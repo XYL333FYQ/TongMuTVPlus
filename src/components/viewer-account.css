@@ -1,0 +1,23 @@
+.tm-login-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 36px;
+  padding: 6px 13px;
+  border: 1px solid var(--tm-line);
+  border-radius: 22px;
+  color: var(--tm-text);
+  background: var(--tm-surface);
+  font-size: 12px;
+  white-space: nowrap;
+}
+.tm-login-link:focus-visible {
+  outline: 2px solid var(--tm-accent);
+  outline-offset: 4px;
+}
+.tm-account-placeholder {
+  display: inline-block;
+  width: 36px;
+  height: 36px;
+}

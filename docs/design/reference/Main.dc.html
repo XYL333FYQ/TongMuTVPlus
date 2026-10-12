@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>首页</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>body{margin:0}a{color:inherit;text-decoration:none}</style>
+</helmet>
+<div style="position:relative;width:100%;background:radial-gradient(ellipse 70% 38% at 50% 0%,{{c.spot}},transparent),{{c.bg}};color:{{c.fg}};font-family:'Noto Sans SC','PingFang SC','Microsoft YaHei',sans-serif;font-size:14px;line-height:1.5">
+<div style="height:64px;box-sizing:border-box;padding:0 48px;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;border-bottom:1px solid {{c.line}}">
+<div style="display:flex;align-items:center;gap:10px;font-weight:700;font-size:17px"><div style="width:28px;height:28px;border-radius:8px;background:{{c.btnBg}};color:{{c.btnFg}};display:flex;align-items:center;justify-content:center;font-size:12px">TM</div>TongMuTV</div>
+<nav style="display:flex;gap:2px;padding:4px;border-radius:999px;background:{{c.glass}};-webkit-backdrop-filter:blur(24px) saturate(1.6);backdrop-filter:blur(24px) saturate(1.6);box-shadow:inset 0 1px 0 rgba(255,255,255,0.08);border:1px solid {{c.line}}"><a href="#" style="padding:6px 20px;border-radius:999px;background:{{c.btnBg}};color:{{c.btnFg}};font-weight:700;font-size:14px">发现</a><a href="#" style="padding:6px 20px;color:{{c.sub}};font-size:14px">片库</a><a href="#" style="padding:6px 20px;color:{{c.sub}};font-size:14px">房间</a></nav>
+<div style="display:flex;align-items:center;justify-content:flex-end;gap:12px">
+<div style="width:36px;height:36px;box-sizing:border-box;border:1px solid {{c.line}};border-radius:10px;display:flex;align-items:center;justify-content:center;color:{{c.sub}}"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-label="搜索"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg></div>
+<div style="display:flex;gap:2px;padding:3px;border:1px solid {{c.line}};border-radius:10px;background:{{c.soft}}">
+<button onClick="{{setLight}}" aria-label="切换到浅色" style="height:28px;padding:0 12px;border:0;border-radius:7px;font:inherit;font-size:13px;cursor:pointer;background:{{lightBg}};color:{{lightFg}}">浅色</button>
+<button onClick="{{setDark}}" aria-label="切换到深色" style="height:28px;padding:0 12px;border:0;border-radius:7px;font:inherit;font-size:13px;cursor:pointer;background:{{darkBg}};color:{{darkFg}}">深色</button>
+</div>
+<div style="width:36px;height:36px;border-radius:50%;background:{{c.btnBg}};color:{{c.btnFg}};display:flex;align-items:center;justify-content:center;font-size:13px">A</div>
+</div>
+</div>
+<div style="padding:24px 48px 0">
+<div style="position:relative;height:500px;box-sizing:border-box;border-radius:24px;background:{{c.heroPanel}};border:1px solid {{c.heroLine}};color:#fff;overflow:hidden;box-shadow:0 40px 80px -32px rgba(0,0,0,0.7);display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding-bottom:44px;text-align:center">
+<div style="position:absolute;top:24px;left:0;right:0;color:#6b6b6b;font-size:13px">横版剧照铺满整张</div>
+<button aria-label="上一部" style="position:absolute;left:24px;top:50%;margin-top:-20px;width:40px;height:40px;border-radius:50%;border:1px solid #404040;background:transparent;color:#fff;cursor:pointer"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>
+<button aria-label="下一部" style="position:absolute;right:24px;top:50%;margin-top:-20px;width:40px;height:40px;border-radius:50%;border:1px solid #404040;background:transparent;color:#fff;cursor:pointer"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg></button>
+<div style="color:#a3a3a3;font-size:14px">★ 7.2 &nbsp;·&nbsp; 2026 &nbsp;·&nbsp; 剧情 &nbsp;·&nbsp; 动画</div>
+<h1 style="margin:12px 0 0;font-size:76px;line-height:1.1;font-weight:700;letter-spacing:-0.035em">巴黎绽放的星辰</h1>
+<p style="margin:12px 0 0;max-width:520px;color:#d4d4d4;font-size:15px;line-height:1.7">以 20 世纪初的巴黎为舞台，讲述两位少女追寻星辰的故事。</p>
+<div style="margin-top:28px;display:flex;gap:12px">
+<a href="#" style="width:148px;height:48px;border-radius:10px;background:#fff;color:#0a0a0a;font-weight:700;display:flex;align-items:center;justify-content:center;gap:8px"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 4l14 8-14 8z"/></svg>播放</a>
+<a href="#" style="width:148px;height:48px;box-sizing:border-box;border-radius:10px;background:rgba(255,255,255,0.14);-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,0.3);color:#fff;font-weight:700;display:flex;align-items:center;justify-content:center;gap:8px"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.5 3-6 6.5-6s6.5 2.5 6.5 6M16 4.5a3.5 3.5 0 010 7M18 14c2 .6 3.5 2.4 3.5 6"/></svg>一起看</a>
+</div>
+<div style="margin-top:28px;display:flex;gap:6px;align-items:center"><div style="width:8px;height:8px;border-radius:50%;background:#404040"></div><div style="width:8px;height:8px;border-radius:50%;background:#404040"></div><div style="width:24px;height:8px;border-radius:4px;background:#fff"></div><div style="width:8px;height:8px;border-radius:50%;background:#404040"></div><div style="width:8px;height:8px;border-radius:50%;background:#404040"></div></div>
+</div>
+</div>
+<div style="padding:64px 48px 0;display:grid;grid-template-columns:repeat(6, minmax(0, 1fr));gap:20px">
+<div style="grid-column:span 3">
+<div style="font-size:22px;font-weight:700">继续观看</div>
+<div style="margin-top:16px;display:grid;grid-template-columns:repeat(3, minmax(0, 1fr));gap:20px">
+<sc-for list="{{resume}}" as="r" hint-placeholder-count="3">
+<div><div style="aspect-ratio:16/9;border-radius:10px;background:{{r.bg}};position:relative;overflow:hidden"><div style="position:absolute;left:0;right:0;bottom:0;height:4px;background:{{r.line}}"><div style="width:{{r.pct}};height:4px;background:{{r.fg}}"></div></div></div><div style="margin-top:10px;font-weight:500;font-size:14px">{{r.title}}</div><div style="font-size:12px;color:{{r.sub}}">{{r.note}}</div></div>
+</sc-for>
+</div>
+</div>
+<div style="grid-column:span 3">
+<div style="font-size:22px;font-weight:700">我的房间</div>
+<div style="margin-top:16px;display:grid;grid-template-columns:repeat(3, minmax(0, 1fr));gap:20px">
+<sc-for list="{{rooms}}" as="m" hint-placeholder-count="2">
+<div><div style="aspect-ratio:16/9;border-radius:10px;background:{{m.bg}};position:relative"><span style="position:absolute;top:8px;left:8px;display:flex;align-items:center;gap:5px;padding:2px 8px;border-radius:6px;background:rgba(0,0,0,0.6);color:#fff;font-size:11px"><span style="width:6px;height:6px;border-radius:50%;background:{{m.dot}}"></span>{{m.online}}</span></div><div style="margin-top:10px;font-weight:500;font-size:14px">{{m.name}}</div><div style="font-size:12px;color:{{m.sub}}">{{m.now}}</div></div>
+</sc-for>
+<div><div style="aspect-ratio:16/9;box-sizing:border-box;border-radius:10px;border:1px dashed {{c.sub}};display:flex;align-items:center;justify-content:center;color:{{c.sub}}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></div><div style="margin-top:10px;font-weight:500;font-size:14px">创建房间</div><div style="font-size:12px;color:{{c.sub}}">邀请朋友一起看</div></div>
+</div>
+</div>
+</div>
+<div style="padding:72px 48px 0">
+<div style="display:flex;justify-content:center;gap:32px;font-size:24px;letter-spacing:-0.01em">
+<sc-for list="{{tabs}}" as="t" hint-placeholder-count="5">
+<div style="font-weight:{{t.w}};color:{{t.col}}">{{t.label}}</div>
+</sc-for>
+</div>
+<div style="margin-top:32px;display:grid;grid-template-columns:repeat(6, minmax(0, 1fr));gap:32px 20px">
+<sc-for list="{{posters}}" as="p" hint-placeholder-count="12">
+<div><div style="aspect-ratio:2/3;border-radius:14px;background:{{p.bg}};box-shadow:inset 0 1px 0 rgba(255,255,255,0.07),0 18px 32px -14px rgba(0,0,0,0.55);position:relative"><span style="position:absolute;top:8px;left:8px;background:{{p.chipBg}};color:{{p.chipFg}};font-size:12px;font-weight:700;padding:2px 7px;border-radius:6px">{{p.rate}}</span></div><div style="margin-top:10px;font-weight:500">{{p.title}}</div></div>
+</sc-for>
+</div>
+<div style="margin-top:40px;display:flex;justify-content:center"><a href="#" style="height:44px;padding:0 28px;box-sizing:border-box;border:1px solid {{c.line}};border-radius:10px;display:flex;align-items:center;font-weight:500">查看全部</a></div>
+</div>
+<div style="height:160px"></div>
+<div style="position:absolute;left:50%;bottom:32px;margin-left:-280px;width:560px;box-sizing:border-box;height:64px;border-radius:16px;background:{{c.soft}};border:1px solid {{c.line}};box-shadow:0 8px 32px rgba(0,0,0,0.35);display:flex;align-items:center;gap:12px;padding:0 12px">
+<div style="width:72px;height:40px;border-radius:8px;background:{{c.poster}}"></div>
+<div style="flex:1;min-width:0"><div style="font-weight:500;font-size:13px">峡湾</div><div style="font-size:12px;color:{{c.sub}}">周五电影夜 · 一起看</div></div>
+<button aria-label="房间消息，1 条未读" style="position:relative;width:36px;height:36px;border:0;border-radius:8px;background:transparent;color:{{c.fg}};cursor:pointer"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 12a8 8 0 01-11.5 7.2L4 20l1-4.6A8 8 0 1121 12z"/></svg><span style="position:absolute;top:2px;right:2px;min-width:14px;height:14px;border-radius:7px;background:{{c.btnBg}};color:{{c.btnFg}};font-size:10px;font-weight:700;line-height:14px">1</span></button>
+<button aria-label="展开完整画面" style="width:36px;height:36px;border:0;border-radius:8px;background:transparent;color:{{c.fg}};cursor:pointer"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M14 4h6v6M10 20H4v-6M20 4l-7 7M4 20l7-7"/></svg></button>
+<button aria-label="收起，继续播放" style="width:36px;height:36px;border:0;border-radius:8px;background:transparent;color:{{c.fg}};cursor:pointer"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":1900}}'>
+class Component extends DCLogic {
+renderVals() {
+const dark = !(this.state && this.state.dark === false);
+const c = dark
+? { bg: '#0a0a0a', fg: '#fafafa', sub: '#a3a3a3', line: '#262626', soft: '#141414', poster: '#1c1c1c', btnBg: '#fafafa', btnFg: '#0a0a0a', heroPanel: '#141414', heroLine: '#262626', glass: 'rgba(28,28,28,0.7)', spot: 'rgba(255,255,255,0.08)' }
+: { bg: '#ffffff', fg: '#0a0a0a', sub: '#6b6b6b', line: '#e5e5e5', soft: '#f5f5f5', poster: '#ececec', btnBg: '#0a0a0a', btnFg: '#ffffff', heroPanel: '#0a0a0a', heroLine: '#0a0a0a', glass: 'rgba(255,255,255,0.7)', spot: 'rgba(0,0,0,0.04)' };
+const rows = [['功夫女足', '6.2'], ['一个部门的诞生', '7.2'], ['庆州纪行', '6.3'], ['潜伏6', '6.6'], ['罗斯', '8.5'], ['爱情假说', '6.6'], ['给阿嬷的情书', '9.3'], ['年会不能停！2', '6.2'], ['求救信号', '7.2'], ['魔方小姐', '6.8'], ['阳光女子合唱团', '7.3'], ['峡湾', '8.0']];
+const tabs = ['电影', '剧集', '动漫', '综艺', '短剧'];
+const resume = [['峡湾', '看到 45%', '45%'], ['罗斯', '看到 12%', '12%'], ['魔方小姐', '看到 70%', '70%']];
+const rooms = [['周五电影夜', '3 人在线', '正在播放 峡湾', '#fafafa'], ['周末追剧', '无人在线', '片单 2 部待播', '#6b6b6b']];
+return {
+c,
+lightBg: dark ? 'transparent' : c.btnBg,
+lightFg: dark ? c.sub : c.btnFg,
+darkBg: dark ? c.btnBg : 'transparent',
+darkFg: dark ? c.btnFg : c.sub,
+setLight: () => this.setState({ dark: false }),
+setDark: () => this.setState({ dark: true }),
+tabs: tabs.map((t, i) => ({ label: t, w: i === 0 ? '700' : '500', col: i === 0 ? c.fg : c.sub })),
+posters: rows.map((r) => ({ title: r[0], rate: r[1], bg: c.poster, chipBg: c.btnBg, chipFg: c.btnFg })),
+resume: resume.map((r) => ({ title: r[0], note: r[1], pct: r[2], bg: c.poster, line: c.line, fg: c.fg, sub: c.sub })),
+rooms: rooms.map((r) => ({ name: r[0], online: r[1], now: r[2], dot: r[3], bg: c.poster, sub: c.sub }))
+};
+}
+}
+</script>
+</body>
+</html>

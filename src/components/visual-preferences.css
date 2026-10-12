@@ -1,0 +1,78 @@
+.tm-explore-dialog {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.tm-visual-preferences {
+  min-width: 0;
+  border: 0;
+  border-top: 1px solid var(--tm-line);
+  margin-top: 24px;
+  padding-top: 19px;
+}
+.tm-visual-preferences legend {
+  padding: 0 8px 0 0;
+  font-size: 12px;
+  color: var(--tm-muted);
+}
+.tm-visual-preferences label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 10px 0;
+  cursor: pointer;
+}
+.tm-visual-preferences strong {
+  display: block;
+  font-size: 13px;
+  font-weight: 550;
+}
+.tm-visual-preferences small,
+.tm-visual-preferences p {
+  display: block;
+  margin-top: 4px;
+  color: var(--tm-muted);
+  font-size: 11px;
+  line-height: 1.7;
+}
+.tm-visual-preferences p {
+  margin: 12px 0 0;
+}
+.tm-visual-preferences input {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  accent-color: var(--tm-accent);
+  cursor: pointer;
+}
+html[data-tm-no-blur='true'] .tm-glass {
+  background: var(--tm-glass-solid);
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+html[data-tm-reduced-motion='true'] .tm-shell *,
+html[data-tm-reduced-motion='true'] .tm-mobile-nav *,
+html[data-tm-reduced-motion='true'] .tm-explore-dialog *,
+html[data-tm-reduced-motion='true'] .tm-public-detail * {
+  animation: none !important;
+  transition: none !important;
+  scroll-behavior: auto !important;
+}
+html[data-tm-reduced-motion='true'] .tm-shell .video-card-hover:hover,
+html[data-tm-reduced-motion='true'] .tm-public-card:hover .tm-public-poster,
+html[data-tm-reduced-motion='true'] .tm-explore-card:hover,
+html[data-tm-reduced-motion='true'] .tm-button-primary:hover,
+html[data-tm-reduced-motion='true'] .tm-button-secondary:hover,
+html[data-tm-reduced-motion='true'] .tm-mobile-nav-item:active {
+  transform: none !important;
+}
+html[data-tm-reduced-motion='true']::view-transition-old(root),
+html[data-tm-reduced-motion='true']::view-transition-new(root) {
+  animation: none !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation: none !important;
+  }
+}

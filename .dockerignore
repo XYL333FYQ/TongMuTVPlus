@@ -1,0 +1,24 @@
+.env*
+!.env.example
+node_modules/
+.next/
+.data/
+data/
+backups/
+.git/
+coverage/
+output/
+outputs/
+*.log
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+public/screenshot1.png
+public/screenshot2.png
+public/screenshot3.png
+
+# Android/TV native app sources are not needed in Docker image builds
+apps/
