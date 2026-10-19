@@ -5,15 +5,21 @@ import { request } from './http';
 export async function check115(link) {
   const { shareCode, receiveCode, error: parseError } = extractParams115(link);
   if (parseError || !shareCode || !receiveCode) {
-    return { valid: false, reason: parseError || (!shareCode ? '缺少分享码' : '缺少提取码') };
+    return {
+      valid: false,
+      reason: parseError || (!shareCode ? '缺少分享码' : '缺少提取码'),
+    };
   }
 
   try {
-    const apiURL = `https://115cdn.com/webapi/share/snap?share_code=${encodeURIComponent(shareCode)}&offset=0&limit=20&receive_code=${encodeURIComponent(receiveCode)}&cid=`;
+    const apiURL = `https://115cdn.com/webapi/share/snap?share_code=${encodeURIComponent(
+      shareCode
+    )}&offset=0&limit=20&receive_code=${encodeURIComponent(receiveCode)}&cid=`;
     const { statusCode, body } = await request(apiURL, {
       headers: {
         Referer: `https://115cdn.com/s/${shareCode}?password=${receiveCode}&`,
-        'Sec-Ch-Ua': '"Chromium";v="142", "Google Chrome";v="142", "Not_A Brand";v="99"',
+        'Sec-Ch-Ua':
+          '"Chromium";v="142", "Google Chrome";v="142", "Not_A Brand";v="99"',
         'Sec-Ch-Ua-Mobile': '?0',
         'Sec-Ch-Ua-Platform': '"Windows"',
         'Sec-Fetch-Dest': 'empty',
@@ -39,7 +45,9 @@ export async function check115(link) {
         return { valid: true, reason: '' };
       }
 
-      const failReason = (data.data?.shareinfo?.forbid_reason || '').trim() || `链接状态异常(share_state=${shareState})`;
+      const failReason =
+        (data.data?.shareinfo?.forbid_reason || '').trim() ||
+        `链接状态异常(share_state=${shareState})`;
       return { valid: false, reason: failReason };
     }
 

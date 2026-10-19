@@ -28,7 +28,8 @@ function isBrowser() {
 function isQuotaExceededError(error: unknown) {
   return (
     error instanceof DOMException &&
-    (error.name === 'QuotaExceededError' || error.name === 'NS_ERROR_DOM_QUOTA_REACHED')
+    (error.name === 'QuotaExceededError' ||
+      error.name === 'NS_ERROR_DOM_QUOTA_REACHED')
   );
 }
 
@@ -50,14 +51,16 @@ function parseEpisodeProgressRecord(
 
   return {
     playTime: Math.floor(playTime),
-    totalTime: Number.isFinite(totalTime) && totalTime >= 0 ? Math.floor(totalTime) : 0,
+    totalTime:
+      Number.isFinite(totalTime) && totalTime >= 0 ? Math.floor(totalTime) : 0,
     updatedAt: Number.isFinite(updatedAt) && updatedAt > 0 ? updatedAt : 0,
   };
 }
 
-function normalizeEpisodeProgressStore(
-  value: unknown
-): { store: LocalEpisodeProgressStore | null; changed: boolean } {
+function normalizeEpisodeProgressStore(value: unknown): {
+  store: LocalEpisodeProgressStore | null;
+  changed: boolean;
+} {
   if (!value || typeof value !== 'object') {
     return { store: null, changed: false };
   }
@@ -115,7 +118,9 @@ function normalizeEpisodeProgressStore(
   };
 }
 
-function readEpisodeProgressStore(contentKey: string): LocalEpisodeProgressStore | null {
+function readEpisodeProgressStore(
+  contentKey: string
+): LocalEpisodeProgressStore | null {
   if (!isBrowser()) {
     return null;
   }
@@ -222,7 +227,9 @@ function buildLegacyEpisodeProgressContentKey(
 ) {
   const title = normalizeContentTitle(identity.title || '');
   const year = String(identity.year || '').trim();
-  const searchType = String(identity.searchType || '').trim().toLowerCase();
+  const searchType = String(identity.searchType || '')
+    .trim()
+    .toLowerCase();
 
   if (!title) {
     return null;
@@ -241,7 +248,9 @@ export function buildEpisodeProgressContentKey(
 
   const tmdbId = normalizeContentIdentityId(identity.tmdbId);
   if (tmdbId) {
-    const searchType = String(identity.searchType || '').trim().toLowerCase();
+    const searchType = String(identity.searchType || '')
+      .trim()
+      .toLowerCase();
     return searchType ? `tmdb:${searchType}:${tmdbId}` : `tmdb:${tmdbId}`;
   }
 
@@ -327,7 +336,10 @@ export function saveLocalEpisodeProgress(
       ...(currentStore?.episodes || {}),
       [String(episodeIndex)]: {
         playTime: Math.floor(playTime),
-        totalTime: Number.isFinite(totalTime) && totalTime >= 0 ? Math.floor(totalTime) : 0,
+        totalTime:
+          Number.isFinite(totalTime) && totalTime >= 0
+            ? Math.floor(totalTime)
+            : 0,
         updatedAt: now,
       },
     },

@@ -1,0 +1,126 @@
+/* 搜索页：大号搜索框与最近搜索。 */
+
+/* 大号搜索框（搜索页） */
+.tm-search-page {
+  padding-top: 24px;
+}
+.tm-search-form {
+  max-width: 720px;
+  margin-inline: auto;
+}
+.tm-search-field {
+  position: relative;
+}
+.tm-search-icon {
+  position: absolute;
+  top: 50%;
+  left: 18px;
+  color: var(--tm-muted);
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+.tm-search-input {
+  width: 100%;
+  height: 56px;
+  padding: 0 56px 0 52px;
+  border: 1px solid var(--tm-line);
+  border-radius: var(--tm-radius-lg);
+  background: var(--tm-surface);
+  color: var(--tm-text);
+  font-size: 16px;
+  box-shadow: var(--tm-shadow-sm);
+  transition: border-color var(--tm-d-hover) var(--tm-ease-out),
+    box-shadow var(--tm-d-hover) var(--tm-ease-out);
+}
+.tm-search-input::placeholder {
+  color: var(--tm-muted);
+}
+.tm-search-input:focus {
+  outline: none;
+  border-color: var(--tm-line-strong);
+  box-shadow: 0 0 0 4px var(--tm-line), var(--tm-shadow-md);
+}
+.tm-search-clear {
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  color: var(--tm-muted);
+  transform: translateY(-50%);
+}
+.tm-search-clear:hover {
+  background: var(--tm-surface-raised);
+  color: var(--tm-text);
+}
+.tm-search-body {
+  margin-top: 32px;
+}
+.tm-search-results-head {
+  align-items: flex-start;
+}
+.tm-search-results-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  margin-top: 4px;
+  font-size: var(--tm-fs-caption);
+  color: var(--tm-muted);
+  font-variant-numeric: tabular-nums;
+}
+.tm-search-modes {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+/* 最近搜索：文字按钮 + 内嵌删除，同一颗胶囊 */
+.tm-search-history {
+  margin-top: 40px;
+}
+.tm-history-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.tm-history-item {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--tm-line);
+  border-radius: var(--tm-radius-pill);
+  background: var(--tm-surface);
+  transition: border-color var(--tm-d-hover) var(--tm-ease-out);
+}
+.tm-history-item:hover {
+  border-color: var(--tm-line-strong);
+}
+.tm-history-query {
+  min-height: 40px;
+  padding: 0 4px 0 16px;
+  font-size: var(--tm-fs-small);
+  color: var(--tm-text);
+}
+.tm-history-remove {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 40px;
+  border-radius: var(--tm-radius-pill);
+  color: var(--tm-muted);
+}
+.tm-history-remove:hover {
+  color: var(--tm-text);
+}
+@media (pointer: coarse) {
+  .tm-history-query,
+  .tm-history-remove {
+    min-height: 44px;
+    height: 44px;
+  }
+  .tm-history-remove {
+    width: 44px;
+  }
+}

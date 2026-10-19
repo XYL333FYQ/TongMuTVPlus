@@ -30,11 +30,7 @@ export interface AdminConfig {
     // TMDB 图片默认地址：用户未在本地数据源设置中配置时，图片默认使用该地址
     TMDBImageBaseUrl?: string;
     // 动漫/Bangumi配置
-    BangumiDataSource?:
-      | 'direct'
-      | 'server-proxy'
-      | 'custom-baseurl'
-      | 'sakura';
+    BangumiDataSource?: 'direct' | 'server-proxy' | 'custom-baseurl' | 'sakura';
     BangumiApiBaseUrl?: string;
     BangumiImageBaseUrl?: string;
     BangumiProxy?: string;

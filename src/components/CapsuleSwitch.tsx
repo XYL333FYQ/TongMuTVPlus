@@ -177,16 +177,11 @@ const CapsuleSwitch: React.FC<CapsuleSwitchProps> = ({
   }, []);
 
   return (
-    <div
-      ref={containerRef}
-      className={`tm-capsule relative inline-flex rounded-full p-1 max-w-full ${
-        className || ''
-      }`}
-    >
+    <div ref={containerRef} className={`tm-capsule ${className || ''}`}>
       {/* 可滚动容器 */}
       <div
         ref={scrollContainerRef}
-        className='tm-capsule-scroll relative flex overflow-x-auto scrollbar-hide'
+        className='tm-capsule-scroll flex overflow-x-auto scrollbar-hide'
         style={{
           scrollbarWidth: 'none',
           msOverflowStyle: 'none',
@@ -210,7 +205,7 @@ const CapsuleSwitch: React.FC<CapsuleSwitchProps> = ({
                 }
                 onChange(opt.value);
               }}
-              className='tm-capsule-option tm-press relative flex items-center justify-center gap-1.5 px-3 sm:px-4 rounded-full font-medium cursor-pointer whitespace-nowrap flex-shrink-0'
+              className='tm-capsule-option'
             >
               {isActive && (
                 <motion.span
@@ -225,11 +220,9 @@ const CapsuleSwitch: React.FC<CapsuleSwitchProps> = ({
                 />
               )}
               {opt.icon && (
-                <span className='tm-control-label inline-flex items-center'>
-                  {opt.icon}
-                </span>
+                <span className='inline-flex items-center'>{opt.icon}</span>
               )}
-              <span className='tm-control-label'>{opt.label}</span>
+              <span>{opt.label}</span>
             </button>
           );
         })}

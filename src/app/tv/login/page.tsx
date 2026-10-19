@@ -83,21 +83,19 @@ export default function TVLoginPage() {
           width: '100vw',
           marginInline: 'calc((100% - min(100vw, 1440px)) / 2)',
         }}
-        className='text-[color:var(--tm-text)] grid grid-cols-[1fr_430px] gap-10 rounded-[42px] border border-[var(--tm-line)] bg-[var(--tm-surface)] py-12 shadow-2xl shadow-[color-mix(in_srgb,var(--tm-room-cinema-bg)_60%,transparent)]'
+        className='text-fg grid grid-cols-[1fr_430px] gap-10 rounded-[42px] border border-line bg-surface py-12 shadow-2xl shadow-ink/60'
       >
         <div className='flex flex-col justify-center'>
-          <div className='inline-flex w-fit items-center gap-3 rounded-full bg-[var(--tm-surface-raised)] px-5 py-2 text-xl font-bold text-[color:var(--tm-text)]'>
+          <div className='inline-flex w-fit items-center gap-3 rounded-full bg-raised px-5 py-2 text-xl font-bold text-fg'>
             <Smartphone className='h-6 w-6' /> 手机确认 · 电视自动登录
           </div>
           <h1 className='mt-7 text-7xl font-black tracking-normal'>扫码登录</h1>
-          <p className='mt-6 max-w-2xl text-3xl leading-relaxed text-[color:var(--tm-muted)]'>
+          <p className='mt-6 max-w-2xl text-3xl leading-relaxed text-muted'>
             用已登录的手机浏览器扫描右侧二维码，在手机上确认后，电视端会自动进入。
           </p>
-          <p className='mt-8 text-2xl font-bold text-[color:var(--tm-text)]'>
-            {status}
-          </p>
+          <p className='mt-8 text-2xl font-bold text-fg'>{status}</p>
         </div>
-        <div className='rounded-[36px] border border-[var(--tm-line)] bg-[var(--tm-surface)] p-7 text-center text-[color:var(--tm-text)] shadow-2xl shadow-[color-mix(in_srgb,var(--tm-room-cinema-bg)_60%,transparent)]'>
+        <div className='rounded-[36px] border border-line bg-surface p-7 text-center text-fg shadow-2xl shadow-ink/60'>
           {qrImg ? (
             <img
               src={qrImg}

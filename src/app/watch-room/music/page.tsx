@@ -310,8 +310,8 @@ function VinylTurntable({
             background: 'none',
           }}
         />
-        <div className='hidden pointer-events-none absolute left-[18%] top-[10%] h-[42%] w-[22%] rotate-[-28deg] rounded-full bg-[var(--tm-surface-raised)] blur-md' />
-        <div className='relative z-10 flex h-[158px] w-[158px] items-center justify-center overflow-hidden rounded-full border-[5px] border-[var(--tm-line)] bg-[var(--tm-surface)] md:h-[192px] md:w-[192px]'>
+        <div className='hidden pointer-events-none absolute left-[18%] top-[10%] h-[42%] w-[22%] rotate-[-28deg] rounded-full bg-raised blur-md' />
+        <div className='relative z-10 flex h-[158px] w-[158px] items-center justify-center overflow-hidden rounded-full border-[5px] border-line bg-surface md:h-[192px] md:w-[192px]'>
           {song.pic ? (
             <img
               src={song.pic}
@@ -319,12 +319,12 @@ function VinylTurntable({
               className='h-full w-full rounded-full object-cover'
             />
           ) : (
-            <div className='flex h-full w-full items-center justify-center text-4xl text-[color:var(--tm-muted)]'>
+            <div className='flex h-full w-full items-center justify-center text-4xl text-muted'>
               <Music2 className='h-10 w-10' aria-hidden />
             </div>
           )}
         </div>
-        <div className='absolute z-20 h-3 w-3 rounded-full bg-[var(--tm-surface)] ring-1 ring-[color-mix(in_srgb,var(--tm-text)_30%,transparent)]' />
+        <div className='absolute z-20 h-3 w-3 rounded-full bg-surface ring-1 ring-[color-mix(in_srgb,var(--tm-text)_30%,transparent)]' />
       </div>
     </div>
   );
@@ -677,21 +677,14 @@ export default function WatchRoomMusicPage() {
       : 0;
   const song = state?.song;
   const nextSong = state?.nextSong || null;
-  const themeRootClass = isDark
-    ? 'bg-[var(--tm-surface)] text-[color:var(--tm-text)]'
-    : 'bg-[var(--tm-surface)] text-[color:var(--tm-text)]';
+  const themeRootClass = 'bg-surface text-fg';
   const showCoverPanel = mobilePanel === 'cover';
   const showLyricsPanel = mobilePanel === 'lyrics';
   const isPlaying = Boolean(state?.isPlaying);
-  const lyricActiveClass = isDark
-    ? 'tm-room-lyric-current scale-105 text-lg font-bold text-[color:var(--tm-text)] md:text-2xl'
-    : 'tm-room-lyric-current scale-105 text-lg font-bold text-[color:var(--tm-text)] md:text-2xl';
-  const lyricNearbyClass = isDark
-    ? 'text-base text-[color:var(--tm-muted)]'
-    : 'text-base text-[color:var(--tm-muted)]';
-  const lyricIdleClass = isDark
-    ? 'text-sm text-[color:var(--tm-muted)]'
-    : 'text-sm text-[color:var(--tm-muted)]';
+  const lyricActiveClass =
+    'tm-room-lyric-current scale-105 text-lg font-bold text-fg md:text-2xl';
+  const lyricNearbyClass = 'text-base text-muted';
+  const lyricIdleClass = 'text-sm text-muted';
 
   return (
     <main
@@ -723,26 +716,14 @@ export default function WatchRoomMusicPage() {
         <img src={song.pic} alt='' className='hidden' aria-hidden />
       )}
       <div
-        className={`absolute inset-0 ${
-          isDark ? 'bg-[var(--tm-surface)]' : 'bg-[var(--tm-surface-raised)]'
-        }`}
+        className={`absolute inset-0 ${isDark ? 'bg-surface' : 'bg-raised'}`}
       />
 
       <PageContainer className='relative z-10 flex min-h-screen flex-col py-6'>
-        <div
-          className={`mb-4 flex items-center justify-between gap-4 text-sm ${
-            isDark
-              ? 'text-[color:var(--tm-muted)]'
-              : 'text-[color:var(--tm-muted)]'
-          }`}
-        >
+        <div className='mb-4 flex items-center justify-between gap-4 text-sm text-muted'>
           <button
             onClick={() => router.push('/watch-room')}
-            className={`rounded-md border px-3 py-2 transition-colors ${
-              isDark
-                ? 'border-[var(--tm-line)] text-[color:var(--tm-muted)] hover:bg-[var(--tm-line)] min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
-                : 'border-[var(--tm-line)] text-[color:var(--tm-muted)] hover:bg-[var(--tm-line)] min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
-            }`}
+            className='rounded-md border px-3 py-2 transition-colors border-line text-muted hover:bg-line min-h-[44px] tm-press min-w-[44px]'
           >
             返回观影室
           </button>
@@ -757,8 +738,8 @@ export default function WatchRoomMusicPage() {
                   ref={mobileVolumeControlRef}
                   className={`rounded-2xl border px-3 py-3 ${
                     isDark
-                      ? 'border-[var(--tm-line)] bg-[color:color-mix(in_srgb,var(--tm-room-cinema-bg)_20%,transparent)]'
-                      : 'border-[var(--tm-line)] bg-[var(--tm-surface-raised)] shadow-sm'
+                      ? 'border-line bg-ink/20'
+                      : 'border-line bg-raised shadow-sm'
                   }`}
                 >
                   <div className='flex items-center gap-3'>
@@ -767,9 +748,9 @@ export default function WatchRoomMusicPage() {
                       onClick={() =>
                         setMobilePanel(showCoverPanel ? 'lyrics' : 'cover')
                       }
-                      className='flex min-w-0 flex-1 items-center gap-3 text-left min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
+                      className='flex min-w-0 flex-1 items-center gap-3 text-left min-h-[44px] tm-press min-w-[44px]'
                     >
-                      <div className='h-11 w-11 shrink-0 overflow-hidden rounded-lg border border-[var(--tm-line)] bg-[var(--tm-surface)]'>
+                      <div className='h-11 w-11 shrink-0 overflow-hidden rounded-lg border border-line bg-surface'>
                         {song.pic ? (
                           <img
                             src={song.pic}
@@ -777,7 +758,7 @@ export default function WatchRoomMusicPage() {
                             className='h-full w-full object-cover'
                           />
                         ) : (
-                          <div className='flex h-full w-full items-center justify-center text-base text-[color:var(--tm-muted)]'>
+                          <div className='flex h-full w-full items-center justify-center text-base text-muted'>
                             <Music2 className='h-10 w-10' aria-hidden />
                           </div>
                         )}
@@ -786,13 +767,7 @@ export default function WatchRoomMusicPage() {
                         <div className='truncate text-sm font-medium'>
                           {song.name}
                         </div>
-                        <div
-                          className={`truncate text-[13px] ${
-                            isDark
-                              ? 'text-[color:var(--tm-muted)]'
-                              : 'text-[color:var(--tm-muted)]'
-                          }`}
-                        >
+                        <div className='truncate text-[13px] text-muted'>
                           {song.artist}
                         </div>
                       </div>
@@ -800,11 +775,7 @@ export default function WatchRoomMusicPage() {
                     <button
                       type='button'
                       onClick={() => setShowVolumeSlider((prev) => !prev)}
-                      className={`relative shrink-0 transition-colors ${
-                        isDark
-                          ? 'text-[color:var(--tm-muted)] hover:text-[color:var(--tm-text)] min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
-                          : 'text-[color:var(--tm-muted)] hover:text-[color:var(--tm-text)] min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
-                      }`}
+                      className='relative shrink-0 transition-colors text-muted hover:text-fg min-h-[44px] tm-press min-w-[44px]'
                       title='音量'
                     >
                       <svg
@@ -825,21 +796,9 @@ export default function WatchRoomMusicPage() {
                             : 'pointer-events-none opacity-0'
                         }`}
                       >
-                        <div
-                          className={`rounded-lg border p-3 shadow-xl ${
-                            isDark
-                              ? 'border-[var(--tm-line)] bg-[var(--tm-surface)]'
-                              : 'border-[var(--tm-line)] bg-[var(--tm-surface)]'
-                          }`}
-                        >
+                        <div className='rounded-lg border p-3 shadow-xl border-line bg-surface'>
                           <div className='flex flex-col items-center gap-2'>
-                            <span
-                              className={`text-[13px] font-mono ${
-                                isDark
-                                  ? 'text-[color:var(--tm-muted)]'
-                                  : 'text-[color:var(--tm-muted)]'
-                              }`}
-                            >
+                            <span className='text-[13px] font-mono text-muted'>
                               {volume}
                             </span>
                             <input
@@ -851,7 +810,7 @@ export default function WatchRoomMusicPage() {
                               onChange={(e) =>
                                 setVolume(Number(e.target.value))
                               }
-                              className='h-24 w-11 cursor-pointer appearance-none rounded-full accent-[var(--tm-text)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
+                              className='h-24 w-11 cursor-pointer appearance-none rounded-full accent-fg'
                               style={{
                                 writingMode: 'vertical-lr',
                                 WebkitAppearance: 'slider-vertical',
@@ -868,8 +827,8 @@ export default function WatchRoomMusicPage() {
                   <div
                     className={`rounded-2xl border px-4 py-4 ${
                       isDark
-                        ? 'border-[var(--tm-line)] bg-[color:color-mix(in_srgb,var(--tm-room-cinema-bg)_20%,transparent)]'
-                        : 'border-[var(--tm-line)] bg-[var(--tm-surface-raised)] shadow-sm'
+                        ? 'border-line bg-ink/20'
+                        : 'border-line bg-raised shadow-sm'
                     }`}
                   >
                     <div className='flex flex-col gap-4'>
@@ -884,34 +843,16 @@ export default function WatchRoomMusicPage() {
                         volume={volume}
                       />
                       <div className='flex items-center gap-2 text-[13px] tabular-nums'>
-                        <span
-                          className={`w-10 ${
-                            isDark
-                              ? 'text-[color:var(--tm-muted)]'
-                              : 'text-[color:var(--tm-muted)]'
-                          }`}
-                        >
+                        <span className='w-10 text-muted'>
                           {formatTime(currentTime)}
                         </span>
-                        <div
-                          className={`relative h-1.5 flex-1 overflow-hidden rounded-full ${
-                            isDark
-                              ? 'bg-[var(--tm-surface-raised)]'
-                              : 'bg-[var(--tm-surface-raised)]'
-                          }`}
-                        >
+                        <div className='relative h-1.5 flex-1 overflow-hidden rounded-full bg-raised'>
                           <div
-                            className='h-full rounded-full bg-[var(--tm-text)]'
+                            className='h-full rounded-full bg-fg'
                             style={{ width: `${progress}%` }}
                           />
                         </div>
-                        <span
-                          className={`w-10 text-right ${
-                            isDark
-                              ? 'text-[color:var(--tm-muted)]'
-                              : 'text-[color:var(--tm-muted)]'
-                          }`}
-                        >
+                        <span className='w-10 text-right text-muted'>
                           {formatTime(duration)}
                         </span>
                       </div>
@@ -922,8 +863,8 @@ export default function WatchRoomMusicPage() {
                     ref={mobileLyricsContainerRef}
                     className={`rounded-2xl border px-4 py-4 ${
                       isDark
-                        ? 'border-[var(--tm-line)] bg-[color:color-mix(in_srgb,var(--tm-room-cinema-bg)_20%,transparent)]'
-                        : 'border-[var(--tm-line)] bg-[var(--tm-surface-raised)] shadow-sm'
+                        ? 'border-line bg-ink/20'
+                        : 'border-line bg-raised shadow-sm'
                     }`}
                   >
                     <div className='max-h-[64vh] overflow-y-auto px-1'>
@@ -944,13 +885,7 @@ export default function WatchRoomMusicPage() {
                             >
                               <div>{line.text || '♪'}</div>
                               {line.translation && (
-                                <div
-                                  className={`mt-1 text-sm font-normal ${
-                                    isDark
-                                      ? 'text-[color:var(--tm-muted)]'
-                                      : 'text-[color:var(--tm-muted)]'
-                                  }`}
-                                >
+                                <div className='mt-1 text-sm font-normal text-muted'>
                                   {line.translation}
                                 </div>
                               )}
@@ -958,13 +893,7 @@ export default function WatchRoomMusicPage() {
                           ))}
                         </div>
                       ) : (
-                        <div
-                          className={`flex min-h-[48vh] items-center justify-center ${
-                            isDark
-                              ? 'text-[color:var(--tm-muted)]'
-                              : 'text-[color:var(--tm-muted)]'
-                          }`}
-                        >
+                        <div className='flex min-h-[48vh] items-center justify-center text-muted'>
                           暂无歌词
                         </div>
                       )}
@@ -978,34 +907,16 @@ export default function WatchRoomMusicPage() {
                       />
                     </div>
                     <div className='mt-4 flex items-center gap-2 text-[13px] tabular-nums'>
-                      <span
-                        className={`w-10 ${
-                          isDark
-                            ? 'text-[color:var(--tm-muted)]'
-                            : 'text-[color:var(--tm-muted)]'
-                        }`}
-                      >
+                      <span className='w-10 text-muted'>
                         {formatTime(currentTime)}
                       </span>
-                      <div
-                        className={`relative h-1.5 flex-1 overflow-hidden rounded-full ${
-                          isDark
-                            ? 'bg-[var(--tm-surface-raised)]'
-                            : 'bg-[var(--tm-surface-raised)]'
-                        }`}
-                      >
+                      <div className='relative h-1.5 flex-1 overflow-hidden rounded-full bg-raised'>
                         <div
-                          className='h-full rounded-full bg-[var(--tm-text)]'
+                          className='h-full rounded-full bg-fg'
                           style={{ width: `${progress}%` }}
                         />
                       </div>
-                      <span
-                        className={`w-10 text-right ${
-                          isDark
-                            ? 'text-[color:var(--tm-muted)]'
-                            : 'text-[color:var(--tm-muted)]'
-                        }`}
-                      >
+                      <span className='w-10 text-right text-muted'>
                         {formatTime(duration)}
                       </span>
                     </div>
@@ -1024,19 +935,15 @@ export default function WatchRoomMusicPage() {
                   ref={desktopVolumeControlRef}
                   className={`rounded-lg border p-4 md:p-6 ${
                     isDark
-                      ? 'border-[var(--tm-line)] bg-[color:color-mix(in_srgb,var(--tm-room-cinema-bg)_20%,transparent)]'
-                      : 'border-[var(--tm-line)] bg-[var(--tm-surface-raised)] shadow-sm'
+                      ? 'border-line bg-ink/20'
+                      : 'border-line bg-raised shadow-sm'
                   }`}
                 >
                   <div className='relative'>
                     <button
                       type='button'
                       onClick={() => setShowVolumeSlider((prev) => !prev)}
-                      className={`absolute right-0 top-0 z-10 shrink-0 transition-colors ${
-                        isDark
-                          ? 'text-[color:var(--tm-muted)] hover:text-[color:var(--tm-text)] min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
-                          : 'text-[color:var(--tm-muted)] hover:text-[color:var(--tm-text)] min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
-                      }`}
+                      className='absolute right-0 top-0 z-10 shrink-0 transition-colors text-muted hover:text-fg min-h-[44px] tm-press min-w-[44px]'
                       title='音量'
                     >
                       <svg
@@ -1058,21 +965,9 @@ export default function WatchRoomMusicPage() {
                           : 'pointer-events-none opacity-0'
                       }`}
                     >
-                      <div
-                        className={`rounded-lg border p-3 shadow-xl ${
-                          isDark
-                            ? 'border-[var(--tm-line)] bg-[var(--tm-surface)]'
-                            : 'border-[var(--tm-line)] bg-[var(--tm-surface)]'
-                        }`}
-                      >
+                      <div className='rounded-lg border p-3 shadow-xl border-line bg-surface'>
                         <div className='flex flex-col items-center gap-2'>
-                          <span
-                            className={`text-[13px] font-mono ${
-                              isDark
-                                ? 'text-[color:var(--tm-muted)]'
-                                : 'text-[color:var(--tm-muted)]'
-                            }`}
-                          >
+                          <span className='text-[13px] font-mono text-muted'>
                             {volume}
                           </span>
                           <input
@@ -1082,7 +977,7 @@ export default function WatchRoomMusicPage() {
                             max={100}
                             value={volume}
                             onChange={(e) => setVolume(Number(e.target.value))}
-                            className='h-24 w-11 cursor-pointer appearance-none rounded-full accent-[var(--tm-text)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
+                            className='h-24 w-11 cursor-pointer appearance-none rounded-full accent-fg'
                             style={{
                               writingMode: 'vertical-lr',
                               WebkitAppearance: 'slider-vertical',
@@ -1106,56 +1001,26 @@ export default function WatchRoomMusicPage() {
                     <h1 className='truncate text-[28px] font-bold md:text-[32px]'>
                       {song.name}
                     </h1>
-                    <p
-                      className={`mt-2 truncate text-sm md:text-base ${
-                        isDark
-                          ? 'text-[color:var(--tm-muted)]'
-                          : 'text-[color:var(--tm-muted)]'
-                      }`}
-                    >
+                    <p className='mt-2 truncate text-sm md:text-base text-muted'>
                       {song.artist}
                     </p>
                     {nextSong && (
-                      <p
-                        className={`mt-2 truncate text-[13px] md:text-sm ${
-                          isDark
-                            ? 'text-[color:var(--tm-muted)]'
-                            : 'text-[color:var(--tm-muted)]'
-                        }`}
-                      >
+                      <p className='mt-2 truncate text-[13px] md:text-sm text-muted'>
                         下一首：{nextSong.name} - {nextSong.artist}
                       </p>
                     )}
                   </div>
                   <div className='mt-5 flex items-center gap-2 text-[13px] tabular-nums'>
-                    <span
-                      className={`w-10 ${
-                        isDark
-                          ? 'text-[color:var(--tm-muted)]'
-                          : 'text-[color:var(--tm-muted)]'
-                      }`}
-                    >
+                    <span className='w-10 text-muted'>
                       {formatTime(currentTime)}
                     </span>
-                    <div
-                      className={`relative h-1.5 flex-1 overflow-hidden rounded-full ${
-                        isDark
-                          ? 'bg-[var(--tm-surface-raised)]'
-                          : 'bg-[var(--tm-surface-raised)]'
-                      }`}
-                    >
+                    <div className='relative h-1.5 flex-1 overflow-hidden rounded-full bg-raised'>
                       <div
-                        className='h-full rounded-full bg-[var(--tm-text)]'
+                        className='h-full rounded-full bg-fg'
                         style={{ width: `${progress}%` }}
                       />
                     </div>
-                    <span
-                      className={`w-10 text-right ${
-                        isDark
-                          ? 'text-[color:var(--tm-muted)]'
-                          : 'text-[color:var(--tm-muted)]'
-                      }`}
-                    >
+                    <span className='w-10 text-right text-muted'>
                       {formatTime(duration)}
                     </span>
                   </div>
@@ -1168,8 +1033,8 @@ export default function WatchRoomMusicPage() {
                   showLyricsPanel ? 'block' : 'hidden'
                 } min-h-0 rounded-lg border p-4 md:block md:h-[70vh] md:overflow-y-auto md:p-6 ${
                   isDark
-                    ? 'border-[var(--tm-line)] bg-[color:color-mix(in_srgb,var(--tm-room-cinema-bg)_20%,transparent)]'
-                    : 'border-[var(--tm-line)] bg-[var(--tm-surface-raised)] shadow-sm'
+                    ? 'border-line bg-ink/20'
+                    : 'border-line bg-raised shadow-sm'
                 }`}
               >
                 {lyrics.length > 0 ? (
@@ -1189,13 +1054,7 @@ export default function WatchRoomMusicPage() {
                       >
                         <div>{line.text || '♪'}</div>
                         {line.translation && (
-                          <div
-                            className={`mt-1 text-sm font-normal ${
-                              isDark
-                                ? 'text-[color:var(--tm-muted)]'
-                                : 'text-[color:var(--tm-muted)]'
-                            }`}
-                          >
+                          <div className='mt-1 text-sm font-normal text-muted'>
                             {line.translation}
                           </div>
                         )}
@@ -1203,13 +1062,7 @@ export default function WatchRoomMusicPage() {
                     ))}
                   </div>
                 ) : (
-                  <div
-                    className={`flex h-full min-h-[200px] items-center justify-center ${
-                      isDark
-                        ? 'text-[color:var(--tm-muted)]'
-                        : 'text-[color:var(--tm-muted)]'
-                    }`}
-                  >
+                  <div className='flex h-full min-h-[200px] items-center justify-center text-muted'>
                     暂无歌词
                   </div>
                 )}
@@ -1217,13 +1070,7 @@ export default function WatchRoomMusicPage() {
             </div>
           </>
         ) : (
-          <div
-            className={`flex flex-1 items-center justify-center ${
-              isDark
-                ? 'text-[color:var(--tm-muted)]'
-                : 'text-[color:var(--tm-muted)]'
-            }`}
-          >
+          <div className='flex flex-1 items-center justify-center text-muted'>
             等待房主播放音乐
           </div>
         )}
@@ -1232,15 +1079,13 @@ export default function WatchRoomMusicPage() {
       {needsActivation && song && (
         <div
           className={`absolute inset-0 z-20 flex items-center justify-center  ${
-            isDark
-              ? 'bg-[color:color-mix(in_srgb,var(--tm-room-cinema-bg)_70%,transparent)]'
-              : 'bg-[var(--tm-surface-raised)]'
+            isDark ? 'bg-ink/70' : 'bg-raised'
           }`}
         >
           <button
             type='button'
             onClick={activate}
-            className='rounded-full bg-[var(--tm-text)] px-8 py-4 text-base font-medium text-[color:var(--tm-accent-contrast)] shadow-2xl hover:opacity-90 min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
+            className='rounded-full bg-fg px-8 py-4 text-base font-medium text-inverse shadow-2xl hover:opacity-90 min-h-[44px] tm-press min-w-[44px]'
           >
             点击加入一起听
           </button>

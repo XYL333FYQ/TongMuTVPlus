@@ -42,13 +42,20 @@ export function parseVideoFileName(fileName: string): ParsedVideoInfo {
 
   // 降级方案：使用多种正则模式提取集数
   // 按优先级排序：更具体的模式优先
-  const patterns: Array<{ pattern: RegExp; isOVA?: boolean; extractSeason?: boolean }> = [
+  const patterns: Array<{
+    pattern: RegExp;
+    isOVA?: boolean;
+    extractSeason?: boolean;
+  }> = [
     // OVA01, OVA 01, ova01, ova 01 (OVA特殊处理) - 最优先
     { pattern: /OVA\s*(\d+(?:\.\d+)?)/i, isOVA: true },
     // S01E01, s01e01, S01E1234, S01E01.5 (支持1-4位数字和小数) - 最具体
     { pattern: /[Ss](\d+)[Ee](\d{1,4}(?:\.\d+)?)/, extractSeason: true },
     // S04 - 02, S04-02, S04 02 (带空格/横线分隔的季+集) - 具体
-    { pattern: /[Ss](\d{1,2})\s*[-–—]\s*(\d{1,4}(?:\.\d+)?)(?!\d)/, extractSeason: true },
+    {
+      pattern: /[Ss](\d{1,2})\s*[-–—]\s*(\d{1,4}(?:\.\d+)?)(?!\d)/,
+      extractSeason: true,
+    },
     // [01], (01), [01.5], (01.5) (支持小数，但要排除中文括号内容) - 很具体
     { pattern: /[[(](\d+(?:\.\d+)?)[)\]]/ },
     // E01, E1, e01, e1, E01.5 (支持小数)

@@ -1,0 +1,181 @@
+/* 登录 / 注册 / OIDC 注册：居中一张卡片，背景只有顶部一束聚光。 */
+.tm-auth {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  min-height: 100dvh;
+  padding: 72px 16px 88px;
+  overflow: hidden;
+  background-color: var(--tm-bg);
+  color: var(--tm-text);
+}
+.tm-auth::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto;
+  height: 70vh;
+  background: radial-gradient(60% 100% at 50% 0%, var(--tm-spot), transparent);
+  pointer-events: none;
+}
+.tm-auth-theme {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 1;
+}
+.tm-auth-card {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 400px;
+  padding: 40px 32px 32px;
+  border: 1px solid var(--tm-line);
+  border-radius: var(--tm-radius-xl);
+  background: var(--tm-surface);
+  box-shadow: var(--tm-shadow-lg);
+}
+.tm-auth-title {
+  margin-bottom: 32px;
+  font-size: 28px;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  text-align: center;
+}
+.tm-auth-title:has(+ .tm-auth-sub) {
+  margin-bottom: 8px;
+}
+.tm-auth-sub {
+  margin-bottom: 32px;
+  font-size: var(--tm-fs-small);
+  color: var(--tm-muted);
+  text-align: center;
+}
+.tm-auth-form {
+  display: grid;
+  gap: 16px;
+}
+
+/* 带图标的输入框 */
+.tm-auth-field-icon {
+  position: absolute;
+  inset-block: 0;
+  left: 14px;
+  display: flex;
+  align-items: center;
+  color: var(--tm-muted);
+  pointer-events: none;
+}
+.tm-input.tm-auth-input {
+  min-height: 48px;
+  padding-inline: 44px 48px;
+  border-radius: var(--tm-radius-md);
+  background: var(--tm-bg);
+  font-size: 16px;
+}
+.tm-auth-reveal {
+  position: absolute;
+  inset-block: 0;
+  right: 2px;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  color: var(--tm-muted);
+}
+.tm-auth-reveal:hover {
+  color: var(--tm-text);
+}
+
+.tm-auth-error {
+  font-size: var(--tm-fs-small);
+  color: var(--tm-danger);
+}
+.tm-auth-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  font-size: var(--tm-fs-small);
+  color: var(--tm-muted);
+  transition: color var(--tm-d-hover) var(--tm-ease-out);
+}
+.tm-auth-link:hover {
+  color: var(--tm-text);
+}
+
+/* 第三方登录 */
+.tm-auth-alt {
+  margin-top: 24px;
+}
+.tm-auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  font-size: var(--tm-fs-caption);
+  color: var(--tm-muted);
+}
+.tm-auth-divider::before,
+.tm-auth-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--tm-line);
+}
+
+/* 注册成功后的说明块 */
+.tm-auth-note {
+  padding: 16px;
+  border: 1px solid var(--tm-line);
+  border-radius: var(--tm-radius-md);
+  background: var(--tm-surface-raised);
+}
+.tm-auth-code {
+  margin-block: 12px;
+  padding: 10px 12px;
+  border-radius: var(--tm-radius-sm);
+  background: var(--tm-bg);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+}
+
+.tm-auth-version {
+  position: absolute;
+  bottom: 16px;
+  left: 50%;
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 44px;
+  padding-inline: 12px;
+  font-size: var(--tm-fs-caption);
+  color: var(--tm-muted);
+  transform: translateX(-50%);
+  transition: color var(--tm-d-hover) var(--tm-ease-out);
+}
+.tm-auth-version:hover {
+  color: var(--tm-text);
+}
+.tm-auth-version-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+@media (max-width: 480px) {
+  .tm-auth-card {
+    padding: 32px 20px 24px;
+    border-radius: var(--tm-radius-lg);
+  }
+}
+.tm-input.tm-auth-input-plain {
+  padding-inline: 16px;
+}
+
+/* 登录类页面不显示房间聊天入口 */
+body:has(.tm-auth) .tm-chat-launcher {
+  display: none;
+}

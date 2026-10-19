@@ -37,7 +37,9 @@ export async function getDuanjuSources(): Promise<DuanjuSource[]> {
 
     if (cachedData !== null) {
       // 有缓存，直接返回（getGlobalValue 已经处理了序列化问题）
-      const cachedSources: DuanjuSource[] = cachedData ? JSON.parse(cachedData) : [];
+      const cachedSources: DuanjuSource[] = cachedData
+        ? JSON.parse(cachedData)
+        : [];
       // 旧版本缓存只保存采集源，不包含短剧分类 ID。缺少 typeId 时自动重建缓存。
       if (
         cachedSources.length === 0 ||

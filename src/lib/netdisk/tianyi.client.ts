@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { constants,publicEncrypt } from 'crypto';
+import { constants, publicEncrypt } from 'crypto';
 
 export interface TianyiShareVideoFile {
   name: string;
@@ -21,7 +21,20 @@ export interface TianyiShareListResult {
 const API_BASE = 'https://cloud.189.cn/api';
 const LOGIN_URL = 'https://open.e.189.cn';
 const VIDEO_EXTENSIONS = [
-  '.mp4', '.mkv', '.avi', '.mov', '.flv', '.wmv', '.m3u8', '.ts', '.rmvb', '.rm', '.mpeg', '.mpg', '.m4v', '.webm',
+  '.mp4',
+  '.mkv',
+  '.avi',
+  '.mov',
+  '.flv',
+  '.wmv',
+  '.m3u8',
+  '.ts',
+  '.rmvb',
+  '.rm',
+  '.mpeg',
+  '.mpg',
+  '.m4v',
+  '.webm',
 ];
 
 const NORMAL_HEADERS: HeadersInit = {
@@ -30,7 +43,10 @@ const NORMAL_HEADERS: HeadersInit = {
   Accept: 'application/json;charset=UTF-8',
 };
 
-const loginCookieStore = new Map<string, { cookie: string; expiresAt: number }>();
+const loginCookieStore = new Map<
+  string,
+  { cookie: string; expiresAt: number }
+>();
 const LOGIN_TTL_MS = 30 * 60 * 1000;
 
 export function normalizeTianyiAccount(value: string): string {
@@ -47,7 +63,10 @@ function makeLoginCacheKey(account: string, password: string) {
 
 export function clearTianyiLoginCache(account: string, password: string) {
   loginCookieStore.delete(
-    makeLoginCacheKey(normalizeTianyiAccount(account), normalizeTianyiPassword(password))
+    makeLoginCacheKey(
+      normalizeTianyiAccount(account),
+      normalizeTianyiPassword(password)
+    )
   );
 }
 
@@ -64,7 +83,9 @@ function assertHeaderSafe(value: string, label: string) {
   const normalized = value.trim();
   for (let i = 0; i < normalized.length; i += 1) {
     if (normalized.charCodeAt(i) > 255) {
-      throw new Error(`${label} 含有非法字符，请检查是否包含中文标点或说明文字`);
+      throw new Error(
+        `${label} 含有非法字符，请检查是否包含中文标点或说明文字`
+      );
     }
   }
   return normalized;
@@ -101,7 +122,9 @@ function mergeCookies(...cookieGroups: Array<string | string[] | undefined>) {
       }
     }
   }
-  return Array.from(map.entries()).map(([key, value]) => `${key}=${value}`).join('; ');
+  return Array.from(map.entries())
+    .map(([key, value]) => `${key}=${value}`)
+    .join('; ');
 }
 
 function toFormBody(data: Record<string, any>) {
@@ -134,7 +157,10 @@ function encryptCredential(value: string, pubKey: string) {
   return `{NRP}${encrypted.toString('hex')}`;
 }
 
-export function parseTianyiShareUrl(url: string, passcode = ''): { shareCode: string; accessCode: string } {
+export function parseTianyiShareUrl(
+  url: string,
+  passcode = ''
+): { shareCode: string; accessCode: string } {
   const decoded = decodeURIComponent(url);
   const patterns = [
     /https:\/\/cloud\.189\.cn\/web\/share\?code=([A-Za-z0-9]+)/i,
@@ -158,18 +184,33 @@ export function parseTianyiShareUrl(url: string, passcode = ''): { shareCode: st
   shareCode = cleanMatch?.[1] || rawCode.trim();
 
   const pwdMatch = decoded.match(/[?&]pwd=([^&]+)/i);
-  const inlineAccessCodeMatch1 = rawCode.match(/[（(]\s*访问码[：:]\s*([A-Za-z0-9]+)\s*[）)]/i);
-  const inlineAccessCodeMatch2 = rawCode.match(/\s+访问码[：:]\s*([A-Za-z0-9]+)/i);
+  const inlineAccessCodeMatch1 = rawCode.match(
+    /[（(]\s*访问码[：:]\s*([A-Za-z0-9]+)\s*[）)]/i
+  );
+  const inlineAccessCodeMatch2 = rawCode.match(
+    /\s+访问码[：:]\s*([A-Za-z0-9]+)/i
+  );
 
   return {
     shareCode,
-    accessCode: passcode || pwdMatch?.[1] || inlineAccessCodeMatch1?.[1] || inlineAccessCodeMatch2?.[1] || '',
+    accessCode:
+      passcode ||
+      pwdMatch?.[1] ||
+      inlineAccessCodeMatch1?.[1] ||
+      inlineAccessCodeMatch2?.[1] ||
+      '',
   };
 }
 
 async function fetchLoginCookie(account: string, password: string) {
-  const safeAccount = assertHeaderSafe(normalizeTianyiAccount(account), '天翼云盘账号');
-  const safePassword = assertHeaderSafe(normalizeTianyiPassword(password), '天翼云盘密码');
+  const safeAccount = assertHeaderSafe(
+    normalizeTianyiAccount(account),
+    '天翼云盘账号'
+  );
+  const safePassword = assertHeaderSafe(
+    normalizeTianyiPassword(password),
+    '天翼云盘密码'
+  );
   const cacheKey = makeLoginCacheKey(safeAccount, safePassword);
   pruneLoginCookies();
   const cached = loginCookieStore.get(cacheKey);
@@ -177,10 +218,13 @@ async function fetchLoginCookie(account: string, password: string) {
     return cached.cookie;
   }
 
-  const encryptConfResp = await fetch(`${LOGIN_URL}/api/logbox/config/encryptConf.do?appId=cloud`, {
-    method: 'POST',
-    cache: 'no-store',
-  });
+  const encryptConfResp = await fetch(
+    `${LOGIN_URL}/api/logbox/config/encryptConf.do?appId=cloud`,
+    {
+      method: 'POST',
+      cache: 'no-store',
+    }
+  );
   const encryptConf = await parseJsonResponse<any>(encryptConfResp);
   const pubKey = String(encryptConf?.data?.pubKey || '');
   if (!pubKey) {
@@ -201,7 +245,8 @@ async function fetchLoginCookie(account: string, password: string) {
   const loginHeaders: HeadersInit = {
     'Content-Type': 'application/x-www-form-urlencoded',
     Accept: 'application/json;charset=UTF-8',
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:74.0) Gecko/20100101 Firefox/76.0',
+    'User-Agent':
+      'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:74.0) Gecko/20100101 Firefox/76.0',
     Referer: 'https://open.e.189.cn/',
     Lt: lt,
     Reqid: reqId,
@@ -220,31 +265,36 @@ async function fetchLoginCookie(account: string, password: string) {
     throw new Error('获取天翼云盘登录配置失败');
   }
 
-  const loginSubmitResp = await fetch(`${LOGIN_URL}/api/logbox/oauth2/loginSubmit.do`, {
-    method: 'POST',
-    headers: loginHeaders,
-    body: toFormBody({
-      appKey: 'cloud',
-      version: '2.0',
-      accountType: '01',
-      mailSuffix: '@189.cn',
-      validateCode: '',
-      returnUrl,
-      paramId,
-      captchaToken: '',
-      dynamicCheck: 'FALSE',
-      clientType: '1',
-      cb_SaveName: '0',
-      isOauth2: false,
-      userName: encryptCredential(safeAccount, pubKey),
-      password: encryptCredential(safePassword, pubKey),
-    }),
-    cache: 'no-store',
-  });
+  const loginSubmitResp = await fetch(
+    `${LOGIN_URL}/api/logbox/oauth2/loginSubmit.do`,
+    {
+      method: 'POST',
+      headers: loginHeaders,
+      body: toFormBody({
+        appKey: 'cloud',
+        version: '2.0',
+        accountType: '01',
+        mailSuffix: '@189.cn',
+        validateCode: '',
+        returnUrl,
+        paramId,
+        captchaToken: '',
+        dynamicCheck: 'FALSE',
+        clientType: '1',
+        cb_SaveName: '0',
+        isOauth2: false,
+        userName: encryptCredential(safeAccount, pubKey),
+        password: encryptCredential(safePassword, pubKey),
+      }),
+      cache: 'no-store',
+    }
+  );
   const loginSubmit = await parseJsonResponse<any>(loginSubmitResp);
   const toUrl = String(loginSubmit?.toUrl || '');
   if (!toUrl) {
-    throw new Error(loginSubmit?.msg || loginSubmit?.message || '天翼云盘登录失败');
+    throw new Error(
+      loginSubmit?.msg || loginSubmit?.message || '天翼云盘登录失败'
+    );
   }
 
   const firstCookies = mergeCookies(extractSetCookies(loginSubmitResp));
@@ -257,7 +307,10 @@ async function fetchLoginCookie(account: string, password: string) {
     cache: 'no-store',
   });
 
-  const finalCookie = mergeCookies(firstCookies, extractSetCookies(redirectResp));
+  const finalCookie = mergeCookies(
+    firstCookies,
+    extractSetCookies(redirectResp)
+  );
   if (!finalCookie) {
     throw new Error('天翼云盘登录未获取到 Cookie');
   }
@@ -269,7 +322,10 @@ async function fetchLoginCookie(account: string, password: string) {
   return finalCookie;
 }
 
-async function fetchJsonWithRetry<T = any>(url: string, options?: RequestInit): Promise<T> {
+async function fetchJsonWithRetry<T = any>(
+  url: string,
+  options?: RequestInit
+): Promise<T> {
   let lastError: unknown;
   for (let i = 0; i < 3; i += 1) {
     try {
@@ -285,7 +341,9 @@ async function fetchJsonWithRetry<T = any>(url: string, options?: RequestInit): 
       lastError = error;
     }
   }
-  throw lastError instanceof Error ? lastError : new Error('天翼云盘接口请求失败');
+  throw lastError instanceof Error
+    ? lastError
+    : new Error('天翼云盘接口请求失败');
 }
 
 async function getShareInfo(input: { shareCode: string; accessCode: string }) {
@@ -294,7 +352,9 @@ async function getShareInfo(input: { shareCode: string; accessCode: string }) {
   if (input.accessCode) {
     try {
       await fetchJsonWithRetry(
-        `${API_BASE}/open/share/checkAccessCode.action?shareCode=${encodeURIComponent(input.shareCode)}&accessCode=${encodeURIComponent(input.accessCode)}`,
+        `${API_BASE}/open/share/checkAccessCode.action?shareCode=${encodeURIComponent(
+          input.shareCode
+        )}&accessCode=${encodeURIComponent(input.accessCode)}`,
         { headers: NORMAL_HEADERS }
       );
     } catch {
@@ -305,12 +365,20 @@ async function getShareInfo(input: { shareCode: string; accessCode: string }) {
 
   try {
     const infoUrl = input.accessCode
-      ? `${API_BASE}/open/share/getShareInfoByCodeV2.action?key=noCache&shareCode=${encodeURIComponent(input.shareCode)}`
-      : `${API_BASE}/open/share/getShareInfoByCodeV2.action?noCache=${Math.random()}&shareCode=${encodeURIComponent(input.shareCode)}`;
+      ? `${API_BASE}/open/share/getShareInfoByCodeV2.action?key=noCache&shareCode=${encodeURIComponent(
+          input.shareCode
+        )}`
+      : `${API_BASE}/open/share/getShareInfoByCodeV2.action?noCache=${Math.random()}&shareCode=${encodeURIComponent(
+          input.shareCode
+        )}`;
     info = await fetchJsonWithRetry<any>(infoUrl, { headers: NORMAL_HEADERS });
   } catch (error) {
     if (input.accessCode) {
-      throw new Error(`获取天翼云盘分享信息失败，可能是访问码错误或链接已失效：${error instanceof Error ? error.message : 'unknown error'}`);
+      throw new Error(
+        `获取天翼云盘分享信息失败，可能是访问码错误或链接已失效：${
+          error instanceof Error ? error.message : 'unknown error'
+        }`
+      );
     }
     throw error;
   }
@@ -334,11 +402,13 @@ async function listShareDir(input: {
 }) {
   const pageNum = input.pageNum || 1;
   const isFolderCandidates = Array.from(
-    new Set([
-      String(input.isFolder),
-      input.isFolder === true ? '1' : '',
-      input.isFolder === false ? '0' : '',
-    ].filter(Boolean))
+    new Set(
+      [
+        String(input.isFolder),
+        input.isFolder === true ? '1' : '',
+        input.isFolder === false ? '0' : '',
+      ].filter(Boolean)
+    )
   );
 
   const accessCodeCandidates = Array.from(
@@ -367,7 +437,21 @@ async function listShareDir(input: {
       candidates.push(
         `${API_BASE}/open/share/listShareDir.action?key=noCache&${baseParams.toString()}&noCache=${Math.random()}`,
         `${API_BASE}/open/share/listShareDir.action?${baseParams.toString()}`,
-        `${API_BASE}/open/share/listShareDir.action?pageNum=${pageNum}&pageSize=60&fileId=${encodeURIComponent(input.fileId)}&shareDirFileId=${encodeURIComponent(input.fileId)}&isFolder=${encodeURIComponent(isFolderValue)}&shareId=${encodeURIComponent(input.shareId)}&shareMode=${encodeURIComponent(input.shareMode)}&iconOption=5&orderBy=lastOpTime&descending=true${accessCodeValue ? `&accessCode=${encodeURIComponent(accessCodeValue)}` : ''}`
+        `${API_BASE}/open/share/listShareDir.action?pageNum=${pageNum}&pageSize=60&fileId=${encodeURIComponent(
+          input.fileId
+        )}&shareDirFileId=${encodeURIComponent(
+          input.fileId
+        )}&isFolder=${encodeURIComponent(
+          isFolderValue
+        )}&shareId=${encodeURIComponent(
+          input.shareId
+        )}&shareMode=${encodeURIComponent(
+          input.shareMode
+        )}&iconOption=5&orderBy=lastOpTime&descending=true${
+          accessCodeValue
+            ? `&accessCode=${encodeURIComponent(accessCodeValue)}`
+            : ''
+        }`
       );
     }
   }
@@ -380,7 +464,9 @@ async function listShareDir(input: {
       errors.push(error instanceof Error ? error.message : String(error));
     }
   }
-  throw new Error(`获取天翼云盘目录失败：${errors[errors.length - 1] || 'unknown error'}`);
+  throw new Error(
+    `获取天翼云盘目录失败：${errors[errors.length - 1] || 'unknown error'}`
+  );
 }
 
 async function collectShareFiles(input: {
@@ -408,8 +494,12 @@ async function collectShareFiles(input: {
         pageNum,
       });
       const fileListAO = data?.fileListAO || {};
-      const folderList = Array.isArray(fileListAO.folderList) ? fileListAO.folderList : [];
-      const fileList = Array.isArray(fileListAO.fileList) ? fileListAO.fileList : [];
+      const folderList = Array.isArray(fileListAO.folderList)
+        ? fileListAO.folderList
+        : [];
+      const fileList = Array.isArray(fileListAO.fileList)
+        ? fileListAO.fileList
+        : [];
 
       folderList.forEach((item: any) => {
         if (item?.id) {
@@ -440,10 +530,20 @@ async function collectShareFiles(input: {
 
   return result
     .filter((item) => item.fileId)
-    .sort((a, b) => a.name.localeCompare(b.name, 'zh-Hans-CN', { numeric: true, sensitivity: 'base' }));
+    .sort((a, b) =>
+      a.name.localeCompare(b.name, 'zh-Hans-CN', {
+        numeric: true,
+        sensitivity: 'base',
+      })
+    );
 }
 
-export async function listTianyiShareVideos(shareUrl: string, account: string, password: string, passcode = ''): Promise<TianyiShareListResult> {
+export async function listTianyiShareVideos(
+  shareUrl: string,
+  account: string,
+  password: string,
+  passcode = ''
+): Promise<TianyiShareListResult> {
   normalizeTianyiAccount(account);
   normalizeTianyiPassword(password);
   const parsed = parseTianyiShareUrl(shareUrl, passcode);
@@ -462,7 +562,11 @@ export async function listTianyiShareVideos(shareUrl: string, account: string, p
     throw new Error('天翼云盘分享中没有视频文件');
   }
   return {
-    title: info.fileName || (files.length === 1 ? files[0].name.replace(/\.[^.]+$/, '') : '天翼云盘立即播放'),
+    title:
+      info.fileName ||
+      (files.length === 1
+        ? files[0].name.replace(/\.[^.]+$/, '')
+        : '天翼云盘立即播放'),
     files,
     shareId: info.shareId,
     shareMode: info.shareMode,
@@ -481,7 +585,9 @@ export async function getTianyiSharePlayUrl(
   for (let attempt = 0; attempt < 3; attempt += 1) {
     const cookie = await fetchLoginCookie(account, password);
     const response = await fetch(
-      `${API_BASE}/portal/getNewVlcVideoPlayUrl.action?shareId=${encodeURIComponent(shareId)}&dt=1&fileId=${encodeURIComponent(fileId)}&type=4&key=noCache`,
+      `${API_BASE}/portal/getNewVlcVideoPlayUrl.action?shareId=${encodeURIComponent(
+        shareId
+      )}&dt=1&fileId=${encodeURIComponent(fileId)}&type=4&key=noCache`,
       {
         headers: {
           ...NORMAL_HEADERS,
@@ -498,7 +604,11 @@ export async function getTianyiSharePlayUrl(
         lastError = new Error(`获取天翼云盘播放地址失败 (${response.status})`);
         continue;
       }
-      throw new Error(`获取天翼云盘播放地址失败 (${response.status})${errorText ? `: ${errorText.slice(0, 200)}` : ''}`);
+      throw new Error(
+        `获取天翼云盘播放地址失败 (${response.status})${
+          errorText ? `: ${errorText.slice(0, 200)}` : ''
+        }`
+      );
     }
 
     const data = await parseJsonResponse<any>(response);
@@ -514,9 +624,14 @@ export async function getTianyiSharePlayUrl(
     return redirectResponse.headers.get('location') || rawUrl;
   }
 
-  throw lastError instanceof Error ? lastError : new Error('获取天翼云盘播放地址失败');
+  throw lastError instanceof Error
+    ? lastError
+    : new Error('获取天翼云盘播放地址失败');
 }
 
-export async function validateTianyiCredentials(account: string, password: string): Promise<void> {
+export async function validateTianyiCredentials(
+  account: string,
+  password: string
+): Promise<void> {
   await fetchLoginCookie(account, password);
 }

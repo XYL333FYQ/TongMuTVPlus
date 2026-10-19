@@ -40,7 +40,7 @@ function makeHref(sourceId: string, item: BookListItem) {
 
 /** 书源 / 分类两排都是书脊标签，横向拖拽滚动，隐藏滚动条。 */
 const CHIP_ROW =
-  'flex flex-nowrap gap-1 overflow-x-auto border-b border-[var(--tm-line)] px-1 pt-1 cursor-grab select-none touch-pan-x [scrollbar-width:none] active:cursor-grabbing [&::-webkit-scrollbar]:hidden';
+  'flex flex-nowrap gap-1 overflow-x-auto border-b border-line px-1 pt-1 cursor-grab select-none touch-pan-x [scrollbar-width:none] active:cursor-grabbing [&::-webkit-scrollbar]:hidden';
 
 function CatalogSkeleton() {
   return (

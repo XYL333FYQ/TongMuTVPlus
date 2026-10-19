@@ -65,20 +65,20 @@ export const CLOUD_TYPE_NAMES: Record<string, string> = {
 
 // 网盘类型颜色
 const CLOUD_TYPE_COLORS: Record<string, string> = {
-  baidu: 'bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)]',
-  aliyun: 'bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)]',
-  quark: 'bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)]',
-  tianyi: 'bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)]',
-  uc: 'bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)]',
-  mobile: 'bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)]',
-  '115': 'bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)]',
-  pikpak: 'bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)]',
-  xunlei: 'bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)]',
-  '123': 'bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)]',
-  guangya: 'bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)]',
-  magnet: 'bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)]',
-  ed2k: 'bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)]',
-  others: 'bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)]',
+  baidu: 'bg-raised text-fg',
+  aliyun: 'bg-raised text-fg',
+  quark: 'bg-raised text-fg',
+  tianyi: 'bg-raised text-fg',
+  uc: 'bg-raised text-fg',
+  mobile: 'bg-raised text-fg',
+  '115': 'bg-raised text-fg',
+  pikpak: 'bg-raised text-fg',
+  xunlei: 'bg-raised text-fg',
+  '123': 'bg-raised text-fg',
+  guangya: 'bg-raised text-fg',
+  magnet: 'bg-raised text-fg',
+  ed2k: 'bg-raised text-fg',
+  others: 'bg-raised text-fg',
 };
 
 const CHECKABLE_CLOUD_TYPES = new Set([
@@ -140,13 +140,12 @@ interface StoredCloudCheckState {
 }
 
 const CHECK_STATUS_STYLE: Record<CheckItemStatus, string> = {
-  pending:
-    'bg-[var(--tm-surface-raised)] text-[color:var(--tm-muted)] text-[color:var(--tm-text)]',
-  checking: 'bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)]',
-  valid: 'bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)]',
-  invalid: 'bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)]',
-  unknown: 'bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)]',
-  rate_limited: 'bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)]',
+  pending: 'bg-raised text-fg',
+  checking: 'bg-raised text-fg',
+  valid: 'bg-raised text-fg',
+  invalid: 'bg-raised text-fg',
+  unknown: 'bg-raised text-fg',
+  rate_limited: 'bg-raised text-fg',
 };
 
 const CHECK_STATUS_TEXT: Record<CheckItemStatus, string> = {
@@ -376,13 +375,13 @@ export default function PansouSearch({
   const magnetHealthBadgeClass = (level: MagnetHealthLevel) => {
     switch (level) {
       case 'good':
-        return 'bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)]';
+        return 'bg-raised text-fg';
       case 'ok':
-        return 'bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)]';
+        return 'bg-raised text-fg';
       case 'risk':
-        return 'bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)]';
+        return 'bg-raised text-fg';
       default:
-        return 'bg-[var(--tm-surface-raised)] text-[color:var(--tm-muted)]';
+        return 'bg-raised text-muted';
     }
   };
 
@@ -709,10 +708,8 @@ export default function PansouSearch({
       return (
         <div className='flex items-center justify-center py-12'>
           <div className='text-center'>
-            <Loader2 className='mx-auto h-8 w-8 animate-spin text-[color:var(--tm-text)]' />
-            <p className='mt-4 text-sm text-[color:var(--tm-muted)]'>
-              正在搜索网盘资源...
-            </p>
+            <Loader2 className='mx-auto h-8 w-8 animate-spin text-fg' />
+            <p className='mt-4 text-sm text-muted'>正在搜索网盘资源...</p>
           </div>
         </div>
       );
@@ -722,11 +719,11 @@ export default function PansouSearch({
       return (
         <div className='flex items-center justify-center py-12'>
           <div className='text-center'>
-            <AlertCircle className='mx-auto h-12 w-12 text-[color:var(--tm-danger)]' />
-            <p className='mt-4 text-sm text-[color:var(--tm-text)]'>{error}</p>
+            <AlertCircle className='mx-auto h-12 w-12 text-danger' />
+            <p className='mt-4 text-sm text-fg'>{error}</p>
             <button
               onClick={searchPansou}
-              className='mt-4 inline-flex items-center gap-2 px-4 py-2 bg-[var(--tm-text)] hover:opacity-90 text-[color:var(--tm-accent-contrast)] text-sm font-medium rounded-lg transition-colors min-h-[44px] tm-press'
+              className='mt-4 inline-flex items-center gap-2 px-4 py-2 bg-fg hover:opacity-90 text-inverse text-sm font-medium rounded-lg transition-colors min-h-[44px] tm-press'
             >
               <RefreshCw className='h-4 w-4' />
               重试
@@ -740,10 +737,8 @@ export default function PansouSearch({
       return (
         <div className='flex items-center justify-center py-12'>
           <div className='text-center'>
-            <AlertCircle className='mx-auto h-12 w-12 text-[color:var(--tm-muted)]' />
-            <p className='mt-4 text-sm text-[color:var(--tm-muted)]'>
-              未找到相关资源
-            </p>
+            <AlertCircle className='mx-auto h-12 w-12 text-muted' />
+            <p className='mt-4 text-sm text-muted'>未找到相关资源</p>
           </div>
         </div>
       );
@@ -766,19 +761,14 @@ export default function PansouSearch({
     return (
       <>
         {/* 搜索结果统计 */}
-        <div className='text-sm text-[color:var(--tm-muted)]'>
-          找到{' '}
-          <span className='font-medium text-[color:var(--tm-text)]'>
-            {results.total}
-          </span>{' '}
+        <div className='text-sm text-muted'>
+          找到 <span className='font-medium text-fg'>{results.total}</span>{' '}
           个资源
         </div>
 
         {/* 网盘类型过滤器 */}
         <div className='space-y-2'>
-          <h3 className='text-sm font-medium text-[color:var(--tm-muted)] text-[color:var(--tm-text)]'>
-            网盘类型
-          </h3>
+          <h3 className='text-sm font-medium text-fg'>网盘类型</h3>
           <div className='relative'>
             <div
               ref={typeScrollContainerRef}
@@ -791,11 +781,8 @@ export default function PansouSearch({
               <div className='flex gap-2 min-w-min'>
                 <button
                   onClick={() => setSelectedType('all')}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap flex-shrink-0 ${
-                    selectedType === 'all'
-                      ? 'bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] min-h-[44px] tm-press'
-                      : 'bg-[var(--tm-surface-raised)] text-[color:var(--tm-muted)] hover:bg-[var(--tm-line)] min-h-[44px] tm-press'
-                  }`}
+                  aria-pressed={selectedType === 'all'}
+                  className='tm-chip'
                 >
                   全部 ({results.total})
                 </button>
@@ -806,11 +793,8 @@ export default function PansouSearch({
                     <button
                       key={type}
                       onClick={() => setSelectedType(type)}
-                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap flex-shrink-0 ${
-                        selectedType === type
-                          ? 'bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] min-h-[44px] tm-press'
-                          : 'bg-[var(--tm-surface-raised)] text-[color:var(--tm-muted)] hover:bg-[var(--tm-line)] min-h-[44px] tm-press'
-                      }`}
+                      aria-pressed={selectedType === type}
+                      className='tm-chip'
                     >
                       {typeName} ({count})
                     </button>
@@ -844,11 +828,11 @@ export default function PansouSearch({
                 >
                   {typeName}
                 </span>
-                <span className='text-[13px] text-[color:var(--tm-muted)]'>
+                <span className='text-[13px] text-muted'>
                   {links.length} 个链接
                 </span>
                 {groupProgress && (
-                  <span className='text-[13px] text-[color:var(--tm-muted)]'>
+                  <span className='text-[13px] text-muted'>
                     进度 {groupProgress.done}/{groupProgress.total} · 有效{' '}
                     {groupProgress.valid} · 失效 {groupProgress.invalid} · 未知{' '}
                     {groupProgress.unknown + groupProgress.rateLimited}
@@ -859,7 +843,7 @@ export default function PansouSearch({
                     <button
                       onClick={() => handleStartCheck(cloudType, links)}
                       disabled={isCheckingThisType}
-                      className='px-3 py-1 rounded-md bg-[var(--tm-text)] hover:opacity-90 text-[color:var(--tm-accent-contrast)] text-[13px] transition-colors disabled:opacity-60 min-h-[44px] tm-press'
+                      className='px-3 py-1 rounded-md bg-fg hover:opacity-90 text-inverse text-[13px] transition-colors disabled:opacity-60 min-h-[44px] tm-press'
                     >
                       {cloudCheckTask
                         ? cloudCheckTask.status === 'running'
@@ -870,7 +854,7 @@ export default function PansouSearch({
                     {isCheckingThisType && (
                       <button
                         onClick={() => handleCancelCheck(cloudType)}
-                        className='px-3 py-1 rounded-md bg-[var(--tm-surface)] hover:bg-[var(--tm-line)] text-[color:var(--tm-text)] text-[13px] transition-colors min-h-[44px] tm-press'
+                        className='px-3 py-1 rounded-md bg-surface hover:bg-line text-fg text-[13px] transition-colors min-h-[44px] tm-press'
                       >
                         停止检测
                       </button>
@@ -878,7 +862,7 @@ export default function PansouSearch({
                   </>
                 )}
                 {cooldownRemainingMs > 0 && (
-                  <span className='text-[13px] text-[color:var(--tm-text)]'>
+                  <span className='text-[13px] text-fg'>
                     冷却中 {Math.ceil(cooldownRemainingMs / 1000)}s
                   </span>
                 )}
@@ -889,11 +873,11 @@ export default function PansouSearch({
                 {sortedLinks.map((link: PansouLink, index: number) => (
                   <div
                     key={`${cloudType}-${index}`}
-                    className='p-4 rounded-lg bg-[var(--tm-surface-raised)] border border-[var(--tm-line)] hover:border-[var(--tm-line)] transition-colors'
+                    className='p-4 rounded-lg bg-raised border border-line hover:border-line transition-colors'
                   >
                     {/* 资源标题 */}
                     {link.note && (
-                      <div className='mb-2 text-sm font-medium text-[color:var(--tm-text)]'>
+                      <div className='mb-2 text-sm font-medium text-fg'>
                         {link.note}
                       </div>
                     )}
@@ -901,11 +885,11 @@ export default function PansouSearch({
                     {/* 链接和密码 */}
                     <div className='flex items-center gap-2 mb-2'>
                       <div className='flex-1 min-w-0'>
-                        <div className='text-[13px] text-[color:var(--tm-muted)] truncate'>
+                        <div className='text-[13px] text-muted truncate'>
                           {link.url}
                         </div>
                         {link.password && (
-                          <div className='text-[13px] text-[color:var(--tm-muted)] mt-1'>
+                          <div className='text-[13px] text-muted mt-1'>
                             提取码:{' '}
                             <span className='font-mono font-medium'>
                               {link.password}
@@ -949,7 +933,7 @@ export default function PansouSearch({
                                 handleNetdiskInstantPlay(cloudType, link)
                               }
                               disabled={playingUrl === link.url}
-                              className='px-2 py-1 rounded-md bg-[var(--tm-text)] hover:opacity-90 text-[color:var(--tm-accent-contrast)] text-[13px] transition-colors disabled:opacity-60 min-h-[44px] tm-press'
+                              className='px-2 py-1 rounded-md bg-fg hover:opacity-90 text-inverse text-[13px] transition-colors disabled:opacity-60 min-h-[44px] tm-press'
                               title='播放'
                             >
                               {playingUrl === link.url ? '处理中...' : '播放'}
@@ -958,7 +942,7 @@ export default function PansouSearch({
                               <button
                                 onClick={() => handleQuarkTransfer(link)}
                                 disabled={transferingUrl === link.url}
-                                className='px-2 py-1 rounded-md bg-[var(--tm-text)] hover:opacity-90 text-[color:var(--tm-accent-contrast)] text-[13px] transition-colors disabled:opacity-60 min-h-[44px] tm-press'
+                                className='px-2 py-1 rounded-md bg-fg hover:opacity-90 text-inverse text-[13px] transition-colors disabled:opacity-60 min-h-[44px] tm-press'
                                 title='转存到配置目录'
                               >
                                 {transferingUrl === link.url
@@ -973,7 +957,7 @@ export default function PansouSearch({
                             <button
                               onClick={() => handleOpenDownloadDialog(link)}
                               disabled={downloadingUrl === link.url}
-                              className='flex items-center gap-1.5 px-2 py-1 rounded-md bg-[var(--tm-text)] hover:opacity-90 text-[color:var(--tm-accent-contrast)] text-[13px] transition-colors disabled:opacity-60 min-h-[44px] tm-press'
+                              className='flex items-center gap-1.5 px-2 py-1 rounded-md bg-fg hover:opacity-90 text-inverse text-[13px] transition-colors disabled:opacity-60 min-h-[44px] tm-press'
                               title='存到私人影库'
                             >
                               {downloadingUrl === link.url ? (
@@ -998,7 +982,7 @@ export default function PansouSearch({
                                 !link.url ||
                                 Boolean(magnetHealthCheckingIds[link.url])
                               }
-                              className='flex items-center gap-1.5 px-2 py-1 rounded-md bg-[var(--tm-text)] hover:opacity-90 text-[color:var(--tm-accent-contrast)] text-[13px] transition-colors disabled:opacity-60 min-h-[44px] tm-press'
+                              className='flex items-center gap-1.5 px-2 py-1 rounded-md bg-fg hover:opacity-90 text-inverse text-[13px] transition-colors disabled:opacity-60 min-h-[44px] tm-press'
                               title='Tracker 测活（全站并发上限可由 MAGNET_HEALTH_MAX_CONCURRENT 配置）'
                             >
                               {magnetHealthCheckingIds[link.url] ? (
@@ -1030,29 +1014,27 @@ export default function PansouSearch({
                               link.url
                             )
                           }
-                          className='p-2 rounded-md hover:bg-[var(--tm-line)] transition-colors min-h-[44px] tm-press'
+                          className='p-2 rounded-md hover:bg-line transition-colors min-h-[44px] tm-press'
                           title='复制链接'
                         >
                           {copiedUrl === link.url ? (
-                            <span className='text-[13px] text-[color:var(--tm-text)]'>
-                              已复制
-                            </span>
+                            <span className='text-[13px] text-fg'>已复制</span>
                           ) : (
-                            <Copy className='h-4 w-4 text-[color:var(--tm-muted)]' />
+                            <Copy className='h-4 w-4 text-muted' />
                           )}
                         </button>
                         <button
                           onClick={() => handleOpenLink(link.url)}
-                          className='p-2 rounded-md hover:bg-[var(--tm-line)] transition-colors min-h-[44px] tm-press'
+                          className='p-2 rounded-md hover:bg-line transition-colors min-h-[44px] tm-press'
                           title='打开链接'
                         >
-                          <ExternalLink className='h-4 w-4 text-[color:var(--tm-muted)]' />
+                          <ExternalLink className='h-4 w-4 text-muted' />
                         </button>
                       </div>
                     </div>
 
                     {/* 来源和时间 */}
-                    <div className='flex items-center gap-3 text-[13px] text-[color:var(--tm-muted)] flex-wrap'>
+                    <div className='flex items-center gap-3 text-[13px] text-muted flex-wrap'>
                       {link.source && <span>来源: {link.source}</span>}
                       {link.datetime && (
                         <span>
@@ -1070,7 +1052,7 @@ export default function PansouSearch({
                               magnetHealthMap[link.url].health
                             )}
                           </span>
-                          <span className='text-[color:var(--tm-muted)]'>
+                          <span className='text-muted'>
                             Seeder {magnetHealthMap[link.url].seeders}
                             {' · '}
                             Leecher {magnetHealthMap[link.url].leechers}
@@ -1079,7 +1061,7 @@ export default function PansouSearch({
                           </span>
                           {typeof magnetHealthMap[link.url].durationMs ===
                             'number' && (
-                            <span className='text-[color:var(--tm-muted)]'>
+                            <span className='text-muted'>
                               {magnetHealthMap[link.url].source === 'cache'
                                 ? '缓存'
                                 : `${magnetHealthMap[link.url].durationMs}ms`}
@@ -1129,26 +1111,24 @@ export default function PansouSearch({
     <>
       <div className='space-y-6'>{renderBody()}</div>
       {showNameDialog && (
-        <div className='fixed inset-0 z-[1000] flex items-center justify-center bg-[color:color-mix(in_srgb,var(--tm-room-cinema-bg)_50%,transparent)]'>
-          <div className='bg-[var(--tm-surface)] rounded-lg p-6 max-w-md w-full mx-4 shadow-xl'>
-            <h3 className='text-lg font-medium text-[color:var(--tm-text)] mb-4'>
-              设置资源名称
-            </h3>
+        <div className='fixed inset-0 z-[1000] flex items-center justify-center bg-ink/50'>
+          <div className='bg-surface rounded-lg p-6 max-w-md w-full mx-4 shadow-xl'>
+            <h3 className='text-lg font-medium text-fg mb-4'>设置资源名称</h3>
             <input
               type='text'
               value={customName}
               onChange={(e) => setCustomName(e.target.value)}
               placeholder='请输入资源名称'
-              className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)] focus:outline-none focus:ring-2 focus:ring-[var(--tm-text)]'
+              className='w-full px-3 py-2 border border-line rounded-lg bg-surface text-fg focus:outline-none focus:ring-2 focus:ring-fg'
               autoFocus
             />
-            <label className='mt-4 block text-sm font-medium text-[color:var(--tm-muted)]'>
+            <label className='mt-4 block text-sm font-medium text-muted'>
               下载方式
             </label>
             <select
               value={downloadTool}
               onChange={(e) => setDownloadTool(e.target.value as DownloadTool)}
-              className='mt-1 w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)] focus:outline-none focus:ring-2 focus:ring-[var(--tm-text)]'
+              className='mt-1 w-full px-3 py-2 border border-line rounded-lg bg-surface text-fg focus:outline-none focus:ring-2 focus:ring-fg'
             >
               {downloadToolOptions.map((option) => (
                 <option key={option.value} value={option.value}>
@@ -1159,14 +1139,14 @@ export default function PansouSearch({
             <div className='mt-4 flex gap-2 justify-end'>
               <button
                 onClick={handleCloseDownloadDialog}
-                className='px-4 py-2 rounded-lg bg-[var(--tm-surface-raised)] text-[color:var(--tm-muted)] hover:bg-[var(--tm-line)] transition-colors min-h-[44px] tm-press'
+                className='px-4 py-2 rounded-lg bg-raised text-muted hover:bg-line transition-colors min-h-[44px] tm-press'
               >
                 取消
               </button>
               <button
                 onClick={handleConfirmDownload}
                 disabled={!customName.trim()}
-                className='px-4 py-2 rounded-lg bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors min-h-[44px] tm-press'
+                className='px-4 py-2 rounded-lg bg-fg text-inverse hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors min-h-[44px] tm-press'
               >
                 确定
               </button>

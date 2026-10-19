@@ -37,7 +37,12 @@ export class TelegramApiError extends Error {
   body: string;
   data: unknown;
 
-  constructor(message: string, response: Response, body: string, data: unknown) {
+  constructor(
+    message: string,
+    response: Response,
+    body: string,
+    data: unknown
+  ) {
     super(message);
     this.name = 'TelegramApiError';
     this.status = response.status;
@@ -59,7 +64,13 @@ export interface TelegramBinding {
   updatedAt: number;
 }
 
-type TelegramLoginStatus = 'pending' | 'awaiting_confirm' | 'confirmed' | 'denied' | 'expired' | 'used';
+type TelegramLoginStatus =
+  | 'pending'
+  | 'awaiting_confirm'
+  | 'confirmed'
+  | 'denied'
+  | 'expired'
+  | 'used';
 
 interface TelegramLoginSession {
   token: string;
@@ -105,7 +116,8 @@ function readEnvTelegramConfig(): TelegramConfig {
   const botToken = process.env.TELEGRAM_BOT_TOKEN || '';
   const botUsername = process.env.TELEGRAM_BOT_USERNAME || '';
   const webhookSecret = process.env.TELEGRAM_WEBHOOK_SECRET || '';
-  const enabled = process.env.TELEGRAM_BOT_ENABLED === 'true' || Boolean(botToken);
+  const enabled =
+    process.env.TELEGRAM_BOT_ENABLED === 'true' || Boolean(botToken);
 
   return {
     enabled,
@@ -117,12 +129,17 @@ function readEnvTelegramConfig(): TelegramConfig {
     loginEnabled: process.env.TELEGRAM_LOGIN_ENABLED !== 'false',
     bindingEnabled: process.env.TELEGRAM_BINDING_ENABLED !== 'false',
     registrationEnabled: process.env.TELEGRAM_REGISTRATION_ENABLED === 'true',
-    notificationsEnabled: process.env.TELEGRAM_NOTIFICATIONS_ENABLED !== 'false',
-    defaultNotifications: process.env.TELEGRAM_DEFAULT_NOTIFICATIONS !== 'false',
+    notificationsEnabled:
+      process.env.TELEGRAM_NOTIFICATIONS_ENABLED !== 'false',
+    defaultNotifications:
+      process.env.TELEGRAM_DEFAULT_NOTIFICATIONS !== 'false',
   };
 }
 
-function mergeAdminTelegramConfig(base: TelegramConfig, admin?: AdminConfig | null): TelegramConfig {
+function mergeAdminTelegramConfig(
+  base: TelegramConfig,
+  admin?: AdminConfig | null
+): TelegramConfig {
   const cfg = admin?.TelegramConfig;
   if (!cfg) return base;
 
@@ -141,7 +158,9 @@ function mergeAdminTelegramConfig(base: TelegramConfig, admin?: AdminConfig | nu
   };
 }
 
-export async function getTelegramConfig(storage?: IStorage): Promise<TelegramConfig> {
+export async function getTelegramConfig(
+  storage?: IStorage
+): Promise<TelegramConfig> {
   const base = readEnvTelegramConfig();
   try {
     const resolvedStorage = storage || getStorage();
@@ -171,15 +190,23 @@ async function writeJson(key: string, value: unknown) {
   await db.setGlobalValue(key, JSON.stringify(value));
 }
 
-export async function getTelegramBinding(username: string): Promise<TelegramBinding | null> {
+export async function getTelegramBinding(
+  username: string
+): Promise<TelegramBinding | null> {
   return db.getTelegramBinding(username) as Promise<TelegramBinding | null>;
 }
 
-export async function getTelegramBindingByTelegramUser(telegramUserId: string): Promise<TelegramBinding | null> {
-  return db.getTelegramBindingByTelegramUserId(telegramUserId) as Promise<TelegramBinding | null>;
+export async function getTelegramBindingByTelegramUser(
+  telegramUserId: string
+): Promise<TelegramBinding | null> {
+  return db.getTelegramBindingByTelegramUserId(
+    telegramUserId
+  ) as Promise<TelegramBinding | null>;
 }
 
-export async function createTelegramBindSession(username: string): Promise<TelegramBindSession> {
+export async function createTelegramBindSession(
+  username: string
+): Promise<TelegramBindSession> {
   for (let attempt = 0; attempt < 5; attempt++) {
     const code = randomBindCode();
     const existing = await db.getTelegramBindSession(code);
@@ -212,7 +239,9 @@ export async function bindTelegramUser(input: {
   }
 
   const config = await getTelegramConfig();
-  const existingByTelegram = await getTelegramBindingByTelegramUser(input.telegramUserId);
+  const existingByTelegram = await getTelegramBindingByTelegramUser(
+    input.telegramUserId
+  );
   if (existingByTelegram && existingByTelegram.username !== session.username) {
     await db.deleteTelegramBindingByUsername(existingByTelegram.username);
   }
@@ -234,7 +263,9 @@ export async function bindTelegramUser(input: {
   return binding;
 }
 
-export async function unbindTelegramUser(telegramUserId: string): Promise<boolean> {
+export async function unbindTelegramUser(
+  telegramUserId: string
+): Promise<boolean> {
   const binding = await getTelegramBindingByTelegramUser(telegramUserId);
   if (!binding) return false;
 
@@ -280,7 +311,9 @@ export async function registerTelegramUser(input: {
     throw new Error('该用户名不可用');
   }
 
-  const existingBinding = await getTelegramBindingByTelegramUser(input.telegramUserId);
+  const existingBinding = await getTelegramBindingByTelegramUser(
+    input.telegramUserId
+  );
   if (existingBinding) {
     throw new Error(`当前 Telegram 已绑定账号：${existingBinding.username}`);
   }
@@ -339,12 +372,18 @@ export async function createTelegramLoginSession(
   return session;
 }
 
-export async function getTelegramLoginSession(token?: string | null): Promise<TelegramLoginSession | null> {
+export async function getTelegramLoginSession(
+  token?: string | null
+): Promise<TelegramLoginSession | null> {
   if (!token) return null;
   const session = await readJson<TelegramLoginSession>(loginSessionKey(token));
   if (!session) return null;
 
-  if (session.expiresAt <= now() && session.status !== 'confirmed' && session.status !== 'used') {
+  if (
+    session.expiresAt <= now() &&
+    session.status !== 'confirmed' &&
+    session.status !== 'used'
+  ) {
     session.status = 'expired';
     await writeJson(loginSessionKey(token), session);
   }
@@ -352,15 +391,21 @@ export async function getTelegramLoginSession(token?: string | null): Promise<Te
   return session;
 }
 
-async function getUserRole(username: string): Promise<'owner' | 'admin' | 'user'> {
+async function getUserRole(
+  username: string
+): Promise<'owner' | 'admin' | 'user'> {
   if (username === process.env.USERNAME) return 'owner';
   const userInfo = await db.getUserInfoV2(username);
   return userInfo?.role || 'user';
 }
 
-export async function requestTelegramLoginConfirm(token: string, telegramUserId: string): Promise<TelegramLoginSession> {
+export async function requestTelegramLoginConfirm(
+  token: string,
+  telegramUserId: string
+): Promise<TelegramLoginSession> {
   const session = await getTelegramLoginSession(token);
-  if (!session || session.expiresAt <= now()) throw new Error('登录请求无效或已过期');
+  if (!session || session.expiresAt <= now())
+    throw new Error('登录请求无效或已过期');
 
   const binding = await getTelegramBindingByTelegramUser(telegramUserId);
   if (!binding) throw new Error('当前 Telegram 账号尚未绑定站内账号');
@@ -372,20 +417,31 @@ export async function requestTelegramLoginConfirm(token: string, telegramUserId:
   session.username = binding.username;
   await writeJson(loginSessionKey(token), session);
 
-  await sendTelegramMessage(binding.chatId, `确认登录 ${siteName} 账号：${binding.username}`, {
-    inline_keyboard: [[
-      { text: '确认登录', callback_data: `tg_login_confirm:${token}` },
-      { text: '拒绝', callback_data: `tg_login_deny:${token}` },
-    ]],
-  });
+  await sendTelegramMessage(
+    binding.chatId,
+    `确认登录 ${siteName} 账号：${binding.username}`,
+    {
+      inline_keyboard: [
+        [
+          { text: '确认登录', callback_data: `tg_login_confirm:${token}` },
+          { text: '拒绝', callback_data: `tg_login_deny:${token}` },
+        ],
+      ],
+    }
+  );
 
   return session;
 }
 
-export async function confirmTelegramLogin(token: string, telegramUserId: string): Promise<TelegramLoginSession> {
+export async function confirmTelegramLogin(
+  token: string,
+  telegramUserId: string
+): Promise<TelegramLoginSession> {
   const session = await getTelegramLoginSession(token);
-  if (!session || session.expiresAt <= now()) throw new Error('登录请求无效或已过期');
-  if (session.telegramUserId && session.telegramUserId !== telegramUserId) throw new Error('登录请求与 Telegram 账号不匹配');
+  if (!session || session.expiresAt <= now())
+    throw new Error('登录请求无效或已过期');
+  if (session.telegramUserId && session.telegramUserId !== telegramUserId)
+    throw new Error('登录请求与 Telegram 账号不匹配');
 
   const binding = await getTelegramBindingByTelegramUser(telegramUserId);
   if (!binding) throw new Error('当前 Telegram 账号尚未绑定站内账号');
@@ -407,24 +463,33 @@ export async function confirmTelegramLogin(token: string, telegramUserId: string
   return session;
 }
 
-export async function denyTelegramLogin(token: string, telegramUserId: string): Promise<void> {
+export async function denyTelegramLogin(
+  token: string,
+  telegramUserId: string
+): Promise<void> {
   const session = await getTelegramLoginSession(token);
   if (!session) return;
-  if (session.telegramUserId && session.telegramUserId !== telegramUserId) return;
+  if (session.telegramUserId && session.telegramUserId !== telegramUserId)
+    return;
   session.status = 'denied';
   await writeJson(loginSessionKey(token), session);
 }
 
-export async function consumeConfirmedTelegramLogin(token: string): Promise<TelegramLoginSession | null> {
+export async function consumeConfirmedTelegramLogin(
+  token: string
+): Promise<TelegramLoginSession | null> {
   const session = await getTelegramLoginSession(token);
-  if (!session || session.status !== 'confirmed' || !session.authToken) return session;
+  if (!session || session.status !== 'confirmed' || !session.authToken)
+    return session;
   session.status = 'used';
   await writeJson(loginSessionKey(token), session);
   return session;
 }
 
 function isCloudflareEnvironment(): boolean {
-  return process.env.CF_PAGES === '1' || process.env.BUILD_TARGET === 'cloudflare';
+  return (
+    process.env.CF_PAGES === '1' || process.env.BUILD_TARGET === 'cloudflare'
+  );
 }
 
 function normalizeTelegramApiBaseUrl(input?: string | null): string {
@@ -451,14 +516,20 @@ async function fetchTelegramApi(
 
   if (isCloudflareEnvironment()) {
     if (config?.apiProxy) {
-      console.warn('TELEGRAM_API_PROXY is ignored in Cloudflare runtime; use TELEGRAM_API_BASE_URL instead.');
+      console.warn(
+        'TELEGRAM_API_PROXY is ignored in Cloudflare runtime; use TELEGRAM_API_BASE_URL instead.'
+      );
     }
     return fetch(requestUrl, init) as Promise<Response>;
   }
 
   const fetchOptions: any = { ...init };
 
-  return safeFetch(requestUrl, fetchOptions, config?.apiProxy) as unknown as Response;
+  return safeFetch(
+    requestUrl,
+    fetchOptions,
+    config?.apiProxy
+  ) as unknown as Response;
 }
 
 export async function setTelegramWebhook(
@@ -487,14 +558,24 @@ export async function setTelegramWebhook(
     data = null;
   }
 
-  const successByBody = /^(true|ok)$/i.test(trimmed) || /(^|\b)ok(\b|$)/i.test(trimmed);
+  const successByBody =
+    /^(true|ok)$/i.test(trimmed) || /(^|\b)ok(\b|$)/i.test(trimmed);
   const successByJson = data?.ok === true;
   const explicitJsonFailure = data?.ok === false;
   const successByHttp = response.ok && !explicitJsonFailure;
 
   if (!successByJson && !successByBody && !successByHttp) {
-    const detail = data?.description || trimmed || response.statusText || `HTTP ${response.status}`;
-    throw new TelegramApiError(`Webhook 设置失败: ${detail}`, response, rawText, data);
+    const detail =
+      data?.description ||
+      trimmed ||
+      response.statusText ||
+      `HTTP ${response.status}`;
+    throw new TelegramApiError(
+      `Webhook 设置失败: ${detail}`,
+      response,
+      rawText,
+      data
+    );
   }
 
   return data?.result ?? true;
@@ -530,7 +611,10 @@ export async function sendTelegramMessage(
   replyMarkup?: any,
   configOverride?: Partial<TelegramConfig>
 ): Promise<void> {
-  const config = { ...(await getTelegramConfig()), ...(configOverride || {}) } as TelegramConfig;
+  const config = {
+    ...(await getTelegramConfig()),
+    ...(configOverride || {}),
+  } as TelegramConfig;
   if (!config.enabled || !config.botToken) return;
 
   const response = await fetchTelegramApi(
@@ -577,7 +661,9 @@ function buildNotificationText(notification: Notification, baseUrl?: string) {
   const message = escapeHtml(notification.message);
   const path = getNotificationClickUrl(notification);
   const url = baseUrl ? new URL(path, baseUrl).toString() : '';
-  return url ? `<b>${title}</b>\n${message}\n\n<a href="${escapeHtml(url)}">打开查看</a>` : `<b>${title}</b>\n${message}`;
+  return url
+    ? `<b>${title}</b>\n${message}\n\n<a href="${escapeHtml(url)}">打开查看</a>`
+    : `<b>${title}</b>\n${message}`;
 }
 
 export async function dispatchTelegramNotification(
@@ -586,20 +672,30 @@ export async function dispatchTelegramNotification(
   notification: Notification
 ): Promise<void> {
   const config = await getTelegramConfig(storage);
-  if (!config.enabled || !config.notificationsEnabled || !config.botToken) return;
+  if (!config.enabled || !config.notificationsEnabled || !config.botToken)
+    return;
 
   const binding = await getTelegramBinding(username);
   if (!binding || !binding.notificationsEnabled) return;
 
   try {
-    await sendTelegramMessage(binding.chatId, buildNotificationText(notification, process.env.NEXT_PUBLIC_SITE_URL || process.env.SITE_BASE));
+    await sendTelegramMessage(
+      binding.chatId,
+      buildNotificationText(
+        notification,
+        process.env.NEXT_PUBLIC_SITE_URL || process.env.SITE_BASE
+      )
+    );
   } catch (error) {
     console.error('Telegram notification failed:', error);
   }
 }
 
 export function getTelegramDeepLink(botUsername: string, payload: string) {
-  return `https://t.me/${botUsername.replace(/^@/, '')}?start=${encodeURIComponent(payload)}`;
+  return `https://t.me/${botUsername.replace(
+    /^@/,
+    ''
+  )}?start=${encodeURIComponent(payload)}`;
 }
 
 export function getTelegramConfigProblems(
@@ -609,11 +705,16 @@ export function getTelegramConfigProblems(
   const problems: string[] = [];
   if (!config.enabled) problems.push('总开关未开启');
   if (!config.botToken) problems.push('Bot Token 为空');
-  if ((feature === 'login' || feature === 'binding') && !config.botUsername) problems.push('Bot 用户名为空');
-  if (feature === 'login' && !config.loginEnabled) problems.push('Telegram 登录开关未开启');
-  if (feature === 'binding' && !config.bindingEnabled) problems.push('Telegram 绑定开关未开启');
-  if (feature === 'registration' && !config.registrationEnabled) problems.push('Telegram 注册开关未开启');
-  if (feature === 'notifications' && !config.notificationsEnabled) problems.push('Telegram 通知开关未开启');
+  if ((feature === 'login' || feature === 'binding') && !config.botUsername)
+    problems.push('Bot 用户名为空');
+  if (feature === 'login' && !config.loginEnabled)
+    problems.push('Telegram 登录开关未开启');
+  if (feature === 'binding' && !config.bindingEnabled)
+    problems.push('Telegram 绑定开关未开启');
+  if (feature === 'registration' && !config.registrationEnabled)
+    problems.push('Telegram 注册开关未开启');
+  if (feature === 'notifications' && !config.notificationsEnabled)
+    problems.push('Telegram 通知开关未开启');
   return problems;
 }
 
@@ -624,9 +725,15 @@ function parseMessageText(update: any) {
     text: String(message.text).trim(),
     telegramUserId: String(message.from.id),
     chatId: String(message.chat.id),
-    telegramUsername: message.from.username ? String(message.from.username) : undefined,
-    firstName: message.from.first_name ? String(message.from.first_name) : undefined,
-    lastName: message.from.last_name ? String(message.from.last_name) : undefined,
+    telegramUsername: message.from.username
+      ? String(message.from.username)
+      : undefined,
+    firstName: message.from.first_name
+      ? String(message.from.first_name)
+      : undefined,
+    lastName: message.from.last_name
+      ? String(message.from.last_name)
+      : undefined,
   };
 }
 
@@ -648,38 +755,64 @@ export async function handleTelegramWebhookUpdate(update: any): Promise<void> {
   const parsed = parseMessageText(update);
   if (parsed) {
     if (/^\/start$/i.test(parsed.text)) {
-      await sendTelegramMessage(parsed.chatId, await buildTelegramHelpText(await getTelegramConfig()));
+      await sendTelegramMessage(
+        parsed.chatId,
+        await buildTelegramHelpText(await getTelegramConfig())
+      );
       return;
     }
 
     if (/^\/bind$/i.test(parsed.text)) {
-      await sendTelegramMessage(parsed.chatId, '请先在站内「账号/通知设置」里生成 6 位 Telegram 绑定码，然后发送：\n/bind 123456');
+      await sendTelegramMessage(
+        parsed.chatId,
+        '请先在站内「账号/通知设置」里生成 6 位 Telegram 绑定码，然后发送：\n/bind 123456'
+      );
       return;
     }
 
     const startLoginMatch = parsed.text.match(/^\/start\s+login_(.+)$/i);
     if (startLoginMatch) {
       try {
-        await requestTelegramLoginConfirm(startLoginMatch[1], parsed.telegramUserId);
+        await requestTelegramLoginConfirm(
+          startLoginMatch[1],
+          parsed.telegramUserId
+        );
       } catch (error) {
-        await sendTelegramMessage(parsed.chatId, error instanceof Error ? error.message : 'Telegram 登录失败');
+        await sendTelegramMessage(
+          parsed.chatId,
+          error instanceof Error ? error.message : 'Telegram 登录失败'
+        );
       }
       return;
     }
 
-    const bindMatch = parsed.text.match(/^\/(?:bind|start)\s+(?:bind_)?(\d{6})$/i);
+    const bindMatch = parsed.text.match(
+      /^\/(?:bind|start)\s+(?:bind_)?(\d{6})$/i
+    );
     if (bindMatch) {
       try {
-        const binding = await bindTelegramUser({ ...parsed, code: bindMatch[1] });
-        await sendTelegramMessage(parsed.chatId, `绑定成功：${binding.username}\n后续可使用 Telegram 登录和接收通知。`);
+        const binding = await bindTelegramUser({
+          ...parsed,
+          code: bindMatch[1],
+        });
+        await sendTelegramMessage(
+          parsed.chatId,
+          `绑定成功：${binding.username}\n后续可使用 Telegram 登录和接收通知。`
+        );
       } catch (error) {
-        await sendTelegramMessage(parsed.chatId, error instanceof Error ? error.message : '绑定失败');
+        await sendTelegramMessage(
+          parsed.chatId,
+          error instanceof Error ? error.message : '绑定失败'
+        );
       }
       return;
     }
 
     if (/^\/register$/i.test(parsed.text)) {
-      await sendTelegramMessage(parsed.chatId, '请发送：\n/register 用户名 密码\n\n用户名只能包含字母、数字、下划线，长度3-20位；密码至少6位。');
+      await sendTelegramMessage(
+        parsed.chatId,
+        '请发送：\n/register 用户名 密码\n\n用户名只能包含字母、数字、下划线，长度3-20位；密码至少6位。'
+      );
       return;
     }
 
@@ -691,25 +824,46 @@ export async function handleTelegramWebhookUpdate(update: any): Promise<void> {
           username: registerMatch[1],
           password: registerMatch[2],
         });
-        await sendTelegramMessage(parsed.chatId, `注册成功：${binding.username}\n当前 Telegram 已自动绑定该账号。`);
+        await sendTelegramMessage(
+          parsed.chatId,
+          `注册成功：${binding.username}\n当前 Telegram 已自动绑定该账号。`
+        );
       } catch (error) {
-        await sendTelegramMessage(parsed.chatId, error instanceof Error ? error.message : '注册失败');
+        await sendTelegramMessage(
+          parsed.chatId,
+          error instanceof Error ? error.message : '注册失败'
+        );
       }
       return;
     }
 
     if (/^\/status$/i.test(parsed.text)) {
-      const binding = await getTelegramBindingByTelegramUser(parsed.telegramUserId);
-      await sendTelegramMessage(parsed.chatId, binding ? `已绑定账号：${binding.username}\n通知：${binding.notificationsEnabled ? '开启' : '关闭'}` : '当前 Telegram 账号尚未绑定。');
+      const binding = await getTelegramBindingByTelegramUser(
+        parsed.telegramUserId
+      );
+      await sendTelegramMessage(
+        parsed.chatId,
+        binding
+          ? `已绑定账号：${binding.username}\n通知：${
+              binding.notificationsEnabled ? '开启' : '关闭'
+            }`
+          : '当前 Telegram 账号尚未绑定。'
+      );
       return;
     }
 
     if (/^\/help$/i.test(parsed.text)) {
-      await sendTelegramMessage(parsed.chatId, await buildTelegramHelpText(await getTelegramConfig()));
+      await sendTelegramMessage(
+        parsed.chatId,
+        await buildTelegramHelpText(await getTelegramConfig())
+      );
       return;
     }
 
-    await sendTelegramMessage(parsed.chatId, '未知指令，请发送 /help 查看可用命令。');
+    await sendTelegramMessage(
+      parsed.chatId,
+      '未知指令，请发送 /help 查看可用命令。'
+    );
     return;
   }
 
@@ -719,13 +873,16 @@ export async function handleTelegramWebhookUpdate(update: any): Promise<void> {
     const data = String(callback.data);
     const confirmMatch = data.match(/^tg_login_confirm:(.+)$/);
     const denyMatch = data.match(/^tg_login_deny:(.+)$/);
-    
+
     if (confirmMatch) {
       try {
         await confirmTelegramLogin(confirmMatch[1], telegramUserId);
         await answerCallbackQuery(callback.id, '已确认登录');
       } catch (error) {
-        await answerCallbackQuery(callback.id, error instanceof Error ? error.message : '确认失败');
+        await answerCallbackQuery(
+          callback.id,
+          error instanceof Error ? error.message : '确认失败'
+        );
       }
       return;
     }
@@ -737,14 +894,19 @@ export async function handleTelegramWebhookUpdate(update: any): Promise<void> {
   }
 }
 
-export async function validateTelegramWebhookRequest(request: NextRequest, secretParam: string) {
+export async function validateTelegramWebhookRequest(
+  request: NextRequest,
+  secretParam: string
+) {
   const config = await getTelegramConfig();
-  const configuredSecret = config.webhookSecret || process.env.TELEGRAM_WEBHOOK_SECRET || '';
-  const headerSecret = request.headers.get('x-telegram-bot-api-secret-token') || '';
+  const configuredSecret =
+    config.webhookSecret || process.env.TELEGRAM_WEBHOOK_SECRET || '';
+  const headerSecret =
+    request.headers.get('x-telegram-bot-api-secret-token') || '';
   return Boolean(
     secretParam &&
-    configuredSecret &&
-    secretParam === configuredSecret &&
-    (!headerSecret || headerSecret === configuredSecret)
+      configuredSecret &&
+      secretParam === configuredSecret &&
+      (!headerSecret || headerSecret === configuredSecret)
   );
 }

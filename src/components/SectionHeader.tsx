@@ -1,24 +1,23 @@
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 
+/** 区块标题行：左标题，右「查看全部」或自定义操作。 */
 export default function SectionHeader({
   title,
   href,
   actions,
   className = '',
-  linkClassName = 'tm-home-view-all tm-press',
 }: {
   title: string;
   href?: string;
   actions?: ReactNode;
   className?: string;
-  linkClassName?: string;
 }) {
   return (
-    <div className={'tm-home-section-heading tm-section-header ' + className}>
-      <h2 className='tm-home-section-title'>{title}</h2>
+    <div className={'tm-section-header ' + className}>
+      <h2 className='tm-section-title'>{title}</h2>
       {href ? (
-        <Link href={href} className={linkClassName}>
+        <Link href={href} className='tm-section-link'>
           查看全部
         </Link>
       ) : (

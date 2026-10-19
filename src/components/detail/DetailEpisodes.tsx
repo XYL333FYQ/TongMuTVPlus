@@ -68,9 +68,7 @@ export default function DetailEpisodes({
               {/* 季度列表 */}
               {seasonData.seasons.length > 0 && (
                 <div className='mb-6'>
-                  <h4 className='text-lg font-medium text-[var(--tm-text)] mb-3'>
-                    季度
-                  </h4>
+                  <h4 className='text-lg font-medium text-fg mb-3'>季度</h4>
                   <div className='grid grid-cols-2 sm:grid-cols-3 gap-3'>
                     {seasonData.seasons.map((season: Season) => (
                       <div
@@ -78,8 +76,8 @@ export default function DetailEpisodes({
                         onClick={() => handleSeasonChange(season.season_number)}
                         className={`flex items-center gap-2 p-2 rounded cursor-pointer transition-colors ${
                           selectedSeason === season.season_number
-                            ? 'bg-[var(--tm-surface-raised)] ring-2 ring-[var(--tm-text)]'
-                            : 'bg-[var(--tm-surface-raised)] hover:bg-[var(--tm-surface-raised)]'
+                            ? 'bg-raised ring-2 ring-fg'
+                            : 'bg-raised hover:bg-raised'
                         }`}
                         role='button'
                         tabIndex={0}
@@ -95,7 +93,7 @@ export default function DetailEpisodes({
                       >
                         {season.poster_path && (
                           <div
-                            className='relative w-12 h-16 rounded overflow-hidden bg-[var(--tm-surface-raised)] flex-shrink-0 hover:opacity-80 transition-opacity'
+                            className='relative w-12 h-16 rounded overflow-hidden bg-raised flex-shrink-0 hover:opacity-80 transition-opacity'
                             onClick={(e) => {
                               e.stopPropagation();
                               handleImageClick(
@@ -126,10 +124,10 @@ export default function DetailEpisodes({
                           </div>
                         )}
                         <div className='flex-1 min-w-0'>
-                          <p className='text-sm font-medium text-[var(--tm-text)] truncate'>
+                          <p className='text-sm font-medium text-fg truncate'>
                             {season.name}
                           </p>
-                          <p className='text-[13px] text-[var(--tm-muted)]'>
+                          <p className='text-[13px] text-muted'>
                             {season.episode_count} 集
                           </p>
                         </div>
@@ -142,7 +140,7 @@ export default function DetailEpisodes({
               {/* 集数列表 */}
               {seasonData.episodes.length > 0 && (
                 <div>
-                  <h4 className='text-lg font-medium text-[var(--tm-text)] mb-3'>
+                  <h4 className='text-lg font-medium text-fg mb-3'>
                     {seasonData.seasons.find(
                       (s: Season) => s.season_number === selectedSeason
                     )?.name || `第${selectedSeason}季`}
@@ -170,8 +168,8 @@ export default function DetailEpisodes({
                             id={`episode-${episode.episode_number}`}
                             className={`flex-shrink-0 w-64 p-3 rounded ${
                               isCurrentEpisode
-                                ? 'bg-[var(--tm-surface-raised)] ring-2 ring-[var(--tm-text)]'
-                                : 'bg-[var(--tm-surface-raised)]'
+                                ? 'bg-raised ring-2 ring-fg'
+                                : 'bg-raised'
                             }`}
                             style={{
                               pointerEvents: isDragging ? 'none' : 'auto',
@@ -179,7 +177,7 @@ export default function DetailEpisodes({
                           >
                             {episode.still_path && (
                               <div
-                                className='relative w-full h-36 rounded overflow-hidden bg-[var(--tm-surface-raised)] mb-2 cursor-pointer hover:opacity-90 transition-opacity'
+                                className='relative w-full h-36 rounded overflow-hidden bg-raised mb-2 cursor-pointer hover:opacity-90 transition-opacity'
                                 onClick={() =>
                                   handleEpisodeStillsClick(episode)
                                 }
@@ -207,7 +205,7 @@ export default function DetailEpisodes({
                                 />
                               </div>
                             )}
-                            <p className='text-sm font-medium text-[var(--tm-text)] mb-1'>
+                            <p className='text-sm font-medium text-fg mb-1'>
                               第{episode.episode_number}集: {episode.name}
                             </p>
                             {episode.overview && (
@@ -221,7 +219,7 @@ export default function DetailEpisodes({
                                   }
                                   setExpandedEpisodes(newExpanded);
                                 }}
-                                className={`text-[13px] text-[var(--tm-muted)] cursor-pointer ${
+                                className={`text-[13px] text-muted cursor-pointer ${
                                   isExpanded ? '' : 'line-clamp-3'
                                 }`}
                               >
@@ -229,7 +227,7 @@ export default function DetailEpisodes({
                               </p>
                             )}
                             {episode.air_date && (
-                              <p className='text-[13px] text-[var(--tm-muted)] mt-1'>
+                              <p className='text-[13px] text-muted mt-1'>
                                 {episode.air_date}
                               </p>
                             )}

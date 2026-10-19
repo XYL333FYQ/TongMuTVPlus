@@ -98,11 +98,7 @@ export default function AnimeSubscribeModal({
   if (!isOpen) return null;
 
   const chipClass = (active: boolean) =>
-    `px-2 py-0.5 text-[13px] rounded-full border transition-colors ${
-      active
-        ? 'bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)]'
-        : 'bg-[var(--tm-surface-raised)] text-[color:var(--tm-muted)] text-[color:var(--tm-text)]'
-    }`;
+    `px-2 py-0.5 text-[13px] rounded-full border transition-colors bg-raised text-fg`;
 
   const handleFansubSelect = (preset: AnimeFansubPreset) => {
     setForm((prev) => ({
@@ -268,49 +264,47 @@ export default function AnimeSubscribeModal({
   return createPortal(
     <div className='fixed inset-0 z-[10000] flex items-center justify-center p-4'>
       <div
-        className={`absolute inset-0 bg-[var(--tm-surface)] transition-opacity duration-200 ${
+        className={`absolute inset-0 bg-surface transition-opacity duration-200 ${
           visible ? 'opacity-50' : 'opacity-0'
         }`}
         onClick={onClose}
       />
       <div
-        className={`relative w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-xl bg-[var(--tm-surface)] bg-[var(--tm-surface)] shadow-xl transition-all duration-200 ${
+        className={`relative w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-xl bg-surface shadow-xl transition-all duration-200 ${
           visible ? 'opacity-100 scale-100' : 'opacity-0 scale-95'
         }`}
       >
-        <div className='sticky top-0 z-10 flex items-center justify-between px-4 py-3 border-b border-[var(--tm-line)] bg-[var(--tm-surface)]'>
-          <h3 className='text-base font-medium text-[color:var(--tm-text)]'>
-            添加追番订阅
-          </h3>
+        <div className='sticky top-0 z-10 flex items-center justify-between px-4 py-3 border-b border-line bg-surface'>
+          <h3 className='text-base font-medium text-fg'>添加追番订阅</h3>
           <button
             type='button'
             onClick={onClose}
-            className='p-1 text-[color:var(--tm-muted)] hover:text-[color:var(--tm-text)] min-h-[44px] tm-press'
+            className='p-1 text-muted hover:text-fg min-h-[44px] tm-press'
           >
             <X size={18} />
           </button>
         </div>
 
         <div className='p-4 space-y-3'>
-          <p className='text-[13px] text-[color:var(--tm-muted)]'>
+          <p className='text-[13px] text-muted'>
             将按番剧名在 ACG 源搜索，过滤后自动离线下载（仅管理员）。
           </p>
 
           <div>
-            <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-1'>
+            <label className='block text-sm font-medium text-muted mb-1'>
               番剧名称 *
             </label>
             <input
               value={form.title}
               onChange={(e) => setForm({ ...form, title: e.target.value })}
-              className='w-full px-3 py-2 rounded-lg border border-[var(--tm-line)] bg-[var(--tm-surface)] text-sm'
+              className='w-full px-3 py-2 rounded-lg border border-line bg-surface text-sm'
               placeholder='搜索用的番剧名'
             />
           </div>
 
           <div>
             <div className='flex items-center justify-between mb-1'>
-              <label className='block text-sm font-medium text-[color:var(--tm-muted)]'>
+              <label className='block text-sm font-medium text-muted'>
                 过滤关键词 *
               </label>
               <button
@@ -318,7 +312,7 @@ export default function AnimeSubscribeModal({
                 onClick={handleRecognize}
                 disabled={recognizing}
                 title='按番剧名搜索一次，识别字幕组与字幕形态'
-                className='flex items-center gap-1 px-2 py-0.5 text-[13px] rounded-full border border-[var(--tm-line)] text-[color:var(--tm-text)] hover:bg-[var(--tm-line)] transition-colors disabled:opacity-50 min-h-[44px] tm-press'
+                className='flex items-center gap-1 px-2 py-0.5 text-[13px] rounded-full border border-line text-fg hover:bg-line transition-colors disabled:opacity-50 min-h-[44px] tm-press'
               >
                 {recognizing ? (
                   <Loader2 size={12} className='animate-spin' />
@@ -331,40 +325,36 @@ export default function AnimeSubscribeModal({
             <input
               value={form.filterText}
               onChange={(e) => setForm({ ...form, filterText: e.target.value })}
-              className='w-full px-3 py-2 rounded-lg border border-[var(--tm-line)] bg-[var(--tm-surface)] text-sm'
+              className='w-full px-3 py-2 rounded-lg border border-line bg-surface text-sm'
               placeholder='喵萌奶茶屋&简日双语'
             />
             {recognizeError ? (
-              <p className='mt-1 text-[13px] text-[color:var(--tm-text)]'>
-                {recognizeError}
-              </p>
+              <p className='mt-1 text-[13px] text-fg'>{recognizeError}</p>
             ) : null}
             {recognition ? (
-              <div className='mt-2 rounded-lg border border-[var(--tm-line)] p-2.5 space-y-2.5'>
+              <div className='mt-2 rounded-lg border border-line p-2.5 space-y-2.5'>
                 <div className='flex items-center justify-between'>
-                  <p className='text-[13px] text-[color:var(--tm-muted)]'>
+                  <p className='text-[13px] text-muted'>
                     识别到 {recognition.total} 条种子，点击填入过滤关键词
                   </p>
                   <button
                     type='button'
                     onClick={() => setRecognition(null)}
-                    className='p-0.5 text-[color:var(--tm-muted)] hover:text-[color:var(--tm-muted)] hover:text-[color:var(--tm-text)] min-h-[44px] tm-press'
+                    className='p-0.5 text-muted hover:text-fg min-h-[44px] tm-press'
                   >
                     <X size={12} />
                   </button>
                 </div>
                 {recognition.fansubs.length === 0 ? (
-                  <p className='text-[13px] text-[color:var(--tm-muted)]'>
-                    搜索结果为空
-                  </p>
+                  <p className='text-[13px] text-muted'>搜索结果为空</p>
                 ) : (
                   recognition.fansubs.map((fansub) => (
                     <div key={fansub.fansub}>
                       <div className='flex items-baseline gap-1.5'>
-                        <span className='text-[13px] font-medium text-[color:var(--tm-text)]'>
+                        <span className='text-[13px] font-medium text-fg'>
                           {fansub.fansub}
                         </span>
-                        <span className='text-[13px] text-[color:var(--tm-muted)]'>
+                        <span className='text-[13px] text-muted'>
                           {fansub.count} 条
                         </span>
                       </div>
@@ -392,9 +382,7 @@ export default function AnimeSubscribeModal({
                 )}
               </div>
             ) : null}
-            <p className='mt-1 text-[13px] text-[color:var(--tm-muted)]'>
-              字幕组
-            </p>
+            <p className='mt-1 text-[13px] text-muted'>字幕组</p>
             <div className='mt-1.5 flex flex-wrap gap-1.5'>
               {ANIME_FANSUB_PRESETS.map((p) => (
                 <button
@@ -413,7 +401,7 @@ export default function AnimeSubscribeModal({
           </div>
 
           <div>
-            <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-1'>
+            <label className='block text-sm font-medium text-muted mb-1'>
               排除关键词
             </label>
             <input
@@ -421,7 +409,7 @@ export default function AnimeSubscribeModal({
               onChange={(e) =>
                 setForm({ ...form, excludeText: e.target.value })
               }
-              className='w-full px-3 py-2 rounded-lg border border-[var(--tm-line)] bg-[var(--tm-surface)] text-sm'
+              className='w-full px-3 py-2 rounded-lg border border-line bg-surface text-sm'
               placeholder='先行|预告|PV'
             />
             <div className='mt-2 flex flex-wrap gap-1.5'>
@@ -443,7 +431,7 @@ export default function AnimeSubscribeModal({
 
           <div>
             <div className='flex items-center justify-between mb-1'>
-              <label className='block text-sm font-medium text-[color:var(--tm-muted)]'>
+              <label className='block text-sm font-medium text-muted'>
                 集数提取正则
               </label>
               <button
@@ -451,7 +439,7 @@ export default function AnimeSubscribeModal({
                 onClick={handleTest}
                 disabled={testing}
                 title='按当前表单实际搜索一次，查看能过滤到哪些集数'
-                className='flex items-center gap-1 px-2 py-0.5 text-[13px] rounded-full border border-[var(--tm-line)] text-[color:var(--tm-text)] hover:bg-[var(--tm-line)] transition-colors disabled:opacity-50 min-h-[44px] tm-press'
+                className='flex items-center gap-1 px-2 py-0.5 text-[13px] rounded-full border border-line text-fg hover:bg-line transition-colors disabled:opacity-50 min-h-[44px] tm-press'
               >
                 {testing ? (
                   <Loader2 size={12} className='animate-spin' />
@@ -466,36 +454,32 @@ export default function AnimeSubscribeModal({
               onChange={(e) =>
                 setForm({ ...form, episodeRegex: e.target.value })
               }
-              className='w-full px-3 py-2 rounded-lg border border-[var(--tm-line)] bg-[var(--tm-surface)] text-sm'
+              className='w-full px-3 py-2 rounded-lg border border-line bg-surface text-sm'
               placeholder='第(\d{1,3})[话話集]'
             />
-            <p className='mt-1 text-[13px] text-[color:var(--tm-muted)]'>
+            <p className='mt-1 text-[13px] text-muted'>
               可选；首个捕获组将作为集数，留空使用内置规则
             </p>
             {testError ? (
-              <p className='mt-1 text-[13px] text-[color:var(--tm-text)]'>
-                {testError}
-              </p>
+              <p className='mt-1 text-[13px] text-fg'>{testError}</p>
             ) : null}
             {testResult ? (
-              <div className='mt-2 rounded-lg border border-[var(--tm-line)] p-2.5 space-y-2.5'>
+              <div className='mt-2 rounded-lg border border-line p-2.5 space-y-2.5'>
                 <div className='flex items-center justify-between'>
-                  <p className='text-[13px] text-[color:var(--tm-muted)]'>
+                  <p className='text-[13px] text-muted'>
                     搜索到 {testResult.total} 条 · 关键词命中{' '}
                     {testResult.matched} 条
                   </p>
                   <button
                     type='button'
                     onClick={() => setTestResult(null)}
-                    className='p-0.5 text-[color:var(--tm-muted)] hover:text-[color:var(--tm-muted)] hover:text-[color:var(--tm-text)] min-h-[44px] tm-press'
+                    className='p-0.5 text-muted hover:text-fg min-h-[44px] tm-press'
                   >
                     <X size={12} />
                   </button>
                 </div>
                 {testResult.matched === 0 ? (
-                  <p className='text-[13px] text-[color:var(--tm-muted)]'>
-                    没有种子命中过滤条件
-                  </p>
+                  <p className='text-[13px] text-muted'>没有种子命中过滤条件</p>
                 ) : (
                   <>
                     <div className='flex flex-wrap gap-1.5'>
@@ -506,8 +490,8 @@ export default function AnimeSubscribeModal({
                             key={ep}
                             className={`px-2 py-0.5 text-[13px] rounded-full border ${
                               isNew
-                                ? 'bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)] border-[var(--tm-line)]'
-                                : 'bg-[var(--tm-surface-raised)] text-[color:var(--tm-muted)] border-[var(--tm-line)]'
+                                ? 'bg-raised text-fg border-line'
+                                : 'bg-raised text-muted border-line'
                             }`}
                             title={
                               isNew
@@ -521,7 +505,7 @@ export default function AnimeSubscribeModal({
                       })}
                       {testResult.unparsed > 0 ? (
                         <span
-                          className='px-2 py-0.5 text-[13px] rounded-full border border-[var(--tm-line)] text-[color:var(--tm-text)]'
+                          className='px-2 py-0.5 text-[13px] rounded-full border border-line text-fg'
                           title='命中过滤关键词但未能提取集数'
                         >
                           {testResult.unparsed} 条未识别集数
@@ -529,12 +513,12 @@ export default function AnimeSubscribeModal({
                       ) : null}
                     </div>
                     {testResult.newEpisodes.length > 0 ? (
-                      <p className='text-[13px] text-[color:var(--tm-muted)]'>
+                      <p className='text-[13px] text-muted'>
                         当前集数 {testResult.lastEpisode}，会下载新集数：
                         {testResult.newEpisodes.join('、')}
                       </p>
                     ) : (
-                      <p className='text-[13px] text-[color:var(--tm-muted)]'>
+                      <p className='text-[13px] text-muted'>
                         当前集数 {testResult.lastEpisode}，没有需要下载的新集数
                       </p>
                     )}
@@ -547,15 +531,15 @@ export default function AnimeSubscribeModal({
                           <span
                             className={`flex-shrink-0 mt-px px-1.5 rounded ${
                               item.episode == null
-                                ? 'text-[color:var(--tm-text)] bg-[var(--tm-surface-raised)]'
-                                : 'text-[color:var(--tm-muted)] bg-[var(--tm-surface-raised)]'
+                                ? 'text-fg bg-raised'
+                                : 'text-muted bg-raised'
                             }`}
                           >
                             {item.episode == null
                               ? '未识别'
                               : `第${item.episode}集`}
                           </span>
-                          <span className='break-all text-[color:var(--tm-muted)]'>
+                          <span className='break-all text-muted'>
                             {item.title}
                           </span>
                         </div>
@@ -569,7 +553,7 @@ export default function AnimeSubscribeModal({
 
           <div className='grid grid-cols-2 gap-3'>
             <div>
-              <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-1'>
+              <label className='block text-sm font-medium text-muted mb-1'>
                 搜索源
               </label>
               <select
@@ -577,7 +561,7 @@ export default function AnimeSubscribeModal({
                 onChange={(e) =>
                   setForm({ ...form, source: e.target.value as SourceType })
                 }
-                className='w-full px-3 py-2 rounded-lg border border-[var(--tm-line)] bg-[var(--tm-surface)] text-sm'
+                className='w-full px-3 py-2 rounded-lg border border-line bg-surface text-sm'
               >
                 <option value='mikan'>蜜柑</option>
                 <option value='acgrip'>ACG.RIP</option>
@@ -586,7 +570,7 @@ export default function AnimeSubscribeModal({
               </select>
             </div>
             <div>
-              <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-1'>
+              <label className='block text-sm font-medium text-muted mb-1'>
                 当前集数
               </label>
               <input
@@ -599,12 +583,12 @@ export default function AnimeSubscribeModal({
                     lastEpisode: parseInt(e.target.value, 10) || 0,
                   })
                 }
-                className='w-full px-3 py-2 rounded-lg border border-[var(--tm-line)] bg-[var(--tm-surface)] text-sm'
+                className='w-full px-3 py-2 rounded-lg border border-line bg-surface text-sm'
               />
             </div>
           </div>
 
-          <label className='flex items-center gap-2 text-sm text-[color:var(--tm-muted)]'>
+          <label className='flex items-center gap-2 text-sm text-muted'>
             <input
               type='checkbox'
               checked={form.onePerEpisode}
@@ -615,7 +599,7 @@ export default function AnimeSubscribeModal({
             />
             单集只下载一次（同集多种子时只入队一条）
           </label>
-          <label className='flex items-center gap-2 text-sm text-[color:var(--tm-muted)]'>
+          <label className='flex items-center gap-2 text-sm text-muted'>
             <input
               type='checkbox'
               checked={form.refillMissingEpisodes}
@@ -627,16 +611,14 @@ export default function AnimeSubscribeModal({
             缺集重新检索（跳集时按「番名+集数」补搜）
           </label>
 
-          {error ? (
-            <p className='text-sm text-[color:var(--tm-text)]'>{error}</p>
-          ) : null}
+          {error ? <p className='text-sm text-fg'>{error}</p> : null}
 
           <div className='flex justify-end gap-2 pt-1'>
             <button
               type='button'
               onClick={onClose}
               disabled={loading}
-              className='px-4 py-2 rounded-lg text-sm bg-[var(--tm-surface-raised)] text-[color:var(--tm-muted)] text-[color:var(--tm-text)] min-h-[44px] tm-press'
+              className='px-4 py-2 rounded-lg text-sm bg-raised text-fg min-h-[44px] tm-press'
             >
               取消
             </button>
@@ -644,7 +626,7 @@ export default function AnimeSubscribeModal({
               type='button'
               onClick={handleSubmit}
               disabled={loading}
-              className='px-4 py-2 rounded-lg text-sm bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] hover:opacity-90 disabled:opacity-50 flex items-center gap-2 min-h-[44px] tm-press'
+              className='px-4 py-2 rounded-lg text-sm bg-fg text-inverse hover:opacity-90 disabled:opacity-50 flex items-center gap-2 min-h-[44px] tm-press'
             >
               {loading ? <Loader2 size={16} className='animate-spin' /> : null}
               添加订阅

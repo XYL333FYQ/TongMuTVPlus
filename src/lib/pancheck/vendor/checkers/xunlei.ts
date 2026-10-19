@@ -8,7 +8,8 @@ const XUNLEI_DEVICE_ID = '5505bd0cab8c9469b98e5891d9fb3e0d';
 const XUNLEI_CLIENT_ID = 'ZUBzD9J_XPXfn7f7';
 const XUNLEI_CLIENT_VERSION = '1.10.0.2633';
 const XUNLEI_PACKAGE_NAME = 'com.xunlei.browser';
-const XUNLEI_UA = 'ANDROID-com.xunlei.browser/1.10.0.2633 networkType/WIFI appid/22062 deviceName/Xiaomi_M2004j7ac deviceModel/M2004J7AC OSVersion/13 protocolVersion/301 platformVersion/10 sdkVersion/233100 Oauth2Client/0.9 (Linux 4_9_337-perf-sn-uotan-gd9d488809c3d3d) (JAVA 0)';
+const XUNLEI_UA =
+  'ANDROID-com.xunlei.browser/1.10.0.2633 networkType/WIFI appid/22062 deviceName/Xiaomi_M2004j7ac deviceModel/M2004J7AC OSVersion/13 protocolVersion/301 platformVersion/10 sdkVersion/233100 Oauth2Client/0.9 (Linux 4_9_337-perf-sn-uotan-gd9d488809c3d3d) (JAVA 0)';
 
 const CAPTCHA_ALGORITHMS = [
   'uWRwO7gPfdPB/0NfPtfQO+71',
@@ -26,14 +27,20 @@ export function getCaptchaSign(clientID, clientVersion, packageName, deviceID) {
   const timestamp = Date.now().toString();
   let str = `${clientID}${clientVersion}${packageName}${deviceID}${timestamp}`;
   for (const algorithm of CAPTCHA_ALGORITHMS) {
-    str = crypto.createHash('md5').update(str + algorithm).digest('hex');
+    str = crypto
+      .createHash('md5')
+      .update(str + algorithm)
+      .digest('hex');
   }
   return { timestamp, sign: `1.${str}` };
 }
 
 export async function getCaptchaToken(action, metas = {}) {
   const { timestamp, sign: captchaSign } = getCaptchaSign(
-    XUNLEI_CLIENT_ID, XUNLEI_CLIENT_VERSION, XUNLEI_PACKAGE_NAME, XUNLEI_DEVICE_ID
+    XUNLEI_CLIENT_ID,
+    XUNLEI_CLIENT_VERSION,
+    XUNLEI_PACKAGE_NAME,
+    XUNLEI_DEVICE_ID
   );
 
   metas.timestamp = timestamp;
@@ -107,13 +114,18 @@ export async function checkXunlei(link) {
       });
     } catch (_) {}
 
-    const apiURL = `https://api-pan.xunlei.com/drive/v1/share?share_id=${encodeURIComponent(shareID)}&pass_code=${encodeURIComponent(passCode)}&limit=100&pass_code_token=&page_token=&thumbnail_size=SIZE_SMALL`;
+    const apiURL = `https://api-pan.xunlei.com/drive/v1/share?share_id=${encodeURIComponent(
+      shareID
+    )}&pass_code=${encodeURIComponent(
+      passCode
+    )}&limit=100&pass_code_token=&page_token=&thumbnail_size=SIZE_SMALL`;
     const reqHeaders = {
       Accept: '*/*',
       'Content-Type': 'application/json',
       Origin: 'https://pan.xunlei.com',
       Referer: 'https://pan.xunlei.com/',
-      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36',
+      'User-Agent':
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36',
       'Accept-Encoding': 'gzip, deflate',
       'X-Client-Id': XUNLEI_CLIENT_ID,
       'X-Device-Id': XUNLEI_DEVICE_ID,
@@ -122,13 +134,17 @@ export async function checkXunlei(link) {
       reqHeaders['X-Captcha-Token'] = captchaToken;
     }
 
-    const { statusCode, body, headers } = await request(apiURL, { headers: reqHeaders });
+    const { statusCode, body, headers } = await request(apiURL, {
+      headers: reqHeaders,
+    });
     let respBody = body;
     const encoding = (headers['content-encoding'] || '').toLowerCase();
     if (encoding === 'gzip') {
       respBody = zlib.gunzipSync(Buffer.from(body, 'binary')).toString('utf-8');
     } else if (encoding === 'deflate') {
-      respBody = zlib.inflateSync(Buffer.from(body, 'binary')).toString('utf-8');
+      respBody = zlib
+        .inflateSync(Buffer.from(body, 'binary'))
+        .toString('utf-8');
     }
 
     if (statusCode !== 200) {
@@ -147,7 +163,10 @@ export async function checkXunlei(link) {
     const apiResp = JSON.parse(respBody);
     if (apiResp.share_status === 'OK') return { valid: true, reason: '' };
     if (apiResp.error) return { valid: false, reason: apiResp.error };
-    return { valid: false, reason: apiResp.share_status_text || `分享状态: ${apiResp.share_status}` };
+    return {
+      valid: false,
+      reason: apiResp.share_status_text || `分享状态: ${apiResp.share_status}`,
+    };
   } catch (err) {
     if (err.message === '请求超时') return { valid: true, reason: '' };
     return { valid: false, reason: `检测失败: ${err.message}` };

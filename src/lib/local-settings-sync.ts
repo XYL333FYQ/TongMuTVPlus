@@ -7,7 +7,8 @@
  */
 
 export const LOCAL_SETTINGS_SYNC_MODE_KEY = 'moontv_local_settings_sync_mode';
-export const LOCAL_SETTINGS_SYNC_LAST_PULL_KEY = 'moontv_local_settings_sync_last_pull';
+export const LOCAL_SETTINGS_SYNC_LAST_PULL_KEY =
+  'moontv_local_settings_sync_last_pull';
 
 // 本地设置面板同步白名单（键 = localStorage 中存储的 key）
 export const LOCAL_SETTINGS_KEYS: string[] = [
@@ -96,10 +97,7 @@ export function validateLocalSettingsPayload(
   if (obj.version !== 1) {
     return { error: '不支持的 payload 版本' };
   }
-  if (
-    typeof obj.updatedAt !== 'number' ||
-    !Number.isFinite(obj.updatedAt)
-  ) {
+  if (typeof obj.updatedAt !== 'number' || !Number.isFinite(obj.updatedAt)) {
     return { error: 'updatedAt 格式错误' };
   }
   if (!obj.data || typeof obj.data !== 'object' || Array.isArray(obj.data)) {

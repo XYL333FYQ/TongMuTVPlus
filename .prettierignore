@@ -44,3 +44,9 @@ pnpm-lock.yaml
 /output/
 /docs/design/reference-static/
 /docs/design/reference/
+
+# Local state and vendored builds (all gitignored).
+/.data/
+/.omc/
+/public/libbitsub/
+/public/manifest.json

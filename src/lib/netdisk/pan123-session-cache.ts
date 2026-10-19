@@ -16,11 +16,19 @@ export interface Pan123NetdiskSession {
 const TTL_MS = 30 * 60 * 1000;
 const sessionStore = new Map<string, Pan123NetdiskSession>();
 
-export function buildPan123NetdiskId(input: { shareUrl: string; passcode?: string }) {
-  return base58Encode(JSON.stringify({ shareUrl: input.shareUrl, passcode: input.passcode || '' }));
+export function buildPan123NetdiskId(input: {
+  shareUrl: string;
+  passcode?: string;
+}) {
+  return base58Encode(
+    JSON.stringify({ shareUrl: input.shareUrl, passcode: input.passcode || '' })
+  );
 }
 
-export function parsePan123NetdiskId(id: string): { shareUrl: string; passcode?: string } {
+export function parsePan123NetdiskId(id: string): {
+  shareUrl: string;
+  passcode?: string;
+} {
   try {
     const decoded = base58Decode(id);
     const parsed = JSON.parse(decoded);
@@ -51,7 +59,10 @@ export function createPan123NetdiskSession(input: {
 }) {
   pruneExpiredSessions();
   const now = Date.now();
-  const id = buildPan123NetdiskId({ shareUrl: input.shareUrl, passcode: input.passcode });
+  const id = buildPan123NetdiskId({
+    shareUrl: input.shareUrl,
+    passcode: input.passcode,
+  });
   const session: Pan123NetdiskSession = {
     id,
     provider: 'pan123',
@@ -66,7 +77,9 @@ export function createPan123NetdiskSession(input: {
   return session;
 }
 
-export function getPan123NetdiskSession(id: string): Pan123NetdiskSession | null {
+export function getPan123NetdiskSession(
+  id: string
+): Pan123NetdiskSession | null {
   pruneExpiredSessions();
   const session = sessionStore.get(id);
   if (!session) return null;
@@ -77,7 +90,9 @@ export function getPan123NetdiskSession(id: string): Pan123NetdiskSession | null
   return session;
 }
 
-export function refreshPan123NetdiskSession(id: string): Pan123NetdiskSession | null {
+export function refreshPan123NetdiskSession(
+  id: string
+): Pan123NetdiskSession | null {
   const session = getPan123NetdiskSession(id);
   if (!session) return null;
   session.expiresAt = Date.now() + TTL_MS;

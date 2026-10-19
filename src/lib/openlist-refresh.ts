@@ -20,7 +20,7 @@ import {
   updateScanTaskProgress,
 } from '@/lib/scan-task';
 import { parseSeasonFromTitle } from '@/lib/season-parser';
-import { getTVSeasonDetails,searchTMDB } from '@/lib/tmdb.search';
+import { getTVSeasonDetails, searchTMDB } from '@/lib/tmdb.search';
 
 /**
  * 获取根目录列表（兼容新旧配置）
@@ -59,7 +59,9 @@ function getRootPaths(openListConfig: AdminConfig['OpenListConfig']): string[] {
 /**
  * 迁移旧版单根目录配置到多根目录
  */
-async function migrateToMultiRoot(openListConfig: NonNullable<AdminConfig['OpenListConfig']>): Promise<void> {
+async function migrateToMultiRoot(
+  openListConfig: NonNullable<AdminConfig['OpenListConfig']>
+): Promise<void> {
   const oldRootPath = openListConfig.RootPath!;
 
   console.log('[OpenList Migration] 检测到旧版配置，开始迁移...');
@@ -72,7 +74,9 @@ async function migrateToMultiRoot(openListConfig: NonNullable<AdminConfig['OpenL
     // 2. 迁移 folderName：加上原根路径前缀
     for (const [_key, info] of Object.entries(metaInfo.folders)) {
       const oldFolderName = info.folderName;
-      const newFolderName = `${oldRootPath}${oldRootPath.endsWith('/') ? '' : '/'}${oldFolderName}`;
+      const newFolderName = `${oldRootPath}${
+        oldRootPath.endsWith('/') ? '' : '/'
+      }${oldFolderName}`;
       info.folderName = newFolderName;
 
       console.log(`[Migration] ${oldFolderName} -> ${newFolderName}`);
@@ -95,7 +99,9 @@ async function migrateToMultiRoot(openListConfig: NonNullable<AdminConfig['OpenL
 /**
  * 启动 OpenList 刷新任务
  */
-export async function startOpenListRefresh(clearMetaInfo = false): Promise<{ taskId: string }> {
+export async function startOpenListRefresh(
+  clearMetaInfo = false
+): Promise<{ taskId: string }> {
   const config = await getConfig();
   const openListConfig = config.OpenListConfig;
 
@@ -234,7 +240,9 @@ async function performMultiRootScan(
     for (let i = 0; i < rootPaths.length; i++) {
       const rootPath = rootPaths[i];
       console.log(
-        `[OpenList Refresh] 列举根目录 (${i + 1}/${rootPaths.length}): ${rootPath}`
+        `[OpenList Refresh] 列举根目录 (${i + 1}/${
+          rootPaths.length
+        }): ${rootPath}`
       );
 
       try {
@@ -273,14 +281,11 @@ async function performMultiRootScan(
 
       for (const folder of folders) {
         processed++;
-        updateScanTaskProgress(
-          taskId,
-          processed,
-          totalFolders,
-          folder.name
-        );
+        updateScanTaskProgress(taskId, processed, totalFolders, folder.name);
 
-        const fullFolderPath = `${rootPath}${rootPath.endsWith('/') ? '' : '/'}${folder.name}`;
+        const fullFolderPath = `${rootPath}${
+          rootPath.endsWith('/') ? '' : '/'
+        }${folder.name}`;
 
         if (!clearMetaInfo && folderNameToKey.has(fullFolderPath)) {
           existingCount++;
@@ -302,7 +307,9 @@ async function performMultiRootScan(
             seasonNumber = torrentInfo.season || null;
             year = torrentInfo.year || null;
 
-            console.log(`[OpenList Refresh] 种子库模式 - 文件夹: ${folder.name}`);
+            console.log(
+              `[OpenList Refresh] 种子库模式 - 文件夹: ${folder.name}`
+            );
             console.log(
               `[OpenList Refresh] 解析结果 - 标题: ${searchQuery}, 季度: ${seasonNumber}, 年份: ${year}`
             );
@@ -328,7 +335,9 @@ async function performMultiRootScan(
             seasonNumber = seasonInfo.seasonNumber;
             year = seasonInfo.year;
 
-            console.log(`[OpenList Refresh] 名字匹配模式 - 文件夹: ${folder.name}`);
+            console.log(
+              `[OpenList Refresh] 名字匹配模式 - 文件夹: ${folder.name}`
+            );
             console.log(
               `[OpenList Refresh] 清理后标题: ${searchQuery}, 季度: ${seasonNumber}, 年份: ${year}`
             );
@@ -369,8 +378,7 @@ async function performMultiRootScan(
                 );
 
                 if (seasonDetails.code === 200 && seasonDetails.season) {
-                  folderInfo.season_number =
-                    seasonDetails.season.season_number;
+                  folderInfo.season_number = seasonDetails.season.season_number;
                   folderInfo.season_name = seasonDetails.season.name;
 
                   if (seasonDetails.season.season_number > 1) {

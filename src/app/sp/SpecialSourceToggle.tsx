@@ -35,10 +35,10 @@ export default function SpecialSourceToggle({
 
   const track = `relative inline-flex h-8 w-14 items-center rounded-full p-1 transition-colors ${
     enabled
-      ? 'bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] min-h-[44px] tm-press'
-      : 'bg-[var(--tm-surface)] min-h-[44px] tm-press'
+      ? 'bg-fg text-inverse min-h-[44px] tm-press'
+      : 'bg-surface min-h-[44px] tm-press'
   }`;
-  const thumb = `h-6 w-6 rounded-full bg-[var(--tm-text)] [[aria-checked=true]_&]:bg-[var(--tm-accent-contrast)] transition-transform motion-reduce:transition-none [html[data-tm-reduced-motion=true]_&]:transition-none ${
+  const thumb = `h-6 w-6 rounded-full bg-fg [[aria-checked=true]_&]:bg-inverse transition-transform motion-reduce:transition-none [html[data-tm-reduced-motion=true]_&]:transition-none ${
     enabled ? 'translate-x-6' : 'translate-x-0'
   }`;
 
@@ -50,7 +50,7 @@ export default function SpecialSourceToggle({
       aria-checked={enabled}
       aria-label={enabled ? '特殊源入口已开启' : '特殊源入口已关闭'}
       title='点击切换本机的特殊源入口'
-      className={`${track} focus:outline-none focus:ring-2 focus:ring-[var(--tm-text)] focus:ring-offset-2`}
+      className={`${track} focus:outline-none focus:ring-2 focus:ring-fg focus:ring-offset-2`}
     >
       <span className={thumb} />
     </button>

@@ -4,8 +4,6 @@
 import { Film } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
-import './public-poster.css';
-
 /** Public posters never read private proxy preferences or call protected image APIs. */
 export default function PublicPoster({
   src,

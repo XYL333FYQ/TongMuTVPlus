@@ -5,10 +5,13 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 
+import '@/styles/controls.css';
+
 import { getTMDBImageUrl } from '@/lib/tmdb.client';
 import { processImageUrl } from '@/lib/utils';
 
 import PageContainer from '@/components/PageContainer';
+import PageHeader from '@/components/PageHeader';
 import PageLayout from '@/components/PageLayout';
 
 interface TMDBResult {
@@ -236,47 +239,43 @@ export default function MovieRequestPage() {
 
   return (
     <PageLayout activePath='/movie-request'>
-      <PageContainer className='py-6'>
-        <div className='mb-6'>
-          <h1 className='text-2xl font-bold text-[color:var(--tm-text)]'>
-            求片
-          </h1>
-          <p className='text-sm text-[color:var(--tm-muted)] mt-1'>
-            {isFeatureEnabled
-              ? '搜索并提交您想看的影片'
-              : '求片功能已关闭，仅可查看已求片列表'}
-          </p>
-        </div>
+      <PageContainer className='pb-12'>
+        <PageHeader
+          title='求片'
+          description={
+            isFeatureEnabled
+              ? '搜索并提交想看的影片'
+              : '求片已关闭，只能查看已提交的记录'
+          }
+        />
 
         {/* 功能关闭提示 */}
         {!isFeatureEnabled && (
-          <div className='mb-6 p-4 bg-[var(--tm-surface-raised)] border border-[var(--tm-line)] rounded-lg'>
-            <p className='text-sm text-[color:var(--tm-text)]'>
-              求片功能已被管理员关闭，您可以查看已提交的求片记录
-            </p>
-          </div>
+          <p className='tm-inline-state mb-6'>
+            管理员已关闭求片，下面是你提交过的记录
+          </p>
         )}
 
         {/* 搜索框 - 仅在功能启用时显示 */}
         {isFeatureEnabled && (
-          <div className='mb-6'>
+          <div className='mb-10 max-w-2xl'>
             <div className='flex gap-2'>
               <input
                 type='text'
-                placeholder='搜索影片名称...'
+                placeholder='输入片名'
                 value={searchKeyword}
                 onChange={(e) => setSearchKeyword(e.target.value)}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') handleSearch();
                 }}
-                className='flex-1 px-4 py-2 min-h-[44px] rounded-lg border border-[var(--tm-line)] bg-[var(--tm-surface)] text-[color:var(--tm-text)] focus:outline-none focus:ring-2 focus:ring-[var(--tm-text)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
+                className='tm-input h-12 flex-1'
               />
               <button
                 onClick={handleSearch}
                 disabled={!searchKeyword.trim() || isSearching}
-                className='px-6 py-2 min-h-[44px] bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] hover:opacity-90 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
+                className='tm-btn tm-btn-primary h-12'
               >
-                {isSearching ? '搜索中...' : '搜索'}
+                {isSearching ? '正在搜索' : '搜索'}
               </button>
             </div>
           </div>
@@ -284,53 +283,41 @@ export default function MovieRequestPage() {
 
         {/* 我的求片列表 */}
         {searchResults.length === 0 && (
-          <div className='mb-8'>
-            <h2 className='text-lg font-medium text-[color:var(--tm-text)] mb-4'>
-              我的求片
-            </h2>
+          <section>
+            <div className='tm-section-header'>
+              <h2 className='tm-section-title'>我的求片</h2>
+            </div>
             {loadingMyRequests ? (
-              <div className='flex justify-center py-8'>
-                {}
-                <div className='w-5 h-5 border-2 border-[var(--tm-text)] border-t-transparent rounded-full animate-spin' />
+              <div className='tm-poster-grid' aria-label='正在加载'>
+                {Array.from({ length: 6 }, (_, index) => (
+                  <div key={index} className='tm-poster tm-skeleton' />
+                ))}
               </div>
             ) : myRequests.length === 0 ? (
-              <div className='text-center py-8 text-[color:var(--tm-muted)]'>
-                暂无求片记录
+              <div className='tm-empty'>
+                <p className='tm-empty-title'>还没有求片记录</p>
               </div>
             ) : (
-              <div className='grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4'>
+              <div className='tm-poster-grid'>
                 {myRequests.map((request) => (
-                  <div
-                    key={request.id}
-                    className='bg-[var(--tm-surface)] rounded-lg overflow-hidden shadow hover:shadow-lg transition-shadow'
-                  >
+                  <div key={request.id} className='flex flex-col gap-2'>
                     {request.poster ? (
                       <img
                         src={request.poster}
                         alt={request.title}
-                        className='w-full aspect-[2/3] object-cover'
+                        className='tm-poster object-cover'
                       />
                     ) : (
-                      <div className='w-full aspect-[2/3] bg-[var(--tm-surface-raised)] flex items-center justify-center'>
-                        <span className='text-[color:var(--tm-muted)]'>
-                          无海报
-                        </span>
+                      <div className='tm-poster flex items-center justify-center'>
+                        <span className='text-[13px] text-muted'>暂无海报</span>
                       </div>
                     )}
-                    <div className='p-3'>
-                      <h3 className='text-sm font-medium text-[color:var(--tm-text)] truncate mb-1'>
-                        {request.title}
-                      </h3>
-                      <p className='text-[13px] text-[color:var(--tm-muted)] mb-2'>
+                    <div className='min-w-0'>
+                      <h3 className='tm-poster-title'>{request.title}</h3>
+                      <p className='tm-poster-meta mb-2'>
                         {request.year || '未知'} · {request.requestCount}人求片
                       </p>
-                      <div
-                        className={`text-[13px] px-2 py-1 rounded text-center ${
-                          request.status === 'fulfilled'
-                            ? 'bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)]'
-                            : 'bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)]'
-                        }`}
-                      >
+                      <div className='tm-badge' data-state={request.status}>
                         {request.status === 'fulfilled' ? '已上架' : '待处理'}
                       </div>
                     </div>
@@ -338,35 +325,30 @@ export default function MovieRequestPage() {
                 ))}
               </div>
             )}
-          </div>
+          </section>
         )}
 
         {/* 搜索结果 */}
         {searchResults.length > 0 ? (
-          <div className='grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4'>
+          <div className='tm-poster-grid'>
             {searchResults.map((item) => (
-              <div
-                key={item.id}
-                className='bg-[var(--tm-surface)] rounded-lg overflow-hidden shadow hover:shadow-lg transition-shadow'
-              >
+              <div key={item.id} className='flex flex-col gap-2'>
                 {item.poster_path ? (
                   <img
                     src={processImageUrl(
                       getTMDBImageUrl(item.poster_path, 'w500')
                     )}
                     alt={item.title || item.name}
-                    className='w-full aspect-[2/3] object-cover'
+                    className='tm-poster object-cover'
                   />
                 ) : (
-                  <div className='w-full aspect-[2/3] bg-[var(--tm-surface-raised)] flex items-center justify-center'>
-                    <span className='text-[color:var(--tm-muted)]'>无海报</span>
+                  <div className='tm-poster flex items-center justify-center'>
+                    <span className='text-[13px] text-muted'>暂无海报</span>
                   </div>
                 )}
-                <div className='p-3'>
-                  <h3 className='text-sm font-medium text-[color:var(--tm-text)] truncate mb-1'>
-                    {item.title || item.name}
-                  </h3>
-                  <p className='text-[13px] text-[color:var(--tm-muted)] mb-2'>
+                <div className='min-w-0'>
+                  <h3 className='tm-poster-title'>{item.title || item.name}</h3>
+                  <p className='tm-poster-meta mb-2'>
                     {(item.release_date || item.first_air_date)?.split(
                       '-'
                     )[0] || '未知'}
@@ -374,10 +356,10 @@ export default function MovieRequestPage() {
                   <button
                     onClick={() => handleRequest(item)}
                     disabled={submitting || !isFeatureEnabled}
-                    className='w-full px-3 py-1.5 min-h-[44px] text-sm bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] hover:opacity-90 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
+                    className='tm-btn tm-btn-secondary tm-btn-sm w-full'
                   >
                     {submitting
-                      ? '处理中...'
+                      ? '正在提交'
                       : !isFeatureEnabled
                       ? '功能已关闭'
                       : '求片'}
@@ -387,8 +369,8 @@ export default function MovieRequestPage() {
             ))}
           </div>
         ) : searchKeyword && !isSearching ? (
-          <div className='text-center py-12 text-[color:var(--tm-muted)]'>
-            未找到相关影片
+          <div className='tm-empty'>
+            <p className='tm-empty-title'>没有找到“{searchKeyword}”</p>
           </div>
         ) : null}
       </PageContainer>
@@ -397,24 +379,26 @@ export default function MovieRequestPage() {
       {alertModal.isOpen &&
         typeof window !== 'undefined' &&
         createPortal(
-          <div className='fixed inset-0 bg-[color:color-mix(in_srgb,var(--tm-room-cinema-bg)_50%,transparent)] z-[1002] flex items-center justify-center p-4'>
-            <div className='bg-[var(--tm-surface)] rounded-lg shadow-xl max-w-sm w-full p-6'>
+          <div className='tm-modal-backdrop'>
+            <div
+              className='tm-modal tm-modal-body pb-6 text-center'
+              role='alertdialog'
+              aria-modal='true'
+            >
               <div className='flex justify-center mb-4'>
                 {alertModal.type === 'success' ? (
-                  <CheckCircle className='w-12 h-12 text-[color:var(--tm-text)]' />
+                  <CheckCircle className='h-10 w-10 text-fg' aria-hidden />
                 ) : (
-                  <AlertCircle className='w-12 h-12 text-[color:var(--tm-danger)]' />
+                  <AlertCircle className='h-10 w-10 text-danger' aria-hidden />
                 )}
               </div>
-              <h3 className='text-lg font-medium text-[color:var(--tm-text)] text-center mb-2'>
-                {alertModal.title}
-              </h3>
-              <p className='text-[color:var(--tm-muted)] text-center mb-4'>
+              <h3 className='tm-modal-title mb-2'>{alertModal.title}</h3>
+              <p className='text-muted text-center mb-4'>
                 {alertModal.message}
               </p>
               <button
                 onClick={() => setAlertModal({ ...alertModal, isOpen: false })}
-                className='w-full px-4 py-2 min-h-[44px] bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] hover:opacity-90 rounded-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
+                className='tm-btn tm-btn-primary w-full'
               >
                 确定
               </button>
@@ -427,56 +411,57 @@ export default function MovieRequestPage() {
       {showSeasonDialog &&
         typeof window !== 'undefined' &&
         createPortal(
-          <>
+          <div
+            className='tm-modal-backdrop'
+            onClick={() => setShowSeasonDialog(false)}
+          >
             <div
-              className='fixed inset-0 bg-[color:color-mix(in_srgb,var(--tm-room-cinema-bg)_50%,transparent)] z-[1000]'
-              onClick={() => setShowSeasonDialog(false)}
-            />
-            <div className='fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-[var(--tm-surface)] rounded-xl shadow-xl z-[1001] p-6'>
-              <h3 className='text-lg font-bold text-[color:var(--tm-text)] mb-4'>
-                选择季度
-              </h3>
-              <p className='text-sm text-[color:var(--tm-muted)] mb-4'>
-                {selectedItem?.title || selectedItem?.name}
-              </p>
-              {loadingSeasons ? (
-                <div className='flex justify-center py-8'>
-                  {}
-                  <div className='w-6 h-6 border-2 border-[var(--tm-text)] border-t-transparent rounded-full animate-spin' />
-                </div>
-              ) : (
-                <div className='space-y-2 mb-4 max-h-60 overflow-y-auto'>
-                  {seasons.map((season) => (
-                    <button
-                      key={season.season_number}
-                      onClick={() => setSelectedSeason(season.season_number)}
-                      className={`w-full p-3 min-h-[44px] rounded-lg text-left transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)] ${
-                        selectedSeason === season.season_number
-                          ? 'bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)]'
-                          : 'bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)] hover:bg-[var(--tm-line)]'
-                      }`}
-                    >
-                      {season.name}
-                    </button>
-                  ))}
-                </div>
-              )}
-              <div className='flex gap-2'>
+              className='tm-modal'
+              role='dialog'
+              aria-modal='true'
+              aria-labelledby='season-dialog-title'
+              onClick={(event) => event.stopPropagation()}
+            >
+              <div className='tm-modal-body'>
+                <h3 id='season-dialog-title' className='tm-modal-title'>
+                  选择季度
+                </h3>
+                <p className='mt-1 mb-4 text-sm text-muted'>
+                  {selectedItem?.title || selectedItem?.name}
+                </p>
+                {loadingSeasons ? (
+                  <div className='tm-inline-state'>正在加载季度</div>
+                ) : (
+                  <div className='max-h-60 space-y-1 overflow-y-auto'>
+                    {seasons.map((season) => (
+                      <button
+                        key={season.season_number}
+                        onClick={() => setSelectedSeason(season.season_number)}
+                        aria-pressed={selectedSeason === season.season_number}
+                        className='tm-popover-option w-full'
+                      >
+                        {season.name}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <div className='tm-modal-footer'>
                 <button
                   onClick={() => setShowSeasonDialog(false)}
-                  className='flex-1 px-4 py-2 min-h-[44px] bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)] rounded-lg hover:bg-[var(--tm-line)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
+                  className='tm-btn tm-btn-secondary'
                 >
                   取消
                 </button>
                 <button
                   onClick={handleSeasonConfirm}
-                  className='flex-1 px-4 py-2 min-h-[44px] bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] hover:opacity-90 rounded-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
+                  className='tm-btn tm-btn-primary'
                 >
                   确认
                 </button>
               </div>
             </div>
-          </>,
+          </div>,
           document.body
         )}
     </PageLayout>

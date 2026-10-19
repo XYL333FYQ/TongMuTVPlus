@@ -1,28 +1,50 @@
+/*
+ * 表单类控件：分段胶囊、筛选行、下拉筛选、可展开搜索框、显示偏好开关。
+ * 胶囊的选中块是 framer-motion 的 layoutId 滑块（.tm-control-selection）。
+ */
 .tm-capsule {
+  position: relative;
+  display: inline-flex;
+  gap: 2px;
+  max-width: 100%;
+  padding: 3px;
+  border-radius: var(--tm-radius-pill);
   background: var(--tm-surface-raised);
+  box-shadow: inset 0 0 0 1px var(--tm-line);
   color: var(--tm-text);
-  font-family: var(--tm-font-sans);
 }
 .tm-capsule-scroll {
   border-radius: inherit;
   overscroll-behavior-x: contain;
-  margin: -4px;
-  padding: 4px;
 }
 .tm-capsule-option,
 .tm-animated-theme button {
   position: relative;
   isolation: isolate;
-  min-height: 44px;
-  color: var(--tm-muted);
-  font-size: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  flex-shrink: 0;
+  min-height: 34px;
+  padding: 0 16px;
+  border-radius: var(--tm-radius-pill);
+  font-size: var(--tm-fs-small);
   font-weight: 500;
-  letter-spacing: 0;
+  color: var(--tm-muted);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color var(--tm-d-hover) var(--tm-ease-out),
+    scale var(--tm-d-press) var(--tm-ease-out);
+}
+.tm-capsule-option:active {
+  scale: 0.97;
 }
 .tm-capsule-option[aria-pressed='true'],
 .tm-theme-segments.tm-animated-theme button[aria-checked='true'] {
   color: var(--tm-accent-contrast);
   background: transparent;
+  cursor: default;
 }
 .tm-control-selection {
   position: absolute;
@@ -31,14 +53,7 @@
   pointer-events: none;
   border-radius: inherit;
   background: var(--tm-text);
-}
-.tm-control-label {
-  position: relative;
-}
-.tm-capsule-option:focus-visible,
-.tm-animated-theme button:focus-visible {
-  outline: 2px solid var(--tm-text);
-  outline-offset: 2px;
+  box-shadow: var(--tm-shadow-sm);
 }
 @media (hover: hover) and (pointer: fine) {
   .tm-capsule-option:not([aria-pressed='true']):hover,
@@ -46,6 +61,179 @@
     color: var(--tm-text);
   }
 }
+@media (pointer: coarse) {
+  .tm-capsule-option,
+  .tm-animated-theme button {
+    min-height: 44px;
+    padding: 0 14px;
+  }
+}
+
+/* 筛选行：左侧小标签 + 右侧分段控件，手机上标签在上 */
+.tm-filter-rows {
+  display: grid;
+  gap: 12px;
+}
+.tm-filter-row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+.tm-filter-label {
+  font-size: var(--tm-fs-caption);
+  font-weight: 500;
+  color: var(--tm-muted);
+}
+.tm-filter-track {
+  min-width: 0;
+  overflow-x: auto;
+}
+@media (min-width: 640px) {
+  .tm-filter-row {
+    flex-direction: row;
+    align-items: center;
+    gap: 16px;
+  }
+  .tm-filter-label {
+    flex: 0 0 40px;
+  }
+}
+
+/* 下拉筛选（多级选择器）：文字按钮 + 浮层网格 */
+.tm-dropdowns {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.tm-dropdown-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 36px;
+  padding: 0 12px;
+  border-radius: var(--tm-radius-pill);
+  font-size: var(--tm-fs-small);
+  font-weight: 500;
+  color: var(--tm-muted);
+  white-space: nowrap;
+  transition: color var(--tm-d-hover) var(--tm-ease-out),
+    background-color var(--tm-d-hover) var(--tm-ease-out);
+}
+.tm-dropdown-trigger:hover,
+.tm-dropdown-trigger[data-set='true'] {
+  color: var(--tm-text);
+}
+.tm-dropdown-trigger[aria-expanded='true'] {
+  background: var(--tm-surface-raised);
+  color: var(--tm-text);
+}
+.tm-dropdown-trigger svg {
+  transition: transform var(--tm-d-hover) var(--tm-ease-out);
+}
+.tm-dropdown-trigger[aria-expanded='true'] svg {
+  transform: rotate(180deg);
+}
+@media (pointer: coarse) {
+  .tm-dropdown-trigger {
+    min-height: 44px;
+  }
+}
+
+.tm-popover {
+  position: fixed;
+  z-index: var(--tm-z-overlay);
+  max-width: 600px;
+  padding: 8px;
+  border: 1px solid var(--tm-line);
+  border-radius: var(--tm-radius-lg);
+  background: var(--tm-surface);
+  box-shadow: var(--tm-shadow-lg);
+}
+.tm-popover-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 2px;
+}
+@media (min-width: 640px) {
+  .tm-popover-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+@media (min-width: 768px) {
+  .tm-popover-grid {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+}
+.tm-popover-option {
+  min-height: 40px;
+  padding: 0 12px;
+  border-radius: var(--tm-radius-sm);
+  font-size: var(--tm-fs-small);
+  color: var(--tm-muted);
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: color var(--tm-d-hover) var(--tm-ease-out),
+    background-color var(--tm-d-hover) var(--tm-ease-out);
+}
+.tm-popover-option:hover {
+  background: var(--tm-surface-raised);
+  color: var(--tm-text);
+}
+.tm-popover-option[aria-pressed='true'] {
+  background: var(--tm-text);
+  color: var(--tm-accent-contrast);
+}
+@media (pointer: coarse) {
+  .tm-popover-option {
+    min-height: 44px;
+  }
+}
+
+/* 可展开的小搜索框：收起时只剩放大镜按钮 */
+.tm-expand-search {
+  display: flex;
+  align-items: center;
+  height: 40px;
+  overflow: hidden;
+  border: 1px solid var(--tm-line);
+  border-radius: var(--tm-radius-pill);
+  background: var(--tm-surface);
+  transition: width var(--tm-d-panel) var(--tm-ease-out);
+}
+.tm-expand-search-btn {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  color: var(--tm-muted);
+}
+.tm-expand-search-btn:hover {
+  color: var(--tm-text);
+}
+.tm-expand-search-input {
+  width: 100%;
+  height: 40px;
+  padding-right: 14px;
+  border: 0;
+  background: transparent;
+  font-size: var(--tm-fs-small);
+  color: var(--tm-text);
+  transition: opacity var(--tm-d-hover) var(--tm-ease-out);
+}
+.tm-expand-search-input::placeholder {
+  color: var(--tm-muted);
+}
+.tm-expand-search-input:focus {
+  outline: none;
+}
+.tm-expand-search:focus-within {
+  border-color: var(--tm-line-strong);
+}
+
 html[data-tm-reduced-motion='true'] .tm-control-selection {
   transform: none !important;
   transition: none !important;
@@ -55,4 +243,82 @@ html[data-tm-reduced-motion='true'] .tm-control-selection {
     transform: none !important;
     transition: none !important;
   }
+}
+
+/* 显示偏好：关闭模糊、减少动效两个开关（「更多」面板和「我的」页共用）。 */
+.tm-visual-preferences {
+  min-width: 0;
+  border: 0;
+  border-top: 1px solid var(--tm-line);
+  margin-top: 24px;
+  padding-top: 19px;
+}
+.tm-visual-preferences legend {
+  padding: 0 8px 0 0;
+  font-size: 14px;
+  color: var(--tm-muted);
+}
+.tm-visual-preferences label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 10px 0;
+  cursor: pointer;
+}
+.tm-visual-preferences strong {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+}
+.tm-visual-preferences small,
+.tm-visual-preferences p {
+  display: block;
+  margin-top: 4px;
+  color: var(--tm-muted);
+  font-size: 13px;
+  line-height: 1.7;
+}
+.tm-visual-preferences p {
+  margin: 12px 0 0;
+}
+.tm-visual-preferences input {
+  appearance: none;
+  -webkit-appearance: none;
+  position: relative;
+  width: 44px;
+  height: 24px;
+  flex-shrink: 0;
+  margin: 0;
+  border: 1px solid var(--tm-line);
+  border-radius: 999px;
+  background: var(--tm-surface-raised);
+  cursor: pointer;
+}
+.tm-visual-preferences input::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--tm-muted);
+  transition: transform 200ms var(--tm-spring);
+}
+.tm-visual-preferences input:checked {
+  background: var(--tm-text);
+  border-color: var(--tm-text);
+}
+.tm-visual-preferences input:checked::after {
+  transform: translateX(20px);
+  background: var(--tm-accent-contrast);
+}
+.tm-visual-preferences input:focus-visible {
+  outline: 2px solid var(--tm-text);
+  outline-offset: 2px;
+}
+.tm-visual-preferences input:disabled {
+  opacity: 0.5;
+  cursor: default;
 }

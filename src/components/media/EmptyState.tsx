@@ -29,7 +29,7 @@ export default function EmptyState({
       <div
         role='alert'
         className={cn(
-          'flex flex-wrap items-center justify-between gap-3 rounded-md border border-[var(--tm-danger)] bg-[var(--tm-surface-raised)] p-4 text-sm text-[color:var(--tm-text)]',
+          'flex flex-wrap items-center justify-between gap-3 rounded-md border border-danger bg-raised p-4 text-sm text-fg',
           className
         )}
       >
@@ -47,17 +47,12 @@ export default function EmptyState({
       )}
     >
       {icon ? (
-        <div className='flex h-14 w-14 items-center justify-center rounded-full bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)]'>
+        <div className='flex h-14 w-14 items-center justify-center rounded-full bg-raised text-fg'>
           {icon}
         </div>
       ) : null}
       {title ? (
-        <div
-          className={cn(
-            'mt-4 text-lg font-medium text-[color:var(--tm-text)]',
-            LIBRARY_SERIF
-          )}
-        >
+        <div className={cn('mt-4 text-lg font-medium text-fg', LIBRARY_SERIF)}>
           {title}
         </div>
       ) : null}

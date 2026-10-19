@@ -34,16 +34,22 @@ function openDatabase(): Promise<IDBDatabase> {
         const store = db.createObjectStore(STORE_NAME, { keyPath: 'cacheKey' });
         store.createIndex('lastAccessAt', 'lastAccessAt', { unique: false });
         store.createIndex('book', ['sourceId', 'bookId'], { unique: false });
-        store.createIndex('chapter', ['sourceId', 'bookId', 'chapterHref'], { unique: false });
+        store.createIndex('chapter', ['sourceId', 'bookId', 'chapterHref'], {
+          unique: false,
+        });
       }
     };
     request.onsuccess = () => resolve(request.result);
-    request.onerror = () => reject(request.error || new Error('打开听书缓存失败'));
+    request.onerror = () =>
+      reject(request.error || new Error('打开听书缓存失败'));
   });
 }
 
 async function sha256(input: string): Promise<string> {
-  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(input));
+  const digest = await crypto.subtle.digest(
+    'SHA-256',
+    new TextEncoder().encode(input)
+  );
   return Array.from(new Uint8Array(digest))
     .map((item) => item.toString(16).padStart(2, '0'))
     .join('');
@@ -78,7 +84,9 @@ export async function buildBookTtsCacheKey(input: {
   };
 }
 
-export async function getCachedBookTtsChunk(cacheKey: string): Promise<CachedBookTtsChunk | null> {
+export async function getCachedBookTtsChunk(
+  cacheKey: string
+): Promise<CachedBookTtsChunk | null> {
   const db = await openDatabase();
   return new Promise((resolve, reject) => {
     const tx = db.transaction(STORE_NAME, 'readonly');
@@ -94,7 +102,9 @@ export async function getCachedBookTtsChunk(cacheKey: string): Promise<CachedBoo
   });
 }
 
-export async function putCachedBookTtsChunk(record: CachedBookTtsChunk): Promise<void> {
+export async function putCachedBookTtsChunk(
+  record: CachedBookTtsChunk
+): Promise<void> {
   const db = await openDatabase();
   await new Promise<void>((resolve, reject) => {
     const tx = db.transaction(STORE_NAME, 'readwrite');
@@ -132,7 +142,9 @@ export async function listCachedBookTtsChunks(): Promise<CachedBookTtsChunk[]> {
   });
 }
 
-export async function deleteCachedBookTtsChunk(cacheKey: string): Promise<void> {
+export async function deleteCachedBookTtsChunk(
+  cacheKey: string
+): Promise<void> {
   const db = await openDatabase();
   await new Promise<void>((resolve, reject) => {
     const tx = db.transaction(STORE_NAME, 'readwrite');
@@ -148,7 +160,9 @@ export async function deleteCachedBookTtsChunk(cacheKey: string): Promise<void> 
   });
 }
 
-export async function enforceBookTtsCacheLimit(limit = DEFAULT_CACHE_LIMIT): Promise<void> {
+export async function enforceBookTtsCacheLimit(
+  limit = DEFAULT_CACHE_LIMIT
+): Promise<void> {
   const items = await listCachedBookTtsChunks();
   const total = items.reduce((sum, item) => sum + item.size, 0);
   if (total <= limit) return;

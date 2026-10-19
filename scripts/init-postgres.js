@@ -26,8 +26,9 @@ if (!fs.existsSync(migrationsDir)) {
 }
 
 // 读取并排序所有 .sql 文件
-const migrationFiles = fs.readdirSync(migrationsDir)
-  .filter(file => file.endsWith('.sql'))
+const migrationFiles = fs
+  .readdirSync(migrationsDir)
+  .filter((file) => file.endsWith('.sql'))
   .sort(); // 按文件名排序，确保按顺序执行
 
 if (migrationFiles.length === 0) {
@@ -35,7 +36,10 @@ if (migrationFiles.length === 0) {
   process.exit(1);
 }
 
-console.log(`📄 Found ${migrationFiles.length} migration file(s):`, migrationFiles.join(', '));
+console.log(
+  `📄 Found ${migrationFiles.length} migration file(s):`,
+  migrationFiles.join(', ')
+);
 
 const MIGRATION_BASELINE_CUTOFF = '008_web_push_notifications.sql';
 
@@ -52,10 +56,9 @@ function splitSqlStatements(schemaSql) {
 }
 
 async function tableExists(tableName) {
-  const result = await sql.query(
-    "SELECT to_regclass($1) AS table_name",
-    [`public.${tableName}`]
-  );
+  const result = await sql.query('SELECT to_regclass($1) AS table_name', [
+    `public.${tableName}`,
+  ]);
   return Boolean(result.rows?.[0]?.table_name);
 }
 

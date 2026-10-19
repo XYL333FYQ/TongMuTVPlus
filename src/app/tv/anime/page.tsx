@@ -121,14 +121,14 @@ export default function TVAnimePage() {
 
   return (
     <TVLayout>
-      <section className='rounded-[42px] border border-[var(--tm-line)] bg-[var(--tm-surface)] p-4 md:p-8 shadow-lg'>
+      <section className='rounded-[42px] border border-line bg-surface p-4 md:p-8 shadow-lg'>
         <div className='flex items-center gap-4'>
-          <CalendarDays className='h-8 w-8 shrink-0 text-[color:var(--tm-text)]' />
+          <CalendarDays className='h-8 w-8 shrink-0 text-fg' />
           <div>
             <h1 className='text-[28px] md:text-[32px] font-bold'>
               动漫更新时间表
             </h1>
-            <p className='mt-2 text-sm text-[color:var(--tm-muted)]'>
+            <p className='mt-2 text-sm text-muted'>
               按周查看新番放送，遥控器左右选择日期。
             </p>
           </div>
@@ -143,8 +143,8 @@ export default function TVAnimePage() {
               aria-pressed={activeDay === day.weekday.en}
               className={`tv-focusable shrink-0 cursor-pointer rounded-2xl px-5 py-3 text-sm font-medium outline-none transition ${
                 activeDay === day.weekday.en
-                  ? 'bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] min-h-[44px] tm-press'
-                  : 'bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)] hover:bg-[var(--tm-line)] min-h-[44px] tm-press'
+                  ? 'bg-fg text-inverse min-h-[44px] tm-press'
+                  : 'bg-raised text-fg hover:bg-line min-h-[44px] tm-press'
               }`}
             >
               {weekdayMap[day.weekday.en] || day.weekday.en}
@@ -170,12 +170,10 @@ export default function TVAnimePage() {
           <section className='mt-10 md:mt-16'>
             <div className='mb-3 md:mb-4 flex items-end justify-between'>
               <div>
-                <h2 className='text-[20px] md:text-[24px] font-medium tracking-normal text-[color:var(--tm-text)]'>
+                <h2 className='text-[20px] md:text-[24px] font-medium tracking-normal text-fg'>
                   {weekdayMap[activeDay] || activeDay} 更新
                 </h2>
-                <p className='mt-2 text-sm text-[color:var(--tm-muted)]'>
-                  当天放送的新番列表
-                </p>
+                <p className='mt-2 text-sm text-muted'>当天放送的新番列表</p>
               </div>
             </div>
             {activeItems.length > 0 ? (
@@ -185,7 +183,7 @@ export default function TVAnimePage() {
                 ))}
               </div>
             ) : (
-              <div className='rounded-3xl border border-[var(--tm-line)] bg-[var(--tm-surface-raised)] p-4 md:p-8 text-base text-[color:var(--tm-muted)]'>
+              <div className='rounded-3xl border border-line bg-raised p-4 md:p-8 text-base text-muted'>
                 暂无更新时间表数据
               </div>
             )}

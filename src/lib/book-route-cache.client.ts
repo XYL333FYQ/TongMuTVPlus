@@ -1,6 +1,12 @@
 'use client';
 
-import { BookAcquisitionLink, BookDetail, BookListItem, BookReadRecord, BookShelfItem } from './book.types';
+import {
+  BookAcquisitionLink,
+  BookDetail,
+  BookListItem,
+  BookReadRecord,
+  BookShelfItem,
+} from './book.types';
 
 const BOOK_ROUTE_CACHE_KEY = 'moontv_books_route_cache_v1';
 const MAX_CACHE_ITEMS = 300;
@@ -39,15 +45,23 @@ function writeCache(cache: Record<string, BookRouteCacheItem>) {
   const entries = Object.entries(cache)
     .sort(([, a], [, b]) => (b.updatedAt || 0) - (a.updatedAt || 0))
     .slice(0, MAX_CACHE_ITEMS);
-  localStorage.setItem(BOOK_ROUTE_CACHE_KEY, JSON.stringify(Object.fromEntries(entries)));
+  localStorage.setItem(
+    BOOK_ROUTE_CACHE_KEY,
+    JSON.stringify(Object.fromEntries(entries))
+  );
 }
 
-export function getBookRouteCache(sourceId: string, bookId: string): BookRouteCacheItem | null {
+export function getBookRouteCache(
+  sourceId: string,
+  bookId: string
+): BookRouteCacheItem | null {
   const item = readCache()[buildKey(sourceId, bookId)];
   return item || null;
 }
 
-export function saveBookRouteCache(item: Omit<BookRouteCacheItem, 'updatedAt'> & { updatedAt?: number }) {
+export function saveBookRouteCache(
+  item: Omit<BookRouteCacheItem, 'updatedAt'> & { updatedAt?: number }
+) {
   if (typeof window === 'undefined' || !item.sourceId || !item.bookId) return;
   const cache = readCache();
   const key = buildKey(item.sourceId, item.bookId);
@@ -78,7 +92,12 @@ export function cacheBookListItem(item: BookListItem) {
 export function cacheBookDetail(detail: BookDetail) {
   const readable = detail.acquisitionLinks.find((item) => {
     const type = item.type.toLowerCase();
-    return type.includes('epub') || type.includes('pdf') || type.includes('legado-chapters') || item.rel === 'legado:chapters';
+    return (
+      type.includes('epub') ||
+      type.includes('pdf') ||
+      type.includes('legado-chapters') ||
+      item.rel === 'legado:chapters'
+    );
   });
   saveBookRouteCache({
     sourceId: detail.sourceId,
@@ -90,7 +109,14 @@ export function cacheBookDetail(detail: BookDetail) {
     summary: detail.summary,
     detailHref: detail.detailHref,
     acquisitionHref: readable?.href,
-    format: readable?.type.toLowerCase().includes('pdf') ? 'pdf' : readable?.type.toLowerCase().includes('legado-chapters') || readable?.rel === 'legado:chapters' ? 'chapters' : readable ? 'epub' : undefined,
+    format: readable?.type.toLowerCase().includes('pdf')
+      ? 'pdf'
+      : readable?.type.toLowerCase().includes('legado-chapters') ||
+        readable?.rel === 'legado:chapters'
+      ? 'chapters'
+      : readable
+      ? 'epub'
+      : undefined,
     acquisitionLinks: detail.acquisitionLinks,
   });
 }
@@ -124,10 +150,16 @@ export function cacheBookReadRecord(item: BookReadRecord) {
 }
 
 export function buildBookDetailPath(sourceId: string, bookId: string) {
-  return `/books/detail?sourceId=${encodeURIComponent(sourceId)}&bookId=${encodeURIComponent(bookId)}`;
+  return `/books/detail?sourceId=${encodeURIComponent(
+    sourceId
+  )}&bookId=${encodeURIComponent(bookId)}`;
 }
 
-export function buildBookReadPath(sourceId: string, bookId: string, chapterHref?: string) {
+export function buildBookReadPath(
+  sourceId: string,
+  bookId: string,
+  chapterHref?: string
+) {
   const params = new URLSearchParams({
     sourceId,
     bookId,

@@ -2,7 +2,10 @@
 
 import { createHash } from 'crypto';
 
-import type { BaiduNetdiskSessionFile, BaiduNetdiskSessionMeta } from './baidu-session-cache';
+import type {
+  BaiduNetdiskSessionFile,
+  BaiduNetdiskSessionMeta,
+} from './baidu-session-cache';
 
 export interface BaiduShareListResult {
   title: string;
@@ -13,7 +16,31 @@ export interface BaiduShareListResult {
 
 const API_BASE = 'https://pan.baidu.com/';
 const VIDEO_EXTS = [
-  '.mp4', '.mkv', '.avi', '.rmvb', '.mov', '.flv', '.wmv', '.webm', '.3gp', '.mpeg', '.mpg', '.ts', '.mts', '.m2ts', '.vob', '.divx', '.xvid', '.m4v', '.ogv', '.f4v', '.rm', '.asf', '.dat', '.dv', '.m2v',
+  '.mp4',
+  '.mkv',
+  '.avi',
+  '.rmvb',
+  '.mov',
+  '.flv',
+  '.wmv',
+  '.webm',
+  '.3gp',
+  '.mpeg',
+  '.mpg',
+  '.ts',
+  '.mts',
+  '.m2ts',
+  '.vob',
+  '.divx',
+  '.xvid',
+  '.m4v',
+  '.ogv',
+  '.f4v',
+  '.rm',
+  '.asf',
+  '.dat',
+  '.dv',
+  '.m2v',
 ];
 
 function sha1(value: string) {
@@ -21,22 +48,33 @@ function sha1(value: string) {
 }
 
 export function normalizeBaiduCookie(cookie: string): string {
-  return cookie.replace(/；/g, ';').replace(/：/g, ':').replace(/，/g, ',').trim();
+  return cookie
+    .replace(/；/g, ';')
+    .replace(/：/g, ':')
+    .replace(/，/g, ',')
+    .trim();
 }
 
 export function assertBaiduCookieHeaderSafe(cookie: string): string {
   const normalized = normalizeBaiduCookie(cookie);
   for (let i = 0; i < normalized.length; i += 1) {
     if (normalized.charCodeAt(i) > 255) {
-      throw new Error('百度网盘 Cookie 含有非法字符，请确认没有中文标点、中文空格或说明文字');
+      throw new Error(
+        '百度网盘 Cookie 含有非法字符，请确认没有中文标点、中文空格或说明文字'
+      );
     }
   }
   return normalized;
 }
 
-export function parseBaiduShareUrl(url: string, passcode = ''): { shareId: string; sharePwd: string } {
+export function parseBaiduShareUrl(
+  url: string,
+  passcode = ''
+): { shareId: string; sharePwd: string } {
   const decoded = decodeURIComponent(url).replace(/\s+/g, '');
-  const match = decoded.match(/pan\.baidu\.com\/(s\/|wap\/init\?surl=)([^?&#]+)/);
+  const match = decoded.match(
+    /pan\.baidu\.com\/(s\/|wap\/init\?surl=)([^?&#]+)/
+  );
   if (!match) {
     throw new Error('无法解析百度网盘分享链接');
   }
@@ -47,7 +85,8 @@ export function parseBaiduShareUrl(url: string, passcode = ''): { shareId: strin
 
 function getBaseHeaders(cookie: string): HeadersInit {
   return {
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
+    'User-Agent':
+      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
     'Accept-Encoding': 'gzip',
     Referer: 'https://pan.baidu.com',
     'Content-Type': 'application/x-www-form-urlencoded',
@@ -82,17 +121,25 @@ async function requestApi(
   const objectToQuery = (obj: Record<string, any>) =>
     Object.entries(obj)
       .filter(([, value]) => value !== undefined && value !== null)
-      .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(String(value))}`)
+      .map(
+        ([key, value]) =>
+          `${encodeURIComponent(key)}=${encodeURIComponent(String(value))}`
+      )
       .join('&');
 
   try {
     const url = `${API_BASE}${path}`;
-    const response = await fetch(method === 'get' ? `${url}${objectToQuery(data) ? `?${objectToQuery(data)}` : ''}` : url, {
-      method: method.toUpperCase(),
-      headers,
-      body: method === 'post' ? objectToQuery(data) : undefined,
-      cache: 'no-store',
-    });
+    const response = await fetch(
+      method === 'get'
+        ? `${url}${objectToQuery(data) ? `?${objectToQuery(data)}` : ''}`
+        : url,
+      {
+        method: method.toUpperCase(),
+        headers,
+        body: method === 'post' ? objectToQuery(data) : undefined,
+        cache: 'no-store',
+      }
+    );
     const text = await response.text();
     try {
       return JSON.parse(text);
@@ -102,7 +149,13 @@ async function requestApi(
   } catch (error) {
     if (retry > 0) {
       await new Promise((resolve) => setTimeout(resolve, (3 - retry) * 1000));
-      return requestApi(path, { cookie, data, method, extraHeaders, retry: retry - 1 });
+      return requestApi(path, {
+        cookie,
+        data,
+        method,
+        extraHeaders,
+        retry: retry - 1,
+      });
     }
     throw error;
   }
@@ -114,7 +167,8 @@ async function getUid(cookie: string): Promise<string | null> {
       'https://mbd.baidu.com/userx/v1/info/get?appname=baiduboxapp&fields=%5B%22bg_image%22,%22member%22,%22uid%22,%22avatar%22,%22avatar_member%22%5D&client&clientfrom&lang=zh-cn&tpl&ttt',
       {
         headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
+          'User-Agent':
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
           Cookie: assertBaiduCookieHeaderSafe(cookie),
         },
         cache: 'no-store',
@@ -127,20 +181,33 @@ async function getUid(cookie: string): Promise<string | null> {
   }
 }
 
-async function verifyShare(share: { shareId: string; sharePwd: string }, cookie: string) {
-  const result = await requestApi(`share/verify?t=${Date.now()}&surl=${share.shareId}`, {
-    cookie,
-    data: { pwd: share.sharePwd || '' },
-    method: 'post',
-  });
+async function verifyShare(
+  share: { shareId: string; sharePwd: string },
+  cookie: string
+) {
+  const result = await requestApi(
+    `share/verify?t=${Date.now()}&surl=${share.shareId}`,
+    {
+      cookie,
+      data: { pwd: share.sharePwd || '' },
+      method: 'post',
+    }
+  );
   if (result?.errno !== 0) {
-    throw new Error(result?.errmsg || result?.show_msg || '验证百度网盘分享失败');
+    throw new Error(
+      result?.errmsg || result?.show_msg || '验证百度网盘分享失败'
+    );
   }
-  const nextCookie = result?.randsk ? mergeCookie(cookie, 'BDCLND', result.randsk) : cookie;
+  const nextCookie = result?.randsk
+    ? mergeCookie(cookie, 'BDCLND', result.randsk)
+    : cookie;
   return { result, cookie: nextCookie };
 }
 
-async function getShareToken(share: { shareId: string; sharePwd: string }, cookie: string) {
+async function getShareToken(
+  share: { shareId: string; sharePwd: string },
+  cookie: string
+) {
   const verified = await verifyShare(share, cookie);
   const listData = await requestApi('share/list', {
     cookie: verified.cookie,
@@ -153,7 +220,9 @@ async function getShareToken(share: { shareId: string; sharePwd: string }, cooki
     method: 'get',
   });
   if (listData?.errno !== 0) {
-    throw new Error(listData?.errmsg || listData?.show_msg || '获取百度网盘文件列表失败');
+    throw new Error(
+      listData?.errmsg || listData?.show_msg || '获取百度网盘文件列表失败'
+    );
   }
   return {
     cookie: verified.cookie,
@@ -200,8 +269,15 @@ async function collectVideosFromList(
   for (const item of list) {
     if (item.isdir === 1 || item.isdir === '1') {
       const dirPath = `${parentPath}/${item.server_filename}`;
-      const nested = await listShareDirectory(cookie, meta, dirPath, String(item.fs_id));
-      videos.push(...(await collectVideosFromList(cookie, meta, nested, dirPath)));
+      const nested = await listShareDirectory(
+        cookie,
+        meta,
+        dirPath,
+        String(item.fs_id)
+      );
+      videos.push(
+        ...(await collectVideosFromList(cookie, meta, nested, dirPath))
+      );
       continue;
     }
     const name = String(item.server_filename || '');
@@ -217,16 +293,27 @@ async function collectVideosFromList(
   return videos;
 }
 
-export async function listBaiduShareVideos(shareUrl: string, cookie: string, passcode = ''): Promise<BaiduShareListResult> {
+export async function listBaiduShareVideos(
+  shareUrl: string,
+  cookie: string,
+  passcode = ''
+): Promise<BaiduShareListResult> {
   const safeCookie = assertBaiduCookieHeaderSafe(cookie);
   const share = parseBaiduShareUrl(shareUrl, passcode);
   const tokenData = await getShareToken(share, safeCookie);
-  const files = await collectVideosFromList(tokenData.cookie, tokenData.meta, tokenData.rootList);
+  const files = await collectVideosFromList(
+    tokenData.cookie,
+    tokenData.meta,
+    tokenData.rootList
+  );
   if (files.length === 0) {
     throw new Error('百度网盘分享中没有视频文件');
   }
   return {
-    title: files.length === 1 ? files[0].name.replace(/\.[^.]+$/, '') : '百度网盘立即播放',
+    title:
+      files.length === 1
+        ? files[0].name.replace(/\.[^.]+$/, '')
+        : '百度网盘立即播放',
     files,
     meta: tokenData.meta,
     cookie: tokenData.cookie,
@@ -249,9 +336,20 @@ export async function getBaiduDirectPlayUrl(
     throw new Error('百度网盘 Cookie 缺少 BDUSS');
   }
   const rand = sha1(
-    sha1(bduss) + uid + 'ebrcUYiuxaZv2XGu7KIYKxUrqfnOfpDF' + time + devuid + '11.30.2ae5821440fab5e1a61a025f014bd8972'
+    sha1(bduss) +
+      uid +
+      'ebrcUYiuxaZv2XGu7KIYKxUrqfnOfpDF' +
+      time +
+      devuid +
+      '11.30.2ae5821440fab5e1a61a025f014bd8972'
   );
-  const path = `share/list?shareid=${meta.shareid}&uk=${meta.uk}&fid=${fid}&sekey=${encodeURIComponent(meta.randsk)}&origin=dlna&devuid=${encodeURIComponent(devuid)}&clienttype=1&channel=android_12_zhao_bd-netdisk_1024266h&version=11.30.2&time=${time}&rand=${rand}`;
+  const path = `share/list?shareid=${meta.shareid}&uk=${
+    meta.uk
+  }&fid=${fid}&sekey=${encodeURIComponent(
+    meta.randsk
+  )}&origin=dlna&devuid=${encodeURIComponent(
+    devuid
+  )}&clienttype=1&channel=android_12_zhao_bd-netdisk_1024266h&version=11.30.2&time=${time}&rand=${rand}`;
   const response = await fetch(`${API_BASE}${path}`, {
     headers: {
       'User-Agent': 'netdisk;P2SP;2.2.91.136;android-android;',
@@ -262,7 +360,9 @@ export async function getBaiduDirectPlayUrl(
   const data = await response.json().catch(() => null);
   const url = data?.list?.[0]?.dlink;
   if (!url) {
-    throw new Error(data?.errmsg || data?.show_msg || '获取百度网盘播放地址失败');
+    throw new Error(
+      data?.errmsg || data?.show_msg || '获取百度网盘播放地址失败'
+    );
   }
   return {
     url,

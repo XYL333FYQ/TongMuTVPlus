@@ -154,7 +154,7 @@ function ChapterEndActions({
         <Link
           href={nextHref}
           className={cn(
-            'w-full max-w-sm px-4 py-3 min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]',
+            'w-full max-w-sm px-4 py-3 min-h-[44px] tm-press min-w-[44px]',
             LIBRARY_BUTTON
           )}
         >
@@ -166,7 +166,7 @@ function ChapterEndActions({
       <Link
         href={detailHref}
         className={cn(
-          'w-full max-w-sm px-4 py-3 min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]',
+          'w-full max-w-sm px-4 py-3 min-h-[44px] tm-press min-w-[44px]',
           LIBRARY_GHOST_BUTTON
         )}
       >
@@ -1018,7 +1018,7 @@ export default function MangaReadPage() {
     <div className='mx-auto max-w-6xl'>
       {settingsOpen && (
         <div
-          className='fixed inset-0 z-40 flex items-center justify-center bg-[color:color-mix(in_srgb,var(--tm-room-cinema-bg)_40%,transparent)] px-4'
+          className='fixed inset-0 z-40 flex items-center justify-center bg-ink/40 px-4'
           onClick={() => setSettingsOpen(false)}
         >
           <div
@@ -1126,11 +1126,11 @@ export default function MangaReadPage() {
 
       {chapterListOpen && (
         <div
-          className='fixed inset-0 z-40 bg-[color:color-mix(in_srgb,var(--tm-room-cinema-bg)_30%,transparent)]'
+          className='fixed inset-0 z-40 bg-ink/30'
           onClick={() => setChapterListOpen(false)}
         >
           <div
-            className='absolute right-0 top-14 h-[calc(100vh-3.5rem)] w-full max-w-sm overflow-y-auto border-l border-[var(--tm-line)] bg-[var(--tm-surface)] shadow-xl sm:top-16 sm:h-[calc(100vh-4rem)]'
+            className='absolute right-0 top-14 h-[calc(100vh-3.5rem)] w-full max-w-sm overflow-y-auto border-l border-line bg-surface shadow-xl sm:top-16 sm:h-[calc(100vh-4rem)]'
             onClick={(event) => event.stopPropagation()}
           >
             <div className='p-4'>
@@ -1139,7 +1139,7 @@ export default function MangaReadPage() {
                   type='button'
                   className={cn(
                     LIBRARY_GHOST_BUTTON,
-                    'px-3 py-2 min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
+                    'px-3 py-2 min-h-[44px] tm-press min-w-[44px]'
                   )}
                   onClick={() => setChapterListDesc((prev) => !prev)}
                 >
@@ -1160,16 +1160,16 @@ export default function MangaReadPage() {
                       ref={active ? activeChapterRef : null}
                       href={buildChapterHref(chapter)}
                       className={cn(
-                        'group relative block px-4 py-3 text-sm transition-[opacity,transform] duration-200 min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]',
+                        'group relative block px-4 py-3 text-sm transition-[opacity,transform] duration-200 min-h-[44px] tm-press min-w-[44px]',
                         LIBRARY_FOCUS,
                         active
                           ? cn(
-                              'rounded-md border min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]',
+                              'rounded-md border min-h-[44px] tm-press min-w-[44px]',
                               LIBRARY_ROW_ACTIVE
                             )
                           : cn(
                               LIBRARY_ROW,
-                              'hover:border-[var(--tm-text)] min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
+                              'hover:border-fg min-h-[44px] tm-press min-w-[44px]'
                             )
                       )}
                       onClick={() => setChapterListOpen(false)}
@@ -1198,7 +1198,7 @@ export default function MangaReadPage() {
       >
         {showChapterComplete && (
           <div
-            className='fixed inset-0 z-30 flex items-center justify-center bg-[color:color-mix(in_srgb,var(--tm-room-cinema-bg)_60%,transparent)] px-4'
+            className='fixed inset-0 z-30 flex items-center justify-center bg-ink/60 px-4'
             onClick={() => setShowChapterComplete(false)}
           >
             <div
@@ -1224,7 +1224,7 @@ export default function MangaReadPage() {
                   <Link
                     href={buildChapterHref(nextChapter)}
                     className={cn(
-                      'px-4 py-3 min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]',
+                      'px-4 py-3 min-h-[44px] tm-press min-w-[44px]',
                       LIBRARY_BUTTON
                     )}
                   >
@@ -1234,7 +1234,7 @@ export default function MangaReadPage() {
                 <button
                   type='button'
                   className={cn(
-                    'px-4 py-3 min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]',
+                    'px-4 py-3 min-h-[44px] tm-press min-w-[44px]',
                     LIBRARY_GHOST_BUTTON
                   )}
                   onClick={() => setShowChapterComplete(false)}
@@ -1248,7 +1248,7 @@ export default function MangaReadPage() {
 
         {jumpDialogOpen && (
           <div
-            className='fixed inset-0 z-30 flex items-center justify-center bg-[color:color-mix(in_srgb,var(--tm-room-cinema-bg)_60%,transparent)] px-4'
+            className='fixed inset-0 z-30 flex items-center justify-center bg-ink/60 px-4'
             onClick={(event) => {
               event.stopPropagation();
               setJumpDialogOpen(false);
@@ -1282,16 +1282,13 @@ export default function MangaReadPage() {
                 max={pages.length}
                 value={jumpValue}
                 onChange={(event) => setJumpValue(event.target.value)}
-                className={cn(
-                  LIBRARY_FIELD,
-                  'mt-4 px-3 py-2 min-h-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
-                )}
+                className={cn(LIBRARY_FIELD, 'mt-4 px-3 py-2 min-h-[44px]')}
               />
               <div className='mt-5 flex gap-3'>
                 <button
                   type='button'
                   className={cn(
-                    'flex-1 px-4 py-3 min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]',
+                    'flex-1 px-4 py-3 min-h-[44px] tm-press min-w-[44px]',
                     LIBRARY_GHOST_BUTTON
                   )}
                   onClick={() => setJumpDialogOpen(false)}
@@ -1301,7 +1298,7 @@ export default function MangaReadPage() {
                 <button
                   type='submit'
                   className={cn(
-                    'flex-1 px-4 py-3 min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]',
+                    'flex-1 px-4 py-3 min-h-[44px] tm-press min-w-[44px]',
                     LIBRARY_BUTTON
                   )}
                 >
@@ -1318,7 +1315,7 @@ export default function MangaReadPage() {
           }`}
         >
           <div
-            className='absolute bottom-0 left-0 w-full rounded-full bg-[var(--tm-text)]'
+            className='absolute bottom-0 left-0 w-full rounded-full bg-fg'
             style={{ height: `${progress}%` }}
           />
         </div>
@@ -1331,10 +1328,10 @@ export default function MangaReadPage() {
               openJumpDialog();
             }}
             className={cn(
-              'fixed bottom-4 left-1/2 z-20 -translate-x-1/2 rounded-full px-2.5 py-0.5 text-sm font-medium min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]',
+              'fixed bottom-4 left-1/2 z-20 -translate-x-1/2 rounded-full px-2.5 py-0.5 text-sm font-medium min-h-[44px] tm-press min-w-[44px]',
               pages.length > 1
-                ? 'cursor-pointer min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
-                : 'pointer-events-none min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]',
+                ? 'cursor-pointer min-h-[44px] tm-press min-w-[44px]'
+                : 'pointer-events-none min-h-[44px] tm-press min-w-[44px]',
               READER_HUD
             )}
           >
@@ -1442,7 +1439,7 @@ export default function MangaReadPage() {
 
       <Link
         href={buildDetailHref()}
-        className='sr-only min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
+        className='sr-only min-h-[44px] tm-press min-w-[44px]'
       >
         返回详情
       </Link>

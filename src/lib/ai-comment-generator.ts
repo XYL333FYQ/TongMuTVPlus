@@ -1,12 +1,13 @@
 // AI评论生成核心逻辑
 
+import { parseStringPromise } from 'xml2js';
+
 import {
   buildAgentTools,
   runToolAgent,
   ToolDataSources,
 } from '@/lib/ai-tool-agent';
 import { normalizeApiBaseUrl } from '@/lib/url';
-import { parseStringPromise } from 'xml2js';
 
 export interface AIComment {
   id: string;
@@ -52,7 +53,9 @@ interface GenerateCommentsParams {
 
 // Claude Messages API 根地址需以 /v1 结尾
 function normalizeClaudeBaseURL(baseURL: string): string {
-  const normalized = normalizeApiBaseUrl(baseURL || 'https://api.anthropic.com');
+  const normalized = normalizeApiBaseUrl(
+    baseURL || 'https://api.anthropic.com'
+  );
   return /\/v1$/i.test(normalized) ? normalized : `${normalized}/v1`;
 }
 
@@ -112,15 +115,18 @@ async function callAIForComments(params: {
       body.temperature = temperature;
     }
 
-    const response = await fetch(`${normalizeClaudeBaseURL(baseURL)}/messages`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
-      },
-      body: JSON.stringify(body),
-    });
+    const response = await fetch(
+      `${normalizeClaudeBaseURL(baseURL)}/messages`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': apiKey,
+          'anthropic-version': '2023-06-01',
+        },
+        body: JSON.stringify(body),
+      }
+    );
 
     if (!response.ok) {
       throw new Error(`AI API调用失败: ${response.status}`);
@@ -213,7 +219,7 @@ function buildCommentPrompt(
   movieName: string,
   movieInfo?: string,
   searchResults?: string,
-  count: number = 10
+  count = 10
 ): string {
   return `你是一个影评生成助手。请生成真实自然的观众评论。
 
@@ -304,7 +310,9 @@ async function searchMovieInfo(
       }
     } else if (provider === 'serpapi' && aiConfig.SerpApiKey) {
       const response = await fetch(
-        `https://serpapi.com/search?q=${encodeURIComponent(movieName + ' 影评 评价')}&api_key=${aiConfig.SerpApiKey}&num=5`
+        `https://serpapi.com/search?q=${encodeURIComponent(
+          movieName + ' 影评 评价'
+        )}&api_key=${aiConfig.SerpApiKey}&num=5`
       );
 
       if (response.ok) {
@@ -316,7 +324,9 @@ async function searchMovieInfo(
       }
     } else if (provider === 'bing') {
       const response = await fetch(
-        `https://www.bing.com/search?format=rss&q=${encodeURIComponent(movieName + ' 影评 评价')}`,
+        `https://www.bing.com/search?format=rss&q=${encodeURIComponent(
+          movieName + ' 影评 评价'
+        )}`,
         {
           headers: {
             Accept: 'application/rss+xml, application/xml, text/xml',
@@ -325,7 +335,9 @@ async function searchMovieInfo(
         }
       );
       if (response.ok) {
-        const parsed = await parseStringPromise(await response.text(), { trim: true });
+        const parsed = await parseStringPromise(await response.text(), {
+          trim: true,
+        });
         const items = parsed?.rss?.channel?.[0]?.item || [];
         searchResults = items
           .slice(0, 5)
@@ -376,7 +388,12 @@ export async function generateAIComments(
     } else {
       // 单轮直调：先按需预抓取网络评价，再一次性生成
       const searchResults = await searchMovieInfo(movieName, aiConfig);
-      const prompt = buildCommentPrompt(movieName, movieInfo, searchResults, count);
+      const prompt = buildCommentPrompt(
+        movieName,
+        movieInfo,
+        searchResults,
+        count
+      );
       content = await callAIForComments({
         protocol: params.protocol,
         apiKey: params.apiKey,

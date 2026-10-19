@@ -26,7 +26,9 @@ import nodeFetch from 'node-fetch';
 let useNonKeepAliveAgent = false;
 
 /** 代理路径保持现状（keepAlive:false）；无代理路径由门闩控制 keep-alive */
-export function makeFetchAgent(proxy?: string | null): https.Agent | HttpsProxyAgent<string> | undefined {
+export function makeFetchAgent(
+  proxy?: string | null
+): https.Agent | HttpsProxyAgent<string> | undefined {
   if (proxy) {
     return new HttpsProxyAgent(proxy, {
       timeout: 30000,
@@ -86,7 +88,14 @@ function wrapResponse(
 ): Response {
   let readRetried = false;
   const target = res as any;
-  const methodNames = ['json', 'text', 'arrayBuffer', 'buffer', 'blob', 'formData'];
+  const methodNames = [
+    'json',
+    'text',
+    'arrayBuffer',
+    'buffer',
+    'blob',
+    'formData',
+  ];
 
   return new Proxy(target, {
     get(inner, prop, receiver) {
@@ -95,7 +104,10 @@ function wrapResponse(
           const read = () => inner[prop](...args);
           if (readRetried) return read();
           return read().catch((err: unknown) => {
-            if (isPrematureClose(err) && !(init?.method && init.method !== 'GET')) {
+            if (
+              isPrematureClose(err) &&
+              !(init?.method && init.method !== 'GET')
+            ) {
               // 只在 GET 时重试，避免 POST/webhook 等重复投递
               readRetried = true;
               useNonKeepAliveAgent = true; // 翻转门闩：后续请求全部走非 keep-alive
@@ -130,5 +142,7 @@ export function safeFetch(
   init?: RequestInit,
   proxy?: string | null
 ): Promise<Response> {
-  return doFetch(url, init, proxy).then((res) => wrapResponse(res, url, init, proxy));
+  return doFetch(url, init, proxy).then((res) =>
+    wrapResponse(res, url, init, proxy)
+  );
 }

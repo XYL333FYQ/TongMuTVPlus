@@ -67,8 +67,7 @@ const pickBestTmdbResult = (
   const targetYear = year ? parseInt(year, 10) : NaN;
 
   const getResultYear = (r: any): number => {
-    const date =
-      r.media_type === 'movie' ? r.release_date : r.first_air_date;
+    const date = r.media_type === 'movie' ? r.release_date : r.first_air_date;
     return date ? parseInt(String(date).substring(0, 4), 10) : NaN;
   };
 
@@ -246,8 +245,9 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
       }
 
       const data = await response.json();
-      const stills: string[] = (data.list || []).map((item: { file_path: string }) =>
-        getTMDBImageUrl(item.file_path, 'original')
+      const stills: string[] = (data.list || []).map(
+        (item: { file_path: string }) =>
+          getTMDBImageUrl(item.file_path, 'original')
       );
 
       // 兜底：接口无剧照时至少展示当前集封面
@@ -258,7 +258,9 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
       setEpisodeStills(stills);
     } catch (err) {
       console.error('获取集数剧照失败:', err);
-      setEpisodeStillsError(err instanceof Error ? err.message : '获取剧照失败');
+      setEpisodeStillsError(
+        err instanceof Error ? err.message : '获取剧照失败'
+      );
     } finally {
       setEpisodeStillsLoading(false);
     }
@@ -583,11 +585,13 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
           if (sourceId && source) {
             try {
               const response = await fetch(
-                appendSpecialSourceParam(`/api/source-detail?id=${encodeURIComponent(
-                  sourceId
-                )}&source=${encodeURIComponent(
-                  source
-                )}&title=${encodeURIComponent(title)}`)
+                appendSpecialSourceParam(
+                  `/api/source-detail?id=${encodeURIComponent(
+                    sourceId
+                  )}&source=${encodeURIComponent(
+                    source
+                  )}&title=${encodeURIComponent(title)}`
+                )
               );
               if (response.ok) {
                 const data = await response.json();
@@ -775,8 +779,8 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
     const { searchTitle, extractedSeasonNumber } = parseTmdbSearchInfo();
 
     const searchResponse = await fetch(
-        `/api/tmdb/search?query=${encodeURIComponent(searchTitle)}`
-      );
+      `/api/tmdb/search?query=${encodeURIComponent(searchTitle)}`
+    );
     if (!searchResponse.ok) {
       throw new Error('搜索失败');
     }
@@ -786,9 +790,9 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
       // 保存全部搜索结果,供纠错切换
       setTmdbResults(searchData.results);
       const best = pickBestTmdbResult(searchData.results, {
-          mediaTypeHint: getMediaTypeHint(),
-          year,
-        });
+        mediaTypeHint: getMediaTypeHint(),
+        year,
+      });
       await applyTmdbResult(best, extractedSeasonNumber);
       return;
     }

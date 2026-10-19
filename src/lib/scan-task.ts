@@ -68,10 +68,7 @@ export function updateScanTaskProgress(
   task.progress = { current, total, currentFolder };
 }
 
-export function completeScanTask(
-  id: string,
-  result: ScanTask['result']
-): void {
+export function completeScanTask(id: string, result: ScanTask['result']): void {
   let task = tasks.get(id);
   if (!task) {
     // 如果任务不存在（可能因为模块重新加载），重新创建任务

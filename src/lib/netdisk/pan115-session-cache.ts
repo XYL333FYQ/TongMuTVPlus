@@ -16,15 +16,24 @@ export interface Pan115NetdiskSession {
 const TTL_MS = 30 * 60 * 1000;
 const sessionStore = new Map<string, Pan115NetdiskSession>();
 
-export function buildPan115NetdiskId(input: { shareUrl: string; passcode?: string }) {
-  return base58Encode(JSON.stringify({ shareUrl: input.shareUrl, passcode: input.passcode || '' }));
+export function buildPan115NetdiskId(input: {
+  shareUrl: string;
+  passcode?: string;
+}) {
+  return base58Encode(
+    JSON.stringify({ shareUrl: input.shareUrl, passcode: input.passcode || '' })
+  );
 }
 
-export function parsePan115NetdiskId(id: string): { shareUrl: string; passcode?: string } {
+export function parsePan115NetdiskId(id: string): {
+  shareUrl: string;
+  passcode?: string;
+} {
   try {
     const decoded = base58Decode(id);
     const parsed = JSON.parse(decoded);
-    if (!parsed?.shareUrl || typeof parsed.shareUrl !== 'string') throw new Error('invalid 115 netdisk id');
+    if (!parsed?.shareUrl || typeof parsed.shareUrl !== 'string')
+      throw new Error('invalid 115 netdisk id');
     return {
       shareUrl: parsed.shareUrl,
       passcode: typeof parsed.passcode === 'string' ? parsed.passcode : '',
@@ -49,7 +58,10 @@ export function createPan115NetdiskSession(input: {
 }): Pan115NetdiskSession {
   pruneExpiredSessions();
   const now = Date.now();
-  const id = buildPan115NetdiskId({ shareUrl: input.shareUrl, passcode: input.passcode });
+  const id = buildPan115NetdiskId({
+    shareUrl: input.shareUrl,
+    passcode: input.passcode,
+  });
   const session: Pan115NetdiskSession = {
     id,
     provider: '115',
@@ -64,7 +76,9 @@ export function createPan115NetdiskSession(input: {
   return session;
 }
 
-export function getPan115NetdiskSession(id: string): Pan115NetdiskSession | null {
+export function getPan115NetdiskSession(
+  id: string
+): Pan115NetdiskSession | null {
   pruneExpiredSessions();
   const session = sessionStore.get(id);
   if (!session) return null;
@@ -75,7 +89,9 @@ export function getPan115NetdiskSession(id: string): Pan115NetdiskSession | null
   return session;
 }
 
-export function refreshPan115NetdiskSession(id: string): Pan115NetdiskSession | null {
+export function refreshPan115NetdiskSession(
+  id: string
+): Pan115NetdiskSession | null {
   const session = getPan115NetdiskSession(id);
   if (!session) return null;
   session.expiresAt = Date.now() + TTL_MS;

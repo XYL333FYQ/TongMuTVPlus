@@ -18,7 +18,11 @@ export async function resolveUCSession(id: string) {
   let session = refreshUCNetdiskSession(id) || getUCNetdiskSession(id);
   if (!session) {
     const payload = parseUCNetdiskId(id);
-    const result = await listUCShareVideos(payload.shareUrl, ucConfig.Cookie, payload.passcode || '');
+    const result = await listUCShareVideos(
+      payload.shareUrl,
+      ucConfig.Cookie,
+      payload.passcode || ''
+    );
     session = createUCNetdiskSession({
       title: result.title,
       shareUrl: payload.shareUrl,

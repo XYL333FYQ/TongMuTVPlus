@@ -60,17 +60,17 @@ export function DownloadPanel() {
   const getStatusColor = (status: M3U8DownloadTask['status']) => {
     switch (status) {
       case 'ready':
-        return 'text-[color:var(--tm-muted)]';
+        return 'text-muted';
       case 'downloading':
-        return 'text-[color:var(--tm-text)]';
+        return 'text-fg';
       case 'pause':
-        return 'text-[color:var(--tm-text)]';
+        return 'text-fg';
       case 'done':
-        return 'text-[color:var(--tm-text)]';
+        return 'text-fg';
       case 'error':
-        return 'text-[color:var(--tm-text)]';
+        return 'text-fg';
       default:
-        return 'text-[color:var(--tm-muted)]';
+        return 'text-muted';
     }
   };
 
@@ -89,18 +89,18 @@ export function DownloadPanel() {
   const getLogBadgeClass = (status: M3U8SegmentLogStatus) => {
     switch (status) {
       case 'downloading':
-        return 'bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)]';
+        return 'bg-raised text-fg';
       case 'success':
-        return 'bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)]';
+        return 'bg-raised text-fg';
       case 'retry':
-        return 'bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)]';
+        return 'bg-raised text-fg';
       case 'timeout':
       case 'error':
-        return 'bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)]';
+        return 'bg-raised text-fg';
       case 'aborted':
-        return 'bg-[var(--tm-surface-raised)] text-[color:var(--tm-muted)]';
+        return 'bg-raised text-muted';
       default:
-        return 'bg-[var(--tm-surface-raised)] text-[color:var(--tm-muted)]';
+        return 'bg-raised text-muted';
     }
   };
 
@@ -143,21 +143,19 @@ export function DownloadPanel() {
     : null;
 
   return (
-    <div className='fixed inset-0 z-[9999] flex items-center justify-center bg-[color:color-mix(in_srgb,var(--tm-room-cinema-bg)_60%,transparent)] p-3 backdrop-blur-sm sm:p-6'>
-      <div className='flex max-h-[86vh] w-full max-w-6xl flex-col overflow-hidden rounded-2xl border border-[var(--tm-line)] bg-[var(--tm-surface)] shadow-2xl'>
+    <div className='fixed inset-0 z-[9999] flex items-center justify-center bg-ink/60 p-3 backdrop-blur-sm sm:p-6'>
+      <div className='flex max-h-[86vh] w-full max-w-6xl flex-col overflow-hidden rounded-2xl border border-line bg-surface shadow-2xl'>
         {/* 标题栏 */}
-        <div className='flex items-center justify-between border-b border-[var(--tm-line)] bg-[var(--tm-surface-raised)] p-4'>
+        <div className='flex items-center justify-between border-b border-line bg-raised p-4'>
           <div>
-            <h2 className='text-xl font-bold text-[color:var(--tm-text)]'>
-              下载任务列表
-            </h2>
-            <p className='mt-1 text-[13px] text-[color:var(--tm-muted)]'>
+            <h2 className='text-xl font-bold text-fg'>下载任务列表</h2>
+            <p className='mt-1 text-[13px] text-muted'>
               支持查看每个分片的下载、重试、超时和失败日志
             </p>
           </div>
           <button
             onClick={() => setShowDownloadPanel(false)}
-            className='cursor-pointer rounded-lg p-2 text-[color:var(--tm-muted)] transition-colors duration-200 hover:bg-[var(--tm-line)] hover:text-[color:var(--tm-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--tm-text)] hover:text-[color:var(--tm-text)] min-h-[44px] tm-press'
+            className='cursor-pointer rounded-lg p-2 text-muted transition-colors duration-200 hover:bg-line focus:outline-none focus:ring-2 focus:ring-fg hover:text-fg min-h-[44px] tm-press'
             aria-label='关闭下载任务列表'
           >
             <svg
@@ -179,7 +177,7 @@ export function DownloadPanel() {
         {/* 任务列表 */}
         <div className='flex-1 overflow-y-auto p-4 space-y-3'>
           {tasks.length === 0 ? (
-            <div className='flex min-h-[320px] flex-col items-center justify-center text-[color:var(--tm-muted)]'>
+            <div className='flex min-h-[320px] flex-col items-center justify-center text-muted'>
               <svg
                 className='mb-4 h-16 w-16'
                 fill='none'
@@ -201,15 +199,15 @@ export function DownloadPanel() {
               return (
                 <div
                   key={task.id}
-                  className='rounded-xl border border-[var(--tm-line)] bg-[var(--tm-surface-raised)] p-4 transition-colors duration-200'
+                  className='rounded-xl border border-line bg-raised p-4 transition-colors duration-200'
                 >
                   {/* 任务信息 */}
                   <div className='mb-3 flex items-start justify-between gap-4'>
                     <div className='min-w-0 flex-1'>
-                      <h3 className='mb-1 truncate text-sm font-medium text-[color:var(--tm-text)]'>
+                      <h3 className='mb-1 truncate text-sm font-medium text-fg'>
                         {task.title}
                       </h3>
-                      <p className='truncate text-[13px] text-[color:var(--tm-muted)]'>
+                      <p className='truncate text-[13px] text-muted'>
                         {task.url}
                       </p>
                     </div>
@@ -221,10 +219,10 @@ export function DownloadPanel() {
                       >
                         {getStatusText(task.status)}
                       </span>
-                      <span className='rounded-md border border-[var(--tm-line)] px-2 py-0.5 text-[13px] text-[color:var(--tm-muted)]'>
+                      <span className='rounded-md border border-line px-2 py-0.5 text-[13px] text-muted'>
                         {task.type}
                       </span>
-                      <span className='rounded-md border border-[var(--tm-line)] px-2 py-0.5 text-[13px] text-[color:var(--tm-muted)]'>
+                      <span className='rounded-md border border-line px-2 py-0.5 text-[13px] text-muted'>
                         {getDownloadModeText(task.downloadMode)}
                       </span>
                     </div>
@@ -232,23 +230,23 @@ export function DownloadPanel() {
 
                   {/* 进度条 */}
                   <div className='mb-3'>
-                    <div className='mb-1 flex items-center justify-between text-[13px] text-[color:var(--tm-muted)]'>
+                    <div className='mb-1 flex items-center justify-between text-[13px] text-muted'>
                       <span>
                         {task.finishNum} / {task.rangeDownload.targetSegment}{' '}
                         片段
                       </span>
                       <span>{progress.toFixed(1)}%</span>
                     </div>
-                    <div className='h-2 w-full overflow-hidden rounded-full bg-[var(--tm-surface-raised)]'>
+                    <div className='h-2 w-full overflow-hidden rounded-full bg-raised'>
                       <div
                         className={`h-full rounded-full transition-all duration-300 ${
                           task.status === 'downloading'
-                            ? 'bg-[var(--tm-surface)] motion-safe:tm-skeleton'
+                            ? 'bg-surface motion-safe:tm-skeleton'
                             : task.status === 'done'
-                            ? 'bg-[var(--tm-text)]'
+                            ? 'bg-fg'
                             : task.status === 'error'
-                            ? 'bg-[var(--tm-surface-raised)]'
-                            : 'bg-[var(--tm-surface)]'
+                            ? 'bg-raised'
+                            : 'bg-surface'
                         }`}
                         style={{ width: `${progress}%` }}
                       ></div>
@@ -257,16 +255,13 @@ export function DownloadPanel() {
 
                   {/* 错误信息 */}
                   {task.errorNum > 0 && (
-                    <div className='mb-3 flex items-center justify-between rounded-lg border border-[var(--tm-danger)] bg-[var(--tm-surface-raised)] px-3 py-2'>
-                      <div
-                        className='text-[13px] text-[color:var(--tm-text)]'
-                        role='alert'
-                      >
+                    <div className='mb-3 flex items-center justify-between rounded-lg border border-danger bg-raised px-3 py-2'>
+                      <div className='text-[13px] text-fg' role='alert'>
                         {task.errorNum} 个片段下载失败
                       </div>
                       <button
                         onClick={() => retryFailedSegments(task.id)}
-                        className='cursor-pointer text-[13px] text-[color:var(--tm-text)] underline transition-colors hover:text-[color:var(--tm-text)] focus:outline-none focus:ring-2 focus:ring-[var(--tm-text)] min-h-[44px] tm-press'
+                        className='cursor-pointer text-[13px] text-fg underline transition-colors hover:text-fg focus:outline-none focus:ring-2 focus:ring-fg min-h-[44px] tm-press'
                       >
                         重试失败片段
                       </button>
@@ -280,7 +275,7 @@ export function DownloadPanel() {
                         setLogTaskId(task.id);
                         setLogFilter('all');
                       }}
-                      className='flex cursor-pointer items-center gap-1 rounded-lg border border-[var(--tm-line)] bg-[var(--tm-surface-raised)] px-3 py-1.5 text-[13px] font-medium text-[color:var(--tm-muted)] transition-colors duration-200 hover:bg-[var(--tm-line)] focus:outline-none focus:ring-2 focus:ring-[var(--tm-text)] text-[color:var(--tm-text)] min-h-[44px] tm-press'
+                      className='flex cursor-pointer items-center gap-1 rounded-lg border border-line bg-raised px-3 py-1.5 text-[13px] font-medium transition-colors duration-200 hover:bg-line focus:outline-none focus:ring-2 focus:ring-fg text-fg min-h-[44px] tm-press'
                     >
                       <svg
                         className='h-4 w-4'
@@ -297,7 +292,7 @@ export function DownloadPanel() {
                       </svg>
                       查看日志
                       {task.segmentLogs.length > 0 && (
-                        <span className='rounded-full bg-[var(--tm-surface-raised)] px-1.5 py-0.5 text-[13px] text-[color:var(--tm-muted)] text-[color:var(--tm-text)]'>
+                        <span className='rounded-full bg-raised px-1.5 py-0.5 text-[13px] text-fg'>
                           {task.segmentLogs.length}
                         </span>
                       )}
@@ -306,7 +301,7 @@ export function DownloadPanel() {
                     {task.status === 'downloading' && (
                       <button
                         onClick={() => pauseTask(task.id)}
-                        className='flex cursor-pointer items-center gap-1 rounded-lg bg-[var(--tm-surface-raised)] px-3 py-1.5 text-[13px] font-medium text-[color:var(--tm-text)] transition-colors duration-200 hover:bg-[var(--tm-line)] focus:outline-none focus:ring-2 focus:ring-[var(--tm-text)] min-h-[44px] tm-press'
+                        className='flex cursor-pointer items-center gap-1 rounded-lg bg-raised px-3 py-1.5 text-[13px] font-medium text-fg transition-colors duration-200 hover:bg-line focus:outline-none focus:ring-2 focus:ring-fg min-h-[44px] tm-press'
                       >
                         <svg
                           className='h-4 w-4'
@@ -330,7 +325,7 @@ export function DownloadPanel() {
                       task.status === 'error') && (
                       <button
                         onClick={() => startTask(task.id)}
-                        className='flex cursor-pointer items-center gap-1 rounded-lg bg-[var(--tm-text)] px-3 py-1.5 text-[13px] font-medium text-[color:var(--tm-accent-contrast)] transition-colors duration-200 hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-[var(--tm-text)] min-h-[44px] tm-press'
+                        className='flex cursor-pointer items-center gap-1 rounded-lg bg-fg px-3 py-1.5 text-[13px] font-medium text-inverse transition-colors duration-200 hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-fg min-h-[44px] tm-press'
                       >
                         <svg
                           className='h-4 w-4'
@@ -357,7 +352,7 @@ export function DownloadPanel() {
 
                     <button
                       onClick={() => cancelTask(task.id)}
-                      className='flex cursor-pointer items-center gap-1 rounded-lg bg-[var(--tm-text)] px-3 py-1.5 text-[13px] font-medium text-[color:var(--tm-accent-contrast)] transition-colors duration-200 hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-[var(--tm-text)] min-h-[44px] tm-press'
+                      className='flex cursor-pointer items-center gap-1 rounded-lg bg-fg px-3 py-1.5 text-[13px] font-medium text-inverse transition-colors duration-200 hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-fg min-h-[44px] tm-press'
                     >
                       <svg
                         className='h-4 w-4'
@@ -383,8 +378,8 @@ export function DownloadPanel() {
 
         {/* 底部统计 */}
         {tasks.length > 0 && (
-          <div className='border-t border-[var(--tm-line)] bg-[var(--tm-surface-raised)] p-4'>
-            <div className='grid grid-cols-2 gap-2 text-sm text-[color:var(--tm-muted)] sm:grid-cols-4'>
+          <div className='border-t border-line bg-raised p-4'>
+            <div className='grid grid-cols-2 gap-2 text-sm text-muted sm:grid-cols-4'>
               <span>总任务数: {tasks.length}</span>
               <span>
                 下载中: {tasks.filter((t) => t.status === 'downloading').length}
@@ -401,21 +396,21 @@ export function DownloadPanel() {
       </div>
 
       {logTask && (
-        <div className='fixed inset-0 z-[10000] flex items-center justify-center bg-[color:color-mix(in_srgb,var(--tm-room-cinema-bg)_50%,transparent)] p-3 backdrop-blur-sm sm:p-6'>
-          <div className='flex max-h-[82vh] w-full max-w-5xl flex-col overflow-hidden rounded-2xl border border-[var(--tm-line)] bg-[var(--tm-surface)] shadow-2xl'>
-            <div className='border-b border-[var(--tm-line)] bg-[var(--tm-surface-raised)] p-4'>
+        <div className='fixed inset-0 z-[10000] flex items-center justify-center bg-ink/50 p-3 backdrop-blur-sm sm:p-6'>
+          <div className='flex max-h-[82vh] w-full max-w-5xl flex-col overflow-hidden rounded-2xl border border-line bg-surface shadow-2xl'>
+            <div className='border-b border-line bg-raised p-4'>
               <div className='flex items-start justify-between gap-4'>
                 <div className='min-w-0'>
-                  <h3 className='truncate text-lg font-bold text-[color:var(--tm-text)]'>
+                  <h3 className='truncate text-lg font-bold text-fg'>
                     分片下载日志
                   </h3>
-                  <p className='mt-1 truncate text-[13px] text-[color:var(--tm-muted)]'>
+                  <p className='mt-1 truncate text-[13px] text-muted'>
                     {logTask.title}
                   </p>
                 </div>
                 <button
                   onClick={() => setLogTaskId(null)}
-                  className='cursor-pointer rounded-lg p-2 text-[color:var(--tm-muted)] transition-colors duration-200 hover:bg-[var(--tm-line)] hover:text-[color:var(--tm-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--tm-text)] hover:text-[color:var(--tm-text)] min-h-[44px] tm-press'
+                  className='cursor-pointer rounded-lg p-2 text-muted transition-colors duration-200 hover:bg-line focus:outline-none focus:ring-2 focus:ring-fg hover:text-fg min-h-[44px] tm-press'
                   aria-label='关闭分片下载日志'
                 >
                   <svg
@@ -436,35 +431,27 @@ export function DownloadPanel() {
 
               {logStats && (
                 <div className='mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4'>
-                  <div className='rounded-xl border border-[var(--tm-line)] bg-[var(--tm-surface-raised)] p-3'>
-                    <div className='text-[13px] text-[color:var(--tm-muted)]'>
-                      日志数
-                    </div>
-                    <div className='mt-1 text-lg font-medium text-[color:var(--tm-text)]'>
+                  <div className='rounded-xl border border-line bg-raised p-3'>
+                    <div className='text-[13px] text-muted'>日志数</div>
+                    <div className='mt-1 text-lg font-medium text-fg'>
                       {logStats.total}
                     </div>
                   </div>
-                  <div className='rounded-xl border border-[var(--tm-line)] bg-[var(--tm-surface-raised)] p-3'>
-                    <div className='text-[13px] text-[color:var(--tm-text)]'>
-                      成功分片
-                    </div>
-                    <div className='mt-1 text-lg font-medium text-[color:var(--tm-text)]'>
+                  <div className='rounded-xl border border-line bg-raised p-3'>
+                    <div className='text-[13px] text-fg'>成功分片</div>
+                    <div className='mt-1 text-lg font-medium text-fg'>
                       {logStats.success}
                     </div>
                   </div>
-                  <div className='rounded-xl border border-[var(--tm-line)] bg-[var(--tm-surface-raised)] p-3'>
-                    <div className='text-[13px] text-[color:var(--tm-text)]'>
-                      下载中
-                    </div>
-                    <div className='mt-1 text-lg font-medium text-[color:var(--tm-text)]'>
+                  <div className='rounded-xl border border-line bg-raised p-3'>
+                    <div className='text-[13px] text-fg'>下载中</div>
+                    <div className='mt-1 text-lg font-medium text-fg'>
                       {logStats.downloading}
                     </div>
                   </div>
-                  <div className='rounded-xl border border-[var(--tm-danger)] bg-[var(--tm-surface-raised)] p-3'>
-                    <div className='text-[13px] text-[color:var(--tm-text)]'>
-                      失败分片
-                    </div>
-                    <div className='mt-1 text-lg font-medium text-[color:var(--tm-text)]'>
+                  <div className='rounded-xl border border-danger bg-raised p-3'>
+                    <div className='text-[13px] text-fg'>失败分片</div>
+                    <div className='mt-1 text-lg font-medium text-fg'>
                       {logStats.error}
                     </div>
                   </div>
@@ -486,11 +473,8 @@ export function DownloadPanel() {
                   <button
                     key={filter}
                     onClick={() => setLogFilter(filter)}
-                    className={`cursor-pointer rounded-full border px-3 py-1 text-[13px] font-medium transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[var(--tm-text)] ${
-                      logFilter === filter
-                        ? 'border-[var(--tm-line)] bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] min-h-[44px] tm-press'
-                        : 'border-[var(--tm-line)] bg-[var(--tm-surface-raised)] text-[color:var(--tm-muted)] hover:bg-[var(--tm-line)] min-h-[44px] tm-press'
-                    }`}
+                    aria-pressed={logFilter === filter}
+                    className='tm-chip'
                   >
                     {filter === 'all' ? '全部' : getLogStatusText(filter)}
                   </button>
@@ -500,7 +484,7 @@ export function DownloadPanel() {
 
             <div className='flex-1 overflow-y-auto p-4'>
               {filteredLogs.length === 0 ? (
-                <div className='flex min-h-[220px] flex-col items-center justify-center rounded-xl border border-dashed border-[var(--tm-line)] text-[color:var(--tm-muted)]'>
+                <div className='flex min-h-[220px] flex-col items-center justify-center rounded-xl border border-dashed border-line text-muted'>
                   <svg
                     className='mb-3 h-10 w-10'
                     fill='none'
@@ -521,9 +505,9 @@ export function DownloadPanel() {
                   {filteredLogs.map((log) => (
                     <div
                       key={log.id}
-                      className='grid gap-3 rounded-xl border border-[var(--tm-line)] bg-[var(--tm-surface)] p-3 text-sm md:grid-cols-[120px_110px_1fr_160px]'
+                      className='grid gap-3 rounded-xl border border-line bg-surface p-3 text-sm md:grid-cols-[120px_110px_1fr_160px]'
                     >
-                      <div className='font-mono text-[13px] text-[color:var(--tm-muted)]'>
+                      <div className='font-mono text-[13px] text-muted'>
                         {formatTime(log.timestamp)}
                       </div>
                       <div>
@@ -536,14 +520,12 @@ export function DownloadPanel() {
                         </span>
                       </div>
                       <div className='min-w-0'>
-                        <div className='truncate text-[color:var(--tm-text)]'>
-                          {log.message}
-                        </div>
-                        <div className='mt-1 truncate font-mono text-[13px] text-[color:var(--tm-muted)]'>
+                        <div className='truncate text-fg'>{log.message}</div>
+                        <div className='mt-1 truncate font-mono text-[13px] text-muted'>
                           segment #{log.index + 1}
                         </div>
                       </div>
-                      <div className='flex flex-wrap items-center gap-2 text-[13px] text-[color:var(--tm-muted)] md:justify-end'>
+                      <div className='flex flex-wrap items-center gap-2 text-[13px] text-muted md:justify-end'>
                         {typeof log.retryCount === 'number' && (
                           <span>重试 {log.retryCount}</span>
                         )}

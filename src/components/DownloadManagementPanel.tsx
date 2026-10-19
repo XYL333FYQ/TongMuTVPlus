@@ -551,27 +551,24 @@ export function DownloadManagementPanel({
     <>
       {createPortal(
         <div className='fixed inset-0 z-[9999] flex items-end justify-center p-0 sm:items-center sm:p-4'>
-          <div
-            className='absolute inset-0 bg-[color:color-mix(in_srgb,var(--tm-room-cinema-bg)_50%,transparent)]'
-            onClick={onClose}
-          />
-          <div className='relative flex h-[92dvh] max-h-[92dvh] w-full max-w-4xl flex-col rounded-t-2xl bg-[var(--tm-surface)] shadow-xl sm:h-auto sm:max-h-[90vh] sm:rounded-lg'>
+          <div className='absolute inset-0 bg-ink/50' onClick={onClose} />
+          <div className='relative flex h-[92dvh] max-h-[92dvh] w-full max-w-4xl flex-col rounded-t-2xl bg-surface shadow-xl sm:h-auto sm:max-h-[90vh] sm:rounded-lg'>
             {/* Header */}
-            <div className='flex items-center justify-between border-b border-[var(--tm-line)] p-3 sm:p-4'>
-              <h2 className='text-lg font-medium text-[color:var(--tm-text)] sm:text-xl'>
+            <div className='flex items-center justify-between border-b border-line p-3 sm:p-4'>
+              <h2 className='text-lg font-medium text-fg sm:text-xl'>
                 下载文件管理
               </h2>
               <button
                 onClick={onClose}
-                className='rounded p-2 transition-colors hover:bg-[var(--tm-line)] min-h-[44px] tm-press'
+                className='rounded p-2 transition-colors hover:bg-line min-h-[44px] tm-press'
                 aria-label='关闭下载文件管理'
               >
-                <X className='w-5 h-5 text-[color:var(--tm-muted)]' />
+                <X className='w-5 h-5 text-muted' />
               </button>
             </div>
 
             {/* Toolbar */}
-            <div className='flex items-center justify-between gap-3 border-b border-[var(--tm-line)] p-3 sm:p-4'>
+            <div className='flex items-center justify-between gap-3 border-b border-line p-3 sm:p-4'>
               <div className='min-w-0 flex-1 flex-col gap-2 sm:flex sm:flex-row sm:items-center sm:gap-4'>
                 <label className='flex items-center gap-2 cursor-pointer'>
                   <input
@@ -583,11 +580,9 @@ export function DownloadManagementPanel({
                     onChange={handleSelectAll}
                     className='w-4 h-4'
                   />
-                  <span className='text-sm text-[color:var(--tm-muted)]'>
-                    全选
-                  </span>
+                  <span className='text-sm text-muted'>全选</span>
                 </label>
-                <span className='text-sm text-[color:var(--tm-muted)]'>
+                <span className='text-sm text-muted'>
                   已选择 {selectedIds.size} / {completedTasks.length} 集
                   {videoGroups.length > 0 &&
                     `，共 ${videoGroups.length} 个视频`}
@@ -598,7 +593,7 @@ export function DownloadManagementPanel({
                   onClick={handleExport}
                   aria-label={isExporting ? '导出中' : '导出选中'}
                   disabled={selectedIds.size === 0 || isExporting || isDeleting}
-                  className='flex h-10 w-10 items-center justify-center rounded bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] transition-colors hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 sm:h-auto sm:w-auto sm:gap-2 sm:px-4 sm:py-2 sm:text-sm min-h-[44px] tm-press'
+                  className='flex h-10 w-10 items-center justify-center rounded bg-fg text-inverse transition-colors hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 sm:h-auto sm:w-auto sm:gap-2 sm:px-4 sm:py-2 sm:text-sm min-h-[44px] tm-press'
                 >
                   <Download className='h-4 w-4' />
                   <span className='hidden sm:inline'>
@@ -609,7 +604,7 @@ export function DownloadManagementPanel({
                   onClick={handleDelete}
                   aria-label={isDeleting ? '删除中' : '删除选中'}
                   disabled={selectedIds.size === 0 || isDeleting || isExporting}
-                  className='flex h-10 w-10 items-center justify-center rounded bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] transition-colors hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 sm:h-auto sm:w-auto sm:gap-2 sm:px-4 sm:py-2 sm:text-sm min-h-[44px] tm-press'
+                  className='flex h-10 w-10 items-center justify-center rounded bg-fg text-inverse transition-colors hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 sm:h-auto sm:w-auto sm:gap-2 sm:px-4 sm:py-2 sm:text-sm min-h-[44px] tm-press'
                 >
                   <Trash2 className='h-4 w-4' />
                   <span className='hidden sm:inline'>
@@ -622,9 +617,7 @@ export function DownloadManagementPanel({
             {/* Content */}
             <div className='flex-1 overflow-y-auto p-3 sm:p-4'>
               {completedTasks.length === 0 ? (
-                <div className='text-center py-12 text-[color:var(--tm-muted)]'>
-                  暂无下载记录
-                </div>
+                <div className='text-center py-12 text-muted'>暂无下载记录</div>
               ) : (
                 <div className='space-y-3'>
                   {videoGroups.map((group) => {
@@ -642,12 +635,12 @@ export function DownloadManagementPanel({
                         key={group.key}
                         className={`border rounded-lg overflow-hidden transition-colors ${
                           isGroupSelected || isGroupPartiallySelected
-                            ? 'border-[var(--tm-line)] bg-[var(--tm-surface-raised)]'
-                            : 'border-[var(--tm-line)]'
+                            ? 'border-line bg-raised'
+                            : 'border-line'
                         }`}
                       >
                         <div
-                          className='flex cursor-pointer items-start gap-2 p-3 hover:bg-[var(--tm-line)] sm:gap-3 sm:p-4'
+                          className='flex cursor-pointer items-start gap-2 p-3 hover:bg-line sm:gap-3 sm:p-4'
                           onClick={() => handleToggleGroupExpand(group.key)}
                         >
                           <button
@@ -658,27 +651,27 @@ export function DownloadManagementPanel({
                             }}
                             className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded border-2 transition-colors sm:mt-1 sm:h-5 sm:w-5 ${
                               isGroupSelected
-                                ? 'border-[var(--tm-line)] bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] min-h-[44px] tm-press'
+                                ? 'border-line bg-fg text-inverse min-h-[44px] tm-press'
                                 : isGroupPartiallySelected
-                                ? 'border-[var(--tm-line)] bg-[var(--tm-surface-raised)] min-h-[44px] tm-press'
-                                : 'border-[var(--tm-line)] min-h-[44px] tm-press'
+                                ? 'border-line bg-raised min-h-[44px] tm-press'
+                                : 'border-line min-h-[44px] tm-press'
                             }`}
                             aria-label={`选择 ${group.title}`}
                           >
                             {isGroupSelected ? (
-                              <Check className='h-4 w-4 text-[color:var(--tm-text)] sm:h-3 sm:w-3' />
+                              <Check className='h-4 w-4 text-fg sm:h-3 sm:w-3' />
                             ) : isGroupPartiallySelected ? (
-                              <span className='h-0.5 w-3 rounded bg-[var(--tm-text)] sm:w-2.5' />
+                              <span className='h-0.5 w-3 rounded bg-fg sm:w-2.5' />
                             ) : null}
                           </button>
 
                           <div className='min-w-0 flex-1'>
                             <div className='flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-3'>
                               <div className='min-w-0 flex-1'>
-                                <h3 className='line-clamp-2 text-sm font-medium text-[color:var(--tm-text)] sm:truncate'>
+                                <h3 className='line-clamp-2 text-sm font-medium text-fg sm:truncate'>
                                   {group.title}
                                 </h3>
-                                <div className='mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[13px] text-[color:var(--tm-muted)]'>
+                                <div className='mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[13px] text-muted'>
                                   <span>来源: {group.source}</span>
                                   <span>•</span>
                                   <span>{group.tasks.length} 集</span>
@@ -692,21 +685,21 @@ export function DownloadManagementPanel({
                               </div>
                               <div className='flex w-full flex-row-reverse items-center justify-between gap-3 text-left sm:w-auto sm:flex-row sm:items-start sm:text-right'>
                                 <div className='min-w-0 sm:min-w-[150px]'>
-                                  <div className='text-[13px] text-[color:var(--tm-muted)]'>
+                                  <div className='text-[13px] text-muted'>
                                     最近完成：
                                     {formatDate(group.lastCompletedAt)}
                                   </div>
-                                  <div className='mt-1 text-[13px] text-[color:var(--tm-muted)]'>
+                                  <div className='mt-1 text-[13px] text-muted'>
                                     总大小：{formatFileSize(group.totalSize)}
                                   </div>
                                   {selectedCount > 0 && (
-                                    <div className='mt-1 text-[13px] text-[color:var(--tm-text)]'>
+                                    <div className='mt-1 text-[13px] text-fg'>
                                       已选 {selectedCount} 集
                                     </div>
                                   )}
                                 </div>
                                 <ChevronDown
-                                  className={`h-5 w-5 flex-shrink-0 text-[color:var(--tm-muted)] transition-transform sm:mt-1 ${
+                                  className={`h-5 w-5 flex-shrink-0 text-muted transition-transform sm:mt-1 ${
                                     isExpanded ? 'rotate-180' : ''
                                   }`}
                                 />
@@ -716,14 +709,14 @@ export function DownloadManagementPanel({
                         </div>
 
                         {isExpanded && (
-                          <div className='border-t border-[var(--tm-line)] bg-[var(--tm-surface)]'>
+                          <div className='border-t border-line bg-surface'>
                             {group.tasks.map((task) => (
                               <div
                                 key={task.id}
                                 className={`flex cursor-pointer items-start gap-2 px-3 py-3.5 transition-colors sm:gap-3 sm:px-4 sm:py-3 ${
                                   selectedIds.has(task.id)
-                                    ? 'bg-[var(--tm-surface-raised)]'
-                                    : 'hover:bg-[var(--tm-line)]'
+                                    ? 'bg-raised'
+                                    : 'hover:bg-line'
                                 }`}
                                 onClick={() => handleToggleSelect(task.id)}
                               >
@@ -731,38 +724,38 @@ export function DownloadManagementPanel({
                                   <div
                                     className={`flex h-8 w-8 items-center justify-center rounded border-2 sm:h-5 sm:w-5 ${
                                       selectedIds.has(task.id)
-                                        ? 'border-[var(--tm-line)] bg-[var(--tm-text)]'
-                                        : 'border-[var(--tm-line)]'
+                                        ? 'border-line bg-fg'
+                                        : 'border-line'
                                     }`}
                                   >
                                     {selectedIds.has(task.id) && (
-                                      <Check className='h-4 w-4 text-[color:var(--tm-text)] sm:h-3 sm:w-3' />
+                                      <Check className='h-4 w-4 text-fg sm:h-3 sm:w-3' />
                                     )}
                                   </div>
                                 </div>
                                 <div className='min-w-0 flex-1'>
                                   <div className='flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between'>
                                     <div className='min-w-0 flex-1'>
-                                      <h4 className='line-clamp-2 text-sm font-medium text-[color:var(--tm-text)] sm:truncate'>
+                                      <h4 className='line-clamp-2 text-sm font-medium text-fg sm:truncate'>
                                         第 {task.episodeIndex + 1} 集
                                         {task.episodeTitle
                                           ? `：${task.episodeTitle}`
                                           : ''}
                                       </h4>
-                                      <p className='mt-1 truncate text-[13px] text-[color:var(--tm-muted)]'>
+                                      <p className='mt-1 truncate text-[13px] text-muted'>
                                         {task.title}
                                       </p>
                                     </div>
                                     <div className='flex-shrink-0 text-left sm:text-right'>
-                                      <div className='text-[13px] text-[color:var(--tm-muted)]'>
+                                      <div className='text-[13px] text-muted'>
                                         {formatDate(task.completedAt)}
                                       </div>
-                                      <div className='mt-1 text-[13px] text-[color:var(--tm-muted)]'>
+                                      <div className='mt-1 text-[13px] text-muted'>
                                         {formatFileSize(task.fileSize)}
                                       </div>
                                     </div>
                                   </div>
-                                  <div className='mt-2 flex flex-wrap items-center gap-2 text-[13px] text-[color:var(--tm-muted)]'>
+                                  <div className='mt-2 flex flex-wrap items-center gap-2 text-[13px] text-muted'>
                                     <span>第 {task.episodeIndex + 1} 集</span>
                                     <span>•</span>
                                     <span>

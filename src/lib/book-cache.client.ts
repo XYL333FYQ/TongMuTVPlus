@@ -30,15 +30,22 @@ function openDatabase(): Promise<IDBDatabase> {
       }
     };
     request.onsuccess = () => resolve(request.result);
-    request.onerror = () => reject(request.error || new Error('打开 IndexedDB 失败'));
+    request.onerror = () =>
+      reject(request.error || new Error('打开 IndexedDB 失败'));
   });
 }
 
-export function buildBookCacheKey(sourceId: string, bookId: string, acquisitionHref: string) {
+export function buildBookCacheKey(
+  sourceId: string,
+  bookId: string,
+  acquisitionHref: string
+) {
   return `${sourceId}::${bookId}::${acquisitionHref}`;
 }
 
-export async function getCachedBookFile(key: string): Promise<CachedBookFile | null> {
+export async function getCachedBookFile(
+  key: string
+): Promise<CachedBookFile | null> {
   const db = await openDatabase();
   return new Promise((resolve, reject) => {
     const tx = db.transaction(STORE_NAME, 'readonly');
@@ -109,7 +116,9 @@ export async function listCachedBookFiles(): Promise<CachedBookFile[]> {
   });
 }
 
-export async function enforceBookCacheLimit(limit = DEFAULT_CACHE_LIMIT): Promise<void> {
+export async function enforceBookCacheLimit(
+  limit = DEFAULT_CACHE_LIMIT
+): Promise<void> {
   const items = await listCachedBookFiles();
   const total = items.reduce((sum, item) => sum + item.size, 0);
   if (total <= limit) return;

@@ -52,9 +52,9 @@ import MediaGridSkeleton from '@/components/media/MediaGridSkeleton';
 import MediaPressCard from '@/components/media/MediaPressCard';
 
 /** 缓存面板里的一行（书名 + 大小 + 删除键）。 */
-const CARD_CLASS = cn(LIBRARY_ROW, 'bg-[var(--tm-surface)]');
+const CARD_CLASS = cn(LIBRARY_ROW, 'bg-surface');
 const DANGER_BUTTON_CLASS =
-  'cursor-pointer rounded-md bg-[var(--tm-text)] px-4 py-2 text-sm font-medium text-[color:var(--tm-accent-contrast)] transition-colors duration-200 hover:opacity-90 min-h-[44px] tm-press';
+  'cursor-pointer rounded-md bg-fg px-4 py-2 text-sm font-medium text-inverse transition-colors duration-200 hover:opacity-90 min-h-[44px] tm-press';
 
 function looksLikeInternalHref(value?: string) {
   if (!value) return false;
@@ -281,11 +281,11 @@ export default function BookHistoryPage() {
         mounted &&
         createPortal(
           <div
-            className='fixed inset-0 z-50 bg-[color:color-mix(in_srgb,var(--tm-room-cinema-bg)_45%,transparent)] '
+            className='fixed inset-0 z-50 bg-ink/45'
             onClick={() => setCacheModalOpen(false)}
           >
             <div
-              className='absolute right-0 top-0 h-screen w-full max-w-lg overflow-y-auto border-l border-[var(--tm-line)] bg-[var(--tm-bg)] shadow-2xl'
+              className='absolute right-0 top-0 h-screen w-full max-w-lg overflow-y-auto border-l border-line bg-canvas shadow-2xl'
               onClick={(event) => event.stopPropagation()}
             >
               <div className='space-y-5 p-5'>
@@ -410,7 +410,7 @@ export default function BookHistoryPage() {
         mounted &&
         createPortal(
           <div
-            className='fixed inset-0 z-[60] flex items-center justify-center bg-[color:color-mix(in_srgb,var(--tm-room-cinema-bg)_55%,transparent)] px-4 '
+            className='fixed inset-0 z-[60] flex items-center justify-center bg-ink/55 px-4'
             onClick={() => setConfirmAction(null)}
           >
             <div
@@ -424,7 +424,7 @@ export default function BookHistoryPage() {
                   LIBRARY_SERIF
                 )}
               >
-                <Trash2 className='h-4 w-4 text-[color:var(--tm-text)]' />
+                <Trash2 className='h-4 w-4 text-fg' />
                 {confirmAction.type === 'clear-all'
                   ? '清空全部缓存'
                   : '删除缓存'}

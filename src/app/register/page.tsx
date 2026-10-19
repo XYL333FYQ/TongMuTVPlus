@@ -3,83 +3,18 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import {
-  AlertCircle,
-  CheckCircle,
-  Eye,
-  EyeOff,
-  Lock,
-  Send,
-  User,
-} from 'lucide-react';
+import { CheckCircle, Eye, EyeOff, Lock, Send, User } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useState } from 'react';
 
-import { useReducedMotionSetting } from '@/lib/motion';
-import { CURRENT_VERSION } from '@/lib/version';
-import { checkForUpdates, UpdateStatus } from '@/lib/version_check';
+import '@/styles/auth.css';
 
+import { useReducedMotionSetting } from '@/lib/motion';
+
+import AuthVersion from '@/components/auth/AuthVersion';
 import PageContainer from '@/components/PageContainer';
 import { useSite } from '@/components/SiteProvider';
 import { ThemeToggle } from '@/components/ThemeToggle';
-
-// 版本显示组件
-function VersionDisplay() {
-  const [updateStatus, setUpdateStatus] = useState<UpdateStatus | null>(null);
-  const [isChecking, setIsChecking] = useState(true);
-
-  useEffect(() => {
-    const checkUpdate = async () => {
-      try {
-        const status = await checkForUpdates();
-        setUpdateStatus(status);
-      } catch (_) {
-        // do nothing
-      } finally {
-        setIsChecking(false);
-      }
-    };
-
-    checkUpdate();
-  }, []);
-
-  return (
-    <button
-      onClick={() => window.open('/about', '_self')}
-      className='absolute bottom-4 left-1/2 transform -translate-x-1/2 flex items-center gap-2 text-sm text-[color:var(--tm-muted)] transition-colors cursor-pointer min-h-[44px] active:opacity-70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)] '
-    >
-      <span className='[font-family:var(--tm-font-sans)]'>
-        v{CURRENT_VERSION}
-      </span>
-      {!isChecking &&
-        updateStatus !== UpdateStatus.FETCH_FAILED &&
-        updateStatus !== UpdateStatus.NOT_CONFIGURED && (
-          <div
-            className={`flex items-center gap-1.5 ${
-              updateStatus === UpdateStatus.HAS_UPDATE
-                ? 'text-[color:var(--tm-text)]'
-                : updateStatus === UpdateStatus.NO_UPDATE
-                ? 'text-[color:var(--tm-text)]'
-                : ''
-            }`}
-          >
-            {updateStatus === UpdateStatus.HAS_UPDATE && (
-              <>
-                <AlertCircle className='w-3.5 h-3.5' />
-                <span className='font-medium text-[13px]'>有新版本</span>
-              </>
-            )}
-            {updateStatus === UpdateStatus.NO_UPDATE && (
-              <>
-                <CheckCircle className='w-3.5 h-3.5' />
-                <span className='font-medium text-[13px]'>已是最新</span>
-              </>
-            )}
-          </div>
-        )}
-    </button>
-  );
-}
 
 function RegisterPageClient() {
   const reduced = useReducedMotionSetting();
@@ -303,7 +238,7 @@ function RegisterPageClient() {
 
   return (
     <PageContainer
-      className='relative flex min-h-screen items-center justify-center overflow-hidden bg-[var(--tm-bg)] text-[color:var(--tm-text)]'
+      className='tm-auth'
       style={
         backgroundImage
           ? {
@@ -315,11 +250,11 @@ function RegisterPageClient() {
           : undefined
       }
     >
-      <div className='absolute top-4 right-4'>
+      <div className='tm-auth-theme'>
         <ThemeToggle />
       </div>
       <motion.div
-        className='tm-enter relative z-10 w-full max-w-md rounded-3xl bg-[var(--tm-surface)] shadow-2xl p-10 dark:border border-[var(--tm-line)]'
+        className='tm-auth-card'
         initial={{ opacity: 0, y: reduced ? 0 : 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{
@@ -327,15 +262,11 @@ function RegisterPageClient() {
           ease: [0.22, 1, 0.36, 1],
         }}
       >
-        <h1 className='text-[color:var(--tm-text)] tracking-normal text-center text-[28px] font-bold mb-2 bg-clip-text drop-shadow-sm md:text-[32px]'>
-          {siteName}
-        </h1>
-        <p className='text-center text-sm text-[color:var(--tm-muted)] mb-8'>
-          创建新账号
-        </p>
+        <h1 className='tm-auth-title'>{siteName}</h1>
+        <p className='tm-auth-sub'>创建新账号</p>
         {registerSuccess ? (
           <div className='space-y-5'>
-            <div className='rounded-2xl border border-[var(--tm-line)] bg-[var(--tm-surface-raised)] p-4 text-[color:var(--tm-text)]'>
+            <div className='tm-auth-note'>
               <div className='mb-2 flex items-center gap-2 font-medium'>
                 <CheckCircle className='h-5 w-5' />
                 注册成功
@@ -347,15 +278,13 @@ function RegisterPageClient() {
             </div>
 
             {telegramBind && (
-              <div className='rounded-2xl border border-[var(--tm-line)] bg-[var(--tm-surface-raised)] p-4 text-[color:var(--tm-text)]'>
+              <div className='tm-auth-note'>
                 <div className='mb-3 flex items-center gap-2 font-medium'>
                   <Send className='h-5 w-5' />
                   Telegram 绑定
                 </div>
                 <p className='text-sm'>在 Bot 中发送：</p>
-                <div className='my-3 rounded-lg bg-[var(--tm-surface-raised)] px-3 py-2 font-mono text-lg font-bold tracking-widest'>
-                  /bind {telegramBind.code}
-                </div>
+                <div className='tm-auth-code'>/bind {telegramBind.code}</div>
                 {telegramBind.deepLink && (
                   <button
                     type='button'
@@ -366,12 +295,12 @@ function RegisterPageClient() {
                         'noopener,noreferrer'
                       )
                     }
-                    className='mb-3 inline-flex w-full items-center justify-center rounded-lg bg-[var(--tm-text)] py-2.5 text-sm font-medium text-[color:var(--tm-accent-contrast)] transition-colors hover:opacity-90 min-h-[44px] tm-press'
+                    className='tm-btn tm-btn-primary mb-3 w-full'
                   >
                     打开 Telegram
                   </button>
                 )}
-                <p className='text-[13px] opacity-80'>
+                <p className='text-[13px] text-muted'>
                   绑定码 10 分钟内有效，也可稍后登录后在通知设置中重新生成。
                 </p>
               </div>
@@ -382,26 +311,26 @@ function RegisterPageClient() {
               onClick={() =>
                 router.replace(searchParams.get('redirect') || '/login')
               }
-              className='inline-flex w-full justify-center rounded-lg bg-[var(--tm-text)] py-3 text-base font-medium text-[color:var(--tm-accent-contrast)] shadow-lg transition-[transform,opacity] duration-200 hover:opacity-90 min-h-[44px] tm-press'
+              className='tm-btn tm-btn-primary tm-btn-lg w-full'
             >
               前往登录
             </button>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className='space-y-6'>
+          <form onSubmit={handleSubmit} className='tm-auth-form'>
             <div>
               <label htmlFor='username' className='sr-only'>
                 用户名
               </label>
               <div className='relative'>
-                <div className='absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none'>
-                  <User className='h-5 w-5 text-[color:var(--tm-muted)]' />
+                <div className='tm-auth-field-icon'>
+                  <User size={18} />
                 </div>
                 <input
                   id='username'
                   type='text'
                   autoComplete='username'
-                  className='block min-h-[48px] w-full rounded-[10px] border-0 bg-[var(--tm-surface-raised)] py-3 pl-10 pr-4 text-base text-[color:var(--tm-text)] shadow-sm ring-1 ring-[var(--tm-line)] placeholder:text-[color:var(--tm-muted)] focus:outline focus:outline-2 focus:outline-offset-2 focus:outline-[var(--tm-text)] focus:ring-[var(--tm-line)]'
+                  className='tm-input tm-auth-input'
                   placeholder='输入用户名'
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
@@ -414,21 +343,21 @@ function RegisterPageClient() {
                 密码
               </label>
               <div className='relative'>
-                <div className='absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none'>
-                  <Lock className='h-5 w-5 text-[color:var(--tm-muted)]' />
+                <div className='tm-auth-field-icon'>
+                  <Lock size={18} />
                 </div>
                 <input
                   id='password'
                   type={showPassword ? 'text' : 'password'}
                   autoComplete='new-password'
-                  className='block min-h-[48px] w-full rounded-[10px] border-0 bg-[var(--tm-surface-raised)] py-3 pl-10 pr-12 text-base text-[color:var(--tm-text)] shadow-sm ring-1 ring-[var(--tm-line)] placeholder:text-[color:var(--tm-muted)] focus:outline focus:outline-2 focus:outline-offset-2 focus:outline-[var(--tm-text)] focus:ring-[var(--tm-line)]'
+                  className='tm-input tm-auth-input'
                   placeholder='输入密码（至少6位）'
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                 />
                 <button
                   type='button'
-                  className='absolute inset-y-0 right-0 flex min-h-[44px] w-11 items-center justify-center text-[color:var(--tm-muted)] hover:text-[color:var(--tm-text)] tm-press'
+                  className='tm-auth-reveal'
                   onClick={() => setShowPassword(!showPassword)}
                   aria-label={showPassword ? '隐藏密码' : '显示密码'}
                 >
@@ -446,21 +375,21 @@ function RegisterPageClient() {
                 确认密码
               </label>
               <div className='relative'>
-                <div className='absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none'>
-                  <Lock className='h-5 w-5 text-[color:var(--tm-muted)]' />
+                <div className='tm-auth-field-icon'>
+                  <Lock size={18} />
                 </div>
                 <input
                   id='confirmPassword'
                   type={showConfirmPassword ? 'text' : 'password'}
                   autoComplete='new-password'
-                  className='block min-h-[48px] w-full rounded-[10px] border-0 bg-[var(--tm-surface-raised)] py-3 pl-10 pr-12 text-base text-[color:var(--tm-text)] shadow-sm ring-1 ring-[var(--tm-line)] placeholder:text-[color:var(--tm-muted)] focus:outline focus:outline-2 focus:outline-offset-2 focus:outline-[var(--tm-text)] focus:ring-[var(--tm-line)]'
+                  className='tm-input tm-auth-input'
                   placeholder='再次输入密码'
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                 />
                 <button
                   type='button'
-                  className='absolute inset-y-0 right-0 flex min-h-[44px] w-11 items-center justify-center text-[color:var(--tm-muted)] hover:text-[color:var(--tm-text)] tm-press'
+                  className='tm-auth-reveal'
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                   aria-label={
                     showConfirmPassword ? '隐藏确认密码' : '显示确认密码'
@@ -481,13 +410,13 @@ function RegisterPageClient() {
                   邀请码
                 </label>
                 <div className='relative'>
-                  <div className='absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none'>
-                    <User className='h-5 w-5 text-[color:var(--tm-muted)]' />
+                  <div className='tm-auth-field-icon'>
+                    <User size={18} />
                   </div>
                   <input
                     id='inviteCode'
                     type='text'
-                    className='block min-h-[48px] w-full rounded-[10px] border-0 bg-[var(--tm-surface-raised)] py-3 pl-10 pr-4 text-base text-[color:var(--tm-text)] shadow-sm ring-1 ring-[var(--tm-line)] placeholder:text-[color:var(--tm-muted)] focus:outline focus:outline-2 focus:outline-offset-2 focus:outline-[var(--tm-text)] focus:ring-[var(--tm-line)]'
+                    className='tm-input tm-auth-input'
                     placeholder='输入邀请码'
                     value={inviteCode}
                     onChange={(e) => setInviteCode(e.target.value)}
@@ -506,7 +435,7 @@ function RegisterPageClient() {
               )}
 
             {error && (
-              <p role='alert' className='text-sm text-[color:var(--tm-text)]'>
+              <p role='alert' className='tm-auth-error'>
                 {error}
               </p>
             )}
@@ -523,7 +452,7 @@ function RegisterPageClient() {
                   !inviteCode.trim()) ||
                 (siteConfig?.RegistrationRequireTurnstile && !turnstileToken)
               }
-              className='inline-flex w-full justify-center rounded-lg bg-[var(--tm-text)] py-3 text-base font-medium text-[color:var(--tm-accent-contrast)] shadow-lg transition-[transform,opacity] duration-200 disabled:cursor-not-allowed disabled:opacity-50 min-h-[44px] tm-press'
+              className='tm-btn tm-btn-primary tm-btn-lg w-full'
             >
               {loading ? '注册中...' : '注册'}
             </button>
@@ -533,7 +462,7 @@ function RegisterPageClient() {
               <button
                 type='button'
                 onClick={() => router.push('/login')}
-                className='text-sm text-[color:var(--tm-text)] hover:text-[color:var(--tm-text)] transition-colors min-h-[44px] tm-press'
+                className='tm-auth-link'
               >
                 已有账号？返回登录
               </button>
@@ -543,7 +472,7 @@ function RegisterPageClient() {
       </motion.div>
 
       {/* 版本信息显示 */}
-      <VersionDisplay />
+      <AuthVersion />
     </PageContainer>
   );
 }

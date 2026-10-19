@@ -14,7 +14,8 @@ function getCachedSearchResults(query?: string | null) {
     const cached = sessionStorage.getItem(`search_cache_${keyword}`);
     if (!cached) return null;
     const parsed = JSON.parse(cached) as SearchCachePayload;
-    if (Array.isArray(parsed.results) && parsed.results.length > 0) return parsed.results;
+    if (Array.isArray(parsed.results) && parsed.results.length > 0)
+      return parsed.results;
   } catch {
     // ignore invalid cache
   }
@@ -25,7 +26,9 @@ async function fetchSearchResults(query: string) {
   const cached = getCachedSearchResults(query);
   if (cached) return cached;
 
-  const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`, { cache: 'no-store' });
+  const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`, {
+    cache: 'no-store',
+  });
   if (!res.ok) throw new Error('搜索播放源失败');
   const data = await res.json();
   return (data.results || []) as SearchResult[];
@@ -42,7 +45,9 @@ export async function fetchTVDetail(params: {
   if (source && id) {
     const qs = new URLSearchParams({ source, id, title: title || '' });
     if (fileName) qs.set('fileName', fileName);
-    const res = await fetch(`/api/source-detail?${qs.toString()}`, { cache: 'no-store' });
+    const res = await fetch(`/api/source-detail?${qs.toString()}`, {
+      cache: 'no-store',
+    });
     if (!res.ok) throw new Error('获取视频详情失败');
     const detail = (await res.json()) as SearchResult;
     let sources: SearchResult[] = [detail];
@@ -52,7 +57,9 @@ export async function fetchTVDetail(params: {
         const list = await fetchSearchResults(searchTitle);
         sources = [
           detail,
-          ...list.filter((item) => !(item.source === detail.source && item.id === detail.id)),
+          ...list.filter(
+            (item) => !(item.source === detail.source && item.id === detail.id)
+          ),
         ];
       } catch {
         // 换源搜索失败不影响当前播放
@@ -66,14 +73,24 @@ export async function fetchTVDetail(params: {
   if (sources.length === 0) throw new Error('未找到播放源');
   let detail = sources[0];
   if (!detail.episodes?.length) {
-    const qs = new URLSearchParams({ source: detail.source, id: detail.id, title: detail.title || title });
-    const detailRes = await fetch(`/api/source-detail?${qs.toString()}`, { cache: 'no-store' });
+    const qs = new URLSearchParams({
+      source: detail.source,
+      id: detail.id,
+      title: detail.title || title,
+    });
+    const detailRes = await fetch(`/api/source-detail?${qs.toString()}`, {
+      cache: 'no-store',
+    });
     if (detailRes.ok) detail = (await detailRes.json()) as SearchResult;
   }
   return { detail, sources };
 }
 
-export async function resolveTVEpisodeUrl(rawUrl: string, source?: string, proxyMode?: boolean) {
+export async function resolveTVEpisodeUrl(
+  rawUrl: string,
+  source?: string,
+  proxyMode?: boolean
+) {
   let url = rawUrl;
   const lazyPrefixes = [
     '/api/xiaoya/play',
@@ -87,14 +104,20 @@ export async function resolveTVEpisodeUrl(rawUrl: string, source?: string, proxy
   ];
   if (lazyPrefixes.some((prefix) => url.startsWith(prefix))) {
     const separator = url.includes('?') ? '&' : '?';
-    const res = await fetch(`${url}${separator}format=json`, { cache: 'no-store' });
+    const res = await fetch(`${url}${separator}format=json`, {
+      cache: 'no-store',
+    });
     const data = await res.json();
     if (data.url) url = data.url;
   }
 
-  const isM3u8 = url.toLowerCase().includes('.m3u') || !url.toLowerCase().match(/\.(mp4|flv|webm|mkv|avi|mov)(\?.*)?$/);
+  const isM3u8 =
+    url.toLowerCase().includes('.m3u') ||
+    !url.toLowerCase().match(/\.(mp4|flv|webm|mkv|avi|mov)(\?.*)?$/);
   if (proxyMode && source && isM3u8 && !url.startsWith('/api/proxy/')) {
-    return `/api/proxy/vod/m3u8?url=${encodeURIComponent(url)}&source=${encodeURIComponent(source)}`;
+    return `/api/proxy/vod/m3u8?url=${encodeURIComponent(
+      url
+    )}&source=${encodeURIComponent(source)}`;
   }
   return url;
 }
@@ -105,6 +128,8 @@ export function formatTVTime(seconds: number) {
   const m = Math.floor((seconds % 3600) / 60);
   const s = Math.floor(seconds % 60);
   return h > 0
-    ? `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`
+    ? `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s
+        .toString()
+        .padStart(2, '0')}`
     : `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
 }

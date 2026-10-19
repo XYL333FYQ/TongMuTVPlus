@@ -78,7 +78,7 @@ export default function ContinueReadingCard({
       }}
       aria-label={`${ctaLabel} ${title}`}
       className={cn(
-        'tm-media-card group flex min-h-[44px] gap-4 p-4 hover:border-[var(--tm-text)] sm:gap-5 sm:p-5 tm-press',
+        'tm-media-card group flex min-h-[44px] gap-4 p-4 hover:border-fg sm:gap-5 sm:p-5 tm-press',
         LIBRARY_PANEL,
         LIBRARY_FOCUS,
         className
@@ -86,7 +86,7 @@ export default function ContinueReadingCard({
     >
       <div
         className={cn(
-          'relative aspect-[3/4] w-20 shrink-0 self-start overflow-hidden rounded-sm bg-[var(--tm-surface-raised)] sm:w-28',
+          'relative aspect-[3/4] w-20 shrink-0 self-start overflow-hidden rounded-sm bg-raised sm:w-28',
           BOOK_COVER_LIFT
         )}
       >
@@ -112,12 +112,10 @@ export default function ContinueReadingCard({
 
       <div className='flex min-w-0 flex-1 flex-col justify-between gap-3'>
         <div className='min-w-0'>
-          <div className='text-[13px] font-medium text-[color:var(--tm-text)]'>
-            {eyebrow}
-          </div>
+          <div className='text-[13px] font-medium text-fg'>{eyebrow}</div>
           <div
             className={cn(
-              'mt-1.5 line-clamp-2 text-xl font-medium leading-snug text-[color:var(--tm-text)] sm:text-2xl',
+              'mt-1.5 line-clamp-2 text-xl font-medium leading-snug text-fg sm:text-2xl',
               LIBRARY_SERIF
             )}
           >
@@ -134,14 +132,14 @@ export default function ContinueReadingCard({
           {typeof progress === 'number' && (
             <div className='flex min-w-[8rem] flex-1 items-center gap-3'>
               <div
-                className='h-1 flex-1 overflow-hidden rounded-full bg-[var(--tm-line)]'
+                className='h-1 flex-1 overflow-hidden rounded-full bg-line'
                 role='progressbar'
                 aria-valuenow={progress}
                 aria-valuemin={0}
                 aria-valuemax={100}
               >
                 <div
-                  className='h-full rounded-full bg-[var(--tm-text)]'
+                  className='h-full rounded-full bg-fg'
                   style={{ width: `${progress}%` }}
                 />
               </div>

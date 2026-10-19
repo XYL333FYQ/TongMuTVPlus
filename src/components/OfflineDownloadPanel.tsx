@@ -150,17 +150,17 @@ export function OfflineDownloadPanel({
   const getStatusColor = (status: OfflineDownloadTask['status']) => {
     switch (status) {
       case 'pending':
-        return 'text-[color:var(--tm-muted)]';
+        return 'text-muted';
       case 'downloading':
-        return 'text-[color:var(--tm-text)]';
+        return 'text-fg';
       case 'paused':
-        return 'text-[color:var(--tm-text)]';
+        return 'text-fg';
       case 'completed':
-        return 'text-[color:var(--tm-text)]';
+        return 'text-fg';
       case 'error':
-        return 'text-[color:var(--tm-text)]';
+        return 'text-fg';
       default:
-        return 'text-[color:var(--tm-muted)]';
+        return 'text-muted';
     }
   };
 
@@ -194,11 +194,11 @@ export function OfflineDownloadPanel({
   const libraryVideos = getLibraryVideos();
 
   const panelContent = (
-    <div className='fixed inset-0 z-[9999] flex items-center justify-center bg-[color:color-mix(in_srgb,var(--tm-room-cinema-bg)_50%,transparent)] backdrop-blur-sm p-4'>
-      <div className='bg-[var(--tm-surface)] rounded-lg shadow-2xl w-full max-w-4xl max-h-[80vh] flex flex-col'>
+    <div className='fixed inset-0 z-[9999] flex items-center justify-center bg-ink/50 backdrop-blur-sm p-4'>
+      <div className='bg-surface rounded-lg shadow-2xl w-full max-w-4xl max-h-[80vh] flex flex-col'>
         {/* 标题栏 */}
-        <div className='flex items-center justify-between p-4 border-b border-[var(--tm-line)]'>
-          <h2 className='text-xl font-bold text-[color:var(--tm-text)]'>
+        <div className='flex items-center justify-between p-4 border-b border-line'>
+          <h2 className='text-xl font-bold text-fg'>
             {viewMode === 'tasks' ? '离线下载任务列表' : '视频库'}
           </h2>
           <div className='flex items-center gap-3'>
@@ -208,8 +208,8 @@ export function OfflineDownloadPanel({
                 onClick={() => setViewMode('tasks')}
                 className={`px-3 py-1 text-sm font-medium rounded transition-colors ${
                   viewMode === 'tasks'
-                    ? 'bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] min-h-[44px] tm-press'
-                    : 'bg-[var(--tm-surface-raised)] text-[color:var(--tm-muted)] hover:bg-[var(--tm-line)] min-h-[44px] tm-press'
+                    ? 'bg-fg text-inverse min-h-[44px] tm-press'
+                    : 'bg-raised text-muted hover:bg-line min-h-[44px] tm-press'
                 }`}
               >
                 任务列表
@@ -218,8 +218,8 @@ export function OfflineDownloadPanel({
                 onClick={() => setViewMode('library')}
                 className={`px-3 py-1 text-sm font-medium rounded transition-colors ${
                   viewMode === 'library'
-                    ? 'bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] min-h-[44px] tm-press'
-                    : 'bg-[var(--tm-surface-raised)] text-[color:var(--tm-muted)] hover:bg-[var(--tm-line)] min-h-[44px] tm-press'
+                    ? 'bg-fg text-inverse min-h-[44px] tm-press'
+                    : 'bg-raised text-muted hover:bg-line min-h-[44px] tm-press'
                 }`}
               >
                 视频库 ({libraryVideos.length})
@@ -228,7 +228,7 @@ export function OfflineDownloadPanel({
             {/* 关闭按钮 */}
             <button
               onClick={onClose}
-              className='text-[color:var(--tm-muted)] hover:text-[color:var(--tm-muted)] hover:text-[color:var(--tm-text)] transition-colors min-h-[44px] tm-press'
+              className='text-muted hover:text-fg transition-colors min-h-[44px] tm-press'
             >
               <svg
                 className='w-6 h-6'
@@ -251,12 +251,12 @@ export function OfflineDownloadPanel({
         <div className='flex-1 overflow-y-auto p-4 space-y-3'>
           {loading ? (
             <div className='flex items-center justify-center h-full'>
-              <div className='animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--tm-line)]'></div>
+              <div className='animate-spin rounded-full h-12 w-12 border-b-2 border-line'></div>
             </div>
           ) : viewMode === 'library' ? (
             // 视频库视图
             libraryVideos.length === 0 ? (
-              <div className='flex flex-col items-center justify-center h-full text-[color:var(--tm-muted)]'>
+              <div className='flex flex-col items-center justify-center h-full text-muted'>
                 <svg
                   className='w-16 h-16 mb-4'
                   fill='none'
@@ -276,7 +276,7 @@ export function OfflineDownloadPanel({
               libraryVideos.map(({ video, episodes }) => (
                 <div
                   key={`${video.source}_${video.videoId}`}
-                  className='bg-[var(--tm-surface-raised)] rounded-lg p-4 border border-[var(--tm-line)]'
+                  className='bg-raised rounded-lg p-4 border border-line'
                 >
                   <div className='flex gap-4'>
                     {/* 封面图 */}
@@ -291,30 +291,30 @@ export function OfflineDownloadPanel({
                     )}
                     {/* 视频信息 */}
                     <div className='flex-1 min-w-0'>
-                      <h3 className='text-lg font-bold text-[color:var(--tm-text)] mb-2'>
+                      <h3 className='text-lg font-bold text-fg mb-2'>
                         {video.metadata?.videoTitle || video.title}
                       </h3>
                       {video.metadata?.year && (
-                        <p className='text-sm text-[color:var(--tm-muted)] mb-1'>
+                        <p className='text-sm text-muted mb-1'>
                           年份: {video.metadata.year}
                         </p>
                       )}
                       {video.metadata?.rating && (
-                        <p className='text-sm text-[color:var(--tm-muted)] mb-1'>
+                        <p className='text-sm text-muted mb-1'>
                           评分: {video.metadata.rating.toFixed(1)}
                         </p>
                       )}
                       {video.metadata?.description && (
-                        <p className='text-sm text-[color:var(--tm-muted)] mb-3 line-clamp-2'>
+                        <p className='text-sm text-muted mb-3 line-clamp-2'>
                           {video.metadata.description}
                         </p>
                       )}
                       <div className='flex items-center gap-2 mb-3'>
-                        <span className='text-sm text-[color:var(--tm-muted)]'>
+                        <span className='text-sm text-muted'>
                           已下载 {episodes.length} 集
                         </span>
                         {video.metadata?.totalEpisodes && (
-                          <span className='text-sm text-[color:var(--tm-muted)]'>
+                          <span className='text-sm text-muted'>
                             / 共 {video.metadata.totalEpisodes} 集
                           </span>
                         )}
@@ -324,7 +324,7 @@ export function OfflineDownloadPanel({
                         {episodes.map((ep) => (
                           <div
                             key={ep.id}
-                            className='flex items-center gap-1 px-2 py-1 bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)] text-[13px] rounded group'
+                            className='flex items-center gap-1 px-2 py-1 bg-raised text-fg text-[13px] rounded group'
                           >
                             <span>第{ep.episodeIndex + 1}集</span>
                             <button
@@ -337,7 +337,7 @@ export function OfflineDownloadPanel({
                                   handleDeleteTask(ep.id);
                                 }
                               }}
-                              className='ml-1 opacity-0 group-hover:opacity-100 transition-opacity text-[color:var(--tm-text)] hover:text-[color:var(--tm-text)] min-h-[44px] tm-press'
+                              className='ml-1 opacity-0 group-hover:opacity-100 transition-opacity text-fg hover:text-fg min-h-[44px] tm-press'
                               title='删除此集'
                             >
                               <svg
@@ -370,7 +370,7 @@ export function OfflineDownloadPanel({
                             episodes.forEach((ep) => handleDeleteTask(ep.id));
                           }
                         }}
-                        className='flex items-center gap-1 px-3 py-1.5 bg-[var(--tm-text)] hover:opacity-90 text-[color:var(--tm-accent-contrast)] text-[13px] font-medium rounded transition-colors min-h-[44px] tm-press'
+                        className='flex items-center gap-1 px-3 py-1.5 bg-fg hover:opacity-90 text-inverse text-[13px] font-medium rounded transition-colors min-h-[44px] tm-press'
                       >
                         <svg
                           className='w-4 h-4'
@@ -394,7 +394,7 @@ export function OfflineDownloadPanel({
             )
           ) : tasks.length === 0 ? (
             // 任务列表为空
-            <div className='flex flex-col items-center justify-center h-full text-[color:var(--tm-muted)]'>
+            <div className='flex flex-col items-center justify-center h-full text-muted'>
               <svg
                 className='w-16 h-16 mb-4'
                 fill='none'
@@ -415,15 +415,15 @@ export function OfflineDownloadPanel({
             tasks.map((task) => (
               <div
                 key={task.id}
-                className='bg-[var(--tm-surface-raised)] rounded-lg p-4 border border-[var(--tm-line)]'
+                className='bg-raised rounded-lg p-4 border border-line'
               >
                 {/* 任务信息 */}
                 <div className='flex items-start justify-between mb-3'>
                   <div className='flex-1 min-w-0'>
-                    <h3 className='text-sm font-medium text-[color:var(--tm-text)] truncate mb-1'>
+                    <h3 className='text-sm font-medium text-fg truncate mb-1'>
                       {task.title}
                     </h3>
-                    <p className='text-[13px] text-[color:var(--tm-muted)]'>
+                    <p className='text-[13px] text-muted'>
                       来源: {task.source} | 视频ID: {task.videoId} | 第
                       {task.episodeIndex + 1}集
                     </p>
@@ -442,22 +442,22 @@ export function OfflineDownloadPanel({
                 {/* 进度条 */}
                 {task.totalSegments > 0 && (
                   <div className='mb-3'>
-                    <div className='flex items-center justify-between text-[13px] text-[color:var(--tm-muted)] mb-1'>
+                    <div className='flex items-center justify-between text-[13px] text-muted mb-1'>
                       <span>
                         {task.downloadedSegments} / {task.totalSegments} 片段
                       </span>
                       <span>{task.progress.toFixed(1)}%</span>
                     </div>
-                    <div className='w-full bg-[var(--tm-surface-raised)] rounded-full h-2 overflow-hidden'>
+                    <div className='w-full bg-raised rounded-full h-2 overflow-hidden'>
                       <div
                         className={`h-full rounded-full transition-all duration-300 ${
                           task.status === 'downloading'
-                            ? 'bg-[var(--tm-surface)] tm-skeleton'
+                            ? 'bg-surface tm-skeleton'
                             : task.status === 'completed'
-                            ? 'bg-[var(--tm-text)]'
+                            ? 'bg-fg'
                             : task.status === 'error'
-                            ? 'bg-[var(--tm-surface-raised)]'
-                            : 'bg-[var(--tm-surface)]'
+                            ? 'bg-raised'
+                            : 'bg-surface'
                         }`}
                         style={{ width: `${task.progress}%` }}
                       ></div>
@@ -468,14 +468,14 @@ export function OfflineDownloadPanel({
                 {/* 错误信息 */}
                 {task.errorMessage && (
                   <div className='mb-3'>
-                    <div className='text-[13px] text-[color:var(--tm-text)]'>
+                    <div className='text-[13px] text-fg'>
                       {task.errorMessage}
                     </div>
                   </div>
                 )}
 
                 {/* 时间信息 */}
-                <div className='flex items-center justify-between text-[13px] text-[color:var(--tm-muted)] mb-3'>
+                <div className='flex items-center justify-between text-[13px] text-muted mb-3'>
                   <span>
                     创建: {new Date(task.createdAt).toLocaleString('zh-CN')}
                   </span>
@@ -490,7 +490,7 @@ export function OfflineDownloadPanel({
                   {(task.status === 'error' || task.status === 'paused') && (
                     <button
                       onClick={() => handleRetryTask(task.id)}
-                      className='flex items-center gap-1 px-3 py-1.5 bg-[var(--tm-text)] hover:opacity-90 text-[color:var(--tm-accent-contrast)] text-[13px] font-medium rounded transition-colors min-h-[44px] tm-press'
+                      className='flex items-center gap-1 px-3 py-1.5 bg-fg hover:opacity-90 text-inverse text-[13px] font-medium rounded transition-colors min-h-[44px] tm-press'
                     >
                       <svg
                         className='w-4 h-4'
@@ -510,7 +510,7 @@ export function OfflineDownloadPanel({
                   )}
                   <button
                     onClick={() => handleDeleteTask(task.id)}
-                    className='flex items-center gap-1 px-3 py-1.5 bg-[var(--tm-text)] hover:opacity-90 text-[color:var(--tm-accent-contrast)] text-[13px] font-medium rounded transition-colors min-h-[44px] tm-press'
+                    className='flex items-center gap-1 px-3 py-1.5 bg-fg hover:opacity-90 text-inverse text-[13px] font-medium rounded transition-colors min-h-[44px] tm-press'
                   >
                     <svg
                       className='w-4 h-4'

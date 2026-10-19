@@ -63,7 +63,7 @@ export default function MediaCard({
   }, [reduced, reveal]);
 
   const shellClass = cn(
-    'tm-media-card group block min-h-[44px] overflow-hidden rounded-[14px] border border-[var(--tm-line)] bg-[var(--tm-surface)]',
+    'tm-media-card group block min-h-[44px] overflow-hidden rounded-[14px] border border-line bg-surface',
     LIBRARY_FOCUS,
     className
   );
@@ -72,7 +72,7 @@ export default function MediaCard({
     <>
       <div
         className={cn(
-          'relative overflow-hidden bg-[var(--tm-surface-raised)]',
+          'relative overflow-hidden bg-raised',
           BOOK_COVER_LIFT,
           aspect === '3/4' ? 'aspect-[3/4]' : 'aspect-[2/3]'
         )}
@@ -108,7 +108,7 @@ export default function MediaCard({
       <div className='space-y-1 px-2.5 pb-2.5 pt-2'>
         <div
           className={cn(
-            'min-h-[1.7em] truncate text-sm font-medium leading-[1.7] text-[color:var(--tm-text)]',
+            'min-h-[1.7em] truncate text-sm font-medium leading-[1.7] text-fg',
             LIBRARY_SERIF
           )}
         >
@@ -129,14 +129,14 @@ export default function MediaCard({
         )}
         {typeof item.progress === 'number' && (
           <div
-            className='mt-2 h-1 w-full overflow-hidden rounded-full bg-[var(--tm-line)]'
+            className='mt-2 h-1 w-full overflow-hidden rounded-full bg-line'
             role='progressbar'
             aria-valuenow={item.progress}
             aria-valuemin={0}
             aria-valuemax={100}
           >
             <div
-              className='h-full rounded-full bg-[var(--tm-text)]'
+              className='h-full rounded-full bg-fg'
               style={{ width: `${item.progress}%` }}
             />
           </div>

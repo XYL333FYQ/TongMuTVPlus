@@ -4,7 +4,7 @@ import { AlertTriangle } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
-import '@/styles/legacy-panels.css';
+import '@/styles/panels.css';
 
 import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
 import { useReducedMotionSetting } from '@/lib/motion';
@@ -85,13 +85,13 @@ export default function HttpWarningDialog({ onClose }: HttpWarningDialogProps) {
 
   return createPortal(
     <div
-      className={`tm-http-warning-backdrop fixed inset-0 bg-[color:color-mix(in_srgb,var(--tm-room-cinema-bg)_50%,transparent)] z-[9999] flex items-center justify-center p-4 transition-opacity duration-300 ${
+      className={`tm-http-warning-backdrop fixed inset-0 bg-ink/50 z-[9999] flex items-center justify-center p-4 transition-opacity duration-300 ${
         isVisible ? 'opacity-100' : 'opacity-0'
       } `}
       onClick={handleClose}
     >
       <div
-        className={`tm-http-warning-panel bg-[var(--tm-surface)] rounded-lg shadow-xl max-w-md w-full border border-[var(--tm-line)] transition-[transform,opacity] duration-300 ${
+        className={`tm-http-warning-panel bg-surface rounded-lg shadow-xl max-w-md w-full border border-line transition-[transform,opacity] duration-300 ${
           isVisible ? 'tm-http-warning-shown' : 'tm-http-warning-hidden'
         } `}
         onClick={(e) => e.stopPropagation()}
@@ -100,13 +100,13 @@ export default function HttpWarningDialog({ onClose }: HttpWarningDialogProps) {
           {/* 图标和标题 */}
           <div className='flex items-start gap-4 mb-4'>
             <div className='flex-shrink-0'>
-              <AlertTriangle className='w-8 h-8 text-[color:var(--tm-text)]' />
+              <AlertTriangle className='w-8 h-8 text-fg' />
             </div>
             <div className='flex-1'>
-              <h3 className='text-lg font-medium text-[color:var(--tm-text)] mb-2'>
+              <h3 className='text-lg font-medium text-fg mb-2'>
                 HTTP 环境功能限制提示
               </h3>
-              <div className='text-sm text-[color:var(--tm-muted)] space-y-2'>
+              <div className='text-sm text-muted space-y-2'>
                 <p>
                   检测到您正在使用 HTTP
                   协议访问本站。由于浏览器安全策略限制，以下功能将无法正常使用:
@@ -116,7 +116,7 @@ export default function HttpWarningDialog({ onClose }: HttpWarningDialogProps) {
                   <li>麦克风语音功能</li>
                   <li>其他需要安全上下文的高级功能</li>
                 </ul>
-                <p className='mt-3 text-[color:var(--tm-text)] font-medium'>
+                <p className='mt-3 text-fg font-medium'>
                   建议配置 HTTPS 证书以获得完整功能体验。
                 </p>
               </div>
@@ -127,13 +127,13 @@ export default function HttpWarningDialog({ onClose }: HttpWarningDialogProps) {
           <div className='flex gap-3 mt-6'>
             <button
               onClick={handleDontShowAgain}
-              className='flex-1 px-4 py-2 text-sm font-medium text-[color:var(--tm-muted)] bg-[var(--tm-surface-raised)] hover:bg-[var(--tm-line)] rounded-lg transition-[opacity,transform] min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
+              className='flex-1 px-4 py-2 text-sm font-medium text-muted bg-raised hover:bg-line rounded-lg transition-[opacity,transform] min-h-[44px] tm-press min-w-[44px]'
             >
               不再提示
             </button>
             <button
               onClick={handleClose}
-              className='flex-1 px-4 py-2 text-sm font-medium text-[color:var(--tm-accent-contrast)] bg-[var(--tm-text)] hover:opacity-90 rounded-lg transition-[opacity,transform] min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
+              className='flex-1 px-4 py-2 text-sm font-medium text-inverse bg-fg hover:opacity-90 rounded-lg transition-[opacity,transform] min-h-[44px] tm-press min-w-[44px]'
             >
               我知道了
             </button>

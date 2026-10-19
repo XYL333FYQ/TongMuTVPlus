@@ -3,8 +3,6 @@
 import { LogIn, UserRound } from 'lucide-react';
 import Link from 'next/link';
 
-import './viewer-account.css';
-
 import { useViewerIdentity } from '@/hooks/useViewerIdentity';
 
 import ThemeSettings from './ThemeSettings';

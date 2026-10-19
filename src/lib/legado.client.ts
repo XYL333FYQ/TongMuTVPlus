@@ -1,12 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { DOMParser } from '@xmldom/xmldom';
 import * as cheerio from 'cheerio/slim';
 import crypto from 'crypto';
 import he from 'he';
 import vm from 'vm';
-import { DOMParser } from '@xmldom/xmldom';
 import xpath from 'xpath';
 
-import { getConfig } from './config';
 import {
   BookAcquisitionLink,
   BookCatalogResult,
@@ -21,8 +20,9 @@ import {
   LegadoBookSourceRule,
   LegadoRuleSearch,
 } from './book.types';
-import { validateProxyUrlServerSide } from './server/ssrf';
+import { getConfig } from './config';
 import { legadoSubscriptionStore } from './legado/subscription-store';
+import { validateProxyUrlServerSide } from './server/ssrf';
 
 interface ResolvedLegadoConfig {
   enabled: boolean;
@@ -30,14 +30,26 @@ interface ResolvedLegadoConfig {
   cacheTTL: number;
 }
 
-const DEFAULT_TIMEOUT_MS = Number(process.env.LEGADO_TIMEOUT_MS || process.env.OPDS_TIMEOUT_MS || 20000);
-const MAX_TEXT_BYTES = Number(process.env.LEGADO_MAX_TEXT_BYTES || 3 * 1024 * 1024);
-const DEFAULT_LEGADO_SEARCH_PAGES = Number(process.env.LEGADO_SEARCH_PAGES || 5);
+const DEFAULT_TIMEOUT_MS = Number(
+  process.env.LEGADO_TIMEOUT_MS || process.env.OPDS_TIMEOUT_MS || 20000
+);
+const MAX_TEXT_BYTES = Number(
+  process.env.LEGADO_MAX_TEXT_BYTES || 3 * 1024 * 1024
+);
+const DEFAULT_LEGADO_SEARCH_PAGES = Number(
+  process.env.LEGADO_SEARCH_PAGES || 5
+);
 const textCache = new Map<string, { expiresAt: number; data: string }>();
-const searchCache = new Map<string, { expiresAt: number; data: BookListItem[] }>();
+const searchCache = new Map<
+  string,
+  { expiresAt: number; data: BookListItem[] }
+>();
 const detailCache = new Map<string, { expiresAt: number; data: BookDetail }>();
 const tocCache = new Map<string, { expiresAt: number; data: BookChapter[] }>();
-const chapterCache = new Map<string, { expiresAt: number; data: BookChapterContent }>();
+const chapterCache = new Map<
+  string,
+  { expiresAt: number; data: BookChapterContent }
+>();
 
 interface RequestOptions {
   url: string;
@@ -50,7 +62,10 @@ interface RequestOptions {
 
 const cookieJar = new Map<string, string>();
 const variableStore = new Map<string, any>();
-const imageMemoryCache = new Map<string, { expiresAt: number; contentType: string; data: Uint8Array }>();
+const imageMemoryCache = new Map<
+  string,
+  { expiresAt: number; contentType: string; data: Uint8Array }
+>();
 
 function stableId(input: string) {
   return crypto.createHash('sha1').update(input).digest('hex').slice(0, 16);
@@ -65,8 +80,16 @@ function isJsRuleString(value?: string) {
   return /^(?:@js:|<js>)/i.test(trimmed) || /<js>[\s\S]*?<\/js>/i.test(trimmed);
 }
 
-function resolveLegadoDynamicValue(value: any, context: Record<string, any>, timeout = 1000, evaluateJs = false): any {
-  if (Array.isArray(value)) return value.map((item) => resolveLegadoDynamicValue(item, context, timeout, evaluateJs));
+function resolveLegadoDynamicValue(
+  value: any,
+  context: Record<string, any>,
+  timeout = 1000,
+  evaluateJs = false
+): any {
+  if (Array.isArray(value))
+    return value.map((item) =>
+      resolveLegadoDynamicValue(item, context, timeout, evaluateJs)
+    );
   if (!value || typeof value !== 'object') {
     if (typeof value !== 'string') return value;
     // 规范化书源时只做浅层搬移，不求值动态规则：此时上下文里没有 key/page/result，
@@ -74,13 +97,25 @@ function resolveLegadoDynamicValue(value: any, context: Record<string, any>, tim
     if (!evaluateJs || !isJsRuleString(value)) return value;
     return evaluateJsRuleString(value, context, timeout);
   }
-  return Object.fromEntries(Object.entries(value).map(([key, val]) => [key, resolveLegadoDynamicValue(val, context, timeout, evaluateJs)]));
+  return Object.fromEntries(
+    Object.entries(value).map(([key, val]) => [
+      key,
+      resolveLegadoDynamicValue(val, context, timeout, evaluateJs),
+    ])
+  );
 }
 
-function evaluateJsRuleString(value: string, context: Record<string, any>, timeout = 1000) {
+function evaluateJsRuleString(
+  value: string,
+  context: Record<string, any>,
+  timeout = 1000
+) {
   const trimmed = value.trim();
-  if (/^(?:@js:|<js>)/i.test(trimmed)) return runJsSnippet(trimmed, context, timeout);
-  return value.replace(/<js>([\s\S]*?)<\/js>/gi, (_, code) => runJsSnippet(code, context, timeout));
+  if (/^(?:@js:|<js>)/i.test(trimmed))
+    return runJsSnippet(trimmed, context, timeout);
+  return value.replace(/<js>([\s\S]*?)<\/js>/gi, (_, code) =>
+    runJsSnippet(code, context, timeout)
+  );
 }
 
 function parseHeaderLines(raw: string, context: Record<string, any>) {
@@ -90,14 +125,20 @@ function parseHeaderLines(raw: string, context: Record<string, any>) {
     const name = line.slice(0, index).trim();
     if (!isSafeHeaderName(name)) return headers;
     const value = line.slice(index + 1).trim();
-    headers[name] = isJsRuleString(value) ? evaluateJsRuleString(value, context) : value;
+    headers[name] = isJsRuleString(value)
+      ? evaluateJsRuleString(value, context)
+      : value;
     return headers;
   }, {});
 }
 
-function asObjectHeader(value?: string | Record<string, string>, context?: Record<string, any>): Record<string, string> {
+function asObjectHeader(
+  value?: string | Record<string, string>,
+  context?: Record<string, any>
+): Record<string, string> {
   if (!value) return {};
-  if (typeof value === 'object') return resolveLegadoDynamicValue(value, context || {}, 1000, true);
+  if (typeof value === 'object')
+    return resolveLegadoDynamicValue(value, context || {}, 1000, true);
   let raw = value.trim();
   if (isJsRuleString(raw)) {
     raw = evaluateJsRuleString(raw, context || {});
@@ -111,7 +152,10 @@ function asObjectHeader(value?: string | Record<string, string>, context?: Recor
   }
 }
 
-function resolveLegadoRule(rule?: LegadoBookSourceRule, source?: BookSource): LegadoBookSourceRule | undefined {
+function resolveLegadoRule(
+  rule?: LegadoBookSourceRule,
+  source?: BookSource
+): LegadoBookSourceRule | undefined {
   if (!rule) return rule;
   const base = source?.url || rule.bookSourceUrl || '';
   const context = { baseUrl: base, source: rule };
@@ -124,19 +168,27 @@ function resolveLegadoSource(source: BookSource): BookSource {
     ...source,
     legado: rule,
   };
-  return resolveLegadoDynamicValue(resolved, { baseUrl: source.url || rule?.bookSourceUrl || '', source: rule || source.legado || source });
+  return resolveLegadoDynamicValue(resolved, {
+    baseUrl: source.url || rule?.bookSourceUrl || '',
+    source: rule || source.legado || source,
+  });
 }
 
 function buildHeaders(source: BookSource): HeadersInit {
   const rule = source.legado;
   const baseUrl = sourceBase(source);
   const headers: Record<string, string> = {
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0 Safari/537.36',
+    'User-Agent':
+      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0 Safari/537.36',
     Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
     ...asObjectHeader(rule?.header, { baseUrl, source: rule }),
   };
-  if (source.authMode === 'header' && source.headerName && source.headerValue) headers[source.headerName] = source.headerValue;
-  if (source.authMode === 'basic' && source.username) headers.Authorization = `Basic ${Buffer.from(`${source.username}:${source.password || ''}`).toString('base64')}`;
+  if (source.authMode === 'header' && source.headerName && source.headerValue)
+    headers[source.headerName] = source.headerValue;
+  if (source.authMode === 'basic' && source.username)
+    headers.Authorization = `Basic ${Buffer.from(
+      `${source.username}:${source.password || ''}`
+    ).toString('base64')}`;
   delete headers.Host;
   delete headers.host;
   delete headers['Content-Length'];
@@ -174,36 +226,70 @@ function encryptTongrenKeyword(plainText: string) {
   Buffer.from(passphrase).copy(key);
   Buffer.from(passphrase).copy(iv);
   const cipher = crypto.createCipheriv('aes-256-cbc', key, iv);
-  return encodeURIComponent(Buffer.concat([cipher.update(String(plainText), 'utf8'), cipher.final()]).toString('base64'));
+  return encodeURIComponent(
+    Buffer.concat([
+      cipher.update(String(plainText), 'utf8'),
+      cipher.final(),
+    ]).toString('base64')
+  );
 }
 
-function decryptTongrenOpenUrl(encryptedBase64: string, num: string, source?: LegadoBookSourceRule) {
+function decryptTongrenOpenUrl(
+  encryptedBase64: string,
+  num: string,
+  source?: LegadoBookSourceRule
+) {
   try {
     const numStr = Buffer.from(String(num || ''), 'base64').toString('utf8');
-    const userAgent = (asObjectHeader(source?.header)['User-Agent'] || 'Mozilla/5.0 (Linux; Android 9) Mobile Safari/537.36').toLowerCase();
-    const key = Buffer.from(crypto.createHash('md5').update(userAgent + numStr).digest('hex'), 'utf8');
+    const userAgent = (
+      asObjectHeader(source?.header)['User-Agent'] ||
+      'Mozilla/5.0 (Linux; Android 9) Mobile Safari/537.36'
+    ).toLowerCase();
+    const key = Buffer.from(
+      crypto
+        .createHash('md5')
+        .update(userAgent + numStr)
+        .digest('hex'),
+      'utf8'
+    );
     const encryptedData = Buffer.from(String(encryptedBase64 || ''), 'base64');
     const iv = encryptedData.subarray(0, 16);
     const data = encryptedData.subarray(16);
     const decipher = crypto.createDecipheriv('aes-256-cbc', key, iv);
-    return Buffer.concat([decipher.update(data), decipher.final()]).toString('utf8');
+    return Buffer.concat([decipher.update(data), decipher.final()]).toString(
+      'utf8'
+    );
   } catch {
     return '';
   }
 }
 
-function safeEvalTemplateExpression(expr: string, keyword: string, page: number) {
+function safeEvalTemplateExpression(
+  expr: string,
+  keyword: string,
+  page: number
+) {
   const key = keyword;
   const searchTerms = keyword;
   const java = {
-    base64Encode: (value: unknown) => Buffer.from(String(value ?? ''), 'utf8').toString('base64'),
-    base64Decode: (value: unknown) => Buffer.from(String(value ?? ''), 'base64').toString('utf8'),
+    base64Encode: (value: unknown) =>
+      Buffer.from(String(value ?? ''), 'utf8').toString('base64'),
+    base64Decode: (value: unknown) =>
+      Buffer.from(String(value ?? ''), 'base64').toString('utf8'),
     encodeURI: (value: unknown) => encodeURIComponent(String(value ?? '')),
-    encodeURIComponent: (value: unknown) => encodeURIComponent(String(value ?? '')),
+    encodeURIComponent: (value: unknown) =>
+      encodeURIComponent(String(value ?? '')),
   };
   try {
     // eslint-disable-next-line no-new-func
-    const fn = new Function('key', 'keyword', 'searchTerms', 'page', 'java', `return (${expr});`);
+    const fn = new Function(
+      'key',
+      'keyword',
+      'searchTerms',
+      'page',
+      'java',
+      `return (${expr});`
+    );
     return jsonPrimitiveToString(fn(key, keyword, searchTerms, page, java));
   } catch {
     return '';
@@ -211,21 +297,32 @@ function safeEvalTemplateExpression(expr: string, keyword: string, page: number)
 }
 
 function renderTemplateExpressions(raw: string, keyword = '', page = 1) {
-  return raw.replace(/<([^,<>]*),\s*\{\{(.*?)\}\}>/g, (_, prefix, expr) => {
-    const value = safeEvalTemplateExpression(String(expr).trim(), keyword, page);
-    return value ? `${prefix || ''}${value}` : '';
-  }).replace(/\{\{(.*?)\}\}/g, (_, expr) => {
-    const value = String(expr).trim();
-    if (/^(key|keyword|searchTerms)$/.test(value)) return encodeRuleParam(keyword || '');
-    if (/^(page|pageIndex)$/.test(value)) return String(page);
-    const evaluated = safeEvalTemplateExpression(value, keyword, page);
-    // 表达式里如果已经显式调用 encodeURIComponent/encodeURI/java.encodeURI，
-    // 结果就是编码后的参数，不能再 encode 一次，否则会把 % 编成 %25。
-    if (/\b(?:encodeURIComponent|encodeURI|java\.encodeURI|java\.encodeURIComponent)\s*\(/.test(value)) return evaluated;
-    return encodeRuleParam(evaluated);
-  });
+  return raw
+    .replace(/<([^,<>]*),\s*\{\{(.*?)\}\}>/g, (_, prefix, expr) => {
+      const value = safeEvalTemplateExpression(
+        String(expr).trim(),
+        keyword,
+        page
+      );
+      return value ? `${prefix || ''}${value}` : '';
+    })
+    .replace(/\{\{(.*?)\}\}/g, (_, expr) => {
+      const value = String(expr).trim();
+      if (/^(key|keyword|searchTerms)$/.test(value))
+        return encodeRuleParam(keyword || '');
+      if (/^(page|pageIndex)$/.test(value)) return String(page);
+      const evaluated = safeEvalTemplateExpression(value, keyword, page);
+      // 表达式里如果已经显式调用 encodeURIComponent/encodeURI/java.encodeURI，
+      // 结果就是编码后的参数，不能再 encode 一次，否则会把 % 编成 %25。
+      if (
+        /\b(?:encodeURIComponent|encodeURI|java\.encodeURI|java\.encodeURIComponent)\s*\(/.test(
+          value
+        )
+      )
+        return evaluated;
+      return encodeRuleParam(evaluated);
+    });
 }
-
 
 function unwrapJsRule(code: string) {
   const raw = String(code || '').trim();
@@ -236,19 +333,26 @@ function unwrapJsRule(code: string) {
 
 function parseArguments(value?: string) {
   const out: Record<string, string> = {};
-  String(value || '').split(/[&;\n]+/).forEach((part) => {
-    const idx = part.indexOf('=');
-    if (idx <= 0) return;
-    const key = part.slice(0, idx).trim();
-    const val = part.slice(idx + 1).trim();
-    try { out[key] = decodeURIComponent(val); } catch { out[key] = val; }
-  });
+  String(value || '')
+    .split(/[&;\n]+/)
+    .forEach((part) => {
+      const idx = part.indexOf('=');
+      if (idx <= 0) return;
+      const key = part.slice(0, idx).trim();
+      const val = part.slice(idx + 1).trim();
+      try {
+        out[key] = decodeURIComponent(val);
+      } catch {
+        out[key] = val;
+      }
+    });
   return out;
 }
 
 function makeSourceRuntime(source: any, baseUrl?: string) {
   const raw = source || {};
-  const variable = raw.variable || raw.loginUrl || raw.bookSourceUrl || baseUrl || '';
+  const variable =
+    raw.variable || raw.loginUrl || raw.bookSourceUrl || baseUrl || '';
   return {
     ...raw,
     getVariable: () => variable,
@@ -257,16 +361,28 @@ function makeSourceRuntime(source: any, baseUrl?: string) {
   };
 }
 
-function runJsSnippetRaw(code: string, context: Record<string, any>, timeout = 1000): any {
+function runJsSnippetRaw(
+  code: string,
+  context: Record<string, any>,
+  timeout = 1000
+): any {
   const sourceRuntime = makeSourceRuntime(context.source, context.baseUrl);
   let lastPut: any = null;
   const java = {
-    base64Encode: (value: unknown) => Buffer.from(String(value ?? ''), 'utf8').toString('base64'),
-    base64Decode: (value: unknown) => Buffer.from(String(value ?? ''), 'base64').toString('utf8'),
-    md5Encode: (value: unknown) => crypto.createHash('md5').update(String(value ?? '')).digest('hex'),
+    base64Encode: (value: unknown) =>
+      Buffer.from(String(value ?? ''), 'utf8').toString('base64'),
+    base64Decode: (value: unknown) =>
+      Buffer.from(String(value ?? ''), 'base64').toString('utf8'),
+    md5Encode: (value: unknown) =>
+      crypto
+        .createHash('md5')
+        .update(String(value ?? ''))
+        .digest('hex'),
     strToBytes: (value: unknown) => Buffer.from(String(value ?? ''), 'utf8'),
-    base64DecodeToByteArray: (value: unknown) => Buffer.from(String(value ?? ''), 'base64'),
-    hexDecodeToString: (value: unknown) => Buffer.from(String(value ?? ''), 'hex').toString('utf8'),
+    base64DecodeToByteArray: (value: unknown) =>
+      Buffer.from(String(value ?? ''), 'base64'),
+    hexDecodeToString: (value: unknown) =>
+      Buffer.from(String(value ?? ''), 'hex').toString('utf8'),
     ajax: () => '',
     getWebViewUA: () => 'Mozilla/5.0 (Linux; Android 10) Mobile Safari/537.36',
     getElements: (selectorRule: string) => {
@@ -274,11 +390,18 @@ function runJsSnippetRaw(code: string, context: Record<string, any>, timeout = 1
       if (!raw) return [];
       const $ = cheerio.load(raw);
       let nodes = selectElements($, $.root(), selectorRule);
-      if (nodes.length === 0 && /#chapter-items@a/.test(selectorRule)) nodes = $('#chapter-items').find('a');
+      if (nodes.length === 0 && /#chapter-items@a/.test(selectorRule))
+        nodes = $('#chapter-items').find('a');
       return nodes.toArray().map((element) => {
         const node = $(element);
         const attrs = (element as any).attribs || {};
-        return { ...attrs, text: node.text().trim(), href: attrs.href, src: attrs.src, html: node.html() || '' };
+        return {
+          ...attrs,
+          text: node.text().trim(),
+          href: attrs.href,
+          src: attrs.src,
+          html: node.html() || '',
+        };
       });
     },
     deviceID: () => '',
@@ -287,16 +410,30 @@ function runJsSnippetRaw(code: string, context: Record<string, any>, timeout = 1
     toast: () => undefined,
     startBrowserAwait: () => ({ body: () => '' }),
     encodeURI: (value: unknown) => encodeURIComponent(String(value ?? '')),
-    encodeURIComponent: (value: unknown) => encodeURIComponent(String(value ?? '')),
-    put: (key: string, value: any) => { lastPut = { key, value }; variableStore.set(key, value); return value; },
+    encodeURIComponent: (value: unknown) =>
+      encodeURIComponent(String(value ?? '')),
+    put: (key: string, value: any) => {
+      lastPut = { key, value };
+      variableStore.set(key, value);
+      return value;
+    },
     get: (key: string) => variableStore.get(key),
     log: () => undefined,
-    htmlFormat: (value: unknown) => he.decode(String(value ?? '')).replace(/<br\s*\/?/gi, '\n').replace(/<[^>]+>/g, ''),
+    htmlFormat: (value: unknown) =>
+      he
+        .decode(String(value ?? ''))
+        .replace(/<br\s*\/?/gi, '\n')
+        .replace(/<[^>]+>/g, ''),
   };
   const cookie = {
     getCookie: () => '',
     removeCookie: () => undefined,
-    mapToCookie: (input: any) => typeof input === 'string' ? input : Array.isArray(input) ? input.join('; ') : '',
+    mapToCookie: (input: any) =>
+      typeof input === 'string'
+        ? input
+        : Array.isArray(input)
+        ? input.join('; ')
+        : '',
   };
   const sandbox: Record<string, any> = {
     ...context,
@@ -313,8 +450,10 @@ function runJsSnippetRaw(code: string, context: Record<string, any>, timeout = 1
     Object,
     encodeURIComponent,
     encryptText: encryptTongrenKeyword,
-    openUrl: (encryptedText: string, num: string) => decryptTongrenOpenUrl(encryptedText, num, context.source),
-    getArguments: (value: string, key?: string) => key ? (parseArguments(value)[key] || '') : parseArguments(value),
+    openUrl: (encryptedText: string, num: string) =>
+      decryptTongrenOpenUrl(encryptedText, num, context.source),
+    getArguments: (value: string, key?: string) =>
+      key ? parseArguments(value)[key] || '' : parseArguments(value),
     console: { log: () => undefined },
   };
   const body = unwrapJsRule(code);
@@ -322,8 +461,15 @@ function runJsSnippetRaw(code: string, context: Record<string, any>, timeout = 1
     try {
       const script = new vm.Script(wrapper);
       const result = script.runInNewContext(sandbox, { timeout });
-      if (result !== undefined && result !== null && result !== '') return result;
-      if (sandbox.result !== context.result && sandbox.result !== undefined && sandbox.result !== null && sandbox.result !== '') return sandbox.result;
+      if (result !== undefined && result !== null && result !== '')
+        return result;
+      if (
+        sandbox.result !== context.result &&
+        sandbox.result !== undefined &&
+        sandbox.result !== null &&
+        sandbox.result !== ''
+      )
+        return sandbox.result;
       if (lastPut?.key === 'url') return lastPut.value;
     } catch {
       // 换下一种包装方式重试
@@ -334,13 +480,19 @@ function runJsSnippetRaw(code: string, context: Record<string, any>, timeout = 1
   let value = runAttempt(`(function(){ ${body}\n})()`);
   if (value !== undefined) return value;
   // 2) 脚本通过 res 返回（部分源的约定）
-  value = runAttempt(`(function(){ ${body}\n; if (typeof res !== 'undefined') return res; return ''; })()`);
+  value = runAttempt(
+    `(function(){ ${body}\n; if (typeof res !== 'undefined') return res; return ''; })()`
+  );
   if (value !== undefined) return value;
   // 3) 整段就是一个表达式（例如 header 的 @js:JSON.stringify({...})）
-  value = runAttempt(`(function(){ return (${body.replace(/;\s*$/, '')}); })()`);
+  value = runAttempt(
+    `(function(){ return (${body.replace(/;\s*$/, '')}); })()`
+  );
   if (value !== undefined) return value;
   // 4) 多语句脚本且最后一条语句是表达式：Rhino/legado 会用它的值作为结果
-  const tail = body.match(/(?:^|[;\n])\s*((?!(?:var|let|const|return|if|for|while|function|throw|switch|try|new|do|else|break|continue)\b)[^\n;]+?)\s*;?\s*$/);
+  const tail = body.match(
+    /(?:^|[;\n])\s*((?!(?:var|let|const|return|if|for|while|function|throw|switch|try|new|do|else|break|continue)\b)[^\n;]+?)\s*;?\s*$/
+  );
   if (tail) {
     value = runAttempt(`(function(){ ${body}\n; return (${tail[1]}); })()`);
     if (value !== undefined) return value;
@@ -348,7 +500,11 @@ function runJsSnippetRaw(code: string, context: Record<string, any>, timeout = 1
   return '';
 }
 
-function runJsSnippet(code: string, context: Record<string, any>, timeout = 1000): string {
+function runJsSnippet(
+  code: string,
+  context: Record<string, any>,
+  timeout = 1000
+): string {
   return jsonPrimitiveToString(runJsSnippetRaw(code, context, timeout));
 }
 
@@ -359,7 +515,9 @@ function applyPutGetRules(rule: string, value: string) {
       const obj = JSON.parse(`{${putMatch[1]}}`);
       Object.entries(obj).forEach(([key, val]) => variableStore.set(key, val));
     } catch {
-      const pair = putMatch[1].match(/([A-Za-z0-9_$-]+)\s*:\s*['"]?([^,'"]+)['"]?/);
+      const pair = putMatch[1].match(
+        /([A-Za-z0-9_$-]+)\s*:\s*['"]?([^,'"]+)['"]?/
+      );
       if (pair) variableStore.set(pair[1], value || pair[2]);
     }
   }
@@ -368,14 +526,28 @@ function applyPutGetRules(rule: string, value: string) {
   return value;
 }
 
-function buildUrlFromTemplate(template: string, source: BookSource, keyword?: string, page = 1, baseOverride?: string) {
+function buildUrlFromTemplate(
+  template: string,
+  source: BookSource,
+  keyword?: string,
+  page = 1,
+  baseOverride?: string
+) {
   const base = baseOverride || sourceBase(source);
   let raw = template || base;
   if (isJsRuleString(raw)) {
     if (/\/k-\{\{encryptText\(key\)\}\}-\{\{page\}\}\.html/.test(raw)) {
-      return `https://www.rrssk.com/k-${encryptTongrenKeyword(keyword || '')}-${page}.html`;
+      return `https://www.rrssk.com/k-${encryptTongrenKeyword(
+        keyword || ''
+      )}-${page}.html`;
     }
-    const evaluated = evaluateJsRuleString(raw, { key: keyword || '', keyword: keyword || '', page, baseUrl: base, source: { ...(source.legado || {}), key: base } });
+    const evaluated = evaluateJsRuleString(raw, {
+      key: keyword || '',
+      keyword: keyword || '',
+      page,
+      baseUrl: base,
+      source: { ...(source.legado || {}), key: base },
+    });
     raw = evaluated || raw;
     if (/,(\s*)\{/.test(raw)) return raw;
   }
@@ -411,8 +583,10 @@ function parseJsonMaybe(value: string): any | null {
 function jsonPrimitiveToString(value: any): string {
   if (value === undefined || value === null) return '';
   if (typeof value === 'string') return value.trim();
-  if (typeof value === 'number' || typeof value === 'boolean') return String(value);
-  if (Array.isArray(value)) return value.map(jsonPrimitiveToString).filter(Boolean).join(', ');
+  if (typeof value === 'number' || typeof value === 'boolean')
+    return String(value);
+  if (Array.isArray(value))
+    return value.map(jsonPrimitiveToString).filter(Boolean).join(', ');
   try {
     return JSON.stringify(value);
   } catch {
@@ -427,15 +601,21 @@ function readJsonPath(input: any, path?: string): any {
   if (normalized.startsWith('-@json:')) normalized = normalized.slice(7);
   if (!normalized || normalized === '$') return input;
 
-  const filterMatch = normalized.match(/^(.*)\[\?\(@\.([A-Za-z0-9_$-]+)\s*(==|=|!=)\s*['"]?([^'"\]]+)['"]?\)\](.*)$/);
+  const filterMatch = normalized.match(
+    /^(.*)\[\?\(@\.([A-Za-z0-9_$-]+)\s*(==|=|!=)\s*['"]?([^'"\]]+)['"]?\)\](.*)$/
+  );
   if (filterMatch) {
     const base = readJsonPath(input, filterMatch[1] || '$');
     const list = Array.isArray(base) ? base : [];
     const filtered = list.filter((item) => {
       const actual = jsonPrimitiveToString(item?.[filterMatch[2]]);
-      return filterMatch[3] === '!=' ? actual !== filterMatch[4] : actual === filterMatch[4];
+      return filterMatch[3] === '!='
+        ? actual !== filterMatch[4]
+        : actual === filterMatch[4];
     });
-    return filterMatch[5] ? readJsonPath(filtered, `$${filterMatch[5]}`) : filtered;
+    return filterMatch[5]
+      ? readJsonPath(filtered, `$${filterMatch[5]}`)
+      : filtered;
   }
 
   const recursive = normalized.match(/^\$\.\.([A-Za-z0-9_$-]+)(.*)$/);
@@ -454,7 +634,10 @@ function readJsonPath(input: any, path?: string): any {
   }
 
   normalized = normalized.replace(/^\$\.?/, '');
-  const tokens = normalized.match(/[^.[\]]+|\[\*\]|\[-?\d+\]|\[-?\d*:-?\d*(?::-?\d+)?\]|\[['"][^\]]+['"](?:,\s*['"][^\]]+['"])*\]/g) || [];
+  const tokens =
+    normalized.match(
+      /[^.[\]]+|\[\*\]|\[-?\d+\]|\[-?\d*:-?\d*(?::-?\d+)?\]|\[['"][^\]]+['"](?:,\s*['"][^\]]+['"])*\]/g
+    ) || [];
   let current = input;
   for (const token of tokens) {
     if (current === undefined || current === null) return undefined;
@@ -462,21 +645,50 @@ function readJsonPath(input: any, path?: string): any {
       current = Array.isArray(current) ? current.flat() : [];
     } else if (/^\[-?\d+\]$/.test(token)) {
       const idx = Number(token.slice(1, -1));
-      current = Array.isArray(current) ? current[idx < 0 ? current.length + idx : idx] : undefined;
+      current = Array.isArray(current)
+        ? current[idx < 0 ? current.length + idx : idx]
+        : undefined;
     } else if (/^\[-?\d*:-?\d*/.test(token)) {
       if (!Array.isArray(current)) return [];
-      const parts = token.slice(1, -1).split(':').map((item) => item === '' ? undefined : Number(item));
-      const start = parts[0] === undefined ? 0 : parts[0] < 0 ? current.length + parts[0] : parts[0];
-      const end = parts[1] === undefined ? current.length : parts[1] < 0 ? current.length + parts[1] : parts[1];
+      const parts = token
+        .slice(1, -1)
+        .split(':')
+        .map((item) => (item === '' ? undefined : Number(item)));
+      const start =
+        parts[0] === undefined
+          ? 0
+          : parts[0] < 0
+          ? current.length + parts[0]
+          : parts[0];
+      const end =
+        parts[1] === undefined
+          ? current.length
+          : parts[1] < 0
+          ? current.length + parts[1]
+          : parts[1];
       const step = parts[2] || 1;
       const sliced = current.slice(start, end);
-      current = step === 1 ? sliced : sliced.filter((_, index) => index % Math.abs(step) === 0);
+      current =
+        step === 1
+          ? sliced
+          : sliced.filter((_, index) => index % Math.abs(step) === 0);
     } else if (/^\[/.test(token)) {
-      const keys = Array.from(token.matchAll(/['"]([^'"]+)['"]/g)).map((m) => m[1]);
-      if (Array.isArray(current)) current = current.map((item) => keys.map((key) => item?.[key])).flat().filter((item) => item !== undefined);
-      else current = keys.map((key) => current?.[key]).filter((item) => item !== undefined);
+      const keys = Array.from(token.matchAll(/['"]([^'"]+)['"]/g)).map(
+        (m) => m[1]
+      );
+      if (Array.isArray(current))
+        current = current
+          .map((item) => keys.map((key) => item?.[key]))
+          .flat()
+          .filter((item) => item !== undefined);
+      else
+        current = keys
+          .map((key) => current?.[key])
+          .filter((item) => item !== undefined);
     } else if (Array.isArray(current)) {
-      current = current.map((item) => item?.[token]).filter((item) => item !== undefined);
+      current = current
+        .map((item) => item?.[token])
+        .filter((item) => item !== undefined);
     } else {
       current = current[token];
     }
@@ -494,28 +706,44 @@ function selectJsonItems(json: any, rule?: string): any[] {
     const alternative = alternatives[index];
     const reverse = alternative.trim().startsWith('-');
     const value = readJsonPath(json, alternative);
-    if (Array.isArray(value) && value.length > 0) return reverse ? [...value].reverse() : value;
+    if (Array.isArray(value) && value.length > 0)
+      return reverse ? [...value].reverse() : value;
     // 备用 JSONPath 常见写法：$.data||$.data.data[*]。前者可能是分页包装对象，优先继续尝试后续数组规则。
-    if (value && typeof value === 'object' && index === alternatives.length - 1) return [value];
+    if (value && typeof value === 'object' && index === alternatives.length - 1)
+      return [value];
     if (value && typeof value !== 'object') return [value];
   }
   return [];
 }
 
-function evaluateJsListRule(rule: string | undefined, context: Record<string, any>): any[] {
+function evaluateJsListRule(
+  rule: string | undefined,
+  context: Record<string, any>
+): any[] {
   const trimmed = (rule || '').trim();
   if (!isJsRuleString(trimmed)) return [];
-  const elementRules = Array.from(trimmed.matchAll(/java\.getElements\(\s*(['"`])([\s\S]*?)\1\s*\)/g)).map((match) => match[2]).filter(Boolean);
+  const elementRules = Array.from(
+    trimmed.matchAll(/java\.getElements\(\s*(['"`])([\s\S]*?)\1\s*\)/g)
+  )
+    .map((match) => match[2])
+    .filter(Boolean);
   if (elementRules.length > 0) {
     const raw = jsonPrimitiveToString(context.result ?? context.src ?? '');
     const $ = cheerio.load(raw);
     for (const selectorRule of elementRules) {
       let nodes = selectElements($, $.root(), selectorRule);
-      if (nodes.length === 0 && /#chapter-items@a/.test(selectorRule)) nodes = $('#chapter-items').find('a');
+      if (nodes.length === 0 && /#chapter-items@a/.test(selectorRule))
+        nodes = $('#chapter-items').find('a');
       const items = nodes.toArray().map((element) => {
         const node = $(element);
         const attrs = (element as any).attribs || {};
-        return { ...attrs, text: node.text().trim(), href: attrs.href, src: attrs.src, html: node.html() || '' };
+        return {
+          ...attrs,
+          text: node.text().trim(),
+          href: attrs.href,
+          src: attrs.src,
+          html: node.html() || '',
+        };
       });
       if (items.length > 0) return items;
     }
@@ -531,57 +759,126 @@ function evaluateJsListRule(rule: string | undefined, context: Record<string, an
   return [];
 }
 
-function renderTemplateWithJson(template: string, json: any, source: BookSource, baseUrl: string) {
+function renderTemplateWithJson(
+  template: string,
+  json: any,
+  source: BookSource,
+  baseUrl: string
+) {
   const rendered = template.replace(/\{\{(.*?)\}\}/g, (_, expr) => {
-    const normalizedExpr = String(expr).trim().replace(/^@json:/, '');
+    const normalizedExpr = String(expr)
+      .trim()
+      .replace(/^@json:/, '');
     const value = readJsonPath(json, normalizedExpr);
     return encodeRuleParam(jsonPrimitiveToString(value));
   });
   return normalizeUrl(baseUrl || sourceBase(source), rendered);
 }
 
-function readJsonRule(json: any, rule?: string, source?: BookSource, baseUrl?: string): string {
+function readJsonRule(
+  json: any,
+  rule?: string,
+  source?: BookSource,
+  baseUrl?: string
+): string {
   if (!rule) return '';
   const trimmed = rule.trim();
-  if (trimmed.includes('{{')) return renderTemplateWithJson(trimmed, json, source as BookSource, baseUrl || sourceBase(source as BookSource));
+  if (trimmed.includes('{{'))
+    return renderTemplateWithJson(
+      trimmed,
+      json,
+      source as BookSource,
+      baseUrl || sourceBase(source as BookSource)
+    );
   if (isJsRuleString(trimmed)) {
-    if (/result\s*=\s*['"]([^'"]+)['"]\s*\+\s*result\.([A-Za-z0-9_$-]+)/.test(trimmed)) {
-      const match = trimmed.match(/result\s*=\s*['"]([^'"]+)['"]\s*\+\s*result\.([A-Za-z0-9_$-]+)/);
-      return normalizeUrl(baseUrl || sourceBase(source as BookSource), `${match?.[1] || ''}${jsonPrimitiveToString(json?.[match?.[2] || ''])}`);
+    if (
+      /result\s*=\s*['"]([^'"]+)['"]\s*\+\s*result\.([A-Za-z0-9_$-]+)/.test(
+        trimmed
+      )
+    ) {
+      const match = trimmed.match(
+        /result\s*=\s*['"]([^'"]+)['"]\s*\+\s*result\.([A-Za-z0-9_$-]+)/
+      );
+      return normalizeUrl(
+        baseUrl || sourceBase(source as BookSource),
+        `${match?.[1] || ''}${jsonPrimitiveToString(json?.[match?.[2] || ''])}`
+      );
     }
     if (/item\.img|\.reverse\(\)/.test(trimmed)) {
-      const data = Array.isArray(json?.data) ? [...json.data].reverse() : Array.isArray(json) ? [...json].reverse() : [];
+      const data = Array.isArray(json?.data)
+        ? [...json.data].reverse()
+        : Array.isArray(json)
+        ? [...json].reverse()
+        : [];
       return data
-        .map((item) => item?.img ? `<img src="${String(item.img)}" style="max-width:100%; display:block;" referrerpolicy="no-referrer">` : '')
+        .map((item) =>
+          item?.img
+            ? `<img src="${String(
+                item.img
+              )}" style="max-width:100%; display:block;" referrerpolicy="no-referrer">`
+            : ''
+        )
         .filter(Boolean)
         .join('');
     }
     const resultText = typeof json === 'string' ? json : JSON.stringify(json);
-    if (/java\.base64Decode/.test(trimmed)) return Buffer.from(resultText, 'base64').toString('utf8');
-    if (/java\.base64Encode/.test(trimmed)) return Buffer.from(resultText, 'utf8').toString('base64');
-    if (/java\.md5Encode/.test(trimmed)) return crypto.createHash('md5').update(resultText).digest('hex');
-    const replaceMatch = trimmed.match(/result\.replace\(\s*\/([^/]+)\/[gimuy]*\s*,\s*['"]([^'"]*)['"]\s*\)/);
-    if (replaceMatch) return resultText.replace(new RegExp(replaceMatch[1], 'g'), replaceMatch[2]);
-    const matchMatch = trimmed.match(/result\.match\(\s*\/([^/]+)\/[gimuy]*\s*\)/);
-    if (matchMatch) return resultText.match(new RegExp(matchMatch[1]))?.[1] || resultText.match(new RegExp(matchMatch[1]))?.[0] || '';
+    if (/java\.base64Decode/.test(trimmed))
+      return Buffer.from(resultText, 'base64').toString('utf8');
+    if (/java\.base64Encode/.test(trimmed))
+      return Buffer.from(resultText, 'utf8').toString('base64');
+    if (/java\.md5Encode/.test(trimmed))
+      return crypto.createHash('md5').update(resultText).digest('hex');
+    const replaceMatch = trimmed.match(
+      /result\.replace\(\s*\/([^/]+)\/[gimuy]*\s*,\s*['"]([^'"]*)['"]\s*\)/
+    );
+    if (replaceMatch)
+      return resultText.replace(
+        new RegExp(replaceMatch[1], 'g'),
+        replaceMatch[2]
+      );
+    const matchMatch = trimmed.match(
+      /result\.match\(\s*\/([^/]+)\/[gimuy]*\s*\)/
+    );
+    if (matchMatch)
+      return (
+        resultText.match(new RegExp(matchMatch[1]))?.[1] ||
+        resultText.match(new RegExp(matchMatch[1]))?.[0] ||
+        ''
+      );
     return runJsSnippet(trimmed, { result: json, baseUrl, src: json });
   }
   const value = readJsonPath(json, trimmed);
   const text = jsonPrimitiveToString(value);
-  if ((/url|href|pic|cover/i.test(trimmed) || /^https?:\/\//i.test(text)) && text && baseUrl) return normalizeUrl(baseUrl, text);
+  if (
+    (/url|href|pic|cover/i.test(trimmed) || /^https?:\/\//i.test(text)) &&
+    text &&
+    baseUrl
+  )
+    return normalizeUrl(baseUrl, text);
   return text;
 }
 
-function fallbackChapterHrefFromItem(item: any, rule?: string, baseUrl?: string): string {
-  const id = jsonPrimitiveToString(item?.id || item?.cid || item?.chapter_id || item?.chapterId);
+function fallbackChapterHrefFromItem(
+  item: any,
+  rule?: string,
+  baseUrl?: string
+): string {
+  const id = jsonPrimitiveToString(
+    item?.id || item?.cid || item?.chapter_id || item?.chapterId
+  );
   if (!id) return '';
-  const match = (rule || '').match(/['"]([^'"]*(?:pic|chapter)[^'"]*(?:cid|id)=)['"]/i);
+  const match = (rule || '').match(
+    /['"]([^'"]*(?:pic|chapter)[^'"]*(?:cid|id)=)['"]/i
+  );
   if (match?.[1]) return normalizeUrl(baseUrl || '', `${match[1]}${id}`);
   return '';
 }
 
 function splitAlternatives(rule?: string): string[] {
-  return (rule || '').split('||').map((item) => item.trim()).filter(Boolean);
+  return (rule || '')
+    .split('||')
+    .map((item) => item.trim())
+    .filter(Boolean);
 }
 
 function splitRuleFilters(rule: string) {
@@ -596,7 +893,10 @@ function applyRuleFilters(value: string, filters: string[]) {
     const replacement = filters[index + 1] ?? '';
     if (!pattern) continue;
     try {
-      result = result.replace(new RegExp(pattern, 'g'), replacement.replace(/\$(\d+)/g, '$$$$1'));
+      result = result.replace(
+        new RegExp(pattern, 'g'),
+        replacement.replace(/\$(\d+)/g, '$$$$1')
+      );
     } catch {
       result = result.split(pattern).join(replacement);
     }
@@ -604,7 +904,10 @@ function applyRuleFilters(value: string, filters: string[]) {
   return result;
 }
 
-function readAllInOneList(raw: string, rule?: string): Array<Record<string, string>> {
+function readAllInOneList(
+  raw: string,
+  rule?: string
+): Array<Record<string, string>> {
   const trimmed = (rule || '').trim();
   if (!trimmed.startsWith(':')) return [];
   const pattern = trimmed.slice(1);
@@ -615,8 +918,12 @@ function readAllInOneList(raw: string, rule?: string): Array<Record<string, stri
     while ((match = regex.exec(raw)) !== null) {
       const groups = (match.groups || {}) as Record<string, string>;
       const item: Record<string, string> = { _0: match[0] };
-      Array.from(match).forEach((value: string | undefined, index: number) => { item[`_${index}`] = value || ''; });
-      Object.entries(groups).forEach(([key, value]) => { item[key] = String(value || ''); });
+      Array.from(match).forEach((value: string | undefined, index: number) => {
+        item[`_${index}`] = value || '';
+      });
+      Object.entries(groups).forEach(([key, value]) => {
+        item[key] = String(value || '');
+      });
       out.push(item);
       if (match[0] === '') regex.lastIndex += 1;
     }
@@ -626,10 +933,22 @@ function readAllInOneList(raw: string, rule?: string): Array<Record<string, stri
   }
 }
 
-function readRegexItem(item: Record<string, string>, rule?: string, baseUrl?: string) {
-  const key = (rule || '').trim().replace(/^\$?\{?/, '').replace(/\}?$/, '');
+function readRegexItem(
+  item: Record<string, string>,
+  rule?: string,
+  baseUrl?: string
+) {
+  const key = (rule || '')
+    .trim()
+    .replace(/^\$?\{?/, '')
+    .replace(/\}?$/, '');
   const value = item[key] || item[`_${key}`] || '';
-  if ((/url|href|src|cover/i.test(key) || /^https?:\/\//i.test(value)) && value && baseUrl) return normalizeUrl(baseUrl, value);
+  if (
+    (/url|href|src|cover/i.test(key) || /^https?:\/\//i.test(value)) &&
+    value &&
+    baseUrl
+  )
+    return normalizeUrl(baseUrl, value);
   return value;
 }
 
@@ -637,11 +956,67 @@ function readRegexItem(item: Record<string, string>, rule?: string, baseUrl?: st
 // legado 的规则里两者都常见：`a@href` 取属性，`id.chapter-list@a` 取子标签。
 // 这里用标签名白名单区分，其余（onclick/data-src/style…）一律当属性。
 const HTML_TAG_TOKENS = new Set([
-  'a', 'abbr', 'article', 'aside', 'b', 'blockquote', 'br', 'button', 'caption', 'code', 'dd', 'del',
-  'div', 'dl', 'dt', 'em', 'figcaption', 'figure', 'footer', 'form', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
-  'header', 'hr', 'i', 'img', 'input', 'ins', 'label', 'li', 'main', 'nav', 'ol', 'option', 'p', 'pre',
-  'section', 'select', 'small', 'span', 'strong', 'sub', 'sup', 'table', 'tbody', 'td', 'textarea',
-  'tfoot', 'th', 'thead', 'tr', 'u', 'ul', 'video', 'audio', 'source', 'iframe',
+  'a',
+  'abbr',
+  'article',
+  'aside',
+  'b',
+  'blockquote',
+  'br',
+  'button',
+  'caption',
+  'code',
+  'dd',
+  'del',
+  'div',
+  'dl',
+  'dt',
+  'em',
+  'figcaption',
+  'figure',
+  'footer',
+  'form',
+  'h1',
+  'h2',
+  'h3',
+  'h4',
+  'h5',
+  'h6',
+  'header',
+  'hr',
+  'i',
+  'img',
+  'input',
+  'ins',
+  'label',
+  'li',
+  'main',
+  'nav',
+  'ol',
+  'option',
+  'p',
+  'pre',
+  'section',
+  'select',
+  'small',
+  'span',
+  'strong',
+  'sub',
+  'sup',
+  'table',
+  'tbody',
+  'td',
+  'textarea',
+  'tfoot',
+  'th',
+  'thead',
+  'tr',
+  'u',
+  'ul',
+  'video',
+  'audio',
+  'source',
+  'iframe',
 ]);
 
 function isLegadoAttrToken(value: string) {
@@ -660,9 +1035,14 @@ function cssEscapeIdent(value: string) {
 
 // 摘掉 legado 的索引后缀（.0 / [0] / !0 / [0:2]），返回主体与后缀以便原样接回选择器。
 function splitLegadoIndexSuffix(value: string) {
-  const match = value.match(/(?:\[-?\d*(?::-?\d+)?(?::\d+)?\]|!-?\d+|\.-?\d+)$/);
+  const match = value.match(
+    /(?:\[-?\d*(?::-?\d+)?(?::\d+)?\]|!-?\d+|\.-?\d+)$/
+  );
   if (!match) return { body: value, suffix: '' };
-  return { body: value.slice(0, match.index), suffix: value.slice(match.index) };
+  return {
+    body: value.slice(0, match.index),
+    suffix: value.slice(match.index),
+  };
 }
 
 function normalizeLegadoSelector(selector: string) {
@@ -677,7 +1057,9 @@ function normalizeLegadoSelector(selector: string) {
   if (kind === 'id') return `#${cssEscapeIdent(names[0])}${suffix}`;
   if (kind === 'tag') {
     const [tag, ...classes] = names;
-    return `${tag}${classes.map((name) => `.${cssEscapeIdent(name)}`).join('')}${suffix}`;
+    return `${tag}${classes
+      .map((name) => `.${cssEscapeIdent(name)}`)
+      .join('')}${suffix}`;
   }
   return names.map((name) => `.${cssEscapeIdent(name)}`).join('') + suffix;
 }
@@ -686,23 +1068,40 @@ function parseStep(step: string): { selector: string; attr: string } {
   const trimmed = step.trim();
   if (isLegadoAttrToken(trimmed)) return { selector: '', attr: trimmed };
 
-  const parts = trimmed.split('@').map((item) => item.trim()).filter(Boolean);
+  const parts = trimmed
+    .split('@')
+    .map((item) => item.trim())
+    .filter(Boolean);
   if (parts.length > 1) {
     const last = parts[parts.length - 1];
     const hasAttr = isLegadoAttrToken(last);
     const selectorParts = hasAttr ? parts.slice(0, -1) : parts;
     return {
-      selector: selectorParts.map(normalizeLegadoSelector).filter(Boolean).join(' '),
+      selector: selectorParts
+        .map(normalizeLegadoSelector)
+        .filter(Boolean)
+        .join(' '),
       attr: hasAttr ? last : '',
     };
   }
 
-  const attrMatch = trimmed.match(/(?:@|::)(text|textNodes|ownText|all|html|href|src|title|alt|content|value|data-[\w-]+)$/i);
+  const attrMatch = trimmed.match(
+    /(?:@|::)(text|textNodes|ownText|all|html|href|src|title|alt|content|value|data-[\w-]+)$/i
+  );
   if (attrMatch) {
-    return { selector: normalizeLegadoSelector(trimmed.slice(0, attrMatch.index).trim()), attr: attrMatch[1] };
+    return {
+      selector: normalizeLegadoSelector(
+        trimmed.slice(0, attrMatch.index).trim()
+      ),
+      attr: attrMatch[1],
+    };
   }
   const dotAttr = trimmed.match(/\.(text|html|href|src)$/i);
-  if (dotAttr) return { selector: normalizeLegadoSelector(trimmed.slice(0, dotAttr.index).trim()), attr: dotAttr[1] };
+  if (dotAttr)
+    return {
+      selector: normalizeLegadoSelector(trimmed.slice(0, dotAttr.index).trim()),
+      attr: dotAttr[1],
+    };
   return { selector: normalizeLegadoSelector(trimmed), attr: '' };
 }
 
@@ -712,7 +1111,10 @@ function stripFilters(rule: string) {
 
 // legado 的选择器作用于 element.getAllElements()，即包含当前节点自身。
 // 只 find 子孙节点会让 `tag.div.xxx@onclick` 这类「卡片自身带属性」的规则永远取不到值。
-function findWithSelf(current: cheerio.Cheerio<any>, selector: string): cheerio.Cheerio<any> {
+function findWithSelf(
+  current: cheerio.Cheerio<any>,
+  selector: string
+): cheerio.Cheerio<any> {
   if (!selector) return current;
   let self: cheerio.Cheerio<any>;
   try {
@@ -731,7 +1133,10 @@ function findWithSelf(current: cheerio.Cheerio<any>, selector: string): cheerio.
   return self.add(descendants);
 }
 
-function applyLegadoIndexSelector(current: cheerio.Cheerio<any>, selector: string): { current: cheerio.Cheerio<any>; selector: string } {
+function applyLegadoIndexSelector(
+  current: cheerio.Cheerio<any>,
+  selector: string
+): { current: cheerio.Cheerio<any>; selector: string } {
   let normalized = selector.trim();
   const exclude = normalized.match(/(?:\[!(-?\d+)\]|!(-?\d+))$/);
   if (exclude) {
@@ -741,7 +1146,9 @@ function applyLegadoIndexSelector(current: cheerio.Cheerio<any>, selector: strin
     const real = idx < 0 ? current.length + idx : idx;
     return { current: current.filter((index) => index !== real), selector: '' };
   }
-  const range = normalized.match(/(?:\[(-?\d*):(-?\d*)(?::(-?\d+))?\]|\.(-?\d*):(-?\d*)(?::(-?\d+))?)$/);
+  const range = normalized.match(
+    /(?:\[(-?\d*):(-?\d*)(?::(-?\d+))?\]|\.(-?\d*):(-?\d*)(?::(-?\d+))?)$/
+  );
   if (range) {
     normalized = normalized.slice(0, range.index).trim();
     current = normalized ? findWithSelf(current, normalized) : current;
@@ -754,7 +1161,13 @@ function applyLegadoIndexSelector(current: cheerio.Cheerio<any>, selector: strin
     const realEnd = end < 0 ? length + end : end;
     const step = Number(range[3] ?? range[6] ?? 1) || 1;
     const sliced = current.slice(realStart, realEnd);
-    return { current: step === 1 ? sliced : sliced.filter((_, index) => index % Math.abs(step) === 0), selector: '' };
+    return {
+      current:
+        step === 1
+          ? sliced
+          : sliced.filter((_, index) => index % Math.abs(step) === 0),
+      selector: '',
+    };
   }
   const indexMatch = normalized.match(/(?:\[(-?\d+)\]|\.(-?\d+))$/);
   if (indexMatch) {
@@ -767,41 +1180,66 @@ function applyLegadoIndexSelector(current: cheerio.Cheerio<any>, selector: strin
   return { current, selector: normalized };
 }
 
-function applyLegadoSelector($: cheerio.CheerioAPI, current: cheerio.Cheerio<any>, selector: string): cheerio.Cheerio<any> {
+function applyLegadoSelector(
+  $: cheerio.CheerioAPI,
+  current: cheerio.Cheerio<any>,
+  selector: string
+): cheerio.Cheerio<any> {
   const normalized = selector.trim();
   if (!normalized) return current;
   const textMatch = normalized.match(/^text\.(.+)$/);
   if (textMatch) {
     const keyword = textMatch[1].trim();
-    const links = findWithSelf(current, 'a[href]').filter((_, el) => $(el).text().includes(keyword));
+    const links = findWithSelf(current, 'a[href]').filter((_, el) =>
+      $(el).text().includes(keyword)
+    );
     if (links.length > 0) return links;
-    return findWithSelf(current, 'button,span,div,p,li,a').filter((_, el) => $(el).text().includes(keyword));
+    return findWithSelf(current, 'button,span,div,p,li,a').filter((_, el) =>
+      $(el).text().includes(keyword)
+    );
   }
   const tokens = normalized.split(/\s+/).filter(Boolean);
   if (
-    tokens.length > 1
-    && tokens.every((token) => !/[>+~]/.test(token))
-    && tokens.some((token) => /(?:\[!?\-?\d+\]|\[-?\d*:|-?\d+\]$|\.-?\d+(?::\-?\d*){0,2})$/.test(token))
+    tokens.length > 1 &&
+    tokens.every((token) => !/[>+~]/.test(token)) &&
+    tokens.some((token) =>
+      /(?:\[!?\-?\d+\]|\[-?\d*:|-?\d+\]$|\.-?\d+(?::\-?\d*){0,2})$/.test(token)
+    )
   ) {
     let next = current;
     for (const token of tokens) {
       const indexed = applyLegadoIndexSelector(next, token);
-      next = indexed.selector ? findWithSelf(next, indexed.selector) : indexed.current;
+      next = indexed.selector
+        ? findWithSelf(next, indexed.selector)
+        : indexed.current;
     }
     return next;
   }
   const indexed = applyLegadoIndexSelector(current, normalized);
-  return indexed.selector ? findWithSelf(current, indexed.selector) : indexed.current;
+  return indexed.selector
+    ? findWithSelf(current, indexed.selector)
+    : indexed.current;
 }
 
-function selectElements($: cheerio.CheerioAPI, root: cheerio.Cheerio<any>, rule?: string): cheerio.Cheerio<any> {
+function selectElements(
+  $: cheerio.CheerioAPI,
+  root: cheerio.Cheerio<any>,
+  rule?: string
+): cheerio.Cheerio<any> {
   for (const alternative of splitAlternatives(rule)) {
     try {
       const normalized = stripFilters(alternative || '');
-      const reverse = normalized.trim().startsWith('-') && !normalized.trim().startsWith('-@');
-      const effective = reverse ? normalized.trim().slice(1).trim() : normalized;
+      const reverse =
+        normalized.trim().startsWith('-') &&
+        !normalized.trim().startsWith('-@');
+      const effective = reverse
+        ? normalized.trim().slice(1).trim()
+        : normalized;
       if (!effective) continue;
-      const steps = effective.split(/&&|@css:/).map((item) => item.trim()).filter(Boolean);
+      const steps = effective
+        .split(/&&|@css:/)
+        .map((item) => item.trim())
+        .filter(Boolean);
       let current = root;
       for (const rawStep of steps) {
         const { selector, attr } = parseStep(rawStep);
@@ -822,22 +1260,36 @@ function selectElements($: cheerio.CheerioAPI, root: cheerio.Cheerio<any>, rule?
   return cheerio.load('')('');
 }
 
-
-function selectXPath($: cheerio.CheerioAPI, root: cheerio.Cheerio<any>, rule: string): { nodes: cheerio.Cheerio<any>; attr: string; value?: string } {
+function selectXPath(
+  $: cheerio.CheerioAPI,
+  root: cheerio.Cheerio<any>,
+  rule: string
+): { nodes: cheerio.Cheerio<any>; attr: string; value?: string } {
   const expr = rule.trim().replace(/^@XPath:/i, '');
   try {
     const html = $.html(root);
-    const doc = new DOMParser({ errorHandler: () => undefined }).parseFromString(html, 'text/html');
+    const doc = new DOMParser({
+      errorHandler: () => undefined,
+    }).parseFromString(html, 'text/html');
     const selected = xpath.select(expr, doc as any) as any;
     const list = Array.isArray(selected) ? selected : [selected];
-    const values = list.map((node) => {
-      if (node === undefined || node === null) return '';
-      if (typeof node === 'string' || typeof node === 'number' || typeof node === 'boolean') return String(node);
-      if (node.nodeType === 2) return node.nodeValue || '';
-      if (node.nodeType === 3 || node.nodeType === 4) return node.nodeValue || '';
-      return node.textContent || '';
-    }).filter(Boolean);
-    if (values.length > 0) return { nodes: root, attr: '', value: values.join('\n') };
+    const values = list
+      .map((node) => {
+        if (node === undefined || node === null) return '';
+        if (
+          typeof node === 'string' ||
+          typeof node === 'number' ||
+          typeof node === 'boolean'
+        )
+          return String(node);
+        if (node.nodeType === 2) return node.nodeValue || '';
+        if (node.nodeType === 3 || node.nodeType === 4)
+          return node.nodeValue || '';
+        return node.textContent || '';
+      })
+      .filter(Boolean);
+    if (values.length > 0)
+      return { nodes: root, attr: '', value: values.join('\n') };
   } catch {
     // fallback below
   }
@@ -852,28 +1304,55 @@ function selectXPath($: cheerio.CheerioAPI, root: cheerio.Cheerio<any>, rule: st
     attr = 'text';
     fallbackExpr = fallbackExpr.replace(/\/text\(\)$/, '');
   }
-  const parts = fallbackExpr.split('/').filter(Boolean).map((part) => {
-    const match = part.match(/^([A-Za-z0-9_*.-]+)(?:\[@([A-Za-z0-9_-]+)=['"]([^'"]+)['"]\])?(?:\[(\d+)\])?$/);
-    if (!match) return '';
-    const tag = match[1] === '*' ? '*' : match[1];
-    const filter = match[2] ? `[${match[2]}="${match[3]}"]` : '';
-    const index = match[4] ? `:nth-of-type(${match[4]})` : '';
-    return `${tag}${filter}${index}`;
-  }).filter(Boolean);
+  const parts = fallbackExpr
+    .split('/')
+    .filter(Boolean)
+    .map((part) => {
+      const match = part.match(
+        /^([A-Za-z0-9_*.-]+)(?:\[@([A-Za-z0-9_-]+)=['"]([^'"]+)['"]\])?(?:\[(\d+)\])?$/
+      );
+      if (!match) return '';
+      const tag = match[1] === '*' ? '*' : match[1];
+      const filter = match[2] ? `[${match[2]}="${match[3]}"]` : '';
+      const index = match[4] ? `:nth-of-type(${match[4]})` : '';
+      return `${tag}${filter}${index}`;
+    })
+    .filter(Boolean);
   return { nodes: parts.length ? root.find(parts.join(' ')) : root, attr };
 }
 
-function readValue($: cheerio.CheerioAPI, root: cheerio.Cheerio<any>, rule?: string, baseUrl?: string, jsContext?: Record<string, any>, rawUrl = false): string {
+function readValue(
+  $: cheerio.CheerioAPI,
+  root: cheerio.Cheerio<any>,
+  rule?: string,
+  baseUrl?: string,
+  jsContext?: Record<string, any>,
+  rawUrl = false
+): string {
   for (const alternative of splitAlternatives(rule)) {
     const templateKind = alternative.match(/\{\{\s*@@([\s\S]*?)\}\}/);
     if (templateKind) {
-      const value = alternative.replace(/\{\{\s*@@([\s\S]*?)\}\}/g, (_, innerRule) => readValue($, root, String(innerRule).trim(), baseUrl, jsContext, rawUrl));
+      const value = alternative.replace(
+        /\{\{\s*@@([\s\S]*?)\}\}/g,
+        (_, innerRule) =>
+          readValue(
+            $,
+            root,
+            String(innerRule).trim(),
+            baseUrl,
+            jsContext,
+            rawUrl
+          )
+      );
       if (value) return value;
       continue;
     }
     if (alternative.includes('{{baseUrl}}')) {
       const { base, filters } = splitRuleFilters(alternative);
-      const value = applyRuleFilters(base.replace(/\{\{baseUrl\}\}/g, baseUrl || ''), filters);
+      const value = applyRuleFilters(
+        base.replace(/\{\{baseUrl\}\}/g, baseUrl || ''),
+        filters
+      );
       if (value) return value;
       continue;
     }
@@ -884,23 +1363,47 @@ function readValue($: cheerio.CheerioAPI, root: cheerio.Cheerio<any>, rule?: str
       // 取值用原始属性（不走 URL 绝对化）：源站的 JS 常自己拼域名，先绝对化会拼出两个域名。
       if (blockIndex > 0) {
         const selectorRule = alternative.slice(0, blockIndex).trim();
-        const blocks = Array.from(alternative.slice(blockIndex).matchAll(/<js>([\s\S]*?)<\/js>/gi));
+        const blocks = Array.from(
+          alternative.slice(blockIndex).matchAll(/<js>([\s\S]*?)<\/js>/gi)
+        );
         if (selectorRule && !/@js:/i.test(selectorRule)) {
-          let value = readValue($, root, selectorRule, baseUrl, jsContext, true);
+          let value = readValue(
+            $,
+            root,
+            selectorRule,
+            baseUrl,
+            jsContext,
+            true
+          );
           for (const block of blocks) {
-            value = runJsSnippet(block[1], { ...(jsContext || {}), result: value, src: value, baseUrl });
+            value = runJsSnippet(block[1], {
+              ...(jsContext || {}),
+              result: value,
+              src: value,
+              baseUrl,
+            });
           }
           if (value) {
             if (/,(\s*)\{/.test(value)) return value;
-            return /^(?:https?:)?\/\//i.test(value) || value.startsWith('/') ? normalizeUrl(baseUrl || '', value) : value;
+            return /^(?:https?:)?\/\//i.test(value) || value.startsWith('/')
+              ? normalizeUrl(baseUrl || '', value)
+              : value;
           }
           continue;
         }
       }
-      const transformed = evaluateJsRuleString(alternative, { ...(jsContext || {}), result: $.html(root), src: $.html(root), baseUrl });
+      const transformed = evaluateJsRuleString(alternative, {
+        ...(jsContext || {}),
+        result: $.html(root),
+        src: $.html(root),
+        baseUrl,
+      });
       if (transformed) {
         if (rawUrl) return transformed;
-        return /^(?:https?:)?\/\//i.test(transformed) || transformed.startsWith('/') ? normalizeUrl(baseUrl || '', transformed) : transformed;
+        return /^(?:https?:)?\/\//i.test(transformed) ||
+          transformed.startsWith('/')
+          ? normalizeUrl(baseUrl || '', transformed)
+          : transformed;
       }
       continue;
     }
@@ -908,12 +1411,27 @@ function readValue($: cheerio.CheerioAPI, root: cheerio.Cheerio<any>, rule?: str
     if (jsIndex > 0) {
       const selectorRule = alternative.slice(0, jsIndex).trim();
       const jsRule = alternative.slice(jsIndex).trim();
-      const selected = readValue($, root, selectorRule, baseUrl, jsContext, rawUrl);
-      const transformed = runJsSnippet(jsRule, { ...(jsContext || {}), result: selected, src: selected, baseUrl });
+      const selected = readValue(
+        $,
+        root,
+        selectorRule,
+        baseUrl,
+        jsContext,
+        rawUrl
+      );
+      const transformed = runJsSnippet(jsRule, {
+        ...(jsContext || {}),
+        result: selected,
+        src: selected,
+        baseUrl,
+      });
       if (transformed) {
         if (/,(\s*)\{/.test(transformed)) return transformed;
         if (rawUrl) return transformed;
-        return /^(?:https?:)?\/\//i.test(transformed) || transformed.startsWith('/') ? normalizeUrl(baseUrl || '', transformed) : transformed;
+        return /^(?:https?:)?\/\//i.test(transformed) ||
+          transformed.startsWith('/')
+          ? normalizeUrl(baseUrl || '', transformed)
+          : transformed;
       }
       if (selected) return selected;
       continue;
@@ -926,15 +1444,30 @@ function readValue($: cheerio.CheerioAPI, root: cheerio.Cheerio<any>, rule?: str
       continue;
     }
     if (/^@?XPath:/i.test(normalized) || normalized.startsWith('//')) {
-      const { nodes, attr, value: xpathValue } = selectXPath($, root, normalized);
+      const {
+        nodes,
+        attr,
+        value: xpathValue,
+      } = selectXPath($, root, normalized);
       const node = nodes.first();
-      let value = xpathValue !== undefined ? xpathValue : attr === 'text' || !attr ? node.text() : node.attr(attr) || '';
-      value = he.decode(value || '').replace(/\u00a0/g, ' ').trim();
+      let value =
+        xpathValue !== undefined
+          ? xpathValue
+          : attr === 'text' || !attr
+          ? node.text()
+          : node.attr(attr) || '';
+      value = he
+        .decode(value || '')
+        .replace(/\u00a0/g, ' ')
+        .trim();
       value = applyRuleFilters(value, splitRuleFilters(alternative).filters);
       if (value) return value;
       continue;
     }
-    const steps = normalized.split(/&&|@css:/).map((item) => item.trim()).filter(Boolean);
+    const steps = normalized
+      .split(/&&|@css:/)
+      .map((item) => item.trim())
+      .filter(Boolean);
     let current = root;
     let attr = '';
     for (const rawStep of steps) {
@@ -954,13 +1487,28 @@ function readValue($: cheerio.CheerioAPI, root: cheerio.Cheerio<any>, rule?: str
     const node = current.first();
     let value = '';
     const normalizedAttr = attr.toLowerCase();
-    if (!attr || normalizedAttr === 'text' || normalizedAttr === 'textnodes') value = node.text();
-    else if (normalizedAttr === 'owntext') value = node.clone().children().remove().end().text();
-    else if (normalizedAttr === 'all') value = current.toArray().map((el) => $(el).text()).join('\n');
+    if (!attr || normalizedAttr === 'text' || normalizedAttr === 'textnodes')
+      value = node.text();
+    else if (normalizedAttr === 'owntext')
+      value = node.clone().children().remove().end().text();
+    else if (normalizedAttr === 'all')
+      value = current
+        .toArray()
+        .map((el) => $(el).text())
+        .join('\n');
     else if (normalizedAttr === 'html') value = node.html() || '';
     else value = node.attr(attr) || '';
-    value = he.decode(value || '').replace(/\u00a0/g, ' ').trim();
-    if (!rawUrl && (normalizedAttr === 'href' || normalizedAttr === 'src') && value && baseUrl) value = normalizeUrl(baseUrl, value);
+    value = he
+      .decode(value || '')
+      .replace(/\u00a0/g, ' ')
+      .trim();
+    if (
+      !rawUrl &&
+      (normalizedAttr === 'href' || normalizedAttr === 'src') &&
+      value &&
+      baseUrl
+    )
+      value = normalizeUrl(baseUrl, value);
     value = applyRuleFilters(value, splitRuleFilters(alternative).filters);
     value = applyPutGetRules(alternative, value);
     if (value) return value;
@@ -968,10 +1516,18 @@ function readValue($: cheerio.CheerioAPI, root: cheerio.Cheerio<any>, rule?: str
   return '';
 }
 
-function readValues($: cheerio.CheerioAPI, root: cheerio.Cheerio<any>, rule?: string, baseUrl?: string): string[] {
+function readValues(
+  $: cheerio.CheerioAPI,
+  root: cheerio.Cheerio<any>,
+  rule?: string,
+  baseUrl?: string
+): string[] {
   for (const alternative of splitAlternatives(rule)) {
     const normalized = stripFilters(alternative);
-    const steps = normalized.split(/&&|@css:/).map((item) => item.trim()).filter(Boolean);
+    const steps = normalized
+      .split(/&&|@css:/)
+      .map((item) => item.trim())
+      .filter(Boolean);
     let current = root;
     let attr = '';
     for (const rawStep of steps) {
@@ -989,24 +1545,48 @@ function readValues($: cheerio.CheerioAPI, root: cheerio.Cheerio<any>, rule?: st
       if (!parsed.selector && parsed.attr) current = root;
     }
     const normalizedAttr = attr.toLowerCase();
-    const values = current.toArray().map((element) => {
-      const node = $(element);
-      let value = '';
-      if (!attr || normalizedAttr === 'text' || normalizedAttr === 'textnodes') value = node.text();
-      else if (normalizedAttr === 'owntext') value = node.clone().children().remove().end().text();
-      else if (normalizedAttr === 'all') value = node.text();
-      else if (normalizedAttr === 'html') value = node.html() || '';
-      else value = node.attr(attr) || '';
-      value = he.decode(value || '').replace(/\u00a0/g, ' ').trim();
-      if ((normalizedAttr === 'href' || normalizedAttr === 'src' || normalizedAttr === 'data-original') && value && baseUrl) value = normalizeUrl(baseUrl, value);
-      return value;
-    }).filter(Boolean);
+    const values = current
+      .toArray()
+      .map((element) => {
+        const node = $(element);
+        let value = '';
+        if (
+          !attr ||
+          normalizedAttr === 'text' ||
+          normalizedAttr === 'textnodes'
+        )
+          value = node.text();
+        else if (normalizedAttr === 'owntext')
+          value = node.clone().children().remove().end().text();
+        else if (normalizedAttr === 'all') value = node.text();
+        else if (normalizedAttr === 'html') value = node.html() || '';
+        else value = node.attr(attr) || '';
+        value = he
+          .decode(value || '')
+          .replace(/\u00a0/g, ' ')
+          .trim();
+        if (
+          (normalizedAttr === 'href' ||
+            normalizedAttr === 'src' ||
+            normalizedAttr === 'data-original') &&
+          value &&
+          baseUrl
+        )
+          value = normalizeUrl(baseUrl, value);
+        return value;
+      })
+      .filter(Boolean);
     if (values.length > 0) return values;
   }
   return [];
 }
 
-function applyBookInfoInit($: cheerio.CheerioAPI, root: cheerio.Cheerio<any>, initRule?: string, baseUrl?: string) {
+function applyBookInfoInit(
+  $: cheerio.CheerioAPI,
+  root: cheerio.Cheerio<any>,
+  initRule?: string,
+  baseUrl?: string
+) {
   const putMatch = (initRule || '').match(/@put:\s*\{([\s\S]*)\}\s*$/);
   if (!putMatch) return;
   const body = putMatch[1];
@@ -1024,16 +1604,32 @@ function applyContentJsRule(value: string, jsRule: string): string {
   if (encryptedParams) {
     try {
       const encrypted = Buffer.from(encryptedParams, 'base64');
-      const decipher = crypto.createDecipheriv('aes-128-cbc', Buffer.from('5V&RoR%Jf@pJPydF'), encrypted.subarray(0, 16));
-      const decoded = Buffer.concat([decipher.update(encrypted.subarray(16)), decipher.final()]).toString('utf8');
+      const decipher = crypto.createDecipheriv(
+        'aes-128-cbc',
+        Buffer.from('5V&RoR%Jf@pJPydF'),
+        encrypted.subarray(0, 16)
+      );
+      const decoded = Buffer.concat([
+        decipher.update(encrypted.subarray(16)),
+        decipher.final(),
+      ]).toString('utf8');
       const data = JSON.parse(decoded);
-      const images = Array.isArray(data?.chapter_images) ? data.chapter_images : [];
-      const imageBase = data?.chapter_domain || data?.images_domain || data?.cdnurl || 'https://six.mhpic.net';
+      const images = Array.isArray(data?.chapter_images)
+        ? data.chapter_images
+        : [];
+      const imageBase =
+        data?.chapter_domain ||
+        data?.images_domain ||
+        data?.cdnurl ||
+        'https://six.mhpic.net';
       if (images.length > 0) {
         return images
           .map((src: string) => normalizeUrl(imageBase, String(src || '')))
           .filter(Boolean)
-          .map((src: string) => `<img src="${src}" style="max-width:100%; display:block;" referrerpolicy="no-referrer">`)
+          .map(
+            (src: string) =>
+              `<img src="${src}" style="max-width:100%; display:block;" referrerpolicy="no-referrer">`
+          )
           .join('\n');
       }
     } catch {
@@ -1042,15 +1638,23 @@ function applyContentJsRule(value: string, jsRule: string): string {
   }
   if (/window\.comicInfo/.test(value)) {
     try {
-      const match = value.match(/window\.comicInfo\s*=\s*(.*?)(?:,window\.hideguide|;|<\/script>)/);
+      const match = value.match(
+        /window\.comicInfo\s*=\s*(.*?)(?:,window\.hideguide|;|<\/script>)/
+      );
       if (match?.[1]) {
-        const comicInfo = new vm.Script(`(${match[1]})`).runInNewContext({}, { timeout: 1000 });
+        const comicInfo = new vm.Script(`(${match[1]})`).runInNewContext(
+          {},
+          { timeout: 1000 }
+        );
         const images = comicInfo?.current_chapter?.chapter_img_list;
         if (Array.isArray(images)) {
           return images
             .map((src) => String(src || '').replace(/^\/\//, 'https://'))
             .filter(Boolean)
-            .map((src) => `<img src="${src}" style="max-width:100%; display:block;" referrerpolicy="no-referrer">`)
+            .map(
+              (src) =>
+                `<img src="${src}" style="max-width:100%; display:block;" referrerpolicy="no-referrer">`
+            )
             .join('\n');
         }
       }
@@ -1063,7 +1667,10 @@ function applyContentJsRule(value: string, jsRule: string): string {
       .split(/\n+/)
       .map((item) => item.trim())
       .filter(Boolean)
-      .map((src) => `<img src="${src}" style="max-width:100%; display:block;" referrerpolicy="no-referrer">`)
+      .map(
+        (src) =>
+          `<img src="${src}" style="max-width:100%; display:block;" referrerpolicy="no-referrer">`
+      )
       .join('');
   }
   return runJsSnippet(jsRule, { result: value, src: value }) || value;
@@ -1077,18 +1684,36 @@ function contentFromRule(raw: string, rule?: string, baseUrl?: string): string {
   const rawRule = rule || '';
   const blockJs = rawRule.trim().match(/^<js>([\s\S]*?)<\/js>$/i);
   const jsIndex = rawRule.indexOf('@js:');
-  const selectorRule = blockJs ? '' : jsIndex >= 0 ? rawRule.slice(0, jsIndex).trim() : rawRule;
-  const jsRule = blockJs ? blockJs[1].trim() : jsIndex >= 0 ? rawRule.slice(jsIndex + 4).trim() : '';
+  const selectorRule = blockJs
+    ? ''
+    : jsIndex >= 0
+    ? rawRule.slice(0, jsIndex).trim()
+    : rawRule;
+  const jsRule = blockJs
+    ? blockJs[1].trim()
+    : jsIndex >= 0
+    ? rawRule.slice(jsIndex + 4).trim()
+    : '';
   const $ = cheerio.load(raw);
   if (jsRule) {
-    const values = selectorRule ? readValues($, $.root(), selectorRule, baseUrl) : [];
-    const value = selectorRule ? (values.length > 0 ? values.join('\n') : readValue($, $.root(), selectorRule, baseUrl)) : raw;
+    const values = selectorRule
+      ? readValues($, $.root(), selectorRule, baseUrl)
+      : [];
+    const value = selectorRule
+      ? values.length > 0
+        ? values.join('\n')
+        : readValue($, $.root(), selectorRule, baseUrl)
+      : raw;
     return applyContentJsRule(value, jsRule);
   }
   return readValue($, $.root(), selectorRule, baseUrl);
 }
 
-function chapterContentFromRule(raw: string, rule?: string, baseUrl?: string): string {
+function chapterContentFromRule(
+  raw: string,
+  rule?: string,
+  baseUrl?: string
+): string {
   const json = parseJsonMaybe(raw);
   if (json && (ruleIsJson(rule) || isJsRuleString(rule))) {
     return readJsonRule(json, rule, undefined, baseUrl);
@@ -1134,21 +1759,35 @@ function chapterPageStem(url: string) {
 function proxyChapterImages(content: string, source: BookSource) {
   if (!/<img\b/i.test(content)) return content;
   const rule = source.legado;
-  if (rule?.bookSourceType !== 2 && source.legado?.bookSourceType !== 2) return content;
-  return content.replace(/<img\b([^>]*?)\bsrc=(['"])(.*?)\2([^>]*)>/gi, (match, before, quote, rawSrc, after) => {
-    if (!rawSrc || rawSrc.startsWith('/api/books/image')) return match;
-    const optionIndex = rawSrc.indexOf(',{');
-    const src = optionIndex > 0 ? rawSrc.slice(0, optionIndex) : rawSrc;
-    const options = optionIndex > 0 ? rawSrc.slice(optionIndex + 1) : '';
-    const proxied = `/api/books/image?sourceId=${encodeURIComponent(source.id)}&url=${encodeURIComponent(src)}${options ? `&options=${encodeURIComponent(options)}` : ''}`;
-    return `<img${before}src=${quote}${proxied}${quote}${after}>`;
-  });
+  if (rule?.bookSourceType !== 2 && source.legado?.bookSourceType !== 2)
+    return content;
+  return content.replace(
+    /<img\b([^>]*?)\bsrc=(['"])(.*?)\2([^>]*)>/gi,
+    (match, before, quote, rawSrc, after) => {
+      if (!rawSrc || rawSrc.startsWith('/api/books/image')) return match;
+      const optionIndex = rawSrc.indexOf(',{');
+      const src = optionIndex > 0 ? rawSrc.slice(0, optionIndex) : rawSrc;
+      const options = optionIndex > 0 ? rawSrc.slice(optionIndex + 1) : '';
+      const proxied = `/api/books/image?sourceId=${encodeURIComponent(
+        source.id
+      )}&url=${encodeURIComponent(src)}${
+        options ? `&options=${encodeURIComponent(options)}` : ''
+      }`;
+      return `<img${before}src=${quote}${proxied}${quote}${after}>`;
+    }
+  );
 }
 
 async function resolveLegadoConfig(): Promise<ResolvedLegadoConfig> {
-  let enabled = process.env.OPDS_ENABLED === 'true' || process.env.LEGADO_ENABLED === 'true';
+  let enabled =
+    process.env.OPDS_ENABLED === 'true' ||
+    process.env.LEGADO_ENABLED === 'true';
   let sources: BookSource[] = [];
-  const cacheTTL = Number(process.env.LEGADO_CACHE_TTL_MS || process.env.OPDS_CACHE_TTL_MS || 10 * 60 * 1000);
+  const cacheTTL = Number(
+    process.env.LEGADO_CACHE_TTL_MS ||
+      process.env.OPDS_CACHE_TTL_MS ||
+      10 * 60 * 1000
+  );
 
   const envJson = process.env.LEGADO_SOURCES_JSON;
   if (envJson) {
@@ -1162,18 +1801,29 @@ async function resolveLegadoConfig(): Promise<ResolvedLegadoConfig> {
     const config = await getConfig();
     if (config.OPDSConfig) {
       enabled = config.OPDSConfig.Enabled ?? enabled;
-      const subscriptionSources = await legadoSubscriptionStore.getSourcesForSubscriptions(config.OPDSConfig.LegadoSubscriptions || []);
+      const subscriptionSources =
+        await legadoSubscriptionStore.getSourcesForSubscriptions(
+          config.OPDSConfig.LegadoSubscriptions || []
+        );
       sources = [...sources, ...subscriptionSources];
     }
   } catch {}
 
-  return { enabled, cacheTTL, sources: sources.filter((source) => !!source.url && source.enabled !== false) };
+  return {
+    enabled,
+    cacheTTL,
+    sources: sources.filter(
+      (source) => !!source.url && source.enabled !== false
+    ),
+  };
 }
 
 export function normalizeImportedSources(input: unknown): BookSource[] {
   const list = Array.isArray(input) ? input : [input];
   return list
-    .filter((item): item is LegadoBookSourceRule => !!item && typeof item === 'object')
+    .filter(
+      (item): item is LegadoBookSourceRule => !!item && typeof item === 'object'
+    )
     .map((rule, index) => {
       const name = rule.bookSourceName || `Legado 书源 ${index + 1}`;
       const url = rule.bookSourceUrl || '';
@@ -1193,7 +1843,10 @@ export function normalizeImportedSources(input: unknown): BookSource[] {
     .map((source) => resolveLegadoSource(source));
 }
 
-function normalizeConfiguredLegadoSource(item: any, index: number): BookSource | null {
+function normalizeConfiguredLegadoSource(
+  item: any,
+  index: number
+): BookSource | null {
   if (!item || typeof item !== 'object') return null;
   if (item.type === 'legado' || item.legado) {
     const rule = item.legado || item;
@@ -1208,7 +1861,11 @@ function normalizeConfiguredLegadoSource(item: any, index: number): BookSource |
       url,
       enabled: item.enabled !== false && rule.enabled !== false,
       authMode: item.authMode || 'none',
-      legado: { ...rule, bookSourceName: rule.bookSourceName || name, bookSourceUrl: rule.bookSourceUrl || url },
+      legado: {
+        ...rule,
+        bookSourceName: rule.bookSourceName || name,
+        bookSourceUrl: rule.bookSourceUrl || url,
+      },
     });
   }
   if (item.bookSourceUrl || item.searchUrl || item.ruleSearch) {
@@ -1233,9 +1890,14 @@ function splitUrlOptions(input: string): RequestOptions {
       url: raw.slice(0, comma).trim(),
       method: options.method,
       body: options.body,
-      headers: options.headers && typeof options.headers === 'object' ? options.headers : undefined,
+      headers:
+        options.headers && typeof options.headers === 'object'
+          ? options.headers
+          : undefined,
       charset: options.charset,
-      retry: Number.isFinite(Number(options.retry)) ? Number(options.retry) : undefined,
+      retry: Number.isFinite(Number(options.retry))
+        ? Number(options.retry)
+        : undefined,
     };
   } catch {
     try {
@@ -1244,9 +1906,14 @@ function splitUrlOptions(input: string): RequestOptions {
         url: raw.slice(0, comma).trim(),
         method: options.method,
         body: options.body,
-        headers: options.headers && typeof options.headers === 'object' ? options.headers : undefined,
+        headers:
+          options.headers && typeof options.headers === 'object'
+            ? options.headers
+            : undefined,
         charset: options.charset,
-        retry: Number.isFinite(Number(options.retry)) ? Number(options.retry) : undefined,
+        retry: Number.isFinite(Number(options.retry))
+          ? Number(options.retry)
+          : undefined,
       };
     } catch {
       return { url: raw.slice(0, comma).trim() };
@@ -1261,16 +1928,24 @@ function getCookieHeader(sourceId: string) {
 function mergeSetCookie(sourceId: string, setCookie: string | null) {
   if (!setCookie) return;
   const current = new Map<string, string>();
-  (cookieJar.get(sourceId) || '').split(/;\s*/).filter(Boolean).forEach((item) => {
-    const idx = item.indexOf('=');
-    if (idx > 0) current.set(item.slice(0, idx), item.slice(idx + 1));
-  });
+  (cookieJar.get(sourceId) || '')
+    .split(/;\s*/)
+    .filter(Boolean)
+    .forEach((item) => {
+      const idx = item.indexOf('=');
+      if (idx > 0) current.set(item.slice(0, idx), item.slice(idx + 1));
+    });
   setCookie.split(/,(?=\s*[^;,]+=)/).forEach((cookie) => {
     const pair = cookie.split(';')[0]?.trim();
     const idx = pair?.indexOf('=') ?? -1;
     if (idx > 0) current.set(pair.slice(0, idx), pair.slice(idx + 1));
   });
-  cookieJar.set(sourceId, Array.from(current.entries()).map(([key, value]) => `${key}=${value}`).join('; '));
+  cookieJar.set(
+    sourceId,
+    Array.from(current.entries())
+      .map(([key, value]) => `${key}=${value}`)
+      .join('; ')
+  );
 }
 
 async function fetchText(source: BookSource, url: string): Promise<string> {
@@ -1278,7 +1953,9 @@ async function fetchText(source: BookSource, url: string): Promise<string> {
   const request = splitUrlOptions(url);
   const safe = await validateProxyUrlServerSide(request.url);
   if (!safe) throw new Error(`书源地址未通过安全校验: ${request.url}`);
-  const cacheKey = `text|${source.id}|${request.method || 'GET'}|${request.url}|${request.body || ''}`;
+  const cacheKey = `text|${source.id}|${request.method || 'GET'}|${
+    request.url
+  }|${request.body || ''}`;
   const cached = textCache.get(cacheKey);
   const { cacheTTL } = await resolveLegadoConfig();
   if (cached && cached.expiresAt > Date.now()) return cached.data;
@@ -1295,7 +1972,9 @@ async function fetchText(source: BookSource, url: string): Promise<string> {
       };
       const cookie = getCookieHeader(source.id);
       if (source.legado?.enabledCookieJar && cookie) headers.Cookie = cookie;
-      const method = (request.method || (request.body ? 'POST' : 'GET')).toUpperCase();
+      const method = (
+        request.method || (request.body ? 'POST' : 'GET')
+      ).toUpperCase();
       const response = await fetch(request.url, {
         method,
         headers,
@@ -1303,14 +1982,24 @@ async function fetchText(source: BookSource, url: string): Promise<string> {
         signal: controller.signal,
         cache: 'no-store',
       });
-      if (source.legado?.enabledCookieJar) mergeSetCookie(source.id, response.headers.get('set-cookie'));
+      if (source.legado?.enabledCookieJar)
+        mergeSetCookie(source.id, response.headers.get('set-cookie'));
       if (!response.ok) throw new Error(`请求失败: ${response.status}`);
-      const contentLength = Number(response.headers.get('content-length') || '0');
+      const contentLength = Number(
+        response.headers.get('content-length') || '0'
+      );
       if (contentLength > MAX_TEXT_BYTES) throw new Error('响应内容过大');
       const buffer = await response.arrayBuffer();
       const contentType = response.headers.get('content-type') || '';
-      const charset = request.charset || contentType.match(/charset=([^;]+)/i)?.[1]?.trim().replace(/^['"]|['"]$/g, '');
-      const decoderName = /gbk|gb2312|gb18030/i.test(charset || '') ? 'gb18030' : (charset || 'utf-8');
+      const charset =
+        request.charset ||
+        contentType
+          .match(/charset=([^;]+)/i)?.[1]
+          ?.trim()
+          .replace(/^['"]|['"]$/g, '');
+      const decoderName = /gbk|gb2312|gb18030/i.test(charset || '')
+        ? 'gb18030'
+        : charset || 'utf-8';
       let text: string;
       try {
         text = new TextDecoder(decoderName).decode(buffer);
@@ -1342,10 +2031,15 @@ function getRule(source: BookSource): LegadoBookSourceRule {
   return resolveLegadoRule(source.legado, source) || source.legado;
 }
 
-function makeItem(source: BookSource, partial: Partial<BookListItem> & { detailHref?: string; title?: string }): BookListItem {
+function makeItem(
+  source: BookSource,
+  partial: Partial<BookListItem> & { detailHref?: string; title?: string }
+): BookListItem {
   const detailHref = partial.detailHref || '';
   return {
-    id: partial.id || stableId(`${source.id}|${detailHref || partial.title || Date.now()}`),
+    id:
+      partial.id ||
+      stableId(`${source.id}|${detailHref || partial.title || Date.now()}`),
     sourceId: source.id,
     sourceName: source.name,
     title: partial.title || '未命名电子书',
@@ -1368,24 +2062,38 @@ function hasRuleBookList(rule?: LegadoRuleSearch) {
   return !!rule?.bookList?.trim();
 }
 
-function getEffectiveExploreRule(rule: LegadoBookSourceRule): LegadoRuleSearch | undefined {
+function getEffectiveExploreRule(
+  rule: LegadoBookSourceRule
+): LegadoRuleSearch | undefined {
   if (hasRuleBookList(rule.ruleExplore)) return rule.ruleExplore;
   if (hasRuleBookList(rule.ruleSearch)) return rule.ruleSearch;
   return undefined;
 }
 
 function hasExplore(rule: LegadoBookSourceRule) {
-  return rule.enabledExplore !== false && (isJsRuleString(rule.exploreUrl) || parseExploreUrl(rule.exploreUrl).length > 0) && !!getEffectiveExploreRule(rule);
+  return (
+    rule.enabledExplore !== false &&
+    (isJsRuleString(rule.exploreUrl) ||
+      parseExploreUrl(rule.exploreUrl).length > 0) &&
+    !!getEffectiveExploreRule(rule)
+  );
 }
 
-function parseExploreUrl(exploreUrl?: string): Array<{ title: string; template: string }> {
+function parseExploreUrl(
+  exploreUrl?: string
+): Array<{ title: string; template: string }> {
   const raw = (exploreUrl || '').trim();
   if (!raw) return [];
   if (isJsRuleString(raw)) return [];
   const json = parseJsonMaybe(raw);
   if (Array.isArray(json)) {
     return json
-      .map((item) => ({ title: jsonPrimitiveToString(item?.title), template: jsonPrimitiveToString(item?.url) || `__group__:${jsonPrimitiveToString(item?.title)}` }))
+      .map((item) => ({
+        title: jsonPrimitiveToString(item?.title),
+        template:
+          jsonPrimitiveToString(item?.url) ||
+          `__group__:${jsonPrimitiveToString(item?.title)}`,
+      }))
       .filter((item) => !!item.title);
   }
   return raw
@@ -1394,23 +2102,36 @@ function parseExploreUrl(exploreUrl?: string): Array<{ title: string; template: 
     .filter(Boolean)
     .map((item) => {
       const index = item.indexOf('::');
-      if (index >= 0) return { title: item.slice(0, index).trim(), template: item.slice(index + 2).trim() };
+      if (index >= 0)
+        return {
+          title: item.slice(0, index).trim(),
+          template: item.slice(index + 2).trim(),
+        };
       return { title: item, template: item };
     })
     .filter((item) => !!item.template);
 }
 
 function encodeExploreTarget(target: ExploreTarget) {
-  return `legado-explore:${Buffer.from(JSON.stringify(target), 'utf8').toString('base64url')}`;
+  return `legado-explore:${Buffer.from(JSON.stringify(target), 'utf8').toString(
+    'base64url'
+  )}`;
 }
 
 function decodeExploreTarget(href?: string): ExploreTarget | null {
   if (!href?.startsWith('legado-explore:')) return null;
   try {
-    const raw = Buffer.from(href.slice('legado-explore:'.length), 'base64url').toString('utf8');
+    const raw = Buffer.from(
+      href.slice('legado-explore:'.length),
+      'base64url'
+    ).toString('utf8');
     const parsed = JSON.parse(raw);
     if (!parsed?.template) return null;
-    return { title: parsed.title || '分类', template: parsed.template, page: Number(parsed.page || 1) || 1 };
+    return {
+      title: parsed.title || '分类',
+      template: parsed.template,
+      page: Number(parsed.page || 1) || 1,
+    };
   } catch {
     return null;
   }
@@ -1420,15 +2141,30 @@ function buildExploreTargetUrl(source: BookSource, target: ExploreTarget) {
   return buildUrlFromTemplate(target.template, source, undefined, target.page);
 }
 
-async function resolveExploreCategories(source: BookSource, rule: LegadoBookSourceRule): Promise<Array<{ title: string; template: string }>> {
+async function resolveExploreCategories(
+  source: BookSource,
+  rule: LegadoBookSourceRule
+): Promise<Array<{ title: string; template: string }>> {
   const raw = (rule.exploreUrl || '').trim();
   if (!isJsRuleString(raw)) return parseExploreUrl(raw);
 
-  const jsValue = runJsSnippetRaw(raw, { baseUrl: sourceBase(source), source: rule });
-  const parsed = Array.isArray(jsValue) ? jsValue : typeof jsValue === 'string' ? parseJsonMaybe(jsValue) : null;
+  const jsValue = runJsSnippetRaw(raw, {
+    baseUrl: sourceBase(source),
+    source: rule,
+  });
+  const parsed = Array.isArray(jsValue)
+    ? jsValue
+    : typeof jsValue === 'string'
+    ? parseJsonMaybe(jsValue)
+    : null;
   if (Array.isArray(parsed)) {
     const categories = parsed
-      .map((item) => ({ title: jsonPrimitiveToString(item?.title), template: jsonPrimitiveToString(item?.url) || `__group__:${jsonPrimitiveToString(item?.title)}` }))
+      .map((item) => ({
+        title: jsonPrimitiveToString(item?.title),
+        template:
+          jsonPrimitiveToString(item?.url) ||
+          `__group__:${jsonPrimitiveToString(item?.title)}`,
+      }))
       .filter((item) => !!item.title);
     if (categories.length > 0) return categories;
   }
@@ -1436,12 +2172,19 @@ async function resolveExploreCategories(source: BookSource, rule: LegadoBookSour
   try {
     const html = await fetchText(source, sourceBase(source));
     const $ = cheerio.load(html);
-    const categories = $('a[href^="/list"]').toArray().map((el) => {
-      const title = $(el).text().trim();
-      const href = ($(el).attr('href') || '').replace(/\/$/, '-{{page}}/');
-      return title && href ? { title, template: href } : null;
-    }).filter(Boolean) as Array<{ title: string; template: string }>;
-    if (categories.length > 0) return [{ title: '全部分类', template: '__group__:全部分类' }, ...categories];
+    const categories = $('a[href^="/list"]')
+      .toArray()
+      .map((el) => {
+        const title = $(el).text().trim();
+        const href = ($(el).attr('href') || '').replace(/\/$/, '-{{page}}/');
+        return title && href ? { title, template: href } : null;
+      })
+      .filter(Boolean) as Array<{ title: string; template: string }>;
+    if (categories.length > 0)
+      return [
+        { title: '全部分类', template: '__group__:全部分类' },
+        ...categories,
+      ];
   } catch {
     // 动态分类首页被源站拦截时，至少不要把 @js 当成分类项显示。
   }
@@ -1460,7 +2203,9 @@ export class LegadoClient {
           searchSupported: !!resolved.legado?.searchUrl,
           catalogSupported: hasExplore(resolved.legado || {}),
           searchMode: resolved.legado?.searchUrl ? 'legado' : 'disabled',
-          catalogMode: hasExplore(resolved.legado || {}) ? 'legado' : 'disabled',
+          catalogMode: hasExplore(resolved.legado || {})
+            ? 'legado'
+            : 'disabled',
           acquisitionTypes: ['application/x-legado-chapters+json'],
           lastCheckedAt: Date.now(),
         },
@@ -1469,16 +2214,23 @@ export class LegadoClient {
   }
 
   async getSearchSources(sourceId?: string): Promise<BookSource[]> {
-    return sourceId ? [await getSourceById(sourceId)] : (await resolveLegadoConfig()).sources;
+    return sourceId
+      ? [await getSourceById(sourceId)]
+      : (await resolveLegadoConfig()).sources;
   }
 
-  async searchBooksSource(q: string, source: BookSource): Promise<{ source: BookSource; results: BookListItem[] }> {
+  async searchBooksSource(
+    q: string,
+    source: BookSource
+  ): Promise<{ source: BookSource; results: BookListItem[] }> {
     const rule = getRule(source);
-    if (!rule.searchUrl || !rule.ruleSearch?.bookList) throw new Error('该 Legado 书源不支持搜索');
+    if (!rule.searchUrl || !rule.ruleSearch?.bookList)
+      throw new Error('该 Legado 书源不支持搜索');
     const cacheKey = `search|${source.id}|${q}`;
     const { cacheTTL } = await resolveLegadoConfig();
     const cached = searchCache.get(cacheKey);
-    if (cached && cached.expiresAt > Date.now()) return { source, results: cached.data };
+    if (cached && cached.expiresAt > Date.now())
+      return { source, results: cached.data };
 
     const results: BookListItem[] = [];
     const seen = new Set<string>();
@@ -1486,7 +2238,12 @@ export class LegadoClient {
       const targetUrl = buildUrlFromTemplate(rule.searchUrl, source, q, page);
       const html = await fetchText(source, targetUrl);
       applyRuleJsBlocks(html, rule.ruleSearch.bookList);
-      if (page === 1 && rule.ruleSearch.checkKeyWord && !html.includes(rule.ruleSearch.checkKeyWord) && !html.includes(q)) {
+      if (
+        page === 1 &&
+        rule.ruleSearch.checkKeyWord &&
+        !html.includes(rule.ruleSearch.checkKeyWord) &&
+        !html.includes(q)
+      ) {
         throw new Error('搜索结果校验失败');
       }
       let pageCount = 0;
@@ -1496,44 +2253,85 @@ export class LegadoClient {
         const items = selectJsonItems(json, searchBookListRule);
         pageCount = items.length;
         items.forEach((item) => {
-          const detailHref = readJsonRule(item, rule.ruleSearch?.bookUrl, source, targetUrl);
-          const title = readJsonRule(item, rule.ruleSearch?.name, source, targetUrl);
+          const detailHref = readJsonRule(
+            item,
+            rule.ruleSearch?.bookUrl,
+            source,
+            targetUrl
+          );
+          const title = readJsonRule(
+            item,
+            rule.ruleSearch?.name,
+            source,
+            targetUrl
+          );
           if (!title && !detailHref) return;
-          const cover = readJsonRule(item, rule.ruleSearch?.coverUrl, source, targetUrl);
+          const cover = readJsonRule(
+            item,
+            rule.ruleSearch?.coverUrl,
+            source,
+            targetUrl
+          );
           const itemId = jsonPrimitiveToString(item?.id) || undefined;
           const dedupeKey = itemId || detailHref || `${title}|${cover}`;
           if (dedupeKey && seen.has(dedupeKey)) return;
           if (dedupeKey) seen.add(dedupeKey);
-          results.push(makeItem(source, {
-            id: itemId,
-            title,
-            author: readJsonRule(item, rule.ruleSearch?.author, source, targetUrl),
-            summary: readJsonRule(item, rule.ruleSearch?.intro, source, targetUrl),
-            cover: cover || undefined,
-            detailHref,
-            tags: readJsonRule(item, rule.ruleSearch?.kind, source, targetUrl).split(/[,，\s]+/).filter(Boolean),
-          }));
+          results.push(
+            makeItem(source, {
+              id: itemId,
+              title,
+              author: readJsonRule(
+                item,
+                rule.ruleSearch?.author,
+                source,
+                targetUrl
+              ),
+              summary: readJsonRule(
+                item,
+                rule.ruleSearch?.intro,
+                source,
+                targetUrl
+              ),
+              cover: cover || undefined,
+              detailHref,
+              tags: readJsonRule(item, rule.ruleSearch?.kind, source, targetUrl)
+                .split(/[,，\s]+/)
+                .filter(Boolean),
+            })
+          );
         });
       } else if (searchBookListRule.trim().startsWith(':')) {
         const items = readAllInOneList(html, searchBookListRule);
         pageCount = items.length;
         items.forEach((item) => {
-          const detailHref = readRegexItem(item, rule.ruleSearch?.bookUrl, targetUrl);
+          const detailHref = readRegexItem(
+            item,
+            rule.ruleSearch?.bookUrl,
+            targetUrl
+          );
           const title = readRegexItem(item, rule.ruleSearch?.name, targetUrl);
           if (!title && !detailHref) return;
-          const cover = readRegexItem(item, rule.ruleSearch?.coverUrl, targetUrl);
+          const cover = readRegexItem(
+            item,
+            rule.ruleSearch?.coverUrl,
+            targetUrl
+          );
           const dedupeKey = detailHref || `${title}|${cover}`;
           if (dedupeKey && seen.has(dedupeKey)) return;
           if (dedupeKey) seen.add(dedupeKey);
-          results.push(makeItem(source, {
-            id: detailHref || undefined,
-            title,
-            author: readRegexItem(item, rule.ruleSearch?.author, targetUrl),
-            summary: readRegexItem(item, rule.ruleSearch?.intro, targetUrl),
-            cover: cover || undefined,
-            detailHref,
-            tags: readRegexItem(item, rule.ruleSearch?.kind, targetUrl).split(/[,，\s]+/).filter(Boolean),
-          }));
+          results.push(
+            makeItem(source, {
+              id: detailHref || undefined,
+              title,
+              author: readRegexItem(item, rule.ruleSearch?.author, targetUrl),
+              summary: readRegexItem(item, rule.ruleSearch?.intro, targetUrl),
+              cover: cover || undefined,
+              detailHref,
+              tags: readRegexItem(item, rule.ruleSearch?.kind, targetUrl)
+                .split(/[,，\s]+/)
+                .filter(Boolean),
+            })
+          );
         });
       } else {
         const $ = cheerio.load(html);
@@ -1541,27 +2339,45 @@ export class LegadoClient {
         pageCount = items.length;
         items.each((_, element) => {
           const root = $(element);
-          const detailHref = readValue($, root, rule.ruleSearch?.bookUrl, targetUrl, { source: rule });
+          const detailHref = readValue(
+            $,
+            root,
+            rule.ruleSearch?.bookUrl,
+            targetUrl,
+            { source: rule }
+          );
           const title = readValue($, root, rule.ruleSearch?.name, targetUrl);
           if (!title && !detailHref) return;
-          const cover = readValue($, root, rule.ruleSearch?.coverUrl, targetUrl);
+          const cover = readValue(
+            $,
+            root,
+            rule.ruleSearch?.coverUrl,
+            targetUrl
+          );
           const dedupeKey = detailHref || `${title}|${cover}`;
           if (dedupeKey && seen.has(dedupeKey)) return;
           if (dedupeKey) seen.add(dedupeKey);
-          results.push(makeItem(source, {
-            id: detailHref || undefined,
-            title,
-            author: readValue($, root, rule.ruleSearch?.author, targetUrl),
-            summary: readValue($, root, rule.ruleSearch?.intro, targetUrl),
-            cover: cover || undefined,
-            detailHref,
-            tags: readValue($, root, rule.ruleSearch?.kind, targetUrl).split(/[,，\s]+/).filter(Boolean),
-          }));
+          results.push(
+            makeItem(source, {
+              id: detailHref || undefined,
+              title,
+              author: readValue($, root, rule.ruleSearch?.author, targetUrl),
+              summary: readValue($, root, rule.ruleSearch?.intro, targetUrl),
+              cover: cover || undefined,
+              detailHref,
+              tags: readValue($, root, rule.ruleSearch?.kind, targetUrl)
+                .split(/[,，\s]+/)
+                .filter(Boolean),
+            })
+          );
         });
       }
       if (pageCount === 0) break;
     }
-    searchCache.set(cacheKey, { data: results, expiresAt: Date.now() + cacheTTL });
+    searchCache.set(cacheKey, {
+      data: results,
+      expiresAt: Date.now() + cacheTTL,
+    });
     return { source, results };
   }
 
@@ -1569,39 +2385,78 @@ export class LegadoClient {
     const sources = await this.getSearchSources(sourceId);
     const results: BookListItem[] = [];
     const failedSources: BookSearchFailure[] = [];
-    await Promise.all(sources.map(async (source) => {
-      try {
-        const sourceResult = await this.searchBooksSource(q, source);
-        results.push(...sourceResult.results);
-      } catch (error) {
-        failedSources.push({ sourceId: source.id, sourceName: source.name, error: (error as Error).message });
-      }
-    }));
+    await Promise.all(
+      sources.map(async (source) => {
+        try {
+          const sourceResult = await this.searchBooksSource(q, source);
+          results.push(...sourceResult.results);
+        } catch (error) {
+          failedSources.push({
+            sourceId: source.id,
+            sourceName: source.name,
+            error: (error as Error).message,
+          });
+        }
+      })
+    );
     return { results, failedSources };
   }
 
-  async getCatalog(sourceId: string, href?: string): Promise<BookCatalogResult> {
+  async getCatalog(
+    sourceId: string,
+    href?: string
+  ): Promise<BookCatalogResult> {
     const source = await getSourceById(sourceId);
     const rule = getRule(source);
     if (!hasExplore(rule)) {
-      return { sourceId: source.id, sourceName: source.name, title: source.name, href: href || source.url, entries: [], navigation: [] };
+      return {
+        sourceId: source.id,
+        sourceName: source.name,
+        title: source.name,
+        href: href || source.url,
+        entries: [],
+        navigation: [],
+      };
     }
 
     const categories = await resolveExploreCategories(source, rule);
     const target = decodeExploreTarget(href) || null;
     const navigation = categories.map((item) => ({
       title: item.title,
-      href: item.template.startsWith('__group__:') ? '' : encodeExploreTarget({ title: item.title, template: item.template, page: 1 }),
-      rel: item.template.startsWith('__group__:') ? 'legado:group' : 'legado:explore',
+      href: item.template.startsWith('__group__:')
+        ? ''
+        : encodeExploreTarget({
+            title: item.title,
+            template: item.template,
+            page: 1,
+          }),
+      rel: item.template.startsWith('__group__:')
+        ? 'legado:group'
+        : 'legado:explore',
       type: 'application/x-legado-explore',
     }));
 
     if (!target) {
-      return { sourceId: source.id, sourceName: source.name, title: source.name, subtitle: '请选择分类', href: href || source.url, entries: [], navigation };
+      return {
+        sourceId: source.id,
+        sourceName: source.name,
+        title: source.name,
+        subtitle: '请选择分类',
+        href: href || source.url,
+        entries: [],
+        navigation,
+      };
     }
 
     if (target.template.startsWith('__group__:')) {
-      return { sourceId: source.id, sourceName: source.name, title: target.title, href: href || '', entries: [], navigation };
+      return {
+        sourceId: source.id,
+        sourceName: source.name,
+        title: target.title,
+        href: href || '',
+        entries: [],
+        navigation,
+      };
     }
     const targetUrl = buildExploreTargetUrl(source, target);
     const html = await fetchText(source, targetUrl);
@@ -1613,19 +2468,33 @@ export class LegadoClient {
       const items = selectJsonItems(json, exploreRule?.bookList);
       pageCount = items.length;
       items.forEach((item) => {
-        const detailHref = readJsonRule(item, exploreRule?.bookUrl, source, targetUrl);
+        const detailHref = readJsonRule(
+          item,
+          exploreRule?.bookUrl,
+          source,
+          targetUrl
+        );
         const title = readJsonRule(item, exploreRule?.name, source, targetUrl);
         if (!title && !detailHref) return;
-        const cover = readJsonRule(item, exploreRule?.coverUrl, source, targetUrl);
-        entries.push(makeItem(source, {
-          id: jsonPrimitiveToString(item?.id) || detailHref || undefined,
-          title,
-          author: readJsonRule(item, exploreRule?.author, source, targetUrl),
-          summary: readJsonRule(item, exploreRule?.intro, source, targetUrl),
-          cover: cover || undefined,
-          detailHref,
-          tags: readJsonRule(item, exploreRule?.kind, source, targetUrl).split(/[,，\s]+/).filter(Boolean),
-        }));
+        const cover = readJsonRule(
+          item,
+          exploreRule?.coverUrl,
+          source,
+          targetUrl
+        );
+        entries.push(
+          makeItem(source, {
+            id: jsonPrimitiveToString(item?.id) || detailHref || undefined,
+            title,
+            author: readJsonRule(item, exploreRule?.author, source, targetUrl),
+            summary: readJsonRule(item, exploreRule?.intro, source, targetUrl),
+            cover: cover || undefined,
+            detailHref,
+            tags: readJsonRule(item, exploreRule?.kind, source, targetUrl)
+              .split(/[,，\s]+/)
+              .filter(Boolean),
+          })
+        );
       });
     } else {
       const $ = cheerio.load(html);
@@ -1637,15 +2506,19 @@ export class LegadoClient {
         const title = readValue($, root, exploreRule?.name, targetUrl);
         if (!title && !detailHref) return;
         const cover = readValue($, root, exploreRule?.coverUrl, targetUrl);
-        entries.push(makeItem(source, {
-          id: detailHref || undefined,
-          title,
-          author: readValue($, root, exploreRule?.author, targetUrl),
-          summary: readValue($, root, exploreRule?.intro, targetUrl),
-          cover: cover || undefined,
-          detailHref,
-          tags: readValue($, root, exploreRule?.kind, targetUrl).split(/[,，\s]+/).filter(Boolean),
-        }));
+        entries.push(
+          makeItem(source, {
+            id: detailHref || undefined,
+            title,
+            author: readValue($, root, exploreRule?.author, targetUrl),
+            summary: readValue($, root, exploreRule?.intro, targetUrl),
+            cover: cover || undefined,
+            detailHref,
+            tags: readValue($, root, exploreRule?.kind, targetUrl)
+              .split(/[,，\s]+/)
+              .filter(Boolean),
+          })
+        );
       });
     }
 
@@ -1657,63 +2530,137 @@ export class LegadoClient {
       href: href || encodeExploreTarget(target),
       entries,
       navigation,
-      nextHref: pageCount > 0 ? encodeExploreTarget({ ...target, page: target.page + 1 }) : undefined,
-      previousHref: target.page > 1 ? encodeExploreTarget({ ...target, page: target.page - 1 }) : undefined,
+      nextHref:
+        pageCount > 0
+          ? encodeExploreTarget({ ...target, page: target.page + 1 })
+          : undefined,
+      previousHref:
+        target.page > 1
+          ? encodeExploreTarget({ ...target, page: target.page - 1 })
+          : undefined,
     };
   }
 
-  async getChaptersByBookId(sourceId: string, bookId: string): Promise<BookChapter[]> {
+  async getChaptersByBookId(
+    sourceId: string,
+    bookId: string
+  ): Promise<BookChapter[]> {
     const source = await getSourceById(sourceId);
     const rule = getRule(source);
     const base = sourceBase(source);
     const searchBookUrlRule = rule.ruleSearch?.bookUrl || '';
-    const detailHref = /^https?:\/\//i.test(bookId) || bookId.startsWith('/')
-      ? normalizeUrl(base, bookId)
-      : /\{\{\s*(?:\$\.id|id)\s*\}\}|\{id\}/.test(searchBookUrlRule)
-        ? normalizeUrl(base, searchBookUrlRule
-          .replace(/\{\{\s*\$\.id\s*\}\}/g, encodeURIComponent(bookId))
-          .replace(/\{\{\s*id\s*\}\}/g, encodeURIComponent(bookId))
-          .replace(/\{id\}/g, encodeURIComponent(bookId)))
+    const detailHref =
+      /^https?:\/\//i.test(bookId) || bookId.startsWith('/')
+        ? normalizeUrl(base, bookId)
+        : /\{\{\s*(?:\$\.id|id)\s*\}\}|\{id\}/.test(searchBookUrlRule)
+        ? normalizeUrl(
+            base,
+            searchBookUrlRule
+              .replace(/\{\{\s*\$\.id\s*\}\}/g, encodeURIComponent(bookId))
+              .replace(/\{\{\s*id\s*\}\}/g, encodeURIComponent(bookId))
+              .replace(/\{id\}/g, encodeURIComponent(bookId))
+          )
         : '';
-    if (!detailHref) throw new Error('该 Legado 书源无法通过 bookId 定位详情，请重新搜索后打开');
-    const detail = await this.getBookDetail(sourceId, detailHref, { id: bookId, detailHref });
-    const tocHref = detail.acquisitionLinks.find((item) => item.rel === 'legado:chapters' || item.type.toLowerCase().includes('legado-chapters'))?.href;
+    if (!detailHref)
+      throw new Error(
+        '该 Legado 书源无法通过 bookId 定位详情，请重新搜索后打开'
+      );
+    const detail = await this.getBookDetail(sourceId, detailHref, {
+      id: bookId,
+      detailHref,
+    });
+    const tocHref = detail.acquisitionLinks.find(
+      (item) =>
+        item.rel === 'legado:chapters' ||
+        item.type.toLowerCase().includes('legado-chapters')
+    )?.href;
     if (!tocHref) return [];
     return this.getChapters(sourceId, tocHref);
   }
 
-  async getBookDetail(sourceId: string, href: string, fallback?: Partial<BookDetail>): Promise<BookDetail> {
+  async getBookDetail(
+    sourceId: string,
+    href: string,
+    fallback?: Partial<BookDetail>
+  ): Promise<BookDetail> {
     const source = await getSourceById(sourceId);
     const rule = getRule(source);
     const detailHref = href || fallback?.detailHref || '';
     const cacheKey = `detail|${source.id}|${detailHref}`;
     const { cacheTTL } = await resolveLegadoConfig();
     const cached = detailCache.get(cacheKey);
-    if (cached && cached.expiresAt > Date.now()) return { ...cached.data, ...(!href && fallback ? fallback : {}) };
+    if (cached && cached.expiresAt > Date.now())
+      return { ...cached.data, ...(!href && fallback ? fallback : {}) };
 
     let detail: BookDetail | null = null;
     if (detailHref && rule.ruleBookInfo) {
-      const targetUrl = rule.bookInfoUrl ? buildUrlFromTemplate(rule.bookInfoUrl, source, undefined, 1, detailHref).replace(/\{bookUrl\}/g, encodeURIComponent(detailHref)) : detailHref;
+      const targetUrl = rule.bookInfoUrl
+        ? buildUrlFromTemplate(
+            rule.bookInfoUrl,
+            source,
+            undefined,
+            1,
+            detailHref
+          ).replace(/\{bookUrl\}/g, encodeURIComponent(detailHref))
+        : detailHref;
       const html = await fetchText(source, targetUrl);
-      const initData = rule.bookInfoInit?.trim().startsWith(':') ? readAllInOneList(html, rule.bookInfoInit)[0] : null;
+      const initData = rule.bookInfoInit?.trim().startsWith(':')
+        ? readAllInOneList(html, rule.bookInfoInit)[0]
+        : null;
       const json = initData || parseJsonMaybe(html);
       const $ = json && initData ? null : json ? null : cheerio.load(html);
       const root = $?.root();
-      if ($ && root) applyBookInfoInit($, root, (rule.ruleBookInfo as any).init || rule.bookInfoInit, targetUrl);
-      const read = (itemRule?: string) => initData
-        ? readRegexItem(initData, itemRule, targetUrl)
-        : json
+      if ($ && root)
+        applyBookInfoInit(
+          $,
+          root,
+          (rule.ruleBookInfo as any).init || rule.bookInfoInit,
+          targetUrl
+        );
+      const read = (itemRule?: string) =>
+        initData
+          ? readRegexItem(initData, itemRule, targetUrl)
+          : json
           ? readJsonRule(json, itemRule, source, targetUrl)
-          : readValue($ as cheerio.CheerioAPI, root as cheerio.Cheerio<any>, itemRule, targetUrl);
-      const tocUrl = read(rule.ruleBookInfo.tocUrl) || (rule.tocUrl ? buildUrlFromTemplate(rule.tocUrl, source, undefined, 1, detailHref).replace(/\{bookUrl\}/g, encodeURIComponent(detailHref)) : targetUrl);
+          : readValue(
+              $ as cheerio.CheerioAPI,
+              root as cheerio.Cheerio<any>,
+              itemRule,
+              targetUrl
+            );
+      const tocUrl =
+        read(rule.ruleBookInfo.tocUrl) ||
+        (rule.tocUrl
+          ? buildUrlFromTemplate(
+              rule.tocUrl,
+              source,
+              undefined,
+              1,
+              detailHref
+            ).replace(/\{bookUrl\}/g, encodeURIComponent(detailHref))
+          : targetUrl);
       const cover = read(rule.ruleBookInfo.coverUrl) || fallback?.cover;
-      const title = read(rule.ruleBookInfo.name) || fallback?.title || '未命名电子书';
+      const title =
+        read(rule.ruleBookInfo.name) || fallback?.title || '未命名电子书';
       const chapterCountText = json
-        ? jsonPrimitiveToString(readJsonPath(json, '@json:$.data.nums') ?? readJsonPath(json, '@json:$.data.chapter_nums'))
+        ? jsonPrimitiveToString(
+            readJsonPath(json, '@json:$.data.nums') ??
+              readJsonPath(json, '@json:$.data.chapter_nums')
+          )
         : '';
       const chapterCount = chapterCountText ? Number(chapterCountText) : NaN;
-      const hasKnownEmptyChapters = Number.isFinite(chapterCount) && chapterCount <= 0;
-      const acquisitionLinks: BookAcquisitionLink[] = hasKnownEmptyChapters ? [] : [{ rel: 'legado:chapters', type: 'application/x-legado-chapters+json', href: tocUrl, title: '章节目录' }];
+      const hasKnownEmptyChapters =
+        Number.isFinite(chapterCount) && chapterCount <= 0;
+      const acquisitionLinks: BookAcquisitionLink[] = hasKnownEmptyChapters
+        ? []
+        : [
+            {
+              rel: 'legado:chapters',
+              type: 'application/x-legado-chapters+json',
+              href: tocUrl,
+              title: '章节目录',
+            },
+          ];
       detail = {
         id: fallback?.id || stableId(`${source.id}|${detailHref || title}`),
         sourceId,
@@ -1722,18 +2669,33 @@ export class LegadoClient {
         author: read(rule.ruleBookInfo.author) || fallback?.author,
         cover: cover || undefined,
         summary: read(rule.ruleBookInfo.intro) || fallback?.summary,
-        tags: read(rule.ruleBookInfo.kind).split(/[,，\s]+/).filter(Boolean),
-        categories: read(rule.ruleBookInfo.kind).split(/[,，\s]+/).filter(Boolean),
+        tags: read(rule.ruleBookInfo.kind)
+          .split(/[,，\s]+/)
+          .filter(Boolean),
+        categories: read(rule.ruleBookInfo.kind)
+          .split(/[,，\s]+/)
+          .filter(Boolean),
         detailHref,
         acquisitionLinks,
-        navigation: hasKnownEmptyChapters ? [] : [{ title: '目录', href: tocUrl, rel: 'legado:toc', type: 'application/x-legado-chapters+json' }],
+        navigation: hasKnownEmptyChapters
+          ? []
+          : [
+              {
+                title: '目录',
+                href: tocUrl,
+                rel: 'legado:toc',
+                type: 'application/x-legado-chapters+json',
+              },
+            ],
       };
     }
 
     if (!detail) {
       const tocUrl = fallback?.acquisitionLinks?.[0]?.href || detailHref;
       detail = {
-        id: fallback?.id || stableId(`${source.id}|${detailHref || fallback?.title || ''}`),
+        id:
+          fallback?.id ||
+          stableId(`${source.id}|${detailHref || fallback?.title || ''}`),
         sourceId,
         sourceName: source.name,
         title: fallback?.title || '未命名电子书',
@@ -1741,18 +2703,36 @@ export class LegadoClient {
         cover: fallback?.cover,
         summary: fallback?.summary,
         detailHref,
-        acquisitionLinks: [{ rel: 'legado:chapters', type: 'application/x-legado-chapters+json', href: tocUrl, title: '章节目录' }],
-        navigation: [{ title: '目录', href: tocUrl, rel: 'legado:toc', type: 'application/x-legado-chapters+json' }],
+        acquisitionLinks: [
+          {
+            rel: 'legado:chapters',
+            type: 'application/x-legado-chapters+json',
+            href: tocUrl,
+            title: '章节目录',
+          },
+        ],
+        navigation: [
+          {
+            title: '目录',
+            href: tocUrl,
+            rel: 'legado:toc',
+            type: 'application/x-legado-chapters+json',
+          },
+        ],
       };
     }
-    detailCache.set(cacheKey, { data: detail, expiresAt: Date.now() + cacheTTL });
+    detailCache.set(cacheKey, {
+      data: detail,
+      expiresAt: Date.now() + cacheTTL,
+    });
     return detail;
   }
 
   async getChapters(sourceId: string, tocHref: string): Promise<BookChapter[]> {
     const source = await getSourceById(sourceId);
     const rule = getRule(source);
-    if (!rule.ruleToc?.chapterList) throw new Error('该 Legado 书源缺少目录规则');
+    if (!rule.ruleToc?.chapterList)
+      throw new Error('该 Legado 书源缺少目录规则');
     const cacheKey = `toc|${source.id}|${tocHref}`;
     const { cacheTTL } = await resolveLegadoConfig();
     const cached = tocCache.get(cacheKey);
@@ -1762,40 +2742,83 @@ export class LegadoClient {
     const html = await fetchText(source, targetUrl);
     const chapters: BookChapter[] = [];
     const json = parseJsonMaybe(html);
-    const jsItems = evaluateJsListRule(rule.ruleToc.chapterList, { result: html, src: html, baseUrl: targetUrl, source: rule });
+    const jsItems = evaluateJsListRule(rule.ruleToc.chapterList, {
+      result: html,
+      src: html,
+      baseUrl: targetUrl,
+      source: rule,
+    });
     if (jsItems.length > 0) {
       jsItems.forEach((item, index) => {
-        const title = readJsonRule(item, rule.ruleToc?.chapterName, source, targetUrl) || `第 ${index + 1} 章`;
-        const href = readJsonRule(item, rule.ruleToc?.chapterUrl, source, targetUrl)
-          || fallbackChapterHrefFromItem(item, rule.ruleToc?.chapterUrl, targetUrl);
+        const title =
+          readJsonRule(item, rule.ruleToc?.chapterName, source, targetUrl) ||
+          `第 ${index + 1} 章`;
+        const href =
+          readJsonRule(item, rule.ruleToc?.chapterUrl, source, targetUrl) ||
+          fallbackChapterHrefFromItem(
+            item,
+            rule.ruleToc?.chapterUrl,
+            targetUrl
+          );
         if (!href) return;
         const normalizedHref = normalizeUrl(targetUrl, href);
-        chapters.push({ id: stableId(`${source.id}|${normalizedHref}`), title, href: normalizedHref, order: index });
+        chapters.push({
+          id: stableId(`${source.id}|${normalizedHref}`),
+          title,
+          href: normalizedHref,
+          order: index,
+        });
       });
     } else if (json && ruleIsJson(rule.ruleToc.chapterList)) {
       const items = selectJsonItems(json, rule.ruleToc.chapterList);
       items.forEach((item, index) => {
-        const title = readJsonRule(item, rule.ruleToc?.chapterName, source, targetUrl) || `第 ${index + 1} 章`;
-        const href = readJsonRule(item, rule.ruleToc?.chapterUrl, source, targetUrl)
-          || fallbackChapterHrefFromItem(item, rule.ruleToc?.chapterUrl, targetUrl);
+        const title =
+          readJsonRule(item, rule.ruleToc?.chapterName, source, targetUrl) ||
+          `第 ${index + 1} 章`;
+        const href =
+          readJsonRule(item, rule.ruleToc?.chapterUrl, source, targetUrl) ||
+          fallbackChapterHrefFromItem(
+            item,
+            rule.ruleToc?.chapterUrl,
+            targetUrl
+          );
         if (!href) return;
         const normalizedHref = normalizeUrl(targetUrl, href);
-        chapters.push({ id: stableId(`${source.id}|${normalizedHref}`), title, href: normalizedHref, order: index });
+        chapters.push({
+          id: stableId(`${source.id}|${normalizedHref}`),
+          title,
+          href: normalizedHref,
+          order: index,
+        });
       });
     } else {
       const $ = cheerio.load(html);
       const items = selectElements($, $.root(), rule.ruleToc.chapterList);
       items.each((index, element) => {
         const root = $(element);
-        const title = readValue($, root, rule.ruleToc?.chapterName, targetUrl) || `第 ${index + 1} 章`;
-        const href = readValue($, root, rule.ruleToc?.chapterUrl, targetUrl) || root.attr('href') || '';
+        const title =
+          readValue($, root, rule.ruleToc?.chapterName, targetUrl) ||
+          `第 ${index + 1} 章`;
+        const href =
+          readValue($, root, rule.ruleToc?.chapterUrl, targetUrl) ||
+          root.attr('href') ||
+          '';
         if (!href) return;
         const normalizedHref = normalizeUrl(targetUrl, href);
-        chapters.push({ id: stableId(`${source.id}|${normalizedHref}`), title, href: normalizedHref, order: index });
+        chapters.push({
+          id: stableId(`${source.id}|${normalizedHref}`),
+          title,
+          href: normalizedHref,
+          order: index,
+        });
       });
     }
     if (rule.ruleToc.nextTocUrl) {
-      let nextTocUrl = contentFromRule(html, rule.ruleToc.nextTocUrl, targetUrl);
+      let nextTocUrl = contentFromRule(
+        html,
+        rule.ruleToc.nextTocUrl,
+        targetUrl
+      );
       const visited = new Set([targetUrl]);
       for (let page = 0; page < 8 && nextTocUrl; page += 1) {
         const normalizedNext = normalizeUrl(targetUrl, nextTocUrl);
@@ -1808,26 +2831,52 @@ export class LegadoClient {
           break;
         }
         const $next = cheerio.load(nextHtml);
-        const nextItems = selectElements($next, $next.root(), rule.ruleToc.chapterList);
+        const nextItems = selectElements(
+          $next,
+          $next.root(),
+          rule.ruleToc.chapterList
+        );
         nextItems.each((index, element) => {
           const root = $next(element);
-          const title = readValue($next, root, rule.ruleToc?.chapterName, normalizedNext) || `第 ${chapters.length + index + 1} 章`;
-          const href = readValue($next, root, rule.ruleToc?.chapterUrl, normalizedNext) || root.attr('href') || '';
+          const title =
+            readValue($next, root, rule.ruleToc?.chapterName, normalizedNext) ||
+            `第 ${chapters.length + index + 1} 章`;
+          const href =
+            readValue($next, root, rule.ruleToc?.chapterUrl, normalizedNext) ||
+            root.attr('href') ||
+            '';
           if (!href) return;
           const normalizedHref = normalizeUrl(normalizedNext, href);
-          chapters.push({ id: stableId(`${source.id}|${normalizedHref}`), title, href: normalizedHref, order: chapters.length });
+          chapters.push({
+            id: stableId(`${source.id}|${normalizedHref}`),
+            title,
+            href: normalizedHref,
+            order: chapters.length,
+          });
         });
-        nextTocUrl = contentFromRule(nextHtml, rule.ruleToc.nextTocUrl, normalizedNext);
+        nextTocUrl = contentFromRule(
+          nextHtml,
+          rule.ruleToc.nextTocUrl,
+          normalizedNext
+        );
       }
     }
-    tocCache.set(cacheKey, { data: chapters, expiresAt: Date.now() + cacheTTL });
+    tocCache.set(cacheKey, {
+      data: chapters,
+      expiresAt: Date.now() + cacheTTL,
+    });
     return chapters;
   }
 
-  async getChapterContent(sourceId: string, chapterHref: string, tocHref?: string): Promise<BookChapterContent> {
+  async getChapterContent(
+    sourceId: string,
+    chapterHref: string,
+    tocHref?: string
+  ): Promise<BookChapterContent> {
     const source = await getSourceById(sourceId);
     const rule = getRule(source);
-    if (!rule.ruleContent?.content) throw new Error('该 Legado 书源缺少正文规则');
+    if (!rule.ruleContent?.content)
+      throw new Error('该 Legado 书源缺少正文规则');
     const targetUrl = normalizeUrl(sourceBase(source), chapterHref);
     const cacheKey = `chapter|${source.id}|${targetUrl}`;
     const cached = chapterCache.get(cacheKey);
@@ -1836,32 +2885,66 @@ export class LegadoClient {
     let pageUrl = targetUrl;
     const parts: string[] = [];
     const visited = new Set<string>();
-    for (let page = 0; page < 8 && pageUrl && !visited.has(pageUrl); page += 1) {
+    for (
+      let page = 0;
+      page < 8 && pageUrl && !visited.has(pageUrl);
+      page += 1
+    ) {
       visited.add(pageUrl);
       const html = await fetchText(source, pageUrl);
-      const part = chapterContentFromRule(html, rule.ruleContent.content, pageUrl);
+      const part = chapterContentFromRule(
+        html,
+        rule.ruleContent.content,
+        pageUrl
+      );
       if (part) parts.push(part);
-      const next = rule.ruleContent.nextContentUrl ? contentFromRule(html, rule.ruleContent.nextContentUrl, pageUrl) : '';
+      const next = rule.ruleContent.nextContentUrl
+        ? contentFromRule(html, rule.ruleContent.nextContentUrl, pageUrl)
+        : '';
       const normalizedNext = next ? normalizeUrl(pageUrl, next) : '';
-      if (!normalizedNext || normalizedNext === pageUrl || visited.has(normalizedNext)) break;
+      if (
+        !normalizedNext ||
+        normalizedNext === pageUrl ||
+        visited.has(normalizedNext)
+      )
+        break;
       if (chapterPageStem(normalizedNext) !== chapterPageStem(targetUrl)) break;
       pageUrl = normalizedNext;
     }
     const rawContent = parts.join('\\n\\n');
-    const chapters = tocHref ? await this.getChapters(sourceId, tocHref).catch(() => []) : [];
-    const index = chapters.findIndex((item) => item.href === targetUrl || item.href === chapterHref);
+    const chapters = tocHref
+      ? await this.getChapters(sourceId, tocHref).catch(() => [])
+      : [];
+    const index = chapters.findIndex(
+      (item) => item.href === targetUrl || item.href === chapterHref
+    );
     const content: BookChapterContent = {
       id: stableId(`${source.id}|${targetUrl}`),
       title: index >= 0 ? chapters[index].title : '',
       href: targetUrl,
-      content: proxyChapterImages(cleanContent(applyRuleFilters(rawContent, [
-        ...(rule.ruleContent.sourceRegex ? [rule.ruleContent.sourceRegex, ''] : []),
-        ...((rule.ruleContent as any).replaceRegex ? splitRuleFilters((rule.ruleContent as any).replaceRegex).filters : []),
-      ])), source),
+      content: proxyChapterImages(
+        cleanContent(
+          applyRuleFilters(rawContent, [
+            ...(rule.ruleContent.sourceRegex
+              ? [rule.ruleContent.sourceRegex, '']
+              : []),
+            ...((rule.ruleContent as any).replaceRegex
+              ? splitRuleFilters((rule.ruleContent as any).replaceRegex).filters
+              : []),
+          ])
+        ),
+        source
+      ),
       previousHref: index > 0 ? chapters[index - 1].href : undefined,
-      nextHref: index >= 0 && index + 1 < chapters.length ? chapters[index + 1].href : undefined,
+      nextHref:
+        index >= 0 && index + 1 < chapters.length
+          ? chapters[index + 1].href
+          : undefined,
     };
-    chapterCache.set(cacheKey, { data: content, expiresAt: Date.now() + 24 * 60 * 60 * 1000 });
+    chapterCache.set(cacheKey, {
+      data: content,
+      expiresAt: Date.now() + 24 * 60 * 60 * 1000,
+    });
     return content;
   }
 
@@ -1869,7 +2952,9 @@ export class LegadoClient {
     return getSourceById(sourceId);
   }
 
-  async detectCapabilitiesFromSource(source: BookSource): Promise<BookSourceCapabilities> {
+  async detectCapabilitiesFromSource(
+    source: BookSource
+  ): Promise<BookSourceCapabilities> {
     return {
       searchSupported: !!source.legado?.searchUrl,
       catalogSupported: hasExplore(source.legado || {}),

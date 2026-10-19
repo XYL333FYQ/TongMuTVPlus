@@ -42,7 +42,9 @@ function readMap(): CorrectionMap {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return {};
     const parsed = JSON.parse(raw);
-    return parsed && typeof parsed === 'object' ? (parsed as CorrectionMap) : {};
+    return parsed && typeof parsed === 'object'
+      ? (parsed as CorrectionMap)
+      : {};
   } catch {
     return {};
   }
@@ -103,7 +105,10 @@ export function setEpisodeTitleCorrection(
 ): void {
   if (!title) return;
   const map = readMap();
-  const next: EpisodeTitleCorrection = { ...(map[title]?.data ?? {}), ...patch };
+  const next: EpisodeTitleCorrection = {
+    ...(map[title]?.data ?? {}),
+    ...patch,
+  };
   // 清理假值字段（false / undefined / null），保持存储紧凑
   (Object.keys(next) as (keyof EpisodeTitleCorrection)[]).forEach((k) => {
     const v = next[k];

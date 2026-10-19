@@ -103,7 +103,18 @@ function getAssFormatFields(text: string): string[] {
     .find((line) => /^Format:/i.test(line.trim()));
 
   if (!formatLine) {
-    return ['Layer', 'Start', 'End', 'Style', 'Name', 'MarginL', 'MarginR', 'MarginV', 'Effect', 'Text'];
+    return [
+      'Layer',
+      'Start',
+      'End',
+      'Style',
+      'Name',
+      'MarginL',
+      'MarginR',
+      'MarginV',
+      'Effect',
+      'Text',
+    ];
   }
 
   return formatLine
@@ -148,7 +159,10 @@ function splitAssCsv(value: string, expectedParts: number): string[] {
 
   return [
     ...parts.slice(0, expectedParts - 1).map((part) => part.trim()),
-    parts.slice(expectedParts - 1).join(',').trim(),
+    parts
+      .slice(expectedParts - 1)
+      .join(',')
+      .trim(),
   ];
 }
 
@@ -202,7 +216,9 @@ function convertTtmlToVtt(text: string): string {
 
 function readXmlTime(attrs: string, names: string[]): string | null {
   for (const name of names) {
-    const match = attrs.match(new RegExp(`\\b${name}\\s*=\\s*["']([^"']+)["']`, 'i'));
+    const match = attrs.match(
+      new RegExp(`\\b${name}\\s*=\\s*["']([^"']+)["']`, 'i')
+    );
     if (match) {
       return normalizeTimestamp(match[1]);
     }
@@ -216,7 +232,10 @@ function convertSbvToVtt(text: string): string {
   const blocks = text.split(/\n{2,}/);
 
   for (const block of blocks) {
-    const lines = block.split('\n').map((line) => line.trim()).filter(Boolean);
+    const lines = block
+      .split('\n')
+      .map((line) => line.trim())
+      .filter(Boolean);
     const timing = lines[0];
 
     if (!timing || !timing.includes(',')) continue;
@@ -256,7 +275,12 @@ function convertMicroDvdSubToVtt(text: string): string {
 
       const start = secondsToVttTime(Number(match[1]) / frameRate);
       const end = secondsToVttTime(Number(match[2]) / frameRate);
-      const cueText = decodeHtmlEntities(match[3].replace(/\|/g, '\n').replace(/\{[^}]*\}/g, '').trim());
+      const cueText = decodeHtmlEntities(
+        match[3]
+          .replace(/\|/g, '\n')
+          .replace(/\{[^}]*\}/g, '')
+          .trim()
+      );
 
       return cueText ? { start, end, text: cueText } : null;
     })
@@ -269,7 +293,9 @@ function convertLrcToVtt(text: string): string {
   const entries = text
     .split('\n')
     .flatMap((line) => {
-      const timeMatches = Array.from(line.matchAll(/\[(\d{1,2}):(\d{2})(?:[.:](\d{1,3}))?\]/g));
+      const timeMatches = Array.from(
+        line.matchAll(/\[(\d{1,2}):(\d{2})(?:[.:](\d{1,3}))?\]/g)
+      );
       const cueText = line.replace(/\[[^\]]+\]/g, '').trim();
 
       return timeMatches.map((match) => ({
@@ -309,7 +335,9 @@ function normalizeTimestamp(value: string): string | null {
     return secondsToVttTime(Number(offsetMatch[1]));
   }
 
-  const match = trimmed.match(/^(?:(\d{1,2}):)?(\d{1,2}):(\d{2})(?:\.(\d{1,3}))?$/);
+  const match = trimmed.match(
+    /^(?:(\d{1,2}):)?(\d{1,2}):(\d{2})(?:\.(\d{1,3}))?$/
+  );
   if (!match) return null;
 
   const hours = match[1] || '0';
@@ -317,7 +345,10 @@ function normalizeTimestamp(value: string): string | null {
   const seconds = match[3];
   const millis = (match[4] || '0').padEnd(3, '0').slice(0, 3);
 
-  return `${hours.padStart(2, '0')}:${minutes.padStart(2, '0')}:${seconds}.${millis}`;
+  return `${hours.padStart(2, '0')}:${minutes.padStart(
+    2,
+    '0'
+  )}:${seconds}.${millis}`;
 }
 
 function addVttTimes(start: string, duration: string): string {
@@ -343,9 +374,10 @@ function secondsToVttTime(totalSeconds: number): string {
   const seconds = Math.floor(safeSeconds % 60);
   const millis = Math.round((safeSeconds - Math.floor(safeSeconds)) * 1000);
 
-  return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(
-    seconds
-  ).padStart(2, '0')}.${String(millis).padStart(3, '0')}`;
+  return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(
+    2,
+    '0'
+  )}:${String(seconds).padStart(2, '0')}.${String(millis).padStart(3, '0')}`;
 }
 
 function decodeHtmlEntities(value: string): string {

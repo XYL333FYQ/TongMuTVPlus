@@ -8,44 +8,50 @@ services:
     restart: unless-stopped
     stop_grace_period: 30s
     ports:
-      - "${BIND_ADDRESS:-127.0.0.1}:${APP_PORT:-3000}:3000"
+      - '${BIND_ADDRESS:-127.0.0.1}:${APP_PORT:-3000}:3000'
     environment:
       NODE_ENV: production
       HOSTNAME: 0.0.0.0
-      PORT: "3000"
+      PORT: '3000'
       NEXT_PUBLIC_STORAGE_TYPE: d1
       NEXT_PUBLIC_SITE_NAME: TongMuTV Plus
       SQLITE_DB_PATH: /app/.data/moontv.db
       OFFLINE_DOWNLOAD_DIR: /data
-      USERNAME: "${USERNAME:-admin}"
-      PASSWORD: "${PASSWORD:?Set a private PASSWORD in .env before starting}"
-      APP_COMMIT_SHA: "${APP_COMMIT_SHA:-unversioned}"
-      WATCH_ROOM_ENABLED: "true"
+      USERNAME: '${USERNAME:-admin}'
+      PASSWORD: '${PASSWORD:?Set a private PASSWORD in .env before starting}'
+      APP_COMMIT_SHA: '${APP_COMMIT_SHA:-unversioned}'
+      WATCH_ROOM_ENABLED: 'true'
       WATCH_ROOM_SERVER_TYPE: internal
-      ROOM_ALLOWED_ORIGINS: "${ROOM_ALLOWED_ORIGINS:-}"
-      ROOM_MAX_OWNED: "${ROOM_MAX_OWNED:-3}"
-      ROOM_MAX_MEMBERS: "${ROOM_MAX_MEMBERS:-8}"
-      ROOM_MAX_QUEUE: "${ROOM_MAX_QUEUE:-200}"
-      ROOM_RECONNECT_GRACE_MS: "${ROOM_RECONNECT_GRACE_MS:-30000}"
-      ROOM_OWNER_READY_MS: "${ROOM_OWNER_READY_MS:-5000}"
-      ROOM_LEASE_MS: "${ROOM_LEASE_MS:-90000}"
-      ROOM_EMPTY_PAUSE_MS: "${ROOM_EMPTY_PAUSE_MS:-60000}"
-      ROOM_SLEEP_MS: "${ROOM_SLEEP_MS:-600000}"
-      ROOM_ARCHIVE_MS: "${ROOM_ARCHIVE_MS:-2592000000}"
-      ROOM_PURGE_MS: "${ROOM_PURGE_MS:-604800000}"
-      ROOM_CHAT_RETENTION_MS: "${ROOM_CHAT_RETENTION_MS:-2592000000}"
-      PROXY_M3U8_TOKEN: "${PROXY_M3U8_TOKEN:-}"
-      TVBOX_SUBSCRIBE_TOKEN: "${TVBOX_SUBSCRIBE_TOKEN:-}"
+      ROOM_ALLOWED_ORIGINS: '${ROOM_ALLOWED_ORIGINS:-}'
+      ROOM_MAX_OWNED: '${ROOM_MAX_OWNED:-3}'
+      ROOM_MAX_MEMBERS: '${ROOM_MAX_MEMBERS:-8}'
+      ROOM_MAX_QUEUE: '${ROOM_MAX_QUEUE:-200}'
+      ROOM_RECONNECT_GRACE_MS: '${ROOM_RECONNECT_GRACE_MS:-30000}'
+      ROOM_OWNER_READY_MS: '${ROOM_OWNER_READY_MS:-5000}'
+      ROOM_LEASE_MS: '${ROOM_LEASE_MS:-90000}'
+      ROOM_EMPTY_PAUSE_MS: '${ROOM_EMPTY_PAUSE_MS:-60000}'
+      ROOM_SLEEP_MS: '${ROOM_SLEEP_MS:-600000}'
+      ROOM_ARCHIVE_MS: '${ROOM_ARCHIVE_MS:-2592000000}'
+      ROOM_PURGE_MS: '${ROOM_PURGE_MS:-604800000}'
+      ROOM_CHAT_RETENTION_MS: '${ROOM_CHAT_RETENTION_MS:-2592000000}'
+      PROXY_M3U8_TOKEN: '${PROXY_M3U8_TOKEN:-}'
+      TVBOX_SUBSCRIBE_TOKEN: '${TVBOX_SUBSCRIBE_TOKEN:-}'
       # Legacy server-side fallback for existing external players; never read in client code.
-      NEXT_PUBLIC_PROXY_M3U8_TOKEN: "${NEXT_PUBLIC_PROXY_M3U8_TOKEN:-}"
-      PUID: "${PUID:-1001}"
-      PGID: "${PGID:-1001}"
+      NEXT_PUBLIC_PROXY_M3U8_TOKEN: '${NEXT_PUBLIC_PROXY_M3U8_TOKEN:-}'
+      PUID: '${PUID:-1001}'
+      PGID: '${PGID:-1001}'
     volumes:
       - ./.data:/app/.data
       - ./data:/data
       - ./backups:/backups
     healthcheck:
-      test: ["CMD", "node", "-e", "require('node:http').get('http://127.0.0.1:3000/health/ready',r=>{r.resume();process.exitCode=r.statusCode===200?0:1}).on('error',()=>process.exitCode=1)"]
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "require('node:http').get('http://127.0.0.1:3000/health/ready',r=>{r.resume();process.exitCode=r.statusCode===200?0:1}).on('error',()=>process.exitCode=1)",
+        ]
       interval: 30s
       timeout: 5s
       start_period: 90s
@@ -53,5 +59,5 @@ services:
     logging:
       driver: json-file
       options:
-        max-size: "10m"
-        max-file: "3"
+        max-size: '10m'
+        max-file: '3'

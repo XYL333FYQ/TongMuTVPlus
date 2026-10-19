@@ -1,0 +1,366 @@
+/*
+ * 页面骨架：页头、区块头、容器与海报栅格、片架、空状态、返回顶部。
+ * 只放「排版结构」，按钮输入等基础控件见 primitives.css。
+ */
+
+/* 返回顶部：右下角圆钮，手机上让出底部导航 */
+.tm-back-to-top {
+  position: fixed;
+  right: 24px;
+  bottom: calc(var(--tm-bottom-nav-height) + 32px + var(--tm-safe-bottom));
+  z-index: var(--tm-z-header);
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--tm-text);
+  color: var(--tm-accent-contrast);
+  box-shadow: var(--tm-shadow-md);
+  transition: opacity var(--tm-d-hover) var(--tm-ease-out),
+    transform var(--tm-d-hover) var(--tm-ease-out);
+}
+.tm-back-to-top[data-visible='false'] {
+  opacity: 0;
+  transform: translateY(12px);
+  pointer-events: none;
+}
+@media (min-width: 768px) {
+  .tm-back-to-top {
+    bottom: 24px;
+  }
+}
+
+/* 行内状态：筛选区里的「正在加载」「暂无」 */
+.tm-inline-state {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  font-size: var(--tm-fs-small);
+  color: var(--tm-muted);
+}
+
+/* —— 页头与区块头 —— */
+.tm-page-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px 24px;
+  padding-top: 32px;
+  margin-bottom: 32px;
+}
+.tm-page-title {
+  margin: 0;
+  font-size: var(--tm-fs-title);
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--tm-text);
+}
+.tm-page-desc {
+  margin-top: 8px;
+  font-size: var(--tm-fs-small);
+  color: var(--tm-muted);
+}
+.tm-page-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+/* 手机顶栏已经用 h1 显示页名，页头只留说明和操作，避免标题出现两次 */
+@media (max-width: 767px) {
+  .tm-page-head {
+    padding-top: 4px;
+    margin-bottom: 24px;
+  }
+  .tm-page-head .tm-page-title {
+    display: none;
+  }
+  .tm-page-head .tm-page-desc {
+    margin-top: 0;
+  }
+}
+
+.tm-section {
+  margin-top: var(--tm-section-gap);
+}
+.tm-section-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+.tm-section-title {
+  margin: 0;
+  font-size: var(--tm-fs-section);
+  font-weight: 700;
+  line-height: 1.3;
+  color: var(--tm-text);
+}
+.tm-section-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  min-height: 32px;
+  font-size: var(--tm-fs-small);
+  color: var(--tm-muted);
+  white-space: nowrap;
+  transition: color var(--tm-d-hover) var(--tm-ease-out);
+}
+.tm-section-link:hover {
+  color: var(--tm-text);
+}
+@media (pointer: coarse) {
+  .tm-section-link {
+    justify-content: center;
+    min-width: 44px;
+    min-height: 44px;
+  }
+}
+
+/* —— 片库类页面：标签 → 筛选 → 网格 → 加载更多 —— */
+.tm-library-tags,
+.tm-library-filters {
+  margin-top: 20px;
+}
+.tm-library-grid {
+  margin-top: 28px;
+}
+.tm-library-more {
+  display: flex;
+  justify-content: center;
+  margin-top: 48px;
+  min-height: 48px;
+}
+.tm-library-end {
+  padding: 40px 0 8px;
+  text-align: center;
+  font-size: var(--tm-fs-caption);
+  color: var(--tm-muted);
+}
+
+/* —— 容器与栅格 —— */
+.tm-page-container {
+  width: 100%;
+  max-width: var(--tm-container);
+  margin-inline: auto;
+  padding-inline: var(--tm-content-gutter);
+  min-width: 0;
+}
+.tm-poster-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 24px 12px;
+  min-width: 0;
+}
+.tm-poster-grid > * {
+  min-width: 0;
+}
+@media (min-width: 768px) {
+  .tm-poster-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 32px 20px;
+  }
+}
+@media (min-width: 1024px) {
+  .tm-poster-grid {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+}
+@media (min-width: 1200px) {
+  .tm-poster-grid {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+}
+
+/* —— 海报 —— */
+.tm-poster {
+  position: relative;
+  aspect-ratio: 2 / 3;
+  overflow: hidden;
+  border-radius: var(--tm-radius-md);
+  background: var(--tm-surface-raised);
+  box-shadow: var(--tm-shadow-poster);
+  transition: box-shadow var(--tm-d-hover) var(--tm-ease-out);
+}
+.tm-poster::after {
+  /* 1px 内描边：图和底色融在一起时依然有轮廓 */
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: inset 0 0 0 1px var(--tm-line);
+  pointer-events: none;
+}
+.tm-poster img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.tm-poster-title {
+  display: block;
+  margin-top: 10px;
+  overflow: hidden;
+  font-size: var(--tm-fs-small);
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--tm-text);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.tm-poster-meta {
+  display: block;
+  margin-top: 2px;
+  overflow: hidden;
+  font-size: var(--tm-fs-caption);
+  color: var(--tm-muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 图片加载：模糊到清晰 */
+.tm-fade-image {
+  transition: opacity var(--tm-d-panel) var(--tm-ease-out),
+    filter var(--tm-d-panel) var(--tm-ease-out);
+}
+.tm-fade-image[data-loaded='false'] {
+  opacity: 0;
+  filter: blur(12px);
+}
+html[data-tm-no-blur='true'] .tm-fade-image {
+  filter: none !important;
+}
+
+/* —— 空状态 —— */
+.tm-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 64px 24px;
+  text-align: center;
+  color: var(--tm-muted);
+}
+.tm-empty-icon {
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  margin-bottom: 4px;
+  border-radius: var(--tm-radius-lg);
+  background: var(--tm-surface-raised);
+  color: var(--tm-muted);
+}
+.tm-empty-title {
+  font-size: var(--tm-fs-subtitle);
+  font-weight: 500;
+  color: var(--tm-text);
+}
+.tm-empty-desc {
+  max-width: 360px;
+  font-size: var(--tm-fs-small);
+  line-height: 1.6;
+}
+
+/* —— 横向滚动列表 —— */
+.tm-shelf {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: calc((100% - 2 * 12px) / 3);
+  gap: 12px;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x mandatory;
+  scroll-padding-inline: var(--tm-content-gutter);
+  padding-inline: var(--tm-content-gutter);
+  margin-inline: calc(var(--tm-content-gutter) * -1);
+  /* 留出悬停放大与阴影的空间，再用负外边距抵消 */
+  padding-block: 12px 28px;
+  margin-block: -12px -16px;
+}
+.tm-shelf > * {
+  min-width: 0;
+  scroll-snap-align: start;
+}
+@media (min-width: 768px) {
+  .tm-shelf {
+    gap: 20px;
+    grid-auto-columns: calc((100% - 3 * 20px) / 4);
+  }
+}
+@media (min-width: 1024px) {
+  .tm-shelf {
+    grid-auto-columns: calc((100% - 4 * 20px) / 5);
+  }
+}
+@media (min-width: 1200px) {
+  .tm-shelf {
+    grid-auto-columns: calc((100% - 5 * 20px) / 6);
+  }
+}
+
+/* 片架翻页按钮：只在能精确指向的设备上悬停出现 */
+.tm-shelf-frame {
+  position: relative;
+}
+.tm-shelf-nav {
+  position: absolute;
+  z-index: 60;
+  top: calc(50% - 40px);
+  display: none;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--tm-line);
+  border-radius: var(--tm-radius-pill);
+  background: var(--tm-glass-solid);
+  color: var(--tm-text);
+  box-shadow: var(--tm-shadow-md);
+  opacity: 0;
+  transition: opacity var(--tm-d-hover) var(--tm-ease-out),
+    scale var(--tm-d-press) var(--tm-ease-out);
+}
+.tm-shelf-nav[data-side='start'] {
+  left: -22px;
+}
+.tm-shelf-nav[data-side='end'] {
+  right: -22px;
+}
+.tm-shelf-nav:active {
+  scale: 0.94;
+}
+@media (hover: hover) and (pointer: fine) {
+  .tm-shelf-nav {
+    display: grid;
+  }
+  .tm-shelf-frame:hover .tm-shelf-nav,
+  .tm-shelf-nav:focus-visible {
+    opacity: 1;
+  }
+}
+
+/* 整页加载 / 出错时的一行状态 */
+.tm-public-feedback {
+  padding: 96px 16px;
+  text-align: center;
+  color: var(--tm-muted);
+}
+
+/* 访客页海报卡片与缺图占位 */
+.tm-public-card {
+  display: block;
+  width: 100%;
+  text-align: left;
+}
+.tm-public-image-missing {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  min-height: 100px;
+  color: var(--tm-muted);
+  background: var(--tm-surface);
+}

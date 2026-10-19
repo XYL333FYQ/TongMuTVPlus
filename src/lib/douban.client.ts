@@ -133,8 +133,8 @@ async function fetchWithTimeout(
     proxyUrl === 'https://cors-anywhere.com/'
       ? `${proxyUrl}${url}`
       : proxyUrl
-        ? `${proxyUrl}${encodeURIComponent(url)}`
-        : url;
+      ? `${proxyUrl}${encodeURIComponent(url)}`
+      : url;
 
   const fetchOptions: RequestInit = {
     signal: controller.signal,
@@ -158,20 +158,20 @@ async function fetchWithTimeout(
 
 function getDoubanProxyConfig(): {
   proxyType:
-  | 'direct'
-  | 'cors-proxy-zwei'
-  | 'cmliussss-cdn-tencent'
-  | 'cmliussss-cdn-ali'
-  | 'cors-anywhere'
-  | 'custom';
+    | 'direct'
+    | 'cors-proxy-zwei'
+    | 'cmliussss-cdn-tencent'
+    | 'cmliussss-cdn-ali'
+    | 'cors-anywhere'
+    | 'custom';
   proxyUrl: string;
   backupProxyType:
-  | 'direct'
-  | 'cors-proxy-zwei'
-  | 'cmliussss-cdn-tencent'
-  | 'cmliussss-cdn-ali'
-  | 'cors-anywhere'
-  | 'custom';
+    | 'direct'
+    | 'cors-proxy-zwei'
+    | 'cmliussss-cdn-tencent'
+    | 'cmliussss-cdn-ali'
+    | 'cors-anywhere'
+    | 'custom';
   backupProxyUrl: string;
 } {
   const doubanProxyType =
@@ -183,11 +183,15 @@ function getDoubanProxyConfig(): {
     (window as any).RUNTIME_CONFIG?.DOUBAN_PROXY ||
     '';
   const doubanProxyBackupType =
-    (localStorage.getItem('doubanDataSourceBackup') as DoubanProxyType | null) ||
-    'direct';
+    (localStorage.getItem(
+      'doubanDataSourceBackup'
+    ) as DoubanProxyType | null) || 'direct';
   const doubanProxyBackupUrl =
     localStorage.getItem('doubanProxyUrlBackup') || '';
-  const primaryConfig = normalizeDoubanProxyConfig(doubanProxyType, doubanProxy);
+  const primaryConfig = normalizeDoubanProxyConfig(
+    doubanProxyType,
+    doubanProxy
+  );
   const backupConfig = normalizeDoubanProxyConfig(
     doubanProxyBackupType,
     doubanProxyBackupUrl
@@ -261,14 +265,21 @@ async function requestDoubanWithFallback<T>(
   backup: { proxyType: DoubanProxyType; proxyUrl: string },
   runner: (requester: ReturnType<typeof buildDoubanRequester>) => Promise<T>
 ): Promise<T> {
-  const primaryRequester = buildDoubanRequester(primary.proxyType, primary.proxyUrl);
-  const backupRequester = buildDoubanRequester(backup.proxyType, backup.proxyUrl);
+  const primaryRequester = buildDoubanRequester(
+    primary.proxyType,
+    primary.proxyUrl
+  );
+  const backupRequester = buildDoubanRequester(
+    backup.proxyType,
+    backup.proxyUrl
+  );
 
   try {
     return await runner(primaryRequester);
   } catch (primaryError) {
     const sameStrategy =
-      primary.proxyType === backup.proxyType && primary.proxyUrl === backup.proxyUrl;
+      primary.proxyType === backup.proxyType &&
+      primary.proxyUrl === backup.proxyUrl;
     if (sameStrategy) {
       throw primaryError;
     }
@@ -322,8 +333,8 @@ export async function fetchDoubanCategories(
   const target = useTencentCDN
     ? `https://m.douban.cmliussss.net/rexxar/api/v2/subject/recent_hot/${kind}?start=${pageStart}&limit=${pageLimit}&category=${category}&type=${type}`
     : useAliCDN
-      ? `https://m.douban.cmliussss.com/rexxar/api/v2/subject/recent_hot/${kind}?start=${pageStart}&limit=${pageLimit}&category=${category}&type=${type}`
-      : `https://m.douban.com/rexxar/api/v2/subject/recent_hot/${kind}?start=${pageStart}&limit=${pageLimit}&category=${category}&type=${type}`;
+    ? `https://m.douban.cmliussss.com/rexxar/api/v2/subject/recent_hot/${kind}?start=${pageStart}&limit=${pageLimit}&category=${category}&type=${type}`
+    : `https://m.douban.com/rexxar/api/v2/subject/recent_hot/${kind}?start=${pageStart}&limit=${pageLimit}&category=${category}&type=${type}`;
 
   try {
     const response = await fetchWithTimeout(
@@ -464,8 +475,8 @@ export async function fetchDoubanList(
   const target = useTencentCDN
     ? `https://movie.douban.cmliussss.net/j/search_subjects?type=${type}&tag=${tag}&sort=recommend&page_limit=${pageLimit}&page_start=${pageStart}`
     : useAliCDN
-      ? `https://movie.douban.cmliussss.com/j/search_subjects?type=${type}&tag=${tag}&sort=recommend&page_limit=${pageLimit}&page_start=${pageStart}`
-      : `https://movie.douban.com/j/search_subjects?type=${type}&tag=${tag}&sort=recommend&page_limit=${pageLimit}&page_start=${pageStart}`;
+    ? `https://movie.douban.cmliussss.com/j/search_subjects?type=${type}&tag=${tag}&sort=recommend&page_limit=${pageLimit}&page_start=${pageStart}`
+    : `https://movie.douban.com/j/search_subjects?type=${type}&tag=${tag}&sort=recommend&page_limit=${pageLimit}&page_start=${pageStart}`;
 
   try {
     const response = await fetchWithTimeout(
@@ -618,8 +629,8 @@ async function fetchDoubanRecommends(
   const baseUrl = useTencentCDN
     ? `https://m.douban.cmliussss.net/rexxar/api/v2/${kind}/recommend`
     : useAliCDN
-      ? `https://m.douban.cmliussss.com/rexxar/api/v2/${kind}/recommend`
-      : `https://m.douban.com/rexxar/api/v2/${kind}/recommend`;
+    ? `https://m.douban.cmliussss.com/rexxar/api/v2/${kind}/recommend`
+    : `https://m.douban.com/rexxar/api/v2/${kind}/recommend`;
   const reqParams = new URLSearchParams();
   reqParams.append('refresh', '0');
   reqParams.append('start', pageStart.toString());
@@ -680,8 +691,8 @@ export async function fetchDoubanDetail(
   const target = useTencentCDN
     ? `https://m.douban.cmliussss.net/rexxar/api/v2/subject/${id}`
     : useAliCDN
-      ? `https://m.douban.cmliussss.com/rexxar/api/v2/subject/${id}`
-      : `https://m.douban.com/rexxar/api/v2/subject/${id}`;
+    ? `https://m.douban.cmliussss.com/rexxar/api/v2/subject/${id}`
+    : `https://m.douban.com/rexxar/api/v2/subject/${id}`;
 
   try {
     const response = await fetchWithTimeout(

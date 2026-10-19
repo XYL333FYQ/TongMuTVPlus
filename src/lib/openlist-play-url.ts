@@ -13,8 +13,12 @@ export function buildOpenListProxyUrl(opts: {
   fileName: string;
   baseUrl?: string;
 }): string {
-  const query = `?folder=${encodeURIComponent(opts.folder)}&fileName=${encodeURIComponent(opts.fileName)}`;
-  return `${opts.baseUrl || ''}/api/openlist/proxy/${encodeURIComponent(opts.token)}/video.mp4${query}`;
+  const query = `?folder=${encodeURIComponent(
+    opts.folder
+  )}&fileName=${encodeURIComponent(opts.fileName)}`;
+  return `${opts.baseUrl || ''}/api/openlist/proxy/${encodeURIComponent(
+    opts.token
+  )}/video.mp4${query}`;
 }
 
 export function is115OpenListProvider(provider?: string): boolean {

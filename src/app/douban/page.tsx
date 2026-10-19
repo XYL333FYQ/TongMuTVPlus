@@ -2,9 +2,9 @@
 
 'use client';
 
+import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { Suspense } from 'react';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
 
 import { GetBangumiCalendarData } from '@/lib/bangumi.client';
 import {
@@ -12,6 +12,7 @@ import {
   getDoubanList,
   getDoubanRecommends,
 } from '@/lib/douban.client';
+import { publicCatalogCategories } from '@/lib/public-catalog';
 import { DoubanItem, DoubanResult } from '@/lib/types';
 import { useViewerIdentity } from '@/hooks/useViewerIdentity';
 
@@ -754,25 +755,12 @@ function DoubanPageClient() {
     setSelectedWeekday(weekday);
   }, []);
 
-  const getPageTitle = () => {
-    // 根据 type 生成标题
-    return type === 'movie'
-      ? '电影'
-      : type === 'tv'
-      ? '电视剧'
-      : type === 'anime'
-      ? '动漫'
-      : type === 'show'
-      ? '综艺'
-      : '自定义';
-  };
-
-  const getPageDescription = () => {
-    if (type === 'anime' && primarySelection === '每日放送') {
-      return '来自 Bangumi 番组计划的精选内容';
-    }
-    return '来自豆瓣的精选内容';
-  };
+  const libraryTabs = [
+    ...publicCatalogCategories,
+    ...(customCategories.length > 0
+      ? [{ type: 'custom', label: '精选', href: '/douban?type=custom' }]
+      : []),
+  ];
 
   const getActivePath = () => {
     const params = new URLSearchParams();
@@ -791,55 +779,61 @@ function DoubanPageClient() {
 
   return (
     <PageLayout activePath={getActivePath()}>
-      <PageContainer className='py-4 sm:py-8 overflow-visible [&_button]:min-h-[44px] [&_button]:min-w-[44px] [&_button]:text-[13px] sm:[&_button]:text-sm'>
-        {/* 页面标题和选择器 */}
-        <div className='mb-6 sm:mb-8 space-y-4 sm:space-y-6'>
-          {/* 页面标题 */}
+      <PageContainer>
+        <header className='tm-page-head'>
           <div>
-            <h1 className=' text-[color:var(--tm-text)] mb-1 sm:mb-2 text-[28px] font-bold md:text-[32px]'>
-              {getPageTitle()}
-            </h1>
-            <p className='text-sm sm:text-base text-[color:var(--tm-muted)]'>
-              {getPageDescription()}
+            <h1 className='tm-page-title'>片库</h1>
+            <p className='tm-page-desc'>
+              {type === 'anime' && primarySelection === '每日放送'
+                ? '数据来自 Bangumi 番组计划'
+                : '数据来自豆瓣'}
             </p>
           </div>
-
-          {/* 选择器组件 */}
+        </header>
+        <nav className='tm-tabs' aria-label='影视类型'>
+          {libraryTabs.map((tab) => (
+            <Link
+              key={tab.type}
+              href={tab.href}
+              className='tm-tab'
+              aria-current={type === tab.type ? 'page' : undefined}
+            >
+              {tab.label}
+            </Link>
+          ))}
+        </nav>
+        <div className='tm-library-filters'>
           {type !== 'custom' ? (
-            <div className='bg-[var(--tm-surface-raised)] rounded-2xl p-4 sm:p-6 border border-[var(--tm-line)] '>
-              <DoubanSelector
-                type={type as 'movie' | 'tv' | 'show' | 'anime'}
-                primarySelection={primarySelection}
-                secondarySelection={secondarySelection}
-                onPrimaryChange={handlePrimaryChange}
-                onSecondaryChange={handleSecondaryChange}
-                onMultiLevelChange={handleMultiLevelChange}
-                onWeekdayChange={handleWeekdayChange}
-                viewMode={viewMode}
-                onViewModeChange={setViewMode}
-              />
-            </div>
+            <DoubanSelector
+              type={type as 'movie' | 'tv' | 'show' | 'anime'}
+              primarySelection={primarySelection}
+              secondarySelection={secondarySelection}
+              onPrimaryChange={handlePrimaryChange}
+              onSecondaryChange={handleSecondaryChange}
+              onMultiLevelChange={handleMultiLevelChange}
+              onWeekdayChange={handleWeekdayChange}
+              viewMode={viewMode}
+              onViewModeChange={setViewMode}
+            />
           ) : (
-            <div className='bg-[var(--tm-surface-raised)] rounded-2xl p-4 sm:p-6 border border-[var(--tm-line)] '>
-              <DoubanCustomSelector
-                customCategories={customCategories}
-                primarySelection={primarySelection}
-                secondarySelection={secondarySelection}
-                onPrimaryChange={handlePrimaryChange}
-                onSecondaryChange={handleSecondaryChange}
-              />
-            </div>
+            <DoubanCustomSelector
+              customCategories={customCategories}
+              primarySelection={primarySelection}
+              secondarySelection={secondarySelection}
+              onPrimaryChange={handlePrimaryChange}
+              onSecondaryChange={handleSecondaryChange}
+            />
           )}
         </div>
 
         {/* 内容展示区域 */}
-        <div ref={contentRef} className='mt-8 overflow-visible'>
+        <div ref={contentRef} className='tm-library-grid'>
           {/* 时刻表视图（每日放送） */}
           {isScheduleView ? (
             <BangumiScheduleTimeline weekday={selectedWeekday} />
           ) : (
             /* 内容网格 */
-            <PosterGrid className=''>
+            <PosterGrid>
               {loading || !selectorsReady
                 ? // 显示骨架屏
                   skeletonData.map((index) => (
@@ -876,28 +870,21 @@ function DoubanPageClient() {
                   ).current = el;
                 }
               }}
-              className='flex justify-center mt-12 py-8'
+              className='tm-library-more'
             >
-              {isLoadingMore && (
-                <div className='flex items-center gap-2'>
-                  <div className='tm-skeleton rounded-md h-6 w-6 '></div>
-                  <span className='text-[color:var(--tm-muted)]'>正在加载</span>
-                </div>
-              )}
+              {isLoadingMore && <span className='text-muted'>正在加载…</span>}
             </div>
           )}
 
           {/* 没有更多数据提示 */}
           {!isScheduleView && !hasMore && doubanData.length > 0 && (
-            <div className='text-center text-[color:var(--tm-muted)] py-8'>
-              已加载全部内容
-            </div>
+            <p className='tm-library-end'>已经到底了</p>
           )}
 
           {/* 空状态 */}
           {!isScheduleView && !loading && doubanData.length === 0 && (
-            <div className='text-center text-[color:var(--tm-muted)] py-8'>
-              暂无相关内容
+            <div className='tm-empty'>
+              <p className='tm-empty-desc'>暂时没有相关内容</p>
             </div>
           )}
         </div>

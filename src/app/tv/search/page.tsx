@@ -190,9 +190,9 @@ export default function TVSearchPage() {
   return (
     <TVLayout>
       <div data-tv-focus-scope='active'>
-        <section className=' rounded-[42px] border border-[var(--tm-line)] bg-[var(--tm-surface)] p-4 md:p-10 shadow-lg'>
+        <section className='rounded-[42px] border border-line bg-surface p-4 md:p-10 shadow-lg'>
           <h1 className='text-[28px] md:text-[32px] font-bold'>搜索</h1>
-          <p className='mt-4 text-base text-[color:var(--tm-muted)]'>
+          <p className='mt-4 text-base text-muted'>
             搜索片名，选择影片查看详情
           </p>
           <form onSubmit={submit} className='mt-10 flex gap-4'>
@@ -205,18 +205,18 @@ export default function TVSearchPage() {
               value={keyword}
               onChange={(e) => setKeyword(e.target.value)}
               placeholder='搜索片名'
-              className='h-12 min-w-0 flex-1 rounded-3xl border border-[var(--tm-line)] bg-[var(--tm-surface-raised)] px-4 text-base text-[color:var(--tm-text)] outline-none placeholder:text-[color:var(--tm-muted)] focus:border-[var(--tm-text)] tv-focusable'
+              className='h-12 min-w-0 flex-1 rounded-3xl border border-line bg-raised px-4 text-base text-fg outline-none placeholder:text-muted focus:border-fg tv-focusable'
             />
             <button
               type='submit'
-              className='flex h-12 shrink-0 cursor-pointer items-center gap-2 rounded-3xl bg-[var(--tm-text)] px-4 text-base font-medium text-[color:var(--tm-accent-contrast)] outline-none transition hover:opacity-90 tv-focusable min-h-[44px] tm-press'
+              className='flex h-12 shrink-0 cursor-pointer items-center gap-2 rounded-3xl bg-fg px-4 text-base font-medium text-inverse outline-none transition hover:opacity-90 tv-focusable min-h-[44px] tm-press'
             >
               <Search className='h-5 w-5' /> 搜索
             </button>
           </form>
         </section>
         {(loading || searched || error) && (
-          <section className='mx-auto mt-12 '>
+          <section className='mx-auto mt-12'>
             <div className='mb-6 flex items-center justify-between gap-4'>
               <h2 className='text-[20px] md:text-[24px] font-medium'>
                 {searched ? `“${searched}” 的搜索结果` : '搜索结果'}
@@ -234,12 +234,12 @@ export default function TVSearchPage() {
             {error ? (
               <div
                 role='alert'
-                className='rounded-3xl border border-[var(--tm-danger)] bg-[var(--tm-surface-raised)] p-4 md:p-8 text-base font-medium text-[color:var(--tm-text)]'
+                className='rounded-3xl border border-danger bg-raised p-4 md:p-8 text-base font-medium text-fg'
               >
                 {error}
               </div>
             ) : loading ? null : displayResults.length === 0 ? (
-              <div className='rounded-3xl border border-[var(--tm-line)] bg-[var(--tm-surface-raised)] p-4 md:p-8 text-base font-medium text-[color:var(--tm-muted)]'>
+              <div className='rounded-3xl border border-line bg-raised p-4 md:p-8 text-base font-medium text-muted'>
                 未找到相关结果
               </div>
             ) : (
@@ -249,9 +249,9 @@ export default function TVSearchPage() {
                     key={item.key}
                     ref={index === 0 ? firstResultRef : undefined}
                     onClick={() => router.push(getTVDetailUrl(item))}
-                    className='tv-focusable cursor-pointer overflow-hidden rounded-3xl border border-[var(--tm-line)] bg-[var(--tm-surface-raised)] text-left outline-none transition hover:bg-[var(--tm-line)] min-h-[44px] tm-press'
+                    className='tv-focusable cursor-pointer overflow-hidden rounded-3xl border border-line bg-raised text-left outline-none transition hover:bg-line min-h-[44px] tm-press'
                   >
-                    <div className='aspect-[2/3] bg-[var(--tm-surface)]'>
+                    <div className='aspect-[2/3] bg-surface'>
                       {item.poster ? (
                         <img
                           src={processImageUrl(item.poster)}
@@ -260,20 +260,20 @@ export default function TVSearchPage() {
                         />
                       ) : (
                         <div className='flex h-full items-center justify-center'>
-                          <Film className='h-16 w-16 text-[color:var(--tm-muted)]' />
+                          <Film className='h-16 w-16 text-muted' />
                         </div>
                       )}
                     </div>
                     <div className='p-5'>
-                      <div className='line-clamp-1 text-base font-medium text-[color:var(--tm-text)]'>
+                      <div className='line-clamp-1 text-base font-medium text-fg'>
                         {item.title}
                       </div>
-                      <div className='mt-2 line-clamp-1 text-sm font-medium text-[color:var(--tm-muted)]'>
+                      <div className='mt-2 line-clamp-1 text-sm font-medium text-muted'>
                         {item.isAggregate
                           ? `${item.sourceNames.length} 个播放源`
                           : item.sourceName}
                       </div>
-                      <div className='mt-2 flex flex-wrap gap-2 text-base font-medium text-[color:var(--tm-muted)]'>
+                      <div className='mt-2 flex flex-wrap gap-2 text-base font-medium text-muted'>
                         {item.year && <span>{item.year}</span>}
                         {item.vodRemarks && <span>{item.vodRemarks}</span>}
                       </div>
@@ -285,14 +285,14 @@ export default function TVSearchPage() {
           </section>
         )}
         {history.length > 0 && (
-          <section className='mx-auto mt-12 '>
+          <section className='mx-auto mt-12'>
             <h2 className='text-[20px] md:text-[24px] font-medium'>搜索历史</h2>
             <div className='mt-6 grid grid-cols-2 gap-4 md:grid-cols-4'>
               {history.slice(0, 20).map((item) => (
                 <button
                   key={item}
                   onClick={() => runSearch(item)}
-                  className='cursor-pointer rounded-3xl border border-[var(--tm-line)] bg-[var(--tm-surface-raised)] px-6 py-5 text-base font-medium text-[color:var(--tm-text)] outline-none transition hover:bg-[var(--tm-line)] tv-focusable min-h-[44px] tm-press'
+                  className='cursor-pointer rounded-3xl border border-line bg-raised px-6 py-5 text-base font-medium text-fg outline-none transition hover:bg-line tv-focusable min-h-[44px] tm-press'
                 >
                   {item}
                 </button>
@@ -300,14 +300,14 @@ export default function TVSearchPage() {
             </div>
           </section>
         )}
-        <section className='mx-auto mt-12 '>
+        <section className='mx-auto mt-12'>
           <h2 className='text-[20px] md:text-[24px] font-medium'>热门搜索</h2>
           <div className='mt-6 grid grid-cols-2 gap-4 md:grid-cols-4'>
             {hot.map((item) => (
               <button
                 key={item}
                 onClick={() => runSearch(item)}
-                className='cursor-pointer rounded-3xl border border-[var(--tm-line)] bg-[var(--tm-surface-raised)] px-6 py-5 text-base font-medium text-[color:var(--tm-text)] outline-none transition hover:bg-[var(--tm-line)] tv-focusable min-h-[44px] tm-press'
+                className='cursor-pointer rounded-3xl border border-line bg-raised px-6 py-5 text-base font-medium text-fg outline-none transition hover:bg-line tv-focusable min-h-[44px] tm-press'
               >
                 {item}
               </button>

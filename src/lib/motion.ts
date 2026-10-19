@@ -1,7 +1,7 @@
 'use client';
 
 import type { Variants } from 'framer-motion';
-import { useSyncExternalStore } from 'react';
+import { type PointerEvent, useSyncExternalStore } from 'react';
 
 // Pass useReducedMotionSetting() as the motion component's `custom` prop.
 export const fadeUp: Variants = {
@@ -58,3 +58,30 @@ export function useReducedMotionSetting(): boolean {
     serverReducedMotion
   );
 }
+
+/**
+ * 海报 3D 倾斜：跟随鼠标写入 --tm-poster-rx/ry 与高光位置 --mx/--my。
+ * 触屏、减少动态时不启用。样式见 home.css 的 .tm-video-card。
+ */
+export const posterTiltHandlers = {
+  onPointerMove(event: PointerEvent<HTMLElement>) {
+    if (
+      event.pointerType !== 'mouse' ||
+      isReducedMotionSetting() ||
+      !window.matchMedia('(hover: hover) and (pointer: fine)').matches
+    )
+      return;
+    const box = event.currentTarget.getBoundingClientRect();
+    const x = Math.max(0, Math.min(1, (event.clientX - box.left) / box.width));
+    const y = Math.max(0, Math.min(1, (event.clientY - box.top) / box.height));
+    const style = event.currentTarget.style;
+    style.setProperty('--tm-poster-rx', (0.5 - y) * 12 + 'deg');
+    style.setProperty('--tm-poster-ry', (x - 0.5) * 12 + 'deg');
+    style.setProperty('--mx', x * 100 + '%');
+    style.setProperty('--my', y * 100 + '%');
+  },
+  onPointerLeave(event: PointerEvent<HTMLElement>) {
+    event.currentTarget.style.setProperty('--tm-poster-rx', '0deg');
+    event.currentTarget.style.setProperty('--tm-poster-ry', '0deg');
+  },
+};

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import '@/styles/legacy-panels.css';
+import '@/styles/panels.css';
 
 interface SearchSuggestionsProps {
   query: string;
@@ -155,16 +155,16 @@ export default function SearchSuggestions({
   return (
     <div
       ref={containerRef}
-      className='tm-search-suggestions absolute top-full left-0 right-0 z-[600] mt-1 bg-[var(--tm-surface)] rounded-lg shadow-lg border border-[var(--tm-line)] max-h-80 overflow-y-auto'
+      className='tm-search-suggestions absolute top-full left-0 right-0 z-[600] mt-1 bg-surface rounded-lg shadow-lg border border-line max-h-80 overflow-y-auto'
     >
       {suggestions.map((suggestion) => (
         <button
           type='button'
           key={`related-${suggestion.text}`}
           onClick={() => onSelect(suggestion.text)}
-          className='w-full px-4 py-3 text-left hover:bg-[var(--tm-line)] transition-opacity duration-150 flex items-center gap-3 min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
+          className='w-full px-4 py-3 text-left hover:bg-line transition-opacity duration-150 flex items-center gap-3 min-h-[44px] tm-press min-w-[44px]'
         >
-          <span className='flex-1 text-sm text-[color:var(--tm-muted)] truncate'>
+          <span className='flex-1 text-sm text-muted truncate'>
             {suggestion.text}
           </span>
         </button>

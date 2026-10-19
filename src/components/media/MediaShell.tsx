@@ -75,7 +75,7 @@ export default function MediaShell({
         )}
       >
         <header
-          className='fixed inset-x-0 top-0 z-40 border-b border-[var(--tm-line)] bg-[color:color-mix(in_srgb,var(--tm-bg)_95%,transparent)] backdrop-blur-none'
+          className='fixed inset-x-0 top-0 z-40 border-b border-line bg-[color:color-mix(in_srgb,var(--tm-bg)_95%,transparent)] backdrop-blur-none'
           style={{ paddingTop: 'env(safe-area-inset-top)' }}
         >
           <HeaderContainer
@@ -99,7 +99,7 @@ export default function MediaShell({
                   className={cn(
                     'flex min-h-[44px] shrink-0 items-center rounded-md px-3 text-sm font-medium tm-press',
                     LIBRARY_SERIF,
-                    'text-[color:var(--tm-text)] hover:bg-[var(--tm-surface-raised)]',
+                    'text-fg hover:bg-raised',
                     LIBRARY_FOCUS
                   )}
                 >
@@ -176,7 +176,7 @@ export default function MediaShell({
 
         {!isReader && (
           <nav
-            className='fixed inset-x-0 bottom-0 z-40 border-t border-[var(--tm-line)] bg-[color:color-mix(in_srgb,var(--tm-bg)_95%,transparent)] backdrop-blur-none lg:hidden'
+            className='fixed inset-x-0 bottom-0 z-40 border-t border-line bg-[color:color-mix(in_srgb,var(--tm-bg)_95%,transparent)] backdrop-blur-none lg:hidden'
             style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
           >
             <PageContainer className='grid grid-cols-4'>
@@ -189,24 +189,18 @@ export default function MediaShell({
                     href={tab.href}
                     aria-current={active ? 'page' : undefined}
                     className={cn(
-                      'tm-media-nav-link flex min-h-16 flex-col items-center justify-center gap-1 py-2 text-[13px] hover:bg-[var(--tm-surface-raised)] tm-press',
+                      'tm-media-nav-link flex min-h-16 flex-col items-center justify-center gap-1 py-2 text-[13px] hover:bg-raised tm-press',
                       LIBRARY_FOCUS
                     )}
                   >
                     <Icon
                       className={cn(
                         'h-5 w-5',
-                        active
-                          ? 'text-[color:var(--tm-text)]'
-                          : 'text-[color:var(--tm-muted)]'
+                        active ? 'text-fg' : 'text-muted'
                       )}
                     />
                     <span
-                      className={
-                        active
-                          ? 'font-medium text-[color:var(--tm-text)]'
-                          : 'text-[color:var(--tm-muted)]'
-                      }
+                      className={active ? 'font-medium text-fg' : 'text-muted'}
                     >
                       {tab.label}
                     </span>

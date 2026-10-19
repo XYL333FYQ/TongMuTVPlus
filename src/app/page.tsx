@@ -4,7 +4,6 @@
 
 import { motion } from 'framer-motion';
 import { Bot, X } from 'lucide-react';
-import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useState } from 'react';
 
@@ -27,10 +26,10 @@ import HomeRooms from '@/components/HomeRooms';
 import HttpWarningDialog from '@/components/HttpWarningDialog';
 import PageContainer from '@/components/PageContainer';
 import PageLayout from '@/components/PageLayout';
-import PosterGrid from '@/components/PosterGrid';
 import PosterMotion from '@/components/PosterMotion';
 import PublicCatalogPage from '@/components/PublicCatalogPage';
 import SectionHeader from '@/components/SectionHeader';
+import Shelf from '@/components/Shelf';
 import { useSite } from '@/components/SiteProvider';
 import Toast, { ToastProps } from '@/components/Toast';
 import VideoCard from '@/components/VideoCard';
@@ -571,13 +570,9 @@ function HomeClient() {
     switch (moduleId) {
       case 'hotMovies':
         return (
-          <section
-            key='hotMovies'
-            className='tm-film-section'
-            data-module='hotMovies'
-          >
+          <section key='hotMovies' className='tm-section'>
             <SectionHeader title='热门电影' href='/douban?type=movie' />
-            <PosterGrid className='tm-home-poster-grid'>
+            <Shelf>
               {loading
                 ? Array.from({ length: 12 }).map((_, index) => (
                     <PosterMotion key={index}>
@@ -599,16 +594,16 @@ function HomeClient() {
                       />
                     </PosterMotion>
                   ))}
-            </PosterGrid>
+            </Shelf>
           </section>
         );
 
       case 'hotDuanju':
         if (hotDuanju.length === 0) return null;
         return (
-          <section key='hotDuanju' className='tm-film-section'>
+          <section key='hotDuanju' className='tm-section'>
             <SectionHeader title='热播短剧' href='/duanju' />
-            <PosterGrid className='tm-home-poster-grid'>
+            <Shelf>
               {loading
                 ? Array.from({ length: 12 }).map((_, index) => (
                     <PosterMotion key={index}>
@@ -637,15 +632,15 @@ function HomeClient() {
                       />
                     </PosterMotion>
                   ))}
-            </PosterGrid>
+            </Shelf>
           </section>
         );
 
       case 'bangumiCalendar':
         return (
-          <section key='bangumiCalendar' className='tm-film-section'>
+          <section key='bangumiCalendar' className='tm-section'>
             <SectionHeader title='新番放送' href='/douban?type=anime' />
-            <PosterGrid className='tm-home-poster-grid'>
+            <Shelf>
               {loading
                 ? Array.from({ length: 12 }).map((_, index) => (
                     <PosterMotion key={index}>
@@ -691,15 +686,15 @@ function HomeClient() {
                       </PosterMotion>
                     ));
                   })()}
-            </PosterGrid>
+            </Shelf>
           </section>
         );
 
       case 'hotTvShows':
         return (
-          <section key='hotTvShows' className='tm-film-section'>
+          <section key='hotTvShows' className='tm-section'>
             <SectionHeader title='热门剧集' href='/douban?type=tv' />
-            <PosterGrid className='tm-home-poster-grid'>
+            <Shelf>
               {loading
                 ? Array.from({ length: 12 }).map((_, index) => (
                     <PosterMotion key={index}>
@@ -721,15 +716,15 @@ function HomeClient() {
                       />
                     </PosterMotion>
                   ))}
-            </PosterGrid>
+            </Shelf>
           </section>
         );
 
       case 'hotVarietyShows':
         return (
-          <section key='hotVarietyShows' className='tm-film-section'>
+          <section key='hotVarietyShows' className='tm-section'>
             <SectionHeader title='热门综艺' href='/douban?type=show' />
-            <PosterGrid className='tm-home-poster-grid'>
+            <Shelf>
               {loading
                 ? Array.from({ length: 12 }).map((_, index) => (
                     <PosterMotion key={index}>
@@ -753,16 +748,16 @@ function HomeClient() {
                       />
                     </PosterMotion>
                   ))}
-            </PosterGrid>
+            </Shelf>
           </section>
         );
 
       case 'upcomingContent':
         if (upcomingContent.length === 0) return null;
         return (
-          <section key='upcomingContent' className='tm-film-section'>
+          <section key='upcomingContent' className='tm-section'>
             <SectionHeader title='即将上映' href='/douban?type=movie' />
-            <PosterGrid className='tm-home-poster-grid'>
+            <Shelf>
               {upcomingContent.slice(0, 12).map((item) => (
                 <PosterMotion key={`${item.media_type}-${item.id}`}>
                   <VideoCard
@@ -783,7 +778,7 @@ function HomeClient() {
                   />
                 </PosterMotion>
               ))}
-            </PosterGrid>
+            </Shelf>
           </section>
         );
 
@@ -794,43 +789,31 @@ function HomeClient() {
 
   return (
     <PageLayout>
-      <div className='tm-home tm-home-v3'>
-        {/* TMDB 热门轮播图 */}
+      <div className='tm-home'>
         {homeBannerEnabled && (
           <PageContainer>
             <BannerCarousel delayLoad={true} />
           </PageContainer>
         )}
 
-        <PageContainer className='tm-home-content-v3'>
-          <div className='tm-home-resume-rooms'>
+        <PageContainer className='tm-home-body'>
+          <div className='tm-home-pair'>
             {homeContinueWatchingEnabled && (
               <ContinueWatching className='tm-home-resume' homeLayout />
             )}
             <HomeRooms />
           </div>
-          <div className='tm-home-utilities'>
-            {aiEnabled && (
+          {aiEnabled && (
+            <div className='tm-home-tools'>
               <button
                 onClick={() => setShowAIChat(true)}
-                className='tm-tool-link tm-press min-h-[44px] min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
+                className='tm-btn tm-btn-ghost tm-btn-sm'
               >
                 <Bot size={16} />
                 AI 问片
               </button>
-            )}
-          </div>
-          <nav className='tm-category-row' aria-label='影视分类'>
-            <Link href='/douban?type=movie' aria-current='page'>
-              电影
-            </Link>
-            <Link href='/douban?type=tv'>剧集</Link>
-            <Link href='/douban?type=anime'>动漫</Link>
-            <Link href='/douban?type=show'>综艺</Link>
-            {homeModules.some(
-              (module) => module.id === 'hotDuanju' && module.enabled
-            ) && <Link href='/duanju'>短剧</Link>}
-          </nav>
+            </div>
+          )}
 
           {homeModules
             .filter((module) => module.enabled)
@@ -855,9 +838,12 @@ function HomeClient() {
 
       {/* 公告弹窗 */}
       {showAnnouncement && (
-        <div className='fixed inset-0 bg-[color:color-mix(in_srgb,var(--tm-room-cinema-bg)_70%,transparent)] z-[1000] flex items-center justify-center p-4'>
+        <div className='tm-modal-backdrop'>
           <motion.div
-            className='bg-[var(--tm-surface)] rounded-lg shadow-xl max-w-md w-full p-6 max-h-[calc(100dvh-2rem)] overflow-y-auto'
+            className='tm-modal'
+            role='dialog'
+            aria-modal='true'
+            aria-labelledby='home-announcement-title'
             initial={{ opacity: 0, y: reduced ? 0 : 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{
@@ -865,29 +851,36 @@ function HomeClient() {
               ease: [0.22, 1, 0.36, 1],
             }}
           >
-            <h3 className='text-lg font-medium text-[color:var(--tm-text)] mb-3'>
-              公告
-            </h3>
-            <div className='text-[color:var(--tm-muted)] mb-4 whitespace-pre-wrap'>
-              {announcement}
+            <div className='tm-modal-body'>
+              <h2 id='home-announcement-title' className='tm-modal-title'>
+                公告
+              </h2>
+              <p className='mt-3 whitespace-pre-wrap text-muted'>
+                {announcement}
+              </p>
             </div>
-            <button
-              onClick={() => handleCloseAnnouncement(announcement || '')}
-              className='w-full px-4 py-2 bg-[var(--tm-text)] text-[var(--tm-accent-contrast)] rounded-lg transition-[opacity,transform] min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
-            >
-              知道了
-            </button>
+            <div className='tm-modal-footer'>
+              <button
+                onClick={() => handleCloseAnnouncement(announcement || '')}
+                className='tm-btn tm-btn-primary w-full'
+              >
+                知道了
+              </button>
+            </div>
           </motion.div>
         </div>
       )}
 
       {showDirectPlayDialog && (
         <div
-          className='fixed inset-0 bg-[color:color-mix(in_srgb,var(--tm-room-cinema-bg)_50%,transparent)] z-[1000] flex items-center justify-center p-4'
+          className='tm-modal-backdrop'
           onClick={() => setShowDirectPlayDialog(false)}
         >
           <motion.div
-            className='bg-[var(--tm-surface)] rounded-lg shadow-xl w-full max-w-lg max-h-[calc(100dvh-2rem)] overflow-y-auto'
+            className='tm-modal'
+            role='dialog'
+            aria-modal='true'
+            aria-labelledby='home-direct-play-title'
             onClick={(event) => event.stopPropagation()}
             initial={{ opacity: 0, y: reduced ? 0 : 8 }}
             animate={{ opacity: 1, y: 0 }}
@@ -896,24 +889,24 @@ function HomeClient() {
               ease: [0.22, 1, 0.36, 1],
             }}
           >
-            <div className='flex items-center justify-between p-4 border-b border-[var(--tm-line)]'>
-              <h3 className='text-lg font-medium text-[color:var(--tm-text)]'>
+            <div className='tm-modal-header'>
+              <h2 id='home-direct-play-title' className='tm-modal-title'>
                 直链播放
-              </h3>
+              </h2>
               <button
                 onClick={() => setShowDirectPlayDialog(false)}
-                className='p-2 hover:bg-[var(--tm-line)] rounded-lg transition-[opacity,transform] min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
+                className='tm-feedback-close'
                 aria-label='关闭'
               >
-                <X size={20} className='text-[color:var(--tm-muted)]' />
+                <X size={20} />
               </button>
             </div>
-            <div className='p-4 space-y-4'>
-              <div className='text-sm text-[color:var(--tm-muted)]'>
-                请输入可直接播放的视频链接。
+            <div className='tm-modal-body space-y-3'>
+              <div className='text-sm text-muted'>
+                粘贴可以直接播放的视频链接
               </div>
               {netdiskTempPlayEnabled && (
-                <div className='text-[13px] text-[color:var(--tm-muted)]'>
+                <div className='text-[13px] text-muted'>
                   支持夸克、UC、百度、天翼、移动、123、115 网盘在线播放。
                 </div>
               )}
@@ -926,23 +919,23 @@ function HomeClient() {
                   }
                 }}
                 placeholder='https://example.com/video.m3u8'
-                className='w-full px-3 py-2 rounded-lg border border-[var(--tm-line)] bg-[var(--tm-surface)] text-[color:var(--tm-text)] focus:outline-none focus:ring-2 focus:ring-[var(--tm-text)] min-h-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
+                className='tm-input'
               />
-              <div className='flex justify-end gap-2'>
-                <button
-                  onClick={() => setShowDirectPlayDialog(false)}
-                  className='px-4 py-2 rounded-lg border border-[var(--tm-line)] text-[color:var(--tm-muted)] text-[color:var(--tm-text)] hover:bg-[var(--tm-line)] transition-[opacity,transform] min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
-                >
-                  取消
-                </button>
-                <button
-                  onClick={submitDirectPlay}
-                  disabled={!directPlayUrl.trim() || directPlaySubmitting}
-                  className='px-4 py-2 rounded-lg bg-[var(--tm-text)] text-[var(--tm-accent-contrast)] transition-[opacity,transform] disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
-                >
-                  {directPlaySubmitting ? '处理中...' : '播放'}
-                </button>
-              </div>
+            </div>
+            <div className='tm-modal-footer'>
+              <button
+                onClick={() => setShowDirectPlayDialog(false)}
+                className='tm-btn tm-btn-secondary'
+              >
+                取消
+              </button>
+              <button
+                onClick={submitDirectPlay}
+                disabled={!directPlayUrl.trim() || directPlaySubmitting}
+                className='tm-btn tm-btn-primary'
+              >
+                {directPlaySubmitting ? '正在处理' : '播放'}
+              </button>
             </div>
           </motion.div>
         </div>

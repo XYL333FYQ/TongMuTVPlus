@@ -39,7 +39,13 @@ export function isPrivateIP(ip: string): boolean {
     if (lowerIp.startsWith('fc') || lowerIp.startsWith('fd')) return true;
 
     // 链路本地地址 (Link-Local Addresses, fe80::/10)
-    if (lowerIp.startsWith('fe8') || lowerIp.startsWith('fe9') || lowerIp.startsWith('fea') || lowerIp.startsWith('feb')) return true;
+    if (
+      lowerIp.startsWith('fe8') ||
+      lowerIp.startsWith('fe9') ||
+      lowerIp.startsWith('fea') ||
+      lowerIp.startsWith('feb')
+    )
+      return true;
   }
 
   return false;
@@ -49,7 +55,9 @@ export function isPrivateIP(ip: string): boolean {
  * 校验代理 URL 是否安全 (防止 SSRF / DNS 重绑定漏洞)
  * 只在 Node.js 服务端运行。
  */
-export async function validateProxyUrlServerSide(urlStr: string): Promise<boolean> {
+export async function validateProxyUrlServerSide(
+  urlStr: string
+): Promise<boolean> {
   if (!urlStr) return false;
   try {
     const parsed = new URL(urlStr);
@@ -81,7 +89,9 @@ export async function validateProxyUrlServerSide(urlStr: string): Promise<boolea
 
     // 4. 对物理 IP 进行内网校验
     if (isPrivateIP(lookupResult.address)) {
-      console.warn(`[SSRF 防护] 拦截到尝试访问内部网络的请求 URL: ${urlStr} (解析出的底层 IP: ${lookupResult.address})`);
+      console.warn(
+        `[SSRF 防护] 拦截到尝试访问内部网络的请求 URL: ${urlStr} (解析出的底层 IP: ${lookupResult.address})`
+      );
       return false;
     }
 

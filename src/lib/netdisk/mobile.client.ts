@@ -16,11 +16,15 @@ export interface MobileShareListResult {
 
 function ensureHeaderSafeAuthorization(authorization: string): string {
   const raw = authorization.trim();
-  const normalized = /^basic\s+/i.test(raw) ? raw.replace(/^basic\s+/i, 'Basic ') : `Basic ${raw}`;
+  const normalized = /^basic\s+/i.test(raw)
+    ? raw.replace(/^basic\s+/i, 'Basic ')
+    : `Basic ${raw}`;
 
   for (let i = 0; i < normalized.length; i += 1) {
     if (normalized.charCodeAt(i) > 255) {
-      throw new Error('移动云盘 Authorization 含有非法字符，请检查是否包含中文标点或说明文字');
+      throw new Error(
+        '移动云盘 Authorization 含有非法字符，请检查是否包含中文标点或说明文字'
+      );
     }
   }
 
@@ -31,7 +35,9 @@ export function normalizeMobileAuthorization(authorization: string): string {
   return ensureHeaderSafeAuthorization(authorization);
 }
 
-export function assertMobileAuthorizationHeaderSafe(authorization: string): string {
+export function assertMobileAuthorizationHeaderSafe(
+  authorization: string
+): string {
   return ensureHeaderSafeAuthorization(authorization);
 }
 
@@ -42,7 +48,8 @@ const SHARE_ID_PATTERNS = [
   /https:\/\/caiyun\.139\.com\/w\/i\/([^&/]+)/,
 ];
 
-const BASE_URL = 'https://share-kd-njs.yun.139.com/yun-share/richlifeApp/devapp/IOutLink/';
+const BASE_URL =
+  'https://share-kd-njs.yun.139.com/yun-share/richlifeApp/devapp/IOutLink/';
 const ALTERNATIVE_URLS = [
   'https://cloud.139.com/yun-share/richlifeApp/devapp/IOutLink/',
   'https://yun.139.com/yun-share/richlifeApp/devapp/IOutLink/',
@@ -50,11 +57,13 @@ const ALTERNATIVE_URLS = [
 ];
 const AES_KEY = Buffer.from('PVGDwmcvfs1uV3d1', 'utf8');
 const BASE_HEADERS: HeadersInit = {
-  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36',
+  'User-Agent':
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36',
   Accept: 'application/json, text/plain, */*',
   'Content-Type': 'application/json',
   'hcy-cool-flag': '1',
-  'x-deviceinfo': '||3|12.27.0|chrome|136.0.0.0|189f4426ca008b9cbe9bf9bd79723d77||windows 10|1536X695|zh-CN|||',
+  'x-deviceinfo':
+    '||3|12.27.0|chrome|136.0.0.0|189f4426ca008b9cbe9bf9bd79723d77||windows 10|1536X695|zh-CN|||',
   Origin: 'https://yun.139.com',
   Referer: 'https://yun.139.com/',
 };
@@ -81,7 +90,10 @@ function encryptPayload(data: string | object): string {
   const iv = randomBytes(16);
   const cipher = createCipheriv('aes-128-cbc', AES_KEY, iv);
   const plain = typeof data === 'string' ? data : JSON.stringify(data);
-  const encrypted = Buffer.concat([cipher.update(plain, 'utf8'), cipher.final()]);
+  const encrypted = Buffer.concat([
+    cipher.update(plain, 'utf8'),
+    cipher.final(),
+  ]);
   return Buffer.concat([iv, encrypted]).toString('base64');
 }
 
@@ -90,7 +102,10 @@ function decryptPayload(data: string): string {
   const iv = payload.subarray(0, 16);
   const encrypted = payload.subarray(16);
   const decipher = createDecipheriv('aes-128-cbc', AES_KEY, iv);
-  const decrypted = Buffer.concat([decipher.update(encrypted), decipher.final()]);
+  const decrypted = Buffer.concat([
+    decipher.update(encrypted),
+    decipher.final(),
+  ]);
   return decrypted.toString('utf8');
 }
 
@@ -112,7 +127,9 @@ async function postPlain(
     method: 'POST',
     headers: {
       ...BASE_HEADERS,
-      ...(authorization ? { authorization: ensureHeaderSafeAuthorization(authorization) } : {}),
+      ...(authorization
+        ? { authorization: ensureHeaderSafeAuthorization(authorization) }
+        : {}),
     },
     body: encrypted ? encryptPayload(body) : JSON.stringify(body),
     cache: 'no-store',
@@ -125,7 +142,11 @@ async function postPlain(
   return text;
 }
 
-async function fetchShareInfo(linkId: string, pCaID: string, authorization?: string) {
+async function fetchShareInfo(
+  linkId: string,
+  pCaID: string,
+  authorization?: string
+) {
   const requestPayload = {
     getOutLinkInfoReq: {
       account: '',
@@ -144,7 +165,12 @@ async function fetchShareInfo(linkId: string, pCaID: string, authorization?: str
   let lastError: unknown;
   for (const baseUrl of [BASE_URL, ...ALTERNATIVE_URLS]) {
     try {
-      const raw = await postPlain(`${baseUrl}getOutLinkInfoV6`, requestPayload, true, authorization);
+      const raw = await postPlain(
+        `${baseUrl}getOutLinkInfoV6`,
+        requestPayload,
+        true,
+        authorization
+      );
       if (!raw || raw === 'null') {
         continue;
       }
@@ -157,10 +183,16 @@ async function fetchShareInfo(linkId: string, pCaID: string, authorization?: str
     }
   }
 
-  throw lastError instanceof Error ? lastError : new Error('获取移动云盘分享信息失败');
+  throw lastError instanceof Error
+    ? lastError
+    : new Error('获取移动云盘分享信息失败');
 }
 
-async function collectFiles(linkId: string, path = 'root', authorization?: string): Promise<MobileShareVideoFile[]> {
+async function collectFiles(
+  linkId: string,
+  path = 'root',
+  authorization?: string
+): Promise<MobileShareVideoFile[]> {
   const info = await fetchShareInfo(linkId, path, authorization);
   if (!info) return [];
 
@@ -177,9 +209,7 @@ async function collectFiles(linkId: string, path = 'root', authorization?: strin
     : [];
 
   const childDirs = Array.isArray(info.caLst)
-    ? info.caLst
-        .map((item: any) => String(item?.path || ''))
-        .filter(Boolean)
+    ? info.caLst.map((item: any) => String(item?.path || '')).filter(Boolean)
     : [];
 
   if (childDirs.length === 0) {
@@ -187,28 +217,45 @@ async function collectFiles(linkId: string, path = 'root', authorization?: strin
   }
 
   const nested = await Promise.all(
-    childDirs.map((childPath: string) => collectFiles(linkId, childPath, authorization))
+    childDirs.map((childPath: string) =>
+      collectFiles(linkId, childPath, authorization)
+    )
   );
   return [...currentFiles, ...nested.flat()];
 }
 
 function sortFiles(files: MobileShareVideoFile[]): MobileShareVideoFile[] {
-  return [...files].sort((a, b) => a.name.localeCompare(b.name, 'zh-Hans-CN', { numeric: true, sensitivity: 'base' }));
+  return [...files].sort((a, b) =>
+    a.name.localeCompare(b.name, 'zh-Hans-CN', {
+      numeric: true,
+      sensitivity: 'base',
+    })
+  );
 }
 
-export async function listMobileShareVideos(shareUrl: string, authorization?: string): Promise<MobileShareListResult> {
+export async function listMobileShareVideos(
+  shareUrl: string,
+  authorization?: string
+): Promise<MobileShareListResult> {
   const linkId = parseShareId(shareUrl);
   const files = sortFiles(await collectFiles(linkId, 'root', authorization));
   if (files.length === 0) {
     throw new Error('移动云盘分享中没有视频文件');
   }
   return {
-    title: files.length === 1 ? files[0].name.replace(/\.[^.]+$/, '') : '移动云盘立即播放',
+    title:
+      files.length === 1
+        ? files[0].name.replace(/\.[^.]+$/, '')
+        : '移动云盘立即播放',
     files,
   };
 }
 
-export async function getMobileSharePlayUrl(contentId: string, linkID: string, authorization?: string): Promise<string> {
+export async function getMobileSharePlayUrl(
+  contentId: string,
+  linkID: string,
+  authorization?: string
+): Promise<string> {
   const requestPayload = {
     getContentInfoFromOutLinkReq: {
       contentId: contentId.split('/')[1] || contentId,
@@ -227,11 +274,14 @@ export async function getMobileSharePlayUrl(contentId: string, linkID: string, a
     const response = await fetch(`${BASE_URL}getContentInfoFromOutLink`, {
       method: 'POST',
       headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
+        'User-Agent':
+          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
         Accept: 'application/json, text/plain, */*',
         'Accept-Encoding': 'gzip, deflate, br, zstd',
         'Content-Type': 'application/json',
-        ...(authorization ? { authorization: ensureHeaderSafeAuthorization(authorization) } : {}),
+        ...(authorization
+          ? { authorization: ensureHeaderSafeAuthorization(authorization) }
+          : {}),
       },
       body: JSON.stringify(requestPayload),
       cache: 'no-store',
@@ -321,9 +371,7 @@ export async function getMobileShareDownloadUrl(
   }
 
   const downloadUrl =
-    parsed?.data?.redrUrl ||
-    parsed?.data?.downloadUrl ||
-    parsed?.data?.url;
+    parsed?.data?.redrUrl || parsed?.data?.downloadUrl || parsed?.data?.url;
 
   if (!downloadUrl) {
     throw new Error(

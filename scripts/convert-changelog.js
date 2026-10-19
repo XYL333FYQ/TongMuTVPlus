@@ -228,7 +228,9 @@ function main() {
       // 在本地运行时，只提示但不更新版本文件
       console.log('🔧 本地运行模式：跳过版本文件更新');
       console.log('💡 版本文件更新将在 git tag 触发的 release 工作流中完成');
-      console.log('💡 本地可执行 node scripts/convert-changelog.js --sync-version 从 VERSION.txt 同步 version.ts');
+      console.log(
+        '💡 本地可执行 node scripts/convert-changelog.js --sync-version 从 VERSION.txt 同步 version.ts'
+      );
     }
 
     console.log(`✅ 成功生成 ${outputPath}`);

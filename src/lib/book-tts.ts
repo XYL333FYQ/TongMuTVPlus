@@ -83,7 +83,11 @@ function resolveEdgeTtsModule(): EdgeTtsModule {
     // eslint-disable-next-line no-eval
     return eval('require')('edge-tts-universal') as EdgeTtsModule;
   } catch (error) {
-    throw new Error(`未安装 edge-tts-universal，请先执行 pnpm add edge-tts-universal。${(error as Error).message}`);
+    throw new Error(
+      `未安装 edge-tts-universal，请先执行 pnpm add edge-tts-universal。${
+        (error as Error).message
+      }`
+    );
   }
 }
 
@@ -107,8 +111,14 @@ function normalizeBoundary(item: RawBoundary): BookTtsBoundary {
   };
 }
 
-function isArrayBufferLike(audio: unknown): audio is { arrayBuffer: () => Promise<ArrayBuffer> } {
-  return !!audio && typeof audio === 'object' && typeof (audio as { arrayBuffer?: unknown }).arrayBuffer === 'function';
+function isArrayBufferLike(
+  audio: unknown
+): audio is { arrayBuffer: () => Promise<ArrayBuffer> } {
+  return (
+    !!audio &&
+    typeof audio === 'object' &&
+    typeof (audio as { arrayBuffer?: unknown }).arrayBuffer === 'function'
+  );
 }
 
 async function toBuffer(audio: unknown): Promise<Buffer> {
@@ -153,7 +163,8 @@ export async function getBookTtsConfig(): Promise<BookTtsRuntimeConfig> {
 export async function listBookTtsVoices(): Promise<BookTtsVoice[]> {
   const mod = resolveEdgeTtsModule();
   const VoicesManager = mod.VoicesManager || mod.default?.VoicesManager;
-  if (!VoicesManager) throw new Error('edge-tts-universal 未导出 VoicesManager');
+  if (!VoicesManager)
+    throw new Error('edge-tts-universal 未导出 VoicesManager');
 
   let voices: RawVoice[] = [];
   if (typeof VoicesManager.create === 'function') {
@@ -170,7 +181,11 @@ export async function listBookTtsVoices(): Promise<BookTtsVoice[]> {
     .sort((a, b) => {
       const zhA = a.locale.startsWith('zh') ? 0 : 1;
       const zhB = b.locale.startsWith('zh') ? 0 : 1;
-      return zhA - zhB || a.locale.localeCompare(b.locale) || a.shortName.localeCompare(b.shortName);
+      return (
+        zhA - zhB ||
+        a.locale.localeCompare(b.locale) ||
+        a.shortName.localeCompare(b.shortName)
+      );
     });
 }
 
@@ -188,7 +203,9 @@ export async function synthesizeBookTts(input: {
   const normalizedText = input.text.trim();
   if (!normalizedText) throw new Error('缺少朗读文本');
   if (normalizedText.length > config.maxTextLengthPerRequest) {
-    throw new Error(`单次朗读文本过长，最多 ${config.maxTextLengthPerRequest} 个字符`);
+    throw new Error(
+      `单次朗读文本过长，最多 ${config.maxTextLengthPerRequest} 个字符`
+    );
   }
 
   const cacheKey = buildCacheKey({
@@ -200,15 +217,11 @@ export async function synthesizeBookTts(input: {
   const EdgeTTS = mod.EdgeTTS || mod.default?.EdgeTTS;
   if (!EdgeTTS) throw new Error('edge-tts-universal 未导出 EdgeTTS');
 
-  const tts = new EdgeTTS(
-    normalizedText,
-    input.voice || config.defaultVoice,
-    {
-      rate: input.rate || config.defaultRate,
-      pitch: input.pitch || config.defaultPitch,
-      volume: input.volume || config.defaultVolume,
-    }
-  );
+  const tts = new EdgeTTS(normalizedText, input.voice || config.defaultVoice, {
+    rate: input.rate || config.defaultRate,
+    pitch: input.pitch || config.defaultPitch,
+    volume: input.volume || config.defaultVolume,
+  });
   const result = await tts.synthesize();
 
   const payload: TtsSynthesizeResult = {
@@ -217,10 +230,10 @@ export async function synthesizeBookTts(input: {
     boundaries: Array.isArray(result?.subtitle)
       ? result.subtitle.map(normalizeBoundary)
       : Array.isArray(result?.subtitle?.words)
-        ? result.subtitle?.words?.map(normalizeBoundary) || []
+      ? result.subtitle?.words?.map(normalizeBoundary) || []
       : Array.isArray(result?.subtitles)
-        ? result.subtitles.map(normalizeBoundary)
-        : [],
+      ? result.subtitles.map(normalizeBoundary)
+      : [],
   };
 
   return { ...payload, cacheKey, cacheHit: false };

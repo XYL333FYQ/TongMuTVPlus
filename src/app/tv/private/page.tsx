@@ -156,12 +156,12 @@ export default function TVPrivatePage() {
   if (!ready || !authed) {
     return (
       <TVLayout>
-        <section className='mx-auto max-w-5xl rounded-[42px] border border-[var(--tm-line)] bg-[var(--tm-surface)] p-12 text-center shadow-lg'>
-          <Lock className='mx-auto h-20 w-20 text-[color:var(--tm-text)]' />
+        <section className='mx-auto max-w-5xl rounded-[42px] border border-line bg-surface p-12 text-center shadow-lg'>
+          <Lock className='mx-auto h-20 w-20 text-fg' />
           <h1 className='mt-6 text-[28px] md:text-[32px] font-bold'>
             需要扫码登录
           </h1>
-          <p className='mt-5 text-base text-[color:var(--tm-muted)]'>
+          <p className='mt-5 text-base text-muted'>
             正在跳转到电视扫码登录页...
           </p>
         </section>
@@ -171,13 +171,13 @@ export default function TVPrivatePage() {
 
   return (
     <TVLayout>
-      <section className='rounded-[42px] border border-[var(--tm-line)] bg-[var(--tm-surface)] p-4 md:p-8 shadow-lg'>
+      <section className='rounded-[42px] border border-line bg-surface p-4 md:p-8 shadow-lg'>
         <div className='flex flex-col items-start justify-between gap-6 xl:flex-row xl:items-center'>
           <div className='flex min-w-0 items-center gap-4'>
-            <HardDrive className='h-8 w-8 shrink-0 text-[color:var(--tm-text)]' />
+            <HardDrive className='h-8 w-8 shrink-0 text-fg' />
             <div>
               <h1 className='text-[28px] md:text-[32px] font-bold'>私人影库</h1>
-              <p className='mt-2 text-sm text-[color:var(--tm-muted)]'>
+              <p className='mt-2 text-sm text-muted'>
                 已接入真实 OpenList / Emby / 小雅数据。
               </p>
             </div>
@@ -190,8 +190,8 @@ export default function TVPrivatePage() {
                 onClick={() => setSource(item)}
                 className={`shrink-0 cursor-pointer rounded-2xl px-5 py-3 text-sm font-medium outline-none transition tv-focusable ${
                   source === item
-                    ? 'bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] min-h-[44px] tm-press'
-                    : 'bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)] hover:bg-[var(--tm-line)] min-h-[44px] tm-press'
+                    ? 'bg-fg text-inverse min-h-[44px] tm-press'
+                    : 'bg-raised text-fg hover:bg-line min-h-[44px] tm-press'
                 }`}
               >
                 {sourceLabel[item]}
@@ -208,8 +208,8 @@ export default function TVPrivatePage() {
                 onClick={() => setEmbyKey(item.key)}
                 className={`tv-focusable shrink-0 cursor-pointer rounded-2xl px-5 py-3 text-sm font-medium ${
                   embyKey === item.key
-                    ? 'bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] min-h-[44px] tm-press'
-                    : 'bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)] min-h-[44px] tm-press'
+                    ? 'bg-fg text-inverse min-h-[44px] tm-press'
+                    : 'bg-raised text-fg min-h-[44px] tm-press'
                 }`}
               >
                 <Server className='mr-2 inline h-5 w-5' />
@@ -233,13 +233,13 @@ export default function TVPrivatePage() {
       {error && (
         <div
           role='alert'
-          className='mt-8 rounded-3xl border border-[var(--tm-danger)] bg-[var(--tm-surface)] p-6 text-base text-[color:var(--tm-text)]'
+          className='mt-8 rounded-3xl border border-danger bg-surface p-6 text-base text-fg'
         >
           {error}
         </div>
       )}
       {!loading && enabledSources.length === 0 && (
-        <div className='mt-8 rounded-3xl border border-[var(--tm-line)] bg-[var(--tm-surface-raised)] p-4 md:p-8 text-base text-[color:var(--tm-muted)]'>
+        <div className='mt-8 rounded-3xl border border-line bg-raised p-4 md:p-8 text-base text-muted'>
           未启用私人影库源。
         </div>
       )}
@@ -254,7 +254,7 @@ export default function TVPrivatePage() {
 
       {!loading && source === 'xiaoya' && (
         <section className='mt-10 space-y-8'>
-          <div className='rounded-3xl bg-[var(--tm-surface-raised)] p-5 text-sm text-[color:var(--tm-muted)]'>
+          <div className='rounded-3xl bg-raised p-5 text-sm text-muted'>
             当前位置：{xiaoyaPath}
           </div>
           {xiaoyaPath !== '/' && (
@@ -265,7 +265,7 @@ export default function TVPrivatePage() {
                     xiaoyaPath.split('/').filter(Boolean).slice(0, -1).join('/')
                 )
               }
-              className='cursor-pointer rounded-2xl bg-[var(--tm-surface-raised)] px-6 py-4 text-base font-medium outline-none tv-focusable min-h-[44px] tm-press'
+              className='cursor-pointer rounded-2xl bg-raised px-6 py-4 text-base font-medium outline-none tv-focusable min-h-[44px] tm-press'
             >
               返回上级
             </button>
@@ -280,9 +280,9 @@ export default function TVPrivatePage() {
                   <button
                     key={folder.path}
                     onClick={() => setXiaoyaPath(folder.path)}
-                    className='flex min-h-24 cursor-pointer items-center gap-3 rounded-3xl border border-[var(--tm-line)] bg-[var(--tm-surface-raised)] p-5 text-left text-base font-medium outline-none tv-focusable min-h-[44px] tm-press'
+                    className='flex min-h-24 cursor-pointer items-center gap-3 rounded-3xl border border-line bg-raised p-5 text-left text-base font-medium outline-none tv-focusable min-h-[44px] tm-press'
                   >
-                    <Folder className='h-9 w-9 text-[color:var(--tm-text)]' />
+                    <Folder className='h-9 w-9 text-fg' />
                     {folder.name}
                   </button>
                 ))}
@@ -315,9 +315,9 @@ export default function TVPrivatePage() {
                           )}&title=${encodeURIComponent(title)}`
                         )
                       }
-                      className='flex cursor-pointer items-center gap-4 rounded-3xl border border-[var(--tm-line)] bg-[var(--tm-surface-raised)] p-5 text-left text-base font-medium outline-none tv-focusable min-h-[44px] tm-press'
+                      className='flex cursor-pointer items-center gap-4 rounded-3xl border border-line bg-raised p-5 text-left text-base font-medium outline-none tv-focusable min-h-[44px] tm-press'
                     >
-                      <PlayCircle className='h-9 w-9 text-[color:var(--tm-text)]' />
+                      <PlayCircle className='h-9 w-9 text-fg' />
                       {file.name}
                     </button>
                   );

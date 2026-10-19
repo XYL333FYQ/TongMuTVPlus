@@ -24,6 +24,8 @@ import React, {
 } from 'react';
 import { createPortal } from 'react-dom';
 
+import '@/styles/search.css';
+
 import { isAnimeCategoryText } from '@/lib/anime-keyword-expr';
 import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
 import { loadTraditionalToSimplifiedConverter } from '@/lib/danmaku/traditional-to-simplified';
@@ -44,6 +46,7 @@ import { SearchResult } from '@/lib/types';
 import { processImageUrl } from '@/lib/utils';
 
 import AcgSearch from '@/components/AcgSearch';
+import BackToTop from '@/components/BackToTop';
 import CapsuleSwitch from '@/components/CapsuleSwitch';
 import ContinueWatching from '@/components/ContinueWatching';
 import ImageViewer from '@/components/ImageViewer';
@@ -80,7 +83,6 @@ export function SearchPageClient({
   // 搜索历史
   const [searchHistory, setSearchHistory] = useState<string[]>([]);
   // 返回顶部按钮显示状态
-  const [showBackToTop, setShowBackToTop] = useState(false);
   // 选项卡状态: 'video' 或 'pansou' 或 'acg'
   const [activeTab, setActiveTab] = useState<'video' | 'pansou' | 'acg'>(
     'video'
@@ -934,17 +936,17 @@ export function SearchPageClient({
       onClick={() => router.push(getSearchResultUrl(item))}
       className='group block w-full text-left min-h-[44px] tm-press'
     >
-      <div className='aspect-[2/3] overflow-hidden rounded-xl bg-[var(--tm-surface-raised)] ring-1 ring-[color-mix(in_srgb,var(--tm-text)_10%,transparent)]'>
+      <div className='aspect-[2/3] overflow-hidden rounded-xl bg-raised ring-1 ring-[color-mix(in_srgb,var(--tm-text)_10%,transparent)]'>
         <PublicPoster
           src={item.poster}
           alt={item.title}
           className='h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]'
         />
       </div>
-      <h3 className='mt-3 line-clamp-1 text-sm font-medium text-[color:var(--tm-text)]'>
+      <h3 className='mt-3 line-clamp-1 text-sm font-medium text-fg'>
         {item.title}
       </h3>
-      <p className='mt-1 text-[13px] text-[color:var(--tm-muted)]'>
+      <p className='mt-1 text-[13px] text-muted'>
         {[item.year, item.type === 'tv' ? '剧集' : '电影']
           .filter(Boolean)
           .join(' · ')}
@@ -1003,10 +1005,10 @@ export function SearchPageClient({
           savePartialCacheForPlayback();
           router.push(itemUrl);
         }}
-        className='group w-full rounded-2xl border border-[var(--tm-line)] bg-[var(--tm-surface-raised)] p-3 text-left shadow-sm transition-all hover:border-[var(--tm-line)] hover:shadow-md min-h-[44px] tm-press'
+        className='group w-full rounded-2xl border border-line bg-raised p-3 text-left shadow-sm transition-all hover:border-line hover:shadow-md min-h-[44px] tm-press'
       >
         <div className='flex items-start gap-4'>
-          <div className='relative h-32 w-24 shrink-0 overflow-hidden rounded-xl bg-[var(--tm-surface-raised)]'>
+          <div className='relative h-32 w-24 shrink-0 overflow-hidden rounded-xl bg-raised'>
             {isGuest ? (
               <PublicPoster
                 src={item.poster}
@@ -1033,42 +1035,29 @@ export function SearchPageClient({
           <div className='min-w-0 flex-1'>
             <div className='flex items-start justify-between gap-3'>
               <div className='min-w-0'>
-                <h3 className='line-clamp-2 text-base font-medium text-[color:var(--tm-text)]'>
+                <h3 className='line-clamp-2 text-base font-medium text-fg'>
                   {item.title}
                 </h3>
                 <div className='mt-2 flex flex-wrap gap-2'>
                   {renderTag(
                     item.type === 'movie' ? '电影' : '剧集',
-                    'bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)]'
+                    'bg-raised text-fg'
                   )}
-                  {yearText &&
-                    renderTag(
-                      yearText,
-                      'bg-[var(--tm-surface-raised)] text-[color:var(--tm-muted)]'
-                    )}
+                  {yearText && renderTag(yearText, 'bg-raised text-muted')}
                   {!!item.episodes &&
                     item.episodes > 0 &&
-                    renderTag(
-                      `${item.episodes}集`,
-                      'bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)]'
-                    )}
+                    renderTag(`${item.episodes}集`, 'bg-raised text-fg')}
                   {item.vodRemarks &&
-                    renderTag(
-                      item.vodRemarks,
-                      'bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)]'
-                    )}
+                    renderTag(item.vodRemarks, 'bg-raised text-fg')}
                   {item.doubanId &&
                     item.doubanId > 0 &&
-                    renderTag(
-                      '豆瓣',
-                      'bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)]'
-                    )}
+                    renderTag('豆瓣', 'bg-raised text-fg')}
                 </div>
               </div>
             </div>
 
             {description && (
-              <p className='mt-3 line-clamp-3 text-sm leading-6 text-[color:var(--tm-muted)]'>
+              <p className='mt-3 line-clamp-3 text-sm leading-6 text-muted'>
                 {description}
               </p>
             )}
@@ -1084,7 +1073,7 @@ export function SearchPageClient({
             {visibleSourceTags.map((sourceName) => (
               <span
                 key={`${item.key}-${sourceName}`}
-                className='inline-flex max-w-full shrink-0 items-center truncate rounded-full border border-[var(--tm-line)] bg-[var(--tm-surface-raised)] px-2.5 py-1 text-[13px] text-[color:var(--tm-muted)]'
+                className='inline-flex max-w-full shrink-0 items-center truncate rounded-full border border-line bg-raised px-2.5 py-1 text-[13px] text-muted'
                 title={sourceName}
               >
                 {sourceName}
@@ -1100,7 +1089,7 @@ export function SearchPageClient({
                     [item.key]: true,
                   }));
                 }}
-                className='inline-flex shrink-0 items-center rounded-full border border-[var(--tm-line)] bg-[var(--tm-surface-raised)] px-2.5 py-1 text-[13px] font-medium text-[color:var(--tm-text)] transition-colors hover:bg-[var(--tm-line)] min-h-[44px] tm-press'
+                className='inline-flex shrink-0 items-center rounded-full border border-line bg-raised px-2.5 py-1 text-[13px] font-medium text-fg transition-colors hover:bg-line min-h-[44px] tm-press'
                 aria-label={`展开剩余${hiddenSourceCount}个来源`}
               >
                 +{hiddenSourceCount}
@@ -1208,41 +1197,8 @@ export function SearchPageClient({
           }
         );
 
-    // 获取滚动位置的函数 - 专门针对 body 滚动
-    const getScrollTop = () => {
-      return document.body.scrollTop || 0;
-    };
-
-    // 使用 requestAnimationFrame 持续检测滚动位置
-    let isRunning = false;
-    const checkScrollPosition = () => {
-      if (!isRunning) return;
-
-      const scrollTop = getScrollTop();
-      const shouldShow = scrollTop > 300;
-      setShowBackToTop(shouldShow);
-
-      requestAnimationFrame(checkScrollPosition);
-    };
-
-    // 启动持续检测
-    isRunning = true;
-    checkScrollPosition();
-
-    // 监听 body 元素的滚动事件
-    const handleScroll = () => {
-      const scrollTop = getScrollTop();
-      setShowBackToTop(scrollTop > 300);
-    };
-
-    document.body.addEventListener('scroll', handleScroll, { passive: true });
-
     return () => {
       unsubscribe();
-      isRunning = false; // 停止 requestAnimationFrame 循环
-
-      // 移除 body 滚动事件监听器
-      document.body.removeEventListener('scroll', handleScroll);
     };
   }, []);
 
@@ -1847,10 +1803,10 @@ export function SearchPageClient({
             }
             setPansouCloudFilterOpen((prev) => !prev);
           }}
-          className={`relative z-10 rounded-full px-3 py-1 text-[13px] font-medium transition-all duration-200 whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-[var(--tm-text)] focus:ring-offset-2 focus:ring-offset-[var(--tm-text)] ${
+          className={`relative z-10 rounded-full px-3 py-1 text-[13px] font-medium transition-all duration-200 whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-fg focus:ring-offset-2 focus:ring-offset-fg ${
             hasFilter
-              ? 'cursor-pointer text-[color:var(--tm-text)] hover:text-[color:var(--tm-text)] min-h-[44px] tm-press'
-              : 'cursor-pointer text-[color:var(--tm-muted)] hover:text-[color:var(--tm-text)] min-h-[44px] tm-press'
+              ? 'cursor-pointer text-fg hover:text-fg min-h-[44px] tm-press'
+              : 'cursor-pointer min-h-[44px] tm-press'
           }`}
           aria-expanded={pansouCloudFilterOpen}
           aria-haspopup='listbox'
@@ -1905,20 +1861,6 @@ export function SearchPageClient({
     };
   }, [pansouCloudFilterOpen]);
 
-  // 返回顶部功能
-  const scrollToTop = () => {
-    try {
-      // 根据调试结果，真正的滚动容器是 document.body
-      document.body.scrollTo({
-        top: 0,
-        behavior: 'smooth',
-      });
-    } catch (error) {
-      // 如果平滑滚动完全失败，使用立即滚动
-      document.body.scrollTop = 0;
-    }
-  };
-
   // 处理标签切换
   const handleTabChange = (newTab: 'video' | 'pansou' | 'acg') => {
     setActiveTab(newTab);
@@ -1934,12 +1876,12 @@ export function SearchPageClient({
 
   return (
     <PageLayout activePath={searchBase}>
-      <PageContainer className='py-4 sm:py-8 overflow-visible mb-10'>
+      <PageContainer className='tm-search-page'>
         {/* 搜索框 */}
-        <div className='mb-0'>
-          <form onSubmit={handleSearch} className='max-w-2xl mx-auto'>
-            <div className='relative'>
-              <Search className='absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-[color:var(--tm-muted)]' />
+        <div>
+          <form onSubmit={handleSearch} className='tm-search-form'>
+            <div className='tm-search-field'>
+              <Search className='tm-search-icon' size={20} aria-hidden />
               <input
                 id='searchInput'
                 type='text'
@@ -1948,7 +1890,7 @@ export function SearchPageClient({
                 onFocus={handleInputFocus}
                 placeholder='搜索片名'
                 autoComplete='off'
-                className='w-full h-12 rounded-lg bg-[var(--tm-surface-raised)] py-3 pl-10 pr-12 text-sm text-[color:var(--tm-muted)] placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[var(--tm-text)] focus:bg-[var(--tm-surface-raised)] border border-[var(--tm-line)] shadow-sm dark:placeholder-gray-500'
+                className='tm-search-input'
               />
 
               {/* 清除按钮 */}
@@ -1960,10 +1902,10 @@ export function SearchPageClient({
                     setShowSuggestions(false);
                     document.getElementById('searchInput')?.focus();
                   }}
-                  className='absolute right-3 top-1/2 h-5 w-5 -translate-y-1/2 text-[color:var(--tm-muted)] hover:text-[color:var(--tm-muted)] transition-colors min-h-[44px] tm-press'
+                  className='tm-search-clear'
                   aria-label='清除搜索内容'
                 >
-                  <X className='h-5 w-5' />
+                  <X size={18} />
                 </button>
               )}
 
@@ -1997,17 +1939,14 @@ export function SearchPageClient({
             </div>
           </form>
           {isGuest && showResults && guestSearchError && (
-            <p
-              role='status'
-              className='mt-4 text-sm text-[color:var(--tm-text)]'
-            >
+            <p role='status' className='mt-4 text-sm text-fg'>
               {guestSearchError}
             </p>
           )}
 
           {/* 选项卡：特殊源入口（/under）只有影视搜索，整块隐藏 */}
           {!isSpecialEntry && (
-            <div className='flex justify-center mt-6'>
+            <div className='tm-search-modes'>
               <CapsuleSwitch
                 options={[
                   {
@@ -2051,7 +1990,7 @@ export function SearchPageClient({
               <Link
                 href='/source-search?special=1'
                 prefetch={false}
-                className='inline-flex items-center gap-2 rounded-full border border-[var(--tm-line)] bg-[var(--tm-surface-raised)] px-4 py-2 text-sm font-medium text-[color:var(--tm-text)] transition-colors hover:bg-[var(--tm-line)] min-h-[44px] tm-press'
+                className='inline-flex items-center gap-2 rounded-full border border-line bg-raised px-4 py-2 text-sm font-medium text-fg transition-colors hover:bg-line min-h-[44px] tm-press'
               >
                 <ListVideo size={16} />
                 源站寻片
@@ -2080,8 +2019,8 @@ export function SearchPageClient({
                   onClick={() => setAdvancedOpen((prev) => !prev)}
                   className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm transition-colors ${
                     advancedOpen
-                      ? 'bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)] min-h-[44px] tm-press'
-                      : 'text-[color:var(--tm-muted)] hover:bg-[var(--tm-line)] hover:text-[color:var(--tm-text)] min-h-[44px] tm-press'
+                      ? 'bg-raised text-fg min-h-[44px] tm-press'
+                      : 'text-muted hover:bg-line hover:text-fg min-h-[44px] tm-press'
                   }`}
                   aria-expanded={advancedOpen}
                 >
@@ -2097,12 +2036,10 @@ export function SearchPageClient({
                     ref={(el) => {
                       if (el) advancedDropdownRefs.current[0] = el;
                     }}
-                    className='absolute right-0 z-[70] mt-2 w-56 rounded-xl border border-[var(--tm-line)] bg-[var(--tm-surface)] p-3 shadow-lg'
+                    className='absolute right-0 z-[70] mt-2 w-56 rounded-xl border border-line bg-surface p-3 shadow-lg'
                   >
                     <label className='flex cursor-pointer select-none items-center justify-between gap-3 rounded-lg px-1 py-2'>
-                      <span className='text-sm text-[color:var(--tm-muted)]'>
-                        聚合
-                      </span>
+                      <span className='text-sm text-muted'>聚合</span>
                       <div className='relative'>
                         <input
                           type='checkbox'
@@ -2112,15 +2049,13 @@ export function SearchPageClient({
                             setViewMode(viewMode === 'agg' ? 'all' : 'agg')
                           }
                         />
-                        <div className='h-5 w-9 rounded-full bg-[var(--tm-surface)] transition-colors peer-checked:bg-[var(--tm-text)]'></div>
-                        <div className='absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-[var(--tm-surface)] transition-transform peer-checked:translate-x-4'></div>
+                        <div className='tm-switch-track'></div>
+                        <div className='tm-switch-thumb'></div>
                       </div>
                     </label>
                     {privateLibrarySearchEnabled && !isSpecialEntry && (
                       <label className='flex cursor-pointer select-none items-center justify-between gap-3 rounded-lg px-1 py-2'>
-                        <span className='text-sm text-[color:var(--tm-muted)]'>
-                          只搜私人影库
-                        </span>
+                        <span className='text-sm text-muted'>只搜私人影库</span>
                         <div className='relative'>
                           <input
                             type='checkbox'
@@ -2130,23 +2065,21 @@ export function SearchPageClient({
                               setPrivateLibraryOnly(e.target.checked)
                             }
                           />
-                          <div className='h-5 w-9 rounded-full bg-[var(--tm-surface)] transition-colors peer-checked:bg-[var(--tm-text)]'></div>
-                          <div className='absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-[var(--tm-surface)] transition-transform peer-checked:translate-x-4'></div>
+                          <div className='tm-switch-track'></div>
+                          <div className='tm-switch-thumb'></div>
                         </div>
                       </label>
                     )}
-                    <div className='mt-2 border-t border-[var(--tm-line)] pt-2'>
-                      <span className='px-1 text-sm text-[color:var(--tm-muted)]'>
-                        显示方式
-                      </span>
-                      <div className='mt-2 grid grid-cols-2 gap-1 rounded-lg bg-[var(--tm-surface-raised)] p-1'>
+                    <div className='mt-2 border-t border-line pt-2'>
+                      <span className='px-1 text-sm text-muted'>显示方式</span>
+                      <div className='mt-2 grid grid-cols-2 gap-1 rounded-lg bg-raised p-1'>
                         <button
                           type='button'
                           onClick={() => setResultDisplayMode('card')}
                           className={`inline-flex items-center justify-center gap-1 rounded-md px-2 py-1.5 text-sm transition-colors ${
                             resultDisplayMode === 'card'
-                              ? 'bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] min-h-[44px] tm-press'
-                              : 'text-[color:var(--tm-muted)] hover:bg-[var(--tm-line)] min-h-[44px] tm-press'
+                              ? 'bg-fg text-inverse min-h-[44px] tm-press'
+                              : 'text-muted hover:bg-line min-h-[44px] tm-press'
                           }`}
                           aria-label='切换为卡片视图'
                         >
@@ -2158,8 +2091,8 @@ export function SearchPageClient({
                           onClick={() => setResultDisplayMode('list')}
                           className={`inline-flex items-center justify-center gap-1 rounded-md px-2 py-1.5 text-sm transition-colors ${
                             resultDisplayMode === 'list'
-                              ? 'bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] min-h-[44px] tm-press'
-                              : 'text-[color:var(--tm-muted)] hover:bg-[var(--tm-line)] min-h-[44px] tm-press'
+                              ? 'bg-fg text-inverse min-h-[44px] tm-press'
+                              : 'text-muted hover:bg-line min-h-[44px] tm-press'
                           }`}
                           aria-label='切换为列表视图'
                         >
@@ -2179,7 +2112,7 @@ export function SearchPageClient({
           createPortal(
             <div
               ref={pansouCloudFilterDropdownRef}
-              className='fixed z-[9999] max-h-[50vh] overflow-y-auto rounded-xl border border-[var(--tm-line)] bg-[var(--tm-surface-raised)] p-2 backdrop-blur-sm'
+              className='fixed z-[9999] max-h-[50vh] overflow-y-auto rounded-xl border border-line bg-raised p-2 backdrop-blur-sm'
               style={{
                 left: `${pansouCloudFilterPosition.x}px`,
                 top: `${pansouCloudFilterPosition.y}px`,
@@ -2192,8 +2125,8 @@ export function SearchPageClient({
                   onClick={() => setSelectedPansouCloudTypes([])}
                   className={`rounded-lg px-2 py-1.5 text-left text-[13px] transition-all duration-200 ${
                     selectedPansouCloudTypes.length === 0
-                      ? 'border border-[var(--tm-line)] bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)] min-h-[44px] tm-press'
-                      : 'text-[color:var(--tm-muted)] hover:bg-[var(--tm-line)] min-h-[44px] tm-press'
+                      ? 'border border-line bg-raised text-fg min-h-[44px] tm-press'
+                      : 'text-muted hover:bg-line min-h-[44px] tm-press'
                   }`}
                   aria-pressed={selectedPansouCloudTypes.length === 0}
                 >
@@ -2208,8 +2141,8 @@ export function SearchPageClient({
                       onClick={() => togglePansouCloudType(value)}
                       className={`rounded-lg px-2 py-1.5 text-left text-[13px] transition-all duration-200 ${
                         selected
-                          ? 'border border-[var(--tm-line)] bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)] min-h-[44px] tm-press'
-                          : 'text-[color:var(--tm-muted)] hover:bg-[var(--tm-line)] min-h-[44px] tm-press'
+                          ? 'border border-line bg-raised text-fg min-h-[44px] tm-press'
+                          : 'text-muted hover:bg-line min-h-[44px] tm-press'
                       }`}
                       aria-pressed={selected}
                     >
@@ -2223,57 +2156,41 @@ export function SearchPageClient({
           )}
 
         {/* 搜索结果或搜索历史 */}
-        <div
-          className={`max-w-[95%] mx-auto overflow-visible ${
-            activeTab === 'video' && !showResults
-              ? 'mt-2'
-              : activeTab === 'pansou'
-              ? 'mt-4'
-              : 'mt-12'
-          }`}
-        >
+        <div className='tm-search-body'>
           {showResults ? (
             <section className='mb-12'>
               {activeTab === 'video' ? (
                 <>
                   {/* 影视搜索结果 */}
                   {/* 标题 */}
-                  <div className='mb-4 flex items-start justify-between gap-4'>
+                  <div className='tm-section-header tm-search-results-head'>
                     <div className='min-w-0'>
-                      <h2 className='flex flex-wrap items-start gap-x-3 gap-y-1 text-xl font-bold text-[color:var(--tm-text)]'>
-                        <span className='inline-flex items-center gap-2'>
-                          搜索结果
-                          {isFromCache && (
-                            <span className='rounded-md bg-[var(--tm-surface-raised)] px-2 py-0.5 text-[13px] font-medium text-[color:var(--tm-text)]'>
-                              缓存
+                      <h2 className='tm-section-title flex items-center gap-2'>
+                        搜索结果
+                        {isFromCache && <span className='tm-badge'>缓存</span>}
+                      </h2>
+                      <p className='tm-search-results-meta'>
+                        <span>
+                          {resultCountMeta.modeLabel}{' '}
+                          {resultCountMeta.visibleCount.toLocaleString()}{' '}
+                          {resultCountMeta.unit}
+                          {resultCountMeta.isFiltered && (
+                            <span className='ml-1'>
+                              / 筛选前{' '}
+                              {resultCountMeta.totalCount.toLocaleString()}{' '}
+                              {resultCountMeta.unit}
                             </span>
                           )}
                         </span>
-                        <span className='flex flex-col text-[13px] font-medium leading-5 text-[color:var(--tm-muted)]'>
-                          <span>
-                            {resultCountMeta.modeLabel}{' '}
-                            {resultCountMeta.visibleCount.toLocaleString()}{' '}
-                            {resultCountMeta.unit}
-                            {resultCountMeta.isFiltered && (
-                              <span className='ml-1 text-[color:var(--tm-muted)]'>
-                                / 筛选前{' '}
-                                {resultCountMeta.totalCount.toLocaleString()}{' '}
-                                {resultCountMeta.unit}
-                              </span>
+                        {!isFromCache && totalSources > 0 && useFluidSearch && (
+                          <span className='inline-flex items-center gap-1'>
+                            源 {completedSources}/{totalSources}
+                            {isLoading && (
+                              <span className='inline-block h-3 w-3 animate-spin rounded-full border-2 border-line border-t-fg' />
                             )}
                           </span>
-                          {!isFromCache &&
-                            totalSources > 0 &&
-                            useFluidSearch && (
-                              <span className='inline-flex items-center gap-1'>
-                                源 {completedSources}/{totalSources}
-                                {isLoading && (
-                                  <span className='inline-block h-3 w-3 animate-spin rounded-full border-2 border-[var(--tm-line)] border-t-[var(--tm-line)]'></span>
-                                )}
-                              </span>
-                            )}
-                        </span>
-                      </h2>
+                        )}
+                      </p>
                     </div>
                     <div className='flex shrink-0 items-center gap-2'>
                       {searchQuery && (
@@ -2282,7 +2199,7 @@ export function SearchPageClient({
                             setForceRefresh(true);
                           }}
                           disabled={isLoading}
-                          className='flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm text-[color:var(--tm-muted)] transition-colors hover:bg-[var(--tm-line)] hover:text-[color:var(--tm-text)] disabled:cursor-not-allowed disabled:opacity-50 min-h-[44px] tm-press'
+                          className='tm-btn tm-btn-ghost tm-btn-sm'
                           aria-label='强制刷新搜索结果'
                         >
                           <RefreshCw
@@ -2320,8 +2237,8 @@ export function SearchPageClient({
                         onClick={() => setAdvancedOpen((prev) => !prev)}
                         className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm transition-colors ${
                           advancedOpen
-                            ? 'bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)] min-h-[44px] tm-press'
-                            : 'text-[color:var(--tm-muted)] hover:bg-[var(--tm-line)] hover:text-[color:var(--tm-text)] min-h-[44px] tm-press'
+                            ? 'bg-raised text-fg min-h-[44px] tm-press'
+                            : 'text-muted hover:bg-line hover:text-fg min-h-[44px] tm-press'
                         }`}
                         aria-expanded={advancedOpen}
                       >
@@ -2337,12 +2254,10 @@ export function SearchPageClient({
                           ref={(el) => {
                             if (el) advancedDropdownRefs.current[1] = el;
                           }}
-                          className='absolute right-0 top-full z-[70] mt-2 w-56 rounded-xl border border-[var(--tm-line)] bg-[var(--tm-surface)] p-3 shadow-lg'
+                          className='absolute right-0 top-full z-[70] mt-2 w-56 rounded-xl border border-line bg-surface p-3 shadow-lg'
                         >
                           <label className='flex cursor-pointer select-none items-center justify-between gap-3 rounded-lg px-1 py-2'>
-                            <span className='text-sm text-[color:var(--tm-muted)]'>
-                              聚合
-                            </span>
+                            <span className='text-sm text-muted'>聚合</span>
                             <div className='relative'>
                               <input
                                 type='checkbox'
@@ -2354,13 +2269,13 @@ export function SearchPageClient({
                                   )
                                 }
                               />
-                              <div className='h-5 w-9 rounded-full bg-[var(--tm-surface)] transition-colors peer-checked:bg-[var(--tm-text)]'></div>
-                              <div className='absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-[var(--tm-surface)] transition-transform peer-checked:translate-x-4'></div>
+                              <div className='tm-switch-track'></div>
+                              <div className='tm-switch-thumb'></div>
                             </div>
                           </label>
                           {privateLibrarySearchEnabled && !isSpecialEntry && (
                             <label className='flex cursor-pointer select-none items-center justify-between gap-3 rounded-lg px-1 py-2'>
-                              <span className='text-sm text-[color:var(--tm-muted)]'>
+                              <span className='text-sm text-muted'>
                                 只搜私人影库
                               </span>
                               <div className='relative'>
@@ -2372,23 +2287,23 @@ export function SearchPageClient({
                                     setPrivateLibraryOnly(e.target.checked)
                                   }
                                 />
-                                <div className='h-5 w-9 rounded-full bg-[var(--tm-surface)] transition-colors peer-checked:bg-[var(--tm-text)]'></div>
-                                <div className='absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-[var(--tm-surface)] transition-transform peer-checked:translate-x-4'></div>
+                                <div className='tm-switch-track'></div>
+                                <div className='tm-switch-thumb'></div>
                               </div>
                             </label>
                           )}
-                          <div className='mt-2 border-t border-[var(--tm-line)] pt-2'>
-                            <span className='px-1 text-sm text-[color:var(--tm-muted)]'>
+                          <div className='mt-2 border-t border-line pt-2'>
+                            <span className='px-1 text-sm text-muted'>
                               显示方式
                             </span>
-                            <div className='mt-2 grid grid-cols-2 gap-1 rounded-lg bg-[var(--tm-surface-raised)] p-1'>
+                            <div className='mt-2 grid grid-cols-2 gap-1 rounded-lg bg-raised p-1'>
                               <button
                                 type='button'
                                 onClick={() => setResultDisplayMode('card')}
                                 className={`inline-flex items-center justify-center gap-1 rounded-md px-2 py-1.5 text-sm transition-colors ${
                                   resultDisplayMode === 'card'
-                                    ? 'bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] min-h-[44px] tm-press'
-                                    : 'text-[color:var(--tm-muted)] hover:bg-[var(--tm-line)] min-h-[44px] tm-press'
+                                    ? 'bg-fg text-inverse min-h-[44px] tm-press'
+                                    : 'text-muted hover:bg-line min-h-[44px] tm-press'
                                 }`}
                                 aria-label='切换为卡片视图'
                               >
@@ -2400,8 +2315,8 @@ export function SearchPageClient({
                                 onClick={() => setResultDisplayMode('list')}
                                 className={`inline-flex items-center justify-center gap-1 rounded-md px-2 py-1.5 text-sm transition-colors ${
                                   resultDisplayMode === 'list'
-                                    ? 'bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] min-h-[44px] tm-press'
-                                    : 'text-[color:var(--tm-muted)] hover:bg-[var(--tm-line)] min-h-[44px] tm-press'
+                                    ? 'bg-fg text-inverse min-h-[44px] tm-press'
+                                    : 'text-muted hover:bg-line min-h-[44px] tm-press'
                                 }`}
                                 aria-label='切换为列表视图'
                               >
@@ -2416,18 +2331,25 @@ export function SearchPageClient({
                   </div>
                   {searchResults.length === 0 ? (
                     isLoading ? (
-                      <div className='flex justify-center items-center h-40'>
-                        <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--tm-line)]'></div>
+                      <div className='tm-poster-grid' aria-label='正在搜索'>
+                        {Array.from({ length: 12 }, (_, index) => (
+                          <div key={index} className='tm-poster tm-skeleton' />
+                        ))}
                       </div>
                     ) : (
-                      <div className='text-center text-[color:var(--tm-muted)] py-8'>
-                        未找到相关结果
+                      <div className='tm-empty'>
+                        <Search className='tm-empty-icon' aria-hidden />
+                        <p className='tm-empty-title'>
+                          没有找到“{searchQuery}”
+                        </p>
+                        <p className='tm-empty-desc'>
+                          换个关键词，或检查错别字
+                        </p>
                       </div>
                     )
                   ) : (
                     (() => {
-                      const gridClassName =
-                        'justify-start grid grid-cols-3 gap-x-2 gap-y-14 px-0 sm:grid-cols-[repeat(auto-fill,_minmax(11rem,_1fr))] sm:gap-x-8 sm:gap-y-20 sm:px-2';
+                      const gridClassName = 'tm-poster-grid';
 
                       const listClassName = 'space-y-4';
 
@@ -2666,10 +2588,8 @@ export function SearchPageClient({
               ) : activeTab === 'pansou' ? (
                 <>
                   {/* 网盘搜索结果 */}
-                  <div className='mb-4'>
-                    <h2 className='text-xl font-bold text-[color:var(--tm-text)]'>
-                      网盘搜索结果
-                    </h2>
+                  <div className='tm-section-header'>
+                    <h2 className='tm-section-title'>网盘结果</h2>
                   </div>
                   <PansouSearch
                     keyword={searchQuery}
@@ -2680,10 +2600,8 @@ export function SearchPageClient({
               ) : (
                 <>
                   {/* ACG 磁力搜索结果 */}
-                  <div className='mb-4'>
-                    <h2 className='text-xl font-bold text-[color:var(--tm-text)]'>
-                      动漫磁力搜索结果
-                    </h2>
+                  <div className='tm-section-header'>
+                    <h2 className='tm-section-title'>动漫磁力结果</h2>
                   </div>
                   <AcgSearch
                     keyword={searchQuery}
@@ -2701,23 +2619,22 @@ export function SearchPageClient({
                 activeTab === 'video' && <ContinueWatching />}
               {searchHistory.length > 0 && (
                 // 搜索历史
-                <section className='mb-12'>
-                  <h2 className='mb-4 text-xl font-bold text-[color:var(--tm-text)] text-left'>
-                    搜索历史
-                    {searchHistory.length > 0 && (
-                      <button
-                        onClick={() => {
-                          clearSearchHistory(); // 事件监听会自动更新界面
-                        }}
-                        className='ml-3 text-sm text-[color:var(--tm-muted)] hover:text-[color:var(--tm-text)] transition-colors min-h-[44px] tm-press'
-                      >
-                        清空
-                      </button>
-                    )}
-                  </h2>
-                  <div className='flex flex-wrap gap-2'>
+                <section className='tm-search-history'>
+                  <div className='tm-section-header'>
+                    <h2 className='tm-section-title'>最近搜索</h2>
+                    <button
+                      type='button'
+                      onClick={() => {
+                        clearSearchHistory(); // 事件监听会自动更新界面
+                      }}
+                      className='tm-section-link'
+                    >
+                      清空
+                    </button>
+                  </div>
+                  <div className='tm-history-list'>
                     {searchHistory.map((item) => (
-                      <div key={item} className='relative group'>
+                      <div key={item} className='tm-history-item'>
                         <button
                           onClick={() => {
                             setSearchQuery(item);
@@ -2751,7 +2668,7 @@ export function SearchPageClient({
                               setTriggerAcgSearch((prev) => !prev);
                             }
                           }}
-                          className='px-4 py-2 bg-[var(--tm-surface)] hover:bg-[var(--tm-line)] rounded-full text-sm text-[color:var(--tm-muted)] transition-colors duration-200 min-h-[44px] tm-press'
+                          className='tm-history-query'
                         >
                           {item}
                         </button>
@@ -2763,9 +2680,9 @@ export function SearchPageClient({
                             e.preventDefault();
                             deleteSearchHistory(item); // 事件监听会自动更新界面
                           }}
-                          className='absolute -top-1 -right-1 w-4 h-4 opacity-0 group-hover:opacity-100 bg-[var(--tm-surface)] hover:bg-[var(--tm-line)] text-[color:var(--tm-text)] rounded-full flex items-center justify-center text-[13px] transition-colors min-h-[44px] tm-press'
+                          className='tm-history-remove'
                         >
-                          <X className='w-3 h-3' />
+                          <X size={14} aria-hidden />
                         </button>
                       </div>
                     ))}
@@ -2786,18 +2703,7 @@ export function SearchPageClient({
         />
       )}
 
-      {/* 返回顶部悬浮按钮 */}
-      <button
-        onClick={scrollToTop}
-        className={`fixed bottom-20 md:bottom-6 right-6 z-[500] w-12 h-12 bg-[var(--tm-text)] hover:opacity-90 text-[color:var(--tm-accent-contrast)] rounded-full shadow-lg backdrop-blur-sm transition-all duration-300 ease-in-out flex items-center justify-center group ${
-          showBackToTop
-            ? 'opacity-100 translate-y-0 pointer-events-auto min-h-[44px] tm-press'
-            : 'opacity-0 translate-y-4 pointer-events-none min-h-[44px] tm-press'
-        }`}
-        aria-label='返回顶部'
-      >
-        <ChevronUp className='w-6 h-6 transition-transform group-hover:scale-110' />
-      </button>
+      <BackToTop />
     </PageLayout>
   );
 }

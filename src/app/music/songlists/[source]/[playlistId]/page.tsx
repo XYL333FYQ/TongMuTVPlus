@@ -4,13 +4,16 @@ import { Play } from 'lucide-react';
 import { useParams, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
-import MusicEmpty, { MusicRowListSkeleton } from '@/components/music/MusicEmpty';
-import MusicPage from '@/components/music/MusicPage';
-import SongList from '@/components/music/SongList';
-import { MUSIC_BUTTON, MUSIC_COUNT } from '@/components/music/tokens';
 import { playMusicList } from '@/lib/music/actions';
 import { mapSong, musicSources, normalizeSource } from '@/lib/music/shared';
 import type { Song } from '@/lib/music/types';
+
+import MusicEmpty, {
+  MusicRowListSkeleton,
+} from '@/components/music/MusicEmpty';
+import MusicPage from '@/components/music/MusicPage';
+import SongList from '@/components/music/SongList';
+import { MUSIC_BUTTON, MUSIC_COUNT } from '@/components/music/tokens';
 
 export default function MusicSongListDetailPage() {
   const params = useParams<{ source: string; playlistId: string }>();
@@ -24,7 +27,11 @@ export default function MusicSongListDetailPage() {
 
   useEffect(() => {
     setLoading(true);
-    fetch(`/api/music/v2/discovery/songlist-detail?source=${source}&id=${encodeURIComponent(playlistId)}`)
+    fetch(
+      `/api/music/v2/discovery/songlist-detail?source=${source}&id=${encodeURIComponent(
+        playlistId
+      )}`
+    )
       .then((res) => res.json())
       .then((data) => {
         if (data.success) setSongs((data.data?.list || []).map(mapSong));
@@ -34,7 +41,8 @@ export default function MusicSongListDetailPage() {
       .finally(() => setLoading(false));
   }, [source, playlistId]);
 
-  const sourceLabel = musicSources.find((item) => item.key === source)?.label || source;
+  const sourceLabel =
+    musicSources.find((item) => item.key === source)?.label || source;
 
   return (
     <MusicPage

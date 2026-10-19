@@ -2,7 +2,10 @@ import { getAvailableApiSites } from '@/lib/config';
 import { SearchResult } from '@/lib/types';
 
 import { getDetailFromApiV2 } from './downstream';
-import { getSpecialSourceDetail, isSpecialSource } from './special-sources-detail';
+import {
+  getSpecialSourceDetail,
+  isSpecialSource,
+} from './special-sources-detail';
 
 interface FetchVideoDetailOptions {
   source: string;

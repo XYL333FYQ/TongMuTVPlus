@@ -6,7 +6,7 @@
 return {
   meta: {
     name: '示例脚本',
-    author: 'admin'
+    author: 'admin',
   },
 
   async getSources(ctx) {
@@ -18,7 +18,7 @@ return {
       list: [],
       page,
       pageCount: 1,
-      total: 0
+      total: 0,
     };
   },
 
@@ -27,7 +27,7 @@ return {
       list: [],
       page: page || 1,
       pageCount: 1,
-      total: 0
+      total: 0,
     };
   },
 
@@ -43,9 +43,9 @@ return {
           sourceId,
           sourceName: '默认源',
           episodes: [],
-          episodes_titles: []
-        }
-      ]
+          episodes_titles: [],
+        },
+      ],
     };
   },
 
@@ -53,9 +53,9 @@ return {
     return {
       url: playUrl,
       type: 'auto',
-      headers: {}
+      headers: {},
     };
-  }
+  },
 };
 ```
 

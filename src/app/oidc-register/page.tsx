@@ -4,9 +4,11 @@ import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import { Suspense, useEffect, useState } from 'react';
 
-import { fadeUp, useReducedMotionSetting } from '@/lib/motion';
-import { CURRENT_VERSION } from '@/lib/version';
+import '@/styles/auth.css';
 
+import { fadeUp, useReducedMotionSetting } from '@/lib/motion';
+
+import AuthVersion from '@/components/auth/AuthVersion';
 import { useSite } from '@/components/SiteProvider';
 import { ThemeToggle } from '@/components/ThemeToggle';
 
@@ -76,11 +78,11 @@ function OIDCRegisterPageClient() {
 
   if (!oidcInfo) {
     return (
-      <div className='relative min-h-screen flex items-center justify-center px-4'>
+      <div className='tm-auth'>
         <div
           role='status'
           aria-label='加载中'
-          className='tm-skeleton h-48 w-full max-w-md rounded-3xl'
+          className='tm-auth-card tm-skeleton h-72'
         >
           <span className='sr-only'>加载中...</span>
         </div>
@@ -89,8 +91,8 @@ function OIDCRegisterPageClient() {
   }
 
   return (
-    <div className='relative min-h-dvh flex items-center justify-center px-[var(--tm-content-gutter)] py-20 bg-[var(--tm-bg)] text-[color:var(--tm-text)]'>
-      <div className='absolute top-4 right-4'>
+    <div className='tm-auth'>
+      <div className='tm-auth-theme'>
         <ThemeToggle />
       </div>
       <motion.div
@@ -98,19 +100,15 @@ function OIDCRegisterPageClient() {
         variants={fadeUp}
         initial='hidden'
         animate='visible'
-        className='tm-enter relative z-10 w-full max-w-md rounded-3xl bg-[var(--tm-surface)] shadow-xl p-6 sm:p-10 dark:border border-[var(--tm-line)]'
+        className='tm-auth-card'
       >
-        <h1 className='text-[color:var(--tm-text)] tracking-normal text-center text-[28px] md:text-[32px] font-bold mb-2'>
-          {siteName}
-        </h1>
-        <p className='text-center text-sm text-[color:var(--tm-muted)] mb-8'>
-          完成OIDC注册
-        </p>
+        <h1 className='tm-auth-title'>{siteName}</h1>
+        <p className='tm-auth-sub'>完成 OIDC 注册</p>
 
         {/* OIDC信息显示 */}
         {oidcInfo && (
-          <div className='mb-6 p-4 bg-[var(--tm-surface-raised)] border border-[var(--tm-line)] rounded-lg'>
-            <p className='text-sm text-[color:var(--tm-text)]'>
+          <div className='tm-auth-note mb-6'>
+            <p className='text-sm'>
               {oidcInfo.email && (
                 <>
                   邮箱: <strong>{oidcInfo.email}</strong>
@@ -132,30 +130,27 @@ function OIDCRegisterPageClient() {
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className='space-y-6'>
+        <form onSubmit={handleSubmit} className='tm-auth-form'>
           <div>
-            <label
-              htmlFor='username'
-              className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'
-            >
+            <label htmlFor='username' className='tm-field-label'>
               选择用户名
             </label>
             <input
               id='username'
               type='text'
               autoComplete='username'
-              className='block min-h-[44px] w-full rounded-lg border-0 py-3 px-4 text-base text-[color:var(--tm-text)] shadow-sm ring-1 ring-[var(--tm-line)] placeholder:text-[color:var(--tm-muted)] focus:ring-2 focus:ring-[var(--tm-text)] focus:outline-none bg-[var(--tm-surface-raised)]'
+              className='tm-input tm-auth-input tm-auth-input-plain'
               placeholder='输入用户名（3-20位字母、数字、下划线）'
               value={username}
               onChange={(e) => setUsername(e.target.value)}
             />
-            <p className='mt-2 text-[13px] leading-relaxed text-[color:var(--tm-muted)]'>
+            <p className='mt-2 text-[13px] leading-relaxed text-muted'>
               用户名只能包含字母、数字、下划线，长度3-20位
             </p>
           </div>
 
           {error && (
-            <p role='alert' className='text-sm text-[color:var(--tm-text)]'>
+            <p role='alert' className='tm-auth-error'>
               {error}
             </p>
           )}
@@ -163,7 +158,7 @@ function OIDCRegisterPageClient() {
           <button
             type='submit'
             disabled={!username || loading}
-            className='inline-flex w-full justify-center rounded-lg bg-[var(--tm-text)] py-3 text-base font-medium text-[color:var(--tm-accent-contrast)] disabled:cursor-not-allowed disabled:opacity-50 min-h-[44px] tm-press'
+            className='tm-btn tm-btn-primary tm-btn-lg w-full'
           >
             {loading ? '注册中...' : '完成注册'}
           </button>
@@ -173,7 +168,7 @@ function OIDCRegisterPageClient() {
             <button
               type='button'
               onClick={() => router.push('/login')}
-              className='text-sm text-[color:var(--tm-text)] hover:text-[color:var(--tm-text)] transition-colors min-h-[44px] tm-press'
+              className='tm-auth-link'
             >
               返回登录
             </button>
@@ -181,10 +176,7 @@ function OIDCRegisterPageClient() {
         </form>
       </motion.div>
 
-      {/* 版本信息 */}
-      <div className='absolute bottom-4 left-1/2 transform -translate-x-1/2 text-[13px] text-[color:var(--tm-muted)]'>
-        <span>v{CURRENT_VERSION}</span>
-      </div>
+      <AuthVersion />
     </div>
   );
 }

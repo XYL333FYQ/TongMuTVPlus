@@ -11,7 +11,7 @@ export default function RippleCountBadge({ count }: { count: number }) {
     <div className='pointer-events-none absolute right-2 top-2 z-20 h-7 w-7'>
       <motion.span
         key={count}
-        className='tm-media-card-motion absolute inset-0 flex items-center justify-center rounded-full bg-[var(--tm-text)] text-[13px] font-medium tabular-nums text-[color:var(--tm-accent-contrast)]'
+        className='tm-media-card-motion absolute inset-0 flex items-center justify-center rounded-full bg-fg text-[13px] font-medium tabular-nums text-inverse'
         initial={{ opacity: 0, scale: reduced ? 1 : 0.85 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{

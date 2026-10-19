@@ -25,11 +25,19 @@ export interface TianyiNetdiskSession {
 const TTL_MS = 30 * 60 * 1000;
 const sessionStore = new Map<string, TianyiNetdiskSession>();
 
-export function buildTianyiNetdiskId(input: { shareUrl: string; passcode?: string }): string {
-  return base58Encode(JSON.stringify({ shareUrl: input.shareUrl, passcode: input.passcode || '' }));
+export function buildTianyiNetdiskId(input: {
+  shareUrl: string;
+  passcode?: string;
+}): string {
+  return base58Encode(
+    JSON.stringify({ shareUrl: input.shareUrl, passcode: input.passcode || '' })
+  );
 }
 
-export function parseTianyiNetdiskId(id: string): { shareUrl: string; passcode?: string } {
+export function parseTianyiNetdiskId(id: string): {
+  shareUrl: string;
+  passcode?: string;
+} {
   try {
     const decoded = base58Decode(id);
     const parsed = JSON.parse(decoded);
@@ -66,7 +74,10 @@ export function createTianyiNetdiskSession(input: {
 }) {
   pruneExpiredSessions();
   const now = Date.now();
-  const id = buildTianyiNetdiskId({ shareUrl: input.shareUrl, passcode: input.passcode });
+  const id = buildTianyiNetdiskId({
+    shareUrl: input.shareUrl,
+    passcode: input.passcode,
+  });
   const session: TianyiNetdiskSession = {
     id,
     provider: 'tianyi',
@@ -85,7 +96,9 @@ export function createTianyiNetdiskSession(input: {
   return session;
 }
 
-export function getTianyiNetdiskSession(id: string): TianyiNetdiskSession | null {
+export function getTianyiNetdiskSession(
+  id: string
+): TianyiNetdiskSession | null {
   pruneExpiredSessions();
   const session = sessionStore.get(id);
   if (!session) return null;
@@ -96,7 +109,9 @@ export function getTianyiNetdiskSession(id: string): TianyiNetdiskSession | null
   return session;
 }
 
-export function refreshTianyiNetdiskSession(id: string): TianyiNetdiskSession | null {
+export function refreshTianyiNetdiskSession(
+  id: string
+): TianyiNetdiskSession | null {
   const session = getTianyiNetdiskSession(id);
   if (!session) return null;
   session.expiresAt = Date.now() + TTL_MS;

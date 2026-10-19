@@ -28,14 +28,18 @@ interface TokenData {
 export function generateTokenId(): string {
   const array = new Uint8Array(16);
   crypto.getRandomValues(array);
-  return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
+  return Array.from(array, (byte) => byte.toString(16).padStart(2, '0')).join(
+    ''
+  );
 }
 
 // 生成随机 Refresh Token
 export function generateRefreshToken(): string {
   const array = new Uint8Array(32);
   crypto.getRandomValues(array);
-  return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
+  return Array.from(array, (byte) => byte.toString(16).padStart(2, '0')).join(
+    ''
+  );
 }
 
 // 存储 Refresh Token（使用 Redis Hash）
@@ -137,13 +141,15 @@ export async function revokeRefreshToken(
 }
 
 // 获取用户的所有设备
-export async function getUserDevices(username: string): Promise<Array<{
-  tokenId: string;
-  deviceInfo: string;
-  createdAt: number;
-  lastUsed: number;
-  expiresAt: number;
-}>> {
+export async function getUserDevices(username: string): Promise<
+  Array<{
+    tokenId: string;
+    deviceInfo: string;
+    createdAt: number;
+    lastUsed: number;
+    expiresAt: number;
+  }>
+> {
   const hashKey = `user_tokens:${username}`;
   const storage = await loadStorage();
 

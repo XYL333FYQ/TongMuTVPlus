@@ -25,10 +25,12 @@ export function buildMobileNetdiskId(input: {
   shareUrl: string;
   passcode?: string;
 }): string {
-  return base58Encode(JSON.stringify({
-    shareUrl: input.shareUrl,
-    passcode: input.passcode || '',
-  }));
+  return base58Encode(
+    JSON.stringify({
+      shareUrl: input.shareUrl,
+      passcode: input.passcode || '',
+    })
+  );
 }
 
 export function parseMobileNetdiskId(id: string): {
@@ -85,7 +87,9 @@ export function createMobileNetdiskSession(input: {
   return session;
 }
 
-export function getMobileNetdiskSession(id: string): MobileNetdiskSession | null {
+export function getMobileNetdiskSession(
+  id: string
+): MobileNetdiskSession | null {
   pruneExpiredSessions();
   const session = sessionStore.get(id);
   if (!session) return null;
@@ -96,7 +100,9 @@ export function getMobileNetdiskSession(id: string): MobileNetdiskSession | null
   return session;
 }
 
-export function refreshMobileNetdiskSession(id: string): MobileNetdiskSession | null {
+export function refreshMobileNetdiskSession(
+  id: string
+): MobileNetdiskSession | null {
   const session = getMobileNetdiskSession(id);
   if (!session) return null;
   session.expiresAt = Date.now() + TTL_MS;

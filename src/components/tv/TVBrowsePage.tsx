@@ -81,7 +81,7 @@ export default function TVBrowsePage({
 
   return (
     <TVLayout>
-      <section className='tm-tv-browse-hero relative overflow-hidden rounded-[24px] border border-[var(--tm-line)] bg-[var(--tm-surface)] p-4 md:p-8'>
+      <section className='tm-tv-browse-hero relative overflow-hidden rounded-[24px] border border-line bg-surface p-4 md:p-8'>
         <div className='tm-tv-browse-backdrop absolute inset-0'>
           {hero?.poster ? (
             <img
@@ -99,17 +99,17 @@ export default function TVBrowsePage({
           <div className='absolute inset-0 bg-[color:color-mix(in_srgb,var(--tm-surface)_80%,transparent)]' />
         </div>
         <div className='relative max-w-4xl py-6 md:py-10'>
-          <p className='mb-4 inline-flex rounded-full bg-[var(--tm-surface-raised)] px-4 py-2 text-[13px] font-medium text-[color:var(--tm-text)]'>
+          <p className='mb-4 inline-flex rounded-full bg-raised px-4 py-2 text-[13px] font-medium text-fg'>
             TV 专用大屏模式
           </p>
-          <h1 className='font-bold tracking-normal text-[color:var(--tm-text)] text-[28px] md:text-[32px]'>
+          <h1 className='font-bold tracking-normal text-fg text-[28px] md:text-[32px]'>
             {heroTitle || title}
           </h1>
-          <p className='mt-5 max-w-3xl text-base leading-[1.7] text-[color:var(--tm-muted)]'>
+          <p className='mt-5 max-w-3xl text-base leading-[1.7] text-muted'>
             {heroSubtitle || subtitle}
           </p>
-          <div className='mt-8 inline-flex items-center gap-3 rounded-2xl bg-[var(--tm-surface-raised)] px-5 py-3 text-sm text-[color:var(--tm-muted)]'>
-            <PlayCircle className='h-5 w-5 text-[color:var(--tm-text)]' />
+          <div className='mt-8 inline-flex items-center gap-3 rounded-2xl bg-raised px-5 py-3 text-sm text-muted'>
+            <PlayCircle className='h-5 w-5 text-fg' />
             遥控器 OK 键开始浏览
           </div>
         </div>
@@ -118,7 +118,7 @@ export default function TVBrowsePage({
       {loading ? (
         <div
           role='status'
-          className='mt-10 flex items-center justify-center gap-4 text-base text-[color:var(--tm-muted)] md:mt-16'
+          className='mt-10 flex items-center justify-center gap-4 text-base text-muted md:mt-16'
         >
           <span aria-hidden className='tm-skeleton block rounded-md h-6 w-6' />{' '}
           正在加载

@@ -6,8 +6,16 @@ import { pathToFileURL } from 'node:url';
 
 const root = process.cwd();
 const assetsDir = path.join(root, '.edgeone', 'assets');
-const handlerPath = path.join(root, '.edgeone', 'cloud-functions', 'ssr-node', 'handler.js');
-const defaultPort = Number(process.env.PORT || process.env.EDGEONE_LOCAL_PORT || 8088);
+const handlerPath = path.join(
+  root,
+  '.edgeone',
+  'cloud-functions',
+  'ssr-node',
+  'handler.js'
+);
+const defaultPort = Number(
+  process.env.PORT || process.env.EDGEONE_LOCAL_PORT || 8088
+);
 
 function loadDotenv(file) {
   if (!existsSync(file)) return;
@@ -20,7 +28,10 @@ function loadDotenv(file) {
     if (idx <= 0) continue;
     const key = normalized.slice(0, idx).trim();
     let value = normalized.slice(idx + 1).trim();
-    if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
+    if (
+      (value.startsWith('"') && value.endsWith('"')) ||
+      (value.startsWith("'") && value.endsWith("'"))
+    ) {
       value = value.slice(1, -1);
     }
     if (!(key in process.env)) process.env[key] = value;
@@ -40,7 +51,9 @@ if (!existsSync(handlerPath)) {
   process.exit(1);
 }
 
-const { default: edgeoneHandler } = await import(pathToFileURL(handlerPath).href);
+const { default: edgeoneHandler } = await import(
+  pathToFileURL(handlerPath).href
+);
 
 const mime = {
   '.html': 'text/html; charset=utf-8',
@@ -75,7 +88,8 @@ function safeAssetPath(urlPath) {
   const full = path.normalize(path.join(assetsDir, relative));
   if (!full.startsWith(assetsDir)) return null;
   if (existsSync(full) && statSync(full).isFile()) return full;
-  if (existsSync(full + '.html') && statSync(full + '.html').isFile()) return full + '.html';
+  if (existsSync(full + '.html') && statSync(full + '.html').isFile())
+    return full + '.html';
   const indexFile = path.join(full, 'index.html');
   if (existsSync(indexFile) && statSync(indexFile).isFile()) return indexFile;
   return null;
@@ -94,7 +108,9 @@ function sendStatic(req, res, file) {
 function toEdgeOneRequest(req) {
   const headers = {};
   for (const [key, value] of Object.entries(req.headers)) {
-    headers[key.toLowerCase()] = Array.isArray(value) ? value.join(', ') : String(value ?? '');
+    headers[key.toLowerCase()] = Array.isArray(value)
+      ? value.join(', ')
+      : String(value ?? '');
   }
   headers['x-forwarded-proto'] ||= 'http';
   headers.host ||= `localhost:${defaultPort}`;
@@ -133,24 +149,34 @@ async function sendFetchResponse(res, response) {
 
 const server = createServer(async (req, res) => {
   try {
-    const pathname = new URL(req.url || '/', `http://${req.headers.host || 'localhost'}`).pathname;
+    const pathname = new URL(
+      req.url || '/',
+      `http://${req.headers.host || 'localhost'}`
+    ).pathname;
     const asset = safeAssetPath(pathname);
     if (asset) return sendStatic(req, res, asset);
 
     const request = toEdgeOneRequest(req);
     const response = await edgeoneHandler(request, {
       env: process.env,
-      waitUntil: (promise) => Promise.resolve(promise).catch((err) => console.error('[waitUntil]', err)),
+      waitUntil: (promise) =>
+        Promise.resolve(promise).catch((err) =>
+          console.error('[waitUntil]', err)
+        ),
     });
     await sendFetchResponse(res, response);
   } catch (error) {
     console.error('[edgeone-local-preview]', error);
     res.statusCode = 500;
     res.setHeader('content-type', 'text/plain; charset=utf-8');
-    res.end(error instanceof Error ? error.stack || error.message : String(error));
+    res.end(
+      error instanceof Error ? error.stack || error.message : String(error)
+    );
   }
 });
 
 server.listen(defaultPort, () => {
-  console.log(`EdgeOne local preview (no login) running at http://localhost:${defaultPort}`);
+  console.log(
+    `EdgeOne local preview (no login) running at http://localhost:${defaultPort}`
+  );
 });

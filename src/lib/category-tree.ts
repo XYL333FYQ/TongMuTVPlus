@@ -12,9 +12,7 @@ export interface CategoryNode {
 // 分类列表是否为「类型 → 分类」两级结构
 export function isHierarchicalCategories(list: CategoryNode[]): boolean {
   const ids = new Set(list.map((item) => item.id));
-  return list.some(
-    (item) => item.pid && item.pid !== '0' && ids.has(item.pid)
-  );
+  return list.some((item) => item.pid && item.pid !== '0' && ids.has(item.pid));
 }
 
 // 一级分类列表；孤儿分类（pid 指向不存在的分类）视为一级

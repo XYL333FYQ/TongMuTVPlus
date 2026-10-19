@@ -1,6 +1,12 @@
 import crypto from 'crypto';
 
-export type QrLoginStatus = 'pending' | 'scanned' | 'confirmed' | 'expired' | 'cancelled' | 'used';
+export type QrLoginStatus =
+  | 'pending'
+  | 'scanned'
+  | 'confirmed'
+  | 'expired'
+  | 'cancelled'
+  | 'used';
 
 export interface QrLoginSession {
   token: string;
@@ -21,19 +27,29 @@ type QrLoginStorageAdapter = {
 };
 type QrLoginStorage = { adapter?: QrLoginStorageAdapter };
 
-type GlobalWithQr = typeof globalThis & { __moonTvQrLoginStore?: Map<string, QrLoginSession> };
+type GlobalWithQr = typeof globalThis & {
+  __moonTvQrLoginStore?: Map<string, QrLoginSession>;
+};
 
 const g = globalThis as GlobalWithQr;
-export const qrLoginStore = g.__moonTvQrLoginStore || new Map<string, QrLoginSession>();
+export const qrLoginStore =
+  g.__moonTvQrLoginStore || new Map<string, QrLoginSession>();
 g.__moonTvQrLoginStore = qrLoginStore;
 
 const QR_LOGIN_HASH_KEY = 'qr_login_sessions';
-const VALID_STORE_MODES = new Set<QrLoginStoreMode>(['auto', 'memory', 'hybrid', 'shared']);
+const VALID_STORE_MODES = new Set<QrLoginStoreMode>([
+  'auto',
+  'memory',
+  'hybrid',
+  'shared',
+]);
 
 let getStorage: (() => unknown) | null = null;
 
 function resolveQrLoginStoreMode(): ResolvedQrLoginStoreMode {
-  const configuredMode = (process.env.QR_LOGIN_STORE_MODE || 'auto').toLowerCase() as QrLoginStoreMode;
+  const configuredMode = (
+    process.env.QR_LOGIN_STORE_MODE || 'auto'
+  ).toLowerCase() as QrLoginStoreMode;
   const mode = VALID_STORE_MODES.has(configuredMode) ? configuredMode : 'auto';
 
   if (mode !== 'auto') return mode;
@@ -95,12 +111,17 @@ async function persistQrLoginSession(session: QrLoginSession) {
 
   const storage = await loadStorage(mode === 'shared');
   if (!storage || typeof storage.adapter?.hSet !== 'function') {
-    if (mode === 'shared') throw new Error('QR login shared storage does not support hSet');
+    if (mode === 'shared')
+      throw new Error('QR login shared storage does not support hSet');
     return;
   }
 
   try {
-    await storage.adapter.hSet(QR_LOGIN_HASH_KEY, session.token, JSON.stringify(session));
+    await storage.adapter.hSet(
+      QR_LOGIN_HASH_KEY,
+      session.token,
+      JSON.stringify(session)
+    );
   } catch (error) {
     if (mode === 'shared') throw error;
   }
@@ -117,7 +138,8 @@ async function deletePersistedQrLoginSession(token: string) {
 
   const storage = await loadStorage(mode === 'shared');
   if (!storage || typeof storage.adapter?.hDel !== 'function') {
-    if (mode === 'shared') throw new Error('QR login shared storage does not support hDel');
+    if (mode === 'shared')
+      throw new Error('QR login shared storage does not support hDel');
     return;
   }
 
@@ -158,7 +180,12 @@ export async function getQrLoginSession(token?: string | null) {
     }
   }
 
-  if (session && session.expiresAt <= Date.now() && session.status !== 'confirmed' && session.status !== 'used') {
+  if (
+    session &&
+    session.expiresAt <= Date.now() &&
+    session.status !== 'confirmed' &&
+    session.status !== 'used'
+  ) {
     session.status = 'expired';
     await persistQrLoginSession(session);
   }
@@ -185,7 +212,8 @@ export async function cleanupQrLoginSessions() {
 
   const storage = await loadStorage(mode === 'shared');
   if (!storage || typeof storage.adapter?.hGetAll !== 'function') {
-    if (mode === 'shared') throw new Error('QR login shared storage does not support hGetAll');
+    if (mode === 'shared')
+      throw new Error('QR login shared storage does not support hGetAll');
     return;
   }
 

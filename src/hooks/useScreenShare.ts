@@ -43,12 +43,12 @@ const SCREEN_SHARE_CONSTRAINTS: Record<
   },
 };
 
-export const screenShareQualityOptions = Object.entries(SCREEN_SHARE_CONSTRAINTS).map(
-  ([value, preset]) => ({
-    value: value as ScreenShareQualityPreset,
-    label: preset.label,
-  })
-);
+export const screenShareQualityOptions = Object.entries(
+  SCREEN_SHARE_CONSTRAINTS
+).map(([value, preset]) => ({
+  value: value as ScreenShareQualityPreset,
+  label: preset.label,
+}));
 
 export interface ScreenShareCaptureSettings {
   width: number | null;
@@ -56,7 +56,9 @@ export interface ScreenShareCaptureSettings {
   frameRate: number | null;
 }
 
-export function useScreenShare(qualityPreset: ScreenShareQualityPreset = 'smooth') {
+export function useScreenShare(
+  qualityPreset: ScreenShareQualityPreset = 'smooth'
+) {
   const watchRoom = useWatchRoomContextSafe();
   const localVideoRef = useRef<HTMLVideoElement | null>(null);
   const remoteVideoRef = useRef<HTMLVideoElement | null>(null);
@@ -67,7 +69,8 @@ export function useScreenShare(qualityPreset: ScreenShareQualityPreset = 'smooth
 
   const [error, setError] = useState<string | null>(null);
   const [isStarting, setIsStarting] = useState(false);
-  const [captureSettings, setCaptureSettings] = useState<ScreenShareCaptureSettings | null>(null);
+  const [captureSettings, setCaptureSettings] =
+    useState<ScreenShareCaptureSettings | null>(null);
 
   const currentRoom = watchRoom?.currentRoom || null;
   const socket = watchRoom?.socket || null;
@@ -75,7 +78,8 @@ export function useScreenShare(qualityPreset: ScreenShareQualityPreset = 'smooth
   const isOwner = watchRoom?.isOwner || false;
   const members = watchRoom?.members || [];
   const currentState = currentRoom?.currentState;
-  const isSharing = currentState?.type === 'screen' && currentState.status === 'sharing';
+  const isSharing =
+    currentState?.type === 'screen' && currentState.status === 'sharing';
 
   const closePeerConnection = useCallback((userId: string) => {
     const pc = peerConnectionsRef.current.get(userId);
@@ -98,7 +102,9 @@ export function useScreenShare(qualityPreset: ScreenShareQualityPreset = 'smooth
     if (stoppingRef.current) return;
     stoppingRef.current = true;
 
-    peerConnectionsRef.current.forEach((_pc, userId) => closePeerConnection(userId));
+    peerConnectionsRef.current.forEach((_pc, userId) =>
+      closePeerConnection(userId)
+    );
     peerConnectionsRef.current.clear();
 
     if (displayStreamRef.current) {
@@ -118,63 +124,72 @@ export function useScreenShare(qualityPreset: ScreenShareQualityPreset = 'smooth
     stoppingRef.current = false;
   }, [clearRemoteVideo, closePeerConnection]);
 
-  const stopSharing = useCallback((notifyServer = true) => {
-    cleanupSharingResources();
+  const stopSharing = useCallback(
+    (notifyServer = true) => {
+      cleanupSharingResources();
 
-    if (notifyServer && isOwner) {
-      watchRoom?.stopScreenShare();
-    }
-  }, [cleanupSharingResources, isOwner, watchRoom]);
-
-  const createPeerConnection = useCallback((userId: string, ownerMode: boolean) => {
-    const existing = peerConnectionsRef.current.get(userId);
-    if (existing) return existing;
-
-    const pc = new RTCPeerConnection({ iceServers });
-
-    pc.onicecandidate = (event) => {
-      if (event.candidate && socket) {
-        socket.emit('screen:ice', {
-          targetUserId: userId,
-          candidate: event.candidate.toJSON(),
-        });
+      if (notifyServer && isOwner) {
+        watchRoom?.stopScreenShare();
       }
-    };
+    },
+    [cleanupSharingResources, isOwner, watchRoom]
+  );
 
-    if (ownerMode && displayStreamRef.current) {
-      displayStreamRef.current.getTracks().forEach((track) => {
-        pc.addTrack(track, displayStreamRef.current!);
-      });
-    } else {
-      pc.ontrack = (event) => {
-        const stream = event.streams[0];
-        remoteStreamRef.current = stream;
-        if (remoteVideoRef.current) {
-          remoteVideoRef.current.srcObject = stream;
+  const createPeerConnection = useCallback(
+    (userId: string, ownerMode: boolean) => {
+      const existing = peerConnectionsRef.current.get(userId);
+      if (existing) return existing;
+
+      const pc = new RTCPeerConnection({ iceServers });
+
+      pc.onicecandidate = (event) => {
+        if (event.candidate && socket) {
+          socket.emit('screen:ice', {
+            targetUserId: userId,
+            candidate: event.candidate.toJSON(),
+          });
         }
       };
-    }
 
-    peerConnectionsRef.current.set(userId, pc);
-    return pc;
-  }, [socket]);
+      if (ownerMode && displayStreamRef.current) {
+        displayStreamRef.current.getTracks().forEach((track) => {
+          pc.addTrack(track, displayStreamRef.current!);
+        });
+      } else {
+        pc.ontrack = (event) => {
+          const stream = event.streams[0];
+          remoteStreamRef.current = stream;
+          if (remoteVideoRef.current) {
+            remoteVideoRef.current.srcObject = stream;
+          }
+        };
+      }
 
-  const sendOfferToMember = useCallback(async (memberId: string) => {
-    if (!socket || !displayStreamRef.current) return;
+      peerConnectionsRef.current.set(userId, pc);
+      return pc;
+    },
+    [socket]
+  );
 
-    try {
-      const pc = createPeerConnection(memberId, true);
-      const offer = await pc.createOffer();
-      await pc.setLocalDescription(offer);
-      socket.emit('screen:offer', {
-        targetUserId: memberId,
-        offer,
-      });
-    } catch (err) {
-      console.error('[ScreenShare] Failed to send offer:', err);
-      setError('无法建立屏幕共享连接');
-    }
-  }, [createPeerConnection, socket]);
+  const sendOfferToMember = useCallback(
+    async (memberId: string) => {
+      if (!socket || !displayStreamRef.current) return;
+
+      try {
+        const pc = createPeerConnection(memberId, true);
+        const offer = await pc.createOffer();
+        await pc.setLocalDescription(offer);
+        socket.emit('screen:offer', {
+          targetUserId: memberId,
+          offer,
+        });
+      } catch (err) {
+        console.error('[ScreenShare] Failed to send offer:', err);
+        setError('无法建立屏幕共享连接');
+      }
+    },
+    [createPeerConnection, socket]
+  );
 
   const startSharing = useCallback(async () => {
     if (!watchRoom || !currentRoom || !isOwner) return;
@@ -204,7 +219,8 @@ export function useScreenShare(qualityPreset: ScreenShareQualityPreset = 'smooth
         setCaptureSettings({
           width: typeof settings.width === 'number' ? settings.width : null,
           height: typeof settings.height === 'number' ? settings.height : null,
-          frameRate: typeof settings.frameRate === 'number' ? settings.frameRate : null,
+          frameRate:
+            typeof settings.frameRate === 'number' ? settings.frameRate : null,
         });
         videoTrack.onended = () => {
           stopSharing(true);
@@ -222,7 +238,9 @@ export function useScreenShare(qualityPreset: ScreenShareQualityPreset = 'smooth
       watchRoom.startScreenShare(state);
 
       await Promise.all(
-        members.filter((member) => !member.isOwner).map((member) => sendOfferToMember(member.id))
+        members
+          .filter((member) => !member.isOwner)
+          .map((member) => sendOfferToMember(member.id))
       );
     } catch (err: any) {
       console.error('[ScreenShare] Failed to start sharing:', err);
@@ -230,12 +248,23 @@ export function useScreenShare(qualityPreset: ScreenShareQualityPreset = 'smooth
     } finally {
       setIsStarting(false);
     }
-  }, [currentRoom, isOwner, members, qualityPreset, sendOfferToMember, stopSharing, watchRoom]);
+  }, [
+    currentRoom,
+    isOwner,
+    members,
+    qualityPreset,
+    sendOfferToMember,
+    stopSharing,
+    watchRoom,
+  ]);
 
   useEffect(() => {
     if (!socket || !currentRoom) return;
 
-    const handleOffer = async (data: { userId: string; offer: RTCSessionDescriptionInit }) => {
+    const handleOffer = async (data: {
+      userId: string;
+      offer: RTCSessionDescriptionInit;
+    }) => {
       if (isOwner) return;
 
       try {
@@ -253,7 +282,10 @@ export function useScreenShare(qualityPreset: ScreenShareQualityPreset = 'smooth
       }
     };
 
-    const handleAnswer = async (data: { userId: string; answer: RTCSessionDescriptionInit }) => {
+    const handleAnswer = async (data: {
+      userId: string;
+      answer: RTCSessionDescriptionInit;
+    }) => {
       if (!isOwner) return;
 
       const pc = peerConnectionsRef.current.get(data.userId);
@@ -266,7 +298,10 @@ export function useScreenShare(qualityPreset: ScreenShareQualityPreset = 'smooth
       }
     };
 
-    const handleIce = async (data: { userId: string; candidate: RTCIceCandidateInit }) => {
+    const handleIce = async (data: {
+      userId: string;
+      candidate: RTCIceCandidateInit;
+    }) => {
       const pc = peerConnectionsRef.current.get(data.userId);
       if (!pc) return;
 
@@ -279,7 +314,9 @@ export function useScreenShare(qualityPreset: ScreenShareQualityPreset = 'smooth
 
     const handleScreenStop = () => {
       if (!isOwner) {
-        peerConnectionsRef.current.forEach((_pc, userId) => closePeerConnection(userId));
+        peerConnectionsRef.current.forEach((_pc, userId) =>
+          closePeerConnection(userId)
+        );
         peerConnectionsRef.current.clear();
         clearRemoteVideo();
       }
@@ -287,7 +324,9 @@ export function useScreenShare(qualityPreset: ScreenShareQualityPreset = 'smooth
 
     const handleSocketDisconnect = () => {
       if (!isOwner) {
-        peerConnectionsRef.current.forEach((_pc, userId) => closePeerConnection(userId));
+        peerConnectionsRef.current.forEach((_pc, userId) =>
+          closePeerConnection(userId)
+        );
         peerConnectionsRef.current.clear();
         clearRemoteVideo();
       }
@@ -313,7 +352,15 @@ export function useScreenShare(qualityPreset: ScreenShareQualityPreset = 'smooth
       socket.off('screen:viewer-ready', handleViewerReady);
       socket.off('disconnect', handleSocketDisconnect);
     };
-  }, [clearRemoteVideo, closePeerConnection, createPeerConnection, currentRoom, isOwner, sendOfferToMember, socket]);
+  }, [
+    clearRemoteVideo,
+    closePeerConnection,
+    createPeerConnection,
+    currentRoom,
+    isOwner,
+    sendOfferToMember,
+    socket,
+  ]);
 
   useEffect(() => {
     if (!isOwner || !isSharing || !displayStreamRef.current) return;
@@ -327,7 +374,9 @@ export function useScreenShare(qualityPreset: ScreenShareQualityPreset = 'smooth
       });
 
     Array.from(peerConnectionsRef.current.keys()).forEach((userId) => {
-      const stillInRoom = members.some((member) => member.id === userId && !member.isOwner);
+      const stillInRoom = members.some(
+        (member) => member.id === userId && !member.isOwner
+      );
       if (!stillInRoom) {
         closePeerConnection(userId);
       }
@@ -342,7 +391,8 @@ export function useScreenShare(qualityPreset: ScreenShareQualityPreset = 'smooth
 
   useEffect(() => {
     if (!socket || !currentRoom || isOwner || !isConnected) return;
-    if (currentState?.type !== 'screen' || currentState.status !== 'sharing') return;
+    if (currentState?.type !== 'screen' || currentState.status !== 'sharing')
+      return;
 
     socket.emit('screen:viewer-ready');
   }, [currentRoom, currentState, isConnected, isOwner, socket]);

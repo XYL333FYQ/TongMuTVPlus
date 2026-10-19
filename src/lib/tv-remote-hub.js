@@ -38,13 +38,18 @@ function registerTVRemoteDevice(socketId, username, data) {
 
 function updateTVRemoteDevice(socketId, username, data) {
   const hub = getGlobalHub();
-  const deviceId = String(data?.deviceId || hub.socketToDevice.get(socketId) || '');
+  const deviceId = String(
+    data?.deviceId || hub.socketToDevice.get(socketId) || ''
+  );
   const device = hub.devices.get(deviceId);
   if (!device || device.socketId !== socketId || device.username !== username) {
     return false;
   }
 
-  device.currentPath = String(data?.currentPath || device.currentPath).slice(0, 240);
+  device.currentPath = String(data?.currentPath || device.currentPath).slice(
+    0,
+    240
+  );
   device.title = String(data?.title || device.title || '').slice(0, 120);
   device.lastActiveAt = Date.now();
   hub.devices.set(deviceId, device);
@@ -67,7 +72,10 @@ function listTVRemoteDevices(username) {
   const hub = getGlobalHub();
   const now = Date.now();
   return Array.from(hub.devices.values())
-    .filter((device) => device.username === username && now - device.lastActiveAt < 45_000)
+    .filter(
+      (device) =>
+        device.username === username && now - device.lastActiveAt < 45_000
+    )
     .map(({ deviceId, deviceName, currentPath, title, lastActiveAt }) => ({
       deviceId,
       deviceName,

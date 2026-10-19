@@ -384,7 +384,7 @@ export default function TVNativeVideo({
 
   return (
     <div
-      className={`tm-tv-native-player relative h-full w-full bg-[var(--tm-surface)] ${className}`}
+      className={`tm-tv-native-player relative h-full w-full bg-surface ${className}`}
       data-playing={playing}
       data-loading={loading || buffering}
       data-error={Boolean(error)}
@@ -392,7 +392,7 @@ export default function TVNativeVideo({
       <video
         ref={videoRef}
         poster={poster}
-        className='h-full w-full bg-[var(--tm-surface)] object-contain'
+        className='h-full w-full bg-surface object-contain'
         controls={false}
         playsInline
         preload='auto'
@@ -403,9 +403,9 @@ export default function TVNativeVideo({
         <div
           role='status'
           data-buffering={buffering}
-          className='tm-tv-player-wait pointer-events-none absolute inset-0 flex items-center justify-center bg-[color:color-mix(in_srgb,var(--tm-room-cinema-bg)_35%,transparent)] text-[color:var(--tm-text)]'
+          className='tm-tv-player-wait pointer-events-none absolute inset-0 flex items-center justify-center bg-ink/35 text-fg'
         >
-          <div className='tm-tv-player-panel flex items-center gap-3 rounded-2xl border border-[var(--tm-line)] px-6 py-4 text-base font-medium shadow-2xl shadow-[color-mix(in_srgb,var(--tm-room-cinema-bg)_50%,transparent)]'>
+          <div className='tm-tv-player-panel flex items-center gap-3 rounded-2xl border border-line px-6 py-4 text-base font-medium shadow-2xl shadow-ink/50'>
             <span
               aria-hidden
               className='tm-skeleton block rounded-md h-6 w-6'
@@ -417,7 +417,7 @@ export default function TVNativeVideo({
       {error && (
         <div
           role='alert'
-          className='absolute inset-0 flex items-center justify-center bg-[color:color-mix(in_srgb,var(--tm-room-cinema-bg)_70%,transparent)] p-8 text-center text-base leading-relaxed text-[color:var(--tm-text)]'
+          className='absolute inset-0 flex items-center justify-center bg-ink/70 p-8 text-center text-base leading-relaxed text-fg'
         >
           {error}
         </div>
@@ -425,7 +425,7 @@ export default function TVNativeVideo({
       <button
         type='button'
         onClick={toggle}
-        className='tm-tv-player-control tv-focusable absolute left-1/2 top-1/2 flex h-24 w-24 -translate-x-1/2 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full bg-[color:color-mix(in_srgb,var(--tm-room-cinema-bg)_35%,transparent)] text-[color:var(--tm-text)] opacity-0 outline-none hover:opacity-100 focus:opacity-100 min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
+        className='tm-tv-player-control tv-focusable absolute left-1/2 top-1/2 flex h-24 w-24 -translate-x-1/2 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full bg-ink/35 text-fg opacity-0 outline-none hover:opacity-100 focus:opacity-100 min-h-[44px] tm-press min-w-[44px]'
         aria-label={playing ? '暂停' : '播放'}
       >
         {playing ? (

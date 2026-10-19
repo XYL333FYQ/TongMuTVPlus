@@ -83,7 +83,9 @@ async function canCopyExternalImageToTexture(): Promise<boolean> {
     if (!device) return false;
 
     const offscreen = new OffscreenCanvas(1, 1);
-    const ctx = offscreen.getContext('2d') as unknown as CanvasRenderingContext2D | null;
+    const ctx = offscreen.getContext(
+      '2d'
+    ) as unknown as CanvasRenderingContext2D | null;
     if (!ctx) return false;
     ctx.fillRect(0, 0, 1, 1);
 
@@ -103,7 +105,11 @@ async function canCopyExternalImageToTexture(): Promise<boolean> {
       usage: GPUTextureUsage.COPY_DST | GPUTextureUsage.RENDER_ATTACHMENT,
     });
 
-    device.queue.copyExternalImageToTexture({ source: frame }, { texture }, [1, 1]);
+    device.queue.copyExternalImageToTexture(
+      { source: frame },
+      { texture },
+      [1, 1]
+    );
 
     frame.close();
     texture.destroy();
@@ -139,7 +145,10 @@ export async function createAnime4KRenderer(
   const adapterLimits = adapter.limits;
   const device = await adapter.requestDevice({
     requiredLimits: {
-      maxBufferSize: Math.min(adapterLimits.maxBufferSize || 2147483648, 2147483648),
+      maxBufferSize: Math.min(
+        adapterLimits.maxBufferSize || 2147483648,
+        2147483648
+      ),
       maxStorageBufferBindingSize: Math.min(
         adapterLimits.maxStorageBufferBindingSize || 1073741824,
         1073741824
@@ -182,7 +191,9 @@ export async function createAnime4KRenderer(
     ],
   });
   const renderPipeline = await device.createRenderPipelineAsync({
-    layout: device.createPipelineLayout({ bindGroupLayouts: [bindGroupLayout] }),
+    layout: device.createPipelineLayout({
+      bindGroupLayouts: [bindGroupLayout],
+    }),
     vertex: {
       module: device.createShaderModule({ code: fullscreenTexturedQuadWGSL }),
       entryPoint: 'vert_main',
@@ -194,7 +205,10 @@ export async function createAnime4KRenderer(
     },
     primitive: { topology: 'triangle-list' },
   });
-  const sampler = device.createSampler({ magFilter: 'linear', minFilter: 'linear' });
+  const sampler = device.createSampler({
+    magFilter: 'linear',
+    minFilter: 'linear',
+  });
   const bindGroup = device.createBindGroup({
     layout: bindGroupLayout,
     entries: [
@@ -209,7 +223,11 @@ export async function createAnime4KRenderer(
   let rafId = 0;
 
   const copyCurrentFrame = async (): Promise<boolean> => {
-    if (destroyed || video.readyState < video.HAVE_CURRENT_DATA || video.paused) {
+    if (
+      destroyed ||
+      video.readyState < video.HAVE_CURRENT_DATA ||
+      video.paused
+    ) {
       return false;
     }
 

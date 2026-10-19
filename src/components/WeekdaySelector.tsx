@@ -48,9 +48,7 @@ const WeekdaySelector: React.FC<WeekdaySelectorProps> = ({
   }, []); // 只在组件挂载时执行一次
 
   return (
-    <div
-      className={`tm-capsule relative inline-flex rounded-full p-0.5 sm:p-1 ${className} `}
-    >
+    <div className={'tm-capsule ' + className}>
       {weekdays.map((weekday) => {
         const isActive = selectedWeekday === weekday.value;
         return (
@@ -62,11 +60,7 @@ const WeekdaySelector: React.FC<WeekdaySelectorProps> = ({
               setSelectedWeekday(weekday.value);
               onWeekdayChange(weekday.value);
             }}
-            className={`tm-capsule-option tm-press relative z-10 px-2 py-1 sm:px-4 sm:py-2 text-[13px] sm:text-sm font-medium rounded-full transition-[transform,opacity] duration-200 whitespace-nowrap min-h-[44px] min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)] ${
-              isActive
-                ? 'text-[color:var(--tm-text)] font-medium min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
-                : 'text-[color:var(--tm-muted)] hover:text-[color:var(--tm-text)] cursor-pointer min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
-            } `}
+            className='tm-capsule-option'
             title={weekday.label}
           >
             {isActive && (

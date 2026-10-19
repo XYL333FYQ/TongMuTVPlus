@@ -7,12 +7,11 @@ import { useEffect, useRef, useState } from 'react';
 import { useWebLiveSync } from '@/hooks/useWebLiveSync';
 
 import LoadingStyle, {
-  LoadingErrorStyle,
   type LoadingStep,
+  LoadingErrorStyle,
 } from '@/components/LoadingStyle';
 import PageContainer from '@/components/PageContainer';
 import PageLayout from '@/components/PageLayout';
-import { useWatchRoomContextSafe } from '@/components/WatchRoomProvider';
 
 let Artplayer: any = null;
 let Hls: any = null;
@@ -413,18 +412,16 @@ export default function WebLivePage() {
         <div className='flex items-center justify-center min-h-screen bg-transparent'>
           <div className='text-center max-w-md mx-auto px-6'>
             <div className='relative mb-8'>
-              <div className='relative mx-auto w-24 h-24 bg-[var(--tm-surface)] rounded-2xl shadow-2xl flex items-center justify-center transform transition-transform duration-300'>
-                <AlertTriangle className='w-12 h-12 text-[color:var(--tm-text)]' />
-                <div className='hidden absolute -inset-2 bg-[var(--tm-surface)] rounded-2xl opacity-20 tm-skeleton'></div>
+              <div className='relative mx-auto w-24 h-24 bg-surface rounded-2xl shadow-2xl flex items-center justify-center transform transition-transform duration-300'>
+                <AlertTriangle className='w-12 h-12 text-fg' />
+                <div className='hidden absolute -inset-2 bg-surface rounded-2xl opacity-20 tm-skeleton'></div>
               </div>
             </div>
 
             <div className='space-y-4'>
-              <h3 className='text-lg font-medium text-[color:var(--tm-text)]'>
-                功能未启用
-              </h3>
-              <div className='bg-[var(--tm-surface-raised)] border border-[var(--tm-line)] rounded-lg p-4'>
-                <p className='text-sm text-[color:var(--tm-muted)] leading-relaxed'>
+              <h3 className='text-lg font-medium text-fg'>功能未启用</h3>
+              <div className='bg-raised border border-line rounded-lg p-4'>
+                <p className='text-sm text-muted leading-relaxed'>
                   网络直播功能当前未启用。请联系管理员在管理面板中开启此功能。
                 </p>
               </div>
@@ -453,21 +450,21 @@ export default function WebLivePage() {
                 <>
                   {/* 动画直播图标 */}
                   <div className='relative mb-8'>
-                    <div className='relative mx-auto w-24 h-24 bg-[var(--tm-surface)] rounded-2xl shadow-2xl flex items-center justify-center transform transition-transform duration-300'>
-                      <Radio className='h-10 w-10 text-[color:var(--tm-text)]' />
+                    <div className='relative mx-auto w-24 h-24 bg-surface rounded-2xl shadow-2xl flex items-center justify-center transform transition-transform duration-300'>
+                      <Radio className='h-10 w-10 text-fg' />
                       {/* 旋转光环 */}
-                      <div className='tm-skeleton hidden absolute -inset-2 bg-[var(--tm-surface)] rounded-2xl opacity-20 '></div>
+                      <div className='tm-skeleton hidden absolute -inset-2 bg-surface rounded-2xl opacity-20'></div>
                     </div>
 
                     {/* 浮动粒子效果 */}
                     <div className='hidden absolute top-0 left-0 w-full h-full pointer-events-none'>
-                      <div className='absolute top-2 left-2 w-2 h-2 bg-[var(--tm-text)] rounded-full '></div>
+                      <div className='absolute top-2 left-2 w-2 h-2 bg-fg rounded-full'></div>
                       <div
-                        className='absolute top-4 right-4 w-1.5 h-1.5 bg-[var(--tm-text)] rounded-full '
+                        className='absolute top-4 right-4 w-1.5 h-1.5 bg-fg rounded-full'
                         style={{ animationDelay: '0.5s' }}
                       ></div>
                       <div
-                        className='absolute bottom-3 left-6 w-1 h-1 bg-[var(--tm-text)] rounded-full '
+                        className='absolute bottom-3 left-6 w-1 h-1 bg-fg rounded-full'
                         style={{ animationDelay: '1s' }}
                       ></div>
                     </div>
@@ -479,30 +476,30 @@ export default function WebLivePage() {
                       <div
                         className={`w-3 h-3 rounded-full transition-[transform,opacity] duration-500 ${
                           loadingStage === 'loading'
-                            ? 'bg-[var(--tm-text)] scale-125'
-                            : 'bg-[var(--tm-text)]'
+                            ? 'bg-fg scale-125'
+                            : 'bg-fg'
                         }`}
                       ></div>
                       <div
                         className={`w-3 h-3 rounded-full transition-[transform,opacity] duration-500 ${
                           loadingStage === 'fetching'
-                            ? 'bg-[var(--tm-text)] scale-125'
-                            : 'bg-[var(--tm-text)]'
+                            ? 'bg-fg scale-125'
+                            : 'bg-fg'
                         }`}
                       ></div>
                       <div
                         className={`w-3 h-3 rounded-full transition-[transform,opacity] duration-500 ${
                           loadingStage === 'ready'
-                            ? 'bg-[var(--tm-text)] scale-125'
-                            : 'bg-[var(--tm-surface)]'
+                            ? 'bg-fg scale-125'
+                            : 'bg-surface'
                         }`}
                       ></div>
                     </div>
 
                     {/* 进度条 */}
-                    <div className='w-full bg-[var(--tm-surface-raised)] rounded-full h-2 overflow-hidden'>
+                    <div className='w-full bg-raised rounded-full h-2 overflow-hidden'>
                       <div
-                        className='h-full bg-[var(--tm-surface)] rounded-full transition-[transform,opacity] duration-1000 ease-out'
+                        className='h-full bg-surface rounded-full transition-[transform,opacity] duration-1000 ease-out'
                         style={{
                           width:
                             loadingStage === 'loading'
@@ -517,7 +514,7 @@ export default function WebLivePage() {
 
                   {/* 加载消息 */}
                   <div className='space-y-2'>
-                    <p className='text-base font-medium text-[color:var(--tm-text)] '>
+                    <p className='text-base font-medium text-fg'>
                       {loadingMessage}
                     </p>
                   </div>
@@ -534,8 +531,8 @@ export default function WebLivePage() {
     <PageLayout activePath='/web-live'>
       <PageContainer className='flex flex-col gap-3 py-4'>
         <div className='py-1'>
-          <h1 className=' text-[color:var(--tm-text)] flex items-center gap-2 max-w-[80%] text-[28px] font-bold md:text-[32px]'>
-            <Radio className='w-5 h-5 text-[color:var(--tm-text)] flex-shrink-0' />
+          <h1 className='text-fg flex items-center gap-2 max-w-[80%] text-[28px] font-bold md:text-[32px]'>
+            <Radio className='w-5 h-5 text-fg flex-shrink-0' />
             <div className='min-w-0 flex-1'>
               <div className='truncate'>
                 {currentSource?.name || '网络直播'}
@@ -548,10 +545,10 @@ export default function WebLivePage() {
           <div className='hidden lg:flex justify-end'>
             <button
               onClick={() => setIsChannelListCollapsed(!isChannelListCollapsed)}
-              className='group relative flex items-center space-x-1.5 px-3 py-1.5 rounded-full bg-[var(--tm-surface-raised)] hover:bg-[var(--tm-line)] border border-[var(--tm-line)] shadow-sm hover:shadow-md transition-[transform,opacity] duration-200 min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
+              className='group relative flex items-center space-x-1.5 px-3 py-1.5 rounded-full bg-raised hover:bg-line border border-line shadow-sm hover:shadow-md transition-[transform,opacity] duration-200 min-h-[44px] tm-press min-w-[44px]'
             >
               <svg
-                className={`w-3.5 h-3.5 text-[color:var(--tm-muted)] transition-transform duration-200 ${
+                className={`w-3.5 h-3.5 text-muted transition-transform duration-200 ${
                   isChannelListCollapsed ? 'rotate-180' : 'rotate-0'
                 }`}
                 fill='none'
@@ -565,14 +562,12 @@ export default function WebLivePage() {
                   d='M9 5l7 7-7 7'
                 />
               </svg>
-              <span className='text-[13px] font-medium text-[color:var(--tm-muted)]'>
+              <span className='text-[13px] font-medium text-muted'>
                 {isChannelListCollapsed ? '显示' : '隐藏'}
               </span>
               <div
                 className={`absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full transition-[transform,opacity] duration-200 ${
-                  isChannelListCollapsed
-                    ? 'bg-[var(--tm-text)] tm-skeleton'
-                    : 'bg-[var(--tm-text)]'
+                  isChannelListCollapsed ? 'bg-fg tm-skeleton' : 'bg-fg'
                 }`}
               ></div>
             </button>
@@ -593,11 +588,11 @@ export default function WebLivePage() {
               <div className='relative w-full h-[300px] lg:h-full [--tm-surface:var(--tm-room-cinema-bg)] [--tm-surface-raised:color-mix(in_srgb,var(--tm-room-cinema-bg)_85%,var(--tm-room-player-text))] [--tm-text:var(--tm-room-player-text)] [--tm-muted:color-mix(in_srgb,var(--tm-room-player-text)_72%,var(--tm-room-cinema-bg))] [--tm-line:color-mix(in_srgb,var(--tm-room-player-text)_15%,transparent)]'>
                 <div
                   ref={artRef}
-                  className='bg-[var(--tm-surface)] w-full h-full rounded-xl overflow-hidden shadow-lg border border-[var(--tm-line)]'
+                  className='bg-surface w-full h-full rounded-xl overflow-hidden shadow-lg border border-line'
                 ></div>
 
                 {errorMessage && (
-                  <div className='absolute inset-0 bg-[color:color-mix(in_srgb,var(--tm-room-cinema-bg)_90%,transparent)] rounded-xl overflow-hidden shadow-lg border border-[var(--tm-line)] flex items-center justify-center z-[600] transition-[transform,opacity] duration-300'>
+                  <div className='absolute inset-0 bg-ink/90 rounded-xl overflow-hidden shadow-lg border border-line flex items-center justify-center z-[600] transition-[transform,opacity] duration-300'>
                     <div className='text-center max-w-md mx-auto px-6'>
                       {/* 错误图标：跟其他页面失败态同款，遮罩是深色底所以钉暗色 */}
                       <div className='relative mb-4 lg:mb-8'>
@@ -609,33 +604,29 @@ export default function WebLivePage() {
                           onDark
                           legacy={
                             <>
-                              <div className='relative mx-auto w-24 h-24 bg-[var(--tm-surface)] rounded-2xl shadow-2xl flex items-center justify-center transform transition-transform duration-300'>
-                                <AlertTriangle className='h-10 w-10 text-[color:var(--tm-danger)]' />
-                                <div className='hidden absolute -inset-2 bg-[var(--tm-surface)] rounded-2xl opacity-20 tm-skeleton'></div>
+                              <div className='relative mx-auto w-24 h-24 bg-surface rounded-2xl shadow-2xl flex items-center justify-center transform transition-transform duration-300'>
+                                <AlertTriangle className='h-10 w-10 text-danger' />
+                                <div className='hidden absolute -inset-2 bg-surface rounded-2xl opacity-20 tm-skeleton'></div>
                               </div>
                             </>
                           }
                         />
                       </div>
                       <div className='space-y-2 lg:space-y-4'>
-                        <h3 className='text-lg font-medium text-[color:var(--tm-text)]'>
+                        <h3 className='text-lg font-medium text-fg'>
                           获取直播流失败
                         </h3>
-                        <div className='mtv-err-box bg-[var(--tm-surface-raised)] border border-[var(--tm-line)] rounded-lg p-4'>
-                          <p className='text-[color:var(--tm-text)] font-medium'>
-                            {errorMessage}
-                          </p>
+                        <div className='mtv-err-box bg-raised border border-line rounded-lg p-4'>
+                          <p className='text-fg font-medium'>{errorMessage}</p>
                         </div>
-                        <p className='text-sm text-[color:var(--tm-muted)]'>
-                          请尝试其他房间
-                        </p>
+                        <p className='text-sm text-muted'>请尝试其他房间</p>
                       </div>
                     </div>
                   </div>
                 )}
 
                 {isVideoLoading && (
-                  <div className='absolute inset-0 bg-[color:color-mix(in_srgb,var(--tm-room-cinema-bg)_85%,transparent)] rounded-xl overflow-hidden shadow-lg border border-[var(--tm-line)] flex items-center justify-center z-[500] transition-[transform,opacity] duration-300'>
+                  <div className='absolute inset-0 bg-ink/85 rounded-xl overflow-hidden shadow-lg border border-line flex items-center justify-center z-[500] transition-[transform,opacity] duration-300'>
                     <div className='text-center max-w-md mx-auto px-6'>
                       {/* 三种加载款式（旧版那一套各页自备） */}
                       <LoadingStyle
@@ -646,13 +637,13 @@ export default function WebLivePage() {
                         legacy={
                           <>
                             <div className='relative mb-8'>
-                              <div className='relative mx-auto w-24 h-24 bg-[var(--tm-surface)] rounded-2xl shadow-2xl flex items-center justify-center transform transition-transform duration-300'>
-                                <Radio className='h-10 w-10 text-[color:var(--tm-text)]' />
-                                <div className='tm-skeleton hidden absolute -inset-2 bg-[var(--tm-surface)] rounded-2xl opacity-20 '></div>
+                              <div className='relative mx-auto w-24 h-24 bg-surface rounded-2xl shadow-2xl flex items-center justify-center transform transition-transform duration-300'>
+                                <Radio className='h-10 w-10 text-fg' />
+                                <div className='tm-skeleton hidden absolute -inset-2 bg-surface rounded-2xl opacity-20'></div>
                               </div>
                             </div>
                             <div className='space-y-2'>
-                              <p className='text-base font-medium text-[color:var(--tm-text)] '>
+                              <p className='text-base font-medium text-fg'>
                                 正在加载
                               </p>
                             </div>
@@ -667,7 +658,7 @@ export default function WebLivePage() {
               {/* 外部播放器按钮 */}
               {currentSource && !webLiveSync.isInRoom && (
                 <div className='mt-3 px-2 lg:flex-shrink-0 flex justify-end'>
-                  <div className='bg-[var(--tm-surface-raised)] rounded-lg p-2 border border-[var(--tm-line)] w-full lg:w-auto overflow-x-auto'>
+                  <div className='bg-raised rounded-lg p-2 border border-line w-full lg:w-auto overflow-x-auto'>
                     <div className='flex gap-1.5 justify-end lg:flex-wrap items-center'>
                       {/* 网页播放 */}
                       <button
@@ -678,11 +669,11 @@ export default function WebLivePage() {
                             window.open(roomUrl, '_blank');
                           }
                         }}
-                        className='group relative flex items-center justify-center gap-1 w-8 h-8 lg:w-auto lg:h-auto lg:px-2 lg:py-1.5 bg-[var(--tm-surface-raised)] hover:bg-[var(--tm-line)] text-[13px] font-medium rounded-md transition-[transform,opacity] duration-200 shadow-sm hover:shadow-md cursor-pointer overflow-hidden border border-[var(--tm-line)] flex-shrink-0 min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
+                        className='group relative flex items-center justify-center gap-1 w-8 h-8 lg:w-auto lg:h-auto lg:px-2 lg:py-1.5 bg-raised hover:bg-line text-[13px] font-medium rounded-md transition-[transform,opacity] duration-200 shadow-sm hover:shadow-md cursor-pointer overflow-hidden border border-line flex-shrink-0 min-h-[44px] tm-press min-w-[44px]'
                         title='网页播放'
                       >
                         <svg
-                          className='w-4 h-4 flex-shrink-0 text-[color:var(--tm-muted)] text-[color:var(--tm-text)]'
+                          className='w-4 h-4 flex-shrink-0 text-fg'
                           fill='none'
                           stroke='currentColor'
                           viewBox='0 0 24 24'
@@ -695,7 +686,7 @@ export default function WebLivePage() {
                             d='M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25'
                           />
                         </svg>
-                        <span className='hidden lg:inline max-w-0 group-hover:max-w-[100px] overflow-hidden whitespace-nowrap transition-[transform,opacity] duration-200 ease-in-out text-[color:var(--tm-muted)] text-[color:var(--tm-text)]'>
+                        <span className='hidden lg:inline max-w-0 group-hover:max-w-[100px] overflow-hidden whitespace-nowrap transition-[transform,opacity] duration-200 ease-in-out text-fg'>
                           网页播放
                         </span>
                       </button>
@@ -711,7 +702,7 @@ export default function WebLivePage() {
                             );
                           }
                         }}
-                        className='group relative flex items-center justify-center gap-1 w-8 h-8 lg:w-auto lg:h-auto lg:px-2 lg:py-1.5 bg-[var(--tm-surface-raised)] hover:bg-[var(--tm-line)] text-[13px] font-medium rounded-md transition-[transform,opacity] duration-200 shadow-sm hover:shadow-md cursor-pointer overflow-hidden border border-[var(--tm-line)] flex-shrink-0 min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
+                        className='group relative flex items-center justify-center gap-1 w-8 h-8 lg:w-auto lg:h-auto lg:px-2 lg:py-1.5 bg-raised hover:bg-line text-[13px] font-medium rounded-md transition-[transform,opacity] duration-200 shadow-sm hover:shadow-md cursor-pointer overflow-hidden border border-line flex-shrink-0 min-h-[44px] tm-press min-w-[44px]'
                         title='PotPlayer'
                       >
                         <img
@@ -719,7 +710,7 @@ export default function WebLivePage() {
                           alt='PotPlayer'
                           className='w-4 h-4 flex-shrink-0'
                         />
-                        <span className='hidden lg:inline max-w-0 group-hover:max-w-[100px] overflow-hidden whitespace-nowrap transition-[transform,opacity] duration-200 ease-in-out text-[color:var(--tm-muted)] text-[color:var(--tm-text)]'>
+                        <span className='hidden lg:inline max-w-0 group-hover:max-w-[100px] overflow-hidden whitespace-nowrap transition-[transform,opacity] duration-200 ease-in-out text-fg'>
                           PotPlayer
                         </span>
                       </button>
@@ -732,7 +723,7 @@ export default function WebLivePage() {
                             window.open(`vlc://${originalVideoUrl}`, '_blank');
                           }
                         }}
-                        className='group relative flex items-center justify-center gap-1 w-8 h-8 lg:w-auto lg:h-auto lg:px-2 lg:py-1.5 bg-[var(--tm-surface-raised)] hover:bg-[var(--tm-line)] text-[13px] font-medium rounded-md transition-[transform,opacity] duration-200 shadow-sm hover:shadow-md cursor-pointer overflow-hidden border border-[var(--tm-line)] flex-shrink-0 min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
+                        className='group relative flex items-center justify-center gap-1 w-8 h-8 lg:w-auto lg:h-auto lg:px-2 lg:py-1.5 bg-raised hover:bg-line text-[13px] font-medium rounded-md transition-[transform,opacity] duration-200 shadow-sm hover:shadow-md cursor-pointer overflow-hidden border border-line flex-shrink-0 min-h-[44px] tm-press min-w-[44px]'
                         title='VLC'
                       >
                         <img
@@ -740,7 +731,7 @@ export default function WebLivePage() {
                           alt='VLC'
                           className='w-4 h-4 flex-shrink-0'
                         />
-                        <span className='hidden lg:inline max-w-0 group-hover:max-w-[100px] overflow-hidden whitespace-nowrap transition-[transform,opacity] duration-200 ease-in-out text-[color:var(--tm-muted)] text-[color:var(--tm-text)]'>
+                        <span className='hidden lg:inline max-w-0 group-hover:max-w-[100px] overflow-hidden whitespace-nowrap transition-[transform,opacity] duration-200 ease-in-out text-fg'>
                           VLC
                         </span>
                       </button>
@@ -753,7 +744,7 @@ export default function WebLivePage() {
                             window.open(`mpv://${originalVideoUrl}`, '_blank');
                           }
                         }}
-                        className='group relative flex items-center justify-center gap-1 w-8 h-8 lg:w-auto lg:h-auto lg:px-2 lg:py-1.5 bg-[var(--tm-surface-raised)] hover:bg-[var(--tm-line)] text-[13px] font-medium rounded-md transition-[transform,opacity] duration-200 shadow-sm hover:shadow-md cursor-pointer overflow-hidden border border-[var(--tm-line)] flex-shrink-0 min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
+                        className='group relative flex items-center justify-center gap-1 w-8 h-8 lg:w-auto lg:h-auto lg:px-2 lg:py-1.5 bg-raised hover:bg-line text-[13px] font-medium rounded-md transition-[transform,opacity] duration-200 shadow-sm hover:shadow-md cursor-pointer overflow-hidden border border-line flex-shrink-0 min-h-[44px] tm-press min-w-[44px]'
                         title='MPV'
                       >
                         <img
@@ -761,7 +752,7 @@ export default function WebLivePage() {
                           alt='MPV'
                           className='w-4 h-4 flex-shrink-0'
                         />
-                        <span className='hidden lg:inline max-w-0 group-hover:max-w-[100px] overflow-hidden whitespace-nowrap transition-[transform,opacity] duration-200 ease-in-out text-[color:var(--tm-muted)] text-[color:var(--tm-text)]'>
+                        <span className='hidden lg:inline max-w-0 group-hover:max-w-[100px] overflow-hidden whitespace-nowrap transition-[transform,opacity] duration-200 ease-in-out text-fg'>
                           MPV
                         </span>
                       </button>
@@ -779,7 +770,7 @@ export default function WebLivePage() {
                             );
                           }
                         }}
-                        className='group relative flex items-center justify-center gap-1 w-8 h-8 lg:w-auto lg:h-auto lg:px-2 lg:py-1.5 bg-[var(--tm-surface-raised)] hover:bg-[var(--tm-line)] text-[13px] font-medium rounded-md transition-[transform,opacity] duration-200 shadow-sm hover:shadow-md cursor-pointer overflow-hidden border border-[var(--tm-line)] flex-shrink-0 min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
+                        className='group relative flex items-center justify-center gap-1 w-8 h-8 lg:w-auto lg:h-auto lg:px-2 lg:py-1.5 bg-raised hover:bg-line text-[13px] font-medium rounded-md transition-[transform,opacity] duration-200 shadow-sm hover:shadow-md cursor-pointer overflow-hidden border border-line flex-shrink-0 min-h-[44px] tm-press min-w-[44px]'
                         title='MX Player'
                       >
                         <img
@@ -787,7 +778,7 @@ export default function WebLivePage() {
                           alt='MX Player'
                           className='w-4 h-4 flex-shrink-0'
                         />
-                        <span className='hidden lg:inline max-w-0 group-hover:max-w-[100px] overflow-hidden whitespace-nowrap transition-[transform,opacity] duration-200 ease-in-out text-[color:var(--tm-muted)] text-[color:var(--tm-text)]'>
+                        <span className='hidden lg:inline max-w-0 group-hover:max-w-[100px] overflow-hidden whitespace-nowrap transition-[transform,opacity] duration-200 ease-in-out text-fg'>
                           MX Player
                         </span>
                       </button>
@@ -803,7 +794,7 @@ export default function WebLivePage() {
                             );
                           }
                         }}
-                        className='group relative flex items-center justify-center gap-1 w-8 h-8 lg:w-auto lg:h-auto lg:px-2 lg:py-1.5 bg-[var(--tm-surface-raised)] hover:bg-[var(--tm-line)] text-[13px] font-medium rounded-md transition-[transform,opacity] duration-200 shadow-sm hover:shadow-md cursor-pointer overflow-hidden border border-[var(--tm-line)] flex-shrink-0 min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
+                        className='group relative flex items-center justify-center gap-1 w-8 h-8 lg:w-auto lg:h-auto lg:px-2 lg:py-1.5 bg-raised hover:bg-line text-[13px] font-medium rounded-md transition-[transform,opacity] duration-200 shadow-sm hover:shadow-md cursor-pointer overflow-hidden border border-line flex-shrink-0 min-h-[44px] tm-press min-w-[44px]'
                         title='nPlayer'
                       >
                         <img
@@ -811,7 +802,7 @@ export default function WebLivePage() {
                           alt='nPlayer'
                           className='w-4 h-4 flex-shrink-0'
                         />
-                        <span className='hidden lg:inline max-w-0 group-hover:max-w-[100px] overflow-hidden whitespace-nowrap transition-[transform,opacity] duration-200 ease-in-out text-[color:var(--tm-muted)] text-[color:var(--tm-text)]'>
+                        <span className='hidden lg:inline max-w-0 group-hover:max-w-[100px] overflow-hidden whitespace-nowrap transition-[transform,opacity] duration-200 ease-in-out text-fg'>
                           nPlayer
                         </span>
                       </button>
@@ -829,7 +820,7 @@ export default function WebLivePage() {
                             );
                           }
                         }}
-                        className='group relative flex items-center justify-center gap-1 w-8 h-8 lg:w-auto lg:h-auto lg:px-2 lg:py-1.5 bg-[var(--tm-surface-raised)] hover:bg-[var(--tm-line)] text-[13px] font-medium rounded-md transition-[transform,opacity] duration-200 shadow-sm hover:shadow-md cursor-pointer overflow-hidden border border-[var(--tm-line)] flex-shrink-0 min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
+                        className='group relative flex items-center justify-center gap-1 w-8 h-8 lg:w-auto lg:h-auto lg:px-2 lg:py-1.5 bg-raised hover:bg-line text-[13px] font-medium rounded-md transition-[transform,opacity] duration-200 shadow-sm hover:shadow-md cursor-pointer overflow-hidden border border-line flex-shrink-0 min-h-[44px] tm-press min-w-[44px]'
                         title='IINA'
                       >
                         <img
@@ -837,7 +828,7 @@ export default function WebLivePage() {
                           alt='IINA'
                           className='w-4 h-4 flex-shrink-0'
                         />
-                        <span className='hidden lg:inline max-w-0 group-hover:max-w-[100px] overflow-hidden whitespace-nowrap transition-[transform,opacity] duration-200 ease-in-out text-[color:var(--tm-muted)] text-[color:var(--tm-text)]'>
+                        <span className='hidden lg:inline max-w-0 group-hover:max-w-[100px] overflow-hidden whitespace-nowrap transition-[transform,opacity] duration-200 ease-in-out text-fg'>
                           IINA
                         </span>
                       </button>
@@ -851,14 +842,12 @@ export default function WebLivePage() {
                 <div className='mt-3 px-2'>
                   <div className='space-y-1.5'>
                     {streamInfo.title && (
-                      <div className='text-lg font-medium text-[color:var(--tm-text)] line-clamp-2'>
+                      <div className='text-lg font-medium text-fg line-clamp-2'>
                         {streamInfo.title}
                       </div>
                     )}
                     {streamInfo.name && (
-                      <div className='text-base text-[color:var(--tm-text)]'>
-                        {streamInfo.name}
-                      </div>
+                      <div className='text-base text-fg'>{streamInfo.name}</div>
                     )}
                   </div>
                 </div>
@@ -872,7 +861,7 @@ export default function WebLivePage() {
                   : 'md:col-span-1 lg:opacity-100 lg:scale-100'
               }`}
             >
-              <div className='md:ml-2 px-4 py-0 h-full rounded-xl bg-[color:color-mix(in_srgb,var(--tm-room-cinema-bg)_10%,transparent)] bg-[var(--tm-surface-raised)] flex flex-col border border-[var(--tm-line)] overflow-hidden'>
+              <div className='md:ml-2 px-4 py-0 h-full rounded-xl bg-ink/10 bg-raised flex flex-col border border-line overflow-hidden'>
                 <div className='flex mb-1 -mx-6 flex-shrink-0'>
                   <div
                     onClick={() => setActiveTab('rooms')}
@@ -885,10 +874,10 @@ export default function WebLivePage() {
                         event.currentTarget.click();
                       }
                     }}
-                    className={`flex-1 py-3 px-6 text-center cursor-pointer min-h-[44px] tm-press focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)] transition-[transform,opacity] duration-200 font-medium ${
+                    className={`flex-1 py-3 px-6 text-center cursor-pointer min-h-[44px] tm-press transition-[transform,opacity] duration-200 font-medium ${
                       activeTab === 'rooms'
-                        ? 'text-[color:var(--tm-text)]'
-                        : 'text-[color:var(--tm-muted)] hover:text-[color:var(--tm-text)] bg-[color:color-mix(in_srgb,var(--tm-room-cinema-bg)_5%,transparent)] bg-[var(--tm-surface-raised)] hover:bg-[color:color-mix(in_srgb,var(--tm-line)_3%,transparent)] hover:bg-[var(--tm-line)]'
+                        ? 'text-fg'
+                        : 'text-muted hover:text-fg bg-ink/5 bg-raised hover:bg-[color:color-mix(in_srgb,var(--tm-line)_3%,transparent)] hover:bg-line'
                     }`}
                   >
                     房间
@@ -904,10 +893,10 @@ export default function WebLivePage() {
                         event.currentTarget.click();
                       }
                     }}
-                    className={`flex-1 py-3 px-6 text-center cursor-pointer min-h-[44px] tm-press focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)] transition-[transform,opacity] duration-200 font-medium ${
+                    className={`flex-1 py-3 px-6 text-center cursor-pointer min-h-[44px] tm-press transition-[transform,opacity] duration-200 font-medium ${
                       activeTab === 'platforms'
-                        ? 'text-[color:var(--tm-text)]'
-                        : 'text-[color:var(--tm-muted)] hover:text-[color:var(--tm-text)] bg-[color:color-mix(in_srgb,var(--tm-room-cinema-bg)_5%,transparent)] bg-[var(--tm-surface-raised)] hover:bg-[color:color-mix(in_srgb,var(--tm-line)_3%,transparent)] hover:bg-[var(--tm-line)]'
+                        ? 'text-fg'
+                        : 'text-muted hover:text-fg bg-ink/5 bg-raised hover:bg-[color:color-mix(in_srgb,var(--tm-line)_3%,transparent)] hover:bg-line'
                     }`}
                   >
                     平台
@@ -917,12 +906,10 @@ export default function WebLivePage() {
                 {activeTab === 'rooms' && (
                   <div className='flex-1 overflow-y-auto space-y-2 pb-4 mt-4'>
                     {selectedPlatform && (
-                      <div className='mb-3 flex items-center justify-between px-2 py-2 bg-[var(--tm-surface-raised)] rounded-lg border border-[var(--tm-line)]'>
+                      <div className='mb-3 flex items-center justify-between px-2 py-2 bg-raised rounded-lg border border-line'>
                         <div className='flex items-center gap-2'>
-                          <span className='text-[13px] text-[color:var(--tm-text)]'>
-                            筛选平台:
-                          </span>
-                          <span className='text-sm font-medium text-[color:var(--tm-text)]'>
+                          <span className='text-[13px] text-fg'>筛选平台:</span>
+                          <span className='text-sm font-medium text-fg'>
                             {selectedPlatform === 'huya'
                               ? '虎牙'
                               : selectedPlatform === 'bilibili'
@@ -934,7 +921,7 @@ export default function WebLivePage() {
                         </div>
                         <button
                           onClick={clearPlatformFilter}
-                          className='text-[13px] text-[color:var(--tm-text)] hover:text-[color:var(--tm-text)] underline min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
+                          className='text-[13px] text-fg hover:text-fg underline min-h-[44px] tm-press min-w-[44px]'
                         >
                           清除筛选
                         </button>
@@ -948,11 +935,11 @@ export default function WebLivePage() {
                             key={source.key}
                             onClick={() => handleSourceClick(source)}
                             disabled={webLiveSync.shouldDisableControls}
-                            className={`w-full p-3 rounded-lg text-left transition-[transform,opacity] duration-200 min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)] ${
+                            className={`w-full p-3 rounded-lg text-left transition-[transform,opacity] duration-200 min-w-[44px] ${
                               isActive
-                                ? 'bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] border border-[var(--tm-text)] min-h-[44px] tm-press'
-                                : 'hover:bg-[var(--tm-line)] min-h-[44px] tm-press'
-                            }  ${
+                                ? 'bg-fg text-inverse border border-fg min-h-[44px] tm-press'
+                                : 'hover:bg-line min-h-[44px] tm-press'
+                            } ${
                               webLiveSync.shouldDisableControls
                                 ? 'opacity-50 cursor-not-allowed min-h-[44px] tm-press'
                                 : ' min-h-[44px] tm-press'
@@ -976,10 +963,10 @@ export default function WebLivePage() {
                       })
                     ) : (
                       <div className='flex flex-col items-center justify-center py-12 text-center'>
-                        <div className='w-16 h-16 bg-[var(--tm-surface-raised)] rounded-full flex items-center justify-center mb-4'>
-                          <Radio className='w-8 h-8 text-[color:var(--tm-muted)]' />
+                        <div className='w-16 h-16 bg-raised rounded-full flex items-center justify-center mb-4'>
+                          <Radio className='w-8 h-8 text-muted' />
                         </div>
-                        <p className='text-[color:var(--tm-muted)] font-medium'>
+                        <p className='text-muted font-medium'>
                           {selectedPlatform
                             ? '该平台暂无可用房间'
                             : '暂无可用房间'}
@@ -998,13 +985,13 @@ export default function WebLivePage() {
                             key={platform}
                             onClick={() => handlePlatformClick(platform)}
                             disabled={webLiveSync.shouldDisableControls}
-                            className={`w-full flex items-start gap-3 px-2 py-3 rounded-lg bg-[var(--tm-surface-raised)] hover:bg-[var(--tm-line)] transition-[transform,opacity] duration-200 cursor-pointer min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)] ${
+                            className={`w-full flex items-start gap-3 px-2 py-3 rounded-lg bg-raised hover:bg-line transition-[transform,opacity] duration-200 cursor-pointer min-w-[44px] ${
                               webLiveSync.shouldDisableControls
                                 ? 'opacity-50 cursor-not-allowed min-h-[44px] tm-press'
                                 : ' min-h-[44px] tm-press'
                             }`}
                           >
-                            <div className='w-12 h-12 bg-[var(--tm-surface-raised)] rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden'>
+                            <div className='w-12 h-12 bg-raised rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden'>
                               {platform === 'huya' ? (
                                 <img
                                   src='https://hd.huya.com/favicon.ico'
@@ -1024,11 +1011,11 @@ export default function WebLivePage() {
                                   className='w-8 h-8'
                                 />
                               ) : (
-                                <Radio className='w-6 h-6 text-[color:var(--tm-muted)]' />
+                                <Radio className='w-6 h-6 text-muted' />
                               )}
                             </div>
                             <div className='flex-1 min-w-0 text-left'>
-                              <div className='text-sm font-medium text-[color:var(--tm-text)] truncate'>
+                              <div className='text-sm font-medium text-fg truncate'>
                                 {platform === 'huya'
                                   ? '虎牙'
                                   : platform === 'bilibili'
@@ -1037,7 +1024,7 @@ export default function WebLivePage() {
                                   ? '抖音'
                                   : platform}
                               </div>
-                              <div className='text-[13px] text-[color:var(--tm-muted)] mt-1'>
+                              <div className='text-[13px] text-muted mt-1'>
                                 {
                                   sources.filter((s) => s.platform === platform)
                                     .length
@@ -1049,12 +1036,10 @@ export default function WebLivePage() {
                         ))
                       ) : (
                         <div className='flex flex-col items-center justify-center py-12 text-center'>
-                          <div className='w-16 h-16 bg-[var(--tm-surface-raised)] rounded-full flex items-center justify-center mb-4'>
-                            <Radio className='w-8 h-8 text-[color:var(--tm-muted)]' />
+                          <div className='w-16 h-16 bg-raised rounded-full flex items-center justify-center mb-4'>
+                            <Radio className='w-8 h-8 text-muted' />
                           </div>
-                          <p className='text-[color:var(--tm-muted)] font-medium'>
-                            暂无可用平台
-                          </p>
+                          <p className='text-muted font-medium'>暂无可用平台</p>
                         </div>
                       )}
                     </div>

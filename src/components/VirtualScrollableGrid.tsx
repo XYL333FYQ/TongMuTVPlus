@@ -15,7 +15,8 @@ interface VirtualScrollableGridProps {
   maxContentWidth?: number;
 }
 
-const clamp = (n: number, min: number, max: number) => Math.min(max, Math.max(min, n));
+const clamp = (n: number, min: number, max: number) =>
+  Math.min(max, Math.max(min, n));
 
 const DEFAULT_ROW_HEIGHT = 320;
 const MAX_MEASURE_ITEMS = 24;
@@ -95,7 +96,9 @@ export default function VirtualScrollableGrid({
     const measureGrid = measureGridRef.current;
     const measureItems = measureGrid
       ? Array.from(
-          measureGrid.querySelectorAll<HTMLElement>('[data-virtual-measure-item]')
+          measureGrid.querySelectorAll<HTMLElement>(
+            '[data-virtual-measure-item]'
+          )
         )
       : [];
 
@@ -158,12 +161,17 @@ export default function VirtualScrollableGrid({
     const containerTop = el.getBoundingClientRect().top + scrollTop;
 
     const startRow =
-      Math.floor((scrollTop - containerTop) / nextLayout.rowHeight) - overscanRows;
+      Math.floor((scrollTop - containerTop) / nextLayout.rowHeight) -
+      overscanRows;
     const endRow =
       Math.ceil((viewportBottom - containerTop) / nextLayout.rowHeight) +
       overscanRows;
 
-    const clampedStart = clamp(startRow, 0, Math.max(0, nextLayout.totalRows - 1));
+    const clampedStart = clamp(
+      startRow,
+      0,
+      Math.max(0, nextLayout.totalRows - 1)
+    );
     const clampedEnd = clamp(
       endRow,
       clampedStart,
@@ -283,11 +291,17 @@ export default function VirtualScrollableGrid({
   const rowHeight = layout.rowHeight;
 
   const startIndex = range.startRow * columns;
-  const endIndexExclusive = Math.min(children.length, (range.endRow + 1) * columns);
+  const endIndexExclusive = Math.min(
+    children.length,
+    (range.endRow + 1) * columns
+  );
   const visibleChildren = children.slice(startIndex, endIndexExclusive);
 
   const topSpacerHeight = range.startRow * rowHeight;
-  const bottomSpacerHeight = Math.max(0, (totalRows - range.endRow - 1) * rowHeight);
+  const bottomSpacerHeight = Math.max(
+    0,
+    (totalRows - range.endRow - 1) * rowHeight
+  );
 
   return (
     <div ref={containerRef} className='relative w-full'>

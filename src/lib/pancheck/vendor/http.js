@@ -2,13 +2,14 @@ const https = require('https');
 const http = require('http');
 const { URL } = require('url');
 
-const DEFAULT_UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36';
+const DEFAULT_UA =
+  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36';
 const DEFAULT_HEADERS = {
-  'accept': 'application/json;charset=UTF-8',
+  accept: 'application/json;charset=UTF-8',
   'accept-language': 'en,zh-CN;q=0.9,zh;q=0.8',
   'user-agent': DEFAULT_UA,
   'cache-control': 'no-cache',
-  'pragma': 'no-cache',
+  pragma: 'no-cache',
 };
 
 function request(url, options = {}) {

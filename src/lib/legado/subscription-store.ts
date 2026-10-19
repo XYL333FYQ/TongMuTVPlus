@@ -30,8 +30,14 @@ interface StoredManifest {
 }
 
 const CHUNK_SIZE = Number(process.env.LEGADO_SUBSCRIPTION_CHUNK_SIZE || 100);
-const TIMEOUT_MS = Number(process.env.LEGADO_SUBSCRIPTION_TIMEOUT_MS || process.env.LEGADO_TIMEOUT_MS || 30000);
-const MAX_BYTES = Number(process.env.LEGADO_SUBSCRIPTION_MAX_BYTES || 20 * 1024 * 1024);
+const TIMEOUT_MS = Number(
+  process.env.LEGADO_SUBSCRIPTION_TIMEOUT_MS ||
+    process.env.LEGADO_TIMEOUT_MS ||
+    30000
+);
+const MAX_BYTES = Number(
+  process.env.LEGADO_SUBSCRIPTION_MAX_BYTES || 20 * 1024 * 1024
+);
 const sourcesCache = new Map<string, BookSource[]>();
 const sourcesLoadPromises = new Map<string, Promise<BookSource[]>>();
 
@@ -55,7 +61,10 @@ function wait(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-async function fetchTextWithRetry(url: string, retries = 2): Promise<{ text: string; etag?: string; lastModified?: string }> {
+async function fetchTextWithRetry(
+  url: string,
+  retries = 2
+): Promise<{ text: string; etag?: string; lastModified?: string }> {
   const safe = await validateProxyUrlServerSide(url);
   if (!safe) throw new Error('订阅地址未通过安全校验');
 
@@ -68,12 +77,15 @@ async function fetchTextWithRetry(url: string, retries = 2): Promise<{ text: str
         signal: controller.signal,
         cache: 'no-store',
         headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0 Safari/537.36',
+          'User-Agent':
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0 Safari/537.36',
           Accept: 'application/json,text/plain,*/*',
         },
       });
       if (!response.ok) throw new Error(`订阅请求失败: ${response.status}`);
-      const contentLength = Number(response.headers.get('content-length') || '0');
+      const contentLength = Number(
+        response.headers.get('content-length') || '0'
+      );
       if (contentLength > MAX_BYTES) throw new Error('订阅内容过大');
       const text = await response.text();
       if (text.length > MAX_BYTES) throw new Error('订阅内容过大');
@@ -93,15 +105,21 @@ async function fetchTextWithRetry(url: string, retries = 2): Promise<{ text: str
 }
 
 function extractRuleList(input: any): LegadoBookSourceRule[] {
-  if (Array.isArray(input)) return input.filter((item) => item && typeof item === 'object');
+  if (Array.isArray(input))
+    return input.filter((item) => item && typeof item === 'object');
   if (!input || typeof input !== 'object') return [];
   for (const key of ['data', 'sources', 'bookSources', 'items', 'list']) {
-    if (Array.isArray(input[key])) return input[key].filter((item: any) => item && typeof item === 'object');
+    if (Array.isArray(input[key]))
+      return input[key].filter((item: any) => item && typeof item === 'object');
   }
   return [input];
 }
 
-function normalizeRule(rule: LegadoBookSourceRule, subId: string, index: number): BookSource | null {
+function normalizeRule(
+  rule: LegadoBookSourceRule,
+  subId: string,
+  index: number
+): BookSource | null {
   const name = rule.bookSourceName || `Legado 书源 ${index + 1}`;
   const url = rule.bookSourceUrl || '';
   if (!url) return null;
@@ -154,7 +172,11 @@ async function readSourcesFromDb(id: string): Promise<BookSource[]> {
 export const legadoSubscriptionStore = {
   makeId: subscriptionId,
 
-  async sync(input: { id?: string; name?: string; url: string }): Promise<LegadoSubscriptionMeta> {
+  async sync(input: {
+    id?: string;
+    name?: string;
+    url: string;
+  }): Promise<LegadoSubscriptionMeta> {
     const url = input.url.trim();
     if (!url) throw new Error('订阅 URL 不能为空');
     const id = input.id || subscriptionId(url, input.name);
@@ -168,24 +190,54 @@ export const legadoSubscriptionStore = {
       throw new Error('订阅内容不是合法 JSON');
     }
     const rules = extractRuleList(parsed);
-    const sources = rules.map((rule, index) => normalizeRule(rule, id, index)).filter((item): item is BookSource => !!item);
-    if (sources.length === 0) throw new Error('订阅内没有识别到有效 Legado 书源');
+    const sources = rules
+      .map((rule, index) => normalizeRule(rule, id, index))
+      .filter((item): item is BookSource => !!item);
+    if (sources.length === 0)
+      throw new Error('订阅内没有识别到有效 Legado 书源');
 
     const chunkCount = Math.ceil(sources.length / CHUNK_SIZE);
-    const hash = crypto.createHash('sha1').update(JSON.stringify(sources)).digest('hex');
+    const hash = crypto
+      .createHash('sha1')
+      .update(JSON.stringify(sources))
+      .digest('hex');
     for (let index = 0; index < chunkCount; index += 1) {
-      await db.setGlobalValue(chunkKey(id, index), JSON.stringify(sources.slice(index * CHUNK_SIZE, (index + 1) * CHUNK_SIZE)));
+      await db.setGlobalValue(
+        chunkKey(id, index),
+        JSON.stringify(
+          sources.slice(index * CHUNK_SIZE, (index + 1) * CHUNK_SIZE)
+        )
+      );
     }
     if (previous && previous.chunkCount > chunkCount) {
       for (let index = chunkCount; index < previous.chunkCount; index += 1) {
         await db.deleteGlobalValue(chunkKey(id, index));
       }
     }
-    const manifest: StoredManifest = { id, name, url, hash, sourceCount: sources.length, chunkCount, updatedAt: Date.now(), etag, lastModified };
+    const manifest: StoredManifest = {
+      id,
+      name,
+      url,
+      hash,
+      sourceCount: sources.length,
+      chunkCount,
+      updatedAt: Date.now(),
+      etag,
+      lastModified,
+    };
     await db.setGlobalValue(manifestKey(id), JSON.stringify(manifest));
     sourcesLoadPromises.delete(id);
     sourcesCache.set(id, sources);
-    return { id, name, url, enabled: true, sourceCount: sources.length, lastSyncAt: manifest.updatedAt, lastSuccessAt: manifest.updatedAt, lastError: '' };
+    return {
+      id,
+      name,
+      url,
+      enabled: true,
+      sourceCount: sources.length,
+      lastSyncAt: manifest.updatedAt,
+      lastSuccessAt: manifest.updatedAt,
+      lastError: '',
+    };
   },
 
   async getSources(id: string): Promise<BookSource[]> {
@@ -209,9 +261,13 @@ export const legadoSubscriptionStore = {
     return promise;
   },
 
-  async getSourcesForSubscriptions(subscriptions: LegadoSubscriptionMeta[] = []): Promise<BookSource[]> {
+  async getSourcesForSubscriptions(
+    subscriptions: LegadoSubscriptionMeta[] = []
+  ): Promise<BookSource[]> {
     const enabled = subscriptions.filter((item) => item.enabled !== false);
-    const groups = await Promise.all(enabled.map((item) => this.getSources(item.id)));
+    const groups = await Promise.all(
+      enabled.map((item) => this.getSources(item.id))
+    );
     return groups.flat().filter((source) => source.enabled !== false);
   },
 
@@ -238,10 +294,14 @@ export const legadoSubscriptionStore = {
   },
 
   mergeMeta(config: AdminConfig, meta: LegadoSubscriptionMeta): AdminConfig {
-    const opds = config.OPDSConfig || { Enabled: false, Sources: [], CacheTTL: 10 * 60 * 1000 };
+    const opds = config.OPDSConfig || {
+      Enabled: false,
+      Sources: [],
+      CacheTTL: 10 * 60 * 1000,
+    };
     const list = opds.LegadoSubscriptions || [];
     const next = list.some((item) => item.id === meta.id)
-      ? list.map((item) => item.id === meta.id ? { ...item, ...meta } : item)
+      ? list.map((item) => (item.id === meta.id ? { ...item, ...meta } : item))
       : [...list, meta];
     return { ...config, OPDSConfig: { ...opds, LegadoSubscriptions: next } };
   },

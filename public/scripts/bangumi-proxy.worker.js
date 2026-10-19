@@ -68,7 +68,9 @@ async function handleRequest(request) {
         calendar: `${requestUrl.origin}/calendar`,
         subject: `${requestUrl.origin}/v0/subjects/1`,
         image: `${requestUrl.origin}/https://lain.bgm.tv/pic/cover/l/demo.jpg`,
-        queryProxy: `${requestUrl.origin}/?url=${encodeURIComponent('https://api.bgm.tv/calendar')}`,
+        queryProxy: `${requestUrl.origin}/?url=${encodeURIComponent(
+          'https://api.bgm.tv/calendar'
+        )}`,
       },
     });
   }
@@ -90,10 +92,7 @@ async function handleRequest(request) {
 
     return buildProxyResponse(upstreamResponse, requestUrl.origin);
   } catch (error) {
-    return jsonResponse(
-      { error: error?.message || String(error) },
-      502
-    );
+    return jsonResponse({ error: error?.message || String(error) }, 502);
   }
 }
 
@@ -115,7 +114,9 @@ function buildTargetUrl(requestUrl) {
 
   // 某些 URL 解析/拼接场景可能变成 https:/lain.bgm.tv/xxx，这里修正为 https://...
   if (rawPath.startsWith('http:/') || rawPath.startsWith('https:/')) {
-    const fixed = rawPath.replace(/^http:\//, 'http://').replace(/^https:\//, 'https://');
+    const fixed = rawPath
+      .replace(/^http:\//, 'http://')
+      .replace(/^https:\//, 'https://');
     const target = new URL(fixed);
     target.search = requestUrl.search;
     return target;
@@ -133,7 +134,10 @@ function assertAllowedTarget(targetUrl) {
   }
 
   const host = targetUrl.hostname.toLowerCase();
-  const allowed = ALLOWED_HOSTS.has(host) || host.endsWith('.bgm.tv') || host.endsWith('.bangumi.tv');
+  const allowed =
+    ALLOWED_HOSTS.has(host) ||
+    host.endsWith('.bgm.tv') ||
+    host.endsWith('.bangumi.tv');
   if (!allowed) {
     throw new Error(`Target host is not allowed: ${host}`);
   }
@@ -150,10 +154,20 @@ function buildUpstreamHeaders(inputHeaders, targetUrl) {
   }
 
   const isImage = isLikelyImageUrl(targetUrl);
-  headers.set('Accept', inputHeaders.get('Accept') || (isImage ? 'image/avif,image/webp,image/apng,image/*,*/*;q=0.8' : 'application/json, text/plain, */*'));
+  headers.set(
+    'Accept',
+    inputHeaders.get('Accept') ||
+      (isImage
+        ? 'image/avif,image/webp,image/apng,image/*,*/*;q=0.8'
+        : 'application/json, text/plain, */*')
+  );
   headers.set('Referer', 'https://bgm.tv/');
   headers.set('Origin', 'https://bgm.tv');
-  headers.set('User-Agent', inputHeaders.get('User-Agent') || 'MoonTVPlus/1.0 CloudflareWorker (+https://github.com)');
+  headers.set(
+    'User-Agent',
+    inputHeaders.get('User-Agent') ||
+      'MoonTVPlus/1.0 CloudflareWorker (+https://github.com)'
+  );
 
   return headers;
 }
@@ -207,7 +221,11 @@ function isLikelyImageUrl(url) {
 
 function isAllowedHost(hostname) {
   const host = hostname.toLowerCase();
-  return ALLOWED_HOSTS.has(host) || host.endsWith('.bgm.tv') || host.endsWith('.bangumi.tv');
+  return (
+    ALLOWED_HOSTS.has(host) ||
+    host.endsWith('.bgm.tv') ||
+    host.endsWith('.bangumi.tv')
+  );
 }
 
 function corsHeaders() {

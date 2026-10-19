@@ -269,7 +269,7 @@ export default function EpisodeFilterSettings({
     >
       {/* 背景遮罩 */}
       <div
-        className={`absolute inset-0 bg-[color:color-mix(in_srgb,var(--tm-room-cinema-bg)_50%,transparent)] transition-opacity duration-300 ease-out ${
+        className={`absolute inset-0 bg-ink/50 transition-opacity duration-300 ease-out ${
           isAnimating ? 'opacity-100' : 'opacity-0'
         }`}
         onClick={onClose}
@@ -290,7 +290,7 @@ export default function EpisodeFilterSettings({
 
       {/* 弹窗主体 */}
       <div
-        className='relative w-full bg-[var(--tm-surface)] rounded-t-3xl shadow-2xl transition-all duration-300 ease-out max-h-[85vh] flex flex-col'
+        className='relative w-full bg-surface rounded-t-3xl shadow-2xl transition-all duration-300 ease-out max-h-[85vh] flex flex-col'
         onTouchMove={(e) => {
           // 允许弹窗内部滚动，阻止事件冒泡到外层
           e.stopPropagation();
@@ -307,38 +307,34 @@ export default function EpisodeFilterSettings({
         }}
       >
         {/* 顶部拖拽指示器 */}
-        <div className='sticky top-0 z-10 bg-[var(--tm-surface)] pt-3 pb-2'>
+        <div className='sticky top-0 z-10 bg-surface pt-3 pb-2'>
           <div className='flex justify-center'>
-            <div className='w-12 h-1.5 bg-[var(--tm-surface)] rounded-full'></div>
+            <div className='w-12 h-1.5 bg-surface rounded-full'></div>
           </div>
         </div>
 
         {/* 头部 */}
-        <div className='flex items-center justify-between px-4 pb-3 border-b border-[var(--tm-line)]'>
-          <h2 className='text-lg font-medium text-[color:var(--tm-text)]'>
-            集数屏蔽设置
-          </h2>
+        <div className='flex items-center justify-between px-4 pb-3 border-b border-line'>
+          <h2 className='text-lg font-medium text-fg'>集数屏蔽设置</h2>
           <button
             onClick={onClose}
-            className='p-2 rounded-full hover:bg-[var(--tm-line)] transition-colors duration-150 min-h-[44px] tm-press'
+            className='p-2 rounded-full hover:bg-line transition-colors duration-150 min-h-[44px] tm-press'
           >
-            <X size={20} className='text-[color:var(--tm-muted)]' />
+            <X size={20} className='text-muted' />
           </button>
         </div>
 
         {/* 内容区域 */}
         <div className='flex-1 overflow-y-auto px-4 py-4 space-y-4 min-h-0'>
           {/* 添加规则 */}
-          <div className='bg-[var(--tm-surface-raised)] rounded-xl p-4 space-y-3'>
-            <div className='flex items-start justify-between gap-3 rounded-xl bg-[var(--tm-surface)] border border-[var(--tm-line)] px-4 py-3'>
+          <div className='bg-raised rounded-xl p-4 space-y-3'>
+            <div className='flex items-start justify-between gap-3 rounded-xl bg-surface border border-line px-4 py-3'>
               <div className='min-w-0'>
-                <h3 className='text-sm font-medium text-[color:var(--tm-text)]'>
-                  相反模式
-                </h3>
-                <p className='mt-1 text-[13px] leading-relaxed text-[color:var(--tm-muted)]'>
+                <h3 className='text-sm font-medium text-fg'>相反模式</h3>
+                <p className='mt-1 text-[13px] leading-relaxed text-muted'>
                   开启后，将屏蔽改为仅显示符合规则的集数。
                 </p>
-                <p className='mt-1 text-[13px] leading-relaxed text-[color:var(--tm-text)]'>
+                <p className='mt-1 text-[13px] leading-relaxed text-fg'>
                   启用时必须至少保留一条规则才能保存。
                 </p>
               </div>
@@ -350,20 +346,18 @@ export default function EpisodeFilterSettings({
                 {config.reverseMode ? (
                   <ToggleRight
                     size={28}
-                    className='text-[color:var(--tm-text)] hover:text-[color:var(--tm-text)] transition-colors duration-150'
+                    className='text-fg hover:text-fg transition-colors duration-150'
                   />
                 ) : (
                   <ToggleLeft
                     size={28}
-                    className='text-[color:var(--tm-muted)] hover:text-[color:var(--tm-muted)] transition-colors duration-150'
+                    className='text-muted hover:text-muted transition-colors duration-150'
                   />
                 )}
               </button>
             </div>
 
-            <h3 className='text-sm font-medium text-[color:var(--tm-muted)]'>
-              添加屏蔽规则
-            </h3>
+            <h3 className='text-sm font-medium text-muted'>添加屏蔽规则</h3>
             <div className='space-y-3'>
               <input
                 key={inputKey}
@@ -379,7 +373,7 @@ export default function EpisodeFilterSettings({
                 spellCheck='false'
                 data-form-type='other'
                 data-lpignore='true'
-                className='w-full px-4 py-3 bg-[var(--tm-surface)] text-[color:var(--tm-text)] rounded-lg border border-[var(--tm-line)] focus:border-[var(--tm-line)] focus:outline-none focus:ring-2 focus:ring-[color-mix(in_srgb,var(--tm-text)_20%,transparent)] transition-all duration-200'
+                className='w-full px-4 py-3 bg-surface text-fg rounded-lg border border-line focus:border-line focus:outline-none focus:ring-2 focus:ring-[color-mix(in_srgb,var(--tm-text)_20%,transparent)] transition-all duration-200'
               />
               <div className='flex gap-2'>
                 <select
@@ -387,21 +381,21 @@ export default function EpisodeFilterSettings({
                   onChange={(e) =>
                     setNewType(e.target.value as 'normal' | 'regex')
                   }
-                  className='flex-1 px-4 py-3 bg-[var(--tm-surface)] text-[color:var(--tm-text)] rounded-lg border border-[var(--tm-line)] focus:border-[var(--tm-line)] focus:outline-none focus:ring-2 focus:ring-[color-mix(in_srgb,var(--tm-text)_20%,transparent)] transition-all duration-200'
+                  className='flex-1 px-4 py-3 bg-surface text-fg rounded-lg border border-line focus:border-line focus:outline-none focus:ring-2 focus:ring-[color-mix(in_srgb,var(--tm-text)_20%,transparent)] transition-all duration-200'
                 >
                   <option value='normal'>普通模式</option>
                   <option value='regex'>正则模式</option>
                 </select>
                 <button
                   onClick={handleAddRule}
-                  className='px-6 py-3 bg-[var(--tm-text)] hover:opacity-90 active:bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] rounded-lg transition-all duration-200 flex items-center gap-2 active:scale-[0.98] shadow-sm hover:shadow-md min-h-[44px] tm-press'
+                  className='px-6 py-3 bg-fg hover:opacity-90 active:bg-fg text-inverse rounded-lg transition-all duration-200 flex items-center gap-2 active:scale-[0.98] shadow-sm hover:shadow-md min-h-[44px] tm-press'
                 >
                   <Plus size={18} />
                   <span className='font-medium'>添加</span>
                 </button>
               </div>
             </div>
-            <p className='text-[13px] text-[color:var(--tm-muted)] leading-relaxed'>
+            <p className='text-[13px] text-muted leading-relaxed'>
               💡 普通模式：集数标题包含关键字即命中规则
               <br />
               🔄 相反模式：仅显示命中规则的集数
@@ -414,26 +408,24 @@ export default function EpisodeFilterSettings({
           {/* 规则列表 */}
           <div className='space-y-3'>
             <div className='flex items-center justify-between'>
-              <h3 className='text-sm font-medium text-[color:var(--tm-muted)]'>
-                当前规则
-              </h3>
-              <span className='text-[13px] text-[color:var(--tm-muted)] bg-[var(--tm-surface-raised)] px-2 py-1 rounded-full'>
+              <h3 className='text-sm font-medium text-muted'>当前规则</h3>
+              <span className='text-[13px] text-muted bg-raised px-2 py-1 rounded-full'>
                 {config.rules.length}
               </span>
             </div>
 
             {loading ? (
-              <div className='text-center py-12 text-[color:var(--tm-muted)]'>
+              <div className='text-center py-12 text-muted'>
                 <div className='inline-flex items-center gap-2'>
-                  <div className='w-4 h-4 border-2 border-[var(--tm-line)] border-t-[var(--tm-line)] rounded-full animate-spin'></div>
+                  <div className='w-4 h-4 border-2 border-line border-t-line rounded-full animate-spin'></div>
                   <span>加载中...</span>
                 </div>
               </div>
             ) : config.rules.length === 0 ? (
-              <div className='text-center py-12 text-[color:var(--tm-muted)]'>
+              <div className='text-center py-12 text-muted'>
                 <div className='inline-flex flex-col items-center gap-3'>
-                  <div className='w-16 h-16 bg-[var(--tm-surface-raised)] rounded-full flex items-center justify-center'>
-                    <Plus size={24} className='text-[color:var(--tm-muted)]' />
+                  <div className='w-16 h-16 bg-raised rounded-full flex items-center justify-center'>
+                    <Plus size={24} className='text-muted' />
                   </div>
                   <div>
                     <p className='font-medium'>暂无屏蔽规则</p>
@@ -446,7 +438,7 @@ export default function EpisodeFilterSettings({
                 {config.rules.map((rule) => (
                   <div
                     key={rule.id}
-                    className='bg-[var(--tm-surface-raised)] rounded-xl p-4 flex items-center gap-3 active:bg-[var(--tm-surface-raised)] transition-colors duration-150'
+                    className='bg-raised rounded-xl p-4 flex items-center gap-3 active:bg-raised transition-colors duration-150'
                   >
                     {/* 启用/禁用按钮 */}
                     <button
@@ -456,12 +448,12 @@ export default function EpisodeFilterSettings({
                       {rule.enabled ? (
                         <ToggleRight
                           size={28}
-                          className='text-[color:var(--tm-text)] hover:text-[color:var(--tm-text)] transition-colors duration-150'
+                          className='text-fg hover:text-fg transition-colors duration-150'
                         />
                       ) : (
                         <ToggleLeft
                           size={28}
-                          className='text-[color:var(--tm-muted)] hover:text-[color:var(--tm-muted)] transition-colors duration-150'
+                          className='text-muted hover:text-muted transition-colors duration-150'
                         />
                       )}
                     </button>
@@ -471,20 +463,12 @@ export default function EpisodeFilterSettings({
                       <div className='flex flex-col gap-1.5'>
                         <span
                           className={`font-mono text-sm break-all leading-relaxed ${
-                            rule.enabled
-                              ? 'text-[color:var(--tm-text)]'
-                              : 'text-[color:var(--tm-muted)]'
+                            rule.enabled ? 'text-fg' : 'text-muted'
                           }`}
                         >
                           {rule.keyword}
                         </span>
-                        <span
-                          className={`inline-flex items-center self-start text-[13px] px-2.5 py-1 rounded-full font-medium ${
-                            rule.type === 'regex'
-                              ? 'bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)]'
-                              : 'bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)]'
-                          }`}
-                        >
+                        <span className='inline-flex items-center self-start text-[13px] px-2.5 py-1 rounded-full font-medium bg-raised text-fg'>
                           {rule.type === 'regex' ? '🔧 正则' : '💬 普通'}
                         </span>
                       </div>
@@ -493,7 +477,7 @@ export default function EpisodeFilterSettings({
                     {/* 删除按钮 */}
                     <button
                       onClick={() => handleDeleteRule(rule.id)}
-                      className='flex-shrink-0 p-2 text-[color:var(--tm-text)] hover:text-[color:var(--tm-text)] active:text-[color:var(--tm-text)] active:scale-90 transition-all duration-150 min-h-[44px] tm-press'
+                      className='flex-shrink-0 p-2 text-fg hover:text-fg active:text-fg active:scale-90 transition-all duration-150 min-h-[44px] tm-press'
                     >
                       <Trash2 size={18} />
                     </button>
@@ -505,22 +489,22 @@ export default function EpisodeFilterSettings({
         </div>
 
         {/* 底部按钮 */}
-        <div className='sticky bottom-0 bg-[var(--tm-surface)] border-t border-[var(--tm-line)] px-4 py-4'>
+        <div className='sticky bottom-0 bg-surface border-t border-line px-4 py-4'>
           <div className='flex gap-3'>
             <button
               onClick={onClose}
-              className='flex-1 px-4 py-3 bg-[var(--tm-surface-raised)] hover:bg-[var(--tm-line)] active:bg-[var(--tm-surface-raised)] text-[color:var(--tm-muted)] rounded-xl font-medium transition-all duration-200 active:scale-[0.98] min-h-[44px] tm-press'
+              className='flex-1 px-4 py-3 bg-raised hover:bg-line active:bg-raised text-muted rounded-xl font-medium transition-all duration-200 active:scale-[0.98] min-h-[44px] tm-press'
             >
               取消
             </button>
             <button
               onClick={handleSave}
               disabled={saving}
-              className='flex-1 px-4 py-3 bg-[var(--tm-text)] hover:opacity-90 active:bg-[var(--tm-text)] disabled:bg-[var(--tm-surface)] disabled:cursor-not-allowed text-[color:var(--tm-accent-contrast)] rounded-xl font-medium transition-all duration-200 active:scale-[0.98] shadow-sm hover:shadow-md disabled:shadow-none min-h-[44px] tm-press'
+              className='flex-1 px-4 py-3 bg-fg hover:opacity-90 active:bg-fg disabled:bg-surface disabled:cursor-not-allowed text-inverse rounded-xl font-medium transition-all duration-200 active:scale-[0.98] shadow-sm hover:shadow-md disabled:shadow-none min-h-[44px] tm-press'
             >
               {saving ? (
                 <span className='inline-flex items-center gap-2'>
-                  <div className='w-4 h-4 border-2 border-[var(--tm-line)] border-t-transparent rounded-full animate-spin'></div>
+                  <div className='w-4 h-4 border-2 border-line border-t-transparent rounded-full animate-spin'></div>
                   保存中...
                 </span>
               ) : (

@@ -260,8 +260,7 @@ function SortablePlaylistRow({
       className={cn(
         MUSIC_QUEUE_ROW,
         isActive && MUSIC_ROW_PLAYING,
-        isDragging &&
-          'opacity-90 shadow-lg shadow-[color-mix(in_srgb,var(--tm-room-cinema-bg)_40%,transparent)]'
+        isDragging && 'opacity-90 shadow-lg shadow-ink/40'
       )}
     >
       {/* 握把自己吃掉点击：拖完松手也会冒一个 click 上来，不放行就会顺手播了这首。 */}
@@ -473,8 +472,8 @@ function VinylTurntable({
             background: 'var(--tm-surface-raised)',
           }}
         />
-        <div className='pointer-events-none absolute left-[18%] top-[10%] h-[42%] w-[22%] rotate-[-28deg] rounded-full bg-[var(--tm-surface-raised)] blur-md' />
-        <div className='relative z-10 flex h-[158px] w-[158px] items-center justify-center overflow-hidden rounded-full border-[5px] border-[var(--tm-line)] bg-[var(--tm-surface)] md:h-[192px] md:w-[192px]'>
+        <div className='pointer-events-none absolute left-[18%] top-[10%] h-[42%] w-[22%] rotate-[-28deg] rounded-full bg-raised blur-md' />
+        <div className='relative z-10 flex h-[158px] w-[158px] items-center justify-center overflow-hidden rounded-full border-[5px] border-line bg-surface md:h-[192px] md:w-[192px]'>
           {cover ? (
             <img
               src={cover}
@@ -486,7 +485,7 @@ function VinylTurntable({
             />
           ) : (
             <svg
-              className='h-14 w-14 text-[color:var(--tm-muted)] md:h-16 md:w-16'
+              className='h-14 w-14 text-muted md:h-16 md:w-16'
               fill='currentColor'
               viewBox='0 0 20 20'
             >
@@ -494,7 +493,7 @@ function VinylTurntable({
             </svg>
           )}
         </div>
-        <div className='pointer-events-none absolute z-20 h-3 w-3 rounded-full border border-[var(--tm-line)] bg-[var(--tm-surface)]' />
+        <div className='pointer-events-none absolute z-20 h-3 w-3 rounded-full border border-line bg-surface' />
       </div>
     </div>
   );
@@ -2844,13 +2843,13 @@ export default function MusicClient({
         {resolvingCount > 0 && (
           <div className='fixed top-4 right-4 z-[80] pointer-events-none'>
             <div className='relative w-16 h-16 md:w-20 md:h-20'>
-              <div className='absolute inset-0 rounded-full border-4 border-[var(--tm-line)]' />
-              <div className='absolute inset-0 rounded-full border-4 border-transparent border-t-[var(--tm-line)] border-r-[var(--tm-line)] animate-spin shadow-[0_0_20px_color-mix(in_srgb,_var(--tm-text)_35%,_transparent)]' />
-              <div className='absolute inset-1 rounded-full bg-[var(--tm-surface)] backdrop-blur-md border border-[var(--tm-line)] flex flex-col items-center justify-center'>
-                <div className='text-[13px] md:text-[13px] text-[color:var(--tm-muted)] leading-none mb-1'>
+              <div className='absolute inset-0 rounded-full border-4 border-line' />
+              <div className='absolute inset-0 rounded-full border-4 border-transparent border-t-line border-r-line animate-spin shadow-[0_0_20px_color-mix(in_srgb,_var(--tm-text)_35%,_transparent)]' />
+              <div className='absolute inset-1 rounded-full bg-surface backdrop-blur-md border border-line flex flex-col items-center justify-center'>
+                <div className='text-[13px] md:text-[13px] text-muted leading-none mb-1'>
                   解析中
                 </div>
-                <div className='text-lg md:text-xl font-bold text-[color:var(--tm-text)] leading-none'>
+                <div className='text-lg md:text-xl font-bold text-fg leading-none'>
                   {resolvingCount}
                 </div>
               </div>
@@ -2859,7 +2858,7 @@ export default function MusicClient({
         )}
         {/* Header */}
         <header
-          className='relative z-40 bg-[var(--tm-bg)] border-b border-[var(--tm-line)] px-[var(--tm-content-gutter)]'
+          className='relative z-40 bg-canvas border-b border-line px-[var(--tm-content-gutter)]'
           style={{ paddingTop: 'env(safe-area-inset-top)' }}
         >
           <div className='w-full max-w-[1344px] mx-auto flex items-center justify-between gap-3 md:gap-4 py-3'>
@@ -2867,7 +2866,7 @@ export default function MusicClient({
               <div className='flex items-center gap-3'>
                 <button
                   onClick={() => setShowSidebarDrawer(true)}
-                  className='p-0 text-[color:var(--tm-text)] transition-colors hover:text-[color:var(--tm-text)] min-h-[44px] tm-press'
+                  className='p-0 text-fg transition-colors hover:text-fg min-h-[44px] tm-press'
                   title='打开菜单'
                 >
                   <svg
@@ -2884,7 +2883,7 @@ export default function MusicClient({
                     />
                   </svg>
                 </button>
-                <div className='flex items-center justify-center text-[color:var(--tm-text)]'>
+                <div className='flex items-center justify-center text-fg'>
                   <svg
                     className='w-5 h-5'
                     fill='currentColor'
@@ -2893,9 +2892,7 @@ export default function MusicClient({
                     <path d='M18 3a1 1 0 00-1.196-.98l-10 2A1 1 0 006 5v9.114A4.369 4.369 0 005 14c-1.657 0-3 .895-3 2s1.343 2 3 2 3-.895 3-2V7.82l8-1.6v5.894A4.37 4.37 0 0015 12c-1.657 0-3 .895-3 2s1.343 2 3 2 3-.895 3-2V3z' />
                   </svg>
                 </div>
-                <span className='font-bold text-lg text-[color:var(--tm-text)]'>
-                  音乐
-                </span>
+                <span className='font-bold text-lg text-fg'>音乐</span>
               </div>
             </div>
           </div>
@@ -2915,11 +2912,11 @@ export default function MusicClient({
               </div>
             )}
 
-            <div className='relative bg-[var(--tm-surface)] backdrop-blur-md rounded-xl p-4 pt-5 border border-[var(--tm-line)] shadow-2xl'>
+            <div className='relative bg-surface backdrop-blur-md rounded-xl p-4 pt-5 border border-line shadow-2xl'>
               {/* Progress Bar */}
-              <div className='absolute left-0 right-0 top-0 h-1 bg-[var(--tm-surface-raised)] rounded-t-xl overflow-hidden'>
+              <div className='absolute left-0 right-0 top-0 h-1 bg-raised rounded-t-xl overflow-hidden'>
                 <div
-                  className='relative z-10 h-full bg-[var(--tm-text)] transition-all pointer-events-none'
+                  className='relative z-10 h-full bg-fg transition-all pointer-events-none'
                   style={{ width: `${progress}%` }}
                 />
                 {showStreamBuffering && (
@@ -2939,7 +2936,7 @@ export default function MusicClient({
                 {/* Song Info */}
                 <div className='flex items-center gap-3 min-w-0 flex-1'>
                   <div
-                    className='w-12 h-12 rounded-lg bg-[var(--tm-surface)] overflow-hidden shrink-0 flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity'
+                    className='w-12 h-12 rounded-lg bg-surface overflow-hidden shrink-0 flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity'
                     onClick={() => setShowLyrics(true)}
                   >
                     {currentSong.pic ? (
@@ -2954,7 +2951,7 @@ export default function MusicClient({
                       />
                     ) : (
                       <svg
-                        className='w-6 h-6 text-[color:var(--tm-muted)]'
+                        className='w-6 h-6 text-muted'
                         fill='currentColor'
                         viewBox='0 0 20 20'
                       >
@@ -2964,7 +2961,7 @@ export default function MusicClient({
                   </div>
                   <div className='min-w-0 flex-1'>
                     <div className='flex min-w-0 items-center gap-1.5'>
-                      <div className='min-w-0 truncate text-sm font-bold text-[color:var(--tm-text)]'>
+                      <div className='min-w-0 truncate text-sm font-bold text-fg'>
                         {currentSong.name}
                       </div>
                       <SourcePill
@@ -2973,7 +2970,7 @@ export default function MusicClient({
                         className='hidden sm:inline-flex'
                       />
                     </div>
-                    <div className='text-[13px] text-[color:var(--tm-muted)] truncate'>
+                    <div className='text-[13px] text-muted truncate'>
                       {currentSong.artist}
                     </div>
                   </div>
@@ -2983,7 +2980,7 @@ export default function MusicClient({
                 <div className='relative flex items-center gap-4'>
                   <button
                     onClick={playPrev}
-                    className='text-[color:var(--tm-muted)] hover:text-[color:var(--tm-text)] transition-colors min-h-[44px] tm-press'
+                    className='text-muted hover:text-fg transition-colors min-h-[44px] tm-press'
                   >
                     <svg
                       className='w-5 h-5'
@@ -2995,7 +2992,7 @@ export default function MusicClient({
                   </button>
                   <button
                     onClick={togglePlay}
-                    className='w-10 h-10 rounded-full bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] flex items-center justify-center hover:opacity-90 transition-colors min-h-[44px] tm-press'
+                    className='w-10 h-10 rounded-full bg-fg text-inverse flex items-center justify-center hover:opacity-90 transition-colors min-h-[44px] tm-press'
                   >
                     {isPlaying ? (
                       <svg
@@ -3017,7 +3014,7 @@ export default function MusicClient({
                   </button>
                   <button
                     onClick={playNext}
-                    className='text-[color:var(--tm-muted)] hover:text-[color:var(--tm-text)] transition-colors min-h-[44px] tm-press'
+                    className='text-muted hover:text-fg transition-colors min-h-[44px] tm-press'
                   >
                     <svg
                       className='w-5 h-5'
@@ -3036,7 +3033,7 @@ export default function MusicClient({
                       type='range'
                       value={volume}
                       onChange={handleVolumeChange}
-                      className='w-16 h-1 bg-[var(--tm-surface-raised)] rounded-full appearance-none cursor-pointer'
+                      className='w-16 h-1 bg-raised rounded-full appearance-none cursor-pointer'
                     />
                   </div>
                   <button
@@ -3047,7 +3044,7 @@ export default function MusicClient({
                         setShowAddToPlaylistModal(true);
                       }
                     }}
-                    className='text-[color:var(--tm-muted)] hover:text-[color:var(--tm-text)] transition-colors min-h-[44px] tm-press'
+                    className='text-muted hover:text-fg transition-colors min-h-[44px] tm-press'
                     title='添加到歌单'
                   >
                     <svg
@@ -3066,7 +3063,7 @@ export default function MusicClient({
                   </button>
                   <button
                     onClick={downloadSong}
-                    className='text-[color:var(--tm-muted)] hover:text-[color:var(--tm-text)] transition-colors min-h-[44px] tm-press'
+                    className='text-muted hover:text-fg transition-colors min-h-[44px] tm-press'
                     title='下载歌曲'
                   >
                     <svg
@@ -3085,7 +3082,7 @@ export default function MusicClient({
                   </button>
                   <button
                     onClick={toggleMode}
-                    className='text-[color:var(--tm-muted)] hover:text-[color:var(--tm-text)] transition-colors min-h-[44px] tm-press'
+                    className='text-muted hover:text-fg transition-colors min-h-[44px] tm-press'
                     title={
                       playMode === 'loop'
                         ? '列表循环'
@@ -3151,7 +3148,7 @@ export default function MusicClient({
         {/* Lyrics Modal */}
         {showLyrics && currentSong && (
           <div
-            className='fixed inset-0 bg-[color:color-mix(in_srgb,var(--tm-room-cinema-bg)_90%,transparent)] backdrop-blur-sm z-[100] flex items-center justify-center p-4'
+            className='fixed inset-0 bg-ink/90 backdrop-blur-sm z-[100] flex items-center justify-center p-4'
             onClick={(e) => {
               // 点击背景关闭音量条
               if (e.target === e.currentTarget) {
@@ -3160,15 +3157,15 @@ export default function MusicClient({
             }}
           >
             <div
-              className='relative w-full max-w-6xl h-[90vh] bg-[var(--tm-surface)] rounded-2xl overflow-hidden border border-[var(--tm-line)] shadow-2xl flex flex-col'
+              className='relative w-full max-w-6xl h-[90vh] bg-surface rounded-2xl overflow-hidden border border-line shadow-2xl flex flex-col'
               onClick={() => setShowVolumeSlider(false)}
             >
               <button
                 onClick={() => setShowLyrics(false)}
-                className='absolute top-2 right-2 md:top-4 md:right-4 z-10 w-8 h-8 rounded-full bg-[var(--tm-surface-raised)] hover:bg-[var(--tm-line)] flex items-center justify-center transition-colors min-h-[44px] tm-press'
+                className='absolute top-2 right-2 md:top-4 md:right-4 z-10 w-8 h-8 rounded-full bg-raised hover:bg-line flex items-center justify-center transition-colors min-h-[44px] tm-press'
               >
                 <svg
-                  className='w-5 h-5 text-[color:var(--tm-text)]'
+                  className='w-5 h-5 text-fg'
                   fill='none'
                   stroke='currentColor'
                   viewBox='0 0 24 24'
@@ -3183,7 +3180,7 @@ export default function MusicClient({
               </button>
               <div className='flex flex-1 min-h-0 flex-col md:flex-row'>
                 {/* Cover / Meta */}
-                <div className='relative h-32 md:h-auto md:w-[380px] lg:w-[430px] xl:w-[480px] bg-[var(--tm-surface)] shrink-0 overflow-hidden'>
+                <div className='relative h-32 md:h-auto md:w-[380px] lg:w-[430px] xl:w-[480px] bg-surface shrink-0 overflow-hidden'>
                   {currentSong.pic && (
                     <div className='absolute inset-0'>
                       <img
@@ -3210,9 +3207,9 @@ export default function MusicClient({
                           className='w-full h-full object-cover'
                         />
                       ) : (
-                        <div className='w-full h-full bg-[var(--tm-surface)] flex items-center justify-center'>
+                        <div className='w-full h-full bg-surface flex items-center justify-center'>
                           <svg
-                            className='w-8 h-8 text-[color:var(--tm-muted)]'
+                            className='w-8 h-8 text-muted'
                             fill='currentColor'
                             viewBox='0 0 20 20'
                           >
@@ -3229,7 +3226,7 @@ export default function MusicClient({
                       />
                     </div>
                     <div className='mb-1 flex min-w-0 items-center justify-center gap-1.5'>
-                      <h2 className='min-w-0 truncate text-center text-base md:text-xl lg:text-2xl font-bold text-[color:var(--tm-text)]'>
+                      <h2 className='min-w-0 truncate text-center text-base md:text-xl lg:text-2xl font-bold text-fg'>
                         {currentSong.name}
                       </h2>
                       <SourcePill
@@ -3237,14 +3234,14 @@ export default function MusicClient({
                         variant='accent'
                       />
                     </div>
-                    <p className='pb-px text-center text-[13px] leading-5 text-[color:var(--tm-muted)] line-clamp-1 md:text-sm md:leading-6 lg:text-base lg:leading-7'>
+                    <p className='pb-px text-center text-[13px] leading-5 text-muted line-clamp-1 md:text-sm md:leading-6 lg:text-base lg:leading-7'>
                       {currentSong.artist}
                     </p>
                   </div>
                 </div>
 
                 {mobileLyricsView === 'vinyl' && (
-                  <div className='relative md:hidden flex-1 min-h-0 overflow-hidden bg-[var(--tm-surface)]'>
+                  <div className='relative md:hidden flex-1 min-h-0 overflow-hidden bg-surface'>
                     {currentSong.pic && (
                       <div className='absolute inset-0'>
                         <img
@@ -3281,11 +3278,11 @@ export default function MusicClient({
                           onClick={() => seekToLyric(line, index)}
                           className={`block w-full appearance-none border-0 bg-transparent p-0 text-center transition-all duration-300 outline-none ring-0 focus:outline-none focus:ring-0 active:outline-none active:ring-0 ${
                             index === currentLyricIndex
-                              ? 'text-[color:var(--tm-text)] text-lg md:text-xl lg:text-2xl font-bold scale-110 min-h-[44px] tm-press'
+                              ? 'text-fg text-lg md:text-xl lg:text-2xl font-bold scale-110 min-h-[44px] tm-press'
                               : index === currentLyricIndex - 1 ||
                                 index === currentLyricIndex + 1
-                              ? 'text-[color:var(--tm-muted)] text-base md:text-lg min-h-[44px] tm-press'
-                              : 'text-[color:var(--tm-muted)] text-sm md:text-base min-h-[44px] tm-press'
+                              ? 'text-muted text-base md:text-lg min-h-[44px] tm-press'
+                              : 'text-muted text-sm md:text-base min-h-[44px] tm-press'
                           }`}
                         >
                           <div>{line.text}</div>
@@ -3293,8 +3290,8 @@ export default function MusicClient({
                             <div
                               className={`mt-1 ${
                                 index === currentLyricIndex
-                                  ? 'text-[color:var(--tm-muted)] text-sm md:text-base lg:text-lg font-normal'
-                                  : 'text-[color:var(--tm-muted)] text-[13px] md:text-sm lg:text-base font-normal'
+                                  ? 'text-muted text-sm md:text-base lg:text-lg font-normal'
+                                  : 'text-muted text-[13px] md:text-sm lg:text-base font-normal'
                               }`}
                             >
                               {line.translation}
@@ -3305,10 +3302,10 @@ export default function MusicClient({
                     </div>
                   ) : (
                     <div className='text-center space-y-4 pt-10 md:pt-16 lg:pt-20'>
-                      <p className='text-[color:var(--tm-muted)] text-sm md:text-base'>
+                      <p className='text-muted text-sm md:text-base'>
                         暂无歌词
                       </p>
-                      <p className='text-[color:var(--tm-muted)] text-[13px] md:text-sm'>
+                      <p className='text-muted text-[13px] md:text-sm'>
                         纯音乐或歌词获取失败
                       </p>
                     </div>
@@ -3317,12 +3314,12 @@ export default function MusicClient({
               </div>
 
               {/* Mini Player Controls */}
-              <div className='border-t border-[var(--tm-line)] p-3 md:p-4 shrink-0'>
+              <div className='border-t border-line p-3 md:p-4 shrink-0'>
                 {/* 上排：播放控制按钮 */}
                 <div className='relative flex items-center justify-center gap-4 md:gap-6 mb-2 md:mb-3'>
                   <button
                     onClick={playPrev}
-                    className='text-[color:var(--tm-muted)] hover:text-[color:var(--tm-text)] transition-colors min-h-[44px] tm-press'
+                    className='text-muted hover:text-fg transition-colors min-h-[44px] tm-press'
                   >
                     <svg
                       className='w-5 h-5 md:w-6 md:h-6'
@@ -3334,7 +3331,7 @@ export default function MusicClient({
                   </button>
                   <button
                     onClick={togglePlay}
-                    className='w-10 h-10 md:w-12 md:h-12 rounded-full bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] flex items-center justify-center hover:opacity-90 transition-colors min-h-[44px] tm-press'
+                    className='w-10 h-10 md:w-12 md:h-12 rounded-full bg-fg text-inverse flex items-center justify-center hover:opacity-90 transition-colors min-h-[44px] tm-press'
                   >
                     {isPlaying ? (
                       <svg
@@ -3356,7 +3353,7 @@ export default function MusicClient({
                   </button>
                   <button
                     onClick={playNext}
-                    className='text-[color:var(--tm-muted)] hover:text-[color:var(--tm-text)] transition-colors min-h-[44px] tm-press'
+                    className='text-muted hover:text-fg transition-colors min-h-[44px] tm-press'
                   >
                     <svg
                       className='w-5 h-5 md:w-6 md:h-6'
@@ -3367,8 +3364,8 @@ export default function MusicClient({
                     </svg>
                   </button>
                   {showStreamBuffering && (
-                    <span className='absolute left-[calc(50%+4rem)] top-1/2 inline-flex -translate-y-1/2 items-center gap-1 whitespace-nowrap rounded-full bg-[var(--tm-surface-raised)] px-2 py-0.5 text-[13px] font-medium text-[color:var(--tm-text)] md:left-[calc(50%+5rem)]'>
-                      <span className='h-2 w-2 rounded-full bg-[var(--tm-text)] tm-skeleton' />
+                    <span className='absolute left-[calc(50%+4rem)] top-1/2 inline-flex -translate-y-1/2 items-center gap-1 whitespace-nowrap rounded-full bg-raised px-2 py-0.5 text-[13px] font-medium text-fg md:left-[calc(50%+5rem)]'>
+                      <span className='h-2 w-2 rounded-full bg-fg tm-skeleton' />
                       缓冲中
                     </span>
                   )}
@@ -3378,7 +3375,7 @@ export default function MusicClient({
                 <div className='flex items-center justify-center gap-3 md:gap-4 mb-2 md:mb-3'>
                   <button
                     onClick={() => setShowPlaylist(true)}
-                    className='text-[color:var(--tm-muted)] hover:text-[color:var(--tm-text)] transition-colors relative min-h-[44px] tm-press'
+                    className='text-muted hover:text-fg transition-colors relative min-h-[44px] tm-press'
                     title='播放列表'
                   >
                     <svg
@@ -3395,14 +3392,14 @@ export default function MusicClient({
                       />
                     </svg>
                     {playlist.length > 0 && (
-                      <span className='absolute -top-1 -right-1 w-3 h-3 bg-[var(--tm-surface-raised)] rounded-full text-[13px] text-[color:var(--tm-text)] flex items-center justify-center font-bold'>
+                      <span className='absolute -top-1 -right-1 w-3 h-3 bg-raised rounded-full text-[13px] text-fg flex items-center justify-center font-bold'>
                         {playlist.length > 9 ? '9+' : playlist.length}
                       </span>
                     )}
                   </button>
                   <button
                     onClick={downloadSong}
-                    className='text-[color:var(--tm-muted)] hover:text-[color:var(--tm-text)] transition-colors min-h-[44px] tm-press'
+                    className='text-muted hover:text-fg transition-colors min-h-[44px] tm-press'
                     title='下载歌曲'
                   >
                     <svg
@@ -3421,7 +3418,7 @@ export default function MusicClient({
                   </button>
                   <button
                     onClick={() => setShowQualityMenu(true)}
-                    className='px-2 py-0.5 rounded border text-[color:var(--tm-text)] border-[var(--tm-line)] bg-[var(--tm-surface-raised)] text-[13px] md:text-[13px] font-mono min-w-[32px] text-center hover:bg-[var(--tm-line)] transition-colors min-h-[44px] tm-press'
+                    className='px-2 py-0.5 rounded border text-fg border-line bg-raised text-[13px] md:text-[13px] font-mono min-w-[32px] text-center hover:bg-line transition-colors min-h-[44px] tm-press'
                     title='音质选择'
                   >
                     {getQualityLabel()}
@@ -3433,8 +3430,8 @@ export default function MusicClient({
                     }}
                     className={`relative transition-colors ${
                       sleepTimerEndAt
-                        ? 'text-[color:var(--tm-text)] hover:text-[color:var(--tm-text)] min-h-[44px] tm-press'
-                        : 'text-[color:var(--tm-muted)] hover:text-[color:var(--tm-text)] min-h-[44px] tm-press'
+                        ? 'text-fg hover:text-fg min-h-[44px] tm-press'
+                        : 'text-muted hover:text-fg min-h-[44px] tm-press'
                     }`}
                     title={
                       sleepTimerEndAt
@@ -3456,14 +3453,14 @@ export default function MusicClient({
                       />
                     </svg>
                     {sleepTimerEndAt && (
-                      <span className='absolute -bottom-2 left-1/2 -translate-x-1/2 text-[13px] font-medium leading-none text-[color:var(--tm-text)]'>
+                      <span className='absolute -bottom-2 left-1/2 -translate-x-1/2 text-[13px] font-medium leading-none text-fg'>
                         {Math.max(1, Math.ceil(sleepTimerRemaining / 60))}
                       </span>
                     )}
                   </button>
                   <button
                     onClick={toggleMode}
-                    className='text-[color:var(--tm-muted)] hover:text-[color:var(--tm-text)] transition-colors min-h-[44px] tm-press'
+                    className='text-muted hover:text-fg transition-colors min-h-[44px] tm-press'
                     title={
                       playMode === 'loop'
                         ? '列表循环'
@@ -3528,7 +3525,7 @@ export default function MusicClient({
                         e.stopPropagation();
                         setShowVolumeSlider(!showVolumeSlider);
                       }}
-                      className='text-[color:var(--tm-muted)] hover:text-[color:var(--tm-text)] transition-colors min-h-[44px] tm-press'
+                      className='text-muted hover:text-fg transition-colors min-h-[44px] tm-press'
                       title='音量'
                     >
                       <svg
@@ -3552,18 +3549,18 @@ export default function MusicClient({
                       }`}
                       onClick={(e) => e.stopPropagation()}
                     >
-                      <div className='bg-[var(--tm-surface)] backdrop-blur-sm rounded-lg p-3 shadow-xl border border-[var(--tm-line)]'>
+                      <div className='bg-surface backdrop-blur-sm rounded-lg p-3 shadow-xl border border-line'>
                         <div className='flex flex-col items-center gap-2'>
-                          <span className='text-[13px] text-[color:var(--tm-muted)] font-mono'>
+                          <span className='text-[13px] text-muted font-mono'>
                             {volume}
                           </span>
                           <div
-                            className='h-24 w-6 bg-[var(--tm-surface-raised)] rounded-full relative cursor-pointer select-none'
+                            className='h-24 w-6 bg-raised rounded-full relative cursor-pointer select-none'
                             onMouseDown={handleVolumeSliderInteraction}
                             onTouchStart={handleVolumeSliderInteraction}
                           >
                             <div
-                              className='absolute bottom-0 left-0 right-0 bg-[var(--tm-text)] rounded-full transition-all pointer-events-none'
+                              className='absolute bottom-0 left-0 right-0 bg-fg rounded-full transition-all pointer-events-none'
                               style={{ height: `${volume}%` }}
                             />
                           </div>
@@ -3582,8 +3579,8 @@ export default function MusicClient({
                       reverbEnabled ||
                       pitchRate !== 1 ||
                       surroundEnabled
-                        ? 'text-[color:var(--tm-text)] min-h-[44px] tm-press'
-                        : 'text-[color:var(--tm-muted)] hover:text-[color:var(--tm-text)] min-h-[44px] tm-press'
+                        ? 'text-fg min-h-[44px] tm-press'
+                        : 'text-muted hover:text-fg min-h-[44px] tm-press'
                     }`}
                     title='均衡器和音效'
                     aria-label='均衡器和音效'
@@ -3595,8 +3592,8 @@ export default function MusicClient({
                     onClick={toggleSpectrum}
                     className={`transition-colors ${
                       showSpectrum
-                        ? 'text-[color:var(--tm-text)] hover:text-[color:var(--tm-text)] min-h-[44px] tm-press'
-                        : 'text-[color:var(--tm-muted)] hover:text-[color:var(--tm-text)] min-h-[44px] tm-press'
+                        ? 'text-fg hover:text-fg min-h-[44px] tm-press'
+                        : 'text-muted hover:text-fg min-h-[44px] tm-press'
                     }`}
                     title={showSpectrum ? '隐藏音谱图' : '显示音谱图'}
                   >
@@ -3638,8 +3635,8 @@ export default function MusicClient({
                     }}
                     className={`transition-colors ${
                       showPiPLyrics
-                        ? 'text-[color:var(--tm-text)] hover:text-[color:var(--tm-text)] min-h-[44px] tm-press'
-                        : 'text-[color:var(--tm-muted)] hover:text-[color:var(--tm-text)] min-h-[44px] tm-press'
+                        ? 'text-fg hover:text-fg min-h-[44px] tm-press'
+                        : 'text-muted hover:text-fg min-h-[44px] tm-press'
                     }`}
                     title={showPiPLyrics ? '关闭画中画歌词' : '画中画歌词'}
                     disabled={!currentSong}
@@ -3661,7 +3658,7 @@ export default function MusicClient({
                         setShowAddToPlaylistModal(true);
                       }
                     }}
-                    className='text-[color:var(--tm-muted)] hover:text-[color:var(--tm-text)] transition-colors min-h-[44px] tm-press'
+                    className='text-muted hover:text-fg transition-colors min-h-[44px] tm-press'
                     title='添加到歌单'
                   >
                     <svg
@@ -3693,11 +3690,11 @@ export default function MusicClient({
                       <span className='invisible'>{formatTime(duration)}</span>
                     </div>
                   )}
-                  <div className='flex items-center gap-2 text-[13px] text-[color:var(--tm-muted)]'>
+                  <div className='flex items-center gap-2 text-[13px] text-muted'>
                     <span>{formatTime(currentTime)}</span>
-                    <div className='flex-1 h-1 bg-[var(--tm-surface-raised)] rounded-full overflow-hidden relative'>
+                    <div className='flex-1 h-1 bg-raised rounded-full overflow-hidden relative'>
                       <div
-                        className='relative z-10 h-full bg-[var(--tm-text)] transition-all pointer-events-none'
+                        className='relative z-10 h-full bg-fg transition-all pointer-events-none'
                         style={{ width: `${progress}%` }}
                       />
                       {showStreamBuffering && (
@@ -3722,7 +3719,7 @@ export default function MusicClient({
 
         {/* Playlist Modal */}
         {showPlaylist && (
-          <div className='fixed inset-0 bg-[color:color-mix(in_srgb,var(--tm-room-cinema-bg)_90%,transparent)] backdrop-blur-sm z-[100] flex items-center justify-center p-4'>
+          <div className='fixed inset-0 bg-ink/90 backdrop-blur-sm z-[100] flex items-center justify-center p-4'>
             <div className={MUSIC_QUEUE_SHELL}>
               <div className={MUSIC_QUEUE_HEAD}>
                 <div className='flex items-center gap-2.5'>
@@ -3803,21 +3800,21 @@ export default function MusicClient({
         {/* Sleep Timer Menu */}
         {showSleepTimerMenu && (
           <div
-            className='fixed inset-0 bg-[color:color-mix(in_srgb,var(--tm-room-cinema-bg)_50%,transparent)] backdrop-blur-sm z-[110] flex items-end justify-center'
+            className='fixed inset-0 bg-ink/50 backdrop-blur-sm z-[110] flex items-end justify-center'
             onClick={() => setShowSleepTimerMenu(false)}
           >
             <div
-              className='w-full max-w-md bg-[var(--tm-surface)] rounded-t-2xl border-t border-[var(--tm-line)] shadow-2xl animate-slide-up'
+              className='w-full max-w-md bg-surface rounded-t-2xl border-t border-line shadow-2xl animate-slide-up'
               onClick={(e) => e.stopPropagation()}
             >
-              <div className='relative p-4 border-b border-[var(--tm-line)]'>
-                <h3 className='text-lg font-bold text-[color:var(--tm-text)] text-center'>
+              <div className='relative p-4 border-b border-line'>
+                <h3 className='text-lg font-bold text-fg text-center'>
                   睡眠定时
                 </h3>
                 <button
                   type='button'
                   onClick={() => setShowSleepTimerMenu(false)}
-                  className='absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-[var(--tm-surface-raised)] text-[color:var(--tm-muted)] transition-colors hover:bg-[var(--tm-line)] hover:text-[color:var(--tm-text)] min-h-[44px] tm-press'
+                  className='absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-raised text-muted transition-colors hover:bg-line hover:text-fg min-h-[44px] tm-press'
                   title='关闭'
                 >
                   <svg
@@ -3834,7 +3831,7 @@ export default function MusicClient({
                     />
                   </svg>
                 </button>
-                <p className='mt-1 text-center text-[13px] text-[color:var(--tm-muted)]'>
+                <p className='mt-1 text-center text-[13px] text-muted'>
                   {sleepTimerEndAt
                     ? `剩余 ${formatSleepTimer(sleepTimerRemaining)} 后暂停播放`
                     : '选择倒计时时长，到点后自动暂停'}
@@ -3846,15 +3843,15 @@ export default function MusicClient({
                   <button
                     key={minutes}
                     onClick={() => setSleepTimer(minutes)}
-                    className='rounded-lg bg-[var(--tm-surface-raised)] p-4 text-center text-sm font-medium text-[color:var(--tm-text)] transition-colors hover:bg-[var(--tm-line)] hover:text-[color:var(--tm-text)] min-h-[44px] tm-press'
+                    className='rounded-lg bg-raised p-4 text-center text-sm font-medium text-fg transition-colors hover:bg-line hover:text-fg min-h-[44px] tm-press'
                   >
                     {minutes} 分钟
                   </button>
                 ))}
               </div>
 
-              <div className='mx-4 mb-4 rounded-xl border border-[var(--tm-line)] bg-[var(--tm-surface-raised)] p-4'>
-                <div className='mb-3 text-center text-sm font-medium text-[color:var(--tm-text)]'>
+              <div className='mx-4 mb-4 rounded-xl border border-line bg-raised p-4'>
+                <div className='mb-3 text-center text-sm font-medium text-fg'>
                   自定义时间
                 </div>
                 <div className='grid grid-cols-2 gap-3'>
@@ -3875,14 +3872,14 @@ export default function MusicClient({
                     },
                   ].map((picker) => (
                     <div key={picker.label} className='block'>
-                      <span className='mb-2 block text-center text-[13px] text-[color:var(--tm-muted)]'>
+                      <span className='mb-2 block text-center text-[13px] text-muted'>
                         {picker.label}
                       </span>
                       <div className='relative'>
                         <div
                           ref={picker.ref}
                           onScroll={picker.onScroll}
-                          className='scrollbar-hide overflow-y-auto rounded-xl border border-[var(--tm-line)] bg-[var(--tm-surface)] py-[80px] text-[color:var(--tm-text)]'
+                          className='scrollbar-hide overflow-y-auto rounded-xl border border-line bg-surface py-[80px] text-fg'
                           style={{
                             height: `${sleepPickerHeight}px`,
                             scrollbarWidth: 'none',
@@ -3917,8 +3914,8 @@ export default function MusicClient({
                                 }}
                                 className={`flex w-full items-center justify-center text-sm transition-colors ${
                                   isActive
-                                    ? 'text-[color:var(--tm-text)] min-h-[44px] tm-press'
-                                    : 'text-[color:var(--tm-muted)] min-h-[44px] tm-press'
+                                    ? 'text-fg min-h-[44px] tm-press'
+                                    : 'text-muted min-h-[44px] tm-press'
                                 }`}
                                 style={{
                                   height: `${sleepPickerItemHeight}px`,
@@ -3931,18 +3928,18 @@ export default function MusicClient({
                           })}
                         </div>
                         <div
-                          className='pointer-events-none absolute inset-x-0 top-1/2 -translate-y-1/2 border-y border-[var(--tm-line)] bg-[var(--tm-surface-raised)]'
+                          className='pointer-events-none absolute inset-x-0 top-1/2 -translate-y-1/2 border-y border-line bg-raised'
                           style={{ height: `${sleepPickerItemHeight}px` }}
                         />
-                        <div className='pointer-events-none absolute inset-x-0 top-0 h-1/2 bg-[var(--tm-surface)] to-transparent' />
-                        <div className='pointer-events-none absolute inset-x-0 bottom-0 h-1/2 bg-[var(--tm-surface)] to-transparent' />
+                        <div className='pointer-events-none absolute inset-x-0 top-0 h-1/2 bg-surface to-transparent' />
+                        <div className='pointer-events-none absolute inset-x-0 bottom-0 h-1/2 bg-surface to-transparent' />
                       </div>
                     </div>
                   ))}
                 </div>
                 <button
                   onClick={setCustomSleepTimer}
-                  className='mt-4 w-full rounded-lg bg-[var(--tm-text)] p-3 text-sm font-medium text-[color:var(--tm-accent-contrast)] transition-colors hover:opacity-90 disabled:cursor-not-allowed disabled:bg-[var(--tm-surface)] disabled:text-[color:var(--tm-accent-contrast)] min-h-[44px] tm-press'
+                  className='mt-4 w-full rounded-lg bg-fg p-3 text-sm font-medium text-inverse transition-colors hover:opacity-90 disabled:cursor-not-allowed disabled:bg-surface disabled:text-inverse min-h-[44px] tm-press'
                   disabled={customSleepHours === 0 && customSleepMinutes === 0}
                 >
                   {customSleepHours === 0 && customSleepMinutes === 0
@@ -3960,13 +3957,13 @@ export default function MusicClient({
               <div className='grid grid-cols-2 gap-2 px-4 pb-4'>
                 <button
                   onClick={() => setShowSleepTimerMenu(false)}
-                  className='w-full rounded-lg border border-[var(--tm-line)] bg-[var(--tm-surface-raised)] p-3 text-sm font-medium text-[color:var(--tm-muted)] transition-colors hover:bg-[var(--tm-line)] disabled:cursor-not-allowed disabled:opacity-50 min-h-[44px] tm-press'
+                  className='w-full rounded-lg border border-line bg-raised p-3 text-sm font-medium text-muted transition-colors hover:bg-line disabled:cursor-not-allowed disabled:opacity-50 min-h-[44px] tm-press'
                 >
                   返回
                 </button>
                 <button
                   onClick={cancelSleepTimer}
-                  className='w-full rounded-lg border border-[var(--tm-line)] bg-[var(--tm-surface-raised)] p-3 text-sm font-medium text-[color:var(--tm-muted)] transition-colors hover:bg-[var(--tm-line)] disabled:cursor-not-allowed disabled:opacity-50 min-h-[44px] tm-press'
+                  className='w-full rounded-lg border border-line bg-raised p-3 text-sm font-medium text-muted transition-colors hover:bg-line disabled:cursor-not-allowed disabled:opacity-50 min-h-[44px] tm-press'
                   disabled={!sleepTimerEndAt}
                 >
                   关闭定时
@@ -3978,22 +3975,22 @@ export default function MusicClient({
 
         {showAudioEffectsMenu && (
           <div
-            className='fixed inset-0 bg-[color:color-mix(in_srgb,var(--tm-room-cinema-bg)_60%,transparent)] backdrop-blur-sm z-[100] flex items-center justify-center p-4'
+            className='fixed inset-0 bg-ink/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4'
             onClick={() => setShowAudioEffectsMenu(false)}
           >
             <div
-              className='relative w-full max-w-5xl max-h-[90vh] bg-[var(--tm-surface)] rounded-2xl border border-[var(--tm-line)] shadow-2xl overflow-hidden'
+              className='relative w-full max-w-5xl max-h-[90vh] bg-surface rounded-2xl border border-line shadow-2xl overflow-hidden'
               onClick={(e) => e.stopPropagation()}
             >
-              <div className='p-5 border-b border-[var(--tm-line)] flex items-center justify-between'>
+              <div className='p-5 border-b border-line flex items-center justify-between'>
                 <div>
-                  <h3 className='text-lg font-bold text-[color:var(--tm-text)]'>
+                  <h3 className='text-lg font-bold text-fg'>
                     均衡器与音效调节
                   </h3>
                 </div>
                 <button
                   onClick={() => setShowAudioEffectsMenu(false)}
-                  className='w-8 h-8 rounded-lg text-[color:var(--tm-muted)] hover:text-[color:var(--tm-text)] hover:bg-[var(--tm-line)] min-h-[44px] tm-press'
+                  className='w-8 h-8 rounded-lg text-muted hover:text-fg hover:bg-line min-h-[44px] tm-press'
                 >
                   ✕
                 </button>
@@ -4003,30 +4000,30 @@ export default function MusicClient({
                   <section>
                     <div className='flex items-center justify-between mb-4'>
                       <div>
-                        <h4 className='text-sm font-bold text-[color:var(--tm-text)]'>
+                        <h4 className='text-sm font-bold text-fg'>
                           10 段均衡器
                         </h4>
                       </div>
-                      <label className='flex items-center gap-2 text-[13px] text-[color:var(--tm-muted)]'>
+                      <label className='flex items-center gap-2 text-[13px] text-muted'>
                         <input
                           type='checkbox'
                           checked={equalizerEnabled}
                           onChange={(e) =>
                             setEqualizerEnabled(e.target.checked)
                           }
-                          className='h-4 w-4 accent-[var(--tm-text)]'
+                          className='h-4 w-4 accent-fg'
                         />
                         启用 EQ
                       </label>
                     </div>
-                    <div className='rounded-xl border border-[var(--tm-line)] p-4 overflow-x-auto overscroll-x-contain'>
+                    <div className='rounded-xl border border-line p-4 overflow-x-auto overscroll-x-contain'>
                       <div className='min-w-[760px] grid grid-cols-10 gap-3 items-end h-56 sm:h-64'>
                         {EQ_BANDS.map((band, index) => (
                           <div
                             key={band.frequency}
                             className='h-full min-w-0 flex flex-col items-center gap-2'
                           >
-                            <span className='text-[13px] font-mono text-[color:var(--tm-muted)]'>
+                            <span className='text-[13px] font-mono text-muted'>
                               {(eqGains[index] || 0) > 0 ? '+' : ''}
                               {(eqGains[index] || 0).toFixed(1)}
                             </span>
@@ -4047,10 +4044,10 @@ export default function MusicClient({
                                   );
                                 }}
                                 disabled={!equalizerEnabled}
-                                className='w-40 sm:w-52 h-5 -rotate-90 accent-[var(--tm-text)] [direction:rtl] disabled:opacity-40'
+                                className='w-40 sm:w-52 h-5 -rotate-90 accent-fg [direction:rtl] disabled:opacity-40'
                               />
                             </div>
-                            <span className='text-[13px] font-mono text-[color:var(--tm-muted)]'>
+                            <span className='text-[13px] font-mono text-muted'>
                               {band.label}
                             </span>
                           </div>
@@ -4059,12 +4056,10 @@ export default function MusicClient({
                     </div>
                     <div className='mt-5'>
                       <div className='flex items-center justify-between mb-3'>
-                        <h4 className='text-sm font-bold text-[color:var(--tm-text)]'>
-                          预设
-                        </h4>
+                        <h4 className='text-sm font-bold text-fg'>预设</h4>
                         <button
                           onClick={() => applyEqPreset('Flat')}
-                          className='text-[13px] text-[color:var(--tm-text)] hover:text-[color:var(--tm-text)] min-h-[44px] tm-press'
+                          className='text-[13px] text-fg hover:text-fg min-h-[44px] tm-press'
                         >
                           Flat 重置
                         </button>
@@ -4076,8 +4071,8 @@ export default function MusicClient({
                             onClick={() => applyEqPreset(name)}
                             className={`px-3 py-1.5 rounded-lg text-[13px] transition-colors ${
                               eqPreset === name
-                                ? 'bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] border border-[var(--tm-line)] text-[color:var(--tm-accent-contrast)] min-h-[44px] tm-press'
-                                : 'bg-[var(--tm-surface-raised)] text-[color:var(--tm-muted)] border border-[var(--tm-line)] hover:bg-[var(--tm-line)] min-h-[44px] tm-press'
+                                ? 'bg-fg text-inverse border border-line min-h-[44px] tm-press'
+                                : 'bg-raised text-muted border border-line hover:bg-line min-h-[44px] tm-press'
                             }`}
                           >
                             {name}
@@ -4087,13 +4082,13 @@ export default function MusicClient({
                     </div>
                   </section>
                   <aside className='space-y-5'>
-                    <section className='rounded-xl border border-[var(--tm-line)] bg-[var(--tm-surface-raised)] p-4'>
+                    <section className='rounded-xl border border-line bg-raised p-4'>
                       <div className='flex items-center justify-between'>
                         <div>
-                          <h4 className='text-sm font-bold text-[color:var(--tm-text)]'>
+                          <h4 className='text-sm font-bold text-fg'>
                             响度增强
                           </h4>
-                          <p className='text-[13px] text-[color:var(--tm-muted)] mt-1'>
+                          <p className='text-[13px] text-muted mt-1'>
                             轻微压缩，增强人声和细节
                           </p>
                         </div>
@@ -4101,17 +4096,17 @@ export default function MusicClient({
                           type='checkbox'
                           checked={loudnessEnabled}
                           onChange={(e) => setLoudnessEnabled(e.target.checked)}
-                          className='h-4 w-4 accent-[var(--tm-text)]'
+                          className='h-4 w-4 accent-fg'
                         />
                       </div>
                     </section>
-                    <section className='rounded-xl border border-[var(--tm-line)] bg-[var(--tm-surface-raised)] p-4'>
+                    <section className='rounded-xl border border-line bg-raised p-4'>
                       <div className='flex items-center justify-between mb-3'>
                         <div>
-                          <h4 className='text-sm font-bold text-[color:var(--tm-text)]'>
+                          <h4 className='text-sm font-bold text-fg'>
                             环境混响音效
                           </h4>
-                          <p className='text-[13px] text-[color:var(--tm-muted)] mt-1'>
+                          <p className='text-[13px] text-muted mt-1'>
                             模拟不同空间的回声效果
                           </p>
                         </div>
@@ -4119,7 +4114,7 @@ export default function MusicClient({
                           type='checkbox'
                           checked={reverbEnabled}
                           onChange={(e) => setReverbEnabled(e.target.checked)}
-                          className='h-4 w-4 accent-[var(--tm-text)]'
+                          className='h-4 w-4 accent-fg'
                         />
                       </div>
                       <div className='flex flex-wrap gap-2'>
@@ -4144,15 +4139,15 @@ export default function MusicClient({
                             }}
                             className={`rounded-lg border px-2.5 py-1 text-[13px] ${
                               reverbPreset === id
-                                ? 'border-[var(--tm-line)] bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] text-[color:var(--tm-accent-contrast)] min-h-[44px] tm-press'
-                                : 'border-[var(--tm-line)] bg-[var(--tm-surface-raised)] text-[color:var(--tm-muted)] hover:bg-[var(--tm-line)] min-h-[44px] tm-press'
+                                ? 'border-line bg-fg text-inverse min-h-[44px] tm-press'
+                                : 'border-line bg-raised text-muted hover:bg-line min-h-[44px] tm-press'
                             }`}
                           >
                             {preset.label}
                           </button>
                         ))}
                       </div>
-                      <label className='mt-3 block text-[13px] text-[color:var(--tm-muted)]'>
+                      <label className='mt-3 block text-[13px] text-muted'>
                         原始音量 {reverbMainGain}%
                         <input
                           type='range'
@@ -4163,10 +4158,10 @@ export default function MusicClient({
                             setReverbMainGain(Number(e.target.value))
                           }
                           disabled={!reverbEnabled}
-                          className='mt-2 w-full accent-[var(--tm-text)] disabled:opacity-40'
+                          className='mt-2 w-full accent-fg disabled:opacity-40'
                         />
                       </label>
-                      <label className='mt-3 block text-[13px] text-[color:var(--tm-muted)]'>
+                      <label className='mt-3 block text-[13px] text-muted'>
                         环境音效 {reverbMix}%
                         <input
                           type='range'
@@ -4175,23 +4170,23 @@ export default function MusicClient({
                           value={reverbMix}
                           onChange={(e) => setReverbMix(Number(e.target.value))}
                           disabled={!reverbEnabled}
-                          className='mt-2 w-full accent-[var(--tm-text)] disabled:opacity-40'
+                          className='mt-2 w-full accent-fg disabled:opacity-40'
                         />
                       </label>
                     </section>
-                    <section className='rounded-xl border border-[var(--tm-line)] bg-[var(--tm-surface-raised)] p-4'>
+                    <section className='rounded-xl border border-line bg-raised p-4'>
                       <div className='flex items-center justify-between mb-3'>
                         <div>
-                          <h4 className='text-sm font-bold text-[color:var(--tm-text)]'>
+                          <h4 className='text-sm font-bold text-fg'>
                             音调升降调节
                           </h4>
-                          <p className='text-[13px] text-[color:var(--tm-muted)] mt-1'>
+                          <p className='text-[13px] text-muted mt-1'>
                             当前 {pitchRate.toFixed(2)}x
                           </p>
                         </div>
                         <button
                           onClick={() => setPitchRate(1)}
-                          className='text-[13px] text-[color:var(--tm-text)] min-h-[44px] tm-press'
+                          className='text-[13px] text-fg min-h-[44px] tm-press'
                         >
                           重置
                         </button>
@@ -4203,21 +4198,21 @@ export default function MusicClient({
                         step='0.01'
                         value={pitchRate}
                         onChange={(e) => setPitchRate(Number(e.target.value))}
-                        className='w-full accent-[var(--tm-text)]'
+                        className='w-full accent-fg'
                       />
-                      <div className='mt-2 flex justify-between text-[13px] text-[color:var(--tm-muted)]'>
+                      <div className='mt-2 flex justify-between text-[13px] text-muted'>
                         <span>低</span>
                         <span>原速</span>
                         <span>高</span>
                       </div>
                     </section>
-                    <section className='rounded-xl border border-[var(--tm-line)] bg-[var(--tm-surface-raised)] p-4'>
+                    <section className='rounded-xl border border-line bg-raised p-4'>
                       <div className='flex items-center justify-between mb-3'>
                         <div>
-                          <h4 className='text-sm font-bold text-[color:var(--tm-text)]'>
+                          <h4 className='text-sm font-bold text-fg'>
                             3D 立体环绕
                           </h4>
-                          <p className='text-[13px] text-[color:var(--tm-muted)] mt-1'>
+                          <p className='text-[13px] text-muted mt-1'>
                             需使用耳机，模拟声源环绕移动
                           </p>
                         </div>
@@ -4225,10 +4220,10 @@ export default function MusicClient({
                           type='checkbox'
                           checked={surroundEnabled}
                           onChange={(e) => setSurroundEnabled(e.target.checked)}
-                          className='h-4 w-4 accent-[var(--tm-text)]'
+                          className='h-4 w-4 accent-fg'
                         />
                       </div>
-                      <label className='block text-[13px] text-[color:var(--tm-muted)]'>
+                      <label className='block text-[13px] text-muted'>
                         旋转速度 {surroundSpeed}
                         <input
                           type='range'
@@ -4239,10 +4234,10 @@ export default function MusicClient({
                             setSurroundSpeed(Number(e.target.value))
                           }
                           disabled={!surroundEnabled}
-                          className='mt-2 w-full accent-[var(--tm-text)] disabled:opacity-40'
+                          className='mt-2 w-full accent-fg disabled:opacity-40'
                         />
                       </label>
-                      <label className='block mt-3 text-[13px] text-[color:var(--tm-muted)]'>
+                      <label className='block mt-3 text-[13px] text-muted'>
                         声场距离 {surroundDistance}
                         <input
                           type='range'
@@ -4253,13 +4248,13 @@ export default function MusicClient({
                             setSurroundDistance(Number(e.target.value))
                           }
                           disabled={!surroundEnabled}
-                          className='mt-2 w-full accent-[var(--tm-text)] disabled:opacity-40'
+                          className='mt-2 w-full accent-fg disabled:opacity-40'
                         />
                       </label>
                     </section>
                     <button
                       onClick={() => setShowAudioEffectsMenu(false)}
-                      className='w-full rounded-xl bg-[var(--tm-text)] p-3 text-sm font-medium text-[color:var(--tm-accent-contrast)] hover:opacity-90 min-h-[44px] tm-press'
+                      className='w-full rounded-xl bg-fg p-3 text-sm font-medium text-inverse hover:opacity-90 min-h-[44px] tm-press'
                     >
                       完成
                     </button>
@@ -4273,16 +4268,16 @@ export default function MusicClient({
         {/* Quality Selection Menu */}
         {showQualityMenu && (
           <div
-            className='fixed inset-0 bg-[color:color-mix(in_srgb,var(--tm-room-cinema-bg)_50%,transparent)] backdrop-blur-sm z-[100] flex items-end justify-center'
+            className='fixed inset-0 bg-ink/50 backdrop-blur-sm z-[100] flex items-end justify-center'
             onClick={() => setShowQualityMenu(false)}
           >
             <div
-              className='w-full max-w-md bg-[var(--tm-surface)] rounded-t-2xl border-t border-[var(--tm-line)] shadow-2xl animate-slide-up'
+              className='w-full max-w-md bg-surface rounded-t-2xl border-t border-line shadow-2xl animate-slide-up'
               onClick={(e) => e.stopPropagation()}
             >
               {/* Header */}
-              <div className='p-4 border-b border-[var(--tm-line)]'>
-                <h3 className='text-lg font-bold text-[color:var(--tm-text)] text-center'>
+              <div className='p-4 border-b border-line'>
+                <h3 className='text-lg font-bold text-fg text-center'>
                   选择音质
                 </h3>
               </div>
@@ -4295,30 +4290,24 @@ export default function MusicClient({
                   }}
                   className={`w-full p-4 rounded-lg flex items-center justify-between transition-colors ${
                     quality === '128k'
-                      ? 'bg-[var(--tm-surface-raised)] border border-[var(--tm-line)] min-h-[44px] tm-press'
-                      : 'bg-[var(--tm-surface-raised)] hover:bg-[var(--tm-line)] min-h-[44px] tm-press'
+                      ? 'bg-raised border border-line min-h-[44px] tm-press'
+                      : 'bg-raised hover:bg-line min-h-[44px] tm-press'
                   }`}
                 >
                   <div className='flex items-center gap-3'>
                     <div
                       className={`w-2 h-2 rounded-full ${
-                        quality === '128k'
-                          ? 'bg-[var(--tm-text)]'
-                          : 'bg-[var(--tm-surface)]'
+                        quality === '128k' ? 'bg-fg' : 'bg-surface'
                       }`}
                     />
                     <div className='text-left'>
-                      <div className='text-[color:var(--tm-text)] font-medium'>
-                        标准音质
-                      </div>
-                      <div className='text-[13px] text-[color:var(--tm-muted)]'>
-                        128kbps
-                      </div>
+                      <div className='text-fg font-medium'>标准音质</div>
+                      <div className='text-[13px] text-muted'>128kbps</div>
                     </div>
                   </div>
                   {quality === '128k' && (
                     <svg
-                      className='w-5 h-5 text-[color:var(--tm-text)]'
+                      className='w-5 h-5 text-fg'
                       fill='currentColor'
                       viewBox='0 0 20 20'
                     >
@@ -4337,30 +4326,24 @@ export default function MusicClient({
                   }}
                   className={`w-full p-4 rounded-lg flex items-center justify-between transition-colors ${
                     quality === '320k'
-                      ? 'bg-[var(--tm-surface-raised)] border border-[var(--tm-line)] min-h-[44px] tm-press'
-                      : 'bg-[var(--tm-surface-raised)] hover:bg-[var(--tm-line)] min-h-[44px] tm-press'
+                      ? 'bg-raised border border-line min-h-[44px] tm-press'
+                      : 'bg-raised hover:bg-line min-h-[44px] tm-press'
                   }`}
                 >
                   <div className='flex items-center gap-3'>
                     <div
                       className={`w-2 h-2 rounded-full ${
-                        quality === '320k'
-                          ? 'bg-[var(--tm-text)]'
-                          : 'bg-[var(--tm-surface)]'
+                        quality === '320k' ? 'bg-fg' : 'bg-surface'
                       }`}
                     />
                     <div className='text-left'>
-                      <div className='text-[color:var(--tm-text)] font-medium'>
-                        高品质 HQ
-                      </div>
-                      <div className='text-[13px] text-[color:var(--tm-muted)]'>
-                        320kbps
-                      </div>
+                      <div className='text-fg font-medium'>高品质 HQ</div>
+                      <div className='text-[13px] text-muted'>320kbps</div>
                     </div>
                   </div>
                   {quality === '320k' && (
                     <svg
-                      className='w-5 h-5 text-[color:var(--tm-text)]'
+                      className='w-5 h-5 text-fg'
                       fill='currentColor'
                       viewBox='0 0 20 20'
                     >
@@ -4379,30 +4362,24 @@ export default function MusicClient({
                   }}
                   className={`w-full p-4 rounded-lg flex items-center justify-between transition-colors ${
                     quality === 'flac'
-                      ? 'bg-[var(--tm-surface-raised)] border border-[var(--tm-line)] min-h-[44px] tm-press'
-                      : 'bg-[var(--tm-surface-raised)] hover:bg-[var(--tm-line)] min-h-[44px] tm-press'
+                      ? 'bg-raised border border-line min-h-[44px] tm-press'
+                      : 'bg-raised hover:bg-line min-h-[44px] tm-press'
                   }`}
                 >
                   <div className='flex items-center gap-3'>
                     <div
                       className={`w-2 h-2 rounded-full ${
-                        quality === 'flac'
-                          ? 'bg-[var(--tm-text)]'
-                          : 'bg-[var(--tm-surface)]'
+                        quality === 'flac' ? 'bg-fg' : 'bg-surface'
                       }`}
                     />
                     <div className='text-left'>
-                      <div className='text-[color:var(--tm-text)] font-medium'>
-                        无损音质 SQ
-                      </div>
-                      <div className='text-[13px] text-[color:var(--tm-muted)]'>
-                        FLAC
-                      </div>
+                      <div className='text-fg font-medium'>无损音质 SQ</div>
+                      <div className='text-[13px] text-muted'>FLAC</div>
                     </div>
                   </div>
                   {quality === 'flac' && (
                     <svg
-                      className='w-5 h-5 text-[color:var(--tm-text)]'
+                      className='w-5 h-5 text-fg'
                       fill='currentColor'
                       viewBox='0 0 20 20'
                     >
@@ -4421,30 +4398,24 @@ export default function MusicClient({
                   }}
                   className={`w-full p-4 rounded-lg flex items-center justify-between transition-colors ${
                     quality === 'flac24bit'
-                      ? 'bg-[var(--tm-surface-raised)] border border-[var(--tm-line)] min-h-[44px] tm-press'
-                      : 'bg-[var(--tm-surface-raised)] hover:bg-[var(--tm-line)] min-h-[44px] tm-press'
+                      ? 'bg-raised border border-line min-h-[44px] tm-press'
+                      : 'bg-raised hover:bg-line min-h-[44px] tm-press'
                   }`}
                 >
                   <div className='flex items-center gap-3'>
                     <div
                       className={`w-2 h-2 rounded-full ${
-                        quality === 'flac24bit'
-                          ? 'bg-[var(--tm-text)]'
-                          : 'bg-[var(--tm-surface)]'
+                        quality === 'flac24bit' ? 'bg-fg' : 'bg-surface'
                       }`}
                     />
                     <div className='text-left'>
-                      <div className='text-[color:var(--tm-text)] font-medium'>
-                        Hi-Res音质 HR
-                      </div>
-                      <div className='text-[13px] text-[color:var(--tm-muted)]'>
-                        FLAC 24bit
-                      </div>
+                      <div className='text-fg font-medium'>Hi-Res音质 HR</div>
+                      <div className='text-[13px] text-muted'>FLAC 24bit</div>
                     </div>
                   </div>
                   {quality === 'flac24bit' && (
                     <svg
-                      className='w-5 h-5 text-[color:var(--tm-text)]'
+                      className='w-5 h-5 text-fg'
                       fill='currentColor'
                       viewBox='0 0 20 20'
                     >
@@ -4462,7 +4433,7 @@ export default function MusicClient({
               <div className='p-4 pt-0'>
                 <button
                   onClick={() => setShowQualityMenu(false)}
-                  className='w-full p-3 rounded-lg bg-[var(--tm-surface-raised)] hover:bg-[var(--tm-line)] text-[color:var(--tm-text)] transition-colors min-h-[44px] tm-press'
+                  className='w-full p-3 rounded-lg bg-raised hover:bg-line text-fg transition-colors min-h-[44px] tm-press'
                 >
                   取消
                 </button>
@@ -4510,22 +4481,22 @@ export default function MusicClient({
         {confirmModal.isOpen &&
           createPortal(
             <div
-              className='music-theme-portal fixed inset-0 bg-[color:color-mix(in_srgb,var(--tm-room-cinema-bg)_50%,transparent)] backdrop-blur-sm flex items-center justify-center p-4'
+              className='music-theme-portal fixed inset-0 bg-ink/50 backdrop-blur-sm flex items-center justify-center p-4'
               style={{ zIndex: 99999 }}
               onClick={confirmModal.onCancel}
             >
               <div
-                className='bg-[var(--tm-surface)] rounded-xl max-w-md w-full border border-[var(--tm-line)]'
+                className='bg-surface rounded-xl max-w-md w-full border border-line'
                 onClick={(e) => e.stopPropagation()}
               >
                 <div className='p-6'>
                   <div className='flex items-center justify-between mb-4'>
-                    <h3 className='text-lg font-medium text-[color:var(--tm-text)]'>
+                    <h3 className='text-lg font-medium text-fg'>
                       {confirmModal.title}
                     </h3>
                     <button
                       onClick={confirmModal.onCancel}
-                      className='text-[color:var(--tm-muted)] hover:text-[color:var(--tm-text)] transition-colors min-h-[44px] tm-press'
+                      className='text-muted hover:text-fg transition-colors min-h-[44px] tm-press'
                     >
                       <svg
                         className='w-5 h-5'
@@ -4544,21 +4515,19 @@ export default function MusicClient({
                   </div>
 
                   <div className='mb-6'>
-                    <p className='text-sm text-[color:var(--tm-muted)]'>
-                      {confirmModal.message}
-                    </p>
+                    <p className='text-sm text-muted'>{confirmModal.message}</p>
                   </div>
 
                   <div className='flex justify-end space-x-3'>
                     <button
                       onClick={confirmModal.onCancel}
-                      className='px-4 py-2 bg-[var(--tm-surface)] hover:bg-[var(--tm-line)] text-[color:var(--tm-text)] rounded-lg transition-colors min-h-[44px] tm-press'
+                      className='px-4 py-2 bg-surface hover:bg-line text-fg rounded-lg transition-colors min-h-[44px] tm-press'
                     >
                       取消
                     </button>
                     <button
                       onClick={confirmModal.onConfirm}
-                      className='px-4 py-2 bg-[var(--tm-text)] hover:opacity-90 text-[color:var(--tm-accent-contrast)] rounded-lg transition-colors flex items-center gap-2 min-h-[44px] tm-press'
+                      className='px-4 py-2 bg-fg hover:opacity-90 text-inverse rounded-lg transition-colors flex items-center gap-2 min-h-[44px] tm-press'
                     >
                       确定
                     </button>

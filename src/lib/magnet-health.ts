@@ -9,6 +9,7 @@
 
 import { createHash, randomBytes } from 'crypto';
 import dgram from 'dgram';
+
 import { safeFetch } from './safe-http';
 
 export type MagnetHealthLevel = 'good' | 'ok' | 'risk' | 'unknown';
@@ -125,7 +126,10 @@ function bdecode(data: Buffer, idx = 0): [any, number] {
     // i...e
     const end = data.indexOf(101, idx + 1); // 'e'
     if (end < 0) throw new Error('invalid bencode int');
-    return [parseInt(data.subarray(idx + 1, end).toString('ascii'), 10), end + 1];
+    return [
+      parseInt(data.subarray(idx + 1, end).toString('ascii'), 10),
+      end + 1,
+    ];
   }
   if (mark === 108) {
     // l...e
@@ -185,7 +189,12 @@ function bdecodeTorrent(data: Buffer): { root: any; infoRaw: Buffer | null } {
   let infoRaw: Buffer | null = null;
   while (data[i] !== 101) {
     const [k, kNext] = bdecode(data, i);
-    const key = typeof k === 'string' ? k : Buffer.isBuffer(k) ? k.toString('latin1') : String(k);
+    const key =
+      typeof k === 'string'
+        ? k
+        : Buffer.isBuffer(k)
+        ? k.toString('latin1')
+        : String(k);
     if (key === 'info') {
       const valueStart = kNext;
       const [, valueEnd] = bdecode(data, valueStart);
@@ -210,12 +219,18 @@ function bufferishToString(v: any): string {
 
 // ---------- magnet / torrent parse ----------
 
-export function parseMagnetUri(magnet: string): { infoHash: string; trackers: string[] } {
+export function parseMagnetUri(magnet: string): {
+  infoHash: string;
+  trackers: string[];
+} {
   const raw = magnet.trim();
   if (!raw.toLowerCase().startsWith('magnet:')) {
     throw new Error('不是有效的 magnet 链接');
   }
-  const query = raw.indexOf('?') >= 0 ? raw.slice(raw.indexOf('?') + 1) : raw.slice('magnet:'.length);
+  const query =
+    raw.indexOf('?') >= 0
+      ? raw.slice(raw.indexOf('?') + 1)
+      : raw.slice('magnet:'.length);
   const parts = query.split('&');
   let infoHash = '';
   const trackers: string[] = [];
@@ -279,7 +294,8 @@ async function fetchBinary(
   proxy?: string,
   timeoutMs = 15000
 ): Promise<Buffer> {
-  const isCf = process.env.CF_PAGES === '1' || process.env.BUILD_TARGET === 'cloudflare';
+  const isCf =
+    process.env.CF_PAGES === '1' || process.env.BUILD_TARGET === 'cloudflare';
   if (isCf) {
     const resp = await fetch(url, {
       headers: {
@@ -337,7 +353,8 @@ export async function resolveTorrentIdentity(
   }
 
   const { root, infoRaw } = bdecodeTorrent(bin);
-  if (!infoRaw || infoRaw.length === 0) throw new Error('torrent 缺少 info 字段');
+  if (!infoRaw || infoRaw.length === 0)
+    throw new Error('torrent 缺少 info 字段');
   const infoHash = createHash('sha1').update(infoRaw).digest('hex');
   const trackers = extractTrackersFromTorrentRoot(root);
   return { infoHash, trackers };
@@ -374,7 +391,9 @@ function announceToHttpScrape(announceUrl: string): string | null {
   }
 }
 
-function parseUdpTracker(announceUrl: string): { host: string; port: number } | null {
+function parseUdpTracker(
+  announceUrl: string
+): { host: string; port: number } | null {
   try {
     const u = new URL(announceUrl.replace(/^udp:\/\//i, 'http://'));
     if (!u.hostname) return null;
@@ -387,7 +406,8 @@ function parseUdpTracker(announceUrl: string): { host: string; port: number } | 
 }
 
 function isProbablyDeadHost(hostname: string, ipHint?: string): boolean {
-  if (ipHint && /^(10\.|127\.|0\.|221\.229\.|100\.64\.)/.test(ipHint)) return true;
+  if (ipHint && /^(10\.|127\.|0\.|221\.229\.|100\.64\.)/.test(ipHint))
+    return true;
   void hostname;
   return false;
 }
@@ -734,7 +754,12 @@ async function scrapeOneTracker(
 
     const used = udpResult.ms || 0;
     const httpBudget = Math.max(800, timeoutMs - used);
-    const httpResult = await scrapeOneHttp(announceUrl, infoHashHex, proxy, httpBudget);
+    const httpResult = await scrapeOneHttp(
+      announceUrl,
+      infoHashHex,
+      proxy,
+      httpBudget
+    );
     if (httpResult.ok) {
       return {
         ...httpResult,
@@ -749,14 +774,20 @@ async function scrapeOneTracker(
       ok: false,
       ms: used + (httpResult.ms || 0),
       proto: 'http',
-      error: `UDP失败(${udpResult.error || 'unknown'})；HTTP降级失败(${httpResult.error || 'unknown'})`,
+      error: `UDP失败(${udpResult.error || 'unknown'})；HTTP降级失败(${
+        httpResult.error || 'unknown'
+      })`,
     };
   }
 
   return scrapeOneHttp(announceUrl, infoHashHex, proxy, timeoutMs);
 }
 
-function classifyHealth(seeders: number, peers: number, anyOk: boolean): MagnetHealthLevel {
+function classifyHealth(
+  seeders: number,
+  peers: number,
+  anyOk: boolean
+): MagnetHealthLevel {
   if (!anyOk) return 'unknown';
   if (seeders >= 5 && peers > 50) return 'good';
   if (seeders >= 1 || peers >= 5) return 'ok';
@@ -766,7 +797,12 @@ function classifyHealth(seeders: number, peers: number, anyOk: boolean): MagnetH
   return 'ok';
 }
 
-function healthMessage(level: MagnetHealthLevel, seeders: number, leechers: number, peers: number): string {
+function healthMessage(
+  level: MagnetHealthLevel,
+  seeders: number,
+  leechers: number,
+  peers: number
+): string {
   switch (level) {
     case 'good':
       return `健康：Seeder ${seeders} / Peer ${peers}`;
@@ -865,7 +901,12 @@ export async function probeMagnetHealth(options: {
 
       for (const tr of trackers) {
         const remain = Math.max(500, deadline - Date.now());
-        scrapeOneTracker(tr, infoHash, options.proxy, Math.min(PER_TRACKER_TIMEOUT_MS, remain))
+        scrapeOneTracker(
+          tr,
+          infoHash,
+          options.proxy,
+          Math.min(PER_TRACKER_TIMEOUT_MS, remain)
+        )
           .then((r) => {
             if (!timedOut) results.push(r);
           })
@@ -892,7 +933,10 @@ export async function probeMagnetHealth(options: {
     const okList = results.filter((r) => r.ok);
     const seeders = okList.reduce((m, r) => Math.max(m, r.seeders ?? 0), 0);
     const leechers = okList.reduce((m, r) => Math.max(m, r.leechers ?? 0), 0);
-    const downloaded = okList.reduce((m, r) => Math.max(m, r.downloaded ?? 0), 0);
+    const downloaded = okList.reduce(
+      (m, r) => Math.max(m, r.downloaded ?? 0),
+      0
+    );
     const peers = seeders + leechers;
     const health = classifyHealth(seeders, peers, okList.length > 0);
 
@@ -908,7 +952,10 @@ export async function probeMagnetHealth(options: {
       source: 'scrape',
       trackersTried: trackers.length,
       trackersOk: okList.length,
-      trackers: results.sort((a, b) => Number(b.ok) - Number(a.ok) || (b.seeders ?? 0) - (a.seeders ?? 0)),
+      trackers: results.sort(
+        (a, b) =>
+          Number(b.ok) - Number(a.ok) || (b.seeders ?? 0) - (a.seeders ?? 0)
+      ),
       message: healthMessage(health, seeders, leechers, peers),
     };
 

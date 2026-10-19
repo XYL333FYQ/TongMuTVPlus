@@ -582,10 +582,7 @@ export default function MusicSearchPage() {
         }}
         className={cn(MUSIC_FIELD, 'mb-6')}
       >
-        <Search
-          className='h-4 w-4 shrink-0 text-[color:var(--tm-muted)]'
-          strokeWidth={2}
-        />
+        <Search className='h-4 w-4 shrink-0 text-muted' strokeWidth={2} />
         <input
           value={keyword}
           onChange={(event) => setKeyword(event.target.value)}

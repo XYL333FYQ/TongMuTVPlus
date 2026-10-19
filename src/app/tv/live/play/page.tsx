@@ -611,11 +611,8 @@ function TVLivePlayClient() {
 
   if (loading) {
     return (
-      <main className='fixed inset-0 flex items-center justify-center bg-[var(--tm-surface)] text-3xl font-bold text-[color:var(--tm-text)]'>
-        <span
-          aria-hidden
-          className='tm-skeleton mr-4 h-10 w-10 text-[color:var(--tm-text)]'
-        />
+      <main className='fixed inset-0 flex items-center justify-center bg-surface text-3xl font-bold text-fg'>
+        <span aria-hidden className='tm-skeleton mr-4 h-10 w-10 text-fg' />
         正在进入电视直播...
       </main>
     );
@@ -623,26 +620,26 @@ function TVLivePlayClient() {
 
   if (error || !channel) {
     return (
-      <main className='fixed inset-0 flex items-center justify-center bg-[var(--tm-surface)] p-10 text-center text-[color:var(--tm-text)]'>
+      <main className='fixed inset-0 flex items-center justify-center bg-surface p-10 text-center text-fg'>
         <section
           role='alert'
-          className='max-w-3xl rounded-[36px] border border-[var(--tm-danger)] bg-[var(--tm-surface-raised)] p-10 shadow-2xl shadow-[color-mix(in_srgb,var(--tm-room-cinema-bg)_40%,transparent)]'
+          className='max-w-3xl rounded-[36px] border border-danger bg-raised p-10 shadow-2xl shadow-ink/40'
         >
-          <AlertTriangle className='mx-auto mb-5 h-16 w-16 text-[color:var(--tm-danger)]' />
-          <h1 className=' text-[color:var(--tm-text)] text-[28px] font-bold md:text-[32px]'>
+          <AlertTriangle className='mx-auto mb-5 h-16 w-16 text-danger' />
+          <h1 className='text-fg text-[28px] font-bold md:text-[32px]'>
             {error || '没有可播放频道'}
           </h1>
           <div className='mt-8 flex justify-center gap-4'>
             <button
               onClick={() => window.location.reload()}
-              className='tv-focusable flex cursor-pointer items-center gap-3 rounded-2xl bg-[var(--tm-text)] px-7 py-4 text-base font-medium focus:ring-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
+              className='tv-focusable flex cursor-pointer items-center gap-3 rounded-2xl bg-fg px-7 py-4 text-base font-medium focus:ring-fg text-inverse min-h-[44px] tm-press min-w-[44px]'
             >
               <RotateCcw className='h-7 w-7' />
               重试
             </button>
             <button
               onClick={() => router.back()}
-              className='tv-focusable rounded-2xl bg-[var(--tm-surface-raised)] px-7 py-4 text-base font-medium focus:ring-[color-mix(in_srgb,var(--tm-text)_40%,transparent)] min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
+              className='tv-focusable rounded-2xl bg-raised px-7 py-4 text-base font-medium focus:ring-[color-mix(in_srgb,var(--tm-text)_40%,transparent)] min-h-[44px] tm-press min-w-[44px]'
             >
               返回
             </button>
@@ -657,7 +654,7 @@ function TVLivePlayClient() {
       data-tv-player-root
       style={TV_CINEMA_STYLE}
       data-tv-controls-open={showPanel ? 'true' : 'false'}
-      className='fixed inset-0 overflow-hidden bg-[var(--tm-surface)] text-[color:var(--tm-text)]'
+      className='fixed inset-0 overflow-hidden bg-surface text-fg'
       onContextMenu={(event) => {
         const now = Date.now();
         if (now - menuKeyTimeRef.current < REMOTE_KEY_DEDUPE_MS) return;
@@ -682,9 +679,8 @@ function TVLivePlayClient() {
           color: var(--tm-text) !important;
           box-shadow: none !important;
         }
-        [data-tv-player-root] .tv-focusable[class~='bg-[var(--tm-text)]']:focus,
-        [data-tv-player-root]
-          .tv-focusable[class~='bg-[var(--tm-text)]']:focus-visible {
+        [data-tv-player-root] .tv-focusable[class~='bg-fg']:focus,
+        [data-tv-player-root] .tv-focusable[class~='bg-fg']:focus-visible {
           background-color: var(--tm-text) !important;
           color: var(--tm-accent-contrast) !important;
         }
@@ -710,19 +706,17 @@ function TVLivePlayClient() {
       {unsupportedError ? (
         <div
           role='alert'
-          className='flex h-full items-center justify-center bg-[var(--tm-surface)] p-10 text-center text-[color:var(--tm-text)]'
+          className='flex h-full items-center justify-center bg-surface p-10 text-center text-fg'
         >
-          <section className='max-w-3xl rounded-[36px] border border-[var(--tm-line)] bg-[var(--tm-surface)] p-9 shadow-2xl shadow-[color-mix(in_srgb,var(--tm-room-cinema-bg)_70%,transparent)]'>
-            <AlertTriangle className='mx-auto mb-5 h-14 w-14 text-[color:var(--tm-text)]' />
-            <h2 className=' text-xl font-medium md:text-2xl'>
+          <section className='max-w-3xl rounded-[36px] border border-line bg-surface p-9 shadow-2xl shadow-ink/70'>
+            <AlertTriangle className='mx-auto mb-5 h-14 w-14 text-fg' />
+            <h2 className='text-xl font-medium md:text-2xl'>
               当前直播流格式不支持
             </h2>
-            <p className='mt-3 text-base text-[color:var(--tm-muted)]'>
-              {unsupportedError}
-            </p>
+            <p className='mt-3 text-base text-muted'>{unsupportedError}</p>
             <button
               onClick={() => setShowPanel(true)}
-              className='tv-focusable mt-8 rounded-2xl bg-[var(--tm-surface-raised)] px-7 py-4 text-base font-medium focus:ring-[color-mix(in_srgb,var(--tm-text)_40%,transparent)] min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
+              className='tv-focusable mt-8 rounded-2xl bg-raised px-7 py-4 text-base font-medium focus:ring-[color-mix(in_srgb,var(--tm-text)_40%,transparent)] min-h-[44px] tm-press min-w-[44px]'
             >
               频道列表
             </button>
@@ -740,10 +734,7 @@ function TVLivePlayClient() {
         />
       ) : (
         <div className='flex h-full items-center justify-center text-3xl font-bold'>
-          <span
-            aria-hidden
-            className='tm-skeleton mr-4 h-10 w-10 text-[color:var(--tm-text)]'
-          />
+          <span aria-hidden className='tm-skeleton mr-4 h-10 w-10 text-fg' />
           正在解析直播地址...
         </div>
       )}
@@ -751,14 +742,14 @@ function TVLivePlayClient() {
       {playbackError && (
         <div
           role='alert'
-          className='absolute inset-0 z-30 flex items-center justify-center bg-[color:color-mix(in_srgb,var(--tm-room-cinema-bg)_72%,transparent)] p-8 text-[color:var(--tm-text)] '
+          className='absolute inset-0 z-30 flex items-center justify-center bg-ink/70 p-8 text-fg'
         >
-          <section className='max-w-3xl rounded-[36px] border border-[var(--tm-line)] bg-[var(--tm-surface)] p-9 text-center shadow-2xl shadow-[color-mix(in_srgb,var(--tm-room-cinema-bg)_70%,transparent)]'>
-            <AlertTriangle className='mx-auto mb-5 h-14 w-14 text-[color:var(--tm-text)]' />
-            <h2 className=' text-xl font-medium md:text-2xl'>
+          <section className='max-w-3xl rounded-[36px] border border-line bg-surface p-9 text-center shadow-2xl shadow-ink/70'>
+            <AlertTriangle className='mx-auto mb-5 h-14 w-14 text-fg' />
+            <h2 className='text-xl font-medium md:text-2xl'>
               当前频道播放失败
             </h2>
-            <p className='mt-3 text-base text-[color:var(--tm-muted)]'>
+            <p className='mt-3 text-base text-muted'>
               {retryCount < 3
                 ? `正在自动重连（${retryCount + 1}/3）...`
                 : '可以重试当前频道，或打开频道面板切换频道/直播源。'}
@@ -784,7 +775,7 @@ function TVLivePlayClient() {
                         )
                       );
                 }}
-                className='tv-focusable flex cursor-pointer items-center gap-3 rounded-2xl bg-[var(--tm-text)] px-7 py-4 text-base font-medium focus:ring-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
+                className='tv-focusable flex cursor-pointer items-center gap-3 rounded-2xl bg-fg px-7 py-4 text-base font-medium focus:ring-fg text-inverse min-h-[44px] tm-press min-w-[44px]'
               >
                 <RotateCcw className='h-7 w-7' />
                 重试
@@ -794,7 +785,7 @@ function TVLivePlayClient() {
                   setPlaybackError(false);
                   setShowPanel(true);
                 }}
-                className='tv-focusable rounded-2xl bg-[var(--tm-surface-raised)] px-7 py-4 text-base font-medium focus:ring-[color-mix(in_srgb,var(--tm-text)_40%,transparent)] min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
+                className='tv-focusable rounded-2xl bg-raised px-7 py-4 text-base font-medium focus:ring-[color-mix(in_srgb,var(--tm-text)_40%,transparent)] min-h-[44px] tm-press min-w-[44px]'
               >
                 频道列表
               </button>
@@ -808,8 +799,8 @@ function TVLivePlayClient() {
           showPanel ? 'opacity-100' : 'opacity-0'
         }`}
       >
-        <div className='absolute inset-x-0 top-0 h-44 bg-[var(--tm-surface)] to-transparent' />
-        <div className='absolute inset-y-0 left-0 w-[560px] bg-[var(--tm-surface)] to-transparent' />
+        <div className='absolute inset-x-0 top-0 h-44 bg-surface to-transparent' />
+        <div className='absolute inset-y-0 left-0 w-[560px] bg-surface to-transparent' />
       </div>
 
       <div
@@ -823,12 +814,12 @@ function TVLivePlayClient() {
             else router.back();
           }}
           data-tv-live-control
-          className='tv-focusable flex cursor-pointer items-center gap-2 rounded-2xl bg-[color:color-mix(in_srgb,var(--tm-room-cinema-bg)_70%,transparent)] px-3 py-2 md:px-5 md:py-4 text-base font-medium focus:ring-[var(--tm-text)] min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
+          className='tv-focusable flex cursor-pointer items-center gap-2 rounded-2xl bg-ink/70 px-3 py-2 md:px-5 md:py-4 text-base font-medium focus:ring-fg min-h-[44px] tm-press min-w-[44px]'
         >
           <ArrowLeft className='h-7 w-7' />
           返回
         </button>
-        <div className='flex min-w-0 items-center gap-2 rounded-2xl bg-[color:color-mix(in_srgb,var(--tm-room-cinema-bg)_70%,transparent)] px-3 py-2 md:gap-4 md:px-6'>
+        <div className='flex min-w-0 items-center gap-2 rounded-2xl bg-ink/70 px-3 py-2 md:gap-4 md:px-6'>
           {channel.logo ? (
             <img
               src={getLogoUrl(channel.logo, source?.key)}
@@ -836,13 +827,13 @@ function TVLivePlayClient() {
               className='h-7 w-7 shrink-0 rounded-xl object-contain md:h-10 md:w-10'
             />
           ) : (
-            <Radio className='h-7 w-7 shrink-0 text-[color:var(--tm-text)] md:h-10 md:w-10' />
+            <Radio className='h-7 w-7 shrink-0 text-fg md:h-10 md:w-10' />
           )}
           <div className='min-w-0'>
             <div className='truncate text-lg font-medium md:text-2xl'>
               {channel.name}
             </div>
-            <div className='truncate text-sm text-[color:var(--tm-muted)]'>
+            <div className='truncate text-sm text-muted'>
               {source?.name} · {channel.group}
             </div>
           </div>
@@ -852,7 +843,7 @@ function TVLivePlayClient() {
             onClick={toggleMute}
             aria-label={muted ? '取消静音' : '静音'}
             data-tv-live-control
-            className='tv-focusable rounded-2xl bg-[color:color-mix(in_srgb,var(--tm-room-cinema-bg)_70%,transparent)] p-2 md:p-4 focus:ring-[var(--tm-text)] min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
+            className='tv-focusable rounded-2xl bg-ink/70 p-2 md:p-4 focus:ring-fg min-h-[44px] tm-press min-w-[44px]'
           >
             {muted ? (
               <VolumeX className='h-7 w-7' />
@@ -869,13 +860,13 @@ function TVLivePlayClient() {
             step='0.05'
             value={muted ? 0 : volume}
             onChange={(e) => setVideoVolume(Number(e.target.value))}
-            className='tv-focusable h-11 w-28 rounded accent-[var(--tm-text)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
+            className='tv-focusable h-11 w-28 rounded accent-fg'
           />
           <button
             onClick={toggleFullscreen}
             aria-label='全屏'
             data-tv-live-control
-            className='tv-focusable rounded-2xl bg-[color:color-mix(in_srgb,var(--tm-room-cinema-bg)_70%,transparent)] p-2 md:p-4 focus:ring-[var(--tm-text)] min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
+            className='tv-focusable rounded-2xl bg-ink/70 p-2 md:p-4 focus:ring-fg min-h-[44px] tm-press min-w-[44px]'
           >
             <Maximize className='h-7 w-7' />
           </button>
@@ -883,10 +874,10 @@ function TVLivePlayClient() {
             onClick={toggleFavorite}
             aria-pressed={favorited}
             data-tv-live-control
-            className={`tv-focusable flex cursor-pointer items-center gap-2 rounded-2xl px-3 py-2 md:px-5 md:py-4 text-base font-medium outline-none focus:ring-[var(--tm-text)] ${
+            className={`tv-focusable flex cursor-pointer items-center gap-2 rounded-2xl px-3 py-2 md:px-5 md:py-4 text-base font-medium outline-none focus:ring-fg ${
               favorited
-                ? 'bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
-                : 'bg-[color:color-mix(in_srgb,var(--tm-room-cinema-bg)_70%,transparent)] min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
+                ? 'bg-fg text-inverse min-h-[44px] tm-press min-w-[44px]'
+                : 'bg-ink/70 min-h-[44px] tm-press min-w-[44px]'
             }`}
           >
             <Heart className={`h-7 w-7 ${favorited ? 'fill-current' : ''}`} />
@@ -898,7 +889,7 @@ function TVLivePlayClient() {
       {showPanel && (
         <aside
           data-tv-live-control
-          className='absolute bottom-4 left-4 right-4 top-40 grid grid-cols-[88px_minmax(0,1fr)] gap-2 md:bottom-8 md:left-8 md:right-auto md:top-48 xl:top-28 md:w-[720px] md:grid-cols-[220px_minmax(0,1fr)] md:gap-4 rounded-[34px] border border-[var(--tm-line)] bg-[var(--tm-surface)] p-4 md:p-5 shadow-2xl shadow-[color-mix(in_srgb,var(--tm-room-cinema-bg)_70%,transparent)] '
+          className='absolute bottom-4 left-4 right-4 top-40 grid grid-cols-[88px_minmax(0,1fr)] gap-2 md:bottom-8 md:left-8 md:right-auto md:top-48 xl:top-28 md:w-[720px] md:grid-cols-[220px_minmax(0,1fr)] md:gap-4 rounded-[34px] border border-line bg-surface p-4 md:p-5 shadow-2xl shadow-ink/70'
         >
           <div className='overflow-y-auto px-2 py-2'>
             {sources.length > 1 && (
@@ -909,10 +900,10 @@ function TVLivePlayClient() {
                     <button
                       key={item.key}
                       onClick={() => switchSource(item)}
-                      className={`tv-focusable w-full cursor-pointer rounded-2xl px-4 py-4 text-left text-base font-medium outline-none focus:ring-[var(--tm-text)] ${
+                      className={`tv-focusable w-full cursor-pointer rounded-2xl px-4 py-4 text-left text-base font-medium outline-none focus:ring-fg ${
                         source?.key === item.key
-                          ? 'bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
-                          : 'bg-[var(--tm-surface-raised)] min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
+                          ? 'bg-fg text-inverse min-h-[44px] tm-press min-w-[44px]'
+                          : 'bg-raised min-h-[44px] tm-press min-w-[44px]'
                       }`}
                     >
                       {item.name}
@@ -927,10 +918,10 @@ function TVLivePlayClient() {
                 <button
                   key={group}
                   onClick={() => setSelectedGroup(group)}
-                  className={`tv-focusable w-full cursor-pointer rounded-2xl px-4 py-4 text-left text-base font-medium outline-none focus:ring-[var(--tm-text)] ${
+                  className={`tv-focusable w-full cursor-pointer rounded-2xl px-4 py-4 text-left text-base font-medium outline-none focus:ring-fg ${
                     selectedGroup === group
-                      ? 'bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
-                      : 'bg-[var(--tm-surface-raised)] min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
+                      ? 'bg-fg text-inverse min-h-[44px] tm-press min-w-[44px]'
+                      : 'bg-raised min-h-[44px] tm-press min-w-[44px]'
                   }`}
                 >
                   {group}
@@ -940,26 +931,24 @@ function TVLivePlayClient() {
           </div>
           <div className='overflow-y-auto px-2 py-2'>
             <h2 className='mb-4 flex items-center gap-2 text-xl font-medium md:text-2xl'>
-              <Star className='h-6 w-6 text-[color:var(--tm-text)]' />
+              <Star className='h-6 w-6 text-fg' />
               频道
             </h2>
-            <section className='mb-4 rounded-2xl bg-[var(--tm-surface-raised)] p-4'>
-              <h3 className='mb-3 flex items-center gap-2 text-lg font-medium text-[color:var(--tm-text)]'>
-                <Clock className='h-5 w-5 text-[color:var(--tm-text)]' />
+            <section className='mb-4 rounded-2xl bg-raised p-4'>
+              <h3 className='mb-3 flex items-center gap-2 text-lg font-medium text-fg'>
+                <Clock className='h-5 w-5 text-fg' />
                 节目单
               </h3>
               {epgLoading ? (
-                <div className='text-lg text-[color:var(--tm-muted)]'>
-                  正在加载 EPG...
-                </div>
+                <div className='text-lg text-muted'>正在加载 EPG...</div>
               ) : epgPrograms.length > 0 ? (
                 <div className='max-h-36 space-y-2 overflow-y-auto pr-2'>
                   {epgPrograms.map((program, index) => (
                     <div
                       key={`${program.start}-${index}`}
-                      className='rounded-xl bg-[color:color-mix(in_srgb,var(--tm-room-cinema-bg)_25%,transparent)] px-3 py-2 text-base text-[color:var(--tm-text)]'
+                      className='rounded-xl bg-ink/25 px-3 py-2 text-base text-fg'
                     >
-                      <span className='mr-2 text-[color:var(--tm-muted)]'>
+                      <span className='mr-2 text-muted'>
                         {program.start?.slice(8, 12)}-
                         {program.end?.slice(8, 12)}
                       </span>
@@ -968,18 +957,16 @@ function TVLivePlayClient() {
                   ))}
                 </div>
               ) : (
-                <div className='text-lg text-[color:var(--tm-muted)]'>
-                  暂无节目单
-                </div>
+                <div className='text-lg text-muted'>暂无节目单</div>
               )}
             </section>
-            <label className='mb-4 flex h-14 items-center gap-3 rounded-2xl border border-[var(--tm-line)] bg-[var(--tm-surface-raised)] px-4 focus-within:border-[var(--tm-line)]'>
-              <Search className='h-6 w-6 text-[color:var(--tm-muted)]' />
+            <label className='mb-4 flex h-14 items-center gap-3 rounded-2xl border border-line bg-raised px-4 focus-within:border-line'>
+              <Search className='h-6 w-6 text-muted' />
               <input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder='搜索频道'
-                className='tv-focusable h-12 min-w-0 flex-1 bg-transparent text-xl font-bold text-[color:var(--tm-text)] outline-none placeholder:text-[color:var(--tm-muted)]'
+                className='tv-focusable h-12 min-w-0 flex-1 bg-transparent text-xl font-bold text-fg outline-none placeholder:text-muted'
               />
             </label>
             <div className='grid grid-cols-1 gap-3'>
@@ -993,10 +980,10 @@ function TVLivePlayClient() {
                       channelButtonRefs.current[item.id] = el;
                     }}
                     onClick={() => switchChannel(item)}
-                    className={`tv-focusable flex min-h-16 cursor-pointer items-center gap-3 rounded-2xl px-4 py-3 text-left text-base font-medium outline-none focus:ring-[var(--tm-text)] ${
+                    className={`tv-focusable flex min-h-16 cursor-pointer items-center gap-3 rounded-2xl px-4 py-3 text-left text-base font-medium outline-none focus:ring-fg ${
                       item.id === channel.id
-                        ? 'bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
-                        : 'bg-[var(--tm-surface-raised)] min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
+                        ? 'bg-fg text-inverse min-h-[44px] tm-press min-w-[44px]'
+                        : 'bg-raised min-h-[44px] tm-press min-w-[44px]'
                     }`}
                   >
                     {item.logo ? (
@@ -1010,9 +997,7 @@ function TVLivePlayClient() {
                     )}
                     <span
                       className={`min-w-8 text-[13px] md:min-w-12 md:text-base ${
-                        item.id === channel.id
-                          ? 'text-inherit'
-                          : 'text-[color:var(--tm-muted)]'
+                        item.id === channel.id ? 'text-inherit' : 'text-muted'
                       }`}
                     >
                       #{absoluteIndex}
@@ -1026,13 +1011,13 @@ function TVLivePlayClient() {
         </aside>
       )}
       {digitBuffer && (
-        <div className='absolute right-10 top-32 z-[90] rounded-3xl bg-[color:color-mix(in_srgb,var(--tm-room-cinema-bg)_75%,transparent)] px-7 py-5 text-5xl font-bold text-[color:var(--tm-text)] shadow-2xl'>
+        <div className='absolute right-10 top-32 z-[90] rounded-3xl bg-ink/75 px-7 py-5 text-5xl font-bold text-fg shadow-2xl'>
           频道 {digitBuffer}
         </div>
       )}
       {channelHint && (
-        <div className='absolute right-20 top-24 z-[70] max-w-[520px] rounded-3xl bg-[color:color-mix(in_srgb,var(--tm-room-cinema-bg)_80%,transparent)] px-7 py-5 text-right text-[color:var(--tm-text)] shadow-2xl '>
-          <div className='text-2xl font-bold text-[color:var(--tm-text)]'>
+        <div className='absolute right-20 top-24 z-[70] max-w-[520px] rounded-3xl bg-ink/80 px-7 py-5 text-right text-fg shadow-2xl'>
+          <div className='text-2xl font-bold text-fg'>
             #{channelHint.number}
           </div>
           <div className='mt-1 line-clamp-1 text-4xl font-bold'>
@@ -1041,15 +1026,15 @@ function TVLivePlayClient() {
         </div>
       )}
       {showVolumeHint && !showPanel && (
-        <div className='absolute right-10 top-1/2 flex -translate-y-1/2 flex-col items-center gap-4 rounded-3xl bg-[color:color-mix(in_srgb,var(--tm-room-cinema-bg)_80%,transparent)] px-6 py-7 text-3xl font-bold text-[color:var(--tm-text)] shadow-2xl '>
+        <div className='absolute right-10 top-1/2 flex -translate-y-1/2 flex-col items-center gap-4 rounded-3xl bg-ink/80 px-6 py-7 text-3xl font-bold text-fg shadow-2xl'>
           {muted || volume <= 0 ? (
             <VolumeX className='h-10 w-10' />
           ) : (
             <Volume2 className='h-10 w-10' />
           )}
-          <div className='relative h-56 w-4 overflow-hidden rounded-full bg-[var(--tm-surface-raised)]'>
+          <div className='relative h-56 w-4 overflow-hidden rounded-full bg-raised'>
             <div
-              className='absolute bottom-0 left-0 right-0 rounded-full bg-[var(--tm-text)]'
+              className='absolute bottom-0 left-0 right-0 rounded-full bg-fg'
               style={{ height: `${Math.round((muted ? 0 : volume) * 100)}%` }}
             />
           </div>

@@ -9,7 +9,11 @@ function buildRangeHeader(start: number, end: number) {
   return `bytes=${start}-${end}`;
 }
 
-function splitRange(start: number, end: number, chunkSize = DEFAULT_CHUNK_SIZE) {
+function splitRange(
+  start: number,
+  end: number,
+  chunkSize = DEFAULT_CHUNK_SIZE
+) {
   const chunks: Array<{ index: number; start: number; end: number }> = [];
   let index = 0;
   for (let cursor = start; cursor <= end; cursor += chunkSize) {
@@ -99,7 +103,9 @@ async function fetchChunk(
     }
   }
 
-  throw lastError instanceof Error ? lastError : new Error('chunk request failed');
+  throw lastError instanceof Error
+    ? lastError
+    : new Error('chunk request failed');
 }
 
 export function createQuarkMultiThreadStream(input: {

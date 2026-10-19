@@ -2,9 +2,8 @@
 
 import crypto from 'crypto';
 
-import { safeFetch } from './safe-http';
-
 import { lockManager } from './lock';
+import { safeFetch } from './safe-http';
 import { IStorage, Notification, PushSubscriptionRecord } from './types';
 
 const DEFAULT_TTL_SECONDS = 60 * 60 * 24;
@@ -35,10 +34,14 @@ export interface WebPushDispatchResult {
 }
 
 const globalVapidCacheKey = Symbol.for('__MOONTV_WEB_PUSH_VAPID_KEYS__');
-const globalVapidPromiseKey = Symbol.for('__MOONTV_WEB_PUSH_VAPID_KEYS_PROMISE__');
+const globalVapidPromiseKey = Symbol.for(
+  '__MOONTV_WEB_PUSH_VAPID_KEYS_PROMISE__'
+);
 
 function getCachedVapidKeys(): VapidKeys | null {
-  return ((globalThis as any)[globalVapidCacheKey] as VapidKeys | undefined) || null;
+  return (
+    ((globalThis as any)[globalVapidCacheKey] as VapidKeys | undefined) || null
+  );
 }
 
 function setCachedVapidKeys(keys: VapidKeys): void {
@@ -46,7 +49,11 @@ function setCachedVapidKeys(keys: VapidKeys): void {
 }
 
 function getCachedVapidKeysPromise(): Promise<VapidKeys> | null {
-  return ((globalThis as any)[globalVapidPromiseKey] as Promise<VapidKeys> | undefined) || null;
+  return (
+    ((globalThis as any)[globalVapidPromiseKey] as
+      | Promise<VapidKeys>
+      | undefined) || null
+  );
 }
 
 function setCachedVapidKeysPromise(promise: Promise<VapidKeys> | null): void {
@@ -73,7 +80,9 @@ function base64UrlDecode(input: string): Buffer {
 }
 
 function isCloudflareEnvironment(): boolean {
-  return process.env.CF_PAGES === '1' || process.env.BUILD_TARGET === 'cloudflare';
+  return (
+    process.env.CF_PAGES === '1' || process.env.BUILD_TARGET === 'cloudflare'
+  );
 }
 
 function getWebPushProxy(): string | null {
@@ -126,7 +135,9 @@ async function fetchWebPushEndpoint(
 
   if (isCloudflareEnvironment()) {
     if (proxy) {
-      console.warn('WEB_PUSH_PROXY is ignored in Cloudflare runtime; use WEB_PUSH_BASEURL instead.');
+      console.warn(
+        'WEB_PUSH_PROXY is ignored in Cloudflare runtime; use WEB_PUSH_BASEURL instead.'
+      );
     }
     return fetch(requestUrl, init) as Promise<Response>;
   }
@@ -165,7 +176,9 @@ function parseStoredVapidKeys(raw: string | null): VapidKeys | null {
   return null;
 }
 
-async function loadOrCreateDatabaseVapidKeys(storage: IStorage): Promise<VapidKeys> {
+async function loadOrCreateDatabaseVapidKeys(
+  storage: IStorage
+): Promise<VapidKeys> {
   if (!storage?.getGlobalValue || !storage?.setGlobalValue) {
     throw new Error('当前存储类型不支持保存 Web Push VAPID 密钥');
   }
@@ -211,7 +224,9 @@ export async function getVapidKeys(storage: IStorage): Promise<VapidKeys> {
   return promise;
 }
 
-export async function getVapidPublicKey(storage: IStorage): Promise<string | null> {
+export async function getVapidPublicKey(
+  storage: IStorage
+): Promise<string | null> {
   try {
     return (await getVapidKeys(storage)).publicKey;
   } catch (error) {
@@ -231,7 +246,11 @@ export async function isWebPushConfigured(storage: IStorage): Promise<boolean> {
 }
 
 function getVapidSubject(): string {
-  return process.env[SUBJECT_ENV] || process.env.NEXT_PUBLIC_SITE_URL || 'mailto:admin@example.com';
+  return (
+    process.env[SUBJECT_ENV] ||
+    process.env.NEXT_PUBLIC_SITE_URL ||
+    'mailto:admin@example.com'
+  );
 }
 
 function getPublicKeyFromPrivate(privateKeyBase64Url: string): Buffer {
@@ -254,7 +273,9 @@ function createVapidJwt(endpoint: string, privateKeyBase64Url: string): string {
     sub: getVapidSubject(),
   };
 
-  const signingInput = `${base64UrlEncode(JSON.stringify(header))}.${base64UrlEncode(JSON.stringify(payload))}`;
+  const signingInput = `${base64UrlEncode(
+    JSON.stringify(header)
+  )}.${base64UrlEncode(JSON.stringify(payload))}`;
   const key = crypto.createPrivateKey({
     key: {
       kty: 'EC',
@@ -274,7 +295,12 @@ function createVapidJwt(endpoint: string, privateKeyBase64Url: string): string {
   return `${signingInput}.${base64UrlEncode(signature)}`;
 }
 
-function hkdf(secret: Buffer, salt: Buffer, info: Buffer | string, length: number): Buffer {
+function hkdf(
+  secret: Buffer,
+  salt: Buffer,
+  info: Buffer | string,
+  length: number
+): Buffer {
   const prk = crypto.createHmac('sha256', salt).update(secret).digest();
   const infoBuffer = Buffer.isBuffer(info) ? info : Buffer.from(info);
   const blocks: Buffer[] = [];
@@ -334,12 +360,22 @@ function encryptPayload(payload: string, subscription: PushSubscriptionRecord) {
 export function getNotificationClickUrl(notification: Notification): string {
   const metadata = notification.metadata || {};
 
-  if (notification.type === 'favorite_update' && metadata.source && metadata.id) {
+  if (
+    notification.type === 'favorite_update' &&
+    metadata.source &&
+    metadata.id
+  ) {
     const title = encodeURIComponent(String(metadata.title || ''));
-    return `/play?source=${encodeURIComponent(String(metadata.source))}&id=${encodeURIComponent(String(metadata.id))}&title=${title}`;
+    return `/play?source=${encodeURIComponent(
+      String(metadata.source)
+    )}&id=${encodeURIComponent(String(metadata.id))}&title=${title}`;
   }
 
-  if (notification.type === 'manga_update' && metadata.sourceId && metadata.mangaId) {
+  if (
+    notification.type === 'manga_update' &&
+    metadata.sourceId &&
+    metadata.mangaId
+  ) {
     const params = new URLSearchParams({
       sourceId: String(metadata.sourceId),
       mangaId: String(metadata.mangaId),
@@ -356,7 +392,11 @@ export function getNotificationClickUrl(notification: Notification): string {
 
   if (notification.type === 'request_fulfilled') {
     if (metadata.source && metadata.id) {
-      return `/play?source=${encodeURIComponent(String(metadata.source))}&id=${encodeURIComponent(String(metadata.id))}&title=${encodeURIComponent(notification.title)}`;
+      return `/play?source=${encodeURIComponent(
+        String(metadata.source)
+      )}&id=${encodeURIComponent(
+        String(metadata.id)
+      )}&title=${encodeURIComponent(notification.title)}`;
     }
     return '/movie-request';
   }
@@ -380,7 +420,11 @@ function buildPayload(notification: Notification): string {
   });
 }
 
-async function sendToSubscription(storage: IStorage, subscription: PushSubscriptionRecord, payload: string): Promise<Response> {
+async function sendToSubscription(
+  storage: IStorage,
+  subscription: PushSubscriptionRecord,
+  payload: string
+): Promise<Response> {
   const keys = await getVapidKeys(storage);
 
   const jwt = createVapidJwt(subscription.endpoint, keys.privateKey);
@@ -414,24 +458,33 @@ async function sendToSubscriptionWithRetry(
   for (let attempt = 0; attempt <= WEB_PUSH_MAX_RETRIES; attempt++) {
     try {
       const response = await sendToSubscription(storage, subscription, payload);
-      if (!shouldRetryWebPushResponse(response) || attempt === WEB_PUSH_MAX_RETRIES) {
+      if (
+        !shouldRetryWebPushResponse(response) ||
+        attempt === WEB_PUSH_MAX_RETRIES
+      ) {
         return response;
       }
 
       console.warn(
-        `Web Push send failed with ${response.status}, retrying (${attempt + 1}/${WEB_PUSH_MAX_RETRIES})...`
+        `Web Push send failed with ${response.status}, retrying (${
+          attempt + 1
+        }/${WEB_PUSH_MAX_RETRIES})...`
       );
     } catch (error) {
       lastError = error;
       if (attempt === WEB_PUSH_MAX_RETRIES) break;
       console.warn(
-        `Web Push send error, retrying (${attempt + 1}/${WEB_PUSH_MAX_RETRIES}):`,
+        `Web Push send error, retrying (${
+          attempt + 1
+        }/${WEB_PUSH_MAX_RETRIES}):`,
         error
       );
     }
   }
 
-  throw lastError instanceof Error ? lastError : new Error(String(lastError || 'Web Push send failed'));
+  throw lastError instanceof Error
+    ? lastError
+    : new Error(String(lastError || 'Web Push send failed'));
 }
 
 export async function dispatchWebPushNotificationWithResult(
@@ -464,24 +517,55 @@ export async function dispatchWebPushNotificationWithResult(
     subscriptions.map(async (subscription): Promise<WebPushDeliveryResult> => {
       const endpointHost = new URL(subscription.endpoint).host;
       try {
-        const response = await sendToSubscriptionWithRetry(storage, subscription, payload);
+        const response = await sendToSubscriptionWithRetry(
+          storage,
+          subscription,
+          payload
+        );
 
         if (response.ok) {
-          await storage.updatePushSubscriptionDeliveryStats?.(userName, subscription.endpoint, true);
+          await storage.updatePushSubscriptionDeliveryStats?.(
+            userName,
+            subscription.endpoint,
+            true
+          );
           return { endpointHost, ok: true, status: response.status };
         }
 
         if (response.status === 404 || response.status === 410) {
-          await storage.deletePushSubscriptionByEndpoint?.(userName, subscription.endpoint);
-          return { endpointHost, ok: false, status: response.status, removed: true };
+          await storage.deletePushSubscriptionByEndpoint?.(
+            userName,
+            subscription.endpoint
+          );
+          return {
+            endpointHost,
+            ok: false,
+            status: response.status,
+            removed: true,
+          };
         }
 
-        await storage.updatePushSubscriptionDeliveryStats?.(userName, subscription.endpoint, false);
+        await storage.updatePushSubscriptionDeliveryStats?.(
+          userName,
+          subscription.endpoint,
+          false
+        );
         const errorText = await response.text().catch(() => '');
-        console.warn(`Web Push failed (${response.status}) for ${userName}: ${errorText}`);
-        return { endpointHost, ok: false, status: response.status, error: errorText || response.statusText };
+        console.warn(
+          `Web Push failed (${response.status}) for ${userName}: ${errorText}`
+        );
+        return {
+          endpointHost,
+          ok: false,
+          status: response.status,
+          error: errorText || response.statusText,
+        };
       } catch (error) {
-        await storage.updatePushSubscriptionDeliveryStats?.(userName, subscription.endpoint, false);
+        await storage.updatePushSubscriptionDeliveryStats?.(
+          userName,
+          subscription.endpoint,
+          false
+        );
         console.error('Web Push delivery error:', error);
         return {
           endpointHost,
@@ -499,7 +583,14 @@ export async function dispatchWebPushNotificationWithResult(
     deliveries: settled.map((item) =>
       item.status === 'fulfilled'
         ? item.value
-        : { endpointHost: 'unknown', ok: false, error: item.reason instanceof Error ? item.reason.message : String(item.reason) }
+        : {
+            endpointHost: 'unknown',
+            ok: false,
+            error:
+              item.reason instanceof Error
+                ? item.reason.message
+                : String(item.reason),
+          }
     ),
   };
 }
@@ -522,7 +613,9 @@ export function createPushSubscriptionRecord(input: {
 }): PushSubscriptionRecord {
   const now = Date.now();
   return {
-    id: base64UrlEncode(crypto.createHash('sha256').update(input.endpoint).digest()),
+    id: base64UrlEncode(
+      crypto.createHash('sha256').update(input.endpoint).digest()
+    ),
     username: input.username,
     tokenId: input.tokenId || null,
     endpoint: input.endpoint,

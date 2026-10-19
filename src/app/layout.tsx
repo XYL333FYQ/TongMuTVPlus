@@ -3,12 +3,16 @@
 import type { Metadata, Viewport } from 'next';
 import { cookies } from 'next/headers';
 
-import './globals.css';
-import '@/features/playback/playback.css';
-import '@/features/rooms/rooms.css';
-import '@/styles/motion.css';
+import '@/styles/tokens.css';
+import '@/styles/base.css';
+import '@/styles/primitives.css';
+import '@/styles/layout.css';
+import '@/styles/feedback.css';
 import '@/styles/shell.css';
 import '@/styles/home.css';
+import '@/features/playback/playback.css';
+import '@/features/rooms/rooms.css';
+import './globals.css';
 
 import { parseAuthInfo } from '@/lib/auth';
 import { BRAND_DESCRIPTION, BRAND_NAME } from '@/lib/brand';

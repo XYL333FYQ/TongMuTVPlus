@@ -50,8 +50,7 @@ function getMigrationFiles() {
 }
 
 function isIgnorableMigrationError(error) {
-  const message =
-    error instanceof Error ? error.message : String(error || '');
+  const message = error instanceof Error ? error.message : String(error || '');
   return (
     (message.includes('table') && message.includes('already exists')) ||
     (message.includes('index') && message.includes('already exists')) ||
@@ -107,7 +106,11 @@ async function runMigrations(client) {
   const migrationFiles = getMigrationFiles();
   const hadExistingSchema = await tableExists(client, 'users');
   await ensureMigrationTable(client);
-  await seedExistingMigrationBaseline(client, migrationFiles, hadExistingSchema);
+  await seedExistingMigrationBaseline(
+    client,
+    migrationFiles,
+    hadExistingSchema
+  );
 
   for (const file of migrationFiles) {
     const applied = await getAppliedMigrations(client);

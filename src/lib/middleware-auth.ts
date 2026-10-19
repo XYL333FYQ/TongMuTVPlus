@@ -48,7 +48,7 @@ export async function refreshAccessToken(
   const dataToSign = JSON.stringify({
     username,
     role,
-    timestamp: now
+    timestamp: now,
   });
 
   const signature = await generateSignatureForMiddleware(
@@ -63,7 +63,7 @@ export async function refreshAccessToken(
     tokenId,
     refreshToken,
     refreshExpires,
-    signature
+    signature,
   };
 
   console.log(`Refreshed access token for ${username}`);

@@ -9,7 +9,9 @@ export async function checkAliyun(link) {
   }
 
   try {
-    const apiURL = `https://api.aliyundrive.com/adrive/v3/share_link/get_share_by_anonymous?share_id=${encodeURIComponent(shareId)}`;
+    const apiURL = `https://api.aliyundrive.com/adrive/v3/share_link/get_share_by_anonymous?share_id=${encodeURIComponent(
+      shareId
+    )}`;
     const { statusCode, body } = await request(apiURL, {
       method: 'POST',
       body: { share_id: shareId },
@@ -19,7 +21,8 @@ export async function checkAliyun(link) {
         Origin: 'https://www.alipan.com',
         Referer: 'https://www.alipan.com/',
         Priority: 'u=1, i',
-        'Sec-Ch-Ua': '"Chromium";v="142", "Google Chrome";v="142", "Not_A Brand";v="99"',
+        'Sec-Ch-Ua':
+          '"Chromium";v="142", "Google Chrome";v="142", "Not_A Brand";v="99"',
         'Sec-Ch-Ua-Mobile': '?0',
         'Sec-Ch-Ua-Platform': '"Windows"',
         'Sec-Fetch-Dest': 'empty',
@@ -30,7 +33,11 @@ export async function checkAliyun(link) {
     });
 
     if (statusCode === 429) {
-      return { valid: false, reason: 'API频率限制（429错误）', isRateLimited: true };
+      return {
+        valid: false,
+        reason: 'API频率限制（429错误）',
+        isRateLimited: true,
+      };
     }
     if (statusCode !== 200) {
       return { valid: false, reason: `API返回错误状态码: ${statusCode}` };

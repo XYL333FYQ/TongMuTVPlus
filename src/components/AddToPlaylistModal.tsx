@@ -68,13 +68,13 @@ function MusicLoadingIndicator({
         }
       `}</style>
       <div
-        className={`flex items-center justify-center gap-3 text-[color:var(--tm-muted)] ${className}`}
+        className={`flex items-center justify-center gap-3 text-muted ${className}`}
       >
         <div className='flex items-end gap-1.5'>
           {[0, 1, 2].map((index) => (
             <svg
               key={index}
-              className={`${iconSize} text-[color:var(--tm-text)]`}
+              className={`${iconSize} text-fg`}
               fill='currentColor'
               viewBox='0 0 24 24'
               style={{
@@ -213,22 +213,20 @@ export default function AddToPlaylistModal({
 
   return (
     <div
-      className='fixed inset-0 bg-[color:color-mix(in_srgb,var(--tm-room-cinema-bg)_50%,transparent)] backdrop-blur-sm z-[110] flex items-center justify-center p-4'
+      className='fixed inset-0 bg-ink/50 backdrop-blur-sm z-[110] flex items-center justify-center p-4'
       onClick={onClose}
     >
       <div
-        className='bg-[var(--tm-surface)] rounded-xl max-w-md w-full max-h-[80vh] overflow-hidden border border-[var(--tm-line)]'
+        className='bg-surface rounded-xl max-w-md w-full max-h-[80vh] overflow-hidden border border-line'
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className='p-4 border-b border-[var(--tm-line)]'>
+        <div className='p-4 border-b border-line'>
           <div className='flex items-center justify-between'>
-            <h3 className='text-lg font-bold text-[color:var(--tm-text)]'>
-              添加到歌单
-            </h3>
+            <h3 className='text-lg font-bold text-fg'>添加到歌单</h3>
             <button
               onClick={onClose}
-              className='text-[color:var(--tm-muted)] hover:text-[color:var(--tm-text)] transition-colors min-h-[44px] tm-press'
+              className='text-muted hover:text-fg transition-colors min-h-[44px] tm-press'
             >
               <svg
                 className='w-6 h-6'
@@ -246,7 +244,7 @@ export default function AddToPlaylistModal({
             </button>
           </div>
           {song && (
-            <div className='mt-2 text-sm text-[color:var(--tm-muted)]'>
+            <div className='mt-2 text-sm text-muted'>
               {song.name} - {song.artist}
             </div>
           )}
@@ -258,7 +256,7 @@ export default function AddToPlaylistModal({
           {!showCreateForm && (
             <button
               onClick={() => setShowCreateForm(true)}
-              className='w-full mb-4 px-4 py-3 bg-[var(--tm-text)] hover:opacity-90 text-[color:var(--tm-accent-contrast)] rounded-lg transition-colors flex items-center justify-center gap-2 min-h-[44px] tm-press'
+              className='w-full mb-4 px-4 py-3 bg-fg hover:opacity-90 text-inverse rounded-lg transition-colors flex items-center justify-center gap-2 min-h-[44px] tm-press'
             >
               <svg
                 className='w-5 h-5'
@@ -279,31 +277,31 @@ export default function AddToPlaylistModal({
 
           {/* Create Form */}
           {showCreateForm && (
-            <div className='mb-4 p-4 bg-[var(--tm-surface-raised)] rounded-lg border border-[var(--tm-line)]'>
+            <div className='mb-4 p-4 bg-raised rounded-lg border border-line'>
               <input
                 type='text'
                 placeholder='歌单名称'
                 value={newPlaylistName}
                 onChange={(e) => setNewPlaylistName(e.target.value)}
-                className='w-full px-3 py-2 bg-[var(--tm-surface)] text-[color:var(--tm-text)] rounded-lg border border-[var(--tm-line)] focus:border-[var(--tm-line)] focus:outline-none mb-2'
+                className='w-full px-3 py-2 bg-surface text-fg rounded-lg border border-line focus:border-line focus:outline-none mb-2'
               />
               <textarea
                 placeholder='歌单描述（可选）'
                 value={newPlaylistDescription}
                 onChange={(e) => setNewPlaylistDescription(e.target.value)}
-                className='w-full px-3 py-2 bg-[var(--tm-surface)] text-[color:var(--tm-text)] rounded-lg border border-[var(--tm-line)] focus:border-[var(--tm-line)] focus:outline-none resize-none'
+                className='w-full px-3 py-2 bg-surface text-fg rounded-lg border border-line focus:border-line focus:outline-none resize-none'
                 rows={2}
               />
               <div className='flex gap-2 mt-2'>
                 <button
                   onClick={handleCreatePlaylist}
                   disabled={creating}
-                  className='flex-1 px-4 py-2 bg-[var(--tm-text)] hover:opacity-90 disabled:bg-[var(--tm-surface)] text-[color:var(--tm-accent-contrast)] rounded-lg transition-colors flex items-center justify-center min-h-[44px] tm-press'
+                  className='flex-1 px-4 py-2 bg-fg hover:opacity-90 disabled:bg-surface text-inverse rounded-lg transition-colors flex items-center justify-center min-h-[44px] tm-press'
                 >
                   {creating ? (
                     <MusicLoadingIndicator
                       size='sm'
-                      className='gap-2 text-[color:var(--tm-text)]'
+                      className='gap-2 text-fg'
                     />
                   ) : (
                     '确定'
@@ -315,7 +313,7 @@ export default function AddToPlaylistModal({
                     setNewPlaylistName('');
                     setNewPlaylistDescription('');
                   }}
-                  className='flex-1 px-4 py-2 bg-[var(--tm-surface)] hover:bg-[var(--tm-line)] text-[color:var(--tm-text)] rounded-lg transition-colors min-h-[44px] tm-press'
+                  className='flex-1 px-4 py-2 bg-surface hover:bg-line text-fg rounded-lg transition-colors min-h-[44px] tm-press'
                 >
                   取消
                 </button>
@@ -327,7 +325,7 @@ export default function AddToPlaylistModal({
           {loading ? (
             <MusicLoadingIndicator className='py-8' />
           ) : playlists.length === 0 ? (
-            <div className='text-center py-8 text-[color:var(--tm-muted)]'>
+            <div className='text-center py-8 text-muted'>
               还没有歌单，创建一个吧
             </div>
           ) : (
@@ -337,7 +335,7 @@ export default function AddToPlaylistModal({
                   key={playlist.id}
                   onClick={() => handleAddToPlaylist(playlist.id)}
                   disabled={addingToPlaylistId !== null}
-                  className='w-full px-4 py-3 bg-[var(--tm-surface-raised)] hover:bg-[var(--tm-line)] disabled:bg-[var(--tm-surface-raised)] disabled:cursor-not-allowed rounded-lg transition-colors text-left flex items-center gap-3 min-h-[44px] tm-press'
+                  className='w-full px-4 py-3 bg-raised hover:bg-line disabled:bg-raised disabled:cursor-not-allowed rounded-lg transition-colors text-left flex items-center gap-3 min-h-[44px] tm-press'
                 >
                   {playlist.cover ? (
                     <img
@@ -346,9 +344,9 @@ export default function AddToPlaylistModal({
                       className='w-12 h-12 rounded object-cover'
                     />
                   ) : (
-                    <div className='w-12 h-12 rounded bg-[var(--tm-surface)] flex items-center justify-center'>
+                    <div className='w-12 h-12 rounded bg-surface flex items-center justify-center'>
                       <svg
-                        className='w-6 h-6 text-[color:var(--tm-muted)]'
+                        className='w-6 h-6 text-muted'
                         fill='none'
                         stroke='currentColor'
                         viewBox='0 0 24 24'
@@ -363,11 +361,11 @@ export default function AddToPlaylistModal({
                     </div>
                   )}
                   <div className='flex-1 min-w-0'>
-                    <div className='text-[color:var(--tm-text)] font-medium truncate'>
+                    <div className='text-fg font-medium truncate'>
                       {playlist.name}
                     </div>
                     {playlist.description && (
-                      <div className='text-[13px] text-[color:var(--tm-muted)] truncate'>
+                      <div className='text-[13px] text-muted truncate'>
                         {playlist.description}
                       </div>
                     )}
@@ -376,7 +374,7 @@ export default function AddToPlaylistModal({
                     <MusicLoadingIndicator size='sm' className='gap-1' />
                   ) : (
                     <svg
-                      className='w-5 h-5 text-[color:var(--tm-muted)]'
+                      className='w-5 h-5 text-muted'
                       fill='none'
                       stroke='currentColor'
                       viewBox='0 0 24 24'

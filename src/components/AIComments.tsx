@@ -105,7 +105,7 @@ export default function AIComments({ movieName, movieInfo }: AICommentsProps) {
   if (!hasStartedLoading) {
     return (
       <div className='flex flex-col items-center justify-center py-12'>
-        <div className='text-[color:var(--tm-muted)] mb-4'>
+        <div className='text-muted mb-4'>
           <svg
             className='w-16 h-16 mx-auto mb-4 opacity-50'
             fill='none'
@@ -120,13 +120,13 @@ export default function AIComments({ movieName, movieInfo }: AICommentsProps) {
             />
           </svg>
           <p className='text-center'>点击生成AI评论</p>
-          <p className='text-[13px] text-center mt-2 text-[color:var(--tm-muted)]'>
+          <p className='text-[13px] text-center mt-2 text-muted'>
             基于影片信息和网络资料生成
           </p>
         </div>
         <button
           onClick={startLoading}
-          className='px-6 py-2 bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] rounded-lg hover:opacity-90 transition-colors flex items-center gap-2 min-h-[44px] tm-press'
+          className='px-6 py-2 bg-fg text-inverse rounded-lg hover:opacity-90 transition-colors flex items-center gap-2 min-h-[44px] tm-press'
         >
           <svg
             className='w-4 h-4'
@@ -150,11 +150,9 @@ export default function AIComments({ movieName, movieInfo }: AICommentsProps) {
   if (loading && comments.length === 0) {
     return (
       <div className='flex flex-col items-center justify-center py-12'>
-        <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--tm-line)] mb-3'></div>
-        <span className='text-[color:var(--tm-muted)]'>AI正在生成评论...</span>
-        <span className='text-[13px] text-[color:var(--tm-muted)] mt-2'>
-          这可能需要几秒钟
-        </span>
+        <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-line mb-3'></div>
+        <span className='text-muted'>AI正在生成评论...</span>
+        <span className='text-[13px] text-muted mt-2'>这可能需要几秒钟</span>
       </div>
     );
   }
@@ -162,14 +160,14 @@ export default function AIComments({ movieName, movieInfo }: AICommentsProps) {
   if (error && comments.length === 0) {
     return (
       <div className='text-center py-12'>
-        <div className='text-[color:var(--tm-text)] mb-2'>❌</div>
-        <p className='text-[color:var(--tm-muted)] mb-1'>{error}</p>
-        <p className='text-[13px] text-[color:var(--tm-muted)] mb-4'>
+        <div className='text-fg mb-2'>❌</div>
+        <p className='text-muted mb-1'>{error}</p>
+        <p className='text-[13px] text-muted mb-4'>
           请检查管理面板的AI配置是否正确
         </p>
         <button
           onClick={startLoading}
-          className='px-4 py-2 bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] rounded-lg hover:opacity-90 transition-colors min-h-[44px] tm-press'
+          className='px-4 py-2 bg-fg text-inverse rounded-lg hover:opacity-90 transition-colors min-h-[44px] tm-press'
         >
           重试
         </button>
@@ -181,13 +179,13 @@ export default function AIComments({ movieName, movieInfo }: AICommentsProps) {
     <div className='space-y-4'>
       {/* 头部统计和操作 */}
       <div className='flex items-center justify-between'>
-        <div className='text-sm text-[color:var(--tm-muted)]'>
+        <div className='text-sm text-muted'>
           已生成 {comments.length} 条AI评论
         </div>
         <button
           onClick={regenerate}
           disabled={loading}
-          className='text-sm px-3 py-1 bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)] rounded-lg hover:bg-[var(--tm-line)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1 min-h-[44px] tm-press'
+          className='text-sm px-3 py-1 bg-raised text-fg rounded-lg hover:bg-line transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1 min-h-[44px] tm-press'
         >
           <svg
             className='w-4 h-4'
@@ -211,7 +209,7 @@ export default function AIComments({ movieName, movieInfo }: AICommentsProps) {
         {comments.map((comment) => (
           <div
             key={comment.id}
-            className='bg-[var(--tm-surface-raised)] rounded-lg p-4 hover:bg-[var(--tm-line)] transition-colors border border-[var(--tm-line)]'
+            className='bg-raised rounded-lg p-4 hover:bg-line transition-colors border border-line'
           >
             {/* 用户信息 */}
             <div className='flex items-start gap-3 mb-3'>
@@ -227,12 +225,12 @@ export default function AIComments({ movieName, movieInfo }: AICommentsProps) {
               {/* 用户名和评分 */}
               <div className='flex-1 min-w-0'>
                 <div className='flex items-center gap-2 flex-wrap'>
-                  <span className='font-medium text-[color:var(--tm-text)]'>
+                  <span className='font-medium text-fg'>
                     {comment.userName}
                   </span>
                   {renderStars(comment.rating)}
                   {/* AI标识 */}
-                  <span className='inline-flex items-center gap-1 px-2 py-0.5 bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)] text-[13px] rounded-full'>
+                  <span className='inline-flex items-center gap-1 px-2 py-0.5 bg-raised text-fg text-[13px] rounded-full'>
                     <svg
                       className='w-3 h-3'
                       fill='currentColor'
@@ -245,14 +243,14 @@ export default function AIComments({ movieName, movieInfo }: AICommentsProps) {
                 </div>
 
                 {/* 时间 */}
-                <div className='text-[13px] text-[color:var(--tm-muted)] mt-1'>
+                <div className='text-[13px] text-muted mt-1'>
                   {comment.time}
                 </div>
               </div>
 
               {/* 有用数 */}
               {comment.votes > 0 && (
-                <div className='flex items-center gap-1 text-[13px] text-[color:var(--tm-muted)]'>
+                <div className='flex items-center gap-1 text-[13px] text-muted'>
                   <svg
                     className='w-4 h-4'
                     fill='none'
@@ -272,7 +270,7 @@ export default function AIComments({ movieName, movieInfo }: AICommentsProps) {
             </div>
 
             {/* 评论内容 */}
-            <div className='text-[color:var(--tm-muted)] leading-relaxed whitespace-pre-wrap'>
+            <div className='text-muted leading-relaxed whitespace-pre-wrap'>
               {comment.content}
             </div>
           </div>
@@ -280,7 +278,7 @@ export default function AIComments({ movieName, movieInfo }: AICommentsProps) {
       </div>
 
       {/* 提示信息 */}
-      <div className='text-center text-[13px] text-[color:var(--tm-muted)] py-2 border-t border-[var(--tm-line)]'>
+      <div className='text-center text-[13px] text-muted py-2 border-t border-line'>
         以上评论由AI基于影片信息和网络资料生成，仅供参考
       </div>
     </div>

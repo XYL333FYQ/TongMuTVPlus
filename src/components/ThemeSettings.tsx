@@ -16,6 +16,8 @@ export default function ThemeSettings() {
   const id = useId();
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
+  // 挂载前不知道真实主题，先不选中任何一项，避免先亮「深色」再跳走
+  const current = mounted ? theme || 'dark' : null;
   return (
     <div className='tm-menu-theme'>
       <span id={id}>外观</span>
@@ -30,8 +32,8 @@ export default function ThemeSettings() {
               key={value}
               type='button'
               role='radio'
-              aria-checked={(mounted ? theme || 'dark' : 'dark') === value}
-              tabIndex={(mounted ? theme || 'dark' : 'dark') === value ? 0 : -1}
+              aria-checked={current === value}
+              tabIndex={current === value || (!current && index === 0) ? 0 : -1}
               disabled={!mounted}
               className='tm-press'
               onClick={(event) =>
@@ -77,7 +79,7 @@ export default function ThemeSettings() {
                   );
               }}
             >
-              {(mounted ? theme || 'dark' : 'dark') === value && (
+              {current === value && (
                 <motion.span
                   className='tm-control-selection'
                   layoutId={reduced ? undefined : `tm-theme-${id}`}

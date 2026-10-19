@@ -29,7 +29,9 @@ function isPrivilegedRole(role?: string) {
   return role === 'owner' || role === 'admin';
 }
 
-async function getUserFeatureAccessMap(username: string): Promise<FeatureAccessMap> {
+async function getUserFeatureAccessMap(
+  username: string
+): Promise<FeatureAccessMap> {
   const storageType = process.env.NEXT_PUBLIC_STORAGE_TYPE || 'localstorage';
   if (storageType === 'localstorage') {
     return createFullFeatureAccessMap();
@@ -67,7 +69,9 @@ async function getUserFeatureAccessMap(username: string): Promise<FeatureAccessM
   }, {} as FeatureAccessMap);
 }
 
-export async function getUserFeatureAccess(username?: string | null): Promise<FeatureAccessMap> {
+export async function getUserFeatureAccess(
+  username?: string | null
+): Promise<FeatureAccessMap> {
   if (!username) return createEmptyFeatureAccessMap();
   try {
     return await getUserFeatureAccessMap(username);

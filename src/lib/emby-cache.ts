@@ -15,9 +15,16 @@ const EMBY_VIEWS_CACHE_KEY = 'emby:views';
 /**
  * 生成 Emby 列表缓存键
  */
-function makeListCacheKey(page: number, pageSize: number, parentId?: string, embyKey?: string): string {
+function makeListCacheKey(
+  page: number,
+  pageSize: number,
+  parentId?: string,
+  embyKey?: string
+): string {
   const keyPrefix = embyKey ? `emby:${embyKey}` : 'emby';
-  return parentId ? `${keyPrefix}:list:${page}:${pageSize}:${parentId}` : `${keyPrefix}:list:${page}:${pageSize}`;
+  return parentId
+    ? `${keyPrefix}:list:${page}:${pageSize}:${parentId}`
+    : `${keyPrefix}:list:${page}:${pageSize}`;
 }
 
 /**

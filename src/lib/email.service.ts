@@ -171,7 +171,10 @@ export class EmailService {
             <div class="content">
               <p>这是一封来自 ${displayName} 的测试邮件。</p>
               <p>如果您收到这封邮件，说明邮件配置正确！</p>
-              <p style="color: #666;">发送时间: ${new Date().toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' })}</p>
+              <p style="color: #666;">发送时间: ${new Date().toLocaleString(
+                'zh-CN',
+                { timeZone: 'Asia/Shanghai' }
+              )}</p>
             </div>
             <div class="footer">
               <p>此邮件由 ${displayName} 自动发送</p>

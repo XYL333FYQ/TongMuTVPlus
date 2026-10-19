@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { safeFetch } from './safe-http';
-
 import { getNextApiKey } from './tmdb.client';
 import { getTmdbImageBaseUrl } from './tmdb-image-base';
 
@@ -12,7 +11,9 @@ const DEFAULT_TMDB_BASE_URL = 'https://api.themoviedb.org';
  * 检测是否在 Cloudflare 环境中运行
  */
 function isCloudflareEnvironment(): boolean {
-  return process.env.CF_PAGES === '1' || process.env.BUILD_TARGET === 'cloudflare';
+  return (
+    process.env.CF_PAGES === '1' || process.env.BUILD_TARGET === 'cloudflare'
+  );
 }
 
 /**
@@ -29,7 +30,9 @@ async function universalFetch(url: string, proxy?: string): Promise<Response> {
     return response as unknown as Response;
   } else {
     // Node.js 环境：使用 node-fetch（safeFetch），支持 proxy
-    const signal = proxy ? AbortSignal.timeout(30000) : AbortSignal.timeout(15000);
+    const signal = proxy
+      ? AbortSignal.timeout(30000)
+      : AbortSignal.timeout(15000);
 
     return safeFetch(url, { signal }, proxy) as unknown as Response;
   }
@@ -72,7 +75,9 @@ export async function searchTMDB(
 
     const baseUrl = reverseProxyBaseUrl || DEFAULT_TMDB_BASE_URL;
     // 使用 multi search 同时搜索电影和电视剧
-    let url = `${baseUrl}/3/search/multi?api_key=${actualKey}&language=zh-CN&query=${encodeURIComponent(query)}&page=1`;
+    let url = `${baseUrl}/3/search/multi?api_key=${actualKey}&language=zh-CN&query=${encodeURIComponent(
+      query
+    )}&page=1`;
 
     // 如果提供了年份，添加到搜索参数中
     if (year) {
@@ -87,7 +92,8 @@ export async function searchTMDB(
       return { code: response.status, result: null };
     }
 
-    const data: TMDBSearchResponse = await response.json() as TMDBSearchResponse;
+    const data: TMDBSearchResponse =
+      (await response.json()) as TMDBSearchResponse;
 
     // 过滤出电影和电视剧，取第一个结果
     const validResults = data.results.filter(
@@ -156,14 +162,20 @@ export async function getTVSeasons(
     const response = await universalFetch(url, proxy);
 
     if (!response.ok) {
-      console.error('TMDB 获取电视剧详情失败:', response.status, response.statusText);
+      console.error(
+        'TMDB 获取电视剧详情失败:',
+        response.status,
+        response.statusText
+      );
       return { code: response.status, seasons: null };
     }
 
-    const data: TMDBTVDetails = await response.json() as TMDBTVDetails;
+    const data: TMDBTVDetails = (await response.json()) as TMDBTVDetails;
 
     // 过滤掉特殊季度（如 Season 0 通常是特别篇）
-    const validSeasons = data.seasons.filter((season) => season.season_number > 0);
+    const validSeasons = data.seasons.filter(
+      (season) => season.season_number > 0
+    );
 
     return {
       code: 200,
@@ -197,11 +209,15 @@ export async function getTVSeasonDetails(
     const response = await universalFetch(url, proxy);
 
     if (!response.ok) {
-      console.error('TMDB 获取季度详情失败:', response.status, response.statusText);
+      console.error(
+        'TMDB 获取季度详情失败:',
+        response.status,
+        response.statusText
+      );
       return { code: response.status, season: null };
     }
 
-    const data: TMDBSeasonInfo = await response.json() as TMDBSeasonInfo;
+    const data: TMDBSeasonInfo = (await response.json()) as TMDBSeasonInfo;
 
     return {
       code: 200,
@@ -248,7 +264,11 @@ export async function getTVEpisodeImages(
     const response = await universalFetch(url, proxy);
 
     if (!response.ok) {
-      console.error('TMDB 获取集数剧照失败:', response.status, response.statusText);
+      console.error(
+        'TMDB 获取集数剧照失败:',
+        response.status,
+        response.statusText
+      );
       return { code: response.status, stills: null };
     }
 
@@ -273,10 +293,7 @@ export async function getTVEpisodeImages(
 /**
  * 获取 TMDB 图片完整 URL
  */
-export function getTMDBImageUrl(
-  path: string | null,
-  size = 'w500'
-): string {
+export function getTMDBImageUrl(path: string | null, size = 'w500'): string {
   if (!path) return '';
 
   // 如果已经是完整的 URL (http:// 或 https://),直接返回

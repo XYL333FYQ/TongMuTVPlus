@@ -165,22 +165,20 @@ export default function EpisodeTitleCorrectDialog({
 
   return createPortal(
     <div
-      className='fixed inset-0 z-[1000] flex items-center justify-center bg-[color:color-mix(in_srgb,var(--tm-room-cinema-bg)_50%,transparent)] p-4'
+      className='fixed inset-0 z-[1000] flex items-center justify-center bg-ink/50 p-4'
       onClick={onClose}
     >
       <div
-        className='w-full max-w-md max-h-[85vh] overflow-hidden flex flex-col rounded-2xl bg-[var(--tm-surface)] shadow-xl'
+        className='w-full max-w-md max-h-[85vh] overflow-hidden flex flex-col rounded-2xl bg-surface shadow-xl'
         onClick={(e) => e.stopPropagation()}
         role='dialog'
         aria-modal='true'
       >
         {/* 头部 */}
-        <div className='flex items-center justify-between px-5 py-4 border-b border-[var(--tm-line)]'>
-          <span className='text-base font-medium text-[color:var(--tm-text)]'>
-            手动矫正标题
-          </span>
+        <div className='flex items-center justify-between px-5 py-4 border-b border-line'>
+          <span className='text-base font-medium text-fg'>手动矫正标题</span>
           <button
-            className='p-1 rounded-md text-[color:var(--tm-muted)] hover:text-[color:var(--tm-muted)] hover:text-[color:var(--tm-text)] hover:bg-[var(--tm-line)] transition-colors min-h-[44px] tm-press'
+            className='p-1 rounded-md text-muted hover:text-fg hover:bg-line transition-colors min-h-[44px] tm-press'
             onClick={onClose}
             aria-label='关闭'
           >
@@ -192,10 +190,8 @@ export default function EpisodeTitleCorrectDialog({
           {/* 禁用本剧集 */}
           <label className='flex items-start justify-between gap-3 cursor-pointer'>
             <div className='min-w-0'>
-              <div className='text-sm font-medium text-[color:var(--tm-text)]'>
-                禁用本剧集
-              </div>
-              <p className='mt-1 text-[13px] text-[color:var(--tm-muted)]'>
+              <div className='text-sm font-medium text-fg'>禁用本剧集</div>
+              <p className='mt-1 text-[13px] text-muted'>
                 仅对本剧生效：不获取分集名，保持数字网格。
               </p>
             </div>
@@ -211,10 +207,8 @@ export default function EpisodeTitleCorrectDialog({
               {/* 弹幕优先（不用搜 TMDB） */}
               <label className='flex items-start justify-between gap-3 cursor-pointer'>
                 <div className='min-w-0'>
-                  <div className='text-sm font-medium text-[color:var(--tm-text)]'>
-                    弹幕优先
-                  </div>
-                  <p className='mt-1 text-[13px] text-[color:var(--tm-muted)]'>
+                  <div className='text-sm font-medium text-fg'>弹幕优先</div>
+                  <p className='mt-1 text-[13px] text-muted'>
                     直接用弹幕分集名，不搜索、不使用 TMDB。
                   </p>
                 </div>
@@ -235,17 +229,17 @@ export default function EpisodeTitleCorrectDialog({
               {/* 指定 TMDB */}
               {!preferDanmaku && (
                 <div className='space-y-2'>
-                  <div className='text-sm font-medium text-[color:var(--tm-text)]'>
+                  <div className='text-sm font-medium text-fg'>
                     指定 TMDB 剧集
                   </div>
                   {hasTmdb ? (
-                    <div className='flex items-center justify-between gap-3 rounded-lg border border-[var(--tm-line)] px-3 py-2'>
-                      <span className='text-sm text-[color:var(--tm-muted)] text-[color:var(--tm-text)]'>
+                    <div className='flex items-center justify-between gap-3 rounded-lg border border-line px-3 py-2'>
+                      <span className='text-sm text-fg'>
                         已指定：TMDB #{correction.tmdbId} · 第{' '}
                         {correction.season} 季
                       </span>
                       <button
-                        className='text-[13px] text-[color:var(--tm-text)] hover:text-[color:var(--tm-text)] min-h-[44px] tm-press'
+                        className='text-[13px] text-fg hover:text-fg min-h-[44px] tm-press'
                         onClick={clearTmdb}
                       >
                         清除
@@ -276,10 +270,8 @@ export default function EpisodeTitleCorrectDialog({
 
               {/* 起始集数 */}
               <div className='space-y-1'>
-                <div className='text-sm font-medium text-[color:var(--tm-text)]'>
-                  起始集数
-                </div>
-                <p className='text-[13px] text-[color:var(--tm-muted)]'>
+                <div className='text-sm font-medium text-fg'>起始集数</div>
+                <p className='text-[13px] text-muted'>
                   视频第 1 集对应 TMDB 的第几集。TMDB
                   把多季合在一季连续编号（本剧其实是第 2/3
                   季）时，用它对齐，例如填 13。
@@ -295,10 +287,10 @@ export default function EpisodeTitleCorrectDialog({
                       startEpisode: Number.isFinite(v) && v > 1 ? v : undefined,
                     });
                   }}
-                  className='w-28 px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)] focus:ring-2 focus:ring-[var(--tm-text)] focus:border-transparent'
+                  className='w-28 px-3 py-2 border border-line rounded-lg bg-surface text-fg focus:ring-2 focus:ring-fg focus:border-transparent'
                 />
                 {totalEpisodes > 0 && (
-                  <p className='text-[13px] text-[color:var(--tm-muted)]'>
+                  <p className='text-[13px] text-muted'>
                     本视频共 {totalEpisodes} 集
                   </p>
                 )}
@@ -331,8 +323,8 @@ function SwitchButton({
       onClick={onClick}
       className={`relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors ${
         checked
-          ? 'bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] min-h-[44px] tm-press'
-          : 'bg-[var(--tm-surface)] min-h-[44px] tm-press'
+          ? 'bg-fg text-inverse min-h-[44px] tm-press'
+          : 'bg-surface min-h-[44px] tm-press'
       } ${
         disabled
           ? 'opacity-50 cursor-not-allowed min-h-[44px] tm-press'
@@ -340,7 +332,7 @@ function SwitchButton({
       }`}
     >
       <span
-        className={`inline-block h-4 w-4 transform rounded-full bg-[var(--tm-surface)] transition-transform ${
+        className={`inline-block h-4 w-4 transform rounded-full bg-surface transition-transform ${
           checked ? 'translate-x-6' : 'translate-x-1'
         }`}
       />
@@ -383,17 +375,17 @@ function TmdbSearchArea({
       <div>
         <button
           onClick={onBack}
-          className='mb-2 text-sm text-[color:var(--tm-text)] hover:text-[color:var(--tm-text)] min-h-[44px] tm-press'
+          className='mb-2 text-sm text-fg hover:text-fg min-h-[44px] tm-press'
         >
           ← 返回搜索结果
         </button>
         {selectedResult && (
-          <div className='mb-2 text-sm text-[color:var(--tm-muted)]'>
+          <div className='mb-2 text-sm text-muted'>
             {selectedResult.title || selectedResult.name} · 请选择季度
           </div>
         )}
         {loadingSeasons ? (
-          <div className='py-6 text-center text-sm text-[color:var(--tm-muted)]'>
+          <div className='py-6 text-center text-sm text-muted'>
             加载季度中...
           </div>
         ) : (
@@ -402,12 +394,10 @@ function TmdbSearchArea({
               <button
                 key={s.id}
                 onClick={() => onSelectSeason(s)}
-                className='w-full flex items-center justify-between gap-2 px-3 py-2 rounded-lg border border-[var(--tm-line)] hover:bg-[var(--tm-line)] transition-colors text-left min-h-[44px] tm-press'
+                className='w-full flex items-center justify-between gap-2 px-3 py-2 rounded-lg border border-line hover:bg-line transition-colors text-left min-h-[44px] tm-press'
               >
-                <span className='text-sm text-[color:var(--tm-text)]'>
-                  {s.name}
-                </span>
-                <span className='text-[13px] text-[color:var(--tm-muted)]'>
+                <span className='text-sm text-fg'>{s.name}</span>
+                <span className='text-[13px] text-muted'>
                   {s.episode_count} 集
                 </span>
               </button>
@@ -427,19 +417,17 @@ function TmdbSearchArea({
           onChange={(e) => setSearchQuery(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && onSearch()}
           placeholder='搜索剧名'
-          className='flex-1 px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)] focus:ring-2 focus:ring-[var(--tm-text)] focus:border-transparent'
+          className='flex-1 px-3 py-2 border border-line rounded-lg bg-surface text-fg focus:ring-2 focus:ring-fg focus:border-transparent'
         />
         <button
           onClick={onSearch}
           disabled={searching}
-          className='px-3 py-2 bg-[var(--tm-text)] hover:opacity-90 text-[color:var(--tm-accent-contrast)] rounded-lg transition-colors disabled:bg-[var(--tm-surface)] flex items-center min-h-[44px] tm-press'
+          className='px-3 py-2 bg-fg hover:opacity-90 text-inverse rounded-lg transition-colors disabled:bg-surface flex items-center min-h-[44px] tm-press'
         >
           <Search className='w-4 h-4' />
         </button>
       </div>
-      {error && (
-        <p className='mt-2 text-sm text-[color:var(--tm-text)]'>{error}</p>
-      )}
+      {error && <p className='mt-2 text-sm text-fg'>{error}</p>}
       {results.length > 0 && (
         <div className='mt-2 space-y-2 max-h-64 overflow-y-auto'>
           {results.map((r) => (
@@ -447,9 +435,9 @@ function TmdbSearchArea({
               key={r.id}
               onClick={() => onSelectResult(r)}
               disabled={loadingSeasons}
-              className='w-full flex gap-3 p-2 rounded-lg border border-[var(--tm-line)] hover:bg-[var(--tm-line)] transition-colors text-left disabled:opacity-50 min-h-[44px] tm-press'
+              className='w-full flex gap-3 p-2 rounded-lg border border-line hover:bg-line transition-colors text-left disabled:opacity-50 min-h-[44px] tm-press'
             >
-              <div className='flex-shrink-0 w-10 h-14 relative rounded overflow-hidden bg-[var(--tm-surface-raised)]'>
+              <div className='flex-shrink-0 w-10 h-14 relative rounded overflow-hidden bg-raised'>
                 {r.poster_path && (
                   <Image
                     src={processImageUrl(getTMDBImageUrl(r.poster_path))}
@@ -461,10 +449,10 @@ function TmdbSearchArea({
                 )}
               </div>
               <div className='flex-1 min-w-0'>
-                <div className='text-sm font-medium text-[color:var(--tm-text)] truncate'>
+                <div className='text-sm font-medium text-fg truncate'>
                   {r.title || r.name}
                 </div>
-                <div className='text-[13px] text-[color:var(--tm-muted)] mt-0.5'>
+                <div className='text-[13px] text-muted mt-0.5'>
                   {r.first_air_date?.split('-')[0] || '未知'} · 评分{' '}
                   {r.vote_average.toFixed(1)}
                 </div>

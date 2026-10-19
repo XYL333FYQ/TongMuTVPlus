@@ -33,9 +33,14 @@ function isValidEntry<T>(
   );
 }
 
-export function getBangumiScheduleMemoryCache<T>(season: string, year: number): T | null {
+export function getBangumiScheduleMemoryCache<T>(
+  season: string,
+  year: number
+): T | null {
   const key = getCacheKey(season, year);
-  const entry = memoryCache.get(key) as BangumiScheduleCacheEntry<T> | undefined;
+  const entry = memoryCache.get(key) as
+    | BangumiScheduleCacheEntry<T>
+    | undefined;
   if (!entry || !isValidEntry(entry, season, year, MEMORY_CACHE_TTL_MS)) {
     memoryCache.delete(key);
     return null;
@@ -58,7 +63,9 @@ export async function getBangumiScheduleDatabaseCache<T>(
 ): Promise<T | null> {
   try {
     const raw = await new DbManager().getGlobalValue(getCacheKey(season, year));
-    const entry = raw ? (JSON.parse(raw) as BangumiScheduleCacheEntry<T>) : null;
+    const entry = raw
+      ? (JSON.parse(raw) as BangumiScheduleCacheEntry<T>)
+      : null;
     if (!isValidEntry(entry, season, year, DATABASE_CACHE_TTL_MS)) return null;
     setBangumiScheduleMemoryCache(season, year, entry.data, entry.cachedAt);
     return entry.data;

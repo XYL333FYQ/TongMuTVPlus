@@ -287,7 +287,7 @@ export default function BookDetailPage() {
       >
         <div
           className={cn(
-            'relative aspect-[3/4] overflow-hidden rounded-md bg-[var(--tm-surface-raised)]',
+            'relative aspect-[3/4] overflow-hidden rounded-md bg-raised',
             BOOK_COVER_LIFT
           )}
         >
@@ -314,7 +314,7 @@ export default function BookDetailPage() {
         </div>
         <div className='flex min-w-0 flex-col justify-between gap-5'>
           <div>
-            <span className='inline-flex items-center gap-1.5 rounded-sm bg-[var(--tm-surface-raised)] px-2.5 py-1 text-[13px] font-medium text-[color:var(--tm-text)]'>
+            <span className='inline-flex items-center gap-1.5 rounded-sm bg-raised px-2.5 py-1 text-[13px] font-medium text-fg'>
               <BookOpen className='h-3.5 w-3.5' />
               {detail.sourceName}
             </span>
@@ -331,7 +331,7 @@ export default function BookDetailPage() {
               {detail.author || '未知作者'}
             </div>
             {detail.summary ? (
-              <div className='mt-4 line-clamp-5 text-base leading-[1.7] text-[color:var(--tm-text)]'>
+              <div className='mt-4 line-clamp-5 text-base leading-[1.7] text-fg'>
                 {detail.summary}
               </div>
             ) : null}
@@ -341,7 +341,7 @@ export default function BookDetailPage() {
                   key={tag}
                   className={cn(
                     'inline-flex items-center gap-1.5 rounded-sm px-2.5 py-1 text-[13px] font-medium',
-                    'bg-[var(--tm-bg)] text-[color:var(--tm-muted)]'
+                    'bg-canvas text-muted'
                   )}
                 >
                   <Tags className='h-3 w-3' />
@@ -368,7 +368,7 @@ export default function BookDetailPage() {
               className={cn(
                 GHOST_BUTTON_CLASS,
                 shelf[`${detail.sourceId}+${detail.id}`] &&
-                  'border-transparent bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)] hover:border-transparent hover:text-[color:var(--tm-text)] min-h-[44px] tm-press'
+                  'border-transparent bg-raised text-fg hover:border-transparent hover:text-fg min-h-[44px] tm-press'
               )}
             >
               <BookmarkPlus className='h-4 w-4' />
@@ -409,7 +409,7 @@ export default function BookDetailPage() {
 
       <section className={PANEL_CLASS}>
         <div className='flex items-center gap-2'>
-          <FileText className='h-5 w-5 text-[color:var(--tm-text)]' />{' '}
+          <FileText className='h-5 w-5 text-fg' />{' '}
           <h2
             className={cn(
               'text-xl md:text-2xl font-medium',
@@ -478,7 +478,7 @@ export default function BookDetailPage() {
                     }
                   }}
                   className={cn(
-                    'shrink-0 cursor-pointer rounded-sm px-3 py-1.5 text-sm font-medium text-[color:var(--tm-text)] transition-colors duration-200 hover:bg-[var(--tm-surface-raised)] disabled:cursor-not-allowed disabled:text-[color:var(--tm-muted)] min-h-[44px] tm-press',
+                    'shrink-0 cursor-pointer rounded-sm px-3 py-1.5 text-sm font-medium text-fg transition-colors duration-200 hover:bg-raised disabled:cursor-not-allowed disabled:text-muted min-h-[44px] tm-press',
                     LIBRARY_FOCUS
                   )}
                 >
@@ -504,7 +504,7 @@ export default function BookDetailPage() {
             </h2>
             <div
               className={cn(
-                'rounded-sm bg-[var(--tm-bg)] px-3 py-1 text-sm',
+                'rounded-sm bg-canvas px-3 py-1 text-sm',
                 LIBRARY_MUTED
               )}
             >
@@ -512,9 +512,7 @@ export default function BookDetailPage() {
             </div>
           </div>
           {chaptersError ? (
-            <div className='mt-4 text-sm text-[color:var(--tm-text)]'>
-              {chaptersError}
-            </div>
+            <div className='mt-4 text-sm text-fg'>{chaptersError}</div>
           ) : null}
           {!chaptersLoading && !chaptersError && chapters.length === 0 ? (
             <div className={cn('mt-4 text-sm', ROW_CLASS, LIBRARY_MUTED)}>
@@ -533,7 +531,7 @@ export default function BookDetailPage() {
                   )}
                   onClick={() => cacheBookDetail(detail)}
                   className={cn(
-                    'truncate text-sm transition-colors duration-200 hover:text-[color:var(--tm-text)] min-h-[44px] tm-press',
+                    'truncate text-sm transition-colors duration-200 hover:text-fg min-h-[44px] tm-press',
                     ROW_CLASS,
                     LIBRARY_TEXT,
                     LIBRARY_FOCUS

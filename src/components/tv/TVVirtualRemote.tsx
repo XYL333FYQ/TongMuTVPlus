@@ -576,9 +576,7 @@ export default function TVVirtualRemote() {
           <div className='mb-4 flex items-center justify-between'>
             <div>
               <div className='text-lg font-medium'>虚拟遥控器</div>
-              <div className='text-sm text-[color:var(--tm-muted)]'>
-                F1 打开 / 关闭
-              </div>
+              <div className='text-sm text-muted'>F1 打开 / 关闭</div>
             </div>
             <RemoteButton
               label='关闭遥控器'
@@ -663,7 +661,7 @@ export default function TVVirtualRemote() {
             <div />
           </div>
 
-          <div className='mt-4 rounded-2xl bg-[var(--tm-surface-raised)] p-3 text-center text-sm text-[color:var(--tm-muted)]'>
+          <div className='mt-4 rounded-2xl bg-raised p-3 text-center text-sm text-muted'>
             点击按钮会向当前页面发送方向键 / Enter / Esc
           </div>
         </motion.aside>

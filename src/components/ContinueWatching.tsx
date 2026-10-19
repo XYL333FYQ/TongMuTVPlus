@@ -5,7 +5,7 @@ import { ChevronRight } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 
-import '@/styles/legacy-panels.css';
+import '@/styles/panels.css';
 
 import type { PlayRecord } from '@/lib/db.client';
 import {
@@ -121,9 +121,9 @@ export default function ContinueWatching({
   return (
     <>
       <section
-        className={`mb-8 ${homeLayout ? 'tm-home-resume' : ''}  ${
+        className={`${homeLayout ? 'tm-home-resume' : 'mb-8'} ${
           className || ''
-        } `}
+        }`}
       >
         {homeLayout ? (
           <SectionHeader
@@ -131,7 +131,7 @@ export default function ContinueWatching({
             actions={
               !loading && playRecords.length > 0 ? (
                 <button
-                  className='tm-section-view-all min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
+                  className='tm-section-link'
                   onClick={() => setShowPlayRecordsPanel(true)}
                 >
                   查看全部
@@ -141,25 +141,17 @@ export default function ContinueWatching({
           />
         ) : (
           <div className='tm-continue-header mb-4 flex items-center justify-between'>
-            <h2
-              className={
-                homeLayout
-                  ? 'text-xl font-medium text-[var(--tm-text)]'
-                  : 'text-xl font-medium text-[color:var(--tm-text)]'
-              }
-            >
-              继续观看
-            </h2>
+            <h2 className='text-xl font-medium text-fg'>继续观看</h2>
             {!loading && playRecords.length > 0 && (
               <div className='flex items-center gap-1'>
                 <button
-                  className='text-sm text-[color:var(--tm-muted)] hover:text-[color:var(--tm-text)] min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
+                  className='text-sm text-muted hover:text-fg min-h-[44px] tm-press min-w-[44px]'
                   onClick={() => setShowConfirmDialog(true)}
                 >
                   清空
                 </button>
                 <button
-                  className='inline-flex h-8 w-8 items-center justify-center rounded-full text-[color:var(--tm-muted)] transition-opacity hover:bg-[var(--tm-line)] hover:text-[color:var(--tm-text)] min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
+                  className='inline-flex h-8 w-8 items-center justify-center rounded-full text-muted transition-opacity hover:bg-line hover:text-fg min-h-[44px] tm-press min-w-[44px]'
                   onClick={() => setShowPlayRecordsPanel(true)}
                   aria-label='查看全部播放记录'
                 >
@@ -180,25 +172,21 @@ export default function ContinueWatching({
             {Array.from({ length: 8 }).map((_, index) => (
               <div
                 key={index}
-                className='min-w-[180px] w-48 sm:min-w-[200px] sm:w-52'
+                className={
+                  homeLayout
+                    ? ''
+                    : 'min-w-[180px] w-48 sm:min-w-[200px] sm:w-52'
+                }
               >
-                <div
-                  className={
-                    homeLayout
-                      ? 'relative aspect-video w-full overflow-hidden rounded-lg bg-[var(--tm-surface-raised)] tm-skeleton'
-                      : 'relative aspect-video w-full overflow-hidden rounded-lg bg-[var(--tm-surface-raised)] tm-skeleton'
-                  }
-                >
+                <div className='relative aspect-video w-full overflow-hidden rounded-lg bg-raised tm-skeleton'>
                   <div
                     className={
-                      homeLayout
-                        ? 'hidden'
-                        : 'absolute inset-0 bg-[var(--tm-surface)]'
+                      homeLayout ? 'hidden' : 'absolute inset-0 bg-surface'
                     }
                   />
                 </div>
-                <div className='mt-1 h-1 rounded bg-[var(--tm-surface-raised)] tm-skeleton' />
-                <div className='mt-2 h-4 w-3/4 rounded bg-[var(--tm-surface-raised)] tm-skeleton' />
+                <div className='mt-1 h-1 rounded bg-raised tm-skeleton' />
+                <div className='mt-2 h-4 w-3/4 rounded bg-raised tm-skeleton' />
               </div>
             ))}
           </div>
@@ -210,8 +198,11 @@ export default function ContinueWatching({
                 return (
                   <div
                     key={record.key}
-                    className='min-w-[180px] w-48 sm:min-w-[200px] sm:w-52'
-                    style={{ position: 'relative' }}
+                    className={
+                      homeLayout
+                        ? 'relative'
+                        : 'relative min-w-[180px] w-48 sm:min-w-[200px] sm:w-52'
+                    }
                   >
                     <VideoCard
                       id={id}
@@ -251,7 +242,10 @@ export default function ContinueWatching({
                       </>
                     )}
                     {(record.new_episodes ?? 0) > 0 && (
-                      <span className='tm-home-new-episodes'>
+                      <span
+                        className='tm-home-new-episodes tm-badge'
+                        data-on-art='true'
+                      >
                         +{record.new_episodes}
                       </span>
                     )}

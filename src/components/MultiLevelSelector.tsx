@@ -1,12 +1,13 @@
 'use client';
 
 import { motion } from 'framer-motion';
+import { ChevronDown } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 
 import '@/styles/controls.css';
 
 import { useReducedMotionSetting } from '@/lib/motion';
-import { createPortal } from 'react-dom';
 
 interface MultiLevelOption {
   label: string;
@@ -513,7 +514,7 @@ const MultiLevelSelector: React.FC<MultiLevelSelectorProps> = ({
   return (
     <>
       {/* 胶囊样式筛选栏 */}
-      <div className='relative inline-flex rounded-full p-0.5 sm:p-1 bg-transparent gap-1 sm:gap-2'>
+      <div className='tm-dropdowns'>
         {categories.map((category) => (
           <div
             key={category.key}
@@ -525,33 +526,12 @@ const MultiLevelSelector: React.FC<MultiLevelSelectorProps> = ({
             <button
               type='button'
               aria-expanded={activeCategory === category.key}
+              data-set={!isDefaultValue(category.key) || undefined}
               onClick={() => handleCategoryClick(category.key)}
-              className={`relative z-10 px-1.5 py-0.5 sm:px-2 sm:py-1 md:px-4 md:py-2 text-[13px] sm:text-sm font-medium rounded-full transition-[transform,opacity] duration-200 whitespace-nowrap min-h-[44px] min-w-[44px] tm-press focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)] ${
-                activeCategory === category.key
-                  ? isDefaultValue(category.key)
-                    ? 'text-[color:var(--tm-text)] cursor-default min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
-                    : 'text-[color:var(--tm-text)] cursor-default min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
-                  : isDefaultValue(category.key)
-                  ? 'text-[color:var(--tm-muted)] hover:text-[color:var(--tm-text)] cursor-pointer min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
-                  : 'text-[color:var(--tm-text)] hover:text-[color:var(--tm-text)] cursor-pointer min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
-              } `}
+              className='tm-dropdown-trigger'
             >
               <span>{getDisplayText(category.key)}</span>
-              <svg
-                className={`inline-block w-2.5 h-2.5 sm:w-3 sm:h-3 ml-0.5 sm:ml-1 transition-transform duration-200 ${
-                  activeCategory === category.key ? 'rotate-180' : ''
-                } `}
-                fill='none'
-                stroke='currentColor'
-                viewBox='0 0 24 24'
-              >
-                <path
-                  strokeLinecap='round'
-                  strokeLinejoin='round'
-                  strokeWidth={2}
-                  d='M19 9l-7 7-7-7'
-                />
-              </svg>
+              <ChevronDown size={14} aria-hidden />
             </button>
           </div>
         ))}
@@ -568,7 +548,7 @@ const MultiLevelSelector: React.FC<MultiLevelSelectorProps> = ({
               ease: [0.22, 1, 0.36, 1],
             }}
             ref={dropdownRef}
-            className='fixed z-[9999] bg-[var(--tm-surface-raised)] rounded-xl border border-[var(--tm-line)]'
+            className='tm-popover'
             style={{
               left: `${dropdownPosition.x}px`,
               top: `${dropdownPosition.y}px`,
@@ -579,8 +559,8 @@ const MultiLevelSelector: React.FC<MultiLevelSelectorProps> = ({
               position: 'fixed',
             }}
           >
-            <div className='p-2 sm:p-4'>
-              <div className='grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-1 sm:gap-2'>
+            <div>
+              <div className='tm-popover-grid'>
                 {categories
                   .find((cat) => cat.key === activeCategory)
                   ?.options.map((option) => (
@@ -594,11 +574,7 @@ const MultiLevelSelector: React.FC<MultiLevelSelectorProps> = ({
                       onClick={() =>
                         handleOptionSelect(activeCategory, option.value)
                       }
-                      className={`px-2 py-1.5 sm:px-3 sm:py-2 text-[13px] sm:text-sm rounded-lg transition-[transform,opacity] duration-200 text-left min-h-[44px] min-w-[44px] tm-press focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)] ${
-                        isOptionSelected(activeCategory, option.value)
-                          ? 'bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] border border-[var(--tm-line)] min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
-                          : 'text-[color:var(--tm-muted)] hover:bg-[var(--tm-line)] min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
-                      } `}
+                      className='tm-popover-option'
                     >
                       {option.label}
                     </button>

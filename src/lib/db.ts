@@ -1,9 +1,9 @@
 /* eslint-disable no-console, @typescript-eslint/no-explicit-any, @typescript-eslint/no-non-null-assertion */
 
 import { AdminConfig } from './admin.types';
+import { BookReadRecord, BookShelfItem } from './book.types';
 import { MusicPlayRecord } from './db.client';
 import { MangaReadRecord, MangaShelfItem } from './manga.types';
-import { BookReadRecord, BookShelfItem } from './book.types';
 import {
   MusicV2HistoryRecord,
   MusicV2PlaylistItem,
@@ -1056,7 +1056,11 @@ export class DbManager {
     opts: SetLocalSettingsSyncOptions
   ): Promise<SetLocalSettingsSyncResult> {
     if (typeof (this.storage as any).setUserLocalSettings === 'function') {
-      return (this.storage as any).setUserLocalSettings(userName, payload, opts);
+      return (this.storage as any).setUserLocalSettings(
+        userName,
+        payload,
+        opts
+      );
     }
     // 存储后端不支持时静默忽略（等价于从未开启）
     return { ok: true, version: 0, updatedAt: Date.now() };
@@ -1158,7 +1162,6 @@ export class DbManager {
     }
   }
 
-
   // ---------- Telegram Bot绑定相关 ----------
   async getTelegramBinding(userName: string) {
     if (typeof (this.storage as any).getTelegramBinding === 'function') {
@@ -1168,27 +1171,44 @@ export class DbManager {
   }
 
   async getTelegramBindingByTelegramUserId(telegramUserId: string) {
-    if (typeof (this.storage as any).getTelegramBindingByTelegramUserId === 'function') {
-      return (this.storage as any).getTelegramBindingByTelegramUserId(telegramUserId);
+    if (
+      typeof (this.storage as any).getTelegramBindingByTelegramUserId ===
+      'function'
+    ) {
+      return (this.storage as any).getTelegramBindingByTelegramUserId(
+        telegramUserId
+      );
     }
     return null;
   }
 
-  async upsertTelegramBinding(binding: import('./types').TelegramBindingRecord): Promise<void> {
+  async upsertTelegramBinding(
+    binding: import('./types').TelegramBindingRecord
+  ): Promise<void> {
     if (typeof (this.storage as any).upsertTelegramBinding === 'function') {
       await (this.storage as any).upsertTelegramBinding(binding);
     }
   }
 
   async deleteTelegramBindingByUsername(userName: string): Promise<void> {
-    if (typeof (this.storage as any).deleteTelegramBindingByUsername === 'function') {
+    if (
+      typeof (this.storage as any).deleteTelegramBindingByUsername ===
+      'function'
+    ) {
       await (this.storage as any).deleteTelegramBindingByUsername(userName);
     }
   }
 
-  async deleteTelegramBindingByTelegramUserId(telegramUserId: string): Promise<void> {
-    if (typeof (this.storage as any).deleteTelegramBindingByTelegramUserId === 'function') {
-      await (this.storage as any).deleteTelegramBindingByTelegramUserId(telegramUserId);
+  async deleteTelegramBindingByTelegramUserId(
+    telegramUserId: string
+  ): Promise<void> {
+    if (
+      typeof (this.storage as any).deleteTelegramBindingByTelegramUserId ===
+      'function'
+    ) {
+      await (this.storage as any).deleteTelegramBindingByTelegramUserId(
+        telegramUserId
+      );
     }
   }
 
@@ -1199,14 +1219,18 @@ export class DbManager {
     return null;
   }
 
-  async upsertTelegramBindSession(session: import('./types').TelegramBindSessionRecord): Promise<void> {
+  async upsertTelegramBindSession(
+    session: import('./types').TelegramBindSessionRecord
+  ): Promise<void> {
     if (typeof (this.storage as any).upsertTelegramBindSession === 'function') {
       await (this.storage as any).upsertTelegramBindSession(session);
     }
   }
 
   async markTelegramBindSessionUsed(code: string): Promise<void> {
-    if (typeof (this.storage as any).markTelegramBindSessionUsed === 'function') {
+    if (
+      typeof (this.storage as any).markTelegramBindSessionUsed === 'function'
+    ) {
       await (this.storage as any).markTelegramBindSessionUsed(code);
     }
   }

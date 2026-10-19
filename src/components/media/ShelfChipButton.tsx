@@ -26,8 +26,8 @@ export default function ShelfChipButton({
       className={cn(
         SHELF_CHIP,
         active
-          ? 'bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] hover:bg-[var(--tm-text)] hover:text-[color:var(--tm-accent-contrast)]'
-          : 'bg-[color:color-mix(in_srgb,var(--tm-room-cinema-bg)_80%,transparent)] text-[color:var(--tm-room-player-text)] hover:bg-[var(--tm-room-cinema-bg)] hover:text-[color:var(--tm-room-player-text)]',
+          ? 'bg-fg text-inverse hover:bg-fg hover:text-inverse'
+          : 'bg-ink/80 text-[color:var(--tm-room-player-text)] hover:bg-ink hover:text-[color:var(--tm-room-player-text)]',
         className
       )}
     >

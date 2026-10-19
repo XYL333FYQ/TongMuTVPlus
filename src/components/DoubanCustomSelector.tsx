@@ -129,7 +129,7 @@ const DoubanCustomSelector: React.FC<DoubanCustomSelectorProps> = ({
     return (
       <div
         ref={isPrimary ? undefined : secondaryContainerRef}
-        className='tm-capsule relative inline-flex bg-[var(--tm-surface-raised)] rounded-full p-0.5 sm:p-1'
+        className='tm-capsule'
       >
         {/* 滑动的白色背景指示器 */}
 
@@ -141,11 +141,7 @@ const DoubanCustomSelector: React.FC<DoubanCustomSelectorProps> = ({
               aria-pressed={isActive}
               key={option.value}
               onClick={() => onChange(option.value)}
-              className={`tm-capsule-option tm-press relative z-10 px-2 py-1 sm:px-4 sm:py-2 text-[13px] sm:text-sm font-medium rounded-full transition-[transform,opacity] duration-200 whitespace-nowrap min-h-[44px] min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)] ${
-                isActive
-                  ? 'text-[color:var(--tm-text)] cursor-default min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
-                  : 'text-[color:var(--tm-muted)] hover:text-[color:var(--tm-text)] cursor-pointer min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
-              } `}
+              className='tm-capsule-option'
             >
               {isActive && (
                 <motion.span
@@ -179,15 +175,13 @@ const DoubanCustomSelector: React.FC<DoubanCustomSelectorProps> = ({
   }
 
   return (
-    <div className='space-y-4 sm:space-y-6'>
+    <div className='tm-filter-rows'>
       {/* 两级选择器包装 */}
-      <div className='space-y-3 sm:space-y-4'>
+      <div className='tm-filter-rows'>
         {/* 一级选择器 */}
-        <div className='flex flex-col sm:flex-row sm:items-center gap-2'>
-          <span className='text-[13px] sm:text-sm font-medium text-[color:var(--tm-muted)] min-w-[48px]'>
-            类型
-          </span>
-          <div className='overflow-x-auto'>
+        <div className='tm-filter-row'>
+          <span className='tm-filter-label'>类型</span>
+          <div className='tm-filter-track'>
             {renderCapsuleSelector(
               primaryOptions,
               primarySelection || primaryOptions[0]?.value,
@@ -199,11 +193,9 @@ const DoubanCustomSelector: React.FC<DoubanCustomSelectorProps> = ({
 
         {/* 二级选择器 */}
         {secondaryOptions.length > 0 && (
-          <div className='flex flex-col sm:flex-row sm:items-center gap-2'>
-            <span className='text-[13px] sm:text-sm font-medium text-[color:var(--tm-muted)] min-w-[48px]'>
-              片单
-            </span>
-            <div ref={secondaryScrollContainerRef} className='overflow-x-auto'>
+          <div className='tm-filter-row'>
+            <span className='tm-filter-label'>片单</span>
+            <div ref={secondaryScrollContainerRef} className='tm-filter-track'>
               {renderCapsuleSelector(
                 secondaryOptions,
                 secondarySelection || secondaryOptions[0]?.value,

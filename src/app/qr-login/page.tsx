@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { Suspense, useState } from 'react';
 
+import '@/styles/auth.css';
+
 import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
 
 import PageContainer from '@/components/PageContainer';
@@ -49,53 +51,52 @@ function QrLoginClient() {
   };
 
   return (
-    <PageContainer className='min-h-screen bg-[var(--tm-bg)] py-10 text-[color:var(--tm-text)]'>
-      <section className='mx-auto max-w-md rounded-[32px] border border-[var(--tm-line)] bg-[var(--tm-surface)] p-7 shadow-2xl shadow-[var(--tm-room-cinema-bg)]'>
-        <h1 className='text-3xl font-black'>确认登录电视端</h1>
-        <p className='mt-3 text-[color:var(--tm-muted)]'>
+    <PageContainer className='tm-auth'>
+      <section className='tm-auth-card'>
+        <h1 className='tm-auth-title'>确认登录电视端</h1>
+        <p className='tm-auth-sub'>
           请确认电视屏幕上的二维码来自你正在使用的设备。
         </p>
         {!authed ? (
-          <div className='mt-8 rounded-3xl bg-[var(--tm-surface-raised)] p-5'>
-            <LogIn className='h-12 w-12 text-[color:var(--tm-text)]' />
-            <p className='mt-4 text-lg font-bold'>
+          <div className='tm-auth-note'>
+            <LogIn size={28} aria-hidden />
+            <p className='mt-3 text-[15px] font-medium'>
               当前手机未登录，请先登录后再确认电视登录。
             </p>
             <Link
               href={`/login?redirect=${encodeURIComponent(
                 `/qr-login?token=${token}`
               )}`}
-              className='mt-5 block rounded-2xl bg-[var(--tm-text)] px-5 py-4 text-center text-lg font-black text-[color:var(--tm-accent-contrast)] min-h-[44px] tm-press'
+              className='tm-btn tm-btn-primary tm-btn-lg mt-5 w-full'
             >
               去登录
             </Link>
           </div>
         ) : (
-          <div className='mt-8 grid gap-3'>
+          <div className='grid gap-3'>
             <button
               onClick={confirm}
               disabled={loading || !token}
-              className='flex items-center justify-center gap-2 rounded-2xl bg-[var(--tm-text)] px-5 py-4 text-lg font-black disabled:opacity-60 text-[color:var(--tm-accent-contrast)] min-h-[44px] tm-press'
+              className='tm-btn tm-btn-primary tm-btn-lg w-full'
             >
               {loading ? (
                 <Loader2 className='h-5 w-5 animate-spin' />
               ) : (
                 <CheckCircle className='h-5 w-5' />
-              )}{' '}
+              )}
               确认登录
             </button>
             <button
               onClick={cancel}
-              className='flex items-center justify-center gap-2 rounded-2xl bg-[var(--tm-surface-raised)] px-5 py-4 text-lg font-bold min-h-[44px] tm-press'
+              className='tm-btn tm-btn-secondary tm-btn-lg w-full'
             >
-              <XCircle className='h-5 w-5' /> 取消
+              <XCircle className='h-5 w-5' />
+              取消
             </button>
           </div>
         )}
         {message && (
-          <p className='mt-5 rounded-2xl bg-[var(--tm-surface-raised)] p-4 text-center text-lg font-bold'>
-            {message}
-          </p>
+          <p className='tm-auth-note mt-5 text-center text-[15px]'>{message}</p>
         )}
       </section>
     </PageContainer>

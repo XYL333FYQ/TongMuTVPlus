@@ -4,8 +4,6 @@ import { CheckCircle, Info, X, XCircle } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
-import '@/styles/feedback.css';
-
 export interface ToastProps {
   message: string;
   type?: 'success' | 'error' | 'info';

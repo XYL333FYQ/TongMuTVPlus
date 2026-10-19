@@ -30,7 +30,10 @@ export interface BaiduNetdiskSession {
 const TTL_MS = 30 * 60 * 1000;
 const sessionStore = new Map<string, BaiduNetdiskSession>();
 
-export function buildBaiduNetdiskId(input: { shareUrl: string; passcode?: string }): string {
+export function buildBaiduNetdiskId(input: {
+  shareUrl: string;
+  passcode?: string;
+}): string {
   return base58Encode(
     JSON.stringify({
       shareUrl: input.shareUrl,
@@ -39,7 +42,10 @@ export function buildBaiduNetdiskId(input: { shareUrl: string; passcode?: string
   );
 }
 
-export function parseBaiduNetdiskId(id: string): { shareUrl: string; passcode?: string } {
+export function parseBaiduNetdiskId(id: string): {
+  shareUrl: string;
+  passcode?: string;
+} {
   try {
     const decoded = base58Decode(id);
     const parsed = JSON.parse(decoded);
@@ -74,7 +80,10 @@ export function createBaiduNetdiskSession(input: {
 }): BaiduNetdiskSession {
   pruneExpiredSessions();
   const now = Date.now();
-  const id = buildBaiduNetdiskId({ shareUrl: input.shareUrl, passcode: input.passcode });
+  const id = buildBaiduNetdiskId({
+    shareUrl: input.shareUrl,
+    passcode: input.passcode,
+  });
   const session: BaiduNetdiskSession = {
     id,
     provider: 'baidu',
@@ -102,7 +111,9 @@ export function getBaiduNetdiskSession(id: string): BaiduNetdiskSession | null {
   return session;
 }
 
-export function refreshBaiduNetdiskSession(id: string): BaiduNetdiskSession | null {
+export function refreshBaiduNetdiskSession(
+  id: string
+): BaiduNetdiskSession | null {
   const session = getBaiduNetdiskSession(id);
   if (!session) return null;
   session.expiresAt = Date.now() + TTL_MS;

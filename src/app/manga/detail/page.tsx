@@ -49,8 +49,7 @@ import ProxyImage from '@/components/ProxyImage';
 const PANEL_CLASS = cn(LIBRARY_PANEL, 'p-6');
 
 /** 详情页里的元信息胶囊（作者 / 状态）。 */
-const META_PILL =
-  'rounded-sm bg-[var(--tm-bg)] px-2.5 py-1 text-[color:var(--tm-muted)]';
+const META_PILL = 'rounded-sm bg-canvas px-2.5 py-1 text-muted';
 
 function MangaDetailSkeleton() {
   return (
@@ -269,7 +268,7 @@ export default function MangaDetailPage() {
         {/* 封面立起来：外层投影 + 覆盖层书脊，和书墙上的卡片同一套。 */}
         <div
           className={cn(
-            'relative aspect-[3/4] overflow-hidden rounded-md bg-[var(--tm-surface-raised)]',
+            'relative aspect-[3/4] overflow-hidden rounded-md bg-raised',
             BOOK_COVER_LIFT
           )}
         >
@@ -311,7 +310,7 @@ export default function MangaDetailPage() {
                 LIBRARY_MUTED
               )}
             >
-              <span className='rounded-sm bg-[var(--tm-surface-raised)] px-2.5 py-1 text-[color:var(--tm-text)]'>
+              <span className='rounded-sm bg-raised px-2.5 py-1 text-fg'>
                 {detail.sourceName}
               </span>
               {detail.author && (
@@ -323,7 +322,7 @@ export default function MangaDetailPage() {
             </div>
           </div>
           {detail.description && (
-            <p className='text-base leading-[1.7] text-[color:var(--tm-text)]'>
+            <p className='text-base leading-[1.7] text-fg'>
               {detail.description}
             </p>
           )}
@@ -352,8 +351,8 @@ export default function MangaDetailPage() {
                 LIBRARY_FOCUS,
                 'inline-flex items-center justify-center gap-2 rounded-md border px-4 py-2.5 text-sm font-medium transition-colors duration-200 min-h-[44px] tm-press',
                 shelf[key]
-                  ? 'border-transparent bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)] hover:bg-[color:color-mix(in_srgb,var(--tm-surface-raised)_70%,transparent)] min-h-[44px] tm-press'
-                  : 'border-[var(--tm-line)] text-[color:var(--tm-text)] hover:border-[var(--tm-text)] hover:text-[color:var(--tm-text)] min-h-[44px] tm-press'
+                  ? 'border-transparent bg-raised text-fg hover:bg-[color:color-mix(in_srgb,var(--tm-surface-raised)_70%,transparent)] min-h-[44px] tm-press'
+                  : 'border-line text-fg hover:border-fg hover:text-fg min-h-[44px] tm-press'
               )}
             >
               {shelf[key] ? (
@@ -396,7 +395,7 @@ export default function MangaDetailPage() {
           </button>
         </div>
         {unreadChapterCount > 0 && latestChapter && (
-          <div className='mb-4 rounded-md border border-[var(--tm-text)] bg-[var(--tm-surface-raised)] px-4 py-3 text-sm text-[color:var(--tm-text)]'>
+          <div className='mb-4 rounded-md border border-fg bg-raised px-4 py-3 text-sm text-fg'>
             已更新 {unreadChapterCount} 话，最新章节：{latestChapter.name}
           </div>
         )}
@@ -419,10 +418,7 @@ export default function MangaDetailPage() {
                   LIBRARY_FOCUS,
                   active
                     ? LIBRARY_ROW_ACTIVE
-                    : cn(
-                        LIBRARY_ROW,
-                        'hover:border-[var(--tm-text)] min-h-[44px] tm-press'
-                      )
+                    : cn(LIBRARY_ROW, 'hover:border-fg min-h-[44px] tm-press')
                 )}
               >
                 <div className='flex items-center justify-between gap-3'>
@@ -430,7 +426,7 @@ export default function MangaDetailPage() {
                     {chapter.name}
                   </div>
                   {isNewChapter && (
-                    <span className='shrink-0 rounded-sm bg-[var(--tm-text)] px-1.5 py-0.5 text-[13px] font-medium text-[color:var(--tm-accent-contrast)]'>
+                    <span className='shrink-0 rounded-sm bg-fg px-1.5 py-0.5 text-[13px] font-medium text-inverse'>
                       更新
                     </span>
                   )}

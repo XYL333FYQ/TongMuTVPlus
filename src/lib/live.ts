@@ -9,7 +9,9 @@ export const DEFAULT_LIVE_REFRESH_INTERVAL_HOURS = 12;
 
 let lastGlobalLiveRefreshTime = 0;
 
-export function getLiveRefreshIntervalHours(refreshIntervalHours?: number): number {
+export function getLiveRefreshIntervalHours(
+  refreshIntervalHours?: number
+): number {
   const normalizedInterval = Number(refreshIntervalHours);
 
   if (!Number.isFinite(normalizedInterval) || normalizedInterval <= 0) {

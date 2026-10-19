@@ -8,7 +8,6 @@ export interface TVItem {
   href?: string;
 }
 
-
 export interface TVSection {
   title: string;
   subtitle?: string;

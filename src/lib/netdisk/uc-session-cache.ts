@@ -27,11 +27,19 @@ export interface UCNetdiskSession {
 const TTL_MS = 30 * 60 * 1000;
 const sessionStore = new Map<string, UCNetdiskSession>();
 
-export function buildUCNetdiskId(input: { shareUrl: string; passcode?: string }) {
-  return base58Encode(JSON.stringify({ shareUrl: input.shareUrl, passcode: input.passcode || '' }));
+export function buildUCNetdiskId(input: {
+  shareUrl: string;
+  passcode?: string;
+}) {
+  return base58Encode(
+    JSON.stringify({ shareUrl: input.shareUrl, passcode: input.passcode || '' })
+  );
 }
 
-export function parseUCNetdiskId(id: string): { shareUrl: string; passcode?: string } {
+export function parseUCNetdiskId(id: string): {
+  shareUrl: string;
+  passcode?: string;
+} {
   try {
     const decoded = base58Decode(id);
     const parsed = JSON.parse(decoded);
@@ -64,7 +72,10 @@ export function createUCNetdiskSession(input: {
 }): UCNetdiskSession {
   pruneExpiredSessions();
   const now = Date.now();
-  const id = buildUCNetdiskId({ shareUrl: input.shareUrl, passcode: input.passcode });
+  const id = buildUCNetdiskId({
+    shareUrl: input.shareUrl,
+    passcode: input.passcode,
+  });
   const session: UCNetdiskSession = {
     id,
     provider: 'uc',

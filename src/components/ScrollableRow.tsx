@@ -133,9 +133,9 @@ export default function ScrollableRow({
             <button
               aria-label='向左滚动'
               onClick={handleScrollLeftClick}
-              className='w-12 h-12 bg-[var(--tm-surface-raised)] rounded-full shadow-lg flex items-center justify-center hover:bg-[var(--tm-line)] border border-[var(--tm-line)] transition-transform hover:scale-105 min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
+              className='w-12 h-12 bg-raised rounded-full shadow-lg flex items-center justify-center hover:bg-line border border-line transition-transform hover:scale-105 min-h-[44px] tm-press min-w-[44px]'
             >
-              <ChevronLeft className='w-6 h-6 text-[color:var(--tm-muted)]' />
+              <ChevronLeft className='w-6 h-6 text-muted' />
             </button>
           </div>
         </div>
@@ -163,9 +163,9 @@ export default function ScrollableRow({
             <button
               aria-label='向右滚动'
               onClick={handleScrollRightClick}
-              className='w-12 h-12 bg-[var(--tm-surface-raised)] rounded-full shadow-lg flex items-center justify-center hover:bg-[var(--tm-line)] border border-[var(--tm-line)] transition-transform hover:scale-105 min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
+              className='w-12 h-12 bg-raised rounded-full shadow-lg flex items-center justify-center hover:bg-line border border-line transition-transform hover:scale-105 min-h-[44px] tm-press min-w-[44px]'
             >
-              <ChevronRight className='w-6 h-6 text-[color:var(--tm-muted)]' />
+              <ChevronRight className='w-6 h-6 text-muted' />
             </button>
           </div>
         </div>

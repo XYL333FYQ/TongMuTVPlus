@@ -36,25 +36,33 @@ self.addEventListener('push', (event) => {
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
 
-  const targetUrl = new URL(event.notification.data?.url || '/', self.location.origin).href;
+  const targetUrl = new URL(
+    event.notification.data?.url || '/',
+    self.location.origin
+  ).href;
 
-  event.waitUntil((async () => {
-    const windowClients = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+  event.waitUntil(
+    (async () => {
+      const windowClients = await self.clients.matchAll({
+        type: 'window',
+        includeUncontrolled: true,
+      });
 
-    for (const client of windowClients) {
-      if ('focus' in client) {
-        await client.focus();
-        if ('navigate' in client) {
-          return client.navigate(targetUrl);
+      for (const client of windowClients) {
+        if ('focus' in client) {
+          await client.focus();
+          if ('navigate' in client) {
+            return client.navigate(targetUrl);
+          }
+          return;
         }
-        return;
       }
-    }
 
-    if (self.clients.openWindow) {
-      return self.clients.openWindow(targetUrl);
-    }
-  })());
+      if (self.clients.openWindow) {
+        return self.clients.openWindow(targetUrl);
+      }
+    })()
+  );
 });
 
 /* IndexedDB video cache virtual files
@@ -98,9 +106,13 @@ function openIDBVideoCache() {
         const manifestStore = db.createObjectStore(IDB_VIDEO_MANIFESTS_STORE, {
           keyPath: 'cacheKey',
         });
-        manifestStore.createIndex('sourceVideoEpisode', ['source', 'videoId', 'episodeIndex'], {
-          unique: true,
-        });
+        manifestStore.createIndex(
+          'sourceVideoEpisode',
+          ['source', 'videoId', 'episodeIndex'],
+          {
+            unique: true,
+          }
+        );
         manifestStore.createIndex('completed', 'completed', { unique: false });
         manifestStore.createIndex('updatedAt', 'updatedAt', { unique: false });
       }
@@ -125,14 +137,17 @@ function openIDBVideoCache() {
 }
 
 function idbVideoGet(storeName, key) {
-  return openIDBVideoCache().then((db) => new Promise((resolve, reject) => {
-    const tx = db.transaction([storeName], 'readonly');
-    const store = tx.objectStore(storeName);
-    const request = store.get(key);
+  return openIDBVideoCache().then(
+    (db) =>
+      new Promise((resolve, reject) => {
+        const tx = db.transaction([storeName], 'readonly');
+        const store = tx.objectStore(storeName);
+        const request = store.get(key);
 
-    request.onsuccess = () => resolve(request.result);
-    request.onerror = () => reject(request.error);
-  }));
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      })
+  );
 }
 
 function makeIDBVideoSegmentId(cacheKey, index) {
@@ -235,7 +250,9 @@ async function handleIDBVideoRequest(info) {
     });
   }
 
-  return new Response('Unsupported IndexedDB video cache request', { status: 400 });
+  return new Response('Unsupported IndexedDB video cache request', {
+    status: 400,
+  });
 }
 
 self.addEventListener('fetch', (event) => {

@@ -37,7 +37,10 @@ export interface AnimeSubscription {
   createdBy: string;
 }
 
-export type AnimeSubscriptionDownloadTool = 'aria2' | 'qBittorrent' | 'Transmission';
+export type AnimeSubscriptionDownloadTool =
+  | 'aria2'
+  | 'qBittorrent'
+  | 'Transmission';
 
 /** 集数过滤测试的单条结果 */
 export interface EpisodeTestItem {

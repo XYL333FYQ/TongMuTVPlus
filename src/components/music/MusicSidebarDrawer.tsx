@@ -127,7 +127,7 @@ export default function MusicSidebarDrawer({
           })}
         </nav>
 
-        <div className='mt-auto border-t border-[var(--tm-line)] pt-4'>
+        <div className='mt-auto border-t border-line pt-4'>
           <button
             onClick={() => navigate('/')}
             className={cn(MUSIC_DRAWER_ITEM, MUSIC_DRAWER_ITEM_IDLE)}

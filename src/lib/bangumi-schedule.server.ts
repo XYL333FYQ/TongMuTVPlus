@@ -1,8 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import * as cheerio from 'cheerio/slim';
-import { safeFetch } from './safe-http';
+
 import { isCloudflareEnvironment } from '@/lib/bangumi.server';
+
+import { safeFetch } from './safe-http';
 
 /**
  * Bangumi 番剧每日放送时刻表 —— 服务端实现。
@@ -159,10 +161,7 @@ function normalize(s: string): string {
   out = out.replace(/\s+/g, '');
   out = out
     .toLowerCase()
-    .replace(
-      /2nd|second|Ⅱ|ＩＩ|2|第二|二|第2|2期|第2期|二期/g,
-      ''
-    );
+    .replace(/2nd|second|Ⅱ|ＩＩ|2|第二|二|第2|2期|第2期|二期/g, '');
   out = out.replace(/[「」『』【】《》〈〉"'“”‘’()（）\-—]/g, '');
   return out;
 }

@@ -9,7 +9,7 @@ import Image from 'next/image';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
-import '@/styles/legacy-panels.css';
+import '@/styles/panels.css';
 
 import { useReducedMotionSetting } from '@/lib/motion';
 
@@ -255,22 +255,22 @@ const MobileActionSheet: React.FC<MobileActionSheetProps> = ({
   const getActionColor = (color: ActionItem['color']) => {
     switch (color) {
       case 'danger':
-        return 'text-[color:var(--tm-danger)]';
+        return 'text-danger';
       case 'primary':
-        return 'text-[color:var(--tm-text)]';
+        return 'text-fg';
       default:
-        return 'text-[color:var(--tm-muted)]';
+        return 'text-muted';
     }
   };
 
   const getActionHoverColor = (color: ActionItem['color']) => {
     switch (color) {
       case 'danger':
-        return 'hover:bg-[var(--tm-surface-raised)]';
+        return 'hover:bg-raised';
       case 'primary':
-        return 'hover:bg-[var(--tm-surface-raised)]';
+        return 'hover:bg-raised';
       default:
-        return 'hover:bg-[var(--tm-surface-raised)]';
+        return 'hover:bg-raised';
     }
   };
 
@@ -337,7 +337,7 @@ const MobileActionSheet: React.FC<MobileActionSheetProps> = ({
     >
       {/* 背景遮罩 */}
       <div
-        className={`tm-action-sheet-backdrop absolute inset-0 bg-[color:color-mix(in_srgb,var(--tm-room-cinema-bg)_50%,transparent)] transition-opacity duration-200 ease-out ${
+        className={`tm-action-sheet-backdrop absolute inset-0 bg-ink/50 transition-opacity duration-200 ease-out ${
           isAnimating ? 'opacity-100' : 'opacity-0'
         }`}
         onPointerDown={armBackdropClose}
@@ -358,7 +358,7 @@ const MobileActionSheet: React.FC<MobileActionSheetProps> = ({
 
       {/* 操作表单 */}
       <motion.div
-        className='tm-action-sheet-panel relative w-full max-w-lg mx-4 mb-4 bg-[var(--tm-surface)] rounded-2xl shadow-2xl'
+        className='tm-action-sheet-panel relative w-full max-w-lg mx-4 mb-4 bg-surface rounded-2xl shadow-2xl'
         initial={false}
         animate={{
           opacity: isAnimating ? 1 : 0,
@@ -392,7 +392,7 @@ const MobileActionSheet: React.FC<MobileActionSheetProps> = ({
       >
         {/* 头部 */}
         <div
-          className='tm-action-sheet-header flex items-center justify-between p-4 border-b border-[var(--tm-line)]'
+          className='tm-action-sheet-header flex items-center justify-between p-4 border-b border-line'
           style={{ touchAction: 'none' }}
           onPointerDown={(event) => {
             if (
@@ -408,7 +408,7 @@ const MobileActionSheet: React.FC<MobileActionSheetProps> = ({
               <button
                 type='button'
                 aria-label='查看海报'
-                className='tm-press relative w-12 h-16 rounded-lg overflow-hidden bg-[var(--tm-surface-raised)] flex-shrink-0 cursor-pointer hover:opacity-90 transition-opacity'
+                className='tm-press relative w-12 h-16 rounded-lg overflow-hidden bg-raised flex-shrink-0 cursor-pointer hover:opacity-90 transition-opacity'
                 onClick={(e) => {
                   e.stopPropagation();
                   onPosterClick?.();
@@ -430,23 +430,23 @@ const MobileActionSheet: React.FC<MobileActionSheetProps> = ({
                 <div className='relative min-w-0 flex-1 group/title'>
                   <h3
                     ref={titleRef}
-                    className='text-lg font-medium text-[color:var(--tm-text)] truncate'
+                    className='text-lg font-medium text-fg truncate'
                   >
                     {title}
                   </h3>
                   {isTitleOverflowing && (
-                    <div className='absolute bottom-full left-1/2 z-10 mb-2 w-max max-w-[min(20rem,calc(100vw-2rem))] -translate-x-1/2 rounded-lg bg-[var(--tm-surface)] px-3 py-2 text-center text-sm text-[color:var(--tm-text)] shadow-xl opacity-0 invisible transition-[transform,opacity] duration-200 ease-out whitespace-normal break-words pointer-events-none group-hover/title:opacity-100 group-hover/title:visible'>
+                    <div className='absolute bottom-full left-1/2 z-10 mb-2 w-max max-w-[min(20rem,calc(100vw-2rem))] -translate-x-1/2 rounded-lg bg-surface px-3 py-2 text-center text-sm text-fg shadow-xl opacity-0 invisible transition-[transform,opacity] duration-200 ease-out whitespace-normal break-words pointer-events-none group-hover/title:opacity-100 group-hover/title:visible'>
                       {title}
-                      <div className='absolute top-full left-1/2 h-0 w-0 -translate-x-1/2 border-l-4 border-r-4 border-t-4 border-transparent border-t-[var(--tm-line)]'></div>
+                      <div className='absolute top-full left-1/2 h-0 w-0 -translate-x-1/2 border-l-4 border-r-4 border-t-4 border-transparent border-t-line'></div>
                     </div>
                   )}
                 </div>
                 {sourceName && (
-                  <span className='flex-shrink-0 text-[13px] px-2 py-1 border border-[var(--tm-line)] rounded text-[color:var(--tm-muted)] bg-[var(--tm-surface-raised)]'>
+                  <span className='flex-shrink-0 text-[13px] px-2 py-1 border border-line rounded text-muted bg-raised'>
                     {origin === 'live' && (
                       <Radio
                         size={12}
-                        className='inline-block text-[color:var(--tm-muted)] mr-1.5'
+                        className='inline-block text-muted mr-1.5'
                       />
                     )}
                     {sourceName}
@@ -454,22 +454,20 @@ const MobileActionSheet: React.FC<MobileActionSheetProps> = ({
                 )}
               </div>
               {directLinkUrl && (
-                <p className='mb-2 text-[13px] text-[color:var(--tm-muted)] break-all'>
+                <p className='mb-2 text-[13px] text-muted break-all'>
                   {directLinkUrl}
                 </p>
               )}
-              <p className='text-sm text-[color:var(--tm-muted)]'>
-                {description}
-              </p>
+              <p className='text-sm text-muted'>{description}</p>
             </div>
           </div>
 
           <button
             aria-label='关闭操作菜单'
             onClick={requestClose}
-            className='tm-press p-2 rounded-full hover:bg-[var(--tm-line)] transition-opacity duration-150 min-h-[44px] tm-press'
+            className='tm-press p-2 rounded-full hover:bg-line transition-opacity duration-150 min-h-[44px] tm-press'
           >
-            <X size={20} className='text-[color:var(--tm-muted)]' />
+            <X size={20} className='text-muted' />
           </button>
         </div>
 
@@ -510,7 +508,7 @@ const MobileActionSheet: React.FC<MobileActionSheetProps> = ({
                     <span
                       className={`transition-opacity duration-150 ${
                         action.disabled
-                          ? 'text-[color:var(--tm-muted)]'
+                          ? 'text-muted'
                           : getActionColor(action.color)
                       }`}
                     >
@@ -521,9 +519,7 @@ const MobileActionSheet: React.FC<MobileActionSheetProps> = ({
                   {/* 文字 */}
                   <span
                     className={` text-left font-medium text-sm flex-1 ${
-                      action.disabled
-                        ? 'text-[color:var(--tm-muted)]'
-                        : 'text-[color:var(--tm-text)]'
+                      action.disabled ? 'text-muted' : 'text-fg'
                     }
                   `}
                   >
@@ -534,7 +530,7 @@ const MobileActionSheet: React.FC<MobileActionSheetProps> = ({
                   {action.id === 'play' &&
                     (currentEpisode ?? 0) > 0 &&
                     (totalEpisodes ?? 0) > 0 && (
-                      <span className='text-sm text-[color:var(--tm-muted)] font-medium'>
+                      <span className='text-sm text-muted font-medium'>
                         {currentEpisode}/{totalEpisodes}
                       </span>
                     )}
@@ -542,7 +538,7 @@ const MobileActionSheet: React.FC<MobileActionSheetProps> = ({
 
                 {/* 分割线 - 最后一项不显示 */}
                 {index < actions.length - 1 && (
-                  <div className='border-b border-[var(--tm-line)] ml-10'></div>
+                  <div className='border-b border-line ml-10'></div>
                 )}
               </div>
             ))}
@@ -551,13 +547,11 @@ const MobileActionSheet: React.FC<MobileActionSheetProps> = ({
 
         {/* 播放源信息展示区域 */}
         {isAggregate && sources && sources.length > 0 && (
-          <div className='px-4 py-3 border-t border-[var(--tm-line)]'>
+          <div className='px-4 py-3 border-t border-line'>
             {/* 标题区域 */}
             <div className='mb-3'>
-              <h4 className='text-sm font-medium text-[color:var(--tm-text)] mb-1'>
-                可用播放源
-              </h4>
-              <p className='text-[13px] text-[color:var(--tm-muted)]'>
+              <h4 className='text-sm font-medium text-fg mb-1'>可用播放源</h4>
+              <p className='text-[13px] text-muted'>
                 共 {sources.length} 个播放源
               </p>
             </div>
@@ -568,10 +562,10 @@ const MobileActionSheet: React.FC<MobileActionSheetProps> = ({
                 {sources.map((source, index) => (
                   <div
                     key={index}
-                    className='flex items-center gap-2 py-2 px-3 rounded-lg border border-[var(--tm-line)] bg-[var(--tm-surface-raised)]'
+                    className='flex items-center gap-2 py-2 px-3 rounded-lg border border-line bg-raised'
                   >
-                    <div className='w-1 h-1 bg-[var(--tm-surface)] rounded-full flex-shrink-0' />
-                    <span className='text-[13px] text-[color:var(--tm-muted)] truncate'>
+                    <div className='w-1 h-1 bg-surface rounded-full flex-shrink-0' />
+                    <span className='text-[13px] text-muted truncate'>
                       {source}
                     </span>
                   </div>

@@ -263,15 +263,15 @@ export default function EpgScrollableRow({
     return (
       <div className='pt-4'>
         <div className='mb-3 flex items-center justify-between'>
-          <h4 className='text-[13px] sm:text-sm font-medium text-[color:var(--tm-muted)] flex items-center gap-2'>
+          <h4 className='text-[13px] sm:text-sm font-medium text-muted flex items-center gap-2'>
             <Clock className='w-3 h-3 sm:w-4 sm:h-4' />
             今日节目单
           </h4>
           <div className='w-16 sm:w-20'></div>
         </div>
         <div className='min-h-[100px] sm:min-h-[120px] flex items-center justify-center'>
-          <div className='flex items-center gap-3 sm:gap-4 text-[color:var(--tm-muted)]'>
-            <div className='tm-skeleton h-3 w-24 rounded bg-[var(--tm-surface-raised)]'></div>
+          <div className='flex items-center gap-3 sm:gap-4 text-muted'>
+            <div className='tm-skeleton h-3 w-24 rounded bg-raised'></div>
             <span className='text-sm sm:text-base'>正在加载节目单</span>
           </div>
         </div>
@@ -284,14 +284,14 @@ export default function EpgScrollableRow({
     return (
       <div className='pt-4'>
         <div className='mb-3 flex items-center justify-between'>
-          <h4 className='text-[13px] sm:text-sm font-medium text-[color:var(--tm-muted)] flex items-center gap-2'>
+          <h4 className='text-[13px] sm:text-sm font-medium text-muted flex items-center gap-2'>
             <Clock className='w-3 h-3 sm:w-4 sm:h-4' />
             今日节目单
           </h4>
           <div className='w-16 sm:w-20'></div>
         </div>
         <div className='min-h-[100px] sm:min-h-[120px] flex items-center justify-center'>
-          <div className='flex items-center gap-2 sm:gap-3 text-[color:var(--tm-muted)]'>
+          <div className='flex items-center gap-2 sm:gap-3 text-muted'>
             <Tv className='w-4 h-4 sm:w-5 sm:h-5' />
             <span className='text-sm sm:text-base'>暂无节目单数据</span>
           </div>
@@ -303,20 +303,20 @@ export default function EpgScrollableRow({
   return (
     <div className='pt-4 mt-2'>
       <div className='mb-3 flex items-center justify-between'>
-        <h4 className='text-[13px] sm:text-sm font-medium text-[color:var(--tm-muted)] flex items-center gap-2'>
+        <h4 className='text-[13px] sm:text-sm font-medium text-muted flex items-center gap-2'>
           <Clock className='w-3 h-3 sm:w-4 sm:h-4' />
           今日节目单
         </h4>
         <div className='flex items-center gap-2'>
           {/* 视图切换按钮 */}
-          <div className='flex items-center gap-1 bg-[var(--tm-surface-raised)] rounded-lg p-0.5'>
+          <div className='flex items-center gap-1 bg-raised rounded-lg p-0.5'>
             <button
               aria-pressed={viewMode === 'list'}
               onClick={() => setViewMode('list')}
-              className={`tm-capsule-option flex items-center gap-1 px-2 py-1 text-[13px] font-medium rounded transition-[transform,opacity] duration-200 min-h-[44px] min-w-[44px] tm-press focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)] ${
+              className={`tm-capsule-option flex items-center gap-1 px-2 py-1 text-[13px] font-medium rounded transition-[transform,opacity] duration-200 min-h-[44px] min-w-[44px] tm-press ${
                 viewMode === 'list'
-                  ? 'bg-[var(--tm-surface)] text-[color:var(--tm-text)] shadow-sm min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
-                  : 'text-[color:var(--tm-muted)] hover:text-[color:var(--tm-text)] min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
+                  ? 'bg-surface text-fg shadow-sm min-h-[44px] tm-press min-w-[44px]'
+                  : 'text-muted hover:text-fg min-h-[44px] tm-press min-w-[44px]'
               } `}
               title='列表视图'
             >
@@ -338,10 +338,10 @@ export default function EpgScrollableRow({
             <button
               aria-pressed={viewMode === 'timeline'}
               onClick={() => setViewMode('timeline')}
-              className={`tm-capsule-option flex items-center gap-1 px-2 py-1 text-[13px] font-medium rounded transition-[transform,opacity] duration-200 min-h-[44px] min-w-[44px] tm-press focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)] ${
+              className={`tm-capsule-option flex items-center gap-1 px-2 py-1 text-[13px] font-medium rounded transition-[transform,opacity] duration-200 min-h-[44px] min-w-[44px] tm-press ${
                 viewMode === 'timeline'
-                  ? 'bg-[var(--tm-surface)] text-[color:var(--tm-text)] shadow-sm min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
-                  : 'text-[color:var(--tm-muted)] hover:text-[color:var(--tm-text)] min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
+                  ? 'bg-surface text-fg shadow-sm min-h-[44px] tm-press min-w-[44px]'
+                  : 'text-muted hover:text-fg min-h-[44px] tm-press min-w-[44px]'
               } `}
               title='时间线视图'
             >
@@ -370,7 +370,7 @@ export default function EpgScrollableRow({
                   ? scrollToCurrentProgram
                   : scrollToCurrentProgramTimeline
               }
-              className='flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1.5 sm:py-2 text-[13px] font-medium text-[color:var(--tm-muted)] hover:text-[color:var(--tm-text)] bg-[var(--tm-surface-raised)] hover:bg-[var(--tm-line)] rounded-lg border border-[var(--tm-line)] hover:border-[var(--tm-line)] transition-[transform,opacity] duration-200 min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
+              className='flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1.5 sm:py-2 text-[13px] font-medium text-muted hover:text-fg bg-raised hover:bg-line rounded-lg border border-line hover:border-line transition-[transform,opacity] duration-200 min-h-[44px] tm-press min-w-[44px]'
               title='滚动到当前播放位置'
             >
               <Target className='w-2.5 h-2.5 sm:w-3 sm:h-3' />
@@ -403,12 +403,12 @@ export default function EpgScrollableRow({
                   key={index}
                   className={`flex-shrink-0 w-36 sm:w-48 p-2 sm:p-3 rounded-lg border transition-[transform,opacity] duration-200 flex flex-col min-h-[100px] sm:min-h-[120px] ${
                     isPlaying
-                      ? 'bg-[var(--tm-surface-raised)] border-[var(--tm-line)]'
+                      ? 'bg-raised border-line'
                       : isFinishedProgram
-                      ? 'bg-[var(--tm-surface)] border-[var(--tm-line)]'
+                      ? 'bg-surface border-line'
                       : isUpcomingProgram
-                      ? 'bg-[var(--tm-surface-raised)] border-[var(--tm-line)]'
-                      : 'bg-[var(--tm-surface)] border-[var(--tm-line)] hover:border-[var(--tm-line)]'
+                      ? 'bg-raised border-line'
+                      : 'bg-surface border-line hover:border-line'
                   } `}
                 >
                   {/* 时间显示在顶部 */}
@@ -416,17 +416,17 @@ export default function EpgScrollableRow({
                     <span
                       className={`text-[13px] font-medium ${
                         isPlaying
-                          ? 'text-[color:var(--tm-text)]'
+                          ? 'text-fg'
                           : isFinishedProgram
-                          ? 'text-[color:var(--tm-muted)]'
+                          ? 'text-muted'
                           : isUpcomingProgram
-                          ? 'text-[color:var(--tm-text)]'
-                          : 'text-[color:var(--tm-muted)]'
+                          ? 'text-fg'
+                          : 'text-muted'
                       } `}
                     >
                       {formatTime(program.start)}
                     </span>
-                    <span className='text-[13px] text-[color:var(--tm-muted)]'>
+                    <span className='text-[13px] text-muted'>
                       {formatTime(program.end)}
                     </span>
                   </div>
@@ -435,12 +435,10 @@ export default function EpgScrollableRow({
                   <div
                     className={`text-[13px] sm:text-sm font-medium flex-1 ${
                       isPlaying
-                        ? 'text-[color:var(--tm-text)]'
+                        ? 'text-fg'
                         : isFinishedProgram
-                        ? 'text-[color:var(--tm-muted)]'
-                        : isUpcomingProgram
-                        ? 'text-[color:var(--tm-text)]'
-                        : 'text-[color:var(--tm-text)]'
+                        ? 'text-muted'
+                        : 'text-fg'
                     } `}
                     style={{
                       display: '-webkit-box',
@@ -459,8 +457,8 @@ export default function EpgScrollableRow({
                   {/* 正在播放状态在底部 */}
                   {isPlaying && (
                     <div className='mt-auto pt-1 sm:pt-2 flex items-center gap-1 sm:gap-1.5 flex-shrink-0'>
-                      <div className='w-1.5 h-1.5 sm:w-2 sm:h-2 bg-[var(--tm-text)] rounded-full'></div>
-                      <span className='text-[13px] text-[color:var(--tm-text)] font-medium'>
+                      <div className='w-1.5 h-1.5 sm:w-2 sm:h-2 bg-fg rounded-full'></div>
+                      <span className='text-[13px] text-fg font-medium'>
                         正在播放
                       </span>
                     </div>
@@ -477,7 +475,7 @@ export default function EpgScrollableRow({
         <div className='relative'>
           {/* 电脑端：横向时间线 */}
           <div className='hidden md:block'>
-            <div className='bg-[var(--tm-surface-raised)] rounded-lg p-4'>
+            <div className='bg-raised rounded-lg p-4'>
               {/* 时间线容器 - 可横向滚动 */}
               <div
                 className='relative'
@@ -525,35 +523,35 @@ export default function EpgScrollableRow({
                         <div
                           className={`w-48 p-3 rounded-lg border transition-[transform,opacity] duration-200 mb-3 h-[110px] flex flex-col ${
                             isPlaying
-                              ? 'bg-[var(--tm-surface-raised)] border-[var(--tm-line)]'
+                              ? 'bg-raised border-line'
                               : isFinished
-                              ? 'bg-[var(--tm-surface)] border-[var(--tm-line)]'
-                              : 'bg-[var(--tm-surface-raised)] border-[var(--tm-line)]'
+                              ? 'bg-surface border-line'
+                              : 'bg-raised border-line'
                           } `}
                         >
                           <div className='flex items-start justify-between mb-2 flex-shrink-0'>
                             <span
                               className={`text-[13px] font-medium ${
                                 isPlaying
-                                  ? 'text-[color:var(--tm-text)]'
+                                  ? 'text-fg'
                                   : isFinished
-                                  ? 'text-[color:var(--tm-muted)]'
-                                  : 'text-[color:var(--tm-text)]'
+                                  ? 'text-muted'
+                                  : 'text-fg'
                               } `}
                             >
                               {formatTime(program.start)}
                             </span>
-                            <span className='text-[13px] text-[color:var(--tm-muted)]'>
+                            <span className='text-[13px] text-muted'>
                               {Math.round(duration)}分钟
                             </span>
                           </div>
                           <div
                             className={`text-sm font-medium flex-1 ${
                               isPlaying
-                                ? 'text-[color:var(--tm-text)]'
+                                ? 'text-fg'
                                 : isFinished
-                                ? 'text-[color:var(--tm-muted)]'
-                                : 'text-[color:var(--tm-text)]'
+                                ? 'text-muted'
+                                : 'text-fg'
                             } `}
                             style={{
                               display: '-webkit-box',
@@ -568,8 +566,8 @@ export default function EpgScrollableRow({
                           </div>
                           {isPlaying && (
                             <div className='mt-auto pt-2 flex items-center gap-1.5 flex-shrink-0'>
-                              <div className='w-1.5 h-1.5 bg-[var(--tm-text)] rounded-full'></div>
-                              <span className='text-[13px] text-[color:var(--tm-text)] font-medium'>
+                              <div className='w-1.5 h-1.5 bg-fg rounded-full'></div>
+                              <span className='text-[13px] text-fg font-medium'>
                                 正在播放
                               </span>
                             </div>
@@ -582,10 +580,10 @@ export default function EpgScrollableRow({
                           <div
                             className={`w-3 h-3 rounded-full border-2 flex-shrink-0 ${
                               isPlaying
-                                ? 'bg-[var(--tm-text)] border-[var(--tm-line)]'
+                                ? 'bg-fg border-fg'
                                 : isFinished
-                                ? 'bg-[var(--tm-surface)] border-[var(--tm-line)]'
-                                : 'bg-[var(--tm-text)] border-[var(--tm-line)]'
+                                ? 'bg-muted border-muted'
+                                : 'bg-surface border-line'
                             } `}
                           ></div>
 
@@ -593,11 +591,7 @@ export default function EpgScrollableRow({
                           {index < programs.length - 1 && (
                             <div
                               className={`h-0.5 w-48 ${
-                                isFinished
-                                  ? 'bg-[var(--tm-surface)]'
-                                  : isPlaying
-                                  ? 'bg-[var(--tm-surface-raised)] bg-[var(--tm-text)]'
-                                  : 'bg-[var(--tm-surface-raised)] bg-[var(--tm-text)]'
+                                isFinished ? 'bg-surface' : 'bg-fg'
                               } `}
                             ></div>
                           )}
@@ -612,7 +606,7 @@ export default function EpgScrollableRow({
 
           {/* 手机端：竖向时间线 */}
           <div className='md:hidden'>
-            <div className='relative bg-[var(--tm-surface-raised)] rounded-lg p-4 max-h-[500px] overflow-y-auto'>
+            <div className='relative bg-raised rounded-lg p-4 max-h-[500px] overflow-y-auto'>
               {/* 时间线容器 */}
               <div ref={timelineVerticalRef} className='relative'>
                 {programs.map((program, index) => {
@@ -634,10 +628,10 @@ export default function EpgScrollableRow({
                         <div
                           className={`w-3 h-3 rounded-full border-2 z-10 ${
                             isPlaying
-                              ? 'bg-[var(--tm-text)] border-[var(--tm-line)]'
+                              ? 'bg-fg border-line'
                               : isFinished
-                              ? 'bg-[var(--tm-surface)] border-[var(--tm-line)]'
-                              : 'bg-[var(--tm-text)] border-[var(--tm-line)]'
+                              ? 'bg-surface border-line'
+                              : 'bg-fg border-line'
                           } `}
                         ></div>
 
@@ -645,11 +639,7 @@ export default function EpgScrollableRow({
                         {index < programs.length - 1 && (
                           <div
                             className={`absolute w-0.5 ${
-                              isFinished
-                                ? 'bg-[var(--tm-surface)]'
-                                : isPlaying
-                                ? 'bg-[var(--tm-surface-raised)] bg-[var(--tm-text)]'
-                                : 'bg-[var(--tm-surface-raised)] bg-[var(--tm-text)]'
+                              isFinished ? 'bg-surface' : 'bg-fg'
                             } `}
                             style={{
                               top: '0.375rem',
@@ -665,43 +655,43 @@ export default function EpgScrollableRow({
                       <div
                         className={`flex-1 p-3 rounded-lg border transition-[transform,opacity] duration-200 ${
                           isPlaying
-                            ? 'bg-[var(--tm-surface-raised)] border-[var(--tm-line)]'
+                            ? 'bg-raised border-line'
                             : isFinished
-                            ? 'bg-[var(--tm-surface)] border-[var(--tm-line)]'
-                            : 'bg-[var(--tm-surface-raised)] border-[var(--tm-line)]'
+                            ? 'bg-surface border-line'
+                            : 'bg-raised border-line'
                         } `}
                       >
                         <div className='flex items-start justify-between mb-2'>
                           <span
                             className={`text-[13px] font-medium ${
                               isPlaying
-                                ? 'text-[color:var(--tm-text)]'
+                                ? 'text-fg'
                                 : isFinished
-                                ? 'text-[color:var(--tm-muted)]'
-                                : 'text-[color:var(--tm-text)]'
+                                ? 'text-muted'
+                                : 'text-fg'
                             } `}
                           >
                             {formatTime(program.start)}
                           </span>
-                          <span className='text-[13px] text-[color:var(--tm-muted)]'>
+                          <span className='text-[13px] text-muted'>
                             {Math.round(duration)}分钟
                           </span>
                         </div>
                         <div
                           className={`text-sm font-medium ${
                             isPlaying
-                              ? 'text-[color:var(--tm-text)]'
+                              ? 'text-fg'
                               : isFinished
-                              ? 'text-[color:var(--tm-muted)]'
-                              : 'text-[color:var(--tm-text)]'
+                              ? 'text-muted'
+                              : 'text-fg'
                           } `}
                         >
                           {program.title}
                         </div>
                         {isPlaying && (
                           <div className='mt-2 flex items-center gap-1.5'>
-                            <div className='w-1.5 h-1.5 bg-[var(--tm-text)] rounded-full'></div>
-                            <span className='text-[13px] text-[color:var(--tm-text)] font-medium'>
+                            <div className='w-1.5 h-1.5 bg-fg rounded-full'></div>
+                            <span className='text-[13px] text-fg font-medium'>
                               正在播放
                             </span>
                           </div>

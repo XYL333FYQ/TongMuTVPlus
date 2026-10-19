@@ -27,8 +27,5 @@ export function calculateSeekTime(
   const upperBound = Number.isFinite(duration)
     ? Math.max(0, duration)
     : Infinity;
-  return Math.max(
-    0,
-    Math.min(upperBound, currentTime + direction * seconds)
-  );
+  return Math.max(0, Math.min(upperBound, currentTime + direction * seconds));
 }

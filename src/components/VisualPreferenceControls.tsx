@@ -1,6 +1,6 @@
 'use client';
 
-import './visual-preferences.css';
+import '@/styles/controls.css';
 
 import { useVisualPreferences } from '@/hooks/useVisualPreferences';
 

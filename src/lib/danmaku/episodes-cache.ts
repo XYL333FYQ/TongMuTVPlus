@@ -44,9 +44,7 @@ function writeMap(map: CacheMap): void {
 /**
  * 读取指定视频的弹幕完整分集列表缓存；命中时刷新其 LRU 时间戳。
  */
-export function getCachedDanmakuEpisodes(
-  key: string
-): DanmakuEpisode[] | null {
+export function getCachedDanmakuEpisodes(key: string): DanmakuEpisode[] | null {
   if (!key) return null;
   const map = readMap();
   const entry = map[key];

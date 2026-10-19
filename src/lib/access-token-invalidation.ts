@@ -7,7 +7,10 @@ function makeDeviceKey(username: string, tokenId: string): string {
   return `${username}:${tokenId}`;
 }
 
-export function invalidateUserAccessTokens(username: string, invalidatedAt = Date.now()): void {
+export function invalidateUserAccessTokens(
+  username: string,
+  invalidatedAt = Date.now()
+): void {
   const current = userInvalidBefore.get(username) || 0;
   if (invalidatedAt > current) {
     userInvalidBefore.set(username, invalidatedAt);

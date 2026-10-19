@@ -57,7 +57,7 @@ test('shows real membership, deduplicates the current room, and aborts on unmoun
   expect(screen.getAllByText('当前房间')).toHaveLength(1);
   expect(screen.getByText('2 人在线')).toBeInTheDocument();
   expect(screen.getByText('正在播放 影片甲')).toBeInTheDocument();
-  expect(screen.getByText('休眠中')).toBeInTheDocument();
+  expect(screen.getByText('无人在线')).toBeInTheDocument();
   expect(screen.queryByText('其他房间')).not.toBeInTheDocument();
   const signal = mockFetch.mock.calls[0][1].signal as AbortSignal;
   unmount();

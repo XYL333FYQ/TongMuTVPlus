@@ -1,5 +1,6 @@
 'use client';
 
+import { X, XCircle } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 interface ErrorInfo {
@@ -109,40 +110,26 @@ export function GlobalErrorIndicator() {
   }
 
   return (
-    <div className='fixed top-4 right-4 z-[2000]'>
-      {/* 错误卡片 */}
-      <div
-        className={`bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)] px-4 py-3 rounded-lg shadow-lg flex items-center justify-between min-w-[300px] max-w-[400px] transition-all duration-300 ${
-          isClosing ? '-translate-y-4 opacity-0' : 'translate-y-0 opacity-100'
-        } ${
-          isReplacing
-            ? 'scale-105 bg-[var(--tm-text)]'
-            : 'scale-100 bg-[var(--tm-text)]'
-        } animate-fade-in`}
-      >
-        <span className='text-sm font-medium flex-1 mr-3'>
-          {currentError.message}
-        </span>
-        <button
-          onClick={handleClose}
-          className='text-[color:var(--tm-text)] hover:text-[color:var(--tm-text)] transition-colors flex-shrink-0'
-          aria-label='关闭错误提示'
-        >
-          <svg
-            className='w-5 h-5'
-            fill='none'
-            stroke='currentColor'
-            viewBox='0 0 24 24'
-          >
-            <path
-              strokeLinecap='round'
-              strokeLinejoin='round'
-              strokeWidth={2}
-              d='M6 18L18 6M6 6l12 12'
-            />
-          </svg>
-        </button>
+    <div
+      className='tm-toast'
+      data-type='error'
+      data-visible={!isClosing}
+      data-replacing={isReplacing || undefined}
+    >
+      <div className='tm-toast-icon'>
+        <XCircle size={20} aria-hidden />
       </div>
+      <div className='tm-toast-message' role='alert'>
+        {currentError.message}
+      </div>
+      <button
+        type='button'
+        onClick={handleClose}
+        className='tm-feedback-close'
+        aria-label='关闭错误提示'
+      >
+        <X size={20} aria-hidden />
+      </button>
     </div>
   );
 }

@@ -429,13 +429,11 @@ export default function CorrectDialog({
   const dialogContent = (
     <>
       {/* 头部 */}
-      <div className='flex items-center justify-between p-4 border-b border-[var(--tm-line)]'>
-        <h2 className='text-lg font-medium text-[color:var(--tm-text)]'>
-          纠错：{currentTitle}
-        </h2>
+      <div className='flex items-center justify-between p-4 border-b border-line'>
+        <h2 className='text-lg font-medium text-fg'>纠错：{currentTitle}</h2>
         <button
           onClick={onClose}
-          className='text-[color:var(--tm-muted)] hover:text-[color:var(--tm-muted)] hover:text-[color:var(--tm-text)] min-h-[44px] tm-press'
+          className='text-muted hover:text-fg min-h-[44px] tm-press'
         >
           <X size={24} />
         </button>
@@ -443,7 +441,7 @@ export default function CorrectDialog({
 
       {/* 搜索框 */}
       {!showManualInput && (
-        <div className='p-4 border-b border-[var(--tm-line)]'>
+        <div className='p-4 border-b border-line'>
           <div className='flex gap-2'>
             <input
               type='text'
@@ -455,12 +453,12 @@ export default function CorrectDialog({
                 }
               }}
               placeholder='输入搜索关键词'
-              className='flex-1 px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)] focus:ring-2 focus:ring-[var(--tm-text)] focus:border-transparent'
+              className='flex-1 px-3 py-2 border border-line rounded-lg bg-surface text-fg focus:ring-2 focus:ring-fg focus:border-transparent'
             />
             <button
               onClick={handleSearch}
               disabled={searching}
-              className='px-4 py-2 bg-[var(--tm-text)] hover:opacity-90 text-[color:var(--tm-accent-contrast)] rounded-lg transition-colors disabled:bg-[var(--tm-surface)] disabled:cursor-not-allowed flex items-center gap-2 min-h-[44px] tm-press'
+              className='px-4 py-2 bg-fg hover:opacity-90 text-inverse rounded-lg transition-colors disabled:bg-surface disabled:cursor-not-allowed flex items-center gap-2 min-h-[44px] tm-press'
             >
               <Search size={20} />
               <span className='hidden sm:inline'>
@@ -468,9 +466,7 @@ export default function CorrectDialog({
               </span>
             </button>
           </div>
-          {error && (
-            <p className='mt-2 text-sm text-[color:var(--tm-text)]'>{error}</p>
-          )}
+          {error && <p className='mt-2 text-sm text-fg'>{error}</p>}
         </div>
       )}
 
@@ -482,7 +478,7 @@ export default function CorrectDialog({
             <div className='mb-4 flex items-center gap-2'>
               <button
                 onClick={handleBackToSearch}
-                className='text-[color:var(--tm-text)] hover:text-[color:var(--tm-text)] flex items-center gap-1 min-h-[44px] tm-press'
+                className='text-fg hover:text-fg flex items-center gap-1 min-h-[44px] tm-press'
               >
                 <span>←</span>
                 <span>返回搜索</span>
@@ -492,9 +488,8 @@ export default function CorrectDialog({
             <div className='space-y-4'>
               {/* 标题 - 必填 */}
               <div>
-                <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-1'>
-                  影片标题{' '}
-                  <span className='text-[color:var(--tm-text)]'>*</span>
+                <label className='block text-sm font-medium text-muted mb-1'>
+                  影片标题 <span className='text-fg'>*</span>
                 </label>
                 <input
                   type='text'
@@ -503,13 +498,13 @@ export default function CorrectDialog({
                     setManualData({ ...manualData, title: e.target.value })
                   }
                   placeholder='请输入影片标题'
-                  className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)] focus:ring-2 focus:ring-[var(--tm-text)] focus:border-transparent'
+                  className='w-full px-3 py-2 border border-line rounded-lg bg-surface text-fg focus:ring-2 focus:ring-fg focus:border-transparent'
                 />
               </div>
 
               {/* TMDB ID - 可选 */}
               <div>
-                <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-1'>
+                <label className='block text-sm font-medium text-muted mb-1'>
                   TMDB ID（可选）
                 </label>
                 <input
@@ -519,16 +514,16 @@ export default function CorrectDialog({
                     setManualData({ ...manualData, tmdbId: e.target.value })
                   }
                   placeholder='例如：550'
-                  className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)] focus:ring-2 focus:ring-[var(--tm-text)] focus:border-transparent'
+                  className='w-full px-3 py-2 border border-line rounded-lg bg-surface text-fg focus:ring-2 focus:ring-fg focus:border-transparent'
                 />
-                <p className='mt-1 text-[13px] text-[color:var(--tm-muted)]'>
+                <p className='mt-1 text-[13px] text-muted'>
                   可在 TMDB 网站查找影片对应的 ID
                 </p>
               </div>
 
               {/* 豆瓣 ID - 可选 */}
               <div>
-                <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-1'>
+                <label className='block text-sm font-medium text-muted mb-1'>
                   豆瓣 ID（可选）
                 </label>
                 <input
@@ -538,16 +533,16 @@ export default function CorrectDialog({
                     setManualData({ ...manualData, doubanId: e.target.value })
                   }
                   placeholder='例如：1292052'
-                  className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)] focus:ring-2 focus:ring-[var(--tm-text)] focus:border-transparent'
+                  className='w-full px-3 py-2 border border-line rounded-lg bg-surface text-fg focus:ring-2 focus:ring-fg focus:border-transparent'
                 />
-                <p className='mt-1 text-[13px] text-[color:var(--tm-muted)]'>
+                <p className='mt-1 text-[13px] text-muted'>
                   可在豆瓣网站查找影片对应的 ID
                 </p>
               </div>
 
               {/* 媒体类型 */}
               <div>
-                <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-1'>
+                <label className='block text-sm font-medium text-muted mb-1'>
                   类型
                 </label>
                 <div className='flex gap-4'>
@@ -564,7 +559,7 @@ export default function CorrectDialog({
                       }
                       className='mr-2'
                     />
-                    <span className='text-[color:var(--tm-text)]'>电影</span>
+                    <span className='text-fg'>电影</span>
                   </label>
                   <label className='flex items-center'>
                     <input
@@ -579,7 +574,7 @@ export default function CorrectDialog({
                       }
                       className='mr-2'
                     />
-                    <span className='text-[color:var(--tm-text)]'>电视剧</span>
+                    <span className='text-fg'>电视剧</span>
                   </label>
                 </div>
               </div>
@@ -588,7 +583,7 @@ export default function CorrectDialog({
               {manualData.mediaType === 'tv' && (
                 <>
                   <div>
-                    <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-1'>
+                    <label className='block text-sm font-medium text-muted mb-1'>
                       季数（可选）
                     </label>
                     <input
@@ -601,11 +596,11 @@ export default function CorrectDialog({
                         })
                       }
                       placeholder='例如：1'
-                      className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)] focus:ring-2 focus:ring-[var(--tm-text)] focus:border-transparent'
+                      className='w-full px-3 py-2 border border-line rounded-lg bg-surface text-fg focus:ring-2 focus:ring-fg focus:border-transparent'
                     />
                   </div>
                   <div>
-                    <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-1'>
+                    <label className='block text-sm font-medium text-muted mb-1'>
                       季名称（可选）
                     </label>
                     <input
@@ -618,7 +613,7 @@ export default function CorrectDialog({
                         })
                       }
                       placeholder='例如：第 1 季'
-                      className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)] focus:ring-2 focus:ring-[var(--tm-text)] focus:border-transparent'
+                      className='w-full px-3 py-2 border border-line rounded-lg bg-surface text-fg focus:ring-2 focus:ring-fg focus:border-transparent'
                     />
                   </div>
                 </>
@@ -626,7 +621,7 @@ export default function CorrectDialog({
 
               {/* 封面图链接 */}
               <div>
-                <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-1'>
+                <label className='block text-sm font-medium text-muted mb-1'>
                   封面图链接（可选）
                 </label>
                 <input
@@ -636,13 +631,13 @@ export default function CorrectDialog({
                     setManualData({ ...manualData, posterPath: e.target.value })
                   }
                   placeholder='请输入图片链接'
-                  className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)] focus:ring-2 focus:ring-[var(--tm-text)] focus:border-transparent'
+                  className='w-full px-3 py-2 border border-line rounded-lg bg-surface text-fg focus:ring-2 focus:ring-fg focus:border-transparent'
                 />
               </div>
 
               {/* 上映日期 */}
               <div>
-                <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-1'>
+                <label className='block text-sm font-medium text-muted mb-1'>
                   上映日期（可选）
                 </label>
                 <input
@@ -654,13 +649,13 @@ export default function CorrectDialog({
                       releaseDate: e.target.value,
                     })
                   }
-                  className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)] focus:ring-2 focus:ring-[var(--tm-text)] focus:border-transparent'
+                  className='w-full px-3 py-2 border border-line rounded-lg bg-surface text-fg focus:ring-2 focus:ring-fg focus:border-transparent'
                 />
               </div>
 
               {/* 评分 */}
               <div>
-                <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-1'>
+                <label className='block text-sm font-medium text-muted mb-1'>
                   评分（可选，0-10）
                 </label>
                 <input
@@ -673,13 +668,13 @@ export default function CorrectDialog({
                     })
                   }
                   placeholder='例如：8.5'
-                  className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)] focus:ring-2 focus:ring-[var(--tm-text)] focus:border-transparent'
+                  className='w-full px-3 py-2 border border-line rounded-lg bg-surface text-fg focus:ring-2 focus:ring-fg focus:border-transparent'
                 />
               </div>
 
               {/* 简介 */}
               <div>
-                <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-1'>
+                <label className='block text-sm font-medium text-muted mb-1'>
                   简介（可选）
                 </label>
                 <textarea
@@ -689,20 +684,18 @@ export default function CorrectDialog({
                   }
                   placeholder='请输入影片简介'
                   rows={3}
-                  className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)] focus:ring-2 focus:ring-[var(--tm-text)] focus:border-transparent'
+                  className='w-full px-3 py-2 border border-line rounded-lg bg-surface text-fg focus:ring-2 focus:ring-fg focus:border-transparent'
                 />
               </div>
 
               {/* 错误提示 */}
-              {error && (
-                <p className='text-sm text-[color:var(--tm-text)]'>{error}</p>
-              )}
+              {error && <p className='text-sm text-fg'>{error}</p>}
 
               {/* 提交按钮 */}
               <button
                 onClick={handleManualSubmit}
                 disabled={correcting}
-                className='w-full px-4 py-2 bg-[var(--tm-text)] hover:opacity-90 text-[color:var(--tm-accent-contrast)] rounded-lg transition-colors disabled:bg-[var(--tm-surface)] disabled:cursor-not-allowed min-h-[44px] tm-press'
+                className='w-full px-4 py-2 bg-fg hover:opacity-90 text-inverse rounded-lg transition-colors disabled:bg-surface disabled:cursor-not-allowed min-h-[44px] tm-press'
               >
                 {correcting ? '提交中...' : '提交纠错'}
               </button>
@@ -714,7 +707,7 @@ export default function CorrectDialog({
             <div className='mb-4 flex items-center gap-2'>
               <button
                 onClick={handleBackToResults}
-                className='text-[color:var(--tm-text)] hover:text-[color:var(--tm-text)] flex items-center gap-1 min-h-[44px] tm-press'
+                className='text-fg hover:text-fg flex items-center gap-1 min-h-[44px] tm-press'
               >
                 <span>←</span>
                 <span>返回搜索结果</span>
@@ -722,33 +715,29 @@ export default function CorrectDialog({
             </div>
 
             {selectedResult && (
-              <div className='mb-4 p-3 bg-[var(--tm-surface-raised)] rounded-lg'>
-                <h3 className='font-medium text-[color:var(--tm-text)]'>
+              <div className='mb-4 p-3 bg-raised rounded-lg'>
+                <h3 className='font-medium text-fg'>
                   {selectedResult.title || selectedResult.name}
                 </h3>
-                <p className='text-sm text-[color:var(--tm-muted)] mt-1'>
-                  请选择季度：
-                </p>
+                <p className='text-sm text-muted mt-1'>请选择季度：</p>
               </div>
             )}
 
             {loadingSeasons ? (
-              <div className='text-center py-12 text-[color:var(--tm-muted)]'>
+              <div className='text-center py-12 text-muted'>
                 加载季度列表中...
               </div>
             ) : seasons.length === 0 ? (
-              <div className='text-center py-12 text-[color:var(--tm-muted)]'>
-                未找到季度信息
-              </div>
+              <div className='text-center py-12 text-muted'>未找到季度信息</div>
             ) : (
               <div className='space-y-3'>
                 {seasons.map((season) => (
                   <div
                     key={season.id}
-                    className='flex gap-3 p-3 border border-[var(--tm-line)] rounded-lg hover:bg-[var(--tm-line)] transition-colors'
+                    className='flex gap-3 p-3 border border-line rounded-lg hover:bg-line transition-colors'
                   >
                     {/* 海报 */}
-                    <div className='flex-shrink-0 w-16 h-24 relative rounded overflow-hidden bg-[var(--tm-surface-raised)]'>
+                    <div className='flex-shrink-0 w-16 h-24 relative rounded overflow-hidden bg-raised'>
                       {season.poster_path ? (
                         <Image
                           src={processImageUrl(
@@ -760,7 +749,7 @@ export default function CorrectDialog({
                           referrerPolicy='no-referrer'
                         />
                       ) : (
-                        <div className='w-full h-full flex items-center justify-center text-[color:var(--tm-muted)] text-[13px]'>
+                        <div className='w-full h-full flex items-center justify-center text-muted text-[13px]'>
                           无海报
                         </div>
                       )}
@@ -768,15 +757,13 @@ export default function CorrectDialog({
 
                     {/* 信息 */}
                     <div className='flex-1 min-w-0'>
-                      <h3 className='font-medium text-[color:var(--tm-text)]'>
-                        {season.name}
-                      </h3>
-                      <p className='text-sm text-[color:var(--tm-muted)] mt-1'>
+                      <h3 className='font-medium text-fg'>{season.name}</h3>
+                      <p className='text-sm text-muted mt-1'>
                         {season.episode_count} 集
                         {season.air_date &&
                           ` • ${season.air_date.split('-')[0]}`}
                       </p>
-                      <p className='text-[13px] text-[color:var(--tm-muted)] mt-1 line-clamp-2'>
+                      <p className='text-[13px] text-muted mt-1 line-clamp-2'>
                         {season.overview || '暂无简介'}
                       </p>
                     </div>
@@ -786,7 +773,7 @@ export default function CorrectDialog({
                       <button
                         onClick={() => handleSelectSeason(season)}
                         disabled={correcting}
-                        className='px-3 py-1.5 bg-[var(--tm-text)] hover:opacity-90 text-[color:var(--tm-accent-contrast)] text-sm rounded-lg transition-colors disabled:bg-[var(--tm-surface)] disabled:cursor-not-allowed min-h-[44px] tm-press'
+                        className='px-3 py-1.5 bg-fg hover:opacity-90 text-inverse text-sm rounded-lg transition-colors disabled:bg-surface disabled:cursor-not-allowed min-h-[44px] tm-press'
                       >
                         {correcting ? '处理中...' : '选择'}
                       </button>
@@ -799,16 +786,16 @@ export default function CorrectDialog({
         ) : results.length === 0 ? (
           // 空状态
           <>
-            <div className='text-center py-12 text-[color:var(--tm-muted)]'>
+            <div className='text-center py-12 text-muted'>
               {searching ? '搜索中...' : '请输入关键词搜索'}
             </div>
 
             {/* 手动纠错入口 */}
             {!searching && (
-              <div className='mt-6 pt-4 border-t border-[var(--tm-line)] text-center'>
+              <div className='mt-6 pt-4 border-t border-line text-center'>
                 <button
                   onClick={handleShowManualInput}
-                  className='text-[13px] text-[color:var(--tm-muted)] hover:text-[color:var(--tm-text)] transition-colors min-h-[44px] tm-press'
+                  className='text-[13px] text-muted hover:text-fg transition-colors min-h-[44px] tm-press'
                 >
                   搜不到影片？手动纠错
                 </button>
@@ -822,10 +809,10 @@ export default function CorrectDialog({
               {results.map((result) => (
                 <div
                   key={result.id}
-                  className='flex gap-3 p-3 border border-[var(--tm-line)] rounded-lg hover:bg-[var(--tm-line)] transition-colors'
+                  className='flex gap-3 p-3 border border-line rounded-lg hover:bg-line transition-colors'
                 >
                   {/* 海报 */}
-                  <div className='flex-shrink-0 w-16 h-24 relative rounded overflow-hidden bg-[var(--tm-surface-raised)]'>
+                  <div className='flex-shrink-0 w-16 h-24 relative rounded overflow-hidden bg-raised'>
                     {result.poster_path ? (
                       <Image
                         src={processImageUrl(
@@ -837,7 +824,7 @@ export default function CorrectDialog({
                         referrerPolicy='no-referrer'
                       />
                     ) : (
-                      <div className='w-full h-full flex items-center justify-center text-[color:var(--tm-muted)] text-[13px]'>
+                      <div className='w-full h-full flex items-center justify-center text-muted text-[13px]'>
                         无海报
                       </div>
                     )}
@@ -845,17 +832,17 @@ export default function CorrectDialog({
 
                   {/* 信息 */}
                   <div className='flex-1 min-w-0'>
-                    <h3 className='font-medium text-[color:var(--tm-text)] truncate'>
+                    <h3 className='font-medium text-fg truncate'>
                       {result.title || result.name}
                     </h3>
-                    <p className='text-sm text-[color:var(--tm-muted)] mt-1'>
+                    <p className='text-sm text-muted mt-1'>
                       {result.media_type === 'movie' ? '电影' : '电视剧'} •{' '}
                       {result.release_date?.split('-')[0] ||
                         result.first_air_date?.split('-')[0] ||
                         '未知'}{' '}
                       • 评分: {result.vote_average.toFixed(1)}
                     </p>
-                    <p className='text-[13px] text-[color:var(--tm-muted)] mt-1 line-clamp-2'>
+                    <p className='text-[13px] text-muted mt-1 line-clamp-2'>
                       {result.overview || '暂无简介'}
                     </p>
                   </div>
@@ -865,7 +852,7 @@ export default function CorrectDialog({
                     <button
                       onClick={() => handleSelectResult(result)}
                       disabled={correcting || loadingSeasons}
-                      className='px-3 py-1.5 bg-[var(--tm-text)] hover:opacity-90 text-[color:var(--tm-accent-contrast)] text-sm rounded-lg transition-colors disabled:bg-[var(--tm-surface)] disabled:cursor-not-allowed min-h-[44px] tm-press'
+                      className='px-3 py-1.5 bg-fg hover:opacity-90 text-inverse text-sm rounded-lg transition-colors disabled:bg-surface disabled:cursor-not-allowed min-h-[44px] tm-press'
                     >
                       {correcting || loadingSeasons ? '处理中...' : '选择'}
                     </button>
@@ -875,10 +862,10 @@ export default function CorrectDialog({
             </div>
 
             {/* 手动纠错入口 */}
-            <div className='mt-6 pt-4 border-t border-[var(--tm-line)] text-center'>
+            <div className='mt-6 pt-4 border-t border-line text-center'>
               <button
                 onClick={handleShowManualInput}
-                className='text-[13px] text-[color:var(--tm-muted)] hover:text-[color:var(--tm-text)] transition-colors min-h-[44px] tm-press'
+                className='text-[13px] text-muted hover:text-fg transition-colors min-h-[44px] tm-press'
               >
                 搜不到影片？手动纠错
               </button>
@@ -893,14 +880,14 @@ export default function CorrectDialog({
     useDrawer ? (
       <div className='fixed inset-0 z-[9999] flex items-center justify-end pointer-events-none'>
         <div
-          className={`relative ${drawerWidth} h-full bg-[var(--tm-surface)] bg-[var(--tm-surface)] shadow-2xl flex flex-col pointer-events-auto`}
+          className={`relative ${drawerWidth} h-full bg-surface shadow-2xl flex flex-col pointer-events-auto`}
         >
           {dialogContent}
         </div>
       </div>
     ) : (
-      <div className='fixed inset-0 z-[9999] flex items-center justify-center bg-[color:color-mix(in_srgb,var(--tm-room-cinema-bg)_50%,transparent)] backdrop-blur-sm'>
-        <div className='bg-[var(--tm-surface)] rounded-lg shadow-xl w-full max-w-2xl max-h-[80vh] overflow-hidden flex flex-col m-4'>
+      <div className='fixed inset-0 z-[9999] flex items-center justify-center bg-ink/50 backdrop-blur-sm'>
+        <div className='bg-surface rounded-lg shadow-xl w-full max-w-2xl max-h-[80vh] overflow-hidden flex flex-col m-4'>
           {dialogContent}
         </div>
       </div>

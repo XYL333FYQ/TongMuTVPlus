@@ -49,7 +49,10 @@ interface ParsedFeed {
 
 const DEFAULT_TIMEOUT_MS = Number(process.env.OPDS_TIMEOUT_MS || 20000);
 const feedCache = new Map<string, { expiresAt: number; data: ParsedFeed }>();
-const sourceCapabilityCache = new Map<string, { expiresAt: number; data: BookSourceCapabilities }>();
+const sourceCapabilityCache = new Map<
+  string,
+  { expiresAt: number; data: BookSourceCapabilities }
+>();
 const SOURCE_CAPABILITY_SUCCESS_TTL_MS = 6 * 60 * 60 * 1000;
 const SOURCE_CAPABILITY_FAILURE_TTL_MS = 30 * 1000;
 
@@ -78,7 +81,10 @@ async function parseXmlWithFallback(xml: string) {
   } catch (error) {
     const sanitizedXml = sanitizeXmlForParsing(xml);
     if (sanitizedXml === xml) throw error;
-    return await parseStringPromise(sanitizedXml, { explicitArray: true, trim: true });
+    return await parseStringPromise(sanitizedXml, {
+      explicitArray: true,
+      trim: true,
+    });
   }
 }
 
@@ -88,7 +94,9 @@ function normalizeUrl(base: string, href?: string): string {
 }
 
 function buildProxyUrl(sourceId: string, href: string): string {
-  return `/api/books/file?sourceId=${encodeURIComponent(sourceId)}&href=${encodeURIComponent(href)}`;
+  return `/api/books/file?sourceId=${encodeURIComponent(
+    sourceId
+  )}&href=${encodeURIComponent(href)}`;
 }
 
 function mapFormat(type: string): 'epub' | 'pdf' | null {
@@ -108,17 +116,23 @@ function isNavigationRel(rel?: string): boolean {
 
 function isNavigationLink(link: ParsedFeedLink): boolean {
   const type = (link.type || '').toLowerCase();
-  return isNavigationRel(link.rel) || type.includes('kind=navigation') || (type.includes('opds-catalog') && !isAcquisitionRel(link.rel));
+  return (
+    isNavigationRel(link.rel) ||
+    type.includes('kind=navigation') ||
+    (type.includes('opds-catalog') && !isAcquisitionRel(link.rel))
+  );
 }
 
 function isCoverRel(rel?: string): boolean {
   if (!rel) return false;
   const normalized = rel.toLowerCase();
-  return normalized.includes('opds-spec.org/cover')
-    || normalized.includes('opds-spec.org/image')
-    || normalized.includes('image/thumbnail')
-    || normalized === 'thumbnail'
-    || normalized === 'cover';
+  return (
+    normalized.includes('opds-spec.org/cover') ||
+    normalized.includes('opds-spec.org/image') ||
+    normalized.includes('image/thumbnail') ||
+    normalized === 'thumbnail' ||
+    normalized === 'cover'
+  );
 }
 
 function isImageType(type?: string): boolean {
@@ -128,24 +142,39 @@ function isImageType(type?: string): boolean {
 function pickCoverLink(links: ParsedFeedLink[]): string | undefined {
   const thumbnail = links.find((link) => {
     const rel = (link.rel || '').toLowerCase();
-    return rel.includes('thumbnail') && (isCoverRel(link.rel) || isImageType(link.type));
+    return (
+      rel.includes('thumbnail') &&
+      (isCoverRel(link.rel) || isImageType(link.type))
+    );
   });
-  const cover = thumbnail
-    || links.find((link) => isCoverRel(link.rel))
-    || links.find((link) => isImageType(link.type) && !isAcquisitionRel(link.rel));
+  const cover =
+    thumbnail ||
+    links.find((link) => isCoverRel(link.rel)) ||
+    links.find((link) => isImageType(link.type) && !isAcquisitionRel(link.rel));
   return cover?.href;
 }
 
 function pickDetailHref(links: ParsedFeedLink[]): string | undefined {
-  const preferred = links.find((link) => link.rel === 'alternate' && (link.type || '').includes('atom+xml'))
-    || links.find((link) => link.rel === 'self' && (link.type || '').includes('atom+xml'))
-    || links.find((link) => isNavigationLink(link));
+  const preferred =
+    links.find(
+      (link) =>
+        link.rel === 'alternate' && (link.type || '').includes('atom+xml')
+    ) ||
+    links.find(
+      (link) => link.rel === 'self' && (link.type || '').includes('atom+xml')
+    ) ||
+    links.find((link) => isNavigationLink(link));
   return preferred?.href;
 }
 
-function extractAcquisitionLinks(entry: ParsedFeedEntry): BookAcquisitionLink[] {
+function extractAcquisitionLinks(
+  entry: ParsedFeedEntry
+): BookAcquisitionLink[] {
   return entry.links
-    .filter((link) => isAcquisitionRel(link.rel) || mapFormat(link.type || '') !== null)
+    .filter(
+      (link) =>
+        isAcquisitionRel(link.rel) || mapFormat(link.type || '') !== null
+    )
     .map((link) => ({
       rel: link.rel || 'http://opds-spec.org/acquisition',
       type: link.type || 'application/octet-stream',
@@ -161,16 +190,26 @@ function isLikelyNavigationEntry(entry: ParsedFeedEntry): boolean {
   return hasNavigationLink && !hasAcquisition;
 }
 
-function mapEntryToItem(source: BookSource, entry: ParsedFeedEntry): BookListItem {
+function mapEntryToItem(
+  source: BookSource,
+  entry: ParsedFeedEntry
+): BookListItem {
   const acquisitionLinks = extractAcquisitionLinks(entry);
 
   return {
-    id: entry.id || pickDetailHref(entry.links) || acquisitionLinks[0]?.href || entry.title,
+    id:
+      entry.id ||
+      pickDetailHref(entry.links) ||
+      acquisitionLinks[0]?.href ||
+      entry.title,
     sourceId: source.id,
     sourceName: source.name,
     title: entry.title || '未命名电子书',
     author: entry.author,
-    cover: (() => { const coverHref = pickCoverLink(entry.links); return coverHref ? buildProxyUrl(source.id, coverHref) : undefined; })(),
+    cover: (() => {
+      const coverHref = pickCoverLink(entry.links);
+      return coverHref ? buildProxyUrl(source.id, coverHref) : undefined;
+    })(),
     summary: entry.summary || entry.content || undefined,
     language: entry.language,
     published: entry.published,
@@ -181,14 +220,22 @@ function mapEntryToItem(source: BookSource, entry: ParsedFeedEntry): BookListIte
   };
 }
 
-function mapEntryToDetail(source: BookSource, entry: ParsedFeedEntry): BookDetail {
+function mapEntryToDetail(
+  source: BookSource,
+  entry: ParsedFeedEntry
+): BookDetail {
   const item = mapEntryToItem(source, entry);
   return {
     ...item,
     categories: entry.categories,
     navigation: entry.links
       .filter((link) => isNavigationRel(link.rel))
-      .map((link) => ({ title: link.title || entry.title, href: link.href, rel: link.rel, type: link.type })),
+      .map((link) => ({
+        title: link.title || entry.title,
+        href: link.href,
+        rel: link.rel,
+        type: link.type,
+      })),
   };
 }
 
@@ -205,25 +252,31 @@ async function resolveOPDSConfig(): Promise<ResolvedOPDSConfig> {
       // ignore invalid json
     }
   } else if (process.env.OPDS_URL || process.env.NEXT_PUBLIC_OPDS_URL) {
-    sources = [{
-      id: 'default',
-      name: process.env.OPDS_NAME || '默认书源',
-      url: process.env.OPDS_URL || process.env.NEXT_PUBLIC_OPDS_URL || '',
-      authMode: (process.env.OPDS_AUTH_MODE as BookSource['authMode']) || 'none',
-      username: process.env.OPDS_USERNAME || '',
-      password: process.env.OPDS_PASSWORD || '',
-      headerName: process.env.OPDS_HEADER_NAME || '',
-      headerValue: process.env.OPDS_HEADER_VALUE || '',
-      searchTemplate: process.env.OPDS_SEARCH_TEMPLATE || '',
-      enabled: true,
-    }];
+    sources = [
+      {
+        id: 'default',
+        name: process.env.OPDS_NAME || '默认书源',
+        url: process.env.OPDS_URL || process.env.NEXT_PUBLIC_OPDS_URL || '',
+        authMode:
+          (process.env.OPDS_AUTH_MODE as BookSource['authMode']) || 'none',
+        username: process.env.OPDS_USERNAME || '',
+        password: process.env.OPDS_PASSWORD || '',
+        headerName: process.env.OPDS_HEADER_NAME || '',
+        headerValue: process.env.OPDS_HEADER_VALUE || '',
+        searchTemplate: process.env.OPDS_SEARCH_TEMPLATE || '',
+        enabled: true,
+      },
+    ];
   }
 
   try {
     const config = await getConfig();
     if (config.OPDSConfig) {
       enabled = config.OPDSConfig.Enabled ?? enabled;
-      if (Array.isArray(config.OPDSConfig.Sources) && config.OPDSConfig.Sources.length > 0) {
+      if (
+        Array.isArray(config.OPDSConfig.Sources) &&
+        config.OPDSConfig.Sources.length > 0
+      ) {
         sources = config.OPDSConfig.Sources as BookSource[];
       }
     }
@@ -234,14 +287,22 @@ async function resolveOPDSConfig(): Promise<ResolvedOPDSConfig> {
   return {
     enabled,
     cacheTTL,
-    sources: (sources || []).filter((source) => !!source?.url && source.enabled !== false && (source.type || 'opds') === 'opds' && !source.legado),
+    sources: (sources || []).filter(
+      (source) =>
+        !!source?.url &&
+        source.enabled !== false &&
+        (source.type || 'opds') === 'opds' &&
+        !source.legado
+    ),
   };
 }
 
 function buildHeaders(source: BookSource): HeadersInit {
   if (source.authMode === 'basic' && source.username) {
     return {
-      Authorization: `Basic ${Buffer.from(`${source.username}:${source.password || ''}`).toString('base64')}`,
+      Authorization: `Basic ${Buffer.from(
+        `${source.username}:${source.password || ''}`
+      ).toString('base64')}`,
     };
   }
   if (source.authMode === 'header' && source.headerName && source.headerValue) {
@@ -269,25 +330,33 @@ async function fetchText(url: string, headers: HeadersInit): Promise<string> {
 }
 
 function parseLinks(value: any[], baseUrl: string): ParsedFeedLink[] {
-  return value.map((item) => ({
-    href: normalizeUrl(baseUrl, item?.$?.href),
-    rel: item?.$?.rel,
-    type: item?.$?.type,
-    title: item?.$?.title,
-  })).filter((item) => !!item.href);
+  return value
+    .map((item) => ({
+      href: normalizeUrl(baseUrl, item?.$?.href),
+      rel: item?.$?.rel,
+      type: item?.$?.type,
+      title: item?.$?.title,
+    }))
+    .filter((item) => !!item.href);
 }
 
 function parseEntries(value: any[], baseUrl: string): ParsedFeedEntry[] {
   return value.map((entry) => ({
     id: textValue(entry.id?.[0] || entry.id),
     title: textValue(entry.title?.[0] || entry.title),
-    author: textValue(entry.author?.[0]?.name?.[0] || entry.author?.[0]?.name || entry.author?.name),
+    author: textValue(
+      entry.author?.[0]?.name?.[0] ||
+        entry.author?.[0]?.name ||
+        entry.author?.name
+    ),
     summary: textValue(entry.summary?.[0] || entry.summary),
     content: textValue(entry.content?.[0] || entry.content),
     language: textValue(entry.language?.[0] || entry['dc:language']?.[0]),
     published: textValue(entry.published?.[0] || entry['dc:issued']?.[0]),
     updated: textValue(entry.updated?.[0]),
-    categories: asArray(entry.category).map((item) => item?.$?.label || item?.$?.term).filter(Boolean),
+    categories: asArray(entry.category)
+      .map((item) => item?.$?.label || item?.$?.term)
+      .filter(Boolean),
     links: parseLinks(asArray(entry.link), baseUrl),
   }));
 }
@@ -307,7 +376,6 @@ async function parseFeed(xml: string, baseUrl: string): Promise<ParsedFeed> {
   };
 }
 
-
 function fillSearchTermsTemplate(template: string, keyword: string) {
   const encoded = encodeURIComponent(keyword);
   const replaced = template
@@ -325,18 +393,20 @@ function fillSearchTermsTemplate(template: string, keyword: string) {
     const url = new URL(replaced);
     const toDelete: string[] = [];
     url.searchParams.forEach((value, key) => {
-      if (!value || value === 'undefined' || value === 'null') toDelete.push(key);
+      if (!value || value === 'undefined' || value === 'null')
+        toDelete.push(key);
     });
     toDelete.forEach((key) => url.searchParams.delete(key));
     return url.toString();
   } catch {
-    return replaced
-      .replace(/[?&](?:[^=]+)=(&|$)/g, '$1')
-      .replace(/[?&]$/, '');
+    return replaced.replace(/[?&](?:[^=]+)=(&|$)/g, '$1').replace(/[?&]$/, '');
   }
 }
 
-async function resolveSearchTargetUrl(source: BookSource, q: string): Promise<string> {
+async function resolveSearchTargetUrl(
+  source: BookSource,
+  q: string
+): Promise<string> {
   if (source.searchTemplate) {
     return fillSearchTermsTemplate(source.searchTemplate, q);
   }
@@ -345,12 +415,20 @@ async function resolveSearchTargetUrl(source: BookSource, q: string): Promise<st
   const searchLink = rootFeed.links.find((link) => link.rel === 'search');
   if (!searchLink?.href) throw new Error('该书源不支持搜索');
 
-  if ((searchLink.type || '').toLowerCase().includes('opensearchdescription+xml')) {
+  if (
+    (searchLink.type || '').toLowerCase().includes('opensearchdescription+xml')
+  ) {
     const xml = await fetchText(searchLink.href, buildHeaders(source));
     const parsed = await parseXmlWithFallback(xml);
-    const description = parsed.OpenSearchDescription || parsed['os:OpenSearchDescription'] || parsed['OpenSearchDescription'];
+    const description =
+      parsed.OpenSearchDescription ||
+      parsed['os:OpenSearchDescription'] ||
+      parsed['OpenSearchDescription'];
     const urlNodes = asArray(description?.Url || description?.url);
-    const preferred = urlNodes.find((item) => (item?.$?.type || '').toLowerCase().includes('atom+xml')) || urlNodes[0];
+    const preferred =
+      urlNodes.find((item) =>
+        (item?.$?.type || '').toLowerCase().includes('atom+xml')
+      ) || urlNodes[0];
     const template = preferred?.$?.template;
     if (!template) throw new Error('未找到搜索模板');
     return fillSearchTermsTemplate(normalizeUrl(searchLink.href, template), q);
@@ -358,7 +436,9 @@ async function resolveSearchTargetUrl(source: BookSource, q: string): Promise<st
 
   return searchLink.href.includes('{searchTerms}')
     ? searchLink.href.replace('{searchTerms}', encodeURIComponent(q))
-    : `${searchLink.href}${searchLink.href.includes('?') ? '&' : '?'}q=${encodeURIComponent(q)}`;
+    : `${searchLink.href}${
+        searchLink.href.includes('?') ? '&' : '?'
+      }q=${encodeURIComponent(q)}`;
 }
 
 async function getFeed(source: BookSource, href?: string): Promise<ParsedFeed> {
@@ -381,7 +461,9 @@ async function getSourceById(sourceId: string): Promise<BookSource> {
   return source;
 }
 
-async function detectCapabilities(source: BookSource): Promise<BookSourceCapabilities> {
+async function detectCapabilities(
+  source: BookSource
+): Promise<BookSourceCapabilities> {
   const cached = sourceCapabilityCache.get(source.id);
   const now = Date.now();
   if (cached && cached.expiresAt > now) return cached.data;
@@ -389,24 +471,49 @@ async function detectCapabilities(source: BookSource): Promise<BookSourceCapabil
   try {
     const feed = await getFeed(source);
     const searchLink = feed.links.find((link) => link.rel === 'search');
-    const navigationEntries = feed.entries.filter((entry) => isLikelyNavigationEntry(entry));
-    const bookEntries = feed.entries.filter((entry) => !isLikelyNavigationEntry(entry));
-    const acquisitionTypes = Array.from(new Set(bookEntries.flatMap((entry) => entry.links
-      .map((link) => mapFormat(link.type || ''))
-      .filter(Boolean) as string[])));
-    const navigationCount = feed.links.filter((link) => isNavigationRel(link.rel)).length + navigationEntries.length;
+    const navigationEntries = feed.entries.filter((entry) =>
+      isLikelyNavigationEntry(entry)
+    );
+    const bookEntries = feed.entries.filter(
+      (entry) => !isLikelyNavigationEntry(entry)
+    );
+    const acquisitionTypes = Array.from(
+      new Set(
+        bookEntries.flatMap(
+          (entry) =>
+            entry.links
+              .map((link) => mapFormat(link.type || ''))
+              .filter(Boolean) as string[]
+        )
+      )
+    );
+    const navigationCount =
+      feed.links.filter((link) => isNavigationRel(link.rel)).length +
+      navigationEntries.length;
     const entryCount = bookEntries.length;
 
     const data: BookSourceCapabilities = {
       searchSupported: !!searchLink || !!source.searchTemplate,
       catalogSupported: navigationCount > 0 || entryCount > 0,
-      searchMode: searchLink ? 'opds' : source.searchTemplate ? 'template' : 'disabled',
-      catalogMode: navigationCount > 0 ? 'navigation' : entryCount > 0 ? 'flat' : 'disabled',
+      searchMode: searchLink
+        ? 'opds'
+        : source.searchTemplate
+        ? 'template'
+        : 'disabled',
+      catalogMode:
+        navigationCount > 0
+          ? 'navigation'
+          : entryCount > 0
+          ? 'flat'
+          : 'disabled',
       acquisitionTypes,
       lastCheckedAt: now,
     };
 
-    sourceCapabilityCache.set(source.id, { data, expiresAt: now + SOURCE_CAPABILITY_SUCCESS_TTL_MS });
+    sourceCapabilityCache.set(source.id, {
+      data,
+      expiresAt: now + SOURCE_CAPABILITY_SUCCESS_TTL_MS,
+    });
     return data;
   } catch (error) {
     const failureData: BookSourceCapabilities = {
@@ -420,11 +527,17 @@ async function detectCapabilities(source: BookSource): Promise<BookSourceCapabil
     };
 
     if (cached?.data && !cached.data.lastError) {
-      sourceCapabilityCache.set(source.id, { data: cached.data, expiresAt: now + SOURCE_CAPABILITY_FAILURE_TTL_MS });
+      sourceCapabilityCache.set(source.id, {
+        data: cached.data,
+        expiresAt: now + SOURCE_CAPABILITY_FAILURE_TTL_MS,
+      });
       return cached.data;
     }
 
-    sourceCapabilityCache.set(source.id, { data: failureData, expiresAt: now + SOURCE_CAPABILITY_FAILURE_TTL_MS });
+    sourceCapabilityCache.set(source.id, {
+      data: failureData,
+      expiresAt: now + SOURCE_CAPABILITY_FAILURE_TTL_MS,
+    });
     return failureData;
   }
 }
@@ -437,22 +550,34 @@ export class OPDSClient {
   async getSources(): Promise<BookSource[]> {
     const config = await resolveOPDSConfig();
     if (!config.enabled) return [];
-    const withCapabilities = await Promise.all(config.sources.map(async (source) => ({
-      ...source,
-      capabilities: await detectCapabilities(source),
-    })));
+    const withCapabilities = await Promise.all(
+      config.sources.map(async (source) => ({
+        ...source,
+        capabilities: await detectCapabilities(source),
+      }))
+    );
     return withCapabilities;
   }
 
-  async getCatalog(sourceId: string, href?: string): Promise<BookCatalogResult> {
+  async getCatalog(
+    sourceId: string,
+    href?: string
+  ): Promise<BookCatalogResult> {
     const source = await getSourceById(sourceId);
     return this.getCatalogFromSource(source, href);
   }
 
-  async getCatalogFromSource(source: BookSource, href?: string): Promise<BookCatalogResult & { searchHref?: string }> {
+  async getCatalogFromSource(
+    source: BookSource,
+    href?: string
+  ): Promise<BookCatalogResult & { searchHref?: string }> {
     const feed = await getFeed(source, href);
-    const navigationEntries = feed.entries.filter((entry) => isLikelyNavigationEntry(entry));
-    const bookEntries = feed.entries.filter((entry) => !isLikelyNavigationEntry(entry));
+    const navigationEntries = feed.entries.filter((entry) =>
+      isLikelyNavigationEntry(entry)
+    );
+    const bookEntries = feed.entries.filter(
+      (entry) => !isLikelyNavigationEntry(entry)
+    );
     return {
       sourceId: source.id,
       sourceName: source.name,
@@ -462,7 +587,13 @@ export class OPDSClient {
       entries: bookEntries.map((entry) => mapEntryToItem(source, entry)),
       navigation: [
         ...feed.links
-          .filter((link) => isNavigationLink(link) && link.rel !== 'next' && link.rel !== 'previous' && !!(link.title || '').trim())
+          .filter(
+            (link) =>
+              isNavigationLink(link) &&
+              link.rel !== 'next' &&
+              link.rel !== 'previous' &&
+              !!(link.title || '').trim()
+          )
           .map((link) => ({
             title: (link.title || '').trim(),
             href: link.href,
@@ -472,11 +603,16 @@ export class OPDSClient {
         ...navigationEntries
           .map((entry) => ({
             title: (entry.title || '').trim(),
-            href: pickDetailHref(entry.links) || entry.links.find((link) => isNavigationLink(link))?.href || '',
+            href:
+              pickDetailHref(entry.links) ||
+              entry.links.find((link) => isNavigationLink(link))?.href ||
+              '',
             rel: entry.links.find((link) => isNavigationLink(link))?.rel,
             type: entry.links.find((link) => isNavigationLink(link))?.type,
           }))
-          .filter((item) => !!item.href && !!item.title && item.title !== '目录'),
+          .filter(
+            (item) => !!item.href && !!item.title && item.title !== '目录'
+          ),
       ],
       nextHref: feed.links.find((link) => link.rel === 'next')?.href,
       previousHref: feed.links.find((link) => link.rel === 'previous')?.href,
@@ -485,14 +621,22 @@ export class OPDSClient {
   }
 
   async getSearchSources(sourceId?: string): Promise<BookSource[]> {
-    return sourceId ? [await getSourceById(sourceId)] : (await resolveOPDSConfig()).sources;
+    return sourceId
+      ? [await getSourceById(sourceId)]
+      : (await resolveOPDSConfig()).sources;
   }
 
-  async searchBooksSource(q: string, source: BookSource): Promise<{ source: BookSource; results: BookListItem[] }> {
+  async searchBooksSource(
+    q: string,
+    source: BookSource
+  ): Promise<{ source: BookSource; results: BookListItem[] }> {
     const targetUrl = await resolveSearchTargetUrl(source, q);
     if (!targetUrl) throw new Error('未配置可用的搜索地址');
     const feed = await getFeed(source, targetUrl);
-    return { source, results: feed.entries.map((entry) => mapEntryToItem(source, entry)) };
+    return {
+      source,
+      results: feed.entries.map((entry) => mapEntryToItem(source, entry)),
+    };
   }
 
   async searchBooks(q: string, sourceId?: string): Promise<BookSearchResult> {
@@ -500,19 +644,29 @@ export class OPDSClient {
     const results: BookListItem[] = [];
     const failedSources: BookSearchFailure[] = [];
 
-    await Promise.all(sources.map(async (source) => {
-      try {
-        const sourceResult = await this.searchBooksSource(q, source);
-        results.push(...sourceResult.results);
-      } catch (error) {
-        failedSources.push({ sourceId: source.id, sourceName: source.name, error: (error as Error).message });
-      }
-    }));
+    await Promise.all(
+      sources.map(async (source) => {
+        try {
+          const sourceResult = await this.searchBooksSource(q, source);
+          results.push(...sourceResult.results);
+        } catch (error) {
+          failedSources.push({
+            sourceId: source.id,
+            sourceName: source.name,
+            error: (error as Error).message,
+          });
+        }
+      })
+    );
 
     return { results, failedSources };
   }
 
-  async getBookDetail(sourceId: string, href: string, fallback?: Partial<BookDetail>): Promise<BookDetail> {
+  async getBookDetail(
+    sourceId: string,
+    href: string,
+    fallback?: Partial<BookDetail>
+  ): Promise<BookDetail> {
     const source = await getSourceById(sourceId);
     if (!href) {
       if (!fallback?.title) throw new Error('缺少详情链接');
@@ -559,12 +713,18 @@ export class OPDSClient {
       ...detail,
       detailHref: href,
       summary: detail.summary || feed.subtitle || fallback?.summary,
-      acquisitionLinks: detail.acquisitionLinks.length > 0 ? detail.acquisitionLinks : fallback?.acquisitionLinks || [],
+      acquisitionLinks:
+        detail.acquisitionLinks.length > 0
+          ? detail.acquisitionLinks
+          : fallback?.acquisitionLinks || [],
       cover: detail.cover || fallback?.cover,
     };
   }
 
-  async getPreferredAcquisition(sourceId: string, href: string): Promise<{ format: 'epub' | 'pdf'; href: string }> {
+  async getPreferredAcquisition(
+    sourceId: string,
+    href: string
+  ): Promise<{ format: 'epub' | 'pdf'; href: string }> {
     const detail = await this.getBookDetail(sourceId, href);
     const preferred = detail.acquisitionLinks
       .map((item) => ({ ...item, format: mapFormat(item.type || '') }))

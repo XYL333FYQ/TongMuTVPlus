@@ -68,7 +68,9 @@ async function openDB(): Promise<IDBDatabase> {
 
       // 创建对象存储（如果不存在）
       if (!db.objectStoreNames.contains(STORE_NAME)) {
-        const objectStore = db.createObjectStore(STORE_NAME, { keyPath: 'cacheKey' });
+        const objectStore = db.createObjectStore(STORE_NAME, {
+          keyPath: 'cacheKey',
+        });
         objectStore.createIndex('timestamp', 'timestamp', { unique: false });
         console.log('IndexedDB 对象存储已创建:', STORE_NAME);
       }
@@ -129,13 +131,17 @@ export async function saveDanmakuToCache(
     };
 
     // 添加调试日志
-    console.log(`[弹幕缓存] 准备保存: cacheKey="${cacheKey}", title="${title}", episodeIndex=${episodeIndex}`);
+    console.log(
+      `[弹幕缓存] 准备保存: cacheKey="${cacheKey}", title="${title}", episodeIndex=${episodeIndex}`
+    );
 
     return new Promise((resolve, reject) => {
       const request = objectStore.put(cacheData);
 
       request.onsuccess = () => {
-        console.log(`弹幕已缓存: title=${title}, episodeIndex=${episodeIndex}, 数量=${comments.length}`);
+        console.log(
+          `弹幕已缓存: title=${title}, episodeIndex=${episodeIndex}, 数量=${comments.length}`
+        );
         resolve();
       };
 
@@ -195,7 +201,9 @@ export async function getDanmakuFromCache(
         const result = request.result as DanmakuCacheData | undefined;
 
         if (!result) {
-          console.log(`弹幕缓存未找到: title=${title}, episodeIndex=${episodeIndex}`);
+          console.log(
+            `弹幕缓存未找到: title=${title}, episodeIndex=${episodeIndex}`
+          );
           resolve(null);
           return;
         }
@@ -246,7 +254,10 @@ export async function getDanmakuFromCache(
 }
 
 // 清除指定弹幕缓存
-export async function clearDanmakuCache(title: string, episodeIndex: number): Promise<void> {
+export async function clearDanmakuCache(
+  title: string,
+  episodeIndex: number
+): Promise<void> {
   try {
     const db = await openDB();
     const transaction = db.transaction([STORE_NAME], 'readwrite');
@@ -258,7 +269,9 @@ export async function clearDanmakuCache(title: string, episodeIndex: number): Pr
       const request = objectStore.delete(cacheKey);
 
       request.onsuccess = () => {
-        console.log(`弹幕缓存已清除: title=${title}, episodeIndex=${episodeIndex}`);
+        console.log(
+          `弹幕缓存已清除: title=${title}, episodeIndex=${episodeIndex}`
+        );
         resolve();
       };
 

@@ -77,7 +77,8 @@ export function normalizePathMetaMap(
     const pathKey = normalizeOpenListPath(rawPath);
     if (!pathKey) continue;
     result[pathKey] = {
-      category: typeof entry?.category === 'string' ? entry.category.trim() : '',
+      category:
+        typeof entry?.category === 'string' ? entry.category.trim() : '',
       refresh14m: Boolean(entry?.refresh14m),
       proxyPlay: Boolean(entry?.proxyPlay),
       proxyCacheMinutes: normalizeProxyCacheMinutes(entry?.proxyCacheMinutes),

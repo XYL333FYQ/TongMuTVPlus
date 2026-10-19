@@ -176,12 +176,15 @@ export default function HomeHero({
                 </p>
               ) : null,
               <div className='tm-home-hero-actions' key='actions'>
-                <button className='tm-home-primary tm-press' onClick={onPlay}>
+                <button
+                  className='tm-btn tm-btn-lg tm-btn-art'
+                  onClick={onPlay}
+                >
                   <Play size={16} fill='currentColor' />
                   播放
                 </button>
                 <button
-                  className='tm-home-secondary tm-press'
+                  className='tm-btn tm-btn-lg tm-btn-art-glass'
                   onClick={onTogether}
                 >
                   <Users size={18} />
@@ -214,7 +217,8 @@ export default function HomeHero({
         {titles.length > 1 && (
           <>
             <button
-              className='tm-home-hero-arrow tm-home-hero-prev tm-press'
+              className='tm-icon-btn tm-home-hero-arrow tm-home-hero-prev'
+              data-variant='art'
               aria-label='上一张推荐'
               onClick={() =>
                 onSelect((index - 1 + titles.length) % titles.length)
@@ -223,7 +227,8 @@ export default function HomeHero({
               <ChevronLeft size={20} />
             </button>
             <button
-              className='tm-home-hero-arrow tm-home-hero-next tm-press'
+              className='tm-icon-btn tm-home-hero-arrow tm-home-hero-next'
+              data-variant='art'
               aria-label='下一张推荐'
               onClick={() => onSelect((index + 1) % titles.length)}
             >
@@ -233,7 +238,6 @@ export default function HomeHero({
               {titles.map((name, n) => (
                 <button
                   key={n}
-                  className='tm-press'
                   aria-label={`查看推荐 ${n + 1}：${name}`}
                   aria-current={n === index ? 'true' : undefined}
                   data-active={n === index}

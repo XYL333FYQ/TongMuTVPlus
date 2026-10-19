@@ -1,4 +1,5 @@
 import React from 'react';
+
 import type { MusicSource, Song } from '@/lib/music/types';
 
 /**
@@ -18,11 +19,20 @@ export const musicSources: Array<{
   { key: 'mg', label: '咪咕', monogram: 'MG' },
 ];
 
-export function normalizeSource(source: string | undefined | null): MusicSource {
+export function normalizeSource(
+  source: string | undefined | null
+): MusicSource {
   if (source === 'netease') return 'wy';
   if (source === 'qq') return 'tx';
   if (source === 'kuwo') return 'kw';
-  if (source === 'wy' || source === 'tx' || source === 'kw' || source === 'kg' || source === 'mg') return source;
+  if (
+    source === 'wy' ||
+    source === 'tx' ||
+    source === 'kw' ||
+    source === 'kg' ||
+    source === 'mg'
+  )
+    return source;
   return 'wy';
 }
 
@@ -53,7 +63,10 @@ export function mapSong(song: any): Song {
   };
 }
 
-export function getSourceDisplayLabel(source?: MusicSource | string, compact = true): string {
+export function getSourceDisplayLabel(
+  source?: MusicSource | string,
+  compact = true
+): string {
   switch (normalizeSource(source)) {
     case 'wy':
       return compact ? '网易' : '网易云';
@@ -78,17 +91,21 @@ export function SourcePill({
   variant?: 'subtle' | 'accent';
 }) {
   const normalized = normalizeSource(source);
-  const label = variant === 'accent'
-    ? getSourceDisplayLabel(normalized)
-    : musicSources.find((item) => item.key === normalized)?.label || source || '未知';
-  const variantClass = variant === 'accent'
-    ? 'rounded-lg border-red-500/50 bg-red-500/20 leading-none text-red-400'
-    : 'rounded-full border-white/10 bg-white/5 text-zinc-400';
+  const label =
+    variant === 'accent'
+      ? getSourceDisplayLabel(normalized)
+      : musicSources.find((item) => item.key === normalized)?.label ||
+        source ||
+        '未知';
+  const variantClass =
+    variant === 'accent'
+      ? 'rounded-lg border-fg bg-fg leading-none text-inverse'
+      : 'rounded-full border-line bg-surface text-muted';
 
   return React.createElement(
     'span',
     {
-      className: `inline-flex shrink-0 items-center border px-2 py-0.5 text-[10px] font-medium ${variantClass} ${className}`,
+      className: `inline-flex shrink-0 items-center border px-2 py-0.5 text-xs font-medium ${variantClass} ${className}`,
     },
     label
   );

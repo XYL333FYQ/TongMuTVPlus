@@ -7,7 +7,14 @@ export const NETDISK_123_SOURCE = 'netdisk-123';
 export const NETDISK_UC_SOURCE = 'netdisk-uc';
 export const NETDISK_115_SOURCE = 'netdisk-115';
 
-export type NetdiskProvider = 'quark' | 'mobile' | 'baidu' | 'tianyi' | '123' | 'uc' | '115';
+export type NetdiskProvider =
+  | 'quark'
+  | 'mobile'
+  | 'baidu'
+  | 'tianyi'
+  | '123'
+  | 'uc'
+  | '115';
 
 export function normalizeNetdiskSource(source?: string | null): string {
   if (!source) return '';
@@ -17,10 +24,20 @@ export function normalizeNetdiskSource(source?: string | null): string {
 
 export function isNetdiskSource(source?: string | null): boolean {
   const normalized = normalizeNetdiskSource(source);
-  return normalized === NETDISK_QUARK_SOURCE || normalized === NETDISK_MOBILE_SOURCE || normalized === NETDISK_BAIDU_SOURCE || normalized === NETDISK_TIANYI_SOURCE || normalized === NETDISK_123_SOURCE || normalized === NETDISK_UC_SOURCE || normalized === NETDISK_115_SOURCE;
+  return (
+    normalized === NETDISK_QUARK_SOURCE ||
+    normalized === NETDISK_MOBILE_SOURCE ||
+    normalized === NETDISK_BAIDU_SOURCE ||
+    normalized === NETDISK_TIANYI_SOURCE ||
+    normalized === NETDISK_123_SOURCE ||
+    normalized === NETDISK_UC_SOURCE ||
+    normalized === NETDISK_115_SOURCE
+  );
 }
 
-export function getNetdiskProvider(source?: string | null): NetdiskProvider | null {
+export function getNetdiskProvider(
+  source?: string | null
+): NetdiskProvider | null {
   const normalized = normalizeNetdiskSource(source);
   if (normalized === NETDISK_QUARK_SOURCE) return 'quark';
   if (normalized === NETDISK_MOBILE_SOURCE) return 'mobile';

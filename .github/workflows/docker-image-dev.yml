@@ -67,10 +67,10 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      
+
       # 这个步骤不再需要，因为我们直接用 github.repository_owner
       # - name: Set lowercase repository owner ...
-      
+
       # 更改：使用动态镜像名和更强大的标签逻辑
       - name: Extract metadata
         id: meta

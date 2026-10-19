@@ -1,13 +1,11 @@
 'use client';
 
-import { ArrowRight, Film, RefreshCw } from 'lucide-react';
+import { Film, RefreshCw } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import './public-catalog.css';
-
-import { useReducedMotionSetting } from '@/lib/motion';
+import { posterTiltHandlers, useReducedMotionSetting } from '@/lib/motion';
 import {
   type PublicCatalogCategory,
   type PublicCatalogItem,
@@ -23,6 +21,7 @@ import PosterGrid from './PosterGrid';
 import PosterMotion from './PosterMotion';
 import PublicPoster from './PublicPoster';
 import SectionHeader from './SectionHeader';
+import Shelf from './Shelf';
 
 function usePublicCatalog(
   type: PublicCatalogCategory,
@@ -95,8 +94,7 @@ function usePublicCatalog(
             nextStart.current <= 500
         );
       } catch {
-        if (!request.signal.aborted)
-          setError('影视信息暂时无法获取，可以稍后重试。');
+        if (!request.signal.aborted) setError('影视信息暂时无法获取');
       } finally {
         if (!request.signal.aborted) setLoading(false);
       }
@@ -112,126 +110,106 @@ function usePublicCatalog(
   return { items, loading, error, hasMore, load };
 }
 
-function PlainCard({ children }: { children: React.ReactNode }) {
-  return <>{children}</>;
-}
-
-function CatalogCards({
-  items,
+function CatalogCard({
+  item,
   onSelect,
-  horizontal = false,
 }: {
-  items: PublicCatalogItem[];
+  item: PublicCatalogItem;
   onSelect: (item: PublicCatalogItem) => void;
-  horizontal?: boolean;
 }) {
-  const CardsContainer = horizontal ? PosterGrid : 'div';
-  const CardMotion = horizontal ? PosterMotion : PlainCard;
+  const meta = [item.year, item.mediaType === 'tv' ? '剧集' : '电影']
+    .filter(Boolean)
+    .join(' · ');
   return (
-    <CardsContainer
-      className={horizontal ? 'tm-home-poster-grid' : 'tm-public-grid'}
+    <button
+      type='button'
+      className='tm-video-card tm-public-card'
+      {...posterTiltHandlers}
+      onClick={() => onSelect(item)}
+      aria-label={'查看影片介绍：' + item.title}
     >
-      {(horizontal ? items.slice(0, 12) : items).map((item) => (
-        <CardMotion key={item.provider + ':' + item.id}>
-          <button
-            key={item.provider + ':' + item.id}
-            type='button'
-            className='tm-public-card tm-press'
-            onPointerMove={(event) => {
-              if (
-                event.pointerType !== 'mouse' ||
-                document.documentElement.dataset.tmReducedMotion === 'true' ||
-                window.matchMedia('(prefers-reduced-motion: reduce)').matches ||
-                !window.matchMedia('(hover:hover) and (pointer:fine)').matches
-              )
-                return;
-              const rect = event.currentTarget.getBoundingClientRect();
-              const x = Math.max(
-                0,
-                Math.min(1, (event.clientX - rect.left) / rect.width)
-              );
-              const y = Math.max(
-                0,
-                Math.min(1, (event.clientY - rect.top) / rect.height)
-              );
-              event.currentTarget.style.setProperty(
-                '--tm-poster-rx',
-                (0.5 - y) * 12 + 'deg'
-              );
-              event.currentTarget.style.setProperty(
-                '--tm-poster-ry',
-                (x - 0.5) * 12 + 'deg'
-              );
-              event.currentTarget.style.setProperty('--mx', x * 100 + '%');
-              event.currentTarget.style.setProperty('--my', y * 100 + '%');
-            }}
-            onPointerLeave={(event) => {
-              event.currentTarget.style.setProperty('--tm-poster-rx', '0deg');
-              event.currentTarget.style.setProperty('--tm-poster-ry', '0deg');
-            }}
-            onClick={() => onSelect(item)}
-            aria-label={'查看影片介绍：' + item.title}
-          >
-            <div className='tm-public-poster'>
-              {item.poster ? (
-                <PublicPoster src={item.poster} alt='' />
-              ) : (
-                <Film size={32} aria-hidden />
-              )}
-              {item.rate && Number(item.rate) > 0 && (
-                <span className='mtv-rate'>{Number(item.rate).toFixed(1)}</span>
-              )}
-            </div>
-            <strong>{item.title}</strong>
-            <span>
-              {[item.year, item.mediaType === 'tv' ? '剧集' : '电影']
-                .filter(Boolean)
-                .join(' · ')}
-            </span>
-          </button>
-        </CardMotion>
-      ))}
-    </CardsContainer>
+      <div className='tm-poster tm-video-card-art'>
+        {item.poster ? (
+          <PublicPoster src={item.poster} alt='' className='tm-fade-image' />
+        ) : (
+          <span className='tm-public-image-missing'>
+            <Film size={32} aria-hidden />
+          </span>
+        )}
+        {item.rate && Number(item.rate) > 0 && (
+          <span className='mtv-rate'>{Number(item.rate).toFixed(1)}</span>
+        )}
+      </div>
+      <span className='tm-poster-title'>{item.title}</span>
+      {meta && <span className='tm-poster-meta'>{meta}</span>}
+    </button>
   );
 }
 
 function CatalogFeedback({
   feed,
+  skeleton,
 }: {
   feed: ReturnType<typeof usePublicCatalog>;
+  skeleton: 'shelf' | 'grid';
 }) {
   if (feed.error)
     return (
-      <div className='tm-public-feedback' role='status'>
-        <p>{feed.error}</p>
+      <div className='tm-empty' role='status'>
+        <p className='tm-empty-desc'>{feed.error}</p>
         <button
           type='button'
           onClick={() => void feed.load(feed.items.length === 0)}
-          className='tm-tool-link'
+          className='tm-btn tm-btn-ghost tm-btn-sm'
         >
           <RefreshCw size={14} />
           重新获取
         </button>
       </div>
     );
-  if (feed.loading && !feed.items.length)
+  if (feed.loading && !feed.items.length) {
+    const placeholders = Array.from({ length: 12 }, (_, index) => (
+      <div key={index} className='tm-home-skeleton tm-skeleton' />
+    ));
     return (
-      <div
-        className='tm-public-grid'
-        aria-busy='true'
-        aria-label='正在获取影视信息'
-      >
-        {Array.from({ length: 8 }, (_, index) => (
-          <div key={index} className='tm-public-skeleton' />
-        ))}
+      <div aria-busy='true' aria-label='正在获取影视信息'>
+        {skeleton === 'shelf' ? (
+          <Shelf>{placeholders}</Shelf>
+        ) : (
+          <PosterGrid>{placeholders}</PosterGrid>
+        )}
       </div>
     );
+  }
   if (!feed.loading && !feed.items.length)
-    return <p className='tm-public-feedback'>暂时没有相关影视信息。</p>;
+    return (
+      <div className='tm-empty'>
+        <span className='tm-empty-icon'>
+          <Film size={24} />
+        </span>
+        <p className='tm-empty-desc'>暂时没有相关影视信息</p>
+      </div>
+    );
   return null;
 }
 
-/** Public metadata only: no playback sources, user records or source-search cache. */
+function CategoryLinks() {
+  return (
+    <nav
+      className='tm-chips tm-home-categories'
+      data-scroll='true'
+      aria-label='影视分类'
+    >
+      {publicCatalogCategories.map((item) => (
+        <Link key={item.type} href={item.href} className='tm-chip'>
+          {item.label}
+        </Link>
+      ))}
+    </nav>
+  );
+}
+
+/** 只用公开资料：不读片源、个人记录或片源搜索缓存。 */
 export default function PublicCatalogPage({
   mode,
   category,
@@ -274,158 +252,150 @@ export default function PublicCatalogPage({
     }, 8000);
     return () => window.clearInterval(timer);
   }, [isHome, reduced, paused, recommendations.length]);
-  const ContentContainer = PageContainer;
+
+  if (!isHome)
+    return (
+      <PageLayout activePath='/douban'>
+        <PageContainer>
+          <header className='tm-page-head'>
+            <div>
+              <h1 className='tm-page-title'>片库</h1>
+              <p className='tm-page-desc'>登录后可以播放、收藏和一起看</p>
+            </div>
+          </header>
+          <nav className='tm-tabs' aria-label='影视类型'>
+            {publicCatalogCategories.map((item) => (
+              <Link
+                key={item.type}
+                href={item.href}
+                className='tm-tab'
+                aria-current={type === item.type ? 'page' : undefined}
+              >
+                {item.label}
+              </Link>
+            ))}
+          </nav>
+          {tags.length > 1 && (
+            <div
+              className='tm-chips tm-library-tags'
+              data-scroll='true'
+              role='group'
+              aria-label='影片分类'
+            >
+              {tags.map((value) => (
+                <button
+                  type='button'
+                  key={value}
+                  className='tm-chip'
+                  aria-pressed={tag === value}
+                  onClick={() => setSelectedTag(value)}
+                >
+                  {value}
+                </button>
+              ))}
+            </div>
+          )}
+          <div className='tm-library-grid'>
+            {catalog.items.length > 0 && (
+              <PosterGrid>
+                {catalog.items.map((item) => (
+                  <CatalogCard
+                    key={item.provider + ':' + item.id}
+                    item={item}
+                    onSelect={openWork}
+                  />
+                ))}
+              </PosterGrid>
+            )}
+            <CatalogFeedback feed={catalog} skeleton='grid' />
+          </div>
+          {!!catalog.items.length && catalog.hasMore && !catalog.error && (
+            <div className='tm-library-more'>
+              <button
+                type='button'
+                className='tm-btn tm-btn-secondary'
+                disabled={catalog.loading}
+                onClick={() => void catalog.load()}
+              >
+                {catalog.loading ? '正在加载…' : '加载更多'}
+              </button>
+            </div>
+          )}
+        </PageContainer>
+      </PageLayout>
+    );
 
   return (
-    <PageLayout activePath={isHome ? '/' : '/douban'}>
-      <div
-        className={'tm-home tm-public-catalog' + (isHome ? ' tm-home-v3' : '')}
-      >
-        {isHome && (
-          <PageContainer>
-            {featured ? (
-              <HomeHero
-                id={featured.provider + ':' + featured.id}
-                title={featured.title}
-                meta={
-                  <>
-                    {featured.year && <span>{featured.year}</span>}
-                    <span>{featured.mediaType === 'tv' ? '剧集' : '电影'}</span>
-                  </>
-                }
-                description={featured.description}
-                contain
-                art={
-                  <PublicPoster
-                    src={featured.poster}
-                    alt={featured.title}
-                    eager
-                    className='tm-home-hero-image'
-                  />
-                }
-                ambient={<PublicPoster src={featured.poster} alt='' eager />}
-                onPlay={() => openWork(featured)}
-                onTogether={() =>
-                  router.push(
-                    '/login?redirect=' + encodeURIComponent('/watch-room')
-                  )
-                }
-                titles={recommendations.map((item) => item.title)}
-                index={heroIndex}
-                onSelect={setHeroIndex}
-                onPause={setPaused}
-              />
-            ) : (
-              <div
-                className={
-                  'tm-home-hero-panel tm-home-hero-loading' +
-                  (catalog.loading ? ' tm-skeleton' : '')
-                }
-              >
-                {' '}
-                {catalog.loading ? '正在加载推荐' : '暂时没有推荐内容'}
-              </div>
-            )}
-          </PageContainer>
-        )}
-        <ContentContainer
-          className={isHome ? 'tm-home-content-v3' : 'tm-home-content'}
-        >
-          {isHome ? (
-            <>
-              <div className='tm-home-resume-rooms'>
-                <HomeRooms guest />
-              </div>
-              <div className='tm-category-row'>
-                {publicCatalogCategories.map((item) => (
-                  <Link
-                    key={item.type}
-                    href={item.href}
-                    className='tm-tool-link'
-                    aria-current={item.type === 'movie' ? 'page' : undefined}
-                  >
-                    {item.label}
-                  </Link>
-                ))}
-              </div>
-              <section className='tm-public-section' data-module='hotMovies'>
-                <SectionHeader
-                  title='热门电影'
-                  href='/douban?type=movie'
-                  className='tm-public-section-heading'
+    <PageLayout activePath='/'>
+      <div className='tm-home'>
+        <PageContainer>
+          {featured ? (
+            <HomeHero
+              id={featured.provider + ':' + featured.id}
+              title={featured.title}
+              meta={
+                <>
+                  {featured.year && <span>{featured.year}</span>}
+                  <span>{featured.mediaType === 'tv' ? '剧集' : '电影'}</span>
+                </>
+              }
+              description={featured.description}
+              contain
+              art={
+                <PublicPoster
+                  src={featured.poster}
+                  alt={featured.title}
+                  eager
+                  className='tm-home-hero-image'
                 />
-                <CatalogCards
-                  items={catalog.items}
-                  onSelect={openWork}
-                  horizontal
-                />
-                <CatalogFeedback feed={catalog} />
-              </section>
-              <section className='tm-public-section'>
-                <SectionHeader
-                  title='热门剧集'
-                  href='/douban?type=tv'
-                  className='tm-public-section-heading'
-                />
-                <CatalogCards
-                  items={television.items}
-                  onSelect={openWork}
-                  horizontal
-                />
-                <CatalogFeedback feed={television} />
-              </section>
-            </>
+              }
+              ambient={<PublicPoster src={featured.poster} alt='' eager />}
+              onPlay={() => openWork(featured)}
+              onTogether={() =>
+                router.push(
+                  '/login?redirect=' + encodeURIComponent('/watch-room')
+                )
+              }
+              titles={recommendations.map((item) => item.title)}
+              index={heroIndex}
+              onSelect={setHeroIndex}
+              onPause={setPaused}
+            />
           ) : (
-            <>
-              <div className='tm-public-library-heading'>
-                <h1>片库</h1>
-                <p>浏览公开影视信息，登录后查找片源、收藏作品或一起观看。</p>
-              </div>
-              <nav className='tm-public-filters' aria-label='影视类型'>
-                {publicCatalogCategories.map((item) => (
-                  <Link
-                    key={item.type}
-                    href={item.href}
-                    aria-current={type === item.type ? 'page' : undefined}
-                  >
-                    {item.label}
-                  </Link>
-                ))}
-              </nav>
-              <div
-                className='tm-public-tags'
-                role='group'
-                aria-label='影片分类'
-              >
-                {tags.map((value) => (
-                  <button
-                    type='button'
-                    key={value}
-                    aria-pressed={tag === value}
-                    onClick={() => setSelectedTag(value)}
-                  >
-                    {value}
-                  </button>
-                ))}
-              </div>
-              <CatalogCards items={catalog.items} onSelect={openWork} />
-              <CatalogFeedback feed={catalog} />
-              {!!catalog.items.length && catalog.hasMore && !catalog.error && (
-                <div className='tm-public-more'>
-                  <button
-                    type='button'
-                    className='tm-tool-link'
-                    disabled={catalog.loading}
-                    onClick={() => void catalog.load()}
-                  >
-                    {catalog.loading ? '正在加载…' : '加载更多影片'}
-                    <ArrowRight size={14} />
-                  </button>
-                </div>
-              )}
-            </>
+            <div
+              className={
+                'tm-home-hero-panel tm-home-hero-loading' +
+                (catalog.loading ? ' tm-skeleton' : '')
+              }
+            >
+              {catalog.loading ? '' : '暂时没有推荐内容'}
+            </div>
           )}
-        </ContentContainer>
+        </PageContainer>
+        <PageContainer className='tm-home-body'>
+          <div className='tm-home-pair'>
+            <HomeRooms guest />
+          </div>
+          <CategoryLinks />
+          {[
+            { title: '热门电影', href: '/douban?type=movie', feed: catalog },
+            { title: '热门剧集', href: '/douban?type=tv', feed: television },
+          ].map((section) => (
+            <section key={section.title} className='tm-section'>
+              <SectionHeader title={section.title} href={section.href} />
+              {section.feed.items.length > 0 && (
+                <Shelf>
+                  {section.feed.items.slice(0, 18).map((item) => (
+                    <PosterMotion key={item.provider + ':' + item.id}>
+                      <CatalogCard item={item} onSelect={openWork} />
+                    </PosterMotion>
+                  ))}
+                </Shelf>
+              )}
+              <CatalogFeedback feed={section.feed} skeleton='shelf' />
+            </section>
+          ))}
+        </PageContainer>
       </div>
     </PageLayout>
   );

@@ -9,7 +9,7 @@ function readAll(): Record<string, BookTtsProgress> {
   if (typeof window === 'undefined') return {};
   try {
     const raw = localStorage.getItem(BOOK_TTS_PROGRESS_KEY);
-    return raw ? JSON.parse(raw) as Record<string, BookTtsProgress> : {};
+    return raw ? (JSON.parse(raw) as Record<string, BookTtsProgress>) : {};
   } catch {
     return {};
   }
@@ -20,7 +20,10 @@ function writeAll(data: Record<string, BookTtsProgress>) {
   localStorage.setItem(BOOK_TTS_PROGRESS_KEY, JSON.stringify(data));
 }
 
-export function getBookTtsProgress(sourceId: string, bookId: string): BookTtsProgress | null {
+export function getBookTtsProgress(
+  sourceId: string,
+  bookId: string
+): BookTtsProgress | null {
   return readAll()[generateStorageKey(sourceId, bookId)] || null;
 }
 

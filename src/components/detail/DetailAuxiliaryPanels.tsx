@@ -69,7 +69,7 @@ export function GalleryContent({
       )}
 
       {!galleryLoading && !galleryError && galleryImages.length === 0 && (
-        <div className='text-center py-12 text-[var(--tm-muted)]'>暂无图片</div>
+        <div className='text-center py-12 text-muted'>暂无图片</div>
       )}
 
       {!galleryLoading && !galleryError && galleryImages.length > 0 && (
@@ -102,7 +102,7 @@ export function GalleryContent({
                 }}
               >
                 <div
-                  className='relative w-full h-full overflow-hidden rounded-md bg-[var(--tm-surface-raised)] cursor-pointer hover:opacity-90 transition-opacity'
+                  className='relative w-full h-full overflow-hidden rounded-md bg-raised cursor-pointer hover:opacity-90 transition-opacity'
                   onClick={() => handleImageClick(imageUrl)}
                   role='button'
                   tabIndex={0}
@@ -124,7 +124,7 @@ export function GalleryContent({
                     className='absolute inset-0 w-full h-full object-cover'
                     draggable={false}
                   />
-                  <div className='absolute left-2 top-2 px-2 py-0.5 rounded-full text-[13px] bg-[var(--tm-surface)] text-[var(--tm-text)]'>
+                  <div className='absolute left-2 top-2 px-2 py-0.5 rounded-full text-[13px] bg-surface text-fg'>
                     {image.imageType === 'poster' ? '海报' : '剧照'}
                   </div>
                 </div>
@@ -167,9 +167,7 @@ export function StillsContent({
       {!episodeStillsLoading &&
         !episodeStillsError &&
         episodeStills.length === 0 && (
-          <div className='text-center py-12 text-[var(--tm-muted)]'>
-            暂无剧照
-          </div>
+          <div className='text-center py-12 text-muted'>暂无剧照</div>
         )}
 
       {!episodeStillsLoading &&
@@ -179,7 +177,7 @@ export function StillsContent({
             {episodeStills.map((stillUrl, index) => (
               <div
                 key={`${stillUrl}-${index}`}
-                className='relative aspect-video overflow-hidden rounded-md bg-[var(--tm-surface-raised)] cursor-pointer hover:opacity-90 transition-opacity'
+                className='relative aspect-video overflow-hidden rounded-md bg-raised cursor-pointer hover:opacity-90 transition-opacity'
                 onClick={() => handleImageClick(stillUrl)}
                 role='button'
                 tabIndex={0}
@@ -232,8 +230,8 @@ export function CorrectionContent({
               onClick={() => handleSelectTmdbResult(result)}
               className={`flex items-start gap-3 p-2 rounded-lg cursor-pointer transition-colors ${
                 isActive
-                  ? 'bg-[var(--tm-surface-raised)] ring-2 ring-[var(--tm-text)]'
-                  : 'bg-[var(--tm-surface-raised)] hover:bg-[var(--tm-surface-raised)]'
+                  ? 'bg-raised ring-2 ring-fg'
+                  : 'bg-raised hover:bg-raised'
               }`}
               role='button'
               tabIndex={0}
@@ -247,7 +245,7 @@ export function CorrectionContent({
                 }
               }}
             >
-              <div className='relative w-12 h-16 rounded overflow-hidden bg-[var(--tm-surface-raised)] flex-shrink-0'>
+              <div className='relative w-12 h-16 rounded overflow-hidden bg-raised flex-shrink-0'>
                 {resultPoster ? (
                   <ProxyImage
                     originalSrc={resultPoster}
@@ -257,26 +255,24 @@ export function CorrectionContent({
                   />
                 ) : (
                   <div className='w-full h-full flex items-center justify-center'>
-                    <Film size={20} className='text-[var(--tm-muted)]' />
+                    <Film size={20} className='text-muted' />
                   </div>
                 )}
               </div>
               <div className='flex-1 min-w-0'>
                 <div className='flex items-center gap-2'>
-                  <p className='text-sm font-medium text-[var(--tm-muted)] truncate'>
+                  <p className='text-sm font-medium text-muted truncate'>
                     {resultTitle}
                   </p>
-                  <span className='flex-shrink-0 px-1.5 py-0.5 rounded text-[13px] bg-[var(--tm-surface-raised)] text-[var(--tm-muted)]'>
+                  <span className='flex-shrink-0 px-1.5 py-0.5 rounded text-[13px] bg-raised text-muted'>
                     {result.media_type === 'tv' ? '剧集' : '电影'}
                   </span>
                 </div>
                 {resultYear && (
-                  <p className='text-[13px] text-[var(--tm-muted)] mt-0.5'>
-                    {resultYear}
-                  </p>
+                  <p className='text-[13px] text-muted mt-0.5'>{resultYear}</p>
                 )}
                 {result.overview && (
-                  <p className='text-[13px] text-[var(--tm-muted)] mt-1 line-clamp-2'>
+                  <p className='text-[13px] text-muted mt-1 line-clamp-2'>
                     {result.overview}
                   </p>
                 )}

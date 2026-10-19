@@ -18,7 +18,10 @@ export async function resolvePan115Session(id: string) {
   let session = refreshPan115NetdiskSession(id) || getPan115NetdiskSession(id);
   if (!session) {
     const payload = parsePan115NetdiskId(id);
-    const result = await listPan115ShareVideos(payload.shareUrl, payload.passcode || '');
+    const result = await listPan115ShareVideos(
+      payload.shareUrl,
+      payload.passcode || ''
+    );
     session = createPan115NetdiskSession({
       title: result.title,
       shareUrl: payload.shareUrl,

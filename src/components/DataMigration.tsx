@@ -63,17 +63,11 @@ const AlertModal = ({
   const getIcon = () => {
     switch (type) {
       case 'success':
-        return (
-          <CheckCircle className='w-12 h-12 text-[color:var(--tm-text)]' />
-        );
+        return <CheckCircle className='w-12 h-12 text-fg' />;
       case 'error':
-        return (
-          <AlertCircle className='w-12 h-12 text-[color:var(--tm-text)]' />
-        );
+        return <AlertCircle className='w-12 h-12 text-fg' />;
       case 'warning':
-        return (
-          <AlertTriangle className='w-12 h-12 text-[color:var(--tm-text)]' />
-        );
+        return <AlertTriangle className='w-12 h-12 text-fg' />;
       default:
         return null;
     }
@@ -82,25 +76,25 @@ const AlertModal = ({
   const getBgColor = () => {
     switch (type) {
       case 'success':
-        return 'bg-[var(--tm-surface-raised)]';
+        return 'bg-raised';
       case 'error':
-        return 'bg-[var(--tm-surface-raised)]';
+        return 'bg-raised';
       case 'warning':
-        return 'bg-[var(--tm-surface-raised)]';
+        return 'bg-raised';
       default:
-        return 'bg-[var(--tm-surface-raised)]';
+        return 'bg-raised';
     }
   };
 
   return createPortal(
     <div
-      className={`fixed inset-0 bg-[var(--tm-surface-raised)] bg-opacity-50 z-50 flex items-center justify-center p-4 transition-opacity duration-200 ${
+      className={`fixed inset-0 bg-raised bg-opacity-50 z-50 flex items-center justify-center p-4 transition-opacity duration-200 ${
         isVisible ? 'opacity-100' : 'opacity-0'
       }`}
       onClick={onClose}
     >
       <div
-        className={`bg-[var(--tm-surface)] bg-[var(--tm-surface)] rounded-lg shadow-xl max-w-md w-full border ${getBgColor()} transition-all duration-200 ${
+        className={`bg-surface rounded-lg shadow-xl max-w-md w-full border ${getBgColor()} transition-all duration-200 ${
           isVisible ? 'scale-100' : 'scale-95'
         }`}
         onClick={(e) => e.stopPropagation()}
@@ -108,17 +102,13 @@ const AlertModal = ({
         <div className='p-6 text-center'>
           <div className='flex justify-center mb-4'>{getIcon()}</div>
 
-          <h3 className='text-lg font-medium text-[color:var(--tm-text)] mb-2'>
-            {title}
-          </h3>
+          <h3 className='text-lg font-medium text-fg mb-2'>{title}</h3>
 
-          {message && (
-            <p className='text-[color:var(--tm-muted)] mb-4'>{message}</p>
-          )}
+          {message && <p className='text-muted mb-4'>{message}</p>}
 
           {html && (
             <div
-              className='text-left text-[color:var(--tm-muted)] mb-4'
+              className='text-left text-muted mb-4'
               dangerouslySetInnerHTML={{ __html: html }}
             />
           )}
@@ -128,7 +118,7 @@ const AlertModal = ({
               <>
                 <button
                   onClick={onClose}
-                  className='px-4 py-2 text-sm font-medium text-[color:var(--tm-muted)] bg-[var(--tm-surface-raised)] hover:bg-[var(--tm-line)] rounded-lg transition-colors min-h-[44px] tm-press'
+                  className='px-4 py-2 text-sm font-medium text-muted bg-raised hover:bg-line rounded-lg transition-colors min-h-[44px] tm-press'
                 >
                   取消
                 </button>
@@ -137,7 +127,7 @@ const AlertModal = ({
                     onConfirm();
                     onClose();
                   }}
-                  className='px-4 py-2 text-sm font-medium text-[color:var(--tm-accent-contrast)] bg-[var(--tm-text)] hover:opacity-90 rounded-lg transition-colors min-h-[44px] tm-press'
+                  className='px-4 py-2 text-sm font-medium text-inverse bg-fg hover:opacity-90 rounded-lg transition-colors min-h-[44px] tm-press'
                 >
                   {confirmText}
                 </button>
@@ -145,7 +135,7 @@ const AlertModal = ({
             ) : (
               <button
                 onClick={onClose}
-                className='px-4 py-2 text-sm font-medium text-[color:var(--tm-accent-contrast)] bg-[var(--tm-text)] hover:opacity-90 rounded-lg transition-colors min-h-[44px] tm-press'
+                className='px-4 py-2 text-sm font-medium text-inverse bg-fg hover:opacity-90 rounded-lg transition-colors min-h-[44px] tm-press'
               >
                 确定
               </button>
@@ -368,7 +358,7 @@ const DataMigration = ({ onRefreshConfig }: DataMigrationProps) => {
             <p>服务器版本: ${result.serverVersion || '未知版本'}</p>
             <p>漫画数据: ${result.importedMangaData ? '已导入' : '未导入'}</p>
             <p>电子书数据: ${result.importedBookData ? '已导入' : '未导入'}</p>
-            <p class="mt-3 text-[color:var(--tm-text)]">请刷新页面以查看最新数据。</p>
+            <p class="mt-3 text-fg">请刷新页面以查看最新数据。</p>
           </div>
         `,
         confirmText: '刷新页面',
@@ -409,9 +399,9 @@ const DataMigration = ({ onRefreshConfig }: DataMigrationProps) => {
     <>
       <div className='max-w-6xl mx-auto space-y-6'>
         {/* 简洁警告提示 */}
-        <div className='flex items-center gap-3 p-4 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface-raised)]'>
-          <AlertTriangle className='w-5 h-5 text-[color:var(--tm-text)] flex-shrink-0' />
-          <p className='text-sm text-[color:var(--tm-text)]'>
+        <div className='flex items-center gap-3 p-4 border border-line rounded-lg bg-raised'>
+          <AlertTriangle className='w-5 h-5 text-fg flex-shrink-0' />
+          <p className='text-sm text-fg'>
             数据迁移操作请谨慎，确保已备份重要数据
           </p>
         </div>
@@ -419,18 +409,14 @@ const DataMigration = ({ onRefreshConfig }: DataMigrationProps) => {
         {/* 主要操作区域 - 响应式布局 */}
         <div className='grid grid-cols-1 lg:grid-cols-2 gap-6'>
           {/* 数据导出 */}
-          <div className='border border-[var(--tm-line)] rounded-lg p-6 bg-[var(--tm-surface)] hover:shadow-sm transition-shadow flex flex-col'>
+          <div className='border border-line rounded-lg p-6 bg-surface hover:shadow-sm transition-shadow flex flex-col'>
             <div className='flex items-center gap-3 mb-6'>
-              <div className='w-8 h-8 rounded-lg bg-[var(--tm-surface-raised)] flex items-center justify-center'>
-                <Download className='w-4 h-4 text-[color:var(--tm-text)]' />
+              <div className='w-8 h-8 rounded-lg bg-raised flex items-center justify-center'>
+                <Download className='w-4 h-4 text-fg' />
               </div>
               <div>
-                <h3 className='font-medium text-[color:var(--tm-text)]'>
-                  数据导出
-                </h3>
-                <p className='text-sm text-[color:var(--tm-muted)]'>
-                  创建加密备份文件
-                </p>
+                <h3 className='font-medium text-fg'>数据导出</h3>
+                <p className='text-sm text-muted'>创建加密备份文件</p>
               </div>
             </div>
 
@@ -438,7 +424,7 @@ const DataMigration = ({ onRefreshConfig }: DataMigrationProps) => {
               <div className='space-y-4'>
                 {/* 密码输入 */}
                 <div>
-                  <label className='flex items-center gap-2 text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
+                  <label className='flex items-center gap-2 text-sm font-medium text-muted mb-2'>
                     <Lock className='w-4 h-4' />
                     加密密码
                   </label>
@@ -447,45 +433,41 @@ const DataMigration = ({ onRefreshConfig }: DataMigrationProps) => {
                     value={exportPassword}
                     onChange={(e) => setExportPassword(e.target.value)}
                     placeholder='设置强密码保护备份文件'
-                    className='w-full px-3 py-2.5 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)] focus:ring-2 focus:ring-[var(--tm-text)] focus:border-[var(--tm-line)] transition-colors'
+                    className='w-full px-3 py-2.5 border border-line rounded-lg bg-surface text-fg focus:ring-2 focus:ring-fg focus:border-line transition-colors'
                     disabled={isExporting}
                   />
-                  <p className='text-[13px] text-[color:var(--tm-muted)] mt-1'>
+                  <p className='text-[13px] text-muted mt-1'>
                     导入时需要使用相同密码
                   </p>
                 </div>
 
-                <div className='space-y-3 rounded-lg border border-[var(--tm-line)] p-3'>
-                  <p className='text-sm font-medium text-[color:var(--tm-muted)]'>
-                    附加数据
-                  </p>
-                  <label className='flex items-center gap-2 text-sm text-[color:var(--tm-muted)]'>
+                <div className='space-y-3 rounded-lg border border-line p-3'>
+                  <p className='text-sm font-medium text-muted'>附加数据</p>
+                  <label className='flex items-center gap-2 text-sm text-muted'>
                     <input
                       type='checkbox'
                       checked={includeMangaExport}
                       onChange={(e) => setIncludeMangaExport(e.target.checked)}
                       disabled={isExporting}
-                      className='h-4 w-4 rounded text-[color:var(--tm-text)] focus:ring-[var(--tm-text)]'
+                      className='h-4 w-4 rounded text-fg focus:ring-fg'
                     />
                     漫画数据（书架 + 阅读记录）
                   </label>
-                  <label className='flex items-center gap-2 text-sm text-[color:var(--tm-muted)]'>
+                  <label className='flex items-center gap-2 text-sm text-muted'>
                     <input
                       type='checkbox'
                       checked={includeBooksExport}
                       onChange={(e) => setIncludeBooksExport(e.target.checked)}
                       disabled={isExporting}
-                      className='h-4 w-4 rounded text-[color:var(--tm-text)] focus:ring-[var(--tm-text)]'
+                      className='h-4 w-4 rounded text-fg focus:ring-fg'
                     />
                     电子书数据（书架 + 阅读记录）
                   </label>
                 </div>
 
                 {/* 备份内容列表 */}
-                <div className='text-[13px] text-[color:var(--tm-muted)] space-y-1'>
-                  <p className='font-medium text-[color:var(--tm-muted)] mb-2'>
-                    备份内容：
-                  </p>
+                <div className='text-[13px] text-muted space-y-1'>
+                  <p className='font-medium text-muted mb-2'>备份内容：</p>
                   <div className='grid grid-cols-2 gap-1'>
                     <div>• 管理配置</div>
                     <div>• 用户数据</div>
@@ -503,25 +485,25 @@ const DataMigration = ({ onRefreshConfig }: DataMigrationProps) => {
                 disabled={isExporting || !exportPassword.trim()}
                 className={`w-full px-4 py-2.5 rounded-lg font-medium transition-colors mt-10 ${
                   isExporting || !exportPassword.trim()
-                    ? 'bg-[var(--tm-surface-raised)] cursor-not-allowed text-[color:var(--tm-muted)] min-h-[44px] tm-press'
-                    : 'bg-[var(--tm-text)] hover:opacity-90 text-[color:var(--tm-accent-contrast)] min-h-[44px] tm-press'
+                    ? 'bg-raised cursor-not-allowed text-muted min-h-[44px] tm-press'
+                    : 'bg-fg hover:opacity-90 text-inverse min-h-[44px] tm-press'
                 }`}
               >
                 {isExporting ? (
                   <div className='space-y-2'>
                     <div className='flex items-center justify-center gap-2'>
-                      <div className='w-4 h-4 border-2 border-[var(--tm-line)] border-t-transparent rounded-full animate-spin'></div>
+                      <div className='w-4 h-4 border-2 border-line border-t-transparent rounded-full animate-spin'></div>
                       导出中...
                     </div>
                     {exportProgress && (
-                      <div className='bg-[var(--tm-surface-raised)] rounded-lg p-3 space-y-2'>
-                        <div className='text-[13px] text-[color:var(--tm-text)] font-medium'>
+                      <div className='bg-raised rounded-lg p-3 space-y-2'>
+                        <div className='text-[13px] text-fg font-medium'>
                           {exportProgress.message}
                         </div>
                         {exportProgress.total > 0 && (
-                          <div className='w-full bg-[var(--tm-surface)] rounded-full h-3'>
+                          <div className='w-full bg-surface rounded-full h-3'>
                             <div
-                              className='bg-[var(--tm-text)] h-3 rounded-full transition-all duration-300'
+                              className='bg-fg h-3 rounded-full transition-all duration-300'
                               style={{
                                 width: `${
                                   (exportProgress.current /
@@ -546,18 +528,14 @@ const DataMigration = ({ onRefreshConfig }: DataMigrationProps) => {
           </div>
 
           {/* 数据导入 */}
-          <div className='border border-[var(--tm-line)] rounded-lg p-6 bg-[var(--tm-surface)] hover:shadow-sm transition-shadow flex flex-col'>
+          <div className='border border-line rounded-lg p-6 bg-surface hover:shadow-sm transition-shadow flex flex-col'>
             <div className='flex items-center gap-3 mb-6'>
-              <div className='w-8 h-8 rounded-lg bg-[var(--tm-surface-raised)] flex items-center justify-center'>
-                <Upload className='w-4 h-4 text-[color:var(--tm-text)]' />
+              <div className='w-8 h-8 rounded-lg bg-raised flex items-center justify-center'>
+                <Upload className='w-4 h-4 text-fg' />
               </div>
               <div>
-                <h3 className='font-medium text-[color:var(--tm-text)]'>
-                  数据导入
-                </h3>
-                <p className='text-sm text-[color:var(--tm-text)]'>
-                  ⚠️ 将清空现有数据
-                </p>
+                <h3 className='font-medium text-fg'>数据导入</h3>
+                <p className='text-sm text-fg'>⚠️ 将清空现有数据</p>
               </div>
             </div>
 
@@ -565,11 +543,11 @@ const DataMigration = ({ onRefreshConfig }: DataMigrationProps) => {
               <div className='space-y-4'>
                 {/* 文件选择 */}
                 <div>
-                  <label className='flex items-center gap-2 text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
+                  <label className='flex items-center gap-2 text-sm font-medium text-muted mb-2'>
                     <FileCheck className='w-4 h-4' />
                     备份文件
                     {selectedFile && (
-                      <span className='ml-auto text-[13px] text-[color:var(--tm-text)] font-normal'>
+                      <span className='ml-auto text-[13px] text-fg font-normal'>
                         {selectedFile.name} (
                         {(selectedFile.size / 1024).toFixed(1)} KB)
                       </span>
@@ -580,14 +558,14 @@ const DataMigration = ({ onRefreshConfig }: DataMigrationProps) => {
                     type='file'
                     accept='.dat'
                     onChange={handleFileSelect}
-                    className='w-full px-3 py-2.5 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)] focus:ring-2 focus:ring-[var(--tm-text)] focus:border-[var(--tm-line)] file:mr-3 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-sm file:font-medium file:bg-[var(--tm-surface-raised)] file:text-[color:var(--tm-muted)] hover:file:bg-[var(--tm-line)] transition-colors'
+                    className='w-full px-3 py-2.5 border border-line rounded-lg bg-raised text-fg focus:ring-2 focus:ring-fg focus:border-line file:mr-3 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-sm file:font-medium file:bg-raised file:text-muted hover:file:bg-line transition-colors'
                     disabled={isImporting}
                   />
                 </div>
 
                 {/* 密码输入 */}
                 <div>
-                  <label className='flex items-center gap-2 text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
+                  <label className='flex items-center gap-2 text-sm font-medium text-muted mb-2'>
                     <Lock className='w-4 h-4' />
                     解密密码
                   </label>
@@ -596,7 +574,7 @@ const DataMigration = ({ onRefreshConfig }: DataMigrationProps) => {
                     value={importPassword}
                     onChange={(e) => setImportPassword(e.target.value)}
                     placeholder='输入导出时的加密密码'
-                    className='w-full px-3 py-2.5 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)] focus:ring-2 focus:ring-[var(--tm-text)] focus:border-[var(--tm-line)] transition-colors'
+                    className='w-full px-3 py-2.5 border border-line rounded-lg bg-surface text-fg focus:ring-2 focus:ring-fg focus:border-line transition-colors'
                     disabled={isImporting}
                   />
                 </div>
@@ -610,25 +588,25 @@ const DataMigration = ({ onRefreshConfig }: DataMigrationProps) => {
                 }
                 className={`w-full px-4 py-2.5 rounded-lg font-medium transition-colors mt-10 ${
                   isImporting || !selectedFile || !importPassword.trim()
-                    ? 'bg-[var(--tm-surface-raised)] cursor-not-allowed text-[color:var(--tm-muted)] min-h-[44px] tm-press'
-                    : 'bg-[var(--tm-text)] hover:opacity-90 text-[color:var(--tm-accent-contrast)] min-h-[44px] tm-press'
+                    ? 'bg-raised cursor-not-allowed text-muted min-h-[44px] tm-press'
+                    : 'bg-fg hover:opacity-90 text-inverse min-h-[44px] tm-press'
                 }`}
               >
                 {isImporting ? (
                   <div className='space-y-2'>
                     <div className='flex items-center justify-center gap-2'>
-                      <div className='w-4 h-4 border-2 border-[var(--tm-line)] border-t-transparent rounded-full animate-spin'></div>
+                      <div className='w-4 h-4 border-2 border-line border-t-transparent rounded-full animate-spin'></div>
                       导入中...
                     </div>
                     {importProgress && (
-                      <div className='bg-[var(--tm-surface-raised)] rounded-lg p-3 space-y-2'>
-                        <div className='text-[13px] text-[color:var(--tm-text)] font-medium'>
+                      <div className='bg-raised rounded-lg p-3 space-y-2'>
+                        <div className='text-[13px] text-fg font-medium'>
                           {importProgress.message}
                         </div>
                         {importProgress.total > 0 && (
-                          <div className='w-full bg-[var(--tm-surface)] rounded-full h-3'>
+                          <div className='w-full bg-surface rounded-full h-3'>
                             <div
-                              className='bg-[var(--tm-text)] h-3 rounded-full transition-all duration-300'
+                              className='bg-fg h-3 rounded-full transition-all duration-300'
                               style={{
                                 width: `${
                                   (importProgress.current /

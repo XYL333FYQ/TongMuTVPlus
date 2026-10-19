@@ -150,10 +150,12 @@ export function refineConfig(adminConfig: AdminConfig): AdminConfig {
     ? fileConfig.specialSourceApis
     : undefined;
   if (specialApisFromFile) {
-    const sourceKeys = new Set(adminConfig.SourceConfig.map((source) => source.key));
-    adminConfig.SpecialSourceApis = Array.from(new Set(specialApisFromFile)).filter((key) =>
-      sourceKeys.has(key)
+    const sourceKeys = new Set(
+      adminConfig.SourceConfig.map((source) => source.key)
     );
+    adminConfig.SpecialSourceApis = Array.from(
+      new Set(specialApisFromFile)
+    ).filter((key) => sourceKeys.has(key));
   }
 
   // 覆盖 CustomCategories
@@ -288,9 +290,7 @@ async function getInitConfig(
         process.env.ANNOUNCEMENT ||
         '本网站仅提供影视信息搜索服务，所有内容均来自第三方网站。本站不存储任何视频资源，不对任何内容的准确性、合法性、完整性负责。',
       AnnouncementDisplayMode:
-        process.env.ANNOUNCEMENT_DISPLAY_MODE === 'every'
-          ? 'every'
-          : 'once',
+        process.env.ANNOUNCEMENT_DISPLAY_MODE === 'every' ? 'every' : 'once',
       SearchDownstreamMaxPage:
         Number(process.env.NEXT_PUBLIC_SEARCH_MAX_PAGE) || 5,
       SiteInterfaceCacheTime: cfgFile.cache_time || 7200,
@@ -369,7 +369,9 @@ async function getInitConfig(
     CustomCategories: [],
     LiveConfig: [],
     TelegramConfig: {
-      enabled: process.env.TELEGRAM_BOT_ENABLED === 'true' || Boolean(process.env.TELEGRAM_BOT_TOKEN),
+      enabled:
+        process.env.TELEGRAM_BOT_ENABLED === 'true' ||
+        Boolean(process.env.TELEGRAM_BOT_TOKEN),
       botToken: process.env.TELEGRAM_BOT_TOKEN || '',
       botUsername: process.env.TELEGRAM_BOT_USERNAME || '',
       webhookSecret: process.env.TELEGRAM_WEBHOOK_SECRET || '',
@@ -378,8 +380,10 @@ async function getInitConfig(
       loginEnabled: process.env.TELEGRAM_LOGIN_ENABLED !== 'false',
       bindingEnabled: process.env.TELEGRAM_BINDING_ENABLED !== 'false',
       registrationEnabled: process.env.TELEGRAM_REGISTRATION_ENABLED === 'true',
-      notificationsEnabled: process.env.TELEGRAM_NOTIFICATIONS_ENABLED !== 'false',
-      defaultNotifications: process.env.TELEGRAM_DEFAULT_NOTIFICATIONS !== 'false',
+      notificationsEnabled:
+        process.env.TELEGRAM_NOTIFICATIONS_ENABLED !== 'false',
+      defaultNotifications:
+        process.env.TELEGRAM_DEFAULT_NOTIFICATIONS !== 'false',
     },
     SpecialSourceApis: Array.isArray(cfgFile.special_source_apis)
       ? cfgFile.special_source_apis
@@ -655,7 +659,9 @@ export function configSelfCheck(adminConfig: AdminConfig): AdminConfig {
   }
   if (!adminConfig.TelegramConfig) {
     adminConfig.TelegramConfig = {
-      enabled: process.env.TELEGRAM_BOT_ENABLED === 'true' || Boolean(process.env.TELEGRAM_BOT_TOKEN),
+      enabled:
+        process.env.TELEGRAM_BOT_ENABLED === 'true' ||
+        Boolean(process.env.TELEGRAM_BOT_TOKEN),
       botToken: process.env.TELEGRAM_BOT_TOKEN || '',
       botUsername: process.env.TELEGRAM_BOT_USERNAME || '',
       webhookSecret: process.env.TELEGRAM_WEBHOOK_SECRET || '',
@@ -664,8 +670,10 @@ export function configSelfCheck(adminConfig: AdminConfig): AdminConfig {
       loginEnabled: process.env.TELEGRAM_LOGIN_ENABLED !== 'false',
       bindingEnabled: process.env.TELEGRAM_BINDING_ENABLED !== 'false',
       registrationEnabled: process.env.TELEGRAM_REGISTRATION_ENABLED === 'true',
-      notificationsEnabled: process.env.TELEGRAM_NOTIFICATIONS_ENABLED !== 'false',
-      defaultNotifications: process.env.TELEGRAM_DEFAULT_NOTIFICATIONS !== 'false',
+      notificationsEnabled:
+        process.env.TELEGRAM_NOTIFICATIONS_ENABLED !== 'false',
+      defaultNotifications:
+        process.env.TELEGRAM_DEFAULT_NOTIFICATIONS !== 'false',
     };
   }
   if (adminConfig.TelegramConfig.registrationEnabled === undefined) {
@@ -799,7 +807,9 @@ export function configSelfCheck(adminConfig: AdminConfig): AdminConfig {
     return true;
   });
 
-  const validSourceKeys = new Set(adminConfig.SourceConfig.map((source) => source.key));
+  const validSourceKeys = new Set(
+    adminConfig.SourceConfig.map((source) => source.key)
+  );
   // 配置文件是采集源的权威来源，special_source_apis 同理：**老库缺字段时**从 ConfigFile 补齐。
   // 只在字段缺失时回填——否则后台把特殊源全部取消勾选（存成空数组）后，
   // 每次 getConfig() 都会被配置文件又捞回来，等于关不掉。
@@ -809,10 +819,18 @@ export function configSelfCheck(adminConfig: AdminConfig): AdminConfig {
     );
   }
   adminConfig.SpecialSourceApis = Array.from(
-    new Set((adminConfig.SpecialSourceApis || []).filter((key) => validSourceKeys.has(key)))
+    new Set(
+      (adminConfig.SpecialSourceApis || []).filter((key) =>
+        validSourceKeys.has(key)
+      )
+    )
   );
   adminConfig.ClientAdSourceApis = Array.from(
-    new Set((adminConfig.ClientAdSourceApis || []).filter((key) => validSourceKeys.has(key)))
+    new Set(
+      (adminConfig.ClientAdSourceApis || []).filter((key) =>
+        validSourceKeys.has(key)
+      )
+    )
   );
 
   // 自定义分类去重
@@ -1212,11 +1230,13 @@ export function configSelfCheck(adminConfig: AdminConfig): AdminConfig {
       adminConfig.AIConfig.DecisionCustomBaseURL
     );
     // 新版工具式调用：补充默认值，避免旧存储配置未定义
-    adminConfig.AIConfig.EnableNewMode = adminConfig.AIConfig.EnableNewMode ?? true;
+    adminConfig.AIConfig.EnableNewMode =
+      adminConfig.AIConfig.EnableNewMode ?? true;
     adminConfig.AIConfig.NewProtocol =
       adminConfig.AIConfig.NewProtocol ?? 'openai-completions';
     adminConfig.AIConfig.MaxContext = adminConfig.AIConfig.MaxContext ?? 131072;
-    adminConfig.AIConfig.CompressThreshold = adminConfig.AIConfig.CompressThreshold ?? 90;
+    adminConfig.AIConfig.CompressThreshold =
+      adminConfig.AIConfig.CompressThreshold ?? 90;
   }
 
   if (adminConfig.TelegramConfig) {

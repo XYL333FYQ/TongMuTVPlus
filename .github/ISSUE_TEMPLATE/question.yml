@@ -1,7 +1,7 @@
 name: 项目提问
 description: 对项目功能有疑问
 title: '[提问]'
-labels: ["question"]
+labels: ['question']
 body:
   - type: checkboxes
     attributes:
@@ -16,7 +16,7 @@ body:
         - label: 我提交的是疑问，而不是bug
           required: true
         - label: 上述并非随意勾选，我已明确随意勾选不会得到回应且有可能会被close
-          required: true         
+          required: true
   - type: textarea
     id: question
     attributes:

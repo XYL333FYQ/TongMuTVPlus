@@ -31,7 +31,10 @@ function withTimeout<T>(promise: Promise<T>, timeoutMs: number) {
   return Promise.race([
     promise,
     new Promise<T>((_, reject) => {
-      setTimeout(() => reject(new Error(`执行超时(${timeoutMs}ms)`)), timeoutMs);
+      setTimeout(
+        () => reject(new Error(`执行超时(${timeoutMs}ms)`)),
+        timeoutMs
+      );
     }),
   ]);
 }
@@ -49,7 +52,9 @@ function cloneTask(task: NetdiskCheckTask): NetdiskCheckTask {
   return JSON.parse(JSON.stringify(task)) as NetdiskCheckTask;
 }
 
-function createTaskResultItem(status: NetdiskCheckTaskResultItem['status']): NetdiskCheckTaskResultItem {
+function createTaskResultItem(
+  status: NetdiskCheckTaskResultItem['status']
+): NetdiskCheckTaskResultItem {
   return { status };
 }
 
@@ -57,7 +62,11 @@ function countBatchSize(total: number) {
   return Math.max(1, Math.ceil(total / NETDISK_CHECK_RULE.batchSize));
 }
 
-function updateTaskAfterResult(task: NetdiskCheckTask, url: string, result: NetdiskCheckResult) {
+function updateTaskAfterResult(
+  task: NetdiskCheckTask,
+  url: string,
+  result: NetdiskCheckResult
+) {
   task.results[url] = {
     status: result.status,
     reason: result.reason,
@@ -107,7 +116,10 @@ async function runTask(taskId: string, links: string[]) {
       const batchResults = await Promise.all(
         batch.map(async (url) => {
           try {
-            return await withTimeout(checkNetdiskLink(task.platform, url), NETDISK_CHECK_RULE.requestTimeoutMs);
+            return await withTimeout(
+              checkNetdiskLink(task.platform, url),
+              NETDISK_CHECK_RULE.requestTimeoutMs
+            );
           } catch (error) {
             const reason = error instanceof Error ? error.message : '检测失败';
             return {
@@ -168,15 +180,13 @@ export function startNetdiskCheckTask(input: NetdiskCheckStartInput) {
     }
   }
   if (activeTaskIds.size >= NETDISK_CHECK_RULE.maxActiveTasks) {
-    throw new Error(`当前最多只允许 ${NETDISK_CHECK_RULE.maxActiveTasks} 个检测任务同时执行，请稍后再试`);
+    throw new Error(
+      `当前最多只允许 ${NETDISK_CHECK_RULE.maxActiveTasks} 个检测任务同时执行，请稍后再试`
+    );
   }
 
   const uniqueLinks = Array.from(
-    new Set(
-      input.links
-        .map((item) => item.trim())
-        .filter(Boolean)
-    )
+    new Set(input.links.map((item) => item.trim()).filter(Boolean))
   ).slice(0, NETDISK_CHECK_RULE.maxTaskLinks);
 
   if (uniqueLinks.length === 0) {
@@ -198,7 +208,9 @@ export function startNetdiskCheckTask(input: NetdiskCheckStartInput) {
       currentBatch: 0,
       totalBatches: countBatchSize(uniqueLinks.length),
     },
-    results: Object.fromEntries(uniqueLinks.map((url) => [url, createTaskResultItem('pending')])),
+    results: Object.fromEntries(
+      uniqueLinks.map((url) => [url, createTaskResultItem('pending')])
+    ),
     createdAt: Date.now(),
     updatedAt: Date.now(),
   };
@@ -229,9 +241,21 @@ export function getNetdiskCheckCooldownRemainingMs() {
   return Math.max(0, cooldownUntil - Date.now());
 }
 
-export function assertNetdiskCheckPlatform(value: string): NetdiskCheckPlatform {
+export function assertNetdiskCheckPlatform(
+  value: string
+): NetdiskCheckPlatform {
   const platform = value as NetdiskCheckPlatform;
-  const allowed: NetdiskCheckPlatform[] = ['115', 'aliyun', 'baidu', 'cmcc', 'pan123', 'quark', 'tianyi', 'uc', 'xunlei'];
+  const allowed: NetdiskCheckPlatform[] = [
+    '115',
+    'aliyun',
+    'baidu',
+    'cmcc',
+    'pan123',
+    'quark',
+    'tianyi',
+    'uc',
+    'xunlei',
+  ];
   if (!allowed.includes(platform)) {
     throw new Error('不支持的网盘平台');
   }

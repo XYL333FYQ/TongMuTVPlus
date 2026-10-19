@@ -28,14 +28,14 @@ function SourceCardSkeleton() {
     <div className='grid gap-4 md:grid-cols-2 xl:grid-cols-3'>
       {Array.from({ length: 6 }).map((_, index) => (
         <div key={index} className={cn(LIBRARY_PANEL, 'p-5')}>
-          <div className='h-5 w-32 tm-skeleton rounded-sm bg-[var(--tm-line)]' />
+          <div className='h-5 w-32 tm-skeleton rounded-sm bg-line' />
           <div className='mt-3 flex gap-2'>
-            <div className='h-6 w-16 tm-skeleton rounded-sm bg-[var(--tm-line)]' />
-            <div className='h-6 w-16 tm-skeleton rounded-sm bg-[var(--tm-line)]' />
+            <div className='h-6 w-16 tm-skeleton rounded-sm bg-line' />
+            <div className='h-6 w-16 tm-skeleton rounded-sm bg-line' />
           </div>
           <div className='mt-5 flex gap-2'>
-            <div className='h-10 w-24 tm-skeleton rounded-md bg-[var(--tm-line)]' />
-            <div className='h-10 w-24 tm-skeleton rounded-md bg-[var(--tm-line)]' />
+            <div className='h-10 w-24 tm-skeleton rounded-md bg-line' />
+            <div className='h-10 w-24 tm-skeleton rounded-md bg-line' />
           </div>
         </div>
       ))}
@@ -56,8 +56,8 @@ function CapabilityPill({
       className={cn(
         'inline-flex items-center gap-1.5 rounded-sm px-2 py-1 text-[13px] ring-1',
         enabled
-          ? 'bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)] ring-[color-mix(in_srgb,var(--tm-text)_25%,transparent)]'
-          : 'text-[color:var(--tm-muted)] ring-[var(--tm-line)]'
+          ? 'bg-raised text-fg ring-[color-mix(in_srgb,var(--tm-text)_25%,transparent)]'
+          : 'text-muted ring-line'
       )}
     >
       <Icon className='h-3.5 w-3.5' />
@@ -128,12 +128,7 @@ export default function BooksHomePage() {
           )}
         >
           <div className='min-w-0'>
-            <h1
-              className={cn(
-                'text-xl font-bold text-[color:var(--tm-text)]',
-                LIBRARY_SERIF
-              )}
-            >
+            <h1 className={cn('text-xl font-bold text-fg', LIBRARY_SERIF)}>
               电子书馆
             </h1>
             <p className={cn('mt-1.5 text-sm', LIBRARY_MUTED)}>
@@ -198,7 +193,7 @@ export default function BooksHomePage() {
               <div className='min-w-0'>
                 <div
                   className={cn(
-                    'truncate text-base font-medium text-[color:var(--tm-text)]',
+                    'truncate text-base font-medium text-fg',
                     LIBRARY_SERIF
                   )}
                 >

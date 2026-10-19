@@ -11,6 +11,7 @@ import { base58Encode } from '@/lib/utils';
 
 import CapsuleSwitch from '@/components/CapsuleSwitch';
 import PageContainer from '@/components/PageContainer';
+import PageHeader from '@/components/PageHeader';
 import PageLayout from '@/components/PageLayout';
 import PosterGrid from '@/components/PosterGrid';
 import VideoCard from '@/components/VideoCard';
@@ -655,27 +656,23 @@ export default function PrivateLibraryPage() {
 
   return (
     <PageLayout activePath='/private-library'>
-      <PageContainer className='py-6'>
-        <div className='mb-6 flex justify-between items-start'>
-          <div>
-            <h1 className=' text-[color:var(--tm-text)] text-[28px] font-bold md:text-[32px]'>
-              私人影库
-            </h1>
-            <p className='text-sm text-[color:var(--tm-muted)] mt-1'>
-              浏览已连接的私人影库
-            </p>
-          </div>
-          {mounted && (
-            <button
-              onClick={() => router.push('/movie-request')}
-              className='flex items-center gap-2 px-3 py-2 text-[color:var(--tm-muted)] hover:text-[color:var(--tm-text)] transition-[opacity,transform] min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
-              style={{ marginTop: '10px' }}
-            >
-              <Film size={20} />
-              <span>求片</span>
-            </button>
-          )}
-        </div>
+      <PageContainer className='pb-12'>
+        <PageHeader
+          title='私人影库'
+          description='浏览已连接的私人影库'
+          actions={
+            mounted && (
+              <button
+                type='button'
+                onClick={() => router.push('/movie-request')}
+                className='tm-btn tm-btn-secondary tm-btn-sm'
+              >
+                <Film size={16} aria-hidden />
+                求片
+              </button>
+            )
+          }
+        />
 
         {/* 第一级：源类型选择（OpenList / Emby / 小雅） */}
         {mounted && (
@@ -701,9 +698,7 @@ export default function PrivateLibraryPage() {
         {/* 第二级：Emby源选择（仅当选择Emby且有多个源时显示） */}
         {sourceType === 'emby' && embySourceOptions.length > 1 && (
           <div className='mb-6'>
-            <div className='text-[13px] text-[color:var(--tm-muted)] mb-2 px-4'>
-              服务
-            </div>
+            <div className='tm-field-label'>服务</div>
             <div className='relative'>
               <div
                 ref={embyScrollContainerRef}
@@ -740,16 +735,13 @@ export default function PrivateLibraryPage() {
                     scrollLeftRef.current - walk;
                 }}
               >
-                <div className='flex gap-2 px-4 min-w-min'>
+                <div className='tm-chips flex-nowrap'>
                   {embySourceOptions.map((option) => (
                     <button
                       key={option.key}
                       onClick={() => setEmbyKey(option.key)}
-                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-[opacity,transform] whitespace-nowrap flex-shrink-0 min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)] ${
-                        embyKey === option.key
-                          ? 'bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] min-h-[44px] tm-press'
-                          : 'bg-[var(--tm-surface-raised)] text-[color:var(--tm-muted)] hover:bg-[var(--tm-line)] min-h-[44px] tm-press'
-                      }`}
+                      aria-pressed={embyKey === option.key}
+                      className='tm-chip'
                     >
                       {option.name}
                     </button>
@@ -763,9 +755,7 @@ export default function PrivateLibraryPage() {
         {/* OpenList 分类筛选（PathMeta） */}
         {sourceType === 'openlist' && openlistCategories.length > 0 && (
           <div className='mb-6'>
-            <div className='text-[13px] text-[color:var(--tm-muted)] mb-2 px-4'>
-              分类
-            </div>
+            <div className='tm-field-label'>分类</div>
             <div className='relative'>
               <div
                 ref={scrollContainerRef}
@@ -775,14 +765,11 @@ export default function PrivateLibraryPage() {
                 onMouseUp={handleMouseUp}
                 onMouseMove={handleMouseMove}
               >
-                <div className='flex gap-2 px-4 min-w-min'>
+                <div className='tm-chips flex-nowrap'>
                   <button
                     onClick={() => setOpenlistCategory('all')}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-[opacity,transform] whitespace-nowrap flex-shrink-0 min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)] ${
-                      openlistCategory === 'all'
-                        ? 'bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] min-h-[44px] tm-press'
-                        : 'bg-[var(--tm-surface-raised)] text-[color:var(--tm-muted)] hover:bg-[var(--tm-line)] min-h-[44px] tm-press'
-                    }`}
+                    aria-pressed={openlistCategory === 'all'}
+                    className='tm-chip'
                   >
                     全部
                   </button>
@@ -790,11 +777,8 @@ export default function PrivateLibraryPage() {
                     <button
                       key={cat}
                       onClick={() => setOpenlistCategory(cat)}
-                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-[opacity,transform] whitespace-nowrap flex-shrink-0 min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)] ${
-                        openlistCategory === cat
-                          ? 'bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] min-h-[44px] tm-press'
-                          : 'bg-[var(--tm-surface-raised)] text-[color:var(--tm-muted)] hover:bg-[var(--tm-line)] min-h-[44px] tm-press'
-                      }`}
+                      aria-pressed={openlistCategory === cat}
+                      className='tm-chip'
                     >
                       {cat}
                     </button>
@@ -808,12 +792,10 @@ export default function PrivateLibraryPage() {
         {/* 第三级：Emby 媒体库分类选择器 */}
         {sourceType === 'emby' && (
           <div className='mb-6'>
-            <div className='text-[13px] text-[color:var(--tm-muted)] mb-2 px-4'>
-              分类
-            </div>
+            <div className='tm-field-label'>分类</div>
             {loadingViews ? (
               <div className='flex justify-center'>
-                <div className='tm-skeleton w-5 h-5 rounded-md ' />
+                <div className='tm-skeleton w-5 h-5 rounded-md' />
               </div>
             ) : embyViews.length > 0 ? (
               <div className='relative'>
@@ -825,14 +807,11 @@ export default function PrivateLibraryPage() {
                   onMouseUp={handleMouseUp}
                   onMouseMove={handleMouseMove}
                 >
-                  <div className='flex gap-2 px-4 min-w-min'>
+                  <div className='tm-chips flex-nowrap'>
                     <button
                       onClick={() => setSelectedView('all')}
-                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-[opacity,transform] whitespace-nowrap flex-shrink-0 min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)] ${
-                        selectedView === 'all'
-                          ? 'bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] min-h-[44px] tm-press'
-                          : 'bg-[var(--tm-surface-raised)] text-[color:var(--tm-muted)] hover:bg-[var(--tm-line)] min-h-[44px] tm-press'
-                      }`}
+                      aria-pressed={selectedView === 'all'}
+                      className='tm-chip'
                     >
                       全部
                     </button>
@@ -840,11 +819,8 @@ export default function PrivateLibraryPage() {
                       <button
                         key={view.id}
                         onClick={() => setSelectedView(view.id)}
-                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-[opacity,transform] whitespace-nowrap flex-shrink-0 min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)] ${
-                          selectedView === view.id
-                            ? 'bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] min-h-[44px] tm-press'
-                            : 'bg-[var(--tm-surface-raised)] text-[color:var(--tm-muted)] hover:bg-[var(--tm-line)] min-h-[44px] tm-press'
-                        }`}
+                        aria-pressed={selectedView === view.id}
+                        className='tm-chip'
                       >
                         {view.name}
                       </button>
@@ -859,23 +835,19 @@ export default function PrivateLibraryPage() {
         {/* Emby 排序选择器 */}
         {sourceType === 'emby' && (
           <div className='mb-6'>
-            <div className='text-[13px] text-[color:var(--tm-muted)] mb-2 px-4'>
-              排序
-            </div>
+            <div className='tm-field-label'>排序</div>
             <div className='px-4'>
               <div className='relative inline-flex rounded-full p-0.5 sm:p-1 bg-transparent gap-1 sm:gap-2'>
                 {/* 排序字段选择 */}
                 <div ref={sortButtonRef} className='relative'>
                   <button
                     onClick={handleSortButtonClick}
-                    className={`relative z-10 px-1.5 py-0.5 sm:px-2 sm:py-1 md:px-4 md:py-2 text-[13px] sm:text-sm font-medium rounded-full transition-[transform,opacity] duration-200 whitespace-nowrap min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)] ${
+                    className={`relative z-10 px-1.5 py-0.5 sm:px-2 sm:py-1 md:px-4 md:py-2 text-[13px] sm:text-sm font-medium rounded-full transition-[transform,opacity] duration-200 whitespace-nowrap min-w-[44px] ${
                       showSortDropdown
-                        ? isDefaultSort()
-                          ? 'text-[color:var(--tm-text)] cursor-default min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
-                          : 'text-[color:var(--tm-text)] cursor-default min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
+                        ? 'text-fg cursor-default min-h-[44px] tm-press min-w-[44px]'
                         : isDefaultSort()
-                        ? 'text-[color:var(--tm-muted)] hover:text-[color:var(--tm-text)] cursor-pointer min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
-                        : 'text-[color:var(--tm-text)] hover:text-[color:var(--tm-text)] cursor-pointer min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
+                        ? 'text-muted hover:text-fg cursor-pointer min-h-[44px] tm-press min-w-[44px]'
+                        : 'text-fg cursor-pointer min-h-[44px] tm-press min-w-[44px]'
                     }`}
                   >
                     <span>{getSortDisplayText()}</span>
@@ -901,10 +873,10 @@ export default function PrivateLibraryPage() {
                 <div className='relative'>
                   <button
                     onClick={toggleSortOrder}
-                    className={`relative z-10 px-1.5 py-0.5 sm:px-2 sm:py-1 md:px-4 md:py-2 text-[13px] sm:text-sm font-medium rounded-full transition-[transform,opacity] duration-200 whitespace-nowrap min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)] ${
+                    className={`relative z-10 px-1.5 py-0.5 sm:px-2 sm:py-1 md:px-4 md:py-2 text-[13px] sm:text-sm font-medium rounded-full transition-[transform,opacity] duration-200 whitespace-nowrap min-w-[44px] ${
                       isDefaultSort()
-                        ? 'text-[color:var(--tm-muted)] hover:text-[color:var(--tm-text)] cursor-pointer min-h-[44px] tm-press'
-                        : 'text-[color:var(--tm-text)] hover:text-[color:var(--tm-text)] cursor-pointer min-h-[44px] tm-press'
+                        ? 'text-muted hover:text-fg cursor-pointer min-h-[44px] tm-press'
+                        : 'text-fg cursor-pointer min-h-[44px] tm-press'
                     }`}
                     aria-label={sortOrder === 'Ascending' ? '升序' : '降序'}
                   >
@@ -926,7 +898,7 @@ export default function PrivateLibraryPage() {
           createPortal(
             <div
               ref={sortDropdownRef}
-              className='fixed z-[9999] bg-[var(--tm-surface-raised)] rounded-xl border border-[var(--tm-line)] max-h-[50vh] flex flex-col'
+              className='fixed z-[9999] bg-raised rounded-xl border border-line max-h-[50vh] flex flex-col'
               style={{
                 left: `${sortDropdownPosition.x}px`,
                 top: `${sortDropdownPosition.y}px`,
@@ -941,10 +913,10 @@ export default function PrivateLibraryPage() {
                     <button
                       key={option.value}
                       onClick={() => handleSortOptionSelect(option.value)}
-                      className={`px-2 py-1.5 sm:px-3 sm:py-2 text-[13px] sm:text-sm rounded-lg transition-[transform,opacity] duration-200 text-left min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)] ${
+                      className={`px-2 py-1.5 sm:px-3 sm:py-2 text-[13px] sm:text-sm rounded-lg transition-[transform,opacity] duration-200 text-left min-w-[44px] ${
                         sortBy === option.value
-                          ? 'bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] border border-[var(--tm-text)] min-h-[44px] tm-press'
-                          : 'text-[color:var(--tm-muted)] hover:bg-[var(--tm-line)] min-h-[44px] tm-press'
+                          ? 'bg-fg text-inverse border border-fg min-h-[44px] tm-press'
+                          : 'text-muted hover:bg-line min-h-[44px] tm-press'
                       }`}
                     >
                       {option.label}
@@ -957,8 +929,8 @@ export default function PrivateLibraryPage() {
           )}
 
         {error && (
-          <div className='bg-[var(--tm-surface-raised)] border border-[var(--tm-danger)] rounded-lg p-4 mb-6'>
-            <p className='text-[color:var(--tm-text)]'>{error}</p>
+          <div className='bg-raised border border-danger rounded-lg p-4 mb-6'>
+            <p className='text-fg'>{error}</p>
           </div>
         )}
 
@@ -968,12 +940,12 @@ export default function PrivateLibraryPage() {
             <div className='space-y-4'>
               {/* 文件夹骨架屏 */}
               <div className='space-y-2'>
-                <div className='h-5 w-16 bg-[var(--tm-surface-raised)] rounded tm-skeleton' />
+                <div className='h-5 w-16 bg-raised rounded tm-skeleton' />
                 <div className='grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2'>
                   {Array.from({ length: 12 }).map((_, index) => (
                     <div
                       key={index}
-                      className='h-12 bg-[var(--tm-surface-raised)] rounded-lg tm-skeleton'
+                      className='h-12 bg-raised rounded-lg tm-skeleton'
                     />
                   ))}
                 </div>
@@ -985,7 +957,7 @@ export default function PrivateLibraryPage() {
               {Array.from({ length: pageSize }).map((_, index) => (
                 <div
                   key={index}
-                  className='tm-skeleton bg-[var(--tm-surface-raised)] rounded-lg aspect-[2/3]'
+                  className='tm-skeleton bg-raised rounded-lg aspect-[2/3]'
                 />
               ))}
             </PosterGrid>
@@ -1006,7 +978,7 @@ export default function PrivateLibraryPage() {
                       handleXiaoyaSearch();
                     }
                   }}
-                  className='w-full px-4 py-2 pr-14 rounded-lg border border-[var(--tm-line)] bg-[var(--tm-surface)] text-[color:var(--tm-text)] focus:outline-none focus:ring-2 focus:ring-[var(--tm-text)] min-h-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
+                  className='w-full px-4 py-2 pr-14 rounded-lg border border-line bg-surface text-fg focus:outline-none focus:ring-2 focus:ring-fg min-h-[44px]'
                 />
                 {xiaoyaSearchKeyword ? (
                   <button
@@ -1015,7 +987,7 @@ export default function PrivateLibraryPage() {
                       setXiaoyaSearchResults([]);
                     }}
                     aria-label='清空搜索'
-                    className='absolute right-2 top-1/2 -translate-y-1/2 p-1 text-[color:var(--tm-muted)] hover:text-[color:var(--tm-muted)] min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
+                    className='absolute right-2 top-1/2 -translate-y-1/2 p-1 text-muted hover:text-muted min-h-[44px] tm-press min-w-[44px]'
                   >
                     <svg
                       className='w-5 h-5'
@@ -1034,7 +1006,7 @@ export default function PrivateLibraryPage() {
                     aria-label='搜索片名'
                     onClick={handleXiaoyaSearch}
                     disabled={!xiaoyaSearchKeyword.trim() || isSearching}
-                    className='absolute right-2 top-1/2 -translate-y-1/2 p-1 text-[color:var(--tm-muted)] hover:text-[color:var(--tm-text)] disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
+                    className='absolute right-2 top-1/2 -translate-y-1/2 p-1 text-muted hover:text-fg disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px] tm-press min-w-[44px]'
                   >
                     <svg
                       className='w-5 h-5'
@@ -1056,7 +1028,7 @@ export default function PrivateLibraryPage() {
             {xiaoyaSearchResults.length > 0 ? (
               <div className='space-y-2'>
                 <div className='flex items-center justify-between'>
-                  <h3 className='text-sm font-medium text-[color:var(--tm-muted)]'>
+                  <h3 className='text-sm font-medium text-muted'>
                     搜索结果 ({xiaoyaSearchResults.length})
                   </h3>
                   <button
@@ -1064,7 +1036,7 @@ export default function PrivateLibraryPage() {
                       setXiaoyaSearchKeyword('');
                       setXiaoyaSearchResults([]);
                     }}
-                    className='text-sm text-[color:var(--tm-text)] hover:text-[color:var(--tm-text)] min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
+                    className='text-sm text-fg hover:text-fg min-h-[44px] tm-press min-w-[44px]'
                   >
                     返回浏览
                   </button>
@@ -1123,11 +1095,11 @@ export default function PrivateLibraryPage() {
                             setXiaoyaSearchResults([]);
                           }
                         }}
-                        className='flex items-center gap-2 p-3 bg-[var(--tm-surface-raised)] rounded-lg hover:bg-[var(--tm-line)] transition-[opacity,transform] text-left min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
+                        className='flex items-center gap-2 p-3 bg-raised rounded-lg hover:bg-line transition-[opacity,transform] text-left min-h-[44px] tm-press min-w-[44px]'
                       >
                         {isVideoFile ? (
                           <svg
-                            className='w-5 h-5 text-[color:var(--tm-text)] flex-shrink-0'
+                            className='w-5 h-5 text-fg flex-shrink-0'
                             fill='currentColor'
                             viewBox='0 0 20 20'
                           >
@@ -1135,7 +1107,7 @@ export default function PrivateLibraryPage() {
                           </svg>
                         ) : (
                           <svg
-                            className='w-5 h-5 text-[color:var(--tm-text)] flex-shrink-0'
+                            className='w-5 h-5 text-fg flex-shrink-0'
                             fill='currentColor'
                             viewBox='0 0 20 20'
                           >
@@ -1144,7 +1116,7 @@ export default function PrivateLibraryPage() {
                         )}
                         <div className='flex-1 min-w-0'>
                           <div className='text-sm truncate'>{item.name}</div>
-                          <div className='text-[13px] text-[color:var(--tm-muted)] truncate'>
+                          <div className='text-[13px] text-muted truncate'>
                             {item.path}
                           </div>
                         </div>
@@ -1155,18 +1127,18 @@ export default function PrivateLibraryPage() {
               </div>
             ) : isSearching ? (
               <div className='flex justify-center py-8'>
-                <div className='flex items-center gap-2 text-[color:var(--tm-muted)]'>
-                  <div className='tm-skeleton w-5 h-5 rounded-md ' />
+                <div className='flex items-center gap-2 text-muted'>
+                  <div className='tm-skeleton w-5 h-5 rounded-md' />
                   <span>正在搜索</span>
                 </div>
               </div>
             ) : (
               <>
                 {/* 面包屑导航 */}
-                <div className='flex items-center gap-2 text-sm text-[color:var(--tm-muted)]'>
+                <div className='flex items-center gap-2 text-sm text-muted'>
                   <button
                     onClick={() => setXiaoyaPath('/')}
-                    className='hover:text-[color:var(--tm-text)] min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
+                    className='hover:text-fg min-h-[44px] tm-press min-w-[44px]'
                   >
                     根目录
                   </button>
@@ -1180,7 +1152,7 @@ export default function PrivateLibraryPage() {
                           <span>/</span>
                           <button
                             onClick={() => setXiaoyaPath(path)}
-                            className='hover:text-[color:var(--tm-text)] min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
+                            className='hover:text-fg min-h-[44px] tm-press min-w-[44px]'
                           >
                             {part}
                           </button>
@@ -1192,18 +1164,16 @@ export default function PrivateLibraryPage() {
                 {/* 文件夹列表 */}
                 {xiaoyaFolders.length > 0 && (
                   <div className='space-y-2'>
-                    <h3 className='text-sm font-medium text-[color:var(--tm-muted)]'>
-                      文件夹
-                    </h3>
+                    <h3 className='text-sm font-medium text-muted'>文件夹</h3>
                     <div className='grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2'>
                       {xiaoyaFolders.map((folder) => (
                         <button
                           key={folder.path}
                           onClick={() => setXiaoyaPath(folder.path)}
-                          className='flex items-center gap-2 p-3 bg-[var(--tm-surface-raised)] rounded-lg hover:bg-[var(--tm-line)] transition-[opacity,transform] text-left min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
+                          className='flex items-center gap-2 p-3 bg-raised rounded-lg hover:bg-line transition-[opacity,transform] text-left min-h-[44px] tm-press min-w-[44px]'
                         >
                           <svg
-                            className='w-5 h-5 text-[color:var(--tm-text)]'
+                            className='w-5 h-5 text-fg'
                             fill='currentColor'
                             viewBox='0 0 20 20'
                           >
@@ -1221,9 +1191,7 @@ export default function PrivateLibraryPage() {
                 {/* 视频文件列表 */}
                 {xiaoyaFiles.length > 0 && (
                   <div className='space-y-2'>
-                    <h3 className='text-sm font-medium text-[color:var(--tm-muted)]'>
-                      视频文件
-                    </h3>
+                    <h3 className='text-sm font-medium text-muted'>视频文件</h3>
                     <div className='grid grid-cols-1 gap-2'>
                       {xiaoyaFiles.map((file) => {
                         // 从当前路径提取文件夹名作为标题
@@ -1250,10 +1218,10 @@ export default function PrivateLibraryPage() {
                                 )}&title=${encodeURIComponent(title)}`
                               );
                             }}
-                            className='flex items-center gap-2 p-3 bg-[var(--tm-surface-raised)] rounded-lg hover:bg-[var(--tm-line)] transition-[opacity,transform] text-left min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
+                            className='flex items-center gap-2 p-3 bg-raised rounded-lg hover:bg-line transition-[opacity,transform] text-left min-h-[44px] tm-press min-w-[44px]'
                           >
                             <svg
-                              className='w-5 h-5 text-[color:var(--tm-text)]'
+                              className='w-5 h-5 text-fg'
                               fill='currentColor'
                               viewBox='0 0 20 20'
                             >
@@ -1271,7 +1239,7 @@ export default function PrivateLibraryPage() {
 
                 {xiaoyaFolders.length === 0 && xiaoyaFiles.length === 0 && (
                   <div className='text-center py-12'>
-                    <p className='text-[color:var(--tm-muted)]'>此目录为空</p>
+                    <p className='text-muted'>此目录为空</p>
                   </div>
                 )}
               </>
@@ -1279,7 +1247,7 @@ export default function PrivateLibraryPage() {
           </div>
         ) : videos.length === 0 ? (
           <div className='text-center py-12'>
-            <p className='text-[color:var(--tm-muted)]'>
+            <p className='text-muted'>
               {sourceType === 'openlist'
                 ? '暂无视频，请在管理面板配置 OpenList 并刷新'
                 : '暂无视频，请在管理面板配置 Emby'}
@@ -1326,15 +1294,13 @@ export default function PrivateLibraryPage() {
               className='flex justify-center items-center py-8 min-h-[100px]'
             >
               {loadingMore && (
-                <div className='flex items-center gap-2 text-[color:var(--tm-muted)]'>
-                  <div className='tm-skeleton w-5 h-5 rounded-md ' />
+                <div className='flex items-center gap-2 text-muted'>
+                  <div className='tm-skeleton w-5 h-5 rounded-md' />
                   <span>正在加载</span>
                 </div>
               )}
               {!hasMore && videos.length > 0 && !loadingMore && (
-                <div className='text-[color:var(--tm-muted)]'>
-                  已加载全部内容
-                </div>
+                <div className='text-muted'>已加载全部内容</div>
               )}
             </div>
           </>

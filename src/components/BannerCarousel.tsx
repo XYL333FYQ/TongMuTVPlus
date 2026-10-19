@@ -1,10 +1,9 @@
 'use client';
 
-import { Star, Volume2, VolumeX } from 'lucide-react';
+import { Volume2, VolumeX } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { BRAND_NAME } from '@/lib/brand';
 import { getDoubanDetail } from '@/lib/douban.client';
 import {
   type TMDBItem,
@@ -476,11 +475,9 @@ export default function BannerCarousel({
   if (isLoading || !shouldLoad) {
     return (
       <div
-        className='tm-home-hero-panel tm-home-hero-loading tm-skeleton'
+        className='tm-home-hero-panel tm-skeleton'
         aria-label='正在加载推荐'
-      >
-        <span>{BRAND_NAME}</span>
-      </div>
+      />
     );
   }
 
@@ -490,10 +487,10 @@ export default function BannerCarousel({
         <div>
           <p>暂时没有推荐内容</p>
           <button
-            className='tm-tool-link'
+            className='tm-btn tm-btn-art-glass'
             onClick={() => router.push('/search')}
           >
-            搜索想看的作品
+            搜索片名
           </button>
         </div>
       </div>
@@ -527,10 +524,7 @@ export default function BannerCarousel({
         meta={
           <>
             {currentItem.vote_average > 0 && (
-              <span className='tm-home-hero-rating'>
-                <Star size={14} fill='currentColor' aria-hidden='true' />
-                {currentItem.vote_average.toFixed(1)}
-              </span>
+              <span>{currentItem.vote_average.toFixed(1)} 分</span>
             )}
             {currentItem.release_date && (
               <span>{currentItem.release_date.slice(0, 4)}</span>
@@ -596,7 +590,8 @@ export default function BannerCarousel({
         extraControls={
           canShowVideo ? (
             <button
-              className='tm-press'
+              className='tm-icon-btn'
+              data-variant='art'
               onClick={toggleMute}
               aria-label={isMuted ? '开启预告片声音' : '关闭预告片声音'}
             >

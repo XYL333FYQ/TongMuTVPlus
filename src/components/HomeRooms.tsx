@@ -1,6 +1,6 @@
 'use client';
 
-import { Film, Plus } from 'lucide-react';
+import { Plus, Users } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
@@ -10,7 +10,7 @@ import SectionHeader from './SectionHeader';
 
 import type { Room } from '@/types/watch-room';
 
-type Summary = Pick<Room, 'id' | 'name' | 'memberCount' | 'lifecycle'>;
+type Summary = Pick<Room, 'id' | 'name' | 'memberCount'>;
 export default function HomeRooms({ guest = false }: { guest?: boolean }) {
   const context = useWatchRoomContextSafe();
   const [rooms, setRooms] = useState<Summary[]>([]);
@@ -47,40 +47,34 @@ export default function HomeRooms({ guest = false }: { guest?: boolean }) {
     : rooms;
   return (
     <section className='tm-home-rooms' aria-label='我的房间'>
-      <SectionHeader
-        title='我的房间'
-        href='/watch-room'
-        linkClassName='tm-press'
-      />
+      <SectionHeader title='我的房间' href='/watch-room' />
       <div className='tm-home-compact-grid'>
-        {visible.slice(0, 2).map((room) => (
-          <Link
-            key={room.id}
-            href='/watch-room'
-            className='tm-home-room-card tm-press'
-          >
-            <div className='tm-home-room-art'>
-              <Film size={28} aria-hidden='true' />
-              <span
-                className='tm-home-room-status'
-                data-online={room.memberCount > 0}
-              >
-                <i />
-                {room.memberCount > 0
-                  ? `${room.memberCount} 人在线`
-                  : '无人在线'}
-              </span>
-            </div>
-            <strong>{room.name}</strong>
-            <small>
-              {room.id === current?.id && current.currentState?.type === 'play'
-                ? `正在播放 ${current.currentState.videoName}`
-                : room.lifecycle === 'sleeping'
-                ? '休眠中'
-                : '进入房间'}
-            </small>
-          </Link>
-        ))}
+        {visible.slice(0, 2).map((room) => {
+          const online = room.memberCount > 0;
+          const state = room.id === current?.id ? current.currentState : null;
+          const playing = state?.type === 'play' ? state.videoName : '';
+          return (
+            <Link
+              key={room.id}
+              href='/watch-room'
+              className='tm-home-room-card tm-press'
+            >
+              <div className='tm-home-room-art'>
+                <Users size={28} strokeWidth={1.5} aria-hidden='true' />
+                <span
+                  className='tm-home-room-status tm-badge'
+                  data-on-art='true'
+                  data-online={online}
+                >
+                  <i className='tm-dot' data-live={online} />
+                  {online ? `${room.memberCount} 人在线` : '无人在线'}
+                </span>
+              </div>
+              <strong>{room.name}</strong>
+              <small>{playing ? `正在播放 ${playing}` : '进入房间'}</small>
+            </Link>
+          );
+        })}
         <Link
           href='/watch-room'
           className='tm-home-room-card tm-home-room-create tm-press'

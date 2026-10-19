@@ -3,84 +3,18 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import {
-  AlertCircle,
-  Check,
-  CheckCircle,
-  Eye,
-  EyeOff,
-  Lock,
-  Send,
-  User,
-} from 'lucide-react';
+import { Check, Eye, EyeOff, Lock, Send, User } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useState } from 'react';
 
-import { useReducedMotionSetting } from '@/lib/motion';
-import { CURRENT_VERSION } from '@/lib/version';
-import { checkForUpdates, UpdateStatus } from '@/lib/version_check';
+import '@/styles/auth.css';
 
+import { useReducedMotionSetting } from '@/lib/motion';
+
+import AuthVersion from '@/components/auth/AuthVersion';
 import PageContainer from '@/components/PageContainer';
 import { useSite } from '@/components/SiteProvider';
 import { ThemeToggle } from '@/components/ThemeToggle';
-
-// 版本显示组件
-function VersionDisplay() {
-  const [updateStatus, setUpdateStatus] = useState<UpdateStatus | null>(null);
-  const [isChecking, setIsChecking] = useState(true);
-
-  useEffect(() => {
-    const checkUpdate = async () => {
-      try {
-        const status = await checkForUpdates();
-        setUpdateStatus(status);
-      } catch (_) {
-        // do nothing
-      } finally {
-        setIsChecking(false);
-      }
-    };
-
-    checkUpdate();
-  }, []);
-
-  return (
-    <button
-      onClick={() => window.open('/about', '_self')}
-      className='absolute bottom-4 left-1/2 transform -translate-x-1/2 flex items-center gap-2 text-sm text-[color:var(--tm-muted)] transition-colors cursor-pointer min-h-[44px] active:opacity-70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)] '
-    >
-      <span className='[font-family:var(--tm-font-sans)]'>
-        v{CURRENT_VERSION}
-      </span>
-      {!isChecking &&
-        updateStatus !== UpdateStatus.FETCH_FAILED &&
-        updateStatus !== UpdateStatus.NOT_CONFIGURED && (
-          <div
-            className={`flex items-center gap-1.5 ${
-              updateStatus === UpdateStatus.HAS_UPDATE
-                ? 'text-[color:var(--tm-text)]'
-                : updateStatus === UpdateStatus.NO_UPDATE
-                ? 'text-[color:var(--tm-text)]'
-                : ''
-            }`}
-          >
-            {updateStatus === UpdateStatus.HAS_UPDATE && (
-              <>
-                <AlertCircle className='w-3.5 h-3.5' />
-                <span className='font-medium text-[13px]'>有新版本</span>
-              </>
-            )}
-            {updateStatus === UpdateStatus.NO_UPDATE && (
-              <>
-                <CheckCircle className='w-3.5 h-3.5' />
-                <span className='font-medium text-[13px]'>已是最新</span>
-              </>
-            )}
-          </div>
-        )}
-    </button>
-  );
-}
 
 // 根据按钮文本识别OIDC提供商并返回对应的图标
 function getOIDCProviderIcon(buttonText: string) {
@@ -100,15 +34,13 @@ function getOIDCProviderIcon(buttonText: string) {
 
   for (const provider of providers) {
     if (provider.keywords.some((keyword) => text.includes(keyword))) {
-      return (
-        <img src={provider.icon} alt={provider.alt} className='w-5 h-5 mr-2' />
-      );
+      return <img src={provider.icon} alt={provider.alt} className='h-5 w-5' />;
     }
   }
 
   // 默认图标
   return (
-    <svg className='w-5 h-5 mr-2' fill='currentColor' viewBox='0 0 20 20'>
+    <svg className='h-5 w-5' fill='currentColor' viewBox='0 0 20 20'>
       <path
         fillRule='evenodd'
         d='M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z'
@@ -397,7 +329,7 @@ function LoginPageClient() {
 
   return (
     <PageContainer
-      className='relative flex min-h-screen items-center justify-center overflow-hidden bg-[var(--tm-bg)] text-[color:var(--tm-text)]'
+      className='tm-auth'
       style={
         backgroundImage
           ? {
@@ -409,11 +341,11 @@ function LoginPageClient() {
           : undefined
       }
     >
-      <div className='absolute top-4 right-4'>
+      <div className='tm-auth-theme'>
         <ThemeToggle />
       </div>
       <motion.div
-        className='tm-enter relative z-10 w-full max-w-md rounded-3xl bg-[var(--tm-surface)] shadow-2xl p-10 dark:border border-[var(--tm-line)]'
+        className='tm-auth-card'
         initial={{ opacity: 0, y: reduced ? 0 : 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{
@@ -421,24 +353,22 @@ function LoginPageClient() {
           ease: [0.22, 1, 0.36, 1],
         }}
       >
-        <h1 className='text-[color:var(--tm-text)] tracking-normal text-center text-[28px] font-bold mb-8 bg-clip-text drop-shadow-sm md:text-[32px]'>
-          {siteName}
-        </h1>
-        <form onSubmit={handleSubmit} className='space-y-8'>
+        <h1 className='tm-auth-title'>{siteName}</h1>
+        <form onSubmit={handleSubmit} className='tm-auth-form'>
           {shouldAskUsername && (
             <div>
               <label htmlFor='username' className='sr-only'>
                 用户名
               </label>
               <div className='relative'>
-                <div className='absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none'>
-                  <User className='h-5 w-5 text-[color:var(--tm-muted)]' />
+                <div className='tm-auth-field-icon'>
+                  <User size={18} />
                 </div>
                 <input
                   id='username'
                   type='text'
                   autoComplete='username'
-                  className='block min-h-[48px] w-full rounded-[10px] border-0 bg-[var(--tm-surface-raised)] py-3 pl-10 pr-4 text-base text-[color:var(--tm-text)] shadow-sm ring-1 ring-[var(--tm-line)] placeholder:text-[color:var(--tm-muted)] focus:outline focus:outline-2 focus:outline-offset-2 focus:outline-[var(--tm-text)] focus:ring-[var(--tm-line)]'
+                  className='tm-input tm-auth-input'
                   placeholder='输入用户名'
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
@@ -452,21 +382,21 @@ function LoginPageClient() {
               密码
             </label>
             <div className='relative'>
-              <div className='absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none'>
-                <Lock className='h-5 w-5 text-[color:var(--tm-muted)]' />
+              <div className='tm-auth-field-icon'>
+                <Lock size={18} />
               </div>
               <input
                 id='password'
                 type={showPassword ? 'text' : 'password'}
                 autoComplete='current-password'
-                className='block min-h-[48px] w-full rounded-[10px] border-0 bg-[var(--tm-surface-raised)] py-3 pl-10 pr-12 text-base text-[color:var(--tm-text)] shadow-sm ring-1 ring-[var(--tm-line)] placeholder:text-[color:var(--tm-muted)] focus:outline focus:outline-2 focus:outline-offset-2 focus:outline-[var(--tm-text)] focus:ring-[var(--tm-line)]'
+                className='tm-input tm-auth-input'
                 placeholder='输入访问密码'
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
               <button
                 type='button'
-                className='absolute inset-y-0 right-0 flex min-h-[44px] w-11 items-center justify-center text-[color:var(--tm-muted)] hover:text-[color:var(--tm-text)] tm-press'
+                className='tm-auth-reveal'
                 onClick={() => setShowPassword(!showPassword)}
                 aria-label={showPassword ? '隐藏密码' : '显示密码'}
               >
@@ -489,7 +419,7 @@ function LoginPageClient() {
             )}
 
           {error && (
-            <p role='alert' className='text-sm text-[color:var(--tm-text)]'>
+            <p role='alert' className='tm-auth-error'>
               {error}
             </p>
           )}
@@ -505,13 +435,13 @@ function LoginPageClient() {
             />
             <span
               aria-hidden
-              className='pointer-events-none ml-3 flex h-5 w-5 shrink-0 items-center justify-center rounded border border-[var(--tm-line)] bg-[var(--tm-bg)] text-[color:var(--tm-bg)] peer-checked:border-[var(--tm-text)] peer-checked:bg-[var(--tm-text)] peer-checked:text-[color:var(--tm-accent-contrast)] peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-[var(--tm-text)]'
+              className='pointer-events-none ml-3 flex h-5 w-5 shrink-0 items-center justify-center rounded-md border-[1.5px] border-muted bg-transparent text-transparent peer-checked:border-fg peer-checked:bg-fg peer-checked:text-inverse peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-fg'
             >
               <Check className='h-4 w-4' />
             </span>
             <label
               htmlFor='remember-password'
-              className='ml-5 flex min-h-[44px] flex-1 items-center text-sm text-[color:var(--tm-muted)]'
+              className='ml-5 flex min-h-[44px] flex-1 items-center text-sm text-muted'
             >
               记住密码
             </label>
@@ -526,7 +456,7 @@ function LoginPageClient() {
               (shouldAskUsername && !username) ||
               (siteConfig?.LoginRequireTurnstile && !turnstileToken)
             }
-            className='inline-flex w-full justify-center rounded-lg bg-[var(--tm-text)] py-3 text-base font-medium text-[color:var(--tm-accent-contrast)] shadow-lg transition-[transform,opacity] duration-200 disabled:cursor-not-allowed disabled:opacity-50 min-h-[44px] tm-press'
+            className='tm-btn tm-btn-primary tm-btn-lg w-full'
           >
             {loading ? '登录中...' : '登录'}
           </button>
@@ -537,7 +467,7 @@ function LoginPageClient() {
               <button
                 type='button'
                 onClick={() => router.push('/register')}
-                className='text-sm text-[color:var(--tm-text)] hover:text-[color:var(--tm-text)] transition-colors min-h-[44px] tm-press'
+                className='tm-auth-link'
               >
                 还没有账号？立即注册
               </button>
@@ -548,32 +478,27 @@ function LoginPageClient() {
         {/* 第三方登录区域 */}
         {shouldAskUsername &&
           (telegramLoginEnabled || siteConfig?.EnableOIDCLogin) && (
-            <div className='mt-6'>
-              <div className='relative'>
-                <div className='absolute inset-0 flex items-center'>
-                  <div className='w-full border-t border-[var(--tm-line)]'></div>
-                </div>
-                <div className='relative flex justify-center text-sm'>
-                  <span className='px-2 text-[color:var(--tm-muted)]'>或</span>
-                </div>
+            <div className='tm-auth-alt'>
+              <div className='tm-auth-divider'>
+                <span>或</span>
               </div>
-              <div className='mt-4 space-y-3'>
+              <div className='space-y-3'>
                 {/* Telegram登录按钮 */}
                 {telegramLoginEnabled && (
                   <button
                     type='button'
                     disabled={telegramLoginLoading}
                     onClick={handleTelegramLogin}
-                    className='w-full inline-flex justify-center items-center rounded-lg border-2 border-[var(--tm-line)] bg-[var(--tm-surface-raised)] py-3 text-base font-medium text-[color:var(--tm-text)] shadow-sm transition-[transform,opacity] duration-200 hover:bg-[var(--tm-line)] disabled:cursor-not-allowed disabled:opacity-60 min-h-[44px] tm-press'
+                    className='tm-btn tm-btn-secondary tm-btn-lg w-full'
                   >
-                    <Send className='w-5 h-5 mr-2' />
+                    <Send size={18} aria-hidden />
                     {telegramLoginLoading
                       ? '等待 Telegram 确认...'
                       : '使用 Telegram 登录'}
                   </button>
                 )}
                 {telegramLoginHint && (
-                  <p className='text-center text-[13px] text-[color:var(--tm-muted)]'>
+                  <p className='text-center text-[13px] text-muted'>
                     {telegramLoginHint}
                   </p>
                 )}
@@ -584,7 +509,7 @@ function LoginPageClient() {
                     onClick={() =>
                       (window.location.href = '/api/auth/oidc/login')
                     }
-                    className='w-full inline-flex justify-center items-center rounded-lg border-2 border-[var(--tm-line)] bg-[var(--tm-surface-raised)] py-3 text-base font-medium text-[color:var(--tm-muted)] text-[color:var(--tm-text)] shadow-sm transition-[transform,opacity] duration-200 hover:bg-[var(--tm-line)] min-h-[44px] tm-press'
+                    className='tm-btn tm-btn-secondary tm-btn-lg w-full'
                   >
                     {getOIDCProviderIcon(siteConfig?.OIDCButtonText || '')}
                     {siteConfig?.OIDCButtonText || '使用OIDC登录'}
@@ -596,7 +521,7 @@ function LoginPageClient() {
       </motion.div>
 
       {/* 版本信息显示 */}
-      <VersionDisplay />
+      <AuthVersion />
     </PageContainer>
   );
 }

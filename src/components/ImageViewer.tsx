@@ -4,7 +4,7 @@ import { X } from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
-import '@/styles/legacy-panels.css';
+import '@/styles/panels.css';
 
 import { useReducedMotionSetting } from '@/lib/motion';
 
@@ -175,7 +175,7 @@ const ImageViewer: React.FC<ImageViewerProps> = ({
     >
       {/* 背景遮罩 */}
       <div
-        className={`tm-image-viewer-backdrop absolute inset-0 bg-[color:color-mix(in_srgb,var(--tm-room-cinema-bg)_80%,transparent)] transition-opacity duration-200 ease-out ${
+        className={`tm-image-viewer-backdrop absolute inset-0 bg-ink/80 transition-opacity duration-200 ease-out ${
           isAnimating ? 'opacity-100' : 'opacity-0'
         } `}
         onClick={requestClose}
@@ -187,7 +187,7 @@ const ImageViewer: React.FC<ImageViewerProps> = ({
       {/* 关闭按钮 */}
       <button
         onClick={requestClose}
-        className='tm-image-viewer-close absolute top-4 right-4 z-10 p-2 rounded-full bg-[color:color-mix(in_srgb,var(--tm-room-cinema-bg)_50%,transparent)] hover:bg-[color:color-mix(in_srgb,var(--tm-room-cinema-bg)_70%,transparent)] transition-[opacity,transform] duration-150 min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
+        className='tm-image-viewer-close absolute top-4 right-4 z-10 p-2 rounded-full bg-ink/50 hover:bg-ink/70 transition-[opacity,transform] duration-150 min-h-[44px] tm-press min-w-[44px]'
         aria-label='关闭'
       >
         <X size={24} className='text-[color:var(--tm-room-player-text)]' />

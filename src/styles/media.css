@@ -116,3 +116,26 @@ html[data-tm-no-blur='true'] :is(.tm-library-hud, .tm-library-chip) {
 html[data-tm-no-blur='true'] .tm-library-chip[aria-pressed='true'] {
   background: var(--tm-text);
 }
+
+/* 电子书阅读器加载动画 */
+@keyframes reader-book-flip {
+  0%,
+  100% {
+    transform: perspective(120px) rotateY(0deg) translateY(0);
+  }
+  30% {
+    transform: perspective(120px) rotateY(-24deg) translateY(-2px);
+  }
+  60% {
+    transform: perspective(120px) rotateY(24deg) translateY(0);
+  }
+}
+
+.reader-book-loader {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--tm-text);
+  animation: reader-book-flip 1.5s ease-in-out infinite;
+  transform-origin: center;
+}

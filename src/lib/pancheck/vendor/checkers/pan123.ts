@@ -9,10 +9,13 @@ export async function check123(link) {
   }
 
   try {
-    const apiURL = `https://www.123pan.com/api/share/info?shareKey=${encodeURIComponent(shareKey)}`;
+    const apiURL = `https://www.123pan.com/api/share/info?shareKey=${encodeURIComponent(
+      shareKey
+    )}`;
     const { statusCode, body } = await request(apiURL, {
       headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        'User-Agent':
+          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
       },
     });
 

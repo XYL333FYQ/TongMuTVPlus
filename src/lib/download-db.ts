@@ -32,7 +32,14 @@ export interface SavedTask {
   segmentLogs?: Array<{
     id: string;
     index: number;
-    status: 'queued' | 'downloading' | 'success' | 'retry' | 'error' | 'timeout' | 'aborted';
+    status:
+      | 'queued'
+      | 'downloading'
+      | 'success'
+      | 'retry'
+      | 'error'
+      | 'timeout'
+      | 'aborted';
     message: string;
     timestamp: number;
     retryCount?: number;
@@ -79,18 +86,26 @@ class DownloadDB {
 
         // 创建 activeTasks 表
         if (!db.objectStoreNames.contains(ACTIVE_TASKS_STORE)) {
-          const activeStore = db.createObjectStore(ACTIVE_TASKS_STORE, { keyPath: 'id' });
+          const activeStore = db.createObjectStore(ACTIVE_TASKS_STORE, {
+            keyPath: 'id',
+          });
           activeStore.createIndex('status', 'status', { unique: false });
           activeStore.createIndex('createdAt', 'createdAt', { unique: false });
         }
 
         // 创建 completedTasks 表
         if (!db.objectStoreNames.contains(COMPLETED_TASKS_STORE)) {
-          const completedStore = db.createObjectStore(COMPLETED_TASKS_STORE, { keyPath: 'id' });
+          const completedStore = db.createObjectStore(COMPLETED_TASKS_STORE, {
+            keyPath: 'id',
+          });
           completedStore.createIndex('source', 'source', { unique: false });
           completedStore.createIndex('videoId', 'videoId', { unique: false });
-          completedStore.createIndex('completedAt', 'completedAt', { unique: false });
-          completedStore.createIndex('sourceVideoId', ['source', 'videoId'], { unique: false });
+          completedStore.createIndex('completedAt', 'completedAt', {
+            unique: false,
+          });
+          completedStore.createIndex('sourceVideoId', ['source', 'videoId'], {
+            unique: false,
+          });
         }
       };
     });
@@ -100,7 +115,10 @@ class DownloadDB {
   async saveActiveTask(task: SavedTask): Promise<void> {
     await this.init();
     return new Promise((resolve, reject) => {
-      const transaction = this.db!.transaction([ACTIVE_TASKS_STORE], 'readwrite');
+      const transaction = this.db!.transaction(
+        [ACTIVE_TASKS_STORE],
+        'readwrite'
+      );
       const store = transaction.objectStore(ACTIVE_TASKS_STORE);
       const request = store.put(task);
 
@@ -113,7 +131,10 @@ class DownloadDB {
   async saveActiveTasks(tasks: SavedTask[]): Promise<void> {
     await this.init();
     return new Promise((resolve, reject) => {
-      const transaction = this.db!.transaction([ACTIVE_TASKS_STORE], 'readwrite');
+      const transaction = this.db!.transaction(
+        [ACTIVE_TASKS_STORE],
+        'readwrite'
+      );
       const store = transaction.objectStore(ACTIVE_TASKS_STORE);
 
       // 先清空
@@ -133,7 +154,10 @@ class DownloadDB {
   async getActiveTasks(): Promise<SavedTask[]> {
     await this.init();
     return new Promise((resolve, reject) => {
-      const transaction = this.db!.transaction([ACTIVE_TASKS_STORE], 'readonly');
+      const transaction = this.db!.transaction(
+        [ACTIVE_TASKS_STORE],
+        'readonly'
+      );
       const store = transaction.objectStore(ACTIVE_TASKS_STORE);
       const request = store.getAll();
 
@@ -146,7 +170,10 @@ class DownloadDB {
   async deleteActiveTask(id: string): Promise<void> {
     await this.init();
     return new Promise((resolve, reject) => {
-      const transaction = this.db!.transaction([ACTIVE_TASKS_STORE], 'readwrite');
+      const transaction = this.db!.transaction(
+        [ACTIVE_TASKS_STORE],
+        'readwrite'
+      );
       const store = transaction.objectStore(ACTIVE_TASKS_STORE);
       const request = store.delete(id);
 
@@ -159,7 +186,10 @@ class DownloadDB {
   async deleteActiveTasks(ids: string[]): Promise<void> {
     await this.init();
     return new Promise((resolve, reject) => {
-      const transaction = this.db!.transaction([ACTIVE_TASKS_STORE], 'readwrite');
+      const transaction = this.db!.transaction(
+        [ACTIVE_TASKS_STORE],
+        'readwrite'
+      );
       const store = transaction.objectStore(ACTIVE_TASKS_STORE);
 
       for (const id of ids) {
@@ -175,7 +205,10 @@ class DownloadDB {
   async saveCompletedTask(task: CompletedTask): Promise<void> {
     await this.init();
     return new Promise((resolve, reject) => {
-      const transaction = this.db!.transaction([COMPLETED_TASKS_STORE], 'readwrite');
+      const transaction = this.db!.transaction(
+        [COMPLETED_TASKS_STORE],
+        'readwrite'
+      );
       const store = transaction.objectStore(COMPLETED_TASKS_STORE);
       const request = store.put(task);
 
@@ -188,7 +221,10 @@ class DownloadDB {
   async getCompletedTasks(): Promise<CompletedTask[]> {
     await this.init();
     return new Promise((resolve, reject) => {
-      const transaction = this.db!.transaction([COMPLETED_TASKS_STORE], 'readonly');
+      const transaction = this.db!.transaction(
+        [COMPLETED_TASKS_STORE],
+        'readonly'
+      );
       const store = transaction.objectStore(COMPLETED_TASKS_STORE);
       const index = store.index('completedAt');
       const request = index.openCursor(null, 'prev'); // 按完成时间倒序
@@ -211,7 +247,10 @@ class DownloadDB {
   async deleteCompletedTask(id: string): Promise<void> {
     await this.init();
     return new Promise((resolve, reject) => {
-      const transaction = this.db!.transaction([COMPLETED_TASKS_STORE], 'readwrite');
+      const transaction = this.db!.transaction(
+        [COMPLETED_TASKS_STORE],
+        'readwrite'
+      );
       const store = transaction.objectStore(COMPLETED_TASKS_STORE);
       const request = store.delete(id);
 
@@ -224,7 +263,10 @@ class DownloadDB {
   async deleteCompletedTasks(ids: string[]): Promise<void> {
     await this.init();
     return new Promise((resolve, reject) => {
-      const transaction = this.db!.transaction([COMPLETED_TASKS_STORE], 'readwrite');
+      const transaction = this.db!.transaction(
+        [COMPLETED_TASKS_STORE],
+        'readwrite'
+      );
       const store = transaction.objectStore(COMPLETED_TASKS_STORE);
 
       for (const id of ids) {
@@ -237,10 +279,17 @@ class DownloadDB {
   }
 
   // 检查是否已下载
-  async isDownloaded(source: string, videoId: string, episodeIndex: number): Promise<boolean> {
+  async isDownloaded(
+    source: string,
+    videoId: string,
+    episodeIndex: number
+  ): Promise<boolean> {
     await this.init();
     return new Promise((resolve, reject) => {
-      const transaction = this.db!.transaction([COMPLETED_TASKS_STORE], 'readonly');
+      const transaction = this.db!.transaction(
+        [COMPLETED_TASKS_STORE],
+        'readonly'
+      );
       const store = transaction.objectStore(COMPLETED_TASKS_STORE);
       const index = store.index('sourceVideoId');
       const request = index.openCursor(IDBKeyRange.only([source, videoId]));

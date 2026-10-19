@@ -63,8 +63,9 @@ export function appendSpecialSourceSearchParam(params: URLSearchParams) {
  */
 function getSpecialSourceKeys(): Set<string> {
   if (typeof window === 'undefined') return new Set();
-  const apis = (window as { RUNTIME_CONFIG?: { SPECIAL_SOURCE_APIS?: string[] } })
-    .RUNTIME_CONFIG?.SPECIAL_SOURCE_APIS;
+  const apis = (
+    window as { RUNTIME_CONFIG?: { SPECIAL_SOURCE_APIS?: string[] } }
+  ).RUNTIME_CONFIG?.SPECIAL_SOURCE_APIS;
   return new Set(Array.isArray(apis) ? apis : []);
 }
 

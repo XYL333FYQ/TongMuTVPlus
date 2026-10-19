@@ -8,7 +8,10 @@ const CACHE_TTL_MS = {
 } as const;
 
 const MAX_CACHE_SIZE = 3000;
-const CACHE = new Map<string, { expiresAt: number; result: NetdiskCheckResult }>();
+const CACHE = new Map<
+  string,
+  { expiresAt: number; result: NetdiskCheckResult }
+>();
 const INFLIGHT = new Map<string, Promise<NetdiskCheckResult>>();
 
 function pruneExpired() {
@@ -30,11 +33,16 @@ function evictIfNeeded() {
   }
 }
 
-export function buildNetdiskCheckCacheKey(platform: NetdiskCheckPlatform, normalizedUrl: string) {
+export function buildNetdiskCheckCacheKey(
+  platform: NetdiskCheckPlatform,
+  normalizedUrl: string
+) {
   return `${platform}:${normalizedUrl}`;
 }
 
-export function getCachedNetdiskCheckResult(cacheKey: string): NetdiskCheckResult | null {
+export function getCachedNetdiskCheckResult(
+  cacheKey: string
+): NetdiskCheckResult | null {
   pruneExpired();
   const cached = CACHE.get(cacheKey);
   if (!cached) return null;
@@ -45,15 +53,18 @@ export function getCachedNetdiskCheckResult(cacheKey: string): NetdiskCheckResul
   return { ...cached.result, fromCache: true };
 }
 
-export function setCachedNetdiskCheckResult(cacheKey: string, result: NetdiskCheckResult) {
+export function setCachedNetdiskCheckResult(
+  cacheKey: string,
+  result: NetdiskCheckResult
+) {
   const ttl =
     result.status === 'valid'
       ? CACHE_TTL_MS.valid
       : result.status === 'invalid'
-        ? CACHE_TTL_MS.invalid
-        : result.status === 'rate_limited'
-          ? CACHE_TTL_MS.rate_limited
-          : CACHE_TTL_MS.unknown;
+      ? CACHE_TTL_MS.invalid
+      : result.status === 'rate_limited'
+      ? CACHE_TTL_MS.rate_limited
+      : CACHE_TTL_MS.unknown;
   CACHE.set(cacheKey, {
     expiresAt: Date.now() + ttl,
     result: { ...result, fromCache: false },
@@ -65,7 +76,10 @@ export function getNetdiskCheckInflight(cacheKey: string) {
   return INFLIGHT.get(cacheKey) || null;
 }
 
-export function setNetdiskCheckInflight(cacheKey: string, promise: Promise<NetdiskCheckResult>) {
+export function setNetdiskCheckInflight(
+  cacheKey: string,
+  promise: Promise<NetdiskCheckResult>
+) {
   INFLIGHT.set(cacheKey, promise);
 }
 

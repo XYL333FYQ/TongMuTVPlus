@@ -28,7 +28,10 @@ function buildSignedPayload(session: {
 }
 
 // 使用 PASSWORD 生成 HMAC-SHA256 签名(与账号密码登录一致)
-async function generateSignature(data: string, secret: string): Promise<string> {
+async function generateSignature(
+  data: string,
+  secret: string
+): Promise<string> {
   const encoder = new TextEncoder();
   const key = await crypto.subtle.importKey(
     'raw',
@@ -86,7 +89,10 @@ export async function signOidcSession(
   }
 
   const session: OidcSession = { ...data, timestamp: Date.now() };
-  const signature = await generateSignature(buildSignedPayload(session), secret);
+  const signature = await generateSignature(
+    buildSignedPayload(session),
+    secret
+  );
 
   return JSON.stringify({ ...session, signature });
 }

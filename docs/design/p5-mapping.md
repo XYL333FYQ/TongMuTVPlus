@@ -4,17 +4,17 @@
 
 ## 2026-10-17 执行补充
 
-- TYPOGRAPHY覆盖旧字号规则：Tailwind非评分text-xs及小于13px文字→text-[13px]；评分类（mtv-rate/tm-tv-card-rating/tm-poster-rating）仍12。font-semibold/600→500（h1→700），800/900→700，负字距→0；保留原响应式前缀和条件。原pulse加载块→tm-skeleton，转圈/不明确动效仍TODO人工核对。CSS字号仍按角色审查，不把脚本成功当全部排版通过。
-- bg-library-ochre的实心徽标与按钮同样配tm-accent-contrast；text-library-paper仅在固定深色媒体遮罩上用tm-room-player-text，不能把该白字机械放在深色主题的白底徽标上。两类映射已有回归；图像遮罩、选中态与开关仍逐项实际复核。
+- TYPOGRAPHY 覆盖旧字号规则：Tailwind 非评分 text-xs 及小于 13px 文字 →text-[13px]；评分类（mtv-rate/tm-tv-card-rating/tm-poster-rating）仍 12。font-semibold/600→500（h1→700），800/900→700，负字距 →0；保留原响应式前缀和条件。原 pulse 加载块 →tm-skeleton，转圈/不明确动效仍 TODO 人工核对。CSS 字号仍按角色审查，不把脚本成功当全部排版通过。
+- bg-library-ochre 的实心徽标与按钮同样配 tm-accent-contrast；text-library-paper 仅在固定深色媒体遮罩上用 tm-room-player-text，不能把该白字机械放在深色主题的白底徽标上。两类映射已有回归；图像遮罩、选中态与开关仍逐项实际复核。
 
-- 旧自定义library色板同样按角色映射：paper/night→tm-bg，card/night-card→tm-surface，edge/night-edge→tm-line，ink/night-ink与ochre系列→tm-text，muted系列→tm-muted，ochre-tint系列→tm-surface-raised。主按钮背景ochre须配tm-accent-contrast，不合并条件；封面深色遮罩ink→tm-room-cinema-bg、浅字paper→tm-room-player-text；保留遮罩透明度和dark分支。未知别名/透明度保留TODO；书封3:4、阅读器布局与阅读偏好不受token迁移改变。
+- 旧自定义 library 色板同样按角色映射：paper/night→tm-bg，card/night-card→tm-surface，edge/night-edge→tm-line，ink/night-ink 与 ochre 系列 →tm-text，muted 系列 →tm-muted，ochre-tint 系列 →tm-surface-raised。主按钮背景 ochre 须配 tm-accent-contrast，不合并条件；封面深色遮罩 ink→tm-room-cinema-bg、浅字 paper→tm-room-player-text；保留遮罩透明度和 dark 分支。未知别名/透明度保留 TODO；书封 3:4、阅读器布局与阅读偏好不受 token 迁移改变。
 
 - 用户已授权 Codex 自主继续，仍不使用 Gemini；下面原试运行的委托/阶段授权描述保留作历史记录，不覆盖最新授权。
 - 字体以 TYPOGRAPHY.md 为准，下面旧“12px 最小”映射不能作为普通文字的验收标准：说明至少 13px，正文/次要信息按角色 16/14px，12px 只给评分角标。后续批次必须补排版审查，不能只凭四类扫描通过。
 - 现有交互按钮的 `bg-white text-black` 或 `bg-black text-white` → `bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)]`；不能把这类选中态误当普通面板。半透明未选背景仍用 surface-raised/text；三元和 clsx 结构、border/ring 宽度不变。非交互面板不套按钮反色规则。
 - B02 预检发现上述白底黑字选中态会被旧脚本弱化；已补失败回归并修复规则，通过原 8 类问题及新增双向黑白按钮/非按钮边界。没有写入 B02 五个页面，130 个候选和 4 个 TODO 仍须逐处审查。
-- B02现已完成：130处脚本替换、4TODO经人工处理归零，五页三宽度深浅浏览器通过。脚本再补渐变停点删除回归：删除hover:from/to时同时去掉空hover:前缀。53处人工className差异和CSS角色补正说明脚本仍不能替代排版、错误背景与减少动态验收；音乐内部旧色板留后续批次，不因外壳checker=0宣称全模块完成。
-- B03可读性补充（优先于下表旧错误文本规则）：指定--tm-danger在深色--tm-surface-raised上实测3.527:1，不能用于普通错误正文。保留规范色值；错误正文用--tm-text，已有错误图标与描边用--tm-danger，不新增图标或依赖颜色单独表达错误。脚本按原生正文标签/图标角色区分，保留错误条件和动作。半透明彩色状态面板使用surface-raised；任意渐变未映射时须TODO，不得漏检。相关失败回归已补。
+- B02 现已完成：130 处脚本替换、4TODO 经人工处理归零，五页三宽度深浅浏览器通过。脚本再补渐变停点删除回归：删除 hover:from/to 时同时去掉空 hover:前缀。53 处人工 className 差异和 CSS 角色补正说明脚本仍不能替代排版、错误背景与减少动态验收；音乐内部旧色板留后续批次，不因外壳 checker=0 宣称全模块完成。
+- B03 可读性补充（优先于下表旧错误文本规则）：指定--tm-danger 在深色--tm-surface-raised 上实测 3.527:1，不能用于普通错误正文。保留规范色值；错误正文用--tm-text，已有错误图标与描边用--tm-danger，不新增图标或依赖颜色单独表达错误。脚本按原生正文标签/图标角色区分，保留错误条件和动作。半透明彩色状态面板使用 surface-raised；任意渐变未映射时须 TODO，不得漏检。相关失败回归已补。
 
 ## 扫描边界与白名单
 

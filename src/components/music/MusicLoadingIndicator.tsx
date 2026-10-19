@@ -13,7 +13,7 @@ export default function MusicLoadingIndicator({
   className?: string;
 }) {
   const iconSize = size === 'sm' ? 'w-4 h-4' : 'w-5 h-5';
-  const textSize = size === 'sm' ? 'text-[13px]' : 'text-[13px]';
+  const textSize = 'text-[13px]';
 
   return (
     <div
@@ -27,7 +27,7 @@ export default function MusicLoadingIndicator({
         {[0, 1, 2].map((index) => (
           <svg
             key={index}
-            className={cn(iconSize, 'text-[color:var(--tm-text)]')}
+            className={cn(iconSize, 'text-fg')}
             fill='currentColor'
             viewBox='0 0 24 24'
             style={{

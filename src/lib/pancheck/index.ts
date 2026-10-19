@@ -19,7 +19,13 @@ import { checkTianyi } from './vendor/checkers/tianyi';
 import { checkUC } from './vendor/checkers/uc';
 import { checkXunlei } from './vendor/checkers/xunlei';
 
-const RATE_LIMIT_REASON_PATTERNS = [/频率限制/i, /请求过快/i, /rate.?limit/i, /too many/i, /风控/i];
+const RATE_LIMIT_REASON_PATTERNS = [
+  /频率限制/i,
+  /请求过快/i,
+  /rate.?limit/i,
+  /too many/i,
+  /风控/i,
+];
 
 type RawCheckerResult = {
   valid?: boolean;
@@ -32,14 +38,21 @@ const PLATFORM_PATTERNS: Record<NetdiskCheckPlatform, RegExp[]> = {
   quark: [/pan\.quark\.cn\/s\//i, /pan\.qoark\.cn\/s\//i],
   aliyun: [/aliyundrive\.com\/s\//i, /alipan\.com\/s\//i],
   baidu: [/pan\.baidu\.com\/s\//i, /pan\.baidu\.com\/share\//i],
-  tianyi: [/cloud\.189\.cn\/web\/share/i, /cloud\.189\.cn\/t\//i, /h5\.cloud\.189\.cn\/share/i],
+  tianyi: [
+    /cloud\.189\.cn\/web\/share/i,
+    /cloud\.189\.cn\/t\//i,
+    /h5\.cloud\.189\.cn\/share/i,
+  ],
   pan123: [/123(?:pan|684|685|912|592|865)\.(?:com|cn)\/s\//i],
   uc: [/drive\.uc\.cn\/s\//i, /yun\.uc\.cn\/s\//i],
   xunlei: [/pan\.xunlei\.com\/s\//i],
   cmcc: [/yun\.139\.com\/shareweb/i, /caiyun\.139\.com\/m\/i/i],
 };
 
-const CHECKERS: Record<NetdiskCheckPlatform, (url: string) => Promise<RawCheckerResult>> = {
+const CHECKERS: Record<
+  NetdiskCheckPlatform,
+  (url: string) => Promise<RawCheckerResult>
+> = {
   '115': check115,
   aliyun: checkAliyun,
   baidu: checkBaidu,
@@ -55,9 +68,13 @@ export function normalizeNetdiskCheckUrl(url: string) {
   return url.trim().replace(/\s+/g, '').replace(/\/+$/, '');
 }
 
-export function detectNetdiskCheckPlatform(url: string): NetdiskCheckPlatform | null {
+export function detectNetdiskCheckPlatform(
+  url: string
+): NetdiskCheckPlatform | null {
   const normalized = normalizeNetdiskCheckUrl(url);
-  for (const [platform, patterns] of Object.entries(PLATFORM_PATTERNS) as Array<[NetdiskCheckPlatform, RegExp[]]>) {
+  for (const [platform, patterns] of Object.entries(PLATFORM_PATTERNS) as Array<
+    [NetdiskCheckPlatform, RegExp[]]
+  >) {
     if (patterns.some((pattern) => pattern.test(normalized))) return platform;
   }
   return null;
@@ -127,7 +144,10 @@ function toFinalResult(
   };
 }
 
-export async function checkNetdiskLink(platform: NetdiskCheckPlatform, url: string): Promise<NetdiskCheckResult> {
+export async function checkNetdiskLink(
+  platform: NetdiskCheckPlatform,
+  url: string
+): Promise<NetdiskCheckResult> {
   const normalizedUrl = normalizeNetdiskCheckUrl(url);
   const cacheKey = buildNetdiskCheckCacheKey(platform, normalizedUrl);
   const cached = getCachedNetdiskCheckResult(cacheKey);
@@ -144,7 +164,13 @@ export async function checkNetdiskLink(platform: NetdiskCheckPlatform, url: stri
         throw new Error(`未找到 ${platform} 检测器`);
       }
       const raw = await checker(normalizedUrl);
-      const finalResult = toFinalResult(platform, url, normalizedUrl, raw, Date.now() - startedAt);
+      const finalResult = toFinalResult(
+        platform,
+        url,
+        normalizedUrl,
+        raw,
+        Date.now() - startedAt
+      );
       setCachedNetdiskCheckResult(cacheKey, finalResult);
       return finalResult;
     } catch (error) {

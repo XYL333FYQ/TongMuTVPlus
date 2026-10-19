@@ -95,10 +95,10 @@ export default function VirtualScrollableRow({
       {showLeftScroll && (
         <button
           onClick={scrollLeft}
-          className='absolute left-0 top-1/2 -translate-y-1/2 z-[600] bg-[var(--tm-surface-raised)] p-2 rounded-full shadow-lg opacity-100 sm:opacity-0 sm:group-hover:opacity-100 focus-visible:opacity-100 transition-opacity hover:bg-[var(--tm-line)] min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
+          className='absolute left-0 top-1/2 -translate-y-1/2 z-[600] bg-raised p-2 rounded-full shadow-lg opacity-100 sm:opacity-0 sm:group-hover:opacity-100 focus-visible:opacity-100 transition-opacity hover:bg-line min-h-[44px] tm-press min-w-[44px]'
           aria-label='向左滚动'
         >
-          <ChevronLeft className='w-6 h-6 text-[color:var(--tm-muted)] text-[color:var(--tm-text)]' />
+          <ChevronLeft className='w-6 h-6 text-fg' />
         </button>
       )}
 
@@ -137,10 +137,10 @@ export default function VirtualScrollableRow({
       {showRightScroll && (
         <button
           onClick={scrollRight}
-          className='absolute right-0 top-1/2 -translate-y-1/2 z-[600] bg-[var(--tm-surface-raised)] p-2 rounded-full shadow-lg opacity-100 sm:opacity-0 sm:group-hover:opacity-100 focus-visible:opacity-100 transition-opacity hover:bg-[var(--tm-line)] min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
+          className='absolute right-0 top-1/2 -translate-y-1/2 z-[600] bg-raised p-2 rounded-full shadow-lg opacity-100 sm:opacity-0 sm:group-hover:opacity-100 focus-visible:opacity-100 transition-opacity hover:bg-line min-h-[44px] tm-press min-w-[44px]'
           aria-label='向右滚动'
         >
-          <ChevronRight className='w-6 h-6 text-[color:var(--tm-muted)] text-[color:var(--tm-text)]' />
+          <ChevronRight className='w-6 h-6 text-fg' />
         </button>
       )}
     </div>

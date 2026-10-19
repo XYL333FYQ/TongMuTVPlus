@@ -156,7 +156,9 @@ export class OpenListClient {
         const data = await clonedResponse.json();
 
         if (data.code === 401) {
-          console.log('[OpenListClient] 响应体 code 为 401，Token 已过期，清除缓存并重试');
+          console.log(
+            '[OpenListClient] 响应体 code 为 401，Token 已过期，清除缓存并重试'
+          );
           this.clearTokenCache();
           return this.fetchWithRetry(url, options, true);
         }
@@ -172,7 +174,7 @@ export class OpenListClient {
     const token = await this.getToken();
     return {
       Authorization: token, // 不带 bearer
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
     };
   }
 
@@ -247,17 +249,20 @@ export class OpenListClient {
   // 刷新目录缓存
   async refreshDirectory(path: string): Promise<void> {
     try {
-      const response = await this.fetchWithRetry(`${this.baseURL}/api/fs/list`, {
-        method: 'POST',
-        headers: await this.getHeaders(),
-        body: JSON.stringify({
-          path,
-          password: '',
-          refresh: true,
-          page: 1,
-          per_page: 1,
-        }),
-      });
+      const response = await this.fetchWithRetry(
+        `${this.baseURL}/api/fs/list`,
+        {
+          method: 'POST',
+          headers: await this.getHeaders(),
+          body: JSON.stringify({
+            path,
+            password: '',
+            refresh: true,
+            page: 1,
+            per_page: 1,
+          }),
+        }
+      );
 
       if (!response.ok) {
         console.warn(`刷新目录缓存失败: ${response.status}`);
@@ -272,14 +277,17 @@ export class OpenListClient {
     const dir = path.substring(0, path.lastIndexOf('/')) || '/';
     const fileName = path.substring(path.lastIndexOf('/') + 1);
 
-    const response = await this.fetchWithRetry(`${this.baseURL}/api/fs/remove`, {
-      method: 'POST',
-      headers: await this.getHeaders(),
-      body: JSON.stringify({
-        names: [fileName],
-        dir: dir,
-      }),
-    });
+    const response = await this.fetchWithRetry(
+      `${this.baseURL}/api/fs/remove`,
+      {
+        method: 'POST',
+        headers: await this.getHeaders(),
+        body: JSON.stringify({
+          names: [fileName],
+          dir: dir,
+        }),
+      }
+    );
 
     if (!response.ok) {
       throw new Error(`OpenList 删除失败: ${response.status}`);

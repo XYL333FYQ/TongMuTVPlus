@@ -15,7 +15,9 @@ export function useEnableAIComments(): boolean {
     if (typeof window !== 'undefined') {
       const runtimeConfig = (window as any).RUNTIME_CONFIG as RuntimeConfig;
       setEnableAIComments(
-        Boolean(runtimeConfig?.AI_ENABLED && runtimeConfig?.AIConfig?.EnableAIComments)
+        Boolean(
+          runtimeConfig?.AI_ENABLED && runtimeConfig?.AIConfig?.EnableAIComments
+        )
       );
     }
   }, []);

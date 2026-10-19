@@ -45,7 +45,12 @@ export async function getEmbyDetail(
       source_name: sourceName,
       id: item.Id,
       title: item.Name,
-      poster: client.getImageUrl(item.Id, 'Primary', undefined, client.isProxyEnabled() ? proxyToken || undefined : undefined),
+      poster: client.getImageUrl(
+        item.Id,
+        'Primary',
+        undefined,
+        client.isProxyEnabled() ? proxyToken || undefined : undefined
+      ),
       year: item.ProductionYear?.toString() || '',
       douban_id: 0,
       desc: item.Overview || '',
@@ -77,7 +82,12 @@ export async function getEmbyDetail(
       source_name: sourceName,
       id: item.Id,
       title: item.Name,
-      poster: client.getImageUrl(item.Id, 'Primary', undefined, client.isProxyEnabled() ? proxyToken || undefined : undefined),
+      poster: client.getImageUrl(
+        item.Id,
+        'Primary',
+        undefined,
+        client.isProxyEnabled() ? proxyToken || undefined : undefined
+      ),
       year: item.ProductionYear?.toString() || '',
       douban_id: 0,
       desc: item.Overview || '',
@@ -87,7 +97,9 @@ export async function getEmbyDetail(
       episodes_titles: allEpisodes.map((ep) => {
         const seasonNum = ep.ParentIndexNumber || 1;
         const episodeNum = ep.IndexNumber || 1;
-        return `S${seasonNum.toString().padStart(2, '0')}E${episodeNum.toString().padStart(2, '0')}`;
+        return `S${seasonNum.toString().padStart(2, '0')}E${episodeNum
+          .toString()
+          .padStart(2, '0')}`;
       }),
       subtitles: allEpisodes.map((ep) => client.getSubtitles(ep, proxyToken)),
       proxyMode: false,
@@ -100,9 +112,7 @@ export async function getEmbyDetail(
 /**
  * 获取 OpenList 源的视频详情
  */
-export async function getOpenListDetail(
-  id: string
-): Promise<SearchResult> {
+export async function getOpenListDetail(id: string): Promise<SearchResult> {
   const config = await getConfig();
   const openListConfig = config.OpenListConfig;
 
@@ -148,7 +158,9 @@ export async function getOpenListDetail(
 
   // 使用 folderName 构建实际路径
   const folderName = folderMeta.folderName;
-  const folderPath = `${rootPath}${rootPath.endsWith('/') ? '' : '/'}${folderName}`;
+  const folderPath = `${rootPath}${
+    rootPath.endsWith('/') ? '' : '/'
+  }${folderName}`;
 
   // 2. 直接调用 OpenList 客户端获取视频列表
   const { OpenListClient } = await import('@/lib/openlist.client');
@@ -214,9 +226,7 @@ export async function getOpenListDetail(
   const videoFiles = allFiles.filter((item) => {
     if (item.is_dir || item.name.startsWith('.') || item.name.endsWith('.json'))
       return false;
-    return videoExtensions.some((ext) =>
-      item.name.toLowerCase().endsWith(ext)
-    );
+    return videoExtensions.some((ext) => item.name.toLowerCase().endsWith(ext));
   });
 
   if (!videoInfo) {
@@ -249,13 +259,12 @@ export async function getOpenListDetail(
           isOVA: parsed.isOVA,
         };
       } else {
-        episodeInfo =
-          videoInfo!.episodes[file.name] || {
-            episode: index + 1,
-            season: undefined,
-            title: undefined,
-            parsed_from: 'filename',
-          };
+        episodeInfo = videoInfo!.episodes[file.name] || {
+          episode: index + 1,
+          season: undefined,
+          title: undefined,
+          parsed_from: 'filename',
+        };
       }
       let displayTitle = episodeInfo.title;
       if (!displayTitle && episodeInfo.episode) {
@@ -288,10 +297,7 @@ export async function getOpenListDetail(
   const { getTMDBImageUrl } = await import('@/lib/tmdb.search');
   const { resolvePathMeta } = await import('@/lib/openlist-path-meta');
   // folderName 为 metainfo 中的完整路径，PathMeta 按最长前缀匹配
-  const pathMetaResolved = resolvePathMeta(
-    folderName,
-    openListConfig.PathMeta
-  );
+  const pathMetaResolved = resolvePathMeta(folderName, openListConfig.PathMeta);
 
   return {
     source: 'openlist',
@@ -301,14 +307,14 @@ export async function getOpenListDetail(
     poster: folderMeta?.poster_path
       ? getTMDBImageUrl(folderMeta.poster_path)
       : '',
-    year: folderMeta?.release_date
-      ? folderMeta.release_date.split('-')[0]
-      : '',
+    year: folderMeta?.release_date ? folderMeta.release_date.split('-')[0] : '',
     douban_id: 0,
     desc: folderMeta?.overview || '',
     episodes: episodes.map(
       (ep) =>
-        `/api/openlist/play?folder=${encodeURIComponent(folderName)}&fileName=${encodeURIComponent(ep.fileName)}`
+        `/api/openlist/play?folder=${encodeURIComponent(
+          folderName
+        )}&fileName=${encodeURIComponent(ep.fileName)}`
     ),
     episodes_titles: episodes.map((ep) => ep.title!),
     proxyMode: false, // openlist 源不使用代理模式
@@ -324,11 +330,7 @@ export async function getXiaoyaDetail(id: string): Promise<SearchResult> {
   const config = await getConfig();
   const xiaoyaConfig = config.XiaoyaConfig;
 
-  if (
-    !xiaoyaConfig ||
-    !xiaoyaConfig.Enabled ||
-    !xiaoyaConfig.ServerURL
-  ) {
+  if (!xiaoyaConfig || !xiaoyaConfig.Enabled || !xiaoyaConfig.ServerURL) {
     throw new Error('小雅未配置或未启用');
   }
 

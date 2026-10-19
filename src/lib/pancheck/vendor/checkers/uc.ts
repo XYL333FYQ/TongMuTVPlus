@@ -12,7 +12,8 @@ export async function checkUC(link) {
     const url = `https://drive.uc.cn/s/${shareID}`;
     const { statusCode, body } = await request(url, {
       headers: {
-        'User-Agent': 'Mozilla/5.0 (Linux; Android 10; SM-G975F) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.101 Mobile Safari/537.36',
+        'User-Agent':
+          'Mozilla/5.0 (Linux; Android 10; SM-G975F) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.101 Mobile Safari/537.36',
       },
     });
 
@@ -21,8 +22,16 @@ export async function checkUC(link) {
     }
 
     const pageText = body.toLowerCase();
-    for (const keyword of ['失效', '不存在', '违规', '删除', '已过期', '被取消']) {
-      if (pageText.includes(keyword)) return { valid: false, reason: '链接已失效' };
+    for (const keyword of [
+      '失效',
+      '不存在',
+      '违规',
+      '删除',
+      '已过期',
+      '被取消',
+    ]) {
+      if (pageText.includes(keyword))
+        return { valid: false, reason: '链接已失效' };
     }
     for (const keyword of ['文件', '分享']) {
       if (pageText.includes(keyword)) return { valid: true, reason: '' };

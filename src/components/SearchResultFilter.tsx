@@ -185,12 +185,10 @@ const SearchResultFilter: React.FC<SearchResultFilterProps> = ({
               onClick={() => handleCategoryClick(category.key)}
               className={`relative z-10 px-1.5 py-0.5 sm:px-2 sm:py-1 md:px-4 md:py-2 text-[13px] sm:text-sm font-medium rounded-full transition-all duration-200 whitespace-nowrap ${
                 activeCategory === category.key
-                  ? isDefaultValue(category.key)
-                    ? 'text-[color:var(--tm-text)] cursor-default min-h-[44px] tm-press'
-                    : 'text-[color:var(--tm-text)] cursor-default min-h-[44px] tm-press'
+                  ? 'text-fg cursor-default min-h-[44px] tm-press'
                   : isDefaultValue(category.key)
-                  ? 'text-[color:var(--tm-muted)] hover:text-[color:var(--tm-text)] cursor-pointer min-h-[44px] tm-press'
-                  : 'text-[color:var(--tm-text)] hover:text-[color:var(--tm-text)] cursor-pointer min-h-[44px] tm-press'
+                  ? 'text-muted hover:text-fg cursor-pointer min-h-[44px] tm-press'
+                  : 'text-fg hover:text-fg cursor-pointer min-h-[44px] tm-press'
               }`}
             >
               <span>{getDisplayText(category.key)}</span>
@@ -234,8 +232,8 @@ const SearchResultFilter: React.FC<SearchResultFilterProps> = ({
             }}
             className={`relative z-10 px-1.5 py-0.5 sm:px-2 sm:py-1 md:px-4 md:py-2 text-[13px] sm:text-sm font-medium rounded-full transition-all duration-200 whitespace-nowrap ${
               mergedValues.yearOrder === 'none'
-                ? 'text-[color:var(--tm-muted)] hover:text-[color:var(--tm-text)] cursor-pointer min-h-[44px] tm-press'
-                : 'text-[color:var(--tm-text)] hover:text-[color:var(--tm-text)] cursor-pointer min-h-[44px] tm-press'
+                ? 'text-muted hover:text-fg cursor-pointer min-h-[44px] tm-press'
+                : 'text-fg hover:text-fg cursor-pointer min-h-[44px] tm-press'
             }`}
             aria-label={`按年份${
               mergedValues.yearOrder === 'none'
@@ -261,7 +259,7 @@ const SearchResultFilter: React.FC<SearchResultFilterProps> = ({
         createPortal(
           <div
             ref={dropdownRef}
-            className='fixed z-[9999] bg-[var(--tm-surface-raised)] rounded-xl border border-[var(--tm-line)] backdrop-blur-sm max-h-[50vh] flex flex-col'
+            className='fixed z-[9999] bg-raised rounded-xl border border-line backdrop-blur-sm max-h-[50vh] flex flex-col'
             style={{
               left: `${dropdownPosition.x}px`,
               top: `${dropdownPosition.y}px`,
@@ -289,8 +287,8 @@ const SearchResultFilter: React.FC<SearchResultFilterProps> = ({
                       }
                       className={`px-2 py-1.5 sm:px-3 sm:py-2 text-[13px] sm:text-sm rounded-lg transition-all duration-200 text-left ${
                         isOptionSelected(activeCategory, option.value)
-                          ? 'bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)] border border-[var(--tm-line)] min-h-[44px] tm-press'
-                          : 'text-[color:var(--tm-muted)] hover:bg-[var(--tm-line)] min-h-[44px] tm-press'
+                          ? 'bg-raised text-fg border border-line min-h-[44px] tm-press'
+                          : 'text-muted hover:bg-line min-h-[44px] tm-press'
                       }`}
                     >
                       {option.label}

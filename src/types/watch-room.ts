@@ -143,7 +143,9 @@ export interface RoomSnapshot {
   messages?: ChatMessage[];
 }
 
-export type RoomAck = (response: RoomCommandResult & Partial<RoomSnapshot>) => void;
+export type RoomAck = (
+  response: RoomCommandResult & Partial<RoomSnapshot>
+) => void;
 
 export interface RoomMemberInfo {
   roomId: string;
@@ -155,10 +157,21 @@ export interface RoomMemberInfo {
 // Socket.IO 事件类型
 export interface ServerToClientEvents {
   'room:snapshot': (snapshot: RoomSnapshot) => void;
-  'room:controller-changed': (state: { controllerAccountId: string | null; controllerSessionId: string | null; controllerEpoch: number; revision: number; serverTime: number }) => void;
-  'room:command-error': (error: RoomCommandResult & { event: string; commandId?: string }) => void;
+  'room:controller-changed': (state: {
+    controllerAccountId: string | null;
+    controllerSessionId: string | null;
+    controllerEpoch: number;
+    revision: number;
+    serverTime: number;
+  }) => void;
+  'room:command-error': (
+    error: RoomCommandResult & { event: string; commandId?: string }
+  ) => void;
   'room:auth-required': (error: { code: string }) => void;
-  'queue:updated': (state: { queue: RoomQueueItem[]; revision: number }) => void;
+  'queue:updated': (state: {
+    queue: RoomQueueItem[];
+    revision: number;
+  }) => void;
   'room:created': (room: Room) => void;
   'room:joined': (data: { room: Room; members: Member[] }) => void;
   'room:left': () => void;
@@ -176,9 +189,18 @@ export interface ServerToClientEvents {
   'screen:start': (state: ScreenState) => void;
   'screen:stop': () => void;
   'screen:viewer-ready': (data: { userId: string }) => void;
-  'screen:offer': (data: { userId: string; offer: RTCSessionDescriptionInit }) => void;
-  'screen:answer': (data: { userId: string; answer: RTCSessionDescriptionInit }) => void;
-  'screen:ice': (data: { userId: string; candidate: RTCIceCandidateInit }) => void;
+  'screen:offer': (data: {
+    userId: string;
+    offer: RTCSessionDescriptionInit;
+  }) => void;
+  'screen:answer': (data: {
+    userId: string;
+    answer: RTCSessionDescriptionInit;
+  }) => void;
+  'screen:ice': (data: {
+    userId: string;
+    candidate: RTCIceCandidateInit;
+  }) => void;
   'music:change': (state: MusicSyncState) => void;
   'music:update': (state: MusicSyncState) => void;
   'music:play': (state: MusicSyncState) => void;
@@ -186,67 +208,174 @@ export interface ServerToClientEvents {
   'music:seek': (state: MusicSyncState) => void;
   'music:queue': (state: MusicSyncState) => void;
   'chat:message': (message: ChatMessage) => void;
-  'voice:offer': (data: { userId: string; offer: RTCSessionDescriptionInit }) => void;
-  'voice:answer': (data: { userId: string; answer: RTCSessionDescriptionInit }) => void;
-  'voice:ice': (data: { userId: string; candidate: RTCIceCandidateInit }) => void;
+  'voice:offer': (data: {
+    userId: string;
+    offer: RTCSessionDescriptionInit;
+  }) => void;
+  'voice:answer': (data: {
+    userId: string;
+    answer: RTCSessionDescriptionInit;
+  }) => void;
+  'voice:ice': (data: {
+    userId: string;
+    candidate: RTCIceCandidateInit;
+  }) => void;
   'voice:mic-enabled': (data: { userId: string }) => void;
-  'voice:audio-chunk': (data: { userId: string; audioData: number[]; sampleRate?: number }) => void;
+  'voice:audio-chunk': (data: {
+    userId: string;
+    audioData: number[];
+    sampleRate?: number;
+  }) => void;
   'state:cleared': () => void;
   'heartbeat:pong': (data: { timestamp: number }) => void;
-  'error': (message: string) => void;
+  error: (message: string) => void;
 }
 
 export interface ClientToServerEvents {
-  'room:sync-applied': (data: { appliedRevision?: number; revision?: number; controllerEpoch?: number }, callback?: RoomAck) => void;
-  'room:ready': (data: { ready?: boolean; appliedRevision?: number; revision?: number }, callback?: RoomAck) => void;
+  'room:sync-applied': (
+    data: {
+      appliedRevision?: number;
+      revision?: number;
+      controllerEpoch?: number;
+    },
+    callback?: RoomAck
+  ) => void;
+  'room:ready': (
+    data: { ready?: boolean; appliedRevision?: number; revision?: number },
+    callback?: RoomAck
+  ) => void;
   'room:following': (data: { following: boolean }, callback?: RoomAck) => void;
-  'room:settings': (data: { name?: string; description?: string; password?: string; isPublic?: boolean; memberCanQueue?: boolean } & RoomCommandMeta, callback?: RoomAck) => void;
-  'room:authorize-host': (data: { accountId: string; canHost: boolean } & RoomCommandMeta, callback?: RoomAck) => void;
+  'room:settings': (
+    data: {
+      name?: string;
+      description?: string;
+      password?: string;
+      isPublic?: boolean;
+      memberCanQueue?: boolean;
+    } & RoomCommandMeta,
+    callback?: RoomAck
+  ) => void;
+  'room:authorize-host': (
+    data: { accountId: string; canHost: boolean } & RoomCommandMeta,
+    callback?: RoomAck
+  ) => void;
   'room:delete': (data: RoomCommandMeta, callback?: RoomAck) => void;
   'room:restore': (data: RoomCommandMeta, callback?: RoomAck) => void;
-  'queue:add': (data: Omit<RoomQueueItem, 'id' | 'addedBy' | 'addedAt'> & RoomCommandMeta, callback?: RoomAck) => void;
-  'queue:remove': (data: { id: string } & RoomCommandMeta, callback?: RoomAck) => void;
-  'queue:move': (data: { id: string; position: number } & RoomCommandMeta, callback?: RoomAck) => void;
-  'chat:history': (data: { roomId?: string; afterSeq?: number; beforeSeq?: number; limit?: number }, callback: (response: RoomCommandResult & { messages?: ChatMessage[]; lastMessageSeq?: number; unreadCount?: number }) => void) => void;
-  'chat:read': (data: { seq: number } & RoomCommandMeta, callback?: RoomAck) => void;
-  'activity:change': (data: (PlayState | LiveState | ScreenState | MusicSyncState) & RoomCommandMeta, callback?: RoomAck) => void;
-  'room:create': (data: {
-    commandId?: string;
-    name: string;
-    description: string;
-    password?: string;
-    isPublic: boolean;
-    roomType: RoomType;
-    userName: string;
-  }, callback: (response: { success: boolean; room?: Room; members?: Member[]; messages?: ChatMessage[]; error?: string; code?: string }) => void) => void;
+  'queue:add': (
+    data: Omit<RoomQueueItem, 'id' | 'addedBy' | 'addedAt'> & RoomCommandMeta,
+    callback?: RoomAck
+  ) => void;
+  'queue:remove': (
+    data: { id: string } & RoomCommandMeta,
+    callback?: RoomAck
+  ) => void;
+  'queue:move': (
+    data: { id: string; position: number } & RoomCommandMeta,
+    callback?: RoomAck
+  ) => void;
+  'chat:history': (
+    data: {
+      roomId?: string;
+      afterSeq?: number;
+      beforeSeq?: number;
+      limit?: number;
+    },
+    callback: (
+      response: RoomCommandResult & {
+        messages?: ChatMessage[];
+        lastMessageSeq?: number;
+        unreadCount?: number;
+      }
+    ) => void
+  ) => void;
+  'chat:read': (
+    data: { seq: number } & RoomCommandMeta,
+    callback?: RoomAck
+  ) => void;
+  'activity:change': (
+    data: (PlayState | LiveState | ScreenState | MusicSyncState) &
+      RoomCommandMeta,
+    callback?: RoomAck
+  ) => void;
+  'room:create': (
+    data: {
+      commandId?: string;
+      name: string;
+      description: string;
+      password?: string;
+      isPublic: boolean;
+      roomType: RoomType;
+      userName: string;
+    },
+    callback: (response: {
+      success: boolean;
+      room?: Room;
+      members?: Member[];
+      messages?: ChatMessage[];
+      error?: string;
+      code?: string;
+    }) => void
+  ) => void;
 
-  'room:join': (data: {
-    roomId: string;
-    password?: string;
-    userName: string;
-  }, callback: (response: { success: boolean; room?: Room; members?: Member[]; messages?: ChatMessage[]; error?: string; code?: string }) => void) => void;
+  'room:join': (
+    data: {
+      roomId: string;
+      password?: string;
+      userName: string;
+    },
+    callback: (response: {
+      success: boolean;
+      room?: Room;
+      members?: Member[];
+      messages?: ChatMessage[];
+      error?: string;
+      code?: string;
+    }) => void
+  ) => void;
 
   'room:leave': () => void;
 
   'room:list': (callback: (rooms: Room[]) => void) => void;
 
-  'play:update': (state: PlayState & RoomCommandMeta, callback?: RoomAck) => void;
-  'play:seek': (currentTime: number | ({ currentTime: number } & RoomCommandMeta), metaOrAck?: RoomCommandMeta | RoomAck, callback?: RoomAck) => void;
+  'play:update': (
+    state: PlayState & RoomCommandMeta,
+    callback?: RoomAck
+  ) => void;
+  'play:seek': (
+    currentTime: number | ({ currentTime: number } & RoomCommandMeta),
+    metaOrAck?: RoomCommandMeta | RoomAck,
+    callback?: RoomAck
+  ) => void;
   'play:play': (meta?: RoomCommandMeta, callback?: RoomAck) => void;
   'play:pause': (meta?: RoomCommandMeta, callback?: RoomAck) => void;
-  'play:change': (state: PlayState & RoomCommandMeta, callback?: RoomAck) => void;
+  'play:change': (
+    state: PlayState & RoomCommandMeta,
+    callback?: RoomAck
+  ) => void;
   'play:owner-leave': () => void;
 
   'live:change': (state: LiveState) => void;
-  'screen:helper-register': (data: {
-    roomId: string;
-  }, callback: (response: { success: boolean; error?: string }) => void) => void;
+  'screen:helper-register': (
+    data: {
+      roomId: string;
+    },
+    callback: (response: { success: boolean; error?: string }) => void
+  ) => void;
   'screen:start': (state: ScreenState) => void;
   'screen:stop': () => void;
   'screen:viewer-ready': () => void;
-  'screen:offer': (data: { targetUserId: string; offer: RTCSessionDescriptionInit }) => void;
-  'screen:answer': (data: { targetUserId: string; answer: RTCSessionDescriptionInit }) => void;
-  'screen:ice': (data: { targetUserId: string; candidate: RTCIceCandidateInit }) => void;
+  'screen:offer': (data: {
+    targetUserId: string;
+    offer: RTCSessionDescriptionInit;
+  }) => void;
+  'screen:answer': (data: {
+    targetUserId: string;
+    answer: RTCSessionDescriptionInit;
+  }) => void;
+  'screen:ice': (data: {
+    targetUserId: string;
+    candidate: RTCIceCandidateInit;
+  }) => void;
   'music:change': (state: MusicSyncState) => void;
   'music:update': (state: MusicSyncState) => void;
   'music:play': (state: MusicSyncState) => void;
@@ -254,16 +383,34 @@ export interface ClientToServerEvents {
   'music:seek': (state: MusicSyncState) => void;
   'music:queue': (state: MusicSyncState) => void;
 
-  'chat:message': (data: { content: string; type: 'text' | 'emoji' } & RoomCommandMeta, callback?: RoomAck) => void;
+  'chat:message': (
+    data: { content: string; type: 'text' | 'emoji' } & RoomCommandMeta,
+    callback?: RoomAck
+  ) => void;
 
-  'voice:offer': (data: { targetUserId: string; offer: RTCSessionDescriptionInit }) => void;
-  'voice:answer': (data: { targetUserId: string; answer: RTCSessionDescriptionInit }) => void;
-  'voice:ice': (data: { targetUserId: string; candidate: RTCIceCandidateInit }) => void;
-  'voice:audio-chunk': (data: { roomId: string; audioData: number[]; sampleRate?: number }) => void;
+  'voice:offer': (data: {
+    targetUserId: string;
+    offer: RTCSessionDescriptionInit;
+  }) => void;
+  'voice:answer': (data: {
+    targetUserId: string;
+    answer: RTCSessionDescriptionInit;
+  }) => void;
+  'voice:ice': (data: {
+    targetUserId: string;
+    candidate: RTCIceCandidateInit;
+  }) => void;
+  'voice:audio-chunk': (data: {
+    roomId: string;
+    audioData: number[];
+    sampleRate?: number;
+  }) => void;
 
-  'state:clear': (callback?: (response: { success: boolean; error?: string }) => void) => void;
+  'state:clear': (
+    callback?: (response: { success: boolean; error?: string }) => void
+  ) => void;
 
-  'heartbeat': () => void;
+  heartbeat: () => void;
 }
 
 // 配置类型

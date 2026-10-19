@@ -8,15 +8,19 @@ import {
   pickOnePerEpisode,
 } from '@/lib/anime-keyword-expr';
 import { getConfig, setCachedConfig } from '@/lib/config';
-import { getMagnetBaseUrl, universalMagnetFetch } from '@/lib/magnet.client';
 import { db, getStorage } from '@/lib/db';
 import { EmailService } from '@/lib/email.service';
+import { getMagnetBaseUrl, universalMagnetFetch } from '@/lib/magnet.client';
 import {
   addOpenListOfflineDownload,
   getOfflineDownloadBasePath,
   joinOpenListPath,
 } from '@/lib/openlist-offline-download';
-import { AnimeSubscription, AnimeSubscriptionDownloadTool } from '@/types/anime-subscription';
+
+import {
+  AnimeSubscription,
+  AnimeSubscriptionDownloadTool,
+} from '@/types/anime-subscription';
 
 // 兼容外部从本模块引用匹配工具（仅服务端使用本文件；客户端请直接 import anime-keyword-expr）
 export {
@@ -28,18 +32,26 @@ export {
   validateKeywordExpr,
 } from '@/lib/anime-keyword-expr';
 
-const downloadTools: AnimeSubscriptionDownloadTool[] = ['aria2', 'qBittorrent', 'Transmission'];
+const downloadTools: AnimeSubscriptionDownloadTool[] = [
+  'aria2',
+  'qBittorrent',
+  'Transmission',
+];
 
 const pickRssText = (value: any): string => {
   if (value === undefined || value === null) return '';
   const first = Array.isArray(value) ? value[0] : value;
   if (first === undefined || first === null) return '';
-  if (typeof first === 'object') return String(first._ ?? first.$?.url ?? first.$?.href ?? '');
+  if (typeof first === 'object')
+    return String(first._ ?? first.$?.url ?? first.$?.href ?? '');
   return String(first);
 };
 
-function getAnimeSubscriptionDownloadTool(tool: unknown): AnimeSubscriptionDownloadTool {
-  return typeof tool === 'string' && downloadTools.includes(tool as AnimeSubscriptionDownloadTool)
+function getAnimeSubscriptionDownloadTool(
+  tool: unknown
+): AnimeSubscriptionDownloadTool {
+  return typeof tool === 'string' &&
+    downloadTools.includes(tool as AnimeSubscriptionDownloadTool)
     ? (tool as AnimeSubscriptionDownloadTool)
     : 'aria2';
 }
@@ -65,7 +77,10 @@ export function titleContainsEpisode(title: string, episode: number): boolean {
 
   // 先挖掉分辨率/常见非集数数字，降低误判
   const cleaned = title
-    .replace(/(?:^|[^0-9])(?:240|360|480|720|1080|1440|2160|4k|8k)(?:p|P|i|I)?(?![0-9])/g, ' ')
+    .replace(
+      /(?:^|[^0-9])(?:240|360|480|720|1080|1440|2160|4k|8k)(?:p|P|i|I)?(?![0-9])/g,
+      ' '
+    )
     .replace(/(?:19|20)\d{2}/g, ' '); // 年份
 
   const patterns: RegExp[] = [
@@ -88,7 +103,10 @@ export function titleContainsEpisode(title: string, episode: number): boolean {
 /**
  * 校验自定义集数正则：可编译且结果可解析即合法
  */
-export function validateEpisodeRegex(regex: string): { ok: boolean; error?: string } {
+export function validateEpisodeRegex(regex: string): {
+  ok: boolean;
+  error?: string;
+} {
   const trimmed = regex.trim();
   if (!trimmed) return { ok: true };
   try {
@@ -127,7 +145,10 @@ export function extractEpisodeWithRegex(
  * 从标题中提取集数。
  * episodeRegex：自定义集数正则（可选），填写后优先于内置规则（不匹配则视为无法识别）
  */
-export function extractEpisode(title: string, episodeRegex?: string): number | null {
+export function extractEpisode(
+  title: string,
+  episodeRegex?: string
+): number | null {
   if (episodeRegex && episodeRegex.trim()) {
     return extractEpisodeWithRegex(title, episodeRegex);
   }
@@ -207,9 +228,7 @@ function filterAndParseEpisodes(
       if (only != null) {
         // 自定义正则时信任正则结果，不再叠加内置形态校验
         if (customRegex) return item.episode === only;
-        return (
-          item.episode === only && titleContainsEpisode(item.title, only)
-        );
+        return item.episode === only && titleContainsEpisode(item.title, only);
       }
       return item.episode > minExclusive;
     })
@@ -360,7 +379,9 @@ export async function searchACG(
         'https://mikanani.me',
         config.SiteConfig.MagnetMikanReverseProxy
       );
-      searchUrl = `${baseUrl}/RSS/Search?searchstr=${encodeURIComponent(trimmedKeyword)}`;
+      searchUrl = `${baseUrl}/RSS/Search?searchstr=${encodeURIComponent(
+        trimmedKeyword
+      )}`;
       break;
     }
     case 'dmhy': {
@@ -368,7 +389,9 @@ export async function searchACG(
         'http://share.dmhy.org',
         config.SiteConfig.MagnetDmhyReverseProxy
       );
-      searchUrl = `${baseUrl}/topics/rss/rss.xml?keyword=${encodeURIComponent(trimmedKeyword)}`;
+      searchUrl = `${baseUrl}/topics/rss/rss.xml?keyword=${encodeURIComponent(
+        trimmedKeyword
+      )}`;
       break;
     }
     case 'nyaa': {
@@ -376,7 +399,9 @@ export async function searchACG(
         'https://nyaa.si',
         config.SiteConfig.MagnetNyaaReverseProxy
       );
-      searchUrl = `${baseUrl}/?page=rss&q=${encodeURIComponent(trimmedKeyword)}&c=1_0&f=0`;
+      searchUrl = `${baseUrl}/?page=rss&q=${encodeURIComponent(
+        trimmedKeyword
+      )}&c=1_0&f=0`;
       break;
     }
     case 'acgrip':
@@ -385,17 +410,23 @@ export async function searchACG(
         'https://acg.rip',
         config.SiteConfig.MagnetAcgripReverseProxy
       );
-      searchUrl = `${baseUrl}/page/1.xml?term=${encodeURIComponent(trimmedKeyword)}`;
+      searchUrl = `${baseUrl}/page/1.xml?term=${encodeURIComponent(
+        trimmedKeyword
+      )}`;
       break;
     }
   }
 
-  const response = await universalMagnetFetch(searchUrl, config.SiteConfig.MagnetProxy, {
-    headers: {
-      'User-Agent':
-        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-    },
-  });
+  const response = await universalMagnetFetch(
+    searchUrl,
+    config.SiteConfig.MagnetProxy,
+    {
+      headers: {
+        'User-Agent':
+          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+      },
+    }
+  );
 
   if (!response.ok) {
     throw new Error(`${source} API 请求失败: ${response.status}`);
@@ -416,13 +447,14 @@ export async function searchACG(
     const rawLink = pickRssText(item.link);
     const rawGuid = pickRssText(item.guid);
     const pubDate = pickRssText(item.pubDate);
-    const description = pickRssText(item.description) || pickRssText(item['content:encoded']);
+    const description =
+      pickRssText(item.description) || pickRssText(item['content:encoded']);
     const enclosureUrl =
       pickRssText(item.enclosure?.[0]?.$?.url) ||
       pickRssText(item.enclosure?.[0]?.$?.href);
 
     const isNyaa = source === 'nyaa';
-    const link = isNyaa ? (rawGuid || rawLink) : rawLink;
+    const link = isNyaa ? rawGuid || rawLink : rawLink;
     const torrentUrl = isNyaa ? rawLink : enclosureUrl;
     const guid = rawGuid || link || torrentUrl || `${title}-${pubDate}`;
 
@@ -449,7 +481,12 @@ export async function addOfflineDownload(
     config.AnimeSubscriptionConfig?.DownloadTool
   );
 
-  await addOpenListOfflineDownload(config, downloadPath, torrentUrl, downloadTool);
+  await addOpenListOfflineDownload(
+    config,
+    downloadPath,
+    torrentUrl,
+    downloadTool
+  );
 }
 
 /**
@@ -513,7 +550,10 @@ async function sendAnimeUpdateNotifications(
       });
       console.log(`[AnimeSubscription] 已发送站内通知给用户: ${username}`);
     } catch (error) {
-      console.error(`[AnimeSubscription] 发送站内通知失败 (${username}):`, error);
+      console.error(
+        `[AnimeSubscription] 发送站内通知失败 (${username}):`,
+        error
+      );
     }
   }
 
@@ -535,7 +575,10 @@ async function sendAnimeUpdateNotifications(
         emailsToSend.push({ username, email });
       }
     } catch (error) {
-      console.error(`[AnimeSubscription] 获取用户邮箱失败 (${username}):`, error);
+      console.error(
+        `[AnimeSubscription] 获取用户邮箱失败 (${username}):`,
+        error
+      );
     }
   }
 
@@ -548,9 +591,19 @@ async function sendAnimeUpdateNotifications(
           <p>您好，${username}！</p>
           <p>您订阅的番剧有新集数更新：</p>
           <div style="background-color: #f5f5f5; padding: 15px; border-radius: 5px; margin: 20px 0;">
-            <h3 style="margin-top: 0; color: #2563eb;">${subscription.title}</h3>
+            <h3 style="margin-top: 0; color: #2563eb;">${
+              subscription.title
+            }</h3>
             <p style="margin: 10px 0;">新增集数：第 ${episodeList} 集</p>
-            <p style="margin: 10px 0; color: #666;">搜索源：${subscription.source === 'acgrip' ? 'ACG.RIP' : subscription.source === 'mikan' ? '蜜柑' : subscription.source === 'nyaa' ? 'Nyaa' : '动漫花园'}</p>
+            <p style="margin: 10px 0; color: #666;">搜索源：${
+              subscription.source === 'acgrip'
+                ? 'ACG.RIP'
+                : subscription.source === 'mikan'
+                ? '蜜柑'
+                : subscription.source === 'nyaa'
+                ? 'Nyaa'
+                : '动漫花园'
+            }</p>
           </div>
           <p style="color: #666; font-size: 14px;">这些集数已自动添加到 OpenList 离线下载队列。</p>
           <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
@@ -660,7 +713,10 @@ export async function checkSubscription(subscription: AnimeSubscription) {
     try {
       await sendAnimeUpdateNotifications(subscription, downloaded);
     } catch (error) {
-      console.error(`[AnimeSubscription] ${subscription.title}: 发送通知失败`, error);
+      console.error(
+        `[AnimeSubscription] ${subscription.title}: 发送通知失败`,
+        error
+      );
     }
   }
 
@@ -705,16 +761,26 @@ export async function checkAnimeSubscriptions() {
     // 检查是否距离上次检查超过30分钟
     const timeSinceLastCheck = now - sub.lastCheckTime;
     if (timeSinceLastCheck < MIN_CHECK_INTERVAL) {
-      const remainingMinutes = Math.ceil((MIN_CHECK_INTERVAL - timeSinceLastCheck) / 60000);
-      console.log(`[AnimeSubscription] 跳过 ${sub.title}: 距离上次检查仅 ${Math.floor(timeSinceLastCheck / 60000)} 分钟，还需等待 ${remainingMinutes} 分钟`);
+      const remainingMinutes = Math.ceil(
+        (MIN_CHECK_INTERVAL - timeSinceLastCheck) / 60000
+      );
+      console.log(
+        `[AnimeSubscription] 跳过 ${sub.title}: 距离上次检查仅 ${Math.floor(
+          timeSinceLastCheck / 60000
+        )} 分钟，还需等待 ${remainingMinutes} 分钟`
+      );
       skippedCount++;
       continue;
     }
 
     try {
-      console.log(`[AnimeSubscription] 检查订阅: ${sub.title} (源: ${sub.source}, 上次集数: ${sub.lastEpisode})`);
+      console.log(
+        `[AnimeSubscription] 检查订阅: ${sub.title} (源: ${sub.source}, 上次集数: ${sub.lastEpisode})`
+      );
       const result = await checkSubscription(sub);
-      console.log(`[AnimeSubscription] ${sub.title}: 找到 ${result.found} 个新集数，成功下载 ${result.downloaded} 个`);
+      console.log(
+        `[AnimeSubscription] ${sub.title}: 找到 ${result.found} 个新集数，成功下载 ${result.downloaded} 个`
+      );
       configChanged = true;
       checkedCount++;
     } catch (error) {
@@ -730,5 +796,7 @@ export async function checkAnimeSubscriptions() {
     console.log('[AnimeSubscription] 配置已更新并保存');
   }
 
-  console.log(`[AnimeSubscription] 检查完成 - 总计: ${subscriptions.length}, 已检查: ${checkedCount}, 跳过: ${skippedCount}, 失败: ${errorCount}`);
+  console.log(
+    `[AnimeSubscription] 检查完成 - 总计: ${subscriptions.length}, 已检查: ${checkedCount}, 跳过: ${skippedCount}, 失败: ${errorCount}`
+  );
 }

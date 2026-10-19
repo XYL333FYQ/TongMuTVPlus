@@ -53,19 +53,19 @@
 
 ## 验证结果
 
-| 项目 | 结果 |
-|---|---|
-| 最终 pnpm typecheck | 失败，原生异常退出 3221225477，无源码类型诊断 |
-| 唯一一次环境串行重跑 | 同样失败，PowerShell 显示 -1073741819，即同一异常码 |
-| 最终 pnpm lint | 未运行，按中止规则停止 |
-| 最终 pnpm test | 未运行，按中止规则停止 |
-| 最终 pnpm format:check | 未运行，按中止规则停止 |
-| 最终 pnpm test:rooms | 未运行，按中止规则停止 |
-| 展示文件 check-design | 违规 0、TODO 0；检查范围为 DetailPanel 及新展示组件 |
-| 请求 AST 比对 | 通过，13 个请求表达式、4 组数据 effect 依赖一致 |
-| 阶段性 actions/presentation 测试 | 当时 2 套件、10 项通过（原 6 项 + 新 4 项）；之后追加 3 项测试，最终未重跑 |
-| 阶段性 scoped ESLint | 自动修正后无错误；原请求控制器的 any/console/effect 依赖警告保留，不为清警告修改请求触发条件 |
-| 阶段性目标代码格式 | 已执行目标文件 prettier --write；不等于完整 format:check 通过 |
+| 项目                             | 结果                                                                                         |
+| -------------------------------- | -------------------------------------------------------------------------------------------- |
+| 最终 pnpm typecheck              | 失败，原生异常退出 3221225477，无源码类型诊断                                                |
+| 唯一一次环境串行重跑             | 同样失败，PowerShell 显示 -1073741819，即同一异常码                                          |
+| 最终 pnpm lint                   | 未运行，按中止规则停止                                                                       |
+| 最终 pnpm test                   | 未运行，按中止规则停止                                                                       |
+| 最终 pnpm format:check           | 未运行，按中止规则停止                                                                       |
+| 最终 pnpm test:rooms             | 未运行，按中止规则停止                                                                       |
+| 展示文件 check-design            | 违规 0、TODO 0；检查范围为 DetailPanel 及新展示组件                                          |
+| 请求 AST 比对                    | 通过，13 个请求表达式、4 组数据 effect 依赖一致                                              |
+| 阶段性 actions/presentation 测试 | 当时 2 套件、10 项通过（原 6 项 + 新 4 项）；之后追加 3 项测试，最终未重跑                   |
+| 阶段性 scoped ESLint             | 自动修正后无错误；原请求控制器的 any/console/effect 依赖警告保留，不为清警告修改请求触发条件 |
+| 阶段性目标代码格式               | 已执行目标文件 prettier --write；不等于完整 format:check 通过                                |
 
 开发中的首次类型检查曾指出 4 个展示类型错误，已修正；这不是最终类型检查通过的证明。新增交互测试先在旧实现上实际失败（3 失败/1 通过），实现后阶段性通过，没有把测试环境缺少 matchMedia 当成功。
 
@@ -82,7 +82,7 @@
 
 ## 本机验收文件
 
-根目录：C:/Users/ss/Documents/桌面图标/编程/ai项目/TongMuTVPlus/output/playwright/p7-detail-20261013/。
+根目录：C:/Users/ss/Documents/桌面图标/编程/ai 项目/TongMuTVPlus/output/playwright/p7-detail-20261013/。
 
 runtime/credentials.json、runtime/auth-state.json、runtime/qa.db（及存在的 -wal/-shm）、runtime/dev.log、runtime/owned-pid.json 是隔离验收文件，不进入桌面压缩包。没有删除任何临时文件。验收浏览器 tm-p7-detail 已关闭，隔离 server PID 12952 已停止，3215 端口无监听。
 

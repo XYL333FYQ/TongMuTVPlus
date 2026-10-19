@@ -168,19 +168,17 @@ export default function PlayRecordsPanel({
   return (
     <>
       <div
-        className='fixed inset-0 bg-[color:color-mix(in_srgb,var(--tm-room-cinema-bg)_50%,transparent)] backdrop-blur-sm z-[1000]'
+        className='fixed inset-0 bg-ink/50 backdrop-blur-sm z-[1000]'
         onClick={onClose}
       />
 
-      <div className='fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-4xl max-h-[85vh] bg-[var(--tm-surface)] rounded-xl shadow-xl z-[1001] flex flex-col overflow-hidden'>
-        <div className='flex items-center justify-between px-6 py-4 border-b border-[var(--tm-line)]'>
+      <div className='fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-4xl max-h-[85vh] bg-surface rounded-xl shadow-xl z-[1001] flex flex-col overflow-hidden'>
+        <div className='flex items-center justify-between px-6 py-4 border-b border-line'>
           <div className='flex items-center gap-2'>
-            <History className='w-5 h-5 text-[color:var(--tm-text)]' />
-            <h3 className='text-lg font-bold text-[color:var(--tm-text)]'>
-              播放记录
-            </h3>
+            <History className='w-5 h-5 text-fg' />
+            <h3 className='text-lg font-bold text-fg'>播放记录</h3>
             {playRecords.length > 0 && (
-              <span className='px-2 py-0.5 text-[13px] font-medium bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)] rounded-full'>
+              <span className='px-2 py-0.5 text-[13px] font-medium bg-raised text-fg rounded-full'>
                 {playRecords.length} 项
               </span>
             )}
@@ -193,21 +191,21 @@ export default function PlayRecordsPanel({
                     onClick={
                       allSelected ? () => setSelectedKeys(new Set()) : selectAll
                     }
-                    className='text-[13px] text-[color:var(--tm-muted)] hover:text-[color:var(--tm-text)] transition-colors min-h-[44px] tm-press'
+                    className='text-[13px] text-muted hover:text-fg transition-colors min-h-[44px] tm-press'
                   >
                     {allSelected ? '取消全选' : '全选'}
                   </button>
                   <button
                     onClick={() => setShowDeleteSelectedDialog(true)}
                     disabled={selectedCount === 0 || deletingSelected}
-                    className='inline-flex items-center gap-1 text-[13px] text-[color:var(--tm-text)] hover:text-[color:var(--tm-text)] disabled:cursor-not-allowed disabled:opacity-40 transition-colors min-h-[44px] tm-press'
+                    className='inline-flex items-center gap-1 text-[13px] text-fg hover:text-fg disabled:cursor-not-allowed disabled:opacity-40 transition-colors min-h-[44px] tm-press'
                   >
                     <Trash2 className='w-3.5 h-3.5' />
                     删除{selectedCount > 0 ? `(${selectedCount})` : ''}
                   </button>
                   <button
                     onClick={toggleEditMode}
-                    className='text-[13px] text-[color:var(--tm-muted)] hover:text-[color:var(--tm-muted)] hover:text-[color:var(--tm-text)] transition-colors min-h-[44px] tm-press'
+                    className='text-[13px] text-muted hover:text-fg transition-colors min-h-[44px] tm-press'
                   >
                     取消
                   </button>
@@ -216,13 +214,13 @@ export default function PlayRecordsPanel({
                 <>
                   <button
                     onClick={toggleEditMode}
-                    className='text-[13px] text-[color:var(--tm-text)] hover:text-[color:var(--tm-text)] transition-colors min-h-[44px] tm-press'
+                    className='text-[13px] text-fg hover:text-fg transition-colors min-h-[44px] tm-press'
                   >
                     编辑
                   </button>
                   <button
                     onClick={() => setShowConfirmDialog(true)}
-                    className='min-h-[44px] text-sm text-[var(--tm-muted)] transition-colors hover:text-[var(--tm-text)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--tm-text)] tm-press'
+                    className='min-h-[44px] text-sm text-muted transition-colors hover:text-fg focus-visible:outline focus-visible:outline-2 focus-visible:outline-fg tm-press'
                   >
                     清空全部
                   </button>
@@ -230,7 +228,7 @@ export default function PlayRecordsPanel({
               ))}
             <button
               onClick={onClose}
-              className='w-8 h-8 p-1 rounded-full flex items-center justify-center text-[color:var(--tm-muted)] hover:bg-[var(--tm-line)] transition-colors min-h-[44px] tm-press'
+              className='w-8 h-8 p-1 rounded-full flex items-center justify-center text-muted hover:bg-line transition-colors min-h-[44px] tm-press'
               aria-label='Close'
             >
               <X className='w-full h-full' />
@@ -241,10 +239,10 @@ export default function PlayRecordsPanel({
         <div className='flex-1 overflow-y-auto p-6'>
           {loading ? (
             <div className='flex items-center justify-center py-12'>
-              <div className='w-8 h-8 border-4 border-[var(--tm-line)] border-t-transparent rounded-full animate-spin'></div>
+              <div className='w-8 h-8 border-4 border-line border-t-transparent rounded-full animate-spin'></div>
             </div>
           ) : playRecords.length === 0 ? (
-            <div className='flex flex-col items-center justify-center py-12 text-[color:var(--tm-muted)]'>
+            <div className='flex flex-col items-center justify-center py-12 text-muted'>
               <History className='w-12 h-12 mb-3 opacity-30' />
               <p className='text-sm'>暂无播放记录</p>
             </div>
@@ -291,15 +289,15 @@ export default function PlayRecordsPanel({
                         }}
                         className={`absolute inset-0 z-20 rounded-lg transition-colors ${
                           checked
-                            ? 'bg-[var(--tm-text)] ring-2 ring-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] min-h-[44px] tm-press'
-                            : 'bg-[color:color-mix(in_srgb,var(--tm-room-cinema-bg)_5%,transparent)] hover:bg-[var(--tm-line)] bg-[color:color-mix(in_srgb,var(--tm-room-cinema-bg)_20%,transparent)] min-h-[44px] tm-press'
+                            ? 'bg-fg ring-2 ring-fg text-inverse min-h-[44px] tm-press'
+                            : 'bg-ink/5 hover:bg-line bg-ink/20 min-h-[44px] tm-press'
                         }`}
                       >
                         <span
                           className={`absolute left-2 top-2 flex h-6 w-6 items-center justify-center rounded-full border-2 shadow-md transition-colors ${
                             checked
-                              ? 'border-[var(--tm-line)] bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)]'
-                              : 'border-[var(--tm-line)] bg-[color:color-mix(in_srgb,var(--tm-room-cinema-bg)_40%,transparent)] text-transparent'
+                              ? 'border-line bg-raised text-fg'
+                              : 'border-line bg-ink/40 text-transparent'
                           }`}
                         >
                           <Check className='h-4 w-4' />
@@ -321,19 +319,19 @@ export default function PlayRecordsPanel({
             onClick={() => setShowConfirmDialog(false)}
           >
             <div
-              className='bg-[var(--tm-surface)] rounded-lg shadow-xl max-w-md w-full border border-[var(--tm-line)] transition-all duration-300'
+              className='bg-surface rounded-lg shadow-xl max-w-md w-full border border-line transition-all duration-300'
               onClick={(e) => e.stopPropagation()}
             >
               <div className='p-6'>
                 <div className='flex items-start gap-4 mb-4'>
                   <div className='flex-shrink-0'>
-                    <AlertTriangle className='w-8 h-8 text-[var(--tm-text)]' />
+                    <AlertTriangle className='w-8 h-8 text-fg' />
                   </div>
                   <div className='flex-1'>
-                    <h3 className='text-lg font-medium text-[var(--tm-text)] mb-2'>
+                    <h3 className='text-lg font-medium text-fg mb-2'>
                       清空播放记录
                     </h3>
-                    <p className='text-sm text-[var(--tm-muted)]'>
+                    <p className='text-sm text-muted'>
                       清空全部观看记录？此操作不能撤销
                     </p>
                   </div>
@@ -342,13 +340,13 @@ export default function PlayRecordsPanel({
                 <div className='flex gap-3 mt-6'>
                   <button
                     onClick={() => setShowConfirmDialog(false)}
-                    className='min-h-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--tm-text)] flex-1 px-4 py-2 text-sm font-medium text-[var(--tm-text)] bg-[var(--tm-surface-raised)] rounded-lg transition-colors tm-press'
+                    className='min-h-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-fg flex-1 px-4 py-2 text-sm font-medium text-fg bg-raised rounded-lg transition-colors tm-press'
                   >
                     取消
                   </button>
                   <button
                     onClick={handleClearAll}
-                    className='min-h-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--tm-text)] flex-1 px-4 py-2 text-sm font-medium text-[var(--tm-accent-contrast)] bg-[var(--tm-text)] rounded-lg transition-colors tm-press'
+                    className='min-h-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-fg flex-1 px-4 py-2 text-sm font-medium text-inverse bg-fg rounded-lg transition-colors tm-press'
                   >
                     确定清空
                   </button>
@@ -362,25 +360,25 @@ export default function PlayRecordsPanel({
       {showDeleteSelectedDialog &&
         createPortal(
           <div
-            className='fixed inset-0 bg-[var(--tm-surface-raised)] bg-opacity-50 z-[9999] flex items-center justify-center p-4 transition-opacity duration-300'
+            className='fixed inset-0 bg-raised bg-opacity-50 z-[9999] flex items-center justify-center p-4 transition-opacity duration-300'
             onClick={() =>
               !deletingSelected && setShowDeleteSelectedDialog(false)
             }
           >
             <div
-              className='bg-[var(--tm-surface)] rounded-lg shadow-xl max-w-md w-full border border-[var(--tm-line)] transition-all duration-300'
+              className='bg-surface rounded-lg shadow-xl max-w-md w-full border border-line transition-all duration-300'
               onClick={(e) => e.stopPropagation()}
             >
               <div className='p-6'>
                 <div className='flex items-start gap-4 mb-4'>
                   <div className='flex-shrink-0'>
-                    <AlertTriangle className='w-8 h-8 text-[color:var(--tm-text)]' />
+                    <AlertTriangle className='w-8 h-8 text-fg' />
                   </div>
                   <div className='flex-1'>
-                    <h3 className='text-lg font-medium text-[color:var(--tm-text)] mb-2'>
+                    <h3 className='text-lg font-medium text-fg mb-2'>
                       删除播放记录
                     </h3>
-                    <p className='text-sm text-[color:var(--tm-muted)]'>
+                    <p className='text-sm text-muted'>
                       确定要删除选中的 {selectedCount}{' '}
                       条播放记录吗？此操作不可恢复。
                     </p>
@@ -391,14 +389,14 @@ export default function PlayRecordsPanel({
                   <button
                     onClick={() => setShowDeleteSelectedDialog(false)}
                     disabled={deletingSelected}
-                    className='flex-1 px-4 py-2 text-sm font-medium text-[color:var(--tm-muted)] bg-[var(--tm-surface-raised)] hover:bg-[var(--tm-line)] disabled:opacity-60 rounded-lg transition-colors min-h-[44px] tm-press'
+                    className='flex-1 px-4 py-2 text-sm font-medium text-muted bg-raised hover:bg-line disabled:opacity-60 rounded-lg transition-colors min-h-[44px] tm-press'
                   >
                     取消
                   </button>
                   <button
                     onClick={handleDeleteSelected}
                     disabled={deletingSelected}
-                    className='flex-1 px-4 py-2 text-sm font-medium text-[color:var(--tm-accent-contrast)] bg-[var(--tm-text)] hover:opacity-90 disabled:opacity-60 rounded-lg transition-colors min-h-[44px] tm-press'
+                    className='flex-1 px-4 py-2 text-sm font-medium text-inverse bg-fg hover:opacity-90 disabled:opacity-60 rounded-lg transition-colors min-h-[44px] tm-press'
                   >
                     {deletingSelected ? '删除中...' : '确定删除'}
                   </button>

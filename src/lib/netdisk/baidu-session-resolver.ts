@@ -18,7 +18,11 @@ export async function resolveBaiduSession(id: string) {
   let session = refreshBaiduNetdiskSession(id) || getBaiduNetdiskSession(id);
   if (!session) {
     const payload = parseBaiduNetdiskId(id);
-    const result = await listBaiduShareVideos(payload.shareUrl, baiduConfig.Cookie, payload.passcode || '');
+    const result = await listBaiduShareVideos(
+      payload.shareUrl,
+      baiduConfig.Cookie,
+      payload.passcode || ''
+    );
     session = createBaiduNetdiskSession({
       title: result.title,
       shareUrl: payload.shareUrl,

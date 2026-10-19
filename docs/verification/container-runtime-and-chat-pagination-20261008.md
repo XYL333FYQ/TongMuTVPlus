@@ -4,15 +4,15 @@
 
 ## 当前容器运行条件
 
-| 环境 | 实际检查 | 结果 |
-| --- | --- | --- |
-| Windows | `Get-Command docker,podman,nerdctl,containerd,ctr,rancher-desktop,colima,wsl` | 只找到系统 `wsl.exe`；当前 PATH 没有所列容器 CLI。 |
-| Windows | Docker/Podman/Rancher/containerd 名称的进程与服务；常见 Program Files 安装目录 | 没有发现相关运行进程、服务或所查安装目录内容。 |
-| WSL | `wsl --list --verbose` | `Ubuntu-24.04` 已经处于 **Running**，使用 WSL2；本轮只进入现有运行中的分发检查，没有安装或启动新的大型软件。 |
-| WSL | `command -v` 查询 docker、podman、nerdctl、containerd、ctr、crictl | 当前 PATH 均未发现。 |
-| WSL | `ps -C dockerd,containerd,podman,conmon,buildkitd -o pid,comm` | 只有表头，没有对应进程。 |
-| WSL | 常用 Docker/Podman/containerd socket | `/var/run/docker.sock`、`/run/docker.sock`、`/run/podman/podman.sock`、`/run/containerd/containerd.sock` 均未发现可用 socket。 |
-| WSL | dpkg 包列表及常用二进制路径 | 查询 docker.io、docker-ce、docker-ce-cli、docker-desktop、podman、containerd、containerd.io、nerdctl 没有已安装项；所查 `/usr/bin`、`/usr/local/bin` 和 Docker Desktop 的 WSL CLI 共享路径未发现可执行文件。 |
+| 环境    | 实际检查                                                                       | 结果                                                                                                                                                                                                         |
+| ------- | ------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Windows | `Get-Command docker,podman,nerdctl,containerd,ctr,rancher-desktop,colima,wsl`  | 只找到系统 `wsl.exe`；当前 PATH 没有所列容器 CLI。                                                                                                                                                           |
+| Windows | Docker/Podman/Rancher/containerd 名称的进程与服务；常见 Program Files 安装目录 | 没有发现相关运行进程、服务或所查安装目录内容。                                                                                                                                                               |
+| WSL     | `wsl --list --verbose`                                                         | `Ubuntu-24.04` 已经处于 **Running**，使用 WSL2；本轮只进入现有运行中的分发检查，没有安装或启动新的大型软件。                                                                                                 |
+| WSL     | `command -v` 查询 docker、podman、nerdctl、containerd、ctr、crictl             | 当前 PATH 均未发现。                                                                                                                                                                                         |
+| WSL     | `ps -C dockerd,containerd,podman,conmon,buildkitd -o pid,comm`                 | 只有表头，没有对应进程。                                                                                                                                                                                     |
+| WSL     | 常用 Docker/Podman/containerd socket                                           | `/var/run/docker.sock`、`/run/docker.sock`、`/run/podman/podman.sock`、`/run/containerd/containerd.sock` 均未发现可用 socket。                                                                               |
+| WSL     | dpkg 包列表及常用二进制路径                                                    | 查询 docker.io、docker-ce、docker-ce-cli、docker-desktop、podman、containerd、containerd.io、nerdctl 没有已安装项；所查 `/usr/bin`、`/usr/local/bin` 和 Docker Desktop 的 WSL CLI 共享路径未发现可执行文件。 |
 
 因此，**当前可访问环境没有可直接用于本地容器验收的现有 Docker/兼容运行时**。这不是“镜像构建失败”，也不是“容器健康检查失败”：这些步骤尚未获得运行条件，未执行。
 
@@ -26,14 +26,14 @@
 
 当前两种传输的契约一致：
 
-| 请求 | 结果 |
-| --- | --- |
-| `afterSeq=N&limit=L` / `{afterSeq:N,limit:L}` | 返回严格大于 N 的本房间消息，从旧到新，最多 L 条；用于补齐断线缺口。 |
+| 请求                                            | 结果                                                                         |
+| ----------------------------------------------- | ---------------------------------------------------------------------------- |
+| `afterSeq=N&limit=L` / `{afterSeq:N,limit:L}`   | 返回严格大于 N 的本房间消息，从旧到新，最多 L 条；用于补齐断线缺口。         |
 | `beforeSeq=N&limit=L` / `{beforeSeq:N,limit:L}` | 返回严格小于 N 的最近一页旧消息，回包仍从旧到新；用该页首条 seq 继续向前翻。 |
-| 同时提供 beforeSeq 与 afterSeq | 与现有 Socket/服务层行为一致，beforeSeq 优先。 |
-| 最早消息之前 | 返回空消息数组。 |
-| 非数值 beforeSeq | HTTP 400 / `INVALID_INPUT`；服务层继续校验。 |
-| 未登录 / 非该房持久成员 | HTTP 401 / 403；分页参数不会绕过权限。 |
+| 同时提供 beforeSeq 与 afterSeq                  | 与现有 Socket/服务层行为一致，beforeSeq 优先。                               |
+| 最早消息之前                                    | 返回空消息数组。                                                             |
+| 非数值 beforeSeq                                | HTTP 400 / `INVALID_INPUT`；服务层继续校验。                                 |
+| 未登录 / 非该房持久成员                         | HTTP 401 / 403；分页参数不会绕过权限。                                       |
 
 成功响应仍是 `{success,messages,lastMessageSeq,unreadCount}`，读取历史不会提交已读。消息 seq 属于全表递增序号，其他房间可以造成正常空洞；游标不是“消息必须逐个整数连续”的假设。
 

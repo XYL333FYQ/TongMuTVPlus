@@ -123,9 +123,13 @@ export function clearAuthCookie(): void {
 
   try {
     // 清除 auth cookie，设置过期时间为过去
-    document.cookie = 'auth=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax';
+    document.cookie =
+      'auth=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax';
     // 如果有其他域名或路径的cookie，也尝试清除
-    document.cookie = 'auth=; path=/; domain=' + window.location.hostname + '; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax';
+    document.cookie =
+      'auth=; path=/; domain=' +
+      window.location.hostname +
+      '; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax';
   } catch (error) {
     console.error('[Auth] Failed to clear cookie:', error);
   }

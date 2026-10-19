@@ -17,36 +17,60 @@ export interface Pan115ShareListResult {
 }
 
 const VIDEO_EXTENSIONS = [
-  '.mp4', '.webm', '.avi', '.wmv', '.flv', '.mov', '.mkv', '.mpeg', '.3gp', '.ts', '.m2ts', '.mp3', '.wav', '.aac', '.iso',
+  '.mp4',
+  '.webm',
+  '.avi',
+  '.wmv',
+  '.flv',
+  '.mov',
+  '.mkv',
+  '.mpeg',
+  '.3gp',
+  '.ts',
+  '.m2ts',
+  '.mp3',
+  '.wav',
+  '.aac',
+  '.iso',
 ];
 
 const G_KTS = new Uint8Array([
-  0xf0, 0xe5, 0x69, 0xae, 0xbf, 0xdc, 0xbf, 0x8a, 0x1a, 0x45, 0xe8, 0xbe, 0x7d, 0xa6, 0x73, 0xb8,
-  0xde, 0x8f, 0xe7, 0xc4, 0x45, 0xda, 0x86, 0xc4, 0x9b, 0x64, 0x8b, 0x14, 0x6a, 0xb4, 0xf1, 0xaa,
-  0x38, 0x01, 0x35, 0x9e, 0x26, 0x69, 0x2c, 0x86, 0x00, 0x6b, 0x4f, 0xa5, 0x36, 0x34, 0x62, 0xa6,
-  0x2a, 0x96, 0x68, 0x18, 0xf2, 0x4a, 0xfd, 0xbd, 0x6b, 0x97, 0x8f, 0x4d, 0x8f, 0x89, 0x13, 0xb7,
-  0x6c, 0x8e, 0x93, 0xed, 0x0e, 0x0d, 0x48, 0x3e, 0xd7, 0x2f, 0x88, 0xd8, 0xfe, 0xfe, 0x7e, 0x86,
-  0x50, 0x95, 0x4f, 0xd1, 0xeb, 0x83, 0x26, 0x34, 0xdb, 0x66, 0x7b, 0x9c, 0x7e, 0x9d, 0x7a, 0x81,
-  0x32, 0xea, 0xb6, 0x33, 0xde, 0x3a, 0xa9, 0x59, 0x34, 0x66, 0x3b, 0xaa, 0xba, 0x81, 0x60, 0x48,
-  0xb9, 0xd5, 0x81, 0x9c, 0xf8, 0x6c, 0x84, 0x77, 0xff, 0x54, 0x78, 0x26, 0x5f, 0xbe, 0xe8, 0x1e,
-  0x36, 0x9f, 0x34, 0x80, 0x5c, 0x45, 0x2c, 0x9b, 0x76, 0xd5, 0x1b, 0x8f, 0xcc, 0xc3, 0xb8, 0xf5,
+  0xf0, 0xe5, 0x69, 0xae, 0xbf, 0xdc, 0xbf, 0x8a, 0x1a, 0x45, 0xe8, 0xbe, 0x7d,
+  0xa6, 0x73, 0xb8, 0xde, 0x8f, 0xe7, 0xc4, 0x45, 0xda, 0x86, 0xc4, 0x9b, 0x64,
+  0x8b, 0x14, 0x6a, 0xb4, 0xf1, 0xaa, 0x38, 0x01, 0x35, 0x9e, 0x26, 0x69, 0x2c,
+  0x86, 0x00, 0x6b, 0x4f, 0xa5, 0x36, 0x34, 0x62, 0xa6, 0x2a, 0x96, 0x68, 0x18,
+  0xf2, 0x4a, 0xfd, 0xbd, 0x6b, 0x97, 0x8f, 0x4d, 0x8f, 0x89, 0x13, 0xb7, 0x6c,
+  0x8e, 0x93, 0xed, 0x0e, 0x0d, 0x48, 0x3e, 0xd7, 0x2f, 0x88, 0xd8, 0xfe, 0xfe,
+  0x7e, 0x86, 0x50, 0x95, 0x4f, 0xd1, 0xeb, 0x83, 0x26, 0x34, 0xdb, 0x66, 0x7b,
+  0x9c, 0x7e, 0x9d, 0x7a, 0x81, 0x32, 0xea, 0xb6, 0x33, 0xde, 0x3a, 0xa9, 0x59,
+  0x34, 0x66, 0x3b, 0xaa, 0xba, 0x81, 0x60, 0x48, 0xb9, 0xd5, 0x81, 0x9c, 0xf8,
+  0x6c, 0x84, 0x77, 0xff, 0x54, 0x78, 0x26, 0x5f, 0xbe, 0xe8, 0x1e, 0x36, 0x9f,
+  0x34, 0x80, 0x5c, 0x45, 0x2c, 0x9b, 0x76, 0xd5, 0x1b, 0x8f, 0xcc, 0xc3, 0xb8,
+  0xf5,
 ]);
 
-const RSA_E = BigInt(`0x8686980c0f5a24c4b9d43020cd2c22703ff3f450756529058b1cf88f09b8602136477198a6e2683149659bd122c33592fdb5ad47944ad1ea4d36c6b172aad6338c3bb6ac6227502d010993ac967d1aef00f0c8e038de2e4d3bc2ec368af2e9f10a6f1eda4f7262f136420c07c331b871bf139f74f3010e3c4fe57df3afb71683`);
+const RSA_E = BigInt(
+  `0x8686980c0f5a24c4b9d43020cd2c22703ff3f450756529058b1cf88f09b8602136477198a6e2683149659bd122c33592fdb5ad47944ad1ea4d36c6b172aad6338c3bb6ac6227502d010993ac967d1aef00f0c8e038de2e4d3bc2ec368af2e9f10a6f1eda4f7262f136420c07c331b871bf139f74f3010e3c4fe57df3afb71683`
+);
 const RSA_N = BigInt(0x10001);
 
 function assertSafe(value: string, label: string) {
   const normalized = value.trim();
   for (let i = 0; i < normalized.length; i += 1) {
     if (normalized.charCodeAt(i) > 255) {
-      throw new Error(`${label} 含有非法字符，请检查是否包含中文标点或说明文字`);
+      throw new Error(
+        `${label} 含有非法字符，请检查是否包含中文标点或说明文字`
+      );
     }
   }
   return normalized;
 }
 
 export function normalizePan115Cookie(cookie: string) {
-  return assertSafe(cookie.replace(/；/g, ';').replace(/：/g, ':').replace(/，/g, ','), '115 Cookie');
+  return assertSafe(
+    cookie.replace(/；/g, ';').replace(/：/g, ':').replace(/，/g, ','),
+    '115 Cookie'
+  );
 }
 
 export function assertPan115CookieHeaderSafe(cookie: string) {
@@ -59,8 +83,14 @@ function isMediaFile(filename: string) {
 }
 
 export function parsePan115ShareUrl(shareUrl: string, passcode = '') {
-  const cleaned = decodeURIComponent(shareUrl.trim()).replace(/[#.,，/\s]+$/, '');
-  const matches = /https:\/\/(?:115|anxia|115cdn)\.com\/s\/([a-zA-Z0-9]+)(?:\?password=([^&#\s]+))?/i.exec(cleaned);
+  const cleaned = decodeURIComponent(shareUrl.trim()).replace(
+    /[#.,，/\s]+$/,
+    ''
+  );
+  const matches =
+    /https:\/\/(?:115|anxia|115cdn)\.com\/s\/([a-zA-Z0-9]+)(?:\?password=([^&#\s]+))?/i.exec(
+      cleaned
+    );
   if (!matches) throw new Error('无法解析115分享链接');
   return {
     shareCode: matches[1],
@@ -77,7 +107,11 @@ async function parseJson(response: Response) {
   }
 }
 
-async function fetchShareDir(shareCode: string, receiveCode: string, cid: string) {
+async function fetchShareDir(
+  shareCode: string,
+  receiveCode: string,
+  cid: string
+) {
   const url = new URL(SHARE_URL);
   url.searchParams.set('share_code', shareCode);
   url.searchParams.set('receive_code', receiveCode);
@@ -91,15 +125,24 @@ async function fetchShareDir(shareCode: string, receiveCode: string, cid: string
   return parseJson(response);
 }
 
-async function collectFilesRecursive(shareCode: string, receiveCode: string, cid: string, files: Pan115ShareVideoFile[]) {
+async function collectFilesRecursive(
+  shareCode: string,
+  receiveCode: string,
+  cid: string,
+  files: Pan115ShareVideoFile[]
+) {
   const responseData = await fetchShareDir(shareCode, receiveCode, cid);
   if (!responseData?.data) return;
   if (responseData.data.share_state === 7) {
     throw new Error(responseData.data.shareinfo?.forbid_reason || '链接已过期');
   }
 
-  const list = Array.isArray(responseData.data.list) ? responseData.data.list : [];
-  const mediaFiles = list.filter((item: any) => Number(item.fc) === 1 && isMediaFile(String(item.n || '')));
+  const list = Array.isArray(responseData.data.list)
+    ? responseData.data.list
+    : [];
+  const mediaFiles = list.filter(
+    (item: any) => Number(item.fc) === 1 && isMediaFile(String(item.n || ''))
+  );
   const folders = list.filter((item: any) => Number(item.fc) === 0);
 
   mediaFiles.forEach((file: any) => {
@@ -113,20 +156,36 @@ async function collectFilesRecursive(shareCode: string, receiveCode: string, cid
   });
 
   for (const folder of folders) {
-    await collectFilesRecursive(shareCode, receiveCode, String(folder.cid || ''), files);
+    await collectFilesRecursive(
+      shareCode,
+      receiveCode,
+      String(folder.cid || ''),
+      files
+    );
   }
 }
 
-export async function listPan115ShareVideos(shareUrl: string, passcode = ''): Promise<Pan115ShareListResult> {
+export async function listPan115ShareVideos(
+  shareUrl: string,
+  passcode = ''
+): Promise<Pan115ShareListResult> {
   const { shareCode, receiveCode } = parsePan115ShareUrl(shareUrl, passcode);
   const files: Pan115ShareVideoFile[] = [];
   await collectFilesRecursive(shareCode, receiveCode, shareCode, files);
-  files.sort((a, b) => a.name.localeCompare(b.name, 'zh-Hans-CN', { numeric: true, sensitivity: 'base' }));
+  files.sort((a, b) =>
+    a.name.localeCompare(b.name, 'zh-Hans-CN', {
+      numeric: true,
+      sensitivity: 'base',
+    })
+  );
   if (files.length === 0) {
     throw new Error('115分享中没有可播放的视频文件');
   }
   return {
-    title: files.length === 1 ? files[0].name.replace(/\.[^.]+$/, '') : '115网盘立即播放',
+    title:
+      files.length === 1
+        ? files[0].name.replace(/\.[^.]+$/, '')
+        : '115网盘立即播放',
     files,
   };
 }
@@ -150,7 +209,11 @@ function bigIntToBytes(value: bigint, length?: number) {
   return buffer;
 }
 
-function* accStep(start: number, stop: number, step = 1): Generator<[number, number, number]> {
+function* accStep(
+  start: number,
+  stop: number,
+  step = 1
+): Generator<[number, number, number]> {
   for (let i = start + step; i < stop; i += step) {
     yield [start, i, step];
     start = i;
@@ -167,7 +230,8 @@ function bytesXor(v1: Uint8Array, v2: Uint8Array) {
 function xor(src: Uint8Array, key: Uint8Array) {
   const buffer = new Uint8Array(src.length);
   const offset = src.length & 0b11;
-  if (offset) buffer.set(bytesXor(src.subarray(0, offset), key.subarray(0, offset)));
+  if (offset)
+    buffer.set(bytesXor(src.subarray(0, offset), key.subarray(0, offset)));
   const iterator = accStep(offset, src.length, key.length);
   let next = iterator.next();
   while (!next.done) {
@@ -220,7 +284,9 @@ function encrypt115(input: string) {
   xorText.set(
     xor(
       reverseBytes(xor(data, new Uint8Array([0x8d, 0xa5, 0xa5, 0x8d]))),
-      new Uint8Array([0x78, 0x06, 0xad, 0x4c, 0x33, 0x86, 0x5d, 0x18, 0x4c, 0x01, 0x3f, 0x46])
+      new Uint8Array([
+        0x78, 0x06, 0xad, 0x4c, 0x33, 0x86, 0x5d, 0x18, 0x4c, 0x01, 0x3f, 0x46,
+      ])
     ),
     16
   );
@@ -230,7 +296,13 @@ function encrypt115(input: string) {
   let next = iterator.next();
   while (!next.done) {
     const [l, r] = next.value;
-    cipherData.set(bigIntToBytes(modPow(padPkcs1V15(xorText.subarray(l, r)), RSA_N, RSA_E), 128), start);
+    cipherData.set(
+      bigIntToBytes(
+        modPow(padPkcs1V15(xorText.subarray(l, r)), RSA_N, RSA_E),
+        128
+      ),
+      start
+    );
     start += 128;
     next = iterator.next();
   }
@@ -256,13 +328,20 @@ function decrypt115(cipherData: string) {
   return Buffer.from(bytes).toString('utf8');
 }
 
-export async function getPan115PlayUrl(file: Pan115ShareVideoFile, cookie: string) {
+export async function getPan115PlayUrl(
+  file: Pan115ShareVideoFile,
+  cookie: string
+) {
   const safeCookie = assertPan115CookieHeaderSafe(cookie);
-  const payload = `data=${encodeURIComponent(encrypt115(JSON.stringify({
-    share_code: file.shareCode,
-    receive_code: file.receiveCode,
-    file_id: file.fileId,
-  })))}`;
+  const payload = `data=${encodeURIComponent(
+    encrypt115(
+      JSON.stringify({
+        share_code: file.shareCode,
+        receive_code: file.receiveCode,
+        file_id: file.fileId,
+      })
+    )
+  )}`;
 
   const response = await fetch(PLAY_URL, {
     method: 'POST',

@@ -3,8 +3,12 @@
 import { Clock3, Heart, ImageOff } from 'lucide-react';
 import { useState } from 'react';
 
-import { addMusicSongToPlaylist, playMusicLater, playMusicSong } from '@/lib/music/actions';
 import { cn } from '@/lib/cn';
+import {
+  addMusicSongToPlaylist,
+  playMusicLater,
+  playMusicSong,
+} from '@/lib/music/actions';
 import { songKey, useNowPlaying } from '@/lib/music/now-playing';
 import { musicSources } from '@/lib/music/shared';
 import type { Song } from '@/lib/music/types';
@@ -34,7 +38,9 @@ function formatDuration(song: Song): string {
   const seconds = Number(song.duration) || Number(text) || 0;
   if (!Number.isFinite(seconds) || seconds <= 0) return '';
   const minutes = Math.floor(seconds / 60);
-  return `${String(minutes).padStart(2, '0')}:${String(Math.floor(seconds % 60)).padStart(2, '0')}`;
+  return `${String(minutes).padStart(2, '0')}:${String(
+    Math.floor(seconds % 60)
+  ).padStart(2, '0')}`;
 }
 
 function sourceLabel(platform?: string): string {
@@ -81,7 +87,9 @@ function SongRow({
       }}
       className={cn(MUSIC_ROW, playing && MUSIC_ROW_PLAYING)}
     >
-      <span className={MUSIC_ROW_INDEX}>{String(index + 1).padStart(2, '0')}</span>
+      <span className={MUSIC_ROW_INDEX}>
+        {String(index + 1).padStart(2, '0')}
+      </span>
 
       <span className={MUSIC_ROW_ART}>
         {cover ? (

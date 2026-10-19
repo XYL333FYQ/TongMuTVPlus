@@ -11,7 +11,7 @@
  * 注意：此模块仅在服务端使用，通过 webpack 配置排除客户端打包
  */
 
-import { DatabaseAdapter, D1PreparedStatement, D1Result } from './d1-adapter';
+import { D1PreparedStatement, D1Result, DatabaseAdapter } from './d1-adapter';
 
 /**
  * 动态加载 @libsql/client 的 createClient 函数
@@ -49,8 +49,8 @@ export class TursoAdapter implements DatabaseAdapter {
 
   async batch(statements: D1PreparedStatement[]): Promise<D1Result[]> {
     // Turso/libSQL 原生支持 batch
-    const libsqlStatements = statements.map(
-      (stmt) => (stmt as TursoPreparedStatement).toLibSQLBatch()
+    const libsqlStatements = statements.map((stmt) =>
+      (stmt as TursoPreparedStatement).toLibSQLBatch()
     );
     const results = await this.client.batch(libsqlStatements, 'write');
     return results.map((result: any) => ({
@@ -78,10 +78,7 @@ export class TursoAdapter implements DatabaseAdapter {
 class TursoPreparedStatement implements D1PreparedStatement {
   private params: any[] = [];
 
-  constructor(
-    private client: any,
-    private query: string
-  ) {}
+  constructor(private client: any, private query: string) {}
 
   bind(...values: any[]): D1PreparedStatement {
     this.params = values;

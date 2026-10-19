@@ -35,7 +35,7 @@ export default function DetailActors({
         <div
           className={currentSource === 'tmdb' ? 'mb-4' : 'tm-detail-credits'}
         >
-          <h4 className='text-sm font-medium text-[var(--tm-text)] mb-2 flex items-center gap-2'>
+          <h4 className='text-sm font-medium text-fg mb-2 flex items-center gap-2'>
             {currentSource === 'tmdb' && <Users size={16} />}
             演员
           </h4>
@@ -63,7 +63,7 @@ export default function DetailActors({
                   >
                     {actor.profile_path ? (
                       <div
-                        className='relative w-20 h-20 rounded-full overflow-hidden bg-[var(--tm-surface-raised)] mb-2 cursor-pointer hover:opacity-80 transition-opacity'
+                        className='relative w-20 h-20 rounded-full overflow-hidden bg-raised mb-2 cursor-pointer hover:opacity-80 transition-opacity'
                         onClick={() =>
                           handleImageClick(
                             getTMDBImageUrl(actor.profile_path || null, 'w185')
@@ -92,8 +92,8 @@ export default function DetailActors({
                         />
                       </div>
                     ) : (
-                      <div className='w-20 h-20 rounded-full bg-[var(--tm-surface-raised)] mb-2 flex items-center justify-center'>
-                        <Users size={28} className='text-[var(--tm-muted)]' />
+                      <div className='w-20 h-20 rounded-full bg-raised mb-2 flex items-center justify-center'>
+                        <Users size={28} className='text-muted' />
                       </div>
                     )}
                     <a
@@ -102,13 +102,13 @@ export default function DetailActors({
                       )}`}
                       target='_blank'
                       rel='noopener noreferrer'
-                      className='text-[13px] font-medium text-[var(--tm-text)] text-center w-20 line-clamp-2 hover:text-[var(--tm-text)] transition-colors cursor-pointer'
+                      className='text-[13px] font-medium text-fg text-center w-20 line-clamp-2 hover:text-fg transition-colors cursor-pointer'
                       onClick={(e) => e.stopPropagation()}
                     >
                       {actor.name}
                     </a>
                     {actor.character && (
-                      <p className='text-[13px] text-[var(--tm-muted)] text-center w-20 line-clamp-2'>
+                      <p className='text-[13px] text-muted text-center w-20 line-clamp-2'>
                         {actor.character}
                       </p>
                     )}
@@ -117,7 +117,7 @@ export default function DetailActors({
               </div>
             </div>
           ) : (
-            <p className='text-[var(--tm-muted)]'>
+            <p className='text-muted'>
               {detailData.actors
                 .slice(0, 10)
                 .map((a) => a.name)

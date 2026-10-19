@@ -128,21 +128,19 @@ export const FavoritesPanel: React.FC<FavoritesPanelProps> = ({
     <>
       {/* 背景遮罩 */}
       <div
-        className='fixed inset-0 bg-[color:color-mix(in_srgb,var(--tm-room-cinema-bg)_50%,transparent)] backdrop-blur-sm z-[1000]'
+        className='fixed inset-0 bg-ink/50 backdrop-blur-sm z-[1000]'
         onClick={onClose}
       />
 
       {/* 收藏面板 */}
-      <div className='fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-4xl max-h-[85vh] bg-[var(--tm-surface)] rounded-xl shadow-xl z-[1001] flex flex-col overflow-hidden'>
+      <div className='fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-4xl max-h-[85vh] bg-surface rounded-xl shadow-xl z-[1001] flex flex-col overflow-hidden'>
         {/* 标题栏 */}
-        <div className='flex items-center justify-between px-6 py-4 border-b border-[var(--tm-line)]'>
+        <div className='flex items-center justify-between px-6 py-4 border-b border-line'>
           <div className='flex items-center gap-2'>
-            <Star className='w-5 h-5 text-[color:var(--tm-text)]' />
-            <h3 className='text-lg font-bold text-[color:var(--tm-text)]'>
-              我的收藏
-            </h3>
+            <Star className='w-5 h-5 text-fg' />
+            <h3 className='text-lg font-bold text-fg'>我的收藏</h3>
             {favoriteItems.length > 0 && (
-              <span className='px-2 py-0.5 text-[13px] font-medium bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)] rounded-full'>
+              <span className='px-2 py-0.5 text-[13px] font-medium bg-raised text-fg rounded-full'>
                 {favoriteItems.length} 项
               </span>
             )}
@@ -151,14 +149,14 @@ export const FavoritesPanel: React.FC<FavoritesPanelProps> = ({
             {favoriteItems.length > 0 && (
               <button
                 onClick={() => setShowConfirmDialog(true)}
-                className='text-[13px] text-[color:var(--tm-text)] hover:text-[color:var(--tm-text)] transition-colors min-h-[44px] tm-press'
+                className='text-[13px] text-fg hover:text-fg transition-colors min-h-[44px] tm-press'
               >
                 清空全部
               </button>
             )}
             <button
               onClick={onClose}
-              className='w-8 h-8 p-1 rounded-full flex items-center justify-center text-[color:var(--tm-muted)] hover:bg-[var(--tm-line)] transition-colors min-h-[44px] tm-press'
+              className='w-8 h-8 p-1 rounded-full flex items-center justify-center text-muted hover:bg-line transition-colors min-h-[44px] tm-press'
               aria-label='Close'
             >
               <X className='w-full h-full' />
@@ -170,10 +168,10 @@ export const FavoritesPanel: React.FC<FavoritesPanelProps> = ({
         <div className='flex-1 overflow-y-auto p-6'>
           {loading ? (
             <div className='flex items-center justify-center py-12'>
-              <div className='w-8 h-8 border-4 border-[var(--tm-line)] border-t-transparent rounded-full animate-spin'></div>
+              <div className='w-8 h-8 border-4 border-line border-t-transparent rounded-full animate-spin'></div>
             </div>
           ) : favoriteItems.length === 0 ? (
-            <div className='flex flex-col items-center justify-center py-12 text-[color:var(--tm-muted)]'>
+            <div className='flex flex-col items-center justify-center py-12 text-muted'>
               <Star className='w-12 h-12 mb-3 opacity-30' />
               <p className='text-sm'>暂无收藏内容</p>
             </div>
@@ -198,24 +196,24 @@ export const FavoritesPanel: React.FC<FavoritesPanelProps> = ({
       {showConfirmDialog &&
         createPortal(
           <div
-            className='fixed inset-0 bg-[var(--tm-surface-raised)] bg-opacity-50 z-[9999] flex items-center justify-center p-4 transition-opacity duration-300'
+            className='fixed inset-0 bg-raised bg-opacity-50 z-[9999] flex items-center justify-center p-4 transition-opacity duration-300'
             onClick={() => setShowConfirmDialog(false)}
           >
             <div
-              className='bg-[var(--tm-surface)] rounded-lg shadow-xl max-w-md w-full border border-[var(--tm-line)] transition-all duration-300'
+              className='bg-surface rounded-lg shadow-xl max-w-md w-full border border-line transition-all duration-300'
               onClick={(e) => e.stopPropagation()}
             >
               <div className='p-6'>
                 {/* 图标和标题 */}
                 <div className='flex items-start gap-4 mb-4'>
                   <div className='flex-shrink-0'>
-                    <AlertTriangle className='w-8 h-8 text-[color:var(--tm-text)]' />
+                    <AlertTriangle className='w-8 h-8 text-fg' />
                   </div>
                   <div className='flex-1'>
-                    <h3 className='text-lg font-medium text-[color:var(--tm-text)] mb-2'>
+                    <h3 className='text-lg font-medium text-fg mb-2'>
                       清空收藏
                     </h3>
-                    <p className='text-sm text-[color:var(--tm-muted)]'>
+                    <p className='text-sm text-muted'>
                       确定要清空所有收藏吗？此操作不可恢复。
                     </p>
                   </div>
@@ -225,13 +223,13 @@ export const FavoritesPanel: React.FC<FavoritesPanelProps> = ({
                 <div className='flex gap-3 mt-6'>
                   <button
                     onClick={() => setShowConfirmDialog(false)}
-                    className='flex-1 px-4 py-2 text-sm font-medium text-[color:var(--tm-muted)] bg-[var(--tm-surface-raised)] hover:bg-[var(--tm-line)] rounded-lg transition-colors min-h-[44px] tm-press'
+                    className='flex-1 px-4 py-2 text-sm font-medium text-muted bg-raised hover:bg-line rounded-lg transition-colors min-h-[44px] tm-press'
                   >
                     取消
                   </button>
                   <button
                     onClick={handleClearAll}
-                    className='flex-1 px-4 py-2 text-sm font-medium text-[color:var(--tm-accent-contrast)] bg-[var(--tm-text)] hover:opacity-90 rounded-lg transition-colors min-h-[44px] tm-press'
+                    className='flex-1 px-4 py-2 text-sm font-medium text-inverse bg-fg hover:opacity-90 rounded-lg transition-colors min-h-[44px] tm-press'
                   >
                     确定清空
                   </button>

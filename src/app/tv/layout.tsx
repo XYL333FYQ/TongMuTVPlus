@@ -1,6 +1,8 @@
 import { notFound } from 'next/navigation';
 import { ReactNode } from 'react';
 
+import '@/components/tv/tv.css';
+
 import { BRAND_NAME } from '@/lib/brand';
 import { isTVModeEnabled } from '@/lib/tv-mode';
 

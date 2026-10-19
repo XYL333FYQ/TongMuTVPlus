@@ -22,7 +22,20 @@ const SHARE_PAGE_TIMEOUT_MS = 15000;
 const MAX_TRAVERSE_NODES = 2000;
 const MAX_TRAVERSE_DEPTH = 20;
 const VIDEO_EXTENSIONS = [
-  '.mp4', '.mkv', '.avi', '.mov', '.flv', '.wmv', '.m3u8', '.ts', '.rmvb', '.rm', '.mpeg', '.mpg', '.m4v', '.webm',
+  '.mp4',
+  '.mkv',
+  '.avi',
+  '.mov',
+  '.flv',
+  '.wmv',
+  '.m3u8',
+  '.ts',
+  '.rmvb',
+  '.rm',
+  '.mpeg',
+  '.mpg',
+  '.m4v',
+  '.webm',
 ];
 
 const authStore = new Map<string, { token: string; expiresAt: number }>();
@@ -76,7 +89,9 @@ function assertSafe(value: string, label: string) {
   const normalized = value.trim();
   for (let i = 0; i < normalized.length; i += 1) {
     if (normalized.charCodeAt(i) > 255) {
-      throw new Error(`${label} 含有非法字符，请检查是否包含中文标点或说明文字`);
+      throw new Error(
+        `${label} 含有非法字符，请检查是否包含中文标点或说明文字`
+      );
     }
   }
   return normalized;
@@ -90,21 +105,29 @@ export function normalizePan123Password(value: string) {
   return assertSafe(value, '123网盘密码');
 }
 
-export function parsePan123ShareUrl(url: string, passcode = ''): { shareKey: string; sharePwd: string } {
+export function parsePan123ShareUrl(
+  url: string,
+  passcode = ''
+): { shareKey: string; sharePwd: string } {
   let panUrl = decodeURIComponent(url.trim()).replace(/[#.,，/\s]+$/, '');
   let sharePwd = passcode || '';
 
   try {
     const parsed = new URL(panUrl);
     if (!sharePwd) {
-      sharePwd = parsed.searchParams.get('pwd') || parsed.searchParams.get('password') || '';
+      sharePwd =
+        parsed.searchParams.get('pwd') ||
+        parsed.searchParams.get('password') ||
+        '';
     }
     panUrl = `${parsed.origin}${parsed.pathname}`;
   } catch {
     // ignore url parse error, continue with regex fallback
   }
 
-  const pwdMatch = panUrl.match(/[;，,\s]+[\u63d0\u53d6\u7801:：\s]*([a-zA-Z0-9]{4})/);
+  const pwdMatch = panUrl.match(
+    /[;，,\s]+[\u63d0\u53d6\u7801:：\s]*([a-zA-Z0-9]{4})/
+  );
   if (!sharePwd && pwdMatch?.[1]) {
     sharePwd = pwdMatch[1];
     panUrl = panUrl.substring(0, pwdMatch.index);
@@ -119,7 +142,8 @@ export function parsePan123ShareUrl(url: string, passcode = ''): { shareKey: str
     }
   }
 
-  const regex = /https:\/\/(www\.)?123(684|865|912|pan)\.(com|cn)\/s\/([^\\/]+)/;
+  const regex =
+    /https:\/\/(www\.)?123(684|865|912|pan)\.(com|cn)\/s\/([^\\/]+)/;
   const matches = regex.exec(panUrl);
   if (!matches?.[4]) {
     throw new Error('无法解析123网盘分享链接');
@@ -137,7 +161,11 @@ async function parseJsonResponse<T = any>(response: Response): Promise<T> {
   }
 }
 
-async function fetchWithTimeout(url: string, init: RequestInit, timeoutMs: number) {
+async function fetchWithTimeout(
+  url: string,
+  init: RequestInit,
+  timeoutMs: number
+) {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
   try {
@@ -151,7 +179,12 @@ async function fetchWithTimeout(url: string, init: RequestInit, timeoutMs: numbe
 }
 
 export function clearPan123AuthCache(account: string, password: string) {
-  authStore.delete(makeCacheKey(normalizePan123Account(account), normalizePan123Password(password)));
+  authStore.delete(
+    makeCacheKey(
+      normalizePan123Account(account),
+      normalizePan123Password(password)
+    )
+  );
 }
 
 async function loginPan123(account: string, password: string): Promise<string> {
@@ -221,13 +254,17 @@ async function fetchSharePage(
     );
   } catch (error) {
     if (error instanceof Error && error.name === 'AbortError') {
-      throw new Error(`123网盘目录请求超时（parentFileId=${parentFileId}, next=${next}, depth=${depth}）`);
+      throw new Error(
+        `123网盘目录请求超时（parentFileId=${parentFileId}, next=${next}, depth=${depth}）`
+      );
     }
     throw error;
   }
   const data = await parseJsonResponse<any>(response);
   if (!response.ok) {
-    throw new Error(data?.message || data?.msg || `123网盘接口请求失败 (${response.status})`);
+    throw new Error(
+      data?.message || data?.msg || `123网盘接口请求失败 (${response.status})`
+    );
   }
   return data?.data || null;
 }
@@ -274,13 +311,21 @@ async function collectPan123FilesRecursive(
     }
     traverseState.seenPageKeys.add(pageKey);
 
-    const data: any = await fetchSharePage(shareKey, sharePwd, next, parentFileId, depth);
+    const data: any = await fetchSharePage(
+      shareKey,
+      sharePwd,
+      next,
+      parentFileId,
+      depth
+    );
     if (!data) break;
 
     const infoList = Array.isArray(data.InfoList) ? data.InfoList : [];
     traverseState.visitedNodes += infoList.length;
     if (traverseState.visitedNodes > MAX_TRAVERSE_NODES) {
-      throw new Error(`123网盘遍历节点过多，已超过限制（${MAX_TRAVERSE_NODES}）`);
+      throw new Error(
+        `123网盘遍历节点过多，已超过限制（${MAX_TRAVERSE_NODES}）`
+      );
     }
     const childFolders: Array<string | number> = [];
     const queuedChildFolderIds = new Set<string>();
@@ -294,7 +339,10 @@ async function collectPan123FilesRecursive(
 
       if (Number(item.Category) === 0) {
         if (!itemFileId) return;
-        if (traverseState.seenFolderIds.has(itemFileId) || queuedChildFolderIds.has(itemFileId)) {
+        if (
+          traverseState.seenFolderIds.has(itemFileId) ||
+          queuedChildFolderIds.has(itemFileId)
+        ) {
           return;
         }
         queuedChildFolderIds.add(itemFileId);
@@ -334,7 +382,14 @@ async function collectPan123FilesRecursive(
     files.push(...nestedFiles.flat());
 
     const nextCursor: string | number | null | undefined = data.Next;
-    if (nextCursor === undefined || nextCursor === null || nextCursor === '' || nextCursor === -1 || nextCursor === '0' || nextCursor === 0) {
+    if (
+      nextCursor === undefined ||
+      nextCursor === null ||
+      nextCursor === '' ||
+      nextCursor === -1 ||
+      nextCursor === '0' ||
+      nextCursor === 0
+    ) {
       hasMore = false;
     } else {
       next = nextCursor;
@@ -344,19 +399,33 @@ async function collectPan123FilesRecursive(
   return files;
 }
 
-export async function listPan123ShareVideos(shareUrl: string, passcode = ''): Promise<Pan123ShareListResult> {
+export async function listPan123ShareVideos(
+  shareUrl: string,
+  passcode = ''
+): Promise<Pan123ShareListResult> {
   const { shareKey, sharePwd } = parsePan123ShareUrl(shareUrl, passcode);
   const fileNameState = { value: '' };
-  const files = (await collectPan123FilesRecursive(shareKey, sharePwd, 0, fileNameState))
+  const files = (
+    await collectPan123FilesRecursive(shareKey, sharePwd, 0, fileNameState)
+  )
     .filter((file) => file.fileId)
-    .sort((a, b) => a.fileName.localeCompare(b.fileName, 'zh-Hans-CN', { numeric: true, sensitivity: 'base' }));
+    .sort((a, b) =>
+      a.fileName.localeCompare(b.fileName, 'zh-Hans-CN', {
+        numeric: true,
+        sensitivity: 'base',
+      })
+    );
 
   if (files.length === 0) {
     throw new Error('123网盘分享中没有视频文件');
   }
 
   return {
-    title: fileNameState.value || (files.length === 1 ? files[0].fileName.replace(/\.[^.]+$/, '') : '123网盘立即播放'),
+    title:
+      fileNameState.value ||
+      (files.length === 1
+        ? files[0].fileName.replace(/\.[^.]+$/, '')
+        : '123网盘立即播放'),
     files,
   };
 }
@@ -396,7 +465,11 @@ export async function getPan123PlayInfo(
       });
       const downloadData = await parseJsonResponse<any>(downloadResp);
       if (!downloadResp.ok) {
-        throw new Error(downloadData?.message || downloadData?.msg || `123网盘播放接口请求失败 (${downloadResp.status})`);
+        throw new Error(
+          downloadData?.message ||
+            downloadData?.msg ||
+            `123网盘播放接口请求失败 (${downloadResp.status})`
+        );
       }
 
       const rawUrl = String(downloadData?.data?.DownloadURL || '');
@@ -422,7 +495,9 @@ export async function getPan123PlayInfo(
       const qualities = Array.isArray(transcodeData?.data?.video_play_info)
         ? transcodeData.data.video_play_info
             .filter((item: any) => item?.url)
-            .sort((a: any, b: any) => Number(b.height || 0) - Number(a.height || 0))
+            .sort(
+              (a: any, b: any) => Number(b.height || 0) - Number(a.height || 0)
+            )
             .map((item: any) => ({
               name: String(item.resolution || '转码'),
               url: String(item.url),
@@ -443,9 +518,14 @@ export async function getPan123PlayInfo(
       clearPan123AuthCache(account, password);
     }
   }
-  throw lastError instanceof Error ? lastError : new Error('未获取到123网盘播放地址');
+  throw lastError instanceof Error
+    ? lastError
+    : new Error('未获取到123网盘播放地址');
 }
 
-export async function validatePan123Credentials(account: string, password: string): Promise<void> {
+export async function validatePan123Credentials(
+  account: string,
+  password: string
+): Promise<void> {
   await loginPan123(account, password);
 }

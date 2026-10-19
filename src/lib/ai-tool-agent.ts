@@ -27,10 +27,7 @@ import {
 import { BRAND_NAME } from '@/lib/brand';
 import { db } from '@/lib/db';
 import { validateProxyUrlServerSide } from '@/lib/server/ssrf';
-import {
-  getTMDBTrendingContent,
-  searchTMDBMulti,
-} from '@/lib/tmdb.client';
+import { getTMDBTrendingContent, searchTMDBMulti } from '@/lib/tmdb.client';
 
 export type NewProtocol = 'openai-completions' | 'openai-responses' | 'claude';
 
@@ -210,7 +207,11 @@ const TOOL_DEFS: AgentToolDef[] = [
       properties: {
         id: { type: 'integer', description: '豆瓣 subject ID（优先于 query）' },
         query: { type: 'string', description: '影视标题或关键词搜索' },
-        kind: { type: 'string', enum: ['movie', 'tv'], description: '搜索时指定类型' },
+        kind: {
+          type: 'string',
+          enum: ['movie', 'tv'],
+          description: '搜索时指定类型',
+        },
         category: { type: 'string', description: '热门榜单分类，如 热门' },
         type: { type: 'string', description: '热门榜单类型，如 全部' },
       },
@@ -228,10 +229,23 @@ const TOOL_DEFS: AgentToolDef[] = [
     parameters: {
       type: 'object',
       properties: {
-        id: { type: 'integer', description: 'TMDB ID（与 type 一起用于查详情）' },
-        type: { type: 'string', enum: ['movie', 'tv'], description: '作品类型' },
-        query: { type: 'string', description: '标题搜索关键词（与 id 二选一）' },
-        trending: { type: 'boolean', description: 'true 时返回本周全球热门内容（优先于其他参数）' },
+        id: {
+          type: 'integer',
+          description: 'TMDB ID（与 type 一起用于查详情）',
+        },
+        type: {
+          type: 'string',
+          enum: ['movie', 'tv'],
+          description: '作品类型',
+        },
+        query: {
+          type: 'string',
+          description: '标题搜索关键词（与 id 二选一）',
+        },
+        trending: {
+          type: 'boolean',
+          description: 'true 时返回本周全球热门内容（优先于其他参数）',
+        },
       },
       required: [],
     },
@@ -326,7 +340,8 @@ export function buildAgentSystemPrompt(opts: {
   if (opts.context?.title) {
     p += `\n\n## 【当前视频上下文】\n用户正在浏览: ${opts.context.title}`;
     if (opts.context.year) p += ` (${opts.context.year})`;
-    if (opts.context.currentEpisode) p += `，当前第 ${opts.context.currentEpisode} 集`;
+    if (opts.context.currentEpisode)
+      p += `，当前第 ${opts.context.currentEpisode} 集`;
     p += '\n';
   }
 
@@ -398,7 +413,8 @@ async function fetchPageText(urlStr: string): Promise<string> {
   const parsed = new URL(urlStr);
   if (!/^https?:$/i.test(parsed.protocol)) return '仅支持 http/https 链接。';
   const safe = await validateProxyUrlServerSide(urlStr);
-  if (!safe) return '目标地址未通过安全校验（可能指向内网或本地地址），已拦截。';
+  if (!safe)
+    return '目标地址未通过安全校验（可能指向内网或本地地址），已拦截。';
 
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 10_000);
@@ -446,7 +462,9 @@ async function dispatchTool(
       const utc8 = new Date(now.getTime() + 8 * 60 * 60 * 1000);
       const pad = (n: number) => String(n).padStart(2, '0');
       const date = utc8.toISOString().slice(0, 10);
-      const time = `${pad(utc8.getUTCHours())}:${pad(utc8.getUTCMinutes())}:${pad(utc8.getUTCSeconds())}`;
+      const time = `${pad(utc8.getUTCHours())}:${pad(
+        utc8.getUTCMinutes()
+      )}:${pad(utc8.getUTCSeconds())}`;
       return { name, ok: true, text: `${date} ${time}（北京时间 UTC+8）` };
     }
 
@@ -461,7 +479,10 @@ async function dispatchTool(
         dataSources.webSearch.provider,
         dataSources.webSearch.apiKey
       );
-      const formatted = formatSearchResults(raw, dataSources.webSearch.provider);
+      const formatted = formatSearchResults(
+        raw,
+        dataSources.webSearch.provider
+      );
       return { name, ok: !!formatted, text: formatted || '无搜索结果。' };
     }
 
@@ -480,7 +501,8 @@ async function dispatchTool(
         category: args?.category,
         type: args?.type,
       });
-      if (!raw) return { name, ok: false, text: '豆瓣数据获取失败或参数不完整。' };
+      if (!raw)
+        return { name, ok: false, text: '豆瓣数据获取失败或参数不完整。' };
       return { name, ok: true, text: formatDoubanResult(raw).slice(0, 4000) };
     }
 
@@ -533,7 +555,11 @@ async function dispatchTool(
 
       // ③ 按 ID 查详情
       if (!args?.id || !args?.type) {
-        return { name, ok: false, text: 'tmdb_lookup 需要提供 query 搜索、trending=true 热榜、或 id+type 查详情之一。' };
+        return {
+          name,
+          ok: false,
+          text: 'tmdb_lookup 需要提供 query 搜索、trending=true 热榜、或 id+type 查详情之一。',
+        };
       }
       const raw = await fetchTMDBData(
         { id: args.id, type: args.type },
@@ -541,7 +567,8 @@ async function dispatchTool(
         proxy,
         reverseProxy
       );
-      if (!raw) return { name, ok: false, text: 'TMDB 数据获取失败或参数不完整。' };
+      if (!raw)
+        return { name, ok: false, text: 'TMDB 数据获取失败或参数不完整。' };
       const text = JSON.stringify({
         title: raw.title || raw.name,
         overview: raw.overview,
@@ -555,7 +582,8 @@ async function dispatchTool(
 
     if (name === 'get_user_favorites') {
       const username = dataSources.username;
-      if (!username) return { name, ok: false, text: '用户未登录，无法获取收藏。' };
+      if (!username)
+        return { name, ok: false, text: '用户未登录，无法获取收藏。' };
       const favorites = await db.getAllFavorites(username);
       const items = Object.values(favorites)
         .sort((a, b) => (b.save_time ?? 0) - (a.save_time ?? 0))
@@ -571,13 +599,17 @@ async function dispatchTool(
       return {
         name,
         ok: true,
-        text: JSON.stringify({ count: items.length, favorites: items }).slice(0, 4000),
+        text: JSON.stringify({ count: items.length, favorites: items }).slice(
+          0,
+          4000
+        ),
       };
     }
 
     if (name === 'get_user_recent') {
       const username = dataSources.username;
-      if (!username) return { name, ok: false, text: '用户未登录，无法获取最近观看。' };
+      if (!username)
+        return { name, ok: false, text: '用户未登录，无法获取最近观看。' };
       const records = await db.getAllPlayRecords(username);
       const items = Object.values(records)
         .sort((a, b) => (b.save_time ?? 0) - (a.save_time ?? 0))
@@ -590,18 +622,26 @@ async function dispatchTool(
           total_episodes: r.total_episodes,
           save_time: r.save_time,
         }));
-      if (!items.length) return { name, ok: true, text: '该用户暂无最近观看记录。' };
+      if (!items.length)
+        return { name, ok: true, text: '该用户暂无最近观看记录。' };
       return {
         name,
         ok: true,
-        text: JSON.stringify({ count: items.length, recent: items }).slice(0, 4000),
+        text: JSON.stringify({ count: items.length, recent: items }).slice(
+          0,
+          4000
+        ),
       };
     }
 
     return { name, ok: false, text: `未知工具: ${name}` };
   } catch (error) {
     console.error(`❌ 工具 ${name} 执行失败:`, error);
-    return { name, ok: false, text: `工具执行失败: ${(error as Error).message}` };
+    return {
+      name,
+      ok: false,
+      text: `工具执行失败: ${(error as Error).message}`,
+    };
   }
 }
 
@@ -630,7 +670,10 @@ function parseToolArgs(rawArgs: any, fallbackName: string): any {
         /* fall through */
       }
     }
-    console.warn(`⚠️ 工具参数解析失败（${fallbackName}）:`, source.slice(0, 100));
+    console.warn(
+      `⚠️ 工具参数解析失败（${fallbackName}）:`,
+      source.slice(0, 100)
+    );
     return {};
   }
 }
@@ -641,7 +684,11 @@ const openaiCompletionsAdapter: ProviderAdapter = {
   buildTools(defs) {
     return defs.map((d) => ({
       type: 'function',
-      function: { name: d.name, description: d.description, parameters: d.parameters },
+      function: {
+        name: d.name,
+        description: d.description,
+        parameters: d.parameters,
+      },
     }));
   },
 
@@ -657,7 +704,8 @@ const openaiCompletionsAdapter: ProviderAdapter = {
         for (const s of h.compressedSummaries) {
           transcript.push({ role: 'user', content: s });
         }
-        if (h.content) transcript.push({ role: 'assistant', content: h.content });
+        if (h.content)
+          transcript.push({ role: 'assistant', content: h.content });
       } else if (h.toolCalls?.length) {
         // 重建历史工具回合：assistant(tool_calls) → tool(结果) → assistant(最终回答)，
         // 让模型直接复用此前拿到的数据，避免同一会话重复调用工具。
@@ -666,18 +714,28 @@ const openaiCompletionsAdapter: ProviderAdapter = {
           type: 'function',
           function: {
             name: tc.name,
-            arguments: JSON.stringify(tc.args ?? (tc.key ? { query: tc.key } : {})),
+            arguments: JSON.stringify(
+              tc.args ?? (tc.key ? { query: tc.key } : {})
+            ),
           },
         }));
-        transcript.push({ role: 'assistant', content: '', tool_calls: toolCalls });
+        transcript.push({
+          role: 'assistant',
+          content: '',
+          tool_calls: toolCalls,
+        });
         h.toolCalls.forEach((tc, i) => {
           transcript.push({
             role: 'tool',
             tool_call_id: toolCalls[i].id,
-            content: tc.ok === false ? `(工具执行失败) ${tc.result ?? ''}` : (tc.result ?? ''),
+            content:
+              tc.ok === false
+                ? `(工具执行失败) ${tc.result ?? ''}`
+                : tc.result ?? '',
           });
         });
-        if (h.content) transcript.push({ role: 'assistant', content: h.content });
+        if (h.content)
+          transcript.push({ role: 'assistant', content: h.content });
       } else if (h.content) {
         transcript.push({ role: 'assistant', content: h.content });
       }
@@ -711,7 +769,12 @@ const openaiCompletionsAdapter: ProviderAdapter = {
 
     if (!res.ok) {
       const errText = await res.text().catch(() => '');
-      throw new Error(`OpenAI API error: ${res.status} ${res.statusText} ${errText.slice(0, 200)}`);
+      throw new Error(
+        `OpenAI API error: ${res.status} ${res.statusText} ${errText.slice(
+          0,
+          200
+        )}`
+      );
     }
 
     if (!opts.streaming) {
@@ -722,7 +785,10 @@ const openaiCompletionsAdapter: ProviderAdapter = {
       const toolCalls: ToolCall[] = rawToolCalls.map((tc: any) => ({
         id: tc.id || `call_${rawToolCalls.indexOf(tc)}`,
         name: tc.function?.name || 'unknown',
-        args: parseToolArgs(tc.function?.arguments, tc.function?.name || 'unknown'),
+        args: parseToolArgs(
+          tc.function?.arguments,
+          tc.function?.name || 'unknown'
+        ),
       }));
       const segments = toolCalls.length
         ? [{ role: 'assistant', content, tool_calls: rawToolCalls }]
@@ -745,7 +811,10 @@ const openaiCompletionsAdapter: ProviderAdapter = {
     let content = '';
     let streamUsage: number | undefined;
     // key: tool index；value: { id, name, rawArgs }
-    const toolAcc: Record<number, { id: string; name: string; rawArgs: string }> = {};
+    const toolAcc: Record<
+      number,
+      { id: string; name: string; rawArgs: string }
+    > = {};
     const emittedToolStart = new Set<number>();
 
     while (true) {
@@ -780,10 +849,15 @@ const openaiCompletionsAdapter: ProviderAdapter = {
           if (Array.isArray(delta?.tool_calls)) {
             for (const tc of delta.tool_calls) {
               const idx = tc.index ?? 0;
-              toolAcc[idx] = toolAcc[idx] || { id: `call_${idx}`, name: '', rawArgs: '' };
+              toolAcc[idx] = toolAcc[idx] || {
+                id: `call_${idx}`,
+                name: '',
+                rawArgs: '',
+              };
               if (tc.id) toolAcc[idx].id = tc.id;
               if (tc.function?.name) toolAcc[idx].name = tc.function.name;
-              if (tc.function?.arguments) toolAcc[idx].rawArgs += tc.function.arguments;
+              if (tc.function?.arguments)
+                toolAcc[idx].rawArgs += tc.function.arguments;
               if (!emittedToolStart.has(idx) && toolAcc[idx].name) {
                 emittedToolStart.add(idx);
                 opts.onToolStart(toolAcc[idx].name);
@@ -822,7 +896,10 @@ const openaiCompletionsAdapter: ProviderAdapter = {
     const toolCalls: ToolCall[] = rawToolCalls.map((tc: any) => ({
       id: tc.id,
       name: tc.function?.name || 'unknown',
-      args: parseToolArgs(tc.function?.arguments, tc.function?.name || 'unknown'),
+      args: parseToolArgs(
+        tc.function?.arguments,
+        tc.function?.name || 'unknown'
+      ),
     }));
     const segments = toolCalls.length
       ? [{ role: 'assistant', content, tool_calls: rawToolCalls }]
@@ -900,23 +977,34 @@ const openaiResponsesAdapter: ProviderAdapter = {
     const input: any[] = [];
     for (const h of history) {
       if (h.role === 'user') {
-        input.push({ role: 'user', content: [{ type: 'input_text', text: h.content }] });
+        input.push({
+          role: 'user',
+          content: [{ type: 'input_text', text: h.content }],
+        });
         continue;
       }
       if (h.compressedSummaries?.length) {
         // 压缩摘要：重建为 user 摘要消息（工具详情已在压缩时移除）
         for (const s of h.compressedSummaries) {
-          input.push({ role: 'user', content: [{ type: 'input_text', text: s }] });
+          input.push({
+            role: 'user',
+            content: [{ type: 'input_text', text: s }],
+          });
         }
         if (h.content) {
-          input.push({ role: 'assistant', content: [{ type: 'output_text', text: h.content }] });
+          input.push({
+            role: 'assistant',
+            content: [{ type: 'output_text', text: h.content }],
+          });
         }
       } else if (h.toolCalls?.length) {
         const calls = h.toolCalls.map((tc) => ({
           type: 'function_call',
           call_id: nextReplayToolId(),
           name: tc.name,
-          arguments: JSON.stringify(tc.args ?? (tc.key ? { query: tc.key } : {})),
+          arguments: JSON.stringify(
+            tc.args ?? (tc.key ? { query: tc.key } : {})
+          ),
         }));
         input.push(...calls);
         h.toolCalls.forEach((tc, i) => {
@@ -927,13 +1015,22 @@ const openaiResponsesAdapter: ProviderAdapter = {
           });
         });
         if (h.content) {
-          input.push({ role: 'assistant', content: [{ type: 'output_text', text: h.content }] });
+          input.push({
+            role: 'assistant',
+            content: [{ type: 'output_text', text: h.content }],
+          });
         }
       } else if (h.content) {
-        input.push({ role: 'assistant', content: [{ type: 'output_text', text: h.content }] });
+        input.push({
+          role: 'assistant',
+          content: [{ type: 'output_text', text: h.content }],
+        });
       }
     }
-    input.push({ role: 'user', content: [{ type: 'input_text', text: message }] });
+    input.push({
+      role: 'user',
+      content: [{ type: 'input_text', text: message }],
+    });
     return input;
   },
 
@@ -962,12 +1059,17 @@ const openaiResponsesAdapter: ProviderAdapter = {
 
     if (!res.ok) {
       const errText = await res.text().catch(() => '');
-      throw new Error(`OpenAI Responses API error: ${res.status} ${res.statusText} ${errText.slice(0, 200)}`);
+      throw new Error(
+        `OpenAI Responses API error: ${res.status} ${
+          res.statusText
+        } ${errText.slice(0, 200)}`
+      );
     }
 
     if (!opts.streaming) {
       const data = await res.json();
-      if (data.status === 'failed') throw new Error('OpenAI Responses API failed');
+      if (data.status === 'failed')
+        throw new Error('OpenAI Responses API failed');
       return {
         ...parseResponsesOutput(data.output),
         usage:
@@ -982,7 +1084,10 @@ const openaiResponsesAdapter: ProviderAdapter = {
     const decoder = new TextDecoder();
     let buffer = '';
     // key: item_id；value: { id, name, rawArgs }
-    const toolAcc: Record<string, { id: string; name: string; rawArgs: string }> = {};
+    const toolAcc: Record<
+      string,
+      { id: string; name: string; rawArgs: string }
+    > = {};
     const emittedToolStart = new Set<string>();
     let completedOutput: any[] | null = null;
     let streamUsage: number | undefined;
@@ -1008,13 +1113,24 @@ const openaiResponsesAdapter: ProviderAdapter = {
 
           if (type === 'response.output_text.delta') {
             opts.onText(json.delta || '');
-          } else if (type === 'response.output_item.added' || type === 'response.output_item.done') {
+          } else if (
+            type === 'response.output_item.added' ||
+            type === 'response.output_item.done'
+          ) {
             const item = json.item;
             if (item?.type === 'function_call') {
-              const itemId = item.id || item.call_id || `item_${Object.keys(toolAcc).length}`;
-              toolAcc[itemId] = toolAcc[itemId] || { id: item.call_id || item.id, name: '', rawArgs: '' };
+              const itemId =
+                item.id ||
+                item.call_id ||
+                `item_${Object.keys(toolAcc).length}`;
+              toolAcc[itemId] = toolAcc[itemId] || {
+                id: item.call_id || item.id,
+                name: '',
+                rawArgs: '',
+              };
               if (item.name) toolAcc[itemId].name = item.name;
-              if (item.call_id || item.id) toolAcc[itemId].id = item.call_id || item.id;
+              if (item.call_id || item.id)
+                toolAcc[itemId].id = item.call_id || item.id;
               if (typeof item.arguments === 'string' && item.arguments) {
                 toolAcc[itemId].rawArgs = item.arguments;
               }
@@ -1024,16 +1140,30 @@ const openaiResponsesAdapter: ProviderAdapter = {
               }
             }
           } else if (type === 'response.function_call_arguments.delta') {
-            const itemId = json.item_id || `item_${Object.keys(toolAcc).length}`;
-            toolAcc[itemId] = toolAcc[itemId] || { id: itemId, name: '', rawArgs: '' };
+            const itemId =
+              json.item_id || `item_${Object.keys(toolAcc).length}`;
+            toolAcc[itemId] = toolAcc[itemId] || {
+              id: itemId,
+              name: '',
+              rawArgs: '',
+            };
             toolAcc[itemId].rawArgs += json.delta || '';
           } else if (type === 'response.function_call_arguments.done') {
             const itemId = json.item_id || '';
-            toolAcc[itemId] = toolAcc[itemId] || { id: itemId, name: '', rawArgs: '' };
-            if (typeof json.arguments === 'string') toolAcc[itemId].rawArgs = json.arguments;
+            toolAcc[itemId] = toolAcc[itemId] || {
+              id: itemId,
+              name: '',
+              rawArgs: '',
+            };
+            if (typeof json.arguments === 'string')
+              toolAcc[itemId].rawArgs = json.arguments;
           } else if (type === 'response.function_call') {
             const itemId = json.item_id || '';
-            toolAcc[itemId] = toolAcc[itemId] || { id: itemId, name: '', rawArgs: '' };
+            toolAcc[itemId] = toolAcc[itemId] || {
+              id: itemId,
+              name: '',
+              rawArgs: '',
+            };
             if (json.name) toolAcc[itemId].name = json.name;
             if (json.call_id) toolAcc[itemId].id = json.call_id;
             if (json.arguments) toolAcc[itemId].rawArgs = json.arguments;
@@ -1072,7 +1202,9 @@ const openaiResponsesAdapter: ProviderAdapter = {
           ...item,
           name: item.name || accumulated.name,
           call_id: item.call_id || accumulated.id,
-          arguments: hasArguments ? item.arguments : accumulated.rawArgs || item.arguments || '{}',
+          arguments: hasArguments
+            ? item.arguments
+            : accumulated.rawArgs || item.arguments || '{}',
         };
       });
       return {
@@ -1146,7 +1278,9 @@ const claudeAdapter: ProviderAdapter = {
       input_schema: { ...d.parameters, additionalProperties: false },
       // 在最后一个工具上打缓存断点：配合 system 断点，让 system+tools 前缀
       // 在 agent 多轮循环中命中 Anthropic prompt caching。
-      ...(i === defs.length - 1 ? { cache_control: { type: 'ephemeral' as const } } : {}),
+      ...(i === defs.length - 1
+        ? { cache_control: { type: 'ephemeral' as const } }
+        : {}),
     }));
   },
 
@@ -1162,7 +1296,8 @@ const claudeAdapter: ProviderAdapter = {
         for (const s of h.compressedSummaries) {
           transcript.push({ role: 'user', content: s });
         }
-        if (h.content) transcript.push({ role: 'assistant', content: h.content });
+        if (h.content)
+          transcript.push({ role: 'assistant', content: h.content });
       } else if (h.toolCalls?.length) {
         // 重建历史工具回合：assistant(tool_use) → user(tool_result) → assistant(最终回答)，
         // Claude 要求角色严格交替，因此把最终回答单独作为一条 assistant 消息。
@@ -1182,7 +1317,8 @@ const claudeAdapter: ProviderAdapter = {
             ...(tc.ok === false ? { is_error: true } : {}),
           })),
         });
-        if (h.content) transcript.push({ role: 'assistant', content: h.content });
+        if (h.content)
+          transcript.push({ role: 'assistant', content: h.content });
       } else if (h.content) {
         transcript.push({ role: 'assistant', content: h.content });
       }
@@ -1226,7 +1362,12 @@ const claudeAdapter: ProviderAdapter = {
 
     if (!res.ok) {
       const errText = await res.text().catch(() => '');
-      throw new Error(`Claude API error: ${res.status} ${res.statusText} ${errText.slice(0, 200)}`);
+      throw new Error(
+        `Claude API error: ${res.status} ${res.statusText} ${errText.slice(
+          0,
+          200
+        )}`
+      );
     }
 
     if (!opts.streaming) {
@@ -1246,7 +1387,10 @@ const claudeAdapter: ProviderAdapter = {
     let buffer = '';
     let text = '';
     // key: block index；value: tool_use 块
-    const toolBlocks: Record<number, { id: string; name: string; rawInput: string }> = {};
+    const toolBlocks: Record<
+      number,
+      { id: string; name: string; rawInput: string }
+    > = {};
     const emittedToolStart = new Set<number>();
     let streamUsage: number | undefined;
 
@@ -1273,7 +1417,9 @@ const claudeAdapter: ProviderAdapter = {
                 id: block.id,
                 name: block.name,
                 rawInput:
-                  block.input && typeof block.input === 'object' && Object.keys(block.input).length > 0
+                  block.input &&
+                  typeof block.input === 'object' &&
+                  Object.keys(block.input).length > 0
                     ? JSON.stringify(block.input)
                     : '',
               };
@@ -1354,8 +1500,17 @@ function parseClaudeContent(content: any[], _stopReason?: string): RoundResult {
       text += block.text;
       blocks.push({ type: 'text', text: block.text });
     } else if (block.type === 'tool_use') {
-      blocks.push({ type: 'tool_use', id: block.id, name: block.name, input: block.input || {} });
-      toolCalls.push({ id: block.id, name: block.name, args: block.input || {} });
+      blocks.push({
+        type: 'tool_use',
+        id: block.id,
+        name: block.name,
+        input: block.input || {},
+      });
+      toolCalls.push({
+        id: block.id,
+        name: block.name,
+        args: block.input || {},
+      });
     }
   }
 
@@ -1366,12 +1521,17 @@ function parseClaudeContent(content: any[], _stopReason?: string): RoundResult {
   };
 }
 
-function buildClaudeRoundResult(text: string, toolBlocks: Record<number, { id: string; name: string; rawInput: string }>): RoundResult {
+function buildClaudeRoundResult(
+  text: string,
+  toolBlocks: Record<number, { id: string; name: string; rawInput: string }>
+): RoundResult {
   const blocks: any[] = [];
   const toolCalls: ToolCall[] = [];
 
   if (text) blocks.push({ type: 'text', text });
-  for (const [, block] of Object.entries(toolBlocks).sort((a, b) => Number(a[0]) - Number(b[0]))) {
+  for (const [, block] of Object.entries(toolBlocks).sort(
+    (a, b) => Number(a[0]) - Number(b[0])
+  )) {
     const input = parseToolArgs(block.rawInput, block.name);
     blocks.push({ type: 'tool_use', id: block.id, name: block.name, input });
     toolCalls.push({ id: block.id, name: block.name, args: input });
@@ -1379,7 +1539,9 @@ function buildClaudeRoundResult(text: string, toolBlocks: Record<number, { id: s
 
   return {
     assistantText: text,
-    assistantSegments: blocks.length ? [{ role: 'assistant', content: blocks }] : [],
+    assistantSegments: blocks.length
+      ? [{ role: 'assistant', content: blocks }]
+      : [],
     toolCalls,
   };
 }
@@ -1407,13 +1569,20 @@ function isToolElement(el: any, protocol: NewProtocol): boolean {
   }
   if (protocol === 'claude') {
     const content: any[] = Array.isArray(el.content) ? el.content : [];
-    if (el.role === 'assistant' && content.some((b) => b?.type === 'tool_use')) return true;
-    if (el.role === 'user' && content.some((b) => b?.type === 'tool_result')) return true;
+    if (el.role === 'assistant' && content.some((b) => b?.type === 'tool_use'))
+      return true;
+    if (el.role === 'user' && content.some((b) => b?.type === 'tool_result'))
+      return true;
     return false;
   }
   // openai-completions
   if (el.role === 'tool') return true;
-  if (el.role === 'assistant' && Array.isArray(el.tool_calls) && el.tool_calls.length) return true;
+  if (
+    el.role === 'assistant' &&
+    Array.isArray(el.tool_calls) &&
+    el.tool_calls.length
+  )
+    return true;
   return false;
 }
 
@@ -1447,7 +1616,11 @@ function toolElementToText(el: any, protocol: NewProtocol): string {
     } else if (el.role === 'user') {
       const results = content
         .filter((b) => b?.type === 'tool_result')
-        .map((b) => (typeof b.content === 'string' ? b.content : JSON.stringify(b.content ?? '')))
+        .map((b) =>
+          typeof b.content === 'string'
+            ? b.content
+            : JSON.stringify(b.content ?? '')
+        )
         .join('\n');
       if (results) lines.push(`工具结果: ${results.slice(0, 4000)}`);
     }
@@ -1459,7 +1632,10 @@ function toolElementToText(el: any, protocol: NewProtocol): string {
   }
   if (el.role === 'assistant' && Array.isArray(el.tool_calls)) {
     const calls = el.tool_calls
-      .map((tc: any) => `${tc.function?.name || ''}(${tc.function?.arguments || '{}'})`)
+      .map(
+        (tc: any) =>
+          `${tc.function?.name || ''}(${tc.function?.arguments || '{}'})`
+      )
       .join('; ');
     lines.push(`助手调用工具: ${calls}`);
     if (el.content) lines.push(`助手: ${el.content}`);
@@ -1489,7 +1665,69 @@ async function summarizeWithProvider(
 ): Promise<string> {
   const summaryMaxTokens = 1024;
   if (providerOpts.protocol === 'openai-responses') {
-    const res = await fetch(buildProtocolUrl(providerOpts.baseURL, 'responses'), {
+    const res = await fetch(
+      buildProtocolUrl(providerOpts.baseURL, 'responses'),
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${providerOpts.apiKey}`,
+        },
+        body: JSON.stringify({
+          model: providerOpts.model,
+          instructions: SUMMARY_SYSTEM_PROMPT,
+          input: [
+            { role: 'user', content: [{ type: 'input_text', text: rawText }] },
+          ],
+          max_output_tokens: summaryMaxTokens,
+          temperature: 0.3,
+          stream: false,
+        }),
+        signal: providerOpts.signal,
+      }
+    );
+    if (!res.ok) {
+      const errText = await res.text().catch(() => '');
+      throw new Error(
+        `Summary Responses error: ${res.status} ${errText.slice(0, 200)}`
+      );
+    }
+    const data = await res.json();
+    return parseResponsesOutput(data.output || []).assistantText;
+  }
+  if (providerOpts.protocol === 'claude') {
+    const res = await fetch(
+      buildProtocolUrl(providerOpts.baseURL, 'messages'),
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': providerOpts.apiKey,
+          'anthropic-version': '2023-06-01',
+        },
+        body: JSON.stringify({
+          model: providerOpts.model,
+          system: SUMMARY_SYSTEM_PROMPT,
+          messages: [{ role: 'user', content: rawText }],
+          max_tokens: summaryMaxTokens,
+          stream: false,
+        }),
+        signal: providerOpts.signal,
+      }
+    );
+    if (!res.ok) {
+      const errText = await res.text().catch(() => '');
+      throw new Error(
+        `Summary Claude error: ${res.status} ${errText.slice(0, 200)}`
+      );
+    }
+    const data = await res.json();
+    return parseClaudeContent(data.content || []).assistantText;
+  }
+  // openai-completions
+  const res = await fetch(
+    buildProtocolUrl(providerOpts.baseURL, 'chat/completions'),
+    {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -1497,67 +1735,22 @@ async function summarizeWithProvider(
       },
       body: JSON.stringify({
         model: providerOpts.model,
-        instructions: SUMMARY_SYSTEM_PROMPT,
-        input: [{ role: 'user', content: [{ type: 'input_text', text: rawText }] }],
-        max_output_tokens: summaryMaxTokens,
+        messages: [
+          { role: 'system', content: SUMMARY_SYSTEM_PROMPT },
+          { role: 'user', content: rawText },
+        ],
+        max_tokens: summaryMaxTokens,
         temperature: 0.3,
         stream: false,
       }),
       signal: providerOpts.signal,
-    });
-    if (!res.ok) {
-      const errText = await res.text().catch(() => '');
-      throw new Error(`Summary Responses error: ${res.status} ${errText.slice(0, 200)}`);
     }
-    const data = await res.json();
-    return parseResponsesOutput(data.output || []).assistantText;
-  }
-  if (providerOpts.protocol === 'claude') {
-    const res = await fetch(buildProtocolUrl(providerOpts.baseURL, 'messages'), {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': providerOpts.apiKey,
-        'anthropic-version': '2023-06-01',
-      },
-      body: JSON.stringify({
-        model: providerOpts.model,
-        system: SUMMARY_SYSTEM_PROMPT,
-        messages: [{ role: 'user', content: rawText }],
-        max_tokens: summaryMaxTokens,
-        stream: false,
-      }),
-      signal: providerOpts.signal,
-    });
-    if (!res.ok) {
-      const errText = await res.text().catch(() => '');
-      throw new Error(`Summary Claude error: ${res.status} ${errText.slice(0, 200)}`);
-    }
-    const data = await res.json();
-    return parseClaudeContent(data.content || []).assistantText;
-  }
-  // openai-completions
-  const res = await fetch(buildProtocolUrl(providerOpts.baseURL, 'chat/completions'), {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${providerOpts.apiKey}`,
-    },
-    body: JSON.stringify({
-      model: providerOpts.model,
-      messages: [
-        { role: 'system', content: SUMMARY_SYSTEM_PROMPT },
-        { role: 'user', content: rawText },
-      ],
-      max_tokens: summaryMaxTokens,
-      temperature: 0.3,
-      stream: false,
-    }),
-    signal: providerOpts.signal,
-  });
+  );
   if (!res.ok) {
     const errText = await res.text().catch(() => '');
-    throw new Error(`Summary OpenAI error: ${res.status} ${errText.slice(0, 200)}`);
+    throw new Error(
+      `Summary OpenAI error: ${res.status} ${errText.slice(0, 200)}`
+    );
   }
   const data = await res.json();
   return data.choices?.[0]?.message?.content || '';
@@ -1588,7 +1781,9 @@ async function compressTranscript(
 
   let summary = '';
   if (summarize) {
-    const rawText = toolElements.map((el) => toolElementToText(el, protocol)).join('\n');
+    const rawText = toolElements
+      .map((el) => toolElementToText(el, protocol))
+      .join('\n');
     try {
       summary = await summarizeWithProvider(providerOpts, rawText);
     } catch (e) {
@@ -1598,7 +1793,10 @@ async function compressTranscript(
   summary = (summary || '').trim();
 
   const fallback = !summary;
-  const summaryMsg = buildSummaryMessage(protocol, summary || '（较早对话中的工具调用详情已省略；如需可重新调用工具获取。）');
+  const summaryMsg = buildSummaryMessage(
+    protocol,
+    summary || '（较早对话中的工具调用详情已省略；如需可重新调用工具获取。）'
+  );
   // 摘要插入到末尾（当前 user 消息）之前
   const insertAt = Math.max(0, kept.length - 1);
   kept.splice(insertAt, 0, summaryMsg);
@@ -1656,7 +1854,9 @@ export type RunToolAgentResult =
  * - 直到模型返回无工具调用的终轮（end_turn/stop）为止。不设调用次数上限。
  * - streaming=false 时同样跑完整循环，累积文本返回 { content }。
  */
-export async function runToolAgent(opts: RunToolAgentOptions): Promise<RunToolAgentResult> {
+export async function runToolAgent(
+  opts: RunToolAgentOptions
+): Promise<RunToolAgentResult> {
   const adapter = getAdapter(opts.protocol);
   const transcript = adapter.buildInitialTranscript({
     systemPrompt: opts.systemPrompt,
@@ -1675,9 +1875,11 @@ export async function runToolAgent(opts: RunToolAgentOptions): Promise<RunToolAg
   // API 未返回 usage（部分网关）时退化为整体估算。
   const maxContext = opts.maxContext ?? 131072;
   const compressThreshold = opts.compressThreshold ?? 90;
-  const budgetEnabled = compressThreshold > 0 && compressThreshold <= 100 && maxContext > 0;
+  const budgetEnabled =
+    compressThreshold > 0 && compressThreshold <= 100 && maxContext > 0;
   const baseTokens = budgetEnabled
-    ? estimateTokens(opts.systemPrompt) + estimateTokens(adapter.buildTools(opts.tools))
+    ? estimateTokens(opts.systemPrompt) +
+      estimateTokens(adapter.buildTools(opts.tools))
     : 0;
   const budgetTokens = budgetEnabled
     ? Math.floor((maxContext * compressThreshold) / 100) - baseTokens
@@ -1699,7 +1901,13 @@ export async function runToolAgent(opts: RunToolAgentOptions): Promise<RunToolAg
     if (!budgetEnabled) return;
     if (ctx.transcriptTokens <= budgetTokens) return;
     // 首次超限调 LLM 摘要；同一次循环内若再次超限，纯丢弃兜底（避免反复调用摘要）
-    const result = await compressTranscript(transcript, adapter.name, providerOpts, ctx, !ctx.compressed);
+    const result = await compressTranscript(
+      transcript,
+      adapter.name,
+      providerOpts,
+      ctx,
+      !ctx.compressed
+    );
     ctx.compressed = true;
     // 摘要成功（未降级）时记录，流式转 SSE、非流式随 JSON 返回给前端持久化
     if (result.summary && !result.fallback) {
@@ -1730,9 +1938,14 @@ export async function runToolAgent(opts: RunToolAgentOptions): Promise<RunToolAg
       allText += round.assistantText;
       if (round.toolCalls.length === 0) break;
       const results = await Promise.all(
-        round.toolCalls.map((tc) => dispatchTool(tc.name, tc.args, opts.dataSources))
+        round.toolCalls.map((tc) =>
+          dispatchTool(tc.name, tc.args, opts.dataSources)
+        )
       );
-      const resultMsgs = adapter.buildToolResultMessages(round.toolCalls, results);
+      const resultMsgs = adapter.buildToolResultMessages(
+        round.toolCalls,
+        results
+      );
       transcript.push(...resultMsgs);
       ctx.transcriptTokens += estimateTokens(resultMsgs);
       // 本轮请求已返回真实用量：校准基准（下一轮 enforce 用更准的值判断）
@@ -1784,7 +1997,11 @@ export async function runToolAgent(opts: RunToolAgentOptions): Promise<RunToolAg
           }
           const results = await Promise.all(
             round.toolCalls.map(async (tc) => {
-              const result = await dispatchTool(tc.name, tc.args, opts.dataSources);
+              const result = await dispatchTool(
+                tc.name,
+                tc.args,
+                opts.dataSources
+              );
               send(
                 JSON.stringify({
                   type: 'tool',
@@ -1798,14 +2015,22 @@ export async function runToolAgent(opts: RunToolAgentOptions): Promise<RunToolAg
               return result;
             })
           );
-          const resultMsgs = adapter.buildToolResultMessages(round.toolCalls, results);
+          const resultMsgs = adapter.buildToolResultMessages(
+            round.toolCalls,
+            results
+          );
           transcript.push(...resultMsgs);
           ctx.transcriptTokens += estimateTokens(resultMsgs);
           syncUsage(round);
         }
         // 压缩发生在本轮循环内：把摘要随 SSE 发给前端，前端持久化后下次请求不再膨胀
         if (lastCompression) {
-          send(JSON.stringify({ type: 'context_compressed', summary: lastCompression }));
+          send(
+            JSON.stringify({
+              type: 'context_compressed',
+              summary: lastCompression,
+            })
+          );
         }
         send('[DONE]');
       } catch (error) {

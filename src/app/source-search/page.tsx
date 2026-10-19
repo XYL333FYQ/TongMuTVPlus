@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, react-hooks/exhaustive-deps */
 'use client';
 
-import { ChevronUp, Search } from 'lucide-react';
+import { Search } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import {
   Suspense,
@@ -12,6 +12,8 @@ import {
   useState,
 } from 'react';
 
+import '@/styles/controls.css';
+
 import { isAnimeCategoryText } from '@/lib/anime-keyword-expr';
 import {
   CategoryNode,
@@ -21,12 +23,14 @@ import {
   pickDefaultSelection,
 } from '@/lib/category-tree';
 import { ApiSite } from '@/lib/config';
-import { isReducedMotionSetting } from '@/lib/motion';
+import { getPageScrollTop, scrollPageTo } from '@/lib/page-scroll';
 import { appendSpecialSourceParam } from '@/lib/special-source.client';
 import { SearchResult } from '@/lib/types';
 
+import BackToTop from '@/components/BackToTop';
 import CapsuleSwitch from '@/components/CapsuleSwitch';
 import PageContainer from '@/components/PageContainer';
+import PageHeader from '@/components/PageHeader';
 import PageLayout from '@/components/PageLayout';
 import PosterGrid from '@/components/PosterGrid';
 import VideoCard from '@/components/VideoCard';
@@ -52,15 +56,6 @@ interface SourceSearchSnapshot {
   searchInputValue: string;
   scrollTop: number;
 }
-
-// 实际滚动容器是 document.body，这里同时兼容 documentElement
-const getPageScrollTop = () =>
-  document.body.scrollTop || document.documentElement.scrollTop || 0;
-
-const scrollPageTo = (top: number) => {
-  document.body.scrollTop = top;
-  document.documentElement.scrollTop = top;
-};
 
 // 恢复动作需要在绘制前完成，避免闪现顶部；SSR 下退化为 useEffect
 const useIsomorphicLayoutEffect =
@@ -108,7 +103,6 @@ function SourceSearchPageClient() {
   const [viewMode, setViewMode] = useState<ViewMode>('browse');
   const [searchKeyword, setSearchKeyword] = useState<string>('');
   const [searchInputValue, setSearchInputValue] = useState<string>('');
-  const [showBackToTop, setShowBackToTop] = useState(false);
   // 视频源过滤：伸缩搜索框的展开状态与关键字
   const [sourceFilter, setSourceFilter] = useState('');
   const [isSourceFilterExpanded, setIsSourceFilterExpanded] = useState(false);
@@ -442,38 +436,6 @@ function SourceSearchPageClient() {
     };
   }, [hasVideos, hasMore, isLoadingVideos]);
 
-  // 滚动超过一屏后显示置顶按钮
-  useEffect(() => {
-    const handleScroll = () => {
-      setShowBackToTop(getPageScrollTop() > 300);
-    };
-
-    handleScroll();
-    document.body.addEventListener('scroll', handleScroll, { passive: true });
-    window.addEventListener('scroll', handleScroll, { passive: true });
-
-    return () => {
-      document.body.removeEventListener('scroll', handleScroll);
-      window.removeEventListener('scroll', handleScroll);
-    };
-  }, []);
-
-  // 返回顶部
-  const scrollToTop = () => {
-    try {
-      document.body.scrollTo({
-        top: 0,
-        behavior: isReducedMotionSetting() ? 'auto' : 'smooth',
-      });
-      document.documentElement.scrollTo({
-        top: 0,
-        behavior: isReducedMotionSetting() ? 'auto' : 'smooth',
-      });
-    } catch {
-      scrollPageTo(0);
-    }
-  };
-
   // 根据分类列表推导两级结构；平铺源回退为单行分类
   const isHierarchical = isHierarchicalCategories(categories);
   const parentCategories = isHierarchical
@@ -493,35 +455,30 @@ function SourceSearchPageClient() {
 
   return (
     <PageLayout activePath='/source-search'>
-      <PageContainer className='py-4 sm:py-8 overflow-visible mb-10'>
-        {/* 页面标题 */}
-        <div className='mb-6'>
-          <h1 className='flex items-center gap-2 text-[color:var(--tm-text)] text-[28px] font-bold md:text-[32px]'>
-            源站寻片
-            {isSpecialVersion && (
-              <span className='rounded-full bg-[var(--tm-surface-raised)] px-2 py-0.5 text-[13px] font-medium text-[color:var(--tm-text)]'>
-                特殊源
-              </span>
-            )}
-          </h1>
-          <p className='text-sm text-[color:var(--tm-muted)] mt-1'>
-            {isSpecialVersion
-              ? '仅浏览与搜索特殊源的内容'
-              : '根据可用视频源浏览分类内容'}
-          </p>
-        </div>
+      <PageContainer className='pb-12'>
+        <PageHeader
+          title={
+            <span className='inline-flex items-center gap-3'>
+              源站寻片
+              {isSpecialVersion && <span className='tm-badge'>特殊源</span>}
+            </span>
+          }
+          description={
+            isSpecialVersion
+              ? '只浏览和搜索特殊源的内容'
+              : '按视频源浏览分类内容'
+          }
+        />
 
         {/* 源选择和分类选择 */}
-        <div className='max-w-4xl mx-auto mb-8 space-y-6'>
+        <div className='mb-8 space-y-6'>
           {/* 源选择 CapsuleSwitch */}
           <div className='relative'>
             <div className='flex items-center justify-between gap-3 mb-3'>
-              <label className='block text-sm font-medium text-[color:var(--tm-muted)]'>
-                选择视频源
-              </label>
+              <span className='tm-field-label mb-0'>视频源</span>
               {/* 过滤视频源：伸缩搜索框 */}
               <div
-                className={`flex items-center h-11 bg-[var(--tm-surface-raised)] bg-[var(--tm-surface-raised)] border border-[var(--tm-line)] border-[var(--tm-line)] rounded-lg shadow-sm transition-[transform,opacity] duration-300 ease-in-out overflow-hidden ${
+                className={`tm-expand-search ${
                   isSourceFilterExpanded ? 'w-44 sm:w-56' : 'w-11'
                 }`}
               >
@@ -532,7 +489,7 @@ function SourceSearchPageClient() {
                     setIsSourceFilterExpanded(true);
                     sourceFilterInputRef.current?.focus();
                   }}
-                  className='flex-none w-11 h-11 flex items-center justify-center text-[color:var(--tm-text)] hover:text-[color:var(--tm-text)] transition-colors min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
+                  className='tm-expand-search-btn'
                 >
                   <Search size={18} />
                 </button>
@@ -546,9 +503,9 @@ function SourceSearchPageClient() {
                   onBlur={() => {
                     if (!sourceFilter.trim()) setIsSourceFilterExpanded(false);
                   }}
-                  placeholder='过滤视频源...'
+                  placeholder='筛选视频源'
                   tabIndex={isSourceFilterExpanded ? 0 : -1}
-                  className={`w-full h-11 pr-3 text-sm bg-transparent border-0 focus:outline-none focus:ring-0 text-[color:var(--tm-muted)] text-[color:var(--tm-muted)] placeholder:text-[color:var(--tm-muted)] placeholder:text-[color:var(--tm-muted)] transition-opacity duration-300 ${
+                  className={`tm-expand-search-input ${
                     isSourceFilterExpanded
                       ? 'opacity-100'
                       : 'opacity-0 pointer-events-none'
@@ -557,27 +514,11 @@ function SourceSearchPageClient() {
               </div>
             </div>
             {isLoadingSources && apiSites.length === 0 ? (
-              <div className='flex items-center justify-center h-12 bg-[var(--tm-surface-raised)] rounded-lg border border-[var(--tm-line)]'>
-                <span
-                  aria-hidden
-                  className='tm-skeleton h-5 w-5 text-[color:var(--tm-muted)]'
-                />
-                <span className='ml-2 text-sm text-[color:var(--tm-muted)]'>
-                  加载视频源中...
-                </span>
-              </div>
+              <div className='tm-inline-state'>正在加载视频源</div>
             ) : apiSites.length === 0 ? (
-              <div className='flex items-center justify-center h-12 bg-[var(--tm-surface-raised)] rounded-lg border border-[var(--tm-line)]'>
-                <span className='text-sm text-[color:var(--tm-muted)]'>
-                  暂无可用源
-                </span>
-              </div>
+              <div className='tm-inline-state'>暂无可用的视频源</div>
             ) : filteredApiSites.length === 0 ? (
-              <div className='flex items-center justify-center h-12 bg-[var(--tm-surface-raised)] rounded-lg border border-[var(--tm-line)]'>
-                <span className='text-sm text-[color:var(--tm-muted)]'>
-                  没有匹配的视频源
-                </span>
-              </div>
+              <div className='tm-inline-state'>没有匹配的视频源</div>
             ) : (
               <div className='flex'>
                 <CapsuleSwitch
@@ -604,13 +545,13 @@ function SourceSearchPageClient() {
                     type='text'
                     value={searchInputValue}
                     onChange={(e) => setSearchInputValue(e.target.value)}
-                    placeholder='搜索视频...'
-                    className='w-full h-12 rounded-lg bg-[var(--tm-surface-raised)] py-3 pl-4 pr-12 text-sm text-[color:var(--tm-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--tm-text)] focus:bg-[var(--tm-surface-raised)] border border-[var(--tm-line)] shadow-sm'
+                    placeholder='在这个源里搜索'
+                    className='tm-input h-12 pr-12'
                   />
                   <button
                     type='submit'
                     aria-label='搜索片名'
-                    className='absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-lg text-[color:var(--tm-text)] hover:text-[color:var(--tm-text)] hover:bg-[var(--tm-line)] transition-colors min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
+                    className='tm-icon-btn absolute right-1 top-1/2 -translate-y-1/2'
                   >
                     <Search size={20} />
                   </button>
@@ -621,13 +562,13 @@ function SourceSearchPageClient() {
 
           {/* 搜索结果提示和返回按钮 */}
           {viewMode === 'search' && searchKeyword && (
-            <div className='flex items-center justify-between bg-[var(--tm-surface-raised)] border border-[var(--tm-line)] rounded-lg px-4 py-3'>
-              <span className='text-sm text-[color:var(--tm-muted)]'>
-                搜索结果: <span className='font-medium'>{searchKeyword}</span>
+            <div className='flex items-center justify-between gap-3'>
+              <span className='text-sm text-muted'>
+                “<span className='text-fg'>{searchKeyword}</span>”的搜索结果
               </span>
               <button
                 onClick={handleBackToBrowse}
-                className='text-sm text-[color:var(--tm-text)] hover:text-[color:var(--tm-text)] font-medium min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
+                className='tm-btn tm-btn-ghost tm-btn-sm'
               >
                 返回分类浏览
               </button>
@@ -638,27 +579,13 @@ function SourceSearchPageClient() {
           {selectedSource && viewMode === 'browse' && (
             <div className='relative space-y-6'>
               {isLoadingCategories && categories.length === 0 ? (
-                <div className='flex items-center justify-center h-12 bg-[var(--tm-surface-raised)] rounded-lg border border-[var(--tm-line)]'>
-                  <span
-                    aria-hidden
-                    className='tm-skeleton h-5 w-5 text-[color:var(--tm-muted)]'
-                  />
-                  <span className='ml-2 text-sm text-[color:var(--tm-muted)]'>
-                    加载分类中...
-                  </span>
-                </div>
+                <div className='tm-inline-state'>正在加载分类</div>
               ) : categories.length === 0 ? (
-                <div className='flex items-center justify-center h-12 bg-[var(--tm-surface-raised)] rounded-lg border border-[var(--tm-line)]'>
-                  <span className='text-sm text-[color:var(--tm-muted)]'>
-                    暂无分类
-                  </span>
-                </div>
+                <div className='tm-inline-state'>这个源没有分类</div>
               ) : isHierarchical ? (
                 <>
                   <div>
-                    <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-3'>
-                      选择类型
-                    </label>
+                    <label className='tm-field-label'>选择类型</label>
                     <div className='flex'>
                       <CapsuleSwitch
                         options={parentCategories.map((category) => ({
@@ -672,9 +599,7 @@ function SourceSearchPageClient() {
                   </div>
                   {subCategories.length > 0 && (
                     <div>
-                      <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-3'>
-                        选择分类
-                      </label>
+                      <label className='tm-field-label'>选择分类</label>
                       <div className='flex'>
                         <CapsuleSwitch
                           options={subCategories.map((category) => ({
@@ -690,9 +615,7 @@ function SourceSearchPageClient() {
                 </>
               ) : (
                 <div>
-                  <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-3'>
-                    选择分类
-                  </label>
+                  <label className='tm-field-label'>选择分类</label>
                   <div className='flex'>
                     <CapsuleSwitch
                       options={categories.map((category) => ({
@@ -714,18 +637,18 @@ function SourceSearchPageClient() {
           (viewMode === 'search' ? searchKeyword : selectedCategory) && (
             <div className='mt-8'>
               <div className='mb-4'>
-                <h2 className=' text-[color:var(--tm-text)] text-xl font-medium md:text-2xl'>
-                  视频列表
-                </h2>
+                <h2 className='tm-section-title'>视频列表</h2>
               </div>
 
               {isLoadingVideos && currentPage === 1 ? (
-                <div className='flex justify-center items-center h-40'>
-                  <div className='tm-skeleton  rounded-md h-8 w-8  '></div>
+                <div className='tm-poster-grid' aria-label='正在加载'>
+                  {Array.from({ length: 12 }, (_, index) => (
+                    <div key={index} className='tm-poster tm-skeleton' />
+                  ))}
                 </div>
               ) : videos.length === 0 ? (
-                <div className='text-center text-[color:var(--tm-muted)] py-8'>
-                  暂无视频
+                <div className='tm-empty'>
+                  <p className='tm-empty-title'>暂无视频</p>
                 </div>
               ) : (
                 <>
@@ -765,12 +688,10 @@ function SourceSearchPageClient() {
                     className='flex justify-center items-center py-8'
                   >
                     {isLoadingVideos && (
-                      <div className='tm-skeleton  rounded-md h-6 w-6  '></div>
+                      <span className='tm-library-end'>正在加载</span>
                     )}
                     {!hasMore && videos.length > 0 && (
-                      <span className='text-sm text-[color:var(--tm-muted)]'>
-                        没有更多了
-                      </span>
+                      <span className='tm-library-end'>已经到底了</span>
                     )}
                   </div>
                 </>
@@ -779,20 +700,7 @@ function SourceSearchPageClient() {
           )}
       </PageContainer>
 
-      {/* 置顶（返回顶部）悬浮按钮 */}
-      <button
-        onClick={scrollToTop}
-        aria-hidden={!showBackToTop}
-        tabIndex={showBackToTop ? 0 : -1}
-        className={`fixed bottom-20 md:bottom-6 right-6 z-[500] w-12 h-12 bg-[var(--tm-text)] hover:opacity-90 text-[color:var(--tm-accent-contrast)] rounded-full shadow-lg transition-[transform,opacity] duration-300 ease-in-out flex items-center justify-center group ${
-          showBackToTop
-            ? 'opacity-100 translate-y-0 pointer-events-auto min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
-            : 'opacity-0 translate-y-4 pointer-events-none min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
-        }`}
-        aria-label='返回顶部'
-      >
-        <ChevronUp className='w-6 h-6 transition-transform group-hover:scale-110' />
-      </button>
+      <BackToTop />
     </PageLayout>
   );
 }

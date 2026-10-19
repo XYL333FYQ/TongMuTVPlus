@@ -177,7 +177,7 @@ export default function TVLivePage() {
   return (
     <TVLayout>
       {lastChannel && (
-        <section className='mb-8 rounded-[34px] border border-[var(--tm-line)] bg-[var(--tm-surface-raised)] p-4 md:p-7 shadow-lg'>
+        <section className='mb-8 rounded-[34px] border border-line bg-raised p-4 md:p-7 shadow-lg'>
           <button
             onClick={() =>
               router.push(
@@ -186,7 +186,7 @@ export default function TVLivePage() {
                 )}&id=${encodeURIComponent(lastChannel.id)}`
               )
             }
-            className='tv-focusable flex w-full cursor-pointer items-center justify-between gap-3 rounded-3xl bg-[var(--tm-surface-raised)] p-4 text-left outline-none transition hover:bg-[var(--tm-line)] min-h-[44px] tm-press'
+            className='tv-focusable flex w-full cursor-pointer items-center justify-between gap-3 rounded-3xl bg-raised p-4 text-left outline-none transition hover:bg-line min-h-[44px] tm-press'
           >
             <div className='flex min-w-0 items-center gap-3'>
               {lastChannel.logo ? (
@@ -196,37 +196,35 @@ export default function TVLivePage() {
                   className='h-10 w-10 shrink-0 rounded-2xl object-contain'
                 />
               ) : (
-                <Radio className='h-10 w-10 shrink-0 text-[color:var(--tm-text)]' />
+                <Radio className='h-10 w-10 shrink-0 text-fg' />
               )}
               <div className='min-w-0'>
-                <div className='mb-2 flex items-center gap-3 text-base font-medium text-[color:var(--tm-text)]'>
+                <div className='mb-2 flex items-center gap-3 text-base font-medium text-fg'>
                   <Play className='h-7 w-7 fill-current' />
                   开始观看
                 </div>
-                <div className='line-clamp-1 text-[24px] font-medium text-[color:var(--tm-text)]'>
+                <div className='line-clamp-1 text-[24px] font-medium text-fg'>
                   {lastChannel.title}
                 </div>
-                <div className='mt-2 text-base text-[color:var(--tm-muted)]'>
+                <div className='mt-2 text-base text-muted'>
                   {lastChannel.sourceName || lastChannel.source}
                   {lastChannel.group ? ` · ${lastChannel.group}` : ''}
                 </div>
               </div>
             </div>
-            <div className='shrink-0 rounded-2xl bg-[var(--tm-text)] px-4 py-3 text-sm font-medium text-[color:var(--tm-accent-contrast)]'>
+            <div className='shrink-0 rounded-2xl bg-fg px-4 py-3 text-sm font-medium text-inverse'>
               播放
             </div>
           </button>
         </section>
       )}
 
-      <section className='rounded-[42px] border border-[var(--tm-line)] bg-[var(--tm-surface)] p-4 md:p-10 shadow-lg'>
+      <section className='rounded-[42px] border border-line bg-surface p-4 md:p-10 shadow-lg'>
         <div className='flex items-center gap-4'>
-          <Radio className='h-8 w-8 shrink-0 text-[color:var(--tm-text)]' />
+          <Radio className='h-8 w-8 shrink-0 text-fg' />
           <div>
             <h1 className='text-[28px] md:text-[32px] font-bold'>直播</h1>
-            <p className='mt-2 text-base text-[color:var(--tm-muted)]'>
-              选择频道播放
-            </p>
+            <p className='mt-2 text-base text-muted'>选择频道播放</p>
           </div>
         </div>
         <div className='mt-8 flex gap-4 overflow-x-auto px-4 py-4 [scrollbar-width:none]'>
@@ -237,16 +235,16 @@ export default function TVLivePage() {
               onClick={() => setSource(item.key)}
               className={`shrink-0 cursor-pointer rounded-2xl px-5 py-3 text-sm font-medium outline-none transition tv-focusable ${
                 source === item.key
-                  ? 'bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] min-h-[44px] tm-press'
-                  : 'bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)] hover:bg-[var(--tm-line)] min-h-[44px] tm-press'
+                  ? 'bg-fg text-inverse min-h-[44px] tm-press'
+                  : 'bg-raised text-fg hover:bg-line min-h-[44px] tm-press'
               }`}
             >
               {item.name}
             </button>
           ))}
         </div>
-        <label className='mt-5 flex min-h-[44px] items-center gap-3 rounded-3xl border border-[var(--tm-line)] bg-[var(--tm-surface-raised)] px-4 focus-within:border-[var(--tm-text)]'>
-          <Search className='h-5 w-5 shrink-0 text-[color:var(--tm-muted)]' />
+        <label className='mt-5 flex min-h-[44px] items-center gap-3 rounded-3xl border border-line bg-raised px-4 focus-within:border-fg'>
+          <Search className='h-5 w-5 shrink-0 text-muted' />
           <input
             value={query}
             onChange={(e) => {
@@ -254,13 +252,13 @@ export default function TVLivePage() {
               setVisibleCount(120);
             }}
             placeholder='搜索频道或分类'
-            className='tv-focusable min-h-[44px] min-w-0 flex-1 rounded-xl border-0 bg-transparent text-base text-[color:var(--tm-text)] outline-none placeholder:text-[color:var(--tm-muted)]'
+            className='tv-focusable min-h-[44px] min-w-0 flex-1 rounded-xl border-0 bg-transparent text-base text-fg outline-none placeholder:text-muted'
           />
         </label>
       </section>
 
       {quickChannels.length > 0 && (
-        <section className='mt-8 rounded-[34px] border border-[var(--tm-line)] bg-[var(--tm-surface-raised)] p-6'>
+        <section className='mt-8 rounded-[34px] border border-line bg-raised p-6'>
           <h2 className='mb-5 text-[20px] md:text-[24px] font-medium'>
             常用频道
           </h2>
@@ -275,7 +273,7 @@ export default function TVLivePage() {
                     )}&id=${encodeURIComponent(item.id)}`
                   )
                 }
-                className='tv-focusable flex min-w-[220px] cursor-pointer items-center gap-3 rounded-3xl bg-[var(--tm-surface-raised)] p-4 text-left outline-none min-h-[44px] tm-press'
+                className='tv-focusable flex min-w-[220px] cursor-pointer items-center gap-3 rounded-3xl bg-raised p-4 text-left outline-none min-h-[44px] tm-press'
               >
                 {item.cover ? (
                   <img
@@ -284,15 +282,13 @@ export default function TVLivePage() {
                     className='h-12 w-12 rounded-xl object-contain'
                   />
                 ) : (
-                  <Radio className='h-10 w-10 text-[color:var(--tm-text)]' />
+                  <Radio className='h-10 w-10 text-fg' />
                 )}
                 <div>
                   <div className='line-clamp-1 text-base font-medium'>
                     {item.title}
                   </div>
-                  <div className='text-base text-[color:var(--tm-muted)]'>
-                    {item.type}
-                  </div>
+                  <div className='text-base text-muted'>{item.type}</div>
                 </div>
               </button>
             ))}
@@ -303,15 +299,15 @@ export default function TVLivePage() {
       {error ? (
         <section
           role='alert'
-          className='mt-10 rounded-[34px] border border-[var(--tm-danger)] bg-[var(--tm-surface-raised)] p-4 md:p-8 text-[color:var(--tm-text)]'
+          className='mt-10 rounded-[34px] border border-danger bg-raised p-4 md:p-8 text-fg'
         >
           <div className='flex items-center gap-4 text-base font-medium'>
-            <AlertTriangle className='h-10 w-10 shrink-0 text-[color:var(--tm-danger)]' />
+            <AlertTriangle className='h-10 w-10 shrink-0 text-danger' />
             {error}
           </div>
           <button
             onClick={() => window.location.reload()}
-            className='tv-focusable mt-6 cursor-pointer rounded-2xl bg-[var(--tm-text)] px-7 py-4 text-base font-medium text-[color:var(--tm-accent-contrast)] outline-none min-h-[44px] tm-press'
+            className='tv-focusable mt-6 cursor-pointer rounded-2xl bg-fg px-7 py-4 text-base font-medium text-inverse outline-none min-h-[44px] tm-press'
           >
             重试
           </button>
@@ -326,7 +322,7 @@ export default function TVLivePage() {
         </div>
       ) : (
         <div className='mt-10 grid grid-cols-1 gap-6 lg:grid-cols-[280px_minmax(0,1fr)]'>
-          <aside className='rounded-[32px] border border-[var(--tm-line)] bg-[var(--tm-surface-raised)] p-4'>
+          <aside className='rounded-[32px] border border-line bg-raised p-4'>
             <div className='flex gap-2 overflow-x-auto p-1 lg:block lg:max-h-[70vh] lg:space-y-2 lg:overflow-y-auto lg:pr-2'>
               {groups.map((group) => (
                 <button
@@ -338,8 +334,8 @@ export default function TVLivePage() {
                   }}
                   className={`tv-focusable shrink-0 cursor-pointer rounded-2xl px-5 py-3 text-left text-sm font-medium outline-none lg:w-full ${
                     selectedGroup === group
-                      ? 'bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] min-h-[44px] tm-press'
-                      : 'text-[color:var(--tm-text)] hover:bg-[var(--tm-line)] min-h-[44px] tm-press'
+                      ? 'bg-fg text-inverse min-h-[44px] tm-press'
+                      : 'text-fg hover:bg-line min-h-[44px] tm-press'
                   }`}
                 >
                   {group}
@@ -348,7 +344,7 @@ export default function TVLivePage() {
             </div>
           </aside>
           <section>
-            <div className='mb-4 text-base font-medium text-[color:var(--tm-muted)]'>
+            <div className='mb-4 text-base font-medium text-muted'>
               {selectedGroup} · {filteredChannels.length} 个频道
             </div>
             <div className='grid grid-cols-2 gap-4 lg:grid-cols-4'>
@@ -362,7 +358,7 @@ export default function TVLivePage() {
                       )}&id=${encodeURIComponent(channel.id)}`
                     )
                   }
-                  className='tv-focusable flex min-h-28 cursor-pointer items-center gap-3 rounded-3xl border border-[var(--tm-line)] bg-[var(--tm-surface-raised)] p-3 text-left outline-none transition hover:bg-[var(--tm-line)] min-h-[44px] tm-press'
+                  className='tv-focusable flex min-h-28 cursor-pointer items-center gap-3 rounded-3xl border border-line bg-raised p-3 text-left outline-none transition hover:bg-line min-h-[44px] tm-press'
                 >
                   {channel.logo ? (
                     <img
@@ -371,13 +367,13 @@ export default function TVLivePage() {
                       className='h-8 w-8 shrink-0 rounded-xl object-contain'
                     />
                   ) : (
-                    <Radio className='h-8 w-8 shrink-0 text-[color:var(--tm-text)]' />
+                    <Radio className='h-8 w-8 shrink-0 text-fg' />
                   )}
                   <div className='min-w-0'>
                     <div className='line-clamp-1 text-sm font-medium'>
                       {channel.name}
                     </div>
-                    <div className='mt-1 text-sm text-[color:var(--tm-muted)]'>
+                    <div className='mt-1 text-sm text-muted'>
                       #{index + 1} · {channel.group || '直播频道'}
                     </div>
                   </div>
@@ -387,7 +383,7 @@ export default function TVLivePage() {
             {visibleCount < filteredChannels.length && (
               <button
                 onClick={() => setVisibleCount((v) => v + 120)}
-                className='tv-focusable mx-auto mt-8 block cursor-pointer rounded-3xl bg-[var(--tm-surface-raised)] px-10 py-5 text-base font-medium text-[color:var(--tm-text)] outline-none min-h-[44px] tm-press'
+                className='tv-focusable mx-auto mt-8 block cursor-pointer rounded-3xl bg-raised px-10 py-5 text-base font-medium text-fg outline-none min-h-[44px] tm-press'
               >
                 加载更多频道
               </button>

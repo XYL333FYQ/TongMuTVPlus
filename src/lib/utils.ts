@@ -147,11 +147,7 @@ function isBangumiImageUrl(url: string): boolean {
   }
 }
 
-type AnimeImageSource =
-  | 'direct'
-  | 'server-proxy'
-  | 'custom-baseurl'
-  | 'sakura';
+type AnimeImageSource = 'direct' | 'server-proxy' | 'custom-baseurl' | 'sakura';
 
 const BANGUMI_IMAGE_FALLBACK_UNTIL_KEY = 'bangumiImageFallbackUntil';
 const BANGUMI_IMAGE_FALLBACK_SIGNATURE_KEY = 'bangumiImageFallbackSignature';
@@ -189,7 +185,10 @@ function rewriteBangumiUrlToSakura(url: string): string {
     } else if (hostname.endsWith('.bgm.tv')) {
       parsed.hostname = `${hostname.slice(0, -'.bgm.tv'.length)}.bangumi.lol`;
     } else if (hostname.endsWith('.bangumi.tv')) {
-      parsed.hostname = `${hostname.slice(0, -'.bangumi.tv'.length)}.bangumi.lol`;
+      parsed.hostname = `${hostname.slice(
+        0,
+        -'.bangumi.tv'.length
+      )}.bangumi.lol`;
     }
     return parsed.toString();
   } catch {
@@ -588,9 +587,7 @@ export function processImageUrl(originalUrl: string): string {
           'http://image.tmdb.org',
         ]) {
           if (originalUrl.startsWith(officialBase)) {
-            return (
-              tmdbImageBaseUrl + originalUrl.slice(officialBase.length)
-            );
+            return tmdbImageBaseUrl + originalUrl.slice(officialBase.length);
           }
         }
       }
@@ -909,8 +906,7 @@ export async function getVideoResolutionFromM3u8(
           video.remove();
           // HLS 的 *TimeOut 类 details（manifestLoadTimeOut 等）归为超时，
           // 其余致命错误（网络不可达、404、解析失败）归为无法访问
-          const details =
-            typeof data.details === 'string' ? data.details : '';
+          const details = typeof data.details === 'string' ? data.details : '';
           const isTimeout = details.toLowerCase().includes('timeout');
           reject(
             new SpeedTestError(

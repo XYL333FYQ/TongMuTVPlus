@@ -80,7 +80,8 @@ interface EmbyView {
   CollectionType?: string;
 }
 
-const DEFAULT_EMBY_AUTHORIZATION_HEADER = 'MediaBrowser Client="moontvplus", Device="Web", DeviceId="moontvplus-web", Version="1.0.0"';
+const DEFAULT_EMBY_AUTHORIZATION_HEADER =
+  'MediaBrowser Client="moontvplus", Device="Web", DeviceId="moontvplus-web", Version="1.0.0"';
 
 // 文本字幕优先于位图字幕（PGS 等），自动加载的默认字幕优先取文本格式
 const TEXT_SUBTITLE_FORMATS = new Set(['ass', 'ssa', 'srt', 'vtt']);
@@ -110,8 +111,12 @@ export class EmbyClient {
     this.proxyPlay = config.proxyPlay || false;
     this.embyKey = config.key;
     // 设置自定义UA，如果没有设置则使用默认浏览器UA
-    this.customUserAgent = config.customUserAgent || 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
-    this.embyAuthorizationHeader = config.embyAuthorizationHeader?.trim() || DEFAULT_EMBY_AUTHORIZATION_HEADER;
+    this.customUserAgent =
+      config.customUserAgent ||
+      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
+    this.embyAuthorizationHeader =
+      config.embyAuthorizationHeader?.trim() ||
+      DEFAULT_EMBY_AUTHORIZATION_HEADER;
 
     // 如果 URL 不包含 /emby 路径，自动添加（除非启用了 removeEmbyPrefix）
     if (!serverUrl.endsWith('/emby') && !this.removeEmbyPrefix) {
@@ -140,13 +145,16 @@ export class EmbyClient {
 
     // 如果有用户名，自动认证（密码可选）
     if (this.username) {
-      const authResult = await this.authenticate(this.username, this.password || '');
+      const authResult = await this.authenticate(
+        this.username,
+        this.password || ''
+      );
       this.authToken = authResult.AccessToken;
       this.userId = authResult.User.Id;
     }
   }
 
-  private getHeaders(includeContentType: boolean = false): Record<string, string> {
+  private getHeaders(includeContentType = false): Record<string, string> {
     const headers: Record<string, string> = {
       'User-Agent': this.customUserAgent,
     };
@@ -165,7 +173,10 @@ export class EmbyClient {
     return headers;
   }
 
-  async authenticate(username: string, password: string): Promise<{ AccessToken: string; User: { Id: string } }> {
+  async authenticate(
+    username: string,
+    password: string
+  ): Promise<{ AccessToken: string; User: { Id: string } }> {
     const url = `${this.serverUrl}/Users/AuthenticateByName`;
 
     const body = JSON.stringify({
@@ -202,7 +213,9 @@ export class EmbyClient {
 
     if (!response.ok) {
       const errorText = await response.text();
-      throw new Error(`获取当前用户信息失败 (${response.status}): ${errorText}`);
+      throw new Error(
+        `获取当前用户信息失败 (${response.status}): ${errorText}`
+      );
     }
 
     const data = await response.json();
@@ -217,13 +230,18 @@ export class EmbyClient {
     }
 
     const token = this.apiKey || this.authToken;
-    const url = `${this.serverUrl}/Users/${this.userId}/Views${token ? `?api_key=${token}` : ''}`;
+    const url = `${this.serverUrl}/Users/${this.userId}/Views${
+      token ? `?api_key=${token}` : ''
+    }`;
 
     const response = await fetch(url);
 
     // 如果是 401 错误且有用户名密码，尝试重新认证
     if (response.status === 401 && this.username && !this.apiKey) {
-      const authResult = await this.authenticate(this.username, this.password || '');
+      const authResult = await this.authenticate(
+        this.username,
+        this.password || ''
+      );
       this.authToken = authResult.AccessToken;
       this.userId = authResult.User.Id;
 
@@ -233,7 +251,9 @@ export class EmbyClient {
 
       if (!retryResponse.ok) {
         const errorText = await retryResponse.text();
-        throw new Error(`获取 Emby 媒体库列表失败 (${retryResponse.status}): ${errorText}`);
+        throw new Error(
+          `获取 Emby 媒体库列表失败 (${retryResponse.status}): ${errorText}`
+        );
       }
 
       const retryData = await retryResponse.json();
@@ -242,7 +262,9 @@ export class EmbyClient {
 
     if (!response.ok) {
       const errorText = await response.text();
-      throw new Error(`获取 Emby 媒体库列表失败 (${response.status}): ${errorText}`);
+      throw new Error(
+        `获取 Emby 媒体库列表失败 (${response.status}): ${errorText}`
+      );
     }
 
     const data = await response.json();
@@ -259,13 +281,17 @@ export class EmbyClient {
     const searchParams = new URLSearchParams();
 
     if (params.ParentId) searchParams.set('ParentId', params.ParentId);
-    if (params.IncludeItemTypes) searchParams.set('IncludeItemTypes', params.IncludeItemTypes);
-    if (params.Recursive !== undefined) searchParams.set('Recursive', params.Recursive.toString());
+    if (params.IncludeItemTypes)
+      searchParams.set('IncludeItemTypes', params.IncludeItemTypes);
+    if (params.Recursive !== undefined)
+      searchParams.set('Recursive', params.Recursive.toString());
     if (params.Fields) searchParams.set('Fields', params.Fields);
     if (params.SortBy) searchParams.set('SortBy', params.SortBy);
     if (params.SortOrder) searchParams.set('SortOrder', params.SortOrder);
-    if (params.StartIndex !== undefined) searchParams.set('StartIndex', params.StartIndex.toString());
-    if (params.Limit !== undefined) searchParams.set('Limit', params.Limit.toString());
+    if (params.StartIndex !== undefined)
+      searchParams.set('StartIndex', params.StartIndex.toString());
+    if (params.Limit !== undefined)
+      searchParams.set('Limit', params.Limit.toString());
     if (params.searchTerm) searchParams.set('searchTerm', params.searchTerm);
 
     // 添加认证参数
@@ -274,24 +300,33 @@ export class EmbyClient {
       searchParams.set('api_key', token);
     }
 
-    const url = `${this.serverUrl}/Users/${this.userId}/Items?${searchParams.toString()}`;
+    const url = `${this.serverUrl}/Users/${
+      this.userId
+    }/Items?${searchParams.toString()}`;
 
     const response = await fetch(url);
 
     // 如果是 401 错误且有用户名密码，尝试重新认证
     if (response.status === 401 && this.username && !this.apiKey) {
-      const authResult = await this.authenticate(this.username, this.password || '');
+      const authResult = await this.authenticate(
+        this.username,
+        this.password || ''
+      );
       this.authToken = authResult.AccessToken;
       this.userId = authResult.User.Id;
 
       // 重试请求
       searchParams.set('api_key', this.authToken);
-      const retryUrl = `${this.serverUrl}/Users/${this.userId}/Items?${searchParams.toString()}`;
+      const retryUrl = `${this.serverUrl}/Users/${
+        this.userId
+      }/Items?${searchParams.toString()}`;
       const retryResponse = await fetch(retryUrl);
 
       if (!retryResponse.ok) {
         const errorText = await retryResponse.text();
-        throw new Error(`获取 Emby 媒体列表失败 (${retryResponse.status}): ${errorText}`);
+        throw new Error(
+          `获取 Emby 媒体列表失败 (${retryResponse.status}): ${errorText}`
+        );
       }
 
       return await retryResponse.json();
@@ -299,7 +334,9 @@ export class EmbyClient {
 
     if (!response.ok) {
       const errorText = await response.text();
-      throw new Error(`获取 Emby 媒体列表失败 (${response.status}): ${errorText}`);
+      throw new Error(
+        `获取 Emby 媒体列表失败 (${response.status}): ${errorText}`
+      );
     }
 
     return await response.json();
@@ -313,18 +350,27 @@ export class EmbyClient {
     }
 
     const token = this.apiKey || this.authToken;
-    const url = `${this.serverUrl}/Users/${this.userId}/Items/${itemId}?Fields=MediaSources${token ? `&api_key=${token}` : ''}`;
+    const url = `${this.serverUrl}/Users/${
+      this.userId
+    }/Items/${itemId}?Fields=MediaSources${token ? `&api_key=${token}` : ''}`;
     const response = await fetch(url);
 
     // 如果是 401 错误且有用户名密码，尝试重新认证
     if (response.status === 401 && this.username && !this.apiKey) {
-      const authResult = await this.authenticate(this.username, this.password || '');
+      const authResult = await this.authenticate(
+        this.username,
+        this.password || ''
+      );
       this.authToken = authResult.AccessToken;
       this.userId = authResult.User.Id;
 
       // 重试请求
       const retryToken = this.authToken;
-      const retryUrl = `${this.serverUrl}/Users/${this.userId}/Items/${itemId}?Fields=MediaSources${retryToken ? `&api_key=${retryToken}` : ''}`;
+      const retryUrl = `${this.serverUrl}/Users/${
+        this.userId
+      }/Items/${itemId}?Fields=MediaSources${
+        retryToken ? `&api_key=${retryToken}` : ''
+      }`;
       const retryResponse = await fetch(retryUrl);
 
       if (!retryResponse.ok) {
@@ -349,18 +395,25 @@ export class EmbyClient {
     }
 
     const token = this.apiKey || this.authToken;
-    const url = `${this.serverUrl}/Shows/${seriesId}/Seasons?userId=${this.userId}${token ? `&api_key=${token}` : ''}`;
+    const url = `${this.serverUrl}/Shows/${seriesId}/Seasons?userId=${
+      this.userId
+    }${token ? `&api_key=${token}` : ''}`;
     const response = await fetch(url);
 
     // 如果是 401 错误且有用户名密码，尝试重新认证
     if (response.status === 401 && this.username && !this.apiKey) {
-      const authResult = await this.authenticate(this.username, this.password || '');
+      const authResult = await this.authenticate(
+        this.username,
+        this.password || ''
+      );
       this.authToken = authResult.AccessToken;
       this.userId = authResult.User.Id;
 
       // 重试请求
       const retryToken = this.authToken;
-      const retryUrl = `${this.serverUrl}/Shows/${seriesId}/Seasons?userId=${this.userId}${retryToken ? `&api_key=${retryToken}` : ''}`;
+      const retryUrl = `${this.serverUrl}/Shows/${seriesId}/Seasons?userId=${
+        this.userId
+      }${retryToken ? `&api_key=${retryToken}` : ''}`;
       const retryResponse = await fetch(retryUrl);
 
       if (!retryResponse.ok) {
@@ -400,12 +453,17 @@ export class EmbyClient {
       searchParams.set('api_key', token);
     }
 
-    const url = `${this.serverUrl}/Shows/${seriesId}/Episodes?${searchParams.toString()}`;
+    const url = `${
+      this.serverUrl
+    }/Shows/${seriesId}/Episodes?${searchParams.toString()}`;
     const response = await fetch(url);
 
     // 如果是 401 错误且有用户名密码，尝试重新认证
     if (response.status === 401 && this.username && !this.apiKey) {
-      const authResult = await this.authenticate(this.username, this.password || '');
+      const authResult = await this.authenticate(
+        this.username,
+        this.password || ''
+      );
       this.authToken = authResult.AccessToken;
       this.userId = authResult.User.Id;
 
@@ -423,7 +481,9 @@ export class EmbyClient {
         retrySearchParams.set('api_key', this.authToken);
       }
 
-      const retryUrl = `${this.serverUrl}/Shows/${seriesId}/Episodes?${retrySearchParams.toString()}`;
+      const retryUrl = `${
+        this.serverUrl
+      }/Shows/${seriesId}/Episodes?${retrySearchParams.toString()}`;
       const retryResponse = await fetch(retryUrl);
 
       if (!retryResponse.ok) {
@@ -445,7 +505,9 @@ export class EmbyClient {
   async checkConnectivity(): Promise<boolean> {
     try {
       const token = this.apiKey || this.authToken;
-      const url = `${this.serverUrl}/System/Info/Public${token ? `?api_key=${token}` : ''}`;
+      const url = `${this.serverUrl}/System/Info/Public${
+        token ? `?api_key=${token}` : ''
+      }`;
       const response = await fetch(url);
       return response.ok;
     } catch {
@@ -453,7 +515,13 @@ export class EmbyClient {
     }
   }
 
-  getImageUrl(itemId: string, imageType: 'Primary' | 'Backdrop' | 'Logo' = 'Primary', maxWidth?: number, proxyToken?: string, forceDirectUrl = false): string {
+  getImageUrl(
+    itemId: string,
+    imageType: 'Primary' | 'Backdrop' | 'Logo' = 'Primary',
+    maxWidth?: number,
+    proxyToken?: string,
+    forceDirectUrl = false
+  ): string {
     // 如果启用了代理播放且不是强制获取直接URL，返回代理 URL
     if (this.proxyPlay && !forceDirectUrl) {
       // 使用固定的token占位符，实际验证在服务端进行
@@ -474,7 +542,9 @@ export class EmbyClient {
     if (token) params.set('api_key', token);
 
     const queryString = params.toString();
-    return `${this.serverUrl}/Items/${itemId}/Images/${imageType}${queryString ? '?' + queryString : ''}`;
+    return `${this.serverUrl}/Items/${itemId}/Images/${imageType}${
+      queryString ? '?' + queryString : ''
+    }`;
   }
 
   /**
@@ -488,7 +558,9 @@ export class EmbyClient {
     }
 
     const token = this.apiKey || this.authToken;
-    const url = `${this.serverUrl}/Items/${itemId}/PlaybackInfo?UserId=${this.userId}${token ? `&api_key=${token}` : ''}`;
+    const url = `${this.serverUrl}/Items/${itemId}/PlaybackInfo?UserId=${
+      this.userId
+    }${token ? `&api_key=${token}` : ''}`;
 
     try {
       const response = await fetch(url, {
@@ -509,7 +581,11 @@ export class EmbyClient {
     }
   }
 
-  async getStreamUrl(itemId: string, direct = true, forceDirectUrl = false): Promise<string> {
+  async getStreamUrl(
+    itemId: string,
+    direct = true,
+    forceDirectUrl = false
+  ): Promise<string> {
     await this.ensureAuthenticated();
     const token = this.apiKey || this.authToken;
 
@@ -559,7 +635,10 @@ export class EmbyClient {
     return url;
   }
 
-  private normalizeSubtitleFormat(codec?: string, deliveryUrl?: string): string {
+  private normalizeSubtitleFormat(
+    codec?: string,
+    deliveryUrl?: string
+  ): string {
     const normalizedCodec = codec?.trim().toLowerCase();
 
     if (normalizedCodec) {
@@ -567,7 +646,7 @@ export class EmbyClient {
         subrip: 'srt',
         webvtt: 'vtt',
         'text/vtt': 'vtt',
-        'hdmv_pgs_subtitle': 'pgs',
+        hdmv_pgs_subtitle: 'pgs',
         pgssub: 'pgs',
         dvdsub: 'sub',
         dvbsub: 'sub',
@@ -604,7 +683,9 @@ export class EmbyClient {
     proxyToken?: string | null,
     forceDirectUrl = false
   ): string {
-    const safeFormat = /^[a-z0-9]+$/i.test(format) ? format.toLowerCase() : 'vtt';
+    const safeFormat = /^[a-z0-9]+$/i.test(format)
+      ? format.toLowerCase()
+      : 'vtt';
 
     if (!forceDirectUrl) {
       const subscribeToken = proxyToken || 'proxy';
@@ -619,7 +700,9 @@ export class EmbyClient {
         params.set('embyKey', this.embyKey);
       }
 
-      return `/api/emby/subtitle/${encodeURIComponent(subscribeToken)}/subtitle.${safeFormat}?${params.toString()}`;
+      return `/api/emby/subtitle/${encodeURIComponent(
+        subscribeToken
+      )}/subtitle.${safeFormat}?${params.toString()}`;
     }
 
     const params = new URLSearchParams();
@@ -627,7 +710,11 @@ export class EmbyClient {
     if (token) params.set('api_key', token);
 
     const queryString = params.toString();
-    return `${this.serverUrl}/Videos/${itemId}/${mediaSourceId}/Subtitles/${streamIndex}/Stream.${safeFormat}${queryString ? '?' + queryString : ''}`;
+    return `${
+      this.serverUrl
+    }/Videos/${itemId}/${mediaSourceId}/Subtitles/${streamIndex}/Stream.${safeFormat}${
+      queryString ? '?' + queryString : ''
+    }`;
   }
 
   async getSubtitleStreamUrl(
@@ -660,30 +747,34 @@ export class EmbyClient {
       return subtitles;
     }
 
-    mediaSource.MediaStreams
-      .filter((stream) => stream.Type === 'Subtitle')
-      .forEach((stream) => {
-        const language = stream.Language || 'unknown';
-        const sourceFormat = this.normalizeSubtitleFormat(stream.Codec, stream.DeliveryUrl);
-        const targetFormat = this.getSubtitleTargetFormat(sourceFormat);
-        const renderMode =
-          targetFormat === 'pgs'
-            ? 'bitsub'
-            : targetFormat === 'ass' || targetFormat === 'ssa'
-              ? 'jassub'
-              : 'native';
-        const label = stream.DisplayTitle || `${language} (${stream.Codec || targetFormat})`;
+    mediaSource.MediaStreams.filter(
+      (stream) => stream.Type === 'Subtitle'
+    ).forEach((stream) => {
+      const language = stream.Language || 'unknown';
+      const sourceFormat = this.normalizeSubtitleFormat(
+        stream.Codec,
+        stream.DeliveryUrl
+      );
+      const targetFormat = this.getSubtitleTargetFormat(sourceFormat);
+      const renderMode =
+        targetFormat === 'pgs'
+          ? 'bitsub'
+          : targetFormat === 'ass' || targetFormat === 'ssa'
+          ? 'jassub'
+          : 'native';
+      const label =
+        stream.DisplayTitle || `${language} (${stream.Codec || targetFormat})`;
 
-        subtitles.push({
-          url: this.buildSubtitleStreamUrl(
-            item.Id,
-            mediaSource.Id,
-            stream.Index,
-            targetFormat,
-            proxyToken
-          ),
-          ...(renderMode === 'jassub'
-            ? {
+      subtitles.push({
+        url: this.buildSubtitleStreamUrl(
+          item.Id,
+          mediaSource.Id,
+          stream.Index,
+          targetFormat,
+          proxyToken
+        ),
+        ...(renderMode === 'jassub'
+          ? {
               fallbackUrl: this.buildSubtitleStreamUrl(
                 item.Id,
                 mediaSource.Id,
@@ -693,16 +784,16 @@ export class EmbyClient {
               ),
               fallbackFormat: 'vtt',
             }
-            : {}),
-          language,
-          label,
-          format: targetFormat,
-          sourceFormat,
-          codec: stream.Codec,
-          isExternal: stream.IsExternal,
-          renderMode,
-        });
+          : {}),
+        language,
+        label,
+        format: targetFormat,
+        sourceFormat,
+        codec: stream.Codec,
+        isExternal: stream.IsExternal,
+        renderMode,
       });
+    });
 
     // ass/ssa/srt/vtt 等文本字幕排在前，PGS 等位图字幕排在后；
     // 播放端默认取第一条字幕，排序后自动加载文本字幕而非 PGS

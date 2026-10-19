@@ -122,7 +122,7 @@ const DoubanSelector: React.FC<DoubanSelectorProps> = ({
     isPrimary = false
   ) => {
     return (
-      <div className='tm-capsule relative inline-flex bg-[var(--tm-surface-raised)] rounded-full p-0.5 sm:p-1'>
+      <div className='tm-capsule'>
         {/* 滑动的白色背景指示器 */}
 
         {options.map((option) => {
@@ -133,11 +133,7 @@ const DoubanSelector: React.FC<DoubanSelectorProps> = ({
               aria-pressed={isActive}
               key={option.value}
               onClick={() => onChange(option.value)}
-              className={`tm-capsule-option tm-press relative z-10 px-2 py-1 sm:px-4 sm:py-2 text-[13px] sm:text-sm font-medium rounded-full transition-[transform,opacity] duration-200 whitespace-nowrap min-h-[44px] min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)] ${
-                isActive
-                  ? 'text-[color:var(--tm-text)] cursor-default min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
-                  : 'text-[color:var(--tm-muted)] hover:text-[color:var(--tm-text)] cursor-pointer min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
-              } `}
+              className='tm-capsule-option'
             >
               {isActive && (
                 <motion.span
@@ -166,16 +162,14 @@ const DoubanSelector: React.FC<DoubanSelectorProps> = ({
   };
 
   return (
-    <div className='space-y-4 sm:space-y-6'>
+    <div className='tm-filter-rows'>
       {/* 电影类型 - 显示两级选择器 */}
       {type === 'movie' && (
-        <div className='space-y-3 sm:space-y-4'>
+        <div className='tm-filter-rows'>
           {/* 一级选择器 */}
-          <div className='flex flex-col sm:flex-row sm:items-center gap-2'>
-            <span className='text-[13px] sm:text-sm font-medium text-[color:var(--tm-muted)] min-w-[48px]'>
-              分类
-            </span>
-            <div className='overflow-x-auto'>
+          <div className='tm-filter-row'>
+            <span className='tm-filter-label'>分类</span>
+            <div className='tm-filter-track'>
               {renderCapsuleSelector(
                 moviePrimaryOptions,
                 primarySelection || moviePrimaryOptions[0].value,
@@ -187,11 +181,9 @@ const DoubanSelector: React.FC<DoubanSelectorProps> = ({
 
           {/* 二级选择器 - 只在非"全部"时显示 */}
           {primarySelection !== '全部' ? (
-            <div className='flex flex-col sm:flex-row sm:items-center gap-2'>
-              <span className='text-[13px] sm:text-sm font-medium text-[color:var(--tm-muted)] min-w-[48px]'>
-                地区
-              </span>
-              <div className='overflow-x-auto'>
+            <div className='tm-filter-row'>
+              <span className='tm-filter-label'>地区</span>
+              <div className='tm-filter-track'>
                 {renderCapsuleSelector(
                   movieSecondaryOptions,
                   secondarySelection || movieSecondaryOptions[0].value,
@@ -202,11 +194,9 @@ const DoubanSelector: React.FC<DoubanSelectorProps> = ({
             </div>
           ) : (
             /* 多级选择器 - 只在选中"全部"时显示 */
-            <div className='flex flex-col sm:flex-row sm:items-center gap-2'>
-              <span className='text-[13px] sm:text-sm font-medium text-[color:var(--tm-muted)] min-w-[48px]'>
-                筛选
-              </span>
-              <div className='overflow-x-auto'>
+            <div className='tm-filter-row'>
+              <span className='tm-filter-label'>筛选</span>
+              <div className='tm-filter-track'>
                 <MultiLevelSelector
                   key={`${type}-${primarySelection}`}
                   onChange={handleMultiLevelChange}
@@ -220,13 +210,11 @@ const DoubanSelector: React.FC<DoubanSelectorProps> = ({
 
       {/* 电视剧类型 - 显示两级选择器 */}
       {type === 'tv' && (
-        <div className='space-y-3 sm:space-y-4'>
+        <div className='tm-filter-rows'>
           {/* 一级选择器 */}
-          <div className='flex flex-col sm:flex-row sm:items-center gap-2'>
-            <span className='text-[13px] sm:text-sm font-medium text-[color:var(--tm-muted)] min-w-[48px]'>
-              分类
-            </span>
-            <div className='overflow-x-auto'>
+          <div className='tm-filter-row'>
+            <span className='tm-filter-label'>分类</span>
+            <div className='tm-filter-track'>
               {renderCapsuleSelector(
                 tvPrimaryOptions,
                 primarySelection || tvPrimaryOptions[1].value,
@@ -238,11 +226,9 @@ const DoubanSelector: React.FC<DoubanSelectorProps> = ({
 
           {/* 二级选择器 - 只在选中"最近热门"时显示，选中"全部"时显示多级选择器 */}
           {(primarySelection || tvPrimaryOptions[1].value) === '最近热门' ? (
-            <div className='flex flex-col sm:flex-row sm:items-center gap-2'>
-              <span className='text-[13px] sm:text-sm font-medium text-[color:var(--tm-muted)] min-w-[48px]'>
-                类型
-              </span>
-              <div className='overflow-x-auto'>
+            <div className='tm-filter-row'>
+              <span className='tm-filter-label'>类型</span>
+              <div className='tm-filter-track'>
                 {renderCapsuleSelector(
                   tvSecondaryOptions,
                   secondarySelection || tvSecondaryOptions[0].value,
@@ -253,11 +239,9 @@ const DoubanSelector: React.FC<DoubanSelectorProps> = ({
             </div>
           ) : (primarySelection || tvPrimaryOptions[1].value) === '全部' ? (
             /* 多级选择器 - 只在选中"全部"时显示 */
-            <div className='flex flex-col sm:flex-row sm:items-center gap-2'>
-              <span className='text-[13px] sm:text-sm font-medium text-[color:var(--tm-muted)] min-w-[48px]'>
-                筛选
-              </span>
-              <div className='overflow-x-auto'>
+            <div className='tm-filter-row'>
+              <span className='tm-filter-label'>筛选</span>
+              <div className='tm-filter-track'>
                 <MultiLevelSelector
                   key={`${type}-${primarySelection}`}
                   onChange={handleMultiLevelChange}
@@ -271,12 +255,10 @@ const DoubanSelector: React.FC<DoubanSelectorProps> = ({
 
       {/* 动漫类型 - 显示一级选择器和多级选择器 */}
       {type === 'anime' && (
-        <div className='space-y-3 sm:space-y-4'>
-          <div className='flex flex-col sm:flex-row sm:items-center gap-2'>
-            <span className='text-[13px] sm:text-sm font-medium text-[color:var(--tm-muted)] min-w-[48px]'>
-              分类
-            </span>
-            <div className='overflow-x-auto'>
+        <div className='tm-filter-rows'>
+          <div className='tm-filter-row'>
+            <span className='tm-filter-label'>分类</span>
+            <div className='tm-filter-track'>
               {renderCapsuleSelector(
                 animeSelectorOptions,
                 primarySelection === '每日放送' && viewMode === 'schedule'
@@ -298,21 +280,17 @@ const DoubanSelector: React.FC<DoubanSelectorProps> = ({
 
           {/* 筛选部分 - 根据一级选择器显示不同内容 */}
           {(primarySelection || animePrimaryOptions[0].value) === '每日放送' ? (
-            <div className='flex flex-col sm:flex-row sm:items-center gap-2'>
-              <span className='text-[13px] sm:text-sm font-medium text-[color:var(--tm-muted)] min-w-[48px]'>
-                星期
-              </span>
-              <div className='overflow-x-auto'>
+            <div className='tm-filter-row'>
+              <span className='tm-filter-label'>星期</span>
+              <div className='tm-filter-track'>
                 <WeekdaySelector onWeekdayChange={onWeekdayChange} />
               </div>
             </div>
           ) : (
             // 其他分类下显示原有的筛选功能
-            <div className='flex flex-col sm:flex-row sm:items-center gap-2'>
-              <span className='text-[13px] sm:text-sm font-medium text-[color:var(--tm-muted)] min-w-[48px]'>
-                筛选
-              </span>
-              <div className='overflow-x-auto'>
+            <div className='tm-filter-row'>
+              <span className='tm-filter-label'>筛选</span>
+              <div className='tm-filter-track'>
                 {(primarySelection || animePrimaryOptions[0].value) ===
                 '番剧' ? (
                   <MultiLevelSelector
@@ -335,13 +313,11 @@ const DoubanSelector: React.FC<DoubanSelectorProps> = ({
 
       {/* 综艺类型 - 显示两级选择器 */}
       {type === 'show' && (
-        <div className='space-y-3 sm:space-y-4'>
+        <div className='tm-filter-rows'>
           {/* 一级选择器 */}
-          <div className='flex flex-col sm:flex-row sm:items-center gap-2'>
-            <span className='text-[13px] sm:text-sm font-medium text-[color:var(--tm-muted)] min-w-[48px]'>
-              分类
-            </span>
-            <div className='overflow-x-auto'>
+          <div className='tm-filter-row'>
+            <span className='tm-filter-label'>分类</span>
+            <div className='tm-filter-track'>
               {renderCapsuleSelector(
                 showPrimaryOptions,
                 primarySelection || showPrimaryOptions[1].value,
@@ -353,11 +329,9 @@ const DoubanSelector: React.FC<DoubanSelectorProps> = ({
 
           {/* 二级选择器 - 只在选中"最近热门"时显示，选中"全部"时显示多级选择器 */}
           {(primarySelection || showPrimaryOptions[1].value) === '最近热门' ? (
-            <div className='flex flex-col sm:flex-row sm:items-center gap-2'>
-              <span className='text-[13px] sm:text-sm font-medium text-[color:var(--tm-muted)] min-w-[48px]'>
-                类型
-              </span>
-              <div className='overflow-x-auto'>
+            <div className='tm-filter-row'>
+              <span className='tm-filter-label'>类型</span>
+              <div className='tm-filter-track'>
                 {renderCapsuleSelector(
                   showSecondaryOptions,
                   secondarySelection || showSecondaryOptions[0].value,
@@ -368,11 +342,9 @@ const DoubanSelector: React.FC<DoubanSelectorProps> = ({
             </div>
           ) : (primarySelection || showPrimaryOptions[1].value) === '全部' ? (
             /* 多级选择器 - 只在选中"全部"时显示 */
-            <div className='flex flex-col sm:flex-row sm:items-center gap-2'>
-              <span className='text-[13px] sm:text-sm font-medium text-[color:var(--tm-muted)] min-w-[48px]'>
-                筛选
-              </span>
-              <div className='overflow-x-auto'>
+            <div className='tm-filter-row'>
+              <span className='tm-filter-label'>筛选</span>
+              <div className='tm-filter-track'>
                 <MultiLevelSelector
                   key={`${type}-${primarySelection}`}
                   onChange={handleMultiLevelChange}

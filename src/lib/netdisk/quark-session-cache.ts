@@ -24,7 +24,10 @@ export interface QuarkNetdiskSession {
   shareToken: string;
   files: QuarkNetdiskSessionFile[];
   savedFileIds: Record<string, string>;
-  playUrlCaches: Record<string, { urls: QuarkPlayUrlCacheItem[]; expiresAt: number }>;
+  playUrlCaches: Record<
+    string,
+    { urls: QuarkPlayUrlCacheItem[]; expiresAt: number }
+  >;
   playFolderFid?: string;
   playFolderPath?: string;
   createdAt: number;
@@ -34,7 +37,10 @@ export interface QuarkNetdiskSession {
 const TTL_MS = 30 * 60 * 1000;
 const sessionStore = new Map<string, QuarkNetdiskSession>();
 
-export function buildQuarkNetdiskId(input: { shareUrl: string; passcode?: string }): string {
+export function buildQuarkNetdiskId(input: {
+  shareUrl: string;
+  passcode?: string;
+}): string {
   return base58Encode(
     JSON.stringify({
       shareUrl: input.shareUrl,
@@ -43,7 +49,10 @@ export function buildQuarkNetdiskId(input: { shareUrl: string; passcode?: string
   );
 }
 
-export function parseQuarkNetdiskId(id: string): { shareUrl: string; passcode?: string } {
+export function parseQuarkNetdiskId(id: string): {
+  shareUrl: string;
+  passcode?: string;
+} {
   try {
     const decoded = base58Decode(id);
     const parsed = JSON.parse(decoded);
@@ -78,7 +87,10 @@ export function createQuarkNetdiskSession(input: {
 }): QuarkNetdiskSession {
   pruneExpiredSessions();
   const now = Date.now();
-  const id = buildQuarkNetdiskId({ shareUrl: input.shareUrl, passcode: input.passcode });
+  const id = buildQuarkNetdiskId({
+    shareUrl: input.shareUrl,
+    passcode: input.passcode,
+  });
   const session: QuarkNetdiskSession = {
     id,
     provider: 'quark',
@@ -108,7 +120,9 @@ export function getQuarkNetdiskSession(id: string): QuarkNetdiskSession | null {
   return session;
 }
 
-export function refreshQuarkNetdiskSession(id: string): QuarkNetdiskSession | null {
+export function refreshQuarkNetdiskSession(
+  id: string
+): QuarkNetdiskSession | null {
   const session = getQuarkNetdiskSession(id);
   if (!session) return null;
   session.expiresAt = Date.now() + TTL_MS;

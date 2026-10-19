@@ -79,7 +79,12 @@ export class OfflineDownloader {
     }
   ): Promise<OfflineDownloadTask> {
     const taskId = `${source}_${videoId}_${episodeIndex}_${Date.now()}`;
-    const downloadDir = path.join(this.baseDir, source, videoId, `ep${episodeIndex + 1}`);
+    const downloadDir = path.join(
+      this.baseDir,
+      source,
+      videoId,
+      `ep${episodeIndex + 1}`
+    );
 
     const task: OfflineDownloadTask = {
       id: taskId,
@@ -139,7 +144,10 @@ export class OfflineDownloader {
         console.log('检测到主播放列表，正在选择最高分辨率...');
 
         // 解析主播放列表，获取最高分辨率的子播放列表URL
-        const bestVariantUrl = this.selectBestVariant(m3u8Content, task.m3u8Url);
+        const bestVariantUrl = this.selectBestVariant(
+          m3u8Content,
+          task.m3u8Url
+        );
 
         if (bestVariantUrl) {
           console.log('已选择最高分辨率流:', bestVariantUrl);
@@ -167,7 +175,12 @@ export class OfflineDownloader {
       await this.downloadSegments(segments, task, onProgress);
 
       // 生成本地播放列表，保持原始格式
-      this.generateLocalPlaylist(m3u8Content, segments, keyInfo, task.downloadDir);
+      this.generateLocalPlaylist(
+        m3u8Content,
+        segments,
+        keyInfo,
+        task.downloadDir
+      );
 
       task.status = 'completed';
       task.progress = 100;
@@ -175,7 +188,8 @@ export class OfflineDownloader {
       onProgress?.(task);
     } catch (error) {
       task.status = 'error';
-      task.errorMessage = error instanceof Error ? error.message : String(error);
+      task.errorMessage =
+        error instanceof Error ? error.message : String(error);
       task.updatedAt = new Date();
       onProgress?.(task);
       throw error;
@@ -214,7 +228,10 @@ export class OfflineDownloader {
         // 提取分辨率信息
         const resolutionMatch = line.match(/RESOLUTION=(\d+)x(\d+)/);
         const resolution = resolutionMatch
-          ? { width: parseInt(resolutionMatch[1], 10), height: parseInt(resolutionMatch[2], 10) }
+          ? {
+              width: parseInt(resolutionMatch[1], 10),
+              height: parseInt(resolutionMatch[2], 10),
+            }
           : undefined;
 
         // 下一行应该是子播放列表的URL
@@ -251,11 +268,16 @@ export class OfflineDownloader {
       return b.bandwidth - a.bandwidth; // 降序
     });
 
-    console.log('可用的流变体:', variants.map(v => ({
-      url: v.url,
-      bandwidth: v.bandwidth,
-      resolution: v.resolution ? `${v.resolution.width}x${v.resolution.height}` : '未知',
-    })));
+    console.log(
+      '可用的流变体:',
+      variants.map((v) => ({
+        url: v.url,
+        bandwidth: v.bandwidth,
+        resolution: v.resolution
+          ? `${v.resolution.width}x${v.resolution.height}`
+          : '未知',
+      }))
+    );
 
     return variants[0].url;
   }
@@ -299,7 +321,9 @@ export class OfflineDownloader {
       // 解析片段 URL
       else if (line && !line.startsWith('#')) {
         const segmentUrl = this.resolveUrl(line, baseUrl);
-        const filename = `segment_${segments.length.toString().padStart(5, '0')}.ts`;
+        const filename = `segment_${segments.length
+          .toString()
+          .padStart(5, '0')}.ts`;
 
         segments.push({
           url: segmentUrl,
@@ -336,7 +360,9 @@ export class OfflineDownloader {
       if (fs.existsSync(segmentPath) && fs.statSync(segmentPath).size > 0) {
         downloadedCount++;
         task.downloadedSegments = downloadedCount;
-        task.progress = Math.round((downloadedCount / task.totalSegments) * 100);
+        task.progress = Math.round(
+          (downloadedCount / task.totalSegments) * 100
+        );
         task.updatedAt = new Date();
         onProgress?.(task);
         return downloadNext();
@@ -365,7 +391,10 @@ export class OfflineDownloader {
   /**
    * 下载解密 Key
    */
-  private async downloadKey(keyInfo: KeyInfo, downloadDir: string): Promise<void> {
+  private async downloadKey(
+    keyInfo: KeyInfo,
+    downloadDir: string
+  ): Promise<void> {
     if (!keyInfo.uri) return;
 
     const keyPath = path.join(downloadDir, 'key.key');
@@ -381,7 +410,10 @@ export class OfflineDownloader {
   /**
    * 下载文件（带重试）
    */
-  private async downloadWithRetry(url: string, savePath: string): Promise<void> {
+  private async downloadWithRetry(
+    url: string,
+    savePath: string
+  ): Promise<void> {
     let lastError: Error | null = null;
 
     for (let attempt = 0; attempt < this.maxRetries; attempt++) {
@@ -390,7 +422,10 @@ export class OfflineDownloader {
         return;
       } catch (error) {
         lastError = error instanceof Error ? error : new Error(String(error));
-        console.error(`下载失败 (尝试 ${attempt + 1}/${this.maxRetries}): ${url}`, error);
+        console.error(
+          `下载失败 (尝试 ${attempt + 1}/${this.maxRetries}): ${url}`,
+          error
+        );
 
         if (attempt < this.maxRetries - 1) {
           await this.sleep(this.retryDelay * (attempt + 1));
@@ -398,7 +433,9 @@ export class OfflineDownloader {
       }
     }
 
-    throw new Error(`下载失败（已重试 ${this.maxRetries} 次）: ${url}\n${lastError?.message}`);
+    throw new Error(
+      `下载失败（已重试 ${this.maxRetries} 次）: ${url}\n${lastError?.message}`
+    );
   }
 
   /**
@@ -407,13 +444,14 @@ export class OfflineDownloader {
   private getHeaders(url: string): Record<string, string> {
     const urlObj = new URL(url);
     return {
-      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-      'Accept': '*/*',
+      'User-Agent':
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      Accept: '*/*',
       'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
       'Accept-Encoding': 'gzip, deflate, br',
-      'Origin': `${urlObj.protocol}//${urlObj.host}`,
-      'Referer': `${urlObj.protocol}//${urlObj.host}/`,
-      'Connection': 'keep-alive',
+      Origin: `${urlObj.protocol}//${urlObj.host}`,
+      Referer: `${urlObj.protocol}//${urlObj.host}/`,
+      Connection: 'keep-alive',
       'Sec-Fetch-Dest': 'empty',
       'Sec-Fetch-Mode': 'cors',
       'Sec-Fetch-Site': 'same-origin',
@@ -445,7 +483,11 @@ export class OfflineDownloader {
       });
     }
 
-    return safeFetch(url, this.getRequestOptions(url, timeout), this.proxy) as unknown as Promise<Response>;
+    return safeFetch(
+      url,
+      this.getRequestOptions(url, timeout),
+      this.proxy
+    ) as unknown as Promise<Response>;
   }
 
   /**
@@ -462,7 +504,8 @@ export class OfflineDownloader {
       throw new Error('响应体为空');
     }
 
-    const body = (await (response as any).getBody?.()) ??
+    const body =
+      (await (response as any).getBody?.()) ??
       (response.body as unknown as NodeJS.ReadableStream | null);
 
     if (!body || typeof body.pipe !== 'function') {
@@ -571,7 +614,10 @@ export class OfflineDownloader {
       for (const line of lines) {
         if (line && !line.startsWith('#')) {
           const segmentPath = path.join(downloadDir, line);
-          if (!fs.existsSync(segmentPath) || fs.statSync(segmentPath).size === 0) {
+          if (
+            !fs.existsSync(segmentPath) ||
+            fs.statSync(segmentPath).size === 0
+          ) {
             return false;
           }
         }
@@ -596,7 +642,10 @@ export class OfflineDownloader {
       if (targetUrl.startsWith('/')) {
         return `${base.protocol}//${base.host}${targetUrl}`;
       } else {
-        const basePath = base.pathname.substring(0, base.pathname.lastIndexOf('/') + 1);
+        const basePath = base.pathname.substring(
+          0,
+          base.pathname.lastIndexOf('/') + 1
+        );
         return `${base.protocol}//${base.host}${basePath}${targetUrl}`;
       }
     } catch {
@@ -632,8 +681,17 @@ export class OfflineDownloader {
   /**
    * 检查视频是否已下载
    */
-  checkDownloaded(source: string, videoId: string, episodeIndex: number): boolean {
-    const downloadDir = path.join(this.baseDir, source, videoId, `ep${episodeIndex + 1}`);
+  checkDownloaded(
+    source: string,
+    videoId: string,
+    episodeIndex: number
+  ): boolean {
+    const downloadDir = path.join(
+      this.baseDir,
+      source,
+      videoId,
+      `ep${episodeIndex + 1}`
+    );
     const playlistPath = path.join(downloadDir, 'playlist.m3u8');
     return fs.existsSync(playlistPath);
   }
@@ -641,8 +699,17 @@ export class OfflineDownloader {
   /**
    * 获取本地播放列表路径
    */
-  getLocalPlaylistPath(source: string, videoId: string, episodeIndex: number): string | null {
-    const downloadDir = path.join(this.baseDir, source, videoId, `ep${episodeIndex + 1}`);
+  getLocalPlaylistPath(
+    source: string,
+    videoId: string,
+    episodeIndex: number
+  ): string | null {
+    const downloadDir = path.join(
+      this.baseDir,
+      source,
+      videoId,
+      `ep${episodeIndex + 1}`
+    );
     const playlistPath = path.join(downloadDir, 'playlist.m3u8');
     return fs.existsSync(playlistPath) ? playlistPath : null;
   }

@@ -171,15 +171,15 @@ export default function WatchRoomScreenPage() {
     : '未开始';
 
   return (
-    <div className='min-h-screen bg-[var(--tm-bg)] text-[color:var(--tm-text)]'>
+    <div className='min-h-screen bg-canvas text-fg'>
       <PageContainer className='flex min-h-screen flex-col gap-4 py-4'>
-        <div className='flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-[var(--tm-line)] bg-[var(--tm-surface-raised)] px-5 py-4 shadow-sm'>
+        <div className='flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-line bg-raised px-5 py-4 shadow-sm'>
           <div>
             <h1 className='flex items-center gap-2 text-[28px] md:text-[32px] font-bold'>
-              <Monitor className='h-6 w-6 text-[color:var(--tm-text)]' />
+              <Monitor className='h-6 w-6 text-fg' />
               屏幕共享观影室
             </h1>
-            <p className='mt-1 text-sm text-[color:var(--tm-muted)]'>
+            <p className='mt-1 text-sm text-muted'>
               房间：{screenRoom.name} · 房主：{screenRoom.ownerName}
             </p>
           </div>
@@ -193,14 +193,14 @@ export default function WatchRoomScreenPage() {
                   event.preventDefault();
                   openDetachedPage();
                 }}
-                className='rounded-lg bg-[var(--tm-text)] px-4 py-2 text-[color:var(--tm-accent-contrast)] min-h-[44px] tm-press'
+                className='rounded-lg bg-fg px-4 py-2 text-inverse min-h-[44px] tm-press'
               >
                 新开主页
               </Link>
             )}
             <button
               onClick={handleLeave}
-              className='rounded-lg bg-[var(--tm-surface-raised)] px-4 py-2 text-[color:var(--tm-text)] min-h-[44px] tm-press'
+              className='rounded-lg bg-raised px-4 py-2 text-fg min-h-[44px] tm-press'
             >
               离开房间
             </button>
@@ -208,14 +208,14 @@ export default function WatchRoomScreenPage() {
         </div>
 
         <div className='grid flex-1 grid-cols-1 gap-4 xl:grid-cols-[1fr_320px]'>
-          <div className='relative flex min-h-[420px] items-center justify-center overflow-hidden rounded-2xl border border-[var(--tm-line)] bg-[var(--tm-room-cinema-bg)]'>
+          <div className='relative flex min-h-[420px] items-center justify-center overflow-hidden rounded-2xl border border-line bg-ink'>
             {isOwner ? (
               <video
                 ref={localVideoRef}
                 autoPlay
                 muted
                 playsInline
-                className='h-full w-full bg-[var(--tm-room-cinema-bg)] object-contain'
+                className='h-full w-full bg-ink object-contain'
               />
             ) : (
               <video
@@ -223,7 +223,7 @@ export default function WatchRoomScreenPage() {
                 autoPlay
                 playsInline
                 controls
-                className='h-full w-full bg-[var(--tm-room-cinema-bg)] object-contain'
+                className='h-full w-full bg-ink object-contain'
               />
             )}
 
@@ -245,29 +245,29 @@ export default function WatchRoomScreenPage() {
           </div>
 
           <div className='space-y-4'>
-            <div className='rounded-xl border border-[var(--tm-line)] bg-[var(--tm-surface)] p-4'>
+            <div className='rounded-xl border border-line bg-surface p-4'>
               <h2 className='mb-3 font-medium'>共享状态</h2>
-              <div className='space-y-2 text-sm text-[color:var(--tm-muted)]'>
+              <div className='space-y-2 text-sm text-muted'>
                 <p>类型：屏幕共享</p>
                 <p>状态：{isSharing ? '共享中' : '未开始'}</p>
                 <p>成员：{members.length} 人</p>
               </div>
 
               {isOwner && (
-                <div className='mt-2 text-sm text-[color:var(--tm-muted)]'>
+                <div className='mt-2 text-sm text-muted'>
                   实际采集：{captureSettingsText}
                 </div>
               )}
 
               {error && (
-                <div className='mt-3 rounded-lg border border-[var(--tm-danger)] bg-[var(--tm-surface-raised)] px-3 py-2 text-sm text-[color:var(--tm-text)]'>
+                <div className='mt-3 rounded-lg border border-danger bg-raised px-3 py-2 text-sm text-fg'>
                   {error}
                 </div>
               )}
 
               {isOwner && (
                 <div className='mt-4'>
-                  <label className='mb-2 block text-sm font-medium text-[color:var(--tm-muted)]'>
+                  <label className='mb-2 block text-sm font-medium text-muted'>
                     共享画质
                   </label>
                   <select
@@ -278,7 +278,7 @@ export default function WatchRoomScreenPage() {
                       )
                     }
                     disabled={isStarting || isSharing}
-                    className='min-h-[44px] w-full rounded-lg border border-[var(--tm-line)] bg-[var(--tm-surface-raised)] px-3 py-2 text-sm text-[color:var(--tm-text)] disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
+                    className='min-h-[44px] w-full rounded-lg border border-line bg-raised px-3 py-2 text-sm text-fg disabled:cursor-not-allowed disabled:opacity-50'
                   >
                     {screenShareQualityOptions.map((option) => (
                       <option key={option.value} value={option.value}>
@@ -286,7 +286,7 @@ export default function WatchRoomScreenPage() {
                       </option>
                     ))}
                   </select>
-                  <p className='mt-2 text-[13px] text-[color:var(--tm-muted)]'>
+                  <p className='mt-2 text-[13px] text-muted'>
                     画质越高越清晰，但更依赖网络和设备性能。共享开始后不可切换。
                   </p>
                 </div>
@@ -298,7 +298,7 @@ export default function WatchRoomScreenPage() {
                     <button
                       onClick={() => startSharing()}
                       disabled={isStarting || isSharing}
-                      className='flex-1 rounded-lg bg-[var(--tm-text)] px-4 py-2 text-[color:var(--tm-accent-contrast)] disabled:opacity-50 min-h-[44px] tm-press'
+                      className='flex-1 rounded-lg bg-fg px-4 py-2 text-inverse disabled:opacity-50 min-h-[44px] tm-press'
                     >
                       {isStarting
                         ? '启动中...'
@@ -309,20 +309,20 @@ export default function WatchRoomScreenPage() {
                     <button
                       onClick={() => stopSharing(true)}
                       disabled={!isSharing}
-                      className='rounded-lg bg-[var(--tm-text)] px-4 py-2 text-[color:var(--tm-accent-contrast)] disabled:opacity-50 min-h-[44px] tm-press'
+                      className='rounded-lg bg-fg px-4 py-2 text-inverse disabled:opacity-50 min-h-[44px] tm-press'
                     >
                       停止
                     </button>
                   </>
                 ) : (
-                  <div className='rounded-lg bg-[var(--tm-surface-raised)] px-3 py-2 text-sm text-[color:var(--tm-text)]'>
+                  <div className='rounded-lg bg-raised px-3 py-2 text-sm text-fg'>
                     房员无需操作，房主开始共享后会自动显示画面。
                   </div>
                 )}
               </div>
             </div>
 
-            <div className='rounded-xl border border-[var(--tm-line)] bg-[var(--tm-surface)] p-4'>
+            <div className='rounded-xl border border-line bg-surface p-4'>
               <h2 className='mb-3 flex items-center gap-2 font-medium'>
                 <Users className='h-4 w-4' />
                 房间成员
@@ -331,11 +331,11 @@ export default function WatchRoomScreenPage() {
                 {members.map((member) => (
                   <div
                     key={member.id}
-                    className='flex items-center justify-between rounded-lg bg-[var(--tm-surface-raised)] px-3 py-2'
+                    className='flex items-center justify-between rounded-lg bg-raised px-3 py-2'
                   >
                     <span className='text-sm'>{member.name}</span>
                     {member.isOwner && (
-                      <span className='rounded bg-[var(--tm-surface-raised)] px-2 py-1 text-[13px] text-[color:var(--tm-text)]'>
+                      <span className='rounded bg-raised px-2 py-1 text-[13px] text-fg'>
                         房主
                       </span>
                     )}
@@ -344,7 +344,7 @@ export default function WatchRoomScreenPage() {
               </div>
             </div>
 
-            <div className='rounded-xl border border-[var(--tm-line)] bg-[var(--tm-surface-raised)] p-4 text-sm text-[color:var(--tm-text)]'>
+            <div className='rounded-xl border border-line bg-raised p-4 text-sm text-fg'>
               建议使用桌面版 Chrome / Edge，并优先共享标签页。
             </div>
           </div>

@@ -1,3 +1,5 @@
+/* 弹层面板：个人中心、HTTP 警告、图片查看、操作菜单、搜索联想。 */
+
 html .tm-profile-backdrop {
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);

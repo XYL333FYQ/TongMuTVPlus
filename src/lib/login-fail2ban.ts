@@ -98,7 +98,10 @@ export function getLoginClientIp(req: NextRequest): string | null {
   return null;
 }
 
-export function checkLoginBan(ip: string | null, now = Date.now()): LoginBanStatus {
+export function checkLoginBan(
+  ip: string | null,
+  now = Date.now()
+): LoginBanStatus {
   if (!ip) return { banned: false };
 
   cleanupExpiredRecords(now);
@@ -119,7 +122,10 @@ export function checkLoginBan(ip: string | null, now = Date.now()): LoginBanStat
   return { banned: false };
 }
 
-export function recordLoginFailure(ip: string | null, now = Date.now()): LoginFailureResult {
+export function recordLoginFailure(
+  ip: string | null,
+  now = Date.now()
+): LoginFailureResult {
   if (!ip) {
     return { banned: false, failureCount: 0, banLevel: 0 };
   }
@@ -140,7 +146,10 @@ export function recordLoginFailure(ip: string | null, now = Date.now()): LoginFa
 
   if (record.failures.length >= MAX_FAILURES) {
     record.banLevel += 1;
-    const durationIndex = Math.min(record.banLevel - 1, BAN_DURATIONS_MS.length - 1);
+    const durationIndex = Math.min(
+      record.banLevel - 1,
+      BAN_DURATIONS_MS.length - 1
+    );
     record.bannedUntil = now + BAN_DURATIONS_MS[durationIndex];
     record.failures = [];
   }

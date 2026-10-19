@@ -1,6 +1,6 @@
 import { AdminConfig } from './admin.types';
-import { MangaReadRecord, MangaShelfItem } from './manga.types';
 import { BookReadRecord, BookShelfItem } from './book.types';
+import { MangaReadRecord, MangaShelfItem } from './manga.types';
 
 // 播放记录数据结构
 export interface PlayRecord {
@@ -241,7 +241,9 @@ export interface IStorage {
     userName: string,
     subscription: PushSubscriptionRecord
   ): Promise<void>;
-  getEnabledPushSubscriptions?(userName: string): Promise<PushSubscriptionRecord[]>;
+  getEnabledPushSubscriptions?(
+    userName: string
+  ): Promise<PushSubscriptionRecord[]>;
   deletePushSubscriptionByEndpoint?(
     userName: string,
     endpoint: string
@@ -268,9 +270,7 @@ export interface IStorage {
   getTelegramBindSession?(
     code: string
   ): Promise<TelegramBindSessionRecord | null>;
-  upsertTelegramBindSession?(
-    session: TelegramBindSessionRecord
-  ): Promise<void>;
+  upsertTelegramBindSession?(session: TelegramBindSessionRecord): Promise<void>;
   markTelegramBindSessionUsed?(code: string): Promise<void>;
 
   // TVBox订阅token相关
@@ -279,7 +279,9 @@ export interface IStorage {
   getUsernameByTvboxToken?(token: string): Promise<string | null>;
 
   // 本地设置云同步相关（可选，各存储后端按需实现）
-  getUserLocalSettings?(userName: string): Promise<LocalSettingsSyncRecord | null>;
+  getUserLocalSettings?(
+    userName: string
+  ): Promise<LocalSettingsSyncRecord | null>;
   setUserLocalSettings?(
     userName: string,
     payload: string,
@@ -326,18 +328,20 @@ export interface SearchResult {
   vod_remarks?: string; // 视频备注信息（如"全80集"、"更新至25集"等）
   vod_total?: number; // 总集数
   proxyMode?: boolean; // 代理模式：启用后由服务器代理m3u8和ts分片
-  subtitles?: Array<Array<{
-    label: string;
-    url: string;
-    fallbackUrl?: string;
-    fallbackFormat?: string;
-    language?: string;
-    format?: string; // 实际加载格式，如 vtt / ass / ssa
-    sourceFormat?: string; // Emby 返回的原始字幕格式
-    codec?: string;
-    isExternal?: boolean;
-    renderMode?: 'native' | 'jassub' | 'bitsub';
-  }>>; // 字幕列表（按集数索引）
+  subtitles?: Array<
+    Array<{
+      label: string;
+      url: string;
+      fallbackUrl?: string;
+      fallbackFormat?: string;
+      language?: string;
+      format?: string; // 实际加载格式，如 vtt / ass / ssa
+      sourceFormat?: string; // Emby 返回的原始字幕格式
+      codec?: string;
+      isExternal?: boolean;
+      renderMode?: 'native' | 'jassub' | 'bitsub';
+    }>
+  >; // 字幕列表（按集数索引）
   tmdb_id?: number; // TMDB ID
   rating?: number; // 评分
   initialEpisodeIndex?: number; // 初始集数索引（用于小雅源从文件点击进入时指定集数）
@@ -396,7 +400,6 @@ export interface EpisodeFilterConfig {
   rules: EpisodeFilterRule[]; // 过滤规则列表
   reverseMode?: boolean; // 反向模式：开启后仅显示符合规则的集数
 }
-
 
 export interface PushSubscriptionRecord {
   id: string;

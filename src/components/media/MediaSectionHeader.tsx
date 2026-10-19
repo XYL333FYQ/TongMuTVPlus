@@ -21,13 +21,13 @@ export default function MediaSectionHeader({
       <div className='flex items-baseline gap-3'>
         <h2
           className={cn(
-            'shrink-0 text-xl font-medium text-[color:var(--tm-text)] md:text-2xl',
+            'shrink-0 text-xl font-medium text-fg md:text-2xl',
             LIBRARY_SERIF
           )}
         >
           {title}
         </h2>
-        <span className='h-px min-w-4 flex-1 bg-[var(--tm-line)]' aria-hidden />
+        <span className='h-px min-w-4 flex-1 bg-line' aria-hidden />
         {action ? <div className='shrink-0'>{action}</div> : null}
       </div>
       {subtitle && (

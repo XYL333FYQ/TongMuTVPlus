@@ -13,8 +13,13 @@ const {
 } = require('./src/lib/tv-remote-hub.js');
 
 function shouldInitSQLite() {
-  const isCloudflare = process.env.CF_PAGES === '1' || process.env.BUILD_TARGET === 'cloudflare';
-  return process.env.NEXT_PUBLIC_STORAGE_TYPE === 'd1' && !isCloudflare && process.env.MOONTV_LITE !== 'true';
+  const isCloudflare =
+    process.env.CF_PAGES === '1' || process.env.BUILD_TARGET === 'cloudflare';
+  return (
+    process.env.NEXT_PUBLIC_STORAGE_TYPE === 'd1' &&
+    !isCloudflare &&
+    process.env.MOONTV_LITE !== 'true'
+  );
 }
 
 function isTVModeEnabled() {
@@ -27,8 +32,14 @@ function ensureSQLiteReady() {
   }
 
   try {
-    const { initSQLiteDatabase, getSqliteDbPath } = require('./scripts/init-sqlite.js');
-    if (require('node:fs').existsSync(`${getSqliteDbPath()}.restore.lock`)) throw new Error('SQLite restore is in progress; retry startup after the restore lock is removed.');
+    const {
+      initSQLiteDatabase,
+      getSqliteDbPath,
+    } = require('./scripts/init-sqlite.js');
+    if (require('node:fs').existsSync(`${getSqliteDbPath()}.restore.lock`))
+      throw new Error(
+        'SQLite restore is in progress; retry startup after the restore lock is removed.'
+      );
     initSQLiteDatabase();
   } catch (error) {
     console.error('❌ Error initializing SQLite database:', error);
@@ -50,12 +61,16 @@ async function getWatchRoomConfig() {
   // 观影室配置现在统一从环境变量读取
   const config = {
     enabled: process.env.WATCH_ROOM_ENABLED === 'true',
-    serverType: (process.env.WATCH_ROOM_SERVER_TYPE || 'internal'),
+    serverType: process.env.WATCH_ROOM_SERVER_TYPE || 'internal',
     externalServerUrl: process.env.WATCH_ROOM_EXTERNAL_SERVER_URL,
     externalServerAuth: process.env.WATCH_ROOM_EXTERNAL_SERVER_AUTH,
   };
 
-  console.log(`[WatchRoom] Watch room ${config.enabled ? 'enabled' : 'disabled'} via environment variable.`);
+  console.log(
+    `[WatchRoom] Watch room ${
+      config.enabled ? 'enabled' : 'disabled'
+    } via environment variable.`
+  );
   return config;
 }
 
@@ -63,7 +78,11 @@ async function getWatchRoomConfig() {
 const { RoomStore, openRoomStore } = require('./server/room-store.js');
 const { RoomService } = require('./server/room-service.js');
 const { createRoomAuthenticator } = require('./server/room-auth.js');
-const { RoomSocketServer, createRoomHttpHandler, validOrigin } = require('./server/room-transport.js');
+const {
+  RoomSocketServer,
+  createRoomHttpHandler,
+  validOrigin,
+} = require('./server/room-transport.js');
 const { createHealthHandler } = require('./server/room-health.js');
 
 function parseCookieHeader(cookieHeader) {
@@ -113,7 +132,9 @@ class TVRemoteServer {
   setupEventHandlers() {
     this.io.on('connection', (socket) => {
       socket.on('tv-remote:register-tv', (data, callback) => {
-        const auth = socket.data.roomIdentity ? { username: socket.data.roomIdentity.accountId } : parseSocketAuth(socket);
+        const auth = socket.data.roomIdentity
+          ? { username: socket.data.roomIdentity.accountId }
+          : parseSocketAuth(socket);
         if (!auth?.username) {
           callback?.({ success: false, error: '未登录' });
           return;
@@ -129,7 +150,9 @@ class TVRemoteServer {
       });
 
       socket.on('tv-remote:tv-state', (data) => {
-        const auth = socket.data.roomIdentity ? { username: socket.data.roomIdentity.accountId } : parseSocketAuth(socket);
+        const auth = socket.data.roomIdentity
+          ? { username: socket.data.roomIdentity.accountId }
+          : parseSocketAuth(socket);
         if (!auth?.username) return;
         updateTVRemoteDevice(socket.id, auth.username, data);
       });
@@ -160,15 +183,34 @@ app.prepare().then(async () => {
   let roomService = null;
   let roomAuthenticator = null;
   let roomHttpHandler = null;
-  const healthHandler = createHealthHandler(() => ({ roomDatabase, roomService, roomsRequired: process.env.WATCH_ROOM_ENABLED === 'true' && process.env.WATCH_ROOM_SERVER_TYPE !== 'external' }));
+  const healthHandler = createHealthHandler(() => ({
+    roomDatabase,
+    roomService,
+    roomsRequired:
+      process.env.WATCH_ROOM_ENABLED === 'true' &&
+      process.env.WATCH_ROOM_SERVER_TYPE !== 'external',
+  }));
   const httpServer = createServer(async (req, res) => {
     try {
       const parsedUrl = parse(req.url, true);
       if (healthHandler(req, res)) return;
-      if (roomHttpHandler && await roomHttpHandler(req, res)) return;
-      if (!roomHttpHandler && (parsedUrl.pathname === '/api/rooms' || parsedUrl.pathname.startsWith('/api/rooms/'))) {
-        res.writeHead(503, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' });
-        res.end(JSON.stringify({ success: false, code: 'ROOM_STORAGE_UNSUPPORTED', error: '长期房间需要完整 Node 服务和 SQLite 存储' }));
+      if (roomHttpHandler && (await roomHttpHandler(req, res))) return;
+      if (
+        !roomHttpHandler &&
+        (parsedUrl.pathname === '/api/rooms' ||
+          parsedUrl.pathname.startsWith('/api/rooms/'))
+      ) {
+        res.writeHead(503, {
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-store',
+        });
+        res.end(
+          JSON.stringify({
+            success: false,
+            code: 'ROOM_STORAGE_UNSUPPORTED',
+            error: '长期房间需要完整 Node 服务和 SQLite 存储',
+          })
+        );
         return;
       }
       await handle(req, res, parsedUrl);
@@ -181,7 +223,10 @@ app.prepare().then(async () => {
 
   // 读取观影室配置
   const watchRoomConfig = await getWatchRoomConfig();
-  console.log('[WatchRoom] Configuration:', { enabled: watchRoomConfig.enabled, serverType: watchRoomConfig.serverType });
+  console.log('[WatchRoom] Configuration:', {
+    enabled: watchRoomConfig.enabled,
+    serverType: watchRoomConfig.serverType,
+  });
 
   let watchRoomServer = null;
   let tvRemoteServer = null;
@@ -189,10 +234,18 @@ app.prepare().then(async () => {
 
   const tvModeEnabled = isTVModeEnabled();
   const shouldStartInternalWatchRoom =
-    watchRoomConfig.enabled && watchRoomConfig.serverType === 'internal' && shouldInitSQLite();
+    watchRoomConfig.enabled &&
+    watchRoomConfig.serverType === 'internal' &&
+    shouldInitSQLite();
 
-  if (watchRoomConfig.enabled && watchRoomConfig.serverType === 'internal' && !shouldInitSQLite()) {
-    console.warn('[WatchRoom] Persistent rooms require the full Node + SQLite deployment.');
+  if (
+    watchRoomConfig.enabled &&
+    watchRoomConfig.serverType === 'internal' &&
+    !shouldInitSQLite()
+  ) {
+    console.warn(
+      '[WatchRoom] Persistent rooms require the full Node + SQLite deployment.'
+    );
   }
   if (shouldStartInternalWatchRoom) {
     roomDatabase = openRoomStore();
@@ -212,7 +265,15 @@ app.prepare().then(async () => {
         credentials: true,
         methods: ['GET', 'POST'],
       },
-      allowRequest: (req, callback) => callback(null, validOrigin(req.headers.origin, req.headers.host, process.env.ROOM_ALLOWED_ORIGINS)),
+      allowRequest: (req, callback) =>
+        callback(
+          null,
+          validOrigin(
+            req.headers.origin,
+            req.headers.host,
+            process.env.ROOM_ALLOWED_ORIGINS
+          )
+        ),
     });
   }
 

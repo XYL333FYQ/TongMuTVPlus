@@ -24,7 +24,9 @@ export async function checkBaidu(link) {
   try {
     let bdclnd = '';
     if (password) {
-      const verifyURL = `https://pan.baidu.com/share/verify?surl=${encodeURIComponent(shorturl)}&pwd=${encodeURIComponent(password)}`;
+      const verifyURL = `https://pan.baidu.com/share/verify?surl=${encodeURIComponent(
+        shorturl
+      )}&pwd=${encodeURIComponent(password)}`;
       const formBody = `pwd=${encodeURIComponent(password)}&vcode=&vcode_str=`;
       const { statusCode: vStatus, body: vBody } = await request(verifyURL, {
         method: 'POST',
@@ -42,12 +44,17 @@ export async function checkBaidu(link) {
       const vData = JSON.parse(vBody);
       if (vData.errno !== 0) {
         const errmsg = vData.errmsg || vData.err_msg || '未知错误';
-        return { valid: false, reason: `验证提取码失败: errno=${vData.errno}, ${errmsg}` };
+        return {
+          valid: false,
+          reason: `验证提取码失败: errno=${vData.errno}, ${errmsg}`,
+        };
       }
       bdclnd = vData.randsk || '';
     }
 
-    const apiURL = `https://pan.baidu.com/share/list?web=5&app_id=250528&desc=1&showempty=0&page=1&num=20&order=time&shorturl=${encodeURIComponent(shorturl)}&root=1&view_mode=1&channel=chunlei&web=1&clienttype=0`;
+    const apiURL = `https://pan.baidu.com/share/list?web=5&app_id=250528&desc=1&showempty=0&page=1&num=20&order=time&shorturl=${encodeURIComponent(
+      shorturl
+    )}&root=1&view_mode=1&channel=chunlei&web=1&clienttype=0`;
     const reqHeaders = {
       Accept: 'application/json, text/plain, */*',
       'Accept-Language': 'zh,en-GB;q=0.9,en-US;q=0.8,en;q=0.7,zh-CN;q=0.6',
@@ -85,7 +92,11 @@ export function normalizeBaiduURL(link) {
   while (endIdx < cleaned.length) {
     const char = cleaned[endIdx];
     if (char === ' ' || char === '\n' || char === '\r' || char === '\t') break;
-    if (cleaned.substring(endIdx).startsWith('提取码') || cleaned.substring(endIdx).startsWith('密码')) break;
+    if (
+      cleaned.substring(endIdx).startsWith('提取码') ||
+      cleaned.substring(endIdx).startsWith('密码')
+    )
+      break;
     endIdx++;
   }
   return cleaned.substring(startIdx, endIdx).trim();
@@ -110,10 +121,15 @@ export function extractBaiduShareID(shareURL) {
 function getFailureReason(errno, errMsg) {
   if (errMsg) return `分享链接无效 (errno: ${errno}, err_msg: ${errMsg})`;
   switch (errno) {
-    case -12: return '缺少提取码 (errno: -12)';
-    case -9: return '提取码错误 (errno: -9)';
-    case -62: return '请求接口受限 (errno: -62)';
-    case -8: return '分享文件已过期 (errno: -8)';
-    default: return `分享链接无效 (errno: ${errno})`;
+    case -12:
+      return '缺少提取码 (errno: -12)';
+    case -9:
+      return '提取码错误 (errno: -9)';
+    case -62:
+      return '请求接口受限 (errno: -62)';
+    case -8:
+      return '分享文件已过期 (errno: -8)';
+    default:
+      return `分享链接无效 (errno: ${errno})`;
   }
 }

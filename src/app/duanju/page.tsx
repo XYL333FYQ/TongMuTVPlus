@@ -1,8 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, react-hooks/exhaustive-deps */
 'use client';
 
-import { ArrowLeft, ChevronUp } from 'lucide-react';
-import Link from 'next/link';
 import {
   Suspense,
   useCallback,
@@ -19,12 +17,14 @@ import {
   isHierarchicalCategories,
   pickDefaultSelection,
 } from '@/lib/category-tree';
-import { isReducedMotionSetting } from '@/lib/motion';
+import { getPageScrollTop, scrollPageTo } from '@/lib/page-scroll';
 import { SearchResult } from '@/lib/types';
 import { useViewerIdentity } from '@/hooks/useViewerIdentity';
 
+import BackToTop from '@/components/BackToTop';
 import CapsuleSwitch from '@/components/CapsuleSwitch';
 import PageContainer from '@/components/PageContainer';
+import PageHeader from '@/components/PageHeader';
 import PageLayout from '@/components/PageLayout';
 import PosterGrid from '@/components/PosterGrid';
 import PublicCatalogPage from '@/components/PublicCatalogPage';
@@ -52,15 +52,6 @@ interface DuanjuSnapshot {
   hasMore: boolean;
   scrollTop: number;
 }
-
-// 实际滚动容器是 document.body，这里同时兼容 documentElement
-const getPageScrollTop = () =>
-  document.body.scrollTop || document.documentElement.scrollTop || 0;
-
-const scrollPageTo = (top: number) => {
-  document.body.scrollTop = top;
-  document.documentElement.scrollTop = top;
-};
 
 // 恢复动作需要在绘制前完成，避免闪现顶部；SSR 下退化为 useEffect
 const useIsomorphicLayoutEffect =
@@ -100,7 +91,6 @@ function DuanjuPageClient() {
   const [isLoadingVideos, setIsLoadingVideos] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
-  const [showBackToTop, setShowBackToTop] = useState(false);
   // 快照读取完成前不发请求，避免覆盖恢复的数据
   const [restoreChecked, setRestoreChecked] = useState(false);
   const loadMoreRef = useRef<HTMLDivElement>(null);
@@ -407,80 +397,18 @@ function DuanjuPageClient() {
     };
   }, [hasVideos, hasMore, isLoadingVideos]);
 
-  // 滚动超过一屏后显示置顶按钮
-  useEffect(() => {
-    const handleScroll = () => {
-      setShowBackToTop(getPageScrollTop() > 300);
-    };
-
-    handleScroll();
-    document.body.addEventListener('scroll', handleScroll, { passive: true });
-    window.addEventListener('scroll', handleScroll, { passive: true });
-
-    return () => {
-      document.body.removeEventListener('scroll', handleScroll);
-      window.removeEventListener('scroll', handleScroll);
-    };
-  }, []);
-
-  // 返回顶部
-  const scrollToTop = () => {
-    try {
-      document.body.scrollTo({
-        top: 0,
-        behavior: isReducedMotionSetting() ? 'auto' : 'smooth',
-      });
-      document.documentElement.scrollTo({
-        top: 0,
-        behavior: isReducedMotionSetting() ? 'auto' : 'smooth',
-      });
-    } catch {
-      scrollPageTo(0);
-    }
-  };
-
   return (
     <PageLayout activePath='/duanju'>
-      <PageContainer className='py-4 sm:py-8 overflow-visible mb-10'>
-        <div className='mb-6 flex items-start justify-between gap-4'>
-          <div>
-            <h1 className=' text-[color:var(--tm-text)] text-[28px] font-bold md:text-[32px]'>
-              短剧
-            </h1>
-            <p className='text-sm text-[color:var(--tm-muted)] mt-1'>
-              浏览所有采集源中的短剧内容
-            </p>
-          </div>
-          <Link
-            href='/'
-            className='inline-flex items-center gap-1 rounded-lg px-3 py-2 text-sm text-[color:var(--tm-muted)] hover:bg-[var(--tm-line)] hover:opacity-80 min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
-          >
-            <ArrowLeft className='h-4 w-4' />
-            返回首页
-          </Link>
-        </div>
+      <PageContainer className='pb-12'>
+        <PageHeader title='短剧' description='浏览所有采集源中的短剧' />
 
-        <div className='max-w-4xl mx-auto mb-8'>
+        <div className='mb-8'>
           <div className='relative'>
-            <div className='text-[13px] text-[color:var(--tm-muted)] mb-2 px-4'>
-              服务
-            </div>
+            <div className='tm-field-label'>服务</div>
             {isLoadingSources ? (
-              <div className='flex items-center justify-center h-12 bg-[var(--tm-surface-raised)] rounded-lg border border-[var(--tm-line)]'>
-                <span
-                  aria-hidden
-                  className='tm-skeleton h-5 w-5 text-[color:var(--tm-muted)]'
-                />
-                <span className='ml-2 text-sm text-[color:var(--tm-muted)]'>
-                  加载采集源中...
-                </span>
-              </div>
+              <div className='tm-inline-state'>正在加载采集源</div>
             ) : sources.length === 0 ? (
-              <div className='flex items-center justify-center h-12 bg-[var(--tm-surface-raised)] rounded-lg border border-[var(--tm-line)]'>
-                <span className='text-sm text-[color:var(--tm-muted)]'>
-                  暂无包含短剧分类的采集源
-                </span>
-              </div>
+              <div className='tm-inline-state'>还没有包含短剧分类的采集源</div>
             ) : (
               <div className='relative'>
                 <div
@@ -522,16 +450,13 @@ function DuanjuPageClient() {
                       scrollLeftRef.current - walk;
                   }}
                 >
-                  <div className='flex gap-2 px-4 min-w-min'>
+                  <div className='tm-chips flex-nowrap'>
                     {sources.map((source) => (
                       <button
                         key={source.key}
                         onClick={() => handleSourceChange(source.key)}
-                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap flex-shrink-0 ${
-                          selectedSource === source.key
-                            ? 'bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
-                            : 'bg-[var(--tm-surface-raised)] text-[color:var(--tm-muted)] hover:bg-[var(--tm-line)] min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
-                        }`}
+                        aria-pressed={selectedSource === source.key}
+                        className='tm-chip'
                       >
                         {source.name}
                       </button>
@@ -545,13 +470,11 @@ function DuanjuPageClient() {
 
         {/* 分类选择：源有二级分类时联动展示 */}
         {selectedSource && categories.length > 1 && (
-          <div className='max-w-4xl mx-auto mb-8'>
+          <div className='mb-8'>
             {isMultiParent ? (
               <>
-                <div className='text-[13px] text-[color:var(--tm-muted)] mb-2 px-4'>
-                  类型
-                </div>
-                <div className='flex px-4 mb-4'>
+                <div className='tm-field-label'>类型</div>
+                <div className='mb-4 flex'>
                   <CapsuleSwitch
                     options={parentCategories.map((category) => ({
                       label: category.name,
@@ -563,10 +486,8 @@ function DuanjuPageClient() {
                 </div>
                 {subCategories.length > 0 && (
                   <div>
-                    <div className='text-[13px] text-[color:var(--tm-muted)] mb-2 px-4'>
-                      分类
-                    </div>
-                    <div className='flex px-4'>
+                    <div className='tm-field-label'>分类</div>
+                    <div className='flex'>
                       <CapsuleSwitch
                         options={subCategories.map((category) => ({
                           label: category.name,
@@ -581,10 +502,8 @@ function DuanjuPageClient() {
               </>
             ) : (
               <div>
-                <div className='text-[13px] text-[color:var(--tm-muted)] mb-2 px-4'>
-                  分类
-                </div>
-                <div className='flex px-4'>
+                <div className='tm-field-label'>分类</div>
+                <div className='flex'>
                   <CapsuleSwitch
                     options={flatCategories.map((category) => ({
                       label: category.name,
@@ -600,26 +519,26 @@ function DuanjuPageClient() {
         )}
 
         {selectedSource && !selectedCategory && (
-          <div className='text-center text-[color:var(--tm-muted)] py-8'>
-            当前采集源暂无短剧分类
+          <div className='tm-empty'>
+            <p className='tm-empty-title'>当前采集源暂无短剧分类</p>
           </div>
         )}
 
         {selectedSource && selectedCategory && (
           <div className='mt-8'>
             <div className='mb-4'>
-              <h2 className=' text-[color:var(--tm-text)] text-xl font-medium md:text-2xl'>
-                短剧列表
-              </h2>
+              <h2 className='tm-section-title'>短剧列表</h2>
             </div>
 
             {isLoadingVideos && currentPage === 1 ? (
-              <div className='flex justify-center items-center h-40'>
-                <div className='tm-skeleton  rounded-md h-8 w-8  '></div>
+              <div className='tm-poster-grid' aria-label='正在加载'>
+                {Array.from({ length: 12 }, (_, index) => (
+                  <div key={index} className='tm-poster tm-skeleton' />
+                ))}
               </div>
             ) : videos.length === 0 ? (
-              <div className='text-center text-[color:var(--tm-muted)] py-8'>
-                暂无短剧
+              <div className='tm-empty'>
+                <p className='tm-empty-title'>暂无短剧</p>
               </div>
             ) : (
               <>
@@ -654,12 +573,10 @@ function DuanjuPageClient() {
                   className='flex justify-center items-center py-8'
                 >
                   {isLoadingVideos && (
-                    <div className='tm-skeleton  rounded-md h-6 w-6  '></div>
+                    <span className='tm-library-end'>正在加载</span>
                   )}
                   {!hasMore && videos.length > 0 && (
-                    <span className='text-sm text-[color:var(--tm-muted)]'>
-                      没有更多了
-                    </span>
+                    <span className='tm-library-end'>已经到底了</span>
                   )}
                 </div>
               </>
@@ -668,20 +585,7 @@ function DuanjuPageClient() {
         )}
       </PageContainer>
 
-      {/* 置顶（返回顶部）悬浮按钮 */}
-      <button
-        onClick={scrollToTop}
-        aria-hidden={!showBackToTop}
-        tabIndex={showBackToTop ? 0 : -1}
-        className={`fixed bottom-20 md:bottom-6 right-6 z-[500] w-12 h-12 bg-[var(--tm-text)] hover:opacity-90 text-[color:var(--tm-accent-contrast)] rounded-full shadow-lg transition-[transform,opacity] duration-300 ease-in-out flex items-center justify-center group ${
-          showBackToTop
-            ? 'opacity-100 translate-y-0 pointer-events-auto min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
-            : 'opacity-0 translate-y-4 pointer-events-none min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
-        }`}
-        aria-label='返回顶部'
-      >
-        <ChevronUp className='w-6 h-6 transition-transform group-hover:scale-110' />
-      </button>
+      <BackToTop />
     </PageLayout>
   );
 }

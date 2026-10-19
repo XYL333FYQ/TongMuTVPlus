@@ -9,14 +9,17 @@ type OpenListOfflineDownloadSource = {
   password: string;
 };
 
-function getOfflineDownloadSource(config: AdminConfig): OpenListOfflineDownloadSource {
+function getOfflineDownloadSource(
+  config: AdminConfig
+): OpenListOfflineDownloadSource {
   const openlistConfig = config.OpenListConfig;
 
   if (!openlistConfig?.Enabled) {
     throw new Error('私人影库功能未启用');
   }
 
-  const useCustomSource = openlistConfig.OfflineDownloadUseCustomSource === true;
+  const useCustomSource =
+    openlistConfig.OfflineDownloadUseCustomSource === true;
   const source = useCustomSource
     ? {
         url: openlistConfig.OfflineDownloadURL || '',
@@ -31,9 +34,7 @@ function getOfflineDownloadSource(config: AdminConfig): OpenListOfflineDownloadS
 
   if (!source.url || !source.username || !source.password) {
     throw new Error(
-      useCustomSource
-        ? '离线下载 OpenList 配置不完整'
-        : 'OpenList 配置不完整'
+      useCustomSource ? '离线下载 OpenList 配置不完整' : 'OpenList 配置不完整'
     );
   }
 
@@ -57,9 +58,16 @@ export async function addOpenListOfflineDownload(
   tool: string
 ) {
   const source = getOfflineDownloadSource(config);
-  const client = new OpenListClient(source.url, source.username, source.password);
+  const client = new OpenListClient(
+    source.url,
+    source.username,
+    source.password
+  );
   const token = await (client as any).getToken();
-  const openlistUrl = `${source.url.replace(/\/$/, '')}/api/fs/add_offline_download`;
+  const openlistUrl = `${source.url.replace(
+    /\/$/,
+    ''
+  )}/api/fs/add_offline_download`;
 
   const response = await fetch(openlistUrl, {
     method: 'POST',

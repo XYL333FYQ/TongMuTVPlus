@@ -17,10 +17,10 @@ export default function MediaCardSkeleton({
   return (
     <div className={cn('flex flex-col gap-2', className)}>
       <div
-        className='overflow-hidden rounded-[14px] border border-[var(--tm-line)] bg-[var(--tm-surface)]'
+        className='overflow-hidden rounded-[14px] border border-line bg-surface'
         aria-hidden
       >
-        <div className={cn('bg-[var(--tm-surface-raised)]', BOOK_COVER_LIFT)}>
+        <div className={cn('bg-raised', BOOK_COVER_LIFT)}>
           <ImagePlaceholder
             aspectRatio={aspect === '3/4' ? 'aspect-[3/4]' : 'aspect-[2/3]'}
             className='rounded-none'

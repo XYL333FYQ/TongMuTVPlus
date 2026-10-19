@@ -51,8 +51,13 @@ function scheduleCleanup(task: () => void): void {
 }
 
 function getCacheTypeForKey(key: string): RecommendationCacheType | null {
-  for (const [type, config] of Object.entries(RECOMMENDATION_CACHE_CONFIG) as Array<
-    [RecommendationCacheType, (typeof RECOMMENDATION_CACHE_CONFIG)[RecommendationCacheType]]
+  for (const [type, config] of Object.entries(
+    RECOMMENDATION_CACHE_CONFIG
+  ) as Array<
+    [
+      RecommendationCacheType,
+      (typeof RECOMMENDATION_CACHE_CONFIG)[RecommendationCacheType]
+    ]
   >) {
     if (key.startsWith(config.prefix)) {
       return type;
@@ -62,7 +67,9 @@ function getCacheTypeForKey(key: string): RecommendationCacheType | null {
   return null;
 }
 
-function parseCacheEntry<T>(rawValue: string | null): RecommendationCacheEntry<T> | null {
+function parseCacheEntry<T>(
+  rawValue: string | null
+): RecommendationCacheEntry<T> | null {
   if (!rawValue) return null;
 
   const parsed = JSON.parse(rawValue) as {
@@ -104,9 +111,7 @@ function isExpired(type: RecommendationCacheType, timestamp: number): boolean {
   return Date.now() - timestamp >= RECOMMENDATION_CACHE_CONFIG[type].ttlMs;
 }
 
-export function getRecommendationCache<T>(
-  key: string
-): T | null {
+export function getRecommendationCache<T>(key: string): T | null {
   if (typeof window === 'undefined') return null;
 
   const cacheType = getCacheTypeForKey(key);

@@ -1,6 +1,5 @@
 'use client';
 
-import { Blend } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 
@@ -8,6 +7,7 @@ import { SearchResult } from '@/lib/types';
 
 import CapsuleSwitch from '@/components/CapsuleSwitch';
 import PageContainer from '@/components/PageContainer';
+import PageHeader from '@/components/PageHeader';
 import PageLayout from '@/components/PageLayout';
 import VideoCard from '@/components/VideoCard';
 
@@ -142,36 +142,20 @@ export default function AdvancedRecommendationPage() {
 
   return (
     <PageLayout activePath='/advanced-recommendation'>
-      <PageContainer className='py-4 sm:py-8 mb-10'>
-        <div className='mb-6'>
-          <h1 className='hidden md:flex text-[32px] font-bold text-[color:var(--tm-text)] items-center gap-2'>
-            <Blend className='w-6 h-6 text-[color:var(--tm-text)]' />
-            高级推荐
-          </h1>
-          <p className='text-sm text-[color:var(--tm-muted)] mt-1'>
-            选择来源，查看推荐影片
-          </p>
-        </div>
+      <PageContainer className='pb-12'>
+        <PageHeader title='高级推荐' description='选择来源，查看推荐影片' />
 
         <div className='space-y-6'>
           <div>
-            <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-3'>
-              选择来源
-            </label>
+            <span className='tm-field-label'>来源</span>
             {isLoadingSources ? (
-              <div
-                role='status'
-                aria-label='加载来源'
-                className='tm-skeleton h-12 rounded-lg border border-[var(--tm-line)]'
-              >
-                <span className='sr-only'>加载来源</span>
+              <div role='status' className='tm-inline-state'>
+                正在加载来源
               </div>
             ) : sources.length === 0 ? (
-              <div className='flex items-center justify-center h-24 rounded-xl border border-dashed border-[var(--tm-line)] bg-[var(--tm-surface-raised)] text-sm text-[color:var(--tm-muted)]'>
-                暂无可用的视频源脚本
-              </div>
+              <div className='tm-inline-state'>还没有可用的视频源脚本</div>
             ) : (
-              <div className='flex justify-center'>
+              <div className='flex'>
                 <CapsuleSwitch
                   options={sources.map((item) => ({
                     label: item.name,
@@ -185,10 +169,7 @@ export default function AdvancedRecommendationPage() {
           </div>
 
           {!!error && (
-            <div
-              role='alert'
-              className='rounded-xl border border-[var(--tm-danger)] bg-[var(--tm-surface-raised)] px-4 py-3 text-sm text-[color:var(--tm-text)]'
-            >
+            <div role='alert' className='text-sm text-danger'>
               {error}
             </div>
           )}
@@ -196,7 +177,7 @@ export default function AdvancedRecommendationPage() {
           {!isLoadingSources && sources.length > 0 && (
             <>
               {videos.length > 0 ? (
-                <div className='grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3 sm:gap-4'>
+                <div className='tm-poster-grid'>
                   {videos.map((video, index) => (
                     <VideoCard
                       key={`${video.source}-${video.id}-${index}`}
@@ -218,18 +199,20 @@ export default function AdvancedRecommendationPage() {
                   ))}
                 </div>
               ) : !isLoadingVideos && !error ? (
-                <div className='flex items-center justify-center h-32 rounded-xl border border-dashed border-[var(--tm-line)] bg-[var(--tm-surface-raised)] text-sm text-[color:var(--tm-muted)]'>
-                  这个来源暂无推荐
+                <div className='tm-empty'>
+                  <p className='tm-empty-title'>这个来源暂时没有推荐</p>
                 </div>
               ) : null}
 
               {isLoadingVideos && (
                 <div
                   role='status'
-                  aria-label='加载推荐内容'
-                  className='tm-skeleton h-32 rounded-xl'
+                  aria-label='正在加载推荐'
+                  className='tm-poster-grid'
                 >
-                  <span className='sr-only'>加载推荐内容</span>
+                  {Array.from({ length: 6 }, (_, index) => (
+                    <div key={index} className='tm-poster tm-skeleton' />
+                  ))}
                 </div>
               )}
 

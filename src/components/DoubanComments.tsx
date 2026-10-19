@@ -147,7 +147,7 @@ export default function DoubanComments({ doubanId }: DoubanCommentsProps) {
   if (!hasStartedLoading) {
     return (
       <div className='flex flex-col items-center justify-center py-12'>
-        <div className='text-[color:var(--tm-muted)] mb-4'>
+        <div className='text-muted mb-4'>
           <svg
             className='w-16 h-16 mx-auto mb-4 opacity-50'
             fill='none'
@@ -165,7 +165,7 @@ export default function DoubanComments({ doubanId }: DoubanCommentsProps) {
         </div>
         <button
           onClick={startLoading}
-          className='px-6 py-2 bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] rounded-lg hover:opacity-90 transition-colors flex items-center gap-2 min-h-[44px] tm-press'
+          className='px-6 py-2 bg-fg text-inverse rounded-lg hover:opacity-90 transition-colors flex items-center gap-2 min-h-[44px] tm-press'
         >
           <svg
             className='w-4 h-4'
@@ -195,8 +195,8 @@ export default function DoubanComments({ doubanId }: DoubanCommentsProps) {
   if (loading && comments.length === 0) {
     return (
       <div className='flex items-center justify-center py-12'>
-        <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--tm-line)]'></div>
-        <span className='ml-3 text-[color:var(--tm-muted)]'>加载评论中...</span>
+        <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-line'></div>
+        <span className='ml-3 text-muted'>加载评论中...</span>
       </div>
     );
   }
@@ -204,11 +204,11 @@ export default function DoubanComments({ doubanId }: DoubanCommentsProps) {
   if (error && comments.length === 0) {
     return (
       <div className='text-center py-12'>
-        <div className='text-[color:var(--tm-text)] mb-2'>❌</div>
-        <p className='text-[color:var(--tm-muted)]'>{error}</p>
+        <div className='text-fg mb-2'>❌</div>
+        <p className='text-muted'>{error}</p>
         <button
           onClick={startLoading}
-          className='mt-4 px-4 py-2 bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] rounded-lg hover:opacity-90 transition-colors min-h-[44px] tm-press'
+          className='mt-4 px-4 py-2 bg-fg text-inverse rounded-lg hover:opacity-90 transition-colors min-h-[44px] tm-press'
         >
           重试
         </button>
@@ -220,7 +220,7 @@ export default function DoubanComments({ doubanId }: DoubanCommentsProps) {
     <div className='space-y-4'>
       {/* 头部统计 */}
       {total > 0 && (
-        <div className='text-sm text-[color:var(--tm-muted)]'>
+        <div className='text-sm text-muted'>
           {total > comments.length
             ? `共 ${total} 条短评`
             : `已加载 ${comments.length} 条短评`}
@@ -232,7 +232,7 @@ export default function DoubanComments({ doubanId }: DoubanCommentsProps) {
         {comments.map((comment) => (
           <div
             key={comment.id}
-            className='bg-[var(--tm-surface-raised)] rounded-lg p-4 hover:bg-[var(--tm-line)] transition-colors'
+            className='bg-raised rounded-lg p-4 hover:bg-line transition-colors'
           >
             {/* 用户信息 */}
             <div className='flex items-start gap-3 mb-3'>
@@ -261,7 +261,7 @@ export default function DoubanComments({ doubanId }: DoubanCommentsProps) {
                     href={comment.userUrl}
                     target='_blank'
                     rel='noopener noreferrer'
-                    className='font-medium text-[color:var(--tm-text)] hover:opacity-80 min-h-[44px] inline-flex items-center tm-press'
+                    className='font-medium text-fg hover:opacity-80 min-h-[44px] inline-flex items-center tm-press'
                   >
                     {comment.userName}
                   </a>
@@ -269,14 +269,14 @@ export default function DoubanComments({ doubanId }: DoubanCommentsProps) {
                 </div>
 
                 {/* 时间 */}
-                <div className='text-[13px] text-[color:var(--tm-muted)] mt-1'>
+                <div className='text-[13px] text-muted mt-1'>
                   {comment.time}
                 </div>
               </div>
 
               {/* 有用数 */}
               {comment.votes > 0 && (
-                <div className='flex items-center gap-1 text-[13px] text-[color:var(--tm-muted)]'>
+                <div className='flex items-center gap-1 text-[13px] text-muted'>
                   <svg
                     className='w-4 h-4'
                     fill='none'
@@ -296,7 +296,7 @@ export default function DoubanComments({ doubanId }: DoubanCommentsProps) {
             </div>
 
             {/* 评论内容 */}
-            <div className='text-[color:var(--tm-muted)] leading-relaxed whitespace-pre-wrap'>
+            <div className='text-muted leading-relaxed whitespace-pre-wrap'>
               {comment.content}
             </div>
           </div>
@@ -309,7 +309,7 @@ export default function DoubanComments({ doubanId }: DoubanCommentsProps) {
           <button
             onClick={loadMore}
             disabled={loading}
-            className='px-6 py-2 bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] rounded-lg hover:opacity-90 disabled:bg-[var(--tm-surface)] disabled:cursor-not-allowed transition-colors min-h-[44px] tm-press'
+            className='px-6 py-2 bg-fg text-inverse rounded-lg hover:opacity-90 disabled:bg-surface disabled:cursor-not-allowed transition-colors min-h-[44px] tm-press'
           >
             {loading ? '加载中...' : '加载更多'}
           </button>
@@ -318,7 +318,7 @@ export default function DoubanComments({ doubanId }: DoubanCommentsProps) {
 
       {/* 没有更多了 */}
       {!hasMore && comments.length > 0 && (
-        <div className='text-center text-sm text-[color:var(--tm-muted)] py-4'>
+        <div className='text-center text-sm text-muted py-4'>
           没有更多评论了
         </div>
       )}

@@ -75,7 +75,7 @@ export default function Drawer({
   const content = (
     <div className='fixed inset-0 z-[10000] flex items-center justify-end pointer-events-none'>
       <div
-        className={`relative ${width} h-full bg-[var(--tm-surface)] shadow-2xl flex flex-col transition-transform duration-300 ease-out pointer-events-auto ${
+        className={`relative ${width} h-full bg-surface shadow-2xl flex flex-col transition-transform duration-300 ease-out pointer-events-auto ${
           position === 'right'
             ? isAnimating
               ? 'translate-x-0'
@@ -85,15 +85,13 @@ export default function Drawer({
             : '-translate-x-full'
         }`}
       >
-        <div className='flex items-center justify-between p-4 border-b border-[var(--tm-line)]'>
-          <h2 className='text-xl font-medium text-[color:var(--tm-text)]'>
-            {title}
-          </h2>
+        <div className='flex items-center justify-between p-4 border-b border-line'>
+          <h2 className='text-xl font-medium text-fg'>{title}</h2>
           <button
             onClick={onClose}
-            className='p-2 hover:bg-[var(--tm-line)] rounded-lg transition-colors'
+            className='p-2 hover:bg-line rounded-lg transition-colors'
           >
-            <X size={20} className='text-[color:var(--tm-muted)]' />
+            <X size={20} className='text-muted' />
           </button>
         </div>
 

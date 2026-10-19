@@ -1,13 +1,10 @@
 'use client';
 
 import { useEffect } from 'react';
-import { type Socket,io } from 'socket.io-client';
+import { type Socket, io } from 'socket.io-client';
 
 import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
-import {
-  applyTVRemoteText,
-  fireTVRemoteKey,
-} from '@/lib/tv-remote-core';
+import { applyTVRemoteText, fireTVRemoteKey } from '@/lib/tv-remote-core';
 import type {
   TVRemoteKeyCommand,
   TVRemoteTextCommand,
@@ -60,11 +57,15 @@ export default function TVRemoteReceiver() {
         if (url.startsWith('http://') || url.startsWith('https://')) {
           localStorage.setItem(LOCAL_REMOTE_URL_KEY, url);
           window.__MOONTV_LOCAL_REMOTE_URL = url;
-          window.dispatchEvent(new CustomEvent('moontv:local-remote-info', {
-            detail: { url },
-          }));
+          window.dispatchEvent(
+            new CustomEvent('moontv:local-remote-info', {
+              detail: { url },
+            })
+          );
         }
-      } catch {}
+      } catch {
+        // hash 里的地址解析失败时保持原状，不影响遥控
+      }
     };
 
     const onLocalRemoteKey = (event: Event) => {
@@ -91,7 +92,10 @@ export default function TVRemoteReceiver() {
       return () => {
         window.removeEventListener('hashchange', syncLocalRemoteUrl);
         window.removeEventListener('moontv:local-remote-key', onLocalRemoteKey);
-        window.removeEventListener('moontv:local-remote-text', onLocalRemoteText);
+        window.removeEventListener(
+          'moontv:local-remote-text',
+          onLocalRemoteText
+        );
       };
     }
 
@@ -122,10 +126,16 @@ export default function TVRemoteReceiver() {
           currentPath: window.location.pathname,
           title: document.title,
         },
-        (error: Error | null, response?: { success: boolean; error?: string }) => {
+        (
+          error: Error | null,
+          response?: { success: boolean; error?: string }
+        ) => {
           if (error || !response?.success) {
             // eslint-disable-next-line no-console
-            console.warn('[TVRemote] TV registration failed:', error || response?.error);
+            console.warn(
+              '[TVRemote] TV registration failed:',
+              error || response?.error
+            );
           }
         }
       );

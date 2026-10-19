@@ -438,7 +438,7 @@ export default function RoomWorkspace() {
             )}
             <h1>{room ? room.name : '房间'}</h1>
             {(room?.description || !room) && (
-              <p>{room?.description || '创建房间或凭邀请加入'}</p>
+              <p>{room?.description || '创建房间，或用邀请码加入'}</p>
             )}
           </div>
           <div className='tm-rooms-heading-actions'>
@@ -508,7 +508,7 @@ export default function RoomWorkspace() {
                   }}
                 >
                   <Link2 size={16} />
-                  凭邀请加入
+                  用邀请码加入
                 </button>
                 <button className='tm-room-primary' onClick={openCreate}>
                   <Plus size={17} />
@@ -618,7 +618,7 @@ export default function RoomWorkspace() {
                   <h2>
                     {room.currentState?.type === 'play'
                       ? room.currentState.videoName
-                      : '一起看的空间'}
+                      : '还没有在播放的影片'}
                   </h2>
                   <p>
                     {room.currentState?.type === 'play'
@@ -627,7 +627,7 @@ export default function RoomWorkspace() {
                             ? '正在准备播放'
                             : '原始画质优先'
                         }`
-                      : '离开页面或收起画面，房间仍会继续。'}
+                      : '离开页面或收起画面，房间仍会继续'}
                   </p>
                 </div>
                 <div className='tm-room-stage-actions'>
@@ -957,7 +957,7 @@ export default function RoomWorkspace() {
                 <Users size={40} strokeWidth={1} />
                 <h2>
                   {loading
-                    ? '正在寻找房间…'
+                    ? '正在加载房间'
                     : directory === 'mine'
                     ? '还没有房间'
                     : directory === 'archived'
@@ -966,8 +966,8 @@ export default function RoomWorkspace() {
                 </h2>
                 <p>
                   {directory === 'archived'
-                    ? '归档后七天内可以恢复房间。'
-                    : '创建私密房间，把邀请发给想一起看的人。'}
+                    ? '归档后七天内可以恢复'
+                    : '创建一个房间，把邀请发给朋友'}
                 </p>
                 {directory !== 'archived' && (
                   <button className='tm-room-primary' onClick={openCreate}>
@@ -978,42 +978,49 @@ export default function RoomWorkspace() {
             ) : (
               <div className='tm-room-directory'>
                 {rooms.map((item) => (
-                  <article key={item.id}>
+                  <article key={item.id} className='tm-room-card'>
                     <div className='tm-room-card-art'>
-                      <Users size={38} strokeWidth={1} />
-                      <span>
+                      <Users size={32} strokeWidth={1.25} aria-hidden />
+                      <span
+                        className='tm-badge tm-room-card-presence'
+                        data-on-art='true'
+                      >
+                        <i
+                          className='tm-dot'
+                          data-live={item.memberCount > 0}
+                        />
+                        {item.memberCount > 0
+                          ? `${item.memberCount} 人在线`
+                          : '无人在线'}
+                      </span>
+                      <span
+                        className='tm-badge tm-room-card-access'
+                        data-on-art='true'
+                      >
+                        {item.hasPassword && <Lock size={12} aria-hidden />}
                         {item.isPublic ? '公开' : '私密'}
-                        {item.hasPassword && <Lock size={12} />}
                       </span>
                     </div>
                     <div className='tm-room-card-body'>
-                      <p>
-                        {item.memberCount}人在线 ·{' '}
-                        {item.lifecycle === 'sleeping'
-                          ? '休眠中'
-                          : item.lifecycle === 'archived'
-                          ? '已归档'
-                          : '随时加入'}
-                      </p>
                       <h2>{item.name}</h2>
                       <p>
                         {item.description ||
-                          `${item.ownerAccountId} 留下的观影空间`}
+                          (item.lifecycle === 'archived'
+                            ? '已归档'
+                            : `房主 ${item.ownerAccountId}`)}
                       </p>
-                      <button
-                        disabled={busy}
-                        onClick={() =>
-                          item.lifecycle === 'archived'
-                            ? restore(item.id)
-                            : join(item.id)
-                        }
-                      >
-                        {item.lifecycle === 'archived'
-                          ? '恢复房间'
-                          : '进入房间'}
-                        <ArrowUpRight size={15} />
-                      </button>
                     </div>
+                    <button
+                      className='tm-btn tm-btn-secondary tm-btn-sm tm-room-card-action'
+                      disabled={busy}
+                      onClick={() =>
+                        item.lifecycle === 'archived'
+                          ? restore(item.id)
+                          : join(item.id)
+                      }
+                    >
+                      {item.lifecycle === 'archived' ? '恢复房间' : '进入房间'}
+                    </button>
                   </article>
                 ))}
               </div>

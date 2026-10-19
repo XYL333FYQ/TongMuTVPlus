@@ -3,7 +3,8 @@
 import http from 'http';
 import https from 'https';
 
-export const DEFAULT_UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36';
+export const DEFAULT_UA =
+  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36';
 export const DEFAULT_HEADERS = {
   accept: 'application/json;charset=UTF-8',
   'accept-language': 'en,zh-CN;q=0.9,zh;q=0.8',

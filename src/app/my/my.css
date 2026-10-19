@@ -1,0 +1,158 @@
+/* 「我的」：头像 + 分组列表，像系统设置那样一行一件事。 */
+.tm-my-page {
+  max-width: 760px;
+  padding-top: 32px;
+  padding-bottom: 48px;
+}
+
+.tm-my-profile {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 32px;
+}
+.tm-my-avatar {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: var(--tm-text);
+  color: var(--tm-accent-contrast);
+  font-size: 26px;
+  font-weight: 600;
+}
+.tm-my-profile .tm-page-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.tm-my-role {
+  margin-top: 2px;
+  font-size: var(--tm-fs-caption);
+  color: var(--tm-muted);
+}
+
+/* 分组 */
+.tm-my-group-label {
+  margin: 32px 0 10px 16px;
+  font-size: var(--tm-fs-caption);
+  font-weight: 500;
+  color: var(--tm-muted);
+}
+.tm-my-group {
+  overflow: hidden;
+  border: 1px solid var(--tm-line);
+  border-radius: var(--tm-radius-lg);
+  background: var(--tm-surface);
+}
+.tm-my-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  min-height: 64px;
+  padding: 10px 16px;
+  text-align: left;
+  transition: background-color var(--tm-d-hover) var(--tm-ease-out);
+}
+.tm-my-row + .tm-my-row::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 62px;
+  height: 1px;
+  background: var(--tm-line);
+}
+.tm-my-row:hover {
+  background: var(--tm-surface-raised);
+}
+.tm-my-row:focus-visible {
+  outline-offset: -2px;
+}
+.tm-my-row-icon {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--tm-radius-sm);
+  background: var(--tm-surface-raised);
+  color: var(--tm-text);
+}
+.tm-my-row-text {
+  flex: 1;
+  min-width: 0;
+}
+.tm-my-row-text strong {
+  display: block;
+  font-size: var(--tm-fs-body);
+  font-weight: 500;
+}
+.tm-my-row-text small {
+  display: block;
+  margin-top: 2px;
+  font-size: var(--tm-fs-caption);
+  color: var(--tm-muted);
+}
+.tm-my-row-chevron {
+  flex-shrink: 0;
+  color: var(--tm-muted);
+}
+
+/* 账号行：UserMenu 的头像按钮用 ::after 铺满整行 */
+.tm-my-account > .relative,
+.tm-my-account .tm-shell-icon {
+  position: static;
+}
+.tm-my-account .tm-shell-icon::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+}
+.tm-my-account .tm-shell-icon:hover {
+  background: none;
+}
+.tm-my-account .tm-shell-icon:focus-visible {
+  outline: none;
+}
+.tm-my-account:has(.tm-shell-icon:focus-visible) {
+  outline: 2px solid var(--tm-text);
+  outline-offset: -2px;
+}
+
+/* 外观分组：主题三段 + 显示开关 */
+.tm-my-prefs {
+  padding: 8px 16px 16px;
+}
+.tm-my-prefs .tm-menu-theme {
+  padding: 8px 0;
+}
+.tm-my-prefs .tm-menu-theme > span {
+  display: none;
+}
+.tm-my-prefs .tm-visual-preferences {
+  margin-top: 12px;
+  padding-top: 8px;
+}
+.tm-my-prefs .tm-visual-preferences legend {
+  display: none;
+}
+
+.tm-my-resume {
+  margin-top: 40px;
+}
+
+@media (max-width: 767px) {
+  .tm-my-page {
+    padding-top: 8px;
+  }
+  .tm-my-avatar {
+    width: 56px;
+    height: 56px;
+    font-size: 22px;
+  }
+}

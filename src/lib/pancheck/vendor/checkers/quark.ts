@@ -9,7 +9,8 @@ export async function checkQuark(link) {
   }
 
   try {
-    const tokenURL = 'https://drive-h.quark.cn/1/clouddrive/share/sharepage/token';
+    const tokenURL =
+      'https://drive-h.quark.cn/1/clouddrive/share/sharepage/token';
     const { statusCode: status1, body: body1 } = await request(tokenURL, {
       method: 'POST',
       body: {
@@ -36,7 +37,9 @@ export async function checkQuark(link) {
       return { valid: false, reason: '分享链接无效：未获取到访问令牌' };
     }
 
-    const detailURL = `https://drive-pc.quark.cn/1/clouddrive/share/sharepage/detail?pwd_id=${encodeURIComponent(resId)}&stoken=${encodeURIComponent(tokenResp.data.stoken)}&ver=2&pr=ucpro`;
+    const detailURL = `https://drive-pc.quark.cn/1/clouddrive/share/sharepage/detail?pwd_id=${encodeURIComponent(
+      resId
+    )}&stoken=${encodeURIComponent(tokenResp.data.stoken)}&ver=2&pr=ucpro`;
     const { statusCode: status2, body: body2 } = await request(detailURL, {
       headers: {
         Accept: 'application/json, text/plain, */*',
@@ -65,7 +68,8 @@ export async function checkQuark(link) {
 }
 
 export function extractParamsQuark(rawURL) {
-  const urlRegex = /^https:\/\/(?:pan\.quark\.cn|pan\.qoark\.cn)\/s\/[a-zA-Z0-9]+(?:\?[^#]*)?(?:#.*)?$/;
+  const urlRegex =
+    /^https:\/\/(?:pan\.quark\.cn|pan\.qoark\.cn)\/s\/[a-zA-Z0-9]+(?:\?[^#]*)?(?:#.*)?$/;
   if (!urlRegex.test(rawURL)) {
     return { resId: '', pwd: '', error: '无效的URL格式' };
   }

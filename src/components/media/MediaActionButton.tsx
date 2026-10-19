@@ -22,8 +22,8 @@ export default function MediaActionButton({
         'w-full min-h-[44px] rounded-[10px] border px-3 py-2 text-sm font-medium tm-press disabled:opacity-50',
         LIBRARY_FOCUS,
         tone === 'danger'
-          ? 'border-[var(--tm-line)] text-[color:var(--tm-muted)] hover:border-[var(--tm-text)] hover:text-[color:var(--tm-text)]'
-          : 'border-[var(--tm-line)] text-[color:var(--tm-muted)] hover:border-[var(--tm-text)] hover:text-[color:var(--tm-text)]',
+          ? 'border-line text-danger hover:border-danger'
+          : 'border-line text-muted hover:border-fg hover:text-fg',
         className
       )}
       {...props}

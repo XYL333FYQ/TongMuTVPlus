@@ -27,33 +27,27 @@ export default function AboutPage() {
           alt={`${BRAND_NAME} 标志`}
           priority
         />
-        <p className='mt-8 text-[13px] font-medium uppercase tracking-normal text-[color:var(--tm-muted)]'>
+        <p className='mt-8 text-[13px] font-medium uppercase tracking-normal text-muted'>
           关于项目
         </p>
-        <h1 className='mt-3 text-3xl font-medium tracking-normal text-[color:var(--tm-text)] sm:text-5xl'>
+        <h1 className='mt-3 text-3xl font-medium tracking-normal text-fg sm:text-5xl'>
           {BRAND_NAME}
         </h1>
-        <p className='mt-4 text-lg text-[color:var(--tm-muted)]'>
-          {BRAND_DESCRIPTION}
-        </p>
-        <div className='mt-10 space-y-6 rounded-2xl border border-[var(--tm-line)] bg-[var(--tm-surface)] p-6 sm:p-8'>
+        <p className='mt-4 text-lg text-muted'>{BRAND_DESCRIPTION}</p>
+        <div className='mt-10 space-y-6 rounded-2xl border border-line bg-surface p-6 sm:p-8'>
           <section>
-            <h2 className='text-lg font-medium text-[color:var(--tm-text)]'>
-              本项目
-            </h2>
-            <p className='mt-2 text-sm leading-7 text-[color:var(--tm-muted)]'>
+            <h2 className='text-lg font-medium text-fg'>本项目</h2>
+            <p className='mt-2 text-sm leading-7 text-muted'>
               当前版本 v{PROJECT_VERSION}
               。本项目在原有影视浏览与播放基础上改造房间体验、内容选择和品牌视觉，使用独立版本维护。尚未配置本项目的在线发行地址。
             </p>
           </section>
           <section>
-            <h2 className='text-lg font-medium text-[color:var(--tm-text)]'>
-              来源与致谢
-            </h2>
-            <p className='mt-2 text-sm leading-7 text-[color:var(--tm-muted)]'>
+            <h2 className='text-lg font-medium text-fg'>来源与致谢</h2>
+            <p className='mt-2 text-sm leading-7 text-muted'>
               基于{' '}
               <a
-                className='inline-flex min-h-[44px] items-center text-[color:var(--tm-text)] underline underline-offset-4 hover:opacity-80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
+                className='inline-flex min-h-[44px] items-center text-fg underline underline-offset-4 hover:opacity-80'
                 href={UPSTREAM_URL}
                 target='_blank'
                 rel='noopener noreferrer'
@@ -66,10 +60,8 @@ export default function AboutPage() {
             </p>
           </section>
           <section>
-            <h2 className='text-lg font-medium text-[color:var(--tm-text)]'>
-              许可记录
-            </h2>
-            <p className='mt-2 text-sm leading-7 text-[color:var(--tm-muted)]'>
+            <h2 className='text-lg font-medium text-fg'>许可记录</h2>
+            <p className='mt-2 text-sm leading-7 text-muted'>
               源码快照根 LICENSE 为 CC BY-NC-SA 4.0，原 README 同时标注
               MIT，两者存在不一致，现保留原始记录并明确标注待核实。第三方组件保留各自许可与归属；更换产品名称不改变原有许可。
             </p>
@@ -77,7 +69,7 @@ export default function AboutPage() {
         </div>
         <Link
           href='/'
-          className='mt-8 inline-flex min-h-[44px] items-center rounded-full border border-[var(--tm-line)] bg-[var(--tm-surface-raised)] px-5 py-2.5 text-sm text-[color:var(--tm-text)] transition hover:bg-[var(--tm-line)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
+          className='mt-8 inline-flex min-h-[44px] items-center rounded-full border border-line bg-raised px-5 py-2.5 text-sm text-fg transition hover:bg-line'
         >
           返回影视
         </Link>

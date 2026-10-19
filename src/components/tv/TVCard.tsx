@@ -59,7 +59,7 @@ export default function TVCard({
             }}
           />
         ) : (
-          <div className='flex h-full w-full items-center justify-center bg-[var(--tm-surface)] text-[color:var(--tm-muted)]'>
+          <div className='flex h-full w-full items-center justify-center bg-surface text-muted'>
             <Play className='h-14 w-14' />
           </div>
         )}

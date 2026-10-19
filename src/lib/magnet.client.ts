@@ -3,10 +3,15 @@
 import { safeFetch } from './safe-http';
 
 function isCloudflareEnvironment(): boolean {
-  return process.env.CF_PAGES === '1' || process.env.BUILD_TARGET === 'cloudflare';
+  return (
+    process.env.CF_PAGES === '1' || process.env.BUILD_TARGET === 'cloudflare'
+  );
 }
 
-export function getMagnetBaseUrl(defaultBaseUrl: string, reverseProxyBaseUrl?: string): string {
+export function getMagnetBaseUrl(
+  defaultBaseUrl: string,
+  reverseProxyBaseUrl?: string
+): string {
   return (reverseProxyBaseUrl || defaultBaseUrl).replace(/\/+$/, '');
 }
 

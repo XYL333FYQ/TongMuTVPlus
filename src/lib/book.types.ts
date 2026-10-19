@@ -21,7 +21,6 @@ export interface LegadoRuleSearch {
   wordCount?: string;
 }
 
-
 export type LegadoRuleExplore = LegadoRuleSearch;
 
 export interface LegadoRuleBookInfo {
