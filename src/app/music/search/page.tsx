@@ -4,6 +4,11 @@ import { Play, RefreshCw, Search } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import { cn } from '@/lib/cn';
+import { playMusicList } from '@/lib/music/actions';
+import { mapSong, musicSources, normalizeSource } from '@/lib/music/shared';
+import type { Song } from '@/lib/music/types';
+
 import CoverCard from '@/components/music/CoverCard';
 import MusicEmpty, {
   MusicCardGridSkeleton,
@@ -35,10 +40,6 @@ import {
   MUSIC_SINGER_NAME,
   MUSIC_SINGER_PIC,
 } from '@/components/music/tokens';
-import { cn } from '@/lib/cn';
-import { playMusicList } from '@/lib/music/actions';
-import { mapSong, musicSources, normalizeSource } from '@/lib/music/shared';
-import type { Song } from '@/lib/music/types';
 
 type HotSearchItem = { keyword: string; artist?: string };
 type SearchType = 'song' | 'singer' | 'album';
@@ -69,7 +70,11 @@ const HOT_SEARCH_LIMIT = 20;
  * 搜索类型。标识方块用"曲 / 唱 / 碟"三个不同的字——两字母缩写在这里不成立
  * （歌曲和歌手都是 S 打头），而这三个字本身就说清楚了搜的是什么。
  */
-const searchTypeOptions: Array<{ key: SearchType; label: string; monogram: string }> = [
+const searchTypeOptions: Array<{
+  key: SearchType;
+  label: string;
+  monogram: string;
+}> = [
   { key: 'song', label: '歌曲', monogram: '曲' },
   { key: 'singer', label: '歌手', monogram: '唱' },
   { key: 'album', label: '专辑', monogram: '碟' },
@@ -130,7 +135,7 @@ function SingerGrid({
                 className={MUSIC_SINGER_PIC}
               />
             ) : (
-              <span className='flex h-full w-full items-center justify-center font-music-display text-[calc(22*var(--music-px))] text-music-muted/60 dark:text-music-night-muted/60'>
+              <span className='flex h-full w-full items-center justify-center font-sans text-[22px] text-[color:color-mix(in_srgb,var(--tm-muted)_60%,transparent)]'>
                 {singer.name.slice(0, 1)}
               </span>
             )}
@@ -139,9 +144,13 @@ function SingerGrid({
             {singer.name}
           </span>
           {singer.alias?.[0] ? (
-            <span className={cn(MUSIC_SINGER_ALIAS, 'block')}>{singer.alias[0]}</span>
+            <span className={cn(MUSIC_SINGER_ALIAS, 'block')}>
+              {singer.alias[0]}
+            </span>
           ) : null}
-          <span className={MUSIC_SINGER_META}>{singer.albumSize || 0} 张专辑</span>
+          <span className={MUSIC_SINGER_META}>
+            {singer.albumSize || 0} 张专辑
+          </span>
         </button>
       ))}
     </div>
@@ -185,9 +194,11 @@ export default function MusicSearchPage() {
   const searchParams = useSearchParams();
   const source = normalizeSource(searchParams.get('source'));
   const q = searchParams.get('q') || '';
-  const searchType = (['song', 'singer', 'album'].includes(searchParams.get('type') || '')
-    ? searchParams.get('type')
-    : 'song') as SearchType;
+  const searchType = (
+    ['song', 'singer', 'album'].includes(searchParams.get('type') || '')
+      ? searchParams.get('type')
+      : 'song'
+  ) as SearchType;
   const [keyword, setKeyword] = useState(q);
   const [selectedSource, setSelectedSource] = useState(source);
   const [selectedType, setSelectedType] = useState<SearchType>(searchType);
@@ -221,7 +232,8 @@ export default function MusicSearchPage() {
           const { data, timestamp } = JSON.parse(cached);
           if (Array.isArray(data)) {
             cachedData = data;
-            cacheExpired = Date.now() - Number(timestamp || 0) > HOT_SEARCH_CACHE_DURATION;
+            cacheExpired =
+              Date.now() - Number(timestamp || 0) > HOT_SEARCH_CACHE_DURATION;
           }
         }
       } catch {
@@ -239,13 +251,21 @@ export default function MusicSearchPage() {
 
     if (!cachedData || cacheExpired || forceRefresh) {
       try {
-        const res = await fetch(`/api/music/v2/discovery/hot-search?source=${source}`);
+        const res = await fetch(
+          `/api/music/v2/discovery/hot-search?source=${source}`
+        );
         const data = await res.json();
         if (data.success) {
-          const nextHotSearches = (data.data?.list || []).slice(0, HOT_SEARCH_LIMIT);
+          const nextHotSearches = (data.data?.list || []).slice(
+            0,
+            HOT_SEARCH_LIMIT
+          );
           setHotSearches(nextHotSearches);
           try {
-            localStorage.setItem(cacheKey, JSON.stringify({ data: nextHotSearches, timestamp: Date.now() }));
+            localStorage.setItem(
+              cacheKey,
+              JSON.stringify({ data: nextHotSearches, timestamp: Date.now() })
+            );
           } catch {
             // ignore cache write failure
           }
@@ -260,63 +280,71 @@ export default function MusicSearchPage() {
     }
   };
 
-  const loadSearchPage = useCallback(async (pageNum: number, append = false, signal?: AbortSignal) => {
-    if (!q) return;
-    if (append) {
-      if (loadingMoreRef.current) return;
-      loadingMoreRef.current = true;
-      setLoadingMore(true);
-    } else {
-      setLoading(true);
-    }
-
-    try {
-      const res = await fetch(`/api/music/v2/search?source=${source}&q=${encodeURIComponent(q)}&type=${searchType}&page=${pageNum}&limit=20`, { signal });
-      const data = await res.json();
-      const list = data.data?.list || [];
-      const nextHasMore = Boolean(data.data?.hasMore);
-
-      if (searchType === 'singer') {
-        setSingers((prev) => append ? [...prev, ...list] : list);
-        if (!append) {
-          setAlbums([]);
-          setSongs([]);
-        }
-      } else if (searchType === 'album') {
-        setAlbums((prev) => append ? [...prev, ...list] : list);
-        if (!append) {
-          setSingers([]);
-          setSongs([]);
-        }
-      } else {
-        const nextSongs = list.map(mapSong);
-        setSongs((prev) => append ? [...prev, ...nextSongs] : nextSongs);
-        if (!append) {
-          setSingers([]);
-          setAlbums([]);
-        }
-      }
-
-      setPage(pageNum);
-      setHasMore(nextHasMore);
-    } catch (error: any) {
-      if (error?.name !== 'AbortError') {
-        if (!append) {
-          setSongs([]);
-          setSingers([]);
-          setAlbums([]);
-          setHasMore(false);
-        }
-      }
-    } finally {
+  const loadSearchPage = useCallback(
+    async (pageNum: number, append = false, signal?: AbortSignal) => {
+      if (!q) return;
       if (append) {
-        loadingMoreRef.current = false;
-        setLoadingMore(false);
+        if (loadingMoreRef.current) return;
+        loadingMoreRef.current = true;
+        setLoadingMore(true);
       } else {
-        setLoading(false);
+        setLoading(true);
       }
-    }
-  }, [source, q, searchType]);
+
+      try {
+        const res = await fetch(
+          `/api/music/v2/search?source=${source}&q=${encodeURIComponent(
+            q
+          )}&type=${searchType}&page=${pageNum}&limit=20`,
+          { signal }
+        );
+        const data = await res.json();
+        const list = data.data?.list || [];
+        const nextHasMore = Boolean(data.data?.hasMore);
+
+        if (searchType === 'singer') {
+          setSingers((prev) => (append ? [...prev, ...list] : list));
+          if (!append) {
+            setAlbums([]);
+            setSongs([]);
+          }
+        } else if (searchType === 'album') {
+          setAlbums((prev) => (append ? [...prev, ...list] : list));
+          if (!append) {
+            setSingers([]);
+            setSongs([]);
+          }
+        } else {
+          const nextSongs = list.map(mapSong);
+          setSongs((prev) => (append ? [...prev, ...nextSongs] : nextSongs));
+          if (!append) {
+            setSingers([]);
+            setAlbums([]);
+          }
+        }
+
+        setPage(pageNum);
+        setHasMore(nextHasMore);
+      } catch (error: any) {
+        if (error?.name !== 'AbortError') {
+          if (!append) {
+            setSongs([]);
+            setSingers([]);
+            setAlbums([]);
+            setHasMore(false);
+          }
+        }
+      } finally {
+        if (append) {
+          loadingMoreRef.current = false;
+          setLoadingMore(false);
+        } else {
+          setLoading(false);
+        }
+      }
+    },
+    [source, q, searchType]
+  );
 
   useEffect(() => {
     setSelectedSource(source);
@@ -379,22 +407,37 @@ export default function MusicSearchPage() {
 
   const submit = () => {
     const next = keyword.trim();
-    if (next) router.push(`/music/search?source=${selectedSource}&type=${selectedType}&q=${encodeURIComponent(next)}`);
+    if (next)
+      router.push(
+        `/music/search?source=${selectedSource}&type=${selectedType}&q=${encodeURIComponent(
+          next
+        )}`
+      );
   };
 
   const changeSource = (nextSource: string) => {
     let normalizedSource = normalizeSource(nextSource);
-    if ((selectedType === 'singer' || selectedType === 'album') && !DETAIL_SEARCH_SOURCES.includes(normalizedSource)) {
+    if (
+      (selectedType === 'singer' || selectedType === 'album') &&
+      !DETAIL_SEARCH_SOURCES.includes(normalizedSource)
+    ) {
       normalizedSource = 'wy';
     }
     const next = keyword.trim() || q;
     setSelectedSource(normalizedSource);
-    router.push(`/music/search?source=${normalizedSource}&type=${selectedType}${next ? `&q=${encodeURIComponent(next)}` : ''}`);
+    router.push(
+      `/music/search?source=${normalizedSource}&type=${selectedType}${
+        next ? `&q=${encodeURIComponent(next)}` : ''
+      }`
+    );
   };
 
   const changeType = (nextType: SearchType) => {
     let nextSource = selectedSource;
-    if ((nextType === 'singer' || nextType === 'album') && !DETAIL_SEARCH_SOURCES.includes(nextSource)) {
+    if (
+      (nextType === 'singer' || nextType === 'album') &&
+      !DETAIL_SEARCH_SOURCES.includes(nextSource)
+    ) {
       nextSource = 'wy';
       setSelectedSource(nextSource);
     }
@@ -413,7 +456,11 @@ export default function MusicSearchPage() {
         setSingers([]);
       }
     }
-    router.push(`/music/search?source=${nextSource}&type=${nextType}${next ? `&q=${encodeURIComponent(next)}` : ''}`);
+    router.push(
+      `/music/search?source=${nextSource}&type=${nextType}${
+        next ? `&q=${encodeURIComponent(next)}` : ''
+      }`
+    );
   };
 
   const openSinger = async (singer: SingerResult) => {
@@ -425,7 +472,11 @@ export default function MusicSearchPage() {
     setLoading(true);
     try {
       const itemSource = normalizeSource(singer.source || selectedSource);
-      const res = await fetch(`/api/music/v2/discovery/artist-songs?source=${itemSource}&id=${encodeURIComponent(String(singer.id))}`);
+      const res = await fetch(
+        `/api/music/v2/discovery/artist-songs?source=${itemSource}&id=${encodeURIComponent(
+          String(singer.id)
+        )}`
+      );
       const data = await res.json();
       const nextSongs = (data.data?.list || []).map(mapSong);
       setSongs(nextSongs);
@@ -445,7 +496,11 @@ export default function MusicSearchPage() {
     setLoading(true);
     try {
       const itemSource = normalizeSource(album.source || selectedSource);
-      const res = await fetch(`/api/music/v2/discovery/album-songs?source=${itemSource}&id=${encodeURIComponent(String(album.id))}`);
+      const res = await fetch(
+        `/api/music/v2/discovery/album-songs?source=${itemSource}&id=${encodeURIComponent(
+          String(album.id)
+        )}`
+      );
       const data = await res.json();
       const nextSongs = (data.data?.list || []).map(mapSong);
       setSongs(nextSongs);
@@ -456,14 +511,25 @@ export default function MusicSearchPage() {
     }
   };
 
-  const currentSourceLabel = musicSources.find((item) => item.key === selectedSource)?.label || '音源';
-  const currentTypeLabel = searchTypeOptions.find((item) => item.key === selectedType)?.label || '歌曲';
-  const resultCount = selectedType === 'song' ? songs.length : selectedType === 'singer' ? singers.length : albums.length;
-  const resultUnit = selectedType === 'song' ? '首' : selectedType === 'singer' ? '位' : '张';
+  const currentSourceLabel =
+    musicSources.find((item) => item.key === selectedSource)?.label || '音源';
+  const currentTypeLabel =
+    searchTypeOptions.find((item) => item.key === selectedType)?.label ||
+    '歌曲';
+  const resultCount =
+    selectedType === 'song'
+      ? songs.length
+      : selectedType === 'singer'
+      ? singers.length
+      : albums.length;
+  const resultUnit =
+    selectedType === 'song' ? '首' : selectedType === 'singer' ? '位' : '张';
 
   const title = detailTitle || q || '发现音乐';
   const subtitle = q
-    ? `${detailTitle ? '歌曲' : '搜索'} · ${currentSourceLabel} · ${currentTypeLabel}`
+    ? `${
+        detailTitle ? '歌曲' : '搜索'
+      } · ${currentSourceLabel} · ${currentTypeLabel}`
     : `热门搜索 · ${currentSourceLabel}`;
 
   const showPlayAll = selectedType === 'song' || Boolean(detailTitle);
@@ -494,7 +560,9 @@ export default function MusicSearchPage() {
           {showPlayAll ? (
             <button
               type='button'
-              onClick={() => playMusicList(songs, q ? `搜索: ${q}` : '搜索结果')}
+              onClick={() =>
+                playMusicList(songs, q ? `搜索: ${q}` : '搜索结果')
+              }
               disabled={songs.length === 0}
               className={MUSIC_BUTTON}
             >
@@ -515,7 +583,7 @@ export default function MusicSearchPage() {
         className={cn(MUSIC_FIELD, 'mb-6')}
       >
         <Search
-          className='h-4 w-4 shrink-0 text-music-muted dark:text-music-night-muted'
+          className='h-4 w-4 shrink-0 text-[color:var(--tm-muted)]'
           strokeWidth={2}
         />
         <input
@@ -549,7 +617,10 @@ export default function MusicSearchPage() {
         ) : songs.length > 0 ? (
           <SongList songs={songs} />
         ) : (
-          <MusicEmpty title={`没有搜到「${q}」`} hint='换个写法，或者切一个音源再试。' />
+          <MusicEmpty
+            title={`没有搜到「${q}」`}
+            hint='换个写法，或者切一个音源再试。'
+          />
         )
       ) : (
         <div>
@@ -564,7 +635,10 @@ export default function MusicSearchPage() {
               className={MUSIC_ICON_BUTTON}
             >
               <RefreshCw
-                className={cn('h-3.5 w-3.5', hotLoading && 'animate-spin motion-reduce:animate-none')}
+                className={cn(
+                  'h-3.5 w-3.5',
+                  hotLoading && 'animate-spin motion-reduce:animate-none'
+                )}
                 strokeWidth={2}
               />
             </button>
@@ -580,11 +654,20 @@ export default function MusicSearchPage() {
                   type='button'
                   onClick={() => {
                     setKeyword(item.keyword);
-                    router.push(`/music/search?source=${source}&type=${selectedType}&q=${encodeURIComponent(item.keyword)}`);
+                    router.push(
+                      `/music/search?source=${source}&type=${selectedType}&q=${encodeURIComponent(
+                        item.keyword
+                      )}`
+                    );
                   }}
                   className={MUSIC_HOT_ITEM}
                 >
-                  <span className={cn(MUSIC_HOT_RANK, index < 3 && MUSIC_HOT_RANK_TOP)}>
+                  <span
+                    className={cn(
+                      MUSIC_HOT_RANK,
+                      index < 3 && MUSIC_HOT_RANK_TOP
+                    )}
+                  >
                     {String(index + 1).padStart(2, '0')}
                   </span>
                   <span className={MUSIC_HOT_WORD}>{item.keyword}</span>
@@ -592,7 +675,12 @@ export default function MusicSearchPage() {
               ))}
             </div>
           ) : (
-            <p className={cn(MUSIC_MUTED, 'py-10 text-center font-music-body text-[calc(12*var(--music-px))]')}>
+            <p
+              className={cn(
+                MUSIC_MUTED,
+                'py-10 text-center font-sans text-[13px]'
+              )}
+            >
               当前音源无法获取热搜
             </p>
           )}
@@ -600,7 +688,9 @@ export default function MusicSearchPage() {
       )}
 
       {loadingMore ? <MusicRowListSkeleton count={4} /> : null}
-      {q && !detailTitle && hasMore ? <div ref={loadMoreRef} className='h-1' /> : null}
+      {q && !detailTitle && hasMore ? (
+        <div ref={loadMoreRef} className='h-1' />
+      ) : null}
     </MusicPage>
   );
 }

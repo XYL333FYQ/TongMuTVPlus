@@ -317,7 +317,7 @@ export default function MangaRecommendPage() {
 
       {sources.length > 0 ? (
         <section className='space-y-3'>
-          <div className='flex flex-nowrap gap-1 overflow-x-auto border-b border-library-edge [scrollbar-width:none] [&::-webkit-scrollbar]:hidden dark:border-library-night-edge'>
+          <div className='flex flex-nowrap gap-1 overflow-x-auto border-b border-[var(--tm-line)] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden'>
             {sources.map((source) => (
               <button
                 key={source.id}
@@ -332,7 +332,7 @@ export default function MangaRecommendPage() {
               </button>
             ))}
           </div>
-          <div className='flex flex-nowrap gap-1 border-b border-library-edge dark:border-library-night-edge'>
+          <div className='flex flex-nowrap gap-1 border-b border-[var(--tm-line)]'>
             {recommendOptions.map((option) => (
               <button
                 key={option.value}
@@ -409,7 +409,7 @@ export default function MangaRecommendPage() {
 
             <div
               ref={loadMoreRef}
-              className='flex min-h-10 items-center justify-center text-sm text-library-muted dark:text-library-night-muted'
+              className='flex min-h-10 items-center justify-center text-sm text-[color:var(--tm-muted)]'
             >
               {loadingMore
                 ? '正在加载更多...'

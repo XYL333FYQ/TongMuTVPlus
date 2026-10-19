@@ -1,6 +1,6 @@
 'use client';
 
-import { Volume2, VolumeX } from 'lucide-react';
+import { Star, Volume2, VolumeX } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
@@ -526,6 +526,12 @@ export default function BannerCarousel({
         contain={!currentItem.backdrop_path}
         meta={
           <>
+            {currentItem.vote_average > 0 && (
+              <span className='tm-home-hero-rating'>
+                <Star size={14} fill='currentColor' aria-hidden='true' />
+                {currentItem.vote_average.toFixed(1)}
+              </span>
+            )}
             {currentItem.release_date && (
               <span>{currentItem.release_date.slice(0, 4)}</span>
             )}
@@ -613,7 +619,7 @@ export default function BannerCarousel({
         type={currentItem.media_type === 'tv' ? 'tv' : 'movie'}
         onPlay={() => handlePlay(currentItem.title)}
         onTogether={() => router.push('/watch-room')}
-        useDrawer
+        backdrop={getImageUrl(currentItem.backdrop_path || null)}
       />
     </>
   );

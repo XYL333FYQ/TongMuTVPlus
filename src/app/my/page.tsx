@@ -3,19 +3,16 @@
 import { ChevronRight, Download, Heart, Users } from 'lucide-react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { useTheme } from 'next-themes';
 import { Suspense, useEffect, useState } from 'react';
 
 import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
-import {
-  type ThemeSetting,
-  changeThemeWithTransition,
-} from '@/lib/theme-transition';
 
 import ContinueWatching from '@/components/ContinueWatching';
 import { FavoritesPanel } from '@/components/FavoritesPanel';
 import { OfflineDownloadPanel } from '@/components/OfflineDownloadPanel';
+import PageContainer from '@/components/PageContainer';
 import PageLayout from '@/components/PageLayout';
+import ThemeSettings from '@/components/ThemeSettings';
 import { UserMenu } from '@/components/UserMenu';
 import VisualPreferenceControls from '@/components/VisualPreferenceControls';
 
@@ -25,8 +22,6 @@ function MyPageClient() {
   const [downloadsEnabled, setDownloadsEnabled] = useState(false);
   const [username, setUsername] = useState('');
   const [showFavorites, setShowFavorites] = useState(false);
-  const [mounted, setMounted] = useState(false);
-  const { theme, setTheme } = useTheme();
   useEffect(() => {
     const auth = getAuthInfoFromBrowserCookie();
     setUsername(auth?.username || '');
@@ -34,7 +29,6 @@ function MyPageClient() {
       (auth?.role === 'owner' || auth?.role === 'admin') &&
         window.RUNTIME_CONFIG?.ENABLE_OFFLINE_DOWNLOAD === true
     );
-    setMounted(true);
   }, []);
   useEffect(() => {
     if (downloadsEnabled && searchParams.get('panel') === 'downloads')
@@ -43,14 +37,13 @@ function MyPageClient() {
 
   return (
     <PageLayout activePath='/my'>
-      <div className='tm-my-page'>
+      <PageContainer className='tm-my-page'>
         <div className='tm-my-heading'>
           <div className='tm-my-avatar' aria-hidden='true'>
             {username ? username.slice(0, 1).toUpperCase() : '你'}
           </div>
           <div>
-            <span className='tm-eyebrow'>YOUR COLLECTION</span>
-            <h1>{username ? username + ' 的时光' : '我的时光'}</h1>
+            <h1>我的</h1>
           </div>
         </div>
         <div className='tm-my-actions'>
@@ -58,7 +51,7 @@ function MyPageClient() {
             <Heart size={24} strokeWidth={1.5} />
             <span>
               <strong>我的收藏</strong>
-              <small>把喜欢的故事留在这里</small>
+              <small>查看收藏的影片</small>
             </span>
             <ChevronRight size={16} className='ml-auto' />
           </button>
@@ -66,7 +59,7 @@ function MyPageClient() {
             <Users size={24} strokeWidth={1.5} />
             <span>
               <strong>我的房间</strong>
-              <small>回到一起看的时光</small>
+              <small>创建和加入房间</small>
             </span>
             <ChevronRight size={16} className='ml-auto' />
           </Link>
@@ -78,25 +71,7 @@ function MyPageClient() {
             </span>
           </div>
         </div>
-        <div className='tm-my-appearance'>
-          <label htmlFor='tm-appearance'>显示外观</label>
-          <select
-            id='tm-appearance'
-            value={mounted ? theme || 'dark' : 'dark'}
-            disabled={!mounted}
-            onChange={(event) =>
-              void changeThemeWithTransition(
-                event.target.value as ThemeSetting,
-                setTheme,
-                event.currentTarget
-              )
-            }
-          >
-            <option value='dark'>深色</option>
-            <option value='light'>浅色</option>
-            <option value='system'>跟随系统</option>
-          </select>
-        </div>
+        <ThemeSettings />
         <VisualPreferenceControls />
         {downloadsEnabled && (
           <button
@@ -117,7 +92,7 @@ function MyPageClient() {
         {showFavorites && (
           <FavoritesPanel isOpen onClose={() => setShowFavorites(false)} />
         )}
-      </div>
+      </PageContainer>
     </PageLayout>
   );
 }

@@ -10,10 +10,17 @@
 }
 
 .tm-press {
-  transition: transform var(--tm-d-press) var(--tm-ease-out);
+  transition: transform var(--tm-d-press) var(--tm-ease-out),
+    scale var(--tm-d-press) var(--tm-ease-out);
 }
 .tm-press:active:not(:disabled):not([aria-disabled='true']) {
-  transform: scale(0.97);
+  scale: 0.97;
+}
+/* Keep positioning transforms intact in browsers without individual scaling. */
+@supports not (scale: 1) {
+  .tm-press:active:not(:disabled):not([aria-disabled='true']) {
+    opacity: 0.8;
+  }
 }
 .tm-press:focus-visible,
 .tm-shell .tm-press:focus-visible,
@@ -24,8 +31,8 @@
 
 .tm-glass {
   background: var(--tm-glass);
-  backdrop-filter: blur(24px) saturate(1.6);
-  -webkit-backdrop-filter: blur(24px) saturate(1.6);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
   box-shadow: inset 0 1px 0 var(--tm-glass-highlight);
   border: 1px solid var(--tm-line);
 }
@@ -113,7 +120,20 @@ html[data-tm-theme-transition='circle']::view-transition-new(root) {
   z-index: 1;
 }
 html[data-tm-reduced-motion='true'] .tm-press:active {
+  scale: 1 !important;
+}
+/* Stop an in-flight transform immediately when either preference changes. */
+html[data-tm-reduced-motion='true']
+  :is(
+    .tm-enter,
+    .tm-home-poster-motion,
+    .tm-home-hero-art,
+    .tm-home-hero-frame,
+    .tm-home-hero-copy,
+    .tm-home-hero-copy > div > div
+  ) {
   transform: none !important;
+  transition: none !important;
 }
 html[data-tm-reduced-motion='true'] .tm-press {
   transition: none !important;
@@ -127,11 +147,22 @@ html[data-tm-reduced-motion='true'] .tm-skeleton.tm-skeleton {
   animation: tm-skeleton-appear 0s 400ms forwards !important;
 }
 @media (prefers-reduced-motion: reduce) {
+  :is(
+      .tm-enter,
+      .tm-home-poster-motion,
+      .tm-home-hero-art,
+      .tm-home-hero-frame,
+      .tm-home-hero-copy,
+      .tm-home-hero-copy > div > div
+    ) {
+    transform: none !important;
+    transition: none !important;
+  }
   .tm-press {
     transition: none !important;
   }
   .tm-press:active {
-    transform: none !important;
+    scale: 1 !important;
   }
   .tm-skeleton::after {
     animation: none !important;

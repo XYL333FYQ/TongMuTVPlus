@@ -1,7 +1,10 @@
 'use client';
 
 import { AlertTriangle, X } from 'lucide-react';
+import { useEffect, useId, useRef } from 'react';
 import { createPortal } from 'react-dom';
+
+import '@/styles/feedback.css';
 
 interface ConfirmDialogProps {
   isOpen: boolean;
@@ -24,72 +27,111 @@ export function ConfirmDialog({
   onCancel,
   variant = 'warning',
 }: ConfirmDialogProps) {
-  if (!isOpen) return null;
+  const dialog = useRef<HTMLDialogElement>(null);
+  const cancel = useRef<HTMLButtonElement>(null);
+  const cancelCallback = useRef(onCancel);
+  cancelCallback.current = onCancel;
+  const titleId = useId();
+  const messageId = useId();
 
-  const variantStyles = {
-    danger: {
-      icon: 'text-red-500',
-      button: 'bg-red-500 hover:bg-red-600',
-    },
-    warning: {
-      icon: 'text-yellow-500',
-      button: 'bg-yellow-500 hover:bg-yellow-600',
-    },
-    info: {
-      icon: 'text-blue-500',
-      button: 'bg-blue-500 hover:bg-blue-600',
-    },
-  };
+  useEffect(() => {
+    const element = dialog.current;
+    if (!isOpen || !element) return;
+    const trigger =
+      document.activeElement instanceof HTMLElement
+        ? document.activeElement
+        : null;
+    const nativeModal = typeof element.showModal === 'function';
+    if (nativeModal) element.showModal();
+    else element.setAttribute('open', '');
+    // Deleting downloads is irreversible: opening a confirmation never selects Delete.
+    cancel.current?.focus({ preventScroll: true });
+    const dismiss = (event: Event) => {
+      event.preventDefault();
+      cancelCallback.current();
+    };
+    const keys = (event: KeyboardEvent) => {
+      if (event.defaultPrevented) return;
+      if (!nativeModal && event.key === 'Escape') dismiss(event);
+      if (event.key !== 'Tab') return;
+      const buttons = Array.from(
+        element.querySelectorAll<HTMLButtonElement>('button:not(:disabled)')
+      );
+      const first = buttons[0];
+      const last = buttons[buttons.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last?.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first?.focus();
+      }
+    };
+    element.addEventListener('cancel', dismiss);
+    element.addEventListener('keydown', keys);
+    return () => {
+      element.removeEventListener('cancel', dismiss);
+      element.removeEventListener('keydown', keys);
+      if (typeof element.close === 'function') element.close();
+      else element.removeAttribute('open');
+      if (trigger?.isConnected) trigger.focus({ preventScroll: true });
+    };
+  }, [isOpen]);
 
-  const styles = variantStyles[variant];
+  if (!isOpen || typeof document === 'undefined') return null;
 
   return createPortal(
-    <div className='fixed inset-0 z-[10000] flex items-center justify-center p-4'>
-      <div
-        className='absolute inset-0 bg-black/50'
-        onClick={onCancel}
-      />
-      <div className='relative w-full max-w-md bg-white dark:bg-gray-900 rounded-lg shadow-xl'>
-        {/* Header */}
-        <div className='flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700'>
-          <div className='flex items-center gap-3'>
-            <AlertTriangle className={`w-6 h-6 ${styles.icon}`} />
-            <h2 className='text-lg font-semibold text-gray-800 dark:text-gray-200'>
-              {title}
-            </h2>
+    <dialog
+      ref={dialog}
+      className='tm-confirm-dialog'
+      role='alertdialog'
+      aria-modal='true'
+      aria-labelledby={titleId}
+      aria-describedby={messageId}
+      data-variant={variant}
+      onClick={(event) => {
+        if (event.target === event.currentTarget) onCancel();
+      }}
+    >
+      <div className='tm-confirm-panel'>
+        <div className='tm-confirm-header'>
+          <div className='tm-confirm-heading'>
+            <AlertTriangle size={24} aria-hidden='true' />
+            <h2 id={titleId}>{title}</h2>
           </div>
           <button
+            type='button'
+            aria-label='关闭确认'
             onClick={onCancel}
-            className='p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded transition-colors'
+            className='tm-feedback-close tm-press'
           >
-            <X className='w-5 h-5 text-gray-600 dark:text-gray-400' />
+            <X size={20} aria-hidden='true' />
           </button>
         </div>
 
-        {/* Content */}
-        <div className='p-4'>
-          <p className='text-sm text-gray-700 dark:text-gray-300 whitespace-pre-line'>
-            {message}
-          </p>
+        <div className='tm-confirm-content'>
+          <p id={messageId}>{message}</p>
         </div>
 
-        {/* Footer */}
-        <div className='flex items-center justify-end gap-3 p-4 border-t border-gray-200 dark:border-gray-700'>
+        <div className='tm-confirm-footer'>
           <button
+            ref={cancel}
+            type='button'
             onClick={onCancel}
-            className='px-4 py-2 text-sm text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors'
+            className='tm-confirm-cancel tm-press'
           >
             {cancelText}
           </button>
           <button
+            type='button'
             onClick={onConfirm}
-            className={`px-4 py-2 text-sm text-white rounded transition-colors ${styles.button}`}
+            className='tm-confirm-action tm-press'
           >
             {confirmText}
           </button>
         </div>
       </div>
-    </div>,
+    </dialog>,
     document.body
   );
 }

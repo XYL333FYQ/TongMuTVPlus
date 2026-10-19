@@ -12,6 +12,7 @@ export default function MediaGrid({
 }) {
   return (
     <div
+      data-tm-reveal-group
       className={cn(
         'grid grid-cols-2 gap-4 md:grid-cols-4 xl:grid-cols-6',
         className

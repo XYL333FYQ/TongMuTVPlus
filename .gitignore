@@ -89,3 +89,7 @@ skills-lock.json
 /.playwright-cli/
 /output/playwright/
 /.swc/
+
+# local agent state and screenshot output
+/.omc/
+/output/

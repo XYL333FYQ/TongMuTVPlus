@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback,useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import { useEnableComments } from '@/hooks/useEnableComments';
 
@@ -35,47 +35,60 @@ export default function DoubanComments({ doubanId }: DoubanCommentsProps) {
 
   const enableComments = useEnableComments();
 
-  const fetchComments = useCallback(async (startIndex: number) => {
-    try {
-      console.log('正在获取评论，起始位置:', startIndex);
-      setLoading(true);
-      setError(null);
+  const fetchComments = useCallback(
+    async (startIndex: number) => {
+      try {
+        console.log('正在获取评论，起始位置:', startIndex);
+        setLoading(true);
+        setError(null);
 
-      const response = await fetch(
-        `/api/douban-comments?id=${doubanId}&start=${startIndex}&limit=${limit}`
-      );
+        const response = await fetch(
+          `/api/douban-comments?id=${doubanId}&start=${startIndex}&limit=${limit}`
+        );
 
-      if (!response.ok) {
-        throw new Error('获取评论失败');
-      }
+        if (!response.ok) {
+          throw new Error('获取评论失败');
+        }
 
-      const data = await response.json();
-      console.log('获取到评论数据:', {
-        newComments: data.comments.length,
-        total: data.total,
-        hasMore: data.hasMore,
-        start: data.start,
-      });
-
-      if (startIndex === 0) {
-        setComments(data.comments);
-      } else {
-        setComments((prev) => {
-          console.log('追加评论，之前:', prev.length, '新增:', data.comments.length);
-          return [...prev, ...data.comments];
+        const data = await response.json();
+        console.log('获取到评论数据:', {
+          newComments: data.comments.length,
+          total: data.total,
+          hasMore: data.hasMore,
+          start: data.start,
         });
-      }
 
-      setTotal(data.total);
-      setHasMore(data.hasMore);
-      console.log('更新后状态 - hasMore:', data.hasMore, 'total:', data.total);
-    } catch (err) {
-      console.error('获取评论失败:', err);
-      setError(err instanceof Error ? err.message : '获取评论失败');
-    } finally {
-      setLoading(false);
-    }
-  }, [doubanId]);
+        if (startIndex === 0) {
+          setComments(data.comments);
+        } else {
+          setComments((prev) => {
+            console.log(
+              '追加评论，之前:',
+              prev.length,
+              '新增:',
+              data.comments.length
+            );
+            return [...prev, ...data.comments];
+          });
+        }
+
+        setTotal(data.total);
+        setHasMore(data.hasMore);
+        console.log(
+          '更新后状态 - hasMore:',
+          data.hasMore,
+          'total:',
+          data.total
+        );
+      } catch (err) {
+        console.error('获取评论失败:', err);
+        setError(err instanceof Error ? err.message : '获取评论失败');
+      } finally {
+        setLoading(false);
+      }
+    },
+    [doubanId]
+  );
 
   useEffect(() => {
     // 重置状态当 doubanId 变化时
@@ -115,7 +128,7 @@ export default function DoubanComments({ doubanId }: DoubanCommentsProps) {
           <svg
             key={star}
             className='w-4 h-4'
-            fill={star <= rating ? '#f99b01' : '#e0e0e0'}
+            fill={star <= rating ? 'var(--tm-text)' : 'var(--tm-line)'}
             viewBox='0 0 24 24'
           >
             <path d='M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z' />
@@ -134,19 +147,44 @@ export default function DoubanComments({ doubanId }: DoubanCommentsProps) {
   if (!hasStartedLoading) {
     return (
       <div className='flex flex-col items-center justify-center py-12'>
-        <div className='text-gray-500 dark:text-gray-400 mb-4'>
-          <svg className='w-16 h-16 mx-auto mb-4 opacity-50' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-            <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={1.5} d='M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z' />
+        <div className='text-[color:var(--tm-muted)] mb-4'>
+          <svg
+            className='w-16 h-16 mx-auto mb-4 opacity-50'
+            fill='none'
+            stroke='currentColor'
+            viewBox='0 0 24 24'
+          >
+            <path
+              strokeLinecap='round'
+              strokeLinejoin='round'
+              strokeWidth={1.5}
+              d='M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z'
+            />
           </svg>
           <p className='text-center'>点击查看豆瓣评论</p>
         </div>
         <button
           onClick={startLoading}
-          className='px-6 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors flex items-center gap-2'
+          className='px-6 py-2 bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] rounded-lg hover:opacity-90 transition-colors flex items-center gap-2 min-h-[44px] tm-press'
         >
-          <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-            <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M15 12a3 3 0 11-6 0 3 3 0 016 0z' />
-            <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z' />
+          <svg
+            className='w-4 h-4'
+            fill='none'
+            stroke='currentColor'
+            viewBox='0 0 24 24'
+          >
+            <path
+              strokeLinecap='round'
+              strokeLinejoin='round'
+              strokeWidth={2}
+              d='M15 12a3 3 0 11-6 0 3 3 0 016 0z'
+            />
+            <path
+              strokeLinecap='round'
+              strokeLinejoin='round'
+              strokeWidth={2}
+              d='M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z'
+            />
           </svg>
           查看评论
         </button>
@@ -157,10 +195,8 @@ export default function DoubanComments({ doubanId }: DoubanCommentsProps) {
   if (loading && comments.length === 0) {
     return (
       <div className='flex items-center justify-center py-12'>
-        <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-green-500'></div>
-        <span className='ml-3 text-gray-600 dark:text-gray-400'>
-          加载评论中...
-        </span>
+        <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--tm-line)]'></div>
+        <span className='ml-3 text-[color:var(--tm-muted)]'>加载评论中...</span>
       </div>
     );
   }
@@ -168,11 +204,11 @@ export default function DoubanComments({ doubanId }: DoubanCommentsProps) {
   if (error && comments.length === 0) {
     return (
       <div className='text-center py-12'>
-        <div className='text-red-500 mb-2'>❌</div>
-        <p className='text-gray-600 dark:text-gray-400'>{error}</p>
+        <div className='text-[color:var(--tm-text)] mb-2'>❌</div>
+        <p className='text-[color:var(--tm-muted)]'>{error}</p>
         <button
           onClick={startLoading}
-          className='mt-4 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors'
+          className='mt-4 px-4 py-2 bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] rounded-lg hover:opacity-90 transition-colors min-h-[44px] tm-press'
         >
           重试
         </button>
@@ -184,8 +220,10 @@ export default function DoubanComments({ doubanId }: DoubanCommentsProps) {
     <div className='space-y-4'>
       {/* 头部统计 */}
       {total > 0 && (
-        <div className='text-sm text-gray-600 dark:text-gray-400'>
-          {total > comments.length ? `共 ${total} 条短评` : `已加载 ${comments.length} 条短评`}
+        <div className='text-sm text-[color:var(--tm-muted)]'>
+          {total > comments.length
+            ? `共 ${total} 条短评`
+            : `已加载 ${comments.length} 条短评`}
         </div>
       )}
 
@@ -194,7 +232,7 @@ export default function DoubanComments({ doubanId }: DoubanCommentsProps) {
         {comments.map((comment) => (
           <div
             key={comment.id}
-            className='bg-gray-50 dark:bg-gray-800/50 rounded-lg p-4 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors'
+            className='bg-[var(--tm-surface-raised)] rounded-lg p-4 hover:bg-[var(--tm-line)] transition-colors'
           >
             {/* 用户信息 */}
             <div className='flex items-start gap-3 mb-3'>
@@ -203,7 +241,7 @@ export default function DoubanComments({ doubanId }: DoubanCommentsProps) {
                 href={comment.userUrl}
                 target='_blank'
                 rel='noopener noreferrer'
-                className='flex-shrink-0'
+                className='flex-shrink-0 min-h-[44px] tm-press'
               >
                 <img
                   src={comment.userAvatar}
@@ -223,7 +261,7 @@ export default function DoubanComments({ doubanId }: DoubanCommentsProps) {
                     href={comment.userUrl}
                     target='_blank'
                     rel='noopener noreferrer'
-                    className='font-medium text-gray-900 dark:text-white hover:text-green-600 dark:hover:text-green-400'
+                    className='font-medium text-[color:var(--tm-text)] hover:opacity-80 min-h-[44px] inline-flex items-center tm-press'
                   >
                     {comment.userName}
                   </a>
@@ -231,14 +269,14 @@ export default function DoubanComments({ doubanId }: DoubanCommentsProps) {
                 </div>
 
                 {/* 时间 */}
-                <div className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
+                <div className='text-[13px] text-[color:var(--tm-muted)] mt-1'>
                   {comment.time}
                 </div>
               </div>
 
               {/* 有用数 */}
               {comment.votes > 0 && (
-                <div className='flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400'>
+                <div className='flex items-center gap-1 text-[13px] text-[color:var(--tm-muted)]'>
                   <svg
                     className='w-4 h-4'
                     fill='none'
@@ -258,7 +296,7 @@ export default function DoubanComments({ doubanId }: DoubanCommentsProps) {
             </div>
 
             {/* 评论内容 */}
-            <div className='text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap'>
+            <div className='text-[color:var(--tm-muted)] leading-relaxed whitespace-pre-wrap'>
               {comment.content}
             </div>
           </div>
@@ -271,7 +309,7 @@ export default function DoubanComments({ doubanId }: DoubanCommentsProps) {
           <button
             onClick={loadMore}
             disabled={loading}
-            className='px-6 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors'
+            className='px-6 py-2 bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] rounded-lg hover:opacity-90 disabled:bg-[var(--tm-surface)] disabled:cursor-not-allowed transition-colors min-h-[44px] tm-press'
           >
             {loading ? '加载中...' : '加载更多'}
           </button>
@@ -280,7 +318,7 @@ export default function DoubanComments({ doubanId }: DoubanCommentsProps) {
 
       {/* 没有更多了 */}
       {!hasMore && comments.length > 0 && (
-        <div className='text-center text-sm text-gray-500 dark:text-gray-400 py-4'>
+        <div className='text-center text-sm text-[color:var(--tm-muted)] py-4'>
           没有更多评论了
         </div>
       )}

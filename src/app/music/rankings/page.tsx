@@ -4,7 +4,9 @@ import { ListMusic } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
-import MusicEmpty, { MusicSleeveGridSkeleton } from '@/components/music/MusicEmpty';
+import MusicEmpty, {
+  MusicSleeveGridSkeleton,
+} from '@/components/music/MusicEmpty';
 import MusicPage from '@/components/music/MusicPage';
 import MusicSwitch from '@/components/music/MusicSwitch';
 import SleeveCard from '@/components/music/SleeveCard';
@@ -22,7 +24,9 @@ const sourceOptions = musicSources.map((item) => ({
 export default function MusicRankingsPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [currentSource, setCurrentSource] = useState(normalizeSource(searchParams.get('source')));
+  const [currentSource, setCurrentSource] = useState(
+    normalizeSource(searchParams.get('source'))
+  );
   const [playlists, setPlaylists] = useState<Playlist[]>([]);
   // 初值是 true：这页挂载即发请求，给 false 会先用"长度为 0"的判断渲染一帧空态
   // （"无法获取此榜单"），effect 跑起来才切成骨架。骨架才是真正的初始态。
@@ -36,17 +40,21 @@ export default function MusicRankingsPage() {
       .then((res) => res.json())
       .then((data) => {
         if (data.success) {
-          setPlaylists((data.data?.list || []).map((item: any) => ({
-            id: item.id,
-            name: item.name,
-            // 榜单接口不给图：上游 /leaderboard/boards 回的每一项只有 id/name/bangid，
-            // 五个音源、全部榜单都没有 img 字段（2026-09 实测）。所以这里**不接 cover**
-            // ——SleeveCard 也没有这个 prop。热榜卡按定义就是一张没印画的套子，
-            // 卡面由名次和名字构成，不是"缺了张图"。真要图只能拿榜单里第一首歌的
-            // 专辑封面顶（/leaderboard/list 的每首歌都带 img），那得先加请求和缓存。
-            source: normalizeSource(item.source || data.data?.source || source),
-            updateFrequency: item.updateFrequency || item.description || '',
-          })));
+          setPlaylists(
+            (data.data?.list || []).map((item: any) => ({
+              id: item.id,
+              name: item.name,
+              // 榜单接口不给图：上游 /leaderboard/boards 回的每一项只有 id/name/bangid，
+              // 五个音源、全部榜单都没有 img 字段（2026-09 实测）。所以这里**不接 cover**
+              // ——SleeveCard 也没有这个 prop。热榜卡按定义就是一张没印画的套子，
+              // 卡面由名次和名字构成，不是"缺了张图"。真要图只能拿榜单里第一首歌的
+              // 专辑封面顶（/leaderboard/list 的每首歌都带 img），那得先加请求和缓存。
+              source: normalizeSource(
+                item.source || data.data?.source || source
+              ),
+              updateFrequency: item.updateFrequency || item.description || '',
+            }))
+          );
         } else {
           setPlaylists([]);
         }
@@ -61,7 +69,7 @@ export default function MusicRankingsPage() {
   return (
     <MusicPage
       title='热歌榜单'
-      subtitle={`Side A · ${currentSourceLabel}`}
+      subtitle={currentSourceLabel}
       actions={
         <MusicSwitch
           field='音源'
@@ -81,13 +89,17 @@ export default function MusicRankingsPage() {
               rank={index + 1}
               name={playlist.name}
               top={
-                musicSources.find((item) => item.key === playlist.source)?.label ||
-                currentSourceLabel
+                musicSources.find((item) => item.key === playlist.source)
+                  ?.label || currentSourceLabel
               }
               meta={playlist.updateFrequency}
               onOpen={() =>
                 router.push(
-                  `/music/rankings/${playlist.source || currentSource}/${encodeURIComponent(playlist.id)}?name=${encodeURIComponent(playlist.name)}`
+                  `/music/rankings/${
+                    playlist.source || currentSource
+                  }/${encodeURIComponent(
+                    playlist.id
+                  )}?name=${encodeURIComponent(playlist.name)}`
                 )
               }
             />

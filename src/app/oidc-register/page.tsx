@@ -1,8 +1,10 @@
 'use client';
 
+import { motion } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import { Suspense, useEffect, useState } from 'react';
 
+import { fadeUp, useReducedMotionSetting } from '@/lib/motion';
 import { CURRENT_VERSION } from '@/lib/version';
 
 import { useSite } from '@/components/SiteProvider';
@@ -10,6 +12,7 @@ import { ThemeToggle } from '@/components/ThemeToggle';
 
 function OIDCRegisterPageClient() {
   const router = useRouter();
+  const reducedMotion = useReducedMotionSetting();
   const [username, setUsername] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -27,7 +30,9 @@ function OIDCRegisterPageClient() {
           setOidcInfo(data);
         } else {
           // session无效,跳转到登录页
-          router.replace('/login?error=' + encodeURIComponent('OIDC会话已过期'));
+          router.replace(
+            '/login?error=' + encodeURIComponent('OIDC会话已过期')
+          );
         }
       } catch (error) {
         console.error('检查session失败:', error);
@@ -72,28 +77,40 @@ function OIDCRegisterPageClient() {
   if (!oidcInfo) {
     return (
       <div className='relative min-h-screen flex items-center justify-center px-4'>
-        <div className='text-gray-500 dark:text-gray-400'>加载中...</div>
+        <div
+          role='status'
+          aria-label='加载中'
+          className='tm-skeleton h-48 w-full max-w-md rounded-3xl'
+        >
+          <span className='sr-only'>加载中...</span>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className='relative min-h-screen flex items-center justify-center px-4 overflow-hidden'>
+    <div className='relative min-h-dvh flex items-center justify-center px-[var(--tm-content-gutter)] py-20 bg-[var(--tm-bg)] text-[color:var(--tm-text)]'>
       <div className='absolute top-4 right-4'>
         <ThemeToggle />
       </div>
-      <div className='relative z-10 w-full max-w-md rounded-3xl bg-gradient-to-b from-white/90 via-white/70 to-white/40 dark:from-zinc-900/90 dark:via-zinc-900/70 dark:to-zinc-900/40 backdrop-blur-xl shadow-2xl p-10 dark:border dark:border-zinc-800'>
-        <h1 className='text-green-600 tracking-tight text-center text-3xl font-extrabold mb-2 bg-clip-text drop-shadow-sm'>
+      <motion.div
+        custom={reducedMotion}
+        variants={fadeUp}
+        initial='hidden'
+        animate='visible'
+        className='tm-enter relative z-10 w-full max-w-md rounded-3xl bg-[var(--tm-surface)] shadow-xl p-6 sm:p-10 dark:border border-[var(--tm-line)]'
+      >
+        <h1 className='text-[color:var(--tm-text)] tracking-normal text-center text-[28px] md:text-[32px] font-bold mb-2'>
           {siteName}
         </h1>
-        <p className='text-center text-sm text-gray-600 dark:text-gray-400 mb-8'>
+        <p className='text-center text-sm text-[color:var(--tm-muted)] mb-8'>
           完成OIDC注册
         </p>
 
         {/* OIDC信息显示 */}
         {oidcInfo && (
-          <div className='mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg'>
-            <p className='text-sm text-blue-700 dark:text-blue-400'>
+          <div className='mb-6 p-4 bg-[var(--tm-surface-raised)] border border-[var(--tm-line)] rounded-lg'>
+            <p className='text-sm text-[color:var(--tm-text)]'>
               {oidcInfo.email && (
                 <>
                   邮箱: <strong>{oidcInfo.email}</strong>
@@ -117,31 +134,36 @@ function OIDCRegisterPageClient() {
 
         <form onSubmit={handleSubmit} className='space-y-6'>
           <div>
-            <label htmlFor='username' className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+            <label
+              htmlFor='username'
+              className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'
+            >
               选择用户名
             </label>
             <input
               id='username'
               type='text'
               autoComplete='username'
-              className='block w-full rounded-lg border-0 py-3 px-4 text-gray-900 dark:text-gray-100 shadow-sm ring-1 ring-white/60 dark:ring-white/20 placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:ring-2 focus:ring-green-500 focus:outline-none sm:text-base bg-white/60 dark:bg-zinc-800/60 backdrop-blur'
+              className='block min-h-[44px] w-full rounded-lg border-0 py-3 px-4 text-base text-[color:var(--tm-text)] shadow-sm ring-1 ring-[var(--tm-line)] placeholder:text-[color:var(--tm-muted)] focus:ring-2 focus:ring-[var(--tm-text)] focus:outline-none bg-[var(--tm-surface-raised)]'
               placeholder='输入用户名（3-20位字母、数字、下划线）'
               value={username}
               onChange={(e) => setUsername(e.target.value)}
             />
-            <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
+            <p className='mt-2 text-[13px] leading-relaxed text-[color:var(--tm-muted)]'>
               用户名只能包含字母、数字、下划线，长度3-20位
             </p>
           </div>
 
           {error && (
-            <p className='text-sm text-red-600 dark:text-red-400'>{error}</p>
+            <p role='alert' className='text-sm text-[color:var(--tm-text)]'>
+              {error}
+            </p>
           )}
 
           <button
             type='submit'
             disabled={!username || loading}
-            className='inline-flex w-full justify-center rounded-lg bg-green-600 py-3 text-base font-semibold text-white shadow-lg transition-all duration-200 hover:from-green-600 hover:to-blue-600 disabled:cursor-not-allowed disabled:opacity-50'
+            className='inline-flex w-full justify-center rounded-lg bg-[var(--tm-text)] py-3 text-base font-medium text-[color:var(--tm-accent-contrast)] disabled:cursor-not-allowed disabled:opacity-50 min-h-[44px] tm-press'
           >
             {loading ? '注册中...' : '完成注册'}
           </button>
@@ -151,17 +173,17 @@ function OIDCRegisterPageClient() {
             <button
               type='button'
               onClick={() => router.push('/login')}
-              className='text-sm text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 transition-colors'
+              className='text-sm text-[color:var(--tm-text)] hover:text-[color:var(--tm-text)] transition-colors min-h-[44px] tm-press'
             >
               返回登录
             </button>
           </div>
         </form>
-      </div>
+      </motion.div>
 
       {/* 版本信息 */}
-      <div className='absolute bottom-4 left-1/2 transform -translate-x-1/2 text-xs text-gray-500 dark:text-gray-400'>
-        <span className='font-mono'>v{CURRENT_VERSION}</span>
+      <div className='absolute bottom-4 left-1/2 transform -translate-x-1/2 text-[13px] text-[color:var(--tm-muted)]'>
+        <span>v{CURRENT_VERSION}</span>
       </div>
     </div>
   );

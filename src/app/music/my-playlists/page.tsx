@@ -3,7 +3,14 @@
 import { ArrowLeft, ImageOff, Play, Trash2 } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 
-import MusicEmpty, { MusicRowListSkeleton } from '@/components/music/MusicEmpty';
+import { cn } from '@/lib/cn';
+import { playMusicList } from '@/lib/music/actions';
+import { getApiErrorMessage } from '@/lib/music/errors';
+import { mapSong } from '@/lib/music/shared';
+
+import MusicEmpty, {
+  MusicRowListSkeleton,
+} from '@/components/music/MusicEmpty';
 import MusicPage from '@/components/music/MusicPage';
 import SongList from '@/components/music/SongList';
 import {
@@ -24,10 +31,6 @@ import {
   MUSIC_PICK_DESC,
   MUSIC_PICK_FRAME,
 } from '@/components/music/tokens';
-import { cn } from '@/lib/cn';
-import { playMusicList } from '@/lib/music/actions';
-import { getApiErrorMessage } from '@/lib/music/errors';
-import { mapSong } from '@/lib/music/shared';
 
 /**
  * 左栏歌单名前面那张小缩略图。
@@ -62,13 +65,18 @@ function PickThumb({ src }: { src?: string }) {
 
 export default function MusicMyPlaylistsPage() {
   const [userPlaylists, setUserPlaylists] = useState<any[]>([]);
-  const [selectedUserPlaylist, setSelectedUserPlaylist] = useState<any | null>(null);
+  const [selectedUserPlaylist, setSelectedUserPlaylist] = useState<any | null>(
+    null
+  );
   const [userPlaylistSongs, setUserPlaylistSongs] = useState<any[]>([]);
   // 歌单列表挂载即拉，初值给 true 才不会先闪一帧"还没有歌单"。
   // 下面的曲目列表是人点出来的，初值就留 false。
   const [loadingUserPlaylists, setLoadingUserPlaylists] = useState(true);
-  const [loadingUserPlaylistSongs, setLoadingUserPlaylistSongs] = useState(false);
-  const [deletingPlaylistId, setDeletingPlaylistId] = useState<string | null>(null);
+  const [loadingUserPlaylistSongs, setLoadingUserPlaylistSongs] =
+    useState(false);
+  const [deletingPlaylistId, setDeletingPlaylistId] = useState<string | null>(
+    null
+  );
   const [removingSongId, setRemovingSongId] = useState<string | null>(null);
 
   const loadUserPlaylists = useCallback(() => {
@@ -84,13 +92,14 @@ export default function MusicMyPlaylistsPage() {
     loadUserPlaylists();
   }, [loadUserPlaylists]);
 
-  const normalizePlaylistSong = (song: any) => mapSong({
-    ...song,
-    id: song.songId || song.id,
-    platform: song.source || song.platform,
-    pic: song.cover || song.pic,
-    duration: song.durationSec || song.duration,
-  });
+  const normalizePlaylistSong = (song: any) =>
+    mapSong({
+      ...song,
+      id: song.songId || song.id,
+      platform: song.source || song.platform,
+      pic: song.cover || song.pic,
+      duration: song.durationSec || song.duration,
+    });
 
   const loadUserPlaylistSongs = useCallback((playlistId: string) => {
     setLoadingUserPlaylistSongs(true);
@@ -104,7 +113,8 @@ export default function MusicMyPlaylistsPage() {
   // 手机上"进入 / 返回"都是换屏，要把页面带回顶部，否则会落在上一屏滚到的位置。
   // 桌面是两栏并排、没有换屏，别把页面拽走——所以只在小屏做。
   const scrollToTopOnPhone = () => {
-    if (window.matchMedia('(max-width: 767px)').matches) window.scrollTo({ top: 0 });
+    if (window.matchMedia('(max-width: 767px)').matches)
+      window.scrollTo({ top: 0 });
   };
 
   const selectPlaylist = (playlist: any) => {
@@ -124,7 +134,9 @@ export default function MusicMyPlaylistsPage() {
 
     setDeletingPlaylistId(playlistId);
     try {
-      const response = await fetch(`/api/music/v2/playlists/${playlistId}`, { method: 'DELETE' });
+      const response = await fetch(`/api/music/v2/playlists/${playlistId}`, {
+        method: 'DELETE',
+      });
       if (!response.ok) {
         const data = await response.json().catch(() => ({}));
         window.alert(getApiErrorMessage(data.error, '删除失败'));
@@ -151,7 +163,9 @@ export default function MusicMyPlaylistsPage() {
     setRemovingSongId(song.id);
     try {
       const response = await fetch(
-        `/api/music/v2/playlists/${selectedUserPlaylist.id}/songs?songId=${encodeURIComponent(song.id)}`,
+        `/api/music/v2/playlists/${
+          selectedUserPlaylist.id
+        }/songs?songId=${encodeURIComponent(song.id)}`,
         { method: 'DELETE' }
       );
       if (!response.ok) {
@@ -176,12 +190,21 @@ export default function MusicMyPlaylistsPage() {
   return (
     <MusicPage
       title='我的歌单'
-      subtitle={userPlaylists.length > 0 ? `${userPlaylists.length} 个歌单` : '还没有收藏任何歌单'}
+      subtitle={
+        userPlaylists.length > 0
+          ? `${userPlaylists.length} 个歌单`
+          : '还没有收藏任何歌单'
+      }
     >
       {/* 手机上不上下堆叠，两栏二选一：没选中就只有歌单列表，点进一个就整屏让给曲目，
           靠上面那颗返回键退回列表。md 起恢复两栏并排，两栏同时在，返回键收起。 */}
       <div className='grid grid-cols-1 gap-6 md:grid-cols-3'>
-        <div className={cn('md:col-span-1', selectedUserPlaylist && 'hidden md:block')}>
+        <div
+          className={cn(
+            'md:col-span-1',
+            selectedUserPlaylist && 'hidden md:block'
+          )}
+        >
           <span className={cn(MUSIC_LABEL, 'mb-2 block')}>歌单</span>
           {loadingUserPlaylists ? (
             <MusicRowListSkeleton count={4} />
@@ -207,7 +230,9 @@ export default function MusicMyPlaylistsPage() {
                   >
                     <PickThumb src={playlist.cover} />
                     <span className='min-w-0 flex-1'>
-                      <span className={cn(MUSIC_DRAWER_LABEL, 'block truncate')}>
+                      <span
+                        className={cn(MUSIC_DRAWER_LABEL, 'block truncate')}
+                      >
                         {playlist.name}
                       </span>
                       {playlist.description ? (
@@ -220,7 +245,9 @@ export default function MusicMyPlaylistsPage() {
                         </span>
                       ) : null}
                     </span>
-                    {active ? <span aria-hidden className={MUSIC_DRAWER_MARK} /> : null}
+                    {active ? (
+                      <span aria-hidden className={MUSIC_DRAWER_MARK} />
+                    ) : null}
                   </button>
                 );
               })}
@@ -228,7 +255,12 @@ export default function MusicMyPlaylistsPage() {
           )}
         </div>
 
-        <div className={cn('md:col-span-2', !selectedUserPlaylist && 'hidden md:block')}>
+        <div
+          className={cn(
+            'md:col-span-2',
+            !selectedUserPlaylist && 'hidden md:block'
+          )}
+        >
           {selectedUserPlaylist ? (
             <>
               <button
@@ -242,11 +274,13 @@ export default function MusicMyPlaylistsPage() {
               {/* 这里不画下边框：曲目列表自己的上沿有一道实线，两条线一叠会像画歪了。 */}
               <div className='flex flex-wrap items-start justify-between gap-3 pb-1'>
                 <div className='min-w-0'>
-                  <div className={cn(MUSIC_BAR_TITLE, 'text-[calc(20*var(--music-px))]')}>
+                  <div className={cn(MUSIC_BAR_TITLE, 'text-[20px]')}>
                     {selectedUserPlaylist.name}
                   </div>
                   {selectedUserPlaylist.description ? (
-                    <p className={cn(MUSIC_MUTED, 'mt-1 font-music-body text-[calc(12*var(--music-px))]')}>
+                    <p
+                      className={cn(MUSIC_MUTED, 'mt-1 font-sans text-[13px]')}
+                    >
                       {selectedUserPlaylist.description}
                     </p>
                   ) : null}
@@ -255,7 +289,9 @@ export default function MusicMyPlaylistsPage() {
                   <span className={MUSIC_COUNT}>{mappedSongs.length} 首</span>
                   <button
                     type='button'
-                    onClick={() => playMusicList(mappedSongs, selectedUserPlaylist.name)}
+                    onClick={() =>
+                      playMusicList(mappedSongs, selectedUserPlaylist.name)
+                    }
                     disabled={mappedSongs.length === 0}
                     className={MUSIC_BUTTON}
                   >
@@ -269,7 +305,9 @@ export default function MusicMyPlaylistsPage() {
                     className={MUSIC_DANGER_BUTTON}
                   >
                     <Trash2 className='h-3.5 w-3.5' strokeWidth={2} />
-                    {deletingPlaylistId === selectedUserPlaylist.id ? '删除中…' : '删除歌单'}
+                    {deletingPlaylistId === selectedUserPlaylist.id
+                      ? '删除中…'
+                      : '删除歌单'}
                   </button>
                 </div>
               </div>

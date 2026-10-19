@@ -33,7 +33,10 @@ interface OfflineDownloadPanelProps {
   onClose: () => void;
 }
 
-export function OfflineDownloadPanel({ isOpen, onClose }: OfflineDownloadPanelProps) {
+export function OfflineDownloadPanel({
+  isOpen,
+  onClose,
+}: OfflineDownloadPanelProps) {
   const [tasks, setTasks] = useState<OfflineDownloadTask[]>([]);
   const [loading, setLoading] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -80,9 +83,12 @@ export function OfflineDownloadPanel({ isOpen, onClose }: OfflineDownloadPanelPr
   // 重试任务
   const handleRetryTask = async (taskId: string) => {
     try {
-      const response = await fetch(`/api/offline-download?taskId=${taskId}&action=retry`, {
-        method: 'PUT',
-      });
+      const response = await fetch(
+        `/api/offline-download?taskId=${taskId}&action=retry`,
+        {
+          method: 'PUT',
+        }
+      );
 
       if (response.ok) {
         const data = await response.json();
@@ -144,25 +150,30 @@ export function OfflineDownloadPanel({ isOpen, onClose }: OfflineDownloadPanelPr
   const getStatusColor = (status: OfflineDownloadTask['status']) => {
     switch (status) {
       case 'pending':
-        return 'text-gray-500 dark:text-gray-400';
+        return 'text-[color:var(--tm-muted)]';
       case 'downloading':
-        return 'text-blue-500 dark:text-blue-400';
+        return 'text-[color:var(--tm-text)]';
       case 'paused':
-        return 'text-yellow-500 dark:text-yellow-400';
+        return 'text-[color:var(--tm-text)]';
       case 'completed':
-        return 'text-green-500 dark:text-green-400';
+        return 'text-[color:var(--tm-text)]';
       case 'error':
-        return 'text-red-500 dark:text-red-400';
+        return 'text-[color:var(--tm-text)]';
       default:
-        return 'text-gray-500 dark:text-gray-400';
+        return 'text-[color:var(--tm-muted)]';
     }
   };
 
   // 获取视频库中的视频（按videoId分组，包含已完成和有进度的任务）
   const getLibraryVideos = () => {
     // 筛选已完成或有下载进度的任务
-    const libraryTasks = tasks.filter((t) => t.status === 'completed' || t.progress > 0);
-    const videoMap = new Map<string, { video: OfflineDownloadTask; episodes: OfflineDownloadTask[] }>();
+    const libraryTasks = tasks.filter(
+      (t) => t.status === 'completed' || t.progress > 0
+    );
+    const videoMap = new Map<
+      string,
+      { video: OfflineDownloadTask; episodes: OfflineDownloadTask[] }
+    >();
 
     libraryTasks.forEach((task) => {
       const key = `${task.source}_${task.videoId}`;
@@ -183,11 +194,11 @@ export function OfflineDownloadPanel({ isOpen, onClose }: OfflineDownloadPanelPr
   const libraryVideos = getLibraryVideos();
 
   const panelContent = (
-    <div className='fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4'>
-      <div className='bg-white dark:bg-gray-800 rounded-lg shadow-2xl w-full max-w-4xl max-h-[80vh] flex flex-col'>
+    <div className='fixed inset-0 z-[9999] flex items-center justify-center bg-[color:color-mix(in_srgb,var(--tm-room-cinema-bg)_50%,transparent)] backdrop-blur-sm p-4'>
+      <div className='bg-[var(--tm-surface)] rounded-lg shadow-2xl w-full max-w-4xl max-h-[80vh] flex flex-col'>
         {/* 标题栏 */}
-        <div className='flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700'>
-          <h2 className='text-xl font-bold text-gray-900 dark:text-white'>
+        <div className='flex items-center justify-between p-4 border-b border-[var(--tm-line)]'>
+          <h2 className='text-xl font-bold text-[color:var(--tm-text)]'>
             {viewMode === 'tasks' ? '离线下载任务列表' : '视频库'}
           </h2>
           <div className='flex items-center gap-3'>
@@ -197,8 +208,8 @@ export function OfflineDownloadPanel({ isOpen, onClose }: OfflineDownloadPanelPr
                 onClick={() => setViewMode('tasks')}
                 className={`px-3 py-1 text-sm font-medium rounded transition-colors ${
                   viewMode === 'tasks'
-                    ? 'bg-blue-500 text-white'
-                    : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
+                    ? 'bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] min-h-[44px] tm-press'
+                    : 'bg-[var(--tm-surface-raised)] text-[color:var(--tm-muted)] hover:bg-[var(--tm-line)] min-h-[44px] tm-press'
                 }`}
               >
                 任务列表
@@ -207,8 +218,8 @@ export function OfflineDownloadPanel({ isOpen, onClose }: OfflineDownloadPanelPr
                 onClick={() => setViewMode('library')}
                 className={`px-3 py-1 text-sm font-medium rounded transition-colors ${
                   viewMode === 'library'
-                    ? 'bg-blue-500 text-white'
-                    : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
+                    ? 'bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] min-h-[44px] tm-press'
+                    : 'bg-[var(--tm-surface-raised)] text-[color:var(--tm-muted)] hover:bg-[var(--tm-line)] min-h-[44px] tm-press'
                 }`}
               >
                 视频库 ({libraryVideos.length})
@@ -217,10 +228,20 @@ export function OfflineDownloadPanel({ isOpen, onClose }: OfflineDownloadPanelPr
             {/* 关闭按钮 */}
             <button
               onClick={onClose}
-              className='text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors'
+              className='text-[color:var(--tm-muted)] hover:text-[color:var(--tm-muted)] hover:text-[color:var(--tm-text)] transition-colors min-h-[44px] tm-press'
             >
-              <svg className='w-6 h-6' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                <path strokeLinecap='round' strokeLinejoin='round' strokeWidth='2' d='M6 18L18 6M6 6l12 12' />
+              <svg
+                className='w-6 h-6'
+                fill='none'
+                stroke='currentColor'
+                viewBox='0 0 24 24'
+              >
+                <path
+                  strokeLinecap='round'
+                  strokeLinejoin='round'
+                  strokeWidth='2'
+                  d='M6 18L18 6M6 6l12 12'
+                />
               </svg>
             </button>
           </div>
@@ -230,13 +251,18 @@ export function OfflineDownloadPanel({ isOpen, onClose }: OfflineDownloadPanelPr
         <div className='flex-1 overflow-y-auto p-4 space-y-3'>
           {loading ? (
             <div className='flex items-center justify-center h-full'>
-              <div className='animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500'></div>
+              <div className='animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--tm-line)]'></div>
             </div>
           ) : viewMode === 'library' ? (
             // 视频库视图
             libraryVideos.length === 0 ? (
-              <div className='flex flex-col items-center justify-center h-full text-gray-500 dark:text-gray-400'>
-                <svg className='w-16 h-16 mb-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+              <div className='flex flex-col items-center justify-center h-full text-[color:var(--tm-muted)]'>
+                <svg
+                  className='w-16 h-16 mb-4'
+                  fill='none'
+                  stroke='currentColor'
+                  viewBox='0 0 24 24'
+                >
                   <path
                     strokeLinecap='round'
                     strokeLinejoin='round'
@@ -250,7 +276,7 @@ export function OfflineDownloadPanel({ isOpen, onClose }: OfflineDownloadPanelPr
               libraryVideos.map(({ video, episodes }) => (
                 <div
                   key={`${video.source}_${video.videoId}`}
-                  className='bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 border border-gray-200 dark:border-gray-600'
+                  className='bg-[var(--tm-surface-raised)] rounded-lg p-4 border border-[var(--tm-line)]'
                 >
                   <div className='flex gap-4'>
                     {/* 封面图 */}
@@ -265,28 +291,30 @@ export function OfflineDownloadPanel({ isOpen, onClose }: OfflineDownloadPanelPr
                     )}
                     {/* 视频信息 */}
                     <div className='flex-1 min-w-0'>
-                      <h3 className='text-lg font-bold text-gray-900 dark:text-white mb-2'>
+                      <h3 className='text-lg font-bold text-[color:var(--tm-text)] mb-2'>
                         {video.metadata?.videoTitle || video.title}
                       </h3>
                       {video.metadata?.year && (
-                        <p className='text-sm text-gray-600 dark:text-gray-400 mb-1'>年份: {video.metadata.year}</p>
+                        <p className='text-sm text-[color:var(--tm-muted)] mb-1'>
+                          年份: {video.metadata.year}
+                        </p>
                       )}
                       {video.metadata?.rating && (
-                        <p className='text-sm text-gray-600 dark:text-gray-400 mb-1'>
+                        <p className='text-sm text-[color:var(--tm-muted)] mb-1'>
                           评分: {video.metadata.rating.toFixed(1)}
                         </p>
                       )}
                       {video.metadata?.description && (
-                        <p className='text-sm text-gray-600 dark:text-gray-400 mb-3 line-clamp-2'>
+                        <p className='text-sm text-[color:var(--tm-muted)] mb-3 line-clamp-2'>
                           {video.metadata.description}
                         </p>
                       )}
                       <div className='flex items-center gap-2 mb-3'>
-                        <span className='text-sm text-gray-600 dark:text-gray-400'>
+                        <span className='text-sm text-[color:var(--tm-muted)]'>
                           已下载 {episodes.length} 集
                         </span>
                         {video.metadata?.totalEpisodes && (
-                          <span className='text-sm text-gray-600 dark:text-gray-400'>
+                          <span className='text-sm text-[color:var(--tm-muted)]'>
                             / 共 {video.metadata.totalEpisodes} 集
                           </span>
                         )}
@@ -296,19 +324,28 @@ export function OfflineDownloadPanel({ isOpen, onClose }: OfflineDownloadPanelPr
                         {episodes.map((ep) => (
                           <div
                             key={ep.id}
-                            className='flex items-center gap-1 px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 text-xs rounded group'
+                            className='flex items-center gap-1 px-2 py-1 bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)] text-[13px] rounded group'
                           >
                             <span>第{ep.episodeIndex + 1}集</span>
                             <button
                               onClick={() => {
-                                if (confirm(`确定要删除第${ep.episodeIndex + 1}集吗？`)) {
+                                if (
+                                  confirm(
+                                    `确定要删除第${ep.episodeIndex + 1}集吗？`
+                                  )
+                                ) {
                                   handleDeleteTask(ep.id);
                                 }
                               }}
-                              className='ml-1 opacity-0 group-hover:opacity-100 transition-opacity text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300'
+                              className='ml-1 opacity-0 group-hover:opacity-100 transition-opacity text-[color:var(--tm-text)] hover:text-[color:var(--tm-text)] min-h-[44px] tm-press'
                               title='删除此集'
                             >
-                              <svg className='w-3 h-3' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                              <svg
+                                className='w-3 h-3'
+                                fill='none'
+                                stroke='currentColor'
+                                viewBox='0 0 24 24'
+                              >
                                 <path
                                   strokeLinecap='round'
                                   strokeLinejoin='round'
@@ -323,13 +360,24 @@ export function OfflineDownloadPanel({ isOpen, onClose }: OfflineDownloadPanelPr
                       {/* 删除全部按钮 */}
                       <button
                         onClick={() => {
-                          if (confirm(`确定要删除《${video.metadata?.videoTitle || video.title}》的所有已下载集数吗？`)) {
+                          if (
+                            confirm(
+                              `确定要删除《${
+                                video.metadata?.videoTitle || video.title
+                              }》的所有已下载集数吗？`
+                            )
+                          ) {
                             episodes.forEach((ep) => handleDeleteTask(ep.id));
                           }
                         }}
-                        className='flex items-center gap-1 px-3 py-1.5 bg-red-500 hover:bg-red-600 text-white text-xs font-medium rounded transition-colors'
+                        className='flex items-center gap-1 px-3 py-1.5 bg-[var(--tm-text)] hover:opacity-90 text-[color:var(--tm-accent-contrast)] text-[13px] font-medium rounded transition-colors min-h-[44px] tm-press'
                       >
-                        <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                        <svg
+                          className='w-4 h-4'
+                          fill='none'
+                          stroke='currentColor'
+                          viewBox='0 0 24 24'
+                        >
                           <path
                             strokeLinecap='round'
                             strokeLinejoin='round'
@@ -346,8 +394,13 @@ export function OfflineDownloadPanel({ isOpen, onClose }: OfflineDownloadPanelPr
             )
           ) : tasks.length === 0 ? (
             // 任务列表为空
-            <div className='flex flex-col items-center justify-center h-full text-gray-500 dark:text-gray-400'>
-              <svg className='w-16 h-16 mb-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+            <div className='flex flex-col items-center justify-center h-full text-[color:var(--tm-muted)]'>
+              <svg
+                className='w-16 h-16 mb-4'
+                fill='none'
+                stroke='currentColor'
+                viewBox='0 0 24 24'
+              >
                 <path
                   strokeLinecap='round'
                   strokeLinejoin='round'
@@ -362,20 +415,25 @@ export function OfflineDownloadPanel({ isOpen, onClose }: OfflineDownloadPanelPr
             tasks.map((task) => (
               <div
                 key={task.id}
-                className='bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 border border-gray-200 dark:border-gray-600'
+                className='bg-[var(--tm-surface-raised)] rounded-lg p-4 border border-[var(--tm-line)]'
               >
                 {/* 任务信息 */}
                 <div className='flex items-start justify-between mb-3'>
                   <div className='flex-1 min-w-0'>
-                    <h3 className='text-sm font-medium text-gray-900 dark:text-white truncate mb-1'>
+                    <h3 className='text-sm font-medium text-[color:var(--tm-text)] truncate mb-1'>
                       {task.title}
                     </h3>
-                    <p className='text-xs text-gray-500 dark:text-gray-400'>
-                      来源: {task.source} | 视频ID: {task.videoId} | 第{task.episodeIndex + 1}集
+                    <p className='text-[13px] text-[color:var(--tm-muted)]'>
+                      来源: {task.source} | 视频ID: {task.videoId} | 第
+                      {task.episodeIndex + 1}集
                     </p>
                   </div>
                   <div className='flex items-center gap-2 ml-4'>
-                    <span className={`text-xs font-medium ${getStatusColor(task.status)}`}>
+                    <span
+                      className={`text-[13px] font-medium ${getStatusColor(
+                        task.status
+                      )}`}
+                    >
                       {getStatusText(task.status)}
                     </span>
                   </div>
@@ -384,22 +442,22 @@ export function OfflineDownloadPanel({ isOpen, onClose }: OfflineDownloadPanelPr
                 {/* 进度条 */}
                 {task.totalSegments > 0 && (
                   <div className='mb-3'>
-                    <div className='flex items-center justify-between text-xs text-gray-600 dark:text-gray-300 mb-1'>
+                    <div className='flex items-center justify-between text-[13px] text-[color:var(--tm-muted)] mb-1'>
                       <span>
                         {task.downloadedSegments} / {task.totalSegments} 片段
                       </span>
                       <span>{task.progress.toFixed(1)}%</span>
                     </div>
-                    <div className='w-full bg-gray-200 dark:bg-gray-600 rounded-full h-2 overflow-hidden'>
+                    <div className='w-full bg-[var(--tm-surface-raised)] rounded-full h-2 overflow-hidden'>
                       <div
                         className={`h-full rounded-full transition-all duration-300 ${
                           task.status === 'downloading'
-                            ? 'bg-gradient-to-r from-blue-500 to-purple-600 animate-pulse'
+                            ? 'bg-[var(--tm-surface)] tm-skeleton'
                             : task.status === 'completed'
-                            ? 'bg-green-500'
+                            ? 'bg-[var(--tm-text)]'
                             : task.status === 'error'
-                            ? 'bg-red-500'
-                            : 'bg-gray-400'
+                            ? 'bg-[var(--tm-surface-raised)]'
+                            : 'bg-[var(--tm-surface)]'
                         }`}
                         style={{ width: `${task.progress}%` }}
                       ></div>
@@ -410,14 +468,20 @@ export function OfflineDownloadPanel({ isOpen, onClose }: OfflineDownloadPanelPr
                 {/* 错误信息 */}
                 {task.errorMessage && (
                   <div className='mb-3'>
-                    <div className='text-xs text-red-500 dark:text-red-400'>{task.errorMessage}</div>
+                    <div className='text-[13px] text-[color:var(--tm-text)]'>
+                      {task.errorMessage}
+                    </div>
                   </div>
                 )}
 
                 {/* 时间信息 */}
-                <div className='flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 mb-3'>
-                  <span>创建: {new Date(task.createdAt).toLocaleString('zh-CN')}</span>
-                  <span>更新: {new Date(task.updatedAt).toLocaleString('zh-CN')}</span>
+                <div className='flex items-center justify-between text-[13px] text-[color:var(--tm-muted)] mb-3'>
+                  <span>
+                    创建: {new Date(task.createdAt).toLocaleString('zh-CN')}
+                  </span>
+                  <span>
+                    更新: {new Date(task.updatedAt).toLocaleString('zh-CN')}
+                  </span>
                 </div>
 
                 {/* 操作按钮 */}
@@ -426,9 +490,14 @@ export function OfflineDownloadPanel({ isOpen, onClose }: OfflineDownloadPanelPr
                   {(task.status === 'error' || task.status === 'paused') && (
                     <button
                       onClick={() => handleRetryTask(task.id)}
-                      className='flex items-center gap-1 px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white text-xs font-medium rounded transition-colors'
+                      className='flex items-center gap-1 px-3 py-1.5 bg-[var(--tm-text)] hover:opacity-90 text-[color:var(--tm-accent-contrast)] text-[13px] font-medium rounded transition-colors min-h-[44px] tm-press'
                     >
-                      <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                      <svg
+                        className='w-4 h-4'
+                        fill='none'
+                        stroke='currentColor'
+                        viewBox='0 0 24 24'
+                      >
                         <path
                           strokeLinecap='round'
                           strokeLinejoin='round'
@@ -441,9 +510,14 @@ export function OfflineDownloadPanel({ isOpen, onClose }: OfflineDownloadPanelPr
                   )}
                   <button
                     onClick={() => handleDeleteTask(task.id)}
-                    className='flex items-center gap-1 px-3 py-1.5 bg-red-500 hover:bg-red-600 text-white text-xs font-medium rounded transition-colors'
+                    className='flex items-center gap-1 px-3 py-1.5 bg-[var(--tm-text)] hover:opacity-90 text-[color:var(--tm-accent-contrast)] text-[13px] font-medium rounded transition-colors min-h-[44px] tm-press'
                   >
-                    <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                    <svg
+                      className='w-4 h-4'
+                      fill='none'
+                      stroke='currentColor'
+                      viewBox='0 0 24 24'
+                    >
                       <path
                         strokeLinecap='round'
                         strokeLinejoin='round'

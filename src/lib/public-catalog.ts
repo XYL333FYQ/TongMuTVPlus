@@ -1,3 +1,33 @@
+export type PublicCatalogCategory =
+  | 'movie'
+  | 'tv'
+  | 'anime'
+  | 'show'
+  | 'duanju';
+
+export const publicCatalogCategories: Array<{
+  type: PublicCatalogCategory;
+  label: string;
+  href: string;
+}> = [
+  { type: 'movie', label: '电影', href: '/douban?type=movie' },
+  { type: 'tv', label: '剧集', href: '/douban?type=tv' },
+  { type: 'anime', label: '动漫', href: '/douban?type=anime' },
+  { type: 'show', label: '综艺', href: '/douban?type=show' },
+  { type: 'duanju', label: '短剧', href: '/duanju' },
+];
+
+export function publicWorkLoginHref(item: PublicCatalogItem): string {
+  const destination =
+    '/play?' +
+    new URLSearchParams({
+      title: item.title,
+      year: item.year,
+      type: item.mediaType,
+    });
+  return '/login?redirect=' + encodeURIComponent(destination);
+}
+
 export interface PublicCatalogItem {
   id: string;
   title: string;
@@ -6,7 +36,7 @@ export interface PublicCatalogItem {
   description: string;
   rate: string;
   mediaType: 'movie' | 'tv';
-  provider: 'tmdb' | 'douban';
+  provider: 'tmdb' | 'douban' | 'cms';
 }
 
 /** Construct a fresh allowlisted DTO; never spread an upstream object or SearchResult. */

@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>排版与文案规范 v2</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>body{margin:0}</style>
+</helmet>
+<div style="width:1280px;height:1000px;box-sizing:border-box;padding:48px;background:{{c.bg}};color:{{c.fg}};font-family:'Noto Sans SC','PingFang SC','Microsoft YaHei',sans-serif;font-size:14px;line-height:1.5;display:grid;grid-template-columns:540px 1fr;gap:64px">
+<div>
+<div style="font-size:13px;color:{{c.sub}}">字号层级（字体：HarmonyOS Sans SC，字重只用 400 / 500 / 700，字距一律 0）</div>
+<div style="margin-top:16px;border-top:1px solid {{c.line}}">
+<sc-for list="{{scale}}" as="s" hint-placeholder-count="8">
+<div style="display:flex;align-items:baseline;justify-content:space-between;gap:16px;padding:14px 0;border-bottom:1px solid {{c.line}}"><div style="font-size:{{s.size}}px;font-weight:{{s.w}};line-height:1.2;color:{{s.col}}">{{s.text}}</div><div style="flex:none;font-size:13px;color:{{c.sub}}">{{s.note}}</div></div>
+</sc-for>
+</div>
+<div style="margin-top:20px;font-size:13px;color:{{c.sub}};line-height:1.8">桌面最小 14px（说明文字 13px）；12px 只给评分角标。<br>标题全部左对齐；居中只用于大图、空状态、弹窗标题。<br>数字和中文用同一种字体。不用 → ↗ 这类字符装饰。</div>
+</div>
+<div>
+<div style="font-size:13px;color:{{c.sub}}">区块标题行</div>
+<div style="margin-top:12px;display:flex;align-items:center;justify-content:space-between"><div style="font-size:24px;font-weight:500">热门电影</div><div style="font-size:14px;color:{{c.sub}}">查看全部</div></div>
+<div style="margin-top:28px;font-size:13px;color:{{c.sub}}">分类标签：一级用下划线，二级用胶囊，全站只有这两种</div>
+<div style="margin-top:12px;display:flex;gap:28px;border-bottom:1px solid {{c.line}}"><div style="padding-bottom:10px;border-bottom:2px solid {{c.fg}};font-size:18px;font-weight:500">电影</div><div style="padding-bottom:10px;font-size:18px;color:{{c.sub}}">剧集</div></div>
+<div style="margin-top:12px;display:flex;gap:8px"><span style="padding:6px 16px;border-radius:999px;background:{{c.btnBg}};color:{{c.btnFg}};font-size:14px;font-weight:500">热门</span><span style="padding:6px 16px;border-radius:999px;border:1px solid {{c.line}};font-size:14px;color:{{c.sub}}">最新</span><span style="padding:6px 16px;border-radius:999px;border:1px solid {{c.line}};font-size:14px;color:{{c.sub}}">经典</span></div>
+<div style="margin-top:28px;font-size:13px;color:{{c.sub}}">卡片下方文字：标题 14/500，说明 13</div>
+<div style="margin-top:12px;display:flex;gap:20px">
+<div style="width:120px"><div style="height:180px;border-radius:12px;background:{{c.poster}}"></div><div style="margin-top:8px;font-size:14px;font-weight:500">潜伏6</div><div style="font-size:13px;color:{{c.sub}}">2026 · 恐怖</div></div>
+<div style="width:200px"><div style="height:113px;border-radius:12px;background:{{c.poster}}"></div><div style="margin-top:8px;font-size:14px;font-weight:500">周五电影夜</div><div style="font-size:13px;color:{{c.sub}}">3 人在线</div></div>
+</div>
+<div style="margin-top:28px;font-size:13px;color:{{c.sub}}">文案对照</div>
+<div style="margin-top:8px;display:grid;grid-template-columns:1fr 24px 1fr;gap:6px 0;font-size:14px;line-height:1.6">
+<sc-for list="{{copy}}" as="p" hint-placeholder-count="9"><div style="color:{{c.sub}};text-decoration:line-through">{{p.a}}</div><div style="color:{{c.sub}}">→</div><div>{{p.b}}</div></sc-for>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":true},"$preview":{"width":1280,"height":1000}}'>
+class Component extends DCLogic {
+renderVals() {
+const d = this.props.dark !== false;
+const c = d ? { bg: '#0a0a0a', fg: '#fafafa', sub: '#a3a3a3', line: '#262626', poster: '#1c1c1c', btnBg: '#fafafa', btnFg: '#0a0a0a' } : { bg: '#ffffff', fg: '#0a0a0a', sub: '#6b6b6b', line: '#e5e5e5', poster: '#ececec', btnBg: '#0a0a0a', btnFg: '#ffffff' };
+const rows = [['潜伏6', 56, 700, '大图标题 56 / 手机 34 · 粗'], ['片库', 32, 700, '页面标题 32 / 手机 28 · 粗'], ['热门电影', 24, 500, '区块标题 24 · 中'], ['继续观看', 18, 500, '小标题 18 · 中'], ['吉玛是一位年轻的母亲，她独自抚养着女儿。', 16, 400, '正文 16 · 常规'], ['2026 · 106 分钟 · 恐怖', 14, 400, '次要信息 14 · 灰'], ['6360 人评价', 13, 400, '说明 13 · 灰'], ['6.6', 12, 500, '评分角标 12 · 中']];
+return { c, scale: rows.map((r) => ({ text: r[0], size: r[1], w: r[2], note: r[3], col: r[1] <= 14 && r[1] !== 16 ? c.sub : c.fg })), copy: [{ a: '电影 → 剧集 → 按片名寻找', b: '电影　剧集　＋右侧搜索图标' }, { a: '查看全部 →　加载更多影片 →', b: '查看全部　加载更多' }, { a: '进入房间 ↗', b: '进入' }, { a: '0人在线 · 休眠中', b: '无人在线' }, { a: 'admin 留下的观影空间', b: '房主 admin' }, { a: '登录后查看自己的房间', b: '登录后创建和加入房间' }, { a: '找到下一个喜欢的故事', b: '（删除）' }, { a: '凭邀请加入', b: '用邀请码加入' }, { a: '搜索影片名称…', b: '搜索片名' }] };
+}
+}
+</script>
+</body>
+</html>

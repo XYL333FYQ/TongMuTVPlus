@@ -11,6 +11,7 @@ import { BackButton } from './BackButton';
 import MobileBottomNav from './MobileBottomNav';
 import MobileHeader from './MobileHeader';
 import PageContainer from './PageContainer';
+import { ThemeToggle } from './ThemeToggle';
 import { DesktopNavigation, pageTitleForPath } from './TongMuNavigation';
 import { VersionCheckProvider } from './VersionCheckProvider';
 import ViewerAccountButton from './ViewerAccountButton';
@@ -21,6 +22,7 @@ interface PageLayoutProps {
   hideNavigation?: boolean;
   embedded?: boolean;
   mobileTitle?: string;
+  mobileSubtitle?: React.ReactNode;
   mobileActions?: React.ReactNode;
 }
 
@@ -30,6 +32,7 @@ export default function PageLayout({
   hideNavigation = false,
   embedded = false,
   mobileTitle,
+  mobileSubtitle,
   mobileActions,
 }: PageLayoutProps) {
   const [backgroundImage, setBackgroundImage] = useState('');
@@ -70,6 +73,7 @@ export default function PageLayout({
   return (
     <VersionCheckProvider>
       <div
+        data-page={current}
         className={
           'tm-shell tm-shell-v2 ' +
           (hideNavigation ? 'tm-shell-no-navigation' : '')
@@ -87,6 +91,7 @@ export default function PageLayout({
             <MobileHeader
               showBackButton={activePath === '/play' || activePath === '/live'}
               title={mobileTitle || pageTitleForPath(current)}
+              subtitle={mobileSubtitle}
               actions={mobileActions}
               compact={compactTitle}
               scrolled={scrolled}
@@ -106,7 +111,7 @@ export default function PageLayout({
                     aria-label={`${BRAND_NAME} 首页`}
                   >
                     <span aria-hidden='true'>TM</span>
-                    <strong>{BRAND_NAME}</strong>
+                    <strong>TongMuTV</strong>
                   </Link>
                 </div>
                 <DesktopNavigation current={current} />
@@ -118,6 +123,7 @@ export default function PageLayout({
                   >
                     <Search size={17} />
                   </Link>
+                  <ThemeToggle />
                   <ViewerAccountButton />
                 </div>
               </PageContainer>

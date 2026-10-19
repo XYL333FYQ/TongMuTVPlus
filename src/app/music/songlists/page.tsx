@@ -4,8 +4,13 @@ import { ChevronDown, Disc3 } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
+import { cn } from '@/lib/cn';
+import { musicSources, normalizeSource } from '@/lib/music/shared';
+
 import CoverCard from '@/components/music/CoverCard';
-import MusicEmpty, { MusicCardGridSkeleton } from '@/components/music/MusicEmpty';
+import MusicEmpty, {
+  MusicCardGridSkeleton,
+} from '@/components/music/MusicEmpty';
 import MusicPage from '@/components/music/MusicPage';
 import MusicSwitch from '@/components/music/MusicSwitch';
 import {
@@ -30,8 +35,6 @@ import {
   MUSIC_TAG_IDLE,
   MUSIC_TAG_WRAP,
 } from '@/components/music/tokens';
-import { cn } from '@/lib/cn';
-import { musicSources, normalizeSource } from '@/lib/music/shared';
 
 interface SongListItem {
   id: string;
@@ -73,7 +76,8 @@ function readCache<T>(key: string): T | null {
     const raw = localStorage.getItem(key);
     if (!raw) return null;
     const cached = JSON.parse(raw);
-    if (Date.now() - Number(cached.timestamp || 0) > SONGLIST_CACHE_TTL) return null;
+    if (Date.now() - Number(cached.timestamp || 0) > SONGLIST_CACHE_TTL)
+      return null;
     return cached.data as T;
   } catch {
     return null;
@@ -108,7 +112,8 @@ export default function MusicSongListsPage() {
   const [activeSource, setActiveSource] = useState(source);
   const [activeSortId, setActiveSortId] = useState(sortId);
 
-  const currentSourceLabel = musicSources.find((item) => item.key === activeSource)?.label || '音源';
+  const currentSourceLabel =
+    musicSources.find((item) => item.key === activeSource)?.label || '音源';
 
   const updateQuery = (next: Record<string, string | number | undefined>) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -154,7 +159,10 @@ export default function MusicSongListsPage() {
 
   useEffect(() => {
     const cacheKey = `music_songlist_tags_${source}`;
-    const cached = readCache<{ groups: SongListGroup[]; hotTags: SongListTag[] }>(cacheKey);
+    const cached = readCache<{
+      groups: SongListGroup[];
+      hotTags: SongListTag[];
+    }>(cacheKey);
     setLoadingTags(true);
     if (cached) {
       setGroups(cached.groups || []);
@@ -195,7 +203,11 @@ export default function MusicSongListsPage() {
       setTotal(cached.total || 0);
     }
 
-    fetch(`/api/music/v2/discovery/songlists?source=${source}&tagId=${encodeURIComponent(tagId)}&sortId=${encodeURIComponent(sortId)}&page=${page}`)
+    fetch(
+      `/api/music/v2/discovery/songlists?source=${source}&tagId=${encodeURIComponent(
+        tagId
+      )}&sortId=${encodeURIComponent(sortId)}&page=${page}`
+    )
       .then((res) => res.json())
       .then((data) => {
         if (data.success) {
@@ -221,7 +233,11 @@ export default function MusicSongListsPage() {
   }, [source, tagId, sortId, page]);
 
   const openDetail = (item: SongListItem) => {
-    router.push(`/music/songlists/${item.source}/${encodeURIComponent(item.id)}?name=${encodeURIComponent(item.name)}`);
+    router.push(
+      `/music/songlists/${item.source}/${encodeURIComponent(
+        item.id
+      )}?name=${encodeURIComponent(item.name)}`
+    );
   };
 
   const selectTag = (name: string) => {
@@ -230,7 +246,8 @@ export default function MusicSongListsPage() {
     updateQuery({ tagId: name, page: 1 });
   };
 
-  const flatTags = hotTags.length > 0 ? hotTags : groups.flatMap((group) => group.list || []);
+  const flatTags =
+    hotTags.length > 0 ? hotTags : groups.flatMap((group) => group.list || []);
   const selectedTagLabel = activeTagLabel || '全部分类';
 
   return (
@@ -263,7 +280,9 @@ export default function MusicSongListsPage() {
               }}
               className={cn(
                 MUSIC_SEG_ITEM,
-                activeSortId === item.id ? MUSIC_SEG_ITEM_ACTIVE : MUSIC_SEG_ITEM_IDLE
+                activeSortId === item.id
+                  ? MUSIC_SEG_ITEM_ACTIVE
+                  : MUSIC_SEG_ITEM_IDLE
               )}
             >
               {item.label}
@@ -297,7 +316,7 @@ export default function MusicSongListsPage() {
               />
               {/* 右侧贴齐触发器、向左展开；宽度上限留出 3rem 而不是 2rem——
                   100vw 在有没有竖向滚动条时会差十几 px，窄屏上正好会把面板顶出左边。 */}
-              <div className='absolute right-0 top-[calc(100%+6px)] z-[60] max-h-[min(70vh,520px)] w-[min(760px,calc(100vw-3rem))] overflow-auto rounded-[4px] border border-music-edge bg-music-paper p-4 shadow-[0_18px_40px_-18px_rgba(0,0,0,0.55)] dark:border-music-night-edge dark:bg-music-night-card'>
+              <div className='absolute right-0 top-[calc(100%+6px)] z-[60] max-h-[min(70vh,520px)] w-[min(760px,calc(100vw-3rem))] overflow-auto rounded-[4px] border border-[var(--tm-line)] bg-[var(--tm-bg)] p-4 shadow-[0_18px_40px_-18px_rgba(0,0,0,0.55)] dark:bg-[var(--tm-surface)]'>
                 {tagId ? (
                   <button
                     type='button'
@@ -309,9 +328,16 @@ export default function MusicSongListsPage() {
                 ) : null}
 
                 {loadingTags ? (
-                  <p className={cn(MUSIC_LABEL, 'py-6 text-center')}>正在取分类…</p>
+                  <p className={cn(MUSIC_LABEL, 'py-6 text-center')}>
+                    正在取分类…
+                  </p>
                 ) : flatTags.length === 0 ? (
-                  <p className={cn(MUSIC_MUTED, 'py-6 text-center font-music-body text-[calc(12*var(--music-px))]')}>
+                  <p
+                    className={cn(
+                      MUSIC_MUTED,
+                      'py-6 text-center font-sans text-[13px]'
+                    )}
+                  >
                     当前音源无法获取此分类
                   </p>
                 ) : (
@@ -327,7 +353,9 @@ export default function MusicSongListsPage() {
                               onClick={() => selectTag(tag.name)}
                               className={cn(
                                 MUSIC_TAG,
-                                tagId === tag.name ? MUSIC_TAG_ACTIVE : MUSIC_TAG_IDLE
+                                tagId === tag.name
+                                  ? MUSIC_TAG_ACTIVE
+                                  : MUSIC_TAG_IDLE
                               )}
                             >
                               {tag.name}
@@ -339,7 +367,9 @@ export default function MusicSongListsPage() {
 
                     {groups.map((group) => (
                       <div key={group.name} className={MUSIC_TAG_GROUP}>
-                        <span className={MUSIC_TAG_GROUP_LABEL}>{group.name}</span>
+                        <span className={MUSIC_TAG_GROUP_LABEL}>
+                          {group.name}
+                        </span>
                         <div className={MUSIC_TAG_WRAP}>
                           {group.list.map((tag) => (
                             <button
@@ -348,7 +378,9 @@ export default function MusicSongListsPage() {
                               onClick={() => selectTag(tag.name)}
                               className={cn(
                                 MUSIC_TAG,
-                                tagId === tag.name ? MUSIC_TAG_ACTIVE : MUSIC_TAG_IDLE
+                                tagId === tag.name
+                                  ? MUSIC_TAG_ACTIVE
+                                  : MUSIC_TAG_IDLE
                               )}
                             >
                               {tag.name}
@@ -384,7 +416,9 @@ export default function MusicSongListsPage() {
         <MusicEmpty
           icon={Disc3}
           title={tagId ? '这个分类下没有歌单' : '当前音源无法获取此歌单'}
-          hint={tagId ? '换个分类，或点上面的分类再选一次。' : '换一个音源试试。'}
+          hint={
+            tagId ? '换个分类，或点上面的分类再选一次。' : '换一个音源试试。'
+          }
           action={
             tagId ? (
               <button

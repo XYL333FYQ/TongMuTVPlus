@@ -2,7 +2,8 @@
 
 'use client';
 
-import { Bot, ChevronRight, Link as LinkIcon } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { Bot, X } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useState } from 'react';
@@ -13,6 +14,7 @@ import {
 } from '@/lib/bangumi.client';
 import { AI_WELCOME_MESSAGE } from '@/lib/brand';
 import { getDoubanCategories } from '@/lib/douban.client';
+import { useReducedMotionSetting } from '@/lib/motion';
 import { getTMDBImageUrl, TMDBItem } from '@/lib/tmdb.client';
 import { DoubanItem } from '@/lib/types';
 import { base58Encode, processImageUrl } from '@/lib/utils';
@@ -28,6 +30,7 @@ import PageLayout from '@/components/PageLayout';
 import PosterGrid from '@/components/PosterGrid';
 import PosterMotion from '@/components/PosterMotion';
 import PublicCatalogPage from '@/components/PublicCatalogPage';
+import SectionHeader from '@/components/SectionHeader';
 import { useSite } from '@/components/SiteProvider';
 import Toast, { ToastProps } from '@/components/Toast';
 import VideoCard from '@/components/VideoCard';
@@ -41,6 +44,7 @@ interface HomeModule {
 }
 
 function HomeClient() {
+  const reduced = useReducedMotionSetting();
   const router = useRouter();
   const searchParams = useSearchParams();
   // 移除了 activeTab 状态，收藏夹功能已移到 UserMenu
@@ -567,17 +571,12 @@ function HomeClient() {
     switch (moduleId) {
       case 'hotMovies':
         return (
-          <section key='hotMovies' className='tm-film-section'>
-            <div className='tm-home-section-heading'>
-              <h2 className='tm-home-section-title'>热门电影</h2>
-              <Link
-                href='/douban?type=movie'
-                className='tm-home-view-all tm-press'
-              >
-                查看全部
-                <ChevronRight className='w-4 h-4 ml-1' />
-              </Link>
-            </div>
+          <section
+            key='hotMovies'
+            className='tm-film-section'
+            data-module='hotMovies'
+          >
+            <SectionHeader title='热门电影' href='/douban?type=movie' />
             <PosterGrid className='tm-home-poster-grid'>
               {loading
                 ? Array.from({ length: 12 }).map((_, index) => (
@@ -608,13 +607,7 @@ function HomeClient() {
         if (hotDuanju.length === 0) return null;
         return (
           <section key='hotDuanju' className='tm-film-section'>
-            <div className='tm-home-section-heading'>
-              <h2 className='tm-home-section-title'>热播短剧</h2>
-              <Link href='/duanju' className='tm-home-view-all tm-press'>
-                查看全部
-                <ChevronRight className='w-4 h-4 ml-1' />
-              </Link>
-            </div>
+            <SectionHeader title='热播短剧' href='/duanju' />
             <PosterGrid className='tm-home-poster-grid'>
               {loading
                 ? Array.from({ length: 12 }).map((_, index) => (
@@ -651,16 +644,7 @@ function HomeClient() {
       case 'bangumiCalendar':
         return (
           <section key='bangumiCalendar' className='tm-film-section'>
-            <div className='tm-home-section-heading'>
-              <h2 className='tm-home-section-title'>新番放送</h2>
-              <Link
-                href='/douban?type=anime'
-                className='tm-home-view-all tm-press'
-              >
-                查看全部
-                <ChevronRight className='w-4 h-4 ml-1' />
-              </Link>
-            </div>
+            <SectionHeader title='新番放送' href='/douban?type=anime' />
             <PosterGrid className='tm-home-poster-grid'>
               {loading
                 ? Array.from({ length: 12 }).map((_, index) => (
@@ -714,16 +698,7 @@ function HomeClient() {
       case 'hotTvShows':
         return (
           <section key='hotTvShows' className='tm-film-section'>
-            <div className='tm-home-section-heading'>
-              <h2 className='tm-home-section-title'>热门剧集</h2>
-              <Link
-                href='/douban?type=tv'
-                className='tm-home-view-all tm-press'
-              >
-                查看全部
-                <ChevronRight className='w-4 h-4 ml-1' />
-              </Link>
-            </div>
+            <SectionHeader title='热门剧集' href='/douban?type=tv' />
             <PosterGrid className='tm-home-poster-grid'>
               {loading
                 ? Array.from({ length: 12 }).map((_, index) => (
@@ -753,16 +728,7 @@ function HomeClient() {
       case 'hotVarietyShows':
         return (
           <section key='hotVarietyShows' className='tm-film-section'>
-            <div className='tm-home-section-heading'>
-              <h2 className='tm-home-section-title'>热门综艺</h2>
-              <Link
-                href='/douban?type=show'
-                className='tm-home-view-all tm-press'
-              >
-                查看全部
-                <ChevronRight className='w-4 h-4 ml-1' />
-              </Link>
-            </div>
+            <SectionHeader title='热门综艺' href='/douban?type=show' />
             <PosterGrid className='tm-home-poster-grid'>
               {loading
                 ? Array.from({ length: 12 }).map((_, index) => (
@@ -795,12 +761,7 @@ function HomeClient() {
         if (upcomingContent.length === 0) return null;
         return (
           <section key='upcomingContent' className='tm-film-section'>
-            <div className='tm-home-section-heading'>
-              <h2 className='tm-home-section-title'>即将上映</h2>
-              <Link href='/douban?type=movie' className='tm-home-view-all'>
-                查看全部 <ChevronRight size={14} />
-              </Link>
-            </div>
+            <SectionHeader title='即将上映' href='/douban?type=movie' />
             <PosterGrid className='tm-home-poster-grid'>
               {upcomingContent.slice(0, 12).map((item) => (
                 <PosterMotion key={`${item.media_type}-${item.id}`}>
@@ -852,7 +813,7 @@ function HomeClient() {
             {aiEnabled && (
               <button
                 onClick={() => setShowAIChat(true)}
-                className='tm-tool-link tm-press'
+                className='tm-tool-link tm-press min-h-[44px] min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
               >
                 <Bot size={16} />
                 AI 问片
@@ -894,51 +855,65 @@ function HomeClient() {
 
       {/* 公告弹窗 */}
       {showAnnouncement && (
-        <div className='fixed inset-0 bg-black/70 z-[1000] flex items-center justify-center p-4'>
-          <div className='bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6'>
-            <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3'>
+        <div className='fixed inset-0 bg-[color:color-mix(in_srgb,var(--tm-room-cinema-bg)_70%,transparent)] z-[1000] flex items-center justify-center p-4'>
+          <motion.div
+            className='bg-[var(--tm-surface)] rounded-lg shadow-xl max-w-md w-full p-6 max-h-[calc(100dvh-2rem)] overflow-y-auto'
+            initial={{ opacity: 0, y: reduced ? 0 : 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{
+              duration: reduced ? 0.12 : 0.32,
+              ease: [0.22, 1, 0.36, 1],
+            }}
+          >
+            <h3 className='text-lg font-medium text-[color:var(--tm-text)] mb-3'>
               公告
             </h3>
-            <div className='text-gray-700 dark:text-gray-300 mb-4 whitespace-pre-wrap'>
+            <div className='text-[color:var(--tm-muted)] mb-4 whitespace-pre-wrap'>
               {announcement}
             </div>
             <button
               onClick={() => handleCloseAnnouncement(announcement || '')}
-              className='w-full px-4 py-2 bg-[var(--tm-text)] text-[var(--tm-accent-contrast)] rounded-lg transition-colors'
+              className='w-full px-4 py-2 bg-[var(--tm-text)] text-[var(--tm-accent-contrast)] rounded-lg transition-[opacity,transform] min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
             >
               知道了
             </button>
-          </div>
+          </motion.div>
         </div>
       )}
 
       {showDirectPlayDialog && (
         <div
-          className='fixed inset-0 bg-black/50 z-[1000] flex items-center justify-center p-4'
+          className='fixed inset-0 bg-[color:color-mix(in_srgb,var(--tm-room-cinema-bg)_50%,transparent)] z-[1000] flex items-center justify-center p-4'
           onClick={() => setShowDirectPlayDialog(false)}
         >
-          <div
-            className='bg-white dark:bg-gray-900 rounded-lg shadow-xl w-full max-w-lg'
+          <motion.div
+            className='bg-[var(--tm-surface)] rounded-lg shadow-xl w-full max-w-lg max-h-[calc(100dvh-2rem)] overflow-y-auto'
             onClick={(event) => event.stopPropagation()}
+            initial={{ opacity: 0, y: reduced ? 0 : 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{
+              duration: reduced ? 0.12 : 0.32,
+              ease: [0.22, 1, 0.36, 1],
+            }}
           >
-            <div className='flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700'>
-              <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100'>
+            <div className='flex items-center justify-between p-4 border-b border-[var(--tm-line)]'>
+              <h3 className='text-lg font-medium text-[color:var(--tm-text)]'>
                 直链播放
               </h3>
               <button
                 onClick={() => setShowDirectPlayDialog(false)}
-                className='p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors'
+                className='p-2 hover:bg-[var(--tm-line)] rounded-lg transition-[opacity,transform] min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
                 aria-label='关闭'
               >
-                <span className='text-gray-600 dark:text-gray-400'>×</span>
+                <X size={20} className='text-[color:var(--tm-muted)]' />
               </button>
             </div>
             <div className='p-4 space-y-4'>
-              <div className='text-sm text-gray-600 dark:text-gray-300'>
+              <div className='text-sm text-[color:var(--tm-muted)]'>
                 请输入可直接播放的视频链接。
               </div>
               {netdiskTempPlayEnabled && (
-                <div className='text-xs text-gray-500 dark:text-gray-400'>
+                <div className='text-[13px] text-[color:var(--tm-muted)]'>
                   支持夸克、UC、百度、天翼、移动、123、115 网盘在线播放。
                 </div>
               )}
@@ -951,25 +926,25 @@ function HomeClient() {
                   }
                 }}
                 placeholder='https://example.com/video.m3u8'
-                className='w-full px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-[var(--tm-text)]'
+                className='w-full px-3 py-2 rounded-lg border border-[var(--tm-line)] bg-[var(--tm-surface)] text-[color:var(--tm-text)] focus:outline-none focus:ring-2 focus:ring-[var(--tm-text)] min-h-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
               />
               <div className='flex justify-end gap-2'>
                 <button
                   onClick={() => setShowDirectPlayDialog(false)}
-                  className='px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors'
+                  className='px-4 py-2 rounded-lg border border-[var(--tm-line)] text-[color:var(--tm-muted)] text-[color:var(--tm-text)] hover:bg-[var(--tm-line)] transition-[opacity,transform] min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
                 >
                   取消
                 </button>
                 <button
                   onClick={submitDirectPlay}
                   disabled={!directPlayUrl.trim() || directPlaySubmitting}
-                  className='px-4 py-2 rounded-lg bg-[var(--tm-text)] text-[var(--tm-accent-contrast)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
+                  className='px-4 py-2 rounded-lg bg-[var(--tm-text)] text-[var(--tm-accent-contrast)] transition-[opacity,transform] disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
                 >
                   {directPlaySubmitting ? '处理中...' : '播放'}
                 </button>
               </div>
             </div>
-          </div>
+          </motion.div>
         </div>
       )}
 

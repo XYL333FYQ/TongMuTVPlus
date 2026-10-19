@@ -1,7 +1,10 @@
 'use client';
 
-import { CheckCircle, Info, X,XCircle } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { CheckCircle, Info, X, XCircle } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
+
+import '@/styles/feedback.css';
 
 export interface ToastProps {
   message: string;
@@ -10,55 +13,69 @@ export interface ToastProps {
   onClose?: () => void;
 }
 
-export default function Toast({ message, type = 'info', duration = 3000, onClose }: ToastProps) {
+export default function Toast({
+  message,
+  type = 'info',
+  duration = 3000,
+  onClose,
+}: ToastProps) {
   const [isVisible, setIsVisible] = useState(true);
+  const callback = useRef(onClose);
+  callback.current = onClose;
+  const dismiss = useRef<() => void>(() => undefined);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
+    let closing = false;
+    let closeTimer: ReturnType<typeof setTimeout> | undefined;
+    const close = () => {
+      if (closing) return;
+      closing = true;
+      clearTimeout(timer);
       setIsVisible(false);
-      setTimeout(() => {
-        onClose?.();
-      }, 300); // 等待动画完成
-    }, duration);
-
-    return () => clearTimeout(timer);
-  }, [duration, onClose]);
-
-  const handleClose = () => {
-    setIsVisible(false);
-    setTimeout(() => {
-      onClose?.();
-    }, 300);
-  };
+      closeTimer = setTimeout(() => callback.current?.(), 320);
+    };
+    dismiss.current = close;
+    setIsVisible(true);
+    const timer = setTimeout(close, duration);
+    return () => {
+      clearTimeout(timer);
+      clearTimeout(closeTimer);
+      dismiss.current = () => undefined;
+    };
+  }, [duration, message, type]);
 
   const icons = {
-    success: <CheckCircle className="w-5 h-5" />,
-    error: <XCircle className="w-5 h-5" />,
-    info: <Info className="w-5 h-5" />,
+    success: <CheckCircle size={20} aria-hidden='true' />,
+    error: <XCircle size={20} aria-hidden='true' />,
+    info: <Info size={20} aria-hidden='true' />,
   };
 
-  const colors = {
-    success: 'bg-green-500/90',
-    error: 'bg-red-500/90',
-    info: 'bg-blue-500/90',
-  };
+  if (typeof document === 'undefined') return null;
 
-  return (
+  return createPortal(
     <div
-      className={`fixed top-20 left-1/2 -translate-x-1/2 z-[9999] transition-all duration-300 ${
-        isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'
-      }`}
+      className='tm-toast'
+      data-visible={isVisible}
+      data-type={type}
+      aria-hidden={!isVisible}
     >
-      <div className={`${colors[type]} text-white px-6 py-3 rounded-lg shadow-lg flex items-start gap-3 min-w-[300px] max-w-[min(90vw,560px)]`}>
-        <div className="flex-shrink-0">{icons[type]}</div>
-        <div className="flex-1 text-sm font-medium whitespace-pre-wrap break-words">{message}</div>
-        <button
-          onClick={handleClose}
-          className="flex-shrink-0 hover:bg-white/20 rounded p-1 transition-colors"
-        >
-          <X className="w-4 h-4" />
-        </button>
+      <div className='tm-toast-icon'>{icons[type]}</div>
+      <div
+        className='tm-toast-message'
+        role={type === 'error' ? 'alert' : 'status'}
+      >
+        {message}
       </div>
-    </div>
+      <button
+        type='button'
+        aria-label='关闭提示'
+        tabIndex={isVisible ? 0 : -1}
+        onClick={() => dismiss.current()}
+        className='tm-feedback-close tm-press'
+      >
+        <X size={20} aria-hidden='true' />
+      </button>
+    </div>,
+    document.body
   );
 }

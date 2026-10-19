@@ -1,5 +1,6 @@
 'use client';
 
+import { AnimatePresence, motion } from 'framer-motion';
 import {
   ChevronDown,
   ChevronLeft,
@@ -14,6 +15,7 @@ import {
 import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 
+import { isReducedMotionSetting, useReducedMotionSetting } from '@/lib/motion';
 import { fireTVRemoteKey } from '@/lib/tv-remote-core';
 
 const focusableSelector = [
@@ -91,24 +93,24 @@ function scrollIntoScrollableParent(element: HTMLElement) {
   if (elementRect.top < parentRect.top + padding) {
     parent.scrollBy({
       top: elementRect.top - parentRect.top - padding,
-      behavior: 'smooth',
+      behavior: isReducedMotionSetting() ? 'auto' : 'smooth',
     });
   } else if (elementRect.bottom > parentRect.bottom - padding) {
     parent.scrollBy({
       top: elementRect.bottom - parentRect.bottom + padding,
-      behavior: 'smooth',
+      behavior: isReducedMotionSetting() ? 'auto' : 'smooth',
     });
   }
 
   if (elementRect.left < parentRect.left + padding) {
     parent.scrollBy({
       left: elementRect.left - parentRect.left - padding,
-      behavior: 'smooth',
+      behavior: isReducedMotionSetting() ? 'auto' : 'smooth',
     });
   } else if (elementRect.right > parentRect.right - padding) {
     parent.scrollBy({
       left: elementRect.right - parentRect.right + padding,
-      behavior: 'smooth',
+      behavior: isReducedMotionSetting() ? 'auto' : 'smooth',
     });
   }
 
@@ -236,7 +238,7 @@ function focusElement(element: HTMLElement) {
     element.scrollIntoView({
       block: 'nearest',
       inline: 'nearest',
-      behavior: 'smooth',
+      behavior: isReducedMotionSetting() ? 'auto' : 'smooth',
     });
     window.requestAnimationFrame(() => {
       const rect = element.getBoundingClientRect();
@@ -244,9 +246,15 @@ function focusElement(element: HTMLElement) {
       const safeBottom = window.innerHeight - 96;
 
       if (rect.top < safeTop) {
-        window.scrollBy({ top: rect.top - safeTop, behavior: 'smooth' });
+        window.scrollBy({
+          top: rect.top - safeTop,
+          behavior: isReducedMotionSetting() ? 'auto' : 'smooth',
+        });
       } else if (rect.bottom > safeBottom) {
-        window.scrollBy({ top: rect.bottom - safeBottom, behavior: 'smooth' });
+        window.scrollBy({
+          top: rect.bottom - safeBottom,
+          behavior: isReducedMotionSetting() ? 'auto' : 'smooth',
+        });
       }
     });
   } else {
@@ -424,7 +432,7 @@ function RemoteButton({
       onPointerCancel={clearRepeat}
       onPointerLeave={clearRepeat}
       onMouseDown={(event) => event.preventDefault()}
-      className={`flex cursor-pointer items-center justify-center rounded-2xl border border-white/10 bg-white/10 text-white shadow-lg shadow-black/30 outline-none transition hover:bg-white/20 active:scale-95 focus-visible:ring-4 focus-visible:ring-rose-500/70 ${className}`}
+      className={`tm-tv-remote-button tm-press ${className}`}
     >
       {children}
     </button>
@@ -433,6 +441,7 @@ function RemoteButton({
 
 export default function TVVirtualRemote() {
   const router = useRouter();
+  const reduced = useReducedMotionSetting();
   const [open, setOpen] = useState(false);
   const lastFocusedRef = useRef<HTMLElement | null>(null);
 
@@ -549,104 +558,116 @@ export default function TVVirtualRemote() {
     };
   }, [router]);
 
-  if (!open) return null;
-
   return (
-    <aside
-      data-tv-remote
-      className='fixed bottom-6 right-6 z-[80] w-[280px] rounded-[34px] border border-white/10 bg-slate-950/88 p-5 text-white shadow-2xl shadow-black/70 backdrop-blur-2xl'
-    >
-      <div className='mb-4 flex items-center justify-between'>
-        <div>
-          <div className='text-xl font-black'>虚拟遥控器</div>
-          <div className='text-sm text-slate-400'>F1 打开 / 关闭</div>
-        </div>
-        <RemoteButton
-          label='关闭遥控器'
-          onClick={() => setOpen(false)}
-          className='h-11 w-11 rounded-full bg-rose-600/90 hover:bg-rose-500'
+    <AnimatePresence>
+      {open && (
+        <motion.aside
+          data-tv-remote
+          className='tm-tv-remote tm-glass'
+          aria-label='虚拟遥控器'
+          initial={{ opacity: 0, y: reduced ? 0 : 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: reduced ? 0 : 12 }}
+          transition={{
+            duration: reduced ? 0.12 : 0.32,
+            ease: [0.22, 1, 0.36, 1],
+          }}
         >
-          <Power className='h-5 w-5' />
-        </RemoteButton>
-      </div>
+          <div className='mb-4 flex items-center justify-between'>
+            <div>
+              <div className='text-lg font-medium'>虚拟遥控器</div>
+              <div className='text-sm text-[color:var(--tm-muted)]'>
+                F1 打开 / 关闭
+              </div>
+            </div>
+            <RemoteButton
+              label='关闭遥控器'
+              onClick={() => setOpen(false)}
+              className='h-11 w-11 rounded-full'
+            >
+              <Power className='h-5 w-5' />
+            </RemoteButton>
+          </div>
 
-      <div className='grid grid-cols-3 gap-3'>
-        <RemoteButton
-          label='返回'
-          onClick={() => fireTVRemoteKey('back')}
-          className='h-14'
-        >
-          <RotateCcw className='h-6 w-6' />
-        </RemoteButton>
-        <RemoteButton
-          label='主页'
-          onClick={() => fireTVRemoteKey('home')}
-          className='h-14'
-        >
-          <Home className='h-6 w-6' />
-        </RemoteButton>
-        <RemoteButton
-          label='菜单'
-          onClick={() => fireTVRemoteKey('menu')}
-          className='h-14'
-        >
-          <Menu className='h-6 w-6' />
-        </RemoteButton>
+          <div className='grid grid-cols-3 gap-3'>
+            <RemoteButton
+              label='返回'
+              onClick={() => fireTVRemoteKey('back')}
+              className='h-14'
+            >
+              <RotateCcw className='h-6 w-6' />
+            </RemoteButton>
+            <RemoteButton
+              label='主页'
+              onClick={() => fireTVRemoteKey('home')}
+              className='h-14'
+            >
+              <Home className='h-6 w-6' />
+            </RemoteButton>
+            <RemoteButton
+              label='菜单'
+              onClick={() => fireTVRemoteKey('menu')}
+              className='h-14'
+            >
+              <Menu className='h-6 w-6' />
+            </RemoteButton>
 
-        <div />
-        <RemoteButton
-          label='上'
-          onClick={() => fireTVRemoteKey('up')}
-          onRepeat={() => fireTVRemoteKey('up', true)}
-          repeatable
-          className='h-16'
-        >
-          <ChevronUp className='h-9 w-9' />
-        </RemoteButton>
-        <div />
+            <div />
+            <RemoteButton
+              label='上'
+              onClick={() => fireTVRemoteKey('up')}
+              onRepeat={() => fireTVRemoteKey('up', true)}
+              repeatable
+              className='h-16'
+            >
+              <ChevronUp className='h-9 w-9' />
+            </RemoteButton>
+            <div />
 
-        <RemoteButton
-          label='左'
-          onClick={() => fireTVRemoteKey('left')}
-          onRepeat={() => fireTVRemoteKey('left', true)}
-          repeatable
-          className='h-16'
-        >
-          <ChevronLeft className='h-9 w-9' />
-        </RemoteButton>
-        <RemoteButton
-          label='确认'
-          onClick={() => fireTVRemoteKey('ok')}
-          className='h-16 rounded-full bg-white text-black hover:bg-slate-200'
-        >
-          <CornerDownLeft className='h-8 w-8' />
-        </RemoteButton>
-        <RemoteButton
-          label='右'
-          onClick={() => fireTVRemoteKey('right')}
-          onRepeat={() => fireTVRemoteKey('right', true)}
-          repeatable
-          className='h-16'
-        >
-          <ChevronRight className='h-9 w-9' />
-        </RemoteButton>
+            <RemoteButton
+              label='左'
+              onClick={() => fireTVRemoteKey('left')}
+              onRepeat={() => fireTVRemoteKey('left', true)}
+              repeatable
+              className='h-16'
+            >
+              <ChevronLeft className='h-9 w-9' />
+            </RemoteButton>
+            <RemoteButton
+              label='确认'
+              onClick={() => fireTVRemoteKey('ok')}
+              className='tm-tv-remote-primary h-16 rounded-full'
+            >
+              <CornerDownLeft className='h-8 w-8' />
+            </RemoteButton>
+            <RemoteButton
+              label='右'
+              onClick={() => fireTVRemoteKey('right')}
+              onRepeat={() => fireTVRemoteKey('right', true)}
+              repeatable
+              className='h-16'
+            >
+              <ChevronRight className='h-9 w-9' />
+            </RemoteButton>
 
-        <div />
-        <RemoteButton
-          label='下'
-          onClick={() => fireTVRemoteKey('down')}
-          onRepeat={() => fireTVRemoteKey('down', true)}
-          repeatable
-          className='h-16'
-        >
-          <ChevronDown className='h-9 w-9' />
-        </RemoteButton>
-        <div />
-      </div>
+            <div />
+            <RemoteButton
+              label='下'
+              onClick={() => fireTVRemoteKey('down')}
+              onRepeat={() => fireTVRemoteKey('down', true)}
+              repeatable
+              className='h-16'
+            >
+              <ChevronDown className='h-9 w-9' />
+            </RemoteButton>
+            <div />
+          </div>
 
-      <div className='mt-4 rounded-2xl bg-white/[0.06] p-3 text-center text-sm text-slate-300'>
-        点击按钮会向当前页面发送方向键 / Enter / Esc
-      </div>
-    </aside>
+          <div className='mt-4 rounded-2xl bg-[var(--tm-surface-raised)] p-3 text-center text-sm text-[color:var(--tm-muted)]'>
+            点击按钮会向当前页面发送方向键 / Enter / Esc
+          </div>
+        </motion.aside>
+      )}
+    </AnimatePresence>
   );
 }

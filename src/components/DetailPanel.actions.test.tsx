@@ -7,6 +7,19 @@ import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import DetailPanel from './DetailPanel';
 const originalFetch = global.fetch;
 beforeEach(() => {
+  Object.defineProperty(window, 'matchMedia', {
+    configurable: true,
+    value: jest.fn((media: string) => ({
+      media,
+      matches: false,
+      addEventListener: jest.fn(),
+      removeEventListener: jest.fn(),
+      addListener: jest.fn(),
+      removeListener: jest.fn(),
+      dispatchEvent: jest.fn(),
+      onchange: null,
+    })),
+  });
   global.fetch = jest.fn(() => new Promise<Response>(() => undefined));
 });
 afterEach(() => {

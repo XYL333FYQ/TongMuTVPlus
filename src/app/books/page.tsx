@@ -28,14 +28,14 @@ function SourceCardSkeleton() {
     <div className='grid gap-4 md:grid-cols-2 xl:grid-cols-3'>
       {Array.from({ length: 6 }).map((_, index) => (
         <div key={index} className={cn(LIBRARY_PANEL, 'p-5')}>
-          <div className='h-5 w-32 animate-pulse rounded-sm bg-library-edge dark:bg-library-night-edge' />
+          <div className='h-5 w-32 tm-skeleton rounded-sm bg-[var(--tm-line)]' />
           <div className='mt-3 flex gap-2'>
-            <div className='h-6 w-16 animate-pulse rounded-sm bg-library-edge dark:bg-library-night-edge' />
-            <div className='h-6 w-16 animate-pulse rounded-sm bg-library-edge dark:bg-library-night-edge' />
+            <div className='h-6 w-16 tm-skeleton rounded-sm bg-[var(--tm-line)]' />
+            <div className='h-6 w-16 tm-skeleton rounded-sm bg-[var(--tm-line)]' />
           </div>
           <div className='mt-5 flex gap-2'>
-            <div className='h-10 w-24 animate-pulse rounded-md bg-library-edge dark:bg-library-night-edge' />
-            <div className='h-10 w-24 animate-pulse rounded-md bg-library-edge dark:bg-library-night-edge' />
+            <div className='h-10 w-24 tm-skeleton rounded-md bg-[var(--tm-line)]' />
+            <div className='h-10 w-24 tm-skeleton rounded-md bg-[var(--tm-line)]' />
           </div>
         </div>
       ))}
@@ -54,10 +54,10 @@ function CapabilityPill({
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-1.5 rounded-sm px-2 py-1 text-xs ring-1',
+        'inline-flex items-center gap-1.5 rounded-sm px-2 py-1 text-[13px] ring-1',
         enabled
-          ? 'bg-library-ochre-tint text-library-ochre ring-library-ochre/25 dark:bg-library-night-ochre-tint dark:text-library-night-ochre dark:ring-library-night-ochre/25'
-          : 'text-library-muted ring-library-edge dark:text-library-night-muted dark:ring-library-night-edge'
+          ? 'bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)] ring-[color-mix(in_srgb,var(--tm-text)_25%,transparent)]'
+          : 'text-[color:var(--tm-muted)] ring-[var(--tm-line)]'
       )}
     >
       <Icon className='h-3.5 w-3.5' />
@@ -130,7 +130,7 @@ export default function BooksHomePage() {
           <div className='min-w-0'>
             <h1
               className={cn(
-                'text-xl font-semibold text-library-ink dark:text-library-night-ink',
+                'text-xl font-bold text-[color:var(--tm-text)]',
                 LIBRARY_SERIF
               )}
             >
@@ -198,13 +198,15 @@ export default function BooksHomePage() {
               <div className='min-w-0'>
                 <div
                   className={cn(
-                    'truncate text-base font-semibold text-library-ink dark:text-library-night-ink',
+                    'truncate text-base font-medium text-[color:var(--tm-text)]',
                     LIBRARY_SERIF
                   )}
                 >
                   {source.name}
                 </div>
-                <div className={cn('mt-1 text-xs font-medium', LIBRARY_MUTED)}>
+                <div
+                  className={cn('mt-1 text-[13px] font-medium', LIBRARY_MUTED)}
+                >
                   {source.type === 'legado' ? 'Legado' : 'OPDS'}
                 </div>
               </div>

@@ -1,27 +1,37 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
-import { AlertCircle, FlaskConical, Loader2, Plus, RefreshCw, Sparkles, Trash2, X } from 'lucide-react';
+import {
+  AlertCircle,
+  FlaskConical,
+  Loader2,
+  Plus,
+  RefreshCw,
+  Sparkles,
+  Trash2,
+  X,
+} from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 
+import { AdminConfig } from '@/lib/admin.types';
 import {
-  buildFilterTextFromRecognition,
   type FansubRecognition,
   type FansubRecognizeResult,
   type FansubVariant,
+  buildFilterTextFromRecognition,
 } from '@/lib/anime-fansub-recognize';
 import {
+  type AnimeExcludePreset,
+  type AnimeFansubPreset,
   ANIME_EXCLUDE_PRESETS,
   ANIME_FANSUB_PRESETS,
   applyExcludeSingleSelect,
   applyFansubSingleSelect,
   isExcludePresetActive,
   isFansubPresetActive,
-  type AnimeExcludePreset,
-  type AnimeFansubPreset,
 } from '@/lib/anime-filter-presets';
-import { AdminConfig } from '@/lib/admin.types';
+
 import {
   AnimeSubscription,
   AnimeSubscriptionDownloadTool,
@@ -33,14 +43,25 @@ interface AnimeSubscriptionComponentProps {
   refreshConfig: () => Promise<void>;
 }
 
-const downloadToolOptions: Array<{ value: AnimeSubscriptionDownloadTool; label: string }> = [
+const downloadToolOptions: Array<{
+  value: AnimeSubscriptionDownloadTool;
+  label: string;
+}> = [
   { value: 'aria2', label: 'aria2' },
   { value: 'qBittorrent', label: 'qBittorrent' },
   { value: 'Transmission', label: 'Transmission' },
 ];
 
 // Switch 组件
-const Switch = ({ checked, onChange, disabled }: { checked: boolean; onChange: (checked: boolean) => void; disabled?: boolean }) => (
+const Switch = ({
+  checked,
+  onChange,
+  disabled,
+}: {
+  checked: boolean;
+  onChange: (checked: boolean) => void;
+  disabled?: boolean;
+}) => (
   <button
     type='button'
     role='switch'
@@ -49,14 +70,22 @@ const Switch = ({ checked, onChange, disabled }: { checked: boolean; onChange: (
     onClick={() => onChange(!checked)}
     className={`
       relative inline-flex h-6 w-11 items-center rounded-full transition-colors
-      ${checked ? 'bg-green-600' : 'bg-gray-200 dark:bg-gray-700'}
-      ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
+      ${
+        checked
+          ? 'bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] min-h-[44px] tm-press'
+          : 'bg-[var(--tm-surface-raised)] min-h-[44px] tm-press'
+      }
+      ${
+        disabled
+          ? 'opacity-50 cursor-not-allowed min-h-[44px] tm-press'
+          : 'cursor-pointer min-h-[44px] tm-press'
+      }
     `}
   >
     <span
-      className={`
-        inline-block h-4 w-4 transform rounded-full bg-white transition-transform
-        ${checked ? 'translate-x-6' : 'translate-x-1'}
+      className={` inline-block h-4 w-4 transform rounded-full bg-[var(--tm-surface)] transition-transform ${
+        checked ? 'translate-x-6' : 'translate-x-1'
+      }
       `}
     />
   </button>
@@ -97,42 +126,42 @@ const AlertModal = ({
   if (!isOpen) return null;
 
   const icons = {
-    success: <AlertCircle className="w-12 h-12 text-green-500" />,
-    error: <AlertCircle className="w-12 h-12 text-red-500" />,
-    warning: <AlertCircle className="w-12 h-12 text-yellow-500" />,
-    info: <AlertCircle className="w-12 h-12 text-blue-500" />,
+    success: <AlertCircle className='w-12 h-12 text-[color:var(--tm-text)]' />,
+    error: <AlertCircle className='w-12 h-12 text-[color:var(--tm-danger)]' />,
+    warning: <AlertCircle className='w-12 h-12 text-[color:var(--tm-text)]' />,
+    info: <AlertCircle className='w-12 h-12 text-[color:var(--tm-text)]' />,
   };
 
   return createPortal(
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center">
+    <div className='fixed inset-0 z-[9999] flex items-center justify-center'>
       <div
-        className={`absolute inset-0 bg-black transition-opacity duration-300 ${
+        className={`absolute inset-0 bg-[var(--tm-surface)] transition-opacity duration-300 ${
           isVisible ? 'opacity-50' : 'opacity-0'
         }`}
         onClick={onClose}
       />
       <div
-        className={`relative bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full mx-4 p-6 transition-all duration-300 ${
+        className={`relative bg-[var(--tm-surface)] bg-[var(--tm-surface)] rounded-lg shadow-xl max-w-md w-full mx-4 p-6 transition-all duration-300 ${
           isVisible ? 'opacity-100 scale-100' : 'opacity-0 scale-95'
         }`}
       >
-        <div className="flex flex-col items-center text-center">
+        <div className='flex flex-col items-center text-center'>
           {icons[type]}
-          <h3 className="mt-4 text-lg font-semibold text-gray-900 dark:text-white">
+          <h3 className='mt-4 text-lg font-medium text-[color:var(--tm-text)]'>
             {title}
           </h3>
           {message && (
-            <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+            <p className='mt-2 text-sm text-[color:var(--tm-muted)]'>
               {message}
             </p>
           )}
 
-          <div className="flex justify-center space-x-3 mt-6">
+          <div className='flex justify-center space-x-3 mt-6'>
             {showConfirm && onConfirm ? (
               <>
                 <button
                   onClick={onClose}
-                  className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors"
+                  className='px-4 py-2 text-sm font-medium text-[color:var(--tm-muted)] bg-[var(--tm-surface-raised)] hover:bg-[var(--tm-line)] rounded-lg transition-colors min-h-[44px] tm-press'
                 >
                   取消
                 </button>
@@ -141,7 +170,7 @@ const AlertModal = ({
                     onConfirm();
                     onClose();
                   }}
-                  className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
+                  className='px-4 py-2 text-sm font-medium text-[color:var(--tm-accent-contrast)] bg-[var(--tm-text)] hover:opacity-90 rounded-lg transition-colors min-h-[44px] tm-press'
                 >
                   {confirmText}
                 </button>
@@ -149,7 +178,7 @@ const AlertModal = ({
             ) : (
               <button
                 onClick={onClose}
-                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
+                className='px-4 py-2 text-sm font-medium text-[color:var(--tm-accent-contrast)] bg-[var(--tm-text)] hover:opacity-90 rounded-lg transition-colors min-h-[44px] tm-press'
               >
                 {confirmText}
               </button>
@@ -167,15 +196,19 @@ export default function AnimeSubscriptionComponent({
   refreshConfig,
 }: AnimeSubscriptionComponentProps) {
   const [enabled, setEnabled] = useState(false);
-  const [downloadTool, setDownloadTool] = useState<AnimeSubscriptionDownloadTool>('aria2');
+  const [downloadTool, setDownloadTool] =
+    useState<AnimeSubscriptionDownloadTool>('aria2');
   const [subscriptions, setSubscriptions] = useState<AnimeSubscription[]>([]);
   const [loading, setLoading] = useState(false);
   const [showAddForm, setShowAddForm] = useState(false);
-  const [editingSubscription, setEditingSubscription] = useState<AnimeSubscription | null>(null);
+  const [editingSubscription, setEditingSubscription] =
+    useState<AnimeSubscription | null>(null);
   const [checkingId, setCheckingId] = useState<string | null>(null);
   const [recognizing, setRecognizing] = useState(false);
   const [recognizeError, setRecognizeError] = useState('');
-  const [recognition, setRecognition] = useState<FansubRecognizeResult | null>(null);
+  const [recognition, setRecognition] = useState<FansubRecognizeResult | null>(
+    null
+  );
   const [testing, setTesting] = useState(false);
   const [testError, setTestError] = useState('');
   const [testResult, setTestResult] = useState<EpisodeTestResult | null>(null);
@@ -198,7 +231,7 @@ export default function AnimeSubscriptionComponent({
   };
 
   const hideAlert = () => {
-    setAlertModal(prev => ({ ...prev, isOpen: false }));
+    setAlertModal((prev) => ({ ...prev, isOpen: false }));
   };
 
   // 表单状态
@@ -271,7 +304,9 @@ export default function AnimeSubscriptionComponent({
     }
   };
 
-  const handleDownloadToolChange = async (newDownloadTool: AnimeSubscriptionDownloadTool) => {
+  const handleDownloadToolChange = async (
+    newDownloadTool: AnimeSubscriptionDownloadTool
+  ) => {
     const previousDownloadTool = downloadTool;
     setDownloadTool(newDownloadTool);
 
@@ -364,17 +399,25 @@ export default function AnimeSubscriptionComponent({
       setRecognition(data);
     } catch (error) {
       setRecognition(null);
-      setRecognizeError(error instanceof Error ? error.message : '智能识别失败');
+      setRecognizeError(
+        error instanceof Error ? error.message : '智能识别失败'
+      );
     } finally {
       setRecognizing(false);
     }
   };
 
   /** 点击识别结果：将「字幕组&字幕形态」写入过滤关键词（替换） */
-  const applyRecognition = (fansub: FansubRecognition, variant: FansubVariant) => {
+  const applyRecognition = (
+    fansub: FansubRecognition,
+    variant: FansubVariant
+  ) => {
     setFormData((prev) => ({
       ...prev,
-      filterText: buildFilterTextFromRecognition(fansub.fansubFilter, variant.filter),
+      filterText: buildFilterTextFromRecognition(
+        fansub.fansubFilter,
+        variant.filter
+      ),
     }));
   };
 
@@ -437,10 +480,10 @@ export default function AnimeSubscriptionComponent({
   };
 
   const chipClass = (active: boolean) =>
-    `px-2 py-0.5 text-xs rounded-full border transition-colors ${
+    `px-2 py-0.5 text-[13px] rounded-full border transition-colors ${
       active
-        ? 'bg-green-600 text-white border-green-600'
-        : 'bg-gray-50 dark:bg-gray-700/50 text-gray-700 dark:text-gray-200 border-gray-200 dark:border-gray-600 hover:border-green-500 hover:text-green-700 dark:hover:text-green-300'
+        ? 'bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)]'
+        : 'bg-[var(--tm-surface-raised)] text-[color:var(--tm-muted)] text-[color:var(--tm-text)] hover:text-[color:var(--tm-text)]'
     }`;
 
   // 保存订阅
@@ -468,11 +511,14 @@ export default function AnimeSubscriptionComponent({
 
       if (editingSubscription) {
         // 更新
-        const response = await fetch(`/api/admin/anime-subscription/${editingSubscription.id}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(formData),
-        });
+        const response = await fetch(
+          `/api/admin/anime-subscription/${editingSubscription.id}`,
+          {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(formData),
+          }
+        );
 
         if (!response.ok) {
           const data = await response.json().catch(() => ({}));
@@ -550,9 +596,12 @@ export default function AnimeSubscriptionComponent({
   const handleCheckSubscription = async (id: string) => {
     try {
       setCheckingId(id);
-      const response = await fetch(`/api/admin/anime-subscription/${id}/check`, {
-        method: 'POST',
-      });
+      const response = await fetch(
+        `/api/admin/anime-subscription/${id}/check`,
+        {
+          method: 'POST',
+        }
+      );
 
       if (!response.ok) {
         throw new Error('检查失败');
@@ -621,20 +670,28 @@ export default function AnimeSubscriptionComponent({
       <div className='flex flex-col gap-4 md:flex-row md:items-center md:justify-between'>
         <div className='flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-6'>
           <div className='flex items-center gap-3'>
-            <span className='text-sm font-medium text-gray-700 dark:text-gray-300'>
+            <span className='text-sm font-medium text-[color:var(--tm-muted)]'>
               启用追番功能
             </span>
-            <Switch checked={enabled} onChange={handleToggleEnabled} disabled={loading} />
+            <Switch
+              checked={enabled}
+              onChange={handleToggleEnabled}
+              disabled={loading}
+            />
           </div>
           <div className='flex items-center gap-3'>
-            <label className='text-sm font-medium text-gray-700 dark:text-gray-300'>
+            <label className='text-sm font-medium text-[color:var(--tm-muted)]'>
               下载方式
             </label>
             <select
               value={downloadTool}
-              onChange={(e) => handleDownloadToolChange(e.target.value as AnimeSubscriptionDownloadTool)}
+              onChange={(e) =>
+                handleDownloadToolChange(
+                  e.target.value as AnimeSubscriptionDownloadTool
+                )
+              }
               disabled={loading}
-              className='min-w-40 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-sm text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50'
+              className='min-w-40 px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-sm text-[color:var(--tm-text)] focus:outline-none focus:ring-2 focus:ring-[var(--tm-text)] disabled:opacity-50'
             >
               {downloadToolOptions.map((option) => (
                 <option key={option.value} value={option.value}>
@@ -647,7 +704,7 @@ export default function AnimeSubscriptionComponent({
         <button
           onClick={handleAdd}
           disabled={loading || showAddForm}
-          className='flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors disabled:opacity-50'
+          className='flex items-center gap-2 px-4 py-2 bg-[var(--tm-text)] hover:opacity-90 text-[color:var(--tm-accent-contrast)] rounded-lg transition-colors disabled:opacity-50 min-h-[44px] tm-press'
         >
           <Plus size={16} />
           添加订阅
@@ -655,20 +712,30 @@ export default function AnimeSubscriptionComponent({
       </div>
 
       {/* 说明 */}
-      <div className='bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4'>
+      <div className='bg-[var(--tm-surface-raised)] border border-[var(--tm-line)] rounded-lg p-4'>
         <div className='flex gap-2'>
-          <AlertCircle className='w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5' />
-          <div className='text-sm text-blue-800 dark:text-blue-200 space-y-1'>
+          <AlertCircle className='w-5 h-5 text-[color:var(--tm-text)] flex-shrink-0 mt-0.5' />
+          <div className='text-sm text-[color:var(--tm-text)] space-y-1'>
             <p>• 定时任务会自动检查订阅更新</p>
             <p>• 下载路径：OpenList离线下载根目录/番剧名称/</p>
             <p>
-              • 过滤/排除支持 <code className='text-xs'>&amp;</code>（且）、
-              <code className='text-xs'>|</code>（或）、
-              <code className='text-xs'>()</code>；无运算符时逗号仍可用（过滤=且，排除=或）
+              • 过滤/排除支持 <code className='text-[13px]'>&amp;</code>（且）、
+              <code className='text-[13px]'>|</code>（或）、
+              <code className='text-[13px]'>()</code>
+              ；无运算符时逗号仍可用（过滤=且，排除=或）
             </p>
-            <p>• 快捷建议按字幕组填入（显示组名，写入已带语种/封装偏好；可再手改）</p>
-            <p>• 「智能识别」会按番剧名在所选源搜索一次，点击结果即可填入过滤关键词</p>
-            <p>• 集数提取正则可覆盖内置集数识别（部分字幕组命名特殊时使用），「测试」可实际搜索预览能过滤到哪些集数</p>
+            <p>
+              •
+              快捷建议按字幕组填入（显示组名，写入已带语种/封装偏好；可再手改）
+            </p>
+            <p>
+              •
+              「智能识别」会按番剧名在所选源搜索一次，点击结果即可填入过滤关键词
+            </p>
+            <p>
+              •
+              集数提取正则可覆盖内置集数识别（部分字幕组命名特殊时使用），「测试」可实际搜索预览能过滤到哪些集数
+            </p>
             <p>• 「单集只下载一次」为每条可选保险：同集多个种子只入队一条</p>
             <p>• 当前集数：已看到第几集，只下载更新的集数</p>
           </div>
@@ -677,37 +744,39 @@ export default function AnimeSubscriptionComponent({
 
       {/* 添加/编辑表单 */}
       {(showAddForm || editingSubscription) && (
-        <div className='bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6'>
+        <div className='bg-[var(--tm-surface)] border border-[var(--tm-line)] rounded-lg p-6'>
           <div className='flex items-center justify-between mb-4'>
-            <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100'>
+            <h3 className='text-lg font-medium text-[color:var(--tm-text)]'>
               {editingSubscription ? '编辑订阅' : '添加订阅'}
             </h3>
             <button
               onClick={resetForm}
-              className='text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+              className='text-[color:var(--tm-muted)] hover:text-[color:var(--tm-muted)] hover:text-[color:var(--tm-text)] min-h-[44px] tm-press'
             >
               <X size={20} />
             </button>
           </div>
           <div className='space-y-4'>
             <div>
-              <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>
+              <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-1'>
                 番剧名称 *
               </label>
               <input
                 type='text'
                 value={formData.title}
-                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, title: e.target.value })
+                }
                 placeholder='葬送的芙莉莲'
-                className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-green-500'
+                className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)] focus:outline-none focus:ring-2 focus:ring-[var(--tm-text)]'
               />
-              <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
+              <p className='mt-1 text-[13px] text-[color:var(--tm-muted)]'>
                 用作 ACG 源搜索词
               </p>
             </div>
             <div>
               <div className='flex items-center justify-between mb-1'>
-                <label className='block text-sm font-medium text-gray-700 dark:text-gray-300'>
+                <label className='block text-sm font-medium text-[color:var(--tm-muted)]'>
                   过滤关键词 *
                 </label>
                 <button
@@ -715,7 +784,7 @@ export default function AnimeSubscriptionComponent({
                   onClick={handleRecognize}
                   disabled={recognizing}
                   title='按番剧名搜索一次，识别字幕组与字幕形态'
-                  className='flex items-center gap-1 px-2 py-0.5 text-xs rounded-full border border-blue-300 dark:border-blue-500/60 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors disabled:opacity-50'
+                  className='flex items-center gap-1 px-2 py-0.5 text-[13px] rounded-full border border-[var(--tm-line)] text-[color:var(--tm-text)] hover:bg-[var(--tm-line)] transition-colors disabled:opacity-50 min-h-[44px] tm-press'
                 >
                   {recognizing ? (
                     <Loader2 size={12} className='animate-spin' />
@@ -728,42 +797,46 @@ export default function AnimeSubscriptionComponent({
               <input
                 type='text'
                 value={formData.filterText}
-                onChange={(e) => setFormData({ ...formData, filterText: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, filterText: e.target.value })
+                }
                 placeholder='喵萌奶茶屋&(简日双语|简日内嵌)'
-                className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-green-500'
+                className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)] focus:outline-none focus:ring-2 focus:ring-[var(--tm-text)]'
               />
-              <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
+              <p className='mt-1 text-[13px] text-[color:var(--tm-muted)]'>
                 支持 &amp; | ()
               </p>
               {recognizeError ? (
-                <p className='mt-1 text-xs text-red-600 dark:text-red-400'>
+                <p className='mt-1 text-[13px] text-[color:var(--tm-text)]'>
                   {recognizeError}
                 </p>
               ) : null}
               {recognition ? (
-                <div className='mt-2 rounded-lg border border-gray-200 dark:border-gray-700 p-2.5 space-y-2.5'>
+                <div className='mt-2 rounded-lg border border-[var(--tm-line)] p-2.5 space-y-2.5'>
                   <div className='flex items-center justify-between'>
-                    <p className='text-[11px] text-gray-500 dark:text-gray-400'>
+                    <p className='text-[13px] text-[color:var(--tm-muted)]'>
                       识别到 {recognition.total} 条种子，点击填入过滤关键词
                     </p>
                     <button
                       type='button'
                       onClick={() => setRecognition(null)}
-                      className='p-0.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200'
+                      className='p-0.5 text-[color:var(--tm-muted)] hover:text-[color:var(--tm-muted)] hover:text-[color:var(--tm-text)] min-h-[44px] tm-press'
                     >
                       <X size={12} />
                     </button>
                   </div>
                   {recognition.fansubs.length === 0 ? (
-                    <p className='text-xs text-gray-400'>搜索结果为空</p>
+                    <p className='text-[13px] text-[color:var(--tm-muted)]'>
+                      搜索结果为空
+                    </p>
                   ) : (
                     recognition.fansubs.map((fansub) => (
                       <div key={fansub.fansub}>
                         <div className='flex items-baseline gap-1.5'>
-                          <span className='text-xs font-medium text-gray-800 dark:text-gray-100'>
+                          <span className='text-[13px] font-medium text-[color:var(--tm-text)]'>
                             {fansub.fansub}
                           </span>
-                          <span className='text-[10px] text-gray-400'>
+                          <span className='text-[13px] text-[color:var(--tm-muted)]'>
                             {fansub.count} 条
                           </span>
                         </div>
@@ -792,7 +865,7 @@ export default function AnimeSubscriptionComponent({
                 </div>
               ) : null}
               <div className='mt-2'>
-                <p className='text-[11px] text-gray-400 dark:text-gray-500 mb-1'>
+                <p className='text-[13px] text-[color:var(--tm-muted)] mb-1'>
                   字幕组
                 </p>
                 <div className='flex flex-wrap gap-1.5'>
@@ -802,7 +875,9 @@ export default function AnimeSubscriptionComponent({
                       type='button'
                       title={p.hint ? `${p.insert}\n${p.hint}` : p.insert}
                       onClick={() => handleFansubSelect(p)}
-                      className={chipClass(isFansubPresetActive(formData.filterText, p))}
+                      className={chipClass(
+                        isFansubPresetActive(formData.filterText, p)
+                      )}
                     >
                       {p.label}
                     </button>
@@ -811,17 +886,19 @@ export default function AnimeSubscriptionComponent({
               </div>
             </div>
             <div>
-              <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>
+              <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-1'>
                 排除关键词
               </label>
               <input
                 type='text'
                 value={formData.excludeText}
-                onChange={(e) => setFormData({ ...formData, excludeText: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, excludeText: e.target.value })
+                }
                 placeholder='先行|预告|PV'
-                className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-green-500'
+                className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)] focus:outline-none focus:ring-2 focus:ring-[var(--tm-text)]'
               />
-              <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
+              <p className='mt-1 text-[13px] text-[color:var(--tm-muted)]'>
                 可选；支持 &amp; | ()
               </p>
               <div className='mt-2 flex flex-wrap gap-1.5'>
@@ -831,7 +908,9 @@ export default function AnimeSubscriptionComponent({
                     type='button'
                     title={p.insert}
                     onClick={() => handleExcludeSelect(p)}
-                    className={chipClass(isExcludePresetActive(formData.excludeText, p))}
+                    className={chipClass(
+                      isExcludePresetActive(formData.excludeText, p)
+                    )}
                   >
                     {p.label}
                   </button>
@@ -840,7 +919,7 @@ export default function AnimeSubscriptionComponent({
             </div>
             <div>
               <div className='flex items-center justify-between mb-1'>
-                <label className='block text-sm font-medium text-gray-700 dark:text-gray-300'>
+                <label className='block text-sm font-medium text-[color:var(--tm-muted)]'>
                   集数提取正则
                 </label>
                 <button
@@ -848,7 +927,7 @@ export default function AnimeSubscriptionComponent({
                   onClick={handleTest}
                   disabled={testing}
                   title='按当前表单实际搜索一次，查看能过滤到哪些集数'
-                  className='flex items-center gap-1 px-2 py-0.5 text-xs rounded-full border border-blue-300 dark:border-blue-500/60 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors disabled:opacity-50'
+                  className='flex items-center gap-1 px-2 py-0.5 text-[13px] rounded-full border border-[var(--tm-line)] text-[color:var(--tm-text)] hover:bg-[var(--tm-line)] transition-colors disabled:opacity-50 min-h-[44px] tm-press'
                 >
                   {testing ? (
                     <Loader2 size={12} className='animate-spin' />
@@ -861,34 +940,39 @@ export default function AnimeSubscriptionComponent({
               <input
                 type='text'
                 value={formData.episodeRegex}
-                onChange={(e) => setFormData({ ...formData, episodeRegex: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, episodeRegex: e.target.value })
+                }
                 placeholder='第(\d{1,3})[话話集]'
-                className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-green-500'
+                className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)] focus:outline-none focus:ring-2 focus:ring-[var(--tm-text)]'
               />
-              <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
+              <p className='mt-1 text-[13px] text-[color:var(--tm-muted)]'>
                 可选；首个捕获组将作为集数（无捕获组时取整个匹配），留空使用内置规则
               </p>
               {testError ? (
-                <p className='mt-1 text-xs text-red-600 dark:text-red-400'>
+                <p className='mt-1 text-[13px] text-[color:var(--tm-text)]'>
                   {testError}
                 </p>
               ) : null}
               {testResult ? (
-                <div className='mt-2 rounded-lg border border-gray-200 dark:border-gray-700 p-2.5 space-y-2.5'>
+                <div className='mt-2 rounded-lg border border-[var(--tm-line)] p-2.5 space-y-2.5'>
                   <div className='flex items-center justify-between'>
-                    <p className='text-[11px] text-gray-500 dark:text-gray-400'>
-                      搜索到 {testResult.total} 条 · 关键词命中 {testResult.matched} 条
+                    <p className='text-[13px] text-[color:var(--tm-muted)]'>
+                      搜索到 {testResult.total} 条 · 关键词命中{' '}
+                      {testResult.matched} 条
                     </p>
                     <button
                       type='button'
                       onClick={() => setTestResult(null)}
-                      className='p-0.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200'
+                      className='p-0.5 text-[color:var(--tm-muted)] hover:text-[color:var(--tm-muted)] hover:text-[color:var(--tm-text)] min-h-[44px] tm-press'
                     >
                       <X size={12} />
                     </button>
                   </div>
                   {testResult.matched === 0 ? (
-                    <p className='text-xs text-gray-400'>没有种子命中过滤条件</p>
+                    <p className='text-[13px] text-[color:var(--tm-muted)]'>
+                      没有种子命中过滤条件
+                    </p>
                   ) : (
                     <>
                       <div className='flex flex-wrap gap-1.5'>
@@ -897,12 +981,16 @@ export default function AnimeSubscriptionComponent({
                           return (
                             <span
                               key={ep}
-                              className={`px-2 py-0.5 text-xs rounded-full border ${
+                              className={`px-2 py-0.5 text-[13px] rounded-full border ${
                                 isNew
-                                  ? 'bg-green-600 text-white border-green-600'
-                                  : 'bg-gray-50 dark:bg-gray-700/50 text-gray-500 dark:text-gray-400 border-gray-200 dark:border-gray-600'
+                                  ? 'bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)] border-[var(--tm-line)]'
+                                  : 'bg-[var(--tm-surface-raised)] text-[color:var(--tm-muted)] border-[var(--tm-line)]'
                               }`}
-                              title={isNew ? '新集数，会触发下载' : '不大于当前集数，不会下载'}
+                              title={
+                                isNew
+                                  ? '新集数，会触发下载'
+                                  : '不大于当前集数，不会下载'
+                              }
                             >
                               第 {ep} 集{isNew ? ' ·新' : ''}
                             </span>
@@ -910,7 +998,7 @@ export default function AnimeSubscriptionComponent({
                         })}
                         {testResult.unparsed > 0 ? (
                           <span
-                            className='px-2 py-0.5 text-xs rounded-full border border-amber-300 dark:border-amber-500/60 text-amber-600 dark:text-amber-400'
+                            className='px-2 py-0.5 text-[13px] rounded-full border border-[var(--tm-line)] text-[color:var(--tm-text)]'
                             title='命中过滤关键词但未能提取集数'
                           >
                             {testResult.unparsed} 条未识别集数
@@ -918,31 +1006,34 @@ export default function AnimeSubscriptionComponent({
                         ) : null}
                       </div>
                       {testResult.newEpisodes.length > 0 ? (
-                        <p className='text-[11px] text-gray-500 dark:text-gray-400'>
+                        <p className='text-[13px] text-[color:var(--tm-muted)]'>
                           当前集数 {testResult.lastEpisode}，会下载新集数：
                           {testResult.newEpisodes.join('、')}
                         </p>
                       ) : (
-                        <p className='text-[11px] text-gray-500 dark:text-gray-400'>
-                          当前集数 {testResult.lastEpisode}，没有需要下载的新集数
+                        <p className='text-[13px] text-[color:var(--tm-muted)]'>
+                          当前集数 {testResult.lastEpisode}
+                          ，没有需要下载的新集数
                         </p>
                       )}
                       <div className='max-h-48 overflow-y-auto space-y-1'>
                         {testResult.items.map((item, idx) => (
                           <div
                             key={`${idx}-${item.title}`}
-                            className='flex items-start gap-1.5 text-[11px] leading-relaxed'
+                            className='flex items-start gap-1.5 text-[13px] leading-relaxed'
                           >
                             <span
                               className={`flex-shrink-0 mt-px px-1.5 rounded ${
                                 item.episode == null
-                                  ? 'text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20'
-                                  : 'text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-700'
+                                  ? 'text-[color:var(--tm-text)] bg-[var(--tm-surface-raised)]'
+                                  : 'text-[color:var(--tm-muted)] bg-[var(--tm-surface-raised)]'
                               }`}
                             >
-                              {item.episode == null ? '未识别' : `第${item.episode}集`}
+                              {item.episode == null
+                                ? '未识别'
+                                : `第${item.episode}集`}
                             </span>
-                            <span className='break-all text-gray-500 dark:text-gray-400'>
+                            <span className='break-all text-[color:var(--tm-muted)]'>
                               {item.title}
                             </span>
                           </div>
@@ -955,13 +1046,15 @@ export default function AnimeSubscriptionComponent({
             </div>
             <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
               <div>
-                <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>
+                <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-1'>
                   搜索源
                 </label>
                 <select
                   value={formData.source}
-                  onChange={(e) => setFormData({ ...formData, source: e.target.value as any })}
-                  className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-green-500'
+                  onChange={(e) =>
+                    setFormData({ ...formData, source: e.target.value as any })
+                  }
+                  className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)] focus:outline-none focus:ring-2 focus:ring-[var(--tm-text)]'
                 >
                   <option value='mikan'>蜜柑 (Mikan)</option>
                   <option value='acgrip'>ACG.RIP</option>
@@ -970,42 +1063,51 @@ export default function AnimeSubscriptionComponent({
                 </select>
               </div>
               <div>
-                <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>
+                <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-1'>
                   当前集数
                 </label>
                 <input
                   type='number'
                   min='0'
                   value={formData.lastEpisode}
-                  onChange={(e) => setFormData({ ...formData, lastEpisode: parseInt(e.target.value) || 0 })}
-                  className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-green-500'
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      lastEpisode: parseInt(e.target.value) || 0,
+                    })
+                  }
+                  className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)] focus:outline-none focus:ring-2 focus:ring-[var(--tm-text)]'
                 />
-                <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
+                <p className='mt-1 text-[13px] text-[color:var(--tm-muted)]'>
                   已看到第几集
                 </p>
               </div>
             </div>
             <div className='flex flex-col sm:flex-row sm:items-center gap-4 flex-wrap'>
               <div className='flex items-center gap-3'>
-                <span className='text-sm font-medium text-gray-700 dark:text-gray-300'>
+                <span className='text-sm font-medium text-[color:var(--tm-muted)]'>
                   启用此订阅
                 </span>
                 <Switch
                   checked={formData.enabled}
-                  onChange={(checked) => setFormData({ ...formData, enabled: checked })}
+                  onChange={(checked) =>
+                    setFormData({ ...formData, enabled: checked })
+                  }
                 />
               </div>
               <div className='flex items-center gap-3'>
-                <span className='text-sm font-medium text-gray-700 dark:text-gray-300'>
+                <span className='text-sm font-medium text-[color:var(--tm-muted)]'>
                   单集只下载一次
                 </span>
                 <Switch
                   checked={formData.onePerEpisode}
-                  onChange={(checked) => setFormData({ ...formData, onePerEpisode: checked })}
+                  onChange={(checked) =>
+                    setFormData({ ...formData, onePerEpisode: checked })
+                  }
                 />
               </div>
               <div className='flex items-center gap-3'>
-                <span className='text-sm font-medium text-gray-700 dark:text-gray-300'>
+                <span className='text-sm font-medium text-[color:var(--tm-muted)]'>
                   缺集重新检索
                 </span>
                 <Switch
@@ -1016,21 +1118,22 @@ export default function AnimeSubscriptionComponent({
                 />
               </div>
             </div>
-            <p className='text-xs text-gray-500 dark:text-gray-400 -mt-2'>
-              单集只下一次：同集多种子只入队一条。缺集重新检索：首搜跳集时按「番名+集数」补搜中间集（如 02）
+            <p className='text-[13px] text-[color:var(--tm-muted)] -mt-2'>
+              单集只下一次：同集多种子只入队一条。缺集重新检索：首搜跳集时按「番名+集数」补搜中间集（如
+              02）
             </p>
             <div className='flex gap-2 justify-end pt-2'>
               <button
                 onClick={resetForm}
                 disabled={loading}
-                className='px-4 py-2 rounded-lg bg-gray-200 text-gray-700 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600 transition-colors disabled:opacity-50'
+                className='px-4 py-2 rounded-lg bg-[var(--tm-surface-raised)] text-[color:var(--tm-muted)] hover:bg-[var(--tm-line)] transition-colors disabled:opacity-50 min-h-[44px] tm-press'
               >
                 取消
               </button>
               <button
                 onClick={handleSave}
                 disabled={loading}
-                className='px-4 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700 transition-colors disabled:opacity-50 flex items-center gap-2'
+                className='px-4 py-2 rounded-lg bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] hover:opacity-90 transition-colors disabled:opacity-50 flex items-center gap-2 min-h-[44px] tm-press'
               >
                 {loading && <Loader2 size={16} className='animate-spin' />}
                 {editingSubscription ? '更新' : '添加'}
@@ -1042,7 +1145,7 @@ export default function AnimeSubscriptionComponent({
 
       {/* 订阅列表 */}
       {subscriptions.length === 0 ? (
-        <div className='text-center py-12 text-gray-500 dark:text-gray-400'>
+        <div className='text-center py-12 text-[color:var(--tm-muted)]'>
           暂无订阅，点击"添加订阅"开始追番
         </div>
       ) : (
@@ -1050,33 +1153,43 @@ export default function AnimeSubscriptionComponent({
           {subscriptions.map((sub) => (
             <div
               key={sub.id}
-              className='bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4'
+              className='bg-[var(--tm-surface)] border border-[var(--tm-line)] rounded-lg p-4'
             >
               {/* 桌面端布局 */}
               <div className='hidden md:flex items-start justify-between gap-4'>
                 <div className='flex-1 space-y-2'>
                   <div className='flex items-center gap-3'>
-                    <h3 className='text-lg font-medium text-gray-900 dark:text-gray-100'>
+                    <h3 className='text-lg font-medium text-[color:var(--tm-text)]'>
                       {sub.title}
                     </h3>
-                    <span className='px-2 py-0.5 text-xs rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-200'>
-                      {sub.source === 'acgrip' ? 'ACG.RIP' : sub.source === 'mikan' ? '蜜柑' : sub.source === 'nyaa' ? 'Nyaa' : '动漫花园'}
+                    <span className='px-2 py-0.5 text-[13px] rounded-full bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)]'>
+                      {sub.source === 'acgrip'
+                        ? 'ACG.RIP'
+                        : sub.source === 'mikan'
+                        ? '蜜柑'
+                        : sub.source === 'nyaa'
+                        ? 'Nyaa'
+                        : '动漫花园'}
                     </span>
                     {sub.onePerEpisode ? (
-                      <span className='px-2 py-0.5 text-xs rounded-full bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200'>
+                      <span className='px-2 py-0.5 text-[13px] rounded-full bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)]'>
                         单集×1
                       </span>
                     ) : null}
                     {sub.refillMissingEpisodes ? (
-                      <span className='px-2 py-0.5 text-xs rounded-full bg-purple-100 text-purple-800 dark:bg-purple-900/40 dark:text-purple-200'>
+                      <span className='px-2 py-0.5 text-[13px] rounded-full bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)]'>
                         缺集补搜
                       </span>
                     ) : null}
                   </div>
-                  <div className='text-sm text-gray-600 dark:text-gray-400 space-y-1'>
+                  <div className='text-sm text-[color:var(--tm-muted)] space-y-1'>
                     <p>过滤条件：{sub.filterText}</p>
-                    {sub.excludeText ? <p>排除条件：{sub.excludeText}</p> : null}
-                    {sub.episodeRegex ? <p>集数正则：{sub.episodeRegex}</p> : null}
+                    {sub.excludeText ? (
+                      <p>排除条件：{sub.excludeText}</p>
+                    ) : null}
+                    {sub.episodeRegex ? (
+                      <p>集数正则：{sub.episodeRegex}</p>
+                    ) : null}
                     <p>当前集数：第 {sub.lastEpisode} 集</p>
                     <p>上次检查：{formatTime(sub.lastCheckTime)}</p>
                   </div>
@@ -1090,7 +1203,7 @@ export default function AnimeSubscriptionComponent({
                   <button
                     onClick={() => handleCheckSubscription(sub.id)}
                     disabled={checkingId === sub.id}
-                    className='p-2 text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/20 rounded-lg transition-colors disabled:opacity-50'
+                    className='p-2 text-[color:var(--tm-text)] hover:bg-[var(--tm-line)] rounded-lg transition-colors disabled:opacity-50 min-h-[44px] tm-press'
                     title='立即检查'
                   >
                     {checkingId === sub.id ? (
@@ -1102,17 +1215,27 @@ export default function AnimeSubscriptionComponent({
                   <button
                     onClick={() => handleEdit(sub)}
                     disabled={loading}
-                    className='p-2 text-green-600 hover:bg-green-50 dark:text-green-400 dark:hover:bg-green-900/20 rounded-lg transition-colors disabled:opacity-50'
+                    className='p-2 text-[color:var(--tm-text)] hover:bg-[var(--tm-line)] rounded-lg transition-colors disabled:opacity-50 min-h-[44px] tm-press'
                     title='编辑'
                   >
-                    <svg className='w-[18px] h-[18px]' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                      <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z' />
+                    <svg
+                      className='w-[18px] h-[18px]'
+                      fill='none'
+                      stroke='currentColor'
+                      viewBox='0 0 24 24'
+                    >
+                      <path
+                        strokeLinecap='round'
+                        strokeLinejoin='round'
+                        strokeWidth={2}
+                        d='M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z'
+                      />
                     </svg>
                   </button>
                   <button
                     onClick={() => handleDelete(sub.id, sub.title)}
                     disabled={loading}
-                    className='p-2 text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20 rounded-lg transition-colors disabled:opacity-50'
+                    className='p-2 text-[color:var(--tm-text)] hover:bg-[var(--tm-line)] rounded-lg transition-colors disabled:opacity-50 min-h-[44px] tm-press'
                     title='删除'
                   >
                     <Trash2 size={18} />
@@ -1124,20 +1247,26 @@ export default function AnimeSubscriptionComponent({
               <div className='md:hidden space-y-3'>
                 <div className='flex items-start justify-between gap-2'>
                   <div className='flex-1 min-w-0'>
-                    <h3 className='text-base font-medium text-gray-900 dark:text-gray-100 truncate'>
+                    <h3 className='text-base font-medium text-[color:var(--tm-text)] truncate'>
                       {sub.title}
                     </h3>
                     <div className='flex flex-wrap gap-1 mt-1'>
-                      <span className='inline-block px-2 py-0.5 text-xs rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-200'>
-                        {sub.source === 'acgrip' ? 'ACG.RIP' : sub.source === 'mikan' ? '蜜柑' : sub.source === 'nyaa' ? 'Nyaa' : '动漫花园'}
+                      <span className='inline-block px-2 py-0.5 text-[13px] rounded-full bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)]'>
+                        {sub.source === 'acgrip'
+                          ? 'ACG.RIP'
+                          : sub.source === 'mikan'
+                          ? '蜜柑'
+                          : sub.source === 'nyaa'
+                          ? 'Nyaa'
+                          : '动漫花园'}
                       </span>
                       {sub.onePerEpisode ? (
-                        <span className='inline-block px-2 py-0.5 text-xs rounded-full bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200'>
+                        <span className='inline-block px-2 py-0.5 text-[13px] rounded-full bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)]'>
                           单集×1
                         </span>
                       ) : null}
                       {sub.refillMissingEpisodes ? (
-                        <span className='inline-block px-2 py-0.5 text-xs rounded-full bg-purple-100 text-purple-800 dark:bg-purple-900/40 dark:text-purple-200'>
+                        <span className='inline-block px-2 py-0.5 text-[13px] rounded-full bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)]'>
                           缺集补搜
                         </span>
                       ) : null}
@@ -1149,7 +1278,7 @@ export default function AnimeSubscriptionComponent({
                     disabled={loading}
                   />
                 </div>
-                <div className='text-sm text-gray-600 dark:text-gray-400 space-y-1'>
+                <div className='text-sm text-[color:var(--tm-muted)] space-y-1'>
                   <p className='break-all'>过滤：{sub.filterText}</p>
                   {sub.excludeText ? (
                     <p className='break-all'>排除：{sub.excludeText}</p>
@@ -1157,13 +1286,16 @@ export default function AnimeSubscriptionComponent({
                   {sub.episodeRegex ? (
                     <p className='break-all'>集数正则：{sub.episodeRegex}</p>
                   ) : null}
-                  <p>集数：第 {sub.lastEpisode} 集 · {formatTime(sub.lastCheckTime)}</p>
+                  <p>
+                    集数：第 {sub.lastEpisode} 集 ·{' '}
+                    {formatTime(sub.lastCheckTime)}
+                  </p>
                 </div>
                 <div className='flex items-center gap-2 pt-1'>
                   <button
                     onClick={() => handleCheckSubscription(sub.id)}
                     disabled={checkingId === sub.id}
-                    className='flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-sm text-blue-600 bg-blue-50 hover:bg-blue-100 dark:text-blue-400 dark:bg-blue-900/20 dark:hover:bg-blue-900/30 rounded-lg transition-colors disabled:opacity-50'
+                    className='flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-sm text-[color:var(--tm-text)] bg-[var(--tm-surface-raised)] hover:bg-[var(--tm-line)] rounded-lg transition-colors disabled:opacity-50 min-h-[44px] tm-press'
                   >
                     {checkingId === sub.id ? (
                       <>
@@ -1180,17 +1312,27 @@ export default function AnimeSubscriptionComponent({
                   <button
                     onClick={() => handleEdit(sub)}
                     disabled={loading}
-                    className='flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-sm text-green-600 bg-green-50 hover:bg-green-100 dark:text-green-400 dark:bg-green-900/20 dark:hover:bg-green-900/30 rounded-lg transition-colors disabled:opacity-50'
+                    className='flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-sm text-[color:var(--tm-text)] bg-[var(--tm-surface-raised)] hover:bg-[var(--tm-line)] rounded-lg transition-colors disabled:opacity-50 min-h-[44px] tm-press'
                   >
-                    <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                      <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z' />
+                    <svg
+                      className='w-4 h-4'
+                      fill='none'
+                      stroke='currentColor'
+                      viewBox='0 0 24 24'
+                    >
+                      <path
+                        strokeLinecap='round'
+                        strokeLinejoin='round'
+                        strokeWidth={2}
+                        d='M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z'
+                      />
                     </svg>
                     <span>编辑</span>
                   </button>
                   <button
                     onClick={() => handleDelete(sub.id, sub.title)}
                     disabled={loading}
-                    className='flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-sm text-red-600 bg-red-50 hover:bg-red-100 dark:text-red-400 dark:bg-red-900/20 dark:hover:bg-red-900/30 rounded-lg transition-colors disabled:opacity-50'
+                    className='flex-1 flex items-center justify-center gap-1.5 px-3 py-2 text-sm text-[color:var(--tm-text)] bg-[var(--tm-surface-raised)] hover:bg-[var(--tm-line)] rounded-lg transition-colors disabled:opacity-50 min-h-[44px] tm-press'
                   >
                     <Trash2 size={16} />
                     <span>删除</span>

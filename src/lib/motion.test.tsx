@@ -28,6 +28,32 @@ afterEach(() => {
   cleanup();
   delete document.documentElement.dataset.tmReducedMotion;
 });
+test('a client-mounted card reads the preference before its first animation frame', () => {
+  const frames: boolean[] = [];
+  function FirstFrame() {
+    frames.push(useReducedMotionSetting());
+    return null;
+  }
+  render(<FirstFrame />);
+  expect(frames[0]).toBe(false);
+});
+
+test('a client-mounted panel respects an already enabled site preference', () => {
+  document.documentElement.dataset.tmReducedMotion = 'true';
+  const frames: boolean[] = [];
+  function FirstFrame() {
+    frames.push(useReducedMotionSetting());
+    return null;
+  }
+  render(<FirstFrame />);
+  expect(frames[0]).toBe(true);
+});
+test('server rendering retains the still snapshot used for hydration', () => {
+  const { renderToString } = jest.requireActual<
+    typeof import('react-dom/server')
+  >('react-dom/server.node');
+  expect(renderToString(<Probe />)).toContain('true');
+});
 test('reacts to HTML and system preferences; either may reduce motion', async () => {
   render(<Probe />);
   expect(screen.getByRole('status')).toHaveTextContent('false');

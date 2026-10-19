@@ -27,8 +27,9 @@ export default function EmptyState({
   if (tone === 'error') {
     return (
       <div
+        role='alert'
         className={cn(
-          'flex flex-wrap items-center justify-between gap-3 rounded-md border border-red-300/70 bg-red-50 p-4 text-sm text-red-700 dark:border-red-500/25 dark:bg-red-950/25 dark:text-red-300',
+          'flex flex-wrap items-center justify-between gap-3 rounded-md border border-[var(--tm-danger)] bg-[var(--tm-surface-raised)] p-4 text-sm text-[color:var(--tm-text)]',
           className
         )}
       >
@@ -46,14 +47,14 @@ export default function EmptyState({
       )}
     >
       {icon ? (
-        <div className='flex h-14 w-14 items-center justify-center rounded-full bg-library-ochre-tint text-library-ochre dark:bg-library-night-ochre-tint dark:text-library-night-ochre'>
+        <div className='flex h-14 w-14 items-center justify-center rounded-full bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)]'>
           {icon}
         </div>
       ) : null}
       {title ? (
         <div
           className={cn(
-            'mt-4 text-base font-semibold text-library-ink dark:text-library-night-ink',
+            'mt-4 text-lg font-medium text-[color:var(--tm-text)]',
             LIBRARY_SERIF
           )}
         >

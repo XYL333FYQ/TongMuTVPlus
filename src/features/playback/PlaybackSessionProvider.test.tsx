@@ -118,6 +118,7 @@ function Probe({ dock = false }: { dock?: boolean }) {
       </button>
       <button onClick={session.minimize}>测试收起</button>
       <button onClick={session.restore}>测试恢复</button>
+      <button onClick={session.enterPersonalViewing}>测试个人观看</button>
       <button
         onClick={() =>
           session.setMetadata({ title: '影片 A', error: '网络暂时断开' })
@@ -153,6 +154,49 @@ function deferred() {
   });
   return { promise, resolve };
 }
+
+it('uses the existing personal choice for the current film after acknowledgement without remounting', async () => {
+  mockPathname = '/watch-room';
+  mockRoom = makeRoom();
+  const acknowledgement = deferred();
+  mockRoom.roomCommand.mockReturnValueOnce(acknowledgement.promise);
+  render(<Harness dock />);
+  const video = await screen.findByTestId('session-video');
+  const href = screen.getByTestId('session-href').textContent;
+  fireEvent.click(screen.getByRole('button', { name: '测试个人观看' }));
+  expect(mockRoom.roomCommand).toHaveBeenCalledWith('room:following', {
+    following: false,
+  });
+  expect(screen.getByTestId('session-following')).toHaveTextContent('true');
+  await act(async () => acknowledgement.resolve());
+  expect(screen.getByTestId('session-following')).toHaveTextContent('false');
+  expect(screen.getByTestId('session-href')).toHaveTextContent(href || '');
+  expect(screen.getByTestId('session-video')).toBe(video);
+  expect(mockMounts).toBe(1);
+  expect(mockUnmounts).toBe(0);
+  fireEvent.click(screen.getByRole('button', { name: '回到一起看' }));
+  await waitFor(() =>
+    expect(screen.getByTestId('session-following')).toHaveTextContent('true')
+  );
+  expect(screen.getByTestId('session-video')).toBe(video);
+});
+
+it('folds through the room corner icon independently from personal viewing', async () => {
+  mockPathname = '/watch-room';
+  mockRoom = makeRoom();
+  render(<Harness dock />);
+  const video = await screen.findByTestId('session-video');
+  const button = screen.getByRole('button', { name: '收起画面' });
+  expect(button).toHaveAttribute('title', '收起画面，继续播放');
+  fireEvent.click(button);
+  expect(screen.getByTestId('global-playback-host')).toHaveAttribute(
+    'data-presentation',
+    'folded'
+  );
+  expect(screen.getByTestId('session-following')).toHaveTextContent('true');
+  expect(mockRoom.roomCommand).not.toHaveBeenCalled();
+  expect(screen.getByTestId('session-video')).toBe(video);
+});
 
 it('keeps the docked player aligned when an inner page container scrolls without remounting media', async () => {
   mockPathname = '/watch-room';

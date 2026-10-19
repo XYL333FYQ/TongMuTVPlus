@@ -75,25 +75,25 @@ export default function Drawer({
   const content = (
     <div className='fixed inset-0 z-[10000] flex items-center justify-end pointer-events-none'>
       <div
-        className={`relative ${width} h-full bg-white dark:bg-gray-900 shadow-2xl flex flex-col transition-transform duration-300 ease-out pointer-events-auto ${
+        className={`relative ${width} h-full bg-[var(--tm-surface)] shadow-2xl flex flex-col transition-transform duration-300 ease-out pointer-events-auto ${
           position === 'right'
             ? isAnimating
               ? 'translate-x-0'
               : 'translate-x-full'
             : isAnimating
-              ? 'translate-x-0'
-              : '-translate-x-full'
+            ? 'translate-x-0'
+            : '-translate-x-full'
         }`}
       >
-        <div className='flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700'>
-          <h2 className='text-xl font-semibold text-gray-900 dark:text-gray-100'>
+        <div className='flex items-center justify-between p-4 border-b border-[var(--tm-line)]'>
+          <h2 className='text-xl font-medium text-[color:var(--tm-text)]'>
             {title}
           </h2>
           <button
             onClick={onClose}
-            className='p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors'
+            className='p-2 hover:bg-[var(--tm-line)] rounded-lg transition-colors'
           >
-            <X size={20} className='text-gray-500 dark:text-gray-400' />
+            <X size={20} className='text-[color:var(--tm-muted)]' />
           </button>
         </div>
 

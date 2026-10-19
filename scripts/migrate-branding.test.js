@@ -1,9 +1,22 @@
+/** @jest-environment node */
 /* eslint-disable @typescript-eslint/no-var-requires */
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
-const { test } = require('node:test');
+// Keep the same assertions usable by Jest 27 and by `node --test`.
+const test =
+  typeof globalThis.test === 'function'
+    ? (name, body) =>
+        globalThis.test(name, async () => {
+          const cleanups = [];
+          try {
+            await body({ after: (cleanup) => cleanups.push(cleanup) });
+          } finally {
+            for (const cleanup of cleanups.reverse()) await cleanup();
+          }
+        })
+    : require('node:test').test;
 const Database = require('better-sqlite3');
 const {
   previewBranding,

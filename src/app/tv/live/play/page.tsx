@@ -1,7 +1,20 @@
 'use client';
 
-import { AlertTriangle, ArrowLeft, Clock, Heart, Loader2, Maximize, Radio, RotateCcw, Search, Star, Volume2, VolumeX } from 'lucide-react';
+import {
+  AlertTriangle,
+  ArrowLeft,
+  Clock,
+  Heart,
+  Maximize,
+  Radio,
+  RotateCcw,
+  Search,
+  Star,
+  Volume2,
+  VolumeX,
+} from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import type { CSSProperties } from 'react';
 import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 
 import { deleteFavorite, isFavorited, saveFavorite } from '@/lib/db.client';
@@ -9,8 +22,33 @@ import { deleteFavorite, isFavorited, saveFavorite } from '@/lib/db.client';
 import TVNativeVideo from '@/components/tv/player/TVNativeVideo';
 import TVVirtualRemote from '@/components/tv/TVVirtualRemote';
 
-type LiveSource = { key: string; name: string; proxyMode?: 'full' | 'm3u8-only' | 'direct' };
-type LiveChannel = { id: string; tvgId?: string; name: string; logo?: string; group?: string; url: string };
+const TV_CINEMA_STYLE = {
+  '--tm-bg': 'var(--tm-room-cinema-bg)',
+  '--tm-surface':
+    'color-mix(in srgb,var(--tm-room-cinema-bg) 92%,var(--tm-room-player-text))',
+  '--tm-surface-raised':
+    'color-mix(in srgb,var(--tm-room-cinema-bg) 85%,var(--tm-room-player-text))',
+  '--tm-text': 'var(--tm-room-player-text)',
+  '--tm-muted':
+    'color-mix(in srgb,var(--tm-room-player-text) 72%,var(--tm-room-cinema-bg))',
+  '--tm-line':
+    'color-mix(in srgb,var(--tm-room-player-text) 15%,var(--tm-room-cinema-bg))',
+  '--tm-accent-contrast': 'var(--tm-room-cinema-bg)',
+} as CSSProperties;
+
+type LiveSource = {
+  key: string;
+  name: string;
+  proxyMode?: 'full' | 'm3u8-only' | 'direct';
+};
+type LiveChannel = {
+  id: string;
+  tvgId?: string;
+  name: string;
+  logo?: string;
+  group?: string;
+  url: string;
+};
 type EpgProgram = { start: string; end: string; title: string };
 type TVPlayerSourceType = 'm3u8' | 'flv' | 'native';
 
@@ -44,22 +82,36 @@ function getLogoUrl(logo?: string, source?: string) {
 function getUrlSourceType(rawUrl: string): TVPlayerSourceType | 'unknown' {
   const lower = rawUrl.toLowerCase();
   const path = lower.split('?')[0];
-  if (path.endsWith('.m3u8') || path.endsWith('.m3u') || lower.includes('.m3u8') || lower.includes('.m3u')) return 'm3u8';
+  if (
+    path.endsWith('.m3u8') ||
+    path.endsWith('.m3u') ||
+    lower.includes('.m3u8') ||
+    lower.includes('.m3u')
+  )
+    return 'm3u8';
   if (path.endsWith('.flv') || lower.includes('.flv?')) return 'flv';
   if (/\.(mp4|webm|ogv|ogg|mov)(\?.*)?$/.test(path)) return 'native';
   return 'unknown';
 }
 
-async function resolveLiveUrl(rawUrl: string, source?: LiveSource | null): Promise<{ url: string; type: TVPlayerSourceType }> {
+async function resolveLiveUrl(
+  rawUrl: string,
+  source?: LiveSource | null
+): Promise<{ url: string; type: TVPlayerSourceType }> {
   const proxyMode = source?.proxyMode || 'full';
   const sourceType = getUrlSourceType(rawUrl);
 
   if (sourceType === 'm3u8') {
     return {
       type: 'm3u8',
-      url: proxyMode === 'direct'
-        ? rawUrl
-        : `/api/proxy/m3u8?url=${encodeURIComponent(rawUrl)}&moontv-source=${encodeURIComponent(source?.key || '')}${proxyMode === 'm3u8-only' ? '&allowCORS=true' : ''}`,
+      url:
+        proxyMode === 'direct'
+          ? rawUrl
+          : `/api/proxy/m3u8?url=${encodeURIComponent(
+              rawUrl
+            )}&moontv-source=${encodeURIComponent(source?.key || '')}${
+              proxyMode === 'm3u8-only' ? '&allowCORS=true' : ''
+            }`,
     };
   }
   if (sourceType === 'flv') return { type: 'flv', url: rawUrl };
@@ -68,7 +120,9 @@ async function resolveLiveUrl(rawUrl: string, source?: LiveSource | null): Promi
   if (!source?.key) throw new Error('未知直播流格式');
 
   const precheckRes = await fetch(
-    `/api/live/precheck?url=${encodeURIComponent(rawUrl)}&moontv-source=${encodeURIComponent(source.key)}`,
+    `/api/live/precheck?url=${encodeURIComponent(
+      rawUrl
+    )}&moontv-source=${encodeURIComponent(source.key)}`,
     { cache: 'no-store' }
   );
   if (!precheckRes.ok) throw new Error('不支持的直播流格式');
@@ -79,9 +133,14 @@ async function resolveLiveUrl(rawUrl: string, source?: LiveSource | null): Promi
   if (precheck?.type === 'm3u8') {
     return {
       type: 'm3u8',
-      url: proxyMode === 'direct'
-        ? rawUrl
-        : `/api/proxy/m3u8?url=${encodeURIComponent(rawUrl)}&moontv-source=${encodeURIComponent(source.key)}${proxyMode === 'm3u8-only' ? '&allowCORS=true' : ''}`,
+      url:
+        proxyMode === 'direct'
+          ? rawUrl
+          : `/api/proxy/m3u8?url=${encodeURIComponent(
+              rawUrl
+            )}&moontv-source=${encodeURIComponent(source.key)}${
+              proxyMode === 'm3u8-only' ? '&allowCORS=true' : ''
+            }`,
     };
   }
 
@@ -116,8 +175,13 @@ function TVLivePlayClient() {
   const [muted, setMuted] = useState(initialVolumeState.muted);
   const [volume, setVolume] = useState(initialVolumeState.volume);
   const [showVolumeHint, setShowVolumeHint] = useState(false);
-  const [channelHint, setChannelHint] = useState<{ number: number; name: string } | null>(null);
-  const channelButtonRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+  const [channelHint, setChannelHint] = useState<{
+    number: number;
+    name: string;
+  } | null>(null);
+  const channelButtonRefs = useRef<Record<string, HTMLButtonElement | null>>(
+    {}
+  );
   const digitTimerRef = useRef<number | null>(null);
   const volumeHintTimerRef = useRef<number | null>(null);
   const channelHintTimerRef = useRef<number | null>(null);
@@ -128,7 +192,8 @@ function TVLivePlayClient() {
     let alive = true;
     fetch('/api/live/sources')
       .then((r) => {
-        if (r.status === 401 || r.status === 403) throw new Error('无权限访问电视直播，请先登录或检查权限');
+        if (r.status === 401 || r.status === 403)
+          throw new Error('无权限访问电视直播，请先登录或检查权限');
         if (!r.ok) throw new Error('获取直播源失败');
         return r.json();
       })
@@ -136,7 +201,8 @@ function TVLivePlayClient() {
         if (!alive) return;
         const list = data.data || [];
         setSources(list);
-        const selected = list.find((s: LiveSource) => s.key === needSource) || list[0] || null;
+        const selected =
+          list.find((s: LiveSource) => s.key === needSource) || list[0] || null;
         setSource(selected);
         if (!selected) setLoading(false);
       })
@@ -144,7 +210,9 @@ function TVLivePlayClient() {
         setError(err instanceof Error ? err.message : '获取直播源失败');
         setLoading(false);
       });
-    return () => { alive = false; };
+    return () => {
+      alive = false;
+    };
   }, [needSource]);
 
   useEffect(() => {
@@ -154,7 +222,8 @@ function TVLivePlayClient() {
     setError('');
     fetch(`/api/live/channels?source=${encodeURIComponent(source.key)}`)
       .then((r) => {
-        if (r.status === 401 || r.status === 403) throw new Error('无权限访问电视直播，请先登录或检查权限');
+        if (r.status === 401 || r.status === 403)
+          throw new Error('无权限访问电视直播，请先登录或检查权限');
         if (!r.ok) throw new Error('获取频道列表失败');
         return r.json();
       })
@@ -169,13 +238,20 @@ function TVLivePlayClient() {
           url: item.url,
         }));
         setChannels(list);
-        const selected = list.find((c: LiveChannel) => c.id === needChannel) || list[0] || null;
+        const selected =
+          list.find((c: LiveChannel) => c.id === needChannel) ||
+          list[0] ||
+          null;
         setChannel(selected);
         setSelectedGroup(selected?.group || list[0]?.group || '');
       })
-      .catch((err) => setError(err instanceof Error ? err.message : '获取频道列表失败'))
+      .catch((err) =>
+        setError(err instanceof Error ? err.message : '获取频道列表失败')
+      )
       .finally(() => alive && setLoading(false));
-    return () => { alive = false; };
+    return () => {
+      alive = false;
+    };
   }, [source, needChannel]);
 
   useEffect(() => {
@@ -194,14 +270,20 @@ function TVLivePlayClient() {
       })
       .catch((err) => {
         if (!alive) return;
-        setUnsupportedError(err instanceof Error ? err.message : '不支持的直播流格式');
+        setUnsupportedError(
+          err instanceof Error ? err.message : '不支持的直播流格式'
+        );
       });
-    return () => { alive = false; };
+    return () => {
+      alive = false;
+    };
   }, [channel, source]);
 
   useEffect(() => {
     if (!source || !channel) return;
-    isFavorited(`live_${source.key}`, `live_${channel.id}`).then(setFavorited).catch(() => undefined);
+    isFavorited(`live_${source.key}`, `live_${channel.id}`)
+      .then(setFavorited)
+      .catch(() => undefined);
   }, [channel, source]);
 
   useEffect(() => {
@@ -211,15 +293,21 @@ function TVLivePlayClient() {
     }
     let alive = true;
     setEpgLoading(true);
-    fetch(`/api/live/epg?source=${encodeURIComponent(source.key)}&tvgId=${encodeURIComponent(channel.tvgId)}`)
-      .then((r) => r.ok ? r.json() : null)
+    fetch(
+      `/api/live/epg?source=${encodeURIComponent(
+        source.key
+      )}&tvgId=${encodeURIComponent(channel.tvgId)}`
+    )
+      .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
         if (!alive) return;
         setEpgPrograms((data?.data?.programs || []).slice(0, 12));
       })
       .catch(() => alive && setEpgPrograms([]))
       .finally(() => alive && setEpgLoading(false));
-    return () => { alive = false; };
+    return () => {
+      alive = false;
+    };
   }, [channel?.tvgId, source]);
 
   useEffect(() => {
@@ -261,17 +349,27 @@ function TVLivePlayClient() {
           setVideoType(type);
           setVideoUrl(url);
         })
-        .catch((err) => setUnsupportedError(err instanceof Error ? err.message : '不支持的直播流格式'));
+        .catch((err) =>
+          setUnsupportedError(
+            err instanceof Error ? err.message : '不支持的直播流格式'
+          )
+        );
     }, 2200);
     return () => window.clearTimeout(timer);
   }, [channel, playbackError, retryCount, source]);
 
-  const groups = useMemo(() => Array.from(new Set(channels.map((item) => item.group || '其他'))), [channels]);
+  const groups = useMemo(
+    () => Array.from(new Set(channels.map((item) => item.group || '其他'))),
+    [channels]
+  );
   const filteredChannels = useMemo(() => {
     const keyword = query.trim().toLowerCase();
     return channels.filter((item) => {
       const groupMatched = (item.group || '其他') === selectedGroup;
-      const queryMatched = !keyword || item.name.toLowerCase().includes(keyword) || (item.group || '').toLowerCase().includes(keyword);
+      const queryMatched =
+        !keyword ||
+        item.name.toLowerCase().includes(keyword) ||
+        (item.group || '').toLowerCase().includes(keyword);
       return groupMatched && queryMatched;
     });
   }, [channels, query, selectedGroup]);
@@ -279,7 +377,12 @@ function TVLivePlayClient() {
   const precheckChannel = async (next: LiveChannel) => {
     if (!source) return;
     try {
-      await fetch(`/api/live/precheck?url=${encodeURIComponent(next.url)}&moontv-source=${encodeURIComponent(source.key)}`, { cache: 'no-store' });
+      await fetch(
+        `/api/live/precheck?url=${encodeURIComponent(
+          next.url
+        )}&moontv-source=${encodeURIComponent(source.key)}`,
+        { cache: 'no-store' }
+      );
     } catch {
       // 预检查失败不阻止切台，播放器错误层会给出重试/换台。
     }
@@ -292,8 +395,12 @@ function TVLivePlayClient() {
     if (revealControls) setShowPanel(true);
     const number = channels.findIndex((item) => item.id === next.id) + 1;
     setChannelHint({ number: number > 0 ? number : 1, name: next.name });
-    if (channelHintTimerRef.current) window.clearTimeout(channelHintTimerRef.current);
-    channelHintTimerRef.current = window.setTimeout(() => setChannelHint(null), 5000);
+    if (channelHintTimerRef.current)
+      window.clearTimeout(channelHintTimerRef.current);
+    channelHintTimerRef.current = window.setTimeout(
+      () => setChannelHint(null),
+      5000
+    );
   };
 
   const switchSource = (next: LiveSource) => {
@@ -328,7 +435,9 @@ function TVLivePlayClient() {
 
   const setVideoVolume = (next: number) => {
     const safe = Math.max(0, Math.min(1, next));
-    const video = document.querySelector<HTMLVideoElement>('[data-tv-player-root] video');
+    const video = document.querySelector<HTMLVideoElement>(
+      '[data-tv-player-root] video'
+    );
     if (video) {
       video.volume = safe;
       video.muted = safe <= 0;
@@ -336,12 +445,18 @@ function TVLivePlayClient() {
     setVolume(safe);
     setMuted(safe <= 0);
     setShowVolumeHint(true);
-    if (volumeHintTimerRef.current) window.clearTimeout(volumeHintTimerRef.current);
-    volumeHintTimerRef.current = window.setTimeout(() => setShowVolumeHint(false), 1200);
+    if (volumeHintTimerRef.current)
+      window.clearTimeout(volumeHintTimerRef.current);
+    volumeHintTimerRef.current = window.setTimeout(
+      () => setShowVolumeHint(false),
+      1200
+    );
   };
 
   const toggleMute = () => {
-    const video = document.querySelector<HTMLVideoElement>('[data-tv-player-root] video');
+    const video = document.querySelector<HTMLVideoElement>(
+      '[data-tv-player-root] video'
+    );
     const next = !muted;
     if (video) video.muted = next;
     setMuted(next);
@@ -350,14 +465,17 @@ function TVLivePlayClient() {
   const toggleFullscreen = () => {
     const root = document.querySelector<HTMLElement>('[data-tv-player-root]');
     if (!root) return;
-    if (document.fullscreenElement) document.exitFullscreen().catch(() => undefined);
+    if (document.fullscreenElement)
+      document.exitFullscreen().catch(() => undefined);
     else root.requestFullscreen?.().catch(() => undefined);
   };
 
   useEffect(() => {
     if (!videoUrl) return;
     window.requestAnimationFrame(() => {
-      const video = document.querySelector<HTMLVideoElement>('[data-tv-player-root] video');
+      const video = document.querySelector<HTMLVideoElement>(
+        '[data-tv-player-root] video'
+      );
       if (!video) return;
       video.volume = volume;
       video.muted = muted;
@@ -404,7 +522,9 @@ function TVLivePlayClient() {
       }
       if (event.key === 'Enter') {
         const active = document.activeElement;
-        const isControlFocused = active instanceof HTMLElement && Boolean(active.closest('[data-tv-live-control]'));
+        const isControlFocused =
+          active instanceof HTMLElement &&
+          Boolean(active.closest('[data-tv-live-control]'));
         if (!showPanel) {
           event.preventDefault();
           event.stopImmediatePropagation();
@@ -418,18 +538,28 @@ function TVLivePlayClient() {
           return;
         }
       }
-      if (!showPanel && (event.key === 'ArrowUp' || event.key === 'ArrowDown')) {
+      if (
+        !showPanel &&
+        (event.key === 'ArrowUp' || event.key === 'ArrowDown')
+      ) {
         event.preventDefault();
         event.stopImmediatePropagation();
-        const currentIndex = channels.findIndex((item) => item.id === channel?.id);
+        const currentIndex = channels.findIndex(
+          (item) => item.id === channel?.id
+        );
         if (currentIndex >= 0) {
-          const nextIndex = event.key === 'ArrowUp' ? currentIndex - 1 : currentIndex + 1;
-          const next = channels[Math.max(0, Math.min(channels.length - 1, nextIndex))];
+          const nextIndex =
+            event.key === 'ArrowUp' ? currentIndex - 1 : currentIndex + 1;
+          const next =
+            channels[Math.max(0, Math.min(channels.length - 1, nextIndex))];
           if (next && next.id !== channel?.id) switchChannel(next, false);
         }
         return;
       }
-      if (!showPanel && (event.key === 'ArrowLeft' || event.key === 'ArrowRight')) {
+      if (
+        !showPanel &&
+        (event.key === 'ArrowLeft' || event.key === 'ArrowRight')
+      ) {
         event.preventDefault();
         event.stopImmediatePropagation();
         setVideoVolume(volume + (event.key === 'ArrowRight' ? 0.05 : -0.05));
@@ -448,10 +578,14 @@ function TVLivePlayClient() {
         return;
       }
       if (event.key === 'PageUp' || event.key === 'PageDown') {
-        const currentIndex = channels.findIndex((item) => item.id === channel?.id);
+        const currentIndex = channels.findIndex(
+          (item) => item.id === channel?.id
+        );
         if (currentIndex >= 0) {
-          const nextIndex = event.key === 'PageUp' ? currentIndex - 1 : currentIndex + 1;
-          const next = channels[Math.max(0, Math.min(channels.length - 1, nextIndex))];
+          const nextIndex =
+            event.key === 'PageUp' ? currentIndex - 1 : currentIndex + 1;
+          const next =
+            channels[Math.max(0, Math.min(channels.length - 1, nextIndex))];
           if (next) switchChannel(next);
         }
       }
@@ -468,23 +602,50 @@ function TVLivePlayClient() {
     if (!showPanel || !channel?.id) return;
     window.requestAnimationFrame(() => {
       channelButtonRefs.current[channel.id]?.focus({ preventScroll: true });
-      channelButtonRefs.current[channel.id]?.scrollIntoView({ block: 'center', inline: 'nearest' });
+      channelButtonRefs.current[channel.id]?.scrollIntoView({
+        block: 'center',
+        inline: 'nearest',
+      });
     });
   }, [channel?.id, selectedGroup, showPanel]);
 
   if (loading) {
-    return <main className='fixed inset-0 flex items-center justify-center bg-black text-3xl font-bold text-white'><Loader2 className='mr-4 h-10 w-10 animate-spin text-rose-500' />正在进入电视直播...</main>;
+    return (
+      <main className='fixed inset-0 flex items-center justify-center bg-[var(--tm-surface)] text-3xl font-bold text-[color:var(--tm-text)]'>
+        <span
+          aria-hidden
+          className='tm-skeleton mr-4 h-10 w-10 text-[color:var(--tm-text)]'
+        />
+        正在进入电视直播...
+      </main>
+    );
   }
 
   if (error || !channel) {
     return (
-      <main className='fixed inset-0 flex items-center justify-center bg-black p-10 text-center text-white'>
-        <section role='alert' className='max-w-3xl rounded-[36px] border border-red-500/40 bg-red-950/50 p-10 shadow-2xl shadow-red-950/40'>
-          <AlertTriangle className='mx-auto mb-5 h-16 w-16 text-red-300' />
-          <h1 className='text-4xl font-black text-red-100'>{error || '没有可播放频道'}</h1>
+      <main className='fixed inset-0 flex items-center justify-center bg-[var(--tm-surface)] p-10 text-center text-[color:var(--tm-text)]'>
+        <section
+          role='alert'
+          className='max-w-3xl rounded-[36px] border border-[var(--tm-danger)] bg-[var(--tm-surface-raised)] p-10 shadow-2xl shadow-[color-mix(in_srgb,var(--tm-room-cinema-bg)_40%,transparent)]'
+        >
+          <AlertTriangle className='mx-auto mb-5 h-16 w-16 text-[color:var(--tm-danger)]' />
+          <h1 className=' text-[color:var(--tm-text)] text-[28px] font-bold md:text-[32px]'>
+            {error || '没有可播放频道'}
+          </h1>
           <div className='mt-8 flex justify-center gap-4'>
-            <button onClick={() => window.location.reload()} className='tv-focusable flex cursor-pointer items-center gap-3 rounded-2xl bg-rose-600 px-7 py-4 text-2xl font-black outline-none focus:ring-4 focus:ring-rose-300'><RotateCcw className='h-7 w-7' />重试</button>
-            <button onClick={() => router.back()} className='tv-focusable rounded-2xl bg-white/10 px-7 py-4 text-2xl font-black outline-none focus:ring-4 focus:ring-white/40'>返回</button>
+            <button
+              onClick={() => window.location.reload()}
+              className='tv-focusable flex cursor-pointer items-center gap-3 rounded-2xl bg-[var(--tm-text)] px-7 py-4 text-base font-medium focus:ring-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
+            >
+              <RotateCcw className='h-7 w-7' />
+              重试
+            </button>
+            <button
+              onClick={() => router.back()}
+              className='tv-focusable rounded-2xl bg-[var(--tm-surface-raised)] px-7 py-4 text-base font-medium focus:ring-[color-mix(in_srgb,var(--tm-text)_40%,transparent)] min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
+            >
+              返回
+            </button>
           </div>
         </section>
       </main>
@@ -494,8 +655,9 @@ function TVLivePlayClient() {
   return (
     <main
       data-tv-player-root
+      style={TV_CINEMA_STYLE}
       data-tv-controls-open={showPanel ? 'true' : 'false'}
-      className='fixed inset-0 overflow-hidden bg-black text-white'
+      className='fixed inset-0 overflow-hidden bg-[var(--tm-surface)] text-[color:var(--tm-text)]'
       onContextMenu={(event) => {
         const now = Date.now();
         if (now - menuKeyTimeRef.current < REMOTE_KEY_DEDUPE_MS) return;
@@ -504,103 +666,396 @@ function TVLivePlayClient() {
         setShowPanel((value) => !value);
       }}
     >
+      <style jsx global>{`
+        [data-tv-player-root] .tv-focusable,
+        [data-tv-player-root] .tv-focusable:active {
+          scale: 1;
+          transition-property: transform, opacity;
+        }
+        [data-tv-player-root] .tv-focusable:focus,
+        [data-tv-player-root] .tv-focusable:focus-visible,
+        [data-tv-player-root] .tv-focused {
+          outline: 2px solid var(--tm-text) !important;
+          outline-offset: 2px;
+          scale: 1;
+          background-color: var(--tm-surface-raised) !important;
+          color: var(--tm-text) !important;
+          box-shadow: none !important;
+        }
+        [data-tv-player-root] .tv-focusable[class~='bg-[var(--tm-text)]']:focus,
+        [data-tv-player-root]
+          .tv-focusable[class~='bg-[var(--tm-text)]']:focus-visible {
+          background-color: var(--tm-text) !important;
+          color: var(--tm-accent-contrast) !important;
+        }
+        [data-tv-player-root] .tv-focusable:focus::after,
+        [data-tv-player-root] .tv-focusable:focus-visible::after,
+        [data-tv-player-root] .tv-focused::after {
+          background: none;
+          opacity: 0;
+        }
+        html[data-tm-reduced-motion='true'] [data-tv-player-root] * {
+          transition: none !important;
+          animation: none !important;
+          scroll-behavior: auto !important;
+        }
+        @media (prefers-reduced-motion: reduce) {
+          [data-tv-player-root] * {
+            transition: none !important;
+            animation: none !important;
+            scroll-behavior: auto !important;
+          }
+        }
+      `}</style>
       {unsupportedError ? (
-        <div role='alert' className='flex h-full items-center justify-center bg-black p-10 text-center text-white'>
-          <section className='max-w-3xl rounded-[36px] border border-amber-500/40 bg-slate-950/92 p-9 shadow-2xl shadow-black/70'>
-            <AlertTriangle className='mx-auto mb-5 h-14 w-14 text-amber-300' />
-            <h2 className='text-4xl font-black'>当前直播流格式不支持</h2>
-            <p className='mt-3 text-2xl text-slate-300'>{unsupportedError}</p>
-            <button onClick={() => setShowPanel(true)} className='tv-focusable mt-8 rounded-2xl bg-white/10 px-7 py-4 text-2xl font-black outline-none focus:ring-4 focus:ring-white/40'>频道列表</button>
+        <div
+          role='alert'
+          className='flex h-full items-center justify-center bg-[var(--tm-surface)] p-10 text-center text-[color:var(--tm-text)]'
+        >
+          <section className='max-w-3xl rounded-[36px] border border-[var(--tm-line)] bg-[var(--tm-surface)] p-9 shadow-2xl shadow-[color-mix(in_srgb,var(--tm-room-cinema-bg)_70%,transparent)]'>
+            <AlertTriangle className='mx-auto mb-5 h-14 w-14 text-[color:var(--tm-text)]' />
+            <h2 className=' text-xl font-medium md:text-2xl'>
+              当前直播流格式不支持
+            </h2>
+            <p className='mt-3 text-base text-[color:var(--tm-muted)]'>
+              {unsupportedError}
+            </p>
+            <button
+              onClick={() => setShowPanel(true)}
+              className='tv-focusable mt-8 rounded-2xl bg-[var(--tm-surface-raised)] px-7 py-4 text-base font-medium focus:ring-[color-mix(in_srgb,var(--tm-text)_40%,transparent)] min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
+            >
+              频道列表
+            </button>
           </section>
         </div>
-      ) : videoUrl ? <TVNativeVideo key={`${videoType || 'auto'}:${videoUrl}`} url={videoUrl} sourceType={videoType} poster={getLogoUrl(channel.logo, source?.key)} live title={channel.name} onError={() => setPlaybackError(true)} /> : <div className='flex h-full items-center justify-center text-3xl font-bold'><Loader2 className='mr-4 h-10 w-10 animate-spin text-rose-500' />正在解析直播地址...</div>}
+      ) : videoUrl ? (
+        <TVNativeVideo
+          key={`${videoType || 'auto'}:${videoUrl}`}
+          url={videoUrl}
+          sourceType={videoType}
+          poster={getLogoUrl(channel.logo, source?.key)}
+          live
+          title={channel.name}
+          onError={() => setPlaybackError(true)}
+        />
+      ) : (
+        <div className='flex h-full items-center justify-center text-3xl font-bold'>
+          <span
+            aria-hidden
+            className='tm-skeleton mr-4 h-10 w-10 text-[color:var(--tm-text)]'
+          />
+          正在解析直播地址...
+        </div>
+      )}
 
       {playbackError && (
-        <div role='alert' className='absolute inset-0 z-30 flex items-center justify-center bg-black/72 p-8 text-white backdrop-blur-sm'>
-          <section className='max-w-3xl rounded-[36px] border border-white/10 bg-slate-950/92 p-9 text-center shadow-2xl shadow-black/70'>
-            <AlertTriangle className='mx-auto mb-5 h-14 w-14 text-amber-300' />
-            <h2 className='text-4xl font-black'>当前频道播放失败</h2>
-            <p className='mt-3 text-2xl text-slate-300'>{retryCount < 3 ? `正在自动重连（${retryCount + 1}/3）...` : '可以重试当前频道，或打开频道面板切换频道/直播源。'}</p>
+        <div
+          role='alert'
+          className='absolute inset-0 z-30 flex items-center justify-center bg-[color:color-mix(in_srgb,var(--tm-room-cinema-bg)_72%,transparent)] p-8 text-[color:var(--tm-text)] '
+        >
+          <section className='max-w-3xl rounded-[36px] border border-[var(--tm-line)] bg-[var(--tm-surface)] p-9 text-center shadow-2xl shadow-[color-mix(in_srgb,var(--tm-room-cinema-bg)_70%,transparent)]'>
+            <AlertTriangle className='mx-auto mb-5 h-14 w-14 text-[color:var(--tm-text)]' />
+            <h2 className=' text-xl font-medium md:text-2xl'>
+              当前频道播放失败
+            </h2>
+            <p className='mt-3 text-base text-[color:var(--tm-muted)]'>
+              {retryCount < 3
+                ? `正在自动重连（${retryCount + 1}/3）...`
+                : '可以重试当前频道，或打开频道面板切换频道/直播源。'}
+            </p>
             <div className='mt-8 flex justify-center gap-4'>
-              <button onClick={() => { setPlaybackError(false); setUnsupportedError(''); setVideoUrl(''); setVideoType(undefined); if (channel) resolveLiveUrl(channel.url, source).then(({ url, type }) => { setVideoType(type); setVideoUrl(url); }).catch((err) => setUnsupportedError(err instanceof Error ? err.message : '不支持的直播流格式')); }} className='tv-focusable flex cursor-pointer items-center gap-3 rounded-2xl bg-rose-600 px-7 py-4 text-2xl font-black outline-none focus:ring-4 focus:ring-rose-300'><RotateCcw className='h-7 w-7' />重试</button>
-              <button onClick={() => { setPlaybackError(false); setShowPanel(true); }} className='tv-focusable rounded-2xl bg-white/10 px-7 py-4 text-2xl font-black outline-none focus:ring-4 focus:ring-white/40'>频道列表</button>
+              <button
+                onClick={() => {
+                  setPlaybackError(false);
+                  setUnsupportedError('');
+                  setVideoUrl('');
+                  setVideoType(undefined);
+                  if (channel)
+                    resolveLiveUrl(channel.url, source)
+                      .then(({ url, type }) => {
+                        setVideoType(type);
+                        setVideoUrl(url);
+                      })
+                      .catch((err) =>
+                        setUnsupportedError(
+                          err instanceof Error
+                            ? err.message
+                            : '不支持的直播流格式'
+                        )
+                      );
+                }}
+                className='tv-focusable flex cursor-pointer items-center gap-3 rounded-2xl bg-[var(--tm-text)] px-7 py-4 text-base font-medium focus:ring-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
+              >
+                <RotateCcw className='h-7 w-7' />
+                重试
+              </button>
+              <button
+                onClick={() => {
+                  setPlaybackError(false);
+                  setShowPanel(true);
+                }}
+                className='tv-focusable rounded-2xl bg-[var(--tm-surface-raised)] px-7 py-4 text-base font-medium focus:ring-[color-mix(in_srgb,var(--tm-text)_40%,transparent)] min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
+              >
+                频道列表
+              </button>
             </div>
           </section>
         </div>
       )}
 
-      <div className={`absolute inset-0 pointer-events-none transition-opacity duration-300 ${showPanel ? 'opacity-100' : 'opacity-0'}`}>
-        <div className='absolute inset-x-0 top-0 h-44 bg-gradient-to-b from-black/90 to-transparent' />
-        <div className='absolute inset-y-0 left-0 w-[560px] bg-gradient-to-r from-black/90 to-transparent' />
+      <div
+        className={`absolute inset-0 pointer-events-none transition-opacity duration-300 ${
+          showPanel ? 'opacity-100' : 'opacity-0'
+        }`}
+      >
+        <div className='absolute inset-x-0 top-0 h-44 bg-[var(--tm-surface)] to-transparent' />
+        <div className='absolute inset-y-0 left-0 w-[560px] bg-[var(--tm-surface)] to-transparent' />
       </div>
 
-      <div className={`absolute left-8 right-8 top-8 flex items-center justify-between transition-opacity duration-300 ${showPanel ? 'opacity-100' : 'opacity-0'}`}>
-        <button onClick={() => { if (showPanel) setShowPanel(false); else router.back(); }} data-tv-live-control className='tv-focusable flex cursor-pointer items-center gap-3 rounded-2xl bg-black/70 px-5 py-4 text-2xl font-black outline-none backdrop-blur focus:ring-4 focus:ring-rose-300'><ArrowLeft className='h-7 w-7' />返回</button>
-        <div className='flex items-center gap-4 rounded-2xl bg-black/70 px-6 py-4 backdrop-blur'>
-          {channel.logo ? <img src={getLogoUrl(channel.logo, source?.key)} alt='' className='h-12 w-12 rounded-xl object-contain' /> : <Radio className='h-10 w-10 text-rose-500' />}
-          <div><div className='text-3xl font-black'>{channel.name}</div><div className='text-xl text-slate-300'>{source?.name} · {channel.group}</div></div>
+      <div
+        className={`absolute left-4 right-4 top-4 grid grid-cols-[auto_minmax(0,1fr)] items-start gap-2 md:left-8 md:right-8 md:top-8 xl:flex xl:justify-between xl:gap-3 transition-opacity duration-300 ${
+          showPanel ? 'opacity-100' : 'opacity-0'
+        }`}
+      >
+        <button
+          onClick={() => {
+            if (showPanel) setShowPanel(false);
+            else router.back();
+          }}
+          data-tv-live-control
+          className='tv-focusable flex cursor-pointer items-center gap-2 rounded-2xl bg-[color:color-mix(in_srgb,var(--tm-room-cinema-bg)_70%,transparent)] px-3 py-2 md:px-5 md:py-4 text-base font-medium focus:ring-[var(--tm-text)] min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
+        >
+          <ArrowLeft className='h-7 w-7' />
+          返回
+        </button>
+        <div className='flex min-w-0 items-center gap-2 rounded-2xl bg-[color:color-mix(in_srgb,var(--tm-room-cinema-bg)_70%,transparent)] px-3 py-2 md:gap-4 md:px-6'>
+          {channel.logo ? (
+            <img
+              src={getLogoUrl(channel.logo, source?.key)}
+              alt=''
+              className='h-7 w-7 shrink-0 rounded-xl object-contain md:h-10 md:w-10'
+            />
+          ) : (
+            <Radio className='h-7 w-7 shrink-0 text-[color:var(--tm-text)] md:h-10 md:w-10' />
+          )}
+          <div className='min-w-0'>
+            <div className='truncate text-lg font-medium md:text-2xl'>
+              {channel.name}
+            </div>
+            <div className='truncate text-sm text-[color:var(--tm-muted)]'>
+              {source?.name} · {channel.group}
+            </div>
+          </div>
         </div>
-        <div className='flex items-center gap-3'>
-          <button onClick={toggleMute} data-tv-live-control className='tv-focusable rounded-2xl bg-black/70 p-4 outline-none backdrop-blur focus:ring-4 focus:ring-rose-300'>{muted ? <VolumeX className='h-7 w-7' /> : <Volume2 className='h-7 w-7' />}</button>
-          <input aria-label='直播音量' data-tv-live-control type='range' min='0' max='1' step='0.05' value={muted ? 0 : volume} onChange={(e) => setVideoVolume(Number(e.target.value))} className='tv-focusable w-28 accent-rose-600' />
-          <button onClick={toggleFullscreen} data-tv-live-control className='tv-focusable rounded-2xl bg-black/70 p-4 outline-none backdrop-blur focus:ring-4 focus:ring-rose-300'><Maximize className='h-7 w-7' /></button>
-          <button onClick={toggleFavorite} data-tv-live-control className={`tv-focusable flex cursor-pointer items-center gap-3 rounded-2xl px-5 py-4 text-2xl font-black outline-none backdrop-blur focus:ring-4 focus:ring-rose-300 ${favorited ? 'bg-rose-600' : 'bg-black/70'}`}><Heart className={`h-7 w-7 ${favorited ? 'fill-current' : ''}`} />收藏</button>
+        <div className='col-span-2 flex max-w-full flex-wrap items-center justify-end gap-2 xl:col-span-1'>
+          <button
+            onClick={toggleMute}
+            aria-label={muted ? '取消静音' : '静音'}
+            data-tv-live-control
+            className='tv-focusable rounded-2xl bg-[color:color-mix(in_srgb,var(--tm-room-cinema-bg)_70%,transparent)] p-2 md:p-4 focus:ring-[var(--tm-text)] min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
+          >
+            {muted ? (
+              <VolumeX className='h-7 w-7' />
+            ) : (
+              <Volume2 className='h-7 w-7' />
+            )}
+          </button>
+          <input
+            aria-label='直播音量'
+            data-tv-live-control
+            type='range'
+            min='0'
+            max='1'
+            step='0.05'
+            value={muted ? 0 : volume}
+            onChange={(e) => setVideoVolume(Number(e.target.value))}
+            className='tv-focusable h-11 w-28 rounded accent-[var(--tm-text)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
+          />
+          <button
+            onClick={toggleFullscreen}
+            aria-label='全屏'
+            data-tv-live-control
+            className='tv-focusable rounded-2xl bg-[color:color-mix(in_srgb,var(--tm-room-cinema-bg)_70%,transparent)] p-2 md:p-4 focus:ring-[var(--tm-text)] min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
+          >
+            <Maximize className='h-7 w-7' />
+          </button>
+          <button
+            onClick={toggleFavorite}
+            aria-pressed={favorited}
+            data-tv-live-control
+            className={`tv-focusable flex cursor-pointer items-center gap-2 rounded-2xl px-3 py-2 md:px-5 md:py-4 text-base font-medium outline-none focus:ring-[var(--tm-text)] ${
+              favorited
+                ? 'bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
+                : 'bg-[color:color-mix(in_srgb,var(--tm-room-cinema-bg)_70%,transparent)] min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
+            }`}
+          >
+            <Heart className={`h-7 w-7 ${favorited ? 'fill-current' : ''}`} />
+            收藏
+          </button>
         </div>
       </div>
 
       {showPanel && (
-        <aside data-tv-live-control className='absolute bottom-8 left-8 top-28 grid w-[720px] grid-cols-[220px_1fr] gap-4 rounded-[34px] border border-white/10 bg-slate-950/88 p-5 shadow-2xl shadow-black/70 backdrop-blur-2xl'>
+        <aside
+          data-tv-live-control
+          className='absolute bottom-4 left-4 right-4 top-40 grid grid-cols-[88px_minmax(0,1fr)] gap-2 md:bottom-8 md:left-8 md:right-auto md:top-48 xl:top-28 md:w-[720px] md:grid-cols-[220px_minmax(0,1fr)] md:gap-4 rounded-[34px] border border-[var(--tm-line)] bg-[var(--tm-surface)] p-4 md:p-5 shadow-2xl shadow-[color-mix(in_srgb,var(--tm-room-cinema-bg)_70%,transparent)] '
+        >
           <div className='overflow-y-auto px-2 py-2'>
             {sources.length > 1 && (
               <>
-                <h2 className='mb-3 text-2xl font-black'>直播源</h2>
+                <h2 className='mb-3 text-xl font-medium md:text-2xl'>直播源</h2>
                 <div className='mb-5 space-y-3'>
-                  {sources.map((item) => <button key={item.key} onClick={() => switchSource(item)} className={`tv-focusable w-full cursor-pointer rounded-2xl px-4 py-4 text-left text-xl font-black outline-none focus:ring-4 focus:ring-inset focus:ring-rose-300 ${source?.key === item.key ? 'bg-rose-600' : 'bg-white/10'}`}>{item.name}</button>)}
+                  {sources.map((item) => (
+                    <button
+                      key={item.key}
+                      onClick={() => switchSource(item)}
+                      className={`tv-focusable w-full cursor-pointer rounded-2xl px-4 py-4 text-left text-base font-medium outline-none focus:ring-[var(--tm-text)] ${
+                        source?.key === item.key
+                          ? 'bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
+                          : 'bg-[var(--tm-surface-raised)] min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
+                      }`}
+                    >
+                      {item.name}
+                    </button>
+                  ))}
                 </div>
               </>
             )}
-            <h2 className='mb-4 text-2xl font-black'>分类</h2>
+            <h2 className='mb-4 text-xl font-medium md:text-2xl'>分类</h2>
             <div className='space-y-3'>
-              {groups.map((group) => <button key={group} onClick={() => setSelectedGroup(group)} className={`tv-focusable w-full cursor-pointer rounded-2xl px-4 py-4 text-left text-xl font-black outline-none focus:ring-4 focus:ring-inset focus:ring-rose-300 ${selectedGroup === group ? 'bg-rose-600' : 'bg-white/10'}`}>{group}</button>)}
+              {groups.map((group) => (
+                <button
+                  key={group}
+                  onClick={() => setSelectedGroup(group)}
+                  className={`tv-focusable w-full cursor-pointer rounded-2xl px-4 py-4 text-left text-base font-medium outline-none focus:ring-[var(--tm-text)] ${
+                    selectedGroup === group
+                      ? 'bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
+                      : 'bg-[var(--tm-surface-raised)] min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
+                  }`}
+                >
+                  {group}
+                </button>
+              ))}
             </div>
           </div>
           <div className='overflow-y-auto px-2 py-2'>
-            <h2 className='mb-4 flex items-center gap-2 text-2xl font-black'><Star className='h-6 w-6 text-rose-500' />频道</h2>
-            <section className='mb-4 rounded-2xl bg-white/[0.06] p-4'>
-              <h3 className='mb-3 flex items-center gap-2 text-xl font-black text-slate-100'><Clock className='h-5 w-5 text-rose-400' />节目单</h3>
-              {epgLoading ? <div className='text-lg text-slate-400'>正在加载 EPG...</div> : epgPrograms.length > 0 ? (
-                <div className='max-h-36 space-y-2 overflow-y-auto pr-2'>
-                  {epgPrograms.map((program, index) => <div key={`${program.start}-${index}`} className='rounded-xl bg-black/25 px-3 py-2 text-base text-slate-200'><span className='mr-2 text-slate-400'>{program.start?.slice(8, 12)}-{program.end?.slice(8, 12)}</span>{program.title}</div>)}
+            <h2 className='mb-4 flex items-center gap-2 text-xl font-medium md:text-2xl'>
+              <Star className='h-6 w-6 text-[color:var(--tm-text)]' />
+              频道
+            </h2>
+            <section className='mb-4 rounded-2xl bg-[var(--tm-surface-raised)] p-4'>
+              <h3 className='mb-3 flex items-center gap-2 text-lg font-medium text-[color:var(--tm-text)]'>
+                <Clock className='h-5 w-5 text-[color:var(--tm-text)]' />
+                节目单
+              </h3>
+              {epgLoading ? (
+                <div className='text-lg text-[color:var(--tm-muted)]'>
+                  正在加载 EPG...
                 </div>
-              ) : <div className='text-lg text-slate-400'>暂无节目单</div>}
+              ) : epgPrograms.length > 0 ? (
+                <div className='max-h-36 space-y-2 overflow-y-auto pr-2'>
+                  {epgPrograms.map((program, index) => (
+                    <div
+                      key={`${program.start}-${index}`}
+                      className='rounded-xl bg-[color:color-mix(in_srgb,var(--tm-room-cinema-bg)_25%,transparent)] px-3 py-2 text-base text-[color:var(--tm-text)]'
+                    >
+                      <span className='mr-2 text-[color:var(--tm-muted)]'>
+                        {program.start?.slice(8, 12)}-
+                        {program.end?.slice(8, 12)}
+                      </span>
+                      {program.title}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className='text-lg text-[color:var(--tm-muted)]'>
+                  暂无节目单
+                </div>
+              )}
             </section>
-            <label className='mb-4 flex h-14 items-center gap-3 rounded-2xl border border-white/10 bg-white/10 px-4 focus-within:border-rose-500'>
-              <Search className='h-6 w-6 text-slate-300' />
-              <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder='搜索频道' className='tv-focusable h-12 flex-1 bg-transparent text-xl font-bold text-white outline-none placeholder:text-slate-500' />
+            <label className='mb-4 flex h-14 items-center gap-3 rounded-2xl border border-[var(--tm-line)] bg-[var(--tm-surface-raised)] px-4 focus-within:border-[var(--tm-line)]'>
+              <Search className='h-6 w-6 text-[color:var(--tm-muted)]' />
+              <input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder='搜索频道'
+                className='tv-focusable h-12 min-w-0 flex-1 bg-transparent text-xl font-bold text-[color:var(--tm-text)] outline-none placeholder:text-[color:var(--tm-muted)]'
+              />
             </label>
             <div className='grid grid-cols-1 gap-3'>
               {filteredChannels.map((item) => {
-                const absoluteIndex = channels.findIndex((c) => c.id === item.id) + 1;
-                return <button key={item.id} ref={(el) => { channelButtonRefs.current[item.id] = el; }} onClick={() => switchChannel(item)} className={`tv-focusable flex min-h-16 cursor-pointer items-center gap-3 rounded-2xl px-4 py-3 text-left text-xl font-black outline-none focus:ring-4 focus:ring-inset focus:ring-rose-300 ${item.id === channel.id ? 'bg-rose-600' : 'bg-white/10'}`}>{item.logo ? <img src={getLogoUrl(item.logo, source?.key)} alt='' className='h-9 w-9 rounded-lg object-contain' /> : <Radio className='h-8 w-8 text-rose-400' />}<span className='min-w-12 text-slate-300'>#{absoluteIndex}</span><span className='line-clamp-1'>{item.name}</span></button>;
+                const absoluteIndex =
+                  channels.findIndex((c) => c.id === item.id) + 1;
+                return (
+                  <button
+                    key={item.id}
+                    ref={(el) => {
+                      channelButtonRefs.current[item.id] = el;
+                    }}
+                    onClick={() => switchChannel(item)}
+                    className={`tv-focusable flex min-h-16 cursor-pointer items-center gap-3 rounded-2xl px-4 py-3 text-left text-base font-medium outline-none focus:ring-[var(--tm-text)] ${
+                      item.id === channel.id
+                        ? 'bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
+                        : 'bg-[var(--tm-surface-raised)] min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
+                    }`}
+                  >
+                    {item.logo ? (
+                      <img
+                        src={getLogoUrl(item.logo, source?.key)}
+                        alt=''
+                        className='h-9 w-9 rounded-lg object-contain'
+                      />
+                    ) : (
+                      <Radio className='h-5 w-5 shrink-0 text-inherit md:h-8 md:w-8' />
+                    )}
+                    <span
+                      className={`min-w-8 text-[13px] md:min-w-12 md:text-base ${
+                        item.id === channel.id
+                          ? 'text-inherit'
+                          : 'text-[color:var(--tm-muted)]'
+                      }`}
+                    >
+                      #{absoluteIndex}
+                    </span>
+                    <span className='line-clamp-1'>{item.name}</span>
+                  </button>
+                );
               })}
             </div>
           </div>
         </aside>
       )}
-      {digitBuffer && <div className='absolute right-10 top-32 z-[90] rounded-3xl bg-black/75 px-7 py-5 text-5xl font-black text-white shadow-2xl'>频道 {digitBuffer}</div>}
+      {digitBuffer && (
+        <div className='absolute right-10 top-32 z-[90] rounded-3xl bg-[color:color-mix(in_srgb,var(--tm-room-cinema-bg)_75%,transparent)] px-7 py-5 text-5xl font-bold text-[color:var(--tm-text)] shadow-2xl'>
+          频道 {digitBuffer}
+        </div>
+      )}
       {channelHint && (
-        <div className='absolute right-20 top-24 z-[70] max-w-[520px] rounded-3xl bg-black/80 px-7 py-5 text-right text-white shadow-2xl backdrop-blur'>
-          <div className='text-2xl font-black text-rose-200'>#{channelHint.number}</div>
-          <div className='mt-1 line-clamp-1 text-4xl font-black'>{channelHint.name}</div>
+        <div className='absolute right-20 top-24 z-[70] max-w-[520px] rounded-3xl bg-[color:color-mix(in_srgb,var(--tm-room-cinema-bg)_80%,transparent)] px-7 py-5 text-right text-[color:var(--tm-text)] shadow-2xl '>
+          <div className='text-2xl font-bold text-[color:var(--tm-text)]'>
+            #{channelHint.number}
+          </div>
+          <div className='mt-1 line-clamp-1 text-4xl font-bold'>
+            {channelHint.name}
+          </div>
         </div>
       )}
       {showVolumeHint && !showPanel && (
-        <div className='absolute right-10 top-1/2 flex -translate-y-1/2 flex-col items-center gap-4 rounded-3xl bg-black/80 px-6 py-7 text-3xl font-black text-white shadow-2xl backdrop-blur'>
-          {muted || volume <= 0 ? <VolumeX className='h-10 w-10' /> : <Volume2 className='h-10 w-10' />}
-          <div className='relative h-56 w-4 overflow-hidden rounded-full bg-white/20'>
-            <div className='absolute bottom-0 left-0 right-0 rounded-full bg-rose-600' style={{ height: `${Math.round((muted ? 0 : volume) * 100)}%` }} />
+        <div className='absolute right-10 top-1/2 flex -translate-y-1/2 flex-col items-center gap-4 rounded-3xl bg-[color:color-mix(in_srgb,var(--tm-room-cinema-bg)_80%,transparent)] px-6 py-7 text-3xl font-bold text-[color:var(--tm-text)] shadow-2xl '>
+          {muted || volume <= 0 ? (
+            <VolumeX className='h-10 w-10' />
+          ) : (
+            <Volume2 className='h-10 w-10' />
+          )}
+          <div className='relative h-56 w-4 overflow-hidden rounded-full bg-[var(--tm-surface-raised)]'>
+            <div
+              className='absolute bottom-0 left-0 right-0 rounded-full bg-[var(--tm-text)]'
+              style={{ height: `${Math.round((muted ? 0 : volume) * 100)}%` }}
+            />
           </div>
-          <div className='min-w-16 text-center'>{Math.round((muted ? 0 : volume) * 100)}</div>
+          <div className='min-w-16 text-center'>
+            {Math.round((muted ? 0 : volume) * 100)}
+          </div>
         </div>
       )}
       <TVVirtualRemote />
@@ -609,5 +1064,9 @@ function TVLivePlayClient() {
 }
 
 export default function TVLivePlayPage() {
-  return <Suspense fallback={null}><TVLivePlayClient /></Suspense>;
+  return (
+    <Suspense fallback={null}>
+      <TVLivePlayClient />
+    </Suspense>
+  );
 }

@@ -2,6 +2,7 @@
 
 import {
   ArrowUpRight,
+  ChevronsDown,
   Film,
   Maximize2,
   MessageCircle,
@@ -22,6 +23,8 @@ import {
   useState,
 } from 'react';
 import type { Socket } from 'socket.io-client';
+
+import RoomPlaybackButton from '@/features/rooms/RoomPlaybackButton';
 
 import { useWatchRoomContextSafe } from '@/components/WatchRoomProvider';
 
@@ -180,6 +183,9 @@ export default function PlaybackSessionProvider({
     const measure = () => setSlotRect(slot.getBoundingClientRect());
     const observer = new ResizeObserver(measure);
     observer.observe(slot);
+    // Notices above the stage move the slot without changing its own size.
+    const roomContainer = slot.closest('.tm-rooms');
+    if (roomContainer) observer.observe(roomContainer);
     // Element scroll events do not bubble; capture BODY and nested page scrolling too.
     window.addEventListener('scroll', measure, {
       passive: true,
@@ -272,6 +278,76 @@ export default function PlaybackSessionProvider({
     setSurfaceVersion((previous) => previous + 1);
   }, []);
 
+  const choosePlayback = useCallback(
+    async (
+      choice: 'queue' | 'room' | 'personal',
+      selectedHref = pendingHref
+    ) => {
+      if (!selectedHref) return;
+      setActionPending(true);
+      setActionError('');
+      try {
+        if (choice === 'queue') {
+          const current = roomRef.current;
+          const socket = current?.socket as Socket | null;
+          if (!socket?.connected)
+            throw new Error('房间连接中断，请重连后再添加');
+          await new Promise<void>((resolve, reject) => {
+            socket.timeout(8000).emit(
+              'queue:add',
+              {
+                ...queueItemFromHref(selectedHref),
+                commandId: crypto.randomUUID(),
+                baseRevision: current?.currentRoom?.revision,
+              },
+              (
+                timeout: Error | null,
+                response: { success?: boolean; error?: string }
+              ) =>
+                timeout
+                  ? reject(new Error('添加超时，请检查片单后重试'))
+                  : response?.success
+                  ? resolve()
+                  : reject(new Error(response?.error || '无法添加到片单'))
+            );
+          });
+          if (hrefRef.current && pathname === '/play')
+            router.replace(hrefRef.current);
+        } else {
+          if (choice === 'personal') {
+            await emitFollowing(false);
+            followingRef.current = false;
+            setFollowingRoom(false);
+            setRoomSelectionHref(null);
+          } else {
+            if (!roomRef.current?.canControl)
+              throw new Error('主持已更新，请加入片单或仅自己看');
+            setRoomSelectionHref(selectedHref);
+          }
+          if (
+            !hrefRef.current ||
+            playbackIdentity(hrefRef.current) !== playbackIdentity(selectedHref)
+          )
+            setSurfaceVersion((previous) => previous + 1);
+          setHref(selectedHref);
+        }
+        setPendingHref(null);
+      } catch (error) {
+        setActionError(
+          error instanceof Error ? error.message : '操作失败，请重试'
+        );
+      } finally {
+        setActionPending(false);
+      }
+    },
+    [pendingHref, emitFollowing, pathname, router]
+  );
+
+  const enterPersonalViewing = useCallback(
+    () => choosePlayback('personal', hrefRef.current),
+    [choosePlayback]
+  );
+
   const value = useMemo(
     () => ({
       href,
@@ -292,6 +368,7 @@ export default function PlaybackSessionProvider({
       shareCurrentPlayback,
       clearRoomSelection,
       reloadPlayback,
+      enterPersonalViewing,
     }),
     [
       href,
@@ -309,66 +386,9 @@ export default function PlaybackSessionProvider({
       shareCurrentPlayback,
       clearRoomSelection,
       reloadPlayback,
+      enterPersonalViewing,
     ]
   );
-
-  const choosePlayback = async (choice: 'queue' | 'room' | 'personal') => {
-    if (!pendingHref) return;
-    setActionPending(true);
-    setActionError('');
-    try {
-      if (choice === 'queue') {
-        const current = roomRef.current;
-        const socket = current?.socket as Socket | null;
-        if (!socket?.connected) throw new Error('房间连接中断，请重连后再添加');
-        await new Promise<void>((resolve, reject) => {
-          socket.timeout(8000).emit(
-            'queue:add',
-            {
-              ...queueItemFromHref(pendingHref),
-              commandId: crypto.randomUUID(),
-              baseRevision: current?.currentRoom?.revision,
-            },
-            (
-              timeout: Error | null,
-              response: { success?: boolean; error?: string }
-            ) =>
-              timeout
-                ? reject(new Error('添加超时，请检查片单后重试'))
-                : response?.success
-                ? resolve()
-                : reject(new Error(response?.error || '无法添加到片单'))
-          );
-        });
-        if (hrefRef.current && pathname === '/play')
-          router.replace(hrefRef.current);
-      } else {
-        if (choice === 'personal') {
-          await emitFollowing(false);
-          followingRef.current = false;
-          setFollowingRoom(false);
-          setRoomSelectionHref(null);
-        } else {
-          if (!roomRef.current?.canControl)
-            throw new Error('主持已更新，请加入片单或仅自己看');
-          setRoomSelectionHref(pendingHref);
-        }
-        if (
-          !hrefRef.current ||
-          playbackIdentity(hrefRef.current) !== playbackIdentity(pendingHref)
-        )
-          setSurfaceVersion((previous) => previous + 1);
-        setHref(pendingHref);
-      }
-      setPendingHref(null);
-    } catch (error) {
-      setActionError(
-        error instanceof Error ? error.message : '操作失败，请重试'
-      );
-    } finally {
-      setActionPending(false);
-    }
-  };
 
   const openFull = () => {
     setFolded(false);
@@ -409,6 +429,18 @@ export default function PlaybackSessionProvider({
           style={slotStyle}
         >
           <PlaybackSurface key={surfaceVersion} />
+          {presentation === 'docked' &&
+            pathname === '/watch-room' &&
+            followingRoom && (
+              <RoomPlaybackButton
+                className='tm-room-fold-button'
+                hint='收起画面，继续播放'
+                aria-label='收起画面'
+                onClick={minimize}
+              >
+                <ChevronsDown size={20} aria-hidden='true' />
+              </RoomPlaybackButton>
+            )}
           {(presentation === 'mini' || presentation === 'folded') && (
             <div
               className={`tm-playback-chrome tm-playback-chrome--${presentation}`}
@@ -418,7 +450,7 @@ export default function PlaybackSessionProvider({
                 onClick={presentation === 'folded' ? restore : openFull}
                 title='恢复画面'
               >
-                <span className='tm-playback-thumbnail' aria-hidden='true'>
+                <span className='tm-playback-thumbnail'>
                   {metadata.poster ? (
                     <Image
                       src={metadata.poster}
@@ -428,15 +460,21 @@ export default function PlaybackSessionProvider({
                       unoptimized
                     />
                   ) : (
-                    <Film size={20} />
+                    <Film size={20} aria-hidden='true' />
+                  )}
+                  {!followingRoom && roomId && (
+                    <small className='tm-playback-personal-badge'>
+                      个人观看
+                    </small>
                   )}
                 </span>
                 <span className='tm-playback-copy'>
                   <span>{metadata.title}</span>
-                  {roomId && <small>{watchRoom?.currentRoom?.name}</small>}
-                  {!followingRoom && roomId && <small>个人观看</small>}
-                  {roomId && !watchRoom?.isConnected && <small>重连中</small>}
-                  {!ownsSound && <small>此页静音</small>}
+                  <span className='tm-playback-context'>
+                    {roomId && <small>{watchRoom?.currentRoom?.name}</small>}
+                    {roomId && !watchRoom?.isConnected && <small>重连中</small>}
+                    {!ownsSound && <small>此页静音</small>}
+                  </span>
                 </span>
               </button>
               <button

@@ -44,6 +44,7 @@ import {
 } from '@/features/playback/session';
 
 import RoomActionMenu from './RoomActionMenu';
+import RoomPlaybackButton from './RoomPlaybackButton';
 import useRoomScreening from './useRoomScreening';
 
 import type { Room } from '@/types/watch-room';
@@ -375,6 +376,14 @@ export default function RoomWorkspace() {
     <PageLayout
       activePath='/watch-room'
       mobileTitle={room?.name}
+      mobileSubtitle={
+        room ? (
+          <>
+            {watchRoom.isConnected ? '已连接' : '重连中'} · {room.memberCount}{' '}
+            人在线
+          </>
+        ) : undefined
+      }
       mobileActions={
         room ? (
           <RoomActionMenu
@@ -404,6 +413,7 @@ export default function RoomWorkspace() {
         className='tm-rooms'
         data-screening={screening}
         data-joined={Boolean(room)}
+        data-playing={room?.currentState?.type === 'play'}
         data-personal={Boolean(room && !playback.followingRoom)}
       >
         {room && !watchRoom.isConnected && (
@@ -468,7 +478,11 @@ export default function RoomWorkspace() {
                   {copied ? '已复制' : '邀请朋友'}
                 </button>
                 {watchRoom.isOwner && (
-                  <button onClick={openSettings} aria-label='房间设置'>
+                  <button
+                    className='tm-room-heading-settings'
+                    onClick={openSettings}
+                    aria-label='房间设置'
+                  >
                     <Settings2 size={18} />
                   </button>
                 )}
@@ -620,34 +634,40 @@ export default function RoomWorkspace() {
                   {room.currentState?.type === 'play' &&
                     playback.followingRoom &&
                     playback.presentation !== 'folded' && (
-                      <button onClick={playback.minimize}>收起画面</button>
-                    )}
-                  <button
-                    className='tm-room-stage-chat'
-                    onClick={() =>
-                      window.dispatchEvent(new Event('tongmu:open-chat'))
-                    }
-                  >
-                    <MessageCircle size={17} />
-                    聊天
-                    {Boolean(room.unreadCount) && (
-                      <motion.b
-                        key={room.unreadCount}
-                        initial={{ scale: reducedMotion ? 1 : 0.8 }}
-                        animate={{ scale: 1 }}
-                        transition={
-                          reducedMotion
-                            ? { duration: 0.12 }
-                            : { type: 'spring', duration: 0.32, bounce: 0.2 }
-                        }
+                      <RoomPlaybackButton
+                        className='tm-room-personal-button'
+                        hint='暂时脱离同步，房间连接和消息保留'
+                        onClick={playback.enterPersonalViewing}
                       >
-                        {room.unreadCount}
-                      </motion.b>
+                        仅自己看
+                      </RoomPlaybackButton>
                     )}
-                  </button>
                 </div>
               </div>
               <div className='tm-room-activities'>
+                <button
+                  className='tm-room-stage-chat'
+                  onClick={() =>
+                    window.dispatchEvent(new Event('tongmu:open-chat'))
+                  }
+                >
+                  <MessageCircle size={17} />
+                  聊天
+                  {Boolean(room.unreadCount) && (
+                    <motion.b
+                      key={room.unreadCount}
+                      initial={{ scale: reducedMotion ? 1 : 0.8 }}
+                      animate={{ scale: 1 }}
+                      transition={
+                        reducedMotion
+                          ? { duration: 0.12 }
+                          : { type: 'spring', duration: 0.32, bounce: 0.2 }
+                      }
+                    >
+                      {room.unreadCount}
+                    </motion.b>
+                  )}
+                </button>
                 <Link href='/search'>
                   <Search size={15} />
                   浏览片库
@@ -713,7 +733,7 @@ export default function RoomWorkspace() {
               >
                 <header>
                   <div>
-                    <h2>片单</h2>
+                    <h2>片单 {room.queue?.length || 0}</h2>
                     <p>{room.queue?.length || 0} 部待播影片</p>
                   </div>
                   <button
@@ -745,7 +765,13 @@ export default function RoomWorkspace() {
                       <span className='tm-room-queue-number'>
                         {String(index + 1).padStart(2, '0')}
                       </span>
-                      <div>
+                      <span
+                        className='tm-room-queue-thumbnail'
+                        aria-hidden='true'
+                      >
+                        <Film size={18} />
+                      </span>
+                      <div className='tm-room-queue-copy'>
                         <h3>{item.title}</h3>
                         <p>
                           {item.addedBy} 添加 · 第{item.episode || 1}集
@@ -817,6 +843,15 @@ export default function RoomWorkspace() {
                     </motion.li>
                   ))}
                 </ol>
+                {!!room.queue?.length && (
+                  <button
+                    className='tm-room-add-film'
+                    onClick={() => setDialog('picker')}
+                  >
+                    <Plus size={16} />
+                    添加影片
+                  </button>
+                )}
               </section>
               <div
                 id='tm-room-panel-chat'
@@ -834,6 +869,11 @@ export default function RoomWorkspace() {
                 <header>
                   <h2>成员</h2>
                   <span>{room.memberCount}人</span>
+                  {watchRoom.isOwner && (
+                    <button onClick={openSettings} aria-label='房间设置'>
+                      <Settings2 size={18} />
+                    </button>
+                  )}
                 </header>
                 {watchRoom.members.map((member) => (
                   <div key={member.id} className='tm-room-member'>

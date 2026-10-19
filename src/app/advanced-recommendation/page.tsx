@@ -1,12 +1,13 @@
 'use client';
 
-import { Blend, Loader2 } from 'lucide-react';
+import { Blend } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 
 import { SearchResult } from '@/lib/types';
 
 import CapsuleSwitch from '@/components/CapsuleSwitch';
+import PageContainer from '@/components/PageContainer';
 import PageLayout from '@/components/PageLayout';
 import VideoCard from '@/components/VideoCard';
 
@@ -97,7 +98,9 @@ export default function AdvancedRecommendationPage() {
       setIsLoadingVideos(true);
       try {
         const response = await fetch(
-          `/api/advanced-recommendation/videos?source=${encodeURIComponent(selectedSource)}&page=${page}`
+          `/api/advanced-recommendation/videos?source=${encodeURIComponent(
+            selectedSource
+          )}&page=${page}`
         );
         const data = await response.json();
 
@@ -106,7 +109,9 @@ export default function AdvancedRecommendationPage() {
         }
 
         const nextResults = Array.isArray(data.results) ? data.results : [];
-        setVideos((prev) => (page === 1 ? nextResults : [...prev, ...nextResults]));
+        setVideos((prev) =>
+          page === 1 ? nextResults : [...prev, ...nextResults]
+        );
         setHasMore(Number(data.page || page) < Number(data.pageCount || 1));
       } catch (err) {
         setError(err instanceof Error ? err.message : '获取推荐失败');
@@ -137,31 +142,32 @@ export default function AdvancedRecommendationPage() {
 
   return (
     <PageLayout activePath='/advanced-recommendation'>
-      <div className='px-4 sm:px-10 py-4 sm:py-8 mb-10'>
+      <PageContainer className='py-4 sm:py-8 mb-10'>
         <div className='mb-6'>
-          <h1 className='text-2xl font-bold text-gray-800 dark:text-gray-200 flex items-center gap-2'>
-            <Blend className='w-6 h-6 text-green-500' />
+          <h1 className='hidden md:flex text-[32px] font-bold text-[color:var(--tm-text)] items-center gap-2'>
+            <Blend className='w-6 h-6 text-[color:var(--tm-text)]' />
             高级推荐
           </h1>
-          <p className='text-sm text-gray-500 dark:text-gray-400 mt-1'>
-            浏览视频源脚本提供的推荐内容
+          <p className='text-sm text-[color:var(--tm-muted)] mt-1'>
+            选择来源，查看推荐影片
           </p>
         </div>
 
-        <div className='max-w-6xl mx-auto space-y-6'>
+        <div className='space-y-6'>
           <div>
-            <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3'>
-              选择脚本源
+            <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-3'>
+              选择来源
             </label>
             {isLoadingSources ? (
-              <div className='flex items-center justify-center h-12 bg-gray-50/80 rounded-lg border border-gray-200/50 dark:bg-gray-800 dark:border-gray-700'>
-                <Loader2 className='h-5 w-5 animate-spin text-gray-400' />
-                <span className='ml-2 text-sm text-gray-500 dark:text-gray-400'>
-                  加载脚本源中...
-                </span>
+              <div
+                role='status'
+                aria-label='加载来源'
+                className='tm-skeleton h-12 rounded-lg border border-[var(--tm-line)]'
+              >
+                <span className='sr-only'>加载来源</span>
               </div>
             ) : sources.length === 0 ? (
-              <div className='flex items-center justify-center h-24 rounded-xl border border-dashed border-gray-300 bg-gray-50/70 text-sm text-gray-500 dark:border-gray-700 dark:bg-gray-800/50 dark:text-gray-400'>
+              <div className='flex items-center justify-center h-24 rounded-xl border border-dashed border-[var(--tm-line)] bg-[var(--tm-surface-raised)] text-sm text-[color:var(--tm-muted)]'>
                 暂无可用的视频源脚本
               </div>
             ) : (
@@ -179,7 +185,10 @@ export default function AdvancedRecommendationPage() {
           </div>
 
           {!!error && (
-            <div className='rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600 dark:border-red-900/50 dark:bg-red-900/10 dark:text-red-300'>
+            <div
+              role='alert'
+              className='rounded-xl border border-[var(--tm-danger)] bg-[var(--tm-surface-raised)] px-4 py-3 text-sm text-[color:var(--tm-text)]'
+            >
               {error}
             </div>
           )}
@@ -209,14 +218,18 @@ export default function AdvancedRecommendationPage() {
                   ))}
                 </div>
               ) : !isLoadingVideos && !error ? (
-                <div className='flex items-center justify-center h-32 rounded-xl border border-dashed border-gray-300 bg-gray-50/70 text-sm text-gray-500 dark:border-gray-700 dark:bg-gray-800/50 dark:text-gray-400'>
-                  当前脚本暂无推荐内容
+                <div className='flex items-center justify-center h-32 rounded-xl border border-dashed border-[var(--tm-line)] bg-[var(--tm-surface-raised)] text-sm text-[color:var(--tm-muted)]'>
+                  这个来源暂无推荐
                 </div>
               ) : null}
 
               {isLoadingVideos && (
-                <div className='flex justify-center py-6'>
-                  <Loader2 className='h-6 w-6 animate-spin text-gray-400' />
+                <div
+                  role='status'
+                  aria-label='加载推荐内容'
+                  className='tm-skeleton h-32 rounded-xl'
+                >
+                  <span className='sr-only'>加载推荐内容</span>
                 </div>
               )}
 
@@ -224,7 +237,7 @@ export default function AdvancedRecommendationPage() {
             </>
           )}
         </div>
-      </div>
+      </PageContainer>
     </PageLayout>
   );
 }

@@ -7,7 +7,7 @@ import ShelfToggleButton from './ShelfToggleButton';
 
 /**
  * 封面右下角的书架开关，书墙（推荐页）与搜索结果共用。
- * 底色跟着状态走：未收藏半透明墨、已收藏赭石，具体见 SHELF_CHIP 的注释。
+ * 未收藏使用固定深色遮罩，已收藏使用全站主色反色。
  */
 export default function ShelfChipButton({
   active,
@@ -26,8 +26,8 @@ export default function ShelfChipButton({
       className={cn(
         SHELF_CHIP,
         active
-          ? 'bg-library-ochre hover:bg-library-ochre-hover'
-          : 'bg-library-ink/80 hover:bg-library-ink',
+          ? 'bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] hover:bg-[var(--tm-text)] hover:text-[color:var(--tm-accent-contrast)]'
+          : 'bg-[color:color-mix(in_srgb,var(--tm-room-cinema-bg)_80%,transparent)] text-[color:var(--tm-room-player-text)] hover:bg-[var(--tm-room-cinema-bg)] hover:text-[color:var(--tm-room-player-text)]',
         className
       )}
     >

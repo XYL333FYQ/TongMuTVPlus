@@ -1,14 +1,6 @@
 'use client';
 
-import {
-  ArrowRight,
-  Film,
-  Play,
-  RefreshCw,
-  Search,
-  Users,
-  X,
-} from 'lucide-react';
+import { ArrowRight, Film, RefreshCw } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -16,23 +8,33 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import './public-catalog.css';
 
 import { useReducedMotionSetting } from '@/lib/motion';
-import type { PublicCatalogItem } from '@/lib/public-catalog';
+import {
+  type PublicCatalogCategory,
+  type PublicCatalogItem,
+  publicCatalogCategories,
+  publicWorkLoginHref,
+} from '@/lib/public-catalog';
 
 import HomeHero from './HomeHero';
 import HomeRooms from './HomeRooms';
 import PageContainer from './PageContainer';
 import PageLayout from './PageLayout';
-import PosterAmbient from './PosterAmbient';
 import PosterGrid from './PosterGrid';
 import PosterMotion from './PosterMotion';
 import PublicPoster from './PublicPoster';
+import SectionHeader from './SectionHeader';
 
-function usePublicCatalog(type: 'movie' | 'tv', tag: string, enabled = true) {
+function usePublicCatalog(
+  type: PublicCatalogCategory,
+  tag: string,
+  enabled = true
+) {
   const [items, setItems] = useState<PublicCatalogItem[]>([]);
   const [loading, setLoading] = useState(enabled);
   const [error, setError] = useState('');
   const [hasMore, setHasMore] = useState(false);
   const nextStart = useRef(0);
+  const nextCursor = useRef<string>();
   const controller = useRef<AbortController | null>(null);
 
   const load = useCallback(
@@ -46,6 +48,7 @@ function usePublicCatalog(type: 'movie' | 'tv', tag: string, enabled = true) {
         setItems([]);
         setHasMore(false);
         nextStart.current = 0;
+        nextCursor.current = undefined;
       }
       const params = new URLSearchParams({
         mode: 'browse',
@@ -54,6 +57,8 @@ function usePublicCatalog(type: 'movie' | 'tv', tag: string, enabled = true) {
         limit: '20',
         start: String(reset ? 0 : nextStart.current),
       });
+      if (!reset && nextCursor.current)
+        params.set('cursor', nextCursor.current);
       try {
         const response = await fetch('/api/public/catalog?' + params, {
           signal: request.signal,
@@ -63,6 +68,8 @@ function usePublicCatalog(type: 'movie' | 'tv', tag: string, enabled = true) {
           items: PublicCatalogItem[];
           start: number;
           hasMore: boolean;
+          nextStart?: number;
+          nextCursor?: string;
         };
         if (request.signal.aborted) return;
         const incoming = Array.isArray(data.items) ? data.items : [];
@@ -80,7 +87,8 @@ function usePublicCatalog(type: 'movie' | 'tv', tag: string, enabled = true) {
                 ),
               ]
         );
-        nextStart.current = data.start + incoming.length;
+        nextStart.current = data.nextStart ?? data.start + incoming.length;
+        nextCursor.current = data.nextCursor;
         setHasMore(
           Boolean(data.hasMore) &&
             incoming.length > 0 &&
@@ -223,148 +231,50 @@ function CatalogFeedback({
   return null;
 }
 
-function PublicFilmDetails({
-  item,
-  onClose,
-}: {
-  item: PublicCatalogItem | null;
-  onClose: () => void;
-}) {
-  const dialog = useRef<HTMLDialogElement>(null);
-  useEffect(() => {
-    if (item && !dialog.current?.open) dialog.current?.showModal();
-    else if (!item) dialog.current?.close();
-  }, [item]);
-  const playParams = item
-    ? new URLSearchParams({
-        title: item.title,
-        year: item.year,
-        type: item.mediaType,
-      })
-    : null;
-  return (
-    <dialog
-      ref={dialog}
-      className='tm-public-detail'
-      aria-labelledby='tm-public-detail-title'
-      onClose={onClose}
-      onClick={(event) => {
-        if (event.target === event.currentTarget) onClose();
-      }}
-    >
-      {item && (
-        <div className='tm-public-detail-body'>
-          {item.poster && (
-            <PosterAmbient imageKey={item.poster}>
-              <PublicPoster src={item.poster} alt='' />
-            </PosterAmbient>
-          )}
-          <button
-            type='button'
-            className='tm-public-detail-close'
-            onClick={onClose}
-            aria-label='关闭影片介绍'
-          >
-            <X size={20} />
-          </button>
-          <div className='tm-public-detail-art'>
-            {item.poster ? (
-              <PublicPoster src={item.poster} alt={item.title + ' 海报'} />
-            ) : (
-              <Film size={48} aria-hidden />
-            )}
-          </div>
-          <div className='tm-public-detail-copy'>
-            <span className='tm-section-label'>
-              {item.mediaType === 'tv' ? '剧集' : '电影'} · 影片介绍
-            </span>
-            <h2 id='tm-public-detail-title'>{item.title}</h2>
-            <p className='tm-public-detail-meta'>
-              {[
-                item.year,
-                Number(item.rate) > 0
-                  ? '评分 ' + Number(item.rate).toFixed(1)
-                  : '',
-              ]
-                .filter(Boolean)
-                .join(' · ')}
-            </p>
-            <p>
-              {item.description ||
-                '暂无剧情介绍。你可以搜索片名，寻找更多影视信息。'}
-            </p>
-            <div className='tm-public-detail-actions'>
-              <Link
-                href={'/play?' + playParams}
-                prefetch={false}
-                className='tm-tool-link'
-              >
-                <Play size={15} />
-                播放
-              </Link>
-              <Link
-                href='/watch-room'
-                className='tm-tool-link'
-                onClick={onClose}
-              >
-                <Users size={15} />
-                一起看
-              </Link>
-              <Link
-                href={'/search?q=' + encodeURIComponent(item.title)}
-                className='tm-tool-link'
-                onClick={onClose}
-              >
-                <Search size={15} />
-                搜索片名
-              </Link>
-            </div>
-            <small>
-              影片信息来自 {item.provider === 'tmdb' ? 'TMDB' : '豆瓣'}
-              。登录后可查看已接入的片源与播放情况。
-            </small>
-          </div>
-        </div>
-      )}
-    </dialog>
-  );
-}
-
 /** Public metadata only: no playback sources, user records or source-search cache. */
 export default function PublicCatalogPage({
   mode,
+  category,
 }: {
   mode: 'home' | 'library';
+  category?: PublicCatalogCategory;
 }) {
   const params = useSearchParams();
   const isHome = mode === 'home';
   const requestedType = params.get('type') || 'movie';
-  const type = !isHome && requestedType === 'tv' ? 'tv' : 'movie';
+  const type: PublicCatalogCategory = isHome
+    ? 'movie'
+    : category ||
+      publicCatalogCategories.find((item) => item.type === requestedType)
+        ?.type ||
+      'movie';
   const [selectedTag, setSelectedTag] = useState('热门');
   const tags =
     type === 'movie'
       ? ['热门', '最新', '经典']
-      : ['热门', '国产剧', '美剧', '英剧', '韩剧', '日剧'];
+      : type === 'tv'
+      ? ['热门', '国产剧', '美剧', '英剧', '韩剧', '日剧']
+      : ['热门'];
   const tag = isHome || !tags.includes(selectedTag) ? '热门' : selectedTag;
   const catalog = usePublicCatalog(type, tag);
   const television = usePublicCatalog('tv', '热门', isHome);
-  const [selected, setSelected] = useState<PublicCatalogItem | null>(null);
   const router = useRouter();
+  const openWork = (item: PublicCatalogItem) =>
+    router.push(publicWorkLoginHref(item));
   const reduced = useReducedMotionSetting();
   const [heroIndex, setHeroIndex] = useState(0);
   const [paused, setPaused] = useState(false);
   const recommendations = catalog.items.slice(0, 5);
   const featured = recommendations[heroIndex] || recommendations[0];
   useEffect(() => {
-    if (!isHome || reduced || paused || selected || recommendations.length < 2)
-      return;
+    if (!isHome || reduced || paused || recommendations.length < 2) return;
     const timer = window.setInterval(() => {
       if (document.visibilityState === 'visible')
         setHeroIndex((index) => (index + 1) % recommendations.length);
     }, 8000);
     return () => window.clearInterval(timer);
-  }, [isHome, reduced, paused, selected, recommendations.length]);
-  const ContentContainer = isHome ? PageContainer : 'div';
+  }, [isHome, reduced, paused, recommendations.length]);
+  const ContentContainer = PageContainer;
 
   return (
     <PageLayout activePath={isHome ? '/' : '/douban'}>
@@ -394,17 +304,12 @@ export default function PublicCatalogPage({
                   />
                 }
                 ambient={<PublicPoster src={featured.poster} alt='' eager />}
-                onPlay={() =>
+                onPlay={() => openWork(featured)}
+                onTogether={() =>
                   router.push(
-                    '/play?' +
-                      new URLSearchParams({
-                        title: featured.title,
-                        year: featured.year,
-                        type: featured.mediaType,
-                      })
+                    '/login?redirect=' + encodeURIComponent('/watch-room')
                   )
                 }
-                onTogether={() => router.push('/watch-room')}
                 titles={recommendations.map((item) => item.title)}
                 index={heroIndex}
                 onSelect={setHeroIndex}
@@ -432,45 +337,39 @@ export default function PublicCatalogPage({
                 <HomeRooms guest />
               </div>
               <div className='tm-category-row'>
-                <Link href='/douban?type=movie' className='tm-tool-link'>
-                  电影
-                  <ArrowRight size={13} />
-                </Link>
-                <Link href='/douban?type=tv' className='tm-tool-link'>
-                  剧集
-                  <ArrowRight size={13} />
-                </Link>
-                <Link href='/search' className='tm-tool-link'>
-                  <Search size={14} />
-                  按片名寻找
-                </Link>
-              </div>
-              <section className='tm-public-section'>
-                <div className='tm-public-section-heading'>
-                  <h2>热门电影</h2>
-                  <Link href='/douban?type=movie'>
-                    查看全部
-                    <ArrowRight size={14} />
+                {publicCatalogCategories.map((item) => (
+                  <Link
+                    key={item.type}
+                    href={item.href}
+                    className='tm-tool-link'
+                    aria-current={item.type === 'movie' ? 'page' : undefined}
+                  >
+                    {item.label}
                   </Link>
-                </div>
+                ))}
+              </div>
+              <section className='tm-public-section' data-module='hotMovies'>
+                <SectionHeader
+                  title='热门电影'
+                  href='/douban?type=movie'
+                  className='tm-public-section-heading'
+                />
                 <CatalogCards
                   items={catalog.items}
-                  onSelect={setSelected}
+                  onSelect={openWork}
                   horizontal
                 />
                 <CatalogFeedback feed={catalog} />
               </section>
               <section className='tm-public-section'>
-                <div className='tm-public-section-heading'>
-                  <h2>热门剧集</h2>
-                  <Link href='/douban?type=tv'>
-                    查看全部
-                    <ArrowRight size={14} />
-                  </Link>
-                </div>
+                <SectionHeader
+                  title='热门剧集'
+                  href='/douban?type=tv'
+                  className='tm-public-section-heading'
+                />
                 <CatalogCards
                   items={television.items}
-                  onSelect={setSelected}
+                  onSelect={openWork}
                   horizontal
                 />
                 <CatalogFeedback feed={television} />
@@ -479,28 +378,19 @@ export default function PublicCatalogPage({
           ) : (
             <>
               <div className='tm-public-library-heading'>
-                <span className='tm-section-label'>找到下一个喜欢的故事</span>
                 <h1>片库</h1>
                 <p>浏览公开影视信息，登录后查找片源、收藏作品或一起观看。</p>
               </div>
-              {!['movie', 'tv'].includes(requestedType) && (
-                <p className='tm-public-feedback'>
-                  当前展示公开电影与剧集。登录后可进入动漫、综艺等专属分类。
-                </p>
-              )}
               <nav className='tm-public-filters' aria-label='影视类型'>
-                <Link
-                  href='/douban?type=movie'
-                  aria-current={type === 'movie' ? 'page' : undefined}
-                >
-                  电影
-                </Link>
-                <Link
-                  href='/douban?type=tv'
-                  aria-current={type === 'tv' ? 'page' : undefined}
-                >
-                  剧集
-                </Link>
+                {publicCatalogCategories.map((item) => (
+                  <Link
+                    key={item.type}
+                    href={item.href}
+                    aria-current={type === item.type ? 'page' : undefined}
+                  >
+                    {item.label}
+                  </Link>
+                ))}
               </nav>
               <div
                 className='tm-public-tags'
@@ -518,7 +408,7 @@ export default function PublicCatalogPage({
                   </button>
                 ))}
               </div>
-              <CatalogCards items={catalog.items} onSelect={setSelected} />
+              <CatalogCards items={catalog.items} onSelect={openWork} />
               <CatalogFeedback feed={catalog} />
               {!!catalog.items.length && catalog.hasMore && !catalog.error && (
                 <div className='tm-public-more'>
@@ -537,7 +427,6 @@ export default function PublicCatalogPage({
           )}
         </ContentContainer>
       </div>
-      <PublicFilmDetails item={selected} onClose={() => setSelected(null)} />
     </PageLayout>
   );
 }

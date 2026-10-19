@@ -15,7 +15,12 @@ import {
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 
-import { BRAND_NAME, UPSTREAM_BASE_VERSION, UPSTREAM_NAME, UPSTREAM_URL } from '@/lib/brand';
+import {
+  BRAND_NAME,
+  UPSTREAM_BASE_VERSION,
+  UPSTREAM_NAME,
+  UPSTREAM_URL,
+} from '@/lib/brand';
 import { changelog, ChangelogEntry } from '@/lib/changelog';
 import { CURRENT_VERSION } from '@/lib/version';
 import { compareVersions, UpdateStatus } from '@/lib/version_check';
@@ -174,7 +179,8 @@ export const VersionPanel: React.FC<VersionPanelProps> = ({
           const latest = parsed[0];
           setLatestVersion(latest.version);
           setIsHasUpdate(
-            compareVersions(latest.version, UPSTREAM_BASE_VERSION) === UpdateStatus.HAS_UPDATE
+            compareVersions(latest.version, UPSTREAM_BASE_VERSION) ===
+              UpdateStatus.HAS_UPDATE
           );
         }
       } else {
@@ -268,32 +274,33 @@ export const VersionPanel: React.FC<VersionPanelProps> = ({
     return (
       <div
         key={entry.version}
-        className={`p-4 rounded-lg border ${isCurrentVersion
-          ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800'
-          : isUpdate
-            ? 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800'
-            : 'bg-gray-50 dark:bg-gray-800/60 border-gray-200 dark:border-gray-700'
-          }`}
+        className={`p-4 rounded-lg border ${
+          isCurrentVersion
+            ? 'bg-[var(--tm-surface-raised)] border-[var(--tm-line)]'
+            : isUpdate
+            ? 'bg-[var(--tm-surface-raised)] border-[var(--tm-line)]'
+            : 'bg-[var(--tm-surface-raised)] border-[var(--tm-line)]'
+        }`}
       >
         {/* 版本标题 */}
         <div className='flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3'>
           <div className='flex flex-wrap items-center gap-2'>
-            <h4 className='text-lg font-semibold text-gray-900 dark:text-gray-100'>
+            <h4 className='text-lg font-medium text-[color:var(--tm-text)]'>
               v{entry.version}
             </h4>
             {isCurrentVersion && (
-              <span className='px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 rounded-full'>
+              <span className='px-2 py-1 text-[13px] font-medium bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)] rounded-full'>
                 上游基线
               </span>
             )}
             {isUpdate && (
-              <span className='px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300 rounded-full flex items-center gap-1'>
+              <span className='px-2 py-1 text-[13px] font-medium bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)] rounded-full flex items-center gap-1'>
                 <Download className='w-3 h-3' />
                 上游动态
               </span>
             )}
           </div>
-          <div className='flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400'>
+          <div className='flex items-center gap-2 text-sm text-[color:var(--tm-muted)]'>
             {entry.date}
           </div>
         </div>
@@ -302,7 +309,7 @@ export const VersionPanel: React.FC<VersionPanelProps> = ({
         <div className='space-y-3'>
           {entry.added.length > 0 && (
             <div>
-              <h5 className='text-sm font-medium text-green-700 dark:text-green-400 mb-2 flex items-center gap-1'>
+              <h5 className='text-sm font-medium text-[color:var(--tm-text)] mb-2 flex items-center gap-1'>
                 <Plus className='w-4 h-4' />
                 新增功能
               </h5>
@@ -310,9 +317,9 @@ export const VersionPanel: React.FC<VersionPanelProps> = ({
                 {entry.added.map((item, index) => (
                   <li
                     key={index}
-                    className='text-sm text-gray-700 dark:text-gray-300 flex items-start gap-2'
+                    className='text-sm text-[color:var(--tm-muted)] flex items-start gap-2'
                   >
-                    <span className='w-1.5 h-1.5 bg-green-500 rounded-full mt-2 flex-shrink-0'></span>
+                    <span className='w-1.5 h-1.5 bg-[var(--tm-text)] rounded-full mt-2 flex-shrink-0'></span>
                     <span
                       className='min-w-0 flex-1'
                       dangerouslySetInnerHTML={{
@@ -327,7 +334,7 @@ export const VersionPanel: React.FC<VersionPanelProps> = ({
 
           {entry.changed.length > 0 && (
             <div>
-              <h5 className='text-sm font-medium text-blue-700 dark:text-blue-400 mb-2 flex items-center gap-1'>
+              <h5 className='text-sm font-medium text-[color:var(--tm-text)] mb-2 flex items-center gap-1'>
                 <RefreshCw className='w-4 h-4' />
                 功能改进
               </h5>
@@ -335,9 +342,9 @@ export const VersionPanel: React.FC<VersionPanelProps> = ({
                 {entry.changed.map((item, index) => (
                   <li
                     key={index}
-                    className='text-sm text-gray-700 dark:text-gray-300 flex items-start gap-2'
+                    className='text-sm text-[color:var(--tm-muted)] flex items-start gap-2'
                   >
-                    <span className='w-1.5 h-1.5 bg-blue-500 rounded-full mt-2 flex-shrink-0'></span>
+                    <span className='w-1.5 h-1.5 bg-[var(--tm-text)] rounded-full mt-2 flex-shrink-0'></span>
                     <span
                       className='min-w-0 flex-1'
                       dangerouslySetInnerHTML={{
@@ -352,7 +359,7 @@ export const VersionPanel: React.FC<VersionPanelProps> = ({
 
           {entry.fixed.length > 0 && (
             <div>
-              <h5 className='text-sm font-medium text-purple-700 dark:text-purple-400 mb-2 flex items-center gap-1'>
+              <h5 className='text-sm font-medium text-[color:var(--tm-text)] mb-2 flex items-center gap-1'>
                 <Bug className='w-4 h-4' />
                 问题修复
               </h5>
@@ -360,9 +367,9 @@ export const VersionPanel: React.FC<VersionPanelProps> = ({
                 {entry.fixed.map((item, index) => (
                   <li
                     key={index}
-                    className='text-sm text-gray-700 dark:text-gray-300 flex items-start gap-2'
+                    className='text-sm text-[color:var(--tm-muted)] flex items-start gap-2'
                   >
-                    <span className='w-1.5 h-1.5 bg-purple-500 rounded-full mt-2 flex-shrink-0'></span>
+                    <span className='w-1.5 h-1.5 bg-[var(--tm-text)] rounded-full mt-2 flex-shrink-0'></span>
                     <span
                       className='min-w-0 flex-1'
                       dangerouslySetInnerHTML={{
@@ -384,7 +391,7 @@ export const VersionPanel: React.FC<VersionPanelProps> = ({
     <>
       {/* 背景遮罩 */}
       <div
-        className='fixed inset-0 bg-black/50 backdrop-blur-sm z-[1000]'
+        className='fixed inset-0 bg-[color:color-mix(in_srgb,var(--tm-room-cinema-bg)_50%,transparent)] backdrop-blur-sm z-[1000]'
         onClick={onClose}
         onTouchMove={(e) => {
           // 只阻止滚动，允许其他触摸事件
@@ -401,7 +408,7 @@ export const VersionPanel: React.FC<VersionPanelProps> = ({
 
       {/* 版本面板 */}
       <div
-        className='fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-xl max-h-[90vh] bg-white dark:bg-gray-900 rounded-xl shadow-xl z-[1001] overflow-hidden'
+        className='fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-xl max-h-[90vh] bg-[var(--tm-surface)] rounded-xl shadow-xl z-[1001] overflow-hidden'
         onTouchMove={(e) => {
           // 允许版本面板内部滚动，阻止事件冒泡到外层
           e.stopPropagation();
@@ -411,17 +418,17 @@ export const VersionPanel: React.FC<VersionPanelProps> = ({
         }}
       >
         {/* 标题栏 */}
-        <div className='flex items-center justify-between p-3 sm:p-6 border-b border-gray-200 dark:border-gray-700'>
+        <div className='flex items-center justify-between p-3 sm:p-6 border-b border-[var(--tm-line)]'>
           <div className='flex items-center gap-2 sm:gap-3'>
-            <h3 className='text-lg sm:text-xl font-bold text-gray-800 dark:text-gray-200'>
+            <h3 className='text-lg sm:text-xl font-bold text-[color:var(--tm-text)]'>
               {BRAND_NAME} · 版本与来源
             </h3>
             <div className='flex flex-wrap items-center gap-1 sm:gap-2'>
-              <span className='px-2 sm:px-3 py-1 text-xs sm:text-sm font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300 rounded-full'>
+              <span className='px-2 sm:px-3 py-1 text-[13px] sm:text-sm font-medium bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)] rounded-full'>
                 v{CURRENT_VERSION}
               </span>
               {hasUpdate && (
-                <span className='px-2 sm:px-3 py-1 text-xs sm:text-sm font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300 rounded-full flex items-center gap-1'>
+                <span className='px-2 sm:px-3 py-1 text-[13px] sm:text-sm font-medium bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)] rounded-full flex items-center gap-1'>
                   <Download className='w-3 h-3 sm:w-4 sm:h-4' />
                   <span className='hidden sm:inline'>上游有新动态</span>
                   <span className='sm:hidden'>上游动态</span>
@@ -431,7 +438,7 @@ export const VersionPanel: React.FC<VersionPanelProps> = ({
           </div>
           <button
             onClick={onClose}
-            className='w-6 h-6 sm:w-8 sm:h-8 p-1 rounded-full flex items-center justify-center text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors'
+            className='w-6 h-6 sm:w-8 sm:h-8 p-1 rounded-full flex items-center justify-center text-[color:var(--tm-muted)] hover:bg-[var(--tm-line)] transition-colors min-h-[44px] tm-press'
             aria-label='关闭'
           >
             <X className='w-full h-full' />
@@ -441,24 +448,34 @@ export const VersionPanel: React.FC<VersionPanelProps> = ({
         {/* 内容区域 */}
         <div className='p-3 sm:p-6 overflow-y-auto max-h-[calc(95vh-140px)] sm:max-h-[calc(90vh-120px)]'>
           <div className='space-y-3 sm:space-y-6'>
-            <div className='rounded-xl border border-gray-200 dark:border-gray-700 p-4 text-sm text-gray-600 dark:text-gray-300 space-y-2'>
-              <p>{BRAND_NAME} 基于 {UPSTREAM_NAME} v{UPSTREAM_BASE_VERSION} 改造，原项目及贡献者的来源记录予以保留。</p>
-              <p>本项目使用独立版本。原项目的更新仅供参考，不会自动覆盖本站；尚未配置本项目的在线发行地址。</p>
-              <a href='/about' className='underline underline-offset-4'>关于本项目、来源与许可</a>
+            <div className='rounded-xl border border-[var(--tm-line)] p-4 text-sm text-[color:var(--tm-muted)] space-y-2'>
+              <p>
+                {BRAND_NAME} 基于 {UPSTREAM_NAME} v{UPSTREAM_BASE_VERSION}{' '}
+                改造，原项目及贡献者的来源记录予以保留。
+              </p>
+              <p>
+                本项目使用独立版本。原项目的更新仅供参考，不会自动覆盖本站；尚未配置本项目的在线发行地址。
+              </p>
+              <a
+                href='/about'
+                className='underline underline-offset-4 min-h-[44px] inline-flex items-center tm-press'
+              >
+                关于本项目、来源与许可
+              </a>
             </div>
             {/* 远程更新信息 */}
             {hasUpdate && (
-              <div className='bg-gradient-to-r from-yellow-50 to-amber-50 dark:from-yellow-900/20 dark:to-amber-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3 sm:p-4'>
+              <div className='bg-[var(--tm-surface)] border border-[var(--tm-line)] rounded-lg p-3 sm:p-4'>
                 <div className='flex flex-col gap-3'>
                   <div className='flex items-center gap-2 sm:gap-3'>
-                    <div className='w-8 h-8 sm:w-10 sm:h-10 bg-yellow-100 dark:bg-yellow-800/40 rounded-full flex items-center justify-center flex-shrink-0'>
-                      <Download className='w-4 h-4 sm:w-5 sm:h-5 text-yellow-600 dark:text-yellow-400' />
+                    <div className='w-8 h-8 sm:w-10 sm:h-10 bg-[var(--tm-surface-raised)] rounded-full flex items-center justify-center flex-shrink-0'>
+                      <Download className='w-4 h-4 sm:w-5 sm:h-5 text-[color:var(--tm-text)]' />
                     </div>
                     <div className='min-w-0 flex-1'>
-                      <h4 className='text-sm sm:text-base font-semibold text-yellow-800 dark:text-yellow-200'>
+                      <h4 className='text-sm sm:text-base font-medium text-[color:var(--tm-text)]'>
                         原项目有新版本
                       </h4>
-                      <p className='text-xs sm:text-sm text-yellow-700 dark:text-yellow-300 break-all'>
+                      <p className='text-[13px] sm:text-sm text-[color:var(--tm-text)] break-all'>
                         上游基线 v{UPSTREAM_BASE_VERSION} → v{latestVersion}
                       </p>
                     </div>
@@ -467,7 +484,7 @@ export const VersionPanel: React.FC<VersionPanelProps> = ({
                     href={UPSTREAM_URL}
                     target='_blank'
                     rel='noopener noreferrer'
-                    className='inline-flex items-center justify-center gap-2 px-3 py-2 bg-yellow-600 hover:bg-yellow-700 text-white text-xs sm:text-sm rounded-lg transition-colors shadow-sm w-full'
+                    className='inline-flex items-center justify-center gap-2 px-3 py-2 bg-[var(--tm-surface-raised)] hover:bg-[var(--tm-line)] text-[color:var(--tm-text)] text-[13px] sm:text-sm rounded-lg transition-colors shadow-sm w-full min-h-[44px] tm-press'
                   >
                     <Download className='w-3 h-3 sm:w-4 sm:h-4' />
                     查看原项目仓库
@@ -478,18 +495,19 @@ export const VersionPanel: React.FC<VersionPanelProps> = ({
 
             {/* 当前为最新版本信息 */}
             {!hasUpdate && (
-              <div className='bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border border-green-200 dark:border-green-800 rounded-lg p-3 sm:p-4'>
+              <div className='bg-[var(--tm-surface)] border border-[var(--tm-line)] rounded-lg p-3 sm:p-4'>
                 <div className='flex flex-col gap-3'>
                   <div className='flex items-center gap-2 sm:gap-3'>
-                    <div className='w-8 h-8 sm:w-10 sm:h-10 bg-green-100 dark:bg-green-800/40 rounded-full flex items-center justify-center flex-shrink-0'>
-                      <CheckCircle className='w-4 h-4 sm:w-5 sm:h-5 text-green-600 dark:text-green-400' />
+                    <div className='w-8 h-8 sm:w-10 sm:h-10 bg-[var(--tm-surface-raised)] rounded-full flex items-center justify-center flex-shrink-0'>
+                      <CheckCircle className='w-4 h-4 sm:w-5 sm:h-5 text-[color:var(--tm-text)]' />
                     </div>
                     <div className='min-w-0 flex-1'>
-                      <h4 className='text-sm sm:text-base font-semibold text-green-800 dark:text-green-200'>
+                      <h4 className='text-sm sm:text-base font-medium text-[color:var(--tm-text)]'>
                         本项目独立维护
                       </h4>
-                      <p className='text-xs sm:text-sm text-green-700 dark:text-green-300 break-all'>
-                        本项目 v{CURRENT_VERSION} · 上游基线 v{UPSTREAM_BASE_VERSION}
+                      <p className='text-[13px] sm:text-sm text-[color:var(--tm-text)] break-all'>
+                        本项目 v{CURRENT_VERSION} · 上游基线 v
+                        {UPSTREAM_BASE_VERSION}
                       </p>
                     </div>
                   </div>
@@ -497,7 +515,7 @@ export const VersionPanel: React.FC<VersionPanelProps> = ({
                     href={UPSTREAM_URL}
                     target='_blank'
                     rel='noopener noreferrer'
-                    className='inline-flex items-center justify-center gap-2 px-3 py-2 bg-green-600 hover:bg-green-700 text-white text-xs sm:text-sm rounded-lg transition-colors shadow-sm w-full'
+                    className='inline-flex items-center justify-center gap-2 px-3 py-2 bg-[var(--tm-text)] hover:opacity-90 text-[color:var(--tm-accent-contrast)] text-[13px] sm:text-sm rounded-lg transition-colors shadow-sm w-full min-h-[44px] tm-press'
                   >
                     <CheckCircle className='w-3 h-3 sm:w-4 sm:h-4' />
                     查看原项目仓库
@@ -510,13 +528,13 @@ export const VersionPanel: React.FC<VersionPanelProps> = ({
             {hasUpdate && (
               <div className='space-y-4'>
                 <div className='flex flex-col sm:flex-row sm:items-center justify-between gap-3'>
-                  <h4 className='text-lg font-semibold text-gray-800 dark:text-gray-200 flex items-center gap-2'>
-                    <Download className='w-5 h-5 text-yellow-500' />
+                  <h4 className='text-lg font-medium text-[color:var(--tm-text)] flex items-center gap-2'>
+                    <Download className='w-5 h-5 text-[color:var(--tm-text)]' />
                     原项目更新参考
                   </h4>
                   <button
                     onClick={() => setShowRemoteContent(!showRemoteContent)}
-                    className='inline-flex items-center justify-center gap-2 px-3 py-1.5 bg-yellow-100 hover:bg-yellow-200 text-yellow-800 dark:bg-yellow-800/30 dark:hover:bg-yellow-800/50 dark:text-yellow-200 rounded-lg transition-colors text-sm w-full sm:w-auto'
+                    className='inline-flex items-center justify-center gap-2 px-3 py-1.5 bg-[var(--tm-surface-raised)] hover:bg-[var(--tm-line)] text-[color:var(--tm-text)] rounded-lg transition-colors text-sm w-full sm:w-auto min-h-[44px] tm-press'
                   >
                     {showRemoteContent ? (
                       <>
@@ -545,30 +563,31 @@ export const VersionPanel: React.FC<VersionPanelProps> = ({
                       .map((entry, index) => (
                         <div
                           key={index}
-                          className={`p-4 rounded-lg border ${entry.version === latestVersion
-                            ? 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800'
-                            : 'bg-gray-50 dark:bg-gray-800/60 border-gray-200 dark:border-gray-700'
-                            }`}
+                          className={`p-4 rounded-lg border ${
+                            entry.version === latestVersion
+                              ? 'bg-[var(--tm-surface-raised)] border-[var(--tm-line)]'
+                              : 'bg-[var(--tm-surface-raised)] border-[var(--tm-line)]'
+                          }`}
                         >
                           <div className='flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3'>
                             <div className='flex flex-wrap items-center gap-2'>
-                              <h4 className='text-lg font-semibold text-gray-900 dark:text-gray-100'>
+                              <h4 className='text-lg font-medium text-[color:var(--tm-text)]'>
                                 v{entry.version}
                               </h4>
                               {entry.version === latestVersion && (
-                                <span className='px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300 rounded-full flex items-center gap-1'>
+                                <span className='px-2 py-1 text-[13px] font-medium bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)] rounded-full flex items-center gap-1'>
                                   上游最新
                                 </span>
                               )}
                             </div>
-                            <div className='flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400'>
+                            <div className='flex items-center gap-2 text-sm text-[color:var(--tm-muted)]'>
                               {entry.date}
                             </div>
                           </div>
 
                           {entry.added && entry.added.length > 0 && (
                             <div className='mb-3'>
-                              <h5 className='text-sm font-medium text-green-600 dark:text-green-400 mb-2 flex items-center gap-1'>
+                              <h5 className='text-sm font-medium text-[color:var(--tm-text)] mb-2 flex items-center gap-1'>
                                 <Plus className='w-4 h-4' />
                                 新增功能
                               </h5>
@@ -576,9 +595,9 @@ export const VersionPanel: React.FC<VersionPanelProps> = ({
                                 {entry.added.map((item, itemIndex) => (
                                   <li
                                     key={itemIndex}
-                                    className='text-sm text-gray-700 dark:text-gray-300 flex items-start gap-2'
+                                    className='text-sm text-[color:var(--tm-muted)] flex items-start gap-2'
                                   >
-                                    <span className='w-1.5 h-1.5 bg-green-400 rounded-full mt-2 flex-shrink-0'></span>
+                                    <span className='w-1.5 h-1.5 bg-[var(--tm-text)] rounded-full mt-2 flex-shrink-0'></span>
                                     <span
                                       className='min-w-0 flex-1'
                                       dangerouslySetInnerHTML={{
@@ -593,7 +612,7 @@ export const VersionPanel: React.FC<VersionPanelProps> = ({
 
                           {entry.changed && entry.changed.length > 0 && (
                             <div className='mb-3'>
-                              <h5 className='text-sm font-medium text-blue-600 dark:text-blue-400 mb-2 flex items-center gap-1'>
+                              <h5 className='text-sm font-medium text-[color:var(--tm-text)] mb-2 flex items-center gap-1'>
                                 <RefreshCw className='w-4 h-4' />
                                 功能改进
                               </h5>
@@ -601,9 +620,9 @@ export const VersionPanel: React.FC<VersionPanelProps> = ({
                                 {entry.changed.map((item, itemIndex) => (
                                   <li
                                     key={itemIndex}
-                                    className='text-sm text-gray-700 dark:text-gray-300 flex items-start gap-2'
+                                    className='text-sm text-[color:var(--tm-muted)] flex items-start gap-2'
                                   >
-                                    <span className='w-1.5 h-1.5 bg-blue-400 rounded-full mt-2 flex-shrink-0'></span>
+                                    <span className='w-1.5 h-1.5 bg-[var(--tm-text)] rounded-full mt-2 flex-shrink-0'></span>
                                     <span
                                       className='min-w-0 flex-1'
                                       dangerouslySetInnerHTML={{
@@ -618,7 +637,7 @@ export const VersionPanel: React.FC<VersionPanelProps> = ({
 
                           {entry.fixed && entry.fixed.length > 0 && (
                             <div>
-                              <h5 className='text-sm font-medium text-purple-700 dark:text-purple-400 mb-2 flex items-center gap-1'>
+                              <h5 className='text-sm font-medium text-[color:var(--tm-text)] mb-2 flex items-center gap-1'>
                                 <Bug className='w-4 h-4' />
                                 问题修复
                               </h5>
@@ -626,9 +645,9 @@ export const VersionPanel: React.FC<VersionPanelProps> = ({
                                 {entry.fixed.map((item, itemIndex) => (
                                   <li
                                     key={itemIndex}
-                                    className='text-sm text-gray-700 dark:text-gray-300 flex items-start gap-2'
+                                    className='text-sm text-[color:var(--tm-muted)] flex items-start gap-2'
                                   >
-                                    <span className='w-1.5 h-1.5 bg-purple-500 rounded-full mt-2 flex-shrink-0'></span>
+                                    <span className='w-1.5 h-1.5 bg-[var(--tm-text)] rounded-full mt-2 flex-shrink-0'></span>
                                     <span
                                       className='min-w-0 flex-1'
                                       dangerouslySetInnerHTML={{
@@ -648,8 +667,8 @@ export const VersionPanel: React.FC<VersionPanelProps> = ({
             )}
 
             {/* 变更日志标题 */}
-            <div className='border-b border-gray-200 dark:border-gray-700 pb-4'>
-              <h4 className='text-lg font-semibold text-gray-800 dark:text-gray-200 pb-3 sm:pb-4'>
+            <div className='border-b border-[var(--tm-line)] pb-4'>
+              <h4 className='text-lg font-medium text-[color:var(--tm-text)] pb-3 sm:pb-4'>
                 原项目历史记录（随基线保留）
               </h4>
 

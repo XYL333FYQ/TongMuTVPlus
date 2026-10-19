@@ -1,19 +1,23 @@
 /* eslint-disable no-console */
 'use client';
 
-import { AlertTriangle, ChevronRight } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
+
+import '@/styles/legacy-panels.css';
 
 import type { PlayRecord } from '@/lib/db.client';
 import {
   clearAllPlayRecords,
-  getCachedPlayRecordsSnapshot,
   getAllPlayRecords,
+  getCachedPlayRecordsSnapshot,
   subscribeToDataUpdates,
 } from '@/lib/db.client';
 
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 import PlayRecordsPanel from '@/components/PlayRecordsPanel';
+import SectionHeader from '@/components/SectionHeader';
 import VideoCard from '@/components/VideoCard';
 import VirtualScrollableRow from '@/components/VirtualScrollableRow';
 
@@ -24,9 +28,14 @@ interface ContinueWatchingProps {
 
 type PlayRecordItem = PlayRecord & { key: string };
 
-function HomeRecordRow({ children }: { children: React.ReactNode }) { return <div className='tm-home-compact-grid'>{children}</div>; }
+function HomeRecordRow({ children }: { children: React.ReactNode }) {
+  return <div className='tm-home-compact-grid'>{children}</div>;
+}
 
-export default function ContinueWatching({ className, homeLayout = false }: ContinueWatchingProps) {
+export default function ContinueWatching({
+  className,
+  homeLayout = false,
+}: ContinueWatchingProps) {
   const RecordRow = homeLayout ? HomeRecordRow : VirtualScrollableRow;
   const storageType = process.env.NEXT_PUBLIC_STORAGE_TYPE || 'localstorage';
   const cachedDisplayLimit = storageType !== 'localstorage' ? 10 : undefined;
@@ -44,7 +53,9 @@ export default function ContinueWatching({ className, homeLayout = false }: Cont
       key,
     }));
 
-    const sortedRecords = recordsArray.sort((a, b) => b.save_time - a.save_time);
+    const sortedRecords = recordsArray.sort(
+      (a, b) => b.save_time - a.save_time
+    );
     setPlayRecords(limit ? sortedRecords.slice(0, limit) : sortedRecords);
   };
 
@@ -109,41 +120,85 @@ export default function ContinueWatching({ className, homeLayout = false }: Cont
 
   return (
     <>
-      <section className={`mb-8 ${homeLayout ? 'tm-home-resume' : ''} ${className || ''}`}>
-        <div className='mb-4 flex items-center justify-between'>
-          <h2 className={homeLayout ? 'text-xl font-bold text-[var(--tm-text)]' : 'text-xl font-bold text-gray-800 dark:text-gray-200'}>
-            继续观看
-          </h2>
-          {!loading && playRecords.length > 0 && (
-            <div className='flex items-center gap-1'>
-              <button
-                className='text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
-                onClick={() => setShowConfirmDialog(true)}
-              >
-                清空
-              </button>
-              <button
-                className='inline-flex h-8 w-8 items-center justify-center rounded-full text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-200'
-                onClick={() => setShowPlayRecordsPanel(true)}
-                aria-label='查看全部播放记录'
-              >
-                <ChevronRight className='h-4 w-4' />
-              </button>
-            </div>
-          )}
-        </div>
+      <section
+        className={`mb-8 ${homeLayout ? 'tm-home-resume' : ''}  ${
+          className || ''
+        } `}
+      >
+        {homeLayout ? (
+          <SectionHeader
+            title='继续观看'
+            actions={
+              !loading && playRecords.length > 0 ? (
+                <button
+                  className='tm-section-view-all min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
+                  onClick={() => setShowPlayRecordsPanel(true)}
+                >
+                  查看全部
+                </button>
+              ) : null
+            }
+          />
+        ) : (
+          <div className='tm-continue-header mb-4 flex items-center justify-between'>
+            <h2
+              className={
+                homeLayout
+                  ? 'text-xl font-medium text-[var(--tm-text)]'
+                  : 'text-xl font-medium text-[color:var(--tm-text)]'
+              }
+            >
+              继续观看
+            </h2>
+            {!loading && playRecords.length > 0 && (
+              <div className='flex items-center gap-1'>
+                <button
+                  className='text-sm text-[color:var(--tm-muted)] hover:text-[color:var(--tm-text)] min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
+                  onClick={() => setShowConfirmDialog(true)}
+                >
+                  清空
+                </button>
+                <button
+                  className='inline-flex h-8 w-8 items-center justify-center rounded-full text-[color:var(--tm-muted)] transition-opacity hover:bg-[var(--tm-line)] hover:text-[color:var(--tm-text)] min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
+                  onClick={() => setShowPlayRecordsPanel(true)}
+                  aria-label='查看全部播放记录'
+                >
+                  <ChevronRight className='h-4 w-4' />
+                </button>
+              </div>
+            )}
+          </div>
+        )}
         {loading ? (
-          <div className={homeLayout ? 'tm-home-compact-grid' : 'flex gap-2 overflow-x-auto scrollbar-hide pb-2 pt-2'}>
+          <div
+            className={
+              homeLayout
+                ? 'tm-home-compact-grid'
+                : 'flex gap-2 overflow-x-auto scrollbar-hide pb-2 pt-2'
+            }
+          >
             {Array.from({ length: 8 }).map((_, index) => (
               <div
                 key={index}
                 className='min-w-[180px] w-48 sm:min-w-[200px] sm:w-52'
               >
-                <div className={homeLayout ? 'relative aspect-video w-full overflow-hidden rounded-lg bg-[var(--tm-surface-raised)] tm-skeleton' : 'relative aspect-video w-full overflow-hidden rounded-lg bg-gray-200 animate-pulse dark:bg-gray-800'}>
-                  <div className={homeLayout ? 'hidden' : 'absolute inset-0 bg-gray-300 dark:bg-gray-700'} />
+                <div
+                  className={
+                    homeLayout
+                      ? 'relative aspect-video w-full overflow-hidden rounded-lg bg-[var(--tm-surface-raised)] tm-skeleton'
+                      : 'relative aspect-video w-full overflow-hidden rounded-lg bg-[var(--tm-surface-raised)] tm-skeleton'
+                  }
+                >
+                  <div
+                    className={
+                      homeLayout
+                        ? 'hidden'
+                        : 'absolute inset-0 bg-[var(--tm-surface)]'
+                    }
+                  />
                 </div>
-                <div className='mt-1 h-1 rounded bg-gray-200 animate-pulse dark:bg-gray-800' />
-                <div className='mt-2 h-4 w-3/4 rounded bg-gray-200 animate-pulse dark:bg-gray-800' />
+                <div className='mt-1 h-1 rounded bg-[var(--tm-surface-raised)] tm-skeleton' />
+                <div className='mt-2 h-4 w-3/4 rounded bg-[var(--tm-surface-raised)] tm-skeleton' />
               </div>
             ))}
           </div>
@@ -182,8 +237,24 @@ export default function ContinueWatching({ className, homeLayout = false }: Cont
                       totalTime={record.total_time}
                       isAnime={Boolean(record.is_anime)}
                     />
-                    {homeLayout && <><strong className='tm-home-resume-name'>{record.title}</strong><small className='tm-home-resume-note'>{record.total_episodes > 1 ? '第 ' + record.index + ' 集 · ' : ''}已看 {Math.round(getProgress(record))}%</small></>}
-                    {record.new_episodes && record.new_episodes > 0 && <span className='tm-home-new-episodes'>+{record.new_episodes}</span>}
+                    {homeLayout && (
+                      <>
+                        <strong className='tm-home-resume-name'>
+                          {record.title}
+                        </strong>
+                        <small className='tm-home-resume-note'>
+                          {record.total_episodes > 1
+                            ? '第 ' + record.index + ' 集 · '
+                            : ''}
+                          看到 {Math.round(getProgress(record))}%
+                        </small>
+                      </>
+                    )}
+                    {(record.new_episodes ?? 0) > 0 && (
+                      <span className='tm-home-new-episodes'>
+                        +{record.new_episodes}
+                      </span>
+                    )}
                   </div>
                 );
               })}
@@ -192,50 +263,17 @@ export default function ContinueWatching({ className, homeLayout = false }: Cont
         )}
       </section>
 
-      {showConfirmDialog &&
-        createPortal(
-          <div
-            className='fixed inset-0 z-[9999] flex items-center justify-center bg-black bg-opacity-50 p-4 transition-opacity duration-300'
-            onClick={() => setShowConfirmDialog(false)}
-          >
-            <div
-              className='max-w-md w-full rounded-lg border border-red-200 bg-white shadow-xl transition-all duration-300 dark:border-red-800 dark:bg-gray-800'
-              onClick={(event) => event.stopPropagation()}
-            >
-              <div className='p-6'>
-                <div className='mb-4 flex items-start gap-4'>
-                  <div className='flex-shrink-0'>
-                    <AlertTriangle className='h-8 w-8 text-red-500' />
-                  </div>
-                  <div className='flex-1'>
-                    <h3 className='mb-2 text-lg font-semibold text-gray-900 dark:text-gray-100'>
-                      清空播放记录
-                    </h3>
-                    <p className='text-sm text-gray-600 dark:text-gray-400'>
-                      确定要清空所有播放记录吗？此操作不可恢复。
-                    </p>
-                  </div>
-                </div>
-
-                <div className='mt-6 flex gap-3'>
-                  <button
-                    onClick={() => setShowConfirmDialog(false)}
-                    className='flex-1 rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
-                  >
-                    取消
-                  </button>
-                  <button
-                    onClick={handleClearConfirm}
-                    className='flex-1 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700'
-                  >
-                    确定清空
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>,
-          document.body
-        )}
+      {showConfirmDialog && (
+        <ConfirmDialog
+          isOpen={showConfirmDialog}
+          title='清空播放记录'
+          message='清空全部观看记录？此操作不能撤销'
+          confirmText='确定清空'
+          variant='danger'
+          onConfirm={handleClearConfirm}
+          onCancel={() => setShowConfirmDialog(false)}
+        />
+      )}
 
       {showPlayRecordsPanel &&
         createPortal(

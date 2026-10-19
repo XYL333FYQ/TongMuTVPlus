@@ -52,12 +52,9 @@ import MediaGridSkeleton from '@/components/media/MediaGridSkeleton';
 import MediaPressCard from '@/components/media/MediaPressCard';
 
 /** 缓存面板里的一行（书名 + 大小 + 删除键）。 */
-const CARD_CLASS = cn(
-  LIBRARY_ROW,
-  'bg-library-card dark:bg-library-night-card'
-);
+const CARD_CLASS = cn(LIBRARY_ROW, 'bg-[var(--tm-surface)]');
 const DANGER_BUTTON_CLASS =
-  'cursor-pointer rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors duration-200 hover:bg-red-700';
+  'cursor-pointer rounded-md bg-[var(--tm-text)] px-4 py-2 text-sm font-medium text-[color:var(--tm-accent-contrast)] transition-colors duration-200 hover:opacity-90 min-h-[44px] tm-press';
 
 function looksLikeInternalHref(value?: string) {
   if (!value) return false;
@@ -284,11 +281,11 @@ export default function BookHistoryPage() {
         mounted &&
         createPortal(
           <div
-            className='fixed inset-0 z-50 bg-black/45 backdrop-blur-sm'
+            className='fixed inset-0 z-50 bg-[color:color-mix(in_srgb,var(--tm-room-cinema-bg)_45%,transparent)] '
             onClick={() => setCacheModalOpen(false)}
           >
             <div
-              className='absolute right-0 top-0 h-screen w-full max-w-lg overflow-y-auto border-l border-library-edge bg-library-paper shadow-2xl dark:border-library-night-edge dark:bg-library-night'
+              className='absolute right-0 top-0 h-screen w-full max-w-lg overflow-y-auto border-l border-[var(--tm-line)] bg-[var(--tm-bg)] shadow-2xl'
               onClick={(event) => event.stopPropagation()}
             >
               <div className='space-y-5 p-5'>
@@ -297,7 +294,7 @@ export default function BookHistoryPage() {
                     <div>
                       <div
                         className={cn(
-                          'flex items-center gap-2 text-base font-semibold',
+                          'flex items-center gap-2 text-base font-medium',
                           LIBRARY_TEXT,
                           LIBRARY_SERIF
                         )}
@@ -307,7 +304,7 @@ export default function BookHistoryPage() {
                         />
                         缓存管理
                       </div>
-                      <div className={cn('mt-1 text-xs', LIBRARY_MUTED)}>
+                      <div className={cn('mt-1 text-[13px]', LIBRARY_MUTED)}>
                         已缓存 {cacheItems.length} 本 ·{' '}
                         {formatBytes(cacheTotalSize)}
                       </div>
@@ -364,18 +361,19 @@ export default function BookHistoryPage() {
                       <div className='flex items-start justify-between gap-3'>
                         <div className='min-w-0 flex-1'>
                           <div
-                            className={cn(
-                              'truncate font-semibold',
-                              LIBRARY_TEXT
-                            )}
+                            className={cn('truncate font-medium', LIBRARY_TEXT)}
                           >
                             {item.title}
                           </div>
-                          <div className={cn('mt-1 text-xs', LIBRARY_MUTED)}>
+                          <div
+                            className={cn('mt-1 text-[13px]', LIBRARY_MUTED)}
+                          >
                             格式 {item.format.toUpperCase()} · 大小{' '}
                             {formatBytes(item.size)}
                           </div>
-                          <div className={cn('mt-1 text-xs', LIBRARY_MUTED)}>
+                          <div
+                            className={cn('mt-1 text-[13px]', LIBRARY_MUTED)}
+                          >
                             最近打开{' '}
                             {new Date(item.lastOpenTime).toLocaleString()}
                           </div>
@@ -412,7 +410,7 @@ export default function BookHistoryPage() {
         mounted &&
         createPortal(
           <div
-            className='fixed inset-0 z-[60] flex items-center justify-center bg-black/55 px-4 backdrop-blur-sm'
+            className='fixed inset-0 z-[60] flex items-center justify-center bg-[color:color-mix(in_srgb,var(--tm-room-cinema-bg)_55%,transparent)] px-4 '
             onClick={() => setConfirmAction(null)}
           >
             <div
@@ -421,12 +419,12 @@ export default function BookHistoryPage() {
             >
               <div
                 className={cn(
-                  'flex items-center gap-2 text-base font-semibold',
+                  'flex items-center gap-2 text-base font-medium',
                   LIBRARY_TEXT,
                   LIBRARY_SERIF
                 )}
               >
-                <Trash2 className='h-4 w-4 text-red-600 dark:text-red-400' />
+                <Trash2 className='h-4 w-4 text-[color:var(--tm-text)]' />
                 {confirmAction.type === 'clear-all'
                   ? '清空全部缓存'
                   : '删除缓存'}
@@ -444,7 +442,7 @@ export default function BookHistoryPage() {
                   onClick={() => setConfirmAction(null)}
                   className={cn(
                     LIBRARY_GHOST_BUTTON,
-                    'cursor-pointer px-4 py-2 text-sm'
+                    'cursor-pointer px-4 py-2 text-sm min-h-[44px] tm-press'
                   )}
                 >
                   取消

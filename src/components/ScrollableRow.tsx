@@ -1,6 +1,8 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
+import { isReducedMotionSetting } from '@/lib/motion';
+
 interface ScrollableRowProps {
   children: React.ReactNode;
   scrollDistance?: number;
@@ -78,7 +80,7 @@ export default function ScrollableRow({
     if (containerRef.current) {
       containerRef.current.scrollBy({
         left: scrollDistance,
-        behavior: 'smooth',
+        behavior: isReducedMotionSetting() ? 'auto' : 'smooth',
       });
     }
   };
@@ -87,7 +89,7 @@ export default function ScrollableRow({
     if (containerRef.current) {
       containerRef.current.scrollBy({
         left: -scrollDistance,
-        behavior: 'smooth',
+        behavior: isReducedMotionSetting() ? 'auto' : 'smooth',
       });
     }
   };
@@ -111,9 +113,9 @@ export default function ScrollableRow({
       </div>
       {showLeftScroll && (
         <div
-          className={`hidden sm:flex absolute left-0 top-0 bottom-0 w-16 items-center justify-center z-[600] transition-opacity duration-200 ${
+          className={`hidden sm:flex absolute left-0 top-0 bottom-0 w-16 items-center justify-center z-[600] focus-within:opacity-100 transition-opacity duration-200 ${
             isHovered ? 'opacity-100' : 'opacity-0'
-          }`}
+          } `}
           style={{
             background: 'transparent',
             pointerEvents: 'none', // 允许点击穿透
@@ -124,15 +126,16 @@ export default function ScrollableRow({
             style={{
               top: '40%',
               bottom: '60%',
-              left: '-4.5rem',
+              left: '0',
               pointerEvents: 'auto',
             }}
           >
             <button
+              aria-label='向左滚动'
               onClick={handleScrollLeftClick}
-              className='w-12 h-12 bg-white/95 rounded-full shadow-lg flex items-center justify-center hover:bg-white border border-gray-200 transition-transform hover:scale-105 dark:bg-gray-800/90 dark:hover:bg-gray-700 dark:border-gray-600'
+              className='w-12 h-12 bg-[var(--tm-surface-raised)] rounded-full shadow-lg flex items-center justify-center hover:bg-[var(--tm-line)] border border-[var(--tm-line)] transition-transform hover:scale-105 min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
             >
-              <ChevronLeft className='w-6 h-6 text-gray-600 dark:text-gray-300' />
+              <ChevronLeft className='w-6 h-6 text-[color:var(--tm-muted)]' />
             </button>
           </div>
         </div>
@@ -140,9 +143,9 @@ export default function ScrollableRow({
 
       {showRightScroll && (
         <div
-          className={`hidden sm:flex absolute right-0 top-0 bottom-0 w-16 items-center justify-center z-[600] transition-opacity duration-200 ${
+          className={`hidden sm:flex absolute right-0 top-0 bottom-0 w-16 items-center justify-center z-[600] focus-within:opacity-100 transition-opacity duration-200 ${
             isHovered ? 'opacity-100' : 'opacity-0'
-          }`}
+          } `}
           style={{
             background: 'transparent',
             pointerEvents: 'none', // 允许点击穿透
@@ -153,15 +156,16 @@ export default function ScrollableRow({
             style={{
               top: '40%',
               bottom: '60%',
-              right: '-4.5rem',
+              right: '0',
               pointerEvents: 'auto',
             }}
           >
             <button
+              aria-label='向右滚动'
               onClick={handleScrollRightClick}
-              className='w-12 h-12 bg-white/95 rounded-full shadow-lg flex items-center justify-center hover:bg-white border border-gray-200 transition-transform hover:scale-105 dark:bg-gray-800/90 dark:hover:bg-gray-700 dark:border-gray-600'
+              className='w-12 h-12 bg-[var(--tm-surface-raised)] rounded-full shadow-lg flex items-center justify-center hover:bg-[var(--tm-line)] border border-[var(--tm-line)] transition-transform hover:scale-105 min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
             >
-              <ChevronRight className='w-6 h-6 text-gray-600 dark:text-gray-300' />
+              <ChevronRight className='w-6 h-6 text-[color:var(--tm-muted)]' />
             </button>
           </div>
         </div>

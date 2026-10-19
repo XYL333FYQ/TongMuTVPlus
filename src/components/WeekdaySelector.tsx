@@ -2,7 +2,12 @@
 
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import { motion } from 'framer-motion';
+import React, { useEffect, useId, useState } from 'react';
+
+import '@/styles/controls.css';
+
+import { useReducedMotionSetting } from '@/lib/motion';
 
 interface WeekdaySelectorProps {
   onWeekdayChange: (weekday: string) => void;
@@ -23,6 +28,8 @@ const WeekdaySelector: React.FC<WeekdaySelectorProps> = ({
   onWeekdayChange,
   className = '',
 }) => {
+  const selectionId = useId();
+  const reduced = useReducedMotionSetting();
   // 获取今天的星期数，默认选中今天
   const getTodayWeekday = (): string => {
     const today = new Date().getDay();
@@ -42,27 +49,38 @@ const WeekdaySelector: React.FC<WeekdaySelectorProps> = ({
 
   return (
     <div
-      className={`relative inline-flex rounded-full p-0.5 sm:p-1 ${className}`}
+      className={`tm-capsule relative inline-flex rounded-full p-0.5 sm:p-1 ${className} `}
     >
       {weekdays.map((weekday) => {
         const isActive = selectedWeekday === weekday.value;
         return (
           <button
+            type='button'
+            aria-pressed={isActive}
             key={weekday.value}
             onClick={() => {
               setSelectedWeekday(weekday.value);
               onWeekdayChange(weekday.value);
             }}
-            className={`
-              relative z-10 px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm font-medium rounded-full transition-all duration-200 whitespace-nowrap
-              ${
-                isActive
-                  ? 'text-green-600 dark:text-green-400 font-semibold'
-                  : 'text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200 cursor-pointer'
-              }
-            `}
+            className={`tm-capsule-option tm-press relative z-10 px-2 py-1 sm:px-4 sm:py-2 text-[13px] sm:text-sm font-medium rounded-full transition-[transform,opacity] duration-200 whitespace-nowrap min-h-[44px] min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)] ${
+              isActive
+                ? 'text-[color:var(--tm-text)] font-medium min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
+                : 'text-[color:var(--tm-muted)] hover:text-[color:var(--tm-text)] cursor-pointer min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
+            } `}
             title={weekday.label}
           >
+            {isActive && (
+              <motion.span
+                className='tm-control-selection'
+                layoutId={reduced ? undefined : `tm-weekday-${selectionId}`}
+                initial={false}
+                transition={{
+                  duration: reduced ? 0 : 0.2,
+                  ease: [0.22, 1, 0.36, 1],
+                }}
+                aria-hidden='true'
+              />
+            )}
             {weekday.shortLabel}
           </button>
         );

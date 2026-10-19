@@ -1,7 +1,15 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
-import { Bot, Loader2, RefreshCw, Send, Sparkles, Trash2, X } from 'lucide-react';
+import {
+  Bot,
+  Loader2,
+  RefreshCw,
+  Send,
+  Sparkles,
+  Trash2,
+  X,
+} from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
@@ -77,7 +85,9 @@ const splitMarkdownTableRow = (line: string): string[] => {
   return cells;
 };
 
-const getTableAlign = (cell: string): 'left' | 'center' | 'right' | undefined => {
+const getTableAlign = (
+  cell: string
+): 'left' | 'center' | 'right' | undefined => {
   const trimmed = cell.trim();
   if (!/^:?-{3,}:?$/.test(trimmed)) return undefined;
   if (trimmed.startsWith(':') && trimmed.endsWith(':')) return 'center';
@@ -87,7 +97,9 @@ const getTableAlign = (cell: string): 'left' | 'center' | 'right' | undefined =>
 
 const isTableDelimiterRow = (line: string): boolean => {
   const cells = splitMarkdownTableRow(line);
-  return cells.length > 0 && cells.every((cell) => /^:?-{3,}:?$/.test(cell.trim()));
+  return (
+    cells.length > 0 && cells.every((cell) => /^:?-{3,}:?$/.test(cell.trim()))
+  );
 };
 
 const normalizeTableRow = (cells: string[], length: number): string[] => {
@@ -138,7 +150,9 @@ const splitMarkdownByTables = (content: string): MarkdownSegment[] => {
         i += 2;
 
         while (i < lines.length && lines[i].trim() && lines[i].includes('|')) {
-          rows.push(normalizeTableRow(splitMarkdownTableRow(lines[i]), header.length));
+          rows.push(
+            normalizeTableRow(splitMarkdownTableRow(lines[i]), header.length)
+          );
           i++;
         }
 
@@ -165,50 +179,71 @@ const transformStrikethrough = (line: string): string => {
 };
 
 const transformTaskList = (line: string): string => {
-  return line.replace(/^(\s*[-*+]\s+)\[(x|X| )\]\s+/g, (_match, prefix: string, checked: string) => {
-    return `${prefix}${checked.trim() ? '☑' : '☐'} `;
-  });
+  return line.replace(
+    /^(\s*[-*+]\s+)\[(x|X| )\]\s+/g,
+    (_match, prefix: string, checked: string) => {
+      return `${prefix}${checked.trim() ? '☑' : '☐'} `;
+    }
+  );
 };
 
 const transformBareLinks = (line: string): string => {
-  return line.replace(/(https?:\/\/[^\s<>()]+|www\.[^\s<>()]+)/g, (match, _url: string, offset: number, source: string) => {
-    const before = source.slice(Math.max(0, offset - 2), offset);
-    const previousChar = source[offset - 1];
-    const lastOpenBracket = source.lastIndexOf('[', offset);
-    const lastCloseBracket = source.lastIndexOf(']', offset);
-    const nextCloseBracket = source.indexOf(']', offset + match.length);
-    const nextOpenParen = nextCloseBracket >= 0 ? source.slice(nextCloseBracket, nextCloseBracket + 2) : '';
+  return line.replace(
+    /(https?:\/\/[^\s<>()]+|www\.[^\s<>()]+)/g,
+    (match, _url: string, offset: number, source: string) => {
+      const before = source.slice(Math.max(0, offset - 2), offset);
+      const previousChar = source[offset - 1];
+      const lastOpenBracket = source.lastIndexOf('[', offset);
+      const lastCloseBracket = source.lastIndexOf(']', offset);
+      const nextCloseBracket = source.indexOf(']', offset + match.length);
+      const nextOpenParen =
+        nextCloseBracket >= 0
+          ? source.slice(nextCloseBracket, nextCloseBracket + 2)
+          : '';
 
-    // 已经是 Markdown 链接目标或链接文本时不重复转换。
-    if (before === '](' || previousChar === '<' || (lastOpenBracket > lastCloseBracket && nextOpenParen === '](')) {
-      return match;
+      // 已经是 Markdown 链接目标或链接文本时不重复转换。
+      if (
+        before === '](' ||
+        previousChar === '<' ||
+        (lastOpenBracket > lastCloseBracket && nextOpenParen === '](')
+      ) {
+        return match;
+      }
+
+      const trailing = match.match(/[.,!?;:，。！？；：]+$/)?.[0] || '';
+      const cleanUrl = trailing ? match.slice(0, -trailing.length) : match;
+      const href = cleanUrl.startsWith('www.')
+        ? `https://${cleanUrl}`
+        : cleanUrl;
+
+      return `[${cleanUrl}](${href})${trailing}`;
     }
-
-    const trailing = match.match(/[.,!?;:，。！？；：]+$/)?.[0] || '';
-    const cleanUrl = trailing ? match.slice(0, -trailing.length) : match;
-    const href = cleanUrl.startsWith('www.') ? `https://${cleanUrl}` : cleanUrl;
-
-    return `[${cleanUrl}](${href})${trailing}`;
-  });
+  );
 };
 
 const transformLightweightGfm = (content: string): string => {
   const lines = content.split('\n');
   let inFence = false;
 
-  return lines.map((line) => {
-    if (/^\s*(```|~~~)/.test(line)) {
-      inFence = !inFence;
-      return line;
-    }
+  return lines
+    .map((line) => {
+      if (/^\s*(```|~~~)/.test(line)) {
+        inFence = !inFence;
+        return line;
+      }
 
-    if (inFence) return line;
+      if (inFence) return line;
 
-    return transformBareLinks(transformStrikethrough(transformTaskList(line)));
-  }).join('\n');
+      return transformBareLinks(
+        transformStrikethrough(transformTaskList(line))
+      );
+    })
+    .join('\n');
 };
 
-const renderStrikethroughNodes = (children: React.ReactNode): React.ReactNode => {
+const renderStrikethroughNodes = (
+  children: React.ReactNode
+): React.ReactNode => {
   return React.Children.map(children, (child) => {
     if (typeof child === 'string') {
       const parts: React.ReactNode[] = [];
@@ -256,7 +291,9 @@ export default function AIChatPanel({
   // 使用 useMemo 稳定 storage key，只在实际内容变化时才改变
   const storageKey = useMemo(() => {
     if (context?.title) {
-      return `ai-chat-${context.title}-${context.year || ''}-${context.type || ''}`;
+      return `ai-chat-${context.title}-${context.year || ''}-${
+        context.type || ''
+      }`;
     }
     return 'ai-chat-general';
   }, [context?.title, context?.year, context?.type]);
@@ -292,13 +329,14 @@ export default function AIChatPanel({
   };
 
   // 工具名称 → 关键参数提取（用于工具链展示）
-  const TOOL_KEY_EXTRACTORS: Record<string, (args: any) => string | undefined> = {
-    web_search: (a) => a?.query,
-    fetch_page: (a) => a?.url,
-    douban_lookup: (a) => a?.query || (a?.id ? `ID:${a.id}` : undefined),
-    tmdb_lookup: (a) =>
-      a?.trending ? '热榜' : a?.query || (a?.id ? `ID:${a.id}` : undefined),
-  };
+  const TOOL_KEY_EXTRACTORS: Record<string, (args: any) => string | undefined> =
+    {
+      web_search: (a) => a?.query,
+      fetch_page: (a) => a?.url,
+      douban_lookup: (a) => a?.query || (a?.id ? `ID:${a.id}` : undefined),
+      tmdb_lookup: (a) =>
+        a?.trending ? '热榜' : a?.query || (a?.id ? `ID:${a.id}` : undefined),
+    };
 
   // 工具链：追加一个进行中的工具调用
   const pushToolChain = (name: string, args?: any) => {
@@ -310,7 +348,10 @@ export default function AIChatPanel({
   };
 
   // 工具链：将某个进行中的工具标记为完成
-  const finishToolChain = (name: string, done?: { result?: string; ok?: boolean }) => {
+  const finishToolChain = (
+    name: string,
+    done?: { result?: string; ok?: boolean }
+  ) => {
     toolChainRef.current = toolChainRef.current.map((item) =>
       item.name === name && item.status === 'running'
         ? {
@@ -345,16 +386,19 @@ export default function AIChatPanel({
           return (
             <div
               key={i}
-              className='flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300'
+              className='flex items-center gap-2 text-sm text-[color:var(--tm-muted)]'
             >
               {live && status === 'running' ? (
-                <Loader2 size={14} className='animate-spin text-purple-500' />
+                <Loader2
+                  size={14}
+                  className='animate-spin text-[color:var(--tm-text)]'
+                />
               ) : (
                 <span
                   className={
                     status === 'failed'
-                      ? 'text-red-500'
-                      : 'text-green-500'
+                      ? 'text-[color:var(--tm-text)]'
+                      : 'text-[color:var(--tm-text)]'
                   }
                 >
                   {status === 'failed' ? '✕' : '✓'}
@@ -362,7 +406,7 @@ export default function AIChatPanel({
               )}
               <span className='flex-1 whitespace-nowrap'>{label}</span>
               {keyText && (
-                <span className='max-w-[60%] truncate text-xs text-gray-400 dark:text-gray-500'>
+                <span className='max-w-[60%] truncate text-[13px] text-[color:var(--tm-muted)]'>
                   {keyText}
                 </span>
               )}
@@ -381,38 +425,50 @@ export default function AIChatPanel({
     });
   };
 
-  const markdownComponents = useMemo(() => ({
-    del: ({ children }: any) => <del>{children}</del>,
-    p: ({ children }: any) => <p>{renderStrikethroughNodes(children)}</p>,
-    li: ({ children }: any) => <li>{renderStrikethroughNodes(children)}</li>,
-    h1: ({ children }: any) => <h1>{renderStrikethroughNodes(children)}</h1>,
-    h2: ({ children }: any) => <h2>{renderStrikethroughNodes(children)}</h2>,
-    h3: ({ children }: any) => <h3>{renderStrikethroughNodes(children)}</h3>,
-    h4: ({ children }: any) => <h4>{renderStrikethroughNodes(children)}</h4>,
-    h5: ({ children }: any) => <h5>{renderStrikethroughNodes(children)}</h5>,
-    h6: ({ children }: any) => <h6>{renderStrikethroughNodes(children)}</h6>,
-    a: ({ href, children, ...props }: any) => {
-      // 如果是内部链接（以 / 开头），使用 Next.js Link
-      if (href?.startsWith('/')) {
-        // 如果当前在 /play 页面且链接也是 /play，不做处理（返回纯文本）
-        if (pathname === '/play' && href.startsWith('/play')) {
-          return <span>{children}</span>;
+  const markdownComponents = useMemo(
+    () => ({
+      del: ({ children }: any) => <del>{children}</del>,
+      p: ({ children }: any) => <p>{renderStrikethroughNodes(children)}</p>,
+      li: ({ children }: any) => <li>{renderStrikethroughNodes(children)}</li>,
+      h1: ({ children }: any) => <h1>{renderStrikethroughNodes(children)}</h1>,
+      h2: ({ children }: any) => <h2>{renderStrikethroughNodes(children)}</h2>,
+      h3: ({ children }: any) => <h3>{renderStrikethroughNodes(children)}</h3>,
+      h4: ({ children }: any) => <h4>{renderStrikethroughNodes(children)}</h4>,
+      h5: ({ children }: any) => <h5>{renderStrikethroughNodes(children)}</h5>,
+      h6: ({ children }: any) => <h6>{renderStrikethroughNodes(children)}</h6>,
+      a: ({ href, children, ...props }: any) => {
+        // 如果是内部链接（以 / 开头），使用 Next.js Link
+        if (href?.startsWith('/')) {
+          // 如果当前在 /play 页面且链接也是 /play，不做处理（返回纯文本）
+          if (pathname === '/play' && href.startsWith('/play')) {
+            return <span>{children}</span>;
+          }
+          return (
+            <Link href={href} {...props}>
+              {children}
+            </Link>
+          );
         }
+        // 外部链接使用普通 a 标签
         return (
-          <Link href={href} {...props}>
+          <a href={href} target='_blank' rel='noopener noreferrer' {...props}>
             {children}
-          </Link>
+          </a>
         );
-      }
-      // 外部链接使用普通 a 标签
-      return <a href={href} target="_blank" rel="noopener noreferrer" {...props}>{children}</a>;
-    },
-  }), [pathname]);
+      },
+    }),
+    [pathname]
+  );
 
-  const inlineMarkdownComponents = useMemo(() => ({
-    ...markdownComponents,
-    p: ({ children }: any) => <span>{renderStrikethroughNodes(children)}</span>,
-  }), [markdownComponents]);
+  const inlineMarkdownComponents = useMemo(
+    () => ({
+      ...markdownComponents,
+      p: ({ children }: any) => (
+        <span>{renderStrikethroughNodes(children)}</span>
+      ),
+    }),
+    [markdownComponents]
+  );
 
   const renderAssistantContent = (content: string) => {
     return splitMarkdownByTables(content).map((segment, segmentIndex) => {
@@ -427,44 +483,44 @@ export default function AIChatPanel({
       return (
         <div
           key={segmentIndex}
-          className='not-prose overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm ring-1 ring-black/5 dark:border-gray-700 dark:bg-gray-900 dark:ring-white/10'
+          className='not-prose overflow-hidden rounded-xl border border-[var(--tm-line)] bg-[var(--tm-surface)] shadow-sm ring-1 ring-[color-mix(in_srgb,var(--tm-text)_5%,transparent)] ring-[color-mix(in_srgb,var(--tm-text)_10%,transparent)]'
         >
           <div className='overflow-x-auto'>
             <table className='m-0 min-w-full border-separate border-spacing-0 text-left text-sm'>
               <thead>
-                <tr className='bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-950/40 dark:to-blue-950/40'>
-                {segment.header.map((cell, cellIndex) => (
-                  <th
-                    key={cellIndex}
-                    className='whitespace-nowrap border-b border-gray-200 px-4 py-3 font-semibold text-gray-800 first:rounded-tl-xl last:rounded-tr-xl dark:border-gray-700 dark:text-gray-100'
-                    style={{ textAlign: segment.align[cellIndex] }}
-                  >
-                    <ReactMarkdown components={inlineMarkdownComponents}>
-                      {transformLightweightGfm(convertTitleToLink(cell))}
-                    </ReactMarkdown>
-                  </th>
-                ))}
-                </tr>
-              </thead>
-              <tbody className='divide-y divide-gray-100 dark:divide-gray-800'>
-              {segment.rows.map((row, rowIndex) => (
-                <tr
-                  key={rowIndex}
-                  className='transition-colors odd:bg-white even:bg-gray-50/70 hover:bg-purple-50/70 dark:odd:bg-gray-900 dark:even:bg-gray-800/40 dark:hover:bg-purple-950/25'
-                >
-                  {row.map((cell, cellIndex) => (
-                    <td
+                <tr className='bg-[var(--tm-surface)]'>
+                  {segment.header.map((cell, cellIndex) => (
+                    <th
                       key={cellIndex}
-                      className='px-4 py-3 align-top leading-relaxed text-gray-700 dark:text-gray-200'
+                      className='whitespace-nowrap border-b border-[var(--tm-line)] px-4 py-3 font-medium text-[color:var(--tm-text)] first:rounded-tl-xl last:rounded-tr-xl'
                       style={{ textAlign: segment.align[cellIndex] }}
                     >
                       <ReactMarkdown components={inlineMarkdownComponents}>
                         {transformLightweightGfm(convertTitleToLink(cell))}
                       </ReactMarkdown>
-                    </td>
+                    </th>
                   ))}
                 </tr>
-              ))}
+              </thead>
+              <tbody className='divide-y divide-[var(--tm-line)]'>
+                {segment.rows.map((row, rowIndex) => (
+                  <tr
+                    key={rowIndex}
+                    className='transition-colors odd:bg-[var(--tm-surface-raised)] even:bg-[var(--tm-surface-raised)] hover:bg-[var(--tm-line)]'
+                  >
+                    {row.map((cell, cellIndex) => (
+                      <td
+                        key={cellIndex}
+                        className='px-4 py-3 align-top leading-relaxed text-[color:var(--tm-muted)] text-[color:var(--tm-text)]'
+                        style={{ textAlign: segment.align[cellIndex] }}
+                      >
+                        <ReactMarkdown components={inlineMarkdownComponents}>
+                          {transformLightweightGfm(convertTitleToLink(cell))}
+                        </ReactMarkdown>
+                      </td>
+                    ))}
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>
@@ -574,7 +630,8 @@ export default function AIChatPanel({
         const originalPaddingRight = document.body.style.paddingRight;
 
         // 获取滚动条宽度
-        const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+        const scrollbarWidth =
+          window.innerWidth - document.documentElement.clientWidth;
 
         document.body.style.overflow = 'hidden';
         document.body.style.paddingRight = `${scrollbarWidth}px`;
@@ -631,7 +688,10 @@ export default function AIChatPanel({
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-     const errorMsg = errorData.error || errorData.details || `请求失败 (${response.status})`;
+        const errorMsg =
+          errorData.error ||
+          errorData.details ||
+          `请求失败 (${response.status})`;
         throw new Error(errorMsg);
       }
 
@@ -651,7 +711,7 @@ export default function AIChatPanel({
         let streamError = '';
         let buffer = ''; // 缓冲区，用于保存不完整的行
 
-        while (true) {
+        for (;;) {
           const { done, value } = await reader.read();
           if (done) break;
 
@@ -688,7 +748,10 @@ export default function AIChatPanel({
                     });
                   } else if (json.status === 'failed') {
                     // 工具执行失败也标记为完成，但可在链上保留
-                    finishToolChain(json.name, { result: json.result, ok: false });
+                    finishToolChain(json.name, {
+                      result: json.result,
+                      ok: false,
+                    });
                   }
                   continue;
                 }
@@ -703,13 +766,13 @@ export default function AIChatPanel({
                 if (text) {
                   assistantMessage += text;
 
-              // 更新最后一条消息
+                  // 更新最后一条消息
                   setMessages((prev) => {
                     const newMessages = [...prev];
                     newMessages[newMessages.length - 1] = {
                       role: 'assistant',
                       content: assistantMessage,
-               };
+                    };
                     return newMessages;
                   });
                 }
@@ -734,7 +797,9 @@ export default function AIChatPanel({
 
                 // 上下文压缩事件：摘要存入 ref，待流式结束后随本消息固化回喂
                 if (json.type === 'context_compressed' && json.summary) {
-                  compressionSummariesRef.current.push(`【较早对话已压缩】\n${json.summary}`);
+                  compressionSummariesRef.current.push(
+                    `【较早对话已压缩】\n${json.summary}`
+                  );
                 } else {
                   const text = json.text || '';
                   if (text) {
@@ -803,7 +868,8 @@ export default function AIChatPanel({
             ...(compressed
               ? {
                   compressedSummaries: [
-                    ...((prev[prev.length - 1] as ChatMessage)?.compressedSummaries || []),
+                    ...((prev[prev.length - 1] as ChatMessage)
+                      ?.compressedSummaries || []),
                     compressed,
                   ],
                 }
@@ -869,22 +935,22 @@ export default function AIChatPanel({
       }`}
     >
       <div
-        className={`relative ${drawerWidth} h-full bg-white dark:bg-gray-900 shadow-2xl flex flex-col transition-transform duration-300 ease-out pointer-events-auto ${
+        className={`relative ${drawerWidth} h-full bg-[var(--tm-surface)] bg-[var(--tm-surface)] shadow-2xl flex flex-col transition-transform duration-300 ease-out pointer-events-auto ${
           isOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
       >
         {/* 头部 */}
-        <div className='flex items-center justify-between border-b border-gray-200 p-4 dark:border-gray-700'>
+        <div className='flex items-center justify-between border-b border-[var(--tm-line)] p-4'>
           <div className='flex items-center gap-3 min-w-0 flex-1'>
-            <div className='flex h-10 w-10 items-center justify-center rounded-full bg-purple-500 flex-shrink-0'>
-              <Sparkles size={20} className='text-white' />
+            <div className='flex h-10 w-10 items-center justify-center rounded-full bg-[var(--tm-text)] flex-shrink-0'>
+              <Sparkles size={20} className='text-[color:var(--tm-text)]' />
             </div>
             <div className='min-w-0 flex-1'>
-              <h2 className='text-lg font-semibold text-gray-900 dark:text-white'>
+              <h2 className='text-lg font-medium text-[color:var(--tm-text)]'>
                 AI影视助手
               </h2>
               {context?.title && (
-                <p className='text-xs text-gray-500 dark:text-gray-400 truncate'>
+                <p className='text-[13px] text-[color:var(--tm-muted)] truncate'>
                   正在讨论: {context.title}
                   {context.year && ` (${context.year})`}
                 </p>
@@ -893,7 +959,7 @@ export default function AIChatPanel({
           </div>
           <button
             onClick={onClose}
-            className='rounded-lg p-2 text-gray-500 transition-colors hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800 flex-shrink-0'
+            className='rounded-lg p-2 text-[color:var(--tm-muted)] transition-colors hover:bg-[var(--tm-line)] flex-shrink-0 min-h-[44px] tm-press'
           >
             <X size={20} />
           </button>
@@ -905,7 +971,9 @@ export default function AIChatPanel({
             {messages.map((message, index) => (
               <div
                 key={index}
-                className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                className={`flex ${
+                  message.role === 'user' ? 'justify-end' : 'justify-start'
+                }`}
               >
                 <div
                   className={`flex gap-3 ${
@@ -918,16 +986,16 @@ export default function AIChatPanel({
                   <div
                     className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${
                       message.role === 'user'
-                        ? 'bg-blue-500'
-                        : 'bg-purple-500'
+                        ? 'bg-[var(--tm-text)]'
+                        : 'bg-[var(--tm-text)]'
                     }`}
                   >
                     {message.role === 'user' ? (
-                      <span className='text-xs font-semibold text-white'>
+                      <span className='text-[13px] font-medium text-[color:var(--tm-text)]'>
                         {userAvatarText}
                       </span>
                     ) : (
-                      <Bot size={16} className='text-white' />
+                      <Bot size={16} className='text-[color:var(--tm-text)]' />
                     )}
                   </div>
 
@@ -935,8 +1003,8 @@ export default function AIChatPanel({
                   <div
                     className={`rounded-2xl px-4 py-2 ${
                       message.role === 'user'
-                        ? 'bg-blue-500 text-white'
-                        : 'flex-1 bg-gray-100 text-gray-900 dark:bg-gray-800 dark:text-white'
+                        ? 'bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)]'
+                        : 'flex-1 bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)]'
                     }`}
                   >
                     {message.role === 'user' ? (
@@ -958,7 +1026,7 @@ export default function AIChatPanel({
                         {isStreaming &&
                           index === messages.length - 1 &&
                           renderToolChain(toolChain, true)}
-                        <div className='prose prose-sm max-w-none dark:prose-invert prose-p:my-2 prose-p:leading-relaxed prose-pre:bg-gray-800 prose-pre:text-gray-100 dark:prose-pre:bg-gray-900 prose-code:text-purple-600 dark:prose-code:text-purple-400 prose-code:bg-purple-50 dark:prose-code:bg-purple-900/20 prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:before:content-none prose-code:after:content-none prose-a:text-inherit dark:prose-a:text-inherit prose-a:no-underline hover:prose-a:underline prose-strong:text-gray-900 dark:prose-strong:text-white prose-ul:my-2 prose-ol:my-2 prose-li:my-1'>
+                        <div className='prose prose-sm max-w-none dark:prose-invert prose-p:my-2 prose-p:leading-relaxed prose-pre:bg-[var(--tm-surface-raised)] prose-pre:text-[color:var(--tm-text)] prose-code:text-[color:var(--tm-text)] prose-code:bg-[var(--tm-surface-raised)] prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:before:content-none prose-code:after:content-none prose-a:text-inherit prose-a:no-underline hover:prose-a:underline prose-strong:text-[color:var(--tm-text)] prose-ul:my-2 prose-ol:my-2 prose-li:my-1'>
                           {renderAssistantContent(message.content)}
                         </div>
                         {message.error &&
@@ -967,8 +1035,10 @@ export default function AIChatPanel({
                           message.retryMessage && (
                             <button
                               type='button'
-                              onClick={() => handleSendMessage(message.retryMessage)}
-                              className='mt-3 inline-flex items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-1.5 text-sm text-gray-700 transition-colors hover:bg-gray-200 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700'
+                              onClick={() =>
+                                handleSendMessage(message.retryMessage)
+                              }
+                              className='mt-3 inline-flex items-center gap-1.5 rounded-lg border border-[var(--tm-line)] px-3 py-1.5 text-sm text-[color:var(--tm-muted)] transition-colors hover:bg-[var(--tm-line)] text-[color:var(--tm-text)] min-h-[44px] tm-press'
                             >
                               <RefreshCw size={14} />
                               重试
@@ -980,8 +1050,11 @@ export default function AIChatPanel({
                           !message.content &&
                           toolChain.length === 0 && (
                             <div className='flex items-center gap-2'>
-                              <Loader2 size={16} className='animate-spin text-gray-500' />
-                              <span className='text-sm text-gray-500 dark:text-gray-400'>
+                              <Loader2
+                                size={16}
+                                className='animate-spin text-[color:var(--tm-muted)]'
+                              />
+                              <span className='text-sm text-[color:var(--tm-muted)]'>
                                 AI正在思考...
                               </span>
                             </div>
@@ -998,11 +1071,11 @@ export default function AIChatPanel({
         </div>
 
         {/* 输入区域 */}
-        <div className='border-t border-gray-200 p-4 dark:border-gray-700'>
+        <div className='border-t border-[var(--tm-line)] p-4'>
           <div className='flex gap-2'>
             <button
               onClick={handleClearContext}
-              className='flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-gray-300 text-gray-500 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-600 dark:text-gray-400 dark:hover:bg-gray-800'
+              className='flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-[var(--tm-line)] text-[color:var(--tm-muted)] transition-colors hover:bg-[var(--tm-line)] disabled:cursor-not-allowed disabled:opacity-50 min-h-[44px] tm-press'
               title='清空聊天记录'
               disabled={isStreaming}
             >
@@ -1013,10 +1086,14 @@ export default function AIChatPanel({
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder={isMobile ? '输入你的问题...' : '输入你的问题... (Shift+Enter换行)'}
+              placeholder={
+                isMobile
+                  ? '输入你的问题...'
+                  : '输入你的问题... (Shift+Enter换行)'
+              }
               disabled={isStreaming}
               rows={1}
-              className='flex-1 resize-none rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 placeholder-gray-400 transition-colors focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder-gray-500 dark:focus:border-purple-400'
+              className='flex-1 resize-none rounded-xl border border-[var(--tm-line)] bg-[var(--tm-surface)] px-4 py-3 text-sm text-[color:var(--tm-text)] placeholder-gray-400 transition-colors focus:border-[var(--tm-line)] focus:outline-none focus:ring-2 focus:ring-[color-mix(in_srgb,var(--tm-text)_20%,transparent)] disabled:cursor-not-allowed disabled:opacity-50 dark:placeholder-gray-500'
               style={{
                 minHeight: '48px',
                 maxHeight: '120px',
@@ -1030,7 +1107,7 @@ export default function AIChatPanel({
             <button
               onClick={() => handleSendMessage()}
               disabled={!input.trim() || isStreaming}
-              className='flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-purple-500 text-white transition-colors hover:bg-purple-600 disabled:cursor-not-allowed disabled:opacity-50'
+              className='flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] transition-colors hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 min-h-[44px] tm-press'
             >
               {isStreaming ? (
                 <Loader2 size={20} className='animate-spin' />
@@ -1046,22 +1123,22 @@ export default function AIChatPanel({
               {context?.title ? (
                 <>
                   <button
-                    onClick={() =>
-                      setInput(`${context.title}讲的是什么故事？`)
-                    }
-                    className='rounded-full bg-gray-100 px-3 py-1 text-xs text-gray-600 transition-colors hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700'
+                    onClick={() => setInput(`${context.title}讲的是什么故事？`)}
+                    className='rounded-full bg-[var(--tm-surface-raised)] px-3 py-1 text-[13px] text-[color:var(--tm-muted)] transition-colors hover:bg-[var(--tm-line)] min-h-[44px] tm-press'
                   >
                     剧情介绍
                   </button>
                   <button
-                    onClick={() => setInput(`${context.title}这部作品评价怎么样？`)}
-                    className='rounded-full bg-gray-100 px-3 py-1 text-xs text-gray-600 transition-colors hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700'
+                    onClick={() =>
+                      setInput(`${context.title}这部作品评价怎么样？`)
+                    }
+                    className='rounded-full bg-[var(--tm-surface-raised)] px-3 py-1 text-[13px] text-[color:var(--tm-muted)] transition-colors hover:bg-[var(--tm-line)] min-h-[44px] tm-press'
                   >
                     这部作品的评价
                   </button>
                   <button
                     onClick={() => setInput(`${context.title}有没有续集？`)}
-                    className='rounded-full bg-gray-100 px-3 py-1 text-xs text-gray-600 transition-colors hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700'
+                    className='rounded-full bg-[var(--tm-surface-raised)] px-3 py-1 text-[13px] text-[color:var(--tm-muted)] transition-colors hover:bg-[var(--tm-line)] min-h-[44px] tm-press'
                   >
                     有没有续集
                   </button>
@@ -1070,13 +1147,13 @@ export default function AIChatPanel({
                 <>
                   <button
                     onClick={() => setInput('推荐一些高分电影')}
-                    className='rounded-full bg-gray-100 px-3 py-1 text-xs text-gray-600 transition-colors hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700'
+                    className='rounded-full bg-[var(--tm-surface-raised)] px-3 py-1 text-[13px] text-[color:var(--tm-muted)] transition-colors hover:bg-[var(--tm-line)] min-h-[44px] tm-press'
                   >
                     推荐高分电影
                   </button>
                   <button
                     onClick={() => setInput('最近有什么新电影上映？')}
-                    className='rounded-full bg-gray-100 px-3 py-1 text-xs text-gray-600 transition-colors hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700'
+                    className='rounded-full bg-[var(--tm-surface-raised)] px-3 py-1 text-[13px] text-[color:var(--tm-muted)] transition-colors hover:bg-[var(--tm-line)] min-h-[44px] tm-press'
                   >
                     最新上映
                   </button>
@@ -1090,7 +1167,7 @@ export default function AIChatPanel({
   ) : (
     // 原有的居中弹窗模式
     <div
-      className={`fixed inset-0 z-[1002] flex items-center justify-center bg-black/50 backdrop-blur-sm overflow-hidden transition-opacity duration-200 ${
+      className={`fixed inset-0 z-[1002] flex items-center justify-center bg-[color:color-mix(in_srgb,var(--tm-room-cinema-bg)_50%,transparent)] backdrop-blur-sm overflow-hidden transition-opacity duration-200 ${
         isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
       }`}
       onClick={(e) => {
@@ -1100,19 +1177,19 @@ export default function AIChatPanel({
         }
       }}
     >
-      <div className='relative mx-4 my-auto flex h-[85vh] sm:h-[80vh] max-h-[90vh] sm:max-h-[600px] w-full max-w-3xl flex-col rounded-2xl bg-white shadow-2xl dark:bg-gray-900'>
+      <div className='relative mx-4 my-auto flex h-[85vh] sm:h-[80vh] max-h-[90vh] sm:max-h-[600px] w-full max-w-3xl flex-col rounded-2xl bg-[var(--tm-surface)] shadow-2xl'>
         {/* 头部 */}
-        <div className='flex items-center justify-between border-b border-gray-200 p-4 dark:border-gray-700'>
+        <div className='flex items-center justify-between border-b border-[var(--tm-line)] p-4'>
           <div className='flex items-center gap-3 min-w-0 flex-1'>
-            <div className='flex h-10 w-10 items-center justify-center rounded-full bg-purple-500 flex-shrink-0'>
-              <Sparkles size={20} className='text-white' />
+            <div className='flex h-10 w-10 items-center justify-center rounded-full bg-[var(--tm-text)] flex-shrink-0'>
+              <Sparkles size={20} className='text-[color:var(--tm-text)]' />
             </div>
             <div className='min-w-0 flex-1'>
-        <h2 className='text-lg font-semibold text-gray-900 dark:text-white'>
+              <h2 className='text-lg font-medium text-[color:var(--tm-text)]'>
                 AI影视助手
               </h2>
               {context?.title && (
-                <p className='text-xs text-gray-500 dark:text-gray-400 truncate'>
+                <p className='text-[13px] text-[color:var(--tm-muted)] truncate'>
                   正在讨论: {context.title}
                   {context.year && ` (${context.year})`}
                 </p>
@@ -1121,9 +1198,9 @@ export default function AIChatPanel({
           </div>
           <button
             onClick={onClose}
-            className='rounded-lg p-2 text-gray-500 transition-colors hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800 flex-shrink-0'
+            className='rounded-lg p-2 text-[color:var(--tm-muted)] transition-colors hover:bg-[var(--tm-line)] flex-shrink-0 min-h-[44px] tm-press'
           >
-         <X size={20} />
+            <X size={20} />
           </button>
         </div>
 
@@ -1133,7 +1210,9 @@ export default function AIChatPanel({
             {messages.map((message, index) => (
               <div
                 key={index}
-                className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                className={`flex ${
+                  message.role === 'user' ? 'justify-end' : 'justify-start'
+                }`}
               >
                 <div
                   className={`flex gap-3 ${
@@ -1146,16 +1225,16 @@ export default function AIChatPanel({
                   <div
                     className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${
                       message.role === 'user'
-                        ? 'bg-blue-500'
-                        : 'bg-purple-500'
+                        ? 'bg-[var(--tm-text)]'
+                        : 'bg-[var(--tm-text)]'
                     }`}
                   >
                     {message.role === 'user' ? (
-                      <span className='text-xs font-semibold text-white'>
+                      <span className='text-[13px] font-medium text-[color:var(--tm-text)]'>
                         {userAvatarText}
                       </span>
                     ) : (
-                      <Bot size={16} className='text-white' />
+                      <Bot size={16} className='text-[color:var(--tm-text)]' />
                     )}
                   </div>
 
@@ -1163,8 +1242,8 @@ export default function AIChatPanel({
                   <div
                     className={`rounded-2xl px-4 py-2 ${
                       message.role === 'user'
-                        ? 'bg-blue-500 text-white'
-                        : 'flex-1 bg-gray-100 text-gray-900 dark:bg-gray-800 dark:text-white'
+                        ? 'bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)]'
+                        : 'flex-1 bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)]'
                     }`}
                   >
                     {message.role === 'user' ? (
@@ -1186,7 +1265,7 @@ export default function AIChatPanel({
                         {isStreaming &&
                           index === messages.length - 1 &&
                           renderToolChain(toolChain, true)}
-                        <div className='prose prose-sm max-w-none dark:prose-invert prose-p:my-2 prose-p:leading-relaxed prose-pre:bg-gray-800 prose-pre:text-gray-100 dark:prose-pre:bg-gray-900 prose-code:text-purple-600 dark:prose-code:text-purple-400 prose-code:bg-purple-50 dark:prose-code:bg-purple-900/20 prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:before:content-none prose-code:after:content-none prose-a:text-inherit dark:prose-a:text-inherit prose-a:no-underline hover:prose-a:underline prose-strong:text-gray-900 dark:prose-strong:text-white prose-ul:my-2 prose-ol:my-2 prose-li:my-1'>
+                        <div className='prose prose-sm max-w-none dark:prose-invert prose-p:my-2 prose-p:leading-relaxed prose-pre:bg-[var(--tm-surface-raised)] prose-pre:text-[color:var(--tm-text)] prose-code:text-[color:var(--tm-text)] prose-code:bg-[var(--tm-surface-raised)] prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:before:content-none prose-code:after:content-none prose-a:text-inherit prose-a:no-underline hover:prose-a:underline prose-strong:text-[color:var(--tm-text)] prose-ul:my-2 prose-ol:my-2 prose-li:my-1'>
                           {renderAssistantContent(message.content)}
                         </div>
                         {message.error &&
@@ -1195,8 +1274,10 @@ export default function AIChatPanel({
                           message.retryMessage && (
                             <button
                               type='button'
-                              onClick={() => handleSendMessage(message.retryMessage)}
-                              className='mt-3 inline-flex items-center gap-1.5 rounded-lg border border-gray-300 px-3 py-1.5 text-sm text-gray-700 transition-colors hover:bg-gray-200 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-700'
+                              onClick={() =>
+                                handleSendMessage(message.retryMessage)
+                              }
+                              className='mt-3 inline-flex items-center gap-1.5 rounded-lg border border-[var(--tm-line)] px-3 py-1.5 text-sm text-[color:var(--tm-muted)] transition-colors hover:bg-[var(--tm-line)] text-[color:var(--tm-text)] min-h-[44px] tm-press'
                             >
                               <RefreshCw size={14} />
                               重试
@@ -1208,8 +1289,11 @@ export default function AIChatPanel({
                           !message.content &&
                           toolChain.length === 0 && (
                             <div className='flex items-center gap-2'>
-                              <Loader2 size={16} className='animate-spin text-gray-500' />
-                              <span className='text-sm text-gray-500 dark:text-gray-400'>
+                              <Loader2
+                                size={16}
+                                className='animate-spin text-[color:var(--tm-muted)]'
+                              />
+                              <span className='text-sm text-[color:var(--tm-muted)]'>
                                 AI正在思考...
                               </span>
                             </div>
@@ -1226,11 +1310,11 @@ export default function AIChatPanel({
         </div>
 
         {/* 输入区域 */}
-        <div className='border-t border-gray-200 p-4 dark:border-gray-700'>
+        <div className='border-t border-[var(--tm-line)] p-4'>
           <div className='flex gap-2'>
             <button
               onClick={handleClearContext}
-              className='flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-gray-300 text-gray-500 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-600 dark:text-gray-400 dark:hover:bg-gray-800'
+              className='flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-[var(--tm-line)] text-[color:var(--tm-muted)] transition-colors hover:bg-[var(--tm-line)] disabled:cursor-not-allowed disabled:opacity-50 min-h-[44px] tm-press'
               title='清空聊天记录'
               disabled={isStreaming}
             >
@@ -1241,10 +1325,14 @@ export default function AIChatPanel({
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder={isMobile ? '输入你的问题...' : '输入你的问题... (Shift+Enter换行)'}
+              placeholder={
+                isMobile
+                  ? '输入你的问题...'
+                  : '输入你的问题... (Shift+Enter换行)'
+              }
               disabled={isStreaming}
               rows={1}
-              className='flex-1 resize-none rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 placeholder-gray-400 transition-colors focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:placeholder-gray-500 dark:focus:border-purple-400'
+              className='flex-1 resize-none rounded-xl border border-[var(--tm-line)] bg-[var(--tm-surface)] px-4 py-3 text-sm text-[color:var(--tm-text)] placeholder-gray-400 transition-colors focus:border-[var(--tm-line)] focus:outline-none focus:ring-2 focus:ring-[color-mix(in_srgb,var(--tm-text)_20%,transparent)] disabled:cursor-not-allowed disabled:opacity-50 dark:placeholder-gray-500'
               style={{
                 minHeight: '48px',
                 maxHeight: '120px',
@@ -1258,7 +1346,7 @@ export default function AIChatPanel({
             <button
               onClick={() => handleSendMessage()}
               disabled={!input.trim() || isStreaming}
-              className='flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-purple-500 text-white transition-colors hover:bg-purple-600 disabled:cursor-not-allowed disabled:opacity-50'
+              className='flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] transition-colors hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 min-h-[44px] tm-press'
             >
               {isStreaming ? (
                 <Loader2 size={20} className='animate-spin' />
@@ -1274,22 +1362,22 @@ export default function AIChatPanel({
               {context?.title ? (
                 <>
                   <button
-                    onClick={() =>
-                      setInput(`${context.title}讲的是什么故事？`)
-                    }
-                    className='rounded-full bg-gray-100 px-3 py-1 text-xs text-gray-600 transition-colors hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700'
+                    onClick={() => setInput(`${context.title}讲的是什么故事？`)}
+                    className='rounded-full bg-[var(--tm-surface-raised)] px-3 py-1 text-[13px] text-[color:var(--tm-muted)] transition-colors hover:bg-[var(--tm-line)] min-h-[44px] tm-press'
                   >
                     剧情介绍
                   </button>
                   <button
-                    onClick={() => setInput(`${context.title}这部作品评价怎么样？`)}
-                    className='rounded-full bg-gray-100 px-3 py-1 text-xs text-gray-600 transition-colors hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700'
+                    onClick={() =>
+                      setInput(`${context.title}这部作品评价怎么样？`)
+                    }
+                    className='rounded-full bg-[var(--tm-surface-raised)] px-3 py-1 text-[13px] text-[color:var(--tm-muted)] transition-colors hover:bg-[var(--tm-line)] min-h-[44px] tm-press'
                   >
                     这部作品的评价
                   </button>
                   <button
                     onClick={() => setInput(`${context.title}有没有续集？`)}
-                    className='rounded-full bg-gray-100 px-3 py-1 text-xs text-gray-600 transition-colors hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700'
+                    className='rounded-full bg-[var(--tm-surface-raised)] px-3 py-1 text-[13px] text-[color:var(--tm-muted)] transition-colors hover:bg-[var(--tm-line)] min-h-[44px] tm-press'
                   >
                     有没有续集
                   </button>
@@ -1298,13 +1386,13 @@ export default function AIChatPanel({
                 <>
                   <button
                     onClick={() => setInput('推荐一些高分电影')}
-                    className='rounded-full bg-gray-100 px-3 py-1 text-xs text-gray-600 transition-colors hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700'
+                    className='rounded-full bg-[var(--tm-surface-raised)] px-3 py-1 text-[13px] text-[color:var(--tm-muted)] transition-colors hover:bg-[var(--tm-line)] min-h-[44px] tm-press'
                   >
                     推荐高分电影
                   </button>
                   <button
                     onClick={() => setInput('最近有什么新电影上映？')}
-                    className='rounded-full bg-gray-100 px-3 py-1 text-xs text-gray-600 transition-colors hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700'
+                    className='rounded-full bg-[var(--tm-surface-raised)] px-3 py-1 text-[13px] text-[color:var(--tm-muted)] transition-colors hover:bg-[var(--tm-line)] min-h-[44px] tm-press'
                   >
                     最新上映
                   </button>

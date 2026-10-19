@@ -542,7 +542,7 @@ export default function MangaSearchPage() {
           title={`搜索结果${results.length > 0 ? `（${results.length}）` : ''}`}
           action={
             loading && useFluidSearch && totalSources > 0 ? (
-              <span className={cn('shrink-0 text-xs', LIBRARY_MUTED)}>
+              <span className={cn('shrink-0 text-[13px]', LIBRARY_MUTED)}>
                 搜索中 {completedSources}/{totalSources}
               </span>
             ) : undefined

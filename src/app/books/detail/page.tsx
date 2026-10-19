@@ -36,17 +36,20 @@ import ProxyImage from '@/components/ProxyImage';
 
 const PANEL_CLASS = cn(LIBRARY_PANEL, 'p-5');
 const ROW_CLASS = cn(LIBRARY_ROW, 'px-4 py-3');
-const SOLID_BUTTON_CLASS = cn(LIBRARY_BUTTON, 'cursor-pointer px-5 py-2.5');
+const SOLID_BUTTON_CLASS = cn(
+  LIBRARY_BUTTON,
+  'cursor-pointer px-5 py-2.5 min-h-[44px] tm-press'
+);
 const GHOST_BUTTON_CLASS = cn(
   LIBRARY_GHOST_BUTTON,
-  'cursor-pointer px-5 py-2.5 disabled:cursor-not-allowed disabled:opacity-60'
+  'cursor-pointer px-5 py-2.5 disabled:cursor-not-allowed disabled:opacity-60 min-h-[44px] tm-press'
 );
 
 const CHAPTER_PREVIEW_LIMIT = 60;
 
 function DetailSkeleton() {
   return (
-    <div className='animate-pulse space-y-6'>
+    <div className='tm-skeleton space-y-6'>
       <section
         className={cn('grid gap-6 md:grid-cols-[220px_1fr]', PANEL_CLASS)}
       >
@@ -284,7 +287,7 @@ export default function BookDetailPage() {
       >
         <div
           className={cn(
-            'relative aspect-[3/4] overflow-hidden rounded-md bg-library-ochre-tint dark:bg-library-night-ochre-tint',
+            'relative aspect-[3/4] overflow-hidden rounded-md bg-[var(--tm-surface-raised)]',
             BOOK_COVER_LIFT
           )}
         >
@@ -311,13 +314,13 @@ export default function BookDetailPage() {
         </div>
         <div className='flex min-w-0 flex-col justify-between gap-5'>
           <div>
-            <span className='inline-flex items-center gap-1.5 rounded-sm bg-library-ochre-tint px-2.5 py-1 text-xs font-medium text-library-ochre dark:bg-library-night-ochre-tint dark:text-library-night-ochre'>
+            <span className='inline-flex items-center gap-1.5 rounded-sm bg-[var(--tm-surface-raised)] px-2.5 py-1 text-[13px] font-medium text-[color:var(--tm-text)]'>
               <BookOpen className='h-3.5 w-3.5' />
               {detail.sourceName}
             </span>
             <h1
               className={cn(
-                'mt-4 text-2xl font-semibold sm:text-3xl',
+                'mt-4 text-[28px] font-bold sm:text-[28px] md:text-[32px]',
                 LIBRARY_TEXT,
                 LIBRARY_SERIF
               )}
@@ -328,7 +331,7 @@ export default function BookDetailPage() {
               {detail.author || '未知作者'}
             </div>
             {detail.summary ? (
-              <div className='mt-4 line-clamp-5 text-sm leading-7 text-library-ink/80 dark:text-library-night-ink/80'>
+              <div className='mt-4 line-clamp-5 text-base leading-[1.7] text-[color:var(--tm-text)]'>
                 {detail.summary}
               </div>
             ) : null}
@@ -337,8 +340,8 @@ export default function BookDetailPage() {
                 <span
                   key={tag}
                   className={cn(
-                    'inline-flex items-center gap-1.5 rounded-sm px-2.5 py-1 text-xs font-medium',
-                    'bg-library-paper text-library-muted dark:bg-library-night dark:text-library-night-muted'
+                    'inline-flex items-center gap-1.5 rounded-sm px-2.5 py-1 text-[13px] font-medium',
+                    'bg-[var(--tm-bg)] text-[color:var(--tm-muted)]'
                   )}
                 >
                   <Tags className='h-3 w-3' />
@@ -365,7 +368,7 @@ export default function BookDetailPage() {
               className={cn(
                 GHOST_BUTTON_CLASS,
                 shelf[`${detail.sourceId}+${detail.id}`] &&
-                  'border-transparent bg-library-ochre-tint text-library-ochre hover:border-transparent hover:text-library-ochre dark:bg-library-night-ochre-tint dark:text-library-night-ochre dark:hover:text-library-night-ochre'
+                  'border-transparent bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)] hover:border-transparent hover:text-[color:var(--tm-text)] min-h-[44px] tm-press'
               )}
             >
               <BookmarkPlus className='h-4 w-4' />
@@ -406,9 +409,13 @@ export default function BookDetailPage() {
 
       <section className={PANEL_CLASS}>
         <div className='flex items-center gap-2'>
-          <FileText className='h-5 w-5 text-library-ochre dark:text-library-night-ochre' />{' '}
+          <FileText className='h-5 w-5 text-[color:var(--tm-text)]' />{' '}
           <h2
-            className={cn('text-lg font-semibold', LIBRARY_TEXT, LIBRARY_SERIF)}
+            className={cn(
+              'text-xl md:text-2xl font-medium',
+              LIBRARY_TEXT,
+              LIBRARY_SERIF
+            )}
           >
             可用格式
           </h2>
@@ -436,7 +443,9 @@ export default function BookDetailPage() {
                   <div className={cn('truncate font-medium', LIBRARY_TEXT)}>
                     {item.title || item.type}
                   </div>
-                  <div className={cn('mt-1 truncate text-xs', LIBRARY_MUTED)}>
+                  <div
+                    className={cn('mt-1 truncate text-[13px]', LIBRARY_MUTED)}
+                  >
                     {item.rel}
                   </div>
                 </div>
@@ -469,7 +478,7 @@ export default function BookDetailPage() {
                     }
                   }}
                   className={cn(
-                    'shrink-0 cursor-pointer rounded-sm px-3 py-1.5 text-xs font-medium text-library-ochre transition-colors duration-200 hover:bg-library-ochre-tint disabled:cursor-not-allowed disabled:text-library-muted dark:text-library-night-ochre dark:hover:bg-library-night-ochre-tint dark:disabled:text-library-night-muted',
+                    'shrink-0 cursor-pointer rounded-sm px-3 py-1.5 text-sm font-medium text-[color:var(--tm-text)] transition-colors duration-200 hover:bg-[var(--tm-surface-raised)] disabled:cursor-not-allowed disabled:text-[color:var(--tm-muted)] min-h-[44px] tm-press',
                     LIBRARY_FOCUS
                   )}
                 >
@@ -486,7 +495,7 @@ export default function BookDetailPage() {
           <div className='flex items-center justify-between gap-3'>
             <h2
               className={cn(
-                'text-lg font-semibold',
+                'text-xl md:text-2xl font-medium',
                 LIBRARY_TEXT,
                 LIBRARY_SERIF
               )}
@@ -495,7 +504,7 @@ export default function BookDetailPage() {
             </h2>
             <div
               className={cn(
-                'rounded-sm bg-library-paper px-3 py-1 text-sm dark:bg-library-night',
+                'rounded-sm bg-[var(--tm-bg)] px-3 py-1 text-sm',
                 LIBRARY_MUTED
               )}
             >
@@ -503,7 +512,7 @@ export default function BookDetailPage() {
             </div>
           </div>
           {chaptersError ? (
-            <div className='mt-4 text-sm text-red-600 dark:text-red-400'>
+            <div className='mt-4 text-sm text-[color:var(--tm-text)]'>
               {chaptersError}
             </div>
           ) : null}
@@ -524,7 +533,7 @@ export default function BookDetailPage() {
                   )}
                   onClick={() => cacheBookDetail(detail)}
                   className={cn(
-                    'truncate text-sm transition-colors duration-200 hover:text-library-ochre dark:hover:text-library-night-ochre',
+                    'truncate text-sm transition-colors duration-200 hover:text-[color:var(--tm-text)] min-h-[44px] tm-press',
                     ROW_CLASS,
                     LIBRARY_TEXT,
                     LIBRARY_FOCUS
@@ -540,7 +549,7 @@ export default function BookDetailPage() {
             <button
               type='button'
               onClick={() => setShowAllChapters(true)}
-              className={cn('mt-3', GHOST_BUTTON_CLASS)}
+              className={cn('mt-3 min-h-[44px] tm-press', GHOST_BUTTON_CLASS)}
             >
               展开全部 {chapters.length} 章
             </button>

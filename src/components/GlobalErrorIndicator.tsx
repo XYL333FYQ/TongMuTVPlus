@@ -112,12 +112,12 @@ export function GlobalErrorIndicator() {
     <div className='fixed top-4 right-4 z-[2000]'>
       {/* 错误卡片 */}
       <div
-        className={`bg-red-500 text-white px-4 py-3 rounded-lg shadow-lg flex items-center justify-between min-w-[300px] max-w-[400px] transition-all duration-300 ${
-          isClosing
-            ? '-translate-y-4 opacity-0'
-            : 'translate-y-0 opacity-100'
+        className={`bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)] px-4 py-3 rounded-lg shadow-lg flex items-center justify-between min-w-[300px] max-w-[400px] transition-all duration-300 ${
+          isClosing ? '-translate-y-4 opacity-0' : 'translate-y-0 opacity-100'
         } ${
-          isReplacing ? 'scale-105 bg-red-400' : 'scale-100 bg-red-500'
+          isReplacing
+            ? 'scale-105 bg-[var(--tm-text)]'
+            : 'scale-100 bg-[var(--tm-text)]'
         } animate-fade-in`}
       >
         <span className='text-sm font-medium flex-1 mr-3'>
@@ -125,7 +125,7 @@ export function GlobalErrorIndicator() {
         </span>
         <button
           onClick={handleClose}
-          className='text-white hover:text-red-100 transition-colors flex-shrink-0'
+          className='text-[color:var(--tm-text)] hover:text-[color:var(--tm-text)] transition-colors flex-shrink-0'
           aria-label='关闭错误提示'
         >
           <svg

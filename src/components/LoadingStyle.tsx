@@ -1,34 +1,9 @@
 'use client';
 
 import { AlertCircle, X } from 'lucide-react';
-import { type CSSProperties, type ReactNode } from 'react';
+import { type ReactNode } from 'react';
 
-/* 初始化加载动画的三种款式（后台「个性化配置 → 初始化加载样式」可切换）。
- *
- * 三套标记都由这里产出，只是靠 globals.css 里的 html[data-loading-style]
- * 决定显示哪一套 —— 首帧就是正确款式，不会「先闪一下旧版再换成二次元」，
- * 也没有 hydration 不匹配。
- *
- * 旧版那一套各页长得不一样（📺/🎬、😵/⚠️），而且要求跟改动前逐字一致，
- * 所以不由这里生成，各页把原标记通过 legacy 塞进来，这里只负责套上
- * .mtv-load-classic 这层开关。
- */
-
-/* 符阵用的卦位字 */
-const LOADING_RUNES = '光影银幕片源剧集播放流媒综艺动漫'.split('');
-
-/* 符阵上升光点。位置/时长必须确定：服务端渲染与客户端水合的标记要一致，
- * 所以用取模哈希代替 Math.random。 */
-const LOADING_MOTES = Array.from({ length: 14 }, (_, i) => {
-  const r = (n: number) =>
-    Math.abs((Math.sin(i * 12.9898 + n * 78.233) * 43758.5453) % 1);
-  return {
-    left: `${(12 + r(1) * 76).toFixed(2)}%`,
-    duration: `${(2.6 + r(2) * 2.4).toFixed(2)}s`,
-    delay: `${(r(3) * 3).toFixed(2)}s`,
-    size: `${(5 + r(4) * 5).toFixed(1)}px`,
-  };
-});
+import '@/styles/loading.css';
 
 export interface LoadingStep {
   label: string;
@@ -54,9 +29,6 @@ interface LoadingStyleProps extends CommonProps {
 const clampIdx = (idx: number, len: number) =>
   Math.min(Math.max(idx, 0), Math.max(len - 1, 0));
 
-const runeCountAt = (idx: number, len: number) =>
-  len > 0 ? Math.round(((idx + 1) / len) * LOADING_RUNES.length) : 0;
-
 /* 阵底细进度条的填充比例：按当前所在格在序列里的序号等分。旧版进度条就是
  * 搜索/详情 33% → 优选 66% → 就绪 100% 这种等分逻辑，这里推广到两三格：
  * 两格（如「获取详情 → 就绪」）时首格正好落在 50%（正中），不再像老曲线那样
@@ -64,33 +36,11 @@ const runeCountAt = (idx: number, len: number) =>
 const barPctAt = (idx: number, len: number) =>
   len < 1 ? 100 : Math.round(((idx + 1) / len) * 100);
 
-const RuneRing = ({ lit, ember }: { lit: number; ember: boolean }) => (
-  <div className='mtv-tal-runes'>
-    {LOADING_RUNES.map((char, i) => (
-      <span
-        key={i}
-        className={`mtv-rune${i < lit ? (ember ? ' ember' : ' lit') : ''}`}
-        style={
-          { '--a': `${(i / LOADING_RUNES.length) * 360}deg` } as CSSProperties
-        }
-      >
-        {char}
-      </span>
-    ))}
-  </div>
-);
-
-const TalismanFrame = ({ children }: { children: ReactNode }) => (
+const TalismanFrame = () => (
   <>
     <div className='mtv-tal-ring mtv-tal-ticks' />
-    <div className='mtv-tal-ring mtv-tal-glow' />
-    <svg className='mtv-tal-star' viewBox='0 0 100 100'>
-      <polygon points='50,7 88,72 12,72' />
-      <polygon points='50,93 12,28 88,28' />
-    </svg>
-    <div className='mtv-tal-ring mtv-tal-dash' />
+
     <div className='mtv-tal-ring mtv-tal-line' />
-    {children}
   </>
 );
 
@@ -107,16 +57,29 @@ export default function LoadingStyle({
 
   return (
     <>
-      <div className='mtv-load mtv-load-classic'>{legacy}</div>
+      <div
+        className={`tm-loading mtv-load mtv-load-classic${dark}`}
+        data-tm-loading-state='loading'
+      >
+        {legacy}
+        <span className='tm-loading-classic-symbol' aria-hidden='true'>
+          {steps[idx]?.icon}
+        </span>
+      </div>
 
       {/* 方格 */}
-      <div className={`mtv-load mtv-load-grid${dark}`}>
+      <div
+        className={`tm-loading mtv-load mtv-load-grid${dark}`}
+        data-tm-loading-state='loading'
+      >
         <div className='mtv-grid'>
           <div className='mtv-grid-panels'>
             {steps.map((step, i) => (
               <div
                 key={step.label}
-                className={`mtv-panel${i <= idx ? ' on' : ''}${i === idx ? ' cur' : ''}`}
+                className={`mtv-panel${i <= idx ? ' on' : ''}${
+                  i === idx ? ' cur' : ''
+                }`}
               >
                 {step.icon}
                 <span>{step.label}</span>
@@ -128,29 +91,15 @@ export default function LoadingStyle({
       </div>
 
       {/* 魔法阵 */}
-      <div className={`mtv-load mtv-load-talisman${dark}`}>
+      <div
+        className={`tm-loading mtv-load mtv-load-talisman${dark}`}
+        data-tm-loading-state='loading'
+      >
         <div className='mtv-tal'>
           <div className='mtv-tal-circle'>
-            <TalismanFrame>
-              <RuneRing lit={runeCountAt(idx, steps.length)} ember={false} />
-              {LOADING_MOTES.map((mote, i) => (
-                <span
-                  key={i}
-                  className='mtv-mote'
-                  style={
-                    {
-                      left: mote.left,
-                      width: mote.size,
-                      height: mote.size,
-                      animationDuration: mote.duration,
-                      animationDelay: mote.delay,
-                    } as CSSProperties
-                  }
-                />
-              ))}
-            </TalismanFrame>
+            <TalismanFrame />
             {/* key 换阶段时重挂载，动画才会重播 */}
-            <div key={idx} className='mtv-tal-flash go' />
+
             <div className='mtv-tal-core'>
               <div key={idx} className='mtv-tal-icon pop'>
                 {steps[idx]?.icon}
@@ -191,15 +140,24 @@ export function LoadingErrorStyle({
 
   return (
     <>
-      <div className='mtv-err-legacy'>{legacy}</div>
+      <div
+        className={`tm-loading mtv-err-legacy${dark}`}
+        data-tm-loading-state='error'
+      >
+        {legacy}
+        <span className='tm-loading-classic-symbol' aria-hidden='true'>
+          <AlertCircle />
+        </span>
+      </div>
 
       {/* 魔法阵：坏死的阵 */}
-      <div className={`mtv-load mtv-load-talisman${dark}`}>
+      <div
+        className={`tm-loading mtv-load mtv-load-talisman${dark}`}
+        data-tm-loading-state='error'
+      >
         <div className='mtv-tal mtv-tal-dead'>
           <div className='mtv-tal-circle'>
-            <TalismanFrame>
-              <RuneRing lit={runeCountAt(idx, steps.length)} ember />
-            </TalismanFrame>
+            <TalismanFrame />
             <div className='mtv-tal-core'>
               <div className='mtv-tal-icon'>
                 <AlertCircle />
@@ -210,11 +168,18 @@ export function LoadingErrorStyle({
       </div>
 
       {/* 方格：本话到此为止，停在失败那一格 */}
-      <div className={`mtv-load mtv-load-grid${dark}`}>
+      <div
+        className={`tm-loading mtv-load mtv-load-grid${dark}`}
+        data-tm-loading-state='error'
+      >
         <div className='mtv-grid mtv-grid-dead'>
           <div className='mtv-grid-panels'>
             {steps.map((step, i) => (
-              <div key={step.label} className='mtv-panel'>
+              <div
+                key={step.label}
+                className='mtv-panel'
+                data-tm-active={i === idx}
+              >
                 {i === idx ? <X /> : step.icon}
                 <span>{step.label}</span>
               </div>

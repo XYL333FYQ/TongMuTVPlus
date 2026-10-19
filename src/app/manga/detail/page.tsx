@@ -50,7 +50,7 @@ const PANEL_CLASS = cn(LIBRARY_PANEL, 'p-6');
 
 /** 详情页里的元信息胶囊（作者 / 状态）。 */
 const META_PILL =
-  'rounded-sm bg-library-paper px-2.5 py-1 text-library-muted dark:bg-library-night dark:text-library-night-muted';
+  'rounded-sm bg-[var(--tm-bg)] px-2.5 py-1 text-[color:var(--tm-muted)]';
 
 function MangaDetailSkeleton() {
   return (
@@ -269,7 +269,7 @@ export default function MangaDetailPage() {
         {/* 封面立起来：外层投影 + 覆盖层书脊，和书墙上的卡片同一套。 */}
         <div
           className={cn(
-            'relative aspect-[3/4] overflow-hidden rounded-md bg-library-ochre-tint dark:bg-library-night-ochre-tint',
+            'relative aspect-[3/4] overflow-hidden rounded-md bg-[var(--tm-surface-raised)]',
             BOOK_COVER_LIFT
           )}
         >
@@ -298,7 +298,7 @@ export default function MangaDetailPage() {
           <div>
             <h1
               className={cn(
-                'text-2xl font-semibold sm:text-3xl',
+                'text-[28px] font-bold sm:text-[28px] md:text-[32px]',
                 LIBRARY_TEXT,
                 LIBRARY_SERIF
               )}
@@ -306,9 +306,12 @@ export default function MangaDetailPage() {
               {detail.title}
             </h1>
             <div
-              className={cn('mt-3 flex flex-wrap gap-2 text-xs', LIBRARY_MUTED)}
+              className={cn(
+                'mt-3 flex flex-wrap gap-2 text-[13px]',
+                LIBRARY_MUTED
+              )}
             >
-              <span className='rounded-sm bg-library-ochre-tint px-2.5 py-1 text-library-ochre dark:bg-library-night-ochre-tint dark:text-library-night-ochre'>
+              <span className='rounded-sm bg-[var(--tm-surface-raised)] px-2.5 py-1 text-[color:var(--tm-text)]'>
                 {detail.sourceName}
               </span>
               {detail.author && (
@@ -320,7 +323,7 @@ export default function MangaDetailPage() {
             </div>
           </div>
           {detail.description && (
-            <p className='text-sm leading-7 text-library-ink/80 dark:text-library-night-ink/80'>
+            <p className='text-base leading-[1.7] text-[color:var(--tm-text)]'>
               {detail.description}
             </p>
           )}
@@ -347,10 +350,10 @@ export default function MangaDetailPage() {
               aria-pressed={Boolean(shelf[key])}
               className={cn(
                 LIBRARY_FOCUS,
-                'inline-flex items-center justify-center gap-2 rounded-md border px-4 py-2.5 text-sm font-medium transition-colors duration-200',
+                'inline-flex items-center justify-center gap-2 rounded-md border px-4 py-2.5 text-sm font-medium transition-colors duration-200 min-h-[44px] tm-press',
                 shelf[key]
-                  ? 'border-transparent bg-library-ochre-tint text-library-ochre hover:bg-library-ochre-tint/70 dark:bg-library-night-ochre-tint dark:text-library-night-ochre dark:hover:bg-library-night-ochre-tint/70'
-                  : 'border-library-edge text-library-ink hover:border-library-ochre hover:text-library-ochre dark:border-library-night-edge dark:text-library-night-ink dark:hover:border-library-night-ochre dark:hover:text-library-night-ochre'
+                  ? 'border-transparent bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)] hover:bg-[color:color-mix(in_srgb,var(--tm-surface-raised)_70%,transparent)] min-h-[44px] tm-press'
+                  : 'border-[var(--tm-line)] text-[color:var(--tm-text)] hover:border-[var(--tm-text)] hover:text-[color:var(--tm-text)] min-h-[44px] tm-press'
               )}
             >
               {shelf[key] ? (
@@ -367,7 +370,11 @@ export default function MangaDetailPage() {
       <div className={PANEL_CLASS}>
         <div className='mb-4 flex items-center justify-between gap-3'>
           <h2
-            className={cn('text-lg font-semibold', LIBRARY_TEXT, LIBRARY_SERIF)}
+            className={cn(
+              'text-xl md:text-2xl font-medium',
+              LIBRARY_TEXT,
+              LIBRARY_SERIF
+            )}
           >
             章节列表
           </h2>
@@ -375,7 +382,10 @@ export default function MangaDetailPage() {
             type='button'
             onClick={() => setDescOrder((prev) => !prev)}
             aria-pressed={descOrder}
-            className={cn(LIBRARY_GHOST_BUTTON, 'gap-1.5 px-3 py-2 text-xs')}
+            className={cn(
+              LIBRARY_GHOST_BUTTON,
+              'gap-1.5 px-3 py-2 text-sm min-h-[44px] tm-press'
+            )}
           >
             {descOrder ? (
               <ArrowDownWideNarrow className='h-4 w-4' />
@@ -386,7 +396,7 @@ export default function MangaDetailPage() {
           </button>
         </div>
         {unreadChapterCount > 0 && latestChapter && (
-          <div className='mb-4 rounded-md border border-library-ochre/30 bg-library-ochre-tint px-4 py-3 text-sm text-library-ochre dark:border-library-night-ochre/30 dark:bg-library-night-ochre-tint dark:text-library-night-ochre'>
+          <div className='mb-4 rounded-md border border-[var(--tm-text)] bg-[var(--tm-surface-raised)] px-4 py-3 text-sm text-[color:var(--tm-text)]'>
             已更新 {unreadChapterCount} 话，最新章节：{latestChapter.name}
           </div>
         )}
@@ -405,13 +415,13 @@ export default function MangaDetailPage() {
                 key={chapter.id}
                 href={chapterHref(chapter)}
                 className={cn(
-                  'rounded-md border px-4 py-3 text-sm transition-colors duration-200',
+                  'rounded-md border px-4 py-3 text-sm transition-colors duration-200 min-h-[44px] tm-press',
                   LIBRARY_FOCUS,
                   active
                     ? LIBRARY_ROW_ACTIVE
                     : cn(
                         LIBRARY_ROW,
-                        'hover:border-library-ochre dark:hover:border-library-night-ochre'
+                        'hover:border-[var(--tm-text)] min-h-[44px] tm-press'
                       )
                 )}
               >
@@ -420,12 +430,12 @@ export default function MangaDetailPage() {
                     {chapter.name}
                   </div>
                   {isNewChapter && (
-                    <span className='shrink-0 rounded-sm bg-library-ochre px-1.5 py-0.5 text-[11px] font-medium text-library-chip'>
+                    <span className='shrink-0 rounded-sm bg-[var(--tm-text)] px-1.5 py-0.5 text-[13px] font-medium text-[color:var(--tm-accent-contrast)]'>
                       更新
                     </span>
                   )}
                 </div>
-                <div className={cn('mt-1 text-xs', LIBRARY_MUTED)}>
+                <div className={cn('mt-1 text-[13px]', LIBRARY_MUTED)}>
                   {[meta, progress].filter(Boolean).join(' · ')}
                 </div>
               </Link>

@@ -28,7 +28,7 @@ afterEach(() => {
 test('guest homepage never requests private room data', () => {
   render(<HomeRooms guest />);
   expect(mockFetch).not.toHaveBeenCalled();
-  expect(screen.getByText('登录后查看自己的房间')).toBeInTheDocument();
+  expect(screen.getByText('登录后创建和加入房间')).toBeInTheDocument();
   expect(screen.getByRole('link', { name: '创建房间' })).toHaveAttribute(
     'href',
     '/watch-room'

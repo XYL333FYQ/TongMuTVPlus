@@ -1,31 +1,26 @@
-/**
- * 漫画未读话数的水波纹角标。
- *
- * 三个 @keyframes（ping-scale / pulse-scale / badge-scale）定义在
- * src/app/globals.css，并与 ContinueWatching 的更新角标共用——不要删除或改名。
- * 这里只换配色（primary 天蓝 → 书库赭石），不碰动画。
- */
+'use client';
+
+import { motion } from 'framer-motion';
+
+import { useReducedMotionSetting } from '@/lib/motion';
+
+/** 未读数出现时轻弹一次；保留全局旧 keyframes 供其它调用方使用。 */
 export default function RippleCountBadge({ count }: { count: number }) {
+  const reduced = useReducedMotionSetting();
   return (
     <div className='pointer-events-none absolute right-2 top-2 z-20 h-7 w-7'>
-      <span
-        className='absolute inset-0 rounded-full bg-library-ochre dark:bg-library-night-ochre'
-        style={{
-          animation: 'ping-scale 1.5s cubic-bezier(0, 0, 0.2, 1) infinite',
+      <motion.span
+        key={count}
+        className='tm-media-card-motion absolute inset-0 flex items-center justify-center rounded-full bg-[var(--tm-text)] text-[13px] font-medium tabular-nums text-[color:var(--tm-accent-contrast)]'
+        initial={{ opacity: 0, scale: reduced ? 1 : 0.85 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{
+          duration: reduced ? 0.12 : 0.32,
+          ease: [0.34, 1.56, 0.64, 1],
         }}
-      />
-      <span
-        className='absolute inset-0 rounded-full bg-library-ochre dark:bg-library-night-ochre'
-        style={{
-          animation: 'pulse-scale 2.5s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-        }}
-      />
-      <span
-        className='absolute inset-0 flex items-center justify-center rounded-full bg-library-ochre text-[11px] font-bold text-white shadow-sm dark:bg-library-night-ochre dark:text-library-night'
-        style={{ animation: 'badge-scale 2s ease-in-out infinite' }}
       >
         +{count}
-      </span>
+      </motion.span>
     </div>
   );
 }

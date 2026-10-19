@@ -13,7 +13,7 @@ import {
 /**
  * 音乐模块每个浏览页共用的外壳：顶部那一行（标题 / 眉标 / 右侧控件）。
  *
- * 这里不铺页面底色——底色是外壳（MusicClient）那层渐变底，模块只管内容和字色，
+ * 这里不铺页面底色——底色由外壳（MusicClient）统一设置，模块只管内容和字色，
  * 见 tokens.ts 的 MUSIC_PAGE_BODY。
  */
 export default function MusicPage({

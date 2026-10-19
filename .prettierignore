@@ -39,3 +39,8 @@ yarn-error.log*
 CHANGELOG.md
 
 pnpm-lock.yaml
+
+# Generated browser evidence and immutable design sources are not application code.
+/output/
+/docs/design/reference-static/
+/docs/design/reference/

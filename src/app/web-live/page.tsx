@@ -10,6 +10,7 @@ import LoadingStyle, {
   LoadingErrorStyle,
   type LoadingStep,
 } from '@/components/LoadingStyle';
+import PageContainer from '@/components/PageContainer';
 import PageLayout from '@/components/PageLayout';
 import { useWatchRoomContextSafe } from '@/components/WatchRoomProvider';
 
@@ -21,10 +22,7 @@ let flvjs: any = null;
  * 款式本身见 components/LoadingStyle。 */
 type WebLiveLoadingStepKey = 'loading' | 'fetching' | 'ready';
 
-const WEB_LIVE_LOADING_STEP_META: Record<
-  WebLiveLoadingStepKey,
-  LoadingStep
-> = {
+const WEB_LIVE_LOADING_STEP_META: Record<WebLiveLoadingStepKey, LoadingStep> = {
   loading: { label: '加载', icon: <Radio /> },
   fetching: { label: '获取', icon: <Download /> },
   ready: { label: '就绪', icon: <Play /> },
@@ -48,19 +46,26 @@ export default function WebLivePage() {
   const artRef = useRef<HTMLDivElement | null>(null);
   const artPlayerRef = useRef<any>(null);
   const [loading, setLoading] = useState(true);
-  const [loadingStage, setLoadingStage] = useState<'loading' | 'fetching' | 'ready'>('loading');
+  const [loadingStage, setLoadingStage] = useState<
+    'loading' | 'fetching' | 'ready'
+  >('loading');
   const [loadingMessage, setLoadingMessage] = useState('正在加载直播源...');
   const [sources, setSources] = useState<any[]>([]);
   const [currentSource, setCurrentSource] = useState<any | null>(null);
   const [videoUrl, setVideoUrl] = useState('');
   const [originalVideoUrl, setOriginalVideoUrl] = useState('');
-  const [streamInfo, setStreamInfo] = useState<{ name?: string; title?: string } | null>(null);
+  const [streamInfo, setStreamInfo] = useState<{
+    name?: string;
+    title?: string;
+  } | null>(null);
   const [activeTab, setActiveTab] = useState<'rooms' | 'platforms'>('rooms');
   const [isChannelListCollapsed, setIsChannelListCollapsed] = useState(false);
   const [isVideoLoading, setIsVideoLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [selectedPlatform, setSelectedPlatform] = useState<string | null>(null);
-  const [isWebLiveEnabled, setIsWebLiveEnabled] = useState<boolean | null>(null);
+  const [isWebLiveEnabled, setIsWebLiveEnabled] = useState<boolean | null>(
+    null
+  );
   const [librariesLoaded, setLibrariesLoaded] = useState(false);
   const hasAutoLoadedRef = useRef(false); // 防止重复自动加载
 
@@ -73,7 +78,7 @@ export default function WebLivePage() {
     onSourceChange: (sourceKey, platform, roomId) => {
       // 房员接收到直播源切换指令
       if (!sources || !Array.isArray(sources)) return;
-      const source = sources.find(s => s.key === sourceKey);
+      const source = sources.find((s) => s.key === sourceKey);
       if (source) {
         handleSourceClick(source);
       }
@@ -89,9 +94,15 @@ export default function WebLivePage() {
     if (typeof window !== 'undefined') {
       // 异步加载所有必需的库
       Promise.all([
-        import('artplayer').then(mod => { Artplayer = mod.default; }),
-        import('hls.js').then(mod => { Hls = mod.default; }),
-        import('flv.js').then(mod => { flvjs = mod.default; })
+        import('artplayer').then((mod) => {
+          Artplayer = mod.default;
+        }),
+        import('hls.js').then((mod) => {
+          Hls = mod.default;
+        }),
+        import('flv.js').then((mod) => {
+          flvjs = mod.default;
+        }),
       ]).then(() => {
         setLibrariesLoaded(true);
       });
@@ -124,7 +135,7 @@ export default function WebLivePage() {
         const data = await res.json();
         setSources(data);
         setLoadingStage('ready');
-        await new Promise(resolve => setTimeout(resolve, 500));
+        await new Promise((resolve) => setTimeout(resolve, 500));
       }
     } catch (err) {
       console.error('获取直播源失败:', err);
@@ -148,7 +159,10 @@ export default function WebLivePage() {
     }
 
     // 检查是否已经加载了这个频道
-    if (currentSource?.platform === needLoadPlatform && currentSource?.roomId === needLoadRoomId) {
+    if (
+      currentSource?.platform === needLoadPlatform &&
+      currentSource?.roomId === needLoadRoomId
+    ) {
       return;
     }
 
@@ -160,7 +174,9 @@ export default function WebLivePage() {
     hasAutoLoadedRef.current = true;
 
     // 查找匹配的 source
-    const foundSource = sources.find(s => s.platform === needLoadPlatform && s.roomId === needLoadRoomId);
+    const foundSource = sources.find(
+      (s) => s.platform === needLoadPlatform && s.roomId === needLoadRoomId
+    );
     if (foundSource) {
       handleSourceClick(foundSource);
     } else {
@@ -170,7 +186,11 @@ export default function WebLivePage() {
 
   function m3u8Loader(video: HTMLVideoElement, url: string) {
     if (!Hls) return;
-    const hls = new Hls({ debug: false, enableWorker: true, lowLatencyMode: true });
+    const hls = new Hls({
+      debug: false,
+      enableWorker: true,
+      lowLatencyMode: true,
+    });
     hls.loadSource(url);
     hls.attachMedia(video);
     (video as any).hls = hls;
@@ -180,11 +200,14 @@ export default function WebLivePage() {
     if (!flvjs) return;
     const flvPlayer = flvjs.createPlayer({ type: 'flv', url, isLive: true });
     flvPlayer.attachMediaElement(video);
-    flvPlayer.on(flvjs.Events.ERROR, (errorType: string, errorDetail: string) => {
-      console.error('FLV.js error:', errorType, errorDetail);
-      setErrorMessage(`播放失败: ${errorType} - ${errorDetail}`);
-      setVideoUrl('');
-    });
+    flvPlayer.on(
+      flvjs.Events.ERROR,
+      (errorType: string, errorDetail: string) => {
+        console.error('FLV.js error:', errorType, errorDetail);
+        setErrorMessage(`播放失败: ${errorType} - ${errorDetail}`);
+        setVideoUrl('');
+      }
+    );
     flvPlayer.load();
     (video as any).flv = flvPlayer;
   }
@@ -207,7 +230,10 @@ export default function WebLivePage() {
         }
 
         // 销毁 FLV 实例
-        if (artPlayerRef.current.video && (artPlayerRef.current.video as any).flv) {
+        if (
+          artPlayerRef.current.video &&
+          (artPlayerRef.current.video as any).flv
+        ) {
           try {
             if ((artPlayerRef.current.video as any).flv.unload) {
               (artPlayerRef.current.video as any).flv.unload();
@@ -242,15 +268,19 @@ export default function WebLivePage() {
 
     artPlayerRef.current = new Artplayer({
       container: artRef.current,
+      theme: 'var(--tm-room-player-text)',
       url: videoUrl,
       isLive: true,
       autoplay: true,
       fullscreen: true,
       customType: {
         m3u8: m3u8Loader,
-        flv: flvLoader
+        flv: flvLoader,
       },
-      icons: { loading: '<svg xmlns="http://www.w3.org/2000/svg" width="50" height="50" viewBox="0 0 100 100"><circle cx="50" cy="50" fill="none" stroke="currentColor" stroke-width="4" r="35" stroke-dasharray="164.93361431346415 56.97787143782138"><animateTransform attributeName="transform" type="rotate" repeatCount="indefinite" dur="1s" values="0 50 50;360 50 50" keyTimes="0;1"/></circle></svg>' }
+      icons: {
+        loading:
+          '<span aria-hidden="true" class="tm-skeleton" style="display:block;width:48px;height:8px;border-radius:999px;background:color-mix(in srgb,var(--tm-room-player-text) 12%,transparent)"></span>',
+      },
     });
 
     return () => {
@@ -295,7 +325,9 @@ export default function WebLivePage() {
     router.replace(`/web-live?${newSearchParams.toString()}`);
 
     try {
-      const res = await fetch(`/api/web-live/stream?platform=${source.platform}&roomId=${source.roomId}`);
+      const res = await fetch(
+        `/api/web-live/stream?platform=${source.platform}&roomId=${source.roomId}`
+      );
       if (res.ok) {
         const data = await res.json();
 
@@ -316,7 +348,7 @@ export default function WebLivePage() {
         if (data.name || data.title) {
           setStreamInfo({
             name: data.name,
-            title: data.title
+            title: data.title,
           });
         }
       } else {
@@ -344,11 +376,11 @@ export default function WebLivePage() {
     return '';
   };
 
-  const platforms = Array.from(new Set(sources.map(s => s.platform)));
+  const platforms = Array.from(new Set(sources.map((s) => s.platform)));
 
   // 根据选中的平台筛选房间
   const filteredSources = selectedPlatform
-    ? sources.filter(s => s.platform === selectedPlatform)
+    ? sources.filter((s) => s.platform === selectedPlatform)
     : sources;
 
   // 处理平台点击
@@ -381,16 +413,18 @@ export default function WebLivePage() {
         <div className='flex items-center justify-center min-h-screen bg-transparent'>
           <div className='text-center max-w-md mx-auto px-6'>
             <div className='relative mb-8'>
-              <div className='relative mx-auto w-24 h-24 bg-gradient-to-r from-orange-500 to-red-600 rounded-2xl shadow-2xl flex items-center justify-center transform hover:scale-105 transition-transform duration-300'>
-                <AlertTriangle className='w-12 h-12 text-white' />
-                <div className='absolute -inset-2 bg-gradient-to-r from-orange-500 to-red-600 rounded-2xl opacity-20 animate-pulse'></div>
+              <div className='relative mx-auto w-24 h-24 bg-[var(--tm-surface)] rounded-2xl shadow-2xl flex items-center justify-center transform transition-transform duration-300'>
+                <AlertTriangle className='w-12 h-12 text-[color:var(--tm-text)]' />
+                <div className='hidden absolute -inset-2 bg-[var(--tm-surface)] rounded-2xl opacity-20 tm-skeleton'></div>
               </div>
             </div>
 
             <div className='space-y-4'>
-              <h3 className='text-2xl font-bold text-gray-900 dark:text-gray-100'>功能未启用</h3>
-              <div className='bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg p-4'>
-                <p className='text-sm text-gray-700 dark:text-gray-300 leading-relaxed'>
+              <h3 className='text-lg font-medium text-[color:var(--tm-text)]'>
+                功能未启用
+              </h3>
+              <div className='bg-[var(--tm-surface-raised)] border border-[var(--tm-line)] rounded-lg p-4'>
+                <p className='text-sm text-[color:var(--tm-muted)] leading-relaxed'>
                   网络直播功能当前未启用。请联系管理员在管理面板中开启此功能。
                 </p>
               </div>
@@ -419,46 +453,63 @@ export default function WebLivePage() {
                 <>
                   {/* 动画直播图标 */}
                   <div className='relative mb-8'>
-                    <div className='relative mx-auto w-24 h-24 bg-gradient-to-r from-green-500 to-emerald-600 rounded-2xl shadow-2xl flex items-center justify-center transform hover:scale-105 transition-transform duration-300'>
-                      <div className='text-white text-4xl'>📺</div>
+                    <div className='relative mx-auto w-24 h-24 bg-[var(--tm-surface)] rounded-2xl shadow-2xl flex items-center justify-center transform transition-transform duration-300'>
+                      <Radio className='h-10 w-10 text-[color:var(--tm-text)]' />
                       {/* 旋转光环 */}
-                      <div className='absolute -inset-2 bg-gradient-to-r from-green-500 to-emerald-600 rounded-2xl opacity-20 animate-spin'></div>
+                      <div className='tm-skeleton hidden absolute -inset-2 bg-[var(--tm-surface)] rounded-2xl opacity-20 '></div>
                     </div>
 
                     {/* 浮动粒子效果 */}
-                    <div className='absolute top-0 left-0 w-full h-full pointer-events-none'>
-                      <div className='absolute top-2 left-2 w-2 h-2 bg-green-400 rounded-full animate-bounce'></div>
+                    <div className='hidden absolute top-0 left-0 w-full h-full pointer-events-none'>
+                      <div className='absolute top-2 left-2 w-2 h-2 bg-[var(--tm-text)] rounded-full '></div>
                       <div
-                        className='absolute top-4 right-4 w-1.5 h-1.5 bg-emerald-400 rounded-full animate-bounce'
+                        className='absolute top-4 right-4 w-1.5 h-1.5 bg-[var(--tm-text)] rounded-full '
                         style={{ animationDelay: '0.5s' }}
                       ></div>
                       <div
-                        className='absolute bottom-3 left-6 w-1 h-1 bg-lime-400 rounded-full animate-bounce'
+                        className='absolute bottom-3 left-6 w-1 h-1 bg-[var(--tm-text)] rounded-full '
                         style={{ animationDelay: '1s' }}
                       ></div>
                     </div>
                   </div>
 
                   {/* 进度指示器 */}
-                  <div className='mb-6 w-80 mx-auto'>
+                  <div className='mb-6 w-full max-w-80 mx-auto'>
                     <div className='flex justify-center space-x-2 mb-4'>
                       <div
-                        className={`w-3 h-3 rounded-full transition-all duration-500 ${loadingStage === 'loading' ? 'bg-green-500 scale-125' : 'bg-green-500'}`}
+                        className={`w-3 h-3 rounded-full transition-[transform,opacity] duration-500 ${
+                          loadingStage === 'loading'
+                            ? 'bg-[var(--tm-text)] scale-125'
+                            : 'bg-[var(--tm-text)]'
+                        }`}
                       ></div>
                       <div
-                        className={`w-3 h-3 rounded-full transition-all duration-500 ${loadingStage === 'fetching' ? 'bg-green-500 scale-125' : 'bg-green-500'}`}
+                        className={`w-3 h-3 rounded-full transition-[transform,opacity] duration-500 ${
+                          loadingStage === 'fetching'
+                            ? 'bg-[var(--tm-text)] scale-125'
+                            : 'bg-[var(--tm-text)]'
+                        }`}
                       ></div>
                       <div
-                        className={`w-3 h-3 rounded-full transition-all duration-500 ${loadingStage === 'ready' ? 'bg-green-500 scale-125' : 'bg-gray-300'}`}
+                        className={`w-3 h-3 rounded-full transition-[transform,opacity] duration-500 ${
+                          loadingStage === 'ready'
+                            ? 'bg-[var(--tm-text)] scale-125'
+                            : 'bg-[var(--tm-surface)]'
+                        }`}
                       ></div>
                     </div>
 
                     {/* 进度条 */}
-                    <div className='w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 overflow-hidden'>
+                    <div className='w-full bg-[var(--tm-surface-raised)] rounded-full h-2 overflow-hidden'>
                       <div
-                        className='h-full bg-gradient-to-r from-green-500 to-emerald-600 rounded-full transition-all duration-1000 ease-out'
+                        className='h-full bg-[var(--tm-surface)] rounded-full transition-[transform,opacity] duration-1000 ease-out'
                         style={{
-                          width: loadingStage === 'loading' ? '33%' : loadingStage === 'fetching' ? '66%' : '100%',
+                          width:
+                            loadingStage === 'loading'
+                              ? '33%'
+                              : loadingStage === 'fetching'
+                              ? '66%'
+                              : '100%',
                         }}
                       ></div>
                     </div>
@@ -466,7 +517,7 @@ export default function WebLivePage() {
 
                   {/* 加载消息 */}
                   <div className='space-y-2'>
-                    <p className='text-xl font-semibold text-gray-800 dark:text-gray-200 animate-pulse'>
+                    <p className='text-base font-medium text-[color:var(--tm-text)] '>
                       {loadingMessage}
                     </p>
                   </div>
@@ -481,10 +532,10 @@ export default function WebLivePage() {
 
   return (
     <PageLayout activePath='/web-live'>
-      <div className='flex flex-col gap-3 py-4 px-5 lg:px-[3rem] 2xl:px-20'>
+      <PageContainer className='flex flex-col gap-3 py-4'>
         <div className='py-1'>
-          <h1 className='text-xl font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2 max-w-[80%]'>
-            <Radio className='w-5 h-5 text-blue-500 flex-shrink-0' />
+          <h1 className=' text-[color:var(--tm-text)] flex items-center gap-2 max-w-[80%] text-[28px] font-bold md:text-[32px]'>
+            <Radio className='w-5 h-5 text-[color:var(--tm-text)] flex-shrink-0' />
             <div className='min-w-0 flex-1'>
               <div className='truncate'>
                 {currentSource?.name || '网络直播'}
@@ -497,30 +548,56 @@ export default function WebLivePage() {
           <div className='hidden lg:flex justify-end'>
             <button
               onClick={() => setIsChannelListCollapsed(!isChannelListCollapsed)}
-              className='group relative flex items-center space-x-1.5 px-3 py-1.5 rounded-full bg-white/80 hover:bg-white dark:bg-gray-800/80 dark:hover:bg-gray-800 backdrop-blur-sm border border-gray-200/50 dark:border-gray-700/50 shadow-sm hover:shadow-md transition-all duration-200'
+              className='group relative flex items-center space-x-1.5 px-3 py-1.5 rounded-full bg-[var(--tm-surface-raised)] hover:bg-[var(--tm-line)] border border-[var(--tm-line)] shadow-sm hover:shadow-md transition-[transform,opacity] duration-200 min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
             >
               <svg
-                className={`w-3.5 h-3.5 text-gray-500 dark:text-gray-400 transition-transform duration-200 ${isChannelListCollapsed ? 'rotate-180' : 'rotate-0'}`}
+                className={`w-3.5 h-3.5 text-[color:var(--tm-muted)] transition-transform duration-200 ${
+                  isChannelListCollapsed ? 'rotate-180' : 'rotate-0'
+                }`}
                 fill='none'
                 stroke='currentColor'
                 viewBox='0 0 24 24'
               >
-                <path strokeLinecap='round' strokeLinejoin='round' strokeWidth='2' d='M9 5l7 7-7 7' />
+                <path
+                  strokeLinecap='round'
+                  strokeLinejoin='round'
+                  strokeWidth='2'
+                  d='M9 5l7 7-7 7'
+                />
               </svg>
-              <span className='text-xs font-medium text-gray-600 dark:text-gray-300'>
+              <span className='text-[13px] font-medium text-[color:var(--tm-muted)]'>
                 {isChannelListCollapsed ? '显示' : '隐藏'}
               </span>
-              <div className={`absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full transition-all duration-200 ${isChannelListCollapsed ? 'bg-orange-400 animate-pulse' : 'bg-green-400'}`}></div>
+              <div
+                className={`absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full transition-[transform,opacity] duration-200 ${
+                  isChannelListCollapsed
+                    ? 'bg-[var(--tm-text)] tm-skeleton'
+                    : 'bg-[var(--tm-text)]'
+                }`}
+              ></div>
             </button>
           </div>
 
-          <div className={`grid gap-4 lg:h-[500px] xl:h-[650px] 2xl:h-[750px] transition-all duration-300 ease-in-out ${isChannelListCollapsed ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-4'}`}>
-            <div className={`h-full transition-all duration-300 ease-in-out ${isChannelListCollapsed ? 'col-span-1' : 'md:col-span-3'}`}>
-              <div className='relative w-full h-[300px] lg:h-full'>
-                <div ref={artRef} className='bg-black w-full h-full rounded-xl overflow-hidden shadow-lg border border-white/0 dark:border-white/30'></div>
+          <div
+            className={`grid gap-4 lg:h-[500px] xl:h-[650px] 2xl:h-[750px] transition-[transform,opacity] duration-300 ease-in-out ${
+              isChannelListCollapsed
+                ? 'grid-cols-1'
+                : 'grid-cols-1 md:grid-cols-4'
+            }`}
+          >
+            <div
+              className={`h-full transition-[transform,opacity] duration-300 ease-in-out ${
+                isChannelListCollapsed ? 'col-span-1' : 'md:col-span-3'
+              }`}
+            >
+              <div className='relative w-full h-[300px] lg:h-full [--tm-surface:var(--tm-room-cinema-bg)] [--tm-surface-raised:color-mix(in_srgb,var(--tm-room-cinema-bg)_85%,var(--tm-room-player-text))] [--tm-text:var(--tm-room-player-text)] [--tm-muted:color-mix(in_srgb,var(--tm-room-player-text)_72%,var(--tm-room-cinema-bg))] [--tm-line:color-mix(in_srgb,var(--tm-room-player-text)_15%,transparent)]'>
+                <div
+                  ref={artRef}
+                  className='bg-[var(--tm-surface)] w-full h-full rounded-xl overflow-hidden shadow-lg border border-[var(--tm-line)]'
+                ></div>
 
                 {errorMessage && (
-                  <div className='absolute inset-0 bg-black/90 backdrop-blur-sm rounded-xl overflow-hidden shadow-lg border border-white/0 dark:border-white/30 flex items-center justify-center z-[600] transition-all duration-300'>
+                  <div className='absolute inset-0 bg-[color:color-mix(in_srgb,var(--tm-room-cinema-bg)_90%,transparent)] rounded-xl overflow-hidden shadow-lg border border-[var(--tm-line)] flex items-center justify-center z-[600] transition-[transform,opacity] duration-300'>
                     <div className='text-center max-w-md mx-auto px-6'>
                       {/* 错误图标：跟其他页面失败态同款，遮罩是深色底所以钉暗色 */}
                       <div className='relative mb-4 lg:mb-8'>
@@ -532,27 +609,33 @@ export default function WebLivePage() {
                           onDark
                           legacy={
                             <>
-                              <div className='relative mx-auto w-24 h-24 bg-gradient-to-r from-orange-500 to-red-600 rounded-2xl shadow-2xl flex items-center justify-center transform hover:scale-105 transition-transform duration-300'>
-                                <div className='text-white text-4xl'>⚠️</div>
-                                <div className='absolute -inset-2 bg-gradient-to-r from-orange-500 to-red-600 rounded-2xl opacity-20 animate-pulse'></div>
+                              <div className='relative mx-auto w-24 h-24 bg-[var(--tm-surface)] rounded-2xl shadow-2xl flex items-center justify-center transform transition-transform duration-300'>
+                                <AlertTriangle className='h-10 w-10 text-[color:var(--tm-danger)]' />
+                                <div className='hidden absolute -inset-2 bg-[var(--tm-surface)] rounded-2xl opacity-20 tm-skeleton'></div>
                               </div>
                             </>
                           }
                         />
                       </div>
                       <div className='space-y-2 lg:space-y-4'>
-                        <h3 className='text-xl font-semibold text-white'>获取直播流失败</h3>
-                        <div className='mtv-err-box bg-orange-500/20 border border-orange-500/30 rounded-lg p-4'>
-                          <p className='text-orange-300 font-medium'>{errorMessage}</p>
+                        <h3 className='text-lg font-medium text-[color:var(--tm-text)]'>
+                          获取直播流失败
+                        </h3>
+                        <div className='mtv-err-box bg-[var(--tm-surface-raised)] border border-[var(--tm-line)] rounded-lg p-4'>
+                          <p className='text-[color:var(--tm-text)] font-medium'>
+                            {errorMessage}
+                          </p>
                         </div>
-                        <p className='text-sm text-gray-300'>请尝试其他房间</p>
+                        <p className='text-sm text-[color:var(--tm-muted)]'>
+                          请尝试其他房间
+                        </p>
                       </div>
                     </div>
                   </div>
                 )}
 
                 {isVideoLoading && (
-                  <div className='absolute inset-0 bg-black/85 backdrop-blur-sm rounded-xl overflow-hidden shadow-lg border border-white/0 dark:border-white/30 flex items-center justify-center z-[500] transition-all duration-300'>
+                  <div className='absolute inset-0 bg-[color:color-mix(in_srgb,var(--tm-room-cinema-bg)_85%,transparent)] rounded-xl overflow-hidden shadow-lg border border-[var(--tm-line)] flex items-center justify-center z-[500] transition-[transform,opacity] duration-300'>
                     <div className='text-center max-w-md mx-auto px-6'>
                       {/* 三种加载款式（旧版那一套各页自备） */}
                       <LoadingStyle
@@ -563,13 +646,15 @@ export default function WebLivePage() {
                         legacy={
                           <>
                             <div className='relative mb-8'>
-                              <div className='relative mx-auto w-24 h-24 bg-gradient-to-r from-green-500 to-emerald-600 rounded-2xl shadow-2xl flex items-center justify-center transform hover:scale-105 transition-transform duration-300'>
-                                <div className='text-white text-4xl'>📺</div>
-                                <div className='absolute -inset-2 bg-gradient-to-r from-green-500 to-emerald-600 rounded-2xl opacity-20 animate-spin'></div>
+                              <div className='relative mx-auto w-24 h-24 bg-[var(--tm-surface)] rounded-2xl shadow-2xl flex items-center justify-center transform transition-transform duration-300'>
+                                <Radio className='h-10 w-10 text-[color:var(--tm-text)]' />
+                                <div className='tm-skeleton hidden absolute -inset-2 bg-[var(--tm-surface)] rounded-2xl opacity-20 '></div>
                               </div>
                             </div>
                             <div className='space-y-2'>
-                              <p className='text-xl font-semibold text-white animate-pulse'>🔄 加载中...</p>
+                              <p className='text-base font-medium text-[color:var(--tm-text)] '>
+                                正在加载
+                              </p>
                             </div>
                           </>
                         }
@@ -582,7 +667,7 @@ export default function WebLivePage() {
               {/* 外部播放器按钮 */}
               {currentSource && !webLiveSync.isInRoom && (
                 <div className='mt-3 px-2 lg:flex-shrink-0 flex justify-end'>
-                  <div className='bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm rounded-lg p-2 border border-gray-200/50 dark:border-gray-700/50 w-full lg:w-auto overflow-x-auto'>
+                  <div className='bg-[var(--tm-surface-raised)] rounded-lg p-2 border border-[var(--tm-line)] w-full lg:w-auto overflow-x-auto'>
                     <div className='flex gap-1.5 justify-end lg:flex-wrap items-center'>
                       {/* 网页播放 */}
                       <button
@@ -593,11 +678,11 @@ export default function WebLivePage() {
                             window.open(roomUrl, '_blank');
                           }
                         }}
-                        className='group relative flex items-center justify-center gap-1 w-8 h-8 lg:w-auto lg:h-auto lg:px-2 lg:py-1.5 bg-white hover:bg-gray-100 dark:bg-gray-700 dark:hover:bg-gray-600 text-xs font-medium rounded-md transition-all duration-200 shadow-sm hover:shadow-md cursor-pointer overflow-hidden border border-gray-300 dark:border-gray-600 flex-shrink-0'
+                        className='group relative flex items-center justify-center gap-1 w-8 h-8 lg:w-auto lg:h-auto lg:px-2 lg:py-1.5 bg-[var(--tm-surface-raised)] hover:bg-[var(--tm-line)] text-[13px] font-medium rounded-md transition-[transform,opacity] duration-200 shadow-sm hover:shadow-md cursor-pointer overflow-hidden border border-[var(--tm-line)] flex-shrink-0 min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
                         title='网页播放'
                       >
                         <svg
-                          className='w-4 h-4 flex-shrink-0 text-gray-700 dark:text-gray-200'
+                          className='w-4 h-4 flex-shrink-0 text-[color:var(--tm-muted)] text-[color:var(--tm-text)]'
                           fill='none'
                           stroke='currentColor'
                           viewBox='0 0 24 24'
@@ -610,7 +695,7 @@ export default function WebLivePage() {
                             d='M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25'
                           />
                         </svg>
-                        <span className='hidden lg:inline max-w-0 group-hover:max-w-[100px] overflow-hidden whitespace-nowrap transition-all duration-200 ease-in-out text-gray-700 dark:text-gray-200'>
+                        <span className='hidden lg:inline max-w-0 group-hover:max-w-[100px] overflow-hidden whitespace-nowrap transition-[transform,opacity] duration-200 ease-in-out text-[color:var(--tm-muted)] text-[color:var(--tm-text)]'>
                           网页播放
                         </span>
                       </button>
@@ -620,10 +705,13 @@ export default function WebLivePage() {
                         onClick={(e) => {
                           e.preventDefault();
                           if (originalVideoUrl) {
-                            window.open(`potplayer://${originalVideoUrl}`, '_blank');
+                            window.open(
+                              `potplayer://${originalVideoUrl}`,
+                              '_blank'
+                            );
                           }
                         }}
-                        className='group relative flex items-center justify-center gap-1 w-8 h-8 lg:w-auto lg:h-auto lg:px-2 lg:py-1.5 bg-white hover:bg-gray-100 dark:bg-gray-700 dark:hover:bg-gray-600 text-xs font-medium rounded-md transition-all duration-200 shadow-sm hover:shadow-md cursor-pointer overflow-hidden border border-gray-300 dark:border-gray-600 flex-shrink-0'
+                        className='group relative flex items-center justify-center gap-1 w-8 h-8 lg:w-auto lg:h-auto lg:px-2 lg:py-1.5 bg-[var(--tm-surface-raised)] hover:bg-[var(--tm-line)] text-[13px] font-medium rounded-md transition-[transform,opacity] duration-200 shadow-sm hover:shadow-md cursor-pointer overflow-hidden border border-[var(--tm-line)] flex-shrink-0 min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
                         title='PotPlayer'
                       >
                         <img
@@ -631,7 +719,7 @@ export default function WebLivePage() {
                           alt='PotPlayer'
                           className='w-4 h-4 flex-shrink-0'
                         />
-                        <span className='hidden lg:inline max-w-0 group-hover:max-w-[100px] overflow-hidden whitespace-nowrap transition-all duration-200 ease-in-out text-gray-700 dark:text-gray-200'>
+                        <span className='hidden lg:inline max-w-0 group-hover:max-w-[100px] overflow-hidden whitespace-nowrap transition-[transform,opacity] duration-200 ease-in-out text-[color:var(--tm-muted)] text-[color:var(--tm-text)]'>
                           PotPlayer
                         </span>
                       </button>
@@ -644,7 +732,7 @@ export default function WebLivePage() {
                             window.open(`vlc://${originalVideoUrl}`, '_blank');
                           }
                         }}
-                        className='group relative flex items-center justify-center gap-1 w-8 h-8 lg:w-auto lg:h-auto lg:px-2 lg:py-1.5 bg-white hover:bg-gray-100 dark:bg-gray-700 dark:hover:bg-gray-600 text-xs font-medium rounded-md transition-all duration-200 shadow-sm hover:shadow-md cursor-pointer overflow-hidden border border-gray-300 dark:border-gray-600 flex-shrink-0'
+                        className='group relative flex items-center justify-center gap-1 w-8 h-8 lg:w-auto lg:h-auto lg:px-2 lg:py-1.5 bg-[var(--tm-surface-raised)] hover:bg-[var(--tm-line)] text-[13px] font-medium rounded-md transition-[transform,opacity] duration-200 shadow-sm hover:shadow-md cursor-pointer overflow-hidden border border-[var(--tm-line)] flex-shrink-0 min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
                         title='VLC'
                       >
                         <img
@@ -652,7 +740,7 @@ export default function WebLivePage() {
                           alt='VLC'
                           className='w-4 h-4 flex-shrink-0'
                         />
-                        <span className='hidden lg:inline max-w-0 group-hover:max-w-[100px] overflow-hidden whitespace-nowrap transition-all duration-200 ease-in-out text-gray-700 dark:text-gray-200'>
+                        <span className='hidden lg:inline max-w-0 group-hover:max-w-[100px] overflow-hidden whitespace-nowrap transition-[transform,opacity] duration-200 ease-in-out text-[color:var(--tm-muted)] text-[color:var(--tm-text)]'>
                           VLC
                         </span>
                       </button>
@@ -665,7 +753,7 @@ export default function WebLivePage() {
                             window.open(`mpv://${originalVideoUrl}`, '_blank');
                           }
                         }}
-                        className='group relative flex items-center justify-center gap-1 w-8 h-8 lg:w-auto lg:h-auto lg:px-2 lg:py-1.5 bg-white hover:bg-gray-100 dark:bg-gray-700 dark:hover:bg-gray-600 text-xs font-medium rounded-md transition-all duration-200 shadow-sm hover:shadow-md cursor-pointer overflow-hidden border border-gray-300 dark:border-gray-600 flex-shrink-0'
+                        className='group relative flex items-center justify-center gap-1 w-8 h-8 lg:w-auto lg:h-auto lg:px-2 lg:py-1.5 bg-[var(--tm-surface-raised)] hover:bg-[var(--tm-line)] text-[13px] font-medium rounded-md transition-[transform,opacity] duration-200 shadow-sm hover:shadow-md cursor-pointer overflow-hidden border border-[var(--tm-line)] flex-shrink-0 min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
                         title='MPV'
                       >
                         <img
@@ -673,7 +761,7 @@ export default function WebLivePage() {
                           alt='MPV'
                           className='w-4 h-4 flex-shrink-0'
                         />
-                        <span className='hidden lg:inline max-w-0 group-hover:max-w-[100px] overflow-hidden whitespace-nowrap transition-all duration-200 ease-in-out text-gray-700 dark:text-gray-200'>
+                        <span className='hidden lg:inline max-w-0 group-hover:max-w-[100px] overflow-hidden whitespace-nowrap transition-[transform,opacity] duration-200 ease-in-out text-[color:var(--tm-muted)] text-[color:var(--tm-text)]'>
                           MPV
                         </span>
                       </button>
@@ -691,7 +779,7 @@ export default function WebLivePage() {
                             );
                           }
                         }}
-                        className='group relative flex items-center justify-center gap-1 w-8 h-8 lg:w-auto lg:h-auto lg:px-2 lg:py-1.5 bg-white hover:bg-gray-100 dark:bg-gray-700 dark:hover:bg-gray-600 text-xs font-medium rounded-md transition-all duration-200 shadow-sm hover:shadow-md cursor-pointer overflow-hidden border border-gray-300 dark:border-gray-600 flex-shrink-0'
+                        className='group relative flex items-center justify-center gap-1 w-8 h-8 lg:w-auto lg:h-auto lg:px-2 lg:py-1.5 bg-[var(--tm-surface-raised)] hover:bg-[var(--tm-line)] text-[13px] font-medium rounded-md transition-[transform,opacity] duration-200 shadow-sm hover:shadow-md cursor-pointer overflow-hidden border border-[var(--tm-line)] flex-shrink-0 min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
                         title='MX Player'
                       >
                         <img
@@ -699,7 +787,7 @@ export default function WebLivePage() {
                           alt='MX Player'
                           className='w-4 h-4 flex-shrink-0'
                         />
-                        <span className='hidden lg:inline max-w-0 group-hover:max-w-[100px] overflow-hidden whitespace-nowrap transition-all duration-200 ease-in-out text-gray-700 dark:text-gray-200'>
+                        <span className='hidden lg:inline max-w-0 group-hover:max-w-[100px] overflow-hidden whitespace-nowrap transition-[transform,opacity] duration-200 ease-in-out text-[color:var(--tm-muted)] text-[color:var(--tm-text)]'>
                           MX Player
                         </span>
                       </button>
@@ -709,10 +797,13 @@ export default function WebLivePage() {
                         onClick={(e) => {
                           e.preventDefault();
                           if (originalVideoUrl) {
-                            window.open(`nplayer-${originalVideoUrl}`, '_blank');
+                            window.open(
+                              `nplayer-${originalVideoUrl}`,
+                              '_blank'
+                            );
                           }
                         }}
-                        className='group relative flex items-center justify-center gap-1 w-8 h-8 lg:w-auto lg:h-auto lg:px-2 lg:py-1.5 bg-white hover:bg-gray-100 dark:bg-gray-700 dark:hover:bg-gray-600 text-xs font-medium rounded-md transition-all duration-200 shadow-sm hover:shadow-md cursor-pointer overflow-hidden border border-gray-300 dark:border-gray-600 flex-shrink-0'
+                        className='group relative flex items-center justify-center gap-1 w-8 h-8 lg:w-auto lg:h-auto lg:px-2 lg:py-1.5 bg-[var(--tm-surface-raised)] hover:bg-[var(--tm-line)] text-[13px] font-medium rounded-md transition-[transform,opacity] duration-200 shadow-sm hover:shadow-md cursor-pointer overflow-hidden border border-[var(--tm-line)] flex-shrink-0 min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
                         title='nPlayer'
                       >
                         <img
@@ -720,7 +811,7 @@ export default function WebLivePage() {
                           alt='nPlayer'
                           className='w-4 h-4 flex-shrink-0'
                         />
-                        <span className='hidden lg:inline max-w-0 group-hover:max-w-[100px] overflow-hidden whitespace-nowrap transition-all duration-200 ease-in-out text-gray-700 dark:text-gray-200'>
+                        <span className='hidden lg:inline max-w-0 group-hover:max-w-[100px] overflow-hidden whitespace-nowrap transition-[transform,opacity] duration-200 ease-in-out text-[color:var(--tm-muted)] text-[color:var(--tm-text)]'>
                           nPlayer
                         </span>
                       </button>
@@ -731,12 +822,14 @@ export default function WebLivePage() {
                           e.preventDefault();
                           if (originalVideoUrl) {
                             window.open(
-                              `iina://weblink?url=${encodeURIComponent(originalVideoUrl)}`,
+                              `iina://weblink?url=${encodeURIComponent(
+                                originalVideoUrl
+                              )}`,
                               '_blank'
                             );
                           }
                         }}
-                        className='group relative flex items-center justify-center gap-1 w-8 h-8 lg:w-auto lg:h-auto lg:px-2 lg:py-1.5 bg-white hover:bg-gray-100 dark:bg-gray-700 dark:hover:bg-gray-600 text-xs font-medium rounded-md transition-all duration-200 shadow-sm hover:shadow-md cursor-pointer overflow-hidden border border-gray-300 dark:border-gray-600 flex-shrink-0'
+                        className='group relative flex items-center justify-center gap-1 w-8 h-8 lg:w-auto lg:h-auto lg:px-2 lg:py-1.5 bg-[var(--tm-surface-raised)] hover:bg-[var(--tm-line)] text-[13px] font-medium rounded-md transition-[transform,opacity] duration-200 shadow-sm hover:shadow-md cursor-pointer overflow-hidden border border-[var(--tm-line)] flex-shrink-0 min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
                         title='IINA'
                       >
                         <img
@@ -744,7 +837,7 @@ export default function WebLivePage() {
                           alt='IINA'
                           className='w-4 h-4 flex-shrink-0'
                         />
-                        <span className='hidden lg:inline max-w-0 group-hover:max-w-[100px] overflow-hidden whitespace-nowrap transition-all duration-200 ease-in-out text-gray-700 dark:text-gray-200'>
+                        <span className='hidden lg:inline max-w-0 group-hover:max-w-[100px] overflow-hidden whitespace-nowrap transition-[transform,opacity] duration-200 ease-in-out text-[color:var(--tm-muted)] text-[color:var(--tm-text)]'>
                           IINA
                         </span>
                       </button>
@@ -758,12 +851,12 @@ export default function WebLivePage() {
                 <div className='mt-3 px-2'>
                   <div className='space-y-1.5'>
                     {streamInfo.title && (
-                      <div className='text-lg font-medium text-black dark:text-white line-clamp-2'>
+                      <div className='text-lg font-medium text-[color:var(--tm-text)] line-clamp-2'>
                         {streamInfo.title}
                       </div>
                     )}
                     {streamInfo.name && (
-                      <div className='text-base text-black dark:text-white'>
+                      <div className='text-base text-[color:var(--tm-text)]'>
                         {streamInfo.name}
                       </div>
                     )}
@@ -772,18 +865,50 @@ export default function WebLivePage() {
               )}
             </div>
 
-            <div className={`h-[300px] lg:h-full md:overflow-hidden transition-all duration-300 ease-in-out ${isChannelListCollapsed ? 'md:col-span-1 lg:hidden lg:opacity-0 lg:scale-95' : 'md:col-span-1 lg:opacity-100 lg:scale-100'}`}>
-              <div className='md:ml-2 px-4 py-0 h-full rounded-xl bg-black/10 dark:bg-white/5 flex flex-col border border-white/0 dark:border-white/30 overflow-hidden'>
+            <div
+              className={`h-[300px] lg:h-full md:overflow-hidden transition-[transform,opacity] duration-300 ease-in-out ${
+                isChannelListCollapsed
+                  ? 'md:col-span-1 lg:hidden lg:opacity-0 lg:scale-95'
+                  : 'md:col-span-1 lg:opacity-100 lg:scale-100'
+              }`}
+            >
+              <div className='md:ml-2 px-4 py-0 h-full rounded-xl bg-[color:color-mix(in_srgb,var(--tm-room-cinema-bg)_10%,transparent)] bg-[var(--tm-surface-raised)] flex flex-col border border-[var(--tm-line)] overflow-hidden'>
                 <div className='flex mb-1 -mx-6 flex-shrink-0'>
                   <div
                     onClick={() => setActiveTab('rooms')}
-                    className={`flex-1 py-3 px-6 text-center cursor-pointer transition-all duration-200 font-medium ${activeTab === 'rooms' ? 'text-green-600 dark:text-green-400' : 'text-gray-700 hover:text-green-600 bg-black/5 dark:bg-white/5 dark:text-gray-300 dark:hover:text-green-400 hover:bg-black/3 dark:hover:bg-white/3'}`}
+                    role='button'
+                    tabIndex={0}
+                    aria-pressed={activeTab === 'rooms'}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault();
+                        event.currentTarget.click();
+                      }
+                    }}
+                    className={`flex-1 py-3 px-6 text-center cursor-pointer min-h-[44px] tm-press focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)] transition-[transform,opacity] duration-200 font-medium ${
+                      activeTab === 'rooms'
+                        ? 'text-[color:var(--tm-text)]'
+                        : 'text-[color:var(--tm-muted)] hover:text-[color:var(--tm-text)] bg-[color:color-mix(in_srgb,var(--tm-room-cinema-bg)_5%,transparent)] bg-[var(--tm-surface-raised)] hover:bg-[color:color-mix(in_srgb,var(--tm-line)_3%,transparent)] hover:bg-[var(--tm-line)]'
+                    }`}
                   >
                     房间
                   </div>
                   <div
                     onClick={() => setActiveTab('platforms')}
-                    className={`flex-1 py-3 px-6 text-center cursor-pointer transition-all duration-200 font-medium ${activeTab === 'platforms' ? 'text-green-600 dark:text-green-400' : 'text-gray-700 hover:text-green-600 bg-black/5 dark:bg-white/5 dark:text-gray-300 dark:hover:text-green-400 hover:bg-black/3 dark:hover:bg-white/3'}`}
+                    role='button'
+                    tabIndex={0}
+                    aria-pressed={activeTab === 'platforms'}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault();
+                        event.currentTarget.click();
+                      }
+                    }}
+                    className={`flex-1 py-3 px-6 text-center cursor-pointer min-h-[44px] tm-press focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)] transition-[transform,opacity] duration-200 font-medium ${
+                      activeTab === 'platforms'
+                        ? 'text-[color:var(--tm-text)]'
+                        : 'text-[color:var(--tm-muted)] hover:text-[color:var(--tm-text)] bg-[color:color-mix(in_srgb,var(--tm-room-cinema-bg)_5%,transparent)] bg-[var(--tm-surface-raised)] hover:bg-[color:color-mix(in_srgb,var(--tm-line)_3%,transparent)] hover:bg-[var(--tm-line)]'
+                    }`}
                   >
                     平台
                   </div>
@@ -792,16 +917,24 @@ export default function WebLivePage() {
                 {activeTab === 'rooms' && (
                   <div className='flex-1 overflow-y-auto space-y-2 pb-4 mt-4'>
                     {selectedPlatform && (
-                      <div className='mb-3 flex items-center justify-between px-2 py-2 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800'>
+                      <div className='mb-3 flex items-center justify-between px-2 py-2 bg-[var(--tm-surface-raised)] rounded-lg border border-[var(--tm-line)]'>
                         <div className='flex items-center gap-2'>
-                          <span className='text-xs text-green-700 dark:text-green-300'>筛选平台:</span>
-                          <span className='text-sm font-medium text-green-800 dark:text-green-200'>
-                            {selectedPlatform === 'huya' ? '虎牙' : selectedPlatform === 'bilibili' ? '哔哩哔哩' : selectedPlatform === 'douyin' ? '抖音' : selectedPlatform}
+                          <span className='text-[13px] text-[color:var(--tm-text)]'>
+                            筛选平台:
+                          </span>
+                          <span className='text-sm font-medium text-[color:var(--tm-text)]'>
+                            {selectedPlatform === 'huya'
+                              ? '虎牙'
+                              : selectedPlatform === 'bilibili'
+                              ? '哔哩哔哩'
+                              : selectedPlatform === 'douyin'
+                              ? '抖音'
+                              : selectedPlatform}
                           </span>
                         </div>
                         <button
                           onClick={clearPlatformFilter}
-                          className='text-xs text-green-700 dark:text-green-300 hover:text-green-900 dark:hover:text-green-100 underline'
+                          className='text-[13px] text-[color:var(--tm-text)] hover:text-[color:var(--tm-text)] underline min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
                         >
                           清除筛选
                         </button>
@@ -815,15 +948,27 @@ export default function WebLivePage() {
                             key={source.key}
                             onClick={() => handleSourceClick(source)}
                             disabled={webLiveSync.shouldDisableControls}
-                            className={`w-full p-3 rounded-lg text-left transition-all duration-200 ${isActive ? 'bg-green-100 dark:bg-green-900/30 border border-green-300 dark:border-green-700' : 'hover:bg-gray-100 dark:hover:bg-gray-700'} ${webLiveSync.shouldDisableControls ? 'opacity-50 cursor-not-allowed' : ''}`}
+                            className={`w-full p-3 rounded-lg text-left transition-[transform,opacity] duration-200 min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)] ${
+                              isActive
+                                ? 'bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] border border-[var(--tm-text)] min-h-[44px] tm-press'
+                                : 'hover:bg-[var(--tm-line)] min-h-[44px] tm-press'
+                            }  ${
+                              webLiveSync.shouldDisableControls
+                                ? 'opacity-50 cursor-not-allowed min-h-[44px] tm-press'
+                                : ' min-h-[44px] tm-press'
+                            }`}
                           >
                             <div className='flex items-center gap-3'>
-                              <div className='w-10 h-10 bg-gray-300 dark:bg-gray-700 rounded-lg flex items-center justify-center flex-shrink-0'>
-                                <Radio className='w-5 h-5 text-gray-500' />
+                              <div className='w-10 h-10 bg-[color:color-mix(in_srgb,var(--tm-text)_8%,transparent)] rounded-lg flex items-center justify-center flex-shrink-0'>
+                                <Radio className='w-5 h-5 text-inherit' />
                               </div>
                               <div className='flex-1 min-w-0'>
-                                <div className='text-sm font-medium text-gray-900 dark:text-gray-100 truncate'>{source.name}</div>
-                                <div className='text-xs text-gray-500 dark:text-gray-400 mt-1'>房间ID: {source.roomId}</div>
+                                <div className='text-sm font-medium text-inherit truncate'>
+                                  {source.name}
+                                </div>
+                                <div className='text-[13px] text-inherit mt-1'>
+                                  房间ID: {source.roomId}
+                                </div>
                               </div>
                             </div>
                           </button>
@@ -831,11 +976,13 @@ export default function WebLivePage() {
                       })
                     ) : (
                       <div className='flex flex-col items-center justify-center py-12 text-center'>
-                        <div className='w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mb-4'>
-                          <Radio className='w-8 h-8 text-gray-400 dark:text-gray-600' />
+                        <div className='w-16 h-16 bg-[var(--tm-surface-raised)] rounded-full flex items-center justify-center mb-4'>
+                          <Radio className='w-8 h-8 text-[color:var(--tm-muted)]' />
                         </div>
-                        <p className='text-gray-500 dark:text-gray-400 font-medium'>
-                          {selectedPlatform ? '该平台暂无可用房间' : '暂无可用房间'}
+                        <p className='text-[color:var(--tm-muted)] font-medium'>
+                          {selectedPlatform
+                            ? '该平台暂无可用房间'
+                            : '暂无可用房间'}
                         </p>
                       </div>
                     )}
@@ -851,35 +998,63 @@ export default function WebLivePage() {
                             key={platform}
                             onClick={() => handlePlatformClick(platform)}
                             disabled={webLiveSync.shouldDisableControls}
-                            className={`w-full flex items-start gap-3 px-2 py-3 rounded-lg bg-gray-200/50 dark:bg-white/10 hover:bg-gray-300/50 dark:hover:bg-white/20 transition-all duration-200 cursor-pointer ${webLiveSync.shouldDisableControls ? 'opacity-50 cursor-not-allowed' : ''}`}
+                            className={`w-full flex items-start gap-3 px-2 py-3 rounded-lg bg-[var(--tm-surface-raised)] hover:bg-[var(--tm-line)] transition-[transform,opacity] duration-200 cursor-pointer min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)] ${
+                              webLiveSync.shouldDisableControls
+                                ? 'opacity-50 cursor-not-allowed min-h-[44px] tm-press'
+                                : ' min-h-[44px] tm-press'
+                            }`}
                           >
-                            <div className='w-12 h-12 bg-gray-200 dark:bg-gray-600 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden'>
+                            <div className='w-12 h-12 bg-[var(--tm-surface-raised)] rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden'>
                               {platform === 'huya' ? (
-                                <img src='https://hd.huya.com/favicon.ico' alt='虎牙' className='w-8 h-8' />
+                                <img
+                                  src='https://hd.huya.com/favicon.ico'
+                                  alt='虎牙'
+                                  className='w-8 h-8'
+                                />
                               ) : platform === 'bilibili' ? (
-                                <img src='https://www.bilibili.com/favicon.ico' alt='哔哩哔哩' className='w-8 h-8' />
+                                <img
+                                  src='https://www.bilibili.com/favicon.ico'
+                                  alt='哔哩哔哩'
+                                  className='w-8 h-8'
+                                />
                               ) : platform === 'douyin' ? (
-                                <img src='https://lf1-cdn-tos.bytegoofy.com/goofy/ies/douyin_web/public/favicon.ico' alt='抖音' className='w-8 h-8' />
+                                <img
+                                  src='https://lf1-cdn-tos.bytegoofy.com/goofy/ies/douyin_web/public/favicon.ico'
+                                  alt='抖音'
+                                  className='w-8 h-8'
+                                />
                               ) : (
-                                <Radio className='w-6 h-6 text-gray-500' />
+                                <Radio className='w-6 h-6 text-[color:var(--tm-muted)]' />
                               )}
                             </div>
                             <div className='flex-1 min-w-0 text-left'>
-                              <div className='text-sm font-medium text-gray-900 dark:text-gray-100 truncate'>
-                                {platform === 'huya' ? '虎牙' : platform === 'bilibili' ? '哔哩哔哩' : platform === 'douyin' ? '抖音' : platform}
+                              <div className='text-sm font-medium text-[color:var(--tm-text)] truncate'>
+                                {platform === 'huya'
+                                  ? '虎牙'
+                                  : platform === 'bilibili'
+                                  ? '哔哩哔哩'
+                                  : platform === 'douyin'
+                                  ? '抖音'
+                                  : platform}
                               </div>
-                              <div className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
-                                {sources.filter(s => s.platform === platform).length} 个房间
+                              <div className='text-[13px] text-[color:var(--tm-muted)] mt-1'>
+                                {
+                                  sources.filter((s) => s.platform === platform)
+                                    .length
+                                }{' '}
+                                个房间
                               </div>
                             </div>
                           </button>
                         ))
                       ) : (
                         <div className='flex flex-col items-center justify-center py-12 text-center'>
-                          <div className='w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mb-4'>
-                            <Radio className='w-8 h-8 text-gray-400 dark:text-gray-600' />
+                          <div className='w-16 h-16 bg-[var(--tm-surface-raised)] rounded-full flex items-center justify-center mb-4'>
+                            <Radio className='w-8 h-8 text-[color:var(--tm-muted)]' />
                           </div>
-                          <p className='text-gray-500 dark:text-gray-400 font-medium'>暂无可用平台</p>
+                          <p className='text-[color:var(--tm-muted)] font-medium'>
+                            暂无可用平台
+                          </p>
                         </div>
                       )}
                     </div>
@@ -889,7 +1064,7 @@ export default function WebLivePage() {
             </div>
           </div>
         </div>
-      </div>
+      </PageContainer>
     </PageLayout>
   );
 }

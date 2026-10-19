@@ -1,8 +1,11 @@
 'use client';
 
+import { motion, useAnimationControls } from 'framer-motion';
 import Link from 'next/link';
+import { useEffect, useRef } from 'react';
 
 import { cn } from '@/lib/cn';
+import { useReducedMotionSetting } from '@/lib/motion';
 
 import ProxyImage from '@/components/ProxyImage';
 
@@ -17,7 +20,7 @@ import { MediaCardProps } from './media-card.types';
 import RippleCountBadge from './RippleCountBadge';
 
 /**
- * 漫画与小说共用的媒体卡片，走「暖纸书库」语言：纸面卡片 + 书脊封面 + 衬线书名。
+ * 漫画与小说共用的媒体卡片，保留领域封面比例并复用全站 token 与动效。
  *
  * 只做渲染，不认识任何领域类型——数据映射见 adapters.ts。
  * 差异通过三处收敛：progress 是标量、封面上的操作走 overlayAction 槽位，
@@ -33,11 +36,35 @@ export default function MediaCard({
   onPress,
   className,
 }: MediaCardProps) {
+  const rootRef = useRef<HTMLDivElement>(null);
+  const reduced = useReducedMotionSetting();
+  const reveal = useAnimationControls();
+  const entered = useRef(false);
+  useEffect(() => {
+    const image =
+      rootRef.current?.querySelector<HTMLImageElement>('.tm-media-image');
+    if (!image) return;
+    delete image.dataset.loaded;
+    const frame = requestAnimationFrame(() => {
+      if (image.complete && image.naturalWidth > 0)
+        image.dataset.loaded = 'true';
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [item.image]);
+
+  useEffect(() => {
+    if (!reduced || !entered.current) return;
+    reveal.stop();
+    void reveal.start({
+      opacity: 1,
+      y: 0,
+      transition: { duration: 0.12, delay: 0 },
+    });
+  }, [reduced, reveal]);
+
   const shellClass = cn(
-    'group block overflow-hidden rounded-md border border-library-edge bg-library-card transition-colors duration-200',
-    'hover:border-library-ochre/45 dark:border-library-night-edge dark:bg-library-night-card dark:hover:border-library-night-ochre/45',
+    'tm-media-card group block min-h-[44px] overflow-hidden rounded-[14px] border border-[var(--tm-line)] bg-[var(--tm-surface)]',
     LIBRARY_FOCUS,
-    'focus-visible:ring-inset',
     className
   );
 
@@ -45,7 +72,7 @@ export default function MediaCard({
     <>
       <div
         className={cn(
-          'relative overflow-hidden bg-library-ochre-tint dark:bg-library-night-ochre-tint',
+          'relative overflow-hidden bg-[var(--tm-surface-raised)]',
           BOOK_COVER_LIFT,
           aspect === '3/4' ? 'aspect-[3/4]' : 'aspect-[2/3]'
         )}
@@ -55,7 +82,7 @@ export default function MediaCard({
             originalSrc={item.image}
             alt={item.title}
             draggable={false}
-            className='h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]'
+            className='tm-media-image h-full w-full object-cover'
           />
         ) : (
           <div
@@ -69,7 +96,7 @@ export default function MediaCard({
         )}
         <span className={BOOK_SPINE_OVERLAY} aria-hidden />
         {item.badge && (
-          <span className='absolute left-2 top-2 rounded-sm bg-library-ink/75 px-1.5 py-0.5 text-[11px] font-medium text-library-paper backdrop-blur-sm dark:bg-black/70 dark:text-library-night-ink'>
+          <span className='tm-library-hud absolute left-2 top-2 rounded-md px-1.5 py-0.5 text-[13px] font-medium'>
             {item.badge}
           </span>
         )}
@@ -81,10 +108,7 @@ export default function MediaCard({
       <div className='space-y-1 px-2.5 pb-2.5 pt-2'>
         <div
           className={cn(
-            // 2.7em = 13px × 1.35 × 2，正好两行：撑高到两行是为了名字短的卡片
-            // 也和对面的长名字一样高，但绝不能超过两行——min-height 比两行多出来的
-            // 那几像素会让被 -webkit-line-clamp 截掉的第三行从底下露出字头。
-            'line-clamp-2 min-h-[2.7em] text-[13px] font-medium leading-[1.35] text-library-ink dark:text-library-night-ink',
+            'min-h-[1.7em] truncate text-sm font-medium leading-[1.7] text-[color:var(--tm-text)]',
             LIBRARY_SERIF
           )}
         >
@@ -92,27 +116,27 @@ export default function MediaCard({
         </div>
         {item.meta && (
           <div
-            className={cn('truncate text-[11px]', LIBRARY_MUTED)}
+            className={cn('truncate text-[13px]', LIBRARY_MUTED)}
             title={item.meta}
           >
             {item.meta}
           </div>
         )}
         {item.subtitle && (
-          <div className={cn('line-clamp-2 text-[11px]', LIBRARY_MUTED)}>
+          <div className={cn('line-clamp-2 text-[13px]', LIBRARY_MUTED)}>
             {item.subtitle}
           </div>
         )}
         {typeof item.progress === 'number' && (
           <div
-            className='mt-2 h-1 w-full overflow-hidden rounded-full bg-library-edge dark:bg-library-night-edge'
+            className='mt-2 h-1 w-full overflow-hidden rounded-full bg-[var(--tm-line)]'
             role='progressbar'
             aria-valuenow={item.progress}
             aria-valuemin={0}
             aria-valuemax={100}
           >
             <div
-              className='h-full rounded-full bg-library-ochre dark:bg-library-night-ochre'
+              className='h-full rounded-full bg-[var(--tm-text)]'
               style={{ width: `${item.progress}%` }}
             />
           </div>
@@ -122,7 +146,61 @@ export default function MediaCard({
   );
 
   return (
-    <div className='relative flex flex-col gap-2'>
+    <motion.div
+      ref={rootRef}
+      className='tm-media-card-motion relative flex flex-col gap-2'
+      tabIndex={-1}
+      initial={{ opacity: 0, y: reduced ? 0 : 16 }}
+      animate={reveal}
+      viewport={{ once: true, amount: 0.1 }}
+      onViewportEnter={() => {
+        if (entered.current) return;
+        entered.current = true;
+        const node = rootRef.current;
+        const group = node?.closest('[data-tm-reveal-group]');
+        let column = 0;
+        if (node && group && !reduced) {
+          const cards = group.querySelectorAll<HTMLElement>(
+            '.tm-media-card-motion'
+          );
+          for (const card of Array.from(cards)) {
+            if (card === node) break;
+            // offsetTop ignores each card's active entrance transform.
+            if (
+              card.offsetParent === node.offsetParent &&
+              Math.abs(card.offsetTop - node.offsetTop) <= 2
+            )
+              column += 1;
+          }
+        }
+        void reveal.start({
+          opacity: 1,
+          y: 0,
+          transition: {
+            duration: reduced ? 0.12 : 0.36,
+            delay: reduced ? 0 : column * 0.04,
+            ease: [0.22, 1, 0.36, 1],
+          },
+        });
+      }}
+      whileTap={
+        href || interactive === 'press'
+          ? {
+              scale: reduced ? 1 : 0.97,
+              transition: { duration: reduced ? 0 : 0.12, delay: 0 },
+            }
+          : undefined
+      }
+      transition={{
+        duration: reduced ? 0 : 0.12,
+        delay: 0,
+        ease: [0.22, 1, 0.36, 1],
+      }}
+      onLoadCapture={(event) => {
+        if (event.target instanceof HTMLImageElement)
+          event.target.dataset.loaded = 'true';
+      }}
+    >
       {href ? (
         <Link
           href={href}
@@ -170,6 +248,6 @@ export default function MediaCard({
           </div>
         </div>
       )}
-    </div>
+    </motion.div>
   );
 }

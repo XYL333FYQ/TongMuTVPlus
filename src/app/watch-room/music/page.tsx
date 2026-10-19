@@ -1,9 +1,14 @@
 'use client';
 
+import { Music2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
+import { useReducedMotionSetting } from '@/lib/motion';
+
+import PageContainer from '@/components/PageContainer';
 import { useWatchRoomContext } from '@/components/WatchRoomProvider';
+
 import type { MusicQueueItem, MusicSyncState } from '@/types/watch-room';
 
 interface LyricLine {
@@ -66,14 +71,19 @@ function parseLyric(lyricText = '', tlyricText = ''): LyricLine[] {
     if (!times.includes(key)) times.push(key);
   });
   times.sort((a, b) => a - b);
-  return times.map((time) => ({
-    time,
-    text: main.get(time) || '',
-    translation: trans.get(time),
-  })).filter((line) => line.text || line.translation);
+  return times
+    .map((time) => ({
+      time,
+      text: main.get(time) || '',
+      translation: trans.get(time),
+    }))
+    .filter((line) => line.text || line.translation);
 }
 
-function adjustedTime(state: Pick<MusicSyncState, 'currentTime' | 'updatedAt'>, playing: boolean) {
+function adjustedTime(
+  state: Pick<MusicSyncState, 'currentTime' | 'updatedAt'>,
+  playing: boolean
+) {
   if (!playing) return state.currentTime;
   return Math.max(0, state.currentTime + (Date.now() - state.updatedAt) / 1000);
 }
@@ -96,6 +106,7 @@ function AudioSpectrumCanvas({
   volume?: number;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const reduced = useReducedMotionSetting();
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -123,39 +134,63 @@ function AudioSpectrumCanvas({
       const gap = Math.max(1, Math.round(dpr));
       const count = Math.max(1, Math.floor(rect.width / targetPitch));
       const barWidth = Math.max(2 * dpr, (width - gap * (count - 1)) / count);
-      const cubeHeight = compact ? Math.max(2, Math.round(2 * dpr)) : Math.max(2, Math.round(2.5 * dpr));
+      const cubeHeight = compact
+        ? Math.max(2, Math.round(2 * dpr))
+        : Math.max(2, Math.round(2.5 * dpr));
       const cubeGap = 1;
       const scaleBase = compact ? height * 1.55 : height * 1.42;
 
       const sampleBar = (index: number) => {
         const usableLength = Math.max(1, bars.length - SPECTRUM_EDGE_TRIM * 2);
-        const mappedStart = SPECTRUM_EDGE_TRIM + Math.floor((index / count) * usableLength);
+        const mappedStart =
+          SPECTRUM_EDGE_TRIM + Math.floor((index / count) * usableLength);
         const start = Math.min(bars.length - 1, mappedStart);
-        const mappedEnd = SPECTRUM_EDGE_TRIM + Math.max(mappedStart + 1, Math.floor(((index + 1) / count) * usableLength));
+        const mappedEnd =
+          SPECTRUM_EDGE_TRIM +
+          Math.max(
+            mappedStart + 1,
+            Math.floor(((index + 1) / count) * usableLength)
+          );
         const end = Math.min(bars.length, Math.max(start + 1, mappedEnd));
         let total = 0;
         for (let i = start; i < end; i++) total += bars[i] ?? 0;
         return total / Math.max(1, end - start);
       };
 
-      ctx.fillStyle = '#10b981';
-      ctx.strokeStyle = '#10b981';
+      const ink = getComputedStyle(canvas).getPropertyValue('--tm-text').trim();
+      ctx.fillStyle = ink;
+      ctx.strokeStyle = ink;
 
-      const visualVolume = Math.max(SPECTRUM_MIN_VOLUME, volume || SPECTRUM_REFERENCE_VOLUME);
+      const visualVolume = Math.max(
+        SPECTRUM_MIN_VOLUME,
+        volume || SPECTRUM_REFERENCE_VOLUME
+      );
       const visualVolumeScale =
         visualVolume > SPECTRUM_MAX_REFERENCE_VOLUME
           ? Math.sqrt(SPECTRUM_MAX_REFERENCE_VOLUME / visualVolume)
           : SPECTRUM_REFERENCE_VOLUME / visualVolume;
 
       for (let i = 0; i < count; i++) {
-        const q = Math.max(SPECTRUM_IDLE_LEVEL, sampleBar(i)) * scaleBase * visualVolumeScale;
-        const cubeCount = Math.max(1, Math.ceil(q / Math.max(1, barWidth * 0.9)));
+        const q =
+          Math.max(SPECTRUM_IDLE_LEVEL, sampleBar(i)) *
+          scaleBase *
+          visualVolumeScale;
+        const cubeCount = Math.max(
+          1,
+          Math.ceil(q / Math.max(1, barWidth * 0.9))
+        );
         const x = i === count - 1 ? width - barWidth : i * (barWidth + gap);
 
         for (let segment = 0; segment < cubeCount; segment++) {
           const y = height - segment * (cubeHeight + cubeGap);
           ctx.beginPath();
-          ctx.roundRect(x, y - cubeHeight, barWidth, cubeHeight, Math.min(2 * dpr, cubeHeight / 2));
+          ctx.roundRect(
+            x,
+            y - cubeHeight,
+            barWidth,
+            cubeHeight,
+            Math.min(2 * dpr, cubeHeight / 2)
+          );
           ctx.fill();
         }
       }
@@ -168,52 +203,128 @@ function AudioSpectrumCanvas({
   }, [bars, compact, volume]);
 
   return (
-    <div className={`relative w-full overflow-hidden ${compact ? 'h-6' : 'h-8'}`} aria-hidden="true">
-      <canvas ref={canvasRef} className="absolute inset-0 h-full w-full opacity-50" />
+    <div
+      className={`relative w-full overflow-hidden ${compact ? 'h-6' : 'h-8'}`}
+      aria-hidden='true'
+      style={{ visibility: reduced ? 'hidden' : undefined }}
+    >
+      <canvas
+        ref={canvasRef}
+        className='absolute inset-0 h-full w-full opacity-50'
+      />
     </div>
   );
 }
 
-const VINYL_NEEDLE_SVG = `url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 130"><path d="M21,21 C21,65 86,70 86,100" fill="none" stroke="rgba(0,0,0,0.28)" stroke-width="6" stroke-linecap="round"/><path d="M20,20 C20,65 85,70 85,100" fill="none" stroke="%23e0e0e0" stroke-width="4.5" stroke-linecap="round"/><path d="M19,20 C19,65 84,70 84,100" fill="none" stroke="%23fff" stroke-width="1.5" stroke-linecap="round"/><g transform="translate(85, 100) rotate(25)"><rect x="-6" y="0" width="12" height="18" rx="2" fill="%23ccc"/><rect x="-4" y="5" width="8" height="14" rx="1" fill="%23333"/><rect x="-2" y="16" width="4" height="5" rx="1" fill="%23d43c33"/></g><circle cx="20" cy="20" r="10" fill="%23f0f0f0" stroke="%23ccc" stroke-width="1"/><circle cx="20" cy="20" r="4" fill="%23fff"/><circle cx="20" cy="20" r="1.5" fill="%23999"/></svg>')`;
-
-function VinylTurntable({ song, isPlaying }: { song: MusicQueueItem; isPlaying: boolean }) {
+function VinylNeedle() {
   return (
-    <div className="relative mx-auto mt-12 mb-5 flex h-[280px] w-[280px] items-center justify-center md:mt-16 md:mb-8 md:h-[340px] md:w-[340px]">
+    <svg
+      aria-hidden='true'
+      className='h-full w-full'
+      xmlns='http://www.w3.org/2000/svg'
+      viewBox='0 0 100 130'
+    >
+      <path
+        d='M21,21 C21,65 86,70 86,100'
+        fill='none'
+        stroke='color-mix(in srgb,var(--tm-room-cinema-bg) 28%,transparent)'
+        strokeWidth='6'
+        strokeLinecap='round'
+      />
+      <path
+        d='M20,20 C20,65 85,70 85,100'
+        fill='none'
+        stroke='var(--tm-muted)'
+        strokeWidth='4.5'
+        strokeLinecap='round'
+      />
+      <path
+        d='M19,20 C19,65 84,70 84,100'
+        fill='none'
+        stroke='var(--tm-text)'
+        strokeWidth='1.5'
+        strokeLinecap='round'
+      />
+      <g transform='translate(85, 100) rotate(25)'>
+        <rect
+          x='-6'
+          y='0'
+          width='12'
+          height='18'
+          rx='2'
+          fill='var(--tm-line)'
+        />
+        <rect x='-4' y='5' width='8' height='14' rx='1' fill='var(--tm-text)' />
+        <rect x='-2' y='16' width='4' height='5' rx='1' fill='var(--tm-text)' />
+      </g>
+      <circle
+        cx='20'
+        cy='20'
+        r='10'
+        fill='var(--tm-surface-raised)'
+        stroke='var(--tm-line)'
+        strokeWidth='1'
+      />
+      <circle cx='20' cy='20' r='4' fill='var(--tm-text)' />
+      <circle cx='20' cy='20' r='1.5' fill='var(--tm-muted)' />
+    </svg>
+  );
+}
+
+function VinylTurntable({
+  song,
+  isPlaying,
+}: {
+  song: MusicQueueItem;
+  isPlaying: boolean;
+}) {
+  return (
+    <div className='relative mx-auto mt-12 mb-5 flex h-[280px] w-[280px] items-center justify-center md:mt-16 md:mb-8 md:h-[340px] md:w-[340px]'>
       <div
-        className="pointer-events-none absolute left-1/2 top-[-54px] z-20 h-[140px] w-[108px] drop-shadow-xl transition-transform duration-500"
+        className='pointer-events-none absolute left-1/2 top-[-54px] z-20 h-[140px] w-[108px] drop-shadow-xl transition-opacity duration-200'
         style={{
           marginLeft: '-20px',
-          backgroundImage: VINYL_NEEDLE_SVG,
+
           backgroundRepeat: 'no-repeat',
           backgroundSize: 'contain',
           transformOrigin: '20px 20px',
           transform: isPlaying ? 'rotate(0deg)' : 'rotate(-30deg)',
+          opacity: isPlaying ? 1 : 0.7,
         }}
-      />
+      >
+        <VinylNeedle />
+      </div>
       <div
-        className="relative flex h-[246px] w-[246px] items-center justify-center overflow-hidden rounded-full md:h-[300px] md:w-[300px]"
+        className='relative flex h-[246px] w-[246px] items-center justify-center overflow-hidden rounded-full md:h-[300px] md:w-[300px]'
         style={{
-          background: 'conic-gradient(from 45deg, #070707 0%, #2b2b2b 10%, #101010 20%, #080808 32%, #242424 42%, #0b0b0b 55%, #1e1e1e 68%, #050505 80%, #2c2c2c 90%, #070707 100%)',
-          boxShadow: '0 0 0 8px rgba(255,255,255,0.055), 0 20px 42px rgba(0,0,0,0.65), inset 0 0 28px rgba(255,255,255,0.045)',
-          animation: 'music-room-vinyl-spin 20s linear infinite',
+          background: 'var(--tm-surface-raised)',
+          boxShadow:
+            '0 20px 42px -12px color-mix(in srgb,var(--tm-room-cinema-bg) 45%,transparent), inset 0 1px 0 var(--tm-line)',
+          animation: 'none',
           animationPlayState: isPlaying ? 'running' : 'paused',
         }}
       >
         <div
-          className="pointer-events-none absolute inset-0 rounded-full"
+          className='pointer-events-none absolute inset-0 rounded-full'
           style={{
-            background: 'repeating-radial-gradient(circle, transparent 0, transparent 3px, rgba(255,255,255,0.055) 3px, rgba(255,255,255,0.055) 4px)',
+            background: 'none',
           }}
         />
-        <div className="pointer-events-none absolute left-[18%] top-[10%] h-[42%] w-[22%] rotate-[-28deg] rounded-full bg-white/10 blur-md" />
-        <div className="relative z-10 flex h-[158px] w-[158px] items-center justify-center overflow-hidden rounded-full border-[5px] border-black bg-zinc-800 md:h-[192px] md:w-[192px]">
+        <div className='hidden pointer-events-none absolute left-[18%] top-[10%] h-[42%] w-[22%] rotate-[-28deg] rounded-full bg-[var(--tm-surface-raised)] blur-md' />
+        <div className='relative z-10 flex h-[158px] w-[158px] items-center justify-center overflow-hidden rounded-full border-[5px] border-[var(--tm-line)] bg-[var(--tm-surface)] md:h-[192px] md:w-[192px]'>
           {song.pic ? (
-            <img src={song.pic} alt={song.name} className="h-full w-full rounded-full object-cover" />
+            <img
+              src={song.pic}
+              alt={song.name}
+              className='h-full w-full rounded-full object-cover'
+            />
           ) : (
-            <div className="flex h-full w-full items-center justify-center text-4xl text-zinc-500">♪</div>
+            <div className='flex h-full w-full items-center justify-center text-4xl text-[color:var(--tm-muted)]'>
+              <Music2 className='h-10 w-10' aria-hidden />
+            </div>
           )}
         </div>
-        <div className="absolute z-20 h-3 w-3 rounded-full bg-zinc-950 ring-1 ring-white/30" />
+        <div className='absolute z-20 h-3 w-3 rounded-full bg-[var(--tm-surface)] ring-1 ring-[color-mix(in_srgb,var(--tm-text)_30%,transparent)]' />
       </div>
     </div>
   );
@@ -221,6 +332,7 @@ function VinylTurntable({ song, isPlaying }: { song: MusicQueueItem; isPlaying: 
 
 export default function WatchRoomMusicPage() {
   const router = useRouter();
+  const reduced = useReducedMotionSetting();
   const watchRoom = useWatchRoomContext();
   const { currentRoom, isOwner, socket } = watchRoom;
   const audioRef = useRef<HTMLAudioElement>(null);
@@ -237,9 +349,11 @@ export default function WatchRoomMusicPage() {
   const mobileVolumeControlRef = useRef<HTMLDivElement>(null);
   const desktopVolumeControlRef = useRef<HTMLDivElement>(null);
 
-  const [state, setState] = useState<MusicSyncState | null>(() => (
-    currentRoom?.currentState?.type === 'music' ? currentRoom.currentState : null
-  ));
+  const [state, setState] = useState<MusicSyncState | null>(() =>
+    currentRoom?.currentState?.type === 'music'
+      ? currentRoom.currentState
+      : null
+  );
   const [lyrics, setLyrics] = useState<LyricLine[]>([]);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
@@ -248,11 +362,14 @@ export default function WatchRoomMusicPage() {
   const [isDark, setIsDark] = useState(true);
   const [showVolumeSlider, setShowVolumeSlider] = useState(false);
   const [mobilePanel, setMobilePanel] = useState<'cover' | 'lyrics'>('cover');
-  const [bars, setBars] = useState<number[]>(() => Array.from({ length: SPECTRUM_BIN_COUNT }, () => SPECTRUM_IDLE_LEVEL));
+  const [bars, setBars] = useState<number[]>(() =>
+    Array.from({ length: SPECTRUM_BIN_COUNT }, () => SPECTRUM_IDLE_LEVEL)
+  );
 
   useEffect(() => {
     const nextState =
-      currentRoom?.roomType === 'music' && currentRoom.currentState?.type === 'music'
+      currentRoom?.roomType === 'music' &&
+      currentRoom.currentState?.type === 'music'
         ? currentRoom.currentState
         : null;
 
@@ -286,12 +403,20 @@ export default function WatchRoomMusicPage() {
 
   useEffect(() => {
     if (currentLyricIndex < 0) return;
-    const container = window.innerWidth < 768 ? mobileLyricsContainerRef.current : desktopLyricsContainerRef.current;
+    const container =
+      window.innerWidth < 768
+        ? mobileLyricsContainerRef.current
+        : desktopLyricsContainerRef.current;
     if (!container) return;
-    const active = container.querySelector<HTMLElement>(`[data-lyric-index="${currentLyricIndex}"]`);
+    const active = container.querySelector<HTMLElement>(
+      `[data-lyric-index="${currentLyricIndex}"]`
+    );
     if (!active) return;
-    active.scrollIntoView({ block: 'center', behavior: 'smooth' });
-  }, [currentLyricIndex]);
+    active.scrollIntoView({
+      block: 'center',
+      behavior: reduced ? 'auto' : 'smooth',
+    });
+  }, [currentLyricIndex, reduced]);
 
   useEffect(() => {
     if (!currentRoom) {
@@ -306,11 +431,15 @@ export default function WatchRoomMusicPage() {
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
-    const syncTheme = () => setIsDark(document.documentElement.classList.contains('dark'));
+    const syncTheme = () =>
+      setIsDark(document.documentElement.classList.contains('dark'));
     syncTheme();
 
     const observer = new MutationObserver(syncTheme);
-    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class'],
+    });
     return () => observer.disconnect();
   }, []);
 
@@ -319,8 +448,10 @@ export default function WatchRoomMusicPage() {
       if (!showVolumeSlider) return;
       const target = event.target as Node | null;
       if (!target) return;
-      const insideMobile = mobileVolumeControlRef.current?.contains(target) ?? false;
-      const insideDesktop = desktopVolumeControlRef.current?.contains(target) ?? false;
+      const insideMobile =
+        mobileVolumeControlRef.current?.contains(target) ?? false;
+      const insideDesktop =
+        desktopVolumeControlRef.current?.contains(target) ?? false;
       if (!insideMobile && !insideDesktop) {
         setShowVolumeSlider(false);
       }
@@ -340,11 +471,17 @@ export default function WatchRoomMusicPage() {
   const ensureAnalyser = async () => {
     const audio = audioRef.current;
     if (!audio || typeof window === 'undefined') return;
-    const AudioContextClass = window.AudioContext || (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+    const AudioContextClass =
+      window.AudioContext ||
+      (window as typeof window & { webkitAudioContext?: typeof AudioContext })
+        .webkitAudioContext;
     if (!AudioContextClass) return;
 
-    if (!audioContextRef.current) audioContextRef.current = new AudioContextClass();
-    if (!mediaSourceRef.current) mediaSourceRef.current = audioContextRef.current.createMediaElementSource(audio);
+    if (!audioContextRef.current)
+      audioContextRef.current = new AudioContextClass();
+    if (!mediaSourceRef.current)
+      mediaSourceRef.current =
+        audioContextRef.current.createMediaElementSource(audio);
     if (!analyserRef.current) {
       const analyser = audioContextRef.current.createAnalyser();
       analyser.fftSize = 256;
@@ -353,7 +490,8 @@ export default function WatchRoomMusicPage() {
       analyser.connect(audioContextRef.current.destination);
       analyserRef.current = analyser;
     }
-    if (audioContextRef.current.state === 'suspended') await audioContextRef.current.resume();
+    if (audioContextRef.current.state === 'suspended')
+      await audioContextRef.current.resume();
   };
 
   const applyPlaybackState = async (nextState: MusicSyncState) => {
@@ -386,8 +524,14 @@ export default function WatchRoomMusicPage() {
         .then((data) => {
           if (lyricRequestId !== lyricRequestIdRef.current) return;
           if (!data.success) return;
-          const lyricText = typeof data.data?.lyric === 'string' ? data.data.lyric : data.data?.lyric?.lyric ?? '';
-          const tlyricText = typeof data.data?.tlyric === 'string' ? data.data.tlyric : data.data?.lyric?.tlyric ?? '';
+          const lyricText =
+            typeof data.data?.lyric === 'string'
+              ? data.data.lyric
+              : data.data?.lyric?.lyric ?? '';
+          const tlyricText =
+            typeof data.data?.tlyric === 'string'
+              ? data.data.tlyric
+              : data.data?.lyric?.tlyric ?? '';
           setLyrics(parseLyric(lyricText, tlyricText));
         })
         .catch(() => undefined);
@@ -398,8 +542,16 @@ export default function WatchRoomMusicPage() {
     const targetTime = adjustedTime(nextState, nextState.isPlaying);
     const seek = () => {
       if (requestId !== playbackRequestIdRef.current) return;
-      if (Number.isFinite(targetTime) && Math.abs(audio.currentTime - targetTime) > 0.8) {
-        audio.currentTime = Math.min(targetTime, Number.isFinite(audio.duration) ? Math.max(0, audio.duration - 0.25) : targetTime);
+      if (
+        Number.isFinite(targetTime) &&
+        Math.abs(audio.currentTime - targetTime) > 0.8
+      ) {
+        audio.currentTime = Math.min(
+          targetTime,
+          Number.isFinite(audio.duration)
+            ? Math.max(0, audio.duration - 0.25)
+            : targetTime
+        );
       }
     };
 
@@ -463,7 +615,8 @@ export default function WatchRoomMusicPage() {
     if (!audio) return;
 
     const onTimeUpdate = () => setCurrentTime(audio.currentTime || 0);
-    const onDuration = () => setDuration(Number.isFinite(audio.duration) ? audio.duration : 0);
+    const onDuration = () =>
+      setDuration(Number.isFinite(audio.duration) ? audio.duration : 0);
     audio.addEventListener('timeupdate', onTimeUpdate);
     audio.addEventListener('durationchange', onDuration);
     audio.addEventListener('loadedmetadata', onDuration);
@@ -482,13 +635,23 @@ export default function WatchRoomMusicPage() {
       if (analyser) {
         const data = new Uint8Array(analyser.frequencyBinCount);
         analyser.getByteFrequencyData(data);
-        setBars(Array.from({ length: SPECTRUM_BIN_COUNT }, (_, index) => {
-          const start = Math.floor((index / SPECTRUM_BIN_COUNT) * data.length);
-          const end = Math.max(start + 1, Math.floor(((index + 1) / SPECTRUM_BIN_COUNT) * data.length));
-          let total = 0;
-          for (let i = start; i < end; i++) total += data[i] || 0;
-          return Math.max(SPECTRUM_IDLE_LEVEL, Math.min(1, total / Math.max(1, end - start) / 255));
-        }));
+        setBars(
+          Array.from({ length: SPECTRUM_BIN_COUNT }, (_, index) => {
+            const start = Math.floor(
+              (index / SPECTRUM_BIN_COUNT) * data.length
+            );
+            const end = Math.max(
+              start + 1,
+              Math.floor(((index + 1) / SPECTRUM_BIN_COUNT) * data.length)
+            );
+            let total = 0;
+            for (let i = start; i < end; i++) total += data[i] || 0;
+            return Math.max(
+              SPECTRUM_IDLE_LEVEL,
+              Math.min(1, total / Math.max(1, end - start) / 255)
+            );
+          })
+        );
       }
       frameRef.current = window.requestAnimationFrame(tick);
     };
@@ -508,89 +671,191 @@ export default function WatchRoomMusicPage() {
     }
   };
 
-  const progress = duration > 0 ? Math.min(100, Math.max(0, (currentTime / duration) * 100)) : 0;
+  const progress =
+    duration > 0
+      ? Math.min(100, Math.max(0, (currentTime / duration) * 100))
+      : 0;
   const song = state?.song;
   const nextSong = state?.nextSong || null;
-  const themeRootClass = isDark ? 'bg-zinc-950 text-white' : 'bg-white text-zinc-900';
+  const themeRootClass = isDark
+    ? 'bg-[var(--tm-surface)] text-[color:var(--tm-text)]'
+    : 'bg-[var(--tm-surface)] text-[color:var(--tm-text)]';
   const showCoverPanel = mobilePanel === 'cover';
   const showLyricsPanel = mobilePanel === 'lyrics';
   const isPlaying = Boolean(state?.isPlaying);
   const lyricActiveClass = isDark
-    ? 'scale-105 text-lg font-bold text-emerald-300 md:text-2xl'
-    : 'scale-105 text-lg font-bold text-emerald-600 md:text-2xl';
-  const lyricNearbyClass = isDark ? 'text-base text-zinc-400' : 'text-base text-zinc-500';
-  const lyricIdleClass = isDark ? 'text-sm text-zinc-600' : 'text-sm text-zinc-500';
+    ? 'tm-room-lyric-current scale-105 text-lg font-bold text-[color:var(--tm-text)] md:text-2xl'
+    : 'tm-room-lyric-current scale-105 text-lg font-bold text-[color:var(--tm-text)] md:text-2xl';
+  const lyricNearbyClass = isDark
+    ? 'text-base text-[color:var(--tm-muted)]'
+    : 'text-base text-[color:var(--tm-muted)]';
+  const lyricIdleClass = isDark
+    ? 'text-sm text-[color:var(--tm-muted)]'
+    : 'text-sm text-[color:var(--tm-muted)]';
 
   return (
-    <main className={`relative min-h-screen overflow-hidden transition-colors ${themeRootClass}`}>
-      <style>{`
-        @keyframes music-room-vinyl-spin {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
+    <main
+      className={`tm-room-music relative min-h-screen overflow-hidden transition-colors ${themeRootClass}`}
+    >
+      <style jsx global>{`
+        html[data-tm-reduced-motion='true'] .tm-room-music * {
+          transition: none !important;
+          animation: none !important;
+          scroll-behavior: auto !important;
+        }
+        html[data-tm-reduced-motion='true'] .tm-room-lyric-current {
+          transform: none !important;
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .tm-room-music * {
+            transition: none !important;
+            animation: none !important;
+            scroll-behavior: auto !important;
+          }
+          .tm-room-lyric-current {
+            transform: none !important;
+          }
         }
       `}</style>
-      <audio ref={audioRef} className="hidden" />
+      <audio ref={audioRef} className='hidden' />
 
       {song?.pic && (
-        <img src={song.pic} alt="" className={`absolute inset-0 h-full w-full object-cover blur-3xl ${isDark ? 'opacity-20' : 'opacity-12'}`} />
+        <img src={song.pic} alt='' className='hidden' aria-hidden />
       )}
-      <div className={`absolute inset-0 ${isDark ? 'bg-zinc-950/80' : 'bg-white/75'}`} />
+      <div
+        className={`absolute inset-0 ${
+          isDark ? 'bg-[var(--tm-surface)]' : 'bg-[var(--tm-surface-raised)]'
+        }`}
+      />
 
-      <section className="relative z-10 mx-auto flex min-h-screen max-w-6xl flex-col px-5 py-6">
-        <div className={`mb-4 flex items-center justify-between gap-4 text-sm ${isDark ? 'text-zinc-400' : 'text-zinc-600'}`}>
+      <PageContainer className='relative z-10 flex min-h-screen flex-col py-6'>
+        <div
+          className={`mb-4 flex items-center justify-between gap-4 text-sm ${
+            isDark
+              ? 'text-[color:var(--tm-muted)]'
+              : 'text-[color:var(--tm-muted)]'
+          }`}
+        >
           <button
             onClick={() => router.push('/watch-room')}
-            className={`rounded-md border px-3 py-2 transition-colors ${isDark ? 'border-white/10 text-zinc-300 hover:bg-white/10' : 'border-zinc-200 text-zinc-700 hover:bg-zinc-100'}`}
+            className={`rounded-md border px-3 py-2 transition-colors ${
+              isDark
+                ? 'border-[var(--tm-line)] text-[color:var(--tm-muted)] hover:bg-[var(--tm-line)] min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
+                : 'border-[var(--tm-line)] text-[color:var(--tm-muted)] hover:bg-[var(--tm-line)] min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
+            }`}
           >
             返回观影室
           </button>
-          <span className="truncate">房间：{currentRoom?.name || '-'}</span>
+          <span className='truncate'>房间：{currentRoom?.name || '-'}</span>
         </div>
 
         {song ? (
           <>
-            <div className="md:hidden">
-              <div className="mx-auto flex w-full max-w-[430px] flex-col gap-3">
-                <div ref={mobileVolumeControlRef} className={`rounded-2xl border px-3 py-3 ${isDark ? 'border-white/10 bg-black/20' : 'border-zinc-200 bg-white/80 shadow-sm'}`}>
-                  <div className="flex items-center gap-3">
+            <div className='md:hidden'>
+              <div className='mx-auto flex w-full max-w-[430px] flex-col gap-3'>
+                <div
+                  ref={mobileVolumeControlRef}
+                  className={`rounded-2xl border px-3 py-3 ${
+                    isDark
+                      ? 'border-[var(--tm-line)] bg-[color:color-mix(in_srgb,var(--tm-room-cinema-bg)_20%,transparent)]'
+                      : 'border-[var(--tm-line)] bg-[var(--tm-surface-raised)] shadow-sm'
+                  }`}
+                >
+                  <div className='flex items-center gap-3'>
                     <button
-                      type="button"
-                      onClick={() => setMobilePanel(showCoverPanel ? 'lyrics' : 'cover')}
-                      className="flex min-w-0 flex-1 items-center gap-3 text-left"
+                      type='button'
+                      onClick={() =>
+                        setMobilePanel(showCoverPanel ? 'lyrics' : 'cover')
+                      }
+                      className='flex min-w-0 flex-1 items-center gap-3 text-left min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
                     >
-                      <div className="h-11 w-11 shrink-0 overflow-hidden rounded-lg border border-white/10 bg-zinc-800">
+                      <div className='h-11 w-11 shrink-0 overflow-hidden rounded-lg border border-[var(--tm-line)] bg-[var(--tm-surface)]'>
                         {song.pic ? (
-                          <img src={song.pic} alt={song.name} className="h-full w-full object-cover" />
+                          <img
+                            src={song.pic}
+                            alt={song.name}
+                            className='h-full w-full object-cover'
+                          />
                         ) : (
-                          <div className="flex h-full w-full items-center justify-center text-base text-zinc-500">♪</div>
+                          <div className='flex h-full w-full items-center justify-center text-base text-[color:var(--tm-muted)]'>
+                            <Music2 className='h-10 w-10' aria-hidden />
+                          </div>
                         )}
                       </div>
-                      <div className="min-w-0">
-                        <div className="truncate text-sm font-semibold">{song.name}</div>
-                        <div className={`truncate text-xs ${isDark ? 'text-zinc-500' : 'text-zinc-600'}`}>{song.artist}</div>
+                      <div className='min-w-0'>
+                        <div className='truncate text-sm font-medium'>
+                          {song.name}
+                        </div>
+                        <div
+                          className={`truncate text-[13px] ${
+                            isDark
+                              ? 'text-[color:var(--tm-muted)]'
+                              : 'text-[color:var(--tm-muted)]'
+                          }`}
+                        >
+                          {song.artist}
+                        </div>
                       </div>
                     </button>
                     <button
-                      type="button"
+                      type='button'
                       onClick={() => setShowVolumeSlider((prev) => !prev)}
-                      className={`relative shrink-0 transition-colors ${isDark ? 'text-zinc-400 hover:text-white' : 'text-zinc-600 hover:text-zinc-900'}`}
-                      title="音量"
+                      className={`relative shrink-0 transition-colors ${
+                        isDark
+                          ? 'text-[color:var(--tm-muted)] hover:text-[color:var(--tm-text)] min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
+                          : 'text-[color:var(--tm-muted)] hover:text-[color:var(--tm-text)] min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
+                      }`}
+                      title='音量'
                     >
-                      <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.707.707L4.586 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.586l3.707-3.707a1 1 0 011.09-.217zM14.657 2.929a1 1 0 011.414 0A9.972 9.972 0 0119 10a9.972 9.972 0 01-2.929 7.071 1 1 0 01-1.414-1.414A7.971 7.971 0 0017 10c0-2.21-.894-4.208-2.343-5.657a1 1 0 010-1.414zm-2.829 2.828a1 1 0 011.415 0A5.983 5.983 0 0115 10a5.984 5.984 0 01-1.757 4.243 1 1 0 01-1.415-1.415A3.984 3.984 0 0013 10a3.983 3.983 0 00-1.172-2.828 1 1 0 010-1.415z" clipRule="evenodd" />
+                      <svg
+                        className='h-4 w-4'
+                        fill='currentColor'
+                        viewBox='0 0 20 20'
+                      >
+                        <path
+                          fillRule='evenodd'
+                          d='M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.707.707L4.586 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.586l3.707-3.707a1 1 0 011.09-.217zM14.657 2.929a1 1 0 011.414 0A9.972 9.972 0 0119 10a9.972 9.972 0 01-2.929 7.071 1 1 0 01-1.414-1.414A7.971 7.971 0 0017 10c0-2.21-.894-4.208-2.343-5.657a1 1 0 010-1.414zm-2.829 2.828a1 1 0 011.415 0A5.983 5.983 0 0115 10a5.984 5.984 0 01-1.757 4.243 1 1 0 01-1.415-1.415A3.984 3.984 0 0013 10a3.983 3.983 0 00-1.172-2.828 1 1 0 010-1.415z'
+                          clipRule='evenodd'
+                        />
                       </svg>
-                      <div className={`absolute right-0 top-6 z-20 transition-opacity ${showVolumeSlider ? 'opacity-100' : 'pointer-events-none opacity-0'}`}>
-                        <div className={`rounded-lg border p-3 shadow-xl ${isDark ? 'border-white/10 bg-zinc-900/95' : 'border-zinc-200 bg-white'}`}>
-                          <div className="flex flex-col items-center gap-2">
-                            <span className={`text-xs font-mono ${isDark ? 'text-zinc-400' : 'text-zinc-600'}`}>{volume}</span>
+                      <div
+                        className={`absolute right-0 top-6 z-20 transition-opacity ${
+                          showVolumeSlider
+                            ? 'opacity-100'
+                            : 'pointer-events-none opacity-0'
+                        }`}
+                      >
+                        <div
+                          className={`rounded-lg border p-3 shadow-xl ${
+                            isDark
+                              ? 'border-[var(--tm-line)] bg-[var(--tm-surface)]'
+                              : 'border-[var(--tm-line)] bg-[var(--tm-surface)]'
+                          }`}
+                        >
+                          <div className='flex flex-col items-center gap-2'>
+                            <span
+                              className={`text-[13px] font-mono ${
+                                isDark
+                                  ? 'text-[color:var(--tm-muted)]'
+                                  : 'text-[color:var(--tm-muted)]'
+                              }`}
+                            >
+                              {volume}
+                            </span>
                             <input
-                              type="range"
+                              type='range'
+                              aria-label='音量'
                               min={0}
                               max={100}
                               value={volume}
-                              onChange={(e) => setVolume(Number(e.target.value))}
-                              className="h-24 w-2 cursor-pointer appearance-none rounded-full accent-emerald-400"
-                              style={{ writingMode: 'vertical-lr', WebkitAppearance: 'slider-vertical' }}
+                              onChange={(e) =>
+                                setVolume(Number(e.target.value))
+                              }
+                              className='h-24 w-11 cursor-pointer appearance-none rounded-full accent-[var(--tm-text)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
+                              style={{
+                                writingMode: 'vertical-lr',
+                                WebkitAppearance: 'slider-vertical',
+                              }}
                             />
                           </div>
                         </div>
@@ -600,152 +865,382 @@ export default function WatchRoomMusicPage() {
                 </div>
 
                 {showCoverPanel ? (
-                  <div className={`rounded-2xl border px-4 py-4 ${isDark ? 'border-white/10 bg-black/20' : 'border-zinc-200 bg-white/80 shadow-sm'}`}>
-                    <div className="flex flex-col gap-4">
-                      <VinylTurntable song={song} isPlaying={Boolean(state?.isPlaying)} />
-                      <AudioSpectrumCanvas bars={bars} compact volume={volume} />
-                      <div className="flex items-center gap-2 text-xs tabular-nums">
-                        <span className={`w-10 ${isDark ? 'text-zinc-500' : 'text-zinc-600'}`}>{formatTime(currentTime)}</span>
-                        <div className={`relative h-1.5 flex-1 overflow-hidden rounded-full ${isDark ? 'bg-white/10' : 'bg-zinc-200'}`}>
-                          <div className="h-full rounded-full bg-emerald-400" style={{ width: `${progress}%` }} />
+                  <div
+                    className={`rounded-2xl border px-4 py-4 ${
+                      isDark
+                        ? 'border-[var(--tm-line)] bg-[color:color-mix(in_srgb,var(--tm-room-cinema-bg)_20%,transparent)]'
+                        : 'border-[var(--tm-line)] bg-[var(--tm-surface-raised)] shadow-sm'
+                    }`}
+                  >
+                    <div className='flex flex-col gap-4'>
+                      <VinylTurntable
+                        song={song}
+                        isPlaying={Boolean(state?.isPlaying)}
+                      />
+                      <AudioSpectrumCanvas
+                        key={isDark ? 'dark' : 'light'}
+                        bars={bars}
+                        compact
+                        volume={volume}
+                      />
+                      <div className='flex items-center gap-2 text-[13px] tabular-nums'>
+                        <span
+                          className={`w-10 ${
+                            isDark
+                              ? 'text-[color:var(--tm-muted)]'
+                              : 'text-[color:var(--tm-muted)]'
+                          }`}
+                        >
+                          {formatTime(currentTime)}
+                        </span>
+                        <div
+                          className={`relative h-1.5 flex-1 overflow-hidden rounded-full ${
+                            isDark
+                              ? 'bg-[var(--tm-surface-raised)]'
+                              : 'bg-[var(--tm-surface-raised)]'
+                          }`}
+                        >
+                          <div
+                            className='h-full rounded-full bg-[var(--tm-text)]'
+                            style={{ width: `${progress}%` }}
+                          />
                         </div>
-                        <span className={`w-10 text-right ${isDark ? 'text-zinc-500' : 'text-zinc-600'}`}>{formatTime(duration)}</span>
+                        <span
+                          className={`w-10 text-right ${
+                            isDark
+                              ? 'text-[color:var(--tm-muted)]'
+                              : 'text-[color:var(--tm-muted)]'
+                          }`}
+                        >
+                          {formatTime(duration)}
+                        </span>
                       </div>
                     </div>
                   </div>
                 ) : (
-                <div
-                  ref={mobileLyricsContainerRef}
-                  className={`rounded-2xl border px-4 py-4 ${isDark ? 'border-white/10 bg-black/20' : 'border-zinc-200 bg-white/80 shadow-sm'}`}
-                >
-                    <div className="max-h-[64vh] overflow-y-auto px-1">
+                  <div
+                    ref={mobileLyricsContainerRef}
+                    className={`rounded-2xl border px-4 py-4 ${
+                      isDark
+                        ? 'border-[var(--tm-line)] bg-[color:color-mix(in_srgb,var(--tm-room-cinema-bg)_20%,transparent)]'
+                        : 'border-[var(--tm-line)] bg-[var(--tm-surface-raised)] shadow-sm'
+                    }`}
+                  >
+                    <div className='max-h-[64vh] overflow-y-auto px-1'>
                       {lyrics.length > 0 ? (
-                        <div className="space-y-3">
+                        <div className='space-y-3'>
                           {lyrics.map((line, index) => (
                             <div
                               key={`${line.time}-${index}`}
                               data-lyric-index={index}
-                              className={`text-center transition-all duration-300 ${
+                              className={`text-center transition-[transform,opacity] duration-300 ${
                                 index === currentLyricIndex
                                   ? lyricActiveClass
-                                  : index === currentLyricIndex - 1 || index === currentLyricIndex + 1
-                                    ? lyricNearbyClass
-                                    : lyricIdleClass
+                                  : index === currentLyricIndex - 1 ||
+                                    index === currentLyricIndex + 1
+                                  ? lyricNearbyClass
+                                  : lyricIdleClass
                               }`}
                             >
                               <div>{line.text || '♪'}</div>
-                              {line.translation && <div className={`mt-1 text-sm font-normal ${isDark ? 'text-zinc-500' : 'text-zinc-400'}`}>{line.translation}</div>}
+                              {line.translation && (
+                                <div
+                                  className={`mt-1 text-sm font-normal ${
+                                    isDark
+                                      ? 'text-[color:var(--tm-muted)]'
+                                      : 'text-[color:var(--tm-muted)]'
+                                  }`}
+                                >
+                                  {line.translation}
+                                </div>
+                              )}
                             </div>
                           ))}
                         </div>
                       ) : (
-                        <div className={`flex min-h-[48vh] items-center justify-center ${isDark ? 'text-zinc-500' : 'text-zinc-400'}`}>暂无歌词</div>
+                        <div
+                          className={`flex min-h-[48vh] items-center justify-center ${
+                            isDark
+                              ? 'text-[color:var(--tm-muted)]'
+                              : 'text-[color:var(--tm-muted)]'
+                          }`}
+                        >
+                          暂无歌词
+                        </div>
                       )}
                     </div>
-                    <div className="mt-3">
-                      <AudioSpectrumCanvas bars={bars} compact volume={volume} />
+                    <div className='mt-3'>
+                      <AudioSpectrumCanvas
+                        key={isDark ? 'dark' : 'light'}
+                        bars={bars}
+                        compact
+                        volume={volume}
+                      />
                     </div>
-                    <div className="mt-4 flex items-center gap-2 text-xs tabular-nums">
-                      <span className={`w-10 ${isDark ? 'text-zinc-500' : 'text-zinc-600'}`}>{formatTime(currentTime)}</span>
-                      <div className={`relative h-1.5 flex-1 overflow-hidden rounded-full ${isDark ? 'bg-white/10' : 'bg-zinc-200'}`}>
-                        <div className="h-full rounded-full bg-emerald-400" style={{ width: `${progress}%` }} />
+                    <div className='mt-4 flex items-center gap-2 text-[13px] tabular-nums'>
+                      <span
+                        className={`w-10 ${
+                          isDark
+                            ? 'text-[color:var(--tm-muted)]'
+                            : 'text-[color:var(--tm-muted)]'
+                        }`}
+                      >
+                        {formatTime(currentTime)}
+                      </span>
+                      <div
+                        className={`relative h-1.5 flex-1 overflow-hidden rounded-full ${
+                          isDark
+                            ? 'bg-[var(--tm-surface-raised)]'
+                            : 'bg-[var(--tm-surface-raised)]'
+                        }`}
+                      >
+                        <div
+                          className='h-full rounded-full bg-[var(--tm-text)]'
+                          style={{ width: `${progress}%` }}
+                        />
                       </div>
-                      <span className={`w-10 text-right ${isDark ? 'text-zinc-500' : 'text-zinc-600'}`}>{formatTime(duration)}</span>
+                      <span
+                        className={`w-10 text-right ${
+                          isDark
+                            ? 'text-[color:var(--tm-muted)]'
+                            : 'text-[color:var(--tm-muted)]'
+                        }`}
+                      >
+                        {formatTime(duration)}
+                      </span>
                     </div>
                   </div>
                 )}
               </div>
             </div>
 
-            <div className="hidden md:grid flex-1 gap-4 md:grid-cols-[420px_minmax(0,1fr)]">
-              <div className={`${showCoverPanel ? 'block' : 'hidden'} min-w-0 md:block`}>
-                  <div ref={desktopVolumeControlRef} className={`rounded-lg border p-4 md:p-6 ${isDark ? 'border-white/10 bg-black/20' : 'border-zinc-200 bg-white/80 shadow-sm'}`}>
-                  <div className="relative">
+            <div className='hidden md:grid flex-1 gap-4 md:grid-cols-[420px_minmax(0,1fr)]'>
+              <div
+                className={`${
+                  showCoverPanel ? 'block' : 'hidden'
+                } min-w-0 md:block`}
+              >
+                <div
+                  ref={desktopVolumeControlRef}
+                  className={`rounded-lg border p-4 md:p-6 ${
+                    isDark
+                      ? 'border-[var(--tm-line)] bg-[color:color-mix(in_srgb,var(--tm-room-cinema-bg)_20%,transparent)]'
+                      : 'border-[var(--tm-line)] bg-[var(--tm-surface-raised)] shadow-sm'
+                  }`}
+                >
+                  <div className='relative'>
                     <button
-                      type="button"
+                      type='button'
                       onClick={() => setShowVolumeSlider((prev) => !prev)}
-                      className={`absolute right-0 top-0 z-10 shrink-0 transition-colors ${isDark ? 'text-zinc-400 hover:text-white' : 'text-zinc-600 hover:text-zinc-900'}`}
-                      title="音量"
+                      className={`absolute right-0 top-0 z-10 shrink-0 transition-colors ${
+                        isDark
+                          ? 'text-[color:var(--tm-muted)] hover:text-[color:var(--tm-text)] min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
+                          : 'text-[color:var(--tm-muted)] hover:text-[color:var(--tm-text)] min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
+                      }`}
+                      title='音量'
                     >
-                      <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.707.707L4.586 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.586l3.707-3.707a1 1 0 011.09-.217zM14.657 2.929a1 1 0 011.414 0A9.972 9.972 0 0119 10a9.972 9.972 0 01-2.929 7.071 1 1 0 01-1.414-1.414A7.971 7.971 0 0017 10c0-2.21-.894-4.208-2.343-5.657a1 1 0 010-1.414zm-2.829 2.828a1 1 0 011.415 0A5.983 5.983 0 0115 10a5.984 5.984 0 01-1.757 4.243 1 1 0 01-1.415-1.415A3.984 3.984 0 0013 10a3.983 3.983 0 00-1.172-2.828 1 1 0 010-1.415z" clipRule="evenodd" />
+                      <svg
+                        className='h-4 w-4'
+                        fill='currentColor'
+                        viewBox='0 0 20 20'
+                      >
+                        <path
+                          fillRule='evenodd'
+                          d='M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.707.707L4.586 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.586l3.707-3.707a1 1 0 011.09-.217zM14.657 2.929a1 1 0 011.414 0A9.972 9.972 0 0119 10a9.972 9.972 0 01-2.929 7.071 1 1 0 01-1.414-1.414A7.971 7.971 0 0017 10c0-2.21-.894-4.208-2.343-5.657a1 1 0 010-1.414zm-2.829 2.828a1 1 0 011.415 0A5.983 5.983 0 0115 10a5.984 5.984 0 01-1.757 4.243 1 1 0 01-1.415-1.415A3.984 3.984 0 0013 10a3.983 3.983 0 00-1.172-2.828 1 1 0 010-1.415z'
+                          clipRule='evenodd'
+                        />
                       </svg>
                     </button>
-                    <div className={`absolute right-0 top-6 z-20 transition-opacity ${showVolumeSlider ? 'opacity-100' : 'pointer-events-none opacity-0'}`}>
-                      <div className={`rounded-lg border p-3 shadow-xl ${isDark ? 'border-white/10 bg-zinc-900/95' : 'border-zinc-200 bg-white'}`}>
-                        <div className="flex flex-col items-center gap-2">
-                          <span className={`text-xs font-mono ${isDark ? 'text-zinc-400' : 'text-zinc-600'}`}>{volume}</span>
+                    <div
+                      className={`absolute right-0 top-6 z-20 transition-opacity ${
+                        showVolumeSlider
+                          ? 'opacity-100'
+                          : 'pointer-events-none opacity-0'
+                      }`}
+                    >
+                      <div
+                        className={`rounded-lg border p-3 shadow-xl ${
+                          isDark
+                            ? 'border-[var(--tm-line)] bg-[var(--tm-surface)]'
+                            : 'border-[var(--tm-line)] bg-[var(--tm-surface)]'
+                        }`}
+                      >
+                        <div className='flex flex-col items-center gap-2'>
+                          <span
+                            className={`text-[13px] font-mono ${
+                              isDark
+                                ? 'text-[color:var(--tm-muted)]'
+                                : 'text-[color:var(--tm-muted)]'
+                            }`}
+                          >
+                            {volume}
+                          </span>
                           <input
-                            type="range"
+                            type='range'
+                            aria-label='音量'
                             min={0}
                             max={100}
                             value={volume}
                             onChange={(e) => setVolume(Number(e.target.value))}
-                            className="h-24 w-2 cursor-pointer appearance-none rounded-full accent-emerald-400"
-                            style={{ writingMode: 'vertical-lr', WebkitAppearance: 'slider-vertical' }}
+                            className='h-24 w-11 cursor-pointer appearance-none rounded-full accent-[var(--tm-text)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
+                            style={{
+                              writingMode: 'vertical-lr',
+                              WebkitAppearance: 'slider-vertical',
+                            }}
                           />
                         </div>
                       </div>
                     </div>
                   </div>
-                  <VinylTurntable song={song} isPlaying={Boolean(state?.isPlaying)} />
-                  <AudioSpectrumCanvas bars={bars} compact volume={volume} />
-                  <div className="mt-4 text-center">
-                    <h1 className="truncate text-xl font-bold md:text-3xl">{song.name}</h1>
-                    <p className={`mt-2 truncate text-sm md:text-base ${isDark ? 'text-zinc-400' : 'text-zinc-600'}`}>{song.artist}</p>
-                    {nextSong && <p className={`mt-2 truncate text-xs md:text-sm ${isDark ? 'text-zinc-500' : 'text-zinc-600'}`}>下一首：{nextSong.name} - {nextSong.artist}</p>}
+                  <VinylTurntable
+                    song={song}
+                    isPlaying={Boolean(state?.isPlaying)}
+                  />
+                  <AudioSpectrumCanvas
+                    key={isDark ? 'dark' : 'light'}
+                    bars={bars}
+                    compact
+                    volume={volume}
+                  />
+                  <div className='mt-4 text-center'>
+                    <h1 className='truncate text-[28px] font-bold md:text-[32px]'>
+                      {song.name}
+                    </h1>
+                    <p
+                      className={`mt-2 truncate text-sm md:text-base ${
+                        isDark
+                          ? 'text-[color:var(--tm-muted)]'
+                          : 'text-[color:var(--tm-muted)]'
+                      }`}
+                    >
+                      {song.artist}
+                    </p>
+                    {nextSong && (
+                      <p
+                        className={`mt-2 truncate text-[13px] md:text-sm ${
+                          isDark
+                            ? 'text-[color:var(--tm-muted)]'
+                            : 'text-[color:var(--tm-muted)]'
+                        }`}
+                      >
+                        下一首：{nextSong.name} - {nextSong.artist}
+                      </p>
+                    )}
                   </div>
-                  <div className="mt-5 flex items-center gap-2 text-xs tabular-nums">
-                    <span className={`w-10 ${isDark ? 'text-zinc-500' : 'text-zinc-600'}`}>{formatTime(currentTime)}</span>
-                    <div className={`relative h-1.5 flex-1 overflow-hidden rounded-full ${isDark ? 'bg-white/10' : 'bg-zinc-200'}`}>
-                      <div className="h-full rounded-full bg-emerald-400" style={{ width: `${progress}%` }} />
+                  <div className='mt-5 flex items-center gap-2 text-[13px] tabular-nums'>
+                    <span
+                      className={`w-10 ${
+                        isDark
+                          ? 'text-[color:var(--tm-muted)]'
+                          : 'text-[color:var(--tm-muted)]'
+                      }`}
+                    >
+                      {formatTime(currentTime)}
+                    </span>
+                    <div
+                      className={`relative h-1.5 flex-1 overflow-hidden rounded-full ${
+                        isDark
+                          ? 'bg-[var(--tm-surface-raised)]'
+                          : 'bg-[var(--tm-surface-raised)]'
+                      }`}
+                    >
+                      <div
+                        className='h-full rounded-full bg-[var(--tm-text)]'
+                        style={{ width: `${progress}%` }}
+                      />
                     </div>
-                    <span className={`w-10 text-right ${isDark ? 'text-zinc-500' : 'text-zinc-600'}`}>{formatTime(duration)}</span>
+                    <span
+                      className={`w-10 text-right ${
+                        isDark
+                          ? 'text-[color:var(--tm-muted)]'
+                          : 'text-[color:var(--tm-muted)]'
+                      }`}
+                    >
+                      {formatTime(duration)}
+                    </span>
                   </div>
                 </div>
               </div>
 
               <div
                 ref={desktopLyricsContainerRef}
-                className={`${showLyricsPanel ? 'block' : 'hidden'} min-h-0 rounded-lg border p-4 md:block md:h-[70vh] md:overflow-y-auto md:p-6 ${isDark ? 'border-white/10 bg-black/20' : 'border-zinc-200 bg-white/80 shadow-sm'}`}
+                className={`${
+                  showLyricsPanel ? 'block' : 'hidden'
+                } min-h-0 rounded-lg border p-4 md:block md:h-[70vh] md:overflow-y-auto md:p-6 ${
+                  isDark
+                    ? 'border-[var(--tm-line)] bg-[color:color-mix(in_srgb,var(--tm-room-cinema-bg)_20%,transparent)]'
+                    : 'border-[var(--tm-line)] bg-[var(--tm-surface-raised)] shadow-sm'
+                }`}
               >
                 {lyrics.length > 0 ? (
-                  <div className="space-y-4">
+                  <div className='space-y-4'>
                     {lyrics.map((line, index) => (
                       <div
                         key={`${line.time}-${index}`}
                         data-lyric-index={index}
-                        className={`text-center transition-all duration-300 ${
+                        className={`text-center transition-[transform,opacity] duration-300 ${
                           index === currentLyricIndex
                             ? lyricActiveClass
-                            : index === currentLyricIndex - 1 || index === currentLyricIndex + 1
-                              ? lyricNearbyClass
-                              : lyricIdleClass
+                            : index === currentLyricIndex - 1 ||
+                              index === currentLyricIndex + 1
+                            ? lyricNearbyClass
+                            : lyricIdleClass
                         }`}
                       >
                         <div>{line.text || '♪'}</div>
-                        {line.translation && <div className={`mt-1 text-sm font-normal ${isDark ? 'text-zinc-500' : 'text-zinc-400'}`}>{line.translation}</div>}
+                        {line.translation && (
+                          <div
+                            className={`mt-1 text-sm font-normal ${
+                              isDark
+                                ? 'text-[color:var(--tm-muted)]'
+                                : 'text-[color:var(--tm-muted)]'
+                            }`}
+                          >
+                            {line.translation}
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <div className={`flex h-full min-h-[200px] items-center justify-center ${isDark ? 'text-zinc-500' : 'text-zinc-400'}`}>暂无歌词</div>
+                  <div
+                    className={`flex h-full min-h-[200px] items-center justify-center ${
+                      isDark
+                        ? 'text-[color:var(--tm-muted)]'
+                        : 'text-[color:var(--tm-muted)]'
+                    }`}
+                  >
+                    暂无歌词
+                  </div>
                 )}
               </div>
             </div>
-
           </>
         ) : (
-          <div className={`flex flex-1 items-center justify-center ${isDark ? 'text-zinc-400' : 'text-zinc-500'}`}>等待房主播放音乐</div>
+          <div
+            className={`flex flex-1 items-center justify-center ${
+              isDark
+                ? 'text-[color:var(--tm-muted)]'
+                : 'text-[color:var(--tm-muted)]'
+            }`}
+          >
+            等待房主播放音乐
+          </div>
         )}
-      </section>
+      </PageContainer>
 
       {needsActivation && song && (
-        <div className={`absolute inset-0 z-20 flex items-center justify-center backdrop-blur ${isDark ? 'bg-black/70' : 'bg-white/60'}`}>
+        <div
+          className={`absolute inset-0 z-20 flex items-center justify-center  ${
+            isDark
+              ? 'bg-[color:color-mix(in_srgb,var(--tm-room-cinema-bg)_70%,transparent)]'
+              : 'bg-[var(--tm-surface-raised)]'
+          }`}
+        >
           <button
-            type="button"
+            type='button'
             onClick={activate}
-            className="rounded-full bg-emerald-500 px-8 py-4 text-base font-semibold text-white shadow-2xl hover:bg-emerald-600"
+            className='rounded-full bg-[var(--tm-text)] px-8 py-4 text-base font-medium text-[color:var(--tm-accent-contrast)] shadow-2xl hover:opacity-90 min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
           >
             点击加入一起听
           </button>

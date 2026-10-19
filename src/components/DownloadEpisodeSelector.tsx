@@ -1,6 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
 
-import React, { useMemo,useState } from 'react';
+import React, { useMemo, useState } from 'react';
 
 interface DownloadEpisodeSelectorProps {
   /** 是否显示弹窗 */
@@ -119,39 +119,42 @@ const DownloadEpisodeSelector: React.FC<DownloadEpisodeSelectorProps> = ({
   };
 
   const currentStart = currentPage * episodesPerPage;
-  const currentEnd = Math.min(currentStart + episodesPerPage - 1, totalEpisodes - 1);
+  const currentEnd = Math.min(
+    currentStart + episodesPerPage - 1,
+    totalEpisodes - 1
+  );
 
   if (!isOpen) return null;
 
   return (
-    <div className='fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm'>
-      <div className='bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-[90vw] max-w-4xl max-h-[80vh] flex flex-col overflow-hidden border border-gray-200 dark:border-gray-700'>
+    <div className='fixed inset-0 z-[9999] flex items-center justify-center bg-[color:color-mix(in_srgb,var(--tm-room-cinema-bg)_50%,transparent)] backdrop-blur-sm'>
+      <div className='bg-[var(--tm-surface)] rounded-xl shadow-2xl w-[90vw] max-w-4xl max-h-[80vh] flex flex-col overflow-hidden border border-[var(--tm-line)]'>
         {/* 标题栏 */}
-        <div className='flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700'>
+        <div className='flex items-center justify-between px-6 py-4 border-b border-[var(--tm-line)]'>
           <div className='flex-1'>
-            <h2 className='text-xl font-bold text-gray-900 dark:text-gray-100'>
+            <h2 className='text-xl font-bold text-[color:var(--tm-text)]'>
               选择要下载的集数
             </h2>
-            <p className='text-sm text-gray-500 dark:text-gray-400 mt-1'>
+            <p className='text-sm text-[color:var(--tm-muted)] mt-1'>
               {videoTitle}
             </p>
           </div>
           <div className='flex items-center gap-2'>
             <button
               onClick={handleSelectAll}
-              className='px-3 py-1.5 text-xs font-medium text-green-600 hover:text-green-700 hover:bg-green-50 dark:text-green-400 dark:hover:text-green-300 dark:hover:bg-green-900/20 rounded-md transition-colors'
+              className='px-3 py-1.5 text-[13px] font-medium text-[color:var(--tm-text)] hover:text-[color:var(--tm-text)] hover:bg-[var(--tm-line)] rounded-md transition-colors min-h-[44px] tm-press'
             >
               全选
             </button>
             <button
               onClick={handleClearAll}
-              className='px-3 py-1.5 text-xs font-medium text-gray-600 hover:text-gray-700 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-gray-300 dark:hover:bg-gray-700 rounded-md transition-colors'
+              className='px-3 py-1.5 text-[13px] font-medium text-[color:var(--tm-muted)] hover:text-[color:var(--tm-muted)] hover:bg-[var(--tm-line)] rounded-md transition-colors min-h-[44px] tm-press'
             >
               清空
             </button>
             <button
               onClick={onClose}
-              className='flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-gray-500 hover:text-gray-700 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-gray-700 transition-colors'
+              className='flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-[color:var(--tm-muted)] hover:text-[color:var(--tm-muted)] hover:bg-[var(--tm-line)] hover:text-[color:var(--tm-text)] transition-colors min-h-[44px] tm-press'
             >
               <svg
                 className='w-5 h-5'
@@ -172,26 +175,36 @@ const DownloadEpisodeSelector: React.FC<DownloadEpisodeSelectorProps> = ({
 
         {/* 离线下载开关 - 仅管理员和站长可见 */}
         {enableOfflineDownload && hasOfflinePermission && (
-          <div className='flex items-center justify-between px-6 py-3 bg-blue-50 dark:bg-blue-900/10 border-b border-blue-100 dark:border-blue-900/30'>
+          <div className='flex items-center justify-between px-6 py-3 bg-[var(--tm-surface-raised)] border-b border-[var(--tm-line)]'>
             <div className='flex items-center gap-3'>
               {/* 服务器图标 */}
-              <div className='flex-shrink-0 w-10 h-10 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center'>
-                <svg className='w-5 h-5 text-blue-600 dark:text-blue-400' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                  <path strokeLinecap='round' strokeLinejoin='round' strokeWidth='2' d='M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01' />
+              <div className='flex-shrink-0 w-10 h-10 rounded-lg bg-[var(--tm-surface-raised)] flex items-center justify-center'>
+                <svg
+                  className='w-5 h-5 text-[color:var(--tm-text)]'
+                  fill='none'
+                  stroke='currentColor'
+                  viewBox='0 0 24 24'
+                >
+                  <path
+                    strokeLinecap='round'
+                    strokeLinejoin='round'
+                    strokeWidth='2'
+                    d='M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01'
+                  />
                 </svg>
               </div>
               <div className='flex-1'>
                 <div className='flex items-center gap-2'>
-                  <h3 className='text-sm font-semibold text-gray-900 dark:text-gray-100'>
+                  <h3 className='text-sm font-medium text-[color:var(--tm-text)]'>
                     服务器离线下载
                   </h3>
                   {offlineMode && (
-                    <span className='px-2 py-0.5 text-xs font-medium bg-blue-500 text-white rounded'>
+                    <span className='px-2 py-0.5 text-[13px] font-medium bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)] rounded'>
                       已启用
                     </span>
                   )}
                 </div>
-                <p className='text-xs text-gray-600 dark:text-gray-400 mt-0.5'>
+                <p className='text-[13px] text-[color:var(--tm-muted)] mt-0.5'>
                   开启后将在服务器端下载视频文件，支持断点续传和后台下载
                 </p>
               </div>
@@ -201,12 +214,12 @@ const DownloadEpisodeSelector: React.FC<DownloadEpisodeSelectorProps> = ({
               onClick={() => setOfflineMode(!offlineMode)}
               className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
                 offlineMode
-                  ? 'bg-blue-600'
-                  : 'bg-gray-300 dark:bg-gray-600'
+                  ? 'bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] min-h-[44px] tm-press'
+                  : 'bg-[var(--tm-surface)] min-h-[44px] tm-press'
               }`}
             >
               <span
-                className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-sm transition-transform ${
+                className={`inline-block h-5 w-5 transform rounded-full bg-[var(--tm-surface)] shadow-sm transition-transform ${
                   offlineMode ? 'translate-x-6' : 'translate-x-1'
                 }`}
               />
@@ -216,7 +229,7 @@ const DownloadEpisodeSelector: React.FC<DownloadEpisodeSelectorProps> = ({
 
         {/* 分页标签 */}
         {pageCount > 1 && (
-          <div className='flex items-center gap-4 px-6 py-3 border-b border-gray-200 dark:border-gray-700'>
+          <div className='flex items-center gap-4 px-6 py-3 border-b border-[var(--tm-line)]'>
             <div className='flex-1 overflow-x-auto'>
               <div className='flex gap-2 min-w-max'>
                 {categories.map((label, idx) => {
@@ -225,12 +238,11 @@ const DownloadEpisodeSelector: React.FC<DownloadEpisodeSelectorProps> = ({
                     <button
                       key={label}
                       onClick={() => handleCategoryClick(idx)}
-                      className={`px-4 py-2 text-sm font-medium rounded-md transition-all whitespace-nowrap
-                        ${
-                          isActive
-                            ? 'bg-green-500 text-white shadow-md'
-                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
-                        }
+                      className={`px-4 py-2 text-sm font-medium rounded-md transition-all whitespace-nowrap ${
+                        isActive
+                          ? 'bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)] shadow-md'
+                          : 'bg-[var(--tm-surface-raised)] text-[color:var(--tm-muted)] hover:bg-[var(--tm-line)]'
+                      }
                       `.trim()}
                     >
                       {label}
@@ -241,7 +253,7 @@ const DownloadEpisodeSelector: React.FC<DownloadEpisodeSelectorProps> = ({
             </div>
             {/* 向上/向下按钮 */}
             <button
-              className='flex-shrink-0 w-8 h-8 rounded-md flex items-center justify-center text-gray-700 hover:text-green-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:text-green-400 dark:hover:bg-gray-700 transition-colors'
+              className='flex-shrink-0 w-8 h-8 rounded-md flex items-center justify-center text-[color:var(--tm-muted)] hover:text-[color:var(--tm-text)] hover:bg-[var(--tm-line)] transition-colors min-h-[44px] tm-press'
               onClick={() => setDescending((prev) => !prev)}
             >
               <svg
@@ -278,12 +290,11 @@ const DownloadEpisodeSelector: React.FC<DownloadEpisodeSelectorProps> = ({
                 <button
                   key={episodeIndex}
                   onClick={() => handleEpisodeClick(episodeIndex)}
-                  className={`h-10 min-w-10 px-3 py-2 flex items-center justify-center text-sm font-medium rounded-md transition-all duration-200 whitespace-nowrap font-mono relative
-                    ${
-                      isSelected
-                        ? 'bg-green-500 text-white shadow-lg shadow-green-500/25 dark:bg-green-600'
-                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300 hover:scale-105 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
-                    }
+                  className={`h-10 min-w-10 px-3 py-2 flex items-center justify-center text-sm font-medium rounded-md transition-all duration-200 whitespace-nowrap font-mono relative ${
+                    isSelected
+                      ? 'bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)] shadow-lg shadow-[color-mix(in_srgb,var(--tm-room-cinema-bg)_25%,transparent)]'
+                      : 'bg-[var(--tm-surface-raised)] text-[color:var(--tm-muted)] hover:bg-[var(--tm-line)] hover:scale-105'
+                  }
                   `.trim()}
                 >
                   {(() => {
@@ -303,7 +314,7 @@ const DownloadEpisodeSelector: React.FC<DownloadEpisodeSelectorProps> = ({
                     return title;
                   })()}
                   {isCurrent && (
-                    <span className='absolute -top-1 -right-1 w-2 h-2 bg-blue-500 rounded-full'></span>
+                    <span className='absolute -top-1 -right-1 w-2 h-2 bg-[var(--tm-text)] rounded-full'></span>
                   )}
                 </button>
               );
@@ -312,20 +323,24 @@ const DownloadEpisodeSelector: React.FC<DownloadEpisodeSelectorProps> = ({
         </div>
 
         {/* 底部操作栏 */}
-        <div className='flex items-center justify-between px-6 py-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900'>
-          <div className='text-sm text-gray-600 dark:text-gray-400'>
+        <div className='flex items-center justify-between px-6 py-4 border-t border-[var(--tm-line)] bg-[var(--tm-surface-raised)]'>
+          <div className='text-sm text-[color:var(--tm-muted)]'>
             已选择：
             {selectedEpisodes.size === 0 ? (
-              <span className='text-red-500 dark:text-red-400'>未选择任何集数</span>
+              <span className='text-[color:var(--tm-text)]'>
+                未选择任何集数
+              </span>
             ) : selectedEpisodes.size === 1 ? (
               <>
                 第 {Array.from(selectedEpisodes)[0] + 1} 集
                 {Array.from(selectedEpisodes)[0] === currentEpisodeIndex && (
-                  <span className='ml-2 text-blue-500 dark:text-blue-400'>(当前播放)</span>
+                  <span className='ml-2 text-[color:var(--tm-text)]'>
+                    (当前播放)
+                  </span>
                 )}
               </>
             ) : (
-              <span className='font-medium text-green-600 dark:text-green-400'>
+              <span className='font-medium text-[color:var(--tm-text)]'>
                 {selectedEpisodes.size} 集
               </span>
             )}
@@ -333,20 +348,23 @@ const DownloadEpisodeSelector: React.FC<DownloadEpisodeSelectorProps> = ({
           <div className='flex gap-3'>
             <button
               onClick={onClose}
-              className='px-4 py-2 text-sm font-medium text-gray-700 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600 rounded-md transition-colors'
+              className='px-4 py-2 text-sm font-medium text-[color:var(--tm-muted)] bg-[var(--tm-surface-raised)] hover:bg-[var(--tm-line)] rounded-md transition-colors min-h-[44px] tm-press'
             >
               取消
             </button>
             <button
               onClick={handleDownload}
               disabled={selectedEpisodes.size === 0}
-              className={`px-4 py-2 text-sm font-medium text-white rounded-md transition-colors shadow-md disabled:opacity-50 disabled:cursor-not-allowed ${
+              className={`px-4 py-2 text-sm font-medium text-[color:var(--tm-text)] rounded-md transition-colors shadow-md disabled:opacity-50 disabled:cursor-not-allowed ${
                 offlineMode && enableOfflineDownload && hasOfflinePermission
-                  ? 'bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800'
-                  : 'bg-green-500 hover:bg-green-600 dark:bg-green-600 dark:hover:bg-green-700 disabled:hover:bg-green-500'
+                  ? 'bg-[var(--tm-text)] hover:opacity-90 text-[color:var(--tm-accent-contrast)] min-h-[44px] tm-press'
+                  : 'bg-[var(--tm-text)] hover:opacity-90 disabled:hover:opacity-90 text-[color:var(--tm-accent-contrast)] min-h-[44px] tm-press'
               }`}
             >
-              {offlineMode && enableOfflineDownload && hasOfflinePermission ? '离线' : ''}下载 {selectedEpisodes.size > 0 && `(${selectedEpisodes.size})`}
+              {offlineMode && enableOfflineDownload && hasOfflinePermission
+                ? '离线'
+                : ''}
+              下载 {selectedEpisodes.size > 0 && `(${selectedEpisodes.size})`}
             </button>
           </div>
         </div>

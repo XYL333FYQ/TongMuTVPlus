@@ -30,7 +30,7 @@ export default function MusicEmpty({
     <div className={cn(MUSIC_EMPTY, className)}>
       {Icon ? (
         <Icon
-          className='mb-1 h-8 w-8 text-music-muted/70 dark:text-music-night-muted/70'
+          className='mb-1 h-8 w-8 text-[color:color-mix(in_srgb,var(--tm-muted)_70%,transparent)]'
           strokeWidth={1.3}
         />
       ) : null}
@@ -70,7 +70,10 @@ export function MusicSleeveGridSkeleton({ count = 10 }: { count?: number }) {
   return (
     <div className={MUSIC_SLEEVE_GRID}>
       {Array.from({ length: count }).map((_, index) => (
-        <div key={index} className={cn(MUSIC_SKELETON, 'aspect-square w-full')} />
+        <div
+          key={index}
+          className={cn(MUSIC_SKELETON, 'aspect-square w-full')}
+        />
       ))}
     </div>
   );
@@ -82,7 +85,9 @@ export function MusicRowListSkeleton({ count = 8 }: { count?: number }) {
     <div className='flex flex-col gap-2 pt-3'>
       {Array.from({ length: count }).map((_, index) => (
         <div key={index} className='flex items-center gap-3 px-2 py-2'>
-          <div className={cn(MUSIC_SKELETON, 'h-8 w-[34px] shrink-0 rounded-full')} />
+          <div
+            className={cn(MUSIC_SKELETON, 'h-8 w-[34px] shrink-0 rounded-full')}
+          />
           <div className='flex min-w-0 flex-1 flex-col gap-1.5'>
             <div className={cn(MUSIC_SKELETON, 'h-3 w-1/3')} />
             <div className={cn(MUSIC_SKELETON, 'h-2.5 w-1/5')} />

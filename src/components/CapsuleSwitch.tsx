@@ -1,6 +1,12 @@
+'use client';
 /* eslint-disable react-hooks/exhaustive-deps */
 
-import React, { useEffect, useRef, useState } from 'react';
+import { motion } from 'framer-motion';
+import React, { useEffect, useId, useRef } from 'react';
+
+import '@/styles/controls.css';
+
+import { isReducedMotionSetting, useReducedMotionSetting } from '@/lib/motion';
 
 interface CapsuleSwitchProps {
   options: { label: string; value: string; icon?: React.ReactNode }[];
@@ -15,6 +21,8 @@ const CapsuleSwitch: React.FC<CapsuleSwitchProps> = ({
   onChange,
   className,
 }) => {
+  const id = useId();
+  const reduced = useReducedMotionSetting();
   const containerRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const buttonRefs = useRef<(HTMLButtonElement | null)[]>([]);
@@ -24,16 +32,12 @@ const CapsuleSwitch: React.FC<CapsuleSwitchProps> = ({
   const startXRef = useRef(0);
   const scrollLeftRef = useRef(0);
   const hasDraggedRef = useRef(false);
-  const [indicatorStyle, setIndicatorStyle] = useState<{
-    left: number;
-    width: number;
-  }>({ left: 0, width: 0 });
 
   const activeIndex = options.findIndex((opt) => opt.value === active);
   // 选项集合变化时需要重新定位（如联动切换后默认项回到第 0 个，activeIndex 不变）
   const optionsSignature = options.map((opt) => opt.value).join(',');
 
-  // 更新指示器位置（仅更新位置，不触发滚动）
+  // 滑块由 layout 动画定位；这里只在需要时滚动到选中项。
   const updateIndicatorPosition = (autoScroll = false) => {
     if (
       activeIndex >= 0 &&
@@ -47,11 +51,6 @@ const CapsuleSwitch: React.FC<CapsuleSwitchProps> = ({
       if (button) {
         const buttonOffsetLeft = button.offsetLeft;
         const buttonWidth = button.offsetWidth;
-
-        setIndicatorStyle({
-          left: buttonOffsetLeft,
-          width: buttonWidth,
-        });
 
         // 只在需要自动滚动时才执行
         if (autoScroll && !isScrollingRef.current) {
@@ -69,7 +68,7 @@ const CapsuleSwitch: React.FC<CapsuleSwitchProps> = ({
               buttonWidth / 2;
             scrollContainer.scrollTo({
               left: scrollToPosition,
-              behavior: 'smooth',
+              behavior: isReducedMotionSetting() ? 'auto' : 'smooth',
             });
           }
         }
@@ -83,13 +82,13 @@ const CapsuleSwitch: React.FC<CapsuleSwitchProps> = ({
     return () => clearTimeout(timeoutId);
   }, []);
 
-  // 监听选中项或选项集合变化，自动滚动到新选中项并更新指示条
+  // 选中项或选项集合变化时，保持当前项可见。
   useEffect(() => {
     const timeoutId = setTimeout(() => updateIndicatorPosition(true), 0);
     return () => clearTimeout(timeoutId);
   }, [activeIndex, optionsSignature]);
 
-  // 监听滚动事件，仅更新指示器位置
+  // 记录手动滚动，避免此时被自动滚动打断。
   useEffect(() => {
     const scrollContainer = scrollContainerRef.current;
     if (!scrollContainer) return;
@@ -103,7 +102,7 @@ const CapsuleSwitch: React.FC<CapsuleSwitchProps> = ({
         clearTimeout(scrollTimeoutRef.current);
       }
 
-      // 仅更新指示器位置，不触发自动滚动
+      // 不触发自动滚动。
       updateIndicatorPosition(false);
 
       // 滚动结束后重置标记
@@ -180,35 +179,26 @@ const CapsuleSwitch: React.FC<CapsuleSwitchProps> = ({
   return (
     <div
       ref={containerRef}
-      className={`relative inline-flex bg-gray-300/80 rounded-full p-1 dark:bg-gray-700 max-w-full ${
+      className={`tm-capsule relative inline-flex rounded-full p-1 max-w-full ${
         className || ''
       }`}
     >
       {/* 可滚动容器 */}
       <div
         ref={scrollContainerRef}
-        className='relative flex overflow-x-auto scrollbar-hide'
+        className='tm-capsule-scroll relative flex overflow-x-auto scrollbar-hide'
         style={{
           scrollbarWidth: 'none',
           msOverflowStyle: 'none',
         }}
       >
-        {/* 滑动的白色背景指示器 */}
-        {indicatorStyle.width > 0 && (
-          <div
-            className='absolute top-0 bottom-0 bg-white dark:bg-gray-500 rounded-full shadow-sm transition-all duration-300 ease-out pointer-events-none'
-            style={{
-              left: `${indicatorStyle.left}px`,
-              width: `${indicatorStyle.width}px`,
-            }}
-          />
-        )}
-
         {options.map((opt, index) => {
           const isActive = active === opt.value;
           return (
             <button
               key={opt.value}
+              type='button'
+              aria-pressed={isActive}
               ref={(el) => {
                 buttonRefs.current[index] = el;
               }}
@@ -220,14 +210,26 @@ const CapsuleSwitch: React.FC<CapsuleSwitchProps> = ({
                 }
                 onChange(opt.value);
               }}
-              className={`relative z-10 flex items-center justify-center gap-1.5 px-3 py-1 text-xs sm:px-4 sm:py-2 sm:text-sm rounded-full font-medium transition-all duration-200 cursor-pointer whitespace-nowrap flex-shrink-0 ${
-                isActive
-                  ? 'text-gray-900 dark:text-gray-100'
-                  : 'text-gray-700 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100'
-              }`}
+              className='tm-capsule-option tm-press relative flex items-center justify-center gap-1.5 px-3 sm:px-4 rounded-full font-medium cursor-pointer whitespace-nowrap flex-shrink-0'
             >
-              {opt.icon && <span className='inline-flex items-center'>{opt.icon}</span>}
-              {opt.label}
+              {isActive && (
+                <motion.span
+                  className='tm-control-selection'
+                  layoutId={reduced ? undefined : `tm-capsule-${id}`}
+                  initial={false}
+                  transition={{
+                    duration: reduced ? 0 : 0.2,
+                    ease: [0.22, 1, 0.36, 1],
+                  }}
+                  aria-hidden='true'
+                />
+              )}
+              {opt.icon && (
+                <span className='tm-control-label inline-flex items-center'>
+                  {opt.icon}
+                </span>
+              )}
+              <span className='tm-control-label'>{opt.label}</span>
             </button>
           );
         })}

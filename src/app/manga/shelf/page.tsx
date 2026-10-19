@@ -62,7 +62,7 @@ export default function MangaShelfPage() {
       <div className={cn('flex items-center gap-2 text-sm', LIBRARY_MUTED)}>
         <BookOpen className={cn('h-4 w-4', LIBRARY_ACCENT_ICON)} />共{' '}
         {shelfList.length} 本漫画
-        <span className='text-xs'>· 长按封面可移出书架</span>
+        <span className='text-[13px]'>· 长按封面可移出书架</span>
       </div>
 
       {loading ? (
@@ -85,9 +85,9 @@ export default function MangaShelfPage() {
                   count: item.unreadChapterCount,
                   subtitle:
                     item.unreadChapterCount && item.unreadChapterCount > 0
-                      ? `更新至 ${item.latestChapterName || '最新章节'} · 新增 ${
-                          item.unreadChapterCount
-                        } 话`
+                      ? `更新至 ${
+                          item.latestChapterName || '最新章节'
+                        } · 新增 ${item.unreadChapterCount} 话`
                       : item.lastChapterName || item.author || item.status,
                 }}
                 href={detailHref}

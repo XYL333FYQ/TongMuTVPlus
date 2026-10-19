@@ -1,7 +1,9 @@
 'use client';
 
-import { Loader2, Pause, Play } from 'lucide-react';
+import { Pause, Play } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+
+import '../tv-surfaces.css';
 
 declare global {
   interface HTMLVideoElement {
@@ -18,14 +20,29 @@ function getSourceType(url: string, explicitType?: SourceType): SourceType {
   const path = lower.split('?')[0];
   // 代理地址通常是 /api/proxy/vod/m3u8?url=...，真实 m3u8 在 query 中；
   // 不能只看 ? 前路径，否则会被当成 native，浏览器只请求 index.m3u8 而不会交给 hls.js 拉 ts。
-  if (path.includes('.m3u8') || path.includes('.m3u') || lower.includes('/m3u8') || lower.includes('m3u8') || lower.includes('.m3u')) return 'm3u8';
+  if (
+    path.includes('.m3u8') ||
+    path.includes('.m3u') ||
+    lower.includes('/m3u8') ||
+    lower.includes('m3u8') ||
+    lower.includes('.m3u')
+  )
+    return 'm3u8';
   if (path.endsWith('.flv') || lower.includes('.flv?')) return 'flv';
   return 'native';
 }
 
 function filterAdsFromM3U8(m3u8Content: string): string {
   if (!m3u8Content) return '';
-  const adKeywords = ['sponsor', '/ad/', '/ads/', 'advert', 'advertisement', '/adjump', 'redtraffic'];
+  const adKeywords = [
+    'sponsor',
+    '/ad/',
+    '/ads/',
+    'advert',
+    'advertisement',
+    '/adjump',
+    'redtraffic',
+  ];
   const lines = m3u8Content.split('\n');
   const filteredLines: string[] = [];
   let i = 0;
@@ -38,7 +55,9 @@ function filterAdsFromM3U8(m3u8Content: string): string {
     }
     if (line.includes('#EXTINF:') && i + 1 < lines.length) {
       const nextLine = lines[i + 1];
-      const isAd = adKeywords.some((keyword) => nextLine.toLowerCase().includes(keyword));
+      const isAd = adKeywords.some((keyword) =>
+        nextLine.toLowerCase().includes(keyword)
+      );
       if (isAd) {
         i += 2;
         continue;
@@ -86,7 +105,8 @@ export default function TVNativeVideo({
   const onTimeRef = useRef<typeof onTime>(onTime);
   const onPlaybackErrorRef = useRef<typeof onPlaybackError>(onPlaybackError);
   const onPlayingChangeRef = useRef<typeof onPlayingChange>(onPlayingChange);
-  const onBufferingChangeRef = useRef<typeof onBufferingChange>(onBufferingChange);
+  const onBufferingChangeRef =
+    useRef<typeof onBufferingChange>(onBufferingChange);
   const bufferingTimerRef = useRef<number | null>(null);
   const bufferingStateRef = useRef(false);
   const [loading, setLoading] = useState(false);
@@ -161,7 +181,11 @@ export default function TVNativeVideo({
       if (videoEl.paused || videoEl.ended || bufferingTimerRef.current) return;
       bufferingTimerRef.current = window.setTimeout(() => {
         bufferingTimerRef.current = null;
-        if (!videoEl.paused && !videoEl.ended && videoEl.readyState < HTMLMediaElement.HAVE_FUTURE_DATA) {
+        if (
+          !videoEl.paused &&
+          !videoEl.ended &&
+          videoEl.readyState < HTMLMediaElement.HAVE_FUTURE_DATA
+        ) {
           setBufferingState(true);
         }
       }, 700);
@@ -172,7 +196,10 @@ export default function TVNativeVideo({
       const type = getSourceType(url, sourceType);
 
       try {
-        if (type === 'm3u8' && !videoEl.canPlayType('application/vnd.apple.mpegurl')) {
+        if (
+          type === 'm3u8' &&
+          !videoEl.canPlayType('application/vnd.apple.mpegurl')
+        ) {
           const HlsModule = await import('hls.js');
           if (disposed) return;
           const Hls = HlsModule.default;
@@ -183,13 +210,26 @@ export default function TVNativeVideo({
                     super(config);
                     const load = this.load.bind(this);
                     this.load = (context: any, config: any, callbacks: any) => {
-                      if (context?.type === 'manifest' || context?.type === 'level') {
+                      if (
+                        context?.type === 'manifest' ||
+                        context?.type === 'level'
+                      ) {
                         const onSuccess = callbacks.onSuccess;
-                        callbacks.onSuccess = (response: any, stats: any, context: any, networkDetails: any) => {
+                        callbacks.onSuccess = (
+                          response: any,
+                          stats: any,
+                          context: any,
+                          networkDetails: any
+                        ) => {
                           if (typeof response?.data === 'string') {
                             response.data = filterAdsFromM3U8(response.data);
                           }
-                          return onSuccess(response, stats, context, networkDetails);
+                          return onSuccess(
+                            response,
+                            stats,
+                            context,
+                            networkDetails
+                          );
                         };
                       }
                       load(context, config, callbacks);
@@ -248,7 +288,10 @@ export default function TVNativeVideo({
         return;
       }
       const duration = videoEl.duration || 0;
-      const safeTime = duration > 30 ? Math.min(startTime, Math.max(0, duration - 8)) : startTime;
+      const safeTime =
+        duration > 30
+          ? Math.min(startTime, Math.max(0, duration - 8))
+          : startTime;
       try {
         videoEl.currentTime = safeTime;
         triedInitialSeek = true;
@@ -340,11 +383,16 @@ export default function TVNativeVideo({
   }, [command]);
 
   return (
-    <div className={`relative h-full w-full bg-black ${className}`}>
+    <div
+      className={`tm-tv-native-player relative h-full w-full bg-[var(--tm-surface)] ${className}`}
+      data-playing={playing}
+      data-loading={loading || buffering}
+      data-error={Boolean(error)}
+    >
       <video
         ref={videoRef}
         poster={poster}
-        className='h-full w-full bg-black object-contain'
+        className='h-full w-full bg-[var(--tm-surface)] object-contain'
         controls={false}
         playsInline
         preload='auto'
@@ -352,25 +400,39 @@ export default function TVNativeVideo({
         aria-label={title || 'TV 视频播放器'}
       />
       {(loading || buffering) && (
-        <div className='pointer-events-none absolute inset-0 flex items-center justify-center bg-black/35 text-white'>
-          <div className='flex items-center gap-3 rounded-2xl border border-white/12 bg-black/55 px-6 py-4 text-2xl font-bold shadow-2xl shadow-black/50 backdrop-blur-md'>
-            <Loader2 className='h-9 w-9 animate-spin text-rose-500' />
-            <span>{buffering ? '缓冲中' : '正在载入'}</span>
+        <div
+          role='status'
+          data-buffering={buffering}
+          className='tm-tv-player-wait pointer-events-none absolute inset-0 flex items-center justify-center bg-[color:color-mix(in_srgb,var(--tm-room-cinema-bg)_35%,transparent)] text-[color:var(--tm-text)]'
+        >
+          <div className='tm-tv-player-panel flex items-center gap-3 rounded-2xl border border-[var(--tm-line)] px-6 py-4 text-base font-medium shadow-2xl shadow-[color-mix(in_srgb,var(--tm-room-cinema-bg)_50%,transparent)]'>
+            <span
+              aria-hidden
+              className='tm-skeleton block rounded-md h-6 w-6'
+            />
+            <span>{buffering ? '缓冲中' : '正在加载'}</span>
           </div>
         </div>
       )}
       {error && (
-        <div className='absolute inset-0 flex items-center justify-center bg-black/70 p-8 text-center text-3xl font-black text-white'>
+        <div
+          role='alert'
+          className='absolute inset-0 flex items-center justify-center bg-[color:color-mix(in_srgb,var(--tm-room-cinema-bg)_70%,transparent)] p-8 text-center text-base leading-relaxed text-[color:var(--tm-text)]'
+        >
           {error}
         </div>
       )}
       <button
         type='button'
         onClick={toggle}
-        className='tv-focusable absolute left-1/2 top-1/2 flex h-24 w-24 -translate-x-1/2 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full bg-black/35 text-white opacity-0 outline-none backdrop-blur transition hover:opacity-100 focus:opacity-100'
+        className='tm-tv-player-control tv-focusable absolute left-1/2 top-1/2 flex h-24 w-24 -translate-x-1/2 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full bg-[color:color-mix(in_srgb,var(--tm-room-cinema-bg)_35%,transparent)] text-[color:var(--tm-text)] opacity-0 outline-none hover:opacity-100 focus:opacity-100 min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
         aria-label={playing ? '暂停' : '播放'}
       >
-        {playing ? <Pause className='h-12 w-12' /> : <Play className='h-12 w-12 fill-current' />}
+        {playing ? (
+          <Pause className='h-12 w-12' />
+        ) : (
+          <Play className='h-12 w-12 fill-current' />
+        )}
       </button>
     </div>
   );

@@ -2,7 +2,12 @@
 
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import { motion } from 'framer-motion';
+import React, { useEffect, useId, useRef } from 'react';
+
+import '@/styles/controls.css';
+
+import { useReducedMotionSetting } from '@/lib/motion';
 
 interface CustomCategory {
   name: string;
@@ -25,20 +30,10 @@ const DoubanCustomSelector: React.FC<DoubanCustomSelectorProps> = ({
   onPrimaryChange,
   onSecondaryChange,
 }) => {
-  // 为不同的选择器创建独立的refs和状态
-  const primaryContainerRef = useRef<HTMLDivElement>(null);
-  const primaryButtonRefs = useRef<(HTMLButtonElement | null)[]>([]);
-  const [primaryIndicatorStyle, setPrimaryIndicatorStyle] = useState<{
-    left: number;
-    width: number;
-  }>({ left: 0, width: 0 });
+  const selectionId = useId();
+  const reduced = useReducedMotionSetting();
 
   const secondaryContainerRef = useRef<HTMLDivElement>(null);
-  const secondaryButtonRefs = useRef<(HTMLButtonElement | null)[]>([]);
-  const [secondaryIndicatorStyle, setSecondaryIndicatorStyle] = useState<{
-    left: number;
-    width: number;
-  }>({ left: 0, width: 0 });
 
   // 二级选择器滚动容器的ref
   const secondaryScrollContainerRef = useRef<HTMLDivElement>(null);
@@ -122,99 +117,7 @@ const DoubanCustomSelector: React.FC<DoubanCustomSelectorProps> = ({
     }
   }, [handleSecondaryWheel, secondaryOptions]);
 
-  // 更新指示器位置的通用函数
-  const updateIndicatorPosition = (
-    activeIndex: number,
-    containerRef: React.RefObject<HTMLDivElement>,
-    buttonRefs: React.MutableRefObject<(HTMLButtonElement | null)[]>,
-    setIndicatorStyle: React.Dispatch<
-      React.SetStateAction<{ left: number; width: number }>
-    >
-  ) => {
-    if (
-      activeIndex >= 0 &&
-      buttonRefs.current[activeIndex] &&
-      containerRef.current
-    ) {
-      const timeoutId = setTimeout(() => {
-        const button = buttonRefs.current[activeIndex];
-        const container = containerRef.current;
-        if (button && container) {
-          const buttonRect = button.getBoundingClientRect();
-          const containerRect = container.getBoundingClientRect();
-
-          if (buttonRect.width > 0) {
-            setIndicatorStyle({
-              left: buttonRect.left - containerRect.left,
-              width: buttonRect.width,
-            });
-          }
-        }
-      }, 0);
-      return () => clearTimeout(timeoutId);
-    }
-  };
-
-  // 组件挂载时立即计算初始位置
-  useEffect(() => {
-    // 主选择器初始位置
-    if (primaryOptions.length > 0) {
-      const activeIndex = primaryOptions.findIndex(
-        (opt) => opt.value === (primarySelection || primaryOptions[0].value)
-      );
-      updateIndicatorPosition(
-        activeIndex,
-        primaryContainerRef,
-        primaryButtonRefs,
-        setPrimaryIndicatorStyle
-      );
-    }
-
-    // 副选择器初始位置
-    if (secondaryOptions.length > 0) {
-      const activeIndex = secondaryOptions.findIndex(
-        (opt) => opt.value === (secondarySelection || secondaryOptions[0].value)
-      );
-      updateIndicatorPosition(
-        activeIndex,
-        secondaryContainerRef,
-        secondaryButtonRefs,
-        setSecondaryIndicatorStyle
-      );
-    }
-  }, [primaryOptions, secondaryOptions]); // 当选项变化时重新计算
-
-  // 监听主选择器变化
-  useEffect(() => {
-    if (primaryOptions.length > 0) {
-      const activeIndex = primaryOptions.findIndex(
-        (opt) => opt.value === primarySelection
-      );
-      const cleanup = updateIndicatorPosition(
-        activeIndex,
-        primaryContainerRef,
-        primaryButtonRefs,
-        setPrimaryIndicatorStyle
-      );
-      return cleanup;
-    }
-  }, [primarySelection, primaryOptions]);
-
-  // 监听副选择器变化
-  useEffect(() => {
-    if (secondaryOptions.length > 0) {
-      const activeIndex = secondaryOptions.findIndex(
-        (opt) => opt.value === secondarySelection
-      );
-      const cleanup = updateIndicatorPosition(
-        activeIndex,
-        secondaryContainerRef,
-        secondaryButtonRefs,
-        setSecondaryIndicatorStyle
-      );
-      return cleanup;
-    }
-  }, [secondarySelection, secondaryOptions]);
+  // 当选项变化时重新计算
 
   // 渲染胶囊式选择器
   const renderCapsuleSelector = (
@@ -223,45 +126,45 @@ const DoubanCustomSelector: React.FC<DoubanCustomSelectorProps> = ({
     onChange: (value: string) => void,
     isPrimary = false
   ) => {
-    const containerRef = isPrimary
-      ? primaryContainerRef
-      : secondaryContainerRef;
-    const buttonRefs = isPrimary ? primaryButtonRefs : secondaryButtonRefs;
-    const indicatorStyle = isPrimary
-      ? primaryIndicatorStyle
-      : secondaryIndicatorStyle;
-
     return (
       <div
-        ref={containerRef}
-        className='relative inline-flex bg-gray-200/60 rounded-full p-0.5 sm:p-1 dark:bg-gray-700/60 backdrop-blur-sm'
+        ref={isPrimary ? undefined : secondaryContainerRef}
+        className='tm-capsule relative inline-flex bg-[var(--tm-surface-raised)] rounded-full p-0.5 sm:p-1'
       >
         {/* 滑动的白色背景指示器 */}
-        {indicatorStyle.width > 0 && (
-          <div
-            className='absolute top-0.5 bottom-0.5 sm:top-1 sm:bottom-1 bg-white dark:bg-gray-500 rounded-full shadow-sm transition-all duration-300 ease-out'
-            style={{
-              left: `${indicatorStyle.left}px`,
-              width: `${indicatorStyle.width}px`,
-            }}
-          />
-        )}
 
-        {options.map((option, index) => {
+        {options.map((option) => {
           const isActive = activeValue === option.value;
           return (
             <button
+              type='button'
+              aria-pressed={isActive}
               key={option.value}
-              ref={(el) => {
-                buttonRefs.current[index] = el;
-              }}
               onClick={() => onChange(option.value)}
-              className={`relative z-10 px-2 py-1 sm:px-4 sm:py-2 text-xs sm:text-sm font-medium rounded-full transition-all duration-200 whitespace-nowrap ${
+              className={`tm-capsule-option tm-press relative z-10 px-2 py-1 sm:px-4 sm:py-2 text-[13px] sm:text-sm font-medium rounded-full transition-[transform,opacity] duration-200 whitespace-nowrap min-h-[44px] min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)] ${
                 isActive
-                  ? 'text-gray-900 dark:text-gray-100 cursor-default'
-                  : 'text-gray-700 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 cursor-pointer'
-              }`}
+                  ? 'text-[color:var(--tm-text)] cursor-default min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
+                  : 'text-[color:var(--tm-muted)] hover:text-[color:var(--tm-text)] cursor-pointer min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
+              } `}
             >
+              {isActive && (
+                <motion.span
+                  className='tm-control-selection'
+                  layoutId={
+                    reduced
+                      ? undefined
+                      : `tm-catalog-${selectionId}-${
+                          isPrimary ? 'primary' : 'secondary'
+                        }`
+                  }
+                  initial={false}
+                  transition={{
+                    duration: reduced ? 0 : 0.2,
+                    ease: [0.22, 1, 0.36, 1],
+                  }}
+                  aria-hidden='true'
+                />
+              )}
               {option.label}
             </button>
           );
@@ -281,7 +184,7 @@ const DoubanCustomSelector: React.FC<DoubanCustomSelectorProps> = ({
       <div className='space-y-3 sm:space-y-4'>
         {/* 一级选择器 */}
         <div className='flex flex-col sm:flex-row sm:items-center gap-2'>
-          <span className='text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 min-w-[48px]'>
+          <span className='text-[13px] sm:text-sm font-medium text-[color:var(--tm-muted)] min-w-[48px]'>
             类型
           </span>
           <div className='overflow-x-auto'>
@@ -297,7 +200,7 @@ const DoubanCustomSelector: React.FC<DoubanCustomSelectorProps> = ({
         {/* 二级选择器 */}
         {secondaryOptions.length > 0 && (
           <div className='flex flex-col sm:flex-row sm:items-center gap-2'>
-            <span className='text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 min-w-[48px]'>
+            <span className='text-[13px] sm:text-sm font-medium text-[color:var(--tm-muted)] min-w-[48px]'>
               片单
             </span>
             <div ref={secondaryScrollContainerRef} className='overflow-x-auto'>

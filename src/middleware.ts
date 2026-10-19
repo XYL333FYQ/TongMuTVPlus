@@ -5,7 +5,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { authenticateRequest } from '@/lib/request-auth';
 import { isTVModeEnabled, resolveLoginPath } from '@/lib/tv-mode';
 
-const PUBLIC_PAGES = new Set(['/', '/douban', '/search', '/watch-room', '/about']);
+const PUBLIC_PAGES = new Set(['/', '/douban', '/duanju', '/search', '/watch-room', '/about']);
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;

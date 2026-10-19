@@ -19,11 +19,11 @@ export default function MediaActionButton({
     <button
       type='button'
       className={cn(
-        'w-full rounded-md border px-3 py-2 text-xs font-medium transition-colors duration-200',
+        'w-full min-h-[44px] rounded-[10px] border px-3 py-2 text-sm font-medium tm-press disabled:opacity-50',
         LIBRARY_FOCUS,
         tone === 'danger'
-          ? 'border-library-edge text-library-muted hover:border-red-400 hover:text-red-600 dark:border-library-night-edge dark:text-library-night-muted dark:hover:border-red-500/60 dark:hover:text-red-400'
-          : 'border-library-edge text-library-muted hover:border-library-ochre hover:text-library-ochre dark:border-library-night-edge dark:text-library-night-muted dark:hover:border-library-night-ochre dark:hover:text-library-night-ochre',
+          ? 'border-[var(--tm-line)] text-[color:var(--tm-muted)] hover:border-[var(--tm-text)] hover:text-[color:var(--tm-text)]'
+          : 'border-[var(--tm-line)] text-[color:var(--tm-muted)] hover:border-[var(--tm-text)] hover:text-[color:var(--tm-text)]',
         className
       )}
       {...props}

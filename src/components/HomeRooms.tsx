@@ -6,6 +6,8 @@ import { useEffect, useState } from 'react';
 
 import { useWatchRoomContextSafe } from '@/components/WatchRoomProvider';
 
+import SectionHeader from './SectionHeader';
+
 import type { Room } from '@/types/watch-room';
 
 type Summary = Pick<Room, 'id' | 'name' | 'memberCount' | 'lifecycle'>;
@@ -45,12 +47,11 @@ export default function HomeRooms({ guest = false }: { guest?: boolean }) {
     : rooms;
   return (
     <section className='tm-home-rooms' aria-label='我的房间'>
-      <div className='tm-home-section-heading'>
-        <h2>我的房间</h2>
-        <Link href='/watch-room' className='tm-press'>
-          查看全部
-        </Link>
-      </div>
+      <SectionHeader
+        title='我的房间'
+        href='/watch-room'
+        linkClassName='tm-press'
+      />
       <div className='tm-home-compact-grid'>
         {visible.slice(0, 2).map((room) => (
           <Link
@@ -92,7 +93,7 @@ export default function HomeRooms({ guest = false }: { guest?: boolean }) {
       </div>
       {(guest || error || !context?.isEnabled) && (
         <p className='tm-home-hint'>
-          {guest ? '登录后查看自己的房间' : error || '房间服务未启用'}
+          {guest ? '登录后创建和加入房间' : error || '房间服务未启用'}
         </p>
       )}
     </section>

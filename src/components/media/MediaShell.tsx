@@ -1,10 +1,13 @@
 'use client';
 
+import { motion } from 'framer-motion';
 import { ChevronLeft } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useId } from 'react';
 
 import { cn } from '@/lib/cn';
+import { useReducedMotionSetting } from '@/lib/motion';
 
 import {
   LIBRARY_FOCUS,
@@ -16,6 +19,7 @@ import {
   SPINE_TAB_ACTIVE,
   SPINE_TAB_IDLE,
 } from '@/components/media/library';
+import PageContainer from '@/components/PageContainer';
 import PageLayout from '@/components/PageLayout';
 
 export interface MediaShellTab {
@@ -28,7 +32,7 @@ export interface MediaShellTab {
  * 漫画与小说共用的页面外壳（顶栏 + 二级 tab + 移动端底栏）。
  *
  * 两套功能仍然各有自己的外壳实例与作用域，这里只是把重复的 200 余行收敛成一份。
- * 外壳走「暖纸书库」语言：实心纸面顶栏（不再用玻璃模糊）+ 赭石强调。阅读页与
+ * 外壳复用全站黑白 token 和容器。阅读页与
  * 书库页共用同一套外壳，区别只剩两处——阅读页把二级 tab 换成阅读器动作按钮，
  * 内容区用各功能自己的 reader.mainClassName。
  */
@@ -56,6 +60,9 @@ export default function MediaShell({
   const pathname = usePathname();
   const isReader = Boolean(reader);
   const isActive = (href: string) => pathname === href;
+  const navigationId = useId();
+  const reduced = useReducedMotionSetting();
+  const HeaderContainer = isReader ? 'div' : PageContainer;
 
   return (
     <PageLayout activePath={pathname} embedded={isReader}>
@@ -68,10 +75,15 @@ export default function MediaShell({
         )}
       >
         <header
-          className='fixed inset-x-0 top-0 z-40 border-b border-library-edge bg-library-paper/95 backdrop-blur-none dark:border-library-night-edge dark:bg-library-night/95'
+          className='fixed inset-x-0 top-0 z-40 border-b border-[var(--tm-line)] bg-[color:color-mix(in_srgb,var(--tm-bg)_95%,transparent)] backdrop-blur-none'
           style={{ paddingTop: 'env(safe-area-inset-top)' }}
         >
-          <div className='mx-auto flex h-14 max-w-7xl items-center gap-3 px-3 sm:h-16 sm:px-6'>
+          <HeaderContainer
+            className={cn(
+              'flex h-14 items-center gap-3 sm:h-16',
+              isReader && 'mx-auto max-w-7xl px-3 sm:px-6'
+            )}
+          >
             <div className='flex min-w-0 flex-1 items-center gap-2'>
               {backHref ? (
                 <Link
@@ -85,9 +97,9 @@ export default function MediaShell({
                 <Link
                   href='/'
                   className={cn(
-                    'flex h-10 shrink-0 items-center rounded-md px-3 text-sm font-semibold transition-colors duration-200',
+                    'flex min-h-[44px] shrink-0 items-center rounded-md px-3 text-sm font-medium tm-press',
                     LIBRARY_SERIF,
-                    'text-library-ochre hover:bg-library-ochre-tint dark:text-library-night-ochre dark:hover:bg-library-night-ochre-tint',
+                    'text-[color:var(--tm-text)] hover:bg-[var(--tm-surface-raised)]',
                     LIBRARY_FOCUS
                   )}
                 >
@@ -96,16 +108,13 @@ export default function MediaShell({
               )}
               <div className='min-w-0'>
                 <div
-                  className={cn(
-                    'truncate text-sm font-semibold sm:text-base',
-                    LIBRARY_SERIF
-                  )}
+                  className={cn('truncate text-lg font-medium', LIBRARY_SERIF)}
                   title={title}
                 >
                   {title}
                 </div>
                 {subtitle && (
-                  <div className={cn('truncate text-xs', LIBRARY_MUTED)}>
+                  <div className={cn('truncate text-[13px]', LIBRARY_MUTED)}>
                     {subtitle}
                   </div>
                 )}
@@ -128,39 +137,49 @@ export default function MediaShell({
                         href={tab.href}
                         aria-current={active ? 'page' : undefined}
                         className={cn(
-                          'inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm transition-colors duration-200',
+                          'tm-media-nav-link inline-flex min-h-[44px] items-center gap-2 rounded-md px-4 py-2 text-sm font-medium tm-press',
                           LIBRARY_FOCUS,
                           active ? SPINE_TAB_ACTIVE : SPINE_TAB_IDLE
                         )}
                       >
                         <Icon className='h-4 w-4' />
                         {tab.label}
+                        {active && (
+                          <motion.span
+                            aria-hidden
+                            className='tm-media-nav-indicator'
+                            layoutId={`${navigationId}-desktop`}
+                            transition={{
+                              duration: reduced ? 0 : 0.2,
+                              ease: [0.22, 1, 0.36, 1],
+                            }}
+                          />
+                        )}
                       </Link>
                     );
                   })}
                 </nav>
               </>
             )}
-          </div>
+          </HeaderContainer>
         </header>
 
         <main
           className={cn(
-            'mx-auto max-w-7xl',
             reader
-              ? reader.mainClassName
-              : 'px-3 pb-[calc(5rem+env(safe-area-inset-bottom))] pt-[calc(5rem+env(safe-area-inset-top))] sm:px-6 sm:pt-[calc(6rem+env(safe-area-inset-top))] lg:pb-10'
+              ? cn('mx-auto max-w-7xl', reader.mainClassName)
+              : 'pb-[calc(5rem+env(safe-area-inset-bottom))] pt-[calc(5rem+env(safe-area-inset-top))] sm:pt-[calc(6rem+env(safe-area-inset-top))] lg:pb-10'
           )}
         >
-          {children}
+          {isReader ? children : <PageContainer>{children}</PageContainer>}
         </main>
 
         {!isReader && (
           <nav
-            className='fixed inset-x-0 bottom-0 z-40 border-t border-library-edge bg-library-paper/95 backdrop-blur-none dark:border-library-night-edge dark:bg-library-night/95 lg:hidden'
+            className='fixed inset-x-0 bottom-0 z-40 border-t border-[var(--tm-line)] bg-[color:color-mix(in_srgb,var(--tm-bg)_95%,transparent)] backdrop-blur-none lg:hidden'
             style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
           >
-            <div className='mx-auto grid max-w-3xl grid-cols-4'>
+            <PageContainer className='grid grid-cols-4'>
               {tabs.map((tab) => {
                 const Icon = tab.icon;
                 const active = isActive(tab.href);
@@ -169,29 +188,43 @@ export default function MediaShell({
                     key={tab.href}
                     href={tab.href}
                     aria-current={active ? 'page' : undefined}
-                    className='flex min-h-16 flex-col items-center justify-center gap-1 py-2 text-xs transition-colors duration-200 hover:bg-library-ochre-tint/60 dark:hover:bg-library-night-ochre-tint/60'
+                    className={cn(
+                      'tm-media-nav-link flex min-h-16 flex-col items-center justify-center gap-1 py-2 text-[13px] hover:bg-[var(--tm-surface-raised)] tm-press',
+                      LIBRARY_FOCUS
+                    )}
                   >
                     <Icon
                       className={cn(
                         'h-5 w-5',
                         active
-                          ? 'text-library-ochre dark:text-library-night-ochre'
-                          : 'text-library-muted dark:text-library-night-muted'
+                          ? 'text-[color:var(--tm-text)]'
+                          : 'text-[color:var(--tm-muted)]'
                       )}
                     />
                     <span
                       className={
                         active
-                          ? 'font-medium text-library-ochre dark:text-library-night-ochre'
-                          : 'text-library-muted dark:text-library-night-muted'
+                          ? 'font-medium text-[color:var(--tm-text)]'
+                          : 'text-[color:var(--tm-muted)]'
                       }
                     >
                       {tab.label}
                     </span>
+                    {active && (
+                      <motion.span
+                        aria-hidden
+                        className='tm-media-nav-indicator'
+                        layoutId={`${navigationId}-mobile`}
+                        transition={{
+                          duration: reduced ? 0 : 0.2,
+                          ease: [0.22, 1, 0.36, 1],
+                        }}
+                      />
+                    )}
                   </Link>
                 );
               })}
-            </div>
+            </PageContainer>
           </nav>
         )}
       </div>

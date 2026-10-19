@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, react-hooks/exhaustive-deps */
 'use client';
 
-import { ChevronUp, Loader2, Search } from 'lucide-react';
+import { ChevronUp, Search } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import {
   Suspense,
@@ -21,11 +21,14 @@ import {
   pickDefaultSelection,
 } from '@/lib/category-tree';
 import { ApiSite } from '@/lib/config';
+import { isReducedMotionSetting } from '@/lib/motion';
 import { appendSpecialSourceParam } from '@/lib/special-source.client';
 import { SearchResult } from '@/lib/types';
 
 import CapsuleSwitch from '@/components/CapsuleSwitch';
+import PageContainer from '@/components/PageContainer';
 import PageLayout from '@/components/PageLayout';
+import PosterGrid from '@/components/PosterGrid';
 import VideoCard from '@/components/VideoCard';
 
 type Category = CategoryNode;
@@ -93,7 +96,8 @@ function SourceSearchPageClient() {
   const [apiSites, setApiSites] = useState<ApiSite[]>([]);
   const [selectedSource, setSelectedSource] = useState<string>('');
   const [categories, setCategories] = useState<Category[]>([]);
-  const [selectedParentCategory, setSelectedParentCategory] = useState<string>('');
+  const [selectedParentCategory, setSelectedParentCategory] =
+    useState<string>('');
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [videos, setVideos] = useState<SearchResult[]>([]);
   const [isLoadingSources, setIsLoadingSources] = useState(true);
@@ -131,8 +135,9 @@ function SourceSearchPageClient() {
       // 旧快照没有一级分类时，从已选分类反推
       setSelectedParentCategory(
         snapshot.selectedParentCategory ||
-          snapshot.categories.find((item) => item.id === snapshot.selectedCategory)
-            ?.pid ||
+          snapshot.categories.find(
+            (item) => item.id === snapshot.selectedCategory
+          )?.pid ||
           ''
       );
       setSelectedCategory(snapshot.selectedCategory);
@@ -167,7 +172,8 @@ function SourceSearchPageClient() {
       selectedCategory,
       videos,
       // 当前页还在请求中，回退一页以便返回后重新拉取，避免缺页
-      currentPage: isLoadingVideos && currentPage > 1 ? currentPage - 1 : currentPage,
+      currentPage:
+        isLoadingVideos && currentPage > 1 ? currentPage - 1 : currentPage,
       hasMore,
       viewMode,
       searchKeyword,
@@ -210,7 +216,9 @@ function SourceSearchPageClient() {
     const fetchApiSites = async () => {
       setIsLoadingSources(true);
       try {
-        const response = await fetch(appendSpecialSourceParam('/api/source-search/sources'));
+        const response = await fetch(
+          appendSpecialSourceParam('/api/source-search/sources')
+        );
         const data = await response.json();
         if (data.sources && Array.isArray(data.sources)) {
           setApiSites(data.sources);
@@ -253,7 +261,11 @@ function SourceSearchPageClient() {
       setHasMore(true);
       try {
         const response = await fetch(
-          appendSpecialSourceParam(`/api/source-search/categories?source=${encodeURIComponent(selectedSource)}`)
+          appendSpecialSourceParam(
+            `/api/source-search/categories?source=${encodeURIComponent(
+              selectedSource
+            )}`
+          )
         );
         const data = await response.json();
         if (data.categories && Array.isArray(data.categories)) {
@@ -276,7 +288,12 @@ function SourceSearchPageClient() {
 
   // 当选择的分类或页码变化时，加载视频列表（浏览模式）
   useEffect(() => {
-    if (!restoreChecked || viewMode !== 'browse' || !selectedSource || !selectedCategory)
+    if (
+      !restoreChecked ||
+      viewMode !== 'browse' ||
+      !selectedSource ||
+      !selectedCategory
+    )
       return;
 
     // 恢复场景下列表已来自快照，跳过本次请求
@@ -289,7 +306,13 @@ function SourceSearchPageClient() {
       setIsLoadingVideos(true);
       try {
         const response = await fetch(
-          appendSpecialSourceParam(`/api/source-search/videos?source=${encodeURIComponent(selectedSource)}&categoryId=${encodeURIComponent(selectedCategory)}&page=${currentPage}`)
+          appendSpecialSourceParam(
+            `/api/source-search/videos?source=${encodeURIComponent(
+              selectedSource
+            )}&categoryId=${encodeURIComponent(
+              selectedCategory
+            )}&page=${currentPage}`
+          )
         );
         const data = await response.json();
         if (data.results && Array.isArray(data.results)) {
@@ -312,7 +335,12 @@ function SourceSearchPageClient() {
 
   // 当搜索关键词或页码变化时，执行搜索（搜索模式）
   useEffect(() => {
-    if (!restoreChecked || viewMode !== 'search' || !selectedSource || !searchKeyword)
+    if (
+      !restoreChecked ||
+      viewMode !== 'search' ||
+      !selectedSource ||
+      !searchKeyword
+    )
       return;
 
     // 恢复场景下列表已来自快照，跳过本次请求
@@ -325,7 +353,11 @@ function SourceSearchPageClient() {
       setIsLoadingVideos(true);
       try {
         const response = await fetch(
-          appendSpecialSourceParam(`/api/source-search/search?source=${encodeURIComponent(selectedSource)}&keyword=${encodeURIComponent(searchKeyword)}&page=${currentPage}`)
+          appendSpecialSourceParam(
+            `/api/source-search/search?source=${encodeURIComponent(
+              selectedSource
+            )}&keyword=${encodeURIComponent(searchKeyword)}&page=${currentPage}`
+          )
         );
         const data = await response.json();
         if (data.results && Array.isArray(data.results)) {
@@ -429,8 +461,14 @@ function SourceSearchPageClient() {
   // 返回顶部
   const scrollToTop = () => {
     try {
-      document.body.scrollTo({ top: 0, behavior: 'smooth' });
-      document.documentElement.scrollTo({ top: 0, behavior: 'smooth' });
+      document.body.scrollTo({
+        top: 0,
+        behavior: isReducedMotionSetting() ? 'auto' : 'smooth',
+      });
+      document.documentElement.scrollTo({
+        top: 0,
+        behavior: isReducedMotionSetting() ? 'auto' : 'smooth',
+      });
     } catch {
       scrollPageTo(0);
     }
@@ -455,18 +493,18 @@ function SourceSearchPageClient() {
 
   return (
     <PageLayout activePath='/source-search'>
-      <div className='px-4 sm:px-10 py-4 sm:py-8 overflow-visible mb-10'>
+      <PageContainer className='py-4 sm:py-8 overflow-visible mb-10'>
         {/* 页面标题 */}
         <div className='mb-6'>
-          <h1 className='flex items-center gap-2 text-2xl font-bold text-gray-800 dark:text-gray-200'>
+          <h1 className='flex items-center gap-2 text-[color:var(--tm-text)] text-[28px] font-bold md:text-[32px]'>
             源站寻片
             {isSpecialVersion && (
-              <span className='rounded-full bg-purple-100 px-2 py-0.5 text-xs font-medium text-purple-600 dark:bg-purple-900/30 dark:text-purple-400'>
+              <span className='rounded-full bg-[var(--tm-surface-raised)] px-2 py-0.5 text-[13px] font-medium text-[color:var(--tm-text)]'>
                 特殊源
               </span>
             )}
           </h1>
-          <p className='text-sm text-gray-500 dark:text-gray-400 mt-1'>
+          <p className='text-sm text-[color:var(--tm-muted)] mt-1'>
             {isSpecialVersion
               ? '仅浏览与搜索特殊源的内容'
               : '根据可用视频源浏览分类内容'}
@@ -478,13 +516,13 @@ function SourceSearchPageClient() {
           {/* 源选择 CapsuleSwitch */}
           <div className='relative'>
             <div className='flex items-center justify-between gap-3 mb-3'>
-              <label className='block text-sm font-medium text-gray-700 dark:text-gray-300'>
+              <label className='block text-sm font-medium text-[color:var(--tm-muted)]'>
                 选择视频源
               </label>
               {/* 过滤视频源：伸缩搜索框 */}
               <div
-                className={`flex items-center h-9 bg-gray-50/80 dark:bg-gray-800 border border-gray-200/50 dark:border-gray-700 rounded-lg shadow-sm transition-all duration-300 ease-in-out overflow-hidden ${
-                  isSourceFilterExpanded ? 'w-44 sm:w-56' : 'w-9'
+                className={`flex items-center h-11 bg-[var(--tm-surface-raised)] bg-[var(--tm-surface-raised)] border border-[var(--tm-line)] border-[var(--tm-line)] rounded-lg shadow-sm transition-[transform,opacity] duration-300 ease-in-out overflow-hidden ${
+                  isSourceFilterExpanded ? 'w-44 sm:w-56' : 'w-11'
                 }`}
               >
                 <button
@@ -494,7 +532,7 @@ function SourceSearchPageClient() {
                     setIsSourceFilterExpanded(true);
                     sourceFilterInputRef.current?.focus();
                   }}
-                  className='flex-none w-9 h-9 flex items-center justify-center text-blue-500 hover:text-blue-600 transition-colors focus:outline-none focus-visible:outline-none'
+                  className='flex-none w-11 h-11 flex items-center justify-center text-[color:var(--tm-text)] hover:text-[color:var(--tm-text)] transition-colors min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
                 >
                   <Search size={18} />
                 </button>
@@ -510,7 +548,7 @@ function SourceSearchPageClient() {
                   }}
                   placeholder='过滤视频源...'
                   tabIndex={isSourceFilterExpanded ? 0 : -1}
-                  className={`w-full h-9 pr-3 text-sm bg-transparent border-0 focus:outline-none focus:ring-0 text-gray-700 dark:text-gray-300 placeholder:text-gray-400 dark:placeholder:text-gray-500 transition-opacity duration-300 ${
+                  className={`w-full h-11 pr-3 text-sm bg-transparent border-0 focus:outline-none focus:ring-0 text-[color:var(--tm-muted)] text-[color:var(--tm-muted)] placeholder:text-[color:var(--tm-muted)] placeholder:text-[color:var(--tm-muted)] transition-opacity duration-300 ${
                     isSourceFilterExpanded
                       ? 'opacity-100'
                       : 'opacity-0 pointer-events-none'
@@ -519,21 +557,24 @@ function SourceSearchPageClient() {
               </div>
             </div>
             {isLoadingSources && apiSites.length === 0 ? (
-              <div className='flex items-center justify-center h-12 bg-gray-50/80 rounded-lg border border-gray-200/50 dark:bg-gray-800 dark:border-gray-700'>
-                <Loader2 className='h-5 w-5 animate-spin text-gray-400' />
-                <span className='ml-2 text-sm text-gray-500 dark:text-gray-400'>
+              <div className='flex items-center justify-center h-12 bg-[var(--tm-surface-raised)] rounded-lg border border-[var(--tm-line)]'>
+                <span
+                  aria-hidden
+                  className='tm-skeleton h-5 w-5 text-[color:var(--tm-muted)]'
+                />
+                <span className='ml-2 text-sm text-[color:var(--tm-muted)]'>
                   加载视频源中...
                 </span>
               </div>
             ) : apiSites.length === 0 ? (
-              <div className='flex items-center justify-center h-12 bg-gray-50/80 rounded-lg border border-gray-200/50 dark:bg-gray-800 dark:border-gray-700'>
-                <span className='text-sm text-gray-500 dark:text-gray-400'>
+              <div className='flex items-center justify-center h-12 bg-[var(--tm-surface-raised)] rounded-lg border border-[var(--tm-line)]'>
+                <span className='text-sm text-[color:var(--tm-muted)]'>
                   暂无可用源
                 </span>
               </div>
             ) : filteredApiSites.length === 0 ? (
-              <div className='flex items-center justify-center h-12 bg-gray-50/80 rounded-lg border border-gray-200/50 dark:bg-gray-800 dark:border-gray-700'>
-                <span className='text-sm text-gray-500 dark:text-gray-400'>
+              <div className='flex items-center justify-center h-12 bg-[var(--tm-surface-raised)] rounded-lg border border-[var(--tm-line)]'>
+                <span className='text-sm text-[color:var(--tm-muted)]'>
                   没有匹配的视频源
                 </span>
               </div>
@@ -564,11 +605,12 @@ function SourceSearchPageClient() {
                     value={searchInputValue}
                     onChange={(e) => setSearchInputValue(e.target.value)}
                     placeholder='搜索视频...'
-                    className='w-full h-12 rounded-lg bg-gray-50/80 py-3 pl-4 pr-12 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:bg-white border border-gray-200/50 shadow-sm dark:bg-gray-800 dark:text-gray-300 dark:focus:bg-gray-700 dark:border-gray-700'
+                    className='w-full h-12 rounded-lg bg-[var(--tm-surface-raised)] py-3 pl-4 pr-12 text-sm text-[color:var(--tm-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--tm-text)] focus:bg-[var(--tm-surface-raised)] border border-[var(--tm-line)] shadow-sm'
                   />
                   <button
                     type='submit'
-                    className='absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-lg text-blue-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-gray-600 transition-colors'
+                    aria-label='搜索片名'
+                    className='absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-lg text-[color:var(--tm-text)] hover:text-[color:var(--tm-text)] hover:bg-[var(--tm-line)] transition-colors min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
                   >
                     <Search size={20} />
                   </button>
@@ -579,13 +621,13 @@ function SourceSearchPageClient() {
 
           {/* 搜索结果提示和返回按钮 */}
           {viewMode === 'search' && searchKeyword && (
-            <div className='flex items-center justify-between bg-blue-50/80 dark:bg-blue-900/20 border border-blue-200/50 dark:border-blue-800/50 rounded-lg px-4 py-3'>
-              <span className='text-sm text-gray-700 dark:text-gray-300'>
+            <div className='flex items-center justify-between bg-[var(--tm-surface-raised)] border border-[var(--tm-line)] rounded-lg px-4 py-3'>
+              <span className='text-sm text-[color:var(--tm-muted)]'>
                 搜索结果: <span className='font-medium'>{searchKeyword}</span>
               </span>
               <button
                 onClick={handleBackToBrowse}
-                className='text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 font-medium'
+                className='text-sm text-[color:var(--tm-text)] hover:text-[color:var(--tm-text)] font-medium min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
               >
                 返回分类浏览
               </button>
@@ -596,22 +638,25 @@ function SourceSearchPageClient() {
           {selectedSource && viewMode === 'browse' && (
             <div className='relative space-y-6'>
               {isLoadingCategories && categories.length === 0 ? (
-                <div className='flex items-center justify-center h-12 bg-gray-50/80 rounded-lg border border-gray-200/50 dark:bg-gray-800 dark:border-gray-700'>
-                  <Loader2 className='h-5 w-5 animate-spin text-gray-400' />
-                  <span className='ml-2 text-sm text-gray-500 dark:text-gray-400'>
+                <div className='flex items-center justify-center h-12 bg-[var(--tm-surface-raised)] rounded-lg border border-[var(--tm-line)]'>
+                  <span
+                    aria-hidden
+                    className='tm-skeleton h-5 w-5 text-[color:var(--tm-muted)]'
+                  />
+                  <span className='ml-2 text-sm text-[color:var(--tm-muted)]'>
                     加载分类中...
                   </span>
                 </div>
               ) : categories.length === 0 ? (
-                <div className='flex items-center justify-center h-12 bg-gray-50/80 rounded-lg border border-gray-200/50 dark:bg-gray-800 dark:border-gray-700'>
-                  <span className='text-sm text-gray-500 dark:text-gray-400'>
+                <div className='flex items-center justify-center h-12 bg-[var(--tm-surface-raised)] rounded-lg border border-[var(--tm-line)]'>
+                  <span className='text-sm text-[color:var(--tm-muted)]'>
                     暂无分类
                   </span>
                 </div>
               ) : isHierarchical ? (
                 <>
                   <div>
-                    <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3'>
+                    <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-3'>
                       选择类型
                     </label>
                     <div className='flex'>
@@ -627,7 +672,7 @@ function SourceSearchPageClient() {
                   </div>
                   {subCategories.length > 0 && (
                     <div>
-                      <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3'>
+                      <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-3'>
                         选择分类
                       </label>
                       <div className='flex'>
@@ -645,7 +690,7 @@ function SourceSearchPageClient() {
                 </>
               ) : (
                 <div>
-                  <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3'>
+                  <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-3'>
                     选择分类
                   </label>
                   <div className='flex'>
@@ -665,81 +710,84 @@ function SourceSearchPageClient() {
         </div>
 
         {/* 视频列表 */}
-        {selectedSource && (viewMode === 'search' ? searchKeyword : selectedCategory) && (
-          <div className='max-w-[95%] mx-auto mt-8'>
-            <div className='mb-4'>
-              <h2 className='text-xl font-bold text-gray-800 dark:text-gray-200'>
-                视频列表
-              </h2>
+        {selectedSource &&
+          (viewMode === 'search' ? searchKeyword : selectedCategory) && (
+            <div className='mt-8'>
+              <div className='mb-4'>
+                <h2 className=' text-[color:var(--tm-text)] text-xl font-medium md:text-2xl'>
+                  视频列表
+                </h2>
+              </div>
+
+              {isLoadingVideos && currentPage === 1 ? (
+                <div className='flex justify-center items-center h-40'>
+                  <div className='tm-skeleton  rounded-md h-8 w-8  '></div>
+                </div>
+              ) : videos.length === 0 ? (
+                <div className='text-center text-[color:var(--tm-muted)] py-8'>
+                  暂无视频
+                </div>
+              ) : (
+                <>
+                  <PosterGrid className=''>
+                    {videos.map((item) => (
+                      <div key={`${item.source}-${item.id}`} className='w-full'>
+                        <VideoCard
+                          id={item.id}
+                          title={item.title}
+                          poster={item.poster}
+                          episodes={item.episodes.length}
+                          source={item.source}
+                          source_name={item.source_name}
+                          douban_id={item.douban_id}
+                          year={item.year}
+                          from='source-search'
+                          type={item.episodes.length > 1 ? 'tv' : 'movie'}
+                          isAnime={isAnimeCategoryText(
+                            item.type_name,
+                            item.class
+                          )}
+                          typeName={item.type_name || item.class}
+                          cmsData={{
+                            desc: item.desc,
+                            episodes: item.episodes,
+                            episodes_titles: item.episodes_titles,
+                          }}
+                          onBeforeNavigate={saveSnapshot}
+                        />
+                      </div>
+                    ))}
+                  </PosterGrid>
+
+                  {/* Infinite scroll trigger */}
+                  <div
+                    ref={loadMoreRef}
+                    className='flex justify-center items-center py-8'
+                  >
+                    {isLoadingVideos && (
+                      <div className='tm-skeleton  rounded-md h-6 w-6  '></div>
+                    )}
+                    {!hasMore && videos.length > 0 && (
+                      <span className='text-sm text-[color:var(--tm-muted)]'>
+                        没有更多了
+                      </span>
+                    )}
+                  </div>
+                </>
+              )}
             </div>
-
-            {isLoadingVideos && currentPage === 1 ? (
-              <div className='flex justify-center items-center h-40'>
-                <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500'></div>
-              </div>
-            ) : videos.length === 0 ? (
-              <div className='text-center text-gray-500 py-8 dark:text-gray-400'>
-                暂无视频
-              </div>
-            ) : (
-              <>
-                <div className='grid grid-cols-3 gap-x-2 gap-y-14 sm:gap-y-20 px-0 sm:px-2 sm:grid-cols-[repeat(auto-fill,_minmax(11rem,_1fr))] sm:gap-x-8'>
-                  {videos.map((item) => (
-                    <div
-                      key={`${item.source}-${item.id}`}
-                      className='w-full'
-                    >
-                      <VideoCard
-                        id={item.id}
-                        title={item.title}
-                        poster={item.poster}
-                        episodes={item.episodes.length}
-                        source={item.source}
-                        source_name={item.source_name}
-                        douban_id={item.douban_id}
-                        year={item.year}
-                        from='source-search'
-                        type={item.episodes.length > 1 ? 'tv' : 'movie'}
-                        isAnime={isAnimeCategoryText(
-                          item.type_name,
-                          item.class
-                        )}
-                        typeName={item.type_name || item.class}
-                        cmsData={{
-                          desc: item.desc,
-                          episodes: item.episodes,
-                          episodes_titles: item.episodes_titles,
-                        }}
-                        onBeforeNavigate={saveSnapshot}
-                      />
-                    </div>
-                  ))}
-                </div>
-
-                {/* Infinite scroll trigger */}
-                <div ref={loadMoreRef} className='flex justify-center items-center py-8'>
-                  {isLoadingVideos && (
-                    <div className='animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500'></div>
-                  )}
-                  {!hasMore && videos.length > 0 && (
-                    <span className='text-sm text-gray-500 dark:text-gray-400'>
-                      没有更多了
-                    </span>
-                  )}
-                </div>
-              </>
-            )}
-          </div>
-        )}
-      </div>
+          )}
+      </PageContainer>
 
       {/* 置顶（返回顶部）悬浮按钮 */}
       <button
         onClick={scrollToTop}
-        className={`fixed bottom-20 md:bottom-6 right-6 z-[500] w-12 h-12 bg-green-500/90 hover:bg-green-500 text-white rounded-full shadow-lg backdrop-blur-sm transition-all duration-300 ease-in-out flex items-center justify-center group ${
+        aria-hidden={!showBackToTop}
+        tabIndex={showBackToTop ? 0 : -1}
+        className={`fixed bottom-20 md:bottom-6 right-6 z-[500] w-12 h-12 bg-[var(--tm-text)] hover:opacity-90 text-[color:var(--tm-accent-contrast)] rounded-full shadow-lg transition-[transform,opacity] duration-300 ease-in-out flex items-center justify-center group ${
           showBackToTop
-            ? 'opacity-100 translate-y-0 pointer-events-auto'
-            : 'opacity-0 translate-y-4 pointer-events-none'
+            ? 'opacity-100 translate-y-0 pointer-events-auto min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
+            : 'opacity-0 translate-y-4 pointer-events-none min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
         }`}
         aria-label='返回顶部'
       >

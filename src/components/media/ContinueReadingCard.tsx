@@ -1,4 +1,7 @@
+'use client';
+
 import Link from 'next/link';
+import { useEffect, useRef } from 'react';
 
 import { cn } from '@/lib/cn';
 
@@ -51,13 +54,31 @@ export default function ContinueReadingCard({
   ctaLabel?: string;
   className?: string;
 }) {
+  const rootRef = useRef<HTMLAnchorElement>(null);
+  useEffect(() => {
+    const cover =
+      rootRef.current?.querySelector<HTMLImageElement>('.tm-media-image');
+    if (!cover) return;
+    delete cover.dataset.loaded;
+    const frame = requestAnimationFrame(() => {
+      if (cover.complete && cover.naturalWidth > 0)
+        cover.dataset.loaded = 'true';
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [image]);
+
   return (
     <Link
+      ref={rootRef}
       href={href}
       onClick={onNavigate}
+      onLoadCapture={(event) => {
+        if (event.target instanceof HTMLImageElement)
+          event.target.dataset.loaded = 'true';
+      }}
       aria-label={`${ctaLabel} ${title}`}
       className={cn(
-        'group flex gap-4 p-4 transition-colors duration-200 hover:border-library-ochre/45 dark:hover:border-library-night-ochre/45 sm:gap-5 sm:p-5',
+        'tm-media-card group flex min-h-[44px] gap-4 p-4 hover:border-[var(--tm-text)] sm:gap-5 sm:p-5 tm-press',
         LIBRARY_PANEL,
         LIBRARY_FOCUS,
         className
@@ -65,7 +86,7 @@ export default function ContinueReadingCard({
     >
       <div
         className={cn(
-          'relative aspect-[3/4] w-20 shrink-0 overflow-hidden rounded-sm bg-library-ochre-tint dark:bg-library-night-ochre-tint sm:w-28',
+          'relative aspect-[3/4] w-20 shrink-0 self-start overflow-hidden rounded-sm bg-[var(--tm-surface-raised)] sm:w-28',
           BOOK_COVER_LIFT
         )}
       >
@@ -74,12 +95,12 @@ export default function ContinueReadingCard({
             originalSrc={image}
             alt={title}
             draggable={false}
-            className='h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]'
+            className='tm-media-image h-full w-full object-cover'
           />
         ) : (
           <div
             className={cn(
-              'flex h-full items-center justify-center text-xs',
+              'flex h-full items-center justify-center text-sm',
               LIBRARY_MUTED
             )}
           >
@@ -91,19 +112,19 @@ export default function ContinueReadingCard({
 
       <div className='flex min-w-0 flex-1 flex-col justify-between gap-3'>
         <div className='min-w-0'>
-          <div className='text-[11px] font-medium text-library-ochre dark:text-library-night-ochre'>
+          <div className='text-[13px] font-medium text-[color:var(--tm-text)]'>
             {eyebrow}
           </div>
           <div
             className={cn(
-              'mt-1.5 line-clamp-2 text-xl font-semibold leading-snug text-library-ink dark:text-library-night-ink sm:text-2xl',
+              'mt-1.5 line-clamp-2 text-xl font-medium leading-snug text-[color:var(--tm-text)] sm:text-2xl',
               LIBRARY_SERIF
             )}
           >
             {title}
           </div>
           {meta && (
-            <div className={cn('mt-2 truncate text-xs', LIBRARY_MUTED)}>
+            <div className={cn('mt-2 truncate text-sm', LIBRARY_MUTED)}>
               {meta}
             </div>
           )}
@@ -113,25 +134,30 @@ export default function ContinueReadingCard({
           {typeof progress === 'number' && (
             <div className='flex min-w-[8rem] flex-1 items-center gap-3'>
               <div
-                className='h-1 flex-1 overflow-hidden rounded-full bg-library-edge dark:bg-library-night-edge'
+                className='h-1 flex-1 overflow-hidden rounded-full bg-[var(--tm-line)]'
                 role='progressbar'
                 aria-valuenow={progress}
                 aria-valuemin={0}
                 aria-valuemax={100}
               >
                 <div
-                  className='h-full rounded-full bg-library-ochre dark:bg-library-night-ochre'
+                  className='h-full rounded-full bg-[var(--tm-text)]'
                   style={{ width: `${progress}%` }}
                 />
               </div>
               <span
-                className={cn('shrink-0 text-xs tabular-nums', LIBRARY_MUTED)}
+                className={cn(
+                  'shrink-0 text-[13px] tabular-nums',
+                  LIBRARY_MUTED
+                )}
               >
                 {formatProgressLabel(progress)}%
               </span>
             </div>
           )}
-          <span className={cn(LIBRARY_BUTTON, 'shrink-0')}>{ctaLabel}</span>
+          <span className={cn(LIBRARY_BUTTON, 'pointer-events-none shrink-0')}>
+            {ctaLabel}
+          </span>
         </div>
       </div>
     </Link>

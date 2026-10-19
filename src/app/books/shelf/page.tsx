@@ -55,7 +55,7 @@ export default function BookShelfPage() {
       <div className={cn('flex items-center gap-2 text-sm', LIBRARY_MUTED)}>
         <BookmarkCheck className={cn('h-4 w-4', LIBRARY_ACCENT_ICON)} />共{' '}
         {items.length} 本电子书
-        <span className='text-xs'>· 长按封面可移出书架</span>
+        <span className='text-[13px]'>· 长按封面可移出书架</span>
       </div>
 
       {loading ? (

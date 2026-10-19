@@ -62,6 +62,7 @@ const mockPlayback = {
   metadata: { error: null as string | null },
   resumeRoom: jest.fn(),
   minimize: jest.fn(),
+  enterPersonalViewing: jest.fn(),
   restore: jest.fn(),
 };
 const originalFetch = global.fetch;
@@ -126,8 +127,12 @@ test('folding preserves player slot and restores through existing session action
     };
   const view = render(<RoomWorkspace />);
   const slot = screen.getByTestId('player-slot');
-  fireEvent.click(screen.getByRole('button', { name: '收起画面' }));
-  expect(mockPlayback.minimize).toHaveBeenCalledTimes(1);
+  fireEvent.click(screen.getByRole('button', { name: '仅自己看' }));
+  expect(mockPlayback.enterPersonalViewing).toHaveBeenCalledTimes(1);
+  expect(mockPlayback.minimize).not.toHaveBeenCalled();
+  expect(
+    screen.queryByRole('button', { name: '收起画面' })
+  ).not.toBeInTheDocument();
   mockPlayback.presentation = 'folded';
   view.rerender(<RoomWorkspace />);
   expect(screen.getByTestId('player-slot')).toBe(slot);

@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>影片详情（桌面）</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>body{margin:0}</style>
+</helmet>
+<div style="position:relative;width:1280px;height:960px;overflow:hidden;background:{{c.scrim}};color:{{c.fg}};font-family:'Noto Sans SC','PingFang SC','Microsoft YaHei',sans-serif;font-size:14px;line-height:1.5">
+<div style="position:absolute;left:140px;top:40px;width:1000px;height:880px;box-sizing:border-box;border-radius:28px;background:{{c.panel}};border:1px solid {{c.line}};box-shadow:0 40px 100px rgba(0,0,0,0.55);overflow:hidden">
+<div style="position:relative;height:300px;background:{{c.poster}};display:flex;align-items:center;justify-content:center;color:{{c.sub}};font-size:13px">横版剧照；没有就用海报放大模糊作氛围
+<button aria-label="关闭" style="position:absolute;top:20px;right:20px;width:44px;height:44px;border-radius:50%;border:1px solid {{c.line}};background:{{c.glass}};color:{{c.fg}};cursor:pointer"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+</div>
+<div style="padding:0 48px;margin-top:-90px;display:flex;gap:32px">
+<div style="flex:none;width:200px;height:300px;border-radius:14px;background:{{c.raised}};border:4px solid {{c.panel}};box-sizing:border-box;box-shadow:0 18px 40px -12px rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;color:{{c.sub}};font-size:13px">海报</div>
+<div style="flex:1;padding-top:100px">
+<div style="font-size:14px;color:{{c.sub}}">2026 · 106 分钟 · 悬疑 · 惊悚 · 恐怖</div>
+<h1 style="margin:4px 0 0;font-size:40px;line-height:1.15;font-weight:700;letter-spacing:-0.02em">潜伏6</h1>
+<div style="margin-top:2px;font-size:14px;color:{{c.sub}}">Insidious: Out of the Further</div>
+<div style="margin-top:12px;display:flex;align-items:center;gap:10px"><span style="background:{{c.btnBg}};color:{{c.btnFg}};font-size:12px;font-weight:700;padding:2px 7px;border-radius:6px">6.6</span><span style="font-size:13px;color:{{c.sub}}">6360 人评价</span></div>
+<div style="margin-top:20px;display:flex;gap:12px">
+<button style="width:168px;height:48px;border:0;border-radius:12px;background:{{c.btnBg}};color:{{c.btnFg}};font:inherit;font-weight:700;display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 4l14 8-14 8z"/></svg>播放</button>
+<button style="width:168px;height:48px;border-radius:12px;border:1px solid {{c.fg2}};background:{{c.glass}};color:{{c.fg}};font:inherit;font-weight:700;display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.5 3-6 6.5-6s6.5 2.5 6.5 6M16 4.5a3.5 3.5 0 010 7M18 14c2 .6 3.5 2.4 3.5 6"/></svg>一起看</button>
+<button aria-label="收藏" style="width:48px;height:48px;border-radius:12px;border:1px solid {{c.line}};background:transparent;color:{{c.fg}};cursor:pointer"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M20.8 5.6a5 5 0 00-7.1 0L12 7.3l-1.7-1.7a5 5 0 00-7.1 7.1l1.7 1.7L12 21.5l7.1-7.1 1.7-1.7a5 5 0 000-7.1z"/></svg></button>
+</div>
+</div>
+</div>
+<div style="display:{{epShow}};padding:28px 48px 0">
+<div style="font-size:18px;font-weight:700">选集</div>
+<div style="margin-top:12px;display:flex;gap:8px">
+<sc-for list="{{eps}}" as="e" hint-placeholder-count="12"><button style="width:48px;height:44px;border-radius:10px;border:1px solid {{e.bd}};background:{{e.bg}};color:{{e.fg}};font:inherit;font-weight:500;cursor:pointer">{{e.n}}</button></sc-for>
+</div>
+</div>
+<div style="padding:32px 48px 0;display:grid;grid-template-columns:2fr 1fr;gap:48px">
+<div>
+<div style="font-size:18px;font-weight:700">简介</div>
+<p style="margin:10px 0 0;font-size:15px;line-height:1.8">吉玛是一位年轻的母亲，她独自抚养着女儿，住在自己长大的房子里。她发现自己竟然可以进入“异灵世界”，更可怕的是，她拥有一种能力，可以将那个世界里栖息的恐怖生物带回现实世界。</p>
+<div style="margin-top:20px;display:grid;grid-template-columns:48px 1fr;gap:8px 12px;font-size:15px"><span style="color:{{c.sub}}">导演</span><span>雅各布·蔡斯</span><span style="color:{{c.sub}}">演员</span><span>阿梅利亚·伊芙、林·沙烨、萨姆·斯普卢尔</span></div>
+</div>
+<div style="padding:20px;box-sizing:border-box;border-radius:16px;background:{{c.soft}};border:1px solid {{c.line}};align-self:start">
+<div style="font-size:18px;font-weight:700">信息</div>
+<div style="margin-top:12px;display:grid;grid-template-columns:auto 1fr;gap:10px 16px;font-size:14px"><span style="color:{{c.sub}}">类型</span><span>悬疑 / 惊悚 / 恐怖</span><span style="color:{{c.sub}}">年份</span><span>2026</span><span style="color:{{c.sub}}">片长</span><span>106 分钟</span><span style="color:{{c.sub}}">评分</span><span>6.6（6360 人）</span></div>
+</div>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":true},"series":{"editor":"boolean","default":false},"$preview":{"width":1280,"height":960}}'>
+class Component extends DCLogic {
+renderVals() {
+const d = this.props.dark !== false;
+const c = d ? { scrim: '#050505', panel: '#141414', fg: '#fafafa', fg2: 'rgba(250,250,250,0.4)', sub: '#a3a3a3', line: '#262626', soft: '#1a1a1a', poster: '#1c1c1c', raised: '#262626', btnBg: '#fafafa', btnFg: '#0a0a0a', glass: 'rgba(40,40,40,0.7)' } : { scrim: '#b8b8b8', panel: '#ffffff', fg: '#0a0a0a', fg2: 'rgba(10,10,10,0.4)', sub: '#6b6b6b', line: '#e5e5e5', soft: '#f5f5f5', poster: '#ececec', raised: '#e0e0e0', btnBg: '#0a0a0a', btnFg: '#ffffff', glass: 'rgba(255,255,255,0.7)' };
+const eps = [];
+for (let i = 1; i <= 12; i++) eps.push({ n: String(i), bg: i === 1 ? c.btnBg : 'transparent', fg: i === 1 ? c.btnFg : c.fg, bd: i === 1 ? c.btnBg : c.line });
+return { c, eps, epShow: this.props.series ? 'block' : 'none' };
+}
+}
+</script>
+</body>
+</html>

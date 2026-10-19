@@ -4,7 +4,7 @@ import { BOOK_RAIL, BOOK_SHELF_BOARD } from './library';
 import MediaSectionHeader from './MediaSectionHeader';
 
 /**
- * 书架式横向 rail：一排书立在一条木色书架板上。
+ * 书架式横滑列表，保留原布局与中性分隔线。
  *
  * 与网格的区别是浏览方式——rail 用来放"最近/在追"这类短列表，网格用来放全部。
  */
@@ -22,15 +22,18 @@ export default function MediaRail({
   className?: string;
 }) {
   return (
-    <section className={cn('space-y-3', className)}>
+    <section className={cn('space-y-3 md:space-y-4', className)}>
       <MediaSectionHeader title={title} subtitle={subtitle} action={action} />
       <div
-        className={cn(
-          BOOK_SHELF_BOARD,
-          'shadow-[0_6px_12px_-10px_rgba(0,0,0,0.45)]'
-        )}
+        className={BOOK_SHELF_BOARD}
+        style={{
+          boxShadow:
+            '0 6px 12px -10px color-mix(in srgb, var(--tm-room-cinema-bg) 45%, transparent)',
+        }}
       >
-        <div className={BOOK_RAIL}>{children}</div>
+        <div data-tm-reveal-group className={BOOK_RAIL}>
+          {children}
+        </div>
       </div>
     </section>
   );

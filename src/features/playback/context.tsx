@@ -38,6 +38,7 @@ export interface PlaybackSession {
   restore: () => void;
   endSession: () => void;
   resumeRoom: () => void;
+  enterPersonalViewing: () => Promise<void>;
 }
 
 export const PlaybackSessionContext = createContext<PlaybackSession | null>(

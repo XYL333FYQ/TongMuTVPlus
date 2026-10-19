@@ -8,6 +8,8 @@ import {
   SPECIAL_SOURCE_PATH,
 } from '@/lib/special-source.client';
 
+import PageContainer from '@/components/PageContainer';
+
 import SpecialSourceToggle from './SpecialSourceToggle';
 
 export const dynamic = 'force-dynamic';
@@ -22,28 +24,29 @@ export default async function SpecialPage() {
   const specialCount = (config.SpecialSourceApis || []).length;
 
   return (
-    <main className='min-h-screen bg-gray-50 text-gray-900 dark:bg-black dark:text-slate-100'>
-      <section className='mx-auto flex min-h-screen w-full max-w-xl items-center px-5 py-10'>
-        <div className='w-full rounded-2xl border border-gray-200 bg-white p-6 shadow-xl dark:border-white/10 dark:bg-zinc-950 sm:p-8'>
+    <main className='min-h-screen bg-[var(--tm-bg)] text-[color:var(--tm-text)]'>
+      <PageContainer className='flex min-h-screen w-full items-center py-10'>
+        <div className='w-full rounded-2xl border border-[var(--tm-line)] bg-[var(--tm-surface)] p-6 shadow-xl sm:p-8'>
           <div className='space-y-3'>
-            <h1 className='text-2xl font-semibold tracking-tight text-gray-900 dark:text-white'>
+            <h1 className='text-2xl font-medium tracking-normal text-[color:var(--tm-text)]'>
               特殊源
             </h1>
-            <p className='text-sm leading-6 text-gray-600 dark:text-slate-400'>
-              特殊源只在 {SPECIAL_SOURCE_PATH} 路径下可用，普通搜索不会出现特殊源的内容；
+            <p className='text-sm leading-6 text-[color:var(--tm-muted)]'>
+              特殊源只在 {SPECIAL_SOURCE_PATH}{' '}
+              路径下可用，普通搜索不会出现特殊源的内容；
               {SPECIAL_SOURCE_PATH} 路径下也不会出现普通源的内容。
             </p>
           </div>
 
-          <div className='mt-8 flex items-center justify-between rounded-xl border border-gray-200 bg-gray-50 p-4 dark:border-white/10 dark:bg-white/[0.03]'>
+          <div className='mt-8 flex items-center justify-between rounded-xl border border-[var(--tm-line)] bg-[var(--tm-surface-raised)] p-4'>
             <div>
-              <div className='text-sm text-gray-600 dark:text-slate-400'>
+              <div className='text-sm text-[color:var(--tm-muted)]'>
                 本机状态
               </div>
-              <div className='mt-1 text-lg font-medium text-gray-900 dark:text-white'>
+              <div className='mt-1 text-lg font-medium text-[color:var(--tm-text)]'>
                 {enabled ? '已开启' : '已关闭'}
               </div>
-              <div className='mt-1 text-xs text-gray-500 dark:text-slate-500'>
+              <div className='mt-1 text-[13px] text-[color:var(--tm-muted)]'>
                 已标记特殊源 {specialCount} 个
               </div>
             </div>
@@ -52,7 +55,7 @@ export default async function SpecialPage() {
           </div>
 
           {specialCount === 0 && (
-            <p className='mt-4 rounded-lg bg-amber-50 p-3 text-xs leading-5 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400'>
+            <p className='mt-4 rounded-lg bg-[var(--tm-surface-raised)] p-3 text-[13px] leading-5 text-[color:var(--tm-text)]'>
               没有任何采集源被标记为特殊源，此时普通搜索不会屏蔽任何源。请在后台
               「视频源管理 → 特殊源设置」勾选，或在配置文件里补上
               <code className='mx-1'>special_source_apis</code>
@@ -60,9 +63,10 @@ export default async function SpecialPage() {
             </p>
           )}
 
-          <p className='mt-4 text-xs leading-5 text-gray-500 dark:text-slate-500'>
-            这是本机开关（存在 cookie 里），谁打开谁能用，只影响当前设备与浏览器，
-            不改动站点配置。关闭后 {SPECIAL_SOURCE_PATH} 返回 404，特殊源的收藏与播放记录也不会出现在
+          <p className='mt-4 text-[13px] leading-5 text-[color:var(--tm-muted)]'>
+            这是本机开关（存在 cookie
+            里），谁打开谁能用，只影响当前设备与浏览器， 不改动站点配置。关闭后{' '}
+            {SPECIAL_SOURCE_PATH} 返回 404，特殊源的收藏与播放记录也不会出现在
             普通入口——记录仍在，重新打开即可看到。此开关对 TVBox、OrionTV、WebTV
             渠道无效，这些渠道始终无法使用特殊源。
           </p>
@@ -71,7 +75,7 @@ export default async function SpecialPage() {
             {enabled ? (
               <Link
                 href={SPECIAL_SOURCE_PATH}
-                className='inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-rose-600 px-4 py-3 text-sm font-medium text-white transition hover:bg-rose-500 focus:outline-none focus:ring-2 focus:ring-rose-400'
+                className='inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-[var(--tm-text)] px-4 py-3 text-sm font-medium text-[color:var(--tm-accent-contrast)] transition hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-[var(--tm-text)] min-h-[44px] tm-press'
               >
                 <Search className='h-4 w-4' />
                 前往里世界
@@ -82,7 +86,7 @@ export default async function SpecialPage() {
                 disabled
                 aria-disabled='true'
                 title='请先打开上方开关'
-                className='inline-flex flex-1 cursor-not-allowed items-center justify-center gap-2 rounded-xl bg-gray-200 px-4 py-3 text-sm font-medium text-gray-400 opacity-60 dark:bg-white/10 dark:text-slate-500'
+                className='inline-flex flex-1 cursor-not-allowed items-center justify-center gap-2 rounded-xl bg-[var(--tm-surface-raised)] px-4 py-3 text-sm font-medium text-[color:var(--tm-muted)] opacity-60 min-h-[44px] tm-press'
               >
                 <Search className='h-4 w-4' />
                 前往里世界
@@ -90,7 +94,7 @@ export default async function SpecialPage() {
             )}
           </div>
         </div>
-      </section>
+      </PageContainer>
     </main>
   );
 }

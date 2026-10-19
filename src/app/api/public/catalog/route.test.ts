@@ -1,13 +1,18 @@
 /** @jest-environment ./src/test/node-web-environment.cjs */
 
-jest.mock('@/lib/config', () => ({ getConfig: jest.fn() }));
+jest.mock('@/lib/config', () => ({
+  getConfig: jest.fn(),
+  API_CONFIG: { search: { headers: {} } },
+}));
 jest.mock('@/lib/douban', () => ({ fetchDoubanData: jest.fn() }));
 jest.mock('@/lib/tmdb.client', () => ({ searchTMDBMulti: jest.fn() }));
+jest.mock('@/lib/duanju', () => ({ getDuanjuSources: jest.fn() }));
 
 import { NextRequest } from 'next/server';
 
 import { getConfig } from '@/lib/config';
 import { fetchDoubanData } from '@/lib/douban';
+import { getDuanjuSources } from '@/lib/duanju';
 import { searchTMDBMulti } from '@/lib/tmdb.client';
 
 import { GET } from './route';
@@ -135,3 +140,83 @@ it.each([
     expect(config).not.toHaveBeenCalled();
   }
 );
+
+it.each([
+  ['anime', '动画'],
+  ['show', '综艺'],
+])('browses %s without substituting a movie feed', async (type, category) => {
+  douban.mockResolvedValue({
+    items: [
+      {
+        id: '88',
+        title: '公开作品',
+        type: 'tv',
+        pic: { normal: 'https://img1.doubanio.com/a.jpg' },
+        rating: { value: 8 },
+      },
+    ],
+  });
+  const response = await get('type=' + type);
+  expect(response.status).toBe(200);
+  const body = await response.json();
+  expect(body.items[0].title).toBe('公开作品');
+  const upstream = new URL(douban.mock.calls[0][0]);
+  expect(upstream.pathname).toBe('/rexxar/api/v2/tv/recommend');
+  expect(upstream.searchParams.get('tags')).toContain(category);
+  expect(JSON.stringify(body)).not.toMatch(/episodes|credentials|api_key/);
+});
+
+it('short dramas expose metadata only, including pagination, never source keys or play URLs', async () => {
+  (getDuanjuSources as jest.Mock).mockResolvedValue([
+    {
+      key: 'private-source',
+      api: 'https://private-source.test/api?token=secret',
+      typeId: '7',
+    },
+  ]);
+  const original = global.fetch;
+  const upstream = jest.fn().mockResolvedValue({
+    ok: true,
+    json: async () => ({
+      list: [
+        {
+          vod_id: 17,
+          vod_name: '短剧甲',
+          vod_pic: 'https://public-images.test/a.jpg?token=secret',
+          vod_play_url: '第1集$https://private.test/a.m3u8?token=secret',
+          credentials: 'secret',
+        },
+      ],
+      pagecount: 2,
+    }),
+  });
+  global.fetch = upstream;
+  try {
+    const response = await get('type=duanju&limit=1');
+    expect(response.status).toBe(200);
+    const body = await response.json();
+    expect(body.items[0]).toMatchObject({
+      title: '短剧甲',
+      provider: 'cms',
+      poster: 'https://public-images.test/a.jpg',
+    });
+    expect(body.hasMore).toBe(true);
+    expect(body.nextCursor).toBe('2:0');
+    expect(JSON.stringify(body)).not.toMatch(
+      /private-source|secret|episodes|vod_play|credentials/
+    );
+    expect(new URL(upstream.mock.calls[0][0]).searchParams.get('ac')).toBe(
+      'list'
+    );
+    expect(new URL(upstream.mock.calls[0][0]).searchParams.get('t')).toBe('7');
+    await get('type=duanju&limit=1&start=1&cursor=2:0');
+    expect(new URL(upstream.mock.calls[1][0]).searchParams.get('pg')).toBe('2');
+  } finally {
+    global.fetch = original;
+  }
+});
+
+it('rejects category-only types in public search rather than silently returning another category', async () => {
+  expect((await get('mode=search&q=x&type=anime')).status).toBe(400);
+  expect(douban).not.toHaveBeenCalled();
+});

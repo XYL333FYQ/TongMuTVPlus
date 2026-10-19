@@ -3,15 +3,14 @@
 import {
   BadgeCheck,
   Clock3,
-  Loader2,
   LogOut,
   Menu,
   QrCode,
   ShieldCheck,
   SlidersHorizontal,
   User,
-  Wifi,
   Volume2,
+  Wifi,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import {
@@ -105,9 +104,9 @@ export default function TVMePage() {
       const bridgeUrl = window.MoonTVLocalRemote?.getRemoteUrl?.() || '';
       setLocalRemoteUrl(
         bridgeUrl ||
-        window.__MOONTV_LOCAL_REMOTE_URL ||
-        localStorage.getItem(LOCAL_REMOTE_URL_KEY) ||
-        ''
+          window.__MOONTV_LOCAL_REMOTE_URL ||
+          localStorage.getItem(LOCAL_REMOTE_URL_KEY) ||
+          ''
       );
     };
 
@@ -178,19 +177,16 @@ export default function TVMePage() {
     });
   };
 
-
-
-
-
   if (!ready || !authInfo) {
     return (
       <TVLayout>
-        <section className='mx-auto max-w-5xl rounded-[42px] border border-white/10 bg-slate-950/75 p-12 text-center shadow-2xl shadow-black/60'>
-          <Loader2 className='mx-auto h-16 w-16 animate-spin text-rose-400' />
-          <h1 className='mt-6 text-5xl font-black'>正在读取登录信息</h1>
-          <p className='mt-4 text-2xl text-slate-300'>
-            请稍候，电视端会自动跳转。
-          </p>
+        <section
+          role='status'
+          aria-label='正在读取登录信息'
+          className='tm-skeleton h-48 rounded-[42px] border border-[var(--tm-line)] p-12 text-center'
+        >
+          <h1 className='sr-only'>正在读取登录信息</h1>
+          <p className='sr-only'>请稍候，电视端会自动跳转。</p>
         </section>
       </TVLayout>
     );
@@ -198,59 +194,61 @@ export default function TVMePage() {
 
   return (
     <TVLayout>
-      <section className='mx-auto max-w-6xl overflow-hidden rounded-[42px] border border-white/10 bg-slate-950/75 shadow-2xl shadow-black/60 backdrop-blur-xl'>
-        <div className='relative p-10 md:p-12'>
-          <div className='pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_10%,rgba(244,63,94,0.25),transparent_34%),radial-gradient(circle_at_85%_0%,rgba(67,56,202,0.28),transparent_30%)]' />
+      <section className='tm-glass overflow-hidden rounded-[42px] border border-[var(--tm-line)] shadow-lg'>
+        <div className='relative p-4 md:p-12'>
+          <div className='pointer-events-none absolute inset-0 bg-transparent' />
           <div className='relative grid gap-10 lg:grid-cols-[1fr_340px]'>
             <div>
-              <div className='inline-flex items-center gap-3 rounded-full border border-emerald-400/30 bg-emerald-500/15 px-5 py-2 text-xl font-bold text-emerald-200'>
+              <div className='inline-flex items-center gap-3 rounded-full border border-[var(--tm-line)] bg-[var(--tm-surface-raised)] px-5 py-2 text-base font-medium text-[color:var(--tm-text)]'>
                 <BadgeCheck className='h-6 w-6' />
                 已登录电视端
               </div>
               <div className='mt-8 flex items-center gap-7'>
-                <div className='flex h-28 w-28 shrink-0 items-center justify-center rounded-[32px] bg-gradient-to-br from-rose-500 to-indigo-600 text-6xl font-black text-white shadow-2xl shadow-rose-950/50'>
+                <div className='flex h-28 w-28 shrink-0 items-center justify-center rounded-[32px] bg-[var(--tm-surface)] text-[24px] font-medium text-[color:var(--tm-text)] shadow-lg'>
                   {avatarText}
                 </div>
                 <div>
-                  <h1 className='text-6xl font-black tracking-tight text-white md:text-7xl'>
+                  <h1 className='break-words text-[28px] md:text-[32px] font-bold tracking-normal text-[color:var(--tm-text)]'>
                     {username}
                   </h1>
-                  <p className='mt-3 text-2xl text-slate-300'>
-                    欢迎回来，继续享受大屏观影。
+                  <p className='mt-3 text-base text-[color:var(--tm-muted)]'>
+                    查看账号和电视设置
                   </p>
                 </div>
               </div>
 
               <div className='mt-10 grid gap-4 md:grid-cols-2'>
-                <div className='rounded-[28px] border border-white/10 bg-white/[0.06] p-6'>
-                  <div className='flex items-center gap-3 text-xl font-bold text-slate-300'>
-                    <ShieldCheck className='h-6 w-6 text-rose-300' />
+                <div className='rounded-[28px] border border-[var(--tm-line)] bg-[var(--tm-surface-raised)] p-6'>
+                  <div className='flex items-center gap-3 text-base font-medium text-[color:var(--tm-muted)]'>
+                    <ShieldCheck className='h-6 w-6 text-[color:var(--tm-text)]' />
                     账号角色
                   </div>
-                  <div className='mt-4 text-4xl font-black text-white'>
+                  <div className='mt-4 text-[24px] font-medium text-[color:var(--tm-text)]'>
                     {roleText}
                   </div>
                 </div>
-                <div className='rounded-[28px] border border-white/10 bg-white/[0.06] p-6'>
-                  <div className='flex items-center gap-3 text-xl font-bold text-slate-300'>
-                    <Clock3 className='h-6 w-6 text-indigo-300' />
+                <div className='rounded-[28px] border border-[var(--tm-line)] bg-[var(--tm-surface-raised)] p-6'>
+                  <div className='flex items-center gap-3 text-base font-medium text-[color:var(--tm-muted)]'>
+                    <Clock3 className='h-6 w-6 text-[color:var(--tm-text)]' />
                     登录时间
                   </div>
-                  <div className='mt-4 text-3xl font-black text-white'>
+                  <div className='mt-4 text-base font-medium text-[color:var(--tm-text)]'>
                     {formatDateTime(authInfo.timestamp)}
                   </div>
                 </div>
               </div>
             </div>
 
-            <aside className='flex flex-col justify-between rounded-[34px] border border-white/10 bg-black/35 p-7'>
+            <aside className='flex flex-col justify-between rounded-[34px] border border-[var(--tm-line)] bg-[var(--tm-surface-raised)] p-7'>
               <div>
-                <div className='flex h-16 w-16 items-center justify-center rounded-3xl bg-white/10'>
-                  <User className='h-9 w-9 text-rose-300' />
+                <div className='flex h-16 w-16 items-center justify-center rounded-3xl bg-[var(--tm-surface-raised)]'>
+                  <User className='h-9 w-9 text-[color:var(--tm-text)]' />
                 </div>
-                <h2 className='mt-6 text-4xl font-black'>我的账号</h2>
-                <p className='mt-4 text-xl leading-relaxed text-slate-300'>
-                  当前设备已绑定该账号。登出后会清除电视端会话，并返回扫码登录页。
+                <h2 className='mt-6 text-[20px] md:text-[24px] font-medium'>
+                  我的账号
+                </h2>
+                <p className='mt-4 text-base leading-relaxed text-[color:var(--tm-muted)]'>
+                  此设备已登录该账号。登出后返回扫码登录页。
                 </p>
               </div>
 
@@ -258,7 +256,7 @@ export default function TVMePage() {
                 {error && (
                   <p
                     role='alert'
-                    className='mb-4 rounded-2xl border border-red-400/40 bg-red-950/50 p-4 text-xl text-red-100'
+                    className='mb-4 rounded-2xl border border-[var(--tm-danger)] bg-[var(--tm-surface-raised)] p-4 text-base text-[color:var(--tm-text)]'
                   >
                     {error}
                   </p>
@@ -267,10 +265,13 @@ export default function TVMePage() {
                   type='button'
                   onClick={handleLogout}
                   disabled={loggingOut}
-                  className='tv-focusable flex w-full cursor-pointer items-center justify-center gap-3 rounded-3xl bg-rose-600 px-7 py-5 text-3xl font-black text-white outline-none transition duration-200 hover:bg-rose-500 focus:ring-4 focus:ring-rose-300 disabled:cursor-not-allowed disabled:opacity-70'
+                  className='tv-focusable flex w-full cursor-pointer items-center justify-center gap-3 rounded-3xl bg-[var(--tm-text)] px-7 py-5 text-base font-medium text-[color:var(--tm-accent-contrast)] outline-none transition duration-200 hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-70 min-h-[44px] tm-press'
                 >
                   {loggingOut ? (
-                    <Loader2 className='h-8 w-8 animate-spin' />
+                    <span
+                      aria-hidden='true'
+                      className='tm-skeleton h-8 w-8 rounded-full'
+                    />
                   ) : (
                     <LogOut className='h-8 w-8' />
                   )}
@@ -280,32 +281,35 @@ export default function TVMePage() {
             </aside>
           </div>
 
-          <div className='relative mt-10 overflow-hidden rounded-[34px] border border-indigo-300/20 bg-indigo-950/35 p-7'>
-            <div className='pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_8%_0%,rgba(99,102,241,0.35),transparent_34%),radial-gradient(circle_at_95%_10%,rgba(16,185,129,0.22),transparent_28%)]' />
+          <div className='relative mt-10 overflow-hidden rounded-[34px] border border-[var(--tm-line)] bg-[var(--tm-surface-raised)] p-7'>
+            <div className='pointer-events-none absolute inset-0 bg-transparent' />
             <div className='relative flex flex-col gap-7 lg:flex-row lg:items-start lg:justify-between'>
               <div className='max-w-2xl'>
-                <div className='inline-flex items-center gap-3 rounded-full border border-emerald-300/25 bg-emerald-400/10 px-4 py-2 text-lg font-black text-emerald-200'>
+                <div className='inline-flex items-center gap-3 rounded-full border border-[var(--tm-line)] bg-[var(--tm-surface-raised)] px-4 py-2 text-sm font-medium text-[color:var(--tm-text)]'>
                   <Wifi className='h-6 w-6' />
                   局域网直连
                 </div>
-                <h2 className='mt-5 flex items-center gap-3 text-4xl font-black tracking-tight text-white'>
-                  <QrCode className='h-10 w-10 text-indigo-200' />
+                <h2 className='mt-5 flex items-center gap-3 text-[20px] md:text-[24px] font-medium tracking-normal text-[color:var(--tm-text)]'>
+                  <QrCode className='h-10 w-10 text-[color:var(--tm-text)]' />
                   手机扫码遥控
                 </h2>
-                <p className='mt-4 text-xl leading-relaxed text-slate-300'>
+                <p className='mt-4 text-base leading-relaxed text-[color:var(--tm-muted)]'>
                   在同一 Wi‑Fi 下用手机扫描二维码或打开遥控地址。
                 </p>
 
                 {localRemoteUrl ? (
-                  <div className='mt-6 rounded-3xl border border-white/10 bg-black/30 p-5'>
-                    <div className='text-base font-bold text-indigo-200'>遥控地址</div>
-                    <div className='mt-2 break-all font-mono text-lg font-black text-white'>
+                  <div className='mt-6 rounded-3xl border border-[var(--tm-line)] bg-[var(--tm-surface-raised)] p-5'>
+                    <div className='text-base font-medium text-[color:var(--tm-text)]'>
+                      遥控地址
+                    </div>
+                    <div className='mt-2 break-all text-sm font-medium text-[color:var(--tm-text)]'>
                       {localRemoteUrl}
                     </div>
                   </div>
                 ) : (
-                  <div className='mt-6 rounded-3xl border border-amber-300/20 bg-amber-400/10 p-5 text-lg leading-relaxed text-amber-100'>
-                    当前页面未检测到 APK 内置局域网遥控服务。请使用新版 APK 打开电视端。
+                  <div className='mt-6 rounded-3xl border border-[var(--tm-line)] bg-[var(--tm-surface-raised)] p-5 text-sm leading-relaxed text-[color:var(--tm-text)]'>
+                    当前页面未检测到 APK 内置局域网遥控服务。请使用新版 APK
+                    打开电视端。
                   </div>
                 )}
               </div>
@@ -315,15 +319,17 @@ export default function TVMePage() {
                   tabIndex={0}
                   role='img'
                   aria-label='局域网遥控地址二维码，手机扫码打开遥控器'
-                  className='tv-focusable tv-focusable-light shrink-0 rounded-[32px] border border-white/15 bg-white p-4 shadow-2xl shadow-black/40 outline-none'
+                  className='tv-focusable tv-focusable-light shrink-0 rounded-[32px] border border-[var(--tm-line)] bg-[var(--tm-surface)] p-4 shadow-lg outline-none'
                 >
                   <img
-                    src={`/api/auth/qr/image?data=${encodeURIComponent(localRemoteUrl)}`}
+                    src={`/api/auth/qr/image?data=${encodeURIComponent(
+                      localRemoteUrl
+                    )}`}
                     alt='局域网遥控地址二维码'
                     className='pointer-events-none h-64 w-64 rounded-2xl'
                     draggable={false}
                   />
-                  <div className='mt-3 text-center text-base font-black text-slate-950'>
+                  <div className='mt-3 text-center text-base font-medium text-[color:var(--tm-text)]'>
                     手机扫码打开遥控器
                   </div>
                 </div>
@@ -331,29 +337,29 @@ export default function TVMePage() {
             </div>
           </div>
 
-          <div className='relative mt-10 rounded-[34px] border border-white/10 bg-black/35 p-7'>
+          <div className='relative mt-10 rounded-[34px] border border-[var(--tm-line)] bg-[var(--tm-surface-raised)] p-7'>
             <div className='flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between'>
               <div className='max-w-2xl'>
-                <div className='flex items-center gap-3 text-3xl font-black text-white'>
-                  <SlidersHorizontal className='h-9 w-9 text-rose-300' />
+                <div className='flex items-center gap-3 text-base font-medium text-[color:var(--tm-text)]'>
+                  <SlidersHorizontal className='h-9 w-9 text-[color:var(--tm-text)]' />
                   偏好设置
                 </div>
-                <p className='mt-3 text-xl leading-relaxed text-slate-300'>
+                <p className='mt-3 text-base leading-relaxed text-[color:var(--tm-muted)]'>
                   这些设置保存在当前电视设备上。
                 </p>
               </div>
 
-              <div className='w-full rounded-[28px] border border-white/10 bg-white/[0.06] p-6 lg:max-w-[560px]'>
+              <div className='w-full rounded-[28px] border border-[var(--tm-line)] bg-[var(--tm-surface-raised)] p-6 lg:max-w-[560px]'>
                 <div className='flex items-start justify-between gap-5'>
                   <div>
-                    <h3 className='text-2xl font-black text-white'>
+                    <h3 className='text-[18px] font-medium text-[color:var(--tm-text)]'>
                       播放页上下键功能
                     </h3>
-                    <p className='mt-2 text-lg leading-relaxed text-slate-300'>
+                    <p className='mt-2 text-sm leading-relaxed text-[color:var(--tm-muted)]'>
                       播放页遥控器 ↑ / ↓ 键执行的操作。
                     </p>
                   </div>
-                  <div className='shrink-0 rounded-2xl bg-slate-950/55 px-4 py-2 text-lg font-black text-rose-100'>
+                  <div className='shrink-0 rounded-2xl bg-[var(--tm-surface)] px-4 py-2 text-sm font-medium text-[color:var(--tm-text)]'>
                     {upDownAction === 'wake-menu' ? '唤醒菜单' : '音量控制'}
                   </div>
                 </div>
@@ -365,12 +371,13 @@ export default function TVMePage() {
                 >
                   <button
                     ref={wakeMenuButtonRef}
+                    aria-pressed={upDownAction === 'wake-menu'}
                     type='button'
                     onClick={() => handleUpDownActionChange('wake-menu')}
-                    className={`tv-focusable flex cursor-pointer items-center justify-center gap-3 rounded-2xl px-5 py-4 text-xl font-black outline-none transition focus:ring-4 focus:ring-rose-300 ${
+                    className={`tv-focusable flex cursor-pointer items-center justify-center gap-3 rounded-2xl px-5 py-4 text-base font-medium outline-none transition ${
                       upDownAction === 'wake-menu'
-                        ? 'bg-rose-600 text-white shadow-lg shadow-rose-950/40'
-                        : 'bg-white/10 text-slate-200 hover:bg-white/15'
+                        ? 'bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] shadow-lg shadow-[color-mix(in_srgb,var(--tm-room-cinema-bg)_40%,transparent)] min-h-[44px] tm-press'
+                        : 'bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)] hover:bg-[var(--tm-line)] min-h-[44px] tm-press'
                     }`}
                   >
                     <Menu className='h-6 w-6' />
@@ -378,12 +385,13 @@ export default function TVMePage() {
                   </button>
                   <button
                     ref={volumeButtonRef}
+                    aria-pressed={upDownAction === 'volume'}
                     type='button'
                     onClick={() => handleUpDownActionChange('volume')}
-                    className={`tv-focusable flex cursor-pointer items-center justify-center gap-3 rounded-2xl px-5 py-4 text-xl font-black outline-none transition focus:ring-4 focus:ring-rose-300 ${
+                    className={`tv-focusable flex cursor-pointer items-center justify-center gap-3 rounded-2xl px-5 py-4 text-base font-medium outline-none transition ${
                       upDownAction === 'volume'
-                        ? 'bg-rose-600 text-white shadow-lg shadow-rose-950/40'
-                        : 'bg-white/10 text-slate-200 hover:bg-white/15'
+                        ? 'bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] shadow-lg shadow-[color-mix(in_srgb,var(--tm-room-cinema-bg)_40%,transparent)] min-h-[44px] tm-press'
+                        : 'bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)] hover:bg-[var(--tm-line)] min-h-[44px] tm-press'
                     }`}
                   >
                     <Volume2 className='h-6 w-6' />

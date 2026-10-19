@@ -1,6 +1,6 @@
 'use client';
 
-import { Film, Loader2, Search } from 'lucide-react';
+import { Film, Search } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { FormEvent, useEffect, useMemo, useRef, useState } from 'react';
 
@@ -10,7 +10,16 @@ import { processImageUrl } from '@/lib/utils';
 
 import TVLayout from '@/components/tv/TVLayout';
 
-const hot = ['庆余年', '流浪地球', '繁花', '甄嬛传', '鬼灭之刃', '歌手', '三体', '权力的游戏'];
+const hot = [
+  '庆余年',
+  '流浪地球',
+  '繁花',
+  '甄嬛传',
+  '鬼灭之刃',
+  '歌手',
+  '三体',
+  '权力的游戏',
+];
 
 function getSearchCacheKey(query: string) {
   return `search_cache_${query.trim()}`;
@@ -83,7 +92,9 @@ export default function TVSearchPage() {
   const router = useRouter();
 
   useEffect(() => {
-    getSearchHistory().then(setHistory).catch(() => setHistory([]));
+    getSearchHistory()
+      .then(setHistory)
+      .catch(() => setHistory([]));
   }, []);
 
   const runSearch = (value: string) => {
@@ -121,7 +132,9 @@ export default function TVSearchPage() {
     const order: string[] = [];
 
     results.forEach((item) => {
-      const key = `${normalizeTitle(item.title)}-${getResultType(item)}-${getValidYear(item)}`;
+      const key = `${normalizeTitle(item.title)}-${getResultType(
+        item
+      )}-${getValidYear(item)}`;
       if (!groups.has(key)) {
         groups.set(key, []);
         order.push(key);
@@ -132,10 +145,21 @@ export default function TVSearchPage() {
     return order.map((key) => {
       const group = groups.get(key) || [];
       const first = group[0];
-      const sourceNames = Array.from(new Set(group.map((item) => item.source_name || item.source).filter(Boolean)));
-      const bestPoster = group.find((item) => item.poster)?.poster || first?.poster || '';
-      const bestYear = group.find((item) => getValidYear(item) !== 'unknown')?.year || first?.year || '';
-      const bestRemarks = group.find((item) => item.vod_remarks)?.vod_remarks || first?.vod_remarks || '';
+      const sourceNames = Array.from(
+        new Set(
+          group.map((item) => item.source_name || item.source).filter(Boolean)
+        )
+      );
+      const bestPoster =
+        group.find((item) => item.poster)?.poster || first?.poster || '';
+      const bestYear =
+        group.find((item) => getValidYear(item) !== 'unknown')?.year ||
+        first?.year ||
+        '';
+      const bestRemarks =
+        group.find((item) => item.vod_remarks)?.vod_remarks ||
+        first?.vod_remarks ||
+        '';
 
       return {
         key,
@@ -156,93 +180,140 @@ export default function TVSearchPage() {
     if (loading || error || displayResults.length === 0) return;
     window.requestAnimationFrame(() => {
       firstResultRef.current?.focus({ preventScroll: true });
-      firstResultRef.current?.scrollIntoView({ block: 'center', inline: 'nearest' });
+      firstResultRef.current?.scrollIntoView({
+        block: 'center',
+        inline: 'nearest',
+      });
     });
   }, [displayResults.length, error, loading]);
 
   return (
     <TVLayout>
       <div data-tv-focus-scope='active'>
-      <section className='mx-auto max-w-6xl rounded-[42px] border border-white/10 bg-slate-950/70 p-10 shadow-2xl shadow-black/60'>
-        <h1 className='text-6xl font-black'>搜索</h1>
-        <p className='mt-4 text-2xl text-slate-300'>输入片名后查看搜索结果，选择影片进入详情页后播放。</p>
-        <form onSubmit={submit} className='mt-10 flex gap-4'>
-          <label className='sr-only' htmlFor='tv-search'>搜索片名</label>
-          <input
-            id='tv-search'
-            autoFocus
-            value={keyword}
-            onChange={(e) => setKeyword(e.target.value)}
-            placeholder='输入电影、剧集、动漫、综艺名称'
-            className='h-20 flex-1 rounded-3xl border border-white/10 bg-white/10 px-8 text-3xl text-white outline-none placeholder:text-slate-500 focus:border-rose-500 tv-focusable'
-          />
-          <button type='submit' className='flex h-20 cursor-pointer items-center gap-3 rounded-3xl bg-rose-600 px-10 text-3xl font-black text-white outline-none transition hover:bg-rose-500 tv-focusable'>
-            <Search className='h-9 w-9' /> 搜索
-          </button>
-        </form>
-      </section>
-      {(loading || searched || error) && (
-        <section className='mx-auto mt-12 max-w-6xl'>
-          <div className='mb-6 flex items-center justify-between gap-4'>
-            <h2 className='text-4xl font-black'>{searched ? `“${searched}” 的搜索结果` : '搜索结果'}</h2>
-            {loading && <div className='flex items-center gap-3 text-2xl font-bold text-slate-300'><Loader2 className='h-7 w-7 animate-spin text-rose-500' />搜索中...</div>}
-          </div>
-          {error ? (
-            <div className='rounded-3xl border border-red-500/40 bg-red-950/40 p-8 text-2xl font-bold text-red-100'>{error}</div>
-          ) : loading ? null : displayResults.length === 0 ? (
-            <div className='rounded-3xl border border-white/10 bg-white/[0.06] p-8 text-2xl font-bold text-slate-300'>未找到相关结果</div>
-          ) : (
-            <div className='grid grid-cols-2 gap-5 lg:grid-cols-4'>
-              {displayResults.map((item, index) => (
-                <button
-                  key={item.key}
-                  ref={index === 0 ? firstResultRef : undefined}
-                  onClick={() => router.push(getTVDetailUrl(item))}
-                  className='tv-focusable cursor-pointer overflow-hidden rounded-3xl border border-white/10 bg-white/[0.06] text-left outline-none transition hover:bg-white/12 focus:ring-4 focus:ring-rose-300'
+        <section className=' rounded-[42px] border border-[var(--tm-line)] bg-[var(--tm-surface)] p-4 md:p-10 shadow-lg'>
+          <h1 className='text-[28px] md:text-[32px] font-bold'>搜索</h1>
+          <p className='mt-4 text-base text-[color:var(--tm-muted)]'>
+            搜索片名，选择影片查看详情
+          </p>
+          <form onSubmit={submit} className='mt-10 flex gap-4'>
+            <label className='sr-only' htmlFor='tv-search'>
+              搜索片名
+            </label>
+            <input
+              id='tv-search'
+              autoFocus
+              value={keyword}
+              onChange={(e) => setKeyword(e.target.value)}
+              placeholder='搜索片名'
+              className='h-12 min-w-0 flex-1 rounded-3xl border border-[var(--tm-line)] bg-[var(--tm-surface-raised)] px-4 text-base text-[color:var(--tm-text)] outline-none placeholder:text-[color:var(--tm-muted)] focus:border-[var(--tm-text)] tv-focusable'
+            />
+            <button
+              type='submit'
+              className='flex h-12 shrink-0 cursor-pointer items-center gap-2 rounded-3xl bg-[var(--tm-text)] px-4 text-base font-medium text-[color:var(--tm-accent-contrast)] outline-none transition hover:opacity-90 tv-focusable min-h-[44px] tm-press'
+            >
+              <Search className='h-5 w-5' /> 搜索
+            </button>
+          </form>
+        </section>
+        {(loading || searched || error) && (
+          <section className='mx-auto mt-12 '>
+            <div className='mb-6 flex items-center justify-between gap-4'>
+              <h2 className='text-[20px] md:text-[24px] font-medium'>
+                {searched ? `“${searched}” 的搜索结果` : '搜索结果'}
+              </h2>
+              {loading && (
+                <div
+                  role='status'
+                  aria-label='搜索中'
+                  className='tm-skeleton h-6 w-24 shrink-0 rounded-lg'
                 >
-                  <div className='aspect-[2/3] bg-slate-900'>
-                    {item.poster ? (
-                      <img src={processImageUrl(item.poster)} alt='' className='h-full w-full object-cover' />
-                    ) : (
-                      <div className='flex h-full items-center justify-center'><Film className='h-16 w-16 text-slate-600' /></div>
-                    )}
-                  </div>
-                  <div className='p-5'>
-                    <div className='line-clamp-1 text-2xl font-black text-white'>{item.title}</div>
-                    <div className='mt-2 line-clamp-1 text-lg font-bold text-slate-300'>{item.isAggregate ? `${item.sourceNames.length} 个播放源` : item.sourceName}</div>
-                    <div className='mt-2 flex flex-wrap gap-2 text-base font-bold text-slate-400'>
-                      {item.year && <span>{item.year}</span>}
-                      {item.vodRemarks && <span>{item.vodRemarks}</span>}
+                  <span className='sr-only'>搜索中...</span>
+                </div>
+              )}
+            </div>
+            {error ? (
+              <div
+                role='alert'
+                className='rounded-3xl border border-[var(--tm-danger)] bg-[var(--tm-surface-raised)] p-4 md:p-8 text-base font-medium text-[color:var(--tm-text)]'
+              >
+                {error}
+              </div>
+            ) : loading ? null : displayResults.length === 0 ? (
+              <div className='rounded-3xl border border-[var(--tm-line)] bg-[var(--tm-surface-raised)] p-4 md:p-8 text-base font-medium text-[color:var(--tm-muted)]'>
+                未找到相关结果
+              </div>
+            ) : (
+              <div className='grid grid-cols-2 gap-5 lg:grid-cols-4'>
+                {displayResults.map((item, index) => (
+                  <button
+                    key={item.key}
+                    ref={index === 0 ? firstResultRef : undefined}
+                    onClick={() => router.push(getTVDetailUrl(item))}
+                    className='tv-focusable cursor-pointer overflow-hidden rounded-3xl border border-[var(--tm-line)] bg-[var(--tm-surface-raised)] text-left outline-none transition hover:bg-[var(--tm-line)] min-h-[44px] tm-press'
+                  >
+                    <div className='aspect-[2/3] bg-[var(--tm-surface)]'>
+                      {item.poster ? (
+                        <img
+                          src={processImageUrl(item.poster)}
+                          alt=''
+                          className='h-full w-full object-cover'
+                        />
+                      ) : (
+                        <div className='flex h-full items-center justify-center'>
+                          <Film className='h-16 w-16 text-[color:var(--tm-muted)]' />
+                        </div>
+                      )}
                     </div>
-                  </div>
+                    <div className='p-5'>
+                      <div className='line-clamp-1 text-base font-medium text-[color:var(--tm-text)]'>
+                        {item.title}
+                      </div>
+                      <div className='mt-2 line-clamp-1 text-sm font-medium text-[color:var(--tm-muted)]'>
+                        {item.isAggregate
+                          ? `${item.sourceNames.length} 个播放源`
+                          : item.sourceName}
+                      </div>
+                      <div className='mt-2 flex flex-wrap gap-2 text-base font-medium text-[color:var(--tm-muted)]'>
+                        {item.year && <span>{item.year}</span>}
+                        {item.vodRemarks && <span>{item.vodRemarks}</span>}
+                      </div>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </section>
+        )}
+        {history.length > 0 && (
+          <section className='mx-auto mt-12 '>
+            <h2 className='text-[20px] md:text-[24px] font-medium'>搜索历史</h2>
+            <div className='mt-6 grid grid-cols-2 gap-4 md:grid-cols-4'>
+              {history.slice(0, 20).map((item) => (
+                <button
+                  key={item}
+                  onClick={() => runSearch(item)}
+                  className='cursor-pointer rounded-3xl border border-[var(--tm-line)] bg-[var(--tm-surface-raised)] px-6 py-5 text-base font-medium text-[color:var(--tm-text)] outline-none transition hover:bg-[var(--tm-line)] tv-focusable min-h-[44px] tm-press'
+                >
+                  {item}
                 </button>
               ))}
             </div>
-          )}
-        </section>
-      )}
-      {history.length > 0 && (
-        <section className='mx-auto mt-12 max-w-6xl'>
-          <h2 className='text-4xl font-black'>搜索历史</h2>
+          </section>
+        )}
+        <section className='mx-auto mt-12 '>
+          <h2 className='text-[20px] md:text-[24px] font-medium'>热门搜索</h2>
           <div className='mt-6 grid grid-cols-2 gap-4 md:grid-cols-4'>
-            {history.slice(0, 20).map((item) => (
-              <button key={item} onClick={() => runSearch(item)} className='cursor-pointer rounded-3xl border border-white/10 bg-white/[0.06] px-6 py-5 text-2xl font-bold text-white outline-none transition hover:bg-white/12 tv-focusable'>
+            {hot.map((item) => (
+              <button
+                key={item}
+                onClick={() => runSearch(item)}
+                className='cursor-pointer rounded-3xl border border-[var(--tm-line)] bg-[var(--tm-surface-raised)] px-6 py-5 text-base font-medium text-[color:var(--tm-text)] outline-none transition hover:bg-[var(--tm-line)] tv-focusable min-h-[44px] tm-press'
+              >
                 {item}
               </button>
             ))}
           </div>
         </section>
-      )}
-      <section className='mx-auto mt-12 max-w-6xl'>
-        <h2 className='text-4xl font-black'>热门搜索</h2>
-        <div className='mt-6 grid grid-cols-2 gap-4 md:grid-cols-4'>
-          {hot.map((item) => (
-            <button key={item} onClick={() => runSearch(item)} className='cursor-pointer rounded-3xl border border-white/10 bg-white/[0.06] px-6 py-5 text-2xl font-bold text-white outline-none transition hover:bg-white/12 tv-focusable'>
-              {item}
-            </button>
-          ))}
-        </div>
-      </section>
       </div>
     </TVLayout>
   );

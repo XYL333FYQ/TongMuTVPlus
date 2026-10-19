@@ -306,8 +306,3 @@ export function MoreMenu({ onNavigate }: { onNavigate?: () => void } = {}) {
     </>
   );
 }
-
-// The unused Sidebar keeps its export compatible; it is no longer mounted.
-export function ExploreMenu(_props: { compact?: boolean }) {
-  return <MoreMenu />;
-}

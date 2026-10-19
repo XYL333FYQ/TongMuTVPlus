@@ -1,42 +1,74 @@
 'use client';
 
-import { Play, Star } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { Play } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
+import { useReducedMotionSetting } from '@/lib/motion';
 import { processImageUrl } from '@/lib/utils';
 
 import { TVItem } from './types';
 
-export default function TVCard({ item }: { item: TVItem }) {
+export default function TVCard({
+  item,
+  index = 0,
+}: {
+  item: TVItem;
+  index?: number;
+}) {
   const router = useRouter();
+  const reduced = useReducedMotionSetting();
   const poster = item.poster ? processImageUrl(item.poster) : '';
-  const playUrl = item.href || `/tv/detail?title=${encodeURIComponent(item.title)}${
-    item.year ? `&year=${encodeURIComponent(item.year)}` : ''
-  }${item.type ? `&stype=${item.type}` : ''}`;
+  const playUrl =
+    item.href ||
+    `/tv/detail?title=${encodeURIComponent(item.title)}${
+      item.year ? `&year=${encodeURIComponent(item.year)}` : ''
+    }${item.type ? `&stype=${item.type}` : ''}`;
 
   return (
-    <button
+    <motion.button
       type='button'
       onClick={() => router.push(playUrl)}
-      className='group w-[210px] shrink-0 cursor-pointer rounded-[28px] bg-white/[0.04] p-3 text-left outline-none transition duration-200 hover:bg-white/10 focus-visible:bg-white/10 tv-focusable'
+      className='tm-tv-card group tv-focusable'
+      aria-label={item.title}
+      initial={{ opacity: 0, y: reduced ? 0 : 16 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      whileTap={{
+        scale: reduced ? 1 : 0.97,
+        transition: { duration: reduced ? 0 : 0.12, delay: 0 },
+      }}
+      viewport={{ once: true, amount: 0.1 }}
+      transition={{
+        duration: reduced ? 0.12 : 0.36,
+        delay: reduced ? 0 : Math.min(index, 5) * 0.04,
+        ease: [0.22, 1, 0.36, 1],
+      }}
     >
-      <div className='relative aspect-[2/3] overflow-hidden rounded-[22px] bg-slate-900 shadow-xl shadow-black/50 transition duration-200 group-hover:scale-[1.03] group-focus-visible:scale-[1.03]'>
+      <div className='tm-tv-card-poster'>
         {poster ? (
-          <img src={poster} alt={item.title} className='h-full w-full object-cover' />
+          <img
+            src={poster}
+            alt={item.title}
+            className='tm-tv-card-image'
+            ref={(node) => {
+              if (node?.complete && node.naturalWidth > 0)
+                node.dataset.loaded = 'true';
+            }}
+            onLoad={(event) => {
+              event.currentTarget.dataset.loaded = 'true';
+            }}
+          />
         ) : (
-          <div className='flex h-full w-full items-center justify-center bg-gradient-to-br from-slate-800 to-slate-950 text-slate-500'>
+          <div className='flex h-full w-full items-center justify-center bg-[var(--tm-surface)] text-[color:var(--tm-muted)]'>
             <Play className='h-14 w-14' />
           </div>
         )}
-        <div className='absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 to-transparent p-3'>
-          <div className='inline-flex items-center gap-1 rounded-full bg-black/60 px-2 py-1 text-sm text-amber-300 backdrop-blur'>
-            <Star className='h-4 w-4 fill-current' />
-            {item.rate || '推荐'}
-          </div>
+        <div className='tm-tv-card-rating-slot'>
+          {item.rate && <span className='tm-tv-card-rating'>{item.rate}</span>}
         </div>
       </div>
-      <h3 className='mt-3 line-clamp-1 text-[22px] font-bold text-white'>{item.title}</h3>
-      <p className='mt-1 text-lg text-slate-400'>{item.year || '即刻播放'}</p>
-    </button>
+      <h3 className='tm-tv-card-title'>{item.title}</h3>
+      <p className='tm-tv-card-meta'>{item.year || ''}</p>
+    </motion.button>
   );
 }

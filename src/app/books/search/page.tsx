@@ -43,7 +43,7 @@ const PANEL_CLASS = cn(LIBRARY_PANEL, 'p-5 sm:p-6');
 const FIELD_CLASS = cn(LIBRARY_FIELD, 'h-12 py-0');
 const CHIP_CLASS = cn(
   LIBRARY_GHOST_BUTTON,
-  'cursor-pointer gap-1.5 rounded-full px-3 py-1.5 text-xs'
+  'cursor-pointer gap-1.5 rounded-full px-3 py-1.5 text-[13px] min-h-[44px] tm-press'
 );
 
 function detailHref(item: BookListItem) {
@@ -506,9 +506,7 @@ export default function BooksSearchPage() {
   return (
     <div className='space-y-6'>
       <section className={PANEL_CLASS}>
-        <h1
-          className={cn('text-2xl font-semibold', LIBRARY_TEXT, LIBRARY_SERIF)}
-        >
+        <h1 className={cn('text-2xl font-bold', LIBRARY_TEXT, LIBRARY_SERIF)}>
           搜索电子书
         </h1>
         <p className={cn('mt-2 text-sm', LIBRARY_MUTED)}>
@@ -536,7 +534,10 @@ export default function BooksSearchPage() {
           <div className='grid gap-3 lg:grid-cols-[1fr_13rem_auto]'>
             <label className='block'>
               <span
-                className={cn('mb-2 block text-xs font-medium', LIBRARY_MUTED)}
+                className={cn(
+                  'mb-2 block text-[13px] font-medium',
+                  LIBRARY_MUTED
+                )}
               >
                 关键词
               </span>
@@ -559,7 +560,7 @@ export default function BooksSearchPage() {
                     type='button'
                     onClick={() => setQ('')}
                     className={cn(
-                      'absolute right-2.5 top-1/2 inline-flex h-7 w-7 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full text-library-muted transition-colors duration-200 hover:bg-library-ochre-tint hover:text-library-ochre dark:text-library-night-muted dark:hover:bg-library-night-ochre-tint dark:hover:text-library-night-ochre',
+                      'absolute right-2.5 top-1/2 inline-flex h-7 w-7 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full text-[color:var(--tm-muted)] transition-colors duration-200 hover:bg-[var(--tm-surface-raised)] hover:text-[color:var(--tm-text)] min-h-[44px] tm-press',
                       LIBRARY_FOCUS
                     )}
                     aria-label='清空搜索关键词'
@@ -572,7 +573,10 @@ export default function BooksSearchPage() {
 
             <label className='block'>
               <span
-                className={cn('mb-2 block text-xs font-medium', LIBRARY_MUTED)}
+                className={cn(
+                  'mb-2 block text-[13px] font-medium',
+                  LIBRARY_MUTED
+                )}
               >
                 书源
               </span>
@@ -597,7 +601,7 @@ export default function BooksSearchPage() {
                 disabled={loading}
                 className={cn(
                   LIBRARY_BUTTON,
-                  'h-12 w-full cursor-pointer px-6 disabled:cursor-not-allowed disabled:opacity-70 lg:w-auto'
+                  'h-12 w-full cursor-pointer px-6 disabled:cursor-not-allowed disabled:opacity-70 lg:w-auto min-h-[44px] tm-press'
                 )}
               >
                 {loading ? (
@@ -626,7 +630,7 @@ export default function BooksSearchPage() {
           subtitle={hasSearched ? `当前范围：${scopeLabel}` : undefined}
           action={
             loading && useFluidSearch && totalSources > 0 ? (
-              <span className={cn('shrink-0 text-xs', LIBRARY_MUTED)}>
+              <span className={cn('shrink-0 text-[13px]', LIBRARY_MUTED)}>
                 搜索中 {completedSources}/{totalSources}
               </span>
             ) : undefined

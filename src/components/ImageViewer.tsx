@@ -1,8 +1,12 @@
 'use client';
 
 import { X } from 'lucide-react';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+
+import '@/styles/legacy-panels.css';
+
+import { useReducedMotionSetting } from '@/lib/motion';
 
 import ProxyImage from '@/components/ProxyImage';
 
@@ -19,6 +23,16 @@ const ImageViewer: React.FC<ImageViewerProps> = ({
   imageUrl,
   alt = '图片',
 }) => {
+  const reduced = useReducedMotionSetting();
+  const dialogRef = useRef<HTMLDialogElement>(null);
+  const animationFrame = useRef<number | null>(null);
+  const externalTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const closing = useRef(false);
+  const exitDuration = useRef(320);
+  exitDuration.current = reduced ? 120 : 320;
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
   const [isVisible, setIsVisible] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -26,34 +40,58 @@ const ImageViewer: React.FC<ImageViewerProps> = ({
   // 确保组件在客户端挂载后才渲染 Portal
   useEffect(() => {
     setMounted(true);
+    return () => {
+      if (animationFrame.current !== null)
+        cancelAnimationFrame(animationFrame.current);
+      if (externalTimer.current !== null) clearTimeout(externalTimer.current);
+      if (closeTimer.current !== null) clearTimeout(closeTimer.current);
+    };
   }, []);
+
+  const finishClose = useCallback(() => {
+    closeTimer.current = null;
+    setIsVisible(false);
+    onCloseRef.current();
+  }, []);
+
+  const requestClose = useCallback(() => {
+    if (!isOpen || closing.current) return;
+    closing.current = true;
+    if (animationFrame.current !== null)
+      cancelAnimationFrame(animationFrame.current);
+    setIsAnimating(false);
+    closeTimer.current = setTimeout(finishClose, reduced ? 120 : 320);
+  }, [finishClose, isOpen, reduced]);
+
+  useEffect(() => {
+    if (reduced && closing.current && closeTimer.current !== null) {
+      clearTimeout(closeTimer.current);
+      closeTimer.current = setTimeout(finishClose, 120);
+    }
+  }, [finishClose, reduced]);
 
   // 控制动画状态
   useEffect(() => {
-    let animationId: number;
-    let timer: NodeJS.Timeout;
-
     if (isOpen) {
+      closing.current = false;
+      if (closeTimer.current !== null) clearTimeout(closeTimer.current);
       setIsVisible(true);
-      animationId = requestAnimationFrame(() => {
-        animationId = requestAnimationFrame(() => {
+      animationFrame.current = requestAnimationFrame(() => {
+        animationFrame.current = requestAnimationFrame(() => {
           setIsAnimating(true);
         });
       });
     } else {
       setIsAnimating(false);
-      timer = setTimeout(() => {
+      externalTimer.current = setTimeout(() => {
         setIsVisible(false);
-      }, 200);
+      }, exitDuration.current);
     }
 
     return () => {
-      if (animationId) {
-        cancelAnimationFrame(animationId);
-      }
-      if (timer) {
-        clearTimeout(timer);
-      }
+      if (animationFrame.current !== null)
+        cancelAnimationFrame(animationFrame.current);
+      if (externalTimer.current !== null) clearTimeout(externalTimer.current);
     };
   }, [isOpen]);
 
@@ -101,70 +139,88 @@ const ImageViewer: React.FC<ImageViewerProps> = ({
     }
   }, [isVisible]);
 
-  // ESC键关闭
+  // The top-layer dialog owns focus and Escape; older document listeners stay below it.
   useEffect(() => {
-    const handleEsc = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        onClose();
-      }
+    const dialog = dialogRef.current;
+    if (!mounted || !isVisible || !dialog) return;
+    const trigger = document.activeElement;
+    if (!dialog.open) dialog.showModal();
+    return () => {
+      if (dialog.open) dialog.close();
+      if (trigger instanceof HTMLElement && trigger.isConnected)
+        trigger.focus({ preventScroll: true });
     };
-
-    if (isVisible) {
-      document.addEventListener('keydown', handleEsc);
-      return () => document.removeEventListener('keydown', handleEsc);
-    }
-  }, [isVisible, onClose]);
+  }, [isVisible, mounted]);
 
   if (!isVisible || !mounted) return null;
 
   const content = (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-0 sm:p-4">
+    <dialog
+      ref={dialogRef}
+      aria-label={alt}
+      onCancel={(event) => {
+        event.preventDefault();
+        requestClose();
+      }}
+      onKeyDown={(event) => {
+        if (event.key === 'Escape') event.stopPropagation();
+        if (event.key === 'Tab') {
+          event.preventDefault();
+          event.currentTarget
+            .querySelector<HTMLButtonElement>('button')
+            ?.focus();
+        }
+      }}
+      className='tm-image-viewer fixed inset-0 z-[9999] flex items-center justify-center p-0 sm:p-4'
+    >
       {/* 背景遮罩 */}
       <div
-        className={`absolute inset-0 bg-black/80 transition-opacity duration-200 ease-out ${
+        className={`tm-image-viewer-backdrop absolute inset-0 bg-[color:color-mix(in_srgb,var(--tm-room-cinema-bg)_80%,transparent)] transition-opacity duration-200 ease-out ${
           isAnimating ? 'opacity-100' : 'opacity-0'
-        }`}
-        onClick={onClose}
+        } `}
+        onClick={requestClose}
         style={{
           backdropFilter: 'blur(4px)',
-          willChange: 'opacity',
         }}
       />
 
       {/* 关闭按钮 */}
       <button
-        onClick={onClose}
-        className="absolute top-4 right-4 z-10 p-2 rounded-full bg-black/50 hover:bg-black/70 transition-colors duration-150"
-        aria-label="关闭"
+        onClick={requestClose}
+        className='tm-image-viewer-close absolute top-4 right-4 z-10 p-2 rounded-full bg-[color:color-mix(in_srgb,var(--tm-room-cinema-bg)_50%,transparent)] hover:bg-[color:color-mix(in_srgb,var(--tm-room-cinema-bg)_70%,transparent)] transition-[opacity,transform] duration-150 min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
+        aria-label='关闭'
       >
-        <X size={24} className="text-white" />
+        <X size={24} className='text-[color:var(--tm-room-player-text)]' />
       </button>
 
       {/* 图片容器 */}
       <div
-        className="relative max-w-[100vw] max-h-[100vh] sm:max-w-[90vw] sm:max-h-[90vh] transition-all duration-200 ease-out"
+        className='tm-image-viewer-picture relative max-w-[100vw] max-h-[100vh] sm:max-w-[90vw] sm:max-h-[90vh] transition-[transform,opacity] duration-200 ease-out'
         style={{
-          willChange: 'transform, opacity',
           backfaceVisibility: 'hidden',
-          transform: isAnimating ? 'scale(1) translateZ(0)' : 'scale(0.95) translateZ(0)',
+          transform: reduced
+            ? 'none'
+            : isAnimating
+            ? 'translateY(0px)'
+            : 'translateY(8px)',
           opacity: isAnimating ? 1 : 0,
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="relative w-full h-full">
+        <div className='relative w-full h-full'>
           <ProxyImage
             originalSrc={imageUrl}
             alt={alt}
-            className="object-contain max-w-[100vw] max-h-[100vh] sm:max-w-[90vw] sm:max-h-[90vh] w-auto h-auto"
+            className='object-contain max-w-[100vw] max-h-[100vh] sm:max-w-[90vw] sm:max-h-[90vh] w-auto h-auto'
             style={{
               maxWidth: '100vw',
               maxHeight: '100vh',
             }}
-            loading="eager"
+            loading='eager'
           />
         </div>
       </div>
-    </div>
+    </dialog>
   );
 
   return createPortal(content, document.body);

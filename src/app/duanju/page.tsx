@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, react-hooks/exhaustive-deps */
 'use client';
 
-import { ArrowLeft, ChevronUp, Loader2 } from 'lucide-react';
+import { ArrowLeft, ChevronUp } from 'lucide-react';
 import Link from 'next/link';
 import {
   Suspense,
@@ -19,10 +19,15 @@ import {
   isHierarchicalCategories,
   pickDefaultSelection,
 } from '@/lib/category-tree';
+import { isReducedMotionSetting } from '@/lib/motion';
 import { SearchResult } from '@/lib/types';
+import { useViewerIdentity } from '@/hooks/useViewerIdentity';
 
 import CapsuleSwitch from '@/components/CapsuleSwitch';
+import PageContainer from '@/components/PageContainer';
 import PageLayout from '@/components/PageLayout';
+import PosterGrid from '@/components/PosterGrid';
+import PublicCatalogPage from '@/components/PublicCatalogPage';
 import VideoCard from '@/components/VideoCard';
 
 interface DuanjuSource {
@@ -122,8 +127,9 @@ function DuanjuPageClient() {
       // 旧快照没有一级分类时，从已选分类反推
       setSelectedParentCategory(
         snapshot.selectedParentCategory ||
-          snapshot.categories.find((item) => item.id === snapshot.selectedCategory)
-            ?.pid ||
+          snapshot.categories.find(
+            (item) => item.id === snapshot.selectedCategory
+          )?.pid ||
           ''
       );
       setSelectedCategory(snapshot.selectedCategory);
@@ -155,7 +161,8 @@ function DuanjuPageClient() {
       selectedCategory,
       videos,
       // 当前页还在请求中，回退一页以便返回后重新拉取，避免缺页
-      currentPage: isLoadingVideos && currentPage > 1 ? currentPage - 1 : currentPage,
+      currentPage:
+        isLoadingVideos && currentPage > 1 ? currentPage - 1 : currentPage,
       hasMore,
       scrollTop: 0,
     };
@@ -263,7 +270,9 @@ function DuanjuPageClient() {
           const preferred = source?.typeId || '';
 
           if (preferred && ids.has(preferred)) {
-            const preferredPid = list.find((item) => item.id === preferred)?.pid;
+            const preferredPid = list.find(
+              (item) => item.id === preferred
+            )?.pid;
             if (multiParent) {
               const children = getChildCategories(list, preferred);
               setSelectedParentCategory(
@@ -329,11 +338,11 @@ function DuanjuPageClient() {
   const flatCategories = !isHierarchical
     ? categories
     : parentCategories.length === 1
-      ? [
-          parentCategories[0],
-          ...getChildCategories(categories, parentCategories[0].id),
-        ]
-      : categories;
+    ? [
+        parentCategories[0],
+        ...getChildCategories(categories, parentCategories[0].id),
+      ]
+    : categories;
 
   // 当选择的分类或页码变化时，加载视频列表
   useEffect(() => {
@@ -349,7 +358,11 @@ function DuanjuPageClient() {
       setIsLoadingVideos(true);
       try {
         const response = await fetch(
-          `/api/duanju/videos?source=${encodeURIComponent(selectedSource)}&categoryId=${encodeURIComponent(selectedCategory)}&page=${currentPage}`
+          `/api/duanju/videos?source=${encodeURIComponent(
+            selectedSource
+          )}&categoryId=${encodeURIComponent(
+            selectedCategory
+          )}&page=${currentPage}`
         );
         const data = await response.json();
         if (data.code === 200 && Array.isArray(data.data)) {
@@ -413,8 +426,14 @@ function DuanjuPageClient() {
   // 返回顶部
   const scrollToTop = () => {
     try {
-      document.body.scrollTo({ top: 0, behavior: 'smooth' });
-      document.documentElement.scrollTo({ top: 0, behavior: 'smooth' });
+      document.body.scrollTo({
+        top: 0,
+        behavior: isReducedMotionSetting() ? 'auto' : 'smooth',
+      });
+      document.documentElement.scrollTo({
+        top: 0,
+        behavior: isReducedMotionSetting() ? 'auto' : 'smooth',
+      });
     } catch {
       scrollPageTo(0);
     }
@@ -422,19 +441,19 @@ function DuanjuPageClient() {
 
   return (
     <PageLayout activePath='/duanju'>
-      <div className='px-4 sm:px-10 py-4 sm:py-8 overflow-visible mb-10'>
+      <PageContainer className='py-4 sm:py-8 overflow-visible mb-10'>
         <div className='mb-6 flex items-start justify-between gap-4'>
           <div>
-            <h1 className='text-2xl font-bold text-gray-800 dark:text-gray-200'>
+            <h1 className=' text-[color:var(--tm-text)] text-[28px] font-bold md:text-[32px]'>
               短剧
             </h1>
-            <p className='text-sm text-gray-500 dark:text-gray-400 mt-1'>
+            <p className='text-sm text-[color:var(--tm-muted)] mt-1'>
               浏览所有采集源中的短剧内容
             </p>
           </div>
           <Link
             href='/'
-            className='inline-flex items-center gap-1 rounded-lg px-3 py-2 text-sm text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-gray-100'
+            className='inline-flex items-center gap-1 rounded-lg px-3 py-2 text-sm text-[color:var(--tm-muted)] hover:bg-[var(--tm-line)] hover:opacity-80 min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
           >
             <ArrowLeft className='h-4 w-4' />
             返回首页
@@ -443,19 +462,22 @@ function DuanjuPageClient() {
 
         <div className='max-w-4xl mx-auto mb-8'>
           <div className='relative'>
-            <div className='text-xs text-gray-500 dark:text-gray-400 mb-2 px-4'>
+            <div className='text-[13px] text-[color:var(--tm-muted)] mb-2 px-4'>
               服务
             </div>
             {isLoadingSources ? (
-              <div className='flex items-center justify-center h-12 bg-gray-50/80 rounded-lg border border-gray-200/50 dark:bg-gray-800 dark:border-gray-700'>
-                <Loader2 className='h-5 w-5 animate-spin text-gray-400' />
-                <span className='ml-2 text-sm text-gray-500 dark:text-gray-400'>
+              <div className='flex items-center justify-center h-12 bg-[var(--tm-surface-raised)] rounded-lg border border-[var(--tm-line)]'>
+                <span
+                  aria-hidden
+                  className='tm-skeleton h-5 w-5 text-[color:var(--tm-muted)]'
+                />
+                <span className='ml-2 text-sm text-[color:var(--tm-muted)]'>
                   加载采集源中...
                 </span>
               </div>
             ) : sources.length === 0 ? (
-              <div className='flex items-center justify-center h-12 bg-gray-50/80 rounded-lg border border-gray-200/50 dark:bg-gray-800 dark:border-gray-700'>
-                <span className='text-sm text-gray-500 dark:text-gray-400'>
+              <div className='flex items-center justify-center h-12 bg-[var(--tm-surface-raised)] rounded-lg border border-[var(--tm-line)]'>
+                <span className='text-sm text-[color:var(--tm-muted)]'>
                   暂无包含短剧分类的采集源
                 </span>
               </div>
@@ -467,8 +489,10 @@ function DuanjuPageClient() {
                   onMouseDown={(e) => {
                     if (!sourceScrollContainerRef.current) return;
                     isDraggingRef.current = true;
-                    startXRef.current = e.pageX - sourceScrollContainerRef.current.offsetLeft;
-                    scrollLeftRef.current = sourceScrollContainerRef.current.scrollLeft;
+                    startXRef.current =
+                      e.pageX - sourceScrollContainerRef.current.offsetLeft;
+                    scrollLeftRef.current =
+                      sourceScrollContainerRef.current.scrollLeft;
                     sourceScrollContainerRef.current.style.cursor = 'grabbing';
                     sourceScrollContainerRef.current.style.userSelect = 'none';
                   }}
@@ -485,11 +509,17 @@ function DuanjuPageClient() {
                     sourceScrollContainerRef.current.style.userSelect = 'auto';
                   }}
                   onMouseMove={(e) => {
-                    if (!isDraggingRef.current || !sourceScrollContainerRef.current) return;
+                    if (
+                      !isDraggingRef.current ||
+                      !sourceScrollContainerRef.current
+                    )
+                      return;
                     e.preventDefault();
-                    const x = e.pageX - sourceScrollContainerRef.current.offsetLeft;
+                    const x =
+                      e.pageX - sourceScrollContainerRef.current.offsetLeft;
                     const walk = (x - startXRef.current) * 2;
-                    sourceScrollContainerRef.current.scrollLeft = scrollLeftRef.current - walk;
+                    sourceScrollContainerRef.current.scrollLeft =
+                      scrollLeftRef.current - walk;
                   }}
                 >
                   <div className='flex gap-2 px-4 min-w-min'>
@@ -499,8 +529,8 @@ function DuanjuPageClient() {
                         onClick={() => handleSourceChange(source.key)}
                         className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap flex-shrink-0 ${
                           selectedSource === source.key
-                            ? 'bg-blue-600 text-white'
-                            : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+                            ? 'bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
+                            : 'bg-[var(--tm-surface-raised)] text-[color:var(--tm-muted)] hover:bg-[var(--tm-line)] min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
                         }`}
                       >
                         {source.name}
@@ -518,7 +548,7 @@ function DuanjuPageClient() {
           <div className='max-w-4xl mx-auto mb-8'>
             {isMultiParent ? (
               <>
-                <div className='text-xs text-gray-500 dark:text-gray-400 mb-2 px-4'>
+                <div className='text-[13px] text-[color:var(--tm-muted)] mb-2 px-4'>
                   类型
                 </div>
                 <div className='flex px-4 mb-4'>
@@ -533,7 +563,7 @@ function DuanjuPageClient() {
                 </div>
                 {subCategories.length > 0 && (
                   <div>
-                    <div className='text-xs text-gray-500 dark:text-gray-400 mb-2 px-4'>
+                    <div className='text-[13px] text-[color:var(--tm-muted)] mb-2 px-4'>
                       分类
                     </div>
                     <div className='flex px-4'>
@@ -551,7 +581,7 @@ function DuanjuPageClient() {
               </>
             ) : (
               <div>
-                <div className='text-xs text-gray-500 dark:text-gray-400 mb-2 px-4'>
+                <div className='text-[13px] text-[color:var(--tm-muted)] mb-2 px-4'>
                   分类
                 </div>
                 <div className='flex px-4'>
@@ -570,30 +600,30 @@ function DuanjuPageClient() {
         )}
 
         {selectedSource && !selectedCategory && (
-          <div className='text-center text-gray-500 py-8 dark:text-gray-400'>
+          <div className='text-center text-[color:var(--tm-muted)] py-8'>
             当前采集源暂无短剧分类
           </div>
         )}
 
         {selectedSource && selectedCategory && (
-          <div className='max-w-[95%] mx-auto mt-8'>
+          <div className='mt-8'>
             <div className='mb-4'>
-              <h2 className='text-xl font-bold text-gray-800 dark:text-gray-200'>
+              <h2 className=' text-[color:var(--tm-text)] text-xl font-medium md:text-2xl'>
                 短剧列表
               </h2>
             </div>
 
             {isLoadingVideos && currentPage === 1 ? (
               <div className='flex justify-center items-center h-40'>
-                <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500'></div>
+                <div className='tm-skeleton  rounded-md h-8 w-8  '></div>
               </div>
             ) : videos.length === 0 ? (
-              <div className='text-center text-gray-500 py-8 dark:text-gray-400'>
+              <div className='text-center text-[color:var(--tm-muted)] py-8'>
                 暂无短剧
               </div>
             ) : (
               <>
-                <div className='grid grid-cols-3 gap-x-2 gap-y-14 sm:gap-y-20 px-0 sm:px-2 sm:grid-cols-[repeat(auto-fill,_minmax(11rem,_1fr))] sm:gap-x-8'>
+                <PosterGrid className=''>
                   {videos.map((item) => (
                     <div key={`${item.source}-${item.id}`} className='w-full'>
                       <VideoCard
@@ -617,14 +647,17 @@ function DuanjuPageClient() {
                       />
                     </div>
                   ))}
-                </div>
+                </PosterGrid>
 
-                <div ref={loadMoreRef} className='flex justify-center items-center py-8'>
+                <div
+                  ref={loadMoreRef}
+                  className='flex justify-center items-center py-8'
+                >
                   {isLoadingVideos && (
-                    <div className='animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500'></div>
+                    <div className='tm-skeleton  rounded-md h-6 w-6  '></div>
                   )}
                   {!hasMore && videos.length > 0 && (
-                    <span className='text-sm text-gray-500 dark:text-gray-400'>
+                    <span className='text-sm text-[color:var(--tm-muted)]'>
                       没有更多了
                     </span>
                   )}
@@ -633,15 +666,17 @@ function DuanjuPageClient() {
             )}
           </div>
         )}
-      </div>
+      </PageContainer>
 
       {/* 置顶（返回顶部）悬浮按钮 */}
       <button
         onClick={scrollToTop}
-        className={`fixed bottom-20 md:bottom-6 right-6 z-[500] w-12 h-12 bg-green-500/90 hover:bg-green-500 text-white rounded-full shadow-lg backdrop-blur-sm transition-all duration-300 ease-in-out flex items-center justify-center group ${
+        aria-hidden={!showBackToTop}
+        tabIndex={showBackToTop ? 0 : -1}
+        className={`fixed bottom-20 md:bottom-6 right-6 z-[500] w-12 h-12 bg-[var(--tm-text)] hover:opacity-90 text-[color:var(--tm-accent-contrast)] rounded-full shadow-lg transition-[transform,opacity] duration-300 ease-in-out flex items-center justify-center group ${
           showBackToTop
-            ? 'opacity-100 translate-y-0 pointer-events-auto'
-            : 'opacity-0 translate-y-4 pointer-events-none'
+            ? 'opacity-100 translate-y-0 pointer-events-auto min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
+            : 'opacity-0 translate-y-4 pointer-events-none min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
         }`}
         aria-label='返回顶部'
       >
@@ -651,10 +686,27 @@ function DuanjuPageClient() {
   );
 }
 
+function DuanjuViewerPage() {
+  const { ready, isGuest } = useViewerIdentity();
+  if (!ready)
+    return (
+      <PageLayout activePath='/duanju'>
+        <div className='tm-public-feedback' role='status'>
+          正在加载
+        </div>
+      </PageLayout>
+    );
+  return isGuest ? (
+    <PublicCatalogPage mode='library' category='duanju' />
+  ) : (
+    <DuanjuPageClient />
+  );
+}
+
 export default function DuanjuPage() {
   return (
     <Suspense>
-      <DuanjuPageClient />
+      <DuanjuViewerPage />
     </Suspense>
   );
 }

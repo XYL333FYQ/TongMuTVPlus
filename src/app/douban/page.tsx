@@ -19,7 +19,9 @@ import BangumiScheduleTimeline from '@/components/BangumiScheduleTimeline';
 import DoubanCardSkeleton from '@/components/DoubanCardSkeleton';
 import DoubanCustomSelector from '@/components/DoubanCustomSelector';
 import DoubanSelector from '@/components/DoubanSelector';
+import PageContainer from '@/components/PageContainer';
 import PageLayout from '@/components/PageLayout';
+import PosterGrid from '@/components/PosterGrid';
 import PublicCatalogPage from '@/components/PublicCatalogPage';
 import VideoCard from '@/components/VideoCard';
 
@@ -789,22 +791,22 @@ function DoubanPageClient() {
 
   return (
     <PageLayout activePath={getActivePath()}>
-      <div className='px-4 sm:px-10 py-4 sm:py-8 overflow-visible'>
+      <PageContainer className='py-4 sm:py-8 overflow-visible [&_button]:min-h-[44px] [&_button]:min-w-[44px] [&_button]:text-[13px] sm:[&_button]:text-sm'>
         {/* 页面标题和选择器 */}
         <div className='mb-6 sm:mb-8 space-y-4 sm:space-y-6'>
           {/* 页面标题 */}
           <div>
-            <h1 className='text-2xl sm:text-3xl font-bold text-gray-800 mb-1 sm:mb-2 dark:text-gray-200'>
+            <h1 className=' text-[color:var(--tm-text)] mb-1 sm:mb-2 text-[28px] font-bold md:text-[32px]'>
               {getPageTitle()}
             </h1>
-            <p className='text-sm sm:text-base text-gray-600 dark:text-gray-400'>
+            <p className='text-sm sm:text-base text-[color:var(--tm-muted)]'>
               {getPageDescription()}
             </p>
           </div>
 
           {/* 选择器组件 */}
           {type !== 'custom' ? (
-            <div className='bg-white/60 dark:bg-gray-800/40 rounded-2xl p-4 sm:p-6 border border-gray-200/30 dark:border-gray-700/30 backdrop-blur-sm'>
+            <div className='bg-[var(--tm-surface-raised)] rounded-2xl p-4 sm:p-6 border border-[var(--tm-line)] '>
               <DoubanSelector
                 type={type as 'movie' | 'tv' | 'show' | 'anime'}
                 primarySelection={primarySelection}
@@ -818,7 +820,7 @@ function DoubanPageClient() {
               />
             </div>
           ) : (
-            <div className='bg-white/60 dark:bg-gray-800/40 rounded-2xl p-4 sm:p-6 border border-gray-200/30 dark:border-gray-700/30 backdrop-blur-sm'>
+            <div className='bg-[var(--tm-surface-raised)] rounded-2xl p-4 sm:p-6 border border-[var(--tm-line)] '>
               <DoubanCustomSelector
                 customCategories={customCategories}
                 primarySelection={primarySelection}
@@ -831,16 +833,13 @@ function DoubanPageClient() {
         </div>
 
         {/* 内容展示区域 */}
-        <div
-          ref={contentRef}
-          className='max-w-[95%] mx-auto mt-8 overflow-visible'
-        >
+        <div ref={contentRef} className='mt-8 overflow-visible'>
           {/* 时刻表视图（每日放送） */}
           {isScheduleView ? (
             <BangumiScheduleTimeline weekday={selectedWeekday} />
           ) : (
             /* 内容网格 */
-            <div className='justify-start grid grid-cols-3 gap-x-2 gap-y-12 px-0 sm:px-2 sm:grid-cols-[repeat(auto-fill,minmax(160px,1fr))] sm:gap-x-8 sm:gap-y-20'>
+            <PosterGrid className=''>
               {loading || !selectorsReady
                 ? // 显示骨架屏
                   skeletonData.map((index) => (
@@ -864,7 +863,7 @@ function DoubanPageClient() {
                       />
                     </div>
                   ))}
-            </div>
+            </PosterGrid>
           )}
 
           {/* 加载更多指示器 */}
@@ -881,8 +880,8 @@ function DoubanPageClient() {
             >
               {isLoadingMore && (
                 <div className='flex items-center gap-2'>
-                  <div className='animate-spin rounded-full h-6 w-6 border-b-2 border-green-500'></div>
-                  <span className='text-gray-600'>加载中...</span>
+                  <div className='tm-skeleton rounded-md h-6 w-6 '></div>
+                  <span className='text-[color:var(--tm-muted)]'>正在加载</span>
                 </div>
               )}
             </div>
@@ -890,15 +889,19 @@ function DoubanPageClient() {
 
           {/* 没有更多数据提示 */}
           {!isScheduleView && !hasMore && doubanData.length > 0 && (
-            <div className='text-center text-gray-500 py-8'>已加载全部内容</div>
+            <div className='text-center text-[color:var(--tm-muted)] py-8'>
+              已加载全部内容
+            </div>
           )}
 
           {/* 空状态 */}
           {!isScheduleView && !loading && doubanData.length === 0 && (
-            <div className='text-center text-gray-500 py-8'>暂无相关内容</div>
+            <div className='text-center text-[color:var(--tm-muted)] py-8'>
+              暂无相关内容
+            </div>
           )}
         </div>
-      </div>
+      </PageContainer>
     </PageLayout>
   );
 }
@@ -909,7 +912,7 @@ function DoubanPageEntry() {
     return (
       <PageLayout activePath='/douban'>
         <div className='tm-public-feedback' role='status'>
-          正在打开片库…
+          正在打开片库
         </div>
       </PageLayout>
     );

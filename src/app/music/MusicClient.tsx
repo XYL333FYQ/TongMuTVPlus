@@ -1,13 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
-import { usePathname, useRouter } from 'next/navigation';
-import { useEffect, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
 import {
+  type DragEndEvent,
   closestCenter,
   DndContext,
-  type DragEndEvent,
   PointerSensor,
   TouchSensor,
   useSensor,
@@ -24,9 +21,27 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { GripVertical, ImageOff, ListMusic, SlidersHorizontal, Trash2, X } from 'lucide-react';
+import {
+  GripVertical,
+  ImageOff,
+  ListMusic,
+  SlidersHorizontal,
+  Trash2,
+  X,
+} from 'lucide-react';
+import { usePathname, useRouter } from 'next/navigation';
+import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
+
+import { cn } from '@/lib/cn';
+import {
+  getSourceDisplayLabel,
+  normalizeSource,
+  SourcePill,
+} from '@/lib/music/shared';
+import type { MusicQuality, MusicSource, Song } from '@/lib/music/types';
+
 import AddToPlaylistModal from '@/components/AddToPlaylistModal';
-import Toast, { ToastProps } from '@/components/Toast';
 import LyricsPiPWindow from '@/components/LyricsPiPWindow';
 import MusicEmpty from '@/components/music/MusicEmpty';
 import MusicSidebarDrawer from '@/components/music/MusicSidebarDrawer';
@@ -51,10 +66,10 @@ import {
   MUSIC_ROW_SOURCE,
   MUSIC_ROW_TEXT,
 } from '@/components/music/tokens';
+import PageContainer from '@/components/PageContainer';
+import Toast, { ToastProps } from '@/components/Toast';
 import { useWatchRoomContextSafe } from '@/components/WatchRoomProvider';
-import { cn } from '@/lib/cn';
-import { getSourceDisplayLabel, normalizeSource, SourcePill } from '@/lib/music/shared';
-import type { MusicQuality, MusicSource, Song } from '@/lib/music/types';
+
 import type { MusicQueueItem, MusicSyncState } from '@/types/watch-room';
 
 const SPECTRUM_BIN_COUNT = 96;
@@ -64,34 +79,97 @@ const SPECTRUM_REFERENCE_VOLUME = 10;
 const SPECTRUM_MIN_VOLUME = 5;
 const SPECTRUM_MAX_REFERENCE_VOLUME = 15;
 const EQ_BANDS = [
-  { label: '31', frequency: 31 }, { label: '62', frequency: 62 },
-  { label: '125', frequency: 125 }, { label: '250', frequency: 250 },
-  { label: '500', frequency: 500 }, { label: '1K', frequency: 1000 },
-  { label: '2K', frequency: 2000 }, { label: '4K', frequency: 4000 },
-  { label: '8K', frequency: 8000 }, { label: '16K', frequency: 16000 },
+  { label: '31', frequency: 31 },
+  { label: '62', frequency: 62 },
+  { label: '125', frequency: 125 },
+  { label: '250', frequency: 250 },
+  { label: '500', frequency: 500 },
+  { label: '1K', frequency: 1000 },
+  { label: '2K', frequency: 2000 },
+  { label: '4K', frequency: 4000 },
+  { label: '8K', frequency: 8000 },
+  { label: '16K', frequency: 16000 },
 ] as const;
 const DEFAULT_EQ_GAINS = EQ_BANDS.map(() => 0);
 const EQ_PRESETS = {
   Flat: DEFAULT_EQ_GAINS,
-  流行: [4, 3, -1, -2, 1, 2, 3, 2, 4, 3], 摇滚: [5, 4, 2, 1, -1, -2, 2, 3, 4, 5],
-  古典: [4, 3, 1, 1, 0, 1, -1, -2, -3, -4], 人声: [-3, -2, -1, 1, 3, 4, 3, 2, -1, -2],
-  电子: [5, 4, 1, -2, -2, 0, 3, 4, 4, 3], 重低音: [7, 6, 4, 3, 1, 0, 0, 0, 0, 0],
+  流行: [4, 3, -1, -2, 1, 2, 3, 2, 4, 3],
+  摇滚: [5, 4, 2, 1, -1, -2, 2, 3, 4, 5],
+  古典: [4, 3, 1, 1, 0, 1, -1, -2, -3, -4],
+  人声: [-3, -2, -1, 1, 3, 4, 3, 2, -1, -2],
+  电子: [5, 4, 1, -2, -2, 0, 3, 4, 4, 3],
+  重低音: [7, 6, 4, 3, 1, 0, 0, 0, 0, 0],
 } as const;
 const REVERB_PRESETS = {
   none: { label: '关闭', source: null, main: 1, send: 0 },
-  telephone: { label: '电话', source: 'filter-telephone.wav', main: 0, send: 3 },
+  telephone: {
+    label: '电话',
+    source: 'filter-telephone.wav',
+    main: 0,
+    send: 3,
+  },
   church: { label: '教堂', source: 's2_r4_bd.wav', main: 1.8, send: 0.9 },
   hall: { label: '大厅', source: 'bright-hall.wav', main: 0.8, send: 2.4 },
-  cinema: { label: '电影院', source: 'cinema-diningroom.wav', main: 0.6, send: 2.3 },
-  dining: { label: '餐厅', source: 'dining-living-true-stereo.wav', main: 0.6, send: 1.8 },
-  living: { label: '卫生间', source: 'living-bedroom-leveled.wav', main: 1.6, send: 2.1 },
-  spreader: { label: '室内', source: 'spreader50-65ms.wav', main: 1, send: 2.5 },
-  stereo: { label: '立体声', source: 'cardiod-35-10-spread.wav', main: 1.8, send: 0.6 },
-  matrix1: { label: '矩阵混响 (1)', source: 'matrix-reverb1.wav', main: 1.5, send: 0.9 },
-  matrix2: { label: '矩阵混响 (2)', source: 'matrix-reverb2.wav', main: 1.3, send: 1 },
-  cardiod: { label: '心形扩散', source: 'cardiod-35-10-spread.wav', main: 1.8, send: 0.6 },
-  magnetic: { label: '磁性立体声', source: 'tim-omni-35-10-magnetic.wav', main: 1, send: 0.2 },
-  spring: { label: '反馈弹簧', source: 'feedback-spring.wav', main: 1.8, send: 0.8 },
+  cinema: {
+    label: '电影院',
+    source: 'cinema-diningroom.wav',
+    main: 0.6,
+    send: 2.3,
+  },
+  dining: {
+    label: '餐厅',
+    source: 'dining-living-true-stereo.wav',
+    main: 0.6,
+    send: 1.8,
+  },
+  living: {
+    label: '卫生间',
+    source: 'living-bedroom-leveled.wav',
+    main: 1.6,
+    send: 2.1,
+  },
+  spreader: {
+    label: '室内',
+    source: 'spreader50-65ms.wav',
+    main: 1,
+    send: 2.5,
+  },
+  stereo: {
+    label: '立体声',
+    source: 'cardiod-35-10-spread.wav',
+    main: 1.8,
+    send: 0.6,
+  },
+  matrix1: {
+    label: '矩阵混响 (1)',
+    source: 'matrix-reverb1.wav',
+    main: 1.5,
+    send: 0.9,
+  },
+  matrix2: {
+    label: '矩阵混响 (2)',
+    source: 'matrix-reverb2.wav',
+    main: 1.3,
+    send: 1,
+  },
+  cardiod: {
+    label: '心形扩散',
+    source: 'cardiod-35-10-spread.wav',
+    main: 1.8,
+    send: 0.6,
+  },
+  magnetic: {
+    label: '磁性立体声',
+    source: 'tim-omni-35-10-magnetic.wav',
+    main: 1,
+    send: 0.2,
+  },
+  spring: {
+    label: '反馈弹簧',
+    source: 'feedback-spring.wav',
+    main: 1.8,
+    send: 0.8,
+  },
 } as const;
 
 interface PlayRecord {
@@ -124,7 +202,10 @@ interface DbRecord {
   songmid?: string;
 }
 
-function getMusicQueueItemKey(song: { id: string; platform?: string }, fallbackPlatform = '') {
+function getMusicQueueItemKey(
+  song: { id: string; platform?: string },
+  fallbackPlatform = ''
+) {
   return `${song.platform || fallbackPlatform}:${song.id}`;
 }
 
@@ -143,8 +224,14 @@ function SortablePlaylistRow({
   onPlay: () => void;
   onDelete: () => void;
 }) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
-    useSortable({ id: song.id });
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: song.id });
   const [coverFailed, setCoverFailed] = useState(false);
 
   const style = {
@@ -160,7 +247,7 @@ function SortablePlaylistRow({
     <div
       ref={setNodeRef}
       style={style}
-      role="button"
+      role='button'
       tabIndex={0}
       aria-current={isActive ? 'true' : undefined}
       onClick={onPlay}
@@ -173,36 +260,39 @@ function SortablePlaylistRow({
       className={cn(
         MUSIC_QUEUE_ROW,
         isActive && MUSIC_ROW_PLAYING,
-        isDragging && 'opacity-90 shadow-lg shadow-black/40'
+        isDragging &&
+          'opacity-90 shadow-lg shadow-[color-mix(in_srgb,var(--tm-room-cinema-bg)_40%,transparent)]'
       )}
     >
       {/* 握把自己吃掉点击：拖完松手也会冒一个 click 上来，不放行就会顺手播了这首。 */}
       <button
-        type="button"
+        type='button'
         aria-label={`拖动调整《${song.name}》的顺序`}
         onClick={(event) => event.stopPropagation()}
         className={MUSIC_QUEUE_GRIP}
         {...attributes}
         {...listeners}
       >
-        <GripVertical className="h-3.5 w-3.5" strokeWidth={2} />
+        <GripVertical className='h-3.5 w-3.5' strokeWidth={2} />
       </button>
 
-      <span className={MUSIC_ROW_INDEX}>{String(index + 1).padStart(2, '0')}</span>
+      <span className={MUSIC_ROW_INDEX}>
+        {String(index + 1).padStart(2, '0')}
+      </span>
 
       <span className={MUSIC_ROW_ART}>
         {cover ? (
           <img
             src={cover}
-            alt=""
-            loading="lazy"
-            referrerPolicy="no-referrer"
+            alt=''
+            loading='lazy'
+            referrerPolicy='no-referrer'
             onError={() => setCoverFailed(true)}
-            className="h-full w-full object-cover"
+            className='h-full w-full object-cover'
           />
         ) : (
           <span className={MUSIC_ART_BROKEN}>
-            <ImageOff className="h-3.5 w-3.5" strokeWidth={1.6} />
+            <ImageOff className='h-3.5 w-3.5' strokeWidth={1.6} />
           </span>
         )}
       </span>
@@ -217,8 +307,8 @@ function SortablePlaylistRow({
       <span className={MUSIC_ROW_SOURCE}>{sourceLabel}</span>
 
       <button
-        type="button"
-        title="从列表移除"
+        type='button'
+        title='从列表移除'
         aria-label={`从列表移除《${song.name}》`}
         onClick={(event) => {
           event.stopPropagation();
@@ -226,7 +316,7 @@ function SortablePlaylistRow({
         }}
         className={MUSIC_ICON_BUTTON_DANGER}
       >
-        <Trash2 className="h-3.5 w-3.5" strokeWidth={1.9} />
+        <Trash2 className='h-3.5 w-3.5' strokeWidth={1.9} />
       </button>
     </div>
   );
@@ -267,16 +357,26 @@ function AudioSpectrumCanvas({
       const gap = Math.max(1, Math.round(dpr));
       const count = Math.max(1, Math.floor(rect.width / targetPitch));
       const barWidth = Math.max(2 * dpr, (width - gap * (count - 1)) / count);
-      const cubeHeight = compact ? Math.max(2, Math.round(2 * dpr)) : Math.max(2, Math.round(2.5 * dpr));
+      const cubeHeight = compact
+        ? Math.max(2, Math.round(2 * dpr))
+        : Math.max(2, Math.round(2.5 * dpr));
       const cubeGap = 1;
       const scaleBase = compact ? height * 1.55 : height * 1.42;
-      const themeColor = '#10b981';
+      const themeColor = getComputedStyle(document.documentElement)
+        .getPropertyValue('--tm-text')
+        .trim();
 
       const sampleBar = (index: number) => {
         const usableLength = Math.max(1, bars.length - SPECTRUM_EDGE_TRIM * 2);
-        const mappedStart = SPECTRUM_EDGE_TRIM + Math.floor((index / count) * usableLength);
+        const mappedStart =
+          SPECTRUM_EDGE_TRIM + Math.floor((index / count) * usableLength);
         const start = Math.min(bars.length - 1, mappedStart);
-        const mappedEnd = SPECTRUM_EDGE_TRIM + Math.max(mappedStart + 1, Math.floor(((index + 1) / count) * usableLength));
+        const mappedEnd =
+          SPECTRUM_EDGE_TRIM +
+          Math.max(
+            mappedStart + 1,
+            Math.floor(((index + 1) / count) * usableLength)
+          );
         const end = Math.min(bars.length, Math.max(start + 1, mappedEnd));
         let total = 0;
         for (let i = start; i < end; i++) total += bars[i] ?? 0;
@@ -288,13 +388,22 @@ function AudioSpectrumCanvas({
 
       for (let i = 0; i < count; i++) {
         const q = Math.max(SPECTRUM_IDLE_LEVEL, sampleBar(i)) * scaleBase;
-        const cubeCount = Math.max(1, Math.ceil(q / Math.max(1, barWidth * 0.9)));
+        const cubeCount = Math.max(
+          1,
+          Math.ceil(q / Math.max(1, barWidth * 0.9))
+        );
         const x = i === count - 1 ? width - barWidth : i * (barWidth + gap);
 
         for (let segment = 0; segment < cubeCount; segment++) {
           const y = height - segment * (cubeHeight + cubeGap);
           ctx.beginPath();
-          ctx.roundRect(x, y - cubeHeight, barWidth, cubeHeight, Math.min(2 * dpr, cubeHeight / 2));
+          ctx.roundRect(
+            x,
+            y - cubeHeight,
+            barWidth,
+            cubeHeight,
+            Math.min(2 * dpr, cubeHeight / 2)
+          );
           ctx.fill();
         }
       }
@@ -309,13 +418,15 @@ function AudioSpectrumCanvas({
   return (
     <div
       className={`relative w-full overflow-hidden ${compact ? 'h-6' : 'h-8'}`}
-      aria-hidden="true"
+      aria-hidden='true'
     >
-      <canvas ref={canvasRef} className="absolute inset-0 h-full w-full opacity-50" />
+      <canvas
+        ref={canvasRef}
+        className='absolute inset-0 h-full w-full opacity-50'
+      />
     </div>
   );
 }
-
 
 const VINYL_NEEDLE_SVG = `url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 130"><path d="M21,21 C21,65 86,70 86,100" fill="none" stroke="rgba(0,0,0,0.28)" stroke-width="6" stroke-linecap="round"/><path d="M20,20 C20,65 85,70 85,100" fill="none" stroke="%23e0e0e0" stroke-width="4.5" stroke-linecap="round"/><path d="M19,20 C19,65 84,70 84,100" fill="none" stroke="%23fff" stroke-width="1.5" stroke-linecap="round"/><g transform="translate(85, 100) rotate(25)"><rect x="-6" y="0" width="12" height="18" rx="2" fill="%23ccc"/><rect x="-4" y="5" width="8" height="14" rx="1" fill="%23333"/><rect x="-2" y="16" width="4" height="5" rx="1" fill="%23d43c33"/></g><circle cx="20" cy="20" r="10" fill="%23f0f0f0" stroke="%23ccc" stroke-width="1"/><circle cx="20" cy="20" r="4" fill="%23fff"/><circle cx="20" cy="20" r="1.5" fill="%23999"/></svg>')`;
 
@@ -333,10 +444,10 @@ function VinylTurntable({
   return (
     <div
       className={`relative mx-auto mt-12 mb-5 flex h-[280px] w-[280px] items-center justify-center md:mt-16 md:mb-8 md:h-[340px] md:w-[340px] ${className}`}
-      aria-label="黑胶唱片机封面"
+      aria-label='黑胶唱片机封面'
     >
       <div
-        className="pointer-events-none absolute left-1/2 top-[-54px] z-20 h-[140px] w-[108px] drop-shadow-xl transition-transform duration-500"
+        className='pointer-events-none absolute left-1/2 top-[-54px] z-20 h-[140px] w-[108px] drop-shadow-xl transition-transform duration-500'
         style={{
           marginLeft: '-20px',
           backgroundImage: VINYL_NEEDLE_SVG,
@@ -347,38 +458,43 @@ function VinylTurntable({
         }}
       />
       <div
-        className="relative flex h-[246px] w-[246px] items-center justify-center overflow-hidden rounded-full md:h-[300px] md:w-[300px]"
+        className='relative flex h-[246px] w-[246px] items-center justify-center overflow-hidden rounded-full md:h-[300px] md:w-[300px]'
         style={{
-          background: 'conic-gradient(from 45deg, #070707 0%, #2b2b2b 10%, #101010 20%, #080808 32%, #242424 42%, #0b0b0b 55%, #1e1e1e 68%, #050505 80%, #2c2c2c 90%, #070707 100%)',
-          boxShadow: '0 0 0 8px rgba(255,255,255,0.055), 0 20px 42px rgba(0,0,0,0.65), inset 0 0 28px rgba(255,255,255,0.045)',
+          background: 'var(--tm-surface-raised)',
+          boxShadow:
+            '0 0 0 8px rgba(255,255,255,0.055), 0 20px 42px rgba(0,0,0,0.65), inset 0 0 28px rgba(255,255,255,0.045)',
           animation: 'vinyl-spin 20s linear infinite',
           animationPlayState: isPlaying ? 'running' : 'paused',
         }}
       >
         <div
-          className="pointer-events-none absolute inset-0 rounded-full"
+          className='pointer-events-none absolute inset-0 rounded-full'
           style={{
-            background: 'repeating-radial-gradient(circle, transparent 0, transparent 3px, rgba(255,255,255,0.055) 3px, rgba(255,255,255,0.055) 4px)',
+            background: 'var(--tm-surface-raised)',
           }}
         />
-        <div className="pointer-events-none absolute left-[18%] top-[10%] h-[42%] w-[22%] rotate-[-28deg] rounded-full bg-white/10 blur-md" />
-        <div className="relative z-10 flex h-[158px] w-[158px] items-center justify-center overflow-hidden rounded-full border-[5px] border-black bg-zinc-800 md:h-[192px] md:w-[192px]">
+        <div className='pointer-events-none absolute left-[18%] top-[10%] h-[42%] w-[22%] rotate-[-28deg] rounded-full bg-[var(--tm-surface-raised)] blur-md' />
+        <div className='relative z-10 flex h-[158px] w-[158px] items-center justify-center overflow-hidden rounded-full border-[5px] border-[var(--tm-line)] bg-[var(--tm-surface)] md:h-[192px] md:w-[192px]'>
           {cover ? (
             <img
               src={cover}
               alt={title}
-              className="h-full w-full rounded-full object-cover"
+              className='h-full w-full rounded-full object-cover'
               onError={(e) => {
                 e.currentTarget.style.display = 'none';
               }}
             />
           ) : (
-            <svg className="h-14 w-14 text-zinc-500 md:h-16 md:w-16" fill="currentColor" viewBox="0 0 20 20">
-              <path d="M18 3a1 1 0 00-1.196-.98l-10 2A1 1 0 006 5v9.114A4.369 4.369 0 005 14c-1.657 0-3 .895-3 2s1.343 2 3 2 3-.895 3-2V7.82l8-1.6v5.894A4.37 4.37 0 0015 12c-1.657 0-3 .895-3 2s1.343 2 3 2 3-.895 3-2V3z" />
+            <svg
+              className='h-14 w-14 text-[color:var(--tm-muted)] md:h-16 md:w-16'
+              fill='currentColor'
+              viewBox='0 0 20 20'
+            >
+              <path d='M18 3a1 1 0 00-1.196-.98l-10 2A1 1 0 006 5v9.114A4.369 4.369 0 005 14c-1.657 0-3 .895-3 2s1.343 2 3 2 3-.895 3-2V7.82l8-1.6v5.894A4.37 4.37 0 0015 12c-1.657 0-3 .895-3 2s1.343 2 3 2 3-.895 3-2V3z' />
             </svg>
           )}
         </div>
-        <div className="pointer-events-none absolute z-20 h-3 w-3 rounded-full border border-white/30 bg-zinc-950" />
+        <div className='pointer-events-none absolute z-20 h-3 w-3 rounded-full border border-[var(--tm-line)] bg-[var(--tm-surface)]' />
       </div>
     </div>
   );
@@ -388,13 +504,20 @@ function VinylTurntable({
 declare global {
   interface Window {
     documentPictureInPicture?: {
-      requestWindow: (options: { width: number; height: number }) => Promise<Window>;
+      requestWindow: (options: {
+        width: number;
+        height: number;
+      }) => Promise<Window>;
       window: Window | null;
     };
   }
 }
 
-export default function MusicClient({ children: _children }: { children?: React.ReactNode }) {
+export default function MusicClient({
+  children: _children,
+}: {
+  children?: React.ReactNode;
+}) {
   const router = useRouter();
   const pathname = usePathname();
   const watchRoom = useWatchRoomContextSafe();
@@ -406,11 +529,15 @@ export default function MusicClient({ children: _children }: { children?: React.
   const [duration, setDuration] = useState(0);
   const [volume, setVolume] = useState(100);
   const [quality, setQuality] = useState<MusicQuality>('320k');
-  const [playMode, setPlayMode] = useState<'loop' | 'single' | 'random'>('loop');
+  const [playMode, setPlayMode] = useState<'loop' | 'single' | 'random'>(
+    'loop'
+  );
   const [currentSongIndex, setCurrentSongIndex] = useState(-1);
   const [showPlayer, setShowPlayer] = useState(false);
   const [showLyrics, setShowLyrics] = useState(false);
-  const [mobileLyricsView, setMobileLyricsView] = useState<'lyrics' | 'vinyl'>('lyrics');
+  const [mobileLyricsView, setMobileLyricsView] = useState<'lyrics' | 'vinyl'>(
+    'lyrics'
+  );
   const [musicProxyEnabled, setMusicProxyEnabled] = useState(() => {
     if (typeof window === 'undefined') return true;
     return (window as any).RUNTIME_CONFIG?.MUSIC_PROXY_ENABLED !== false;
@@ -425,7 +552,9 @@ export default function MusicClient({ children: _children }: { children?: React.
   // 播放列表拖拽排序：仅握把可触发，触屏加短延迟避免与列表滚动打架
   const playlistSensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
-    useSensor(TouchSensor, { activationConstraint: { delay: 150, tolerance: 5 } })
+    useSensor(TouchSensor, {
+      activationConstraint: { delay: 150, tolerance: 5 },
+    })
   );
   const [showQualityMenu, setShowQualityMenu] = useState(false); // 音质选择菜单
   const [showAudioEffectsMenu, setShowAudioEffectsMenu] = useState(false);
@@ -434,7 +563,8 @@ export default function MusicClient({ children: _children }: { children?: React.
   const [loudnessEnabled, setLoudnessEnabled] = useState(false);
   const [reverbEnabled, setReverbEnabled] = useState(false);
   const [reverbMix, setReverbMix] = useState(12);
-  const [reverbPreset, setReverbPreset] = useState<keyof typeof REVERB_PRESETS>('none');
+  const [reverbPreset, setReverbPreset] =
+    useState<keyof typeof REVERB_PRESETS>('none');
   const [reverbMainGain, setReverbMainGain] = useState(100);
   const [eqPreset, setEqPreset] = useState('Flat');
   const [pitchRate, setPitchRate] = useState(1);
@@ -448,13 +578,21 @@ export default function MusicClient({ children: _children }: { children?: React.
   const [customSleepMinutes, setCustomSleepMinutes] = useState(30); // 自定义睡眠定时分钟
   const [showSidebarDrawer, setShowSidebarDrawer] = useState(false); // 左侧抽屉菜单
   const [showVolumeSlider, setShowVolumeSlider] = useState(false); // 音量滑块显示状态
-  const [pendingSongToPlay, setPendingSongToPlay] = useState<{ platform: string; id: string } | null>(null); // 待播放的歌曲信息
+  const [pendingSongToPlay, setPendingSongToPlay] = useState<{
+    platform: string;
+    id: string;
+  } | null>(null); // 待播放的歌曲信息
   const [resolvingCount, setResolvingCount] = useState(0); // 当前解析中的歌曲数量
   const [showAddToPlaylistModal, setShowAddToPlaylistModal] = useState(false); // 添加到歌单弹窗
-  const [songToAddToPlaylist, setSongToAddToPlaylist] = useState<Song | null>(null); // 要添加到歌单的歌曲
+  const [songToAddToPlaylist, setSongToAddToPlaylist] = useState<Song | null>(
+    null
+  ); // 要添加到歌单的歌曲
 
   useEffect(() => {
-    if (typeof window !== 'undefined' && !(window as any).RUNTIME_CONFIG?.MUSIC_ENABLED) {
+    if (
+      typeof window !== 'undefined' &&
+      !(window as any).RUNTIME_CONFIG?.MUSIC_ENABLED
+    ) {
       router.replace('/');
     }
   }, [router]);
@@ -471,8 +609,12 @@ export default function MusicClient({ children: _children }: { children?: React.
     isOpen: false,
     title: '',
     message: '',
-    onConfirm: () => {},
-    onCancel: () => {},
+    onConfirm: () => {
+      /* Inactive dialog callback. */
+    },
+    onCancel: () => {
+      /* Inactive dialog callback. */
+    },
   });
 
   // PiP 相关状态
@@ -483,27 +625,67 @@ export default function MusicClient({ children: _children }: { children?: React.
     if (typeof window === 'undefined') return true;
     return localStorage.getItem('musicShowSpectrum') !== '0';
   });
-  const [spectrumBars, setSpectrumBars] = useState<number[]>(
-    () => Array.from({ length: SPECTRUM_BIN_COUNT }, () => SPECTRUM_IDLE_LEVEL)
+  const [spectrumBars, setSpectrumBars] = useState<number[]>(() =>
+    Array.from({ length: SPECTRUM_BIN_COUNT }, () => SPECTRUM_IDLE_LEVEL)
   );
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
     try {
       const saved = JSON.parse(localStorage.getItem('musicEqGains') || 'null');
-      if (Array.isArray(saved) && saved.length === EQ_BANDS.length) setEqGains(saved.map(value => Math.max(-12, Math.min(12, Number(value) || 0))));
+      if (Array.isArray(saved) && saved.length === EQ_BANDS.length)
+        setEqGains(
+          saved.map((value) => Math.max(-12, Math.min(12, Number(value) || 0)))
+        );
       setEqualizerEnabled(localStorage.getItem('musicEqEnabled') === '1');
       setLoudnessEnabled(localStorage.getItem('musicLoudnessEnabled') === '1');
       setReverbEnabled(localStorage.getItem('musicReverbEnabled') === '1');
-      setReverbPreset((localStorage.getItem('musicReverbPreset') as keyof typeof REVERB_PRESETS) || 'none');
-      setReverbMainGain(Math.max(0, Math.min(150, Number(localStorage.getItem('musicReverbMainGain')) || 100)));
-      setReverbMix(Math.max(0, Math.min(40, Number(localStorage.getItem('musicReverbMix')) || 12)));
+      setReverbPreset(
+        (localStorage.getItem(
+          'musicReverbPreset'
+        ) as keyof typeof REVERB_PRESETS) || 'none'
+      );
+      setReverbMainGain(
+        Math.max(
+          0,
+          Math.min(
+            150,
+            Number(localStorage.getItem('musicReverbMainGain')) || 100
+          )
+        )
+      );
+      setReverbMix(
+        Math.max(
+          0,
+          Math.min(40, Number(localStorage.getItem('musicReverbMix')) || 12)
+        )
+      );
       setEqPreset(localStorage.getItem('musicEqPreset') || 'Flat');
-      setPitchRate(Math.max(0.5, Math.min(1.5, Number(localStorage.getItem('musicPitchRate')) || 1)));
+      setPitchRate(
+        Math.max(
+          0.5,
+          Math.min(1.5, Number(localStorage.getItem('musicPitchRate')) || 1)
+        )
+      );
       setSurroundEnabled(localStorage.getItem('musicSurroundEnabled') === '1');
-      setSurroundSpeed(Math.max(5, Math.min(60, Number(localStorage.getItem('musicSurroundSpeed')) || 25)));
-      setSurroundDistance(Math.max(1, Math.min(10, Number(localStorage.getItem('musicSurroundDistance')) || 5)));
-    } catch {}
+      setSurroundSpeed(
+        Math.max(
+          5,
+          Math.min(60, Number(localStorage.getItem('musicSurroundSpeed')) || 25)
+        )
+      );
+      setSurroundDistance(
+        Math.max(
+          1,
+          Math.min(
+            10,
+            Number(localStorage.getItem('musicSurroundDistance')) || 5
+          )
+        )
+      );
+    } catch {
+      /* Optional local preference may be unavailable. */
+    }
   }, []);
 
   useEffect(() => {
@@ -520,7 +702,20 @@ export default function MusicClient({ children: _children }: { children?: React.
     localStorage.setItem('musicSurroundEnabled', surroundEnabled ? '1' : '0');
     localStorage.setItem('musicSurroundSpeed', String(surroundSpeed));
     localStorage.setItem('musicSurroundDistance', String(surroundDistance));
-  }, [eqGains, equalizerEnabled, loudnessEnabled, reverbEnabled, reverbMix, reverbPreset, reverbMainGain, eqPreset, pitchRate, surroundEnabled, surroundSpeed, surroundDistance]);
+  }, [
+    eqGains,
+    equalizerEnabled,
+    loudnessEnabled,
+    reverbEnabled,
+    reverbMix,
+    reverbPreset,
+    reverbMainGain,
+    eqPreset,
+    pitchRate,
+    surroundEnabled,
+    surroundSpeed,
+    surroundDistance,
+  ]);
 
   const audioRef = useRef<HTMLAudioElement>(null);
   const lyricsContainerRef = useRef<HTMLDivElement>(null);
@@ -552,8 +747,7 @@ export default function MusicClient({ children: _children }: { children?: React.
   const plannedNextSongKeyRef = useRef('');
 
   const isMusicRoomOwner = Boolean(
-    watchRoom?.isOwner &&
-    watchRoom.currentRoom?.roomType === 'music'
+    watchRoom?.isOwner && watchRoom.currentRoom?.roomType === 'music'
   );
 
   const toMusicQueueItem = (song: Song): MusicQueueItem => ({
@@ -582,16 +776,21 @@ export default function MusicClient({ children: _children }: { children?: React.
       .map((item) => ({ ...item, platform: item.platform || songPlatform }))
       .filter((item) => item.id);
     const currentKey = getMusicQueueItemKey(currentSong, songPlatform);
-    const playlistKey = playlistSnapshot.map((item) => getMusicQueueItemKey(item)).join('|');
+    const playlistKey = playlistSnapshot
+      .map((item) => getMusicQueueItemKey(item))
+      .join('|');
     const cacheKey = `${currentKey}|${playMode}|${playlistKey}`;
 
     const resolveNextSong = (): Song | null => {
-      if (typeof options.nextSong !== 'undefined') return options.nextSong || null;
+      if (typeof options.nextSong !== 'undefined')
+        return options.nextSong || null;
       if (plannedNextSongKeyRef.current === cacheKey) {
         return plannedNextSongRef.current;
       }
 
-      let currentIndex = playlistSnapshot.findIndex((item) => getMusicQueueItemKey(item) === currentKey);
+      let currentIndex = playlistSnapshot.findIndex(
+        (item) => getMusicQueueItemKey(item) === currentKey
+      );
       if (currentIndex < 0) {
         playlistSnapshot.push(currentSong);
         currentIndex = playlistSnapshot.length - 1;
@@ -604,11 +803,15 @@ export default function MusicClient({ children: _children }: { children?: React.
         if (playlistSnapshot.length === 1) {
           nextSong = playlistSnapshot[0] || null;
         } else {
-          const candidates = playlistSnapshot.filter((_, index) => index !== currentIndex);
-          nextSong = candidates[Math.floor(Math.random() * candidates.length)] || null;
+          const candidates = playlistSnapshot.filter(
+            (_, index) => index !== currentIndex
+          );
+          nextSong =
+            candidates[Math.floor(Math.random() * candidates.length)] || null;
         }
       } else {
-        const nextIndex = currentIndex < playlistSnapshot.length - 1 ? currentIndex + 1 : 0;
+        const nextIndex =
+          currentIndex < playlistSnapshot.length - 1 ? currentIndex + 1 : 0;
         nextSong = playlistSnapshot[nextIndex] || null;
       }
 
@@ -622,7 +825,11 @@ export default function MusicClient({ children: _children }: { children?: React.
       type: 'music',
       song: toMusicQueueItem(currentSong),
       nextSong: nextSong ? toMusicQueueItem(nextSong) : null,
-      currentTime: options.currentTime ?? audioRef.current?.currentTime ?? currentTimeRef.current ?? 0,
+      currentTime:
+        options.currentTime ??
+        audioRef.current?.currentTime ??
+        currentTimeRef.current ??
+        0,
       isPlaying: options.isPlaying ?? isPlaying,
       quality,
       playMode,
@@ -635,7 +842,11 @@ export default function MusicClient({ children: _children }: { children?: React.
     watchRoom.changeMusic(state);
   };
 
-  const buildStreamUrl = (song: Song, source: MusicSource, songQuality: MusicQuality) => {
+  const buildStreamUrl = (
+    song: Song,
+    source: MusicSource,
+    songQuality: MusicQuality
+  ) => {
     const params = new URLSearchParams({
       songId: song.id,
       source,
@@ -731,7 +942,14 @@ export default function MusicClient({ children: _children }: { children?: React.
     lastPlayedAt?: number,
     recordQuality?: MusicQuality
   ) => {
-    saveHistoryRecord(record, song, playTime, totalDuration, lastPlayedAt, recordQuality).catch(err => {
+    saveHistoryRecord(
+      record,
+      song,
+      playTime,
+      totalDuration,
+      lastPlayedAt,
+      recordQuality
+    ).catch((err) => {
       console.error('保存播放记录到数据库失败:', err);
     });
   };
@@ -846,10 +1064,16 @@ export default function MusicClient({ children: _children }: { children?: React.
         if (sortedRecords.length > 0) {
           const proxyEnabled = getMusicProxyEnabled();
           setMusicProxyEnabled(proxyEnabled);
-          const latestIndex = queueRecords.reduce((bestIndex, record, index) => {
-            if (bestIndex < 0) return index;
-            return (record.lastPlayedAt || 0) > (queueRecords[bestIndex].lastPlayedAt || 0) ? index : bestIndex;
-          }, -1);
+          const latestIndex = queueRecords.reduce(
+            (bestIndex, record, index) => {
+              if (bestIndex < 0) return index;
+              return (record.lastPlayedAt || 0) >
+                (queueRecords[bestIndex].lastPlayedAt || 0)
+                ? index
+                : bestIndex;
+            },
+            -1
+          );
           const activeIndex = latestIndex >= 0 ? latestIndex : 0;
           const latestDbRecord = sortedRecords[activeIndex];
           const latestDbSong = sortedSongs[activeIndex];
@@ -873,20 +1097,29 @@ export default function MusicClient({ children: _children }: { children?: React.
           };
 
           if (proxyEnabled) {
-            const streamUrl = buildStreamUrl(latestDbSong, platform, selectedQuality);
+            const streamUrl = buildStreamUrl(
+              latestDbSong,
+              platform,
+              selectedQuality
+            );
             setCurrentSongUrl(streamUrl);
 
             if (audioRef.current) {
               setIsBuffering(true);
               audioRef.current.src = streamUrl;
-              audioRef.current.addEventListener('loadedmetadata', restoreTime, { once: true });
+              audioRef.current.addEventListener('loadedmetadata', restoreTime, {
+                once: true,
+              });
               audioRef.current.load();
             }
 
             fetchPlayData(latestDbSong, platform, selectedQuality, false)
               .then((data) => {
                 if (data.success && data.data?.lyric?.lyric) {
-                  const parsedLyrics = parseLyric(data.data.lyric.lyric, data.data.lyric.tlyric);
+                  const parsedLyrics = parseLyric(
+                    data.data.lyric.lyric,
+                    data.data.lyric.tlyric
+                  );
                   setLyrics(parsedLyrics);
                 }
               })
@@ -894,16 +1127,30 @@ export default function MusicClient({ children: _children }: { children?: React.
                 console.error('加载歌词失败:', error);
               });
           } else {
-            const data = await fetchPlayData(latestDbSong, platform, selectedQuality, true);
-            if (data.success && data.data?.play?.directUrl && audioRef.current) {
+            const data = await fetchPlayData(
+              latestDbSong,
+              platform,
+              selectedQuality,
+              true
+            );
+            if (
+              data.success &&
+              data.data?.play?.directUrl &&
+              audioRef.current
+            ) {
               setCurrentSongUrl(data.data.play.directUrl);
               setIsBuffering(true);
               audioRef.current.src = data.data.play.directUrl;
-              audioRef.current.addEventListener('loadedmetadata', restoreTime, { once: true });
+              audioRef.current.addEventListener('loadedmetadata', restoreTime, {
+                once: true,
+              });
               audioRef.current.load();
 
               if (data.data.lyric?.lyric) {
-                const parsedLyrics = parseLyric(data.data.lyric.lyric, data.data.lyric.tlyric);
+                const parsedLyrics = parseLyric(
+                  data.data.lyric.lyric,
+                  data.data.lyric.tlyric
+                );
                 setLyrics(parsedLyrics);
               }
             }
@@ -931,11 +1178,17 @@ export default function MusicClient({ children: _children }: { children?: React.
       switch (event.data.type) {
         case 'PIP_OPACITY_CHANGE':
           setPipOpacity(event.data.opacity);
-          localStorage.setItem('lyricsPiPOpacity', event.data.opacity.toString());
+          localStorage.setItem(
+            'lyricsPiPOpacity',
+            event.data.opacity.toString()
+          );
           break;
         case 'PIP_MINIMIZED_CHANGE':
           setPipMinimized(event.data.minimized);
-          localStorage.setItem('lyricsPiPMinimized', event.data.minimized.toString());
+          localStorage.setItem(
+            'lyricsPiPMinimized',
+            event.data.minimized.toString()
+          );
           break;
         case 'PIP_CLOSE':
           setShowPiPLyrics(false);
@@ -952,7 +1205,18 @@ export default function MusicClient({ children: _children }: { children?: React.
     if (currentSong) {
       savePlayState();
     }
-  }, [currentSong, currentSongIndex, currentSource, quality, playMode, volume, currentSongUrl, lyrics, playRecords, playlistIndex]);
+  }, [
+    currentSong,
+    currentSongIndex,
+    currentSource,
+    quality,
+    playMode,
+    volume,
+    currentSongUrl,
+    lyrics,
+    playRecords,
+    playlistIndex,
+  ]);
 
   useEffect(() => {
     currentSongRef.current = currentSong;
@@ -966,26 +1230,48 @@ export default function MusicClient({ children: _children }: { children?: React.
     if (!isMusicRoomOwner || !watchRoom || !currentSong) return;
 
     watchRoom.updateMusicState(buildMusicRoomState(currentSong));
-  }, [isMusicRoomOwner, watchRoom, currentSong, playlist, playlistIndex, playMode, quality]);
+  }, [
+    isMusicRoomOwner,
+    watchRoom,
+    currentSong,
+    playlist,
+    playlistIndex,
+    playMode,
+    quality,
+  ]);
 
   useEffect(() => {
     if (!isMusicRoomOwner || !watchRoom || !currentSong || !isPlaying) return;
 
     const interval = window.setInterval(() => {
-      watchRoom.updateMusicState(buildMusicRoomState(currentSong, {
-        currentTime: audioRef.current?.currentTime || currentTimeRef.current || 0,
-        isPlaying: true,
-      }));
+      watchRoom.updateMusicState(
+        buildMusicRoomState(currentSong, {
+          currentTime:
+            audioRef.current?.currentTime || currentTimeRef.current || 0,
+          isPlaying: true,
+        })
+      );
     }, 5000);
 
     return () => window.clearInterval(interval);
-  }, [isMusicRoomOwner, watchRoom, currentSong, isPlaying, playlist, playlistIndex, playMode, quality]);
+  }, [
+    isMusicRoomOwner,
+    watchRoom,
+    currentSong,
+    isPlaying,
+    playlist,
+    playlistIndex,
+    playMode,
+    quality,
+  ]);
 
   // 监听 playRecords 变化，更新 playlistIndex
   useEffect(() => {
     if (pendingSongToPlay) {
       const index = playRecords.findIndex(
-        r => r.platform === pendingSongToPlay.platform && r.id === pendingSongToPlay.id
+        (r) =>
+          r.platform === pendingSongToPlay.platform &&
+          r.id === pendingSongToPlay.id
       );
       setPlaylistIndex(index);
       setPendingSongToPlay(null);
@@ -1000,10 +1286,17 @@ export default function MusicClient({ children: _children }: { children?: React.
     }
   }, [volume]);
 
-  const handlePlayAllCurrentSongsWith = async (targetSongs: Song[], title: string) => {
+  const handlePlayAllCurrentSongsWith = async (
+    targetSongs: Song[],
+    title: string
+  ) => {
     try {
       if (targetSongs.length === 0) {
-        setToast({ message: '当前列表为空', type: 'error', onClose: () => setToast(null) });
+        setToast({
+          message: '当前列表为空',
+          type: 'error',
+          onClose: () => setToast(null),
+        });
         return;
       }
 
@@ -1043,10 +1336,18 @@ export default function MusicClient({ children: _children }: { children?: React.
       setPlaylist(targetSongs);
       setPlaylistIndex(0);
       await playSong(targetSongs[0], 0);
-      setToast({ message: `已开始播放 ${title}`, type: 'success', onClose: () => setToast(null) });
+      setToast({
+        message: `已开始播放 ${title}`,
+        type: 'success',
+        onClose: () => setToast(null),
+      });
     } catch (error) {
       console.error('播放全部失败:', error);
-      setToast({ message: '播放全部失败', type: 'error', onClose: () => setToast(null) });
+      setToast({
+        message: '播放全部失败',
+        type: 'error',
+        onClose: () => setToast(null),
+      });
     }
   };
 
@@ -1056,16 +1357,37 @@ export default function MusicClient({ children: _children }: { children?: React.
       return;
     }
     const platform = song.platform || currentSource;
-    const exists = playlist.some((item) => item.id === song.id && item.platform === platform);
+    const exists = playlist.some(
+      (item) => item.id === song.id && item.platform === platform
+    );
     if (exists) {
-      setToast({ message: '歌曲已在播放列表中', type: 'info', onClose: () => setToast(null) });
+      setToast({
+        message: '歌曲已在播放列表中',
+        type: 'info',
+        onClose: () => setToast(null),
+      });
       return;
     }
-    const record: PlayRecord = { platform, id: song.id, playTime: 0, duration: song.duration || 0, timestamp: Date.now() };
+    const record: PlayRecord = {
+      platform,
+      id: song.id,
+      playTime: 0,
+      duration: song.duration || 0,
+      timestamp: Date.now(),
+    };
     setPlayRecords((prev) => [...prev, record]);
     setPlaylist((prev) => [...prev, { ...song, platform }]);
-    saveHistoryRecordSafely(record, { ...song, platform }, 0, song.duration || 0);
-    setToast({ message: '已添加到稍后播放', type: 'success', onClose: () => setToast(null) });
+    saveHistoryRecordSafely(
+      record,
+      { ...song, platform },
+      0,
+      song.duration || 0
+    );
+    setToast({
+      message: '已添加到稍后播放',
+      type: 'success',
+      onClose: () => setToast(null),
+    });
   };
 
   // 播放歌曲
@@ -1073,10 +1395,10 @@ export default function MusicClient({ children: _children }: { children?: React.
     beginResolving();
     try {
       // 使用歌曲自己的平台信息，如果没有则使用当前选择的平台
-          const platform = song.platform || currentSource;
-          const proxyEnabled = getMusicProxyEnabled();
-          setMusicProxyEnabled(proxyEnabled);
-          const syncSong = { ...song, platform };
+      const platform = song.platform || currentSource;
+      const proxyEnabled = getMusicProxyEnabled();
+      setMusicProxyEnabled(proxyEnabled);
+      const syncSong = { ...song, platform };
 
       // 记录歌曲开始播放的时间
       songStartTimeRef.current = Date.now();
@@ -1089,7 +1411,9 @@ export default function MusicClient({ children: _children }: { children?: React.
 
       // 添加到播放记录和播放列表。timestamp 表示入队时间，不能在再次播放时刷新，
       // 否则会破坏按 createdAt/timestamp 维护的播放队列顺序。
-      const existingRecord = playRecords.find(r => r.platform === platform && r.id === song.id);
+      const existingRecord = playRecords.find(
+        (r) => r.platform === platform && r.id === song.id
+      );
       const record: PlayRecord = existingRecord || {
         platform: platform,
         id: song.id,
@@ -1101,8 +1425,10 @@ export default function MusicClient({ children: _children }: { children?: React.
       // 设置待播放歌曲信息，用于在 playRecords 更新后找到索引
       setPendingSongToPlay({ platform, id: song.id });
 
-      setPlayRecords(prev => {
-        const existingIndex = prev.findIndex(r => r.platform === record.platform && r.id === record.id);
+      setPlayRecords((prev) => {
+        const existingIndex = prev.findIndex(
+          (r) => r.platform === record.platform && r.id === record.id
+        );
         if (existingIndex >= 0) {
           // 记录已存在：保持原位置和原 timestamp，只补齐可能变化的时长信息。
           const updated = [...prev];
@@ -1117,8 +1443,10 @@ export default function MusicClient({ children: _children }: { children?: React.
         }
       });
 
-      setPlaylist(prev => {
-        const existingIndex = prev.findIndex(s => s.id === song.id && s.platform === platform);
+      setPlaylist((prev) => {
+        const existingIndex = prev.findIndex(
+          (s) => s.id === song.id && s.platform === platform
+        );
         if (existingIndex >= 0) {
           return prev;
         } else {
@@ -1126,11 +1454,18 @@ export default function MusicClient({ children: _children }: { children?: React.
         }
       });
 
-      saveHistoryRecordSafely(record, { ...song, platform }, 0, song.duration || 0);
-      emitMusicChange(buildMusicRoomState(syncSong, {
-        currentTime: 0,
-        isPlaying: true,
-      }));
+      saveHistoryRecordSafely(
+        record,
+        { ...song, platform },
+        0,
+        song.duration || 0
+      );
+      emitMusicChange(
+        buildMusicRoomState(syncSong, {
+          currentTime: 0,
+          isPlaying: true,
+        })
+      );
 
       if (proxyEnabled) {
         const streamUrl = buildStreamUrl(song, platform, quality);
@@ -1140,7 +1475,7 @@ export default function MusicClient({ children: _children }: { children?: React.
           setIsBuffering(true);
           audioRef.current.src = streamUrl;
           audioRef.current.load();
-          audioRef.current.play().catch(err => {
+          audioRef.current.play().catch((err) => {
             console.error('播放失败:', err);
             setIsBuffering(false);
           });
@@ -1159,7 +1494,10 @@ export default function MusicClient({ children: _children }: { children?: React.
               }
 
               if (data.data.lyric?.lyric) {
-                const parsedLyrics = parseLyric(data.data.lyric.lyric, data.data.lyric.tlyric);
+                const parsedLyrics = parseLyric(
+                  data.data.lyric.lyric,
+                  data.data.lyric.tlyric
+                );
                 setLyrics(parsedLyrics);
               }
             } else {
@@ -1181,7 +1519,10 @@ export default function MusicClient({ children: _children }: { children?: React.
           }
 
           if (data.data.lyric?.lyric) {
-            const parsedLyrics = parseLyric(data.data.lyric.lyric, data.data.lyric.tlyric);
+            const parsedLyrics = parseLyric(
+              data.data.lyric.lyric,
+              data.data.lyric.tlyric
+            );
             setLyrics(parsedLyrics);
           }
 
@@ -1191,7 +1532,7 @@ export default function MusicClient({ children: _children }: { children?: React.
             setIsBuffering(true);
             audioRef.current.src = data.data.play.directUrl;
             audioRef.current.load();
-            audioRef.current.play().catch(err => {
+            audioRef.current.play().catch((err) => {
               console.error('播放失败:', err);
               setIsBuffering(false);
             });
@@ -1219,15 +1560,17 @@ export default function MusicClient({ children: _children }: { children?: React.
       const parsed = new Map<number, string>();
       const lines = text.split('\n');
 
-      lines.forEach(line => {
+      lines.forEach((line) => {
         const matches = Array.from(line.matchAll(timeRegex));
         if (matches.length > 0) {
           const content = line.replace(timeRegex, '').trim();
           if (content) {
-            matches.forEach(match => {
+            matches.forEach((match) => {
               const minutes = parseInt(match[1]);
               const seconds = parseInt(match[2]);
-              const milliseconds = match[3] ? parseInt(match[3].padEnd(3, '0')) : 0;
+              const milliseconds = match[3]
+                ? parseInt(match[3].padEnd(3, '0'))
+                : 0;
               const time = minutes * 60 + seconds + milliseconds / 1000;
               parsed.set(time, content);
             });
@@ -1240,18 +1583,17 @@ export default function MusicClient({ children: _children }: { children?: React.
 
     const mainMap = parseLyricText(lyricText || '');
     const transMap = parseLyricText(tlyricText || '');
-    const times = Array.from(new Set([
-      ...Array.from(mainMap.keys()),
-      ...Array.from(transMap.keys()),
-    ])).sort((a, b) => a - b);
+    const times = Array.from(
+      new Set([...Array.from(mainMap.keys()), ...Array.from(transMap.keys())])
+    ).sort((a, b) => a - b);
 
     return times
-      .map(time => ({
+      .map((time) => ({
         time,
         text: mainMap.get(time) || '',
         translation: transMap.get(time) || undefined,
       }))
-      .filter(line => line.text || line.translation);
+      .filter((line) => line.text || line.translation);
   };
 
   // 切换播放/暂停
@@ -1262,10 +1604,13 @@ export default function MusicClient({ children: _children }: { children?: React.
         setIsPlaying(false);
         if (isMusicRoomOwner) {
           if (currentSong) {
-            watchRoom?.pauseMusic(buildMusicRoomState(currentSong, {
-              currentTime: audioRef.current.currentTime || currentTimeRef.current || 0,
-              isPlaying: false,
-            }));
+            watchRoom?.pauseMusic(
+              buildMusicRoomState(currentSong, {
+                currentTime:
+                  audioRef.current.currentTime || currentTimeRef.current || 0,
+                isPlaying: false,
+              })
+            );
           }
         }
         // 暂停时保存状态到 localStorage 和数据库
@@ -1279,23 +1624,31 @@ export default function MusicClient({ children: _children }: { children?: React.
         // 保存到数据库
         if (currentSong && playlistIndex >= 0 && playRecords[playlistIndex]) {
           const record = playRecords[playlistIndex];
-          saveHistoryRecord(record, currentSong, audioRef.current.currentTime, audioRef.current.duration || 0).catch(err => {
+          saveHistoryRecord(
+            record,
+            currentSong,
+            audioRef.current.currentTime,
+            audioRef.current.duration || 0
+          ).catch((err) => {
             console.error('暂停时保存播放记录失败:', err);
           });
         }
       } else {
         setIsBuffering(true);
-        audioRef.current.play().catch(err => {
+        audioRef.current.play().catch((err) => {
           console.error('播放失败:', err);
           setIsBuffering(false);
         });
         setIsPlaying(true);
         if (isMusicRoomOwner) {
           if (currentSong) {
-            watchRoom?.playMusic(buildMusicRoomState(currentSong, {
-              currentTime: audioRef.current.currentTime || currentTimeRef.current || 0,
-              isPlaying: true,
-            }));
+            watchRoom?.playMusic(
+              buildMusicRoomState(currentSong, {
+                currentTime:
+                  audioRef.current.currentTime || currentTimeRef.current || 0,
+                isPlaying: true,
+              })
+            );
           }
         }
       }
@@ -1305,7 +1658,8 @@ export default function MusicClient({ children: _children }: { children?: React.
   // 上一曲
   const playPrev = () => {
     if (playlist.length > 0) {
-      const prevIndex = playlistIndex > 0 ? playlistIndex - 1 : playlist.length - 1;
+      const prevIndex =
+        playlistIndex > 0 ? playlistIndex - 1 : playlist.length - 1;
       setPlaylistIndex(prevIndex);
       playSong(playlist[prevIndex], -1);
     }
@@ -1314,7 +1668,8 @@ export default function MusicClient({ children: _children }: { children?: React.
   // 下一曲
   const playNext = () => {
     if (playlist.length > 0) {
-      const nextIndex = playlistIndex < playlist.length - 1 ? playlistIndex + 1 : 0;
+      const nextIndex =
+        playlistIndex < playlist.length - 1 ? playlistIndex + 1 : 0;
       setPlaylistIndex(nextIndex);
       playSong(playlist[nextIndex], -1);
     }
@@ -1340,7 +1695,9 @@ export default function MusicClient({ children: _children }: { children?: React.
 
     const requestId = ++qualitySwitchRequestRef.current;
     const targetSongKey = `${targetPlatform}:${targetSong.id}`;
-    const resumeTime = Number.isFinite(audio.currentTime) ? audio.currentTime : currentTimeRef.current;
+    const resumeTime = Number.isFinite(audio.currentTime)
+      ? audio.currentTime
+      : currentTimeRef.current;
     const shouldResume = isPlaying || (!audio.paused && !audio.ended);
 
     const isStillTargetSong = () => {
@@ -1364,7 +1721,12 @@ export default function MusicClient({ children: _children }: { children?: React.
       if (proxyEnabled) {
         nextSongUrl = buildStreamUrl(targetSong, targetPlatform, nextQuality);
       } else {
-        const data = await fetchPlayData(targetSong, targetPlatform, nextQuality, true);
+        const data = await fetchPlayData(
+          targetSong,
+          targetPlatform,
+          nextQuality,
+          true
+        );
         if (!isStillTargetSong()) return;
 
         if (!data.success || !data.data?.play?.directUrl) {
@@ -1382,7 +1744,10 @@ export default function MusicClient({ children: _children }: { children?: React.
         }
 
         if (data.data.lyric?.lyric) {
-          const parsedLyrics = parseLyric(data.data.lyric.lyric, data.data.lyric.tlyric);
+          const parsedLyrics = parseLyric(
+            data.data.lyric.lyric,
+            data.data.lyric.tlyric
+          );
           setLyrics(parsedLyrics);
         }
       }
@@ -1390,9 +1755,14 @@ export default function MusicClient({ children: _children }: { children?: React.
       if (!isStillTargetSong()) return;
 
       const activeRecord =
-        playRecords[playlistIndex]?.platform === targetPlatform && playRecords[playlistIndex]?.id === targetSong.id
+        playRecords[playlistIndex]?.platform === targetPlatform &&
+        playRecords[playlistIndex]?.id === targetSong.id
           ? playRecords[playlistIndex]
-          : playRecords.find((record) => record.platform === targetPlatform && record.id === targetSong.id);
+          : playRecords.find(
+              (record) =>
+                record.platform === targetPlatform &&
+                record.id === targetSong.id
+            );
       const totalDuration =
         Number.isFinite(audio.duration) && audio.duration > 0
           ? audio.duration
@@ -1436,7 +1806,8 @@ export default function MusicClient({ children: _children }: { children?: React.
         setCurrentTime(audio.currentTime || resumeTime);
 
         if (shouldResume) {
-          audio.play()
+          audio
+            .play()
             .then(() => setIsPlaying(true))
             .catch((error) => {
               console.error('切换音质后播放失败:', error);
@@ -1451,7 +1822,9 @@ export default function MusicClient({ children: _children }: { children?: React.
       audio.pause();
       setIsBuffering(true);
       audio.src = nextSongUrl;
-      audio.addEventListener('loadedmetadata', resumeAfterMetadata, { once: true });
+      audio.addEventListener('loadedmetadata', resumeAfterMetadata, {
+        once: true,
+      });
       audio.load();
       setIsPlaying(shouldResume);
     } catch (error) {
@@ -1495,7 +1868,9 @@ export default function MusicClient({ children: _children }: { children?: React.
     setPlaylist(nextPlaylist);
     setPlayRecords(nextRecords);
     if (activeSongId) {
-      setPlaylistIndex(nextPlaylist.findIndex((song) => song.id === activeSongId));
+      setPlaylistIndex(
+        nextPlaylist.findIndex((song) => song.id === activeSongId)
+      );
     }
 
     try {
@@ -1515,7 +1890,11 @@ export default function MusicClient({ children: _children }: { children?: React.
       setPlaylist(prevPlaylist);
       setPlayRecords(prevRecords);
       setPlaylistIndex(prevIndex);
-      setToast({ message: '保存播放顺序失败', type: 'error', onClose: () => setToast(null) });
+      setToast({
+        message: '保存播放顺序失败',
+        type: 'error',
+        onClose: () => setToast(null),
+      });
     }
   };
 
@@ -1524,7 +1903,10 @@ export default function MusicClient({ children: _children }: { children?: React.
     if (!song) return;
 
     try {
-      await fetch(`/api/music/v2/history?songId=${encodeURIComponent(song.id)}`, { method: 'DELETE' });
+      await fetch(
+        `/api/music/v2/history?songId=${encodeURIComponent(song.id)}`,
+        { method: 'DELETE' }
+      );
 
       setPlaylist(playlist.filter((_, i) => i !== index));
       setPlayRecords(playRecords.filter((_, i) => i !== index));
@@ -1570,8 +1952,12 @@ export default function MusicClient({ children: _children }: { children?: React.
             isOpen: false,
             title: '',
             message: '',
-            onConfirm: () => {},
-            onCancel: () => {},
+            onConfirm: () => {
+              /* Inactive dialog callback. */
+            },
+            onCancel: () => {
+              /* Inactive dialog callback. */
+            },
           });
         }
       },
@@ -1580,8 +1966,12 @@ export default function MusicClient({ children: _children }: { children?: React.
           isOpen: false,
           title: '',
           message: '',
-          onConfirm: () => {},
-          onCancel: () => {},
+          onConfirm: () => {
+            /* Inactive dialog callback. */
+          },
+          onCancel: () => {
+            /* Inactive dialog callback. */
+          },
         });
       },
     });
@@ -1589,7 +1979,11 @@ export default function MusicClient({ children: _children }: { children?: React.
 
   // 切换播放模式
   const toggleMode = () => {
-    const modes: Array<'loop' | 'single' | 'random'> = ['loop', 'single', 'random'];
+    const modes: Array<'loop' | 'single' | 'random'> = [
+      'loop',
+      'single',
+      'random',
+    ];
     const currentIndex = modes.indexOf(playMode);
     const nextIndex = (currentIndex + 1) % modes.length;
     setPlayMode(modes[nextIndex]);
@@ -1610,16 +2004,23 @@ export default function MusicClient({ children: _children }: { children?: React.
 
   // 音频事件监听
   useEffect(() => {
-    eqFiltersRef.current.forEach((filter, index) => { filter.gain.value = equalizerEnabled ? (eqGains[index] || 0) : 0; });
+    eqFiltersRef.current.forEach((filter, index) => {
+      filter.gain.value = equalizerEnabled ? eqGains[index] || 0 : 0;
+    });
     if (compressorRef.current) {
       compressorRef.current.threshold.value = loudnessEnabled ? -24 : 0;
       compressorRef.current.knee.value = loudnessEnabled ? 12 : 0;
       compressorRef.current.ratio.value = loudnessEnabled ? 2 : 1;
     }
-    if (loudnessGainRef.current) loudnessGainRef.current.gain.value = loudnessEnabled ? 1.04 : 1;
-    if (dryGainRef.current) dryGainRef.current.gain.value = reverbEnabled ? reverbMainGain / 100 : 1;
-    if (wetGainRef.current) wetGainRef.current.gain.value = reverbEnabled ? reverbMix / 100 : 0;
-    const audio = audioRef.current as (HTMLAudioElement & { preservesPitch?: boolean }) | null;
+    if (loudnessGainRef.current)
+      loudnessGainRef.current.gain.value = loudnessEnabled ? 1.04 : 1;
+    if (dryGainRef.current)
+      dryGainRef.current.gain.value = reverbEnabled ? reverbMainGain / 100 : 1;
+    if (wetGainRef.current)
+      wetGainRef.current.gain.value = reverbEnabled ? reverbMix / 100 : 0;
+    const audio = audioRef.current as
+      | (HTMLAudioElement & { preservesPitch?: boolean })
+      | null;
     if (audio) {
       audio.playbackRate = pitchRate;
       audio.preservesPitch = false;
@@ -1629,7 +2030,16 @@ export default function MusicClient({ children: _children }: { children?: React.
       pannerRef.current.positionY.value = 0;
       pannerRef.current.positionZ.value = 0;
     }
-  }, [eqGains, equalizerEnabled, loudnessEnabled, reverbEnabled, reverbMix, reverbMainGain, pitchRate, surroundEnabled]);
+  }, [
+    eqGains,
+    equalizerEnabled,
+    loudnessEnabled,
+    reverbEnabled,
+    reverbMix,
+    reverbMainGain,
+    pitchRate,
+    surroundEnabled,
+  ]);
 
   useEffect(() => {
     const convolver = convolverRef.current;
@@ -1641,24 +2051,27 @@ export default function MusicClient({ children: _children }: { children?: React.
     }
     let cancelled = false;
     fetch(`/music/effects/${preset.source}`)
-      .then(response => response.arrayBuffer())
-      .then(data => context.decodeAudioData(data))
-      .then(buffer => {
+      .then((response) => response.arrayBuffer())
+      .then((data) => context.decodeAudioData(data))
+      .then((buffer) => {
         if (!cancelled && convolver) convolver.buffer = buffer;
       })
-      .catch(error => console.warn('加载环境混响音效失败:', error));
-    return () => { cancelled = true; };
+      .catch((error) => console.warn('加载环境混响音效失败:', error));
+    return () => {
+      cancelled = true;
+    };
   }, [reverbPreset, reverbEnabled]);
 
   useEffect(() => {
-    if (pannerTimerRef.current !== null) window.clearInterval(pannerTimerRef.current);
+    if (pannerTimerRef.current !== null)
+      window.clearInterval(pannerTimerRef.current);
     if (!surroundEnabled || !pannerRef.current) return;
     let angle = 0;
     const update = () => {
       const panner = pannerRef.current;
       if (!panner) return;
       angle = (angle + 360 / (surroundSpeed * 10)) % 360;
-      const radians = angle * Math.PI / 180;
+      const radians = (angle * Math.PI) / 180;
       panner.positionX.value = Math.sin(radians) * surroundDistance;
       panner.positionY.value = 0;
       panner.positionZ.value = Math.cos(radians) * surroundDistance;
@@ -1666,7 +2079,8 @@ export default function MusicClient({ children: _children }: { children?: React.
     update();
     pannerTimerRef.current = window.setInterval(update, 100);
     return () => {
-      if (pannerTimerRef.current !== null) window.clearInterval(pannerTimerRef.current);
+      if (pannerTimerRef.current !== null)
+        window.clearInterval(pannerTimerRef.current);
       pannerTimerRef.current = null;
     };
   }, [surroundEnabled, surroundSpeed, surroundDistance]);
@@ -1703,7 +2117,7 @@ export default function MusicClient({ children: _children }: { children?: React.
 
         // 更新当前播放记录的播放时间
         if (currentSong && playlistIndex >= 0) {
-          setPlayRecords(prev => {
+          setPlayRecords((prev) => {
             const updated = [...prev];
             if (updated[playlistIndex]) {
               updated[playlistIndex] = {
@@ -1713,7 +2127,12 @@ export default function MusicClient({ children: _children }: { children?: React.
 
               // 保存到数据库
               const record = updated[playlistIndex];
-              saveHistoryRecord(record, currentSong, audio.currentTime, audio.duration || 0).catch(err => {
+              saveHistoryRecord(
+                record,
+                currentSong,
+                audio.currentTime,
+                audio.duration || 0
+              ).catch((err) => {
                 console.error('保存播放记录到数据库失败:', err);
               });
             }
@@ -1753,7 +2172,7 @@ export default function MusicClient({ children: _children }: { children?: React.
 
       // 更新当前播放记录的总时长
       if (currentSong && playlistIndex >= 0) {
-        setPlayRecords(prev => {
+        setPlayRecords((prev) => {
           const updated = [...prev];
           if (updated[playlistIndex]) {
             updated[playlistIndex] = {
@@ -1763,7 +2182,12 @@ export default function MusicClient({ children: _children }: { children?: React.
 
             // 保存到数据库（包含时长信息）
             const record = updated[playlistIndex];
-            saveHistoryRecord(record, currentSong, record.playTime, audio.duration).catch(err => {
+            saveHistoryRecord(
+              record,
+              currentSong,
+              record.playTime,
+              audio.duration
+            ).catch((err) => {
               console.error('保存播放记录到数据库失败:', err);
             });
           }
@@ -1814,13 +2238,23 @@ export default function MusicClient({ children: _children }: { children?: React.
       audio.removeEventListener('durationchange', handleDurationChange);
       audio.removeEventListener('ended', handleEnded);
     };
-  }, [playMode, currentSongIndex, lyrics, currentSong, playlistIndex, playRecords, quality]);
+  }, [
+    playMode,
+    currentSongIndex,
+    lyrics,
+    currentSong,
+    playlistIndex,
+    playRecords,
+    quality,
+  ]);
 
   // 歌词自动滚动
   useEffect(() => {
     if (lyricsContainerRef.current && currentLyricIndex >= 0) {
       const container = lyricsContainerRef.current;
-      const activeLine = container.querySelector(`[data-index="${currentLyricIndex}"]`);
+      const activeLine = container.querySelector(
+        `[data-index="${currentLyricIndex}"]`
+      );
       if (activeLine) {
         activeLine.scrollIntoView({
           behavior: 'smooth',
@@ -1840,10 +2274,12 @@ export default function MusicClient({ children: _children }: { children?: React.
     if (isMusicRoomOwner) {
       const syncSong = currentSongRef.current || currentSong;
       if (syncSong) {
-        watchRoom?.seekMusic(buildMusicRoomState(syncSong, {
-          currentTime: newTime,
-          isPlaying,
-        }));
+        watchRoom?.seekMusic(
+          buildMusicRoomState(syncSong, {
+            currentTime: newTime,
+            isPlaying,
+          })
+        );
       }
     }
   };
@@ -1864,10 +2300,12 @@ export default function MusicClient({ children: _children }: { children?: React.
     if (isMusicRoomOwner) {
       const syncSong = currentSongRef.current || currentSong;
       if (syncSong) {
-        watchRoom?.seekMusic(buildMusicRoomState(syncSong, {
-          currentTime: nextTime,
-          isPlaying,
-        }));
+        watchRoom?.seekMusic(
+          buildMusicRoomState(syncSong, {
+            currentTime: nextTime,
+            isPlaying,
+          })
+        );
       }
     }
   };
@@ -1882,7 +2320,9 @@ export default function MusicClient({ children: _children }: { children?: React.
   };
 
   // 触摸/鼠标滑动音量调节（移动端兼容）
-  const handleVolumeSliderInteraction = (e: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>) => {
+  const handleVolumeSliderInteraction = (
+    e: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>
+  ) => {
     e.preventDefault();
     e.stopPropagation();
 
@@ -1910,7 +2350,10 @@ export default function MusicClient({ children: _children }: { children?: React.
 
     const handleMove = (moveEvent: MouseEvent | TouchEvent) => {
       moveEvent.preventDefault();
-      const moveClientY = 'touches' in moveEvent ? moveEvent.touches[0]?.clientY || 0 : moveEvent.clientY;
+      const moveClientY =
+        'touches' in moveEvent
+          ? moveEvent.touches[0]?.clientY || 0
+          : moveEvent.clientY;
       updateVolume(moveClientY);
     };
 
@@ -1954,7 +2397,7 @@ export default function MusicClient({ children: _children }: { children?: React.
   const showStreamBuffering = Boolean(currentSong && isBuffering);
 
   const toggleSpectrum = () => {
-    setShowSpectrum(prev => !prev);
+    setShowSpectrum((prev) => !prev);
   };
 
   useEffect(() => {
@@ -1964,10 +2407,14 @@ export default function MusicClient({ children: _children }: { children?: React.
 
   const getQualityLabel = () => {
     switch (quality) {
-      case '128k': return '标准';
-      case '320k': return 'HQ';
-      case 'flac': return 'SQ';
-      case 'flac24bit': return 'HR';
+      case '128k':
+        return '标准';
+      case '320k':
+        return 'HQ';
+      case 'flac':
+        return 'SQ';
+      case 'flac24bit':
+        return 'HR';
     }
   };
 
@@ -1976,15 +2423,26 @@ export default function MusicClient({ children: _children }: { children?: React.
   };
 
   const resetAudioEffects = () => {
-    setEqGains([...DEFAULT_EQ_GAINS]); setEqPreset('Flat'); setEqualizerEnabled(false);
-    setLoudnessEnabled(false); setReverbEnabled(false); setReverbMix(12); setReverbPreset('none'); setReverbMainGain(100);
-    setPitchRate(1); setSurroundEnabled(false); setSurroundSpeed(25); setSurroundDistance(5);
+    setEqGains([...DEFAULT_EQ_GAINS]);
+    setEqPreset('Flat');
+    setEqualizerEnabled(false);
+    setLoudnessEnabled(false);
+    setReverbEnabled(false);
+    setReverbMix(12);
+    setReverbPreset('none');
+    setReverbMainGain(100);
+    setPitchRate(1);
+    setSurroundEnabled(false);
+    setSurroundSpeed(25);
+    setSurroundDistance(5);
   };
 
   const applyEqPreset = (name: string) => {
     const preset = EQ_PRESETS[name as keyof typeof EQ_PRESETS];
     if (!preset) return;
-    setEqPreset(name); setEqGains([...preset]); setEqualizerEnabled(name !== 'Flat');
+    setEqPreset(name);
+    setEqGains([...preset]);
+    setEqualizerEnabled(name !== 'Flat');
   };
 
   const formatTime = (seconds: number) => {
@@ -1997,7 +2455,8 @@ export default function MusicClient({ children: _children }: { children?: React.
   const sleepPickerItemHeight = 40;
   const sleepPickerVisibleCount = 5;
   const sleepPickerHeight = sleepPickerItemHeight * sleepPickerVisibleCount;
-  const clampSleepPickerValue = (value: number, max: number) => Math.max(0, Math.min(max, value));
+  const clampSleepPickerValue = (value: number, max: number) =>
+    Math.max(0, Math.min(max, value));
 
   const formatSleepTimer = (seconds: number) => {
     if (!Number.isFinite(seconds) || seconds <= 0) return '已关闭';
@@ -2006,7 +2465,9 @@ export default function MusicClient({ children: _children }: { children?: React.
     if (mins >= 60) {
       const hours = Math.floor(mins / 60);
       const restMins = mins % 60;
-      return `${hours}:${restMins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+      return `${hours}:${restMins.toString().padStart(2, '0')}:${secs
+        .toString()
+        .padStart(2, '0')}`;
     }
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
@@ -2048,12 +2509,18 @@ export default function MusicClient({ children: _children }: { children?: React.
   };
 
   const handleSleepHourScroll = (e: React.UIEvent<HTMLDivElement>) => {
-    const nextValue = clampSleepPickerValue(Math.round(e.currentTarget.scrollTop / sleepPickerItemHeight), 12);
+    const nextValue = clampSleepPickerValue(
+      Math.round(e.currentTarget.scrollTop / sleepPickerItemHeight),
+      12
+    );
     if (nextValue !== customSleepHours) setCustomSleepHours(nextValue);
   };
 
   const handleSleepMinuteScroll = (e: React.UIEvent<HTMLDivElement>) => {
-    const nextValue = clampSleepPickerValue(Math.round(e.currentTarget.scrollTop / sleepPickerItemHeight), 59);
+    const nextValue = clampSleepPickerValue(
+      Math.round(e.currentTarget.scrollTop / sleepPickerItemHeight),
+      59
+    );
     if (nextValue !== customSleepMinutes) setCustomSleepMinutes(nextValue);
   };
 
@@ -2061,7 +2528,10 @@ export default function MusicClient({ children: _children }: { children?: React.
     if (!sleepTimerEndAt) return;
 
     const updateSleepTimer = () => {
-      const remaining = Math.max(0, Math.ceil((sleepTimerEndAt - Date.now()) / 1000));
+      const remaining = Math.max(
+        0,
+        Math.ceil((sleepTimerEndAt - Date.now()) / 1000)
+      );
       setSleepTimerRemaining(remaining);
 
       if (remaining > 0) return;
@@ -2116,9 +2586,13 @@ export default function MusicClient({ children: _children }: { children?: React.
 
     const ensureAnalyser = async () => {
       try {
-        const AudioContextClass = window.AudioContext || (window as typeof window & {
-          webkitAudioContext?: typeof AudioContext;
-        }).webkitAudioContext;
+        const AudioContextClass =
+          window.AudioContext ||
+          (
+            window as typeof window & {
+              webkitAudioContext?: typeof AudioContext;
+            }
+          ).webkitAudioContext;
 
         if (!AudioContextClass) return;
 
@@ -2127,34 +2601,84 @@ export default function MusicClient({ children: _children }: { children?: React.
         }
 
         if (!mediaSourceRef.current) {
-          mediaSourceRef.current = audioContextRef.current.createMediaElementSource(audio);
+          mediaSourceRef.current =
+            audioContextRef.current.createMediaElementSource(audio);
         }
 
         if (!analyserRef.current) {
           const context = audioContextRef.current;
           const eqFilters = EQ_BANDS.map((band) => {
             const filter = context.createBiquadFilter();
-            filter.type = 'peaking'; filter.frequency.value = band.frequency; filter.Q.value = 1.4; filter.gain.value = 0;
+            filter.type = 'peaking';
+            filter.frequency.value = band.frequency;
+            filter.Q.value = 1.4;
+            filter.gain.value = 0;
             return filter;
           });
-          eqFilters.forEach((filter, index) => index === 0 ? mediaSourceRef.current?.connect(filter) : eqFilters[index - 1].connect(filter));
+          eqFilters.forEach((filter, index) =>
+            index === 0
+              ? mediaSourceRef.current?.connect(filter)
+              : eqFilters[index - 1].connect(filter)
+          );
           const lastEq = eqFilters[eqFilters.length - 1];
-          const dryGain = context.createGain(); const wetGain = context.createGain();
+          const dryGain = context.createGain();
+          const wetGain = context.createGain();
           const convolver = context.createConvolver();
-          const impulse = context.createBuffer(2, Math.floor(context.sampleRate * 1.6), context.sampleRate);
-          for (let channel = 0; channel < impulse.numberOfChannels; channel += 1) {
+          const impulse = context.createBuffer(
+            2,
+            Math.floor(context.sampleRate * 1.6),
+            context.sampleRate
+          );
+          for (
+            let channel = 0;
+            channel < impulse.numberOfChannels;
+            channel += 1
+          ) {
             const data = impulse.getChannelData(channel);
-            for (let i = 0; i < data.length; i += 1) data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / data.length, 2.2);
+            for (let i = 0; i < data.length; i += 1)
+              data[i] =
+                (Math.random() * 2 - 1) * Math.pow(1 - i / data.length, 2.2);
           }
-          convolver.buffer = impulse; lastEq.connect(dryGain); lastEq.connect(convolver); convolver.connect(wetGain);
-          const mixer = context.createGain(); dryGain.connect(mixer); wetGain.connect(mixer);
-          const compressor = context.createDynamicsCompressor(); compressor.threshold.value = 0; compressor.knee.value = 0; compressor.ratio.value = 1; compressor.attack.value = 0.003; compressor.release.value = 0.25; mixer.connect(compressor);
-          const loudnessGain = context.createGain(); compressor.connect(loudnessGain);
+          convolver.buffer = impulse;
+          lastEq.connect(dryGain);
+          lastEq.connect(convolver);
+          convolver.connect(wetGain);
+          const mixer = context.createGain();
+          dryGain.connect(mixer);
+          wetGain.connect(mixer);
+          const compressor = context.createDynamicsCompressor();
+          compressor.threshold.value = 0;
+          compressor.knee.value = 0;
+          compressor.ratio.value = 1;
+          compressor.attack.value = 0.003;
+          compressor.release.value = 0.25;
+          mixer.connect(compressor);
+          const loudnessGain = context.createGain();
+          compressor.connect(loudnessGain);
           const panner = context.createPanner();
-          panner.panningModel = 'HRTF'; panner.distanceModel = 'inverse'; panner.refDistance = 1; panner.maxDistance = 20; panner.rolloffFactor = 0.5;
-          panner.positionX.value = 0; panner.positionY.value = 0; panner.positionZ.value = 0;
-          const analyser = context.createAnalyser(); analyser.fftSize = 512; analyser.smoothingTimeConstant = 0.8; loudnessGain.connect(panner); panner.connect(analyser); analyser.connect(context.destination);
-          eqFiltersRef.current = eqFilters; convolverRef.current = convolver; dryGainRef.current = dryGain; wetGainRef.current = wetGain; compressorRef.current = compressor; loudnessGainRef.current = loudnessGain; pannerRef.current = panner; analyserRef.current = analyser; spectrumDataRef.current = new Uint8Array(analyser.frequencyBinCount);
+          panner.panningModel = 'HRTF';
+          panner.distanceModel = 'inverse';
+          panner.refDistance = 1;
+          panner.maxDistance = 20;
+          panner.rolloffFactor = 0.5;
+          panner.positionX.value = 0;
+          panner.positionY.value = 0;
+          panner.positionZ.value = 0;
+          const analyser = context.createAnalyser();
+          analyser.fftSize = 512;
+          analyser.smoothingTimeConstant = 0.8;
+          loudnessGain.connect(panner);
+          panner.connect(analyser);
+          analyser.connect(context.destination);
+          eqFiltersRef.current = eqFilters;
+          convolverRef.current = convolver;
+          dryGainRef.current = dryGain;
+          wetGainRef.current = wetGain;
+          compressorRef.current = compressor;
+          loudnessGainRef.current = loudnessGain;
+          pannerRef.current = panner;
+          analyserRef.current = analyser;
+          spectrumDataRef.current = new Uint8Array(analyser.frequencyBinCount);
         }
 
         if (audioContextRef.current.state === 'suspended') {
@@ -2171,12 +2695,18 @@ export default function MusicClient({ children: _children }: { children?: React.
       const analyser = analyserRef.current;
       const data = spectrumDataRef.current;
       const isActive = !audio.paused && !audio.ended;
-      let nextBars = Array.from({ length: SPECTRUM_BIN_COUNT }, () => SPECTRUM_IDLE_LEVEL);
+      let nextBars = Array.from(
+        { length: SPECTRUM_BIN_COUNT },
+        () => SPECTRUM_IDLE_LEVEL
+      );
 
       if (isActive && analyser && data) {
         analyser.getByteFrequencyData(data);
         const usableBins = Math.max(1, Math.floor(data.length * 0.88));
-        const visualVolume = Math.max(SPECTRUM_MIN_VOLUME, volumeRef.current || SPECTRUM_REFERENCE_VOLUME);
+        const visualVolume = Math.max(
+          SPECTRUM_MIN_VOLUME,
+          volumeRef.current || SPECTRUM_REFERENCE_VOLUME
+        );
         const visualVolumeScale =
           visualVolume > SPECTRUM_MAX_REFERENCE_VOLUME
             ? Math.sqrt(SPECTRUM_MAX_REFERENCE_VOLUME / visualVolume)
@@ -2184,14 +2714,18 @@ export default function MusicClient({ children: _children }: { children?: React.
 
         nextBars = Array.from({ length: SPECTRUM_BIN_COUNT }, (_, index) => {
           const start = Math.floor((index / SPECTRUM_BIN_COUNT) * usableBins);
-          const end = Math.max(start + 1, Math.floor(((index + 1) / SPECTRUM_BIN_COUNT) * usableBins));
+          const end = Math.max(
+            start + 1,
+            Math.floor(((index + 1) / SPECTRUM_BIN_COUNT) * usableBins)
+          );
           let total = 0;
 
           for (let i = start; i < end; i++) {
             total += data[i] ?? 0;
           }
 
-          const average = (total / Math.max(1, end - start)) * visualVolumeScale;
+          const average =
+            (total / Math.max(1, end - start)) * visualVolumeScale;
           const rightBias = index / Math.max(1, SPECTRUM_BIN_COUNT - 1);
           const highFreqCompensation = 1 + rightBias * 0.85;
           const floorLift = rightBias * 0.035;
@@ -2203,14 +2737,19 @@ export default function MusicClient({ children: _children }: { children?: React.
       } else if (isActive) {
         nextBars = Array.from({ length: SPECTRUM_BIN_COUNT }, (_, index) => {
           const wave =
-            Math.sin(currentTimeRef.current * 5.2 + index * 0.28 + spectrumSeedRef.current) * 0.12 +
+            Math.sin(
+              currentTimeRef.current * 5.2 +
+                index * 0.28 +
+                spectrumSeedRef.current
+            ) *
+              0.12 +
             Math.sin(currentTimeRef.current * 2.6 + index * 0.16) * 0.08 +
             0.22;
           return Math.max(SPECTRUM_IDLE_LEVEL, Math.min(0.65, wave));
         });
       }
 
-      setSpectrumBars(prev =>
+      setSpectrumBars((prev) =>
         nextBars.map((value, index) => {
           const previous = prev[index] ?? SPECTRUM_IDLE_LEVEL;
           return previous + (value - previous) * (isActive ? 0.34 : 0.12);
@@ -2238,24 +2777,33 @@ export default function MusicClient({ children: _children }: { children?: React.
         window.cancelAnimationFrame(spectrumFrameRef.current);
       }
       analyserRef.current?.disconnect();
-      eqFiltersRef.current.forEach(filter => filter.disconnect());
-      convolverRef.current?.disconnect(); dryGainRef.current?.disconnect(); wetGainRef.current?.disconnect(); compressorRef.current?.disconnect(); loudnessGainRef.current?.disconnect(); pannerRef.current?.disconnect();
+      eqFiltersRef.current.forEach((filter) => filter.disconnect());
+      convolverRef.current?.disconnect();
+      dryGainRef.current?.disconnect();
+      wetGainRef.current?.disconnect();
+      compressorRef.current?.disconnect();
+      loudnessGainRef.current?.disconnect();
+      pannerRef.current?.disconnect();
       mediaSourceRef.current?.disconnect();
       audioContextRef.current?.close().catch(() => undefined);
     };
   }, []);
 
-
   useEffect(() => {
     const handlePlaySongEvent = (event: Event) => {
-      const detail = (event as CustomEvent<{ song: Song; index?: number }>).detail;
+      const detail = (event as CustomEvent<{ song: Song; index?: number }>)
+        .detail;
       if (detail?.song) void playSong(detail.song, detail.index ?? -1);
     };
 
     const handlePlayAllEvent = (event: Event) => {
-      const detail = (event as CustomEvent<{ songs: Song[]; title?: string }>).detail;
+      const detail = (event as CustomEvent<{ songs: Song[]; title?: string }>)
+        .detail;
       if (!detail?.songs?.length) return;
-      void handlePlayAllCurrentSongsWith(detail.songs, detail.title || '当前列表');
+      void handlePlayAllCurrentSongsWith(
+        detail.songs,
+        detail.title || '当前列表'
+      );
     };
 
     const handleAddToPlaylistEvent = (event: Event) => {
@@ -2279,7 +2827,10 @@ export default function MusicClient({ children: _children }: { children?: React.
     return () => {
       window.removeEventListener('music:play-song', handlePlaySongEvent);
       window.removeEventListener('music:play-all', handlePlayAllEvent);
-      window.removeEventListener('music:add-to-playlist', handleAddToPlaylistEvent);
+      window.removeEventListener(
+        'music:add-to-playlist',
+        handleAddToPlaylistEvent
+      );
       window.removeEventListener('music:play-later', handlePlayLaterEvent);
     };
   }, [playlist, playRecords, currentSong, quality, currentSource]);
@@ -2288,1263 +2839,1758 @@ export default function MusicClient({ children: _children }: { children?: React.
     // 底色和字色都不在这里兜底：`.music-theme` 的渐变底写在 app/music/music.css 里，
     // 那份进 SSR 样式表、首帧就在。别往这加 bg-* ——原来那个 bg-zinc-950 就是
     // "先黑一下再变回来"的来源（styled-jsx 要等 hydration 才插进 head）。
-    <div className="music-theme min-h-screen">
+    <div className='music-theme min-h-screen'>
       <>
-      <style jsx global>{`
-        @keyframes vinyl-spin {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
-        }
-        .vinyl-player {
-          position: relative;
-          width: min(72vw, 300px);
-          height: min(72vw, 300px);
-          margin: 42px auto 20px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-        @media (min-width: 768px) {
-          .vinyl-player {
-            width: clamp(260px, 30vw, 360px);
-            height: clamp(260px, 30vw, 360px);
-            margin: 54px auto 28px;
-          }
-        }
-        .vinyl-needle {
-          position: absolute;
-          top: -50px;
-          left: 50%;
-          margin-left: -20px;
-          width: 108px;
-          height: 140px;
-          background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 130"><path d="M21,21 C21,65 86,70 86,100" fill="none" stroke="rgba(0,0,0,0.28)" stroke-width="6" stroke-linecap="round"/><path d="M20,20 C20,65 85,70 85,100" fill="none" stroke="%23e0e0e0" stroke-width="4.5" stroke-linecap="round"/><path d="M19,20 C19,65 84,70 84,100" fill="none" stroke="%23fff" stroke-width="1.5" stroke-linecap="round"/><g transform="translate(85, 100) rotate(25)"><rect x="-6" y="0" width="12" height="18" rx="2" fill="%23ccc"/><rect x="-4" y="5" width="8" height="14" rx="1" fill="%23333"/><rect x="-2" y="16" width="4" height="5" rx="1" fill="%23d43c33"/></g><circle cx="20" cy="20" r="10" fill="%23f0f0f0" stroke="%23ccc" stroke-width="1"/><circle cx="20" cy="20" r="4" fill="%23fff"/><circle cx="20" cy="20" r="1.5" fill="%23999"/></svg>');
-          background-repeat: no-repeat;
-          background-size: contain;
-          transform-origin: 20px 20px;
-          transform: rotate(-30deg);
-          transition: transform 0.5s cubic-bezier(0.3, 0, 0.1, 1);
-          z-index: 5;
-          pointer-events: none;
-          filter: drop-shadow(0 8px 8px rgba(0,0,0,0.35));
-        }
-        .vinyl-player.playing .vinyl-needle {
-          transform: rotate(0deg);
-        }
-        .vinyl-disc {
-          position: relative;
-          width: 88%;
-          height: 88%;
-          border-radius: 9999px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          background: conic-gradient(from 45deg, #080808 0%, #2a2a2a 10%, #0f0f0f 20%, #111 40%, #303030 50%, #111 60%, #090909 80%, #2a2a2a 90%, #080808 100%);
-          box-shadow: 0 0 0 8px rgba(255,255,255,0.045), 0 18px 36px rgba(0,0,0,0.55), inset 0 0 24px rgba(255,255,255,0.04);
-          animation: vinyl-spin 20s linear infinite;
-          animation-play-state: paused;
-        }
-        .vinyl-player.playing .vinyl-disc {
-          animation-play-state: running;
-        }
-        .vinyl-disc::before {
-          content: '';
-          position: absolute;
-          inset: 0;
-          border-radius: inherit;
-          background: repeating-radial-gradient(transparent 0, transparent 3px, rgba(255,255,255,0.045) 3px, rgba(255,255,255,0.045) 4px), radial-gradient(circle at 35% 25%, rgba(255,255,255,0.14), transparent 28%);
-          pointer-events: none;
-        }
-        .vinyl-disc::after {
-          content: '';
-          position: absolute;
-          width: 12px;
-          height: 12px;
-          border-radius: 9999px;
-          background: #111;
-          border: 2px solid rgba(255,255,255,0.25);
-          z-index: 3;
-          pointer-events: none;
-        }
-        .vinyl-cover {
-          position: relative;
-          z-index: 2;
-          width: 64%;
-          height: 64%;
-          border-radius: 9999px;
-          object-fit: cover;
-          border: 5px solid #0a0a0a;
-          user-select: none;
-          box-shadow: inset 0 0 0 1px rgba(255,255,255,0.06);
-        }
-        .vinyl-cover-fallback {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          background: #27272a;
-        }
-        @keyframes music-note-bounce {
-          0%,
-          100% {
-            transform: translateY(0);
-            opacity: 0.55;
-          }
-          50% {
-            transform: translateY(-8px);
-            opacity: 1;
-          }
-        }
-        @keyframes music-buffer-scan {
-          0% {
-            transform: translateX(-100%);
-          }
-          100% {
-            transform: translateX(200%);
-          }
-        }
-        @keyframes music-buffer-stripes {
-          0% {
-            background-position: 0 0;
-          }
-          100% {
-            background-position: 24px 0;
-          }
-        }
-        .music-buffer-track {
-          background-image: repeating-linear-gradient(
-            115deg,
-            rgba(16, 185, 129, 0.08) 0,
-            rgba(16, 185, 129, 0.08) 6px,
-            rgba(110, 231, 183, 0.28) 6px,
-            rgba(110, 231, 183, 0.28) 12px
-          );
-          background-size: 24px 100%;
-          animation: music-buffer-stripes 0.65s linear infinite;
-        }
-        .music-buffer-track::before {
-          content: '';
-          position: absolute;
-          inset: 0;
-          width: 42%;
-          background: linear-gradient(
-            90deg,
-            transparent,
-            rgba(167, 243, 208, 0.95),
-            transparent
-          );
-          filter: drop-shadow(0 0 8px rgba(52, 211, 153, 0.7));
-          animation: music-buffer-scan 0.95s ease-in-out infinite;
-        }
-      `}</style>
-      <style jsx global>{`
-        @keyframes music-buffer-scan-global {
-          0% {
-            transform: translateX(-120%);
-          }
-          100% {
-            transform: translateX(260%);
-          }
-        }
-        @keyframes music-buffer-stripes-global {
-          0% {
-            background-position: 0 0;
-          }
-          100% {
-            background-position: 28px 0;
-          }
-        }
-        .music-buffer-track-global {
-          background-image: repeating-linear-gradient(
-            115deg,
-            rgba(16, 185, 129, 0.1) 0,
-            rgba(16, 185, 129, 0.1) 7px,
-            rgba(110, 231, 183, 0.34) 7px,
-            rgba(110, 231, 183, 0.34) 14px
-          );
-          background-size: 28px 100%;
-          animation: music-buffer-stripes-global 0.55s linear infinite;
-        }
-        .music-buffer-track-global::before {
-          content: '';
-          position: absolute;
-          top: 0;
-          bottom: 0;
-          left: 0;
-          width: 45%;
-          background: linear-gradient(
-            90deg,
-            transparent,
-            rgba(236, 253, 245, 0.95),
-            transparent
-          );
-          box-shadow: 0 0 12px rgba(52, 211, 153, 0.9);
-          animation: music-buffer-scan-global 0.85s ease-in-out infinite;
-        }
-      `}</style>
-      {resolvingCount > 0 && (
-        <div className="fixed top-4 right-4 z-[80] pointer-events-none">
-          <div className="relative w-16 h-16 md:w-20 md:h-20">
-            <div className="absolute inset-0 rounded-full border-4 border-white/10" />
-            <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-green-500 border-r-emerald-400 animate-spin shadow-[0_0_20px_rgba(34,197,94,0.35)]" />
-            <div className="absolute inset-1 rounded-full bg-zinc-950/90 backdrop-blur-md border border-white/10 flex flex-col items-center justify-center">
-              <div className="text-[10px] md:text-xs text-zinc-400 leading-none mb-1">解析中</div>
-              <div className="text-lg md:text-xl font-bold text-white leading-none">{resolvingCount}</div>
-            </div>
-          </div>
-        </div>
-      )}
-      {/* Header */}
-      <header
-        className="fixed top-0 left-0 right-0 z-40 bg-zinc-950/95 backdrop-blur-md border-b border-white/10 px-4 md:px-6"
-        style={{ paddingTop: 'env(safe-area-inset-top)' }}
-      >
-        <div className="w-full mx-auto flex items-center justify-between gap-3 md:gap-4 py-3">
-          <div className="flex items-center justify-between md:justify-start md:gap-6 w-full md:w-auto">
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => setShowSidebarDrawer(true)}
-                className="p-0 text-white transition-colors hover:text-green-400"
-                title="打开菜单"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
-                </svg>
-              </button>
-              <div className="flex items-center justify-center text-green-500">
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M18 3a1 1 0 00-1.196-.98l-10 2A1 1 0 006 5v9.114A4.369 4.369 0 005 14c-1.657 0-3 .895-3 2s1.343 2 3 2 3-.895 3-2V7.82l8-1.6v5.894A4.37 4.37 0 0015 12c-1.657 0-3 .895-3 2s1.343 2 3 2 3-.895 3-2V3z" />
-                </svg>
-              </div>
-              <span className="font-bold text-lg text-white">音乐</span>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      {/* Main Content */}
-      <main className="pt-[calc(80px+env(safe-area-inset-top))] md:pt-[calc(76px+env(safe-area-inset-top))] pb-32 px-4 md:px-6">
-        <div className="max-w-7xl mx-auto">
-          {_children}
-        </div>
-      </main>
-
-      {/* Player */}
-      {showPlayer && currentSong && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[95%] max-w-3xl z-50">
-          {showSpectrum && (
-            <div className="pointer-events-none px-4">
-              <AudioSpectrumCanvas bars={spectrumBars} compact />
-            </div>
-          )}
-
-          <div className="relative bg-zinc-900/95 backdrop-blur-md rounded-xl p-4 pt-5 border border-white/10 shadow-2xl">
-            {/* Progress Bar */}
-            <div className="absolute left-0 right-0 top-0 h-1 bg-white/10 rounded-t-xl overflow-hidden">
-              <div
-                className="relative z-10 h-full bg-green-500 transition-all pointer-events-none"
-                style={{ width: `${progress}%` }}
-              />
-              {showStreamBuffering && (
-                <div className="music-buffer-track-global absolute inset-0 z-0" />
-              )}
-              <input
-                type="range"
-                min="0"
-                max="100"
-                value={progress}
-                onChange={handleProgressChange}
-                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-              />
-            </div>
-
-            <div className="flex items-center justify-between gap-4 mt-1">
-              {/* Song Info */}
-              <div className="flex items-center gap-3 min-w-0 flex-1">
-                <div
-                  className="w-12 h-12 rounded-lg bg-zinc-800 overflow-hidden shrink-0 flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity"
-                  onClick={() => setShowLyrics(true)}
-                >
-                  {currentSong.pic ? (
-                    <img
-                      src={currentSong.pic}
-                      alt={currentSong.name}
-                      className="w-full h-full object-cover"
-                      onError={(e) => {
-                        // 图片加载失败时显示默认图标
-                        e.currentTarget.style.display = 'none';
-                      }}
-                    />
-                  ) : (
-                    <svg className="w-6 h-6 text-zinc-600" fill="currentColor" viewBox="0 0 20 20">
-                      <path d="M18 3a1 1 0 00-1.196-.98l-10 2A1 1 0 006 5v9.114A4.369 4.369 0 005 14c-1.657 0-3 .895-3 2s1.343 2 3 2 3-.895 3-2V7.82l8-1.6v5.894A4.37 4.37 0 0015 12c-1.657 0-3 .895-3 2s1.343 2 3 2 3-.895 3-2V3z" />
-                    </svg>
-                  )}
+        {resolvingCount > 0 && (
+          <div className='fixed top-4 right-4 z-[80] pointer-events-none'>
+            <div className='relative w-16 h-16 md:w-20 md:h-20'>
+              <div className='absolute inset-0 rounded-full border-4 border-[var(--tm-line)]' />
+              <div className='absolute inset-0 rounded-full border-4 border-transparent border-t-[var(--tm-line)] border-r-[var(--tm-line)] animate-spin shadow-[0_0_20px_color-mix(in_srgb,_var(--tm-text)_35%,_transparent)]' />
+              <div className='absolute inset-1 rounded-full bg-[var(--tm-surface)] backdrop-blur-md border border-[var(--tm-line)] flex flex-col items-center justify-center'>
+                <div className='text-[13px] md:text-[13px] text-[color:var(--tm-muted)] leading-none mb-1'>
+                  解析中
                 </div>
-                <div className="min-w-0 flex-1">
-                  <div className="flex min-w-0 items-center gap-1.5">
-                    <div className="min-w-0 truncate text-sm font-bold text-white">{currentSong.name}</div>
-                    <SourcePill source={currentSong.platform} variant="accent" className="hidden sm:inline-flex" />
-                  </div>
-                  <div className="text-xs text-zinc-500 truncate">{currentSong.artist}</div>
+                <div className='text-lg md:text-xl font-bold text-[color:var(--tm-text)] leading-none'>
+                  {resolvingCount}
                 </div>
-              </div>
-
-              {/* Controls */}
-              <div className="relative flex items-center gap-4">
-                <button onClick={playPrev} className="text-zinc-500 hover:text-white transition-colors">
-                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M6 6h2v12H6zm3.5 6l8.5 6V6z" />
-                  </svg>
-                </button>
-                <button
-                  onClick={togglePlay}
-                  className="w-10 h-10 rounded-full bg-green-500 text-white flex items-center justify-center hover:bg-green-600 transition-colors"
-                >
-                  {isPlaying ? (
-                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
-                    </svg>
-                  ) : (
-                    <svg className="w-4 h-4 ml-0.5" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M8 5v14l11-7z" />
-                    </svg>
-                  )}
-                </button>
-                <button onClick={playNext} className="text-zinc-500 hover:text-white transition-colors">
-                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z" />
-                  </svg>
-                </button>
-              </div>
-
-              {/* Right Controls */}
-              <div className="flex items-center gap-3">
-                <div className="hidden sm:flex items-center gap-2">
-                  <input
-                    type="range"
-                    value={volume}
-                    onChange={handleVolumeChange}
-                    className="w-16 h-1 bg-white/10 rounded-full appearance-none cursor-pointer"
-                  />
-                </div>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    if (currentSong) {
-                      setSongToAddToPlaylist(currentSong);
-                      setShowAddToPlaylistModal(true);
-                    }
-                  }}
-                  className="text-zinc-500 hover:text-red-500 transition-colors"
-                  title="添加到歌单"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                  </svg>
-                </button>
-                <button
-                  onClick={downloadSong}
-                  className="text-zinc-500 hover:text-white transition-colors"
-                  title="下载歌曲"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                  </svg>
-                </button>
-                <button
-                  onClick={toggleMode}
-                  className="text-zinc-500 hover:text-white transition-colors"
-                  title={playMode === 'loop' ? '列表循环' : playMode === 'single' ? '单曲循环' : '随机播放'}
-                >
-                  {playMode === 'loop' && (
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                    </svg>
-                  )}
-                  {playMode === 'single' && (
-                    <div className="relative w-4 h-4">
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                      </svg>
-                      <span className="absolute inset-0 flex items-center justify-center text-[8px] font-bold">1</span>
-                    </div>
-                  )}
-                  {playMode === 'random' && (
-                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M10.59 9.17L5.41 4 4 5.41l5.17 5.17 1.42-1.41zM14.5 4l2.04 2.04L4 18.59 5.41 20 17.96 7.46 20 9.5V4h-5.5zm.33 9.41l-1.41 1.41 3.13 3.13L14.5 20H20v-5.5l-2.04 2.04-3.13-3.13z"/>
-                    </svg>
-                  )}
-                </button>
               </div>
             </div>
           </div>
-        </div>
-      )}
-
-      {/* Audio Element */}
-      <audio ref={audioRef} className="hidden" />
-
-      {/* Lyrics Modal */}
-      {showLyrics && currentSong && (
-        <div
-          className="fixed inset-0 bg-black/90 backdrop-blur-sm z-[100] flex items-center justify-center p-4"
-          onClick={(e) => {
-            // 点击背景关闭音量条
-            if (e.target === e.currentTarget) {
-              setShowVolumeSlider(false);
-            }
-          }}
+        )}
+        {/* Header */}
+        <header
+          className='relative z-40 bg-[var(--tm-bg)] border-b border-[var(--tm-line)] px-[var(--tm-content-gutter)]'
+          style={{ paddingTop: 'env(safe-area-inset-top)' }}
         >
-          <div
-            className="relative w-full max-w-6xl h-[90vh] bg-zinc-900/95 rounded-2xl overflow-hidden border border-white/10 shadow-2xl flex flex-col"
-            onClick={() => setShowVolumeSlider(false)}
-          >
-            <button
-              onClick={() => setShowLyrics(false)}
-              className="absolute top-2 right-2 md:top-4 md:right-4 z-10 w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"
-            >
-              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-            <div className="flex flex-1 min-h-0 flex-col md:flex-row">
-              {/* Cover / Meta */}
-              <div className="relative h-32 md:h-auto md:w-[380px] lg:w-[430px] xl:w-[480px] bg-gradient-to-b from-zinc-800 to-zinc-900 shrink-0 overflow-hidden">
-                {currentSong.pic && (
-                  <div className="absolute inset-0">
-                    <img
-                      src={currentSong.pic}
-                      alt={currentSong.name}
-                      className="w-full h-full object-cover opacity-30 blur-xl"
+          <div className='w-full max-w-[1344px] mx-auto flex items-center justify-between gap-3 md:gap-4 py-3'>
+            <div className='flex items-center justify-between md:justify-start md:gap-6 w-full md:w-auto'>
+              <div className='flex items-center gap-3'>
+                <button
+                  onClick={() => setShowSidebarDrawer(true)}
+                  className='p-0 text-[color:var(--tm-text)] transition-colors hover:text-[color:var(--tm-text)] min-h-[44px] tm-press'
+                  title='打开菜单'
+                >
+                  <svg
+                    className='w-5 h-5'
+                    fill='none'
+                    stroke='currentColor'
+                    viewBox='0 0 24 24'
+                  >
+                    <path
+                      strokeLinecap='round'
+                      strokeLinejoin='round'
+                      strokeWidth='2'
+                      d='M4 6h16M4 12h16M4 18h16'
                     />
-                  </div>
+                  </svg>
+                </button>
+                <div className='flex items-center justify-center text-[color:var(--tm-text)]'>
+                  <svg
+                    className='w-5 h-5'
+                    fill='currentColor'
+                    viewBox='0 0 20 20'
+                  >
+                    <path d='M18 3a1 1 0 00-1.196-.98l-10 2A1 1 0 006 5v9.114A4.369 4.369 0 005 14c-1.657 0-3 .895-3 2s1.343 2 3 2 3-.895 3-2V7.82l8-1.6v5.894A4.37 4.37 0 0015 12c-1.657 0-3 .895-3 2s1.343 2 3 2 3-.895 3-2V3z' />
+                  </svg>
+                </div>
+                <span className='font-bold text-lg text-[color:var(--tm-text)]'>
+                  音乐
+                </span>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        {/* Main Content */}
+        <main className='py-8 pb-32'>
+          <PageContainer>{_children}</PageContainer>
+        </main>
+
+        {/* Player */}
+        {showPlayer && currentSong && (
+          <div className='fixed bottom-6 left-1/2 -translate-x-1/2 w-[95%] max-w-3xl z-50'>
+            {showSpectrum && (
+              <div className='pointer-events-none px-4'>
+                <AudioSpectrumCanvas bars={spectrumBars} compact />
+              </div>
+            )}
+
+            <div className='relative bg-[var(--tm-surface)] backdrop-blur-md rounded-xl p-4 pt-5 border border-[var(--tm-line)] shadow-2xl'>
+              {/* Progress Bar */}
+              <div className='absolute left-0 right-0 top-0 h-1 bg-[var(--tm-surface-raised)] rounded-t-xl overflow-hidden'>
+                <div
+                  className='relative z-10 h-full bg-[var(--tm-text)] transition-all pointer-events-none'
+                  style={{ width: `${progress}%` }}
+                />
+                {showStreamBuffering && (
+                  <div className='music-buffer-track-global absolute inset-0 z-0' />
                 )}
-                <div className="relative h-full flex flex-col items-center justify-center p-4 md:p-6 lg:p-8">
+                <input
+                  type='range'
+                  min='0'
+                  max='100'
+                  value={progress}
+                  onChange={handleProgressChange}
+                  className='absolute inset-0 w-full h-full opacity-0 cursor-pointer'
+                />
+              </div>
+
+              <div className='flex items-center justify-between gap-4 mt-1'>
+                {/* Song Info */}
+                <div className='flex items-center gap-3 min-w-0 flex-1'>
                   <div
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setMobileLyricsView((view) => (view === 'lyrics' ? 'vinyl' : 'lyrics'));
-                    }}
-                    className="w-16 h-16 md:hidden rounded-xl overflow-hidden shadow-2xl mb-2"
+                    className='w-12 h-12 rounded-lg bg-[var(--tm-surface)] overflow-hidden shrink-0 flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity'
+                    onClick={() => setShowLyrics(true)}
                   >
                     {currentSong.pic ? (
                       <img
                         src={currentSong.pic}
                         alt={currentSong.name}
-                        className="w-full h-full object-cover"
+                        className='w-full h-full object-cover'
+                        onError={(e) => {
+                          // 图片加载失败时显示默认图标
+                          e.currentTarget.style.display = 'none';
+                        }}
                       />
                     ) : (
-                      <div className="w-full h-full bg-zinc-800 flex items-center justify-center">
-                        <svg className="w-8 h-8 text-zinc-600" fill="currentColor" viewBox="0 0 20 20">
-                          <path d="M18 3a1 1 0 00-1.196-.98l-10 2A1 1 0 006 5v9.114A4.369 4.369 0 005 14c-1.657 0-3 .895-3 2s1.343 2 3 2 3-.895 3-2V7.82l8-1.6v5.894A4.37 4.37 0 0015 12c-1.657 0-3 .895-3 2s1.343 2 3 2 3-.895 3-2V3z" />
-                        </svg>
-                      </div>
+                      <svg
+                        className='w-6 h-6 text-[color:var(--tm-muted)]'
+                        fill='currentColor'
+                        viewBox='0 0 20 20'
+                      >
+                        <path d='M18 3a1 1 0 00-1.196-.98l-10 2A1 1 0 006 5v9.114A4.369 4.369 0 005 14c-1.657 0-3 .895-3 2s1.343 2 3 2 3-.895 3-2V7.82l8-1.6v5.894A4.37 4.37 0 0015 12c-1.657 0-3 .895-3 2s1.343 2 3 2 3-.895 3-2V3z' />
+                      </svg>
                     )}
                   </div>
-                  <div className="hidden md:block w-full">
-                    <VinylTurntable cover={currentSong.pic} title={currentSong.name} isPlaying={isPlaying} />
-                  </div>
-                  <div className="mb-1 flex min-w-0 items-center justify-center gap-1.5">
-                    <h2 className="min-w-0 truncate text-center text-base md:text-xl lg:text-2xl font-bold text-white">{currentSong.name}</h2>
-                    <SourcePill source={currentSong.platform} variant="accent" />
-                  </div>
-                  <p className="pb-px text-center text-xs leading-5 text-zinc-400 line-clamp-1 md:text-sm md:leading-6 lg:text-base lg:leading-7">{currentSong.artist}</p>
-                </div>
-              </div>
-
-              {mobileLyricsView === 'vinyl' && (
-                <div className="relative md:hidden flex-1 min-h-0 overflow-hidden bg-gradient-to-b from-zinc-800 to-zinc-900">
-                  {currentSong.pic && (
-                    <div className="absolute inset-0">
-                      <img
-                        src={currentSong.pic}
-                        alt={currentSong.name}
-                        className="w-full h-full object-cover opacity-30 blur-xl"
+                  <div className='min-w-0 flex-1'>
+                    <div className='flex min-w-0 items-center gap-1.5'>
+                      <div className='min-w-0 truncate text-sm font-bold text-[color:var(--tm-text)]'>
+                        {currentSong.name}
+                      </div>
+                      <SourcePill
+                        source={currentSong.platform}
+                        variant='accent'
+                        className='hidden sm:inline-flex'
                       />
                     </div>
-                  )}
-                  <div className="relative h-full flex items-center justify-center p-4">
-                    <VinylTurntable cover={currentSong.pic} title={currentSong.name} isPlaying={isPlaying} />
+                    <div className='text-[13px] text-[color:var(--tm-muted)] truncate'>
+                      {currentSong.artist}
+                    </div>
                   </div>
                 </div>
-              )}
 
-              {/* Lyrics Content */}
-              <div ref={lyricsContainerRef} className={`${mobileLyricsView === 'vinyl' ? 'hidden md:block' : 'block'} flex-1 overflow-y-auto p-4 md:p-6 lg:p-8`}>
-                {lyrics.length > 0 ? (
-                  <div className="space-y-4 md:space-y-5">
-                    {lyrics.map((line, index) => (
-                      <button
-                        key={index}
-                        type="button"
-                        data-index={index}
-                        onClick={() => seekToLyric(line, index)}
-                        className={`block w-full appearance-none border-0 bg-transparent p-0 text-center transition-all duration-300 outline-none ring-0 focus:outline-none focus:ring-0 active:outline-none active:ring-0 ${
-                          index === currentLyricIndex
-                            ? 'text-white text-lg md:text-xl lg:text-2xl font-bold scale-110'
-                            : index === currentLyricIndex - 1 || index === currentLyricIndex + 1
-                            ? 'text-zinc-400 text-base md:text-lg'
-                            : 'text-zinc-600 text-sm md:text-base'
-                        }`}
+                {/* Controls */}
+                <div className='relative flex items-center gap-4'>
+                  <button
+                    onClick={playPrev}
+                    className='text-[color:var(--tm-muted)] hover:text-[color:var(--tm-text)] transition-colors min-h-[44px] tm-press'
+                  >
+                    <svg
+                      className='w-5 h-5'
+                      fill='currentColor'
+                      viewBox='0 0 24 24'
+                    >
+                      <path d='M6 6h2v12H6zm3.5 6l8.5 6V6z' />
+                    </svg>
+                  </button>
+                  <button
+                    onClick={togglePlay}
+                    className='w-10 h-10 rounded-full bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] flex items-center justify-center hover:opacity-90 transition-colors min-h-[44px] tm-press'
+                  >
+                    {isPlaying ? (
+                      <svg
+                        className='w-4 h-4'
+                        fill='currentColor'
+                        viewBox='0 0 24 24'
                       >
-                        <div>{line.text}</div>
-                        {line.translation && (
-                          <div
-                            className={`mt-1 ${
-                              index === currentLyricIndex
-                                ? 'text-zinc-300 text-sm md:text-base lg:text-lg font-normal'
-                                : 'text-zinc-500 text-xs md:text-sm lg:text-base font-normal'
-                            }`}
-                          >
-                            {line.translation}
-                          </div>
-                        )}
-                      </button>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center space-y-4 pt-10 md:pt-16 lg:pt-20">
-                    <p className="text-zinc-500 text-sm md:text-base">暂无歌词</p>
-                    <p className="text-zinc-600 text-xs md:text-sm">纯音乐或歌词获取失败</p>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Mini Player Controls */}
-            <div className="border-t border-white/5 p-3 md:p-4 shrink-0">
-              {/* 上排：播放控制按钮 */}
-              <div className="relative flex items-center justify-center gap-4 md:gap-6 mb-2 md:mb-3">
-                <button onClick={playPrev} className="text-zinc-500 hover:text-white transition-colors">
-                  <svg className="w-5 h-5 md:w-6 md:h-6" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M6 6h2v12H6zm3.5 6l8.5 6V6z" />
-                  </svg>
-                </button>
-                <button
-                  onClick={togglePlay}
-                  className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-green-500 text-white flex items-center justify-center hover:bg-green-600 transition-colors"
-                >
-                  {isPlaying ? (
-                    <svg className="w-4 h-4 md:w-5 md:h-5" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
-                    </svg>
-                  ) : (
-                    <svg className="w-4 h-4 md:w-5 md:h-5 ml-0.5" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M8 5v14l11-7z" />
-                    </svg>
-                  )}
-                </button>
-                <button onClick={playNext} className="text-zinc-500 hover:text-white transition-colors">
-                  <svg className="w-5 h-5 md:w-6 md:h-6" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z" />
-                  </svg>
-                </button>
-                {showStreamBuffering && (
-                  <span className="absolute left-[calc(50%+4rem)] top-1/2 inline-flex -translate-y-1/2 items-center gap-1 whitespace-nowrap rounded-full bg-green-500/15 px-2 py-0.5 text-[10px] font-medium text-green-300 md:left-[calc(50%+5rem)]">
-                    <span className="h-2 w-2 rounded-full bg-green-400 animate-pulse" />
-                    缓冲中
-                  </span>
-                )}
-              </div>
-
-              {/* 下排：其他按钮（小一号） */}
-              <div className="flex items-center justify-center gap-3 md:gap-4 mb-2 md:mb-3">
-                <button
-                  onClick={() => setShowPlaylist(true)}
-                  className="text-zinc-500 hover:text-white transition-colors relative"
-                  title="播放列表"
-                >
-                  <svg className="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
-                  </svg>
-                  {playlist.length > 0 && (
-                    <span className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full text-[8px] text-white flex items-center justify-center font-bold">
-                      {playlist.length > 9 ? '9+' : playlist.length}
-                    </span>
-                  )}
-                </button>
-                <button
-                  onClick={downloadSong}
-                  className="text-zinc-500 hover:text-white transition-colors"
-                  title="下载歌曲"
-                >
-                  <svg className="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                  </svg>
-                </button>
-                <button
-                  onClick={() => setShowQualityMenu(true)}
-                  className="px-2 py-0.5 rounded border text-amber-400 border-amber-500/50 bg-amber-900/20 text-[9px] md:text-[10px] font-mono min-w-[32px] text-center hover:bg-amber-900/30 transition-colors"
-                  title="音质选择"
-                >
-                  {getQualityLabel()}
-                </button>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setShowSleepTimerMenu(true);
-                  }}
-                  className={`relative transition-colors ${
-                    sleepTimerEndAt ? 'text-green-500 hover:text-green-400' : 'text-zinc-500 hover:text-white'
-                  }`}
-                  title={sleepTimerEndAt ? `睡眠定时：${formatSleepTimer(sleepTimerRemaining)}` : '睡眠定时'}
-                >
-                  <svg className="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6l4 2m6-2a10 10 0 11-20 0 10 10 0 0120 0z" />
-                  </svg>
-                  {sleepTimerEndAt && (
-                    <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 text-[8px] font-semibold leading-none text-green-400">
-                      {Math.max(1, Math.ceil(sleepTimerRemaining / 60))}
-                    </span>
-                  )}
-                </button>
-                <button
-                  onClick={toggleMode}
-                  className="text-zinc-500 hover:text-white transition-colors"
-                  title={playMode === 'loop' ? '列表循环' : playMode === 'single' ? '单曲循环' : '随机播放'}
-                >
-                  {playMode === 'loop' && (
-                    <svg className="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                    </svg>
-                  )}
-                  {playMode === 'single' && (
-                    <div className="relative w-4 h-4 md:w-5 md:h-5">
-                      <svg className="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                        <path d='M6 19h4V5H6v14zm8-14v14h4V5h-4z' />
                       </svg>
-                      <span className="absolute inset-0 flex items-center justify-center text-[7px] md:text-[8px] font-bold">1</span>
-                    </div>
-                  )}
-                  {playMode === 'random' && (
-                    <svg className="w-4 h-4 md:w-5 md:h-5" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M10.59 9.17L5.41 4 4 5.41l5.17 5.17 1.42-1.41zM14.5 4l2.04 2.04L4 18.59 5.41 20 17.96 7.46 20 9.5V4h-5.5zm.33 9.41l-1.41 1.41 3.13 3.13L14.5 20H20v-5.5l-2.04 2.04-3.13-3.13z"/>
+                    ) : (
+                      <svg
+                        className='w-4 h-4 ml-0.5'
+                        fill='currentColor'
+                        viewBox='0 0 24 24'
+                      >
+                        <path d='M8 5v14l11-7z' />
+                      </svg>
+                    )}
+                  </button>
+                  <button
+                    onClick={playNext}
+                    className='text-[color:var(--tm-muted)] hover:text-[color:var(--tm-text)] transition-colors min-h-[44px] tm-press'
+                  >
+                    <svg
+                      className='w-5 h-5'
+                      fill='currentColor'
+                      viewBox='0 0 24 24'
+                    >
+                      <path d='M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z' />
                     </svg>
-                  )}
-                </button>
-                {/* 音量控制 */}
-                <div
-                  className="relative"
-                  onMouseEnter={() => setShowVolumeSlider(true)}
-                  onMouseLeave={() => setShowVolumeSlider(false)}
-                >
+                  </button>
+                </div>
+
+                {/* Right Controls */}
+                <div className='flex items-center gap-3'>
+                  <div className='hidden sm:flex items-center gap-2'>
+                    <input
+                      type='range'
+                      value={volume}
+                      onChange={handleVolumeChange}
+                      className='w-16 h-1 bg-[var(--tm-surface-raised)] rounded-full appearance-none cursor-pointer'
+                    />
+                  </div>
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      setShowVolumeSlider(!showVolumeSlider);
+                      if (currentSong) {
+                        setSongToAddToPlaylist(currentSong);
+                        setShowAddToPlaylistModal(true);
+                      }
                     }}
-                    className="text-zinc-500 hover:text-white transition-colors"
-                    title="音量"
+                    className='text-[color:var(--tm-muted)] hover:text-[color:var(--tm-text)] transition-colors min-h-[44px] tm-press'
+                    title='添加到歌单'
                   >
-                    <svg className="w-4 h-4 md:w-5 md:h-5" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.707.707L4.586 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.586l3.707-3.707a1 1 0 011.09-.217zM14.657 2.929a1 1 0 011.414 0A9.972 9.972 0 0119 10a9.972 9.972 0 01-2.929 7.071 1 1 0 01-1.414-1.414A7.971 7.971 0 0017 10c0-2.21-.894-4.208-2.343-5.657a1 1 0 010-1.414zm-2.829 2.828a1 1 0 011.415 0A5.983 5.983 0 0115 10a5.984 5.984 0 01-1.757 4.243 1 1 0 01-1.415-1.415A3.984 3.984 0 0013 10a3.983 3.983 0 00-1.172-2.828 1 1 0 010-1.415z" clipRule="evenodd" />
+                    <svg
+                      className='w-4 h-4'
+                      fill='none'
+                      stroke='currentColor'
+                      viewBox='0 0 24 24'
+                    >
+                      <path
+                        strokeLinecap='round'
+                        strokeLinejoin='round'
+                        strokeWidth={2}
+                        d='M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z'
+                      />
                     </svg>
                   </button>
-                  {/* 垂直音量条 - 桌面悬浮/移动端点击 */}
-                  <div
-                    className={`absolute bottom-full left-1/2 -translate-x-1/2 pb-2 transition-opacity ${showVolumeSlider ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
-                    onClick={(e) => e.stopPropagation()}
+                  <button
+                    onClick={downloadSong}
+                    className='text-[color:var(--tm-muted)] hover:text-[color:var(--tm-text)] transition-colors min-h-[44px] tm-press'
+                    title='下载歌曲'
                   >
-                    <div className="bg-zinc-800/95 backdrop-blur-sm rounded-lg p-3 shadow-xl border border-white/10">
-                      <div className="flex flex-col items-center gap-2">
-                        <span className="text-xs text-zinc-400 font-mono">{volume}</span>
-                        <div
-                          className="h-24 w-6 bg-white/10 rounded-full relative cursor-pointer select-none"
-                          onMouseDown={handleVolumeSliderInteraction}
-                          onTouchStart={handleVolumeSliderInteraction}
+                    <svg
+                      className='w-4 h-4'
+                      fill='none'
+                      stroke='currentColor'
+                      viewBox='0 0 24 24'
+                    >
+                      <path
+                        strokeLinecap='round'
+                        strokeLinejoin='round'
+                        strokeWidth='2'
+                        d='M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4'
+                      />
+                    </svg>
+                  </button>
+                  <button
+                    onClick={toggleMode}
+                    className='text-[color:var(--tm-muted)] hover:text-[color:var(--tm-text)] transition-colors min-h-[44px] tm-press'
+                    title={
+                      playMode === 'loop'
+                        ? '列表循环'
+                        : playMode === 'single'
+                        ? '单曲循环'
+                        : '随机播放'
+                    }
+                  >
+                    {playMode === 'loop' && (
+                      <svg
+                        className='w-4 h-4'
+                        fill='none'
+                        stroke='currentColor'
+                        viewBox='0 0 24 24'
+                      >
+                        <path
+                          strokeLinecap='round'
+                          strokeLinejoin='round'
+                          strokeWidth='2'
+                          d='M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15'
+                        />
+                      </svg>
+                    )}
+                    {playMode === 'single' && (
+                      <div className='relative w-4 h-4'>
+                        <svg
+                          className='w-4 h-4'
+                          fill='none'
+                          stroke='currentColor'
+                          viewBox='0 0 24 24'
                         >
-                          <div
-                            className="absolute bottom-0 left-0 right-0 bg-green-500 rounded-full transition-all pointer-events-none"
-                            style={{ height: `${volume}%` }}
+                          <path
+                            strokeLinecap='round'
+                            strokeLinejoin='round'
+                            strokeWidth='2'
+                            d='M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15'
                           />
+                        </svg>
+                        <span className='absolute inset-0 flex items-center justify-center text-[13px] font-bold'>
+                          1
+                        </span>
+                      </div>
+                    )}
+                    {playMode === 'random' && (
+                      <svg
+                        className='w-4 h-4'
+                        fill='currentColor'
+                        viewBox='0 0 24 24'
+                      >
+                        <path d='M10.59 9.17L5.41 4 4 5.41l5.17 5.17 1.42-1.41zM14.5 4l2.04 2.04L4 18.59 5.41 20 17.96 7.46 20 9.5V4h-5.5zm.33 9.41l-1.41 1.41 3.13 3.13L14.5 20H20v-5.5l-2.04 2.04-3.13-3.13z' />
+                      </svg>
+                    )}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Audio Element */}
+        <audio ref={audioRef} className='hidden' />
+
+        {/* Lyrics Modal */}
+        {showLyrics && currentSong && (
+          <div
+            className='fixed inset-0 bg-[color:color-mix(in_srgb,var(--tm-room-cinema-bg)_90%,transparent)] backdrop-blur-sm z-[100] flex items-center justify-center p-4'
+            onClick={(e) => {
+              // 点击背景关闭音量条
+              if (e.target === e.currentTarget) {
+                setShowVolumeSlider(false);
+              }
+            }}
+          >
+            <div
+              className='relative w-full max-w-6xl h-[90vh] bg-[var(--tm-surface)] rounded-2xl overflow-hidden border border-[var(--tm-line)] shadow-2xl flex flex-col'
+              onClick={() => setShowVolumeSlider(false)}
+            >
+              <button
+                onClick={() => setShowLyrics(false)}
+                className='absolute top-2 right-2 md:top-4 md:right-4 z-10 w-8 h-8 rounded-full bg-[var(--tm-surface-raised)] hover:bg-[var(--tm-line)] flex items-center justify-center transition-colors min-h-[44px] tm-press'
+              >
+                <svg
+                  className='w-5 h-5 text-[color:var(--tm-text)]'
+                  fill='none'
+                  stroke='currentColor'
+                  viewBox='0 0 24 24'
+                >
+                  <path
+                    strokeLinecap='round'
+                    strokeLinejoin='round'
+                    strokeWidth='2'
+                    d='M6 18L18 6M6 6l12 12'
+                  />
+                </svg>
+              </button>
+              <div className='flex flex-1 min-h-0 flex-col md:flex-row'>
+                {/* Cover / Meta */}
+                <div className='relative h-32 md:h-auto md:w-[380px] lg:w-[430px] xl:w-[480px] bg-[var(--tm-surface)] shrink-0 overflow-hidden'>
+                  {currentSong.pic && (
+                    <div className='absolute inset-0'>
+                      <img
+                        src={currentSong.pic}
+                        alt={currentSong.name}
+                        className='w-full h-full object-cover opacity-30 blur-xl'
+                      />
+                    </div>
+                  )}
+                  <div className='relative h-full flex flex-col items-center justify-center p-4 md:p-6 lg:p-8'>
+                    <div
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setMobileLyricsView((view) =>
+                          view === 'lyrics' ? 'vinyl' : 'lyrics'
+                        );
+                      }}
+                      className='w-16 h-16 md:hidden rounded-xl overflow-hidden shadow-2xl mb-2'
+                    >
+                      {currentSong.pic ? (
+                        <img
+                          src={currentSong.pic}
+                          alt={currentSong.name}
+                          className='w-full h-full object-cover'
+                        />
+                      ) : (
+                        <div className='w-full h-full bg-[var(--tm-surface)] flex items-center justify-center'>
+                          <svg
+                            className='w-8 h-8 text-[color:var(--tm-muted)]'
+                            fill='currentColor'
+                            viewBox='0 0 20 20'
+                          >
+                            <path d='M18 3a1 1 0 00-1.196-.98l-10 2A1 1 0 006 5v9.114A4.369 4.369 0 005 14c-1.657 0-3 .895-3 2s1.343 2 3 2 3-.895 3-2V7.82l8-1.6v5.894A4.37 4.37 0 0015 12c-1.657 0-3 .895-3 2s1.343 2 3 2 3-.895 3-2V3z' />
+                          </svg>
+                        </div>
+                      )}
+                    </div>
+                    <div className='hidden md:block w-full'>
+                      <VinylTurntable
+                        cover={currentSong.pic}
+                        title={currentSong.name}
+                        isPlaying={isPlaying}
+                      />
+                    </div>
+                    <div className='mb-1 flex min-w-0 items-center justify-center gap-1.5'>
+                      <h2 className='min-w-0 truncate text-center text-base md:text-xl lg:text-2xl font-bold text-[color:var(--tm-text)]'>
+                        {currentSong.name}
+                      </h2>
+                      <SourcePill
+                        source={currentSong.platform}
+                        variant='accent'
+                      />
+                    </div>
+                    <p className='pb-px text-center text-[13px] leading-5 text-[color:var(--tm-muted)] line-clamp-1 md:text-sm md:leading-6 lg:text-base lg:leading-7'>
+                      {currentSong.artist}
+                    </p>
+                  </div>
+                </div>
+
+                {mobileLyricsView === 'vinyl' && (
+                  <div className='relative md:hidden flex-1 min-h-0 overflow-hidden bg-[var(--tm-surface)]'>
+                    {currentSong.pic && (
+                      <div className='absolute inset-0'>
+                        <img
+                          src={currentSong.pic}
+                          alt={currentSong.name}
+                          className='w-full h-full object-cover opacity-30 blur-xl'
+                        />
+                      </div>
+                    )}
+                    <div className='relative h-full flex items-center justify-center p-4'>
+                      <VinylTurntable
+                        cover={currentSong.pic}
+                        title={currentSong.name}
+                        isPlaying={isPlaying}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* Lyrics Content */}
+                <div
+                  ref={lyricsContainerRef}
+                  className={`${
+                    mobileLyricsView === 'vinyl' ? 'hidden md:block' : 'block'
+                  } flex-1 overflow-y-auto p-4 md:p-6 lg:p-8`}
+                >
+                  {lyrics.length > 0 ? (
+                    <div className='space-y-4 md:space-y-5'>
+                      {lyrics.map((line, index) => (
+                        <button
+                          key={index}
+                          type='button'
+                          data-index={index}
+                          onClick={() => seekToLyric(line, index)}
+                          className={`block w-full appearance-none border-0 bg-transparent p-0 text-center transition-all duration-300 outline-none ring-0 focus:outline-none focus:ring-0 active:outline-none active:ring-0 ${
+                            index === currentLyricIndex
+                              ? 'text-[color:var(--tm-text)] text-lg md:text-xl lg:text-2xl font-bold scale-110 min-h-[44px] tm-press'
+                              : index === currentLyricIndex - 1 ||
+                                index === currentLyricIndex + 1
+                              ? 'text-[color:var(--tm-muted)] text-base md:text-lg min-h-[44px] tm-press'
+                              : 'text-[color:var(--tm-muted)] text-sm md:text-base min-h-[44px] tm-press'
+                          }`}
+                        >
+                          <div>{line.text}</div>
+                          {line.translation && (
+                            <div
+                              className={`mt-1 ${
+                                index === currentLyricIndex
+                                  ? 'text-[color:var(--tm-muted)] text-sm md:text-base lg:text-lg font-normal'
+                                  : 'text-[color:var(--tm-muted)] text-[13px] md:text-sm lg:text-base font-normal'
+                              }`}
+                            >
+                              {line.translation}
+                            </div>
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className='text-center space-y-4 pt-10 md:pt-16 lg:pt-20'>
+                      <p className='text-[color:var(--tm-muted)] text-sm md:text-base'>
+                        暂无歌词
+                      </p>
+                      <p className='text-[color:var(--tm-muted)] text-[13px] md:text-sm'>
+                        纯音乐或歌词获取失败
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Mini Player Controls */}
+              <div className='border-t border-[var(--tm-line)] p-3 md:p-4 shrink-0'>
+                {/* 上排：播放控制按钮 */}
+                <div className='relative flex items-center justify-center gap-4 md:gap-6 mb-2 md:mb-3'>
+                  <button
+                    onClick={playPrev}
+                    className='text-[color:var(--tm-muted)] hover:text-[color:var(--tm-text)] transition-colors min-h-[44px] tm-press'
+                  >
+                    <svg
+                      className='w-5 h-5 md:w-6 md:h-6'
+                      fill='currentColor'
+                      viewBox='0 0 24 24'
+                    >
+                      <path d='M6 6h2v12H6zm3.5 6l8.5 6V6z' />
+                    </svg>
+                  </button>
+                  <button
+                    onClick={togglePlay}
+                    className='w-10 h-10 md:w-12 md:h-12 rounded-full bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] flex items-center justify-center hover:opacity-90 transition-colors min-h-[44px] tm-press'
+                  >
+                    {isPlaying ? (
+                      <svg
+                        className='w-4 h-4 md:w-5 md:h-5'
+                        fill='currentColor'
+                        viewBox='0 0 24 24'
+                      >
+                        <path d='M6 19h4V5H6v14zm8-14v14h4V5h-4z' />
+                      </svg>
+                    ) : (
+                      <svg
+                        className='w-4 h-4 md:w-5 md:h-5 ml-0.5'
+                        fill='currentColor'
+                        viewBox='0 0 24 24'
+                      >
+                        <path d='M8 5v14l11-7z' />
+                      </svg>
+                    )}
+                  </button>
+                  <button
+                    onClick={playNext}
+                    className='text-[color:var(--tm-muted)] hover:text-[color:var(--tm-text)] transition-colors min-h-[44px] tm-press'
+                  >
+                    <svg
+                      className='w-5 h-5 md:w-6 md:h-6'
+                      fill='currentColor'
+                      viewBox='0 0 24 24'
+                    >
+                      <path d='M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z' />
+                    </svg>
+                  </button>
+                  {showStreamBuffering && (
+                    <span className='absolute left-[calc(50%+4rem)] top-1/2 inline-flex -translate-y-1/2 items-center gap-1 whitespace-nowrap rounded-full bg-[var(--tm-surface-raised)] px-2 py-0.5 text-[13px] font-medium text-[color:var(--tm-text)] md:left-[calc(50%+5rem)]'>
+                      <span className='h-2 w-2 rounded-full bg-[var(--tm-text)] tm-skeleton' />
+                      缓冲中
+                    </span>
+                  )}
+                </div>
+
+                {/* 下排：其他按钮（小一号） */}
+                <div className='flex items-center justify-center gap-3 md:gap-4 mb-2 md:mb-3'>
+                  <button
+                    onClick={() => setShowPlaylist(true)}
+                    className='text-[color:var(--tm-muted)] hover:text-[color:var(--tm-text)] transition-colors relative min-h-[44px] tm-press'
+                    title='播放列表'
+                  >
+                    <svg
+                      className='w-4 h-4 md:w-5 md:h-5'
+                      fill='none'
+                      stroke='currentColor'
+                      viewBox='0 0 24 24'
+                    >
+                      <path
+                        strokeLinecap='round'
+                        strokeLinejoin='round'
+                        strokeWidth='2'
+                        d='M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3'
+                      />
+                    </svg>
+                    {playlist.length > 0 && (
+                      <span className='absolute -top-1 -right-1 w-3 h-3 bg-[var(--tm-surface-raised)] rounded-full text-[13px] text-[color:var(--tm-text)] flex items-center justify-center font-bold'>
+                        {playlist.length > 9 ? '9+' : playlist.length}
+                      </span>
+                    )}
+                  </button>
+                  <button
+                    onClick={downloadSong}
+                    className='text-[color:var(--tm-muted)] hover:text-[color:var(--tm-text)] transition-colors min-h-[44px] tm-press'
+                    title='下载歌曲'
+                  >
+                    <svg
+                      className='w-4 h-4 md:w-5 md:h-5'
+                      fill='none'
+                      stroke='currentColor'
+                      viewBox='0 0 24 24'
+                    >
+                      <path
+                        strokeLinecap='round'
+                        strokeLinejoin='round'
+                        strokeWidth='2'
+                        d='M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4'
+                      />
+                    </svg>
+                  </button>
+                  <button
+                    onClick={() => setShowQualityMenu(true)}
+                    className='px-2 py-0.5 rounded border text-[color:var(--tm-text)] border-[var(--tm-line)] bg-[var(--tm-surface-raised)] text-[13px] md:text-[13px] font-mono min-w-[32px] text-center hover:bg-[var(--tm-line)] transition-colors min-h-[44px] tm-press'
+                    title='音质选择'
+                  >
+                    {getQualityLabel()}
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowSleepTimerMenu(true);
+                    }}
+                    className={`relative transition-colors ${
+                      sleepTimerEndAt
+                        ? 'text-[color:var(--tm-text)] hover:text-[color:var(--tm-text)] min-h-[44px] tm-press'
+                        : 'text-[color:var(--tm-muted)] hover:text-[color:var(--tm-text)] min-h-[44px] tm-press'
+                    }`}
+                    title={
+                      sleepTimerEndAt
+                        ? `睡眠定时：${formatSleepTimer(sleepTimerRemaining)}`
+                        : '睡眠定时'
+                    }
+                  >
+                    <svg
+                      className='w-4 h-4 md:w-5 md:h-5'
+                      fill='none'
+                      stroke='currentColor'
+                      viewBox='0 0 24 24'
+                    >
+                      <path
+                        strokeLinecap='round'
+                        strokeLinejoin='round'
+                        strokeWidth='2'
+                        d='M12 6v6l4 2m6-2a10 10 0 11-20 0 10 10 0 0120 0z'
+                      />
+                    </svg>
+                    {sleepTimerEndAt && (
+                      <span className='absolute -bottom-2 left-1/2 -translate-x-1/2 text-[13px] font-medium leading-none text-[color:var(--tm-text)]'>
+                        {Math.max(1, Math.ceil(sleepTimerRemaining / 60))}
+                      </span>
+                    )}
+                  </button>
+                  <button
+                    onClick={toggleMode}
+                    className='text-[color:var(--tm-muted)] hover:text-[color:var(--tm-text)] transition-colors min-h-[44px] tm-press'
+                    title={
+                      playMode === 'loop'
+                        ? '列表循环'
+                        : playMode === 'single'
+                        ? '单曲循环'
+                        : '随机播放'
+                    }
+                  >
+                    {playMode === 'loop' && (
+                      <svg
+                        className='w-4 h-4 md:w-5 md:h-5'
+                        fill='none'
+                        stroke='currentColor'
+                        viewBox='0 0 24 24'
+                      >
+                        <path
+                          strokeLinecap='round'
+                          strokeLinejoin='round'
+                          strokeWidth='2'
+                          d='M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15'
+                        />
+                      </svg>
+                    )}
+                    {playMode === 'single' && (
+                      <div className='relative w-4 h-4 md:w-5 md:h-5'>
+                        <svg
+                          className='w-4 h-4 md:w-5 md:h-5'
+                          fill='none'
+                          stroke='currentColor'
+                          viewBox='0 0 24 24'
+                        >
+                          <path
+                            strokeLinecap='round'
+                            strokeLinejoin='round'
+                            strokeWidth='2'
+                            d='M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15'
+                          />
+                        </svg>
+                        <span className='absolute inset-0 flex items-center justify-center text-[13px] md:text-[13px] font-bold'>
+                          1
+                        </span>
+                      </div>
+                    )}
+                    {playMode === 'random' && (
+                      <svg
+                        className='w-4 h-4 md:w-5 md:h-5'
+                        fill='currentColor'
+                        viewBox='0 0 24 24'
+                      >
+                        <path d='M10.59 9.17L5.41 4 4 5.41l5.17 5.17 1.42-1.41zM14.5 4l2.04 2.04L4 18.59 5.41 20 17.96 7.46 20 9.5V4h-5.5zm.33 9.41l-1.41 1.41 3.13 3.13L14.5 20H20v-5.5l-2.04 2.04-3.13-3.13z' />
+                      </svg>
+                    )}
+                  </button>
+                  {/* 音量控制 */}
+                  <div
+                    className='relative'
+                    onMouseEnter={() => setShowVolumeSlider(true)}
+                    onMouseLeave={() => setShowVolumeSlider(false)}
+                  >
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setShowVolumeSlider(!showVolumeSlider);
+                      }}
+                      className='text-[color:var(--tm-muted)] hover:text-[color:var(--tm-text)] transition-colors min-h-[44px] tm-press'
+                      title='音量'
+                    >
+                      <svg
+                        className='w-4 h-4 md:w-5 md:h-5'
+                        fill='currentColor'
+                        viewBox='0 0 20 20'
+                      >
+                        <path
+                          fillRule='evenodd'
+                          d='M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.707.707L4.586 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.586l3.707-3.707a1 1 0 011.09-.217zM14.657 2.929a1 1 0 011.414 0A9.972 9.972 0 0119 10a9.972 9.972 0 01-2.929 7.071 1 1 0 01-1.414-1.414A7.971 7.971 0 0017 10c0-2.21-.894-4.208-2.343-5.657a1 1 0 010-1.414zm-2.829 2.828a1 1 0 011.415 0A5.983 5.983 0 0115 10a5.984 5.984 0 01-1.757 4.243 1 1 0 01-1.415-1.415A3.984 3.984 0 0013 10a3.983 3.983 0 00-1.172-2.828 1 1 0 010-1.415z'
+                          clipRule='evenodd'
+                        />
+                      </svg>
+                    </button>
+                    {/* 垂直音量条 - 桌面悬浮/移动端点击 */}
+                    <div
+                      className={`absolute bottom-full left-1/2 -translate-x-1/2 pb-2 transition-opacity ${
+                        showVolumeSlider
+                          ? 'opacity-100'
+                          : 'opacity-0 pointer-events-none'
+                      }`}
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <div className='bg-[var(--tm-surface)] backdrop-blur-sm rounded-lg p-3 shadow-xl border border-[var(--tm-line)]'>
+                        <div className='flex flex-col items-center gap-2'>
+                          <span className='text-[13px] text-[color:var(--tm-muted)] font-mono'>
+                            {volume}
+                          </span>
+                          <div
+                            className='h-24 w-6 bg-[var(--tm-surface-raised)] rounded-full relative cursor-pointer select-none'
+                            onMouseDown={handleVolumeSliderInteraction}
+                            onTouchStart={handleVolumeSliderInteraction}
+                          >
+                            <div
+                              className='absolute bottom-0 left-0 right-0 bg-[var(--tm-text)] rounded-full transition-all pointer-events-none'
+                              style={{ height: `${volume}%` }}
+                            />
+                          </div>
                         </div>
                       </div>
                     </div>
                   </div>
-                </div>
-                <button onClick={(e) => { e.stopPropagation(); setShowAudioEffectsMenu(true); }} className={`transition-colors ${equalizerEnabled || loudnessEnabled || reverbEnabled || pitchRate !== 1 || surroundEnabled ? 'text-green-400' : 'text-zinc-500 hover:text-white'}`} title="均衡器和音效" aria-label="均衡器和音效"><SlidersHorizontal className="h-4 w-4 md:h-5 md:w-5" /></button>
-                {/* PiP 歌词按钮 */}
-                <button
-                  onClick={toggleSpectrum}
-                  className={`transition-colors ${
-                    showSpectrum ? 'text-green-500 hover:text-green-400' : 'text-zinc-500 hover:text-white'
-                  }`}
-                  title={showSpectrum ? '隐藏音谱图' : '显示音谱图'}
-                >
-                  <svg className="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    {showSpectrum ? (
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 18V9m4 9V6m4 12v-4m4 4V8m4 10V4" />
-                    ) : (
-                      <>
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 18V9m4 9V6m4 12v-4m4 4V8m4 10V4" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 3l18 18" />
-                      </>
-                    )}
-                  </svg>
-                </button>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    togglePiPLyrics();
-                  }}
-                  className={`transition-colors ${
-                    showPiPLyrics
-                      ? 'text-green-500 hover:text-green-400'
-                      : 'text-zinc-500 hover:text-white'
-                  }`}
-                  title={showPiPLyrics ? '关闭画中画歌词' : '画中画歌词'}
-                  disabled={!currentSong}
-                >
-                  <svg className="w-4 h-4 md:w-5 md:h-5" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M19 7h-8v6h8V7zm2-4H3c-1.1 0-2 .9-2 2v14c0 1.1.9 1.98 2 1.98h18c1.1 0 2-.88 2-1.98V5c0-1.1-.9-2-2-2zm0 16.01H3V4.98h18v14.03z"/>
-                  </svg>
-                </button>
-                {/* 添加到歌单按钮 */}
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    if (currentSong) {
-                      setSongToAddToPlaylist(currentSong);
-                      setShowAddToPlaylistModal(true);
-                    }
-                  }}
-                  className="text-zinc-500 hover:text-red-500 transition-colors"
-                  title="添加到歌单"
-                >
-                  <svg className="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                  </svg>
-                </button>
-              </div>
-
-              {/* 进度条 */}
-              <div className="relative">
-                {showSpectrum && (
-                  <div className="relative mb-3 flex items-center gap-2 text-xs">
-                    <span className="invisible">{formatTime(currentTime)}</span>
-                    <div className="flex-1">
-                      <AudioSpectrumCanvas bars={spectrumBars} />
-                    </div>
-                    <span className="invisible">{formatTime(duration)}</span>
-                  </div>
-                )}
-                <div className="flex items-center gap-2 text-xs text-zinc-500">
-                  <span>{formatTime(currentTime)}</span>
-                  <div className="flex-1 h-1 bg-white/10 rounded-full overflow-hidden relative">
-                    <div
-                      className="relative z-10 h-full bg-green-500 transition-all pointer-events-none"
-                      style={{ width: `${progress}%` }}
-                    />
-                    {showStreamBuffering && (
-                      <div className="music-buffer-track-global absolute inset-0 z-0" />
-                    )}
-                    <input
-                      type="range"
-                      min="0"
-                      max="100"
-                      value={progress}
-                      onChange={handleProgressChange}
-                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                    />
-                  </div>
-                  <span>{formatTime(duration)}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Playlist Modal */}
-      {showPlaylist && (
-        <div className="fixed inset-0 bg-black/90 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
-          <div className={MUSIC_QUEUE_SHELL}>
-            <div className={MUSIC_QUEUE_HEAD}>
-              <div className="flex items-center gap-2.5">
-                <h2 className={MUSIC_QUEUE_TITLE}>播放列表</h2>
-                <span className={MUSIC_COUNT}>{playlist.length} 首</span>
-              </div>
-              <div className="flex items-center gap-2">
-                {playlist.length > 0 && (
                   <button
-                    type="button"
-                    onClick={handleClearPlayRecords}
-                    className={MUSIC_DANGER_BUTTON}
-                    title="清空全部"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowAudioEffectsMenu(true);
+                    }}
+                    className={`transition-colors ${
+                      equalizerEnabled ||
+                      loudnessEnabled ||
+                      reverbEnabled ||
+                      pitchRate !== 1 ||
+                      surroundEnabled
+                        ? 'text-[color:var(--tm-text)] min-h-[44px] tm-press'
+                        : 'text-[color:var(--tm-muted)] hover:text-[color:var(--tm-text)] min-h-[44px] tm-press'
+                    }`}
+                    title='均衡器和音效'
+                    aria-label='均衡器和音效'
                   >
-                    清空
+                    <SlidersHorizontal className='h-4 w-4 md:h-5 md:w-5' />
                   </button>
-                )}
-                <button
-                  type="button"
-                  onClick={() => setShowPlaylist(false)}
-                  className={MUSIC_ICON_BUTTON}
-                  title="关闭"
-                  aria-label="关闭播放列表"
-                >
-                  <X className="h-4 w-4" strokeWidth={2} />
-                </button>
-              </div>
-            </div>
-
-            {/* Playlist */}
-            <div className={MUSIC_QUEUE_BODY}>
-              {playlist.length > 0 ? (
-                <DndContext
-                  sensors={playlistSensors}
-                  collisionDetection={closestCenter}
-                  onDragEnd={handlePlaylistDragEnd}
-                  modifiers={[restrictToVerticalAxis, restrictToParentElement]}
-                >
-                  <SortableContext
-                    items={playlist.map((song) => song.id)}
-                    strategy={verticalListSortingStrategy}
-                  >
-                    <div className="flex flex-col">
-                      {playlist.map((song, index) => (
-                        <SortablePlaylistRow
-                          key={song.id}
-                          song={song}
-                          index={index}
-                          isActive={index === playlistIndex}
-                          onPlay={() => {
-                            setPlaylistIndex(index);
-                            playSong(song, -1);
-                            setShowPlaylist(false);
-                          }}
-                          onDelete={() => {
-                            void handleRemovePlaylistItem(index);
-                          }}
-                        />
-                      ))}
-                    </div>
-                  </SortableContext>
-                </DndContext>
-              ) : (
-                <MusicEmpty
-                  icon={ListMusic}
-                  title="播放列表是空的"
-                  hint="播放歌曲后会自动进列表。"
-                />
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Sleep Timer Menu */}
-      {showSleepTimerMenu && (
-        <div
-          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[110] flex items-end justify-center"
-          onClick={() => setShowSleepTimerMenu(false)}
-        >
-          <div
-            className="w-full max-w-md bg-zinc-900 rounded-t-2xl border-t border-white/10 shadow-2xl animate-slide-up"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="relative p-4 border-b border-white/10">
-              <h3 className="text-lg font-bold text-white text-center">睡眠定时</h3>
-              <button
-                type="button"
-                onClick={() => setShowSleepTimerMenu(false)}
-                className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-zinc-300 transition-colors hover:bg-white/20 hover:text-white"
-                title="关闭"
-              >
-                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-              <p className="mt-1 text-center text-xs text-zinc-500">
-                {sleepTimerEndAt ? `剩余 ${formatSleepTimer(sleepTimerRemaining)} 后暂停播放` : '选择倒计时时长，到点后自动暂停'}
-              </p>
-            </div>
-
-            <div className="p-4 grid grid-cols-2 gap-2">
-              {[15, 30, 45, 60, 90, 120].map((minutes) => (
-                <button
-                  key={minutes}
-                  onClick={() => setSleepTimer(minutes)}
-                  className="rounded-lg bg-white/5 p-4 text-center text-sm font-medium text-white transition-colors hover:bg-green-500/20 hover:text-green-300"
-                >
-                  {minutes} 分钟
-                </button>
-              ))}
-            </div>
-
-            <div className="mx-4 mb-4 rounded-xl border border-white/10 bg-white/[0.03] p-4">
-              <div className="mb-3 text-center text-sm font-medium text-white">自定义时间</div>
-              <div className="grid grid-cols-2 gap-3">
-                {[
-                  {
-                    label: '小时',
-                    value: customSleepHours,
-                    ref: sleepHoursPickerRef,
-                    onScroll: handleSleepHourScroll,
-                    items: Array.from({ length: 13 }, (_, hour) => hour),
-                  },
-                  {
-                    label: '分钟',
-                    value: customSleepMinutes,
-                    ref: sleepMinutesPickerRef,
-                    onScroll: handleSleepMinuteScroll,
-                    items: Array.from({ length: 60 }, (_, minute) => minute),
-                  },
-                ].map((picker) => (
-                  <div key={picker.label} className="block">
-                    <span className="mb-2 block text-center text-xs text-zinc-500">{picker.label}</span>
-                    <div className="relative">
-                      <div
-                        ref={picker.ref}
-                        onScroll={picker.onScroll}
-                        className="scrollbar-hide overflow-y-auto rounded-xl border border-white/10 bg-zinc-800/80 py-[80px] text-white"
-                        style={{
-                          height: `${sleepPickerHeight}px`,
-                          scrollbarWidth: 'none',
-                          msOverflowStyle: 'none',
-                          scrollSnapType: 'y mandatory',
-                        }}
-                      >
-                        {picker.items.map((item) => {
-                          const isActive = item === picker.value;
-                          return (
-                            <button
-                              key={item}
-                              type="button"
-                              onClick={() => {
-                                if (picker.label === '小时') {
-                                  setCustomSleepHours(item);
-                                  if (sleepHoursPickerRef.current) {
-                                    sleepHoursPickerRef.current.scrollTo({
-                                      top: item * sleepPickerItemHeight,
-                                      behavior: 'smooth',
-                                    });
-                                  }
-                                } else {
-                                  setCustomSleepMinutes(item);
-                                  if (sleepMinutesPickerRef.current) {
-                                    sleepMinutesPickerRef.current.scrollTo({
-                                      top: item * sleepPickerItemHeight,
-                                      behavior: 'smooth',
-                                    });
-                                  }
-                                }
-                              }}
-                              className={`flex w-full items-center justify-center text-sm transition-colors ${
-                                isActive ? 'text-green-400' : 'text-zinc-400'
-                              }`}
-                              style={{ height: `${sleepPickerItemHeight}px`, scrollSnapAlign: 'center' }}
-                            >
-                              {item.toString().padStart(2, '0')}
-                            </button>
-                          );
-                        })}
-                      </div>
-                      <div className="pointer-events-none absolute inset-x-0 top-1/2 -translate-y-1/2 border-y border-green-500/40 bg-green-500/10" style={{ height: `${sleepPickerItemHeight}px` }} />
-                      <div className="pointer-events-none absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-zinc-900/95 to-transparent" />
-                      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-zinc-900/95 to-transparent" />
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <button
-                onClick={setCustomSleepTimer}
-                className="mt-4 w-full rounded-lg bg-green-500 p-3 text-sm font-medium text-white transition-colors hover:bg-green-600 disabled:cursor-not-allowed disabled:bg-zinc-700 disabled:text-white"
-                disabled={customSleepHours === 0 && customSleepMinutes === 0}
-              >
-                {customSleepHours === 0 && customSleepMinutes === 0
-                  ? '请选择定时时长'
-                  : `设置 ${customSleepHours > 0 ? `${customSleepHours} 小时` : ''}${
-                      customSleepMinutes > 0 ? `${customSleepMinutes} 分钟` : ''
-                    }后暂停`}
-              </button>
-            </div>
-
-            <div className="grid grid-cols-2 gap-2 px-4 pb-4">
-              <button
-                onClick={() => setShowSleepTimerMenu(false)}
-                className="w-full rounded-lg border border-white/10 bg-white/5 p-3 text-sm font-medium text-zinc-300 transition-colors hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                返回
-              </button>
-              <button
-                onClick={cancelSleepTimer}
-                className="w-full rounded-lg border border-white/10 bg-white/5 p-3 text-sm font-medium text-zinc-300 transition-colors hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-50"
-                disabled={!sleepTimerEndAt}
-              >
-                关闭定时
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {showAudioEffectsMenu && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4" onClick={() => setShowAudioEffectsMenu(false)}>
-          <div className="relative w-full max-w-5xl max-h-[90vh] bg-zinc-900 rounded-2xl border border-white/10 shadow-2xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
-            <div className="p-5 border-b border-white/10 flex items-center justify-between"><div><h3 className="text-lg font-bold text-white">均衡器与音效调节</h3></div><button onClick={() => setShowAudioEffectsMenu(false)} className="w-8 h-8 rounded-lg text-zinc-400 hover:text-white hover:bg-white/10">✕</button></div>
-            <div className="p-5 overflow-y-auto max-h-[calc(90vh-80px)]"><div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-8">
-              <section><div className="flex items-center justify-between mb-4"><div><h4 className="text-sm font-bold text-white">10 段均衡器</h4></div><label className="flex items-center gap-2 text-xs text-zinc-300"><input type="checkbox" checked={equalizerEnabled} onChange={(e) => setEqualizerEnabled(e.target.checked)} className="h-4 w-4 accent-green-500" />启用 EQ</label></div>
-                <div className="rounded-xl border border-white/5 p-4 overflow-x-auto overscroll-x-contain"><div className="min-w-[760px] grid grid-cols-10 gap-3 items-end h-56 sm:h-64">{EQ_BANDS.map((band, index) => (<div key={band.frequency} className="h-full min-w-0 flex flex-col items-center gap-2"><span className="text-[10px] font-mono text-zinc-500">{(eqGains[index] || 0) > 0 ? '+' : ''}{(eqGains[index] || 0).toFixed(1)}</span><div className="flex-1 w-full min-h-0 flex items-center justify-center"><input type="range" min="-12" max="12" step="0.5" value={eqGains[index] || 0} onChange={(e) => { setEqPreset('自定义'); const value = Number(e.target.value); setEqGains(current => current.map((gain, i) => i === index ? value : gain)); }} disabled={!equalizerEnabled} className="w-40 sm:w-52 h-5 -rotate-90 accent-green-500 [direction:rtl] disabled:opacity-40" /></div><span className="text-[10px] font-mono text-zinc-400">{band.label}</span></div>))}</div></div>
-                <div className="mt-5"><div className="flex items-center justify-between mb-3"><h4 className="text-sm font-bold text-white">预设</h4><button onClick={() => applyEqPreset('Flat')} className="text-xs text-green-400 hover:text-green-300">Flat 重置</button></div><div className="flex flex-wrap gap-2">{Object.keys(EQ_PRESETS).map(name => (<button key={name} onClick={() => applyEqPreset(name)} className={`px-3 py-1.5 rounded-lg text-xs transition-colors ${eqPreset === name ? 'bg-green-500/20 text-green-300 border border-green-500/50' : 'bg-white/5 text-zinc-300 border border-white/10 hover:bg-white/10'}`}>{name}</button>))}</div></div>
-              </section>
-              <aside className="space-y-5"><section className="rounded-xl border border-white/10 bg-white/[0.03] p-4"><div className="flex items-center justify-between"><div><h4 className="text-sm font-bold text-white">响度增强</h4><p className="text-xs text-zinc-500 mt-1">轻微压缩，增强人声和细节</p></div><input type="checkbox" checked={loudnessEnabled} onChange={(e) => setLoudnessEnabled(e.target.checked)} className="h-4 w-4 accent-green-500" /></div></section>
-                <section className="rounded-xl border border-white/10 bg-white/[0.03] p-4"><div className="flex items-center justify-between mb-3"><div><h4 className="text-sm font-bold text-white">环境混响音效</h4><p className="text-xs text-zinc-500 mt-1">模拟不同空间的回声效果</p></div><input type="checkbox" checked={reverbEnabled} onChange={(e) => setReverbEnabled(e.target.checked)} className="h-4 w-4 accent-green-500" /></div><div className="flex flex-wrap gap-2">{Object.entries(REVERB_PRESETS).map(([id, preset]) => (<button key={id} onClick={() => { const selected = id as keyof typeof REVERB_PRESETS; const selectedPreset = REVERB_PRESETS[selected]; setReverbPreset(selected); setReverbEnabled(selected !== 'none'); setReverbMainGain(Math.round(selectedPreset.main * 100)); setReverbMix(Math.min(100, Math.round(selectedPreset.send * 30))); }} className={`rounded-lg border px-2.5 py-1 text-xs ${reverbPreset === id ? 'border-green-500/50 bg-green-500/20 text-green-300' : 'border-white/10 bg-white/5 text-zinc-300 hover:bg-white/10'}`}>{preset.label}</button>))}</div><label className="mt-3 block text-xs text-zinc-400">原始音量 {reverbMainGain}%<input type="range" min="0" max="150" value={reverbMainGain} onChange={(e) => setReverbMainGain(Number(e.target.value))} disabled={!reverbEnabled} className="mt-2 w-full accent-green-500 disabled:opacity-40" /></label><label className="mt-3 block text-xs text-zinc-400">环境音效 {reverbMix}%<input type="range" min="0" max="100" value={reverbMix} onChange={(e) => setReverbMix(Number(e.target.value))} disabled={!reverbEnabled} className="mt-2 w-full accent-green-500 disabled:opacity-40" /></label></section>
-                <section className="rounded-xl border border-white/10 bg-white/[0.03] p-4"><div className="flex items-center justify-between mb-3"><div><h4 className="text-sm font-bold text-white">音调升降调节</h4><p className="text-xs text-zinc-500 mt-1">当前 {pitchRate.toFixed(2)}x</p></div><button onClick={() => setPitchRate(1)} className="text-xs text-green-400">重置</button></div><input type="range" min="0.5" max="1.5" step="0.01" value={pitchRate} onChange={(e) => setPitchRate(Number(e.target.value))} className="w-full accent-green-500" /><div className="mt-2 flex justify-between text-xs text-zinc-500"><span>低</span><span>原速</span><span>高</span></div></section>
-                <section className="rounded-xl border border-white/10 bg-white/[0.03] p-4"><div className="flex items-center justify-between mb-3"><div><h4 className="text-sm font-bold text-white">3D 立体环绕</h4><p className="text-xs text-zinc-500 mt-1">需使用耳机，模拟声源环绕移动</p></div><input type="checkbox" checked={surroundEnabled} onChange={(e) => setSurroundEnabled(e.target.checked)} className="h-4 w-4 accent-green-500" /></div><label className="block text-xs text-zinc-400">旋转速度 {surroundSpeed}<input type="range" min="5" max="60" value={surroundSpeed} onChange={(e) => setSurroundSpeed(Number(e.target.value))} disabled={!surroundEnabled} className="mt-2 w-full accent-green-500 disabled:opacity-40" /></label><label className="block mt-3 text-xs text-zinc-400">声场距离 {surroundDistance}<input type="range" min="1" max="10" value={surroundDistance} onChange={(e) => setSurroundDistance(Number(e.target.value))} disabled={!surroundEnabled} className="mt-2 w-full accent-green-500 disabled:opacity-40" /></label></section>
-                <button onClick={() => setShowAudioEffectsMenu(false)} className="w-full rounded-xl bg-green-500 p-3 text-sm font-medium text-black hover:bg-green-400">完成</button>
-              </aside></div></div>
-          </div>
-        </div>
-      )}
-
-      {/* Quality Selection Menu */}
-      {showQualityMenu && (
-        <div
-          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] flex items-end justify-center"
-          onClick={() => setShowQualityMenu(false)}
-        >
-          <div
-            className="w-full max-w-md bg-zinc-900 rounded-t-2xl border-t border-white/10 shadow-2xl animate-slide-up"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Header */}
-            <div className="p-4 border-b border-white/10">
-              <h3 className="text-lg font-bold text-white text-center">选择音质</h3>
-            </div>
-
-            {/* Quality Options */}
-            <div className="p-4 space-y-2">
-              <button
-                onClick={() => {
-                  void handleQualityChange('128k');
-                }}
-                className={`w-full p-4 rounded-lg flex items-center justify-between transition-colors ${
-                  quality === '128k'
-                    ? 'bg-amber-500/20 border border-amber-500/50'
-                    : 'bg-white/5 hover:bg-white/10'
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <div className={`w-2 h-2 rounded-full ${quality === '128k' ? 'bg-amber-400' : 'bg-zinc-600'}`} />
-                  <div className="text-left">
-                    <div className="text-white font-medium">标准音质</div>
-                    <div className="text-xs text-zinc-500">128kbps</div>
-                  </div>
-                </div>
-                {quality === '128k' && (
-                  <svg className="w-5 h-5 text-amber-400" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                  </svg>
-                )}
-              </button>
-
-              <button
-                onClick={() => {
-                  void handleQualityChange('320k');
-                }}
-                className={`w-full p-4 rounded-lg flex items-center justify-between transition-colors ${
-                  quality === '320k'
-                    ? 'bg-amber-500/20 border border-amber-500/50'
-                    : 'bg-white/5 hover:bg-white/10'
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <div className={`w-2 h-2 rounded-full ${quality === '320k' ? 'bg-amber-400' : 'bg-zinc-600'}`} />
-                  <div className="text-left">
-                    <div className="text-white font-medium">高品质 HQ</div>
-                    <div className="text-xs text-zinc-500">320kbps</div>
-                  </div>
-                </div>
-                {quality === '320k' && (
-                  <svg className="w-5 h-5 text-amber-400" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                  </svg>
-                )}
-              </button>
-
-              <button
-                onClick={() => {
-                  void handleQualityChange('flac');
-                }}
-                className={`w-full p-4 rounded-lg flex items-center justify-between transition-colors ${
-                  quality === 'flac'
-                    ? 'bg-amber-500/20 border border-amber-500/50'
-                    : 'bg-white/5 hover:bg-white/10'
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <div className={`w-2 h-2 rounded-full ${quality === 'flac' ? 'bg-amber-400' : 'bg-zinc-600'}`} />
-                  <div className="text-left">
-                    <div className="text-white font-medium">无损音质 SQ</div>
-                    <div className="text-xs text-zinc-500">FLAC</div>
-                  </div>
-                </div>
-                {quality === 'flac' && (
-                  <svg className="w-5 h-5 text-amber-400" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                  </svg>
-                )}
-              </button>
-
-              <button
-                onClick={() => {
-                  void handleQualityChange('flac24bit');
-                }}
-                className={`w-full p-4 rounded-lg flex items-center justify-between transition-colors ${
-                  quality === 'flac24bit'
-                    ? 'bg-amber-500/20 border border-amber-500/50'
-                    : 'bg-white/5 hover:bg-white/10'
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <div className={`w-2 h-2 rounded-full ${quality === 'flac24bit' ? 'bg-amber-400' : 'bg-zinc-600'}`} />
-                  <div className="text-left">
-                    <div className="text-white font-medium">Hi-Res音质 HR</div>
-                    <div className="text-xs text-zinc-500">FLAC 24bit</div>
-                  </div>
-                </div>
-                {quality === 'flac24bit' && (
-                  <svg className="w-5 h-5 text-amber-400" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                  </svg>
-                )}
-              </button>
-            </div>
-
-            {/* Cancel Button */}
-            <div className="p-4 pt-0">
-              <button
-                onClick={() => setShowQualityMenu(false)}
-                className="w-full p-3 rounded-lg bg-white/5 hover:bg-white/10 text-white transition-colors"
-              >
-                取消
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-
-      <MusicSidebarDrawer
-        currentSource={currentSource}
-        isOpen={showSidebarDrawer}
-        pathname={pathname}
-        onClose={() => setShowSidebarDrawer(false)}
-        onNavigate={(href) => router.push(href)}
-      />
-
-      {/* Add to Playlist Modal */}
-      <AddToPlaylistModal
-        song={songToAddToPlaylist}
-        isOpen={showAddToPlaylistModal}
-        onClose={() => {
-          setShowAddToPlaylistModal(false);
-          setSongToAddToPlaylist(null);
-        }}
-        onSuccess={() => {
-          setToast({
-            message: '已添加到歌单',
-            type: 'success',
-            onClose: () => setToast(null),
-          });
-        }}
-        onError={(message) => {
-          setToast({
-            message,
-            type: 'error',
-            onClose: () => setToast(null),
-          });
-        }}
-      />
-
-      {/* Toast */}
-      {toast && <Toast {...toast} />}
-
-      {/* Confirm Modal */}
-      {confirmModal.isOpen &&
-        createPortal(
-          <div
-            className="music-theme-portal fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4"
-            style={{ zIndex: 99999 }}
-            onClick={confirmModal.onCancel}
-          >
-            <div
-              className="bg-zinc-900 rounded-xl max-w-md w-full border border-white/10"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className="p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold text-white">
-                    {confirmModal.title}
-                  </h3>
+                  {/* PiP 歌词按钮 */}
                   <button
-                    onClick={confirmModal.onCancel}
-                    className="text-zinc-400 hover:text-white transition-colors"
+                    onClick={toggleSpectrum}
+                    className={`transition-colors ${
+                      showSpectrum
+                        ? 'text-[color:var(--tm-text)] hover:text-[color:var(--tm-text)] min-h-[44px] tm-press'
+                        : 'text-[color:var(--tm-muted)] hover:text-[color:var(--tm-text)] min-h-[44px] tm-press'
+                    }`}
+                    title={showSpectrum ? '隐藏音谱图' : '显示音谱图'}
                   >
                     <svg
-                      className="w-5 h-5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
+                      className='w-4 h-4 md:w-5 md:h-5'
+                      fill='none'
+                      stroke='currentColor'
+                      viewBox='0 0 24 24'
+                    >
+                      {showSpectrum ? (
+                        <path
+                          strokeLinecap='round'
+                          strokeLinejoin='round'
+                          strokeWidth='2'
+                          d='M4 18V9m4 9V6m4 12v-4m4 4V8m4 10V4'
+                        />
+                      ) : (
+                        <>
+                          <path
+                            strokeLinecap='round'
+                            strokeLinejoin='round'
+                            strokeWidth='2'
+                            d='M4 18V9m4 9V6m4 12v-4m4 4V8m4 10V4'
+                          />
+                          <path
+                            strokeLinecap='round'
+                            strokeLinejoin='round'
+                            strokeWidth='2'
+                            d='M3 3l18 18'
+                          />
+                        </>
+                      )}
+                    </svg>
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      togglePiPLyrics();
+                    }}
+                    className={`transition-colors ${
+                      showPiPLyrics
+                        ? 'text-[color:var(--tm-text)] hover:text-[color:var(--tm-text)] min-h-[44px] tm-press'
+                        : 'text-[color:var(--tm-muted)] hover:text-[color:var(--tm-text)] min-h-[44px] tm-press'
+                    }`}
+                    title={showPiPLyrics ? '关闭画中画歌词' : '画中画歌词'}
+                    disabled={!currentSong}
+                  >
+                    <svg
+                      className='w-4 h-4 md:w-5 md:h-5'
+                      fill='currentColor'
+                      viewBox='0 0 24 24'
+                    >
+                      <path d='M19 7h-8v6h8V7zm2-4H3c-1.1 0-2 .9-2 2v14c0 1.1.9 1.98 2 1.98h18c1.1 0 2-.88 2-1.98V5c0-1.1-.9-2-2-2zm0 16.01H3V4.98h18v14.03z' />
+                    </svg>
+                  </button>
+                  {/* 添加到歌单按钮 */}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (currentSong) {
+                        setSongToAddToPlaylist(currentSong);
+                        setShowAddToPlaylistModal(true);
+                      }
+                    }}
+                    className='text-[color:var(--tm-muted)] hover:text-[color:var(--tm-text)] transition-colors min-h-[44px] tm-press'
+                    title='添加到歌单'
+                  >
+                    <svg
+                      className='w-4 h-4 md:w-5 md:h-5'
+                      fill='none'
+                      stroke='currentColor'
+                      viewBox='0 0 24 24'
                     >
                       <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
+                        strokeLinecap='round'
+                        strokeLinejoin='round'
                         strokeWidth={2}
-                        d="M6 18L18 6M6 6l12 12"
+                        d='M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z'
                       />
                     </svg>
                   </button>
                 </div>
 
-                <div className="mb-6">
-                  <p className="text-sm text-zinc-400">
-                    {confirmModal.message}
-                  </p>
-                </div>
-
-                <div className="flex justify-end space-x-3">
-                  <button
-                    onClick={confirmModal.onCancel}
-                    className="px-4 py-2 bg-zinc-700 hover:bg-zinc-600 text-white rounded-lg transition-colors"
-                  >
-                    取消
-                  </button>
-                  <button
-                    onClick={confirmModal.onConfirm}
-                    className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors flex items-center gap-2"
-                  >
-                    确定
-                  </button>
+                {/* 进度条 */}
+                <div className='relative'>
+                  {showSpectrum && (
+                    <div className='relative mb-3 flex items-center gap-2 text-[13px]'>
+                      <span className='invisible'>
+                        {formatTime(currentTime)}
+                      </span>
+                      <div className='flex-1'>
+                        <AudioSpectrumCanvas bars={spectrumBars} />
+                      </div>
+                      <span className='invisible'>{formatTime(duration)}</span>
+                    </div>
+                  )}
+                  <div className='flex items-center gap-2 text-[13px] text-[color:var(--tm-muted)]'>
+                    <span>{formatTime(currentTime)}</span>
+                    <div className='flex-1 h-1 bg-[var(--tm-surface-raised)] rounded-full overflow-hidden relative'>
+                      <div
+                        className='relative z-10 h-full bg-[var(--tm-text)] transition-all pointer-events-none'
+                        style={{ width: `${progress}%` }}
+                      />
+                      {showStreamBuffering && (
+                        <div className='music-buffer-track-global absolute inset-0 z-0' />
+                      )}
+                      <input
+                        type='range'
+                        min='0'
+                        max='100'
+                        value={progress}
+                        onChange={handleProgressChange}
+                        className='absolute inset-0 w-full h-full opacity-0 cursor-pointer'
+                      />
+                    </div>
+                    <span>{formatTime(duration)}</span>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>,
-          document.body
+          </div>
         )}
 
-      {/* PiP Lyrics Window */}
-      {showPiPLyrics && (
-        <LyricsPiPWindow
-          currentSong={currentSong}
-          lyrics={lyrics}
-          currentLyricIndex={currentLyricIndex}
-          isPlaying={isPlaying}
-          currentTime={currentTime}
-          opacity={pipOpacity}
-          minimized={pipMinimized}
-          onOpacityChange={(opacity) => {
-            setPipOpacity(opacity);
-            localStorage.setItem('lyricsPiPOpacity', opacity.toString());
-          }}
-          onMinimizedChange={(minimized) => {
-            setPipMinimized(minimized);
-            localStorage.setItem('lyricsPiPMinimized', minimized.toString());
-          }}
-          onLyricSeek={seekToLyric}
-          onClose={() => setShowPiPLyrics(false)}
+        {/* Playlist Modal */}
+        {showPlaylist && (
+          <div className='fixed inset-0 bg-[color:color-mix(in_srgb,var(--tm-room-cinema-bg)_90%,transparent)] backdrop-blur-sm z-[100] flex items-center justify-center p-4'>
+            <div className={MUSIC_QUEUE_SHELL}>
+              <div className={MUSIC_QUEUE_HEAD}>
+                <div className='flex items-center gap-2.5'>
+                  <h2 className={MUSIC_QUEUE_TITLE}>播放列表</h2>
+                  <span className={MUSIC_COUNT}>{playlist.length} 首</span>
+                </div>
+                <div className='flex items-center gap-2'>
+                  {playlist.length > 0 && (
+                    <button
+                      type='button'
+                      onClick={handleClearPlayRecords}
+                      className={MUSIC_DANGER_BUTTON}
+                      title='清空全部'
+                    >
+                      清空
+                    </button>
+                  )}
+                  <button
+                    type='button'
+                    onClick={() => setShowPlaylist(false)}
+                    className={MUSIC_ICON_BUTTON}
+                    title='关闭'
+                    aria-label='关闭播放列表'
+                  >
+                    <X className='h-4 w-4' strokeWidth={2} />
+                  </button>
+                </div>
+              </div>
+
+              {/* Playlist */}
+              <div className={MUSIC_QUEUE_BODY}>
+                {playlist.length > 0 ? (
+                  <DndContext
+                    sensors={playlistSensors}
+                    collisionDetection={closestCenter}
+                    onDragEnd={handlePlaylistDragEnd}
+                    modifiers={[
+                      restrictToVerticalAxis,
+                      restrictToParentElement,
+                    ]}
+                  >
+                    <SortableContext
+                      items={playlist.map((song) => song.id)}
+                      strategy={verticalListSortingStrategy}
+                    >
+                      <div className='flex flex-col'>
+                        {playlist.map((song, index) => (
+                          <SortablePlaylistRow
+                            key={song.id}
+                            song={song}
+                            index={index}
+                            isActive={index === playlistIndex}
+                            onPlay={() => {
+                              setPlaylistIndex(index);
+                              playSong(song, -1);
+                              setShowPlaylist(false);
+                            }}
+                            onDelete={() => {
+                              void handleRemovePlaylistItem(index);
+                            }}
+                          />
+                        ))}
+                      </div>
+                    </SortableContext>
+                  </DndContext>
+                ) : (
+                  <MusicEmpty
+                    icon={ListMusic}
+                    title='播放列表是空的'
+                    hint='播放歌曲后会自动进列表。'
+                  />
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Sleep Timer Menu */}
+        {showSleepTimerMenu && (
+          <div
+            className='fixed inset-0 bg-[color:color-mix(in_srgb,var(--tm-room-cinema-bg)_50%,transparent)] backdrop-blur-sm z-[110] flex items-end justify-center'
+            onClick={() => setShowSleepTimerMenu(false)}
+          >
+            <div
+              className='w-full max-w-md bg-[var(--tm-surface)] rounded-t-2xl border-t border-[var(--tm-line)] shadow-2xl animate-slide-up'
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className='relative p-4 border-b border-[var(--tm-line)]'>
+                <h3 className='text-lg font-bold text-[color:var(--tm-text)] text-center'>
+                  睡眠定时
+                </h3>
+                <button
+                  type='button'
+                  onClick={() => setShowSleepTimerMenu(false)}
+                  className='absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-[var(--tm-surface-raised)] text-[color:var(--tm-muted)] transition-colors hover:bg-[var(--tm-line)] hover:text-[color:var(--tm-text)] min-h-[44px] tm-press'
+                  title='关闭'
+                >
+                  <svg
+                    className='h-4 w-4'
+                    fill='none'
+                    stroke='currentColor'
+                    viewBox='0 0 24 24'
+                  >
+                    <path
+                      strokeLinecap='round'
+                      strokeLinejoin='round'
+                      strokeWidth='2'
+                      d='M6 18L18 6M6 6l12 12'
+                    />
+                  </svg>
+                </button>
+                <p className='mt-1 text-center text-[13px] text-[color:var(--tm-muted)]'>
+                  {sleepTimerEndAt
+                    ? `剩余 ${formatSleepTimer(sleepTimerRemaining)} 后暂停播放`
+                    : '选择倒计时时长，到点后自动暂停'}
+                </p>
+              </div>
+
+              <div className='p-4 grid grid-cols-2 gap-2'>
+                {[15, 30, 45, 60, 90, 120].map((minutes) => (
+                  <button
+                    key={minutes}
+                    onClick={() => setSleepTimer(minutes)}
+                    className='rounded-lg bg-[var(--tm-surface-raised)] p-4 text-center text-sm font-medium text-[color:var(--tm-text)] transition-colors hover:bg-[var(--tm-line)] hover:text-[color:var(--tm-text)] min-h-[44px] tm-press'
+                  >
+                    {minutes} 分钟
+                  </button>
+                ))}
+              </div>
+
+              <div className='mx-4 mb-4 rounded-xl border border-[var(--tm-line)] bg-[var(--tm-surface-raised)] p-4'>
+                <div className='mb-3 text-center text-sm font-medium text-[color:var(--tm-text)]'>
+                  自定义时间
+                </div>
+                <div className='grid grid-cols-2 gap-3'>
+                  {[
+                    {
+                      label: '小时',
+                      value: customSleepHours,
+                      ref: sleepHoursPickerRef,
+                      onScroll: handleSleepHourScroll,
+                      items: Array.from({ length: 13 }, (_, hour) => hour),
+                    },
+                    {
+                      label: '分钟',
+                      value: customSleepMinutes,
+                      ref: sleepMinutesPickerRef,
+                      onScroll: handleSleepMinuteScroll,
+                      items: Array.from({ length: 60 }, (_, minute) => minute),
+                    },
+                  ].map((picker) => (
+                    <div key={picker.label} className='block'>
+                      <span className='mb-2 block text-center text-[13px] text-[color:var(--tm-muted)]'>
+                        {picker.label}
+                      </span>
+                      <div className='relative'>
+                        <div
+                          ref={picker.ref}
+                          onScroll={picker.onScroll}
+                          className='scrollbar-hide overflow-y-auto rounded-xl border border-[var(--tm-line)] bg-[var(--tm-surface)] py-[80px] text-[color:var(--tm-text)]'
+                          style={{
+                            height: `${sleepPickerHeight}px`,
+                            scrollbarWidth: 'none',
+                            msOverflowStyle: 'none',
+                            scrollSnapType: 'y mandatory',
+                          }}
+                        >
+                          {picker.items.map((item) => {
+                            const isActive = item === picker.value;
+                            return (
+                              <button
+                                key={item}
+                                type='button'
+                                onClick={() => {
+                                  if (picker.label === '小时') {
+                                    setCustomSleepHours(item);
+                                    if (sleepHoursPickerRef.current) {
+                                      sleepHoursPickerRef.current.scrollTo({
+                                        top: item * sleepPickerItemHeight,
+                                        behavior: 'smooth',
+                                      });
+                                    }
+                                  } else {
+                                    setCustomSleepMinutes(item);
+                                    if (sleepMinutesPickerRef.current) {
+                                      sleepMinutesPickerRef.current.scrollTo({
+                                        top: item * sleepPickerItemHeight,
+                                        behavior: 'smooth',
+                                      });
+                                    }
+                                  }
+                                }}
+                                className={`flex w-full items-center justify-center text-sm transition-colors ${
+                                  isActive
+                                    ? 'text-[color:var(--tm-text)] min-h-[44px] tm-press'
+                                    : 'text-[color:var(--tm-muted)] min-h-[44px] tm-press'
+                                }`}
+                                style={{
+                                  height: `${sleepPickerItemHeight}px`,
+                                  scrollSnapAlign: 'center',
+                                }}
+                              >
+                                {item.toString().padStart(2, '0')}
+                              </button>
+                            );
+                          })}
+                        </div>
+                        <div
+                          className='pointer-events-none absolute inset-x-0 top-1/2 -translate-y-1/2 border-y border-[var(--tm-line)] bg-[var(--tm-surface-raised)]'
+                          style={{ height: `${sleepPickerItemHeight}px` }}
+                        />
+                        <div className='pointer-events-none absolute inset-x-0 top-0 h-1/2 bg-[var(--tm-surface)] to-transparent' />
+                        <div className='pointer-events-none absolute inset-x-0 bottom-0 h-1/2 bg-[var(--tm-surface)] to-transparent' />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <button
+                  onClick={setCustomSleepTimer}
+                  className='mt-4 w-full rounded-lg bg-[var(--tm-text)] p-3 text-sm font-medium text-[color:var(--tm-accent-contrast)] transition-colors hover:opacity-90 disabled:cursor-not-allowed disabled:bg-[var(--tm-surface)] disabled:text-[color:var(--tm-accent-contrast)] min-h-[44px] tm-press'
+                  disabled={customSleepHours === 0 && customSleepMinutes === 0}
+                >
+                  {customSleepHours === 0 && customSleepMinutes === 0
+                    ? '请选择定时时长'
+                    : `设置 ${
+                        customSleepHours > 0 ? `${customSleepHours} 小时` : ''
+                      }${
+                        customSleepMinutes > 0
+                          ? `${customSleepMinutes} 分钟`
+                          : ''
+                      }后暂停`}
+                </button>
+              </div>
+
+              <div className='grid grid-cols-2 gap-2 px-4 pb-4'>
+                <button
+                  onClick={() => setShowSleepTimerMenu(false)}
+                  className='w-full rounded-lg border border-[var(--tm-line)] bg-[var(--tm-surface-raised)] p-3 text-sm font-medium text-[color:var(--tm-muted)] transition-colors hover:bg-[var(--tm-line)] disabled:cursor-not-allowed disabled:opacity-50 min-h-[44px] tm-press'
+                >
+                  返回
+                </button>
+                <button
+                  onClick={cancelSleepTimer}
+                  className='w-full rounded-lg border border-[var(--tm-line)] bg-[var(--tm-surface-raised)] p-3 text-sm font-medium text-[color:var(--tm-muted)] transition-colors hover:bg-[var(--tm-line)] disabled:cursor-not-allowed disabled:opacity-50 min-h-[44px] tm-press'
+                  disabled={!sleepTimerEndAt}
+                >
+                  关闭定时
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {showAudioEffectsMenu && (
+          <div
+            className='fixed inset-0 bg-[color:color-mix(in_srgb,var(--tm-room-cinema-bg)_60%,transparent)] backdrop-blur-sm z-[100] flex items-center justify-center p-4'
+            onClick={() => setShowAudioEffectsMenu(false)}
+          >
+            <div
+              className='relative w-full max-w-5xl max-h-[90vh] bg-[var(--tm-surface)] rounded-2xl border border-[var(--tm-line)] shadow-2xl overflow-hidden'
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className='p-5 border-b border-[var(--tm-line)] flex items-center justify-between'>
+                <div>
+                  <h3 className='text-lg font-bold text-[color:var(--tm-text)]'>
+                    均衡器与音效调节
+                  </h3>
+                </div>
+                <button
+                  onClick={() => setShowAudioEffectsMenu(false)}
+                  className='w-8 h-8 rounded-lg text-[color:var(--tm-muted)] hover:text-[color:var(--tm-text)] hover:bg-[var(--tm-line)] min-h-[44px] tm-press'
+                >
+                  ✕
+                </button>
+              </div>
+              <div className='p-5 overflow-y-auto max-h-[calc(90vh-80px)]'>
+                <div className='grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-8'>
+                  <section>
+                    <div className='flex items-center justify-between mb-4'>
+                      <div>
+                        <h4 className='text-sm font-bold text-[color:var(--tm-text)]'>
+                          10 段均衡器
+                        </h4>
+                      </div>
+                      <label className='flex items-center gap-2 text-[13px] text-[color:var(--tm-muted)]'>
+                        <input
+                          type='checkbox'
+                          checked={equalizerEnabled}
+                          onChange={(e) =>
+                            setEqualizerEnabled(e.target.checked)
+                          }
+                          className='h-4 w-4 accent-[var(--tm-text)]'
+                        />
+                        启用 EQ
+                      </label>
+                    </div>
+                    <div className='rounded-xl border border-[var(--tm-line)] p-4 overflow-x-auto overscroll-x-contain'>
+                      <div className='min-w-[760px] grid grid-cols-10 gap-3 items-end h-56 sm:h-64'>
+                        {EQ_BANDS.map((band, index) => (
+                          <div
+                            key={band.frequency}
+                            className='h-full min-w-0 flex flex-col items-center gap-2'
+                          >
+                            <span className='text-[13px] font-mono text-[color:var(--tm-muted)]'>
+                              {(eqGains[index] || 0) > 0 ? '+' : ''}
+                              {(eqGains[index] || 0).toFixed(1)}
+                            </span>
+                            <div className='flex-1 w-full min-h-0 flex items-center justify-center'>
+                              <input
+                                type='range'
+                                min='-12'
+                                max='12'
+                                step='0.5'
+                                value={eqGains[index] || 0}
+                                onChange={(e) => {
+                                  setEqPreset('自定义');
+                                  const value = Number(e.target.value);
+                                  setEqGains((current) =>
+                                    current.map((gain, i) =>
+                                      i === index ? value : gain
+                                    )
+                                  );
+                                }}
+                                disabled={!equalizerEnabled}
+                                className='w-40 sm:w-52 h-5 -rotate-90 accent-[var(--tm-text)] [direction:rtl] disabled:opacity-40'
+                              />
+                            </div>
+                            <span className='text-[13px] font-mono text-[color:var(--tm-muted)]'>
+                              {band.label}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    <div className='mt-5'>
+                      <div className='flex items-center justify-between mb-3'>
+                        <h4 className='text-sm font-bold text-[color:var(--tm-text)]'>
+                          预设
+                        </h4>
+                        <button
+                          onClick={() => applyEqPreset('Flat')}
+                          className='text-[13px] text-[color:var(--tm-text)] hover:text-[color:var(--tm-text)] min-h-[44px] tm-press'
+                        >
+                          Flat 重置
+                        </button>
+                      </div>
+                      <div className='flex flex-wrap gap-2'>
+                        {Object.keys(EQ_PRESETS).map((name) => (
+                          <button
+                            key={name}
+                            onClick={() => applyEqPreset(name)}
+                            className={`px-3 py-1.5 rounded-lg text-[13px] transition-colors ${
+                              eqPreset === name
+                                ? 'bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] border border-[var(--tm-line)] text-[color:var(--tm-accent-contrast)] min-h-[44px] tm-press'
+                                : 'bg-[var(--tm-surface-raised)] text-[color:var(--tm-muted)] border border-[var(--tm-line)] hover:bg-[var(--tm-line)] min-h-[44px] tm-press'
+                            }`}
+                          >
+                            {name}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </section>
+                  <aside className='space-y-5'>
+                    <section className='rounded-xl border border-[var(--tm-line)] bg-[var(--tm-surface-raised)] p-4'>
+                      <div className='flex items-center justify-between'>
+                        <div>
+                          <h4 className='text-sm font-bold text-[color:var(--tm-text)]'>
+                            响度增强
+                          </h4>
+                          <p className='text-[13px] text-[color:var(--tm-muted)] mt-1'>
+                            轻微压缩，增强人声和细节
+                          </p>
+                        </div>
+                        <input
+                          type='checkbox'
+                          checked={loudnessEnabled}
+                          onChange={(e) => setLoudnessEnabled(e.target.checked)}
+                          className='h-4 w-4 accent-[var(--tm-text)]'
+                        />
+                      </div>
+                    </section>
+                    <section className='rounded-xl border border-[var(--tm-line)] bg-[var(--tm-surface-raised)] p-4'>
+                      <div className='flex items-center justify-between mb-3'>
+                        <div>
+                          <h4 className='text-sm font-bold text-[color:var(--tm-text)]'>
+                            环境混响音效
+                          </h4>
+                          <p className='text-[13px] text-[color:var(--tm-muted)] mt-1'>
+                            模拟不同空间的回声效果
+                          </p>
+                        </div>
+                        <input
+                          type='checkbox'
+                          checked={reverbEnabled}
+                          onChange={(e) => setReverbEnabled(e.target.checked)}
+                          className='h-4 w-4 accent-[var(--tm-text)]'
+                        />
+                      </div>
+                      <div className='flex flex-wrap gap-2'>
+                        {Object.entries(REVERB_PRESETS).map(([id, preset]) => (
+                          <button
+                            key={id}
+                            onClick={() => {
+                              const selected =
+                                id as keyof typeof REVERB_PRESETS;
+                              const selectedPreset = REVERB_PRESETS[selected];
+                              setReverbPreset(selected);
+                              setReverbEnabled(selected !== 'none');
+                              setReverbMainGain(
+                                Math.round(selectedPreset.main * 100)
+                              );
+                              setReverbMix(
+                                Math.min(
+                                  100,
+                                  Math.round(selectedPreset.send * 30)
+                                )
+                              );
+                            }}
+                            className={`rounded-lg border px-2.5 py-1 text-[13px] ${
+                              reverbPreset === id
+                                ? 'border-[var(--tm-line)] bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] text-[color:var(--tm-accent-contrast)] min-h-[44px] tm-press'
+                                : 'border-[var(--tm-line)] bg-[var(--tm-surface-raised)] text-[color:var(--tm-muted)] hover:bg-[var(--tm-line)] min-h-[44px] tm-press'
+                            }`}
+                          >
+                            {preset.label}
+                          </button>
+                        ))}
+                      </div>
+                      <label className='mt-3 block text-[13px] text-[color:var(--tm-muted)]'>
+                        原始音量 {reverbMainGain}%
+                        <input
+                          type='range'
+                          min='0'
+                          max='150'
+                          value={reverbMainGain}
+                          onChange={(e) =>
+                            setReverbMainGain(Number(e.target.value))
+                          }
+                          disabled={!reverbEnabled}
+                          className='mt-2 w-full accent-[var(--tm-text)] disabled:opacity-40'
+                        />
+                      </label>
+                      <label className='mt-3 block text-[13px] text-[color:var(--tm-muted)]'>
+                        环境音效 {reverbMix}%
+                        <input
+                          type='range'
+                          min='0'
+                          max='100'
+                          value={reverbMix}
+                          onChange={(e) => setReverbMix(Number(e.target.value))}
+                          disabled={!reverbEnabled}
+                          className='mt-2 w-full accent-[var(--tm-text)] disabled:opacity-40'
+                        />
+                      </label>
+                    </section>
+                    <section className='rounded-xl border border-[var(--tm-line)] bg-[var(--tm-surface-raised)] p-4'>
+                      <div className='flex items-center justify-between mb-3'>
+                        <div>
+                          <h4 className='text-sm font-bold text-[color:var(--tm-text)]'>
+                            音调升降调节
+                          </h4>
+                          <p className='text-[13px] text-[color:var(--tm-muted)] mt-1'>
+                            当前 {pitchRate.toFixed(2)}x
+                          </p>
+                        </div>
+                        <button
+                          onClick={() => setPitchRate(1)}
+                          className='text-[13px] text-[color:var(--tm-text)] min-h-[44px] tm-press'
+                        >
+                          重置
+                        </button>
+                      </div>
+                      <input
+                        type='range'
+                        min='0.5'
+                        max='1.5'
+                        step='0.01'
+                        value={pitchRate}
+                        onChange={(e) => setPitchRate(Number(e.target.value))}
+                        className='w-full accent-[var(--tm-text)]'
+                      />
+                      <div className='mt-2 flex justify-between text-[13px] text-[color:var(--tm-muted)]'>
+                        <span>低</span>
+                        <span>原速</span>
+                        <span>高</span>
+                      </div>
+                    </section>
+                    <section className='rounded-xl border border-[var(--tm-line)] bg-[var(--tm-surface-raised)] p-4'>
+                      <div className='flex items-center justify-between mb-3'>
+                        <div>
+                          <h4 className='text-sm font-bold text-[color:var(--tm-text)]'>
+                            3D 立体环绕
+                          </h4>
+                          <p className='text-[13px] text-[color:var(--tm-muted)] mt-1'>
+                            需使用耳机，模拟声源环绕移动
+                          </p>
+                        </div>
+                        <input
+                          type='checkbox'
+                          checked={surroundEnabled}
+                          onChange={(e) => setSurroundEnabled(e.target.checked)}
+                          className='h-4 w-4 accent-[var(--tm-text)]'
+                        />
+                      </div>
+                      <label className='block text-[13px] text-[color:var(--tm-muted)]'>
+                        旋转速度 {surroundSpeed}
+                        <input
+                          type='range'
+                          min='5'
+                          max='60'
+                          value={surroundSpeed}
+                          onChange={(e) =>
+                            setSurroundSpeed(Number(e.target.value))
+                          }
+                          disabled={!surroundEnabled}
+                          className='mt-2 w-full accent-[var(--tm-text)] disabled:opacity-40'
+                        />
+                      </label>
+                      <label className='block mt-3 text-[13px] text-[color:var(--tm-muted)]'>
+                        声场距离 {surroundDistance}
+                        <input
+                          type='range'
+                          min='1'
+                          max='10'
+                          value={surroundDistance}
+                          onChange={(e) =>
+                            setSurroundDistance(Number(e.target.value))
+                          }
+                          disabled={!surroundEnabled}
+                          className='mt-2 w-full accent-[var(--tm-text)] disabled:opacity-40'
+                        />
+                      </label>
+                    </section>
+                    <button
+                      onClick={() => setShowAudioEffectsMenu(false)}
+                      className='w-full rounded-xl bg-[var(--tm-text)] p-3 text-sm font-medium text-[color:var(--tm-accent-contrast)] hover:opacity-90 min-h-[44px] tm-press'
+                    >
+                      完成
+                    </button>
+                  </aside>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Quality Selection Menu */}
+        {showQualityMenu && (
+          <div
+            className='fixed inset-0 bg-[color:color-mix(in_srgb,var(--tm-room-cinema-bg)_50%,transparent)] backdrop-blur-sm z-[100] flex items-end justify-center'
+            onClick={() => setShowQualityMenu(false)}
+          >
+            <div
+              className='w-full max-w-md bg-[var(--tm-surface)] rounded-t-2xl border-t border-[var(--tm-line)] shadow-2xl animate-slide-up'
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div className='p-4 border-b border-[var(--tm-line)]'>
+                <h3 className='text-lg font-bold text-[color:var(--tm-text)] text-center'>
+                  选择音质
+                </h3>
+              </div>
+
+              {/* Quality Options */}
+              <div className='p-4 space-y-2'>
+                <button
+                  onClick={() => {
+                    void handleQualityChange('128k');
+                  }}
+                  className={`w-full p-4 rounded-lg flex items-center justify-between transition-colors ${
+                    quality === '128k'
+                      ? 'bg-[var(--tm-surface-raised)] border border-[var(--tm-line)] min-h-[44px] tm-press'
+                      : 'bg-[var(--tm-surface-raised)] hover:bg-[var(--tm-line)] min-h-[44px] tm-press'
+                  }`}
+                >
+                  <div className='flex items-center gap-3'>
+                    <div
+                      className={`w-2 h-2 rounded-full ${
+                        quality === '128k'
+                          ? 'bg-[var(--tm-text)]'
+                          : 'bg-[var(--tm-surface)]'
+                      }`}
+                    />
+                    <div className='text-left'>
+                      <div className='text-[color:var(--tm-text)] font-medium'>
+                        标准音质
+                      </div>
+                      <div className='text-[13px] text-[color:var(--tm-muted)]'>
+                        128kbps
+                      </div>
+                    </div>
+                  </div>
+                  {quality === '128k' && (
+                    <svg
+                      className='w-5 h-5 text-[color:var(--tm-text)]'
+                      fill='currentColor'
+                      viewBox='0 0 20 20'
+                    >
+                      <path
+                        fillRule='evenodd'
+                        d='M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z'
+                        clipRule='evenodd'
+                      />
+                    </svg>
+                  )}
+                </button>
+
+                <button
+                  onClick={() => {
+                    void handleQualityChange('320k');
+                  }}
+                  className={`w-full p-4 rounded-lg flex items-center justify-between transition-colors ${
+                    quality === '320k'
+                      ? 'bg-[var(--tm-surface-raised)] border border-[var(--tm-line)] min-h-[44px] tm-press'
+                      : 'bg-[var(--tm-surface-raised)] hover:bg-[var(--tm-line)] min-h-[44px] tm-press'
+                  }`}
+                >
+                  <div className='flex items-center gap-3'>
+                    <div
+                      className={`w-2 h-2 rounded-full ${
+                        quality === '320k'
+                          ? 'bg-[var(--tm-text)]'
+                          : 'bg-[var(--tm-surface)]'
+                      }`}
+                    />
+                    <div className='text-left'>
+                      <div className='text-[color:var(--tm-text)] font-medium'>
+                        高品质 HQ
+                      </div>
+                      <div className='text-[13px] text-[color:var(--tm-muted)]'>
+                        320kbps
+                      </div>
+                    </div>
+                  </div>
+                  {quality === '320k' && (
+                    <svg
+                      className='w-5 h-5 text-[color:var(--tm-text)]'
+                      fill='currentColor'
+                      viewBox='0 0 20 20'
+                    >
+                      <path
+                        fillRule='evenodd'
+                        d='M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z'
+                        clipRule='evenodd'
+                      />
+                    </svg>
+                  )}
+                </button>
+
+                <button
+                  onClick={() => {
+                    void handleQualityChange('flac');
+                  }}
+                  className={`w-full p-4 rounded-lg flex items-center justify-between transition-colors ${
+                    quality === 'flac'
+                      ? 'bg-[var(--tm-surface-raised)] border border-[var(--tm-line)] min-h-[44px] tm-press'
+                      : 'bg-[var(--tm-surface-raised)] hover:bg-[var(--tm-line)] min-h-[44px] tm-press'
+                  }`}
+                >
+                  <div className='flex items-center gap-3'>
+                    <div
+                      className={`w-2 h-2 rounded-full ${
+                        quality === 'flac'
+                          ? 'bg-[var(--tm-text)]'
+                          : 'bg-[var(--tm-surface)]'
+                      }`}
+                    />
+                    <div className='text-left'>
+                      <div className='text-[color:var(--tm-text)] font-medium'>
+                        无损音质 SQ
+                      </div>
+                      <div className='text-[13px] text-[color:var(--tm-muted)]'>
+                        FLAC
+                      </div>
+                    </div>
+                  </div>
+                  {quality === 'flac' && (
+                    <svg
+                      className='w-5 h-5 text-[color:var(--tm-text)]'
+                      fill='currentColor'
+                      viewBox='0 0 20 20'
+                    >
+                      <path
+                        fillRule='evenodd'
+                        d='M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z'
+                        clipRule='evenodd'
+                      />
+                    </svg>
+                  )}
+                </button>
+
+                <button
+                  onClick={() => {
+                    void handleQualityChange('flac24bit');
+                  }}
+                  className={`w-full p-4 rounded-lg flex items-center justify-between transition-colors ${
+                    quality === 'flac24bit'
+                      ? 'bg-[var(--tm-surface-raised)] border border-[var(--tm-line)] min-h-[44px] tm-press'
+                      : 'bg-[var(--tm-surface-raised)] hover:bg-[var(--tm-line)] min-h-[44px] tm-press'
+                  }`}
+                >
+                  <div className='flex items-center gap-3'>
+                    <div
+                      className={`w-2 h-2 rounded-full ${
+                        quality === 'flac24bit'
+                          ? 'bg-[var(--tm-text)]'
+                          : 'bg-[var(--tm-surface)]'
+                      }`}
+                    />
+                    <div className='text-left'>
+                      <div className='text-[color:var(--tm-text)] font-medium'>
+                        Hi-Res音质 HR
+                      </div>
+                      <div className='text-[13px] text-[color:var(--tm-muted)]'>
+                        FLAC 24bit
+                      </div>
+                    </div>
+                  </div>
+                  {quality === 'flac24bit' && (
+                    <svg
+                      className='w-5 h-5 text-[color:var(--tm-text)]'
+                      fill='currentColor'
+                      viewBox='0 0 20 20'
+                    >
+                      <path
+                        fillRule='evenodd'
+                        d='M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z'
+                        clipRule='evenodd'
+                      />
+                    </svg>
+                  )}
+                </button>
+              </div>
+
+              {/* Cancel Button */}
+              <div className='p-4 pt-0'>
+                <button
+                  onClick={() => setShowQualityMenu(false)}
+                  className='w-full p-3 rounded-lg bg-[var(--tm-surface-raised)] hover:bg-[var(--tm-line)] text-[color:var(--tm-text)] transition-colors min-h-[44px] tm-press'
+                >
+                  取消
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <MusicSidebarDrawer
+          currentSource={currentSource}
+          isOpen={showSidebarDrawer}
+          pathname={pathname}
+          onClose={() => setShowSidebarDrawer(false)}
+          onNavigate={(href) => router.push(href)}
         />
-      )}
+
+        {/* Add to Playlist Modal */}
+        <AddToPlaylistModal
+          song={songToAddToPlaylist}
+          isOpen={showAddToPlaylistModal}
+          onClose={() => {
+            setShowAddToPlaylistModal(false);
+            setSongToAddToPlaylist(null);
+          }}
+          onSuccess={() => {
+            setToast({
+              message: '已添加到歌单',
+              type: 'success',
+              onClose: () => setToast(null),
+            });
+          }}
+          onError={(message) => {
+            setToast({
+              message,
+              type: 'error',
+              onClose: () => setToast(null),
+            });
+          }}
+        />
+
+        {/* Toast */}
+        {toast && <Toast {...toast} />}
+
+        {/* Confirm Modal */}
+        {confirmModal.isOpen &&
+          createPortal(
+            <div
+              className='music-theme-portal fixed inset-0 bg-[color:color-mix(in_srgb,var(--tm-room-cinema-bg)_50%,transparent)] backdrop-blur-sm flex items-center justify-center p-4'
+              style={{ zIndex: 99999 }}
+              onClick={confirmModal.onCancel}
+            >
+              <div
+                className='bg-[var(--tm-surface)] rounded-xl max-w-md w-full border border-[var(--tm-line)]'
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className='p-6'>
+                  <div className='flex items-center justify-between mb-4'>
+                    <h3 className='text-lg font-medium text-[color:var(--tm-text)]'>
+                      {confirmModal.title}
+                    </h3>
+                    <button
+                      onClick={confirmModal.onCancel}
+                      className='text-[color:var(--tm-muted)] hover:text-[color:var(--tm-text)] transition-colors min-h-[44px] tm-press'
+                    >
+                      <svg
+                        className='w-5 h-5'
+                        fill='none'
+                        stroke='currentColor'
+                        viewBox='0 0 24 24'
+                      >
+                        <path
+                          strokeLinecap='round'
+                          strokeLinejoin='round'
+                          strokeWidth={2}
+                          d='M6 18L18 6M6 6l12 12'
+                        />
+                      </svg>
+                    </button>
+                  </div>
+
+                  <div className='mb-6'>
+                    <p className='text-sm text-[color:var(--tm-muted)]'>
+                      {confirmModal.message}
+                    </p>
+                  </div>
+
+                  <div className='flex justify-end space-x-3'>
+                    <button
+                      onClick={confirmModal.onCancel}
+                      className='px-4 py-2 bg-[var(--tm-surface)] hover:bg-[var(--tm-line)] text-[color:var(--tm-text)] rounded-lg transition-colors min-h-[44px] tm-press'
+                    >
+                      取消
+                    </button>
+                    <button
+                      onClick={confirmModal.onConfirm}
+                      className='px-4 py-2 bg-[var(--tm-text)] hover:opacity-90 text-[color:var(--tm-accent-contrast)] rounded-lg transition-colors flex items-center gap-2 min-h-[44px] tm-press'
+                    >
+                      确定
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>,
+            document.body
+          )}
+
+        {/* PiP Lyrics Window */}
+        {showPiPLyrics && (
+          <LyricsPiPWindow
+            currentSong={currentSong}
+            lyrics={lyrics}
+            currentLyricIndex={currentLyricIndex}
+            isPlaying={isPlaying}
+            currentTime={currentTime}
+            opacity={pipOpacity}
+            minimized={pipMinimized}
+            onOpacityChange={(opacity) => {
+              setPipOpacity(opacity);
+              localStorage.setItem('lyricsPiPOpacity', opacity.toString());
+            }}
+            onMinimizedChange={(minimized) => {
+              setPipMinimized(minimized);
+              localStorage.setItem('lyricsPiPMinimized', minimized.toString());
+            }}
+            onLyricSeek={seekToLyric}
+            onClose={() => setShowPiPLyrics(false)}
+          />
+        )}
       </>
     </div>
   );

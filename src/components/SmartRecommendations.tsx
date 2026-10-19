@@ -1,18 +1,19 @@
 'use client';
 
-import { useCallback,useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
-import { useEnableComments } from '@/hooks/useEnableComments';
-import { useRecommendationDataSource } from '@/hooks/useRecommendationDataSource';
-
-import ScrollableRow from '@/components/ScrollableRow';
-import VideoCard from '@/components/VideoCard';
+import '@/styles/legacy-panels.css';
 
 import {
   getRecommendationCache,
   recommendationCacheKeys,
   setRecommendationCache,
 } from '@/lib/recommendations/cache';
+import { useEnableComments } from '@/hooks/useEnableComments';
+import { useRecommendationDataSource } from '@/hooks/useRecommendationDataSource';
+
+import ScrollableRow from '@/components/ScrollableRow';
+import VideoCard from '@/components/VideoCard';
 
 interface Recommendation {
   doubanId?: string;
@@ -74,14 +75,18 @@ export default function SmartRecommendations({
       console.log('正在获取TMDB推荐');
       setLoading(true);
 
-      const mappingCacheKey = recommendationCacheKeys.tmdbTitleMapping(videoTitle);
+      const mappingCacheKey =
+        recommendationCacheKeys.tmdbTitleMapping(videoTitle);
       const cachedId = getRecommendationCache<string>(mappingCacheKey);
 
       if (cachedId) {
         console.log('使用缓存的TMDB ID映射');
 
-        const recommendationsCacheKey = recommendationCacheKeys.tmdbRecommendations(cachedId);
-        const recommendationsCache = getRecommendationCache<Recommendation[]>(recommendationsCacheKey);
+        const recommendationsCacheKey =
+          recommendationCacheKeys.tmdbRecommendations(cachedId);
+        const recommendationsCache = getRecommendationCache<Recommendation[]>(
+          recommendationsCacheKey
+        );
 
         if (recommendationsCache && recommendationsCache.length > 0) {
           console.log('使用缓存的TMDB推荐数据');
@@ -114,8 +119,12 @@ export default function SmartRecommendations({
           try {
             setRecommendationCache(mappingCacheKey, String(result.tmdbId));
 
-            const recommendationsCacheKey = recommendationCacheKeys.tmdbRecommendations(result.tmdbId);
-            setRecommendationCache(recommendationsCacheKey, recommendationsData);
+            const recommendationsCacheKey =
+              recommendationCacheKeys.tmdbRecommendations(result.tmdbId);
+            setRecommendationCache(
+              recommendationsCacheKey,
+              recommendationsData
+            );
           } catch (e) {
             console.error('保存缓存失败:', e);
           }
@@ -146,7 +155,9 @@ export default function SmartRecommendations({
         return;
       }
 
-      const response = await fetch(`/api/douban-recommendations?id=${doubanId}`);
+      const response = await fetch(
+        `/api/douban-recommendations?id=${doubanId}`
+      );
 
       if (!response.ok) {
         throw new Error('获取豆瓣推荐失败');
@@ -202,7 +213,11 @@ export default function SmartRecommendations({
   if (loading && recommendations.length === 0) {
     return (
       <div className='flex justify-center items-center py-8'>
-        <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-green-500'></div>
+        <div
+          className='tm-skeleton h-8 w-24 rounded-lg bg-[var(--tm-surface-raised)]'
+          role='status'
+          aria-label='正在加载推荐'
+        />
       </div>
     );
   }
@@ -213,13 +228,13 @@ export default function SmartRecommendations({
   }
 
   return (
-    <div className='mt-6 -mx-3 md:mx-0 md:px-4'>
-      <div className='bg-white/50 dark:bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-200/50 dark:border-gray-700/50 overflow-hidden'>
+    <div className='tm-smart-recommendations mt-6 -mx-3 md:mx-0 md:px-4'>
+      <div className='bg-[var(--tm-surface-raised)] rounded-xl border border-[var(--tm-line)] overflow-hidden'>
         {/* 标题 */}
-        <div className='px-3 md:px-6 py-4 border-b border-gray-200 dark:border-gray-700'>
-          <h3 className='text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2'>
+        <div className='px-3 md:px-6 py-4 border-b border-[var(--tm-line)]'>
+          <h3 className='text-xl md:text-2xl font-medium text-[color:var(--tm-text)] flex items-center gap-2'>
             <svg className='w-5 h-5' fill='currentColor' viewBox='0 0 24 24'>
-              <path d='M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z'/>
+              <path d='M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z' />
             </svg>
             更多推荐
           </h3>

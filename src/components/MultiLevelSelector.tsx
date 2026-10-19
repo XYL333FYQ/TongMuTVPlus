@@ -1,6 +1,11 @@
 'use client';
 
+import { motion } from 'framer-motion';
 import React, { useEffect, useRef, useState } from 'react';
+
+import '@/styles/controls.css';
+
+import { useReducedMotionSetting } from '@/lib/motion';
 import { createPortal } from 'react-dom';
 
 interface MultiLevelOption {
@@ -24,6 +29,7 @@ const MultiLevelSelector: React.FC<MultiLevelSelectorProps> = ({
   onChange,
   contentType = 'movie',
 }) => {
+  const reduced = useReducedMotionSetting();
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [dropdownPosition, setDropdownPosition] = useState<{
     x: number;
@@ -282,19 +288,19 @@ const MultiLevelSelector: React.FC<MultiLevelSelectorProps> = ({
   const categories: MultiLevelCategory[] = [
     ...(contentType !== 'anime-tv' && contentType !== 'anime-movie'
       ? [
-        {
-          key: 'type',
-          label: '类型',
-          options: getTypeOptions(contentType),
-        },
-      ]
+          {
+            key: 'type',
+            label: '类型',
+            options: getTypeOptions(contentType),
+          },
+        ]
       : [
-        {
-          key: 'label',
-          label: '类型',
-          options: getLabelOptions(contentType),
-        },
-      ]),
+          {
+            key: 'label',
+            label: '类型',
+            options: getLabelOptions(contentType),
+          },
+        ]),
     {
       key: 'region',
       label: '地区',
@@ -307,15 +313,15 @@ const MultiLevelSelector: React.FC<MultiLevelSelectorProps> = ({
     },
     // 只在电视剧和综艺时显示平台选项
     ...(contentType === 'tv' ||
-      contentType === 'show' ||
-      contentType === 'anime-tv'
+    contentType === 'show' ||
+    contentType === 'anime-tv'
       ? [
-        {
-          key: 'platform',
-          label: '平台',
-          options: getPlatformOptions(contentType),
-        },
-      ]
+          {
+            key: 'platform',
+            label: '平台',
+            options: getPlatformOptions(contentType),
+          },
+        ]
       : []),
     {
       key: 'sort',
@@ -517,20 +523,24 @@ const MultiLevelSelector: React.FC<MultiLevelSelectorProps> = ({
             className='relative'
           >
             <button
+              type='button'
+              aria-expanded={activeCategory === category.key}
               onClick={() => handleCategoryClick(category.key)}
-              className={`relative z-10 px-1.5 py-0.5 sm:px-2 sm:py-1 md:px-4 md:py-2 text-xs sm:text-sm font-medium rounded-full transition-all duration-200 whitespace-nowrap ${activeCategory === category.key
+              className={`relative z-10 px-1.5 py-0.5 sm:px-2 sm:py-1 md:px-4 md:py-2 text-[13px] sm:text-sm font-medium rounded-full transition-[transform,opacity] duration-200 whitespace-nowrap min-h-[44px] min-w-[44px] tm-press focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)] ${
+                activeCategory === category.key
                   ? isDefaultValue(category.key)
-                    ? 'text-gray-900 dark:text-gray-100 cursor-default'
-                    : 'text-green-600 dark:text-green-400 cursor-default'
+                    ? 'text-[color:var(--tm-text)] cursor-default min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
+                    : 'text-[color:var(--tm-text)] cursor-default min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
                   : isDefaultValue(category.key)
-                    ? 'text-gray-700 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100 cursor-pointer'
-                    : 'text-green-600 hover:text-green-700 dark:text-green-400 dark:hover:text-green-300 cursor-pointer'
-                }`}
+                  ? 'text-[color:var(--tm-muted)] hover:text-[color:var(--tm-text)] cursor-pointer min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
+                  : 'text-[color:var(--tm-text)] hover:text-[color:var(--tm-text)] cursor-pointer min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
+              } `}
             >
               <span>{getDisplayText(category.key)}</span>
               <svg
-                className={`inline-block w-2.5 h-2.5 sm:w-3 sm:h-3 ml-0.5 sm:ml-1 transition-transform duration-200 ${activeCategory === category.key ? 'rotate-180' : ''
-                  }`}
+                className={`inline-block w-2.5 h-2.5 sm:w-3 sm:h-3 ml-0.5 sm:ml-1 transition-transform duration-200 ${
+                  activeCategory === category.key ? 'rotate-180' : ''
+                } `}
                 fill='none'
                 stroke='currentColor'
                 viewBox='0 0 24 24'
@@ -550,9 +560,15 @@ const MultiLevelSelector: React.FC<MultiLevelSelectorProps> = ({
       {/* 展开的筛选选项 - 悬浮显示 */}
       {activeCategory &&
         createPortal(
-          <div
+          <motion.div
+            initial={{ opacity: 0, y: reduced ? 0 : 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{
+              duration: reduced ? 0.12 : 0.32,
+              ease: [0.22, 1, 0.36, 1],
+            }}
             ref={dropdownRef}
-            className='fixed z-[9999] bg-white/95 dark:bg-gray-800/95 rounded-xl border border-gray-200/50 dark:border-gray-700/50 backdrop-blur-sm'
+            className='fixed z-[9999] bg-[var(--tm-surface-raised)] rounded-xl border border-[var(--tm-line)]'
             style={{
               left: `${dropdownPosition.x}px`,
               top: `${dropdownPosition.y}px`,
@@ -569,21 +585,27 @@ const MultiLevelSelector: React.FC<MultiLevelSelectorProps> = ({
                   .find((cat) => cat.key === activeCategory)
                   ?.options.map((option) => (
                     <button
+                      type='button'
+                      aria-pressed={isOptionSelected(
+                        activeCategory,
+                        option.value
+                      )}
                       key={option.value}
                       onClick={() =>
                         handleOptionSelect(activeCategory, option.value)
                       }
-                      className={`px-2 py-1.5 sm:px-3 sm:py-2 text-xs sm:text-sm rounded-lg transition-all duration-200 text-left ${isOptionSelected(activeCategory, option.value)
-                          ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 border border-green-200 dark:border-green-700'
-                          : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100/80 dark:hover:bg-gray-700/80'
-                        }`}
+                      className={`px-2 py-1.5 sm:px-3 sm:py-2 text-[13px] sm:text-sm rounded-lg transition-[transform,opacity] duration-200 text-left min-h-[44px] min-w-[44px] tm-press focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)] ${
+                        isOptionSelected(activeCategory, option.value)
+                          ? 'bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] border border-[var(--tm-line)] min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
+                          : 'text-[color:var(--tm-muted)] hover:bg-[var(--tm-line)] min-h-[44px] tm-press min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]'
+                      } `}
                     >
                       {option.label}
                     </button>
                   ))}
               </div>
             </div>
-          </div>,
+          </motion.div>,
           document.body
         )}
     </>
