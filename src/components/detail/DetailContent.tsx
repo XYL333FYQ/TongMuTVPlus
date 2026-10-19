@@ -3,7 +3,7 @@
 import { Film } from 'lucide-react';
 import { type ReactNode, useState } from 'react';
 
-import PosterAmbient from '@/components/PosterAmbient';
+import PosterAmbient from '@/components/catalog/PosterAmbient';
 import ProxyImage from '@/components/ProxyImage';
 
 import DetailError from './DetailError';

@@ -22,8 +22,8 @@ import DoubanCustomSelector from '@/components/DoubanCustomSelector';
 import DoubanSelector from '@/components/DoubanSelector';
 import PageContainer from '@/components/PageContainer';
 import PageLayout from '@/components/PageLayout';
-import PosterGrid from '@/components/PosterGrid';
-import PublicCatalogPage from '@/components/PublicCatalogPage';
+import PosterGrid from '@/components/catalog/PosterGrid';
+import PublicCatalogPage from '@/components/catalog/PublicCatalogPage';
 import VideoCard from '@/components/VideoCard';
 
 function DoubanPageClient() {

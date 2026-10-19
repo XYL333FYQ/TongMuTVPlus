@@ -67,7 +67,7 @@ import {
   MUSIC_ROW_TEXT,
 } from '@/components/music/tokens';
 import PageContainer from '@/components/PageContainer';
-import Toast, { ToastProps } from '@/components/Toast';
+import Toast, { ToastProps } from '@/components/feedback/Toast';
 import { useWatchRoomContextSafe } from '@/components/WatchRoomProvider';
 
 import type { MusicQueueItem, MusicSyncState } from '@/types/watch-room';

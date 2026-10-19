@@ -22,16 +22,16 @@ import { useViewerIdentity } from '@/hooks/useViewerIdentity';
 import AIChatPanel from '@/components/AIChatPanel';
 import BannerCarousel from '@/components/BannerCarousel';
 import ContinueWatching from '@/components/ContinueWatching';
-import HomeRooms from '@/components/HomeRooms';
-import HttpWarningDialog from '@/components/HttpWarningDialog';
+import HomeRooms from '@/components/catalog/HomeRooms';
+import HttpWarningDialog from '@/components/feedback/HttpWarningDialog';
 import PageContainer from '@/components/PageContainer';
 import PageLayout from '@/components/PageLayout';
-import PosterMotion from '@/components/PosterMotion';
-import PublicCatalogPage from '@/components/PublicCatalogPage';
-import SectionHeader from '@/components/SectionHeader';
-import Shelf from '@/components/Shelf';
+import PosterMotion from '@/components/catalog/PosterMotion';
+import PublicCatalogPage from '@/components/catalog/PublicCatalogPage';
+import SectionHeader from '@/components/catalog/SectionHeader';
+import Shelf from '@/components/catalog/Shelf';
 import { useSite } from '@/components/SiteProvider';
-import Toast, { ToastProps } from '@/components/Toast';
+import Toast, { ToastProps } from '@/components/feedback/Toast';
 import VideoCard from '@/components/VideoCard';
 
 // 首页模块配置接口

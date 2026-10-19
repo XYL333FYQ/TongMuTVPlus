@@ -18,7 +18,7 @@ import {
 } from '@/lib/indexeddb-video-cache';
 import { M3U8Downloader, M3U8DownloadTask } from '@/lib/m3u8-downloader';
 
-import Toast from '@/components/Toast';
+import Toast from '@/components/feedback/Toast';
 
 interface DownloadContextType {
   downloader: M3U8Downloader;

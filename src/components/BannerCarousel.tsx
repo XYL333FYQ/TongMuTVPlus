@@ -12,7 +12,7 @@ import {
 } from '@/lib/tmdb.client';
 
 import DetailPanel from '@/components/DetailPanel';
-import HomeHero from '@/components/HomeHero';
+import HomeHero from '@/components/catalog/HomeHero';
 import ProxyImage from '@/components/ProxyImage';
 import { useWatchRoomContextSafe } from '@/components/WatchRoomProvider';
 

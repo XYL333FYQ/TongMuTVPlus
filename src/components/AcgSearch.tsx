@@ -11,8 +11,8 @@ import {
 } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import CapsuleSwitch from '@/components/CapsuleSwitch';
-import Toast, { ToastProps } from '@/components/Toast';
+import CapsuleSwitch from '@/components/catalog/CapsuleSwitch';
+import Toast, { ToastProps } from '@/components/feedback/Toast';
 
 interface AcgSearchItem {
   title: string;

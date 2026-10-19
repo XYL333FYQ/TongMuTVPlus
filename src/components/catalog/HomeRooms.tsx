@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react';
 
 import { useWatchRoomContextSafe } from '@/components/WatchRoomProvider';
 
-import SectionHeader from './SectionHeader';
+import SectionHeader from '@/components/catalog/SectionHeader';
 
 import type { Room } from '@/types/watch-room';
 

@@ -12,7 +12,7 @@ import {
   getIndexedDBVideoSegments,
 } from '@/lib/indexeddb-video-cache';
 
-import { ConfirmDialog } from './ConfirmDialog';
+import { ConfirmDialog } from '@/components/feedback/ConfirmDialog';
 
 interface DownloadManagementPanelProps {
   isOpen: boolean;

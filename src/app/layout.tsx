@@ -22,7 +22,7 @@ import { projectGuestRuntimeConfig } from '@/lib/public-runtime-config';
 import { authenticateAuthInfo } from '@/lib/request-auth';
 import { listEnabledSourceScripts } from '@/lib/source-script';
 
-import ShellMotionProvider from '@/components/ShellMotionProvider';
+import ShellMotionProvider from '@/components/shell/ShellMotionProvider';
 
 import PlaybackSessionProvider from '@/features/playback/PlaybackSessionProvider';
 

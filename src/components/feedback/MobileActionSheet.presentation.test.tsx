@@ -1,7 +1,7 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { useState } from 'react';
 
-import MobileActionSheet from './MobileActionSheet';
+import MobileActionSheet from '@/components/feedback/MobileActionSheet';
 
 let mockReduced = false;
 jest.mock('@/lib/motion', () => ({

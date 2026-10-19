@@ -1,6 +1,6 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
 
-import CapsuleSwitch from './CapsuleSwitch';
+import CapsuleSwitch from '@/components/catalog/CapsuleSwitch';
 
 const options = [
   { label: '电影', value: 'movie' },

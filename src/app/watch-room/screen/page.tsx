@@ -12,7 +12,7 @@ import {
 } from '@/hooks/useScreenShare';
 
 import PageContainer from '@/components/PageContainer';
-import Toast, { ToastProps } from '@/components/Toast';
+import Toast, { ToastProps } from '@/components/feedback/Toast';
 import { useWatchRoomContext } from '@/components/WatchRoomProvider';
 
 const NEW_TAB_KEY_PREFIX = 'watch_room_screen_home_opened_';

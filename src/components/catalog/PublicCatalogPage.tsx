@@ -13,15 +13,15 @@ import {
   publicWorkLoginHref,
 } from '@/lib/public-catalog';
 
-import HomeHero from './HomeHero';
-import HomeRooms from './HomeRooms';
-import PageContainer from './PageContainer';
-import PageLayout from './PageLayout';
-import PosterGrid from './PosterGrid';
-import PosterMotion from './PosterMotion';
-import PublicPoster from './PublicPoster';
-import SectionHeader from './SectionHeader';
-import Shelf from './Shelf';
+import HomeHero from '@/components/catalog/HomeHero';
+import HomeRooms from '@/components/catalog/HomeRooms';
+import PageContainer from '@/components/PageContainer';
+import PageLayout from '@/components/PageLayout';
+import PosterGrid from '@/components/catalog/PosterGrid';
+import PosterMotion from '@/components/catalog/PosterMotion';
+import PublicPoster from '@/components/catalog/PublicPoster';
+import SectionHeader from '@/components/catalog/SectionHeader';
+import Shelf from '@/components/catalog/Shelf';
 
 function usePublicCatalog(
   type: PublicCatalogCategory,

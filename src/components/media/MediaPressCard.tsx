@@ -5,10 +5,10 @@ import { useCallback, useState } from 'react';
 
 import { useLongPress } from '@/hooks/useLongPress';
 
-import ImageViewer from '@/components/ImageViewer';
+import ImageViewer from '@/components/feedback/ImageViewer';
 import MobileActionSheet, {
   type ActionItem,
-} from '@/components/MobileActionSheet';
+} from '@/components/feedback/MobileActionSheet';
 
 import { MediaCardItem } from './media-card.types';
 import MediaCard from './MediaCard';

@@ -28,9 +28,9 @@ import { useEffect, useId, useRef, useState } from 'react';
 
 import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
 
-import { useShellReducedMotion } from './ShellMotionProvider';
-import ThemeSettings from './ThemeSettings';
-import VisualPreferenceControls from './VisualPreferenceControls';
+import { useShellReducedMotion } from '@/components/shell/ShellMotionProvider';
+import ThemeSettings from '@/components/account/ThemeSettings';
+import VisualPreferenceControls from '@/components/account/VisualPreferenceControls';
 
 export function pageTitleForPath(path: string) {
   const names: Record<string, string> = {

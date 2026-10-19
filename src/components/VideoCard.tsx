@@ -57,8 +57,8 @@ import AIChatPanel from '@/components/AIChatPanel';
 import AnimeSubscribeModal from '@/components/AnimeSubscribeModal';
 import DetailPanel from '@/components/DetailPanel';
 import { ImagePlaceholder } from '@/components/ImagePlaceholder';
-import ImageViewer from '@/components/ImageViewer';
-import MobileActionSheet from '@/components/MobileActionSheet';
+import ImageViewer from '@/components/feedback/ImageViewer';
+import MobileActionSheet from '@/components/feedback/MobileActionSheet';
 import TrailerPickerDialog from '@/components/TrailerPickerDialog';
 
 export interface VideoCardProps {

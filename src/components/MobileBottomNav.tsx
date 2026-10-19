@@ -6,7 +6,7 @@ import { usePathname } from 'next/navigation';
 import {
   isPrimaryNavigationActive,
   primaryNavigation,
-} from './TongMuNavigation';
+} from '@/components/shell/TongMuNavigation';
 
 interface MobileBottomNavProps {
   activePath?: string;

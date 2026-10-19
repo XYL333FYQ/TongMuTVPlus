@@ -15,7 +15,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { PansouLink, PansouSearchResult } from '@/lib/pansou.client';
 
-import Toast, { ToastProps } from '@/components/Toast';
+import Toast, { ToastProps } from '@/components/feedback/Toast';
 
 interface PansouSearchProps {
   keyword: string;

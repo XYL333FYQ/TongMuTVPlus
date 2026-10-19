@@ -1,6 +1,6 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
 
-import HttpWarningDialog from './HttpWarningDialog';
+import HttpWarningDialog from '@/components/feedback/HttpWarningDialog';
 
 let mockReduced = false;
 let mockRole = 'owner';

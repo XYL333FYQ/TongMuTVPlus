@@ -31,7 +31,7 @@ import EpgScrollableRow from '@/components/EpgScrollableRow';
 import LoadingStyle, {
   type LoadingStep,
   LoadingErrorStyle,
-} from '@/components/LoadingStyle';
+} from '@/components/feedback/LoadingStyle';
 import PageContainer from '@/components/PageContainer';
 import PageLayout from '@/components/PageLayout';
 

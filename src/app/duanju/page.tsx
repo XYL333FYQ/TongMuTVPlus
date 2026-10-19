@@ -21,13 +21,13 @@ import { getPageScrollTop, scrollPageTo } from '@/lib/page-scroll';
 import { SearchResult } from '@/lib/types';
 import { useViewerIdentity } from '@/hooks/useViewerIdentity';
 
-import BackToTop from '@/components/BackToTop';
-import CapsuleSwitch from '@/components/CapsuleSwitch';
+import BackToTop from '@/components/shell/BackToTop';
+import CapsuleSwitch from '@/components/catalog/CapsuleSwitch';
 import PageContainer from '@/components/PageContainer';
-import PageHeader from '@/components/PageHeader';
+import PageHeader from '@/components/shell/PageHeader';
 import PageLayout from '@/components/PageLayout';
-import PosterGrid from '@/components/PosterGrid';
-import PublicCatalogPage from '@/components/PublicCatalogPage';
+import PosterGrid from '@/components/catalog/PosterGrid';
+import PublicCatalogPage from '@/components/catalog/PublicCatalogPage';
 import VideoCard from '@/components/VideoCard';
 
 interface DuanjuSource {

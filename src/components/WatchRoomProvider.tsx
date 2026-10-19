@@ -13,7 +13,7 @@ import React, {
 import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
 import { useWatchRoom } from '@/hooks/useWatchRoom';
 
-import Toast, { ToastProps } from '@/components/Toast';
+import Toast, { ToastProps } from '@/components/feedback/Toast';
 
 import type { WatchRoomConfig } from '@/types/watch-room';
 

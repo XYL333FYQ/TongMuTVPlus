@@ -46,15 +46,15 @@ import { SearchResult } from '@/lib/types';
 import { processImageUrl } from '@/lib/utils';
 
 import AcgSearch from '@/components/AcgSearch';
-import BackToTop from '@/components/BackToTop';
-import CapsuleSwitch from '@/components/CapsuleSwitch';
+import BackToTop from '@/components/shell/BackToTop';
+import CapsuleSwitch from '@/components/catalog/CapsuleSwitch';
 import ContinueWatching from '@/components/ContinueWatching';
-import ImageViewer from '@/components/ImageViewer';
+import ImageViewer from '@/components/feedback/ImageViewer';
 import PageContainer from '@/components/PageContainer';
 import PageLayout from '@/components/PageLayout';
 import PansouSearch, { CLOUD_TYPE_NAMES } from '@/components/PansouSearch';
 import ProxyImage from '@/components/ProxyImage';
-import PublicPoster from '@/components/PublicPoster';
+import PublicPoster from '@/components/catalog/PublicPoster';
 import SearchResultFilter, {
   SearchFilterCategory,
 } from '@/components/SearchResultFilter';

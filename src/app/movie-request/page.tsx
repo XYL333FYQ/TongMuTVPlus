@@ -11,7 +11,7 @@ import { getTMDBImageUrl } from '@/lib/tmdb.client';
 import { processImageUrl } from '@/lib/utils';
 
 import PageContainer from '@/components/PageContainer';
-import PageHeader from '@/components/PageHeader';
+import PageHeader from '@/components/shell/PageHeader';
 import PageLayout from '@/components/PageLayout';
 
 interface TMDBResult {

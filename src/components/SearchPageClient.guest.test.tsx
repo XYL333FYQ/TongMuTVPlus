@@ -55,7 +55,7 @@ jest.mock('@/components/SearchSuggestions', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('@/components/CapsuleSwitch', () => ({
+jest.mock('@/components/catalog/CapsuleSwitch', () => ({
   __esModule: true,
   default: () => null,
 }));
@@ -76,13 +76,13 @@ jest.mock('@/components/ProxyImage', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('@/components/PublicPoster', () => ({
+jest.mock('@/components/catalog/PublicPoster', () => ({
   __esModule: true,
   default: (props: { alt: string }) => (
     <span role='img' aria-label={props.alt} data-testid='public-poster' />
   ),
 }));
-jest.mock('@/components/ImageViewer', () => ({
+jest.mock('@/components/feedback/ImageViewer', () => ({
   __esModule: true,
   default: () => null,
 }));

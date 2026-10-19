@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 
-import PublicCatalogPage from './PublicCatalogPage';
+import PublicCatalogPage from '@/components/catalog/PublicCatalogPage';
 
 const mockPush = jest.fn();
 let mockType = '';
@@ -10,15 +10,15 @@ jest.mock('next/navigation', () => ({
     new URLSearchParams(mockType ? { type: mockType } : {}),
 }));
 jest.mock('@/lib/motion', () => ({ useReducedMotionSetting: () => true }));
-jest.mock('./PageLayout', () => ({
+jest.mock('@/components/PageLayout', () => ({
   __esModule: true,
   default: ({ children }: { children: React.ReactNode }) => (
     <div>{children}</div>
   ),
 }));
-jest.mock('./HomeRooms', () => ({ __esModule: true, default: () => null }));
-jest.mock('./HomeHero', () => ({ __esModule: true, default: () => null }));
-jest.mock('./PosterMotion', () => ({
+jest.mock('@/components/catalog/HomeRooms', () => ({ __esModule: true, default: () => null }));
+jest.mock('@/components/catalog/HomeHero', () => ({ __esModule: true, default: () => null }));
+jest.mock('@/components/catalog/PosterMotion', () => ({
   __esModule: true,
   default: ({ children }: { children: React.ReactNode }) => (
     <div>{children}</div>

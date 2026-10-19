@@ -1,7 +1,7 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { useState } from 'react';
 
-import ImageViewer from './ImageViewer';
+import ImageViewer from '@/components/feedback/ImageViewer';
 
 let mockReduced = false;
 jest.mock('@/lib/motion', () => ({

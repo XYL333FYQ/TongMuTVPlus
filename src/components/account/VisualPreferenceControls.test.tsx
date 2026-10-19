@@ -1,6 +1,6 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 
-import VisualPreferenceControls from './VisualPreferenceControls';
+import VisualPreferenceControls from '@/components/account/VisualPreferenceControls';
 
 beforeEach(() => {
   localStorage.clear();

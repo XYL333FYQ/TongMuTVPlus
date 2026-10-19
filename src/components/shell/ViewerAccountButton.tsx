@@ -5,9 +5,9 @@ import Link from 'next/link';
 
 import { useViewerIdentity } from '@/hooks/useViewerIdentity';
 
-import ThemeSettings from './ThemeSettings';
-import { MoreMenu } from './TongMuNavigation';
-import { UserMenu } from './UserMenu';
+import ThemeSettings from '@/components/account/ThemeSettings';
+import { MoreMenu } from '@/components/shell/TongMuNavigation';
+import { UserMenu } from '@/components/UserMenu';
 
 export default function ViewerAccountButton() {
   const { ready, isGuest, loginHref } = useViewerIdentity();

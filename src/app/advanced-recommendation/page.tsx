@@ -5,9 +5,9 @@ import { useEffect, useRef, useState } from 'react';
 
 import { SearchResult } from '@/lib/types';
 
-import CapsuleSwitch from '@/components/CapsuleSwitch';
+import CapsuleSwitch from '@/components/catalog/CapsuleSwitch';
 import PageContainer from '@/components/PageContainer';
-import PageHeader from '@/components/PageHeader';
+import PageHeader from '@/components/shell/PageHeader';
 import PageLayout from '@/components/PageLayout';
 import VideoCard from '@/components/VideoCard';
 

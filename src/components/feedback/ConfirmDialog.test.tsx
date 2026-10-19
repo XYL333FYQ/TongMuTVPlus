@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 
-import { ConfirmDialog } from './ConfirmDialog';
+import { ConfirmDialog } from '@/components/feedback/ConfirmDialog';
 
 beforeEach(() => {
   HTMLDialogElement.prototype.showModal = function () {

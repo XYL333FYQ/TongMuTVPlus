@@ -6,7 +6,7 @@ import { useReducedMotionSetting } from '@/lib/motion';
 
 import { BackButton } from './BackButton';
 import { ThemeToggle } from './ThemeToggle';
-import ViewerAccountButton from './ViewerAccountButton';
+import ViewerAccountButton from '@/components/shell/ViewerAccountButton';
 
 interface MobileHeaderProps {
   showBackButton?: boolean;

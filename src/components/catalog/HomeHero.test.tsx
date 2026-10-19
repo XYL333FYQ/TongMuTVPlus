@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 
-import HomeHero from './HomeHero';
+import HomeHero from '@/components/catalog/HomeHero';
 
 jest.mock('@/lib/motion', () => ({ useReducedMotionSetting: () => true }));
 

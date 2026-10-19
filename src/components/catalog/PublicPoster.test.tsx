@@ -1,6 +1,6 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 
-import PublicPoster from './PublicPoster';
+import PublicPoster from '@/components/catalog/PublicPoster';
 
 afterEach(() => {
   cleanup();

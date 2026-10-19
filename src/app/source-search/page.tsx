@@ -27,12 +27,12 @@ import { getPageScrollTop, scrollPageTo } from '@/lib/page-scroll';
 import { appendSpecialSourceParam } from '@/lib/special-source.client';
 import { SearchResult } from '@/lib/types';
 
-import BackToTop from '@/components/BackToTop';
-import CapsuleSwitch from '@/components/CapsuleSwitch';
+import BackToTop from '@/components/shell/BackToTop';
+import CapsuleSwitch from '@/components/catalog/CapsuleSwitch';
 import PageContainer from '@/components/PageContainer';
-import PageHeader from '@/components/PageHeader';
+import PageHeader from '@/components/shell/PageHeader';
 import PageLayout from '@/components/PageLayout';
-import PosterGrid from '@/components/PosterGrid';
+import PosterGrid from '@/components/catalog/PosterGrid';
 import VideoCard from '@/components/VideoCard';
 
 type Category = CategoryNode;

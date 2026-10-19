@@ -30,11 +30,11 @@
 - 直播、音乐、漫画、电子书、网络直播、私人影库、特殊源本地未配置会跳走，只做了静态检查，没看到真实画面。
 - 详情页、已选片房间、真实播放未逐项重验。
 - `LegacyPlaybackSurface.tsx` 只改了 className 和文案；"旧版加载款式"里的 emoji 是用户可选的旧样式，保留。
-- `src/components` 没有按功能大搬家：`admin/page.tsx`（禁区）直接引用其中多个组件，且会让上游 MoonTVPlus 合并大面积冲突。建议另开任务处理。
+- `src/components` 已做方案 B 部分整理（见下）；上游原有组件不搬，原因：`admin/page.tsx`（禁区）直接引用其中多个组件，且会让上游 MoonTVPlus 合并大面积冲突。建议另开任务处理。
 - 本机 Node 24.18 偶发 V8 原生崩溃（typecheck / lint / format / dev 都遇到过），根因未知；dev 崩溃后清 `.next/cache` 再启动可恢复。
 
 ### 下一步
 
 1. 用户实测确认后提交（提交前跑 `/verify`）。
 2. 配好直播 / 音乐 / 书籍等来源后补看这些页面。
-3. 视需要另开任务整理 `src/components` 目录结构。
+3. `src/components` 方案 B 已完成（2026-10-19）：36 个文件（23 个自有组件及其测试）搬入 `shell/ catalog/ feedback/ account/`，import 统一为 `@/components/<域>/<名>`；`AnimeSubscriptionComponent / CorrectDialog / DataMigration / PageLayout / WatchRoomProvider` 留原位。验证：typecheck 通过、test 57 套件 331 项、test:rooms 19 项、lint 69 error（≤ 基线 70）、禁区 diff 0。「自有 / 上游」是按重做新增和带测试的文件判断的，仓库无上游历史，可能有遗漏。

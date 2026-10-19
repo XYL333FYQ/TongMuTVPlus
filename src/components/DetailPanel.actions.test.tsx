@@ -1,4 +1,4 @@
-jest.mock('@/components/PosterAmbient', () => ({
+jest.mock('@/components/catalog/PosterAmbient', () => ({
   __esModule: true,
   default: () => null,
 }));
