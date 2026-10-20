@@ -19,7 +19,6 @@ import PosterGrid from '@/components/catalog/PosterGrid';
 import PosterMotion from '@/components/catalog/PosterMotion';
 import PublicPoster from '@/components/catalog/PublicPoster';
 import SectionHeader from '@/components/catalog/SectionHeader';
-import Shelf from '@/components/catalog/Shelf';
 import PageContainer from '@/components/PageContainer';
 import PageLayout from '@/components/PageLayout';
 
@@ -145,12 +144,17 @@ function CatalogCard({
   );
 }
 
+/** 大图要铺满半屏：豆瓣小/中图换大图，TMDB 换 1280 宽 */
+function heroImage(url: string) {
+  return url
+    .replace(/\/[sm]_ratio_poster\//, '/l_ratio_poster/')
+    .replace('/t/p/w500/', '/t/p/w1280/');
+}
+
 function CatalogFeedback({
   feed,
-  skeleton,
 }: {
   feed: ReturnType<typeof usePublicCatalog>;
-  skeleton: 'shelf' | 'grid';
 }) {
   if (feed.error)
     return (
@@ -172,11 +176,7 @@ function CatalogFeedback({
     ));
     return (
       <div aria-busy='true' aria-label='正在获取影视信息'>
-        {skeleton === 'shelf' ? (
-          <Shelf>{placeholders}</Shelf>
-        ) : (
-          <PosterGrid>{placeholders}</PosterGrid>
-        )}
+        <PosterGrid>{placeholders}</PosterGrid>
       </div>
     );
   }
@@ -306,7 +306,7 @@ export default function PublicCatalogPage({
                 ))}
               </PosterGrid>
             )}
-            <CatalogFeedback feed={catalog} skeleton='grid' />
+            <CatalogFeedback feed={catalog} />
           </div>
           {!!catalog.items.length && catalog.hasMore && !catalog.error && (
             <div className='tm-library-more'>
@@ -342,10 +342,7 @@ export default function PublicCatalogPage({
               contain
               art={
                 <PublicPoster
-                  src={featured.poster.replace(
-                    '/m_ratio_poster/',
-                    '/l_ratio_poster/'
-                  )}
+                  src={heroImage(featured.poster)}
                   alt={featured.title}
                   eager
                   className='tm-home-hero-image'
@@ -385,15 +382,15 @@ export default function PublicCatalogPage({
             <section key={section.title} className='tm-section'>
               <SectionHeader title={section.title} href={section.href} />
               {section.feed.items.length > 0 && (
-                <Shelf>
-                  {section.feed.items.slice(0, 18).map((item) => (
+                <PosterGrid>
+                  {section.feed.items.slice(0, 12).map((item) => (
                     <PosterMotion key={item.provider + ':' + item.id}>
                       <CatalogCard item={item} onSelect={openWork} />
                     </PosterMotion>
                   ))}
-                </Shelf>
+                </PosterGrid>
               )}
-              <CatalogFeedback feed={section.feed} skeleton='shelf' />
+              <CatalogFeedback feed={section.feed} />
             </section>
           ))}
         </PageContainer>

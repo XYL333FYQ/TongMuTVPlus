@@ -135,7 +135,7 @@ export default function BannerCarousel({
     // 如果是完整URL（TX数据源或豆瓣），直接返回原始地址
     if (path.startsWith('http://') || path.startsWith('https://')) {
       // 豆瓣中图只有 540 宽，铺满大图会糊；换成同一张的大图（1080 宽）
-      return path.replace('/m_ratio_poster/', '/l_ratio_poster/');
+      return path.replace(/\/[sm]_ratio_poster\//, '/l_ratio_poster/');
     }
     // 否则使用TMDB的URL拼接原始地址
     return getTMDBImageUrl(path, 'original');

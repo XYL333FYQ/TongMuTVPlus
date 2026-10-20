@@ -173,24 +173,6 @@
     grid-template-columns: repeat(6, minmax(0, 1fr));
   }
 }
-/* 宽屏多放几列，海报保持 200～260px 宽，而不是被拉大 */
-@media (min-width: 1600px) {
-  .tm-poster-grid {
-    grid-template-columns: repeat(7, minmax(0, 1fr));
-    gap: 36px 24px;
-  }
-}
-@media (min-width: 1880px) {
-  .tm-poster-grid {
-    grid-template-columns: repeat(8, minmax(0, 1fr));
-  }
-}
-@media (min-width: 2300px) {
-  .tm-poster-grid {
-    grid-template-columns: repeat(9, minmax(0, 1fr));
-  }
-}
-
 /* —— 海报 —— */
 .tm-poster {
   position: relative;
@@ -317,23 +299,6 @@ html[data-tm-no-blur='true'] .tm-fade-image {
     grid-auto-columns: calc((100% - 5 * 20px) / 6);
   }
 }
-@media (min-width: 1600px) {
-  .tm-shelf {
-    gap: 24px;
-    grid-auto-columns: calc((100% - 6 * 24px) / 7);
-  }
-}
-@media (min-width: 1880px) {
-  .tm-shelf {
-    grid-auto-columns: calc((100% - 7 * 24px) / 8);
-  }
-}
-@media (min-width: 2300px) {
-  .tm-shelf {
-    grid-auto-columns: calc((100% - 8 * 24px) / 9);
-  }
-}
-
 /* 片架翻页按钮：只在能精确指向的设备上悬停出现 */
 .tm-shelf-frame {
   position: relative;

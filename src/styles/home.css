@@ -115,7 +115,11 @@
 .tm-home-hero-copy {
   position: absolute;
   z-index: 4;
-  left: var(--tm-content-gutter);
+  /* 与下面内容区左边缘对齐（内容区最宽 --tm-container） */
+  left: max(
+    var(--tm-content-gutter),
+    calc((100% - var(--tm-container)) / 2 + var(--tm-content-gutter))
+  );
   bottom: clamp(88px, 14vh, 160px);
   width: min(640px, 46%);
 }
@@ -185,7 +189,10 @@ html[data-tm-no-blur='true'] :is(.tm-home-hero-glass, .tm-home-hero-arrow) {
 .tm-home-hero-controls {
   position: absolute;
   z-index: 5;
-  right: var(--tm-content-gutter);
+  right: max(
+    var(--tm-content-gutter),
+    calc((100% - var(--tm-container)) / 2 + var(--tm-content-gutter))
+  );
   bottom: 40px;
   display: flex;
   align-items: center;
@@ -268,15 +275,6 @@ html[data-tm-no-blur='true'] :is(.tm-home-hero-glass, .tm-home-hero-arrow) {
 }
 .tm-home-compact-grid > :nth-child(n + 4) {
   display: none;
-}
-/* 宽屏两半各放 4 张，跟着海报列数一起变宽 */
-@media (min-width: 1600px) {
-  .tm-home-compact-grid {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-  }
-  .tm-home-compact-grid > :nth-child(4) {
-    display: block;
-  }
 }
 
 .tm-home-room-card {

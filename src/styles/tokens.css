@@ -68,8 +68,8 @@
   --tm-radius-pill: 999px;
 
   /* —— 布局 ——
-     通栏：内容随屏幕铺开，只留左右边距；2560 以上的超宽屏才封顶 */
-  --tm-container: 2560px;
+     大图通栏；内容区最宽 1920，宽屏上海报跟着变大（固定 6 列），不加列数 */
+  --tm-container: 1920px;
   --tm-content-gutter: 16px;
   --tm-section-gap: 40px;
   --tm-header-height: 64px;
@@ -132,6 +132,11 @@ html.light {
   :root {
     --tm-content-gutter: clamp(48px, 4vw, 96px);
     --tm-section-gap: 64px;
+  }
+}
+@media (min-width: 1600px) {
+  :root {
+    --tm-header-height: 72px;
   }
 }
 

@@ -151,6 +151,23 @@
   border-radius: var(--tm-radius-pill);
   background: var(--tm-text);
 }
+/* 宽屏：顶栏跟着内容区一起放大，不显得缩在一条细线里 */
+@media (min-width: 1600px) {
+  .tm-logo > span {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    font-size: 13px;
+  }
+  .tm-logo > strong {
+    font-size: 19px;
+  }
+  .tm-primary-nav-item {
+    min-height: 40px;
+    padding: 0 26px;
+    font-size: 15px;
+  }
+}
 .tm-header-actions {
   display: flex;
   align-items: center;

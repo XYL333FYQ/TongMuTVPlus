@@ -25,7 +25,7 @@ import HomeRooms from '@/components/catalog/HomeRooms';
 import PosterMotion from '@/components/catalog/PosterMotion';
 import PublicCatalogPage from '@/components/catalog/PublicCatalogPage';
 import SectionHeader from '@/components/catalog/SectionHeader';
-import Shelf from '@/components/catalog/Shelf';
+import PosterGrid from '@/components/catalog/PosterGrid';
 import ContinueWatching from '@/components/ContinueWatching';
 import HttpWarningDialog from '@/components/feedback/HttpWarningDialog';
 import Toast, { ToastProps } from '@/components/feedback/Toast';
@@ -572,7 +572,7 @@ function HomeClient() {
         return (
           <section key='hotMovies' className='tm-section'>
             <SectionHeader title='热门电影' href='/douban?type=movie' />
-            <Shelf>
+            <PosterGrid>
               {loading
                 ? Array.from({ length: 12 }).map((_, index) => (
                     <PosterMotion key={index}>
@@ -594,7 +594,7 @@ function HomeClient() {
                       />
                     </PosterMotion>
                   ))}
-            </Shelf>
+            </PosterGrid>
           </section>
         );
 
@@ -603,7 +603,7 @@ function HomeClient() {
         return (
           <section key='hotDuanju' className='tm-section'>
             <SectionHeader title='热播短剧' href='/duanju' />
-            <Shelf>
+            <PosterGrid>
               {loading
                 ? Array.from({ length: 12 }).map((_, index) => (
                     <PosterMotion key={index}>
@@ -632,7 +632,7 @@ function HomeClient() {
                       />
                     </PosterMotion>
                   ))}
-            </Shelf>
+            </PosterGrid>
           </section>
         );
 
@@ -640,7 +640,7 @@ function HomeClient() {
         return (
           <section key='bangumiCalendar' className='tm-section'>
             <SectionHeader title='新番放送' href='/douban?type=anime' />
-            <Shelf>
+            <PosterGrid>
               {loading
                 ? Array.from({ length: 12 }).map((_, index) => (
                     <PosterMotion key={index}>
@@ -686,7 +686,7 @@ function HomeClient() {
                       </PosterMotion>
                     ));
                   })()}
-            </Shelf>
+            </PosterGrid>
           </section>
         );
 
@@ -694,7 +694,7 @@ function HomeClient() {
         return (
           <section key='hotTvShows' className='tm-section'>
             <SectionHeader title='热门剧集' href='/douban?type=tv' />
-            <Shelf>
+            <PosterGrid>
               {loading
                 ? Array.from({ length: 12 }).map((_, index) => (
                     <PosterMotion key={index}>
@@ -716,7 +716,7 @@ function HomeClient() {
                       />
                     </PosterMotion>
                   ))}
-            </Shelf>
+            </PosterGrid>
           </section>
         );
 
@@ -724,7 +724,7 @@ function HomeClient() {
         return (
           <section key='hotVarietyShows' className='tm-section'>
             <SectionHeader title='热门综艺' href='/douban?type=show' />
-            <Shelf>
+            <PosterGrid>
               {loading
                 ? Array.from({ length: 12 }).map((_, index) => (
                     <PosterMotion key={index}>
@@ -748,7 +748,7 @@ function HomeClient() {
                       />
                     </PosterMotion>
                   ))}
-            </Shelf>
+            </PosterGrid>
           </section>
         );
 
@@ -757,7 +757,7 @@ function HomeClient() {
         return (
           <section key='upcomingContent' className='tm-section'>
             <SectionHeader title='即将上映' href='/douban?type=movie' />
-            <Shelf>
+            <PosterGrid>
               {upcomingContent.slice(0, 12).map((item) => (
                 <PosterMotion key={`${item.media_type}-${item.id}`}>
                   <VideoCard
@@ -778,7 +778,7 @@ function HomeClient() {
                   />
                 </PosterMotion>
               ))}
-            </Shelf>
+            </PosterGrid>
           </section>
         );
 
