@@ -134,7 +134,8 @@ export default function BannerCarousel({
     if (!path) return '';
     // 如果是完整URL（TX数据源或豆瓣），直接返回原始地址
     if (path.startsWith('http://') || path.startsWith('https://')) {
-      return path;
+      // 豆瓣中图只有 540 宽，铺满大图会糊；换成同一张的大图（1080 宽）
+      return path.replace('/m_ratio_poster/', '/l_ratio_poster/');
     }
     // 否则使用TMDB的URL拼接原始地址
     return getTMDBImageUrl(path, 'original');
@@ -487,7 +488,7 @@ export default function BannerCarousel({
         <div>
           <p>暂时没有推荐内容</p>
           <button
-            className='tm-btn tm-btn-art-glass'
+            className='tm-btn tm-btn-secondary'
             onClick={() => router.push('/search')}
           >
             搜索片名
@@ -533,14 +534,6 @@ export default function BannerCarousel({
               <span key={genre + i}>{genre}</span>
             ))}
           </>
-        }
-        ambient={
-          <ProxyImage
-            originalSrc={getImageUrl(
-              currentItem.backdrop_path || currentItem.poster_path
-            )}
-            alt=''
-          />
         }
         art={
           canShowVideo ? (
@@ -590,8 +583,7 @@ export default function BannerCarousel({
         extraControls={
           canShowVideo ? (
             <button
-              className='tm-icon-btn'
-              data-variant='art'
+              className='tm-icon-btn tm-home-hero-arrow'
               onClick={toggleMute}
               aria-label={isMuted ? '开启预告片声音' : '关闭预告片声音'}
             >

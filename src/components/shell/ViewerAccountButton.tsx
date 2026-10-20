@@ -14,18 +14,28 @@ export default function ViewerAccountButton() {
   if (!ready) return <span className='tm-account-placeholder' aria-hidden />;
   if (!isGuest) return <UserMenu />;
   return (
-    <details className='tm-guest-account'>
-      <summary className='tm-shell-icon tm-press' aria-label='账号菜单'>
-        <UserRound size={22} />
-      </summary>
-      <div className='tm-account-menu tm-guest-menu'>
-        <Link href={loginHref} prefetch={false} className='tm-menu-link'>
-          <LogIn size={18} />
-          <span>登录</span>
-        </Link>
-        <MoreMenu />
-        <ThemeSettings />
-      </div>
-    </details>
+    <>
+      {/* 访客：登录要一眼能看到，不藏在图标菜单里 */}
+      <Link
+        href={loginHref}
+        prefetch={false}
+        className='tm-btn tm-btn-primary tm-btn-sm tm-guest-login'
+      >
+        登录
+      </Link>
+      <details className='tm-guest-account'>
+        <summary className='tm-shell-icon tm-press' aria-label='账号菜单'>
+          <UserRound size={22} />
+        </summary>
+        <div className='tm-account-menu tm-guest-menu'>
+          <Link href={loginHref} prefetch={false} className='tm-menu-link'>
+            <LogIn size={18} />
+            <span>登录</span>
+          </Link>
+          <MoreMenu />
+          <ThemeSettings />
+        </div>
+      </details>
+    </>
   );
 }

@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "pnpm gen:manifest && node server.js",
+    "dev": "pnpm gen:manifest && node -r ./scripts/dev-env.cjs server.js",
     "build": "pnpm gen:manifest && next build",
     "build:cloudflare": "BUILD_TARGET=cloudflare pnpm gen:manifest && BUILD_TARGET=cloudflare npx @opennextjs/cloudflare build",
     "start": "NODE_ENV=production node server.js",

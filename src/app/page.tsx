@@ -21,17 +21,17 @@ import { useViewerIdentity } from '@/hooks/useViewerIdentity';
 
 import AIChatPanel from '@/components/AIChatPanel';
 import BannerCarousel from '@/components/BannerCarousel';
-import ContinueWatching from '@/components/ContinueWatching';
 import HomeRooms from '@/components/catalog/HomeRooms';
-import HttpWarningDialog from '@/components/feedback/HttpWarningDialog';
-import PageContainer from '@/components/PageContainer';
-import PageLayout from '@/components/PageLayout';
 import PosterMotion from '@/components/catalog/PosterMotion';
 import PublicCatalogPage from '@/components/catalog/PublicCatalogPage';
 import SectionHeader from '@/components/catalog/SectionHeader';
 import Shelf from '@/components/catalog/Shelf';
-import { useSite } from '@/components/SiteProvider';
+import ContinueWatching from '@/components/ContinueWatching';
+import HttpWarningDialog from '@/components/feedback/HttpWarningDialog';
 import Toast, { ToastProps } from '@/components/feedback/Toast';
+import PageContainer from '@/components/PageContainer';
+import PageLayout from '@/components/PageLayout';
+import { useSite } from '@/components/SiteProvider';
 import VideoCard from '@/components/VideoCard';
 
 // 首页模块配置接口
@@ -791,9 +791,9 @@ function HomeClient() {
     <PageLayout>
       <div className='tm-home'>
         {homeBannerEnabled && (
-          <PageContainer>
+          <div className='tm-home-stage'>
             <BannerCarousel delayLoad={true} />
-          </PageContainer>
+          </div>
         )}
 
         <PageContainer className='tm-home-body'>

@@ -28,10 +28,11 @@ afterEach(() => {
 test('guest homepage never requests private room data', () => {
   render(<HomeRooms guest />);
   expect(mockFetch).not.toHaveBeenCalled();
-  expect(screen.getByText('登录后创建和加入房间')).toBeInTheDocument();
-  expect(screen.getByRole('link', { name: '创建房间' })).toHaveAttribute(
+  expect(screen.getByRole('heading', { name: '一起看' })).toBeInTheDocument();
+  // 访客点开房间入口先去登录，登录后回到房间页
+  expect(screen.getByRole('link', { name: /登录后开一间房/ })).toHaveAttribute(
     'href',
-    '/watch-room'
+    '/login?redirect=' + encodeURIComponent('/watch-room')
   );
 });
 test('shows real membership, deduplicates the current room, and aborts on unmount', async () => {

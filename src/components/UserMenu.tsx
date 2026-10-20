@@ -6,6 +6,7 @@ import {
   Bell,
   Check,
   ChevronDown,
+  ChevronRight,
   ChevronUp,
   CircleHelp,
   Copy,
@@ -50,6 +51,10 @@ import { clearBangumiImageFallbackCache } from '@/lib/utils';
 import { CURRENT_VERSION } from '@/lib/version';
 import { UpdateStatus } from '@/lib/version_check';
 
+import ThemeSettings from '@/components/account/ThemeSettings';
+import Toast, { ToastProps } from '@/components/feedback/Toast';
+import { MoreMenu } from '@/components/shell/TongMuNavigation';
+
 import { DeviceManagementPanel } from './DeviceManagementPanel';
 import { DownloadManagementPanel } from './DownloadManagementPanel';
 import { EmailSettingsPanel } from './EmailSettingsPanel';
@@ -57,9 +62,6 @@ import { FavoritesPanel } from './FavoritesPanel';
 import { NotificationPanel } from './NotificationPanel';
 import { OfflineDownloadPanel } from './OfflineDownloadPanel';
 import { PersonalCenterPanel } from './PersonalCenterPanel';
-import ThemeSettings from '@/components/account/ThemeSettings';
-import Toast, { ToastProps } from '@/components/feedback/Toast';
-import { MoreMenu } from '@/components/shell/TongMuNavigation';
 import TVRemotePanel from './tv/TVRemotePanel';
 import { useVersionCheck } from './VersionCheckProvider';
 import { VersionPanel } from './VersionPanel';
@@ -2964,44 +2966,27 @@ export const UserMenu: React.FC = () => {
 
       {/* 菜单面板 */}
       <div className='tm-account-menu'>
-        {/* 用户信息区域 */}
-        <div className='tm-account-menu-heading'>
-          <div className='flex items-start justify-between gap-3'>
-            <button
-              onClick={handleOpenProfileCenter}
-              className='flex items-center gap-3 rounded-xl px-2 py-1 text-left hover:bg-line transition-colors min-h-[44px] tm-press'
-            >
-              <div className='tm-menu-avatar'>
-                <span>{avatarText}</span>
-                {shouldShowRoleBadge && (
-                  <span className='tm-menu-role'>{currentRoleText}</span>
-                )}
-              </div>
-              <div className='min-w-0'>
-                <span className='block max-w-[84px] truncate text-sm font-medium text-fg leading-none'>
-                  {currentUsername}
-                </span>
-              </div>
-            </button>
+        {/* 用户信息：头像 + 名字 + 身份，整行进入个人中心 */}
+        <button
+          onClick={handleOpenProfileCenter}
+          className='tm-account-menu-heading tm-press'
+        >
+          <span className='tm-menu-avatar' aria-hidden='true'>
+            {avatarText}
+          </span>
+          <span className='tm-menu-identity'>
+            <span className='tm-menu-name'>{currentUsername}</span>
+            <span className='tm-menu-role'>
+              {shouldShowRoleBadge ? currentRoleText : '个人中心'}
+            </span>
+          </span>
+          <ChevronRight aria-hidden className='tm-menu-chevron' />
+        </button>
 
-            <div className='pt-1 text-right'>
-              <div className='text-[13px] text-muted'>
-                <div>数据存储</div>
-                <div className='mt-0.5'>
-                  {displayStorageType === 'localstorage'
-                    ? '本地'
-                    : displayStorageType}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+        <ThemeSettings />
 
-        {/* 菜单项 */}
-        <div className='py-1'>
-          <MoreMenu onNavigate={() => setIsOpen(false)} />
-          <ThemeSettings />
-          {/* 通知按钮 */}
+        {/* 个人 */}
+        <div className='tm-menu-group'>
           <button
             onClick={() => {
               setIsOpen(false);
@@ -3017,8 +3002,6 @@ export const UserMenu: React.FC = () => {
               </span>
             )}
           </button>
-
-          {/* 我的收藏按钮 */}
           <button
             onClick={() => {
               setIsOpen(false);
@@ -3029,22 +3012,25 @@ export const UserMenu: React.FC = () => {
             <Star aria-hidden />
             <span>我的收藏</span>
           </button>
+        </div>
 
-          {/* 设置按钮 */}
-          <button onClick={handleSettings} className='tm-menu-item'>
-            <Settings aria-hidden />
-            <span>设置</span>
+        {/* 功能入口 */}
+        <div className='tm-menu-group'>
+          <MoreMenu label='更多功能' onNavigate={() => setIsOpen(false)} />
+          <button onClick={handleSubscribe} className='tm-menu-item'>
+            <Monitor aria-hidden />
+            <span>电视访问</span>
           </button>
-
-          {/* 管理面板按钮 */}
-          {showAdminPanel && (
-            <button onClick={handleAdminPanel} className='tm-menu-item'>
-              <Shield aria-hidden />
-              <span>管理面板</span>
-            </button>
-          )}
-
-          {/* 离线下载按钮 */}
+          <button
+            onClick={() => {
+              setIsOpen(false);
+              setIsEcoAppsOpen(true);
+            }}
+            className='tm-menu-item'
+          >
+            <Package aria-hidden />
+            <span>生态应用</span>
+          </button>
           {showOfflineDownload && (
             <button
               onClick={() => {
@@ -3057,62 +3043,45 @@ export const UserMenu: React.FC = () => {
               <span>离线下载</span>
             </button>
           )}
+        </div>
 
-          {/* 电视访问按钮 */}
-          <button onClick={handleSubscribe} className='tm-menu-item'>
-            <Monitor aria-hidden />
-            <span>电视访问</span>
+        {/* 设置与管理 */}
+        <div className='tm-menu-group'>
+          <button onClick={handleSettings} className='tm-menu-item'>
+            <Settings aria-hidden />
+            <span>设置</span>
           </button>
+          {showAdminPanel && (
+            <button onClick={handleAdminPanel} className='tm-menu-item'>
+              <Shield aria-hidden />
+              <span>管理面板</span>
+            </button>
+          )}
+        </div>
 
-          {/* 生态应用按钮 */}
-          <button
-            onClick={() => {
-              setIsOpen(false);
-              setIsEcoAppsOpen(true);
-            }}
-            className='tm-menu-item'
-          >
-            <Package aria-hidden />
-            <span>生态应用</span>
-          </button>
-
-          {/* 分割线 */}
-          <div className='tm-menu-divider' />
-
-          {/* 登出按钮 */}
+        {/* 底部：登出 + 版本（附数据存储方式） */}
+        <div className='tm-menu-footer'>
           <button onClick={handleLogout} className='tm-menu-item'>
             <LogOut aria-hidden />
             <span>登出</span>
           </button>
-
-          {/* 分割线 */}
-          <div className='tm-menu-divider' />
-
-          {/* 版本信息 */}
           <button
             onClick={() => {
               setIsVersionPanelOpen(true);
               handleCloseMenu();
             }}
-            className='tm-menu-item tm-menu-version'
+            className='tm-menu-version'
+            aria-label={`版本 v${CURRENT_VERSION}，查看更新`}
           >
-            <div className='flex items-center gap-1'>
-              <span className='font-mono'>v{CURRENT_VERSION}</span>
-              {!isChecking &&
-                updateStatus &&
-                updateStatus !== UpdateStatus.FETCH_FAILED &&
-                updateStatus !== UpdateStatus.NOT_CONFIGURED && (
-                  <div
-                    className={`w-2 h-2 rounded-full -translate-y-2 ${
-                      updateStatus === UpdateStatus.HAS_UPDATE
-                        ? 'bg-fg'
-                        : updateStatus === UpdateStatus.NO_UPDATE
-                        ? 'bg-fg'
-                        : ''
-                    }`}
-                  ></div>
-                )}
-            </div>
+            <span>
+              v{CURRENT_VERSION} ·{' '}
+              {displayStorageType === 'localstorage'
+                ? '本地存储'
+                : displayStorageType}
+            </span>
+            {!isChecking && updateStatus === UpdateStatus.HAS_UPDATE && (
+              <span className='tm-menu-update-dot' aria-label='有新版本' />
+            )}
           </button>
         </div>
       </div>

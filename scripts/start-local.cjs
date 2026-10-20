@@ -151,6 +151,20 @@ async function ready(port) {
   }
 }
 
+// 本项目已经在这个端口跑着（例如终端里的 pnpm dev）：直接打开网页，
+// 不再另起一个服务——两个开发服务共用 .next 会把对方的页面弄坏。
+async function projectRunning(port) {
+  try {
+    const response = await fetch(`http://127.0.0.1:${port}/health/ready`, {
+      signal: AbortSignal.timeout(1500),
+    });
+    const value = await response.json();
+    return response.ok && value.service === 'tongmutvplus';
+  } catch {
+    return false;
+  }
+}
+
 function openBrowser(port) {
   const url = `http://localhost:${port}`;
   console.log(`\n[网页] ${url}\n[后台] ${url}/admin`);
@@ -256,6 +270,11 @@ async function main() {
   if (!Number.isInteger(port) || port < 1024 || port > 65525)
     throw new Error('.env 的 PORT 必须是 1024–65525 的整数。');
   const requestedPort = port;
+  if (await projectRunning(requestedPort)) {
+    console.log('[启动] 服务已经在运行，直接打开网页。');
+    openBrowser(requestedPort);
+    return;
+  }
   while (port < requestedPort + 10 && !(await freePort(port))) port++;
   if (port === requestedPort + 10)
     throw new Error('连续 10 个端口都被占用，请修改 .env 的 PORT。');

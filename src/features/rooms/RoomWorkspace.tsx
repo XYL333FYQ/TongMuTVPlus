@@ -2,7 +2,6 @@
 
 import { AnimatePresence, motion } from 'framer-motion';
 import {
-  ArrowUpRight,
   Check,
   Copy,
   Film,
@@ -454,22 +453,34 @@ export default function RoomWorkspace() {
                   }}
                 >
                   <AnimatePresence initial={false}>
-                    {watchRoom.members.slice(0, 4).map((member) => (
-                      <motion.span
-                        key={member.id}
-                        className='tm-room-avatar'
-                        initial={{ opacity: 0, scale: reducedMotion ? 1 : 0.8 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: reducedMotion ? 1 : 0.8 }}
-                        transition={
-                          reducedMotion
-                            ? { duration: 0.12 }
-                            : { type: 'spring', duration: 0.32, bounce: 0.2 }
-                        }
-                      >
-                        {member.name.charAt(0).toUpperCase()}
-                      </motion.span>
-                    ))}
+                    {/* 同一账号开多个页面会有多条连接；人数按账号算，头像也按账号去重 */}
+                    {watchRoom.members
+                      .filter(
+                        (member, i, all) =>
+                          all.findIndex(
+                            (other) => other.name === member.name
+                          ) === i
+                      )
+                      .slice(0, 4)
+                      .map((member) => (
+                        <motion.span
+                          key={member.id}
+                          className='tm-room-avatar'
+                          initial={{
+                            opacity: 0,
+                            scale: reducedMotion ? 1 : 0.8,
+                          }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          exit={{ opacity: 0, scale: reducedMotion ? 1 : 0.8 }}
+                          transition={
+                            reducedMotion
+                              ? { duration: 0.12 }
+                              : { type: 'spring', duration: 0.32, bounce: 0.2 }
+                          }
+                        >
+                          {member.name.charAt(0).toUpperCase()}
+                        </motion.span>
+                      ))}
                   </AnimatePresence>
                   <span>{room.memberCount} 人</span>
                 </button>
@@ -557,39 +568,74 @@ export default function RoomWorkspace() {
                 </>
               ) : (
                 <div className='tm-room-empty-stage'>
-                  <Film size={36} strokeWidth={1} />
+                  <div className='tm-room-screen-glow' aria-hidden='true' />
+                  <Film size={32} strokeWidth={1.25} />
                   <h2>
                     {!playback.followingRoom
                       ? '你正在个人观看'
                       : room.currentState
                       ? '房间正在进行其他活动'
-                      : '选一部影片'}
+                      : room.queue?.length
+                      ? `下一部：${room.queue[0].title}`
+                      : '选一部影片，开始一起看'}
                   </h2>
                   <p>
                     {!playback.followingRoom
                       ? '房间连接和消息保留'
+                      : room.queue?.length && !room.currentState
+                      ? watchRoom.canControl
+                        ? `片单里有 ${room.queue.length} 部，准备好就开始`
+                        : `片单里有 ${room.queue.length} 部，等主持开始播放`
                       : '加入片单，再由主持播放'}
                   </p>
-                  {!playback.followingRoom ? (
-                    <button
-                      className='tm-room-primary'
-                      onClick={playback.resumeRoom}
-                    >
-                      回到一起看
-                    </button>
-                  ) : (
-                    <button
-                      className='tm-room-primary'
-                      onClick={() => setDialog('picker')}
-                    >
-                      <Plus size={16} />
-                      选择影片
-                    </button>
-                  )}
+                  <div className='tm-room-empty-actions'>
+                    {!playback.followingRoom ? (
+                      <button
+                        className='tm-room-primary'
+                        onClick={playback.resumeRoom}
+                      >
+                        回到一起看
+                      </button>
+                    ) : room.queue?.length &&
+                      !room.currentState &&
+                      watchRoom.canControl ? (
+                      <button
+                        className='tm-room-primary'
+                        onClick={() => {
+                          const next = room.queue?.[0];
+                          if (next)
+                            playback.requestPlayback(
+                              queuePlaybackHref(next.href, next.episode || 1),
+                              'user'
+                            );
+                        }}
+                      >
+                        <Play size={15} fill='currentColor' />
+                        开始播放
+                      </button>
+                    ) : (
+                      <button
+                        className='tm-room-primary'
+                        onClick={() => setDialog('picker')}
+                      >
+                        <Plus size={16} />
+                        选择影片
+                      </button>
+                    )}
+                    {playback.followingRoom && (
+                      <Link href='/search' className='tm-room-screen-link'>
+                        <Search size={15} />
+                        浏览片库
+                      </Link>
+                    )}
+                  </div>
                   {!room.currentState &&
                     playback.href &&
                     watchRoom.canControl && (
-                      <button onClick={playback.shareCurrentPlayback}>
+                      <button
+                        className='tm-room-screen-share'
+                        onClick={playback.shareCurrentPlayback}
+                      >
                         <Play size={14} />
                         分享当前正在看的影片
                       </button>
@@ -668,11 +714,6 @@ export default function RoomWorkspace() {
                     </motion.b>
                   )}
                 </button>
-                <Link href='/search'>
-                  <Search size={15} />
-                  浏览片库
-                  <ArrowUpRight size={12} />
-                </Link>
                 {liveEnabled && (
                   <Link href='/live'>
                     <Radio size={15} />
@@ -745,14 +786,8 @@ export default function RoomWorkspace() {
                 </header>
                 {!room.queue?.length && (
                   <div className='tm-room-queue-empty'>
-                    <Film size={25} strokeWidth={1} />
                     <p>片单为空</p>
-                    <button
-                      className='tm-room-primary'
-                      onClick={() => setDialog('picker')}
-                    >
-                      添加影片
-                    </button>
+                    <span>选好的影片会排在这里，按顺序播放</span>
                   </div>
                 )}
                 <ol>
@@ -922,12 +957,14 @@ export default function RoomWorkspace() {
           <>
             <div className='tm-room-directory-toolbar'>
               <div role='tablist' aria-label='房间目录'>
-                {(['mine', 'public', 'archived'] as const).map((tab) => (
+                {(username
+                  ? (['mine', 'public', 'archived'] as const)
+                  : (['public'] as const)
+                ).map((tab) => (
                   <button
                     key={tab}
                     role='tab'
                     aria-selected={directory === tab}
-                    disabled={!username && tab !== 'public'}
                     onClick={() => {
                       setDirectory(tab);
                       setError('');
@@ -980,7 +1017,14 @@ export default function RoomWorkspace() {
                 {rooms.map((item) => (
                   <article key={item.id} className='tm-room-card'>
                     <div className='tm-room-card-art'>
-                      <Users size={32} strokeWidth={1.25} aria-hidden />
+                      <span className='tm-room-card-glyph' aria-hidden='true'>
+                        {/* 房名首字是数字或符号时，字母头像没有意义，改用图标 */}
+                        {!/^[\s!-@[-`{-~]/.test(item.name) ? (
+                          Array.from(item.name)[0]
+                        ) : (
+                          <Users strokeWidth={1.5} />
+                        )}
+                      </span>
                       <span
                         className='tm-badge tm-room-card-presence'
                         data-on-art='true'
@@ -999,6 +1043,7 @@ export default function RoomWorkspace() {
                       >
                         {item.hasPassword && <Lock size={12} aria-hidden />}
                         {item.isPublic ? '公开' : '私密'}
+                        {item.hasPassword && ' · 需密码'}
                       </span>
                     </div>
                     <div className='tm-room-card-body'>

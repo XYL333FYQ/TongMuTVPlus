@@ -28,9 +28,9 @@ import { useEffect, useId, useRef, useState } from 'react';
 
 import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
 
-import { useShellReducedMotion } from '@/components/shell/ShellMotionProvider';
 import ThemeSettings from '@/components/account/ThemeSettings';
 import VisualPreferenceControls from '@/components/account/VisualPreferenceControls';
+import { useShellReducedMotion } from '@/components/shell/ShellMotionProvider';
 
 export function pageTitleForPath(path: string) {
   const names: Record<string, string> = {
@@ -104,7 +104,10 @@ export function isPrimaryNavigationActive(href: string, pathname: string) {
   return pathname === href || pathname.startsWith(href + '/');
 }
 
-export function MoreMenu({ onNavigate }: { onNavigate?: () => void } = {}) {
+export function MoreMenu({
+  onNavigate,
+  label = '更多',
+}: { onNavigate?: () => void; label?: string } = {}) {
   const [runtime, setRuntime] = useState<Record<string, unknown>>({});
   const [canManageDownloads, setCanManageDownloads] = useState(false);
   const dialogRef = useRef<HTMLDialogElement>(null);
@@ -252,11 +255,11 @@ export function MoreMenu({ onNavigate }: { onNavigate?: () => void } = {}) {
       <button
         className='tm-more-trigger tm-press'
         onClick={() => dialogRef.current?.showModal()}
-        aria-label='更多'
+        aria-label={label}
         aria-haspopup='dialog'
       >
         <Compass size={20} strokeWidth={1.6} />
-        <span>更多</span>
+        <span>{label}</span>
       </button>
       <dialog
         ref={dialogRef}

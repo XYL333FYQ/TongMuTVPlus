@@ -7,65 +7,40 @@
   position: relative;
   padding-top: 16px;
 }
+.tm-home:has(> .tm-home-stage) {
+  padding-top: 0;
+}
 
-/* —— 大图 —— */
+/* —— 大图（通栏） ——
+ * 画面铺满整块大图，横图竖图都一样；竖图（豆瓣海报）取上部为焦点。
+ * 遮罩全部用页面底色 --tm-bg 渐变：深色主题是压暗，浅色主题是提亮，
+ * 文字跟着主题走（深色白字、浅色黑字），下沿无缝融进下面的内容。
+ * 桌面端从屏幕最上沿开始，顶栏浮在画面上。
+ */
+.tm-home-stage {
+  position: relative;
+}
+@media (min-width: 768px) {
+  .tm-home-stage {
+    /* 收回 .tm-main 的 8px 顶距和顶栏高度 */
+    margin-top: calc(-8px - var(--tm-header-height));
+  }
+}
 .tm-home-hero {
-  --tm-hero-ambient-opacity: 0.5;
   position: relative;
   isolation: isolate;
 }
-.tm-home-ambient {
-  position: absolute;
-  inset: -10% -6% -30%;
-  z-index: -1;
-  overflow: hidden;
-  pointer-events: none;
-  opacity: var(--tm-hero-ambient-opacity);
-  mask-image: radial-gradient(ellipse 70% 60% at 50% 40%, black, transparent);
-  -webkit-mask-image: radial-gradient(
-    ellipse 70% 60% at 50% 40%,
-    black,
-    transparent
-  );
-}
-html.light .tm-home-hero {
-  --tm-hero-ambient-opacity: 0.18;
-}
-.tm-home-ambient-frame {
-  position: absolute;
-  inset: 0;
-}
-.tm-home-ambient img,
-.tm-home-portrait-ambient img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  transform: scale(1.2);
-  filter: blur(80px) saturate(1.4);
-}
 .tm-home-hero-panel {
   position: relative;
-  height: clamp(440px, 64vh, 640px);
+  height: clamp(580px, 88vh, 940px);
   overflow: hidden;
-  border-radius: var(--tm-radius-xl);
-  background: var(--tm-hero-bg);
-  color: var(--tm-on-art);
-  box-shadow: var(--tm-shadow-lg);
-}
-.tm-home-hero-panel::after {
-  /* 内描边，让深色画面与深色页面之间有边界 */
-  content: '';
-  position: absolute;
-  inset: 0;
-  z-index: 3;
-  border-radius: inherit;
-  box-shadow: inset 0 0 0 1px var(--tm-line);
-  pointer-events: none;
+  background: var(--tm-bg);
+  color: var(--tm-text);
 }
 .tm-home-hero-loading {
   display: grid;
   place-items: center;
-  color: var(--tm-on-art-muted);
+  color: var(--tm-muted);
   text-align: center;
 }
 .tm-home-hero-loading p {
@@ -82,20 +57,6 @@ html.light .tm-home-hero {
   width: 100%;
   height: 100%;
   object-fit: cover;
-}
-.tm-home-hero-frame[data-portrait='false']::after {
-  /* 横版：左下压暗，保证左下角文字可读 */
-  content: '';
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background: linear-gradient(
-      90deg,
-      rgba(0, 0, 0, 0.72) 0%,
-      rgba(0, 0, 0, 0.36) 42%,
-      rgba(0, 0, 0, 0) 72%
-    ),
-    linear-gradient(0deg, rgba(0, 0, 0, 0.6) 0%, rgba(0, 0, 0, 0) 50%);
 }
 .tm-home-hero-image {
   transition: opacity var(--tm-d-panel) var(--tm-ease-out),
@@ -116,13 +77,47 @@ html.light .tm-home-hero {
   border: 0;
   transform: translate(-50%, -50%);
 }
+/* 三层遮罩：顶部托住顶栏、左侧托住文字、底部融进页面 */
+.tm-home-hero-scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  background: linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--tm-bg) 72%, transparent) 0,
+      transparent 200px
+    ),
+    linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--tm-bg) 92%, transparent) 0%,
+      color-mix(in srgb, var(--tm-bg) 64%, transparent) 30%,
+      transparent 58%
+    ),
+    linear-gradient(
+      0deg,
+      var(--tm-bg) 0,
+      color-mix(in srgb, var(--tm-bg) 70%, transparent) 16%,
+      transparent 46%
+    );
+}
+/* 竖版海报：铺满右侧 62%，从顶到底不留边；左缘用蒙版淡进页面底色。
+ * 竖图若硬铺满整宽会被放大近 2 倍、只剩中间一条，所以只占右侧。 */
+.tm-home-hero-panel[data-portrait='true'] .tm-home-hero-art {
+  left: 38%;
+  -webkit-mask-image: linear-gradient(90deg, transparent 0, var(--tm-bg) 34%);
+  mask-image: linear-gradient(90deg, transparent 0, var(--tm-bg) 34%);
+}
+.tm-home-hero-panel[data-portrait='true'] .tm-home-hero-frame > img {
+  object-position: 50% 18%;
+}
 
 .tm-home-hero-copy {
   position: absolute;
-  z-index: 2;
-  left: 56px;
-  bottom: 56px;
-  width: min(560px, calc(100% - 112px));
+  z-index: 4;
+  left: var(--tm-content-gutter);
+  bottom: clamp(88px, 14vh, 160px);
+  width: min(640px, 46%);
 }
 .tm-home-hero-meta {
   display: flex;
@@ -130,7 +125,8 @@ html.light .tm-home-hero {
   align-items: center;
   gap: 10px;
   font-size: var(--tm-fs-small);
-  color: var(--tm-on-art-muted);
+  font-weight: 500;
+  color: var(--tm-muted);
 }
 .tm-home-hero-meta > span + span::before {
   content: '·';
@@ -138,39 +134,65 @@ html.light .tm-home-hero {
   opacity: 0.7;
 }
 .tm-home-hero-title {
-  margin: 10px 0 0;
-  font-size: var(--tm-fs-display);
+  margin: 12px 0 0;
+  font-size: clamp(36px, 4.4vw, 76px);
   font-weight: 700;
-  line-height: 1.08;
-  letter-spacing: -0.01em;
+  line-height: 1.04;
+  letter-spacing: -0.02em;
   overflow-wrap: anywhere;
   text-wrap: balance;
-  text-shadow: 0 2px 24px rgba(0, 0, 0, 0.35);
 }
 .tm-home-hero-description {
-  margin-top: 14px;
+  margin-top: 16px;
+  max-width: 560px;
   font-size: var(--tm-fs-body);
   line-height: 1.7;
-  color: var(--tm-on-art-muted);
+  color: var(--tm-muted);
   display: -webkit-box;
-  -webkit-line-clamp: 2;
+  -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
 .tm-home-hero-actions {
   display: flex;
   gap: 12px;
-  margin-top: 24px;
+  margin-top: 28px;
 }
 .tm-home-hero-actions .tm-btn {
-  min-width: 132px;
+  min-width: 140px;
+}
+/* 次按钮与箭头：跟主题走的玻璃 */
+.tm-home-hero-glass,
+.tm-home-hero-arrow {
+  color: var(--tm-text);
+  background: color-mix(in srgb, var(--tm-surface) 55%, transparent);
+  border: 1px solid var(--tm-line);
+  backdrop-filter: blur(20px) saturate(1.4);
+  -webkit-backdrop-filter: blur(20px) saturate(1.4);
+}
+.tm-home-hero-glass:hover:not(:disabled),
+.tm-home-hero-arrow:hover {
+  background: color-mix(in srgb, var(--tm-surface) 80%, transparent);
+  border-color: var(--tm-line-strong);
+}
+html[data-tm-no-blur='true'] :is(.tm-home-hero-glass, .tm-home-hero-arrow) {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  background: var(--tm-surface);
 }
 
-.tm-home-hero-arrow {
+/* 右下角控件组：静音 · 上一张 · 圆点 · 下一张 */
+.tm-home-hero-controls {
   position: absolute;
-  z-index: 4;
-  top: calc(50% - 22px);
-  opacity: 0;
+  z-index: 5;
+  right: var(--tm-content-gutter);
+  bottom: 40px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.tm-home-hero-arrow {
+  opacity: 0.8;
   transition: opacity var(--tm-d-hover) var(--tm-ease-out),
     background-color var(--tm-d-hover) var(--tm-ease-out),
     scale var(--tm-d-press) var(--tm-ease-out);
@@ -179,18 +201,9 @@ html.light .tm-home-hero {
 .tm-home-hero-arrow:focus-visible {
   opacity: 1;
 }
-.tm-home-hero-prev {
-  left: 20px;
-}
-.tm-home-hero-next {
-  right: 20px;
-}
 .tm-home-hero-dots {
-  position: absolute;
-  z-index: 4;
-  right: 40px;
-  bottom: 44px;
   display: flex;
+  align-items: center;
   gap: 4px;
 }
 .tm-home-hero-dots button {
@@ -204,10 +217,13 @@ html.light .tm-home-hero {
   width: 8px;
   height: 4px;
   border-radius: 999px;
-  background: var(--tm-on-art);
-  opacity: 0.4;
+  background: var(--tm-text);
+  opacity: 0.32;
   transition: width var(--tm-d-panel) var(--tm-ease-out),
     opacity var(--tm-d-panel) var(--tm-ease-out);
+}
+.tm-home-hero-dots button:hover span {
+  opacity: 0.6;
 }
 .tm-home-hero-dots [data-active='true'] span {
   width: 24px;
@@ -223,53 +239,6 @@ html.light .tm-home-hero {
     height: 44px;
     margin: -10px -8px;
   }
-}
-.tm-home-hero-extra {
-  position: absolute;
-  z-index: 4;
-  top: 20px;
-  right: 20px;
-}
-
-/* 竖版海报：左文字，右海报卡，背景铺放大模糊图 */
-.tm-home-portrait-ambient {
-  position: absolute;
-  inset: 0;
-  opacity: 0.55;
-  pointer-events: none;
-}
-.tm-home-hero-panel[data-portrait='true']::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  pointer-events: none;
-  background: linear-gradient(90deg, rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0.1));
-}
-.tm-home-hero-panel[data-portrait='true'] .tm-home-hero-art {
-  left: 50%;
-  z-index: 2;
-  container-type: size;
-}
-/* 新旧两张海报叠在同一位置交叉淡入，用容器单位算尺寸 */
-.tm-home-hero-frame[data-portrait='true'] {
-  inset: 0;
-  margin: auto;
-  height: 78cqh;
-  width: 52cqh;
-  overflow: hidden;
-  border-radius: var(--tm-radius-lg);
-  box-shadow: 0 30px 60px -20px rgba(0, 0, 0, 0.7),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.08);
-}
-.tm-home-hero-frame[data-portrait='true'] > img {
-  object-fit: cover;
-}
-.tm-home-hero-panel[data-portrait='true'] .tm-home-hero-copy {
-  top: 50%;
-  bottom: auto;
-  width: min(480px, calc(50% - 80px));
-  transform: translateY(-50%);
 }
 
 /* —— 继续观看 + 我的房间 —— */
@@ -300,6 +269,15 @@ html.light .tm-home-hero {
 .tm-home-compact-grid > :nth-child(n + 4) {
   display: none;
 }
+/* 宽屏两半各放 4 张，跟着海报列数一起变宽 */
+@media (min-width: 1600px) {
+  .tm-home-compact-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+  .tm-home-compact-grid > :nth-child(4) {
+    display: block;
+  }
+}
 
 .tm-home-room-card {
   display: block;
@@ -313,19 +291,36 @@ html.light .tm-home-hero {
   aspect-ratio: 16 / 9;
   overflow: hidden;
   border-radius: var(--tm-radius-md);
-  background: radial-gradient(
-      circle at 30% 20%,
-      var(--tm-spot),
-      transparent 60%
-    ),
+  background: linear-gradient(135deg, var(--tm-spot), transparent 55%),
+    radial-gradient(circle at 80% 120%, var(--tm-spot), transparent 60%),
     var(--tm-surface-raised);
   color: var(--tm-muted);
   box-shadow: inset 0 0 0 1px var(--tm-line);
-  transition: box-shadow var(--tm-d-hover) var(--tm-ease-out),
+  transition: transform var(--tm-d-panel) var(--tm-ease-out),
+    box-shadow var(--tm-d-panel) var(--tm-ease-out),
     background-color var(--tm-d-hover) var(--tm-ease-out);
 }
-.tm-home-room-card:hover .tm-home-room-art {
-  box-shadow: inset 0 0 0 1px var(--tm-line-strong);
+/* 房间封面：房间名首字放大做字母封面，每间房一眼能分开 */
+.tm-home-room-glyph,
+.tm-room-card-glyph {
+  font-size: clamp(36px, 3.6vw, 64px);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  color: var(--tm-text);
+  opacity: 0.88;
+  transition: transform var(--tm-d-panel) var(--tm-ease-out),
+    opacity var(--tm-d-hover) var(--tm-ease-out);
+}
+@media (hover: hover) and (pointer: fine) {
+  .tm-home-room-card:hover .tm-home-room-art {
+    transform: translateY(-4px);
+    box-shadow: inset 0 0 0 1px var(--tm-line-strong), var(--tm-shadow-md);
+  }
+  .tm-home-room-card:hover .tm-home-room-glyph {
+    transform: scale(1.08);
+    opacity: 1;
+  }
 }
 .tm-home-room-status {
   position: absolute;
@@ -356,13 +351,24 @@ html.light .tm-home-hero {
   white-space: nowrap;
 }
 .tm-home-room-create .tm-home-room-art {
-  background: transparent;
-  box-shadow: none;
-  border: 1px dashed var(--tm-line-strong);
-}
-.tm-home-room-create:hover .tm-home-room-art {
   background: var(--tm-surface);
-  color: var(--tm-text);
+}
+.tm-home-room-create .tm-home-room-art > svg {
+  box-sizing: content-box;
+  padding: 12px;
+  border-radius: 50%;
+  background: var(--tm-surface-raised);
+  transition: transform var(--tm-d-panel) var(--tm-spring),
+    background-color var(--tm-d-hover) var(--tm-ease-out);
+}
+@media (hover: hover) and (pointer: fine) {
+  .tm-home-room-create:hover .tm-home-room-art {
+    color: var(--tm-text);
+  }
+  .tm-home-room-create:hover .tm-home-room-art > svg {
+    transform: rotate(90deg) scale(1.08);
+    background: var(--tm-line);
+  }
 }
 .tm-home-hint {
   margin-top: 12px;
@@ -412,16 +418,18 @@ html.light .tm-home-hero {
 }
 
 /* —— 海报卡（登录态 VideoCard 与访客 PublicPoster 共用的观感） —— */
+/* 悬停只抬起画面（倾斜、放大、投影加深），标题文字不动，避免跟着歪斜发虚 */
 .tm-video-card {
+  position: relative;
   border-radius: var(--tm-radius-md);
-  transform: perspective(800px);
-  transition: transform var(--tm-d-panel) var(--tm-ease-out);
 }
 .tm-video-card-art {
   border-radius: var(--tm-radius-md);
   background: var(--tm-surface-raised);
   box-shadow: var(--tm-shadow-poster), inset 0 0 0 1px var(--tm-line);
-  transition: box-shadow var(--tm-d-hover) var(--tm-ease-out);
+  transform: perspective(800px);
+  transition: transform var(--tm-d-panel) var(--tm-ease-out),
+    box-shadow var(--tm-d-panel) var(--tm-ease-out);
 }
 .tm-video-card-art::after {
   /* 跟随指针的高光 */
@@ -447,23 +455,23 @@ html.light .tm-home-hero {
   opacity: 0;
   filter: blur(12px);
 }
-.tm-video-card:focus-visible {
-  transform: perspective(800px) translateY(-4px) scale(1.04);
+.tm-video-card:focus-visible .tm-video-card-art {
+  transform: perspective(800px) translateY(-6px) scale(1.04);
 }
-.tm-video-card:active {
-  transform: scale(0.97);
+.tm-video-card:active .tm-video-card-art {
+  transform: perspective(800px) scale(0.97);
   transition-duration: var(--tm-d-press);
 }
 @media (hover: hover) and (pointer: fine) {
   .tm-video-card:hover {
     z-index: 50;
-    transform: perspective(800px) translateY(-4px)
-      rotateX(var(--tm-poster-rx, 0deg)) rotateY(var(--tm-poster-ry, 0deg))
-      scale(1.04);
-    transition-duration: var(--tm-d-hover);
   }
   .tm-video-card:hover .tm-video-card-art {
+    transform: perspective(800px) translateY(-6px)
+      rotateX(var(--tm-poster-rx, 0deg)) rotateY(var(--tm-poster-ry, 0deg))
+      scale(1.04);
     box-shadow: var(--tm-shadow-poster-hover), inset 0 0 0 1px var(--tm-line);
+    transition-duration: var(--tm-d-hover), var(--tm-d-panel);
   }
   .tm-video-card:hover .tm-video-card-art::after {
     opacity: 1;
@@ -489,6 +497,42 @@ html.light .tm-home-hero {
   filter: blur(80px) saturate(1.3);
 }
 
+/* 宽屏两块并排：中间留宽并加一条细竖线，左边的「查看全部」不会被看成右边标题的链接 */
+@media (min-width: 1200px) {
+  .tm-home-pair {
+    column-gap: clamp(48px, 4vw, 96px);
+  }
+  .tm-home-pair > * + * {
+    position: relative;
+  }
+  .tm-home-pair > * + *::before {
+    content: '';
+    position: absolute;
+    top: 4px;
+    bottom: 0;
+    left: calc(clamp(48px, 4vw, 96px) / -2);
+    width: 1px;
+    background: var(--tm-line);
+  }
+}
+/* 房名首字不是字母时用图标代替 */
+:is(.tm-home-room-glyph, .tm-room-card-glyph) svg {
+  width: 0.8em;
+  height: 0.8em;
+}
+/* 直链等没有封面的播放记录：画一块深色小屏，不再是灰底像没加载出来 */
+.tm-video-card-art div:has(> svg.lucide-link) {
+  background: radial-gradient(
+      ellipse at 50% 0%,
+      color-mix(in srgb, var(--tm-on-art) 14%, transparent),
+      transparent 70%
+    ),
+    var(--tm-video-bg);
+}
+.tm-video-card-art div:has(> svg.lucide-link) > svg {
+  color: var(--tm-on-art-muted);
+}
+
 /* —— 响应式 —— */
 @media (min-width: 768px) and (max-width: 1199px) {
   .tm-home-pair {
@@ -504,21 +548,32 @@ html.light .tm-home-hero {
     padding-top: 4px;
   }
   .tm-home-hero-panel {
-    height: 460px;
-    border-radius: var(--tm-radius-lg);
+    height: 540px;
   }
-  .tm-home-hero-frame[data-portrait='false']::after {
+  /* 手机竖屏：竖版海报正好铺满 */
+  .tm-home-hero-panel[data-portrait='true'] .tm-home-hero-art {
+    left: 0;
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
+  /* 手机：文字在下半部，底部遮罩加高 */
+  .tm-home-hero-scrim,
+  .tm-home-hero-panel[data-portrait='true'] .tm-home-hero-scrim {
     background: linear-gradient(
-      0deg,
-      rgba(0, 0, 0, 0.82) 0%,
-      rgba(0, 0, 0, 0.3) 55%,
-      rgba(0, 0, 0, 0) 80%
-    );
+        180deg,
+        color-mix(in srgb, var(--tm-bg) 60%, transparent) 0,
+        transparent 120px
+      ),
+      linear-gradient(
+        0deg,
+        var(--tm-bg) 0,
+        color-mix(in srgb, var(--tm-bg) 86%, transparent) 26%,
+        transparent 62%
+      );
   }
   .tm-home-hero-copy {
-    left: 20px;
-    right: 20px;
-    bottom: 40px;
+    right: var(--tm-content-gutter);
+    bottom: 48px;
     width: auto;
   }
   .tm-home-hero-meta {
@@ -541,29 +596,10 @@ html.light .tm-home-hero {
   .tm-home-hero-arrow {
     display: none;
   }
-  .tm-home-hero-dots {
+  .tm-home-hero-controls {
     left: 0;
     right: 0;
     bottom: 12px;
-    justify-content: center;
-  }
-  .tm-home-hero-panel[data-portrait='true'] .tm-home-hero-art {
-    left: 0;
-    bottom: 42%;
-    padding-top: 24px;
-  }
-  .tm-home-hero-frame[data-portrait='true'] {
-    height: 100cqh;
-    width: 66.67cqh;
-  }
-  .tm-home-hero-panel[data-portrait='true'] .tm-home-hero-copy {
-    top: auto;
-    bottom: 40px;
-    width: auto;
-    text-align: center;
-    transform: none;
-  }
-  .tm-home-hero-panel[data-portrait='true'] .tm-home-hero-meta {
     justify-content: center;
   }
   .tm-home-pair {
@@ -594,28 +630,23 @@ html.light .tm-home-hero {
 
 /* —— 偏好：关闭模糊 / 减少动态 —— */
 html[data-tm-no-blur='true']
-  :is(
-    .tm-home-ambient img,
-    .tm-home-portrait-ambient img,
-    .tm-detail-ambient img,
-    .tm-home-hero-image,
-    .tm-video-card-art img
-  ) {
+  :is(.tm-detail-ambient img, .tm-home-hero-image, .tm-video-card-art img) {
   filter: none;
 }
-html[data-tm-reduced-motion='true'] .tm-video-card,
-html[data-tm-reduced-motion='true'] .tm-video-card:hover {
+html[data-tm-reduced-motion='true']
+  :is(.tm-video-card-art, .tm-home-room-art, .tm-home-room-glyph) {
   transform: none !important;
 }
 @media (prefers-reduced-motion: reduce) {
-  .tm-video-card,
-  .tm-video-card:hover {
+  :is(.tm-video-card-art, .tm-home-room-art, .tm-home-room-glyph) {
     transform: none !important;
   }
 }
 @media (prefers-reduced-transparency: reduce) {
-  :is(.tm-home-ambient img, .tm-home-portrait-ambient img) {
-    filter: none;
+  :is(.tm-home-hero-glass, .tm-home-hero-arrow) {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    background: var(--tm-surface);
   }
 }
 

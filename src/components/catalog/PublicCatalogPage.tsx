@@ -15,13 +15,13 @@ import {
 
 import HomeHero from '@/components/catalog/HomeHero';
 import HomeRooms from '@/components/catalog/HomeRooms';
-import PageContainer from '@/components/PageContainer';
-import PageLayout from '@/components/PageLayout';
 import PosterGrid from '@/components/catalog/PosterGrid';
 import PosterMotion from '@/components/catalog/PosterMotion';
 import PublicPoster from '@/components/catalog/PublicPoster';
 import SectionHeader from '@/components/catalog/SectionHeader';
 import Shelf from '@/components/catalog/Shelf';
+import PageContainer from '@/components/PageContainer';
+import PageLayout from '@/components/PageLayout';
 
 function usePublicCatalog(
   type: PublicCatalogCategory,
@@ -117,9 +117,8 @@ function CatalogCard({
   item: PublicCatalogItem;
   onSelect: (item: PublicCatalogItem) => void;
 }) {
-  const meta = [item.year, item.mediaType === 'tv' ? '剧集' : '电影']
-    .filter(Boolean)
-    .join(' · ');
+  // 所在分区已经说明了类型，卡片下面只写年份；没有年份就不留空行
+  const meta = item.year || '';
   return (
     <button
       type='button'
@@ -328,7 +327,7 @@ export default function PublicCatalogPage({
   return (
     <PageLayout activePath='/'>
       <div className='tm-home'>
-        <PageContainer>
+        <div className='tm-home-stage'>
           {featured ? (
             <HomeHero
               id={featured.provider + ':' + featured.id}
@@ -343,13 +342,15 @@ export default function PublicCatalogPage({
               contain
               art={
                 <PublicPoster
-                  src={featured.poster}
+                  src={featured.poster.replace(
+                    '/m_ratio_poster/',
+                    '/l_ratio_poster/'
+                  )}
                   alt={featured.title}
                   eager
                   className='tm-home-hero-image'
                 />
               }
-              ambient={<PublicPoster src={featured.poster} alt='' eager />}
               onPlay={() => openWork(featured)}
               onTogether={() =>
                 router.push(
@@ -371,7 +372,7 @@ export default function PublicCatalogPage({
               {catalog.loading ? '' : '暂时没有推荐内容'}
             </div>
           )}
-        </PageContainer>
+        </div>
         <PageContainer className='tm-home-body'>
           <div className='tm-home-pair'>
             <HomeRooms guest />

@@ -23,7 +23,6 @@ export default function HomeHero({
   meta,
   description,
   art,
-  ambient,
   contain,
   onPlay,
   onTogether,
@@ -41,7 +40,6 @@ export default function HomeHero({
   meta: ReactNode;
   description?: string;
   art: ReactNode;
-  ambient?: ReactNode;
   contain: boolean;
   onPlay: () => void;
   onTogether: () => void;
@@ -63,8 +61,8 @@ export default function HomeHero({
   const root = useRef<HTMLElement>(null);
   const distance = useMotionValue(0);
   const y = useTransform(distance, (value) => value * 0.3);
-  const opacity = useTransform(distance, [0, 400], [1, 0]);
-  const scale = useTransform(distance, [0, 400], [1, 0.96]);
+  const opacity = useTransform(distance, [0, 420], [1, 0]);
+  const copyY = useTransform(distance, (value) => value * -0.12);
   useEffect(() => {
     const update = () =>
       distance.set(
@@ -93,32 +91,12 @@ export default function HomeHero({
           onPause?.(false);
       }}
     >
-      <div className='tm-home-ambient' aria-hidden='true'>
-        <AnimatePresence initial={false}>
-          <motion.div
-            key={id + '-ambient'}
-            className='tm-home-ambient-frame'
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration }}
-          >
-            {ambient}
-          </motion.div>
-        </AnimatePresence>
-      </div>
       <div className='tm-home-hero-panel' data-portrait={portrait}>
-        {portrait && (
-          <div className='tm-home-portrait-ambient' aria-hidden='true'>
-            {ambient}
-          </div>
-        )}
         <motion.div className='tm-home-hero-art' style={{ y: reduced ? 0 : y }}>
           <AnimatePresence initial={false}>
             <motion.div
               key={id}
               className='tm-home-hero-frame'
-              data-contain={portrait || contain}
               data-portrait={portrait}
               onLoadCapture={(event) => {
                 const image = event.target;
@@ -135,13 +113,13 @@ export default function HomeHero({
               initial={{ opacity: 0, scale: 1 }}
               animate={{
                 opacity: 1,
-                scale: reduced || portrait || contain ? 1 : 1.06,
+                scale: reduced ? 1 : 1.06,
               }}
               exit={{ opacity: 0 }}
               transition={{
                 opacity: { duration },
                 scale: {
-                  duration: reduced || portrait || contain ? 0 : 12,
+                  duration: reduced ? 0 : 12,
                   ease: 'linear',
                 },
               }}
@@ -150,9 +128,11 @@ export default function HomeHero({
             </motion.div>
           </AnimatePresence>
         </motion.div>
+        {/* 遮罩用页面底色渐变：深色主题压暗、浅色主题提亮，大图下沿融进页面 */}
+        <div className='tm-home-hero-scrim' aria-hidden='true' />
         <motion.div
           className='tm-home-hero-copy'
-          style={{ opacity: reduced ? 1 : opacity, scale: reduced ? 1 : scale }}
+          style={{ opacity: reduced ? 1 : opacity, y: reduced ? 0 : copyY }}
         >
           <motion.div
             key={id + '-copy'}
@@ -177,14 +157,14 @@ export default function HomeHero({
               ) : null,
               <div className='tm-home-hero-actions' key='actions'>
                 <button
-                  className='tm-btn tm-btn-lg tm-btn-art'
+                  className='tm-btn tm-btn-lg tm-btn-primary'
                   onClick={onPlay}
                 >
                   <Play size={16} fill='currentColor' />
                   播放
                 </button>
                 <button
-                  className='tm-btn tm-btn-lg tm-btn-art-glass'
+                  className='tm-btn tm-btn-lg tm-home-hero-glass'
                   onClick={onTogether}
                 >
                   <Users size={18} />
@@ -214,44 +194,42 @@ export default function HomeHero({
             )}
           </motion.div>
         </motion.div>
-        {titles.length > 1 && (
-          <>
-            <button
-              className='tm-icon-btn tm-home-hero-arrow tm-home-hero-prev'
-              data-variant='art'
-              aria-label='上一张推荐'
-              onClick={() =>
-                onSelect((index - 1 + titles.length) % titles.length)
-              }
-            >
-              <ChevronLeft size={20} />
-            </button>
-            <button
-              className='tm-icon-btn tm-home-hero-arrow tm-home-hero-next'
-              data-variant='art'
-              aria-label='下一张推荐'
-              onClick={() => onSelect((index + 1) % titles.length)}
-            >
-              <ChevronRight size={20} />
-            </button>
-            <div className='tm-home-hero-dots' aria-label='切换推荐'>
-              {titles.map((name, n) => (
-                <button
-                  key={n}
-                  aria-label={`查看推荐 ${n + 1}：${name}`}
-                  aria-current={n === index ? 'true' : undefined}
-                  data-active={n === index}
-                  onClick={() => onSelect(n)}
-                >
-                  <span />
-                </button>
-              ))}
-            </div>
-          </>
-        )}
-        {extraControls && (
-          <div className='tm-home-hero-extra'>{extraControls}</div>
-        )}
+        <div className='tm-home-hero-controls'>
+          {extraControls}
+          {titles.length > 1 && (
+            <>
+              <button
+                className='tm-icon-btn tm-home-hero-arrow'
+                aria-label='上一张推荐'
+                onClick={() =>
+                  onSelect((index - 1 + titles.length) % titles.length)
+                }
+              >
+                <ChevronLeft size={20} />
+              </button>
+              <div className='tm-home-hero-dots' aria-label='切换推荐'>
+                {titles.map((name, n) => (
+                  <button
+                    key={n}
+                    aria-label={`查看推荐 ${n + 1}：${name}`}
+                    aria-current={n === index ? 'true' : undefined}
+                    data-active={n === index}
+                    onClick={() => onSelect(n)}
+                  >
+                    <span />
+                  </button>
+                ))}
+              </div>
+              <button
+                className='tm-icon-btn tm-home-hero-arrow'
+                aria-label='下一张推荐'
+                onClick={() => onSelect((index + 1) % titles.length)}
+              >
+                <ChevronRight size={20} />
+              </button>
+            </>
+          )}
+        </div>
       </div>
     </section>
   );

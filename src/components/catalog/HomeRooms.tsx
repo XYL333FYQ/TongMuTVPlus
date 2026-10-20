@@ -4,9 +4,8 @@ import { Plus, Users } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
-import { useWatchRoomContextSafe } from '@/components/WatchRoomProvider';
-
 import SectionHeader from '@/components/catalog/SectionHeader';
+import { useWatchRoomContextSafe } from '@/components/WatchRoomProvider';
 
 import type { Room } from '@/types/watch-room';
 
@@ -47,7 +46,10 @@ export default function HomeRooms({ guest = false }: { guest?: boolean }) {
     : rooms;
   return (
     <section className='tm-home-rooms' aria-label='我的房间'>
-      <SectionHeader title='我的房间' href='/watch-room' />
+      <SectionHeader
+        title={guest ? '一起看' : '我的房间'}
+        href={guest ? undefined : '/watch-room'}
+      />
       <div className='tm-home-compact-grid'>
         {visible.slice(0, 2).map((room) => {
           const online = room.memberCount > 0;
@@ -60,7 +62,14 @@ export default function HomeRooms({ guest = false }: { guest?: boolean }) {
               className='tm-home-room-card tm-press'
             >
               <div className='tm-home-room-art'>
-                <Users size={28} strokeWidth={1.5} aria-hidden='true' />
+                <span className='tm-home-room-glyph' aria-hidden='true'>
+                  {/* 房名首字是数字或符号时，字母头像没有意义，改用图标 */}
+                  {!/^[\s!-@[-`{-~]/.test(room.name) ? (
+                    Array.from(room.name)[0]
+                  ) : (
+                    <Users strokeWidth={1.5} />
+                  )}
+                </span>
                 <span
                   className='tm-home-room-status tm-badge'
                   data-on-art='true'
@@ -76,19 +85,22 @@ export default function HomeRooms({ guest = false }: { guest?: boolean }) {
           );
         })}
         <Link
-          href='/watch-room'
+          href={
+            guest
+              ? '/login?redirect=' + encodeURIComponent('/watch-room')
+              : '/watch-room'
+          }
           className='tm-home-room-card tm-home-room-create tm-press'
         >
           <div className='tm-home-room-art'>
-            <Plus size={24} />
+            <Plus size={22} aria-hidden='true' />
           </div>
-          <strong>创建房间</strong>
+          <strong>{guest ? '登录后开一间房' : '创建房间'}</strong>
+          {guest && <small>和朋友同步看同一部片，边看边聊</small>}
         </Link>
       </div>
-      {(guest || error || !context?.isEnabled) && (
-        <p className='tm-home-hint'>
-          {guest ? '登录后创建和加入房间' : error || '房间服务未启用'}
-        </p>
+      {!guest && (error || !context?.isEnabled) && (
+        <p className='tm-home-hint'>{error || '房间服务未启用'}</p>
       )}
     </section>
   );

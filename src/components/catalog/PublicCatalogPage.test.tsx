@@ -16,8 +16,14 @@ jest.mock('@/components/PageLayout', () => ({
     <div>{children}</div>
   ),
 }));
-jest.mock('@/components/catalog/HomeRooms', () => ({ __esModule: true, default: () => null }));
-jest.mock('@/components/catalog/HomeHero', () => ({ __esModule: true, default: () => null }));
+jest.mock('@/components/catalog/HomeRooms', () => ({
+  __esModule: true,
+  default: () => null,
+}));
+jest.mock('@/components/catalog/HomeHero', () => ({
+  __esModule: true,
+  default: () => null,
+}));
 jest.mock('@/components/catalog/PosterMotion', () => ({
   __esModule: true,
   default: ({ children }: { children: React.ReactNode }) => (
