@@ -43,6 +43,13 @@ export default function ChatFloatingWindow() {
       setInlineVisible(
         Boolean(target && (media.matches || target.dataset.active === 'true'))
       );
+      if (target?.dataset.active === 'true' && atBottom.current) {
+        requestAnimationFrame(() => {
+          if (bodyRef.current && atBottom.current) {
+            bodyRef.current.scrollTop = bodyRef.current.scrollHeight;
+          }
+        });
+      }
     };
     const observer = new MutationObserver(update);
     observer.observe(document.body, {
@@ -340,24 +347,42 @@ export default function ChatFloatingWindow() {
         {!roomContext?.chatMessages.length && (
           <p className='tm-chat-empty'>暂无消息</p>
         )}
-        {roomContext?.chatMessages.map((message) => (
-          <article
-            key={message.id}
-            data-seq={message.seq}
-            className={message.type === 'emoji' ? 'tm-chat-emoji-message' : ''}
-          >
-            <div>
-              <strong>{message.userName}</strong>
-              <time dateTime={new Date(message.timestamp).toISOString()}>
-                {new Date(message.timestamp).toLocaleTimeString('zh-CN', {
-                  hour: '2-digit',
-                  minute: '2-digit',
-                })}
-              </time>
-            </div>
-            <p>{message.content}</p>
-          </article>
-        ))}
+        {roomContext?.chatMessages.map((message, index, list) => {
+          const prev = index > 0 ? list[index - 1] : undefined;
+          const grouped =
+            Boolean(prev) &&
+            prev?.userName === message.userName &&
+            message.timestamp - (prev?.timestamp || 0) < 120000;
+          const selfMember = roomContext?.members?.find(
+            (member) => member.id === roomContext?.socket?.id
+          );
+          const isSelf = Boolean(
+            (selfMember && message.userName === selfMember.name) ||
+              (message.userId && message.userId === roomContext?.socket?.id)
+          );
+          return (
+            <article
+              key={message.id}
+              data-seq={message.seq}
+              data-grouped={grouped ? 'true' : undefined}
+              data-self={isSelf ? 'true' : undefined}
+              className={
+                message.type === 'emoji' ? 'tm-chat-emoji-message' : ''
+              }
+            >
+              <div>
+                <strong>{message.userName}</strong>
+                <time dateTime={new Date(message.timestamp).toISOString()}>
+                  {new Date(message.timestamp).toLocaleTimeString('zh-CN', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  })}
+                </time>
+              </div>
+              <p>{message.content}</p>
+            </article>
+          );
+        })}
       </div>
       {unread > 0 && (
         <button

@@ -354,6 +354,11 @@ export default function PublicCatalogPage({
                   '/login?redirect=' + encodeURIComponent('/watch-room')
                 )
               }
+              deck={recommendations.map((item) => ({
+                id: item.provider + ':' + item.id,
+                title: item.title,
+                src: heroImage(item.poster),
+              }))}
               titles={recommendations.map((item) => item.title)}
               index={heroIndex}
               onSelect={setHeroIndex}

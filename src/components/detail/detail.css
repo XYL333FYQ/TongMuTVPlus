@@ -105,8 +105,11 @@ html:not(.dark) .tm-detail-mask-shade {
   align-items: center;
   justify-content: center;
   border-radius: 50%;
+  border: 1px solid var(--tm-line);
   color: var(--tm-text);
   background: var(--tm-detail-control-glass);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
 }
 .tm-detail-more {
   position: relative;
@@ -625,7 +628,7 @@ html:not(.dark) .tm-detail-mask-shade {
     padding: 0;
   }
 }
-html[data-tm-no-blur='true'] .tm-detail-dialog .tm-glass {
+html[data-tm-no-blur='true'] .tm-detail-dialog :is(.tm-glass, .tm-detail-icon) {
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
   background: var(--tm-glass-solid);

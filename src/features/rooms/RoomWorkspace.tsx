@@ -762,6 +762,13 @@ export default function RoomWorkspace() {
                         : tab === 'chat'
                         ? '聊天'
                         : `成员 ${room.memberCount}`}
+                      {tab === 'chat' &&
+                        Boolean(room.unreadCount) &&
+                        panelTab !== 'chat' && (
+                          <b className='tm-room-tab-badge' aria-hidden='true'>
+                            {room.unreadCount}
+                          </b>
+                        )}
                     </span>
                   </button>
                 ))}
@@ -772,18 +779,6 @@ export default function RoomWorkspace() {
                 data-active={panelTab === 'queue'}
                 aria-label='片单'
               >
-                <header>
-                  <div>
-                    <h2>片单 {room.queue?.length || 0}</h2>
-                    <p>{room.queue?.length || 0} 部待播影片</p>
-                  </div>
-                  <button
-                    onClick={() => setDialog('picker')}
-                    aria-label='添加影片'
-                  >
-                    <Plus size={20} />
-                  </button>
-                </header>
                 {!room.queue?.length && (
                   <div className='tm-room-queue-empty'>
                     <p>片单为空</p>
@@ -878,15 +873,13 @@ export default function RoomWorkspace() {
                     </motion.li>
                   ))}
                 </ol>
-                {!!room.queue?.length && (
-                  <button
-                    className='tm-room-add-film'
-                    onClick={() => setDialog('picker')}
-                  >
-                    <Plus size={16} />
-                    添加影片
-                  </button>
-                )}
+                <button
+                  className='tm-room-add-film'
+                  onClick={() => setDialog('picker')}
+                >
+                  <Plus size={16} />
+                  添加影片
+                </button>
               </section>
               <div
                 id='tm-room-panel-chat'

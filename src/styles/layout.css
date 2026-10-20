@@ -29,6 +29,12 @@
   .tm-back-to-top {
     bottom: 24px;
   }
+  body:has(.tm-chat-launcher) .tm-back-to-top {
+    bottom: 84px;
+  }
+  body:has(.tm-playback-chrome) .tm-back-to-top {
+    bottom: 96px;
+  }
 }
 
 /* 行内状态：筛选区里的「正在加载」「暂无」 */

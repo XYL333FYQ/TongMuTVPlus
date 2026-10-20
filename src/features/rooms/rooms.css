@@ -573,54 +573,111 @@
   color: var(--tm-text);
 }
 
-/* 右侧面板 */
+/* 右侧面板：严格遵循 Room.dc.html 三标签切换（片单 / 聊天 / 成员） */
 .tm-room-side {
   position: relative;
   display: flex;
   flex-direction: column;
   gap: 12px;
   min-width: 0;
+  height: 440px;
+  min-height: 380px;
+  max-height: 480px;
+  padding: 16px;
+  overflow: hidden;
+  border: 1px solid var(--tm-line);
+  border-radius: 20px;
+  background: var(--tm-surface);
 }
 .tm-room-panel-tabs {
   display: flex;
+  flex-shrink: 0;
   gap: 2px;
   padding: 3px;
   border-radius: 12px;
-  background: var(--tm-surface-raised);
+  background: var(--tm-bg);
+  border: 1px solid var(--tm-line);
 }
 .tm-room-panel-tabs button {
   position: relative;
   flex: 1;
   min-width: 0;
-  min-height: 40px;
+  min-height: 36px;
   border-radius: 9px;
-  font-size: var(--tm-fs-small);
+  font-size: var(--tm-fs-caption);
   font-weight: 500;
   color: var(--tm-muted);
 }
 .tm-room-panel-tabs button > span:last-child {
   position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 .tm-room-panel-tabs [aria-selected='true'] {
   color: var(--tm-text);
+  font-weight: 700;
 }
 .tm-room-tab-active {
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  background: var(--tm-surface);
+  background: var(--tm-surface-raised);
   box-shadow: var(--tm-shadow-sm);
 }
+.tm-room-tab-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: var(--tm-text);
+  color: var(--tm-accent-contrast);
+  font-size: var(--tm-fs-badge);
+  font-weight: 700;
+  line-height: 1;
+}
 .tm-room-side > [data-active='false'] {
-  display: none;
+  display: none !important;
 }
 .tm-room-chat-slot {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
   min-width: 0;
+  min-height: 0;
+  overflow: hidden;
   scroll-margin-top: 88px;
 }
-/* 房间页顶部已有「邀请朋友」，聊天里不再重复 */
-.tm-rooms .tm-room-chat-slot header > .tm-chat-copy-invite {
+.tm-room-chat-slot .tm-chat-panel--inline {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  max-height: none;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+/* 面板顶部标签栏已经表明「聊天」，内嵌模式下隐藏重复的聊天标题与分割线 */
+.tm-room-chat-slot .tm-chat-panel--inline > header {
   display: none;
+}
+.tm-room-chat-slot .tm-chat-panel--inline .tm-chat-messages {
+  flex: 1;
+  min-height: 0;
+  max-height: none;
+  padding: 6px 4px 12px;
+}
+.tm-room-chat-slot .tm-chat-panel--inline form {
+  flex-shrink: 0;
+  padding: 10px 0 0;
+  border-top: 1px solid var(--tm-line);
 }
 
 .tm-room-queue {
@@ -629,7 +686,9 @@
   flex: 1;
   min-height: 0;
 }
-.tm-room-queue > header,
+.tm-room-queue > header {
+  display: none;
+}
 .tm-room-members > header {
   display: flex;
   align-items: center;
@@ -727,8 +786,12 @@
 .tm-room-queue-empty {
   display: flex;
   flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
   gap: 4px;
-  padding: 12px 4px;
+  padding: 24px 8px;
+  text-align: center;
   font-size: var(--tm-fs-small);
 }
 .tm-room-queue-empty span {
@@ -736,6 +799,7 @@
   color: var(--tm-muted);
 }
 .tm-room-add-film {
+  flex-shrink: 0;
   width: 100%;
   margin-top: 12px;
 }
@@ -745,13 +809,17 @@
 
 .tm-room-members {
   display: none;
-  padding: 16px;
-  border: 1px solid var(--tm-line);
-  border-radius: var(--tm-radius-lg);
-  background: var(--tm-surface);
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 4px;
+  border: 0;
+  background: transparent;
 }
 .tm-room-members[data-active='true'] {
-  display: block;
+  display: flex;
 }
 .tm-room-member {
   display: flex;
@@ -1121,77 +1189,28 @@ html[data-tm-room-presentation='true']
   stroke: var(--tm-room-player-text);
 }
 
-/* —— 桌面 ≥1200：片单 + 聊天常驻 —— */
+/* —— 桌面 ≥1200：按 Room.dc.html 右侧三标签面板与左侧舞台严格等高 —— */
 @media (min-width: 1200px) {
   .tm-rooms[data-joined='true'] .tm-room-workspace {
     grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
     gap: 24px;
+    align-items: stretch;
   }
-  /* 右侧面板与舞台等高，底边对齐 */
+  /* height: 0 + min-height: 100% 让右侧面板高度 100% 由左侧 16:9 舞台决定，绝不撑破首屏 */
   .tm-rooms[data-joined='true'] .tm-room-side {
     align-self: stretch;
-    min-height: 480px;
-    max-height: calc(100dvh - var(--tm-header-height) - 32px);
-    padding: 20px;
-    gap: 0;
+    height: 0;
+    min-height: 100%;
+    max-height: 100%;
+    padding: 16px;
+    gap: 12px;
+    overflow: hidden;
     border: 1px solid var(--tm-line);
-    border-radius: var(--tm-radius-xl);
+    border-radius: 20px;
     background: var(--tm-surface);
   }
-  .tm-rooms[data-joined='true']
-    :is(.tm-room-panel-tabs, .tm-room-heading-settings),
-  .tm-room-activities .tm-room-stage-chat,
-  .tm-room-queue > header p {
+  .tm-room-activities .tm-room-stage-chat {
     display: none;
-  }
-  .tm-rooms[data-joined='true'] .tm-room-queue > header > button {
-    width: 36px;
-    height: 36px;
-  }
-  .tm-rooms[data-joined='true']
-    .tm-room-side
-    > :is(.tm-room-queue, .tm-room-chat-slot) {
-    display: flex;
-  }
-  .tm-rooms[data-joined='true'] .tm-room-queue {
-    flex: 0 1 auto;
-    max-height: 40%;
-    padding-bottom: 16px;
-  }
-  .tm-rooms[data-joined='true'] .tm-room-chat-slot {
-    flex: 1;
-    min-height: 160px;
-  }
-  /* 聊天直接长在面板里：只用一条细线和片单分开，不再套一层卡片 */
-  .tm-rooms[data-joined='true'] .tm-room-chat-slot .tm-chat-panel--inline {
-    height: 100%;
-    min-height: 0;
-    border: 0;
-    border-top: 1px solid var(--tm-line);
-    border-radius: 0;
-    background: transparent;
-    box-shadow: none;
-  }
-  .tm-rooms[data-joined='true'] .tm-chat-panel--inline header {
-    padding-inline: 0;
-  }
-  .tm-rooms[data-joined='true']
-    .tm-chat-panel--inline
-    :is(.tm-chat-messages, form) {
-    padding-inline: 0;
-  }
-  /* 成员列表由头像簇打开，浮在面板上方 */
-  .tm-rooms[data-joined='true'] .tm-room-members {
-    display: none;
-  }
-  .tm-rooms[data-joined='true'] .tm-room-members[data-expanded='true'] {
-    position: absolute;
-    top: 0;
-    right: 0;
-    z-index: 90;
-    display: block;
-    width: min(320px, 100%);
-    box-shadow: var(--tm-shadow-lg);
   }
   /* 只剩聊天按钮（桌面已隐藏）时整行不占位，舞台与右侧面板底边对齐 */
   .tm-rooms[data-joined='true'] .tm-room-activities:not(:has(a)) {
@@ -1202,13 +1221,6 @@ html[data-tm-room-presentation='true']
 /* 没在播放时，空屏幕已经说明了状态，舞台底部那行不再重复 */
 .tm-rooms[data-joined='true'][data-playing='false'] .tm-room-stage-footer {
   display: none;
-}
-
-/* —— 平板与手机：三标签 —— */
-@media (max-width: 1199px) {
-  .tm-room-queue > header {
-    display: none;
-  }
 }
 @media (max-width: 767px) {
   .tm-rooms {
@@ -1250,6 +1262,11 @@ html[data-tm-room-presentation='true']
     padding: 20px;
     gap: 8px;
     border-radius: var(--tm-radius-lg);
+  }
+  .tm-room-side {
+    height: 360px;
+    min-height: 320px;
+    max-height: 380px;
   }
   .tm-room-empty-stage h2 {
     font-size: 18px;

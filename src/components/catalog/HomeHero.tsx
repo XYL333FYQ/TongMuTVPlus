@@ -6,7 +6,7 @@ import {
   useMotionValue,
   useTransform,
 } from 'framer-motion';
-import { ChevronLeft, ChevronRight, Play, Users } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Info, Play, Users } from 'lucide-react';
 import {
   type ReactNode,
   type TouchEventHandler,
@@ -17,6 +17,14 @@ import {
 
 import { useReducedMotionSetting } from '@/lib/motion';
 
+import ProxyImage from '@/components/ProxyImage';
+
+export interface HeroDeckItem {
+  id: string;
+  title: string;
+  src: string;
+}
+
 export default function HomeHero({
   id,
   title,
@@ -24,8 +32,10 @@ export default function HomeHero({
   description,
   art,
   contain,
+  deck,
   onPlay,
   onTogether,
+  onDetail,
   titles,
   index,
   onSelect,
@@ -41,8 +51,10 @@ export default function HomeHero({
   description?: string;
   art: ReactNode;
   contain: boolean;
+  deck?: HeroDeckItem[];
   onPlay: () => void;
   onTogether: () => void;
+  onDetail?: () => void;
   titles: string[];
   index: number;
   onSelect: (index: number) => void;
@@ -75,6 +87,18 @@ export default function HomeHero({
     return () => window.removeEventListener('scroll', update, true);
   }, [distance, reduced]);
   const duration = reduced ? 0.12 : 0.6;
+  const prevIndex =
+    deck && deck.length > 1 ? (index - 1 + deck.length) % deck.length : -1;
+  const nextIndex =
+    deck && deck.length > 2
+      ? (index + 1) % deck.length
+      : deck && deck.length === 2
+      ? (index + 1) % 2
+      : -1;
+  const prevItem = prevIndex >= 0 ? deck?.[prevIndex] : undefined;
+  const nextItem =
+    nextIndex >= 0 && nextIndex !== prevIndex ? deck?.[nextIndex] : undefined;
+
   return (
     <section
       ref={root}
@@ -92,7 +116,27 @@ export default function HomeHero({
       }}
     >
       <div className='tm-home-hero-panel' data-portrait={portrait}>
-        <motion.div className='tm-home-hero-art' style={{ y: reduced ? 0 : y }}>
+        <motion.div
+          className='tm-home-hero-art'
+          style={{ y: reduced || portrait ? 0 : y }}
+        >
+          {portrait && prevItem?.src && (
+            <button
+              type='button'
+              className='tm-home-hero-side-card'
+              data-side='prev'
+              onClick={() => onSelect(prevIndex)}
+              aria-label={`切换到上一部：${prevItem.title}`}
+              tabIndex={-1}
+            >
+              <ProxyImage
+                originalSrc={prevItem.src}
+                alt=''
+                loading='lazy'
+                className='tm-home-hero-side-image'
+              />
+            </button>
+          )}
           <AnimatePresence initial={false}>
             <motion.div
               key={id}
@@ -113,13 +157,13 @@ export default function HomeHero({
               initial={{ opacity: 0, scale: 1 }}
               animate={{
                 opacity: 1,
-                scale: reduced ? 1 : 1.06,
+                scale: reduced || portrait ? 1 : 1.06,
               }}
               exit={{ opacity: 0 }}
               transition={{
                 opacity: { duration },
                 scale: {
-                  duration: reduced ? 0 : 12,
+                  duration: reduced || portrait ? 0 : 12,
                   ease: 'linear',
                 },
               }}
@@ -127,12 +171,32 @@ export default function HomeHero({
               {art}
             </motion.div>
           </AnimatePresence>
+          {portrait && nextItem?.src && (
+            <button
+              type='button'
+              className='tm-home-hero-side-card'
+              data-side='next'
+              onClick={() => onSelect(nextIndex)}
+              aria-label={`切换到下一部：${nextItem.title}`}
+              tabIndex={-1}
+            >
+              <ProxyImage
+                originalSrc={nextItem.src}
+                alt=''
+                loading='lazy'
+                className='tm-home-hero-side-image'
+              />
+            </button>
+          )}
         </motion.div>
         {/* 遮罩用页面底色渐变：深色主题压暗、浅色主题提亮，大图下沿融进页面 */}
         <div className='tm-home-hero-scrim' aria-hidden='true' />
         <motion.div
           className='tm-home-hero-copy'
-          style={{ opacity: reduced ? 1 : opacity, y: reduced ? 0 : copyY }}
+          style={{
+            opacity: reduced || portrait ? 1 : opacity,
+            y: reduced || portrait ? 0 : copyY,
+          }}
         >
           <motion.div
             key={id + '-copy'}
@@ -170,6 +234,15 @@ export default function HomeHero({
                   <Users size={18} />
                   一起看
                 </button>
+                {onDetail && (
+                  <button
+                    className='tm-btn tm-btn-lg tm-home-hero-glass tm-home-hero-detail'
+                    onClick={onDetail}
+                  >
+                    <Info size={18} />
+                    详情
+                  </button>
+                )}
               </div>,
             ].map(
               (child, i) =>

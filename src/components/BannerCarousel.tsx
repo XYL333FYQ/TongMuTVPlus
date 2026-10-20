@@ -576,6 +576,12 @@ export default function BannerCarousel({
         }
         onPlay={() => handlePlay(currentItem.title)}
         onTogether={() => router.push('/watch-room')}
+        onDetail={() => setDetailOpen(true)}
+        deck={items.map((item) => ({
+          id: String(item.id),
+          title: item.title,
+          src: getImageUrl(item.poster_path || item.backdrop_path || null),
+        }))}
         titles={items.map((item) => item.title)}
         index={currentIndex}
         onSelect={goToSlide}

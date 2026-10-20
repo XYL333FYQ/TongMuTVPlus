@@ -5,26 +5,20 @@
 
 .tm-home {
   position: relative;
-  padding-top: 16px;
-}
-.tm-home:has(> .tm-home-stage) {
-  padding-top: 0;
+  padding-top: 8px;
 }
 
-/* —— 大图（通栏） ——
- * 画面铺满整块大图，横图竖图都一样；竖图（豆瓣海报）取上部为焦点。
- * 遮罩全部用页面底色 --tm-bg 渐变：深色主题是压暗，浅色主题是提亮，
- * 文字跟着主题走（深色白字、浅色黑字），下沿无缝融进下面的内容。
- * 桌面端从屏幕最上沿开始，顶栏浮在画面上。
+/* —— 精选推荐舞台（容器内深色院线卡片） ——
+ * 横图（TX / TMDB）铺满整张舞台卡片；
+ * 竖图（豆瓣 2:3 海报）在右侧以三联院线展台呈现：中央主海报 2:3 完整无裁切，
+ * 左右两侧托出相邻推荐海报，既不放大糊化，也不留左侧大片空白。
  */
 .tm-home-stage {
   position: relative;
-}
-@media (min-width: 768px) {
-  .tm-home-stage {
-    /* 收回 .tm-main 的 8px 顶距和顶栏高度 */
-    margin-top: calc(-8px - var(--tm-header-height));
-  }
+  width: 100%;
+  max-width: var(--tm-container);
+  margin-inline: auto;
+  padding-inline: var(--tm-content-gutter);
 }
 .tm-home-hero {
   position: relative;
@@ -32,10 +26,19 @@
 }
 .tm-home-hero-panel {
   position: relative;
-  height: clamp(580px, 88vh, 940px);
+  height: clamp(430px, 50vh, 520px);
   overflow: hidden;
-  background: var(--tm-bg);
+  border: 1px solid var(--tm-line);
+  border-radius: var(--tm-radius-xl);
+  background: radial-gradient(
+      ellipse 60% 85% at 74% 50%,
+      var(--tm-spot),
+      transparent 70%
+    ),
+    radial-gradient(ellipse 50% 70% at 20% 25%, var(--tm-spot), transparent 70%),
+    var(--tm-surface);
   color: var(--tm-text);
+  box-shadow: var(--tm-shadow-md);
 }
 .tm-home-hero-loading {
   display: grid;
@@ -77,51 +80,116 @@
   border: 0;
   transform: translate(-50%, -50%);
 }
-/* 三层遮罩：顶部托住顶栏、左侧托住文字、底部融进页面 */
+/* 横图遮罩：左侧跟随主题底色渐变托住文字 */
 .tm-home-hero-scrim {
   position: absolute;
   inset: 0;
   z-index: 3;
   pointer-events: none;
   background: linear-gradient(
-      180deg,
-      color-mix(in srgb, var(--tm-bg) 72%, transparent) 0,
-      transparent 200px
-    ),
-    linear-gradient(
       90deg,
-      color-mix(in srgb, var(--tm-bg) 92%, transparent) 0%,
-      color-mix(in srgb, var(--tm-bg) 64%, transparent) 30%,
-      transparent 58%
+      color-mix(in srgb, var(--tm-surface) 94%, transparent) 0%,
+      color-mix(in srgb, var(--tm-surface) 72%, transparent) 40%,
+      transparent 72%
     ),
     linear-gradient(
       0deg,
-      var(--tm-bg) 0,
-      color-mix(in srgb, var(--tm-bg) 70%, transparent) 16%,
-      transparent 46%
+      color-mix(in srgb, var(--tm-surface) 82%, transparent) 0,
+      transparent 42%
     );
 }
-/* 竖版海报：铺满右侧 62%，从顶到底不留边；左缘用蒙版淡进页面底色。
- * 竖图若硬铺满整宽会被放大近 2 倍、只剩中间一条，所以只占右侧。 */
-.tm-home-hero-panel[data-portrait='true'] .tm-home-hero-art {
-  left: 38%;
-  -webkit-mask-image: linear-gradient(90deg, transparent 0, var(--tm-bg) 34%);
-  mask-image: linear-gradient(90deg, transparent 0, var(--tm-bg) 34%);
+/* 竖版海报（豆瓣 2:3）：右侧三联院线展台，保持 2:3 原生比例，零裁切零模糊 */
+@media (min-width: 768px) {
+  .tm-home-hero-panel[data-portrait='true'] .tm-home-hero-art {
+    left: 48%;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    z-index: 4;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 28px 36px;
+  }
+  .tm-home-hero-panel[data-portrait='true'] .tm-home-hero-frame {
+    position: relative;
+    inset: auto;
+    z-index: 3;
+    height: min(100%, 410px);
+    width: auto;
+    aspect-ratio: 2 / 3;
+    border-radius: 16px;
+    overflow: hidden;
+    background: var(--tm-surface-raised);
+    box-shadow: var(--tm-shadow-poster-hover), 0 0 0 1px var(--tm-line-strong);
+  }
+  .tm-home-hero-panel[data-portrait='true'] .tm-home-hero-frame > img {
+    object-position: 50% 50%;
+  }
+  .tm-home-hero-panel[data-portrait='true'] .tm-home-hero-scrim {
+    z-index: 1;
+    background: radial-gradient(
+      ellipse 55% 75% at 73% 50%,
+      var(--tm-spot),
+      transparent 70%
+    );
+  }
 }
-.tm-home-hero-panel[data-portrait='true'] .tm-home-hero-frame > img {
-  object-position: 50% 18%;
+.tm-home-hero-side-card {
+  position: absolute;
+  z-index: 2;
+  height: min(82%, 336px);
+  width: auto;
+  aspect-ratio: 2 / 3;
+  padding: 0;
+  border: 0;
+  border-radius: 14px;
+  overflow: hidden;
+  background: var(--tm-surface-raised);
+  box-shadow: var(--tm-shadow-poster), 0 0 0 1px var(--tm-line);
+  opacity: 0.62;
+  filter: brightness(0.88);
+  cursor: pointer;
+  transition: transform var(--tm-d-panel) var(--tm-ease-out),
+    opacity var(--tm-d-hover) var(--tm-ease-out),
+    filter var(--tm-d-hover) var(--tm-ease-out);
+}
+.tm-home-hero-side-card[data-side='prev'] {
+  transform: translateX(-78%) rotate(-5deg);
+}
+.tm-home-hero-side-card[data-side='next'] {
+  transform: translateX(78%) rotate(5deg);
+}
+@media (hover: hover) and (pointer: fine) {
+  .tm-home-hero-side-card[data-side='prev']:hover {
+    opacity: 0.92;
+    filter: brightness(1);
+    transform: translateX(-82%) rotate(-3deg) scale(1.03);
+  }
+  .tm-home-hero-side-card[data-side='next']:hover {
+    opacity: 0.92;
+    filter: brightness(1);
+    transform: translateX(82%) rotate(3deg) scale(1.03);
+  }
+}
+.tm-home-hero-side-image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .tm-home-hero-copy {
   position: absolute;
   z-index: 4;
-  /* 与下面内容区左边缘对齐（内容区最宽 --tm-container） */
-  left: max(
-    var(--tm-content-gutter),
-    calc((100% - var(--tm-container)) / 2 + var(--tm-content-gutter))
-  );
-  bottom: clamp(88px, 14vh, 160px);
-  width: min(640px, 46%);
+  left: clamp(32px, 4vw, 56px);
+  top: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding-block: 28px 64px;
+  width: min(500px, 41%);
 }
 .tm-home-hero-meta {
   display: flex;
@@ -138,17 +206,18 @@
   opacity: 0.7;
 }
 .tm-home-hero-title {
-  margin: 12px 0 0;
-  font-size: clamp(36px, 4.4vw, 76px);
+  margin: 10px 0 0;
+  font-size: clamp(32px, 3.4vw, 54px);
   font-weight: 700;
-  line-height: 1.04;
+  line-height: 1.08;
   letter-spacing: -0.02em;
+  color: var(--tm-text);
   overflow-wrap: anywhere;
   text-wrap: balance;
 }
 .tm-home-hero-description {
-  margin-top: 16px;
-  max-width: 560px;
+  margin-top: 14px;
+  max-width: 520px;
   font-size: var(--tm-fs-body);
   line-height: 1.7;
   color: var(--tm-muted);
@@ -159,47 +228,52 @@
 }
 .tm-home-hero-actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 12px;
-  margin-top: 28px;
+  margin-top: 24px;
 }
 .tm-home-hero-actions .tm-btn {
-  min-width: 140px;
+  min-width: 128px;
 }
-/* 次按钮与箭头：跟主题走的玻璃 */
+.tm-home-hero-actions .tm-home-hero-detail {
+  min-width: 96px;
+}
+/* 次按钮与箭头：跟主题走的磨砂玻璃 */
 .tm-home-hero-glass,
 .tm-home-hero-arrow {
   color: var(--tm-text);
-  background: color-mix(in srgb, var(--tm-surface) 55%, transparent);
-  border: 1px solid var(--tm-line);
+  background: color-mix(in srgb, var(--tm-surface-raised) 78%, transparent);
+  border: 1px solid var(--tm-line-strong);
   backdrop-filter: blur(20px) saturate(1.4);
   -webkit-backdrop-filter: blur(20px) saturate(1.4);
 }
 .tm-home-hero-glass:hover:not(:disabled),
 .tm-home-hero-arrow:hover {
-  background: color-mix(in srgb, var(--tm-surface) 80%, transparent);
-  border-color: var(--tm-line-strong);
+  background: var(--tm-surface-raised);
+  border-color: var(--tm-text);
 }
 html[data-tm-no-blur='true'] :is(.tm-home-hero-glass, .tm-home-hero-arrow) {
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
-  background: var(--tm-surface);
+  background: var(--tm-surface-raised);
 }
 
-/* 右下角控件组：静音 · 上一张 · 圆点 · 下一张 */
+/* 左下角控件组：与左栏文字左对齐，绝不遮挡右侧三联海报 */
 .tm-home-hero-controls {
   position: absolute;
   z-index: 5;
-  right: max(
-    var(--tm-content-gutter),
-    calc((100% - var(--tm-container)) / 2 + var(--tm-content-gutter))
-  );
-  bottom: 40px;
+  left: clamp(32px, 4vw, 56px);
+  bottom: 20px;
   display: flex;
   align-items: center;
   gap: 12px;
 }
 .tm-home-hero-arrow {
-  opacity: 0.8;
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  min-height: 36px;
+  opacity: 0.85;
   transition: opacity var(--tm-d-hover) var(--tm-ease-out),
     background-color var(--tm-d-hover) var(--tm-ease-out),
     scale var(--tm-d-press) var(--tm-ease-out);
@@ -350,6 +424,8 @@ html[data-tm-no-blur='true'] :is(.tm-home-hero-glass, .tm-home-hero-arrow) {
 }
 .tm-home-room-create .tm-home-room-art {
   background: var(--tm-surface);
+  box-shadow: none;
+  border: 1px dashed var(--tm-line-strong);
 }
 .tm-home-room-create .tm-home-room-art > svg {
   box-sizing: content-box;
@@ -518,17 +594,14 @@ html[data-tm-no-blur='true'] :is(.tm-home-hero-glass, .tm-home-hero-arrow) {
   width: 0.8em;
   height: 0.8em;
 }
-/* 直链等没有封面的播放记录：画一块深色小屏，不再是灰底像没加载出来 */
+/* 直链等没有封面的播放记录：跟随主题的柔和展板，与右侧房间卡片质感统一 */
 .tm-video-card-art div:has(> svg.lucide-link) {
-  background: radial-gradient(
-      ellipse at 50% 0%,
-      color-mix(in srgb, var(--tm-on-art) 14%, transparent),
-      transparent 70%
-    ),
-    var(--tm-video-bg);
+  background: linear-gradient(135deg, var(--tm-spot), transparent 55%),
+    radial-gradient(circle at 80% 120%, var(--tm-spot), transparent 60%),
+    var(--tm-surface-raised);
 }
 .tm-video-card-art div:has(> svg.lucide-link) > svg {
-  color: var(--tm-on-art-muted);
+  color: var(--tm-muted);
 }
 
 /* —— 响应式 —— */
@@ -546,32 +619,31 @@ html[data-tm-no-blur='true'] :is(.tm-home-hero-glass, .tm-home-hero-arrow) {
     padding-top: 4px;
   }
   .tm-home-hero-panel {
-    height: 540px;
+    height: 460px;
   }
-  /* 手机竖屏：竖版海报正好铺满 */
+  /* 手机竖屏：竖版海报正好铺满，隐藏两侧伴随海报 */
+  .tm-home-hero-side-card {
+    display: none;
+  }
   .tm-home-hero-panel[data-portrait='true'] .tm-home-hero-art {
     left: 0;
-    -webkit-mask-image: none;
-    mask-image: none;
   }
-  /* 手机：文字在下半部，底部遮罩加高 */
+  /* 手机：文字在下半部，底部遮罩托住文字 */
   .tm-home-hero-scrim,
   .tm-home-hero-panel[data-portrait='true'] .tm-home-hero-scrim {
     background: linear-gradient(
-        180deg,
-        color-mix(in srgb, var(--tm-bg) 60%, transparent) 0,
-        transparent 120px
-      ),
-      linear-gradient(
-        0deg,
-        var(--tm-bg) 0,
-        color-mix(in srgb, var(--tm-bg) 86%, transparent) 26%,
-        transparent 62%
-      );
+      0deg,
+      var(--tm-surface) 0,
+      color-mix(in srgb, var(--tm-surface) 88%, transparent) 30%,
+      transparent 68%
+    );
   }
   .tm-home-hero-copy {
-    right: var(--tm-content-gutter);
-    bottom: 48px;
+    left: 20px;
+    right: 20px;
+    top: auto;
+    bottom: 44px;
+    padding-block: 0;
     width: auto;
   }
   .tm-home-hero-meta {
@@ -632,10 +704,27 @@ html[data-tm-no-blur='true']
   filter: none;
 }
 html[data-tm-reduced-motion='true']
+  :is(
+    .tm-video-card-art,
+    .tm-home-room-art,
+    .tm-home-room-glyph,
+    .tm-home-hero-side-card
+  ) {
+  transition: none !important;
+}
+html[data-tm-reduced-motion='true']
   :is(.tm-video-card-art, .tm-home-room-art, .tm-home-room-glyph) {
   transform: none !important;
 }
 @media (prefers-reduced-motion: reduce) {
+  :is(
+      .tm-video-card-art,
+      .tm-home-room-art,
+      .tm-home-room-glyph,
+      .tm-home-hero-side-card
+    ) {
+    transition: none !important;
+  }
   :is(.tm-video-card-art, .tm-home-room-art, .tm-home-room-glyph) {
     transform: none !important;
   }
