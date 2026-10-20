@@ -3,6 +3,7 @@
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   Check,
+  ChevronDown,
   Copy,
   Film,
   Link2,
@@ -78,7 +79,6 @@ export default function RoomWorkspace() {
   const [panelTab, setPanelTab] = useState<'queue' | 'chat' | 'members'>(
     'queue'
   );
-  const [membersOpen, setMembersOpen] = useState(false);
   const screening = useRoomScreening(
     playback.controller?.video || null,
     Boolean(
@@ -426,14 +426,27 @@ export default function RoomWorkspace() {
         <div className='tm-rooms-heading'>
           <div>
             {room && (
-              <p className='tm-room-heading-status'>
-                <span
-                  className={`tm-room-connection ${
-                    watchRoom.isConnected ? '' : 'is-offline'
-                  }`}
-                />
-                {watchRoom.isConnected ? '已连接' : '重连中'} · {hostLabel}
-              </p>
+              <div className='tm-room-heading-status' aria-live='polite'>
+                <span className='tm-room-state-badge'>
+                  <span
+                    aria-hidden
+                    className={`tm-room-connection ${
+                      watchRoom.isConnected ? '' : 'is-offline'
+                    }`}
+                  />
+                  {watchRoom.isConnected ? '已连接' : '重连中'}
+                </span>
+                <motion.span
+                  key={hostLabel}
+                  className='tm-room-state-badge'
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: reducedMotion ? 0.12 : 0.2 }}
+                >
+                  <Shield size={13} aria-hidden />
+                  {hostLabel}
+                </motion.span>
+              </div>
             )}
             <h1>{room ? room.name : '房间'}</h1>
             {(room?.description || !room) && (
@@ -446,10 +459,12 @@ export default function RoomWorkspace() {
                 <button
                   className='tm-room-avatar-cluster'
                   aria-label={`成员，${room.memberCount}人`}
-                  aria-expanded={membersOpen}
+                  aria-expanded={panelTab === 'members'}
+                  aria-controls='tm-room-panel-members'
                   onClick={() => {
-                    setMembersOpen((value) => !value);
-                    setPanelTab('members');
+                    setPanelTab((value) =>
+                      value === 'members' ? 'queue' : 'members'
+                    );
                   }}
                 >
                   <AnimatePresence initial={false}>
@@ -482,8 +497,20 @@ export default function RoomWorkspace() {
                         </motion.span>
                       ))}
                   </AnimatePresence>
-                  <span>{room.memberCount} 人</span>
+                  <span className='tm-room-member-count'>
+                    {room.memberCount} 人
+                  </span>
+                  <ChevronDown size={14} aria-hidden />
                 </button>
+                {watchRoom.canControl && (
+                  <Link
+                    href='/watch-room/screen'
+                    className='tm-room-screen-shortcut'
+                  >
+                    <Monitor size={16} aria-hidden />
+                    屏幕共享
+                  </Link>
+                )}
                 <button onClick={copyInvite}>
                   {copied ? <Check size={16} /> : <Copy size={16} />}
                   {copied ? '已复制' : '邀请朋友'}
@@ -654,6 +681,8 @@ export default function RoomWorkspace() {
                   <PlaybackSlot />
                 </div>
               )}
+            </section>
+            <div className='tm-room-support'>
               {playback.metadata.error && (
                 <p className='tm-room-media-status' role='status'>
                   视频加载失败 · 使用「重新加载影片」重试
@@ -726,14 +755,8 @@ export default function RoomWorkspace() {
                     一起听
                   </Link>
                 )}
-                {watchRoom.canControl && (
-                  <Link href='/watch-room/screen'>
-                    <Monitor size={15} />
-                    屏幕共享
-                  </Link>
-                )}
               </div>
-            </section>
+            </div>
             <aside className='tm-room-side'>
               <div
                 className='tm-room-panel-tabs'
@@ -891,7 +914,7 @@ export default function RoomWorkspace() {
                 className='tm-room-members'
                 id='tm-room-panel-members'
                 data-active={panelTab === 'members'}
-                data-expanded={membersOpen}
+                data-expanded={panelTab === 'members'}
                 aria-label='成员'
               >
                 <header>

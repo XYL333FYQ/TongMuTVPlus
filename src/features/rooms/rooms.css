@@ -49,11 +49,24 @@
 }
 .tm-room-heading-status {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 8px;
   margin-bottom: 8px;
   font-size: var(--tm-fs-caption);
   color: var(--tm-muted);
+}
+.tm-room-state-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 28px;
+  padding: 4px 10px;
+  border: 1px solid var(--tm-line);
+  border-radius: var(--tm-radius-pill);
+  background: var(--tm-surface);
+  color: var(--tm-text);
+  font-size: var(--tm-fs-caption);
 }
 .tm-room-connection {
   width: 7px;
@@ -76,6 +89,7 @@
 
 /* 标题区、空舞台、舞台底部的按钮统一成次按钮；.tm-room-primary 为主按钮 */
 .tm-rooms-heading-actions > button,
+.tm-rooms-heading-actions > a,
 .tm-room-stage-footer button,
 .tm-room-add-film {
   display: inline-flex;
@@ -94,6 +108,7 @@
     scale var(--tm-d-press) var(--tm-ease-out);
 }
 .tm-rooms-heading-actions > button:hover,
+.tm-rooms-heading-actions > a:hover,
 .tm-room-stage-footer button:hover,
 .tm-room-add-film:hover {
   border-color: var(--tm-line-strong);
@@ -121,10 +136,8 @@
 
 /* 成员头像簇 */
 .tm-rooms-heading-actions .tm-room-avatar-cluster {
-  gap: 0;
-  padding: 0 4px;
-  border: 0;
-  background: transparent;
+  gap: 8px;
+  padding: 4px 12px 4px 6px;
 }
 .tm-room-avatar {
   display: grid;
@@ -142,8 +155,8 @@
 .tm-room-avatar-cluster .tm-room-avatar + .tm-room-avatar {
   margin-left: -8px;
 }
-.tm-room-avatar-cluster > span:last-child {
-  margin-left: 10px;
+.tm-room-avatar-cluster .tm-room-member-count {
+  margin-left: 2px;
   font-size: var(--tm-fs-caption);
   color: var(--tm-muted);
 }
@@ -341,6 +354,10 @@
   align-self: flex-start;
   margin: 16px 18px 0;
 }
+/* The stretched hit area must remain relative to the card while pressed. */
+.tm-rooms .tm-room-card-action:active:not(:disabled) {
+  scale: none;
+}
 /* 按钮的点击区铺满整张卡：点卡片任何位置都等于点「进入房间」 */
 .tm-room-card-action::after {
   content: '';
@@ -390,6 +407,9 @@
   position: relative;
   display: flex;
   flex-direction: column;
+  min-width: 0;
+}
+.tm-room-support {
   min-width: 0;
 }
 .tm-room-main-anchor {
@@ -561,9 +581,10 @@
   align-items: center;
   gap: 6px;
   min-height: 44px;
-  padding: 0;
-  border: 0;
-  background: transparent;
+  padding: 0 12px;
+  border: 1px solid var(--tm-line);
+  border-radius: var(--tm-radius-sm);
+  background: var(--tm-surface);
   font-size: var(--tm-fs-small);
   color: var(--tm-muted);
   transition: color var(--tm-d-hover) var(--tm-ease-out);
@@ -1196,6 +1217,22 @@ html[data-tm-room-presentation='true']
     gap: 24px;
     align-items: stretch;
   }
+  .tm-room-stage {
+    grid-column: 1;
+    grid-row: 1;
+  }
+  .tm-room-side {
+    grid-column: 2;
+    grid-row: 1;
+  }
+  .tm-room-support {
+    grid-column: 1;
+    grid-row: 2;
+  }
+  .tm-rooms[data-playing='false']
+    .tm-room-support:not(:has(.tm-room-activities a, .tm-room-media-status)) {
+    display: none;
+  }
   /* height: 0 + min-height: 100% 让右侧面板高度 100% 由左侧 16:9 舞台决定，绝不撑破首屏 */
   .tm-rooms[data-joined='true'] .tm-room-side {
     align-self: stretch;
@@ -1243,6 +1280,13 @@ html[data-tm-room-presentation='true']
     :is(.tm-rooms-heading h1, .tm-room-heading-status, .tm-room-avatar-cluster),
   .tm-rooms-heading-actions > :not(.tm-room-avatar-cluster) {
     display: none;
+  }
+  .tm-rooms[data-joined='true']
+    .tm-rooms-heading-actions
+    > .tm-room-screen-shortcut {
+    display: inline-flex;
+    min-height: 44px;
+    margin-bottom: 16px;
   }
   .tm-rooms[data-joined='true']
     .tm-rooms-heading:has(p:not(.tm-room-heading-status)) {

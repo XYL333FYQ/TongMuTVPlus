@@ -107,15 +107,21 @@
 .tm-section-link {
   display: inline-flex;
   align-items: center;
-  gap: 2px;
-  min-height: 32px;
+  gap: 6px;
+  min-height: 36px;
+  padding: 0 12px;
+  border: 1px solid var(--tm-line);
+  border-radius: var(--tm-radius-pill);
+  background: var(--tm-surface);
   font-size: var(--tm-fs-small);
   color: var(--tm-muted);
   white-space: nowrap;
-  transition: color var(--tm-d-hover) var(--tm-ease-out);
+  transition: color var(--tm-d-hover) var(--tm-ease-out),
+    background-color var(--tm-d-hover) var(--tm-ease-out);
 }
 .tm-section-link:hover {
   color: var(--tm-text);
+  background: var(--tm-surface-raised);
 }
 @media (pointer: coarse) {
   .tm-section-link {
@@ -144,6 +150,16 @@
   text-align: center;
   font-size: var(--tm-fs-caption);
   color: var(--tm-muted);
+}
+.tm-library-feedback {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding-top: 24px;
+  color: var(--tm-muted);
+  font-size: var(--tm-fs-small);
 }
 
 /* —— 容器与栅格 —— */

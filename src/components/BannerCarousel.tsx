@@ -11,8 +11,8 @@ import {
   getTMDBImageUrl,
 } from '@/lib/tmdb.client';
 
-import DetailPanel from '@/components/DetailPanel';
 import HomeHero from '@/components/catalog/HomeHero';
+import DetailPanel from '@/components/DetailPanel';
 import ProxyImage from '@/components/ProxyImage';
 import { useWatchRoomContextSafe } from '@/components/WatchRoomProvider';
 
@@ -521,7 +521,7 @@ export default function BannerCarousel({
         id={String(currentItem.id)}
         title={currentItem.title}
         description={currentItem.overview}
-        contain={!currentItem.backdrop_path}
+        contain={dataSource === 'Douban' || !currentItem.backdrop_path}
         meta={
           <>
             {currentItem.vote_average > 0 && (

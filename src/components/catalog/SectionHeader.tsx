@@ -1,3 +1,4 @@
+import { ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 
@@ -19,6 +20,7 @@ export default function SectionHeader({
       {href ? (
         <Link href={href} className='tm-section-link'>
           查看全部
+          <ChevronRight size={14} aria-hidden />
         </Link>
       ) : (
         actions

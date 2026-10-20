@@ -359,6 +359,15 @@ export default function PublicCatalogPage({
                 title: item.title,
                 src: heroImage(item.poster),
               }))}
+              renderPoster={(item) => (
+                <PublicPoster
+                  key={item.id}
+                  src={item.src}
+                  alt=''
+                  eager
+                  className='tm-home-hero-side-image'
+                />
+              )}
               titles={recommendations.map((item) => item.title)}
               index={heroIndex}
               onSelect={setHeroIndex}

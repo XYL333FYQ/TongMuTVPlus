@@ -2,6 +2,7 @@
 
 'use client';
 
+import { ChevronDown, RefreshCw } from 'lucide-react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
@@ -17,13 +18,13 @@ import { DoubanItem, DoubanResult } from '@/lib/types';
 import { useViewerIdentity } from '@/hooks/useViewerIdentity';
 
 import BangumiScheduleTimeline from '@/components/BangumiScheduleTimeline';
+import PosterGrid from '@/components/catalog/PosterGrid';
+import PublicCatalogPage from '@/components/catalog/PublicCatalogPage';
 import DoubanCardSkeleton from '@/components/DoubanCardSkeleton';
 import DoubanCustomSelector from '@/components/DoubanCustomSelector';
 import DoubanSelector from '@/components/DoubanSelector';
 import PageContainer from '@/components/PageContainer';
 import PageLayout from '@/components/PageLayout';
-import PosterGrid from '@/components/catalog/PosterGrid';
-import PublicCatalogPage from '@/components/catalog/PublicCatalogPage';
 import VideoCard from '@/components/VideoCard';
 
 function DoubanPageClient() {
@@ -33,6 +34,8 @@ function DoubanPageClient() {
   const [currentPage, setCurrentPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [loadingError, setLoadingError] = useState('');
+  const [retryAttempt, setRetryAttempt] = useState(0);
   const [selectorsReady, setSelectorsReady] = useState(false);
   const observerRef = useRef<IntersectionObserver | null>(null);
   const loadingRef = useRef<HTMLDivElement>(null);
@@ -288,6 +291,7 @@ function DoubanPageClient() {
 
     try {
       setLoading(true);
+      setLoadingError('');
       // 确保在加载初始数据时重置页面状态
       setDoubanData([]);
       setCurrentPage(0);
@@ -402,7 +406,10 @@ function DoubanPageClient() {
       }
     } catch (err) {
       console.error(err);
-      setLoading(false); // 发生错误时总是停止loading状态
+      if (isSnapshotEqual(requestSnapshot, currentParamsRef.current)) {
+        setLoadingError('影视信息暂时无法获取');
+        setLoading(false);
+      }
     }
   }, [
     type,
@@ -449,6 +456,7 @@ function DoubanPageClient() {
 
   // 单独处理 currentPage 变化（加载更多）
   useEffect(() => {
+    let cancelled = false;
     if (currentPage > 0) {
       const fetchMoreData = async () => {
         // 创建当前参数的快照
@@ -463,6 +471,7 @@ function DoubanPageClient() {
 
         try {
           setIsLoadingMore(true);
+          setLoadingError('');
 
           let data: DoubanResult;
           if (type === 'custom') {
@@ -549,7 +558,10 @@ function DoubanPageClient() {
             // 使用 ref 获取最新的当前值
             const currentSnapshot = { ...currentParamsRef.current };
 
-            if (isSnapshotEqual(requestSnapshot, currentSnapshot)) {
+            if (
+              !cancelled &&
+              isSnapshotEqual(requestSnapshot, currentSnapshot)
+            ) {
               setDoubanData((prev) => [...prev, ...data.list]);
               setHasMore(data.list.length !== 0);
             } else {
@@ -559,16 +571,25 @@ function DoubanPageClient() {
             throw new Error(data.message || '获取数据失败');
           }
         } catch (err) {
-          console.error(err);
+          if (
+            !cancelled &&
+            isSnapshotEqual(requestSnapshot, currentParamsRef.current)
+          ) {
+            setLoadingError('下一页加载失败，已保留当前内容');
+          }
         } finally {
-          setIsLoadingMore(false);
+          if (!cancelled) setIsLoadingMore(false);
         }
       };
 
       fetchMoreData();
     }
+    return () => {
+      cancelled = true;
+    };
   }, [
     currentPage,
+    retryAttempt,
     type,
     primarySelection,
     secondarySelection,
@@ -580,7 +601,7 @@ function DoubanPageClient() {
   // 设置滚动监听
   useEffect(() => {
     // 如果没有更多数据或正在加载，则不设置监听
-    if (!hasMore || isLoadingMore || loading) {
+    if (!hasMore || isLoadingMore || loading || loadingError) {
       return;
     }
 
@@ -606,12 +627,13 @@ function DoubanPageClient() {
         observerRef.current.disconnect();
       }
     };
-  }, [hasMore, isLoadingMore, loading]);
+  }, [hasMore, isLoadingMore, loading, loadingError]);
 
   // 首屏如果未被撑满，仅在第一页时额外请求一次下一页
   useEffect(() => {
     if (
       loading ||
+      loadingError ||
       !selectorsReady ||
       isLoadingMore ||
       !hasMore ||
@@ -636,6 +658,7 @@ function DoubanPageClient() {
     return () => window.cancelAnimationFrame(rafId);
   }, [
     loading,
+    loadingError,
     selectorsReady,
     isLoadingMore,
     hasMore,
@@ -786,6 +809,8 @@ function DoubanPageClient() {
             <p className='tm-page-desc'>
               {type === 'anime' && primarySelection === '每日放送'
                 ? '数据来自 Bangumi 番组计划'
+                : primarySelection === '全部'
+                ? '豆瓣推荐 · 按筛选分页浏览，非全量片库'
                 : '数据来自豆瓣'}
             </p>
           </div>
@@ -860,7 +885,24 @@ function DoubanPageClient() {
             </PosterGrid>
           )}
 
-          {/* 加载更多指示器 */}
+          {loadingError && (
+            <div className='tm-library-feedback' role='alert'>
+              <span>{loadingError}</span>
+              <button
+                type='button'
+                className='tm-btn tm-btn-secondary'
+                onClick={() =>
+                  currentPage > 0
+                    ? setRetryAttempt((value) => value + 1)
+                    : void loadInitialData()
+                }
+              >
+                <RefreshCw size={16} aria-hidden />
+                重试加载
+              </button>
+            </div>
+          )}
+          {/* 自动触底与手动按钮共用同一页号；失败时重试原页。 */}
           {!isScheduleView && hasMore && !loading && (
             <div
               ref={(el) => {
@@ -872,21 +914,42 @@ function DoubanPageClient() {
               }}
               className='tm-library-more'
             >
-              {isLoadingMore && <span className='text-muted'>正在加载…</span>}
+              {!loadingError && (
+                <button
+                  type='button'
+                  className='tm-btn tm-btn-secondary'
+                  disabled={isLoadingMore}
+                  onClick={() => setCurrentPage((value) => value + 1)}
+                >
+                  {isLoadingMore ? (
+                    <RefreshCw size={16} aria-hidden />
+                  ) : (
+                    <ChevronDown size={16} aria-hidden />
+                  )}
+                  {isLoadingMore ? '正在加载…' : '加载更多'}
+                </button>
+              )}
             </div>
           )}
 
           {/* 没有更多数据提示 */}
           {!isScheduleView && !hasMore && doubanData.length > 0 && (
-            <p className='tm-library-end'>已经到底了</p>
+            <p className='tm-library-end'>
+              {primarySelection === '全部'
+                ? '本次推荐已加载完'
+                : '当前分类已加载完'}
+            </p>
           )}
 
           {/* 空状态 */}
-          {!isScheduleView && !loading && doubanData.length === 0 && (
-            <div className='tm-empty'>
-              <p className='tm-empty-desc'>暂时没有相关内容</p>
-            </div>
-          )}
+          {!isScheduleView &&
+            !loading &&
+            !loadingError &&
+            doubanData.length === 0 && (
+              <div className='tm-empty'>
+                <p className='tm-empty-desc'>暂时没有相关内容</p>
+              </div>
+            )}
         </div>
       </PageContainer>
     </PageLayout>

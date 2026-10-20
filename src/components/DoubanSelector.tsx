@@ -46,7 +46,7 @@ const DoubanSelector: React.FC<DoubanSelectorProps> = ({
 
   // 电影的一级选择器选项
   const moviePrimaryOptions: SelectorOption[] = [
-    { label: '全部', value: '全部' },
+    { label: '综合推荐', value: '全部' },
     { label: '热门电影', value: '热门' },
     { label: '最新电影', value: '最新' },
     { label: '豆瓣高分', value: '豆瓣高分' },

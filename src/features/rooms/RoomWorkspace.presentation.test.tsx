@@ -81,7 +81,8 @@ afterEach(() => {
 
 test('connected, no host and empty queue have direct copy', () => {
   render(<RoomWorkspace />);
-  expect(screen.getByText('已连接 · 暂无主持')).toBeInTheDocument();
+  expect(screen.getByText('已连接')).toBeInTheDocument();
+  expect(screen.getByText('暂无主持')).toBeInTheDocument();
   expect(screen.getByText('片单为空')).toBeInTheDocument();
   expect(screen.getByRole('tab', { name: '片单 0' })).toHaveAttribute(
     'aria-selected',
@@ -100,7 +101,8 @@ test('reconnection and departed assigned controller are distinct states', () => 
     mockRoom.currentRoom.controllerAccountId = 'qa-owner';
   }
   const view = render(<RoomWorkspace />);
-  expect(screen.getByText('已连接 · 房主交接中')).toBeInTheDocument();
+  expect(screen.getByText('已连接')).toBeInTheDocument();
+  expect(screen.getByText('房主交接中')).toBeInTheDocument();
   mockRoom.isConnected = false;
   view.rerender(<RoomWorkspace />);
   expect(screen.getByRole('status')).toHaveTextContent('重连中 · 影片继续播放');
@@ -165,4 +167,17 @@ test('media failure directs users to existing global retry and autocomplete rema
     'autocomplete',
     'new-password'
   );
+});
+
+test('member shortcut reflects the selected panel and returns to the queue', () => {
+  render(<RoomWorkspace />);
+  const shortcut = screen.getByRole('button', { name: '成员，1人' });
+  fireEvent.click(screen.getByRole('tab', { name: '成员 1' }));
+  expect(shortcut).toHaveAttribute('aria-expanded', 'true');
+  fireEvent.click(shortcut);
+  expect(screen.getByRole('tab', { name: '片单 0' })).toHaveAttribute(
+    'aria-selected',
+    'true'
+  );
+  expect(shortcut).toHaveAttribute('aria-expanded', 'false');
 });

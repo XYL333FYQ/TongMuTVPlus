@@ -6,10 +6,18 @@ import {
   useMotionValue,
   useTransform,
 } from 'framer-motion';
-import { ChevronLeft, ChevronRight, Info, Play, Users } from 'lucide-react';
+import {
+  ChevronLeft,
+  ChevronRight,
+  Film,
+  Info,
+  Play,
+  Users,
+} from 'lucide-react';
 import {
   type ReactNode,
   type TouchEventHandler,
+  isValidElement,
   useEffect,
   useRef,
   useState,
@@ -33,6 +41,7 @@ export default function HomeHero({
   art,
   contain,
   deck,
+  renderPoster,
   onPlay,
   onTogether,
   onDetail,
@@ -52,6 +61,7 @@ export default function HomeHero({
   art: ReactNode;
   contain: boolean;
   deck?: HeroDeckItem[];
+  renderPoster?: (item: HeroDeckItem) => ReactNode;
   onPlay: () => void;
   onTogether: () => void;
   onDetail?: () => void;
@@ -65,12 +75,55 @@ export default function HomeHero({
   onTouchEnd?: TouchEventHandler<HTMLElement>;
 }) {
   const reduced = useReducedMotionSetting();
-  const [imageShape, setImageShape] = useState<{
+  const [imageShapes, setImageShapes] = useState<Record<string, boolean>>({});
+  const portrait = imageShapes[id] ?? contain;
+  const media =
+    isValidElement(art) && (art.type === 'video' || art.type === 'iframe');
+  const [readyId, setReadyId] = useState<string>();
+  const [failedId, setFailedId] = useState<string>();
+  const [settled, setSettled] = useState<{
     id: string;
+    art: ReactNode;
     portrait: boolean;
   }>();
-  const portrait = imageShape?.id === id ? imageShape.portrait : contain;
+  const currentId = useRef(id);
+  currentId.current = id;
   const root = useRef<HTMLElement>(null);
+  const currentFrame = useRef<HTMLDivElement | null>(null);
+  const ready = media || readyId === id;
+  const markLoaded = (image: HTMLImageElement) => {
+    if (image.naturalWidth <= 0) return;
+    const loadedId = id;
+    const finish = () => {
+      if (currentId.current !== loadedId) return;
+      setImageShapes((previous) => ({
+        ...previous,
+        [loadedId]: image.naturalHeight > image.naturalWidth,
+      }));
+      setFailedId(undefined);
+      setReadyId(loadedId);
+    };
+    if (typeof image.decode === 'function')
+      void image.decode().then(finish, finish);
+    else finish();
+  };
+  useEffect(() => {
+    if (ready) {
+      // Retain only image art: an outgoing preview must never keep playing sound.
+      setSettled(media ? undefined : { id, art, portrait });
+      return;
+    }
+    const image = currentFrame.current?.querySelector<HTMLImageElement>('img');
+    if (image?.complete && image.naturalWidth) markLoaded(image);
+    // A failed source must not trap the carousel on the previous poster forever.
+    const timeout = window.setTimeout(() => {
+      setFailedId(id);
+      setReadyId(id);
+    }, 5000);
+    return () => window.clearTimeout(timeout);
+    // art is a caller-owned element; loading depends on its stable item identity.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id, ready, portrait, media, art]);
   const distance = useMotionValue(0);
   const y = useTransform(distance, (value) => value * 0.3);
   const opacity = useTransform(distance, [0, 420], [1, 0]);
@@ -129,34 +182,61 @@ export default function HomeHero({
               aria-label={`切换到上一部：${prevItem.title}`}
               tabIndex={-1}
             >
-              <ProxyImage
-                originalSrc={prevItem.src}
-                alt=''
-                loading='lazy'
-                className='tm-home-hero-side-image'
-              />
+              <AnimatePresence initial={false}>
+                <motion.div
+                  key={prevItem.id}
+                  className='tm-home-hero-side-frame'
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration }}
+                >
+                  {renderPoster ? (
+                    renderPoster(prevItem)
+                  ) : (
+                    <ProxyImage
+                      originalSrc={prevItem.src}
+                      alt=''
+                      loading='eager'
+                      className='tm-home-hero-side-image'
+                    />
+                  )}
+                </motion.div>
+              </AnimatePresence>
             </button>
           )}
           <AnimatePresence initial={false}>
+            {!media && settled && settled.id !== id && (
+              <motion.div
+                key={settled.id}
+                className='tm-home-hero-frame'
+                data-portrait={settled.portrait}
+                data-ready='true'
+                aria-hidden='true'
+                initial={false}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration }}
+              >
+                {settled.art}
+              </motion.div>
+            )}
             <motion.div
               key={id}
+              ref={(element) => {
+                if (currentId.current === id) currentFrame.current = element;
+              }}
               className='tm-home-hero-frame'
               data-portrait={portrait}
+              data-current='true'
+              data-ready={ready}
               onLoadCapture={(event) => {
                 const image = event.target;
-                if (
-                  image instanceof HTMLImageElement &&
-                  image.naturalWidth > 0
-                ) {
-                  setImageShape({
-                    id,
-                    portrait: image.naturalHeight > image.naturalWidth,
-                  });
-                }
+                if (image instanceof HTMLImageElement) markLoaded(image);
               }}
               initial={{ opacity: 0, scale: 1 }}
               animate={{
-                opacity: 1,
+                opacity: ready || !settled ? 1 : 0,
                 scale: reduced || portrait ? 1 : 1.06,
               }}
               exit={{ opacity: 0 }}
@@ -169,6 +249,15 @@ export default function HomeHero({
               }}
             >
               {art}
+              {failedId === id && (
+                <span
+                  className='tm-home-hero-image-failed'
+                  role='img'
+                  aria-label='海报暂时无法加载'
+                >
+                  <Film size={36} aria-hidden />
+                </span>
+              )}
             </motion.div>
           </AnimatePresence>
           {portrait && nextItem?.src && (
@@ -180,12 +269,27 @@ export default function HomeHero({
               aria-label={`切换到下一部：${nextItem.title}`}
               tabIndex={-1}
             >
-              <ProxyImage
-                originalSrc={nextItem.src}
-                alt=''
-                loading='lazy'
-                className='tm-home-hero-side-image'
-              />
+              <AnimatePresence initial={false}>
+                <motion.div
+                  key={nextItem.id}
+                  className='tm-home-hero-side-frame'
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration }}
+                >
+                  {renderPoster ? (
+                    renderPoster(nextItem)
+                  ) : (
+                    <ProxyImage
+                      originalSrc={nextItem.src}
+                      alt=''
+                      loading='eager'
+                      className='tm-home-hero-side-image'
+                    />
+                  )}
+                </motion.div>
+              </AnimatePresence>
             </button>
           )}
         </motion.div>
