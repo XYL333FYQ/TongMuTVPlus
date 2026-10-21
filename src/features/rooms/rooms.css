@@ -1453,3 +1453,9 @@ dialog.tm-room-modal-root::backdrop {
   min-width: calc(44 * var(--tm-wide-unit, 1px));
   flex-shrink: 0;
 }
+
+/* 辅助时间使用既有弱化文字 token，避免透明度叠加损失对比度。 */
+.tm-room-chat-slot .tm-chat-messages time {
+  color: var(--tm-muted);
+  opacity: 1;
+}
