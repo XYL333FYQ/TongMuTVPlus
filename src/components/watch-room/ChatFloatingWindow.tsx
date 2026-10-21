@@ -14,7 +14,7 @@ import {
   X,
 } from 'lucide-react';
 import Link from 'next/link';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 import { useVoiceChat } from '@/hooks/useVoiceChat';
@@ -67,7 +67,43 @@ export default function ChatFloatingWindow() {
   }, []);
   const [draft, setDraft] = useState('');
   const [emojiOpen, setEmojiOpen] = useState(false);
+  const emojiId = useId();
+  const emojiTrigger = useRef<HTMLButtonElement>(null);
+  const emojiPanel = useRef<HTMLDivElement>(null);
   const [sending, setSending] = useState(false);
+  useEffect(() => {
+    if (!emojiOpen) return;
+    const first = emojiPanel.current?.querySelector<HTMLButtonElement>(
+      'button:not(:disabled)'
+    );
+    (first || emojiTrigger.current)?.focus({ preventScroll: true });
+    const inside = (target: EventTarget | null) =>
+      target instanceof Node &&
+      (emojiPanel.current?.contains(target) ||
+        emojiTrigger.current?.contains(target));
+    const dismiss = (event: KeyboardEvent) => {
+      if (
+        event.key !== 'Escape' ||
+        event.defaultPrevented ||
+        !inside(event.target)
+      )
+        return;
+      event.preventDefault();
+      setEmojiOpen(false);
+      emojiTrigger.current?.focus({ preventScroll: true });
+    };
+    const outside = (event: Event) => {
+      if (!inside(event.target)) setEmojiOpen(false);
+    };
+    document.addEventListener('keydown', dismiss);
+    document.addEventListener('pointerdown', outside);
+    document.addEventListener('focusin', outside);
+    return () => {
+      document.removeEventListener('keydown', dismiss);
+      document.removeEventListener('pointerdown', outside);
+      document.removeEventListener('focusin', outside);
+    };
+  }, [emojiOpen, roomContext?.isConnected]);
   const [error, setError] = useState('');
   const [copied, setCopied] = useState(false);
   const [micEnabled, setMicEnabled] = useState(false);
@@ -135,6 +171,7 @@ export default function ChatFloatingWindow() {
   }, []);
   useEffect(() => {
     setOpen(false);
+    setEmojiOpen(false);
     setDraft('');
     setError('');
     setMicEnabled(false);
@@ -199,7 +236,8 @@ export default function ChatFloatingWindow() {
   }, [panelVisible, chatSlot, roomContext?.chatMessages.length]);
 
   const send = async (content = draft, type: 'text' | 'emoji' = 'text') => {
-    if (!content.trim() || !roomContext || sending) return;
+    if (!content.trim() || !roomContext?.isConnected || sending) return;
+    if (type === 'emoji') emojiTrigger.current?.focus({ preventScroll: true });
     setSending(true);
     setError('');
     try {
@@ -420,9 +458,20 @@ export default function ChatFloatingWindow() {
         </div>
       )}
       {emojiOpen && (
-        <div className='tm-chat-emojis'>
+        <div
+          ref={emojiPanel}
+          id={emojiId}
+          className='tm-chat-emojis'
+          role='group'
+          aria-label='表情'
+        >
           {EMOJIS.map((emoji) => (
-            <button key={emoji} onClick={() => send(emoji, 'emoji')}>
+            <button
+              key={emoji}
+              type='button'
+              disabled={sending || !roomContext?.isConnected}
+              onClick={() => send(emoji, 'emoji')}
+            >
               {emoji}
             </button>
           ))}
@@ -435,8 +484,11 @@ export default function ChatFloatingWindow() {
         }}
       >
         <button
+          ref={emojiTrigger}
           type='button'
           aria-label='选择表情'
+          aria-expanded={emojiOpen}
+          aria-controls={emojiOpen ? emojiId : undefined}
           onClick={() => setEmojiOpen((value) => !value)}
         >
           <Smile size={19} />

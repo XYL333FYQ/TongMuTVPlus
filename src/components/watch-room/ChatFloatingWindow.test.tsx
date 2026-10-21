@@ -328,3 +328,43 @@ test('closing chat cancels a pending read, and failed acknowledgement is retried
   await advance(2000);
   expect(mockRoom.markChatRead).toHaveBeenCalledTimes(2);
 });
+
+test('表情选择器可用 Esc 关闭并回到触发按钮', () => {
+  render(<ChatFloatingWindow />);
+  openChat();
+  const trigger = screen.getByRole('button', { name: '选择表情' });
+  fireEvent.click(trigger);
+  const emoji = screen.getByRole('button', { name: '👍' });
+  emoji.focus();
+  fireEvent.keyDown(emoji, { key: 'Escape' });
+  expect(screen.queryByRole('button', { name: '👍' })).toBeNull();
+  expect(trigger).toHaveFocus();
+  expect(trigger).toHaveAttribute('aria-expanded', 'false');
+});
+
+test('真实连接状态断开后表情发送禁用，不产生房间命令', () => {
+  const view = render(<ChatFloatingWindow />);
+  openChat();
+  fireEvent.click(screen.getByRole('button', { name: '选择表情' }));
+  screen.getByRole('button', { name: '👍' }).focus();
+  mockRoom.isConnected = false;
+  view.rerender(<ChatFloatingWindow />);
+  const emoji = screen.getByRole('button', { name: '👍' });
+  expect(emoji).toBeDisabled();
+  const trigger = screen.getByRole('button', { name: '选择表情' });
+  expect(trigger).toHaveFocus();
+  fireEvent.keyDown(trigger, { key: 'Escape' });
+  expect(screen.queryByRole('button', { name: '👍' })).toBeNull();
+  fireEvent.click(emoji);
+  expect(mockRoom.roomCommand).not.toHaveBeenCalled();
+});
+
+test('切换房间会关闭上个房间遗留的表情选择器', () => {
+  const view = render(<ChatFloatingWindow />);
+  openChat();
+  fireEvent.click(screen.getByRole('button', { name: '选择表情' }));
+  mockRoom.currentRoom = { ...mockRoom.currentRoom, id: 'room-b' };
+  view.rerender(<ChatFloatingWindow />);
+  openChat();
+  expect(screen.queryByRole('button', { name: '👍' })).toBeNull();
+});

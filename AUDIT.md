@@ -75,7 +75,8 @@
 - 复现：打开表情选择器后按 Esc；真实停止测试服务后再次打开。
 - 预期：Esc 关闭并回到表情按钮；断线时发送入口禁用，草稿保留。
 - 实际：Esc 后仍打开；发送文字已禁用，表情按钮仍可点击并触发无效命令。
-- 证据：`screenshots/05-chat-emoji-before.png`、`screenshots/12-real-disconnected-before.png`。状态：待修复。
+- 修复：补 Esc/外点/移焦关闭、展开信息、换房清理；断线禁用选择项和发送守卫。实测断线会让已禁用按钮失焦，补连接变化时回焦入口，保留草稿。未吞发送错误。
+- 证据：`screenshots/05-chat-emoji-before.png`、`screenshots/12-real-disconnected-before.png`、`screenshots/room-06-disconnected-after.png`、六张 `room-06-emoji-{390,820,1280}-{dark,light}-after.png`。状态：已修复。真实在线发送到另一成员一次、文本草稿保留；真实停服后十项均禁用、焦点在入口、Esc 关闭、草稿保留。三项新增回归先红后绿，最终 typecheck 0，66 套/382 项及房间 19/19；目标 lint/格式/设计通过。完整测试此前数次原生崩溃后，同配置全部重跑通过；全库 format 本次仍原生退出，最终重查。
 
 ### ROOM-07 · P2 · 聊天时间文字对比度不达标
 
