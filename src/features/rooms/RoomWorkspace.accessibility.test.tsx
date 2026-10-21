@@ -12,22 +12,50 @@ jest.mock('@/components/PageLayout', () => ({
 }));
 jest.mock('@/components/WatchRoomProvider', () => ({
   useWatchRoomContext: () => ({
-    currentRoom: null,
+    currentRoom: mockJoined ? mockActiveRoom : null,
+    members: [],
     isConnected: true,
+    canControl: false,
+    isOwner: true,
     notices: [],
     lastError: '',
   }),
 }));
 jest.mock('@/features/playback/context', () => ({
-  usePlaybackSession: () => ({ controller: null }),
+  usePlaybackSession: () => ({
+    controller: null,
+    followingRoom: true,
+    presentation: 'docked',
+    metadata: {},
+  }),
 }));
 
 import { fireEvent, render, screen } from '@testing-library/react';
 
 import RoomWorkspace from './RoomWorkspace';
 
+import type { Room } from '@/types/watch-room';
+
+let mockJoined = false;
+const mockActiveRoom: Room = {
+  id: 'audit-room',
+  name: '审查测试',
+  description: '',
+  isPublic: false,
+  roomType: 'sync',
+  ownerId: 'owner-session',
+  ownerName: 'audit-owner',
+  ownerAccountId: 'audit-owner',
+  memberCount: 1,
+  currentState: null,
+  createdAt: 0,
+  lastOwnerHeartbeat: 0,
+  queue: [],
+};
+
 const originalFetch = global.fetch;
 beforeEach(() => {
+  mockJoined = false;
   global.fetch = jest.fn(() => new Promise<Response>(() => undefined));
 });
 afterEach(() => {
@@ -56,4 +84,30 @@ test('弹窗首尾用 Tab 双向循环，不把焦点交给背景或浏览器工
   expect(last).toHaveFocus();
   fireEvent.keyDown(last, { key: 'Tab' });
   expect(first).toHaveFocus();
+});
+
+test('房间标签方向键和首尾键同步焦点、选中状态及关联面板', () => {
+  mockJoined = true;
+  render(<RoomWorkspace />);
+  const queue = screen.getByRole('tab', { name: '片单 0' });
+  const chat = screen.getByRole('tab', { name: '聊天' });
+  const members = screen.getByRole('tab', { name: '成员 1' });
+  queue.focus();
+  fireEvent.keyDown(queue, { key: 'ArrowRight' });
+  expect(chat).toHaveFocus();
+  expect(chat).toHaveAttribute('aria-selected', 'true');
+  expect(screen.getByRole('tabpanel', { name: '聊天' })).toHaveAttribute(
+    'id',
+    chat.getAttribute('aria-controls')
+  );
+  expect(queue).toHaveAttribute('tabindex', '-1');
+  fireEvent.keyDown(chat, { key: 'End' });
+  expect(members).toHaveFocus();
+  expect(members).toHaveAttribute('aria-selected', 'true');
+  fireEvent.keyDown(members, { key: 'ArrowRight' });
+  expect(queue).toHaveFocus();
+  expect(queue).toHaveAttribute('aria-selected', 'true');
+  expect(
+    screen.getAllByRole('tab').filter((tab) => tab.tabIndex === 0)
+  ).toEqual([queue]);
 });

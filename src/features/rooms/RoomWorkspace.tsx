@@ -789,7 +789,37 @@ export default function RoomWorkspace() {
                     role='tab'
                     aria-selected={panelTab === tab}
                     aria-controls={`tm-room-panel-${tab}`}
+                    tabIndex={panelTab === tab ? 0 : -1}
                     onClick={() => setPanelTab(tab)}
+                    onKeyDown={(event) => {
+                      if (
+                        !['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(
+                          event.key
+                        ) ||
+                        event.altKey ||
+                        event.ctrlKey ||
+                        event.metaKey
+                      )
+                        return;
+                      event.preventDefault();
+                      const tabs = Array.from(
+                        event.currentTarget.parentElement?.querySelectorAll<HTMLButtonElement>(
+                          '[role="tab"]'
+                        ) || []
+                      );
+                      const index = tabs.indexOf(event.currentTarget);
+                      const next =
+                        event.key === 'Home'
+                          ? 0
+                          : event.key === 'End'
+                          ? tabs.length - 1
+                          : (index +
+                              (event.key === 'ArrowLeft' ? -1 : 1) +
+                              tabs.length) %
+                            tabs.length;
+                      tabs[next]?.click();
+                      tabs[next]?.focus();
+                    }}
                   >
                     {panelTab === tab && (
                       <motion.span
@@ -818,6 +848,9 @@ export default function RoomWorkspace() {
               <section
                 className='tm-room-queue'
                 id='tm-room-panel-queue'
+                role='tabpanel'
+                aria-labelledby='tm-room-tab-queue'
+                tabIndex={0}
                 data-active={panelTab === 'queue'}
                 aria-label='片单'
               >
@@ -926,12 +959,21 @@ export default function RoomWorkspace() {
               <div
                 id='tm-room-panel-chat'
                 className='tm-room-chat-slot'
+                role={panelTab === 'chat' ? 'tabpanel' : 'region'}
+                aria-labelledby={
+                  panelTab === 'chat' ? 'tm-room-tab-chat' : undefined
+                }
+                aria-label={panelTab === 'chat' ? undefined : '发送消息'}
+                tabIndex={panelTab === 'chat' ? 0 : undefined}
                 data-tm-room-chat-slot
                 data-active={panelTab === 'chat'}
               />
               <section
                 className='tm-room-members'
                 id='tm-room-panel-members'
+                role='tabpanel'
+                aria-labelledby='tm-room-tab-members'
+                tabIndex={0}
                 data-active={panelTab === 'members'}
                 data-expanded={panelTab === 'members'}
                 aria-label='成员'

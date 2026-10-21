@@ -59,7 +59,8 @@
 - 复现：聚焦片单标签，按右方向键、Home/End。
 - 预期：焦点与选中标签同步移动；选中标签关联可识别的 tabpanel。
 - 实际：焦点和选中标签都不动，三个标签全进入 Tab 顺序，目标面板没有 tabpanel 语义。
-- 证据：`screenshots/04-queue-unread-before.png`，Playwright 实际键盘操作。状态：待修复。
+- 修复：左右方向键循环、Home/End、仅当前标签进入 Tab 顺序，并关联可聚焦的 tabpanel。非聊天标签保留原共享输入框，语义为发送消息区域，不把仍可用的输入框对读屏器隐藏。
+- 证据：`screenshots/04-queue-unread-before.png`、`screenshots/room-04-tabs-{390,820,1280}-{dark,light}-after.png`。状态：已修复；真实键盘依次到聊天、成员、片单，Tab 进入对应面板，聚焦环 2px。新回归先红后绿，普通 typecheck 0；完整 Jest 初跑原生退出后，用同一套配置与全部用例重跑 65 套/378 项通过，房间 19/19；全库 lint 仍 69 旧错误。没有修改检查配置、过滤用例或压掉异常。
 
 ### ROOM-05 · P2 · 头像菜单 Esc 无效
 
