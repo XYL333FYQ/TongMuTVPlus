@@ -35,7 +35,7 @@ import {
   X,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
@@ -73,6 +73,9 @@ interface AuthInfo {
 
 export const UserMenu: React.FC = () => {
   const router = useRouter();
+  const menuId = useId();
+  const menuTrigger = useRef<HTMLButtonElement>(null);
+  const menuPanelRef = useRef<HTMLDivElement>(null);
   const { updateStatus, isChecking } = useVersionCheck();
   const [isOpen, setIsOpen] = useState(false);
   const [isProfileCenterOpen, setIsProfileCenterOpen] = useState(false);
@@ -97,6 +100,22 @@ export const UserMenu: React.FC = () => {
     useState<string>('localstorage');
   const [mounted, setMounted] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    if (!isOpen || !mounted) return;
+    menuPanelRef.current
+      ?.querySelector<HTMLButtonElement>('button:not(:disabled)')
+      ?.focus({ preventScroll: true });
+    const dismiss = (event: KeyboardEvent) => {
+      // 子菜单已处理的按键不再触发外层关闭。
+      if (event.key !== 'Escape' || event.defaultPrevented) return;
+      event.preventDefault();
+      setIsOpen(false);
+      menuTrigger.current?.focus({ preventScroll: true });
+    };
+    document.addEventListener('keydown', dismiss);
+    return () => document.removeEventListener('keydown', dismiss);
+  }, [isOpen, mounted]);
 
   // 订阅相关状态
   const [subscribeEnabled, setSubscribeEnabled] = useState(false);
@@ -2965,7 +2984,13 @@ export const UserMenu: React.FC = () => {
       />
 
       {/* 菜单面板 */}
-      <div className='tm-account-menu'>
+      <div
+        ref={menuPanelRef}
+        id={menuId}
+        className='tm-account-menu'
+        role='group'
+        aria-label='账号选项'
+      >
         {/* 用户信息：头像 + 名字 + 身份，整行进入个人中心 */}
         <button
           onClick={handleOpenProfileCenter}
@@ -6091,9 +6116,12 @@ export const UserMenu: React.FC = () => {
     <>
       <div className='relative'>
         <button
+          ref={menuTrigger}
           onClick={handleMenuClick}
           className='tm-shell-icon tm-press min-h-[44px]'
           aria-label='账号菜单'
+          aria-expanded={isOpen}
+          aria-controls={isOpen ? menuId : undefined}
         >
           <span className='tm-account-initial' aria-hidden='true'>
             {currentUsername.slice(0, 1).toUpperCase()}

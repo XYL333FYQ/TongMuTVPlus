@@ -67,7 +67,8 @@
 - 复现：点击顶栏账号头像，按 Esc，继续尝试点击房间标签。
 - 预期：菜单关闭并把焦点交还头像。
 - 实际：透明遮罩仍拦截点击；头像也没有展开状态和关联面板信息。
-- 证据：`screenshots/11-account-escape-before.png`；Playwright 点击被遮罩拦截。状态：待修复。
+- 修复：只补展开/关联信息、打开后聚焦第一项、Esc 关闭并回焦，保留既有菜单分组、路由与主题设置。
+- 证据：`screenshots/11-account-escape-before.png`、`screenshots/room-05-account-{390,820,1280}-{dark,light}-after.png`。状态：已修复；真实展开 `true`、关闭 `false`，遮罩数量从 1 到 0、焦点回头像，关闭后可操作片单。真实组件回归先红后绿；typecheck 0，66 套/379 项、房间 19/19；本项完整测试重试使用本机已有 Node 24.19.0，未升级依赖。目标 lint 0 error / 5 条既有 warning，格式和设计扫描通过。
 
 ### ROOM-06 · P2 · 表情选择器无法 Esc 关闭，断线时仍允许发送
 
