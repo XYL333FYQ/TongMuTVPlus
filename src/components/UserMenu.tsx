@@ -109,6 +109,12 @@ export const UserMenu: React.FC = () => {
     const dismiss = (event: KeyboardEvent) => {
       // 子菜单已处理的按键不再触发外层关闭。
       if (event.key !== 'Escape' || event.defaultPrevented) return;
+      // 原生弹窗的 cancel 在 keydown 之后发生，交由最上层弹窗处理。
+      if (
+        event.target instanceof Element &&
+        event.target.closest('dialog[open]')
+      )
+        return;
       event.preventDefault();
       setIsOpen(false);
       menuTrigger.current?.focus({ preventScroll: true });
