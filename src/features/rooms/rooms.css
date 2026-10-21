@@ -1430,3 +1430,17 @@ html[data-tm-reduced-motion='true'] .tm-room-card-art::after {
     transform: none !important;
   }
 }
+
+/* 原生模态层只负责焦点与背景隔离，视觉仍由现有房间遮罩和面板绘制。 */
+dialog.tm-room-modal-root {
+  width: 100%;
+  height: 100%;
+  max-height: none;
+  border: 0;
+  background: transparent;
+  color: var(--tm-text);
+  overflow: hidden;
+}
+dialog.tm-room-modal-root::backdrop {
+  background: transparent;
+}

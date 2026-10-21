@@ -72,6 +72,7 @@ type FilmChoice = {
 export default function RoomWorkspace() {
   const router = useRouter();
   const params = useSearchParams();
+  const modal = useRef<HTMLDialogElement>(null);
   const watchRoom = useWatchRoomContext();
   const playback = usePlaybackSession();
   const room = watchRoom.currentRoom;
@@ -141,6 +142,24 @@ export default function RoomWorkspace() {
   const attemptedInvite = useRef('');
   const directoryRequest = useRef(0);
   const inviteId = params.get('room') || '';
+
+  useEffect(() => {
+    const element = modal.current;
+    if (!dialog || !element) return;
+    const trigger =
+      document.activeElement instanceof HTMLElement
+        ? document.activeElement
+        : null;
+    // 沿用详情层的原生模态方案，由浏览器隔离背景并约束键盘焦点。
+    if (typeof element.showModal === 'function') element.showModal();
+    else element.setAttribute('open', '');
+    element.querySelector<HTMLButtonElement>('button:not(:disabled)')?.focus();
+    return () => {
+      if (typeof element.close === 'function') element.close();
+      else element.removeAttribute('open');
+      if (trigger?.isConnected) trigger.focus({ preventScroll: true });
+    };
+  }, [dialog]);
 
   useEffect(() => {
     const user = getAuthInfoFromBrowserCookie()?.username || '';
@@ -1090,7 +1109,37 @@ export default function RoomWorkspace() {
         )}
         {dialog &&
           createPortal(
-            <div className='tm-rooms tm-room-modal-root'>
+            <dialog
+              ref={modal}
+              className='tm-rooms tm-room-modal-root'
+              aria-modal='true'
+              aria-labelledby='tm-room-dialog-title'
+              onKeyDown={(event) => {
+                if (event.key !== 'Tab') return;
+                const targets = Array.from(
+                  event.currentTarget.querySelectorAll<HTMLElement>(
+                    'button:not(:disabled),a[href],input:not(:disabled),textarea:not(:disabled),select:not(:disabled),[tabindex="0"]'
+                  )
+                ).filter(
+                  (node) =>
+                    node.getClientRects().length ||
+                    process.env.NODE_ENV === 'test'
+                );
+                const first = targets[0];
+                const last = targets[targets.length - 1];
+                if (event.shiftKey && document.activeElement === first) {
+                  event.preventDefault();
+                  last?.focus();
+                } else if (!event.shiftKey && document.activeElement === last) {
+                  event.preventDefault();
+                  first?.focus();
+                }
+              }}
+              onCancel={(event) => {
+                event.preventDefault();
+                if (!busy) setDialog(null);
+              }}
+            >
               <div
                 className='tm-room-dialog-backdrop'
                 onClick={() => !busy && setDialog(null)}
@@ -1098,9 +1147,6 @@ export default function RoomWorkspace() {
               >
                 <section
                   className='tm-room-dialog'
-                  role='dialog'
-                  aria-modal='true'
-                  aria-labelledby='tm-room-dialog-title'
                   onClick={(event) => event.stopPropagation()}
                 >
                   <header>
@@ -1292,7 +1338,7 @@ export default function RoomWorkspace() {
                   )}
                 </section>
               </div>
-            </div>,
+            </dialog>,
             document.body
           )}
       </PageContainer>

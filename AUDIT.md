@@ -43,7 +43,8 @@
 - 复现：点击创建房间、选择影片或房间设置；按 Tab、Shift+Tab、Esc。
 - 预期：焦点进入弹窗并在其中循环，Esc 关闭，关闭后回到入口。
 - 实际：初始焦点仍在背景创建按钮，Tab 可进入背景导航，Esc 不关闭；有 `aria-modal` 却没有对应模态行为。
-- 证据：`screenshots/01-dialog-escape-before.png`。状态：待修复。
+- 修复：复用项目详情层的原生 `dialog` 模态方式，加首尾 Tab 循环、Esc 取消及关闭回焦；保留现有遮罩、样式、保存及删除规则。第一次原生方案的 Shift+Tab 可进入浏览器工具栏，实测后补齐首尾循环，未改测试来放过问题。
+- 证据：`screenshots/01-dialog-escape-before.png`、`screenshots/room-02-dialog-{390,820,1280}-{dark,light}-after.png`。状态：已修复；真实 Esc、正反向 Tab 和回焦均通过。两项新回归通过；最终普通 typecheck 0，65 套/377 项、房间 19/19，目标 lint/格式/设计扫描通过。过程中无诊断原生崩溃与重试保留日志，根因未确定。
 
 ### ROOM-03 · P2 · 手机聊天控件点击区域不足
 
