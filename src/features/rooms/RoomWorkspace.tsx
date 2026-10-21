@@ -1402,6 +1402,27 @@ function FilmPicker({
   const [searching, setSearching] = useState(false);
   const [searched, setSearched] = useState(false);
   const [error, setError] = useState('');
+  const searchRequest = useRef<AbortController | null>(null);
+  const searchSequence = useRef(0);
+  useEffect(
+    () => () => {
+      searchSequence.current += 1;
+      searchRequest.current?.abort();
+    },
+    []
+  );
+  const changeMode = (next: 'catalog' | 'direct') => {
+    // 模式独立，迟到的搜索结果不能覆盖新模式或重新锁住提交按钮。
+    searchSequence.current += 1;
+    searchRequest.current?.abort();
+    searchRequest.current = null;
+    setMode(next);
+    setQuery('');
+    setError('');
+    setResults([]);
+    setSearching(false);
+    setSearched(false);
+  };
   const search = async () => {
     setError('');
     if (mode === 'direct') {
@@ -1429,21 +1450,30 @@ function FilmPicker({
       }
       return;
     }
+    searchRequest.current?.abort();
+    const request = new AbortController();
+    searchRequest.current = request;
+    const sequence = ++searchSequence.current;
     setSearching(true);
     setSearched(true);
     try {
       const response = await fetch(
         `/api/search?q=${encodeURIComponent(query.trim())}`,
-        { cache: 'no-store' }
+        { cache: 'no-store', signal: request.signal }
       );
       if (!response.ok)
         throw new Error('搜索失败，请检查登录和站长配置的数据源');
       const data = await response.json();
-      setResults(data.results || []);
+      if (sequence === searchSequence.current && !request.signal.aborted)
+        setResults(data.results || []);
     } catch (failure) {
-      setError(failure instanceof Error ? failure.message : '搜索失败');
+      if (sequence === searchSequence.current && !request.signal.aborted)
+        setError(failure instanceof Error ? failure.message : '搜索失败');
     } finally {
-      setSearching(false);
+      if (sequence === searchSequence.current) {
+        searchRequest.current = null;
+        setSearching(false);
+      }
     }
   };
   return (
@@ -1451,22 +1481,14 @@ function FilmPicker({
       <div className='tm-room-picker-tabs'>
         <button
           aria-pressed={mode === 'catalog'}
-          onClick={() => {
-            setMode('catalog');
-            setQuery('');
-            setError('');
-          }}
+          onClick={() => changeMode('catalog')}
         >
           <Film size={15} />
           影视库
         </button>
         <button
           aria-pressed={mode === 'direct'}
-          onClick={() => {
-            setMode('direct');
-            setQuery('');
-            setError('');
-          }}
+          onClick={() => changeMode('direct')}
         >
           <Link2 size={15} />
           视频直链

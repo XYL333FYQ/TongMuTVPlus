@@ -30,7 +30,7 @@ jest.mock('@/features/playback/context', () => ({
   }),
 }));
 
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 
 import RoomWorkspace from './RoomWorkspace';
 
@@ -111,3 +111,40 @@ test('房间标签方向键和首尾键同步焦点、选中状态及关联面�
     screen.getAllByRole('tab').filter((tab) => tab.tabIndex === 0)
   ).toEqual([queue]);
 });
+
+test.each([true, false])(
+  '切换视频直链可独立操作，迟到的影视库响应不污染新模式（成功=%s）',
+  async (ok) => {
+    let finishSearch: (response: Response) => void = () => undefined;
+    global.fetch = jest.fn((url) =>
+      String(url).startsWith('/api/search?')
+        ? new Promise<Response>((resolve) => {
+            finishSearch = resolve;
+          })
+        : new Promise<Response>(() => undefined)
+    );
+    mockJoined = true;
+    render(<RoomWorkspace />);
+    fireEvent.click(screen.getByRole('button', { name: '选择影片' }));
+    fireEvent.change(screen.getByRole('textbox', { name: '搜索影片' }), {
+      target: { value: '旧搜索' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: '搜索' }));
+    fireEvent.click(screen.getByRole('button', { name: '视频直链' }));
+    fireEvent.change(screen.getByRole('textbox', { name: 'MP4 / M3U8 地址' }), {
+      target: { value: 'https://example.com/film.mp4' },
+    });
+    expect(screen.getByRole('button', { name: '加入片单' })).toBeEnabled();
+    await act(async () => {
+      finishSearch({
+        ok,
+        json: async () => ({
+          results: [{ id: 'old', source: 'old', title: '迟到的旧影片' }],
+        }),
+      } as Response);
+    });
+    expect(screen.queryByText('迟到的旧影片')).toBeNull();
+    expect(screen.queryByRole('alert')).toBeNull();
+    expect(screen.getByRole('button', { name: '加入片单' })).toBeEnabled();
+  }
+);
