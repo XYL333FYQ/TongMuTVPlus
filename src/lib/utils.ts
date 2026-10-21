@@ -710,6 +710,53 @@ export async function getVideoResolutionFromM3u8(
   pingTime: number; // 网络延迟（毫秒）
   bitrate: string; // 视频码率（如 "2.5 Mbps"）
 }> {
+  // 直链 MP4 使用浏览器读取元数据，避免把二进制影片当成 HLS 清单解析。
+  if (/\.mp4$/i.test(m3u8Url.split(/[?#]/, 1)[0])) {
+    return new Promise((resolve, reject) => {
+      const video = document.createElement('video');
+      video.muted = true;
+      video.preload = 'metadata';
+      const startedAt = performance.now();
+      const cleanup = () => {
+        clearTimeout(timer);
+        video.onloadedmetadata = null;
+        video.onerror = null;
+        video.removeAttribute('src');
+        video.load();
+        video.remove();
+      };
+      const timer = setTimeout(() => {
+        cleanup();
+        reject(new SpeedTestError('timeout', '读取视频元数据超时'));
+      }, timeoutMs);
+      video.onerror = () => {
+        cleanup();
+        reject(new SpeedTestError('unreachable', '无法读取视频元数据'));
+      };
+      video.onloadedmetadata = () => {
+        const width = video.videoWidth;
+        const quality =
+          width >= 3840
+            ? '4K'
+            : width >= 2560
+            ? '2K'
+            : width >= 1920
+            ? '1080p'
+            : width >= 1280
+            ? '720p'
+            : width >= 854
+            ? '480p'
+            : width > 0
+            ? 'SD'
+            : '未知';
+        const pingTime = Math.round(performance.now() - startedAt);
+        cleanup();
+        // 原生元数据不提供分片测速与码率，保留未知，不能虚构测量结果。
+        resolve({ quality, loadSpeed: '未知', pingTime, bitrate: '未知' });
+      };
+      video.src = m3u8Url;
+    });
+  }
   try {
     const { default: Hls } = await import('hls.js');
 
