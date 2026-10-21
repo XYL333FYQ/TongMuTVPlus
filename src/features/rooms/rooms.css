@@ -1444,3 +1444,12 @@ dialog.tm-room-modal-root {
 dialog.tm-room-modal-root::backdrop {
   background: transparent;
 }
+
+/* 聊天图标保持原尺寸，扩大实际点按区域并沿用宽屏比例。 */
+.tm-room-chat-slot .tm-chat-panel--inline :is(button, input) {
+  min-height: calc(44 * var(--tm-wide-unit, 1px));
+}
+.tm-room-chat-slot .tm-chat-panel--inline button {
+  min-width: calc(44 * var(--tm-wide-unit, 1px));
+  flex-shrink: 0;
+}

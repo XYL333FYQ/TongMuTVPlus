@@ -51,7 +51,8 @@
 - 复现：390×844、`isMobile=true / hasTouch=true / pointer:coarse`，打开聊天。
 - 预期：点按区域至少 44×44。
 - 实际：选择表情、发送均 30×30；加载历史按钮高度 30。细指针桌面与平板也为 30px。
-- 证据：`screenshots/09-mobile-chat-touch-before.png`；七宽度双主题几何采样。状态：待修复。
+- 修复：仅在房间作用域扩大真实命中区，图标尺寸不变，沿用已有宽屏比例。
+- 证据：`screenshots/09-mobile-chat-touch-before.png`、`screenshots/room-03-touch-390-after.png`、`screenshots/room-03-chat-{390,820,1280}-{dark,light}-after.png`。状态：已修复；真实触屏表情/发送 44×44、历史按钮高度 44，六种布局无横溢出。typecheck 0、65 套/377 项及房间 19/19；修改样式格式和设计扫描通过，无新增测试（纯命中区样式，以真实浏览器几何和操作验证）。
 
 ### ROOM-04 · P2 · 三标签缺少方向键切换及面板语义
 
@@ -73,6 +74,13 @@
 - 预期：Esc 关闭并回到表情按钮；断线时发送入口禁用，草稿保留。
 - 实际：Esc 后仍打开；发送文字已禁用，表情按钮仍可点击并触发无效命令。
 - 证据：`screenshots/05-chat-emoji-before.png`、`screenshots/12-real-disconnected-before.png`。状态：待修复。
+
+### ROOM-07 · P2 · 聊天时间文字对比度不达标
+
+- 复现：打开聊天，深浅各一次，读取时间文字实际样式并与面板背景合成。
+- 预期：DESIGN.md §2.1 规定文字对比度至少 4.5:1。
+- 实际：时间文字使用 `opacity:0.45`；深色约 4.16:1、浅色约 3.07:1，浅色尤其难读。其他正文与字号不需要调整。
+- 证据：`screenshots/room-03-chat-1280-{dark,light}-after.png`（此时只修了热区）；Playwright 读取 RGB 和透明度后计算 WCAG 相对亮度。状态：待修复。
 
 ## 待确认
 
