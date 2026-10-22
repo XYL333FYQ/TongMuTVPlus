@@ -1,10 +1,10 @@
 # 放映室体验与缺陷审查
 
-> **本轮结果：确认 19 项问题，修复 14 项；未修 5 项（2 项 P2、3 项 P3）。未发现 P0/P1。** 其中 ROOM-08 是本轮修复引入、随后修正的回归，也计入数量。日期：2026-10-21；分支：`audit/room-page-polish`；14 项修复分别提交，未推送。
+> **本轮结果：确认 20 项问题，修复 15 项；未修 5 项（2 项 P2、3 项 P3）。未发现 P0/P1。** 其中 ROOM-08 是本轮修复引入、随后修正的回归，也计入数量。日期：2026-10-21–22；分支：`audit/room-page-polish`；15 项修复分别提交，未推送。
 >
-> **整体验收未全部满足。** 最终源码 typecheck、67 套/388 项测试、房间 19 项、运维 4 项通过；build 未通过，全库 lint/format 有既有失败。剩余三项 P3 为海报首选源 HTTP 418、HLS 恢复性缓冲 error 日志及播放器高级设置残留彩色控件；补测确认两项 P2 为播放器工具栏键盘不可达、跨域影片截图失败，均涉及播放器内部逻辑禁区，详见 ROOM-15–19。完整主流程控制台零 error 未满足。
+> **整体验收未全部满足。** 最终源码 typecheck、67 套/388 项测试、房间 19 项、运维 4 项通过；build 未通过，全库 lint/format 有既有失败。剩余三项 P3 为海报首选源 HTTP 418、HLS 恢复性缓冲 error 日志及换房后邀请复制反馈沿用；播放器高级设置颜色已补修；补测确认两项 P2 为播放器工具栏键盘不可达、跨域影片截图失败，均涉及播放器内部逻辑禁区，详见 ROOM-15–20。完整主流程控制台零 error 未满足。
 >
-> **早上需人工确认：** 是否另行允许修复 AGENTS.md 禁止改动的播放器内部渲染/截图逻辑；构建环境的原生崩溃及 Windows symlink 权限；是否另行处理全库旧检查债务；同步房间“屏幕共享”入口的产品预期；约 1.5 秒同步容忍与海报首选来源策略。文件删除被自动审批三次拒绝，四个生成物及外部临时目录仍待清理，准确路径见文末。测试房间和账号已通过正常接口删除，原本地服务已恢复。
+> **早上需人工确认：** 是否另行允许修复 AGENTS.md 禁止改动的播放器内部渲染/截图逻辑；构建环境的原生崩溃及 Windows symlink 权限；是否另行处理全库旧检查债务；同步房间“屏幕共享”入口的产品预期；约 1.5 秒同步容忍与海报首选来源策略。文件删除被自动审批三次拒绝，四个生成物及外部临时目录仍待清理，准确路径见文末。上轮测试房间和账号已清理；本批两个临时房间仍在副本中供复验，完成后清理并恢复原服务。
 
 ## 范围、假设与执行计划
 
@@ -207,7 +207,19 @@
 - 预期：沿用 DESIGN.md 的黑白 token，报错红以外不引入彩色强调。
 - 实际：截图中高级设置启用开关为蓝色、部分弹幕状态图标为青色；房间本身的导航、聊天和主按钮保持现有黑白风格。未据此推断某一特定源码色值或已定位上游/浏览器原生来源。
 - 证据：[高级设置](screenshots/toolbar-settings-open.png)、[播放器底栏](screenshots/toolbar-web-fullscreen.png)。
-- 状态：**未修，P3 外观项**。按用户允许保留 P3 的完成条件列入报告；本轮没有遍历高级设置的全部开关状态，没有用一次广泛颜色覆盖代替状态可辨性回归，未重绘播放器菜单。后续可在既有 token 下单独核对局部样式。
+- 续查确认：ArtPlayer 开启图标自带蓝色 SVG fill，弹幕开启图标另带青色 fill；浅色下视频外弹幕条背景透明，白色图形难辨。只在 rooms.css 用房间标记限定播放器，覆盖这两类固定填色并沿用影院底色，未改内部事件、节点或尺寸。开/关仍以不同图形区分。
+- 尝试记录：第一版挂载容器选择器在网页全屏失效，因播放器移到容器外；已改为房间标记下的播放器选择器，第二版在网页/原生全屏均测得白色 fill、黑色弹幕条。原生 fullscreenElement 通过页面标准 API 核对，不使用工具只读 DOM 代理的空值作为结论。
+- 状态：**已修复并复验**。最终 390/820/1280 深浅各一次，真实开关开/关、播放恢复、两种全屏进入/退出均操作；普通 typecheck 0、67 套/388 项测试、房间 19/19、运维 4/4；目标格式/设计通过。全库 lint 仍 69 旧 error；第一轮 format 233 文件，第二轮原生崩溃，未宣称全库通过。Legacy 和会话文件未改。
+- 新证据：[修复前](screenshots/room-19-iab-before.jpg)、[开启](screenshots/room-19-iab-1440-light-on-after.jpg)、[关闭](screenshots/room-19-iab-1440-light-off-after.jpg)、[网页全屏](screenshots/room-19-web-fullscreen-after.jpg)、[原生全屏](screenshots/room-19-native-fullscreen-after.jpg)、[实际画面](screenshots/room-19-iab-playing-after.jpg)。390/820/1280 深浅截图使用 room-19-iab-宽度-主题-after.jpg 命名。
+- 环境边界：第一测试标签曾崩溃，工具随后拒绝操作其 data: 崩溃页，未绕过 URL 限制；新建同一内置浏览器标签后继续。另一标签在全屏阶段捕获一次 requestPictureInPicture NotSupportedError，根因与准确触发动作未完全确定，未归因于本次 CSS、未隐藏错误，也不能宣称主流程控制台零 error。
+
+### ROOM-20 · P3 · 换房后仍显示旧房间的邀请已复制
+
+- 复现：在房间 A 点击邀请朋友；退出后不刷新页面，创建并进入房间 B，未复制 B 的邀请。
+- 预期：B 显示邀请朋友，只有复制 B 的邀请成功后才显示已复制。
+- 实际：B 直接显示已复制。复制反馈只存单一布尔值，没有关联房间，可能误导用户判断剪贴板内容。本次剪贴板读取工具超时，没有把未读到的内容写成已核验。
+- 证据：[新房间错误反馈](screenshots/room-20-invite-feedback-before.jpg)。
+- 状态：**已确认，待单独修复**。
 
 ## 工具栏补测
 
@@ -293,7 +305,7 @@ Wake Lock 请求失败: NotAllowedError: Wake Lock permission request denied
 | src/app/watch-room/screen/page.tsx               | 仅 screen 类型启动专用副作用                                 | 两种房间类型现有约束；不改共享协议/存储键                                      |
 | src/features/playback/playback.css               | mini 房间样式要求已有槽位变量存在                            | §3.3 小窗连续性；纯选择器，不改 Provider/视频实例                              |
 | 五个测试文件                                     | 元数据、房间键盘/竞争/轮询、账号嵌套、聊天离线、共享类型回归 | 没有修改原测试断言来放过失败；沿用测试设施                                     |
-| AUDIT.md、docs/design/PROGRESS.md、screenshots/  | 审查/证据和必要交接记录                                      | 项目要求每步更新 PROGRESS；图片共 194 张                                       |
+| AUDIT.md、docs/design/PROGRESS.md、screenshots/  | 审查/证据和必要交接记录                                      | 项目要求每步更新 PROGRESS；图片共 209 张                                       |
 
 新增/扩展测试文件为 `utils.video-metadata.test.ts`、`RoomWorkspace.accessibility.test.tsx`、`UserMenu.keyboard.test.tsx`、`ChatFloatingWindow.test.tsx`、`screen/page.room-type.test.tsx`。修复前有针对性的失败，再实现；纯 CSS 项使用真实几何、Tab/命中与截图，没有写镜像实现的测试。
 
@@ -471,16 +483,22 @@ ELIFECYCLE Command failed with exit code 1.
 
 </details>
 
+## 2026-10-22 续查环境与本批验证
+
+- 恢复执行时原服务及原内置标签已不存在；旧 TEMP/TongMu-room-audit-20261021 目录也不存在，原因未核实。此前三次删除拒绝是历史事实，不能写成当前旧目录仍在。四个工作区生成物本次核对仍在，没有再次绕过删除拒绝。
+- 新建 TEMP/TongMu-room-audit-style-20261021，使用原库 readonly 在线备份 test.db；只在此副本创建放映室样式审查 20261021、邀请反馈审查 20261022，无新账号。当前测试服务 22016；这两房间仍供后续复制反馈复验，尚未进行本批结束清理，原库没有测试写入。
+- 本批 CSS 仅 14 行，两轮普通 typecheck 和 67 套/388 项 Jest 均退出 0；两轮房间 19/19、运维 4/4。全库 lint 69 个旧错误；format 第一轮 233 个旧文件/生成物失败，第二轮退出 3221225477；目标 Prettier、check-design 违规 0/TODO 0。过程中有一次 PowerShell 启动原生崩溃，重跑只读命令成功，根因未知。原始日志在新临时目录；未改配置和依赖绕过检查。
+
 ## 完成条件逐项对照
 
 | 用户条件                                  | 当前证据                                                                          | 结论                                                               |
 | ----------------------------------------- | --------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
-| 1. 每个维度至少检查一次，AUDIT 有记录     | 上方验收矩阵、194 张实际截图、双端交互/网络/媒体记录                              | 维度已覆盖；深层扩展配置未遍历全部，不能承诺任意第三方控件都已穷尽 |
-| 2. P0/P1 修复，P2 能修都修，P3/待确认列出 | 未发现 P0/P1，14 项修复已验证；两项 P2 位于明确禁区，三项 P3 保留                 | 不能把两项 P2 写为已修；继续修复需先解决现有禁区约束               |
+| 1. 每个维度至少检查一次，AUDIT 有记录     | 上方验收矩阵、209 张实际截图、双端交互/网络/媒体记录                              | 维度已覆盖；深层扩展配置未遍历全部，不能承诺任意第三方控件都已穷尽 |
+| 2. P0/P1 修复，P2 能修都修，P3/待确认列出 | 未发现 P0/P1，15 项修复已验证；两项 P2 位于明确禁区，三项 P3 保留                 | 不能把两项 P2 写为已修；继续修复需先解决现有禁区约束               |
 | 3. build/lint/已有测试全部通过并贴输出    | tests/typecheck/rooms/ops 通过；build 三种失败、lint 69 旧 error、format 233 文件 | 未满足，未更改检查口径或修无关禁区文件                             |
 | 4. 主流程控制台无 error                   | MP4 部分流程曾为 0；海报/HLS 错误保留，截图两次 pageerror                         | 未满足                                                             |
 | 5. 清理临时文件/数据，仅保留指定产物      | 三个测试房间、两个新账号、补测播放记录正常删除；专用进程关闭；文件删除三次被拒绝  | 未满足，四个生成物和临时目录仍在；另按项目要求保留 PROGRESS        |
-| 6. AUDIT 顶部总结数量、原因、人工事项     | 已实际读回顶部并核对 19 个编号和证据链接                                          | 已完成                                                             |
+| 6. AUDIT 顶部总结数量、原因、人工事项     | 已实际读回顶部并核对 20 个编号和证据链接                                          | 已完成                                                             |
 
 本次续查仅补充文档和截图，没有源码修改，因此没有再次重复全套代码测试。已重查文档格式、实际链接、数据删除与服务状态；保留前一轮对应最终源码的完整命令输出。以上未满足项没有以报告替代功能修复或验收通过。
 
@@ -489,7 +507,7 @@ ELIFECYCLE Command failed with exit code 1.
 - 测试仅在在线备份的临时 SQLite 中进行，原数据路径和配置未修改。房间 `E0847AA0376F`、`46410E367037` 均通过房主设置中的精确名称确认删除；我的/公开/归档三个目录查询残留都是 0。成员实际收到删除后返回目录。错名时删除禁用、正确名启用分别有截图：[错名](screenshots/final-delete-wrong-name.png)、[正确名](screenshots/final-delete-correct-name.png)、[清理结果](screenshots/final-test-rooms-cleaned.png)。
 - 补测房间 `8F5A9FFAEDFB` 同样通过正确名称删除，我的/公开/归档残留均 0：[补测清理](screenshots/toolbar-test-room-cleaned.png)。补测使用临时库内既有站长副本登录，正常 logout 为 HTTP 200，没有新建或删除该账号；独立浏览器已关闭，服务 PID 50908 已停。额外只读核对发现一条本轮影片播放记录，临时服务 40296 通过带唯一 key 的 DELETE /api/playrecords 精确删除（HTTP 200），随后 API 和只读 SQLite 均确认该标题残留 0；没有调用无 key 的清空接口。正常 logout 后 40296 已停，3001 已释放。原服务 34528 的房间页仍 HTTP 200、health ok。
 - 临时账号 `audit-host-20261021`、`audit-member-20261021` 通过正常管理接口删除，均 HTTP 200。没有清空数据库、批量删除用户或触碰原库账号。
-- 独立 Playwright 上下文/浏览器和 CLI room-host 会话已关闭；最后测试服务 PID 42224 已退出。原服务此前由启动器 41888、服务 34528 恢复；内置浏览器补测已确认其预览异常并沿 `scripts/start-local.cjs --no-browser` 重启，当前启动器 37596、服务 54656，房间页正常、health ready 为 ok。未关闭用户原有浏览器或其他项目进程。
+- 独立 Playwright 上下文/浏览器和 CLI room-host 会话已关闭；最后测试服务 PID 42224 已退出。原服务此前由启动器 41888、服务 34528 恢复；内置浏览器补测已确认其预览异常并沿 `scripts/start-local.cjs --no-browser` 重启，当时启动器 37596、服务 54656，房间页正常、health ready 为 ok；本次续查服务已不在运行，当前隔离测试服务见上方续查节。未关闭用户原有浏览器或其他项目进程。
 - **未完成的文件清理：** 自动审批三次拒绝删除命令，工具仅返回 blocked by policy，未给出具体原因。工作区先尝试带路径校验的批量方式，再尝试精确绝对路径逐文件删除；报告提交后，对已核实的外部临时目录单独请求删除也被拒绝。三次均未执行，不再绕过拒绝。工作区残留以下四个本轮生成物，未提交：
 
 ```text
@@ -499,7 +517,7 @@ C:\Users\ss\Documents\桌面图标\编程\ai项目\TongMuTVPlus\public\sw.js
 C:\Users\ss\Documents\桌面图标\编程\ai项目\TongMuTVPlus\public\workbox-e9849328.js
 ```
 
-- 外部本轮临时目录 `C:\Users\ss\AppData\Local\Temp\TongMu-room-audit-20261021` 仍保留，仅含本轮基线 .bak、日志、测试库副本和两个临时账号的浏览器状态。原用户库和既有 output 备份不在清理范围。因清理审批未解决，不能宣称“只剩代码/AUDIT/screenshots”。
+- 外部上一轮临时目录 `C:\Users\ss\AppData\Local\Temp\TongMu-room-audit-20261021` 曾保留基线 .bak、日志、测试库副本和浏览器状态；2026-10-22 续查确认该目录已不存在，原因未核实。本批新临时目录 TongMu-room-audit-style-20261021 当前尚在，供复制反馈下一项测试。原用户库和既有 output 备份不在清理范围。因清理审批未解决，不能宣称“只剩代码/AUDIT/screenshots”。
 - 按项目要求保留本轮 PROGRESS 交接区；output 未发现 .ts/.tsx/.d.ts 备份。除上述审批阻止的生成物外，没有额外调试输出；未新增依赖。
 
 实现参考：[原生媒体元数据事件](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/loadedmetadata_event)、[WAI 模态弹窗键盘规范](https://www.w3.org/WAI/ARIA/apg/patterns/dialog-modal/)、[WAI 标签页键盘规范](https://www.w3.org/WAI/ARIA/apg/patterns/tabs/)。

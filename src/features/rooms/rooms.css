@@ -1210,6 +1210,20 @@ html[data-tm-room-presentation='true']
   stroke: var(--tm-room-player-text);
 }
 
+/* 固定色 SVG 跟随影院文字色，开关的图形及显示状态由播放器保留。 */
+html[data-tm-room-presentation='true']
+  .art-video-player
+  :is(.art-settings .art-icon-switchOn, .apd-toggle-on)
+  path[fill] {
+  fill: var(--tm-room-player-text);
+}
+/* 弹幕条在视频下方，沿用影院底色，避免浅色页面上的白色图标消失。 */
+html[data-tm-room-presentation='true']
+  .art-video-player
+  .artplayer-plugin-danmuku {
+  background: var(--tm-room-cinema-bg);
+}
+
 /* —— 桌面 ≥1200：按 Room.dc.html 右侧三标签面板与左侧舞台严格等高 —— */
 @media (min-width: 1200px) {
   .tm-rooms[data-joined='true'] .tm-room-workspace {
