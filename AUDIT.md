@@ -31,6 +31,29 @@
 | 性能/偏好    | 开发环境单次首屏测量；图片 lazy/async 和失败回退；消除隐藏轮询；站内减少动态/无模糊、系统 reduce 均实际切换并恢复                                                                                              | [偏好](screenshots/final-visual-preferences.png)、[图片加载](screenshots/final-quick-posters-loaded.png)、ROOM-13                                   |
 | 工程/保全    | 最终 typecheck/388 tests/19 rooms/4 ops 通过；目标 lint/格式/设计通过；全库 lint/format 与 build 未过；1027 个原文件核对无越界修改/删除                                                                        | 下方命令输出、文件范围、清理状态                                                                                                                    |
 
+## 用户指定内置浏览器后的补测
+
+- 后续检查已改用 Codex 内置浏览器，通过其 Playwright API 实际操作；没有再启动外部浏览器。最终保留 `/watch-room`，明确为 1440 × 900、浅色、片单标签，未使用默认面板比例。本次新增 20 张 JPEG，连同此前 174 张 PNG 共 194 张。
+- 本次使用用户原有空房间，只操作展示、草稿、复制及菜单，没有发送消息、添加影片、改房间设置或删除原房间。先前临时库中的双登录上下文、媒体实播和权限测试仍是此前浏览器的证据，**不能写成已经在内置浏览器重新完成多人及实播验收**。
+- 刷新前先见到旧客户端；实际刷新后房间路由和静态资源出现 404。核对路由源码仍在，只停止已确认的本项目旧服务 34528 及启动器 41888，沿用 `scripts/start-local.cjs --no-browser` 重启后页面恢复，最新三标签语义与主持状态均可见。现在启动器为 37596、服务为 54656，仅 3000 监听；没有改源码修复这次预览环境异常。此前不同端口的 Next 服务共用 `.next` 是可能变量，根因没有证实。
+- 实操通过：片单 → 聊天 → 成员的 ArrowRight、Home 返回；账号菜单初始焦点、Esc 关闭回焦；选片弹窗反向 Tab 循环、Esc 回焦；空白消息禁用；表情 Esc 关闭回焦；房间操作菜单；深浅主题；刷新后主持状态恢复。草稿已清空，未点击发送。
+- 复制校验：内置工具的 clipboard.readText 最初返回空字符串；从同一页面标准 Clipboard API 只读复核，房号为 12 字且与遮罩首尾相符，邀请为 50 字且包含本房间的 `/watch-room` 链接。没有仅凭“已复制”文案判断成功，也没有把工具读数差异当成功能缺陷。
+- 输入校验：工具 fill/paste 可将 DOM 值写到 2200，不能用它验证浏览器原生长度限制；改为 1995 字草稿再实际键入 20 字，最终为 2000。整段逐字输入曾在工具期限内只完成 77 字后超时，已清空；没有发送这两类样本。
+- 390 × 520 的浅/深色真实 Tab 均聚焦输入框；稳定状态输入框顶 194.125、底 238.125、中心命中 input，焦点环可见，没有被底栏遮挡：[浅色焦点](screenshots/iab-focus-390x520-light.jpg)、[深色焦点](screenshots/iab-focus-390x520-dark.jpg)。主题过渡中的瞬时命中不用于稳定布局结论。
+- 内置截图在连续调整尺寸后出现缓存帧、黑边或上一尺寸画面的工具现象；已逐宽分开调整和观察，重拍并逐张看过实际画面。一次只读调试表达式语法错误、一次等待动画的命令超时均属于审查工具，不记为应用错误，没有注入 DOM 修复或屏蔽异常。
+- 当前空房间交互和最后刷新期间，捕获的新增 console error/warning 为 0。刷新网络记录有 29 个匹配事件，6 个海报原域 HTTP 418；没有匹配的 loadingFailed 或 WebSocket frame error，记录未截断。海报仍转备用来源，属于 ROOM-15；这不是全站网络无错或完整媒体主流程零 error 的证明。启动恢复之前的资源 404 和 TokenRefresh 旧日志保留为环境事件，不混入恢复后的计数。
+- 辅助证据：[聊天键盘](screenshots/iab-chat-keyboard.jpg)、[选片弹窗](screenshots/iab-film-dialog.jpg)、[表情](screenshots/iab-emoji-keyboard.jpg)、[刷新前旧客户端](screenshots/iab-stale-1440-light-before.jpg)。本次仅补充报告与截图，源码未变，不重复之前已经通过的源码检查。
+
+| 视口        | 浅色                                   | 深色                                  | 横向溢出 |
+| ----------- | -------------------------------------- | ------------------------------------- | -------- |
+| 1920 × 1080 | [截图](screenshots/iab-1920-light.jpg) | [截图](screenshots/iab-1920-dark.jpg) | 无       |
+| 1440 × 900  | [截图](screenshots/iab-1440-light.jpg) | [截图](screenshots/iab-1440-dark.jpg) | 无       |
+| 1280 × 900  | [截图](screenshots/iab-1280-light.jpg) | [截图](screenshots/iab-1280-dark.jpg) | 无       |
+| 1024 × 768  | [截图](screenshots/iab-1024-light.jpg) | [截图](screenshots/iab-1024-dark.jpg) | 无       |
+| 820 × 1180  | [截图](screenshots/iab-820-light.jpg)  | [截图](screenshots/iab-820-dark.jpg)  | 无       |
+| 768 × 1024  | [截图](screenshots/iab-768-light.jpg)  | [截图](screenshots/iab-768-dark.jpg)  | 无       |
+| 390 × 844   | [截图](screenshots/iab-390-light.jpg)  | [截图](screenshots/iab-390-dark.jpg)  | 无       |
+
 ## 问题
 
 ### ROOM-01 · P2 · MP4 可播放，但影片信息读取误用 HLS
@@ -270,7 +293,7 @@ Wake Lock 请求失败: NotAllowedError: Wake Lock permission request denied
 | src/app/watch-room/screen/page.tsx               | 仅 screen 类型启动专用副作用                                 | 两种房间类型现有约束；不改共享协议/存储键                                      |
 | src/features/playback/playback.css               | mini 房间样式要求已有槽位变量存在                            | §3.3 小窗连续性；纯选择器，不改 Provider/视频实例                              |
 | 五个测试文件                                     | 元数据、房间键盘/竞争/轮询、账号嵌套、聊天离线、共享类型回归 | 没有修改原测试断言来放过失败；沿用测试设施                                     |
-| AUDIT.md、docs/design/PROGRESS.md、screenshots/  | 审查/证据和必要交接记录                                      | 项目要求每步更新 PROGRESS；图片共 174 张                                       |
+| AUDIT.md、docs/design/PROGRESS.md、screenshots/  | 审查/证据和必要交接记录                                      | 项目要求每步更新 PROGRESS；图片共 194 张                                       |
 
 新增/扩展测试文件为 `utils.video-metadata.test.ts`、`RoomWorkspace.accessibility.test.tsx`、`UserMenu.keyboard.test.tsx`、`ChatFloatingWindow.test.tsx`、`screen/page.room-type.test.tsx`。修复前有针对性的失败，再实现；纯 CSS 项使用真实几何、Tab/命中与截图，没有写镜像实现的测试。
 
@@ -452,7 +475,7 @@ ELIFECYCLE Command failed with exit code 1.
 
 | 用户条件                                  | 当前证据                                                                          | 结论                                                               |
 | ----------------------------------------- | --------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
-| 1. 每个维度至少检查一次，AUDIT 有记录     | 上方验收矩阵、174 张实际截图、双端交互/网络/媒体记录                              | 维度已覆盖；深层扩展配置未遍历全部，不能承诺任意第三方控件都已穷尽 |
+| 1. 每个维度至少检查一次，AUDIT 有记录     | 上方验收矩阵、194 张实际截图、双端交互/网络/媒体记录                              | 维度已覆盖；深层扩展配置未遍历全部，不能承诺任意第三方控件都已穷尽 |
 | 2. P0/P1 修复，P2 能修都修，P3/待确认列出 | 未发现 P0/P1，14 项修复已验证；两项 P2 位于明确禁区，三项 P3 保留                 | 不能把两项 P2 写为已修；继续修复需先解决现有禁区约束               |
 | 3. build/lint/已有测试全部通过并贴输出    | tests/typecheck/rooms/ops 通过；build 三种失败、lint 69 旧 error、format 233 文件 | 未满足，未更改检查口径或修无关禁区文件                             |
 | 4. 主流程控制台无 error                   | MP4 部分流程曾为 0；海报/HLS 错误保留，截图两次 pageerror                         | 未满足                                                             |
@@ -466,7 +489,7 @@ ELIFECYCLE Command failed with exit code 1.
 - 测试仅在在线备份的临时 SQLite 中进行，原数据路径和配置未修改。房间 `E0847AA0376F`、`46410E367037` 均通过房主设置中的精确名称确认删除；我的/公开/归档三个目录查询残留都是 0。成员实际收到删除后返回目录。错名时删除禁用、正确名启用分别有截图：[错名](screenshots/final-delete-wrong-name.png)、[正确名](screenshots/final-delete-correct-name.png)、[清理结果](screenshots/final-test-rooms-cleaned.png)。
 - 补测房间 `8F5A9FFAEDFB` 同样通过正确名称删除，我的/公开/归档残留均 0：[补测清理](screenshots/toolbar-test-room-cleaned.png)。补测使用临时库内既有站长副本登录，正常 logout 为 HTTP 200，没有新建或删除该账号；独立浏览器已关闭，服务 PID 50908 已停。额外只读核对发现一条本轮影片播放记录，临时服务 40296 通过带唯一 key 的 DELETE /api/playrecords 精确删除（HTTP 200），随后 API 和只读 SQLite 均确认该标题残留 0；没有调用无 key 的清空接口。正常 logout 后 40296 已停，3001 已释放。原服务 34528 的房间页仍 HTTP 200、health ok。
 - 临时账号 `audit-host-20261021`、`audit-member-20261021` 通过正常管理接口删除，均 HTTP 200。没有清空数据库、批量删除用户或触碰原库账号。
-- 独立 Playwright 上下文/浏览器和 CLI room-host 会话已关闭；最后测试服务 PID 42224 已退出。原服务通过 `scripts/start-local.cjs --no-browser` 恢复：启动器 41888、服务 34528，房间页 HTTP 200、health ready 为 ok。未关闭用户原有浏览器或其他项目进程。
+- 独立 Playwright 上下文/浏览器和 CLI room-host 会话已关闭；最后测试服务 PID 42224 已退出。原服务此前由启动器 41888、服务 34528 恢复；内置浏览器补测已确认其预览异常并沿 `scripts/start-local.cjs --no-browser` 重启，当前启动器 37596、服务 54656，房间页正常、health ready 为 ok。未关闭用户原有浏览器或其他项目进程。
 - **未完成的文件清理：** 自动审批三次拒绝删除命令，工具仅返回 blocked by policy，未给出具体原因。工作区先尝试带路径校验的批量方式，再尝试精确绝对路径逐文件删除；报告提交后，对已核实的外部临时目录单独请求删除也被拒绝。三次均未执行，不再绕过拒绝。工作区残留以下四个本轮生成物，未提交：
 
 ```text
