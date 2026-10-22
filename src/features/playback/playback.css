@@ -293,7 +293,7 @@ html[data-tm-no-blur='true'] .tm-chat-panel {
 }
 
 html[data-tm-room-presentation='true']
-  .tm-playback-host[data-presentation='mini']
+  .tm-playback-host[data-presentation='mini'][style*='--tm-slot-left']
   [data-tm-player-mount] {
   left: var(--tm-slot-left, 48px);
   top: var(--tm-slot-top, 96px);
