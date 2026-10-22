@@ -433,6 +433,11 @@ input:disabled ~ .tm-switch-thumb {
 }
 
 /* —— 主题切换按钮与圆形扩散过渡 —— */
+@property --tm-theme-radius {
+  syntax: '<length>';
+  inherits: false;
+  initial-value: 0px;
+}
 .tm-theme-toggle,
 .tm-theme-toggle-placeholder {
   width: 44px;
@@ -440,24 +445,101 @@ input:disabled ~ .tm-switch-thumb {
   flex-shrink: 0;
 }
 .tm-theme-toggle {
+  position: relative;
+  isolation: isolate;
   display: inline-grid;
   place-items: center;
   border-radius: var(--tm-radius-pill);
   color: var(--tm-text);
   background: transparent;
-  transition: background-color var(--tm-d-hover) var(--tm-ease-out);
 }
-.tm-theme-toggle:hover {
+.tm-theme-toggle::before {
+  position: absolute;
+  inset: 2px;
+  z-index: -1;
+  content: '';
+  border: 1px solid var(--tm-line);
+  border-radius: inherit;
   background: var(--tm-surface-raised);
+  opacity: 0;
+  transform: scale(0.9);
+  transition: opacity var(--tm-d-hover) var(--tm-ease-out),
+    transform var(--tm-d-hover) var(--tm-ease-out);
+}
+@media (hover: hover) and (pointer: fine) {
+  .tm-theme-toggle:hover::before {
+    opacity: 1;
+    transform: none;
+  }
+}
+.tm-theme-toggle:focus-visible::before {
+  opacity: 1;
+  transform: none;
+}
+[data-tm-theme-origin='true'] {
+  view-transition-name: tm-theme-control;
+}
+.tm-theme-toggle[data-tm-theme-origin='true'] {
+  /* 快照自带底色，关灯时白色图标也能与尚未收拢的亮面区分。 */
+  background: var(--tm-surface);
+}
+html[data-tm-theme-transition='circle']::view-transition {
+  pointer-events: none;
+}
+html[data-tm-theme-transition='circle']::view-transition-group(
+    tm-theme-control
+  ) {
+  z-index: 2;
+  animation: none;
+}
+html[data-tm-theme-transition='circle']::view-transition-old(tm-theme-control) {
+  animation: tm-theme-control-out var(--tm-d-hover) var(--tm-ease-out) both;
+  mix-blend-mode: normal;
+}
+html[data-tm-theme-transition='circle']::view-transition-new(tm-theme-control) {
+  animation: tm-theme-control-in var(--tm-d-panel) var(--tm-ease-out) both;
+  mix-blend-mode: normal;
+}
+@keyframes tm-theme-control-out {
+  from {
+    opacity: 1;
+    transform: none;
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.9);
+  }
+}
+@keyframes tm-theme-control-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 html[data-tm-reduced-motion='true']::view-transition-old(root),
-html[data-tm-reduced-motion='true']::view-transition-new(root) {
+html[data-tm-reduced-motion='true']::view-transition-new(root),
+html[data-tm-reduced-motion='true']::view-transition-old(tm-theme-control),
+html[data-tm-reduced-motion='true']::view-transition-new(tm-theme-control) {
   animation: none !important;
+}
+html[data-tm-reduced-motion='true'] .tm-theme-toggle::before {
+  transform: none;
+  transition-duration: var(--tm-d-press);
 }
 @media (prefers-reduced-motion: reduce) {
   ::view-transition-old(root),
-  ::view-transition-new(root) {
+  ::view-transition-new(root),
+  ::view-transition-old(tm-theme-control),
+  ::view-transition-new(tm-theme-control) {
     animation: none !important;
+  }
+  .tm-theme-toggle::before {
+    transform: none;
+    transition-duration: var(--tm-d-press);
   }
 }
 html[data-tm-theme-transition='circle']::view-transition-old(root),
@@ -470,6 +552,60 @@ html[data-tm-theme-transition='circle']::view-transition-old(root) {
 }
 html[data-tm-theme-transition='circle']::view-transition-new(root) {
   z-index: 1;
+}
+html[data-tm-theme-transition='circle'][data-tm-theme-target='dark']::view-transition-old(
+    root
+  ) {
+  z-index: 1;
+}
+html[data-tm-theme-transition='circle'][data-tm-theme-target='dark']::view-transition-new(
+    root
+  ) {
+  z-index: 0;
+}
+
+/* 保留按钮圆心与圆弧形态，只让交界透出柔光和一圈很弱的同心回波。 */
+html[data-tm-theme-effect='glow']::view-transition-image-pair(root) {
+  background: color-mix(in srgb, var(--tm-on-art) 70%, var(--tm-video-bg));
+}
+html[data-tm-theme-effect='glow']::view-transition-old(root),
+html[data-tm-theme-effect='glow']::view-transition-new(root) {
+  --tm-theme-mask-in: radial-gradient(
+    circle at var(--tm-theme-x) var(--tm-theme-y),
+    var(--tm-on-art)
+      max(0px, calc(var(--tm-theme-radius) - var(--tm-theme-softness))),
+    transparent
+      max(0px, calc(var(--tm-theme-radius) + var(--tm-theme-softness))),
+    color-mix(in srgb, var(--tm-on-art) 8%, transparent)
+      max(0px, calc(var(--tm-theme-radius) + var(--tm-theme-softness) * 2)),
+    transparent
+      max(0px, calc(var(--tm-theme-radius) + var(--tm-theme-softness) * 3))
+  );
+  --tm-theme-mask-out: radial-gradient(
+    circle at var(--tm-theme-x) var(--tm-theme-y),
+    transparent
+      max(0px, calc(var(--tm-theme-radius) - var(--tm-theme-softness))),
+    var(--tm-on-art)
+      max(0px, calc(var(--tm-theme-radius) + var(--tm-theme-softness))),
+    color-mix(in srgb, var(--tm-on-art) 92%, transparent)
+      max(0px, calc(var(--tm-theme-radius) + var(--tm-theme-softness) * 2)),
+    var(--tm-on-art)
+      max(0px, calc(var(--tm-theme-radius) + var(--tm-theme-softness) * 3))
+  );
+  mask-mode: alpha;
+  mask-repeat: no-repeat;
+}
+html[data-tm-theme-effect='glow']::view-transition-new(root),
+html[data-tm-theme-effect='glow'][data-tm-theme-target='dark']::view-transition-old(
+    root
+  ) {
+  mask-image: var(--tm-theme-mask-in);
+}
+html[data-tm-theme-effect='glow']::view-transition-old(root),
+html[data-tm-theme-effect='glow'][data-tm-theme-target='dark']::view-transition-new(
+    root
+  ) {
+  mask-image: var(--tm-theme-mask-out);
 }
 
 /* 减少动态：去掉位移与缩放，只留淡入淡出 */

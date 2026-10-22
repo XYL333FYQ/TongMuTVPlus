@@ -1,5 +1,43 @@
 # 界面改造进度
 
+## 2026-10-22 主题效果本地提交范围
+
+- 用户授权提交上一版圆弧柔光。提交范围仅为主题过渡工具、对应测试、`primitives.css` 的主题区、这几轮主题进度及相关截图；共用样式其他区段、进度里的其他批次和工作区其他既有改动不一起提交。验证基于当前工作区，未另建干净 checkout 验证整个独立提交；全库 lint / 格式 / build 的既有边界仍保留。仅提交本地当前分支，不推送、合并或部署。
+
+- 提交前再次运行定向主题 / 账号测试，2 套 / 15 项通过；目标源码 ESLint、Prettier、设计扫描（违规 0 / TODO 0）、暂存 CSS 格式、暂存范围和空白检查均通过。此提交步骤未重复全库检查，历史失败边界不变。
+
+## 2026-10-22 按用户要求撤回新增点缀
+
+- 用户要求恢复上一版，已从 `output/theme-arc-details-20261022/*.before.bak` 精确恢复 `theme-transition.ts`、对应测试和 `primitives.css`，三个文件哈希均与本轮开始前备份一致。撤回分段细弧、额外尾波、六个光点、第三动画及临时装饰节点，保留上一版圆弧柔光；没有继续增强或改动其他功能。仍在原分支，未提交、推送或部署。
+- 恢复后定向主题 / 账号测试 2 套、15 项通过；内置浏览器在 1440×900 实点深浅双向切换，最终浅色原房间，装饰节点 / 触发标记 / 暂停动画 / 调试覆盖均为 0，坐标变量清空。截图在 `screenshots/theme-circle-rollback-20261022/1440-light.jpg`。原启动器恢复为 28064、health ready 为 ok。本次精确回退未重跑全量 typecheck / lint / test / format / rooms / build，上一版的检查边界见下方历史记录。
+
+## 2026-10-22 保留圆弧并增加柔光回波
+
+- 用户明确要求在原圆弧上增加效果。本轮曾误改为斜向扫光，收到纠正后已从上一轮精确 `.bak` 恢复圆弧，再只增加弧边柔光和很淡的同心回波；斜向方案不在当前源码中。保留按钮圆心、开灯展开 / 关灯收拢、500ms、原 in-out 曲线和控件 200 / 320ms 交接，不改页面布局、图标或黑白定位。
+- 本轮源码仅修改 `src/lib/theme-transition.ts`、对应测试、`src/styles/primitives.css`，另更新本进度；保留当前分支及其他旧改动。增强采用注册的半径变量和互补径向遮罩，软边随视口在 18–36px 内调整，快照之间透出 token 定义的中性亮面；首末半径留三倍软边余量，保证最远角完成覆盖。没有新增 DOM 遮盖层、依赖或修改接口、存储键、Socket、播放器、数据库。两个快照动画共同取消，减少动态和旧请求保护延续原实现，结束清理坐标、效果和触发标记。
+- 规则对应 DESIGN §3.3 第 11 条的按钮圆形扩散和 500ms、§3.2 的一次性几何过渡 / 减少动态、§3.4 的禁用旋转与彩色光效。按用户本轮授权用径向 mask 增强原圆形边缘；没有将增强扩展为其他形状。不支持 mask / 注册属性时仍使用原 `clip-path:circle`，不支持 View Transition 时沿用原淡入淡出。
+- 新增四项回归（深浅两个方向、双层减少动态取消、不支持 mask 保持旧圆弧），先在旧圆弧实现观察 3 项失败，再补实现；原有用例未删改断言。最终 `pnpm typecheck` 退出 0；`pnpm test --runInBand` 为 67 套 / 406 项通过（50.717s）；`pnpm test:rooms` 为 19/19。目标 TS 两文件 ESLint 退出 0，三个源码 Prettier 通过，设计扫描违规 0 / TODO 0。源码检查期间预览关闭，检查完成后再启动浏览器。
+- 全库 `pnpm lint` 仍退出 1（69 error / 1054 warning），与上一轮按文件、行列和消息比较差异 0；`pnpm format:check` 仍退出 1（234 个既有文件）。本轮未重跑 build，旧审查的 build 阻塞未宣称解决。完整命令日志在 `output/theme-circle-glow-20261022/`；没有全库格式化、修改检查配置或掩盖错误。
+- 内置浏览器实际检查 390×844、820×1180、1280×900 深浅六组，最终恢复 1440×900 浅色；截图 11 张在 `screenshots/theme-circle-glow-20261022/`。各宽横向溢出 0、按钮 44×44、推荐 3 / 4 / 6 张仍同一行。工具恢复后视口曾回到 1440，已按原生实际宽度纠正记录并重拍覆盖 820 图，没有用错误尺寸作验收。连续四次切换结果交替正确、临时变量清空且暂停动画 0；账号菜单方向键双向选主题有 2px 焦点环，Esc 关闭并返回账号按钮。本轮恢复后的控制台 error / warning 均为 0（作用区间见 console-resumed.txt）。
+- 原生快照中间帧确认圆心与按钮一致（1440 档 x=1270 / y=34）、双层时钟一致、500ms / fill forwards，弧边柔光和淡回波可见。四张 `paused` 图明确为暂停原生动画取帧，随后恢复；不把它们当作正常速度或 FPS 证据。真实减少动态中途开启已确认取消两个快照、清空标记，之后恢复；站内 false / 系统 false。恢复前的工具观测另存 pre-reset-observations.txt，区分于恢复后的原始 JSON 记录。工具 rAF 在闲置基线也约 1006ms 才采样，不能据此证明实际设备的平滑度或绘制性能；大屏性能、实际视频音频连续播放和其他浏览器仍未验收。增强能力降级本轮由单测覆盖，未在当前新标签再次模拟全部旧浏览器。
+- Modern Web Guidance 的 `interactive-content-reveal` 要求 “register the variables using `@property`”，本轮注册半径以插值圆弧边缘，避免整段渐变字符串跳变；`motion` 的 “Use `clip-path` and `mask-image` for custom geometric reveals and smooth fade-outs.” 只应用于这一处主题快照，普通按钮仍用 opacity / transform。读取的原文在 guides.txt，另核对 [MDN @property](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/At-rules/%40property) 和 [Chrome 同页 View Transition](https://developer.chrome.com/docs/web-platform/view-transitions/same-document)。只读 Agent 复核未发现阻塞，未并行写文件。
+- 预览恢复时原服务已不在，沿项目原 `start-local.cjs --no-browser` 启动，启动器 13844 / 服务 3760、health ready 的 application / rooms 均 ok；没有改启动配置或用户数据。没有新建房间、加片、发送消息或删除记录；最终原房间片单 0 / 成员 1。此轮没有提交、推送或部署。废弃斜向试验目录 `output/theme-light-sweep-20261022/` 已核对为本轮试验文件并确认清理目标在项目 output 下，但删除被自动审批以 blocked by policy 拒绝、无具体原因；保留目录，不换工具绕过。当前有效证据与备份在独立 circle-glow 目录。
+- 本轮圆弧效果实现与上述范围验证完成；下一步由用户查看实时观感，原 AUDIT.md 的播放器 / 构建 / 历史检查债务及清理阻塞继续保持未完成，不把局部主题验收写成整个审查目标达成。
+
+## 2026-10-22 主题切换节奏与控件过渡
+
+- 本轮按用户“更高级一些”的要求，在原有黑白主题和圆形扩散内细化，不重新设计页面。采用保守方案：开灯从触发按钮展开新亮面，关灯把旧亮面收拢到按钮；保留 DESIGN §3.3.11 的 500ms 时长，改用现有 in-out 曲线。日月控件独立做 200 / 320ms 淡出淡入和 4px 位移，按钮 hover / focus 有轻微圆形底面反馈，不加旋转、弹跳、彩色光效或整页缩放，遵守 §3.2、§3.4 和 44px / focus-visible 规则。
+- 源码只改 src/lib/theme-transition.ts、对应测试和 primitives.css 的主题切换区；没有改 ThemeToggle / ThemeSettings 的现有入口、next-themes 的存储方式、接口、房间协议、播放器或数据。仅当前触发控件获得命名快照，避免顶栏和菜单入口重名。旧请求不能清理新请求的标记；同一明暗下仍保存“跟随系统”等设置，但不重播整页动画。降级保持 125+125ms，透明度最低由 0 改为 0.88，保留可见内容。
+- 独立只读复核指出暗色旧快照在结束时需要保持最后一帧，已补 fill:forwards 和断言，等快照结束再清理。真实中间帧又发现白色新图标会叠在尚未收拢的浅色页面上，已给顶栏按钮的临时快照添加 --tm-surface 底色；标记清理后恢复透明。两个问题都在本轮内修正并复验。复核 Agent 只读，无并行写文件。
+- 新增 5 个有行为意义的回归用例，覆盖关灯收拢 / 最后一帧、相同明暗仍保存 system、降级不隐藏页面、旧 ready 回调不覆盖新选择、过程中减少动态取消。新增用例先在旧实现确认失败，再补实现；原有 5 个主题用例和账号主题用例保留。最终 pnpm typecheck 退出 0；pnpm test --runInBand 为 67 套 / 402 项通过（46.606s）；pnpm test:rooms 为 19/19 通过。两个 TS 文件 ESLint 退出 0，三个源码 Prettier 通过，设计违规 0 / TODO 0。没有改测试配置、依赖或跳过断言。
+- 全库 pnpm lint 退出 1，仍为既有 69 error / 1054 warning，与前批按文件、行列和消息逐条比较差异 0；pnpm format:check 退出 1，仍为既有 234 文件格式问题。没有修无关历史问题或全库格式化。本轮未重跑 build；旧审查中 build 未通过及其余未完成项仍按原报告处理，不将本轮主题完成写成原目标全部达成。完整命令输出在 output/theme-polish-20261022/ 的 .txt。
+- 内置浏览器完成 390×844、820×1180、1280×900 深浅六组，并保留 1440×900 深浅桌面图；实际 CSS 宽度分别确认，页面横溢出为 0，主题按钮 44×44。原生动画检查确认开灯使用 new(root) 0→最远角半径，关灯使用 old(root) 反向，时长 500ms、fill forwards、控件独立 200 / 320ms。连续四次相反选择最终正确；账号菜单方向键选择浅色有 2px 焦点环，Esc 回到触发按钮。刷新后浅色设置保持、原房间恢复；推荐仍为窄屏三卡 / 平板四卡 / 桌面六卡，同一行，没有因此修改推荐逻辑。
+- 实际验证系统与站内“减少动态效果”分别开启时无整页快照动画；站内通过 /my 原开关操作，随后恢复 false。另在真实过渡暂停到 150ms 后模拟系统减少动态，确认快照、标记和暂停动画均清除。模拟不支持 View Transition 时实点切换，读到第一阶段 1→0.88 / 125ms，最终 body opacity 1，原生能力已恢复；第二阶段同时有单测验证。所有媒体模拟已清除，原生 API 无临时自有覆盖，结束时标记和暂停动画均为 0。/my 的既有播放历史未修改，也没有添加影片、发聊天、创建或删除房间。
+- 截图共 13 张在 screenshots/theme-polish-20261022/；dark-midpoint-paused-250ms.jpg 与 light-midpoint-paused-180ms.jpg 是明确暂停原生动画取得的中间帧，用于检查绘制与对比度，不是正常时长的性能证据，之后均恢复。平板浅色首图未完整绘制播放器引导，已在稳定状态重新拍摄覆盖。浏览器工具两次 detached 等待和一次异步 CDP 等待超时，随后直接读取均已完成且标记清除，未据此修改应用；不将工具等待时间认定为 500ms 动画的实际总耗时或已定位的性能问题。
+- 本轮浏览器复验区间 console error 0，豆瓣主渠道超时后切换备用的既有 warning 共 2 条，未隐藏日志。只验证了空播放器房间与共享 /my 主题，未验证实际视频、音频在快照期间的连续播放，也没有做其他浏览器或生产性能验收。browser-checks.txt 保留原生关键帧、状态、布局、恢复和控制台证据。截图是工具 JPEG，有压缩观感。
+- 依据已读取的 Modern Web Guidance motion 指南 “Prefer to animate opacity and transform” 及 “Use clip-path and mask-image for custom geometric reveals”，普通控件仅使用 opacity / transform，几何裁切只用于这一次性主题过渡；结合 [Chrome 同页 View Transition 文档](https://developer.chrome.com/docs/web-platform/view-transitions/same-document) 的 ready 后裁切和 [MDN 命名快照说明](https://developer.mozilla.org/en-US/docs/Web/API/View_Transition_API/Using) 保持渐进增强。按 DESIGN 的旋转禁则，没有采用旋转日月图标的建议。
+- 最终内置浏览器留在 1440×900 浅色原房间，片单 0 / 成员 1；预览启动器 27976 / 服务 30860，沿项目原 start-local.cjs --no-browser 恢复。源码检查期间预览关闭，完成后才启动截图。此轮未提交、推送或部署，旧未提交工作及先前审批拒绝的清理目标保留。下一步只需用户查看本轮视觉效果；原审查待处理项继续见 AUDIT.md。
+
 ## 2026-10-21 放映室自主审查（16 项已修，整体验收未通过）
 
 - 用户授权自主 Playwright 全面检查、逐项最小修复及单独提交；分支 audit/room-page-polish，16 项修复各自提交，未 push/部署或改 remote/main。完整问题、提交和截图索引见 AUDIT.md（20 项问题，16 项已修，未修 4 项（2 项 P2、2 项 P3）；包含 1 项本轮引入后修正的回归）。
