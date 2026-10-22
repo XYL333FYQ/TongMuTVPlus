@@ -202,13 +202,14 @@ export default function RoomWorkspace() {
     }
   }, [directory]);
   useEffect(() => {
+    if (room?.id) return;
     void refresh();
     const timer = window.setInterval(refresh, 15000);
     return () => {
       clearInterval(timer);
       directoryRequest.current += 1;
     };
-  }, [refresh]);
+  }, [refresh, room?.id]);
 
   const requireLogin = () => {
     if (username) return true;
@@ -334,7 +335,6 @@ export default function RoomWorkspace() {
       });
       setDialog(null);
       router.replace(`/watch-room?room=${encodeURIComponent(created.id)}`);
-      void refresh();
     } catch (failure) {
       setError(failure instanceof Error ? failure.message : '创建失败');
     } finally {
@@ -419,7 +419,6 @@ export default function RoomWorkspace() {
                 onSelect: () => {
                   watchRoom.leaveRoom();
                   router.replace('/watch-room');
-                  void refresh();
                 },
               },
             ]}
@@ -1361,7 +1360,6 @@ export default function RoomWorkspace() {
                                 if (ok) {
                                   setDialog(null);
                                   router.replace('/watch-room');
-                                  void refresh();
                                 }
                               })
                             }

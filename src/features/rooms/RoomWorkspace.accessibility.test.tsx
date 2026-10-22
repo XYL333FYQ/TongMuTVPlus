@@ -19,6 +19,9 @@ jest.mock('@/components/WatchRoomProvider', () => ({
     isOwner: true,
     notices: [],
     lastError: '',
+    leaveRoom: () => {
+      mockJoined = false;
+    },
   }),
 }));
 jest.mock('@/features/playback/context', () => ({
@@ -148,3 +151,27 @@ test.each([true, false])(
     expect(screen.getByRole('button', { name: '加入片单' })).toBeEnabled();
   }
 );
+
+test('入房后不轮询隐藏目录，退出按钮立即刷新一次并恢复原轮询', () => {
+  jest.useFakeTimers();
+  try {
+    mockJoined = true;
+    const view = render(<RoomWorkspace />);
+    const directoryCalls = () =>
+      (global.fetch as jest.Mock).mock.calls.filter(([url]) =>
+        String(url).startsWith('/api/rooms?')
+      ).length;
+    expect(directoryCalls()).toBe(0);
+    act(() => jest.advanceTimersByTime(30000));
+    expect(directoryCalls()).toBe(0);
+    fireEvent.click(screen.getByRole('button', { name: '房间操作' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: '退出房间' }));
+    view.rerender(<RoomWorkspace />);
+    expect(directoryCalls()).toBe(1);
+    act(() => jest.advanceTimersByTime(15000));
+    expect(directoryCalls()).toBe(2);
+    view.unmount();
+  } finally {
+    jest.useRealTimers();
+  }
+});
