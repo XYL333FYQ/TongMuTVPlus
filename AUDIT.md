@@ -1,10 +1,10 @@
 # 放映室体验与缺陷审查
 
-> **本轮结果：确认 16 项问题，修复 14 项；保留 2 项 P3。未发现 P0/P1。** 其中 ROOM-08 是本轮修复引入、随后修正的回归，也计入数量。日期：2026-10-21；分支：`audit/room-page-polish`；14 项修复分别提交，未推送。
+> **本轮结果：确认 19 项问题，修复 14 项；未修 5 项（2 项 P2、3 项 P3）。未发现 P0/P1。** 其中 ROOM-08 是本轮修复引入、随后修正的回归，也计入数量。日期：2026-10-21；分支：`audit/room-page-polish`；14 项修复分别提交，未推送。
 >
-> **整体验收未全部满足。** 最终源码 typecheck、67 套/388 项测试、房间 19 项、运维 4 项通过；build 未通过，全库 lint/format 有既有失败。剩余两项 P3 为海报首选源 HTTP 418 和 HLS 恢复性缓冲 error 日志，保留原因见 ROOM-15/16，不能声明完整主流程控制台零 error。
+> **整体验收未全部满足。** 最终源码 typecheck、67 套/388 项测试、房间 19 项、运维 4 项通过；build 未通过，全库 lint/format 有既有失败。剩余三项 P3 为海报首选源 HTTP 418、HLS 恢复性缓冲 error 日志及播放器高级设置残留彩色控件；补测确认两项 P2 为播放器工具栏键盘不可达、跨域影片截图失败，均涉及播放器内部逻辑禁区，详见 ROOM-15–19。完整主流程控制台零 error 未满足。
 >
-> **早上需人工确认：** 构建环境的原生崩溃及 Windows symlink 权限；是否另行处理全库旧检查债务；同步房间“屏幕共享”入口的产品预期；约 1.5 秒同步容忍与海报首选来源策略。文件删除被自动审批三次拒绝，四个生成物及外部临时目录仍待清理，准确路径见文末。测试房间和账号已通过正常接口删除，原本地服务已恢复。
+> **早上需人工确认：** 是否另行允许修复 AGENTS.md 禁止改动的播放器内部渲染/截图逻辑；构建环境的原生崩溃及 Windows symlink 权限；是否另行处理全库旧检查债务；同步房间“屏幕共享”入口的产品预期；约 1.5 秒同步容忍与海报首选来源策略。文件删除被自动审批三次拒绝，四个生成物及外部临时目录仍待清理，准确路径见文末。测试房间和账号已通过正常接口删除，原本地服务已恢复。
 
 ## 范围、假设与执行计划
 
@@ -18,18 +18,18 @@
 
 ## 验收矩阵
 
-| 维度         | 实际检查与结果                                                                                                                                                                              | 主要证据                                                                                                                                            |
-| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 每个房间交互 | 导航/搜索、深浅主题、头像及更多、房号/邀请实际剪贴板、成员入口、设置/退出、空态两个选片入口、三标签和四张快速开始均实际操作                                                                 | [最终桌面](screenshots/final-1440-light.png)、[快速开始](screenshots/final-quick-start-1.png)；各修复条目                                           |
-| 聊天         | 双端按钮/Enter、空白禁用、2200 字输入被限制到 2000、单次表情、草稿保留、历史、未读；断线禁用、短视窗键盘焦点                                                                                | [表情](screenshots/room-06-emoji-390-light-after.png)、[短视窗](screenshots/room-14-focus-390x520-light-after.png)                                  |
-| 多人/权限    | 两个独立登录上下文；房主授权/撤销、成员自己的片单增删、他人项不可改；服务端拒绝设置/暂停/他人删除；MP4/HLS 双端实播、暂停、拖动、交接                                                       | [成员权限](screenshots/final-member-queue-permissions.png)、[HLS](screenshots/final-hls-member.png)、[MP4 交接](screenshots/final-mp4-handover.png) |
-| 恢复/连续性  | 真正停服并重启，非仅设置浏览器 offline；草稿/重连、刷新后房间/片单/聊天；跨页同一 video、小窗/折叠/恢复、个人观看                                                                           | [真实断线](screenshots/room-06-disconnected-after.png)、[刷新聊天](screenshots/final-refresh-chat.png)、ROOM-11                                     |
-| 网络/控制台  | 连续监听 console/pageerror/request/response/requestfailed/WebSocket；已修 MP4 误解析、隐藏轮询；未捕获 pageerror 或 WS socketerror，但负面断网有连接拒绝，正常外源仍有 418/HLS 非致命 error | ROOM-01/13/15/16；下方日志分类。**整体零 error 未满足**                                                                                             |
-| UI           | 七宽深浅的对齐、间距、标题/时间字号、文案、图标、海报成功/失败占位、空态及忙碌；修复时间对比度和手机标题重叠                                                                                | [最终手机](screenshots/final-390-light.png)、[失败占位](screenshots/final-posters-forced-failure.png)、ROOM-07/12                                   |
-| 交互/无障碍  | Tab/Shift+Tab、方向键/Home/End、Enter/Esc、模态隔离/回焦、2px focus-visible、真实粗指针 44px、hover/按下/禁用样式、复制反馈、删除精确名称确认                                               | [空名校验](screenshots/final-empty-name-validation.png)、[危险确认](screenshots/final-delete-correct-name.png)、ROOM-02–08/14                       |
-| 响应式/主题  | 1920/1440/1280/1024/820/768/390 深浅各一次，无横溢出；手机滚动状态和 390×520 另测                                                                                                           | 下方 14 张最终主截图及 8 张窄宽面板截图                                                                                                             |
-| 性能/偏好    | 开发环境单次首屏测量；图片 lazy/async 和失败回退；消除隐藏轮询；站内减少动态/无模糊、系统 reduce 均实际切换并恢复                                                                           | [偏好](screenshots/final-visual-preferences.png)、[图片加载](screenshots/final-quick-posters-loaded.png)、ROOM-13                                   |
-| 工程/保全    | 最终 typecheck/388 tests/19 rooms/4 ops 通过；目标 lint/格式/设计通过；全库 lint/format 与 build 未过；1027 个原文件核对无越界修改/删除                                                     | 下方命令输出、文件范围、清理状态                                                                                                                    |
+| 维度         | 实际检查与结果                                                                                                                                                                                                 | 主要证据                                                                                                                                            |
+| ------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 每个房间交互 | 导航/搜索、深浅主题、头像及更多、房号/邀请实际剪贴板、成员入口、设置/退出、空态两个选片入口、三标签和四张快速开始均实际操作                                                                                    | [最终桌面](screenshots/final-1440-light.png)、[快速开始](screenshots/final-quick-start-1.png)；各修复条目                                           |
+| 聊天         | 双端按钮/Enter、空白禁用、2200 字输入被限制到 2000、单次表情、草稿保留、历史、未读；断线禁用、短视窗键盘焦点                                                                                                   | [表情](screenshots/room-06-emoji-390-light-after.png)、[短视窗](screenshots/room-14-focus-390x520-light-after.png)                                  |
+| 多人/权限    | 两个独立登录上下文；房主授权/撤销、成员自己的片单增删、他人项不可改；服务端拒绝设置/暂停/他人删除；MP4/HLS 双端实播、暂停、拖动、交接                                                                          | [成员权限](screenshots/final-member-queue-permissions.png)、[HLS](screenshots/final-hls-member.png)、[MP4 交接](screenshots/final-mp4-handover.png) |
+| 恢复/连续性  | 真正停服并重启，非仅设置浏览器 offline；草稿/重连、刷新后房间/片单/聊天；跨页同一 video、小窗/折叠/恢复、个人观看                                                                                              | [真实断线](screenshots/room-06-disconnected-after.png)、[刷新聊天](screenshots/final-refresh-chat.png)、ROOM-11                                     |
+| 网络/控制台  | 连续监听 console/pageerror/request/response/requestfailed/WebSocket；已修 MP4 误解析、隐藏轮询；初轮无 pageerror/WS socketerror，补测截图有两次 pageerror；负面断网有连接拒绝，正常外源有 418/HLS 非致命 error | ROOM-01/13/15/16；下方日志分类。**整体零 error 未满足**                                                                                             |
+| UI           | 七宽深浅的对齐、间距、标题/时间字号、文案、图标、海报成功/失败占位、空态及忙碌；修复时间对比度和手机标题重叠                                                                                                   | [最终手机](screenshots/final-390-light.png)、[失败占位](screenshots/final-posters-forced-failure.png)、ROOM-07/12                                   |
+| 交互/无障碍  | Tab/Shift+Tab、方向键/Home/End、Enter/Esc、模态隔离/回焦、2px focus-visible、真实粗指针 44px、hover/按下/禁用样式、复制反馈、删除精确名称确认                                                                  | [空名校验](screenshots/final-empty-name-validation.png)、[危险确认](screenshots/final-delete-correct-name.png)、ROOM-02–08/14                       |
+| 响应式/主题  | 1920/1440/1280/1024/820/768/390 深浅各一次，无横溢出；手机滚动状态和 390×520 另测                                                                                                                              | 下方 14 张最终主截图及 8 张窄宽面板截图                                                                                                             |
+| 性能/偏好    | 开发环境单次首屏测量；图片 lazy/async 和失败回退；消除隐藏轮询；站内减少动态/无模糊、系统 reduce 均实际切换并恢复                                                                                              | [偏好](screenshots/final-visual-preferences.png)、[图片加载](screenshots/final-quick-posters-loaded.png)、ROOM-13                                   |
+| 工程/保全    | 最终 typecheck/388 tests/19 rooms/4 ops 通过；目标 lint/格式/设计通过；全库 lint/format 与 build 未过；1027 个原文件核对无越界修改/删除                                                                        | 下方命令输出、文件范围、清理状态                                                                                                                    |
 
 ## 问题
 
@@ -161,13 +161,58 @@
 - 证据：[双端 HLS](screenshots/final-hls-host.png)、[拖动后](screenshots/final-hls-seek.png)。主样本日志见下方。
 - 状态：**未修，P3**。底层缓冲原因可能包含外部流和网络，尚未定位；调整日志事件分级涉及项目明确禁止修改的 LegacyPlaybackSurface 内部逻辑。未直接屏蔽日志，未修改播放同步阈值或后端。MP4 普通播放的已复验片段无 error，但不能替代本项验收。
 
+### ROOM-17 · P2 · 播放器工具栏无法用 Tab 到达
+
+- 复现：播放普通房间直链 MP4，从“仅自己看”按钮开始连续按 Tab，检查设置、截图、画中画及全屏入口。
+- 预期：可见操作入口有可识别的按钮语义，键盘可以到达并操作，焦点可见。
+- 实际：可点工具栏是 div/i，role 为空、tabIndex=-1；当时唯一 input 是不可见的 apd-input，可见可聚焦控件为 0。16 次真实 Tab 完全跳过工具栏。现有全局快捷键可控制播放/音量/快进/全屏，但没有设置、截图和画中画操作，不能替代完整键盘可达性。
+- 证据：[工具栏](screenshots/toolbar-baseline.png)、[Tab 路径](screenshots/toolbar-keyboard-skipped.png)、[设置](screenshots/toolbar-settings-open.png)。
+- 状态：**已确认，因禁区未修复**。生成/控制这些控件的是 LegacyPlaybackSurface 中的 ArtPlayer，控制器接口没有暴露上述所有操作。修复需要控件焦点、角色与键盘事件，超出 [AGENTS.md](AGENTS.md) 的“只允许改 className、样式、文案，逐处说明；不碰内部逻辑”。不从房间外部注入 DOM 属性或代点事件绕过禁区。独立只读复核同意证据足够，未发现约束内完整稳妥的局部修法。
+
+### ROOM-18 · P2 · 普通跨域直链播放正常，截图抛出异常
+
+- 复现：房间选择 MDN flower.mp4，readyState=4 后暂停，点击播放器“截图”。
+- 预期：生成可下载图像，或者在读帧不可用时给出准确的能力提示，不抛未处理异常。
+- 实际：两次点击均触发 pageerror：Failed to execute 'toDataURL' on 'HTMLCanvasElement': Tainted canvases may not be exported；播放器 notice 也是该英文异常，7 秒内没有 download 事件。视频正常解码，当前 crossOrigin=null。HEAD 请求返回 200/ACAO=\*，但这并不证明实际 GET/206 和重定向链支持 CORS。
+- 证据：[异常提示](screenshots/toolbar-screenshot-tainted.png)、[点击后页面](screenshots/toolbar-screenshot-dialog.png)。没有生成 toolbar-captured-frame.png，不把 Playwright 截页面当作播放器截图功能成功。
+- 状态：**已确认，因禁区未修复**。现有内部实现只对指定私人源启用跨域读帧，普通源会移除 crossOrigin，以保留不支持 CORS 的 CDN 播放兼容性；不能直接对全站加 anonymous。调整初始化/能力判断与降级涉及 LegacyPlaybackSurface 内部逻辑，项目禁止；外部修改属性并重载还会干扰既有播放。没有隐藏截图入口或吞异常来声明已修。独立只读复核确认。
+- 机制依据：[媒体 crossOrigin 模式](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/crossOrigin)、[toDataURL 的安全限制](https://developer.mozilla.org/en-US/docs/Web/API/HTMLCanvasElement/toDataURL)。这些说明支持读帧限制，不能据此推断所有媒体源都应该强制 CORS。
+
+### ROOM-19 · P3 · 播放器高级设置仍有彩色控件
+
+- 复现：房间实际播放 → 显示设置，查看“弹幕热力”开关及底部弹幕图标。
+- 预期：沿用 DESIGN.md 的黑白 token，报错红以外不引入彩色强调。
+- 实际：截图中高级设置启用开关为蓝色、部分弹幕状态图标为青色；房间本身的导航、聊天和主按钮保持现有黑白风格。未据此推断某一特定源码色值或已定位上游/浏览器原生来源。
+- 证据：[高级设置](screenshots/toolbar-settings-open.png)、[播放器底栏](screenshots/toolbar-web-fullscreen.png)。
+- 状态：**未修，P3 外观项**。按用户允许保留 P3 的完成条件列入报告；本轮没有遍历高级设置的全部开关状态，没有用一次广泛颜色覆盖代替状态可辨性回归，未重绘播放器菜单。后续可在既有 token 下单独核对局部样式。
+
+## 工具栏补测
+
+在独立 3001 端口复用已清理的测试库，原 3000 服务保持运行；浏览器 1440×900，独立软件渲染 Chrome。只创建补测房间，没有在原库写入测试数据。
+
+| 实际操作               | 结果                                                                     | 证据                                                                        |
+| ---------------------- | ------------------------------------------------------------------------ | --------------------------------------------------------------------------- |
+| 设置 → 倍速 → 恢复正常 | 视频 playbackRate 从 1 到 1.25，再回 1；菜单显示 1.3，显示精度作为待确认 | [设置](screenshots/toolbar-settings-open.png)                               |
+| 音量图标静音/恢复      | video.muted=true / false                                                 | 实际状态记录                                                                |
+| 画中画开/关            | document.pictureInPictureElement 非空后恢复空                            | [状态](screenshots/toolbar-pip-state.png)，页面截图不捕获系统独立画中画窗口 |
+| 网页全屏开/关          | 播放区 (0,0,1440,900)，退出恢复                                          | [网页全屏](screenshots/toolbar-web-fullscreen.png)                          |
+| 原生全屏开/关          | document.fullscreenElement 非空后恢复空                                  | [原生全屏](screenshots/toolbar-native-fullscreen.png)                       |
+| 水平翻转/正常          | 真实 transform 为 matrix(-1,0,0,1,0,0)，通过正确翻转子菜单恢复 none      | [翻转](screenshots/toolbar-flip-horizontal.png)                             |
+| 快捷快进               | 5.055 秒样本被限制到 duration=5.055，提示“快进 1 分 30 秒”               | 实际时间与 notice                                                           |
+| 最后一集点下一集       | 仅一集时影片不变、无新反馈；列待确认                                     | [末集](screenshots/toolbar-next-at-last.png)                                |
+| 截图                   | 两次失败并有未处理 pageerror                                             | ROOM-18                                                                     |
+| Tab 操作               | 跳过可点工具栏                                                           | ROOM-17                                                                     |
+
+测试定位时两次选到了不可见的设置路径，已根据真实可见子菜单纠正，不计为产品缺陷；翻转恢复用正确子菜单并等待实际绘制后确认。补测期间开发服务有 webpack cache incorrect data check 警告，重编译后房间正常 HTTP 200；未删除缓存或修改构建配置，原因未定位。
+
 ## 待确认
 
 - 同步房间的“屏幕共享”入口当前访问 screen 路由后被类型守卫退回。本轮仅修其误开首页/多连接副作用；没有擅自把 sync 房间转成 screen 房间。真正转换入口与数据/协议行为需单独确定。
 - HLS 连续播放样本的双端差约 1.48 秒，接近 usePlaySync 现有 1.5 秒软校准门限；暂停/拖动后两端均为 19.104677/189.767942 秒。是否需要更紧的日常同步容忍是产品取舍，本轮不修改禁区同步逻辑。
 - 顶栏“已连接”表示通信状态，“正在主持”表示当前控制者；成员“可接替主持”表示授权资格，语义不同，未为了文案统一合并这些状态。
 - 普通渲染 Chrome、Node 与 PowerShell 曾有无 JS/TS 诊断的原生崩溃。后段使用独立 --disable-gpu Chrome 和现有启动器的 --regexp-interpret-all 继续验证，不能由此认定根因已定位或应用已修复原生崩溃。
-- 第三方播放器工具栏的画中画、系统全屏、下载/截图、弹幕、音量听感、物理手机软键盘，以及真正 screen 类型房间的共享采集未完整验收；本轮重点为房间主流程和所列交互。390×520 是浏览器视窗模拟，不等于真机输入法。
+- 已补测主要工具栏、画中画和全屏，结果见上表；设置内部所有扩展配置、字幕/弹幕源选择、音量听感、物理手机软键盘及真正 screen 类型房间共享采集仍未完整验收。390×520 是浏览器视窗模拟，不等于真机输入法。
+- 单集末尾“下一集”仍可点但没有新反馈，是否应禁用/提示未明确，保守列待确认；倍速菜单将实际 1.25 显示为 1.3，属于现有第三方显示精度，本轮不擅自调整。
 - Google 示例长片返回 HTTP 403，已改用实测返回 206 的 W3C 测试 MP4。诱发的失败与重试单独记录，不计为普通主流程通过；项目自己的错误提示确实出现。
 - 排除项：窄窗细指针下“浏览片库”为 36px，但真实 `pointer:coarse` 已有 44px，原样符合手机规范；撤回临时增加高度的改动，不计为缺陷。证据：`screenshots/excluded-touch-link-44.png`。创建弹窗本来预填名称，初始可提交符合预期，不能把它当成空名称校验失败。
 
@@ -202,7 +247,7 @@
 - 四张推荐图片实际 loading=lazy / decoding=async；成功加载与全失败占位分别实测。没有新增依赖、图片源或缓存策略。
 - 入房静置 16 秒的目录 GET 从两个上下文各 1 次降为 0；退出立即一次，手动刷新再一次。没有注入 React Profiler，未量化重渲染次数；确认减少了无用 fetch 与隐藏目录 setState。
 - MP4：两端 readyState 4，单例视频节点跨页/折叠/退出仍相同；主持交接后成员 t=1.192991、paused=false。HLS：两端 1280×720 解码，暂停/拖动同步，恢复后持续播放。没有用 DOM 数量冒充实际解码。
-- 全程记录未出现 pageerror 或 WebSocket socketerror 事件；真实停服测试产生连接拒绝和资源失败是负面测试预期，不计为正常流程干净。主流程仍保留 ROOM-15/16 错误；另有 Wake Lock 被浏览器拒绝的 warning。冷 MP4 探测曾真实元数据超时，后续播放成功，超时未被吞掉。
+- 初轮未出现 pageerror 或 WebSocket socketerror；工具栏补测出现两次截图 pageerror（ROOM-18），所以不能再把初轮观察扩展到整个审查。真实停服测试产生连接拒绝和资源失败是负面测试预期，不计为正常流程干净。主流程仍保留 ROOM-15/16 错误；另有 Wake Lock 被浏览器拒绝的 warning。冷 MP4 探测曾真实元数据超时，后续播放成功，超时未被吞掉。
 - 代表性保留日志（原始文本摘要，未改控制台分级）：
 
 ```text
@@ -225,7 +270,7 @@ Wake Lock 请求失败: NotAllowedError: Wake Lock permission request denied
 | src/app/watch-room/screen/page.tsx               | 仅 screen 类型启动专用副作用                                 | 两种房间类型现有约束；不改共享协议/存储键                                      |
 | src/features/playback/playback.css               | mini 房间样式要求已有槽位变量存在                            | §3.3 小窗连续性；纯选择器，不改 Provider/视频实例                              |
 | 五个测试文件                                     | 元数据、房间键盘/竞争/轮询、账号嵌套、聊天离线、共享类型回归 | 没有修改原测试断言来放过失败；沿用测试设施                                     |
-| AUDIT.md、docs/design/PROGRESS.md、screenshots/  | 审查/证据和必要交接记录                                      | 项目要求每步更新 PROGRESS；图片共 163 张                                       |
+| AUDIT.md、docs/design/PROGRESS.md、screenshots/  | 审查/证据和必要交接记录                                      | 项目要求每步更新 PROGRESS；图片共 174 张                                       |
 
 新增/扩展测试文件为 `utils.video-metadata.test.ts`、`RoomWorkspace.accessibility.test.tsx`、`UserMenu.keyboard.test.tsx`、`ChatFloatingWindow.test.tsx`、`screen/page.room-type.test.tsx`。修复前有针对性的失败，再实现；纯 CSS 项使用真实几何、Tab/命中与截图，没有写镜像实现的测试。
 
@@ -403,9 +448,23 @@ ELIFECYCLE Command failed with exit code 1.
 
 </details>
 
+## 完成条件逐项对照
+
+| 用户条件                                  | 当前证据                                                                          | 结论                                                               |
+| ----------------------------------------- | --------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| 1. 每个维度至少检查一次，AUDIT 有记录     | 上方验收矩阵、174 张实际截图、双端交互/网络/媒体记录                              | 维度已覆盖；深层扩展配置未遍历全部，不能承诺任意第三方控件都已穷尽 |
+| 2. P0/P1 修复，P2 能修都修，P3/待确认列出 | 未发现 P0/P1，14 项修复已验证；两项 P2 位于明确禁区，三项 P3 保留                 | 不能把两项 P2 写为已修；继续修复需先解决现有禁区约束               |
+| 3. build/lint/已有测试全部通过并贴输出    | tests/typecheck/rooms/ops 通过；build 三种失败、lint 69 旧 error、format 233 文件 | 未满足，未更改检查口径或修无关禁区文件                             |
+| 4. 主流程控制台无 error                   | MP4 部分流程曾为 0；海报/HLS 错误保留，截图两次 pageerror                         | 未满足                                                             |
+| 5. 清理临时文件/数据，仅保留指定产物      | 三个测试房间、两个新账号、补测播放记录正常删除；专用进程关闭；文件删除三次被拒绝  | 未满足，四个生成物和临时目录仍在；另按项目要求保留 PROGRESS        |
+| 6. AUDIT 顶部总结数量、原因、人工事项     | 已实际读回顶部并核对 19 个编号和证据链接                                          | 已完成                                                             |
+
+本次续查仅补充文档和截图，没有源码修改，因此没有再次重复全套代码测试。已重查文档格式、实际链接、数据删除与服务状态；保留前一轮对应最终源码的完整命令输出。以上未满足项没有以报告替代功能修复或验收通过。
+
 ## 测试数据、进程与文件清理
 
 - 测试仅在在线备份的临时 SQLite 中进行，原数据路径和配置未修改。房间 `E0847AA0376F`、`46410E367037` 均通过房主设置中的精确名称确认删除；我的/公开/归档三个目录查询残留都是 0。成员实际收到删除后返回目录。错名时删除禁用、正确名启用分别有截图：[错名](screenshots/final-delete-wrong-name.png)、[正确名](screenshots/final-delete-correct-name.png)、[清理结果](screenshots/final-test-rooms-cleaned.png)。
+- 补测房间 `8F5A9FFAEDFB` 同样通过正确名称删除，我的/公开/归档残留均 0：[补测清理](screenshots/toolbar-test-room-cleaned.png)。补测使用临时库内既有站长副本登录，正常 logout 为 HTTP 200，没有新建或删除该账号；独立浏览器已关闭，服务 PID 50908 已停。额外只读核对发现一条本轮影片播放记录，临时服务 40296 通过带唯一 key 的 DELETE /api/playrecords 精确删除（HTTP 200），随后 API 和只读 SQLite 均确认该标题残留 0；没有调用无 key 的清空接口。正常 logout 后 40296 已停，3001 已释放。原服务 34528 的房间页仍 HTTP 200、health ok。
 - 临时账号 `audit-host-20261021`、`audit-member-20261021` 通过正常管理接口删除，均 HTTP 200。没有清空数据库、批量删除用户或触碰原库账号。
 - 独立 Playwright 上下文/浏览器和 CLI room-host 会话已关闭；最后测试服务 PID 42224 已退出。原服务通过 `scripts/start-local.cjs --no-browser` 恢复：启动器 41888、服务 34528，房间页 HTTP 200、health ready 为 ok。未关闭用户原有浏览器或其他项目进程。
 - **未完成的文件清理：** 自动审批三次拒绝删除命令，工具仅返回 blocked by policy，未给出具体原因。工作区先尝试带路径校验的批量方式，再尝试精确绝对路径逐文件删除；报告提交后，对已核实的外部临时目录单独请求删除也被拒绝。三次均未执行，不再绕过拒绝。工作区残留以下四个本轮生成物，未提交：
