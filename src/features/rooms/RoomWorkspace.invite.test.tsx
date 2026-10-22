@@ -25,7 +25,13 @@ jest.mock('./useRoomScreening', () => ({
   default: () => false,
 }));
 
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from '@testing-library/react';
 
 import RoomWorkspace from './RoomWorkspace';
 
@@ -56,14 +62,27 @@ const mockRoom = {
   }),
 };
 const originalFetch = global.fetch;
+const originalClipboard = Object.getOwnPropertyDescriptor(
+  navigator,
+  'clipboard'
+);
+const mockWriteText = jest.fn<Promise<void>, [string]>();
 beforeEach(() => {
   jest.clearAllMocks();
   mockParams = new URLSearchParams('room=invited-room&keep=1');
   mockRoom.currentRoom = null;
   global.fetch = jest.fn(() => new Promise<Response>(() => undefined));
+  mockWriteText.mockReset().mockResolvedValue(undefined);
+  Object.defineProperty(navigator, 'clipboard', {
+    configurable: true,
+    value: { writeText: mockWriteText },
+  });
 });
 afterEach(() => {
   global.fetch = originalFetch;
+  if (originalClipboard)
+    Object.defineProperty(navigator, 'clipboard', originalClipboard);
+  else Reflect.deleteProperty(navigator, 'clipboard');
 });
 
 test('an already joined invitation is consumed and only room is removed', async () => {
@@ -104,4 +123,46 @@ test('failed invitation keeps its room parameter for password retry', async () =
   await screen.findAllByText('房间密码错误');
   expect(mockRouter.replace).not.toHaveBeenCalled();
   expect(mockParams.get('room')).toBe('invited-room');
+});
+
+test('copy feedback belongs to the room whose invitation was copied', async () => {
+  mockParams = new URLSearchParams();
+  mockRoom.currentRoom = targetRoom;
+  const view = render(<RoomWorkspace />);
+  fireEvent.click(screen.getByRole('button', { name: '邀请朋友' }));
+  await screen.findByRole('button', { name: '已复制' });
+  expect(mockWriteText).toHaveBeenLastCalledWith(
+    `${window.location.origin}/watch-room?room=invited-room`
+  );
+
+  mockRoom.currentRoom = { ...targetRoom, id: 'another-room' };
+  view.rerender(<RoomWorkspace />);
+  fireEvent.click(screen.getByRole('button', { name: '邀请朋友' }));
+  await screen.findByRole('button', { name: '已复制' });
+  expect(mockWriteText).toHaveBeenLastCalledWith(
+    `${window.location.origin}/watch-room?room=another-room`
+  );
+
+  mockRoom.currentRoom = targetRoom;
+  view.rerender(<RoomWorkspace />);
+  expect(screen.getByRole('button', { name: '邀请朋友' })).toBeInTheDocument();
+});
+
+test('a pending copy from the previous room cannot mark the next room as copied', async () => {
+  let resolveCopy: () => void = () => {
+    throw new Error('Clipboard request did not start');
+  };
+  mockWriteText.mockImplementationOnce(
+    () => new Promise<void>((resolve) => (resolveCopy = resolve))
+  );
+  mockParams = new URLSearchParams();
+  mockRoom.currentRoom = targetRoom;
+  const view = render(<RoomWorkspace />);
+  fireEvent.click(screen.getByRole('button', { name: '邀请朋友' }));
+  expect(mockWriteText).toHaveBeenCalledTimes(1);
+
+  mockRoom.currentRoom = { ...targetRoom, id: 'another-room' };
+  view.rerender(<RoomWorkspace />);
+  await act(async () => resolveCopy());
+  expect(screen.getByRole('button', { name: '邀请朋友' })).toBeInTheDocument();
 });

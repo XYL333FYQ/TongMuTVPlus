@@ -135,7 +135,7 @@ export default function RoomWorkspace() {
   const [isPublic, setIsPublic] = useState(false);
   const [password, setPassword] = useState('');
   const [joinId, setJoinId] = useState('');
-  const [copied, setCopied] = useState(false);
+  const [copiedInviteRoomId, setCopiedInviteRoomId] = useState('');
   const [deleteConfirmation, setDeleteConfirmation] = useState('');
   const [musicEnabled, setMusicEnabled] = useState(false);
   const [liveEnabled, setLiveEnabled] = useState(false);
@@ -349,7 +349,7 @@ export default function RoomWorkspace() {
           room.id
         )}`
       );
-      setCopied(true);
+      setCopiedInviteRoomId(room.id);
     } catch {
       setNotice(
         `邀请地址：${window.location.origin}/watch-room?room=${room.id}`
@@ -408,7 +408,8 @@ export default function RoomWorkspace() {
             label='房间操作'
             items={[
               {
-                label: copied ? '已复制邀请' : '邀请朋友',
+                label:
+                  copiedInviteRoomId === room.id ? '已复制邀请' : '邀请朋友',
                 onSelect: () => void copyInvite(),
               },
               ...(watchRoom.isOwner
@@ -530,8 +531,12 @@ export default function RoomWorkspace() {
                   </Link>
                 )}
                 <button onClick={copyInvite}>
-                  {copied ? <Check size={16} /> : <Copy size={16} />}
-                  {copied ? '已复制' : '邀请朋友'}
+                  {copiedInviteRoomId === room.id ? (
+                    <Check size={16} />
+                  ) : (
+                    <Copy size={16} />
+                  )}
+                  {copiedInviteRoomId === room.id ? '已复制' : '邀请朋友'}
                 </button>
                 {watchRoom.isOwner && (
                   <button

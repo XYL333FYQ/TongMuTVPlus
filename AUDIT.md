@@ -1,10 +1,10 @@
 # 放映室体验与缺陷审查
 
-> **本轮结果：确认 20 项问题，修复 15 项；未修 5 项（2 项 P2、3 项 P3）。未发现 P0/P1。** 其中 ROOM-08 是本轮修复引入、随后修正的回归，也计入数量。日期：2026-10-21–22；分支：`audit/room-page-polish`；15 项修复分别提交，未推送。
+> **本轮结果：确认 20 项问题，修复 16 项；未修 4 项（2 项 P2、2 项 P3）。未发现 P0/P1。** 其中 ROOM-08 是本轮修复引入、随后修正的回归，也计入数量。日期：2026-10-21–22；分支：`audit/room-page-polish`；16 项修复分别提交，未推送。
 >
-> **整体验收未全部满足。** 最终源码 typecheck、67 套/388 项测试、房间 19 项、运维 4 项通过；build 未通过，全库 lint/format 有既有失败。剩余三项 P3 为海报首选源 HTTP 418、HLS 恢复性缓冲 error 日志及换房后邀请复制反馈沿用；播放器高级设置颜色已补修；补测确认两项 P2 为播放器工具栏键盘不可达、跨域影片截图失败，均涉及播放器内部逻辑禁区，详见 ROOM-15–20。完整主流程控制台零 error 未满足。
+> **整体验收未全部满足。** 最终源码 typecheck、67 套/390 项测试、房间 19 项、运维 4 项通过；build 未通过，全库 lint/format 有既有失败。剩余两项 P3 为海报首选源 HTTP 418、HLS 恢复性缓冲 error 日志；播放器高级设置颜色和换房后的复制反馈已补修；补测确认两项 P2 为播放器工具栏键盘不可达、跨域影片截图失败，均涉及播放器内部逻辑禁区，详见 ROOM-15–20。完整主流程控制台零 error 未满足。
 >
-> **早上需人工确认：** 是否另行允许修复 AGENTS.md 禁止改动的播放器内部渲染/截图逻辑；构建环境的原生崩溃及 Windows symlink 权限；是否另行处理全库旧检查债务；同步房间“屏幕共享”入口的产品预期；约 1.5 秒同步容忍与海报首选来源策略。文件删除被自动审批三次拒绝，四个生成物及外部临时目录仍待清理，准确路径见文末。上轮测试房间和账号已清理；本批两个临时房间仍在副本中供复验，完成后清理并恢复原服务。
+> **早上需人工确认：** 是否另行允许修复 AGENTS.md 禁止改动的播放器内部渲染/截图逻辑；构建环境的原生崩溃及 Windows symlink 权限；是否另行处理全库旧检查债务；同步房间“屏幕共享”入口的产品预期；约 1.5 秒同步容忍与海报首选来源策略。此前文件删除被自动审批三次拒绝，四个生成物仍待清理，准确路径见文末。旧临时目录本次已不存在，原因未知；本批新临时目录的删除也被自动审批拒绝，仍待人工清理。所有测试房间、账号和播放记录已通过正常接口清理，原服务及用户原房间已恢复。
 
 ## 范围、假设与执行计划
 
@@ -29,13 +29,13 @@
 | 交互/无障碍  | Tab/Shift+Tab、方向键/Home/End、Enter/Esc、模态隔离/回焦、2px focus-visible、真实粗指针 44px、hover/按下/禁用样式、复制反馈、删除精确名称确认                                                                  | [空名校验](screenshots/final-empty-name-validation.png)、[危险确认](screenshots/final-delete-correct-name.png)、ROOM-02–08/14                       |
 | 响应式/主题  | 1920/1440/1280/1024/820/768/390 深浅各一次，无横溢出；手机滚动状态和 390×520 另测                                                                                                                              | 下方 14 张最终主截图及 8 张窄宽面板截图                                                                                                             |
 | 性能/偏好    | 开发环境单次首屏测量；图片 lazy/async 和失败回退；消除隐藏轮询；站内减少动态/无模糊、系统 reduce 均实际切换并恢复                                                                                              | [偏好](screenshots/final-visual-preferences.png)、[图片加载](screenshots/final-quick-posters-loaded.png)、ROOM-13                                   |
-| 工程/保全    | 最终 typecheck/388 tests/19 rooms/4 ops 通过；目标 lint/格式/设计通过；全库 lint/format 与 build 未过；1027 个原文件核对无越界修改/删除                                                                        | 下方命令输出、文件范围、清理状态                                                                                                                    |
+| 工程/保全    | 最终 typecheck/390 tests/19 rooms/4 ops 通过；目标 lint/格式/设计通过；全库 lint/format 与 build 未过；1027 个原文件核对无越界修改/删除                                                                        | 下方命令输出、文件范围、清理状态                                                                                                                    |
 
 ## 用户指定内置浏览器后的补测
 
-- 后续检查已改用 Codex 内置浏览器，通过其 Playwright API 实际操作；没有再启动外部浏览器。最终保留 `/watch-room`，明确为 1440 × 900、浅色、片单标签，未使用默认面板比例。本次新增 20 张 JPEG，连同此前 174 张 PNG 共 194 张。
+- 后续检查已改用 Codex 内置浏览器，通过其 Playwright API 实际操作；没有再启动外部浏览器。最终保留 `/watch-room`，明确为 1440 × 900、浅色、片单标签，未使用默认面板比例。首次内置补测新增 20 张 JPEG，连同此前 174 张 PNG 当时共 194 张；本批续修后的累计 219 张见后文。
 - 本次使用用户原有空房间，只操作展示、草稿、复制及菜单，没有发送消息、添加影片、改房间设置或删除原房间。先前临时库中的双登录上下文、媒体实播和权限测试仍是此前浏览器的证据，**不能写成已经在内置浏览器重新完成多人及实播验收**。
-- 刷新前先见到旧客户端；实际刷新后房间路由和静态资源出现 404。核对路由源码仍在，只停止已确认的本项目旧服务 34528 及启动器 41888，沿用 `scripts/start-local.cjs --no-browser` 重启后页面恢复，最新三标签语义与主持状态均可见。现在启动器为 37596、服务为 54656，仅 3000 监听；没有改源码修复这次预览环境异常。此前不同端口的 Next 服务共用 `.next` 是可能变量，根因没有证实。
+- 刷新前先见到旧客户端；实际刷新后房间路由和静态资源出现 404。核对路由源码仍在，只停止已确认的本项目旧服务 34528 及启动器 41888，沿用 `scripts/start-local.cjs --no-browser` 重启后页面恢复，最新三标签语义与主持状态均可见。当时启动器为 37596、服务为 54656，仅 3000 监听；没有改源码修复这次预览环境异常。此前不同端口的 Next 服务共用 `.next` 是可能变量，根因没有证实。
 - 实操通过：片单 → 聊天 → 成员的 ArrowRight、Home 返回；账号菜单初始焦点、Esc 关闭回焦；选片弹窗反向 Tab 循环、Esc 回焦；空白消息禁用；表情 Esc 关闭回焦；房间操作菜单；深浅主题；刷新后主持状态恢复。草稿已清空，未点击发送。
 - 复制校验：内置工具的 clipboard.readText 最初返回空字符串；从同一页面标准 Clipboard API 只读复核，房号为 12 字且与遮罩首尾相符，邀请为 50 字且包含本房间的 `/watch-room` 链接。没有仅凭“已复制”文案判断成功，也没有把工具读数差异当成功能缺陷。
 - 输入校验：工具 fill/paste 可将 DOM 值写到 2200，不能用它验证浏览器原生长度限制；改为 1995 字草稿再实际键入 20 字，最终为 2000。整段逐字输入曾在工具期限内只完成 77 字后超时，已清空；没有发送这两类样本。
@@ -219,7 +219,10 @@
 - 预期：B 显示邀请朋友，只有复制 B 的邀请成功后才显示已复制。
 - 实际：B 直接显示已复制。复制反馈只存单一布尔值，没有关联房间，可能误导用户判断剪贴板内容。本次剪贴板读取工具超时，没有把未读到的内容写成已核验。
 - 证据：[新房间错误反馈](screenshots/room-20-invite-feedback-before.jpg)。
-- 状态：**已确认，待单独修复**。
+- 修复：反馈状态保存成功复制的房间 ID，并与当前房间比较，沿用房号复制的已有实现方式。旧房间异步复制晚完成也不能将新房间标为已复制；不改变邀请地址、接口或剪贴板错误处理。
+- 验证：新增两项回归先出现 2 failed / 3 passed，修复后 5/5；普通全量 67 套/390 项通过。内置浏览器实际 A → B、B → A 后均恢复“邀请朋友”，复制当前房间后才显示“已复制”。本批未成功读出剪贴板内容，地址由原测试和新增 URL 断言覆盖，不冒称本次重新读回验证。
+- 证据：[切回 A](screenshots/room-20-invite-feedback-after-a.jpg)、[切回 B](screenshots/room-20-invite-feedback-after-b.jpg)、[测试房间已清理](screenshots/room-20-test-rooms-cleaned.jpg)、[原房间已恢复](screenshots/room-20-original-restored.jpg)。另有 room-20-final-{390,820,1280}-{dark,light}.jpg 六张最终截图，均实际查看，无横溢出。
+- 状态：**已修复并复验，独立提交“修复换房后的邀请复制反馈”**。本项源码/测试 ESLint 0 error、0 warning；目标格式和设计检查通过。
 
 ## 工具栏补测
 
@@ -246,6 +249,7 @@
 - HLS 连续播放样本的双端差约 1.48 秒，接近 usePlaySync 现有 1.5 秒软校准门限；暂停/拖动后两端均为 19.104677/189.767942 秒。是否需要更紧的日常同步容忍是产品取舍，本轮不修改禁区同步逻辑。
 - 顶栏“已连接”表示通信状态，“正在主持”表示当前控制者；成员“可接替主持”表示授权资格，语义不同，未为了文案统一合并这些状态。
 - 普通渲染 Chrome、Node 与 PowerShell 曾有无 JS/TS 诊断的原生崩溃。后段使用独立 --disable-gpu Chrome 和现有启动器的 --regexp-interpret-all 继续验证，不能由此认定根因已定位或应用已修复原生崩溃。
+- 内置浏览器续查全屏时捕获一次 PiP 不可用的 NotSupportedError，以及一次标签崩溃；准确触发动作和根因未完全确定。另一浏览器此前 PiP 实际开关成功，不能将其等同内置浏览器也已通过。没有隐藏异常或绕过崩溃页 URL 限制。
 - 已补测主要工具栏、画中画和全屏，结果见上表；设置内部所有扩展配置、字幕/弹幕源选择、音量听感、物理手机软键盘及真正 screen 类型房间共享采集仍未完整验收。390×520 是浏览器视窗模拟，不等于真机输入法。
 - 单集末尾“下一集”仍可点但没有新反馈，是否应禁用/提示未明确，保守列待确认；倍速菜单将实际 1.25 显示为 1.3，属于现有第三方显示精度，本轮不擅自调整。
 - Google 示例长片返回 HTTP 403，已改用实测返回 206 的 W3C 测试 MP4。诱发的失败与重试单独记录，不计为普通主流程通过；项目自己的错误提示确实出现。
@@ -295,19 +299,19 @@ Wake Lock 请求失败: NotAllowedError: Wake Lock permission request denied
 
 ## 修改文件、设计依据与提交
 
-| 文件                                             | 本轮最小修改                                                 | 设计依据/约束                                                                  |
-| ------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------------------------ |
-| src/lib/utils.ts                                 | MP4 原生元数据分支；HLS 路径保留                             | 房间 §5.2 加载/错误可识别；不改接口和播放器会话                                |
-| src/features/rooms/RoomWorkspace.tsx             | 原生模态焦点、三标签键盘/语义、选片请求竞争、隐藏目录轮询    | §4 聚焦/控件、§5.1 房间结构与最新三标签修订、§5.2 状态；网络竞争属于正确性修复 |
-| src/features/rooms/rooms.css                     | 模态容器、44px 命中区、时间对比度、紧凑标题、移焦留白        | §2.1/2.2、§2.5、§4；保持 token、减少动态和无模糊约束                           |
-| src/components/UserMenu.tsx                      | 展开状态、Esc/回焦、原生子弹窗取消保留                       | §4 交互与聚焦；保留既有分组和路由                                              |
-| src/components/watch-room/ChatFloatingWindow.tsx | 表情关闭/回焦、断线禁用与发送守卫、换房清理                  | §4、§5.2 重连状态；不改事件/接口                                               |
-| src/app/watch-room/screen/page.tsx               | 仅 screen 类型启动专用副作用                                 | 两种房间类型现有约束；不改共享协议/存储键                                      |
-| src/features/playback/playback.css               | mini 房间样式要求已有槽位变量存在                            | §3.3 小窗连续性；纯选择器，不改 Provider/视频实例                              |
-| 五个测试文件                                     | 元数据、房间键盘/竞争/轮询、账号嵌套、聊天离线、共享类型回归 | 没有修改原测试断言来放过失败；沿用测试设施                                     |
-| AUDIT.md、docs/design/PROGRESS.md、screenshots/  | 审查/证据和必要交接记录                                      | 项目要求每步更新 PROGRESS；图片共 209 张                                       |
+| 文件                                             | 本轮最小修改                                                                | 设计依据/约束                                                                  |
+| ------------------------------------------------ | --------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| src/lib/utils.ts                                 | MP4 原生元数据分支；HLS 路径保留                                            | 房间 §5.2 加载/错误可识别；不改接口和播放器会话                                |
+| src/features/rooms/RoomWorkspace.tsx             | 原生模态焦点、三标签键盘/语义、选片请求竞争、隐藏目录轮询、邀请反馈关联房间 | §4 聚焦/控件、§5.1 房间结构与最新三标签修订、§5.2 状态；网络竞争属于正确性修复 |
+| src/features/rooms/rooms.css                     | 模态容器、44px 命中区、时间对比度、紧凑标题、移焦留白、播放器图标配色       | §2.1/2.2、§2.5、§4；保持 token、减少动态和无模糊约束                           |
+| src/components/UserMenu.tsx                      | 展开状态、Esc/回焦、原生子弹窗取消保留                                      | §4 交互与聚焦；保留既有分组和路由                                              |
+| src/components/watch-room/ChatFloatingWindow.tsx | 表情关闭/回焦、断线禁用与发送守卫、换房清理                                 | §4、§5.2 重连状态；不改事件/接口                                               |
+| src/app/watch-room/screen/page.tsx               | 仅 screen 类型启动专用副作用                                                | 两种房间类型现有约束；不改共享协议/存储键                                      |
+| src/features/playback/playback.css               | mini 房间样式要求已有槽位变量存在                                           | §3.3 小窗连续性；纯选择器，不改 Provider/视频实例                              |
+| 六个测试文件                                     | 元数据、房间键盘/竞争/轮询、账号嵌套、聊天离线、共享类型回归                | 没有修改原测试断言来放过失败；沿用测试设施                                     |
+| AUDIT.md、docs/design/PROGRESS.md、screenshots/  | 审查/证据和必要交接记录                                                     | 项目要求每步更新 PROGRESS；图片共 219 张                                       |
 
-新增/扩展测试文件为 `utils.video-metadata.test.ts`、`RoomWorkspace.accessibility.test.tsx`、`UserMenu.keyboard.test.tsx`、`ChatFloatingWindow.test.tsx`、`screen/page.room-type.test.tsx`。修复前有针对性的失败，再实现；纯 CSS 项使用真实几何、Tab/命中与截图，没有写镜像实现的测试。
+新增/扩展测试文件为 `utils.video-metadata.test.ts`、`RoomWorkspace.accessibility.test.tsx`、`UserMenu.keyboard.test.tsx`、`ChatFloatingWindow.test.tsx`、`screen/page.room-type.test.tsx`、`RoomWorkspace.invite.test.tsx`。修复前有针对性的失败，再实现；纯 CSS 项使用真实几何、Tab/命中与截图，没有写镜像实现的测试。
 
 | 问题    | 提交    | 修后主截图                                                        |
 | ------- | ------- | ----------------------------------------------------------------- |
@@ -326,11 +330,16 @@ Wake Lock 请求失败: NotAllowedError: Wake Lock permission request denied
 | ROOM-13 | 211e315 | [目录恢复](screenshots/room-13-directory-refresh-after.png)       |
 | ROOM-14 | fdc8170 | [短视窗](screenshots/room-14-focus-390x520-light-after.png)       |
 
-本轮只暂存自己的差异，未把原有大量未提交/未跟踪组件一并提交；这些提交的浏览器验收基于**当前完整工作区**，不能由此宣称单独 clean checkout 已验收。原 1027 个非忽略文件逐字节比较，缺失 0、越界修改 0；变化只有上述允许源码及本轮进度区。server、API、两个同步 hook、播放会话、数据库实现、middleware、admin、LegacyPlaybackSurface 本轮均未修改。main 仍为 `c6c78f24926c174aaaa99a35d1af17f5394d06de`，未改远程（原本无 remote），未 push/部署。
+| ROOM-19 | d876e5c | [播放器图标](screenshots/room-19-iab-1440-light-on-after.jpg) |
+| ROOM-20 | 本次独立提交 | [换房反馈](screenshots/room-20-invite-feedback-after-b.jpg) |
+
+暂存时对 HEAD 中仍存在的旧邀请菜单同样改为房间 ID 判断；没有一并提交用户既有菜单重排。浏览器验收与全部测试基于当前完整工作区，独立暂存视图没有另开干净 checkout 验收。
+
+本轮只暂存自己的差异，未把原有大量未提交/未跟踪组件一并提交；这些提交的浏览器验收基于**当前完整工作区**，不能由此宣称单独 clean checkout 已验收。原轮次对 1027 个非忽略文件逐字节比较，缺失 0、越界修改 0；变化只有上述允许源码及本轮进度区。server、API、两个同步 hook、播放会话、数据库实现、middleware、admin、LegacyPlaybackSurface 本轮均未修改。main 仍为 `c6c78f24926c174aaaa99a35d1af17f5394d06de`，未改远程（原本无 remote），未 push/部署。
 
 ## 命令输出与边界
 
-预览在类型和测试期间关闭；本轮最终普通命令结果如下。源文件完成最后一次修改后没有失败断言，没有跳过测试、改检查配置或升级依赖。
+预览在类型和测试期间关闭；2026-10-22 最终源码普通命令结果如下。源文件完成最后一次修改后没有失败断言，没有跳过测试、改检查配置或升级依赖。
 
 ```text
 $ pnpm typecheck
@@ -339,9 +348,9 @@ exit 0
 
 $ pnpm test --runInBand
 Test Suites: 67 passed, 67 total
-Tests:       388 passed, 388 total
+Tests:       390 passed, 390 total
 Snapshots:   0 total
-Time:        46.331 s
+Time:        45.655 s, estimated 46 s
 Ran all test suites.
 exit 0
 
@@ -359,8 +368,8 @@ $ pnpm test:ops
 ℹ skipped 0
 exit 0
 
-$ pnpm exec eslint <本轮10个TS/TSX源码与测试文件>
-✖ 9 problems (0 errors, 9 warnings)
+$ pnpm exec eslint src/features/rooms/RoomWorkspace.tsx src/features/rooms/RoomWorkspace.invite.test.tsx
+0 errors / 0 warnings
 exit 0
 
 $ pnpm exec prettier --check <AUDIT与本轮12个源码/测试/样式文件>
@@ -380,11 +389,21 @@ $ pnpm format:check
 ELIFECYCLE Command failed with exit code 1.
 ```
 
-- 全库 lint 的 69 条 error 与基线逐行相同；目标 9 条 warning 为 UserMenu 的 5 条与 screen 页的 4 条既有 warning。未运行 --fix 或全库格式化。
+- 最终全库 lint 的 69 条 error 与报告保存的基线逐条按路径、行号和消息比较，差异为 0；此前整批目标中的 9 条 warning 为 UserMenu 的 5 条与 screen 页的 4 条既有 warning。最后两份 ROOM-20 文件为 0 error / 0 warning。未运行 --fix 或全库格式化。
 - 全库格式中的 230 个原有文件名单与基线相同；另外 3 项为本轮 CLI YAML 和 build 生成的 sw.js/workbox 文件，删除被审批阻止。基线首次 232 项包含当时未格式化的 AUDIT 和 CLI YAML；本轮 AUDIT 已通过格式检查。不能把全库结果写成通过。
 - 中途 typecheck/Jest/格式命令曾有原生崩溃（含 3221225477），没有 TS 诊断或失败断言。按要求停预览后串行重跑，部分使用本机已有 Node 24.19.0 或启动器既有 regexp 解释选项；最终上述普通 typecheck/Jest 均退出 0。根因未知；若用户终端再次崩溃，应保留原始输出，不能归因到已定位的源码问题。
 
-### 构建的三种尝试（均未通过）
+### 最终源码构建与历史三种尝试（均未通过）
+
+```text
+$ pnpm build（2026-10-22，最终源码）
+Compiled successfully
+Checking validity of types ...
+Generating static pages (283/283)
+Build error occurred
+Error: EPERM: operation not permitted, symlink ... @next/env ... .next/standalone/...
+ELIFECYCLE Command failed with exit code 1.
+```
 
 ```text
 1. pnpm build（系统 Node 24.18.0）
@@ -404,7 +423,7 @@ unhandledRejection ReferenceError: WebAssembly is not defined
 ELIFECYCLE Command failed with exit code 1.
 ```
 
-第二种已完成编译、类型与 283 页生成，但 Windows standalone 打包需要的链接创建被拒绝；第一种原生崩溃根因未知，第三种关闭 JIT 会破坏 Next 依赖的 WebAssembly，不能采用。按用户三种方案上限停止重试，没有改 next.config、tsconfig、锁文件、系统权限或构建目标来制造通过。三次尝试早于最后的局部修复，**最终版本没有获得一次成功 build**；最后源码另已通过类型和全部测试。已有 serverExternalPackages 配置 warning、旧 Browserslist 和 PWA 大块 warning 均未顺带修改。
+前三次为历史尝试。2026-10-22 已对含 ROOM-19/20 的最终源码重跑普通 pnpm build，仍完成 Compiled successfully、类型校验和 Generating static pages (283/283)，在 standalone 的 @next/env 链接创建阶段报 EPERM、退出 1。最新构建使用隔离测试库且没有预览竞争。第二种历史尝试也完成编译、类型与 283 页生成，但 Windows standalone 打包需要的链接创建被拒绝；第一种原生崩溃根因未知，第三种关闭 JIT 会破坏 Next 依赖的 WebAssembly，不能采用。按用户三种方案上限停止重试，没有改 next.config、tsconfig、锁文件、系统权限或构建目标来制造通过。前三次尝试早于最后的局部修复，最新普通重跑也未过，**最终版本没有获得一次成功 build**；最后源码另已通过类型和全部测试。已有 serverExternalPackages 配置 warning、旧 Browserslist 和 PWA 大块 warning 均未顺带修改。
 
 <details>
 <summary>全库 lint 的 69 条原有 error（不包含 1054 条 warning）</summary>
@@ -485,29 +504,32 @@ ELIFECYCLE Command failed with exit code 1.
 
 ## 2026-10-22 续查环境与本批验证
 
-- 恢复执行时原服务及原内置标签已不存在；旧 TEMP/TongMu-room-audit-20261021 目录也不存在，原因未核实。此前三次删除拒绝是历史事实，不能写成当前旧目录仍在。四个工作区生成物本次核对仍在，没有再次绕过删除拒绝。
-- 新建 TEMP/TongMu-room-audit-style-20261021，使用原库 readonly 在线备份 test.db；只在此副本创建放映室样式审查 20261021、邀请反馈审查 20261022，无新账号。当前测试服务 22016；这两房间仍供后续复制反馈复验，尚未进行本批结束清理，原库没有测试写入。
-- 本批 CSS 仅 14 行，两轮普通 typecheck 和 67 套/388 项 Jest 均退出 0；两轮房间 19/19、运维 4/4。全库 lint 69 个旧错误；format 第一轮 233 个旧文件/生成物失败，第二轮退出 3221225477；目标 Prettier、check-design 违规 0/TODO 0。过程中有一次 PowerShell 启动原生崩溃，重跑只读命令成功，根因未知。原始日志在新临时目录；未改配置和依赖绕过检查。
+- 恢复执行时原服务及原内置标签已不存在；旧 TEMP/TongMu-room-audit-20261021 也不存在，原因未核实。此前三次删除拒绝是历史事实，不能写成旧目录当前仍在。四个工作区生成物本次核对仍在，没有再绕过删除拒绝。
+- 本批只在原库 readonly 在线备份 test.db 创建两个私密测试房间，无新账号。房间通过正常 DELETE 接口分别 HTTP 200；我的/公开/归档目录残留 0。专用标签关闭后，唯一测试播放记录通过带精确 key 的正常接口删除 HTTP 200，副本及原库只读复核测试房间名/播放标题均 0。没有清空表或无 key 删除。
+- 测试服务 38956 已停止并核对退出；原启动器 35744 / 服务 41920 现已恢复，仅 127.0.0.1:3000 监听，health/ready 的 application/rooms 均 ok。最终内置浏览器回到原 admin 房间，已连接、主持、空片单，1440×900 浅色；新增 error/warning 0。实际截图像素为 1440×900，未用只读 DOM 代理默认尺寸推断视口。
+- ROOM-19 仅 14 行 CSS；ROOM-20 只将邀请反馈布尔状态改成房间 ID，并追加两项异步/换房回归。LegacyPlaybackSurface.tsx 和 playback.css 与本批开始的 .bak 字节相同，主分支/远程未动；本批新截图 25 张，总计 219 张（174 PNG + 45 JPEG）。旧 1027 文件基线已随旧目录消失，本批没有冒称重新完成该全源哈希比较。
+- 最终普通 typecheck 0、67 套/390 项 Jest、房间 19/19、运维 4/4 通过。运维首次退出 3221225477 且没有断言输出，停预览串行普通重跑 4/4，未改配置；之前 PowerShell、格式命令的原生崩溃记录保留，根因未知。最终 format 为 233 文件，lint 69 error/1054 warning 且逐条对比无新增，目标 lint/格式/设计通过。
+- 最新普通 build 针对最终源码重新执行：编译、类型及 283 页生成成功，standalone 的 Windows symlink EPERM 退出 1。没有升级依赖、改配置、改目标或系统权限来制造通过。主要命令输出已归入本报告；新临时目录在完成精确路径/服务退出校验后请求删除，自动审批返回 blocked by policy，未给具体原因，命令未执行且不再换工具绕过。日志/备份因此仍在该目录。
 
 ## 完成条件逐项对照
 
-| 用户条件                                  | 当前证据                                                                          | 结论                                                               |
-| ----------------------------------------- | --------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
-| 1. 每个维度至少检查一次，AUDIT 有记录     | 上方验收矩阵、209 张实际截图、双端交互/网络/媒体记录                              | 维度已覆盖；深层扩展配置未遍历全部，不能承诺任意第三方控件都已穷尽 |
-| 2. P0/P1 修复，P2 能修都修，P3/待确认列出 | 未发现 P0/P1，15 项修复已验证；两项 P2 位于明确禁区，三项 P3 保留                 | 不能把两项 P2 写为已修；继续修复需先解决现有禁区约束               |
-| 3. build/lint/已有测试全部通过并贴输出    | tests/typecheck/rooms/ops 通过；build 三种失败、lint 69 旧 error、format 233 文件 | 未满足，未更改检查口径或修无关禁区文件                             |
-| 4. 主流程控制台无 error                   | MP4 部分流程曾为 0；海报/HLS 错误保留，截图两次 pageerror                         | 未满足                                                             |
-| 5. 清理临时文件/数据，仅保留指定产物      | 三个测试房间、两个新账号、补测播放记录正常删除；专用进程关闭；文件删除三次被拒绝  | 未满足，四个生成物和临时目录仍在；另按项目要求保留 PROGRESS        |
-| 6. AUDIT 顶部总结数量、原因、人工事项     | 已实际读回顶部并核对 20 个编号和证据链接                                          | 已完成                                                             |
+| 用户条件                                  | 当前证据                                                                                                  | 结论                                                                        |
+| ----------------------------------------- | --------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| 1. 每个维度至少检查一次，AUDIT 有记录     | 上方验收矩阵、219 张实际截图、双端交互/网络/媒体记录                                                      | 维度已覆盖；深层扩展配置未遍历全部，不能承诺任意第三方控件都已穷尽          |
+| 2. P0/P1 修复，P2 能修都修，P3/待确认列出 | 未发现 P0/P1，16 项修复已验证；两项 P2 位于明确禁区，两项 P3 保留                                         | 不能把两项 P2 写为已修；继续修复需先解决现有禁区约束                        |
+| 3. build/lint/已有测试全部通过并贴输出    | tests/typecheck/rooms/ops 通过；build 历史三种失败及最终普通重跑 EPERM、lint 69 旧 error、format 233 文件 | 未满足，未更改检查口径或修无关禁区文件                                      |
+| 4. 主流程控制台无 error                   | MP4 部分流程曾为 0；海报/HLS 错误保留，截图两次 pageerror                                                 | 未满足                                                                      |
+| 5. 清理临时文件/数据，仅保留指定产物      | 五个测试房间、两个新账号、两轮补测播放记录正常删除；专用进程关闭；历史文件删除三次被拒绝                  | 未满足，四个生成物仍在；新临时目录也被审批拒绝删除；按项目要求保留 PROGRESS |
+| 6. AUDIT 顶部总结数量、原因、人工事项     | 已实际读回顶部并核对 20 个编号和证据链接                                                                  | 已完成                                                                      |
 
-本次续查仅补充文档和截图，没有源码修改，因此没有再次重复全套代码测试。已重查文档格式、实际链接、数据删除与服务状态；保留前一轮对应最终源码的完整命令输出。以上未满足项没有以报告替代功能修复或验收通过。
+本次续查实际修复两项，并对最终源码运行上述完整检查。最终七宽深浅覆盖来自前轮，最新两项补做 390/820/1280 深浅、实际媒体和换房验证；未把此前外部浏览器多人证据冒称内置浏览器已重测。文档收尾不再次重复已通过的源码测试。以上未满足项没有以报告替代功能修复或验收通过。
 
 ## 测试数据、进程与文件清理
 
 - 测试仅在在线备份的临时 SQLite 中进行，原数据路径和配置未修改。房间 `E0847AA0376F`、`46410E367037` 均通过房主设置中的精确名称确认删除；我的/公开/归档三个目录查询残留都是 0。成员实际收到删除后返回目录。错名时删除禁用、正确名启用分别有截图：[错名](screenshots/final-delete-wrong-name.png)、[正确名](screenshots/final-delete-correct-name.png)、[清理结果](screenshots/final-test-rooms-cleaned.png)。
 - 补测房间 `8F5A9FFAEDFB` 同样通过正确名称删除，我的/公开/归档残留均 0：[补测清理](screenshots/toolbar-test-room-cleaned.png)。补测使用临时库内既有站长副本登录，正常 logout 为 HTTP 200，没有新建或删除该账号；独立浏览器已关闭，服务 PID 50908 已停。额外只读核对发现一条本轮影片播放记录，临时服务 40296 通过带唯一 key 的 DELETE /api/playrecords 精确删除（HTTP 200），随后 API 和只读 SQLite 均确认该标题残留 0；没有调用无 key 的清空接口。正常 logout 后 40296 已停，3001 已释放。原服务 34528 的房间页仍 HTTP 200、health ok。
 - 临时账号 `audit-host-20261021`、`audit-member-20261021` 通过正常管理接口删除，均 HTTP 200。没有清空数据库、批量删除用户或触碰原库账号。
-- 独立 Playwright 上下文/浏览器和 CLI room-host 会话已关闭；最后测试服务 PID 42224 已退出。原服务此前由启动器 41888、服务 34528 恢复；内置浏览器补测已确认其预览异常并沿 `scripts/start-local.cjs --no-browser` 重启，当时启动器 37596、服务 54656，房间页正常、health ready 为 ok；本次续查服务已不在运行，当前隔离测试服务见上方续查节。未关闭用户原有浏览器或其他项目进程。
+- 独立 Playwright 上下文/浏览器和 CLI room-host 会话已关闭；最后测试服务 PID 42224 已退出。原服务此前由启动器 41888、服务 34528 恢复；内置浏览器补测已确认其预览异常并沿 `scripts/start-local.cjs --no-browser` 重启，当时启动器 37596、服务 54656，房间页正常、health ready 为 ok；这些历史进程在本次续查前已不在运行，当前已恢复原服务 41920，见上方续查节。未关闭用户原有浏览器或其他项目进程。
 - **未完成的文件清理：** 自动审批三次拒绝删除命令，工具仅返回 blocked by policy，未给出具体原因。工作区先尝试带路径校验的批量方式，再尝试精确绝对路径逐文件删除；报告提交后，对已核实的外部临时目录单独请求删除也被拒绝。三次均未执行，不再绕过拒绝。工作区残留以下四个本轮生成物，未提交：
 
 ```text
@@ -517,7 +539,7 @@ C:\Users\ss\Documents\桌面图标\编程\ai项目\TongMuTVPlus\public\sw.js
 C:\Users\ss\Documents\桌面图标\编程\ai项目\TongMuTVPlus\public\workbox-e9849328.js
 ```
 
-- 外部上一轮临时目录 `C:\Users\ss\AppData\Local\Temp\TongMu-room-audit-20261021` 曾保留基线 .bak、日志、测试库副本和浏览器状态；2026-10-22 续查确认该目录已不存在，原因未核实。本批新临时目录 TongMu-room-audit-style-20261021 当前尚在，供复制反馈下一项测试。原用户库和既有 output 备份不在清理范围。因清理审批未解决，不能宣称“只剩代码/AUDIT/screenshots”。
+- 外部上一轮临时目录 `C:\Users\ss\AppData\Local\Temp\TongMu-room-audit-20261021` 曾保留基线 .bak、日志、测试库副本和浏览器状态；2026-10-22 续查确认该目录已不存在，原因未核实。本批新临时目录 `C:\Users\ss\AppData\Local\Temp\TongMu-room-audit-style-20261021` 在数据清理和证据归档后，请求删除也被自动审批拒绝（第四次拒绝，发生在新目标）；返回 blocked by policy，无具体原因。该目录仍在，内含本批日志、.bak、已清理测试数据的库副本和暂存辅助脚本。没有尝试其他工具或改名绕过。原用户库和既有 output 备份不在清理范围。因清理审批未解决，不能宣称“只剩代码/AUDIT/screenshots”。
 - 按项目要求保留本轮 PROGRESS 交接区；output 未发现 .ts/.tsx/.d.ts 备份。除上述审批阻止的生成物外，没有额外调试输出；未新增依赖。
 
 实现参考：[原生媒体元数据事件](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/loadedmetadata_event)、[WAI 模态弹窗键盘规范](https://www.w3.org/WAI/ARIA/apg/patterns/dialog-modal/)、[WAI 标签页键盘规范](https://www.w3.org/WAI/ARIA/apg/patterns/tabs/)。
