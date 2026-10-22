@@ -1459,3 +1459,12 @@ dialog.tm-room-modal-root::backdrop {
   color: var(--tm-muted);
   opacity: 1;
 }
+
+/* 房间顶栏只有两列，紧凑标题跨列居中，避免与右侧账号控件共用第二列。 */
+@media (max-width: 767px) {
+  html[data-tm-room-presentation='true']
+    .tm-mobile-header-v2[data-room-actions='false'][data-compact='true']
+    .tm-mobile-page-title {
+    grid-column: 1 / -1;
+  }
+}
