@@ -121,7 +121,7 @@ export default function WatchRoomScreenPage() {
   }, [isOwner, leaveRoom, router, screenRoom?.id, screenRoom?.roomType]);
 
   useEffect(() => {
-    if (!screenRoom || !isOwner) return;
+    if (!screenRoom || screenRoom.roomType !== 'screen' || !isOwner) return;
 
     localStorage.setItem(WATCH_ROOM_NO_CONNECT_KEY, '1');
     localStorage.setItem(
@@ -145,7 +145,7 @@ export default function WatchRoomScreenPage() {
       localStorage.removeItem(WATCH_ROOM_NO_CONNECT_TIMESTAMP_KEY);
       window.clearInterval(heartbeat);
     };
-  }, [isOwner, openDetachedPage, screenRoom?.id]);
+  }, [isOwner, openDetachedPage, screenRoom?.id, screenRoom?.roomType]);
 
   if (!screenRoom || screenRoom.roomType !== 'screen') {
     return null;
