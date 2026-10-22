@@ -1467,4 +1467,11 @@ dialog.tm-room-modal-root::backdrop {
     .tm-mobile-page-title {
     grid-column: 1 / -1;
   }
+
+  /* 键盘移焦时为悬浮底栏留出空间，避免浏览器只滚到视窗边缘。 */
+  .tm-room-chat-slot .tm-chat-panel--inline :is(button, input) {
+    scroll-margin-bottom: calc(
+      var(--tm-bottom-nav-height) + var(--tm-safe-bottom) + 24px
+    );
+  }
 }
