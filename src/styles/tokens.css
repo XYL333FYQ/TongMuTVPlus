@@ -53,7 +53,7 @@
   --tm-glass-highlight: rgba(255, 255, 255, 0.07);
   --tm-spot: rgba(255, 255, 255, 0.07);
   --tm-hero-bg: #141416;
-  --tm-skeleton-shine: rgba(255, 255, 255, 0.05);
+  --tm-skeleton-shine: rgba(255, 255, 255, 0.095);
 
   /* 阴影 */
   --tm-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
@@ -135,7 +135,7 @@ html.light {
   --tm-glass-highlight: rgba(255, 255, 255, 0.6);
   --tm-spot: rgba(0, 0, 0, 0.035);
   --tm-hero-bg: #0a0a0b;
-  --tm-skeleton-shine: rgba(0, 0, 0, 0.04);
+  --tm-skeleton-shine: rgba(0, 0, 0, 0.07);
 
   --tm-shadow-sm: 0 1px 2px rgba(16, 16, 20, 0.04),
     0 6px 16px rgba(16, 16, 20, 0.05);

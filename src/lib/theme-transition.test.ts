@@ -61,9 +61,13 @@ test('entering dark retracts the old light snapshot into the control', async () 
   document.documentElement.className = 'light';
   let capturedOrigin: string | null = null;
   let capturedTarget: string | undefined;
+  let capturedAura = false;
   document.startViewTransition = (update) => {
     capturedOrigin = origin.getAttribute('data-tm-theme-origin');
     capturedTarget = document.documentElement.dataset.tmThemeTarget;
+    capturedAura = Boolean(
+      document.body.querySelector('[data-tm-theme-aura="true"]')
+    );
     const completion = Promise.resolve(update());
     return {
       ready: completion,
@@ -75,15 +79,21 @@ test('entering dark retracts the old light snapshot into the control', async () 
   await changeThemeWithTransition('dark', setTheme, origin);
   expect(capturedOrigin).toBe('true');
   expect(capturedTarget).toBe('dark');
+  expect(capturedAura).toBe(true);
   const frames = animate.mock.calls[0][0];
   expect(frames[0].clipPath).not.toContain('circle(0px');
   expect(frames[1].clipPath).toContain('circle(0px');
   expect(animate.mock.calls[0][1]).toMatchObject({
-    duration: 500,
+    duration: 420,
     fill: 'forwards',
+    easing: 'cubic-bezier(.22,1,.36,1)',
     pseudoElement: '::view-transition-old(root)',
   });
   expect(origin).not.toHaveAttribute('data-tm-theme-origin');
+  expect(document.body.querySelector('[data-tm-theme-aura="true"]')).toBeNull();
+  expect(document.documentElement.style.getPropertyValue('--tm-theme-x')).toBe(
+    ''
+  );
   expect(document.documentElement.dataset.tmThemeTarget).toBeUndefined();
 });
 
@@ -213,7 +223,8 @@ test('circle waits for the next-themes class update and uses the control centre'
     clipPath: 'circle(0px at 42px 52px)',
   });
   expect(animate.mock.calls[0][1]).toMatchObject({
-    duration: 500,
+    duration: 420,
+    easing: 'cubic-bezier(.22,1,.36,1)',
     pseudoElement: '::view-transition-new(root)',
   });
   expect(document.documentElement.dataset.tmThemeTransition).toBeUndefined();
@@ -231,13 +242,6 @@ test('a failed snapshot still applies the theme and cleans up', async () => {
   expect(document.documentElement.dataset.tmThemeTransition).toBeUndefined();
 });
 
-function enableGlow(mask = true) {
-  Object.defineProperty(window, 'CSS', {
-    configurable: true,
-    value: { supports: () => mask, registerProperty: jest.fn() },
-  });
-}
-
 function startSuccessfulTransition(update: () => void | Promise<void>) {
   const completion = Promise.resolve(update());
   return {
@@ -249,70 +253,49 @@ function startSuccessfulTransition(update: () => void | Promise<void>) {
 }
 
 test.each(['light', 'dark'] as const)(
-  '%s circular glow keeps the control centre and covers every corner before cleanup',
+  '%s crisp circular clip-path uses the control centre and covers every corner before cleanup',
   async (theme) => {
-    enableGlow();
+    document.startViewTransition = startSuccessfulTransition;
     document.documentElement.className = theme === 'light' ? 'dark' : 'light';
     origin.getBoundingClientRect = () =>
       ({ left: 20, top: 30, width: 44, height: 44 } as DOMRect);
-    let capturedEffect: string | undefined;
-    let capturedCentre = '';
-    document.startViewTransition = (update) => {
-      capturedEffect = document.documentElement.dataset.tmThemeEffect;
-      capturedCentre =
-        document.documentElement.style.getPropertyValue('--tm-theme-x');
-      return startSuccessfulTransition(update);
-    };
     await changeThemeWithTransition(theme, setTheme, origin);
-    expect(capturedEffect).toBe('glow');
-    expect(capturedCentre).toBe('42px');
-    expect(animate).toHaveBeenCalledTimes(2);
+    expect(animate).toHaveBeenCalledTimes(1);
     const frames = animate.mock.calls[0][0];
-    const radii = frames.map((frame) =>
-      parseFloat(String(frame['--tm-theme-radius']))
-    );
     const farthest = Math.hypot(
       Math.max(42, window.innerWidth - 42),
       Math.max(52, window.innerHeight - 52)
     );
-    expect(theme === 'light' ? radii[0] : radii[1]).toBeLessThan(0);
-    expect(theme === 'light' ? radii[1] : radii[0]).toBeGreaterThan(farthest);
-    expect(animate.mock.calls[1][0]).toEqual(frames);
-    expect(animate.mock.calls[0][1].pseudoElement).toBe(
+    const zeroClip = 'circle(0px at 42px 52px)';
+    const fullClip = `circle(${farthest}px at 42px 52px)`;
+    expect(frames).toEqual(
       theme === 'light'
-        ? '::view-transition-new(root)'
-        : '::view-transition-old(root)'
+        ? [{ clipPath: zeroClip }, { clipPath: fullClip }]
+        : [{ clipPath: fullClip }, { clipPath: zeroClip }]
     );
-    for (const [, options] of animate.mock.calls)
-      expect(options).toMatchObject({ duration: 500, fill: 'forwards' });
-    expect(document.documentElement.dataset.tmThemeEffect).toBeUndefined();
-    expect(
-      document.documentElement.style.getPropertyValue('--tm-theme-x')
-    ).toBe('');
-    expect(
-      document.documentElement.style.getPropertyValue('--tm-theme-y')
-    ).toBe('');
-    expect(
-      document.documentElement.style.getPropertyValue('--tm-theme-softness')
-    ).toBe('');
+    expect(animate.mock.calls[0][1]).toMatchObject({
+      duration: 420,
+      fill: 'forwards',
+      easing: 'cubic-bezier(.22,1,.36,1)',
+      pseudoElement:
+        theme === 'light'
+          ? '::view-transition-new(root)'
+          : '::view-transition-old(root)',
+    });
   }
 );
 
-test('reduced motion cancels both active circular glow layers', async () => {
-  enableGlow();
+test('reduced motion cancels the active circular clip-path animation', async () => {
   document.startViewTransition = startSuccessfulTransition;
   const first = deferred();
-  const second = deferred();
   const started = deferred();
   const cancelFirst = jest.fn(first.resolve);
-  const cancelSecond = jest.fn(second.resolve);
-  animate.mockImplementationOnce(() => ({
-    finished: first.promise,
-    cancel: cancelFirst,
-  }));
   animate.mockImplementationOnce(() => {
     started.resolve();
-    return { finished: second.promise, cancel: cancelSecond };
+    return {
+      finished: first.promise,
+      cancel: cancelFirst,
+    };
   });
   const pending = changeThemeWithTransition('light', setTheme, origin);
   await started.promise;
@@ -320,17 +303,6 @@ test('reduced motion cancels both active circular glow layers', async () => {
   motionChange();
   await pending;
   expect(cancelFirst).toHaveBeenCalled();
-  expect(cancelSecond).toHaveBeenCalled();
   expect(document.documentElement).toHaveClass('light');
-  expect(document.documentElement.dataset.tmThemeEffect).toBeUndefined();
   expect(origin).not.toHaveAttribute('data-tm-theme-origin');
-});
-
-test('missing mask support retains the original circle without the glow enhancement', async () => {
-  enableGlow(false);
-  document.startViewTransition = startSuccessfulTransition;
-  await changeThemeWithTransition('light', setTheme, origin);
-  expect(animate).toHaveBeenCalledTimes(1);
-  expect(animate.mock.calls[0][0][0].clipPath).toContain('circle(0px');
-  expect(document.documentElement).toHaveClass('light');
 });

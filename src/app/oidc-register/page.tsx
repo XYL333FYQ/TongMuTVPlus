@@ -183,7 +183,13 @@ function OIDCRegisterPageClient() {
 
 export default function OIDCRegisterPage() {
   return (
-    <Suspense fallback={<div>Loading...</div>}>
+    <Suspense
+      fallback={
+        <div className='tm-public-feedback' role='status'>
+          正在加载…
+        </div>
+      }
+    >
       <OIDCRegisterPageClient />
     </Suspense>
   );

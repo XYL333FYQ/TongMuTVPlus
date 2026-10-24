@@ -44,13 +44,13 @@ html[data-tm-no-blur='true'] .tm-glass {
   scale: 0.97;
 }
 
-/* —— 骨架屏：400ms 后才出现，避免快速加载时闪一下 —— */
+/* —— 骨架屏：180ms 后才出现，避免瞬时缓存闪一下，同时保证加载反馈及时可见 —— */
 .tm-skeleton {
   position: relative;
   overflow: hidden;
   background: var(--tm-surface-raised);
   opacity: 0;
-  animation: tm-skeleton-appear 0s 400ms forwards;
+  animation: tm-skeleton-appear 0s 180ms forwards;
 }
 .tm-skeleton::after {
   content: '';
@@ -64,7 +64,7 @@ html[data-tm-no-blur='true'] .tm-glass {
     transparent
   );
   transform: translateX(-100%);
-  animation: tm-skeleton-sweep 1.6s var(--tm-ease-in-out) 400ms infinite;
+  animation: tm-skeleton-sweep 1.5s var(--tm-ease-in-out) 180ms infinite;
 }
 @keyframes tm-skeleton-appear {
   to {
@@ -465,12 +465,7 @@ input:disabled ~ .tm-switch-thumb {
   }
 }
 
-/* —— 主题切换按钮与圆形扩散过渡 —— */
-@property --tm-theme-radius {
-  syntax: '<length>';
-  inherits: false;
-  initial-value: 0px;
-}
+/* —— 主题切换按钮与「日冕形态 ⇄ 月神形态」圆形结界过渡 —— */
 .tm-theme-toggle,
 .tm-theme-toggle-placeholder {
   width: 44px;
@@ -499,22 +494,89 @@ input:disabled ~ .tm-switch-thumb {
   transition: opacity var(--tm-d-hover) var(--tm-ease-out),
     transform var(--tm-d-hover) var(--tm-ease-out);
 }
+.tm-theme-emblem {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--tm-radius-full);
+}
+.tm-theme-emblem-orbit {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  transform: scale(0.82);
+  transition: opacity var(--tm-d-hover) var(--tm-ease-out),
+    transform var(--tm-d-hover) var(--tm-ease-out);
+}
+/* 日冕星轨（待唤醒浅色）与月神弦轨（待唤醒深色） */
+.tm-theme-toggle[data-tm-celestial='solar'] .tm-theme-emblem-orbit {
+  border: 1px dashed color-mix(in srgb, var(--tm-text) 34%, transparent);
+  box-shadow: inset 0 0 8px color-mix(in srgb, var(--tm-text) 14%, transparent);
+}
+.tm-theme-toggle[data-tm-celestial='lunar'] .tm-theme-emblem-orbit {
+  border: 1px solid color-mix(in srgb, var(--tm-text) 28%, transparent);
+  box-shadow: inset -2px -1px 0 0
+    color-mix(in srgb, var(--tm-text) 42%, transparent);
+}
+.tm-theme-emblem-core {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  transition: transform var(--tm-d-hover) var(--tm-ease-out);
+}
 @media (hover: hover) and (pointer: fine) {
   .tm-theme-toggle:hover::before {
     opacity: 1;
     transform: none;
   }
+  .tm-theme-toggle:hover .tm-theme-emblem-orbit {
+    opacity: 0.85;
+    transform: scale(1);
+  }
+  .tm-theme-toggle[data-tm-celestial='solar']:hover .tm-theme-emblem-core {
+    transform: rotate(18deg) scale(1.05);
+  }
+  .tm-theme-toggle[data-tm-celestial='lunar']:hover .tm-theme-emblem-core {
+    transform: rotate(-14deg) scale(1.05);
+  }
 }
-.tm-theme-toggle:focus-visible::before {
+.tm-theme-toggle:focus-visible::before,
+.tm-theme-toggle[data-tm-theme-origin='true']::before {
   opacity: 1;
   transform: none;
+}
+.tm-theme-toggle[data-tm-theme-origin='true'] .tm-theme-emblem-orbit {
+  opacity: 1;
+  transform: scale(1.06);
+}
+/* 过渡期间锁死全站普通 DOM 的颜色/背景/边框过渡与骨架动画，彻底消除首帧重绘与 1ms 抖动掉帧 */
+html[data-tm-theme-transition] *,
+html[data-tm-theme-transition] *::before,
+html[data-tm-theme-transition] *::after {
+  transition-property: none !important;
+  transition-duration: 0s !important;
+}
+html[data-tm-theme-transition] .tm-skeleton::after {
+  animation-play-state: paused !important;
 }
 [data-tm-theme-origin='true'] {
   view-transition-name: tm-theme-control;
 }
-.tm-theme-toggle[data-tm-theme-origin='true'] {
-  /* 快照自带底色，关灯时白色图标也能与尚未收拢的亮面区分。 */
-  background: var(--tm-surface);
+[data-tm-theme-aura='true'] {
+  position: fixed;
+  left: var(--tm-theme-x, 50vw);
+  top: var(--tm-theme-y, 50vh);
+  width: 2px;
+  height: 2px;
+  margin-left: -1px;
+  margin-top: -1px;
+  pointer-events: none;
+  opacity: 0;
+  view-transition-name: tm-theme-aura;
 }
 html[data-tm-theme-transition='circle']::view-transition {
   pointer-events: none;
@@ -523,55 +585,183 @@ html[data-tm-theme-transition='circle']::view-transition-group(
     tm-theme-control
   ) {
   z-index: 2;
-  animation: none;
+  animation: tm-theme-origin-pulse 420ms var(--tm-ease-out) both;
 }
+/* 日冕 ⇄ 月神 法相无缝旋转交接：0ms 同频起手，无切换空档与剪辑感 */
 html[data-tm-theme-transition='circle']::view-transition-old(tm-theme-control) {
-  animation: tm-theme-control-out var(--tm-d-hover) var(--tm-ease-out) both;
+  animation: tm-theme-solar-out 360ms var(--tm-ease-out) both;
   mix-blend-mode: normal;
 }
 html[data-tm-theme-transition='circle']::view-transition-new(tm-theme-control) {
-  animation: tm-theme-control-in var(--tm-d-panel) var(--tm-ease-out) both;
+  animation: tm-theme-solar-in 420ms var(--tm-ease-out) both;
   mix-blend-mode: normal;
 }
-@keyframes tm-theme-control-out {
-  from {
-    opacity: 1;
-    transform: none;
+html[data-tm-theme-transition='circle'][data-tm-theme-target='dark']::view-transition-old(
+    tm-theme-control
+  ) {
+  animation-name: tm-theme-lunar-out;
+}
+html[data-tm-theme-transition='circle'][data-tm-theme-target='dark']::view-transition-new(
+    tm-theme-control
+  ) {
+  animation-name: tm-theme-lunar-in;
+}
+@keyframes tm-theme-origin-pulse {
+  0% {
+    filter: brightness(1);
   }
-  to {
-    opacity: 0;
-    transform: translateY(-4px) scale(0.9);
+  38% {
+    filter: brightness(1.16);
+  }
+  100% {
+    filter: brightness(1);
   }
 }
-@keyframes tm-theme-control-in {
+@keyframes tm-theme-solar-out {
+  from {
+    opacity: 1;
+    transform: rotate(0deg) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: rotate(100deg) scale(0.42);
+  }
+}
+@keyframes tm-theme-solar-in {
   from {
     opacity: 0;
-    transform: translateY(4px) scale(0.9);
+    transform: rotate(-100deg) scale(0.42);
   }
   to {
     opacity: 1;
-    transform: none;
+    transform: rotate(0deg) scale(1);
+  }
+}
+@keyframes tm-theme-lunar-out {
+  from {
+    opacity: 1;
+    transform: rotate(0deg) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: rotate(-100deg) scale(0.42);
+  }
+}
+@keyframes tm-theme-lunar-in {
+  from {
+    opacity: 0;
+    transform: rotate(100deg) scale(0.42);
+  }
+  to {
+    opacity: 1;
+    transform: rotate(0deg) scale(1);
+  }
+}
+/*
+ * 日冕破晓波前 / 月神蚀日星环（纯 GPU Compositor 缩放层）：
+ * 半径设为 1.08 * R，使得 92.59% 处恰好在每一帧严格贴合 clip-path 边界，
+ * 用柔亮日冕/月华能量带完全包裹几何裁切线，消除数字剪辑硬边，且下方文字保持 100% 锐利。
+ */
+html[data-tm-theme-transition='circle']::view-transition-old(tm-theme-aura),
+html[data-tm-theme-transition='circle']::view-transition-new(tm-theme-aura) {
+  display: none;
+}
+html[data-tm-theme-transition='circle']::view-transition-group(tm-theme-aura) {
+  z-index: 1;
+  position: fixed;
+  top: var(--tm-theme-y, 50vh);
+  left: var(--tm-theme-x, 50vw);
+  width: calc(var(--tm-theme-r, 100vmax) * 2.16);
+  height: calc(var(--tm-theme-r, 100vmax) * 2.16);
+  margin-top: calc(var(--tm-theme-r, 100vmax) * -1.08);
+  margin-left: calc(var(--tm-theme-r, 100vmax) * -1.08);
+  border-radius: var(--tm-radius-full);
+  pointer-events: none;
+  contain: layout style paint;
+  will-change: transform, opacity;
+  background: radial-gradient(
+    circle,
+    transparent 0% 76%,
+    color-mix(in srgb, var(--tm-on-art) 16%, transparent) 80.5%,
+    transparent 82.5% 88.5%,
+    color-mix(in srgb, var(--tm-on-art) 32%, transparent) 91.5%,
+    color-mix(in srgb, var(--tm-on-art) 82%, transparent) 92.6%,
+    color-mix(in srgb, var(--tm-on-art) 28%, transparent) 94.4%,
+    transparent 98% 100%
+  );
+  animation: tm-theme-corona-expand 420ms var(--tm-ease-out) both;
+}
+html[data-tm-theme-transition='circle'][data-tm-theme-target='dark']::view-transition-group(
+    tm-theme-aura
+  ) {
+  background: radial-gradient(
+    circle,
+    transparent 0% 77%,
+    color-mix(in srgb, var(--tm-on-art) 14%, transparent) 81%,
+    transparent 83% 89%,
+    color-mix(in srgb, var(--tm-on-art) 26%, transparent) 91.4%,
+    color-mix(in srgb, var(--tm-on-art) 76%, transparent) 92.6%,
+    color-mix(in srgb, var(--tm-video-bg) 48%, transparent) 95.2%,
+    transparent 98.5% 100%
+  );
+  animation: tm-theme-lunar-retract 420ms var(--tm-ease-out) both;
+}
+@keyframes tm-theme-corona-expand {
+  0% {
+    opacity: 0.9;
+    transform: scale(0.015);
+  }
+  78% {
+    opacity: 0.92;
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1);
+  }
+}
+@keyframes tm-theme-lunar-retract {
+  0% {
+    opacity: 0;
+    transform: scale(1);
+  }
+  14% {
+    opacity: 0.92;
+  }
+  88% {
+    opacity: 0.95;
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.015);
   }
 }
 html[data-tm-reduced-motion='true']::view-transition-old(root),
 html[data-tm-reduced-motion='true']::view-transition-new(root),
 html[data-tm-reduced-motion='true']::view-transition-old(tm-theme-control),
-html[data-tm-reduced-motion='true']::view-transition-new(tm-theme-control) {
+html[data-tm-reduced-motion='true']::view-transition-new(tm-theme-control),
+html[data-tm-reduced-motion='true']::view-transition-group(tm-theme-control),
+html[data-tm-reduced-motion='true']::view-transition-group(tm-theme-aura) {
   animation: none !important;
 }
-html[data-tm-reduced-motion='true'] .tm-theme-toggle::before {
-  transform: none;
+html[data-tm-reduced-motion='true'] .tm-theme-toggle::before,
+html[data-tm-reduced-motion='true'] .tm-theme-emblem-orbit,
+html[data-tm-reduced-motion='true'] .tm-theme-emblem-core {
+  transform: none !important;
   transition-duration: var(--tm-d-press);
 }
 @media (prefers-reduced-motion: reduce) {
   ::view-transition-old(root),
   ::view-transition-new(root),
   ::view-transition-old(tm-theme-control),
-  ::view-transition-new(tm-theme-control) {
+  ::view-transition-new(tm-theme-control),
+  ::view-transition-group(tm-theme-control),
+  ::view-transition-group(tm-theme-aura) {
     animation: none !important;
   }
-  .tm-theme-toggle::before {
-    transform: none;
+  .tm-theme-toggle::before,
+  .tm-theme-emblem-orbit,
+  .tm-theme-emblem-core {
+    transform: none !important;
     transition-duration: var(--tm-d-press);
   }
 }
@@ -579,6 +769,8 @@ html[data-tm-theme-transition='circle']::view-transition-old(root),
 html[data-tm-theme-transition='circle']::view-transition-new(root) {
   animation: none;
   mix-blend-mode: normal;
+  contain: paint;
+  will-change: clip-path;
 }
 html[data-tm-theme-transition='circle']::view-transition-old(root) {
   z-index: 0;
@@ -595,50 +787,6 @@ html[data-tm-theme-transition='circle'][data-tm-theme-target='dark']::view-trans
     root
   ) {
   z-index: 0;
-}
-
-/* 保留按钮圆心与圆弧形态，只让交界透出柔光和一圈很弱的同心回波。 */
-html[data-tm-theme-effect='glow']::view-transition-image-pair(root) {
-  background: color-mix(in srgb, var(--tm-on-art) 70%, var(--tm-video-bg));
-}
-html[data-tm-theme-effect='glow']::view-transition-old(root),
-html[data-tm-theme-effect='glow']::view-transition-new(root) {
-  --tm-theme-mask-in: radial-gradient(
-    circle at var(--tm-theme-x) var(--tm-theme-y),
-    var(--tm-on-art)
-      max(0px, calc(var(--tm-theme-radius) - var(--tm-theme-softness))),
-    transparent
-      max(0px, calc(var(--tm-theme-radius) + var(--tm-theme-softness))),
-    color-mix(in srgb, var(--tm-on-art) 8%, transparent)
-      max(0px, calc(var(--tm-theme-radius) + var(--tm-theme-softness) * 2)),
-    transparent
-      max(0px, calc(var(--tm-theme-radius) + var(--tm-theme-softness) * 3))
-  );
-  --tm-theme-mask-out: radial-gradient(
-    circle at var(--tm-theme-x) var(--tm-theme-y),
-    transparent
-      max(0px, calc(var(--tm-theme-radius) - var(--tm-theme-softness))),
-    var(--tm-on-art)
-      max(0px, calc(var(--tm-theme-radius) + var(--tm-theme-softness))),
-    color-mix(in srgb, var(--tm-on-art) 92%, transparent)
-      max(0px, calc(var(--tm-theme-radius) + var(--tm-theme-softness) * 2)),
-    var(--tm-on-art)
-      max(0px, calc(var(--tm-theme-radius) + var(--tm-theme-softness) * 3))
-  );
-  mask-mode: alpha;
-  mask-repeat: no-repeat;
-}
-html[data-tm-theme-effect='glow']::view-transition-new(root),
-html[data-tm-theme-effect='glow'][data-tm-theme-target='dark']::view-transition-old(
-    root
-  ) {
-  mask-image: var(--tm-theme-mask-in);
-}
-html[data-tm-theme-effect='glow']::view-transition-old(root),
-html[data-tm-theme-effect='glow'][data-tm-theme-target='dark']::view-transition-new(
-    root
-  ) {
-  mask-image: var(--tm-theme-mask-out);
 }
 
 /* 减少动态：去掉位移与缩放，只留淡入淡出 */

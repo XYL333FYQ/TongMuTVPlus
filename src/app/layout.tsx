@@ -472,12 +472,7 @@ export default async function RootLayout({
           )}
       </head>
       <body className='tm-app min-h-screen'>
-        <ThemeProvider
-          attribute='class'
-          defaultTheme='dark'
-          enableSystem
-          disableTransitionOnChange
-        >
+        <ThemeProvider attribute='class' defaultTheme='dark' enableSystem>
           <TopProgressBar />
           <RouteScrollReset />
           <TokenRefreshManager />

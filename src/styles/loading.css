@@ -462,7 +462,20 @@ html .tm-loading .mtv-grid-dead .mtv-panel {
   border-color: var(--tm-line);
   color: var(--tm-muted);
 }
-html .tm-loading .mtv-panel::before,
+html .tm-loading .mtv-panel::before {
+  display: none;
+}
+html .tm-loading[data-tm-loading-state='loading'] .mtv-panel.cur::before {
+  content: '';
+  display: block;
+  position: absolute;
+  inset: -4px;
+  border-radius: var(--tm-radius-md);
+  border: 1.5px solid color-mix(in srgb, var(--tm-text) 42%, transparent);
+  box-shadow: none;
+  pointer-events: none;
+  animation: mtv-spark-ring 1.6s var(--tm-ease-out) infinite;
+}
 html .tm-loading .mtv-bubble::before,
 html .tm-loading .mtv-bubble::after {
   display: none;
@@ -520,15 +533,63 @@ html .tm-loading .mtv-tal-circle {
   height: var(--mtv-tal-s);
   overflow: hidden;
   border-radius: var(--tm-radius-full);
-  background: var(--tm-surface-raised);
+  background: radial-gradient(
+    circle at 50% 50%,
+    var(--tm-surface-raised) 0%,
+    color-mix(in srgb, var(--tm-surface-raised) 72%, transparent) 68%,
+    transparent 100%
+  );
 }
-html .tm-loading :is(.mtv-tal-ticks, .mtv-tal-line) {
+/* 精密黑白灰双环星轨：外圈 24 格细刻度慢旋，内圈流光圆弧快旋 */
+html .tm-loading .mtv-tal-ticks {
+  inset: 0;
   border: 0;
-  background: none;
   box-shadow: none;
   filter: none;
-  opacity: 1;
-  animation: none;
+  opacity: 0.72;
+  background: repeating-conic-gradient(
+    from 0deg,
+    color-mix(in srgb, var(--tm-text) 48%, transparent) 0 1deg,
+    transparent 1deg 15deg
+  );
+  -webkit-mask: radial-gradient(
+    circle,
+    transparent 63%,
+    var(--tm-text) 64% 70%,
+    transparent 71%
+  );
+  mask: radial-gradient(
+    circle,
+    transparent 63%,
+    var(--tm-text) 64% 70%,
+    transparent 71%
+  );
+  animation: mtv-spin 22s linear infinite;
+}
+html .tm-loading .mtv-tal-line {
+  inset: calc(var(--mtv-tal-s) * 24 / 150);
+  border: 0;
+  box-shadow: none;
+  filter: none;
+  opacity: 0.92;
+  background: conic-gradient(
+    from 0deg,
+    color-mix(in srgb, var(--tm-text) 12%, transparent) 0deg 140deg,
+    color-mix(in srgb, var(--tm-text) 36%, transparent) 250deg,
+    var(--tm-text) 348deg,
+    color-mix(in srgb, var(--tm-text) 12%, transparent) 360deg
+  );
+  -webkit-mask: radial-gradient(
+    farthest-side,
+    transparent calc(100% - 2px),
+    var(--tm-text) calc(100% - 1.5px)
+  );
+  mask: radial-gradient(
+    farthest-side,
+    transparent calc(100% - 2px),
+    var(--tm-text) calc(100% - 1.5px)
+  );
+  animation: mtv-spin 1.65s linear infinite;
 }
 html .tm-loading .mtv-tal-core {
   position: absolute;
@@ -579,7 +640,7 @@ html .tm-loading .mtv-tal-bar i {
   box-shadow: none;
   filter: none;
   animation: none;
-  transition: none;
+  transition: width 320ms var(--tm-ease-out);
 }
 html .tm-loading .mtv-tal-bar i::after {
   content: '';
@@ -592,14 +653,15 @@ html .tm-loading .mtv-tal-bar i::after {
   background: linear-gradient(
     90deg,
     transparent,
-    color-mix(in srgb, var(--mtv-acc) 45%, var(--tm-surface-raised))
+    color-mix(in srgb, var(--tm-accent-contrast) 42%, transparent),
+    transparent
   );
-  animation: mtv-tal-flow 1.2s linear infinite;
-  display: none;
+  animation: mtv-tal-flow 1.35s var(--tm-ease-in-out) infinite;
+  display: block;
 }
 html .tm-loading[data-tm-loading-state='loading'] {
   opacity: 0;
-  animation: tm-loading-appear 0s 400ms forwards !important;
+  animation: tm-loading-appear 0s 150ms forwards !important;
 }
 html
   .tm-loading
@@ -670,13 +732,44 @@ html .tm-loading .tm-loading-classic-symbol {
   transform: translateX(-50%);
   pointer-events: none;
 }
+html
+  .tm-loading[data-tm-loading-state='loading']
+  .tm-loading-classic-symbol::before {
+  content: '';
+  position: absolute;
+  inset: 14px;
+  border-radius: var(--tm-radius-full);
+  background: conic-gradient(
+    from 0deg,
+    color-mix(in srgb, var(--tm-text) 12%, transparent) 0deg 160deg,
+    var(--tm-text) 345deg,
+    color-mix(in srgb, var(--tm-text) 12%, transparent) 360deg
+  );
+  -webkit-mask: radial-gradient(
+    farthest-side,
+    transparent calc(100% - 2px),
+    var(--tm-text) calc(100% - 1.5px)
+  );
+  mask: radial-gradient(
+    farthest-side,
+    transparent calc(100% - 2px),
+    var(--tm-text) calc(100% - 1.5px)
+  );
+  animation: mtv-spin 1.35s linear infinite;
+}
 html .tm-loading .tm-loading-classic-symbol svg {
   width: 32px;
   height: 32px;
 }
 html
   .tm-loading[data-tm-loading-state='error']
-  :is(.mtv-grid-panels, .mtv-tal-circle, .tm-loading-classic-symbol) {
+  :is(
+    .mtv-grid-panels,
+    .mtv-tal-circle,
+    .mtv-tal-ticks,
+    .mtv-tal-line,
+    .tm-loading-classic-symbol
+  ) {
   opacity: 1;
   animation: none !important;
 }
@@ -695,26 +788,44 @@ html .tm-loading[data-tm-loading-state='error'] ::after {
 }
 html[data-tm-reduced-motion='true']
   .tm-loading[data-tm-loading-state='loading'] {
-  animation: tm-loading-appear 0s 400ms forwards !important;
+  animation: tm-loading-appear 0s 150ms forwards !important;
 }
-html[data-tm-reduced-motion='true'] .tm-loading .mtv-tal-icon {
+html[data-tm-reduced-motion='true']
+  .tm-loading
+  :is(.mtv-tal-icon, .mtv-tal-ticks, .mtv-tal-line, .mtv-panel.cur) {
   animation: none !important;
   transform: none !important;
 }
 html[data-tm-reduced-motion='true']
   .tm-loading
-  :is(.mtv-panel, .mtv-tal-core, .tm-loading-classic-symbol)::after {
+  :is(
+    .mtv-panel,
+    .mtv-tal-core,
+    .tm-loading-classic-symbol,
+    .mtv-tal-bar i
+  )::after,
+html[data-tm-reduced-motion='true']
+  .tm-loading
+  :is(.mtv-panel.cur, .tm-loading-classic-symbol)::before {
   animation: none !important;
   display: none !important;
 }
 @media (prefers-reduced-motion: reduce) {
-  html .tm-loading .mtv-tal-icon {
+  html
+    .tm-loading
+    :is(.mtv-tal-icon, .mtv-tal-ticks, .mtv-tal-line, .mtv-panel.cur) {
     animation: none !important;
     transform: none !important;
   }
   html
     .tm-loading
-    :is(.mtv-panel, .mtv-tal-core, .tm-loading-classic-symbol)::after {
+    :is(
+      .mtv-panel,
+      .mtv-tal-core,
+      .tm-loading-classic-symbol,
+      .mtv-tal-bar i
+    )::after,
+  html .tm-loading :is(.mtv-panel.cur, .tm-loading-classic-symbol)::before {
     animation: none !important;
     display: none !important;
   }

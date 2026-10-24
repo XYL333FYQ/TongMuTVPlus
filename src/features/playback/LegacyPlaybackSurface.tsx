@@ -13305,7 +13305,13 @@ const FavoriteIcon = ({ filled }: { filled: boolean }) => {
 
 export default function PlayPage() {
   return (
-    <Suspense fallback={<div>Loading...</div>}>
+    <Suspense
+      fallback={
+        <div className='tm-public-feedback' role='status'>
+          正在加载播放器…
+        </div>
+      }
+    >
       <PlayPageClient />
     </Suspense>
   );

@@ -1,12 +1,24 @@
 # 界面改造进度
 
+## 2026-10-24 「日冕形态 ⇄ 月神形态」丝滑主题过渡与全站加载动效体系补齐
+
+- **主题切换「日冕形态 ⇄ 月神形态」无缝流转与锁帧优化**（`src/lib/theme-transition.ts`、`src/components/ThemeToggle.tsx`、`src/styles/primitives.css`、`src/app/layout.tsx`、`src/lib/theme-transition.test.ts`）：
+  - **性能锁帧（消除掉帧）**：移除 `src/app/layout.tsx` 中 `ThemeProvider` 的 `disableTransitionOnChange`（消除 `next-themes` 在动画第 1ms 插入又移除 `<style>` 引发的全站二次样式重算卡顿）；改由 `html[data-tm-theme-transition]` 在整个过渡周期内锁死普通 DOM 节点的 `transition` 并暂停骨架扫光；将 `--tm-ease-out` 读取前置到 `startViewTransition` 之前，消除 `await transition.ready` 后的同步样式计算阻塞。
+  - **视觉点缀与无缝衔接（消除剪辑感）**：`ThemeToggle` 升级为带星轨光环（`.tm-theme-emblem-orbit`）与核心法相（`.tm-theme-emblem-core`）的双生结构，新旧图标在 `::view-transition-old/new(tm-theme-control)` 中以 `0ms` 延迟同频交叉旋转（`±100deg` 缩放融合），消除切换空档；在 `::view-transition-group(tm-theme-aura)` 上通过 `2×2px` 零开销锚点挂载纯 GPU Compositor 缩放（`transform: scale(...)`）的日冕破晓波前与月神蚀日双环，使其 `92.6%` 能量脊线在每一帧精确包裹 `clip-path` 几何裁切线，既彻底隐藏一刀切的数字硬边，又保持页面文字与海报 100% 锐利无重影。
+- **全站加载动效体系激活与补齐**（`src/styles/loading.css`、`src/styles/layout.css`、`src/styles/tokens.css`、`src/app/douban/page.tsx`、`src/app/oidc-register/page.tsx`、`src/app/watch-room/page.tsx`、`src/features/playback/LegacyPlaybackSurface.tsx`）：
+  - 为整页加载状态 `.tm-public-feedback[role='status']` 挂载 40px 黑白灰同心星轨光学旋转环，并将 `watch-room`、`oidc-register`、`LegacyPlaybackSurface` 的 `<Suspense fallback>` 统一接入该光学加载态，为片库加载更多图标接入 `.tm-spin`。
+  - 解封并重塑 `src/styles/loading.css` 中 `LoadingStyle` 的三款播放器/直播专属加载动画（`talisman` 外圈 24 格细刻度慢旋 + 内圈流光圆弧快旋 + 进度条单色流光；`grid` 当前阶段格柔和脉冲外环；`classic` 中心图标外圈旋转光弧），并将首次显现延迟从 400ms 优化至 150ms ～ 180ms，适度提升 `--tm-skeleton-shine` 扫光可见度。
+  - 全部新增动画严格遵守黑白灰 `--tm-*` token 规范，并完整响应 `html[data-tm-reduced-motion='true']` 与 `prefers-reduced-motion: reduce`。
+- **验证**：`pnpm typecheck` 0 error；`pnpm lint` 0 error；`pnpm test` 87 套件 / 518 项全部通过；`pnpm format:check` 全部通过；`check-design.mjs` 违规 0 / TODO 0；浏览器在 1280 / 820 / 390 深浅主题下实测截图（`output/theme-loading-20261024/`）。
+
 ## 2026-10-24 清理旧项目残留、修复 DesignGridOverlay 报错、改造客户端安装指南与统一管理面板排版
 
 - 修复 `src/components/DesignGridOverlay.tsx` 中当浏览器自动填充或输入法触发无 `event.key` 的 `keydown` 事件时调用 `event.key.toLowerCase()` 抛出的 `TypeError` 运行时崩溃。
 - 彻底清除 `src/components/UserMenu.tsx` 中的「耻辱柱」弹窗与 `🐶` 按钮，以及 `DownloadManagementPanel.tsx`、`DownloadContext.tsx`、`m3u8-downloader.ts`、`file-system-access.d.ts` 共 4 个文件中的辱骂注释；移除播放页 `LegacyPlaybackSurface.tsx` 底部唤醒旧版客户端的「App 打开」「PC Client 打开」按钮。
 - 将账号菜单中的原「生态应用」改造为 `TongMuTV Plus` 专属的「客户端安装指南」（提供电脑桌面端、iOS/Android 手机端 PWA 安装说明及电视大屏端入口）；「电视访问」弹窗移除第三方绿色图标 `OrionTV` 标签页，保留原生「TVBox 订阅」与「Web 电视」双标签页。
 - 统一管理面板（`/admin`）排版与字号：`src/styles/tokens.css` 将 `[data-page='/admin']` 纳入 1700px+ 宽屏连续缩放体系；`src/app/admin/page.tsx` 外层容器改为全站统一的 `.tm-page-container`，页头改为 `.tm-page-head` + `.tm-page-title`；`src/styles/layout.css` 新增 `.tm-admin-page` 排版与动态字号规则，使管理面板与外部页面左右边缘及字号比例对齐。
-- 验证：`pnpm typecheck` 0 error；`pnpm lint` 0 error；`pnpm test` 87 套件 / 519 项通过；`pnpm format:check` 通过；`check-design.mjs` 新增违规 0；浏览器在 1280 / 820 / 390 深浅主题下实测通过，控制台 0 error。
+- 优化主题切换过渡动效（方案 A）：移除 `src/lib/theme-transition.ts` 与 `src/styles/primitives.css` 中造成半透明重影雾化感的 `glow` 径向羽化遮罩及负半径起手延迟，统一采用锐利的单层 `clip-path: circle(...)` 几何裁切（亮扩暗收，420ms `--tm-ease-out` 跟手缓动），并将按钮过渡态底色统一到原有 `::before` 胶囊层以消除跳闪。
+- 验证：`pnpm typecheck` 0 error；`pnpm lint` 0 error；`pnpm test` 全部通过；`pnpm format:check` 通过；`check-design.mjs` 新增违规 0；浏览器在 1280 / 820 / 390 深浅主题下实测通过，控制台 0 error。
 
 ## 2026-10-23 bug-hunter 余下问题清零、小窗可拖动、双账号走查
 

@@ -3,11 +3,12 @@
 import { isReducedMotionSetting } from './motion';
 
 export type ThemeSetting = 'dark' | 'light' | 'system';
+const DEFAULT_EASE_OUT = 'cubic-bezier(0.22, 1, 0.36, 1)';
 let request = 0;
 let activeTransition: TMViewTransition | undefined;
 let activeAnimation: Animation | undefined;
-let activeReveal: Animation | undefined;
 let activeOrigin: HTMLElement | undefined;
+let activeAura: HTMLSpanElement | undefined;
 
 function resolvesDark(theme: ThemeSetting) {
   return (
@@ -17,15 +18,29 @@ function resolvesDark(theme: ThemeSetting) {
   );
 }
 
+function mountThemeAura(x: number, y: number, radius: number) {
+  const root = document.documentElement;
+  root.style.setProperty('--tm-theme-x', `${x}px`);
+  root.style.setProperty('--tm-theme-y', `${y}px`);
+  root.style.setProperty('--tm-theme-r', `${radius}px`);
+  if (!document.body) return;
+  const aura = document.createElement('span');
+  aura.setAttribute('data-tm-theme-aura', 'true');
+  aura.setAttribute('aria-hidden', 'true');
+  document.body.appendChild(aura);
+  activeAura = aura;
+}
+
 function clearTransitionMarkers(root: HTMLElement) {
   delete root.dataset.tmThemeTransition;
   delete root.dataset.tmThemeTarget;
-  delete root.dataset.tmThemeEffect;
   root.style.removeProperty('--tm-theme-x');
   root.style.removeProperty('--tm-theme-y');
-  root.style.removeProperty('--tm-theme-softness');
+  root.style.removeProperty('--tm-theme-r');
   activeOrigin?.removeAttribute('data-tm-theme-origin');
   activeOrigin = undefined;
+  activeAura?.remove();
+  activeAura = undefined;
 }
 
 function applyTheme(
@@ -68,10 +83,8 @@ export async function changeThemeWithTransition(
 ): Promise<void> {
   const currentRequest = ++request;
   activeAnimation?.cancel();
-  activeReveal?.cancel();
   activeTransition?.skipTransition();
   activeAnimation = undefined;
-  activeReveal = undefined;
   activeTransition = undefined;
   const root = document.documentElement;
   clearTransitionMarkers(root);
@@ -85,7 +98,6 @@ export async function changeThemeWithTransition(
   const stopMovement = () => {
     if (isReducedMotionSetting() && currentRequest === request) {
       activeAnimation?.cancel();
-      activeReveal?.cancel();
       activeTransition?.skipTransition();
     }
   };
@@ -111,28 +123,15 @@ export async function changeThemeWithTransition(
         Math.max(x, window.innerWidth - x),
         Math.max(y, window.innerHeight - y)
       );
+      const easing =
+        getComputedStyle(root).getPropertyValue('--tm-ease-out').trim() ||
+        DEFAULT_EASE_OUT;
       root.dataset.tmThemeTransition = 'circle';
       root.dataset.tmThemeTarget = resolvesDark(theme) ? 'dark' : 'light';
-      const glow =
-        typeof CSS !== 'undefined' &&
-        'registerProperty' in CSS &&
-        CSS.supports(
-          'mask-image',
-          'radial-gradient(circle, currentColor, transparent)'
-        );
-      const softness = Math.max(
-        18,
-        Math.min(36, Math.min(window.innerWidth, window.innerHeight) * 0.03)
-      );
-      if (glow) {
-        root.dataset.tmThemeEffect = 'glow';
-        root.style.setProperty('--tm-theme-x', `${x}px`);
-        root.style.setProperty('--tm-theme-y', `${y}px`);
-        root.style.setProperty('--tm-theme-softness', `${softness}px`);
-      }
       // 只命名本次触发控件，让图标独立交接，避免双入口重名导致快照失败。
       origin.dataset.tmThemeOrigin = 'true';
       activeOrigin = origin;
+      mountThemeAura(x, y, radius);
       const transition = document.startViewTransition(update);
       activeTransition = transition;
       void transition.finished.catch(() => undefined);
@@ -141,39 +140,21 @@ export async function changeThemeWithTransition(
       if (currentRequest !== request || isReducedMotionSetting()) return;
       const dark = root.classList.contains('dark');
       root.dataset.tmThemeTarget = dark ? 'dark' : 'light';
-      // 圆心与方向沿用原圆弧，柔光额外留三倍边宽，确保结束时覆盖最远角。
-      const frames: Keyframe[] = glow
-        ? [
-            { '--tm-theme-radius': `${-softness * 3}px` },
-            { '--tm-theme-radius': `${radius + softness * 3}px` },
-          ]
-        : [
-            { clipPath: `circle(0px at ${x}px ${y}px)` },
-            { clipPath: `circle(${radius}px at ${x}px ${y}px)` },
-          ];
+      const frames: Keyframe[] = [
+        { clipPath: `circle(0px at ${x}px ${y}px)` },
+        { clipPath: `circle(${radius}px at ${x}px ${y}px)` },
+      ];
       if (dark) frames.reverse();
-      const options: KeyframeAnimationOptions = {
-        duration: 500,
-        fill: 'forwards',
-        easing:
-          getComputedStyle(root).getPropertyValue('--tm-ease-in-out').trim() ||
-          'ease-in-out',
-      };
       activeAnimation = root.animate(frames, {
-        ...options,
+        duration: 420,
+        fill: 'forwards',
+        easing,
         pseudoElement: dark
           ? '::view-transition-old(root)'
           : '::view-transition-new(root)',
       });
       void activeAnimation.finished.catch(() => undefined);
-      if (glow)
-        activeReveal = root.animate(frames, {
-          ...options,
-          pseudoElement: dark
-            ? '::view-transition-new(root)'
-            : '::view-transition-old(root)',
-        });
-      await Promise.all([activeAnimation.finished, activeReveal?.finished]);
+      await activeAnimation.finished;
       await transition.finished;
     } else if (document.body.animate) {
       activeAnimation = document.body.animate(
@@ -200,10 +181,8 @@ export async function changeThemeWithTransition(
     media.removeEventListener('change', stopMovement);
     if (currentRequest === request) {
       activeAnimation?.cancel();
-      activeReveal?.cancel();
       activeTransition?.skipTransition();
       activeAnimation = undefined;
-      activeReveal = undefined;
       activeTransition = undefined;
       clearTransitionMarkers(root);
     }

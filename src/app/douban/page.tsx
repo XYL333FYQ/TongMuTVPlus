@@ -922,7 +922,7 @@ function DoubanPageClient() {
                   onClick={() => setCurrentPage((value) => value + 1)}
                 >
                   {isLoadingMore ? (
-                    <RefreshCw size={16} aria-hidden />
+                    <RefreshCw size={16} className='tm-spin' aria-hidden />
                   ) : (
                     <ChevronDown size={16} aria-hidden />
                   )}

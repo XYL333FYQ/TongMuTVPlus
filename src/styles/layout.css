@@ -348,11 +348,65 @@ html[data-tm-no-blur='true'] .tm-fade-image {
   }
 }
 
-/* 整页加载 / 出错时的一行状态 */
+/* 整页加载 / 出错时的一行状态：role="status" 自动挂载黑白灰星轨光学加载环 */
 .tm-public-feedback {
   padding: 96px 16px;
   text-align: center;
   color: var(--tm-muted);
+}
+.tm-public-feedback[role='status'] {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  min-height: 42vh;
+  font-size: var(--tm-fs-caption);
+  letter-spacing: 0.02em;
+}
+.tm-public-feedback[role='status']::before {
+  content: '';
+  display: block;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--tm-radius-full);
+  background: conic-gradient(
+    from 0deg,
+    color-mix(in srgb, var(--tm-text) 10%, transparent) 0deg 90deg,
+    color-mix(in srgb, var(--tm-text) 28%, transparent) 210deg,
+    var(--tm-text) 345deg,
+    color-mix(in srgb, var(--tm-text) 10%, transparent) 360deg
+  );
+  -webkit-mask: radial-gradient(
+    farthest-side,
+    transparent calc(100% - 2.5px),
+    var(--tm-text) calc(100% - 2px)
+  );
+  mask: radial-gradient(
+    farthest-side,
+    transparent calc(100% - 2.5px),
+    var(--tm-text) calc(100% - 2px)
+  );
+  animation: tm-orbital-spin 1.1s linear infinite;
+}
+.tm-spin {
+  animation: tm-orbital-spin 1s linear infinite;
+}
+@keyframes tm-orbital-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+html[data-tm-reduced-motion='true'] .tm-public-feedback[role='status']::before,
+html[data-tm-reduced-motion='true'] .tm-spin {
+  animation: none !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  .tm-public-feedback[role='status']::before,
+  .tm-spin {
+    animation: none !important;
+  }
 }
 
 /* 访客页海报卡片与缺图占位 */
