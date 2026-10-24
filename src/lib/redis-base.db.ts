@@ -10,6 +10,7 @@ import {
   sortMusicV2History,
 } from './music-v2';
 import { RedisAdapter } from './redis-adapter';
+import { hashPassword as createPasswordHash, verifyPassword } from './password-hash';
 import { Favorite, IStorage, LocalSettingsSyncRecord, Notification, PlayRecord, PushSubscriptionRecord, SetLocalSettingsSyncOptions, SetLocalSettingsSyncResult, SkipConfig } from './types';
 import { userInfoCache } from './user-cache';
 import { dispatchNotificationChannels } from './notification-dispatch';
@@ -1129,13 +1130,10 @@ export abstract class BaseRedisStorage implements IStorage {
     return `oidc:sub:${oidcSub}`;
   }
 
-  // SHA256加密密码
+  // 用户密码哈希
   private async hashPassword(password: string): Promise<string> {
-    const encoder = new TextEncoder();
-    const data = encoder.encode(password);
-    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
+    // 加盐 PBKDF2，见 password-hash.ts；旧的 SHA-256 哈希在登录成功时自动升级
+    return createPasswordHash(password);
   }
 
   // 创建新用户（新版本）
@@ -1206,8 +1204,20 @@ export abstract class BaseRedisStorage implements IStorage {
       return false;
     }
 
-    const hashedPassword = await this.hashPassword(password);
-    return userInfo.password === hashedPassword;
+    const check = await verifyPassword(password, userInfo.password);
+    if (check.needsRehash) {
+      // 旧格式哈希：登录成功后换成加盐哈希，失败不影响本次登录
+      try {
+        const upgraded = await this.hashPassword(password);
+        await this.withRetry(() =>
+          this.adapter.hSet(this.userInfoKey(userName), 'password', upgraded)
+        );
+        userInfoCache?.delete(userName);
+      } catch (err) {
+        console.error('upgradePasswordHash error:', err);
+      }
+    }
+    return check.ok;
   }
 
   // 获取用户信息（新版本）

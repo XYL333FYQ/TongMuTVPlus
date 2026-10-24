@@ -26,6 +26,10 @@ import { MangaReadRecord, MangaShelfItem } from './manga.types';
 import { BookReadRecord, BookShelfItem } from './book.types';
 import { DatabaseAdapter } from './d1-adapter';
 import {
+  hashPassword as createPasswordHash,
+  verifyPassword,
+} from './password-hash';
+import {
   MusicV2HistoryRecord,
   MusicV2PlaylistItem,
   MusicV2PlaylistRecord,
@@ -417,11 +421,8 @@ export class PostgresStorage implements IStorage {
   // ==================== 用户管理 ====================
 
   private async hashPassword(password: string): Promise<string> {
-    const encoder = new TextEncoder();
-    const data = encoder.encode(password);
-    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
+    // 加盐 PBKDF2，见 password-hash.ts；旧的 SHA-256 哈希在登录成功时自动升级
+    return createPasswordHash(password);
   }
 
   async verifyUser(userName: string, password: string): Promise<boolean> {
@@ -444,8 +445,22 @@ export class PostgresStorage implements IStorage {
       if (!user || !user.password_hash) return false;
 
       // 使用 SHA-256 验证密码（与 Redis 保持一致）
-      const hashedPassword = await this.hashPassword(password);
-      return user.password_hash === hashedPassword;
+      const check = await verifyPassword(
+        password,
+        user.password_hash as string
+      );
+      if (check.needsRehash) {
+        // 旧格式哈希：登录成功后换成加盐哈希，失败不影响本次登录
+        try {
+          await this.db
+            .prepare('UPDATE users SET password_hash = $1 WHERE username = $2')
+            .bind(await this.hashPassword(password), userName)
+            .run();
+        } catch (err) {
+          console.error('PostgresStorage.upgradePasswordHash error:', err);
+        }
+      }
+      return check.ok;
     } catch (err) {
       console.error('PostgresStorage.verifyUser error:', err);
       return false;
@@ -788,8 +803,22 @@ export class PostgresStorage implements IStorage {
 
       if (!user) return false;
 
-      const hashedPassword = await this.hashPassword(password);
-      return user.password_hash === hashedPassword;
+      const check = await verifyPassword(
+        password,
+        user.password_hash as string
+      );
+      if (check.needsRehash) {
+        // 旧格式哈希：登录成功后换成加盐哈希，失败不影响本次登录
+        try {
+          await this.db
+            .prepare('UPDATE users SET password_hash = $1 WHERE username = $2')
+            .bind(await this.hashPassword(password), userName)
+            .run();
+        } catch (err) {
+          console.error('PostgresStorage.upgradePasswordHash error:', err);
+        }
+      }
+      return check.ok;
     } catch (err) {
       console.error('PostgresStorage.verifyUserV2 error:', err);
       return false;
@@ -1074,14 +1103,14 @@ export class PostgresStorage implements IStorage {
     }
   }
 
-
   async upsertPushSubscription(
     userName: string,
     subscription: PushSubscriptionRecord
   ): Promise<void> {
     try {
       await this.db
-        .prepare(`
+        .prepare(
+          `
           INSERT INTO notification_push_subscriptions (
             id, username, token_id, endpoint, p256dh, auth, user_agent, enabled,
             created_at, updated_at, last_success_at, last_failure_at, failure_count
@@ -1094,7 +1123,8 @@ export class PostgresStorage implements IStorage {
             user_agent = excluded.user_agent,
             enabled = 1,
             updated_at = excluded.updated_at
-        `)
+        `
+        )
         .bind(
           subscription.id,
           userName,
@@ -1114,10 +1144,14 @@ export class PostgresStorage implements IStorage {
     }
   }
 
-  async getEnabledPushSubscriptions(userName: string): Promise<PushSubscriptionRecord[]> {
+  async getEnabledPushSubscriptions(
+    userName: string
+  ): Promise<PushSubscriptionRecord[]> {
     try {
       const results = await this.db
-        .prepare('SELECT * FROM notification_push_subscriptions WHERE username = $1 AND enabled = 1')
+        .prepare(
+          'SELECT * FROM notification_push_subscriptions WHERE username = $1 AND enabled = 1'
+        )
         .bind(userName)
         .all();
 
@@ -1142,32 +1176,50 @@ export class PostgresStorage implements IStorage {
     }
   }
 
-  async deletePushSubscriptionByEndpoint(userName: string, endpoint: string): Promise<void> {
+  async deletePushSubscriptionByEndpoint(
+    userName: string,
+    endpoint: string
+  ): Promise<void> {
     try {
       await this.db
-        .prepare('DELETE FROM notification_push_subscriptions WHERE username = $1 AND endpoint = $2')
+        .prepare(
+          'DELETE FROM notification_push_subscriptions WHERE username = $1 AND endpoint = $2'
+        )
         .bind(userName, endpoint)
         .run();
     } catch (err) {
-      console.error('PostgresStorage.deletePushSubscriptionByEndpoint error:', err);
+      console.error(
+        'PostgresStorage.deletePushSubscriptionByEndpoint error:',
+        err
+      );
     }
   }
 
-  async deletePushSubscriptionsByTokenId(userName: string, tokenId: string): Promise<void> {
+  async deletePushSubscriptionsByTokenId(
+    userName: string,
+    tokenId: string
+  ): Promise<void> {
     try {
       await this.db
-        .prepare('DELETE FROM notification_push_subscriptions WHERE username = $1 AND token_id = $2')
+        .prepare(
+          'DELETE FROM notification_push_subscriptions WHERE username = $1 AND token_id = $2'
+        )
         .bind(userName, tokenId)
         .run();
     } catch (err) {
-      console.error('PostgresStorage.deletePushSubscriptionsByTokenId error:', err);
+      console.error(
+        'PostgresStorage.deletePushSubscriptionsByTokenId error:',
+        err
+      );
     }
   }
 
   async deleteAllPushSubscriptions(userName: string): Promise<void> {
     try {
       await this.db
-        .prepare('DELETE FROM notification_push_subscriptions WHERE username = $1')
+        .prepare(
+          'DELETE FROM notification_push_subscriptions WHERE username = $1'
+        )
         .bind(userName)
         .run();
     } catch (err) {
@@ -1184,17 +1236,24 @@ export class PostgresStorage implements IStorage {
       const now = Date.now();
       if (success) {
         await this.db
-          .prepare('UPDATE notification_push_subscriptions SET last_success_at = $1, failure_count = 0, updated_at = $2 WHERE username = $3 AND endpoint = $4')
+          .prepare(
+            'UPDATE notification_push_subscriptions SET last_success_at = $1, failure_count = 0, updated_at = $2 WHERE username = $3 AND endpoint = $4'
+          )
           .bind(now, now, userName, endpoint)
           .run();
       } else {
         await this.db
-          .prepare('UPDATE notification_push_subscriptions SET last_failure_at = $1, failure_count = failure_count + 1, updated_at = $2 WHERE username = $3 AND endpoint = $4')
+          .prepare(
+            'UPDATE notification_push_subscriptions SET last_failure_at = $1, failure_count = failure_count + 1, updated_at = $2 WHERE username = $3 AND endpoint = $4'
+          )
           .bind(now, now, userName, endpoint)
           .run();
       }
     } catch (err) {
-      console.error('PostgresStorage.updatePushSubscriptionDeliveryStats error:', err);
+      console.error(
+        'PostgresStorage.updatePushSubscriptionDeliveryStats error:',
+        err
+      );
     }
   }
 
@@ -1203,9 +1262,7 @@ export class PostgresStorage implements IStorage {
   async getTvboxSubscribeToken(userName: string): Promise<string | null> {
     try {
       const result = await this.db
-        .prepare(
-          'SELECT tvbox_subscribe_token FROM users WHERE username = $1'
-        )
+        .prepare('SELECT tvbox_subscribe_token FROM users WHERE username = $1')
         .bind(userName)
         .first();
 
@@ -1237,9 +1294,7 @@ export class PostgresStorage implements IStorage {
   async getUsernameByTvboxToken(token: string): Promise<string | null> {
     try {
       const result = await this.db
-        .prepare(
-          'SELECT username FROM users WHERE tvbox_subscribe_token = $1'
-        )
+        .prepare('SELECT username FROM users WHERE tvbox_subscribe_token = $1')
         .bind(token)
         .first();
 
@@ -3420,7 +3475,11 @@ export class PostgresStorage implements IStorage {
       if (opts.expectedVersion !== undefined) {
         const current = await this.getUserLocalSettings(userName);
         if (current && current.version !== opts.expectedVersion) {
-          return { ok: false, version: current.version, updatedAt: current.updatedAt };
+          return {
+            ok: false,
+            version: current.version,
+            updatedAt: current.updatedAt,
+          };
         }
         version = current ? current.version + 1 : 1;
       } else {
@@ -3549,8 +3608,9 @@ export class PostgresStorage implements IStorage {
     }
   }
 
-
-  private mapTelegramBinding(row: any): import('./types').TelegramBindingRecord {
+  private mapTelegramBinding(
+    row: any
+  ): import('./types').TelegramBindingRecord {
     return {
       username: row.username as string,
       telegramUserId: String(row.telegram_user_id),
@@ -3558,13 +3618,16 @@ export class PostgresStorage implements IStorage {
       telegramUsername: (row.telegram_username as string | null) || null,
       firstName: (row.first_name as string | null) || null,
       lastName: (row.last_name as string | null) || null,
-      notificationsEnabled: row.notifications_enabled === 1 || row.notifications_enabled === true,
+      notificationsEnabled:
+        row.notifications_enabled === 1 || row.notifications_enabled === true,
       boundAt: Number(row.bound_at),
       updatedAt: Number(row.updated_at),
     };
   }
 
-  async getTelegramBinding(userName: string): Promise<import('./types').TelegramBindingRecord | null> {
+  async getTelegramBinding(
+    userName: string
+  ): Promise<import('./types').TelegramBindingRecord | null> {
     try {
       const row = await this.db
         .prepare('SELECT * FROM telegram_bindings WHERE username = $1')
@@ -3577,7 +3640,9 @@ export class PostgresStorage implements IStorage {
     }
   }
 
-  async getTelegramBindingByTelegramUserId(telegramUserId: string): Promise<import('./types').TelegramBindingRecord | null> {
+  async getTelegramBindingByTelegramUserId(
+    telegramUserId: string
+  ): Promise<import('./types').TelegramBindingRecord | null> {
     try {
       const row = await this.db
         .prepare('SELECT * FROM telegram_bindings WHERE telegram_user_id = $1')
@@ -3585,15 +3650,21 @@ export class PostgresStorage implements IStorage {
         .first();
       return row ? this.mapTelegramBinding(row) : null;
     } catch (err) {
-      console.error('PostgresStorage.getTelegramBindingByTelegramUserId error:', err);
+      console.error(
+        'PostgresStorage.getTelegramBindingByTelegramUserId error:',
+        err
+      );
       return null;
     }
   }
 
-  async upsertTelegramBinding(binding: import('./types').TelegramBindingRecord): Promise<void> {
+  async upsertTelegramBinding(
+    binding: import('./types').TelegramBindingRecord
+  ): Promise<void> {
     try {
       await this.db
-        .prepare(`
+        .prepare(
+          `
           INSERT INTO telegram_bindings (
             username, telegram_user_id, chat_id, telegram_username, first_name, last_name,
             notifications_enabled, bound_at, updated_at
@@ -3607,7 +3678,8 @@ export class PostgresStorage implements IStorage {
             notifications_enabled = EXCLUDED.notifications_enabled,
             bound_at = EXCLUDED.bound_at,
             updated_at = EXCLUDED.updated_at
-        `)
+        `
+        )
         .bind(
           binding.username,
           binding.telegramUserId,
@@ -3627,14 +3699,24 @@ export class PostgresStorage implements IStorage {
   }
 
   async deleteTelegramBindingByUsername(userName: string): Promise<void> {
-    await this.db.prepare('DELETE FROM telegram_bindings WHERE username = $1').bind(userName).run();
+    await this.db
+      .prepare('DELETE FROM telegram_bindings WHERE username = $1')
+      .bind(userName)
+      .run();
   }
 
-  async deleteTelegramBindingByTelegramUserId(telegramUserId: string): Promise<void> {
-    await this.db.prepare('DELETE FROM telegram_bindings WHERE telegram_user_id = $1').bind(telegramUserId).run();
+  async deleteTelegramBindingByTelegramUserId(
+    telegramUserId: string
+  ): Promise<void> {
+    await this.db
+      .prepare('DELETE FROM telegram_bindings WHERE telegram_user_id = $1')
+      .bind(telegramUserId)
+      .run();
   }
 
-  async getTelegramBindSession(code: string): Promise<import('./types').TelegramBindSessionRecord | null> {
+  async getTelegramBindSession(
+    code: string
+  ): Promise<import('./types').TelegramBindSessionRecord | null> {
     try {
       const row = await this.db
         .prepare('SELECT * FROM telegram_bind_sessions WHERE code = $1')
@@ -3654,10 +3736,13 @@ export class PostgresStorage implements IStorage {
     }
   }
 
-  async upsertTelegramBindSession(session: import('./types').TelegramBindSessionRecord): Promise<void> {
+  async upsertTelegramBindSession(
+    session: import('./types').TelegramBindSessionRecord
+  ): Promise<void> {
     try {
       await this.db
-        .prepare(`
+        .prepare(
+          `
           INSERT INTO telegram_bind_sessions (code, username, created_at, expires_at, used)
           VALUES ($1, $2, $3, $4, $5)
           ON CONFLICT(code) DO UPDATE SET
@@ -3665,8 +3750,15 @@ export class PostgresStorage implements IStorage {
             created_at = EXCLUDED.created_at,
             expires_at = EXCLUDED.expires_at,
             used = EXCLUDED.used
-        `)
-        .bind(session.code, session.username, session.createdAt, session.expiresAt, session.used ? 1 : 0)
+        `
+        )
+        .bind(
+          session.code,
+          session.username,
+          session.createdAt,
+          session.expiresAt,
+          session.used ? 1 : 0
+        )
         .run();
     } catch (err) {
       console.error('PostgresStorage.upsertTelegramBindSession error:', err);

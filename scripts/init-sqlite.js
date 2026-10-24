@@ -6,8 +6,18 @@ const crypto = require('crypto');
 const MIGRATIONS_DIR = path.join(__dirname, '../migrations');
 const MIGRATION_BASELINE_CUTOFF = '008_web_push_notifications.sql';
 
+// 与 src/lib/password-hash.ts 同一格式：加盐 PBKDF2-SHA256
 function hashPassword(password) {
-  return crypto.createHash('sha256').update(password).digest('hex');
+  const iterations = 100000;
+  const salt = crypto.randomBytes(16);
+  const hash = crypto.pbkdf2Sync(password, salt, iterations, 32, 'sha256');
+  return [
+    'pbkdf2',
+    'sha256',
+    iterations,
+    salt.toString('base64'),
+    hash.toString('base64'),
+  ].join('$');
 }
 
 function getSqliteDbPath() {
@@ -139,7 +149,13 @@ function runMigrations(db) {
 
 function ensureDefaultAdmin(db) {
   const username = process.env.USERNAME || 'admin';
-  const password = process.env.PASSWORD || '123456789';
+  const password = process.env.PASSWORD;
+  // 以前缺省密码是公开的 123456789，任何人都能用 admin 登录成站长。
+  // 没配 PASSWORD 时不建站长账号，提示站长先配置。
+  if (!password) {
+    console.warn('⚠️ 未设置 PASSWORD，跳过创建站长账号；配置后重启即可登录');
+    return;
+  }
   const passwordHash = hashPassword(password);
 
   const existingUser = db

@@ -24,6 +24,10 @@ import { MangaReadRecord, MangaShelfItem } from './manga.types';
 import { BookReadRecord, BookShelfItem } from './book.types';
 import { DatabaseAdapter } from './d1-adapter';
 import {
+  hashPassword as createPasswordHash,
+  verifyPassword,
+} from './password-hash';
+import {
   MusicV2HistoryRecord,
   MusicV2PlaylistItem,
   MusicV2PlaylistRecord,
@@ -85,7 +89,6 @@ export class D1Storage implements IStorage {
       }
     }
   }
-
 
   // ==================== 播放记录 ====================
 
@@ -1270,11 +1273,8 @@ export class D1Storage implements IStorage {
 
   // SHA256 加密密码（与 Redis 保持一致）
   private async hashPassword(password: string): Promise<string> {
-    const encoder = new TextEncoder();
-    const data = encoder.encode(password);
-    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
+    // 加盐 PBKDF2，见 password-hash.ts；旧的 SHA-256 哈希在登录成功时自动升级
+    return createPasswordHash(password);
   }
 
   async verifyUser(userName: string, password: string): Promise<boolean> {
@@ -1297,8 +1297,23 @@ export class D1Storage implements IStorage {
       if (!user || !user.password_hash) return false;
 
       // 使用 SHA-256 验证密码（与 Redis 保持一致）
-      const hashedPassword = await this.hashPassword(password);
-      return user.password_hash === hashedPassword;
+      const check = await verifyPassword(
+        password,
+        user.password_hash as string
+      );
+      if (check.needsRehash) {
+        // 旧格式哈希：登录成功后换成加盐哈希，失败不影响本次登录
+        try {
+          await this.db
+            .prepare('UPDATE users SET password_hash = ? WHERE username = ?')
+            .bind(await this.hashPassword(password), userName)
+            .run();
+          userInfoCache?.delete(userName);
+        } catch (err) {
+          console.error('D1Storage.upgradePasswordHash error:', err);
+        }
+      }
+      return check.ok;
     } catch (err) {
       console.error('D1Storage.verifyUser error:', err);
       return false;
@@ -1648,8 +1663,23 @@ export class D1Storage implements IStorage {
 
       if (!user) return false;
 
-      const hashedPassword = await this.hashPassword(password);
-      return user.password_hash === hashedPassword;
+      const check = await verifyPassword(
+        password,
+        user.password_hash as string
+      );
+      if (check.needsRehash) {
+        // 旧格式哈希：登录成功后换成加盐哈希，失败不影响本次登录
+        try {
+          await this.db
+            .prepare('UPDATE users SET password_hash = ? WHERE username = ?')
+            .bind(await this.hashPassword(password), userName)
+            .run();
+          userInfoCache?.delete(userName);
+        } catch (err) {
+          console.error('D1Storage.upgradePasswordHash error:', err);
+        }
+      }
+      return check.ok;
     } catch (err) {
       console.error('D1Storage.verifyUserV2 error:', err);
       return false;
@@ -1923,14 +1953,14 @@ export class D1Storage implements IStorage {
     }
   }
 
-
   async upsertPushSubscription(
     userName: string,
     subscription: PushSubscriptionRecord
   ): Promise<void> {
     try {
       const result = await this.db
-        .prepare(`
+        .prepare(
+          `
           INSERT INTO notification_push_subscriptions (
             id, username, token_id, endpoint, p256dh, auth, user_agent, enabled,
             created_at, updated_at, last_success_at, last_failure_at, failure_count
@@ -1943,7 +1973,8 @@ export class D1Storage implements IStorage {
             user_agent = excluded.user_agent,
             enabled = 1,
             updated_at = excluded.updated_at
-        `)
+        `
+        )
         .bind(
           subscription.id,
           userName,
@@ -1966,10 +1997,14 @@ export class D1Storage implements IStorage {
     }
   }
 
-  async getEnabledPushSubscriptions(userName: string): Promise<PushSubscriptionRecord[]> {
+  async getEnabledPushSubscriptions(
+    userName: string
+  ): Promise<PushSubscriptionRecord[]> {
     try {
       const results = await this.db
-        .prepare('SELECT * FROM notification_push_subscriptions WHERE username = ? AND enabled = 1')
+        .prepare(
+          'SELECT * FROM notification_push_subscriptions WHERE username = ? AND enabled = 1'
+        )
         .bind(userName)
         .all();
 
@@ -1994,10 +2029,15 @@ export class D1Storage implements IStorage {
     }
   }
 
-  async deletePushSubscriptionByEndpoint(userName: string, endpoint: string): Promise<void> {
+  async deletePushSubscriptionByEndpoint(
+    userName: string,
+    endpoint: string
+  ): Promise<void> {
     try {
       await this.db
-        .prepare('DELETE FROM notification_push_subscriptions WHERE username = ? AND endpoint = ?')
+        .prepare(
+          'DELETE FROM notification_push_subscriptions WHERE username = ? AND endpoint = ?'
+        )
         .bind(userName, endpoint)
         .run();
     } catch (err) {
@@ -2005,10 +2045,15 @@ export class D1Storage implements IStorage {
     }
   }
 
-  async deletePushSubscriptionsByTokenId(userName: string, tokenId: string): Promise<void> {
+  async deletePushSubscriptionsByTokenId(
+    userName: string,
+    tokenId: string
+  ): Promise<void> {
     try {
       await this.db
-        .prepare('DELETE FROM notification_push_subscriptions WHERE username = ? AND token_id = ?')
+        .prepare(
+          'DELETE FROM notification_push_subscriptions WHERE username = ? AND token_id = ?'
+        )
         .bind(userName, tokenId)
         .run();
     } catch (err) {
@@ -2019,7 +2064,9 @@ export class D1Storage implements IStorage {
   async deleteAllPushSubscriptions(userName: string): Promise<void> {
     try {
       await this.db
-        .prepare('DELETE FROM notification_push_subscriptions WHERE username = ?')
+        .prepare(
+          'DELETE FROM notification_push_subscriptions WHERE username = ?'
+        )
         .bind(userName)
         .run();
     } catch (err) {
@@ -2036,17 +2083,24 @@ export class D1Storage implements IStorage {
       const now = Date.now();
       if (success) {
         await this.db
-          .prepare('UPDATE notification_push_subscriptions SET last_success_at = ?, failure_count = 0, updated_at = ? WHERE username = ? AND endpoint = ?')
+          .prepare(
+            'UPDATE notification_push_subscriptions SET last_success_at = ?, failure_count = 0, updated_at = ? WHERE username = ? AND endpoint = ?'
+          )
           .bind(now, now, userName, endpoint)
           .run();
       } else {
         await this.db
-          .prepare('UPDATE notification_push_subscriptions SET last_failure_at = ?, failure_count = failure_count + 1, updated_at = ? WHERE username = ? AND endpoint = ?')
+          .prepare(
+            'UPDATE notification_push_subscriptions SET last_failure_at = ?, failure_count = failure_count + 1, updated_at = ? WHERE username = ? AND endpoint = ?'
+          )
           .bind(now, now, userName, endpoint)
           .run();
       }
     } catch (err) {
-      console.error('D1Storage.updatePushSubscriptionDeliveryStats error:', err);
+      console.error(
+        'D1Storage.updatePushSubscriptionDeliveryStats error:',
+        err
+      );
     }
   }
 
@@ -3434,7 +3488,11 @@ export class D1Storage implements IStorage {
       if (opts.expectedVersion !== undefined) {
         const current = await this.getUserLocalSettings(userName);
         if (current && current.version !== opts.expectedVersion) {
-          return { ok: false, version: current.version, updatedAt: current.updatedAt };
+          return {
+            ok: false,
+            version: current.version,
+            updatedAt: current.updatedAt,
+          };
         }
         version = current ? current.version + 1 : 1;
       } else {
@@ -3559,8 +3617,9 @@ export class D1Storage implements IStorage {
     }
   }
 
-
-  private mapTelegramBinding(row: any): import('./types').TelegramBindingRecord {
+  private mapTelegramBinding(
+    row: any
+  ): import('./types').TelegramBindingRecord {
     return {
       username: row.username as string,
       telegramUserId: String(row.telegram_user_id),
@@ -3574,7 +3633,9 @@ export class D1Storage implements IStorage {
     };
   }
 
-  async getTelegramBinding(userName: string): Promise<import('./types').TelegramBindingRecord | null> {
+  async getTelegramBinding(
+    userName: string
+  ): Promise<import('./types').TelegramBindingRecord | null> {
     try {
       const row = await this.db
         .prepare('SELECT * FROM telegram_bindings WHERE username = ?')
@@ -3587,7 +3648,9 @@ export class D1Storage implements IStorage {
     }
   }
 
-  async getTelegramBindingByTelegramUserId(telegramUserId: string): Promise<import('./types').TelegramBindingRecord | null> {
+  async getTelegramBindingByTelegramUserId(
+    telegramUserId: string
+  ): Promise<import('./types').TelegramBindingRecord | null> {
     try {
       const row = await this.db
         .prepare('SELECT * FROM telegram_bindings WHERE telegram_user_id = ?')
@@ -3600,10 +3663,13 @@ export class D1Storage implements IStorage {
     }
   }
 
-  async upsertTelegramBinding(binding: import('./types').TelegramBindingRecord): Promise<void> {
+  async upsertTelegramBinding(
+    binding: import('./types').TelegramBindingRecord
+  ): Promise<void> {
     try {
       await this.db
-        .prepare(`
+        .prepare(
+          `
           INSERT INTO telegram_bindings (
             username, telegram_user_id, chat_id, telegram_username, first_name, last_name,
             notifications_enabled, bound_at, updated_at
@@ -3617,7 +3683,8 @@ export class D1Storage implements IStorage {
             notifications_enabled = excluded.notifications_enabled,
             bound_at = excluded.bound_at,
             updated_at = excluded.updated_at
-        `)
+        `
+        )
         .bind(
           binding.username,
           binding.telegramUserId,
@@ -3637,14 +3704,24 @@ export class D1Storage implements IStorage {
   }
 
   async deleteTelegramBindingByUsername(userName: string): Promise<void> {
-    await this.db.prepare('DELETE FROM telegram_bindings WHERE username = ?').bind(userName).run();
+    await this.db
+      .prepare('DELETE FROM telegram_bindings WHERE username = ?')
+      .bind(userName)
+      .run();
   }
 
-  async deleteTelegramBindingByTelegramUserId(telegramUserId: string): Promise<void> {
-    await this.db.prepare('DELETE FROM telegram_bindings WHERE telegram_user_id = ?').bind(telegramUserId).run();
+  async deleteTelegramBindingByTelegramUserId(
+    telegramUserId: string
+  ): Promise<void> {
+    await this.db
+      .prepare('DELETE FROM telegram_bindings WHERE telegram_user_id = ?')
+      .bind(telegramUserId)
+      .run();
   }
 
-  async getTelegramBindSession(code: string): Promise<import('./types').TelegramBindSessionRecord | null> {
+  async getTelegramBindSession(
+    code: string
+  ): Promise<import('./types').TelegramBindSessionRecord | null> {
     try {
       const row = await this.db
         .prepare('SELECT * FROM telegram_bind_sessions WHERE code = ?')
@@ -3664,10 +3741,13 @@ export class D1Storage implements IStorage {
     }
   }
 
-  async upsertTelegramBindSession(session: import('./types').TelegramBindSessionRecord): Promise<void> {
+  async upsertTelegramBindSession(
+    session: import('./types').TelegramBindSessionRecord
+  ): Promise<void> {
     try {
       await this.db
-        .prepare(`
+        .prepare(
+          `
           INSERT INTO telegram_bind_sessions (code, username, created_at, expires_at, used)
           VALUES (?, ?, ?, ?, ?)
           ON CONFLICT(code) DO UPDATE SET
@@ -3675,8 +3755,15 @@ export class D1Storage implements IStorage {
             created_at = excluded.created_at,
             expires_at = excluded.expires_at,
             used = excluded.used
-        `)
-        .bind(session.code, session.username, session.createdAt, session.expiresAt, session.used ? 1 : 0)
+        `
+        )
+        .bind(
+          session.code,
+          session.username,
+          session.createdAt,
+          session.expiresAt,
+          session.used ? 1 : 0
+        )
         .run();
     } catch (err) {
       console.error('D1Storage.upsertTelegramBindSession error:', err);
