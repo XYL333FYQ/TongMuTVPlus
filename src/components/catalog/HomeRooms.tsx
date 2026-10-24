@@ -1,21 +1,29 @@
 'use client';
 
-import { Plus, Users } from 'lucide-react';
+import { ChevronRight, Plus, Users } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
 import SectionHeader from '@/components/catalog/SectionHeader';
 import { useWatchRoomContextSafe } from '@/components/WatchRoomProvider';
 
+import { displayRoomName } from '@/features/rooms/room-presentation';
+
 import type { Room } from '@/types/watch-room';
 
-type Summary = Pick<Room, 'id' | 'name' | 'memberCount'>;
+type Summary = Pick<Room, 'id' | 'name' | 'memberCount'> &
+  Partial<Pick<Room, 'ownerName' | 'ownerAccountId'>>;
 export default function HomeRooms({ guest = false }: { guest?: boolean }) {
   const context = useWatchRoomContextSafe();
   const [rooms, setRooms] = useState<Summary[]>([]);
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(!guest && Boolean(context?.isEnabled));
   useEffect(() => {
-    if (guest || !context?.isEnabled) return;
+    if (guest || !context?.isEnabled) {
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
     const controller = new AbortController();
     const refresh = async () => {
       try {
@@ -31,6 +39,8 @@ export default function HomeRooms({ guest = false }: { guest?: boolean }) {
         }
       } catch {
         if (!controller.signal.aborted) setError('房间列表暂时无法刷新');
+      } finally {
+        if (!controller.signal.aborted) setLoading(false);
       }
     };
     void refresh();
@@ -44,63 +54,64 @@ export default function HomeRooms({ guest = false }: { guest?: boolean }) {
   const visible = current
     ? [current, ...rooms.filter((room) => room.id !== current.id)]
     : rooms;
-  return (
-    <section className='tm-home-rooms' aria-label='我的房间'>
-      <SectionHeader
-        title={guest ? '一起看' : '我的房间'}
-        href={guest ? undefined : '/watch-room'}
-      />
-      <div className='tm-home-compact-grid'>
-        {visible.slice(0, 2).map((room) => {
-          const online = room.memberCount > 0;
-          const state = room.id === current?.id ? current.currentState : null;
-          const playing = state?.type === 'play' ? state.videoName : '';
-          return (
-            <Link
-              key={room.id}
-              href='/watch-room'
-              className='tm-home-room-card tm-press'
-            >
-              <div className='tm-home-room-art'>
-                <span className='tm-home-room-glyph' aria-hidden='true'>
-                  {/* 房名首字是数字或符号时，字母头像没有意义，改用图标 */}
-                  {!/^[\s!-@[-`{-~]/.test(room.name) ? (
-                    Array.from(room.name)[0]
-                  ) : (
-                    <Users strokeWidth={1.5} />
-                  )}
-                </span>
-                <span
-                  className='tm-home-room-status tm-badge'
-                  data-on-art='true'
-                  data-online={online}
-                >
-                  <i className='tm-dot' data-live={online} />
-                  {online ? `${room.memberCount} 人在线` : '无人在线'}
-                </span>
-              </div>
-              <strong>{room.name}</strong>
-              <small>{playing ? `正在播放 ${playing}` : '进入房间'}</small>
-            </Link>
-          );
-        })}
-        <Link
-          href={
-            guest
-              ? '/login?redirect=' + encodeURIComponent('/watch-room')
-              : '/watch-room'
-          }
-          className='tm-home-room-card tm-home-room-create tm-press'
-        >
-          <div className='tm-home-room-art'>
-            <Plus size={22} aria-hidden='true' />
-          </div>
-          <strong>{guest ? '登录后开一间房' : '创建房间'}</strong>
-          {guest && <small>和朋友同步看同一部片，边看边聊</small>}
+  const room = visible[0];
+  if (guest) return null;
+  if (!room && !loading && !error && context?.isEnabled) {
+    return (
+      <div className='tm-home-room-empty'>
+        <Users size={16} aria-hidden='true' />
+        <span>和朋友一起看</span>
+        <Link href='/watch-room' className='tm-home-room-create-link tm-press'>
+          <Plus size={16} aria-hidden='true' />
+          创建房间
         </Link>
       </div>
-      {!guest && (error || !context?.isEnabled) && (
-        <p className='tm-home-hint'>{error || '房间服务未启用'}</p>
+    );
+  }
+  const playing =
+    room?.id === current?.id && current?.currentState?.type === 'play'
+      ? current.currentState.videoName
+      : '';
+  return (
+    <section className='tm-home-rooms' aria-label='我的房间'>
+      <SectionHeader title='我的房间' linkLabel='管理房间' href='/watch-room' />
+      {room ? (
+        <Link
+          href={`/watch-room?room=${encodeURIComponent(room.id)}`}
+          className='tm-home-room-summary tm-press'
+        >
+          <span className='tm-home-room-avatar' aria-hidden='true'>
+            {Array.from(displayRoomName(room))[0] || '房'}
+          </span>
+          <div className='tm-home-room-details'>
+            <strong>{displayRoomName(room)}</strong>
+            <small>
+              <i className='tm-dot' data-live={room.memberCount > 0} />
+              {room.memberCount > 0 ? `${room.memberCount} 人在线` : '无人在线'}
+            </small>
+            {playing && (
+              <span className='tm-home-room-playing'>正在播放 {playing}</span>
+            )}
+          </div>
+          <span className='tm-home-room-enter' aria-hidden='true'>
+            进入
+            <ChevronRight size={14} />
+          </span>
+        </Link>
+      ) : loading ? (
+        <div
+          className='tm-home-personal-skeleton'
+          role='status'
+          aria-label='正在加载房间'
+        >
+          <span className='tm-skeleton' aria-hidden='true' />
+          <span className='tm-skeleton' aria-hidden='true' />
+        </div>
+      ) : null}
+      {(error || !context?.isEnabled) && (
+        <p className='tm-home-hint' role='status'>
+          {error || '房间服务未启用'}
+        </p>
       )}
     </section>
   );

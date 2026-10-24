@@ -1,11 +1,11 @@
 'use client';
 
-import { Film, RefreshCw } from 'lucide-react';
+import { Film, RefreshCw, Star } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { posterTiltHandlers, useReducedMotionSetting } from '@/lib/motion';
+import { posterTiltHandlers } from '@/lib/motion';
 import {
   type PublicCatalogCategory,
   type PublicCatalogItem,
@@ -135,7 +135,10 @@ function CatalogCard({
           </span>
         )}
         {item.rate && Number(item.rate) > 0 && (
-          <span className='mtv-rate'>{Number(item.rate).toFixed(1)}</span>
+          <span className='mtv-rate'>
+            <Star size={11} aria-hidden />
+            {Number(item.rate).toFixed(1)}
+          </span>
         )}
       </div>
       <span className='tm-poster-title'>{item.title}</span>
@@ -238,19 +241,9 @@ export default function PublicCatalogPage({
   const router = useRouter();
   const openWork = (item: PublicCatalogItem) =>
     router.push(publicWorkLoginHref(item));
-  const reduced = useReducedMotionSetting();
   const [heroIndex, setHeroIndex] = useState(0);
-  const [paused, setPaused] = useState(false);
   const recommendations = catalog.items.slice(0, 5);
   const featured = recommendations[heroIndex] || recommendations[0];
-  useEffect(() => {
-    if (!isHome || reduced || paused || recommendations.length < 2) return;
-    const timer = window.setInterval(() => {
-      if (document.visibilityState === 'visible')
-        setHeroIndex((index) => (index + 1) % recommendations.length);
-    }, 8000);
-    return () => window.clearInterval(timer);
-  }, [isHome, reduced, paused, recommendations.length]);
 
   if (!isHome)
     return (
@@ -335,7 +328,11 @@ export default function PublicCatalogPage({
               meta={
                 <>
                   {featured.year && <span>{featured.year}</span>}
-                  <span>{featured.mediaType === 'tv' ? '剧集' : '电影'}</span>
+                  <span className='tm-home-hero-genres'>
+                    <span className='tm-home-hero-genre'>
+                      {featured.mediaType === 'tv' ? '剧集' : '电影'}
+                    </span>
+                  </span>
                 </>
               }
               description={featured.description}
@@ -364,14 +361,12 @@ export default function PublicCatalogPage({
                   key={item.id}
                   src={item.src}
                   alt=''
-                  eager
                   className='tm-home-hero-side-image'
                 />
               )}
               titles={recommendations.map((item) => item.title)}
               index={heroIndex}
               onSelect={setHeroIndex}
-              onPause={setPaused}
             />
           ) : (
             <div

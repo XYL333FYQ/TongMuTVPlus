@@ -29,7 +29,7 @@ interface ContinueWatchingProps {
 type PlayRecordItem = PlayRecord & { key: string };
 
 function HomeRecordRow({ children }: { children: React.ReactNode }) {
-  return <div className='tm-home-compact-grid'>{children}</div>;
+  return <div className='tm-home-resume-items'>{children}</div>;
 }
 
 export default function ContinueWatching({
@@ -103,8 +103,11 @@ export default function ContinueWatching({
   if (!loading && playRecords.length === 0) return null;
 
   const getProgress = (record: PlayRecord) => {
-    if (record.total_time === 0) return 0;
-    return (record.play_time / record.total_time) * 100;
+    if (record.total_time <= 0) return 0;
+    return Math.max(
+      0,
+      Math.min(100, (record.play_time / record.total_time) * 100)
+    );
   };
 
   const parseKey = (key: string) => {
@@ -135,6 +138,7 @@ export default function ContinueWatching({
                   onClick={() => setShowPlayRecordsPanel(true)}
                 >
                   查看全部
+                  <ChevronRight size={14} aria-hidden />
                 </button>
               ) : null
             }
@@ -165,11 +169,11 @@ export default function ContinueWatching({
           <div
             className={
               homeLayout
-                ? 'tm-home-compact-grid'
+                ? 'tm-home-personal-skeleton tm-home-resume-skeleton'
                 : 'flex gap-2 overflow-x-auto scrollbar-hide pb-2 pt-2'
             }
           >
-            {Array.from({ length: 8 }).map((_, index) => (
+            {Array.from({ length: homeLayout ? 1 : 8 }).map((_, index) => (
               <div
                 key={index}
                 className={
@@ -193,65 +197,55 @@ export default function ContinueWatching({
         ) : (
           <div>
             <RecordRow>
-              {playRecords.map((record) => {
-                const { source, id } = parseKey(record.key);
-                return (
-                  <div
-                    key={record.key}
-                    className={
-                      homeLayout
-                        ? 'relative'
-                        : 'relative min-w-[180px] w-48 sm:min-w-[200px] sm:w-52'
-                    }
-                  >
-                    <VideoCard
-                      id={id}
-                      title={record.title}
-                      poster={record.cover}
-                      year={record.year}
-                      source={source}
-                      source_name={record.source_name}
-                      progress={getProgress(record)}
-                      episodes={record.total_episodes}
-                      currentEpisode={record.index}
-                      query={record.search_title}
-                      from='playrecord'
-                      onDelete={() =>
-                        setPlayRecords((prev) =>
-                          prev.filter((item) => item.key !== record.key)
-                        )
+              {(homeLayout ? playRecords.slice(0, 1) : playRecords).map(
+                (record) => {
+                  const { source, id } = parseKey(record.key);
+                  return (
+                    <div
+                      key={record.key}
+                      className={
+                        homeLayout
+                          ? 'tm-home-resume-item relative'
+                          : 'relative min-w-[180px] w-48 sm:min-w-[200px] sm:w-52'
                       }
-                      type={record.total_episodes > 1 ? 'tv' : ''}
-                      origin={record.origin}
-                      orientation='horizontal'
-                      playTime={record.play_time}
-                      totalTime={record.total_time}
-                      isAnime={Boolean(record.is_anime)}
-                    />
-                    {homeLayout && (
-                      <>
-                        <strong className='tm-home-resume-name'>
-                          {record.title}
-                        </strong>
-                        <small className='tm-home-resume-note'>
-                          {record.total_episodes > 1
-                            ? '第 ' + record.index + ' 集 · '
-                            : ''}
-                          看到 {Math.round(getProgress(record))}%
-                        </small>
-                      </>
-                    )}
-                    {(record.new_episodes ?? 0) > 0 && (
-                      <span
-                        className='tm-home-new-episodes tm-badge'
-                        data-on-art='true'
-                      >
-                        +{record.new_episodes}
-                      </span>
-                    )}
-                  </div>
-                );
-              })}
+                    >
+                      <VideoCard
+                        id={id}
+                        title={record.title}
+                        poster={record.cover}
+                        year={record.year}
+                        source={source}
+                        source_name={record.source_name}
+                        progress={getProgress(record)}
+                        episodes={record.total_episodes}
+                        currentEpisode={record.index}
+                        query={record.search_title}
+                        from='playrecord'
+                        onDelete={() =>
+                          setPlayRecords((prev) =>
+                            prev.filter((item) => item.key !== record.key)
+                          )
+                        }
+                        type={record.total_episodes > 1 ? 'tv' : ''}
+                        origin={record.origin}
+                        orientation='horizontal'
+                        compact={homeLayout}
+                        playTime={record.play_time}
+                        totalTime={record.total_time}
+                        isAnime={Boolean(record.is_anime)}
+                      />
+                      {(record.new_episodes ?? 0) > 0 && (
+                        <span
+                          className='tm-home-new-episodes tm-badge'
+                          data-on-art='true'
+                        >
+                          +{record.new_episodes}
+                        </span>
+                      )}
+                    </div>
+                  );
+                }
+              )}
             </RecordRow>
           </div>
         )}

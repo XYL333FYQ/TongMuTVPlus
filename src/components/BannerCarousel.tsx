@@ -1,6 +1,6 @@
 'use client';
 
-import { Volume2, VolumeX } from 'lucide-react';
+import { Star, Volume2, VolumeX } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
@@ -49,8 +49,6 @@ export default function BannerCarousel({
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [shouldLoad, setShouldLoad] = useState(!delayLoad); // 是否应该开始加载数据
-  const [isPaused, setIsPaused] = useState(false);
-  const [skipNextAutoPlay, setSkipNextAutoPlay] = useState(false); // 跳过下一次自动播放
   const [isYouTubeAccessible, setIsYouTubeAccessible] = useState(false); // YouTube连通性（默认false，检查后再决定）
   const [enableTrailers, setEnableTrailers] = useState(false); // 是否启用预告片（默认关闭）
   const [dataSource, setDataSource] = useState<string>(''); // 当前数据源
@@ -102,9 +100,16 @@ export default function BannerCarousel({
     };
   }, []);
   const videoRefs = useRef<Map<number, HTMLVideoElement>>(new Map()); // 所有视频元素的引用
-  const touchStartX = useRef(0);
-  const touchEndX = useRef(0);
   const isManualChange = useRef(false); // 标记是否为手动切换
+  const manualReset = useRef<ReturnType<typeof setTimeout>>();
+  useEffect(() => () => clearTimeout(manualReset.current), []);
+  const beginManualChange = useCallback(() => {
+    isManualChange.current = true;
+    clearTimeout(manualReset.current);
+    manualReset.current = setTimeout(() => {
+      isManualChange.current = false;
+    }, 100);
+  }, []);
 
   // 根据数据源获取缓存key
   const getLocalStorageKey = (source: string) => {
@@ -369,109 +374,14 @@ export default function BannerCarousel({
     });
   }, [currentIndex, isMuted, previewAllowed]);
 
-  // 自动播放
-  useEffect(() => {
-    if (
-      !items.length ||
-      isPaused ||
-      detailOpen ||
-      reducedMotion ||
-      !isPageVisible ||
-      hasActivePlayback ||
-      watchRoom?.currentRoom
-    )
-      return;
-
-    const timer = setInterval(() => {
-      // 如果设置了跳过标志，跳过这一次自动播放
-      if (skipNextAutoPlay) {
-        setSkipNextAutoPlay(false);
-        return;
-      }
-
-      setCurrentIndex((prev) => (prev + 1) % items.length);
-    }, autoPlayInterval);
-
-    return () => clearInterval(timer);
-  }, [
-    items.length,
-    isPaused,
-    autoPlayInterval,
-    skipNextAutoPlay,
-    detailOpen,
-    reducedMotion,
-    isMobileView,
-    isPageVisible,
-    hasActivePlayback,
-    watchRoom?.currentRoom,
-  ]);
-
-  const goToPrevious = useCallback(() => {
-    isManualChange.current = true;
-    setSkipNextAutoPlay(true);
-    setCurrentIndex((prev) => (prev - 1 + items.length) % items.length);
-    setTimeout(() => {
-      isManualChange.current = false;
-    }, 100);
-  }, [items.length]);
-
-  const goToNext = useCallback(() => {
-    isManualChange.current = true;
-    setSkipNextAutoPlay(true);
-    setCurrentIndex((prev) => (prev + 1) % items.length);
-    setTimeout(() => {
-      isManualChange.current = false;
-    }, 100);
-  }, [items.length]);
-
-  const goToSlide = useCallback((index: number) => {
-    isManualChange.current = true;
-    setSkipNextAutoPlay(true);
-    setCurrentIndex(index);
-    setTimeout(() => {
-      isManualChange.current = false;
-    }, 100);
-  }, []);
-
-  // 触摸事件处理
-  const handleTouchStart = (e: React.TouchEvent) => {
-    // 防止在手动切换过程中触发
-    if (isManualChange.current) return;
-    touchStartX.current = e.touches[0].clientX;
-    touchEndX.current = 0; // 重置结束位置
-  };
-
-  const handleTouchMove = (e: React.TouchEvent) => {
-    // 防止在手动切换过程中触发
-    if (isManualChange.current) return;
-    touchEndX.current = e.touches[0].clientX;
-  };
-
-  const handleTouchEnd = () => {
-    // 防止在手动切换过程中触发
-    if (isManualChange.current) return;
-    if (!touchStartX.current) return;
-
-    // 如果有滑动，则执行滑动逻辑
-    if (touchEndX.current !== 0) {
-      const distance = touchStartX.current - touchEndX.current;
-      const minSwipeDistance = 50; // 最小滑动距离
-
-      if (Math.abs(distance) > minSwipeDistance) {
-        if (distance > 0) {
-          // 向左滑动，显示下一张
-          goToNext();
-        } else {
-          // 向右滑动，显示上一张
-          goToPrevious();
-        }
-      }
-    }
-
-    // 重置
-    touchStartX.current = 0;
-    touchEndX.current = 0;
-  };
+  const goToSlide = useCallback(
+    (index: number) => {
+      if (index < 0 || index >= items.length) return;
+      beginManualChange();
+      setCurrentIndex(index);
+    },
+    [items.length, beginManualChange]
+  );
 
   if (isLoading || !shouldLoad) {
     return (
@@ -525,14 +435,23 @@ export default function BannerCarousel({
         meta={
           <>
             {currentItem.vote_average > 0 && (
-              <span>{currentItem.vote_average.toFixed(1)} 分</span>
+              <span className='tm-hero-score'>
+                <Star aria-hidden />
+                {currentItem.vote_average.toFixed(1)}
+              </span>
             )}
             {currentItem.release_date && (
               <span>{currentItem.release_date.slice(0, 4)}</span>
             )}
-            {genres.slice(0, 3).map((genre, i) => (
-              <span key={genre + i}>{genre}</span>
-            ))}
+            {genres.length > 0 && (
+              <span className='tm-home-hero-genres'>
+                {genres.slice(0, 3).map((genre, i) => (
+                  <span className='tm-home-hero-genre' key={genre + i}>
+                    {genre}
+                  </span>
+                ))}
+              </span>
+            )}
           </>
         }
         art={
@@ -585,7 +504,9 @@ export default function BannerCarousel({
         titles={items.map((item) => item.title)}
         index={currentIndex}
         onSelect={goToSlide}
-        onPause={setIsPaused}
+        onAutoSelect={setCurrentIndex}
+        autoPlayInterval={autoPlayInterval}
+        autoPlayDisabled={detailOpen || hasActivePlayback}
         extraControls={
           canShowVideo ? (
             <button
@@ -597,9 +518,6 @@ export default function BannerCarousel({
             </button>
           ) : undefined
         }
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
       />
       <DetailPanel
         isOpen={detailOpen}

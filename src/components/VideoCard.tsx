@@ -7,9 +7,11 @@ import {
   Info,
   Link,
   ListPlus,
+  Play,
   PlayCircleIcon,
   Radio,
   Sparkles,
+  Star,
   Trash2,
   Youtube,
 } from 'lucide-react';
@@ -56,9 +58,9 @@ import { useLongPress } from '@/hooks/useLongPress';
 import AIChatPanel from '@/components/AIChatPanel';
 import AnimeSubscribeModal from '@/components/AnimeSubscribeModal';
 import DetailPanel from '@/components/DetailPanel';
-import { ImagePlaceholder } from '@/components/ImagePlaceholder';
 import ImageViewer from '@/components/feedback/ImageViewer';
 import MobileActionSheet from '@/components/feedback/MobileActionSheet';
+import { ImagePlaceholder } from '@/components/ImagePlaceholder';
 import TrailerPickerDialog from '@/components/TrailerPickerDialog';
 
 export interface VideoCardProps {
@@ -97,6 +99,7 @@ export interface VideoCardProps {
   seasonNumber?: number; // 季度编号
   seasonName?: string; // 季度名称
   orientation?: 'vertical' | 'horizontal'; // 卡片方向
+  compact?: boolean; // 首页记录的紧凑排版，沿用原卡片的全部操作
   playTime?: number; // 当前播放时间（秒）
   totalTime?: number; // 总时长（秒）
   cmsData?: {
@@ -145,6 +148,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
       seasonNumber,
       seasonName,
       orientation = 'vertical',
+      compact = false,
       playTime,
       totalTime,
       cmsData,
@@ -166,6 +170,8 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
       [isBangumi, isAnime, typeName]
     );
     const actualTitle = title;
+    const compactRecord =
+      compact && from === 'playrecord' && orientation === 'horizontal';
     const actualPoster = poster;
     const netdiskPosterPlaceholder = '/icons/netdisk-placeholder.svg';
     const processedPoster = useMemo(
@@ -960,8 +966,9 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
           } ${showUpcomingInfo ? 'scale-[1.05] z-[500]' : ''}`}
           role='button'
           tabIndex={0}
-          aria-label={'查看 ' + actualTitle}
+          aria-label={(compactRecord ? '继续观看 ' : '查看 ') + actualTitle}
           data-horizontal={orientation === 'horizontal'}
+          data-compact={compactRecord}
           {...posterTiltHandlers}
           onKeyDown={(event) => {
             if (event.target !== event.currentTarget) return;
@@ -1052,9 +1059,14 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
                   }
                 />
               )}
-              {isDirectPlaySource ? (
-                <div className='absolute inset-0 flex items-center justify-center bg-raised'>
-                  <Link className='w-8 h-8 text-muted min-h-[44px] tm-press' />
+              {isDirectPlaySource ||
+              !displayPoster ||
+              (from === 'playrecord' && !actualPoster) ? (
+                <div
+                  className='tm-media-initial absolute inset-0'
+                  aria-hidden='true'
+                >
+                  {Array.from(actualTitle.trim())[0] || '影'}
                 </div>
               ) : isNetdiskSource(actualSource) &&
                 !actualPoster &&
@@ -1189,7 +1201,8 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
                 </div>
               </div>
             ) : (
-              config.showPlayButton && (
+              config.showPlayButton &&
+              !compactRecord && (
                 <div
                   className='pointer-events-none absolute inset-0 flex items-center justify-center opacity-0 transition-all duration-300 ease-in-out delay-75 group-hover:opacity-100 group-hover:scale-100'
                   style={
@@ -1308,6 +1321,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
 
             {config.showRating && rate && Number(rate) > 0 && (
               <span className='mtv-rate' aria-label={'评分 ' + rate}>
+                <Star size={11} aria-hidden />
                 {rate}
               </span>
             )}
@@ -1922,6 +1936,28 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
               </>
             )}
           </div>
+
+          {compactRecord && (
+            <>
+              <div className='tm-home-resume-details'>
+                <strong>{actualTitle}</strong>
+                <small>
+                  {origin === 'live'
+                    ? '直播'
+                    : (totalTime ?? 0) > 0
+                    ? `${
+                        actualEpisodes && actualEpisodes > 1
+                          ? `第 ${currentEpisode} 集 · `
+                          : ''
+                      }看到 ${Math.round(progress)}%`
+                    : '进度未记录'}
+                </small>
+              </div>
+              <span className='tm-home-resume-play' aria-hidden='true'>
+                <Play size={18} />
+              </span>
+            </>
+          )}
 
           {/* 竖向模式：进度条和标题在海报下方 */}
           {orientation === 'vertical' && (
