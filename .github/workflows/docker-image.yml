@@ -8,10 +8,9 @@ on:
         required: false
         default: 'latest'
         type: string
+  # 推送到 main 时构建镜像并发布到 ghcr.io/<你的用户名>/tongmutvplus
   push:
-    branches: [main, master]
-  pull_request:
-    branches: [main, master]
+    branches: [main]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -64,7 +63,7 @@ jobs:
         uses: docker/metadata-action@v5
 
         with:
-          images: ghcr.io/mtvpls/moontvplus
+          images: ghcr.io/${{ steps.lowercase.outputs.owner }}/tongmutvplus
           tags: |
             type=raw,value=${{ steps.version.outputs.version }},enable={{is_default_branch}}
             type=raw,value=${{ github.event.inputs.tag || 'latest' }},enable={{is_default_branch}}
@@ -78,9 +77,9 @@ jobs:
           platforms: ${{ matrix.platform }}
           labels: ${{ steps.meta.outputs.labels }}
           tags: |
-            ghcr.io/mtvpls/moontvplus:${{ steps.version.outputs.version }}
-            ghcr.io/mtvpls/moontvplus:${{ github.event.inputs.tag || 'latest' }}
-          outputs: type=image,name=ghcr.io/mtvpls/moontvplus,name-canonical=true,push=true
+            ghcr.io/${{ steps.lowercase.outputs.owner }}/tongmutvplus:${{ steps.version.outputs.version }}
+            ghcr.io/${{ steps.lowercase.outputs.owner }}/tongmutvplus:${{ github.event.inputs.tag || 'latest' }}
+          outputs: type=image,name=ghcr.io/${{ steps.lowercase.outputs.owner }}/tongmutvplus,name-canonical=true,push=true
 
       - name: Export digest
         run: |
@@ -133,9 +132,9 @@ jobs:
         working-directory: /tmp/digests
         run: |
           docker buildx imagetools create \
-            -t ghcr.io/mtvpls/moontvplus:${{ steps.version.outputs.version }} \
-            -t ghcr.io/mtvpls/moontvplus:${{ github.event.inputs.tag || 'latest' }} \
-            $(printf 'ghcr.io/mtvpls/moontvplus@sha256:%s ' *)
+            -t ghcr.io/${{ steps.lowercase.outputs.owner }}/tongmutvplus:${{ steps.version.outputs.version }} \
+            -t ghcr.io/${{ steps.lowercase.outputs.owner }}/tongmutvplus:${{ github.event.inputs.tag || 'latest' }} \
+            $(printf 'ghcr.io/${{ steps.lowercase.outputs.owner }}/tongmutvplus@sha256:%s ' *)
 
   cleanup-untagged:
     runs-on: ubuntu-latest
@@ -146,8 +145,8 @@ jobs:
         uses: dataaxiom/ghcr-cleanup-action@v1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          owner: mtvpls
-          package: moontvplus
+          owner: ${{ github.repository_owner }}
+          package: tongmutvplus
           delete-untagged: true
           validate: true
 
