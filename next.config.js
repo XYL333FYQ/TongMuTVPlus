@@ -39,6 +39,28 @@ const createNextConfig = (phase) => {
     reactStrictMode: false,
     swcMinify: true,
 
+    // 安全响应头：
+    // - 全站禁止 MIME 嗅探，防止把代理来的文本当脚本/页面执行；
+    // - /api/* 只给程序读取，不应作为网页打开。加 sandbox CSP 后，
+    //   即使某个代理接口被诱导返回 HTML，也无法以本站身份运行脚本、读取登录 Cookie。
+    async headers() {
+      return [
+        {
+          source: '/:path*',
+          headers: [{ key: 'X-Content-Type-Options', value: 'nosniff' }],
+        },
+        {
+          source: '/api/:path*',
+          headers: [
+            {
+              key: 'Content-Security-Policy',
+              value: "default-src 'none'; style-src 'unsafe-inline'; sandbox",
+            },
+          ],
+        },
+      ];
+    },
+
     // OpenNext/esbuild 使用 workerd condition 解析依赖。
     // @libsql/* 等包有 workerd 专用入口（如 web.cjs），Next NFT 默认只追踪 node 入口，
     // 导致 .open-next 里缺少 web.cjs 并报 Could not resolve "@libsql/isomorphic-ws"。

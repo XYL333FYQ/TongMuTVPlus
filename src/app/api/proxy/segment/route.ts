@@ -1,8 +1,13 @@
 /* eslint-disable no-console,@typescript-eslint/no-explicit-any */
 
-import { NextResponse } from "next/server";
+import { NextResponse } from 'next/server';
 
-import { getConfig } from "@/lib/config";
+import { getConfig } from '@/lib/config';
+import {
+  guardedFetch,
+  hostsOf,
+  ProxyTargetBlockedError,
+} from '@/lib/server/ssrf';
 
 export const runtime = 'nodejs';
 
@@ -20,28 +25,43 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'Source not found' }, { status: 404 });
   }
   const ua = liveSource.ua || 'AptvPlayer/1.4.10';
+  // 站长配置的直播源主机（含局域网 IPTV）可以代理，其他内网地址一律拒绝
+  const trustedHosts = hostsOf([liveSource?.url, liveSource?.epg]);
 
   let response: Response | null = null;
   let reader: ReadableStreamDefaultReader<Uint8Array> | null = null;
 
   try {
     const decodedUrl = decodeURIComponent(url);
-    response = await fetch(decodedUrl, {
-      headers: {
-        'User-Agent': ua,
+    response = await guardedFetch(
+      decodedUrl,
+      {
+        headers: {
+          'User-Agent': ua,
+        },
       },
-    });
+      { trustedHosts }
+    );
     if (!response.ok) {
-      return NextResponse.json({ error: 'Failed to fetch segment' }, { status: 500 });
+      return NextResponse.json(
+        { error: 'Failed to fetch segment' },
+        { status: 500 }
+      );
     }
 
     const headers = new Headers();
     headers.set('Content-Type', 'video/mp2t');
     headers.set('Access-Control-Allow-Origin', '*');
     headers.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-    headers.set('Access-Control-Allow-Headers', 'Content-Type, Range, Origin, Accept');
+    headers.set(
+      'Access-Control-Allow-Headers',
+      'Content-Type, Range, Origin, Accept'
+    );
     headers.set('Accept-Ranges', 'bytes');
-    headers.set('Access-Control-Expose-Headers', 'Content-Length, Content-Range');
+    headers.set(
+      'Access-Control-Expose-Headers',
+      'Content-Length, Content-Range'
+    );
 
     // 使用流式传输，避免占用内存
     const stream = new ReadableStream({
@@ -59,25 +79,28 @@ export async function GET(request: Request) {
             return;
           }
 
-          reader.read().then(({ done, value }) => {
-            if (isCancelled) {
-              return;
-            }
+          reader
+            .read()
+            .then(({ done, value }) => {
+              if (isCancelled) {
+                return;
+              }
 
-            if (done) {
-              controller.close();
-              cleanup();
-              return;
-            }
+              if (done) {
+                controller.close();
+                cleanup();
+                return;
+              }
 
-            controller.enqueue(value);
-            pump();
-          }).catch((error) => {
-            if (!isCancelled) {
-              controller.error(error);
-              cleanup();
-            }
-          });
+              controller.enqueue(value);
+              pump();
+            })
+            .catch((error) => {
+              if (!isCancelled) {
+                controller.error(error);
+                cleanup();
+              }
+            });
         }
 
         function cleanup() {
@@ -111,11 +134,14 @@ export async function GET(request: Request) {
             // 忽略取消时的错误
           }
         }
-      }
+      },
     });
 
     return new Response(stream, { headers });
   } catch (error) {
+    if (error instanceof ProxyTargetBlockedError) {
+      return NextResponse.json({ error: error.message }, { status: 403 });
+    }
     // 确保在错误情况下也释放资源
     if (reader) {
       try {
@@ -133,6 +159,9 @@ export async function GET(request: Request) {
       }
     }
 
-    return NextResponse.json({ error: 'Failed to fetch segment' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Failed to fetch segment' },
+      { status: 500 }
+    );
   }
 }

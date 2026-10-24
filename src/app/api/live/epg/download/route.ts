@@ -1,5 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+import { getConfig } from '@/lib/config';
+import {
+  guardedFetch,
+  hostsOf,
+  ProxyTargetBlockedError,
+} from '@/lib/server/ssrf';
+
 export const runtime = 'nodejs';
 
 export async function GET(request: NextRequest) {
@@ -13,19 +20,25 @@ export async function GET(request: NextRequest) {
 
     console.log('[EPG Download] Fetching:', epgUrl);
 
-    // 获取EPG文件
-    const response = await fetch(epgUrl, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0',
-      },
-    });
+    // 获取EPG文件：站长配置过的节目单 / 直播源主机可在内网，其他地址必须是公网
+    const config = await getConfig();
+    const trustedHosts = hostsOf(
+      (config.LiveConfig || []).flatMap((source) => [source.url, source.epg])
+    );
+    const response = await guardedFetch(
+      epgUrl,
+      { headers: { 'User-Agent': 'Mozilla/5.0' } },
+      { trustedHosts }
+    );
 
     if (!response.ok) {
       return NextResponse.json({ error: 'EPG文件下载失败' }, { status: 500 });
     }
 
     // 检查是否是gzip压缩
-    const isGzip = epgUrl.endsWith('.gz') || response.headers.get('content-encoding') === 'gzip';
+    const isGzip =
+      epgUrl.endsWith('.gz') ||
+      response.headers.get('content-encoding') === 'gzip';
 
     if (isGzip) {
       console.log('[EPG Download] Decompressing gzip...');
@@ -37,7 +50,7 @@ export async function GET(request: NextRequest) {
       }
 
       const chunks: Uint8Array[] = [];
-      while (true) {
+      for (;;) {
         const { done, value } = await reader.read();
         if (done) break;
         chunks.push(value);
@@ -59,7 +72,11 @@ export async function GET(request: NextRequest) {
       const decompressed = zlib.gunzipSync(Buffer.from(allChunks));
       const decompressedText = decompressed.toString('utf-8');
 
-      console.log('[EPG Download] Decompressed size:', decompressedText.length, 'bytes');
+      console.log(
+        '[EPG Download] Decompressed size:',
+        decompressedText.length,
+        'bytes'
+      );
 
       // 返回解压后的XML
       return new NextResponse(decompressedText, {
@@ -79,10 +96,10 @@ export async function GET(request: NextRequest) {
       });
     }
   } catch (error) {
+    if (error instanceof ProxyTargetBlockedError) {
+      return NextResponse.json({ error: error.message }, { status: 403 });
+    }
     console.error('[EPG Download] Error:', error);
-    return NextResponse.json(
-      { error: '下载EPG文件失败' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: '下载EPG文件失败' }, { status: 500 });
   }
 }

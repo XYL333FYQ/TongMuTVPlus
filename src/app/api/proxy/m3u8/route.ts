@@ -1,9 +1,15 @@
 /* eslint-disable no-console,@typescript-eslint/no-explicit-any */
 
-import { NextResponse } from "next/server";
+import { NextResponse } from 'next/server';
 
-import { getConfig } from "@/lib/config";
-import { getBaseUrl, resolveUrl } from "@/lib/live";
+import { getConfig } from '@/lib/config';
+import { getBaseUrl, resolveUrl } from '@/lib/live';
+import {
+  guardedFetch,
+  hostsOf,
+  ProxyTargetBlockedError,
+  safeMediaContentType,
+} from '@/lib/server/ssrf';
 
 export const runtime = 'nodejs';
 
@@ -22,6 +28,8 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'Source not found' }, { status: 404 });
   }
   const ua = liveSource.ua || 'AptvPlayer/1.4.10';
+  // 站长配置的直播源主机（含局域网 IPTV）可以代理，其他内网地址一律拒绝
+  const trustedHosts = hostsOf([liveSource?.url, liveSource?.epg]);
 
   let response: Response | null = null;
   let responseUsed = false;
@@ -29,22 +37,32 @@ export async function GET(request: Request) {
   try {
     const decodedUrl = decodeURIComponent(url);
 
-    response = await fetch(decodedUrl, {
-      cache: 'no-cache',
-      redirect: 'follow',
-      credentials: 'same-origin',
-      headers: {
-        'User-Agent': ua,
+    response = await guardedFetch(
+      decodedUrl,
+      {
+        cache: 'no-cache',
+        redirect: 'follow',
+        credentials: 'same-origin',
+        headers: {
+          'User-Agent': ua,
+        },
       },
-    });
+      { trustedHosts }
+    );
 
     if (!response.ok) {
-      return NextResponse.json({ error: 'Failed to fetch m3u8' }, { status: 500 });
+      return NextResponse.json(
+        { error: 'Failed to fetch m3u8' },
+        { status: 500 }
+      );
     }
 
     const contentType = response.headers.get('Content-Type') || '';
     // rewrite m3u8
-    if (contentType.toLowerCase().includes('mpegurl') || contentType.toLowerCase().includes('octet-stream')) {
+    if (
+      contentType.toLowerCase().includes('mpegurl') ||
+      contentType.toLowerCase().includes('octet-stream')
+    ) {
       // 获取最终的响应URL（处理重定向后的URL）
       const finalUrl = response.url;
       const m3u8Content = await response.text();
@@ -54,25 +72,48 @@ export async function GET(request: Request) {
       const baseUrl = getBaseUrl(finalUrl);
 
       // 重写 M3U8 内容
-      const modifiedContent = rewriteM3U8Content(m3u8Content, baseUrl, request, allowCORS);
+      const modifiedContent = rewriteM3U8Content(
+        m3u8Content,
+        baseUrl,
+        request,
+        allowCORS
+      );
 
       const headers = new Headers();
       headers.set('Content-Type', contentType);
       headers.set('Access-Control-Allow-Origin', '*');
       headers.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-      headers.set('Access-Control-Allow-Headers', 'Content-Type, Range, Origin, Accept');
+      headers.set(
+        'Access-Control-Allow-Headers',
+        'Content-Type, Range, Origin, Accept'
+      );
       headers.set('Cache-Control', 'no-cache');
-      headers.set('Access-Control-Expose-Headers', 'Content-Length, Content-Range');
+      headers.set(
+        'Access-Control-Expose-Headers',
+        'Content-Length, Content-Range'
+      );
       return new Response(modifiedContent, { headers });
     }
     // just proxy
     const headers = new Headers();
-    headers.set('Content-Type', response.headers.get('Content-Type') || 'application/vnd.apple.mpegurl');
+    // 只透传音视频类型，其他类型改为二进制，防止被当作网页执行
+    headers.set(
+      'Content-Type',
+      safeMediaContentType(
+        response.headers.get('Content-Type') || 'application/vnd.apple.mpegurl'
+      )
+    );
     headers.set('Access-Control-Allow-Origin', '*');
     headers.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-    headers.set('Access-Control-Allow-Headers', 'Content-Type, Range, Origin, Accept');
+    headers.set(
+      'Access-Control-Allow-Headers',
+      'Content-Type, Range, Origin, Accept'
+    );
     headers.set('Cache-Control', 'no-cache');
-    headers.set('Access-Control-Expose-Headers', 'Content-Length, Content-Range');
+    headers.set(
+      'Access-Control-Expose-Headers',
+      'Content-Length, Content-Range'
+    );
 
     // 直接返回视频流
     return new Response(response.body, {
@@ -80,7 +121,13 @@ export async function GET(request: Request) {
       headers,
     });
   } catch (error) {
-    return NextResponse.json({ error: 'Failed to fetch m3u8' }, { status: 500 });
+    if (error instanceof ProxyTargetBlockedError) {
+      return NextResponse.json({ error: error.message }, { status: 403 });
+    }
+    return NextResponse.json(
+      { error: 'Failed to fetch m3u8' },
+      { status: 500 }
+    );
   } finally {
     // 确保 response 被正确关闭以释放资源
     if (response && !responseUsed) {
@@ -94,7 +141,12 @@ export async function GET(request: Request) {
   }
 }
 
-function rewriteM3U8Content(content: string, baseUrl: string, req: Request, allowCORS: boolean) {
+function rewriteM3U8Content(
+  content: string,
+  baseUrl: string,
+  req: Request,
+  allowCORS: boolean
+) {
   // 从 referer 头提取协议信息
   const referer = req.headers.get('referer');
   let protocol = 'http';
@@ -123,7 +175,11 @@ function rewriteM3U8Content(content: string, baseUrl: string, req: Request, allo
     // 处理 TS 片段 URL 和其他媒体文件
     if (line && !line.startsWith('#')) {
       const resolvedUrl = resolveUrl(baseUrl, line);
-      const proxyUrl = allowCORS ? resolvedUrl : `${proxyBase}/segment?url=${encodeURIComponent(resolvedUrl)}&moontv-source=${source}`;
+      const proxyUrl = allowCORS
+        ? resolvedUrl
+        : `${proxyBase}/segment?url=${encodeURIComponent(
+            resolvedUrl
+          )}&moontv-source=${source}`;
       rewrittenLines.push(proxyUrl);
       continue;
     }
@@ -147,7 +203,9 @@ function rewriteM3U8Content(content: string, baseUrl: string, req: Request, allo
         const nextLine = lines[i].trim();
         if (nextLine && !nextLine.startsWith('#')) {
           const resolvedUrl = resolveUrl(baseUrl, nextLine);
-          const proxyUrl = `${proxyBase}/m3u8?url=${encodeURIComponent(resolvedUrl)}&moontv-source=${source}`;
+          const proxyUrl = `${proxyBase}/m3u8?url=${encodeURIComponent(
+            resolvedUrl
+          )}&moontv-source=${source}`;
           rewrittenLines.push(proxyUrl);
         } else {
           rewrittenLines.push(nextLine);
@@ -162,23 +220,43 @@ function rewriteM3U8Content(content: string, baseUrl: string, req: Request, allo
   return rewrittenLines.join('\n');
 }
 
-function rewriteMapUri(line: string, baseUrl: string, proxyBase: string, allowCORS: boolean, source: string) {
+function rewriteMapUri(
+  line: string,
+  baseUrl: string,
+  proxyBase: string,
+  allowCORS: boolean,
+  source: string
+) {
   const uriMatch = line.match(/URI="([^"]+)"/);
   if (uriMatch) {
     const originalUri = uriMatch[1];
     const resolvedUrl = resolveUrl(baseUrl, originalUri);
-    const proxyUrl = allowCORS ? resolvedUrl : `${proxyBase}/segment?url=${encodeURIComponent(resolvedUrl)}&moontv-source=${source}`;
+    const proxyUrl = allowCORS
+      ? resolvedUrl
+      : `${proxyBase}/segment?url=${encodeURIComponent(
+          resolvedUrl
+        )}&moontv-source=${source}`;
     return line.replace(uriMatch[0], `URI="${proxyUrl}"`);
   }
   return line;
 }
 
-function rewriteKeyUri(line: string, baseUrl: string, proxyBase: string, allowCORS: boolean, source: string) {
+function rewriteKeyUri(
+  line: string,
+  baseUrl: string,
+  proxyBase: string,
+  allowCORS: boolean,
+  source: string
+) {
   const uriMatch = line.match(/URI="([^"]+)"/);
   if (uriMatch) {
     const originalUri = uriMatch[1];
     const resolvedUrl = resolveUrl(baseUrl, originalUri);
-    const proxyUrl = allowCORS ? resolvedUrl : `${proxyBase}/key?url=${encodeURIComponent(resolvedUrl)}&moontv-source=${source}`;
+    const proxyUrl = allowCORS
+      ? resolvedUrl
+      : `${proxyBase}/key?url=${encodeURIComponent(
+          resolvedUrl
+        )}&moontv-source=${source}`;
     return line.replace(uriMatch[0], `URI="${proxyUrl}"`);
   }
   return line;

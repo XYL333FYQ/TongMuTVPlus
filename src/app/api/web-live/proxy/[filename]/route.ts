@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { requireFeaturePermission } from '@/lib/permissions';
+import {
+  guardedFetch,
+  ProxyTargetBlockedError,
+  safeMediaContentType,
+} from '@/lib/server/ssrf';
 
 function getBaseUrl(url: string): string {
   const urlObj = new URL(url);
@@ -11,7 +16,7 @@ function getBaseUrl(url: string): string {
 
 function processM3u8Content(content: string, baseUrl: string): string {
   const lines = content.split('\n');
-  const processedLines = lines.map(line => {
+  const processedLines = lines.map((line) => {
     const trimmedLine = line.trim();
 
     // 跳过注释行和空行
@@ -20,7 +25,10 @@ function processM3u8Content(content: string, baseUrl: string): string {
     }
 
     // 如果已经是完整URL，不处理
-    if (trimmedLine.startsWith('http://') || trimmedLine.startsWith('https://')) {
+    if (
+      trimmedLine.startsWith('http://') ||
+      trimmedLine.startsWith('https://')
+    ) {
       return line;
     }
 
@@ -40,7 +48,11 @@ function processM3u8Content(content: string, baseUrl: string): string {
 
 export async function GET(request: NextRequest) {
   try {
-    const authResult = await requireFeaturePermission(request, 'web_live', '无权限访问网络直播');
+    const authResult = await requireFeaturePermission(
+      request,
+      'web_live',
+      '无权限访问网络直播'
+    );
     if (authResult instanceof NextResponse) return authResult;
     const { searchParams } = new URL(request.url);
     const url = searchParams.get('url');
@@ -57,11 +69,13 @@ export async function GET(request: NextRequest) {
       referer = 'https://live.douyin.com/';
     }
 
-    const streamRes = await fetch(url, {
+    // 直播流都在公网 CDN 上；逐跳校验，禁止借此访问服务器内网
+    const streamRes = await guardedFetch(url, {
       headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-        'Referer': referer
-      }
+        'User-Agent':
+          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        Referer: referer,
+      },
     });
 
     if (!streamRes.ok) {
@@ -71,9 +85,10 @@ export async function GET(request: NextRequest) {
     const contentType = streamRes.headers.get('Content-Type') || '';
 
     // 检测是否为m3u8文件
-    const isM3u8 = url.endsWith('.m3u8') ||
-                   contentType.includes('application/vnd.apple.mpegurl') ||
-                   contentType.includes('application/x-mpegURL');
+    const isM3u8 =
+      url.endsWith('.m3u8') ||
+      contentType.includes('application/vnd.apple.mpegurl') ||
+      contentType.includes('application/x-mpegURL');
 
     if (isM3u8) {
       // 读取m3u8内容
@@ -85,20 +100,23 @@ export async function GET(request: NextRequest) {
         headers: {
           'Content-Type': 'application/vnd.apple.mpegurl',
           'Cache-Control': 'no-cache',
-          'Access-Control-Allow-Origin': '*'
-        }
+          'Access-Control-Allow-Origin': '*',
+        },
       });
     }
 
     // 非m3u8文件，直接返回流
     return new NextResponse(streamRes.body, {
       headers: {
-        'Content-Type': contentType || 'application/octet-stream',
+        'Content-Type': safeMediaContentType(contentType),
         'Cache-Control': 'no-cache',
-        'Access-Control-Allow-Origin': '*'
-      }
+        'Access-Control-Allow-Origin': '*',
+      },
     });
   } catch (error) {
+    if (error instanceof ProxyTargetBlockedError) {
+      return NextResponse.json({ error: error.message }, { status: 403 });
+    }
     return NextResponse.json(
       { error: error instanceof Error ? error.message : '代理失败' },
       { status: 500 }

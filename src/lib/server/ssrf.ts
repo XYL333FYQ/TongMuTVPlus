@@ -5,6 +5,20 @@ import dns from 'dns';
  * 覆盖 IPv4 和 IPv6，彻底杜绝所有变体绕过。
  */
 export function isPrivateIP(ip: string): boolean {
+  if (ip.includes(':')) {
+    try {
+      ip = new URL(`http://[${ip}]`).hostname.slice(1, -1);
+      const mapped = /^::ffff:([\da-f]+):([\da-f]+)$/i.exec(ip);
+      if (mapped) {
+        const high = parseInt(mapped[1], 16);
+        const low = parseInt(mapped[2], 16);
+        ip = `${high >> 8}.${high & 255}.${low >> 8}.${low & 255}`;
+      }
+    } catch {
+      return false;
+    }
+  }
+
   // IPv4 私有地址和环回地址
   if (ip.includes('.')) {
     const parts = ip.split('.').map(Number);
@@ -16,7 +30,10 @@ export function isPrivateIP(ip: string): boolean {
       (parts[0] === 172 && parts[1] >= 16 && parts[1] <= 31) || // 172.16.x.x - 172.31.x.x
       (parts[0] === 192 && parts[1] === 168) || // 192.168.x.x
       (parts[0] === 169 && parts[1] === 254) || // 169.254.x.x (Link-local)
-      parts[0] === 0 // 0.x.x.x ("This network")
+      parts[0] === 0 || // 0.x.x.x ("This network")
+      (parts[0] === 100 && parts[1] >= 64 && parts[1] <= 127) || // 100.64.0.0/10 运营商级 NAT
+      (parts[0] === 198 && (parts[1] === 18 || parts[1] === 19)) || // 198.18.0.0/15 基准测试网段
+      parts[0] >= 224 // 224.0.0.0 以上：组播与保留地址
     );
   }
 
@@ -29,11 +46,6 @@ export function isPrivateIP(ip: string): boolean {
     if (ip === '::' || ip === '0:0:0:0:0:0:0:0') return true;
 
     const lowerIp = ip.toLowerCase();
-
-    // IPv4 映射到 IPv6 的地址 (例如 ::ffff:127.0.0.1)
-    if (lowerIp.startsWith('::ffff:')) {
-      return isPrivateIP(lowerIp.substring(7));
-    }
 
     // 唯一本地地址 (Unique Local Addresses, fc00::/7)
     if (lowerIp.startsWith('fc') || lowerIp.startsWith('fd')) return true;
@@ -101,4 +113,106 @@ export async function validateProxyUrlServerSide(
     console.warn(`[SSRF 防护] URL解析失败或不合法, 拒绝代理请求: ${urlStr}`);
     return false;
   }
+}
+
+/**
+ * 站长明确允许代理访问内网（例如局域网 IPTV / Emby）时打开：ALLOW_PRIVATE_PROXY_TARGETS=true。
+ * 默认关闭：普通成员不能借代理接口探测服务器所在内网。
+ */
+export function privateProxyTargetsAllowed(): boolean {
+  return process.env.ALLOW_PRIVATE_PROXY_TARGETS === 'true';
+}
+
+/** 从站长配置的地址里取出主机名，作为“可信内网主机”白名单 */
+export function hostsOf(urls: Array<string | undefined | null>): Set<string> {
+  const hosts = new Set<string>();
+  for (const url of urls) {
+    if (!url) continue;
+    try {
+      hosts.add(new URL(url).hostname.toLowerCase());
+    } catch {
+      // 配置里的非法地址直接忽略
+    }
+  }
+  return hosts;
+}
+
+/**
+ * 代理目标是否允许访问：
+ * - 只允许 http/https；
+ * - 站长配置过的主机（trustedHosts）即使在内网也放行；
+ * - 其他地址必须解析到公网 IP，除非站长打开了 ALLOW_PRIVATE_PROXY_TARGETS。
+ */
+export async function isProxyTargetAllowed(
+  urlStr: string,
+  trustedHosts?: Set<string>
+): Promise<boolean> {
+  let parsed: URL;
+  try {
+    parsed = new URL(urlStr);
+  } catch {
+    return false;
+  }
+  if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return false;
+  if (privateProxyTargetsAllowed()) return true;
+  if (trustedHosts?.has(parsed.hostname.toLowerCase())) return true;
+  return validateProxyUrlServerSide(urlStr);
+}
+
+export class ProxyTargetBlockedError extends Error {
+  constructor(public readonly target: string) {
+    super('Proxy request to local or invalid network is forbidden');
+    this.name = 'ProxyTargetBlockedError';
+  }
+}
+
+/**
+ * 带 SSRF 防护的 fetch：手动跟随重定向，每一跳都重新校验目标，
+ * 防止“先访问公网地址、再 302 到 127.0.0.1”绕过检查。
+ * 返回的 Response.url 是最后一跳的地址，可直接用于解析 m3u8 相对路径。
+ */
+export async function guardedFetch(
+  urlStr: string,
+  init: RequestInit = {},
+  options: { trustedHosts?: Set<string>; maxRedirects?: number } = {}
+): Promise<Response> {
+  const maxRedirects = options.maxRedirects ?? 5;
+  let current = urlStr;
+  for (let hop = 0; hop <= maxRedirects; hop++) {
+    if (!(await isProxyTargetAllowed(current, options.trustedHosts))) {
+      throw new ProxyTargetBlockedError(current);
+    }
+    const response = await fetch(current, { ...init, redirect: 'manual' });
+    const location = response.headers.get('location');
+    if (response.status >= 300 && response.status < 400 && location) {
+      try {
+        await response.body?.cancel();
+      } catch {
+        // 丢弃重定向响应体失败不影响继续
+      }
+      current = new URL(location, current).toString();
+      continue;
+    }
+    return response;
+  }
+  throw new ProxyTargetBlockedError(current);
+}
+
+/**
+ * 代理图片时只透传 image/* 类型；其他类型（如 text/html）一律改成二进制，
+ * 浏览器 <img> 仍能显示，但不会被当作网页执行。
+ */
+export function safeImageContentType(contentType: string | null): string {
+  const value = (contentType || '').trim();
+  return /^image\/[\w.+-]+/i.test(value) ? value : 'application/octet-stream';
+}
+
+/** 代理媒体流时只透传音视频 / 播放列表类型，其余改为二进制 */
+export function safeMediaContentType(contentType: string | null): string {
+  const value = (contentType || '').trim();
+  return /^(video|audio)\/|mpegurl|^application\/(octet-stream|dash\+xml|mp4)/i.test(
+    value
+  )
+    ? value
+    : 'application/octet-stream';
 }
