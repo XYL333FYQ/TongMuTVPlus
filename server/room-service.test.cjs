@@ -778,6 +778,21 @@ test('default room capacity permits eight connections and rejects the ninth', (t
   expectCode(() => f.join('guest', id, 'ninth'), 'ROOM_FULL');
   assert.equal(f.service.members(id).length, 8);
 });
+test('a connection already in another room cannot switch into a full room', (t) => {
+  const f = setup(t);
+  const full = createAndHost(f);
+  for (let index = 0; index < 7; index++)
+    f.join('guest', full, `guest-${index}`);
+  const { id: other } = f.service.create(identities.host, {
+    name: '另一个房间',
+    isPublic: true,
+  });
+  f.join('stranger', other, 'switcher');
+  expectCode(() => f.join('stranger', full, 'switcher'), 'ROOM_FULL');
+  assert.equal(f.service.members(full).length, 8);
+  // 被拒绝时仍留在原房间
+  assert.equal(f.service.sessions.get('switcher').roomId, other);
+});
 test('chat supports stable older pages and reconnect replay without giving outsiders message access', (t) => {
   const f = setup(t);
   const id = createAndHost(f);

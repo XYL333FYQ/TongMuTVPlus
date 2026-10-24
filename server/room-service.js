@@ -385,9 +385,11 @@ class RoomService {
       this.limit(`${identity.accountId}:join-password`, 10, 60000);
     if (!known && !passwordMatches(data.password, room.passwordHash))
       fail('WRONG_PASSWORD', '房间密码错误', 403);
+    // 只有已经在这个房间里的连接（重复加入）才免检；
+    // 从别的房间切过来的连接要占新名额，必须同样受人数上限约束
     if (
       sessionId &&
-      !this.sessions.has(sessionId) &&
+      this.sessions.get(sessionId)?.roomId !== id &&
       this.members(id).length >= this.config.maxMembers
     )
       fail('ROOM_FULL', '房间人数已满', 409);
