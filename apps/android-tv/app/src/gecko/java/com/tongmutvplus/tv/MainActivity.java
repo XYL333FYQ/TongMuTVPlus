@@ -1,4 +1,4 @@
-package com.moontvplus.tv;
+package com.tongmutvplus.tv;
 
 import android.app.Activity;
 import android.os.Bundle;
@@ -64,7 +64,36 @@ public class MainActivity extends Activity implements RemoteCommandHandler {
         session.open(runtime);
         geckoView.setSession(session);
         setupLocalRemoteServer();
-        session.loadUri(withLocalRemoteHash(buildTvUrl(BuildConfig.BASE_URL)));
+        startLoad();
+    }
+
+    /** 读已保存的服务器地址并打开 /tv；没有地址就先弹框让用户填。 */
+    private void startLoad() {
+        String base = ServerAddress.get(this);
+        if (base == null) {
+            ServerAddress.showDialog(this, null, false, this::startLoad);
+            return;
+        }
+        session.loadUri(withLocalRemoteHash(buildTvUrl(base)));
+    }
+
+    // 遥控器长按「菜单」键：更换服务器地址
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        if (keyCode == KeyEvent.KEYCODE_MENU) {
+            event.startTracking();
+            return true;
+        }
+        return super.onKeyDown(keyCode, event);
+    }
+
+    @Override
+    public boolean onKeyLongPress(int keyCode, KeyEvent event) {
+        if (keyCode == KeyEvent.KEYCODE_MENU) {
+            ServerAddress.showDialog(this, null, true, this::startLoad);
+            return true;
+        }
+        return super.onKeyLongPress(keyCode, event);
     }
 
 
@@ -158,6 +187,7 @@ public class MainActivity extends Activity implements RemoteCommandHandler {
 
     @Override
     protected void onDestroy() {
+        ServerAddress.dismiss();
         if (localRemoteServer != null) {
             localRemoteServer.stop();
             localRemoteServer = null;
