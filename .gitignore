@@ -97,3 +97,16 @@ skills-lock.json
 apps/android-tv/.gradle/
 apps/android-tv/build/
 
+
+# 桌面 / 安卓手机客户端的构建产物（在 GitHub Actions 里生成）
+/apps/desktop/node_modules/
+/apps/desktop/package-lock.json
+/apps/desktop/src-tauri/target/
+/apps/desktop/src-tauri/icons/
+/apps/desktop/src-tauri/gen/
+/apps/desktop/src-tauri/Cargo.lock
+/apps/android-mobile/.gradle/
+/apps/android-mobile/build/
+/apps/android-mobile/app/build/
+/apps/android-mobile/app/src/main/res/drawable/logo.png
+/apps/android-mobile/local.properties
