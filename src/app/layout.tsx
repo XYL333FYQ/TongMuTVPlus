@@ -56,7 +56,7 @@ export async function generateMetadata(): Promise<Metadata> {
     description: BRAND_DESCRIPTION,
     icons: { icon: '/favicon.ico', apple: '/icons/icon-180x180.png' },
     manifest: '/manifest.json',
-    // 供配套浏览器扩展（moontvplus-extension）识别本站部署（勿删）
+    // 供兼容浏览器扩展识别本站部署（保留协议标记）
     other: {
       'moontvplus-site': '1',
     },
@@ -406,7 +406,7 @@ export default async function RootLayout({
       suppressHydrationWarning
     >
       <head>
-        {/* 配套 moontvplus-extension 识别指纹；仅本项目部署站应带此标记 */}
+        {/* 兼容浏览器扩展的识别指纹；仅本项目部署站应带此标记 */}
         <meta name='moontvplus-site' content='1' />
         <meta
           name='viewport'

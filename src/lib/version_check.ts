@@ -9,12 +9,12 @@ export enum UpdateStatus {
   NOT_CONFIGURED = 'not_configured',
 }
 
-/** No project release endpoint exists yet. Never compare this fork to upstream releases. */
+/** 尚未配置 TongMuTV Plus 发行地址，不请求外部项目，也不宣称当前为最新版本。 */
 export async function checkForUpdates(): Promise<UpdateStatus> {
   return UpdateStatus.NOT_CONFIGURED;
 }
 
-/** The version panel passes the upstream baseline explicitly for its separate reference view. */
+/** 比较本项目的语义化版本。 */
 export function compareVersions(
   remoteVersion: string,
   currentVersion: string = CURRENT_VERSION

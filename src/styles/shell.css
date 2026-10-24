@@ -178,6 +178,33 @@
 .tm-shell-icon:hover {
   background: var(--tm-surface-raised);
 }
+.tm-repository-trigger {
+  position: relative;
+  display: inline-flex;
+  flex-shrink: 0;
+}
+.tm-repository-tooltip {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  z-index: 1;
+  padding-top: 8px;
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+.tm-repository-tooltip > span {
+  display: block;
+  padding: 8px 12px;
+  border: 1px solid var(--tm-line);
+  border-radius: var(--tm-radius-sm);
+  background: var(--tm-surface-raised);
+  color: var(--tm-text);
+  box-shadow: var(--tm-shadow-sm);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.5;
+}
 .tm-account-initial {
   display: grid;
   place-items: center;

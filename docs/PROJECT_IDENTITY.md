@@ -8,7 +8,7 @@
 
 `src/lib/brand.json` 是公开品牌元数据；网页通过 `brand.ts` 使用它，构建脚本读取同一 JSON。产品名称为 **TongMuTV Plus**，使用原创 TM 标志。`public/brand/tm-mark.svg` 是图标源，`node scripts/generate-brand-icons.js` 生成现有路径的 PNG / ICO 图标，不改变安装路径。
 
-保留原数据库路径、浏览器存储键、缓存虚拟路由、扩展识别与遥控协议。它们是兼容接口，不是页面品牌。MoonTVPlus-PC 与 MoonTVPlus 扩展仍用真实第三方名称，避免误认为由本项目发行。
+保留原数据库路径、浏览器存储键、缓存虚拟路由、扩展识别与遥控协议。它们是兼容接口，不是页面品牌。网站不推广原项目客户端，旧登录设备的第三方品牌只转换为“兼容客户端”展示，不冒充本项目发行。
 
 ## 旧站名迁移
 
@@ -25,4 +25,8 @@ node scripts/migrate-branding.js --db /path/to/moontv.db --apply
 
 ## 项目更新
 
-`VERSION.txt` 与 `brand.json` 保存本项目版本；`UPSTREAM_VERSION.txt` 保留上游基线。尚未配置本项目发行端点时不显示“已是最新”或跳转上游更新本站。版本面板保留上游动态与历史记录，并明确其仅为参考。更新必须评估本项目改造差异后进行，不自动覆盖。
+`VERSION.txt` 与 `brand.json` 保存本项目版本；`UPSTREAM_VERSION.txt` 仅在源码资料中保留来源快照版本。网站品牌元数据只包含本项目身份，不再导出来源项目字段。
+
+版本面板只展示本项目版本及 `PROJECT_CHANGELOG` 的发布记录。`scripts/convert-changelog.js` 只转换该文件为 `src/lib/project-changelog.ts`；空记录显示“暂无发布记录”。脚本不会从根历史 CHANGELOG 更新项目版本，`--sync-version` 只在版本文本与品牌配置一致时生成统一版本入口。尚未配置本项目发行端点时不请求外部项目、不显示“已是最新”。
+
+2026-10-24 用户确认：网站普通页面、版本弹窗及关于页不再展示来源项目的名称、日志、仓库推广或来源说明；真实归属保留在 GitHub README、许可证和源码资料中。原作者声明、历史记录不改写为本项目原创。

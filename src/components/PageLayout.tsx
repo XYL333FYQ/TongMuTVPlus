@@ -1,11 +1,11 @@
 'use client';
 
-import { Search } from 'lucide-react';
+import { Github, Search } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useId, useState } from 'react';
 
-import { BRAND_NAME } from '@/lib/brand';
+import { BRAND_NAME, PROJECT_REPOSITORY_URL } from '@/lib/brand';
 
 import {
   DesktopNavigation,
@@ -45,6 +45,8 @@ export default function PageLayout({
   const current = (activePath || pathname).split('?')[0];
   const [scrolled, setScrolled] = useState(false);
   const [compactTitle, setCompactTitle] = useState(false);
+  const repositoryHintId = useId();
+  const [repositoryHintVisible, setRepositoryHintVisible] = useState(false);
   useEffect(() => {
     const update = () => {
       // Existing pages can scroll the body rather than the window.
@@ -119,6 +121,46 @@ export default function PageLayout({
                     <span aria-hidden='true'>TM</span>
                     <strong>TongMuTV</strong>
                   </Link>
+                  <span
+                    className='tm-repository-trigger'
+                    onMouseEnter={() => setRepositoryHintVisible(true)}
+                    onMouseLeave={() => setRepositoryHintVisible(false)}
+                    onFocusCapture={() => setRepositoryHintVisible(true)}
+                    onBlurCapture={(event) => {
+                      if (!event.currentTarget.contains(event.relatedTarget)) {
+                        setRepositoryHintVisible(false);
+                      }
+                    }}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Escape' && repositoryHintVisible) {
+                        event.preventDefault();
+                        setRepositoryHintVisible(false);
+                      }
+                    }}
+                  >
+                    <a
+                      href={PROJECT_REPOSITORY_URL}
+                      target='_blank'
+                      rel='noopener noreferrer'
+                      className='tm-shell-icon tm-press min-h-[44px] min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-fg'
+                      aria-label={`${BRAND_NAME} GitHub 仓库（在新标签页打开）`}
+                      aria-describedby={
+                        repositoryHintVisible ? repositoryHintId : undefined
+                      }
+                      onClick={() => setRepositoryHintVisible(false)}
+                    >
+                      <Github size={20} aria-hidden='true' />
+                    </a>
+                    {repositoryHintVisible && (
+                      <span
+                        id={repositoryHintId}
+                        role='tooltip'
+                        className='tm-repository-tooltip'
+                      >
+                        <span>{BRAND_NAME} 项目仓库</span>
+                      </span>
+                    )}
+                  </span>
                 </div>
                 <DesktopNavigation current={current} />
                 <div className='tm-header-actions'>

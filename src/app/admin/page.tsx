@@ -73,6 +73,7 @@ import { AdminConfig, AdminConfigResult } from '@/lib/admin.types';
 import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
 import { BookSource } from '@/lib/book.types';
 import { AI_WELCOME_MESSAGE } from '@/lib/brand';
+import { getDeviceDisplayName } from '@/lib/device-display';
 import {
   ALL_FEATURE_PERMISSION_KEYS,
   FEATURE_PERMISSION_OPTIONS,
@@ -2163,7 +2164,9 @@ const UserConfig = ({
                               <div className='min-w-0 flex-1'>
                                 <div className='flex items-center gap-2'>
                                   <div className='text-sm font-medium text-[color:var(--tm-text)] break-all'>
-                                    {device.deviceInfo || '未知设备'}
+                                    {getDeviceDisplayName(
+                                      device.deviceInfo || '未知设备'
+                                    )}
                                   </div>
                                   {device.isCurrent && (
                                     <span className='px-2 py-0.5 text-[13px] font-medium bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)] rounded-full whitespace-nowrap'>

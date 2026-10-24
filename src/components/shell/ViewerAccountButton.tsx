@@ -1,9 +1,10 @@
 'use client';
 
-import { LogIn, UserRound } from 'lucide-react';
+import { Info, LogIn, UserRound } from 'lucide-react';
 import Link from 'next/link';
 
 import { useViewerIdentity } from '@/hooks/useViewerIdentity';
+import { BRAND_NAME } from '@/lib/brand';
 
 import ThemeSettings from '@/components/account/ThemeSettings';
 import { MoreMenu } from '@/components/shell/TongMuNavigation';
@@ -34,6 +35,12 @@ export default function ViewerAccountButton() {
           </Link>
           <MoreMenu />
           <ThemeSettings />
+          <div className='tm-menu-group'>
+            <Link href='/about' className='tm-menu-link'>
+              <Info size={18} aria-hidden='true' />
+              <span>关于 {BRAND_NAME}</span>
+            </Link>
+          </div>
         </div>
       </details>
     </>

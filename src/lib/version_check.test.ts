@@ -1,12 +1,12 @@
-import { PROJECT_VERSION, UPSTREAM_BASE_VERSION } from './brand';
+import { PROJECT_VERSION } from './brand';
 import {
   checkForUpdates,
   compareVersions,
   UpdateStatus,
 } from './version_check';
 
-describe('independent project version and upstream reference', () => {
-  it('does not poll upstream or claim the project is latest when no project endpoint is configured', async () => {
+describe('TongMuTV Plus version information', () => {
+  it('does not poll or claim the project is latest when no project endpoint is configured', async () => {
     const originalFetch = global.fetch;
     global.fetch = jest.fn();
     try {
@@ -17,14 +17,11 @@ describe('independent project version and upstream reference', () => {
     }
   });
 
-  it('compares upstream only against an explicitly supplied upstream baseline', () => {
-    expect(PROJECT_VERSION).not.toBe(UPSTREAM_BASE_VERSION);
-    expect(compareVersions(UPSTREAM_BASE_VERSION, UPSTREAM_BASE_VERSION)).toBe(
+  it('compares project releases against the current or an explicit project version', () => {
+    expect(compareVersions(PROJECT_VERSION, PROJECT_VERSION)).toBe(
       UpdateStatus.NO_UPDATE
     );
-    expect(compareVersions('227.0.0', UPSTREAM_BASE_VERSION)).toBe(
-      UpdateStatus.HAS_UPDATE
-    );
+    expect(compareVersions('0.2.0', '0.1.0')).toBe(UpdateStatus.HAS_UPDATE);
     expect(compareVersions(PROJECT_VERSION)).toBe(UpdateStatus.NO_UPDATE);
     expect(compareVersions('not-a-version')).toBe(UpdateStatus.FETCH_FAILED);
   });

@@ -20,7 +20,7 @@
 
 ## 这是什么
 
-TongMuTV Plus 基于 [MoonTVPlus](https://github.com/mtvpls/MoonTVPlus) 二次开发，面向**邀请制的小圈子**：站长部署一个实例，用邀请码拉朋友进来。
+TongMuTV Plus 基于 [MoonTVPlus](https://github.com/mtvpls/MoonTVPlus) 进行特色化改造，拥有独立的产品品牌、房间体验与界面，面向**邀请制的小圈子**：站长部署一个实例，用邀请码拉朋友进来。
 
 两个平级的核心功能：
 

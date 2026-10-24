@@ -17,6 +17,7 @@ import {
   Gauge,
   Globe,
   Home,
+  Info,
   LogOut,
   MessageSquare,
   Monitor,
@@ -32,6 +33,7 @@ import {
   Tablet,
   X,
 } from 'lucide-react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
@@ -3054,7 +3056,7 @@ export const UserMenu: React.FC = () => {
           )}
         </div>
 
-        {/* 设置与管理 */}
+        {/* 设置与管理同组，项目介绍单独分组 */}
         <div className='tm-menu-group'>
           <button onClick={handleSettings} className='tm-menu-item'>
             <Settings aria-hidden />
@@ -3066,6 +3068,16 @@ export const UserMenu: React.FC = () => {
               <span>管理面板</span>
             </button>
           )}
+        </div>
+        <div className='tm-menu-group'>
+          <Link
+            href='/about'
+            className='tm-menu-item'
+            onClick={handleCloseMenu}
+          >
+            <Info aria-hidden='true' />
+            <span>关于 {BRAND_NAME}</span>
+          </Link>
         </div>
 
         {/* 底部：登出 + 版本（附数据存储方式） */}
@@ -3080,7 +3092,7 @@ export const UserMenu: React.FC = () => {
               handleCloseMenu();
             }}
             className='tm-menu-version'
-            aria-label={`版本 v${CURRENT_VERSION}，查看更新`}
+            aria-label={`版本 v${CURRENT_VERSION}，查看版本信息`}
           >
             <span>
               v{CURRENT_VERSION} ·{' '}

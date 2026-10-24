@@ -33,13 +33,13 @@ import TVLayout from '@/components/tv/TVLayout';
 
 const LOCAL_REMOTE_URL_KEY = 'moontv_local_remote_url';
 
-type MoonTVLocalRemoteBridge = {
+type LocalRemoteBridge = {
   getRemoteUrl?: () => string;
 };
 
 declare global {
   interface Window {
-    MoonTVLocalRemote?: MoonTVLocalRemoteBridge;
+    MoonTVLocalRemote?: LocalRemoteBridge;
     __MOONTV_LOCAL_REMOTE_URL?: string;
   }
 }

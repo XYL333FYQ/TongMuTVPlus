@@ -1013,7 +1013,7 @@ function PlayPageClient() {
     supportsNativeHls &&
     netdiskHlsPlaybackMode === 'native';
 
-  /** 私人影库/网盘类源：配合 moontvplus-extension 跨域媒体模块，供 Anime4K 等读帧 */
+  /** 私人影库/网盘类源：配合兼容扩展的跨域媒体模块，供 Anime4K 等读帧 */
   const needsPrivateSourceCrossOrigin = (source?: string | null) => {
     if (!source) return false;
     return (
@@ -1030,7 +1030,7 @@ function PlayPageClient() {
     source?: string | null
   ) => {
     if (!video) return;
-    // 私人影库/网盘类直链先乐观 CORS 模式加载：配「moontvplus 扩展」注入 ACAO，
+    // 私人影库/网盘类直链先乐观 CORS 模式加载：配合跨域媒体扩展注入 ACAO，
     // Anime4K 才能读帧超分。单文件直链（openlist file）/网盘挂载原生 HLS 也先试
     // CORS，无 ACAO 的 CDN 首次播放 error 时一次性回退 no-cors（见 error 处理器）。
     if (
@@ -2234,7 +2234,7 @@ function PlayPageClient() {
   const currentXiaoyaUrlRef = useRef<string>(''); // 当前xiaoya原始URL（用于刷新）
   const videoMediaTypeRef = useRef<'hls' | 'file' | ''>(''); // 播放链接媒体类型（openlist 探测后注入，用于单文件直连分流）
   // 当前视频是否已因 CORS 失败回退 no-cors（无扩展注入 ACAO 的 CDN 直链）。
-  // 先乐观设置 crossOrigin（配 moontvplus-extension 注入 ACAO 供 Anime4K 读帧），
+  // 先乐观设置 crossOrigin（配合跨域媒体扩展注入 ACAO 供 Anime4K 读帧），
   // 首次播放 error 时一次性回退，之后不再恢复 crossOrigin。切集/换源时重置。
   const mediaCorsFallbackRef = useRef(false);
   const isInitialLoadRef = useRef(true); // 标记是否为首次加载
@@ -5037,7 +5037,7 @@ function PlayPageClient() {
     (video as any).playsInline = true;
     (video as any).webkitPlaysInline = true;
 
-    // openlist/emby/xiaoya/netdisk：CORS 模式加载，需配套「moontvplus 扩展」注入 ACAO 后 Anime4K 才能读帧
+    // openlist/emby/xiaoya/netdisk：CORS 模式加载，需配套跨域媒体扩展注入 ACAO 后 Anime4K 才能读帧
     applyVideoCrossOrigin(video, currentSourceRef.current);
   };
 
@@ -8463,7 +8463,7 @@ function PlayPageClient() {
             playsInline: true,
             'webkit-playsinline': 'true',
             referrerpolicy: 'no-referrer',
-            // 私人影库/网盘直链：配合同级 moontvplus-extension 注入 ACAO，供 Anime4K 读帧。
+            // 私人影库/网盘直链：配合跨域媒体扩展注入 ACAO，供 Anime4K 读帧。
             // 单文件直链（mediaType=file）与网盘挂载原生 HLS 也先乐观 CORS，
             // 无 ACAO 的 CDN 首次播放 error 时一次性回退 no-cors（见 error 处理器）。
             ...(needsPrivateSourceCrossOrigin(currentSourceRef.current) &&

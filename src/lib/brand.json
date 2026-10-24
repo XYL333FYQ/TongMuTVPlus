@@ -3,7 +3,5 @@
   "slug": "tongmutvplus",
   "version": "0.1.0",
   "description": "一起发现好内容，一起看，一起听。",
-  "upstreamName": "MoonTVPlus",
-  "upstreamVersion": "226.1.0",
-  "upstreamUrl": "https://github.com/mtvpls/MoonTVPlus"
+  "repositoryUrl": "https://github.com/XYL333FYQ/TongMuTVPlus"
 }

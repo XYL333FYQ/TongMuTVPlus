@@ -3,6 +3,8 @@
 import { LucideIcon, Monitor, X } from 'lucide-react';
 import { createPortal } from 'react-dom';
 
+import { getDeviceDisplayName } from '@/lib/device-display';
+
 interface DeviceItem {
   tokenId: string;
   deviceInfo: string;
@@ -104,7 +106,7 @@ export function DeviceManagementPanel({
                             <div className='flex items-center gap-2 mb-2'>
                               <DeviceIcon className='w-4 h-4 text-muted' />
                               <span className='text-sm font-medium text-fg'>
-                                {device.deviceInfo}
+                                {getDeviceDisplayName(device.deviceInfo)}
                               </span>
                               {device.isCurrent && (
                                 <span className='px-2 py-0.5 text-[13px] font-medium bg-raised text-fg rounded-full'>

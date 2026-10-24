@@ -20,7 +20,7 @@ English | [简体中文](README_zh.md)
 
 ## What it is
 
-TongMuTV Plus is built on [MoonTVPlus](https://github.com/mtvpls/MoonTVPlus) for **small, invite-only communities**: one owner deploys an instance and invites friends with an invite code.
+TongMuTV Plus is a customized project built on [MoonTVPlus](https://github.com/mtvpls/MoonTVPlus), with its own product identity, room experience and interface. It is designed for **small, invite-only communities**: one owner deploys an instance and invites friends with an invite code.
 
 Two equal core features:
 

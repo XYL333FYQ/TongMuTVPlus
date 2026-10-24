@@ -1,7 +1,7 @@
 jest.mock('@/lib/auth', () => ({
   getAuthInfoFromBrowserCookie: () => ({
     username: 'audit-user',
-    role: 'user',
+    role: 'owner',
   }),
 }));
 jest.mock('next/navigation', () => ({
@@ -22,6 +22,7 @@ const originalFetch = global.fetch;
 const originalMatchMedia = window.matchMedia;
 
 beforeEach(() => {
+  window.RUNTIME_CONFIG = { STORAGE_TYPE: 'd1' };
   global.fetch = jest.fn().mockResolvedValue({
     ok: true,
     json: async () => ({ unreadCount: 0 }),
@@ -35,6 +36,7 @@ beforeEach(() => {
   }));
 });
 afterEach(() => {
+  delete window.RUNTIME_CONFIG;
   global.fetch = originalFetch;
   window.matchMedia = originalMatchMedia;
   Reflect.deleteProperty(window, '__unreadNotificationCount');
@@ -70,4 +72,31 @@ test('原生子弹窗的 Esc 交给子弹窗，不卸载整个账号菜单', asy
   expect(fireEvent.keyDown(close, { key: 'Escape' })).toBe(true);
   expect(trigger).toHaveAttribute('aria-expanded', 'true');
   expect(screen.getByRole('button', { name: '更多功能' })).toBe(more);
+});
+
+test('账号菜单提供独立的关于入口，点击后关闭菜单', async () => {
+  render(<UserMenu />);
+  const trigger = screen.getByRole('button', { name: '账号菜单' });
+  fireEvent.click(trigger);
+  const about = await screen.findByRole('link', {
+    name: '关于 TongMuTV Plus',
+  });
+  expect(about).toHaveAttribute('href', '/about');
+  const settings = screen.getByRole('button', { name: '设置' });
+  const admin = screen.getByRole('button', { name: '管理面板' });
+  expect(settings.closest('.tm-menu-group')).toBe(
+    admin.closest('.tm-menu-group')
+  );
+  expect(about.closest('.tm-menu-group')).not.toBe(
+    admin.closest('.tm-menu-group')
+  );
+  expect(
+    admin.compareDocumentPosition(about) & Node.DOCUMENT_POSITION_FOLLOWING
+  ).toBeTruthy();
+  expect(about.closest('.tm-menu-group')?.textContent).toBe(
+    '关于 TongMuTV Plus'
+  );
+  fireEvent.click(about);
+  expect(trigger).toHaveAttribute('aria-expanded', 'false');
+  expect(screen.queryByRole('link', { name: '关于 TongMuTV Plus' })).toBeNull();
 });
