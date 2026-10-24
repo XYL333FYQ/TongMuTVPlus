@@ -48,7 +48,10 @@ export async function GET(request: NextRequest) {
 
     if (!mediaId) {
       if (!title.trim()) {
-        return NextResponse.json({ error: '缺少 id 或 title 参数' }, { status: 400 });
+        return NextResponse.json(
+          { error: '缺少 id 或 title 参数' },
+          { status: 400 }
+        );
       }
 
       const searchResponse = await searchTMDBMulti(
@@ -79,7 +82,10 @@ export async function GET(request: NextRequest) {
         validResults[0];
 
       if (!matched?.id) {
-        return NextResponse.json({ error: '未找到 TMDB 条目' }, { status: 404 });
+        return NextResponse.json(
+          { error: '未找到 TMDB 条目' },
+          { status: 404 }
+        );
       }
 
       mediaId = matched.id;

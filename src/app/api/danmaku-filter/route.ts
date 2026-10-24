@@ -72,7 +72,8 @@ export async function POST(request: NextRequest) {
     // 验证每个规则的格式
     const validatedRules = config.rules.map((rule) => ({
       keyword: String(rule.keyword || ''),
-      type: (rule.type === 'regex' || rule.type === 'normal') ? rule.type : 'normal',
+      type:
+        rule.type === 'regex' || rule.type === 'normal' ? rule.type : 'normal',
       enabled: Boolean(rule.enabled),
       id: rule.id || undefined,
     }));

@@ -22,7 +22,10 @@ export async function GET(request: NextRequest) {
 
     const episodeIndex = Number.parseInt(episodeIndexRaw, 10);
     if (!Number.isInteger(episodeIndex) || episodeIndex < 0) {
-      return NextResponse.json({ error: '无效的 episodeIndex' }, { status: 400 });
+      return NextResponse.json(
+        { error: '无效的 episodeIndex' },
+        { status: 400 }
+      );
     }
 
     const { session, cookie } = await resolveBaiduSession(id);
@@ -31,7 +34,11 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: '播放文件不存在' }, { status: 404 });
     }
 
-    const { url, headers } = await getBaiduDirectPlayUrl(session.meta, file.fid, cookie);
+    const { url, headers } = await getBaiduDirectPlayUrl(
+      session.meta,
+      file.fid,
+      cookie
+    );
     const range = request.headers.get('range');
     const abortController = new AbortController();
     const timeoutId = setTimeout(() => abortController.abort(), 300000);
@@ -57,7 +64,14 @@ export async function GET(request: NextRequest) {
       }
 
       const responseHeaders = new Headers();
-      const copyHeaders = ['content-type', 'content-length', 'content-range', 'accept-ranges', 'etag', 'last-modified'];
+      const copyHeaders = [
+        'content-type',
+        'content-length',
+        'content-range',
+        'accept-ranges',
+        'etag',
+        'last-modified',
+      ];
       copyHeaders.forEach((name) => {
         const value = upstream.headers.get(name);
         if (value) responseHeaders.set(name, value);
@@ -100,13 +114,19 @@ export async function GET(request: NextRequest) {
       })();
 
       return new Response(readable, {
-        status: range && upstream.headers.get('content-range') ? 206 : upstream.status,
+        status:
+          range && upstream.headers.get('content-range')
+            ? 206
+            : upstream.status,
         headers: responseHeaders,
       });
     } catch (error) {
       clearTimeout(timeoutId);
       if (error instanceof Error && error.name === 'AbortError') {
-        return NextResponse.json({ error: '百度网盘代理超时' }, { status: 504 });
+        return NextResponse.json(
+          { error: '百度网盘代理超时' },
+          { status: 504 }
+        );
       }
       throw error;
     }

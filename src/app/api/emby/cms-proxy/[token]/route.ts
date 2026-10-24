@@ -92,7 +92,13 @@ export async function GET(
     if (wd) {
       // 搜索模式
       if (ac === 'detail') {
-        return await handleDetailBySearch(client, wd, requestToken, embyKey, request);
+        return await handleDetailBySearch(
+          client,
+          wd,
+          requestToken,
+          embyKey,
+          request
+        );
       }
       return await handleSearch(client, wd, requestToken);
     } else if (ids || ac === 'detail') {
@@ -190,7 +196,13 @@ async function handleDetailBySearch(
     });
   }
 
-  return await handleDetail(client, result.Items[0].Id, token, embyKey, request);
+  return await handleDetail(
+    client,
+    result.Items[0].Id,
+    token,
+    embyKey,
+    request
+  );
 }
 
 /**
@@ -206,9 +218,13 @@ async function handleDetail(
   const item = await client.getItem(itemId);
 
   // 获取当前请求的 baseUrl
-  const host = request.headers.get('host') || request.headers.get('x-forwarded-host');
-  const proto = request.headers.get('x-forwarded-proto') ||
-    (host?.includes('localhost') || host?.includes('127.0.0.1') ? 'http' : 'https');
+  const host =
+    request.headers.get('host') || request.headers.get('x-forwarded-host');
+  const proto =
+    request.headers.get('x-forwarded-proto') ||
+    (host?.includes('localhost') || host?.includes('127.0.0.1')
+      ? 'http'
+      : 'https');
   const baseUrl = process.env.SITE_BASE || `${proto}://${host}`;
 
   const embyKeyParam = embyKey ? `&embyKey=${embyKey}` : '';
@@ -216,7 +232,9 @@ async function handleDetail(
 
   if (item.Type === 'Movie') {
     // 电影：单个播放链接（使用代理，添加 .mp4 扩展名）
-    const proxyUrl = `${baseUrl}/api/emby/play/${encodeURIComponent(token)}/video.mp4?itemId=${item.Id}${embyKeyParam}`;
+    const proxyUrl = `${baseUrl}/api/emby/play/${encodeURIComponent(
+      token
+    )}/video.mp4?itemId=${item.Id}${embyKeyParam}`;
     vodPlayUrl = `正片$${proxyUrl}`;
   } else if (item.Type === 'Series') {
     // 剧集：获取所有集
@@ -231,7 +249,9 @@ async function handleDetail(
       })
       .map((ep) => {
         const title = `第${ep.IndexNumber}集`;
-        const proxyUrl = `${baseUrl}/api/emby/play/${encodeURIComponent(token)}/video.mp4?itemId=${ep.Id}${embyKeyParam}`;
+        const proxyUrl = `${baseUrl}/api/emby/play/${encodeURIComponent(
+          token
+        )}/video.mp4?itemId=${ep.Id}${embyKeyParam}`;
         return `${title}$${proxyUrl}`;
       });
 

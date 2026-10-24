@@ -5,23 +5,35 @@ import { NextRequest, NextResponse } from 'next/server';
 import { authenticateRequest } from '@/lib/request-auth';
 import { isTVModeEnabled, resolveLoginPath } from '@/lib/tv-mode';
 
-const PUBLIC_PAGES = new Set(['/', '/douban', '/duanju', '/search', '/watch-room', '/about']);
+const PUBLIC_PAGES = new Set([
+  '/',
+  '/douban',
+  '/duanju',
+  '/search',
+  '/watch-room',
+  '/about',
+]);
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   if (!isTVModeEnabled() && isTVModePath(pathname)) {
     return new NextResponse('Not Found', { status: 404 });
   }
-  if (shouldSkipAuth(pathname) ||
-      (request.method === 'GET' && PUBLIC_PAGES.has(pathname)) ||
-      (request.method === 'GET' && pathname === '/api/public/catalog') ||
-      (request.method === 'GET' && pathname === '/api/rooms' && request.nextUrl.searchParams.get('mode') === 'public')) {
+  if (
+    shouldSkipAuth(pathname) ||
+    (request.method === 'GET' && PUBLIC_PAGES.has(pathname)) ||
+    (request.method === 'GET' && pathname === '/api/public/catalog') ||
+    (request.method === 'GET' &&
+      pathname === '/api/rooms' &&
+      request.nextUrl.searchParams.get('mode') === 'public')
+  ) {
     return NextResponse.next();
   }
   if (!process.env.PASSWORD && !pathname.startsWith('/api/')) {
     return NextResponse.redirect(new URL('/warning', request.url));
   }
-  if (!(await authenticateRequest(request))) return handleAuthFailure(request, pathname);
+  if (!(await authenticateRequest(request)))
+    return handleAuthFailure(request, pathname);
   return NextResponse.next();
 }
 
@@ -61,7 +73,11 @@ function shouldSkipAuth(pathname: string): boolean {
 }
 
 function isTVModePath(pathname: string): boolean {
-  return pathname === '/tv' || pathname.startsWith('/tv/') || pathname.startsWith('/api/tv-remote/');
+  return (
+    pathname === '/tv' ||
+    pathname.startsWith('/tv/') ||
+    pathname.startsWith('/api/tv-remote/')
+  );
 }
 
 // 配置middleware匹配规则

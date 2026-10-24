@@ -32,7 +32,9 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const target = `https://movie.douban.com/j/subject_suggest?q=${encodeURIComponent(query)}`;
+    const target = `https://movie.douban.com/j/subject_suggest?q=${encodeURIComponent(
+      query
+    )}`;
     const data = await fetchDoubanData<DoubanSearchResult[]>(target);
 
     const response: DoubanSearchResponse = {

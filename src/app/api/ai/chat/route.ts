@@ -2,10 +2,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 
-import {
-  orchestrateDataSources,
-  VideoContext,
-} from '@/lib/ai-orchestrator';
+import { orchestrateDataSources, VideoContext } from '@/lib/ai-orchestrator';
 import {
   buildAgentSystemPrompt,
   buildAgentTools,
@@ -149,7 +146,10 @@ function transformToSSE(
                   // 检查是否退出thinking块
                   if (inThinkingBlock && contentBuffer.includes('</think>')) {
                     // 移除thinking块内容
-                    contentBuffer = contentBuffer.replace(/<think>[\s\S]*?<\/think>/g, '');
+                    contentBuffer = contentBuffer.replace(
+                      /<think>[\s\S]*?<\/think>/g,
+                      ''
+                    );
                     inThinkingBlock = false;
                   }
 
@@ -159,7 +159,9 @@ function transformToSSE(
                     const outputText = contentBuffer;
                     if (outputText) {
                       controller.enqueue(
-                        new TextEncoder().encode(`data: ${JSON.stringify({ text: outputText })}\n\n`)
+                        new TextEncoder().encode(
+                          `data: ${JSON.stringify({ text: outputText })}\n\n`
+                        )
                       );
                       contentBuffer = ''; // 清空已输出的内容
                     }
@@ -168,7 +170,12 @@ function transformToSSE(
               } catch (e) {
                 // 只在非空数据解析失败时打印错误
                 if (data.length > 0) {
-                  console.error('Parse stream chunk error:', e, 'Data:', data.substring(0, 100));
+                  console.error(
+                    'Parse stream chunk error:',
+                    e,
+                    'Data:',
+                    data.substring(0, 100)
+                  );
                 }
               }
             }
@@ -194,10 +201,15 @@ function transformToSSE(
                 if (text) {
                   contentBuffer += text;
                   // 最后清理一次thinking标签
-                  contentBuffer = contentBuffer.replace(/<think>[\s\S]*?<\/think>/g, '');
+                  contentBuffer = contentBuffer.replace(
+                    /<think>[\s\S]*?<\/think>/g,
+                    ''
+                  );
                   if (contentBuffer) {
                     controller.enqueue(
-                      new TextEncoder().encode(`data: ${JSON.stringify({ text: contentBuffer })}\n\n`)
+                      new TextEncoder().encode(
+                        `data: ${JSON.stringify({ text: contentBuffer })}\n\n`
+                      )
                     );
                   }
                 }
@@ -211,7 +223,9 @@ function transformToSSE(
         console.error('Stream error:', error);
         const message = error instanceof Error ? error.message : String(error);
         controller.enqueue(
-          new TextEncoder().encode(`data: ${JSON.stringify({ error: `AI请求失败: ${message}` })}\n\n`)
+          new TextEncoder().encode(
+            `data: ${JSON.stringify({ error: `AI请求失败: ${message}` })}\n\n`
+          )
         );
       } finally {
         controller.close();
@@ -233,10 +247,10 @@ async function handleNewMode(
 ): Promise<NextResponse> {
   const { message, context, history = [] } = body;
   const protocol: NewProtocol =
-    aiConfig.NewProtocol === 'openai-responses' || aiConfig.NewProtocol === 'claude'
+    aiConfig.NewProtocol === 'openai-responses' ||
+    aiConfig.NewProtocol === 'claude'
       ? aiConfig.NewProtocol
       : 'openai-completions';
-
 
   // 解析凭据
   let apiKey = '';
@@ -244,7 +258,9 @@ async function handleNewMode(
   let model = '';
   if (protocol === 'claude') {
     apiKey = aiConfig.ClaudeApiKey || '';
-    baseURL = normalizeClaudeBaseURL(aiConfig.ClaudeBaseURL || 'https://api.anthropic.com');
+    baseURL = normalizeClaudeBaseURL(
+      aiConfig.ClaudeBaseURL || 'https://api.anthropic.com'
+    );
     model = aiConfig.ClaudeModel || '';
   } else {
     apiKey = aiConfig.OpenAIApiKey || aiConfig.CustomApiKey || '';
@@ -281,24 +297,27 @@ async function handleNewMode(
               aiConfig.WebSearchProvider === 'tavily'
                 ? aiConfig.TavilyApiKey
                 : aiConfig.WebSearchProvider === 'serper'
-                  ? aiConfig.SerperApiKey
-                  : aiConfig.WebSearchProvider === 'serpapi'
-                    ? aiConfig.SerpApiKey
-                    : '',
+                ? aiConfig.SerperApiKey
+                : aiConfig.WebSearchProvider === 'serpapi'
+                ? aiConfig.SerpApiKey
+                : '',
           }
         : undefined,
-    tmdb:
-      adminConfig?.SiteConfig?.TMDBApiKey
-        ? {
-            apiKey: adminConfig.SiteConfig.TMDBApiKey,
-            proxy: adminConfig.SiteConfig.TMDBProxy,
-            reverseProxy: adminConfig.SiteConfig.TMDBReverseProxy,
-          }
-        : undefined,
+    tmdb: adminConfig?.SiteConfig?.TMDBApiKey
+      ? {
+          apiKey: adminConfig.SiteConfig.TMDBApiKey,
+          proxy: adminConfig.SiteConfig.TMDBProxy,
+          reverseProxy: adminConfig.SiteConfig.TMDBReverseProxy,
+        }
+      : undefined,
     username,
   };
   // 无 key 时不注册 web_search 工具
-  if (dataSources.webSearch && !dataSources.webSearch.apiKey && dataSources.webSearch.provider !== 'bing') {
+  if (
+    dataSources.webSearch &&
+    !dataSources.webSearch.apiKey &&
+    dataSources.webSearch.provider !== 'bing'
+  ) {
     dataSources.webSearch = undefined;
   }
 
@@ -337,7 +356,9 @@ async function handleNewMode(
 
   return NextResponse.json({
     content: result.content,
-    ...(result.compressedSummary ? { compressedSummary: result.compressedSummary } : {}),
+    ...(result.compressedSummary
+      ? { compressedSummary: result.compressedSummary }
+      : {}),
   });
 }
 
@@ -350,7 +371,10 @@ export async function POST(request: NextRequest) {
     }
 
     if (!(await hasFeaturePermission(authInfo.username, 'ai_ask'))) {
-      return NextResponse.json({ error: '无权限使用 AI 问片功能' }, { status: 403 });
+      return NextResponse.json(
+        { error: '无权限使用 AI 问片功能' },
+        { status: 403 }
+      );
     }
 
     // 2. 获取AI配置
@@ -358,10 +382,7 @@ export async function POST(request: NextRequest) {
     const aiConfig = adminConfig.AIConfig;
 
     if (!aiConfig || !aiConfig.Enabled) {
-      return NextResponse.json(
-        { error: 'AI功能未启用' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'AI功能未启用' }, { status: 400 });
     }
 
     // 3. 解析请求参数
@@ -369,15 +390,18 @@ export async function POST(request: NextRequest) {
     const { message, context, history = [] } = body;
 
     if (!message || typeof message !== 'string') {
-      return NextResponse.json(
-        { error: '消息内容不能为空' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: '消息内容不能为空' }, { status: 400 });
     }
 
     // 新版（工具式调用）分支：由管理员开启
     if (aiConfig.EnableNewMode) {
-      return await handleNewMode(aiConfig, adminConfig, body, request, authInfo.username);
+      return await handleNewMode(
+        aiConfig,
+        adminConfig,
+        body,
+        request,
+        authInfo.username
+      );
     }
 
     console.log('📨 收到AI聊天请求:', {
@@ -387,29 +411,28 @@ export async function POST(request: NextRequest) {
     });
 
     // 4. 使用orchestrator协调数据源
-    const orchestrationResult = await orchestrateDataSources(
-      message,
-      context,
-      {
-        enableWebSearch: aiConfig.EnableWebSearch,
-        webSearchProvider: aiConfig.WebSearchProvider,
-        tavilyApiKey: aiConfig.TavilyApiKey,
-        serperApiKey: aiConfig.SerperApiKey,
-        serpApiKey: aiConfig.SerpApiKey,
-        // TMDB 配置
-        tmdbApiKey: adminConfig.SiteConfig.TMDBApiKey,
-        tmdbProxy: adminConfig.SiteConfig.TMDBProxy,
-        tmdbReverseProxy: adminConfig.SiteConfig.TMDBReverseProxy,
-        // 决策模型配置（固定使用自定义provider，复用主模型的API配置）
-        enableDecisionModel: aiConfig.EnableDecisionModel,
-        decisionProvider: 'custom',
-        decisionApiKey: aiConfig.CustomApiKey,
-        decisionBaseURL: aiConfig.CustomBaseURL,
-        decisionModel: aiConfig.DecisionCustomModel,
-      }
-    );
+    const orchestrationResult = await orchestrateDataSources(message, context, {
+      enableWebSearch: aiConfig.EnableWebSearch,
+      webSearchProvider: aiConfig.WebSearchProvider,
+      tavilyApiKey: aiConfig.TavilyApiKey,
+      serperApiKey: aiConfig.SerperApiKey,
+      serpApiKey: aiConfig.SerpApiKey,
+      // TMDB 配置
+      tmdbApiKey: adminConfig.SiteConfig.TMDBApiKey,
+      tmdbProxy: adminConfig.SiteConfig.TMDBProxy,
+      tmdbReverseProxy: adminConfig.SiteConfig.TMDBReverseProxy,
+      // 决策模型配置（固定使用自定义provider，复用主模型的API配置）
+      enableDecisionModel: aiConfig.EnableDecisionModel,
+      decisionProvider: 'custom',
+      decisionApiKey: aiConfig.CustomApiKey,
+      decisionBaseURL: aiConfig.CustomBaseURL,
+      decisionModel: aiConfig.DecisionCustomModel,
+    });
 
-    console.log('🎯 数据协调完成, systemPrompt长度:', orchestrationResult.systemPrompt.length);
+    console.log(
+      '🎯 数据协调完成, systemPrompt长度:',
+      orchestrationResult.systemPrompt.length
+    );
 
     // 5. 构建消息列表（旧模式无工具式调用，历史需剥离 toolCalls 字段）
     const systemPrompt = aiConfig.SystemPrompt
@@ -435,13 +458,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const result = await streamOpenAIChat(messages, {
-      apiKey: aiConfig.CustomApiKey,
-      baseURL: aiConfig.CustomBaseURL,
-      model: aiConfig.CustomModel || 'gpt-3.5-turbo',
-      temperature,
-      maxTokens,
-    }, enableStreaming);
+    const result = await streamOpenAIChat(
+      messages,
+      {
+        apiKey: aiConfig.CustomApiKey,
+        baseURL: aiConfig.CustomBaseURL,
+        model: aiConfig.CustomModel || 'gpt-3.5-turbo',
+        temperature,
+        maxTokens,
+      },
+      enableStreaming
+    );
 
     // 7. 根据是否启用流式响应返回不同格式
     if (enableStreaming) {

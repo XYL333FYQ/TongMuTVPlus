@@ -85,7 +85,10 @@ function toScheduleItem(it: CalendarItem): ScheduleItem {
     // 统一归一为 0=周一 .. 6=周日（与 tsToBeijing/days 数组下标一致）。
     // 未知条目的 weekday 来自 BGM 日历（1=周一..7=周日），需转换。
     weekday: it.weekday > 0 ? it.weekday - 1 : it.weekday,
-    rating: it.rating != null && Number.isFinite(it.rating) ? it.rating.toFixed(1) : undefined,
+    rating:
+      it.rating != null && Number.isFinite(it.rating)
+        ? it.rating.toFixed(1)
+        : undefined,
     air_date: it.air_date || undefined,
     images: it.images ?? undefined,
   };
@@ -96,17 +99,18 @@ export async function GET() {
     const config = await getConfig();
     const { season, year } = currentSeason();
 
-    const memoryCached = getBangumiScheduleMemoryCache<ScheduleResponse>(season, year);
+    const memoryCached = getBangumiScheduleMemoryCache<ScheduleResponse>(
+      season,
+      year
+    );
     if (memoryCached) {
       return NextResponse.json(memoryCached, {
         headers: { 'Cache-Control': 'public, max-age=3600' },
       });
     }
 
-    const databaseCached = await getBangumiScheduleDatabaseCache<ScheduleResponse>(
-      season,
-      year
-    );
+    const databaseCached =
+      await getBangumiScheduleDatabaseCache<ScheduleResponse>(season, year);
     if (databaseCached) {
       return NextResponse.json(databaseCached, {
         headers: { 'Cache-Control': 'public, max-age=3600' },
@@ -128,7 +132,8 @@ export async function GET() {
       );
     }
 
-    const calendar: RawCalendarItem[] = (await calendarRes.json()) as RawCalendarItem[];
+    const calendar: RawCalendarItem[] =
+      (await calendarRes.json()) as RawCalendarItem[];
     const cards = parseLiveChart(html);
     const idx = indexCards(cards);
 
@@ -169,7 +174,6 @@ export async function GET() {
     );
   }
 }
-
 
 interface ScheduleResponse {
   generatedAt: number;

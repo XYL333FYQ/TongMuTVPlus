@@ -4,7 +4,9 @@ import { getAuthInfoFromCookie } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { hasFeaturePermission } from '@/lib/permissions';
 
-export async function getAuthorizedUsername(request: NextRequest): Promise<string | NextResponse> {
+export async function getAuthorizedUsername(
+  request: NextRequest
+): Promise<string | NextResponse> {
   const authInfo = getAuthInfoFromCookie(request);
   if (!authInfo || !authInfo.username) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

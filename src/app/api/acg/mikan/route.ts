@@ -27,11 +27,11 @@ export async function POST(req: NextRequest) {
   try {
     // 检查权限
     const authInfo = getAuthInfoFromCookie(req);
-    if (!authInfo?.username || !(await hasFeaturePermission(authInfo.username, 'magnet_search'))) {
-      return NextResponse.json(
-        { error: '无权限访问' },
-        { status: 403 }
-      );
+    if (
+      !authInfo?.username ||
+      !(await hasFeaturePermission(authInfo.username, 'magnet_search'))
+    ) {
+      return NextResponse.json({ error: '无权限访问' }, { status: 403 });
     }
 
     const { keyword, page = 1 } = await req.json();
@@ -74,14 +74,20 @@ export async function POST(req: NextRequest) {
       'https://mikanani.me',
       config.SiteConfig.MagnetMikanReverseProxy
     );
-    const searchUrl = `${searchBaseUrl}/RSS/Search?searchstr=${encodeURIComponent(trimmedKeyword)}`;
+    const searchUrl = `${searchBaseUrl}/RSS/Search?searchstr=${encodeURIComponent(
+      trimmedKeyword
+    )}`;
 
-    const response = await universalMagnetFetch(searchUrl, config.SiteConfig.MagnetProxy, {
-      headers: {
-        'User-Agent':
-          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
-      },
-    });
+    const response = await universalMagnetFetch(
+      searchUrl,
+      config.SiteConfig.MagnetProxy,
+      {
+        headers: {
+          'User-Agent':
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+        },
+      }
+    );
 
     if (!response.ok) {
       throw new Error(`Mikan API 请求失败: ${response.status}`);
@@ -109,9 +115,7 @@ export async function POST(req: NextRequest) {
         pickText(item.torrent?.[0]?.pubDate) ||
         pickText(item['dc:date']);
       const description =
-        pickText(item.description) ||
-        pickText(item['content:encoded']) ||
-        '';
+        pickText(item.description) || pickText(item['content:encoded']) || '';
       const torrentUrl =
         pickText(item.enclosure?.[0]?.$?.url) ||
         pickText(item.enclosure?.[0]?.$?.href) ||
@@ -129,10 +133,12 @@ export async function POST(req: NextRequest) {
       if (description) {
         const imgMatches = description.match(/src="([^"]+)"/g);
         if (imgMatches) {
-          images = imgMatches.map((match: string) => {
-            const urlMatch = match.match(/src="([^"]+)"/);
-            return urlMatch ? urlMatch[1] : '';
-          }).filter(Boolean);
+          images = imgMatches
+            .map((match: string) => {
+              const urlMatch = match.match(/src="([^"]+)"/);
+              return urlMatch ? urlMatch[1] : '';
+            })
+            .filter(Boolean);
         }
       }
 

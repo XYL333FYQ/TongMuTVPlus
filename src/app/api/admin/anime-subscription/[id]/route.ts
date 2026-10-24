@@ -39,7 +39,10 @@ export async function PUT(
     if (updates.title !== undefined) {
       const normalizedTitle = String(updates.title).trim().replace(/\s+/g, ' ');
       if (!normalizedTitle) {
-        return NextResponse.json({ error: '番剧名称不能为空' }, { status: 400 });
+        return NextResponse.json(
+          { error: '番剧名称不能为空' },
+          { status: 400 }
+        );
       }
       const duplicated = subscriptions.some(
         (sub) =>
@@ -56,7 +59,10 @@ export async function PUT(
       subscription.title = normalizedTitle;
     }
     if (updates.filterText !== undefined) {
-      const filterCheck = validateKeywordExpr(String(updates.filterText), 'and');
+      const filterCheck = validateKeywordExpr(
+        String(updates.filterText),
+        'and'
+      );
       if (!filterCheck.ok) {
         return NextResponse.json(
           { error: `过滤关键词表达式无效: ${filterCheck.error}` },
@@ -67,7 +73,9 @@ export async function PUT(
     }
     if (updates.excludeText !== undefined) {
       const rawExclude =
-        typeof updates.excludeText === 'string' ? updates.excludeText.trim() : '';
+        typeof updates.excludeText === 'string'
+          ? updates.excludeText.trim()
+          : '';
       if (rawExclude) {
         const excludeCheck = validateKeywordExpr(rawExclude, 'or');
         if (!excludeCheck.ok) {

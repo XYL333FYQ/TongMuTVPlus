@@ -14,7 +14,11 @@ export const runtime = 'nodejs';
  */
 export async function GET(request: NextRequest) {
   try {
-    const authResult = await requireFeaturePermission(request, 'private_library', '无权限访问私人影库');
+    const authResult = await requireFeaturePermission(
+      request,
+      'private_library',
+      '无权限访问私人影库'
+    );
     if (authResult instanceof NextResponse) return authResult;
     const authInfo = getAuthInfoFromCookie(request);
     if (!authInfo || !authInfo.username) {

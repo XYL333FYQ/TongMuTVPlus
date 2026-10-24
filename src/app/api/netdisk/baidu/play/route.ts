@@ -21,10 +21,15 @@ export async function GET(request: NextRequest) {
 
     const episodeIndex = Number.parseInt(episodeIndexRaw, 10);
     if (!Number.isInteger(episodeIndex) || episodeIndex < 0) {
-      return NextResponse.json({ error: '无效的 episodeIndex' }, { status: 400 });
+      return NextResponse.json(
+        { error: '无效的 episodeIndex' },
+        { status: 400 }
+      );
     }
 
-    const proxyUrl = `/api/netdisk/baidu/proxy?id=${encodeURIComponent(id)}&episodeIndex=${episodeIndex}`;
+    const proxyUrl = `/api/netdisk/baidu/proxy?id=${encodeURIComponent(
+      id
+    )}&episodeIndex=${episodeIndex}`;
     if (format === 'json') {
       return NextResponse.json({ url: proxyUrl, headers: {} });
     }

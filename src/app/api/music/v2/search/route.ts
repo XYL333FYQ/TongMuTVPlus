@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { isMusicSource, lxGetJson, LxServerSong, normalizeLxSong } from '@/lib/music-v2';
+import {
+  isMusicSource,
+  lxGetJson,
+  LxServerSong,
+  normalizeLxSong,
+} from '@/lib/music-v2';
 import { badRequest, internalError } from '@/lib/music-v2-api';
 
 export const runtime = 'nodejs';
@@ -16,18 +21,31 @@ export async function GET(request: NextRequest) {
 
     if (!q) return badRequest('缺少搜索关键词');
     if (!isMusicSource(source)) return badRequest('不支持的音源');
-    if (!['song', 'singer', 'album'].includes(type)) return badRequest('不支持的搜索类型');
-    if ((type === 'singer' || type === 'album') && source !== 'wy' && source !== 'tx') {
+    if (!['song', 'singer', 'album'].includes(type))
+      return badRequest('不支持的搜索类型');
+    if (
+      (type === 'singer' || type === 'album') &&
+      source !== 'wy' &&
+      source !== 'tx'
+    ) {
       return badRequest('当前音源不支持歌手/专辑搜索');
     }
 
-    const list = await lxGetJson<any[]>(`/api/music/search?name=${encodeURIComponent(q)}&source=${source}&type=${type}&page=${page}&limit=${limit}`, 'none');
+    const list = await lxGetJson<any[]>(
+      `/api/music/search?name=${encodeURIComponent(
+        q
+      )}&source=${source}&type=${type}&page=${page}&limit=${limit}`,
+      'none'
+    );
 
     return NextResponse.json(
       {
         success: true,
         data: {
-          list: type === 'song' ? (list as LxServerSong[]).map(normalizeLxSong) : list,
+          list:
+            type === 'song'
+              ? (list as LxServerSong[]).map(normalizeLxSong)
+              : list,
           type,
           page,
           limit,
@@ -36,7 +54,8 @@ export async function GET(request: NextRequest) {
       },
       {
         headers: {
-          'Cache-Control': 'public, max-age=3600, s-maxage=3600, stale-while-revalidate=3600',
+          'Cache-Control':
+            'public, max-age=3600, s-maxage=3600, stale-while-revalidate=3600',
         },
       }
     );

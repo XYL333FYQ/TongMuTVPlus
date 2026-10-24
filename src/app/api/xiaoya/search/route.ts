@@ -14,7 +14,11 @@ export const runtime = 'nodejs';
  */
 export async function GET(request: NextRequest) {
   try {
-    const authResult = await requireFeaturePermission(request, 'xiaoya', '无权限访问小雅');
+    const authResult = await requireFeaturePermission(
+      request,
+      'xiaoya',
+      '无权限访问小雅'
+    );
     if (authResult instanceof NextResponse) return authResult;
     const authInfo = getAuthInfoFromCookie(request);
     if (!authInfo || !authInfo.username) {
@@ -32,20 +36,22 @@ export async function GET(request: NextRequest) {
     const config = await getConfig();
     const xiaoyaConfig = config.XiaoyaConfig;
 
-    if (
-      !xiaoyaConfig ||
-      !xiaoyaConfig.Enabled ||
-      !xiaoyaConfig.ServerURL
-    ) {
-      return NextResponse.json({ error: '小雅未配置或未启用' }, { status: 400 });
+    if (!xiaoyaConfig || !xiaoyaConfig.Enabled || !xiaoyaConfig.ServerURL) {
+      return NextResponse.json(
+        { error: '小雅未配置或未启用' },
+        { status: 400 }
+      );
     }
 
     // 使用小雅的搜索引擎
-    const searchUrl = `${xiaoyaConfig.ServerURL}/search?box=${encodeURIComponent(keyword)}&type=${type}&url=`;
+    const searchUrl = `${
+      xiaoyaConfig.ServerURL
+    }/search?box=${encodeURIComponent(keyword)}&type=${type}&url=`;
 
     const response = await fetch(searchUrl, {
       headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        'User-Agent':
+          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
       },
     });
 

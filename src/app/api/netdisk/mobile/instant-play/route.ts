@@ -16,7 +16,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: '未登录' }, { status: 401 });
     }
     if (!(await hasFeaturePermission(authInfo.username, 'netdisk_temp_play'))) {
-      return NextResponse.json({ error: '无权限使用临时播放' }, { status: 403 });
+      return NextResponse.json(
+        { error: '无权限使用临时播放' },
+        { status: 403 }
+      );
     }
 
     const { shareUrl, passcode, title } = await request.json();
@@ -27,10 +30,16 @@ export async function POST(request: NextRequest) {
     const config = await getConfig();
     const mobileConfig = config.NetDiskConfig?.Mobile;
     if (!mobileConfig?.Enabled || !mobileConfig.Authorization) {
-      return NextResponse.json({ error: '移动云盘未配置或未启用' }, { status: 400 });
+      return NextResponse.json(
+        { error: '移动云盘未配置或未启用' },
+        { status: 400 }
+      );
     }
 
-    const result = await listMobileShareVideos(shareUrl, mobileConfig.Authorization);
+    const result = await listMobileShareVideos(
+      shareUrl,
+      mobileConfig.Authorization
+    );
     const session = createMobileNetdiskSession({
       title: title || result.title,
       shareUrl,

@@ -14,7 +14,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: '未登录' }, { status: 401 });
     }
     if (!(await hasFeaturePermission(authInfo.username, 'netdisk_transfer'))) {
-      return NextResponse.json({ error: '无权限使用网盘转存' }, { status: 403 });
+      return NextResponse.json(
+        { error: '无权限使用网盘转存' },
+        { status: 403 }
+      );
     }
 
     const { shareUrl, passcode } = await request.json();
@@ -26,7 +29,10 @@ export async function POST(request: NextRequest) {
     const quarkConfig = config.NetDiskConfig?.Quark;
 
     if (!quarkConfig?.Enabled || !quarkConfig.Cookie) {
-      return NextResponse.json({ error: '夸克网盘未配置或未启用' }, { status: 400 });
+      return NextResponse.json(
+        { error: '夸克网盘未配置或未启用' },
+        { status: 400 }
+      );
     }
 
     const result = await transferQuarkShare(quarkConfig.Cookie, {

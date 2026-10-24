@@ -15,7 +15,10 @@ export async function GET(request: Request) {
   // 安全校验：防 SSRF，只允许合法的公网 URL
   const isSafeUrl = await validateProxyUrlServerSide(videoUrl);
   if (!isSafeUrl) {
-    return NextResponse.json({ error: 'Proxy request to local or invalid network is forbidden' }, { status: 403 });
+    return NextResponse.json(
+      { error: 'Proxy request to local or invalid network is forbidden' },
+      { status: 403 }
+    );
   }
 
   try {

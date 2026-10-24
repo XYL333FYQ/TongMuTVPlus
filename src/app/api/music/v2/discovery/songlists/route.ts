@@ -15,7 +15,12 @@ export async function GET(request: NextRequest) {
 
     if (!isMusicSource(source)) return badRequest('不支持的音源');
 
-    const payload = await lxGetJson<any>(`/api/music/songList/list?source=${source}&tagId=${encodeURIComponent(tagId)}&sortId=${encodeURIComponent(sortId)}&page=${page}`, 'none');
+    const payload = await lxGetJson<any>(
+      `/api/music/songList/list?source=${source}&tagId=${encodeURIComponent(
+        tagId
+      )}&sortId=${encodeURIComponent(sortId)}&page=${page}`,
+      'none'
+    );
     const list = unwrapLxArray<any>(payload);
 
     return NextResponse.json({
@@ -34,9 +39,15 @@ export async function GET(request: NextRequest) {
           source: item.source || source,
           author: item.author || item.creator?.nickname || item.uname || '',
           desc: item.desc || item.description || '',
-          play_count: item.play_count || item.playCount || item.listencnt || item.visitnum || '',
+          play_count:
+            item.play_count ||
+            item.playCount ||
+            item.listencnt ||
+            item.visitnum ||
+            '',
           total: item.total || item.trackCount || item.songCount || 0,
-          updateFrequency: item.updateFrequency || item.update_frequency || item.time || '',
+          updateFrequency:
+            item.updateFrequency || item.update_frequency || item.time || '',
         })),
       },
     });

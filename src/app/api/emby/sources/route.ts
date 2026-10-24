@@ -11,12 +11,16 @@ export const dynamic = 'force-dynamic'; // 禁用缓存
  */
 export async function GET(request: NextRequest) {
   try {
-    const authResult = await requireFeaturePermission(request, 'emby', '无权限访问 Emby');
+    const authResult = await requireFeaturePermission(
+      request,
+      'emby',
+      '无权限访问 Emby'
+    );
     if (authResult instanceof NextResponse) return authResult;
     const sources = await embyManager.getEnabledSources();
 
     return NextResponse.json({
-      sources: sources.map(s => ({
+      sources: sources.map((s) => ({
         key: s.key,
         name: s.name,
       })),

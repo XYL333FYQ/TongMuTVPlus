@@ -2,7 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getPan115PlayUrl } from '@/lib/netdisk/pan115.client';
-import { getPan115NetdiskSession, refreshPan115NetdiskSession } from '@/lib/netdisk/pan115-session-cache';
+import {
+  getPan115NetdiskSession,
+  refreshPan115NetdiskSession,
+} from '@/lib/netdisk/pan115-session-cache';
 import { resolvePan115Session } from '@/lib/netdisk/pan115-session-resolver';
 
 export const runtime = 'nodejs';
@@ -24,7 +27,10 @@ export async function GET(request: NextRequest) {
 
     const episodeIndex = Number.parseInt(episodeIndexRaw, 10);
     if (!Number.isInteger(episodeIndex) || episodeIndex < 0) {
-      return NextResponse.json({ error: '无效的 episodeIndex' }, { status: 400 });
+      return NextResponse.json(
+        { error: '无效的 episodeIndex' },
+        { status: 400 }
+      );
     }
 
     refreshPan115NetdiskSession(id) || getPan115NetdiskSession(id);

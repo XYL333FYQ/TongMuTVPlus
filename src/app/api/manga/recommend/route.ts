@@ -16,15 +16,23 @@ export async function GET(request: NextRequest) {
     const sourceId = searchParams.get('sourceId')?.trim();
     const page = Number(searchParams.get('page') || '1');
     const typeParam = searchParams.get('type')?.trim().toUpperCase();
-    const type: MangaRecommendType = typeParam === 'LATEST' ? 'LATEST' : 'POPULAR';
+    const type: MangaRecommendType =
+      typeParam === 'LATEST' ? 'LATEST' : 'POPULAR';
 
     if (!sourceId) {
       return NextResponse.json({ mangas: [], hasNextPage: false });
     }
 
-    const result = await suwayomiClient.getRecommendedManga(sourceId, type, page);
+    const result = await suwayomiClient.getRecommendedManga(
+      sourceId,
+      type,
+      page
+    );
     return NextResponse.json(result);
   } catch (error) {
-    return NextResponse.json({ error: (error as Error).message }, { status: 500 });
+    return NextResponse.json(
+      { error: (error as Error).message },
+      { status: 500 }
+    );
   }
 }

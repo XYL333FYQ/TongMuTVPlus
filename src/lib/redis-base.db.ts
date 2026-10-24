@@ -10,8 +10,21 @@ import {
   sortMusicV2History,
 } from './music-v2';
 import { RedisAdapter } from './redis-adapter';
-import { hashPassword as createPasswordHash, verifyPassword } from './password-hash';
-import { Favorite, IStorage, LocalSettingsSyncRecord, Notification, PlayRecord, PushSubscriptionRecord, SetLocalSettingsSyncOptions, SetLocalSettingsSyncResult, SkipConfig } from './types';
+import {
+  hashPassword as createPasswordHash,
+  verifyPassword,
+} from './password-hash';
+import {
+  Favorite,
+  IStorage,
+  LocalSettingsSyncRecord,
+  Notification,
+  PlayRecord,
+  PushSubscriptionRecord,
+  SetLocalSettingsSyncOptions,
+  SetLocalSettingsSyncResult,
+  SkipConfig,
+} from './types';
 import { userInfoCache } from './user-cache';
 import { dispatchNotificationChannels } from './notification-dispatch';
 
@@ -1583,7 +1596,9 @@ export abstract class BaseRedisStorage implements IStorage {
     await this.withRetry(() => this.adapter.zRem(this.userListKey(), userName));
 
     // 删除用户的本地设置云同步副本
-    await this.withRetry(() => this.adapter.del(this.settingsSyncKey(userName)));
+    await this.withRetry(() =>
+      this.adapter.del(this.settingsSyncKey(userName))
+    );
 
     // 删除用户的其他数据（播放记录、收藏等）
     await this.deleteUser(userName);
@@ -1939,7 +1954,11 @@ export abstract class BaseRedisStorage implements IStorage {
     if (opts.expectedVersion !== undefined) {
       const current = await this.getUserLocalSettings(userName);
       if (current && current.version !== opts.expectedVersion) {
-        return { ok: false, version: current.version, updatedAt: current.updatedAt };
+        return {
+          ok: false,
+          version: current.version,
+          updatedAt: current.updatedAt,
+        };
       }
       version = current ? current.version + 1 : 1;
     } else {
@@ -2170,7 +2189,6 @@ export abstract class BaseRedisStorage implements IStorage {
     await this.withRetry(() => this.adapter.del(this.globalValueKey(key)));
   }
 
-
   private telegramBindingKey(userName: string) {
     return `telegram:binding:user:${userName}`;
   }
@@ -2183,44 +2201,95 @@ export abstract class BaseRedisStorage implements IStorage {
     return `telegram:bind:${code}`;
   }
 
-  async getTelegramBinding(userName: string): Promise<import('./types').TelegramBindingRecord | null> {
-    const raw = await this.withRetry(() => this.adapter.get(this.telegramBindingKey(userName)));
-    return raw ? (JSON.parse(ensureString(raw)) as import('./types').TelegramBindingRecord) : null;
+  async getTelegramBinding(
+    userName: string
+  ): Promise<import('./types').TelegramBindingRecord | null> {
+    const raw = await this.withRetry(() =>
+      this.adapter.get(this.telegramBindingKey(userName))
+    );
+    return raw
+      ? (JSON.parse(
+          ensureString(raw)
+        ) as import('./types').TelegramBindingRecord)
+      : null;
   }
 
-  async getTelegramBindingByTelegramUserId(telegramUserId: string): Promise<import('./types').TelegramBindingRecord | null> {
-    const userName = await this.withRetry(() => this.adapter.get(this.telegramUserBindingKey(telegramUserId)));
+  async getTelegramBindingByTelegramUserId(
+    telegramUserId: string
+  ): Promise<import('./types').TelegramBindingRecord | null> {
+    const userName = await this.withRetry(() =>
+      this.adapter.get(this.telegramUserBindingKey(telegramUserId))
+    );
     return userName ? this.getTelegramBinding(ensureString(userName)) : null;
   }
 
-  async upsertTelegramBinding(binding: import('./types').TelegramBindingRecord): Promise<void> {
-    await this.withRetry(() => this.adapter.set(this.telegramBindingKey(binding.username), JSON.stringify(binding)));
-    await this.withRetry(() => this.adapter.set(this.telegramUserBindingKey(binding.telegramUserId), binding.username));
+  async upsertTelegramBinding(
+    binding: import('./types').TelegramBindingRecord
+  ): Promise<void> {
+    await this.withRetry(() =>
+      this.adapter.set(
+        this.telegramBindingKey(binding.username),
+        JSON.stringify(binding)
+      )
+    );
+    await this.withRetry(() =>
+      this.adapter.set(
+        this.telegramUserBindingKey(binding.telegramUserId),
+        binding.username
+      )
+    );
   }
 
   async deleteTelegramBindingByUsername(userName: string): Promise<void> {
     const binding = await this.getTelegramBinding(userName);
-    await this.withRetry(() => this.adapter.del(this.telegramBindingKey(userName)));
+    await this.withRetry(() =>
+      this.adapter.del(this.telegramBindingKey(userName))
+    );
     if (binding) {
-      await this.withRetry(() => this.adapter.del(this.telegramUserBindingKey(binding.telegramUserId)));
+      await this.withRetry(() =>
+        this.adapter.del(this.telegramUserBindingKey(binding.telegramUserId))
+      );
     }
   }
 
-  async deleteTelegramBindingByTelegramUserId(telegramUserId: string): Promise<void> {
-    const binding = await this.getTelegramBindingByTelegramUserId(telegramUserId);
+  async deleteTelegramBindingByTelegramUserId(
+    telegramUserId: string
+  ): Promise<void> {
+    const binding = await this.getTelegramBindingByTelegramUserId(
+      telegramUserId
+    );
     if (binding) {
-      await this.withRetry(() => this.adapter.del(this.telegramBindingKey(binding.username)));
+      await this.withRetry(() =>
+        this.adapter.del(this.telegramBindingKey(binding.username))
+      );
     }
-    await this.withRetry(() => this.adapter.del(this.telegramUserBindingKey(telegramUserId)));
+    await this.withRetry(() =>
+      this.adapter.del(this.telegramUserBindingKey(telegramUserId))
+    );
   }
 
-  async getTelegramBindSession(code: string): Promise<import('./types').TelegramBindSessionRecord | null> {
-    const raw = await this.withRetry(() => this.adapter.get(this.telegramBindSessionKey(code)));
-    return raw ? (JSON.parse(ensureString(raw)) as import('./types').TelegramBindSessionRecord) : null;
+  async getTelegramBindSession(
+    code: string
+  ): Promise<import('./types').TelegramBindSessionRecord | null> {
+    const raw = await this.withRetry(() =>
+      this.adapter.get(this.telegramBindSessionKey(code))
+    );
+    return raw
+      ? (JSON.parse(
+          ensureString(raw)
+        ) as import('./types').TelegramBindSessionRecord)
+      : null;
   }
 
-  async upsertTelegramBindSession(session: import('./types').TelegramBindSessionRecord): Promise<void> {
-    await this.withRetry(() => this.adapter.set(this.telegramBindSessionKey(session.code), JSON.stringify(session)));
+  async upsertTelegramBindSession(
+    session: import('./types').TelegramBindSessionRecord
+  ): Promise<void> {
+    await this.withRetry(() =>
+      this.adapter.set(
+        this.telegramBindSessionKey(session.code),
+        JSON.stringify(session)
+      )
+    );
   }
 
   async markTelegramBindSessionUsed(code: string): Promise<void> {
@@ -2462,7 +2531,6 @@ export abstract class BaseRedisStorage implements IStorage {
     userInfoCache?.delete(userName);
   }
 
-
   private pushSubscriptionsKey(userName: string): string {
     return `u:${userName}:push_subscriptions`;
   }
@@ -2475,12 +2543,18 @@ export abstract class BaseRedisStorage implements IStorage {
       this.adapter.hSet(
         this.pushSubscriptionsKey(userName),
         subscription.id,
-        JSON.stringify({ ...subscription, username: userName, updatedAt: Date.now() })
+        JSON.stringify({
+          ...subscription,
+          username: userName,
+          updatedAt: Date.now(),
+        })
       )
     );
   }
 
-  async getEnabledPushSubscriptions(userName: string): Promise<PushSubscriptionRecord[]> {
+  async getEnabledPushSubscriptions(
+    userName: string
+  ): Promise<PushSubscriptionRecord[]> {
     const all = await this.withRetry(() =>
       this.adapter.hGetAll(this.pushSubscriptionsKey(userName))
     );
@@ -2497,7 +2571,10 @@ export abstract class BaseRedisStorage implements IStorage {
       .filter((item): item is PushSubscriptionRecord => Boolean(item?.enabled));
   }
 
-  async deletePushSubscriptionByEndpoint(userName: string, endpoint: string): Promise<void> {
+  async deletePushSubscriptionByEndpoint(
+    userName: string,
+    endpoint: string
+  ): Promise<void> {
     const subscriptions = await this.getEnabledPushSubscriptions(userName);
     const target = subscriptions.find((item) => item.endpoint === endpoint);
     if (!target) return;
@@ -2506,7 +2583,10 @@ export abstract class BaseRedisStorage implements IStorage {
     );
   }
 
-  async deletePushSubscriptionsByTokenId(userName: string, tokenId: string): Promise<void> {
+  async deletePushSubscriptionsByTokenId(
+    userName: string,
+    tokenId: string
+  ): Promise<void> {
     const all = await this.withRetry(() =>
       this.adapter.hGetAll(this.pushSubscriptionsKey(userName))
     );
@@ -2514,7 +2594,9 @@ export abstract class BaseRedisStorage implements IStorage {
 
     for (const [id, raw] of Object.entries(all)) {
       try {
-        const subscription = JSON.parse(raw as string) as PushSubscriptionRecord;
+        const subscription = JSON.parse(
+          raw as string
+        ) as PushSubscriptionRecord;
         if (subscription.tokenId === tokenId) {
           await this.withRetry(() =>
             this.adapter.hDel(this.pushSubscriptionsKey(userName), id)
@@ -2527,7 +2609,9 @@ export abstract class BaseRedisStorage implements IStorage {
   }
 
   async deleteAllPushSubscriptions(userName: string): Promise<void> {
-    await this.withRetry(() => this.adapter.del(this.pushSubscriptionsKey(userName)));
+    await this.withRetry(() =>
+      this.adapter.del(this.pushSubscriptionsKey(userName))
+    );
   }
 
   async updatePushSubscriptionDeliveryStats(
@@ -2542,7 +2626,9 @@ export abstract class BaseRedisStorage implements IStorage {
 
     for (const [id, raw] of Object.entries(all)) {
       try {
-        const subscription = JSON.parse(raw as string) as PushSubscriptionRecord;
+        const subscription = JSON.parse(
+          raw as string
+        ) as PushSubscriptionRecord;
         if (subscription.endpoint !== endpoint) continue;
         const now = Date.now();
         const next = {
@@ -2553,7 +2639,11 @@ export abstract class BaseRedisStorage implements IStorage {
           failureCount: success ? 0 : (subscription.failureCount || 0) + 1,
         };
         await this.withRetry(() =>
-          this.adapter.hSet(this.pushSubscriptionsKey(userName), id, JSON.stringify(next))
+          this.adapter.hSet(
+            this.pushSubscriptionsKey(userName),
+            id,
+            JSON.stringify(next)
+          )
         );
         return;
       } catch {

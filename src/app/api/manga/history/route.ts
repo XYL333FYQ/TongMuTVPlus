@@ -16,7 +16,10 @@ export async function GET(request: NextRequest) {
     if (key) {
       const [sourceId, mangaId] = key.split('+');
       if (!sourceId || !mangaId) {
-        return NextResponse.json({ error: 'Invalid key format' }, { status: 400 });
+        return NextResponse.json(
+          { error: 'Invalid key format' },
+          { status: 400 }
+        );
       }
       const record = await db.getMangaReadRecord(username, sourceId, mangaId);
       return NextResponse.json(record, { status: 200 });
@@ -25,7 +28,10 @@ export async function GET(request: NextRequest) {
     const records = await db.getAllMangaReadRecords(username);
     return NextResponse.json(records, { status: 200 });
   } catch (error) {
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Internal Server Error' },
+      { status: 500 }
+    );
   }
 }
 
@@ -34,14 +40,21 @@ export async function POST(request: NextRequest) {
   if (username instanceof NextResponse) return username;
 
   try {
-    const { key, record }: { key: string; record: MangaReadRecord } = await request.json();
+    const { key, record }: { key: string; record: MangaReadRecord } =
+      await request.json();
     if (!key || !record?.chapterId) {
-      return NextResponse.json({ error: 'Missing key or record' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'Missing key or record' },
+        { status: 400 }
+      );
     }
 
     const [sourceId, mangaId] = key.split('+');
     if (!sourceId || !mangaId) {
-      return NextResponse.json({ error: 'Invalid key format' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'Invalid key format' },
+        { status: 400 }
+      );
     }
 
     await db.saveMangaReadRecord(username, sourceId, mangaId, {
@@ -50,14 +63,19 @@ export async function POST(request: NextRequest) {
     });
 
     if ((db as any).storage.cleanupOldMangaReadRecords) {
-      (db as any).storage.cleanupOldMangaReadRecords(username).catch((err: Error) => {
-        console.error('异步清理漫画阅读历史失败:', err);
-      });
+      (db as any).storage
+        .cleanupOldMangaReadRecords(username)
+        .catch((err: Error) => {
+          console.error('异步清理漫画阅读历史失败:', err);
+        });
     }
 
     return NextResponse.json({ success: true }, { status: 200 });
   } catch (error) {
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Internal Server Error' },
+      { status: 500 }
+    );
   }
 }
 
@@ -70,21 +88,29 @@ export async function DELETE(request: NextRequest) {
     if (key) {
       const [sourceId, mangaId] = key.split('+');
       if (!sourceId || !mangaId) {
-        return NextResponse.json({ error: 'Invalid key format' }, { status: 400 });
+        return NextResponse.json(
+          { error: 'Invalid key format' },
+          { status: 400 }
+        );
       }
       await db.deleteMangaReadRecord(username, sourceId, mangaId);
     } else {
       const all = await db.getAllMangaReadRecords(username);
-      await Promise.all(Object.keys(all).map(async (itemKey) => {
-        const [sourceId, mangaId] = itemKey.split('+');
-        if (sourceId && mangaId) {
-          await db.deleteMangaReadRecord(username, sourceId, mangaId);
-        }
-      }));
+      await Promise.all(
+        Object.keys(all).map(async (itemKey) => {
+          const [sourceId, mangaId] = itemKey.split('+');
+          if (sourceId && mangaId) {
+            await db.deleteMangaReadRecord(username, sourceId, mangaId);
+          }
+        })
+      );
     }
 
     return NextResponse.json({ success: true }, { status: 200 });
   } catch (error) {
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Internal Server Error' },
+      { status: 500 }
+    );
   }
 }

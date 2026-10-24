@@ -9,7 +9,8 @@ import { OpenListClient } from '@/lib/openlist.client';
 export const runtime = 'nodejs';
 
 // 检测是否为 Cloudflare 环境
-const isCloudflare = process.env.CF_PAGES === '1' || process.env.BUILD_TARGET === 'cloudflare';
+const isCloudflare =
+  process.env.CF_PAGES === '1' || process.env.BUILD_TARGET === 'cloudflare';
 
 // 服务器端内存缓存
 const serverCache = {
@@ -27,10 +28,7 @@ async function getMusicServiceConfig() {
   const musicConfig = config?.MusicConfig;
 
   const enabled = musicConfig?.Enabled ?? false;
-  const baseUrl =
-    musicConfig?.BaseUrl ||
-    process.env.MUSIC_V2_BASE_URL ||
-    '';
+  const baseUrl = musicConfig?.BaseUrl || process.env.MUSIC_V2_BASE_URL || '';
   const token = musicConfig?.Token || process.env.MUSIC_V2_TOKEN || '';
 
   return { enabled, baseUrl, token, musicConfig };
@@ -90,20 +88,27 @@ async function cacheAudioToOpenList(
 
       const token = await (openListClient as any).getToken();
 
-      const uploadResponse = await fetch(`${(openListClient as any).baseURL}/api/fs/put`, {
-        method: 'PUT',
-        headers: {
-          'Authorization': token,
-          'Content-Type': 'audio/mpeg',
-          'File-Path': encodeURIComponent(audioPath),
-          'As-Task': 'false',
-        },
-        body: audioBlob,
-      });
+      const uploadResponse = await fetch(
+        `${(openListClient as any).baseURL}/api/fs/put`,
+        {
+          method: 'PUT',
+          headers: {
+            Authorization: token,
+            'Content-Type': 'audio/mpeg',
+            'File-Path': encodeURIComponent(audioPath),
+            'As-Task': 'false',
+          },
+          body: audioBlob,
+        }
+      );
 
       if (!uploadResponse.ok) {
         const errorText = await uploadResponse.text();
-        console.error('[Music Cache] 上传音频失败:', uploadResponse.status, errorText);
+        console.error(
+          '[Music Cache] 上传音频失败:',
+          uploadResponse.status,
+          errorText
+        );
         return;
       }
     } catch (error) {
@@ -129,7 +134,8 @@ async function replaceAudioUrlsWithOpenList(
   // 获取配置，检查是否启用 OpenList 缓存
   const config = await getConfig();
   const cacheEnabled = config?.MusicConfig?.OpenListCacheEnabled ?? false;
-  const cacheProxyEnabled = config?.MusicConfig?.OpenListCacheProxyEnabled ?? true;
+  const cacheProxyEnabled =
+    config?.MusicConfig?.OpenListCacheProxyEnabled ?? true;
 
   // 如果没有启用 OpenList 缓存，直接返回原数据
   if (!cacheEnabled || !openListClient || !data?.data) {
@@ -171,18 +177,30 @@ async function replaceAudioUrlsWithOpenList(
       } else {
         song.cached = false;
 
-        cacheAudioToOpenList(openListClient, song.url, platform, song.id, quality, cachePath)
-          .catch(error => {
-            console.error('[Music Cache] 异步缓存音频失败:', error);
-          });
+        cacheAudioToOpenList(
+          openListClient,
+          song.url,
+          platform,
+          song.id,
+          quality,
+          cachePath
+        ).catch((error) => {
+          console.error('[Music Cache] 异步缓存音频失败:', error);
+        });
       }
     } catch (error) {
       song.cached = false;
 
-      cacheAudioToOpenList(openListClient, song.url, platform, song.id, quality, cachePath)
-        .catch(err => {
-          console.error('[Music Cache] 异步缓存音频失败:', err);
-        });
+      cacheAudioToOpenList(
+        openListClient,
+        song.url,
+        platform,
+        song.id,
+        quality,
+        cachePath
+      ).catch((err) => {
+        console.error('[Music Cache] 异步缓存音频失败:', err);
+      });
     }
   }
 
@@ -226,7 +244,9 @@ async function executeMethod(
   if (cached && Date.now() - cached.timestamp < serverCache.CACHE_DURATION) {
     config = cached.data.data;
   } else {
-    const response = await proxyRequest(`${baseUrl}/v1/methods/${platform}/${func}`);
+    const response = await proxyRequest(
+      `${baseUrl}/v1/methods/${platform}/${func}`
+    );
     const data = await response.json();
     serverCache.methodConfigs.set(cacheKey, { data, timestamp: Date.now() });
     config = data.data;
@@ -272,7 +292,10 @@ async function executeMethod(
             for (const [key, val] of Object.entries(evalContext)) {
               const regex = new RegExp(`\\b${key}\\b`, 'g');
               // 对于数字直接替换，对于字符串需要加引号以便 eval
-              const replacement = typeof val === 'number' ? String(val) : `"${String(val).replace(/"/g, '\\"')}"`;
+              const replacement =
+                typeof val === 'number'
+                  ? String(val)
+                  : `"${String(val).replace(/"/g, '\\"')}"`;
               result = result.replace(regex, replacement);
             }
 
@@ -281,7 +304,10 @@ async function executeMethod(
               // eslint-disable-next-line no-eval
               result = eval(result);
             } catch (err) {
-              console.error(`[executeMethod] Cloudflare 环境执行表达式失败: ${expr}`, err);
+              console.error(
+                `[executeMethod] Cloudflare 环境执行表达式失败: ${expr}`,
+                err
+              );
               // 如果计算失败，尝试直接返回替换后的结果（去掉可能的引号）
               result = result.replace(/^["']|["']$/g, '');
             }
@@ -290,7 +316,10 @@ async function executeMethod(
           } else {
             // 在 Node.js 环境下，使用 Function 构造器
             // eslint-disable-next-line no-new-func
-            const func = new Function(...Object.keys(evalContext), `return ${expression}`);
+            const func = new Function(
+              ...Object.keys(evalContext),
+              `return ${expression}`
+            );
             const result = func(...Object.values(evalContext));
             return String(result);
           }
@@ -300,7 +329,7 @@ async function executeMethod(
         }
       });
     } else if (Array.isArray(value)) {
-      return value.map(item => processTemplateValue(item));
+      return value.map((item) => processTemplateValue(item));
     } else if (typeof value === 'object' && value !== null) {
       const result: any = {};
       for (const [k, v] of Object.entries(value)) {
@@ -371,11 +400,15 @@ async function executeMethod(
   // 6. 处理酷我音乐的图片 URL（转换为代理 URL）
   if (platform === 'kuwo') {
     const processKuwoImages = (obj: any): any => {
-      if (typeof obj === 'string' && obj.startsWith('http://') && obj.includes('kwcdn.kuwo.cn')) {
+      if (
+        typeof obj === 'string' &&
+        obj.startsWith('http://') &&
+        obj.includes('kwcdn.kuwo.cn')
+      ) {
         // 将 HTTP 图片 URL 转换为代理 URL
         return `/api/music/proxy?url=${encodeURIComponent(obj)}`;
       } else if (Array.isArray(obj)) {
-        return obj.map(item => processKuwoImages(item));
+        return obj.map((item) => processKuwoImages(item));
       } else if (typeof obj === 'object' && obj !== null) {
         const result: any = {};
         for (const [key, value] of Object.entries(obj)) {
@@ -395,25 +428,23 @@ async function executeMethod(
 // GET 请求处理
 export async function GET(request: NextRequest) {
   try {
-    const authResult = await requireFeaturePermission(request, 'music', '无权限访问音乐功能');
+    const authResult = await requireFeaturePermission(
+      request,
+      'music',
+      '无权限访问音乐功能'
+    );
     if (authResult instanceof NextResponse) return authResult;
     const { enabled, baseUrl } = await getMusicServiceConfig();
 
     if (!enabled) {
-      return NextResponse.json(
-        { error: '音乐功能未开启' },
-        { status: 403 }
-      );
+      return NextResponse.json({ error: '音乐功能未开启' }, { status: 403 });
     }
 
     const { searchParams } = new URL(request.url);
     const action = searchParams.get('action');
 
     if (!action) {
-      return NextResponse.json(
-        { error: '缺少 action 参数' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: '缺少 action 参数' }, { status: 400 });
     }
 
     // 处理不同的 action
@@ -431,12 +462,18 @@ export async function GET(request: NextRequest) {
         const cacheKey = `toplists-${platform}`;
         const cached = serverCache.proxyRequests.get(cacheKey);
 
-        if (cached && Date.now() - cached.timestamp < serverCache.CACHE_DURATION) {
+        if (
+          cached &&
+          Date.now() - cached.timestamp < serverCache.CACHE_DURATION
+        ) {
           return NextResponse.json(cached.data);
         }
 
         const data = await executeMethod(baseUrl, platform, 'toplists');
-        serverCache.proxyRequests.set(cacheKey, { data, timestamp: Date.now() });
+        serverCache.proxyRequests.set(cacheKey, {
+          data,
+          timestamp: Date.now(),
+        });
 
         return NextResponse.json(data);
       }
@@ -456,12 +493,18 @@ export async function GET(request: NextRequest) {
         const cacheKey = `toplist-${platform}-${id}`;
         const cached = serverCache.proxyRequests.get(cacheKey);
 
-        if (cached && Date.now() - cached.timestamp < serverCache.CACHE_DURATION) {
+        if (
+          cached &&
+          Date.now() - cached.timestamp < serverCache.CACHE_DURATION
+        ) {
           return NextResponse.json(cached.data);
         }
 
         const data = await executeMethod(baseUrl, platform, 'toplist', { id });
-        serverCache.proxyRequests.set(cacheKey, { data, timestamp: Date.now() });
+        serverCache.proxyRequests.set(cacheKey, {
+          data,
+          timestamp: Date.now(),
+        });
 
         return NextResponse.json(data);
       }
@@ -481,12 +524,18 @@ export async function GET(request: NextRequest) {
         const cacheKey = `playlist-${platform}-${id}`;
         const cached = serverCache.proxyRequests.get(cacheKey);
 
-        if (cached && Date.now() - cached.timestamp < serverCache.CACHE_DURATION) {
+        if (
+          cached &&
+          Date.now() - cached.timestamp < serverCache.CACHE_DURATION
+        ) {
           return NextResponse.json(cached.data);
         }
 
         const data = await executeMethod(baseUrl, platform, 'playlist', { id });
-        serverCache.proxyRequests.set(cacheKey, { data, timestamp: Date.now() });
+        serverCache.proxyRequests.set(cacheKey, {
+          data,
+          timestamp: Date.now(),
+        });
 
         return NextResponse.json(data);
       }
@@ -508,7 +557,10 @@ export async function GET(request: NextRequest) {
         const cacheKey = `search-${platform}-${keyword}-${page}-${pageSize}`;
         const cached = serverCache.proxyRequests.get(cacheKey);
 
-        if (cached && Date.now() - cached.timestamp < serverCache.CACHE_DURATION) {
+        if (
+          cached &&
+          Date.now() - cached.timestamp < serverCache.CACHE_DURATION
+        ) {
           return NextResponse.json(cached.data);
         }
 
@@ -521,16 +573,16 @@ export async function GET(request: NextRequest) {
           limit: pageSize, // 有些平台使用 limit 而不是 pageSize
         });
 
-        serverCache.proxyRequests.set(cacheKey, { data, timestamp: Date.now() });
+        serverCache.proxyRequests.set(cacheKey, {
+          data,
+          timestamp: Date.now(),
+        });
 
         return NextResponse.json(data);
       }
 
       default:
-        return NextResponse.json(
-          { error: '不支持的 action' },
-          { status: 400 }
-        );
+        return NextResponse.json({ error: '不支持的 action' }, { status: 400 });
     }
   } catch (error) {
     console.error('音乐 API 错误:', error);
@@ -547,25 +599,23 @@ export async function GET(request: NextRequest) {
 // POST 请求处理（用于解析歌曲）
 export async function POST(request: NextRequest) {
   try {
-    const authResult = await requireFeaturePermission(request, 'music', '无权限访问音乐功能');
+    const authResult = await requireFeaturePermission(
+      request,
+      'music',
+      '无权限访问音乐功能'
+    );
     if (authResult instanceof NextResponse) return authResult;
     const { enabled, baseUrl, token } = await getMusicServiceConfig();
 
     if (!enabled) {
-      return NextResponse.json(
-        { error: '音乐功能未开启' },
-        { status: 403 }
-      );
+      return NextResponse.json({ error: '音乐功能未开启' }, { status: 403 });
     }
 
     const body = await request.json();
     const { action } = body;
 
     if (!action) {
-      return NextResponse.json(
-        { error: '缺少 action 参数' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: '缺少 action 参数' }, { status: 400 });
     }
 
     switch (action) {
@@ -576,7 +626,7 @@ export async function POST(request: NextRequest) {
             {
               code: -1,
               error: '未配置音乐服务 Token',
-              message: '未配置音乐服务 Token'
+              message: '未配置音乐服务 Token',
             },
             { status: 403 }
           );
@@ -588,7 +638,7 @@ export async function POST(request: NextRequest) {
             {
               code: -1,
               error: '缺少 platform 或 ids 参数',
-              message: '缺少 platform 或 ids 参数'
+              message: '缺少 platform 或 ids 参数',
             },
             { status: 400 }
           );
@@ -602,11 +652,15 @@ export async function POST(request: NextRequest) {
         // 1. 获取 OpenList 配置
         const openListClient = await getOpenListClient();
         const config = await getConfig();
-        const cachePath = config?.MusicConfig?.OpenListCachePath || '/music-cache';
+        const cachePath =
+          config?.MusicConfig?.OpenListCachePath || '/music-cache';
 
         // 2. 检查内存缓存
         const cached = serverCache.proxyRequests.get(cacheKey);
-        if (cached && Date.now() - cached.timestamp < serverCache.CACHE_DURATION) {
+        if (
+          cached &&
+          Date.now() - cached.timestamp < serverCache.CACHE_DURATION
+        ) {
           // 如果启用了 OpenList，需要检查并替换音频 URL
           if (openListClient) {
             const updatedData = await replaceAudioUrlsWithOpenList(
@@ -618,7 +672,10 @@ export async function POST(request: NextRequest) {
             );
 
             // 更新内存缓存
-            serverCache.proxyRequests.set(cacheKey, { data: updatedData, timestamp: Date.now() });
+            serverCache.proxyRequests.set(cacheKey, {
+              data: updatedData,
+              timestamp: Date.now(),
+            });
 
             return NextResponse.json(updatedData);
           } else {
@@ -649,7 +706,10 @@ export async function POST(request: NextRequest) {
                 );
 
                 // 更新内存缓存
-                serverCache.proxyRequests.set(cacheKey, { data: updatedData, timestamp: Date.now() });
+                serverCache.proxyRequests.set(cacheKey, {
+                  data: updatedData,
+                  timestamp: Date.now(),
+                });
 
                 return NextResponse.json(updatedData);
               }
@@ -686,7 +746,10 @@ export async function POST(request: NextRequest) {
           }
 
           // 5. 缓存成功的解析结果到内存
-          serverCache.proxyRequests.set(cacheKey, { data, timestamp: Date.now() });
+          serverCache.proxyRequests.set(cacheKey, {
+            data,
+            timestamp: Date.now(),
+          });
 
           // 6. 检查并替换音频 URL 为 OpenList URL（如果已缓存）
           // 同时异步下载未缓存的音频
@@ -701,9 +764,13 @@ export async function POST(request: NextRequest) {
           // 7. 缓存解析结果到 OpenList（异步，不阻塞响应）
           if (openListClient) {
             const jsonPath = `${cachePath}/${platform}/${idsKey}-${qualityKey}.json`;
-            openListClient.uploadFile(jsonPath, JSON.stringify(finalData, null, 2))
+            openListClient
+              .uploadFile(jsonPath, JSON.stringify(finalData, null, 2))
               .catch((error) => {
-                console.error('[Music Cache] 缓存解析结果到 OpenList 失败:', error);
+                console.error(
+                  '[Music Cache] 缓存解析结果到 OpenList 失败:',
+                  error
+                );
               });
           }
 
@@ -719,10 +786,7 @@ export async function POST(request: NextRequest) {
       }
 
       default:
-        return NextResponse.json(
-          { error: '不支持的 action' },
-          { status: 400 }
-        );
+        return NextResponse.json({ error: '不支持的 action' }, { status: 400 });
     }
   } catch (error) {
     console.error('音乐 API 错误:', error);

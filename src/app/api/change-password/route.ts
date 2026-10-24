@@ -62,14 +62,26 @@ export async function POST(request: NextRequest) {
         if (device.tokenId !== currentTokenId) {
           invalidateDeviceAccessToken(username, device.tokenId);
           await revokeRefreshToken(username, device.tokenId);
-          await storage.deletePushSubscriptionsByTokenId?.(username, device.tokenId);
-          console.log(`Revoked token ${device.tokenId} for ${username} after password change`);
+          await storage.deletePushSubscriptionsByTokenId?.(
+            username,
+            device.tokenId
+          );
+          console.log(
+            `Revoked token ${device.tokenId} for ${username} after password change`
+          );
         }
       }
 
-      console.log(`Password changed for ${username}, revoked ${devices.length - 1} other devices`);
+      console.log(
+        `Password changed for ${username}, revoked ${
+          devices.length - 1
+        } other devices`
+      );
     } catch (error) {
-      console.error('Failed to revoke other devices after password change:', error);
+      console.error(
+        'Failed to revoke other devices after password change:',
+        error
+      );
       // 不影响密码修改的成功，只记录错误
     }
 

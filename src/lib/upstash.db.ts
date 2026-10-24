@@ -11,8 +11,7 @@ const UPSTASH_TIMEOUT_MS = Math.max(
   1000,
   Number(process.env.UPSTASH_TIMEOUT_MS || DEFAULT_UPSTASH_TIMEOUT_MS)
 );
-const DEFAULT_UPSTASH_RETRIES =
-  process.env.NODE_ENV === 'development' ? 1 : 3;
+const DEFAULT_UPSTASH_RETRIES = process.env.NODE_ENV === 'development' ? 1 : 3;
 const UPSTASH_MAX_RETRIES = Math.max(
   1,
   Number(process.env.UPSTASH_MAX_RETRIES || DEFAULT_UPSTASH_RETRIES)

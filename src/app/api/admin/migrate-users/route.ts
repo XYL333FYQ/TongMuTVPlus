@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
 
     // 检查是否有需要迁移的用户（排除站长）
     const usersToMigrate = adminConfig.UserConfig.Users.filter(
-      u => u.role !== 'owner'
+      (u) => u.role !== 'owner'
     );
 
     if (!usersToMigrate || usersToMigrate.length === 0) {

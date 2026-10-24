@@ -22,13 +22,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const {
-      ServerURL,
-      AuthMode,
-      Username,
-      Password,
-      DefaultLang,
-    } = body as {
+    const { ServerURL, AuthMode, Username, Password, DefaultLang } = body as {
       ServerURL?: string;
       AuthMode?: 'none' | 'basic_auth' | 'simple_login';
       Username?: string;
@@ -37,11 +31,20 @@ export async function POST(request: NextRequest) {
     };
 
     if (!ServerURL?.trim()) {
-      return NextResponse.json({ success: false, message: '请先填写 Suwayomi 服务地址' }, { status: 400 });
+      return NextResponse.json(
+        { success: false, message: '请先填写 Suwayomi 服务地址' },
+        { status: 400 }
+      );
     }
 
-    if ((AuthMode === 'basic_auth' || AuthMode === 'simple_login') && (!Username?.trim() || !Password)) {
-      return NextResponse.json({ success: false, message: '当前认证方式需要填写用户名和密码' }, { status: 400 });
+    if (
+      (AuthMode === 'basic_auth' || AuthMode === 'simple_login') &&
+      (!Username?.trim() || !Password)
+    ) {
+      return NextResponse.json(
+        { success: false, message: '当前认证方式需要填写用户名和密码' },
+        { status: 400 }
+      );
     }
 
     const client = new SuwayomiClient({
@@ -51,7 +54,9 @@ export async function POST(request: NextRequest) {
       password: Password,
     });
 
-    const sources = await client.getSources((DefaultLang || 'zh').trim() || 'zh');
+    const sources = await client.getSources(
+      (DefaultLang || 'zh').trim() || 'zh'
+    );
 
     return NextResponse.json({
       success: true,

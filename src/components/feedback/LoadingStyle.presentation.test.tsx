@@ -1,6 +1,8 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 
-import LoadingStyle, { LoadingErrorStyle } from '@/components/feedback/LoadingStyle';
+import LoadingStyle, {
+  LoadingErrorStyle,
+} from '@/components/feedback/LoadingStyle';
 
 const steps = [
   { label: '加载', icon: <span>加载图标</span> },

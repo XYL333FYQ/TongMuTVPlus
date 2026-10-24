@@ -23,7 +23,10 @@ export async function POST(request: NextRequest) {
 
     // 仅站长可用
     if (authInfo.username !== process.env.USERNAME) {
-      return NextResponse.json({ error: '权限不足，仅站长可用' }, { status: 403 });
+      return NextResponse.json(
+        { error: '权限不足，仅站长可用' },
+        { status: 403 }
+      );
     }
 
     const body = await request.json();
@@ -42,7 +45,9 @@ export async function POST(request: NextRequest) {
       // 覆盖已存在的，追加新的
       const mergedSources = [...existingSources];
       for (const importSource of data.Sources) {
-        const existingIndex = mergedSources.findIndex(s => s.key === importSource.key);
+        const existingIndex = mergedSources.findIndex(
+          (s) => s.key === importSource.key
+        );
         if (existingIndex >= 0) {
           mergedSources[existingIndex] = importSource;
         } else {

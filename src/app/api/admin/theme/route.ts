@@ -79,7 +79,9 @@ export async function POST(request: NextRequest) {
       for (const url of urls) {
         if (!url.startsWith('http://') && !url.startsWith('https://')) {
           return NextResponse.json(
-            { error: `登录界面背景图URL格式错误：${url}，每个URL必须以http://或https://开头` },
+            {
+              error: `登录界面背景图URL格式错误：${url}，每个URL必须以http://或https://开头`,
+            },
             { status: 400 }
           );
         }
@@ -95,7 +97,9 @@ export async function POST(request: NextRequest) {
       for (const url of urls) {
         if (!url.startsWith('http://') && !url.startsWith('https://')) {
           return NextResponse.json(
-            { error: `注册界面背景图URL格式错误：${url}，每个URL必须以http://或https://开头` },
+            {
+              error: `注册界面背景图URL格式错误：${url}，每个URL必须以http://或https://开头`,
+            },
             { status: 400 }
           );
         }
@@ -111,7 +115,9 @@ export async function POST(request: NextRequest) {
       for (const url of urls) {
         if (!url.startsWith('http://') && !url.startsWith('https://')) {
           return NextResponse.json(
-            { error: `首页背景图URL格式错误：${url}，每个URL必须以http://或https://开头` },
+            {
+              error: `首页背景图URL格式错误：${url}，每个URL必须以http://或https://开头`,
+            },
             { status: 400 }
           );
         }

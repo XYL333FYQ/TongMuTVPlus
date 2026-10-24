@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
 
     // 并发刷新所有启用的直播源
     const refreshPromises = (config.LiveConfig || [])
-      .filter(liveInfo => !liveInfo.disabled)
+      .filter((liveInfo) => !liveInfo.disabled)
       .map(async (liveInfo) => {
         try {
           const nums = await refreshLiveChannels(liveInfo);

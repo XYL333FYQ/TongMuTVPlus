@@ -43,7 +43,12 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const result = await getTVSeasons(tmdbApiKey, tvId, tmdbProxy, tmdbReverseProxy);
+    const result = await getTVSeasons(
+      tmdbApiKey,
+      tvId,
+      tmdbProxy,
+      tmdbReverseProxy
+    );
 
     if (result.code === 200 && result.seasons) {
       return NextResponse.json({

@@ -8,8 +8,13 @@ function getAntiCode(oldAntiCode: string, streamName: string): string {
   const sdkVersion = 2403051612;
   const t13 = Date.now();
   const sdkSid = t13;
-  const initUuid = (Math.floor(t13 % 10000000000 * 1000) + Math.floor(1000 * Math.random())) % 4294967295;
-  const uid = Math.floor(Math.random() * (1400009999999 - 1400000000000 + 1)) + 1400000000000;
+  const initUuid =
+    (Math.floor((t13 % 10000000000) * 1000) +
+      Math.floor(1000 * Math.random())) %
+    4294967295;
+  const uid =
+    Math.floor(Math.random() * (1400009999999 - 1400000000000 + 1)) +
+    1400000000000;
   const seqId = uid + sdkSid;
   const targetUnixTime = Math.floor((t13 + 110624) / 1000);
   const wsTime = targetUnixTime.toString(16).toLowerCase();
@@ -18,24 +23,37 @@ function getAntiCode(oldAntiCode: string, streamName: string): string {
   const fm = urlQuery.get('fm');
   if (!fm) return oldAntiCode;
 
-  const wsSecretPf = Buffer.from(decodeURIComponent(fm), 'base64').toString().split('_')[0];
-  const wsSecretHash = crypto.createHash('md5').update(`${seqId}|${urlQuery.get('ctype')}|${paramsT}`).digest('hex');
+  const wsSecretPf = Buffer.from(decodeURIComponent(fm), 'base64')
+    .toString()
+    .split('_')[0];
+  const wsSecretHash = crypto
+    .createHash('md5')
+    .update(`${seqId}|${urlQuery.get('ctype')}|${paramsT}`)
+    .digest('hex');
   const wsSecret = `${wsSecretPf}_${uid}_${streamName}_${wsSecretHash}_${wsTime}`;
   const wsSecretMd5 = crypto.createHash('md5').update(wsSecret).digest('hex');
 
-  return `wsSecret=${wsSecretMd5}&wsTime=${wsTime}&seqid=${seqId}&ctype=${urlQuery.get('ctype')}&ver=1&fs=${urlQuery.get('fs')}&uuid=${initUuid}&u=${uid}&t=${paramsT}&sv=${sdkVersion}&sdk_sid=${sdkSid}&codec=264`;
+  return `wsSecret=${wsSecretMd5}&wsTime=${wsTime}&seqid=${seqId}&ctype=${urlQuery.get(
+    'ctype'
+  )}&ver=1&fs=${urlQuery.get(
+    'fs'
+  )}&uuid=${initUuid}&u=${uid}&t=${paramsT}&sv=${sdkVersion}&sdk_sid=${sdkSid}&codec=264`;
 }
 
 async function getBilibiliStream(roomId: string) {
   const headers = {
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-    'Referer': 'https://live.bilibili.com/'
+    'User-Agent':
+      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    Referer: 'https://live.bilibili.com/',
   };
 
   // 获取房间初始化信息
-  const roomInitRes = await fetch(`https://api.live.bilibili.com/room/v1/Room/room_init?id=${roomId}`, {
-    headers
-  });
+  const roomInitRes = await fetch(
+    `https://api.live.bilibili.com/room/v1/Room/room_init?id=${roomId}`,
+    {
+      headers,
+    }
+  );
   const roomInitData = await roomInitRes.json();
 
   if (roomInitData.code !== 0) {
@@ -54,9 +72,12 @@ async function getBilibiliStream(roomId: string) {
   // 获取主播信息
   let ownerName = '';
   try {
-    const userRes = await fetch(`https://api.live.bilibili.com/live_user/v1/Master/info?uid=${uid}`, {
-      headers
-    });
+    const userRes = await fetch(
+      `https://api.live.bilibili.com/live_user/v1/Master/info?uid=${uid}`,
+      {
+        headers,
+      }
+    );
     const userData = await userRes.json();
     if (userData.code === 0) {
       ownerName = userData.data?.info?.uname || '';
@@ -68,9 +89,12 @@ async function getBilibiliStream(roomId: string) {
   // 获取房间详细信息（包含标题）
   let title = '';
   try {
-    const roomInfoRes = await fetch(`https://api.live.bilibili.com/room/v1/Room/get_info?room_id=${realRoomId}`, {
-      headers
-    });
+    const roomInfoRes = await fetch(
+      `https://api.live.bilibili.com/room/v1/Room/get_info?room_id=${realRoomId}`,
+      {
+        headers,
+      }
+    );
     const roomInfoData = await roomInfoRes.json();
     if (roomInfoData.code === 0) {
       title = roomInfoData.data?.title || '';
@@ -128,17 +152,19 @@ async function getBilibiliStream(roomId: string) {
   return {
     url: m3u8Url,
     name: ownerName,
-    title: title
+    title: title,
   };
 }
 
 async function getDouyinStream(roomId: string) {
-  const cookies = 'ttwid=1%7C2iDIYVmjzMcpZ20fcaFde0VghXAA3NaNXE_SLR68IyE%7C1761045455%7Cab35197d5cfb21df6cbb2fa7ef1c9262206b062c315b9d04da746d0b37dfbc7d';
+  const cookies =
+    'ttwid=1%7C2iDIYVmjzMcpZ20fcaFde0VghXAA3NaNXE_SLR68IyE%7C1761045455%7Cab35197d5cfb21df6cbb2fa7ef1c9262206b062c315b9d04da746d0b37dfbc7d';
 
   const headers = {
-    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.5845.97 Safari/537.36',
-    'Referer': 'https://live.douyin.com/',
-    'Cookie': cookies
+    'User-Agent':
+      'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.5845.97 Safari/537.36',
+    Referer: 'https://live.douyin.com/',
+    Cookie: cookies,
   };
 
   // 构建API参数
@@ -153,7 +179,7 @@ async function getDouyinStream(roomId: string) {
     browser_name: 'Chrome',
     browser_version: '116.0.0.0',
     web_rid: roomId,
-    msToken: ''
+    msToken: '',
   });
 
   const apiUrl = `https://live.douyin.com/webcast/room/web/enter/?${params.toString()}`;
@@ -184,7 +210,12 @@ async function getDouyinStream(roomId: string) {
   }
 
   // 尝试获取原画质，如果没有则获取第一个可用的
-  let m3u8Url = hlsPullUrlMap.ORIGIN || hlsPullUrlMap.FULL_HD1 || hlsPullUrlMap.HD1 || hlsPullUrlMap.SD1 || hlsPullUrlMap.SD2;
+  let m3u8Url =
+    hlsPullUrlMap.ORIGIN ||
+    hlsPullUrlMap.FULL_HD1 ||
+    hlsPullUrlMap.HD1 ||
+    hlsPullUrlMap.SD1 ||
+    hlsPullUrlMap.SD2;
 
   if (!m3u8Url) {
     // 如果上述都没有，获取第一个可用的
@@ -202,13 +233,17 @@ async function getDouyinStream(roomId: string) {
   return {
     url: m3u8Url,
     name: jsonData.data.user?.nickname || '',
-    title: roomData.title || ''
+    title: roomData.title || '',
   };
 }
 
 export async function GET(request: NextRequest) {
   try {
-    const authResult = await requireFeaturePermission(request, 'web_live', '无权限访问网络直播');
+    const authResult = await requireFeaturePermission(
+      request,
+      'web_live',
+      '无权限访问网络直播'
+    );
     if (authResult instanceof NextResponse) return authResult;
     const { searchParams } = new URL(request.url);
     const platform = searchParams.get('platform');
@@ -221,8 +256,9 @@ export async function GET(request: NextRequest) {
     if (platform === 'huya') {
       const res = await fetch(`https://www.huya.com/${roomId}`, {
         headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-        }
+          'User-Agent':
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        },
       });
       const html = await res.text();
 
@@ -242,37 +278,43 @@ export async function GET(request: NextRequest) {
       const { sFlvUrl, sStreamName, sFlvUrlSuffix, sFlvAntiCode } = streamInfo;
       const newAntiCode = getAntiCode(sFlvAntiCode, sStreamName);
       const streamUrl = `${sFlvUrl}/${sStreamName}.${sFlvUrlSuffix}?${newAntiCode}`;
-      const proxyUrl = `/api/web-live/proxy/proxy.flv?url=${encodeURIComponent(streamUrl)}`;
+      const proxyUrl = `/api/web-live/proxy/proxy.flv?url=${encodeURIComponent(
+        streamUrl
+      )}`;
 
       return NextResponse.json({
         url: proxyUrl,
         originalUrl: streamUrl,
         name: gameLiveInfo?.nick || '',
-        title: gameLiveInfo?.introduction || ''
+        title: gameLiveInfo?.introduction || '',
       });
     }
 
     if (platform === 'bilibili') {
       const streamData = await getBilibiliStream(roomId);
-      const proxyUrl = `/api/web-live/proxy/proxy.m3u8?url=${encodeURIComponent(streamData.url)}`;
+      const proxyUrl = `/api/web-live/proxy/proxy.m3u8?url=${encodeURIComponent(
+        streamData.url
+      )}`;
 
       return NextResponse.json({
         url: proxyUrl,
         originalUrl: streamData.url,
         name: streamData.name,
-        title: streamData.title
+        title: streamData.title,
       });
     }
 
     if (platform === 'douyin') {
       const streamData = await getDouyinStream(roomId);
-      const proxyUrl = `/api/web-live/proxy/proxy.m3u8?url=${encodeURIComponent(streamData.url)}`;
+      const proxyUrl = `/api/web-live/proxy/proxy.m3u8?url=${encodeURIComponent(
+        streamData.url
+      )}`;
 
       return NextResponse.json({
         url: proxyUrl,
         originalUrl: streamData.url,
         name: streamData.name,
-        title: streamData.title
+        title: streamData.title,
       });
     }
 

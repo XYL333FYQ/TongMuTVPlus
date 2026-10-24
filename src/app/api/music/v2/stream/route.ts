@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { extractSongmid, isMusicSource, lxPostJson, normalizeMusicQuality, normalizeSong } from '@/lib/music-v2';
+import {
+  extractSongmid,
+  isMusicSource,
+  lxPostJson,
+  normalizeMusicQuality,
+  normalizeSong,
+} from '@/lib/music-v2';
 import { badRequest } from '@/lib/music-v2-api';
 
 export const runtime = 'nodejs';
@@ -17,13 +23,20 @@ const globalMusicStreamCache = globalThis as typeof globalThis & {
   __musicV2StreamUrlInflight?: Map<string, Promise<string>>;
 };
 
-const streamUrlCache = globalMusicStreamCache.__musicV2StreamUrlCache ?? new Map<string, StreamUrlCacheValue>();
-const streamUrlInflight = globalMusicStreamCache.__musicV2StreamUrlInflight ?? new Map<string, Promise<string>>();
+const streamUrlCache =
+  globalMusicStreamCache.__musicV2StreamUrlCache ??
+  new Map<string, StreamUrlCacheValue>();
+const streamUrlInflight =
+  globalMusicStreamCache.__musicV2StreamUrlInflight ??
+  new Map<string, Promise<string>>();
 
 globalMusicStreamCache.__musicV2StreamUrlCache = streamUrlCache;
 globalMusicStreamCache.__musicV2StreamUrlInflight = streamUrlInflight;
 
-function getStreamCacheKey(song: ReturnType<typeof normalizeSong>, quality: string) {
+function getStreamCacheKey(
+  song: ReturnType<typeof normalizeSong>,
+  quality: string
+) {
   return `${song.source}:${song.songId}:${quality}`;
 }
 
@@ -128,7 +141,9 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const source = searchParams.get('source') || '';
     const songId = searchParams.get('songId') || '';
-    const quality = normalizeMusicQuality(searchParams.get('quality') || '320k');
+    const quality = normalizeMusicQuality(
+      searchParams.get('quality') || '320k'
+    );
 
     if (!isMusicSource(source)) return badRequest('不支持的音源');
     if (!songId) return badRequest('缺少歌曲ID');
@@ -168,29 +183,53 @@ export async function GET(request: NextRequest) {
         signal: AbortSignal.timeout(90000),
         cache: 'no-store',
       });
-      console.warn('[music-v2/stream] upstream fetch failed once, retried with refreshed URL', {
-        source,
-        songId,
-        quality,
-        range: request.headers.get('range'),
-        reason: (error as Error).message,
-      });
+      console.warn(
+        '[music-v2/stream] upstream fetch failed once, retried with refreshed URL',
+        {
+          source,
+          songId,
+          quality,
+          range: request.headers.get('range'),
+          reason: (error as Error).message,
+        }
+      );
     }
 
     if (!upstream.ok && upstream.status !== 206) {
-      if (upstream.status === 401 || upstream.status === 403 || upstream.status === 404) {
+      if (
+        upstream.status === 401 ||
+        upstream.status === 403 ||
+        upstream.status === 404
+      ) {
         streamUrlCache.delete(cacheKey);
       }
-      return NextResponse.json({ success: false, error: { code: 'STREAM_FAILED', message: '获取音频流失败' } }, { status: upstream.status });
+      return NextResponse.json(
+        {
+          success: false,
+          error: { code: 'STREAM_FAILED', message: '获取音频流失败' },
+        },
+        { status: upstream.status }
+      );
     }
 
     const responseHeaders = new Headers();
-    responseHeaders.set('Content-Type', upstream.headers.get('content-type') || 'audio/mpeg');
+    responseHeaders.set(
+      'Content-Type',
+      upstream.headers.get('content-type') || 'audio/mpeg'
+    );
     responseHeaders.set('Cache-Control', 'public, max-age=31536000, immutable');
-    responseHeaders.set('Accept-Ranges', upstream.headers.get('accept-ranges') || 'bytes');
+    responseHeaders.set(
+      'Accept-Ranges',
+      upstream.headers.get('accept-ranges') || 'bytes'
+    );
     responseHeaders.set('Access-Control-Allow-Origin', '*');
 
-    const copyHeaders = ['content-length', 'content-range', 'etag', 'last-modified'];
+    const copyHeaders = [
+      'content-length',
+      'content-range',
+      'etag',
+      'last-modified',
+    ];
     for (const header of copyHeaders) {
       const value = upstream.headers.get(header);
       if (value) responseHeaders.set(header, value);
@@ -201,6 +240,12 @@ export async function GET(request: NextRequest) {
       headers: responseHeaders,
     });
   } catch (error) {
-    return NextResponse.json({ success: false, error: { code: 'STREAM_FAILED', message: (error as Error).message } }, { status: 400 });
+    return NextResponse.json(
+      {
+        success: false,
+        error: { code: 'STREAM_FAILED', message: (error as Error).message },
+      },
+      { status: 400 }
+    );
   }
 }

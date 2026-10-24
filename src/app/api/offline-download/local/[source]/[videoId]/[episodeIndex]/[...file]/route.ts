@@ -10,7 +10,8 @@ import * as path from 'path';
 import { getAuthInfoFromCookie } from '@/lib/auth';
 
 // 检查是否启用离线下载功能
-const OFFLINE_DOWNLOAD_ENABLED = process.env.NEXT_PUBLIC_ENABLE_OFFLINE_DOWNLOAD === 'true';
+const OFFLINE_DOWNLOAD_ENABLED =
+  process.env.NEXT_PUBLIC_ENABLE_OFFLINE_DOWNLOAD === 'true';
 const OFFLINE_DOWNLOAD_DIR = process.env.OFFLINE_DOWNLOAD_DIR || '/data';
 
 /**
@@ -35,7 +36,16 @@ function checkPermission(request: NextRequest): boolean {
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { source: string; videoId: string; episodeIndex: string; file: string[] } }
+  {
+    params,
+  }: {
+    params: {
+      source: string;
+      videoId: string;
+      episodeIndex: string;
+      file: string[];
+    };
+  }
 ) {
   if (!checkPermission(request)) {
     return NextResponse.json({ error: '无权限' }, { status: 403 });
@@ -114,8 +124,8 @@ export async function GET(
     const contentType = fileName.endsWith('.ts')
       ? 'video/mp2t'
       : fileName.endsWith('.key')
-        ? 'application/octet-stream'
-        : 'application/octet-stream';
+      ? 'application/octet-stream'
+      : 'application/octet-stream';
 
     return new NextResponse(fileBuffer, {
       headers: {

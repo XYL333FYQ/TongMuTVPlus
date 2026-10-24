@@ -13,7 +13,8 @@ const pickText = (value: any): string => {
   if (value === undefined || value === null) return '';
   const first = Array.isArray(value) ? value[0] : value;
   if (first === undefined || first === null) return '';
-  if (typeof first === 'object') return String(first._ ?? first.$?.url ?? first.$?.href ?? '');
+  if (typeof first === 'object')
+    return String(first._ ?? first.$?.url ?? first.$?.href ?? '');
   return String(first);
 };
 
@@ -25,11 +26,11 @@ const pickText = (value: any): string => {
 export async function POST(req: NextRequest) {
   try {
     const authInfo = getAuthInfoFromCookie(req);
-    if (!authInfo?.username || !(await hasFeaturePermission(authInfo.username, 'magnet_search'))) {
-      return NextResponse.json(
-        { error: '无权限访问' },
-        { status: 403 }
-      );
+    if (
+      !authInfo?.username ||
+      !(await hasFeaturePermission(authInfo.username, 'magnet_search'))
+    ) {
+      return NextResponse.json({ error: '无权限访问' }, { status: 403 });
     }
 
     const { keyword, page = 1 } = await req.json();
@@ -79,12 +80,16 @@ export async function POST(req: NextRequest) {
     });
     const searchUrl = `${searchBaseUrl}/?${params.toString()}`;
 
-    const response = await universalMagnetFetch(searchUrl, config.SiteConfig.MagnetProxy, {
-      headers: {
-        'User-Agent':
-          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
-      },
-    });
+    const response = await universalMagnetFetch(
+      searchUrl,
+      config.SiteConfig.MagnetProxy,
+      {
+        headers: {
+          'User-Agent':
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+        },
+      }
+    );
 
     if (!response.ok) {
       throw new Error(`Nyaa API 请求失败: ${response.status}`);
@@ -109,7 +114,8 @@ export async function POST(req: NextRequest) {
       // Nyaa RSS 的 link 是 .torrent 下载地址，guid 才是详情页（且 guid 带 isPermaLink 属性）
       const torrentUrl = pickText(item.link);
       const detailUrl = pickText(item.guid) || torrentUrl;
-      const guid = detailUrl || torrentUrl || `${title}-${pickText(item.pubDate)}`;
+      const guid =
+        detailUrl || torrentUrl || `${title}-${pickText(item.pubDate)}`;
       const pubDate = pickText(item.pubDate);
       const size = pickText(item['nyaa:size']);
       const category = pickText(item['nyaa:category']);
@@ -126,16 +132,20 @@ export async function POST(req: NextRequest) {
           leechers && `Leechers：${leechers}`,
           downloads && `下载：${downloads}`,
           infoHash && `Hash：${infoHash}`,
-        ].filter(Boolean).join(' | ');
+        ]
+          .filter(Boolean)
+          .join(' | ');
 
       let images: string[] = [];
       if (description) {
         const imgMatches = description.match(/src="([^"]+)"/g);
         if (imgMatches) {
-          images = imgMatches.map((match: string) => {
-            const urlMatch = match.match(/src="([^"]+)"/);
-            return urlMatch ? urlMatch[1] : '';
-          }).filter(Boolean);
+          images = imgMatches
+            .map((match: string) => {
+              const urlMatch = match.match(/src="([^"]+)"/);
+              return urlMatch ? urlMatch[1] : '';
+            })
+            .filter(Boolean);
         }
       }
 

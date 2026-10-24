@@ -6,14 +6,13 @@ import { invalidateDeviceAccessToken } from '@/lib/access-token-invalidation';
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig } from '@/lib/config';
 import { db, getStorage } from '@/lib/db';
-import {
-  getUserDevices,
-  revokeRefreshToken,
-} from '@/lib/refresh-token';
+import { getUserDevices, revokeRefreshToken } from '@/lib/refresh-token';
 
 export const runtime = 'nodejs';
 
-async function getOperatorRole(username: string): Promise<'owner' | 'admin' | 'user'> {
+async function getOperatorRole(
+  username: string
+): Promise<'owner' | 'admin' | 'user'> {
   if (username === process.env.USERNAME) return 'owner';
 
   const operatorInfo = await db.getUserInfoV2(username);
@@ -30,7 +29,9 @@ async function getOperatorRole(username: string): Promise<'owner' | 'admin' | 'u
   return userEntry?.role || 'user';
 }
 
-async function getTargetRole(username: string): Promise<'owner' | 'admin' | 'user' | null> {
+async function getTargetRole(
+  username: string
+): Promise<'owner' | 'admin' | 'user' | null> {
   if (username === process.env.USERNAME) return 'owner';
 
   const targetInfo = await db.getUserInfoV2(username);
@@ -87,7 +88,8 @@ export async function GET(request: NextRequest) {
     const devicesWithCurrent = devices.map((device) => ({
       ...device,
       isCurrent:
-        targetUsername === authInfo.username && device.tokenId === authInfo.tokenId,
+        targetUsername === authInfo.username &&
+        device.tokenId === authInfo.tokenId,
     }));
 
     return NextResponse.json(

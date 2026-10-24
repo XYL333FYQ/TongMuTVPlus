@@ -41,30 +41,41 @@ export async function GET(request: NextRequest) {
         const sources = await suwayomiClient.getSearchSources(sourceId);
         let completedSources = 0;
         let totalResults = 0;
-        const failedSources: Array<{ sourceId: string; sourceName: string; error: string }> = [];
+        const failedSources: Array<{
+          sourceId: string;
+          sourceName: string;
+          error: string;
+        }> = [];
 
         send({ type: 'start', totalSources: sources.length });
 
         await Promise.all(
           sources.map(async (source) => {
             try {
-              const result = await suwayomiClient.searchMangaSource(q, source, page);
+              const result = await suwayomiClient.searchMangaSource(
+                q,
+                source,
+                page
+              );
               completedSources += 1;
               totalResults += result.results.length;
               send({
                 type: 'source_result',
                 sourceId: String(source.id),
-                sourceName: source.displayName || source.name || String(source.id),
+                sourceName:
+                  source.displayName || source.name || String(source.id),
                 results: result.results,
                 completedSources,
                 totalSources: sources.length,
               });
             } catch (error) {
-              const message = error instanceof Error ? error.message : '未知错误';
+              const message =
+                error instanceof Error ? error.message : '未知错误';
               completedSources += 1;
               const failure = {
                 sourceId: String(source.id),
-                sourceName: source.displayName || source.name || String(source.id),
+                sourceName:
+                  source.displayName || source.name || String(source.id),
                 error: message,
               };
               failedSources.push(failure);

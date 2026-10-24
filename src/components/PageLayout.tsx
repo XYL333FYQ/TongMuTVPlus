@@ -12,7 +12,10 @@ import MobileBottomNav from './MobileBottomNav';
 import MobileHeader from './MobileHeader';
 import PageContainer from './PageContainer';
 import { ThemeToggle } from './ThemeToggle';
-import { DesktopNavigation, pageTitleForPath } from '@/components/shell/TongMuNavigation';
+import {
+  DesktopNavigation,
+  pageTitleForPath,
+} from '@/components/shell/TongMuNavigation';
 import { VersionCheckProvider } from './VersionCheckProvider';
 import ViewerAccountButton from '@/components/shell/ViewerAccountButton';
 

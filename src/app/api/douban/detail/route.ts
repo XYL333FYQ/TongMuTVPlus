@@ -47,10 +47,7 @@ export async function GET(request: Request) {
 
   // 验证参数
   if (!id) {
-    return NextResponse.json(
-      { error: '缺少必要参数: id' },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: '缺少必要参数: id' }, { status: 400 });
   }
 
   const target = `https://m.douban.com/rexxar/api/v2/subject/${id}`;

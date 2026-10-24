@@ -40,7 +40,11 @@ export async function GET(request: NextRequest) {
         const sources = await bookProvider.getSearchSources(sourceId);
         let completedSources = 0;
         let totalResults = 0;
-        const failedSources: Array<{ sourceId: string; sourceName: string; error: string }> = [];
+        const failedSources: Array<{
+          sourceId: string;
+          sourceName: string;
+          error: string;
+        }> = [];
 
         send({ type: 'start', totalSources: sources.length });
 
@@ -84,7 +88,10 @@ export async function GET(request: NextRequest) {
           failedSources,
         });
       } catch (error) {
-        send({ type: 'error', error: error instanceof Error ? error.message : '搜索失败' });
+        send({
+          type: 'error',
+          error: error instanceof Error ? error.message : '搜索失败',
+        });
       } finally {
         closed = true;
         try {

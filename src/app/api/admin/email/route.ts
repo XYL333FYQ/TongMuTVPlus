@@ -97,17 +97,17 @@ export async function POST(request: NextRequest) {
 
       const emailConfig = config as AdminConfig['EmailConfig'];
       if (!emailConfig || !emailConfig.enabled) {
-        return NextResponse.json(
-          { error: '邮件配置未启用' },
-          { status: 400 }
-        );
+        return NextResponse.json({ error: '邮件配置未启用' }, { status: 400 });
       }
 
       try {
         const adminConfig = await getConfig();
         const siteName = adminConfig?.SiteConfig?.SiteName || BRAND_NAME;
         await EmailService.sendTestEmail(emailConfig, testEmail, siteName);
-        return NextResponse.json({ success: true, message: '测试邮件发送成功' });
+        return NextResponse.json({
+          success: true,
+          message: '测试邮件发送成功',
+        });
       } catch (error) {
         console.error('发送测试邮件失败:', error);
         return NextResponse.json(
@@ -130,7 +130,12 @@ export async function POST(request: NextRequest) {
       // 验证配置
       if (emailConfig.enabled) {
         if (emailConfig.provider === 'smtp') {
-          if (!emailConfig.smtp?.host || !emailConfig.smtp?.port || !emailConfig.smtp?.user || !emailConfig.smtp?.from) {
+          if (
+            !emailConfig.smtp?.host ||
+            !emailConfig.smtp?.port ||
+            !emailConfig.smtp?.user ||
+            !emailConfig.smtp?.from
+          ) {
             return NextResponse.json(
               { error: 'SMTP配置不完整' },
               { status: 400 }
@@ -177,10 +182,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: true, message: '邮件配置保存成功' });
     }
 
-    return NextResponse.json(
-      { error: '无效的操作' },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: '无效的操作' }, { status: 400 });
   } catch (error) {
     console.error('处理邮件配置失败:', error);
     return NextResponse.json(

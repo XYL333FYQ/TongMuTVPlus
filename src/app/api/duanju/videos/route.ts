@@ -84,7 +84,9 @@ export async function GET(request: NextRequest) {
     }
 
     const response = await fetch(
-      `${targetSource.api}?ac=videolist&t=${encodeURIComponent(categoryId)}&pg=${page}`,
+      `${targetSource.api}?ac=videolist&t=${encodeURIComponent(
+        categoryId
+      )}&pg=${page}`,
       {
         headers: API_CONFIG.search.headers,
         signal: AbortSignal.timeout(10000),
@@ -104,7 +106,9 @@ export async function GET(request: NextRequest) {
         id: item.vod_id.toString(),
         title: (item.vod_name || '').trim().replace(/\s+/g, ' '),
         poster: item.vod_pic || '',
-        year: item.vod_year ? item.vod_year.match(/\d{4}/)?.[0] || item.vod_year : 'unknown',
+        year: item.vod_year
+          ? item.vod_year.match(/\d{4}/)?.[0] || item.vod_year
+          : 'unknown',
         episodes,
         episodes_titles: episodesTitles,
         source: targetSource.key,
@@ -125,7 +129,8 @@ export async function GET(request: NextRequest) {
         data: results,
         total: videoData.total || 0,
         page: videoData.page || page,
-        pageCount: videoData.pagecount || (results.length > 0 ? page + 1 : page),
+        pageCount:
+          videoData.pagecount || (results.length > 0 ? page + 1 : page),
       },
       {
         headers: {

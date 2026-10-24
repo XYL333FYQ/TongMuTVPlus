@@ -11,7 +11,8 @@ import {
 export const runtime = 'nodejs';
 
 function extractSubscriptionKeys(subscription: any) {
-  const p256dh = subscription?.keys?.p256dh || subscription?.toJSON?.()?.keys?.p256dh;
+  const p256dh =
+    subscription?.keys?.p256dh || subscription?.toJSON?.()?.keys?.p256dh;
   const auth = subscription?.keys?.auth || subscription?.toJSON?.()?.keys?.auth;
   return { p256dh, auth };
 }
@@ -58,7 +59,10 @@ export async function POST(request: NextRequest) {
 
   if (enabled === false) {
     if (authInfo.tokenId) {
-      await storage.deletePushSubscriptionsByTokenId?.(authInfo.username, authInfo.tokenId);
+      await storage.deletePushSubscriptionsByTokenId?.(
+        authInfo.username,
+        authInfo.tokenId
+      );
     }
     return NextResponse.json({ ok: true });
   }
@@ -66,7 +70,10 @@ export async function POST(request: NextRequest) {
   if (subscription) {
     const { p256dh, auth } = extractSubscriptionKeys(subscription);
     if (!subscription.endpoint || !p256dh || !auth) {
-      return NextResponse.json({ error: 'Invalid push subscription' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'Invalid push subscription' },
+        { status: 400 }
+      );
     }
 
     if (!authInfo.tokenId) {
@@ -102,9 +109,15 @@ export async function DELETE(request: NextRequest) {
   const storage = getStorage();
 
   if (body?.endpoint) {
-    await storage.deletePushSubscriptionByEndpoint?.(authInfo.username, body.endpoint);
+    await storage.deletePushSubscriptionByEndpoint?.(
+      authInfo.username,
+      body.endpoint
+    );
   } else if (authInfo.tokenId) {
-    await storage.deletePushSubscriptionsByTokenId?.(authInfo.username, authInfo.tokenId);
+    await storage.deletePushSubscriptionsByTokenId?.(
+      authInfo.username,
+      authInfo.tokenId
+    );
   }
 
   return NextResponse.json({ ok: true });

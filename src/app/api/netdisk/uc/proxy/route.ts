@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getAuthInfoFromCookie } from '@/lib/auth';
-import { ensureUCPlayFolder, getUCPlayUrls, saveUCShareFile } from '@/lib/netdisk/uc.client';
+import {
+  ensureUCPlayFolder,
+  getUCPlayUrls,
+  saveUCShareFile,
+} from '@/lib/netdisk/uc.client';
 import { refreshUCNetdiskSession } from '@/lib/netdisk/uc-session-cache';
 import { resolveUCSession } from '@/lib/netdisk/uc-session-resolver';
 
@@ -24,7 +28,10 @@ export async function GET(request: NextRequest) {
 
     const episodeIndex = Number.parseInt(episodeIndexRaw, 10);
     if (!Number.isInteger(episodeIndex) || episodeIndex < 0) {
-      return NextResponse.json({ error: '无效的 episodeIndex' }, { status: 400 });
+      return NextResponse.json(
+        { error: '无效的 episodeIndex' },
+        { status: 400 }
+      );
     }
 
     const { session, cookie, token, savePath } = await resolveUCSession(id);
@@ -34,7 +41,12 @@ export async function GET(request: NextRequest) {
     }
 
     if (!session.playFolderFid || !session.playFolderPath) {
-      const folder = await ensureUCPlayFolder(cookie, savePath, session.shareId, session.title);
+      const folder = await ensureUCPlayFolder(
+        cookie,
+        savePath,
+        session.shareId,
+        session.title
+      );
       session.playFolderFid = folder.folderFid;
       session.playFolderPath = folder.folderPath;
     }
@@ -53,9 +65,13 @@ export async function GET(request: NextRequest) {
     refreshUCNetdiskSession(id);
 
     const playUrls = await getUCPlayUrls(cookie, savedFileId, token);
-    const selected = playUrls.find((item) => item.name === quality) || playUrls[0];
+    const selected =
+      playUrls.find((item) => item.name === quality) || playUrls[0];
     if (!selected) {
-      return NextResponse.json({ error: '未获取到 UC 播放地址' }, { status: 500 });
+      return NextResponse.json(
+        { error: '未获取到 UC 播放地址' },
+        { status: 500 }
+      );
     }
 
     const range = request.headers.get('range');
@@ -82,7 +98,14 @@ export async function GET(request: NextRequest) {
       }
 
       const responseHeaders = new Headers();
-      const copyHeaders = ['content-type', 'content-length', 'content-range', 'accept-ranges', 'etag', 'last-modified'];
+      const copyHeaders = [
+        'content-type',
+        'content-length',
+        'content-range',
+        'accept-ranges',
+        'etag',
+        'last-modified',
+      ];
       copyHeaders.forEach((name) => {
         const value = upstream.headers.get(name);
         if (value) responseHeaders.set(name, value);
@@ -125,7 +148,10 @@ export async function GET(request: NextRequest) {
       })();
 
       return new Response(readable, {
-        status: range && upstream.headers.get('content-range') ? 206 : upstream.status,
+        status:
+          range && upstream.headers.get('content-range')
+            ? 206
+            : upstream.status,
         headers: responseHeaders,
       });
     } catch (error) {

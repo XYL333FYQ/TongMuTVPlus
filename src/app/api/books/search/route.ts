@@ -20,6 +20,9 @@ export async function GET(request: NextRequest) {
     const result = await bookProvider.searchBooks(q, sourceId);
     return NextResponse.json(result);
   } catch (error) {
-    return NextResponse.json({ error: (error as Error).message }, { status: 500 });
+    return NextResponse.json(
+      { error: (error as Error).message },
+      { status: 500 }
+    );
   }
 }

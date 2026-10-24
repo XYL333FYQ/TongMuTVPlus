@@ -38,17 +38,11 @@ export async function GET(request: NextRequest) {
   const page = searchParams.get('page') || '1';
 
   if (!sourceKey) {
-    return NextResponse.json(
-      { error: '缺少参数: source' },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: '缺少参数: source' }, { status: 400 });
   }
 
   if (!keyword || keyword.trim() === '') {
-    return NextResponse.json(
-      { error: '缺少参数: keyword' },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: '缺少参数: keyword' }, { status: 400 });
   }
 
   try {
@@ -64,7 +58,9 @@ export async function GET(request: NextRequest) {
     }
 
     // 请求搜索结果
-    const searchUrl = `${targetSite.api}?ac=videolist&wd=${encodeURIComponent(keyword)}&pg=${page}`;
+    const searchUrl = `${targetSite.api}?ac=videolist&wd=${encodeURIComponent(
+      keyword
+    )}&pg=${page}`;
     const searchResponse = await fetch(searchUrl, {
       headers: API_CONFIG.search.headers,
       signal: AbortSignal.timeout(10000),

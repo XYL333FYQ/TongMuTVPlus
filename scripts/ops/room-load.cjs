@@ -127,7 +127,12 @@ async function run(options) {
     path.join(__dirname, 'room-load-server.cjs'),
     [databasePath],
     {
-      env: { ...process.env, PASSWORD: secret, AUTH_SECRET: secret, ROOM_MAX_MEMBERS: '8' },
+      env: {
+        ...process.env,
+        PASSWORD: secret,
+        AUTH_SECRET: secret,
+        ROOM_MAX_MEMBERS: '8',
+      },
       stdio: ['ignore', 'ignore', 'pipe', 'ipc'],
     }
   );

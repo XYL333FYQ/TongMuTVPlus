@@ -8,10 +8,12 @@ import { db } from '@/lib/db';
 export const runtime = 'nodejs';
 
 const downloadTools = ['aria2', 'qBittorrent', 'Transmission'] as const;
-type DownloadTool = typeof downloadTools[number];
+type DownloadTool = (typeof downloadTools)[number];
 
 function isDownloadTool(tool: unknown): tool is DownloadTool {
-  return typeof tool === 'string' && downloadTools.includes(tool as DownloadTool);
+  return (
+    typeof tool === 'string' && downloadTools.includes(tool as DownloadTool)
+  );
 }
 
 /**
@@ -36,10 +38,7 @@ export async function PUT(req: NextRequest) {
     }
 
     if (downloadTool !== undefined && !isDownloadTool(downloadTool)) {
-      return NextResponse.json(
-        { error: '下载方式不支持' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: '下载方式不支持' }, { status: 400 });
     }
 
     const config = await getConfig();

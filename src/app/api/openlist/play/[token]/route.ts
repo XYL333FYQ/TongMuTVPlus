@@ -75,11 +75,16 @@ export async function GET(
       !openListConfig.Username ||
       !openListConfig.Password
     ) {
-      return NextResponse.json({ error: 'OpenList 未配置或未启用' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'OpenList 未配置或未启用' },
+        { status: 400 }
+      );
     }
 
     const rootPath = openListConfig.RootPath || '/';
-    const folderPath = `${rootPath}${rootPath.endsWith('/') ? '' : '/'}${folderName}`;
+    const folderPath = `${rootPath}${
+      rootPath.endsWith('/') ? '' : '/'
+    }${folderName}`;
     const filePath = `${folderPath}/${fileName}`;
 
     // 解析路径元信息：路径开启代理播放时重定向到服务器代理地址
@@ -123,10 +128,7 @@ export async function GET(
         code: fileResponse.code,
         message: fileResponse.message,
       });
-      return NextResponse.json(
-        { error: '获取播放链接失败' },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: '获取播放链接失败' }, { status: 500 });
     }
 
     const { resolveOpenListDirectPlayUrl } = await import(

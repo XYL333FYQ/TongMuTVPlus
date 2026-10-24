@@ -58,10 +58,7 @@ export async function POST(request: NextRequest) {
     if (email && typeof email === 'string') {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(email)) {
-        return NextResponse.json(
-          { error: '邮箱格式不正确' },
-          { status: 400 }
-        );
+        return NextResponse.json({ error: '邮箱格式不正确' }, { status: 400 });
       }
 
       if (storage.setUserEmail) {
@@ -72,11 +69,12 @@ export async function POST(request: NextRequest) {
     // 保存邮件通知偏好
     if (typeof emailNotifications === 'boolean') {
       if (storage.setEmailNotificationPreference) {
-        await storage.setEmailNotificationPreference(username, emailNotifications);
+        await storage.setEmailNotificationPreference(
+          username,
+          emailNotifications
+        );
       }
     }
-
-
 
     return NextResponse.json({
       success: true,

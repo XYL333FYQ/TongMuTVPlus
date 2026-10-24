@@ -137,10 +137,10 @@ export async function GET(request: NextRequest) {
                     (aiConfig.WebSearchProvider === 'tavily'
                       ? aiConfig.TavilyApiKey
                       : aiConfig.WebSearchProvider === 'serper'
-                        ? aiConfig.SerperApiKey
-                        : aiConfig.WebSearchProvider === 'serpapi'
-                          ? aiConfig.SerpApiKey
-                          : '') || '',
+                      ? aiConfig.SerperApiKey
+                      : aiConfig.WebSearchProvider === 'serpapi'
+                      ? aiConfig.SerpApiKey
+                      : '') || '',
                 }
               : undefined;
           // 无 key 时不注册 web_search 工具（bing 无需 key）

@@ -9,7 +9,8 @@ import * as path from 'path';
 import { getAuthInfoFromCookie } from '@/lib/auth';
 
 // 检查是否启用离线下载功能
-const OFFLINE_DOWNLOAD_ENABLED = process.env.NEXT_PUBLIC_ENABLE_OFFLINE_DOWNLOAD === 'true';
+const OFFLINE_DOWNLOAD_ENABLED =
+  process.env.NEXT_PUBLIC_ENABLE_OFFLINE_DOWNLOAD === 'true';
 const OFFLINE_DOWNLOAD_DIR = process.env.OFFLINE_DOWNLOAD_DIR || '/data';
 
 /**
@@ -113,8 +114,8 @@ export async function GET(request: NextRequest) {
     const contentType = file.endsWith('.ts')
       ? 'video/mp2t'
       : file.endsWith('.key')
-        ? 'application/octet-stream'
-        : 'application/octet-stream';
+      ? 'application/octet-stream'
+      : 'application/octet-stream';
 
     return new NextResponse(fileBuffer, {
       headers: {

@@ -26,9 +26,9 @@ export async function GET(request: NextRequest) {
       // 获取用户自己的求片
       const requestIds = await storage.getUserMovieRequests(authInfo.username);
       const requests = await Promise.all(
-        requestIds.map(id => storage.getMovieRequest(id))
+        requestIds.map((id) => storage.getMovieRequest(id))
       );
-      const filtered = requests.filter(r => r !== null) as MovieRequest[];
+      const filtered = requests.filter((r) => r !== null) as MovieRequest[];
       return NextResponse.json({ requests: filtered });
     }
 
@@ -37,12 +37,12 @@ export async function GET(request: NextRequest) {
 
     // 按状态筛选
     if (status) {
-      requests = requests.filter(r => r.status === status);
+      requests = requests.filter((r) => r.status === status);
     }
 
     // 列表页不返回 requestedBy
     if (!detail) {
-      requests = requests.map(r => ({ ...r, requestedBy: [] }));
+      requests = requests.map((r) => ({ ...r, requestedBy: [] }));
     }
 
     // 按求片人数和时间排序
@@ -108,9 +108,10 @@ export async function POST(request: NextRequest) {
 
     // 查重（剧集需要匹配季度）
     const allRequests = await storage.getAllMovieRequests();
-    const existing = allRequests.find(r =>
-      (tmdbId && r.tmdbId === tmdbId && r.season === season) ||
-      (r.title === title && r.year === year && r.season === season)
+    const existing = allRequests.find(
+      (r) =>
+        (tmdbId && r.tmdbId === tmdbId && r.season === season) ||
+        (r.title === title && r.year === year && r.season === season)
     );
 
     if (existing) {
@@ -121,7 +122,10 @@ export async function POST(request: NextRequest) {
 
       // 检查用户是否已经求过
       if (existing.requestedBy.includes(authInfo.username)) {
-        return NextResponse.json({ error: '您已经求过这部影片了' }, { status: 400 });
+        return NextResponse.json(
+          { error: '您已经求过这部影片了' },
+          { status: 400 }
+        );
       }
 
       // 加入求片
@@ -138,7 +142,9 @@ export async function POST(request: NextRequest) {
           id: `movie_request_join_${existing.id}_${Date.now()}`,
           type: 'movie_request',
           title: '求片人数增加',
-          message: `${authInfo.username} 也想看：${existing.title}${existing.season ? ` 第${existing.season}季` : ''} (${existing.requestCount}人)`,
+          message: `${authInfo.username} 也想看：${existing.title}${
+            existing.season ? ` 第${existing.season}季` : ''
+          } (${existing.requestCount}人)`,
           timestamp: Date.now(),
           read: false,
           metadata: {
@@ -150,7 +156,7 @@ export async function POST(request: NextRequest) {
 
       return NextResponse.json({
         message: '已加入求片',
-        request: existing
+        request: existing,
       });
     }
 
@@ -190,7 +196,9 @@ export async function POST(request: NextRequest) {
         id: `movie_request_${newRequest.id}_${Date.now()}`,
         type: 'movie_request',
         title: '新求片请求',
-        message: `${authInfo.username} 求片：${title}${season ? ` 第${season}季` : ''}`,
+        message: `${authInfo.username} 求片：${title}${
+          season ? ` 第${season}季` : ''
+        }`,
         timestamp: Date.now(),
         read: false,
         metadata: {
@@ -202,7 +210,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       message: '求片成功',
-      request: newRequest
+      request: newRequest,
     });
   } catch (error) {
     console.error('创建求片失败:', error);

@@ -10,13 +10,20 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const song = normalizeSong(body?.song || body?.songInfo || {});
     if (!song.source || !song.songId) {
-      return badRequest(`歌曲信息不完整: songId=${song.songId || ''}, source=${song.source || ''}`);
+      return badRequest(
+        `歌曲信息不完整: songId=${song.songId || ''}, source=${
+          song.source || ''
+        }`
+      );
     }
 
     const data = await fetchLxLyric(song);
 
     return NextResponse.json(
-      { success: true, data: { lyric: data.lyric || '', tlyric: data.tlyric || '' } },
+      {
+        success: true,
+        data: { lyric: data.lyric || '', tlyric: data.tlyric || '' },
+      },
       {
         headers: {
           'Cache-Control': 'public, max-age=86400',

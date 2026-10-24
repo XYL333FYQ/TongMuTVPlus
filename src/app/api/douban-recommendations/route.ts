@@ -89,7 +89,9 @@ export async function GET(request: NextRequest) {
         try {
           // 调用豆瓣详情接口获取完整名称
           const detailUrl = `https://m.douban.com/rexxar/api/v2/subject/${rec.doubanId}`;
-          const detailData = await fetchDoubanData<DoubanDetailApiResponse>(detailUrl);
+          const detailData = await fetchDoubanData<DoubanDetailApiResponse>(
+            detailUrl
+          );
 
           if (detailData && detailData.title) {
             console.log(`成功获取完整标题: ${detailData.title}`);

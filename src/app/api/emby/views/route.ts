@@ -10,7 +10,11 @@ export const runtime = 'nodejs';
 
 export async function GET(request: NextRequest) {
   try {
-    const authResult = await requireFeaturePermission(request, 'emby', '无权限访问 Emby');
+    const authResult = await requireFeaturePermission(
+      request,
+      'emby',
+      '无权限访问 Emby'
+    );
     if (authResult instanceof NextResponse) return authResult;
     const { searchParams } = new URL(request.url);
     const embyKey = searchParams.get('embyKey') || undefined;
@@ -30,7 +34,8 @@ export async function GET(request: NextRequest) {
 
     // 过滤出电影和电视剧媒体库
     const filteredViews = views.filter(
-      (view) => view.CollectionType === 'movies' || view.CollectionType === 'tvshows'
+      (view) =>
+        view.CollectionType === 'movies' || view.CollectionType === 'tvshows'
     );
 
     const response = {

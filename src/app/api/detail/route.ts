@@ -37,11 +37,12 @@ export async function GET(request: NextRequest) {
         payload: {},
       });
       const sources = normalizeScriptSources(sourcesExecution.result);
-      const sourceInfo =
-        sources.find((item) => item.id === parsedScriptSource.sourceId) || {
-          id: parsedScriptSource.sourceId,
-          name: parsedScriptSource.sourceId,
-        };
+      const sourceInfo = sources.find(
+        (item) => item.id === parsedScriptSource.sourceId
+      ) || {
+        id: parsedScriptSource.sourceId,
+        name: parsedScriptSource.sourceId,
+      };
 
       const detailExecution = await executeSavedSourceScript({
         key: parsedScriptSource.scriptKey,
@@ -93,7 +94,9 @@ export async function GET(request: NextRequest) {
       let metaInfo: any = null;
       let folderMeta: any = null;
       try {
-        const { getCachedMetaInfo, setCachedMetaInfo } = await import('@/lib/openlist-cache');
+        const { getCachedMetaInfo, setCachedMetaInfo } = await import(
+          '@/lib/openlist-cache'
+        );
         const { db } = await import('@/lib/db');
 
         metaInfo = getCachedMetaInfo();
@@ -117,12 +120,18 @@ export async function GET(request: NextRequest) {
 
       // 使用 folderName 构建实际路径
       const folderName = folderMeta.folderName;
-      const folderPath = `${rootPath}${rootPath.endsWith('/') ? '' : '/'}${folderName}`;
+      const folderPath = `${rootPath}${
+        rootPath.endsWith('/') ? '' : '/'
+      }${folderName}`;
 
       // 2. 直接调用 OpenList 客户端获取视频列表
       const { OpenListClient } = await import('@/lib/openlist.client');
-      const { getCachedVideoInfo, setCachedVideoInfo } = await import('@/lib/openlist-cache');
-      const { formatEpisodeDisplayTitle, parseVideoFileName } = await import('@/lib/video-parser');
+      const { getCachedVideoInfo, setCachedVideoInfo } = await import(
+        '@/lib/openlist-cache'
+      );
+      const { formatEpisodeDisplayTitle, parseVideoFileName } = await import(
+        '@/lib/video-parser'
+      );
 
       const client = new OpenListClient(
         openListConfig.URL,
@@ -139,7 +148,11 @@ export async function GET(request: NextRequest) {
       let total = 0;
 
       for (;;) {
-        const listResponse = await client.listDirectory(folderPath, currentPage, pageSize);
+        const listResponse = await client.listDirectory(
+          folderPath,
+          currentPage,
+          pageSize
+        );
 
         if (listResponse.code !== 200) {
           throw new Error('OpenList 列表获取失败1');
@@ -155,10 +168,35 @@ export async function GET(request: NextRequest) {
         currentPage++;
       }
 
-      const videoExtensions = ['.mp4', '.mkv', '.avi', '.m3u8', '.flv', '.ts', '.mov', '.wmv', '.webm', '.rmvb', '.rm', '.mpg', '.mpeg', '.3gp', '.f4v', '.m4v', '.vob'];
+      const videoExtensions = [
+        '.mp4',
+        '.mkv',
+        '.avi',
+        '.m3u8',
+        '.flv',
+        '.ts',
+        '.mov',
+        '.wmv',
+        '.webm',
+        '.rmvb',
+        '.rm',
+        '.mpg',
+        '.mpeg',
+        '.3gp',
+        '.f4v',
+        '.m4v',
+        '.vob',
+      ];
       const videoFiles = allFiles.filter((item) => {
-        if (item.is_dir || item.name.startsWith('.') || item.name.endsWith('.json')) return false;
-        return videoExtensions.some(ext => item.name.toLowerCase().endsWith(ext));
+        if (
+          item.is_dir ||
+          item.name.startsWith('.') ||
+          item.name.endsWith('.json')
+        )
+          return false;
+        return videoExtensions.some((ext) =>
+          item.name.toLowerCase().endsWith(ext)
+        );
       });
 
       if (!videoInfo) {
@@ -168,7 +206,7 @@ export async function GET(request: NextRequest) {
           const file = videoFiles[i];
           const parsed = parseVideoFileName(file.name);
           videoInfo.episodes[file.name] = {
-            episode: parsed.episode || (i + 1),
+            episode: parsed.episode || i + 1,
             season: parsed.season,
             title: parsed.title,
             parsed_from: 'filename',
@@ -190,12 +228,27 @@ export async function GET(request: NextRequest) {
           const parsed = parseVideoFileName(file.name);
           let episodeInfo;
           if (parsed.episode) {
-            episodeInfo = { episode: parsed.episode, season: parsed.season, title: parsed.title, parsed_from: 'filename', isOVA: parsed.isOVA };
+            episodeInfo = {
+              episode: parsed.episode,
+              season: parsed.season,
+              title: parsed.title,
+              parsed_from: 'filename',
+              isOVA: parsed.isOVA,
+            };
           } else {
-            episodeInfo = videoInfo!.episodes[file.name] || { episode: index + 1, season: undefined, title: undefined, parsed_from: 'filename' };
+            episodeInfo = videoInfo!.episodes[file.name] || {
+              episode: index + 1,
+              season: undefined,
+              title: undefined,
+              parsed_from: 'filename',
+            };
           }
           let displayTitle = formatEpisodeDisplayTitle(
-            { episode: episodeInfo.episode, season: episodeInfo.season, isOVA: episodeInfo.isOVA },
+            {
+              episode: episodeInfo.episode,
+              season: episodeInfo.season,
+              isOVA: episodeInfo.isOVA,
+            },
             hasMultipleSeasons
           );
           if (!displayTitle) {
@@ -204,14 +257,22 @@ export async function GET(request: NextRequest) {
           if (!displayTitle) {
             displayTitle = file.name;
           }
-          return { fileName: file.name, episode: episodeInfo.episode || 0, season: episodeInfo.season, title: displayTitle, isOVA: episodeInfo.isOVA };
+          return {
+            fileName: file.name,
+            episode: episodeInfo.episode || 0,
+            season: episodeInfo.season,
+            title: displayTitle,
+            isOVA: episodeInfo.isOVA,
+          };
         })
         .sort((a, b) => {
           // OVA 排在最后
           if (a.isOVA && !b.isOVA) return 1;
           if (!a.isOVA && b.isOVA) return -1;
           // 都是 OVA 或都不是 OVA，按集数排序
-          return a.episode !== b.episode ? a.episode - b.episode : a.fileName.localeCompare(b.fileName);
+          return a.episode !== b.episode
+            ? a.episode - b.episode
+            : a.fileName.localeCompare(b.fileName);
         });
 
       // 3. 从 metainfo 中获取元数据
@@ -228,11 +289,20 @@ export async function GET(request: NextRequest) {
         source_name: '私人影库',
         id: id,
         title: folderMeta?.title || folderName,
-        poster: folderMeta?.poster_path ? getTMDBImageUrl(folderMeta.poster_path) : '',
-        year: folderMeta?.release_date ? folderMeta.release_date.split('-')[0] : '',
+        poster: folderMeta?.poster_path
+          ? getTMDBImageUrl(folderMeta.poster_path)
+          : '',
+        year: folderMeta?.release_date
+          ? folderMeta.release_date.split('-')[0]
+          : '',
         douban_id: 0,
         desc: folderMeta?.overview || '',
-        episodes: episodes.map((ep) => `/api/openlist/play?folder=${encodeURIComponent(folderName)}&fileName=${encodeURIComponent(ep.fileName)}`),
+        episodes: episodes.map(
+          (ep) =>
+            `/api/openlist/play?folder=${encodeURIComponent(
+              folderName
+            )}&fileName=${encodeURIComponent(ep.fileName)}`
+        ),
         episodes_titles: episodes.map((ep) => ep.title),
         proxyMode: false, // openlist 源不使用代理模式
         category: pathMetaResolved.category || undefined,

@@ -105,14 +105,15 @@ export async function GET() {
     // 找到短剧分类的ID
     let duanjuClass: CmsClassItem | null = null;
     if (classData.class && Array.isArray(classData.class)) {
-      duanjuClass = classData.class.find((item) => {
-        const typeName = item.type_name?.toLowerCase() || '';
-        return (
-          typeName.includes('短剧') ||
-          typeName.includes('短视频') ||
-          typeName.includes('微短剧')
-        );
-      }) || null;
+      duanjuClass =
+        classData.class.find((item) => {
+          const typeName = item.type_name?.toLowerCase() || '';
+          return (
+            typeName.includes('短剧') ||
+            typeName.includes('短视频') ||
+            typeName.includes('微短剧')
+          );
+        }) || null;
     }
 
     if (!duanjuClass) {
@@ -191,7 +192,9 @@ export async function GET() {
         source: firstSource.key,
         source_name: firstSource.name,
         class: item.vod_class,
-        year: item.vod_year ? item.vod_year.match(/\d{4}/)?.[0] || '' : 'unknown',
+        year: item.vod_year
+          ? item.vod_year.match(/\d{4}/)?.[0] || ''
+          : 'unknown',
         desc: cleanHtmlTags(item.vod_content || ''),
         type_name: item.type_name,
         douban_id: item.vod_douban_id,

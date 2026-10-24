@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getAuthInfoFromCookie } from '@/lib/auth';
-import { getUCNetdiskSession, refreshUCNetdiskSession } from '@/lib/netdisk/uc-session-cache';
+import {
+  getUCNetdiskSession,
+  refreshUCNetdiskSession,
+} from '@/lib/netdisk/uc-session-cache';
 
 export const runtime = 'nodejs';
 
@@ -22,10 +25,15 @@ export async function GET(request: NextRequest) {
 
     const episodeIndex = Number.parseInt(episodeIndexRaw, 10);
     if (!Number.isInteger(episodeIndex) || episodeIndex < 0) {
-      return NextResponse.json({ error: '无效的 episodeIndex' }, { status: 400 });
+      return NextResponse.json(
+        { error: '无效的 episodeIndex' },
+        { status: 400 }
+      );
     }
 
-    const proxyUrl = `/api/netdisk/uc/proxy?id=${encodeURIComponent(id)}&episodeIndex=${episodeIndex}`;
+    const proxyUrl = `/api/netdisk/uc/proxy?id=${encodeURIComponent(
+      id
+    )}&episodeIndex=${episodeIndex}`;
     refreshUCNetdiskSession(id) || getUCNetdiskSession(id);
 
     if (format === 'json') {

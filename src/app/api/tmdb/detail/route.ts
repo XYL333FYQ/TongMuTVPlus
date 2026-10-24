@@ -41,8 +41,18 @@ export async function GET(request: NextRequest) {
 
     const response =
       type === 'movie'
-        ? await getTMDBMovieDetails(tmdbApiKey, parseInt(id), tmdbProxy, tmdbReverseProxy)
-        : await getTMDBTVDetails(tmdbApiKey, parseInt(id), tmdbProxy, tmdbReverseProxy);
+        ? await getTMDBMovieDetails(
+            tmdbApiKey,
+            parseInt(id),
+            tmdbProxy,
+            tmdbReverseProxy
+          )
+        : await getTMDBTVDetails(
+            tmdbApiKey,
+            parseInt(id),
+            tmdbProxy,
+            tmdbReverseProxy
+          );
 
     if (response.code !== 200 || !response.details) {
       return NextResponse.json(

@@ -28,7 +28,10 @@ export async function GET(request: NextRequest) {
     }
 
     if (type !== 'movie' && type !== 'tv') {
-      return NextResponse.json({ error: '类型参数必须是movie或tv' }, { status: 400 });
+      return NextResponse.json(
+        { error: '类型参数必须是movie或tv' },
+        { status: 400 }
+      );
     }
 
     const config = await getConfig();

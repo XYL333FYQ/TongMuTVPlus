@@ -19,7 +19,10 @@ async function getEmbyClient(embyKey?: string) {
   return await embyManager.getClient(embyKey);
 }
 
-async function validateEmbyProxyAccess(request: NextRequest, requestToken: string) {
+async function validateEmbyProxyAccess(
+  request: NextRequest,
+  requestToken: string
+) {
   const globalToken = process.env.TVBOX_SUBSCRIBE_TOKEN;
   const authInfo = await authenticateRequest(request);
 
@@ -99,7 +102,10 @@ export async function GET(
 
     const streamIndex = Number(streamIndexValue);
     if (!Number.isInteger(streamIndex) || streamIndex < 0) {
-      return NextResponse.json({ error: 'streamIndex 参数非法' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'streamIndex 参数非法' },
+        { status: 400 }
+      );
     }
 
     let client = await getEmbyClient(embyKey);
@@ -141,7 +147,10 @@ export async function GET(
       );
 
       const retryAbortController = new AbortController();
-      const retryTimeoutId = setTimeout(() => retryAbortController.abort(), 60000);
+      const retryTimeoutId = setTimeout(
+        () => retryAbortController.abort(),
+        60000
+      );
       try {
         subtitleResponse = await fetch(subtitleUrl, {
           headers: requestHeaders,

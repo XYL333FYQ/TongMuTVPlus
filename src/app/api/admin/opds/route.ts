@@ -33,7 +33,11 @@ async function ensureAdmin(request: NextRequest) {
 
   if (authInfo.username !== process.env.USERNAME) {
     const userInfo = await db.getUserInfoV2(authInfo.username);
-    if (!userInfo || (userInfo.role !== 'admin' && userInfo.role !== 'owner') || userInfo.banned) {
+    if (
+      !userInfo ||
+      (userInfo.role !== 'admin' && userInfo.role !== 'owner') ||
+      userInfo.banned
+    ) {
       return NextResponse.json({ error: '权限不足' }, { status: 401 });
     }
   }
@@ -41,16 +45,36 @@ async function ensureAdmin(request: NextRequest) {
   return authInfo.username;
 }
 
-async function detectCapabilitiesFromSource(source: BookSource): Promise<BookSourceCapabilities> {
-  if (source.type === 'legado') return legadoClient.detectCapabilitiesFromSource(source);
+async function detectCapabilitiesFromSource(
+  source: BookSource
+): Promise<BookSourceCapabilities> {
+  if (source.type === 'legado')
+    return legadoClient.detectCapabilitiesFromSource(source);
   try {
     const result = await opdsClient.getCatalogFromSource(source);
     return {
-      searchSupported: !!source.searchTemplate || result.searchHref !== undefined,
-      catalogSupported: result.navigation.length > 0 || result.entries.length > 0,
-      searchMode: result.searchHref ? 'opds' : source.searchTemplate ? 'template' : 'disabled',
-      catalogMode: result.navigation.length > 0 ? 'navigation' : result.entries.length > 0 ? 'flat' : 'disabled',
-      acquisitionTypes: Array.from(new Set(result.entries.flatMap((item) => item.acquisitionLinks.map((link) => link.type)))),
+      searchSupported:
+        !!source.searchTemplate || result.searchHref !== undefined,
+      catalogSupported:
+        result.navigation.length > 0 || result.entries.length > 0,
+      searchMode: result.searchHref
+        ? 'opds'
+        : source.searchTemplate
+        ? 'template'
+        : 'disabled',
+      catalogMode:
+        result.navigation.length > 0
+          ? 'navigation'
+          : result.entries.length > 0
+          ? 'flat'
+          : 'disabled',
+      acquisitionTypes: Array.from(
+        new Set(
+          result.entries.flatMap((item) =>
+            item.acquisitionLinks.map((link) => link.type)
+          )
+        )
+      ),
       lastCheckedAt: Date.now(),
     };
   } catch (error) {
@@ -74,7 +98,10 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const inputSources = (body?.Sources || []) as TestSourceInput[];
     if (!Array.isArray(inputSources) || inputSources.length === 0) {
-      return NextResponse.json({ success: false, message: '请至少填写一个电子书源' }, { status: 400 });
+      return NextResponse.json(
+        { success: false, message: '请至少填写一个电子书源' },
+        { status: 400 }
+      );
     }
 
     const sources: BookSource[] = inputSources
@@ -97,7 +124,10 @@ export async function POST(request: NextRequest) {
       }));
 
     if (sources.length === 0) {
-      return NextResponse.json({ success: false, message: '没有可测试的有效书源地址' }, { status: 400 });
+      return NextResponse.json(
+        { success: false, message: '没有可测试的有效书源地址' },
+        { status: 400 }
+      );
     }
 
     const results = await Promise.all(
@@ -109,7 +139,10 @@ export async function POST(request: NextRequest) {
       }))
     );
 
-    const successCount = results.filter((item) => item.capability.catalogSupported || item.capability.searchSupported).length;
+    const successCount = results.filter(
+      (item) =>
+        item.capability.catalogSupported || item.capability.searchSupported
+    ).length;
     return NextResponse.json({
       success: successCount > 0,
       message: `测试完成，${successCount}/${results.length} 个书源可用`,

@@ -74,15 +74,26 @@ export async function GET(
     }
 
     const itemId = params.itemId;
-    const imageType = (searchParams.get('imageType') || 'Primary') as 'Primary' | 'Backdrop' | 'Logo';
-    const maxWidth = searchParams.get('maxWidth') ? parseInt(searchParams.get('maxWidth')!) : undefined;
+    const imageType = (searchParams.get('imageType') || 'Primary') as
+      | 'Primary'
+      | 'Backdrop'
+      | 'Logo';
+    const maxWidth = searchParams.get('maxWidth')
+      ? parseInt(searchParams.get('maxWidth')!)
+      : undefined;
     const embyKey = searchParams.get('embyKey') || undefined;
 
     // 获取 Emby 客户端
     const client = await getEmbyClient(embyKey);
 
     // 获取图片 URL（强制获取直接URL，避免代理循环）
-    const imageUrl = client.getImageUrl(itemId, imageType, maxWidth, undefined, true);
+    const imageUrl = client.getImageUrl(
+      itemId,
+      imageType,
+      maxWidth,
+      undefined,
+      true
+    );
 
     // 构建请求头，添加自定义 User-Agent
     const requestHeaders: HeadersInit = {
@@ -103,50 +114,45 @@ export async function GET(
       // 清除超时定时器
       clearTimeout(timeoutId);
 
-    if (!imageResponse.ok) {
-      console.error('[Emby Image] 获取图片失败:', {
-        itemId,
-        imageType,
+      if (!imageResponse.ok) {
+        console.error('[Emby Image] 获取图片失败:', {
+          itemId,
+          imageType,
+          status: imageResponse.status,
+          statusText: imageResponse.statusText,
+        });
+        return NextResponse.json({ error: '获取图片失败' }, { status: 500 });
+      }
+
+      // 获取 Content-Type
+      const contentType =
+        imageResponse.headers.get('content-type') || 'image/jpeg';
+
+      // 构建响应头
+      const headers = new Headers();
+      headers.set('Content-Type', contentType);
+
+      // 复制重要的响应头
+      const contentLength = imageResponse.headers.get('content-length');
+      if (contentLength) {
+        headers.set('Content-Length', contentLength);
+      }
+
+      // 设置缓存头
+      headers.set('Cache-Control', 'private, max-age=86400'); // 私库图片仅保留浏览器缓存
+
+      // 返回图片内容
+      return new NextResponse(imageResponse.body, {
         status: imageResponse.status,
-        statusText: imageResponse.statusText,
+        headers,
       });
-      return NextResponse.json(
-        { error: '获取图片失败' },
-        { status: 500 }
-      );
-    }
-
-    // 获取 Content-Type
-    const contentType = imageResponse.headers.get('content-type') || 'image/jpeg';
-
-    // 构建响应头
-    const headers = new Headers();
-    headers.set('Content-Type', contentType);
-
-    // 复制重要的响应头
-    const contentLength = imageResponse.headers.get('content-length');
-    if (contentLength) {
-      headers.set('Content-Length', contentLength);
-    }
-
-    // 设置缓存头
-    headers.set('Cache-Control', 'private, max-age=86400'); // 私库图片仅保留浏览器缓存
-
-    // 返回图片内容
-    return new NextResponse(imageResponse.body, {
-      status: imageResponse.status,
-      headers,
-    });
     } catch (error) {
       // 清除超时定时器
       clearTimeout(timeoutId);
 
       if (error instanceof Error && error.name === 'AbortError') {
         console.error('[Emby Image] 请求超时');
-        return NextResponse.json(
-          { error: '请求超时' },
-          { status: 504 }
-        );
+        return NextResponse.json({ error: '请求超时' }, { status: 504 });
       }
       throw error;
     }

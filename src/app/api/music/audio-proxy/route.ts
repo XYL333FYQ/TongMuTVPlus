@@ -31,7 +31,11 @@ async function getOpenListClient(): Promise<OpenListClient | null> {
 // 代理OpenList缓存的音频文件
 export async function GET(request: NextRequest) {
   try {
-    const authResult = await requireFeaturePermission(request, 'music', '无权限访问音乐功能');
+    const authResult = await requireFeaturePermission(
+      request,
+      'music',
+      '无权限访问音乐功能'
+    );
     if (authResult instanceof NextResponse) return authResult;
     const { searchParams } = new URL(request.url);
     const platform = searchParams.get('platform');
@@ -65,10 +69,7 @@ export async function GET(request: NextRequest) {
     const fileResponse = await openListClient.getFile(audioPath);
 
     if (fileResponse.code !== 200 || !fileResponse.data?.raw_url) {
-      return NextResponse.json(
-        { error: '音频文件未找到' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: '音频文件未找到' }, { status: 404 });
     }
 
     // 检查是否有 Range 请求头
@@ -85,14 +86,15 @@ export async function GET(request: NextRequest) {
         status: 304,
         headers: {
           'Cache-Control': 'public, max-age=31536000, immutable',
-          'ETag': generatedETag,
+          ETag: generatedETag,
         },
       });
     }
 
     // 构建上游请求头
     const upstreamHeaders: Record<string, string> = {
-      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+      'User-Agent':
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
     };
 
     // 如果有 Range 请求，转发给上游
@@ -119,7 +121,7 @@ export async function GET(request: NextRequest) {
         status: 304,
         headers: {
           'Cache-Control': 'public, max-age=31536000, immutable',
-          'ETag': generatedETag,
+          ETag: generatedETag,
         },
       });
     }

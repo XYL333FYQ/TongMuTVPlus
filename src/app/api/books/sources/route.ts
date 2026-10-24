@@ -14,6 +14,9 @@ export async function GET(request: NextRequest) {
     const sources = await bookProvider.getSources();
     return NextResponse.json({ sources });
   } catch (error) {
-    return NextResponse.json({ error: (error as Error).message }, { status: 500 });
+    return NextResponse.json(
+      { error: (error as Error).message },
+      { status: 500 }
+    );
   }
 }

@@ -15,7 +15,11 @@ export async function GET(request: NextRequest) {
     const key = new URL(request.url).searchParams.get('key');
     if (key) {
       const [sourceId, bookId] = key.split('+');
-      if (!sourceId || !bookId) return NextResponse.json({ error: 'Invalid key format' }, { status: 400 });
+      if (!sourceId || !bookId)
+        return NextResponse.json(
+          { error: 'Invalid key format' },
+          { status: 400 }
+        );
       const item = await db.getBookShelf(username, sourceId, bookId);
       return NextResponse.json(item, { status: 200 });
     }
@@ -23,7 +27,10 @@ export async function GET(request: NextRequest) {
     const records = await db.getAllBookShelf(username);
     return NextResponse.json(records, { status: 200 });
   } catch {
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Internal Server Error' },
+      { status: 500 }
+    );
   }
 }
 
@@ -32,10 +39,19 @@ export async function POST(request: NextRequest) {
   if (username instanceof NextResponse) return username;
 
   try {
-    const { key, item }: { key: string; item: BookShelfItem } = await request.json();
-    if (!key || !item?.title) return NextResponse.json({ error: 'Missing key or item' }, { status: 400 });
+    const { key, item }: { key: string; item: BookShelfItem } =
+      await request.json();
+    if (!key || !item?.title)
+      return NextResponse.json(
+        { error: 'Missing key or item' },
+        { status: 400 }
+      );
     const [sourceId, bookId] = key.split('+');
-    if (!sourceId || !bookId) return NextResponse.json({ error: 'Invalid key format' }, { status: 400 });
+    if (!sourceId || !bookId)
+      return NextResponse.json(
+        { error: 'Invalid key format' },
+        { status: 400 }
+      );
 
     await db.saveBookShelf(username, sourceId, bookId, {
       ...item,
@@ -45,7 +61,10 @@ export async function POST(request: NextRequest) {
     });
     return NextResponse.json({ success: true }, { status: 200 });
   } catch {
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Internal Server Error' },
+      { status: 500 }
+    );
   }
 }
 
@@ -57,17 +76,27 @@ export async function DELETE(request: NextRequest) {
     const key = new URL(request.url).searchParams.get('key');
     if (key) {
       const [sourceId, bookId] = key.split('+');
-      if (!sourceId || !bookId) return NextResponse.json({ error: 'Invalid key format' }, { status: 400 });
+      if (!sourceId || !bookId)
+        return NextResponse.json(
+          { error: 'Invalid key format' },
+          { status: 400 }
+        );
       await db.deleteBookShelf(username, sourceId, bookId);
     } else {
       const all = await db.getAllBookShelf(username);
-      await Promise.all(Object.keys(all).map(async (itemKey) => {
-        const [sourceId, bookId] = itemKey.split('+');
-        if (sourceId && bookId) await db.deleteBookShelf(username, sourceId, bookId);
-      }));
+      await Promise.all(
+        Object.keys(all).map(async (itemKey) => {
+          const [sourceId, bookId] = itemKey.split('+');
+          if (sourceId && bookId)
+            await db.deleteBookShelf(username, sourceId, bookId);
+        })
+      );
     }
     return NextResponse.json({ success: true }, { status: 200 });
   } catch {
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Internal Server Error' },
+      { status: 500 }
+    );
   }
 }

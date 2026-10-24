@@ -12,7 +12,11 @@ export const runtime = 'nodejs';
 
 export async function GET(request: NextRequest) {
   try {
-    const authResult = await requireFeaturePermission(request, 'music', '无权限访问音乐功能');
+    const authResult = await requireFeaturePermission(
+      request,
+      'music',
+      '无权限访问音乐功能'
+    );
     if (authResult instanceof NextResponse) return authResult;
     // 从 cookie 获取用户信息
     const authInfo = getAuthInfoFromCookie(request);
@@ -35,7 +39,7 @@ export async function GET(request: NextRequest) {
     const records = await db.getAllMusicPlayRecords(authInfo.username);
 
     // 从缓存中获取歌曲信息并填充到记录中
-    const keys = Object.keys(records).map(key => {
+    const keys = Object.keys(records).map((key) => {
       const [platform, id] = key.split('+');
       return { platform, id };
     });
@@ -66,7 +70,11 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const authResult = await requireFeaturePermission(request, 'music', '无权限访问音乐功能');
+    const authResult = await requireFeaturePermission(
+      request,
+      'music',
+      '无权限访问音乐功能'
+    );
     if (authResult instanceof NextResponse) return authResult;
     // 从 cookie 获取用户信息
     const authInfo = getAuthInfoFromCookie(request);
@@ -90,7 +98,11 @@ export async function POST(request: NextRequest) {
     // 检查是否是批量添加
     if (Array.isArray(body.records)) {
       // 批量添加
-      const records: Array<{ platform: string; id: string; record: MusicPlayRecord }> = [];
+      const records: Array<{
+        platform: string;
+        id: string;
+        record: MusicPlayRecord;
+      }> = [];
 
       for (const item of body.records) {
         const { key, record } = item;
@@ -133,7 +145,10 @@ export async function POST(request: NextRequest) {
       // 批量保存到数据库
       await db.batchSaveMusicPlayRecords(authInfo.username, records);
 
-      return NextResponse.json({ success: true, count: records.length }, { status: 200 });
+      return NextResponse.json(
+        { success: true, count: records.length },
+        { status: 200 }
+      );
     } else {
       // 单个添加（保持向后兼容）
       const { key, record }: { key: string; record: MusicPlayRecord } = body;
@@ -186,7 +201,11 @@ export async function POST(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
-    const authResult = await requireFeaturePermission(request, 'music', '无权限访问音乐功能');
+    const authResult = await requireFeaturePermission(
+      request,
+      'music',
+      '无权限访问音乐功能'
+    );
     if (authResult instanceof NextResponse) return authResult;
     // 从 cookie 获取用户信息
     const authInfo = getAuthInfoFromCookie(request);

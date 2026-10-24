@@ -29,12 +29,7 @@ export async function POST(request: NextRequest) {
     }
     const username = authInfo.username;
 
-    const {
-      Enabled,
-      BaseUrl,
-      Token,
-      ProxyEnabled,
-    } = body as {
+    const { Enabled, BaseUrl, Token, ProxyEnabled } = body as {
       Enabled?: boolean;
       BaseUrl?: string;
       Token?: string;

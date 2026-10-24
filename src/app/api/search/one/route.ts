@@ -44,7 +44,9 @@ export async function GET(request: NextRequest) {
 
   try {
     const enabledScripts = await listEnabledSourceScripts();
-    const matchedScript = enabledScripts.find((item) => item.key === resourceId);
+    const matchedScript = enabledScripts.find(
+      (item) => item.key === resourceId
+    );
     if (matchedScript) {
       const sourcesExecution = await executeSavedSourceScript({
         key: matchedScript.key,

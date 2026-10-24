@@ -15,7 +15,11 @@ export const runtime = 'nodejs';
  */
 export async function GET(request: NextRequest) {
   try {
-    const authResult = await requireFeaturePermission(request, 'xiaoya', '无权限访问小雅');
+    const authResult = await requireFeaturePermission(
+      request,
+      'xiaoya',
+      '无权限访问小雅'
+    );
     if (authResult instanceof NextResponse) return authResult;
     const authInfo = getAuthInfoFromCookie(request);
     if (!authInfo || !authInfo.username) {
@@ -28,12 +32,11 @@ export async function GET(request: NextRequest) {
     const config = await getConfig();
     const xiaoyaConfig = config.XiaoyaConfig;
 
-    if (
-      !xiaoyaConfig ||
-      !xiaoyaConfig.Enabled ||
-      !xiaoyaConfig.ServerURL
-    ) {
-      return NextResponse.json({ error: '小雅未配置或未启用' }, { status: 400 });
+    if (!xiaoyaConfig || !xiaoyaConfig.Enabled || !xiaoyaConfig.ServerURL) {
+      return NextResponse.json(
+        { error: '小雅未配置或未启用' },
+        { status: 400 }
+      );
     }
 
     const client = new XiaoyaClient(
@@ -43,7 +46,7 @@ export async function GET(request: NextRequest) {
       xiaoyaConfig.Token
     );
 
-        // 循环翻页获取全部条目（alist 单页上限100，避免大目录被截断）
+    // 循环翻页获取全部条目（alist 单页上限100，避免大目录被截断）
     const firstPage = await client.listDirectory(path);
     const allContent = [...firstPage.content];
     const total = firstPage.total || allContent.length;
@@ -57,21 +60,32 @@ export async function GET(request: NextRequest) {
     const result = { content: allContent, total };
 
     // 过滤出文件夹和视频文件
-    const videoExtensions = ['.mp4', '.mkv', '.avi', '.m3u8', '.flv', '.ts', '.mov', '.wmv', '.webm'];
+    const videoExtensions = [
+      '.mp4',
+      '.mkv',
+      '.avi',
+      '.m3u8',
+      '.flv',
+      '.ts',
+      '.mov',
+      '.wmv',
+      '.webm',
+    ];
 
     const folders = result.content
-      .filter(item => item.is_dir)
-      .map(item => ({
+      .filter((item) => item.is_dir)
+      .map((item) => ({
         name: item.name,
         path: `${path}${path.endsWith('/') ? '' : '/'}${item.name}`,
       }));
 
     const files = result.content
-      .filter(item =>
-        !item.is_dir &&
-        videoExtensions.some(ext => item.name.toLowerCase().endsWith(ext))
+      .filter(
+        (item) =>
+          !item.is_dir &&
+          videoExtensions.some((ext) => item.name.toLowerCase().endsWith(ext))
       )
-      .map(item => ({
+      .map((item) => ({
         name: item.name,
         path: `${path}${path.endsWith('/') ? '' : '/'}${item.name}`,
       }));

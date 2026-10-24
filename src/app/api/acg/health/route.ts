@@ -58,7 +58,10 @@ export async function POST(req: NextRequest) {
       concurrency: getMagnetHealthConcurrency(),
     });
   } catch (error: any) {
-    if (error instanceof MagnetHealthBusyError || error?.code === 'MAGNET_HEALTH_BUSY') {
+    if (
+      error instanceof MagnetHealthBusyError ||
+      error?.code === 'MAGNET_HEALTH_BUSY'
+    ) {
       return NextResponse.json(
         {
           error: error.message || '测活繁忙，请稍后再试',

@@ -29,7 +29,9 @@ export async function POST(req: NextRequest) {
     }
 
     const items = await searchACG(keyword, source);
-    const result = recognizeFansubGroups(items.map((item: { title: string }) => item.title));
+    const result = recognizeFansubGroups(
+      items.map((item: { title: string }) => item.title)
+    );
 
     return NextResponse.json(result);
   } catch (error: any) {

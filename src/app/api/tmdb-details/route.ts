@@ -35,7 +35,9 @@ function findExactMatch(results: any[], originalTitle: string): any | null {
 
   // 尝试精确匹配
   for (const result of results) {
-    const resultTitle = (result.title || result.name || '').toLowerCase().trim();
+    const resultTitle = (result.title || result.name || '')
+      .toLowerCase()
+      .trim();
     if (resultTitle === cleanTitle) {
       return result;
     }
@@ -137,9 +139,19 @@ export async function GET(request: NextRequest) {
     // 获取详情
     let detailsResult;
     if (mediaType === 'movie') {
-      detailsResult = await getTMDBMovieDetails(tmdbApiKey, tmdbId, tmdbProxy, tmdbReverseProxy);
+      detailsResult = await getTMDBMovieDetails(
+        tmdbApiKey,
+        tmdbId,
+        tmdbProxy,
+        tmdbReverseProxy
+      );
     } else {
-      detailsResult = await getTMDBTVDetails(tmdbApiKey, tmdbId, tmdbProxy, tmdbReverseProxy);
+      detailsResult = await getTMDBTVDetails(
+        tmdbApiKey,
+        tmdbId,
+        tmdbProxy,
+        tmdbReverseProxy
+      );
     }
 
     if (detailsResult.code !== 200 || !detailsResult.details) {
@@ -176,9 +188,6 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error('获取 TMDB 详情失败:', error);
-    return NextResponse.json(
-      { error: '获取详情失败' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: '获取详情失败' }, { status: 500 });
   }
 }

@@ -36,7 +36,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: '番剧名称不能为空' }, { status: 400 });
     }
     if (!filterText || typeof filterText !== 'string') {
-      return NextResponse.json({ error: '过滤关键词不能为空' }, { status: 400 });
+      return NextResponse.json(
+        { error: '过滤关键词不能为空' },
+        { status: 400 }
+      );
     }
     if (!['acgrip', 'mikan', 'dmhy', 'nyaa'].includes(source)) {
       return NextResponse.json({ error: '无效的搜索源' }, { status: 400 });

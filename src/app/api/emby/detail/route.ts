@@ -18,13 +18,19 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const authResult = await requireFeaturePermission(request, 'emby', '无权限访问 Emby');
+    const authResult = await requireFeaturePermission(
+      request,
+      'emby',
+      '无权限访问 Emby'
+    );
     if (authResult instanceof NextResponse) return authResult;
     // 获取Emby客户端
     const client = await embyManager.getClient(embyKey);
 
     // 获取代理 token（如果启用了代理）
-    const proxyToken = client.isProxyEnabled() ? await getProxyToken(request) : null;
+    const proxyToken = client.isProxyEnabled()
+      ? await getProxyToken(request)
+      : null;
 
     // 获取媒体详情
     const item = await client.getItem(itemId);
@@ -61,10 +67,18 @@ export async function GET(request: NextRequest) {
         title: item.Name,
         type: item.Type === 'Movie' ? 'movie' : 'tv',
         overview: item.Overview || '',
-        poster: client.getImageUrl(item.Id, 'Primary', undefined, proxyToken || undefined),
+        poster: client.getImageUrl(
+          item.Id,
+          'Primary',
+          undefined,
+          proxyToken || undefined
+        ),
         year: item.ProductionYear?.toString() || '',
         rating: item.CommunityRating || 0,
-        playUrl: item.Type === 'Movie' ? await client.getStreamUrl(item.Id) : undefined,
+        playUrl:
+          item.Type === 'Movie'
+            ? await client.getStreamUrl(item.Id)
+            : undefined,
       },
       episodes: item.Type === 'Series' ? episodes : [],
     });

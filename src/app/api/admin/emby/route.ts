@@ -27,7 +27,14 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { action, ServerURL, ApiKey, Username, Password, embyAuthorizationHeader } = body;
+    const {
+      action,
+      ServerURL,
+      ApiKey,
+      Username,
+      Password,
+      embyAuthorizationHeader,
+    } = body;
 
     const authInfo = getAuthInfoFromCookie(request);
     if (!authInfo || !authInfo.username) {
@@ -49,7 +56,10 @@ export async function POST(request: NextRequest) {
     if (action === 'test') {
       // 测试连接
       if (!ServerURL) {
-        return NextResponse.json({ error: '请填写 Emby 服务器地址' }, { status: 400 });
+        return NextResponse.json(
+          { error: '请填写 Emby 服务器地址' },
+          { status: 400 }
+        );
       }
 
       if (!ApiKey && !Username) {
@@ -75,7 +85,10 @@ export async function POST(request: NextRequest) {
           await client.authenticate(Username, Password || '');
         } catch (error) {
           return NextResponse.json(
-            { success: false, message: 'Emby 认证失败: ' + (error as Error).message },
+            {
+              success: false,
+              message: 'Emby 认证失败: ' + (error as Error).message,
+            },
             { status: 200 }
           );
         }
@@ -85,7 +98,10 @@ export async function POST(request: NextRequest) {
       const isConnected = await client.checkConnectivity();
       if (!isConnected) {
         return NextResponse.json(
-          { success: false, message: 'Emby 连接失败，请检查服务器地址和认证信息' },
+          {
+            success: false,
+            message: 'Emby 连接失败，请检查服务器地址和认证信息',
+          },
           { status: 200 }
         );
       }

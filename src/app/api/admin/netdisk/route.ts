@@ -5,7 +5,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig, setCachedConfig } from '@/lib/config';
 import { db } from '@/lib/db';
-import { assertBaiduCookieHeaderSafe, normalizeBaiduCookie } from '@/lib/netdisk/baidu.client';
+import {
+  assertBaiduCookieHeaderSafe,
+  normalizeBaiduCookie,
+} from '@/lib/netdisk/baidu.client';
 import {
   assertMobileAuthorizationHeaderSafe,
   normalizeMobileAuthorization,
@@ -15,13 +18,21 @@ import {
   normalizePan123Password,
   validatePan123Credentials,
 } from '@/lib/netdisk/pan123.client';
-import { assertPan115CookieHeaderSafe, normalizePan115Cookie, validatePan115Cookie } from '@/lib/netdisk/pan115.client';
+import {
+  assertPan115CookieHeaderSafe,
+  normalizePan115Cookie,
+  validatePan115Cookie,
+} from '@/lib/netdisk/pan115.client';
 import {
   assertQuarkCookieHeaderSafe,
   normalizeQuarkCookie,
   validateQuarkCookieReadable,
 } from '@/lib/netdisk/quark.client';
-import { normalizeTianyiAccount, normalizeTianyiPassword, validateTianyiCredentials } from '@/lib/netdisk/tianyi.client';
+import {
+  normalizeTianyiAccount,
+  normalizeTianyiPassword,
+  validateTianyiCredentials,
+} from '@/lib/netdisk/tianyi.client';
 import {
   assertUCCookieHeaderSafe,
   normalizeUCCookie,
@@ -57,29 +68,58 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { action, Quark, Mobile, Baidu, Tianyi, Pan123, UC, Pan115, provider } = body;
+    const {
+      action,
+      Quark,
+      Mobile,
+      Baidu,
+      Tianyi,
+      Pan123,
+      UC,
+      Pan115,
+      provider,
+    } = body;
     const adminConfig = await getConfig();
 
     if (action === 'save') {
-      const normalizedCookie = Quark?.Cookie ? assertQuarkCookieHeaderSafe(Quark.Cookie) : '';
+      const normalizedCookie = Quark?.Cookie
+        ? assertQuarkCookieHeaderSafe(Quark.Cookie)
+        : '';
       const normalizedMobileAuthorization = Mobile?.Authorization
         ? assertMobileAuthorizationHeaderSafe(Mobile.Authorization)
         : '';
-      const normalizedBaiduCookie = Baidu?.Cookie ? assertBaiduCookieHeaderSafe(Baidu.Cookie) : '';
-      const normalizedTianyiAccount = Tianyi?.Account ? normalizeTianyiAccount(Tianyi.Account) : '';
-      const normalizedTianyiPassword = Tianyi?.Password ? normalizeTianyiPassword(Tianyi.Password) : '';
-      const normalizedPan123Account = Pan123?.Account ? normalizePan123Account(Pan123.Account) : '';
-      const normalizedPan123Password = Pan123?.Password ? normalizePan123Password(Pan123.Password) : '';
-      const normalizedUCCookie = UC?.Cookie ? assertUCCookieHeaderSafe(UC.Cookie) : '';
+      const normalizedBaiduCookie = Baidu?.Cookie
+        ? assertBaiduCookieHeaderSafe(Baidu.Cookie)
+        : '';
+      const normalizedTianyiAccount = Tianyi?.Account
+        ? normalizeTianyiAccount(Tianyi.Account)
+        : '';
+      const normalizedTianyiPassword = Tianyi?.Password
+        ? normalizeTianyiPassword(Tianyi.Password)
+        : '';
+      const normalizedPan123Account = Pan123?.Account
+        ? normalizePan123Account(Pan123.Account)
+        : '';
+      const normalizedPan123Password = Pan123?.Password
+        ? normalizePan123Password(Pan123.Password)
+        : '';
+      const normalizedUCCookie = UC?.Cookie
+        ? assertUCCookieHeaderSafe(UC.Cookie)
+        : '';
       const normalizedUCToken = UC?.Token ? String(UC.Token).trim() : '';
-      const normalizedPan115Cookie = Pan115?.Cookie ? assertPan115CookieHeaderSafe(Pan115.Cookie) : '';
+      const normalizedPan115Cookie = Pan115?.Cookie
+        ? assertPan115CookieHeaderSafe(Pan115.Cookie)
+        : '';
 
       adminConfig.NetDiskConfig = adminConfig.NetDiskConfig || {};
       adminConfig.NetDiskConfig.Quark = {
         Enabled: Boolean(Quark?.Enabled),
         Cookie: normalizedCookie,
         SavePath: Quark?.SavePath || '/',
-        PlayMode: Quark?.PlayMode === 'direct_first' ? 'direct_first' : 'transcode_first',
+        PlayMode:
+          Quark?.PlayMode === 'direct_first'
+            ? 'direct_first'
+            : 'transcode_first',
         MultiThreadPlayback: Boolean(Quark?.MultiThreadPlayback),
       };
       adminConfig.NetDiskConfig.Mobile = {
@@ -120,7 +160,10 @@ export async function POST(request: NextRequest) {
     if (action === 'validate') {
       if (provider === 'mobile') {
         if (!Mobile?.Authorization) {
-          return NextResponse.json({ error: '请先填写移动云盘 Authorization' }, { status: 400 });
+          return NextResponse.json(
+            { error: '请先填写移动云盘 Authorization' },
+            { status: 400 }
+          );
         }
 
         normalizeMobileAuthorization(Mobile.Authorization);
@@ -131,7 +174,10 @@ export async function POST(request: NextRequest) {
       }
       if (provider === 'baidu') {
         if (!Baidu?.Cookie) {
-          return NextResponse.json({ error: '请先填写百度网盘 Cookie' }, { status: 400 });
+          return NextResponse.json(
+            { error: '请先填写百度网盘 Cookie' },
+            { status: 400 }
+          );
         }
         normalizeBaiduCookie(Baidu.Cookie);
         return NextResponse.json({
@@ -141,7 +187,10 @@ export async function POST(request: NextRequest) {
       }
       if (provider === 'tianyi') {
         if (!Tianyi?.Account || !Tianyi?.Password) {
-          return NextResponse.json({ error: '请先填写天翼云盘账号和密码' }, { status: 400 });
+          return NextResponse.json(
+            { error: '请先填写天翼云盘账号和密码' },
+            { status: 400 }
+          );
         }
         await validateTianyiCredentials(
           normalizeTianyiAccount(Tianyi.Account),
@@ -154,7 +203,10 @@ export async function POST(request: NextRequest) {
       }
       if (provider === 'pan123') {
         if (!Pan123?.Account || !Pan123?.Password) {
-          return NextResponse.json({ error: '请先填写123网盘账号和密码' }, { status: 400 });
+          return NextResponse.json(
+            { error: '请先填写123网盘账号和密码' },
+            { status: 400 }
+          );
         }
         await validatePan123Credentials(
           normalizePan123Account(Pan123.Account),
@@ -167,7 +219,10 @@ export async function POST(request: NextRequest) {
       }
       if (provider === 'uc') {
         if (!UC?.Cookie) {
-          return NextResponse.json({ error: '请先填写UC Cookie' }, { status: 400 });
+          return NextResponse.json(
+            { error: '请先填写UC Cookie' },
+            { status: 400 }
+          );
         }
         await validateUCCookieReadable(normalizeUCCookie(UC.Cookie));
         return NextResponse.json({
@@ -177,7 +232,10 @@ export async function POST(request: NextRequest) {
       }
       if (provider === 'pan115') {
         if (!Pan115?.Cookie) {
-          return NextResponse.json({ error: '请先填写115 Cookie' }, { status: 400 });
+          return NextResponse.json(
+            { error: '请先填写115 Cookie' },
+            { status: 400 }
+          );
         }
         await validatePan115Cookie(normalizePan115Cookie(Pan115.Cookie));
         return NextResponse.json({
@@ -187,7 +245,10 @@ export async function POST(request: NextRequest) {
       }
 
       if (!Quark?.Cookie) {
-        return NextResponse.json({ error: '请先填写夸克 Cookie' }, { status: 400 });
+        return NextResponse.json(
+          { error: '请先填写夸克 Cookie' },
+          { status: 400 }
+        );
       }
       await validateQuarkCookieReadable(normalizeQuarkCookie(Quark.Cookie));
 

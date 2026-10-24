@@ -34,7 +34,10 @@ export async function GET(request: NextRequest) {
     const tmdbReverseProxy = config.SiteConfig.TMDBReverseProxy;
 
     if (!tmdbApiKey) {
-      return NextResponse.json({ error: 'TMDB API Key 未配置' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'TMDB API Key 未配置' },
+        { status: 400 }
+      );
     }
 
     const response = await getTVEpisodeImages(

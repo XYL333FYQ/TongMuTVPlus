@@ -15,7 +15,9 @@ export async function GET(request: NextRequest) {
   try {
     const storage = getStorage();
     const notifications = await storage.getNotifications(authInfo.username);
-    const unreadCount = await storage.getUnreadNotificationCount(authInfo.username);
+    const unreadCount = await storage.getUnreadNotificationCount(
+      authInfo.username
+    );
 
     return NextResponse.json({
       notifications,

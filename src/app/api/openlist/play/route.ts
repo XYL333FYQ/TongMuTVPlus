@@ -140,7 +140,11 @@ async function detectOpenListMediaType(
   try {
     const path = playUrl.split('?')[0].toLowerCase();
     if (/\.m3u8?$/i.test(path) || path.includes('m3u8')) return 'hls';
-    if (/\.(mp4|mkv|webm|mov|avi|m4v|flv|ts|mpeg|mpg|3gp|rmvb|rm|wmv|vob)$/i.test(path)) {
+    if (
+      /\.(mp4|mkv|webm|mov|avi|m4v|flv|ts|mpeg|mpg|3gp|rmvb|rm|wmv|vob)$/i.test(
+        path
+      )
+    ) {
       return 'file';
     }
   } catch {
@@ -175,7 +179,10 @@ async function detectOpenListMediaType(
     ) {
       return 'hls';
     }
-    if (contentType.startsWith('video/') || contentType === 'application/octet-stream') {
+    if (
+      contentType.startsWith('video/') ||
+      contentType === 'application/octet-stream'
+    ) {
       return 'file';
     }
     return 'unknown';
@@ -195,7 +202,11 @@ async function detectOpenListMediaType(
  */
 export async function GET(request: NextRequest) {
   try {
-    const authResult = await requireFeaturePermission(request, 'private_library', '无权限访问私人影库');
+    const authResult = await requireFeaturePermission(
+      request,
+      'private_library',
+      '无权限访问私人影库'
+    );
     if (authResult instanceof NextResponse) return authResult;
     const authInfo = getAuthInfoFromCookie(request);
     if (!authInfo || !authInfo.username) {
@@ -221,7 +232,10 @@ export async function GET(request: NextRequest) {
       !openListConfig.Username ||
       !openListConfig.Password
     ) {
-      return NextResponse.json({ error: 'OpenList 未配置或未启用' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'OpenList 未配置或未启用' },
+        { status: 400 }
+      );
     }
 
     // folderName 已经是完整路径，直接使用
@@ -311,16 +325,17 @@ export async function GET(request: NextRequest) {
     try {
       const data = await client.getVideoPreview(filePath);
 
-      const taskList = data.data?.video_preview_play_info?.live_transcoding_task_list;
+      const taskList =
+        data.data?.video_preview_play_info?.live_transcoding_task_list;
       if (!taskList || taskList.length === 0) {
         throw new Error('未找到可用的播放链接');
       }
 
       const qualityOrder: Record<string, number> = {
-        'FHD': 1,
-        'HD': 2,
-        'LD': 3,
-        'SD': 4,
+        FHD: 1,
+        HD: 2,
+        LD: 3,
+        SD: 4,
       };
 
       const qualities = taskList
@@ -330,7 +345,10 @@ export async function GET(request: NextRequest) {
           url: task.url,
         }))
         .filter((quality: any) => quality.url && quality.url.trim() !== '') // 过滤空URL
-        .sort((a: any, b: any) => (qualityOrder[a.name] || 999) - (qualityOrder[b.name] || 999));
+        .sort(
+          (a: any, b: any) =>
+            (qualityOrder[a.name] || 999) - (qualityOrder[b.name] || 999)
+        );
 
       if (qualities.length === 0) {
         throw new Error('未找到已完成的播放链接');
@@ -347,9 +365,7 @@ export async function GET(request: NextRequest) {
 
         return NextResponse.json({
           url: resolvedQualities[0].url,
-          mediaType: await detectOpenListMediaType(
-            resolvedQualities[0].url
-          ),
+          mediaType: await detectOpenListMediaType(resolvedQualities[0].url),
           qualities: resolvedQualities,
           refresh14m: pathMetaResolved.refresh14m,
           category: pathMetaResolved.category,
@@ -360,7 +376,10 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(qualities[0].url);
     } catch (error) {
       // 视频预览流失败，降级到直连方法
-      console.log('[openlist/play] 视频预览流失败，降级到直连方法:', (error as Error).message);
+      console.log(
+        '[openlist/play] 视频预览流失败，降级到直连方法:',
+        (error as Error).message
+      );
 
       const fileResponse = await client.getFile(filePath);
 

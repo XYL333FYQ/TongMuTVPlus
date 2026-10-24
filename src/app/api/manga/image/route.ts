@@ -43,7 +43,9 @@ export async function GET(request: NextRequest) {
         }
 
         return new Headers({
-          Authorization: `Basic ${Buffer.from(`${config.username}:${config.password}`).toString('base64')}`,
+          Authorization: `Basic ${Buffer.from(
+            `${config.username}:${config.password}`
+          ).toString('base64')}`,
         });
       }
 

@@ -33,7 +33,10 @@ export async function POST(req: NextRequest) {
 
     // 检查用户权限（只有站长可以导入数据）
     if (authInfo.username !== process.env.USERNAME) {
-      return NextResponse.json({ error: '权限不足，只有站长可以导入数据' }, { status: 401 });
+      return NextResponse.json(
+        { error: '权限不足，只有站长可以导入数据' },
+        { status: 401 }
+      );
     }
 
     const username = authInfo.username; // 存储到局部变量以便 TypeScript 类型推断
@@ -59,7 +62,10 @@ export async function POST(req: NextRequest) {
     try {
       decryptedData = SimpleCrypto.decrypt(encryptedData, password);
     } catch (error) {
-      return NextResponse.json({ error: '解密失败，请检查密码是否正确' }, { status: 400 });
+      return NextResponse.json(
+        { error: '解密失败，请检查密码是否正确' },
+        { status: 400 }
+      );
     }
 
     // 解压缩数据
@@ -76,34 +82,56 @@ export async function POST(req: NextRequest) {
     }
 
     // 验证数据格式
-    if (!importData.data || !importData.data.adminConfig || !importData.data.userData) {
+    if (
+      !importData.data ||
+      !importData.data.adminConfig ||
+      !importData.data.userData
+    ) {
       return NextResponse.json({ error: '备份文件格式无效' }, { status: 400 });
     }
 
     const importUsernames = Object.keys(importData.data.userData || {});
-    const backupHasMangaData = importUsernames.some((name) => Object.prototype.hasOwnProperty.call(importData.data.userData?.[name] || {}, 'mangaData'));
-    const backupHasBookData = importUsernames.some((name) => Object.prototype.hasOwnProperty.call(importData.data.userData?.[name] || {}, 'bookData'));
+    const backupHasMangaData = importUsernames.some((name) =>
+      Object.prototype.hasOwnProperty.call(
+        importData.data.userData?.[name] || {},
+        'mangaData'
+      )
+    );
+    const backupHasBookData = importUsernames.some((name) =>
+      Object.prototype.hasOwnProperty.call(
+        importData.data.userData?.[name] || {},
+        'bookData'
+      )
+    );
     const preserveMangaData = !backupHasMangaData;
     const preserveBookData = !backupHasBookData;
 
     const preservedMangaData = preserveMangaData
-      ? Object.fromEntries(await Promise.all(importUsernames.map(async (name) => ([
-          name,
-          {
-            mangaShelf: await db.getAllMangaShelf(name),
-            mangaReadRecords: await db.getAllMangaReadRecords(name),
-          },
-        ]))))
+      ? Object.fromEntries(
+          await Promise.all(
+            importUsernames.map(async (name) => [
+              name,
+              {
+                mangaShelf: await db.getAllMangaShelf(name),
+                mangaReadRecords: await db.getAllMangaReadRecords(name),
+              },
+            ])
+          )
+        )
       : {};
 
     const preservedBookData = preserveBookData
-      ? Object.fromEntries(await Promise.all(importUsernames.map(async (name) => ([
-          name,
-          {
-            bookShelf: await db.getAllBookShelf(name),
-            bookReadRecords: await db.getAllBookReadRecords(name),
-          },
-        ]))))
+      ? Object.fromEntries(
+          await Promise.all(
+            importUsernames.map(async (name) => [
+              name,
+              {
+                bookShelf: await db.getAllBookShelf(name),
+                bookReadRecords: await db.getAllBookReadRecords(name),
+              },
+            ])
+          )
+        )
       : {};
 
     // 开始导入数据 - 先清空现有数据
@@ -111,7 +139,11 @@ export async function POST(req: NextRequest) {
     await db.clearAllData();
 
     // 额外清除所有V2用户（clearAllData可能只清除旧版用户）
-    const existingUsers = await db.getUserListV2(0, 1000000, process.env.USERNAME);
+    const existingUsers = await db.getUserListV2(
+      0,
+      1000000,
+      process.env.USERNAME
+    );
     for (const user of existingUsers.users) {
       await db.deleteUserV2(user.username);
     }
@@ -135,20 +167,34 @@ export async function POST(req: NextRequest) {
     const userData = importData.data.userData;
     const storage = (db as any).storage;
     // 使用前面已声明的 storageType 变量
-    const usersV2Map = new Map((importData.data.usersV2 || []).map((u: any) => [u.username, u]));
+    const usersV2Map = new Map(
+      (importData.data.usersV2 || []).map((u: any) => [u.username, u])
+    );
 
     const userCount = Object.keys(userData).length;
     console.log(`准备导入 ${userCount} 个用户的数据`);
-    updateProgress(username, 'import', 'importing', 0, userCount, '开始导入用户数据...');
+    updateProgress(
+      username,
+      'import',
+      'importing',
+      0,
+      userCount,
+      '开始导入用户数据...'
+    );
 
     // 分块处理用户，每批处理数量可通过环境变量配置
-    const CHUNK_SIZE = parseInt(process.env.DATA_MIGRATION_CHUNK_SIZE || '10', 10);
+    const CHUNK_SIZE = parseInt(
+      process.env.DATA_MIGRATION_CHUNK_SIZE || '10',
+      10
+    );
     const usernames = Object.keys(userData);
     let importedCount = 0;
 
     for (let i = 0; i < usernames.length; i += CHUNK_SIZE) {
       const chunk = usernames.slice(i, i + CHUNK_SIZE);
-      console.log(`处理第 ${Math.floor(i / CHUNK_SIZE) + 1} 批用户 (${chunk.length} 个)`);
+      console.log(
+        `处理第 ${Math.floor(i / CHUNK_SIZE) + 1} 批用户 (${chunk.length} 个)`
+      );
       updateProgress(
         username,
         'import',
@@ -163,7 +209,10 @@ export async function POST(req: NextRequest) {
         try {
           const user = userData[username];
           // 数据批处理大小（用于播放记录、收藏夹等）
-          const DATA_BATCH_SIZE = parseInt(process.env.DATA_MIGRATION_CHUNK_SIZE || '10', 10);
+          const DATA_BATCH_SIZE = parseInt(
+            process.env.DATA_MIGRATION_CHUNK_SIZE || '10',
+            10
+          );
 
           // 为所有有passwordV2的用户创建user:info
           if (user.passwordV2) {
@@ -195,7 +244,9 @@ export async function POST(req: NextRequest) {
                 );
                 console.log(`用户 ${username} 导入成功 (${storageType})`);
               } else {
-                console.error(`${storageType} storage 缺少 createUserWithHashedPassword 方法`);
+                console.error(
+                  `${storageType} storage 缺少 createUserWithHashedPassword 方法`
+                );
                 return false;
               }
             } else if (storageType === 'postgres') {
@@ -213,7 +264,9 @@ export async function POST(req: NextRequest) {
                 );
                 console.log(`用户 ${username} 导入成功 (Postgres)`);
               } else {
-                console.error(`Postgres storage 缺少 createUserWithHashedPassword 方法`);
+                console.error(
+                  `Postgres storage 缺少 createUserWithHashedPassword 方法`
+                );
                 return false;
               }
             } else {
@@ -238,15 +291,21 @@ export async function POST(req: NextRequest) {
                 userInfo.enabledApis = JSON.stringify(userV2.enabledApis);
               }
 
-              await storage.withRetry(() => storage.client.hSet(userInfoKey, userInfo));
-              await storage.withRetry(() => storage.client.zAdd('user:list', {
-                score: createdAt,
-                value: username,
-              }));
+              await storage.withRetry(() =>
+                storage.client.hSet(userInfoKey, userInfo)
+              );
+              await storage.withRetry(() =>
+                storage.client.zAdd('user:list', {
+                  score: createdAt,
+                  value: username,
+                })
+              );
 
               if (userV2?.oidcSub) {
                 const oidcSubKey = `oidc:sub:${userV2.oidcSub}`;
-                await storage.withRetry(() => storage.client.set(oidcSubKey, username));
+                await storage.withRetry(() =>
+                  storage.client.set(oidcSubKey, username)
+                );
               }
 
               console.log(`用户 ${username} 导入成功 (Redis)`);
@@ -296,7 +355,9 @@ export async function POST(req: NextRequest) {
                 for (let j = 0; j < reversed.length; j += DATA_BATCH_SIZE) {
                   const batch = reversed.slice(j, j + DATA_BATCH_SIZE);
                   await Promise.all(
-                    batch.map((keyword: string) => db.addSearchHistory(username, keyword))
+                    batch.map((keyword: string) =>
+                      db.addSearchHistory(username, keyword)
+                    )
                   );
                 }
               }
@@ -312,7 +373,12 @@ export async function POST(req: NextRequest) {
                     batch.map(([key, skipConfig]) => {
                       const [source, id] = key.split('+');
                       if (source && id) {
-                        return db.setSkipConfig(username, source, id, skipConfig as any);
+                        return db.setSkipConfig(
+                          username,
+                          source,
+                          id,
+                          skipConfig as any
+                        );
                       }
                       return Promise.resolve();
                     })
@@ -328,7 +394,11 @@ export async function POST(req: NextRequest) {
                 : [];
 
               if (historyRecords.length > 0) {
-                for (let j = 0; j < historyRecords.length; j += DATA_BATCH_SIZE) {
+                for (
+                  let j = 0;
+                  j < historyRecords.length;
+                  j += DATA_BATCH_SIZE
+                ) {
                   const batch = historyRecords.slice(j, j + DATA_BATCH_SIZE);
                   await db.batchUpsertMusicV2History(
                     username,
@@ -366,8 +436,15 @@ export async function POST(req: NextRequest) {
 
                   // 批量导入歌单中的歌曲
                   if (playlist.songs && Array.isArray(playlist.songs)) {
-                    for (let j = 0; j < playlist.songs.length; j += DATA_BATCH_SIZE) {
-                      const batch = playlist.songs.slice(j, j + DATA_BATCH_SIZE);
+                    for (
+                      let j = 0;
+                      j < playlist.songs.length;
+                      j += DATA_BATCH_SIZE
+                    ) {
+                      const batch = playlist.songs.slice(
+                        j,
+                        j + DATA_BATCH_SIZE
+                      );
                       await Promise.all(
                         batch.map((song: any, index: number) =>
                           db.addMusicV2PlaylistItem(playlist.id, {
@@ -387,7 +464,7 @@ export async function POST(req: NextRequest) {
                             lrcUrl: song.lrcUrl,
                             mrcUrl: song.mrcUrl,
                             trcUrl: song.trcUrl,
-                            sortOrder: song.sortOrder ?? (j + index),
+                            sortOrder: song.sortOrder ?? j + index,
                             addedAt: song.addedAt || Date.now(),
                             updatedAt: song.updatedAt || Date.now(),
                           })
@@ -402,19 +479,49 @@ export async function POST(req: NextRequest) {
             // 导入漫画书架 / 阅读记录
             (async () => {
               if (!backupHasMangaData) return;
-              const mangaShelfEntries = Object.entries((user.mangaData?.shelf || preservedMangaData[username]?.mangaShelf || {}));
-              for (let j = 0; j < mangaShelfEntries.length; j += DATA_BATCH_SIZE) {
+              const mangaShelfEntries = Object.entries(
+                user.mangaData?.shelf ||
+                  preservedMangaData[username]?.mangaShelf ||
+                  {}
+              );
+              for (
+                let j = 0;
+                j < mangaShelfEntries.length;
+                j += DATA_BATCH_SIZE
+              ) {
                 const batch = mangaShelfEntries.slice(j, j + DATA_BATCH_SIZE);
                 await Promise.all(
-                  batch.map(([, item]: [string, any]) => db.saveMangaShelf(username, item.sourceId, item.mangaId, item))
+                  batch.map(([, item]: [string, any]) =>
+                    db.saveMangaShelf(
+                      username,
+                      item.sourceId,
+                      item.mangaId,
+                      item
+                    )
+                  )
                 );
               }
 
-              const mangaReadEntries = Object.entries((user.mangaData?.readRecords || preservedMangaData[username]?.mangaReadRecords || {}));
-              for (let j = 0; j < mangaReadEntries.length; j += DATA_BATCH_SIZE) {
+              const mangaReadEntries = Object.entries(
+                user.mangaData?.readRecords ||
+                  preservedMangaData[username]?.mangaReadRecords ||
+                  {}
+              );
+              for (
+                let j = 0;
+                j < mangaReadEntries.length;
+                j += DATA_BATCH_SIZE
+              ) {
                 const batch = mangaReadEntries.slice(j, j + DATA_BATCH_SIZE);
                 await Promise.all(
-                  batch.map(([, record]: [string, any]) => db.saveMangaReadRecord(username, record.sourceId, record.mangaId, record))
+                  batch.map(([, record]: [string, any]) =>
+                    db.saveMangaReadRecord(
+                      username,
+                      record.sourceId,
+                      record.mangaId,
+                      record
+                    )
+                  )
                 );
               }
             })(),
@@ -422,22 +529,47 @@ export async function POST(req: NextRequest) {
             // 导入电子书书架 / 阅读记录
             (async () => {
               if (!backupHasBookData) return;
-              const bookShelfEntries = Object.entries((user.bookData?.shelf || preservedBookData[username]?.bookShelf || {}));
-              for (let j = 0; j < bookShelfEntries.length; j += DATA_BATCH_SIZE) {
+              const bookShelfEntries = Object.entries(
+                user.bookData?.shelf ||
+                  preservedBookData[username]?.bookShelf ||
+                  {}
+              );
+              for (
+                let j = 0;
+                j < bookShelfEntries.length;
+                j += DATA_BATCH_SIZE
+              ) {
                 const batch = bookShelfEntries.slice(j, j + DATA_BATCH_SIZE);
                 await Promise.all(
-                  batch.map(([, item]: [string, any]) => db.saveBookShelf(username, item.sourceId, item.bookId, item))
+                  batch.map(([, item]: [string, any]) =>
+                    db.saveBookShelf(username, item.sourceId, item.bookId, item)
+                  )
                 );
               }
 
-              const bookReadEntries = Object.entries((user.bookData?.readRecords || preservedBookData[username]?.bookReadRecords || {}));
-              for (let j = 0; j < bookReadEntries.length; j += DATA_BATCH_SIZE) {
+              const bookReadEntries = Object.entries(
+                user.bookData?.readRecords ||
+                  preservedBookData[username]?.bookReadRecords ||
+                  {}
+              );
+              for (
+                let j = 0;
+                j < bookReadEntries.length;
+                j += DATA_BATCH_SIZE
+              ) {
                 const batch = bookReadEntries.slice(j, j + DATA_BATCH_SIZE);
                 await Promise.all(
-                  batch.map(([, record]: [string, any]) => db.saveBookReadRecord(username, record.sourceId, record.bookId, record))
+                  batch.map(([, record]: [string, any]) =>
+                    db.saveBookReadRecord(
+                      username,
+                      record.sourceId,
+                      record.bookId,
+                      record
+                    )
+                  )
                 );
               }
-            })()
+            })(),
           ]);
 
           return true;
@@ -449,7 +581,7 @@ export async function POST(req: NextRequest) {
 
       // 等待当前批次完成
       const results = await Promise.all(importPromises);
-      importedCount += results.filter(r => r).length;
+      importedCount += results.filter((r) => r).length;
 
       console.log(`已完成 ${importedCount}/${userCount} 个用户`);
       updateProgress(
@@ -463,7 +595,14 @@ export async function POST(req: NextRequest) {
     }
 
     console.log(`成功导入 ${importedCount} 个用户的user:info`);
-    updateProgress(username, 'import', 'completed', importedCount, userCount, '导入完成！');
+    updateProgress(
+      username,
+      'import',
+      'completed',
+      importedCount,
+      userCount,
+      '导入完成！'
+    );
     setTimeout(() => clearProgress(username, 'import'), 3000);
 
     return NextResponse.json({
@@ -473,9 +612,11 @@ export async function POST(req: NextRequest) {
       importedMangaData: backupHasMangaData,
       importedBookData: backupHasBookData,
       timestamp: importData.timestamp,
-      serverVersion: typeof importData.serverVersion === 'string' ? importData.serverVersion : '未知版本'
+      serverVersion:
+        typeof importData.serverVersion === 'string'
+          ? importData.serverVersion
+          : '未知版本',
     });
-
   } catch (error) {
     console.error('数据导入失败:', error);
     // 清除进度信息

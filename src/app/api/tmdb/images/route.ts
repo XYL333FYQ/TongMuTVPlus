@@ -25,14 +25,19 @@ export async function GET(request: NextRequest) {
     const pageParam = searchParams.get('page');
     const pageSizeParam = searchParams.get('pageSize');
     const page = pageParam ? Math.max(parseInt(pageParam, 10), 1) : null;
-    const pageSize = pageSizeParam ? Math.min(Math.max(parseInt(pageSizeParam, 10), 1), 60) : null;
+    const pageSize = pageSizeParam
+      ? Math.min(Math.max(parseInt(pageSizeParam, 10), 1), 60)
+      : null;
 
     if (!id) {
       return NextResponse.json({ error: '缺少ID参数' }, { status: 400 });
     }
 
     if (type !== 'movie' && type !== 'tv') {
-      return NextResponse.json({ error: '类型参数必须是movie或tv' }, { status: 400 });
+      return NextResponse.json(
+        { error: '类型参数必须是movie或tv' },
+        { status: 400 }
+      );
     }
 
     const config = await getConfig();
@@ -41,7 +46,10 @@ export async function GET(request: NextRequest) {
     const tmdbReverseProxy = config.SiteConfig.TMDBReverseProxy;
 
     if (!tmdbApiKey) {
-      return NextResponse.json({ error: 'TMDB API Key 未配置' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'TMDB API Key 未配置' },
+        { status: 400 }
+      );
     }
 
     const response = await getTMDBImages(

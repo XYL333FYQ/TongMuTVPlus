@@ -14,10 +14,14 @@ type FilePayload = {
   format?: 'epub' | 'pdf' | 'chapters' | null;
 };
 
-async function resolveFileHref(username: string, payload: FilePayload): Promise<{ sourceId: string; href: string }> {
+async function resolveFileHref(
+  username: string,
+  payload: FilePayload
+): Promise<{ sourceId: string; href: string }> {
   const sourceId = payload.sourceId?.trim();
   if (!sourceId) throw new Error('缺少 sourceId');
-  if (payload.format === 'chapters') throw new Error('章节型书源不提供文件下载');
+  if (payload.format === 'chapters')
+    throw new Error('章节型书源不提供文件下载');
 
   if (payload.href?.trim()) {
     return { sourceId, href: payload.href.trim() };
@@ -36,11 +40,19 @@ async function resolveFileHref(username: string, payload: FilePayload): Promise<
   const detailHref = shelfItem?.detailHref || readRecord?.detailHref;
   if (!detailHref) throw new Error('找不到可下载文件');
 
-  const preferred = await bookProvider.getPreferredAcquisition(sourceId, detailHref);
-  if (preferred.format === 'chapters') throw new Error('章节型书源不提供文件下载');
+  const preferred = await bookProvider.getPreferredAcquisition(
+    sourceId,
+    detailHref
+  );
+  if (preferred.format === 'chapters')
+    throw new Error('章节型书源不提供文件下载');
   if (payload.format && preferred.format !== payload.format) {
     const detail = await bookProvider.getBookDetail(sourceId, detailHref);
-    const matched = detail.acquisitionLinks.find((item) => (payload.format === 'pdf' ? item.type.toLowerCase().includes('pdf') : item.type.toLowerCase().includes('epub')));
+    const matched = detail.acquisitionLinks.find((item) =>
+      payload.format === 'pdf'
+        ? item.type.toLowerCase().includes('pdf')
+        : item.type.toLowerCase().includes('epub')
+    );
     if (!matched?.href) throw new Error('找不到对应格式文件');
     return { sourceId, href: matched.href };
   }
@@ -52,8 +64,17 @@ async function proxyFile(request: NextRequest, sourceId: string, href: string) {
   const source = await bookProvider.getSourceById(sourceId);
   const headers = new Headers();
   if (source.authMode === 'basic' && source.username) {
-    headers.set('Authorization', `Basic ${Buffer.from(`${source.username}:${source.password || ''}`).toString('base64')}`);
-  } else if (source.authMode === 'header' && source.headerName && source.headerValue) {
+    headers.set(
+      'Authorization',
+      `Basic ${Buffer.from(
+        `${source.username}:${source.password || ''}`
+      ).toString('base64')}`
+    );
+  } else if (
+    source.authMode === 'header' &&
+    source.headerName &&
+    source.headerValue
+  ) {
     headers.set(source.headerName, source.headerValue);
   }
   const range = request.headers.get('range');
@@ -66,7 +87,10 @@ async function proxyFile(request: NextRequest, sourceId: string, href: string) {
   });
 
   if (!response.ok) {
-    return NextResponse.json({ error: `文件代理失败: ${response.status}` }, { status: response.status });
+    return NextResponse.json(
+      { error: `文件代理失败: ${response.status}` },
+      { status: response.status }
+    );
   }
 
   const outHeaders = new Headers();
@@ -76,7 +100,13 @@ async function proxyFile(request: NextRequest, sourceId: string, href: string) {
   const contentRange = response.headers.get('content-range');
   const disposition = response.headers.get('content-disposition');
   const normalizedHref = href.toLowerCase();
-  const resolvedContentType = contentType || (normalizedHref.endsWith('.pdf') ? 'application/pdf' : normalizedHref.endsWith('.epub') ? 'application/epub+zip' : '');
+  const resolvedContentType =
+    contentType ||
+    (normalizedHref.endsWith('.pdf')
+      ? 'application/pdf'
+      : normalizedHref.endsWith('.epub')
+      ? 'application/epub+zip'
+      : '');
   if (resolvedContentType) outHeaders.set('Content-Type', resolvedContentType);
   if (contentLength) outHeaders.set('Content-Length', contentLength);
   if (acceptRanges) outHeaders.set('Accept-Ranges', acceptRanges);
@@ -100,11 +130,19 @@ export async function GET(request: NextRequest) {
       sourceId: searchParams.get('sourceId') || undefined,
       bookId: searchParams.get('bookId') || undefined,
       href: searchParams.get('href') || undefined,
-      format: (searchParams.get('format')?.trim() as 'epub' | 'pdf' | 'chapters' | null) || null,
+      format:
+        (searchParams.get('format')?.trim() as
+          | 'epub'
+          | 'pdf'
+          | 'chapters'
+          | null) || null,
     });
     return await proxyFile(request, resolved.sourceId, resolved.href);
   } catch (error) {
-    return NextResponse.json({ error: (error as Error).message }, { status: 400 });
+    return NextResponse.json(
+      { error: (error as Error).message },
+      { status: 400 }
+    );
   }
 }
 
@@ -113,10 +151,13 @@ export async function POST(request: NextRequest) {
   if (username instanceof NextResponse) return username;
 
   try {
-    const payload = await request.json() as FilePayload;
+    const payload = (await request.json()) as FilePayload;
     const resolved = await resolveFileHref(username, payload);
     return await proxyFile(request, resolved.sourceId, resolved.href);
   } catch (error) {
-    return NextResponse.json({ error: (error as Error).message }, { status: 400 });
+    return NextResponse.json(
+      { error: (error as Error).message },
+      { status: 400 }
+    );
   }
 }

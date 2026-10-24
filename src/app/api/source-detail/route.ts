@@ -343,7 +343,9 @@ export async function GET(request: NextRequest) {
               .toString()
               .padStart(2, '0')}`;
           }),
-          subtitles: allEpisodes.map((ep) => client.getSubtitles(ep, proxyToken)),
+          subtitles: allEpisodes.map((ep) =>
+            client.getSubtitles(ep, proxyToken)
+          ),
           proxyMode: false,
         };
 
@@ -522,19 +524,22 @@ export async function GET(request: NextRequest) {
           )}&episodeIndex=${file.originalIndex}`
       );
 
-      return NextResponse.json({
-        source: NETDISK_MOBILE_SOURCE,
-        source_name: '移动云盘',
-        id: mobileSession.id,
-        title: title || mobileSession.title,
-        poster: '',
-        year: '',
-        douban_id: 0,
-        desc: `移动云盘分享：${mobileSession.shareUrl}`,
-        episodes,
-        episodes_titles: parsedFiles.map((file) => file.displayTitle),
-        proxyMode: false,
-      }, { headers: PRIVATE_MEDIA_HEADERS });
+      return NextResponse.json(
+        {
+          source: NETDISK_MOBILE_SOURCE,
+          source_name: '移动云盘',
+          id: mobileSession.id,
+          title: title || mobileSession.title,
+          poster: '',
+          year: '',
+          douban_id: 0,
+          desc: `移动云盘分享：${mobileSession.shareUrl}`,
+          episodes,
+          episodes_titles: parsedFiles.map((file) => file.displayTitle),
+          proxyMode: false,
+        },
+        { headers: PRIVATE_MEDIA_HEADERS }
+      );
     } catch (error) {
       return NextResponse.json(
         { error: (error as Error).message },
@@ -599,24 +604,27 @@ export async function GET(request: NextRequest) {
               });
         });
 
-      return NextResponse.json({
-        source: NETDISK_BAIDU_SOURCE,
-        source_name: '百度网盘',
-        id: baiduSession.id,
-        title: title || baiduSession.title,
-        poster: '',
-        year: '',
-        douban_id: 0,
-        desc: `百度网盘分享：${baiduSession.shareUrl}`,
-        episodes: parsedFiles.map(
-          (file) =>
-            `/api/netdisk/baidu/play?id=${encodeURIComponent(
-              baiduSession.id
-            )}&episodeIndex=${file.originalIndex}`
-        ),
-        episodes_titles: parsedFiles.map((file) => file.displayTitle),
-        proxyMode: false,
-      }, { headers: PRIVATE_MEDIA_HEADERS });
+      return NextResponse.json(
+        {
+          source: NETDISK_BAIDU_SOURCE,
+          source_name: '百度网盘',
+          id: baiduSession.id,
+          title: title || baiduSession.title,
+          poster: '',
+          year: '',
+          douban_id: 0,
+          desc: `百度网盘分享：${baiduSession.shareUrl}`,
+          episodes: parsedFiles.map(
+            (file) =>
+              `/api/netdisk/baidu/play?id=${encodeURIComponent(
+                baiduSession.id
+              )}&episodeIndex=${file.originalIndex}`
+          ),
+          episodes_titles: parsedFiles.map((file) => file.displayTitle),
+          proxyMode: false,
+        },
+        { headers: PRIVATE_MEDIA_HEADERS }
+      );
     } catch (error) {
       return NextResponse.json(
         { error: (error as Error).message },
@@ -689,24 +697,27 @@ export async function GET(request: NextRequest) {
               });
         });
 
-      return NextResponse.json({
-        source: NETDISK_TIANYI_SOURCE,
-        source_name: '天翼云盘',
-        id: tianyiSession.id,
-        title: title || tianyiSession.title,
-        poster: '',
-        year: '',
-        douban_id: 0,
-        desc: `天翼云盘分享：${tianyiSession.shareUrl}`,
-        episodes: parsedFiles.map(
-          (file) =>
-            `/api/netdisk/tianyi/play?id=${encodeURIComponent(
-              tianyiSession.id
-            )}&episodeIndex=${file.originalIndex}`
-        ),
-        episodes_titles: parsedFiles.map((file) => file.displayTitle),
-        proxyMode: false,
-      }, { headers: PRIVATE_MEDIA_HEADERS });
+      return NextResponse.json(
+        {
+          source: NETDISK_TIANYI_SOURCE,
+          source_name: '天翼云盘',
+          id: tianyiSession.id,
+          title: title || tianyiSession.title,
+          poster: '',
+          year: '',
+          douban_id: 0,
+          desc: `天翼云盘分享：${tianyiSession.shareUrl}`,
+          episodes: parsedFiles.map(
+            (file) =>
+              `/api/netdisk/tianyi/play?id=${encodeURIComponent(
+                tianyiSession.id
+              )}&episodeIndex=${file.originalIndex}`
+          ),
+          episodes_titles: parsedFiles.map((file) => file.displayTitle),
+          proxyMode: false,
+        },
+        { headers: PRIVATE_MEDIA_HEADERS }
+      );
     } catch (error) {
       return NextResponse.json(
         { error: (error as Error).message },
@@ -773,24 +784,27 @@ export async function GET(request: NextRequest) {
               });
         });
 
-      return NextResponse.json({
-        source: NETDISK_123_SOURCE,
-        source_name: '123网盘',
-        id: pan123Session.id,
-        title: title || pan123Session.title,
-        poster: '',
-        year: '',
-        douban_id: 0,
-        desc: `123网盘分享：${pan123Session.shareUrl}`,
-        episodes: parsedFiles.map(
-          (file) =>
-            `/api/netdisk/123/play?id=${encodeURIComponent(
-              pan123Session.id
-            )}&episodeIndex=${file.originalIndex}`
-        ),
-        episodes_titles: parsedFiles.map((file) => file.displayTitle),
-        proxyMode: false,
-      }, { headers: PRIVATE_MEDIA_HEADERS });
+      return NextResponse.json(
+        {
+          source: NETDISK_123_SOURCE,
+          source_name: '123网盘',
+          id: pan123Session.id,
+          title: title || pan123Session.title,
+          poster: '',
+          year: '',
+          douban_id: 0,
+          desc: `123网盘分享：${pan123Session.shareUrl}`,
+          episodes: parsedFiles.map(
+            (file) =>
+              `/api/netdisk/123/play?id=${encodeURIComponent(
+                pan123Session.id
+              )}&episodeIndex=${file.originalIndex}`
+          ),
+          episodes_titles: parsedFiles.map((file) => file.displayTitle),
+          proxyMode: false,
+        },
+        { headers: PRIVATE_MEDIA_HEADERS }
+      );
     } catch (error) {
       console.error('[netdisk-123][source-detail] error', error);
       return NextResponse.json(
@@ -854,24 +868,27 @@ export async function GET(request: NextRequest) {
               });
         });
 
-      return NextResponse.json({
-        source: NETDISK_115_SOURCE,
-        source_name: '115网盘',
-        id: pan115Session.id,
-        title: title || pan115Session.title,
-        poster: '',
-        year: '',
-        douban_id: 0,
-        desc: `115网盘分享：${pan115Session.shareUrl}`,
-        episodes: parsedFiles.map(
-          (file) =>
-            `/api/netdisk/115/play?id=${encodeURIComponent(
-              pan115Session.id
-            )}&episodeIndex=${file.originalIndex}`
-        ),
-        episodes_titles: parsedFiles.map((file) => file.displayTitle),
-        proxyMode: false,
-      }, { headers: PRIVATE_MEDIA_HEADERS });
+      return NextResponse.json(
+        {
+          source: NETDISK_115_SOURCE,
+          source_name: '115网盘',
+          id: pan115Session.id,
+          title: title || pan115Session.title,
+          poster: '',
+          year: '',
+          douban_id: 0,
+          desc: `115网盘分享：${pan115Session.shareUrl}`,
+          episodes: parsedFiles.map(
+            (file) =>
+              `/api/netdisk/115/play?id=${encodeURIComponent(
+                pan115Session.id
+              )}&episodeIndex=${file.originalIndex}`
+          ),
+          episodes_titles: parsedFiles.map((file) => file.displayTitle),
+          proxyMode: false,
+        },
+        { headers: PRIVATE_MEDIA_HEADERS }
+      );
     } catch (error) {
       return NextResponse.json(
         { error: (error as Error).message },
@@ -937,24 +954,27 @@ export async function GET(request: NextRequest) {
             : a.fileName.localeCompare(b.fileName);
         });
 
-      return NextResponse.json({
-        source: NETDISK_QUARK_SOURCE,
-        source_name: '夸克网盘',
-        id: quarkSession.id,
-        title: title || quarkSession.title,
-        poster: '',
-        year: '',
-        douban_id: 0,
-        desc: `夸克网盘分享：${quarkSession.shareUrl}`,
-        episodes: episodes.map(
-          (ep) =>
-            `/api/netdisk/quark/play?id=${encodeURIComponent(
-              quarkSession.id
-            )}&episodeIndex=${ep.originalIndex}`
-        ),
-        episodes_titles: episodes.map((ep) => ep.title),
-        proxyMode: false,
-      }, { headers: PRIVATE_MEDIA_HEADERS });
+      return NextResponse.json(
+        {
+          source: NETDISK_QUARK_SOURCE,
+          source_name: '夸克网盘',
+          id: quarkSession.id,
+          title: title || quarkSession.title,
+          poster: '',
+          year: '',
+          douban_id: 0,
+          desc: `夸克网盘分享：${quarkSession.shareUrl}`,
+          episodes: episodes.map(
+            (ep) =>
+              `/api/netdisk/quark/play?id=${encodeURIComponent(
+                quarkSession.id
+              )}&episodeIndex=${ep.originalIndex}`
+          ),
+          episodes_titles: episodes.map((ep) => ep.title),
+          proxyMode: false,
+        },
+        { headers: PRIVATE_MEDIA_HEADERS }
+      );
     } catch (error) {
       return NextResponse.json(
         { error: (error as Error).message },
@@ -1014,24 +1034,27 @@ export async function GET(request: NextRequest) {
             : a.fileName.localeCompare(b.fileName);
         });
 
-      return NextResponse.json({
-        source: NETDISK_UC_SOURCE,
-        source_name: 'UC网盘',
-        id: ucSession.id,
-        title: title || ucSession.title,
-        poster: '',
-        year: '',
-        douban_id: 0,
-        desc: `UC网盘分享：${ucSession.shareUrl}`,
-        episodes: episodes.map(
-          (ep) =>
-            `/api/netdisk/uc/play?id=${encodeURIComponent(
-              ucSession.id
-            )}&episodeIndex=${ep.originalIndex}`
-        ),
-        episodes_titles: episodes.map((ep) => ep.title),
-        proxyMode: false,
-      }, { headers: PRIVATE_MEDIA_HEADERS });
+      return NextResponse.json(
+        {
+          source: NETDISK_UC_SOURCE,
+          source_name: 'UC网盘',
+          id: ucSession.id,
+          title: title || ucSession.title,
+          poster: '',
+          year: '',
+          douban_id: 0,
+          desc: `UC网盘分享：${ucSession.shareUrl}`,
+          episodes: episodes.map(
+            (ep) =>
+              `/api/netdisk/uc/play?id=${encodeURIComponent(
+                ucSession.id
+              )}&episodeIndex=${ep.originalIndex}`
+          ),
+          episodes_titles: episodes.map((ep) => ep.title),
+          proxyMode: false,
+        },
+        { headers: PRIVATE_MEDIA_HEADERS }
+      );
     } catch (error) {
       return NextResponse.json(
         { error: (error as Error).message },
@@ -1097,7 +1120,9 @@ export async function GET(request: NextRequest) {
       const { getCachedVideoInfo, setCachedVideoInfo } = await import(
         '@/lib/openlist-cache'
       );
-      const { formatEpisodeDisplayTitle, parseVideoFileName } = await import('@/lib/video-parser');
+      const { formatEpisodeDisplayTitle, parseVideoFileName } = await import(
+        '@/lib/video-parser'
+      );
 
       const client = new OpenListClient(
         openListConfig.URL,
@@ -1208,7 +1233,11 @@ export async function GET(request: NextRequest) {
             };
           }
           let displayTitle = formatEpisodeDisplayTitle(
-            { episode: episodeInfo.episode, season: episodeInfo.season, isOVA: episodeInfo.isOVA },
+            {
+              episode: episodeInfo.episode,
+              season: episodeInfo.season,
+              isOVA: episodeInfo.isOVA,
+            },
             hasMultipleSeasons
           );
           if (!displayTitle) {

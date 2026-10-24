@@ -253,16 +253,21 @@ export async function POST(request: NextRequest) {
       (OIDCClientSecret !== undefined &&
         typeof OIDCClientSecret !== 'string') ||
       (OIDCButtonText !== undefined && typeof OIDCButtonText !== 'string') ||
-      (OIDCMinTrustLevel !== undefined && typeof OIDCMinTrustLevel !== 'number') ||
-      (AnalyticsEnabled !== undefined && typeof AnalyticsEnabled !== 'boolean') ||
+      (OIDCMinTrustLevel !== undefined &&
+        typeof OIDCMinTrustLevel !== 'number') ||
+      (AnalyticsEnabled !== undefined &&
+        typeof AnalyticsEnabled !== 'boolean') ||
       (AnalyticsProvider !== undefined &&
         AnalyticsProvider !== 'umami' &&
         AnalyticsProvider !== 'google' &&
         AnalyticsProvider !== 'clarity' &&
         AnalyticsProvider !== 'custom') ||
-      (AnalyticsScriptUrl !== undefined && typeof AnalyticsScriptUrl !== 'string') ||
-      (AnalyticsWebsiteId !== undefined && typeof AnalyticsWebsiteId !== 'string') ||
-      (AnalyticsCustomScript !== undefined && typeof AnalyticsCustomScript !== 'string')
+      (AnalyticsScriptUrl !== undefined &&
+        typeof AnalyticsScriptUrl !== 'string') ||
+      (AnalyticsWebsiteId !== undefined &&
+        typeof AnalyticsWebsiteId !== 'string') ||
+      (AnalyticsCustomScript !== undefined &&
+        typeof AnalyticsCustomScript !== 'string')
     ) {
       return NextResponse.json({ error: '参数格式错误' }, { status: 400 });
     }

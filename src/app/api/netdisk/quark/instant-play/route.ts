@@ -16,7 +16,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: '未登录' }, { status: 401 });
     }
     if (!(await hasFeaturePermission(authInfo.username, 'netdisk_temp_play'))) {
-      return NextResponse.json({ error: '无权限使用临时播放' }, { status: 403 });
+      return NextResponse.json(
+        { error: '无权限使用临时播放' },
+        { status: 403 }
+      );
     }
 
     const { shareUrl, passcode, title } = await request.json();
@@ -27,10 +30,17 @@ export async function POST(request: NextRequest) {
     const config = await getConfig();
     const quarkConfig = config.NetDiskConfig?.Quark;
     if (!quarkConfig?.Enabled || !quarkConfig.Cookie) {
-      return NextResponse.json({ error: '夸克网盘未配置或未启用' }, { status: 400 });
+      return NextResponse.json(
+        { error: '夸克网盘未配置或未启用' },
+        { status: 400 }
+      );
     }
 
-    const result = await listQuarkShareVideos(shareUrl, quarkConfig.Cookie, passcode || '');
+    const result = await listQuarkShareVideos(
+      shareUrl,
+      quarkConfig.Cookie,
+      passcode || ''
+    );
     const session = createQuarkNetdiskSession({
       title: title || result.title,
       shareUrl,

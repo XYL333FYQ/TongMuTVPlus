@@ -14,7 +14,11 @@ export const runtime = 'nodejs';
  */
 export async function POST(request: NextRequest) {
   try {
-    const authResult = await requireFeaturePermission(request, 'private_library', '无权限访问私人影库');
+    const authResult = await requireFeaturePermission(
+      request,
+      'private_library',
+      '无权限访问私人影库'
+    );
     if (authResult instanceof NextResponse) return authResult;
     // 权限检查
     const authInfo = getAuthInfoFromCookie(request);
@@ -27,10 +31,7 @@ export async function POST(request: NextRequest) {
     const { url, username, password } = body;
 
     if (!url || !username || !password) {
-      return NextResponse.json(
-        { error: '缺少必要参数' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: '缺少必要参数' }, { status: 400 });
     }
 
     // 创建客户端并检查连通性

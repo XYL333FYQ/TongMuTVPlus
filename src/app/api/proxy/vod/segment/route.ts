@@ -39,7 +39,10 @@ export async function GET(request: NextRequest) {
     }
 
     if (!videoSource.proxyMode) {
-      return NextResponse.json({ error: 'Proxy mode not enabled for this source' }, { status: 403 });
+      return NextResponse.json(
+        { error: 'Proxy mode not enabled for this source' },
+        { status: 403 }
+      );
     }
   }
 
@@ -52,17 +55,24 @@ export async function GET(request: NextRequest) {
     // 安全校验：防 SSRF 拦截请求内网或非法 URL (强制检查所有代理请求)
     const isSafeUrl = await validateProxyUrlServerSide(decodedUrl);
     if (!isSafeUrl) {
-      return NextResponse.json({ error: 'Proxy request to local or invalid network is forbidden' }, { status: 403 });
+      return NextResponse.json(
+        { error: 'Proxy request to local or invalid network is forbidden' },
+        { status: 403 }
+      );
     }
 
     response = await fetch(decodedUrl, {
       headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Referer': decodedUrl,
+        'User-Agent':
+          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        Referer: decodedUrl,
       },
     });
     if (!response.ok) {
-      return NextResponse.json({ error: 'Failed to fetch segment' }, { status: 500 });
+      return NextResponse.json(
+        { error: 'Failed to fetch segment' },
+        { status: 500 }
+      );
     }
 
     const headers = buildProxyStreamHeaders(
@@ -87,25 +97,28 @@ export async function GET(request: NextRequest) {
             return;
           }
 
-          reader.read().then(({ done, value }) => {
-            if (isCancelled) {
-              return;
-            }
+          reader
+            .read()
+            .then(({ done, value }) => {
+              if (isCancelled) {
+                return;
+              }
 
-            if (done) {
-              controller.close();
-              cleanup();
-              return;
-            }
+              if (done) {
+                controller.close();
+                cleanup();
+                return;
+              }
 
-            controller.enqueue(value);
-            pump();
-          }).catch((error) => {
-            if (!isCancelled) {
-              controller.error(error);
-              cleanup();
-            }
-          });
+              controller.enqueue(value);
+              pump();
+            })
+            .catch((error) => {
+              if (!isCancelled) {
+                controller.error(error);
+                cleanup();
+              }
+            });
         }
 
         function cleanup() {
@@ -140,7 +153,7 @@ export async function GET(request: NextRequest) {
             // 忽略取消时的错误
           }
         }
-      }
+      },
     });
 
     return new Response(stream, { headers });
@@ -162,6 +175,9 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    return NextResponse.json({ error: 'Failed to fetch segment' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Failed to fetch segment' },
+      { status: 500 }
+    );
   }
 }

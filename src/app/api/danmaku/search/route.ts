@@ -27,7 +27,9 @@ export async function GET(request: NextRequest) {
     const config = await getConfig();
     const baseUrl = getDanmakuApiBaseUrl(config.SiteConfig);
 
-    const apiUrl = `${baseUrl}/api/v2/search/anime?keyword=${encodeURIComponent(keyword)}`;
+    const apiUrl = `${baseUrl}/api/v2/search/anime?keyword=${encodeURIComponent(
+      keyword
+    )}`;
 
     // 添加超时控制
     const controller = new AbortController();

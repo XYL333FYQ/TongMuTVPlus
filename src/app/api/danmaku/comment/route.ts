@@ -7,7 +7,9 @@ import { getDanmakuApiBaseUrl } from '@/lib/danmaku/config';
 export const runtime = 'nodejs';
 
 // 解析弹幕 XML 为 JSON
-function parseXmlDanmaku(xmlText: string): Array<{ p: string; m: string; cid: number }> {
+function parseXmlDanmaku(
+  xmlText: string
+): Array<{ p: string; m: string; cid: number }> {
   const comments: Array<{ p: string; m: string; cid: number }> = [];
 
   // 使用正则表达式提取所有 <d> 标签
@@ -60,7 +62,9 @@ export async function GET(request: NextRequest) {
       apiUrl = `${baseUrl}/api/v2/comment/${episodeId}?format=xml`;
     } else {
       // 通过视频 URL 获取弹幕 - 使用 XML 格式
-      apiUrl = `${baseUrl}/api/v2/comment?url=${encodeURIComponent(url!)}&format=xml`;
+      apiUrl = `${baseUrl}/api/v2/comment?url=${encodeURIComponent(
+        url!
+      )}&format=xml`;
     }
 
     // 添加超时控制
@@ -71,7 +75,7 @@ export async function GET(request: NextRequest) {
       const response = await fetch(apiUrl, {
         method: 'GET',
         headers: {
-          'Accept': 'application/xml, text/xml',
+          Accept: 'application/xml, text/xml',
         },
         signal: controller.signal,
         keepalive: true,

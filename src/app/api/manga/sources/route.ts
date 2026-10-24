@@ -11,10 +11,16 @@ export async function GET(request: NextRequest) {
   if (username instanceof NextResponse) return username;
 
   try {
-    const lang = new URL(request.url).searchParams.get('lang') || process.env.SUWAYOMI_DEFAULT_LANG || 'zh';
+    const lang =
+      new URL(request.url).searchParams.get('lang') ||
+      process.env.SUWAYOMI_DEFAULT_LANG ||
+      'zh';
     const sources = await suwayomiClient.getSources(lang);
     return NextResponse.json({ sources });
   } catch (error) {
-    return NextResponse.json({ error: (error as Error).message }, { status: 500 });
+    return NextResponse.json(
+      { error: (error as Error).message },
+      { status: 500 }
+    );
   }
 }

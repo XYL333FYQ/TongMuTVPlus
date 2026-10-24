@@ -19,7 +19,14 @@ const QUARK_PC_UA =
 
 async function pipeUpstream(response: Response, range: string | null) {
   const responseHeaders = new Headers();
-  const copyHeaders = ['content-type', 'content-length', 'content-range', 'accept-ranges', 'etag', 'last-modified'];
+  const copyHeaders = [
+    'content-type',
+    'content-length',
+    'content-range',
+    'accept-ranges',
+    'etag',
+    'last-modified',
+  ];
   copyHeaders.forEach((name) => {
     const value = response.headers.get(name);
     if (value) responseHeaders.set(name, value);
@@ -62,7 +69,8 @@ async function pipeUpstream(response: Response, range: string | null) {
   })();
 
   return new Response(readable, {
-    status: range && response.headers.get('content-range') ? 206 : response.status,
+    status:
+      range && response.headers.get('content-range') ? 206 : response.status,
     headers: responseHeaders,
   });
 }
@@ -127,7 +135,9 @@ function buildHeaderProfiles(request: NextRequest, cookie: string) {
   ];
 }
 
-function parseRequestedRange(range: string | null): { start: number; end?: number } | null {
+function parseRequestedRange(
+  range: string | null
+): { start: number; end?: number } | null {
   if (!range) return null;
   const match = /^bytes=(\d+)-(\d*)$/i.exec(range.trim());
   if (!match) return null;
@@ -161,17 +171,26 @@ export async function GET(request: NextRequest) {
 
     const episodeIndex = Number.parseInt(episodeIndexRaw, 10);
     if (!Number.isInteger(episodeIndex) || episodeIndex < 0) {
-      return NextResponse.json({ error: '无效的 episodeIndex' }, { status: 400 });
+      return NextResponse.json(
+        { error: '无效的 episodeIndex' },
+        { status: 400 }
+      );
     }
 
-    const { session, cookie, savePath, playMode, multiThreadPlayback } = await resolveQuarkSession(id);
+    const { session, cookie, savePath, playMode, multiThreadPlayback } =
+      await resolveQuarkSession(id);
     const file = session.files[episodeIndex];
     if (!file) {
       return NextResponse.json({ error: '播放文件不存在' }, { status: 404 });
     }
 
     if (!session.playFolderFid || !session.playFolderPath) {
-      const folder = await ensureQuarkPlayFolder(cookie, savePath, session.shareId, session.title);
+      const folder = await ensureQuarkPlayFolder(
+        cookie,
+        savePath,
+        session.shareId,
+        session.title
+      );
       session.playFolderFid = folder.folderFid;
       session.playFolderPath = folder.folderPath;
     }
@@ -204,15 +223,16 @@ export async function GET(request: NextRequest) {
         expiresAt: Date.now() + 5 * 60 * 1000,
       };
     }
-    const selected = playUrls.find((item) => item.name === quality) || playUrls[0];
+    const selected =
+      playUrls.find((item) => item.name === quality) || playUrls[0];
     const candidates = selected
-      ? [
-          selected,
-          ...playUrls.filter((item) => item.url !== selected.url),
-        ]
+      ? [selected, ...playUrls.filter((item) => item.url !== selected.url)]
       : [];
     if (candidates.length === 0) {
-      return NextResponse.json({ error: '未获取到夸克播放地址' }, { status: 500 });
+      return NextResponse.json(
+        { error: '未获取到夸克播放地址' },
+        { status: 500 }
+      );
     }
 
     const range = request.headers.get('range');
@@ -226,11 +246,16 @@ export async function GET(request: NextRequest) {
             multiThreadPlayback && requestedRange
               ? `bytes=${requestedRange.start}-${requestedRange.start}`
               : range || undefined;
-          const probed = await probeQuarkPlayRange(candidate.url, profile.headers, probeRange);
+          const probed = await probeQuarkPlayRange(
+            candidate.url,
+            profile.headers,
+            probeRange
+          );
           if (probed?.response.body) {
             if (multiThreadPlayback && requestedRange && probed.window) {
               const trunkEnd = Math.min(
-                requestedRange.end ?? requestedRange.start + 8 * 1024 * 1024 - 1,
+                requestedRange.end ??
+                  requestedRange.start + 8 * 1024 * 1024 - 1,
                 requestedRange.start + 8 * 1024 * 1024 - 1,
                 probed.window.total - 1
               );
@@ -240,15 +265,32 @@ export async function GET(request: NextRequest) {
                 total: probed.window.total,
               };
               const responseHeaders = new Headers();
-              const copyHeaders = ['content-type', 'content-length', 'content-range', 'accept-ranges', 'etag', 'last-modified'];
+              const copyHeaders = [
+                'content-type',
+                'content-length',
+                'content-range',
+                'accept-ranges',
+                'etag',
+                'last-modified',
+              ];
               copyHeaders.forEach((name) => {
                 const value = probed.response.headers.get(name);
                 if (value) responseHeaders.set(name, value);
               });
               responseHeaders.set('Cache-Control', 'private, no-store');
-              const rangeHeaders = buildRangeHeaders(window.start, window.end, window.total);
-              responseHeaders.set('Content-Range', rangeHeaders['Content-Range']);
-              responseHeaders.set('Content-Length', rangeHeaders['Content-Length']);
+              const rangeHeaders = buildRangeHeaders(
+                window.start,
+                window.end,
+                window.total
+              );
+              responseHeaders.set(
+                'Content-Range',
+                rangeHeaders['Content-Range']
+              );
+              responseHeaders.set(
+                'Content-Length',
+                rangeHeaders['Content-Length']
+              );
               try {
                 await probed.response.body.cancel();
               } catch {
@@ -269,7 +311,10 @@ export async function GET(request: NextRequest) {
           lastStatus = probed?.response.status || lastStatus;
         } catch (error) {
           if (error instanceof Error && error.name === 'AbortError') {
-            return NextResponse.json({ error: '夸克网盘代理超时' }, { status: 504 });
+            return NextResponse.json(
+              { error: '夸克网盘代理超时' },
+              { status: 504 }
+            );
           }
         }
       }

@@ -4,7 +4,12 @@ import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig } from '@/lib/config';
 import { getTianyiSharePlayUrl } from '@/lib/netdisk/tianyi.client';
 import { listTianyiShareVideos } from '@/lib/netdisk/tianyi.client';
-import { createTianyiNetdiskSession, getTianyiNetdiskSession, parseTianyiNetdiskId, refreshTianyiNetdiskSession } from '@/lib/netdisk/tianyi-session-cache';
+import {
+  createTianyiNetdiskSession,
+  getTianyiNetdiskSession,
+  parseTianyiNetdiskId,
+  refreshTianyiNetdiskSession,
+} from '@/lib/netdisk/tianyi-session-cache';
 
 export const runtime = 'nodejs';
 
@@ -25,16 +30,28 @@ export async function GET(request: NextRequest) {
 
     const episodeIndex = Number.parseInt(episodeIndexRaw, 10);
     if (!Number.isInteger(episodeIndex) || episodeIndex < 0) {
-      return NextResponse.json({ error: '无效的 episodeIndex' }, { status: 400 });
+      return NextResponse.json(
+        { error: '无效的 episodeIndex' },
+        { status: 400 }
+      );
     }
 
     const config = await getConfig();
     const tianyiConfig = config.NetDiskConfig?.Tianyi;
-    if (!tianyiConfig?.Enabled || !tianyiConfig.Account || !tianyiConfig.Password) {
-      return NextResponse.json({ error: '天翼云盘未配置或未启用' }, { status: 400 });
+    if (
+      !tianyiConfig?.Enabled ||
+      !tianyiConfig.Account ||
+      !tianyiConfig.Password
+    ) {
+      return NextResponse.json(
+        { error: '天翼云盘未配置或未启用' },
+        { status: 400 }
+      );
     }
 
-    let session = refreshTianyiNetdiskSession(sessionId) || getTianyiNetdiskSession(sessionId);
+    let session =
+      refreshTianyiNetdiskSession(sessionId) ||
+      getTianyiNetdiskSession(sessionId);
     if (!session) {
       const payload = parseTianyiNetdiskId(sessionId);
       const result = await listTianyiShareVideos(

@@ -38,10 +38,7 @@ export async function GET(request: NextRequest) {
   const page = searchParams.get('page') || '1';
 
   if (!sourceKey) {
-    return NextResponse.json(
-      { error: '缺少参数: source' },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: '缺少参数: source' }, { status: 400 });
   }
 
   if (!categoryId) {
@@ -124,9 +121,6 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error('Failed to get videos:', error);
-    return NextResponse.json(
-      { error: '获取视频列表失败' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: '获取视频列表失败' }, { status: 500 });
   }
 }

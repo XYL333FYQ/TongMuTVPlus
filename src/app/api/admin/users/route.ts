@@ -48,7 +48,12 @@ export async function GET(request: NextRequest) {
     const offset = (page - 1) * limit;
 
     // 获取用户列表（优先使用新版本）
-    const result = await db.getUserListV2(offset, limit, process.env.USERNAME, search);
+    const result = await db.getUserListV2(
+      offset,
+      limit,
+      process.env.USERNAME,
+      search
+    );
 
     if (result.users.length > 0) {
       // 使用新版本数据

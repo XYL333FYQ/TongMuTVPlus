@@ -16,7 +16,11 @@ export const runtime = 'nodejs';
  */
 export async function POST(request: NextRequest) {
   try {
-    const authResult = await requireFeaturePermission(request, 'private_library', '无权限访问私人影库');
+    const authResult = await requireFeaturePermission(
+      request,
+      'private_library',
+      '无权限访问私人影库'
+    );
     if (authResult instanceof NextResponse) return authResult;
     const authInfo = getAuthInfoFromCookie(request);
     if (!authInfo || !authInfo.username) {
@@ -40,7 +44,10 @@ export async function POST(request: NextRequest) {
       !openListConfig.Username ||
       !openListConfig.Password
     ) {
-      return NextResponse.json({ error: 'OpenList 未配置或未启用' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'OpenList 未配置或未启用' },
+        { status: 400 }
+      );
     }
 
     // folder 已经是完整路径，直接使用

@@ -32,7 +32,11 @@ async function assertAdmin(request: NextRequest) {
   }
 
   const userInfoV2 = await db.getUserInfoV2(authInfo.username);
-  if (!userInfoV2 || (userInfoV2.role !== 'admin' && userInfoV2.role !== 'owner') || userInfoV2.banned) {
+  if (
+    !userInfoV2 ||
+    (userInfoV2.role !== 'admin' && userInfoV2.role !== 'owner') ||
+    userInfoV2.banned
+  ) {
     return null;
   }
 

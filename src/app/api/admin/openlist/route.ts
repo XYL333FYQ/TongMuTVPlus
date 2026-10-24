@@ -84,7 +84,8 @@ export async function POST(request: NextRequest) {
     if (action === 'save') {
       const cleanedPathMeta = parsePathMeta(PathMeta);
       const normalizedURL = normalizeApiBaseUrl(URL);
-      const normalizedOfflineDownloadURL = normalizeApiBaseUrl(OfflineDownloadURL);
+      const normalizedOfflineDownloadURL =
+        normalizeApiBaseUrl(OfflineDownloadURL);
 
       // 如果功能未启用，允许保存空配置
       if (!Enabled) {
@@ -95,7 +96,8 @@ export async function POST(request: NextRequest) {
           Password: Password || '',
           RootPaths: RootPaths || ['/'],
           OfflineDownloadPath: OfflineDownloadPath || '/',
-          OfflineDownloadUseCustomSource: OfflineDownloadUseCustomSource || false,
+          OfflineDownloadUseCustomSource:
+            OfflineDownloadUseCustomSource || false,
           OfflineDownloadURL: normalizedOfflineDownloadURL,
           OfflineDownloadUsername: OfflineDownloadUsername || '',
           OfflineDownloadPassword: OfflineDownloadPassword || '',
@@ -178,9 +180,16 @@ export async function POST(request: NextRequest) {
           );
           console.log('[OpenList Config] 离线下载 OpenList 账号密码验证成功');
         } catch (error) {
-          console.error('[OpenList Config] 离线下载 OpenList 账号密码验证失败:', error);
+          console.error(
+            '[OpenList Config] 离线下载 OpenList 账号密码验证失败:',
+            error
+          );
           return NextResponse.json(
-            { error: '离线下载 OpenList 账号密码验证失败: ' + (error as Error).message },
+            {
+              error:
+                '离线下载 OpenList 账号密码验证失败: ' +
+                (error as Error).message,
+            },
             { status: 400 }
           );
         }

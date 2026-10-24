@@ -118,7 +118,8 @@ export async function POST(request: NextRequest) {
     // 参数校验
     if (
       typeof Enabled !== 'boolean' ||
-      (Provider !== undefined && !['openai', 'claude', 'custom'].includes(Provider)) ||
+      (Provider !== undefined &&
+        !['openai', 'claude', 'custom'].includes(Provider)) ||
       (OpenAIApiKey !== undefined && typeof OpenAIApiKey !== 'string') ||
       (OpenAIBaseURL !== undefined && typeof OpenAIBaseURL !== 'string') ||
       (OpenAIModel !== undefined && typeof OpenAIModel !== 'string') ||
@@ -129,24 +130,37 @@ export async function POST(request: NextRequest) {
       (CustomBaseURL !== undefined && typeof CustomBaseURL !== 'string') ||
       (CustomModel !== undefined && typeof CustomModel !== 'string') ||
       typeof EnableDecisionModel !== 'boolean' ||
-      (DecisionProvider !== undefined && !['openai', 'claude', 'custom'].includes(DecisionProvider)) ||
-      (DecisionOpenAIApiKey !== undefined && typeof DecisionOpenAIApiKey !== 'string') ||
-      (DecisionOpenAIBaseURL !== undefined && typeof DecisionOpenAIBaseURL !== 'string') ||
-      (DecisionOpenAIModel !== undefined && typeof DecisionOpenAIModel !== 'string') ||
-      (DecisionClaudeApiKey !== undefined && typeof DecisionClaudeApiKey !== 'string') ||
-      (DecisionClaudeModel !== undefined && typeof DecisionClaudeModel !== 'string') ||
-      (DecisionCustomApiKey !== undefined && typeof DecisionCustomApiKey !== 'string') ||
-      (DecisionCustomBaseURL !== undefined && typeof DecisionCustomBaseURL !== 'string') ||
-      (DecisionCustomModel !== undefined && typeof DecisionCustomModel !== 'string') ||
+      (DecisionProvider !== undefined &&
+        !['openai', 'claude', 'custom'].includes(DecisionProvider)) ||
+      (DecisionOpenAIApiKey !== undefined &&
+        typeof DecisionOpenAIApiKey !== 'string') ||
+      (DecisionOpenAIBaseURL !== undefined &&
+        typeof DecisionOpenAIBaseURL !== 'string') ||
+      (DecisionOpenAIModel !== undefined &&
+        typeof DecisionOpenAIModel !== 'string') ||
+      (DecisionClaudeApiKey !== undefined &&
+        typeof DecisionClaudeApiKey !== 'string') ||
+      (DecisionClaudeModel !== undefined &&
+        typeof DecisionClaudeModel !== 'string') ||
+      (DecisionCustomApiKey !== undefined &&
+        typeof DecisionCustomApiKey !== 'string') ||
+      (DecisionCustomBaseURL !== undefined &&
+        typeof DecisionCustomBaseURL !== 'string') ||
+      (DecisionCustomModel !== undefined &&
+        typeof DecisionCustomModel !== 'string') ||
       typeof EnableWebSearch !== 'boolean' ||
-      (WebSearchProvider !== undefined && !['tavily', 'serper', 'serpapi', 'bing'].includes(WebSearchProvider)) ||
+      (WebSearchProvider !== undefined &&
+        !['tavily', 'serper', 'serpapi', 'bing'].includes(WebSearchProvider)) ||
       (TavilyApiKey !== undefined && typeof TavilyApiKey !== 'string') ||
       (SerperApiKey !== undefined && typeof SerperApiKey !== 'string') ||
       (SerpApiKey !== undefined && typeof SerpApiKey !== 'string') ||
       (EnableNewMode !== undefined && typeof EnableNewMode !== 'boolean') ||
       (NewProtocol !== undefined &&
-        !['openai-completions', 'openai-responses', 'claude'].includes(NewProtocol)) ||
-      (MaxContext !== undefined && (typeof MaxContext !== 'number' || MaxContext <= 0)) ||
+        !['openai-completions', 'openai-responses', 'claude'].includes(
+          NewProtocol
+        )) ||
+      (MaxContext !== undefined &&
+        (typeof MaxContext !== 'number' || MaxContext <= 0)) ||
       (CompressThreshold !== undefined &&
         (typeof CompressThreshold !== 'number' ||
           CompressThreshold < 0 ||

@@ -46,11 +46,7 @@ async function getFinalUrl(url: string, maxRedirects = 5): Promise<string> {
 
     // 2) 部分服务器不支持 HEAD（返回 405/501 或直接抛错），用普通 GET 兜底
     //    不带 Range（可能被服务器拒绝），直接让 fetch 跟随重定向，取 response.url 为最终地址
-    if (
-      !response ||
-      response.status === 405 ||
-      response.status === 501
-    ) {
+    if (!response || response.status === 405 || response.status === 501) {
       try {
         const getResponse = await fetch(currentUrl, {
           method: 'GET',
@@ -128,7 +124,8 @@ async function resolveFinalPlayUrl(
   try {
     const data = await client.getVideoPreview(filePath);
 
-    const taskList = data.data?.video_preview_play_info?.live_transcoding_task_list;
+    const taskList =
+      data.data?.video_preview_play_info?.live_transcoding_task_list;
     if (!taskList || taskList.length === 0) {
       throw new Error('未找到可用的播放链接');
     }
@@ -240,7 +237,10 @@ export async function GET(
       !openListConfig.Username ||
       !openListConfig.Password
     ) {
-      return NextResponse.json({ error: 'OpenList 未配置或未启用' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'OpenList 未配置或未启用' },
+        { status: 400 }
+      );
     }
 
     // 解析路径元信息：仅允许开启了代理播放的路径走服务器代理
@@ -346,10 +346,7 @@ export async function GET(
           status: videoResponse.status,
           statusText: videoResponse.statusText,
         });
-        return NextResponse.json(
-          { error: '获取视频流失败' },
-          { status: 500 }
-        );
+        return NextResponse.json({ error: '获取视频流失败' }, { status: 500 });
       }
 
       // 获取 Content-Type
@@ -377,17 +374,17 @@ export async function GET(
       }
 
       // 使用 URL 中的文件名
-      headers.set('Content-Disposition', `inline; filename="${params.filename}"`);
+      headers.set(
+        'Content-Disposition',
+        `inline; filename="${params.filename}"`
+      );
 
       // 创建一个可以被中断的流
       const { readable, writable } = new TransformStream();
       const reader = videoResponse.body?.getReader();
 
       if (!reader) {
-        return NextResponse.json(
-          { error: '无法读取视频流' },
-          { status: 500 }
-        );
+        return NextResponse.json({ error: '无法读取视频流' }, { status: 500 });
       }
 
       // 异步管道传输，确保在客户端断开时清理资源
@@ -431,10 +428,7 @@ export async function GET(
 
       if (error instanceof Error && error.name === 'AbortError') {
         console.error('[OpenList Proxy] 请求超时');
-        return NextResponse.json(
-          { error: '请求超时' },
-          { status: 504 }
-        );
+        return NextResponse.json({ error: '请求超时' }, { status: 504 });
       }
       throw error;
     }

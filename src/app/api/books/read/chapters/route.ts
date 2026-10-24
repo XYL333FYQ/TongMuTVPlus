@@ -16,16 +16,27 @@ export async function GET(request: NextRequest) {
     const bookId = searchParams.get('bookId')?.trim();
     const href = searchParams.get('href')?.trim() || '';
 
-    if (!sourceId) return NextResponse.json({ error: '缺少 sourceId' }, { status: 400 });
+    if (!sourceId)
+      return NextResponse.json({ error: '缺少 sourceId' }, { status: 400 });
 
     const chapters = bookId
       ? await legadoClient.getChaptersByBookId(sourceId, bookId)
       : href
-        ? await legadoClient.getChapters(sourceId, href)
-        : null;
-    if (!chapters) return NextResponse.json({ error: '缺少 bookId 或 href，无法定位章节目录' }, { status: 400 });
-    return NextResponse.json({ chapters }, { headers: { 'Cache-Control': 'no-store' } });
+      ? await legadoClient.getChapters(sourceId, href)
+      : null;
+    if (!chapters)
+      return NextResponse.json(
+        { error: '缺少 bookId 或 href，无法定位章节目录' },
+        { status: 400 }
+      );
+    return NextResponse.json(
+      { chapters },
+      { headers: { 'Cache-Control': 'no-store' } }
+    );
   } catch (error) {
-    return NextResponse.json({ error: (error as Error).message }, { status: 500 });
+    return NextResponse.json(
+      { error: (error as Error).message },
+      { status: 500 }
+    );
   }
 }
