@@ -3,7 +3,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    image: tongmutvplus:local
+    # 默认在本机构建；设置 TONGMU_IMAGE=ghcr.io/<用户名>/tongmutvplus:latest 可直接拉取 GitHub 构建好的镜像
+    image: '${TONGMU_IMAGE:-tongmutvplus:local}'
     init: true
     restart: unless-stopped
     stop_grace_period: 30s
@@ -20,6 +21,10 @@ services:
       USERNAME: '${USERNAME:-admin}'
       PASSWORD: '${PASSWORD:?Set a private PASSWORD in .env before starting}'
       APP_COMMIT_SHA: '${APP_COMMIT_SHA:-unversioned}'
+      # 留空时首次启动自动生成并保存到 .data/auth-secret
+      AUTH_SECRET: '${AUTH_SECRET:-}'
+      CRON_PASSWORD: '${CRON_PASSWORD:-}'
+      ALLOW_PRIVATE_PROXY_TARGETS: '${ALLOW_PRIVATE_PROXY_TARGETS:-false}'
       WATCH_ROOM_ENABLED: 'true'
       WATCH_ROOM_SERVER_TYPE: internal
       ROOM_ALLOWED_ORIGINS: '${ROOM_ALLOWED_ORIGINS:-}'
