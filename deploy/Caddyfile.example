@@ -1,0 +1,13 @@
+# Caddy 反向代理示例：自动申请 HTTPS 证书，WebSocket（观影房间）无需额外配置。
+# 把 tv.example.com 换成你的域名，并先把域名 A 记录指向 VPS。
+# 用法：复制到 /etc/caddy/Caddyfile 后执行 systemctl reload caddy
+
+tv.example.com {
+	encode zstd gzip
+	reverse_proxy 127.0.0.1:3000 {
+		# 保持长连接，房间同步依赖 /socket.io/ 的 WebSocket
+		transport http {
+			read_timeout 0
+		}
+	}
+}

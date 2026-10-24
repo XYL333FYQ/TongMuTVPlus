@@ -1,0 +1,43 @@
+# Nginx 反向代理示例（HTTPS 证书用 certbot 申请）。
+# 把 tv.example.com 换成你的域名；放到 /etc/nginx/conf.d/tongmutvplus.conf 后执行 nginx -t && systemctl reload nginx
+
+map $http_upgrade $connection_upgrade {
+    default upgrade;
+    ''      close;
+}
+
+server {
+    listen 80;
+    server_name tv.example.com;
+    return 301 https://$host$request_uri;
+}
+
+server {
+    # 老版本 nginx（<1.25）用这种写法；新版本会提示改用 http2 on，不影响使用
+    listen 443 ssl http2;
+    server_name tv.example.com;
+
+    ssl_certificate     /etc/letsencrypt/live/tv.example.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/tv.example.com/privkey.pem;
+
+    # 电子书、备份导入等上传需要更大的请求体
+    client_max_body_size 200m;
+
+    location / {
+        proxy_pass http://127.0.0.1:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+
+        # 观影房间走 /socket.io/ 的 WebSocket，必须转发 Upgrade，空闲超时要大于 60 秒
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection $connection_upgrade;
+        proxy_read_timeout 3600s;
+        proxy_send_timeout 3600s;
+
+        # 视频代理是流式响应，不要缓冲
+        proxy_buffering off;
+    }
+}
