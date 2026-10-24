@@ -1,13 +1,14 @@
 # 界面改造进度
 
-## 2026-10-24 电视端改运行时填地址、Windows 便携包、客户端发布到 Releases、README 中文为主（本地已提交，云端未跑）
+## 2026-10-24 电视端改运行时填地址、Windows 便携包、客户端发布到 Releases、README 中文为主
 
 - **电视壳**（`apps/android-tv/`）：包名 `com.moontvplus.tv` → `com.tongmutvplus.tv`，项目名与 UA 换成 TongMuTV Plus；首次打开弹地址框（`ServerAddress.java`），遥控器长按菜单键换地址，WebView 版连接失败弹重试 / 改地址 / 退出；`BASE_URL` 变成可选默认值。**未改** `moontv:local-remote-*` 事件名与 `MoonTVLocalRemote` JS 桥（网页端依赖）。
 - **Windows 便携包**：工作流在安装包之外多收一个 `...-Portable.zip`（主程序 exe + 使用说明），需系统自带 WebView2。
 - **发布**：三个客户端工作流新增 `publish` 开关，测试通过后把固定文件名的安装包传到 Releases 的 `clients` 版本（页面标题「客户端下载」，每次运行覆盖更新）。电视端工作流新增模拟器冒烟测试，签名密钥改用 `ANDROID_MOBILE_KEYSTORE_*`。
 - **README**：`README.md` 改为中文（仓库首页），英文为 `README_en.md`，顶部互相切换；两份都加了「下载客户端」。仓库简介（About）已改成中文。
 - **Co-Authored-By 清理**：历史里 16 个提交带 `Co-Authored-By: Claude`，使仓库贡献者列表出现 @claude。已在本地用 filter-branch 去掉（内容逐字节一致，原历史备份在 ai 项目/备份/\*.bundle），**尚未强制推送到 GitHub**。
-- **没验证**：以上工作流还没在云端运行（等强制推送后才能触发）；电视壳没在模拟器 / 真电视上测过。
+- **验证（云端实测）**：Windows（含便携 zip 解压即启动）、安卓手机（API 24 / 34 模拟器）、电视壳 WebView 版（API 34 模拟器）都通过冒烟测试，并发布到 Releases `clients`；手机端 API 34 首轮曾因模拟器偶发慢失败，已改成轮询等待，重跑通过。GeckoView 版（250 ～ 570MB）不放 Releases，只在 Actions Artifacts。
+- **没验证**：电视壳没在真电视上测，遥控器输入地址的手感未知；真机视频播放同前。
 
 ## 2026-10-24 Windows 桌面客户端与安卓手机客户端（套壳，全部在 GitHub Actions 打包）
 

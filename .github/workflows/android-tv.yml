@@ -215,4 +215,4 @@ jobs:
             --title "客户端下载" \
             --notes "Windows 桌面端、安卓手机端、安卓电视端安装包。首次打开填你自己的服务器地址即可。说明见仓库 README。" \
             2>/dev/null || true
-          gh release upload clients release/*.apk --clobber
+          gh release upload clients release/*webview*.apk --clobber
