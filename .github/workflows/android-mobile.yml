@@ -13,6 +13,11 @@ on:
         required: false
         default: '1'
         type: string
+      publish:
+        description: '打包并测试通过后，发布到仓库 Releases（客户端下载）'
+        required: false
+        default: true
+        type: boolean
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -90,9 +95,9 @@ jobs:
         run: |
           mkdir -p /tmp/apk
           cp "apps/android-mobile/app/build/outputs/apk/${{ steps.signing.outputs.build_type }}/app-${{ steps.signing.outputs.build_type }}.apk" \
-            "/tmp/apk/TongMuTV-Plus-${{ inputs.version_name }}-android.apk"
+            "/tmp/apk/TongMuTV-Plus-Android.apk"
           ls -lh /tmp/apk
-          echo "apk_name=TongMuTV-Plus-${{ inputs.version_name }}-android.apk" >> "$GITHUB_OUTPUT"
+          echo "apk_name=TongMuTV-Plus-Android.apk" >> "$GITHUB_OUTPUT"
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
@@ -143,3 +148,29 @@ jobs:
           path: smoke-out
           if-no-files-found: ignore
           retention-days: 14
+
+  release:
+    name: Publish to Releases
+    needs: [build, smoke]
+    if: ${{ inputs.publish }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download APK
+        uses: actions/download-artifact@v4
+        with:
+          name: tongmutvplus-android-mobile
+          path: release
+
+      - name: Upload to the "clients" release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          ls -lh release
+          gh release create clients --target "${{ github.sha }}" --latest \
+            --title "客户端下载" \
+            --notes "Windows 桌面端、安卓手机端、安卓电视端安装包。首次打开填你自己的服务器地址即可。说明见仓库 README。" \
+            2>/dev/null || true
+          gh release upload clients release/*.apk --clobber
