@@ -10,6 +10,7 @@ export default function DesignGridOverlay() {
     const toggle = (event: KeyboardEvent) => {
       const target = event.target;
       if (
+        typeof event.key !== 'string' ||
         event.key.toLowerCase() !== 'g' ||
         event.ctrlKey ||
         event.metaKey ||

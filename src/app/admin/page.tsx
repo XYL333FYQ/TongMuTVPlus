@@ -87,29 +87,29 @@ import PageLayout from '@/components/PageLayout';
 const buttonStyles = {
   // 主要操作 - 配置、设置、确认等
   primary:
-    'px-3 py-1.5 text-sm font-medium rounded-lg transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)] bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] hover:opacity-90',
+    'inline-flex items-center justify-center px-4 py-2 min-h-[40px] text-sm font-medium rounded-lg transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)] bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] hover:opacity-90',
   // 添加、启用、保存等，与主要操作同样式，靠文案区分
   success:
-    'px-3 py-1.5 text-sm font-medium rounded-lg transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)] bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] hover:opacity-90',
+    'inline-flex items-center justify-center px-4 py-2 min-h-[40px] text-sm font-medium rounded-lg transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)] bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] hover:opacity-90',
   // 危险操作 - 删除、禁用、重置等
   danger:
-    'px-3 py-1.5 text-sm font-medium rounded-lg transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)] bg-[var(--tm-surface-raised)] text-[color:var(--tm-danger)] border border-[var(--tm-danger)] hover:bg-[var(--tm-line)]',
+    'inline-flex items-center justify-center px-4 py-2 min-h-[40px] text-sm font-medium rounded-lg transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)] bg-[var(--tm-surface-raised)] text-[color:var(--tm-danger)] border border-[var(--tm-danger)] hover:bg-[var(--tm-line)]',
   // 次要操作 - 取消、关闭等
   secondary:
-    'px-3 py-1.5 text-sm font-medium rounded-lg transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)] bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)] hover:bg-[var(--tm-line)]',
+    'inline-flex items-center justify-center px-4 py-2 min-h-[40px] text-sm font-medium rounded-lg transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)] bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)] hover:bg-[var(--tm-line)]',
   // 批量禁用等需要留意的操作
   warning:
-    'px-3 py-1.5 text-sm font-medium rounded-lg transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)] bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)] hover:bg-[var(--tm-line)]',
+    'inline-flex items-center justify-center px-4 py-2 min-h-[40px] text-sm font-medium rounded-lg transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)] bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)] hover:bg-[var(--tm-line)]',
   primarySmall:
-    'px-2 py-1 text-[13px] font-medium rounded-md transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)] bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] hover:opacity-90',
+    'inline-flex items-center justify-center px-3 py-1.5 min-h-[36px] text-[13px] font-medium rounded-md transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)] bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] hover:opacity-90',
   successSmall:
-    'px-2 py-1 text-[13px] font-medium rounded-md transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)] bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] hover:opacity-90',
+    'inline-flex items-center justify-center px-3 py-1.5 min-h-[36px] text-[13px] font-medium rounded-md transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)] bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] hover:opacity-90',
   dangerSmall:
-    'px-2 py-1 text-[13px] font-medium rounded-md transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)] bg-[var(--tm-surface-raised)] text-[color:var(--tm-danger)] border border-[var(--tm-danger)] hover:bg-[var(--tm-line)]',
+    'inline-flex items-center justify-center px-3 py-1.5 min-h-[36px] text-[13px] font-medium rounded-md transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)] bg-[var(--tm-surface-raised)] text-[color:var(--tm-danger)] border border-[var(--tm-danger)] hover:bg-[var(--tm-line)]',
   secondarySmall:
-    'px-2 py-1 text-[13px] font-medium rounded-md transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)] bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)] hover:bg-[var(--tm-line)]',
+    'inline-flex items-center justify-center px-3 py-1.5 min-h-[36px] text-[13px] font-medium rounded-md transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)] bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)] hover:bg-[var(--tm-line)]',
   warningSmall:
-    'px-2 py-1 text-[13px] font-medium rounded-md transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)] bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)] hover:bg-[var(--tm-line)]',
+    'inline-flex items-center justify-center px-3 py-1.5 min-h-[36px] text-[13px] font-medium rounded-md transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)] bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)] hover:bg-[var(--tm-line)]',
   // 圆角小按钮（用于表格操作）
   roundedPrimary:
     'inline-flex items-center px-3 py-1.5 rounded-full text-[13px] font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)] bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)] hover:bg-[var(--tm-line)]',
@@ -6629,13 +6629,13 @@ const EmbyConfigComponent = ({
                       embyAuthorizationHeader: e.target.value,
                     })
                   }
-                  placeholder='留空使用默认 moontvplus 认证头'
+                  placeholder='留空使用默认客户端认证头'
                   className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-md shadow-sm focus:outline-none focus:ring-[var(--tm-text)] focus:border-[var(--tm-line)] bg-[var(--tm-surface)] text-[color:var(--tm-text)] text-sm'
                 />
                 <p className='text-[13px] text-[color:var(--tm-muted)] mt-1'>
                   仅用于账号认证登录请求，示例：MediaBrowser
-                  Client=&quot;moontvplus&quot;, Device=&quot;Web&quot;,
-                  DeviceId=&quot;moontvplus-web&quot;, Version=&quot;1.0.0&quot;
+                  Client=&quot;TongMuTV&quot;, Device=&quot;Web&quot;,
+                  DeviceId=&quot;tongmutv-web&quot;, Version=&quot;1.0.0&quot;
                 </p>
               </div>
             </div>
@@ -8156,8 +8156,8 @@ const VideoSourceConfig = ({
                     配置说明
                   </div>
                   <p className='mt-1 text-sm text-[color:var(--tm-text)]'>
-                    这里维护的是特殊源列表，不是用户权限；TVBox、OrionTV、WebTV
-                    始终不会使用这些特殊源。
+                    这里维护的是特殊源列表，不是用户权限；TVBox、Web 电视
+                    及第三方电视端始终不会使用这些特殊源。
                   </p>
                 </div>
 
@@ -19138,19 +19138,22 @@ function AdminPageClient() {
   if (loading) {
     return (
       <PageLayout activePath='/admin'>
-        <div className='px-2 sm:px-10 py-4 sm:py-8'>
-          <div className='max-w-[95%] mx-auto'>
-            <h1 className='text-2xl font-bold text-[color:var(--tm-text)] mb-8'>
-              管理员设置
-            </h1>
-            <div className='space-y-4'>
-              {Array.from({ length: 3 }).map((_, index) => (
-                <div
-                  key={index}
-                  className='h-20 bg-[var(--tm-surface-raised)] rounded-lg tm-skeleton'
-                />
-              ))}
+        <div className='tm-page-container tm-admin-page'>
+          <header className='tm-page-head'>
+            <div>
+              <h1 className='tm-page-title'>管理员设置</h1>
+              <p className='tm-page-desc'>
+                管理站点配置、视频来源、用户权限与系统维护
+              </p>
             </div>
+          </header>
+          <div className='space-y-4'>
+            {Array.from({ length: 3 }).map((_, index) => (
+              <div
+                key={index}
+                className='h-20 bg-[var(--tm-surface-raised)] rounded-lg tm-skeleton'
+              />
+            ))}
           </div>
         </div>
       </PageLayout>
@@ -19483,574 +19486,543 @@ function AdminPageClient() {
 
   return (
     <PageLayout activePath='/admin'>
-      <div className='px-2 sm:px-10 py-4 sm:py-8'>
-        <div className='max-w-[95%] mx-auto'>
-          {/* 标题 + 重置配置按钮 */}
-          <div className='flex items-center gap-2 mb-8'>
-            <h1 className='text-2xl font-bold text-[color:var(--tm-text)]'>
-              管理员设置
-            </h1>
-            {config && role === 'owner' && (
-              <>
-                <button
-                  onClick={handleResetConfig}
-                  className={`px-3 py-1 text-[13px] rounded-md transition-colors ${buttonStyles.dangerSmall}`}
-                >
-                  重置配置
-                </button>
-                <button
-                  onClick={handleReloadConfig}
-                  className={`px-3 py-1 text-[13px] rounded-md transition-colors ${buttonStyles.primarySmall}`}
-                >
-                  重载配置
-                </button>
-              </>
-            )}
+      <div className='tm-page-container tm-admin-page'>
+        {/* 标题 + 重置配置按钮 */}
+        <header className='tm-page-head'>
+          <div>
+            <h1 className='tm-page-title'>管理员设置</h1>
+            <p className='tm-page-desc'>
+              管理站点配置、视频来源、用户权限与系统维护
+            </p>
           </div>
-
-          {/* TMDB 未配置提示 */}
-          {config && !config.SiteConfig.TMDBApiKey && (
-            <div className='bg-[var(--tm-surface-raised)] border border-[var(--tm-line)] rounded-lg p-4 mb-4'>
-              <div className='flex items-start gap-3'>
-                <div className='flex-shrink-0 mt-0.5'>
-                  <svg
-                    className='w-5 h-5 text-[color:var(--tm-text)]'
-                    fill='currentColor'
-                    viewBox='0 0 20 20'
-                  >
-                    <path
-                      fillRule='evenodd'
-                      d='M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z'
-                      clipRule='evenodd'
-                    />
-                  </svg>
-                </div>
-                <div className='flex-1'>
-                  <p className='text-sm font-medium text-[color:var(--tm-text)]'>
-                    未配置 TMDB API Key，配置后可获得更丰富的影视信息和推荐内容
-                  </p>
-                </div>
-              </div>
+          {config && role === 'owner' && (
+            <div className='tm-page-actions'>
+              <button
+                onClick={handleResetConfig}
+                className={`${buttonStyles.danger} min-h-[44px] tm-press`}
+              >
+                重置配置
+              </button>
+              <button
+                onClick={handleReloadConfig}
+                className={`${buttonStyles.primary} min-h-[44px] tm-press`}
+              >
+                重载配置
+              </button>
             </div>
           )}
+        </header>
 
-          {/* 视频源过多提示 */}
-          {config && (config.SourceConfig?.length ?? 0) > 50 && (
-            <div className='bg-[var(--tm-surface-raised)] border border-[var(--tm-line)] rounded-lg p-4 mb-4'>
-              <div className='flex items-start gap-3'>
-                <div className='flex-shrink-0 mt-0.5'>
-                  <svg
-                    className='w-5 h-5 text-[color:var(--tm-text)]'
-                    fill='currentColor'
-                    viewBox='0 0 20 20'
-                  >
-                    <path
-                      fillRule='evenodd'
-                      d='M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l6.518 11.591c.75 1.334-.213 2.99-1.742 2.99H3.48c-1.53 0-2.492-1.656-1.743-2.99L8.257 3.1zM11 13a1 1 0 10-2 0 1 1 0 002 0zm-1-6a1 1 0 00-1 1v3a1 1 0 102 0V8a1 1 0 00-1-1z'
-                      clipRule='evenodd'
-                    />
-                  </svg>
-                </div>
-                <div className='flex-1'>
-                  <p className='text-sm font-medium text-[color:var(--tm-text)]'>
-                    当前视频源数量较多，可能会拖慢搜索与优选速度，建议适当精简
-                  </p>
-                </div>
+        {/* TMDB 未配置提示 */}
+        {config && !config.SiteConfig.TMDBApiKey && (
+          <div className='bg-[var(--tm-surface-raised)] border border-[var(--tm-line)] rounded-lg p-4 mb-4'>
+            <div className='flex items-start gap-3'>
+              <div className='flex-shrink-0 mt-0.5'>
+                <svg
+                  className='w-5 h-5 text-[color:var(--tm-text)]'
+                  fill='currentColor'
+                  viewBox='0 0 20 20'
+                >
+                  <path
+                    fillRule='evenodd'
+                    d='M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z'
+                    clipRule='evenodd'
+                  />
+                </svg>
+              </div>
+              <div className='flex-1'>
+                <p className='text-sm font-medium text-[color:var(--tm-text)]'>
+                  未配置 TMDB API Key，配置后可获得更丰富的影视信息和推荐内容
+                </p>
               </div>
             </div>
-          )}
+          </div>
+        )}
 
-          {/* PC：左右结构（侧边栏 + 内容区），两栏各自独立滚动 */}
-          <div className='hidden lg:flex gap-6 lg:h-[calc(100vh-7rem)]'>
-            {/* 侧边栏 */}
-            <nav className='w-56 shrink-0 h-full overflow-y-auto pr-1'>
-              <div className='space-y-1'>
-                {visibleNavItems.map((item) =>
-                  item.children ? (
-                    <div key={item.key}>
-                      <button
-                        onClick={() => toggleGroup(item.key)}
-                        className='w-full flex items-center justify-between gap-2 px-3 py-2 rounded-lg text-sm font-medium text-[color:var(--tm-text)] hover:bg-[var(--tm-line)] transition-colors min-h-[44px] tm-press'
-                      >
-                        <span className='flex items-center gap-2 min-w-0'>
-                          {item.icon}
-                          <span className='truncate'>{item.title}</span>
-                        </span>
-                        {expandedGroups[item.key] ? (
-                          <ChevronUp size={16} />
-                        ) : (
-                          <ChevronDown size={16} />
-                        )}
-                      </button>
-                      {expandedGroups[item.key] && (
-                        <div className='mt-1 ml-3 pl-3 border-l border-[var(--tm-line)] space-y-1'>
-                          {item.children.map((child) => (
-                            <button
-                              key={child.key}
-                              onClick={() => selectSection(child.key)}
-                              className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${
-                                activeKey === child.key
-                                  ? 'bg-[var(--tm-text)] font-medium text-[color:var(--tm-accent-contrast)] min-h-[44px] tm-press'
-                                  : 'text-[color:var(--tm-muted)] hover:bg-[var(--tm-line)] min-h-[44px] tm-press'
-                              }`}
-                            >
-                              {child.icon}
-                              <span className='truncate'>{child.title}</span>
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  ) : (
+        {/* 视频源过多提示 */}
+        {config && (config.SourceConfig?.length ?? 0) > 50 && (
+          <div className='bg-[var(--tm-surface-raised)] border border-[var(--tm-line)] rounded-lg p-4 mb-4'>
+            <div className='flex items-start gap-3'>
+              <div className='flex-shrink-0 mt-0.5'>
+                <svg
+                  className='w-5 h-5 text-[color:var(--tm-text)]'
+                  fill='currentColor'
+                  viewBox='0 0 20 20'
+                >
+                  <path
+                    fillRule='evenodd'
+                    d='M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l6.518 11.591c.75 1.334-.213 2.99-1.742 2.99H3.48c-1.53 0-2.492-1.656-1.743-2.99L8.257 3.1zM11 13a1 1 0 10-2 0 1 1 0 002 0zm-1-6a1 1 0 00-1 1v3a1 1 0 102 0V8a1 1 0 00-1-1z'
+                    clipRule='evenodd'
+                  />
+                </svg>
+              </div>
+              <div className='flex-1'>
+                <p className='text-sm font-medium text-[color:var(--tm-text)]'>
+                  当前视频源数量较多，可能会拖慢搜索与优选速度，建议适当精简
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* PC：左右结构（侧边栏 + 内容区） */}
+        <div className='tm-admin-workspace hidden lg:flex'>
+          {/* 侧边栏 */}
+          <nav className='tm-admin-sidebar shrink-0 overflow-y-auto pr-1'>
+            <div className='space-y-1'>
+              {visibleNavItems.map((item) =>
+                item.children ? (
+                  <div key={item.key}>
                     <button
-                      key={item.key}
-                      onClick={() => selectSection(item.key)}
-                      className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${
-                        activeKey === item.key
-                          ? 'bg-[var(--tm-text)] font-medium text-[color:var(--tm-accent-contrast)] min-h-[44px] tm-press'
-                          : ' text-[color:var(--tm-text)] hover:bg-[var(--tm-line)] min-h-[44px] tm-press'
-                      }`}
+                      onClick={() => toggleGroup(item.key)}
+                      className='w-full flex items-center justify-between gap-2 px-3 py-2 rounded-lg text-sm font-medium text-[color:var(--tm-text)] hover:bg-[var(--tm-line)] transition-colors min-h-[44px] tm-press'
                     >
-                      {item.icon}
-                      <span className='truncate'>{item.title}</span>
+                      <span className='flex items-center gap-2 min-w-0'>
+                        {item.icon}
+                        <span className='truncate'>{item.title}</span>
+                      </span>
+                      {expandedGroups[item.key] ? (
+                        <ChevronUp size={16} />
+                      ) : (
+                        <ChevronDown size={16} />
+                      )}
                     </button>
-                  )
-                )}
-              </div>
-            </nav>
-
-            {/* 内容区（独立滚动） */}
-            <div
-              ref={contentScrollRef}
-              className='flex-1 min-w-0 h-full overflow-y-auto pr-1'
-            >
-              {activeItem?.render?.()}
+                    {expandedGroups[item.key] && (
+                      <div className='mt-1 ml-3 pl-3 border-l border-[var(--tm-line)] space-y-1'>
+                        {item.children.map((child) => (
+                          <button
+                            key={child.key}
+                            onClick={() => selectSection(child.key)}
+                            className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${
+                              activeKey === child.key
+                                ? 'bg-[var(--tm-text)] font-medium text-[color:var(--tm-accent-contrast)] min-h-[44px] tm-press'
+                                : 'text-[color:var(--tm-muted)] hover:bg-[var(--tm-line)] min-h-[44px] tm-press'
+                            }`}
+                          >
+                            {child.icon}
+                            <span className='truncate'>{child.title}</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <button
+                    key={item.key}
+                    onClick={() => selectSection(item.key)}
+                    className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${
+                      activeKey === item.key
+                        ? 'bg-[var(--tm-text)] font-medium text-[color:var(--tm-accent-contrast)] min-h-[44px] tm-press'
+                        : ' text-[color:var(--tm-text)] hover:bg-[var(--tm-line)] min-h-[44px] tm-press'
+                    }`}
+                  >
+                    {item.icon}
+                    <span className='truncate'>{item.title}</span>
+                  </button>
+                )
+              )}
             </div>
+          </nav>
+
+          {/* 内容区（独立滚动） */}
+          <div
+            ref={contentScrollRef}
+            className='flex-1 min-w-0 h-full overflow-y-auto pr-1'
+          >
+            {activeItem?.render?.()}
           </div>
+        </div>
 
-          {/* 移动端 / 窄屏：保留原有手风琴 */}
-          <div className='lg:hidden'>
-            {/* 配置文件标签 - 仅站长可见 */}
-            {role === 'owner' && (
-              <CollapsibleTab
-                title='配置文件'
-                icon={
-                  <FileText
-                    size={20}
-                    className='text-[color:var(--tm-muted)]'
-                  />
-                }
-                isExpanded={expandedTabs.configFile}
-                onToggle={() => toggleTab('configFile')}
-              >
-                <ConfigFileComponent
-                  config={config}
-                  refreshConfig={fetchConfig}
-                />
-              </CollapsibleTab>
-            )}
-
-            {/* 站点配置标签 */}
+        {/* 移动端 / 窄屏：保留原有手风琴 */}
+        <div className='lg:hidden'>
+          {/* 配置文件标签 - 仅站长可见 */}
+          {role === 'owner' && (
             <CollapsibleTab
-              title='站点配置'
+              title='配置文件'
               icon={
-                <Settings size={20} className='text-[color:var(--tm-muted)]' />
+                <FileText size={20} className='text-[color:var(--tm-muted)]' />
               }
-              isExpanded={expandedTabs.siteConfig}
-              onToggle={() => toggleTab('siteConfig')}
+              isExpanded={expandedTabs.configFile}
+              onToggle={() => toggleTab('configFile')}
             >
-              <SiteConfigComponent
+              <ConfigFileComponent
+                config={config}
+                refreshConfig={fetchConfig}
+              />
+            </CollapsibleTab>
+          )}
+
+          {/* 站点配置标签 */}
+          <CollapsibleTab
+            title='站点配置'
+            icon={
+              <Settings size={20} className='text-[color:var(--tm-muted)]' />
+            }
+            isExpanded={expandedTabs.siteConfig}
+            onToggle={() => toggleTab('siteConfig')}
+          >
+            <SiteConfigComponent config={config} refreshConfig={fetchConfig} />
+          </CollapsibleTab>
+
+          {/* 注册配置标签 */}
+          <CollapsibleTab
+            title='注册配置'
+            icon={
+              <UserPlus size={20} className='text-[color:var(--tm-muted)]' />
+            }
+            isExpanded={expandedTabs.registrationConfig}
+            onToggle={() => toggleTab('registrationConfig')}
+          >
+            <RegistrationConfigComponent
+              config={config}
+              refreshConfig={fetchConfig}
+            />
+          </CollapsibleTab>
+
+          {/* 个性化配置标签 */}
+          <CollapsibleTab
+            title='个性化配置'
+            icon={
+              <Palette size={20} className='text-[color:var(--tm-muted)]' />
+            }
+            isExpanded={expandedTabs.themeConfig}
+            onToggle={() => toggleTab('themeConfig')}
+          >
+            <ThemeConfigComponent config={config} refreshConfig={fetchConfig} />
+          </CollapsibleTab>
+
+          <div className='space-y-4'>
+            {/* 用户管理标签 */}
+            <CollapsibleTab
+              title='用户管理'
+              icon={
+                <Users size={20} className='text-[color:var(--tm-muted)]' />
+              }
+              isExpanded={expandedTabs.userConfig}
+              onToggle={() => toggleTab('userConfig')}
+            >
+              <UserConfig
+                config={config}
+                role={role}
+                refreshConfig={refreshConfigAndUsers}
+                usersV2={usersV2}
+                userPage={userPage}
+                userTotalPages={userTotalPages}
+                userTotal={userTotal}
+                fetchUsersV2={fetchUsersV2}
+                userListLoading={userListLoading}
+                userSearch={userSearch}
+                setUserSearch={setUserSearch}
+              />
+            </CollapsibleTab>
+
+            {/* 视频源配置标签 */}
+            <CollapsibleTab
+              title='视频源配置'
+              icon={
+                <Video size={20} className='text-[color:var(--tm-muted)]' />
+              }
+              isExpanded={expandedTabs.videoSource}
+              onToggle={() => toggleTab('videoSource')}
+            >
+              <VideoSourceConfig config={config} refreshConfig={fetchConfig} />
+            </CollapsibleTab>
+
+            <CollapsibleTab
+              title='视频源脚本'
+              icon={<Bot size={20} className='text-[color:var(--tm-muted)]' />}
+              isExpanded={expandedTabs.sourceScriptLab}
+              onToggle={() => toggleTab('sourceScriptLab')}
+            >
+              <VideoSourceScriptLab />
+            </CollapsibleTab>
+
+            <CollapsibleTab
+              title='音乐配置'
+              icon={
+                <svg
+                  width='20'
+                  height='20'
+                  viewBox='0 0 24 24'
+                  fill='none'
+                  stroke='currentColor'
+                  strokeWidth='2'
+                  strokeLinecap='round'
+                  strokeLinejoin='round'
+                  className='text-[color:var(--tm-muted)]'
+                >
+                  <path d='M9 18V5l12-2v13' />
+                  <circle cx='6' cy='18' r='3' />
+                  <circle cx='18' cy='16' r='3' />
+                </svg>
+              }
+              isExpanded={expandedTabs.musicConfig}
+              onToggle={() => toggleTab('musicConfig')}
+            >
+              <MusicConfigComponent
                 config={config}
                 refreshConfig={fetchConfig}
               />
             </CollapsibleTab>
 
-            {/* 注册配置标签 */}
             <CollapsibleTab
-              title='注册配置'
+              title='漫画配置'
               icon={
-                <UserPlus size={20} className='text-[color:var(--tm-muted)]' />
+                <BookOpen size={20} className='text-[color:var(--tm-muted)]' />
               }
-              isExpanded={expandedTabs.registrationConfig}
-              onToggle={() => toggleTab('registrationConfig')}
+              isExpanded={expandedTabs.suwayomiConfig}
+              onToggle={() => toggleTab('suwayomiConfig')}
             >
-              <RegistrationConfigComponent
+              <SuwayomiConfigComponent
                 config={config}
                 refreshConfig={fetchConfig}
               />
             </CollapsibleTab>
 
-            {/* 个性化配置标签 */}
             <CollapsibleTab
-              title='个性化配置'
+              title='电子书配置'
               icon={
-                <Palette size={20} className='text-[color:var(--tm-muted)]' />
+                <BookMarked
+                  size={20}
+                  className='text-[color:var(--tm-muted)]'
+                />
               }
-              isExpanded={expandedTabs.themeConfig}
-              onToggle={() => toggleTab('themeConfig')}
+              isExpanded={expandedTabs.opdsConfig}
+              onToggle={() => toggleTab('opdsConfig')}
             >
-              <ThemeConfigComponent
+              <OPDSConfigComponent
                 config={config}
                 refreshConfig={fetchConfig}
               />
             </CollapsibleTab>
 
-            <div className='space-y-4'>
-              {/* 用户管理标签 */}
-              <CollapsibleTab
-                title='用户管理'
-                icon={
-                  <Users size={20} className='text-[color:var(--tm-muted)]' />
-                }
-                isExpanded={expandedTabs.userConfig}
-                onToggle={() => toggleTab('userConfig')}
-              >
-                <UserConfig
-                  config={config}
-                  role={role}
-                  refreshConfig={refreshConfigAndUsers}
-                  usersV2={usersV2}
-                  userPage={userPage}
-                  userTotalPages={userTotalPages}
-                  userTotal={userTotal}
-                  fetchUsersV2={fetchUsersV2}
-                  userListLoading={userListLoading}
-                  userSearch={userSearch}
-                  setUserSearch={setUserSearch}
-                />
-              </CollapsibleTab>
+            {/* 电视直播源配置标签 */}
+            <CollapsibleTab
+              title='电视直播源配置'
+              icon={<Tv size={20} className='text-[color:var(--tm-muted)]' />}
+              isExpanded={expandedTabs.liveSource}
+              onToggle={() => toggleTab('liveSource')}
+            >
+              <LiveSourceConfig config={config} refreshConfig={fetchConfig} />
+            </CollapsibleTab>
 
-              {/* 视频源配置标签 */}
-              <CollapsibleTab
-                title='视频源配置'
-                icon={
-                  <Video size={20} className='text-[color:var(--tm-muted)]' />
-                }
-                isExpanded={expandedTabs.videoSource}
-                onToggle={() => toggleTab('videoSource')}
-              >
-                <VideoSourceConfig
-                  config={config}
-                  refreshConfig={fetchConfig}
-                />
-              </CollapsibleTab>
+            {/* 网络直播配置标签 */}
+            <CollapsibleTab
+              title='网络直播配置'
+              icon={
+                <Globe size={20} className='text-[color:var(--tm-muted)]' />
+              }
+              isExpanded={expandedTabs.webLive}
+              onToggle={() => toggleTab('webLive')}
+            >
+              <WebLiveConfig config={config} refreshConfig={fetchConfig} />
+            </CollapsibleTab>
 
-              <CollapsibleTab
-                title='视频源脚本'
-                icon={
-                  <Bot size={20} className='text-[color:var(--tm-muted)]' />
-                }
-                isExpanded={expandedTabs.sourceScriptLab}
-                onToggle={() => toggleTab('sourceScriptLab')}
-              >
-                <VideoSourceScriptLab />
-              </CollapsibleTab>
-
-              <CollapsibleTab
-                title='音乐配置'
-                icon={
-                  <svg
-                    width='20'
-                    height='20'
-                    viewBox='0 0 24 24'
-                    fill='none'
-                    stroke='currentColor'
-                    strokeWidth='2'
-                    strokeLinecap='round'
-                    strokeLinejoin='round'
-                    className='text-[color:var(--tm-muted)]'
-                  >
-                    <path d='M9 18V5l12-2v13' />
-                    <circle cx='6' cy='18' r='3' />
-                    <circle cx='18' cy='16' r='3' />
-                  </svg>
-                }
-                isExpanded={expandedTabs.musicConfig}
-                onToggle={() => toggleTab('musicConfig')}
-              >
-                <MusicConfigComponent
-                  config={config}
-                  refreshConfig={fetchConfig}
-                />
-              </CollapsibleTab>
-
-              <CollapsibleTab
-                title='漫画配置'
-                icon={
-                  <BookOpen
-                    size={20}
-                    className='text-[color:var(--tm-muted)]'
-                  />
-                }
-                isExpanded={expandedTabs.suwayomiConfig}
-                onToggle={() => toggleTab('suwayomiConfig')}
-              >
-                <SuwayomiConfigComponent
-                  config={config}
-                  refreshConfig={fetchConfig}
-                />
-              </CollapsibleTab>
-
-              <CollapsibleTab
-                title='电子书配置'
-                icon={
-                  <BookMarked
-                    size={20}
-                    className='text-[color:var(--tm-muted)]'
-                  />
-                }
-                isExpanded={expandedTabs.opdsConfig}
-                onToggle={() => toggleTab('opdsConfig')}
-              >
-                <OPDSConfigComponent
-                  config={config}
-                  refreshConfig={fetchConfig}
-                />
-              </CollapsibleTab>
-
-              {/* 电视直播源配置标签 */}
-              <CollapsibleTab
-                title='电视直播源配置'
-                icon={<Tv size={20} className='text-[color:var(--tm-muted)]' />}
-                isExpanded={expandedTabs.liveSource}
-                onToggle={() => toggleTab('liveSource')}
-              >
-                <LiveSourceConfig config={config} refreshConfig={fetchConfig} />
-              </CollapsibleTab>
-
-              {/* 网络直播配置标签 */}
-              <CollapsibleTab
-                title='网络直播配置'
-                icon={
-                  <Globe size={20} className='text-[color:var(--tm-muted)]' />
-                }
-                isExpanded={expandedTabs.webLive}
-                onToggle={() => toggleTab('webLive')}
-              >
-                <WebLiveConfig config={config} refreshConfig={fetchConfig} />
-              </CollapsibleTab>
-
-              {/* 私人影库大类 */}
-              <CollapsibleTab
-                title='私人影库'
-                icon={
-                  <Database size={20} className='text-[color:var(--tm-text)]' />
-                }
-                isExpanded={expandedTabs.mediaLibrary}
-                onToggle={() => toggleTab('mediaLibrary')}
-                isParent={true}
-              >
-                <div className='space-y-4'>
-                  {/* Openlist配置子标签 */}
-                  <CollapsibleTab
-                    title='Openlist配置'
-                    icon={
-                      <FolderOpen
-                        size={20}
-                        className='text-[color:var(--tm-muted)]'
-                      />
-                    }
-                    isExpanded={expandedTabs.openListConfig}
-                    onToggle={() => toggleTab('openListConfig')}
-                  >
-                    <OpenListConfigComponent
-                      config={config}
-                      refreshConfig={fetchConfig}
-                    />
-                  </CollapsibleTab>
-
-                  {/* Emby 媒体库子标签 */}
-                  <CollapsibleTab
-                    title='Emby 媒体库'
-                    icon={
-                      <FolderOpen
-                        size={20}
-                        className='text-[color:var(--tm-muted)]'
-                      />
-                    }
-                    isExpanded={expandedTabs.embyConfig}
-                    onToggle={() => toggleTab('embyConfig')}
-                  >
-                    <EmbyConfigComponent
-                      config={config}
-                      refreshConfig={fetchConfig}
-                    />
-                  </CollapsibleTab>
-
-                  {/* 小雅配置子标签 */}
-                  <CollapsibleTab
-                    title='小雅配置'
-                    icon={
-                      <FolderOpen
-                        size={20}
-                        className='text-[color:var(--tm-muted)]'
-                      />
-                    }
-                    isExpanded={expandedTabs.xiaoyaConfig}
-                    onToggle={() => toggleTab('xiaoyaConfig')}
-                  >
-                    <XiaoyaConfigComponent
-                      config={config}
-                      refreshConfig={fetchConfig}
-                    />
-                  </CollapsibleTab>
-                  {/* 求片管理子标签 */}
-                  <CollapsibleTab
-                    title='求片管理'
-                    icon={
-                      <Video
-                        size={20}
-                        className='text-[color:var(--tm-muted)]'
-                      />
-                    }
-                    isExpanded={expandedTabs.movieRequests}
-                    onToggle={() => toggleTab('movieRequests')}
-                  >
-                    <MovieRequestsComponent
-                      config={config}
-                      refreshConfig={fetchConfig}
-                    />
-                  </CollapsibleTab>
-
-                  {/* 追番订阅子标签 */}
-                  <CollapsibleTab
-                    title='追番订阅'
-                    icon={
-                      <Cat size={20} className='text-[color:var(--tm-muted)]' />
-                    }
-                    isExpanded={expandedTabs.animeSubscription}
-                    onToggle={() => toggleTab('animeSubscription')}
-                  >
-                    <AnimeSubscriptionComponent
-                      config={config}
-                      refreshConfig={fetchConfig}
-                    />
-                  </CollapsibleTab>
-
-                  <CollapsibleTab
-                    title='网盘配置'
-                    icon={
-                      <Cloud
-                        size={20}
-                        className='text-[color:var(--tm-muted)]'
-                      />
-                    }
-                    isExpanded={expandedTabs.netDiskConfig}
-                    onToggle={() => toggleTab('netDiskConfig')}
-                  >
-                    <NetDiskConfigComponent
-                      config={config}
-                      refreshConfig={fetchConfig}
-                    />
-                  </CollapsibleTab>
-                </div>
-              </CollapsibleTab>
-
-              {/* AI配置标签 */}
-              <CollapsibleTab
-                title='AI设定'
-                icon={
-                  <Bot size={20} className='text-[color:var(--tm-muted)]' />
-                }
-                isExpanded={expandedTabs.aiConfig}
-                onToggle={() => toggleTab('aiConfig')}
-              >
-                <AIConfigComponent
-                  config={config}
-                  refreshConfig={fetchConfig}
-                />
-              </CollapsibleTab>
-
-              {/* 邮件配置标签 */}
-              <CollapsibleTab
-                title='邮件配置'
-                icon={
-                  <Mail size={20} className='text-[color:var(--tm-muted)]' />
-                }
-                isExpanded={expandedTabs.emailConfig}
-                onToggle={() => toggleTab('emailConfig')}
-              >
-                <EmailConfigComponent
-                  config={config}
-                  refreshConfig={fetchConfig}
-                />
-              </CollapsibleTab>
-
-              {/* Telegram Bot 配置标签 */}
-              <CollapsibleTab
-                title='Telegram Bot'
-                icon={
-                  <Send size={20} className='text-[color:var(--tm-muted)]' />
-                }
-                isExpanded={expandedTabs.telegramConfig}
-                onToggle={() => toggleTab('telegramConfig')}
-              >
-                <TelegramConfigComponent
-                  config={config}
-                  refreshConfig={fetchConfig}
-                />
-              </CollapsibleTab>
-
-              {/* 分类配置标签 */}
-              <CollapsibleTab
-                title='分类配置'
-                icon={
-                  <FolderOpen
-                    size={20}
-                    className='text-[color:var(--tm-muted)]'
-                  />
-                }
-                isExpanded={expandedTabs.categoryConfig}
-                onToggle={() => toggleTab('categoryConfig')}
-              >
-                <CategoryConfig config={config} refreshConfig={fetchConfig} />
-              </CollapsibleTab>
-
-              {/* 自定义去广告标签 */}
-              <CollapsibleTab
-                title='自定义去广告'
-                icon={
-                  <svg
-                    width='20'
-                    height='20'
-                    viewBox='0 0 24 24'
-                    fill='none'
-                    stroke='currentColor'
-                    strokeWidth='2'
-                    strokeLinecap='round'
-                    strokeLinejoin='round'
-                    className='text-[color:var(--tm-muted)]'
-                  >
-                    <path d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z' />
-                    <path d='M8 12h8' />
-                  </svg>
-                }
-                isExpanded={expandedTabs.customAdFilter}
-                onToggle={() => toggleTab('customAdFilter')}
-              >
-                <CustomAdFilterConfig
-                  config={config}
-                  refreshConfig={fetchConfig}
-                />
-              </CollapsibleTab>
-
-              {/* 数据迁移标签 - 仅站长可见 */}
-              {role === 'owner' && (
+            {/* 私人影库大类 */}
+            <CollapsibleTab
+              title='私人影库'
+              icon={
+                <Database size={20} className='text-[color:var(--tm-text)]' />
+              }
+              isExpanded={expandedTabs.mediaLibrary}
+              onToggle={() => toggleTab('mediaLibrary')}
+              isParent={true}
+            >
+              <div className='space-y-4'>
+                {/* Openlist配置子标签 */}
                 <CollapsibleTab
-                  title='数据迁移'
+                  title='Openlist配置'
                   icon={
-                    <Database
+                    <FolderOpen
                       size={20}
                       className='text-[color:var(--tm-muted)]'
                     />
                   }
-                  isExpanded={expandedTabs.dataMigration}
-                  onToggle={() => toggleTab('dataMigration')}
+                  isExpanded={expandedTabs.openListConfig}
+                  onToggle={() => toggleTab('openListConfig')}
                 >
-                  <DataMigration onRefreshConfig={refreshConfigAndUsers} />
+                  <OpenListConfigComponent
+                    config={config}
+                    refreshConfig={fetchConfig}
+                  />
                 </CollapsibleTab>
-              )}
-            </div>
+
+                {/* Emby 媒体库子标签 */}
+                <CollapsibleTab
+                  title='Emby 媒体库'
+                  icon={
+                    <FolderOpen
+                      size={20}
+                      className='text-[color:var(--tm-muted)]'
+                    />
+                  }
+                  isExpanded={expandedTabs.embyConfig}
+                  onToggle={() => toggleTab('embyConfig')}
+                >
+                  <EmbyConfigComponent
+                    config={config}
+                    refreshConfig={fetchConfig}
+                  />
+                </CollapsibleTab>
+
+                {/* 小雅配置子标签 */}
+                <CollapsibleTab
+                  title='小雅配置'
+                  icon={
+                    <FolderOpen
+                      size={20}
+                      className='text-[color:var(--tm-muted)]'
+                    />
+                  }
+                  isExpanded={expandedTabs.xiaoyaConfig}
+                  onToggle={() => toggleTab('xiaoyaConfig')}
+                >
+                  <XiaoyaConfigComponent
+                    config={config}
+                    refreshConfig={fetchConfig}
+                  />
+                </CollapsibleTab>
+                {/* 求片管理子标签 */}
+                <CollapsibleTab
+                  title='求片管理'
+                  icon={
+                    <Video size={20} className='text-[color:var(--tm-muted)]' />
+                  }
+                  isExpanded={expandedTabs.movieRequests}
+                  onToggle={() => toggleTab('movieRequests')}
+                >
+                  <MovieRequestsComponent
+                    config={config}
+                    refreshConfig={fetchConfig}
+                  />
+                </CollapsibleTab>
+
+                {/* 追番订阅子标签 */}
+                <CollapsibleTab
+                  title='追番订阅'
+                  icon={
+                    <Cat size={20} className='text-[color:var(--tm-muted)]' />
+                  }
+                  isExpanded={expandedTabs.animeSubscription}
+                  onToggle={() => toggleTab('animeSubscription')}
+                >
+                  <AnimeSubscriptionComponent
+                    config={config}
+                    refreshConfig={fetchConfig}
+                  />
+                </CollapsibleTab>
+
+                <CollapsibleTab
+                  title='网盘配置'
+                  icon={
+                    <Cloud size={20} className='text-[color:var(--tm-muted)]' />
+                  }
+                  isExpanded={expandedTabs.netDiskConfig}
+                  onToggle={() => toggleTab('netDiskConfig')}
+                >
+                  <NetDiskConfigComponent
+                    config={config}
+                    refreshConfig={fetchConfig}
+                  />
+                </CollapsibleTab>
+              </div>
+            </CollapsibleTab>
+
+            {/* AI配置标签 */}
+            <CollapsibleTab
+              title='AI设定'
+              icon={<Bot size={20} className='text-[color:var(--tm-muted)]' />}
+              isExpanded={expandedTabs.aiConfig}
+              onToggle={() => toggleTab('aiConfig')}
+            >
+              <AIConfigComponent config={config} refreshConfig={fetchConfig} />
+            </CollapsibleTab>
+
+            {/* 邮件配置标签 */}
+            <CollapsibleTab
+              title='邮件配置'
+              icon={<Mail size={20} className='text-[color:var(--tm-muted)]' />}
+              isExpanded={expandedTabs.emailConfig}
+              onToggle={() => toggleTab('emailConfig')}
+            >
+              <EmailConfigComponent
+                config={config}
+                refreshConfig={fetchConfig}
+              />
+            </CollapsibleTab>
+
+            {/* Telegram Bot 配置标签 */}
+            <CollapsibleTab
+              title='Telegram Bot'
+              icon={<Send size={20} className='text-[color:var(--tm-muted)]' />}
+              isExpanded={expandedTabs.telegramConfig}
+              onToggle={() => toggleTab('telegramConfig')}
+            >
+              <TelegramConfigComponent
+                config={config}
+                refreshConfig={fetchConfig}
+              />
+            </CollapsibleTab>
+
+            {/* 分类配置标签 */}
+            <CollapsibleTab
+              title='分类配置'
+              icon={
+                <FolderOpen
+                  size={20}
+                  className='text-[color:var(--tm-muted)]'
+                />
+              }
+              isExpanded={expandedTabs.categoryConfig}
+              onToggle={() => toggleTab('categoryConfig')}
+            >
+              <CategoryConfig config={config} refreshConfig={fetchConfig} />
+            </CollapsibleTab>
+
+            {/* 自定义去广告标签 */}
+            <CollapsibleTab
+              title='自定义去广告'
+              icon={
+                <svg
+                  width='20'
+                  height='20'
+                  viewBox='0 0 24 24'
+                  fill='none'
+                  stroke='currentColor'
+                  strokeWidth='2'
+                  strokeLinecap='round'
+                  strokeLinejoin='round'
+                  className='text-[color:var(--tm-muted)]'
+                >
+                  <path d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z' />
+                  <path d='M8 12h8' />
+                </svg>
+              }
+              isExpanded={expandedTabs.customAdFilter}
+              onToggle={() => toggleTab('customAdFilter')}
+            >
+              <CustomAdFilterConfig
+                config={config}
+                refreshConfig={fetchConfig}
+              />
+            </CollapsibleTab>
+
+            {/* 数据迁移标签 - 仅站长可见 */}
+            {role === 'owner' && (
+              <CollapsibleTab
+                title='数据迁移'
+                icon={
+                  <Database
+                    size={20}
+                    className='text-[color:var(--tm-muted)]'
+                  />
+                }
+                isExpanded={expandedTabs.dataMigration}
+                onToggle={() => toggleTab('dataMigration')}
+              >
+                <DataMigration onRefreshConfig={refreshConfigAndUsers} />
+              </CollapsibleTab>
+            )}
           </div>
         </div>
       </div>

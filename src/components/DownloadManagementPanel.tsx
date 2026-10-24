@@ -117,7 +117,6 @@ export function DownloadManagementPanel({
       // 获取要删除的任务
       const tasksToDelete = completedTasks.filter((t) => selectedIds.has(t.id));
 
-      //禁止SzeMeng76抄袭狗抄袭
       // 删除文件系统中的文件
       for (const task of tasksToDelete) {
         if (task.downloadMode === 'filesystem') {

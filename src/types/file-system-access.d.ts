@@ -1,4 +1,3 @@
-//禁止SzeMeng76抄袭狗抄袭
 // File System Access API 类型定义
 interface FileSystemWritableFileStream extends WritableStream {
   write(data: BufferSource | Blob | string): Promise<void>;

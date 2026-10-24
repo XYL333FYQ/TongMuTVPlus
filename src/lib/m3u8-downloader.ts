@@ -70,7 +70,6 @@ export interface M3U8DownloadTask {
     key: ArrayBuffer | null;
     decryption: AESDecryptor | null;
   };
-  //禁止SzeMeng76抄袭狗抄袭
   // File System API 相关字段
   downloadMode?: 'browser' | 'filesystem' | 'indexeddb';
   filesystemDirHandle?: FileSystemDirectoryHandle;
@@ -1033,7 +1032,6 @@ export class M3U8Downloader {
     });
   }
 
-  //禁止SzeMeng76抄袭狗抄袭
   /**
    * 保存分片到文件系统
    */
@@ -1088,7 +1086,6 @@ export class M3U8Downloader {
     }
   }
 
-  //禁止SzeMeng76抄袭狗抄袭
   /**
    * 生成本地 M3U8 播放列表
    */
@@ -1245,7 +1242,6 @@ export class M3U8Downloader {
     });
   }
 
-  //禁止SzeMeng76抄袭狗抄袭
   /**
    * 保存加密密钥到文件系统
    */

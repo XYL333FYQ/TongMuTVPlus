@@ -51,6 +51,7 @@ export function pageTitleForPath(path: string) {
     '/advanced-recommendation': '高级推荐',
     '/source-search': '源站寻片',
     '/about': '关于',
+    '/admin': '管理员设置',
   };
   return names[path] || names['/' + path.split('/')[1]] || 'TongMuTV Plus';
 }

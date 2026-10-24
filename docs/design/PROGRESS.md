@@ -1,5 +1,13 @@
 # 界面改造进度
 
+## 2026-10-24 清理旧项目残留、修复 DesignGridOverlay 报错、改造客户端安装指南与统一管理面板排版
+
+- 修复 `src/components/DesignGridOverlay.tsx` 中当浏览器自动填充或输入法触发无 `event.key` 的 `keydown` 事件时调用 `event.key.toLowerCase()` 抛出的 `TypeError` 运行时崩溃。
+- 彻底清除 `src/components/UserMenu.tsx` 中的「耻辱柱」弹窗与 `🐶` 按钮，以及 `DownloadManagementPanel.tsx`、`DownloadContext.tsx`、`m3u8-downloader.ts`、`file-system-access.d.ts` 共 4 个文件中的辱骂注释；移除播放页 `LegacyPlaybackSurface.tsx` 底部唤醒旧版客户端的「App 打开」「PC Client 打开」按钮。
+- 将账号菜单中的原「生态应用」改造为 `TongMuTV Plus` 专属的「客户端安装指南」（提供电脑桌面端、iOS/Android 手机端 PWA 安装说明及电视大屏端入口）；「电视访问」弹窗移除第三方绿色图标 `OrionTV` 标签页，保留原生「TVBox 订阅」与「Web 电视」双标签页。
+- 统一管理面板（`/admin`）排版与字号：`src/styles/tokens.css` 将 `[data-page='/admin']` 纳入 1700px+ 宽屏连续缩放体系；`src/app/admin/page.tsx` 外层容器改为全站统一的 `.tm-page-container`，页头改为 `.tm-page-head` + `.tm-page-title`；`src/styles/layout.css` 新增 `.tm-admin-page` 排版与动态字号规则，使管理面板与外部页面左右边缘及字号比例对齐。
+- 验证：`pnpm typecheck` 0 error；`pnpm lint` 0 error；`pnpm test` 87 套件 / 519 项通过；`pnpm format:check` 通过；`check-design.mjs` 新增违规 0；浏览器在 1280 / 820 / 390 深浅主题下实测通过，控制台 0 error。
+
 ## 2026-10-23 bug-hunter 余下问题清零、小窗可拖动、双账号走查
 
 - 用户同意“简单就全修”，并提出小窗只能固定在右下角。没有新增依赖，没有提交；首页三套布局未动。

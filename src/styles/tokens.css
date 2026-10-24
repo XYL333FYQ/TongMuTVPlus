@@ -175,7 +175,8 @@ html.light {
       .tm-shell:is(
           [data-page='/'],
           [data-page='/douban'],
-          [data-page='/watch-room']
+          [data-page='/watch-room'],
+          [data-page='/admin']
         )
     ) {
     --tm-wide-unit: clamp(1px, 0.0588235294vw, 1.25px);

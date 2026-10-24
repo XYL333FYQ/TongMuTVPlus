@@ -23,8 +23,6 @@ import {
   MoveDown,
   MoveUp,
   Package,
-  Puzzle,
-  Router as RouterIcon,
   Rss,
   Settings,
   Shield,
@@ -90,7 +88,6 @@ export const UserMenu: React.FC = () => {
   const [isEmailSettingsOpen, setIsEmailSettingsOpen] = useState(false);
   const [isDeviceManagementOpen, setIsDeviceManagementOpen] = useState(false);
   const [isEcoAppsOpen, setIsEcoAppsOpen] = useState(false);
-  const [isReportOpen, setIsReportOpen] = useState(false);
   const [isDownloadManagementOpen, setIsDownloadManagementOpen] =
     useState(false);
   const [isTVRemoteOpen, setIsTVRemoteOpen] = useState(false);
@@ -128,7 +125,6 @@ export const UserMenu: React.FC = () => {
   const [tvModeEnabled, setTvModeEnabled] = useState(true);
   const [subscribeUrl, setSubscribeUrl] = useState('');
   const [copySuccess, setCopySuccess] = useState(false);
-  const [orionBaseUrlCopySuccess, setOrionBaseUrlCopySuccess] = useState(false);
   const [tvboxToken, setTvboxToken] = useState('');
   const [isResettingToken, setIsResettingToken] = useState(false);
   const [isLoadingSubscribeUrl, setIsLoadingSubscribeUrl] = useState(false);
@@ -144,9 +140,7 @@ export const UserMenu: React.FC = () => {
   const tvQrVideoRef = useRef<HTMLVideoElement | null>(null);
   const tvQrStreamRef = useRef<MediaStream | null>(null);
   const tvQrScanStopRef = useRef(false);
-  const [tvAccessTab, setTvAccessTab] = useState<'tvbox' | 'orion' | 'web'>(
-    'tvbox'
-  );
+  const [tvAccessTab, setTvAccessTab] = useState<'tvbox' | 'web'>('tvbox');
 
   // Body 滚动锁定 - 使用 overflow 方式避免布局问题
   useEffect(() => {
@@ -159,7 +153,6 @@ export const UserMenu: React.FC = () => {
       isEmailSettingsOpen ||
       isDeviceManagementOpen ||
       isEcoAppsOpen ||
-      isReportOpen ||
       isDownloadManagementOpen ||
       isTvQrScannerOpen ||
       isTVRemoteOpen
@@ -190,7 +183,6 @@ export const UserMenu: React.FC = () => {
     isEmailSettingsOpen,
     isDeviceManagementOpen,
     isEcoAppsOpen,
-    isReportOpen,
     isDownloadManagementOpen,
     isTvQrScannerOpen,
     isTVRemoteOpen,
@@ -1654,7 +1646,6 @@ export const UserMenu: React.FC = () => {
     setIsOpen(false);
     setIsSubscribeOpen(true);
     setCopySuccess(false);
-    setOrionBaseUrlCopySuccess(false);
     // 懒加载: TVBox 订阅启用时才请求订阅 URL
     if (subscribeEnabled) {
       await fetchSubscribeUrl();
@@ -1666,7 +1657,6 @@ export const UserMenu: React.FC = () => {
   const handleCloseSubscribe = () => {
     setIsSubscribeOpen(false);
     setCopySuccess(false);
-    setOrionBaseUrlCopySuccess(false);
   };
 
   const handleCopySubscribeUrl = async () => {
@@ -1678,18 +1668,6 @@ export const UserMenu: React.FC = () => {
       }, 2000);
     } catch (error) {
       console.error('复制失败:', error);
-    }
-  };
-
-  const handleCopyOrionBaseUrl = async () => {
-    try {
-      await navigator.clipboard.writeText(window.location.origin);
-      setOrionBaseUrlCopySuccess(true);
-      setTimeout(() => {
-        setOrionBaseUrlCopySuccess(false);
-      }, 2000);
-    } catch (error) {
-      console.error('复制OrionTV Base URL失败:', error);
     }
   };
 
@@ -3060,7 +3038,7 @@ export const UserMenu: React.FC = () => {
             className='tm-menu-item'
           >
             <Package aria-hidden />
-            <span>生态应用</span>
+            <span>客户端安装</span>
           </button>
           {showOfflineDownload && (
             <button
@@ -5392,10 +5370,9 @@ export const UserMenu: React.FC = () => {
                 </button>
               </div>
 
-              <div className='mb-5 grid grid-cols-3 rounded-2xl bg-raised p-1'>
+              <div className='mb-5 grid grid-cols-2 rounded-2xl bg-raised p-1'>
                 {[
                   { key: 'tvbox' as const, label: 'TVBox 订阅', icon: Rss },
-                  { key: 'orion' as const, label: 'OrionTV', icon: Download },
                   { key: 'web' as const, label: 'Web 电视', icon: Monitor },
                 ].map((item) => {
                   const Icon = item.icon;
@@ -5417,11 +5394,7 @@ export const UserMenu: React.FC = () => {
                       <Icon className='h-4 w-4' />
                       <span className='hidden sm:inline'>{item.label}</span>
                       <span className='sm:hidden'>
-                        {item.key === 'tvbox'
-                          ? 'TVBox'
-                          : item.key === 'orion'
-                          ? 'Orion'
-                          : 'Web'}
+                        {item.key === 'tvbox' ? 'TVBox' : 'Web'}
                       </span>
                     </button>
                   );
@@ -5574,65 +5547,6 @@ export const UserMenu: React.FC = () => {
                       </div>
                     </div>
                   )}
-                </section>
-              )}
-
-              {tvAccessTab === 'orion' && (
-                <section className='rounded-2xl border border-line bg-raised p-5'>
-                  <div className='flex items-center gap-3'>
-                    <img
-                      src='/icons/OrionTV.png'
-                      alt='OrionTV'
-                      className='h-11 w-11 rounded-2xl object-cover shadow-lg shadow-ink/20'
-                    />
-                    <div>
-                      <h4 className='text-lg font-bold text-fg'>OrionTV</h4>
-                      <p className='mt-1 text-sm text-muted'>
-                        Android TV 专用客户端
-                      </p>
-                    </div>
-                  </div>
-                  <p className='mt-5 text-sm leading-6 text-muted'>
-                    可直接作为 {BRAND_NAME} 电视端使用，适合安装到 Android TV /
-                    电视盒子。
-                  </p>
-                  <div className='mt-5'>
-                    <h5 className='mb-2 text-sm font-bold text-muted'>
-                      Base URL
-                    </h5>
-                    <div className='flex gap-2'>
-                      <input
-                        type='text'
-                        readOnly
-                        value={
-                          typeof window !== 'undefined'
-                            ? window.location.origin
-                            : ''
-                        }
-                        className='min-w-0 flex-1 rounded-xl border border-line bg-surface px-3 py-2 text-sm outline-none text-fg'
-                      />
-                      <button
-                        type='button'
-                        onClick={handleCopyOrionBaseUrl}
-                        className='inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl bg-fg px-4 py-2.5 text-sm font-bold text-inverse transition hover:opacity-90 min-h-[44px] tm-press'
-                      >
-                        <Copy className='h-4 w-4' />
-                        {orionBaseUrlCopySuccess ? '已复制' : '复制'}
-                      </button>
-                    </div>
-                    <p className='mt-2 text-[13px] text-muted'>
-                      在 OrionTV 中填写该地址作为后端服务地址。
-                    </p>
-                  </div>
-                  <a
-                    href='https://github.com/mtvpls/OrionTV_Build/tags'
-                    target='_blank'
-                    rel='noopener noreferrer'
-                    className='mt-5 inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl bg-fg px-5 py-3 text-sm font-bold text-inverse transition hover:opacity-90 min-h-[44px] tm-press'
-                  >
-                    下载 OrionTV
-                    <ExternalLink className='h-4 w-4' />
-                  </a>
                 </section>
               )}
 
@@ -5808,81 +5722,7 @@ export const UserMenu: React.FC = () => {
     </>
   );
 
-  // 举报信息弹窗
-  const reportPanel = (
-    <>
-      {/* 背景遮罩 */}
-      <div
-        className='fixed inset-0 bg-ink/50 backdrop-blur-sm z-[1002]'
-        onClick={() => setIsReportOpen(false)}
-        onTouchMove={(e) => {
-          e.preventDefault();
-        }}
-        onWheel={(e) => {
-          e.preventDefault();
-        }}
-        style={{
-          touchAction: 'none',
-        }}
-      />
-
-      {/* 举报信息面板 */}
-      <div className='fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-lg bg-surface rounded-xl shadow-xl z-[1003] overflow-hidden'>
-        <div
-          className='h-full max-h-[70vh] flex flex-col'
-          data-panel-content
-          onTouchMove={(e) => {
-            e.stopPropagation();
-          }}
-          style={{
-            touchAction: 'auto',
-          }}
-        >
-          {/* 标题栏 */}
-          <div className='flex items-center justify-between p-6 border-b border-line'>
-            <h3 className='text-xl font-bold text-fg'>耻辱柱</h3>
-            <button
-              onClick={() => setIsReportOpen(false)}
-              className='w-8 h-8 p-1 rounded-full flex items-center justify-center text-muted hover:bg-line transition-colors min-h-[44px] tm-press'
-              aria-label='Close'
-            >
-              <X className='w-full h-full' />
-            </button>
-          </div>
-
-          {/* 内容区域 */}
-          <div className='flex-1 overflow-y-auto p-6'>
-            <div className='bg-raised border border-line rounded-lg p-4'>
-              <p className='text-fg leading-relaxed'>
-                抄袭狗
-                <span className='font-bold text-fg'>SzeMeng76</span>
-                毫无廉耻，盯着本项目的commit区，疯狂抄袭。警告亦全当看不见，实为开源界耻辱。
-              </p>
-              <p className='text-fg leading-relaxed mt-3'>
-                超分，观影室，豆瓣反爬，精确搜索等等等等，直接抄袭，最不要脸的就是，刚更新一版，几小时后直接抄走。
-              </p>
-              <p className='text-fg leading-relaxed mt-3'>
-                <span className='font-medium text-fg'>2026-02-25：</span>
-                抄袭emby功能
-              </p>
-            </div>
-          </div>
-
-          {/* 底部按钮 */}
-          <div className='p-6 border-t border-line'>
-            <button
-              onClick={() => setIsReportOpen(false)}
-              className='w-full px-4 py-2.5 bg-raised hover:bg-line text-fg font-medium rounded-lg transition-colors min-h-[44px] tm-press'
-            >
-              我知道了
-            </button>
-          </div>
-        </div>
-      </div>
-    </>
-  );
-
-  // 生态应用面板内容
+  // 客户端安装指南面板内容
   const ecoAppsPanel = (
     <>
       {/* 背景遮罩 */}
@@ -5900,8 +5740,8 @@ export const UserMenu: React.FC = () => {
         }}
       />
 
-      {/* 生态应用面板 */}
-      <div className='fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl bg-surface rounded-xl shadow-xl z-[1001] overflow-hidden'>
+      {/* 客户端安装指南面板 */}
+      <div className='fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl bg-surface rounded-xl shadow-xl z-[1001] overflow-hidden border border-line'>
         <div
           className='h-full max-h-[85vh] flex flex-col'
           data-panel-content
@@ -5914,193 +5754,115 @@ export const UserMenu: React.FC = () => {
         >
           {/* 标题栏 */}
           <div className='flex items-center justify-between p-6 border-b border-line'>
-            <h3 className='text-xl font-bold text-fg'>生态应用</h3>
-            <div className='flex items-center gap-2'>
-              {/* 举报按钮 */}
-              <button
-                onClick={() => setIsReportOpen(true)}
-                className='w-8 h-8 p-1 rounded-full flex items-center justify-center text-muted hover:bg-line transition-colors text-lg min-h-[44px] tm-press'
-                aria-label='Report'
-                title='举报抄袭'
-              >
-                🐶
-              </button>
-              {/* 关闭按钮 */}
-              <button
-                onClick={() => setIsEcoAppsOpen(false)}
-                className='w-8 h-8 p-1 rounded-full flex items-center justify-center text-muted hover:bg-line transition-colors min-h-[44px] tm-press'
-                aria-label='Close'
-              >
-                <X className='w-full h-full' />
-              </button>
+            <div>
+              <h3 className='text-xl font-bold text-fg'>客户端安装指南</h3>
+              <p className='mt-1 text-sm text-muted'>
+                无需单独下载安装包，直接将 {BRAND_NAME} 安装到桌面或手机主屏幕
+              </p>
             </div>
+            <button
+              onClick={() => setIsEcoAppsOpen(false)}
+              className='w-8 h-8 p-1 rounded-full flex items-center justify-center text-muted hover:bg-line transition-colors min-h-[44px] tm-press'
+              aria-label='Close'
+            >
+              <X className='w-full h-full' />
+            </button>
           </div>
 
-          {/* 应用列表 */}
+          {/* 平台安装说明列表 */}
           <div className='flex-1 overflow-y-auto p-6'>
-            <div className='grid gap-6 md:grid-cols-1'>
-              {/* MoonTVPlus-PC 客户端 */}
+            <div className='grid gap-4'>
+              {/* 电脑桌面端 */}
               <div className='bg-raised rounded-lg p-5 border border-line'>
                 <div className='flex items-start gap-4'>
-                  <div className='flex-shrink-0 relative'>
-                    <img
-                      src='/logo.png'
-                      alt='MoonTVPlus-PC'
-                      className='w-16 h-16 rounded-xl object-cover'
-                    />
-                    <div className='absolute -bottom-1 -right-1 w-6 h-6 bg-fg rounded-full flex items-center justify-center shadow-lg'>
-                      <Monitor className='w-3.5 h-3.5 text-fg' />
-                    </div>
+                  <div className='flex-shrink-0 w-12 h-12 rounded-xl bg-surface border border-line flex items-center justify-center text-fg'>
+                    <Monitor className='w-6 h-6' />
                   </div>
                   <div className='flex-1 min-w-0'>
-                    <h4 className='text-lg font-medium text-fg mb-2'>
-                      MoonTVPlus-PC 客户端（第三方）
-                    </h4>
-                    <p className='text-sm text-muted mb-3'>
-                      专为Windows开发的客户端，完美支持私人影库mkv视频
+                    <div className='flex items-center gap-2 mb-1.5'>
+                      <h4 className='text-base font-bold text-fg'>
+                        电脑桌面端（Windows / macOS）
+                      </h4>
+                      <span className='px-2 py-0.5 bg-surface border border-line text-fg text-[12px] font-medium rounded-full'>
+                        推荐
+                      </span>
+                    </div>
+                    <p className='text-sm text-muted leading-6'>
+                      使用 Chrome 或 Edge 浏览器打开本站，点击浏览器地址栏右侧的
+                      <strong className='text-fg font-medium'>
+                        「安装 {BRAND_NAME}」
+                      </strong>
+                      图标，即可生成独立的桌面应用窗口与快捷方式，完整支持「一起看」同步观影房间与全部功能。
                     </p>
-                    <a
-                      href='https://github.com/mtvpls/MoonTVPlus-PC/releases'
-                      target='_blank'
-                      rel='noopener noreferrer'
+                  </div>
+                </div>
+              </div>
+
+              {/* 手机与平板端 */}
+              <div className='bg-raised rounded-lg p-5 border border-line'>
+                <div className='flex items-start gap-4'>
+                  <div className='flex-shrink-0 w-12 h-12 rounded-xl bg-surface border border-line flex items-center justify-center text-fg'>
+                    <Smartphone className='w-6 h-6' />
+                  </div>
+                  <div className='flex-1 min-w-0'>
+                    <h4 className='text-base font-bold text-fg mb-1.5'>
+                      手机与平板端（iOS / Android）
+                    </h4>
+                    <div className='space-y-1.5 text-sm text-muted leading-6'>
+                      <p>
+                        <strong className='text-fg font-medium'>
+                          iPhone / iPad：
+                        </strong>
+                        使用 Safari 浏览器打开本站，点击底部「分享」按钮，选择
+                        <strong className='text-fg font-medium'>
+                          「添加到主屏幕」
+                        </strong>
+                        即可生成独立全屏应用。
+                      </p>
+                      <p>
+                        <strong className='text-fg font-medium'>
+                          Android 设备：
+                        </strong>
+                        使用 Chrome 或 Edge 浏览器打开本站，点击菜单选择
+                        <strong className='text-fg font-medium'>
+                          「安装应用」或「添加到主屏幕」
+                        </strong>
+                        。
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* 电视大屏端 */}
+              <div className='bg-raised rounded-lg p-5 border border-line'>
+                <div className='flex items-start gap-4'>
+                  <div className='flex-shrink-0 w-12 h-12 rounded-xl bg-surface border border-line flex items-center justify-center text-fg'>
+                    <Rss className='w-6 h-6' />
+                  </div>
+                  <div className='flex-1 min-w-0'>
+                    <h4 className='text-base font-bold text-fg mb-1.5'>
+                      电视大屏端（Web 电视 / TVBox）
+                    </h4>
+                    <p className='text-sm text-muted leading-6 mb-3'>
+                      智能电视浏览器可直接访问本站{' '}
+                      <code className='px-1.5 py-0.5 rounded bg-surface text-fg text-[13px]'>
+                        /tv
+                      </code>{' '}
+                      路径进入大屏遥控模式，并用手机扫码登录；或通过「电视访问」复制专属订阅地址到
+                      TVBox 使用。
+                    </p>
+                    <button
+                      type='button'
+                      onClick={() => {
+                        setIsEcoAppsOpen(false);
+                        void handleSubscribe();
+                      }}
                       className='inline-flex items-center gap-2 px-4 py-2 bg-fg hover:opacity-90 text-inverse text-sm font-medium rounded-lg transition-colors min-h-[44px] tm-press'
                     >
-                      <Download className='w-4 h-4' />
-                      下载
-                      <ExternalLink className='w-3 h-3' />
-                    </a>
-                  </div>
-                </div>
-              </div>
-
-              {/* Selene 跨平台客户端 */}
-              <div className='bg-raised rounded-lg p-5 border border-line'>
-                <div className='flex items-start gap-4'>
-                  <div className='flex-shrink-0 relative'>
-                    <img
-                      src='/icons/Selene.png'
-                      alt='Selene'
-                      className='w-16 h-16 rounded-xl object-cover'
-                    />
-                    <span className='absolute -top-1 -right-1 px-1.5 py-0.5 bg-raised text-fg text-[13px] font-bold rounded'>
-                      二开
-                    </span>
-                  </div>
-                  <div className='flex-1 min-w-0'>
-                    <h4 className='text-lg font-medium text-fg mb-2'>
-                      Selene 跨平台客户端
-                    </h4>
-                    <p className='text-sm text-muted mb-3'>多平台客户端</p>
-                    <div className='flex flex-wrap gap-2'>
-                      <a
-                        href='https://github.com/mtvpls/Selene-Build/releases'
-                        target='_blank'
-                        rel='noopener noreferrer'
-                        className='inline-flex items-center gap-2 px-4 py-2 bg-fg hover:opacity-90 text-inverse text-sm font-medium rounded-lg transition-colors min-h-[44px] tm-press'
-                      >
-                        <Download className='w-4 h-4' />
-                        下载
-                        <ExternalLink className='w-3 h-3' />
-                      </a>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* OrionTV TV专用客户端 */}
-              <div className='bg-raised rounded-lg p-5 border border-line'>
-                <div className='flex items-start gap-4'>
-                  <div className='flex-shrink-0 relative'>
-                    <img
-                      src='/icons/OrionTV.png'
-                      alt='OrionTV'
-                      className='w-16 h-16 rounded-xl object-cover'
-                    />
-                    <span className='absolute -top-1 -right-1 px-1.5 py-0.5 bg-raised text-fg text-[13px] font-bold rounded'>
-                      二开
-                    </span>
-                  </div>
-                  <div className='flex-1 min-w-0'>
-                    <h4 className='text-lg font-medium text-fg mb-2'>
-                      OrionTV TV专用客户端
-                    </h4>
-                    <p className='text-sm text-muted mb-3'>tv专用</p>
-                    <a
-                      href='https://github.com/mtvpls/OrionTV_Build/tags'
-                      target='_blank'
-                      rel='noopener noreferrer'
-                      className='inline-flex items-center gap-2 px-4 py-2 bg-fg hover:opacity-90 text-inverse text-sm font-medium rounded-lg transition-colors min-h-[44px] tm-press'
-                    >
-                      <Download className='w-4 h-4' />
-                      下载
-                      <ExternalLink className='w-3 h-3' />
-                    </a>
-                  </div>
-                </div>
-              </div>
-
-              {/* 私人影库转码器 */}
-              <div className='bg-raised rounded-lg p-5 border border-line'>
-                <div className='flex items-start gap-4'>
-                  <div className='flex-shrink-0 relative'>
-                    <div className='w-16 h-16 rounded-xl bg-fg flex items-center justify-center shadow-sm'>
-                      <RouterIcon className='w-8 h-8 text-fg' />
-                    </div>
-                    <span className='absolute -top-1 -right-1 px-1.5 py-0.5 bg-raised text-fg text-[13px] font-bold rounded'>
-                      MKV转码
-                    </span>
-                  </div>
-                  <div className='flex-1 min-w-0'>
-                    <h4 className='text-lg font-medium text-fg mb-2'>
-                      私人影库转码器
-                    </h4>
-                    <p className='text-sm text-muted mb-3'>
-                      为私人影库中的 MKV
-                      视频提供转码播放能力，可解析内封字幕并解决部分视频无音频问题，但通常需要较高的本机性能配置。
-                    </p>
-                    <a
-                      href='https://github.com/mtvpls/moontvplus-transcoder/tags'
-                      target='_blank'
-                      rel='noopener noreferrer'
-                      className='inline-flex items-center gap-2 px-4 py-2 bg-raised hover:bg-line text-fg text-sm font-medium rounded-lg transition-colors min-h-[44px] tm-press'
-                    >
-                      <Download className='w-4 h-4' />
-                      下载
-                      <ExternalLink className='w-3 h-3' />
-                    </a>
-                  </div>
-                </div>
-              </div>
-
-              {/* MoonTVPlus 插件 */}
-              <div className='bg-raised rounded-lg p-5 border border-line'>
-                <div className='flex items-start gap-4'>
-                  <div className='flex-shrink-0 relative'>
-                    <div className='w-16 h-16 rounded-xl bg-fg flex items-center justify-center shadow-sm'>
-                      <Puzzle className='w-8 h-8 text-fg' />
-                    </div>
-                    <span className='absolute -top-1 -right-1 px-1.5 py-0.5 bg-raised text-fg text-[13px] font-bold rounded'>
-                      插件
-                    </span>
-                  </div>
-                  <div className='flex-1 min-w-0'>
-                    <h4 className='text-lg font-medium text-fg mb-2'>
-                      MoonTVPlus 插件（第三方）
-                    </h4>
-                    <p className='text-sm text-muted mb-3'>
-                      兼容本网站的第三方扩展，
-                      提供增强性功能，目前拥有解决私人影库超分跨域能力
-                    </p>
-                    <a
-                      href='https://github.com/mtvpls/moontvplus-extension/releases'
-                      target='_blank'
-                      rel='noopener noreferrer'
-                      className='inline-flex items-center gap-2 px-4 py-2 bg-fg hover:opacity-90 text-inverse text-sm font-medium rounded-lg transition-colors min-h-[44px] tm-press'
-                    >
-                      <Download className='w-4 h-4' />
-                      下载
-                      <ExternalLink className='w-3 h-3' />
-                    </a>
+                      <Monitor className='w-4 h-4' />
+                      打开电视访问
+                    </button>
                   </div>
                 </div>
               </div>
@@ -6110,7 +5872,7 @@ export const UserMenu: React.FC = () => {
           {/* 底部说明 */}
           <div className='p-6 pt-4 border-t border-line'>
             <p className='text-[13px] text-muted text-center'>
-              选择适合您设备的客户端下载使用
+              安装到主屏幕后可获得无浏览器地址栏的沉浸式全屏观影体验
             </p>
           </div>
         </div>
@@ -6287,11 +6049,8 @@ export const UserMenu: React.FC = () => {
         onClose={() => setIsTVRemoteOpen(false)}
       />
 
-      {/* 使用 Portal 将生态应用面板渲染到 document.body */}
+      {/* 使用 Portal 将客户端安装指南面板渲染到 document.body */}
       {isEcoAppsOpen && mounted && createPortal(ecoAppsPanel, document.body)}
-
-      {/* 使用 Portal 将举报信息面板渲染到 document.body */}
-      {isReportOpen && mounted && createPortal(reportPanel, document.body)}
 
       {/* 确认对话框 */}
       {confirmDialog.isOpen &&

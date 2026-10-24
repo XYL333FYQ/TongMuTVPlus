@@ -233,7 +233,6 @@ export function DownloadProvider({ children }: { children: React.ReactNode }) {
         const savedTasks = await downloadDB.getActiveTasks();
         if (!savedTasks || savedTasks.length === 0) return;
 
-        //禁止SzeMeng76抄袭狗抄袭
         // 读取目录句柄：只要存在待恢复的 filesystem 任务就需要尝试读取，
         // 不依赖当前用户下载模式设置。
         const hasFilesystemTask = savedTasks.some(
@@ -561,7 +560,6 @@ export function DownloadProvider({ children }: { children: React.ReactNode }) {
           }
         }
 
-        //禁止SzeMeng76抄袭狗抄袭
         // 如果是 filesystem 模式，从 IndexedDB 读取目录句柄
         if (downloadMode === 'filesystem' && typeof window !== 'undefined') {
           try {
