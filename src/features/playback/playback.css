@@ -918,3 +918,32 @@ html[data-tm-no-blur='true'] .tm-playback-chrome {
   outline-offset: -2px;
   border-radius: var(--tm-radius-xs);
 }
+
+/* 小窗拖动：画面和底栏一起平移，位移来自 useMiniPlayerDrag 写入的变量。
+   只用 transform，不改 left/top/尺寸，也就不会触发上面的形态过渡和视频重建 */
+.tm-playback-host[data-presentation='mini'] [data-tm-player-mount],
+.tm-playback-host[data-presentation='mini'] .tm-playback-chrome {
+  transform: translate3d(var(--tm-mini-x, 0px), var(--tm-mini-y, 0px), 0);
+  touch-action: none;
+  cursor: grab;
+}
+.tm-playback-host[data-presentation='mini'] [data-tm-player-mount] {
+  transition: left 400ms var(--tm-ease-in-out), top 400ms var(--tm-ease-in-out),
+    width 400ms var(--tm-ease-in-out), height 400ms var(--tm-ease-in-out),
+    opacity 400ms var(--tm-ease-in-out),
+    border-radius 400ms var(--tm-ease-in-out),
+    transform 220ms var(--tm-ease-out);
+}
+.tm-playback-host[data-presentation='mini'] .tm-playback-chrome {
+  transition: transform 220ms var(--tm-ease-out);
+}
+/* 拖动过程中跟手，不要过渡；松手后吸附到角落才有 220ms 动画 */
+.tm-playback-host[data-dragging='true'] [data-tm-player-mount],
+.tm-playback-host[data-dragging='true'] .tm-playback-chrome {
+  transition: none;
+  cursor: grabbing;
+  user-select: none;
+}
+.tm-playback-host[data-presentation='mini'] .tm-playback-chrome button {
+  cursor: pointer;
+}

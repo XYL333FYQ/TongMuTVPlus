@@ -41,6 +41,7 @@ import {
   queueItemFromHref,
 } from './session';
 import { useAudioFocus } from './useAudioFocus';
+import { useMiniPlayerDrag } from './useMiniPlayerDrag';
 
 const PlaybackSurface = dynamic(() => import('./LegacyPlaybackSurface'), {
   ssr: false,
@@ -255,6 +256,7 @@ export default function PlaybackSessionProvider({
     return () => video.removeEventListener('volumechange', update);
   }, [controller]);
 
+  const hostRef = useRef<HTMLDivElement>(null);
   const minimize = useCallback(() => setFolded(true), []);
   const restore = useCallback(() => setFolded(false), []);
   const endSession = useCallback(() => {
@@ -402,6 +404,11 @@ export default function PlaybackSessionProvider({
       controller.video.muted = !controller.video.muted;
   };
   const unread = watchRoom?.currentRoom?.unreadCount || 0;
+  // 小窗可拖动：只叠加一个位移，不改播放实例
+  const miniDrag = useMiniPlayerDrag(
+    hostRef,
+    Boolean(href) && presentation === 'mini'
+  );
   const slotStyle = slotRect
     ? ({
         '--tm-slot-left': `${slotRect.left}px`,
@@ -423,10 +430,12 @@ export default function PlaybackSessionProvider({
         )}
       {href && (
         <div
+          ref={hostRef}
           className='tm-playback-host'
           data-presentation={presentation}
+          data-dragging={miniDrag.dragging ? 'true' : undefined}
           data-testid='global-playback-host'
-          style={slotStyle}
+          style={{ ...slotStyle, ...miniDrag.style }}
         >
           <PlaybackSurface key={surfaceVersion} />
           {presentation === 'docked' &&
