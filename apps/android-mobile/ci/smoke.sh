@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 # 模拟器冒烟测试：装 APK -> 启动 -> 在地址框输入假服务器 -> 确认 WebView 真的请求了页面且没崩溃
-# 用法：smoke.sh <apk> <截图输出目录>
+# 用法：smoke.sh <apk> <截图输出目录> [包名，默认手机版]
 set -uo pipefail
 
 APK="$1"
 OUT="$2"
-PKG=com.tongmutvplus.mobile
+PKG="${3:-com.tongmutvplus.mobile}"
 mkdir -p "$OUT"
 
 python3 "$(dirname "$0")/smoke_server.py" 8080 >"$OUT/server.log" 2>&1 &
