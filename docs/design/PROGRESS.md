@@ -1,5 +1,18 @@
 # 界面改造进度
 
+## 2026-10-23 修复 bug-hunter 留下的 6 个确认问题
+
+- 来源：`output/bug-hunter-20261022/FINAL-REPORT.md`「未修复与风险」里用户点名的 6 项。每项先写测试并确认在旧代码上失败，再改实现。改了 API 与 server，没有新增依赖、接口字段只增不减、存储键只新增撤销标记。
+- BUG-BACKEND-1：导入不含漫画/电子书数据的备份时，清空前保存的书架和阅读记录原来不会写回（回填分支被提前 return 挡住）。现在按快照写回；成功弹窗显示「备份未包含，已保留原有数据」。
+- BUG-BACKEND-2：导出时某个用户读取失败会被静默跳过，下载到“成功”的残缺备份，恢复时把该账号删掉。现在任一用户读取失败（包括读密码失败，不再当成“没有密码”）就取消整个备份并提示是谁。
+- BUG-BACKEND-3：导入时某用户写入失败仍返回「数据导入成功」且按备份人数计数。现在返回 500，列出失败用户和实际导入人数，提示查日志后用同一备份重导。
+- BUG-LIBRARY-2：AI 抓网页只校验第一跳就自动跟随重定向。改用 `guardedFetch` 逐跳校验，新增 `publicOnly` 选项（忽略站长内网白名单和 ALLOW_PRIVATE_PROXY_TARGETS）；Legado 订阅拉取同样处理，被拦截不重试。
+- BUG-LIBRARY-3：refresh token 验证读完记录后写回 lastUsed，可能把并发撤销的记录写回来。撤销时先写 `user_token_revocations:<用户>` 标记再删除，验证写回后再查标记，命中就删除并拒绝；“退出全部设备”只影响之前创建的 token。标记超过 refresh token 有效期后在撤销/清理时删除。
+- BUG-BACKEND-G2-1：已在 A 房间的连接加入已满的 B 房间不受人数上限约束。现在只有重复加入同一房间才免检。
+- 测试环境 `node-web-environment.cjs` 补 FormData/File/Blob，供表单上传路由测试使用。
+- 验证：typecheck 0；Jest 78 套 / 491 项；test:rooms 21/21；test:ops 4/4；lint 0 error（两次 pnpm 原生崩溃后直接用 next lint 通过）；format:check 通过（首次原生崩溃，重跑通过）。
+- 没做 / 风险：这 6 项只有单元/路由级测试，没有在真实 Redis/Postgres 上做备份恢复演练；FINAL-REPORT 里其余未修项（OIDC 探测 SSRF、网络直播排序删源、书源下载代理、图片代理二次跳转等）本轮未处理。
+
 ## 2026-10-23 发布收尾：密码加盐、播放器可达性、管理面板换皮、全库 lint 清零
 
 - 用户要求不再停在局部，按成熟成品收尾。本轮继续放开禁区（API、server、\*.db.ts、LegacyPlaybackSurface、admin），没有新增依赖。备份在 `output/{lint,pwhash,player,admin-skin}-20261023/bak/`。
