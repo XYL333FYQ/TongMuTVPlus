@@ -146,6 +146,27 @@ describe('guarded proxy fetch', () => {
     );
   });
 
+  test('publicOnly ignores the LAN opt-in and trusted hosts, on every redirect hop', async () => {
+    process.env.ALLOW_PRIVATE_PROXY_TARGETS = 'true';
+    const calls: string[] = [];
+    global.fetch = jest.fn(async (url: RequestInfo | URL) => {
+      calls.push(String(url));
+      return new Response(null, {
+        status: 302,
+        headers: { location: 'http://internal.test/secret' },
+      });
+    }) as typeof fetch;
+
+    await expect(
+      guardedFetch(
+        'https://evil.test/r',
+        {},
+        { publicOnly: true, trustedHosts: hostsOf(['http://internal.test']) }
+      )
+    ).rejects.toBeInstanceOf(ProxyTargetBlockedError);
+    expect(calls).toEqual(['https://evil.test/r']);
+  });
+
   test('ALLOW_PRIVATE_PROXY_TARGETS lets the owner opt in to LAN targets', async () => {
     process.env.ALLOW_PRIVATE_PROXY_TARGETS = 'true';
     expect(await isProxyTargetAllowed('http://internal.test/x')).toBe(true);

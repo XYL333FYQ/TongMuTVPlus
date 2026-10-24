@@ -174,12 +174,21 @@ export class ProxyTargetBlockedError extends Error {
 export async function guardedFetch(
   urlStr: string,
   init: RequestInit = {},
-  options: { trustedHosts?: Set<string>; maxRedirects?: number } = {}
+  options: {
+    trustedHosts?: Set<string>;
+    maxRedirects?: number;
+    // 只允许公网：忽略站长白名单和 ALLOW_PRIVATE_PROXY_TARGETS。
+    // 用于 AI 抓网页、订阅地址这类由成员或外部内容决定目标的请求
+    publicOnly?: boolean;
+  } = {}
 ): Promise<Response> {
   const maxRedirects = options.maxRedirects ?? 5;
   let current = urlStr;
   for (let hop = 0; hop <= maxRedirects; hop++) {
-    if (!(await isProxyTargetAllowed(current, options.trustedHosts))) {
+    const allowed = options.publicOnly
+      ? await validateProxyUrlServerSide(current)
+      : await isProxyTargetAllowed(current, options.trustedHosts);
+    if (!allowed) {
       throw new ProxyTargetBlockedError(current);
     }
     const response = await fetch(current, { ...init, redirect: 'manual' });

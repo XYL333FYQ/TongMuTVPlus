@@ -4,7 +4,7 @@ import crypto from 'crypto';
 import type { AdminConfig } from '@/lib/admin.types';
 import type { BookSource, LegadoBookSourceRule } from '@/lib/book.types';
 import { db } from '@/lib/db';
-import { validateProxyUrlServerSide } from '@/lib/server/ssrf';
+import { guardedFetch, ProxyTargetBlockedError } from '@/lib/server/ssrf';
 
 export interface LegadoSubscriptionMeta {
   id: string;
@@ -65,23 +65,25 @@ async function fetchTextWithRetry(
   url: string,
   retries = 2
 ): Promise<{ text: string; etag?: string; lastModified?: string }> {
-  const safe = await validateProxyUrlServerSide(url);
-  if (!safe) throw new Error('订阅地址未通过安全校验');
-
   let lastError: unknown;
   for (let attempt = 0; attempt <= retries; attempt += 1) {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), TIMEOUT_MS);
     try {
-      const response = await fetch(url, {
-        signal: controller.signal,
-        cache: 'no-store',
-        headers: {
-          'User-Agent':
-            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0 Safari/537.36',
-          Accept: 'application/json,text/plain,*/*',
+      // 手动跟随重定向，每一跳都校验，防止订阅地址 302 到内网
+      const response = await guardedFetch(
+        url,
+        {
+          signal: controller.signal,
+          cache: 'no-store',
+          headers: {
+            'User-Agent':
+              'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0 Safari/537.36',
+            Accept: 'application/json,text/plain,*/*',
+          },
         },
-      });
+        { publicOnly: true }
+      );
       if (!response.ok) throw new Error(`订阅请求失败: ${response.status}`);
       const contentLength = Number(
         response.headers.get('content-length') || '0'
@@ -95,6 +97,9 @@ async function fetchTextWithRetry(
         lastModified: response.headers.get('last-modified') || undefined,
       };
     } catch (error) {
+      // 地址被拦截不是临时故障，不重试
+      if (error instanceof ProxyTargetBlockedError)
+        throw new Error('订阅地址未通过安全校验');
       lastError = error;
       if (attempt < retries) await wait(300 * (attempt + 1));
     } finally {

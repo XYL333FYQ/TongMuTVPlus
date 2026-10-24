@@ -26,7 +26,7 @@ import {
 } from '@/lib/ai-orchestrator';
 import { BRAND_NAME } from '@/lib/brand';
 import { db } from '@/lib/db';
-import { validateProxyUrlServerSide } from '@/lib/server/ssrf';
+import { guardedFetch, ProxyTargetBlockedError } from '@/lib/server/ssrf';
 import { getTMDBTrendingContent, searchTMDBMulti } from '@/lib/tmdb.client';
 
 export type NewProtocol = 'openai-completions' | 'openai-responses' | 'claude';
@@ -409,24 +409,25 @@ function htmlToText(html: string): string {
  * - 拒绝带用户名/密码的 URL
  * - 超时 + 响应体上限，防止拖垮服务
  */
-async function fetchPageText(urlStr: string): Promise<string> {
+export async function fetchPageText(urlStr: string): Promise<string> {
   const parsed = new URL(urlStr);
   if (!/^https?:$/i.test(parsed.protocol)) return '仅支持 http/https 链接。';
-  const safe = await validateProxyUrlServerSide(urlStr);
-  if (!safe)
-    return '目标地址未通过安全校验（可能指向内网或本地地址），已拦截。';
 
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 10_000);
   try {
-    const res = await fetch(urlStr, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (compatible; MoonTVPlusBot/1.0)',
-        Accept: 'text/html,application/xhtml+xml',
+    // 手动跟随重定向，每一跳都重新校验，防止公网地址 302 到内网
+    const res = await guardedFetch(
+      urlStr,
+      {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (compatible; MoonTVPlusBot/1.0)',
+          Accept: 'text/html,application/xhtml+xml',
+        },
+        signal: controller.signal,
       },
-      redirect: 'follow',
-      signal: controller.signal,
-    });
+      { publicOnly: true }
+    );
     if (!res.ok) return `抓取失败: HTTP ${res.status} ${res.statusText}`;
 
     const maxBytes = 200_000;
@@ -441,6 +442,8 @@ async function fetchPageText(urlStr: string): Promise<string> {
     reader?.cancel().catch(() => {});
     return htmlToText(collected).slice(0, 8000);
   } catch (error) {
+    if (error instanceof ProxyTargetBlockedError)
+      return '目标地址未通过安全校验（可能指向内网或本地地址），已拦截。';
     if (error instanceof Error && error.name === 'AbortError') {
       return '抓取超时。';
     }
