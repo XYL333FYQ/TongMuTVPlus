@@ -189,6 +189,7 @@ export async function POST(req: NextRequest) {
     );
     const usernames = Object.keys(userData);
     let importedCount = 0;
+    const failedUsers: string[] = [];
 
     for (let i = 0; i < usernames.length; i += CHUNK_SIZE) {
       const chunk = usernames.slice(i, i + CHUNK_SIZE);
@@ -244,10 +245,9 @@ export async function POST(req: NextRequest) {
                 );
                 console.log(`用户 ${username} 导入成功 (${storageType})`);
               } else {
-                console.error(
+                throw new Error(
                   `${storageType} storage 缺少 createUserWithHashedPassword 方法`
                 );
-                return false;
               }
             } else if (storageType === 'postgres') {
               // Postgres 存储：使用 createUserWithHashedPassword 方法
@@ -264,10 +264,9 @@ export async function POST(req: NextRequest) {
                 );
                 console.log(`用户 ${username} 导入成功 (Postgres)`);
               } else {
-                console.error(
+                throw new Error(
                   `Postgres storage 缺少 createUserWithHashedPassword 方法`
                 );
-                return false;
               }
             } else {
               // Redis 存储：直接设置用户信息
@@ -312,7 +311,7 @@ export async function POST(req: NextRequest) {
             }
           } else {
             console.log(`跳过用户 ${username}：没有passwordV2`);
-            return false;
+            return 'skipped' as const;
           }
 
           // 并行导入用户的各类数据
@@ -572,16 +571,17 @@ export async function POST(req: NextRequest) {
             })(),
           ]);
 
-          return true;
+          return 'imported' as const;
         } catch (error) {
           console.error(`导入用户 ${username} 失败:`, error);
-          return false;
+          failedUsers.push(username);
+          return 'failed' as const;
         }
       });
 
       // 等待当前批次完成
       const results = await Promise.all(importPromises);
-      importedCount += results.filter((r) => r).length;
+      importedCount += results.filter((r) => r === 'imported').length;
 
       console.log(`已完成 ${importedCount}/${userCount} 个用户`);
       updateProgress(
@@ -595,6 +595,23 @@ export async function POST(req: NextRequest) {
     }
 
     console.log(`成功导入 ${importedCount} 个用户的user:info`);
+
+    // 有用户没导入完整时不能报成功：现有数据已经清空，站长需要知道哪些账号缺数据
+    if (failedUsers.length > 0) {
+      clearProgress(username, 'import');
+      const shown = failedUsers.slice(0, 10).join('、');
+      const more =
+        failedUsers.length > 10 ? ` 等 ${failedUsers.length} 个用户` : '';
+      return NextResponse.json(
+        {
+          error: `部分用户导入失败：${shown}${more}。已完整导入 ${importedCount} 个用户；原有数据已被备份覆盖，请查看服务器日志排除问题后，用同一份备份重新导入。`,
+          importedUsers: importedCount,
+          failedUsers,
+        },
+        { status: 500 }
+      );
+    }
+
     updateProgress(
       username,
       'import',
@@ -607,7 +624,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       message: '数据导入成功',
-      importedUsers: Object.keys(userData).length,
+      importedUsers: importedCount,
       importedUsersV2: importData.data.usersV2?.length || 0,
       importedMangaData: backupHasMangaData,
       importedBookData: backupHasBookData,

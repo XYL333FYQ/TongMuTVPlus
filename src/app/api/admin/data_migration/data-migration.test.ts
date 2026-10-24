@@ -175,3 +175,23 @@ test('a backup that includes manga data restores exactly that data, not the old 
     fromBackup
   );
 });
+
+test('a user whose data fails to restore is reported, not counted as imported', async () => {
+  mockDb.storage.setPlayRecord = jest.fn(async () => {
+    throw new Error('database unavailable');
+  });
+  const response = await importBackup(
+    importRequest(
+      backupFile({
+        alice: { passwordV2: 'hash', playRecords: { 'a+1': { title: 'x' } } },
+        bob: { passwordV2: 'hash' },
+      })
+    )
+  );
+  const result = await response.json();
+
+  expect(response.status).toBe(500);
+  expect(result.failedUsers).toEqual(['alice']);
+  expect(result.importedUsers).toBe(1);
+  expect(result.error).toContain('alice');
+});
