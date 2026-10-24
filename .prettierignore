@@ -50,3 +50,12 @@ pnpm-lock.yaml
 /.omc/
 /public/libbitsub/
 /public/manifest.json
+
+# Local agent tool state and Android build output (gitignored).
+/.bug-hunter/
+/.playwright-cli/
+/apps/android-tv/build/
+/public/sw.js
+/public/workbox-*.js
+/public/fallback-*.js
+/references/

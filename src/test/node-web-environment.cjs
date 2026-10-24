@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-var-requires */
 // Jest 27's node environment omits Node's native Fetch globals used by NextRequest.
 // Copy the real Node runtime APIs into the isolated test context, without mocking handlers.
 const { createRequire } = require('node:module');

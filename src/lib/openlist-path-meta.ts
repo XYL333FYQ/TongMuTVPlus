@@ -47,10 +47,10 @@ export function normalizeOpenListPath(path: string): string {
 
   let cleaned = path
     // UTF-8 BOM
-    .replace(/^﻿/, '')
-    .replace(/﻿/g, '')
+    .replace(/^\uFEFF/, '')
+    .replace(/\uFEFF/g, '')
     // zero-width chars U+200B-U+200D, U+FEFF
-    .replace(/[​-‍﻿]/g, '')
+    .replace(/[\u200B-\u200D\uFEFF]/g, '')
     .trim()
     .replace(/\\/g, '/');
 

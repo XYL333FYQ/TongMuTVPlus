@@ -174,6 +174,7 @@ function bdecode(data: Buffer, idx = 0): [any, number] {
   const asStr = slice.toString('utf8');
   if (
     Buffer.byteLength(asStr, 'utf8') === slice.length &&
+    // eslint-disable-next-line no-control-regex -- 有意检测二进制控制字符
     !/[\x00-\x08\x0B\x0C\x0E-\x1F]/.test(asStr)
   ) {
     return [asStr, end];

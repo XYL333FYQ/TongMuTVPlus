@@ -187,7 +187,7 @@ export async function GET(
     (async () => {
       const writer = writable.getWriter();
       try {
-        while (true) {
+        for (;;) {
           const { done, value } = await reader.read();
           if (done) break;
           await writer.write(value);

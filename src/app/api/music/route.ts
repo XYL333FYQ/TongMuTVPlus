@@ -260,7 +260,7 @@ async function executeMethod(
             const expr = expression.trim();
 
             // 检查是否是单个变量（没有运算符）
-            if (evalContext.hasOwnProperty(expr)) {
+            if (Object.prototype.hasOwnProperty.call(evalContext, expr)) {
               // 直接返回变量值
               return String(evalContext[expr]);
             }

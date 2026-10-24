@@ -183,7 +183,7 @@ export async function getOpenListDetail(id: string): Promise<SearchResult> {
   const pageSize = 100;
   let total = 0;
 
-  while (true) {
+  for (;;) {
     const listResponse = await client.listDirectory(
       folderPath,
       currentPage,

@@ -1,4 +1,6 @@
 module.exports = {
+  // 第三方网盘检测脚本原样引入，不按本项目规则检查
+  ignorePatterns: ['src/lib/pancheck/vendor/**'],
   env: {
     browser: true,
     es2021: true,

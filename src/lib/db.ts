@@ -1,4 +1,4 @@
-/* eslint-disable no-console, @typescript-eslint/no-explicit-any, @typescript-eslint/no-non-null-assertion */
+/* eslint-disable no-console, @typescript-eslint/no-explicit-any, @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-var-requires */
 
 import { AdminConfig } from './admin.types';
 import { BookReadRecord, BookShelfItem } from './book.types';
@@ -37,7 +37,7 @@ const STORAGE_TYPE =
 // 创建存储实例
 function createStorage(): IStorage {
   switch (STORAGE_TYPE) {
-    case 'redis':
+    case 'redis': {
       if (IS_CLOUDFLARE_BUILD) {
         throw new Error(
           'Node Redis storage is not supported in Cloudflare builds. Use D1 or Upstash instead.'
@@ -45,10 +45,12 @@ function createStorage(): IStorage {
       }
       const { RedisStorage } = require('./redis.db');
       return new RedisStorage();
-    case 'upstash':
+    }
+    case 'upstash': {
       const { UpstashRedisStorage } = require('./upstash.db');
       return new UpstashRedisStorage();
-    case 'kvrocks':
+    }
+    case 'kvrocks': {
       if (IS_CLOUDFLARE_BUILD) {
         throw new Error(
           'Kvrocks storage is not supported in Cloudflare builds. Use D1 or Upstash instead.'
@@ -56,7 +58,8 @@ function createStorage(): IStorage {
       }
       const { KvrocksStorage } = require('./kvrocks.db');
       return new KvrocksStorage();
-    case 'd1':
+    }
+    case 'd1': {
       // D1Storage 只能在服务端使用，客户端会报错
       if (typeof window !== 'undefined') {
         throw new Error('D1Storage can only be used on the server side');
@@ -65,7 +68,8 @@ function createStorage(): IStorage {
       // 动态导入 D1Storage 以避免客户端打包
       const { D1Storage } = require('./d1.db');
       return new D1Storage(d1Adapter);
-    case 'postgres':
+    }
+    case 'postgres': {
       // PostgresStorage 只能在服务端使用，客户端会报错
       if (typeof window !== 'undefined') {
         throw new Error('PostgresStorage can only be used on the server side');
@@ -74,7 +78,8 @@ function createStorage(): IStorage {
       // 动态导入 PostgresStorage 以避免客户端打包
       const { PostgresStorage } = require('./postgres.db');
       return new PostgresStorage(postgresAdapter);
-    case 'turso':
+    }
+    case 'turso': {
       // TursoStorage 只能在服务端使用，客户端会报错
       if (typeof window !== 'undefined') {
         throw new Error('TursoStorage can only be used on the server side');
@@ -83,9 +88,11 @@ function createStorage(): IStorage {
       // 复用 D1Storage（Turso 基于 libSQL/SQLite，SQL 语法完全兼容）
       const { D1Storage: TursoD1Storage } = require('./d1.db');
       return new TursoD1Storage(tursoAdapter);
+    }
     case 'localstorage':
-    default:
+    default: {
       return null as unknown as IStorage;
+    }
   }
 }
 

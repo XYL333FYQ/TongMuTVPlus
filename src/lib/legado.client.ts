@@ -1203,7 +1203,7 @@ function applyLegadoSelector(
     tokens.length > 1 &&
     tokens.every((token) => !/[>+~]/.test(token)) &&
     tokens.some((token) =>
-      /(?:\[!?\-?\d+\]|\[-?\d*:|-?\d+\]$|\.-?\d+(?::\-?\d*){0,2})$/.test(token)
+      /(?:\[!?-?\d+\]|\[-?\d*:|-?\d+\]$|\.-?\d+(?::-?\d*){0,2})$/.test(token)
     )
   ) {
     let next = current;
@@ -1794,7 +1794,9 @@ async function resolveLegadoConfig(): Promise<ResolvedLegadoConfig> {
     try {
       const parsed = JSON.parse(envJson);
       sources = normalizeImportedSources(parsed);
-    } catch {}
+    } catch {
+      // 环境变量里的书源 JSON 无效时忽略，继续读取后台配置
+    }
   }
 
   try {
@@ -1807,7 +1809,9 @@ async function resolveLegadoConfig(): Promise<ResolvedLegadoConfig> {
         );
       sources = [...sources, ...subscriptionSources];
     }
-  } catch {}
+  } catch {
+    // 配置读取失败时沿用已有书源
+  }
 
   return {
     enabled,

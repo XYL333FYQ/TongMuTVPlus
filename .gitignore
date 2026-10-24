@@ -92,6 +92,7 @@ skills-lock.json
 
 # local agent state and screenshot output
 /.omc/
+/.bug-hunter/
 /output/
 apps/android-tv/.gradle/
 apps/android-tv/build/

@@ -138,7 +138,7 @@ export async function GET(request: NextRequest) {
       const pageSize = 100;
       let total = 0;
 
-      while (true) {
+      for (;;) {
         const listResponse = await client.listDirectory(folderPath, currentPage, pageSize);
 
         if (listResponse.code !== 200) {

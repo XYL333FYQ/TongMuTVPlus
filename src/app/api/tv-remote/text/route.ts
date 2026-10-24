@@ -4,6 +4,8 @@ import { getAuthInfoFromCookie } from '@/lib/auth';
 import { isTVModeEnabled } from '@/lib/tv-mode';
 import type { TVRemoteTextCommand } from '@/lib/tv-remote-types';
 
+// tv-remote-hub 是 server.js 共用的 CommonJS 模块，需与自定义服务器拿到同一个实例
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 const { sendTVRemoteCommand } = require('@/lib/tv-remote-hub');
 
 export const runtime = 'nodejs';
@@ -18,7 +20,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: '未登录' }, { status: 401 });
   }
 
-  const body = await request.json().catch(() => null) as {
+  const body = (await request.json().catch(() => null)) as {
     deviceId?: string;
     command?: TVRemoteTextCommand;
   } | null;
