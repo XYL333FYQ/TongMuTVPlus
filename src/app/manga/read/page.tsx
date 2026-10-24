@@ -692,7 +692,9 @@ export default function MangaReadPage() {
   useEffect(() => {
     if (!mangaId || !sourceId || !chapterId) return;
 
-    const flushPendingRecord = () => {
+    // readLiveViewport=false 用于卸载时：页面元素已经移除，不能再按视口位置重算页码，
+    // 直接用翻页时记下的 pendingRecord（其中的页码随翻页实时更新）
+    const flushPendingRecord = (readLiveViewport = true) => {
       const record = pendingRecordRef.current;
       if (
         !record ||
@@ -703,7 +705,7 @@ export default function MangaReadPage() {
         return;
 
       const recordToSave =
-        readMode === 'vertical'
+        readMode === 'vertical' && readLiveViewport
           ? {
               ...record,
               pageIndex: getCurrentVerticalPageIndex(),
@@ -738,7 +740,10 @@ export default function MangaReadPage() {
       }
     };
 
-    const intervalId = window.setInterval(flushPendingRecord, SAVE_INTERVAL_MS);
+    const intervalId = window.setInterval(
+      () => flushPendingRecord(),
+      SAVE_INTERVAL_MS
+    );
     window.addEventListener('pagehide', flushPendingRecordOnLeave);
     document.addEventListener('visibilitychange', handleVisibilityChange);
 
@@ -746,6 +751,9 @@ export default function MangaReadPage() {
       window.clearInterval(intervalId);
       window.removeEventListener('pagehide', flushPendingRecordOnLeave);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
+      // 点站内链接（如“返回详情”）离开或切换章节时补存一次，
+      // 否则距上次定时保存最多 10 秒的阅读进度会丢
+      flushPendingRecord(false);
     };
   }, [chapterId, mangaId, readMode, sourceId]);
 
