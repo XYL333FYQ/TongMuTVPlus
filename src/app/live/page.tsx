@@ -24,6 +24,7 @@ import {
   savePlayRecord,
   subscribeToDataUpdates,
 } from '@/lib/db.client';
+import { createRequestGate } from '@/lib/request-gate';
 import { parseCustomTimeFormat } from '@/lib/time';
 import { useLiveSync } from '@/hooks/useLiveSync';
 
@@ -128,15 +129,16 @@ function LivePageClient() {
   // 动态加载浏览器专用库
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      import('artplayer').then((mod) => {
-        Artplayer = mod.default;
-      });
-      import('hls.js').then((mod) => {
-        Hls = mod.default;
-      });
-      import('flv.js').then((mod) => {
-        flvjs = mod.default;
-      });
+      // 三个播放器库都到位后再通知播放 effect；只改模块变量不会触发重新渲染，
+      // 库加载得慢时第一路直播会一直不初始化
+      Promise.all([import('artplayer'), import('hls.js'), import('flv.js')])
+        .then(([artplayerModule, hlsModule, flvModule]) => {
+          Artplayer = artplayerModule.default;
+          Hls = hlsModule.default;
+          flvjs = flvModule.default;
+          setPlayerLibsReady(true);
+        })
+        .catch((error) => console.error('加载播放器失败:', error));
 
       const runtimeConfig = (window as any).RUNTIME_CONFIG;
       if (runtimeConfig?.LIVE_ENABLED === false) {
@@ -182,6 +184,10 @@ function LivePageClient() {
 
   // 切换直播源状态
   const [isSwitchingSource, setIsSwitchingSource] = useState(false);
+  const [playerLibsReady, setPlayerLibsReady] = useState(false);
+  // 连续切换直播源 / 频道时，只认最新一次请求的结果
+  const channelsGate = useRef(createRequestGate()).current;
+  const epgGate = useRef(createRequestGate()).current;
 
   // 分组相关
   const [groupedChannels, setGroupedChannels] = useState<{
@@ -483,17 +489,21 @@ function LivePageClient() {
   };
 
   // 获取频道列表
-  const fetchChannels = async (source: LiveSource) => {
+  // 返回 false 表示结果已过期（期间又切换了别的直播源），调用方不应继续处理
+  const fetchChannels = async (source: LiveSource): Promise<boolean> => {
+    const request = channelsGate.begin();
     try {
       setIsVideoLoading(true);
 
       // 从 cachedLiveChannels 获取频道信息
       const response = await fetch(`/api/live/channels?source=${source.key}`);
+      if (!request.isCurrent()) return false;
       if (!response.ok) {
         throw new Error('获取频道列表失败');
       }
 
       const result = await response.json();
+      if (!request.isCurrent()) return false;
       if (!result.success) {
         throw new Error(result.error || '获取频道列表失败');
       }
@@ -513,7 +523,7 @@ function LivePageClient() {
         );
 
         setIsVideoLoading(false);
-        return;
+        return true;
       }
 
       // 转换频道数据格式
@@ -644,7 +654,9 @@ function LivePageClient() {
       }
 
       setIsVideoLoading(false);
+      return true;
     } catch (err) {
+      if (!request.isCurrent()) return false;
       console.error('获取频道列表失败:', err);
       // 不设置错误，而是设置空频道列表
       setCurrentChannels([]);
@@ -659,11 +671,13 @@ function LivePageClient() {
       );
 
       setIsVideoLoading(false);
+      return true;
     }
   };
 
   // 切换直播源
   const handleSourceChange = async (source: LiveSource) => {
+    let stale = false;
     try {
       // 设置切换状态，锁住频道切换器
       setIsSwitchingSource(true);
@@ -681,7 +695,9 @@ function LivePageClient() {
       setSearchKeyword('');
 
       setCurrentSource(source);
-      await fetchChannels(source);
+      // 期间又点了别的直播源：交给最新那次处理，这里不再改地址和状态
+      stale = !(await fetchChannels(source));
+      if (stale) return;
 
       // 更新URL参数 - 切换直播源时清除频道id，因为新的直播源会有不同的频道列表
       const newSearchParams = new URLSearchParams(searchParams.toString());
@@ -694,15 +710,20 @@ function LivePageClient() {
       console.error('切换直播源失败:', err);
       // 不设置错误，保持当前状态
     } finally {
-      // 切换完成，解锁频道切换器
-      setIsSwitchingSource(false);
-      // 自动切换到频道 tab
-      setActiveTab('channels');
+      // 过期的那次不解锁，由最新那次切换完成后解锁
+      if (!stale) {
+        // 切换完成，解锁频道切换器
+        setIsSwitchingSource(false);
+        // 自动切换到频道 tab
+        setActiveTab('channels');
+      }
     }
   };
 
   // 获取节目单信息的辅助函数
   const fetchEpgData = async (channel: LiveChannel, source: LiveSource) => {
+    // 快速切台时旧频道的节目单可能晚到，只认最新一次请求
+    const request = epgGate.begin();
     if (channel.tvgId && source) {
       try {
         setIsEpgLoading(true); // 开始加载 EPG 数据
@@ -711,7 +732,7 @@ function LivePageClient() {
         );
         if (response.ok) {
           const result = await response.json();
-          if (result.success) {
+          if (request.isCurrent() && result.success) {
             // 清洗EPG数据，去除重叠的节目
             const cleanedData = {
               ...result.data,
@@ -723,7 +744,7 @@ function LivePageClient() {
       } catch (error) {
         console.error('获取节目单信息失败:', error);
       } finally {
-        setIsEpgLoading(false); // 无论成功失败都结束加载状态
+        if (request.isCurrent()) setIsEpgLoading(false);
       }
     } else {
       // 如果没有 tvgId 或 source，清空 EPG 数据
@@ -761,9 +782,10 @@ function LivePageClient() {
       scrollToChannel(channel);
     }, 100);
 
-    // 获取节目单信息
+    // 获取节目单信息（不等待：播放记录要按点击顺序立即保存，
+    // 等节目单回来再存的话，先点的频道可能晚存而覆盖后点的）
     if (currentSource) {
-      await fetchEpgData(channel, currentSource);
+      void fetchEpgData(channel, currentSource);
     }
 
     // 保存播放记录（由本地设置控制，默认关闭）
@@ -2106,6 +2128,8 @@ function LivePageClient() {
 
   // 播放器初始化
   useEffect(() => {
+    // 频道或地址变了 effect 会重跑，旧那次的预检查晚到时不能再创建播放器
+    let cancelled = false;
     const preload = async () => {
       if (
         !Artplayer ||
@@ -2139,12 +2163,14 @@ function LivePageClient() {
             videoUrl
           )}&moontv-source=${currentSourceRef.current?.key || ''}`;
           const precheckResponse = await fetch(precheckUrl);
+          if (cancelled) return;
           if (!precheckResponse.ok) {
             console.error('预检查失败:', precheckResponse.statusText);
             setIsVideoLoading(false);
             return;
           }
           const precheckResult = await precheckResponse.json();
+          if (cancelled) return;
           if (precheckResult?.success && precheckResult?.type) {
             type = precheckResult.type;
           } else {
@@ -2153,6 +2179,7 @@ function LivePageClient() {
             return;
           }
         } catch (err) {
+          if (cancelled) return;
           console.error('预检查异常:', err);
           setIsVideoLoading(false);
           return;
@@ -2361,7 +2388,10 @@ function LivePageClient() {
       }
     };
     preload();
-  }, [Artplayer, Hls, videoUrl, currentChannel, loading]);
+    return () => {
+      cancelled = true;
+    };
+  }, [playerLibsReady, videoUrl, currentChannel, loading]);
 
   // 清理播放器资源
   useEffect(() => {
