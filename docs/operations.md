@@ -16,7 +16,7 @@
 
 ### Docker 部署
 
-复制 `.env.example` 为 `.env`，填写自己的 `PASSWORD`。这个值同时参与现有登录签名，已有站点应保留原值，改变后需重新登录。`USERNAME` 为站长账号；其余成员由站内账号管理创建。不要把私密配置提交到仓库。
+复制 `.env.example` 为 `.env`，填写自己的 `PASSWORD`。登录签名改用独立的 `AUTH_SECRET`：不填时首次启动自动生成，保存在数据库同目录的 `auth-secret`（日志会提示一次），之后重启沿用；从旧版升级后所有人需要重新登录一次。修改站长密码不再让别人的登录失效，想强制全员下线就删掉 `auth-secret` 或换一个 `AUTH_SECRET`。定时任务需要自己设置 `CRON_PASSWORD`，未设置时 `/api/cron/*` 返回 503。`USERNAME` 为站长账号；其余成员由站内账号管理创建。不要把私密配置提交到仓库。
 
 ```sh
 docker compose build tongmutvplus
@@ -57,6 +57,8 @@ docker compose exec --user 0 tongmutvplus node scripts/ops/sqlite-backup.cjs --o
 ```sh
 node scripts/ops/sqlite-backup.cjs --db .data/moontv.db --output backups/20261008-120000.sqlite
 ```
+
+备份数据库时把同目录的 `auth-secret` 一起保存；只恢复数据库、丢了这个文件也能用，只是所有人要重新登录。
 
 脚本不自动删除旧备份，也不创建定时任务。保留周期与异地副本由部署者设置；只在同一磁盘留副本不覆盖磁盘损坏场景。
 

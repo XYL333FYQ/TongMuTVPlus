@@ -1,5 +1,32 @@
 # 界面改造进度
 
+## 2026-10-23 发布前安全加固与生产实例验收
+
+- 用户目标：按正式发布的标准自查到找不出用户可感知的问题，前后端都可改（本轮获授权改 `src/app/api/**` 与 `server/`）。首页三个界面布局未动；没有新增依赖，没有提交。修改前备份在 `output/release-20261023/bak/`。
+- 代理防 SSRF：新增 `lib/server/ssrf.ts` 的 `guardedFetch`，手动跟随跳转并逐跳校验目标，拦截本机、内网、云元数据、100.64/10、198.18/15、组播等地址；已配置直播源 / EPG 的域名放行；`ALLOW_PRIVATE_PROXY_TARGETS=true` 才允许内网。接入 image-proxy、proxy/m3u8 / segment / key / logo、live/precheck、live/epg/download、web-live/proxy。图片代理只放行 `image/*`，媒体代理只放行音视频 / m3u8 / dash，其余改为 octet-stream，防止代理来的 HTML 以本站身份运行。`cms-proxy` 只接受已配置的视频源。
+- 响应头：全站 `X-Content-Type-Options: nosniff`；`/api/*` 加 sandbox CSP。
+- 鉴权：OIDC 探测、视频源校验、私人影库的删除 / 纠正 / 刷新只允许站长和管理员。定时任务去掉默认口令 `mtvpls`，未设 `CRON_PASSWORD` 时返回 503，口令比较用定长比较。
+- 登录：Cookie 签名改用独立 `AUTH_SECRET`（`lib/auth-secret.ts`），`server.js` 启动时未配置则生成并保存到数据目录 `auth-secret`；原来用站长密码签名，成员可拿自己的 Cookie 离线暴力破解站长密码。房间鉴权同步。HTTPS 下登录 Cookie 加 Secure（`lib/cookie-security.ts`）。同一账号 15 分钟内错 10 次锁 15 分钟，站长密码比较改为定长比较。房间密码加入每账号每分钟 10 次限制。
+- 用户可见：搜索时没有任何视频源，不再显示「没有找到」，改为「还没有可搜索的视频源」，站长 / 管理员给「去管理面板」入口；新增 404 页、出错页、全局出错页；全站页面标题改为「页面 · 站点名」；房间里正在播放时加入片单提示「已加入片单，当前影片继续播放」。
+- 文档：`.env.example` 增加 `AUTH_SECRET`、`CRON_PASSWORD`、`ALLOW_PRIVATE_PROXY_TARGETS`；README 环境变量表、定时任务说明，`docs/operations.md` 升级与备份说明同步。
+- 测试：ssrf 补跳转进内网被拦、公网跳转跟随、信任域名、内容类型；新增 `login-fail2ban.test.ts`、`auth-secret.test.ts`；房间服务补密码尝试限流。
+- 验证：`pnpm typecheck` 0；`pnpm test` 459 项全过；`test:rooms`、`test:ops` 全过；改动文件 ESLint 0 error、Prettier 通过、`check-design.mjs` 违规 0。全库 lint 仍有 67 个旧 error，都不在本轮改动文件里。生产构建在独立副本完成编译、类型和 283 个页面，只在 Windows standalone 符号链接 EPERM 失败（本机权限，Docker / Linux 不受影响）。用全新数据目录启动生产实例：自动生成签名密钥；登录、首页、私有页可用；篡改 Cookie 角色后 API 返回 401、私有页跳登录；内网和元数据地址代理返回 403；公网 HTML 被改为 octet-stream；CSP 与 nosniff 头在位；`/api/cron/mtvpls` 返回 503；404 页、标题、无视频源空态在 1280 深色 / 390 下正常。首轮生产实例里房间建房、加直链 MP4、播放已验证。
+- 没做 / 风险：用户密码哈希是无盐 SHA-256（在 `*.db.ts`，要跨存储后端迁移，未改）；账号锁定可被人故意触发锁住站长 15 分钟（内存态，重启清除）；DNS 重绑定的检查与使用之间仍有窗口；登录 Cookie 非 httpOnly（前端要读，已靠代理收紧与 CSP 缓解）；未做依赖漏洞审计（npmmirror 无 audit 接口）。升级后所有已登录用户需要重新登录一次。用户本机 dev 站点没有配置视频源，搜索 / 播放需要先在管理面板添加。播放器工具栏键盘可达、跨域截图失败仍未修。
+
+## 2026-10-23 非首页加载失败、竞态与弹窗可用性修复
+
+- 用户授权自由巡检和修改，首页三个界面的布局不动。先只读审计非首页前端，确认 14 项后逐项读源码核实再改；没有改首页布局、禁区文件、接口、存储键、Socket 事件或依赖，也没有提交。
+- 源站寻片 `source-search/page.tsx`：视频源 / 分类 / 列表三个请求加取消标记，快速切源或切分类时迟到的旧结果不再覆盖当前列表；第 N 页失败时保留已加载内容、停住自动翻页（原来哨兵一直在视口里会无限请求后续页并跳过失败页），显示「下一页加载失败，已保留当前内容」和重试，重试请求同一页；非 2xx 和格式不对都算失败，不再显示成「暂无可用的视频源 / 这个源没有分类」。两个输入框补 aria-label，未关联控件的 label 改为 span。
+- 短剧 `duanju/page.tsx`：同样修分页失败死循环和失败显示成空态的问题。共用新组件 `components/feedback/RetryNotice.tsx`（复用片库已有的 `tm-library-feedback` 样式与「重试加载」文案）。
+- 登录 / 注册：同源回跳函数移到 `lib/safe-redirect.ts`，注册成功后的 `?redirect=` 也走同源校验（原来可被带到外站）；`?error=100%` 不再因二次 decode 抛错白屏；Telegram 确认轮询改为 ref 管理，离开页面即停止，单次网络失败不再产生未处理的 Promise 拒绝，迟到结果被忽略。
+- 求片 `movie-request/page.tsx`：季度未加载完时「确认」禁用（原来可提前提交默认第 1 季）；打开新剧先清空旧季度，加载失败显示原因而不是上一部剧的季；默认选中列表第一季；只在真正搜索过后才显示「没有找到」；我的求片加载失败显示重试而非「还没有求片记录」。
+- 搜索 `SearchPageClient.tsx`：`defaultAggregateSearch` / `fluidSearch` 本地值被改坏时回落默认值，不再在渲染期 JSON.parse 抛错白屏；主搜索框补 aria-label。
+- 反馈组件：`ConfirmDialog` 支持异步 onConfirm，等待期间按钮禁用防连点（继续观看「清空」原来可连点两次），失败时恢复按钮；`feedback.css` 补禁用态。`MobileActionSheet` 捕获异步操作的拒绝，仍同步调用以保留点击手势。`HttpWarningDialog` 补 role=dialog / aria-modal / 标题关联、Esc 关闭、初始焦点、Tab 循环、关闭回焦和按钮 type。
+- 测试：新增 `source-search/page.loading.test.tsx`（3 项）、`movie-request/page.seasons.test.tsx`（2 项）、`lib/safe-redirect.test.ts`（7 项）、ConfirmDialog 异步防连点 1 项。把三个改动文件临时换回 .bak 原版时这 10 项中 6 项失败，换回修复版全部通过。
+- 验证：`pnpm typecheck` 退出 0；`pnpm test --runInBand` 71 套 / 445 项通过；改动 15 个 TS/TSX 文件 ESLint 0 error（warning 为原有类型），这些文件与 feedback.css Prettier 通过；`check-design.mjs` 违规 0 / TODO 0；禁区 diff 0。未改房间，未跑 `test:rooms`。全库 lint / format / build 的既有失败本轮未处理。日志在 `output/polish-20261023/`，修改前备份在其 `bak/`。
+- 浏览器（内置，已登录）：本机没有配置视频源和短剧源，真实分页无法实测；用页面内临时替换 fetch 返回 502 的方式验证了求片、短剧、源站寻片三处错误态和重试恢复，1280 深色、390 深色、820 浅色无横向溢出，重试按钮 44px 高、居中。`/login?error=100%25` 正常显示。验证期间 dev 服务一次原生崩溃 3221225477（编译中，与既有记录同类，根因未知），重启后继续。结束时已清掉临时 fetch 替换，恢复主题偏好与视口。
+- 没做 / 风险：真实采集源下的分页、Telegram 登录、HttpWarningDialog（只在站长 + 非本地 HTTP 时出现）没有实机验证，仅单测 / 代码审查。全库 lint 69 个旧 error 都在后端 `src/lib` 与禁区 `src/app/api`，未动。Windows 下 `pnpm build` 的 standalone 符号链接 EPERM 是本机权限问题（需开发者模式或管理员），Docker/Linux 构建不受影响，未改配置。
+
 ## 2026-10-22 主题效果本地提交范围
 
 - 用户授权提交上一版圆弧柔光。提交范围仅为主题过渡工具、对应测试、`primitives.css` 的主题区、这几轮主题进度及相关截图；共用样式其他区段、进度里的其他批次和工作区其他既有改动不一起提交。验证基于当前工作区，未另建干净 checkout 验证整个独立提交；全库 lint / 格式 / build 的既有边界仍保留。仅提交本地当前分支，不推送、合并或部署。
