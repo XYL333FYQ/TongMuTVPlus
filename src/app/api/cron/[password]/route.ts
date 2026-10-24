@@ -248,8 +248,11 @@ export async function GET(
         timestamp: new Date().toISOString(),
       });
     } else {
-      // 立即返回 202，定时任务在后台执行
-      cronJob();
+      // 立即返回 202，定时任务在后台执行。
+      // 必须接住后台任务的异常：没人处理的 Promise 拒绝在 Node 里会让整个服务进程退出
+      cronJob().catch((error) => {
+        console.error('Background cron job failed:', error);
+      });
       return NextResponse.json(
         {
           success: true,
