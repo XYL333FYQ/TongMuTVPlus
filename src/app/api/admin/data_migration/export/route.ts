@@ -203,8 +203,13 @@ export async function POST(req: NextRequest) {
             },
           };
         } catch (error) {
+          // 不能静默跳过：缺了某个用户的备份一旦用于恢复，会把这个账号连同数据一起删掉
           console.error(`导出用户 ${username} 数据失败:`, error);
-          return null;
+          throw new Error(
+            `读取用户 ${username} 的数据失败，备份已取消，请稍后重试：${
+              error instanceof Error ? error.message : String(error)
+            }`
+          );
         }
       });
 
@@ -353,7 +358,8 @@ async function getUserPasswordV2(username: string): Promise<string | null> {
 
     return null;
   } catch (error) {
+    // 读取失败与“没有密码”不同，交给上层取消整个备份
     console.error(`获取用户 ${username} V2密码失败:`, error);
-    return null;
+    throw error;
   }
 }

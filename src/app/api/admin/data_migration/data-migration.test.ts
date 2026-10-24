@@ -26,8 +26,9 @@ jest.mock('@/lib/db', () => ({
 }));
 
 import { NextRequest } from 'next/server';
-import { gzipSync } from 'zlib';
+import { gunzipSync, gzipSync } from 'zlib';
 
+import { POST as exportBackup } from './export/route';
 import { POST as importBackup } from './import/route';
 
 const resolved = (value: unknown) => jest.fn(async () => value);
@@ -91,6 +92,16 @@ function importRequest(file: string) {
     {
       method: 'POST',
       body: form,
+    }
+  );
+}
+
+function exportRequest() {
+  return new NextRequest(
+    'https://tongmu.test/api/admin/data_migration/export',
+    {
+      method: 'POST',
+      body: JSON.stringify({ password: 'backup-password' }),
     }
   );
 }
@@ -194,4 +205,31 @@ test('a user whose data fails to restore is reported, not counted as imported', 
   expect(result.failedUsers).toEqual(['alice']);
   expect(result.importedUsers).toBe(1);
   expect(result.error).toContain('alice');
+});
+
+test('a successful export contains every user', async () => {
+  const response = await exportBackup(exportRequest());
+  expect(response.status).toBe(200);
+  const backup = JSON.parse(
+    gunzipSync(Buffer.from(await response.text(), 'base64')).toString()
+  );
+  expect(Object.keys(backup.data.userData).sort()).toEqual(['alice', 'owner']);
+});
+
+test('a read failure for one user cancels the export instead of silently leaving them out', async () => {
+  mockDb.getAllFavorites = jest.fn(async (name: string) => {
+    if (name === 'alice') throw new Error('timeout');
+    return {};
+  });
+  const response = await exportBackup(exportRequest());
+  expect(response.status).toBe(500);
+  expect((await response.json()).error).toContain('alice');
+});
+
+test('a failure reading a password is not mistaken for "user has no password"', async () => {
+  mockDb.storage.getUserPasswordHash = jest.fn(async () => {
+    throw new Error('connection reset');
+  });
+  const response = await exportBackup(exportRequest());
+  expect(response.status).toBe(500);
 });
