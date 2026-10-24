@@ -356,8 +356,20 @@ const DataMigration = ({ onRefreshConfig }: DataMigrationProps) => {
               'zh-CN'
             )}</p>
             <p>服务器版本: ${result.serverVersion || '未知版本'}</p>
-            <p>漫画数据: ${result.importedMangaData ? '已导入' : '未导入'}</p>
-            <p>电子书数据: ${result.importedBookData ? '已导入' : '未导入'}</p>
+            <p>漫画数据: ${
+              result.importedMangaData
+                ? '已导入'
+                : result.preservedMangaData
+                ? '备份未包含，已保留原有数据'
+                : '未导入'
+            }</p>
+            <p>电子书数据: ${
+              result.importedBookData
+                ? '已导入'
+                : result.preservedBookData
+                ? '备份未包含，已保留原有数据'
+                : '未导入'
+            }</p>
             <p class="mt-3 text-fg">请刷新页面以查看最新数据。</p>
           </div>
         `,

@@ -23,6 +23,9 @@ module.exports = class NodeWebEnvironment extends NodeEnvironment {
       'TextDecoder',
       'AbortController',
       'AbortSignal',
+      'FormData',
+      'File',
+      'Blob',
     ]) {
       this.global[name] = globalThis[name];
     }

@@ -477,12 +477,12 @@ export async function POST(req: NextRequest) {
             })(),
 
             // 导入漫画书架 / 阅读记录
+            // 备份不含漫画数据时，用清空前保存的快照写回，保留原有书架和进度
             (async () => {
-              if (!backupHasMangaData) return;
               const mangaShelfEntries = Object.entries(
-                user.mangaData?.shelf ||
-                  preservedMangaData[username]?.mangaShelf ||
-                  {}
+                (backupHasMangaData
+                  ? user.mangaData?.shelf
+                  : preservedMangaData[username]?.mangaShelf) || {}
               );
               for (
                 let j = 0;
@@ -503,9 +503,9 @@ export async function POST(req: NextRequest) {
               }
 
               const mangaReadEntries = Object.entries(
-                user.mangaData?.readRecords ||
-                  preservedMangaData[username]?.mangaReadRecords ||
-                  {}
+                (backupHasMangaData
+                  ? user.mangaData?.readRecords
+                  : preservedMangaData[username]?.mangaReadRecords) || {}
               );
               for (
                 let j = 0;
@@ -527,12 +527,12 @@ export async function POST(req: NextRequest) {
             })(),
 
             // 导入电子书书架 / 阅读记录
+            // 电子书同理：备份不含时写回清空前的快照
             (async () => {
-              if (!backupHasBookData) return;
               const bookShelfEntries = Object.entries(
-                user.bookData?.shelf ||
-                  preservedBookData[username]?.bookShelf ||
-                  {}
+                (backupHasBookData
+                  ? user.bookData?.shelf
+                  : preservedBookData[username]?.bookShelf) || {}
               );
               for (
                 let j = 0;
@@ -548,9 +548,9 @@ export async function POST(req: NextRequest) {
               }
 
               const bookReadEntries = Object.entries(
-                user.bookData?.readRecords ||
-                  preservedBookData[username]?.bookReadRecords ||
-                  {}
+                (backupHasBookData
+                  ? user.bookData?.readRecords
+                  : preservedBookData[username]?.bookReadRecords) || {}
               );
               for (
                 let j = 0;
@@ -611,6 +611,9 @@ export async function POST(req: NextRequest) {
       importedUsersV2: importData.data.usersV2?.length || 0,
       importedMangaData: backupHasMangaData,
       importedBookData: backupHasBookData,
+      // 备份不含该类数据时，原有数据已原样保留
+      preservedMangaData: preserveMangaData,
+      preservedBookData: preserveBookData,
       timestamp: importData.timestamp,
       serverVersion:
         typeof importData.serverVersion === 'string'
