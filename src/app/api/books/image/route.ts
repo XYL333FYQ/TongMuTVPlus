@@ -2,7 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { legadoClient } from '@/lib/legado.client';
 import crypto from 'crypto';
-import { validateProxyUrlServerSide } from '@/lib/server/ssrf';
+import {
+  guardedFetch,
+  ProxyTargetBlockedError,
+  safeImageContentType,
+  validateProxyUrlServerSide,
+} from '@/lib/server/ssrf';
 
 import { getAuthorizedBooksUsername } from '../_utils';
 
@@ -87,60 +92,27 @@ export async function GET(request: NextRequest) {
     }
     const range = request.headers.get('range');
     if (range) headers.Range = range;
-    const res = await fetch(url, {
-      method: imageOptions.method || 'GET',
-      headers,
-      body: imageOptions.body,
-      cache: 'no-store',
-      redirect: 'manual',
-    });
-    if ([301, 302, 303, 307, 308].includes(res.status)) {
-      const location = res.headers.get('location');
-      if (!location)
-        return NextResponse.json(
-          { error: '图片重定向缺少地址' },
-          { status: 502 }
-        );
-      const redirected = new URL(location, url).toString();
-      if (!(await validateProxyUrlServerSide(redirected)))
-        return NextResponse.json(
-          { error: '图片重定向地址未通过安全校验' },
-          { status: 400 }
-        );
-      const second = await fetch(redirected, {
+    // 逐跳校验重定向：只校验第一跳的话，公网地址可以经第二次跳转进内网
+    const res = await guardedFetch(
+      url,
+      {
         method: imageOptions.method || 'GET',
         headers,
         body: imageOptions.body,
         cache: 'no-store',
-      });
-      if (!second.ok)
-        return NextResponse.json(
-          { error: `图片请求失败: ${second.status}` },
-          { status: second.status }
-        );
-      const data = new Uint8Array(await second.arrayBuffer());
-      const contentType = second.headers.get('content-type') || 'image/jpeg';
-      if (!range)
-        imageCache.set(cacheKey, {
-          data,
-          contentType,
-          expiresAt: Date.now() + 86400_000,
-        });
-      return new NextResponse(data, {
-        status: second.status,
-        headers: {
-          'Content-Type': contentType,
-          'Cache-Control': 'public, max-age=86400',
-        },
-      });
-    }
+      },
+      { publicOnly: true }
+    );
     if (!res.ok)
       return NextResponse.json(
         { error: `图片请求失败: ${res.status}` },
         { status: res.status }
       );
     const data = new Uint8Array(await res.arrayBuffer());
-    const contentType = res.headers.get('content-type') || 'image/jpeg';
+    // 只透传图片类型，防止书源返回的 HTML 以本站身份运行
+    const contentType = safeImageContentType(
+      res.headers.get('content-type') || 'image/jpeg'
+    );
     if (!range)
       imageCache.set(cacheKey, {
         data,
@@ -161,6 +133,11 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
+    if (error instanceof ProxyTargetBlockedError)
+      return NextResponse.json(
+        { error: '图片重定向地址未通过安全校验' },
+        { status: 400 }
+      );
     return NextResponse.json(
       { error: error instanceof Error ? error.message : '图片代理失败' },
       { status: 500 }

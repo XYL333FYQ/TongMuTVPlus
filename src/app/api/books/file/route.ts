@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { db } from '@/lib/db';
 import { bookProvider } from '@/lib/book-provider';
+import type { BookSource } from '@/lib/book.types';
+import { hostsOf, isProxyTargetAllowed } from '@/lib/server/ssrf';
 
 import { getAuthorizedBooksUsername } from '../_utils';
 
@@ -60,31 +62,66 @@ async function resolveFileHref(
   return { sourceId, href: preferred.href };
 }
 
+function originOf(url: string): string | null {
+  try {
+    return new URL(url).origin;
+  } catch {
+    return null;
+  }
+}
+
+// 书源配置的登录信息（Basic 或自定义请求头）
+function sourceAuthHeaders(source: BookSource): Record<string, string> {
+  if (source.authMode === 'basic' && source.username) {
+    return {
+      Authorization: `Basic ${Buffer.from(
+        `${source.username}:${source.password || ''}`
+      ).toString('base64')}`,
+    };
+  }
+  if (source.authMode === 'header' && source.headerName && source.headerValue) {
+    return { [source.headerName]: source.headerValue };
+  }
+  return {};
+}
+
+const MAX_REDIRECTS = 5;
+
 async function proxyFile(request: NextRequest, sourceId: string, href: string) {
   const source = await bookProvider.getSourceById(sourceId);
-  const headers = new Headers();
-  if (source.authMode === 'basic' && source.username) {
-    headers.set(
-      'Authorization',
-      `Basic ${Buffer.from(
-        `${source.username}:${source.password || ''}`
-      ).toString('base64')}`
-    );
-  } else if (
-    source.authMode === 'header' &&
-    source.headerName &&
-    source.headerValue
-  ) {
-    headers.set(source.headerName, source.headerValue);
-  }
+  const sourceOrigin = originOf(source.url);
+  // 书源本身可以在内网（自建 OPDS 很常见），其他地址必须是公网
+  const trustedHosts = hostsOf([source.url]);
   const range = request.headers.get('range');
-  if (range) headers.set('Range', range);
 
-  const response = await fetch(href, {
-    headers,
-    redirect: 'follow',
-    cache: 'no-store',
-  });
+  // 手动跟随重定向：每一跳都校验目标；书源的登录信息只发给书源自己的地址，
+  // 否则调用方填一个别的 href 就能把站长配置的账号密码发到任意服务器
+  let current = href;
+  let response: Response | null = null;
+  for (let hop = 0; hop <= MAX_REDIRECTS; hop++) {
+    if (!(await isProxyTargetAllowed(current, trustedHosts)))
+      throw new Error('文件地址未通过安全校验');
+    const headers = new Headers(
+      sourceOrigin && originOf(current) === sourceOrigin
+        ? sourceAuthHeaders(source)
+        : {}
+    );
+    if (range) headers.set('Range', range);
+    const hopResponse = await fetch(current, {
+      headers,
+      redirect: 'manual',
+      cache: 'no-store',
+    });
+    const location = hopResponse.headers.get('location');
+    if (hopResponse.status >= 300 && hopResponse.status < 400 && location) {
+      await hopResponse.body?.cancel().catch(() => undefined);
+      current = new URL(location, current).toString();
+      continue;
+    }
+    response = hopResponse;
+    break;
+  }
+  if (!response) throw new Error('文件地址重定向次数过多');
 
   if (!response.ok) {
     return NextResponse.json(
