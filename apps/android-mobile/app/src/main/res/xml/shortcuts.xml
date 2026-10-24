@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut
+        android:shortcutId="change_server"
+        android:enabled="true"
+        android:shortcutShortLabel="@string/shortcut_change_server">
+        <intent
+            android:action="com.tongmutvplus.mobile.CHANGE_SERVER"
+            android:targetClass="com.tongmutvplus.mobile.MainActivity"
+            android:targetPackage="com.tongmutvplus.mobile" />
+    </shortcut>
+</shortcuts>
