@@ -4,6 +4,7 @@ import { NextResponse } from 'next/server';
 
 import { API_CONFIG, getCacheTime } from '@/lib/config';
 import { getDuanjuSources } from '@/lib/duanju';
+import { isHlsPlaylistUrl } from '@/lib/hls-url';
 import { SearchResult } from '@/lib/types';
 import { cleanHtmlTags } from '@/lib/utils';
 
@@ -170,7 +171,7 @@ export async function GET() {
             const episode_title_url = title_url.split('$');
             if (
               episode_title_url.length === 2 &&
-              episode_title_url[1].endsWith('.m3u8')
+              isHlsPlaylistUrl(episode_title_url[1])
             ) {
               matchTitles.push(episode_title_url[0]);
               matchEpisodes.push(episode_title_url[1]);
