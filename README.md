@@ -190,7 +190,7 @@ on:
 
 **7. 配置外部定时任务（可选）**
 
-先设置环境变量 `CRON_PASSWORD`（一串只有你知道的随机字符），再用外部定时请求 `/api/cron/<CRON_PASSWORD>` 触发定时任务，推荐每小时一次。未设置时该接口关闭，不再接受旧的默认地址 `/api/cron/mtvpls`。
+Docker / 本机启动时程序每小时自动执行一次定时任务，不需要额外配置。需要外部触发（如 Serverless 部署）时，设置环境变量 `CRON_PASSWORD`（一串只有你知道的随机字符），再定时请求 `/api/cron/<CRON_PASSWORD>`，推荐每小时一次。旧的默认地址 `/api/cron/mtvpls` 已停用。
 
 ---
 
@@ -468,7 +468,7 @@ dockge/komodo 等 docker compose UI 也有自动更新功能
 | PASSWORD                                 | 站长密码                                                                                                                                                                                          | 任意字符串                                   | 无默认，必填字段                                                                                                           |
 | AUTH_SECRET | 登录 Cookie 的签名密钥，与站长密码分开；Docker / 本机启动时未设置会自动生成并保存到数据目录的 `auth-secret` 文件 | 32 位以上随机字符串 | 自动生成（边缘部署回退为 PASSWORD） |
 | ALLOW_PRIVATE_PROXY_TARGETS | 是否允许图片 / 直播 / 媒体代理访问内网与本机地址（默认拒绝，防止被当作跳板访问内网；已配置的直播源域名始终放行） | true/false | false |
-| CRON_PASSWORD                            | 定时任务 API 访问密码（用于保护 /api/cron 端点，必须自行设置）                                                                                                                                                  | 任意字符串                                   | 无（未设置时接口关闭）                                                                                                                     |
+| CRON_PASSWORD                            | 定时任务 API 访问密码（外部触发 /api/cron 时使用；不设置时只运行内置的每小时任务）                                                                                                                                                  | 任意字符串                                   | 无（每次启动随机生成，外部无法调用）                                                                                                                     |
 | CRON_WAIT_FOR_COMPLETION                 | 定时任务接口是否等待任务完全结束后再返回响应（true 时返回 200，false 时立即返回 202）。部署在 serverless 平台（如 Vercel）时建议设置为 true，否则响应返回后异步执行可能会被平台杀后台导致任务中断 | true/false                                   | false                                                                                                                      |
 | CRON_USER_BATCH_SIZE                     | 定时任务用户批处理大小（控制并发处理的用户数量，影响播放记录和收藏更新任务的并发性能）                                                                                                            | 正整数                                       | 3                                                                                                                          |
 | SITE_BASE                                | 站点 url                                                                                                                                                                                          | 形如 https://example.com                     | 空                                                                                                                         |

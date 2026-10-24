@@ -59,12 +59,18 @@ const intervalId = setInterval(() => {
 
 // 执行 cron 任务的函数
 function executeCronJob() {
-  const cronPassword = process.env.CRON_PASSWORD || 'mtvpls';
+  // server.js 启动时保证 CRON_PASSWORD 一定有值（未配置则为本次运行的随机口令）
+  const cronPassword = process.env.CRON_PASSWORD;
+  if (!cronPassword) {
+    console.error('Cron job skipped: CRON_PASSWORD is not set');
+    return;
+  }
   const cronUrl = `http://${process.env.HOSTNAME || 'localhost'}:${
     process.env.PORT || 3000
-  }/api/cron/${cronPassword}`;
+  }/api/cron/${encodeURIComponent(cronPassword)}`;
 
-  console.log(`Executing cron job: ${cronUrl}`);
+  // 日志里不打印口令
+  console.log('Executing cron job: /api/cron/***');
 
   const req = http.get(cronUrl, (res) => {
     let data = '';

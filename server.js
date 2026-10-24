@@ -61,12 +61,13 @@ function ensureAuthSecret() {
   );
   const file = path.join(dataDir, 'auth-secret');
   try {
-    let secret = fs.existsSync(file) ? fs.readFileSync(file, 'utf8').trim() : '';
+    let secret = fs.existsSync(file)
+      ? fs.readFileSync(file, 'utf8').trim()
+      : '';
     if (secret.length < 32) {
       secret = crypto.randomBytes(32).toString('hex');
       fs.mkdirSync(dataDir, { recursive: true });
-      fs.writeFileSync(file, `${secret}
-`, { mode: 0o600 });
+      fs.writeFileSync(file, `${secret}\n`, { mode: 0o600 });
       console.log(`🔐 已生成登录签名密钥：${file}（请随数据目录一起备份）`);
     }
     process.env.AUTH_SECRET = secret;
@@ -79,7 +80,18 @@ function ensureAuthSecret() {
   }
 }
 
+// 内置定时任务（start.js 每小时请求 /api/cron/<CRON_PASSWORD>）与本进程共用环境变量。
+// 未配置 CRON_PASSWORD 时生成仅本次运行有效的随机口令：内置任务照常执行，
+// 外部又猜不到地址；需要外部触发时再显式配置。
+function ensureCronPassword() {
+  if (process.env.CRON_PASSWORD) return;
+  process.env.CRON_PASSWORD = require('node:crypto')
+    .randomBytes(24)
+    .toString('hex');
+}
+
 ensureAuthSecret();
+ensureCronPassword();
 ensureSQLiteReady();
 
 const dev = process.env.NODE_ENV !== 'production';
