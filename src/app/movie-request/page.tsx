@@ -2,7 +2,7 @@
 
 import { AlertCircle, CheckCircle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 import '@/styles/controls.css';
@@ -11,6 +11,7 @@ import { getTMDBImageUrl } from '@/lib/tmdb.client';
 import { processImageUrl } from '@/lib/utils';
 
 import PageContainer from '@/components/PageContainer';
+import RetryNotice from '@/components/feedback/RetryNotice';
 import PageHeader from '@/components/shell/PageHeader';
 import PageLayout from '@/components/PageLayout';
 
@@ -42,12 +43,15 @@ export default function MovieRequestPage() {
   const [searchKeyword, setSearchKeyword] = useState('');
   const [searchResults, setSearchResults] = useState<TMDBResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
+  // 最近一次完成搜索的关键词；只有真搜过才显示“没有找到”，输入过程中不提示
+  const [searchedKeyword, setSearchedKeyword] = useState('');
   const [showSeasonDialog, setShowSeasonDialog] = useState(false);
   const [selectedItem, setSelectedItem] = useState<TMDBResult | null>(null);
   const [seasons, setSeasons] = useState<
     Array<{ season_number: number; name: string; poster_path?: string | null }>
   >([]);
   const [loadingSeasons, setLoadingSeasons] = useState(false);
+  const [seasonsError, setSeasonsError] = useState('');
   const [selectedSeason, setSelectedSeason] = useState<number>(1);
   const [alertModal, setAlertModal] = useState<{
     isOpen: boolean;
@@ -57,8 +61,18 @@ export default function MovieRequestPage() {
   }>({ isOpen: false, type: 'success', title: '', message: '' });
   const [myRequests, setMyRequests] = useState<MovieRequest[]>([]);
   const [loadingMyRequests, setLoadingMyRequests] = useState(true);
+  const [myRequestsError, setMyRequestsError] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [isFeatureEnabled, setIsFeatureEnabled] = useState(true);
+  const searchRequestIdRef = useRef(0);
+  const seasonRequestIdRef = useRef(0);
+
+  useEffect(() => {
+    return () => {
+      searchRequestIdRef.current += 1;
+      seasonRequestIdRef.current += 1;
+    };
+  }, []);
 
   // 检查求片功能是否启用
   useEffect(() => {
@@ -71,6 +85,7 @@ export default function MovieRequestPage() {
   // TMDB搜索
   const handleSearch = async () => {
     if (!searchKeyword.trim()) return;
+    const requestId = ++searchRequestIdRef.current;
 
     setIsSearching(true);
     try {
@@ -79,12 +94,16 @@ export default function MovieRequestPage() {
       );
       const data = await response.json();
 
+      if (searchRequestIdRef.current !== requestId) return;
+
       if (data.results) {
         setSearchResults(data.results.slice(0, 20));
       } else {
         setSearchResults([]);
       }
+      setSearchedKeyword(searchKeyword.trim());
     } catch (err) {
+      if (searchRequestIdRef.current !== requestId) return;
       console.error('搜索失败:', err);
       setAlertModal({
         isOpen: true,
@@ -93,45 +112,65 @@ export default function MovieRequestPage() {
         message: '请稍后重试',
       });
     } finally {
-      setIsSearching(false);
+      if (searchRequestIdRef.current === requestId) setIsSearching(false);
     }
   };
 
   // 提交求片
   const handleRequest = async (item: TMDBResult) => {
+    const requestId = ++seasonRequestIdRef.current;
     if (item.media_type === 'tv') {
       setSelectedItem(item);
+      // 先清掉上一部剧的季度，避免加载失败时显示并提交别的剧的季
+      setSeasons([]);
+      setSeasonsError('');
       setLoadingSeasons(true);
       setShowSeasonDialog(true);
 
       try {
         const response = await fetch(`/api/tmdb/seasons?tvId=${item.id}`);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const data = await response.json();
-        if (data.seasons) {
-          const validSeasons = data.seasons.filter(
-            (s: any) => s.season_number > 0
-          );
-          setSeasons(validSeasons);
+        if (seasonRequestIdRef.current !== requestId) return;
+        if (!Array.isArray(data.seasons)) throw new Error('季度格式不正确');
+        const validSeasons = data.seasons.filter(
+          (s: any) => s.season_number > 0
+        );
+        setSeasons(validSeasons);
 
-          if (validSeasons.length === 1) {
-            // 只有一季，自动提交
-            setShowSeasonDialog(false);
-            submitRequest(item, validSeasons[0].season_number);
-          } else {
-            setSelectedSeason(1);
-          }
+        if (validSeasons.length === 0) {
+          setSeasonsError('这部剧还没有季度信息');
+        } else if (validSeasons.length === 1) {
+          // 只有一季，自动提交
+          setShowSeasonDialog(false);
+          submitRequest(item, validSeasons[0].season_number, validSeasons[0]);
+        } else {
+          // 默认选中列表里的第一季，而不是写死第 1 季
+          setSelectedSeason(validSeasons[0].season_number);
         }
       } catch (err) {
+        if (seasonRequestIdRef.current !== requestId) return;
         console.error('加载季度失败:', err);
+        setSeasonsError('季度信息暂时无法获取');
       } finally {
-        setLoadingSeasons(false);
+        if (seasonRequestIdRef.current === requestId) setLoadingSeasons(false);
       }
     } else {
       submitRequest(item);
     }
   };
 
-  const submitRequest = async (item: TMDBResult, season?: number) => {
+  const cancelSeasonRequest = () => {
+    seasonRequestIdRef.current += 1;
+    setShowSeasonDialog(false);
+    setLoadingSeasons(false);
+  };
+
+  const submitRequest = async (
+    item: TMDBResult,
+    season?: number,
+    seasonDetails?: (typeof seasons)[number]
+  ) => {
     setSubmitting(true);
     try {
       let poster = item.poster_path
@@ -139,8 +178,9 @@ export default function MovieRequestPage() {
         : undefined;
       let title = item.title || item.name || '';
 
-      if (season && seasons.length > 0) {
-        const seasonData = seasons.find((s) => s.season_number === season);
+      if (season) {
+        const seasonData =
+          seasonDetails || seasons.find((s) => s.season_number === season);
         if (seasonData) {
           title = `${title} ${seasonData.name}`;
           if (seasonData.poster_path) {
@@ -198,6 +238,8 @@ export default function MovieRequestPage() {
   };
 
   const handleSeasonConfirm = () => {
+    // 季度还没加载出来时不能提交，否则会默认提交第 1 季
+    if (loadingSeasons || seasons.length === 0) return;
     if (selectedItem) {
       submitRequest(selectedItem, selectedSeason);
     }
@@ -206,23 +248,35 @@ export default function MovieRequestPage() {
   };
 
   // 加载我的求片列表
+  const [myRequestsRetry, setMyRequestsRetry] = useState(0);
   useEffect(() => {
+    let cancelled = false;
     const fetchMyRequests = async () => {
+      setLoadingMyRequests(true);
+      setMyRequestsError('');
       try {
         const response = await fetch('/api/movie-requests?my=true');
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const data = await response.json();
+        if (cancelled) return;
         if (data.requests) {
           setMyRequests(data.requests);
         }
       } catch (err) {
+        if (cancelled) return;
         console.error('加载求片列表失败:', err);
+        // 失败时提示并给重试，不显示成“还没有求片记录”
+        setMyRequestsError('求片记录暂时无法获取');
       } finally {
-        setLoadingMyRequests(false);
+        if (!cancelled) setLoadingMyRequests(false);
       }
     };
 
     fetchMyRequests();
-  }, []);
+    return () => {
+      cancelled = true;
+    };
+  }, [myRequestsRetry]);
 
   // 刷新我的求片列表
   const refreshMyRequests = async () => {
@@ -263,6 +317,7 @@ export default function MovieRequestPage() {
               <input
                 type='text'
                 placeholder='输入片名'
+                aria-label='输入想求的片名'
                 value={searchKeyword}
                 onChange={(e) => setSearchKeyword(e.target.value)}
                 onKeyDown={(e) => {
@@ -293,6 +348,11 @@ export default function MovieRequestPage() {
                   <div key={index} className='tm-poster tm-skeleton' />
                 ))}
               </div>
+            ) : myRequestsError && myRequests.length === 0 ? (
+              <RetryNotice
+                message={myRequestsError}
+                onRetry={() => setMyRequestsRetry((value) => value + 1)}
+              />
             ) : myRequests.length === 0 ? (
               <div className='tm-empty'>
                 <p className='tm-empty-title'>还没有求片记录</p>
@@ -368,9 +428,9 @@ export default function MovieRequestPage() {
               </div>
             ))}
           </div>
-        ) : searchKeyword && !isSearching ? (
+        ) : searchedKeyword && !isSearching ? (
           <div className='tm-empty'>
-            <p className='tm-empty-title'>没有找到“{searchKeyword}”</p>
+            <p className='tm-empty-title'>没有找到“{searchedKeyword}”</p>
           </div>
         ) : null}
       </PageContainer>
@@ -411,10 +471,7 @@ export default function MovieRequestPage() {
       {showSeasonDialog &&
         typeof window !== 'undefined' &&
         createPortal(
-          <div
-            className='tm-modal-backdrop'
-            onClick={() => setShowSeasonDialog(false)}
-          >
+          <div className='tm-modal-backdrop' onClick={cancelSeasonRequest}>
             <div
               className='tm-modal'
               role='dialog'
@@ -431,6 +488,10 @@ export default function MovieRequestPage() {
                 </p>
                 {loadingSeasons ? (
                   <div className='tm-inline-state'>正在加载季度</div>
+                ) : seasonsError ? (
+                  <p className='tm-inline-state' role='alert'>
+                    {seasonsError}
+                  </p>
                 ) : (
                   <div className='max-h-60 space-y-1 overflow-y-auto'>
                     {seasons.map((season) => (
@@ -448,13 +509,16 @@ export default function MovieRequestPage() {
               </div>
               <div className='tm-modal-footer'>
                 <button
-                  onClick={() => setShowSeasonDialog(false)}
+                  onClick={cancelSeasonRequest}
                   className='tm-btn tm-btn-secondary'
                 >
                   取消
                 </button>
                 <button
                   onClick={handleSeasonConfirm}
+                  disabled={
+                    loadingSeasons || seasons.length === 0 || submitting
+                  }
                   className='tm-btn tm-btn-primary'
                 >
                   确认

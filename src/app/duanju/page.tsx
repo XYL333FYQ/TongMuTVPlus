@@ -27,6 +27,7 @@ import PageContainer from '@/components/PageContainer';
 import PageHeader from '@/components/shell/PageHeader';
 import PageLayout from '@/components/PageLayout';
 import PosterGrid from '@/components/catalog/PosterGrid';
+import RetryNotice from '@/components/feedback/RetryNotice';
 import PublicCatalogPage from '@/components/catalog/PublicCatalogPage';
 import VideoCard from '@/components/VideoCard';
 
@@ -91,6 +92,11 @@ function DuanjuPageClient() {
   const [isLoadingVideos, setIsLoadingVideos] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
+  // 请求失败的提示；重试计数变化会让对应 effect 重新请求同一页
+  const [sourcesError, setSourcesError] = useState('');
+  const [videosError, setVideosError] = useState('');
+  const [sourcesRetry, setSourcesRetry] = useState(0);
+  const [videosRetry, setVideosRetry] = useState(0);
   // 快照读取完成前不发请求，避免覆盖恢复的数据
   const [restoreChecked, setRestoreChecked] = useState(false);
   const loadMoreRef = useRef<HTMLDivElement>(null);
@@ -150,9 +156,11 @@ function DuanjuPageClient() {
       selectedParentCategory,
       selectedCategory,
       videos,
-      // 当前页还在请求中，回退一页以便返回后重新拉取，避免缺页
+      // 当前页还在请求中或已失败，回退一页以便返回后重新拉取，避免缺页
       currentPage:
-        isLoadingVideos && currentPage > 1 ? currentPage - 1 : currentPage,
+        (isLoadingVideos || videosError) && currentPage > 1
+          ? currentPage - 1
+          : currentPage,
       hasMore,
       scrollTop: 0,
     };
@@ -166,6 +174,7 @@ function DuanjuPageClient() {
     currentPage,
     hasMore,
     isLoadingVideos,
+    videosError,
   ]);
 
   // 跳转播放页前保存当前浏览位置
@@ -186,32 +195,42 @@ function DuanjuPageClient() {
   useEffect(() => {
     if (!restoreChecked) return;
 
+    let cancelled = false;
     const fetchSources = async () => {
       setIsLoadingSources(true);
+      setSourcesError('');
       try {
         const response = await fetch('/api/duanju/sources');
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const data = await response.json();
-        if (data.code === 200 && Array.isArray(data.data)) {
-          const list = data.data as DuanjuSource[];
-          setSources(list);
-          // 默认选择第一个源（恢复的源仍可用时保持不变）
-          if (list.length > 0) {
-            setSelectedSource((prev) =>
-              prev && list.some((source) => source.key === prev)
-                ? prev
-                : list[0].key
-            );
-          }
+        if (cancelled) return;
+        if (data.code !== 200 || !Array.isArray(data.data)) {
+          throw new Error(data.message || '采集源格式不正确');
+        }
+        const list = data.data as DuanjuSource[];
+        setSources(list);
+        // 默认选择第一个源（恢复的源仍可用时保持不变）
+        if (list.length > 0) {
+          setSelectedSource((prev) =>
+            prev && list.some((source) => source.key === prev)
+              ? prev
+              : list[0].key
+          );
         }
       } catch (error) {
+        if (cancelled) return;
         console.error('Failed to load duanju sources:', error);
+        setSourcesError('采集源暂时无法获取');
       } finally {
-        setIsLoadingSources(false);
+        if (!cancelled) setIsLoadingSources(false);
       }
     };
 
     fetchSources();
-  }, [restoreChecked]);
+    return () => {
+      cancelled = true;
+    };
+  }, [restoreChecked, sourcesRetry]);
 
   const handleSourceChange = (sourceKey: string) => {
     const source = sources.find((item) => item.key === sourceKey);
@@ -235,12 +254,14 @@ function DuanjuPageClient() {
       return;
     }
 
+    let cancelled = false;
     const fetchCategories = async () => {
       try {
         const response = await fetch(
           `/api/duanju/categories?source=${encodeURIComponent(selectedSource)}`
         );
         const data = await response.json();
+        if (cancelled) return;
         if (data.code === 200 && Array.isArray(data.data)) {
           const list = data.data as CategoryNode[];
           setCategories(list);
@@ -283,6 +304,7 @@ function DuanjuPageClient() {
           }
         }
       } catch (error) {
+        if (cancelled) return;
         console.error('Failed to load duanju categories:', error);
         // 分类加载失败时回退到采集源标记的短剧分类，保证列表可用
         const source = sources.find((item) => item.key === selectedSource);
@@ -294,6 +316,9 @@ function DuanjuPageClient() {
     };
 
     fetchCategories();
+    return () => {
+      cancelled = true;
+    };
   }, [restoreChecked, selectedSource]);
 
   // 切换一级分类（类型）时，落到该类型下第一个子分类并重置到第一页
@@ -344,8 +369,10 @@ function DuanjuPageClient() {
       return;
     }
 
+    let cancelled = false;
     const fetchVideos = async () => {
       setIsLoadingVideos(true);
+      setVideosError('');
       try {
         const response = await fetch(
           `/api/duanju/videos?source=${encodeURIComponent(
@@ -354,24 +381,43 @@ function DuanjuPageClient() {
             selectedCategory
           )}&page=${currentPage}`
         );
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const data = await response.json();
-        if (data.code === 200 && Array.isArray(data.data)) {
-          if (currentPage === 1) {
-            setVideos(data.data);
-          } else {
-            setVideos((prev) => [...prev, ...data.data]);
-          }
-          setHasMore(data.page < data.pageCount);
+        if (cancelled) return;
+        if (data.code !== 200 || !Array.isArray(data.data)) {
+          throw new Error(data.message || '列表格式不正确');
         }
+        if (currentPage === 1) {
+          setVideos(data.data);
+        } else {
+          setVideos((prev) => [...prev, ...data.data]);
+        }
+        setHasMore(data.page < data.pageCount);
       } catch (error) {
+        if (cancelled) return;
         console.error('Failed to load duanju videos:', error);
+        // 失败后停住自动翻页，保留已加载内容，等用户重试同一页
+        setVideosError(
+          currentPage === 1
+            ? '短剧列表暂时无法获取'
+            : '下一页加载失败，已保留当前内容'
+        );
       } finally {
-        setIsLoadingVideos(false);
+        if (!cancelled) setIsLoadingVideos(false);
       }
     };
 
     fetchVideos();
-  }, [restoreChecked, selectedSource, selectedCategory, currentPage]);
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    restoreChecked,
+    selectedSource,
+    selectedCategory,
+    currentPage,
+    videosRetry,
+  ]);
 
   // Intersection Observer for infinite scroll
   // 哨兵节点仅在列表非空时渲染；快照恢复不发请求、isLoadingVideos 不翻转，
@@ -383,7 +429,12 @@ function DuanjuPageClient() {
     const observer = new IntersectionObserver(
       (entries) => {
         const target = entries[0];
-        if (target.isIntersecting && hasMore && !isLoadingVideos) {
+        if (
+          target.isIntersecting &&
+          hasMore &&
+          !isLoadingVideos &&
+          !videosError
+        ) {
           setCurrentPage((prev) => prev + 1);
         }
       },
@@ -395,7 +446,7 @@ function DuanjuPageClient() {
     return () => {
       observer.disconnect();
     };
-  }, [hasVideos, hasMore, isLoadingVideos]);
+  }, [hasVideos, hasMore, isLoadingVideos, videosError]);
 
   return (
     <PageLayout activePath='/duanju'>
@@ -407,6 +458,11 @@ function DuanjuPageClient() {
             <div className='tm-field-label'>服务</div>
             {isLoadingSources ? (
               <div className='tm-inline-state'>正在加载采集源</div>
+            ) : sourcesError && sources.length === 0 ? (
+              <RetryNotice
+                message={sourcesError}
+                onRetry={() => setSourcesRetry((value) => value + 1)}
+              />
             ) : sources.length === 0 ? (
               <div className='tm-inline-state'>还没有包含短剧分类的采集源</div>
             ) : (
@@ -536,6 +592,11 @@ function DuanjuPageClient() {
                   <div key={index} className='tm-poster tm-skeleton' />
                 ))}
               </div>
+            ) : videosError && videos.length === 0 ? (
+              <RetryNotice
+                message={videosError}
+                onRetry={() => setVideosRetry((value) => value + 1)}
+              />
             ) : videos.length === 0 ? (
               <div className='tm-empty'>
                 <p className='tm-empty-title'>暂无短剧</p>
@@ -575,7 +636,13 @@ function DuanjuPageClient() {
                   {isLoadingVideos && (
                     <span className='tm-library-end'>正在加载</span>
                   )}
-                  {!hasMore && videos.length > 0 && (
+                  {videosError && !isLoadingVideos && (
+                    <RetryNotice
+                      message={videosError}
+                      onRetry={() => setVideosRetry((value) => value + 1)}
+                    />
+                  )}
+                  {!hasMore && !videosError && videos.length > 0 && (
                     <span className='tm-library-end'>已经到底了</span>
                   )}
                 </div>

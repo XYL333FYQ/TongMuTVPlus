@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 
 import { ConfirmDialog } from '@/components/feedback/ConfirmDialog';
 
@@ -74,4 +74,28 @@ test('closed confirmation is absent', () => {
   const { rerender, props } = openDialog();
   rerender(<ConfirmDialog {...props} isOpen={false} />);
   expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
+});
+
+test('an async confirmation cannot run twice while it is still pending', async () => {
+  let finish: () => void = () => undefined;
+  const onConfirm = jest.fn(
+    () => new Promise<void>((resolve) => (finish = resolve))
+  );
+  render(
+    <ConfirmDialog
+      isOpen
+      title='清空记录'
+      message='清空全部播放记录？'
+      confirmText='清空'
+      onConfirm={onConfirm}
+      onCancel={jest.fn()}
+    />
+  );
+  const confirm = screen.getByRole('button', { name: '清空' });
+  fireEvent.click(confirm);
+  fireEvent.click(confirm);
+  expect(onConfirm).toHaveBeenCalledTimes(1);
+  expect(confirm).toBeDisabled();
+  await act(async () => finish());
+  expect(confirm).not.toBeDisabled();
 });

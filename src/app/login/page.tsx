@@ -5,11 +5,12 @@
 import { motion } from 'framer-motion';
 import { Check, Eye, EyeOff, Lock, Send, User } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Suspense, useEffect, useState } from 'react';
+import { Suspense, useEffect, useRef, useState } from 'react';
 
 import '@/styles/auth.css';
 
 import { useReducedMotionSetting } from '@/lib/motion';
+import { decodeQueryText, getSafeRedirect } from '@/lib/safe-redirect';
 
 import AuthVersion from '@/components/auth/AuthVersion';
 import PageContainer from '@/components/PageContainer';
@@ -75,12 +76,21 @@ function LoginPageClient() {
   );
 
   const { siteName } = useSite();
+  // Telegram 确认轮询；离开页面时必须停掉，否则迟到的“已确认”会把人从别的页面拉走
+  const telegramTimerRef = useRef<number | null>(null);
+  const stopTelegramPolling = () => {
+    if (telegramTimerRef.current !== null) {
+      window.clearInterval(telegramTimerRef.current);
+      telegramTimerRef.current = null;
+    }
+  };
+  useEffect(() => stopTelegramPolling, []);
 
   // 处理URL中的error参数
   useEffect(() => {
     const errorParam = searchParams.get('error');
     if (errorParam) {
-      setError(decodeURIComponent(errorParam));
+      setError(decodeQueryText(errorParam));
     }
   }, [searchParams]);
 
@@ -221,7 +231,7 @@ function LoginPageClient() {
           localStorage.removeItem('rememberedCredentials');
         }
 
-        const redirect = searchParams.get('redirect') || '/';
+        const redirect = getSafeRedirect(searchParams.get('redirect'));
         window.location.replace(redirect);
       } else {
         // 登录失败，重置Turnstile
@@ -289,37 +299,47 @@ function LoginPageClient() {
       window.open(createData.deepLink, '_blank', 'noopener,noreferrer');
 
       const startedAt = Date.now();
+      stopTelegramPolling();
       const timer = window.setInterval(async () => {
         if (Date.now() - startedAt > 5 * 60 * 1000) {
-          window.clearInterval(timer);
+          stopTelegramPolling();
           setTelegramLoginLoading(false);
           setTelegramLoginHint(null);
           setError('Telegram 登录已超时，请重试');
           return;
         }
 
-        const statusRes = await fetch(
-          `/api/telegram/login/status?token=${encodeURIComponent(
-            createData.token
-          )}`
-        );
-        const statusData = await statusRes.json().catch(() => ({}));
+        // 单次网络抖动不终止登录，下一轮继续查询
+        let statusData: { status?: string } = {};
+        try {
+          const statusRes = await fetch(
+            `/api/telegram/login/status?token=${encodeURIComponent(
+              createData.token
+            )}`
+          );
+          statusData = await statusRes.json().catch(() => ({}));
+        } catch {
+          return;
+        }
+        // 轮询已被停止（离开页面或重新发起）时，忽略这次迟到的结果
+        if (telegramTimerRef.current !== timer) return;
         if (statusData.status === 'confirmed') {
-          window.clearInterval(timer);
-          const redirect = searchParams.get('redirect') || '/';
+          stopTelegramPolling();
+          const redirect = getSafeRedirect(searchParams.get('redirect'));
           window.location.replace(redirect);
         } else if (statusData.status === 'denied') {
-          window.clearInterval(timer);
+          stopTelegramPolling();
           setTelegramLoginLoading(false);
           setTelegramLoginHint(null);
           setError('已拒绝 Telegram 登录');
         } else if (statusData.status === 'expired') {
-          window.clearInterval(timer);
+          stopTelegramPolling();
           setTelegramLoginLoading(false);
           setTelegramLoginHint(null);
           setError('Telegram 登录已过期');
         }
       }, 2000);
+      telegramTimerRef.current = timer;
     } catch (error) {
       setError('Telegram 登录请求失败，请稍后重试');
       setTelegramLoginLoading(false);

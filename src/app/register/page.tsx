@@ -10,6 +10,7 @@ import { Suspense, useEffect, useState } from 'react';
 import '@/styles/auth.css';
 
 import { useReducedMotionSetting } from '@/lib/motion';
+import { getSafeRedirect } from '@/lib/safe-redirect';
 
 import AuthVersion from '@/components/auth/AuthVersion';
 import PageContainer from '@/components/PageContainer';
@@ -184,8 +185,7 @@ function RegisterPageClient() {
         }
 
         // 注册成功，跳转到登录页
-        const redirect = searchParams.get('redirect') || '/login';
-        router.replace(redirect);
+        router.replace(getSafeRedirect(searchParams.get('redirect'), '/login'));
       } else {
         // 注册失败，重置Turnstile
         if (
@@ -309,7 +309,9 @@ function RegisterPageClient() {
             <button
               type='button'
               onClick={() =>
-                router.replace(searchParams.get('redirect') || '/login')
+                router.replace(
+                  getSafeRedirect(searchParams.get('redirect'), '/login')
+                )
               }
               className='tm-btn tm-btn-primary tm-btn-lg w-full'
             >

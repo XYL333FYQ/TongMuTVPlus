@@ -33,6 +33,7 @@ import PageContainer from '@/components/PageContainer';
 import PageHeader from '@/components/shell/PageHeader';
 import PageLayout from '@/components/PageLayout';
 import PosterGrid from '@/components/catalog/PosterGrid';
+import RetryNotice from '@/components/feedback/RetryNotice';
 import VideoCard from '@/components/VideoCard';
 
 type Category = CategoryNode;
@@ -56,6 +57,12 @@ interface SourceSearchSnapshot {
   searchInputValue: string;
   scrollTop: number;
 }
+
+// 非 2xx 也算失败，交给调用方显示错误和重试，而不是当成空列表
+const readJson = async (response: Response) => {
+  if (!response.ok) throw new Error(`HTTP ${response.status}`);
+  return response.json();
+};
 
 // 恢复动作需要在绘制前完成，避免闪现顶部；SSR 下退化为 useEffect
 const useIsomorphicLayoutEffect =
@@ -103,6 +110,13 @@ function SourceSearchPageClient() {
   const [viewMode, setViewMode] = useState<ViewMode>('browse');
   const [searchKeyword, setSearchKeyword] = useState<string>('');
   const [searchInputValue, setSearchInputValue] = useState<string>('');
+  // 三段请求各自的错误文案；重试计数变化会让对应 effect 重新请求
+  const [sourcesError, setSourcesError] = useState('');
+  const [categoriesError, setCategoriesError] = useState('');
+  const [videosError, setVideosError] = useState('');
+  const [sourcesRetry, setSourcesRetry] = useState(0);
+  const [categoriesRetry, setCategoriesRetry] = useState(0);
+  const [videosRetry, setVideosRetry] = useState(0);
   // 视频源过滤：伸缩搜索框的展开状态与关键字
   const [sourceFilter, setSourceFilter] = useState('');
   const [isSourceFilterExpanded, setIsSourceFilterExpanded] = useState(false);
@@ -165,9 +179,11 @@ function SourceSearchPageClient() {
       selectedParentCategory,
       selectedCategory,
       videos,
-      // 当前页还在请求中，回退一页以便返回后重新拉取，避免缺页
+      // 当前页还在请求中或已失败，回退一页以便返回后重新拉取，避免缺页
       currentPage:
-        isLoadingVideos && currentPage > 1 ? currentPage - 1 : currentPage,
+        (isLoadingVideos || videosError) && currentPage > 1
+          ? currentPage - 1
+          : currentPage,
       hasMore,
       viewMode,
       searchKeyword,
@@ -187,6 +203,7 @@ function SourceSearchPageClient() {
     searchKeyword,
     searchInputValue,
     isLoadingVideos,
+    videosError,
   ]);
 
   // 跳转播放页前保存当前浏览位置
@@ -206,34 +223,41 @@ function SourceSearchPageClient() {
   // 加载用户可用的视频源
   useEffect(() => {
     if (!restoreChecked) return;
+    // 离开页面或重试后，旧请求的结果直接丢弃
+    let cancelled = false;
 
     const fetchApiSites = async () => {
       setIsLoadingSources(true);
+      setSourcesError('');
       try {
-        const response = await fetch(
-          appendSpecialSourceParam('/api/source-search/sources')
+        const data = await readJson(
+          await fetch(appendSpecialSourceParam('/api/source-search/sources'))
         );
-        const data = await response.json();
-        if (data.sources && Array.isArray(data.sources)) {
-          setApiSites(data.sources);
-          // 默认选择第一个源（恢复的源仍可用时保持不变）
-          if (data.sources.length > 0) {
-            setSelectedSource((prev) =>
-              prev && data.sources.some((site: ApiSite) => site.key === prev)
-                ? prev
-                : data.sources[0].key
-            );
-          }
+        if (cancelled) return;
+        if (!Array.isArray(data.sources)) throw new Error('视频源格式不正确');
+        setApiSites(data.sources);
+        // 默认选择第一个源（恢复的源仍可用时保持不变）
+        if (data.sources.length > 0) {
+          setSelectedSource((prev) =>
+            prev && data.sources.some((site: ApiSite) => site.key === prev)
+              ? prev
+              : data.sources[0].key
+          );
         }
       } catch (error) {
+        if (cancelled) return;
         console.error('Failed to load API sources:', error);
+        setSourcesError('视频源暂时无法获取');
       } finally {
-        setIsLoadingSources(false);
+        if (!cancelled) setIsLoadingSources(false);
       }
     };
 
     fetchApiSites();
-  }, [restoreChecked]);
+    return () => {
+      cancelled = true;
+    };
+  }, [restoreChecked, sourcesRetry]);
 
   // 当选择的源变化时，加载分类列表
   useEffect(() => {
@@ -245,8 +269,13 @@ function SourceSearchPageClient() {
       return;
     }
 
+    // 快速切换视频源时，只采用最后一个源的分类
+    let cancelled = false;
+
     const fetchCategories = async () => {
       setIsLoadingCategories(true);
+      setCategoriesError('');
+      setVideosError('');
       setCategories([]);
       setSelectedParentCategory('');
       setSelectedCategory('');
@@ -254,31 +283,76 @@ function SourceSearchPageClient() {
       setCurrentPage(1);
       setHasMore(true);
       try {
-        const response = await fetch(
-          appendSpecialSourceParam(
-            `/api/source-search/categories?source=${encodeURIComponent(
-              selectedSource
-            )}`
+        const data = await readJson(
+          await fetch(
+            appendSpecialSourceParam(
+              `/api/source-search/categories?source=${encodeURIComponent(
+                selectedSource
+              )}`
+            )
           )
         );
-        const data = await response.json();
-        if (data.categories && Array.isArray(data.categories)) {
-          const list = data.categories as Category[];
-          setCategories(list);
-          // 两级分类时默认选中第一个类型下的第一个子分类
-          const { parent, category } = pickDefaultSelection(list);
-          setSelectedParentCategory(parent);
-          setSelectedCategory(category);
+        if (cancelled) return;
+        if (!Array.isArray(data.categories)) {
+          throw new Error('分类格式不正确');
         }
+        const list = data.categories as Category[];
+        setCategories(list);
+        // 两级分类时默认选中第一个类型下的第一个子分类
+        const { parent, category } = pickDefaultSelection(list);
+        setSelectedParentCategory(parent);
+        setSelectedCategory(category);
       } catch (error) {
+        if (cancelled) return;
         console.error('Failed to load categories:', error);
+        setCategoriesError('分类暂时无法获取');
       } finally {
-        setIsLoadingCategories(false);
+        if (!cancelled) setIsLoadingCategories(false);
       }
     };
 
     fetchCategories();
-  }, [restoreChecked, selectedSource]);
+    return () => {
+      cancelled = true;
+    };
+  }, [restoreChecked, selectedSource, categoriesRetry]);
+
+  // 浏览和搜索共用的分页加载：返回清理函数，旧请求迟到时不覆盖新列表。
+  // 失败时保留已加载内容并停住自动翻页，等用户点重试再请求同一页。
+  const loadVideoPage = (path: string, page: number) => {
+    let cancelled = false;
+
+    const run = async () => {
+      setIsLoadingVideos(true);
+      setVideosError('');
+      try {
+        const data = await readJson(
+          await fetch(appendSpecialSourceParam(path))
+        );
+        if (cancelled) return;
+        if (!Array.isArray(data.results)) throw new Error('列表格式不正确');
+        if (page === 1) {
+          setVideos(data.results);
+        } else {
+          setVideos((prev) => [...prev, ...data.results]);
+        }
+        setHasMore(data.page < data.pageCount);
+      } catch (error) {
+        if (cancelled) return;
+        console.error('Failed to load videos:', error);
+        setVideosError(
+          page === 1 ? '视频列表暂时无法获取' : '下一页加载失败，已保留当前内容'
+        );
+      } finally {
+        if (!cancelled) setIsLoadingVideos(false);
+      }
+    };
+
+    run();
+    return () => {
+      cancelled = true;
+    };
+  };
 
   // 当选择的分类或页码变化时，加载视频列表（浏览模式）
   useEffect(() => {
@@ -296,36 +370,22 @@ function SourceSearchPageClient() {
       return;
     }
 
-    const fetchVideos = async () => {
-      setIsLoadingVideos(true);
-      try {
-        const response = await fetch(
-          appendSpecialSourceParam(
-            `/api/source-search/videos?source=${encodeURIComponent(
-              selectedSource
-            )}&categoryId=${encodeURIComponent(
-              selectedCategory
-            )}&page=${currentPage}`
-          )
-        );
-        const data = await response.json();
-        if (data.results && Array.isArray(data.results)) {
-          if (currentPage === 1) {
-            setVideos(data.results);
-          } else {
-            setVideos((prev) => [...prev, ...data.results]);
-          }
-          setHasMore(data.page < data.pageCount);
-        }
-      } catch (error) {
-        console.error('Failed to load videos:', error);
-      } finally {
-        setIsLoadingVideos(false);
-      }
-    };
-
-    fetchVideos();
-  }, [restoreChecked, selectedSource, selectedCategory, currentPage, viewMode]);
+    return loadVideoPage(
+      `/api/source-search/videos?source=${encodeURIComponent(
+        selectedSource
+      )}&categoryId=${encodeURIComponent(
+        selectedCategory
+      )}&page=${currentPage}`,
+      currentPage
+    );
+  }, [
+    restoreChecked,
+    selectedSource,
+    selectedCategory,
+    currentPage,
+    viewMode,
+    videosRetry,
+  ]);
 
   // 当搜索关键词或页码变化时，执行搜索（搜索模式）
   useEffect(() => {
@@ -343,34 +403,20 @@ function SourceSearchPageClient() {
       return;
     }
 
-    const searchVideos = async () => {
-      setIsLoadingVideos(true);
-      try {
-        const response = await fetch(
-          appendSpecialSourceParam(
-            `/api/source-search/search?source=${encodeURIComponent(
-              selectedSource
-            )}&keyword=${encodeURIComponent(searchKeyword)}&page=${currentPage}`
-          )
-        );
-        const data = await response.json();
-        if (data.results && Array.isArray(data.results)) {
-          if (currentPage === 1) {
-            setVideos(data.results);
-          } else {
-            setVideos((prev) => [...prev, ...data.results]);
-          }
-          setHasMore(data.page < data.pageCount);
-        }
-      } catch (error) {
-        console.error('Failed to search videos:', error);
-      } finally {
-        setIsLoadingVideos(false);
-      }
-    };
-
-    searchVideos();
-  }, [restoreChecked, selectedSource, searchKeyword, currentPage, viewMode]);
+    return loadVideoPage(
+      `/api/source-search/search?source=${encodeURIComponent(
+        selectedSource
+      )}&keyword=${encodeURIComponent(searchKeyword)}&page=${currentPage}`,
+      currentPage
+    );
+  }, [
+    restoreChecked,
+    selectedSource,
+    searchKeyword,
+    currentPage,
+    viewMode,
+    videosRetry,
+  ]);
 
   // 切换一级分类（类型）时，落到该类型下第一个子分类并重置到第一页
   const handleParentCategoryChange = (value: string) => {
@@ -422,7 +468,12 @@ function SourceSearchPageClient() {
     const observer = new IntersectionObserver(
       (entries) => {
         const target = entries[0];
-        if (target.isIntersecting && hasMore && !isLoadingVideos) {
+        if (
+          target.isIntersecting &&
+          hasMore &&
+          !isLoadingVideos &&
+          !videosError
+        ) {
           setCurrentPage((prev) => prev + 1);
         }
       },
@@ -434,7 +485,7 @@ function SourceSearchPageClient() {
     return () => {
       observer.disconnect();
     };
-  }, [hasVideos, hasMore, isLoadingVideos]);
+  }, [hasVideos, hasMore, isLoadingVideos, videosError]);
 
   // 根据分类列表推导两级结构；平铺源回退为单行分类
   const isHierarchical = isHierarchicalCategories(categories);
@@ -504,6 +555,7 @@ function SourceSearchPageClient() {
                     if (!sourceFilter.trim()) setIsSourceFilterExpanded(false);
                   }}
                   placeholder='筛选视频源'
+                  aria-label='筛选视频源'
                   tabIndex={isSourceFilterExpanded ? 0 : -1}
                   className={`tm-expand-search-input ${
                     isSourceFilterExpanded
@@ -515,6 +567,11 @@ function SourceSearchPageClient() {
             </div>
             {isLoadingSources && apiSites.length === 0 ? (
               <div className='tm-inline-state'>正在加载视频源</div>
+            ) : sourcesError && apiSites.length === 0 ? (
+              <RetryNotice
+                message={sourcesError}
+                onRetry={() => setSourcesRetry((value) => value + 1)}
+              />
             ) : apiSites.length === 0 ? (
               <div className='tm-inline-state'>暂无可用的视频源</div>
             ) : filteredApiSites.length === 0 ? (
@@ -546,6 +603,7 @@ function SourceSearchPageClient() {
                     value={searchInputValue}
                     onChange={(e) => setSearchInputValue(e.target.value)}
                     placeholder='在这个源里搜索'
+                    aria-label='在这个源里搜索'
                     className='tm-input h-12 pr-12'
                   />
                   <button
@@ -580,12 +638,17 @@ function SourceSearchPageClient() {
             <div className='relative space-y-6'>
               {isLoadingCategories && categories.length === 0 ? (
                 <div className='tm-inline-state'>正在加载分类</div>
+              ) : categoriesError ? (
+                <RetryNotice
+                  message={categoriesError}
+                  onRetry={() => setCategoriesRetry((value) => value + 1)}
+                />
               ) : categories.length === 0 ? (
                 <div className='tm-inline-state'>这个源没有分类</div>
               ) : isHierarchical ? (
                 <>
                   <div>
-                    <label className='tm-field-label'>选择类型</label>
+                    <span className='tm-field-label'>选择类型</span>
                     <div className='flex'>
                       <CapsuleSwitch
                         options={parentCategories.map((category) => ({
@@ -599,7 +662,7 @@ function SourceSearchPageClient() {
                   </div>
                   {subCategories.length > 0 && (
                     <div>
-                      <label className='tm-field-label'>选择分类</label>
+                      <span className='tm-field-label'>选择分类</span>
                       <div className='flex'>
                         <CapsuleSwitch
                           options={subCategories.map((category) => ({
@@ -615,7 +678,7 @@ function SourceSearchPageClient() {
                 </>
               ) : (
                 <div>
-                  <label className='tm-field-label'>选择分类</label>
+                  <span className='tm-field-label'>选择分类</span>
                   <div className='flex'>
                     <CapsuleSwitch
                       options={categories.map((category) => ({
@@ -646,6 +709,11 @@ function SourceSearchPageClient() {
                     <div key={index} className='tm-poster tm-skeleton' />
                   ))}
                 </div>
+              ) : videosError && videos.length === 0 ? (
+                <RetryNotice
+                  message={videosError}
+                  onRetry={() => setVideosRetry((value) => value + 1)}
+                />
               ) : videos.length === 0 ? (
                 <div className='tm-empty'>
                   <p className='tm-empty-title'>暂无视频</p>
@@ -690,7 +758,13 @@ function SourceSearchPageClient() {
                     {isLoadingVideos && (
                       <span className='tm-library-end'>正在加载</span>
                     )}
-                    {!hasMore && videos.length > 0 && (
+                    {videosError && !isLoadingVideos && (
+                      <RetryNotice
+                        message={videosError}
+                        onRetry={() => setVideosRetry((value) => value + 1)}
+                      />
+                    )}
+                    {!hasMore && !videosError && videos.length > 0 && (
                       <span className='tm-library-end'>已经到底了</span>
                     )}
                   </div>

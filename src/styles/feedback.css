@@ -172,6 +172,10 @@
   color: var(--tm-accent-contrast);
   background: var(--tm-text);
 }
+.tm-confirm-action:disabled {
+  opacity: 0.5;
+  cursor: progress;
+}
 .tm-confirm-cancel:focus-visible,
 .tm-confirm-action:focus-visible {
   outline: 2px solid var(--tm-text);

@@ -1,7 +1,7 @@
 'use client';
 
 import { AlertTriangle, X } from 'lucide-react';
-import { useEffect, useId, useRef } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 interface ConfirmDialogProps {
@@ -10,7 +10,8 @@ interface ConfirmDialogProps {
   message: string;
   confirmText?: string;
   cancelText?: string;
-  onConfirm: () => void;
+  // 可以返回 Promise：等待期间按钮禁用，防止连点重复执行不可撤销操作
+  onConfirm: () => void | Promise<void>;
   onCancel: () => void;
   variant?: 'danger' | 'warning' | 'info';
 }
@@ -31,6 +32,42 @@ export function ConfirmDialog({
   cancelCallback.current = onCancel;
   const titleId = useId();
   const messageId = useId();
+  const [pending, setPending] = useState(false);
+  const pendingRef = useRef(false);
+  const mounted = useRef(true);
+
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
+
+  // 每次重新打开都允许再次确认
+  useEffect(() => {
+    if (isOpen) {
+      pendingRef.current = false;
+      setPending(false);
+    }
+  }, [isOpen]);
+
+  const handleConfirm = () => {
+    if (pendingRef.current) return;
+    const result = onConfirm();
+    // 同步操作直接结束；只有返回 Promise 时才进入等待态
+    if (!result || typeof result.then !== 'function') return;
+    pendingRef.current = true;
+    setPending(true);
+    result
+      .catch((error) => {
+        // 失败时保留弹窗并恢复按钮，具体提示由调用方负责
+        console.error('确认操作失败:', error);
+      })
+      .finally(() => {
+        pendingRef.current = false;
+        if (mounted.current) setPending(false);
+      });
+  };
 
   useEffect(() => {
     const element = dialog.current;
@@ -122,7 +159,9 @@ export function ConfirmDialog({
           </button>
           <button
             type='button'
-            onClick={onConfirm}
+            onClick={handleConfirm}
+            disabled={pending}
+            aria-busy={pending || undefined}
             className='tm-confirm-action tm-press'
           >
             {confirmText}

@@ -490,7 +490,11 @@ const MobileActionSheet: React.FC<MobileActionSheetProps> = ({
                 <button
                   onClick={() => {
                     if (closing.current) return;
-                    action.onClick();
+                    // 异步操作失败时记录下来，避免未处理的 Promise 拒绝
+                    // 同步调用以保留点击手势（剪贴板、打开新窗口需要）
+                    Promise.resolve(action.onClick()).catch((error) =>
+                      console.error('操作失败:', error)
+                    );
                     requestClose();
                   }}
                   disabled={action.disabled}

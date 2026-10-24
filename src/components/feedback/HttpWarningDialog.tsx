@@ -1,7 +1,7 @@
 'use client';
 
 import { AlertTriangle } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 import '@/styles/panels.css';
@@ -22,6 +22,9 @@ export default function HttpWarningDialog({ onClose }: HttpWarningDialogProps) {
   onCloseRef.current = onClose;
   const [isVisible, setIsVisible] = useState(false);
   const [shouldShow, setShouldShow] = useState(false);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const primaryRef = useRef<HTMLButtonElement>(null);
+  const titleId = useId();
 
   useEffect(() => {
     // 检查是否应该显示弹窗
@@ -80,6 +83,46 @@ export default function HttpWarningDialog({ onClose }: HttpWarningDialogProps) {
     );
   };
 
+  // 弹窗出现后把焦点放到“我知道了”，Esc 关闭，Tab 只在弹窗内循环；关闭后焦点交还原处
+  useEffect(() => {
+    if (!shouldShow) return;
+    const trigger =
+      document.activeElement instanceof HTMLElement
+        ? document.activeElement
+        : null;
+    primaryRef.current?.focus({ preventScroll: true });
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        handleClose();
+        return;
+      }
+      if (event.key !== 'Tab' || !panelRef.current) return;
+      const buttons = Array.from(
+        panelRef.current.querySelectorAll<HTMLButtonElement>(
+          'button:not(:disabled)'
+        )
+      );
+      const first = buttons[0];
+      const last = buttons[buttons.length - 1];
+      if (!panelRef.current.contains(document.activeElement)) {
+        event.preventDefault();
+        first?.focus();
+      } else if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last?.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first?.focus();
+      }
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.removeEventListener('keydown', onKeyDown);
+      if (trigger?.isConnected) trigger.focus({ preventScroll: true });
+    };
+  }, [shouldShow]);
+
   // 如果不需要显示，直接返回 null
   if (!shouldShow) return null;
 
@@ -91,6 +134,10 @@ export default function HttpWarningDialog({ onClose }: HttpWarningDialogProps) {
       onClick={handleClose}
     >
       <div
+        ref={panelRef}
+        role='dialog'
+        aria-modal='true'
+        aria-labelledby={titleId}
         className={`tm-http-warning-panel bg-surface rounded-lg shadow-xl max-w-md w-full border border-line transition-[transform,opacity] duration-300 ${
           isVisible ? 'tm-http-warning-shown' : 'tm-http-warning-hidden'
         } `}
@@ -100,10 +147,10 @@ export default function HttpWarningDialog({ onClose }: HttpWarningDialogProps) {
           {/* 图标和标题 */}
           <div className='flex items-start gap-4 mb-4'>
             <div className='flex-shrink-0'>
-              <AlertTriangle className='w-8 h-8 text-fg' />
+              <AlertTriangle className='w-8 h-8 text-fg' aria-hidden />
             </div>
             <div className='flex-1'>
-              <h3 className='text-lg font-medium text-fg mb-2'>
+              <h3 id={titleId} className='text-lg font-medium text-fg mb-2'>
                 HTTP 环境功能限制提示
               </h3>
               <div className='text-sm text-muted space-y-2'>
@@ -126,12 +173,15 @@ export default function HttpWarningDialog({ onClose }: HttpWarningDialogProps) {
           {/* 按钮组 */}
           <div className='flex gap-3 mt-6'>
             <button
+              type='button'
               onClick={handleDontShowAgain}
               className='flex-1 px-4 py-2 text-sm font-medium text-muted bg-raised hover:bg-line rounded-lg transition-[opacity,transform] min-h-[44px] tm-press min-w-[44px]'
             >
               不再提示
             </button>
             <button
+              ref={primaryRef}
+              type='button'
               onClick={handleClose}
               className='flex-1 px-4 py-2 text-sm font-medium text-inverse bg-fg hover:opacity-90 rounded-lg transition-[opacity,transform] min-h-[44px] tm-press min-w-[44px]'
             >
