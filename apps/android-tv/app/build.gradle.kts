@@ -8,7 +8,7 @@ fun propOrEnv(propName: String, envName: String, defaultValue: String): String {
         ?: defaultValue
 }
 
-val rawBaseUrl = propOrEnv("BASE_URL", "BASE_URL", "http://192.168.1.10:3000")
+val rawBaseUrl = propOrEnv("BASE_URL", "BASE_URL", "")
 val appDisplayName = propOrEnv("APP_NAME", "APP_NAME", "TongMuTV Plus")
 val versionNameValue = propOrEnv("VERSION_NAME", "VERSION_NAME", "1.0.0")
 val versionCodeValue = propOrEnv("VERSION_CODE", "VERSION_CODE", "1").toIntOrNull() ?: 1
@@ -27,11 +27,11 @@ fun escapeXmlString(value: String): String = value
     .replace("\"", "\\\"")
 
 android {
-    namespace = "com.moontvplus.tv"
+    namespace = "com.tongmutvplus.tv"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.moontvplus.tv"
+        applicationId = "com.tongmutvplus.tv"
         minSdk = minSdkValue
         targetSdk = 35
         versionCode = versionCodeValue
