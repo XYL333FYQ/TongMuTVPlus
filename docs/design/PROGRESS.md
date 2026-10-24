@@ -1,5 +1,17 @@
 # 界面改造进度
 
+## 2026-10-23 发布收尾：密码加盐、播放器可达性、管理面板换皮、全库 lint 清零
+
+- 用户要求不再停在局部，按成熟成品收尾。本轮继续放开禁区（API、server、\*.db.ts、LegacyPlaybackSurface、admin），没有新增依赖。备份在 `output/{lint,pwhash,player,admin-skin}-20261023/bak/`。
+- 全库 ESLint：67 个旧 error 清零（while(true)→for(;;)、hasOwnProperty、空块注释、多余转义、零宽字符改转义、db.ts case 块作用域、CommonJS require 按行豁免）；第三方 `pancheck/vendor` 加入 ignorePatterns。`.bug-hunter/`、构建产物、参考 HTML 加入 .prettierignore / .gitignore。
+- 密码：新增 `lib/password-hash.ts`，用户密码改为加盐 PBKDF2-SHA256（10 万次，WebCrypto，Workers 可用）；旧 SHA-256 照常能登录，成功后自动改存新格式。D1/SQLite、Postgres、Redis 系三套后端都接入；`init-sqlite.js` / `init-turso.js` 同格式写入，并且没配 PASSWORD 时不再建一个密码为 123456789 的 admin（原来可被任何人登录成站长）。测试实例实测：旧哈希用户登录 200 后库里变为 pbkdf2，再登录仍 200，错密码 401。
+- 定时任务回归修复：上一轮去掉默认口令后，start.js 的内置每小时任务会拿到 503。现在 server.js 在未配置 CRON_PASSWORD 时生成仅本次运行有效的随机口令，内置任务照常执行，外部猜不到；日志不再打印口令。README / operations / .env.example 同步。
+- 账号锁定防滥用：曾成功登录过该账号的 IP（每账号最近 5 个，30 天）不受账号锁定影响，别人乱试锁不住站长；这些 IP 仍受按 IP 的封禁约束。
+- 播放器（AUDIT ROOM-16/17/18）：工具栏与设置面板键盘可达、跨域片源截图给出可读提示且无 pageerror、可恢复 HLS 事件降为 warning。详见 AUDIT.md。
+- 管理面板换皮：用 P5 codemod（从历史取回、临时放开 admin 后运行、用完删除）替换 5028 处彩色/中性类，按钮样式表手工映射（主操作反色、危险操作报错红描边、其余中性），开关与站内 tm-switch 一致；修正 codemod 的三类误伤：开关被加 44px 最小高度、遮罩 bg-opacity 失效变不透明、选中项同时带两种文字色。剩余 19 处 TODO 均为内容色（内置主题色样、头像点缀色、评分角标预览）。1280 深色 / 浅色、375 手机实看，无横向溢出。
+- 验证：typecheck 0；Jest 75 套 / 475 项；pnpm lint 0 error；test:rooms 20/20；改动文件设计扫描违规 0。
+- 没做 / 风险：Redis V1 旧接口 verifyUser 仍比对明文旧键（新登录走 V2，不经过它）；DNS 重绑定窗口；登录 Cookie 非 httpOnly；依赖审计未做（npmmirror 无 audit 接口）；Windows 本机 `pnpm build` 的 standalone 符号链接 EPERM（Docker/Linux 不受影响）。全库 Prettier 单独一次提交。
+
 ## 2026-10-23 发布前安全加固与生产实例验收
 
 - 用户目标：按正式发布的标准自查到找不出用户可感知的问题，前后端都可改（本轮获授权改 `src/app/api/**` 与 `server/`）。首页三个界面布局未动；没有新增依赖，没有提交。修改前备份在 `output/release-20261023/bak/`。

@@ -183,6 +183,7 @@
 - 实际：两端曾出现 fatal:false 的 bufferStalledError，另有 bufferSeekOverHole；播放器随后恢复。已有 LegacyPlaybackSurface 对 HLS ERROR 事件统一 console.error，不能据此声称发生未恢复的致命播放故障，也不能声明零 error。
 - 证据：[双端 HLS](screenshots/final-hls-host.png)、[拖动后](screenshots/final-hls-seek.png)。主样本日志见下方。
 - 状态：**未修，P3**。底层缓冲原因可能包含外部流和网络，尚未定位；调整日志事件分级涉及项目明确禁止修改的 LegacyPlaybackSurface 内部逻辑。未直接屏蔽日志，未修改播放同步阈值或后端。MP4 普通播放的已复验片段无 error，但不能替代本项验收。
+- 2026-10-23 续修：用户放开禁区后修复。HLS ERROR 事件按 data.fatal 分级，可自动恢复的缓冲事件记 warning（只记 details），致命错误仍为 error 并走原恢复流程；同步阈值和恢复逻辑未改。
 
 ### ROOM-17 · P2 · 播放器工具栏无法用 Tab 到达
 
@@ -191,6 +192,7 @@
 - 实际：可点工具栏是 div/i，role 为空、tabIndex=-1；当时唯一 input 是不可见的 apd-input，可见可聚焦控件为 0。16 次真实 Tab 完全跳过工具栏。现有全局快捷键可控制播放/音量/快进/全屏，但没有设置、截图和画中画操作，不能替代完整键盘可达性。
 - 证据：[工具栏](screenshots/toolbar-baseline.png)、[Tab 路径](screenshots/toolbar-keyboard-skipped.png)、[设置](screenshots/toolbar-settings-open.png)。
 - 状态：**已确认，因禁区未修复**。生成/控制这些控件的是 LegacyPlaybackSurface 中的 ArtPlayer，控制器接口没有暴露上述所有操作。修复需要控件焦点、角色与键盘事件，超出 [AGENTS.md](AGENTS.md) 的“只允许改 className、样式、文案，逐处说明；不碰内部逻辑”。不从房间外部注入 DOM 属性或代点事件绕过禁区。独立只读复核同意证据足够，未发现约束内完整稳妥的局部修法。
+- 2026-10-23 续修：**已修复**。新增 `features/playback/art-keyboard.ts`：工具栏、设置项、下拉选项补 tabindex=0 与 role=button，播放 / 音量补名称，进度条、时间、缩略图、热力图等纯展示部分不进 Tab 序列；Enter / 空格转成点击并拦下全局快捷键；Enter 打开设置后焦点进入第一项，进出子菜单焦点留在面板，Esc 关闭并回到设置按钮；焦点环用 --tm-on-art。内置浏览器实测通过，单测 4 项。
 
 ### ROOM-18 · P2 · 普通跨域直链播放正常，截图抛出异常
 
@@ -199,6 +201,7 @@
 - 实际：两次点击均触发 pageerror：Failed to execute 'toDataURL' on 'HTMLCanvasElement': Tainted canvases may not be exported；播放器 notice 也是该英文异常，7 秒内没有 download 事件。视频正常解码，当前 crossOrigin=null。HEAD 请求返回 200/ACAO=\*，但这并不证明实际 GET/206 和重定向链支持 CORS。
 - 证据：[异常提示](screenshots/toolbar-screenshot-tainted.png)、[点击后页面](screenshots/toolbar-screenshot-dialog.png)。没有生成 toolbar-captured-frame.png，不把 Playwright 截页面当作播放器截图功能成功。
 - 状态：**已确认，因禁区未修复**。现有内部实现只对指定私人源启用跨域读帧，普通源会移除 crossOrigin，以保留不支持 CORS 的 CDN 播放兼容性；不能直接对全站加 anonymous。调整初始化/能力判断与降级涉及 LegacyPlaybackSurface 内部逻辑，项目禁止；外部修改属性并重载还会干扰既有播放。没有隐藏截图入口或吞异常来声明已修。独立只读复核确认。
+- 2026-10-23 续修：**已修复**。内置截图关闭，改为同名同位置的自定义控件，捕获读帧失败，提示「这个片源不允许截图，可以换个线路再试」；不对普通源强加 crossOrigin（保留无 CORS CDN 的播放兼容）。MDN flower.mp4 实测：提示出现，pageerror / unhandledrejection 为 0。
 - 机制依据：[媒体 crossOrigin 模式](https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/crossOrigin)、[toDataURL 的安全限制](https://developer.mozilla.org/en-US/docs/Web/API/HTMLCanvasElement/toDataURL)。这些说明支持读帧限制，不能据此推断所有媒体源都应该强制 CORS。
 
 ### ROOM-19 · P3 · 播放器高级设置仍有彩色控件
