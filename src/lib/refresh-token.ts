@@ -24,6 +24,41 @@ interface TokenData {
   lastUsed: number;
 }
 
+// 撤销标记。存储层只有 hGet/hSet/hDel，没有“比较后写入”，
+// 验证 refresh token 时写回 lastUsed 可能把刚被撤销的记录又写回去。
+// 所以撤销时先留下标记再删记录，验证在写回之后再查标记：
+// 两边无论怎样交错，被撤销的 token 最终都会被拒绝并删除。
+// 字段为 tokenId（单个设备）或 ALL_DEVICES（该时间点前创建的全部设备），值为撤销时间。
+const ALL_DEVICES = 'all';
+function revocationKey(username: string) {
+  // 不能以 user_tokens: 开头，否则会被 del(user_tokens:<用户>) 的前缀删除一起带走
+  return `user_token_revocations:${username}`;
+}
+
+async function isRevoked(
+  storage: any,
+  username: string,
+  tokenId: string,
+  createdAt: number
+): Promise<boolean> {
+  const key = revocationKey(username);
+  if (await storage.adapter.hGet(key, tokenId)) return true;
+  const all = Number(await storage.adapter.hGet(key, ALL_DEVICES));
+  return Number.isFinite(all) && all > 0 && createdAt <= all;
+}
+
+// 撤销标记超过 refresh token 有效期后，它能匹配的 token 都已过期，可以删除
+async function pruneRevocations(storage: any, username: string) {
+  if (typeof storage.adapter?.hGetAll !== 'function') return;
+  const key = revocationKey(username);
+  const revocations = await storage.adapter.hGetAll(key);
+  const now = Date.now();
+  for (const [field, revokedAt] of Object.entries(revocations || {})) {
+    if (now - Number(revokedAt) > TOKEN_CONFIG.REFRESH_TOKEN_AGE)
+      await storage.adapter.hDel(key, field);
+  }
+}
+
 // 生成随机 Token ID
 export function generateTokenId(): string {
   const array = new Uint8Array(16);
@@ -112,6 +147,12 @@ export async function verifyRefreshToken(
       JSON.stringify(tokenData)
     );
 
+    // 写回之后再查撤销标记：期间若被撤销，删掉刚写回的旧记录并拒绝
+    if (await isRevoked(storage, username, tokenId, tokenData.createdAt)) {
+      await (storage as any).adapter.hDel(hashKey, tokenId);
+      return false;
+    }
+
     return true;
   } catch (error) {
     console.error('Failed to verify refresh token:', error);
@@ -133,7 +174,15 @@ export async function revokeRefreshToken(
   }
 
   try {
+    // 先留标记再删除，见 isRevoked 上方说明
+    if (typeof (storage as any).adapter.hSet === 'function')
+      await (storage as any).adapter.hSet(
+        revocationKey(username),
+        tokenId,
+        String(Date.now())
+      );
     await (storage as any).adapter.hDel(hashKey, tokenId);
+    await pruneRevocations(storage, username);
     console.log(`Revoked refresh token for ${username}:${tokenId}`);
   } catch (error) {
     console.error('Failed to revoke refresh token:', error);
@@ -209,7 +258,15 @@ export async function revokeAllRefreshTokens(username: string): Promise<void> {
   }
 
   try {
+    // 先留标记再删除；之后新登录的设备创建时间更晚，不受影响
+    if (typeof (storage as any).adapter.hSet === 'function')
+      await (storage as any).adapter.hSet(
+        revocationKey(username),
+        ALL_DEVICES,
+        String(Date.now())
+      );
     await (storage as any).adapter.del(hashKey);
+    await pruneRevocations(storage, username);
     console.log(`Revoked all refresh tokens for ${username}`);
   } catch (error) {
     console.error('Failed to revoke all refresh tokens:', error);
@@ -247,6 +304,8 @@ export async function cleanupExpiredTokens(username: string): Promise<number> {
         console.error(`Failed to parse token data for ${tokenId}:`, err);
       }
     }
+
+    await pruneRevocations(storage, username);
 
     if (cleanedCount > 0) {
       console.log(`Cleaned up ${cleanedCount} expired tokens for ${username}`);
