@@ -388,7 +388,7 @@ function TVDetailClient() {
   if (error || !detail) {
     return (
       <TVLayout>
-        <section className='rounded-[24px] border border-danger bg-raised p-10 text-3xl font-bold text-fg'>
+        <section className='rounded-md border border-danger bg-raised p-10 text-3xl font-bold text-fg'>
           {error || '详情不存在'}
         </section>
       </TVLayout>
@@ -397,10 +397,10 @@ function TVDetailClient() {
 
   return (
     <TVLayout>
-      <section className='relative overflow-hidden rounded-[24px] border border-line bg-surface p-4 shadow-2xl md:p-6 shadow-ink/70'>
+      <section className='relative overflow-hidden rounded-md border border-line bg-surface p-4 shadow-2xl md:p-6 shadow-ink/70'>
         {poster && <img src={poster} alt='' className='hidden' />}
         <div className='relative grid grid-cols-1 gap-6 md:grid-cols-[240px_minmax(0,1fr)] md:gap-8'>
-          <div className='overflow-hidden rounded-[14px] bg-surface shadow-2xl shadow-ink/70'>
+          <div className='overflow-hidden rounded-md bg-surface shadow-2xl shadow-ink/70'>
             {poster ? (
               <img
                 src={poster}
@@ -458,7 +458,7 @@ function TVDetailClient() {
       </section>
 
       {sources.length > 1 && (
-        <section className='mt-10 rounded-[24px] border border-line bg-raised p-6'>
+        <section className='mt-10 rounded-md border border-line bg-raised p-6'>
           <div className='mb-5 flex flex-wrap items-center justify-between gap-4'>
             <h2 className='text-xl font-medium md:text-2xl'>播放源</h2>
             <div className='flex items-center gap-3 rounded-2xl bg-raised px-5 py-3 text-xl font-bold text-fg'>
@@ -509,7 +509,7 @@ function TVDetailClient() {
         </section>
       )}
 
-      <section className='mt-10 rounded-[24px] border border-line bg-raised p-6'>
+      <section className='mt-10 rounded-md border border-line bg-raised p-6'>
         <h2 className='mb-5 text-xl font-medium md:text-2xl'>选集</h2>
         <div className='grid grid-cols-3 gap-4 md:grid-cols-5 lg:grid-cols-8'>
           {(detail.episodes_titles?.length

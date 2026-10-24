@@ -121,7 +121,7 @@ export default function TVAnimePage() {
 
   return (
     <TVLayout>
-      <section className='rounded-[42px] border border-line bg-surface p-4 md:p-8 shadow-lg'>
+      <section className='rounded-md border border-line bg-surface p-4 md:p-8 shadow-lg'>
         <div className='flex items-center gap-4'>
           <CalendarDays className='h-8 w-8 shrink-0 text-fg' />
           <div>

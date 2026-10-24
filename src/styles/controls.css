@@ -89,6 +89,37 @@
   min-width: 0;
   overflow-x: auto;
 }
+@media (min-width: 1700px) {
+  .tm-capsule {
+    gap: calc(2 * var(--tm-wide-unit));
+    padding: calc(3 * var(--tm-wide-unit));
+  }
+  .tm-capsule-option {
+    min-height: calc(34 * var(--tm-wide-unit));
+    padding-inline: calc(16 * var(--tm-wide-unit));
+  }
+  .tm-filter-rows {
+    gap: calc(12 * var(--tm-wide-unit));
+  }
+  .tm-filter-rows .tm-filter-row {
+    gap: calc(16 * var(--tm-wide-unit));
+  }
+  .tm-filter-row .tm-filter-label {
+    flex-basis: calc(40 * var(--tm-wide-unit));
+  }
+  .tm-filter-track .tm-dropdown-trigger {
+    min-height: calc(36 * var(--tm-wide-unit));
+    padding-inline: calc(12 * var(--tm-wide-unit));
+  }
+}
+@media (min-width: 1700px) and (pointer: coarse) {
+  .tm-capsule-option {
+    min-height: max(44px, calc(34 * var(--tm-wide-unit)));
+  }
+  .tm-filter-track .tm-dropdown-trigger {
+    min-height: max(44px, calc(36 * var(--tm-wide-unit)));
+  }
+}
 @media (min-width: 640px) {
   .tm-filter-row {
     flex-direction: row;
@@ -145,7 +176,7 @@
   z-index: var(--tm-z-overlay);
   max-width: 600px;
   padding: 8px;
-  border: 1px solid var(--tm-line);
+  border: 0;
   border-radius: var(--tm-radius-lg);
   background: var(--tm-surface);
   box-shadow: var(--tm-shadow-lg);
@@ -198,7 +229,7 @@
   align-items: center;
   height: 40px;
   overflow: hidden;
-  border: 1px solid var(--tm-line);
+  border: 0;
   border-radius: var(--tm-radius-pill);
   background: var(--tm-surface);
   transition: width var(--tm-d-panel) var(--tm-ease-out);
@@ -291,7 +322,7 @@ html[data-tm-reduced-motion='true'] .tm-control-selection {
   flex-shrink: 0;
   margin: 0;
   border: 1px solid var(--tm-line);
-  border-radius: 999px;
+  border-radius: var(--tm-radius-full);
   background: var(--tm-surface-raised);
   cursor: pointer;
 }
@@ -302,7 +333,7 @@ html[data-tm-reduced-motion='true'] .tm-control-selection {
   left: 2px;
   width: 18px;
   height: 18px;
-  border-radius: 50%;
+  border-radius: var(--tm-radius-full);
   background: var(--tm-muted);
   transition: transform 200ms var(--tm-spring);
 }

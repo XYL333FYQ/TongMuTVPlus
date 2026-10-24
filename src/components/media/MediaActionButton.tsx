@@ -19,7 +19,7 @@ export default function MediaActionButton({
     <button
       type='button'
       className={cn(
-        'w-full min-h-[44px] rounded-[10px] border px-3 py-2 text-sm font-medium tm-press disabled:opacity-50',
+        'w-full min-h-[44px] rounded-sm border px-3 py-2 text-sm font-medium tm-press disabled:opacity-50',
         LIBRARY_FOCUS,
         tone === 'danger'
           ? 'border-line text-danger hover:border-danger'

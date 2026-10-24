@@ -53,7 +53,7 @@ html:not([data-loading-style]) .mtv-load-talisman {
   content: '';
   position: absolute;
   inset: -4px;
-  border-radius: 7px;
+  border-radius: var(--tm-radius-sm);
   border: 2px solid var(--mtv-acc);
   box-shadow: 0 0 12px color-mix(in srgb, var(--mtv-acc) 70%, transparent);
   pointer-events: none;
@@ -75,7 +75,7 @@ html:not([data-loading-style]) .mtv-load-talisman {
   content: '';
   position: absolute;
   inset: -6px;
-  border-radius: 9px;
+  border-radius: var(--tm-radius-sm);
   background: radial-gradient(
       circle at 50% 0,
       var(--mtv-acc) 1.6px,
@@ -159,7 +159,7 @@ html:not([data-loading-style]) .mtv-load-talisman {
 }
 .mtv-tal-ring {
   position: absolute;
-  border-radius: 50%;
+  border-radius: var(--tm-radius-full);
 }
 /* 细密刻度环：conic-gradient 出刻度，再用 mask 抠成细环 */
 .mtv-tal-ticks {
@@ -425,8 +425,8 @@ html .tm-loading .mtv-panel {
   width: 64px;
   height: 64px;
   overflow: hidden;
-  border: 1px solid var(--tm-line);
-  border-radius: 12px;
+  border: 0;
+  border-radius: var(--tm-radius-md);
   background: var(--tm-surface-raised);
   color: var(--tm-muted);
   animation: none;
@@ -493,7 +493,7 @@ html .tm-loading .mtv-bubble {
   position: relative;
   max-width: 300px;
   margin: 0;
-  border-radius: 14px;
+  border-radius: var(--tm-radius-md);
   overflow-wrap: anywhere;
   border: 0;
   padding: 0;
@@ -519,11 +519,11 @@ html .tm-loading .mtv-tal-circle {
   width: var(--mtv-tal-s);
   height: var(--mtv-tal-s);
   overflow: hidden;
-  border-radius: 50%;
+  border-radius: var(--tm-radius-full);
   background: var(--tm-surface-raised);
 }
 html .tm-loading :is(.mtv-tal-ticks, .mtv-tal-line) {
-  border: 1px solid var(--tm-line);
+  border: 0;
   background: none;
   box-shadow: none;
   filter: none;
@@ -565,7 +565,7 @@ html .tm-loading .mtv-tal-bar {
   width: 100%;
   max-width: calc(var(--mtv-tal-s) * 200 / 150);
   height: calc(var(--mtv-tal-s) * 3 / 150);
-  border-radius: 999px;
+  border-radius: var(--tm-radius-full);
   overflow: hidden;
   background: var(--tm-line);
 }
@@ -573,7 +573,7 @@ html .tm-loading .mtv-tal-bar i {
   position: relative;
   display: block;
   height: 100%;
-  border-radius: 999px;
+  border-radius: var(--tm-radius-full);
   overflow: hidden;
   background: var(--tm-text);
   box-shadow: none;
@@ -588,7 +588,7 @@ html .tm-loading .mtv-tal-bar i::after {
   bottom: 0;
   left: -55%;
   width: 55%;
-  border-radius: 999px;
+  border-radius: var(--tm-radius-full);
   background: linear-gradient(
     90deg,
     transparent,
@@ -666,7 +666,7 @@ html .tm-loading .tm-loading-classic-symbol {
   width: 96px;
   height: 96px;
   overflow: hidden;
-  border-radius: 16px;
+  border-radius: var(--tm-radius-md);
   transform: translateX(-50%);
   pointer-events: none;
 }

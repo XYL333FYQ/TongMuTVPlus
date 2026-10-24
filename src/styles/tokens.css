@@ -7,17 +7,24 @@
   color-scheme: dark;
 
   /* —— 颜色：黑白灰，彩色只来自影片画面 —— */
-  --tm-bg: #0a0a0b;
-  --tm-surface: #141416;
-  --tm-surface-raised: #1f1f22;
+  --tm-bg: #0b0b0d;
+  --tm-surface: #151518;
+  --tm-surface-raised: #1f1f23;
   --tm-line: rgba(255, 255, 255, 0.09);
   --tm-line-strong: rgba(255, 255, 255, 0.18);
-  --tm-text: #f5f5f7;
-  --tm-muted: #a1a1a6;
+  --tm-text: #f2f2f3;
+  --tm-muted: #a3a3ac;
   --tm-accent: var(--tm-text);
   --tm-accent-contrast: #0a0a0b;
   --tm-accent-soft: var(--tm-line);
-  --tm-danger: #f04438;
+  --tm-danger: #e5484d;
+  --tm-highlight: var(--tm-text);
+  --tm-online: var(--tm-text);
+  --tm-rating-star: var(--tm-on-art);
+  --tm-hero-shade-start: rgba(8, 8, 10, 0.82);
+  --tm-hero-shade-mid: rgba(8, 8, 10, 0.55);
+  --tm-hero-shade-end: rgba(8, 8, 10, 0.15);
+  --tm-hero-shade-mobile: rgba(8, 8, 10, 0.88);
 
   /* 叠在画面上的文字与压暗层，不随主题翻转 */
   --tm-on-art-rgb: 255 255 255;
@@ -27,9 +34,18 @@
   --tm-video-bg: #000000;
   --tm-ink-rgb: 0 0 0;
   --tm-scrim: rgba(0, 0, 0, 0.56);
+  --tm-rating-bg: rgba(0, 0, 0, 0.6);
+  --tm-badge-on-art: rgba(255, 255, 255, 0.9);
+  --tm-hero-overlay: rgba(10, 10, 11, 0.8);
   --tm-scrim-soft: rgba(0, 0, 0, 0.32);
   --tm-art-glass: rgba(255, 255, 255, 0.16);
   --tm-art-glass-line: rgba(255, 255, 255, 0.28);
+  --tm-hero-pill-line: rgba(255, 255, 255, 0.3);
+  /* Neutral artwork texture for media without a cover. */
+  --tm-art-fallback-deep: #151518;
+  --tm-art-fallback-base: #4b4b50;
+  --tm-art-fallback-glow: #9a9ba3;
+  --tm-art-grain: rgba(255, 255, 255, 0.09);
 
   /* 材质 */
   --tm-glass: rgba(20, 20, 22, 0.72);
@@ -52,26 +68,33 @@
     'Microsoft YaHei', sans-serif;
   --tm-fs-display: clamp(34px, 4.2vw, 60px);
   --tm-fs-title: 32px;
-  --tm-fs-section: 22px;
+  --tm-fs-section: 20px;
   --tm-fs-subtitle: 18px;
-  --tm-fs-body: 15px;
+  --tm-fs-body: 14px;
   --tm-fs-small: 14px;
   --tm-fs-caption: 13px;
   --tm-fs-badge: 12px;
 
   /* —— 圆角 —— */
-  --tm-radius-xs: 6px;
-  --tm-radius-sm: 10px;
-  --tm-radius-md: 14px;
-  --tm-radius-lg: 18px;
-  --tm-radius-xl: 24px;
-  --tm-radius-pill: 999px;
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-full: 9999px;
+  --tm-radius-sm: var(--radius-sm);
+  --tm-radius-md: var(--radius-md);
+  --tm-radius-full: var(--radius-full);
+  /* 旧名称只作兼容别名，实际值只有三档。 */
+  --tm-radius-xs: var(--tm-radius-sm);
+  --tm-radius-lg: var(--tm-radius-md);
+  --tm-radius-xl: var(--tm-radius-md);
+  --tm-radius-pill: var(--tm-radius-full);
 
   /* —— 布局 ——
-     大图通栏；内容区最宽 1920，宽屏上海报跟着变大（固定 6 列），不加列数 */
-  --tm-container: 1920px;
+     1320px 包含内边距，所有内容共用 12 列栅格 */
+  --tm-container: 1320px;
+  --tm-wide-unit: 1px;
+  --tm-grid-gap: 24px;
   --tm-content-gutter: 16px;
-  --tm-section-gap: 40px;
+  --tm-section-gap: 36px;
   --tm-header-height: 64px;
   --tm-bottom-nav-height: 64px;
   --tm-safe-top: env(safe-area-inset-top, 0px);
@@ -96,16 +119,17 @@
 html.light {
   color-scheme: light;
 
-  --tm-bg: #fbfbfc;
+  --tm-bg: #f7f7f8;
   --tm-surface: #ffffff;
-  --tm-surface-raised: #f0f0f2;
+  --tm-surface-raised: #efeff1;
   --tm-line: rgba(0, 0, 0, 0.08);
   --tm-line-strong: rgba(0, 0, 0, 0.16);
-  --tm-text: #1d1d1f;
-  --tm-muted: #6e6e73;
+  --tm-text: #0f0f10;
+  --tm-muted: #5f6068;
   --tm-accent-contrast: #ffffff;
-  --tm-danger: #d92d20;
+  --tm-danger: #e5484d;
 
+  --tm-hero-overlay: rgba(255, 255, 255, 0.8);
   --tm-glass: rgba(255, 255, 255, 0.74);
   --tm-glass-solid: #f6f6f7;
   --tm-glass-highlight: rgba(255, 255, 255, 0.6);
@@ -113,36 +137,66 @@ html.light {
   --tm-hero-bg: #0a0a0b;
   --tm-skeleton-shine: rgba(0, 0, 0, 0.04);
 
-  --tm-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.06);
-  --tm-shadow-md: 0 12px 32px -14px rgba(0, 0, 0, 0.18);
+  --tm-shadow-sm: 0 1px 2px rgba(16, 16, 20, 0.04),
+    0 6px 16px rgba(16, 16, 20, 0.05);
+  --tm-shadow-md: 0 1px 2px rgba(16, 16, 20, 0.04),
+    0 6px 16px rgba(16, 16, 20, 0.05);
   --tm-shadow-lg: 0 24px 48px -24px rgba(0, 0, 0, 0.2);
-  --tm-shadow-poster: 0 14px 28px -16px rgba(0, 0, 0, 0.32);
+  --tm-shadow-poster: var(--tm-shadow-sm);
   --tm-shadow-poster-hover: 0 24px 40px -16px rgba(0, 0, 0, 0.38);
 }
 
-@media (min-width: 768px) {
+@media (min-width: 600px) {
+  :root {
+    --tm-content-gutter: 24px;
+    --tm-grid-gap: 16px;
+    --tm-section-gap: 44px;
+    --tm-fs-title: 28px;
+  }
+}
+@media (min-width: 900px) {
   :root {
     --tm-content-gutter: 32px;
+    --tm-grid-gap: 24px;
     --tm-section-gap: 56px;
-    --tm-fs-section: 24px;
+    --tm-fs-title: 32px;
   }
 }
-
 @media (min-width: 1200px) {
   :root {
-    --tm-content-gutter: clamp(48px, 4vw, 96px);
-    --tm-section-gap: 64px;
+    --tm-content-gutter: 40px;
+    --tm-header-height: 68px;
   }
 }
-@media (min-width: 1600px) {
-  :root {
-    --tm-header-height: 72px;
+/* The three main destinations share the same reference proportions, including
+   their header, body portals and development grid overlay. */
+@media (min-width: 1700px) {
+  body:has(
+      .tm-shell:is(
+          [data-page='/'],
+          [data-page='/douban'],
+          [data-page='/watch-room']
+        )
+    ) {
+    --tm-wide-unit: clamp(1px, 0.0588235294vw, 1.25px);
+    --tm-container: calc(1320 * var(--tm-wide-unit));
+    --tm-content-gutter: calc(40 * var(--tm-wide-unit));
+    --tm-grid-gap: calc(24 * var(--tm-wide-unit));
+    --tm-section-gap: calc(56 * var(--tm-wide-unit));
+    --tm-header-height: calc(68 * var(--tm-wide-unit));
+    --tm-fs-title: calc(32 * var(--tm-wide-unit));
+    --tm-fs-section: calc(20 * var(--tm-wide-unit));
+    --tm-fs-subtitle: calc(18 * var(--tm-wide-unit));
+    --tm-fs-body: calc(14 * var(--tm-wide-unit));
+    --tm-fs-small: calc(14 * var(--tm-wide-unit));
+    --tm-fs-caption: calc(13 * var(--tm-wide-unit));
+    --tm-fs-badge: calc(12 * var(--tm-wide-unit));
   }
 }
-
-@media (max-width: 767px) {
+@media (max-width: 599px) {
   :root {
-    --tm-fs-title: 28px;
-    --tm-fs-section: 20px;
+    --tm-grid-gap: 12px;
+    --tm-fs-title: 24px;
+    --tm-fs-section: 18px;
   }
 }

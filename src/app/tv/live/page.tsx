@@ -177,7 +177,7 @@ export default function TVLivePage() {
   return (
     <TVLayout>
       {lastChannel && (
-        <section className='mb-8 rounded-[34px] border border-line bg-raised p-4 md:p-7 shadow-lg'>
+        <section className='mb-8 rounded-md border border-line bg-raised p-4 md:p-7 shadow-lg'>
           <button
             onClick={() =>
               router.push(
@@ -219,7 +219,7 @@ export default function TVLivePage() {
         </section>
       )}
 
-      <section className='rounded-[42px] border border-line bg-surface p-4 md:p-10 shadow-lg'>
+      <section className='rounded-md border border-line bg-surface p-4 md:p-10 shadow-lg'>
         <div className='flex items-center gap-4'>
           <Radio className='h-8 w-8 shrink-0 text-fg' />
           <div>
@@ -258,7 +258,7 @@ export default function TVLivePage() {
       </section>
 
       {quickChannels.length > 0 && (
-        <section className='mt-8 rounded-[34px] border border-line bg-raised p-6'>
+        <section className='mt-8 rounded-md border border-line bg-raised p-6'>
           <h2 className='mb-5 text-[20px] md:text-[24px] font-medium'>
             常用频道
           </h2>
@@ -299,7 +299,7 @@ export default function TVLivePage() {
       {error ? (
         <section
           role='alert'
-          className='mt-10 rounded-[34px] border border-danger bg-raised p-4 md:p-8 text-fg'
+          className='mt-10 rounded-md border border-danger bg-raised p-4 md:p-8 text-fg'
         >
           <div className='flex items-center gap-4 text-base font-medium'>
             <AlertTriangle className='h-10 w-10 shrink-0 text-danger' />
@@ -322,7 +322,7 @@ export default function TVLivePage() {
         </div>
       ) : (
         <div className='mt-10 grid grid-cols-1 gap-6 lg:grid-cols-[280px_minmax(0,1fr)]'>
-          <aside className='rounded-[32px] border border-line bg-raised p-4'>
+          <aside className='rounded-md border border-line bg-raised p-4'>
             <div className='flex gap-2 overflow-x-auto p-1 lg:block lg:max-h-[70vh] lg:space-y-2 lg:overflow-y-auto lg:pr-2'>
               {groups.map((group) => (
                 <button

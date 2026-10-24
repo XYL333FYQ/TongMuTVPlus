@@ -31,7 +31,7 @@
   width: 100%;
   max-width: 400px;
   padding: 40px 32px 32px;
-  border: 1px solid var(--tm-line);
+  border: 0;
   border-radius: var(--tm-radius-xl);
   background: var(--tm-surface);
   box-shadow: var(--tm-shadow-lg);
@@ -127,7 +127,7 @@
 /* 注册成功后的说明块 */
 .tm-auth-note {
   padding: 16px;
-  border: 1px solid var(--tm-line);
+  border: 0;
   border-radius: var(--tm-radius-md);
   background: var(--tm-surface-raised);
 }
@@ -169,6 +169,7 @@
   .tm-auth-card {
     padding: 32px 20px 24px;
     border-radius: var(--tm-radius-lg);
+    box-shadow: var(--tm-shadow-sm);
   }
 }
 .tm-input.tm-auth-input-plain {

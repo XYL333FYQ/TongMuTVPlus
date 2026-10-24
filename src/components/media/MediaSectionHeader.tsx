@@ -19,12 +19,7 @@ export default function MediaSectionHeader({
   return (
     <div className={cn('min-w-0', className)}>
       <div className='flex items-baseline gap-3'>
-        <h2
-          className={cn(
-            'shrink-0 text-xl font-medium text-fg md:text-2xl',
-            LIBRARY_SERIF
-          )}
-        >
+        <h2 className={cn('tm-section-title shrink-0', LIBRARY_SERIF)}>
           {title}
         </h2>
         <span className='h-px min-w-4 flex-1 bg-line' aria-hidden />

@@ -316,7 +316,7 @@ export default function MusicSongListsPage() {
               />
               {/* 右侧贴齐触发器、向左展开；宽度上限留出 3rem 而不是 2rem——
                   100vw 在有没有竖向滚动条时会差十几 px，窄屏上正好会把面板顶出左边。 */}
-              <div className='absolute right-0 top-[calc(100%+6px)] z-[60] max-h-[min(70vh,520px)] w-[min(760px,calc(100vw-3rem))] overflow-auto rounded-[4px] border border-line bg-canvas p-4 shadow-[0_18px_40px_-18px_rgba(0,0,0,0.55)] dark:bg-surface'>
+              <div className='absolute right-0 top-[calc(100%+6px)] z-[60] max-h-[min(70vh,520px)] w-[min(760px,calc(100vw-3rem))] overflow-auto rounded-sm border border-line bg-canvas p-4 shadow-[0_18px_40px_-18px_rgba(0,0,0,0.55)] dark:bg-surface'>
                 {tagId ? (
                   <button
                     type='button'

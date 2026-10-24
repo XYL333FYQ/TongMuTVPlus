@@ -183,7 +183,7 @@ export default function TVMePage() {
         <section
           role='status'
           aria-label='正在读取登录信息'
-          className='tm-skeleton h-48 rounded-[42px] border border-line p-12 text-center'
+          className='tm-skeleton h-48 rounded-md border border-line p-12 text-center'
         >
           <h1 className='sr-only'>正在读取登录信息</h1>
           <p className='sr-only'>请稍候，电视端会自动跳转。</p>
@@ -194,7 +194,7 @@ export default function TVMePage() {
 
   return (
     <TVLayout>
-      <section className='tm-glass overflow-hidden rounded-[42px] border border-line shadow-lg'>
+      <section className='tm-glass overflow-hidden rounded-md border border-line shadow-lg'>
         <div className='relative p-4 md:p-12'>
           <div className='pointer-events-none absolute inset-0 bg-transparent' />
           <div className='relative grid gap-10 lg:grid-cols-[1fr_340px]'>
@@ -204,7 +204,7 @@ export default function TVMePage() {
                 已登录电视端
               </div>
               <div className='mt-8 flex items-center gap-7'>
-                <div className='flex h-28 w-28 shrink-0 items-center justify-center rounded-[32px] bg-surface text-[24px] font-medium text-fg shadow-lg'>
+                <div className='flex h-28 w-28 shrink-0 items-center justify-center rounded-md bg-surface text-[24px] font-medium text-fg shadow-lg'>
                   {avatarText}
                 </div>
                 <div>
@@ -218,7 +218,7 @@ export default function TVMePage() {
               </div>
 
               <div className='mt-10 grid gap-4 md:grid-cols-2'>
-                <div className='rounded-[28px] border border-line bg-raised p-6'>
+                <div className='rounded-md border border-line bg-raised p-6'>
                   <div className='flex items-center gap-3 text-base font-medium text-muted'>
                     <ShieldCheck className='h-6 w-6 text-fg' />
                     账号角色
@@ -227,7 +227,7 @@ export default function TVMePage() {
                     {roleText}
                   </div>
                 </div>
-                <div className='rounded-[28px] border border-line bg-raised p-6'>
+                <div className='rounded-md border border-line bg-raised p-6'>
                   <div className='flex items-center gap-3 text-base font-medium text-muted'>
                     <Clock3 className='h-6 w-6 text-fg' />
                     登录时间
@@ -239,7 +239,7 @@ export default function TVMePage() {
               </div>
             </div>
 
-            <aside className='flex flex-col justify-between rounded-[34px] border border-line bg-raised p-7'>
+            <aside className='flex flex-col justify-between rounded-md border border-line bg-raised p-7'>
               <div>
                 <div className='flex h-16 w-16 items-center justify-center rounded-3xl bg-raised'>
                   <User className='h-9 w-9 text-fg' />
@@ -281,7 +281,7 @@ export default function TVMePage() {
             </aside>
           </div>
 
-          <div className='relative mt-10 overflow-hidden rounded-[34px] border border-line bg-raised p-7'>
+          <div className='relative mt-10 overflow-hidden rounded-md border border-line bg-raised p-7'>
             <div className='pointer-events-none absolute inset-0 bg-transparent' />
             <div className='relative flex flex-col gap-7 lg:flex-row lg:items-start lg:justify-between'>
               <div className='max-w-2xl'>
@@ -319,7 +319,7 @@ export default function TVMePage() {
                   tabIndex={0}
                   role='img'
                   aria-label='局域网遥控地址二维码，手机扫码打开遥控器'
-                  className='tv-focusable tv-focusable-light shrink-0 rounded-[32px] border border-line bg-surface p-4 shadow-lg outline-none'
+                  className='tv-focusable tv-focusable-light shrink-0 rounded-md border border-line bg-surface p-4 shadow-lg outline-none'
                 >
                   <img
                     src={`/api/auth/qr/image?data=${encodeURIComponent(
@@ -337,7 +337,7 @@ export default function TVMePage() {
             </div>
           </div>
 
-          <div className='relative mt-10 rounded-[34px] border border-line bg-raised p-7'>
+          <div className='relative mt-10 rounded-md border border-line bg-raised p-7'>
             <div className='flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between'>
               <div className='max-w-2xl'>
                 <div className='flex items-center gap-3 text-base font-medium text-fg'>
@@ -349,7 +349,7 @@ export default function TVMePage() {
                 </p>
               </div>
 
-              <div className='w-full rounded-[28px] border border-line bg-raised p-6 lg:max-w-[560px]'>
+              <div className='w-full rounded-md border border-line bg-raised p-6 lg:max-w-[560px]'>
                 <div className='flex items-start justify-between gap-5'>
                   <div>
                     <h3 className='text-[18px] font-medium text-fg'>

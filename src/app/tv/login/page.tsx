@@ -83,7 +83,7 @@ export default function TVLoginPage() {
           width: '100vw',
           marginInline: 'calc((100% - min(100vw, 1440px)) / 2)',
         }}
-        className='text-fg grid grid-cols-[1fr_430px] gap-10 rounded-[42px] border border-line bg-surface py-12 shadow-2xl shadow-ink/60'
+        className='text-fg grid grid-cols-[1fr_430px] gap-10 rounded-md border border-line bg-surface py-12 shadow-2xl shadow-ink/60'
       >
         <div className='flex flex-col justify-center'>
           <div className='inline-flex w-fit items-center gap-3 rounded-full bg-raised px-5 py-2 text-xl font-bold text-fg'>
@@ -95,7 +95,7 @@ export default function TVLoginPage() {
           </p>
           <p className='mt-8 text-2xl font-bold text-fg'>{status}</p>
         </div>
-        <div className='rounded-[36px] border border-line bg-surface p-7 text-center text-fg shadow-2xl shadow-ink/60'>
+        <div className='rounded-md border border-line bg-surface p-7 text-center text-fg shadow-2xl shadow-ink/60'>
           {qrImg ? (
             <img
               src={qrImg}

@@ -17,7 +17,7 @@
   place-items: center;
   width: 64px;
   height: 64px;
-  border-radius: 50%;
+  border-radius: var(--tm-radius-full);
   background: var(--tm-text);
   color: var(--tm-accent-contrast);
   font-size: 26px;
@@ -43,9 +43,10 @@
 }
 .tm-my-group {
   overflow: hidden;
-  border: 1px solid var(--tm-line);
+  border: 0;
   border-radius: var(--tm-radius-lg);
   background: var(--tm-surface);
+  box-shadow: var(--tm-shadow-sm);
 }
 .tm-my-row {
   position: relative;

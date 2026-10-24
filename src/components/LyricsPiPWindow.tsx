@@ -139,7 +139,7 @@ const PiPLyricsContent = ({
             style={{
               background: 'rgba(255, 255, 255, 0.1)',
               border: 'none',
-              borderRadius: '4px',
+              borderRadius: 'var(--tm-radius-sm)',
               padding: '4px 8px',
               color: 'white',
               cursor: 'pointer',
@@ -162,7 +162,7 @@ const PiPLyricsContent = ({
             style={{
               background: 'rgba(239, 68, 68, 0.8)',
               border: 'none',
-              borderRadius: '4px',
+              borderRadius: 'var(--tm-radius-sm)',
               padding: '4px 8px',
               color: 'white',
               cursor: 'pointer',

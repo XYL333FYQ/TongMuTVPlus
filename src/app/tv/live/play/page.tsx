@@ -623,7 +623,7 @@ function TVLivePlayClient() {
       <main className='fixed inset-0 flex items-center justify-center bg-surface p-10 text-center text-fg'>
         <section
           role='alert'
-          className='max-w-3xl rounded-[36px] border border-danger bg-raised p-10 shadow-2xl shadow-ink/40'
+          className='max-w-3xl rounded-md border border-danger bg-raised p-10 shadow-2xl shadow-ink/40'
         >
           <AlertTriangle className='mx-auto mb-5 h-16 w-16 text-danger' />
           <h1 className='text-fg text-[28px] font-bold md:text-[32px]'>
@@ -708,7 +708,7 @@ function TVLivePlayClient() {
           role='alert'
           className='flex h-full items-center justify-center bg-surface p-10 text-center text-fg'
         >
-          <section className='max-w-3xl rounded-[36px] border border-line bg-surface p-9 shadow-2xl shadow-ink/70'>
+          <section className='max-w-3xl rounded-md border border-line bg-surface p-9 shadow-2xl shadow-ink/70'>
             <AlertTriangle className='mx-auto mb-5 h-14 w-14 text-fg' />
             <h2 className='text-xl font-medium md:text-2xl'>
               当前直播流格式不支持
@@ -744,7 +744,7 @@ function TVLivePlayClient() {
           role='alert'
           className='absolute inset-0 z-30 flex items-center justify-center bg-ink/70 p-8 text-fg'
         >
-          <section className='max-w-3xl rounded-[36px] border border-line bg-surface p-9 text-center shadow-2xl shadow-ink/70'>
+          <section className='max-w-3xl rounded-md border border-line bg-surface p-9 text-center shadow-2xl shadow-ink/70'>
             <AlertTriangle className='mx-auto mb-5 h-14 w-14 text-fg' />
             <h2 className='text-xl font-medium md:text-2xl'>
               当前频道播放失败
@@ -889,7 +889,7 @@ function TVLivePlayClient() {
       {showPanel && (
         <aside
           data-tv-live-control
-          className='absolute bottom-4 left-4 right-4 top-40 grid grid-cols-[88px_minmax(0,1fr)] gap-2 md:bottom-8 md:left-8 md:right-auto md:top-48 xl:top-28 md:w-[720px] md:grid-cols-[220px_minmax(0,1fr)] md:gap-4 rounded-[34px] border border-line bg-surface p-4 md:p-5 shadow-2xl shadow-ink/70'
+          className='absolute bottom-4 left-4 right-4 top-40 grid grid-cols-[88px_minmax(0,1fr)] gap-2 md:bottom-8 md:left-8 md:right-auto md:top-48 xl:top-28 md:w-[720px] md:grid-cols-[220px_minmax(0,1fr)] md:gap-4 rounded-md border border-line bg-surface p-4 md:p-5 shadow-2xl shadow-ink/70'
         >
           <div className='overflow-y-auto px-2 py-2'>
             {sources.length > 1 && (

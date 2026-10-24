@@ -9020,14 +9020,14 @@ function PlayPageClient() {
                   backdrop-filter: blur(3px);
                 `;
                 container.innerHTML = `
-                  <div role="dialog" aria-modal="true" style="width: min(360px, 100%); background: var(--tm-surface); color: var(--tm-text); border: 1px solid var(--tm-line); border-radius: 12px; padding: 20px; box-shadow: 0 16px 48px var(--tm-room-cinema-bg);">
+                  <div role="dialog" aria-modal="true" style="width: min(360px, 100%); background: var(--tm-surface); color: var(--tm-text); border: 1px solid var(--tm-line); border-radius: var(--tm-radius-md); padding: 20px; box-shadow: 0 16px 48px var(--tm-room-cinema-bg);">
                     <div style="font-size: 17px; font-weight: 500; margin-bottom: 8px;">快捷快进设置</div>
                     <div style="color: var(--tm-text); font-size: 13px; line-height: 1.5; margin-bottom: 16px;">设置点击底部按钮或按 P 键时向前跳转的时间。</div>
                     <label for="quick-forward-input" style="display: block; color: var(--tm-text); font-size: 13px; margin-bottom: 6px;">快进时长（秒）</label>
-                    <input id="quick-forward-input" type="number" min="1" step="1" value="${quickForwardSecondsRef.current}" style="box-sizing: border-box; width: 100%; height: 44px; padding: 0 10px; border: 1px solid var(--tm-line); border-radius: 10px; background: var(--tm-surface); color: var(--tm-text); font-size: 14px; outline: none;" />
+                    <input id="quick-forward-input" type="number" min="1" step="1" value="${quickForwardSecondsRef.current}" style="box-sizing: border-box; width: 100%; height: 44px; padding: 0 10px; border: 1px solid var(--tm-line); border-radius: var(--tm-radius-sm); background: var(--tm-surface); color: var(--tm-text); font-size: 14px; outline: none;" />
                     <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 18px;">
-                      <button type="button" data-action="cancel" style="height: 44px; padding: 0 14px; border: 0; border-radius: 10px; background: var(--tm-surface); color: var(--tm-text); cursor: pointer;">取消</button>
-                      <button type="button" data-action="confirm" style="height: 44px; padding: 0 14px; border: 0; border-radius: 10px; background: var(--tm-text); color: var(--tm-accent-contrast); cursor: pointer;">保存</button>
+                      <button type="button" data-action="cancel" style="height: 44px; padding: 0 14px; border: 0; border-radius: var(--tm-radius-sm); background: var(--tm-surface); color: var(--tm-text); cursor: pointer;">取消</button>
+                      <button type="button" data-action="confirm" style="height: 44px; padding: 0 14px; border: 0; border-radius: var(--tm-radius-sm); background: var(--tm-text); color: var(--tm-accent-contrast); cursor: pointer;">保存</button>
                     </div>
                   </div>
                 `;
@@ -9117,14 +9117,14 @@ function PlayPageClient() {
                   backdrop-filter: blur(3px);
                 `;
                 container.innerHTML = `
-                  <div role="dialog" aria-modal="true" style="width: min(360px, 100%); background: var(--tm-surface); color: var(--tm-text); border: 1px solid var(--tm-line); border-radius: 12px; padding: 20px; box-shadow: 0 16px 48px var(--tm-room-cinema-bg);">
+                  <div role="dialog" aria-modal="true" style="width: min(360px, 100%); background: var(--tm-surface); color: var(--tm-text); border: 1px solid var(--tm-line); border-radius: var(--tm-radius-md); padding: 20px; box-shadow: 0 16px 48px var(--tm-room-cinema-bg);">
                     <div style="font-size: 17px; font-weight: 500; margin-bottom: 8px;">快进/倒退时间</div>
                     <div style="color: var(--tm-text); font-size: 13px; line-height: 1.5; margin-bottom: 16px;">设置左右方向键快进 / 快退的时间。</div>
                     <label for="seek-step-input" style="display: block; color: var(--tm-text); font-size: 13px; margin-bottom: 6px;">时长（秒）</label>
-                    <input id="seek-step-input" type="number" min="1" step="1" value="${seekStepSecondsRef.current}" style="box-sizing: border-box; width: 100%; height: 44px; padding: 0 10px; border: 1px solid var(--tm-line); border-radius: 10px; background: var(--tm-surface); color: var(--tm-text); font-size: 14px; outline: none;" />
+                    <input id="seek-step-input" type="number" min="1" step="1" value="${seekStepSecondsRef.current}" style="box-sizing: border-box; width: 100%; height: 44px; padding: 0 10px; border: 1px solid var(--tm-line); border-radius: var(--tm-radius-sm); background: var(--tm-surface); color: var(--tm-text); font-size: 14px; outline: none;" />
                     <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 18px;">
-                      <button type="button" data-action="cancel" style="height: 44px; padding: 0 14px; border: 0; border-radius: 10px; background: var(--tm-surface); color: var(--tm-text); cursor: pointer;">取消</button>
-                      <button type="button" data-action="confirm" style="height: 44px; padding: 0 14px; border: 0; border-radius: 10px; background: var(--tm-text); color: var(--tm-accent-contrast); cursor: pointer;">保存</button>
+                      <button type="button" data-action="cancel" style="height: 44px; padding: 0 14px; border: 0; border-radius: var(--tm-radius-sm); background: var(--tm-surface); color: var(--tm-text); cursor: pointer;">取消</button>
+                      <button type="button" data-action="confirm" style="height: 44px; padding: 0 14px; border: 0; border-radius: var(--tm-radius-sm); background: var(--tm-text); color: var(--tm-accent-contrast); cursor: pointer;">保存</button>
                     </div>
                   </div>
                 `;
@@ -9211,7 +9211,7 @@ function PlayPageClient() {
 
                   // 创建一个自定义的提示框
                   const container = document.createElement('div');
-                  container.style.cssText = ` position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0, 0, 0, 0.9); padding: 20px; border-radius: 8px; z-index: 9999; min-width: 300px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5); `;
+                  container.style.cssText = ` position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0, 0, 0, 0.9); padding: 20px; border-radius: var(--tm-radius-sm); z-index: 9999; min-width: 300px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5); `;
 
                   container.innerHTML = `
                   <div style="color: var(--tm-text); margin-bottom: 15px; font-size: 16px; font-weight: bold; border-bottom: 1px solid var(--tm-line); padding-bottom: 10px;">
@@ -9227,8 +9227,8 @@ function PlayPageClient() {
                     </label>
                     <div style="display: flex; gap: 8px;">
                       <input id="intro-input" type="number" min="0" step="1" value="${currentIntro}" placeholder="如: 90"
-                             style="flex: 1; padding: 8px; border-radius: 10px; border: 1px solid var(--tm-line); background: var(--tm-surface); color: var(--tm-text); font-size: 14px;" />
-                      <button id="set-intro-btn" style="padding: 8px 12px; border-radius: 10px; border: none; background: var(--tm-surface); color: var(--tm-text); cursor: pointer; font-size: 14px; white-space: nowrap;">
+                             style="flex: 1; padding: 8px; border-radius: var(--tm-radius-sm); border: 1px solid var(--tm-line); background: var(--tm-surface); color: var(--tm-text); font-size: 14px;" />
+                      <button id="set-intro-btn" style="padding: 8px 12px; border-radius: var(--tm-radius-sm); border: none; background: var(--tm-surface); color: var(--tm-text); cursor: pointer; font-size: 14px; white-space: nowrap;">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="vertical-align: middle; margin-right: 4px;">
                           <circle cx="12" cy="12" r="10" stroke="white" stroke-width="2"/>
                           <path d="M12 6v6l4 4" stroke="white" stroke-width="2" stroke-linecap="round"/>
@@ -9244,8 +9244,8 @@ function PlayPageClient() {
                     </label>
                     <div style="display: flex; gap: 8px;">
                       <input id="outro-input" type="number" min="0" step="1" value="${currentOutro}" placeholder="如: 120"
-                             style="flex: 1; padding: 8px; border-radius: 10px; border: 1px solid var(--tm-line); background: var(--tm-surface); color: var(--tm-text); font-size: 14px;" />
-                      <button id="set-outro-btn" style="padding: 8px 12px; border-radius: 10px; border: none; background: var(--tm-surface); color: var(--tm-text); cursor: pointer; font-size: 14px; white-space: nowrap;">
+                             style="flex: 1; padding: 8px; border-radius: var(--tm-radius-sm); border: 1px solid var(--tm-line); background: var(--tm-surface); color: var(--tm-text); font-size: 14px;" />
+                      <button id="set-outro-btn" style="padding: 8px 12px; border-radius: var(--tm-radius-sm); border: none; background: var(--tm-surface); color: var(--tm-text); cursor: pointer; font-size: 14px; white-space: nowrap;">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="vertical-align: middle; margin-right: 4px;">
                           <circle cx="12" cy="12" r="10" stroke="white" stroke-width="2"/>
                           <path d="M12 6v6l4 4" stroke="white" stroke-width="2" stroke-linecap="round"/>
@@ -9254,7 +9254,7 @@ function PlayPageClient() {
                       </button>
                     </div>
                   </div>
-                  <div style="background: color-mix(in srgb, var(--tm-room-cinema-bg) 55%, transparent); border-left: 3px solid var(--tm-line); padding: 10px; margin-bottom: 15px; border-radius: 10px;">
+                  <div style="background: color-mix(in srgb, var(--tm-room-cinema-bg) 55%, transparent); border-left: 3px solid var(--tm-line); padding: 10px; margin-bottom: 15px; border-radius: var(--tm-radius-sm);">
                     <div style="color: var(--tm-text); font-size: 13px; line-height: 1.6;">
                       <div style="margin-bottom: 4px;"><strong>提示：</strong></div>
                       <div>• 点击"当前时间"可快速设置为播放位置</div>
@@ -9263,9 +9263,9 @@ function PlayPageClient() {
                     </div>
                   </div>
                   <div style="display: flex; gap: 10px; justify-content: flex-end; border-top: 1px solid var(--tm-line); padding-top: 15px;">
-                    <button id="cancel-btn" style="padding: 8px 16px; border-radius: 10px; border: none; background: var(--tm-surface); color: var(--tm-text); cursor: pointer; font-size: 14px; transition: background 0.2s;" onmouseover="this.style.background='var(--tm-line)'" onmouseout="this.style.background='var(--tm-surface)'">取消</button>
-                    <button id="clear-btn" style="padding: 8px 16px; border-radius: 10px; border: none; background: var(--tm-surface); color: var(--tm-text); cursor: pointer; font-size: 14px; transition: background 0.2s;" onmouseover="this.style.background='var(--tm-line)'" onmouseout="this.style.background='var(--tm-surface)'">清除</button>
-                    <button id="confirm-btn" style="padding: 8px 16px; border-radius: 10px; border: none; background: var(--tm-text); color: var(--tm-accent-contrast); cursor: pointer; font-size: 14px; transition: background 0.2s;" onmouseover="this.style.background='var(--tm-text)'" onmouseout="this.style.background='var(--tm-text)'">确定</button>
+                    <button id="cancel-btn" style="padding: 8px 16px; border-radius: var(--tm-radius-sm); border: none; background: var(--tm-surface); color: var(--tm-text); cursor: pointer; font-size: 14px; transition: background 0.2s;" onmouseover="this.style.background='var(--tm-line)'" onmouseout="this.style.background='var(--tm-surface)'">取消</button>
+                    <button id="clear-btn" style="padding: 8px 16px; border-radius: var(--tm-radius-sm); border: none; background: var(--tm-surface); color: var(--tm-text); cursor: pointer; font-size: 14px; transition: background 0.2s;" onmouseover="this.style.background='var(--tm-line)'" onmouseout="this.style.background='var(--tm-surface)'">清除</button>
+                    <button id="confirm-btn" style="padding: 8px 16px; border-radius: var(--tm-radius-sm); border: none; background: var(--tm-text); color: var(--tm-accent-contrast); cursor: pointer; font-size: 14px; transition: background 0.2s;" onmouseover="this.style.background='var(--tm-text)'" onmouseout="this.style.background='var(--tm-text)'">确定</button>
                   </div>
                 `;
 
@@ -9422,7 +9422,7 @@ function PlayPageClient() {
                     mounted: function ($el: HTMLElement) {
                       // 添加 CSS 样式：横屏和竖屏都显示
                       const style = document.createElement('style');
-                      style.textContent = ` /* iOS 自定义全屏按钮在所有方向都显示 */ .ios-portrait-fullscreen { display: inline-flex !important; } /* iOS 全屏选择对话框样式（遵循项目统一风格） */ .ios-fullscreen-dialog { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: var(--tm-surface); backdrop-filter: blur(4px); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 16px; } .ios-fullscreen-dialog-content { background: var(--tm-surface); border-radius: 16px; max-width: 480px; width: 100%; box-shadow: 0 20px 60px var(--tm-text); overflow: hidden; } .dark .ios-fullscreen-dialog-content { background: var(--tm-surface); } /* 标题栏 */ .ios-fullscreen-dialog-header { background: linear-gradient(135deg, var(--tm-surface) 0%, var(--tm-surface) 100%); padding: 20px 24px; } .ios-fullscreen-dialog-title { font-size: 20px; font-weight: 700; color: var(--tm-text); display: flex; align-items: center; gap: 10px; margin-bottom: 6px; } .ios-fullscreen-dialog-title svg { stroke: var(--tm-text); } .ios-fullscreen-dialog-subtitle { font-size: 14px; color: var(--tm-text); margin: 0; } /* 选项列表 */ .ios-fullscreen-dialog-options { padding: 16px; display: flex; flex-direction: column; gap: 12px; } .ios-fullscreen-option { display: flex; align-items: center; gap: 16px; padding: 16px; background: var(--tm-surface); border: 2px solid transparent; border-radius: 12px; cursor: pointer; transition: all 0.2s; text-align: left; } .dark .ios-fullscreen-option { background: var(--tm-surface); } .ios-fullscreen-option:hover { background: var(--tm-surface); border-color: var(--tm-line); box-shadow: 0 4px 12px var(--tm-text); } .dark .ios-fullscreen-option:hover { background: var(--tm-surface); } .ios-fullscreen-option:active { transform: scale(0.98); } /* 推荐选项 */ .ios-fullscreen-option-recommended { border-color: var(--tm-line); } /* 选项图标 */ .ios-fullscreen-option-icon { flex-shrink: 0; width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; background: var(--tm-surface); border-radius: 10px; color: var(--tm-text); } .dark .ios-fullscreen-option-icon { background: var(--tm-surface); } .ios-fullscreen-option-recommended .ios-fullscreen-option-icon { background: var(--tm-text); color: var(--tm-accent-contrast); } /* 选项内容 */ .ios-fullscreen-option-content { flex: 1; } .ios-fullscreen-option-title { font-size: 16px; font-weight: 500; color: var(--tm-text); margin-bottom: 4px; display: flex; align-items: center; gap: 8px; } .dark .ios-fullscreen-option-title { color: var(--tm-text); } .ios-fullscreen-option-badge { display: inline-block; padding: 2px 8px; background: var(--tm-text); color: var(--tm-accent-contrast); font-size: 13px; font-weight: 500; border-radius: 4px; } .ios-fullscreen-option-desc { font-size: 13px; color: var(--tm-text); line-height: 1.4; } .dark .ios-fullscreen-option-desc { color: var(--tm-text); } /* 箭头图标 */ .ios-fullscreen-option-arrow { flex-shrink: 0; color: var(--tm-text); transition: transform 0.2s; } .dark .ios-fullscreen-option-arrow { color: var(--tm-text); } .ios-fullscreen-option:hover .ios-fullscreen-option-arrow { transform: translateX(4px); color: var(--tm-text); } /* 底部提示 */ .ios-fullscreen-dialog-footer { padding: 16px 24px; background: var(--tm-surface); border-top: 1px solid var(--tm-line); display: flex; align-items: flex-start; gap: 10px; font-size: 13px; color: var(--tm-text); line-height: 1.5; } .dark .ios-fullscreen-dialog-footer { background: var(--tm-surface); border-top-color: var(--tm-line); color: var(--tm-text); } .ios-fullscreen-dialog-footer svg { flex-shrink: 0; margin-top: 2px; stroke: currentColor; } `;
+                      style.textContent = ` /* iOS 自定义全屏按钮在所有方向都显示 */ .ios-portrait-fullscreen { display: inline-flex !important; } /* iOS 全屏选择对话框样式（遵循项目统一风格） */ .ios-fullscreen-dialog { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: var(--tm-surface); backdrop-filter: blur(4px); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 16px; } .ios-fullscreen-dialog-content { background: var(--tm-surface); border-radius: var(--tm-radius-md); max-width: 480px; width: 100%; box-shadow: 0 20px 60px var(--tm-text); overflow: hidden; } .dark .ios-fullscreen-dialog-content { background: var(--tm-surface); } /* 标题栏 */ .ios-fullscreen-dialog-header { background: linear-gradient(135deg, var(--tm-surface) 0%, var(--tm-surface) 100%); padding: 20px 24px; } .ios-fullscreen-dialog-title { font-size: 20px; font-weight: 700; color: var(--tm-text); display: flex; align-items: center; gap: 10px; margin-bottom: 6px; } .ios-fullscreen-dialog-title svg { stroke: var(--tm-text); } .ios-fullscreen-dialog-subtitle { font-size: 14px; color: var(--tm-text); margin: 0; } /* 选项列表 */ .ios-fullscreen-dialog-options { padding: 16px; display: flex; flex-direction: column; gap: 12px; } .ios-fullscreen-option { display: flex; align-items: center; gap: 16px; padding: 16px; background: var(--tm-surface); border: 2px solid transparent; border-radius: var(--tm-radius-md); cursor: pointer; transition: all 0.2s; text-align: left; } .dark .ios-fullscreen-option { background: var(--tm-surface); } .ios-fullscreen-option:hover { background: var(--tm-surface); border-color: var(--tm-line); box-shadow: 0 4px 12px var(--tm-text); } .dark .ios-fullscreen-option:hover { background: var(--tm-surface); } .ios-fullscreen-option:active { transform: scale(0.98); } /* 推荐选项 */ .ios-fullscreen-option-recommended { border-color: var(--tm-line); } /* 选项图标 */ .ios-fullscreen-option-icon { flex-shrink: 0; width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; background: var(--tm-surface); border-radius: var(--tm-radius-sm); color: var(--tm-text); } .dark .ios-fullscreen-option-icon { background: var(--tm-surface); } .ios-fullscreen-option-recommended .ios-fullscreen-option-icon { background: var(--tm-text); color: var(--tm-accent-contrast); } /* 选项内容 */ .ios-fullscreen-option-content { flex: 1; } .ios-fullscreen-option-title { font-size: 16px; font-weight: 500; color: var(--tm-text); margin-bottom: 4px; display: flex; align-items: center; gap: 8px; } .dark .ios-fullscreen-option-title { color: var(--tm-text); } .ios-fullscreen-option-badge { display: inline-block; padding: 2px 8px; background: var(--tm-text); color: var(--tm-accent-contrast); font-size: 13px; font-weight: 500; border-radius: var(--tm-radius-sm); } .ios-fullscreen-option-desc { font-size: 13px; color: var(--tm-text); line-height: 1.4; } .dark .ios-fullscreen-option-desc { color: var(--tm-text); } /* 箭头图标 */ .ios-fullscreen-option-arrow { flex-shrink: 0; color: var(--tm-text); transition: transform 0.2s; } .dark .ios-fullscreen-option-arrow { color: var(--tm-text); } .ios-fullscreen-option:hover .ios-fullscreen-option-arrow { transform: translateX(4px); color: var(--tm-text); } /* 底部提示 */ .ios-fullscreen-dialog-footer { padding: 16px 24px; background: var(--tm-surface); border-top: 1px solid var(--tm-line); display: flex; align-items: flex-start; gap: 10px; font-size: 13px; color: var(--tm-text); line-height: 1.5; } .dark .ios-fullscreen-dialog-footer { background: var(--tm-surface); border-top-color: var(--tm-line); color: var(--tm-text); } .ios-fullscreen-dialog-footer svg { flex-shrink: 0; margin-top: 2px; stroke: currentColor; } `;
                       document.head.appendChild(style);
                     },
                     click: function () {
@@ -10399,7 +10399,7 @@ function PlayPageClient() {
                 // 创建或更新提示框
                 if (!tooltipEl) {
                   tooltipEl = document.createElement('div');
-                  tooltipEl.style.cssText = ` position: absolute; bottom: 100%; transform: translateX(-50%); margin-bottom: 8px; padding: 4px 8px; background: rgba(0, 0, 0, 0.8); color: white; font-size: 12px; border-radius: 4px; white-space: nowrap; pointer-events: none; z-index: 30; `;
+                  tooltipEl.style.cssText = ` position: absolute; bottom: 100%; transform: translateX(-50%); margin-bottom: 8px; padding: 4px 8px; background: rgba(0, 0, 0, 0.8); color: white; font-size: 12px; border-radius: var(--tm-radius-sm); white-space: nowrap; pointer-events: none; z-index: 30; `;
                   $el.appendChild(tooltipEl);
                 }
 
@@ -10529,12 +10529,12 @@ function PlayPageClient() {
           name: 'seek-buttons',
           html: `
           <div class="seek-buttons-container" style="display: none;">
-            <button class="seek-button seek-backward" style="position: fixed; left: 20px; top: 40%; transform: translateY(-50%); width: 48px; height: 48px; background: color-mix(in srgb, var(--tm-room-cinema-bg) 55%, transparent); border: none; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 9999; transition: opacity 0.2s;">
+            <button class="seek-button seek-backward" style="position: fixed; left: 20px; top: 40%; transform: translateY(-50%); width: 48px; height: 48px; background: color-mix(in srgb, var(--tm-room-cinema-bg) 55%, transparent); border: none; border-radius: var(--tm-radius-full); display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 9999; transition: opacity 0.2s;">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M11 18V6l-8.5 6 8.5 6zm.5-6l8.5 6V6l-8.5 6z" fill="white"/>
               </svg>
             </button>
-            <button class="seek-button seek-forward" style="position: fixed; right: 20px; top: 40%; transform: translateY(-50%); width: 48px; height: 48px; background: color-mix(in srgb, var(--tm-room-cinema-bg) 55%, transparent); border: none; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 9999; transition: opacity 0.2s;">
+            <button class="seek-button seek-forward" style="position: fixed; right: 20px; top: 40%; transform: translateY(-50%); width: 48px; height: 48px; background: color-mix(in srgb, var(--tm-room-cinema-bg) 55%, transparent); border: none; border-radius: var(--tm-radius-full); display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 9999; transition: opacity 0.2s;">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M4 18l8.5-6L4 6v12zm9-12v12l8.5-6L13 6z" fill="white"/>
               </svg>
@@ -10805,7 +10805,7 @@ function PlayPageClient() {
                         gap: 8px;
                         padding: 8px 12px;
                         background-color: color-mix(in srgb, var(--tm-room-cinema-bg) 55%, transparent);
-                        border-radius: 10px;
+                        border-radius: var(--tm-radius-sm);
                         color: var(--tm-text);
                         font-size: 14px;
                         font-family: system-ui, -apple-system, sans-serif;
@@ -10820,7 +10820,7 @@ function PlayPageClient() {
                           padding: 4px 12px;
                           background-color: color-mix(in srgb, var(--tm-room-cinema-bg) 55%, transparent);
                           border: 1px solid var(--tm-line);
-                          border-radius: 10px;
+                          border-radius: var(--tm-radius-sm);
                           color: var(--tm-text);
                           font-size: 13px;
                           cursor: pointer;

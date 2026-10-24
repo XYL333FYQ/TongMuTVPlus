@@ -156,7 +156,7 @@ export default function TVPrivatePage() {
   if (!ready || !authed) {
     return (
       <TVLayout>
-        <section className='mx-auto max-w-5xl rounded-[42px] border border-line bg-surface p-12 text-center shadow-lg'>
+        <section className='mx-auto max-w-5xl rounded-md border border-line bg-surface p-12 text-center shadow-lg'>
           <Lock className='mx-auto h-20 w-20 text-fg' />
           <h1 className='mt-6 text-[28px] md:text-[32px] font-bold'>
             需要扫码登录
@@ -171,7 +171,7 @@ export default function TVPrivatePage() {
 
   return (
     <TVLayout>
-      <section className='rounded-[42px] border border-line bg-surface p-4 md:p-8 shadow-lg'>
+      <section className='rounded-md border border-line bg-surface p-4 md:p-8 shadow-lg'>
         <div className='flex flex-col items-start justify-between gap-6 xl:flex-row xl:items-center'>
           <div className='flex min-w-0 items-center gap-4'>
             <HardDrive className='h-8 w-8 shrink-0 text-fg' />

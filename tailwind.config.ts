@@ -11,6 +11,16 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      borderRadius: {
+        DEFAULT: 'var(--tm-radius-sm)',
+        sm: 'var(--tm-radius-sm)',
+        md: 'var(--tm-radius-md)',
+        lg: 'var(--tm-radius-md)',
+        xl: 'var(--tm-radius-md)',
+        '2xl': 'var(--tm-radius-md)',
+        '3xl': 'var(--tm-radius-md)',
+        full: 'var(--tm-radius-full)',
+      },
       fontFamily: {
         sans: ['var(--tm-font-sans)', ...defaultTheme.fontFamily.sans],
       },

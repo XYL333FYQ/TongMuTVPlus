@@ -1,0 +1,573 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TongMuTV 参考稿</title>
+<!--
+  TongMuTV UI 参考稿 v2（给 Codex 看的）
+  - 视觉/布局参考，不是最终实现。请把 token、栅格、组件规则迁移到项目里。
+  - 顶部导航切换：发现 / 片库 / 房间；房间卡片点进去是房间页。
+  - 按 G 显示 12 列栅格叠加层；月亮图标切暗色模式。
+  - 所有“海报/剧照”都是渐变占位，实际项目换成：
+      Hero 用横版剧照(backdrop, 16:9)，卡片用竖版海报(2:3)或横版剧照(16:9)。
+
+  响应式断点（务必实现）：
+    ≥1200  桌面：Hero 左文字 + 右下“接下来”缩略图
+    900–1199  小桌面：缩略图减到 3 张，房间页侧栏移到播放器下方
+    600–899   平板：Hero 单列、隐藏缩略图改用圆点；卡片区变横向滑动
+    <600      手机：边距 16px，按钮可换行，描述 2 行
+-->
+<style>
+/* ================= 0. Design Tokens ================= */
+:root{
+  --bg:#F7F7F8; --surface:#FFFFFF; --surface-2:#EFEFF1; --surface-3:#E6E6E9;
+  --text:#0F0F10; --text-2:#5F6068; --text-3:#9A9BA3;
+  --line:#E4E4E7;
+  --primary:#0F0F10; --primary-text:#FFFFFF;
+  --accent:#FF5A36;            /* 唯一强调色：进度条、在线状态、当前项 */
+  --ok:#22A55B; --danger:#E5484D;
+
+  --radius-sm:8px; --radius-md:14px; --radius-full:9999px;   /* 只有三档 */
+  --shadow:0 1px 2px rgba(16,16,20,.04),0 6px 16px rgba(16,16,20,.05);
+  --shadow-hover:0 4px 8px rgba(16,16,20,.06),0 16px 32px rgba(16,16,20,.10);
+
+  --container:1320px; --gutter:40px; --col-gap:24px;
+  --section-gap:56px;
+
+  --fs-page:32px; --fs-section:20px; --fs-body:14px; --fs-sub:13px; --fs-tag:12px;
+}
+:root[data-theme="dark"]{
+  --bg:#0B0B0D; --surface:#151518; --surface-2:#1F1F23; --surface-3:#2A2A2F;
+  --text:#F2F2F3; --text-2:#A3A3AC; --text-3:#6E6E78;
+  --line:#26262B;
+  --primary:#F2F2F3; --primary-text:#0F0F10;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 6px 16px rgba(0,0,0,.35);
+  --shadow-hover:0 4px 8px rgba(0,0,0,.5),0 16px 32px rgba(0,0,0,.5);
+}
+@media (max-width:1199px){:root{--gutter:32px}}
+@media (max-width:899px){:root{--gutter:24px;--col-gap:16px;--section-gap:44px;--fs-page:28px}}
+@media (max-width:599px){:root{--gutter:16px;--col-gap:12px;--section-gap:36px;--fs-page:24px;--fs-section:18px}}
+
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{background:var(--bg);color:var(--text);font:400 var(--fs-body)/1.6 -apple-system,BlinkMacSystemFont,"PingFang SC","Noto Sans SC","Microsoft YaHei",sans-serif;-webkit-font-smoothing:antialiased;transition:background .2s,color .2s}
+a{color:inherit;text-decoration:none}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+
+/* ================= 栅格 ================= */
+.container{max-width:var(--container);margin:0 auto;padding:0 var(--gutter)}
+.grid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:var(--col-gap)}
+.span-2{grid-column:span 2}.span-3{grid-column:span 3}.span-4{grid-column:span 4}
+.span-6{grid-column:span 6}.span-8{grid-column:span 8}.span-12{grid-column:span 12}
+@media (max-width:1199px){.lg-12{grid-column:span 12}}
+
+/* rail：桌面是栅格，窄屏变成横向滑动（卡片不会被挤成一列长条） */
+@media (max-width:899px){
+  .rail{display:flex;gap:var(--col-gap);overflow-x:auto;scroll-snap-type:x mandatory;scroll-padding-inline:var(--gutter);
+        margin:0 calc(var(--gutter) * -1);padding:4px var(--gutter) 12px;scrollbar-width:none}
+  .rail::-webkit-scrollbar{display:none}
+  .rail>*{flex:0 0 44%;scroll-snap-align:start}
+  .rail.posters>*{flex:0 0 28%}
+}
+@media (max-width:599px){
+  .rail>*{flex:0 0 78%}
+  .rail.posters>*{flex:0 0 40%}
+}
+
+@media (max-width:899px){#gridBtn{display:none}}
+#grid-overlay{position:fixed;inset:0;pointer-events:none;z-index:100;display:none}
+#grid-overlay.on{display:block}
+#grid-overlay .grid{height:100vh}
+#grid-overlay .grid div{background:rgba(255,40,90,.06);border-inline:1px solid rgba(255,40,90,.25)}
+
+/* ================= 按钮（3 种） ================= */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:42px;padding:0 20px;border-radius:var(--radius-sm);font-weight:600;font-size:14px;transition:.15s;white-space:nowrap}
+.btn:active{transform:scale(.98)}
+.btn-primary{background:var(--primary);color:var(--primary-text)}
+.btn-primary:hover{opacity:.88}
+.btn-secondary{background:var(--surface-2);color:var(--text)}
+.btn-secondary:hover{background:var(--surface-3)}
+.btn-ghost{color:var(--text-2);padding:0 12px}
+.btn-ghost:hover{color:var(--text)}
+.btn-icon{width:42px;padding:0}
+.btn-sm{height:34px;padding:0 14px;font-size:13px}
+.btn-sm.btn-icon{width:34px;padding:0}
+.link-more{font-size:var(--fs-sub);color:var(--text-2);display:inline-flex;align-items:center;gap:2px;transition:.15s}
+.link-more:hover{color:var(--text);gap:6px}
+.link-more svg{width:14px;height:14px}
+
+.tag{display:inline-flex;align-items:center;gap:6px;height:24px;padding:0 10px;border-radius:var(--radius-full);font-size:var(--fs-tag);font-weight:500;background:rgba(255,255,255,.88);color:#2A2A2E;backdrop-filter:blur(8px)}
+.tag-plain{background:var(--surface-2);color:var(--text-2)}
+.dot{width:6px;height:6px;border-radius:50%;background:#A0A0A8}
+.dot.live{background:var(--ok);box-shadow:0 0 0 3px color-mix(in srgb,var(--ok) 25%,transparent)}
+
+/* ================= 顶部导航 ================= */
+header{position:sticky;top:0;z-index:50;background:color-mix(in srgb,var(--bg) 82%,transparent);backdrop-filter:saturate(1.4) blur(14px)}
+.nav{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;height:68px}
+.logo{display:flex;align-items:center;gap:10px;font-weight:700;font-size:17px;letter-spacing:-.2px}
+.logo b{width:30px;height:30px;border-radius:var(--radius-sm);background:var(--primary);color:var(--primary-text);display:grid;place-items:center;font-size:11px;letter-spacing:.5px}
+.seg{display:flex;padding:4px;border-radius:var(--radius-full);background:var(--surface-2)}
+.seg button{height:34px;padding:0 20px;border-radius:var(--radius-full);color:var(--text-2);font-weight:500;transition:.15s}
+.seg button:hover{color:var(--text)}
+.seg button.active{background:var(--surface);color:var(--text);box-shadow:var(--shadow);font-weight:600}
+.nav-right{display:flex;align-items:center;justify-content:flex-end;gap:2px}
+.avatar{width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#FF8A5B,#FF5A36);color:#fff;display:grid;place-items:center;font-size:13px;font-weight:700;margin-left:8px;flex:none}
+@media (max-width:599px){
+  .logo span{display:none}
+  .seg button{padding:0 14px}
+  .nav-right .hide-sm{display:none}
+}
+
+/* ================= 页面 / 区块 ================= */
+.page{display:none;padding-bottom:96px}
+.page.active{display:block;animation:fade .25s ease}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.section{margin-top:var(--section-gap)}
+.section-head{display:flex;align-items:baseline;justify-content:space-between;gap:16px;margin-bottom:16px}
+.section-head h2{font-size:var(--fs-section);font-weight:700;letter-spacing:-.2px}
+.section-head h2 small{font-size:var(--fs-sub);font-weight:500;color:var(--text-3);margin-left:8px}
+
+/* 占位“图片”：渐变 + 光斑，模拟剧照/海报 */
+.art{position:relative;overflow:hidden;
+  background:
+    radial-gradient(circle at 78% 28%,var(--c3) 0,transparent 42%),
+    radial-gradient(ellipse at 20% 110%,var(--c3) 0,transparent 50%),
+    linear-gradient(140deg,var(--c1),var(--c2))}
+.art::after{content:"";position:absolute;inset:0;opacity:.18;mix-blend-mode:overlay;
+  background-image:repeating-linear-gradient(115deg,rgba(255,255,255,.5) 0 1px,transparent 1px 7px)}
+
+/* ================= 1. Hero（沉浸式剧照背景） ================= */
+.hero{position:relative;margin-top:8px;border-radius:var(--radius-md);overflow:hidden;color:#fff;
+      min-height:480px;display:flex;isolation:isolate}
+.hero-bg{position:absolute;inset:0;z-index:-2}
+.hero-shade{position:absolute;inset:0;z-index:-1;
+  background:
+    linear-gradient(90deg,rgba(8,8,10,.82) 0%,rgba(8,8,10,.55) 42%,rgba(8,8,10,.05) 75%),
+    linear-gradient(0deg,rgba(8,8,10,.55) 0%,transparent 45%)}
+.hero-inner{width:100%;display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:end;gap:40px;padding:56px}
+.hero-copy{max-width:560px;align-self:center}
+.hero-meta{display:flex;flex-wrap:wrap;align-items:center;gap:8px;font-size:var(--fs-sub);color:rgba(255,255,255,.78)}
+.hero-meta .score{display:inline-flex;align-items:center;gap:4px;color:#fff;font-weight:600}
+.hero-meta .score svg{width:14px;height:14px;fill:#FFC53D;stroke:none}
+.hero-meta i{width:3px;height:3px;border-radius:50%;background:rgba(255,255,255,.5)}
+.hero-meta .pill{border:1px solid rgba(255,255,255,.3);border-radius:var(--radius-full);padding:0 8px;line-height:20px;font-size:12px}
+.hero h1{font-size:clamp(32px,4.4vw,56px);line-height:1.08;font-weight:800;letter-spacing:-1px;margin-top:14px}
+.hero p{margin-top:14px;color:rgba(255,255,255,.78);font-size:15px;line-height:1.7;
+        display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.hero-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:28px}
+.hero .btn-primary{background:#fff;color:#0F0F10}
+.hero .btn-secondary{background:rgba(255,255,255,.16);color:#fff;backdrop-filter:blur(10px)}
+.hero .btn-secondary:hover{background:rgba(255,255,255,.26)}
+.hero .btn-ghost{color:rgba(255,255,255,.8)}
+.hero .btn-ghost:hover{color:#fff}
+
+/* 右下角“接下来”缩略图：替代原来漂浮的海报堆 + 远离的圆点 */
+.upnext{display:flex;flex-direction:column;align-items:flex-end;gap:10px}
+.upnext-label{font-size:12px;color:rgba(255,255,255,.65);letter-spacing:.5px}
+.thumbs{display:flex;gap:10px}
+.thumbs button{position:relative;width:96px;aspect-ratio:2/3;border-radius:10px;overflow:hidden;opacity:.55;transition:.25s;outline:2px solid transparent;outline-offset:2px}
+.thumbs button:hover{opacity:.85}
+.thumbs button.on{opacity:1;outline-color:#fff}
+.thumbs .bar{position:absolute;left:0;bottom:0;height:3px;width:0;background:#fff;z-index:2}
+.thumbs button.on .bar{animation:fill 7s linear forwards}
+@keyframes fill{to{width:100%}}
+.hero-dots{display:none;gap:6px;margin-top:24px}
+.hero-dots button{width:6px;height:6px;border-radius:var(--radius-full);background:rgba(255,255,255,.45);transition:.25s}
+.hero-dots button.on{width:22px;background:#fff}
+
+@media (max-width:1199px){
+  .hero{min-height:440px}
+  .hero-inner{padding:44px}
+  .thumbs button{width:80px}
+  .thumbs button:nth-child(n+4){display:none}
+}
+@media (max-width:899px){
+  .hero{min-height:400px}
+  .hero-inner{grid-template-columns:1fr;padding:36px}
+  .hero-shade{background:linear-gradient(0deg,rgba(8,8,10,.88) 0%,rgba(8,8,10,.55) 55%,rgba(8,8,10,.15) 100%)}
+  .hero-copy{align-self:end}
+  .upnext{display:none}
+  .hero-dots{display:flex}
+}
+@media (max-width:599px){
+  .hero{min-height:420px;margin-inline:calc(var(--gutter) * -1);border-radius:0}
+  .hero-inner{padding:24px var(--gutter)}
+  .hero p{-webkit-line-clamp:2;font-size:14px}
+  .hero-actions .btn{flex:1}
+  .hero-actions .btn-ghost{display:none}
+}
+
+/* ================= 卡片 ================= */
+.card{display:block;cursor:pointer;min-width:0}
+.card .thumb{position:relative;aspect-ratio:16/9;border-radius:var(--radius-md);overflow:hidden;transition:.25s}
+.card:hover .thumb{transform:translateY(-3px);box-shadow:var(--shadow-hover)}
+.thumb .label{position:absolute;inset:auto 12px 12px;z-index:1;color:#fff;font-weight:700;font-size:15px;text-shadow:0 1px 6px rgba(0,0,0,.35)}
+.thumb .tag{position:absolute;top:10px;left:10px;z-index:1}
+.thumb .tag.right{left:auto;right:10px}
+.thumb .play{position:absolute;inset:0;z-index:1;display:grid;place-items:center;opacity:0;transition:.2s;background:rgba(0,0,0,.25)}
+.thumb .play span{width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,.95);display:grid;place-items:center;color:#111}
+.thumb .play svg{fill:#111;stroke:none;width:16px;height:16px;margin-left:2px}
+.card:hover .play{opacity:1}
+.progress{position:absolute;left:0;right:0;bottom:0;height:4px;background:rgba(255,255,255,.3);z-index:1}
+.progress i{display:block;height:100%;background:var(--accent)}
+.card-body{padding:10px 2px 0}
+.card-title{font-weight:600;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card-sub{font-size:var(--fs-sub);color:var(--text-2);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+.card-add{display:flex;flex-direction:column;cursor:pointer}
+.card-add .box{aspect-ratio:16/9;border-radius:var(--radius-md);border:1.5px dashed var(--line);display:grid;place-items:center;color:var(--text-2);transition:.15s}
+.card-add:hover .box{border-color:var(--text-3);color:var(--text);background:var(--surface)}
+.card-add .plus{width:40px;height:40px;border-radius:50%;background:var(--surface-2);display:grid;place-items:center}
+
+.poster{display:block;cursor:pointer;min-width:0}
+.poster .img{position:relative;aspect-ratio:2/3;border-radius:var(--radius-md);overflow:hidden;transition:.25s}
+.poster:hover .img{transform:translateY(-4px);box-shadow:var(--shadow-hover)}
+.poster .img .label{position:absolute;inset:auto 12px 14px;z-index:1;color:#fff;font-weight:800;font-size:18px;line-height:1.2;text-shadow:0 2px 10px rgba(0,0,0,.35)}
+.poster .rating{position:absolute;top:10px;left:10px;z-index:1;display:inline-flex;align-items:center;gap:3px;background:rgba(10,10,12,.62);backdrop-filter:blur(6px);color:#fff;font-size:12px;font-weight:600;padding:2px 8px;border-radius:6px}
+.poster .rating svg{width:11px;height:11px;fill:#FFC53D;stroke:none}
+.poster-name{margin-top:10px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.poster-meta{font-size:var(--fs-sub);color:var(--text-2)}
+
+/* ================= 2. 房间列表 ================= */
+.page-head{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;margin-top:32px}
+.page-head h1{font-size:var(--fs-page);font-weight:800;line-height:1.2;letter-spacing:-.5px}
+.page-head p{color:var(--text-2);margin-top:6px}
+.page-head .actions{display:flex;gap:10px}
+.tabs{display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);margin:28px 0 24px}
+.tabs .list{display:flex;gap:28px;overflow-x:auto}
+.tabs .list button{padding:10px 0;color:var(--text-2);font-weight:500;font-size:15px;border-bottom:2px solid transparent;margin-bottom:-1px;white-space:nowrap}
+.tabs .list button.active{color:var(--text);border-color:var(--text);font-weight:600}
+.tabs .list button small{color:var(--text-3);font-weight:500;margin-left:4px}
+.guide{border-radius:var(--radius-md);background:var(--surface);box-shadow:var(--shadow);padding:22px;display:flex;flex-direction:column;justify-content:space-between;gap:16px;aspect-ratio:auto}
+.guide .ico{width:40px;height:40px;border-radius:10px;background:color-mix(in srgb,var(--accent) 12%,transparent);color:var(--accent);display:grid;place-items:center}
+.guide h3{font-size:16px;font-weight:700;margin-top:14px}
+.guide p{font-size:var(--fs-sub);color:var(--text-2);margin-top:4px}
+@media (max-width:1199px){.rooms-grid .span-3{grid-column:span 4}}
+@media (max-width:899px){.rooms-grid .span-3{grid-column:span 6}}
+@media (max-width:599px){
+  .rooms-grid .span-3{grid-column:span 12}
+  .page-head .actions{width:100%}
+  .page-head .actions .btn{flex:1}
+}
+
+/* ================= 3. 房间页 ================= */
+.room-head{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;margin:28px 0 20px}
+.room-title{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.room-title h1{font-size:var(--fs-page);font-weight:800;line-height:1.2;letter-spacing:-.5px}
+.room-id{font-size:var(--fs-sub);color:var(--text-2);margin-top:6px;display:flex;align-items:center;gap:6px}
+.room-id button{display:inline-flex;align-items:center;gap:4px;color:var(--text-2);padding:2px 6px;border-radius:6px}
+.room-id button:hover{background:var(--surface-2);color:var(--text)}
+.room-id svg{width:13px;height:13px}
+.room-actions{display:flex;align-items:center;gap:8px}
+.avatars{display:flex;align-items:center;height:42px;padding:0 14px 0 6px;border-radius:var(--radius-full);background:var(--surface-2);gap:8px;font-size:var(--fs-sub);color:var(--text-2)}
+.avatars .avatar{width:30px;height:30px;margin:0;font-size:12px}
+.menu-wrap{position:relative}
+.menu{position:absolute;right:0;top:48px;width:190px;background:var(--surface);border-radius:var(--radius-md);box-shadow:var(--shadow-hover);padding:6px;display:none;z-index:20;border:1px solid var(--line)}
+.menu.open{display:block;animation:fade .15s}
+.menu button{display:flex;align-items:center;gap:10px;width:100%;height:38px;padding:0 10px;border-radius:var(--radius-sm);text-align:left}
+.menu button:hover{background:var(--surface-2)}
+.menu .danger{color:var(--danger)}
+.menu hr{border:0;border-top:1px solid var(--line);margin:4px 0}
+
+.stage{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:var(--col-gap)}
+.player{position:relative;aspect-ratio:16/9;background:#050506;border-radius:var(--radius-md);overflow:hidden;display:grid;place-items:center;color:#fff}
+.player::before{content:"";position:absolute;inset:0;background:radial-gradient(ellipse 70% 60% at 50% 40%,rgba(255,255,255,.07),transparent 70%)}
+.empty{position:relative;text-align:center;padding:24px}
+.empty .ico{width:56px;height:56px;border-radius:16px;margin:0 auto;background:rgba(255,255,255,.08);display:grid;place-items:center}
+.empty .ico svg{width:26px;height:26px}
+.empty h3{font-size:clamp(18px,2.2vw,24px);font-weight:700;margin-top:16px}
+.empty p{color:rgba(255,255,255,.55);font-size:var(--fs-sub);margin-top:4px}
+.empty .row{display:flex;gap:8px;justify-content:center;margin-top:22px;flex-wrap:wrap}
+.player .btn-primary{background:#fff;color:#111}
+.player .btn-ghost{color:rgba(255,255,255,.7)}
+.player .btn-ghost:hover{color:#fff}
+
+.side{background:var(--surface);border-radius:var(--radius-md);box-shadow:var(--shadow);display:flex;flex-direction:column;padding:12px;min-height:0}
+.side-tabs{display:flex;padding:4px;border-radius:10px;background:var(--surface-2)}
+.side-tabs button{flex:1;height:34px;border-radius:7px;color:var(--text-2);font-weight:500;font-size:var(--fs-sub)}
+.side-tabs button.active{background:var(--surface);color:var(--text);box-shadow:var(--shadow);font-weight:600}
+.side-empty{flex:1;display:grid;place-items:center;text-align:center;color:var(--text-2);font-size:var(--fs-sub);padding:32px 24px}
+.side-empty .ico{width:44px;height:44px;border-radius:12px;background:var(--surface-2);display:grid;place-items:center;margin:0 auto 12px;color:var(--text-3)}
+.side-empty b{display:block;color:var(--text);font-size:14px;font-weight:600;margin-bottom:2px}
+.chat-input{display:flex;gap:8px;padding-top:12px;border-top:1px solid var(--line)}
+.chat-input input{flex:1;min-width:0;height:38px;border-radius:var(--radius-sm);border:1px solid var(--line);background:var(--bg);padding:0 12px;font:inherit;color:var(--text);outline:none}
+.chat-input input:focus{border-color:var(--text-3)}
+
+@media (max-width:1199px){
+  .stage{grid-template-columns:1fr}
+  .side{min-height:320px}
+}
+@media (max-width:899px){
+  .room-actions .txt{display:none}          /* 屏幕共享只留图标 */
+  .room-actions .btn-secondary.has-txt{width:42px;padding:0}
+}
+@media (max-width:599px){
+  .room-head{align-items:flex-start}
+  .room-actions{width:100%}
+  .room-actions .avatars{margin-right:auto}
+  .player{margin-inline:calc(var(--gutter) * -1);border-radius:0;aspect-ratio:auto;min-height:300px}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="container nav">
+    <a class="logo" href="#" data-goto="home"><b>TM</b><span>TongMuTV</span></a>
+    <nav class="seg" id="nav">
+      <button data-page="home" class="active">发现</button>
+      <button data-page="library">片库</button>
+      <button data-page="rooms">房间</button>
+    </nav>
+    <div class="nav-right">
+      <button class="btn btn-ghost btn-icon" aria-label="搜索"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></button>
+      <button class="btn btn-ghost btn-icon hide-sm" id="theme" aria-label="暗色模式"><svg viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg></button>
+      <div class="avatar">A</div>
+    </div>
+  </div>
+</header>
+
+<!-- ======================= 页面 1：发现 ======================= -->
+<main class="page active" id="page-home">
+  <div class="container">
+
+    <!-- Hero：横版剧照铺满 + 左侧渐变压暗；右下角“接下来”缩略图兼做轮播控制 -->
+    <section class="hero" id="hero">
+      <div class="art hero-bg" id="heroArt"></div>
+      <div class="hero-shade"></div>
+      <div class="hero-inner">
+        <div class="hero-copy">
+          <div class="hero-meta" id="heroMeta"></div>
+          <h1 id="heroTitle"></h1>
+          <p id="heroDesc"></p>
+          <div class="hero-actions">
+            <button class="btn btn-primary"><svg viewBox="0 0 24 24" style="fill:currentColor;stroke:none"><path d="M7 4.5v15l12.5-7.5z"/></svg>播放</button>
+            <button class="btn btn-secondary"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 4.5a3.5 3.5 0 0 1 0 7M21.5 20a6.5 6.5 0 0 0-4-6"/></svg>一起看</button>
+            <button class="btn btn-ghost">详情</button>
+          </div>
+          <div class="hero-dots" id="heroDots"></div>
+        </div>
+        <div class="upnext">
+          <div class="upnext-label">接下来</div>
+          <div class="thumbs" id="thumbs"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-head"><h2>继续观看</h2><a class="link-more" href="#">查看全部<svg viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></a></div>
+      <div class="grid rail" id="continue"></div>
+    </section>
+
+    <section class="section">
+      <div class="section-head"><h2>我的房间<small>1</small></h2><a class="link-more" href="#" data-goto="rooms">管理房间<svg viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></a></div>
+      <div class="grid rail">
+        <a class="span-3 card" data-goto="room">
+          <div class="thumb art" style="--c1:#0F3D3E;--c2:#3C8D7A;--c3:#BFE3C0">
+            <span class="tag"><span class="dot"></span>无人在线</span>
+          </div>
+          <div class="card-body"><div class="card-title">admin 的放映室</div><div class="card-sub">上次在看《祈念守护人》· 2 天前</div></div>
+        </a>
+        <a class="span-3 card-add">
+          <div class="box"><div style="text-align:center"><div class="plus" style="margin:0 auto 8px"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></div>创建房间</div></div>
+        </a>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-head"><h2>热门电影</h2><a class="link-more" href="#">查看全部<svg viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></a></div>
+      <div class="grid rail posters" id="hot"></div>
+    </section>
+
+    <section class="section">
+      <div class="section-head"><h2>新上线</h2><a class="link-more" href="#">查看全部<svg viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></a></div>
+      <div class="grid rail" id="fresh"></div>
+    </section>
+  </div>
+</main>
+
+<main class="page" id="page-library">
+  <div class="container">
+    <div class="page-head"><div><h1>片库</h1><p>参考稿未详细绘制：筛选栏 + 热门电影同款海报网格（6 列 → 4 列 → 3 列）</p></div></div>
+    <div class="grid rail posters" id="lib" style="margin-top:24px"></div>
+  </div>
+</main>
+
+<!-- ======================= 页面 2：房间列表 ======================= -->
+<main class="page" id="page-rooms">
+  <div class="container">
+    <div class="page-head">
+      <div><h1>房间</h1><p>创建房间，或用邀请码加入朋友的房间</p></div>
+      <div class="actions">
+        <button class="btn btn-secondary"><svg viewBox="0 0 24 24"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg>邀请码加入</button>
+        <button class="btn btn-primary"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>创建房间</button>
+      </div>
+    </div>
+    <div class="tabs">
+      <div class="list">
+        <button class="active">我的房间<small>1</small></button><button>公开房间</button><button>已归档</button>
+      </div>
+      <button class="btn btn-ghost btn-sm btn-icon" aria-label="刷新"><svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 0 1-15.5 6.2M3 12a9 9 0 0 1 15.5-6.2M21 4v5h-5M3 20v-5h5"/></svg></button>
+    </div>
+    <div class="grid rooms-grid">
+      <a class="span-3 card" data-goto="room">
+        <div class="thumb art" style="--c1:#0F3D3E;--c2:#3C8D7A;--c3:#BFE3C0">
+          <span class="tag"><span class="dot"></span>无人在线</span>
+          <span class="tag right"><svg viewBox="0 0 24 24" style="width:12px;height:12px"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>需密码</span>
+        </div>
+        <div class="card-body"><div class="card-title">admin 的放映室</div><div class="card-sub">公开 · 房主 admin · 2 天前活跃</div></div>
+      </a>
+      <div class="span-3 guide">
+        <div>
+          <div class="ico"><svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/></svg></div>
+          <h3>叫上朋友一起看</h3>
+          <p>把邀请码发给朋友，进度、暂停和聊天都会实时同步。</p>
+        </div>
+        <a class="link-more" href="#" style="color:var(--text);font-weight:600">复制邀请链接<svg viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></a>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- ======================= 页面 3：房间页 ======================= -->
+<main class="page" id="page-room">
+  <div class="container">
+    <div class="room-head">
+      <div>
+        <div class="room-title">
+          <h1>admin 的放映室</h1>
+          <span class="tag tag-plain"><span class="dot live"></span>已连接</span>
+          <span class="tag tag-plain">主持人</span>
+        </div>
+        <div class="room-id">房间号 147****7728
+          <button><svg viewBox="0 0 24 24"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>复制</button>
+        </div>
+      </div>
+      <div class="room-actions">
+        <div class="avatars"><div class="avatar">A</div>1 人在线</div>
+        <button class="btn btn-secondary has-txt" aria-label="屏幕共享"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg><span class="txt">屏幕共享</span></button>
+        <button class="btn btn-primary"><svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/></svg>邀请</button>
+        <div class="menu-wrap">
+          <button class="btn btn-secondary btn-icon" id="moreBtn" aria-label="更多"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg></button>
+          <div class="menu" id="menu">
+            <button><svg viewBox="0 0 24 24"><path d="M4 6h10M18 6h2M4 18h2M10 18h10M14 4v4M6 16v4"/></svg>房间设置</button>
+            <button><svg viewBox="0 0 24 24"><path d="M3 7h18M6 7v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V7M9 7V4h6v3"/></svg>归档房间</button>
+            <hr>
+            <button class="danger"><svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>退出房间</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 播放器自适应 + 侧栏固定 360px；<1200 侧栏移到下方 -->
+    <div class="stage">
+      <div class="player">
+        <div class="empty">
+          <div class="ico"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M7 3v18M17 3v18M3 8h4M3 16h4M17 8h4M17 16h4"/></svg></div>
+          <h3>选一部影片，开始一起看</h3>
+          <p>加入片单后由主持人控制播放，所有人同步</p>
+          <div class="row">
+            <button class="btn btn-primary"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>选择影片</button>
+            <button class="btn btn-ghost">浏览片库</button>
+          </div>
+        </div>
+      </div>
+      <aside class="side">
+        <div class="side-tabs" id="sideTabs"><button class="active">片单 0</button><button>聊天</button><button>成员 1</button></div>
+        <div class="side-empty"><div>
+          <div class="ico"><svg viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg></div>
+          <b>片单为空</b>选好的影片会按顺序在这里排队</div></div>
+        <div class="chat-input"><input placeholder="说点什么…"><button class="btn btn-secondary btn-icon" style="height:38px;width:38px" aria-label="发送"><svg viewBox="0 0 24 24"><path d="m22 2-7 20-4-9-9-4z"/><path d="M22 2 11 13"/></svg></button></div>
+      </aside>
+    </div>
+
+    <section class="section">
+      <div class="section-head"><h2>快速开始<small>点一下加入片单</small></h2><a class="link-more" href="#" data-goto="library">浏览片库<svg viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></a></div>
+      <div class="grid rail" id="quick"></div>
+    </section>
+  </div>
+</main>
+
+<div id="grid-overlay"><div class="container grid">
+  <div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div>
+</div></div>
+<button class="btn btn-secondary btn-sm" id="gridBtn" style="position:fixed;right:16px;bottom:16px;z-index:101;box-shadow:var(--shadow-hover)">栅格 G</button>
+
+<script>
+/* ---------- 假数据（配色模拟海报/剧照） ---------- */
+const M={
+  qn:{t:"祈念守护人",y:2026,g:["剧情","动画"],r:"6.1",c:["#0F3D3E","#3C8D7A","#E9D8A6"],d:"直井玲人遭遇不公对待丢掉工作，又因被捕彻底跌入人生谷底。就在他任由自己沉沦的时候，一场意料之外的相遇悄然降临，给了他一个足以改写整个人生的机会。"},
+  dx:{t:"刀锋行者",y:2026,g:["动作","武侠"],r:"7.4",c:["#3B2A1E","#8C5A3C","#F2C46D"],d:"边城客栈里聚起八方来客，一把失传的刀牵出二十年前的旧案。各怀心思的人在一夜之间被迫站到同一边。"},
+  wj:{t:"无界之地",y:2026,g:["惊悚"],r:"5.5",c:["#14161C","#3A4152","#8E9AAF"],d:"雾气封山的第三天，护林员在深林里发现了一座不该存在的木屋，以及墙上写满的自己的名字。"},
+  wf:{t:"晚风与沙",y:2025,g:["剧情","公路"],r:"6.3",c:["#5B3A29","#C9A66B","#F6E3B4"],d:"一个即将退休的邮差，一辆老旧的面包车，和一封寄了三十年都没送到的信。"},
+  xh:{t:"信号失真",y:2026,g:["科幻"],r:"7.3",c:["#1B1464","#E8434D","#FFB86B"],d:"深夜电台接到一通来自 1997 年的来电，主持人必须在节目结束前找到打电话的人。"},
+  sy:{t:"深渊低语",y:2026,g:["恐怖"],r:"6.6",c:["#06202B","#1D5C6E","#7BC4C4"],d:"潜水队在沉船中打捞起一只上锁的木箱，从那天起，船上每个人都开始在梦里听见同一首歌。"},
+  wg:{t:"雾港来信",y:2026,g:["悬疑"],r:"7.0",c:["#2C2A4A","#7A6C9A","#D9C7E8"],d:""},
+  hz:{t:"火种",y:2025,g:["纪录"],r:"8.1",c:["#3A0F0F","#B23A2B","#FFB347"],d:""},
+};
+const art=(m)=>`--c1:${m.c[0]};--c2:${m.c[1]};--c3:${m.c[2]}`;
+const star='<svg viewBox="0 0 24 24"><path d="M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4l-5.9 3.1 1.2-6.5L2.5 9.4l6.6-.9z"/></svg>';
+const playIco='<span><svg viewBox="0 0 24 24"><path d="M7 4.5v15l12.5-7.5z"/></svg></span>';
+
+/* ---------- Hero 轮播 ---------- */
+const slides=["qn","dx","wj","xh","wf"];
+let idx=0,timer;
+const thumbs=document.getElementById('thumbs'), dots=document.getElementById('heroDots');
+thumbs.innerHTML=slides.map((k,i)=>`<button class="art" style="${art(M[k])}" aria-label="${M[k].t}" data-i="${i}"><i class="bar"></i></button>`).join('');
+dots.innerHTML=slides.map((_,i)=>`<button aria-label="第${i+1}张" data-i="${i}"></button>`).join('');
+function show(i){
+  idx=(i+slides.length)%slides.length;
+  const m=M[slides[idx]];
+  heroArt.setAttribute('style',art(m));
+  heroTitle.textContent=m.t;
+  heroDesc.textContent=m.d;
+  heroMeta.innerHTML=`<span class="score">${star}${m.r}</span><i></i><span>${m.y}</span><i></i>${m.g.map(g=>`<span class="pill">${g}</span>`).join('')}`;
+  [...thumbs.children].forEach((b,j)=>{b.classList.remove('on');if(j===idx){void b.offsetWidth;b.classList.add('on')}});
+  [...dots.children].forEach((b,j)=>b.classList.toggle('on',j===idx));
+  clearTimeout(timer);timer=setTimeout(()=>show(idx+1),7000);
+}
+[thumbs,dots].forEach(el=>el.addEventListener('click',e=>{const b=e.target.closest('button');if(b)show(+b.dataset.i)}));
+show(0);
+
+/* ---------- 列表渲染 ---------- */
+const wide=(k,sub,pct)=>{const m=M[k];return `<a class="span-3 card"><div class="thumb art" style="${art(m)}">
+  <div class="play">${playIco}</div>${pct?`<div class="progress"><i style="width:${pct}%"></i></div>`:''}</div>
+  <div class="card-body"><div class="card-title">${m.t}</div><div class="card-sub">${sub}</div></div></a>`};
+const poster=(k)=>{const m=M[k];return `<a class="span-2 poster"><div class="img art" style="${art(m)}">
+  <span class="rating">${star}${m.r}</span><span class="label">${m.t}</span></div>
+  <div class="poster-name">${m.t}</div><div class="poster-meta">${m.y} · ${m.g[0]}</div></a>`};
+
+document.getElementById('continue').innerHTML=[wide('qn','剩余 2 分钟',98),wide('xh','剩余 47 分钟',42),wide('wf','剩余 1 小时 12 分',18),wide('sy','剩余 9 分钟',90)].join('');
+hot.innerHTML=['wj','dx','qn','wf','xh','sy'].map(poster).join('');
+fresh.innerHTML=['wg','hz','dx','sy'].map(k=>wide(k,`${M[k].y} · ${M[k].g.join(' / ')}`)).join('');
+lib.innerHTML=Object.keys(M).concat(['qn','dx','wj','xh']).map(poster).join('');
+quick.innerHTML=['qn','dx','wf','wg'].map(k=>wide(k,`${M[k].g[0]} · ${M[k].y}`)).join('');
+
+/* ---------- 路由 ---------- */
+const pages={home:'page-home',library:'page-library',rooms:'page-rooms',room:'page-room'};
+function go(p){
+  document.querySelectorAll('.page').forEach(e=>e.classList.remove('active'));
+  document.getElementById(pages[p]).classList.add('active');
+  const key=p==='room'?'rooms':p;
+  document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('active',b.dataset.page===key));
+  scrollTo(0,0);
+}
+document.querySelectorAll('#nav button').forEach(b=>b.onclick=()=>go(b.dataset.page));
+document.addEventListener('click',e=>{const g=e.target.closest('[data-goto]');if(g){e.preventDefault();go(g.dataset.goto)}});
+
+/* ---------- 其它交互 ---------- */
+document.querySelectorAll('.side-tabs button').forEach(b=>b.onclick=()=>{b.parentNode.querySelectorAll('button').forEach(x=>x.classList.remove('active'));b.classList.add('active')});
+document.querySelectorAll('.tabs .list button').forEach(b=>b.onclick=()=>{b.parentNode.querySelectorAll('button').forEach(x=>x.classList.remove('active'));b.classList.add('active')});
+const menu=document.getElementById('menu');
+moreBtn.onclick=e=>{e.stopPropagation();menu.classList.toggle('open')};
+document.addEventListener('click',()=>menu.classList.remove('open'));
+theme.onclick=()=>{const r=document.documentElement;r.dataset.theme=r.dataset.theme==='dark'?'light':'dark'};
+const ov=document.getElementById('grid-overlay');
+gridBtn.onclick=()=>ov.classList.toggle('on');
+addEventListener('keydown',e=>{if((e.key==='g'||e.key==='G')&&e.target.tagName!=='INPUT')ov.classList.toggle('on')});
+</script>
+</body>
+</html>

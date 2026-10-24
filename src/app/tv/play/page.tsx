@@ -1274,7 +1274,7 @@ function TVPlayClient() {
       <main className='fixed inset-0 flex items-center justify-center bg-surface p-10 text-center text-fg'>
         <section
           role='alert'
-          className='max-w-3xl rounded-[36px] border border-danger bg-raised p-10 shadow-2xl shadow-ink/40'
+          className='max-w-3xl rounded-md border border-danger bg-raised p-10 shadow-2xl shadow-ink/40'
         >
           <AlertTriangle className='mx-auto mb-5 h-16 w-16 text-danger' />
           <h1 className='text-4xl font-bold text-fg'>
@@ -1393,7 +1393,7 @@ function TVPlayClient() {
           role='alert'
           className='absolute inset-0 z-30 flex items-center justify-center bg-ink/70 p-8 text-fg backdrop-blur-sm'
         >
-          <section className='max-w-3xl rounded-[36px] border border-line bg-surface p-9 text-center shadow-2xl shadow-ink/70'>
+          <section className='max-w-3xl rounded-md border border-line bg-surface p-9 text-center shadow-2xl shadow-ink/70'>
             <AlertTriangle className='mx-auto mb-5 h-14 w-14 text-fg' />
             <h2 className='text-4xl font-bold'>当前视频加载失败</h2>
             <p className='mt-3 text-2xl text-muted'>
@@ -1464,7 +1464,7 @@ function TVPlayClient() {
           showPanel ? 'opacity-100' : 'pointer-events-none opacity-0'
         }`}
       >
-        <div className='rounded-[28px] bg-ink/75 p-4 backdrop-blur'>
+        <div className='rounded-md bg-ink/75 p-4 backdrop-blur'>
           <div
             onFocusCapture={scrollFocusedControlIntoView}
             className='flex items-center gap-3 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [&_button]:shrink-0 [&_button]:whitespace-nowrap'
@@ -1627,7 +1627,7 @@ function TVPlayClient() {
         <aside
           ref={episodesPanelRef}
           data-tv-episode-panel
-          className='absolute bottom-40 right-8 max-h-[55vh] w-[560px] overflow-y-auto rounded-[34px] border border-line bg-surface p-6 shadow-2xl shadow-ink/70 backdrop-blur-2xl'
+          className='absolute bottom-40 right-8 max-h-[55vh] w-[560px] overflow-y-auto rounded-md border border-line bg-surface p-6 shadow-2xl shadow-ink/70 backdrop-blur-2xl'
         >
           <h2 className='mb-5 flex items-center gap-3 text-3xl font-bold'>
             <Layers className='h-8 w-8 text-fg' />
@@ -1706,7 +1706,7 @@ function TVPlayClient() {
             data-tv-player-control
             data-tv-focus-scope='active'
             data-tv-danmaku-settings
-            className='w-[720px] max-w-[92vw] rounded-[34px] border border-line bg-surface p-7 text-fg shadow-2xl shadow-ink/80'
+            className='w-[720px] max-w-[92vw] rounded-md border border-line bg-surface p-7 text-fg shadow-2xl shadow-ink/80'
             onKeyDownCapture={(event) => {
               const target = event.target;
               if (
@@ -1848,7 +1848,7 @@ function TVPlayClient() {
         <div className='absolute inset-0 z-40 flex items-center justify-center bg-ink/70 p-10 backdrop-blur-sm'>
           <section
             data-tv-player-control
-            className='max-h-[82vh] w-[980px] max-w-[92vw] overflow-y-auto rounded-[42px] border border-line bg-surface p-8 text-fg shadow-2xl shadow-ink/80'
+            className='max-h-[82vh] w-[980px] max-w-[92vw] overflow-y-auto rounded-md border border-line bg-surface p-8 text-fg shadow-2xl shadow-ink/80'
           >
             <div className='mb-6 flex items-start justify-between gap-6'>
               <div>
@@ -1924,7 +1924,7 @@ function TVPlayClient() {
         </div>
       )}
       {seekHint && !showPanel && !showEpisodes && (
-        <div className='absolute bottom-16 left-1/2 w-[720px] max-w-[86vw] -translate-x-1/2 rounded-[34px] bg-ink/80 px-8 py-6 text-fg shadow-2xl backdrop-blur'>
+        <div className='absolute bottom-16 left-1/2 w-[720px] max-w-[86vw] -translate-x-1/2 rounded-md bg-ink/80 px-8 py-6 text-fg shadow-2xl backdrop-blur'>
           <div className='mb-4 flex items-center justify-between text-3xl font-bold'>
             <span>
               {seekHint.delta > 0

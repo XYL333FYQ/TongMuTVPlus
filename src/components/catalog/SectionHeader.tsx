@@ -8,18 +8,20 @@ export default function SectionHeader({
   href,
   actions,
   className = '',
+  linkLabel = '查看全部',
 }: {
   title: string;
   href?: string;
   actions?: ReactNode;
   className?: string;
+  linkLabel?: string;
 }) {
   return (
     <div className={'tm-section-header ' + className}>
       <h2 className='tm-section-title'>{title}</h2>
       {href ? (
         <Link href={href} className='tm-section-link'>
-          查看全部
+          {linkLabel}
           <ChevronRight size={14} aria-hidden />
         </Link>
       ) : (

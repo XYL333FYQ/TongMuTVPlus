@@ -13,7 +13,7 @@
   place-items: center;
   width: 48px;
   height: 48px;
-  border-radius: 50%;
+  border-radius: var(--tm-radius-full);
   background: var(--tm-text);
   color: var(--tm-accent-contrast);
   box-shadow: var(--tm-shadow-md);
@@ -109,11 +109,10 @@
   align-items: center;
   gap: 6px;
   min-height: 36px;
-  padding: 0 12px;
-  border: 1px solid var(--tm-line);
-  border-radius: var(--tm-radius-pill);
-  background: var(--tm-surface);
-  font-size: var(--tm-fs-small);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font-size: var(--tm-fs-caption);
   color: var(--tm-muted);
   white-space: nowrap;
   transition: color var(--tm-d-hover) var(--tm-ease-out),
@@ -121,7 +120,6 @@
 }
 .tm-section-link:hover {
   color: var(--tm-text);
-  background: var(--tm-surface-raised);
 }
 @media (pointer: coarse) {
   .tm-section-link {
@@ -172,27 +170,22 @@
 }
 .tm-poster-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 24px 12px;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 24px var(--tm-grid-gap);
   min-width: 0;
 }
 .tm-poster-grid > * {
+  grid-column: span 4;
   min-width: 0;
 }
 @media (min-width: 768px) {
-  .tm-poster-grid {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 32px 20px;
-  }
-}
-@media (min-width: 1024px) {
-  .tm-poster-grid {
-    grid-template-columns: repeat(5, minmax(0, 1fr));
+  .tm-poster-grid > * {
+    grid-column: span 3;
   }
 }
 @media (min-width: 1200px) {
-  .tm-poster-grid {
-    grid-template-columns: repeat(6, minmax(0, 1fr));
+  .tm-poster-grid > * {
+    grid-column: span 2;
   }
 }
 /* —— 海报 —— */
@@ -206,12 +199,12 @@
   transition: box-shadow var(--tm-d-hover) var(--tm-ease-out);
 }
 .tm-poster::after {
-  /* 1px 内描边：图和底色融在一起时依然有轮廓 */
+  /* 海报用阴影区分层级，不额外叠边框。 */
   content: '';
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  box-shadow: inset 0 0 0 1px var(--tm-line);
+  box-shadow: none;
   pointer-events: none;
 }
 .tm-poster img {
@@ -289,8 +282,8 @@ html[data-tm-no-blur='true'] .tm-fade-image {
 .tm-shelf {
   display: grid;
   grid-auto-flow: column;
-  grid-auto-columns: calc((100% - 2 * 12px) / 3);
-  gap: 12px;
+  grid-auto-columns: calc((100% - 2 * 24px) / 3);
+  gap: 24px;
   overflow-x: auto;
   overscroll-behavior-x: contain;
   scroll-snap-type: x mandatory;
@@ -307,18 +300,12 @@ html[data-tm-no-blur='true'] .tm-fade-image {
 }
 @media (min-width: 768px) {
   .tm-shelf {
-    gap: 20px;
-    grid-auto-columns: calc((100% - 3 * 20px) / 4);
-  }
-}
-@media (min-width: 1024px) {
-  .tm-shelf {
-    grid-auto-columns: calc((100% - 4 * 20px) / 5);
+    grid-auto-columns: calc((100% - 3 * 24px) / 4);
   }
 }
 @media (min-width: 1200px) {
   .tm-shelf {
-    grid-auto-columns: calc((100% - 5 * 20px) / 6);
+    grid-auto-columns: calc((100% - 5 * 24px) / 6);
   }
 }
 /* 片架翻页按钮：只在能精确指向的设备上悬停出现 */
@@ -333,7 +320,7 @@ html[data-tm-no-blur='true'] .tm-fade-image {
   place-items: center;
   width: 44px;
   height: 44px;
-  border: 1px solid var(--tm-line);
+  border: 0;
   border-radius: var(--tm-radius-pill);
   background: var(--tm-glass-solid);
   color: var(--tm-text);
@@ -373,6 +360,7 @@ html[data-tm-no-blur='true'] .tm-fade-image {
   display: block;
   width: 100%;
   text-align: left;
+  box-shadow: var(--tm-shadow-sm);
 }
 .tm-public-image-missing {
   display: flex;
@@ -383,4 +371,79 @@ html[data-tm-no-blur='true'] .tm-fade-image {
   min-height: 100px;
   color: var(--tm-muted);
   background: var(--tm-surface);
+}
+
+/* 开发环境 G：与真实容器共用尺寸的 12 列验收叠加层。 */
+.tm-design-grid-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  pointer-events: none;
+}
+.tm-design-grid-overlay > div {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: var(--tm-grid-gap);
+  max-width: var(--tm-container);
+  height: 100%;
+  margin-inline: auto;
+  padding-inline: var(--tm-content-gutter);
+}
+.tm-design-grid-overlay i {
+  background: color-mix(in srgb, var(--tm-highlight) 8%, transparent);
+  border-inline: 1px solid
+    color-mix(in srgb, var(--tm-highlight) 22%, transparent);
+}
+
+@media (min-width: 1700px) {
+  .tm-page-head {
+    gap: calc(16 * var(--tm-wide-unit)) var(--tm-grid-gap);
+    padding-top: calc(32 * var(--tm-wide-unit));
+    margin-bottom: calc(32 * var(--tm-wide-unit));
+  }
+  .tm-page-desc {
+    margin-top: calc(8 * var(--tm-wide-unit));
+  }
+  .tm-page-actions {
+    gap: calc(10 * var(--tm-wide-unit));
+  }
+  .tm-section-header {
+    gap: calc(16 * var(--tm-wide-unit));
+    margin-bottom: calc(16 * var(--tm-wide-unit));
+  }
+  .tm-section-link {
+    gap: calc(6 * var(--tm-wide-unit));
+    min-height: calc(36 * var(--tm-wide-unit));
+  }
+  .tm-library-tags,
+  .tm-library-filters {
+    margin-top: calc(20 * var(--tm-wide-unit));
+  }
+  .tm-library-grid {
+    margin-top: calc(28 * var(--tm-wide-unit));
+  }
+  .tm-library-more {
+    margin-top: calc(48 * var(--tm-wide-unit));
+  }
+  .tm-library-end {
+    padding-block: calc(40 * var(--tm-wide-unit)) calc(8 * var(--tm-wide-unit));
+  }
+  .tm-poster-grid {
+    row-gap: var(--tm-grid-gap);
+  }
+  .tm-library-grid .tm-video-card .peer {
+    font-size: var(--tm-fs-small);
+    line-height: 1.5;
+  }
+  .tm-library-grid .tm-video-card > .mt-2 {
+    margin-top: calc(8 * var(--tm-wide-unit));
+  }
+  .tm-library-grid .tm-media-initial {
+    font-size: calc(48 * var(--tm-wide-unit));
+  }
+}
+@media (min-width: 1700px) and (pointer: coarse) {
+  .tm-section-link {
+    min-height: max(44px, calc(36 * var(--tm-wide-unit)));
+  }
 }

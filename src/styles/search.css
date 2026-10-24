@@ -48,7 +48,7 @@
   place-items: center;
   width: 40px;
   height: 40px;
-  border-radius: 50%;
+  border-radius: var(--tm-radius-full);
   color: var(--tm-muted);
   transform: translateY(-50%);
 }
@@ -89,7 +89,7 @@
 .tm-history-item {
   display: inline-flex;
   align-items: center;
-  border: 1px solid var(--tm-line);
+  border: 0;
   border-radius: var(--tm-radius-pill);
   background: var(--tm-surface);
   transition: border-color var(--tm-d-hover) var(--tm-ease-out);

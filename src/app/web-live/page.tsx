@@ -278,7 +278,7 @@ export default function WebLivePage() {
       },
       icons: {
         loading:
-          '<span aria-hidden="true" class="tm-skeleton" style="display:block;width:48px;height:8px;border-radius:999px;background:color-mix(in srgb,var(--tm-room-player-text) 12%,transparent)"></span>',
+          '<span aria-hidden="true" class="tm-skeleton" style="display:block;width:48px;height:8px;border-radius:var(--tm-radius-full);background:color-mix(in srgb,var(--tm-room-player-text) 12%,transparent)"></span>',
       },
     });
 

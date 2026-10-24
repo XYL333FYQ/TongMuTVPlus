@@ -190,7 +190,7 @@ export default function TVSearchPage() {
   return (
     <TVLayout>
       <div data-tv-focus-scope='active'>
-        <section className='rounded-[42px] border border-line bg-surface p-4 md:p-10 shadow-lg'>
+        <section className='rounded-md border border-line bg-surface p-4 md:p-10 shadow-lg'>
           <h1 className='text-[28px] md:text-[32px] font-bold'>搜索</h1>
           <p className='mt-4 text-base text-muted'>
             搜索片名，选择影片查看详情

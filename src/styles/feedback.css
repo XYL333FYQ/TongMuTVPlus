@@ -18,7 +18,7 @@
   max-width: 460px;
   max-height: calc(100dvh - 32px);
   overflow-y: auto;
-  border: 1px solid var(--tm-line);
+  border: 0;
   border-radius: var(--tm-radius-xl);
   background: var(--tm-surface);
   color: var(--tm-text);
@@ -59,7 +59,7 @@
   justify-content: center;
   width: 44px;
   height: 44px;
-  border-radius: 50%;
+  border-radius: var(--tm-radius-full);
   color: var(--tm-muted);
   background: transparent;
 }
@@ -84,6 +84,7 @@
   background: transparent;
   overflow: auto;
   overscroll-behavior: contain;
+  box-shadow: var(--tm-shadow-sm);
 }
 .tm-confirm-dialog[open] {
   display: grid;
@@ -100,7 +101,7 @@
   max-height: 100%;
   overflow: auto;
   overscroll-behavior: contain;
-  border: 1px solid var(--tm-line);
+  border: 0;
   border-radius: var(--tm-radius-xl);
   background: var(--tm-surface);
   box-shadow: var(--tm-shadow-lg);
@@ -194,7 +195,7 @@
   min-width: min(300px, calc(100vw - 32px));
   max-width: min(560px, calc(100vw - 32px));
   padding: 4px 4px 4px 18px;
-  border: 1px solid var(--tm-line);
+  border: 0;
   border-radius: var(--tm-radius-lg);
   color: var(--tm-text);
   background: var(--tm-surface-raised);

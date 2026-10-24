@@ -17,7 +17,7 @@ export default function MediaCardSkeleton({
   return (
     <div className={cn('flex flex-col gap-2', className)}>
       <div
-        className='overflow-hidden rounded-[14px] border border-line bg-surface'
+        className='overflow-hidden rounded-md bg-surface shadow-[var(--tm-shadow-sm)]'
         aria-hidden
       >
         <div className={cn('bg-raised', BOOK_COVER_LIFT)}>

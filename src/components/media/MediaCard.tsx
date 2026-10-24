@@ -63,7 +63,7 @@ export default function MediaCard({
   }, [reduced, reveal]);
 
   const shellClass = cn(
-    'tm-media-card group block min-h-[44px] overflow-hidden rounded-[14px] border border-line bg-surface',
+    'tm-media-card group block min-h-[44px] overflow-hidden rounded-md bg-surface shadow-[var(--tm-shadow-sm)]',
     LIBRARY_FOCUS,
     className
   );

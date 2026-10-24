@@ -7,17 +7,19 @@ import { useEffect, useState } from 'react';
 
 import { BRAND_NAME } from '@/lib/brand';
 
-import { BackButton } from './BackButton';
-import MobileBottomNav from './MobileBottomNav';
-import MobileHeader from './MobileHeader';
-import PageContainer from './PageContainer';
-import { ThemeToggle } from './ThemeToggle';
 import {
   DesktopNavigation,
   pageTitleForPath,
 } from '@/components/shell/TongMuNavigation';
-import { VersionCheckProvider } from './VersionCheckProvider';
 import ViewerAccountButton from '@/components/shell/ViewerAccountButton';
+
+import { BackButton } from './BackButton';
+import DesignGridOverlay from './DesignGridOverlay';
+import MobileBottomNav from './MobileBottomNav';
+import MobileHeader from './MobileHeader';
+import PageContainer from './PageContainer';
+import { ThemeToggle } from './ThemeToggle';
+import { VersionCheckProvider } from './VersionCheckProvider';
 
 interface PageLayoutProps {
   children: React.ReactNode;
@@ -75,6 +77,7 @@ export default function PageLayout({
   if (embedded) return <main className='tm-embedded-page'>{children}</main>;
   return (
     <VersionCheckProvider>
+      <DesignGridOverlay />
       <div
         data-page={current}
         className={

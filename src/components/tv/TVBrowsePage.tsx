@@ -81,7 +81,7 @@ export default function TVBrowsePage({
 
   return (
     <TVLayout>
-      <section className='tm-tv-browse-hero relative overflow-hidden rounded-[24px] border border-line bg-surface p-4 md:p-8'>
+      <section className='tm-tv-browse-hero relative overflow-hidden rounded-md border border-line bg-surface p-4 md:p-8'>
         <div className='tm-tv-browse-backdrop absolute inset-0'>
           {hero?.poster ? (
             <img
