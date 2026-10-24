@@ -90,12 +90,12 @@ export async function GET(request: NextRequest) {
               signal: controller.signal,
             });
 
-            clearTimeout(timeoutId);
-
             if (!response.ok) {
               throw new Error(`HTTP ${response.status}`);
             }
 
+            // 超时要管到正文读完（由下方 finally 清除），
+            // 否则对方卡住正文时整个校验流永远结束不了
             const data = (await response.json()) as any;
 
             // 检查结果是否有效
@@ -160,29 +160,23 @@ export async function GET(request: NextRequest) {
             }
           }
         }
-
-        // 检查是否所有源都已完成
-        if (completedSources === apiSites.length) {
-          if (!streamClosed) {
-            // 发送最终完成事件
-            const completeEvent = `data: ${JSON.stringify({
-              type: 'complete',
-              completedSources,
-            })}\n\n`;
-
-            if (safeEnqueue(encoder.encode(completeEvent))) {
-              try {
-                controller.close();
-              } catch (error) {
-                console.warn('Failed to close controller:', error);
-              }
-            }
-          }
-        }
       });
 
-      // 等待所有验证完成
+      // 所有源结束后统一发完成事件并关闭；没有配置任何源时也要正常结束
       await Promise.allSettled(validationPromises);
+      if (!streamClosed) {
+        const completeEvent = `data: ${JSON.stringify({
+          type: 'complete',
+          completedSources,
+        })}\n\n`;
+        if (safeEnqueue(encoder.encode(completeEvent))) {
+          try {
+            controller.close();
+          } catch (error) {
+            console.warn('Failed to close controller:', error);
+          }
+        }
+      }
     },
 
     cancel() {
