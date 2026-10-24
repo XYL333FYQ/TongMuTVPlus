@@ -176,6 +176,9 @@ class RoomService {
   join(identity, id, data = {}, sessionId) {
     const room = this.getRoom(id);
     const known = this.store.membership(id, identity.accountId);
+    // 需要校验密码时限流：每个账号每分钟最多试 10 次，防止暴力猜房间密码，
+    // 也避免大量同步 scrypt 计算卡住整个服务
+    if (!known && room.passwordHash) this.limit(`${identity.accountId}:join-password`, 10, 60000);
     if (!known && !passwordMatches(data.password, room.passwordHash)) fail('WRONG_PASSWORD', '房间密码错误', 403);
     if (sessionId && !this.sessions.has(sessionId) && this.members(id).length >= this.config.maxMembers) fail('ROOM_FULL', '房间人数已满', 409);
     this.store.addMember(id, identity.accountId, identity.accountId === room.ownerAccountId, this.now());

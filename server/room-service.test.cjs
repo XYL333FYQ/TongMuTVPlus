@@ -477,3 +477,15 @@ test('real HTTP and Socket chat history agree on older and newer pages without c
   assert.equal((await httpJson(`${base}/api/rooms/${id}/messages?beforeSeq=${expected[45].seq}`)).status, 401);
   assert.equal(f.store.unread(id, 'owner'), 145);
 });
+
+test('guessing a room password is rate limited per account, and the right password still works after the window', t => {
+  const f = setup(t);
+  const room = f.service.create(identities.owner, { name: '限流测试房', password: 'right-password' });
+  for (let i = 0; i < 10; i++) expectCode(() => f.join('stranger', room.id, 'stranger', `wrong-${i}`), 'WRONG_PASSWORD');
+  // 第 11 次即使密码正确也先被限流，攻击者无法继续枚举
+  expectCode(() => f.join('stranger', room.id, 'stranger', 'right-password'), 'RATE_LIMITED');
+  // 其他账号不受影响
+  f.join('guest', room.id, 'guest', 'right-password');
+  f.advance(60000);
+  f.join('stranger', room.id, 'stranger', 'right-password');
+});

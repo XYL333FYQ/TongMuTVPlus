@@ -21,6 +21,10 @@ export async function POST(request: NextRequest) {
     if (!authInfo || !authInfo.username) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+    // 管理接口：只有站长 / 管理员可以调用
+    if (authInfo.role !== 'owner' && authInfo.role !== 'admin') {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
 
     const { issuerUrl } = await request.json();
 
@@ -40,7 +44,7 @@ export async function POST(request: NextRequest) {
     const response = await fetch(wellKnownUrl, {
       method: 'GET',
       headers: {
-        'Accept': 'application/json',
+        Accept: 'application/json',
       },
       // 设置超时
       signal: AbortSignal.timeout(10000), // 10秒超时
@@ -59,7 +63,11 @@ export async function POST(request: NextRequest) {
     const data = await response.json();
 
     // 验证返回的数据包含必需的端点
-    if (!data.authorization_endpoint || !data.token_endpoint || !data.userinfo_endpoint) {
+    if (
+      !data.authorization_endpoint ||
+      !data.token_endpoint ||
+      !data.userinfo_endpoint
+    ) {
       return NextResponse.json(
         {
           error: 'OIDC配置不完整，缺少必需的端点',

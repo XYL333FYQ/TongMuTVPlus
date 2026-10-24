@@ -4,13 +4,13 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig } from '@/lib/config';
-import { requireFeaturePermission } from '@/lib/permissions';
 import { db } from '@/lib/db';
 import {
   invalidateMetaInfoCache,
   MetaInfo,
   setCachedMetaInfo,
 } from '@/lib/openlist-cache';
+import { requireFeaturePermission } from '@/lib/permissions';
 
 export const runtime = 'nodejs';
 
@@ -20,12 +20,23 @@ export const runtime = 'nodejs';
  */
 export async function POST(request: NextRequest) {
   try {
-    const authResult = await requireFeaturePermission(request, 'private_library', '无权限访问私人影库');
+    const authResult = await requireFeaturePermission(
+      request,
+      'private_library',
+      '无权限访问私人影库'
+    );
     if (authResult instanceof NextResponse) return authResult;
     // 权限检查
     const authInfo = getAuthInfoFromCookie(request);
     if (!authInfo || !authInfo.username) {
       return NextResponse.json({ error: '未授权' }, { status: 401 });
+    }
+    // 会修改全站共享的私人影库：只有站长 / 管理员可以操作
+    if (authInfo.role !== 'owner' && authInfo.role !== 'admin') {
+      return NextResponse.json(
+        { error: '只有管理员可以修改私人影库' },
+        { status: 403 }
+      );
     }
 
     // 获取请求参数
@@ -40,11 +51,7 @@ export async function POST(request: NextRequest) {
     const config = await getConfig();
     const openListConfig = config.OpenListConfig;
 
-    if (
-      !openListConfig ||
-      !openListConfig.Enabled ||
-      !openListConfig.URL
-    ) {
+    if (!openListConfig || !openListConfig.Enabled || !openListConfig.URL) {
       return NextResponse.json(
         { error: 'OpenList 未配置或未启用' },
         { status: 400 }
@@ -54,20 +61,14 @@ export async function POST(request: NextRequest) {
     // 从数据库读取 metainfo
     const metainfoContent = await db.getGlobalValue('video.metainfo');
     if (!metainfoContent) {
-      return NextResponse.json(
-        { error: '未找到视频元数据' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: '未找到视频元数据' }, { status: 404 });
     }
 
     const metaInfo: MetaInfo = JSON.parse(metainfoContent);
 
     // 检查 key 是否存在
     if (!metaInfo.folders[key]) {
-      return NextResponse.json(
-        { error: '未找到该视频记录' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: '未找到该视频记录' }, { status: 404 });
     }
 
     // 删除记录
@@ -83,7 +84,9 @@ export async function POST(request: NextRequest) {
 
     // 更新配置中的资源数量
     if (config.OpenListConfig) {
-      config.OpenListConfig.ResourceCount = Object.keys(metaInfo.folders).length;
+      config.OpenListConfig.ResourceCount = Object.keys(
+        metaInfo.folders
+      ).length;
       await db.saveAdminConfig(config);
     }
 
