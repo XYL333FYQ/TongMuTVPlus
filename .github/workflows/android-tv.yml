@@ -4,9 +4,9 @@ on:
   workflow_dispatch:
     inputs:
       base_url:
-        description: '服务端 Base URL，不需要带 /tv，例如 https://example.com 或 http://192.168.1.10:3000'
-        required: true
-        default: 'http://192.168.1.10:3000'
+        description: '可选：默认服务器地址（不用带 /tv）。留空则首次打开时在电视上填写'
+        required: false
+        default: ''
         type: string
       app_name:
         description: 'Android TV 应用名称'
@@ -23,6 +23,11 @@ on:
         required: false
         default: '1'
         type: string
+      publish:
+        description: '打包并测试通过后，发布到仓库 Releases（客户端下载）'
+        required: false
+        default: true
+        type: boolean
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -94,23 +99,21 @@ jobs:
       - name: Decode Android signing keystore
         id: signing
         env:
-          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
-          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
-          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_MOBILE_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_MOBILE_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_MOBILE_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_MOBILE_KEY_PASSWORD }}
         run: |
-          if [ -n "$ANDROID_KEYSTORE_BASE64" ] && [ -n "$ANDROID_KEYSTORE_PASSWORD" ] && [ -n "$ANDROID_KEY_ALIAS" ] && [ -n "$ANDROID_KEY_PASSWORD" ]; then
-            echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > /tmp/android-tv-release.keystore
+          if [ -n "$KEYSTORE_BASE64" ] && [ -n "$KEYSTORE_PASSWORD" ] && [ -n "$KEY_ALIAS" ] && [ -n "$KEY_PASSWORD" ]; then
+            echo "$KEYSTORE_BASE64" | base64 -d > /tmp/android-tv-release.keystore
             echo "build_type=release" >> "$GITHUB_OUTPUT"
             echo "build_type_task=Release" >> "$GITHUB_OUTPUT"
             echo "apk_suffix=release" >> "$GITHUB_OUTPUT"
-            echo "artifact_suffix=release-signed" >> "$GITHUB_OUTPUT"
           else
-            echo "Android signing secrets are not fully set, building debug APK only."
+            echo "签名 secrets 不全，只能出 debug APK（每次签名都不同，更新要先卸载旧版）"
             echo "build_type=debug" >> "$GITHUB_OUTPUT"
             echo "build_type_task=Debug" >> "$GITHUB_OUTPUT"
             echo "apk_suffix=debug" >> "$GITHUB_OUTPUT"
-            echo "artifact_suffix=debug" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Build APK
@@ -122,9 +125,9 @@ jobs:
           VERSION_CODE: ${{ inputs.version_code }}
           MIN_SDK: ${{ matrix.min_sdk }}
           ANDROID_KEYSTORE_PATH: /tmp/android-tv-release.keystore
-          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
-          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_MOBILE_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_MOBILE_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_MOBILE_KEY_PASSWORD }}
         run: |
           gradle assemble${{ matrix.flavor_task }}${{ steps.signing.outputs.build_type_task }} \
             -PBASE_URL="$BASE_URL" \
@@ -138,13 +141,78 @@ jobs:
           mkdir -p /tmp/android-tv-apks
           cp \
             "apps/android-tv/app/build/outputs/apk/${{ matrix.flavor }}/${{ steps.signing.outputs.build_type }}/app-${{ matrix.flavor }}-${{ steps.signing.outputs.apk_suffix }}.apk" \
-            "/tmp/android-tv-apks/tongmutvplus-tv-${{ inputs.version_name }}-${{ matrix.label }}-${{ steps.signing.outputs.artifact_suffix }}.apk"
+            "/tmp/android-tv-apks/TongMuTV-Plus-TV-${{ matrix.label }}.apk"
           ls -lh /tmp/android-tv-apks
 
       - name: Upload APK artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: tongmutvplus-android-tv-${{ inputs.version_name }}-${{ matrix.label }}
+          name: tongmutvplus-android-tv-${{ matrix.label }}
           path: /tmp/android-tv-apks/*.apk
           if-no-files-found: error
-          retention-days: 30
+          retention-days: 90
+
+  smoke:
+    name: Emulator smoke test (webview, API 34)
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - name: Download APK
+        uses: actions/download-artifact@v4
+        with:
+          name: tongmutvplus-android-tv-webview-android6plus
+          path: apk
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Run smoke test on emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          target: google_apis
+          disable-animations: true
+          script: bash apps/android-mobile/ci/smoke.sh apk/TongMuTV-Plus-TV-webview-android6plus.apk smoke-out com.tongmutvplus.tv
+
+      - name: Upload smoke screenshots and logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-android-tv
+          path: smoke-out
+          if-no-files-found: ignore
+          retention-days: 14
+
+  release:
+    name: Publish to Releases
+    needs: [build, smoke]
+    if: ${{ inputs.publish }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download all TV APKs
+        uses: actions/download-artifact@v4
+        with:
+          pattern: tongmutvplus-android-tv-*
+          merge-multiple: true
+          path: release
+
+      - name: Upload to the "clients" release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          ls -lh release
+          gh release create clients --target "${{ github.sha }}" --latest \
+            --title "客户端下载" \
+            --notes "Windows 桌面端、安卓手机端、安卓电视端安装包。首次打开填你自己的服务器地址即可。说明见仓库 README。" \
+            2>/dev/null || true
+          gh release upload clients release/*.apk --clobber
