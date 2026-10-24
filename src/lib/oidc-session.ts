@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
+import { getAuthSigningSecret } from '@/lib/auth-secret';
 export interface OidcSession {
   sub: string;
   email?: string;
@@ -83,7 +84,7 @@ async function verifySignature(
 export async function signOidcSession(
   data: Omit<OidcSession, 'timestamp'>
 ): Promise<string> {
-  const secret = process.env.PASSWORD;
+  const secret = getAuthSigningSecret();
   if (!secret) {
     throw new Error('PASSWORD is not configured');
   }
@@ -101,7 +102,7 @@ export async function signOidcSession(
 export async function verifyOidcSession(
   cookieValue?: string | null
 ): Promise<OidcSession | null> {
-  const secret = process.env.PASSWORD;
+  const secret = getAuthSigningSecret();
   if (!cookieValue || !secret) {
     return null;
   }

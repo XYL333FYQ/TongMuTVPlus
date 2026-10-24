@@ -90,7 +90,7 @@ export function getLoginClientIp(req: NextRequest): string | null {
 
   const forwarded = req.headers.get('forwarded');
   if (forwarded) {
-    const match = forwarded.match(/for=(?:"?)([^;,\"]+)/i);
+    const match = forwarded.match(/for=(?:"?)([^;,"]+)/i);
     const forwardedIp = normalizeIp(match?.[1]?.replace(/^\[|\]$/g, '') || '');
     if (forwardedIp) return forwardedIp;
   }
@@ -181,4 +181,75 @@ export function recordLoginSuccess(ip: string | null, now = Date.now()) {
 
   record.failures = [];
   record.lastSeen = now;
+}
+
+// —— 按账号限流 ——
+// 按 IP 限流依赖代理头，直接暴露在公网时可被伪造的 X-Forwarded-For 绕过。
+// 再按用户名限流：同一账号 15 分钟内输错 10 次，锁定 15 分钟（不逐级加长，
+// 避免被人故意锁死站长账号太久；重启服务也会清空）。
+const ACCOUNT_WINDOW_MS = 15 * 60 * 1000;
+const ACCOUNT_MAX_FAILURES = 10;
+const ACCOUNT_LOCK_MS = 15 * 60 * 1000;
+
+interface AccountLockGlobal {
+  __loginAccountLocks?: Map<
+    string,
+    { failures: number[]; lockedUntil: number }
+  >;
+}
+
+function getAccountStore() {
+  const g = globalThis as typeof globalThis & AccountLockGlobal;
+  if (!g.__loginAccountLocks) g.__loginAccountLocks = new Map();
+  return g.__loginAccountLocks;
+}
+
+function accountKey(username: unknown): string | null {
+  if (typeof username !== 'string') return null;
+  const key = username.trim().toLowerCase();
+  return key ? key : null;
+}
+
+export function checkAccountLock(
+  username: unknown,
+  now = Date.now()
+): LoginBanStatus {
+  const key = accountKey(username);
+  if (!key) return { banned: false };
+  const record = getAccountStore().get(key);
+  if (!record || record.lockedUntil <= now) return { banned: false };
+  return {
+    banned: true,
+    bannedUntil: record.lockedUntil,
+    retryAfterSeconds: Math.ceil((record.lockedUntil - now) / 1000),
+  };
+}
+
+export function recordAccountFailure(username: unknown, now = Date.now()) {
+  const key = accountKey(username);
+  if (!key) return;
+  const store = getAccountStore();
+  const record = store.get(key) || { failures: [], lockedUntil: 0 };
+  record.failures = record.failures.filter(
+    (time) => now - time <= ACCOUNT_WINDOW_MS
+  );
+  record.failures.push(now);
+  if (record.failures.length >= ACCOUNT_MAX_FAILURES) {
+    record.lockedUntil = now + ACCOUNT_LOCK_MS;
+    record.failures = [];
+  }
+  store.set(key, record);
+  // 防止大量随机用户名把内存撑大
+  if (store.size > 10000) {
+    for (const [name, value] of Array.from(store.entries())) {
+      if (value.lockedUntil <= now && value.failures.length === 0) {
+        store.delete(name);
+      }
+    }
+  }
+}
+
+export function recordAccountSuccess(username: unknown) {
+  const key = accountKey(username);
+  if (key) getAccountStore().delete(key);
 }

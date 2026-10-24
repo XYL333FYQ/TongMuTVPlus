@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+import { isSecureRequest } from '@/lib/cookie-security';
 import { getQrLoginSession, saveQrLoginSession } from '@/lib/qr-login/store';
 
 export const runtime = 'nodejs';
@@ -20,10 +21,13 @@ export async function GET(request: NextRequest) {
       expires,
       sameSite: 'lax',
       httpOnly: false,
-      secure: false,
+      secure: isSecureRequest(request),
     });
     return response;
   }
 
-  return NextResponse.json({ status: session.status, expiresAt: session.expiresAt });
+  return NextResponse.json({
+    status: session.status,
+    expiresAt: session.expiresAt,
+  });
 }

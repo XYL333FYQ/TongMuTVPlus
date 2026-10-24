@@ -2,6 +2,7 @@ import type { NextRequest } from 'next/server';
 
 import { isAccessTokenInvalidated } from '@/lib/access-token-invalidation';
 import { type AuthInfo, getAuthInfoFromCookie } from '@/lib/auth';
+import { getAuthSigningSecret } from '@/lib/auth-secret';
 import { TOKEN_CONFIG } from '@/lib/token-config';
 
 /** Edge-compatible authentication. Parsing a cookie is never sufficient authorization. */
@@ -15,14 +16,16 @@ export async function authenticateRequest(
 export async function authenticateAuthInfo(
   auth: AuthInfo | null
 ): Promise<AuthInfo | null> {
-  const secret = process.env.PASSWORD;
-  if (!secret) return null;
+  const password = process.env.PASSWORD;
+  if (!password) return null;
   if (!auth || isAccessTokenInvalidated(auth)) return null;
   if (
     (process.env.NEXT_PUBLIC_STORAGE_TYPE || 'localstorage') === 'localstorage'
   ) {
-    return auth.password === secret ? auth : null;
+    // 本地存储模式没有签名，Cookie 里直接是访问密码
+    return auth.password === password ? auth : null;
   }
+  const secret = getAuthSigningSecret();
   const now = Date.now();
   if (
     !auth.username ||

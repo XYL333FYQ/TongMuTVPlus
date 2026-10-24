@@ -1,5 +1,7 @@
 /* eslint-disable no-console */
 
+import { getAuthSigningSecret } from '@/lib/auth-secret';
+
 import { TOKEN_CONFIG, verifyRefreshToken } from './refresh-token';
 
 // 生成签名
@@ -53,7 +55,7 @@ export async function refreshAccessToken(
 
   const signature = await generateSignatureForMiddleware(
     dataToSign,
-    process.env.PASSWORD || ''
+    getAuthSigningSecret()
   );
 
   const authData = {

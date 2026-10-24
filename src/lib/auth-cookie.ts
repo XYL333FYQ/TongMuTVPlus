@@ -1,5 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
+import { getAuthSigningSecret } from '@/lib/auth-secret';
+
 import {
   generateRefreshToken,
   generateTokenId,
@@ -101,7 +103,7 @@ export async function generateAuthCookieValue(input: {
     });
     authData.signature = await generateAuthSignature(
       dataToSign,
-      process.env.PASSWORD
+      getAuthSigningSecret()
     );
   }
 

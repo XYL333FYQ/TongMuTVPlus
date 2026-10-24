@@ -2,9 +2,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getAuthInfoFromCookie, parseAuthInfo } from '@/lib/auth';
+import { isSecureRequest } from '@/lib/cookie-security';
 import { db } from '@/lib/db';
 import { refreshAccessToken } from '@/lib/middleware-auth';
-import { TOKEN_CONFIG } from '@/lib/refresh-token';
 
 export const runtime = 'nodejs';
 
@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
       expires,
       sameSite: 'lax',
       httpOnly: false,
-      secure: false,
+      secure: isSecureRequest(request),
     });
     return response;
   }
@@ -123,7 +123,7 @@ export async function POST(request: NextRequest) {
     expires,
     sameSite: 'lax',
     httpOnly: false,
-    secure: false,
+    secure: isSecureRequest(request),
   });
   return response;
 }

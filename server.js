@@ -47,6 +47,39 @@ function ensureSQLiteReady() {
   }
 }
 
+// 登录 Cookie 的签名密钥与站长密码分开：未显式配置 AUTH_SECRET 时，
+// 首次启动生成 32 字节随机密钥并保存在数据目录（权限 600），之后重启沿用，
+// 这样成员无法从自己的 Cookie 离线反推出站长密码。必须在 Next 初始化前设置，
+// 中间件和 Socket.IO 房间认证读取的都是同一个值。
+function ensureAuthSecret() {
+  if (process.env.AUTH_SECRET) return;
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const crypto = require('node:crypto');
+  const dataDir = path.dirname(
+    path.resolve(process.env.SQLITE_DB_PATH || path.join('.data', 'moontv.db'))
+  );
+  const file = path.join(dataDir, 'auth-secret');
+  try {
+    let secret = fs.existsSync(file) ? fs.readFileSync(file, 'utf8').trim() : '';
+    if (secret.length < 32) {
+      secret = crypto.randomBytes(32).toString('hex');
+      fs.mkdirSync(dataDir, { recursive: true });
+      fs.writeFileSync(file, `${secret}
+`, { mode: 0o600 });
+      console.log(`🔐 已生成登录签名密钥：${file}（请随数据目录一起备份）`);
+    }
+    process.env.AUTH_SECRET = secret;
+  } catch (error) {
+    // 数据目录不可写时退回旧行为（用 PASSWORD 签名），并提示站长手动配置
+    console.warn(
+      '⚠️ 无法保存登录签名密钥，暂用 PASSWORD 签名。建议设置环境变量 AUTH_SECRET：',
+      error && error.message
+    );
+  }
+}
+
+ensureAuthSecret();
 ensureSQLiteReady();
 
 const dev = process.env.NODE_ENV !== 'production';

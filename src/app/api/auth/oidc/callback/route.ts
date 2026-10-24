@@ -1,7 +1,9 @@
 /* eslint-disable no-console,@typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from 'next/server';
 
+import { getAuthSigningSecret } from '@/lib/auth-secret';
 import { getConfig } from '@/lib/config';
+import { isSecureRequest } from '@/lib/cookie-security';
 import { db } from '@/lib/db';
 import { signOidcSession } from '@/lib/oidc-session';
 import {
@@ -51,7 +53,11 @@ function getDeviceInfo(userAgent: string): string {
     return 'OrionTV';
   }
 
-  if (ua.includes('mobile') || ua.includes('android') || ua.includes('iphone')) {
+  if (
+    ua.includes('mobile') ||
+    ua.includes('android') ||
+    ua.includes('iphone')
+  ) {
     if (ua.includes('android')) return 'Android Mobile';
     if (ua.includes('iphone')) return 'iPhone';
     return 'Mobile Device';
@@ -84,9 +90,12 @@ async function generateAuthCookie(
     const dataToSign = JSON.stringify({
       username: authData.username,
       role: authData.role,
-      timestamp: authData.timestamp
+      timestamp: authData.timestamp,
     });
-    const signature = await generateSignature(dataToSign, process.env.PASSWORD);
+    const signature = await generateSignature(
+      dataToSign,
+      getAuthSigningSecret()
+    );
     authData.signature = signature;
 
     // 生成双 Token
@@ -149,7 +158,12 @@ export async function GET(request: NextRequest) {
     const siteConfig = config.SiteConfig;
 
     // 检查OIDC配置
-    if (!siteConfig.OIDCTokenEndpoint || !siteConfig.OIDCUserInfoEndpoint || !siteConfig.OIDCClientId || !siteConfig.OIDCClientSecret) {
+    if (
+      !siteConfig.OIDCTokenEndpoint ||
+      !siteConfig.OIDCUserInfoEndpoint ||
+      !siteConfig.OIDCClientId ||
+      !siteConfig.OIDCClientSecret
+    ) {
       return NextResponse.redirect(
         new URL('/login?error=' + encodeURIComponent('OIDC配置不完整'), origin)
       );
@@ -192,14 +206,17 @@ export async function GET(request: NextRequest) {
     // 获取用户信息
     const userInfoResponse = await fetch(siteConfig.OIDCUserInfoEndpoint, {
       headers: {
-        'Authorization': `Bearer ${accessToken}`,
+        Authorization: `Bearer ${accessToken}`,
       },
     });
 
     if (!userInfoResponse.ok) {
       console.error('获取用户信息失败:', await userInfoResponse.text());
       return NextResponse.redirect(
-        new URL('/login?error=' + encodeURIComponent('获取用户信息失败'), origin)
+        new URL(
+          '/login?error=' + encodeURIComponent('获取用户信息失败'),
+          origin
+        )
       );
     }
 
@@ -235,7 +252,11 @@ export async function GET(request: NextRequest) {
       const response = NextResponse.redirect(new URL('/', origin));
       const userAgent = request.headers.get('user-agent') || 'Unknown';
       const deviceInfo = getDeviceInfo(userAgent);
-      const cookieValue = await generateAuthCookie(username, userRole, deviceInfo);
+      const cookieValue = await generateAuthCookie(
+        username,
+        userRole,
+        deviceInfo
+      );
       const expires = new Date(Date.now() + TOKEN_CONFIG.REFRESH_TOKEN_AGE);
 
       response.cookies.set('auth', cookieValue, {
@@ -243,7 +264,7 @@ export async function GET(request: NextRequest) {
         expires,
         sameSite: 'lax',
         httpOnly: false,
-        secure: false,
+        secure: isSecureRequest(request),
       });
 
       // 清除state cookie
@@ -255,7 +276,10 @@ export async function GET(request: NextRequest) {
     // 用户不存在,检查是否允许注册
     if (!siteConfig.EnableOIDCRegistration) {
       return NextResponse.redirect(
-        new URL('/login?error=' + encodeURIComponent('该OIDC账号未注册'), origin)
+        new URL(
+          '/login?error=' + encodeURIComponent('该OIDC账号未注册'),
+          origin
+        )
       );
     }
 

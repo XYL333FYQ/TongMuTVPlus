@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+import { isSecureRequest } from '@/lib/cookie-security';
 import {
   consumeConfirmedTelegramLogin,
   getTelegramLoginSession,
@@ -14,7 +15,10 @@ export async function GET(request: NextRequest) {
 
   if (session.status === 'confirmed' && session.authToken) {
     const consumed = await consumeConfirmedTelegramLogin(session.token);
-    const response = NextResponse.json({ status: 'confirmed', username: consumed?.username });
+    const response = NextResponse.json({
+      status: 'confirmed',
+      username: consumed?.username,
+    });
     const expires = new Date();
     expires.setDate(expires.getDate() + 60);
     response.cookies.set('auth', session.authToken, {
@@ -22,7 +26,7 @@ export async function GET(request: NextRequest) {
       expires,
       sameSite: 'lax',
       httpOnly: false,
-      secure: false,
+      secure: isSecureRequest(request),
     });
     return response;
   }

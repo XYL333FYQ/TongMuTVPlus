@@ -1,12 +1,18 @@
 /* eslint-disable no-console,@typescript-eslint/no-explicit-any */
+import { timingSafeEqual } from 'crypto';
 import { NextRequest, NextResponse } from 'next/server';
 
 import { parseAuthInfo } from '@/lib/auth';
+import { getAuthSigningSecret } from '@/lib/auth-secret';
 import { getConfig } from '@/lib/config';
+import { isSecureRequest } from '@/lib/cookie-security';
 import { db } from '@/lib/db';
 import {
+  checkAccountLock,
   checkLoginBan,
   getLoginClientIp,
+  recordAccountFailure,
+  recordAccountSuccess,
   recordLoginFailure,
   recordLoginSuccess,
 } from '@/lib/login-fail2ban';
@@ -118,9 +124,12 @@ async function generateAuthCookie(
     const dataToSign = JSON.stringify({
       username: authData.username,
       role: authData.role,
-      timestamp: authData.timestamp
+      timestamp: authData.timestamp,
     });
-    const signature = await generateSignature(dataToSign, process.env.PASSWORD);
+    const signature = await generateSignature(
+      dataToSign,
+      getAuthSigningSecret()
+    );
     authData.signature = signature;
   }
 
@@ -128,18 +137,24 @@ async function generateAuthCookie(
 }
 
 // 验证Cloudflare Turnstile Token
-async function verifyTurnstileToken(token: string, secretKey: string): Promise<boolean> {
+async function verifyTurnstileToken(
+  token: string,
+  secretKey: string
+): Promise<boolean> {
   try {
-    const response = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        secret: secretKey,
-        response: token,
-      }),
-    });
+    const response = await fetch(
+      'https://challenges.cloudflare.com/turnstile/v0/siteverify',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          secret: secretKey,
+          response: token,
+        }),
+      }
+    );
 
     const data = await response.json();
     return data.success === true;
@@ -179,6 +194,13 @@ function getDeviceInfo(request: NextRequest): string {
   else if (userAgent.includes('iOS')) os = 'iOS';
 
   return `${browser} on ${os}`;
+}
+
+// 常量时间比较站长密码，避免按响应时间猜出密码
+function isSamePassword(input: string, expected: string): boolean {
+  const a = Buffer.from(input);
+  const b = Buffer.from(expected);
+  return a.length === b.length && timingSafeEqual(a, b);
 }
 
 export async function POST(req: NextRequest) {
@@ -254,7 +276,7 @@ export async function POST(req: NextRequest) {
         expires,
         sameSite: 'lax',
         httpOnly: false, // 允许客户端访问
-        secure: false,
+        secure: isSecureRequest(req),
       });
 
       return response;
@@ -270,25 +292,36 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: '密码不能为空' }, { status: 400 });
     }
 
+    // 同一账号短时间内输错太多次：暂时锁定，不再校验密码
+    const accountLock = checkAccountLock(username);
+    if (accountLock.banned) {
+      return NextResponse.json(
+        { error: '这个账号密码错误次数过多，请 15 分钟后再试' },
+        {
+          status: 429,
+          headers: accountLock.retryAfterSeconds
+            ? { 'Retry-After': String(accountLock.retryAfterSeconds) }
+            : undefined,
+        }
+      );
+    }
+
     // 如果开启了Turnstile验证
     if (siteConfig.LoginRequireTurnstile) {
       if (!turnstileToken) {
-        return NextResponse.json(
-          { error: '请完成人机验证' },
-          { status: 400 }
-        );
+        return NextResponse.json({ error: '请完成人机验证' }, { status: 400 });
       }
 
       if (!siteConfig.TurnstileSecretKey) {
         console.error('Turnstile Secret Key未配置');
-        return NextResponse.json(
-          { error: '服务器配置错误' },
-          { status: 500 }
-        );
+        return NextResponse.json({ error: '服务器配置错误' }, { status: 500 });
       }
 
       // 验证Turnstile Token
-      const isValid = await verifyTurnstileToken(turnstileToken, siteConfig.TurnstileSecretKey);
+      const isValid = await verifyTurnstileToken(
+        turnstileToken,
+        siteConfig.TurnstileSecretKey
+      );
       if (!isValid) {
         return NextResponse.json(
           { error: '人机验证失败，请重试' },
@@ -300,9 +333,10 @@ export async function POST(req: NextRequest) {
     // 可能是站长，直接读环境变量
     if (
       username === process.env.USERNAME &&
-      password === process.env.PASSWORD
+      isSamePassword(password, process.env.PASSWORD || '')
     ) {
       recordLoginSuccess(clientIp);
+      recordAccountSuccess(username);
 
       // 验证成功，设置认证cookie
       const deviceInfo = getDeviceInfo(req);
@@ -322,12 +356,13 @@ export async function POST(req: NextRequest) {
         expires,
         sameSite: 'lax',
         httpOnly: false, // 允许客户端访问
-        secure: false,
+        secure: isSecureRequest(req),
       });
 
       return response;
     } else if (username === process.env.USERNAME) {
       recordLoginFailure(clientIp);
+      recordAccountFailure(username);
       return NextResponse.json({ error: '用户名或密码错误' }, { status: 401 });
     }
 
@@ -353,13 +388,12 @@ export async function POST(req: NextRequest) {
 
     if (!pass) {
       recordLoginFailure(clientIp);
-      return NextResponse.json(
-        { error: '用户名或密码错误' },
-        { status: 401 }
-      );
+      recordAccountFailure(username);
+      return NextResponse.json({ error: '用户名或密码错误' }, { status: 401 });
     }
 
     recordLoginSuccess(clientIp);
+    recordAccountSuccess(username);
 
     // 验证成功，设置认证cookie
     const deviceInfo = getDeviceInfo(req);
@@ -374,12 +408,12 @@ export async function POST(req: NextRequest) {
     const expires = new Date();
     expires.setDate(expires.getDate() + 60); // 60天过期（Refresh Token 有效期）
 
-  response.cookies.set('auth', cookieValue, {
-    path: '/',
-    expires,
-    sameSite: 'lax',
-    httpOnly: false, // 允许客户端访问
-  });
+    response.cookies.set('auth', cookieValue, {
+      path: '/',
+      expires,
+      sameSite: 'lax',
+      httpOnly: false, // 允许客户端访问
+    });
 
     console.log(`Cookie已设置`);
 

@@ -29,7 +29,8 @@ function equalSecret(left, right) {
 }
 
 function createRoomAuthenticator(db, options = {}) {
-  const secret = options.secret ?? process.env.PASSWORD;
+  // 与网页登录 Cookie 使用同一签名密钥（AUTH_SECRET，未配置时回退 PASSWORD）
+  const secret = options.secret ?? (process.env.AUTH_SECRET || process.env.PASSWORD);
   const now = options.now || Date.now;
   const maxAge = 4 * 60 * 60 * 1000;
   function activeSession(identity) {
