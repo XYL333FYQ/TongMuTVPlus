@@ -46,19 +46,19 @@ import { SearchResult } from '@/lib/types';
 import { processImageUrl } from '@/lib/utils';
 
 import AcgSearch from '@/components/AcgSearch';
-import BackToTop from '@/components/shell/BackToTop';
 import CapsuleSwitch from '@/components/catalog/CapsuleSwitch';
+import PublicPoster from '@/components/catalog/PublicPoster';
 import ContinueWatching from '@/components/ContinueWatching';
 import ImageViewer from '@/components/feedback/ImageViewer';
 import PageContainer from '@/components/PageContainer';
 import PageLayout from '@/components/PageLayout';
 import PansouSearch, { CLOUD_TYPE_NAMES } from '@/components/PansouSearch';
 import ProxyImage from '@/components/ProxyImage';
-import PublicPoster from '@/components/catalog/PublicPoster';
 import SearchResultFilter, {
   SearchFilterCategory,
 } from '@/components/SearchResultFilter';
 import SearchSuggestions from '@/components/SearchSuggestions';
+import BackToTop from '@/components/shell/BackToTop';
 import VideoCard, { VideoCardHandle } from '@/components/VideoCard';
 import VirtualScrollableGrid from '@/components/VirtualScrollableGrid';
 
@@ -71,6 +71,18 @@ type SearchCachePayload = {
   results: SearchResult[];
   query: string;
   updatedAt: number;
+};
+
+// 读取本地保存的布尔设置；值被改坏（如手改成 yes）时用默认值，不让整页白屏
+const readStoredBoolean = (key: string): boolean | null => {
+  try {
+    const raw = localStorage.getItem(key);
+    if (raw === null) return null;
+    const value = JSON.parse(raw);
+    return typeof value === 'boolean' ? value : null;
+  } catch {
+    return null;
+  }
 };
 
 export function SearchPageClient({
@@ -131,6 +143,10 @@ export function SearchPageClient({
   const [showSuggestions, setShowSuggestions] = useState(false);
   const eventSourceRef = useRef<EventSource | null>(null);
   const [totalSources, setTotalSources] = useState(0);
+  // 服务端报告本次搜索可用的源为 0：站点还没配置视频源，而不是关键词有问题
+  const [noSearchSources, setNoSearchSources] = useState(false);
+  // 站长 / 管理员才能去管理面板添加视频源
+  const [canManageSources, setCanManageSources] = useState(false);
   const [completedSources, setCompletedSources] = useState(0);
   const pendingResultsRef = useRef<SearchResult[]>([]);
   const flushTimerRef = useRef<number | null>(null);
@@ -305,9 +321,9 @@ export function SearchPageClient({
   // 获取默认聚合设置：只读取用户本地设置，默认为 true
   const getDefaultAggregate = () => {
     if (typeof window !== 'undefined') {
-      const userSetting = localStorage.getItem('defaultAggregateSearch');
+      const userSetting = readStoredBoolean('defaultAggregateSearch');
       if (userSetting !== null) {
-        return JSON.parse(userSetting);
+        return userSetting;
       }
     }
     return true; // 默认启用聚合
@@ -1121,6 +1137,9 @@ export function SearchPageClient({
     const guest =
       !authInfo?.username && !authInfo?.password && !authInfo?.signature;
     setIsGuest(guest);
+    setCanManageSources(
+      authInfo?.role === 'owner' || authInfo?.role === 'admin'
+    );
     setUserRole(authInfo?.role || null);
     const runtimeConfig = (window as any).RUNTIME_CONFIG || {};
     setNetdiskSearchEnabled(!guest && !!runtimeConfig.NETDISK_SEARCH_ENABLED);
@@ -1156,11 +1175,11 @@ export function SearchPageClient({
 
     // 读取流式搜索设置
     if (typeof window !== 'undefined') {
-      const savedFluidSearch = localStorage.getItem('fluidSearch');
+      const savedFluidSearch = readStoredBoolean('fluidSearch');
       const defaultFluidSearch =
         (window as any).RUNTIME_CONFIG?.FLUID_SEARCH !== false;
       if (savedFluidSearch !== null) {
-        setUseFluidSearch(JSON.parse(savedFluidSearch));
+        setUseFluidSearch(savedFluidSearch);
       } else if (defaultFluidSearch !== undefined) {
         setUseFluidSearch(defaultFluidSearch);
       }
@@ -1418,6 +1437,7 @@ export function SearchPageClient({
       setShowResults(true);
       setSearchResults([]);
       setTotalSources(0);
+      setNoSearchSources(false);
       setCompletedSources(0);
       // 清理缓冲
       pendingResultsRef.current = [];
@@ -1429,9 +1449,9 @@ export function SearchPageClient({
       // 每次搜索时重新读取设置，确保使用最新的配置
       let currentFluidSearch = useFluidSearch;
       if (typeof window !== 'undefined') {
-        const savedFluidSearch = localStorage.getItem('fluidSearch');
+        const savedFluidSearch = readStoredBoolean('fluidSearch');
         if (savedFluidSearch !== null) {
-          currentFluidSearch = JSON.parse(savedFluidSearch);
+          currentFluidSearch = savedFluidSearch;
         } else {
           const defaultFluidSearch =
             (window as any).RUNTIME_CONFIG?.FLUID_SEARCH !== false;
@@ -1460,6 +1480,7 @@ export function SearchPageClient({
             switch (payload.type) {
               case 'start':
                 setTotalSources(payload.totalSources || 0);
+                setNoSearchSources(payload.totalSources === 0);
                 setCompletedSources(0);
                 break;
               case 'source_result': {
@@ -1889,6 +1910,7 @@ export function SearchPageClient({
                 onChange={handleInputChange}
                 onFocus={handleInputFocus}
                 placeholder='搜索片名'
+                aria-label='搜索片名'
                 autoComplete='off'
                 className='tm-search-input'
               />
@@ -2335,6 +2357,21 @@ export function SearchPageClient({
                         {Array.from({ length: 12 }, (_, index) => (
                           <div key={index} className='tm-poster tm-skeleton' />
                         ))}
+                      </div>
+                    ) : noSearchSources ? (
+                      <div className='tm-empty'>
+                        <Search className='tm-empty-icon' aria-hidden />
+                        <p className='tm-empty-title'>还没有可搜索的视频源</p>
+                        <p className='tm-empty-desc'>
+                          {canManageSources
+                            ? '在管理面板添加视频源后，就能搜索和播放影片'
+                            : '站长还没有添加视频源，暂时无法搜索和播放'}
+                        </p>
+                        {canManageSources && (
+                          <Link href='/admin' className='tm-btn tm-btn-primary'>
+                            去管理面板
+                          </Link>
+                        )}
                       </div>
                     ) : (
                       <div className='tm-empty'>

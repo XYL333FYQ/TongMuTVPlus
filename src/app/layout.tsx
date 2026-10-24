@@ -51,7 +51,8 @@ export async function generateMetadata(): Promise<Metadata> {
   }
 
   return {
-    title: siteName,
+    // 各页面只写自己的名字，标签页显示「页面 · 站点名」，首页显示站点名
+    title: { default: siteName, template: `%s · ${siteName}` },
     description: BRAND_DESCRIPTION,
     icons: { icon: '/favicon.ico', apple: '/icons/icon-180x180.png' },
     manifest: '/manifest.json',

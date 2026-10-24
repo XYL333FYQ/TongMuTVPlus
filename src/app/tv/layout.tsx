@@ -3,13 +3,12 @@ import { ReactNode } from 'react';
 
 import '@/components/tv/tv.css';
 
-import { BRAND_NAME } from '@/lib/brand';
 import { isTVModeEnabled } from '@/lib/tv-mode';
 
 import TVRemoteReceiver from '@/components/tv/TVRemoteReceiver';
 
 export const metadata = {
-  title: `电视 - ${BRAND_NAME}`,
+  title: '电视',
 };
 
 export default function Layout({ children }: { children: ReactNode }) {

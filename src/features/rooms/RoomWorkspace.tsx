@@ -305,7 +305,10 @@ export default function RoomWorkspace() {
   const addFilm = async (href: string) => {
     if (await mutate('queue:add', queueItemFromHref(href))) {
       setDialog(null);
-      setNotice('已加入片单，当前影片继续播放');
+      // 只有正在放映时才需要说明“不会切换当前影片”
+      setNotice(
+        room?.currentState ? '已加入片单，当前影片继续播放' : '已加入片单'
+      );
     }
   };
   const openCreate = () => {

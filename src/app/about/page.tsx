@@ -14,7 +14,7 @@ import {
 import PageContainer from '@/components/PageContainer';
 import PageLayout from '@/components/PageLayout';
 
-export const metadata: Metadata = { title: `关于 ${BRAND_NAME}` };
+export const metadata: Metadata = { title: '关于' };
 
 export default function AboutPage() {
   return (
