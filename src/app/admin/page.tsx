@@ -83,65 +83,62 @@ import CorrectDialog from '@/components/CorrectDialog';
 import DataMigration from '@/components/DataMigration';
 import PageLayout from '@/components/PageLayout';
 
-// 统一按钮样式系统
+// 统一按钮样式系统（黑白 token：主操作反色，危险操作用报错红描边，其余中性）
 const buttonStyles = {
-  // 主要操作按钮（蓝色）- 用于配置、设置、确认等
+  // 主要操作 - 配置、设置、确认等
   primary:
-    'px-3 py-1.5 text-sm font-medium bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700 text-white rounded-lg transition-colors',
-  // 成功操作按钮（绿色）- 用于添加、启用、保存等
+    'px-3 py-1.5 text-sm font-medium rounded-lg transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)] bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] hover:opacity-90',
+  // 添加、启用、保存等，与主要操作同样式，靠文案区分
   success:
-    'px-3 py-1.5 text-sm font-medium bg-green-600 hover:bg-green-700 dark:bg-green-600 dark:hover:bg-green-700 text-white rounded-lg transition-colors',
-  // 危险操作按钮（红色）- 用于删除、禁用、重置等
+    'px-3 py-1.5 text-sm font-medium rounded-lg transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)] bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] hover:opacity-90',
+  // 危险操作 - 删除、禁用、重置等
   danger:
-    'px-3 py-1.5 text-sm font-medium bg-red-600 hover:bg-red-700 dark:bg-red-600 dark:hover:bg-red-700 text-white rounded-lg transition-colors',
-  // 次要操作按钮（灰色）- 用于取消、关闭等
+    'px-3 py-1.5 text-sm font-medium rounded-lg transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)] bg-[var(--tm-surface-raised)] text-[color:var(--tm-danger)] border border-[var(--tm-danger)] hover:bg-[var(--tm-line)]',
+  // 次要操作 - 取消、关闭等
   secondary:
-    'px-3 py-1.5 text-sm font-medium bg-gray-600 hover:bg-gray-700 dark:bg-gray-600 dark:hover:bg-gray-700 text-white rounded-lg transition-colors',
-  // 警告操作按钮（黄色）- 用于批量禁用等
+    'px-3 py-1.5 text-sm font-medium rounded-lg transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)] bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)] hover:bg-[var(--tm-line)]',
+  // 批量禁用等需要留意的操作
   warning:
-    'px-3 py-1.5 text-sm font-medium bg-yellow-600 hover:bg-yellow-700 dark:bg-yellow-600 dark:hover:bg-yellow-700 text-white rounded-lg transition-colors',
-  // 小尺寸主要按钮
+    'px-3 py-1.5 text-sm font-medium rounded-lg transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)] bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)] hover:bg-[var(--tm-line)]',
   primarySmall:
-    'px-2 py-1 text-xs font-medium bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700 text-white rounded-md transition-colors',
-  // 小尺寸成功按钮
+    'px-2 py-1 text-[13px] font-medium rounded-md transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)] bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] hover:opacity-90',
   successSmall:
-    'px-2 py-1 text-xs font-medium bg-green-600 hover:bg-green-700 dark:bg-green-600 dark:hover:bg-green-700 text-white rounded-md transition-colors',
-  // 小尺寸危险按钮
+    'px-2 py-1 text-[13px] font-medium rounded-md transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)] bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] hover:opacity-90',
   dangerSmall:
-    'px-2 py-1 text-xs font-medium bg-red-600 hover:bg-red-700 dark:bg-red-600 dark:hover:bg-red-700 text-white rounded-md transition-colors',
-  // 小尺寸次要按钮
+    'px-2 py-1 text-[13px] font-medium rounded-md transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)] bg-[var(--tm-surface-raised)] text-[color:var(--tm-danger)] border border-[var(--tm-danger)] hover:bg-[var(--tm-line)]',
   secondarySmall:
-    'px-2 py-1 text-xs font-medium bg-gray-600 hover:bg-gray-700 dark:bg-gray-600 dark:hover:bg-gray-700 text-white rounded-md transition-colors',
-  // 小尺寸警告按钮
+    'px-2 py-1 text-[13px] font-medium rounded-md transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)] bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)] hover:bg-[var(--tm-line)]',
   warningSmall:
-    'px-2 py-1 text-xs font-medium bg-yellow-600 hover:bg-yellow-700 dark:bg-yellow-600 dark:hover:bg-yellow-700 text-white rounded-md transition-colors',
+    'px-2 py-1 text-[13px] font-medium rounded-md transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)] bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)] hover:bg-[var(--tm-line)]',
   // 圆角小按钮（用于表格操作）
   roundedPrimary:
-    'inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 hover:bg-blue-200 dark:bg-blue-900/40 dark:hover:bg-blue-900/60 dark:text-blue-200 transition-colors',
+    'inline-flex items-center px-3 py-1.5 rounded-full text-[13px] font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)] bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)] hover:bg-[var(--tm-line)]',
   roundedSuccess:
-    'inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium bg-green-100 text-green-800 hover:bg-green-200 dark:bg-green-900/40 dark:hover:bg-green-900/60 dark:text-green-200 transition-colors',
+    'inline-flex items-center px-3 py-1.5 rounded-full text-[13px] font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)] bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)] hover:bg-[var(--tm-line)]',
   roundedDanger:
-    'inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium bg-red-100 text-red-800 hover:bg-red-200 dark:bg-red-900/40 dark:hover:bg-red-900/60 dark:text-red-200 transition-colors',
+    'inline-flex items-center px-3 py-1.5 rounded-full text-[13px] font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)] bg-[var(--tm-surface-raised)] text-[color:var(--tm-danger)] hover:bg-[var(--tm-line)]',
   roundedSecondary:
-    'inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 hover:bg-gray-200 dark:bg-gray-700/40 dark:hover:bg-gray-700/60 dark:text-gray-200 transition-colors',
+    'inline-flex items-center px-3 py-1.5 rounded-full text-[13px] font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)] bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)] hover:bg-[var(--tm-line)]',
   roundedWarning:
-    'inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 hover:bg-yellow-200 dark:bg-yellow-900/40 dark:hover:bg-yellow-900/60 dark:text-yellow-200 transition-colors',
+    'inline-flex items-center px-3 py-1.5 rounded-full text-[13px] font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)] bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)] hover:bg-[var(--tm-line)]',
   roundedPurple:
-    'inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800 hover:bg-purple-200 dark:bg-purple-900/40 dark:hover:bg-purple-900/60 dark:text-purple-200 transition-colors',
+    'inline-flex items-center px-3 py-1.5 rounded-full text-[13px] font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)] bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)] hover:bg-[var(--tm-line)]',
   // 禁用状态
   disabled:
-    'px-3 py-1.5 text-sm font-medium bg-gray-400 dark:bg-gray-600 cursor-not-allowed text-white rounded-lg transition-colors',
+    'px-3 py-1.5 text-sm font-medium bg-[var(--tm-surface-raised)] text-[color:var(--tm-muted)] cursor-not-allowed rounded-lg transition-colors',
   disabledSmall:
-    'px-2 py-1 text-xs font-medium bg-gray-400 dark:bg-gray-600 cursor-not-allowed text-white rounded-md transition-colors',
-  // 开关按钮样式
-  toggleOn: 'bg-green-600 dark:bg-green-600',
-  toggleOff: 'bg-gray-200 dark:bg-gray-700',
-  toggleThumb: 'bg-white',
+    'px-2 py-1 text-[13px] font-medium bg-[var(--tm-surface-raised)] text-[color:var(--tm-muted)] cursor-not-allowed rounded-md transition-colors',
+  // 开关按钮样式（与站内 tm-switch 一致）
+  toggleOn: 'bg-[var(--tm-text)]',
+  toggleOff:
+    'bg-[var(--tm-surface-raised)] shadow-[inset_0_0_0_1px_var(--tm-line-strong)]',
+  toggleThumb:
+    'bg-[var(--tm-accent-contrast)] shadow-[var(--tm-shadow-sm)] ring-1 ring-[var(--tm-line-strong)]',
   toggleThumbOn: 'translate-x-6',
   toggleThumbOff: 'translate-x-1',
   // 快速操作按钮样式
   quickAction:
-    'px-3 py-1.5 text-xs font-medium text-gray-600 dark:text-gray-400 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-md transition-colors',
+    'px-3 py-1.5 text-[13px] font-medium text-[color:var(--tm-muted)] bg-[var(--tm-surface)] border border-[var(--tm-line)] hover:bg-[var(--tm-surface-raised)] rounded-md transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]',
 };
 
 const DEFAULT_GROUP_PERMISSIONS = [...ALL_FEATURE_PERMISSION_KEYS];
@@ -188,11 +185,13 @@ const AlertModal = ({
   const getIcon = () => {
     switch (type) {
       case 'success':
-        return <CheckCircle className='w-8 h-8 text-green-500' />;
+        return <CheckCircle className='w-8 h-8 text-[color:var(--tm-text)]' />;
       case 'error':
-        return <AlertCircle className='w-8 h-8 text-red-500' />;
+        return <AlertCircle className='w-8 h-8 text-[color:var(--tm-text)]' />;
       case 'warning':
-        return <AlertTriangle className='w-8 h-8 text-yellow-500' />;
+        return (
+          <AlertTriangle className='w-8 h-8 text-[color:var(--tm-text)]' />
+        );
       default:
         return null;
     }
@@ -201,36 +200,36 @@ const AlertModal = ({
   const getBgColor = () => {
     switch (type) {
       case 'success':
-        return 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800';
+        return 'bg-[var(--tm-surface-raised)] border-[var(--tm-line)]';
       case 'error':
-        return 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800';
+        return 'bg-[var(--tm-surface-raised)] border-[var(--tm-danger)]';
       case 'warning':
-        return 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800';
+        return 'bg-[var(--tm-surface-raised)] border-[var(--tm-line)]';
       default:
-        return 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800';
+        return 'bg-[var(--tm-surface-raised)] border-[var(--tm-line)]';
     }
   };
 
   return createPortal(
     <div
-      className={`fixed inset-0 bg-black bg-opacity-50 z-[10050] flex items-center justify-center p-4 transition-opacity duration-200 ${
+      className={`fixed inset-0 bg-[var(--tm-scrim)] z-[10050] flex items-center justify-center p-4 transition-opacity duration-200 ${
         isVisible ? 'opacity-100' : 'opacity-0'
       }`}
     >
       <div
-        className={`bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-sm w-full border ${getBgColor()} transition-all duration-200 ${
+        className={`bg-[var(--tm-surface)] bg-[var(--tm-surface)] rounded-lg shadow-xl max-w-sm w-full border ${getBgColor()} transition-all duration-200 ${
           isVisible ? 'scale-100' : 'scale-95'
         }`}
       >
         <div className='p-6 text-center'>
           <div className='flex justify-center mb-4'>{getIcon()}</div>
 
-          <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2'>
+          <h3 className='text-lg font-medium text-[color:var(--tm-text)] mb-2'>
             {title}
           </h3>
 
           {message && (
-            <p className='text-gray-600 dark:text-gray-400 mb-4'>{message}</p>
+            <p className='text-[color:var(--tm-muted)] mb-4'>{message}</p>
           )}
 
           {showConfirm ? (
@@ -382,11 +381,7 @@ interface SiteConfig {
   TMDBProxy?: string;
   TMDBReverseProxy?: string;
   TMDBImageBaseUrl?: string;
-  BangumiDataSource?:
-    | 'direct'
-    | 'server-proxy'
-    | 'custom-baseurl'
-    | 'sakura';
+  BangumiDataSource?: 'direct' | 'server-proxy' | 'custom-baseurl' | 'sakura';
   BangumiApiBaseUrl?: string;
   BangumiImageBaseUrl?: string;
   BangumiProxy?: string;
@@ -485,16 +480,16 @@ const CollapsibleTab = ({
     <div
       className={`rounded-xl shadow-sm mb-4 overflow-hidden ${
         isParent
-          ? 'bg-gradient-to-r from-yellow-50 to-amber-50 dark:from-yellow-900/20 dark:to-amber-900/20 ring-2 ring-yellow-400/50 dark:ring-yellow-600/50'
-          : 'bg-white/80 backdrop-blur-md dark:bg-gray-800/50 dark:ring-1 dark:ring-gray-700'
+          ? 'bg-[var(--tm-surface)] ring-2 ring-[color-mix(in_srgb,var(--tm-text)_50%,transparent)]'
+          : 'bg-[var(--tm-surface-raised)] backdrop-blur-md dark:ring-1 ring-[var(--tm-text)]'
       }`}
     >
       <button
         onClick={onToggle}
         className={`w-full px-6 py-4 flex items-center justify-between transition-colors ${
           isParent
-            ? 'bg-yellow-100/50 dark:bg-yellow-900/30 hover:bg-yellow-100/70 dark:hover:bg-yellow-900/40'
-            : 'bg-gray-50/70 dark:bg-gray-800/60 hover:bg-gray-100/80 dark:hover:bg-gray-700/60'
+            ? 'bg-[var(--tm-surface-raised)] hover:bg-[var(--tm-line)] min-h-[44px] tm-press'
+            : 'bg-[var(--tm-surface-raised)] hover:bg-[var(--tm-line)] min-h-[44px] tm-press'
         }`}
       >
         <div className='flex items-center gap-3'>
@@ -502,8 +497,8 @@ const CollapsibleTab = ({
           <h3
             className={`text-lg font-medium ${
               isParent
-                ? 'text-yellow-900 dark:text-yellow-200'
-                : 'text-gray-900 dark:text-gray-100'
+                ? 'text-[color:var(--tm-text)]'
+                : 'text-[color:var(--tm-text)]'
             }`}
           >
             {title}
@@ -512,8 +507,8 @@ const CollapsibleTab = ({
         <div
           className={
             isParent
-              ? 'text-yellow-700 dark:text-yellow-400'
-              : 'text-gray-500 dark:text-gray-400'
+              ? 'text-[color:var(--tm-text)]'
+              : 'text-[color:var(--tm-muted)]'
           }
         >
           {isExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
@@ -1198,9 +1193,7 @@ const UserConfig = ({
 
   if (!config) {
     return (
-      <div className='text-center text-gray-500 dark:text-gray-400'>
-        加载中...
-      </div>
+      <div className='text-center text-[color:var(--tm-muted)]'>加载中...</div>
     );
   }
 
@@ -1208,29 +1201,27 @@ const UserConfig = ({
     <div className='space-y-6'>
       {/* 用户统计 */}
       <div>
-        <h4 className='text-sm font-medium text-gray-700 dark:text-gray-300 mb-3'>
+        <h4 className='text-sm font-medium text-[color:var(--tm-muted)] mb-3'>
           用户统计
         </h4>
-        <div className='p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800'>
-          <div className='text-2xl font-bold text-green-800 dark:text-green-300'>
+        <div className='p-4 bg-[var(--tm-surface-raised)] rounded-lg border border-[var(--tm-line)]'>
+          <div className='text-2xl font-bold text-[color:var(--tm-text)]'>
             {!hasOldUserData && usersV2 ? userTotal : displayUsers.length}
           </div>
-          <div className='text-sm text-green-600 dark:text-green-400'>
-            总用户数
-          </div>
+          <div className='text-sm text-[color:var(--tm-text)]'>总用户数</div>
         </div>
 
         {/* 数据迁移提示 */}
         {config.UserConfig.Users &&
           config.UserConfig.Users.filter((u) => u.role !== 'owner').length >
             0 && (
-            <div className='mt-4 p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-200 dark:border-yellow-800'>
+            <div className='mt-4 p-4 bg-[var(--tm-surface-raised)] rounded-lg border border-[var(--tm-line)]'>
               <div className='flex items-start justify-between'>
                 <div className='flex-1'>
-                  <h5 className='text-sm font-medium text-yellow-800 dark:text-yellow-300 mb-1'>
+                  <h5 className='text-sm font-medium text-[color:var(--tm-text)] mb-1'>
                     检测到旧版用户数据
                   </h5>
-                  <p className='text-xs text-yellow-600 dark:text-yellow-400'>
+                  <p className='text-[13px] text-[color:var(--tm-text)]'>
                     建议迁移到新的用户存储结构，以获得更好的性能和安全性。迁移后用户密码将使用SHA256加密。
                   </p>
                 </div>
@@ -1284,8 +1275,8 @@ const UserConfig = ({
                   disabled={isLoading('migrateUsers')}
                   className={`ml-4 ${buttonStyles.warning} ${
                     isLoading('migrateUsers')
-                      ? 'opacity-50 cursor-not-allowed'
-                      : ''
+                      ? 'opacity-50 cursor-not-allowed min-h-[44px] tm-press'
+                      : ' min-h-[44px] tm-press'
                   }`}
                 >
                   {isLoading('migrateUsers') ? '迁移中...' : '立即迁移'}
@@ -1298,7 +1289,7 @@ const UserConfig = ({
       {/* 用户组管理 */}
       <div>
         <div className='flex items-center justify-between mb-3'>
-          <h4 className='text-sm font-medium text-gray-700 dark:text-gray-300'>
+          <h4 className='text-sm font-medium text-[color:var(--tm-muted)]'>
             用户组管理
           </h4>
           <button
@@ -1320,36 +1311,36 @@ const UserConfig = ({
         </div>
 
         {/* 用户组列表 */}
-        <div className='border border-gray-200 dark:border-gray-700 rounded-lg max-h-[20rem] overflow-y-auto overflow-x-auto relative'>
-          <table className='min-w-full divide-y divide-gray-200 dark:divide-gray-700'>
-            <thead className='bg-gray-50 dark:bg-gray-900 sticky top-0 z-10'>
+        <div className='border border-[var(--tm-line)] rounded-lg max-h-[20rem] overflow-y-auto overflow-x-auto relative'>
+          <table className='min-w-full divide-y divide-[var(--tm-line)]'>
+            <thead className='bg-[var(--tm-surface-raised)] sticky top-0 z-10'>
               <tr>
-                <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider'>
+                <th className='px-6 py-3 text-left text-[13px] font-medium text-[color:var(--tm-muted)] uppercase tracking-wider'>
                   用户组名称
                 </th>
-                <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider'>
+                <th className='px-6 py-3 text-left text-[13px] font-medium text-[color:var(--tm-muted)] uppercase tracking-wider'>
                   可用视频源
                 </th>
-                <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider'>
+                <th className='px-6 py-3 text-left text-[13px] font-medium text-[color:var(--tm-muted)] uppercase tracking-wider'>
                   功能权限
                 </th>
-                <th className='px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider'>
+                <th className='px-6 py-3 text-right text-[13px] font-medium text-[color:var(--tm-muted)] uppercase tracking-wider'>
                   操作
                 </th>
               </tr>
             </thead>
-            <tbody className='divide-y divide-gray-200 dark:divide-gray-700'>
+            <tbody className='divide-y divide-[var(--tm-line)]'>
               {userGroups.map((group) => (
                 <tr
                   key={group.name}
-                  className='hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors'
+                  className='hover:bg-[var(--tm-line)] transition-colors'
                 >
-                  <td className='px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100'>
+                  <td className='px-6 py-4 whitespace-nowrap text-sm font-medium text-[color:var(--tm-text)]'>
                     {group.name}
                   </td>
                   <td className='px-6 py-4 whitespace-nowrap'>
                     <div className='flex items-center space-x-2'>
-                      <span className='text-sm text-gray-900 dark:text-gray-100'>
+                      <span className='text-sm text-[color:var(--tm-text)]'>
                         {group.enabledApis && group.enabledApis.length > 0
                           ? `${group.enabledApis.length} 个源`
                           : '无限制'}
@@ -1357,7 +1348,7 @@ const UserConfig = ({
                     </div>
                   </td>
                   <td className='px-6 py-4 whitespace-nowrap'>
-                    <span className='text-sm text-gray-900 dark:text-gray-100'>
+                    <span className='text-sm text-[color:var(--tm-text)]'>
                       {group.permissions && group.permissions.length > 0
                         ? `${group.permissions.length} 项`
                         : '无'}
@@ -1369,8 +1360,8 @@ const UserConfig = ({
                       disabled={isLoading(`userGroup_edit_${group.name}`)}
                       className={`${buttonStyles.roundedPrimary} ${
                         isLoading(`userGroup_edit_${group.name}`)
-                          ? 'opacity-50 cursor-not-allowed'
-                          : ''
+                          ? 'opacity-50 cursor-not-allowed min-h-[44px] tm-press'
+                          : ' min-h-[44px] tm-press'
                       }`}
                     >
                       编辑
@@ -1388,7 +1379,7 @@ const UserConfig = ({
                 <tr>
                   <td
                     colSpan={4}
-                    className='px-6 py-8 text-center text-sm text-gray-500 dark:text-gray-400'
+                    className='px-6 py-8 text-center text-sm text-[color:var(--tm-muted)]'
                   >
                     暂无用户组，请添加用户组来管理用户权限
                   </td>
@@ -1403,7 +1394,7 @@ const UserConfig = ({
       <div>
         <div className='mb-3 space-y-3'>
           <div className='flex items-center justify-between gap-3'>
-            <h4 className='text-sm font-medium text-gray-700 dark:text-gray-300'>
+            <h4 className='text-sm font-medium text-[color:var(--tm-muted)]'>
               用户列表
             </h4>
             <button
@@ -1432,13 +1423,13 @@ const UserConfig = ({
                 className='ml-auto flex min-w-0 items-center gap-2'
               >
                 <div className='relative w-44 sm:w-56'>
-                  <Search className='absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400' />
+                  <Search className='absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[color:var(--tm-muted)]' />
                   <input
                     type='text'
                     value={userSearch}
                     onChange={(e) => setUserSearch(e.target.value)}
                     placeholder='按用户名搜索'
-                    className='w-full pl-9 pr-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent'
+                    className='w-full pl-9 pr-3 py-1.5 text-sm border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)] focus:ring-2 focus:ring-[var(--tm-text)] focus:border-transparent'
                   />
                 </div>
                 {trimmedUserSearch && (
@@ -1454,8 +1445,8 @@ const UserConfig = ({
                     title='清空'
                     className={`inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition-colors ${
                       userListLoading
-                        ? 'bg-gray-400 dark:bg-gray-600 cursor-not-allowed text-white'
-                        : 'bg-gray-600 hover:bg-gray-700 dark:bg-gray-600 dark:hover:bg-gray-700 text-white'
+                        ? 'bg-[var(--tm-surface)] cursor-not-allowed text-[color:var(--tm-text)] min-h-[44px] tm-press'
+                        : 'bg-[var(--tm-surface)] hover:bg-[var(--tm-line)] text-[color:var(--tm-text)] min-h-[44px] tm-press'
                     }`}
                   >
                     <X className='h-4 w-4' />
@@ -1468,8 +1459,8 @@ const UserConfig = ({
                   title='搜索'
                   className={`inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition-colors ${
                     userListLoading
-                      ? 'bg-gray-400 dark:bg-gray-600 cursor-not-allowed text-white'
-                      : 'bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700 text-white'
+                      ? 'bg-[var(--tm-surface)] cursor-not-allowed text-[color:var(--tm-text)] min-h-[44px] tm-press'
+                      : 'bg-[var(--tm-text)] hover:opacity-90 text-[color:var(--tm-accent-contrast)] min-h-[44px] tm-press'
                   }`}
                 >
                   <Search className='h-4 w-4' />
@@ -1480,7 +1471,7 @@ const UserConfig = ({
             {selectedUsers.size > 0 && (
               <>
                 <div className='flex flex-col gap-2 sm:flex-row sm:items-center sm:space-x-3'>
-                  <span className='text-sm text-gray-600 dark:text-gray-400'>
+                  <span className='text-sm text-[color:var(--tm-muted)]'>
                     已选择 {selectedUsers.size} 个用户
                   </span>
                   <button
@@ -1490,7 +1481,7 @@ const UserConfig = ({
                     批量设置用户组
                   </button>
                 </div>
-                <div className='hidden sm:block w-px h-6 bg-gray-300 dark:bg-gray-600'></div>
+                <div className='hidden sm:block w-px h-6 bg-[var(--tm-surface)]'></div>
               </>
             )}
           </div>
@@ -1498,7 +1489,7 @@ const UserConfig = ({
 
         {/* 添加用户表单 */}
         {showAddUserForm && (
-          <div className='mb-4 p-4 bg-gray-50 dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700'>
+          <div className='mb-4 p-4 bg-[var(--tm-surface-raised)] rounded-lg border border-[var(--tm-line)]'>
             <div className='space-y-4'>
               <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
                 <input
@@ -1511,7 +1502,7 @@ const UserConfig = ({
                       username: e.target.value,
                     }))
                   }
-                  className='px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent'
+                  className='px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)] focus:ring-2 focus:ring-[var(--tm-text)] focus:border-transparent'
                 />
                 <input
                   type='password'
@@ -1523,11 +1514,11 @@ const UserConfig = ({
                       password: e.target.value,
                     }))
                   }
-                  className='px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent'
+                  className='px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)] focus:ring-2 focus:ring-[var(--tm-text)] focus:border-transparent'
                 />
               </div>
               <div>
-                <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
                   用户组（可选）
                 </label>
                 <select
@@ -1538,7 +1529,7 @@ const UserConfig = ({
                       userGroup: e.target.value,
                     }))
                   }
-                  className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent'
+                  className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)] focus:ring-2 focus:ring-[var(--tm-text)] focus:border-transparent'
                 >
                   <option value=''>无用户组（无限制）</option>
                   {userGroups.map((group) => (
@@ -1577,8 +1568,8 @@ const UserConfig = ({
 
         {/* 修改密码表单 */}
         {showChangePasswordForm && (
-          <div className='mb-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-700'>
-            <h5 className='text-sm font-medium text-blue-800 dark:text-blue-300 mb-3'>
+          <div className='mb-4 p-4 bg-[var(--tm-surface-raised)] rounded-lg border border-[var(--tm-line)]'>
+            <h5 className='text-sm font-medium text-[color:var(--tm-text)] mb-3'>
               修改用户密码
             </h5>
             <div className='flex flex-col sm:flex-row gap-4 sm:gap-3'>
@@ -1587,7 +1578,7 @@ const UserConfig = ({
                 placeholder='用户名'
                 value={changePasswordUser.username}
                 disabled
-                className='flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 cursor-not-allowed'
+                className='flex-1 px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)] cursor-not-allowed'
               />
               <input
                 type='password'
@@ -1599,7 +1590,7 @@ const UserConfig = ({
                     password: e.target.value,
                   }))
                 }
-                className='flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent'
+                className='flex-1 px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)] focus:ring-2 focus:ring-[var(--tm-text)] focus:border-transparent'
               />
               <button
                 onClick={handleChangePassword}
@@ -1637,29 +1628,29 @@ const UserConfig = ({
           {config.UserConfig.Users &&
             config.UserConfig.Users.filter((u) => u.role !== 'owner').length >
               0 && (
-              <div className='absolute inset-0 z-20 backdrop-blur-sm bg-white/30 dark:bg-gray-900/30 rounded-lg flex items-center justify-center'>
-                <div className='bg-white dark:bg-gray-800 p-6 rounded-lg shadow-xl border border-yellow-200 dark:border-yellow-800 max-w-md'>
+              <div className='absolute inset-0 z-20 backdrop-blur-sm bg-[var(--tm-surface-raised)] rounded-lg flex items-center justify-center'>
+                <div className='bg-[var(--tm-surface)] p-6 rounded-lg shadow-xl border border-[var(--tm-line)] max-w-md'>
                   <div className='flex items-center gap-3 mb-4'>
-                    <AlertTriangle className='w-6 h-6 text-yellow-600 dark:text-yellow-400' />
-                    <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100'>
+                    <AlertTriangle className='w-6 h-6 text-[color:var(--tm-text)]' />
+                    <h3 className='text-lg font-medium text-[color:var(--tm-text)]'>
                       需要迁移数据
                     </h3>
                   </div>
-                  <p className='text-sm text-gray-600 dark:text-gray-400 mb-4'>
+                  <p className='text-sm text-[color:var(--tm-muted)] mb-4'>
                     检测到旧版用户数据，请先迁移到新的存储结构后再进行用户管理操作。
                   </p>
-                  <p className='text-xs text-gray-500 dark:text-gray-500'>
+                  <p className='text-[13px] text-[color:var(--tm-muted)]'>
                     请在上方的"用户统计"区域点击"立即迁移"按钮完成数据迁移。
                   </p>
                 </div>
               </div>
             )}
           <div
-            className='border border-gray-200 dark:border-gray-700 rounded-lg max-h-[28rem] overflow-y-auto overflow-x-auto relative'
+            className='border border-[var(--tm-line)] rounded-lg max-h-[28rem] overflow-y-auto overflow-x-auto relative'
             data-table='user-list'
           >
-            <table className='min-w-full divide-y divide-gray-200 dark:divide-gray-700'>
-              <thead className='bg-gray-50 dark:bg-gray-900 sticky top-0 z-10'>
+            <table className='min-w-full divide-y divide-[var(--tm-line)]'>
+              <thead className='bg-[var(--tm-surface-raised)] sticky top-0 z-10'>
                 <tr>
                   <th className='w-4' />
                   <th className='w-10 px-1 py-3 text-center'>
@@ -1680,7 +1671,7 @@ const UserConfig = ({
                           onChange={(e) =>
                             handleSelectAllUsers(e.target.checked)
                           }
-                          className='w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600'
+                          className='w-4 h-4 text-[color:var(--tm-text)] bg-[var(--tm-surface-raised)] rounded focus:ring-[var(--tm-text)] ring-offset-[var(--tm-text)] focus:ring-2'
                         />
                       ) : (
                         <div className='w-4 h-4' />
@@ -1689,37 +1680,37 @@ const UserConfig = ({
                   </th>
                   <th
                     scope='col'
-                    className='px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider'
+                    className='px-6 py-3 text-left text-[13px] font-medium text-[color:var(--tm-muted)] uppercase tracking-wider'
                   >
                     用户名
                   </th>
                   <th
                     scope='col'
-                    className='px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider'
+                    className='px-6 py-3 text-left text-[13px] font-medium text-[color:var(--tm-muted)] uppercase tracking-wider'
                   >
                     角色
                   </th>
                   <th
                     scope='col'
-                    className='px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider'
+                    className='px-6 py-3 text-left text-[13px] font-medium text-[color:var(--tm-muted)] uppercase tracking-wider'
                   >
                     状态
                   </th>
                   <th
                     scope='col'
-                    className='px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider'
+                    className='px-6 py-3 text-left text-[13px] font-medium text-[color:var(--tm-muted)] uppercase tracking-wider'
                   >
                     用户组
                   </th>
                   <th
                     scope='col'
-                    className='px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider'
+                    className='px-6 py-3 text-left text-[13px] font-medium text-[color:var(--tm-muted)] uppercase tracking-wider'
                   >
                     采集源权限
                   </th>
                   <th
                     scope='col'
-                    className='px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider'
+                    className='px-6 py-3 text-right text-[13px] font-medium text-[color:var(--tm-muted)] uppercase tracking-wider'
                   >
                     操作
                   </th>
@@ -1734,7 +1725,7 @@ const UserConfig = ({
                       <tr>
                         <td
                           colSpan={8}
-                          className='px-6 py-8 text-center text-gray-500 dark:text-gray-400'
+                          className='px-6 py-8 text-center text-[color:var(--tm-muted)]'
                         >
                           加载中...
                         </td>
@@ -1759,7 +1750,7 @@ const UserConfig = ({
                       <tr>
                         <td
                           colSpan={8}
-                          className='px-6 py-8 text-center text-gray-500 dark:text-gray-400'
+                          className='px-6 py-8 text-center text-[color:var(--tm-muted)]'
                         >
                           {trimmedUserSearch
                             ? `未找到用户名包含“${trimmedUserSearch}”的用户`
@@ -1771,7 +1762,7 @@ const UserConfig = ({
                 }
 
                 return (
-                  <tbody className='divide-y divide-gray-200 dark:divide-gray-700'>
+                  <tbody className='divide-y divide-[var(--tm-line)]'>
                     {sortedUsers.map((user) => {
                       // 修改密码权限：站长可修改管理员和普通用户密码，管理员可修改普通用户和自己的密码，但任何人都不能修改站长密码
                       const canChangePassword =
@@ -1802,7 +1793,7 @@ const UserConfig = ({
                       return (
                         <tr
                           key={user.username}
-                          className='hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors'
+                          className='hover:bg-[var(--tm-line)] transition-colors'
                         >
                           <td className='w-4' />
                           <td className='w-10 px-1 py-3 text-center'>
@@ -1819,17 +1810,17 @@ const UserConfig = ({
                                     e.target.checked
                                   )
                                 }
-                                className='w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600'
+                                className='w-4 h-4 text-[color:var(--tm-text)] bg-[var(--tm-surface-raised)] rounded focus:ring-[var(--tm-text)] ring-offset-[var(--tm-text)] focus:ring-2'
                               />
                             ) : (
                               <div className='w-4 h-4' />
                             )}
                           </td>
-                          <td className='px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100'>
+                          <td className='px-6 py-4 whitespace-nowrap text-sm font-medium text-[color:var(--tm-text)]'>
                             <div className='flex items-center gap-2'>
                               <span>{user.username}</span>
                               {user.oidcSub && (
-                                <span className='px-2 py-0.5 text-xs rounded-full bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300'>
+                                <span className='px-2 py-0.5 text-[13px] rounded-full bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)]'>
                                   OIDC
                                 </span>
                               )}
@@ -1837,12 +1828,12 @@ const UserConfig = ({
                           </td>
                           <td className='px-6 py-4 whitespace-nowrap'>
                             <span
-                              className={`px-2 py-1 text-xs rounded-full ${
+                              className={`px-2 py-1 text-[13px] rounded-full ${
                                 user.role === 'owner'
-                                  ? 'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-300'
+                                  ? 'bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)]'
                                   : user.role === 'admin'
-                                  ? 'bg-purple-100 dark:bg-purple-900/20 text-purple-800 dark:text-purple-300'
-                                  : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+                                  ? 'bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)]'
+                                  : 'bg-[var(--tm-surface-raised)] text-[color:var(--tm-muted)]'
                               }`}
                             >
                               {user.role === 'owner'
@@ -1854,10 +1845,10 @@ const UserConfig = ({
                           </td>
                           <td className='px-6 py-4 whitespace-nowrap'>
                             <span
-                              className={`px-2 py-1 text-xs rounded-full ${
+                              className={`px-2 py-1 text-[13px] rounded-full ${
                                 !user.banned
-                                  ? 'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-300'
-                                  : 'bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-300'
+                                  ? 'bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)]'
+                                  : 'bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)]'
                               }`}
                             >
                               {!user.banned ? '正常' : '已封禁'}
@@ -1865,7 +1856,7 @@ const UserConfig = ({
                           </td>
                           <td className='px-6 py-4 whitespace-nowrap'>
                             <div className='flex items-center space-x-2'>
-                              <span className='text-sm text-gray-900 dark:text-gray-100'>
+                              <span className='text-sm text-[color:var(--tm-text)]'>
                                 {user.tags && user.tags.length > 0
                                   ? user.tags.join(', ')
                                   : '无用户组'}
@@ -1886,7 +1877,7 @@ const UserConfig = ({
                           </td>
                           <td className='px-6 py-4 whitespace-nowrap'>
                             <div className='flex items-center space-x-2'>
-                              <span className='text-sm text-gray-900 dark:text-gray-100'>
+                              <span className='text-sm text-[color:var(--tm-text)]'>
                                 {user.enabledApis && user.enabledApis.length > 0
                                   ? `${user.enabledApis.length} 个源`
                                   : '无限制'}
@@ -1941,8 +1932,8 @@ const UserConfig = ({
                                     )}
                                     className={`${buttonStyles.roundedPurple} ${
                                       isLoading(`setAdmin_${user.username}`)
-                                        ? 'opacity-50 cursor-not-allowed'
-                                        : ''
+                                        ? 'opacity-50 cursor-not-allowed min-h-[44px] tm-press'
+                                        : ' min-h-[44px] tm-press'
                                     }`}
                                   >
                                     设为管理
@@ -1960,8 +1951,8 @@ const UserConfig = ({
                                       buttonStyles.roundedSecondary
                                     } ${
                                       isLoading(`removeAdmin_${user.username}`)
-                                        ? 'opacity-50 cursor-not-allowed'
-                                        : ''
+                                        ? 'opacity-50 cursor-not-allowed min-h-[44px] tm-press'
+                                        : ' min-h-[44px] tm-press'
                                     }`}
                                   >
                                     取消管理
@@ -1980,8 +1971,8 @@ const UserConfig = ({
                                         buttonStyles.roundedDanger
                                       } ${
                                         isLoading(`banUser_${user.username}`)
-                                          ? 'opacity-50 cursor-not-allowed'
-                                          : ''
+                                          ? 'opacity-50 cursor-not-allowed min-h-[44px] tm-press'
+                                          : ' min-h-[44px] tm-press'
                                       }`}
                                     >
                                       封禁
@@ -1998,8 +1989,8 @@ const UserConfig = ({
                                         buttonStyles.roundedSuccess
                                       } ${
                                         isLoading(`unbanUser_${user.username}`)
-                                          ? 'opacity-50 cursor-not-allowed'
-                                          : ''
+                                          ? 'opacity-50 cursor-not-allowed min-h-[44px] tm-press'
+                                          : ' min-h-[44px] tm-press'
                                       }`}
                                     >
                                       解封
@@ -2029,7 +2020,7 @@ const UserConfig = ({
           {/* 用户列表分页 */}
           {!hasOldUserData && usersV2 && userTotalPages > 1 && (
             <div className='mt-4 flex items-center justify-between px-4'>
-              <div className='text-sm text-gray-600 dark:text-gray-400'>
+              <div className='text-sm text-[color:var(--tm-muted)]'>
                 {trimmedUserSearch
                   ? `搜索结果 ${userTotal} 个用户`
                   : `共 ${userTotal} 个用户`}
@@ -2041,8 +2032,8 @@ const UserConfig = ({
                   disabled={userPage === 1}
                   className={`px-3 py-1 text-sm rounded ${
                     userPage === 1
-                      ? 'bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-600 cursor-not-allowed'
-                      : 'bg-blue-500 hover:bg-blue-600 text-white'
+                      ? 'bg-[var(--tm-surface-raised)] text-[color:var(--tm-muted)] cursor-not-allowed min-h-[44px] tm-press'
+                      : 'bg-[var(--tm-text)] hover:opacity-90 text-[color:var(--tm-accent-contrast)] min-h-[44px] tm-press'
                   }`}
                 >
                   首页
@@ -2052,8 +2043,8 @@ const UserConfig = ({
                   disabled={userPage === 1}
                   className={`px-3 py-1 text-sm rounded ${
                     userPage === 1
-                      ? 'bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-600 cursor-not-allowed'
-                      : 'bg-blue-500 hover:bg-blue-600 text-white'
+                      ? 'bg-[var(--tm-surface-raised)] text-[color:var(--tm-muted)] cursor-not-allowed min-h-[44px] tm-press'
+                      : 'bg-[var(--tm-text)] hover:opacity-90 text-[color:var(--tm-accent-contrast)] min-h-[44px] tm-press'
                   }`}
                 >
                   上一页
@@ -2063,8 +2054,8 @@ const UserConfig = ({
                   disabled={userPage === userTotalPages}
                   className={`px-3 py-1 text-sm rounded ${
                     userPage === userTotalPages
-                      ? 'bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-600 cursor-not-allowed'
-                      : 'bg-blue-500 hover:bg-blue-600 text-white'
+                      ? 'bg-[var(--tm-surface-raised)] text-[color:var(--tm-muted)] cursor-not-allowed min-h-[44px] tm-press'
+                      : 'bg-[var(--tm-text)] hover:opacity-90 text-[color:var(--tm-accent-contrast)] min-h-[44px] tm-press'
                   }`}
                 >
                   下一页
@@ -2076,8 +2067,8 @@ const UserConfig = ({
                   disabled={userPage === userTotalPages}
                   className={`px-3 py-1 text-sm rounded ${
                     userPage === userTotalPages
-                      ? 'bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-600 cursor-not-allowed'
-                      : 'bg-blue-500 hover:bg-blue-600 text-white'
+                      ? 'bg-[var(--tm-surface-raised)] text-[color:var(--tm-muted)] cursor-not-allowed min-h-[44px] tm-press'
+                      : 'bg-[var(--tm-text)] hover:opacity-90 text-[color:var(--tm-accent-contrast)] min-h-[44px] tm-press'
                   }`}
                 >
                   末页
@@ -2093,7 +2084,7 @@ const UserConfig = ({
         selectedDeviceUsername &&
         createPortal(
           <div
-            className='fixed inset-0 bg-black bg-opacity-50 z-[10002] flex items-center justify-center p-4'
+            className='fixed inset-0 bg-[var(--tm-scrim)] z-[10002] flex items-center justify-center p-4'
             onClick={() => {
               setShowUserDevicesModal(false);
               setSelectedDeviceUsername(null);
@@ -2104,18 +2095,18 @@ const UserConfig = ({
             style={{ touchAction: 'none' }}
           >
             <div
-              className='bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full max-h-[80vh] overflow-hidden flex flex-col'
+              className='bg-[var(--tm-surface)] rounded-lg shadow-xl max-w-2xl w-full max-h-[80vh] overflow-hidden flex flex-col'
               onClick={(e) => e.stopPropagation()}
               onTouchMove={(e) => e.stopPropagation()}
               onWheel={(e) => e.stopPropagation()}
               style={{ touchAction: 'auto' }}
             >
-              <div className='p-6 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between'>
+              <div className='p-6 border-b border-[var(--tm-line)] flex items-center justify-between'>
                 <div>
-                  <h3 className='text-xl font-semibold text-gray-900 dark:text-gray-100'>
+                  <h3 className='text-xl font-medium text-[color:var(--tm-text)]'>
                     用户设备 - {selectedDeviceUsername}
                   </h3>
-                  <p className='mt-1 text-sm text-gray-500 dark:text-gray-400'>
+                  <p className='mt-1 text-sm text-[color:var(--tm-muted)]'>
                     查看该用户当前仍有效的登录设备
                   </p>
                 </div>
@@ -2125,7 +2116,7 @@ const UserConfig = ({
                     setSelectedDeviceUsername(null);
                     setUserDevices([]);
                   }}
-                  className='text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'
+                  className='text-[color:var(--tm-muted)] hover:text-[color:var(--tm-muted)] min-h-[44px] tm-press'
                 >
                   <X size={24} />
                 </button>
@@ -2137,17 +2128,17 @@ const UserConfig = ({
                     {[1, 2, 3].map((i) => (
                       <div
                         key={i}
-                        className='h-20 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse'
+                        className='h-20 bg-[var(--tm-surface-raised)] rounded-lg tm-skeleton'
                       />
                     ))}
-                    <div className='text-center text-sm text-gray-500 dark:text-gray-400'>
+                    <div className='text-center text-sm text-[color:var(--tm-muted)]'>
                       加载中...
                     </div>
                   </div>
                 ) : userDevices.length === 0 ? (
                   <div className='text-center py-10'>
-                    <Monitor className='w-12 h-12 mx-auto text-gray-400 dark:text-gray-500 mb-3' />
-                    <p className='text-sm text-gray-500 dark:text-gray-400'>
+                    <Monitor className='w-12 h-12 mx-auto text-[color:var(--tm-muted)] mb-3' />
+                    <p className='text-sm text-[color:var(--tm-muted)]'>
                       暂无登录设备
                     </p>
                   </div>
@@ -2163,24 +2154,24 @@ const UserConfig = ({
                             key={device.tokenId}
                             className={`p-4 rounded-lg border ${
                               device.isCurrent
-                                ? 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-300 dark:border-yellow-700'
-                                : 'bg-gray-50 dark:bg-gray-900/40 border-gray-200 dark:border-gray-700'
+                                ? 'bg-[var(--tm-surface-raised)] border-[var(--tm-line)]'
+                                : 'bg-[var(--tm-surface-raised)] border-[var(--tm-line)]'
                             }`}
                           >
                             <div className='flex items-start gap-3'>
-                              <DeviceIcon className='w-5 h-5 mt-0.5 text-gray-600 dark:text-gray-400 flex-shrink-0' />
+                              <DeviceIcon className='w-5 h-5 mt-0.5 text-[color:var(--tm-muted)] flex-shrink-0' />
                               <div className='min-w-0 flex-1'>
                                 <div className='flex items-center gap-2'>
-                                  <div className='text-sm font-medium text-gray-900 dark:text-gray-100 break-all'>
+                                  <div className='text-sm font-medium text-[color:var(--tm-text)] break-all'>
                                     {device.deviceInfo || '未知设备'}
                                   </div>
                                   {device.isCurrent && (
-                                    <span className='px-2 py-0.5 text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300 rounded-full whitespace-nowrap'>
+                                    <span className='px-2 py-0.5 text-[13px] font-medium bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)] rounded-full whitespace-nowrap'>
                                       当前设备
                                     </span>
                                   )}
                                 </div>
-                                <div className='mt-2 grid grid-cols-1 sm:grid-cols-2 gap-1 text-xs text-gray-500 dark:text-gray-400'>
+                                <div className='mt-2 grid grid-cols-1 sm:grid-cols-2 gap-1 text-[13px] text-[color:var(--tm-muted)]'>
                                   <div>
                                     登录时间:{' '}
                                     {new Date(device.createdAt).toLocaleString(
@@ -2209,7 +2200,7 @@ const UserConfig = ({
                                   disabled={
                                     revokingUserDevice === device.tokenId
                                   }
-                                  className='ml-2 px-3 py-1.5 text-xs font-medium text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 border border-red-200 hover:border-red-300 dark:border-red-800 dark:hover:border-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap'
+                                  className='ml-2 px-3 py-1.5 text-[13px] font-medium text-[color:var(--tm-text)] hover:text-[color:var(--tm-text)] border border-[var(--tm-line)] hover:border-[var(--tm-line)] hover:bg-[var(--tm-line)] rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap min-h-[44px] tm-press'
                                 >
                                   {revokingUserDevice === device.tokenId
                                     ? '登出中...'
@@ -2224,7 +2215,7 @@ const UserConfig = ({
                 )}
               </div>
 
-              <div className='p-6 border-t border-gray-200 dark:border-gray-700 flex justify-end'>
+              <div className='p-6 border-t border-[var(--tm-line)] flex justify-end'>
                 <button
                   onClick={() => {
                     setShowUserDevicesModal(false);
@@ -2246,7 +2237,7 @@ const UserConfig = ({
         selectedUser &&
         createPortal(
           <div
-            className='fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4'
+            className='fixed inset-0 bg-[var(--tm-scrim)] z-50 flex items-center justify-center p-4'
             onClick={() => {
               setShowConfigureApisModal(false);
               setSelectedUser(null);
@@ -2254,12 +2245,12 @@ const UserConfig = ({
             }}
           >
             <div
-              className='bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-4xl w-full max-h-[80vh] overflow-y-auto'
+              className='bg-[var(--tm-surface)] rounded-lg shadow-xl max-w-4xl w-full max-h-[80vh] overflow-y-auto'
               onClick={(e) => e.stopPropagation()}
             >
               <div className='p-6'>
                 <div className='flex items-center justify-between mb-6'>
-                  <h3 className='text-xl font-semibold text-gray-900 dark:text-gray-100'>
+                  <h3 className='text-xl font-medium text-[color:var(--tm-text)]'>
                     配置用户采集源权限 - {selectedUser.username}
                   </h3>
                   <button
@@ -2268,7 +2259,7 @@ const UserConfig = ({
                       setSelectedUser(null);
                       setSelectedApis([]);
                     }}
-                    className='text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors'
+                    className='text-[color:var(--tm-muted)] hover:text-[color:var(--tm-muted)] transition-colors min-h-[44px] tm-press'
                   >
                     <svg
                       className='w-6 h-6'
@@ -2287,10 +2278,10 @@ const UserConfig = ({
                 </div>
 
                 <div className='mb-6'>
-                  <div className='bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4'>
+                  <div className='bg-[var(--tm-surface-raised)] border border-[var(--tm-line)] rounded-lg p-4'>
                     <div className='flex items-center space-x-2 mb-2'>
                       <svg
-                        className='w-5 h-5 text-blue-600 dark:text-blue-400'
+                        className='w-5 h-5 text-[color:var(--tm-text)]'
                         fill='none'
                         stroke='currentColor'
                         viewBox='0 0 24 24'
@@ -2302,11 +2293,11 @@ const UserConfig = ({
                           d='M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z'
                         />
                       </svg>
-                      <span className='text-sm font-medium text-blue-800 dark:text-blue-300'>
+                      <span className='text-sm font-medium text-[color:var(--tm-text)]'>
                         配置说明
                       </span>
                     </div>
-                    <p className='text-sm text-blue-700 dark:text-blue-400 mt-1'>
+                    <p className='text-sm text-[color:var(--tm-text)] mt-1'>
                       提示：全不选为无限制，选中的采集源将限制用户只能访问这些源
                     </p>
                   </div>
@@ -2314,14 +2305,14 @@ const UserConfig = ({
 
                 {/* 采集源选择 - 多列布局 */}
                 <div className='mb-6'>
-                  <h4 className='text-sm font-medium text-gray-700 dark:text-gray-300 mb-4'>
+                  <h4 className='text-sm font-medium text-[color:var(--tm-muted)] mb-4'>
                     选择可用的采集源：
                   </h4>
                   <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4'>
                     {config?.SourceConfig?.map((source) => (
                       <label
                         key={source.key}
-                        className='flex items-center space-x-3 p-3 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer transition-colors'
+                        className='flex items-center space-x-3 p-3 border border-[var(--tm-line)] rounded-lg hover:bg-[var(--tm-line)] cursor-pointer transition-colors'
                       >
                         <input
                           type='checkbox'
@@ -2335,14 +2326,14 @@ const UserConfig = ({
                               );
                             }
                           }}
-                          className='rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700'
+                          className='rounded text-[color:var(--tm-text)] focus:ring-[var(--tm-text)] bg-[var(--tm-surface)]'
                         />
                         <div className='flex-1 min-w-0'>
-                          <div className='text-sm font-medium text-gray-900 dark:text-gray-100 truncate'>
+                          <div className='text-sm font-medium text-[color:var(--tm-text)] truncate'>
                             {source.name}
                           </div>
                           {source.api && (
-                            <div className='text-xs text-gray-500 dark:text-gray-400 truncate'>
+                            <div className='text-[13px] text-[color:var(--tm-muted)] truncate'>
                               {extractDomain(source.api)}
                             </div>
                           )}
@@ -2353,7 +2344,7 @@ const UserConfig = ({
                 </div>
 
                 {/* 快速操作按钮 */}
-                <div className='flex flex-wrap items-center justify-between mb-6 p-4 bg-gray-50 dark:bg-gray-900 rounded-lg'>
+                <div className='flex flex-wrap items-center justify-between mb-6 p-4 bg-[var(--tm-surface-raised)] rounded-lg'>
                   <div className='flex space-x-2'>
                     <button
                       onClick={() => setSelectedApis([])}
@@ -2374,9 +2365,9 @@ const UserConfig = ({
                       全选
                     </button>
                   </div>
-                  <div className='text-sm text-gray-600 dark:text-gray-400'>
+                  <div className='text-sm text-[color:var(--tm-muted)]'>
                     已选择：
-                    <span className='font-medium text-blue-600 dark:text-blue-400'>
+                    <span className='font-medium text-[color:var(--tm-text)]'>
                       {selectedApis.length > 0
                         ? `${selectedApis.length} 个源`
                         : '无限制'}
@@ -2422,7 +2413,7 @@ const UserConfig = ({
       {showAddUserGroupForm &&
         createPortal(
           <div
-            className='fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4'
+            className='fixed inset-0 bg-[var(--tm-scrim)] z-50 flex items-center justify-center p-4'
             onClick={() => {
               setShowAddUserGroupForm(false);
               setNewUserGroup({
@@ -2433,12 +2424,12 @@ const UserConfig = ({
             }}
           >
             <div
-              className='bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-4xl w-full max-h-[80vh] overflow-y-auto'
+              className='bg-[var(--tm-surface)] rounded-lg shadow-xl max-w-4xl w-full max-h-[80vh] overflow-y-auto'
               onClick={(e) => e.stopPropagation()}
             >
               <div className='p-6'>
                 <div className='flex items-center justify-between mb-6'>
-                  <h3 className='text-xl font-semibold text-gray-900 dark:text-gray-100'>
+                  <h3 className='text-xl font-medium text-[color:var(--tm-text)]'>
                     添加新用户组
                   </h3>
                   <button
@@ -2450,7 +2441,7 @@ const UserConfig = ({
                         permissions: [...DEFAULT_GROUP_PERMISSIONS],
                       });
                     }}
-                    className='text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors'
+                    className='text-[color:var(--tm-muted)] hover:text-[color:var(--tm-muted)] transition-colors min-h-[44px] tm-press'
                   >
                     <svg
                       className='w-6 h-6'
@@ -2471,7 +2462,7 @@ const UserConfig = ({
                 <div className='space-y-6'>
                   {/* 用户组名称 */}
                   <div>
-                    <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                    <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
                       用户组名称
                     </label>
                     <input
@@ -2484,19 +2475,19 @@ const UserConfig = ({
                           name: e.target.value,
                         }))
                       }
-                      className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent'
+                      className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)] focus:ring-2 focus:ring-[var(--tm-text)] focus:border-transparent'
                     />
                   </div>
 
                   <div>
-                    <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-4'>
+                    <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-4'>
                       功能权限
                     </label>
                     <div className='grid grid-cols-1 md:grid-cols-2 gap-3'>
                       {FEATURE_PERMISSION_OPTIONS.map((permission) => (
                         <label
                           key={permission.key}
-                          className='flex items-start space-x-3 p-3 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer transition-colors'
+                          className='flex items-start space-x-3 p-3 border border-[var(--tm-line)] rounded-lg hover:bg-[var(--tm-line)] cursor-pointer transition-colors'
                         >
                           <input
                             type='checkbox'
@@ -2521,13 +2512,13 @@ const UserConfig = ({
                                 }));
                               }
                             }}
-                            className='mt-0.5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700'
+                            className='mt-0.5 rounded text-[color:var(--tm-text)] focus:ring-[var(--tm-text)] bg-[var(--tm-surface)]'
                           />
                           <div className='flex-1 min-w-0'>
-                            <div className='text-sm font-medium text-gray-900 dark:text-gray-100'>
+                            <div className='text-sm font-medium text-[color:var(--tm-text)]'>
                               {permission.label}
                             </div>
-                            <div className='text-xs text-gray-500 dark:text-gray-400'>
+                            <div className='text-[13px] text-[color:var(--tm-muted)]'>
                               {permission.description}
                             </div>
                           </div>
@@ -2564,14 +2555,14 @@ const UserConfig = ({
 
                   {/* 可用视频源 */}
                   <div>
-                    <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-4'>
+                    <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-4'>
                       可用视频源
                     </label>
                     <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3'>
                       {config?.SourceConfig?.map((source) => (
                         <label
                           key={source.key}
-                          className='flex items-center space-x-3 p-3 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer transition-colors'
+                          className='flex items-center space-x-3 p-3 border border-[var(--tm-line)] rounded-lg hover:bg-[var(--tm-line)] cursor-pointer transition-colors'
                         >
                           <input
                             type='checkbox'
@@ -2596,14 +2587,14 @@ const UserConfig = ({
                                 }));
                               }
                             }}
-                            className='rounded border-gray-300 text-blue-600 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700'
+                            className='rounded text-[color:var(--tm-text)] focus:ring-[var(--tm-text)] bg-[var(--tm-surface)]'
                           />
                           <div className='flex-1 min-w-0'>
-                            <div className='text-sm font-medium text-gray-900 dark:text-gray-100 truncate'>
+                            <div className='text-sm font-medium text-[color:var(--tm-text)] truncate'>
                               {source.name}
                             </div>
                             {source.api && (
-                              <div className='text-xs text-gray-500 dark:text-gray-400 truncate'>
+                              <div className='text-[13px] text-[color:var(--tm-muted)] truncate'>
                                 {extractDomain(source.api)}
                               </div>
                             )}
@@ -2644,7 +2635,7 @@ const UserConfig = ({
                   </div>
 
                   {/* 操作按钮 */}
-                  <div className='flex justify-end space-x-3 pt-4 border-t border-gray-200 dark:border-gray-700'>
+                  <div className='flex justify-end space-x-3 pt-4 border-t border-[var(--tm-line)]'>
                     <button
                       onClick={() => {
                         setShowAddUserGroupForm(false);
@@ -2688,19 +2679,19 @@ const UserConfig = ({
         editingUserGroup &&
         createPortal(
           <div
-            className='fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4'
+            className='fixed inset-0 bg-[var(--tm-scrim)] z-50 flex items-center justify-center p-4'
             onClick={() => {
               setShowEditUserGroupForm(false);
               setEditingUserGroup(null);
             }}
           >
             <div
-              className='bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-4xl w-full max-h-[80vh] overflow-y-auto'
+              className='bg-[var(--tm-surface)] rounded-lg shadow-xl max-w-4xl w-full max-h-[80vh] overflow-y-auto'
               onClick={(e) => e.stopPropagation()}
             >
               <div className='p-6'>
                 <div className='flex items-center justify-between mb-6'>
-                  <h3 className='text-xl font-semibold text-gray-900 dark:text-gray-100'>
+                  <h3 className='text-xl font-medium text-[color:var(--tm-text)]'>
                     编辑用户组 - {editingUserGroup.name}
                   </h3>
                   <button
@@ -2708,7 +2699,7 @@ const UserConfig = ({
                       setShowEditUserGroupForm(false);
                       setEditingUserGroup(null);
                     }}
-                    className='text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors'
+                    className='text-[color:var(--tm-muted)] hover:text-[color:var(--tm-muted)] transition-colors min-h-[44px] tm-press'
                   >
                     <svg
                       className='w-6 h-6'
@@ -2729,14 +2720,14 @@ const UserConfig = ({
                 <div className='space-y-6'>
                   {/* 可用视频源 */}
                   <div>
-                    <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-4'>
+                    <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-4'>
                       可用视频源
                     </label>
                     <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3'>
                       {config?.SourceConfig?.map((source) => (
                         <label
                           key={source.key}
-                          className='flex items-center space-x-3 p-3 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer transition-colors'
+                          className='flex items-center space-x-3 p-3 border border-[var(--tm-line)] rounded-lg hover:bg-[var(--tm-line)] cursor-pointer transition-colors'
                         >
                           <input
                             type='checkbox'
@@ -2769,14 +2760,14 @@ const UserConfig = ({
                                 );
                               }
                             }}
-                            className='rounded border-gray-300 text-purple-600 focus:ring-purple-500 dark:border-gray-600 dark:bg-gray-700'
+                            className='rounded text-[color:var(--tm-text)] focus:ring-[var(--tm-text)] bg-[var(--tm-surface)]'
                           />
                           <div className='flex-1 min-w-0'>
-                            <div className='text-sm font-medium text-gray-900 dark:text-gray-100 truncate'>
+                            <div className='text-sm font-medium text-[color:var(--tm-text)] truncate'>
                               {source.name}
                             </div>
                             {source.api && (
-                              <div className='text-xs text-gray-500 dark:text-gray-400 truncate'>
+                              <div className='text-[13px] text-[color:var(--tm-muted)] truncate'>
                                 {extractDomain(source.api)}
                               </div>
                             )}
@@ -2815,14 +2806,14 @@ const UserConfig = ({
                   </div>
 
                   <div>
-                    <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-4'>
+                    <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-4'>
                       功能权限
                     </label>
                     <div className='grid grid-cols-1 md:grid-cols-2 gap-3'>
                       {FEATURE_PERMISSION_OPTIONS.map((permission) => (
                         <label
                           key={permission.key}
-                          className='flex items-start space-x-3 p-3 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer transition-colors'
+                          className='flex items-start space-x-3 p-3 border border-[var(--tm-line)] rounded-lg hover:bg-[var(--tm-line)] cursor-pointer transition-colors'
                         >
                           <input
                             type='checkbox'
@@ -2855,13 +2846,13 @@ const UserConfig = ({
                                 );
                               }
                             }}
-                            className='mt-0.5 rounded border-gray-300 text-purple-600 focus:ring-purple-500 dark:border-gray-600 dark:bg-gray-700'
+                            className='mt-0.5 rounded text-[color:var(--tm-text)] focus:ring-[var(--tm-text)] bg-[var(--tm-surface)]'
                           />
                           <div className='flex-1 min-w-0'>
-                            <div className='text-sm font-medium text-gray-900 dark:text-gray-100'>
+                            <div className='text-sm font-medium text-[color:var(--tm-text)]'>
                               {permission.label}
                             </div>
-                            <div className='text-xs text-gray-500 dark:text-gray-400'>
+                            <div className='text-[13px] text-[color:var(--tm-muted)]'>
                               {permission.description}
                             </div>
                           </div>
@@ -2900,7 +2891,7 @@ const UserConfig = ({
                   </div>
 
                   {/* 操作按钮 */}
-                  <div className='flex justify-end space-x-3 pt-4 border-t border-gray-200 dark:border-gray-700'>
+                  <div className='flex justify-end space-x-3 pt-4 border-t border-[var(--tm-line)]'>
                     <button
                       onClick={() => {
                         setShowEditUserGroupForm(false);
@@ -2938,7 +2929,7 @@ const UserConfig = ({
         selectedUserForGroup &&
         createPortal(
           <div
-            className='fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4'
+            className='fixed inset-0 bg-[var(--tm-scrim)] z-50 flex items-center justify-center p-4'
             onClick={() => {
               setShowConfigureUserGroupModal(false);
               setSelectedUserForGroup(null);
@@ -2946,12 +2937,12 @@ const UserConfig = ({
             }}
           >
             <div
-              className='bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-4xl w-full max-h-[80vh] overflow-y-auto'
+              className='bg-[var(--tm-surface)] rounded-lg shadow-xl max-w-4xl w-full max-h-[80vh] overflow-y-auto'
               onClick={(e) => e.stopPropagation()}
             >
               <div className='p-6'>
                 <div className='flex items-center justify-between mb-6'>
-                  <h3 className='text-xl font-semibold text-gray-900 dark:text-gray-100'>
+                  <h3 className='text-xl font-medium text-[color:var(--tm-text)]'>
                     配置用户组 - {selectedUserForGroup.username}
                   </h3>
                   <button
@@ -2960,7 +2951,7 @@ const UserConfig = ({
                       setSelectedUserForGroup(null);
                       setSelectedUserGroups([]);
                     }}
-                    className='text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors'
+                    className='text-[color:var(--tm-muted)] hover:text-[color:var(--tm-muted)] transition-colors min-h-[44px] tm-press'
                   >
                     <svg
                       className='w-6 h-6'
@@ -2979,10 +2970,10 @@ const UserConfig = ({
                 </div>
 
                 <div className='mb-6'>
-                  <div className='bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4'>
+                  <div className='bg-[var(--tm-surface-raised)] border border-[var(--tm-line)] rounded-lg p-4'>
                     <div className='flex items-center space-x-2 mb-2'>
                       <svg
-                        className='w-5 h-5 text-blue-600 dark:text-blue-400'
+                        className='w-5 h-5 text-[color:var(--tm-text)]'
                         fill='none'
                         stroke='currentColor'
                         viewBox='0 0 24 24'
@@ -2994,11 +2985,11 @@ const UserConfig = ({
                           d='M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z'
                         />
                       </svg>
-                      <span className='text-sm font-medium text-blue-800 dark:text-blue-300'>
+                      <span className='text-sm font-medium text-[color:var(--tm-text)]'>
                         配置说明
                       </span>
                     </div>
-                    <p className='text-sm text-blue-700 dark:text-blue-400 mt-1'>
+                    <p className='text-sm text-[color:var(--tm-text)] mt-1'>
                       提示：选择"无用户组"为无限制，选择特定用户组将限制用户只能访问该用户组允许的采集源
                     </p>
                   </div>
@@ -3006,7 +2997,7 @@ const UserConfig = ({
 
                 {/* 用户组选择 - 下拉选择器 */}
                 <div className='mb-6'>
-                  <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                  <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
                     选择用户组：
                   </label>
                   <select
@@ -3017,7 +3008,7 @@ const UserConfig = ({
                       const value = e.target.value;
                       setSelectedUserGroups(value ? [value] : []);
                     }}
-                    className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors'
+                    className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)] focus:ring-2 focus:ring-[var(--tm-text)] focus:border-transparent transition-colors'
                   >
                     <option value=''>无用户组（无限制）</option>
                     {userGroups.map((group) => (
@@ -3029,7 +3020,7 @@ const UserConfig = ({
                       </option>
                     ))}
                   </select>
-                  <p className='mt-2 text-xs text-gray-500 dark:text-gray-400'>
+                  <p className='mt-2 text-[13px] text-[color:var(--tm-muted)]'>
                     选择"无用户组"为无限制，选择特定用户组将限制用户只能访问该用户组允许的采集源
                   </p>
                 </div>
@@ -3077,19 +3068,19 @@ const UserConfig = ({
         deletingUserGroup &&
         createPortal(
           <div
-            className='fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4'
+            className='fixed inset-0 bg-[var(--tm-scrim)] z-50 flex items-center justify-center p-4'
             onClick={() => {
               setShowDeleteUserGroupModal(false);
               setDeletingUserGroup(null);
             }}
           >
             <div
-              className='bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full'
+              className='bg-[var(--tm-surface)] rounded-lg shadow-xl max-w-2xl w-full'
               onClick={(e) => e.stopPropagation()}
             >
               <div className='p-6'>
                 <div className='flex items-center justify-between mb-6'>
-                  <h3 className='text-xl font-semibold text-gray-900 dark:text-gray-100'>
+                  <h3 className='text-xl font-medium text-[color:var(--tm-text)]'>
                     确认删除用户组
                   </h3>
                   <button
@@ -3097,7 +3088,7 @@ const UserConfig = ({
                       setShowDeleteUserGroupModal(false);
                       setDeletingUserGroup(null);
                     }}
-                    className='text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors'
+                    className='text-[color:var(--tm-muted)] hover:text-[color:var(--tm-muted)] transition-colors min-h-[44px] tm-press'
                   >
                     <svg
                       className='w-6 h-6'
@@ -3116,10 +3107,10 @@ const UserConfig = ({
                 </div>
 
                 <div className='mb-6'>
-                  <div className='bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 mb-4'>
+                  <div className='bg-[var(--tm-surface-raised)] border border-[var(--tm-line)] rounded-lg p-4 mb-4'>
                     <div className='flex items-center space-x-2 mb-2'>
                       <svg
-                        className='w-5 h-5 text-red-600 dark:text-red-400'
+                        className='w-5 h-5 text-[color:var(--tm-text)]'
                         fill='none'
                         stroke='currentColor'
                         viewBox='0 0 24 24'
@@ -3131,21 +3122,21 @@ const UserConfig = ({
                           d='M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z'
                         />
                       </svg>
-                      <span className='text-sm font-medium text-red-800 dark:text-red-300'>
+                      <span className='text-sm font-medium text-[color:var(--tm-text)]'>
                         危险操作警告
                       </span>
                     </div>
-                    <p className='text-sm text-red-700 dark:text-red-400'>
+                    <p className='text-sm text-[color:var(--tm-text)]'>
                       删除用户组 <strong>{deletingUserGroup.name}</strong>{' '}
                       将影响所有使用该组的用户，此操作不可恢复！
                     </p>
                   </div>
 
                   {deletingUserGroup.affectedUsers.length > 0 ? (
-                    <div className='bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4'>
+                    <div className='bg-[var(--tm-surface-raised)] border border-[var(--tm-line)] rounded-lg p-4'>
                       <div className='flex items-center space-x-2 mb-2'>
                         <svg
-                          className='w-5 h-5 text-yellow-600 dark:text-yellow-400'
+                          className='w-5 h-5 text-[color:var(--tm-text)]'
                           fill='none'
                           stroke='currentColor'
                           viewBox='0 0 24 24'
@@ -3157,7 +3148,7 @@ const UserConfig = ({
                             d='M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z'
                           />
                         </svg>
-                        <span className='text-sm font-medium text-yellow-800 dark:text-yellow-300'>
+                        <span className='text-sm font-medium text-[color:var(--tm-text)]'>
                           ⚠️ 将影响 {deletingUserGroup.affectedUsers.length}{' '}
                           个用户：
                         </span>
@@ -3166,21 +3157,21 @@ const UserConfig = ({
                         {deletingUserGroup.affectedUsers.map((user, index) => (
                           <div
                             key={index}
-                            className='text-sm text-yellow-700 dark:text-yellow-300'
+                            className='text-sm text-[color:var(--tm-text)]'
                           >
                             • {user.username} ({user.role})
                           </div>
                         ))}
                       </div>
-                      <p className='text-xs text-yellow-600 dark:text-yellow-400 mt-2'>
+                      <p className='text-[13px] text-[color:var(--tm-text)] mt-2'>
                         这些用户的用户组将被自动移除
                       </p>
                     </div>
                   ) : (
-                    <div className='bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4'>
+                    <div className='bg-[var(--tm-surface-raised)] border border-[var(--tm-line)] rounded-lg p-4'>
                       <div className='flex items-center space-x-2'>
                         <svg
-                          className='w-5 h-5 text-green-600 dark:text-green-400'
+                          className='w-5 h-5 text-[color:var(--tm-text)]'
                           fill='none'
                           stroke='currentColor'
                           viewBox='0 0 24 24'
@@ -3192,7 +3183,7 @@ const UserConfig = ({
                             d='M5 13l4 4L19 7'
                           />
                         </svg>
-                        <span className='text-sm font-medium text-green-800 dark:text-green-300'>
+                        <span className='text-sm font-medium text-[color:var(--tm-text)]'>
                           ✅ 当前没有用户使用此用户组
                         </span>
                       </div>
@@ -3238,19 +3229,19 @@ const UserConfig = ({
         deletingUser &&
         createPortal(
           <div
-            className='fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4'
+            className='fixed inset-0 bg-[var(--tm-scrim)] z-50 flex items-center justify-center p-4'
             onClick={() => {
               setShowDeleteUserModal(false);
               setDeletingUser(null);
             }}
           >
             <div
-              className='bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full'
+              className='bg-[var(--tm-surface)] rounded-lg shadow-xl max-w-2xl w-full'
               onClick={(e) => e.stopPropagation()}
             >
               <div className='p-6'>
                 <div className='flex items-center justify-between mb-6'>
-                  <h3 className='text-xl font-semibold text-gray-900 dark:text-gray-100'>
+                  <h3 className='text-xl font-medium text-[color:var(--tm-text)]'>
                     确认删除用户
                   </h3>
                   <button
@@ -3258,7 +3249,7 @@ const UserConfig = ({
                       setShowDeleteUserModal(false);
                       setDeletingUser(null);
                     }}
-                    className='text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors'
+                    className='text-[color:var(--tm-muted)] hover:text-[color:var(--tm-muted)] transition-colors min-h-[44px] tm-press'
                   >
                     <svg
                       className='w-6 h-6'
@@ -3277,10 +3268,10 @@ const UserConfig = ({
                 </div>
 
                 <div className='mb-6'>
-                  <div className='bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 mb-4'>
+                  <div className='bg-[var(--tm-surface-raised)] border border-[var(--tm-line)] rounded-lg p-4 mb-4'>
                     <div className='flex items-center space-x-2 mb-2'>
                       <svg
-                        className='w-5 h-5 text-red-600 dark:text-red-400'
+                        className='w-5 h-5 text-[color:var(--tm-text)]'
                         fill='none'
                         stroke='currentColor'
                         viewBox='0 0 24 24'
@@ -3292,11 +3283,11 @@ const UserConfig = ({
                           d='M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z'
                         />
                       </svg>
-                      <span className='text-sm font-medium text-red-800 dark:text-red-300'>
+                      <span className='text-sm font-medium text-[color:var(--tm-text)]'>
                         危险操作警告
                       </span>
                     </div>
-                    <p className='text-sm text-red-700 dark:text-red-400'>
+                    <p className='text-sm text-[color:var(--tm-text)]'>
                       删除用户 <strong>{deletingUser}</strong>{' '}
                       将同时删除其搜索历史、播放记录和收藏夹，此操作不可恢复！
                     </p>
@@ -3331,19 +3322,19 @@ const UserConfig = ({
       {showBatchUserGroupModal &&
         createPortal(
           <div
-            className='fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4'
+            className='fixed inset-0 bg-[var(--tm-scrim)] z-50 flex items-center justify-center p-4'
             onClick={() => {
               setShowBatchUserGroupModal(false);
               setSelectedUserGroup('');
             }}
           >
             <div
-              className='bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full'
+              className='bg-[var(--tm-surface)] rounded-lg shadow-xl max-w-2xl w-full'
               onClick={(e) => e.stopPropagation()}
             >
               <div className='p-6'>
                 <div className='flex items-center justify-between mb-6'>
-                  <h3 className='text-xl font-semibold text-gray-900 dark:text-gray-100'>
+                  <h3 className='text-xl font-medium text-[color:var(--tm-text)]'>
                     批量设置用户组
                   </h3>
                   <button
@@ -3351,7 +3342,7 @@ const UserConfig = ({
                       setShowBatchUserGroupModal(false);
                       setSelectedUserGroup('');
                     }}
-                    className='text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors'
+                    className='text-[color:var(--tm-muted)] hover:text-[color:var(--tm-muted)] transition-colors min-h-[44px] tm-press'
                   >
                     <svg
                       className='w-6 h-6'
@@ -3370,10 +3361,10 @@ const UserConfig = ({
                 </div>
 
                 <div className='mb-6'>
-                  <div className='bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-4'>
+                  <div className='bg-[var(--tm-surface-raised)] border border-[var(--tm-line)] rounded-lg p-4 mb-4'>
                     <div className='flex items-center space-x-2 mb-2'>
                       <svg
-                        className='w-5 h-5 text-blue-600 dark:text-blue-400'
+                        className='w-5 h-5 text-[color:var(--tm-text)]'
                         fill='none'
                         stroke='currentColor'
                         viewBox='0 0 24 24'
@@ -3385,23 +3376,23 @@ const UserConfig = ({
                           d='M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z'
                         />
                       </svg>
-                      <span className='text-sm font-medium text-blue-800 dark:text-blue-300'>
+                      <span className='text-sm font-medium text-[color:var(--tm-text)]'>
                         批量操作说明
                       </span>
                     </div>
-                    <p className='text-sm text-blue-700 dark:text-blue-400'>
+                    <p className='text-sm text-[color:var(--tm-text)]'>
                       将为选中的 <strong>{selectedUsers.size} 个用户</strong>{' '}
                       设置用户组，选择"无用户组"为无限制
                     </p>
                   </div>
 
                   <div>
-                    <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                    <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
                       选择用户组：
                     </label>
                     <select
                       onChange={(e) => setSelectedUserGroup(e.target.value)}
-                      className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors'
+                      className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)] focus:ring-2 focus:ring-[var(--tm-text)] focus:border-transparent transition-colors'
                       value={selectedUserGroup}
                     >
                       <option value=''>无用户组（无限制）</option>
@@ -3414,7 +3405,7 @@ const UserConfig = ({
                         </option>
                       ))}
                     </select>
-                    <p className='mt-2 text-xs text-gray-500 dark:text-gray-400'>
+                    <p className='mt-2 text-[13px] text-[color:var(--tm-muted)]'>
                       选择"无用户组"为无限制，选择特定用户组将限制用户只能访问该用户组允许的采集源
                     </p>
                   </div>
@@ -3823,10 +3814,10 @@ const OpenListConfigComponent = ({
   return (
     <div className='space-y-6'>
       {/* 使用说明 */}
-      <div className='bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4'>
+      <div className='bg-[var(--tm-surface-raised)] border border-[var(--tm-line)] rounded-lg p-4'>
         <div className='flex items-center gap-2 mb-2'>
           <svg
-            className='w-5 h-5 text-blue-600 dark:text-blue-400'
+            className='w-5 h-5 text-[color:var(--tm-text)]'
             fill='none'
             stroke='currentColor'
             viewBox='0 0 24 24'
@@ -3838,11 +3829,11 @@ const OpenListConfigComponent = ({
               d='M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z'
             />
           </svg>
-          <span className='text-sm font-medium text-blue-800 dark:text-blue-300'>
+          <span className='text-sm font-medium text-[color:var(--tm-text)]'>
             使用说明
           </span>
         </div>
-        <div className='text-sm text-blue-700 dark:text-blue-400 space-y-1'>
+        <div className='text-sm text-[color:var(--tm-text)] space-y-1'>
           <p>
             • 私人影库功能需要配合 OpenList 使用，用于管理和播放您自己的视频文件
           </p>
@@ -3861,12 +3852,12 @@ const OpenListConfigComponent = ({
       </div>
 
       {/* 功能开关 */}
-      <div className='flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700'>
+      <div className='flex items-center justify-between p-4 bg-[var(--tm-surface-raised)] rounded-lg border border-[var(--tm-line)]'>
         <div>
-          <h3 className='text-sm font-medium text-gray-900 dark:text-gray-100'>
+          <h3 className='text-sm font-medium text-[color:var(--tm-text)]'>
             启用私人影库功能
           </h3>
-          <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
+          <p className='text-[13px] text-[color:var(--tm-muted)] mt-1'>
             关闭后将不显示私人影库入口，也不会执行定时扫描
           </p>
         </div>
@@ -3877,14 +3868,14 @@ const OpenListConfigComponent = ({
             onChange={(e) => setEnabled(e.target.checked)}
             className='sr-only peer'
           />
-          <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+          <div className="w-11 h-6 bg-[var(--tm-surface-raised)] peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-[var(--tm-text)] rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-[var(--tm-line)] after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-[var(--tm-surface-raised)] after:border-[var(--tm-line)] after:border after:rounded-full after:h-5 after:w-5 after:transition-all border-[var(--tm-line)] peer-checked:bg-[var(--tm-surface-raised)]"></div>
         </label>
       </div>
 
       {/* 配置表单 */}
       <div className='space-y-4'>
         <div>
-          <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+          <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
             OpenList URL
           </label>
           <input
@@ -3893,13 +3884,13 @@ const OpenListConfigComponent = ({
             onChange={(e) => setUrl(e.target.value)}
             disabled={!enabled}
             placeholder='https://your-openlist-server.com'
-            className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed'
+            className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)] focus:ring-2 focus:ring-[var(--tm-text)] focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed'
           />
         </div>
 
         <div className='grid grid-cols-2 gap-4'>
           <div>
-            <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+            <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
               账号
             </label>
             <input
@@ -3908,11 +3899,11 @@ const OpenListConfigComponent = ({
               onChange={(e) => setUsername(e.target.value)}
               disabled={!enabled}
               placeholder='admin'
-              className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed'
+              className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)] focus:ring-2 focus:ring-[var(--tm-text)] focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed'
             />
           </div>
           <div>
-            <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+            <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
               密码
             </label>
             <input
@@ -3921,13 +3912,13 @@ const OpenListConfigComponent = ({
               onChange={(e) => setPassword(e.target.value)}
               disabled={!enabled}
               placeholder='password'
-              className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed'
+              className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)] focus:ring-2 focus:ring-[var(--tm-text)] focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed'
             />
           </div>
         </div>
 
         <div>
-          <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+          <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
             根目录列表
           </label>
           <div className='space-y-2'>
@@ -3943,7 +3934,7 @@ const OpenListConfigComponent = ({
                   }}
                   disabled={!enabled}
                   placeholder='/'
-                  className='flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed'
+                  className='flex-1 px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)] focus:ring-2 focus:ring-[var(--tm-text)] focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed'
                 />
                 {rootPaths.length > 1 && (
                   <button
@@ -3953,7 +3944,7 @@ const OpenListConfigComponent = ({
                       setRootPaths(newPaths);
                     }}
                     disabled={!enabled}
-                    className='px-3 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed'
+                    className='px-3 py-2 bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] rounded-lg hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px] tm-press'
                   >
                     删除
                   </button>
@@ -3964,18 +3955,18 @@ const OpenListConfigComponent = ({
               type='button'
               onClick={() => setRootPaths([...rootPaths, '/'])}
               disabled={!enabled}
-              className='w-full px-3 py-2 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg text-gray-600 dark:text-gray-400 hover:border-blue-500 hover:text-blue-500 disabled:opacity-50 disabled:cursor-not-allowed'
+              className='w-full px-3 py-2 border-2 border-dashed border-[var(--tm-line)] rounded-lg text-[color:var(--tm-muted)] hover:border-[var(--tm-line)] hover:text-[color:var(--tm-text)] disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px] tm-press'
             >
               + 添加根目录
             </button>
           </div>
-          <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
+          <p className='mt-1 text-[13px] text-[color:var(--tm-muted)]'>
             OpenList 中的视频文件夹路径，可以配置多个根目录
           </p>
         </div>
 
         <div>
-          <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+          <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
             离线下载目录
           </label>
           <input
@@ -3984,20 +3975,20 @@ const OpenListConfigComponent = ({
             onChange={(e) => setOfflineDownloadPath(e.target.value)}
             disabled={!enabled}
             placeholder='/'
-            className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed'
+            className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)] focus:ring-2 focus:ring-[var(--tm-text)] focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed'
           />
-          <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
+          <p className='mt-1 text-[13px] text-[color:var(--tm-muted)]'>
             动漫磁力等离线下载任务的保存目录，默认为根目录 /
           </p>
         </div>
 
-        <div className='space-y-4 rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-800'>
+        <div className='space-y-4 rounded-lg border border-[var(--tm-line)] bg-[var(--tm-surface-raised)] p-4'>
           <div className='flex items-center justify-between'>
             <div>
-              <h3 className='text-sm font-medium text-gray-900 dark:text-gray-100'>
+              <h3 className='text-sm font-medium text-[color:var(--tm-text)]'>
                 离线下载使用独立 OpenList 源
               </h3>
-              <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
+              <p className='mt-1 text-[13px] text-[color:var(--tm-muted)]'>
                 开启后，存到私人影库和追番订阅会把任务提交到下方
                 OpenList，扫描和播放仍使用上方主 OpenList
               </p>
@@ -4012,12 +4003,16 @@ const OpenListConfigComponent = ({
               disabled={!enabled}
               className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors ${
                 offlineDownloadUseCustomSource
-                  ? 'bg-blue-600'
-                  : 'bg-gray-200 dark:bg-gray-700'
-              } ${!enabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  ? 'bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] tm-press'
+                  : 'bg-[var(--tm-surface-raised)] tm-press'
+              } ${
+                !enabled
+                  ? 'opacity-50 cursor-not-allowed min-h-[44px] tm-press'
+                  : ' min-h-[44px] tm-press'
+              }`}
             >
               <span
-                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                className={`inline-block h-4 w-4 transform rounded-full bg-[var(--tm-surface)] transition-transform ${
                   offlineDownloadUseCustomSource
                     ? 'translate-x-6'
                     : 'translate-x-1'
@@ -4029,7 +4024,7 @@ const OpenListConfigComponent = ({
           {offlineDownloadUseCustomSource && (
             <div className='space-y-4'>
               <div>
-                <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
                   离线下载 OpenList URL
                 </label>
                 <input
@@ -4038,13 +4033,13 @@ const OpenListConfigComponent = ({
                   onChange={(e) => setOfflineDownloadUrl(e.target.value)}
                   disabled={!enabled}
                   placeholder='https://download-openlist-server.com'
-                  className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed'
+                  className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)] focus:ring-2 focus:ring-[var(--tm-text)] focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed'
                 />
               </div>
 
               <div className='grid grid-cols-2 gap-4'>
                 <div>
-                  <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                  <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
                     离线下载账号
                   </label>
                   <input
@@ -4053,11 +4048,11 @@ const OpenListConfigComponent = ({
                     onChange={(e) => setOfflineDownloadUsername(e.target.value)}
                     disabled={!enabled}
                     placeholder='admin'
-                    className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed'
+                    className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)] focus:ring-2 focus:ring-[var(--tm-text)] focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed'
                   />
                 </div>
                 <div>
-                  <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                  <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
                     离线下载密码
                   </label>
                   <input
@@ -4066,7 +4061,7 @@ const OpenListConfigComponent = ({
                     onChange={(e) => setOfflineDownloadPassword(e.target.value)}
                     disabled={!enabled}
                     placeholder='password'
-                    className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed'
+                    className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)] focus:ring-2 focus:ring-[var(--tm-text)] focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed'
                   />
                 </div>
               </div>
@@ -4075,7 +4070,7 @@ const OpenListConfigComponent = ({
         </div>
 
         <div>
-          <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+          <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
             定时扫描间隔（分钟）
           </label>
           <input
@@ -4085,15 +4080,15 @@ const OpenListConfigComponent = ({
             disabled={!enabled}
             placeholder='0'
             min='0'
-            className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed'
+            className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)] focus:ring-2 focus:ring-[var(--tm-text)] focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed'
           />
-          <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
+          <p className='mt-1 text-[13px] text-[color:var(--tm-muted)]'>
             设置为 0 关闭定时扫描，最低 60 分钟
           </p>
         </div>
 
         <div>
-          <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+          <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
             扫描模式
           </label>
           <select
@@ -4102,23 +4097,23 @@ const OpenListConfigComponent = ({
               setScanMode(e.target.value as 'torrent' | 'name' | 'hybrid')
             }
             disabled={!enabled}
-            className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed'
+            className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)] focus:ring-2 focus:ring-[var(--tm-text)] focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed'
           >
             <option value='hybrid'>混合模式（推荐）</option>
             <option value='torrent'>种子库匹配</option>
             <option value='name'>名字匹配</option>
           </select>
-          <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
+          <p className='mt-1 text-[13px] text-[color:var(--tm-muted)]'>
             混合模式：先用种子库匹配，失败后降级为名字匹配
           </p>
         </div>
 
-        <div className='flex items-center justify-between py-3 border-b border-gray-200 dark:border-gray-700'>
+        <div className='flex items-center justify-between py-3 border-b border-[var(--tm-line)]'>
           <div>
-            <h3 className='text-sm font-medium text-gray-900 dark:text-white'>
+            <h3 className='text-sm font-medium text-[color:var(--tm-text)]'>
               禁用预览视频
             </h3>
-            <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
+            <p className='text-[13px] text-[color:var(--tm-muted)] mt-1'>
               开启后将直接返回直连链接，不使用视频预览流
             </p>
           </div>
@@ -4127,24 +4122,28 @@ const OpenListConfigComponent = ({
             disabled={!enabled}
             className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
               disableVideoPreview
-                ? 'bg-blue-600'
-                : 'bg-gray-200 dark:bg-gray-700'
-            } ${!enabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+                ? 'bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] tm-press'
+                : 'bg-[var(--tm-surface-raised)] tm-press'
+            } ${
+              !enabled
+                ? 'opacity-50 cursor-not-allowed min-h-[44px] tm-press'
+                : ' min-h-[44px] tm-press'
+            }`}
           >
             <span
-              className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+              className={`inline-block h-4 w-4 transform rounded-full bg-[var(--tm-surface)] transition-transform ${
                 disableVideoPreview ? 'translate-x-6' : 'translate-x-1'
               }`}
             />
           </button>
         </div>
 
-        <div className='flex items-center justify-between py-3 border-b border-gray-200 dark:border-gray-700'>
+        <div className='flex items-center justify-between py-3 border-b border-[var(--tm-line)]'>
           <div>
-            <h3 className='text-sm font-medium text-gray-900 dark:text-white'>
+            <h3 className='text-sm font-medium text-[color:var(--tm-text)]'>
               路径元信息
             </h3>
-            <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
+            <p className='text-[13px] text-[color:var(--tm-muted)] mt-1'>
               为指定路径下的影片设置分类、播放时是否自动刷新链接（约 14 分钟），
               以及是否通过服务器代理播放（可配置链接缓存时长）
               {pathMetaRows.length > 0
@@ -4157,7 +4156,9 @@ const OpenListConfigComponent = ({
             onClick={() => setPathMetaDialogOpen(true)}
             disabled={!enabled}
             className={`${buttonStyles.primary} text-sm ${
-              !enabled ? 'opacity-50 cursor-not-allowed' : ''
+              !enabled
+                ? 'opacity-50 cursor-not-allowed min-h-[44px] tm-press'
+                : ' min-h-[44px] tm-press'
             }`}
           >
             设置
@@ -4167,39 +4168,40 @@ const OpenListConfigComponent = ({
         {pathMetaDialogOpen &&
           createPortal(
             <div
-              className='fixed inset-0 bg-black bg-opacity-50 z-[10002] flex items-center justify-center p-4'
+              className='fixed inset-0 bg-[var(--tm-scrim)] z-[10002] flex items-center justify-center p-4'
               onClick={() => setPathMetaDialogOpen(false)}
               onTouchMove={(e) => e.preventDefault()}
               onWheel={(e) => e.preventDefault()}
               style={{ touchAction: 'none' }}
             >
               <div
-                className='w-full max-w-3xl max-h-[85vh] flex flex-col rounded-xl bg-white dark:bg-gray-900 shadow-xl border border-gray-200 dark:border-gray-700'
+                className='w-full max-w-3xl max-h-[85vh] flex flex-col rounded-xl bg-[var(--tm-surface)] shadow-xl border border-[var(--tm-line)]'
                 onClick={(e) => e.stopPropagation()}
                 onTouchMove={(e) => e.stopPropagation()}
                 onWheel={(e) => e.stopPropagation()}
                 style={{ touchAction: 'auto' }}
               >
-                <div className='flex items-center justify-between px-5 py-4 border-b border-gray-200 dark:border-gray-700'>
-                  <h3 className='text-base font-medium text-gray-900 dark:text-white'>
+                <div className='flex items-center justify-between px-5 py-4 border-b border-[var(--tm-line)]'>
+                  <h3 className='text-base font-medium text-[color:var(--tm-text)]'>
                     路径元信息
                   </h3>
                   <button
                     type='button'
                     onClick={() => setPathMetaDialogOpen(false)}
-                    className='text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 text-sm px-2 py-1'
+                    className='text-[color:var(--tm-muted)] hover:text-[color:var(--tm-muted)] hover:text-[color:var(--tm-text)] text-sm px-2 py-1 min-h-[44px] tm-press'
                   >
                     关闭
                   </button>
                 </div>
 
-                <div className='px-5 py-3 text-xs text-gray-500 dark:text-gray-400 border-b border-gray-100 dark:border-gray-800'>
-                  填写目录路径即可作用于其下所有影片（如 /videos）。更具体的路径优先。改完后点「保存配置」才会生效。
+                <div className='px-5 py-3 text-[13px] text-[color:var(--tm-muted)] border-b border-[var(--tm-line)]'>
+                  填写目录路径即可作用于其下所有影片（如
+                  /videos）。更具体的路径优先。改完后点「保存配置」才会生效。
                 </div>
 
                 <div className='flex-1 overflow-y-auto px-5 py-4 space-y-2'>
                   {pathMetaRows.length === 0 ? (
-                    <p className='text-sm text-gray-400 dark:text-gray-500 text-center py-8'>
+                    <p className='text-sm text-[color:var(--tm-muted)] text-center py-8'>
                       暂无配置，点击下方「添加」开始
                     </p>
                   ) : (
@@ -4208,7 +4210,7 @@ const OpenListConfigComponent = ({
                       return (
                         <div
                           key={index}
-                          className='border border-gray-200 dark:border-gray-700 rounded-lg'
+                          className='border border-[var(--tm-line)] rounded-lg'
                         >
                           {/* 折叠头部：路径 + 展开箭头 + 删除 */}
                           <div className='flex items-center gap-2 px-3 py-2'>
@@ -4225,7 +4227,7 @@ const OpenListConfigComponent = ({
                                   return next;
                                 })
                               }
-                              className='flex-shrink-0 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+                              className='flex-shrink-0 text-[color:var(--tm-muted)] hover:text-[color:var(--tm-muted)] hover:text-[color:var(--tm-text)] min-h-[44px] tm-press'
                               aria-label={expanded ? '收起' : '展开'}
                             >
                               {expanded ? (
@@ -4246,7 +4248,7 @@ const OpenListConfigComponent = ({
                                 );
                               }}
                               placeholder='路径，如 /videos'
-                              className='flex-1 min-w-0 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent'
+                              className='flex-1 min-w-0 px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)] text-sm focus:ring-2 focus:ring-[var(--tm-text)] focus:border-transparent'
                             />
                             <button
                               type='button'
@@ -4255,7 +4257,7 @@ const OpenListConfigComponent = ({
                                   rows.filter((_, i) => i !== index)
                                 )
                               }
-                              className='flex-shrink-0 px-2 py-1 text-sm text-red-600 hover:text-red-700 dark:text-red-400'
+                              className='flex-shrink-0 px-2 py-1 text-sm text-[color:var(--tm-text)] hover:text-[color:var(--tm-text)] min-h-[44px] tm-press'
                             >
                               删除
                             </button>
@@ -4263,9 +4265,9 @@ const OpenListConfigComponent = ({
 
                           {/* 展开配置区：分类、自动刷新、代理播放、代理缓存时长 */}
                           {expanded && (
-                            <div className='border-t border-gray-200 dark:border-gray-700 px-3 py-3 space-y-3'>
+                            <div className='border-t border-[var(--tm-line)] px-3 py-3 space-y-3'>
                               <div>
-                                <label className='block text-xs text-gray-500 dark:text-gray-400 mb-1'>
+                                <label className='block text-[13px] text-[color:var(--tm-muted)] mb-1'>
                                   分类
                                 </label>
                                 <input
@@ -4282,14 +4284,14 @@ const OpenListConfigComponent = ({
                                     );
                                   }}
                                   placeholder='分类，如 动漫'
-                                  className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent'
+                                  className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)] text-sm focus:ring-2 focus:ring-[var(--tm-text)] focus:border-transparent'
                                 />
                               </div>
 
                               <div className='flex items-center justify-between'>
-                                <span className='text-sm text-gray-700 dark:text-gray-300'>
+                                <span className='text-sm text-[color:var(--tm-muted)]'>
                                   播放自动刷新
-                                  <span className='block text-xs text-gray-400 dark:text-gray-500'>
+                                  <span className='block text-[13px] text-[color:var(--tm-muted)]'>
                                     播放时约 14 分钟自动刷新链接
                                   </span>
                                 </span>
@@ -4309,13 +4311,13 @@ const OpenListConfigComponent = ({
                                   }
                                   className={`relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors ${
                                     row.refresh14m
-                                      ? 'bg-blue-600'
-                                      : 'bg-gray-200 dark:bg-gray-700'
+                                      ? 'bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] tm-press'
+                                      : 'bg-[var(--tm-surface-raised)] tm-press'
                                   }`}
                                   aria-label='播放自动刷新'
                                 >
                                   <span
-                                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                                    className={`inline-block h-4 w-4 transform rounded-full bg-[var(--tm-surface)] transition-transform ${
                                       row.refresh14m
                                         ? 'translate-x-6'
                                         : 'translate-x-1'
@@ -4325,9 +4327,9 @@ const OpenListConfigComponent = ({
                               </div>
 
                               <div className='flex items-center justify-between'>
-                                <span className='text-sm text-gray-700 dark:text-gray-300'>
+                                <span className='text-sm text-[color:var(--tm-muted)]'>
                                   代理播放
-                                  <span className='block text-xs text-gray-400 dark:text-gray-500'>
+                                  <span className='block text-[13px] text-[color:var(--tm-muted)]'>
                                     播放链接通过服务器代理
                                   </span>
                                 </span>
@@ -4347,13 +4349,13 @@ const OpenListConfigComponent = ({
                                   }
                                   className={`relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors ${
                                     row.proxyPlay
-                                      ? 'bg-blue-600'
-                                      : 'bg-gray-200 dark:bg-gray-700'
+                                      ? 'bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] tm-press'
+                                      : 'bg-[var(--tm-surface-raised)] tm-press'
                                   }`}
                                   aria-label='代理播放'
                                 >
                                   <span
-                                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                                    className={`inline-block h-4 w-4 transform rounded-full bg-[var(--tm-surface)] transition-transform ${
                                       row.proxyPlay
                                         ? 'translate-x-6'
                                         : 'translate-x-1'
@@ -4363,7 +4365,7 @@ const OpenListConfigComponent = ({
                               </div>
 
                               <div className='flex items-center gap-2'>
-                                <label className='text-sm text-gray-700 dark:text-gray-300 whitespace-nowrap'>
+                                <label className='text-sm text-[color:var(--tm-muted)] whitespace-nowrap'>
                                   代理缓存时长（分钟）
                                 </label>
                                 <input
@@ -4388,7 +4390,7 @@ const OpenListConfigComponent = ({
                                     );
                                   }}
                                   placeholder='60'
-                                  className='w-24 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent'
+                                  className='w-24 px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)] text-sm focus:ring-2 focus:ring-[var(--tm-text)] focus:border-transparent'
                                 />
                               </div>
                             </div>
@@ -4399,7 +4401,7 @@ const OpenListConfigComponent = ({
                   )}
                 </div>
 
-                <div className='flex items-center justify-between gap-3 px-5 py-4 border-t border-gray-200 dark:border-gray-700'>
+                <div className='flex items-center justify-between gap-3 px-5 py-4 border-t border-[var(--tm-line)]'>
                   <button
                     type='button'
                     onClick={() => {
@@ -4427,7 +4429,9 @@ const OpenListConfigComponent = ({
                   <button
                     type='button'
                     onClick={() => {
-                      if (pathMetaRows.some((row) => !(row.path || '').trim())) {
+                      if (
+                        pathMetaRows.some((row) => !(row.path || '').trim())
+                      ) {
                         showError('路径不能为空', showAlert);
                         return;
                       }
@@ -4475,10 +4479,10 @@ const OpenListConfigComponent = ({
           <div className='space-y-4'>
             <div className='flex items-center justify-between'>
               <div>
-                <h3 className='text-lg font-medium text-gray-900 dark:text-gray-100'>
+                <h3 className='text-lg font-medium text-[color:var(--tm-text)]'>
                   视频列表
                 </h3>
-                <div className='mt-1 text-sm text-gray-500 dark:text-gray-400'>
+                <div className='mt-1 text-sm text-[color:var(--tm-muted)]'>
                   <span>
                     资源数: {config.OpenListConfig.ResourceCount || 0}
                   </span>
@@ -4508,12 +4512,12 @@ const OpenListConfigComponent = ({
             </div>
 
             {refreshing && scanProgress && (
-              <div className='bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-4'>
+              <div className='bg-[var(--tm-surface-raised)] border border-[var(--tm-line)] rounded-lg p-4 mb-4'>
                 <div className='flex items-center justify-between mb-2'>
-                  <span className='text-sm font-medium text-blue-900 dark:text-blue-100'>
+                  <span className='text-sm font-medium text-[color:var(--tm-text)]'>
                     扫描进度: {scanProgress.current} / {scanProgress.total}
                   </span>
-                  <span className='text-sm text-blue-700 dark:text-blue-300'>
+                  <span className='text-sm text-[color:var(--tm-text)]'>
                     {scanProgress.total > 0
                       ? Math.round(
                           (scanProgress.current / scanProgress.total) * 100
@@ -4522,9 +4526,9 @@ const OpenListConfigComponent = ({
                     %
                   </span>
                 </div>
-                <div className='w-full bg-blue-200 dark:bg-blue-800 rounded-full h-2 mb-2'>
+                <div className='w-full bg-[var(--tm-surface-raised)] rounded-full h-2 mb-2'>
                   <div
-                    className='bg-blue-600 dark:bg-blue-500 h-2 rounded-full transition-all duration-300'
+                    className='bg-[var(--tm-text)] h-2 rounded-full transition-all duration-300'
                     style={{
                       width: `${
                         scanProgress.total > 0
@@ -4535,7 +4539,7 @@ const OpenListConfigComponent = ({
                   />
                 </div>
                 {scanProgress.currentFolder && (
-                  <p className='text-xs text-blue-700 dark:text-blue-300'>
+                  <p className='text-[13px] text-[color:var(--tm-text)]'>
                     正在处理: {scanProgress.currentFolder}
                   </p>
                 )}
@@ -4543,66 +4547,66 @@ const OpenListConfigComponent = ({
             )}
 
             {refreshing ? (
-              <div className='text-center py-8 text-gray-500 dark:text-gray-400'>
+              <div className='text-center py-8 text-[color:var(--tm-muted)]'>
                 加载中...
               </div>
             ) : videos.length > 0 ? (
               <div className='overflow-x-auto'>
-                <table className='min-w-full divide-y divide-gray-200 dark:divide-gray-700'>
-                  <thead className='bg-gray-50 dark:bg-gray-800'>
+                <table className='min-w-full divide-y divide-[var(--tm-line)]'>
+                  <thead className='bg-[var(--tm-surface-raised)]'>
                     <tr>
-                      <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider'>
+                      <th className='px-6 py-3 text-left text-[13px] font-medium text-[color:var(--tm-muted)] uppercase tracking-wider'>
                         标题
                       </th>
-                      <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider'>
+                      <th className='px-6 py-3 text-left text-[13px] font-medium text-[color:var(--tm-muted)] uppercase tracking-wider'>
                         状态
                       </th>
-                      <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider'>
+                      <th className='px-6 py-3 text-left text-[13px] font-medium text-[color:var(--tm-muted)] uppercase tracking-wider'>
                         类型
                       </th>
-                      <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider'>
+                      <th className='px-6 py-3 text-left text-[13px] font-medium text-[color:var(--tm-muted)] uppercase tracking-wider'>
                         季度
                       </th>
-                      <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider'>
+                      <th className='px-6 py-3 text-left text-[13px] font-medium text-[color:var(--tm-muted)] uppercase tracking-wider'>
                         年份
                       </th>
-                      <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider'>
+                      <th className='px-6 py-3 text-left text-[13px] font-medium text-[color:var(--tm-muted)] uppercase tracking-wider'>
                         评分
                       </th>
-                      <th className='px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider'>
+                      <th className='px-6 py-3 text-right text-[13px] font-medium text-[color:var(--tm-muted)] uppercase tracking-wider'>
                         操作
                       </th>
                     </tr>
                   </thead>
-                  <tbody className='bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700'>
+                  <tbody className='bg-[var(--tm-surface)] divide-y divide-[var(--tm-line)]'>
                     {videos.map((video) => (
                       <tr
                         key={video.id}
                         className={
-                          video.failed ? 'bg-red-50 dark:bg-red-900/10' : ''
+                          video.failed ? 'bg-[var(--tm-surface-raised)]' : ''
                         }
                       >
-                        <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100'>
+                        <td className='px-6 py-4 whitespace-nowrap text-sm text-[color:var(--tm-text)]'>
                           {video.title}
                         </td>
                         <td className='px-6 py-4 whitespace-nowrap text-sm'>
                           {video.failed ? (
-                            <span className='inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-200'>
+                            <span className='inline-flex items-center px-2 py-1 rounded-full text-[13px] font-medium bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)]'>
                               匹配失败
                             </span>
                           ) : (
-                            <span className='inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-200'>
+                            <span className='inline-flex items-center px-2 py-1 rounded-full text-[13px] font-medium bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)]'>
                               正常
                             </span>
                           )}
                         </td>
-                        <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400'>
+                        <td className='px-6 py-4 whitespace-nowrap text-sm text-[color:var(--tm-muted)]'>
                           {video.mediaType === 'movie' ? '电影' : '剧集'}
                         </td>
-                        <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400'>
+                        <td className='px-6 py-4 whitespace-nowrap text-sm text-[color:var(--tm-muted)]'>
                           {video.seasonNumber ? (
                             <span
-                              className='inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-200'
+                              className='inline-flex items-center px-2 py-1 rounded-full text-[13px] font-medium bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)]'
                               title={
                                 video.seasonName || `第${video.seasonNumber}季`
                               }
@@ -4613,12 +4617,12 @@ const OpenListConfigComponent = ({
                             '-'
                           )}
                         </td>
-                        <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400'>
+                        <td className='px-6 py-4 whitespace-nowrap text-sm text-[color:var(--tm-muted)]'>
                           {video.releaseDate
                             ? video.releaseDate.split('-')[0]
                             : '-'}
                         </td>
-                        <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400'>
+                        <td className='px-6 py-4 whitespace-nowrap text-sm text-[color:var(--tm-muted)]'>
                           {video.voteAverage > 0
                             ? video.voteAverage.toFixed(1)
                             : '-'}
@@ -4667,7 +4671,7 @@ const OpenListConfigComponent = ({
                 </table>
               </div>
             ) : (
-              <div className='text-center py-8 text-gray-500 dark:text-gray-400'>
+              <div className='text-center py-8 text-[color:var(--tm-muted)]'>
                 暂无视频，请点击"立即扫描"扫描视频库
               </div>
             )}
@@ -5050,17 +5054,17 @@ const NetDiskConfigComponent = ({
 
   return (
     <div className='space-y-6'>
-      <details className='pt-4 border-t border-gray-200 dark:border-gray-700'>
-        <summary className='text-sm font-semibold text-gray-900 dark:text-gray-100 cursor-pointer'>
+      <details className='pt-4 border-t border-[var(--tm-line)]'>
+        <summary className='text-sm font-medium text-[color:var(--tm-text)] cursor-pointer'>
           夸克网盘
         </summary>
         <div className='mt-4 space-y-4'>
-          <div className='flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700'>
+          <div className='flex items-center justify-between p-4 bg-[var(--tm-surface-raised)] rounded-lg border border-[var(--tm-line)]'>
             <div>
-              <h3 className='text-sm font-medium text-gray-900 dark:text-gray-100'>
+              <h3 className='text-sm font-medium text-[color:var(--tm-text)]'>
                 启用夸克网盘
               </h3>
-              <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
+              <p className='text-[13px] text-[color:var(--tm-muted)] mt-1'>
                 开启后，网盘搜索中的夸克资源会显示“立即播放”和“转存”按钮
               </p>
             </div>
@@ -5071,12 +5075,12 @@ const NetDiskConfigComponent = ({
                 onChange={(e) => setEnabled(e.target.checked)}
                 className='sr-only peer'
               />
-              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+              <div className="w-11 h-6 bg-[var(--tm-surface-raised)] peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-[var(--tm-text)] rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-[var(--tm-line)] after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-[var(--tm-surface-raised)] after:border-[var(--tm-line)] after:border after:rounded-full after:h-5 after:w-5 after:transition-all border-[var(--tm-line)] peer-checked:bg-[var(--tm-surface-raised)]"></div>
             </label>
           </div>
 
           <div>
-            <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+            <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
               Cookie
             </label>
             <textarea
@@ -5085,12 +5089,12 @@ const NetDiskConfigComponent = ({
               disabled={!enabled}
               rows={5}
               placeholder='粘贴夸克网盘 Cookie'
-              className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed'
+              className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)] focus:ring-2 focus:ring-[var(--tm-text)] focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed'
             />
           </div>
 
           <div>
-            <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+            <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
               转存位置
             </label>
             <input
@@ -5099,12 +5103,12 @@ const NetDiskConfigComponent = ({
               onChange={(e) => setSavePath(e.target.value)}
               disabled={!enabled}
               placeholder='/影视/正式转存'
-              className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed'
+              className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)] focus:ring-2 focus:ring-[var(--tm-text)] focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed'
             />
           </div>
 
           <div>
-            <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+            <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
               播放方式
             </label>
             <select
@@ -5117,22 +5121,22 @@ const NetDiskConfigComponent = ({
                 )
               }
               disabled={!enabled}
-              className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed'
+              className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)] focus:ring-2 focus:ring-[var(--tm-text)] focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed'
             >
               <option value='direct_first'>直链优先</option>
               <option value='transcode_first'>转码优先</option>
             </select>
-            <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
+            <p className='text-[13px] text-[color:var(--tm-muted)] mt-1'>
               直链优先会优先使用原画下载地址；转码优先会优先使用夸克转码播放地址。
             </p>
           </div>
 
-          <div className='flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700'>
+          <div className='flex items-center justify-between p-4 bg-[var(--tm-surface-raised)] rounded-lg border border-[var(--tm-line)]'>
             <div>
-              <h3 className='text-sm font-medium text-gray-900 dark:text-gray-100'>
+              <h3 className='text-sm font-medium text-[color:var(--tm-text)]'>
                 多线程播放
               </h3>
-              <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
+              <p className='text-[13px] text-[color:var(--tm-muted)] mt-1'>
                 开启后，代理会把播放器请求的 Range 拆分并发拉取。
               </p>
             </div>
@@ -5144,7 +5148,7 @@ const NetDiskConfigComponent = ({
                 disabled={!enabled}
                 className='sr-only peer'
               />
-              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-disabled:opacity-50 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+              <div className="w-11 h-6 bg-[var(--tm-surface-raised)] peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-[var(--tm-text)] rounded-full peer peer-disabled:opacity-50 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-[var(--tm-line)] after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-[var(--tm-surface-raised)] after:border-[var(--tm-line)] after:border after:rounded-full after:h-5 after:w-5 after:transition-all border-[var(--tm-line)] peer-checked:bg-[var(--tm-surface-raised)]"></div>
             </label>
           </div>
 
@@ -5167,17 +5171,17 @@ const NetDiskConfigComponent = ({
         </div>
       </details>
 
-      <details className='pt-4 border-t border-gray-200 dark:border-gray-700'>
-        <summary className='text-sm font-semibold text-gray-900 dark:text-gray-100 cursor-pointer'>
+      <details className='pt-4 border-t border-[var(--tm-line)]'>
+        <summary className='text-sm font-medium text-[color:var(--tm-text)] cursor-pointer'>
           移动云盘
         </summary>
         <div className='mt-4 space-y-4'>
-          <div className='flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700'>
+          <div className='flex items-center justify-between p-4 bg-[var(--tm-surface-raised)] rounded-lg border border-[var(--tm-line)]'>
             <div>
-              <h3 className='text-sm font-medium text-gray-900 dark:text-gray-100'>
+              <h3 className='text-sm font-medium text-[color:var(--tm-text)]'>
                 启用移动云盘
               </h3>
-              <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
+              <p className='text-[13px] text-[color:var(--tm-muted)] mt-1'>
                 开启后，网盘搜索中的移动云盘资源会显示“立即播放”按钮
               </p>
             </div>
@@ -5188,12 +5192,12 @@ const NetDiskConfigComponent = ({
                 onChange={(e) => setMobileEnabled(e.target.checked)}
                 className='sr-only peer'
               />
-              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-pink-300 dark:peer-focus:ring-pink-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-pink-600"></div>
+              <div className="w-11 h-6 bg-[var(--tm-surface-raised)] peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-[var(--tm-text)] rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-[var(--tm-line)] after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-[var(--tm-surface-raised)] after:border-[var(--tm-line)] after:border after:rounded-full after:h-5 after:w-5 after:transition-all border-[var(--tm-line)] peer-checked:bg-[var(--tm-surface-raised)]"></div>
             </label>
           </div>
 
           <div>
-            <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+            <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
               验证头
             </label>
             <textarea
@@ -5202,7 +5206,7 @@ const NetDiskConfigComponent = ({
               disabled={!mobileEnabled}
               rows={5}
               placeholder='粘贴移动云盘验证头'
-              className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-pink-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed'
+              className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)] focus:ring-2 focus:ring-[var(--tm-text)] focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed'
             />
           </div>
 
@@ -5231,17 +5235,17 @@ const NetDiskConfigComponent = ({
         </div>
       </details>
 
-      <details className='pt-4 border-t border-gray-200 dark:border-gray-700'>
-        <summary className='text-sm font-semibold text-gray-900 dark:text-gray-100 cursor-pointer'>
+      <details className='pt-4 border-t border-[var(--tm-line)]'>
+        <summary className='text-sm font-medium text-[color:var(--tm-text)] cursor-pointer'>
           百度网盘
         </summary>
         <div className='mt-4 space-y-4'>
-          <div className='flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700'>
+          <div className='flex items-center justify-between p-4 bg-[var(--tm-surface-raised)] rounded-lg border border-[var(--tm-line)]'>
             <div>
-              <h3 className='text-sm font-medium text-gray-900 dark:text-gray-100'>
+              <h3 className='text-sm font-medium text-[color:var(--tm-text)]'>
                 启用百度网盘
               </h3>
-              <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
+              <p className='text-[13px] text-[color:var(--tm-muted)] mt-1'>
                 开启后，网盘搜索中的百度网盘资源会显示“立即播放”按钮
               </p>
             </div>
@@ -5252,12 +5256,12 @@ const NetDiskConfigComponent = ({
                 onChange={(e) => setBaiduEnabled(e.target.checked)}
                 className='sr-only peer'
               />
-              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-sky-300 dark:peer-focus:ring-sky-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-sky-600"></div>
+              <div className="w-11 h-6 bg-[var(--tm-surface-raised)] peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-[var(--tm-text)] rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-[var(--tm-line)] after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-[var(--tm-surface-raised)] after:border-[var(--tm-line)] after:border after:rounded-full after:h-5 after:w-5 after:transition-all border-[var(--tm-line)] peer-checked:bg-[var(--tm-surface-raised)]"></div>
             </label>
           </div>
 
           <div>
-            <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+            <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
               Cookie
             </label>
             <textarea
@@ -5266,7 +5270,7 @@ const NetDiskConfigComponent = ({
               disabled={!baiduEnabled}
               rows={5}
               placeholder='粘贴百度网盘 Cookie'
-              className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-sky-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed'
+              className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)] focus:ring-2 focus:ring-[var(--tm-text)] focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed'
             />
           </div>
 
@@ -5295,21 +5299,21 @@ const NetDiskConfigComponent = ({
         </div>
       </details>
 
-      <details className='pt-4 border-t border-gray-200 dark:border-gray-700'>
-        <summary className='text-sm font-semibold text-gray-900 dark:text-gray-100 cursor-pointer'>
+      <details className='pt-4 border-t border-[var(--tm-line)]'>
+        <summary className='text-sm font-medium text-[color:var(--tm-text)] cursor-pointer'>
           天翼云盘
         </summary>
         <div className='mt-4 space-y-4'>
-          <div className='rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-300'>
+          <div className='rounded-lg border border-[var(--tm-line)] bg-[var(--tm-surface-raised)] p-4 text-sm text-[color:var(--tm-text)]'>
             使用天翼云盘前，请先关闭账号的设备锁，否则可能无法登录。
           </div>
 
-          <div className='flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700'>
+          <div className='flex items-center justify-between p-4 bg-[var(--tm-surface-raised)] rounded-lg border border-[var(--tm-line)]'>
             <div>
-              <h3 className='text-sm font-medium text-gray-900 dark:text-gray-100'>
+              <h3 className='text-sm font-medium text-[color:var(--tm-text)]'>
                 启用天翼云盘
               </h3>
-              <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
+              <p className='text-[13px] text-[color:var(--tm-muted)] mt-1'>
                 开启后，网盘搜索中的天翼云盘资源会显示“立即播放”按钮
               </p>
             </div>
@@ -5320,12 +5324,12 @@ const NetDiskConfigComponent = ({
                 onChange={(e) => setTianyiEnabled(e.target.checked)}
                 className='sr-only peer'
               />
-              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-red-300 dark:peer-focus:ring-red-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-red-600"></div>
+              <div className="w-11 h-6 bg-[var(--tm-surface-raised)] peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-[var(--tm-text)] rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-[var(--tm-line)] after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-[var(--tm-surface-raised)] after:border-[var(--tm-line)] after:border after:rounded-full after:h-5 after:w-5 after:transition-all border-[var(--tm-line)] peer-checked:bg-[var(--tm-surface-raised)]"></div>
             </label>
           </div>
 
           <div>
-            <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+            <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
               账号
             </label>
             <input
@@ -5334,12 +5338,12 @@ const NetDiskConfigComponent = ({
               onChange={(e) => setTianyiAccount(e.target.value)}
               disabled={!tianyiEnabled}
               placeholder='手机号 / 邮箱 / 天翼账号'
-              className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-red-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed'
+              className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)] focus:ring-2 focus:ring-[var(--tm-text)] focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed'
             />
           </div>
 
           <div>
-            <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+            <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
               密码
             </label>
             <input
@@ -5348,7 +5352,7 @@ const NetDiskConfigComponent = ({
               onChange={(e) => setTianyiPassword(e.target.value)}
               disabled={!tianyiEnabled}
               placeholder='输入天翼云盘密码'
-              className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-red-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed'
+              className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)] focus:ring-2 focus:ring-[var(--tm-text)] focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed'
             />
           </div>
 
@@ -5378,17 +5382,17 @@ const NetDiskConfigComponent = ({
         </div>
       </details>
 
-      <details className='pt-4 border-t border-gray-200 dark:border-gray-700'>
-        <summary className='text-sm font-semibold text-gray-900 dark:text-gray-100 cursor-pointer'>
+      <details className='pt-4 border-t border-[var(--tm-line)]'>
+        <summary className='text-sm font-medium text-[color:var(--tm-text)] cursor-pointer'>
           123网盘
         </summary>
         <div className='mt-4 space-y-4'>
-          <div className='flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700'>
+          <div className='flex items-center justify-between p-4 bg-[var(--tm-surface-raised)] rounded-lg border border-[var(--tm-line)]'>
             <div>
-              <h3 className='text-sm font-medium text-gray-900 dark:text-gray-100'>
+              <h3 className='text-sm font-medium text-[color:var(--tm-text)]'>
                 启用123网盘
               </h3>
-              <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
+              <p className='text-[13px] text-[color:var(--tm-muted)] mt-1'>
                 开启后，网盘搜索中的123网盘资源会显示“立即播放”按钮
               </p>
             </div>
@@ -5399,12 +5403,12 @@ const NetDiskConfigComponent = ({
                 onChange={(e) => setPan123Enabled(e.target.checked)}
                 className='sr-only peer'
               />
-              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-teal-300 dark:peer-focus:ring-teal-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-teal-600"></div>
+              <div className="w-11 h-6 bg-[var(--tm-surface-raised)] peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-[var(--tm-text)] rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-[var(--tm-line)] after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-[var(--tm-surface-raised)] after:border-[var(--tm-line)] after:border after:rounded-full after:h-5 after:w-5 after:transition-all border-[var(--tm-line)] peer-checked:bg-[var(--tm-surface-raised)]"></div>
             </label>
           </div>
 
           <div>
-            <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+            <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
               账号
             </label>
             <input
@@ -5413,12 +5417,12 @@ const NetDiskConfigComponent = ({
               onChange={(e) => setPan123Account(e.target.value)}
               disabled={!pan123Enabled}
               placeholder='输入123网盘账号'
-              className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-teal-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed'
+              className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)] focus:ring-2 focus:ring-[var(--tm-text)] focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed'
             />
           </div>
 
           <div>
-            <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+            <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
               密码
             </label>
             <input
@@ -5427,7 +5431,7 @@ const NetDiskConfigComponent = ({
               onChange={(e) => setPan123Password(e.target.value)}
               disabled={!pan123Enabled}
               placeholder='输入123网盘密码'
-              className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-teal-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed'
+              className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)] focus:ring-2 focus:ring-[var(--tm-text)] focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed'
             />
           </div>
 
@@ -5457,17 +5461,17 @@ const NetDiskConfigComponent = ({
         </div>
       </details>
 
-      <details className='pt-4 border-t border-gray-200 dark:border-gray-700'>
-        <summary className='text-sm font-semibold text-gray-900 dark:text-gray-100 cursor-pointer'>
+      <details className='pt-4 border-t border-[var(--tm-line)]'>
+        <summary className='text-sm font-medium text-[color:var(--tm-text)] cursor-pointer'>
           UC网盘
         </summary>
         <div className='mt-4 space-y-4'>
-          <div className='flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700'>
+          <div className='flex items-center justify-between p-4 bg-[var(--tm-surface-raised)] rounded-lg border border-[var(--tm-line)]'>
             <div>
-              <h3 className='text-sm font-medium text-gray-900 dark:text-gray-100'>
+              <h3 className='text-sm font-medium text-[color:var(--tm-text)]'>
                 启用UC网盘
               </h3>
-              <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
+              <p className='text-[13px] text-[color:var(--tm-muted)] mt-1'>
                 开启后，网盘搜索中的UC网盘资源会显示“立即播放”按钮
               </p>
             </div>
@@ -5478,12 +5482,12 @@ const NetDiskConfigComponent = ({
                 onChange={(e) => setUcEnabled(e.target.checked)}
                 className='sr-only peer'
               />
-              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-300 dark:peer-focus:ring-green-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-green-600"></div>
+              <div className="w-11 h-6 bg-[var(--tm-surface-raised)] peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-[var(--tm-text)] rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-[var(--tm-line)] after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-[var(--tm-surface-raised)] after:border-[var(--tm-line)] after:border after:rounded-full after:h-5 after:w-5 after:transition-all border-[var(--tm-line)] peer-checked:bg-[var(--tm-surface-raised)]"></div>
             </label>
           </div>
 
           <div>
-            <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+            <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
               Cookie
             </label>
             <textarea
@@ -5492,12 +5496,12 @@ const NetDiskConfigComponent = ({
               disabled={!ucEnabled}
               rows={5}
               placeholder='粘贴 UC 网盘 Cookie'
-              className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed'
+              className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)] focus:ring-2 focus:ring-[var(--tm-text)] focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed'
             />
           </div>
 
           <div>
-            <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+            <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
               Open API Token（可选）
             </label>
             <input
@@ -5506,12 +5510,12 @@ const NetDiskConfigComponent = ({
               onChange={(e) => setUcToken(e.target.value)}
               disabled={!ucEnabled}
               placeholder='可选，填写后优先尝试原画地址'
-              className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed'
+              className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)] focus:ring-2 focus:ring-[var(--tm-text)] focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed'
             />
           </div>
 
           <div>
-            <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+            <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
               临时转存位置
             </label>
             <input
@@ -5520,7 +5524,7 @@ const NetDiskConfigComponent = ({
               onChange={(e) => setUcSavePath(e.target.value)}
               disabled={!ucEnabled}
               placeholder='/影视/UC临时转存'
-              className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed'
+              className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)] focus:ring-2 focus:ring-[var(--tm-text)] focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed'
             />
           </div>
 
@@ -5545,17 +5549,17 @@ const NetDiskConfigComponent = ({
         </div>
       </details>
 
-      <details className='pt-4 border-t border-gray-200 dark:border-gray-700'>
-        <summary className='text-sm font-semibold text-gray-900 dark:text-gray-100 cursor-pointer'>
+      <details className='pt-4 border-t border-[var(--tm-line)]'>
+        <summary className='text-sm font-medium text-[color:var(--tm-text)] cursor-pointer'>
           115网盘
         </summary>
         <div className='mt-4 space-y-4'>
-          <div className='flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700'>
+          <div className='flex items-center justify-between p-4 bg-[var(--tm-surface-raised)] rounded-lg border border-[var(--tm-line)]'>
             <div>
-              <h3 className='text-sm font-medium text-gray-900 dark:text-gray-100'>
+              <h3 className='text-sm font-medium text-[color:var(--tm-text)]'>
                 启用115网盘
               </h3>
-              <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
+              <p className='text-[13px] text-[color:var(--tm-muted)] mt-1'>
                 开启后，网盘搜索中的115网盘资源会显示“立即播放”按钮
               </p>
             </div>
@@ -5566,12 +5570,12 @@ const NetDiskConfigComponent = ({
                 onChange={(e) => setPan115Enabled(e.target.checked)}
                 className='sr-only peer'
               />
-              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-amber-300 dark:peer-focus:ring-amber-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-amber-600"></div>
+              <div className="w-11 h-6 bg-[var(--tm-surface-raised)] peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-[var(--tm-text)] rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-[var(--tm-line)] after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-[var(--tm-surface-raised)] after:border-[var(--tm-line)] after:border after:rounded-full after:h-5 after:w-5 after:transition-all border-[var(--tm-line)] peer-checked:bg-[var(--tm-surface-raised)]"></div>
             </label>
           </div>
 
           <div>
-            <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+            <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
               Cookie
             </label>
             <textarea
@@ -5580,7 +5584,7 @@ const NetDiskConfigComponent = ({
               disabled={!pan115Enabled}
               rows={5}
               placeholder='粘贴115网盘 Cookie'
-              className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-amber-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed'
+              className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)] focus:ring-2 focus:ring-[var(--tm-text)] focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed'
             />
           </div>
 
@@ -6108,7 +6112,7 @@ const EmbyConfigComponent = ({
       {/* 源列表 */}
       <div className='space-y-4'>
         <div className='flex items-center justify-between'>
-          <h3 className='text-lg font-medium text-gray-900 dark:text-gray-100'>
+          <h3 className='text-lg font-medium text-[color:var(--tm-text)]'>
             Emby 源列表 ({sources.length})
           </h3>
           <div className='flex gap-2'>
@@ -6119,8 +6123,8 @@ const EmbyConfigComponent = ({
         </div>
 
         {selectedSources.size > 0 && (
-          <div className='flex items-center gap-2 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg'>
-            <span className='text-sm text-gray-700 dark:text-gray-300'>
+          <div className='flex items-center gap-2 p-3 bg-[var(--tm-surface-raised)] rounded-lg'>
+            <span className='text-sm text-[color:var(--tm-muted)]'>
               已选择 {selectedSources.size} 项
             </span>
             <button
@@ -6154,14 +6158,14 @@ const EmbyConfigComponent = ({
         )}
 
         {sources.length === 0 ? (
-          <div className='text-center py-8 text-gray-500 dark:text-gray-400'>
+          <div className='text-center py-8 text-[color:var(--tm-muted)]'>
             暂无Emby源，点击"添加新源"开始配置
           </div>
         ) : (
           sources.map((source) => (
             <div
               key={source.key}
-              className='border border-gray-200 dark:border-gray-700 rounded-lg p-4 bg-white dark:bg-gray-800'
+              className='border border-[var(--tm-line)] rounded-lg p-4 bg-[var(--tm-surface)]'
             >
               <div className='flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3'>
                 <div className='flex items-center gap-3 flex-1'>
@@ -6177,36 +6181,36 @@ const EmbyConfigComponent = ({
                       }
                       setSelectedSources(newSelected);
                     }}
-                    className='w-4 h-4 text-blue-600 rounded border-gray-300 dark:border-gray-600'
+                    className='w-4 h-4 text-[color:var(--tm-text)] rounded'
                   />
                   <div className='flex-1'>
                     <div className='flex items-center gap-3 flex-wrap'>
-                      <h4 className='text-base font-medium text-gray-900 dark:text-gray-100'>
+                      <h4 className='text-base font-medium text-[color:var(--tm-text)]'>
                         {source.name}
                       </h4>
                       {source.isDefault && (
-                        <span className='px-2 py-0.5 text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-200 rounded'>
+                        <span className='px-2 py-0.5 text-[13px] font-medium bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)] rounded'>
                           默认
                         </span>
                       )}
                       <span
-                        className={`px-2 py-0.5 text-xs font-medium rounded ${
+                        className={`px-2 py-0.5 text-[13px] font-medium rounded ${
                           source.enabled
-                            ? 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-200'
-                            : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
+                            ? 'bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)]'
+                            : 'bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)] '
                         }`}
                       >
                         {source.enabled ? '已启用' : '已禁用'}
                       </span>
                     </div>
-                    <p className='mt-1 text-sm text-gray-600 dark:text-gray-400'>
+                    <p className='mt-1 text-sm text-[color:var(--tm-muted)]'>
                       标识符: {source.key}
                     </p>
-                    <p className='mt-1 text-sm text-gray-600 dark:text-gray-400'>
+                    <p className='mt-1 text-sm text-[color:var(--tm-muted)]'>
                       服务器: {source.ServerURL}
                     </p>
                     {source.UserId && (
-                      <p className='mt-1 text-sm text-gray-600 dark:text-gray-400'>
+                      <p className='mt-1 text-sm text-[color:var(--tm-muted)]'>
                         用户ID: {source.UserId}
                       </p>
                     )}
@@ -6253,15 +6257,15 @@ const EmbyConfigComponent = ({
 
       {/* 添加/编辑表单 */}
       {(showAddForm || editingSource) && (
-        <div className='border border-gray-200 dark:border-gray-700 rounded-lg p-6 bg-gray-50 dark:bg-gray-800/50'>
-          <h3 className='text-lg font-medium text-gray-900 dark:text-gray-100 mb-4'>
+        <div className='border border-[var(--tm-line)] rounded-lg p-6 bg-[var(--tm-surface-raised)]'>
+          <h3 className='text-lg font-medium text-[color:var(--tm-text)] mb-4'>
             {editingSource ? '编辑 Emby 源' : '添加新的 Emby 源'}
           </h3>
 
           <div className='space-y-4'>
             {/* 标识符 */}
             <div>
-              <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+              <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
                 标识符 *
               </label>
               <input
@@ -6272,16 +6276,16 @@ const EmbyConfigComponent = ({
                 }
                 disabled={!!editingSource}
                 placeholder='home, office, etc.'
-                className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 disabled:bg-gray-100 dark:disabled:bg-gray-700'
+                className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)] disabled:bg-[var(--tm-surface-raised)]'
               />
-              <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
+              <p className='mt-1 text-[13px] text-[color:var(--tm-muted)]'>
                 唯一标识符，只能包含字母、数字、下划线，创建后不可修改
               </p>
             </div>
 
             {/* 名称 */}
             <div>
-              <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+              <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
                 显示名称 *
               </label>
               <input
@@ -6291,13 +6295,13 @@ const EmbyConfigComponent = ({
                   setFormData({ ...formData, name: e.target.value })
                 }
                 placeholder='家庭Emby, 公司Emby, etc.'
-                className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100'
+                className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)]'
               />
             </div>
 
             {/* 服务器地址 */}
             <div>
-              <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+              <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
                 Emby 服务器地址 *
               </label>
               <input
@@ -6307,13 +6311,13 @@ const EmbyConfigComponent = ({
                   setFormData({ ...formData, ServerURL: e.target.value })
                 }
                 placeholder='http://192.168.1.100:8096'
-                className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100'
+                className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)]'
               />
             </div>
 
             {/* 认证方式切换卡 */}
             <div>
-              <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+              <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
                 认证方式 *
               </label>
               <div className='flex gap-2 mb-4'>
@@ -6326,8 +6330,8 @@ const EmbyConfigComponent = ({
                   }}
                   className={`flex-1 px-4 py-2 rounded-lg font-medium transition-colors ${
                     authMode === 'apikey'
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                      ? 'bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] min-h-[44px] tm-press'
+                      : 'bg-[var(--tm-surface-raised)] text-[color:var(--tm-muted)] hover:bg-[var(--tm-line)] min-h-[44px] tm-press'
                   }`}
                 >
                   密钥认证
@@ -6341,8 +6345,8 @@ const EmbyConfigComponent = ({
                   }}
                   className={`flex-1 px-4 py-2 rounded-lg font-medium transition-colors ${
                     authMode === 'password'
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                      ? 'bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] min-h-[44px] tm-press'
+                      : 'bg-[var(--tm-surface-raised)] text-[color:var(--tm-muted)] hover:bg-[var(--tm-line)] min-h-[44px] tm-press'
                   }`}
                 >
                   账号认证
@@ -6355,7 +6359,7 @@ const EmbyConfigComponent = ({
               <>
                 {/* API Key */}
                 <div>
-                  <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                  <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
                     API Key *
                   </label>
                   <input
@@ -6365,16 +6369,16 @@ const EmbyConfigComponent = ({
                       setFormData({ ...formData, ApiKey: e.target.value })
                     }
                     placeholder='输入 Emby API Key'
-                    className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100'
+                    className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)]'
                   />
-                  <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
+                  <p className='mt-1 text-[13px] text-[color:var(--tm-muted)]'>
                     在 Emby 控制台的 API 密钥页面生成
                   </p>
                 </div>
 
                 {/* 用户 ID */}
                 <div>
-                  <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                  <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
                     用户 ID *
                   </label>
                   <input
@@ -6384,9 +6388,9 @@ const EmbyConfigComponent = ({
                       setFormData({ ...formData, UserId: e.target.value })
                     }
                     placeholder='aab507c58e874de6a9bd12388d72f4d2'
-                    className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100'
+                    className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)]'
                   />
-                  <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
+                  <p className='mt-1 text-[13px] text-[color:var(--tm-muted)]'>
                     从你的 Emby 抓包数据中获取用户 ID，通常在 URL 中如
                     /Users/[userId]/...
                   </p>
@@ -6399,7 +6403,7 @@ const EmbyConfigComponent = ({
               <>
                 {/* 用户名 */}
                 <div>
-                  <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                  <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
                     用户名 *
                   </label>
                   <input
@@ -6409,13 +6413,13 @@ const EmbyConfigComponent = ({
                       setFormData({ ...formData, Username: e.target.value })
                     }
                     placeholder='Emby 用户名'
-                    className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100'
+                    className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)]'
                   />
                 </div>
 
                 {/* 密码 */}
                 <div>
-                  <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                  <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
                     密码（可选）
                   </label>
                   <input
@@ -6425,9 +6429,9 @@ const EmbyConfigComponent = ({
                       setFormData({ ...formData, Password: e.target.value })
                     }
                     placeholder='Emby 密码（如果账号没有密码可留空）'
-                    className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100'
+                    className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)]'
                   />
-                  <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
+                  <p className='mt-1 text-[13px] text-[color:var(--tm-muted)]'>
                     如果 Emby 账号没有设置密码，可以留空
                   </p>
                 </div>
@@ -6436,7 +6440,7 @@ const EmbyConfigComponent = ({
 
             {/* 启用开关 */}
             <div className='flex items-center justify-between'>
-              <label className='text-sm font-medium text-gray-700 dark:text-gray-300'>
+              <label className='text-sm font-medium text-[color:var(--tm-muted)]'>
                 启用此源
               </label>
               <button
@@ -6445,12 +6449,12 @@ const EmbyConfigComponent = ({
                 }
                 className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
                   formData.enabled
-                    ? 'bg-blue-600'
-                    : 'bg-gray-200 dark:bg-gray-700'
+                    ? 'bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] tm-press'
+                    : 'bg-[var(--tm-surface-raised)] tm-press'
                 }`}
               >
                 <span
-                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                  className={`inline-block h-4 w-4 transform rounded-full bg-[var(--tm-surface)] transition-transform ${
                     formData.enabled ? 'translate-x-6' : 'translate-x-1'
                   }`}
                 />
@@ -6458,18 +6462,18 @@ const EmbyConfigComponent = ({
             </div>
 
             {/* 高级选项 */}
-            <div className='border-t border-gray-200 dark:border-gray-700 pt-4 mt-4'>
-              <h4 className='text-sm font-medium text-gray-700 dark:text-gray-300 mb-3'>
+            <div className='border-t border-[var(--tm-line)] pt-4 mt-4'>
+              <h4 className='text-sm font-medium text-[color:var(--tm-muted)] mb-3'>
                 高级选项
               </h4>
 
               {/* 选项1: 播放链接移除/emby前缀 */}
               <div className='flex items-center justify-between mb-3'>
                 <div className='flex-1'>
-                  <label className='text-sm font-medium text-gray-700 dark:text-gray-300'>
+                  <label className='text-sm font-medium text-[color:var(--tm-muted)]'>
                     播放链接移除/emby前缀
                   </label>
-                  <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
+                  <p className='text-[13px] text-[color:var(--tm-muted)] mt-1'>
                     启用后将从播放链接中移除 /emby 前缀
                   </p>
                 </div>
@@ -6482,12 +6486,12 @@ const EmbyConfigComponent = ({
                   }
                   className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
                     formData.removeEmbyPrefix
-                      ? 'bg-blue-600'
-                      : 'bg-gray-200 dark:bg-gray-700'
+                      ? 'bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] tm-press'
+                      : 'bg-[var(--tm-surface-raised)] tm-press'
                   }`}
                 >
                   <span
-                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                    className={`inline-block h-4 w-4 transform rounded-full bg-[var(--tm-surface)] transition-transform ${
                       formData.removeEmbyPrefix
                         ? 'translate-x-6'
                         : 'translate-x-1'
@@ -6499,10 +6503,10 @@ const EmbyConfigComponent = ({
               {/* 选项2: 拼接MediaSourceId参数 */}
               <div className='flex items-center justify-between mb-3'>
                 <div className='flex-1'>
-                  <label className='text-sm font-medium text-gray-700 dark:text-gray-300'>
+                  <label className='text-sm font-medium text-[color:var(--tm-muted)]'>
                     拼接MediaSourceId参数
                   </label>
-                  <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
+                  <p className='text-[13px] text-[color:var(--tm-muted)] mt-1'>
                     启用后将调用 PlaybackInfo API 获取 MediaSourceId
                     并添加到播放链接
                   </p>
@@ -6516,12 +6520,12 @@ const EmbyConfigComponent = ({
                   }
                   className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
                     formData.appendMediaSourceId
-                      ? 'bg-blue-600'
-                      : 'bg-gray-200 dark:bg-gray-700'
+                      ? 'bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] tm-press'
+                      : 'bg-[var(--tm-surface-raised)] tm-press'
                   }`}
                 >
                   <span
-                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                    className={`inline-block h-4 w-4 transform rounded-full bg-[var(--tm-surface)] transition-transform ${
                       formData.appendMediaSourceId
                         ? 'translate-x-6'
                         : 'translate-x-1'
@@ -6533,10 +6537,10 @@ const EmbyConfigComponent = ({
               {/* 选项3: 转码mp4 */}
               <div className='flex items-center justify-between mb-3'>
                 <div className='flex-1'>
-                  <label className='text-sm font-medium text-gray-700 dark:text-gray-300'>
+                  <label className='text-sm font-medium text-[color:var(--tm-muted)]'>
                     转码mp4
                   </label>
-                  <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
+                  <p className='text-[13px] text-[color:var(--tm-muted)] mt-1'>
                     启用后将使用 stream.mp4 格式并移除 Static 参数
                   </p>
                 </div>
@@ -6549,12 +6553,12 @@ const EmbyConfigComponent = ({
                   }
                   className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
                     formData.transcodeMp4
-                      ? 'bg-blue-600'
-                      : 'bg-gray-200 dark:bg-gray-700'
+                      ? 'bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] tm-press'
+                      : 'bg-[var(--tm-surface-raised)] tm-press'
                   }`}
                 >
                   <span
-                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                    className={`inline-block h-4 w-4 transform rounded-full bg-[var(--tm-surface)] transition-transform ${
                       formData.transcodeMp4 ? 'translate-x-6' : 'translate-x-1'
                     }`}
                   />
@@ -6564,10 +6568,10 @@ const EmbyConfigComponent = ({
               {/* 视频播放代理开关 */}
               <div className='flex items-center justify-between mb-3'>
                 <div className='flex-1'>
-                  <h4 className='text-sm font-medium text-gray-900 dark:text-white'>
+                  <h4 className='text-sm font-medium text-[color:var(--tm-text)]'>
                     视频播放代理
                   </h4>
-                  <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
+                  <p className='text-[13px] text-[color:var(--tm-muted)] mt-1'>
                     启用后视频播放将通过服务器代理
                   </p>
                 </div>
@@ -6577,12 +6581,12 @@ const EmbyConfigComponent = ({
                   }
                   className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
                     formData.proxyPlay
-                      ? 'bg-blue-600'
-                      : 'bg-gray-200 dark:bg-gray-700'
+                      ? 'bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] tm-press'
+                      : 'bg-[var(--tm-surface-raised)] tm-press'
                   }`}
                 >
                   <span
-                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                    className={`inline-block h-4 w-4 transform rounded-full bg-[var(--tm-surface)] transition-transform ${
                       formData.proxyPlay ? 'translate-x-6' : 'translate-x-1'
                     }`}
                   />
@@ -6591,7 +6595,7 @@ const EmbyConfigComponent = ({
 
               {/* 自定义User-Agent */}
               <div className='mb-3'>
-                <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
                   自定义User-Agent
                 </label>
                 <input
@@ -6604,16 +6608,16 @@ const EmbyConfigComponent = ({
                     })
                   }
                   placeholder='留空使用默认浏览器UA'
-                  className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white text-sm'
+                  className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-md shadow-sm focus:outline-none focus:ring-[var(--tm-text)] focus:border-[var(--tm-line)] bg-[var(--tm-surface)] text-[color:var(--tm-text)] text-sm'
                 />
-                <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
+                <p className='text-[13px] text-[color:var(--tm-muted)] mt-1'>
                   用于登录、获取影片和代理视频时的User-Agent，留空则使用默认浏览器UA
                 </p>
               </div>
 
               {/* 自定义 X-Emby-Authorization */}
               <div className='mb-3'>
-                <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
                   自定义 X-Emby-Authorization
                 </label>
                 <input
@@ -6626,10 +6630,12 @@ const EmbyConfigComponent = ({
                     })
                   }
                   placeholder='留空使用默认 moontvplus 认证头'
-                  className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white text-sm'
+                  className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-md shadow-sm focus:outline-none focus:ring-[var(--tm-text)] focus:border-[var(--tm-line)] bg-[var(--tm-surface)] text-[color:var(--tm-text)] text-sm'
                 />
-                <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
-                  仅用于账号认证登录请求，示例：MediaBrowser Client=&quot;moontvplus&quot;, Device=&quot;Web&quot;, DeviceId=&quot;moontvplus-web&quot;, Version=&quot;1.0.0&quot;
+                <p className='text-[13px] text-[color:var(--tm-muted)] mt-1'>
+                  仅用于账号认证登录请求，示例：MediaBrowser
+                  Client=&quot;moontvplus&quot;, Device=&quot;Web&quot;,
+                  DeviceId=&quot;moontvplus-web&quot;, Version=&quot;1.0.0&quot;
                 </p>
               </div>
             </div>
@@ -6652,7 +6658,7 @@ const EmbyConfigComponent = ({
       )}
 
       {/* 全局操作 */}
-      <div className='flex gap-3 pt-4 border-t border-gray-200 dark:border-gray-700'>
+      <div className='flex gap-3 pt-4 border-t border-[var(--tm-line)]'>
         <button
           onClick={handleClearCache}
           disabled={isLoading('clearEmbyCache')}
@@ -6730,9 +6736,14 @@ const VideoSourceConfig = ({
   const [showValidationModal, setShowValidationModal] = useState(false);
   const [showWeightModal, setShowWeightModal] = useState(false);
   const [showSpecialSourcesModal, setShowSpecialSourcesModal] = useState(false);
-  const [showClientAdSourcesModal, setShowClientAdSourcesModal] = useState(false);
-  const [specialSourceDraftApis, setSpecialSourceDraftApis] = useState<string[]>([]);
-  const [clientAdSourceDraftApis, setClientAdSourceDraftApis] = useState<string[]>([]);
+  const [showClientAdSourcesModal, setShowClientAdSourcesModal] =
+    useState(false);
+  const [specialSourceDraftApis, setSpecialSourceDraftApis] = useState<
+    string[]
+  >([]);
+  const [clientAdSourceDraftApis, setClientAdSourceDraftApis] = useState<
+    string[]
+  >([]);
   const [weightDraftSources, setWeightDraftSources] = useState<DataSource[]>(
     []
   );
@@ -6883,7 +6894,6 @@ const VideoSourceConfig = ({
       console.error('操作失败', 'toggle_proxy_mode', key);
     });
   };
-
 
   const openSpecialSourcesModal = () => {
     setSpecialSourceDraftApis(config?.SpecialSourceApis || []);
@@ -7317,7 +7327,7 @@ const VideoSourceConfig = ({
         return {
           text: '检测中',
           className:
-            'bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300',
+            'bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)]',
           icon: '⟳',
           message: result.message,
         };
@@ -7325,7 +7335,7 @@ const VideoSourceConfig = ({
         return {
           text: '有效',
           className:
-            'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-300',
+            'bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)]',
           icon: '✓',
           message: result.message,
         };
@@ -7333,7 +7343,7 @@ const VideoSourceConfig = ({
         return {
           text: '无法搜索',
           className:
-            'bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-300',
+            'bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)]',
           icon: '⚠',
           message: result.message,
         };
@@ -7341,7 +7351,7 @@ const VideoSourceConfig = ({
         return {
           text: '无效',
           className:
-            'bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-300',
+            'bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)]',
           icon: '✗',
           message: result.message,
         };
@@ -7377,7 +7387,7 @@ const VideoSourceConfig = ({
             max='100'
             value={localWeight}
             onChange={(e) => commitWeight(parseInt(e.target.value) || 0)}
-            className='w-full accent-blue-600'
+            className='w-full accent-[var(--tm-text)]'
           />
           <input
             type='number'
@@ -7391,7 +7401,7 @@ const VideoSourceConfig = ({
               setLocalWeight(clampedValue);
             }}
             onBlur={(e) => commitWeight(parseInt(e.target.value) || 0)}
-            className='w-20 px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent'
+            className='w-20 px-3 py-2 text-sm border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)] focus:ring-2 focus:ring-[var(--tm-text)] focus:border-transparent'
           />
         </div>
       );
@@ -7420,40 +7430,40 @@ const VideoSourceConfig = ({
         <div
           ref={setNodeRef}
           style={style}
-          className='grid grid-cols-[88px_minmax(0,1fr)_112px_112px_220px] items-center gap-3 rounded-2xl border border-gray-200 bg-white px-4 py-3 shadow-sm transition hover:border-blue-200 hover:shadow dark:border-gray-700 dark:bg-gray-800/90 dark:hover:border-blue-800'
+          className='grid grid-cols-[88px_minmax(0,1fr)_112px_112px_220px] items-center gap-3 rounded-2xl border border-[var(--tm-line)] bg-[var(--tm-surface)] px-4 py-3 shadow-sm transition hover:border-[var(--tm-line)] hover:shadow'
         >
           <div
-            className='flex items-center gap-3 text-sm text-gray-500 dark:text-gray-400 cursor-grab'
+            className='flex items-center gap-3 text-sm text-[color:var(--tm-muted)] cursor-grab'
             style={{ touchAction: 'none' }}
             {...attributes}
             {...listeners}
           >
             <GripVertical size={16} />
-            <span className='font-medium text-gray-700 dark:text-gray-200'>
+            <span className='font-medium text-[color:var(--tm-text)]'>
               #{index + 1}
             </span>
           </div>
           <div className='min-w-0'>
-            <div className='truncate text-sm font-medium text-gray-900 dark:text-gray-100'>
+            <div className='truncate text-sm font-medium text-[color:var(--tm-text)]'>
               {source.name}
             </div>
-            <div className='truncate text-xs text-gray-500 dark:text-gray-400'>
+            <div className='truncate text-[13px] text-[color:var(--tm-muted)]'>
               {source.key}
             </div>
           </div>
           <div>
             <span
-              className={`inline-flex rounded-full px-2.5 py-1 text-xs font-medium ${
+              className={`inline-flex rounded-full px-2.5 py-1 text-[13px] font-medium ${
                 source.disabled
-                  ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'
-                  : 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300'
+                  ? 'bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)]'
+                  : 'bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)]'
               }`}
             >
               {source.disabled ? '已禁用' : '启用中'}
             </span>
           </div>
           <div>
-            <span className='inline-flex rounded-full bg-blue-100 px-2.5 py-1 text-xs font-medium text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'>
+            <span className='inline-flex rounded-full bg-[var(--tm-surface-raised)] px-2.5 py-1 text-[13px] font-medium text-[color:var(--tm-text)]'>
               {recommendedWeight}
             </span>
           </div>
@@ -7468,39 +7478,39 @@ const VideoSourceConfig = ({
 
   const SourceRow = memo(({ source }: { source: DataSource }) => {
     return (
-      <tr className='hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors'>
+      <tr className='hover:bg-[var(--tm-line)] transition-colors'>
         <td className='px-2 py-4 text-center'>
           <input
             type='checkbox'
             checked={selectedSources.has(source.key)}
             onChange={(e) => handleSelectSource(source.key, e.target.checked)}
-            className='w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600'
+            className='w-4 h-4 text-[color:var(--tm-text)] bg-[var(--tm-surface-raised)] rounded focus:ring-[var(--tm-text)] ring-offset-[var(--tm-text)] focus:ring-2'
           />
         </td>
-        <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100'>
+        <td className='px-6 py-4 whitespace-nowrap text-sm text-[color:var(--tm-text)]'>
           {source.name}
         </td>
-        <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100'>
+        <td className='px-6 py-4 whitespace-nowrap text-sm text-[color:var(--tm-text)]'>
           {source.key}
         </td>
         <td
-          className='px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100 max-w-[12rem] truncate'
+          className='px-6 py-4 whitespace-nowrap text-sm text-[color:var(--tm-text)] max-w-[12rem] truncate'
           title={source.api}
         >
           {source.api}
         </td>
         <td
-          className='px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100 max-w-[8rem] truncate'
+          className='px-6 py-4 whitespace-nowrap text-sm text-[color:var(--tm-text)] max-w-[8rem] truncate'
           title={source.detail || '-'}
         >
           {source.detail || '-'}
         </td>
         <td className='px-6 py-4 whitespace-nowrap max-w-[1rem]'>
           <span
-            className={`px-2 py-1 text-xs rounded-full ${
+            className={`px-2 py-1 text-[13px] rounded-full ${
               !source.disabled
-                ? 'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-300'
-                : 'bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-300'
+                ? 'bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)]'
+                : 'bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)]'
             }`}
           >
             {!source.disabled ? '启用中' : '已禁用'}
@@ -7515,17 +7525,17 @@ const VideoSourceConfig = ({
             disabled={isLoading(`toggleProxyMode_${source.key}`)}
             className={`relative inline-flex items-center h-6 w-11 rounded-full transition-colors ${
               source.proxyMode
-                ? 'bg-blue-600 dark:bg-blue-500'
-                : 'bg-gray-200 dark:bg-gray-700'
+                ? 'bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] tm-press'
+                : 'bg-[var(--tm-surface-raised)] tm-press'
             } ${
               isLoading(`toggleProxyMode_${source.key}`)
-                ? 'opacity-50 cursor-not-allowed'
-                : 'cursor-pointer'
+                ? 'opacity-50 cursor-not-allowed min-h-[44px] tm-press'
+                : 'cursor-pointer min-h-[44px] tm-press'
             }`}
             title={source.proxyMode ? '代理模式已启用' : '代理模式已禁用'}
           >
             <span
-              className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+              className={`inline-block h-4 w-4 transform rounded-full bg-[var(--tm-surface)] transition-transform ${
                 source.proxyMode ? 'translate-x-6' : 'translate-x-1'
               }`}
             />
@@ -7536,14 +7546,14 @@ const VideoSourceConfig = ({
             const status = getValidationStatus(source.key);
             if (!status) {
               return (
-                <span className='px-2 py-1 text-xs rounded-full bg-gray-100 dark:bg-gray-900/20 text-gray-600 dark:text-gray-400'>
+                <span className='px-2 py-1 text-[13px] rounded-full bg-[var(--tm-surface-raised)] text-[color:var(--tm-muted)]'>
                   未检测
                 </span>
               );
             }
             return (
               <span
-                className={`px-2 py-1 text-xs rounded-full ${status.className}`}
+                className={`px-2 py-1 text-[13px] rounded-full ${status.className}`}
                 title={status.message}
               >
                 {status.icon} {status.text}
@@ -7555,14 +7565,14 @@ const VideoSourceConfig = ({
           <button
             onClick={() => handleToggleEnable(source.key)}
             disabled={isLoading(`toggleSource_${source.key}`)}
-            className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium ${
+            className={`inline-flex items-center px-3 py-1.5 rounded-full text-[13px] font-medium ${
               !source.disabled
                 ? buttonStyles.roundedDanger
                 : buttonStyles.roundedSuccess
             } transition-colors ${
               isLoading(`toggleSource_${source.key}`)
-                ? 'opacity-50 cursor-not-allowed'
-                : ''
+                ? 'opacity-50 cursor-not-allowed min-h-[44px] tm-press'
+                : ' min-h-[44px] tm-press'
             }`}
           >
             {!source.disabled ? '禁用' : '启用'}
@@ -7573,8 +7583,8 @@ const VideoSourceConfig = ({
               disabled={isLoading(`deleteSource_${source.key}`)}
               className={`${buttonStyles.roundedSecondary} ${
                 isLoading(`deleteSource_${source.key}`)
-                  ? 'opacity-50 cursor-not-allowed'
-                  : ''
+                  ? 'opacity-50 cursor-not-allowed min-h-[44px] tm-press'
+                  : ' min-h-[44px] tm-press'
               }`}
             >
               删除
@@ -7740,9 +7750,7 @@ const VideoSourceConfig = ({
     if (keys.length === 0) {
       showAlert({
         type: 'warning',
-        title: `没有需要${
-          action === 'batch_enable' ? '启用' : '禁用'
-        }的视频源`,
+        title: `没有需要${action === 'batch_enable' ? '启用' : '禁用'}的视频源`,
         message: emptyMessage,
       });
       return;
@@ -7779,9 +7787,7 @@ const VideoSourceConfig = ({
 
   if (!config) {
     return (
-      <div className='text-center text-gray-500 dark:text-gray-400'>
-        加载中...
-      </div>
+      <div className='text-center text-[color:var(--tm-muted)]'>加载中...</div>
     );
   }
 
@@ -7789,7 +7795,7 @@ const VideoSourceConfig = ({
     <div className='space-y-6'>
       {/* 添加视频源表单 */}
       <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4'>
-        <h4 className='shrink-0 whitespace-nowrap text-sm font-medium text-gray-700 dark:text-gray-300'>
+        <h4 className='shrink-0 whitespace-nowrap text-sm font-medium text-[color:var(--tm-muted)]'>
           视频源列表
         </h4>
         <div className='flex min-w-0 flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end sm:gap-2'>
@@ -7797,7 +7803,7 @@ const VideoSourceConfig = ({
           {selectedSources.size > 0 && (
             <>
               <div className='flex flex-wrap items-center gap-3 order-2 sm:order-1'>
-                <span className='text-sm text-gray-600 dark:text-gray-400'>
+                <span className='text-sm text-[color:var(--tm-muted)]'>
                   <span className='sm:hidden'>已选 {selectedSources.size}</span>
                   <span className='hidden sm:inline'>
                     已选择 {selectedSources.size} 个视频源
@@ -7843,7 +7849,7 @@ const VideoSourceConfig = ({
                     : '批量删除'}
                 </button>
               </div>
-              <div className='hidden sm:block w-px h-6 bg-gray-300 dark:bg-gray-600 order-2'></div>
+              <div className='hidden sm:block w-px h-6 bg-[var(--tm-surface)] order-2'></div>
             </>
           )}
           <div className='flex w-full min-w-0 flex-col gap-2 order-1 sm:order-2 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center sm:justify-end sm:gap-2'>
@@ -7857,7 +7863,7 @@ const VideoSourceConfig = ({
                   <Settings size={14} />
                   <span>特殊源设置</span>
                   {(config?.SpecialSourceApis?.length || 0) > 0 && (
-                    <span className='rounded-full bg-rose-100 px-1.5 py-0.5 text-[10px] font-semibold text-rose-700 dark:bg-rose-900/30 dark:text-rose-300'>
+                    <span className='rounded-full bg-[var(--tm-surface-raised)] px-1.5 py-0.5 text-[13px] font-medium text-[color:var(--tm-text)]'>
                       {config?.SpecialSourceApis?.length}
                     </span>
                   )}
@@ -7878,7 +7884,7 @@ const VideoSourceConfig = ({
                   <Settings size={14} />
                   <span>客户端广告配置</span>
                   {(config?.ClientAdSourceApis?.length || 0) > 0 && (
-                    <span className='rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'>
+                    <span className='rounded-full bg-[var(--tm-surface-raised)] px-1.5 py-0.5 text-[13px] font-medium text-[color:var(--tm-text)]'>
                       {config?.ClientAdSourceApis?.length}
                     </span>
                   )}
@@ -7896,7 +7902,11 @@ const VideoSourceConfig = ({
                 >
                   {isValidating ? (
                     <>
-                      <div className='w-3 h-3 border border-white border-t-transparent rounded-full animate-spin'></div>
+                      <div
+                        className={
+                          'w-3 h-3 border border-[var(--tm-text)] border-t-transparent rounded-full animate-spin'
+                        }
+                      ></div>
                       <span>检测中...</span>
                     </>
                   ) : (
@@ -7926,7 +7936,7 @@ const VideoSourceConfig = ({
                       : '启用全部源'}
                   </span>
                   {disabledSourceKeys.length > 0 && (
-                    <span className='rounded-full bg-white/20 px-1.5 py-0.5 text-[10px] font-semibold'>
+                    <span className='rounded-full bg-[var(--tm-surface-raised)] px-1.5 py-0.5 text-[13px] font-medium'>
                       {disabledSourceKeys.length}
                     </span>
                   )}
@@ -7952,7 +7962,7 @@ const VideoSourceConfig = ({
                 >
                   <span>禁用无效源</span>
                   {invalidSourceKeys.length > 0 && (
-                    <span className='rounded-full bg-white/20 px-1.5 py-0.5 text-[10px] font-semibold'>
+                    <span className='rounded-full bg-[var(--tm-surface-raised)] px-1.5 py-0.5 text-[13px] font-medium'>
                       {invalidSourceKeys.length}
                     </span>
                   )}
@@ -7978,7 +7988,7 @@ const VideoSourceConfig = ({
                 >
                   <span>禁用无法搜索源</span>
                   {noResultSourceKeys.length > 0 && (
-                    <span className='rounded-full bg-white/20 px-1.5 py-0.5 text-[10px] font-semibold'>
+                    <span className='rounded-full bg-[var(--tm-surface-raised)] px-1.5 py-0.5 text-[13px] font-medium'>
                       {noResultSourceKeys.length}
                     </span>
                   )}
@@ -7998,7 +8008,7 @@ const VideoSourceConfig = ({
       </div>
 
       {showAddForm && (
-        <div className='p-4 bg-gray-50 dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 space-y-4'>
+        <div className='p-4 bg-[var(--tm-surface-raised)] rounded-lg border border-[var(--tm-line)] space-y-4'>
           <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
             <input
               type='text'
@@ -8007,7 +8017,7 @@ const VideoSourceConfig = ({
               onChange={(e) =>
                 setNewSource((prev) => ({ ...prev, name: e.target.value }))
               }
-              className='px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100'
+              className='px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)]'
             />
             <input
               type='text'
@@ -8016,7 +8026,7 @@ const VideoSourceConfig = ({
               onChange={(e) =>
                 setNewSource((prev) => ({ ...prev, key: e.target.value }))
               }
-              className='px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100'
+              className='px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)]'
             />
             <input
               type='text'
@@ -8025,7 +8035,7 @@ const VideoSourceConfig = ({
               onChange={(e) =>
                 setNewSource((prev) => ({ ...prev, api: e.target.value }))
               }
-              className='px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100'
+              className='px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)]'
             />
             <input
               type='text'
@@ -8034,7 +8044,7 @@ const VideoSourceConfig = ({
               onChange={(e) =>
                 setNewSource((prev) => ({ ...prev, detail: e.target.value }))
               }
-              className='px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100'
+              className='px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)]'
             />
           </div>
           <div className='flex justify-end'>
@@ -8063,47 +8073,47 @@ const VideoSourceConfig = ({
 
       {/* 视频源表格 */}
       <div
-        className='border border-gray-200 dark:border-gray-700 rounded-lg max-h-[28rem] overflow-y-auto overflow-x-auto relative'
+        className='border border-[var(--tm-line)] rounded-lg max-h-[28rem] overflow-y-auto overflow-x-auto relative'
         data-table='source-list'
       >
-        <table className='min-w-full divide-y divide-gray-200 dark:divide-gray-700'>
-          <thead className='bg-gray-50 dark:bg-gray-900 sticky top-0 z-10'>
+        <table className='min-w-full divide-y divide-[var(--tm-line)]'>
+          <thead className='bg-[var(--tm-surface-raised)] sticky top-0 z-10'>
             <tr>
               <th className='w-12 px-2 py-3 text-center'>
                 <input
                   type='checkbox'
                   checked={selectAll}
                   onChange={(e) => handleSelectAll(e.target.checked)}
-                  className='w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600'
+                  className='w-4 h-4 text-[color:var(--tm-text)] bg-[var(--tm-surface-raised)] rounded focus:ring-[var(--tm-text)] ring-offset-[var(--tm-text)] focus:ring-2'
                 />
               </th>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider'>
+              <th className='px-6 py-3 text-left text-[13px] font-medium text-[color:var(--tm-muted)] uppercase tracking-wider'>
                 名称
               </th>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider'>
+              <th className='px-6 py-3 text-left text-[13px] font-medium text-[color:var(--tm-muted)] uppercase tracking-wider'>
                 Key
               </th>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider'>
+              <th className='px-6 py-3 text-left text-[13px] font-medium text-[color:var(--tm-muted)] uppercase tracking-wider'>
                 API 地址
               </th>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider'>
+              <th className='px-6 py-3 text-left text-[13px] font-medium text-[color:var(--tm-muted)] uppercase tracking-wider'>
                 Detail 地址
               </th>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider'>
+              <th className='px-6 py-3 text-left text-[13px] font-medium text-[color:var(--tm-muted)] uppercase tracking-wider'>
                 状态
               </th>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider'>
+              <th className='px-6 py-3 text-left text-[13px] font-medium text-[color:var(--tm-muted)] uppercase tracking-wider'>
                 代理模式
               </th>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider'>
+              <th className='px-6 py-3 text-left text-[13px] font-medium text-[color:var(--tm-muted)] uppercase tracking-wider'>
                 有效性
               </th>
-              <th className='px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider'>
+              <th className='px-6 py-3 text-right text-[13px] font-medium text-[color:var(--tm-muted)] uppercase tracking-wider'>
                 操作
               </th>
             </tr>
           </thead>
-          <tbody className='divide-y divide-gray-200 dark:divide-gray-700'>
+          <tbody className='divide-y divide-[var(--tm-line)]'>
             {sources.map((source) => (
               <SourceRow key={source.key} source={source} />
             ))}
@@ -8111,29 +8121,29 @@ const VideoSourceConfig = ({
         </table>
       </div>
 
-
       {showSpecialSourcesModal &&
         createPortal(
           <div
-            className='fixed inset-0 z-[10000] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm'
+            className='fixed inset-0 z-[10000] flex items-center justify-center bg-[color:color-mix(in_srgb,var(--tm-room-cinema-bg)_60%,transparent)] p-4 backdrop-blur-sm'
             onClick={closeSpecialSourcesModal}
           >
             <div
-              className='flex max-h-[84vh] w-full max-w-4xl flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl dark:border-gray-700 dark:bg-gray-800'
+              className='flex max-h-[84vh] w-full max-w-4xl flex-col overflow-hidden rounded-2xl border border-[var(--tm-line)] bg-[var(--tm-surface)] shadow-2xl'
               onClick={(e) => e.stopPropagation()}
             >
-              <div className='flex items-start justify-between gap-4 border-b border-gray-200 px-6 py-5 dark:border-gray-700'>
+              <div className='flex items-start justify-between gap-4 border-b border-[var(--tm-line)] px-6 py-5'>
                 <div>
-                  <h3 className='text-xl font-semibold text-gray-900 dark:text-gray-100'>
+                  <h3 className='text-xl font-medium text-[color:var(--tm-text)]'>
                     特殊源设置
                   </h3>
-                  <p className='mt-1 text-sm text-gray-600 dark:text-gray-400'>
-                    选中的视频源对普通搜索完全隐藏，只在 /under 入口可用；/under 也不会出现普通源。开关状态见 /sp。
+                  <p className='mt-1 text-sm text-[color:var(--tm-muted)]'>
+                    选中的视频源对普通搜索完全隐藏，只在 /under 入口可用；/under
+                    也不会出现普通源。开关状态见 /sp。
                   </p>
                 </div>
                 <button
                   onClick={closeSpecialSourcesModal}
-                  className='text-2xl leading-none text-gray-400 transition-colors hover:text-gray-600 dark:hover:text-gray-300'
+                  className='text-2xl leading-none text-[color:var(--tm-muted)] transition-colors hover:text-[color:var(--tm-muted)] min-h-[44px] tm-press'
                   aria-label='关闭特殊源设置弹窗'
                 >
                   ×
@@ -8141,12 +8151,13 @@ const VideoSourceConfig = ({
               </div>
 
               <div className='min-h-0 flex-1 overflow-y-auto px-6 py-5'>
-                <div className='mb-5 rounded-lg border border-rose-200 bg-rose-50 p-4 dark:border-rose-800 dark:bg-rose-900/20'>
-                  <div className='text-sm font-medium text-rose-800 dark:text-rose-300'>
+                <div className='mb-5 rounded-lg border border-[var(--tm-line)] bg-[var(--tm-surface-raised)] p-4'>
+                  <div className='text-sm font-medium text-[color:var(--tm-text)]'>
                     配置说明
                   </div>
-                  <p className='mt-1 text-sm text-rose-700 dark:text-rose-400'>
-                    这里维护的是特殊源列表，不是用户权限；TVBox、OrionTV、WebTV 始终不会使用这些特殊源。
+                  <p className='mt-1 text-sm text-[color:var(--tm-text)]'>
+                    这里维护的是特殊源列表，不是用户权限；TVBox、OrionTV、WebTV
+                    始终不会使用这些特殊源。
                   </p>
                 </div>
 
@@ -8154,7 +8165,7 @@ const VideoSourceConfig = ({
                   {config?.SourceConfig?.map((source) => (
                     <label
                       key={source.key}
-                      className='flex cursor-pointer items-center space-x-3 rounded-lg border border-gray-200 p-3 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-900/50'
+                      className='flex cursor-pointer items-center space-x-3 rounded-lg border border-[var(--tm-line)] p-3 transition-colors hover:bg-[var(--tm-line)]'
                     >
                       <input
                         type='checkbox'
@@ -8162,7 +8173,9 @@ const VideoSourceConfig = ({
                         onChange={(e) => {
                           if (e.target.checked) {
                             setSpecialSourceDraftApis((prev) =>
-                              prev.includes(source.key) ? prev : [...prev, source.key]
+                              prev.includes(source.key)
+                                ? prev
+                                : [...prev, source.key]
                             );
                           } else {
                             setSpecialSourceDraftApis((prev) =>
@@ -8170,13 +8183,13 @@ const VideoSourceConfig = ({
                             );
                           }
                         }}
-                        className='rounded border-gray-300 text-rose-600 focus:ring-rose-500 dark:border-gray-600 dark:bg-gray-700'
+                        className='rounded text-[color:var(--tm-text)] focus:ring-[var(--tm-text)] bg-[var(--tm-surface)]'
                       />
                       <div className='min-w-0 flex-1'>
-                        <div className='truncate text-sm font-medium text-gray-900 dark:text-gray-100'>
+                        <div className='truncate text-sm font-medium text-[color:var(--tm-text)]'>
                           {source.name}
                         </div>
-                        <div className='truncate text-xs text-gray-500 dark:text-gray-400'>
+                        <div className='truncate text-[13px] text-[color:var(--tm-muted)]'>
                           {source.key}
                         </div>
                       </div>
@@ -8185,7 +8198,7 @@ const VideoSourceConfig = ({
                 </div>
               </div>
 
-              <div className='flex flex-wrap items-center justify-between gap-3 border-t border-gray-200 bg-gray-50 px-6 py-4 dark:border-gray-700 dark:bg-gray-900/30'>
+              <div className='flex flex-wrap items-center justify-between gap-3 border-t border-[var(--tm-line)] bg-[var(--tm-surface-raised)] px-6 py-4'>
                 <div className='flex flex-wrap gap-2'>
                   <button
                     onClick={() => setSpecialSourceDraftApis([])}
@@ -8196,9 +8209,9 @@ const VideoSourceConfig = ({
                   <button
                     onClick={() => {
                       const allApis =
-                        config?.SourceConfig?.filter((source) => !source.disabled).map(
-                          (source) => source.key
-                        ) || [];
+                        config?.SourceConfig?.filter(
+                          (source) => !source.disabled
+                        ).map((source) => source.key) || [];
                       setSpecialSourceDraftApis(allApis);
                     }}
                     className={buttonStyles.quickAction}
@@ -8207,13 +8220,16 @@ const VideoSourceConfig = ({
                   </button>
                 </div>
                 <div className='flex items-center gap-3'>
-                  <span className='text-sm text-gray-600 dark:text-gray-400'>
+                  <span className='text-sm text-[color:var(--tm-muted)]'>
                     已选择：
-                    <span className='font-medium text-rose-600 dark:text-rose-400'>
+                    <span className='font-medium text-[color:var(--tm-text)]'>
                       {specialSourceDraftApis.length} 个源
                     </span>
                   </span>
-                  <button onClick={closeSpecialSourcesModal} className={buttonStyles.secondary}>
+                  <button
+                    onClick={closeSpecialSourcesModal}
+                    className={buttonStyles.secondary}
+                  >
                     取消
                   </button>
                   <button
@@ -8237,25 +8253,25 @@ const VideoSourceConfig = ({
       {showClientAdSourcesModal &&
         createPortal(
           <div
-            className='fixed inset-0 z-[10000] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm'
+            className='fixed inset-0 z-[10000] flex items-center justify-center bg-[color:color-mix(in_srgb,var(--tm-room-cinema-bg)_60%,transparent)] p-4 backdrop-blur-sm'
             onClick={closeClientAdSourcesModal}
           >
             <div
-              className='flex max-h-[84vh] w-full max-w-4xl flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl dark:border-gray-700 dark:bg-gray-800'
+              className='flex max-h-[84vh] w-full max-w-4xl flex-col overflow-hidden rounded-2xl border border-[var(--tm-line)] bg-[var(--tm-surface)] shadow-2xl'
               onClick={(e) => e.stopPropagation()}
             >
-              <div className='flex items-start justify-between gap-4 border-b border-gray-200 px-6 py-5 dark:border-gray-700'>
+              <div className='flex items-start justify-between gap-4 border-b border-[var(--tm-line)] px-6 py-5'>
                 <div>
-                  <h3 className='text-xl font-semibold text-gray-900 dark:text-gray-100'>
+                  <h3 className='text-xl font-medium text-[color:var(--tm-text)]'>
                     客户端去广告配置
                   </h3>
-                  <p className='mt-1 text-sm text-amber-500 dark:text-amber-400'>
+                  <p className='mt-1 text-sm text-[color:var(--tm-text)]'>
                     ⚠️客户端已具备本地去广告功能，该功能可能在未来移除
                   </p>
                 </div>
                 <button
                   onClick={closeClientAdSourcesModal}
-                  className='text-2xl leading-none text-gray-400 transition-colors hover:text-gray-600 dark:hover:text-gray-300'
+                  className='text-2xl leading-none text-[color:var(--tm-muted)] transition-colors hover:text-[color:var(--tm-muted)] min-h-[44px] tm-press'
                   aria-label='关闭客户端去广告配置弹窗'
                 >
                   ×
@@ -8267,7 +8283,7 @@ const VideoSourceConfig = ({
                   {config?.SourceConfig?.map((source) => (
                     <label
                       key={source.key}
-                      className='flex cursor-pointer items-center space-x-3 rounded-lg border border-gray-200 p-3 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-900/50'
+                      className='flex cursor-pointer items-center space-x-3 rounded-lg border border-[var(--tm-line)] p-3 transition-colors hover:bg-[var(--tm-line)]'
                     >
                       <input
                         type='checkbox'
@@ -8275,7 +8291,9 @@ const VideoSourceConfig = ({
                         onChange={(e) => {
                           if (e.target.checked) {
                             setClientAdSourceDraftApis((prev) =>
-                              prev.includes(source.key) ? prev : [...prev, source.key]
+                              prev.includes(source.key)
+                                ? prev
+                                : [...prev, source.key]
                             );
                           } else {
                             setClientAdSourceDraftApis((prev) =>
@@ -8283,13 +8301,13 @@ const VideoSourceConfig = ({
                             );
                           }
                         }}
-                        className='rounded border-gray-300 text-amber-600 focus:ring-amber-500 dark:border-gray-600 dark:bg-gray-700'
+                        className='rounded text-[color:var(--tm-text)] focus:ring-[var(--tm-text)] bg-[var(--tm-surface)]'
                       />
                       <div className='min-w-0 flex-1'>
-                        <div className='truncate text-sm font-medium text-gray-900 dark:text-gray-100'>
+                        <div className='truncate text-sm font-medium text-[color:var(--tm-text)]'>
                           {source.name}
                         </div>
-                        <div className='truncate text-xs text-gray-500 dark:text-gray-400'>
+                        <div className='truncate text-[13px] text-[color:var(--tm-muted)]'>
                           {source.key}
                         </div>
                       </div>
@@ -8298,7 +8316,7 @@ const VideoSourceConfig = ({
                 </div>
               </div>
 
-              <div className='flex flex-wrap items-center justify-between gap-3 border-t border-gray-200 bg-gray-50 px-6 py-4 dark:border-gray-700 dark:bg-gray-900/30'>
+              <div className='flex flex-wrap items-center justify-between gap-3 border-t border-[var(--tm-line)] bg-[var(--tm-surface-raised)] px-6 py-4'>
                 <div className='flex flex-wrap gap-2'>
                   <button
                     onClick={() => setClientAdSourceDraftApis([])}
@@ -8309,9 +8327,9 @@ const VideoSourceConfig = ({
                   <button
                     onClick={() => {
                       const allApis =
-                        config?.SourceConfig?.filter((source) => !source.disabled).map(
-                          (source) => source.key
-                        ) || [];
+                        config?.SourceConfig?.filter(
+                          (source) => !source.disabled
+                        ).map((source) => source.key) || [];
                       setClientAdSourceDraftApis(allApis);
                     }}
                     className={buttonStyles.quickAction}
@@ -8320,13 +8338,16 @@ const VideoSourceConfig = ({
                   </button>
                 </div>
                 <div className='flex items-center gap-3'>
-                  <span className='text-sm text-gray-600 dark:text-gray-400'>
+                  <span className='text-sm text-[color:var(--tm-muted)]'>
                     已选择：
-                    <span className='font-medium text-amber-600 dark:text-amber-400'>
+                    <span className='font-medium text-[color:var(--tm-text)]'>
                       {clientAdSourceDraftApis.length} 个源
                     </span>
                   </span>
-                  <button onClick={closeClientAdSourcesModal} className={buttonStyles.secondary}>
+                  <button
+                    onClick={closeClientAdSourcesModal}
+                    className={buttonStyles.secondary}
+                  >
                     取消
                   </button>
                   <button
@@ -8351,7 +8372,7 @@ const VideoSourceConfig = ({
         createPortal(
           <>
             <div
-              className='fixed inset-0 bg-black/60 backdrop-blur-sm z-[10000]'
+              className='fixed inset-0 bg-[color:color-mix(in_srgb,var(--tm-room-cinema-bg)_60%,transparent)] backdrop-blur-sm z-[10000]'
               onClick={handleCloseWeightModal}
               onTouchMove={(e) => {
                 e.preventDefault();
@@ -8364,18 +8385,18 @@ const VideoSourceConfig = ({
               }}
             />
             <div
-              className='fixed left-1/2 top-1/2 z-[10001] flex w-[calc(100%-1rem)] max-w-6xl max-h-[90vh] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl dark:border-gray-700 dark:bg-gray-800'
+              className='fixed left-1/2 top-1/2 z-[10001] flex w-[calc(100%-1rem)] max-w-6xl max-h-[90vh] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-2xl border border-[var(--tm-line)] bg-[var(--tm-surface)] shadow-2xl'
               onClick={(e) => e.stopPropagation()}
             >
-              <div className='flex items-start justify-between gap-4 border-b border-gray-200 dark:border-gray-700 px-6 py-5'>
+              <div className='flex items-start justify-between gap-4 border-b border-[var(--tm-line)] px-6 py-5'>
                 <div>
-                  <h3 className='text-xl font-semibold text-gray-900 dark:text-gray-100'>
+                  <h3 className='text-xl font-medium text-[color:var(--tm-text)]'>
                     视频源权重设置
                   </h3>
                 </div>
                 <button
                   onClick={handleCloseWeightModal}
-                  className='text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors text-2xl leading-none'
+                  className='text-[color:var(--tm-muted)] hover:text-[color:var(--tm-muted)] transition-colors text-2xl leading-none min-h-[44px] tm-press'
                   aria-label='关闭权重设置弹窗'
                 >
                   ×
@@ -8398,7 +8419,7 @@ const VideoSourceConfig = ({
                 }}
               >
                 <div className='flex flex-wrap items-center justify-between gap-3 px-6 py-4'>
-                  <div className='text-sm text-gray-600 dark:text-gray-400'>
+                  <div className='text-sm text-[color:var(--tm-muted)]'>
                     排序越靠前，推荐权重越高；拖动后再次生成推荐值时，会把当前列表均匀映射到
                     0~40。
                   </div>
@@ -8420,14 +8441,14 @@ const VideoSourceConfig = ({
 
                 <div className='px-6 pb-6'>
                   <div className='overflow-x-auto'>
-                    <div className='grid min-w-[820px] grid-cols-[88px_minmax(0,1fr)_112px_112px_220px] gap-3 px-4 pb-3 text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400'>
+                    <div className='grid min-w-[820px] grid-cols-[88px_minmax(0,1fr)_112px_112px_220px] gap-3 px-4 pb-3 text-[13px] font-medium uppercase tracking-wide text-[color:var(--tm-muted)]'>
                       <div>排序</div>
                       <div>视频源</div>
                       <div>状态</div>
                       <div>推荐值</div>
                       <div>生效权重</div>
                     </div>
-                    <div className='min-w-[820px] rounded-2xl border border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-900/20 p-3'>
+                    <div className='min-w-[820px] rounded-2xl border border-[var(--tm-line)] bg-[var(--tm-surface-raised)] p-3'>
                       <DndContext
                         sensors={sensors}
                         collisionDetection={closestCenter}
@@ -8463,7 +8484,7 @@ const VideoSourceConfig = ({
                 </div>
               </div>
 
-              <div className='flex items-center justify-end gap-3 border-t border-gray-200 dark:border-gray-700 px-6 py-4'>
+              <div className='flex items-center justify-end gap-3 border-t border-[var(--tm-line)] px-6 py-4'>
                 <div className='flex items-center gap-3'>
                   <button
                     onClick={handleCloseWeightModal}
@@ -8495,17 +8516,17 @@ const VideoSourceConfig = ({
       {showValidationModal &&
         createPortal(
           <div
-            className='fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50'
+            className='fixed inset-0 bg-[var(--tm-scrim)] flex items-center justify-center z-50'
             onClick={() => setShowValidationModal(false)}
           >
             <div
-              className='bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-md mx-4'
+              className='bg-[var(--tm-surface)] rounded-lg p-6 w-full max-w-md mx-4'
               onClick={(e) => e.stopPropagation()}
             >
-              <h3 className='text-lg font-medium text-gray-900 dark:text-gray-100 mb-4'>
+              <h3 className='text-lg font-medium text-[color:var(--tm-text)] mb-4'>
                 视频源有效性检测
               </h3>
-              <p className='text-sm text-gray-600 dark:text-gray-400 mb-4'>
+              <p className='text-sm text-[color:var(--tm-muted)] mb-4'>
                 请输入检测用的搜索关键词
               </p>
               <div className='space-y-4'>
@@ -8514,7 +8535,7 @@ const VideoSourceConfig = ({
                   placeholder='请输入搜索关键词'
                   value={searchKeyword}
                   onChange={(e) => setSearchKeyword(e.target.value)}
-                  className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100'
+                  className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)]'
                   onKeyPress={(e) =>
                     e.key === 'Enter' && handleValidateSources()
                   }
@@ -8522,7 +8543,7 @@ const VideoSourceConfig = ({
                 <div className='flex justify-end space-x-3'>
                   <button
                     onClick={() => setShowValidationModal(false)}
-                    className='px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors'
+                    className='px-4 py-2 text-[color:var(--tm-muted)] hover:text-[color:var(--tm-text)] transition-colors min-h-[44px] tm-press'
                   >
                     取消
                   </button>
@@ -8560,21 +8581,21 @@ const VideoSourceConfig = ({
       {confirmModal.isOpen &&
         createPortal(
           <div
-            className='fixed inset-0 bg-black bg-opacity-50 z-[10020] flex items-center justify-center p-4'
+            className='fixed inset-0 bg-[var(--tm-scrim)] z-[10020] flex items-center justify-center p-4'
             onClick={confirmModal.onCancel}
           >
             <div
-              className='bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full'
+              className='bg-[var(--tm-surface)] rounded-lg shadow-xl max-w-md w-full'
               onClick={(e) => e.stopPropagation()}
             >
               <div className='p-6'>
                 <div className='flex items-center justify-between mb-4'>
-                  <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100'>
+                  <h3 className='text-lg font-medium text-[color:var(--tm-text)]'>
                     {confirmModal.title}
                   </h3>
                   <button
                     onClick={confirmModal.onCancel}
-                    className='text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors'
+                    className='text-[color:var(--tm-muted)] hover:text-[color:var(--tm-muted)] transition-colors min-h-[44px] tm-press'
                   >
                     <svg
                       className='w-5 h-5'
@@ -8593,7 +8614,7 @@ const VideoSourceConfig = ({
                 </div>
 
                 <div className='mb-6'>
-                  <p className='text-sm text-gray-600 dark:text-gray-400'>
+                  <p className='text-sm text-[color:var(--tm-muted)]'>
                     {confirmModal.message}
                   </p>
                 </div>
@@ -8785,41 +8806,41 @@ const CategoryConfig = ({
       <tr
         ref={setNodeRef}
         style={style}
-        className='hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors select-none'
+        className='hover:bg-[var(--tm-line)] transition-colors select-none'
       >
         <td
-          className='px-2 py-4 cursor-grab text-gray-400'
+          className='px-2 py-4 cursor-grab text-[color:var(--tm-muted)]'
           style={{ touchAction: 'none' }}
           {...{ ...attributes, ...listeners }}
         >
           <GripVertical size={16} />
         </td>
-        <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100'>
+        <td className='px-6 py-4 whitespace-nowrap text-sm text-[color:var(--tm-text)]'>
           {category.name || '-'}
         </td>
-        <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100'>
+        <td className='px-6 py-4 whitespace-nowrap text-sm text-[color:var(--tm-text)]'>
           <span
-            className={`px-2 py-1 text-xs rounded-full ${
+            className={`px-2 py-1 text-[13px] rounded-full ${
               category.type === 'movie'
-                ? 'bg-blue-100 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300'
-                : 'bg-purple-100 dark:bg-purple-900/20 text-purple-800 dark:text-purple-300'
+                ? 'bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)]'
+                : 'bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)]'
             }`}
           >
             {category.type === 'movie' ? '电影' : '电视剧'}
           </span>
         </td>
         <td
-          className='px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100 max-w-[12rem] truncate'
+          className='px-6 py-4 whitespace-nowrap text-sm text-[color:var(--tm-text)] max-w-[12rem] truncate'
           title={category.query}
         >
           {category.query}
         </td>
         <td className='px-6 py-4 whitespace-nowrap max-w-[1rem]'>
           <span
-            className={`px-2 py-1 text-xs rounded-full ${
+            className={`px-2 py-1 text-[13px] rounded-full ${
               !category.disabled
-                ? 'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-300'
-                : 'bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-300'
+                ? 'bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)]'
+                : 'bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)]'
             }`}
           >
             {!category.disabled ? '启用中' : '已禁用'}
@@ -8831,14 +8852,14 @@ const CategoryConfig = ({
             disabled={isLoading(
               `toggleCategory_${category.query}_${category.type}`
             )}
-            className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium ${
+            className={`inline-flex items-center px-3 py-1.5 rounded-full text-[13px] font-medium ${
               !category.disabled
                 ? buttonStyles.roundedDanger
                 : buttonStyles.roundedSuccess
             } transition-colors ${
               isLoading(`toggleCategory_${category.query}_${category.type}`)
-                ? 'opacity-50 cursor-not-allowed'
-                : ''
+                ? 'opacity-50 cursor-not-allowed min-h-[44px] tm-press'
+                : ' min-h-[44px] tm-press'
             }`}
           >
             {!category.disabled ? '禁用' : '启用'}
@@ -8851,8 +8872,8 @@ const CategoryConfig = ({
               )}
               className={`${buttonStyles.roundedSecondary} ${
                 isLoading(`deleteCategory_${category.query}_${category.type}`)
-                  ? 'opacity-50 cursor-not-allowed'
-                  : ''
+                  ? 'opacity-50 cursor-not-allowed min-h-[44px] tm-press'
+                  : ' min-h-[44px] tm-press'
               }`}
             >
               删除
@@ -8865,9 +8886,7 @@ const CategoryConfig = ({
 
   if (!config) {
     return (
-      <div className='text-center text-gray-500 dark:text-gray-400'>
-        加载中...
-      </div>
+      <div className='text-center text-[color:var(--tm-muted)]'>加载中...</div>
     );
   }
 
@@ -8875,7 +8894,7 @@ const CategoryConfig = ({
     <div className='space-y-6'>
       {/* 添加分类表单 */}
       <div className='flex items-center justify-between'>
-        <h4 className='text-sm font-medium text-gray-700 dark:text-gray-300'>
+        <h4 className='text-sm font-medium text-[color:var(--tm-muted)]'>
           自定义分类列表
         </h4>
         <button
@@ -8889,7 +8908,7 @@ const CategoryConfig = ({
       </div>
 
       {showAddForm && (
-        <div className='p-4 bg-gray-50 dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 space-y-4'>
+        <div className='p-4 bg-[var(--tm-surface-raised)] rounded-lg border border-[var(--tm-line)] space-y-4'>
           <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
             <input
               type='text'
@@ -8898,7 +8917,7 @@ const CategoryConfig = ({
               onChange={(e) =>
                 setNewCategory((prev) => ({ ...prev, name: e.target.value }))
               }
-              className='px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100'
+              className='px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)]'
             />
             <select
               value={newCategory.type}
@@ -8908,7 +8927,7 @@ const CategoryConfig = ({
                   type: e.target.value as 'movie' | 'tv',
                 }))
               }
-              className='px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100'
+              className='px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)]'
             >
               <option value='movie'>电影</option>
               <option value='tv'>电视剧</option>
@@ -8920,7 +8939,7 @@ const CategoryConfig = ({
               onChange={(e) =>
                 setNewCategory((prev) => ({ ...prev, query: e.target.value }))
               }
-              className='px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100'
+              className='px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)]'
             />
           </div>
           <div className='flex justify-end'>
@@ -8946,23 +8965,23 @@ const CategoryConfig = ({
       )}
 
       {/* 分类表格 */}
-      <div className='border border-gray-200 dark:border-gray-700 rounded-lg max-h-[28rem] overflow-y-auto overflow-x-auto relative'>
-        <table className='min-w-full divide-y divide-gray-200 dark:divide-gray-700'>
-          <thead className='bg-gray-50 dark:bg-gray-900 sticky top-0 z-10'>
+      <div className='border border-[var(--tm-line)] rounded-lg max-h-[28rem] overflow-y-auto overflow-x-auto relative'>
+        <table className='min-w-full divide-y divide-[var(--tm-line)]'>
+          <thead className='bg-[var(--tm-surface-raised)] sticky top-0 z-10'>
             <tr>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider'>
+              <th className='px-6 py-3 text-left text-[13px] font-medium text-[color:var(--tm-muted)] uppercase tracking-wider'>
                 分类名称
               </th>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider'>
+              <th className='px-6 py-3 text-left text-[13px] font-medium text-[color:var(--tm-muted)] uppercase tracking-wider'>
                 类型
               </th>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider'>
+              <th className='px-6 py-3 text-left text-[13px] font-medium text-[color:var(--tm-muted)] uppercase tracking-wider'>
                 搜索关键词
               </th>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider'>
+              <th className='px-6 py-3 text-left text-[13px] font-medium text-[color:var(--tm-muted)] uppercase tracking-wider'>
                 状态
               </th>
-              <th className='px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider'>
+              <th className='px-6 py-3 text-right text-[13px] font-medium text-[color:var(--tm-muted)] uppercase tracking-wider'>
                 操作
               </th>
             </tr>
@@ -8978,7 +8997,7 @@ const CategoryConfig = ({
               items={categories.map((c) => `${c.query}:${c.type}`)}
               strategy={verticalListSortingStrategy}
             >
-              <tbody className='divide-y divide-gray-200 dark:divide-gray-700'>
+              <tbody className='divide-y divide-[var(--tm-line)]'>
                 {categories.map((category) => (
                   <DraggableRow
                     key={`${category.query}:${category.type}`}
@@ -9353,7 +9372,7 @@ const VideoSourceScriptLab = () => {
       <div className='flex flex-col lg:flex-row gap-6'>
         <div className='lg:w-80 space-y-4'>
           <div className='flex items-center justify-between'>
-            <h4 className='text-sm font-medium text-gray-700 dark:text-gray-300'>
+            <h4 className='text-sm font-medium text-[color:var(--tm-muted)]'>
               脚本列表
             </h4>
             <div className='flex items-center gap-2'>
@@ -9397,11 +9416,11 @@ const VideoSourceScriptLab = () => {
 
           <div className='space-y-3 max-h-[38rem] overflow-y-auto pr-1'>
             {loadingScripts ? (
-              <div className='text-sm text-gray-500 dark:text-gray-400'>
+              <div className='text-sm text-[color:var(--tm-muted)]'>
                 加载中...
               </div>
             ) : scripts.length === 0 ? (
-              <div className='p-4 rounded-lg border border-dashed border-gray-300 dark:border-gray-700 text-sm text-gray-500 dark:text-gray-400'>
+              <div className='p-4 rounded-lg border border-dashed border-[var(--tm-line)] text-sm text-[color:var(--tm-muted)]'>
                 还没有脚本，点右上角新建一个。
               </div>
             ) : (
@@ -9414,30 +9433,30 @@ const VideoSourceScriptLab = () => {
                   }}
                   className={`w-full text-left p-4 rounded-xl border transition-colors ${
                     selectedScriptId === script.id
-                      ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                      : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900'
+                      ? 'border-[var(--tm-line)] bg-[var(--tm-surface-raised)] min-h-[44px] tm-press'
+                      : 'border-[var(--tm-line)] bg-[var(--tm-surface)] min-h-[44px] tm-press'
                   }`}
                 >
                   <div className='flex items-center justify-between gap-3'>
                     <div className='min-w-0'>
-                      <div className='font-medium text-gray-900 dark:text-gray-100 truncate'>
+                      <div className='font-medium text-[color:var(--tm-text)] truncate'>
                         {script.name}
                       </div>
-                      <div className='text-xs text-gray-500 dark:text-gray-400 truncate'>
+                      <div className='text-[13px] text-[color:var(--tm-muted)] truncate'>
                         {script.key}
                       </div>
                     </div>
                     <span
-                      className={`px-2 py-1 text-xs rounded-full ${
+                      className={`px-2 py-1 text-[13px] rounded-full ${
                         script.enabled
-                          ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-300'
-                          : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300'
+                          ? 'bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)]'
+                          : 'bg-[var(--tm-surface-raised)] text-[color:var(--tm-muted)]'
                       }`}
                     >
                       {script.enabled ? '启用' : '停用'}
                     </span>
                   </div>
-                  <div className='mt-3 flex items-center justify-between text-xs text-gray-500 dark:text-gray-400'>
+                  <div className='mt-3 flex items-center justify-between text-[13px] text-[color:var(--tm-muted)]'>
                     <span>
                       {new Date(script.updatedAt).toLocaleString('zh-CN')}
                     </span>
@@ -9471,7 +9490,7 @@ const VideoSourceScriptLab = () => {
               onChange={(e) =>
                 setEditor((prev) => ({ ...prev, name: e.target.value }))
               }
-              className='px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100'
+              className='px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)]'
             />
             <input
               type='text'
@@ -9480,7 +9499,7 @@ const VideoSourceScriptLab = () => {
               onChange={(e) =>
                 setEditor((prev) => ({ ...prev, key: e.target.value }))
               }
-              className='px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100'
+              className='px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)]'
             />
           </div>
 
@@ -9491,15 +9510,15 @@ const VideoSourceScriptLab = () => {
               setEditor((prev) => ({ ...prev, description: e.target.value }))
             }
             rows={2}
-            className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100'
+            className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)]'
           />
 
           <div>
             <div className='flex items-center justify-between mb-2'>
-              <label className='text-sm font-medium text-gray-700 dark:text-gray-300'>
+              <label className='text-sm font-medium text-[color:var(--tm-muted)]'>
                 脚本代码
               </label>
-              <div className='text-xs text-gray-500 dark:text-gray-400'>
+              <div className='text-[13px] text-[color:var(--tm-muted)]'>
                 {editor.version ? `当前版本: ${editor.version}` : '未保存'}
               </div>
             </div>
@@ -9510,7 +9529,7 @@ const VideoSourceScriptLab = () => {
               }
               rows={24}
               spellCheck={false}
-              className='w-full px-3 py-3 font-mono text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-950 text-gray-100'
+              className='w-full px-3 py-3 font-mono text-sm border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)]'
             />
           </div>
 
@@ -9551,7 +9570,7 @@ const VideoSourceScriptLab = () => {
           <div className='grid grid-cols-1 xl:grid-cols-2 gap-6'>
             <div className='space-y-3'>
               <div className='flex items-center gap-3'>
-                <label className='text-sm font-medium text-gray-700 dark:text-gray-300'>
+                <label className='text-sm font-medium text-[color:var(--tm-muted)]'>
                   测试 Hook
                 </label>
                 <select
@@ -9566,7 +9585,7 @@ const VideoSourceScriptLab = () => {
                         | 'resolvePlayUrl'
                     )
                   }
-                  className='px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100'
+                  className='px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)]'
                 >
                   <option value='getSources'>getSources</option>
                   <option value='search'>search</option>
@@ -9575,7 +9594,7 @@ const VideoSourceScriptLab = () => {
                   <option value='resolvePlayUrl'>resolvePlayUrl</option>
                 </select>
               </div>
-              <p className='text-xs text-gray-500 dark:text-gray-400'>
+              <p className='text-[13px] text-[color:var(--tm-muted)]'>
                 现在脚本可以自己管理多个源，测试入参可传 `sourceId`。
               </p>
               <textarea
@@ -9583,15 +9602,15 @@ const VideoSourceScriptLab = () => {
                 onChange={(e) => setTestPayload(e.target.value)}
                 rows={10}
                 spellCheck={false}
-                className='w-full px-3 py-3 font-mono text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100'
+                className='w-full px-3 py-3 font-mono text-sm border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)]'
               />
             </div>
 
             <div className='space-y-3'>
-              <div className='text-sm font-medium text-gray-700 dark:text-gray-300'>
+              <div className='text-sm font-medium text-[color:var(--tm-muted)]'>
                 测试输出
               </div>
-              <pre className='w-full min-h-[16rem] whitespace-pre-wrap break-all px-3 py-3 text-xs border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-950 text-gray-100 overflow-auto'>
+              <pre className='w-full min-h-[16rem] whitespace-pre-wrap break-all px-3 py-3 text-[13px] border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)] overflow-auto'>
                 {testOutput || '运行测试后会显示结果、日志和错误信息'}
               </pre>
             </div>
@@ -9793,21 +9812,19 @@ const ConfigFileComponent = ({
 
   if (!config) {
     return (
-      <div className='text-center text-gray-500 dark:text-gray-400'>
-        加载中...
-      </div>
+      <div className='text-center text-[color:var(--tm-muted)]'>加载中...</div>
     );
   }
 
   return (
     <div className='space-y-4'>
       {/* 配置订阅区域 */}
-      <div className='bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700 shadow-sm'>
+      <div className='bg-[var(--tm-surface)] rounded-lg p-6 border border-[var(--tm-line)] shadow-sm'>
         <div className='flex items-center justify-between mb-6'>
-          <h3 className='text-xl font-semibold text-gray-900 dark:text-gray-100'>
+          <h3 className='text-xl font-medium text-[color:var(--tm-text)]'>
             配置订阅
           </h3>
-          <div className='text-sm text-gray-500 dark:text-gray-400 px-3 py-1.5 rounded-full'>
+          <div className='text-sm text-[color:var(--tm-muted)] px-3 py-1.5 rounded-full'>
             最后更新:{' '}
             {lastCheckTime
               ? new Date(lastCheckTime).toLocaleString('zh-CN')
@@ -9818,7 +9835,7 @@ const ConfigFileComponent = ({
         <div className='space-y-6'>
           {/* 订阅URL输入 */}
           <div>
-            <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3'>
+            <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-3'>
               订阅URL
             </label>
             <input
@@ -9827,9 +9844,9 @@ const ConfigFileComponent = ({
               onChange={(e) => setSubscriptionUrl(e.target.value)}
               placeholder='https://example.com/config.json'
               disabled={false}
-              className='w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200 shadow-sm hover:border-gray-400 dark:hover:border-gray-500'
+              className='w-full px-4 py-3 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)] focus:ring-2 focus:ring-[var(--tm-text)] focus:border-transparent transition-all duration-200 shadow-sm hover:border-[var(--tm-line)]'
             />
-            <p className='mt-2 text-xs text-gray-500 dark:text-gray-400'>
+            <p className='mt-2 text-[13px] text-[color:var(--tm-muted)]'>
               输入配置文件的订阅地址，要求 JSON 格式，且使用 Base58 编码
             </p>
           </div>
@@ -9847,7 +9864,11 @@ const ConfigFileComponent = ({
             >
               {isLoading('fetchConfig') ? (
                 <div className='flex items-center justify-center gap-2'>
-                  <div className='w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin'></div>
+                  <div
+                    className={
+                      'w-4 h-4 border-2 border-[var(--tm-text)] border-t-transparent rounded-full animate-spin'
+                    }
+                  ></div>
                   拉取中…
                 </div>
               ) : (
@@ -9859,10 +9880,10 @@ const ConfigFileComponent = ({
           {/* 自动更新开关 */}
           <div className='flex items-center justify-between'>
             <div>
-              <label className='text-sm font-medium text-gray-700 dark:text-gray-300'>
+              <label className='text-sm font-medium text-[color:var(--tm-muted)]'>
                 自动更新
               </label>
-              <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
+              <p className='text-[13px] text-[color:var(--tm-muted)] mt-1'>
                 启用后系统将定期自动拉取最新配置
               </p>
             </div>
@@ -9870,7 +9891,7 @@ const ConfigFileComponent = ({
               type='button'
               onClick={() => setAutoUpdate(!autoUpdate)}
               disabled={false}
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 ${
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--tm-text)] focus:ring-offset-2 ${
                 autoUpdate ? buttonStyles.toggleOn : buttonStyles.toggleOff
               }`}
             >
@@ -9897,7 +9918,7 @@ const ConfigFileComponent = ({
             rows={20}
             placeholder='请输入配置文件内容（JSON 格式）...'
             disabled={false}
-            className='w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 font-mono text-sm leading-relaxed resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 hover:border-gray-400 dark:hover:border-gray-500'
+            className='w-full px-4 py-3 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)] font-mono text-sm leading-relaxed resize-none focus:ring-2 focus:ring-[var(--tm-text)] focus:border-transparent transition-all duration-200 hover:border-[var(--tm-line)]'
             style={{
               fontFamily:
                 'ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace',
@@ -9908,12 +9929,12 @@ const ConfigFileComponent = ({
         </div>
 
         {/* 文件上传区域 */}
-        <div className='border-t border-gray-200 dark:border-gray-700 pt-4'>
+        <div className='border-t border-[var(--tm-line)] pt-4'>
           <div className='flex items-center justify-between mb-3'>
-            <label className='text-sm font-medium text-gray-700 dark:text-gray-300'>
+            <label className='text-sm font-medium text-[color:var(--tm-muted)]'>
               上传JSON配置文件
             </label>
-            <div className='text-xs text-gray-500 dark:text-gray-400'>
+            <div className='text-[13px] text-[color:var(--tm-muted)]'>
               支持根据API字段自动去重
             </div>
           </div>
@@ -9928,24 +9949,28 @@ const ConfigFileComponent = ({
             />
             <label
               htmlFor='json-file-upload'
-              className={`flex items-center justify-center w-full px-4 py-3 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer transition-colors ${
+              className={`flex items-center justify-center w-full px-4 py-3 border-2 border-dashed border-[var(--tm-line)] border-[var(--tm-line)] rounded-lg cursor-pointer transition-colors ${
                 isLoading('uploadConfig')
-                  ? 'bg-gray-100 dark:bg-gray-800 cursor-not-allowed opacity-50'
-                  : 'bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-gray-400 dark:hover:border-gray-500'
+                  ? 'bg-[var(--tm-surface-raised)] cursor-not-allowed opacity-50'
+                  : 'bg-[var(--tm-surface-raised)] hover:bg-[var(--tm-line)] hover:border-[var(--tm-line)]'
               }`}
             >
               <div className='flex items-center space-x-2'>
                 {isLoading('uploadConfig') ? (
                   <>
-                    <div className='w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin'></div>
-                    <span className='text-sm text-gray-600 dark:text-gray-400'>
+                    <div
+                      className={
+                        'w-4 h-4 border-2 border-[var(--tm-text)] border-t-transparent rounded-full animate-spin'
+                      }
+                    ></div>
+                    <span className='text-sm text-[color:var(--tm-muted)]'>
                       上传中...
                     </span>
                   </>
                 ) : (
                   <>
                     <svg
-                      className='w-5 h-5 text-gray-400'
+                      className='w-5 h-5 text-[color:var(--tm-muted)]'
                       fill='none'
                       stroke='currentColor'
                       viewBox='0 0 24 24'
@@ -9957,7 +9982,7 @@ const ConfigFileComponent = ({
                         d='M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12'
                       />
                     </svg>
-                    <span className='text-sm text-gray-600 dark:text-gray-400'>
+                    <span className='text-sm text-[color:var(--tm-muted)]'>
                       点击选择JSON文件或拖拽到此处
                     </span>
                   </>
@@ -9965,13 +9990,13 @@ const ConfigFileComponent = ({
               </div>
             </label>
           </div>
-          <p className='mt-2 text-xs text-gray-500 dark:text-gray-400'>
+          <p className='mt-2 text-[13px] text-[color:var(--tm-muted)]'>
             上传的JSON配置将自动合并到当前配置，重复的API地址将被自动过滤
           </p>
         </div>
 
         <div className='flex items-center justify-between'>
-          <div className='text-xs text-gray-500 dark:text-gray-400'>
+          <div className='text-[13px] text-[color:var(--tm-muted)]'>
             支持 JSON 格式，用于配置视频源和自定义分类
           </div>
           <button
@@ -10181,45 +10206,52 @@ const ThemeConfigComponent = ({
     {
       value: 'default',
       label: '默认主题',
-      color: '#3b82f6',
+      color:
+        /* TODO-P5: 内容色，展示主题/头像本身的颜色，不是界面配色 */ '#3b82f6',
     },
     {
       value: 'dark_blue',
       label: '深蓝夜空',
-      color: '#3b82f6',
+      color:
+        /* TODO-P5: 内容色，展示主题/头像本身的颜色，不是界面配色 */ '#3b82f6',
     },
     {
       value: 'purple_dream',
       label: '紫色梦境',
-      color: '#a78bfa',
+      color:
+        /* TODO-P5: 内容色，展示主题/头像本身的颜色，不是界面配色 */ '#a78bfa',
     },
     {
       value: 'green_forest',
       label: '翠绿森林',
-      color: '#10b981',
+      color:
+        /* TODO-P5: 内容色，展示主题/头像本身的颜色，不是界面配色 */ '#10b981',
     },
     {
       value: 'orange_sunset',
       label: '橙色日落',
-      color: '#f97316',
+      color:
+        /* TODO-P5: 内容色，展示主题/头像本身的颜色，不是界面配色 */ '#f97316',
     },
     {
       value: 'pink_candy',
       label: '粉色糖果',
-      color: '#ec4899',
+      color:
+        /* TODO-P5: 内容色，展示主题/头像本身的颜色，不是界面配色 */ '#ec4899',
     },
     {
       value: 'cyan_ocean',
       label: '青色海洋',
-      color: '#06b6d4',
+      color:
+        /* TODO-P5: 内容色，展示主题/头像本身的颜色，不是界面配色 */ '#06b6d4',
     },
   ];
 
   return (
     <div className='space-y-6'>
       {/* 主题类型选择 */}
-      <div className='bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700'>
-        <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4'>
+      <div className='bg-[var(--tm-surface)] rounded-lg p-6 border border-[var(--tm-line)]'>
+        <h3 className='text-lg font-medium text-[color:var(--tm-text)] mb-4'>
           主题类型
         </h3>
         <div className='space-y-4'>
@@ -10233,9 +10265,9 @@ const ThemeConfigComponent = ({
                   enableBuiltInTheme: false,
                 }))
               }
-              className='w-4 h-4 text-blue-600'
+              className='w-4 h-4 text-[color:var(--tm-text)]'
             />
-            <span className='text-gray-900 dark:text-gray-100'>
+            <span className='text-[color:var(--tm-text)]'>
               自定义CSS（使用下方的CSS编辑器）
             </span>
           </label>
@@ -10249,9 +10281,9 @@ const ThemeConfigComponent = ({
                   enableBuiltInTheme: true,
                 }))
               }
-              className='w-4 h-4 text-blue-600'
+              className='w-4 h-4 text-[color:var(--tm-text)]'
             />
-            <span className='text-gray-900 dark:text-gray-100'>
+            <span className='text-[color:var(--tm-text)]'>
               内置主题（使用预设的主题样式）
             </span>
           </label>
@@ -10260,8 +10292,8 @@ const ThemeConfigComponent = ({
 
       {/* 内置主题选择 */}
       {themeSettings.enableBuiltInTheme && (
-        <div className='bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700'>
-          <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4'>
+        <div className='bg-[var(--tm-surface)] rounded-lg p-6 border border-[var(--tm-line)]'>
+          <h3 className='text-lg font-medium text-[color:var(--tm-text)] mb-4'>
             选择内置主题
           </h3>
           <div className='flex flex-wrap gap-3'>
@@ -10276,8 +10308,8 @@ const ThemeConfigComponent = ({
                 }
                 className={`cursor-pointer rounded-lg border-2 p-3 transition-all hover:shadow-md ${
                   themeSettings.builtInTheme === theme.value
-                    ? 'border-blue-500 ring-2 ring-blue-200 dark:ring-blue-800 bg-blue-50 dark:bg-blue-900/20'
-                    : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+                    ? 'border-[var(--tm-line)] ring-2 ring-[var(--tm-text)] bg-[var(--tm-surface-raised)]'
+                    : 'border-[var(--tm-line)] hover:border-[var(--tm-line)]'
                 }`}
               >
                 <div className='flex items-center gap-3'>
@@ -10288,13 +10320,13 @@ const ThemeConfigComponent = ({
                   />
                   {/* 主题名称 */}
                   <div className='flex items-center gap-2'>
-                    <span className='text-sm font-medium text-gray-900 dark:text-gray-100 whitespace-nowrap'>
+                    <span className='text-sm font-medium text-[color:var(--tm-text)] whitespace-nowrap'>
                       {theme.label}
                     </span>
                     {themeSettings.builtInTheme === theme.value && (
-                      <div className='w-4 h-4 rounded-full bg-blue-500 flex items-center justify-center flex-shrink-0'>
+                      <div className='w-4 h-4 rounded-full bg-[var(--tm-text)] flex items-center justify-center flex-shrink-0'>
                         <svg
-                          className='w-2.5 h-2.5 text-white'
+                          className='w-2.5 h-2.5 text-[color:var(--tm-text)]'
                           fill='none'
                           stroke='currentColor'
                           viewBox='0 0 24 24'
@@ -10313,7 +10345,7 @@ const ThemeConfigComponent = ({
               </div>
             ))}
           </div>
-          <p className='mt-4 text-sm text-gray-600 dark:text-gray-400'>
+          <p className='mt-4 text-sm text-[color:var(--tm-muted)]'>
             注意：启用内置主题时，自定义CSS将被禁用
           </p>
         </div>
@@ -10321,8 +10353,8 @@ const ThemeConfigComponent = ({
 
       {/* 自定义CSS编辑器 */}
       {!themeSettings.enableBuiltInTheme && (
-        <div className='bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700'>
-          <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4'>
+        <div className='bg-[var(--tm-surface)] rounded-lg p-6 border border-[var(--tm-line)]'>
+          <h3 className='text-lg font-medium text-[color:var(--tm-text)] mb-4'>
             自定义CSS
           </h3>
           <textarea
@@ -10334,17 +10366,17 @@ const ThemeConfigComponent = ({
               }))
             }
             placeholder='在此输入自定义CSS代码...'
-            className='w-full h-96 px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 font-mono text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent'
+            className='w-full h-96 px-4 py-3 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)] font-mono text-sm focus:ring-2 focus:ring-[var(--tm-text)] focus:border-transparent'
           />
-          <p className='mt-2 text-sm text-gray-600 dark:text-gray-400'>
+          <p className='mt-2 text-sm text-[color:var(--tm-muted)]'>
             提示：可以使用CSS变量、媒体查询等高级特性
           </p>
         </div>
       )}
 
       {/* 缓存设置 */}
-      <div className='bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700'>
-        <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4'>
+      <div className='bg-[var(--tm-surface)] rounded-lg p-6 border border-[var(--tm-line)]'>
+        <h3 className='text-lg font-medium text-[color:var(--tm-text)] mb-4'>
           缓存设置
         </h3>
         <div className='space-y-4'>
@@ -10358,16 +10390,16 @@ const ThemeConfigComponent = ({
                   enableCache: e.target.checked,
                 }))
               }
-              className='w-4 h-4 text-blue-600 rounded'
+              className='w-4 h-4 text-[color:var(--tm-text)] rounded'
             />
-            <span className='text-gray-900 dark:text-gray-100'>
+            <span className='text-[color:var(--tm-text)]'>
               启用浏览器缓存（推荐）
             </span>
           </label>
 
           {themeSettings.enableCache && (
             <div>
-              <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+              <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
                 缓存时间（分钟）
               </label>
               <input
@@ -10381,28 +10413,28 @@ const ThemeConfigComponent = ({
                     cacheMinutes: parseInt(e.target.value) || 1440,
                   }))
                 }
-                className='w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent'
+                className='w-full px-4 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)] focus:ring-2 focus:ring-[var(--tm-text)] focus:border-transparent'
               />
-              <p className='mt-2 text-sm text-gray-600 dark:text-gray-400'>
+              <p className='mt-2 text-sm text-[color:var(--tm-muted)]'>
                 建议值：60分钟（1小时）、1440分钟（1天）、10080分钟（7天）
               </p>
             </div>
           )}
         </div>
-        <p className='mt-4 text-sm text-gray-600 dark:text-gray-400'>
+        <p className='mt-4 text-sm text-[color:var(--tm-muted)]'>
           启用后，用户浏览器会缓存CSS文件指定时间，减少服务器负载。启用该项可能会导致主题更新延迟。
         </p>
       </div>
 
       {/* 背景图配置 */}
-      <div className='bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700'>
-        <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4'>
+      <div className='bg-[var(--tm-surface)] rounded-lg p-6 border border-[var(--tm-line)]'>
+        <h3 className='text-lg font-medium text-[color:var(--tm-text)] mb-4'>
           背景图配置
         </h3>
         <div className='space-y-6'>
           {/* 登录界面背景图 */}
           <div>
-            <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+            <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
               登录界面背景图
             </label>
             <div className='space-y-2'>
@@ -10417,7 +10449,7 @@ const ThemeConfigComponent = ({
                       setLoginBackgroundImages(newImages);
                     }}
                     placeholder='请输入登录界面背景图URL (http:// 或 https://)'
-                    className='flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent font-mono text-sm'
+                    className='flex-1 px-4 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)] focus:ring-2 focus:ring-[var(--tm-text)] focus:border-transparent font-mono text-sm'
                   />
                   {loginBackgroundImages.length > 1 && (
                     <button
@@ -10427,7 +10459,7 @@ const ThemeConfigComponent = ({
                           loginBackgroundImages.filter((_, i) => i !== index)
                         );
                       }}
-                      className='px-3 py-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors'
+                      className='px-3 py-2 text-[color:var(--tm-text)] hover:bg-[var(--tm-line)] rounded-lg transition-colors min-h-[44px] tm-press'
                       title='删除'
                     >
                       <svg
@@ -10452,7 +10484,7 @@ const ThemeConfigComponent = ({
                 onClick={() =>
                   setLoginBackgroundImages([...loginBackgroundImages, ''])
                 }
-                className='flex items-center gap-2 px-4 py-2 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors'
+                className='flex items-center gap-2 px-4 py-2 text-[color:var(--tm-text)] hover:bg-[var(--tm-line)] rounded-lg transition-colors min-h-[44px] tm-press'
               >
                 <svg
                   className='w-5 h-5'
@@ -10474,7 +10506,7 @@ const ThemeConfigComponent = ({
 
           {/* 注册界面背景图 */}
           <div>
-            <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+            <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
               注册界面背景图
             </label>
             <div className='space-y-2'>
@@ -10489,7 +10521,7 @@ const ThemeConfigComponent = ({
                       setRegisterBackgroundImages(newImages);
                     }}
                     placeholder='请输入注册界面背景图URL (http:// 或 https://)'
-                    className='flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent font-mono text-sm'
+                    className='flex-1 px-4 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)] focus:ring-2 focus:ring-[var(--tm-text)] focus:border-transparent font-mono text-sm'
                   />
                   {registerBackgroundImages.length > 1 && (
                     <button
@@ -10499,7 +10531,7 @@ const ThemeConfigComponent = ({
                           registerBackgroundImages.filter((_, i) => i !== index)
                         );
                       }}
-                      className='px-3 py-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors'
+                      className='px-3 py-2 text-[color:var(--tm-text)] hover:bg-[var(--tm-line)] rounded-lg transition-colors min-h-[44px] tm-press'
                       title='删除'
                     >
                       <svg
@@ -10524,7 +10556,7 @@ const ThemeConfigComponent = ({
                 onClick={() =>
                   setRegisterBackgroundImages([...registerBackgroundImages, ''])
                 }
-                className='flex items-center gap-2 px-4 py-2 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors'
+                className='flex items-center gap-2 px-4 py-2 text-[color:var(--tm-text)] hover:bg-[var(--tm-line)] rounded-lg transition-colors min-h-[44px] tm-press'
               >
                 <svg
                   className='w-5 h-5'
@@ -10546,7 +10578,7 @@ const ThemeConfigComponent = ({
 
           {/* 首页背景图 */}
           <div>
-            <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+            <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
               首页背景图
             </label>
             <div className='space-y-2'>
@@ -10561,7 +10593,7 @@ const ThemeConfigComponent = ({
                       setHomeBackgroundImages(newImages);
                     }}
                     placeholder='请输入首页背景图URL (http:// 或 https://)'
-                    className='flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-transparent font-mono text-sm'
+                    className='flex-1 px-4 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)] focus:ring-2 focus:ring-[var(--tm-text)] focus:border-transparent font-mono text-sm'
                   />
                   {homeBackgroundImages.length > 1 && (
                     <button
@@ -10571,7 +10603,7 @@ const ThemeConfigComponent = ({
                           homeBackgroundImages.filter((_, i) => i !== index)
                         );
                       }}
-                      className='px-3 py-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors'
+                      className='px-3 py-2 text-[color:var(--tm-text)] hover:bg-[var(--tm-line)] rounded-lg transition-colors min-h-[44px] tm-press'
                       title='删除'
                     >
                       <svg
@@ -10596,7 +10628,7 @@ const ThemeConfigComponent = ({
                 onClick={() =>
                   setHomeBackgroundImages([...homeBackgroundImages, ''])
                 }
-                className='flex items-center gap-2 px-4 py-2 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors'
+                className='flex items-center gap-2 px-4 py-2 text-[color:var(--tm-text)] hover:bg-[var(--tm-line)] rounded-lg transition-colors min-h-[44px] tm-press'
               >
                 <svg
                   className='w-5 h-5'
@@ -10616,18 +10648,18 @@ const ThemeConfigComponent = ({
             </div>
           </div>
         </div>
-        <p className='mt-4 text-sm text-gray-600 dark:text-gray-400'>
+        <p className='mt-4 text-sm text-[color:var(--tm-muted)]'>
           配置登录、注册和首页的背景图链接，留空则使用默认样式。支持配置多张图片，将随机展示其中一张
         </p>
       </div>
 
       {/* 进度条图标配置 */}
-      <div className='bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700'>
-        <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2'>
+      <div className='bg-[var(--tm-surface)] rounded-lg p-6 border border-[var(--tm-line)]'>
+        <h3 className='text-lg font-medium text-[color:var(--tm-text)] mb-4 flex items-center gap-2'>
           <Palette className='w-5 h-5' />
           进度条图标
         </h3>
-        <p className='text-sm text-gray-600 dark:text-gray-400 mb-4'>
+        <p className='text-sm text-[color:var(--tm-muted)] mb-4'>
           自定义视频播放器进度条的滑块图标，让播放器更具个性
         </p>
 
@@ -10643,9 +10675,9 @@ const ThemeConfigComponent = ({
                   progressThumbType: 'default',
                 }))
               }
-              className='w-4 h-4 text-blue-600'
+              className='w-4 h-4 text-[color:var(--tm-text)]'
             />
-            <span className='text-gray-900 dark:text-gray-100'>默认圆点</span>
+            <span className='text-[color:var(--tm-text)]'>默认圆点</span>
           </label>
           <label className='flex items-center space-x-3 cursor-pointer'>
             <input
@@ -10657,9 +10689,9 @@ const ThemeConfigComponent = ({
                   progressThumbType: 'preset',
                 }))
               }
-              className='w-4 h-4 text-blue-600'
+              className='w-4 h-4 text-[color:var(--tm-text)]'
             />
-            <span className='text-gray-900 dark:text-gray-100'>内置图标</span>
+            <span className='text-[color:var(--tm-text)]'>内置图标</span>
           </label>
           <label className='flex items-center space-x-3 cursor-pointer'>
             <input
@@ -10671,16 +10703,16 @@ const ThemeConfigComponent = ({
                   progressThumbType: 'custom',
                 }))
               }
-              className='w-4 h-4 text-blue-600'
+              className='w-4 h-4 text-[color:var(--tm-text)]'
             />
-            <span className='text-gray-900 dark:text-gray-100'>自定义图标</span>
+            <span className='text-[color:var(--tm-text)]'>自定义图标</span>
           </label>
         </div>
 
         {/* 预制图标选择 */}
         {themeSettings.progressThumbType === 'preset' && (
           <div className='space-y-3 mb-4'>
-            <label className='block text-sm font-medium text-gray-700 dark:text-gray-300'>
+            <label className='block text-sm font-medium text-[color:var(--tm-muted)]'>
               选择内置图标
             </label>
             <div className='grid grid-cols-2 md:grid-cols-3 gap-3'>
@@ -10689,19 +10721,22 @@ const ThemeConfigComponent = ({
                   id: 'renako',
                   name: '玲奈子',
                   url: '/icons/q/renako.png',
-                  color: '#ec4899',
+                  color:
+                    /* TODO-P5: 内容色，展示主题/头像本身的颜色，不是界面配色 */ '#ec4899',
                 },
                 {
                   id: 'irena',
                   name: '伊蕾娜',
                   url: '/icons/q/irena.png',
-                  color: '#f8fafc',
+                  color:
+                    /* TODO-P5: 内容色，展示主题/头像本身的颜色，不是界面配色 */ '#f8fafc',
                 },
                 {
                   id: 'emilia',
                   name: '爱蜜莉雅',
                   url: '/icons/q/emilia.png',
-                  color: '#f8fafc',
+                  color:
+                    /* TODO-P5: 内容色，展示主题/头像本身的颜色，不是界面配色 */ '#f8fafc',
                 },
               ].map((thumb) => (
                 <button
@@ -10715,8 +10750,8 @@ const ThemeConfigComponent = ({
                   }
                   className={`relative p-4 border-2 rounded-lg transition-all ${
                     themeSettings.progressThumbPresetId === thumb.id
-                      ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                      : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500'
+                      ? 'border-[var(--tm-line)] bg-[var(--tm-surface-raised)] min-h-[44px] tm-press'
+                      : 'border-[var(--tm-line)] hover:border-[var(--tm-line)] min-h-[44px] tm-press'
                   }`}
                 >
                   <div className='flex flex-col items-center gap-2'>
@@ -10729,7 +10764,7 @@ const ThemeConfigComponent = ({
                           'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="48" height="48"%3E%3Crect width="48" height="48" fill="%23ddd"/%3E%3Ctext x="50%25" y="50%25" text-anchor="middle" dy=".3em" fill="%23999"%3E?%3C/text%3E%3C/svg%3E';
                       }}
                     />
-                    <span className='text-sm font-medium text-gray-700 dark:text-gray-300 text-center'>
+                    <span className='text-sm font-medium text-[color:var(--tm-muted)] text-center'>
                       {thumb.name}
                     </span>
                     <div
@@ -10740,7 +10775,7 @@ const ThemeConfigComponent = ({
                   </div>
                   {themeSettings.progressThumbPresetId === thumb.id && (
                     <div className='absolute top-2 right-2'>
-                      <Check className='w-5 h-5 text-blue-600 dark:text-blue-400' />
+                      <Check className='w-5 h-5 text-[color:var(--tm-text)]' />
                     </div>
                   )}
                 </button>
@@ -10752,12 +10787,12 @@ const ThemeConfigComponent = ({
         {/* 自定义图标URL输入 */}
         {themeSettings.progressThumbType === 'custom' && (
           <div className='space-y-3'>
-            <label className='block text-sm font-medium text-gray-700 dark:text-gray-300'>
+            <label className='block text-sm font-medium text-[color:var(--tm-muted)]'>
               自定义图标URL
             </label>
             <input
               type='text'
-              className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400'
+              className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--tm-text)] focus:border-[var(--tm-line)] transition-all duration-200 bg-[var(--tm-surface)] text-[color:var(--tm-text)] placeholder-gray-500 dark:placeholder-gray-400'
               placeholder='例如: https://example.com/icon.png'
               value={themeSettings.progressThumbCustomUrl}
               onChange={(e) =>
@@ -10767,25 +10802,26 @@ const ThemeConfigComponent = ({
                 }))
               }
             />
-            <p className='text-xs text-gray-500 dark:text-gray-400'>
+            <p className='text-[13px] text-[color:var(--tm-muted)]'>
               支持 PNG、JPG、GIF、WebP 格式，建议尺寸
               32x32px，图片URL必须可公开访问
             </p>
             {themeSettings.progressThumbCustomUrl && (
-              <div className='mt-2 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg'>
-                <p className='text-xs text-gray-600 dark:text-gray-400 mb-2'>
+              <div className='mt-2 p-3 bg-[var(--tm-surface-raised)] rounded-lg'>
+                <p className='text-[13px] text-[color:var(--tm-muted)] mb-2'>
                   预览：
                 </p>
                 <img
                   src={themeSettings.progressThumbCustomUrl}
                   alt='自定义图标预览'
-                  className='w-12 h-12 object-contain border border-gray-300 dark:border-gray-600 rounded'
+                  className='w-12 h-12 object-contain border border-[var(--tm-line)] rounded'
                   onError={(e) => {
                     (e.target as HTMLImageElement).style.display = 'none';
                     const parent = (e.target as HTMLImageElement).parentElement;
                     if (parent && !parent.querySelector('.error-msg')) {
                       const errorMsg = document.createElement('p');
-                      errorMsg.className = 'text-xs text-red-500 error-msg';
+                      errorMsg.className =
+                        'text-[13px] text-[color:var(--tm-text)] error-msg';
                       errorMsg.textContent = '图片加载失败，请检查URL是否正确';
                       parent.appendChild(errorMsg);
                     }
@@ -10798,12 +10834,12 @@ const ThemeConfigComponent = ({
       </div>
 
       {/* 初始化加载样式配置 */}
-      <div className='bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700'>
-        <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2'>
+      <div className='bg-[var(--tm-surface)] rounded-lg p-6 border border-[var(--tm-line)]'>
+        <h3 className='text-lg font-medium text-[color:var(--tm-text)] mb-4 flex items-center gap-2'>
           <Video className='w-5 h-5' />
           初始化加载样式
         </h3>
-        <p className='text-sm text-gray-600 dark:text-gray-400 mb-4'>
+        <p className='text-sm text-[color:var(--tm-muted)] mb-4'>
           播放页、直播页首屏加载动画的款式。颜色跟随站点主题色，保存后刷新页面生效
         </p>
 
@@ -10817,7 +10853,7 @@ const ThemeConfigComponent = ({
                 preview: (
                   <svg
                     viewBox='0 0 100 100'
-                    className='w-12 h-12 text-green-500'
+                    className='w-12 h-12 text-[color:var(--tm-text)]'
                     fill='none'
                     stroke='currentColor'
                   >
@@ -10846,8 +10882,8 @@ const ThemeConfigComponent = ({
                         key={i}
                         className={`rounded-sm ${
                           i < 2
-                            ? 'bg-green-500'
-                            : 'bg-gray-300 dark:bg-gray-600'
+                            ? 'bg-[var(--tm-text)]'
+                            : 'bg-[var(--tm-surface)]'
                         }`}
                       />
                     ))}
@@ -10870,22 +10906,22 @@ const ThemeConfigComponent = ({
               }
               className={`relative p-4 border-2 rounded-lg transition-all ${
                 themeSettings.loadingStyle === opt.id
-                  ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                  : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500'
+                  ? 'border-[var(--tm-line)] bg-[var(--tm-surface-raised)] min-h-[44px] tm-press'
+                  : 'border-[var(--tm-line)] hover:border-[var(--tm-line)] min-h-[44px] tm-press'
               }`}
             >
               <div className='flex flex-col items-center gap-2'>
                 <div className='w-12 h-12 flex items-center justify-center'>
                   {opt.preview}
                 </div>
-                <span className='text-sm font-medium text-gray-700 dark:text-gray-300 text-center'>
+                <span className='text-sm font-medium text-[color:var(--tm-muted)] text-center'>
                   {opt.name}
                   {opt.desc ? `（${opt.desc}）` : ''}
                 </span>
               </div>
               {themeSettings.loadingStyle === opt.id && (
                 <div className='absolute top-2 right-2'>
-                  <Check className='w-5 h-5 text-blue-600 dark:text-blue-400' />
+                  <Check className='w-5 h-5 text-[color:var(--tm-text)]' />
                 </div>
               )}
             </button>
@@ -10894,12 +10930,12 @@ const ThemeConfigComponent = ({
       </div>
 
       {/* 评分星标样式配置 */}
-      <div className='bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700'>
-        <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2'>
+      <div className='bg-[var(--tm-surface)] rounded-lg p-6 border border-[var(--tm-line)]'>
+        <h3 className='text-lg font-medium text-[color:var(--tm-text)] mb-4 flex items-center gap-2'>
           <Video className='w-5 h-5' />
           评分星标样式
         </h3>
-        <p className='text-sm text-gray-600 dark:text-gray-400 mb-4'>
+        <p className='text-sm text-[color:var(--tm-muted)] mb-4'>
           视频卡片右上角评分徽章的款式
         </p>
 
@@ -10911,7 +10947,7 @@ const ThemeConfigComponent = ({
                 name: '圆点',
                 desc: '',
                 preview: (
-                  <div className='w-9 h-9 rounded-full bg-pink-500 text-white text-xs font-bold flex items-center justify-center shadow-md'>
+                  <div className='w-9 h-9 rounded-full bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)] text-[13px] font-bold flex items-center justify-center shadow-md'>
                     8.5
                   </div>
                 ),
@@ -10922,12 +10958,11 @@ const ThemeConfigComponent = ({
                 desc: '默认',
                 preview: (
                   <div
-                    className='w-8 flex flex-col items-center pt-1 pb-2 text-[#4a2600] font-extrabold text-sm'
+                    className='w-8 flex flex-col items-center pt-1 pb-2 text-[#4a2600] font-bold text-sm' /* TODO-P5: 内容色，评分角标样式预览 */
                     style={{
                       background:
-                        'linear-gradient(180deg,#ffd54a,#ff8a3d)',
-                      clipPath:
-                        'polygon(0 0,100% 0,100% 100%,50% 84%,0 100%)',
+                        /* TODO-P5: 内容色，评分角标样式预览需还原角标实际配色 */ 'linear-gradient(180deg,#ffd54a,#ff8a3d)',
+                      clipPath: 'polygon(0 0,100% 0,100% 100%,50% 84%,0 100%)',
                     }}
                   >
                     <span className='flex gap-[1px] mb-[1px]'>
@@ -10936,7 +10971,9 @@ const ThemeConfigComponent = ({
                           key={i}
                           viewBox='0 0 24 24'
                           className='w-2 h-2'
-                          fill='#4a2600'
+                          fill={
+                            /* TODO-P5: 内容色，评分角标样式预览 */ '#4a2600'
+                          }
                         >
                           <path d='M12 2l2.9 6.3 6.9.7-5.1 4.6 1.4 6.8L12 17.8 5.9 20.4l1.4-6.8L2.2 9l6.9-.7z' />
                         </svg>
@@ -10954,14 +10991,14 @@ const ThemeConfigComponent = ({
                   <div className='flex flex-col items-center'>
                     <div className='relative w-6 h-4 -mb-2'>
                       <i
-                        className='absolute left-0 top-0 w-2.5 h-4 -rotate-6 bg-[#ff8a3d] block'
+                        className='absolute left-0 top-0 w-2.5 h-4 -rotate-6 bg-[var(--tm-surface)] block'
                         style={{
                           clipPath:
                             'polygon(0 0,100% 0,100% 100%,50% 72%,0 100%)',
                         }}
                       />
                       <i
-                        className='absolute right-0 top-0 w-2.5 h-4 rotate-6 bg-[#ff8a3d] block'
+                        className='absolute right-0 top-0 w-2.5 h-4 rotate-6 bg-[var(--tm-surface)] block'
                         style={{
                           clipPath:
                             'polygon(0 0,100% 0,100% 100%,50% 72%,0 100%)',
@@ -10969,10 +11006,10 @@ const ThemeConfigComponent = ({
                       />
                     </div>
                     <div
-                      className='relative z-10 w-8 h-8 rounded-full flex flex-col items-center justify-center text-[#4a2600] font-extrabold text-[11px] leading-none border-2 border-white/70'
+                      className='relative z-10 w-8 h-8 rounded-full flex flex-col items-center justify-center text-[#4a2600] font-bold text-[13px] leading-none border-2 border-white/70' /* TODO-P5: 内容色，评分角标样式预览 */
                       style={{
                         background:
-                          'linear-gradient(135deg,#ffd54a,#ff8a3d)',
+                          /* TODO-P5: 内容色，评分角标样式预览需还原角标实际配色 */ 'linear-gradient(135deg,#ffd54a,#ff8a3d)',
                       }}
                     >
                       <span className='flex flex-col items-center -mb-[1px]'>
@@ -10980,7 +11017,9 @@ const ThemeConfigComponent = ({
                           <svg
                             viewBox='0 0 24 24'
                             className='w-1.5 h-1.5'
-                            fill='#4a2600'
+                            fill={
+                              /* TODO-P5: 内容色，评分角标样式预览 */ '#4a2600'
+                            }
                           >
                             <path d='M12 2l2.9 6.3 6.9.7-5.1 4.6 1.4 6.8L12 17.8 5.9 20.4l1.4-6.8L2.2 9l6.9-.7z' />
                           </svg>
@@ -10991,7 +11030,9 @@ const ThemeConfigComponent = ({
                               key={i}
                               viewBox='0 0 24 24'
                               className='w-1.5 h-1.5'
-                              fill='#4a2600'
+                              fill={
+                                /* TODO-P5: 内容色，评分角标样式预览 */ '#4a2600'
+                              }
                             >
                               <path d='M12 2l2.9 6.3 6.9.7-5.1 4.6 1.4 6.8L12 17.8 5.9 20.4l1.4-6.8L2.2 9l6.9-.7z' />
                             </svg>
@@ -11016,22 +11057,22 @@ const ThemeConfigComponent = ({
               }
               className={`relative p-4 border-2 rounded-lg transition-all ${
                 themeSettings.rateBadgeStyle === opt.id
-                  ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                  : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500'
+                  ? 'border-[var(--tm-line)] bg-[var(--tm-surface-raised)] min-h-[44px] tm-press'
+                  : 'border-[var(--tm-line)] hover:border-[var(--tm-line)] min-h-[44px] tm-press'
               }`}
             >
               <div className='flex flex-col items-center gap-2'>
                 <div className='w-12 h-12 flex items-center justify-center'>
                   {opt.preview}
                 </div>
-                <span className='text-sm font-medium text-gray-700 dark:text-gray-300 text-center'>
+                <span className='text-sm font-medium text-[color:var(--tm-muted)] text-center'>
                   {opt.name}
                   {opt.desc ? `（${opt.desc}）` : ''}
                 </span>
               </div>
               {themeSettings.rateBadgeStyle === opt.id && (
                 <div className='absolute top-2 right-2'>
-                  <Check className='w-5 h-5 text-blue-600 dark:text-blue-400' />
+                  <Check className='w-5 h-5 text-[color:var(--tm-text)]' />
                 </div>
               )}
             </button>
@@ -11375,9 +11416,7 @@ const SiteConfigComponent = ({
 
   if (!config) {
     return (
-      <div className='text-center text-gray-500 dark:text-gray-400'>
-        加载中...
-      </div>
+      <div className='text-center text-[color:var(--tm-muted)]'>加载中...</div>
     );
   }
 
@@ -11385,7 +11424,7 @@ const SiteConfigComponent = ({
     <div className='space-y-6'>
       {/* 站点名称 */}
       <div>
-        <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+        <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
           站点名称
         </label>
         <input
@@ -11394,13 +11433,13 @@ const SiteConfigComponent = ({
           onChange={(e) =>
             setSiteSettings((prev) => ({ ...prev, SiteName: e.target.value }))
           }
-          className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent'
+          className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)] focus:ring-2 focus:ring-[var(--tm-text)] focus:border-transparent'
         />
       </div>
 
       {/* 站点公告 */}
       <div>
-        <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+        <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
           站点公告
         </label>
         <textarea
@@ -11412,13 +11451,13 @@ const SiteConfigComponent = ({
             }))
           }
           rows={3}
-          className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent'
+          className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)] focus:ring-2 focus:ring-[var(--tm-text)] focus:border-transparent'
         />
       </div>
 
       {/* 公告显示模式 */}
       <div>
-        <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+        <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
           公告显示模式
         </label>
         <div className='flex gap-4'>
@@ -11434,9 +11473,9 @@ const SiteConfigComponent = ({
                   AnnouncementDisplayMode: 'once',
                 }))
               }
-              className='text-green-600 focus:ring-green-500'
+              className='text-[color:var(--tm-text)] focus:ring-[var(--tm-text)]'
             />
-            <span className='text-sm text-gray-700 dark:text-gray-300'>
+            <span className='text-sm text-[color:var(--tm-muted)]'>
               单次显示
             </span>
           </label>
@@ -11452,9 +11491,9 @@ const SiteConfigComponent = ({
                   AnnouncementDisplayMode: 'every',
                 }))
               }
-              className='text-green-600 focus:ring-green-500'
+              className='text-[color:var(--tm-text)] focus:ring-[var(--tm-text)]'
             />
-            <span className='text-sm text-gray-700 dark:text-gray-300'>
+            <span className='text-sm text-[color:var(--tm-muted)]'>
               每次显示
             </span>
           </label>
@@ -11464,7 +11503,7 @@ const SiteConfigComponent = ({
       {/* 豆瓣数据源设置 */}
       <div className='space-y-3'>
         <div>
-          <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+          <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
             豆瓣数据代理
           </label>
           <div className='relative' data-dropdown='douban-datasource'>
@@ -11472,7 +11511,7 @@ const SiteConfigComponent = ({
             <button
               type='button'
               onClick={() => setIsDoubanDropdownOpen(!isDoubanDropdownOpen)}
-              className='w-full px-3 py-2.5 pr-10 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 shadow-sm hover:border-gray-400 dark:hover:border-gray-500 text-left'
+              className='w-full px-3 py-2.5 pr-10 border border-[var(--tm-line)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--tm-text)] focus:border-[var(--tm-line)] transition-all duration-200 bg-[var(--tm-surface)] text-[color:var(--tm-text)] shadow-sm hover:border-[var(--tm-line)] text-left min-h-[44px] tm-press'
             >
               {
                 doubanDataSourceOptions.find(
@@ -11484,7 +11523,7 @@ const SiteConfigComponent = ({
             {/* 下拉箭头 */}
             <div className='absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none'>
               <ChevronDown
-                className={`w-4 h-4 text-gray-400 dark:text-gray-500 transition-transform duration-200 ${
+                className={`w-4 h-4 text-[color:var(--tm-muted)] text-[color:var(--tm-muted)] transition-transform duration-200 ${
                   isDoubanDropdownOpen ? 'rotate-180' : ''
                 }`}
               />
@@ -11492,7 +11531,7 @@ const SiteConfigComponent = ({
 
             {/* 下拉选项列表 */}
             {isDoubanDropdownOpen && (
-              <div className='absolute z-50 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg max-h-60 overflow-auto'>
+              <div className='absolute z-50 w-full mt-1 bg-[var(--tm-surface)] border border-[var(--tm-line)] rounded-lg shadow-lg max-h-60 overflow-auto'>
                 {doubanDataSourceOptions.map((option) => (
                   <button
                     key={option.value}
@@ -11501,22 +11540,22 @@ const SiteConfigComponent = ({
                       handleDoubanDataSourceChange(option.value);
                       setIsDoubanDropdownOpen(false);
                     }}
-                    className={`w-full px-3 py-2.5 text-left text-sm transition-colors duration-150 flex items-center justify-between hover:bg-gray-100 dark:hover:bg-gray-700 ${
+                    className={`w-full px-3 py-2.5 text-left text-sm transition-colors duration-150 flex items-center justify-between hover:bg-[var(--tm-line)] hover:bg-[var(--tm-line)] ${
                       siteSettings.DoubanProxyType === option.value
-                        ? 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400'
-                        : 'text-gray-900 dark:text-gray-100'
+                        ? 'bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)] min-h-[44px] tm-press'
+                        : 'text-[color:var(--tm-text)] min-h-[44px] tm-press'
                     }`}
                   >
                     <span className='truncate'>{option.label}</span>
                     {siteSettings.DoubanProxyType === option.value && (
-                      <Check className='w-4 h-4 text-green-600 dark:text-green-400 flex-shrink-0 ml-2' />
+                      <Check className='w-4 h-4 text-[color:var(--tm-text)] flex-shrink-0 ml-2' />
                     )}
                   </button>
                 ))}
               </div>
             )}
           </div>
-          <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
+          <p className='mt-1 text-[13px] text-[color:var(--tm-muted)]'>
             选择获取豆瓣数据的方式
           </p>
 
@@ -11531,7 +11570,7 @@ const SiteConfigComponent = ({
                     '_blank'
                   )
                 }
-                className='flex items-center justify-center gap-1.5 w-full px-3 text-xs text-gray-500 dark:text-gray-400 cursor-pointer'
+                className='flex items-center justify-center gap-1.5 w-full px-3 text-[13px] text-[color:var(--tm-muted)] cursor-pointer min-h-[44px] tm-press'
               >
                 <span className='font-medium'>
                   {getThanksInfo(siteSettings.DoubanProxyType)!.text}
@@ -11545,7 +11584,7 @@ const SiteConfigComponent = ({
         {/* 豆瓣代理地址设置 - 仅在选择自定义代理时显示 */}
         {siteSettings.DoubanProxyType === 'custom' && (
           <div>
-            <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+            <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
               豆瓣代理地址
             </label>
             <input
@@ -11558,9 +11597,9 @@ const SiteConfigComponent = ({
                   DoubanProxy: e.target.value,
                 }))
               }
-              className='w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 shadow-sm hover:border-gray-400 dark:hover:border-gray-500'
+              className='w-full px-3 py-2.5 border border-[var(--tm-line)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--tm-text)] focus:border-[var(--tm-line)] transition-all duration-200 bg-[var(--tm-surface)] text-[color:var(--tm-text)] placeholder-gray-500 dark:placeholder-gray-400 shadow-sm hover:border-[var(--tm-line)]'
             />
-            <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
+            <p className='mt-1 text-[13px] text-[color:var(--tm-muted)]'>
               自定义代理服务器地址
             </p>
           </div>
@@ -11570,7 +11609,7 @@ const SiteConfigComponent = ({
       {/* 豆瓣图片代理设置 */}
       <div className='space-y-3'>
         <div>
-          <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+          <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
             豆瓣图片代理
           </label>
           <div className='relative' data-dropdown='douban-image-proxy'>
@@ -11582,7 +11621,7 @@ const SiteConfigComponent = ({
                   !isDoubanImageProxyDropdownOpen
                 )
               }
-              className='w-full px-3 py-2.5 pr-10 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 shadow-sm hover:border-gray-400 dark:hover:border-gray-500 text-left'
+              className='w-full px-3 py-2.5 pr-10 border border-[var(--tm-line)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--tm-text)] focus:border-[var(--tm-line)] transition-all duration-200 bg-[var(--tm-surface)] text-[color:var(--tm-text)] shadow-sm hover:border-[var(--tm-line)] text-left min-h-[44px] tm-press'
             >
               {
                 doubanImageProxyTypeOptions.find(
@@ -11594,7 +11633,7 @@ const SiteConfigComponent = ({
             {/* 下拉箭头 */}
             <div className='absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none'>
               <ChevronDown
-                className={`w-4 h-4 text-gray-400 dark:text-gray-500 transition-transform duration-200 ${
+                className={`w-4 h-4 text-[color:var(--tm-muted)] text-[color:var(--tm-muted)] transition-transform duration-200 ${
                   isDoubanImageProxyDropdownOpen ? 'rotate-180' : ''
                 }`}
               />
@@ -11602,7 +11641,7 @@ const SiteConfigComponent = ({
 
             {/* 下拉选项列表 */}
             {isDoubanImageProxyDropdownOpen && (
-              <div className='absolute z-50 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg max-h-60 overflow-auto'>
+              <div className='absolute z-50 w-full mt-1 bg-[var(--tm-surface)] border border-[var(--tm-line)] rounded-lg shadow-lg max-h-60 overflow-auto'>
                 {doubanImageProxyTypeOptions.map((option) => (
                   <button
                     key={option.value}
@@ -11611,22 +11650,22 @@ const SiteConfigComponent = ({
                       handleDoubanImageProxyChange(option.value);
                       setIsDoubanImageProxyDropdownOpen(false);
                     }}
-                    className={`w-full px-3 py-2.5 text-left text-sm transition-colors duration-150 flex items-center justify-between hover:bg-gray-100 dark:hover:bg-gray-700 ${
+                    className={`w-full px-3 py-2.5 text-left text-sm transition-colors duration-150 flex items-center justify-between hover:bg-[var(--tm-line)] hover:bg-[var(--tm-line)] ${
                       siteSettings.DoubanImageProxyType === option.value
-                        ? 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400'
-                        : 'text-gray-900 dark:text-gray-100'
+                        ? 'bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)] min-h-[44px] tm-press'
+                        : 'text-[color:var(--tm-text)] min-h-[44px] tm-press'
                     }`}
                   >
                     <span className='truncate'>{option.label}</span>
                     {siteSettings.DoubanImageProxyType === option.value && (
-                      <Check className='w-4 h-4 text-green-600 dark:text-green-400 flex-shrink-0 ml-2' />
+                      <Check className='w-4 h-4 text-[color:var(--tm-text)] flex-shrink-0 ml-2' />
                     )}
                   </button>
                 ))}
               </div>
             )}
           </div>
-          <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
+          <p className='mt-1 text-[13px] text-[color:var(--tm-muted)]'>
             选择获取豆瓣图片的方式
           </p>
 
@@ -11641,7 +11680,7 @@ const SiteConfigComponent = ({
                     '_blank'
                   )
                 }
-                className='flex items-center justify-center gap-1.5 w-full px-3 text-xs text-gray-500 dark:text-gray-400 cursor-pointer'
+                className='flex items-center justify-center gap-1.5 w-full px-3 text-[13px] text-[color:var(--tm-muted)] cursor-pointer min-h-[44px] tm-press'
               >
                 <span className='font-medium'>
                   {getThanksInfo(siteSettings.DoubanImageProxyType)!.text}
@@ -11655,7 +11694,7 @@ const SiteConfigComponent = ({
         {/* 豆瓣代理地址设置 - 仅在选择自定义代理时显示 */}
         {siteSettings.DoubanImageProxyType === 'custom' && (
           <div>
-            <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+            <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
               豆瓣图片代理地址
             </label>
             <input
@@ -11668,9 +11707,9 @@ const SiteConfigComponent = ({
                   DoubanImageProxy: e.target.value,
                 }))
               }
-              className='w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all duration-200 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 shadow-sm hover:border-gray-400 dark:hover:border-gray-500'
+              className='w-full px-3 py-2.5 border border-[var(--tm-line)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--tm-text)] focus:border-[var(--tm-line)] transition-all duration-200 bg-[var(--tm-surface)] text-[color:var(--tm-text)] placeholder-gray-500 dark:placeholder-gray-400 shadow-sm hover:border-[var(--tm-line)]'
             />
-            <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
+            <p className='mt-1 text-[13px] text-[color:var(--tm-muted)]'>
               自定义图片代理服务器地址
             </p>
           </div>
@@ -11679,7 +11718,7 @@ const SiteConfigComponent = ({
 
       {/* 搜索接口可拉取最大页数 */}
       <div>
-        <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+        <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
           搜索接口可拉取最大页数
         </label>
         <input
@@ -11692,13 +11731,13 @@ const SiteConfigComponent = ({
               SearchDownstreamMaxPage: Number(e.target.value),
             }))
           }
-          className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent'
+          className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)] focus:ring-2 focus:ring-[var(--tm-text)] focus:border-transparent'
         />
       </div>
 
       {/* 站点接口缓存时间 */}
       <div>
-        <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+        <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
           站点接口缓存时间（秒）
         </label>
         <input
@@ -11711,14 +11750,14 @@ const SiteConfigComponent = ({
               SiteInterfaceCacheTime: Number(e.target.value),
             }))
           }
-          className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent'
+          className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)] focus:ring-2 focus:ring-[var(--tm-text)] focus:border-transparent'
         />
       </div>
 
       {/* 禁用黄色过滤器 */}
       <div>
         <div className='flex items-center justify-between'>
-          <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+          <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
             禁用黄色过滤器
           </label>
           <button
@@ -11729,7 +11768,7 @@ const SiteConfigComponent = ({
                 DisableYellowFilter: !prev.DisableYellowFilter,
               }))
             }
-            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 ${
+            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--tm-text)] focus:ring-offset-2 ${
               siteSettings.DisableYellowFilter
                 ? buttonStyles.toggleOn
                 : buttonStyles.toggleOff
@@ -11746,7 +11785,7 @@ const SiteConfigComponent = ({
             />
           </button>
         </div>
-        <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
+        <p className='mt-1 text-[13px] text-[color:var(--tm-muted)]'>
           禁用黄色内容的过滤功能，允许显示所有内容。
         </p>
       </div>
@@ -11754,7 +11793,7 @@ const SiteConfigComponent = ({
       {/* 流式搜索 */}
       <div>
         <div className='flex items-center justify-between'>
-          <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+          <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
             启用流式搜索
           </label>
           <button
@@ -11765,7 +11804,7 @@ const SiteConfigComponent = ({
                 FluidSearch: !prev.FluidSearch,
               }))
             }
-            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 ${
+            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--tm-text)] focus:ring-offset-2 ${
               siteSettings.FluidSearch
                 ? buttonStyles.toggleOn
                 : buttonStyles.toggleOff
@@ -11782,14 +11821,14 @@ const SiteConfigComponent = ({
             />
           </button>
         </div>
-        <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
+        <p className='mt-1 text-[13px] text-[color:var(--tm-muted)]'>
           启用后搜索结果将实时流式返回,提升用户体验。
         </p>
       </div>
 
       {/* 本地设置云同步模式 */}
       <div>
-        <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+        <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
           本地设置云同步
         </label>
         <select
@@ -11803,13 +11842,13 @@ const SiteConfigComponent = ({
                 | 'auto',
             }))
           }
-          className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent'
+          className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)] focus:ring-2 focus:ring-[var(--tm-text)] focus:border-transparent'
         >
           <option value='off'>关闭</option>
           <option value='manual'>手动模式</option>
           <option value='auto'>自动模式</option>
         </select>
-        <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
+        <p className='mt-1 text-[13px] text-[color:var(--tm-muted)]'>
           登录用户可把本地设置同步到云端，多设备保持一致。
           <br />
           手动模式：本地设置面板右上角出现「备份/恢复」按钮。
@@ -11818,14 +11857,14 @@ const SiteConfigComponent = ({
         </p>
       </div>
 
-      <details className='pt-4 border-t border-gray-200 dark:border-gray-700'>
-        <summary className='text-sm font-semibold text-gray-900 dark:text-gray-100 cursor-pointer'>
+      <details className='pt-4 border-t border-[var(--tm-line)]'>
+        <summary className='text-sm font-medium text-[color:var(--tm-text)] cursor-pointer'>
           数据源配置
         </summary>
         <div className='mt-4 space-y-4'>
           {/* 轮播图数据源 */}
           <div>
-            <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+            <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
               轮播图数据源
             </label>
             <select
@@ -11836,20 +11875,20 @@ const SiteConfigComponent = ({
                   BannerDataSource: e.target.value,
                 }))
               }
-              className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent'
+              className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)] focus:ring-2 focus:ring-[var(--tm-text)] focus:border-transparent'
             >
               <option value='Douban'>豆瓣</option>
               <option value='TMDB'>TMDB</option>
               <option value='TX'>TX</option>
             </select>
-            <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
+            <p className='mt-1 text-[13px] text-[color:var(--tm-muted)]'>
               选择首页轮播图的数据来源
             </p>
           </div>
 
           {/* 更多推荐数据源 */}
           <div>
-            <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+            <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
               更多推荐数据源
             </label>
             <select
@@ -11860,13 +11899,13 @@ const SiteConfigComponent = ({
                   RecommendationDataSource: e.target.value,
                 }))
               }
-              className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent'
+              className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)] focus:ring-2 focus:ring-[var(--tm-text)] focus:border-transparent'
             >
               <option value='Mixed'>混合</option>
               <option value='Douban'>豆瓣</option>
               <option value='TMDB'>TMDB</option>
             </select>
-            <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
+            <p className='mt-1 text-[13px] text-[color:var(--tm-muted)]'>
               选择详情页"更多推荐"的数据来源。混合模式会根据豆瓣ID和评论开关自动切换数据源
             </p>
           </div>
@@ -11874,12 +11913,12 @@ const SiteConfigComponent = ({
       </details>
 
       {/* 弹幕 API 配置 */}
-      <details className='pt-4 border-t border-gray-200 dark:border-gray-700'>
-        <summary className='text-sm font-semibold text-gray-900 dark:text-gray-100 cursor-pointer'>
+      <details className='pt-4 border-t border-[var(--tm-line)]'>
+        <summary className='text-sm font-medium text-[color:var(--tm-text)] cursor-pointer'>
           弹幕配置
         </summary>
         <div className='mt-4 space-y-4'>
-          <div className='inline-flex rounded-lg bg-gray-100 p-1 dark:bg-gray-800'>
+          <div className='inline-flex rounded-lg bg-[var(--tm-surface-raised)] p-1'>
             <button
               type='button'
               onClick={() =>
@@ -11890,8 +11929,8 @@ const SiteConfigComponent = ({
               }
               className={`rounded-md px-3 py-1.5 text-sm transition-colors ${
                 siteSettings.DanmakuSourceType !== 'custom'
-                  ? 'bg-white text-green-600 shadow-sm dark:bg-gray-700 dark:text-green-400'
-                  : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white'
+                  ? 'bg-[var(--tm-surface)] text-[color:var(--tm-text)] shadow-sm min-h-[44px] tm-press'
+                  : 'text-[color:var(--tm-muted)] hover:text-[color:var(--tm-text)] min-h-[44px] tm-press'
               }`}
             >
               内置源
@@ -11906,8 +11945,8 @@ const SiteConfigComponent = ({
               }
               className={`rounded-md px-3 py-1.5 text-sm transition-colors ${
                 siteSettings.DanmakuSourceType === 'custom'
-                  ? 'bg-white text-green-600 shadow-sm dark:bg-gray-700 dark:text-green-400'
-                  : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white'
+                  ? 'bg-[var(--tm-surface)] text-[color:var(--tm-text)] shadow-sm min-h-[44px] tm-press'
+                  : 'text-[color:var(--tm-muted)] hover:text-[color:var(--tm-text)] min-h-[44px] tm-press'
               }`}
             >
               自定义源
@@ -11915,7 +11954,7 @@ const SiteConfigComponent = ({
           </div>
 
           {siteSettings.DanmakuSourceType !== 'custom' && (
-            <p className='text-xs text-amber-600 dark:text-amber-400'>
+            <p className='text-[13px] text-[color:var(--tm-text)]'>
               ⚠️
               内置弹幕源为多人共享服务，稳定性可能受使用高峰影响，建议自行部署后使用自定义源。
             </p>
@@ -11925,7 +11964,7 @@ const SiteConfigComponent = ({
             <>
               {/* 弹幕 API 地址 */}
               <div>
-                <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
                   弹幕 API 地址
                 </label>
                 <input
@@ -11938,15 +11977,15 @@ const SiteConfigComponent = ({
                       DanmakuApiBase: e.target.value,
                     }))
                   }
-                  className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent'
+                  className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)] focus:ring-2 focus:ring-[var(--tm-text)] focus:border-transparent'
                 />
-                <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
+                <p className='mt-1 text-[13px] text-[color:var(--tm-muted)]'>
                   自定义弹幕服务器的 API 地址。API部署参考
                   <a
                     href='https://github.com/huangxd-/danmu_api.git'
                     target='_blank'
                     rel='noopener noreferrer'
-                    className='ml-1 text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300'
+                    className='ml-1 text-[color:var(--tm-text)] hover:opacity-80 min-h-[44px] inline-flex items-center tm-press'
                   >
                     danmu_api
                   </a>
@@ -11955,7 +11994,7 @@ const SiteConfigComponent = ({
 
               {/* 弹幕 API Token */}
               <div>
-                <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
                   弹幕 API Token
                 </label>
                 <input
@@ -11968,9 +12007,9 @@ const SiteConfigComponent = ({
                       DanmakuApiToken: e.target.value,
                     }))
                   }
-                  className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent'
+                  className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)] focus:ring-2 focus:ring-[var(--tm-text)] focus:border-transparent'
                 />
-                <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
+                <p className='mt-1 text-[13px] text-[color:var(--tm-muted)]'>
                   自定义弹幕服务器的访问令牌，默认为 87654321
                 </p>
               </div>
@@ -11979,10 +12018,10 @@ const SiteConfigComponent = ({
 
           <div className='flex items-center justify-between'>
             <div>
-              <h4 className='text-sm font-medium text-gray-700 dark:text-gray-300'>
+              <h4 className='text-sm font-medium text-[color:var(--tm-muted)]'>
                 默认自动加载弹幕
               </h4>
-              <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
+              <p className='text-[13px] text-[color:var(--tm-muted)] mt-1'>
                 新用户或未设置本地偏好时，播放页是否默认自动匹配并加载弹幕。用户仍可在个人设置中自行覆盖。
               </p>
             </div>
@@ -11999,8 +12038,8 @@ const SiteConfigComponent = ({
                     }))
                   }
                 />
-                <div className='w-11 h-6 bg-gray-300 rounded-full peer-checked:bg-green-500 transition-colors dark:bg-gray-600'></div>
-                <div className='absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform peer-checked:translate-x-5'></div>
+                <div className='w-11 h-6 bg-[var(--tm-surface)] rounded-full peer-checked:bg-[var(--tm-text)] transition-colors'></div>
+                <div className='absolute top-0.5 left-0.5 w-5 h-5 bg-[var(--tm-surface)] rounded-full transition-transform peer-checked:translate-x-5'></div>
               </div>
             </label>
           </div>
@@ -12008,17 +12047,17 @@ const SiteConfigComponent = ({
       </details>
 
       {/* TMDB 配置 */}
-      <details className='pt-4 border-t border-gray-200 dark:border-gray-700'>
-        <summary className='text-sm font-semibold text-gray-900 dark:text-gray-100 cursor-pointer'>
+      <details className='pt-4 border-t border-[var(--tm-line)]'>
+        <summary className='text-sm font-medium text-[color:var(--tm-text)] cursor-pointer'>
           TMDB 配置
         </summary>
         <div className='mt-4 space-y-4'>
-          <p className='text-xs text-amber-600 dark:text-amber-400'>
+          <p className='text-[13px] text-[color:var(--tm-text)]'>
             由于国内网络环境限制，TMDB 服务通常需要配置代理后才能正常使用。
           </p>
           {/* TMDB API Key */}
           <div>
-            <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+            <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
               TMDB API Key
             </label>
             <input
@@ -12031,9 +12070,9 @@ const SiteConfigComponent = ({
                   TMDBApiKey: e.target.value,
                 }))
               }
-              className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent'
+              className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)] focus:ring-2 focus:ring-[var(--tm-text)] focus:border-transparent'
             />
-            <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
+            <p className='mt-1 text-[13px] text-[color:var(--tm-muted)]'>
               配置后首页将显示 TMDB 即将上映电影。支持配置多个 API
               Key（用英文逗号分隔）以实现轮询，避免单个 Key 请求限制。获取 API
               Key 请访问{' '}
@@ -12041,7 +12080,7 @@ const SiteConfigComponent = ({
                 href='https://www.themoviedb.org/settings/api'
                 target='_blank'
                 rel='noopener noreferrer'
-                className='text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300'
+                className='text-[color:var(--tm-text)] hover:opacity-80 min-h-[44px] inline-flex items-center tm-press'
               >
                 TMDB API 设置页面
               </a>
@@ -12050,7 +12089,7 @@ const SiteConfigComponent = ({
 
           {/* TMDB Proxy */}
           <div>
-            <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+            <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
               TMDB 系统代理
             </label>
             <input
@@ -12063,16 +12102,16 @@ const SiteConfigComponent = ({
                   TMDBProxy: e.target.value,
                 }))
               }
-              className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent'
+              className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)] focus:ring-2 focus:ring-[var(--tm-text)] focus:border-transparent'
             />
-            <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
+            <p className='mt-1 text-[13px] text-[color:var(--tm-muted)]'>
               配置代理服务器地址，用于访问 TMDB API（可选）
             </p>
           </div>
 
           {/* TMDB Reverse Proxy */}
           <div>
-            <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+            <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
               TMDB 反代代理
             </label>
             <input
@@ -12085,16 +12124,16 @@ const SiteConfigComponent = ({
                   TMDBReverseProxy: e.target.value,
                 }))
               }
-              className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent'
+              className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)] focus:ring-2 focus:ring-[var(--tm-text)] focus:border-transparent'
             />
-            <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
+            <p className='mt-1 text-[13px] text-[color:var(--tm-muted)]'>
               配置 TMDB 反向代理 Base URL（可选）
             </p>
           </div>
 
           {/* TMDB Image Base URL */}
           <div>
-            <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+            <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
               TMDB 图片默认地址
             </label>
             <input
@@ -12107,32 +12146,32 @@ const SiteConfigComponent = ({
                   TMDBImageBaseUrl: e.target.value,
                 }))
               }
-              className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent'
+              className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)] focus:ring-2 focus:ring-[var(--tm-text)] focus:border-transparent'
             />
-            <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
-              用户未在本地数据源设置中配置 TMDB 图片地址时，图片默认使用该地址（默认
-              https://image.tmdb.org）
+            <p className='mt-1 text-[13px] text-[color:var(--tm-muted)]'>
+              用户未在本地数据源设置中配置 TMDB
+              图片地址时，图片默认使用该地址（默认 https://image.tmdb.org）
             </p>
           </div>
         </div>
       </details>
 
       {/* 动漫/Bangumi 配置 */}
-      <details className='pt-4 border-t border-gray-200 dark:border-gray-700'>
-        <summary className='text-sm font-semibold text-gray-900 dark:text-gray-100 cursor-pointer'>
+      <details className='pt-4 border-t border-[var(--tm-line)]'>
+        <summary className='text-sm font-medium text-[color:var(--tm-text)] cursor-pointer'>
           动漫数据源配置
         </summary>
         <div className='mt-4 space-y-4'>
-          <p className='text-xs text-amber-600 dark:text-amber-400'>
+          <p className='text-[13px] text-[color:var(--tm-text)]'>
             Bangumi
             在部分国内网络环境下可能无法直连，可按部署环境选择合适的数据源。
           </p>
 
           <div>
-            <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+            <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
               默认动漫数据源
             </label>
-            <div className='inline-flex rounded-lg bg-gray-100 p-1 dark:bg-gray-800'>
+            <div className='inline-flex rounded-lg bg-[var(--tm-surface-raised)] p-1'>
               {[
                 { value: 'direct', label: '直连' },
                 { value: 'server-proxy', label: '服务器代理' },
@@ -12152,21 +12191,21 @@ const SiteConfigComponent = ({
                   className={`rounded-md px-3 py-1.5 text-sm transition-colors ${
                     (siteSettings.BangumiDataSource || 'direct') ===
                     option.value
-                      ? 'bg-white text-green-600 shadow-sm dark:bg-gray-700 dark:text-green-400'
-                      : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white'
+                      ? 'bg-[var(--tm-surface)] text-[color:var(--tm-text)] shadow-sm min-h-[44px] tm-press'
+                      : 'text-[color:var(--tm-muted)] hover:text-[color:var(--tm-text)] min-h-[44px] tm-press'
                   }`}
                 >
                   {option.label}
                 </button>
               ))}
             </div>
-            <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
+            <p className='mt-1 text-[13px] text-[color:var(--tm-muted)]'>
               作为新用户本地设置的默认动漫数据源；用户仍可在本地网络配置中覆盖。
             </p>
           </div>
 
           <div>
-            <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+            <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
               Bangumi Base URL
             </label>
             <input
@@ -12179,16 +12218,16 @@ const SiteConfigComponent = ({
                   BangumiApiBaseUrl: e.target.value,
                 }))
               }
-              className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent'
+              className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)] focus:ring-2 focus:ring-[var(--tm-text)] focus:border-transparent'
             />
-            <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
+            <p className='mt-1 text-[13px] text-[color:var(--tm-muted)]'>
               Bangumi 官方或自建反代地址，不要带末尾路径，例如
               https://api.bgm.tv。
             </p>
           </div>
 
           <div>
-            <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+            <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
               Bangumi 图片 Base URL
             </label>
             <input
@@ -12201,9 +12240,9 @@ const SiteConfigComponent = ({
                   BangumiImageBaseUrl: e.target.value,
                 }))
               }
-              className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent'
+              className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)] focus:ring-2 focus:ring-[var(--tm-text)] focus:border-transparent'
             />
-            <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
+            <p className='mt-1 text-[13px] text-[color:var(--tm-muted)]'>
               用于替换 Bangumi
               图片域名。只需填写基础部分，不需要填写完整图片路径，例如
               https://lain.bgm.tv。
@@ -12211,7 +12250,7 @@ const SiteConfigComponent = ({
           </div>
 
           <div>
-            <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+            <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
               Bangumi 系统代理
             </label>
             <input
@@ -12224,16 +12263,16 @@ const SiteConfigComponent = ({
                   BangumiProxy: e.target.value,
                 }))
               }
-              className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent'
+              className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)] focus:ring-2 focus:ring-[var(--tm-text)] focus:border-transparent'
             />
-            <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
+            <p className='mt-1 text-[13px] text-[color:var(--tm-muted)]'>
               用于服务器代理访问 Bangumi API。Cloudflare
               部署环境下不会使用该代理。
             </p>
           </div>
 
           <div>
-            <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+            <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
               LiveChart 系统代理
             </label>
             <input
@@ -12246,22 +12285,22 @@ const SiteConfigComponent = ({
                   LiveChartProxy: e.target.value,
                 }))
               }
-              className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent'
+              className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)] focus:ring-2 focus:ring-[var(--tm-text)] focus:border-transparent'
             />
-            <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
+            <p className='mt-1 text-[13px] text-[color:var(--tm-muted)]'>
               用于服务器代理访问 LiveChart 番剧时刻表。留空则直连。
             </p>
           </div>
 
-          <details className='group rounded-lg border border-green-200 bg-green-50/60 p-4 dark:border-green-900/50 dark:bg-green-900/10'>
+          <details className='group rounded-lg border border-[var(--tm-line)] bg-[var(--tm-surface-raised)] p-4'>
             <summary className='flex cursor-pointer list-none items-start justify-between gap-3'>
               <div className='min-w-0'>
-                <label className='block text-sm font-medium text-gray-700 dark:text-gray-300'>
+                <label className='block text-sm font-medium text-[color:var(--tm-muted)]'>
                   Bangumi Cloudflare Workers 代理脚本
                 </label>
-                <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
-                  复制后粘贴到 Cloudflare Workers，部署后的域名可填入
-                  Bangumi Base URL 和 Bangumi 图片 Base URL。
+                <p className='mt-1 text-[13px] text-[color:var(--tm-muted)]'>
+                  复制后粘贴到 Cloudflare Workers，部署后的域名可填入 Bangumi
+                  Base URL 和 Bangumi 图片 Base URL。
                 </p>
               </div>
               <div className='flex shrink-0 items-center gap-2'>
@@ -12273,15 +12312,15 @@ const SiteConfigComponent = ({
                     handleCopyBangumiProxyScript();
                   }}
                   disabled={!bangumiProxyScript}
-                  className='inline-flex items-center gap-1.5 rounded-lg bg-green-600 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50'
+                  className='inline-flex items-center gap-1.5 rounded-lg bg-[var(--tm-text)] px-3 py-2 text-[13px] font-medium text-[color:var(--tm-accent-contrast)] transition-colors hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 min-h-[44px] tm-press'
                 >
                   <Copy className='h-3.5 w-3.5' />
                   {bangumiProxyScriptCopied ? '已复制' : '复制脚本'}
                 </button>
-                <ChevronDown className='h-4 w-4 text-green-600 transition-transform group-open:rotate-180 dark:text-green-400' />
+                <ChevronDown className='h-4 w-4 text-[color:var(--tm-text)] transition-transform group-open:rotate-180' />
               </div>
             </summary>
-            <pre className='mt-3 max-h-48 overflow-auto rounded-lg border border-gray-200 bg-white p-3 text-xs text-gray-700 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-300'>
+            <pre className='mt-3 max-h-48 overflow-auto rounded-lg border border-[var(--tm-line)] bg-[var(--tm-surface)] p-3 text-[13px] text-[color:var(--tm-muted)]'>
               <code>
                 {bangumiProxyScript ||
                   '正在加载 /scripts/bangumi-proxy.worker.js ...'}
@@ -12291,16 +12330,16 @@ const SiteConfigComponent = ({
         </div>
       </details>
 
-      <details className='pt-4 border-t border-gray-200 dark:border-gray-700'>
-        <summary className='text-sm font-semibold text-gray-900 dark:text-gray-100 cursor-pointer'>
+      <details className='pt-4 border-t border-[var(--tm-line)]'>
+        <summary className='text-sm font-medium text-[color:var(--tm-text)] cursor-pointer'>
           磁链配置
         </summary>
         <div className='mt-4 space-y-4'>
-          <p className='text-xs text-amber-600 dark:text-amber-400'>
+          <p className='text-[13px] text-[color:var(--tm-text)]'>
             由于国内网络环境限制，部分磁链搜索站点通常需要配置代理后才能正常访问。
           </p>
           <div>
-            <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+            <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
               系统代理
             </label>
             <input
@@ -12313,16 +12352,16 @@ const SiteConfigComponent = ({
                   MagnetProxy: e.target.value,
                 }))
               }
-              className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent'
+              className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)] focus:ring-2 focus:ring-[var(--tm-text)] focus:border-transparent'
             />
-            <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
+            <p className='mt-1 text-[13px] text-[color:var(--tm-muted)]'>
               用于访问磁链搜索站点的系统代理。Cloudflare
               部署环境下不会使用该代理。
             </p>
           </div>
 
           <div>
-            <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+            <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
               Mikan 反代代理
             </label>
             <input
@@ -12335,15 +12374,15 @@ const SiteConfigComponent = ({
                   MagnetMikanReverseProxy: e.target.value,
                 }))
               }
-              className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent'
+              className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)] focus:ring-2 focus:ring-[var(--tm-text)] focus:border-transparent'
             />
-            <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
+            <p className='mt-1 text-[13px] text-[color:var(--tm-muted)]'>
               配置后将使用该地址替代默认的 Mikan 域名进行请求。
             </p>
           </div>
 
           <div>
-            <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+            <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
               动漫花园反代代理
             </label>
             <input
@@ -12356,15 +12395,15 @@ const SiteConfigComponent = ({
                   MagnetDmhyReverseProxy: e.target.value,
                 }))
               }
-              className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent'
+              className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)] focus:ring-2 focus:ring-[var(--tm-text)] focus:border-transparent'
             />
-            <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
+            <p className='mt-1 text-[13px] text-[color:var(--tm-muted)]'>
               配置后将使用该地址替代默认的动漫花园域名进行请求。
             </p>
           </div>
 
           <div>
-            <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+            <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
               ACG.RIP 反代代理
             </label>
             <input
@@ -12377,15 +12416,15 @@ const SiteConfigComponent = ({
                   MagnetAcgripReverseProxy: e.target.value,
                 }))
               }
-              className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent'
+              className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)] focus:ring-2 focus:ring-[var(--tm-text)] focus:border-transparent'
             />
-            <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
+            <p className='mt-1 text-[13px] text-[color:var(--tm-muted)]'>
               配置后将使用该地址替代默认的 ACG.RIP 域名进行请求。
             </p>
           </div>
 
           <div>
-            <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+            <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
               Nyaa 反代代理
             </label>
             <input
@@ -12398,9 +12437,9 @@ const SiteConfigComponent = ({
                   MagnetNyaaReverseProxy: e.target.value,
                 }))
               }
-              className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent'
+              className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)] focus:ring-2 focus:ring-[var(--tm-text)] focus:border-transparent'
             />
-            <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
+            <p className='mt-1 text-[13px] text-[color:var(--tm-muted)]'>
               配置后将使用该地址替代默认的 Nyaa 域名进行请求。
             </p>
           </div>
@@ -12408,14 +12447,14 @@ const SiteConfigComponent = ({
       </details>
 
       {/* Pansou 配置 */}
-      <details className='pt-4 border-t border-gray-200 dark:border-gray-700'>
-        <summary className='text-sm font-semibold text-gray-900 dark:text-gray-100 cursor-pointer'>
+      <details className='pt-4 border-t border-[var(--tm-line)]'>
+        <summary className='text-sm font-medium text-[color:var(--tm-text)] cursor-pointer'>
           Pansou 网盘搜索配置
         </summary>
         <div className='mt-4 space-y-4'>
           {/* Pansou API 地址 */}
           <div>
-            <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+            <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
               Pansou API 地址
             </label>
             <input
@@ -12428,15 +12467,15 @@ const SiteConfigComponent = ({
                   PansouApiUrl: e.target.value,
                 }))
               }
-              className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent'
+              className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)] focus:ring-2 focus:ring-[var(--tm-text)] focus:border-transparent'
             />
-            <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
+            <p className='mt-1 text-[13px] text-[color:var(--tm-muted)]'>
               配置 Pansou 服务器地址，用于网盘资源搜索。项目地址：{' '}
               <a
                 href='https://github.com/fish2018/pansou'
                 target='_blank'
                 rel='noopener noreferrer'
-                className='text-blue-500 hover:text-blue-600 dark:text-blue-400 dark:hover:text-blue-300'
+                className='text-[color:var(--tm-text)] hover:opacity-80 min-h-[44px] inline-flex items-center tm-press'
               >
                 https://github.com/fish2018/pansou
               </a>
@@ -12445,7 +12484,7 @@ const SiteConfigComponent = ({
 
           {/* Pansou 账号 */}
           <div>
-            <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+            <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
               Pansou 账号（可选）
             </label>
             <input
@@ -12458,16 +12497,16 @@ const SiteConfigComponent = ({
                   PansouUsername: e.target.value,
                 }))
               }
-              className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent'
+              className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)] focus:ring-2 focus:ring-[var(--tm-text)] focus:border-transparent'
             />
-            <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
+            <p className='mt-1 text-[13px] text-[color:var(--tm-muted)]'>
               如果 Pansou 服务启用了认证功能，需要提供账号密码
             </p>
           </div>
 
           {/* Pansou 密码 */}
           <div>
-            <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+            <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
               Pansou 密码（可选）
             </label>
             <input
@@ -12480,16 +12519,16 @@ const SiteConfigComponent = ({
                   PansouPassword: e.target.value,
                 }))
               }
-              className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent'
+              className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)] focus:ring-2 focus:ring-[var(--tm-text)] focus:border-transparent'
             />
-            <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
+            <p className='mt-1 text-[13px] text-[color:var(--tm-muted)]'>
               配置账号密码后，系统会自动登录并缓存 Token
             </p>
           </div>
 
           {/* 关键词屏蔽 */}
           <div>
-            <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+            <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
               关键词屏蔽（可选）
             </label>
             <input
@@ -12502,9 +12541,9 @@ const SiteConfigComponent = ({
                   PansouKeywordBlocklist: e.target.value,
                 }))
               }
-              className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent'
+              className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)] focus:ring-2 focus:ring-[var(--tm-text)] focus:border-transparent'
             />
-            <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
+            <p className='mt-1 text-[13px] text-[color:var(--tm-muted)]'>
               设置后会过滤包含这些关键词的搜索结果
             </p>
           </div>
@@ -12512,15 +12551,15 @@ const SiteConfigComponent = ({
       </details>
 
       {/* 评论功能配置 */}
-      <details className='pt-4 border-t border-gray-200 dark:border-gray-700'>
-        <summary className='text-sm font-semibold text-gray-900 dark:text-gray-100 cursor-pointer'>
+      <details className='pt-4 border-t border-[var(--tm-line)]'>
+        <summary className='text-sm font-medium text-[color:var(--tm-text)] cursor-pointer'>
           评论配置
         </summary>
         <div className='mt-4 space-y-4'>
           {/* 开启评论与相似推荐 */}
           <div>
             <div className='flex items-center justify-between'>
-              <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+              <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
                 开启评论与相似推荐
               </label>
               <button
@@ -12528,7 +12567,7 @@ const SiteConfigComponent = ({
                 onClick={() =>
                   handleCommentsToggle(!siteSettings.EnableComments)
                 }
-                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 ${
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--tm-text)] focus:ring-offset-2 ${
                   siteSettings.EnableComments
                     ? buttonStyles.toggleOn
                     : buttonStyles.toggleOff
@@ -12545,7 +12584,7 @@ const SiteConfigComponent = ({
                 />
               </button>
             </div>
-            <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
+            <p className='mt-1 text-[13px] text-[color:var(--tm-muted)]'>
               开启后将显示豆瓣评论与相似推荐。评论为逆向抓取，请自行承担责任。
             </p>
           </div>
@@ -12553,8 +12592,8 @@ const SiteConfigComponent = ({
       </details>
 
       {/* 流量统计配置 */}
-      <details className='group rounded-lg border border-gray-200 p-4 dark:border-gray-700'>
-        <summary className='flex cursor-pointer items-center justify-between font-medium text-gray-900 dark:text-gray-100'>
+      <details className='group rounded-lg border border-[var(--tm-line)] p-4'>
+        <summary className='flex cursor-pointer items-center justify-between font-medium text-[color:var(--tm-text)]'>
           <span className='flex items-center gap-2'>
             <BarChart3 className='h-5 w-5' />
             流量统计
@@ -12565,11 +12604,12 @@ const SiteConfigComponent = ({
           {/* 启用开关 */}
           <div className='flex items-center justify-between'>
             <div>
-              <label className='block text-sm font-medium text-gray-700 dark:text-gray-300'>
+              <label className='block text-sm font-medium text-[color:var(--tm-muted)]'>
                 启用流量统计
               </label>
-              <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
-                开启后将在页面中注入统计脚本，支持 Umami、Google Analytics 和自定义代码
+              <p className='mt-1 text-[13px] text-[color:var(--tm-muted)]'>
+                开启后将在页面中注入统计脚本，支持 Umami、Google Analytics
+                和自定义代码
               </p>
             </div>
             <button
@@ -12580,7 +12620,7 @@ const SiteConfigComponent = ({
                   AnalyticsEnabled: !prev.AnalyticsEnabled,
                 }))
               }
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 ${
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--tm-text)] focus:ring-offset-2 ${
                 siteSettings.AnalyticsEnabled
                   ? buttonStyles.toggleOn
                   : buttonStyles.toggleOff
@@ -12602,7 +12642,7 @@ const SiteConfigComponent = ({
             <>
               {/* 统计服务提供商 */}
               <div>
-                <label className='block text-sm font-medium text-gray-700 dark:text-gray-300'>
+                <label className='block text-sm font-medium text-[color:var(--tm-muted)]'>
                   统计服务
                 </label>
                 <select
@@ -12610,14 +12650,20 @@ const SiteConfigComponent = ({
                   onChange={(e) =>
                     setSiteSettings((prev) => ({
                       ...prev,
-                      AnalyticsProvider: e.target.value as 'umami' | 'google' | 'clarity' | 'custom',
+                      AnalyticsProvider: e.target.value as
+                        | 'umami'
+                        | 'google'
+                        | 'clarity'
+                        | 'custom',
                     }))
                   }
-                  className='mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200'
+                  className='mt-1 block w-full rounded-md border border-[var(--tm-line)] px-3 py-2 text-sm bg-[var(--tm-surface)] text-[color:var(--tm-text)]'
                 >
                   <option value='umami'>Umami（开源，自托管）</option>
                   <option value='google'>Google Analytics</option>
-                  <option value='clarity'>Microsoft Clarity（免费，热力图+会话回放）</option>
+                  <option value='clarity'>
+                    Microsoft Clarity（免费，热力图+会话回放）
+                  </option>
                   <option value='custom'>自定义代码</option>
                 </select>
               </div>
@@ -12625,7 +12671,7 @@ const SiteConfigComponent = ({
               {siteSettings.AnalyticsProvider === 'umami' && (
                 <>
                   <div>
-                    <label className='block text-sm font-medium text-gray-700 dark:text-gray-300'>
+                    <label className='block text-sm font-medium text-[color:var(--tm-muted)]'>
                       Umami 脚本地址
                     </label>
                     <input
@@ -12638,14 +12684,14 @@ const SiteConfigComponent = ({
                         }))
                       }
                       placeholder='https://your-umami-server.com/script.js'
-                      className='mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200'
+                      className='mt-1 block w-full rounded-md border border-[var(--tm-line)] px-3 py-2 text-sm bg-[var(--tm-surface)] text-[color:var(--tm-text)]'
                     />
-                    <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
+                    <p className='mt-1 text-[13px] text-[color:var(--tm-muted)]'>
                       Umami 实例的 script.js 完整 URL
                     </p>
                   </div>
                   <div>
-                    <label className='block text-sm font-medium text-gray-700 dark:text-gray-300'>
+                    <label className='block text-sm font-medium text-[color:var(--tm-muted)]'>
                       网站 ID (Website ID)
                     </label>
                     <input
@@ -12658,9 +12704,9 @@ const SiteConfigComponent = ({
                         }))
                       }
                       placeholder='e.g. 12345678-abcd-efgh-ijkl-1234567890ab'
-                      className='mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200'
+                      className='mt-1 block w-full rounded-md border border-[var(--tm-line)] px-3 py-2 text-sm bg-[var(--tm-surface)] text-[color:var(--tm-text)]'
                     />
-                    <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
+                    <p className='mt-1 text-[13px] text-[color:var(--tm-muted)]'>
                       在 Umami 后台添加网站后获取的 Website ID
                     </p>
                   </div>
@@ -12669,7 +12715,7 @@ const SiteConfigComponent = ({
 
               {siteSettings.AnalyticsProvider === 'google' && (
                 <div>
-                  <label className='block text-sm font-medium text-gray-700 dark:text-gray-300'>
+                  <label className='block text-sm font-medium text-[color:var(--tm-muted)]'>
                     Measurement ID
                   </label>
                   <input
@@ -12682,17 +12728,18 @@ const SiteConfigComponent = ({
                       }))
                     }
                     placeholder='G-XXXXXXXXXX'
-                    className='mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200'
+                    className='mt-1 block w-full rounded-md border border-[var(--tm-line)] px-3 py-2 text-sm bg-[var(--tm-surface)] text-[color:var(--tm-text)]'
                   />
-                  <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
-                    Google Analytics 4 的 Measurement ID，在 GA 后台「数据流」中获取
+                  <p className='mt-1 text-[13px] text-[color:var(--tm-muted)]'>
+                    Google Analytics 4 的 Measurement ID，在 GA
+                    后台「数据流」中获取
                   </p>
                 </div>
               )}
 
               {siteSettings.AnalyticsProvider === 'clarity' && (
                 <div>
-                  <label className='block text-sm font-medium text-gray-700 dark:text-gray-300'>
+                  <label className='block text-sm font-medium text-[color:var(--tm-muted)]'>
                     Project ID
                   </label>
                   <input
@@ -12705,17 +12752,18 @@ const SiteConfigComponent = ({
                       }))
                     }
                     placeholder='e.g. abc1234567'
-                    className='mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200'
+                    className='mt-1 block w-full rounded-md border border-[var(--tm-line)] px-3 py-2 text-sm bg-[var(--tm-surface)] text-[color:var(--tm-text)]'
                   />
-                  <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
-                    Microsoft Clarity 的 Project ID，在 clarity.microsoft.com 项目设置中获取
+                  <p className='mt-1 text-[13px] text-[color:var(--tm-muted)]'>
+                    Microsoft Clarity 的 Project ID，在 clarity.microsoft.com
+                    项目设置中获取
                   </p>
                 </div>
               )}
 
               {siteSettings.AnalyticsProvider === 'custom' && (
                 <div>
-                  <label className='block text-sm font-medium text-gray-700 dark:text-gray-300'>
+                  <label className='block text-sm font-medium text-[color:var(--tm-muted)]'>
                     自定义统计代码
                   </label>
                   <textarea
@@ -12728,10 +12776,11 @@ const SiteConfigComponent = ({
                     }
                     placeholder='粘贴完整的统计脚本代码，如百度统计、Plausible、51la 等...'
                     rows={6}
-                    className='mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 font-mono text-sm dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200'
+                    className='mt-1 block w-full rounded-md border border-[var(--tm-line)] px-3 py-2 font-mono text-sm bg-[var(--tm-surface)] text-[color:var(--tm-text)]'
                   />
-                  <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
-                    支持任意第三方统计服务的脚本代码，将直接注入到页面 &lt;head&gt; 中
+                  <p className='mt-1 text-[13px] text-[color:var(--tm-muted)]'>
+                    支持任意第三方统计服务的脚本代码，将直接注入到页面
+                    &lt;head&gt; 中
                   </p>
                 </div>
               )}
@@ -12770,21 +12819,21 @@ const SiteConfigComponent = ({
       {showEnableCommentsModal &&
         createPortal(
           <div
-            className='fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4'
+            className='fixed inset-0 bg-[var(--tm-scrim)] z-50 flex items-center justify-center p-4'
             onClick={() => setShowEnableCommentsModal(false)}
           >
             <div
-              className='bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full'
+              className='bg-[var(--tm-surface)] rounded-lg shadow-xl max-w-md w-full'
               onClick={(e) => e.stopPropagation()}
             >
               <div className='p-6'>
                 <div className='flex items-center justify-between mb-6'>
-                  <h3 className='text-xl font-semibold text-gray-900 dark:text-gray-100'>
+                  <h3 className='text-xl font-medium text-[color:var(--tm-text)]'>
                     开启评论与相似推荐功能
                   </h3>
                   <button
                     onClick={() => setShowEnableCommentsModal(false)}
-                    className='text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors'
+                    className='text-[color:var(--tm-muted)] hover:text-[color:var(--tm-muted)] transition-colors min-h-[44px] tm-press'
                   >
                     <svg
                       className='w-6 h-6'
@@ -12803,14 +12852,14 @@ const SiteConfigComponent = ({
                 </div>
 
                 <div className='mb-6'>
-                  <div className='bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4'>
+                  <div className='bg-[var(--tm-surface-raised)] border border-[var(--tm-line)] rounded-lg p-4'>
                     <div className='flex items-center space-x-2 mb-2'>
-                      <AlertTriangle className='w-5 h-5 text-yellow-600 dark:text-yellow-400' />
-                      <span className='text-sm font-medium text-yellow-800 dark:text-yellow-300'>
+                      <AlertTriangle className='w-5 h-5 text-[color:var(--tm-text)]' />
+                      <span className='text-sm font-medium text-[color:var(--tm-text)]'>
                         重要提示
                       </span>
                     </div>
-                    <p className='text-sm text-yellow-700 dark:text-yellow-400'>
+                    <p className='text-sm text-[color:var(--tm-text)]'>
                       评论功能为逆向抓取豆瓣评论数据，此功能仅供学习，开启后请自行承担相关责任和风险。
                     </p>
                   </div>
@@ -12987,9 +13036,7 @@ const RegistrationConfigComponent = ({
 
   if (!config) {
     return (
-      <div className='text-center text-gray-500 dark:text-gray-400'>
-        加载中...
-      </div>
+      <div className='text-center text-[color:var(--tm-muted)]'>加载中...</div>
     );
   }
 
@@ -12997,21 +13044,18 @@ const RegistrationConfigComponent = ({
     <div className='space-y-6'>
       {/* 注册相关配置 */}
       <div className='space-y-4'>
-        <h3 className='text-sm font-semibold text-gray-900 dark:text-gray-100'>
+        <h3 className='text-sm font-medium text-[color:var(--tm-text)]'>
           注册配置
         </h3>
 
-        <details
-          open
-          className='pt-4 border-t border-gray-200 dark:border-gray-700'
-        >
-          <summary className='text-sm font-semibold text-gray-900 dark:text-gray-100 cursor-pointer'>
+        <details open className='pt-4 border-t border-[var(--tm-line)]'>
+          <summary className='text-sm font-medium text-[color:var(--tm-text)] cursor-pointer'>
             基础注册设置
           </summary>
           <div className='mt-4 space-y-4'>
             <div>
               <div className='flex items-center justify-between'>
-                <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
                   开启注册
                 </label>
                 <button
@@ -13021,7 +13065,7 @@ const RegistrationConfigComponent = ({
                       !registrationSettings.EnableRegistration
                     )
                   }
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 ${
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--tm-text)] focus:ring-offset-2 ${
                     registrationSettings.EnableRegistration
                       ? buttonStyles.toggleOn
                       : buttonStyles.toggleOff
@@ -13038,13 +13082,13 @@ const RegistrationConfigComponent = ({
                   />
                 </button>
               </div>
-              <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
+              <p className='mt-1 text-[13px] text-[color:var(--tm-muted)]'>
                 开启后登录页面将显示注册按钮，允许用户自行注册账号。
               </p>
             </div>
 
             <div>
-              <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+              <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
                 默认用户组
               </label>
               <select
@@ -13061,7 +13105,7 @@ const RegistrationConfigComponent = ({
                     DefaultUserTags: value ? [value] : [],
                   }));
                 }}
-                className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent'
+                className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)] focus:ring-2 focus:ring-[var(--tm-text)] focus:border-transparent'
               >
                 <option value=''>无用户组（无限制）</option>
                 {config?.UserConfig?.Tags &&
@@ -13074,21 +13118,21 @@ const RegistrationConfigComponent = ({
                     </option>
                   ))}
               </select>
-              <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
+              <p className='mt-1 text-[13px] text-[color:var(--tm-muted)]'>
                 新注册的用户将自动分配到选中的用户组，选择"无用户组"为无限制
               </p>
             </div>
           </div>
         </details>
 
-        <details className='pt-4 border-t border-gray-200 dark:border-gray-700'>
-          <summary className='text-sm font-semibold text-gray-900 dark:text-gray-100 cursor-pointer'>
+        <details className='pt-4 border-t border-[var(--tm-line)]'>
+          <summary className='text-sm font-medium text-[color:var(--tm-text)] cursor-pointer'>
             安全设置
           </summary>
           <div className='mt-4 space-y-4'>
             <div>
               <div className='flex items-center justify-between'>
-                <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
                   要求注册邀请码
                 </label>
                 <button
@@ -13100,7 +13144,7 @@ const RegistrationConfigComponent = ({
                         !prev.RequireRegistrationInviteCode,
                     }))
                   }
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 ${
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--tm-text)] focus:ring-offset-2 ${
                     registrationSettings.RequireRegistrationInviteCode
                       ? buttonStyles.toggleOn
                       : buttonStyles.toggleOff
@@ -13117,13 +13161,13 @@ const RegistrationConfigComponent = ({
                   />
                 </button>
               </div>
-              <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
+              <p className='mt-1 text-[13px] text-[color:var(--tm-muted)]'>
                 开启后，普通注册必须填写管理员设置的统一邀请码。
               </p>
             </div>
 
             <div>
-              <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+              <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
                 通用注册邀请码
               </label>
               <input
@@ -13136,16 +13180,16 @@ const RegistrationConfigComponent = ({
                     RegistrationInviteCode: e.target.value,
                   }))
                 }
-                className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent'
+                className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)] focus:ring-2 focus:ring-[var(--tm-text)] focus:border-transparent'
               />
-              <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
+              <p className='mt-1 text-[13px] text-[color:var(--tm-muted)]'>
                 仅普通注册生效；开启邀请码注册时不能为空。
               </p>
             </div>
 
             <div>
               <div className='flex items-center justify-between'>
-                <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
                   注册启用Cloudflare Turnstile
                 </label>
                 <button
@@ -13161,10 +13205,10 @@ const RegistrationConfigComponent = ({
                         !prev.RegistrationRequireTurnstile,
                     }))
                   }
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 ${
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--tm-text)] focus:ring-offset-2 ${
                     !registrationSettings.TurnstileSiteKey ||
                     !registrationSettings.TurnstileSecretKey
-                      ? 'opacity-50 cursor-not-allowed bg-gray-300 dark:bg-gray-600'
+                      ? 'opacity-50 cursor-not-allowed bg-[var(--tm-surface)] tm-press'
                       : registrationSettings.RegistrationRequireTurnstile
                       ? buttonStyles.toggleOn
                       : buttonStyles.toggleOff
@@ -13181,11 +13225,11 @@ const RegistrationConfigComponent = ({
                   />
                 </button>
               </div>
-              <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
+              <p className='mt-1 text-[13px] text-[color:var(--tm-muted)]'>
                 开启后注册时需要通过Cloudflare Turnstile人机验证。
                 {(!registrationSettings.TurnstileSiteKey ||
                   !registrationSettings.TurnstileSecretKey) && (
-                  <span className='text-orange-500 dark:text-orange-400'>
+                  <span className='text-[color:var(--tm-text)]'>
                     {' '}
                     需要先配置Site Key和Secret Key才能启用。
                   </span>
@@ -13195,7 +13239,7 @@ const RegistrationConfigComponent = ({
 
             <div>
               <div className='flex items-center justify-between'>
-                <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
                   登录启用Cloudflare Turnstile
                 </label>
                 <button
@@ -13210,10 +13254,10 @@ const RegistrationConfigComponent = ({
                       LoginRequireTurnstile: !prev.LoginRequireTurnstile,
                     }))
                   }
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 ${
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--tm-text)] focus:ring-offset-2 ${
                     !registrationSettings.TurnstileSiteKey ||
                     !registrationSettings.TurnstileSecretKey
-                      ? 'opacity-50 cursor-not-allowed bg-gray-300 dark:bg-gray-600'
+                      ? 'opacity-50 cursor-not-allowed bg-[var(--tm-surface)] tm-press'
                       : registrationSettings.LoginRequireTurnstile
                       ? buttonStyles.toggleOn
                       : buttonStyles.toggleOff
@@ -13230,11 +13274,11 @@ const RegistrationConfigComponent = ({
                   />
                 </button>
               </div>
-              <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
+              <p className='mt-1 text-[13px] text-[color:var(--tm-muted)]'>
                 开启后登录时需要通过Cloudflare Turnstile人机验证。
                 {(!registrationSettings.TurnstileSiteKey ||
                   !registrationSettings.TurnstileSecretKey) && (
-                  <span className='text-orange-500 dark:text-orange-400'>
+                  <span className='text-[color:var(--tm-text)]'>
                     {' '}
                     需要先配置Site Key和Secret Key才能启用。
                   </span>
@@ -13243,7 +13287,7 @@ const RegistrationConfigComponent = ({
             </div>
 
             <div>
-              <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+              <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
                 Cloudflare Turnstile Site Key
               </label>
               <input
@@ -13256,15 +13300,15 @@ const RegistrationConfigComponent = ({
                     TurnstileSiteKey: e.target.value,
                   }))
                 }
-                className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent'
+                className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)] focus:ring-2 focus:ring-[var(--tm-text)] focus:border-transparent'
               />
-              <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
+              <p className='mt-1 text-[13px] text-[color:var(--tm-muted)]'>
                 在Cloudflare Dashboard中获取的Site Key（公钥）
               </p>
             </div>
 
             <div>
-              <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+              <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
                 Cloudflare Turnstile Secret Key
               </label>
               <input
@@ -13277,9 +13321,9 @@ const RegistrationConfigComponent = ({
                     TurnstileSecretKey: e.target.value,
                   }))
                 }
-                className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent'
+                className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)] focus:ring-2 focus:ring-[var(--tm-text)] focus:border-transparent'
               />
-              <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
+              <p className='mt-1 text-[13px] text-[color:var(--tm-muted)]'>
                 在Cloudflare Dashboard中获取的Secret Key（私钥），用于服务端验证
               </p>
             </div>
@@ -13288,15 +13332,15 @@ const RegistrationConfigComponent = ({
       </div>
 
       {/* OIDC配置 */}
-      <details className='pt-4 border-t border-gray-200 dark:border-gray-700'>
-        <summary className='text-sm font-semibold text-gray-900 dark:text-gray-100 cursor-pointer'>
+      <details className='pt-4 border-t border-[var(--tm-line)]'>
+        <summary className='text-sm font-medium text-[color:var(--tm-text)] cursor-pointer'>
           OIDC配置
         </summary>
         <div className='mt-4 space-y-4'>
           {/* 启用OIDC登录 */}
           <div>
             <div className='flex items-center justify-between'>
-              <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+              <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
                 启用OIDC登录
               </label>
               <button
@@ -13307,7 +13351,7 @@ const RegistrationConfigComponent = ({
                     EnableOIDCLogin: !prev.EnableOIDCLogin,
                   }))
                 }
-                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 ${
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--tm-text)] focus:ring-offset-2 ${
                   registrationSettings.EnableOIDCLogin
                     ? buttonStyles.toggleOn
                     : buttonStyles.toggleOff
@@ -13324,7 +13368,7 @@ const RegistrationConfigComponent = ({
                 />
               </button>
             </div>
-            <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
+            <p className='mt-1 text-[13px] text-[color:var(--tm-muted)]'>
               开启后登录页面将显示OIDC登录按钮
             </p>
           </div>
@@ -13332,7 +13376,7 @@ const RegistrationConfigComponent = ({
           {/* 启用OIDC注册 */}
           <div>
             <div className='flex items-center justify-between'>
-              <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+              <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
                 启用OIDC注册
               </label>
               <button
@@ -13343,7 +13387,7 @@ const RegistrationConfigComponent = ({
                     EnableOIDCRegistration: !prev.EnableOIDCRegistration,
                   }))
                 }
-                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 ${
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--tm-text)] focus:ring-offset-2 ${
                   registrationSettings.EnableOIDCRegistration
                     ? buttonStyles.toggleOn
                     : buttonStyles.toggleOff
@@ -13360,14 +13404,14 @@ const RegistrationConfigComponent = ({
                 />
               </button>
             </div>
-            <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
+            <p className='mt-1 text-[13px] text-[color:var(--tm-muted)]'>
               开启后允许通过OIDC方式注册新用户（需要先启用OIDC登录）
             </p>
           </div>
 
           {/* OIDC Issuer */}
           <div>
-            <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+            <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
               OIDC Issuer URL（可选）
             </label>
             <div className='flex flex-col sm:flex-row gap-2'>
@@ -13381,7 +13425,7 @@ const RegistrationConfigComponent = ({
                     OIDCIssuer: e.target.value,
                   }))
                 }
-                className='flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent'
+                className='flex-1 px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)] focus:ring-2 focus:ring-[var(--tm-text)] focus:border-transparent'
               />
               <button
                 type='button'
@@ -13435,14 +13479,14 @@ const RegistrationConfigComponent = ({
                 {isLoading('oidcDiscover') ? '发现中...' : '自动发现'}
               </button>
             </div>
-            <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
+            <p className='mt-1 text-[13px] text-[color:var(--tm-muted)]'>
               OIDC提供商的Issuer URL，填写后可点击"自动发现"按钮自动获取端点配置
             </p>
           </div>
 
           {/* Authorization Endpoint */}
           <div>
-            <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+            <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
               Authorization Endpoint（授权端点）
             </label>
             <input
@@ -13455,16 +13499,16 @@ const RegistrationConfigComponent = ({
                   OIDCAuthorizationEndpoint: e.target.value,
                 }))
               }
-              className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent'
+              className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)] focus:ring-2 focus:ring-[var(--tm-text)] focus:border-transparent'
             />
-            <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
+            <p className='mt-1 text-[13px] text-[color:var(--tm-muted)]'>
               用户授权的端点URL
             </p>
           </div>
 
           {/* Token Endpoint */}
           <div>
-            <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+            <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
               Token Endpoint（Token端点）
             </label>
             <input
@@ -13477,16 +13521,16 @@ const RegistrationConfigComponent = ({
                   OIDCTokenEndpoint: e.target.value,
                 }))
               }
-              className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent'
+              className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)] focus:ring-2 focus:ring-[var(--tm-text)] focus:border-transparent'
             />
-            <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
+            <p className='mt-1 text-[13px] text-[color:var(--tm-muted)]'>
               交换授权码获取token的端点URL
             </p>
           </div>
 
           {/* UserInfo Endpoint */}
           <div>
-            <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+            <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
               UserInfo Endpoint（用户信息端点）
             </label>
             <input
@@ -13499,16 +13543,16 @@ const RegistrationConfigComponent = ({
                   OIDCUserInfoEndpoint: e.target.value,
                 }))
               }
-              className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent'
+              className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)] focus:ring-2 focus:ring-[var(--tm-text)] focus:border-transparent'
             />
-            <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
+            <p className='mt-1 text-[13px] text-[color:var(--tm-muted)]'>
               获取用户信息的端点URL
             </p>
           </div>
 
           {/* OIDC Client ID */}
           <div>
-            <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+            <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
               OIDC Client ID
             </label>
             <input
@@ -13521,16 +13565,16 @@ const RegistrationConfigComponent = ({
                   OIDCClientId: e.target.value,
                 }))
               }
-              className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent'
+              className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)] focus:ring-2 focus:ring-[var(--tm-text)] focus:border-transparent'
             />
-            <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
+            <p className='mt-1 text-[13px] text-[color:var(--tm-muted)]'>
               在OIDC提供商处注册应用后获得的Client ID
             </p>
           </div>
 
           {/* OIDC Client Secret */}
           <div>
-            <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+            <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
               OIDC Client Secret
             </label>
             <input
@@ -13543,16 +13587,16 @@ const RegistrationConfigComponent = ({
                   OIDCClientSecret: e.target.value,
                 }))
               }
-              className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent'
+              className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)] focus:ring-2 focus:ring-[var(--tm-text)] focus:border-transparent'
             />
-            <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
+            <p className='mt-1 text-[13px] text-[color:var(--tm-muted)]'>
               在OIDC提供商处注册应用后获得的Client Secret
             </p>
           </div>
 
           {/* OIDC Redirect URI - 只读显示 */}
           <div>
-            <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+            <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
               OIDC Redirect URI（回调地址）
             </label>
             <div className='relative'>
@@ -13567,7 +13611,7 @@ const RegistrationConfigComponent = ({
                       }/api/auth/oidc/callback`
                     : ''
                 }
-                className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-900 text-gray-700 dark:text-gray-300 cursor-default'
+                className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface-raised)] text-[color:var(--tm-muted)] cursor-default'
               />
               <button
                 type='button'
@@ -13579,19 +13623,19 @@ const RegistrationConfigComponent = ({
                   navigator.clipboard.writeText(uri);
                   showSuccess('已复制到剪贴板', showAlert);
                 }}
-                className='absolute right-2 top-1/2 -translate-y-1/2 px-3 py-1 text-xs bg-green-600 text-white rounded hover:bg-green-700 transition-colors'
+                className='absolute right-2 top-1/2 -translate-y-1/2 px-3 py-1 text-[13px] bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] rounded hover:opacity-90 transition-colors min-h-[44px] tm-press'
               >
                 复制
               </button>
             </div>
-            <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
+            <p className='mt-1 text-[13px] text-[color:var(--tm-muted)]'>
               这是系统自动生成的回调地址，基于环境变量SITE_BASE。请在OIDC提供商（如Keycloak、Auth0等）的应用配置中添加此地址作为允许的重定向URI
             </p>
           </div>
 
           {/* OIDC登录按钮文字 */}
           <div>
-            <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+            <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
               OIDC登录按钮文字
             </label>
             <input
@@ -13604,16 +13648,16 @@ const RegistrationConfigComponent = ({
                   OIDCButtonText: e.target.value,
                 }))
               }
-              className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent'
+              className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)] focus:ring-2 focus:ring-[var(--tm-text)] focus:border-transparent'
             />
-            <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
+            <p className='mt-1 text-[13px] text-[color:var(--tm-muted)]'>
               自定义OIDC登录按钮显示的文字,如"使用企业账号登录"、"使用SSO登录"等。留空则显示默认文字"使用OIDC登录"
             </p>
           </div>
 
           {/* OIDC最低信任等级 */}
           <div>
-            <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+            <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
               最低信任等级
             </label>
             <input
@@ -13633,9 +13677,9 @@ const RegistrationConfigComponent = ({
                     e.target.value === '' ? 0 : parseInt(e.target.value),
                 }))
               }
-              className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-green-500 focus:border-transparent'
+              className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)] focus:ring-2 focus:ring-[var(--tm-text)] focus:border-transparent'
             />
-            <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
+            <p className='mt-1 text-[13px] text-[color:var(--tm-muted)]'>
               仅LinuxDo网站有效。设置为0时不判断，1-4表示最低信任等级要求
             </p>
           </div>
@@ -13672,21 +13716,21 @@ const RegistrationConfigComponent = ({
       {showEnableRegistrationModal &&
         createPortal(
           <div
-            className='fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4'
+            className='fixed inset-0 bg-[var(--tm-scrim)] z-50 flex items-center justify-center p-4'
             onClick={() => setShowEnableRegistrationModal(false)}
           >
             <div
-              className='bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full'
+              className='bg-[var(--tm-surface)] rounded-lg shadow-xl max-w-md w-full'
               onClick={(e) => e.stopPropagation()}
             >
               <div className='p-6'>
                 <div className='flex items-center justify-between mb-6'>
-                  <h3 className='text-xl font-semibold text-gray-900 dark:text-gray-100'>
+                  <h3 className='text-xl font-medium text-[color:var(--tm-text)]'>
                     开启注册功能
                   </h3>
                   <button
                     onClick={() => setShowEnableRegistrationModal(false)}
-                    className='text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors'
+                    className='text-[color:var(--tm-muted)] hover:text-[color:var(--tm-muted)] transition-colors min-h-[44px] tm-press'
                   >
                     <svg
                       className='w-6 h-6'
@@ -13705,14 +13749,14 @@ const RegistrationConfigComponent = ({
                 </div>
 
                 <div className='mb-6'>
-                  <div className='bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4'>
+                  <div className='bg-[var(--tm-surface-raised)] border border-[var(--tm-line)] rounded-lg p-4'>
                     <div className='flex items-center space-x-2 mb-2'>
-                      <AlertTriangle className='w-5 h-5 text-yellow-600 dark:text-yellow-400' />
-                      <span className='text-sm font-medium text-yellow-800 dark:text-yellow-300'>
+                      <AlertTriangle className='w-5 h-5 text-[color:var(--tm-text)]' />
+                      <span className='text-sm font-medium text-[color:var(--tm-text)]'>
                         安全提示
                       </span>
                     </div>
-                    <p className='text-sm text-yellow-700 dark:text-yellow-400'>
+                    <p className='text-sm text-[color:var(--tm-text)]'>
                       为了您的安全和避免潜在的法律风险,如果您的网站部署在公网不建议开启。
                     </p>
                   </div>
@@ -13910,19 +13954,17 @@ const CustomAdFilterConfig = ({
 
   if (!config) {
     return (
-      <div className='text-center text-gray-500 dark:text-gray-400'>
-        加载中...
-      </div>
+      <div className='text-center text-[color:var(--tm-muted)]'>加载中...</div>
     );
   }
 
   return (
     <div className='space-y-4'>
       {/* 说明区域 */}
-      <div className='bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4'>
+      <div className='bg-[var(--tm-surface-raised)] border border-[var(--tm-line)] rounded-lg p-4'>
         <div className='flex items-center space-x-2 mb-2'>
           <svg
-            className='w-5 h-5 text-blue-600 dark:text-blue-400'
+            className='w-5 h-5 text-[color:var(--tm-text)]'
             fill='none'
             stroke='currentColor'
             viewBox='0 0 24 24'
@@ -13934,11 +13976,11 @@ const CustomAdFilterConfig = ({
               d='M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z'
             />
           </svg>
-          <span className='text-sm font-medium text-blue-800 dark:text-blue-300'>
+          <span className='text-sm font-medium text-[color:var(--tm-text)]'>
             使用说明
           </span>
         </div>
-        <div className='text-sm text-blue-700 dark:text-blue-400 space-y-1'>
+        <div className='text-sm text-[color:var(--tm-text)] space-y-1'>
           <p>• 此功能用于自定义 M3U8 播放列表的去广告逻辑</p>
           <p>• 配置保存到数据库，对全平台所有用户生效</p>
           <p>
@@ -13946,7 +13988,7 @@ const CustomAdFilterConfig = ({
           </p>
           <p>
             • 函数签名必须为:{' '}
-            <code className='bg-blue-100 dark:bg-blue-900/40 px-1 rounded'>
+            <code className='bg-[var(--tm-surface-raised)] px-1 rounded'>
               filterAdsFromM3U8(type, m3u8Content)
             </code>
           </p>
@@ -13959,7 +14001,7 @@ const CustomAdFilterConfig = ({
       {/* 代码编辑区域 */}
       <div className='space-y-3'>
         <div className='flex items-center justify-between'>
-          <label className='text-sm font-medium text-gray-700 dark:text-gray-300'>
+          <label className='text-sm font-medium text-[color:var(--tm-muted)]'>
             自定义去广告代码
           </label>
           <button
@@ -13975,7 +14017,7 @@ const CustomAdFilterConfig = ({
             onChange={(e) => setAdFilterCode(e.target.value)}
             rows={25}
             placeholder='请输入自定义去广告代码...'
-            className='w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 font-mono text-sm leading-relaxed resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 hover:border-gray-400 dark:hover:border-gray-500'
+            className='w-full px-4 py-3 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)] font-mono text-sm leading-relaxed resize-none focus:ring-2 focus:ring-[var(--tm-text)] focus:border-transparent transition-all duration-200 hover:border-[var(--tm-line)]'
             style={{
               fontFamily:
                 'ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace',
@@ -13986,7 +14028,7 @@ const CustomAdFilterConfig = ({
         </div>
 
         <div className='flex items-center justify-between'>
-          <div className='text-xs text-gray-500 dark:text-gray-400'>
+          <div className='text-[13px] text-[color:var(--tm-muted)]'>
             修改后需保存才能生效，保存前会进行语法验证
           </div>
           <button
@@ -14140,11 +14182,11 @@ const SuwayomiConfigComponent = ({
 
   return (
     <div className='space-y-6'>
-      <div className='bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4'>
-        <h3 className='text-sm font-medium text-blue-900 dark:text-blue-100 mb-2'>
+      <div className='bg-[var(--tm-surface-raised)] border border-[var(--tm-line)] rounded-lg p-4'>
+        <h3 className='text-sm font-medium text-[color:var(--tm-text)] mb-2'>
           关于漫画展馆 / Suwayomi
         </h3>
-        <div className='text-sm text-blue-800 dark:text-blue-200 space-y-1'>
+        <div className='text-sm text-[color:var(--tm-text)] space-y-1'>
           <p>
             • 漫画展馆通过 Suwayomi Server 的 GraphQL
             接口搜索、拉取章节与阅读页。
@@ -14159,12 +14201,12 @@ const SuwayomiConfigComponent = ({
       </div>
 
       <div className='space-y-4'>
-        <div className='flex items-center justify-between py-3 border-b border-gray-200 dark:border-gray-700'>
+        <div className='flex items-center justify-between py-3 border-b border-[var(--tm-line)]'>
           <div>
-            <h3 className='text-sm font-medium text-gray-900 dark:text-white'>
+            <h3 className='text-sm font-medium text-[color:var(--tm-text)]'>
               启用漫画展馆
             </h3>
-            <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
+            <p className='text-[13px] text-[color:var(--tm-muted)] mt-1'>
               关闭后仍保留代码，但不建议在未配置时对用户开放入口。
             </p>
           </div>
@@ -14178,11 +14220,13 @@ const SuwayomiConfigComponent = ({
               }
             }}
             className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-              enabled ? 'bg-blue-600' : 'bg-gray-200 dark:bg-gray-700'
+              enabled
+                ? 'bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] tm-press'
+                : 'bg-[var(--tm-surface-raised)] tm-press'
             }`}
           >
             <span
-              className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+              className={`inline-block h-4 w-4 transform rounded-full bg-[var(--tm-surface)] transition-transform ${
                 enabled ? 'translate-x-6' : 'translate-x-1'
               }`}
             />
@@ -14192,19 +14236,19 @@ const SuwayomiConfigComponent = ({
         {/* 漫画展馆免责声明弹窗 */}
         {showMangaDisclaimer &&
           createPortal(
-            <div className='fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4'>
-              <div className='bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full border border-red-200 dark:border-red-800'>
+            <div className='fixed inset-0 bg-[var(--tm-scrim)] z-50 flex items-center justify-center p-4'>
+              <div className='bg-[var(--tm-surface)] rounded-lg shadow-xl max-w-md w-full border border-[var(--tm-line)]'>
                 <div className='p-6'>
                   <div className='flex justify-center mb-4'>
-                    <AlertTriangle className='w-12 h-12 text-red-500' />
+                    <AlertTriangle className='w-12 h-12 text-[color:var(--tm-text)]' />
                   </div>
 
-                  <h3 className='text-xl font-bold text-gray-900 dark:text-gray-100 mb-4 text-center'>
+                  <h3 className='text-xl font-bold text-[color:var(--tm-text)] mb-4 text-center'>
                     免责声明
                   </h3>
 
-                  <div className='bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 mb-6'>
-                    <p className='text-sm text-gray-700 dark:text-gray-300 leading-relaxed'>
+                  <div className='bg-[var(--tm-surface-raised)] border border-[var(--tm-line)] rounded-lg p-4 mb-6'>
+                    <p className='text-sm text-[color:var(--tm-muted)] leading-relaxed'>
                       本功能仅供个人学习和技术研究使用，请勿将其部署在公网环境中，更不得用于任何违法违规行为。
                       使用本功能所产生的一切法律责任由使用者自行承担，与开发者无关。
                       启用此功能即表示您已充分理解并同意承担相应风险。
@@ -14246,7 +14290,7 @@ const SuwayomiConfigComponent = ({
           )}
 
         <div>
-          <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+          <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
             Suwayomi 服务地址
           </label>
           <input
@@ -14254,15 +14298,15 @@ const SuwayomiConfigComponent = ({
             value={serverURL}
             onChange={(e) => setServerURL(e.target.value)}
             placeholder='http://127.0.0.1:4567'
-            className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100'
+            className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)]'
           />
-          <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
+          <p className='mt-1 text-[13px] text-[color:var(--tm-muted)]'>
             只填服务根地址，程序会自动拼接 /api/graphql。
           </p>
         </div>
 
         <div>
-          <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+          <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
             认证方式
           </label>
           <div className='grid grid-cols-1 gap-2 md:grid-cols-3'>
@@ -14281,15 +14325,15 @@ const SuwayomiConfigComponent = ({
                 }
                 className={`rounded-lg border px-3 py-2 text-sm transition-colors ${
                   authMode === item.value
-                    ? 'border-blue-500 bg-blue-50 text-blue-700 dark:border-blue-400 dark:bg-blue-900/30 dark:text-blue-200'
-                    : 'border-gray-300 text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-800'
+                    ? 'border-[var(--tm-line)] bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)] min-h-[44px] tm-press'
+                    : 'border-[var(--tm-line)] hover:bg-[var(--tm-line)] text-[color:var(--tm-text)] min-h-[44px] tm-press'
                 }`}
               >
                 {item.label}
               </button>
             ))}
           </div>
-          <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
+          <p className='mt-1 text-[13px] text-[color:var(--tm-muted)]'>
             basic_auth 使用 Basic Authorization 头；simple_login 会向
             /login.html 提交表单并复用返回 Cookie。
           </p>
@@ -14298,7 +14342,7 @@ const SuwayomiConfigComponent = ({
         {authMode !== 'none' && (
           <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
             <div>
-              <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+              <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
                 用户名
               </label>
               <input
@@ -14306,11 +14350,11 @@ const SuwayomiConfigComponent = ({
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 placeholder='登录用户名'
-                className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100'
+                className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)]'
               />
             </div>
             <div>
-              <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+              <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
                 密码
               </label>
               <input
@@ -14318,7 +14362,7 @@ const SuwayomiConfigComponent = ({
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder='登录密码'
-                className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100'
+                className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)]'
               />
             </div>
           </div>
@@ -14326,7 +14370,7 @@ const SuwayomiConfigComponent = ({
 
         <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
           <div>
-            <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+            <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
               默认语言
             </label>
             <input
@@ -14334,11 +14378,11 @@ const SuwayomiConfigComponent = ({
               value={defaultLang}
               onChange={(e) => setDefaultLang(e.target.value)}
               placeholder='zh'
-              className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100'
+              className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)]'
             />
           </div>
           <div>
-            <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+            <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
               单次搜索最大源数
             </label>
             <input
@@ -14346,13 +14390,13 @@ const SuwayomiConfigComponent = ({
               min='1'
               value={maxSources}
               onChange={(e) => setMaxSources(parseInt(e.target.value) || 10)}
-              className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100'
+              className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)]'
             />
           </div>
         </div>
 
         <div>
-          <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+          <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
             源白名单
           </label>
           <textarea
@@ -14360,7 +14404,7 @@ const SuwayomiConfigComponent = ({
             onChange={(e) => setSourceIds(e.target.value)}
             rows={3}
             placeholder='留空表示使用默认语言下全部源；填写时用英文逗号分隔 sourceId'
-            className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100'
+            className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)]'
           />
         </div>
 
@@ -14652,22 +14696,22 @@ const OPDSConfigComponent = ({
 
   return (
     <div className='space-y-6'>
-      <div className='rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-900/20'>
-        <h3 className='mb-2 text-sm font-medium text-amber-900 dark:text-amber-100'>
+      <div className='rounded-lg border border-[var(--tm-line)] bg-[var(--tm-surface-raised)] p-4'>
+        <h3 className='mb-2 text-sm font-medium text-[color:var(--tm-text)]'>
           关于电子书馆 / OPDS / Legado
         </h3>
-        <div className='space-y-1 text-sm text-amber-800 dark:text-amber-200'>
+        <div className='space-y-1 text-sm text-[color:var(--tm-text)]'>
           <p>• OPDS 源手动配置。</p>
           <p>• Legado 通过订阅 URL 导入。</p>
         </div>
       </div>
 
-      <div className='flex items-center justify-between border-b border-gray-200 py-3 dark:border-gray-700'>
+      <div className='flex items-center justify-between border-b border-[var(--tm-line)] py-3'>
         <div>
-          <h3 className='text-sm font-medium text-gray-900 dark:text-white'>
+          <h3 className='text-sm font-medium text-[color:var(--tm-text)]'>
             启用电子书馆
           </h3>
-          <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
+          <p className='mt-1 text-[13px] text-[color:var(--tm-muted)]'>
             关闭后不会展示电子书入口。
           </p>
         </div>
@@ -14681,11 +14725,13 @@ const OPDSConfigComponent = ({
             }
           }}
           className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-            enabled ? 'bg-amber-600' : 'bg-gray-200 dark:bg-gray-700'
+            enabled
+              ? 'bg-[var(--tm-text)] tm-press'
+              : 'bg-[var(--tm-surface-raised)] tm-press'
           }`}
         >
           <span
-            className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+            className={`inline-block h-4 w-4 transform rounded-full bg-[var(--tm-surface)] transition-transform ${
               enabled ? 'translate-x-6' : 'translate-x-1'
             }`}
           />
@@ -14695,19 +14741,19 @@ const OPDSConfigComponent = ({
       {/* 电子书馆免责声明弹窗 */}
       {showBooksDisclaimer &&
         createPortal(
-          <div className='fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4'>
-            <div className='bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full border border-red-200 dark:border-red-800'>
+          <div className='fixed inset-0 bg-[var(--tm-scrim)] z-50 flex items-center justify-center p-4'>
+            <div className='bg-[var(--tm-surface)] rounded-lg shadow-xl max-w-md w-full border border-[var(--tm-line)]'>
               <div className='p-6'>
                 <div className='flex justify-center mb-4'>
-                  <AlertTriangle className='w-12 h-12 text-red-500' />
+                  <AlertTriangle className='w-12 h-12 text-[color:var(--tm-text)]' />
                 </div>
 
-                <h3 className='text-xl font-bold text-gray-900 dark:text-gray-100 mb-4 text-center'>
+                <h3 className='text-xl font-bold text-[color:var(--tm-text)] mb-4 text-center'>
                   免责声明
                 </h3>
 
-                <div className='bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 mb-6'>
-                  <p className='text-sm text-gray-700 dark:text-gray-300 leading-relaxed'>
+                <div className='bg-[var(--tm-surface-raised)] border border-[var(--tm-line)] rounded-lg p-4 mb-6'>
+                  <p className='text-sm text-[color:var(--tm-muted)] leading-relaxed'>
                     本功能仅供个人学习和技术研究使用，请勿将其部署在公网环境中，更不得用于任何违法违规行为。
                     使用本功能所产生的一切法律责任由使用者自行承担，与开发者无关。
                     启用此功能即表示您已充分理解并同意承担相应风险。
@@ -14749,7 +14795,7 @@ const OPDSConfigComponent = ({
         )}
 
       <div>
-        <label className='mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300'>
+        <label className='mb-2 block text-sm font-medium text-[color:var(--tm-muted)]'>
           Feed 缓存时长（毫秒）
         </label>
         <input
@@ -14759,17 +14805,17 @@ const OPDSConfigComponent = ({
           onChange={(e) =>
             setCacheTTL(parseInt(e.target.value) || 10 * 60 * 1000)
           }
-          className='w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100'
+          className='w-full rounded-lg border border-[var(--tm-line)] bg-[var(--tm-surface)] px-3 py-2 text-[color:var(--tm-text)]'
         />
       </div>
 
-      <div className='rounded-xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-900/20'>
+      <div className='rounded-xl border border-[var(--tm-line)] bg-[var(--tm-surface-raised)] p-4'>
         <div className='mb-3 flex items-center justify-between gap-3'>
           <div>
-            <h4 className='text-sm font-medium text-amber-900 dark:text-amber-100'>
+            <h4 className='text-sm font-medium text-[color:var(--tm-text)]'>
               Legado 订阅
             </h4>
-            <p className='mt-1 text-xs text-amber-800 dark:text-amber-200'>
+            <p className='mt-1 text-[13px] text-[color:var(--tm-text)]'>
               目前处于实验性阶段，仅支持部分简单订阅。
             </p>
           </div>
@@ -14791,43 +14837,43 @@ const OPDSConfigComponent = ({
             value={legadoSubscriptionName}
             onChange={(e) => setLegadoSubscriptionName(e.target.value)}
             placeholder='订阅名称（可选）'
-            className='rounded-lg border border-amber-200 bg-white px-3 py-2 text-sm text-gray-900 dark:border-amber-800 dark:bg-gray-900 dark:text-gray-100'
+            className='rounded-lg border border-[var(--tm-line)] bg-[var(--tm-surface)] px-3 py-2 text-sm text-[color:var(--tm-text)]'
           />
           <input
             type='text'
             value={legadoSubscriptionUrl}
             onChange={(e) => setLegadoSubscriptionUrl(e.target.value)}
             placeholder='https://example.com/bookSource.json'
-            className='rounded-lg border border-amber-200 bg-white px-3 py-2 text-sm text-gray-900 dark:border-amber-800 dark:bg-gray-900 dark:text-gray-100'
+            className='rounded-lg border border-[var(--tm-line)] bg-[var(--tm-surface)] px-3 py-2 text-sm text-[color:var(--tm-text)]'
           />
         </div>
         <div className='mt-4 space-y-2'>
           {(legadoSubscriptions || []).length === 0 ? (
-            <div className='text-xs text-amber-800 dark:text-amber-200'>
+            <div className='text-[13px] text-[color:var(--tm-text)]'>
               暂无 Legado 订阅。
             </div>
           ) : (
             (legadoSubscriptions || []).map((sub) => (
               <div
                 key={sub.id}
-                className='rounded-lg border border-amber-200 bg-white p-3 text-sm dark:border-amber-800 dark:bg-gray-900'
+                className='rounded-lg border border-[var(--tm-line)] bg-[var(--tm-surface)] p-3 text-sm'
               >
                 <div className='flex flex-wrap items-start justify-between gap-3'>
                   <div className='min-w-0 flex-1'>
-                    <div className='font-medium text-gray-900 dark:text-gray-100'>
+                    <div className='font-medium text-[color:var(--tm-text)]'>
                       {sub.name}
                     </div>
-                    <div className='mt-1 break-all text-xs text-gray-500 dark:text-gray-400'>
+                    <div className='mt-1 break-all text-[13px] text-[color:var(--tm-muted)]'>
                       {sub.url}
                     </div>
-                    <div className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
+                    <div className='mt-1 text-[13px] text-[color:var(--tm-muted)]'>
                       源数量：{sub.sourceCount || 0} · 上次同步：
                       {sub.lastSuccessAt
                         ? new Date(sub.lastSuccessAt).toLocaleString()
                         : '-'}
                     </div>
                     {sub.lastError ? (
-                      <div className='mt-1 text-xs text-red-500'>
+                      <div className='mt-1 text-[13px] text-[color:var(--tm-text)]'>
                         {sub.lastError}
                       </div>
                     ) : null}
@@ -14846,12 +14892,12 @@ const OPDSConfigComponent = ({
                       }
                       className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
                         sub.enabled !== false
-                          ? 'bg-green-600'
-                          : 'bg-gray-200 dark:bg-gray-700'
+                          ? 'bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] tm-press'
+                          : 'bg-[var(--tm-surface-raised)] tm-press'
                       }`}
                     >
                       <span
-                        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                        className={`inline-block h-4 w-4 transform rounded-full bg-[var(--tm-surface)] transition-transform ${
                           sub.enabled !== false
                             ? 'translate-x-6'
                             : 'translate-x-1'
@@ -14888,7 +14934,7 @@ const OPDSConfigComponent = ({
 
       <div className='space-y-4'>
         <div className='flex items-center justify-between'>
-          <h3 className='text-sm font-medium text-gray-900 dark:text-white'>
+          <h3 className='text-sm font-medium text-[color:var(--tm-text)]'>
             OPDS 书源列表
           </h3>
           <button
@@ -14901,7 +14947,7 @@ const OPDSConfigComponent = ({
           </button>
         </div>
         {sources.length === 0 ? (
-          <div className='rounded-lg border border-dashed border-gray-300 p-4 text-sm text-gray-500 dark:border-gray-600 dark:text-gray-400'>
+          <div className='rounded-lg border border-dashed border-[var(--tm-line)] p-4 text-sm text-[color:var(--tm-muted)]'>
             暂无 OPDS 书源。
           </div>
         ) : null}
@@ -14911,14 +14957,14 @@ const OPDSConfigComponent = ({
             return (
               <div
                 key={`opds-source-${index}`}
-                className='rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-900'
+                className='rounded-xl border border-[var(--tm-line)] bg-[var(--tm-surface)] p-4'
               >
                 <div className='flex flex-wrap items-start justify-between gap-3'>
                   <div className='min-w-0 flex-1'>
-                    <div className='font-medium text-gray-900 dark:text-gray-100'>
+                    <div className='font-medium text-[color:var(--tm-text)]'>
                       {source.name || `书源 ${index + 1}`}
                     </div>
-                    <div className='mt-1 break-all text-xs text-gray-500 dark:text-gray-400'>
+                    <div className='mt-1 break-all text-[13px] text-[color:var(--tm-muted)]'>
                       {source.url || '-'}
                     </div>
                   </div>
@@ -14932,12 +14978,12 @@ const OPDSConfigComponent = ({
                       }
                       className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
                         source.enabled !== false
-                          ? 'bg-green-600'
-                          : 'bg-gray-200 dark:bg-gray-700'
+                          ? 'bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] tm-press'
+                          : 'bg-[var(--tm-surface-raised)] tm-press'
                       }`}
                     >
                       <span
-                        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                        className={`inline-block h-4 w-4 transform rounded-full bg-[var(--tm-surface)] transition-transform ${
                           source.enabled !== false
                             ? 'translate-x-6'
                             : 'translate-x-1'
@@ -14971,7 +15017,7 @@ const OPDSConfigComponent = ({
                   </div>
                 </div>
                 {isEditing ? (
-                  <div className='mt-4 grid grid-cols-1 gap-4 border-t border-gray-200 pt-4 dark:border-gray-700 md:grid-cols-2'>
+                  <div className='mt-4 grid grid-cols-1 gap-4 border-t border-[var(--tm-line)] pt-4 md:grid-cols-2'>
                     <input
                       type='text'
                       value={source.id}
@@ -14979,7 +15025,7 @@ const OPDSConfigComponent = ({
                         updateSource(index, { id: e.target.value })
                       }
                       placeholder='书源 ID'
-                      className='rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100'
+                      className='rounded-lg border border-[var(--tm-line)] bg-[var(--tm-surface)] px-3 py-2 text-[color:var(--tm-text)]'
                     />
                     <input
                       type='text'
@@ -14988,7 +15034,7 @@ const OPDSConfigComponent = ({
                         updateSource(index, { name: e.target.value })
                       }
                       placeholder='书源名称'
-                      className='rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100'
+                      className='rounded-lg border border-[var(--tm-line)] bg-[var(--tm-surface)] px-3 py-2 text-[color:var(--tm-text)]'
                     />
                     <input
                       type='text'
@@ -14997,7 +15043,7 @@ const OPDSConfigComponent = ({
                         updateSource(index, { url: e.target.value })
                       }
                       placeholder='https://example.com/opds'
-                      className='rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 md:col-span-2'
+                      className='rounded-lg border border-[var(--tm-line)] bg-[var(--tm-surface)] px-3 py-2 text-[color:var(--tm-text)] md:col-span-2'
                     />
                     <select
                       value={source.authMode || 'none'}
@@ -15006,7 +15052,7 @@ const OPDSConfigComponent = ({
                           authMode: e.target.value as BookSource['authMode'],
                         })
                       }
-                      className='rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100'
+                      className='rounded-lg border border-[var(--tm-line)] bg-[var(--tm-surface)] px-3 py-2 text-[color:var(--tm-text)]'
                     >
                       <option value='none'>无认证</option>
                       <option value='basic'>Basic Auth</option>
@@ -15019,7 +15065,7 @@ const OPDSConfigComponent = ({
                         updateSource(index, { language: e.target.value })
                       }
                       placeholder='语言 zh / en'
-                      className='rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100'
+                      className='rounded-lg border border-[var(--tm-line)] bg-[var(--tm-surface)] px-3 py-2 text-[color:var(--tm-text)]'
                     />
                     <input
                       type='text'
@@ -15028,7 +15074,7 @@ const OPDSConfigComponent = ({
                         updateSource(index, { searchTemplate: e.target.value })
                       }
                       placeholder='搜索模板 https://...{searchTerms}'
-                      className='rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 md:col-span-2'
+                      className='rounded-lg border border-[var(--tm-line)] bg-[var(--tm-surface)] px-3 py-2 text-[color:var(--tm-text)] md:col-span-2'
                     />
                     {source.authMode === 'basic' ? (
                       <>
@@ -15039,7 +15085,7 @@ const OPDSConfigComponent = ({
                             updateSource(index, { username: e.target.value })
                           }
                           placeholder='用户名'
-                          className='rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100'
+                          className='rounded-lg border border-[var(--tm-line)] bg-[var(--tm-surface)] px-3 py-2 text-[color:var(--tm-text)]'
                         />
                         <input
                           type='password'
@@ -15048,7 +15094,7 @@ const OPDSConfigComponent = ({
                             updateSource(index, { password: e.target.value })
                           }
                           placeholder='密码'
-                          className='rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100'
+                          className='rounded-lg border border-[var(--tm-line)] bg-[var(--tm-surface)] px-3 py-2 text-[color:var(--tm-text)]'
                         />
                       </>
                     ) : null}
@@ -15061,7 +15107,7 @@ const OPDSConfigComponent = ({
                             updateSource(index, { headerName: e.target.value })
                           }
                           placeholder='Header 名称'
-                          className='rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100'
+                          className='rounded-lg border border-[var(--tm-line)] bg-[var(--tm-surface)] px-3 py-2 text-[color:var(--tm-text)]'
                         />
                         <input
                           type='password'
@@ -15070,7 +15116,7 @@ const OPDSConfigComponent = ({
                             updateSource(index, { headerValue: e.target.value })
                           }
                           placeholder='Header 值'
-                          className='rounded-lg border border-gray-300 bg-white px-3 py-2 text-gray-900 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100'
+                          className='rounded-lg border border-[var(--tm-line)] bg-[var(--tm-surface)] px-3 py-2 text-[color:var(--tm-text)]'
                         />
                       </>
                     ) : null}
@@ -15199,11 +15245,11 @@ const XiaoyaConfigComponent = ({
 
   return (
     <div className='space-y-6'>
-      <div className='bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4'>
-        <h3 className='text-sm font-medium text-blue-900 dark:text-blue-100 mb-2'>
+      <div className='bg-[var(--tm-surface-raised)] border border-[var(--tm-line)] rounded-lg p-4'>
+        <h3 className='text-sm font-medium text-[color:var(--tm-text)] mb-2'>
           关于小雅
         </h3>
-        <div className='text-sm text-blue-800 dark:text-blue-200 space-y-1'>
+        <div className='text-sm text-[color:var(--tm-text)] space-y-1'>
           <p>• 小雅是基于 Alist 的网盘资源聚合服务</p>
           <p>
             • 支持文件夹名自动识别 TMDb ID（格式：标题 (年份) {'{tmdb-id}'}）
@@ -15214,23 +15260,25 @@ const XiaoyaConfigComponent = ({
       </div>
 
       <div className='space-y-4'>
-        <div className='flex items-center justify-between py-3 border-b border-gray-200 dark:border-gray-700'>
+        <div className='flex items-center justify-between py-3 border-b border-[var(--tm-line)]'>
           <div>
-            <h3 className='text-sm font-medium text-gray-900 dark:text-white'>
+            <h3 className='text-sm font-medium text-[color:var(--tm-text)]'>
               启用小雅功能
             </h3>
-            <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
+            <p className='text-[13px] text-[color:var(--tm-muted)] mt-1'>
               关闭后将不显示小雅入口
             </p>
           </div>
           <button
             onClick={() => setEnabled(!enabled)}
             className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-              enabled ? 'bg-blue-600' : 'bg-gray-200 dark:bg-gray-700'
+              enabled
+                ? 'bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] tm-press'
+                : 'bg-[var(--tm-surface-raised)] tm-press'
             }`}
           >
             <span
-              className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+              className={`inline-block h-4 w-4 transform rounded-full bg-[var(--tm-surface)] transition-transform ${
                 enabled ? 'translate-x-6' : 'translate-x-1'
               }`}
             />
@@ -15238,7 +15286,7 @@ const XiaoyaConfigComponent = ({
         </div>
 
         <div>
-          <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+          <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
             Alist 服务器地址
           </label>
           <input
@@ -15246,15 +15294,15 @@ const XiaoyaConfigComponent = ({
             value={serverURL}
             onChange={(e) => setServerURL(e.target.value)}
             placeholder='http://localhost:5244'
-            className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100'
+            className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)]'
           />
-          <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
+          <p className='mt-1 text-[13px] text-[color:var(--tm-muted)]'>
             小雅 Alist 服务器的完整地址
           </p>
         </div>
 
         <div>
-          <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+          <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
             Token（推荐）
           </label>
           <input
@@ -15262,13 +15310,13 @@ const XiaoyaConfigComponent = ({
             value={token}
             onChange={(e) => setToken(e.target.value)}
             placeholder='可选，使用 Token 认证'
-            className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100'
+            className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)]'
           />
         </div>
 
         <div className='grid grid-cols-2 gap-4'>
           <div>
-            <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+            <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
               用户名
             </label>
             <input
@@ -15276,11 +15324,11 @@ const XiaoyaConfigComponent = ({
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               placeholder='可选，用户名密码认证'
-              className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100'
+              className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)]'
             />
           </div>
           <div>
-            <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+            <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
               密码
             </label>
             <input
@@ -15288,17 +15336,17 @@ const XiaoyaConfigComponent = ({
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder='可选'
-              className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100'
+              className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)]'
             />
           </div>
         </div>
 
-        <div className='flex items-center justify-between py-3 border-b border-gray-200 dark:border-gray-700'>
+        <div className='flex items-center justify-between py-3 border-b border-[var(--tm-line)]'>
           <div>
-            <h3 className='text-sm font-medium text-gray-900 dark:text-white'>
+            <h3 className='text-sm font-medium text-[color:var(--tm-text)]'>
               禁用预览视频
             </h3>
-            <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
+            <p className='text-[13px] text-[color:var(--tm-muted)] mt-1'>
               开启后将直接返回直连链接，不使用视频预览流
             </p>
           </div>
@@ -15306,12 +15354,12 @@ const XiaoyaConfigComponent = ({
             onClick={() => setDisableVideoPreview(!disableVideoPreview)}
             className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
               disableVideoPreview
-                ? 'bg-blue-600'
-                : 'bg-gray-200 dark:bg-gray-700'
+                ? 'bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] tm-press'
+                : 'bg-[var(--tm-surface-raised)] tm-press'
             }`}
           >
             <span
-              className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+              className={`inline-block h-4 w-4 transform rounded-full bg-[var(--tm-surface)] transition-transform ${
                 disableVideoPreview ? 'translate-x-6' : 'translate-x-1'
               }`}
             />
@@ -15348,7 +15396,6 @@ const XiaoyaConfigComponent = ({
     </div>
   );
 };
-
 
 // Telegram Bot 配置组件
 const TelegramConfigComponent = ({
@@ -15417,7 +15464,10 @@ const TelegramConfigComponent = ({
         showSuccess('Telegram 配置保存成功', showAlert);
         await refreshConfig();
       } catch (error) {
-        showError(error instanceof Error ? error.message : '保存失败', showAlert);
+        showError(
+          error instanceof Error ? error.message : '保存失败',
+          showAlert
+        );
         throw error;
       }
     });
@@ -15433,9 +15483,10 @@ const TelegramConfigComponent = ({
           throw new Error('请先填写 Bot Token、Bot 用户名 和 Webhook Secret');
         }
 
-        const webhookUrlValue = webhookSecret === '******'
-          ? ''
-          : `${window.location.origin}/api/telegram/webhook/${webhookSecret}`;
+        const webhookUrlValue =
+          webhookSecret === '******'
+            ? ''
+            : `${window.location.origin}/api/telegram/webhook/${webhookSecret}`;
         const response = await fetch('/api/admin/telegram', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -15449,13 +15500,20 @@ const TelegramConfigComponent = ({
         const data = await response.json().catch(() => ({}));
         if (!response.ok) {
           const telegramDetail = data.telegram
-            ? `（HTTP ${data.telegram.status || '-'}，响应：${data.telegram.body || data.telegram.statusText || '-'}）`
+            ? `（HTTP ${data.telegram.status || '-'}，响应：${
+                data.telegram.body || data.telegram.statusText || '-'
+              }）`
             : '';
-          throw new Error(`${data.error || 'Webhook 设置失败'}${telegramDetail}`);
+          throw new Error(
+            `${data.error || 'Webhook 设置失败'}${telegramDetail}`
+          );
         }
         showSuccess('Webhook 设置成功', showAlert);
       } catch (error) {
-        showError(error instanceof Error ? error.message : 'Webhook 设置失败', showAlert);
+        showError(
+          error instanceof Error ? error.message : 'Webhook 设置失败',
+          showAlert
+        );
         throw error;
       }
     });
@@ -15472,108 +15530,225 @@ const TelegramConfigComponent = ({
         const response = await fetch('/api/admin/telegram', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'test', config: buildConfig(), testChatId: testChatId.trim() }),
+          body: JSON.stringify({
+            action: 'test',
+            config: buildConfig(),
+            testChatId: testChatId.trim(),
+          }),
         });
         const data = await response.json().catch(() => ({}));
         if (!response.ok) throw new Error(data.error || '发送失败');
         showSuccess('测试消息发送成功', showAlert);
       } catch (error) {
-        showError(error instanceof Error ? error.message : '发送失败', showAlert);
+        showError(
+          error instanceof Error ? error.message : '发送失败',
+          showAlert
+        );
         throw error;
       }
     });
   };
 
   const webhookUrl = webhookSecret
-    ? `${typeof window !== 'undefined' ? window.location.origin : ''}/api/telegram/webhook/${webhookSecret === '******' ? '<secret>' : webhookSecret}`
+    ? `${
+        typeof window !== 'undefined' ? window.location.origin : ''
+      }/api/telegram/webhook/${
+        webhookSecret === '******' ? '<secret>' : webhookSecret
+      }`
     : '';
 
   return (
     <div className='space-y-6'>
-      <div className='bg-sky-50 dark:bg-sky-900/20 border border-sky-200 dark:border-sky-800 rounded-lg p-4'>
-        <h3 className='text-sm font-medium text-sky-900 dark:text-sky-100 mb-2'>
+      <div className='bg-[var(--tm-surface-raised)] border border-[var(--tm-line)] rounded-lg p-4'>
+        <h3 className='text-sm font-medium text-[color:var(--tm-text)] mb-2'>
           关于 Telegram Bot
         </h3>
-        <div className='text-sm text-sky-800 dark:text-sky-200 space-y-1'>
+        <div className='text-sm text-[color:var(--tm-text)] space-y-1'>
           <p>• 支持用户绑定 Telegram、快捷确认登录和站内通知推送</p>
-          <p>• 开启 Telegram 注册后，用户可在 Bot 中发送 /register 用户名 密码 注册账号</p>
+          <p>
+            • 开启 Telegram 注册后，用户可在 Bot 中发送 /register 用户名 密码
+            注册账号
+          </p>
           <p>• Webhook 地址需在 Telegram Bot API 中手动设置</p>
           <p>• Bot Token 和 Webhook Secret 仅服务端保存，不会暴露给前端</p>
         </div>
       </div>
 
       <div className='space-y-4'>
-        <div className='flex items-center justify-between py-3 border-b border-gray-200 dark:border-gray-700'>
+        <div className='flex items-center justify-between py-3 border-b border-[var(--tm-line)]'>
           <div>
-            <h3 className='text-sm font-medium text-gray-900 dark:text-white'>启用 Telegram Bot</h3>
-            <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>开启后显示绑定与 Telegram 登录入口</p>
+            <h3 className='text-sm font-medium text-[color:var(--tm-text)]'>
+              启用 Telegram Bot
+            </h3>
+            <p className='text-[13px] text-[color:var(--tm-muted)] mt-1'>
+              开启后显示绑定与 Telegram 登录入口
+            </p>
           </div>
           <button
             onClick={() => setEnabled(!enabled)}
-            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${enabled ? 'bg-blue-600' : 'bg-gray-200 dark:bg-gray-700'}`}
+            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+              enabled
+                ? 'bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] tm-press'
+                : 'bg-[var(--tm-surface-raised)] tm-press'
+            }`}
           >
-            <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${enabled ? 'translate-x-6' : 'translate-x-1'}`} />
+            <span
+              className={`inline-block h-4 w-4 transform rounded-full bg-[var(--tm-surface)] transition-transform ${
+                enabled ? 'translate-x-6' : 'translate-x-1'
+              }`}
+            />
           </button>
         </div>
 
         <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
           <div>
-            <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>Bot Token *</label>
-            <input type='password' value={botToken} onChange={(e) => setBotToken(e.target.value)} placeholder='123456:ABC...' className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white' />
+            <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-1'>
+              Bot Token *
+            </label>
+            <input
+              type='password'
+              value={botToken}
+              onChange={(e) => setBotToken(e.target.value)}
+              placeholder='123456:ABC...'
+              className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)]'
+            />
           </div>
           <div>
-            <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>Bot 用户名 *</label>
-            <input type='text' value={botUsername} onChange={(e) => setBotUsername(e.target.value)} placeholder='your_bot' className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white' />
+            <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-1'>
+              Bot 用户名 *
+            </label>
+            <input
+              type='text'
+              value={botUsername}
+              onChange={(e) => setBotUsername(e.target.value)}
+              placeholder='your_bot'
+              className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)]'
+            />
           </div>
         </div>
 
         <div>
-          <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>Webhook Secret</label>
-          <input type='password' value={webhookSecret} onChange={(e) => setWebhookSecret(e.target.value)} placeholder='建议填写随机长字符串' className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white' />
-          {webhookUrl && <p className='mt-2 break-all text-xs text-gray-500 dark:text-gray-400'>Webhook URL：{webhookUrl}</p>}
+          <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-1'>
+            Webhook Secret
+          </label>
+          <input
+            type='password'
+            value={webhookSecret}
+            onChange={(e) => setWebhookSecret(e.target.value)}
+            placeholder='建议填写随机长字符串'
+            className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)]'
+          />
+          {webhookUrl && (
+            <p className='mt-2 break-all text-[13px] text-[color:var(--tm-muted)]'>
+              Webhook URL：{webhookUrl}
+            </p>
+          )}
           <div className='mt-3 flex flex-col gap-2 sm:flex-row'>
-            <button onClick={handleSetWebhook} disabled={isLoading('setTelegramWebhook')} className={`w-full sm:w-auto ${buttonStyles.primary}`}>{isLoading('setTelegramWebhook') ? '设置中...' : '一键设置 Webhook'}</button>
+            <button
+              onClick={handleSetWebhook}
+              disabled={isLoading('setTelegramWebhook')}
+              className={`w-full sm:w-auto ${buttonStyles.primary}`}
+            >
+              {isLoading('setTelegramWebhook')
+                ? '设置中...'
+                : '一键设置 Webhook'}
+            </button>
           </div>
         </div>
 
-        <div className='grid grid-cols-1 sm:grid-cols-2 gap-4 rounded-lg border border-gray-200 p-4 dark:border-gray-700'>
+        <div className='grid grid-cols-1 sm:grid-cols-2 gap-4 rounded-lg border border-[var(--tm-line)] p-4'>
           <div>
-            <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>系统代理</label>
-            <input type='text' value={apiProxy} onChange={(e) => setApiProxy(e.target.value)} placeholder='http://127.0.0.1:7890' className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white' />
-            <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>Node 部署可用；Cloudflare/Edge 环境会忽略。</p>
+            <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-1'>
+              系统代理
+            </label>
+            <input
+              type='text'
+              value={apiProxy}
+              onChange={(e) => setApiProxy(e.target.value)}
+              placeholder='http://127.0.0.1:7890'
+              className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)]'
+            />
+            <p className='mt-1 text-[13px] text-[color:var(--tm-muted)]'>
+              Node 部署可用；Cloudflare/Edge 环境会忽略。
+            </p>
           </div>
           <div>
-            <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>反代 Base URL</label>
-            <input type='text' value={apiBaseUrl} onChange={(e) => setApiBaseUrl(e.target.value)} placeholder='https://telegram-api.example.com' className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white' />
-            <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>用于替换 https://api.telegram.org。</p>
+            <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-1'>
+              反代 Base URL
+            </label>
+            <input
+              type='text'
+              value={apiBaseUrl}
+              onChange={(e) => setApiBaseUrl(e.target.value)}
+              placeholder='https://telegram-api.example.com'
+              className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)]'
+            />
+            <p className='mt-1 text-[13px] text-[color:var(--tm-muted)]'>
+              用于替换 https://api.telegram.org。
+            </p>
           </div>
         </div>
 
-        <div className='grid grid-cols-1 sm:grid-cols-2 gap-3 rounded-lg border border-gray-200 p-4 dark:border-gray-700'>
+        <div className='grid grid-cols-1 sm:grid-cols-2 gap-3 rounded-lg border border-[var(--tm-line)] p-4'>
           {[
             ['允许绑定', bindingEnabled, setBindingEnabled],
             ['允许 Telegram 注册', registrationEnabled, setRegistrationEnabled],
             ['允许 Telegram 登录', loginEnabled, setLoginEnabled],
-            ['启用 Telegram 通知', notificationsEnabled, setNotificationsEnabled],
-            ['新绑定默认开启通知', defaultNotifications, setDefaultNotifications],
+            [
+              '启用 Telegram 通知',
+              notificationsEnabled,
+              setNotificationsEnabled,
+            ],
+            [
+              '新绑定默认开启通知',
+              defaultNotifications,
+              setDefaultNotifications,
+            ],
           ].map(([label, value, setter]) => (
-            <label key={label as string} className='flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300'>
-              <input type='checkbox' checked={value as boolean} onChange={(e) => (setter as (value: boolean) => void)(e.target.checked)} />
+            <label
+              key={label as string}
+              className='flex items-center gap-2 text-sm text-[color:var(--tm-muted)]'
+            >
+              <input
+                type='checkbox'
+                checked={value as boolean}
+                onChange={(e) =>
+                  (setter as (value: boolean) => void)(e.target.checked)
+                }
+              />
               {label as string}
             </label>
           ))}
         </div>
 
-        <div className='rounded-lg border border-gray-200 p-4 dark:border-gray-700'>
-          <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>测试 Chat ID</label>
+        <div className='rounded-lg border border-[var(--tm-line)] p-4'>
+          <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-1'>
+            测试 Chat ID
+          </label>
           <div className='flex flex-col gap-2 sm:flex-row'>
-            <input type='text' value={testChatId} onChange={(e) => setTestChatId(e.target.value)} placeholder='用户或群组 chat_id' className='min-w-0 flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white' />
-            <button onClick={handleTest} disabled={isLoading('testTelegram')} className={`w-full shrink-0 sm:w-auto ${buttonStyles.primary}`}>{isLoading('testTelegram') ? '发送中...' : '测试'}</button>
+            <input
+              type='text'
+              value={testChatId}
+              onChange={(e) => setTestChatId(e.target.value)}
+              placeholder='用户或群组 chat_id'
+              className='min-w-0 flex-1 px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)]'
+            />
+            <button
+              onClick={handleTest}
+              disabled={isLoading('testTelegram')}
+              className={`w-full shrink-0 sm:w-auto ${buttonStyles.primary}`}
+            >
+              {isLoading('testTelegram') ? '发送中...' : '测试'}
+            </button>
           </div>
         </div>
 
         <div className='flex justify-end'>
-          <button onClick={handleSave} disabled={isLoading('saveTelegram')} className={buttonStyles.success}>
+          <button
+            onClick={handleSave}
+            disabled={isLoading('saveTelegram')}
+            className={buttonStyles.success}
+          >
             {isLoading('saveTelegram') ? '保存中...' : '保存配置'}
           </button>
         </div>
@@ -15752,11 +15927,11 @@ const EmailConfigComponent = ({
 
   return (
     <div className='space-y-6'>
-      <div className='bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4'>
-        <h3 className='text-sm font-medium text-blue-900 dark:text-blue-100 mb-2'>
+      <div className='bg-[var(--tm-surface-raised)] border border-[var(--tm-line)] rounded-lg p-4'>
+        <h3 className='text-sm font-medium text-[color:var(--tm-text)] mb-2'>
           关于邮件通知
         </h3>
-        <div className='text-sm text-blue-800 dark:text-blue-200 space-y-1'>
+        <div className='text-sm text-[color:var(--tm-text)] space-y-1'>
           <p>• 当用户收藏的影片有更新时，自动发送邮件通知</p>
           <p>• 支持 SMTP 和 Resend 两种发送方式</p>
           <p>• 用户可在个人设置中配置邮箱和通知偏好</p>
@@ -15765,23 +15940,25 @@ const EmailConfigComponent = ({
 
       <div className='space-y-4'>
         {/* 启用开关 */}
-        <div className='flex items-center justify-between py-3 border-b border-gray-200 dark:border-gray-700'>
+        <div className='flex items-center justify-between py-3 border-b border-[var(--tm-line)]'>
           <div>
-            <h3 className='text-sm font-medium text-gray-900 dark:text-white'>
+            <h3 className='text-sm font-medium text-[color:var(--tm-text)]'>
               启用邮件通知
             </h3>
-            <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
+            <p className='text-[13px] text-[color:var(--tm-muted)] mt-1'>
               开启后用户可以接收收藏更新的邮件通知
             </p>
           </div>
           <button
             onClick={() => setEnabled(!enabled)}
             className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-              enabled ? 'bg-blue-600' : 'bg-gray-200 dark:bg-gray-700'
+              enabled
+                ? 'bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] tm-press'
+                : 'bg-[var(--tm-surface-raised)] tm-press'
             }`}
           >
             <span
-              className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+              className={`inline-block h-4 w-4 transform rounded-full bg-[var(--tm-surface)] transition-transform ${
                 enabled ? 'translate-x-6' : 'translate-x-1'
               }`}
             />
@@ -15790,7 +15967,7 @@ const EmailConfigComponent = ({
 
         {/* 发送方式选择 */}
         <div>
-          <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+          <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
             发送方式
           </label>
           <div className='flex gap-4'>
@@ -15802,9 +15979,7 @@ const EmailConfigComponent = ({
                 onChange={(e) => setProvider(e.target.value as 'smtp')}
                 className='mr-2'
               />
-              <span className='text-sm text-gray-700 dark:text-gray-300'>
-                SMTP
-              </span>
+              <span className='text-sm text-[color:var(--tm-muted)]'>SMTP</span>
             </label>
             <label className='flex items-center'>
               <input
@@ -15814,7 +15989,7 @@ const EmailConfigComponent = ({
                 onChange={(e) => setProvider(e.target.value as 'resend')}
                 className='mr-2'
               />
-              <span className='text-sm text-gray-700 dark:text-gray-300'>
+              <span className='text-sm text-[color:var(--tm-muted)]'>
                 Resend
               </span>
             </label>
@@ -15823,14 +15998,14 @@ const EmailConfigComponent = ({
 
         {/* SMTP配置 */}
         {provider === 'smtp' && (
-          <div className='space-y-4 p-4 bg-gray-50 dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700'>
-            <h4 className='text-sm font-medium text-gray-900 dark:text-white'>
+          <div className='space-y-4 p-4 bg-[var(--tm-surface-raised)] rounded-lg border border-[var(--tm-line)]'>
+            <h4 className='text-sm font-medium text-[color:var(--tm-text)]'>
               SMTP 配置
             </h4>
 
             <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
               <div>
-                <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>
+                <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-1'>
                   SMTP 主机 *
                 </label>
                 <input
@@ -15838,12 +16013,12 @@ const EmailConfigComponent = ({
                   value={smtpHost}
                   onChange={(e) => setSmtpHost(e.target.value)}
                   placeholder='smtp.gmail.com'
-                  className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white'
+                  className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)]'
                 />
               </div>
 
               <div>
-                <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>
+                <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-1'>
                   SMTP 端口 *
                 </label>
                 <input
@@ -15851,7 +16026,7 @@ const EmailConfigComponent = ({
                   value={smtpPort}
                   onChange={(e) => setSmtpPort(parseInt(e.target.value))}
                   placeholder='587'
-                  className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white'
+                  className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)]'
                 />
               </div>
             </div>
@@ -15863,13 +16038,13 @@ const EmailConfigComponent = ({
                 onChange={(e) => setSmtpSecure(e.target.checked)}
                 className='mr-2'
               />
-              <label className='text-sm text-gray-700 dark:text-gray-300'>
+              <label className='text-sm text-[color:var(--tm-muted)]'>
                 使用 SSL/TLS（端口 465 时启用）
               </label>
             </div>
 
             <div>
-              <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>
+              <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-1'>
                 SMTP 用户名 *
               </label>
               <input
@@ -15877,12 +16052,12 @@ const EmailConfigComponent = ({
                 value={smtpUser}
                 onChange={(e) => setSmtpUser(e.target.value)}
                 placeholder='your-email@gmail.com'
-                className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white'
+                className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)]'
               />
             </div>
 
             <div>
-              <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>
+              <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-1'>
                 SMTP 密码 *
               </label>
               <input
@@ -15890,12 +16065,12 @@ const EmailConfigComponent = ({
                 value={smtpPassword}
                 onChange={(e) => setSmtpPassword(e.target.value)}
                 placeholder='应用专用密码'
-                className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white'
+                className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)]'
               />
             </div>
 
             <div>
-              <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>
+              <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-1'>
                 发件人邮箱 *
               </label>
               <input
@@ -15903,7 +16078,7 @@ const EmailConfigComponent = ({
                 value={smtpFrom}
                 onChange={(e) => setSmtpFrom(e.target.value)}
                 placeholder='noreply@yourdomain.com'
-                className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white'
+                className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)]'
               />
             </div>
           </div>
@@ -15911,13 +16086,13 @@ const EmailConfigComponent = ({
 
         {/* Resend配置 */}
         {provider === 'resend' && (
-          <div className='space-y-4 p-4 bg-gray-50 dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700'>
-            <h4 className='text-sm font-medium text-gray-900 dark:text-white'>
+          <div className='space-y-4 p-4 bg-[var(--tm-surface-raised)] rounded-lg border border-[var(--tm-line)]'>
+            <h4 className='text-sm font-medium text-[color:var(--tm-text)]'>
               Resend 配置
             </h4>
 
             <div>
-              <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>
+              <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-1'>
                 Resend API Key *
               </label>
               <input
@@ -15925,15 +16100,15 @@ const EmailConfigComponent = ({
                 value={resendApiKey}
                 onChange={(e) => setResendApiKey(e.target.value)}
                 placeholder='re_xxxxx'
-                className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white'
+                className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)]'
               />
-              <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
+              <p className='text-[13px] text-[color:var(--tm-muted)] mt-1'>
                 在{' '}
                 <a
                   href='https://resend.com/api-keys'
                   target='_blank'
                   rel='noopener noreferrer'
-                  className='text-blue-600 hover:underline'
+                  className='text-[color:var(--tm-text)] hover:underline min-h-[44px] inline-flex items-center tm-press'
                 >
                   Resend 控制台
                 </a>{' '}
@@ -15942,7 +16117,7 @@ const EmailConfigComponent = ({
             </div>
 
             <div>
-              <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1'>
+              <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-1'>
                 发件人邮箱 *
               </label>
               <input
@@ -15950,9 +16125,9 @@ const EmailConfigComponent = ({
                 value={resendFrom}
                 onChange={(e) => setResendFrom(e.target.value)}
                 placeholder='noreply@yourdomain.com'
-                className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white'
+                className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)]'
               />
-              <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
+              <p className='text-[13px] text-[color:var(--tm-muted)] mt-1'>
                 需要先在 Resend 中验证域名
               </p>
             </div>
@@ -15960,8 +16135,8 @@ const EmailConfigComponent = ({
         )}
 
         {/* 测试邮件 */}
-        <div className='p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg'>
-          <h4 className='text-sm font-medium text-blue-900 dark:text-blue-100 mb-2'>
+        <div className='p-4 bg-[var(--tm-surface-raised)] border border-[var(--tm-line)] rounded-lg'>
+          <h4 className='text-sm font-medium text-[color:var(--tm-text)] mb-2'>
             发送测试邮件
           </h4>
           <div className='flex flex-col sm:flex-row gap-2'>
@@ -15970,7 +16145,7 @@ const EmailConfigComponent = ({
               value={testEmail}
               onChange={(e) => setTestEmail(e.target.value)}
               placeholder='输入测试邮箱地址'
-              className='flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white text-sm'
+              className='flex-1 px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)] text-sm'
             />
             <button
               onClick={handleTest}
@@ -16134,17 +16309,17 @@ const MovieRequestsComponent = ({
   return (
     <div className='space-y-4'>
       {/* 求片功能设置 */}
-      <div className='p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700'>
-        <h3 className='text-lg font-medium text-gray-900 dark:text-gray-100 mb-4'>
+      <div className='p-4 bg-[var(--tm-surface)] rounded-lg border border-[var(--tm-line)]'>
+        <h3 className='text-lg font-medium text-[color:var(--tm-text)] mb-4'>
           求片功能设置
         </h3>
         <div className='space-y-4'>
           <div className='flex items-center justify-between'>
             <div>
-              <label className='text-sm font-medium text-gray-700 dark:text-gray-300'>
+              <label className='text-sm font-medium text-[color:var(--tm-muted)]'>
                 启用求片功能
               </label>
-              <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
+              <p className='text-[13px] text-[color:var(--tm-muted)] mt-1'>
                 关闭后用户将无法访问求片页面
               </p>
             </div>
@@ -16155,15 +16330,15 @@ const MovieRequestsComponent = ({
                 onChange={(e) => setEnableMovieRequest(e.target.checked)}
                 className='sr-only peer'
               />
-              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+              <div className="w-11 h-6 bg-[var(--tm-surface-raised)] peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-[var(--tm-text)] rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-[var(--tm-line)] after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-[var(--tm-surface-raised)] after:border-[var(--tm-line)] after:border after:rounded-full after:h-5 after:w-5 after:transition-all border-[var(--tm-line)] peer-checked:bg-[var(--tm-surface-raised)]"></div>
             </label>
           </div>
 
           <div>
-            <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+            <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
               求片冷却时间（秒）
             </label>
-            <p className='text-xs text-gray-500 dark:text-gray-400 mb-2'>
+            <p className='text-[13px] text-[color:var(--tm-muted)] mb-2'>
               用户两次求片之间的最小间隔时间，默认3600秒（1小时）
             </p>
             <input
@@ -16173,9 +16348,9 @@ const MovieRequestsComponent = ({
               onChange={(e) =>
                 setMovieRequestCooldown(parseInt(e.target.value) || 0)
               }
-              className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100'
+              className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)]'
             />
-            <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
+            <p className='text-[13px] text-[color:var(--tm-muted)] mt-1'>
               {movieRequestCooldown >= 3600
                 ? `约 ${Math.floor(
                     movieRequestCooldown / 3600
@@ -16199,8 +16374,8 @@ const MovieRequestsComponent = ({
       </div>
 
       {/* 求片列表 */}
-      <div className='p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700'>
-        <h3 className='text-lg font-medium text-gray-900 dark:text-gray-100 mb-4'>
+      <div className='p-4 bg-[var(--tm-surface)] rounded-lg border border-[var(--tm-line)]'>
+        <h3 className='text-lg font-medium text-[color:var(--tm-text)] mb-4'>
           求片列表
         </h3>
         <div className='flex gap-2 mb-4'>
@@ -16208,8 +16383,8 @@ const MovieRequestsComponent = ({
             onClick={() => setFilter('pending')}
             className={`px-4 py-2 rounded-lg ${
               filter === 'pending'
-                ? 'bg-blue-600 text-white'
-                : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+                ? 'bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] min-h-[44px] tm-press'
+                : 'bg-[var(--tm-surface-raised)] text-[color:var(--tm-muted)] min-h-[44px] tm-press'
             }`}
           >
             待处理 ({pendingCount})
@@ -16218,8 +16393,8 @@ const MovieRequestsComponent = ({
             onClick={() => setFilter('fulfilled')}
             className={`px-4 py-2 rounded-lg ${
               filter === 'fulfilled'
-                ? 'bg-blue-600 text-white'
-                : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+                ? 'bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] min-h-[44px] tm-press'
+                : 'bg-[var(--tm-surface-raised)] text-[color:var(--tm-muted)] min-h-[44px] tm-press'
             }`}
           >
             已上架 ({fulfilledCount})
@@ -16228,10 +16403,14 @@ const MovieRequestsComponent = ({
 
         {loading ? (
           <div className='flex justify-center py-8'>
-            <div className='w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin' />
+            <div
+              className={
+                'w-6 h-6 border-2 border-[var(--tm-text)] border-t-transparent rounded-full animate-spin'
+              }
+            />
           </div>
         ) : requests.length === 0 ? (
-          <div className='text-center py-8 text-gray-500 dark:text-gray-400'>
+          <div className='text-center py-8 text-[color:var(--tm-muted)]'>
             暂无求片
           </div>
         ) : (
@@ -16239,7 +16418,7 @@ const MovieRequestsComponent = ({
             {requests.map((req) => (
               <div
                 key={req.id}
-                className='p-4 bg-gray-50 dark:bg-gray-800 rounded-lg'
+                className='p-4 bg-[var(--tm-surface-raised)] rounded-lg'
               >
                 <div className='flex gap-4'>
                   {req.poster && (
@@ -16250,17 +16429,17 @@ const MovieRequestsComponent = ({
                     />
                   )}
                   <div className='flex-1'>
-                    <h3 className='font-medium text-gray-900 dark:text-gray-100'>
+                    <h3 className='font-medium text-[color:var(--tm-text)]'>
                       {req.title} {req.year && `(${req.year})`}
                     </h3>
-                    <p className='text-sm text-gray-600 dark:text-gray-400 mt-1'>
+                    <p className='text-sm text-[color:var(--tm-muted)] mt-1'>
                       求片人数: {req.requestCount} 人
                     </p>
-                    <p className='text-xs text-gray-500 dark:text-gray-500 mt-1'>
+                    <p className='text-[13px] text-[color:var(--tm-muted)] mt-1'>
                       {new Date(req.createdAt).toLocaleString('zh-CN')}
                     </p>
                     {req.requestedBy && (
-                      <p className='text-xs text-gray-500 dark:text-gray-500 mt-1'>
+                      <p className='text-[13px] text-[color:var(--tm-muted)] mt-1'>
                         求片用户: {req.requestedBy.join(', ')}
                       </p>
                     )}
@@ -16473,10 +16652,10 @@ const AIConfigComponent = ({
   return (
     <div className='space-y-6'>
       {/* 使用说明 */}
-      <div className='bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4'>
+      <div className='bg-[var(--tm-surface-raised)] border border-[var(--tm-line)] rounded-lg p-4'>
         <div className='flex items-center gap-2 mb-2'>
           <svg
-            className='w-5 h-5 text-blue-600 dark:text-blue-400'
+            className='w-5 h-5 text-[color:var(--tm-text)]'
             fill='none'
             stroke='currentColor'
             viewBox='0 0 24 24'
@@ -16488,11 +16667,11 @@ const AIConfigComponent = ({
               d='M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z'
             />
           </svg>
-          <span className='text-sm font-medium text-blue-800 dark:text-blue-300'>
+          <span className='text-sm font-medium text-[color:var(--tm-text)]'>
             使用说明
           </span>
         </div>
-        <div className='text-sm text-blue-700 dark:text-blue-400 space-y-1'>
+        <div className='text-sm text-[color:var(--tm-text)] space-y-1'>
           <p>• AI问片功能可以让用户通过AI对话获取影视推荐和信息查询</p>
           <p>• 支持 OpenAI、Claude 和自定义兼容 OpenAI 格式的 API</p>
           <p>• 启用决策模型后,AI会智能判断是否需要联网搜索/豆瓣/TMDB数据</p>
@@ -16502,12 +16681,12 @@ const AIConfigComponent = ({
       </div>
 
       {/* 功能开关 */}
-      <div className='flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700'>
+      <div className='flex items-center justify-between p-4 bg-[var(--tm-surface-raised)] rounded-lg border border-[var(--tm-line)]'>
         <div>
-          <h3 className='text-sm font-medium text-gray-900 dark:text-gray-100'>
+          <h3 className='text-sm font-medium text-[color:var(--tm-text)]'>
             启用AI问片功能
           </h3>
-          <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
+          <p className='text-[13px] text-[color:var(--tm-muted)] mt-1'>
             关闭后所有AI问片入口将不可用
           </p>
         </div>
@@ -16518,13 +16697,13 @@ const AIConfigComponent = ({
             onChange={(e) => setEnabled(e.target.checked)}
             className='sr-only peer'
           />
-          <div className="w-14 h-7 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-300 dark:peer-focus:ring-green-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:start-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all dark:border-gray-600 peer-checked:bg-green-600"></div>
+          <div className="w-14 h-7 bg-[var(--tm-surface-raised)] peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-[var(--tm-text)] rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-[var(--tm-line)] after:content-[''] after:absolute after:top-0.5 after:start-[4px] after:bg-[var(--tm-surface-raised)] after:border-[var(--tm-line)] after:border after:rounded-full after:h-6 after:w-6 after:transition-all border-[var(--tm-line)] peer-checked:bg-[var(--tm-surface-raised)]"></div>
         </label>
       </div>
 
       {/* 调用模式切换（旧版/新版卡片） */}
       <div className='space-y-4'>
-        <h3 className='text-base font-semibold text-gray-900 dark:text-gray-100'>
+        <h3 className='text-base font-medium text-[color:var(--tm-text)]'>
           调用模式
         </h3>
         <div className='grid grid-cols-1 sm:grid-cols-2 gap-3'>
@@ -16534,17 +16713,19 @@ const AIConfigComponent = ({
             onClick={() => setEnableNewMode(false)}
             className={`p-4 rounded-lg border-2 text-left transition-colors ${
               !enableNewMode
-                ? 'border-green-500 bg-green-50/50 dark:bg-green-900/10'
-                : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600'
+                ? 'border-[var(--tm-line)] bg-[var(--tm-surface-raised)] min-h-[44px] tm-press'
+                : 'border-[var(--tm-line)] bg-[var(--tm-surface)] hover:border-[var(--tm-line)] min-h-[44px] tm-press'
             }`}
           >
             <div className='flex items-center justify-between'>
-              <span className='text-sm font-semibold text-gray-900 dark:text-gray-100'>
+              <span className='text-sm font-medium text-[color:var(--tm-text)]'>
                 旧版
               </span>
-              {!enableNewMode && <Check className='w-5 h-5 text-green-600' />}
+              {!enableNewMode && (
+                <Check className='w-5 h-5 text-[color:var(--tm-text)]' />
+              )}
             </div>
-            <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
+            <p className='text-[13px] text-[color:var(--tm-muted)] mt-1'>
               预先分析意图并抓取 联网搜索/豆瓣/TMDB 数据后回答
             </p>
           </button>
@@ -16555,17 +16736,19 @@ const AIConfigComponent = ({
             onClick={() => setEnableNewMode(true)}
             className={`p-4 rounded-lg border-2 text-left transition-colors ${
               enableNewMode
-                ? 'border-green-500 bg-green-50/50 dark:bg-green-900/10'
-                : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600'
+                ? 'border-[var(--tm-line)] bg-[var(--tm-surface-raised)] min-h-[44px] tm-press'
+                : 'border-[var(--tm-line)] bg-[var(--tm-surface)] hover:border-[var(--tm-line)] min-h-[44px] tm-press'
             }`}
           >
             <div className='flex items-center justify-between'>
-              <span className='text-sm font-semibold text-gray-900 dark:text-gray-100'>
+              <span className='text-sm font-medium text-[color:var(--tm-text)]'>
                 新版（工具式调用）
               </span>
-              {enableNewMode && <Check className='w-5 h-5 text-green-600' />}
+              {enableNewMode && (
+                <Check className='w-5 h-5 text-[color:var(--tm-text)]' />
+              )}
             </div>
-            <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
+            <p className='text-[13px] text-[color:var(--tm-muted)] mt-1'>
               由模型自主决定是否调用相关工具
             </p>
           </button>
@@ -16575,258 +16758,272 @@ const AIConfigComponent = ({
       {/* 旧版 AI模型配置（仅旧版显示） */}
       {!enableNewMode && (
         <>
-      <div className='space-y-4'>
-        <h3 className='text-base font-semibold text-gray-900 dark:text-gray-100'>
-          AI模型配置
-        </h3>
-        <p className='text-sm text-gray-500 dark:text-gray-400'>
-          请配置兼容OpenAI格式的API
-        </p>
-        <div className='space-y-4 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg'>
-          <h4 className='text-sm font-semibold text-gray-900 dark:text-gray-100'>
-            自定义 API 配置
-          </h4>
-          <div>
-            <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
-              API Key <span className='text-red-500'>*</span>
-            </label>
-            <input
-              type='password'
-              value={customApiKey}
-              onChange={(e) => setCustomApiKey(e.target.value)}
-              placeholder='your-api-key'
-              className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100'
-            />
-          </div>
-          <div>
-            <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
-              Base URL <span className='text-red-500'>*</span>
-            </label>
-            <input
-              type='text'
-              value={customBaseURL}
-              onChange={(e) => setCustomBaseURL(e.target.value)}
-              placeholder='https://your-api.example.com/v1'
-              className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100'
-            />
-          </div>
-          <div>
-            <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
-              模型名称 <span className='text-red-500'>*</span>
-            </label>
-            <input
-              type='text'
-              value={customModel}
-              onChange={(e) => setCustomModel(e.target.value)}
-              placeholder='model-name'
-              className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100'
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* 旧版 决策模型配置（仅旧版显示） */}
-      <div className='space-y-4 p-4 border border-gray-200 dark:border-gray-700 rounded-lg'>
-        <div>
-          <h4 className='text-sm font-semibold text-gray-900 dark:text-gray-100'>
-            AI决策模型配置
-          </h4>
-          <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
-            使用AI智能判断是否需要联网搜索、豆瓣或TMDB数据,并优化搜索关键词(复用主模型的API配置)
-          </p>
-        </div>
-
-        <div className='space-y-3 p-3 bg-purple-50/50 dark:bg-purple-900/10 rounded-lg'>
-          <div>
-            <label className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
-              决策模型名称
-            </label>
-            <input
-              type='text'
-              value={decisionCustomModel}
-              onChange={(e) => setDecisionCustomModel(e.target.value)}
-              placeholder='gpt-4o-mini (建议使用成本较低的小模型)'
-              className='w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100'
-            />
-            <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
-              留空则使用传统关键词匹配方式,不进行AI决策
+          <div className='space-y-4'>
+            <h3 className='text-base font-medium text-[color:var(--tm-text)]'>
+              AI模型配置
+            </h3>
+            <p className='text-sm text-[color:var(--tm-muted)]'>
+              请配置兼容OpenAI格式的API
             </p>
+            <div className='space-y-4 p-4 bg-[var(--tm-surface-raised)] rounded-lg'>
+              <h4 className='text-sm font-medium text-[color:var(--tm-text)]'>
+                自定义 API 配置
+              </h4>
+              <div>
+                <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
+                  API Key <span className='text-[color:var(--tm-text)]'>*</span>
+                </label>
+                <input
+                  type='password'
+                  value={customApiKey}
+                  onChange={(e) => setCustomApiKey(e.target.value)}
+                  placeholder='your-api-key'
+                  className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)]'
+                />
+              </div>
+              <div>
+                <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
+                  Base URL{' '}
+                  <span className='text-[color:var(--tm-text)]'>*</span>
+                </label>
+                <input
+                  type='text'
+                  value={customBaseURL}
+                  onChange={(e) => setCustomBaseURL(e.target.value)}
+                  placeholder='https://your-api.example.com/v1'
+                  className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)]'
+                />
+              </div>
+              <div>
+                <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
+                  模型名称{' '}
+                  <span className='text-[color:var(--tm-text)]'>*</span>
+                </label>
+                <input
+                  type='text'
+                  value={customModel}
+                  onChange={(e) => setCustomModel(e.target.value)}
+                  placeholder='model-name'
+                  className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)]'
+                />
+              </div>
+            </div>
           </div>
-        </div>
 
-        <div className='bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3'>
-          <p className='text-xs text-blue-700 dark:text-blue-400'>
-            💡 <strong>提示:</strong>{' '}
-            决策模型用于智能判断是否需要调用各个数据源,建议使用成本较低的小模型(如
-            gpt-4o-mini)。会复用主模型的API Key和Base URL配置。
-          </p>
-        </div>
-      </div>
-      </>
+          {/* 旧版 决策模型配置（仅旧版显示） */}
+          <div className='space-y-4 p-4 border border-[var(--tm-line)] rounded-lg'>
+            <div>
+              <h4 className='text-sm font-medium text-[color:var(--tm-text)]'>
+                AI决策模型配置
+              </h4>
+              <p className='text-[13px] text-[color:var(--tm-muted)] mt-1'>
+                使用AI智能判断是否需要联网搜索、豆瓣或TMDB数据,并优化搜索关键词(复用主模型的API配置)
+              </p>
+            </div>
+
+            <div className='space-y-3 p-3 bg-[var(--tm-surface-raised)] rounded-lg'>
+              <div>
+                <label className='block text-[13px] font-medium text-[color:var(--tm-muted)] mb-1'>
+                  决策模型名称
+                </label>
+                <input
+                  type='text'
+                  value={decisionCustomModel}
+                  onChange={(e) => setDecisionCustomModel(e.target.value)}
+                  placeholder='gpt-4o-mini (建议使用成本较低的小模型)'
+                  className='w-full px-3 py-2 text-sm border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)]'
+                />
+                <p className='text-[13px] text-[color:var(--tm-muted)] mt-1'>
+                  留空则使用传统关键词匹配方式,不进行AI决策
+                </p>
+              </div>
+            </div>
+
+            <div className='bg-[var(--tm-surface-raised)] border border-[var(--tm-line)] rounded-lg p-3'>
+              <p className='text-[13px] text-[color:var(--tm-text)]'>
+                💡 <strong>提示:</strong>{' '}
+                决策模型用于智能判断是否需要调用各个数据源,建议使用成本较低的小模型(如
+                gpt-4o-mini)。会复用主模型的API Key和Base URL配置。
+              </p>
+            </div>
+          </div>
+        </>
       )}
 
       {/* 新版 调用配置（仅新版显示） */}
       {enableNewMode && (
-      <div className='space-y-4 p-4 border border-gray-200 dark:border-gray-700 rounded-lg'>
-        <div>
-          <h4 className='text-sm font-semibold text-gray-900 dark:text-gray-100'>
-            新版调用配置
-          </h4>
-          <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
-            由模型自主决定是否调用相关工具
-          </p>
-        </div>
-
-        <div>
-          <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
-            调用协议
-          </label>
-          <select
-            value={newProtocol}
-            onChange={(e) => setNewProtocol(e.target.value as any)}
-            className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100'
-          >
-            <option value='openai-completions'>OpenAI 普通协议 (chat/completions)</option>
-            <option value='openai-responses'>OpenAI Response 协议 (/responses)</option>
-            <option value='claude'>Claude Messages 协议 (/v1/messages)</option>
-          </select>
-        </div>
-
-        <div>
-          <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
-            最大上下文Token数
-          </label>
-          <input
-            type='number'
-            min='1024'
-            step='1024'
-            value={maxContext}
-            onChange={(e) => setMaxContext(parseInt(e.target.value) || 131072)}
-            className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100'
-          />
-          <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
-            上下文窗口 token 上限，默认 131072（128k）
-          </p>
-        </div>
-
-        <div>
-          <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
-            上下文压缩触发阈值 (%)
-          </label>
-          <input
-            type='number'
-            min='0'
-            max='100'
-            step='1'
-            value={compressThreshold}
-            onChange={(e) => setCompressThreshold(parseInt(e.target.value) || 0)}
-            className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100'
-          />
-          <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
-            超出后调用 LLM 将较早的工具调用摘要化并丢弃工具消息；0=关闭压缩
-          </p>
-        </div>
-
-        {(newProtocol === 'openai-completions' || newProtocol === 'openai-responses') && (
-          <div className='space-y-3 p-3 bg-purple-50/50 dark:bg-purple-900/10 rounded-lg'>
-            <div>
-              <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
-                OpenAI API Key
-              </label>
-              <input
-                type='password'
-                value={openaiApiKey}
-                onChange={(e) => setOpenaiApiKey(e.target.value)}
-                placeholder='sk-...'
-                className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100'
-              />
-            </div>
-            <div>
-              <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
-                OpenAI Base URL
-              </label>
-              <input
-                type='text'
-                value={openaiBaseURL}
-                onChange={(e) => setOpenaiBaseURL(e.target.value)}
-                placeholder='https://api.openai.com'
-                className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100'
-              />
-            </div>
-            <div>
-              <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
-                OpenAI 模型
-              </label>
-              <input
-                type='text'
-                value={openaiModel}
-                onChange={(e) => setOpenaiModel(e.target.value)}
-                placeholder='gpt-4o-mini'
-                className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100'
-              />
-            </div>
+        <div className='space-y-4 p-4 border border-[var(--tm-line)] rounded-lg'>
+          <div>
+            <h4 className='text-sm font-medium text-[color:var(--tm-text)]'>
+              新版调用配置
+            </h4>
+            <p className='text-[13px] text-[color:var(--tm-muted)] mt-1'>
+              由模型自主决定是否调用相关工具
+            </p>
           </div>
-        )}
 
-        {newProtocol === 'claude' && (
-          <div className='space-y-3 p-3 bg-purple-50/50 dark:bg-purple-900/10 rounded-lg'>
-            <div>
-              <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
-                Claude API Key
-              </label>
-              <input
-                type='password'
-                value={claudeApiKey}
-                onChange={(e) => setClaudeApiKey(e.target.value)}
-                placeholder='sk-ant-...'
-                className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100'
-              />
-            </div>
-            <div>
-              <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
-                Claude Base URL
-              </label>
-              <input
-                type='text'
-                value={claudeBaseURL}
-                onChange={(e) => setClaudeBaseURL(e.target.value)}
-                placeholder='https://api.anthropic.com'
-                className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100'
-              />
-            </div>
-            <div>
-              <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
-                Claude 模型
-              </label>
-              <input
-                type='text'
-                value={claudeModel}
-                onChange={(e) => setClaudeModel(e.target.value)}
-                placeholder='claude-sonnet-4-6'
-                className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100'
-              />
-            </div>
+          <div>
+            <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
+              调用协议
+            </label>
+            <select
+              value={newProtocol}
+              onChange={(e) => setNewProtocol(e.target.value as any)}
+              className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)]'
+            >
+              <option value='openai-completions'>
+                OpenAI 普通协议 (chat/completions)
+              </option>
+              <option value='openai-responses'>
+                OpenAI Response 协议 (/responses)
+              </option>
+              <option value='claude'>
+                Claude Messages 协议 (/v1/messages)
+              </option>
+            </select>
           </div>
-        )}
 
-        <div className='bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3'>
-          <p className='text-xs text-blue-700 dark:text-blue-400'>
-            💡 <strong>提示:</strong> 由模型自主决定是否调用相关工具。
-            需在站点设置中配置 TMDB API Key（TMDB 工具）、
-            在下方「启用联网搜索」中配置对应搜索服务 API Key（联网搜索工具）。豆瓣工具始终可用。
-          </p>
+          <div>
+            <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
+              最大上下文Token数
+            </label>
+            <input
+              type='number'
+              min='1024'
+              step='1024'
+              value={maxContext}
+              onChange={(e) =>
+                setMaxContext(parseInt(e.target.value) || 131072)
+              }
+              className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)]'
+            />
+            <p className='text-[13px] text-[color:var(--tm-muted)] mt-1'>
+              上下文窗口 token 上限，默认 131072（128k）
+            </p>
+          </div>
+
+          <div>
+            <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
+              上下文压缩触发阈值 (%)
+            </label>
+            <input
+              type='number'
+              min='0'
+              max='100'
+              step='1'
+              value={compressThreshold}
+              onChange={(e) =>
+                setCompressThreshold(parseInt(e.target.value) || 0)
+              }
+              className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)]'
+            />
+            <p className='text-[13px] text-[color:var(--tm-muted)] mt-1'>
+              超出后调用 LLM 将较早的工具调用摘要化并丢弃工具消息；0=关闭压缩
+            </p>
+          </div>
+
+          {(newProtocol === 'openai-completions' ||
+            newProtocol === 'openai-responses') && (
+            <div className='space-y-3 p-3 bg-[var(--tm-surface-raised)] rounded-lg'>
+              <div>
+                <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
+                  OpenAI API Key
+                </label>
+                <input
+                  type='password'
+                  value={openaiApiKey}
+                  onChange={(e) => setOpenaiApiKey(e.target.value)}
+                  placeholder='sk-...'
+                  className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)]'
+                />
+              </div>
+              <div>
+                <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
+                  OpenAI Base URL
+                </label>
+                <input
+                  type='text'
+                  value={openaiBaseURL}
+                  onChange={(e) => setOpenaiBaseURL(e.target.value)}
+                  placeholder='https://api.openai.com'
+                  className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)]'
+                />
+              </div>
+              <div>
+                <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
+                  OpenAI 模型
+                </label>
+                <input
+                  type='text'
+                  value={openaiModel}
+                  onChange={(e) => setOpenaiModel(e.target.value)}
+                  placeholder='gpt-4o-mini'
+                  className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)]'
+                />
+              </div>
+            </div>
+          )}
+
+          {newProtocol === 'claude' && (
+            <div className='space-y-3 p-3 bg-[var(--tm-surface-raised)] rounded-lg'>
+              <div>
+                <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
+                  Claude API Key
+                </label>
+                <input
+                  type='password'
+                  value={claudeApiKey}
+                  onChange={(e) => setClaudeApiKey(e.target.value)}
+                  placeholder='sk-ant-...'
+                  className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)]'
+                />
+              </div>
+              <div>
+                <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
+                  Claude Base URL
+                </label>
+                <input
+                  type='text'
+                  value={claudeBaseURL}
+                  onChange={(e) => setClaudeBaseURL(e.target.value)}
+                  placeholder='https://api.anthropic.com'
+                  className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)]'
+                />
+              </div>
+              <div>
+                <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
+                  Claude 模型
+                </label>
+                <input
+                  type='text'
+                  value={claudeModel}
+                  onChange={(e) => setClaudeModel(e.target.value)}
+                  placeholder='claude-sonnet-4-6'
+                  className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)]'
+                />
+              </div>
+            </div>
+          )}
+
+          <div className='bg-[var(--tm-surface-raised)] border border-[var(--tm-line)] rounded-lg p-3'>
+            <p className='text-[13px] text-[color:var(--tm-text)]'>
+              💡 <strong>提示:</strong> 由模型自主决定是否调用相关工具。
+              需在站点设置中配置 TMDB API Key（TMDB 工具）、
+              在下方「启用联网搜索」中配置对应搜索服务 API
+              Key（联网搜索工具）。豆瓣工具始终可用。
+            </p>
+          </div>
         </div>
-      </div>
       )}
 
       {/* 联网搜索配置 */}
-      <div className='space-y-4 p-4 border border-gray-200 dark:border-gray-700 rounded-lg'>
+      <div className='space-y-4 p-4 border border-[var(--tm-line)] rounded-lg'>
         <div className='flex items-center justify-between'>
           <div>
-            <h4 className='text-sm font-semibold text-gray-900 dark:text-gray-100'>
+            <h4 className='text-sm font-medium text-[color:var(--tm-text)]'>
               启用联网搜索
             </h4>
-            <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
+            <p className='text-[13px] text-[color:var(--tm-muted)] mt-1'>
               AI可以搜索最新的影视资讯和信息
             </p>
           </div>
@@ -16837,20 +17034,20 @@ const AIConfigComponent = ({
               onChange={(e) => setEnableWebSearch(e.target.checked)}
               className='sr-only peer'
             />
-            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+            <div className="w-11 h-6 bg-[var(--tm-surface-raised)] peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-[var(--tm-text)] rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-[var(--tm-line)] after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-[var(--tm-surface-raised)] after:border-[var(--tm-line)] after:border after:rounded-full after:h-5 after:w-5 after:transition-all border-[var(--tm-line)] peer-checked:bg-[var(--tm-surface-raised)]"></div>
           </label>
         </div>
 
         {enableWebSearch && (
           <div className='space-y-4 mt-4'>
             <div>
-              <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+              <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
                 搜索服务提供商
               </label>
               <select
                 value={webSearchProvider}
                 onChange={(e) => setWebSearchProvider(e.target.value as any)}
-                className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100'
+                className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)]'
               >
                 <option value='tavily'>Tavily (推荐)</option>
                 <option value='serper'>Serper.dev</option>
@@ -16861,7 +17058,7 @@ const AIConfigComponent = ({
 
             {webSearchProvider === 'tavily' && (
               <div>
-                <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
                   Tavily API Key
                 </label>
                 <input
@@ -16869,14 +17066,14 @@ const AIConfigComponent = ({
                   value={tavilyApiKey}
                   onChange={(e) => setTavilyApiKey(e.target.value)}
                   placeholder='tvly-...'
-                  className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100'
+                  className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)]'
                 />
-                <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
+                <p className='text-[13px] text-[color:var(--tm-muted)] mt-1'>
                   在{' '}
                   <a
                     href='https://tavily.com'
                     target='_blank'
-                    className='text-blue-600 hover:underline'
+                    className='text-[color:var(--tm-text)] hover:underline min-h-[44px] inline-flex items-center tm-press'
                   >
                     tavily.com
                   </a>{' '}
@@ -16887,7 +17084,7 @@ const AIConfigComponent = ({
 
             {webSearchProvider === 'serper' && (
               <div>
-                <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
                   Serper API Key
                 </label>
                 <input
@@ -16895,14 +17092,14 @@ const AIConfigComponent = ({
                   value={serperApiKey}
                   onChange={(e) => setSerperApiKey(e.target.value)}
                   placeholder='your-serper-key'
-                  className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100'
+                  className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)]'
                 />
-                <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
+                <p className='text-[13px] text-[color:var(--tm-muted)] mt-1'>
                   在{' '}
                   <a
                     href='https://serper.dev'
                     target='_blank'
-                    className='text-blue-600 hover:underline'
+                    className='text-[color:var(--tm-text)] hover:underline min-h-[44px] inline-flex items-center tm-press'
                   >
                     serper.dev
                   </a>{' '}
@@ -16913,7 +17110,7 @@ const AIConfigComponent = ({
 
             {webSearchProvider === 'serpapi' && (
               <div>
-                <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+                <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
                   SerpAPI Key
                 </label>
                 <input
@@ -16921,14 +17118,14 @@ const AIConfigComponent = ({
                   value={serpApiKey}
                   onChange={(e) => setSerpApiKey(e.target.value)}
                   placeholder='your-serpapi-key'
-                  className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100'
+                  className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)]'
                 />
-                <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
+                <p className='text-[13px] text-[color:var(--tm-muted)] mt-1'>
                   在{' '}
                   <a
                     href='https://serpapi.com'
                     target='_blank'
-                    className='text-blue-600 hover:underline'
+                    className='text-[color:var(--tm-text)] hover:underline min-h-[44px] inline-flex items-center tm-press'
                   >
                     serpapi.com
                   </a>{' '}
@@ -16941,8 +17138,8 @@ const AIConfigComponent = ({
       </div>
 
       {/* 入口开关 */}
-      <div className='space-y-3 p-4 border border-gray-200 dark:border-gray-700 rounded-lg'>
-        <h4 className='text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3'>
+      <div className='space-y-3 p-4 border border-[var(--tm-line)] rounded-lg'>
+        <h4 className='text-sm font-medium text-[color:var(--tm-text)] mb-3'>
           功能入口设置
         </h4>
 
@@ -16988,10 +17185,10 @@ const AIConfigComponent = ({
             className='flex items-center justify-between py-2'
           >
             <div>
-              <div className='text-sm font-medium text-gray-900 dark:text-gray-100'>
+              <div className='text-sm font-medium text-[color:var(--tm-text)]'>
                 {item.label}
               </div>
-              <div className='text-xs text-gray-500 dark:text-gray-400'>
+              <div className='text-[13px] text-[color:var(--tm-muted)]'>
                 {item.desc}
               </div>
             </div>
@@ -17002,20 +17199,20 @@ const AIConfigComponent = ({
                 onChange={(e) => item.setState(e.target.checked)}
                 className='sr-only peer'
               />
-              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-300 dark:peer-focus:ring-green-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-green-600"></div>
+              <div className="w-11 h-6 bg-[var(--tm-surface-raised)] peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-[var(--tm-text)] rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-[var(--tm-line)] after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-[var(--tm-surface-raised)] after:border-[var(--tm-line)] after:border after:rounded-full after:h-5 after:w-5 after:transition-all border-[var(--tm-line)] peer-checked:bg-[var(--tm-surface-raised)]"></div>
             </label>
           </div>
         ))}
       </div>
 
       {/* 高级设置 */}
-      <details className='p-4 border border-gray-200 dark:border-gray-700 rounded-lg'>
-        <summary className='text-sm font-semibold text-gray-900 dark:text-gray-100 cursor-pointer'>
+      <details className='p-4 border border-[var(--tm-line)] rounded-lg'>
+        <summary className='text-sm font-medium text-[color:var(--tm-text)] cursor-pointer'>
           高级设置 (可选)
         </summary>
         <div className='mt-4 space-y-4'>
           <div>
-            <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+            <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
               Temperature ({temperature === '' ? '未设置' : temperature})
             </label>
             <input
@@ -17031,13 +17228,13 @@ const AIConfigComponent = ({
               }}
               className='w-full'
             />
-            <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
+            <p className='text-[13px] text-[color:var(--tm-muted)] mt-1'>
               控制回复的创造性，0=保守，2=创造；滑到最左则不设置
             </p>
           </div>
 
           <div>
-            <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+            <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
               最大回复Token数
             </label>
             <input
@@ -17050,15 +17247,15 @@ const AIConfigComponent = ({
                 const n = parseInt(v, 10);
                 setMaxTokens(v === '' || Number.isNaN(n) ? '' : n);
               }}
-              className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100'
+              className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)]'
             />
-            <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
+            <p className='text-[13px] text-[color:var(--tm-muted)] mt-1'>
               留空则不设置
             </p>
           </div>
 
           <div>
-            <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+            <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
               自定义系统提示词
             </label>
             <textarea
@@ -17066,28 +17263,30 @@ const AIConfigComponent = ({
               onChange={(e) => setSystemPrompt(e.target.value)}
               rows={4}
               placeholder='可自定义AI的角色和行为规则...'
-              className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100'
+              className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)]'
             />
           </div>
 
           {/* 流式响应开关 */}
-          <div className='flex items-center justify-between py-3 border-t border-gray-200 dark:border-gray-700'>
+          <div className='flex items-center justify-between py-3 border-t border-[var(--tm-line)]'>
             <div className='flex-1'>
-              <label className='text-sm font-medium text-gray-700 dark:text-gray-300'>
+              <label className='text-sm font-medium text-[color:var(--tm-muted)]'>
                 流式响应
               </label>
-              <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
+              <p className='text-[13px] text-[color:var(--tm-muted)] mt-1'>
                 启用后AI消息将实时流式显示，关闭后将等待完整响应后一次性显示
               </p>
             </div>
             <button
               onClick={() => setEnableStreaming(!enableStreaming)}
               className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                enableStreaming ? 'bg-blue-600' : 'bg-gray-200 dark:bg-gray-700'
+                enableStreaming
+                  ? 'bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] tm-press'
+                  : 'bg-[var(--tm-surface-raised)] tm-press'
               }`}
             >
               <span
-                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                className={`inline-block h-4 w-4 transform rounded-full bg-[var(--tm-surface)] transition-transform ${
                   enableStreaming ? 'translate-x-6' : 'translate-x-1'
                 }`}
               />
@@ -17097,13 +17296,13 @@ const AIConfigComponent = ({
       </details>
 
       {/* AI默认消息配置 */}
-      <details className='p-4 border border-gray-200 dark:border-gray-700 rounded-lg'>
-        <summary className='text-sm font-semibold text-gray-900 dark:text-gray-100 cursor-pointer'>
+      <details className='p-4 border border-[var(--tm-line)] rounded-lg'>
+        <summary className='text-sm font-medium text-[color:var(--tm-text)] cursor-pointer'>
           默认消息配置 (可选)
         </summary>
         <div className='mt-4 space-y-4'>
           <div>
-            <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+            <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
               无视频时的默认消息
             </label>
             <textarea
@@ -17111,15 +17310,15 @@ const AIConfigComponent = ({
               onChange={(e) => setDefaultMessageNoVideo(e.target.value)}
               rows={3}
               placeholder={`例如：${AI_WELCOME_MESSAGE}`}
-              className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100'
+              className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)]'
             />
-            <p className='mt-2 text-sm text-gray-600 dark:text-gray-400'>
+            <p className='mt-2 text-sm text-[color:var(--tm-muted)]'>
               当用户在首页或没有视频上下文时打开AI问片，将显示此默认消息
             </p>
           </div>
 
           <div>
-            <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+            <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
               有视频时的默认消息
             </label>
             <textarea
@@ -17127,11 +17326,11 @@ const AIConfigComponent = ({
               onChange={(e) => setDefaultMessageWithVideo(e.target.value)}
               rows={3}
               placeholder='例如：你好！我看到你正在浏览《{title}》，有什么想了解的吗？'
-              className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100'
+              className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)]'
             />
-            <p className='mt-2 text-sm text-gray-600 dark:text-gray-400'>
+            <p className='mt-2 text-sm text-[color:var(--tm-muted)]'>
               当用户在视频卡片或播放页打开AI问片时，将显示此默认消息。支持使用{' '}
-              <code className='px-1.5 py-0.5 bg-gray-100 dark:bg-gray-700 rounded text-xs font-mono'>
+              <code className='px-1.5 py-0.5 bg-[var(--tm-surface-raised)] rounded text-[13px] font-mono'>
                 {'{title}'}
               </code>{' '}
               替换符来显示片名
@@ -17242,10 +17441,10 @@ const MusicConfigComponent = ({
 
   return (
     <div className='space-y-6'>
-      <div className='bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4'>
+      <div className='bg-[var(--tm-surface-raised)] border border-[var(--tm-line)] rounded-lg p-4'>
         <div className='flex items-center gap-2 mb-2'>
           <svg
-            className='w-5 h-5 text-blue-600 dark:text-blue-400'
+            className='w-5 h-5 text-[color:var(--tm-text)]'
             fill='none'
             stroke='currentColor'
             viewBox='0 0 24 24'
@@ -17257,11 +17456,11 @@ const MusicConfigComponent = ({
               d='M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3'
             />
           </svg>
-          <span className='text-sm font-medium text-blue-800 dark:text-blue-300'>
+          <span className='text-sm font-medium text-[color:var(--tm-text)]'>
             使用说明
           </span>
         </div>
-        <div className='text-sm text-blue-700 dark:text-blue-400 space-y-1'>
+        <div className='text-sm text-[color:var(--tm-text)] space-y-1'>
           <p>
             • 音乐功能基于 lxserver 提供搜索、热搜、榜单、歌词与播放解析能力
           </p>
@@ -17275,7 +17474,7 @@ const MusicConfigComponent = ({
               href='https://github.com/XCQ0607/lxserver'
               target='_blank'
               rel='noreferrer'
-              className='underline hover:text-blue-500'
+              className='underline hover:opacity-80 min-h-[44px] inline-flex items-center tm-press'
             >
               https://github.com/XCQ0607/lxserver
             </a>
@@ -17283,12 +17482,12 @@ const MusicConfigComponent = ({
         </div>
       </div>
 
-      <div className='flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700'>
+      <div className='flex items-center justify-between p-4 bg-[var(--tm-surface-raised)] rounded-lg border border-[var(--tm-line)]'>
         <div>
-          <h3 className='text-sm font-medium text-gray-900 dark:text-gray-100'>
+          <h3 className='text-sm font-medium text-[color:var(--tm-text)]'>
             启用音乐功能
           </h3>
-          <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
+          <p className='text-[13px] text-[color:var(--tm-muted)] mt-1'>
             关闭后不显示音乐入口，前端音乐页与接口将不可用
           </p>
         </div>
@@ -17306,26 +17505,26 @@ const MusicConfigComponent = ({
             }}
             className='sr-only peer'
           />
-          <div className="w-14 h-7 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-300 dark:peer-focus:ring-green-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:start-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all dark:border-gray-600 peer-checked:bg-green-600"></div>
+          <div className="w-14 h-7 bg-[var(--tm-surface-raised)] peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-[var(--tm-text)] rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-[var(--tm-line)] after:content-[''] after:absolute after:top-0.5 after:start-[4px] after:bg-[var(--tm-surface-raised)] after:border-[var(--tm-line)] after:border after:rounded-full after:h-6 after:w-6 after:transition-all border-[var(--tm-line)] peer-checked:bg-[var(--tm-surface-raised)]"></div>
         </label>
       </div>
 
       {/* 音乐免责声明弹窗 */}
       {showMusicDisclaimer &&
         createPortal(
-          <div className='fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4'>
-            <div className='bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full border border-red-200 dark:border-red-800'>
+          <div className='fixed inset-0 bg-[var(--tm-scrim)] z-50 flex items-center justify-center p-4'>
+            <div className='bg-[var(--tm-surface)] rounded-lg shadow-xl max-w-md w-full border border-[var(--tm-line)]'>
               <div className='p-6'>
                 <div className='flex justify-center mb-4'>
-                  <AlertTriangle className='w-12 h-12 text-red-500' />
+                  <AlertTriangle className='w-12 h-12 text-[color:var(--tm-text)]' />
                 </div>
 
-                <h3 className='text-xl font-bold text-gray-900 dark:text-gray-100 mb-4 text-center'>
+                <h3 className='text-xl font-bold text-[color:var(--tm-text)] mb-4 text-center'>
                   免责声明
                 </h3>
 
-                <div className='bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 mb-6'>
-                  <p className='text-sm text-gray-700 dark:text-gray-300 leading-relaxed'>
+                <div className='bg-[var(--tm-surface-raised)] border border-[var(--tm-line)] rounded-lg p-4 mb-6'>
+                  <p className='text-sm text-[color:var(--tm-muted)] leading-relaxed'>
                     本功能仅供个人学习和技术研究使用，请勿将其部署在公网环境中，更不得用于任何违法违规行为。
                     使用本功能所产生的一切法律责任由使用者自行承担，与开发者无关。
                     启用此功能即表示您已充分理解并同意承担相应风险。
@@ -17367,12 +17566,12 @@ const MusicConfigComponent = ({
         )}
 
       <div className='space-y-4'>
-        <div className='flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700'>
+        <div className='flex items-center justify-between p-4 bg-[var(--tm-surface-raised)] rounded-lg border border-[var(--tm-line)]'>
           <div>
-            <h3 className='text-sm font-medium text-gray-900 dark:text-gray-100'>
+            <h3 className='text-sm font-medium text-[color:var(--tm-text)]'>
               启用播放代理
             </h3>
-            <p className='text-xs text-gray-500 dark:text-gray-400 mt-1'>
+            <p className='text-[13px] text-[color:var(--tm-muted)] mt-1'>
               开启后走服务器代理并设置浏览器永久缓存，关闭后将每次都解析播放链接
             </p>
           </div>
@@ -17383,12 +17582,12 @@ const MusicConfigComponent = ({
               onChange={(e) => setProxyEnabled(e.target.checked)}
               className='sr-only peer'
             />
-            <div className="w-14 h-7 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-300 dark:peer-focus:ring-green-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:start-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all dark:border-gray-600 peer-checked:bg-green-600"></div>
+            <div className="w-14 h-7 bg-[var(--tm-surface-raised)] peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-[var(--tm-text)] rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-[var(--tm-line)] after:content-[''] after:absolute after:top-0.5 after:start-[4px] after:bg-[var(--tm-surface-raised)] after:border-[var(--tm-line)] after:border after:rounded-full after:h-6 after:w-6 after:transition-all border-[var(--tm-line)] peer-checked:bg-[var(--tm-surface-raised)]"></div>
           </label>
         </div>
 
         <div>
-          <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+          <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
             lxserver Base URL
           </label>
           <input
@@ -17396,15 +17595,15 @@ const MusicConfigComponent = ({
             value={baseUrl}
             onChange={(e) => setBaseUrl(e.target.value)}
             placeholder='http://127.0.0.1:9527'
-            className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100'
+            className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)]'
           />
-          <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
+          <p className='mt-1 text-[13px] text-[color:var(--tm-muted)]'>
             例如： http://127.0.0.1:9527 或 https://music.example.com
           </p>
         </div>
 
         <div>
-          <label className='block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2'>
+          <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
             x-user-token
           </label>
           <input
@@ -17412,9 +17611,9 @@ const MusicConfigComponent = ({
             value={token}
             onChange={(e) => setToken(e.target.value)}
             placeholder='lx_tk_xxx'
-            className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100'
+            className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)]'
           />
-          <p className='mt-1 text-xs text-gray-500 dark:text-gray-400'>
+          <p className='mt-1 text-[13px] text-[color:var(--tm-muted)]'>
             推荐填写 lxserver 持久 Token；留空则按匿名访问处理
           </p>
         </div>
@@ -17734,51 +17933,51 @@ const LiveSourceConfig = ({
       <tr
         ref={setNodeRef}
         style={style}
-        className='hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors select-none'
+        className='hover:bg-[var(--tm-line)] transition-colors select-none'
       >
         <td
-          className='px-2 py-4 cursor-grab text-gray-400'
+          className='px-2 py-4 cursor-grab text-[color:var(--tm-muted)]'
           style={{ touchAction: 'none' }}
           {...attributes}
           {...listeners}
         >
           <GripVertical size={16} />
         </td>
-        <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100'>
+        <td className='px-6 py-4 whitespace-nowrap text-sm text-[color:var(--tm-text)]'>
           {liveSource.name}
         </td>
-        <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100'>
+        <td className='px-6 py-4 whitespace-nowrap text-sm text-[color:var(--tm-text)]'>
           {liveSource.key}
         </td>
         <td
-          className='px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100 max-w-[12rem] truncate'
+          className='px-6 py-4 whitespace-nowrap text-sm text-[color:var(--tm-text)] max-w-[12rem] truncate'
           title={liveSource.url}
         >
           {liveSource.url}
         </td>
         <td
-          className='px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100 max-w-[8rem] truncate'
+          className='px-6 py-4 whitespace-nowrap text-sm text-[color:var(--tm-text)] max-w-[8rem] truncate'
           title={liveSource.epg || '-'}
         >
           {liveSource.epg || '-'}
         </td>
         <td
-          className='px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100 max-w-[8rem] truncate'
+          className='px-6 py-4 whitespace-nowrap text-sm text-[color:var(--tm-text)] max-w-[8rem] truncate'
           title={liveSource.ua || '-'}
         >
           {liveSource.ua || '-'}
         </td>
-        <td className='px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100 text-center'>
+        <td className='px-6 py-4 whitespace-nowrap text-sm text-[color:var(--tm-text)] text-center'>
           {liveSource.channelNumber && liveSource.channelNumber > 0
             ? liveSource.channelNumber
             : '-'}
         </td>
         <td className='px-6 py-4 whitespace-nowrap max-w-[1rem]'>
           <span
-            className={`px-2 py-1 text-xs rounded-full ${
+            className={`px-2 py-1 text-[13px] rounded-full ${
               !liveSource.disabled
-                ? 'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-300'
-                : 'bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-300'
+                ? 'bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)]'
+                : 'bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)]'
             }`}
           >
             {!liveSource.disabled ? '启用中' : '已禁用'}
@@ -17794,7 +17993,7 @@ const LiveSourceConfig = ({
               );
             }}
             disabled={isLoading(`setLiveProxyMode_${liveSource.key}`)}
-            className={`px-2 py-1 text-xs rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 ${
+            className={`px-2 py-1 text-[13px] rounded border border-[var(--tm-line)] border-[var(--tm-line)] bg-[var(--tm-surface)] bg-[var(--tm-surface)] text-[color:var(--tm-text)] text-[color:var(--tm-text)] ${
               isLoading(`setLiveProxyMode_${liveSource.key}`)
                 ? 'opacity-50 cursor-not-allowed'
                 : 'cursor-pointer'
@@ -17809,14 +18008,14 @@ const LiveSourceConfig = ({
           <button
             onClick={() => handleToggleEnable(liveSource.key)}
             disabled={isLoading(`toggleLiveSource_${liveSource.key}`)}
-            className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium ${
+            className={`inline-flex items-center px-3 py-1.5 rounded-full text-[13px] font-medium ${
               !liveSource.disabled
                 ? buttonStyles.roundedDanger
                 : buttonStyles.roundedSuccess
             } transition-colors ${
               isLoading(`toggleLiveSource_${liveSource.key}`)
-                ? 'opacity-50 cursor-not-allowed'
-                : ''
+                ? 'opacity-50 cursor-not-allowed min-h-[44px] tm-press'
+                : ' min-h-[44px] tm-press'
             }`}
           >
             {!liveSource.disabled ? '禁用' : '启用'}
@@ -17828,8 +18027,8 @@ const LiveSourceConfig = ({
                 disabled={isLoading(`editLiveSource_${liveSource.key}`)}
                 className={`${buttonStyles.roundedPrimary} ${
                   isLoading(`editLiveSource_${liveSource.key}`)
-                    ? 'opacity-50 cursor-not-allowed'
-                    : ''
+                    ? 'opacity-50 cursor-not-allowed min-h-[44px] tm-press'
+                    : ' min-h-[44px] tm-press'
                 }`}
               >
                 编辑
@@ -17839,8 +18038,8 @@ const LiveSourceConfig = ({
                 disabled={isLoading(`deleteLiveSource_${liveSource.key}`)}
                 className={`${buttonStyles.roundedSecondary} ${
                   isLoading(`deleteLiveSource_${liveSource.key}`)
-                    ? 'opacity-50 cursor-not-allowed'
-                    : ''
+                    ? 'opacity-50 cursor-not-allowed min-h-[44px] tm-press'
+                    : ' min-h-[44px] tm-press'
                 }`}
               >
                 删除
@@ -17854,9 +18053,7 @@ const LiveSourceConfig = ({
 
   if (!config) {
     return (
-      <div className='text-center text-gray-500 dark:text-gray-400'>
-        加载中...
-      </div>
+      <div className='text-center text-[color:var(--tm-muted)]'>加载中...</div>
     );
   }
 
@@ -17867,7 +18064,7 @@ const LiveSourceConfig = ({
         <div className='flex items-end justify-between gap-3'>
           <div className='flex items-end gap-2 flex-nowrap'>
             <div className='min-w-0'>
-              <label className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1 whitespace-nowrap'>
+              <label className='block text-[13px] font-medium text-[color:var(--tm-muted)] mb-1 whitespace-nowrap'>
                 刷新间隔（小时）
               </label>
               <input
@@ -17879,7 +18076,7 @@ const LiveSourceConfig = ({
                     Math.max(1, parseInt(e.target.value) || 12)
                   )
                 }
-                className='px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 w-28 sm:w-40'
+                className='px-3 py-1.5 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)] w-28 sm:w-40'
               />
             </div>
             <button
@@ -17896,7 +18093,7 @@ const LiveSourceConfig = ({
           </div>
         </div>
         <div className='flex items-center justify-between'>
-          <h4 className='text-sm font-medium text-gray-700 dark:text-gray-300'>
+          <h4 className='text-sm font-medium text-[color:var(--tm-muted)]'>
             直播源列表
           </h4>
           <div className='flex items-center space-x-2'>
@@ -17905,8 +18102,8 @@ const LiveSourceConfig = ({
               disabled={isRefreshing || isLoading('refreshLiveSources')}
               className={`px-3 py-1.5 text-sm font-medium flex items-center space-x-2 ${
                 isRefreshing || isLoading('refreshLiveSources')
-                  ? 'bg-gray-400 dark:bg-gray-600 cursor-not-allowed text-white rounded-lg'
-                  : 'bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700 text-white rounded-lg transition-colors'
+                  ? 'bg-[var(--tm-surface)] cursor-not-allowed text-[color:var(--tm-text)] rounded-lg min-h-[44px] tm-press'
+                  : 'bg-[var(--tm-text)] hover:opacity-90 text-[color:var(--tm-accent-contrast)] rounded-lg transition-colors min-h-[44px] tm-press'
               }`}
             >
               <span>
@@ -17928,7 +18125,7 @@ const LiveSourceConfig = ({
       </div>
 
       {showAddForm && (
-        <div className='p-4 bg-gray-50 dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 space-y-4'>
+        <div className='p-4 bg-[var(--tm-surface-raised)] rounded-lg border border-[var(--tm-line)] space-y-4'>
           <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
             <input
               type='text'
@@ -17937,7 +18134,7 @@ const LiveSourceConfig = ({
               onChange={(e) =>
                 setNewLiveSource((prev) => ({ ...prev, name: e.target.value }))
               }
-              className='px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100'
+              className='px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)]'
             />
             <input
               type='text'
@@ -17946,7 +18143,7 @@ const LiveSourceConfig = ({
               onChange={(e) =>
                 setNewLiveSource((prev) => ({ ...prev, key: e.target.value }))
               }
-              className='px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100'
+              className='px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)]'
             />
             <input
               type='text'
@@ -17955,7 +18152,7 @@ const LiveSourceConfig = ({
               onChange={(e) =>
                 setNewLiveSource((prev) => ({ ...prev, url: e.target.value }))
               }
-              className='px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100'
+              className='px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)]'
             />
             <input
               type='text'
@@ -17964,7 +18161,7 @@ const LiveSourceConfig = ({
               onChange={(e) =>
                 setNewLiveSource((prev) => ({ ...prev, epg: e.target.value }))
               }
-              className='px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100'
+              className='px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)]'
             />
             <input
               type='text'
@@ -17973,7 +18170,7 @@ const LiveSourceConfig = ({
               onChange={(e) =>
                 setNewLiveSource((prev) => ({ ...prev, ua: e.target.value }))
               }
-              className='px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100'
+              className='px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)]'
             />
           </div>
           <div className='flex justify-end'>
@@ -18002,21 +18199,21 @@ const LiveSourceConfig = ({
 
       {/* 编辑直播源表单 */}
       {editingLiveSource && (
-        <div className='p-4 bg-gray-50 dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 space-y-4'>
+        <div className='p-4 bg-[var(--tm-surface-raised)] rounded-lg border border-[var(--tm-line)] space-y-4'>
           <div className='flex items-center justify-between'>
-            <h5 className='text-sm font-medium text-gray-700 dark:text-gray-300'>
+            <h5 className='text-sm font-medium text-[color:var(--tm-muted)]'>
               编辑直播源: {editingLiveSource.name}
             </h5>
             <button
               onClick={handleCancelEdit}
-              className='text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200'
+              className='text-[color:var(--tm-muted)] hover:text-[color:var(--tm-text)] min-h-[44px] tm-press'
             >
               ✕
             </button>
           </div>
           <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
             <div>
-              <label className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
+              <label className='block text-[13px] font-medium text-[color:var(--tm-muted)] mb-1'>
                 名称
               </label>
               <input
@@ -18027,22 +18224,22 @@ const LiveSourceConfig = ({
                     prev ? { ...prev, name: e.target.value } : null
                   )
                 }
-                className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100'
+                className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)]'
               />
             </div>
             <div>
-              <label className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
+              <label className='block text-[13px] font-medium text-[color:var(--tm-muted)] mb-1'>
                 Key (不可编辑)
               </label>
               <input
                 type='text'
                 value={editingLiveSource.key}
                 disabled
-                className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed'
+                className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface-raised)] text-[color:var(--tm-muted)] cursor-not-allowed'
               />
             </div>
             <div>
-              <label className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
+              <label className='block text-[13px] font-medium text-[color:var(--tm-muted)] mb-1'>
                 M3U 地址
               </label>
               <input
@@ -18053,11 +18250,11 @@ const LiveSourceConfig = ({
                     prev ? { ...prev, url: e.target.value } : null
                   )
                 }
-                className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100'
+                className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)]'
               />
             </div>
             <div>
-              <label className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
+              <label className='block text-[13px] font-medium text-[color:var(--tm-muted)] mb-1'>
                 节目单地址（选填）
               </label>
               <input
@@ -18068,11 +18265,11 @@ const LiveSourceConfig = ({
                     prev ? { ...prev, epg: e.target.value } : null
                   )
                 }
-                className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100'
+                className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)]'
               />
             </div>
             <div>
-              <label className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
+              <label className='block text-[13px] font-medium text-[color:var(--tm-muted)] mb-1'>
                 自定义 UA（选填）
               </label>
               <input
@@ -18083,7 +18280,7 @@ const LiveSourceConfig = ({
                     prev ? { ...prev, ua: e.target.value } : null
                   )
                 }
-                className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100'
+                className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)]'
               />
             </div>
           </div>
@@ -18117,41 +18314,41 @@ const LiveSourceConfig = ({
 
       {/* 直播源表格 */}
       <div
-        className='border border-gray-200 dark:border-gray-700 rounded-lg max-h-[28rem] overflow-y-auto overflow-x-auto relative'
+        className='border border-[var(--tm-line)] rounded-lg max-h-[28rem] overflow-y-auto overflow-x-auto relative'
         data-table='live-source-list'
       >
-        <table className='min-w-full divide-y divide-gray-200 dark:divide-gray-700'>
-          <thead className='bg-gray-50 dark:bg-gray-900 sticky top-0 z-10'>
+        <table className='min-w-full divide-y divide-[var(--tm-line)]'>
+          <thead className='bg-[var(--tm-surface-raised)] sticky top-0 z-10'>
             <tr>
               <th
-                className='px-2 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider'
+                className='px-2 py-3 text-left text-[13px] font-medium text-[color:var(--tm-muted)] uppercase tracking-wider'
                 aria-label='排序'
               />
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider'>
+              <th className='px-6 py-3 text-left text-[13px] font-medium text-[color:var(--tm-muted)] uppercase tracking-wider'>
                 名称
               </th>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider'>
+              <th className='px-6 py-3 text-left text-[13px] font-medium text-[color:var(--tm-muted)] uppercase tracking-wider'>
                 Key
               </th>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider'>
+              <th className='px-6 py-3 text-left text-[13px] font-medium text-[color:var(--tm-muted)] uppercase tracking-wider'>
                 M3U 地址
               </th>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider'>
+              <th className='px-6 py-3 text-left text-[13px] font-medium text-[color:var(--tm-muted)] uppercase tracking-wider'>
                 节目单地址
               </th>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider'>
+              <th className='px-6 py-3 text-left text-[13px] font-medium text-[color:var(--tm-muted)] uppercase tracking-wider'>
                 自定义 UA
               </th>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider'>
+              <th className='px-6 py-3 text-left text-[13px] font-medium text-[color:var(--tm-muted)] uppercase tracking-wider'>
                 频道数
               </th>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider'>
+              <th className='px-6 py-3 text-left text-[13px] font-medium text-[color:var(--tm-muted)] uppercase tracking-wider'>
                 状态
               </th>
-              <th className='px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider'>
+              <th className='px-6 py-3 text-left text-[13px] font-medium text-[color:var(--tm-muted)] uppercase tracking-wider'>
                 代理模式
               </th>
-              <th className='px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider'>
+              <th className='px-6 py-3 text-right text-[13px] font-medium text-[color:var(--tm-muted)] uppercase tracking-wider'>
                 操作
               </th>
             </tr>
@@ -18167,7 +18364,7 @@ const LiveSourceConfig = ({
               items={liveSources.map((s) => s.key)}
               strategy={verticalListSortingStrategy}
             >
-              <tbody className='divide-y divide-gray-200 dark:divide-gray-700'>
+              <tbody className='divide-y divide-[var(--tm-line)]'>
                 {liveSources.map((liveSource) => (
                   <DraggableRow key={liveSource.key} liveSource={liveSource} />
                 ))}
@@ -18333,36 +18530,34 @@ const WebLiveConfig = ({
 
   if (!config) {
     return (
-      <div className='text-center text-gray-500 dark:text-gray-400'>
-        加载中...
-      </div>
+      <div className='text-center text-[color:var(--tm-muted)]'>加载中...</div>
     );
   }
 
   return (
     <div className='space-y-6'>
       {/* 功能总开关 */}
-      <div className='p-4 bg-gradient-to-r from-orange-50 to-red-50 dark:from-orange-900/20 dark:to-red-900/20 rounded-lg border-2 border-orange-300 dark:border-orange-700'>
+      <div className='p-4 bg-[var(--tm-surface)] rounded-lg border-2 border-[var(--tm-line)]'>
         <div className='flex items-center justify-between'>
           <div className='flex-1'>
-            <h4 className='text-sm font-semibold text-gray-900 dark:text-gray-100 mb-1'>
+            <h4 className='text-sm font-medium text-[color:var(--tm-text)] mb-1'>
               网络直播功能总开关
             </h4>
-            <p className='text-xs text-gray-600 dark:text-gray-400'>
+            <p className='text-[13px] text-[color:var(--tm-muted)]'>
               关闭后，侧边栏和底部导航栏的网络直播入口将被隐藏，用户无法访问网络直播页面
             </p>
           </div>
           <button
             onClick={handleToggleWebLiveEnabled}
             disabled={isLoading('toggleWebLiveEnabled')}
-            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 ${
+            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--tm-text)] ${
               config.WebLiveEnabled
                 ? buttonStyles.toggleOn
                 : buttonStyles.toggleOff
             } ${
               isLoading('toggleWebLiveEnabled')
-                ? 'opacity-50 cursor-not-allowed'
-                : ''
+                ? 'opacity-50 cursor-not-allowed min-h-[44px] tm-press'
+                : ' min-h-[44px] tm-press'
             }`}
           >
             <span
@@ -18381,19 +18576,19 @@ const WebLiveConfig = ({
       {/* 免责声明弹窗 */}
       {showDisclaimerModal &&
         createPortal(
-          <div className='fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4'>
-            <div className='bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full border border-red-200 dark:border-red-800'>
+          <div className='fixed inset-0 bg-[var(--tm-scrim)] z-50 flex items-center justify-center p-4'>
+            <div className='bg-[var(--tm-surface)] rounded-lg shadow-xl max-w-md w-full border border-[var(--tm-line)]'>
               <div className='p-6'>
                 <div className='flex justify-center mb-4'>
-                  <AlertTriangle className='w-12 h-12 text-red-500' />
+                  <AlertTriangle className='w-12 h-12 text-[color:var(--tm-text)]' />
                 </div>
 
-                <h3 className='text-xl font-bold text-gray-900 dark:text-gray-100 mb-4 text-center'>
+                <h3 className='text-xl font-bold text-[color:var(--tm-text)] mb-4 text-center'>
                   免责声明
                 </h3>
 
-                <div className='bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 mb-6'>
-                  <p className='text-sm text-gray-700 dark:text-gray-300 leading-relaxed'>
+                <div className='bg-[var(--tm-surface-raised)] border border-[var(--tm-line)] rounded-lg p-4 mb-6'>
+                  <p className='text-sm text-[color:var(--tm-muted)] leading-relaxed'>
                     本功能仅供个人学习和技术研究使用，请勿将其部署在公网环境中，更不得用于任何违法违规行为。
                     使用本功能所产生的一切法律责任由使用者自行承担，与开发者无关。
                     启用此功能即表示您已充分理解并同意承担相应风险。
@@ -18434,7 +18629,7 @@ const WebLiveConfig = ({
         )}
 
       <div className='flex items-center justify-between'>
-        <h4 className='text-sm font-medium text-gray-700 dark:text-gray-300'>
+        <h4 className='text-sm font-medium text-[color:var(--tm-muted)]'>
           网络直播列表
         </h4>
         <button
@@ -18448,7 +18643,7 @@ const WebLiveConfig = ({
       </div>
 
       {showAddForm && (
-        <div className='p-4 bg-gray-50 dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 space-y-4'>
+        <div className='p-4 bg-[var(--tm-surface-raised)] rounded-lg border border-[var(--tm-line)] space-y-4'>
           <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
             <input
               type='text'
@@ -18457,14 +18652,14 @@ const WebLiveConfig = ({
               onChange={(e) =>
                 setNewSource((prev) => ({ ...prev, name: e.target.value }))
               }
-              className='px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100'
+              className='px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)]'
             />
             <select
               value={newSource.platform}
               onChange={(e) =>
                 setNewSource((prev) => ({ ...prev, platform: e.target.value }))
               }
-              className='px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100'
+              className='px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)]'
             >
               <option value='huya'>虎牙</option>
               <option value='bilibili'>哔哩哔哩</option>
@@ -18477,7 +18672,7 @@ const WebLiveConfig = ({
               onChange={(e) =>
                 setNewSource((prev) => ({ ...prev, roomId: e.target.value }))
               }
-              className='px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100'
+              className='px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)]'
             />
           </div>
           <div className='flex justify-end'>
@@ -18505,21 +18700,21 @@ const WebLiveConfig = ({
       )}
 
       {editingSource && (
-        <div className='p-4 bg-gray-50 dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 space-y-4'>
+        <div className='p-4 bg-[var(--tm-surface-raised)] rounded-lg border border-[var(--tm-line)] space-y-4'>
           <div className='flex items-center justify-between'>
-            <h5 className='text-sm font-medium text-gray-700 dark:text-gray-300'>
+            <h5 className='text-sm font-medium text-[color:var(--tm-muted)]'>
               编辑: {editingSource.name}
             </h5>
             <button
               onClick={() => setEditingSource(null)}
-              className='text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200'
+              className='text-[color:var(--tm-muted)] hover:text-[color:var(--tm-text)] min-h-[44px] tm-press'
             >
               ✕
             </button>
           </div>
           <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
             <div>
-              <label className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
+              <label className='block text-[13px] font-medium text-[color:var(--tm-muted)] mb-1'>
                 名称
               </label>
               <input
@@ -18530,11 +18725,11 @@ const WebLiveConfig = ({
                     prev ? { ...prev, name: e.target.value } : null
                   )
                 }
-                className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100'
+                className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)]'
               />
             </div>
             <div>
-              <label className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
+              <label className='block text-[13px] font-medium text-[color:var(--tm-muted)] mb-1'>
                 直播类型
               </label>
               <select
@@ -18544,7 +18739,7 @@ const WebLiveConfig = ({
                     prev ? { ...prev, platform: e.target.value } : null
                   )
                 }
-                className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100'
+                className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)]'
               >
                 <option value='huya'>虎牙</option>
                 <option value='bilibili'>哔哩哔哩</option>
@@ -18552,7 +18747,7 @@ const WebLiveConfig = ({
               </select>
             </div>
             <div>
-              <label className='block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1'>
+              <label className='block text-[13px] font-medium text-[color:var(--tm-muted)] mb-1'>
                 房间ID
               </label>
               <input
@@ -18563,7 +18758,7 @@ const WebLiveConfig = ({
                     prev ? { ...prev, roomId: e.target.value } : null
                   )
                 }
-                className='w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100'
+                className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)]'
               />
             </div>
           </div>
@@ -18595,36 +18790,33 @@ const WebLiveConfig = ({
         </div>
       )}
 
-      <div className='border border-gray-200 dark:border-gray-700 rounded-lg overflow-auto'>
-        <table className='min-w-full divide-y divide-gray-200 dark:divide-gray-700'>
-          <thead className='bg-gray-50 dark:bg-gray-900'>
+      <div className='border border-[var(--tm-line)] rounded-lg overflow-auto'>
+        <table className='min-w-full divide-y divide-[var(--tm-line)]'>
+          <thead className='bg-[var(--tm-surface-raised)]'>
             <tr>
-              <th className='px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase'>
+              <th className='px-3 sm:px-6 py-3 text-left text-[13px] font-medium text-[color:var(--tm-muted)] uppercase'>
                 名称
               </th>
-              <th className='hidden sm:table-cell px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase'>
+              <th className='hidden sm:table-cell px-6 py-3 text-left text-[13px] font-medium text-[color:var(--tm-muted)] uppercase'>
                 直播类型
               </th>
-              <th className='hidden sm:table-cell px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase'>
+              <th className='hidden sm:table-cell px-6 py-3 text-left text-[13px] font-medium text-[color:var(--tm-muted)] uppercase'>
                 房间ID
               </th>
-              <th className='px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase'>
+              <th className='px-3 sm:px-6 py-3 text-left text-[13px] font-medium text-[color:var(--tm-muted)] uppercase'>
                 状态
               </th>
-              <th className='px-3 sm:px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase'>
+              <th className='px-3 sm:px-6 py-3 text-right text-[13px] font-medium text-[color:var(--tm-muted)] uppercase'>
                 操作
               </th>
             </tr>
           </thead>
-          <tbody className='divide-y divide-gray-200 dark:divide-gray-700'>
+          <tbody className='divide-y divide-[var(--tm-line)]'>
             {webLiveSources.map((source) => (
-              <tr
-                key={source.key}
-                className='hover:bg-gray-50 dark:hover:bg-gray-800'
-              >
-                <td className='px-3 sm:px-6 py-4 text-sm text-gray-900 dark:text-gray-100'>
+              <tr key={source.key} className='hover:bg-[var(--tm-line)]'>
+                <td className='px-3 sm:px-6 py-4 text-sm text-[color:var(--tm-text)]'>
                   <div>{source.name}</div>
-                  <div className='sm:hidden text-xs text-gray-500 dark:text-gray-400 mt-1'>
+                  <div className='sm:hidden text-[13px] text-[color:var(--tm-muted)] mt-1'>
                     {source.platform === 'huya'
                       ? '虎牙'
                       : source.platform === 'bilibili'
@@ -18635,7 +18827,7 @@ const WebLiveConfig = ({
                     · {source.roomId}
                   </div>
                 </td>
-                <td className='hidden sm:table-cell px-6 py-4 text-sm text-gray-900 dark:text-gray-100'>
+                <td className='hidden sm:table-cell px-6 py-4 text-sm text-[color:var(--tm-text)]'>
                   {source.platform === 'huya'
                     ? '虎牙'
                     : source.platform === 'bilibili'
@@ -18644,15 +18836,15 @@ const WebLiveConfig = ({
                     ? '抖音'
                     : source.platform}
                 </td>
-                <td className='hidden sm:table-cell px-6 py-4 text-sm text-gray-900 dark:text-gray-100'>
+                <td className='hidden sm:table-cell px-6 py-4 text-sm text-[color:var(--tm-text)]'>
                   {source.roomId}
                 </td>
                 <td className='px-3 sm:px-6 py-4 whitespace-nowrap'>
                   <span
-                    className={`px-2 py-1 text-xs rounded-full whitespace-nowrap ${
+                    className={`px-2 py-1 text-[13px] rounded-full whitespace-nowrap ${
                       !source.disabled
-                        ? 'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-300'
-                        : 'bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-300'
+                        ? 'bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)]'
+                        : 'bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)]'
                     }`}
                   >
                     {!source.disabled ? '启用中' : '已禁用'}
@@ -18663,14 +18855,14 @@ const WebLiveConfig = ({
                     <button
                       onClick={() => handleToggle(source.key)}
                       disabled={isLoading(`toggleWebLive_${source.key}`)}
-                      className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium ${
+                      className={`inline-flex items-center px-3 py-1.5 rounded-full text-[13px] font-medium ${
                         !source.disabled
                           ? buttonStyles.roundedDanger
                           : buttonStyles.roundedSuccess
                       } ${
                         isLoading(`toggleWebLive_${source.key}`)
-                          ? 'opacity-50 cursor-not-allowed'
-                          : ''
+                          ? 'opacity-50 cursor-not-allowed min-h-[44px] tm-press'
+                          : ' min-h-[44px] tm-press'
                       }`}
                     >
                       {!source.disabled ? '禁用' : '启用'}
@@ -18682,8 +18874,8 @@ const WebLiveConfig = ({
                           disabled={isLoading(`editWebLive_${source.key}`)}
                           className={`${buttonStyles.roundedPrimary} ${
                             isLoading(`editWebLive_${source.key}`)
-                              ? 'opacity-50 cursor-not-allowed'
-                              : ''
+                              ? 'opacity-50 cursor-not-allowed min-h-[44px] tm-press'
+                              : ' min-h-[44px] tm-press'
                           }`}
                         >
                           编辑
@@ -18693,8 +18885,8 @@ const WebLiveConfig = ({
                           disabled={isLoading(`deleteWebLive_${source.key}`)}
                           className={`${buttonStyles.roundedSecondary} ${
                             isLoading(`deleteWebLive_${source.key}`)
-                              ? 'opacity-50 cursor-not-allowed'
-                              : ''
+                              ? 'opacity-50 cursor-not-allowed min-h-[44px] tm-press'
+                              : ' min-h-[44px] tm-press'
                           }`}
                         >
                           删除
@@ -18948,14 +19140,14 @@ function AdminPageClient() {
       <PageLayout activePath='/admin'>
         <div className='px-2 sm:px-10 py-4 sm:py-8'>
           <div className='max-w-[95%] mx-auto'>
-            <h1 className='text-2xl font-bold text-gray-900 dark:text-gray-100 mb-8'>
+            <h1 className='text-2xl font-bold text-[color:var(--tm-text)] mb-8'>
               管理员设置
             </h1>
             <div className='space-y-4'>
               {Array.from({ length: 3 }).map((_, index) => (
                 <div
                   key={index}
-                  className='h-20 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse'
+                  className='h-20 bg-[var(--tm-surface-raised)] rounded-lg tm-skeleton'
                 />
               ))}
             </div>
@@ -18971,26 +19163,26 @@ function AdminPageClient() {
       <PageLayout activePath='/admin'>
         <div className='min-h-screen flex items-center justify-center px-4'>
           <div className='max-w-md w-full'>
-            <div className='bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8 text-center'>
+            <div className='bg-[var(--tm-surface)] rounded-lg shadow-lg p-8 text-center'>
               <div className='mb-6'>
-                <div className='mx-auto w-16 h-16 bg-red-100 dark:bg-red-900/20 rounded-full flex items-center justify-center'>
-                  <AlertCircle className='w-8 h-8 text-red-600 dark:text-red-400' />
+                <div className='mx-auto w-16 h-16 bg-[var(--tm-surface-raised)] rounded-full flex items-center justify-center'>
+                  <AlertCircle className='w-8 h-8 text-[color:var(--tm-text)]' />
                 </div>
               </div>
-              <h2 className='text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4'>
+              <h2 className='text-2xl font-bold text-[color:var(--tm-text)] mb-4'>
                 无权限访问
               </h2>
-              <p className='text-gray-600 dark:text-gray-400 mb-6'>{error}</p>
+              <p className='text-[color:var(--tm-muted)] mb-6'>{error}</p>
               <div className='space-y-3'>
                 <button
                   onClick={() => (window.location.href = '/')}
-                  className='w-full px-6 py-3 bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-700 text-white rounded-lg font-medium transition-colors'
+                  className='w-full px-6 py-3 bg-[var(--tm-text)] hover:opacity-90 text-[color:var(--tm-accent-contrast)] rounded-lg font-medium transition-colors min-h-[44px] tm-press'
                 >
                   返回首页
                 </button>
                 <button
                   onClick={() => (window.location.href = '/login')}
-                  className='w-full px-6 py-3 bg-gray-600 hover:bg-gray-700 dark:bg-gray-600 dark:hover:bg-gray-700 text-white rounded-lg font-medium transition-colors'
+                  className='w-full px-6 py-3 bg-[var(--tm-surface)] hover:bg-[var(--tm-line)] text-[color:var(--tm-text)] rounded-lg font-medium transition-colors min-h-[44px] tm-press'
                 >
                   重新登录
                 </button>
@@ -19012,7 +19204,7 @@ function AdminPageClient() {
     children?: AdminNavItem[];
   };
 
-  const navIconClass = 'text-gray-600 dark:text-gray-400';
+  const navIconClass = 'text-[color:var(--tm-muted)]';
   const navItems: AdminNavItem[] = [
     {
       key: 'configFile',
@@ -19143,9 +19335,7 @@ function AdminPageClient() {
     {
       key: 'mediaLibrary',
       title: '私人影库',
-      icon: (
-        <Database size={20} className='text-yellow-700 dark:text-yellow-400' />
-      ),
+      icon: <Database size={20} className='text-[color:var(--tm-text)]' />,
       children: [
         {
           key: 'openListConfig',
@@ -19297,20 +19487,20 @@ function AdminPageClient() {
         <div className='max-w-[95%] mx-auto'>
           {/* 标题 + 重置配置按钮 */}
           <div className='flex items-center gap-2 mb-8'>
-            <h1 className='text-2xl font-bold text-gray-900 dark:text-gray-100'>
+            <h1 className='text-2xl font-bold text-[color:var(--tm-text)]'>
               管理员设置
             </h1>
             {config && role === 'owner' && (
               <>
                 <button
                   onClick={handleResetConfig}
-                  className={`px-3 py-1 text-xs rounded-md transition-colors ${buttonStyles.dangerSmall}`}
+                  className={`px-3 py-1 text-[13px] rounded-md transition-colors ${buttonStyles.dangerSmall}`}
                 >
                   重置配置
                 </button>
                 <button
                   onClick={handleReloadConfig}
-                  className={`px-3 py-1 text-xs rounded-md transition-colors ${buttonStyles.primarySmall}`}
+                  className={`px-3 py-1 text-[13px] rounded-md transition-colors ${buttonStyles.primarySmall}`}
                 >
                   重载配置
                 </button>
@@ -19320,11 +19510,11 @@ function AdminPageClient() {
 
           {/* TMDB 未配置提示 */}
           {config && !config.SiteConfig.TMDBApiKey && (
-            <div className='bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-4'>
+            <div className='bg-[var(--tm-surface-raised)] border border-[var(--tm-line)] rounded-lg p-4 mb-4'>
               <div className='flex items-start gap-3'>
                 <div className='flex-shrink-0 mt-0.5'>
                   <svg
-                    className='w-5 h-5 text-blue-600 dark:text-blue-400'
+                    className='w-5 h-5 text-[color:var(--tm-text)]'
                     fill='currentColor'
                     viewBox='0 0 20 20'
                   >
@@ -19336,7 +19526,7 @@ function AdminPageClient() {
                   </svg>
                 </div>
                 <div className='flex-1'>
-                  <p className='text-sm font-medium text-blue-800 dark:text-blue-300'>
+                  <p className='text-sm font-medium text-[color:var(--tm-text)]'>
                     未配置 TMDB API Key，配置后可获得更丰富的影视信息和推荐内容
                   </p>
                 </div>
@@ -19346,11 +19536,11 @@ function AdminPageClient() {
 
           {/* 视频源过多提示 */}
           {config && (config.SourceConfig?.length ?? 0) > 50 && (
-            <div className='bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4 mb-4'>
+            <div className='bg-[var(--tm-surface-raised)] border border-[var(--tm-line)] rounded-lg p-4 mb-4'>
               <div className='flex items-start gap-3'>
                 <div className='flex-shrink-0 mt-0.5'>
                   <svg
-                    className='w-5 h-5 text-amber-600 dark:text-amber-400'
+                    className='w-5 h-5 text-[color:var(--tm-text)]'
                     fill='currentColor'
                     viewBox='0 0 20 20'
                   >
@@ -19362,7 +19552,7 @@ function AdminPageClient() {
                   </svg>
                 </div>
                 <div className='flex-1'>
-                  <p className='text-sm font-medium text-amber-800 dark:text-amber-300'>
+                  <p className='text-sm font-medium text-[color:var(--tm-text)]'>
                     当前视频源数量较多，可能会拖慢搜索与优选速度，建议适当精简
                   </p>
                 </div>
@@ -19380,7 +19570,7 @@ function AdminPageClient() {
                     <div key={item.key}>
                       <button
                         onClick={() => toggleGroup(item.key)}
-                        className='w-full flex items-center justify-between gap-2 px-3 py-2 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors'
+                        className='w-full flex items-center justify-between gap-2 px-3 py-2 rounded-lg text-sm font-medium text-[color:var(--tm-text)] hover:bg-[var(--tm-line)] transition-colors min-h-[44px] tm-press'
                       >
                         <span className='flex items-center gap-2 min-w-0'>
                           {item.icon}
@@ -19393,15 +19583,15 @@ function AdminPageClient() {
                         )}
                       </button>
                       {expandedGroups[item.key] && (
-                        <div className='mt-1 ml-3 pl-3 border-l border-gray-200 dark:border-gray-700 space-y-1'>
+                        <div className='mt-1 ml-3 pl-3 border-l border-[var(--tm-line)] space-y-1'>
                           {item.children.map((child) => (
                             <button
                               key={child.key}
                               onClick={() => selectSection(child.key)}
                               className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${
                                 activeKey === child.key
-                                  ? 'bg-green-500/10 text-green-600 dark:text-green-400 font-medium'
-                                  : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
+                                  ? 'bg-[var(--tm-text)] font-medium text-[color:var(--tm-accent-contrast)] min-h-[44px] tm-press'
+                                  : 'text-[color:var(--tm-muted)] hover:bg-[var(--tm-line)] min-h-[44px] tm-press'
                               }`}
                             >
                               {child.icon}
@@ -19417,8 +19607,8 @@ function AdminPageClient() {
                       onClick={() => selectSection(item.key)}
                       className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${
                         activeKey === item.key
-                          ? 'bg-green-500/10 text-green-600 dark:text-green-400 font-medium'
-                          : 'text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800'
+                          ? 'bg-[var(--tm-text)] font-medium text-[color:var(--tm-accent-contrast)] min-h-[44px] tm-press'
+                          : ' text-[color:var(--tm-text)] hover:bg-[var(--tm-line)] min-h-[44px] tm-press'
                       }`}
                     >
                       {item.icon}
@@ -19440,429 +19630,427 @@ function AdminPageClient() {
 
           {/* 移动端 / 窄屏：保留原有手风琴 */}
           <div className='lg:hidden'>
-          {/* 配置文件标签 - 仅站长可见 */}
-          {role === 'owner' && (
-            <CollapsibleTab
-              title='配置文件'
-              icon={
-                <FileText
-                  size={20}
-                  className='text-gray-600 dark:text-gray-400'
-                />
-              }
-              isExpanded={expandedTabs.configFile}
-              onToggle={() => toggleTab('configFile')}
-            >
-              <ConfigFileComponent
-                config={config}
-                refreshConfig={fetchConfig}
-              />
-            </CollapsibleTab>
-          )}
-
-          {/* 站点配置标签 */}
-          <CollapsibleTab
-            title='站点配置'
-            icon={
-              <Settings
-                size={20}
-                className='text-gray-600 dark:text-gray-400'
-              />
-            }
-            isExpanded={expandedTabs.siteConfig}
-            onToggle={() => toggleTab('siteConfig')}
-          >
-            <SiteConfigComponent config={config} refreshConfig={fetchConfig} />
-          </CollapsibleTab>
-
-          {/* 注册配置标签 */}
-          <CollapsibleTab
-            title='注册配置'
-            icon={
-              <UserPlus
-                size={20}
-                className='text-gray-600 dark:text-gray-400'
-              />
-            }
-            isExpanded={expandedTabs.registrationConfig}
-            onToggle={() => toggleTab('registrationConfig')}
-          >
-            <RegistrationConfigComponent
-              config={config}
-              refreshConfig={fetchConfig}
-            />
-          </CollapsibleTab>
-
-          {/* 个性化配置标签 */}
-          <CollapsibleTab
-            title='个性化配置'
-            icon={
-              <Palette size={20} className='text-gray-600 dark:text-gray-400' />
-            }
-            isExpanded={expandedTabs.themeConfig}
-            onToggle={() => toggleTab('themeConfig')}
-          >
-            <ThemeConfigComponent config={config} refreshConfig={fetchConfig} />
-          </CollapsibleTab>
-
-          <div className='space-y-4'>
-            {/* 用户管理标签 */}
-            <CollapsibleTab
-              title='用户管理'
-              icon={
-                <Users size={20} className='text-gray-600 dark:text-gray-400' />
-              }
-              isExpanded={expandedTabs.userConfig}
-              onToggle={() => toggleTab('userConfig')}
-            >
-              <UserConfig
-                config={config}
-                role={role}
-                refreshConfig={refreshConfigAndUsers}
-                usersV2={usersV2}
-                userPage={userPage}
-                userTotalPages={userTotalPages}
-                userTotal={userTotal}
-                fetchUsersV2={fetchUsersV2}
-                userListLoading={userListLoading}
-                userSearch={userSearch}
-                setUserSearch={setUserSearch}
-              />
-            </CollapsibleTab>
-
-            {/* 视频源配置标签 */}
-            <CollapsibleTab
-              title='视频源配置'
-              icon={
-                <Video size={20} className='text-gray-600 dark:text-gray-400' />
-              }
-              isExpanded={expandedTabs.videoSource}
-              onToggle={() => toggleTab('videoSource')}
-            >
-              <VideoSourceConfig config={config} refreshConfig={fetchConfig} />
-            </CollapsibleTab>
-
-            <CollapsibleTab
-              title='视频源脚本'
-              icon={
-                <Bot size={20} className='text-gray-600 dark:text-gray-400' />
-              }
-              isExpanded={expandedTabs.sourceScriptLab}
-              onToggle={() => toggleTab('sourceScriptLab')}
-            >
-              <VideoSourceScriptLab />
-            </CollapsibleTab>
-
-            <CollapsibleTab
-              title='音乐配置'
-              icon={
-                <svg
-                  width='20'
-                  height='20'
-                  viewBox='0 0 24 24'
-                  fill='none'
-                  stroke='currentColor'
-                  strokeWidth='2'
-                  strokeLinecap='round'
-                  strokeLinejoin='round'
-                  className='text-gray-600 dark:text-gray-400'
-                >
-                  <path d='M9 18V5l12-2v13' />
-                  <circle cx='6' cy='18' r='3' />
-                  <circle cx='18' cy='16' r='3' />
-                </svg>
-              }
-              isExpanded={expandedTabs.musicConfig}
-              onToggle={() => toggleTab('musicConfig')}
-            >
-              <MusicConfigComponent
-                config={config}
-                refreshConfig={fetchConfig}
-              />
-            </CollapsibleTab>
-
-            <CollapsibleTab
-              title='漫画配置'
-              icon={
-                <BookOpen
-                  size={20}
-                  className='text-gray-600 dark:text-gray-400'
-                />
-              }
-              isExpanded={expandedTabs.suwayomiConfig}
-              onToggle={() => toggleTab('suwayomiConfig')}
-            >
-              <SuwayomiConfigComponent
-                config={config}
-                refreshConfig={fetchConfig}
-              />
-            </CollapsibleTab>
-
-            <CollapsibleTab
-              title='电子书配置'
-              icon={
-                <BookMarked
-                  size={20}
-                  className='text-gray-600 dark:text-gray-400'
-                />
-              }
-              isExpanded={expandedTabs.opdsConfig}
-              onToggle={() => toggleTab('opdsConfig')}
-            >
-              <OPDSConfigComponent
-                config={config}
-                refreshConfig={fetchConfig}
-              />
-            </CollapsibleTab>
-
-            {/* 电视直播源配置标签 */}
-            <CollapsibleTab
-              title='电视直播源配置'
-              icon={
-                <Tv size={20} className='text-gray-600 dark:text-gray-400' />
-              }
-              isExpanded={expandedTabs.liveSource}
-              onToggle={() => toggleTab('liveSource')}
-            >
-              <LiveSourceConfig config={config} refreshConfig={fetchConfig} />
-            </CollapsibleTab>
-
-            {/* 网络直播配置标签 */}
-            <CollapsibleTab
-              title='网络直播配置'
-              icon={
-                <Globe size={20} className='text-gray-600 dark:text-gray-400' />
-              }
-              isExpanded={expandedTabs.webLive}
-              onToggle={() => toggleTab('webLive')}
-            >
-              <WebLiveConfig config={config} refreshConfig={fetchConfig} />
-            </CollapsibleTab>
-
-            {/* 私人影库大类 */}
-            <CollapsibleTab
-              title='私人影库'
-              icon={
-                <Database
-                  size={20}
-                  className='text-yellow-700 dark:text-yellow-400'
-                />
-              }
-              isExpanded={expandedTabs.mediaLibrary}
-              onToggle={() => toggleTab('mediaLibrary')}
-              isParent={true}
-            >
-              <div className='space-y-4'>
-                {/* Openlist配置子标签 */}
-                <CollapsibleTab
-                  title='Openlist配置'
-                  icon={
-                    <FolderOpen
-                      size={20}
-                      className='text-gray-600 dark:text-gray-400'
-                    />
-                  }
-                  isExpanded={expandedTabs.openListConfig}
-                  onToggle={() => toggleTab('openListConfig')}
-                >
-                  <OpenListConfigComponent
-                    config={config}
-                    refreshConfig={fetchConfig}
-                  />
-                </CollapsibleTab>
-
-                {/* Emby 媒体库子标签 */}
-                <CollapsibleTab
-                  title='Emby 媒体库'
-                  icon={
-                    <FolderOpen
-                      size={20}
-                      className='text-gray-600 dark:text-gray-400'
-                    />
-                  }
-                  isExpanded={expandedTabs.embyConfig}
-                  onToggle={() => toggleTab('embyConfig')}
-                >
-                  <EmbyConfigComponent
-                    config={config}
-                    refreshConfig={fetchConfig}
-                  />
-                </CollapsibleTab>
-
-                {/* 小雅配置子标签 */}
-                <CollapsibleTab
-                  title='小雅配置'
-                  icon={
-                    <FolderOpen
-                      size={20}
-                      className='text-gray-600 dark:text-gray-400'
-                    />
-                  }
-                  isExpanded={expandedTabs.xiaoyaConfig}
-                  onToggle={() => toggleTab('xiaoyaConfig')}
-                >
-                  <XiaoyaConfigComponent
-                    config={config}
-                    refreshConfig={fetchConfig}
-                  />
-                </CollapsibleTab>
-                {/* 求片管理子标签 */}
-                <CollapsibleTab
-                  title='求片管理'
-                  icon={
-                    <Video
-                      size={20}
-                      className='text-gray-600 dark:text-gray-400'
-                    />
-                  }
-                  isExpanded={expandedTabs.movieRequests}
-                  onToggle={() => toggleTab('movieRequests')}
-                >
-                  <MovieRequestsComponent
-                    config={config}
-                    refreshConfig={fetchConfig}
-                  />
-                </CollapsibleTab>
-
-                {/* 追番订阅子标签 */}
-                <CollapsibleTab
-                  title='追番订阅'
-                  icon={
-                    <Cat
-                      size={20}
-                      className='text-gray-600 dark:text-gray-400'
-                    />
-                  }
-                  isExpanded={expandedTabs.animeSubscription}
-                  onToggle={() => toggleTab('animeSubscription')}
-                >
-                  <AnimeSubscriptionComponent
-                    config={config}
-                    refreshConfig={fetchConfig}
-                  />
-                </CollapsibleTab>
-
-                <CollapsibleTab
-                  title='网盘配置'
-                  icon={
-                    <Cloud
-                      size={20}
-                      className='text-gray-600 dark:text-gray-400'
-                    />
-                  }
-                  isExpanded={expandedTabs.netDiskConfig}
-                  onToggle={() => toggleTab('netDiskConfig')}
-                >
-                  <NetDiskConfigComponent
-                    config={config}
-                    refreshConfig={fetchConfig}
-                  />
-                </CollapsibleTab>
-              </div>
-            </CollapsibleTab>
-
-            {/* AI配置标签 */}
-            <CollapsibleTab
-              title='AI设定'
-              icon={
-                <Bot size={20} className='text-gray-600 dark:text-gray-400' />
-              }
-              isExpanded={expandedTabs.aiConfig}
-              onToggle={() => toggleTab('aiConfig')}
-            >
-              <AIConfigComponent config={config} refreshConfig={fetchConfig} />
-            </CollapsibleTab>
-
-            {/* 邮件配置标签 */}
-            <CollapsibleTab
-              title='邮件配置'
-              icon={
-                <Mail size={20} className='text-gray-600 dark:text-gray-400' />
-              }
-              isExpanded={expandedTabs.emailConfig}
-              onToggle={() => toggleTab('emailConfig')}
-            >
-              <EmailConfigComponent
-                config={config}
-                refreshConfig={fetchConfig}
-              />
-            </CollapsibleTab>
-
-            {/* Telegram Bot 配置标签 */}
-            <CollapsibleTab
-              title='Telegram Bot'
-              icon={
-                <Send size={20} className='text-gray-600 dark:text-gray-400' />
-              }
-              isExpanded={expandedTabs.telegramConfig}
-              onToggle={() => toggleTab('telegramConfig')}
-            >
-              <TelegramConfigComponent
-                config={config}
-                refreshConfig={fetchConfig}
-              />
-            </CollapsibleTab>
-
-            {/* 分类配置标签 */}
-            <CollapsibleTab
-              title='分类配置'
-              icon={
-                <FolderOpen
-                  size={20}
-                  className='text-gray-600 dark:text-gray-400'
-                />
-              }
-              isExpanded={expandedTabs.categoryConfig}
-              onToggle={() => toggleTab('categoryConfig')}
-            >
-              <CategoryConfig config={config} refreshConfig={fetchConfig} />
-            </CollapsibleTab>
-
-            {/* 自定义去广告标签 */}
-            <CollapsibleTab
-              title='自定义去广告'
-              icon={
-                <svg
-                  width='20'
-                  height='20'
-                  viewBox='0 0 24 24'
-                  fill='none'
-                  stroke='currentColor'
-                  strokeWidth='2'
-                  strokeLinecap='round'
-                  strokeLinejoin='round'
-                  className='text-gray-600 dark:text-gray-400'
-                >
-                  <path d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z' />
-                  <path d='M8 12h8' />
-                </svg>
-              }
-              isExpanded={expandedTabs.customAdFilter}
-              onToggle={() => toggleTab('customAdFilter')}
-            >
-              <CustomAdFilterConfig
-                config={config}
-                refreshConfig={fetchConfig}
-              />
-            </CollapsibleTab>
-
-            {/* 数据迁移标签 - 仅站长可见 */}
+            {/* 配置文件标签 - 仅站长可见 */}
             {role === 'owner' && (
               <CollapsibleTab
-                title='数据迁移'
+                title='配置文件'
                 icon={
-                  <Database
+                  <FileText
                     size={20}
-                    className='text-gray-600 dark:text-gray-400'
+                    className='text-[color:var(--tm-muted)]'
                   />
                 }
-                isExpanded={expandedTabs.dataMigration}
-                onToggle={() => toggleTab('dataMigration')}
+                isExpanded={expandedTabs.configFile}
+                onToggle={() => toggleTab('configFile')}
               >
-                <DataMigration onRefreshConfig={refreshConfigAndUsers} />
+                <ConfigFileComponent
+                  config={config}
+                  refreshConfig={fetchConfig}
+                />
               </CollapsibleTab>
             )}
-          </div>
+
+            {/* 站点配置标签 */}
+            <CollapsibleTab
+              title='站点配置'
+              icon={
+                <Settings size={20} className='text-[color:var(--tm-muted)]' />
+              }
+              isExpanded={expandedTabs.siteConfig}
+              onToggle={() => toggleTab('siteConfig')}
+            >
+              <SiteConfigComponent
+                config={config}
+                refreshConfig={fetchConfig}
+              />
+            </CollapsibleTab>
+
+            {/* 注册配置标签 */}
+            <CollapsibleTab
+              title='注册配置'
+              icon={
+                <UserPlus size={20} className='text-[color:var(--tm-muted)]' />
+              }
+              isExpanded={expandedTabs.registrationConfig}
+              onToggle={() => toggleTab('registrationConfig')}
+            >
+              <RegistrationConfigComponent
+                config={config}
+                refreshConfig={fetchConfig}
+              />
+            </CollapsibleTab>
+
+            {/* 个性化配置标签 */}
+            <CollapsibleTab
+              title='个性化配置'
+              icon={
+                <Palette size={20} className='text-[color:var(--tm-muted)]' />
+              }
+              isExpanded={expandedTabs.themeConfig}
+              onToggle={() => toggleTab('themeConfig')}
+            >
+              <ThemeConfigComponent
+                config={config}
+                refreshConfig={fetchConfig}
+              />
+            </CollapsibleTab>
+
+            <div className='space-y-4'>
+              {/* 用户管理标签 */}
+              <CollapsibleTab
+                title='用户管理'
+                icon={
+                  <Users size={20} className='text-[color:var(--tm-muted)]' />
+                }
+                isExpanded={expandedTabs.userConfig}
+                onToggle={() => toggleTab('userConfig')}
+              >
+                <UserConfig
+                  config={config}
+                  role={role}
+                  refreshConfig={refreshConfigAndUsers}
+                  usersV2={usersV2}
+                  userPage={userPage}
+                  userTotalPages={userTotalPages}
+                  userTotal={userTotal}
+                  fetchUsersV2={fetchUsersV2}
+                  userListLoading={userListLoading}
+                  userSearch={userSearch}
+                  setUserSearch={setUserSearch}
+                />
+              </CollapsibleTab>
+
+              {/* 视频源配置标签 */}
+              <CollapsibleTab
+                title='视频源配置'
+                icon={
+                  <Video size={20} className='text-[color:var(--tm-muted)]' />
+                }
+                isExpanded={expandedTabs.videoSource}
+                onToggle={() => toggleTab('videoSource')}
+              >
+                <VideoSourceConfig
+                  config={config}
+                  refreshConfig={fetchConfig}
+                />
+              </CollapsibleTab>
+
+              <CollapsibleTab
+                title='视频源脚本'
+                icon={
+                  <Bot size={20} className='text-[color:var(--tm-muted)]' />
+                }
+                isExpanded={expandedTabs.sourceScriptLab}
+                onToggle={() => toggleTab('sourceScriptLab')}
+              >
+                <VideoSourceScriptLab />
+              </CollapsibleTab>
+
+              <CollapsibleTab
+                title='音乐配置'
+                icon={
+                  <svg
+                    width='20'
+                    height='20'
+                    viewBox='0 0 24 24'
+                    fill='none'
+                    stroke='currentColor'
+                    strokeWidth='2'
+                    strokeLinecap='round'
+                    strokeLinejoin='round'
+                    className='text-[color:var(--tm-muted)]'
+                  >
+                    <path d='M9 18V5l12-2v13' />
+                    <circle cx='6' cy='18' r='3' />
+                    <circle cx='18' cy='16' r='3' />
+                  </svg>
+                }
+                isExpanded={expandedTabs.musicConfig}
+                onToggle={() => toggleTab('musicConfig')}
+              >
+                <MusicConfigComponent
+                  config={config}
+                  refreshConfig={fetchConfig}
+                />
+              </CollapsibleTab>
+
+              <CollapsibleTab
+                title='漫画配置'
+                icon={
+                  <BookOpen
+                    size={20}
+                    className='text-[color:var(--tm-muted)]'
+                  />
+                }
+                isExpanded={expandedTabs.suwayomiConfig}
+                onToggle={() => toggleTab('suwayomiConfig')}
+              >
+                <SuwayomiConfigComponent
+                  config={config}
+                  refreshConfig={fetchConfig}
+                />
+              </CollapsibleTab>
+
+              <CollapsibleTab
+                title='电子书配置'
+                icon={
+                  <BookMarked
+                    size={20}
+                    className='text-[color:var(--tm-muted)]'
+                  />
+                }
+                isExpanded={expandedTabs.opdsConfig}
+                onToggle={() => toggleTab('opdsConfig')}
+              >
+                <OPDSConfigComponent
+                  config={config}
+                  refreshConfig={fetchConfig}
+                />
+              </CollapsibleTab>
+
+              {/* 电视直播源配置标签 */}
+              <CollapsibleTab
+                title='电视直播源配置'
+                icon={<Tv size={20} className='text-[color:var(--tm-muted)]' />}
+                isExpanded={expandedTabs.liveSource}
+                onToggle={() => toggleTab('liveSource')}
+              >
+                <LiveSourceConfig config={config} refreshConfig={fetchConfig} />
+              </CollapsibleTab>
+
+              {/* 网络直播配置标签 */}
+              <CollapsibleTab
+                title='网络直播配置'
+                icon={
+                  <Globe size={20} className='text-[color:var(--tm-muted)]' />
+                }
+                isExpanded={expandedTabs.webLive}
+                onToggle={() => toggleTab('webLive')}
+              >
+                <WebLiveConfig config={config} refreshConfig={fetchConfig} />
+              </CollapsibleTab>
+
+              {/* 私人影库大类 */}
+              <CollapsibleTab
+                title='私人影库'
+                icon={
+                  <Database size={20} className='text-[color:var(--tm-text)]' />
+                }
+                isExpanded={expandedTabs.mediaLibrary}
+                onToggle={() => toggleTab('mediaLibrary')}
+                isParent={true}
+              >
+                <div className='space-y-4'>
+                  {/* Openlist配置子标签 */}
+                  <CollapsibleTab
+                    title='Openlist配置'
+                    icon={
+                      <FolderOpen
+                        size={20}
+                        className='text-[color:var(--tm-muted)]'
+                      />
+                    }
+                    isExpanded={expandedTabs.openListConfig}
+                    onToggle={() => toggleTab('openListConfig')}
+                  >
+                    <OpenListConfigComponent
+                      config={config}
+                      refreshConfig={fetchConfig}
+                    />
+                  </CollapsibleTab>
+
+                  {/* Emby 媒体库子标签 */}
+                  <CollapsibleTab
+                    title='Emby 媒体库'
+                    icon={
+                      <FolderOpen
+                        size={20}
+                        className='text-[color:var(--tm-muted)]'
+                      />
+                    }
+                    isExpanded={expandedTabs.embyConfig}
+                    onToggle={() => toggleTab('embyConfig')}
+                  >
+                    <EmbyConfigComponent
+                      config={config}
+                      refreshConfig={fetchConfig}
+                    />
+                  </CollapsibleTab>
+
+                  {/* 小雅配置子标签 */}
+                  <CollapsibleTab
+                    title='小雅配置'
+                    icon={
+                      <FolderOpen
+                        size={20}
+                        className='text-[color:var(--tm-muted)]'
+                      />
+                    }
+                    isExpanded={expandedTabs.xiaoyaConfig}
+                    onToggle={() => toggleTab('xiaoyaConfig')}
+                  >
+                    <XiaoyaConfigComponent
+                      config={config}
+                      refreshConfig={fetchConfig}
+                    />
+                  </CollapsibleTab>
+                  {/* 求片管理子标签 */}
+                  <CollapsibleTab
+                    title='求片管理'
+                    icon={
+                      <Video
+                        size={20}
+                        className='text-[color:var(--tm-muted)]'
+                      />
+                    }
+                    isExpanded={expandedTabs.movieRequests}
+                    onToggle={() => toggleTab('movieRequests')}
+                  >
+                    <MovieRequestsComponent
+                      config={config}
+                      refreshConfig={fetchConfig}
+                    />
+                  </CollapsibleTab>
+
+                  {/* 追番订阅子标签 */}
+                  <CollapsibleTab
+                    title='追番订阅'
+                    icon={
+                      <Cat size={20} className='text-[color:var(--tm-muted)]' />
+                    }
+                    isExpanded={expandedTabs.animeSubscription}
+                    onToggle={() => toggleTab('animeSubscription')}
+                  >
+                    <AnimeSubscriptionComponent
+                      config={config}
+                      refreshConfig={fetchConfig}
+                    />
+                  </CollapsibleTab>
+
+                  <CollapsibleTab
+                    title='网盘配置'
+                    icon={
+                      <Cloud
+                        size={20}
+                        className='text-[color:var(--tm-muted)]'
+                      />
+                    }
+                    isExpanded={expandedTabs.netDiskConfig}
+                    onToggle={() => toggleTab('netDiskConfig')}
+                  >
+                    <NetDiskConfigComponent
+                      config={config}
+                      refreshConfig={fetchConfig}
+                    />
+                  </CollapsibleTab>
+                </div>
+              </CollapsibleTab>
+
+              {/* AI配置标签 */}
+              <CollapsibleTab
+                title='AI设定'
+                icon={
+                  <Bot size={20} className='text-[color:var(--tm-muted)]' />
+                }
+                isExpanded={expandedTabs.aiConfig}
+                onToggle={() => toggleTab('aiConfig')}
+              >
+                <AIConfigComponent
+                  config={config}
+                  refreshConfig={fetchConfig}
+                />
+              </CollapsibleTab>
+
+              {/* 邮件配置标签 */}
+              <CollapsibleTab
+                title='邮件配置'
+                icon={
+                  <Mail size={20} className='text-[color:var(--tm-muted)]' />
+                }
+                isExpanded={expandedTabs.emailConfig}
+                onToggle={() => toggleTab('emailConfig')}
+              >
+                <EmailConfigComponent
+                  config={config}
+                  refreshConfig={fetchConfig}
+                />
+              </CollapsibleTab>
+
+              {/* Telegram Bot 配置标签 */}
+              <CollapsibleTab
+                title='Telegram Bot'
+                icon={
+                  <Send size={20} className='text-[color:var(--tm-muted)]' />
+                }
+                isExpanded={expandedTabs.telegramConfig}
+                onToggle={() => toggleTab('telegramConfig')}
+              >
+                <TelegramConfigComponent
+                  config={config}
+                  refreshConfig={fetchConfig}
+                />
+              </CollapsibleTab>
+
+              {/* 分类配置标签 */}
+              <CollapsibleTab
+                title='分类配置'
+                icon={
+                  <FolderOpen
+                    size={20}
+                    className='text-[color:var(--tm-muted)]'
+                  />
+                }
+                isExpanded={expandedTabs.categoryConfig}
+                onToggle={() => toggleTab('categoryConfig')}
+              >
+                <CategoryConfig config={config} refreshConfig={fetchConfig} />
+              </CollapsibleTab>
+
+              {/* 自定义去广告标签 */}
+              <CollapsibleTab
+                title='自定义去广告'
+                icon={
+                  <svg
+                    width='20'
+                    height='20'
+                    viewBox='0 0 24 24'
+                    fill='none'
+                    stroke='currentColor'
+                    strokeWidth='2'
+                    strokeLinecap='round'
+                    strokeLinejoin='round'
+                    className='text-[color:var(--tm-muted)]'
+                  >
+                    <path d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z' />
+                    <path d='M8 12h8' />
+                  </svg>
+                }
+                isExpanded={expandedTabs.customAdFilter}
+                onToggle={() => toggleTab('customAdFilter')}
+              >
+                <CustomAdFilterConfig
+                  config={config}
+                  refreshConfig={fetchConfig}
+                />
+              </CollapsibleTab>
+
+              {/* 数据迁移标签 - 仅站长可见 */}
+              {role === 'owner' && (
+                <CollapsibleTab
+                  title='数据迁移'
+                  icon={
+                    <Database
+                      size={20}
+                      className='text-[color:var(--tm-muted)]'
+                    />
+                  }
+                  isExpanded={expandedTabs.dataMigration}
+                  onToggle={() => toggleTab('dataMigration')}
+                >
+                  <DataMigration onRefreshConfig={refreshConfigAndUsers} />
+                </CollapsibleTab>
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -19882,21 +20070,21 @@ function AdminPageClient() {
       {showResetConfigModal &&
         createPortal(
           <div
-            className='fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4'
+            className='fixed inset-0 bg-[var(--tm-scrim)] z-50 flex items-center justify-center p-4'
             onClick={() => setShowResetConfigModal(false)}
           >
             <div
-              className='bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full'
+              className='bg-[var(--tm-surface)] rounded-lg shadow-xl max-w-2xl w-full'
               onClick={(e) => e.stopPropagation()}
             >
               <div className='p-6'>
                 <div className='flex items-center justify-between mb-6'>
-                  <h3 className='text-xl font-semibold text-gray-900 dark:text-gray-100'>
+                  <h3 className='text-xl font-medium text-[color:var(--tm-text)]'>
                     确认重置配置
                   </h3>
                   <button
                     onClick={() => setShowResetConfigModal(false)}
-                    className='text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors'
+                    className='text-[color:var(--tm-muted)] hover:text-[color:var(--tm-muted)] transition-colors min-h-[44px] tm-press'
                   >
                     <svg
                       className='w-6 h-6'
@@ -19915,10 +20103,10 @@ function AdminPageClient() {
                 </div>
 
                 <div className='mb-6'>
-                  <div className='bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4 mb-4'>
+                  <div className='bg-[var(--tm-surface-raised)] border border-[var(--tm-line)] rounded-lg p-4 mb-4'>
                     <div className='flex items-center space-x-2 mb-2'>
                       <svg
-                        className='w-5 h-5 text-yellow-600 dark:text-yellow-400'
+                        className='w-5 h-5 text-[color:var(--tm-text)]'
                         fill='none'
                         stroke='currentColor'
                         viewBox='0 0 24 24'
@@ -19930,11 +20118,11 @@ function AdminPageClient() {
                           d='M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z'
                         />
                       </svg>
-                      <span className='text-sm font-medium text-yellow-800 dark:text-yellow-300'>
+                      <span className='text-sm font-medium text-[color:var(--tm-text)]'>
                         ⚠️ 危险操作警告
                       </span>
                     </div>
-                    <p className='text-sm text-yellow-700 dark:text-yellow-400'>
+                    <p className='text-sm text-[color:var(--tm-text)]'>
                       此操作将重置用户封禁和管理员设置、自定义视频源，站点配置将重置为默认值，是否继续？
                     </p>
                   </div>
