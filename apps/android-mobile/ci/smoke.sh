@@ -21,7 +21,12 @@ adb exec-out screencap -p >"$OUT/1-dialog.png"
 adb shell input text "10.0.2.2:8080"
 sleep 1
 adb shell input keyevent 66
-sleep 10
+# 模拟器网络和 WebView 首次初始化偶尔很慢：最多等 45 秒，等到假服务器收到请求就继续
+for _ in $(seq 1 45); do
+  grep -q "TongMuTVPlusAndroid" "$OUT/server.log" && break
+  sleep 1
+done
+sleep 3
 adb exec-out screencap -p >"$OUT/2-page.png"
 
 adb logcat -d >"$OUT/logcat.txt"
