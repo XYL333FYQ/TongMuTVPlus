@@ -21,7 +21,7 @@ jest.mock('@/features/playback/PlaybackSlot', () => ({
   default: () => <div data-testid='player-slot' />,
 }));
 
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 
 import RoomWorkspace from './RoomWorkspace';
 
@@ -53,6 +53,7 @@ const makeRoom = () => ({
   clearError: jest.fn(),
   reconnectFailed: false,
   manualReconnect: jest.fn(),
+  leaveRoom: jest.fn(),
 });
 let mockRoom = makeRoom();
 const mockPlayback = {
@@ -105,7 +106,10 @@ test('reconnection and departed assigned controller are distinct states', () => 
   expect(screen.getByText('房主交接中')).toBeInTheDocument();
   mockRoom.isConnected = false;
   view.rerender(<RoomWorkspace />);
-  expect(screen.getByRole('status')).toHaveTextContent('重连中 · 影片继续播放');
+  expect(screen.getByText('重连中 · 影片继续播放')).toHaveAttribute(
+    'role',
+    'status'
+  );
 });
 
 test('personal viewing returns using the existing session action', () => {
@@ -155,7 +159,7 @@ test('folding preserves player slot and restores through existing session action
 test('media failure directs users to existing global retry and autocomplete remains correct', () => {
   mockPlayback.metadata.error = '来源暂时不可用';
   const view = render(<RoomWorkspace />);
-  expect(screen.getByRole('status')).toHaveTextContent('视频加载失败');
+  expect(screen.getByText(/视频加载失败/)).toHaveAttribute('role', 'status');
   mockRoom.currentRoom = null;
   view.rerender(<RoomWorkspace />);
   fireEvent.click(screen.getByRole('button', { name: '创建房间' }));
@@ -180,4 +184,43 @@ test('member shortcut reflects the selected panel and returns to the queue', () 
     'true'
   );
   expect(shortcut).toHaveAttribute('aria-expanded', 'false');
+});
+
+test('the empty queue has one central selection action and no duplicate add action', () => {
+  render(<RoomWorkspace />);
+  expect(screen.getByRole('button', { name: '选择影片' })).toBeInTheDocument();
+  expect(
+    screen.queryByRole('button', { name: '添加影片' })
+  ).not.toBeInTheDocument();
+});
+
+test('room identifiers are masked on screen and copied in full', async () => {
+  if (mockRoom.currentRoom) mockRoom.currentRoom.id = '0123456789AB';
+  const writeText = jest.fn().mockResolvedValue(undefined);
+  Object.defineProperty(navigator, 'clipboard', {
+    configurable: true,
+    value: { writeText },
+  });
+  render(<RoomWorkspace />);
+  expect(screen.getByText(/房间号 0123…89AB/)).toBeInTheDocument();
+  expect(screen.queryByText('0123456789AB')).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: '复制房间号' }));
+  await waitFor(() => expect(writeText).toHaveBeenCalledWith('0123456789AB'));
+});
+
+test('exit stays in the accessible action menu and retains the original leave callback', () => {
+  render(<RoomWorkspace />);
+  expect(
+    screen.queryByRole('button', { name: '退出房间' })
+  ).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: '房间操作' }));
+  fireEvent.click(screen.getByRole('menuitem', { name: '退出房间' }));
+  expect(mockRoom.leaveRoom).toHaveBeenCalledTimes(1);
+});
+
+test('new rooms start with a display name rather than an empty identifier', () => {
+  mockRoom.currentRoom = null;
+  render(<RoomWorkspace />);
+  fireEvent.click(screen.getByRole('button', { name: '创建房间' }));
+  expect(screen.getByLabelText('房间名称')).toHaveValue('qa-owner 的放映室');
 });

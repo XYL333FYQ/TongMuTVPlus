@@ -1,6 +1,6 @@
 /*
  * 房间：目录页（我的 / 公开 / 已归档）与加入后的工作区（播放器 + 片单 + 聊天 + 成员）。
- * 桌面 ≥1200：右侧面板上半片单、下半聊天常驻；更窄时改为三标签。
+ * 桌面 ≥1200：播放器自适应，三标签侧栏 360px，首行严格等高。
  * 只描述外观；播放器位置由 PlaybackSlot 与 --tm-slot-* 决定，这里不改。
  */
 :root {
@@ -36,7 +36,7 @@
   margin-bottom: 32px;
 }
 .tm-rooms-heading h1 {
-  font-size: clamp(26px, 2.2vw, 36px);
+  font-size: var(--tm-fs-title);
   font-weight: 700;
   line-height: 1.2;
   overflow-wrap: anywhere;
@@ -52,7 +52,7 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 8px;
-  margin-bottom: 8px;
+  margin-bottom: 0;
   font-size: var(--tm-fs-caption);
   color: var(--tm-muted);
 }
@@ -62,19 +62,19 @@
   gap: 8px;
   min-height: 28px;
   padding: 4px 10px;
-  border: 1px solid var(--tm-line);
-  border-radius: var(--tm-radius-pill);
+  border: 0;
+  border-radius: var(--tm-radius-sm);
   background: var(--tm-surface);
   color: var(--tm-text);
-  font-size: var(--tm-fs-caption);
+  font-size: var(--tm-fs-badge);
 }
 .tm-room-connection {
   width: 7px;
   height: 7px;
   flex-shrink: 0;
-  border-radius: 50%;
-  background: var(--tm-text);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--tm-text) 18%, transparent);
+  border-radius: var(--tm-radius-full);
+  background: var(--tm-online);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--tm-online) 18%, transparent);
 }
 .tm-room-connection.is-offline {
   background: var(--tm-muted);
@@ -96,9 +96,9 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-  min-height: 40px;
+  min-height: 44px;
   padding: 0 16px;
-  border: 1px solid var(--tm-line);
+  border: 0;
   border-radius: var(--tm-radius-sm);
   background: var(--tm-surface-raised);
   color: var(--tm-text);
@@ -118,9 +118,9 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-  min-height: 40px;
+  min-height: 44px;
   padding: 0 18px;
-  border: 1px solid var(--tm-text);
+  border: 0;
   border-radius: var(--tm-radius-sm);
   background: var(--tm-text);
   color: var(--tm-accent-contrast);
@@ -145,8 +145,8 @@
   flex-shrink: 0;
   width: 32px;
   height: 32px;
-  border: 2px solid var(--tm-bg);
-  border-radius: 50%;
+  border: 0;
+  border-radius: var(--tm-radius-full);
   background: var(--tm-surface-raised);
   color: var(--tm-text);
   font-size: 13px;
@@ -169,7 +169,7 @@
   gap: 16px;
   padding: 8px 8px 8px 16px;
   margin-bottom: 20px;
-  border: 1px solid var(--tm-line);
+  border: 0;
   border-radius: var(--tm-radius-md);
   background: var(--tm-surface);
   font-size: var(--tm-fs-small);
@@ -235,7 +235,7 @@
   right: 0;
   bottom: -1px;
   height: 2px;
-  border-radius: 2px;
+  border-radius: var(--tm-radius-sm);
   background: var(--tm-text);
 }
 .tm-room-directory-toolbar > button {
@@ -243,7 +243,7 @@
   place-items: center;
   width: 44px;
   height: 44px;
-  border-radius: 50%;
+  border-radius: var(--tm-radius-full);
   color: var(--tm-muted);
 }
 .tm-room-directory-toolbar > button:hover {
@@ -252,8 +252,8 @@
 }
 .tm-room-directory {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
-  gap: 28px 24px;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: var(--tm-grid-gap);
 }
 /* 房间卡：上面字母封面，下面名称与操作；整张卡都能点，悬停抬起 */
 .tm-room-card {
@@ -263,13 +263,14 @@
   min-width: 0;
   padding-bottom: 18px;
   overflow: hidden;
-  border: 1px solid var(--tm-line);
+  border: 0;
   border-radius: var(--tm-radius-lg);
   background: var(--tm-surface);
   box-shadow: var(--tm-shadow-sm);
   transition: transform var(--tm-d-panel) var(--tm-ease-out),
     box-shadow var(--tm-d-panel) var(--tm-ease-out),
     border-color var(--tm-d-hover) var(--tm-ease-out);
+  grid-column: span 3;
 }
 .tm-room-card:has(.tm-room-card-action:active:not(:disabled)) {
   transform: scale(0.985);
@@ -336,8 +337,8 @@
 }
 .tm-room-card-body h2 {
   overflow: hidden;
-  font-size: var(--tm-fs-subtitle);
-  font-weight: 600;
+  font-size: var(--tm-fs-body);
+  font-weight: 500;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -350,9 +351,15 @@
   white-space: nowrap;
 }
 .tm-room-card-action {
-  position: static;
-  align-self: flex-start;
-  margin: 16px 18px 0;
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  margin: 0;
+  border: 0;
+  background: transparent;
+  z-index: 2;
 }
 /* The stretched hit area must remain relative to the card while pressed. */
 .tm-rooms .tm-room-card-action:active:not(:disabled) {
@@ -399,8 +406,8 @@
 /* —— 工作区 —— */
 .tm-room-workspace {
   display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: 16px;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: var(--tm-grid-gap);
   align-items: stretch;
 }
 .tm-room-stage {
@@ -408,9 +415,11 @@
   display: flex;
   flex-direction: column;
   min-width: 0;
+  grid-column: 1 / -1;
 }
 .tm-room-support {
   min-width: 0;
+  grid-column: 1 / -1;
 }
 .tm-room-main-anchor {
   order: -1;
@@ -436,7 +445,7 @@
   padding: 32px;
   border-radius: var(--tm-radius-xl);
   /* 像一块关着的放映屏：深浅主题都是深色，页面里一眼就能找到它 */
-  border: 1px solid var(--tm-line);
+  border: 0;
   background: var(--tm-room-cinema-bg);
   color: var(--tm-on-art-muted);
   text-align: center;
@@ -501,9 +510,9 @@
   gap: 8px;
   min-height: 44px;
   padding: 0 20px;
-  border: 1px solid var(--tm-art-glass-line);
+  border: 0;
   border-radius: var(--tm-radius-sm);
-  background: var(--tm-art-glass);
+  background: transparent;
   color: var(--tm-on-art);
   font-size: var(--tm-fs-small);
   font-weight: 500;
@@ -552,7 +561,7 @@
 }
 .tm-room-stage-footer button b {
   padding: 0 6px;
-  border-radius: 999px;
+  border-radius: var(--tm-radius-full);
   background: var(--tm-text);
   color: var(--tm-accent-contrast);
   font-size: 12px;
@@ -582,7 +591,7 @@
   gap: 6px;
   min-height: 44px;
   padding: 0 12px;
-  border: 1px solid var(--tm-line);
+  border: 0;
   border-radius: var(--tm-radius-sm);
   background: var(--tm-surface);
   font-size: var(--tm-fs-small);
@@ -606,25 +615,26 @@
   max-height: 480px;
   padding: 16px;
   overflow: hidden;
-  border: 1px solid var(--tm-line);
-  border-radius: 20px;
+  border: 0;
+  border-radius: var(--tm-radius-md);
   background: var(--tm-surface);
+  grid-column: 1 / -1;
 }
 .tm-room-panel-tabs {
   display: flex;
   flex-shrink: 0;
   gap: 2px;
   padding: 3px;
-  border-radius: 12px;
+  border-radius: var(--tm-radius-md);
   background: var(--tm-bg);
-  border: 1px solid var(--tm-line);
+  border: 0;
 }
 .tm-room-panel-tabs button {
   position: relative;
   flex: 1;
   min-width: 0;
-  min-height: 36px;
-  border-radius: 9px;
+  min-height: 44px;
+  border-radius: var(--tm-radius-sm);
   font-size: var(--tm-fs-caption);
   font-weight: 500;
   color: var(--tm-muted);
@@ -653,7 +663,7 @@
   min-width: 18px;
   height: 18px;
   padding: 0 5px;
-  border-radius: 999px;
+  border-radius: var(--tm-radius-full);
   background: var(--tm-text);
   color: var(--tm-accent-contrast);
   font-size: var(--tm-fs-badge);
@@ -731,7 +741,7 @@
   place-items: center;
   width: 40px;
   height: 40px;
-  border-radius: 50%;
+  border-radius: var(--tm-radius-full);
   background: var(--tm-surface-raised);
 }
 .tm-room-queue ol {
@@ -899,7 +909,7 @@
   max-height: calc(var(--tm-visual-height, 100dvh) - 48px);
   overflow-y: auto;
   padding: 24px;
-  border: 1px solid var(--tm-line);
+  border: 0;
   border-radius: var(--tm-radius-xl);
   background: var(--tm-surface);
   color: var(--tm-text);
@@ -922,7 +932,7 @@
   place-items: center;
   min-width: 40px;
   min-height: 40px;
-  border-radius: 50%;
+  border-radius: var(--tm-radius-full);
   background: var(--tm-surface-raised);
 }
 .tm-room-dialog form {
@@ -978,7 +988,7 @@
   height: 20px;
   flex-shrink: 0;
   border: 1px solid var(--tm-line-strong);
-  border-radius: 6px;
+  border-radius: var(--tm-radius-sm);
   background: var(--tm-bg);
   cursor: pointer;
 }
@@ -1024,7 +1034,7 @@
   gap: 2px;
   padding: 3px;
   margin-bottom: 16px;
-  border-radius: 12px;
+  border-radius: var(--tm-radius-md);
   background: var(--tm-surface-raised);
 }
 .tm-room-picker-tabs button {
@@ -1034,7 +1044,7 @@
   justify-content: center;
   gap: 6px;
   min-height: 40px;
-  border-radius: 9px;
+  border-radius: var(--tm-radius-sm);
   font-size: var(--tm-fs-small);
   font-weight: 500;
   color: var(--tm-muted);
@@ -1069,7 +1079,7 @@
   flex-shrink: 0;
   width: 40px;
   height: 40px;
-  border-radius: 50%;
+  border-radius: var(--tm-radius-full);
   background: var(--tm-surface-raised);
 }
 
@@ -1081,7 +1091,7 @@
   max-height: calc(100dvh - 16px);
   overflow-y: auto;
   padding: 6px;
-  border: 1px solid var(--tm-line);
+  border: 0;
   border-radius: var(--tm-radius-md);
   background: var(--tm-surface);
   color: var(--tm-text);
@@ -1114,8 +1124,8 @@
   place-items: center;
   width: 44px;
   height: 44px;
-  border: 1px solid var(--tm-art-glass-line);
-  border-radius: 50%;
+  border: 0;
+  border-radius: var(--tm-radius-full);
   background: var(--tm-scrim);
   color: var(--tm-on-art);
   backdrop-filter: blur(20px);
@@ -1137,7 +1147,7 @@ html[data-tm-no-blur='true'] .tm-room-fold-button {
   width: max-content;
   max-width: min(300px, calc(100vw - 32px));
   padding: 8px 12px;
-  border: 1px solid var(--tm-line);
+  border: 0;
   border-radius: var(--tm-radius-sm);
   background: var(--tm-glass-solid);
   color: var(--tm-text);
@@ -1227,7 +1237,7 @@ html[data-tm-room-presentation='true']
 /* —— 桌面 ≥1200：按 Room.dc.html 右侧三标签面板与左侧舞台严格等高 —— */
 @media (min-width: 1200px) {
   .tm-rooms[data-joined='true'] .tm-room-workspace {
-    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr) 360px;
     gap: 24px;
     align-items: stretch;
   }
@@ -1244,7 +1254,9 @@ html[data-tm-room-presentation='true']
     grid-row: 2;
   }
   .tm-rooms[data-playing='false']
-    .tm-room-support:not(:has(.tm-room-activities a, .tm-room-media-status)) {
+    .tm-room-support:not(
+      :has(.tm-room-activities a, .tm-room-media-status, .tm-room-share-current)
+    ) {
     display: none;
   }
   /* height: 0 + min-height: 100% 让右侧面板高度 100% 由左侧 16:9 舞台决定，绝不撑破首屏 */
@@ -1256,15 +1268,16 @@ html[data-tm-room-presentation='true']
     padding: 16px;
     gap: 12px;
     overflow: hidden;
-    border: 1px solid var(--tm-line);
-    border-radius: 20px;
+    border: 0;
+    border-radius: var(--tm-radius-md);
     background: var(--tm-surface);
   }
   .tm-room-activities .tm-room-stage-chat {
     display: none;
   }
   /* 只剩聊天按钮（桌面已隐藏）时整行不占位，舞台与右侧面板底边对齐 */
-  .tm-rooms[data-joined='true'] .tm-room-activities:not(:has(a)) {
+  .tm-rooms[data-joined='true']
+    .tm-room-activities:not(:has(a, .tm-room-share-current)) {
     display: none;
   }
 }
@@ -1277,35 +1290,11 @@ html[data-tm-room-presentation='true']
   .tm-rooms {
     padding-top: 0;
   }
-  .tm-shell[data-page='/watch-room']:has(.tm-rooms[data-joined='true'])
-    .tm-main {
-    padding-top: 113px;
-  }
   .tm-rooms-heading {
     padding-top: 8px;
     margin-bottom: 24px;
   }
   /* 加入房间后标题放在手机大标题顶栏里 */
-  .tm-rooms[data-joined='true'] .tm-rooms-heading {
-    margin-bottom: 0;
-    padding-top: 0;
-  }
-  .tm-rooms[data-joined='true']
-    :is(.tm-rooms-heading h1, .tm-room-heading-status, .tm-room-avatar-cluster),
-  .tm-rooms-heading-actions > :not(.tm-room-avatar-cluster) {
-    display: none;
-  }
-  .tm-rooms[data-joined='true']
-    .tm-rooms-heading-actions
-    > .tm-room-screen-shortcut {
-    display: inline-flex;
-    min-height: 44px;
-    margin-bottom: 16px;
-  }
-  .tm-rooms[data-joined='true']
-    .tm-rooms-heading:has(p:not(.tm-room-heading-status)) {
-    margin-bottom: 20px;
-  }
   .tm-room-directory-toolbar [role='tablist'] {
     gap: 20px;
   }
@@ -1325,6 +1314,7 @@ html[data-tm-room-presentation='true']
     height: 360px;
     min-height: 320px;
     max-height: 380px;
+    grid-column: 1 / -1;
   }
   .tm-room-empty-stage h2 {
     font-size: 18px;
@@ -1365,6 +1355,7 @@ html[data-tm-room-presentation='true']
   .tm-room-dialog {
     max-height: calc(var(--tm-visual-height, 100dvh) - 40px);
     padding: 20px;
+    box-shadow: var(--tm-shadow-sm);
   }
   /* 手机顶栏：房间名最多两行，右侧放房间操作 */
   html[data-tm-room-presentation='true'] .tm-mobile-title-row {
@@ -1442,6 +1433,391 @@ html[data-tm-reduced-motion='true'] .tm-room-card-art::after {
   :is(.tm-room-card, .tm-room-card-glyph),
   .tm-room-card-art::after {
     transform: none !important;
+  }
+}
+
+/* 本轮标题与信息区：状态同行，复制目标仍是完整房间号。 */
+.tm-room-title-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+.tm-rooms-heading .tm-room-identifier {
+  margin-top: 4px;
+  font-size: var(--tm-fs-caption);
+}
+.tm-room-identifier button {
+  min-width: 44px;
+  min-height: 44px;
+  color: var(--tm-muted);
+}
+.tm-room-identifier button:hover {
+  color: var(--tm-text);
+}
+.tm-room-action-menu [data-danger='true'] {
+  color: var(--tm-danger);
+}
+.tm-room-card .tm-badge[data-on-art='true'] {
+  background: var(--tm-badge-on-art);
+  color: var(--tm-on-art-ink);
+}
+.tm-room-directory-guide {
+  grid-column: span 3;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 24px;
+  min-height: 200px;
+  background: var(--tm-surface);
+  box-shadow: var(--tm-shadow-sm);
+  text-align: left;
+  color: var(--tm-muted);
+  border-radius: var(--tm-radius-md);
+}
+.tm-room-directory-guide strong {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--tm-text);
+}
+.tm-room-directory-guide span {
+  font-size: 13px;
+  line-height: 1.6;
+}
+.tm-room-directory-guide:hover {
+  background: var(--tm-surface);
+}
+.tm-room-media-info {
+  padding-top: 12px;
+}
+.tm-room-media-description {
+  color: var(--tm-muted);
+  font-size: 14px;
+  line-height: 1.8;
+}
+.tm-room-queue-progress {
+  margin-top: 12px;
+  font-size: 13px;
+  color: var(--tm-muted);
+}
+.tm-room-quick-start {
+  container: tm-room-quick-start / inline-size;
+  grid-column: 1 / -1;
+  min-width: 0;
+  margin-top: 8px;
+}
+.tm-room-quick-note {
+  font-size: 13px;
+  color: var(--tm-muted);
+}
+.tm-room-recommendation-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.tm-room-recommendation-actions .tm-section-link {
+  min-height: 44px;
+}
+.tm-room-recommendation-actions button:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+/* 按推荐区实际宽度填满一行，内边距为悬停抬升和焦点环留出空间。 */
+.tm-poster-grid.tm-room-recommendations {
+  --tm-room-recommendation-columns: 3;
+  display: flex;
+  flex-wrap: nowrap;
+  gap: var(--tm-grid-gap);
+  overflow-x: auto;
+  padding: 16px;
+  margin: -16px;
+  scroll-padding-inline: 16px;
+  overscroll-behavior-x: contain;
+}
+.tm-room-recommendation {
+  flex: 0 0
+    calc(
+      (100% - (var(--tm-room-recommendation-columns) - 1) * var(--tm-grid-gap)) /
+        var(--tm-room-recommendation-columns)
+    );
+  min-width: 0;
+  text-align: left;
+}
+@container tm-room-quick-start (min-width: 720px) {
+  .tm-poster-grid.tm-room-recommendations {
+    --tm-room-recommendation-columns: 4;
+  }
+}
+@container tm-room-quick-start (min-width: 1120px) {
+  .tm-poster-grid.tm-room-recommendations {
+    --tm-room-recommendation-columns: 6;
+  }
+}
+.tm-room-recommendation-art > img,
+.tm-room-recommendation-art > span {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.tm-room-recommendation-art > .tm-media-initial {
+  display: grid;
+}
+.tm-room-recommendation strong {
+  display: block;
+  margin-top: 12px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: 14px;
+  font-weight: 500;
+}
+.tm-room-recommendation small {
+  display: block;
+  margin-top: 4px;
+  color: var(--tm-muted);
+  font-size: 13px;
+}
+
+@media (min-width: 900px) and (max-width: 1199px) {
+  .tm-room-card,
+  .tm-room-directory-guide {
+    grid-column: span 4;
+  }
+}
+@media (min-width: 600px) and (max-width: 899px) {
+  .tm-room-card,
+  .tm-room-directory-guide {
+    grid-column: span 6;
+  }
+}
+@media (max-width: 899px) {
+  .tm-rooms-heading-actions .tm-room-screen-shortcut {
+    min-width: 44px;
+    width: 44px;
+    padding: 0;
+  }
+  .tm-room-screen-shortcut > span {
+    display: none;
+  }
+}
+@media (max-width: 599px) {
+  .tm-room-card,
+  .tm-room-directory-guide {
+    grid-column: 1 / -1;
+  }
+  .tm-room-title-line {
+    gap: 10px;
+  }
+  .tm-rooms-heading-actions {
+    width: 100%;
+    gap: 8px;
+  }
+  .tm-room-avatar-cluster {
+    margin-right: auto;
+  }
+  .tm-rooms[data-joined='true'] .tm-room-stage {
+    margin-inline: calc(-1 * var(--tm-content-gutter));
+  }
+  .tm-rooms[data-joined='true'] .tm-room-empty-stage {
+    min-height: 300px;
+    border-radius: 0;
+  }
+  .tm-rooms[data-joined='true'] .tm-playback-slot,
+  html[data-tm-room-presentation='true']
+    .tm-playback-host[data-presentation='docked']
+    [data-tm-player-mount] {
+    border-radius: 0;
+  }
+}
+/* 各标签共用现有聊天输入框；只隐藏未选中标签里的消息列表。 */
+.tm-room-side > .tm-room-chat-slot[data-active='false'] {
+  display: flex !important;
+  flex: 0 0 auto;
+  overflow: visible;
+}
+.tm-room-chat-slot[data-active='false'] .tm-chat-panel--inline {
+  flex: 0 0 auto;
+  height: auto;
+}
+.tm-room-chat-slot[data-active='false']
+  :is(.tm-chat-messages, .tm-chat-new-messages) {
+  display: none;
+}
+.tm-room-chat-slot .tm-chat-panel--inline form {
+  border-top: 0;
+}
+.tm-room-chat-slot .tm-chat-panel--inline input {
+  background: var(--tm-bg);
+  border: 1px solid var(--tm-line);
+  border-radius: var(--tm-radius-sm);
+}
+/* 聚焦描边贴合输入框，避免表单阴影圈与全局外环叠成多重边框。 */
+.tm-room-chat-slot .tm-chat-panel--inline input:focus,
+.tm-room-chat-slot .tm-chat-panel--inline input:focus-visible {
+  border-color: var(--tm-text);
+  box-shadow: none;
+  outline: 2px solid var(--tm-text);
+  outline-offset: -2px;
+}
+.tm-room-side {
+  box-shadow: var(--tm-shadow-sm);
+}
+.tm-room-directory-guide > svg {
+  color: var(--tm-highlight);
+}
+
+/* Keep room surfaces in the same wide-desktop composition as discovery and
+   the library. The stage still determines the sidebar height through 16:9. */
+@media (min-width: 1700px) {
+  .tm-rooms {
+    padding-top: calc(8 * var(--tm-wide-unit));
+  }
+  .tm-rooms-heading {
+    gap: calc(16 * var(--tm-wide-unit)) var(--tm-grid-gap);
+    padding-top: calc(24 * var(--tm-wide-unit));
+    margin-bottom: calc(32 * var(--tm-wide-unit));
+  }
+  .tm-room-title-line {
+    gap: calc(12 * var(--tm-wide-unit));
+  }
+  .tm-room-heading-status,
+  .tm-room-state-badge {
+    gap: calc(8 * var(--tm-wide-unit));
+  }
+  .tm-room-state-badge {
+    min-height: calc(28 * var(--tm-wide-unit));
+    padding: calc(4 * var(--tm-wide-unit)) calc(10 * var(--tm-wide-unit));
+  }
+  .tm-rooms-heading-actions {
+    gap: calc(10 * var(--tm-wide-unit));
+  }
+  .tm-rooms .tm-rooms-heading-actions > :is(button, a),
+  .tm-rooms .tm-room-primary,
+  .tm-room-screen-link,
+  .tm-room-add-film {
+    gap: calc(8 * var(--tm-wide-unit));
+    min-height: calc(44 * var(--tm-wide-unit));
+    padding-inline: calc(16 * var(--tm-wide-unit));
+  }
+  .tm-rooms .tm-room-primary {
+    padding-inline: calc(18 * var(--tm-wide-unit));
+  }
+  .tm-rooms .tm-room-empty-stage .tm-room-primary {
+    min-height: calc(44 * var(--tm-wide-unit));
+    padding-inline: calc(22 * var(--tm-wide-unit));
+  }
+  .tm-rooms-heading-actions .tm-room-avatar-cluster {
+    padding: calc(4 * var(--tm-wide-unit)) calc(12 * var(--tm-wide-unit))
+      calc(4 * var(--tm-wide-unit)) calc(6 * var(--tm-wide-unit));
+  }
+  .tm-room-avatar {
+    width: calc(32 * var(--tm-wide-unit));
+    height: calc(32 * var(--tm-wide-unit));
+    font-size: var(--tm-fs-caption);
+  }
+  .tm-room-directory-toolbar {
+    margin-bottom: calc(28 * var(--tm-wide-unit));
+  }
+  .tm-room-directory-toolbar [role='tablist'] {
+    gap: calc(28 * var(--tm-wide-unit));
+  }
+  .tm-room-directory-toolbar [role='tab'] {
+    min-height: calc(48 * var(--tm-wide-unit));
+  }
+  .tm-room-card {
+    padding-bottom: calc(18 * var(--tm-wide-unit));
+  }
+  .tm-room-card-body {
+    padding: calc(16 * var(--tm-wide-unit)) calc(18 * var(--tm-wide-unit)) 0;
+  }
+  .tm-room-card-presence,
+  .tm-room-card-access {
+    top: calc(12 * var(--tm-wide-unit));
+  }
+  .tm-room-card-presence {
+    left: calc(12 * var(--tm-wide-unit));
+  }
+  .tm-room-card-access {
+    right: calc(12 * var(--tm-wide-unit));
+  }
+  .tm-room-card-glyph {
+    font-size: calc(64 * var(--tm-wide-unit));
+  }
+  .tm-room-directory-guide {
+    gap: calc(12 * var(--tm-wide-unit));
+    padding: calc(24 * var(--tm-wide-unit));
+    min-height: calc(200 * var(--tm-wide-unit));
+  }
+  .tm-room-directory-guide strong,
+  .tm-room-media-description,
+  .tm-room-recommendation strong {
+    font-size: var(--tm-fs-body);
+  }
+  .tm-room-directory-guide span,
+  .tm-room-queue-progress,
+  .tm-room-quick-note,
+  .tm-room-recommendation small {
+    font-size: var(--tm-fs-caption);
+  }
+  .tm-rooms[data-joined='true'] .tm-room-workspace {
+    grid-template-columns: minmax(0, 1fr) calc(360 * var(--tm-wide-unit));
+    gap: var(--tm-grid-gap);
+  }
+  .tm-room-empty-stage {
+    gap: calc(12 * var(--tm-wide-unit));
+    padding: calc(32 * var(--tm-wide-unit));
+  }
+  .tm-room-empty-stage h2 {
+    font-size: calc(32 * var(--tm-wide-unit));
+  }
+  .tm-room-empty-stage p {
+    max-width: calc(360 * var(--tm-wide-unit));
+  }
+  .tm-room-empty-actions {
+    gap: calc(12 * var(--tm-wide-unit));
+    margin-top: calc(12 * var(--tm-wide-unit));
+  }
+  .tm-rooms[data-joined='true'] .tm-room-side {
+    padding: calc(16 * var(--tm-wide-unit));
+    gap: calc(12 * var(--tm-wide-unit));
+  }
+  .tm-room-panel-tabs {
+    padding: calc(3 * var(--tm-wide-unit));
+    gap: calc(2 * var(--tm-wide-unit));
+  }
+  .tm-room-panel-tabs button {
+    min-height: calc(44 * var(--tm-wide-unit));
+  }
+  .tm-room-chat-slot :is(.tm-chat-empty, input, .tm-chat-messages article p) {
+    font-size: var(--tm-fs-caption);
+  }
+  .tm-room-chat-slot :is(.tm-chat-messages article > div, time) {
+    font-size: var(--tm-fs-badge);
+  }
+  .tm-room-chat-slot .tm-chat-messages .tm-chat-emoji-message p {
+    font-size: calc(27 * var(--tm-wide-unit));
+  }
+  .tm-room-chat-slot .tm-chat-panel--inline form {
+    gap: calc(8 * var(--tm-wide-unit));
+    padding-top: calc(10 * var(--tm-wide-unit));
+  }
+  .tm-room-chat-slot form :is(button, input) {
+    min-height: calc(44 * var(--tm-wide-unit));
+  }
+  .tm-room-chat-slot form button {
+    min-width: calc(32 * var(--tm-wide-unit));
+  }
+  .tm-room-recommendation strong {
+    margin-top: calc(12 * var(--tm-wide-unit));
+  }
+  .tm-room-recommendation small {
+    margin-top: calc(4 * var(--tm-wide-unit));
   }
 }
 

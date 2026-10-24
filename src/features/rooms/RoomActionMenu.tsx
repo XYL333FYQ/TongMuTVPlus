@@ -7,6 +7,7 @@ import { createPortal } from 'react-dom';
 export type RoomMenuItem = {
   label: string;
   disabled?: boolean;
+  danger?: boolean;
   onSelect: () => void;
 };
 
@@ -156,6 +157,7 @@ export default function RoomActionMenu({
                 role='menuitem'
                 tabIndex={-1}
                 disabled={item.disabled}
+                data-danger={item.danger || undefined}
                 onClick={() => {
                   close(true);
                   item.onSelect();

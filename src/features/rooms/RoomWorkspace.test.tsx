@@ -88,7 +88,7 @@ test('a successful directory refresh must not clear a failed join operation', as
   mockRoom.joinRoom.mockRejectedValue(new Error('房间密码错误'));
   render(<RoomWorkspace />);
   await screen.findByRole('heading', { name: '恢复验收' });
-  fireEvent.click(screen.getByRole('button', { name: '进入房间' }));
+  fireEvent.click(screen.getByRole('button', { name: '进入房间：恢复验收' }));
   await waitFor(() => expect(screen.getAllByRole('alert')).toHaveLength(2));
   screen
     .getAllByRole('alert')
@@ -124,4 +124,14 @@ test('an obsolete directory failure cannot overwrite a newer successful director
     rejectOld(new Error('旧目录已断开'));
   });
   expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+});
+
+test('joining a room clears an error left by the automatic rejoin of an old room', async () => {
+  mockFetch.mockResolvedValue(response());
+  mockRoom.joinRoom.mockResolvedValue(undefined);
+  render(<RoomWorkspace />);
+  await screen.findByRole('heading', { name: '恢复验收' });
+  fireEvent.click(screen.getByRole('button', { name: '进入房间：恢复验收' }));
+  await waitFor(() => expect(mockRoom.joinRoom).toHaveBeenCalled());
+  expect(mockRoom.clearError).toHaveBeenCalled();
 });

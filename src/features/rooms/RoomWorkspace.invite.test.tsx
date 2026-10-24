@@ -111,7 +111,8 @@ test('successful invitation waits for the joined snapshot and cannot rejoin on e
       scroll: false,
     })
   );
-  fireEvent.click(screen.getByRole('button', { name: '退出房间' }));
+  fireEvent.click(screen.getByRole('button', { name: '房间操作' }));
+  fireEvent.click(screen.getByRole('menuitem', { name: '退出房间' }));
   view.rerender(<RoomWorkspace />);
   await waitFor(() => expect(mockRoom.leaveRoom).toHaveBeenCalledTimes(1));
   expect(mockRoom.joinRoom).toHaveBeenCalledTimes(1);

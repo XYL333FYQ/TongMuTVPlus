@@ -4,11 +4,11 @@ import { AnimatePresence, motion } from 'framer-motion';
 import {
   Check,
   ChevronDown,
+  ChevronRight,
   Copy,
   Film,
   Link2,
   Lock,
-  LogOut,
   MessageCircle,
   Monitor,
   Music2,
@@ -17,7 +17,6 @@ import {
   Radio,
   RefreshCw,
   Search,
-  Settings2,
   Shield,
   Trash2,
   Users,
@@ -43,8 +42,15 @@ import {
   queuePlaybackHref,
 } from '@/features/playback/session';
 
+import {
+  defaultRoomName,
+  displayRoomName,
+  maskedRoomId,
+} from './room-presentation';
 import RoomActionMenu from './RoomActionMenu';
+import RoomMediaInfo from './RoomMediaInfo';
 import RoomPlaybackButton from './RoomPlaybackButton';
+import RoomQuickStart from './RoomQuickStart';
 import useRoomScreening from './useRoomScreening';
 
 import type { Room } from '@/types/watch-room';
@@ -116,6 +122,7 @@ export default function RoomWorkspace() {
     return () => window.removeEventListener('tongmu:open-chat', showChat);
   }, [reducedMotion]);
   const [username, setUsername] = useState('');
+  const roomTitle = room ? displayRoomName(room) : '房间';
   const [isStationAdmin, setIsStationAdmin] = useState(false);
   const [autoArchive, setAutoArchive] = useState(true);
   const [directory, setDirectory] = useState<'mine' | 'public' | 'archived'>(
@@ -131,6 +138,8 @@ export default function RoomWorkspace() {
     'create' | 'join' | 'picker' | 'settings' | null
   >(null);
   const [name, setName] = useState('');
+  const [pickerTitle, setPickerTitle] = useState('');
+  const [copiedRoomId, setCopiedRoomId] = useState('');
   const [description, setDescription] = useState('');
   const [isPublic, setIsPublic] = useState(false);
   const [password, setPassword] = useState('');
@@ -242,6 +251,8 @@ export default function RoomWorkspace() {
     if (room && room.id !== id && replaceCurrent) watchRoom.leaveRoom();
     setBusy(true);
     setError('');
+    // 自动重连旧房间留下的报错（如“房间不存在或已归档”）与这次操作无关
+    watchRoom.clearError();
     try {
       await watchRoom.joinRoom({
         roomId: id.trim(),
@@ -313,7 +324,7 @@ export default function RoomWorkspace() {
   };
   const openCreate = () => {
     if (!requireLogin()) return;
-    setName('');
+    setName(defaultRoomName(username));
     setDescription('');
     setPassword('');
     setIsPublic(false);
@@ -327,6 +338,7 @@ export default function RoomWorkspace() {
     }
     setBusy(true);
     setError('');
+    watchRoom.clearError();
     try {
       const created = await watchRoom.createRoom({
         name,
@@ -369,6 +381,19 @@ export default function RoomWorkspace() {
     setDeleteConfirmation('');
     setDialog('settings');
   };
+  const openPicker = (title = '') => {
+    setPickerTitle(title);
+    setDialog('picker');
+  };
+  const copyRoomId = async () => {
+    if (!room) return;
+    try {
+      await navigator.clipboard.writeText(room.id);
+      setCopiedRoomId(room.id);
+    } catch {
+      setNotice('房间号复制失败，请重试');
+    }
+  };
   const restore = async (id: string) => {
     setBusy(true);
     setError('');
@@ -396,39 +421,7 @@ export default function RoomWorkspace() {
   return (
     <PageLayout
       activePath='/watch-room'
-      mobileTitle={room?.name}
-      mobileSubtitle={
-        room ? (
-          <>
-            {watchRoom.isConnected ? '已连接' : '重连中'} · {room.memberCount}{' '}
-            人在线
-          </>
-        ) : undefined
-      }
-      mobileActions={
-        room ? (
-          <RoomActionMenu
-            label='房间操作'
-            items={[
-              {
-                label:
-                  copiedInviteRoomId === room.id ? '已复制邀请' : '邀请朋友',
-                onSelect: () => void copyInvite(),
-              },
-              ...(watchRoom.isOwner
-                ? [{ label: '房间设置', onSelect: openSettings }]
-                : []),
-              {
-                label: '退出房间',
-                onSelect: () => {
-                  watchRoom.leaveRoom();
-                  router.replace('/watch-room');
-                },
-              },
-            ]}
-          />
-        ) : undefined
-      }
+      mobileTitle={room ? '房间' : undefined}
     >
       <PageContainer
         className='tm-rooms'
@@ -447,30 +440,40 @@ export default function RoomWorkspace() {
         )}
         <div className='tm-rooms-heading'>
           <div>
+            <div className='tm-room-title-line'>
+              <h1>{roomTitle}</h1>
+              {room && (
+                <div className='tm-room-heading-status' aria-live='polite'>
+                  <span className='tm-room-state-badge'>
+                    <span
+                      aria-hidden
+                      className={`tm-room-connection ${
+                        watchRoom.isConnected ? '' : 'is-offline'
+                      }`}
+                    />
+                    {watchRoom.isConnected ? '已连接' : '重连中'}
+                  </span>
+                  <motion.span
+                    key={hostLabel}
+                    className='tm-room-state-badge'
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: reducedMotion ? 0.12 : 0.2 }}
+                  >
+                    <Shield size={13} aria-hidden />
+                    {hostLabel}
+                  </motion.span>
+                </div>
+              )}
+            </div>
             {room && (
-              <div className='tm-room-heading-status' aria-live='polite'>
-                <span className='tm-room-state-badge'>
-                  <span
-                    aria-hidden
-                    className={`tm-room-connection ${
-                      watchRoom.isConnected ? '' : 'is-offline'
-                    }`}
-                  />
-                  {watchRoom.isConnected ? '已连接' : '重连中'}
-                </span>
-                <motion.span
-                  key={hostLabel}
-                  className='tm-room-state-badge'
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ duration: reducedMotion ? 0.12 : 0.2 }}
-                >
-                  <Shield size={13} aria-hidden />
-                  {hostLabel}
-                </motion.span>
-              </div>
+              <p className='tm-room-identifier'>
+                房间号 {maskedRoomId(room.id)} ·{' '}
+                <button onClick={copyRoomId} aria-label='复制房间号'>
+                  {copiedRoomId === room.id ? '已复制' : '复制'}
+                </button>
+              </p>
             )}
-            <h1>{room ? room.name : '房间'}</h1>
             {(room?.description || !room) && (
               <p>{room?.description || '创建房间，或用邀请码加入'}</p>
             )}
@@ -524,16 +527,7 @@ export default function RoomWorkspace() {
                   </span>
                   <ChevronDown size={14} aria-hidden />
                 </button>
-                {watchRoom.canControl && (
-                  <Link
-                    href='/watch-room/screen'
-                    className='tm-room-screen-shortcut'
-                  >
-                    <Monitor size={16} aria-hidden />
-                    屏幕共享
-                  </Link>
-                )}
-                <button onClick={copyInvite}>
+                <button className='tm-room-primary' onClick={copyInvite}>
                   {copiedInviteRoomId === room.id ? (
                     <Check size={16} />
                   ) : (
@@ -541,28 +535,39 @@ export default function RoomWorkspace() {
                   )}
                   {copiedInviteRoomId === room.id ? '已复制' : '邀请朋友'}
                 </button>
-                {watchRoom.isOwner && (
-                  <button
-                    className='tm-room-heading-settings'
-                    onClick={openSettings}
-                    aria-label='房间设置'
+                {watchRoom.canControl && (
+                  <Link
+                    href='/watch-room/screen'
+                    className='tm-room-screen-shortcut'
+                    aria-label='屏幕共享'
                   >
-                    <Settings2 size={18} />
-                  </button>
+                    <Monitor size={16} aria-hidden />
+                    <span>屏幕共享</span>
+                  </Link>
                 )}
-                <button
-                  onClick={() => {
-                    watchRoom.leaveRoom();
-                    router.replace('/watch-room');
-                    void refresh();
-                  }}
-                >
-                  <LogOut size={16} />
-                  退出房间
-                </button>
+                <RoomActionMenu
+                  label='房间操作'
+                  items={[
+                    ...(watchRoom.isOwner
+                      ? [{ label: '房间设置', onSelect: openSettings }]
+                      : []),
+                    {
+                      label: '退出房间',
+                      danger: true,
+                      onSelect: () => {
+                        watchRoom.leaveRoom();
+                        router.replace('/watch-room');
+                      },
+                    },
+                  ]}
+                />
               </>
             ) : (
               <>
+                <button className='tm-room-primary' onClick={openCreate}>
+                  <Plus size={17} />
+                  创建房间
+                </button>
                 <button
                   onClick={() => {
                     setJoinId(inviteId);
@@ -573,10 +578,6 @@ export default function RoomWorkspace() {
                 >
                   <Link2 size={16} />
                   用邀请码加入
-                </button>
-                <button className='tm-room-primary' onClick={openCreate}>
-                  <Plus size={17} />
-                  创建房间
                 </button>
               </>
             )}
@@ -669,30 +670,22 @@ export default function RoomWorkspace() {
                     ) : (
                       <button
                         className='tm-room-primary'
-                        onClick={() => setDialog('picker')}
+                        onClick={() => openPicker()}
                       >
                         <Plus size={16} />
                         选择影片
                       </button>
                     )}
                     {playback.followingRoom && (
-                      <Link href='/search' className='tm-room-screen-link'>
+                      <Link
+                        href='/douban?type=movie'
+                        className='tm-room-screen-link'
+                      >
                         <Search size={15} />
                         浏览片库
                       </Link>
                     )}
                   </div>
-                  {!room.currentState &&
-                    playback.href &&
-                    watchRoom.canControl && (
-                      <button
-                        className='tm-room-screen-share'
-                        onClick={playback.shareCurrentPlayback}
-                      >
-                        <Play size={14} />
-                        分享当前正在看的影片
-                      </button>
-                    )}
                 </div>
               )}
               {(room.currentState?.type === 'play' ||
@@ -746,6 +739,16 @@ export default function RoomWorkspace() {
                 </div>
               </div>
               <div className='tm-room-activities'>
+                {!room.currentState &&
+                  playback.href &&
+                  watchRoom.canControl && (
+                    <button
+                      className='tm-room-share-current tm-btn tm-btn-ghost'
+                      onClick={playback.shareCurrentPlayback}
+                    >
+                      分享当前正在看的影片
+                    </button>
+                  )}
                 <button
                   className='tm-room-stage-chat'
                   onClick={() =>
@@ -782,6 +785,13 @@ export default function RoomWorkspace() {
                   </Link>
                 )}
               </div>
+              {room.currentState?.type === 'play' && (
+                <RoomMediaInfo
+                  roomId={room.id}
+                  state={room.currentState}
+                  queue={room.queue || []}
+                />
+              )}
             </div>
             <aside className='tm-room-side'>
               <div
@@ -955,26 +965,16 @@ export default function RoomWorkspace() {
                     </motion.li>
                   ))}
                 </ol>
-                <button
-                  className='tm-room-add-film'
-                  onClick={() => setDialog('picker')}
-                >
-                  <Plus size={16} />
-                  添加影片
-                </button>
+                {Boolean(room.queue?.length) && (
+                  <button
+                    className='tm-room-add-film'
+                    onClick={() => openPicker()}
+                  >
+                    <Plus size={16} />
+                    添加影片
+                  </button>
+                )}
               </section>
-              <div
-                id='tm-room-panel-chat'
-                className='tm-room-chat-slot'
-                role={panelTab === 'chat' ? 'tabpanel' : 'region'}
-                aria-labelledby={
-                  panelTab === 'chat' ? 'tm-room-tab-chat' : undefined
-                }
-                aria-label={panelTab === 'chat' ? undefined : '发送消息'}
-                tabIndex={panelTab === 'chat' ? 0 : undefined}
-                data-tm-room-chat-slot
-                data-active={panelTab === 'chat'}
-              />
               <section
                 className='tm-room-members'
                 id='tm-room-panel-members'
@@ -988,11 +988,6 @@ export default function RoomWorkspace() {
                 <header>
                   <h2>成员</h2>
                   <span>{room.memberCount}人</span>
-                  {watchRoom.isOwner && (
-                    <button onClick={openSettings} aria-label='房间设置'>
-                      <Settings2 size={18} />
-                    </button>
-                  )}
                 </header>
                 {watchRoom.members.map((member) => (
                   <div key={member.id} className='tm-room-member'>
@@ -1035,7 +1030,22 @@ export default function RoomWorkspace() {
                   </div>
                 ))}
               </section>
+              <div
+                id='tm-room-panel-chat'
+                className='tm-room-chat-slot'
+                role={panelTab === 'chat' ? 'tabpanel' : 'region'}
+                aria-labelledby={
+                  panelTab === 'chat' ? 'tm-room-tab-chat' : undefined
+                }
+                aria-label={panelTab === 'chat' ? undefined : '发送消息'}
+                tabIndex={panelTab === 'chat' ? 0 : undefined}
+                data-tm-room-chat-slot
+                data-active={panelTab === 'chat'}
+              />
             </aside>
+            {!room.currentState && playback.followingRoom && (
+              <RoomQuickStart onChoose={openPicker} />
+            )}
           </div>
         ) : (
           <>
@@ -1102,12 +1112,7 @@ export default function RoomWorkspace() {
                   <article key={item.id} className='tm-room-card'>
                     <div className='tm-room-card-art'>
                       <span className='tm-room-card-glyph' aria-hidden='true'>
-                        {/* 房名首字是数字或符号时，字母头像没有意义，改用图标 */}
-                        {!/^[\s!-@[-`{-~]/.test(item.name) ? (
-                          Array.from(item.name)[0]
-                        ) : (
-                          <Users strokeWidth={1.5} />
-                        )}
+                        {Array.from(displayRoomName(item).trim())[0] || '房'}
                       </span>
                       <span
                         className='tm-badge tm-room-card-presence'
@@ -1131,7 +1136,7 @@ export default function RoomWorkspace() {
                       </span>
                     </div>
                     <div className='tm-room-card-body'>
-                      <h2>{item.name}</h2>
+                      <h2>{displayRoomName(item)}</h2>
                       <p>
                         {item.description ||
                           (item.lifecycle === 'archived'
@@ -1140,7 +1145,10 @@ export default function RoomWorkspace() {
                       </p>
                     </div>
                     <button
-                      className='tm-btn tm-btn-secondary tm-btn-sm tm-room-card-action'
+                      className='tm-room-card-action'
+                      aria-label={`${
+                        item.lifecycle === 'archived' ? '恢复房间' : '进入房间'
+                      }：${displayRoomName(item)}`}
                       disabled={busy}
                       onClick={() =>
                         item.lifecycle === 'archived'
@@ -1148,10 +1156,26 @@ export default function RoomWorkspace() {
                           : join(item.id)
                       }
                     >
-                      {item.lifecycle === 'archived' ? '恢复房间' : '进入房间'}
+                      <span className='sr-only'>
+                        {item.lifecycle === 'archived'
+                          ? '恢复房间'
+                          : '进入房间'}
+                      </span>
                     </button>
                   </article>
                 ))}
+                {rooms.length <= 2 && directory !== 'archived' && (
+                  <button
+                    className='tm-room-directory-guide'
+                    onClick={openCreate}
+                  >
+                    <Users size={24} aria-hidden />
+                    <strong>
+                      邀请朋友一起看 <ChevronRight size={14} aria-hidden />
+                    </strong>
+                    <span>创建房间后，复制邀请发给朋友</span>
+                  </button>
+                )}
               </div>
             )}
           </>
@@ -1217,7 +1241,11 @@ export default function RoomWorkspace() {
                     </button>
                   </header>
                   {dialog === 'picker' ? (
-                    <FilmPicker busy={busy} onAdd={addFilm} />
+                    <FilmPicker
+                      busy={busy}
+                      onAdd={addFilm}
+                      initialQuery={pickerTitle}
+                    />
                   ) : dialog === 'join' ? (
                     <form
                       onSubmit={(event) => {
@@ -1397,12 +1425,14 @@ export default function RoomWorkspace() {
 function FilmPicker({
   busy,
   onAdd,
+  initialQuery = '',
 }: {
   busy: boolean;
   onAdd: (href: string) => Promise<void>;
+  initialQuery?: string;
 }) {
   const [mode, setMode] = useState<'catalog' | 'direct'>('catalog');
-  const [query, setQuery] = useState('');
+  const [query, setQuery] = useState(initialQuery);
   const [title, setTitle] = useState('');
   const [results, setResults] = useState<FilmChoice[]>([]);
   const [searching, setSearching] = useState(false);
