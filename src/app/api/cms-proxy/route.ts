@@ -77,9 +77,8 @@ export async function GET(request: NextRequest) {
         signal: controller.signal,
       });
 
-      clearTimeout(timeoutId);
-
       if (!response.ok) {
+        clearTimeout(timeoutId);
         console.error(
           'CMS API 请求失败:',
           response.status,
@@ -91,7 +90,9 @@ export async function GET(request: NextRequest) {
         );
       }
 
+      // 超时要管到响应体读完：只拿到响应头就清掉，对方卡住正文时请求会一直挂着
       const data = await response.json();
+      clearTimeout(timeoutId);
       console.log('CMS API 返回数据:', {
         code: data.code,
         msg: data.msg,

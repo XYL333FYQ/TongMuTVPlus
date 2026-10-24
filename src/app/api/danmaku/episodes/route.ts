@@ -48,13 +48,13 @@ export async function GET(request: NextRequest) {
         keepalive: true,
       });
 
-      clearTimeout(timeoutId);
-
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
+      // 超时要管到响应体读完：只拿到响应头就清掉，对方卡住正文时请求会一直挂着
       const data = await response.json();
+      clearTimeout(timeoutId);
 
       return NextResponse.json(data);
     } catch (fetchError) {

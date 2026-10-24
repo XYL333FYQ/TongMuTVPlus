@@ -115,14 +115,14 @@ function handleTop250(pageStart: number) {
 
   return fetch(target, fetchOptions)
     .then(async (fetchResponse) => {
-      clearTimeout(timeoutId);
-
       if (!fetchResponse.ok) {
         throw new Error(`HTTP error! Status: ${fetchResponse.status}`);
       }
 
       // 获取 HTML 内容
+      // 超时要管到响应体读完：只拿到响应头就清掉，对方卡住正文时请求会一直挂着
       const html = await fetchResponse.text();
+      clearTimeout(timeoutId);
 
       // 通过正则同时捕获影片 id、标题、封面以及评分
       const moviePattern =
