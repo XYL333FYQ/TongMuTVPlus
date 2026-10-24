@@ -908,3 +908,11 @@ html[data-tm-no-blur='true'] .tm-playback-chrome {
     -webkit-backdrop-filter: none;
   }
 }
+
+/* 播放器工具栏、设置面板可用 Tab 到达（art-keyboard.ts），焦点环画在视频上方，用浅色 */
+.art-video-player
+  :is(.art-control, .art-setting-item, .art-selector-item):focus-visible {
+  outline: 2px solid var(--tm-on-art);
+  outline-offset: -2px;
+  border-radius: var(--tm-radius-xs);
+}

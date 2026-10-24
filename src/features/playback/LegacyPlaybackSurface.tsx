@@ -168,6 +168,7 @@ import VideoCard from '@/components/VideoCard';
 import { useWatchRoomContextSafe } from '@/components/WatchRoomProvider';
 
 import { useDownload } from '@/contexts/DownloadContext';
+import { enableArtKeyboardAccess } from '@/features/playback/art-keyboard';
 import {
   usePlaybackSearchParams,
   usePlaybackSession,
@@ -8413,7 +8414,8 @@ function PlayPageClient() {
           pip: true,
           autoSize: false,
           autoMini: false,
-          screenshot: true,
+          // 截图按钮改为下方自定义控件，以便处理跨域片源无法读帧的情况
+          screenshot: false,
           setting: true,
           loop: false,
           flip: true,
@@ -8672,7 +8674,11 @@ function PlayPageClient() {
               });
 
               hls.on(Hls.Events.ERROR, function (event: any, data: any) {
-                console.error('HLS Error:', event, data);
+                if (data?.fatal) {
+                  console.error('HLS Error:', event, data);
+                } else {
+                  console.warn('HLS recoverable:', data?.details);
+                }
                 if (data.fatal) {
                   switch (data.type) {
                     case Hls.ErrorTypes.NETWORK_ERROR:
@@ -9343,6 +9349,25 @@ function PlayPageClient() {
           // 控制栏配置
           controls: [
             {
+              // 与内置截图同名同位置，沿用 .art-control-screenshot 的显示规则
+              name: 'screenshot',
+              position: 'right',
+              index: 20,
+              html: '<i class="art-icon flex"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><circle cx="12" cy="13" r="3" stroke="currentColor" stroke-width="2"/></svg></i>',
+              tooltip: '截图',
+              click: function () {
+                const art = artPlayerRef.current;
+                if (!art) return;
+                art.screenshot().catch(() => {
+                  // 片源站点没有开放跨域读取时浏览器禁止读帧，给出能看懂的原因
+                  if (artPlayerRef.current) {
+                    artPlayerRef.current.notice.show =
+                      '这个片源不允许截图，可以换个线路再试';
+                  }
+                });
+              },
+            },
+            {
               position: 'left',
               index: 40,
               html: `<i class="art-icon flex quick-forward-control"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 5v14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="m16 17 5-5-5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M21 12H9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></i>`,
@@ -9593,6 +9618,15 @@ function PlayPageClient() {
         artPlayerRef.current.on('destroy', () => {
           clearPlayerTimeouts();
         });
+
+        {
+          const art = artPlayerRef.current;
+          const stopKeyboardAccess = enableArtKeyboardAccess([
+            art.template?.$bottom,
+            art.template?.$setting,
+          ]);
+          art.on('destroy', stopKeyboardAccess);
+        }
 
         artPlayerRef.current.on('flip', syncAnime4KCanvasFlip);
 
