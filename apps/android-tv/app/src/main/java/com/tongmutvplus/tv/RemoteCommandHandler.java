@@ -1,4 +1,4 @@
-package com.moontvplus.tv;
+package com.tongmutvplus.tv;
 
 public interface RemoteCommandHandler {
     void onRemoteKey(String key, boolean repeat, String digit);
