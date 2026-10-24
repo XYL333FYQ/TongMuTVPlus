@@ -3,7 +3,7 @@
 ## 2026-10-24 Windows 桌面客户端与安卓手机客户端（套壳，全部在 GitHub Actions 打包）
 
 - **Windows**（`apps/desktop/`，Tauri 2）：窗口装系统 WebView2，首次启动在本地页填服务器地址，探测连通后跳转并记住；`Ctrl+Shift+S` 换地址、`F11` 全屏。NSIS 安装包，x64 + ARM64，支持 Windows 10 / 11。工作流 `.github/workflows/desktop.yml`（手动运行）。
-- **安卓手机**（`apps/android-mobile/`，参照 `apps/android-tv`，WebView，minSdk 23 / targetSdk 35）：首次打开弹地址框，长按图标「更换服务器地址」，连接失败弹重试 / 改地址 / 退出；处理全屏视频（横屏 + 常亮 + 刘海）、返回键、文件选择、Android 15 边到边留边。工作流 `.github/workflows/android-mobile.yml`（手动运行），release 签名用仓库 secrets `ANDROID_MOBILE_KEYSTORE_*`（密钥库备份在用户桌面 `TongMuTV-android-keystore`）。
+- **安卓手机**（`apps/android-mobile/`，参照 `apps/android-tv`，WebView，minSdk 23 / targetSdk 35）：首次打开弹地址框，长按图标「更换服务器地址」，连接失败弹重试 / 改地址 / 退出；处理全屏视频（横屏 + 常亮 + 刘海）、返回键、文件选择、Android 15 边到边留边。工作流 `.github/workflows/android-mobile.yml`（手动运行），release 签名用仓库 secrets `ANDROID_MOBILE_KEYSTORE_*`（密钥库备份在本机项目目录之外（ai项目/备份），不进仓库）。
 - 未改 `src/`、`server/`、主项目 `package.json`；依赖只在 `apps/desktop` 内（`@tauri-apps/cli`、Rust 的 tauri）。
 - **验证（云端实测，run 40119911439 / 40119915249）**：Windows x64 / ARM64 都打包成功，x64 在 Windows 服务器上静默安装并启动，进程存活、WebView2 子进程在、截图显示地址页；安卓 APK 在 API 24（Android 7）与 API 34（Android 14）模拟器上安装启动，地址框弹出，输入假服务器地址后 WebView 真实请求并渲染页面，无崩溃。
 - **没验证**：真机上的视频播放、全屏横屏、后台行为、厂商系统魔改；Windows 10 真机；ARM64 安装包只验证了能打包，没运行；没有真实服务器所以没验证与站点的整体联调。`pnpm format:check` 全库命令在本机原生崩溃（退出码 3221225477，与 AGENTS.md 所述环境问题一致），已改用 `prettier -c` 单查新增文件。
