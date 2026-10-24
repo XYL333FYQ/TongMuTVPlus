@@ -1,0 +1,12 @@
+{
+  "name": "tongmutvplus-desktop",
+  "version": "1.0.0",
+  "private": true,
+  "description": "TongMuTV Plus Windows 桌面客户端（Tauri 壳，打开用户填写的服务器地址）",
+  "scripts": {
+    "tauri": "tauri"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2"
+  }
+}
