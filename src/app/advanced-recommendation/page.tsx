@@ -94,6 +94,7 @@ export default function AdvancedRecommendationPage() {
   useEffect(() => {
     if (!selectedSource) return;
 
+    let cancelled = false;
     const fetchVideos = async () => {
       setIsLoadingVideos(true);
       try {
@@ -103,6 +104,7 @@ export default function AdvancedRecommendationPage() {
           )}&page=${page}`
         );
         const data = await response.json();
+        if (cancelled) return;
 
         if (!response.ok) {
           throw new Error(data.error || '获取推荐失败');
@@ -114,14 +116,18 @@ export default function AdvancedRecommendationPage() {
         );
         setHasMore(Number(data.page || page) < Number(data.pageCount || 1));
       } catch (err) {
+        if (cancelled) return;
         setError(err instanceof Error ? err.message : '获取推荐失败');
         setHasMore(false);
       } finally {
-        setIsLoadingVideos(false);
+        if (!cancelled) setIsLoadingVideos(false);
       }
     };
 
     fetchVideos();
+    return () => {
+      cancelled = true;
+    };
   }, [selectedSource, page]);
 
   useEffect(() => {

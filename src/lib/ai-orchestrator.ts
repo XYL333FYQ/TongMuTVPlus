@@ -900,7 +900,9 @@ ${today}
         vote_average: tmdbData.vote_average,
         genres: tmdbData.genres,
         keywords: tmdbData.keywords,
-        similar: tmdbData.similar?.slice(0, 5),
+        similar: Array.isArray(tmdbData.similar?.results)
+          ? tmdbData.similar.results.slice(0, 5)
+          : undefined,
       },
       null,
       2

@@ -54,10 +54,11 @@ export function currentSeason(now: Date = new Date()): {
   season: Season;
   year: number;
 } {
-  const m = now.getMonth() + 1; // 1..12
+  const beijingNow = new Date(now.getTime() + BEIJING_OFFSET_MS);
+  const m = beijingNow.getUTCMonth() + 1; // 1..12
   const season: Season =
     m <= 3 ? 'winter' : m <= 6 ? 'spring' : m <= 9 ? 'summer' : 'fall';
-  return { season, year: now.getFullYear() };
+  return { season, year: beijingNow.getUTCFullYear() };
 }
 
 function seasonUrl(season: Season, year: number): string {

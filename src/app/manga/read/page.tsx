@@ -187,7 +187,11 @@ export default function MangaReadPage() {
   const chapterName = searchParams.get('chapterName') || '章节';
   const returnTo = searchParams.get('returnTo') || '/manga';
 
-  const [pages, setPages] = useState<string[]>([]);
+  const [chapterPages, setChapterPages] = useState<{
+    chapterId: string;
+    pages: string[];
+  }>({ chapterId: '', pages: [] });
+  const pages = chapterPages.chapterId === chapterId ? chapterPages.pages : [];
   const [activePage, setActivePage] = useState(0);
   const [readMode, setReadMode] = useState<ReadMode>('vertical');
   const [scaleMode, setScaleMode] = useState<ScaleMode>('fit');
@@ -381,10 +385,18 @@ export default function MangaReadPage() {
 
   useEffect(() => {
     if (!chapterId) return;
+    let cancelled = false;
     fetch(`/api/manga/pages?chapterId=${encodeURIComponent(chapterId)}`)
       .then((res) => res.json())
-      .then((data) => setPages(data.pages || []))
-      .catch(() => setPages([]));
+      .then((data) => {
+        if (!cancelled) setChapterPages({ chapterId, pages: data.pages || [] });
+      })
+      .catch(() => {
+        if (!cancelled) setChapterPages({ chapterId, pages: [] });
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [chapterId]);
 
   useEffect(() => {
@@ -406,6 +418,7 @@ export default function MangaReadPage() {
 
   useEffect(() => {
     setActivePage(0);
+    currentVerticalPageIndexRef.current = 0;
     restoredChapterKeyRef.current = null;
     preloadedImageUrlsRef.current.clear();
   }, [chapterId]);
@@ -681,7 +694,12 @@ export default function MangaReadPage() {
 
     const flushPendingRecord = () => {
       const record = pendingRecordRef.current;
-      if (!record || !pendingRecordDirtyRef.current || saveInFlightRef.current)
+      if (
+        !record ||
+        record.chapterId !== chapterId ||
+        !pendingRecordDirtyRef.current ||
+        saveInFlightRef.current
+      )
         return;
 
       const recordToSave =
@@ -698,8 +716,10 @@ export default function MangaReadPage() {
         saveTime: Date.now(),
       })
         .then(() => {
-          pendingRecordRef.current = recordToSave;
-          pendingRecordDirtyRef.current = false;
+          if (pendingRecordRef.current === record) {
+            pendingRecordRef.current = recordToSave;
+            pendingRecordDirtyRef.current = false;
+          }
         })
         .catch(() => undefined)
         .finally(() => {

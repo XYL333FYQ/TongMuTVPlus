@@ -99,6 +99,7 @@ export default function BooksCatalogPage() {
   const activeNavItemRef = useRef<HTMLAnchorElement | null>(null);
   const loadedPageHrefsRef = useRef<Set<string>>(new Set());
   const failedPageHrefsRef = useRef<Set<string>>(new Set());
+  const catalogRequestIdRef = useRef(0);
   const sourceDragStateRef = useRef<{
     pointerId: number;
     startX: number;
@@ -230,11 +231,13 @@ export default function BooksCatalogPage() {
         failedPageHrefsRef.current = new Set();
       }
 
+      const requestId = ++catalogRequestIdRef.current;
       try {
         const params = new URLSearchParams({ sourceId });
         if (normalizedHref) params.set('href', normalizedHref);
         const res = await fetch(`/api/books/catalog?${params.toString()}`);
         const json = await res.json();
+        if (requestId !== catalogRequestIdRef.current) return;
         if (!res.ok) throw new Error(json.error || '获取目录失败');
         const nextData = json as BookCatalogResult;
         if (append) {
@@ -254,14 +257,17 @@ export default function BooksCatalogPage() {
         setNextHref(nextData.nextHref || undefined);
         if (!append) setData(nextData);
       } catch (err) {
+        if (requestId !== catalogRequestIdRef.current) return;
         if (append && normalizedHref) {
           failedPageHrefsRef.current.add(normalizedHref);
           setNextHref(undefined);
         }
         setError(err instanceof Error ? err.message : '获取目录失败');
       } finally {
-        if (!append) setLoadingCatalog(false);
-        setLoadingMore(false);
+        if (requestId === catalogRequestIdRef.current) {
+          if (!append) setLoadingCatalog(false);
+          setLoadingMore(false);
+        }
       }
     },
     [mergeEntries, sourceId]
@@ -270,6 +276,9 @@ export default function BooksCatalogPage() {
   useEffect(() => {
     if (!sourceId) return;
     void loadCatalog(href, false);
+    return () => {
+      catalogRequestIdRef.current += 1;
+    };
   }, [sourceId, href, loadCatalog]);
 
   // 失败态和空目录态的「重试」都走这里：留在原页重取当前分类，不整页刷新。

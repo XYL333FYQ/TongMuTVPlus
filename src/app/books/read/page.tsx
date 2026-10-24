@@ -715,6 +715,7 @@ function ChapterReader({ manifest }: { manifest: BookReadManifest }) {
     manifest.lastRecord?.locator?.value || ''
   );
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const ttsPlaybackGenerationRef = useRef(0);
   const ttsChunksRef = useRef<TtsChunk[]>([]);
   const ttsCurrentChunkIndexRef = useRef(0);
   const ttsStatusRef = useRef<TtsStatus>('idle');
@@ -762,6 +763,7 @@ function ChapterReader({ manifest }: { manifest: BookReadManifest }) {
   }, [ttsCurrentTime, ttsSeeking]);
 
   const stopTts = useCallback((clearQueue = false) => {
+    ttsPlaybackGenerationRef.current += 1;
     const audio = audioRef.current;
     if (audio) {
       audio.pause();
@@ -976,6 +978,7 @@ function ChapterReader({ manifest }: { manifest: BookReadManifest }) {
       if (chaptersLoaded && chapters.length === 0) setLoading(false);
       return;
     }
+    let cancelled = false;
     stopTts(true);
     setLoading(true);
     setError('');
@@ -993,6 +996,7 @@ function ChapterReader({ manifest }: { manifest: BookReadManifest }) {
       { cache: 'no-store' }
     )
       .then((json) => {
+        if (cancelled) return;
         const shouldRestore =
           !restoredChapterPositionRef.current &&
           !initialChapterHref &&
@@ -1006,8 +1010,15 @@ function ChapterReader({ manifest }: { manifest: BookReadManifest }) {
           title: (json as BookChapterContent).title || item.title,
         });
       })
-      .catch((err) => setError(err.message || '获取章节失败'))
-      .finally(() => setLoading(false));
+      .catch((err) => {
+        if (!cancelled) setError(err.message || '获取章节失败');
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [
     chapters,
     chaptersLoaded,
@@ -1110,19 +1121,26 @@ function ChapterReader({ manifest }: { manifest: BookReadManifest }) {
       const chunks = ttsChunksRef.current;
       const chunk = chunks[index];
       if (!chunk || !currentChapterHref) return;
+      const generation = ++ttsPlaybackGenerationRef.current;
       try {
         setTtsError('');
         setTtsLoadingChunkIndex(index);
         setTtsStatus('loading');
         const url = await fetchTtsChunkAudioUrl(chunk, currentChapterHref);
+        if (generation !== ttsPlaybackGenerationRef.current) {
+          URL.revokeObjectURL(url);
+          return;
+        }
         if (!audioRef.current) audioRef.current = new Audio();
         audioRef.current.src = url;
         await audioRef.current.play();
+        if (generation !== ttsPlaybackGenerationRef.current) return;
         ttsCurrentChunkIndexRef.current = index;
         setTtsCurrentChunkIndex(index);
         setTtsStatus('playing');
         setTtsLoadingChunkIndex(null);
       } catch (err) {
+        if (generation !== ttsPlaybackGenerationRef.current) return;
         setTtsStatus('error');
         setTtsLoadingChunkIndex(null);
         setTtsError((err as Error).message || '朗读失败');
@@ -2149,6 +2167,7 @@ export default function BookReadPage() {
   const currentHrefRef = useRef('');
   const currentChapterRef = useRef('');
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const ttsPlaybackGenerationRef = useRef(0);
   const ttsChunkAudioUrlRef = useRef<Record<number, string>>({});
   const ttsChunkBlobCacheRef = useRef<
     Record<number, { url: string; text: string }>
@@ -2375,8 +2394,10 @@ export default function BookReadPage() {
         ...record,
         saveTime: Date.now(),
       });
-      pendingRecordRef.current = { ...record, saveTime: Date.now() };
-      pendingRecordDirtyRef.current = false;
+      if (pendingRecordRef.current === record) {
+        pendingRecordRef.current = { ...record, saveTime: Date.now() };
+        pendingRecordDirtyRef.current = false;
+      }
     } catch {
       // ignore
     } finally {
@@ -2560,6 +2581,7 @@ export default function BookReadPage() {
 
   const stopTts = useCallback(
     (clearQueue = false) => {
+      ttsPlaybackGenerationRef.current += 1;
       const audio = audioRef.current;
       if (audio) {
         audio.pause();
@@ -2728,11 +2750,13 @@ export default function BookReadPage() {
       const chunk = chunks[index];
       const chapterHref = ttsCurrentChapterHrefRef.current;
       if (!chunk || !chapterHref || !manifest) return;
+      const generation = ++ttsPlaybackGenerationRef.current;
       try {
         setTtsError('');
         setTtsLoadingChunkIndex(index);
         setTtsStatus('loading');
         const url = await fetchTtsChunkAudioUrl(chunk, chapterHref);
+        if (generation !== ttsPlaybackGenerationRef.current) return;
         if (!audioRef.current) {
           audioRef.current = new Audio();
         }
@@ -2746,12 +2770,14 @@ export default function BookReadPage() {
           ttsResumeTimeRef.current = saved.currentTimeSec || 0;
         }
         await audioRef.current.play();
+        if (generation !== ttsPlaybackGenerationRef.current) return;
         ttsCurrentChunkIndexRef.current = index;
         setTtsCurrentChunkIndex(index);
         setTtsStatus('playing');
         setTtsLoadingChunkIndex(null);
         persistTtsProgress(index);
       } catch (error) {
+        if (generation !== ttsPlaybackGenerationRef.current) return;
         setTtsStatus('error');
         setTtsLoadingChunkIndex(null);
         setTtsError((error as Error).message || '朗读失败');

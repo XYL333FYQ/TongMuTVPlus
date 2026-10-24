@@ -211,6 +211,7 @@ export default function MangaSearchPage() {
       .catch(() => undefined);
 
     return () => {
+      currentSearchKeyRef.current = '';
       closeEventSource();
       clearPendingResults();
     };

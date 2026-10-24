@@ -405,6 +405,7 @@ export default function BooksSearchPage() {
       .then((json) => setSources(json.sources || []))
       .catch(() => undefined);
     return () => {
+      currentSearchKeyRef.current = '';
       closeEventSource();
       clearPendingResults();
     };

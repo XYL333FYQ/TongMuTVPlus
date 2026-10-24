@@ -368,3 +368,68 @@ test('切换房间会关闭上个房间遗留的表情选择器', () => {
   openChat();
   expect(screen.queryByRole('button', { name: '👍' })).toBeNull();
 });
+
+test('发送回包保留等待期间编辑的下一条草稿', async () => {
+  let acknowledge!: () => void;
+  mockRoom.roomCommand.mockImplementationOnce(
+    () => new Promise<void>((resolve) => (acknowledge = resolve))
+  );
+  render(<ChatFloatingWindow />);
+  openChat();
+  const input = screen.getByRole('textbox', { name: '消息内容' });
+  fireEvent.change(input, { target: { value: '第一条消息' } });
+  fireEvent.click(screen.getByRole('button', { name: '发送消息' }));
+  fireEvent.change(input, { target: { value: '下一条尚未发送' } });
+  await act(async () => acknowledge());
+  expect(input).toHaveValue('下一条尚未发送');
+  expect(mockRoom.roomCommand).toHaveBeenCalledTimes(1);
+  expect(mockRoom.roomCommand).toHaveBeenCalledWith('chat:message', {
+    content: '第一条消息',
+    type: 'text',
+  });
+});
+
+test('发送成功仍清空未经修改的已发送草稿', async () => {
+  render(<ChatFloatingWindow />);
+  openChat();
+  const input = screen.getByRole('textbox', { name: '消息内容' });
+  fireEvent.change(input, { target: { value: '已发送消息' } });
+  await act(async () => {
+    fireEvent.click(screen.getByRole('button', { name: '发送消息' }));
+  });
+  expect(input).toHaveValue('');
+});
+
+test('旧房间的历史回包不会隐藏新房间的分页入口', async () => {
+  let finish!: (page: never[]) => void;
+  mockRoom.loadChatHistory.mockImplementationOnce(
+    () => new Promise<never[]>((resolve) => (finish = resolve))
+  );
+  const view = render(<ChatFloatingWindow />);
+  openChat();
+  fireEvent.click(screen.getByRole('button', { name: '查看更早的消息' }));
+  mockRoom = makeRoom();
+  mockRoom.currentRoom.id = 'room-b';
+  view.rerender(<ChatFloatingWindow />);
+  openChat();
+  expect(screen.getByRole('button', { name: '查看更早的消息' })).toBeEnabled();
+  await act(async () => finish([]));
+  expect(screen.getByRole('button', { name: '查看更早的消息' })).toBeEnabled();
+});
+
+test('旧房间的历史失败不会显示到新房间', async () => {
+  let reject!: (error: Error) => void;
+  mockRoom.loadChatHistory.mockImplementationOnce(
+    () => new Promise<never[]>((_, fail) => (reject = fail))
+  );
+  const view = render(<ChatFloatingWindow />);
+  openChat();
+  fireEvent.click(screen.getByRole('button', { name: '查看更早的消息' }));
+  mockRoom = makeRoom();
+  mockRoom.currentRoom.id = 'room-b';
+  view.rerender(<ChatFloatingWindow />);
+  openChat();
+  await act(async () => reject(new Error('旧房间加载失败')));
+  expect(screen.queryByText('旧房间加载失败')).not.toBeInTheDocument();
+  expect(screen.getByRole('button', { name: '查看更早的消息' })).toBeEnabled();
+});

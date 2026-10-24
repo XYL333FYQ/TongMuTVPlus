@@ -114,6 +114,7 @@ export default function MangaRecommendPage() {
   const [shelf, setShelf] = useState<Record<string, MangaShelfItem>>({});
   const [readRecords, setReadRecords] = useState<MangaReadRecord[]>([]);
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
+  const recommendRequestIdRef = useRef(0);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -160,6 +161,7 @@ export default function MangaRecommendPage() {
   const fetchRecommend = useCallback(
     async (nextPage: number, append: boolean) => {
       if (!sourceId) return;
+      const requestId = ++recommendRequestIdRef.current;
 
       if (append) {
         setLoadingMore(true);
@@ -178,6 +180,7 @@ export default function MangaRecommendPage() {
         const data = (await res.json()) as MangaRecommendResult & {
           error?: string;
         };
+        if (recommendRequestIdRef.current !== requestId) return;
         if (!res.ok) throw new Error(data.error || '获取推荐失败');
 
         setPage(nextPage);
@@ -186,14 +189,17 @@ export default function MangaRecommendPage() {
           hasNextPage: data.hasNextPage,
         }));
       } catch (err) {
+        if (recommendRequestIdRef.current !== requestId) return;
         setError((err as Error).message);
         if (!append) {
           setResult({ mangas: [], hasNextPage: false });
         }
       } finally {
-        setLoading(false);
-        setLoadingMore(false);
-        if (!append) setRecommendSettled(true);
+        if (recommendRequestIdRef.current === requestId) {
+          setLoading(false);
+          setLoadingMore(false);
+          if (!append) setRecommendSettled(true);
+        }
       }
     },
     [recommendType, sourceId]
@@ -203,6 +209,9 @@ export default function MangaRecommendPage() {
     if (!sourceId) return;
     setRecommendSettled(false);
     void fetchRecommend(1, false);
+    return () => {
+      recommendRequestIdRef.current += 1;
+    };
   }, [fetchRecommend, sourceId]);
 
   useEffect(() => {

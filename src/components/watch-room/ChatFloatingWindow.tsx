@@ -144,6 +144,7 @@ export default function ChatFloatingWindow() {
   }, [notice, ownHostNotice, room?.id]);
   const [loadingHistory, setLoadingHistory] = useState(false);
   const [hasOlderHistory, setHasOlderHistory] = useState(true);
+  const historyGeneration = useRef(0);
   const bodyRef = useRef<HTMLDivElement>(null);
   const atBottom = useRef(true);
   const visibleSeqs = useRef(new Set<number>());
@@ -170,6 +171,7 @@ export default function ChatFloatingWindow() {
     return () => window.removeEventListener('tongmu:open-chat', show);
   }, []);
   useEffect(() => {
+    historyGeneration.current += 1;
     setOpen(false);
     setEmojiOpen(false);
     setDraft('');
@@ -179,6 +181,10 @@ export default function ChatFloatingWindow() {
     atBottom.current = true;
     visibleSeqs.current.clear();
     setHasOlderHistory(true);
+    setLoadingHistory(false);
+    return () => {
+      historyGeneration.current += 1;
+    };
   }, [room?.id]);
 
   // Opening a window alone does not mark messages read. Only visible messages in the foreground do.
@@ -245,7 +251,7 @@ export default function ChatFloatingWindow() {
         content: content.trim(),
         type,
       });
-      if (content === draft) setDraft('');
+      setDraft((current) => (current === content ? '' : current));
       setEmojiOpen(false);
       atBottom.current = true;
     } catch (failure) {
@@ -272,6 +278,7 @@ export default function ChatFloatingWindow() {
   const loadOlder = async () => {
     const before = roomContext?.chatMessages[0]?.seq;
     if (!before || loadingHistory || !roomContext) return;
+    const generation = historyGeneration.current;
     setLoadingHistory(true);
     setError('');
     atBottom.current = false;
@@ -279,18 +286,20 @@ export default function ChatFloatingWindow() {
     const oldTop = bodyRef.current?.scrollTop || 0;
     try {
       const page = await roomContext.loadChatHistory(undefined, before);
+      if (generation !== historyGeneration.current) return;
       if (page.length < 50) setHasOlderHistory(false);
       requestAnimationFrame(() => {
-        if (bodyRef.current)
+        if (generation === historyGeneration.current && bodyRef.current)
           bodyRef.current.scrollTop =
             oldTop + bodyRef.current.scrollHeight - oldHeight;
       });
     } catch (failure) {
+      if (generation !== historyGeneration.current) return;
       setError(
         failure instanceof Error ? failure.message : '更早的消息暂时无法加载'
       );
     } finally {
-      setLoadingHistory(false);
+      if (generation === historyGeneration.current) setLoadingHistory(false);
     }
   };
   const unread = room?.unreadCount || 0;
