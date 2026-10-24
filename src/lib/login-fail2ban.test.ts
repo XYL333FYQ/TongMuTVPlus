@@ -6,6 +6,7 @@ import {
 
 beforeEach(() => {
   delete (globalThis as { __loginAccountLocks?: unknown }).__loginAccountLocks;
+  delete (globalThis as { __loginTrustedIps?: unknown }).__loginTrustedIps;
 });
 
 test('ten wrong passwords for one account lock it for 15 minutes regardless of IP', () => {
@@ -39,4 +40,31 @@ test('missing or non-string usernames are ignored', () => {
   recordAccountFailure(undefined);
   recordAccountFailure({ name: 'x' });
   expect(checkAccountLock('').banned).toBe(false);
+});
+
+test('a locked account still lets in IPs that logged in to it before', () => {
+  const start = 3_000_000;
+  recordAccountSuccess('owner', '203.0.113.7', start);
+  for (let i = 0; i < 10; i++) recordAccountFailure('owner', start + 1 + i);
+
+  expect(checkAccountLock('owner', start + 20, '198.51.100.9').banned).toBe(
+    true
+  );
+  expect(checkAccountLock('owner', start + 20).banned).toBe(true);
+  expect(checkAccountLock('owner', start + 20, '203.0.113.7').banned).toBe(
+    false
+  );
+});
+
+test('trust expires after 30 days and only the latest five IPs are kept', () => {
+  const start = 4_000_000;
+  for (let i = 1; i <= 6; i++)
+    recordAccountSuccess('eve', `10.0.0.${i}`, start);
+  for (let i = 0; i < 10; i++) recordAccountFailure('eve', start + 1 + i);
+  expect(checkAccountLock('eve', start + 20, '10.0.0.1').banned).toBe(true);
+  expect(checkAccountLock('eve', start + 20, '10.0.0.6').banned).toBe(false);
+
+  const later = start + 31 * 24 * 60 * 60 * 1000;
+  for (let i = 0; i < 10; i++) recordAccountFailure('eve', later + i);
+  expect(checkAccountLock('eve', later + 20, '10.0.0.6').banned).toBe(true);
 });

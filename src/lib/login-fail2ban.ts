@@ -187,9 +187,33 @@ export function recordLoginSuccess(ip: string | null, now = Date.now()) {
 // 按 IP 限流依赖代理头，直接暴露在公网时可被伪造的 X-Forwarded-For 绕过。
 // 再按用户名限流：同一账号 15 分钟内输错 10 次，锁定 15 分钟（不逐级加长，
 // 避免被人故意锁死站长账号太久；重启服务也会清空）。
+// 曾经成功登录过这个账号的 IP 不受账号锁定影响：别人从各处乱试锁住账号时，
+// 本人在常用网络上仍能登录（这些 IP 依旧受上面按 IP 的限流约束）。
 const ACCOUNT_WINDOW_MS = 15 * 60 * 1000;
 const ACCOUNT_MAX_FAILURES = 10;
 const ACCOUNT_LOCK_MS = 15 * 60 * 1000;
+const TRUSTED_IPS_PER_ACCOUNT = 5;
+const TRUSTED_IP_TTL_MS = 30 * 24 * 60 * 60 * 1000;
+
+interface TrustedIpGlobal {
+  __loginTrustedIps?: Map<string, Map<string, number>>;
+}
+
+function getTrustedStore() {
+  const g = globalThis as typeof globalThis & TrustedIpGlobal;
+  if (!g.__loginTrustedIps) g.__loginTrustedIps = new Map();
+  return g.__loginTrustedIps;
+}
+
+function isTrustedIp(
+  key: string,
+  clientIp: string | null | undefined,
+  now: number
+) {
+  if (!clientIp) return false;
+  const seen = getTrustedStore().get(key)?.get(clientIp);
+  return seen !== undefined && now - seen <= TRUSTED_IP_TTL_MS;
+}
 
 interface AccountLockGlobal {
   __loginAccountLocks?: Map<
@@ -212,12 +236,14 @@ function accountKey(username: unknown): string | null {
 
 export function checkAccountLock(
   username: unknown,
-  now = Date.now()
+  now = Date.now(),
+  clientIp?: string | null
 ): LoginBanStatus {
   const key = accountKey(username);
   if (!key) return { banned: false };
   const record = getAccountStore().get(key);
   if (!record || record.lockedUntil <= now) return { banned: false };
+  if (isTrustedIp(key, clientIp, now)) return { banned: false };
   return {
     banned: true,
     bannedUntil: record.lockedUntil,
@@ -249,7 +275,23 @@ export function recordAccountFailure(username: unknown, now = Date.now()) {
   }
 }
 
-export function recordAccountSuccess(username: unknown) {
+export function recordAccountSuccess(
+  username: unknown,
+  clientIp?: string | null,
+  now = Date.now()
+) {
   const key = accountKey(username);
-  if (key) getAccountStore().delete(key);
+  if (!key) return;
+  getAccountStore().delete(key);
+  if (!clientIp) return;
+  const store = getTrustedStore();
+  const ips = store.get(key) || new Map<string, number>();
+  ips.delete(clientIp);
+  ips.set(clientIp, now);
+  // 只记最近几个，Map 按插入顺序，先删最旧的
+  while (ips.size > TRUSTED_IPS_PER_ACCOUNT) {
+    ips.delete(ips.keys().next().value as string);
+  }
+  store.set(key, ips);
+  if (store.size > 10000) store.delete(store.keys().next().value as string);
 }

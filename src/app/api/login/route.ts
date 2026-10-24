@@ -293,7 +293,7 @@ export async function POST(req: NextRequest) {
     }
 
     // 同一账号短时间内输错太多次：暂时锁定，不再校验密码
-    const accountLock = checkAccountLock(username);
+    const accountLock = checkAccountLock(username, Date.now(), clientIp);
     if (accountLock.banned) {
       return NextResponse.json(
         { error: '这个账号密码错误次数过多，请 15 分钟后再试' },
@@ -336,7 +336,7 @@ export async function POST(req: NextRequest) {
       isSamePassword(password, process.env.PASSWORD || '')
     ) {
       recordLoginSuccess(clientIp);
-      recordAccountSuccess(username);
+      recordAccountSuccess(username, clientIp);
 
       // 验证成功，设置认证cookie
       const deviceInfo = getDeviceInfo(req);
@@ -393,7 +393,7 @@ export async function POST(req: NextRequest) {
     }
 
     recordLoginSuccess(clientIp);
-    recordAccountSuccess(username);
+    recordAccountSuccess(username, clientIp);
 
     // 验证成功，设置认证cookie
     const deviceInfo = getDeviceInfo(req);
