@@ -1,0 +1,145 @@
+name: Build Android Mobile APK
+
+on:
+  workflow_dispatch:
+    inputs:
+      version_name:
+        description: '版本名'
+        required: false
+        default: '1.0.0'
+        type: string
+      version_code:
+        description: '版本号，必须是整数'
+        required: false
+        default: '1'
+        type: string
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  build:
+    name: Build APK
+    runs-on: ubuntu-latest
+    outputs:
+      apk_name: ${{ steps.collect.outputs.apk_name }}
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages: 'platform-tools'
+
+      - name: Install Android SDK packages
+        run: sdkmanager "platforms;android-35" "build-tools;35.0.0"
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.10.2'
+
+      - name: Prepare app icon from public/icons
+        run: |
+          mkdir -p apps/android-mobile/app/src/main/res/drawable
+          cp public/icons/icon-512x512.png apps/android-mobile/app/src/main/res/drawable/logo.png
+
+      - name: Decode signing keystore
+        id: signing
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_MOBILE_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_MOBILE_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_MOBILE_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_MOBILE_KEY_PASSWORD }}
+        run: |
+          if [ -n "$KEYSTORE_BASE64" ] && [ -n "$KEYSTORE_PASSWORD" ] && [ -n "$KEY_ALIAS" ] && [ -n "$KEY_PASSWORD" ]; then
+            echo "$KEYSTORE_BASE64" | base64 -d > /tmp/android-mobile-release.keystore
+            echo "build_type=release" >> "$GITHUB_OUTPUT"
+            echo "task=Release" >> "$GITHUB_OUTPUT"
+          else
+            echo "签名 secrets 不全，只能出 debug APK（每次签名都不同，更新要先卸载旧版）"
+            echo "build_type=debug" >> "$GITHUB_OUTPUT"
+            echo "task=Debug" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build APK
+        working-directory: apps/android-mobile
+        env:
+          VERSION_NAME: ${{ inputs.version_name }}
+          VERSION_CODE: ${{ inputs.version_code }}
+          ANDROID_KEYSTORE_PATH: /tmp/android-mobile-release.keystore
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_MOBILE_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_MOBILE_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_MOBILE_KEY_PASSWORD }}
+        run: gradle assemble${{ steps.signing.outputs.task }} --stacktrace
+
+      - name: Collect APK
+        id: collect
+        run: |
+          mkdir -p /tmp/apk
+          cp "apps/android-mobile/app/build/outputs/apk/${{ steps.signing.outputs.build_type }}/app-${{ steps.signing.outputs.build_type }}.apk" \
+            "/tmp/apk/TongMuTV-Plus-${{ inputs.version_name }}-android.apk"
+          ls -lh /tmp/apk
+          echo "apk_name=TongMuTV-Plus-${{ inputs.version_name }}-android.apk" >> "$GITHUB_OUTPUT"
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: tongmutvplus-android-mobile
+          path: /tmp/apk/*.apk
+          if-no-files-found: error
+          retention-days: 90
+
+  smoke:
+    name: Emulator smoke test (API ${{ matrix.api }})
+    needs: build
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        api: [24, 34]
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - name: Download APK
+        uses: actions/download-artifact@v4
+        with:
+          name: tongmutvplus-android-mobile
+          path: apk
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Run smoke test on emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: ${{ matrix.api }}
+          arch: x86_64
+          target: google_apis
+          disable-animations: true
+          script: bash apps/android-mobile/ci/smoke.sh apk/${{ needs.build.outputs.apk_name }} smoke-out
+
+      - name: Upload smoke screenshots and logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-android-api${{ matrix.api }}
+          path: smoke-out
+          if-no-files-found: ignore
+          retention-days: 14
