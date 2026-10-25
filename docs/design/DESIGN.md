@@ -329,3 +329,10 @@
 - 新增底层画面呼吸：被圆揭开的底层只做 transform（浅色目标：旧画面 1→1.015 略放大离场；深色目标：新画面 1.015→1 落定。缩放必须 ≥ 1，小于 1 会让画面四边内缩、露出页面底色形成黑边），被裁切层不加变换，日冕环位置不变。
 - 日月图标改为同一个内联 SVG 变形（圆盘缩放、遮罩圆咬成弯月、光线收拢），状态仍由 `data-tm-celestial` 驱动；旧的整体旋转交接去掉。减少动态时变形时长为 0。
 - 不改颜色、布局、存储键、接口，不新增依赖。
+
+### 2026-10-25 — 原生控件清零与内置主题预设（用户确认）
+
+- **下拉**：全站不再出现浏览器原生下拉，统一用 `components/ui/Select.tsx`（触发器沿用输入框样式，弹层为 `--tm-surface-raised` + 1px `--tm-line-strong` + `--tm-shadow-md`，选项高 ≥ 44px，选中项右侧对勾，打开动效 `--tm-d-hover`，响应减少动态）。
+- **复选 / 单选 / 滑块 / 文件选择**：见 `styles/form-controls.css`，黑白自绘，选中态底色 `--tm-text`、标记色 `--tm-accent-contrast`。
+- **提示与确认**：不用浏览器 alert / confirm，改用 `notify` / `askConfirm`（Toast 与 ConfirmDialog）。
+- **内置主题**：在令牌上换带淡淡色调的底色（只改 `--tm-bg / surface / surface-raised / line / line-strong / muted / glass`），不改正文色、强调色和报错红。这是对「唯一彩色是报错红」的受控例外，仅站长在个性化配置里主动选择时生效。
