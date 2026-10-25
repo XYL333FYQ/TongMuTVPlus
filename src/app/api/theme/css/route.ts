@@ -42,8 +42,12 @@ export async function GET(request: NextRequest) {
       ? `public, max-age=${maxAge}, stale-while-revalidate=${staleWhileRevalidate}`
       : 'no-store';
 
-    // 添加版本号到ETag
-    const etag = `"${themeConfig.cacheVersion}"`;
+    // ETag = 版本号 + 内容摘要：版本号没涨但内置主题定义随部署变了，也能被浏览器发现
+    let hash = 5381;
+    for (let i = 0; i < css.length; i++) {
+      hash = ((hash << 5) + hash + css.charCodeAt(i)) >>> 0;
+    }
+    const etag = `"${themeConfig.cacheVersion}-${hash.toString(36)}"`;
 
     // 检查客户端缓存
     const ifNoneMatch = request.headers.get('if-none-match');

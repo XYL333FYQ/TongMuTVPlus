@@ -987,7 +987,7 @@ export default function PrivateLibraryPage() {
                       setXiaoyaSearchResults([]);
                     }}
                     aria-label='清空搜索'
-                    className='absolute right-2 top-1/2 -translate-y-1/2 p-1 text-muted hover:text-muted min-h-[44px] tm-press min-w-[44px]'
+                    className='absolute right-2 top-1/2 -translate-y-1/2 p-1 text-muted hover:text-fg min-h-[44px] tm-press min-w-[44px]'
                   >
                     <svg
                       className='w-5 h-5'

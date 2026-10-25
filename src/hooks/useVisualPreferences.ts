@@ -5,10 +5,16 @@ import { useEffect, useState } from 'react';
 export interface VisualPreferences {
   noBlur: boolean;
   reduceMotion: boolean;
+  /** 房间里滚动页面时，播放窗口缓动跟随（默认关：滚动时窗口紧贴页面） */
+  playerEase: boolean;
 }
 const STORAGE_KEY = 'tm-visual-preferences-v1';
 const CHANGE_EVENT = 'tm-visual-preferences-change';
-const defaults: VisualPreferences = { noBlur: false, reduceMotion: false };
+const defaults: VisualPreferences = {
+  noBlur: false,
+  reduceMotion: false,
+  playerEase: false,
+};
 let memoryPreferences = defaults;
 
 function normalize(value: unknown): VisualPreferences {
@@ -19,6 +25,7 @@ function normalize(value: unknown): VisualPreferences {
   return {
     noBlur: record.noBlur === true,
     reduceMotion: record.reduceMotion === true,
+    playerEase: record.playerEase === true,
   };
 }
 function read(): VisualPreferences {
@@ -33,6 +40,9 @@ function apply(preferences: VisualPreferences) {
   document.documentElement.dataset.tmNoBlur = String(preferences.noBlur);
   document.documentElement.dataset.tmReducedMotion = String(
     preferences.reduceMotion
+  );
+  document.documentElement.dataset.tmPlayerEase = String(
+    preferences.playerEase
   );
 }
 

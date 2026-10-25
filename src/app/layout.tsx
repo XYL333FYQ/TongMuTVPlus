@@ -129,6 +129,8 @@ export default async function RootLayout({
   let progressThumbCustomUrl = '';
   let loadingStyle = 'talisman';
   let rateBadgeStyle = 'flag';
+  // 主题 CSS 的版本号：写进样式表地址，主题一变地址就变，浏览器不会继续用旧缓存
+  let themeCssVersion = 0;
   let enableRegistration = false;
   let requireRegistrationInviteCode = false;
   let loginRequireTurnstile = false;
@@ -210,6 +212,7 @@ export default async function RootLayout({
     bangumiApiBaseUrl =
       config.SiteConfig.BangumiApiBaseUrl || 'https://api.bgm.tv';
     bangumiImageBaseUrl = config.SiteConfig.BangumiImageBaseUrl || '';
+    themeCssVersion = config.ThemeConfig?.cacheVersion || 0;
     loginBackgroundImage = config.ThemeConfig?.loginBackgroundImage || '';
     registerBackgroundImage = config.ThemeConfig?.registerBackgroundImage || '';
     homeBackgroundImage = config.ThemeConfig?.homeBackgroundImage || '';
@@ -432,7 +435,7 @@ export default async function RootLayout({
         />
         <link rel='apple-touch-icon' href='/icons/icon-180x180.png' />
         {/* 主题CSS */}
-        <link rel='stylesheet' href='/api/theme/css' />
+        <link rel='stylesheet' href={`/api/theme/css?v=${themeCssVersion}`} />
         {/* 将配置序列化后直接写入脚本，浏览器端可通过 window.RUNTIME_CONFIG 获取 */}
         {/* eslint-disable-next-line @next/next/no-sync-scripts */}
         <script

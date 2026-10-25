@@ -91,11 +91,13 @@ function MockPlaybackSurface() {
     };
   }, [attachController]);
   return (
-    <video
-      ref={video}
-      data-testid='session-video'
-      data-playback-href={session.href || ''}
-    />
+    <div data-tm-player-mount data-testid='player-mount'>
+      <video
+        ref={video}
+        data-testid='session-video'
+        data-playback-href={session.href || ''}
+      />
+    </div>
   );
 }
 
@@ -448,4 +450,143 @@ it('keeps the current room video and surfaces an error when leaving synchronizat
   expect(screen.getByTestId('session-video')).toBe(video);
   expect(screen.getByTestId('session-href').textContent).toContain('id=film-a');
   expect(mockMounts).toBe(1);
+});
+
+it('closes a solo mini player completely instead of only folding it', async () => {
+  mockPathname = '/search';
+  mockRoom = null;
+  render(<Harness />);
+  fireEvent.click(screen.getByRole('button', { name: '选择影片 A' }));
+  const host = await screen.findByTestId('global-playback-host');
+  expect(host).toHaveAttribute('data-presentation', 'mini');
+
+  fireEvent.click(screen.getByRole('button', { name: '关闭播放' }));
+
+  await waitFor(() =>
+    expect(screen.queryByTestId('global-playback-host')).not.toBeInTheDocument()
+  );
+  expect(screen.getByTestId('session-href')).toBeEmptyDOMElement();
+  expect(mockUnmounts).toBe(1);
+});
+
+it('folded player can also be closed', async () => {
+  mockPathname = '/search';
+  mockRoom = null;
+  render(<Harness />);
+  fireEvent.click(screen.getByRole('button', { name: '选择影片 A' }));
+  await screen.findByTestId('global-playback-host');
+  fireEvent.click(screen.getByRole('button', { name: '测试收起' }));
+  expect(screen.getByTestId('global-playback-host')).toHaveAttribute(
+    'data-presentation',
+    'folded'
+  );
+
+  fireEvent.click(screen.getByRole('button', { name: '关闭播放' }));
+
+  await waitFor(() =>
+    expect(screen.queryByTestId('global-playback-host')).not.toBeInTheDocument()
+  );
+});
+
+it('closing while following a room leaves the sync first and offers the way back', async () => {
+  mockPathname = '/search';
+  mockRoom = makeRoom();
+  render(<Harness />);
+  await screen.findByTestId('global-playback-host');
+
+  fireEvent.click(screen.getByRole('button', { name: '关闭播放' }));
+
+  await waitFor(() =>
+    expect(screen.queryByTestId('global-playback-host')).not.toBeInTheDocument()
+  );
+  expect(mockRoom.roomCommand).toHaveBeenCalledWith('room:following', {
+    following: false,
+  });
+  expect(
+    screen.getByRole('button', { name: /回到一起看/ })
+  ).toBeInTheDocument();
+});
+
+it('keeps playing when leaving the room sync fails', async () => {
+  mockPathname = '/search';
+  mockRoom = makeRoom();
+  mockRoom.roomCommand.mockRejectedValueOnce(new Error('房间连接中断'));
+  render(<Harness />);
+  await screen.findByTestId('global-playback-host');
+
+  fireEvent.click(screen.getByRole('button', { name: '关闭播放' }));
+
+  expect(await screen.findByRole('alert')).toHaveTextContent('房间连接中断');
+  expect(screen.getByTestId('global-playback-host')).toBeInTheDocument();
+});
+
+it('a deleted room ends the playback of people still following it, but not personal viewers', async () => {
+  mockPathname = '/search';
+  mockRoom = makeRoom();
+  render(<Harness />);
+  await screen.findByTestId('global-playback-host');
+
+  act(() => {
+    window.dispatchEvent(
+      new CustomEvent('tongmu:room-deleted', { detail: { roomId: 'room-1' } })
+    );
+  });
+
+  await waitFor(() =>
+    expect(screen.queryByTestId('global-playback-host')).not.toBeInTheDocument()
+  );
+});
+
+it('a deleted room does not hollow out the /play page itself', async () => {
+  mockPathname = '/play';
+  mockRoom = makeRoom();
+  render(<Harness />);
+  await screen.findByTestId('global-playback-host');
+
+  act(() => {
+    window.dispatchEvent(new CustomEvent('tongmu:room-deleted'));
+  });
+
+  expect(screen.getByTestId('global-playback-host')).toBeInTheDocument();
+});
+
+it('while scrolling the docked player follows the page without easing, then restores the transition', async () => {
+  mockPathname = '/watch-room';
+  render(<Harness dock />);
+  fireEvent.click(screen.getByRole('button', { name: '选择影片 A' }));
+  const host = await screen.findByTestId('global-playback-host');
+  const mount = screen.getByTestId('player-mount');
+  const slot = screen.getByTestId('room-playback-slot');
+  const getRect = jest.spyOn(slot, 'getBoundingClientRect');
+  getRect.mockReturnValue({
+    left: 20,
+    top: -40,
+    width: 600,
+    height: 337.5,
+  } as DOMRect);
+
+  fireEvent.scroll(window);
+
+  expect(mount.style.transition).toBe('none');
+  await waitFor(() =>
+    expect(host.style.getPropertyValue('--tm-slot-top')).toBe('-40px')
+  );
+  await waitFor(() => expect(mount.style.transition).toBe(''), {
+    timeout: 1000,
+  });
+  getRect.mockRestore();
+});
+
+it('keeps the easing transition when the user opted into eased following', async () => {
+  mockPathname = '/watch-room';
+  document.documentElement.dataset.tmPlayerEase = 'true';
+  render(<Harness dock />);
+  fireEvent.click(screen.getByRole('button', { name: '选择影片 A' }));
+  await screen.findByTestId('global-playback-host');
+  const mount = screen.getByTestId('player-mount');
+
+  fireEvent.scroll(window);
+
+  expect(mount.style.transition).toBe('');
+  delete document.documentElement.dataset.tmPlayerEase;
 });

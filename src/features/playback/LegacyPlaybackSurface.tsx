@@ -2847,12 +2847,8 @@ function PlayPageClient() {
         userName: authInfo?.username || '游客',
       });
       playbackSession.shareCurrentPlayback();
-      setToast({
-        message: `观影室已创建，房间号：${room.id}，快邀请好友加入吧`,
-        type: 'success',
-        duration: 5000,
-        onClose: () => setToast(null),
-      });
+      // 创建成功直接进房间页：同一个播放实例从整页变成房间里的画面，不会重建
+      router.push(`/watch-room?room=${encodeURIComponent(room.id)}`);
     } catch (error: any) {
       setToast({
         message: error?.message || '创建观影室失败',
@@ -11694,11 +11690,11 @@ function PlayPageClient() {
         </div>
       )}
 
-      <div className='relative z-10 flex flex-col gap-3 py-4 px-5 lg:px-[3rem] 2xl:px-20'>
+      <div className='tm-page-container relative z-10 flex flex-col gap-3 py-4'>
         {/* 第一行：影片标题 */}
         <div className='py-1'>
           <h1
-            className={`text-xl font-medium flex items-center gap-2 flex-wrap ${
+            className={`text-2xl font-semibold tracking-tight flex items-center gap-2 flex-wrap ${
               tmdbBackdrop ? 'text-on-art' : 'text-fg'
             }`}
           >
@@ -11731,6 +11727,42 @@ function PlayPageClient() {
               </span>
             )}
           </h1>
+          {/* 一行关键信息：年份 / 片源 / 类型 / 集数 / 评分，不用滚到页面下方才知道 */}
+          {(doubanYear ||
+            detail?.year ||
+            videoYear ||
+            detail?.source_name ||
+            detail?.type_name ||
+            totalEpisodes > 1 ||
+            (doubanRating && doubanRating.value > 0)) && (
+            <div className='mt-2 flex flex-wrap items-center gap-2 text-[13px]'>
+              {(doubanYear || detail?.year || videoYear) && (
+                <span className='inline-flex items-center rounded-full bg-raised px-2.5 py-0.5 text-fg'>
+                  {doubanYear || detail?.year || videoYear}
+                </span>
+              )}
+              {detail?.type_name && (
+                <span className='inline-flex items-center rounded-full bg-raised px-2.5 py-0.5 text-fg'>
+                  {detail.type_name}
+                </span>
+              )}
+              {totalEpisodes > 1 && (
+                <span className='inline-flex items-center rounded-full bg-raised px-2.5 py-0.5 text-fg'>
+                  共 {totalEpisodes} 集
+                </span>
+              )}
+              {doubanRating && doubanRating.value > 0 && (
+                <span className='inline-flex items-center rounded-full bg-raised px-2.5 py-0.5 text-fg'>
+                  豆瓣 {doubanRating.value.toFixed(1)}
+                </span>
+              )}
+              {detail?.source_name && (
+                <span className='inline-flex items-center rounded-full border border-line px-2.5 py-0.5 text-muted'>
+                  片源 · {detail.source_name}
+                </span>
+              )}
+            </div>
+          )}
         </div>
         {/* 第二行：播放器和选集 */}
         <div className='space-y-2'>
@@ -11774,7 +11806,7 @@ function PlayPageClient() {
           </div>
 
           <div
-            className={`grid gap-4 lg:h-[500px] xl:h-[650px] 2xl:h-[750px] transition-all duration-300 ease-in-out ${
+            className={`grid gap-4 lg:h-[520px] xl:h-[620px] 2xl:h-[680px] transition-all duration-300 ease-in-out ${
               isEpisodeSelectorCollapsed
                 ? 'grid-cols-1'
                 : 'grid-cols-1 md:grid-cols-4'
@@ -12068,7 +12100,7 @@ function PlayPageClient() {
                           title='复制视频链接'
                         >
                           <svg
-                            className='w-4 h-4 flex-shrink-0 text-fg'
+                            className='w-4 h-4 flex-shrink-0 text-inverse'
                             fill='none'
                             stroke='currentColor'
                             viewBox='0 0 24 24'
@@ -12080,7 +12112,7 @@ function PlayPageClient() {
                               d='M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z'
                             />
                           </svg>
-                          <span className='hidden lg:inline max-w-0 group-hover:max-w-[100px] overflow-hidden whitespace-nowrap transition-all duration-200 ease-in-out text-fg'>
+                          <span className='hidden lg:inline max-w-0 group-hover:max-w-[100px] overflow-hidden whitespace-nowrap transition-all duration-200 ease-in-out text-inverse'>
                             复制链接
                           </span>
                         </button>
@@ -12098,11 +12130,11 @@ function PlayPageClient() {
                               title='创建观影室'
                             >
                               {isCreatingRoom ? (
-                                <Loader2 className='w-4 h-4 flex-shrink-0 text-fg animate-spin' />
+                                <Loader2 className='w-4 h-4 flex-shrink-0 text-inverse animate-spin' />
                               ) : (
-                                <Users className='w-4 h-4 flex-shrink-0 text-fg' />
+                                <Users className='w-4 h-4 flex-shrink-0 text-inverse' />
                               )}
-                              <span className='hidden lg:inline max-w-0 group-hover:max-w-[120px] overflow-hidden whitespace-nowrap transition-all duration-200 ease-in-out text-fg'>
+                              <span className='hidden lg:inline max-w-0 group-hover:max-w-[120px] overflow-hidden whitespace-nowrap transition-all duration-200 ease-in-out text-inverse'>
                                 {isCreatingRoom ? '创建中' : '创建观影室'}
                               </span>
                             </button>

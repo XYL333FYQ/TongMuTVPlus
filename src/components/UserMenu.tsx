@@ -3984,7 +3984,7 @@ export const UserMenu: React.FC = () => {
                             优选策略
                             <button
                               type='button'
-                              className='group relative inline-flex h-4 w-4 items-center justify-center rounded-full text-muted transition-colors hover:text-muted focus:outline-none focus:ring-2 focus:ring-[color-mix(in_srgb,var(--tm-text)_50%,transparent)] min-h-[44px] tm-press'
+                              className='group relative inline-flex h-4 w-4 items-center justify-center rounded-full text-muted transition-colors hover:text-fg focus:outline-none focus:ring-2 focus:ring-[color-mix(in_srgb,var(--tm-text)_50%,transparent)] min-h-[44px] tm-press'
                               aria-label='优选策略说明'
                             >
                               <CircleHelp className='h-3.5 w-3.5' />
@@ -4028,7 +4028,7 @@ export const UserMenu: React.FC = () => {
                             优选偏好
                             <button
                               type='button'
-                              className='group relative inline-flex h-4 w-4 items-center justify-center rounded-full text-muted transition-colors hover:text-muted focus:outline-none focus:ring-2 focus:ring-[color-mix(in_srgb,var(--tm-text)_50%,transparent)] min-h-[44px] tm-press'
+                              className='group relative inline-flex h-4 w-4 items-center justify-center rounded-full text-muted transition-colors hover:text-fg focus:outline-none focus:ring-2 focus:ring-[color-mix(in_srgb,var(--tm-text)_50%,transparent)] min-h-[44px] tm-press'
                               aria-label='优选偏好说明'
                             >
                               <CircleHelp className='h-3.5 w-3.5' />

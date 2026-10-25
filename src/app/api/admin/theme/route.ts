@@ -136,10 +136,21 @@ export async function POST(request: NextRequest) {
 
     // 获取当前版本号，如果CSS有变化则递增
     const currentVersion = adminConfig.ThemeConfig?.cacheVersion || 0;
-    const currentCSS = enableBuiltInTheme
-      ? adminConfig.ThemeConfig?.builtInTheme
-      : adminConfig.ThemeConfig?.customCSS;
-    const newCSS = enableBuiltInTheme ? builtInTheme : customCSS;
+    // 比较“旧的实际生效内容”和“新的实际生效内容”，带上模式前缀：
+    // 内置 ↔ 自定义互切、或自定义 CSS 恰好相同时也要算变化，否则版本号不涨、浏览器继续用旧缓存
+    const effectiveKey = (
+      builtIn: boolean | undefined,
+      theme: string | undefined,
+      css: string | undefined
+    ) => (builtIn ? `built-in:${theme ?? ''}` : `custom:${css ?? ''}`);
+    const currentCSS = adminConfig.ThemeConfig
+      ? effectiveKey(
+          adminConfig.ThemeConfig.enableBuiltInTheme,
+          adminConfig.ThemeConfig.builtInTheme,
+          adminConfig.ThemeConfig.customCSS
+        )
+      : effectiveKey(false, undefined, '');
+    const newCSS = effectiveKey(enableBuiltInTheme, builtInTheme, customCSS);
     const cssChanged = currentCSS !== newCSS;
 
     // 更新主题配置

@@ -119,6 +119,8 @@ interface ExploreNotice {
   message: string;
   loginHref?: string;
   requestHref?: string;
+  // 站长/管理员碰到“未开放”时，直接去管理面板配置，不用向自己申请
+  adminHref?: string;
 }
 
 function resolveEntryState(
@@ -163,6 +165,7 @@ export function MoreMenu({
 }: { onNavigate?: () => void; label?: string } = {}) {
   const [runtime, setRuntime] = useState<Record<string, unknown>>({});
   const [loggedIn, setLoggedIn] = useState(false);
+  const [isStationAdmin, setIsStationAdmin] = useState(false);
   const [notice, setNotice] = useState<ExploreNotice | null>(null);
   const dialogRef = useRef<HTMLDialogElement>(null);
   const noticeRef = useRef<HTMLDialogElement>(null);
@@ -172,7 +175,9 @@ export function MoreMenu({
 
   useEffect(() => {
     setRuntime(window.RUNTIME_CONFIG || {});
-    setLoggedIn(!!getAuthInfoFromBrowserCookie()?.username);
+    const auth = getAuthInfoFromBrowserCookie();
+    setLoggedIn(!!auth?.username);
+    setIsStationAdmin(auth?.role === 'owner' || auth?.role === 'admin');
   }, []);
 
   useEffect(() => {
@@ -321,6 +326,15 @@ export function MoreMenu({
 
   const openNotice = (state: ExploreEntryState, entry?: ExploreEntry) => {
     const base = buildNotice(state);
+    // 站长/管理员自己就是“站长”：未开放说明站点还没配置，给管理面板入口，不给申请入口
+    if (state === 'site-locked' && isStationAdmin) {
+      setNotice({
+        title: '功能还没配置',
+        message: '站点里还没配置这个功能，到管理面板配置后才会开放。',
+        adminHref: '/admin',
+      });
+      return;
+    }
     // 已登录但用不了的功能，可以直接向站长申请
     if (
       entry?.permission &&
@@ -491,6 +505,20 @@ export function MoreMenu({
                   }}
                 >
                   去登录
+                </Link>
+              )}
+              {notice.adminHref && (
+                <Link
+                  href={notice.adminHref}
+                  prefetch={false}
+                  className='tm-btn tm-btn-primary tm-press'
+                  onClick={() => {
+                    closeNotice();
+                    dialogRef.current?.close();
+                    onNavigate?.();
+                  }}
+                >
+                  去管理面板
                 </Link>
               )}
               {notice.requestHref && loggedIn && (

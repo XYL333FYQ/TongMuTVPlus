@@ -125,6 +125,7 @@ export function useWatchRoom(
         return Promise.reject(new Error('房间连接中断，请稍后重试'));
       const connection = connectionGeneration.current;
       const generation = roomGeneration.current;
+      const roomAtSend = roomRef.current?.id;
       const isTransition = event === 'room:join' || event === 'room:create';
       const transition = isTransition
         ? ++transitionGeneration.current
@@ -140,6 +141,15 @@ export function useWatchRoom(
             ) {
               if (event === 'chat:history')
                 resolve({ success: true, messages: [] });
+              // 服务端先广播 room:deleted、后回确认：广播会让代际计数 +1，
+              // 确认到达时已“过期”。删除命令发出时的房间已经没了，就是成功，不是被取消。
+              else if (
+                event === 'room:delete' &&
+                connection === connectionGeneration.current &&
+                roomAtSend &&
+                roomRef.current?.id !== roomAtSend
+              )
+                resolve({ success: true });
               else reject(new SupersededRoomRequestError());
               return;
             }
@@ -417,6 +427,12 @@ export function useWatchRoom(
     const deleted = (data?: { reason?: string }) => {
       roomGeneration.current += 1;
       callbacks.current.onRoomDeleted?.(data);
+      // 通知全站播放器：正在跟随这个房间的画面该收场了（浏览器内部事件，不是 Socket 事件）
+      window.dispatchEvent(
+        new CustomEvent('tongmu:room-deleted', {
+          detail: { roomId: roomRef.current?.id },
+        })
+      );
       clearStoredRoomInfo();
       roomRef.current = null;
       setCurrentRoom(null);

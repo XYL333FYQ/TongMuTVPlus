@@ -2211,7 +2211,7 @@ const UserConfig = ({
                                   disabled={
                                     revokingUserDevice === device.tokenId
                                   }
-                                  className='ml-2 px-3 py-1.5 text-[13px] font-medium text-[color:var(--tm-text)] hover:text-[color:var(--tm-text)] border border-[var(--tm-line)] hover:border-[var(--tm-line)] hover:bg-[var(--tm-line)] rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap min-h-[44px] tm-press'
+                                  className='ml-2 px-3 py-1.5 text-[13px] font-medium text-[color:var(--tm-text)] hover:text-[color:var(--tm-text)] border border-[var(--tm-line)] hover:border-[var(--tm-line-strong)] hover:bg-[var(--tm-line)] rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap min-h-[44px] tm-press'
                                 >
                                   {revokingUserDevice === device.tokenId
                                     ? '登出中...'
@@ -3971,7 +3971,7 @@ const OpenListConfigComponent = ({
               type='button'
               onClick={() => setRootPaths([...rootPaths, '/'])}
               disabled={!enabled}
-              className='w-full px-3 py-2 border-2 border-dashed border-[var(--tm-line)] rounded-lg text-[color:var(--tm-muted)] hover:border-[var(--tm-line)] hover:text-[color:var(--tm-text)] disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px] tm-press'
+              className='w-full px-3 py-2 border-2 border-dashed border-[var(--tm-line)] rounded-lg text-[color:var(--tm-muted)] hover:border-[var(--tm-line-strong)] hover:text-[color:var(--tm-text)] disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px] tm-press'
             >
               + 添加根目录
             </button>
@@ -7467,7 +7467,7 @@ const VideoSourceConfig = ({
         <div
           ref={setNodeRef}
           style={style}
-          className='grid grid-cols-[88px_minmax(0,1fr)_112px_112px_220px] items-center gap-3 rounded-2xl border border-[var(--tm-line)] bg-[var(--tm-surface)] px-4 py-3 shadow-sm transition hover:border-[var(--tm-line)] hover:shadow'
+          className='grid grid-cols-[88px_minmax(0,1fr)_112px_112px_220px] items-center gap-3 rounded-2xl border border-[var(--tm-line)] bg-[var(--tm-surface)] px-4 py-3 shadow-sm transition hover:border-[var(--tm-line-strong)] hover:shadow'
         >
           <div
             className='flex items-center gap-3 text-sm text-[color:var(--tm-muted)] cursor-grab'
@@ -9700,6 +9700,10 @@ const ConfigFileComponent = ({
   const [subscriptionUrl, setSubscriptionUrl] = useState('');
   const [autoUpdate, setAutoUpdate] = useState(false);
   const [lastCheckTime, setLastCheckTime] = useState<string>('');
+  // 上传方式：覆盖 = 用新文件替换输入框里的全部内容；合并 = 保留已有内容，按 api 地址去重后追加
+  const [uploadMode, setUploadMode] = useState<'overwrite' | 'merge'>(
+    'overwrite'
+  );
 
   useEffect(() => {
     if (config?.ConfigFile) {
@@ -9753,12 +9757,19 @@ const ConfigFileComponent = ({
   const handleFileUpload = async (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
-    const file = event.target.files?.[0];
+    const input = event.target;
+    const file = input.files?.[0];
     if (!file) return;
+
+    // 不管后面成功还是失败，都要清空文件框，否则再选同一个文件不会触发 onChange
+    const resetInput = () => {
+      input.value = '';
+    };
 
     // 检查文件类型
     if (!file.name.toLowerCase().endsWith('.json')) {
       showError('请上传JSON格式的文件', showAlert);
+      resetInput();
       return;
     }
 
@@ -9781,10 +9792,29 @@ const ConfigFileComponent = ({
           return;
         }
 
-        // 根据api字段进行去重
-        const existingConfig = configContent
-          ? JSON.parse(configContent)
-          : { api_site: {} };
+        // 覆盖模式：新文件直接替换输入框全部内容，不看已有配置
+        if (uploadMode === 'overwrite') {
+          setConfigContent(JSON.stringify(parsedConfig, null, 2));
+          showSuccess(
+            '已用上传的文件覆盖输入框，点击下方“保存”后才会生效',
+            showAlert
+          );
+          return;
+        }
+
+        // 合并模式：根据api字段进行去重
+        let existingConfig: any = { api_site: {} };
+        if (configContent.trim()) {
+          try {
+            existingConfig = JSON.parse(configContent);
+          } catch {
+            showError(
+              '输入框里的现有内容不是有效 JSON，无法合并；可切换到“覆盖”，或先修正输入框',
+              showAlert
+            );
+            return;
+          }
+        }
         const existingApis = new Set();
 
         // 收集现有配置中的所有api
@@ -9809,7 +9839,9 @@ const ConfigFileComponent = ({
           }
         );
 
+        // 已有的其他顶层字段保留，新文件里同名字段以新的为准
         const mergedConfig = {
+          ...existingConfig,
           ...parsedConfig,
           api_site: mergedApiSite,
         };
@@ -9819,20 +9851,18 @@ const ConfigFileComponent = ({
 
         const message =
           duplicateCount > 0
-            ? `配置上传成功，跳过了 ${duplicateCount} 个重复的API`
-            : '配置上传成功';
+            ? `已合并，跳过了 ${duplicateCount} 个重复的API；点击“保存”后才会生效`
+            : '已合并；点击“保存”后才会生效';
         showSuccess(message, showAlert);
       } catch (err) {
         showError(
           err instanceof Error ? err.message : '文件上传失败',
           showAlert
         );
-        throw err;
       }
     });
 
-    // 清空文件输入
-    event.target.value = '';
+    resetInput();
   };
 
   // 保存配置文件
@@ -9898,7 +9928,7 @@ const ConfigFileComponent = ({
               onChange={(e) => setSubscriptionUrl(e.target.value)}
               placeholder='https://example.com/config.json'
               disabled={false}
-              className='w-full px-4 py-3 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)] focus:ring-2 focus:ring-[var(--tm-text)] focus:border-transparent transition-all duration-200 shadow-sm hover:border-[var(--tm-line)]'
+              className='w-full px-4 py-3 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)] focus:ring-2 focus:ring-[var(--tm-text)] focus:border-transparent transition-all duration-200 shadow-sm hover:border-[var(--tm-line-strong)]'
             />
             <p className='mt-2 text-[13px] text-[color:var(--tm-muted)]'>
               输入配置文件的订阅地址，要求 JSON 格式，且使用 Base58 编码
@@ -9968,7 +9998,7 @@ const ConfigFileComponent = ({
             rows={20}
             placeholder='请输入配置文件内容（JSON 格式）...'
             disabled={false}
-            className='w-full px-4 py-3 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)] font-mono text-sm leading-relaxed resize-none focus:ring-2 focus:ring-[var(--tm-text)] focus:border-transparent transition-all duration-200 hover:border-[var(--tm-line)]'
+            className='w-full px-4 py-3 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)] font-mono text-sm leading-relaxed resize-none focus:ring-2 focus:ring-[var(--tm-text)] focus:border-transparent transition-all duration-200 hover:border-[var(--tm-line-strong)]'
             style={{
               fontFamily:
                 'ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace',
@@ -9985,8 +10015,39 @@ const ConfigFileComponent = ({
               上传JSON配置文件
             </label>
             <div className='text-[13px] text-[color:var(--tm-muted)]'>
-              支持根据API字段自动去重
+              上传后只改输入框，点“保存”才生效
             </div>
+          </div>
+          <div
+            className='mb-3 flex flex-wrap gap-2'
+            role='radiogroup'
+            aria-label='上传方式'
+          >
+            {(
+              [
+                ['overwrite', '覆盖', '用新文件替换输入框全部内容'],
+                ['merge', '合并', '保留已有内容，按API地址去重后追加'],
+              ] as const
+            ).map(([mode, label, hint]) => (
+              <button
+                key={mode}
+                type='button'
+                role='radio'
+                aria-checked={uploadMode === mode}
+                title={hint}
+                onClick={() => setUploadMode(mode)}
+                className={`min-h-[44px] rounded-lg border px-4 text-sm font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)] ${
+                  uploadMode === mode
+                    ? 'border-[var(--tm-text)] bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)]'
+                    : 'border-[var(--tm-line)] text-[color:var(--tm-muted)] hover:border-[var(--tm-text)] hover:text-[color:var(--tm-text)]'
+                }`}
+              >
+                {label}
+                <span className='ml-2 hidden text-[13px] font-normal sm:inline'>
+                  {hint}
+                </span>
+              </button>
+            ))}
           </div>
           <div className='relative'>
             <input
@@ -10002,7 +10063,7 @@ const ConfigFileComponent = ({
               className={`flex items-center justify-center w-full px-4 py-3 border-2 border-dashed border-[var(--tm-line)] border-[var(--tm-line)] rounded-lg cursor-pointer transition-colors ${
                 isLoading('uploadConfig')
                   ? 'bg-[var(--tm-surface-raised)] cursor-not-allowed opacity-50'
-                  : 'bg-[var(--tm-surface-raised)] hover:bg-[var(--tm-line)] hover:border-[var(--tm-line)]'
+                  : 'bg-[var(--tm-surface-raised)] hover:bg-[var(--tm-line)] hover:border-[var(--tm-line-strong)]'
               }`}
             >
               <div className='flex items-center space-x-2'>
@@ -10328,7 +10389,7 @@ const ThemeConfigComponent = ({
                 className={`cursor-pointer text-left rounded-lg border-2 p-3 min-h-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)] transition-all hover:shadow-md ${
                   themeSettings.builtInTheme === theme.value
                     ? 'border-[var(--tm-line)] ring-2 ring-[var(--tm-text)] bg-[var(--tm-surface-raised)]'
-                    : 'border-[var(--tm-line)] hover:border-[var(--tm-line)]'
+                    : 'border-[var(--tm-line)] hover:border-[var(--tm-line-strong)]'
                 }`}
               >
                 <div className='flex items-center gap-3'>
@@ -10770,7 +10831,7 @@ const ThemeConfigComponent = ({
                   className={`relative p-4 border-2 rounded-lg transition-all ${
                     themeSettings.progressThumbPresetId === thumb.id
                       ? 'border-[var(--tm-line)] bg-[var(--tm-surface-raised)] min-h-[44px] tm-press'
-                      : 'border-[var(--tm-line)] hover:border-[var(--tm-line)] min-h-[44px] tm-press'
+                      : 'border-[var(--tm-line)] hover:border-[var(--tm-line-strong)] min-h-[44px] tm-press'
                   }`}
                 >
                   <div className='flex flex-col items-center gap-2'>
@@ -10926,7 +10987,7 @@ const ThemeConfigComponent = ({
               className={`relative p-4 border-2 rounded-lg transition-all ${
                 themeSettings.loadingStyle === opt.id
                   ? 'border-[var(--tm-line)] bg-[var(--tm-surface-raised)] min-h-[44px] tm-press'
-                  : 'border-[var(--tm-line)] hover:border-[var(--tm-line)] min-h-[44px] tm-press'
+                  : 'border-[var(--tm-line)] hover:border-[var(--tm-line-strong)] min-h-[44px] tm-press'
               }`}
             >
               <div className='flex flex-col items-center gap-2'>
@@ -11077,7 +11138,7 @@ const ThemeConfigComponent = ({
               className={`relative p-4 border-2 rounded-lg transition-all ${
                 themeSettings.rateBadgeStyle === opt.id
                   ? 'border-[var(--tm-line)] bg-[var(--tm-surface-raised)] min-h-[44px] tm-press'
-                  : 'border-[var(--tm-line)] hover:border-[var(--tm-line)] min-h-[44px] tm-press'
+                  : 'border-[var(--tm-line)] hover:border-[var(--tm-line-strong)] min-h-[44px] tm-press'
               }`}
             >
               <div className='flex flex-col items-center gap-2'>
@@ -11530,7 +11591,7 @@ const SiteConfigComponent = ({
             <button
               type='button'
               onClick={() => setIsDoubanDropdownOpen(!isDoubanDropdownOpen)}
-              className='w-full px-3 py-2.5 pr-10 border border-[var(--tm-line)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--tm-text)] focus:border-[var(--tm-line)] transition-all duration-200 bg-[var(--tm-surface)] text-[color:var(--tm-text)] shadow-sm hover:border-[var(--tm-line)] text-left min-h-[44px] tm-press'
+              className='w-full px-3 py-2.5 pr-10 border border-[var(--tm-line)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--tm-text)] focus:border-[var(--tm-line)] transition-all duration-200 bg-[var(--tm-surface)] text-[color:var(--tm-text)] shadow-sm hover:border-[var(--tm-line-strong)] text-left min-h-[44px] tm-press'
             >
               {
                 doubanDataSourceOptions.find(
@@ -11616,7 +11677,7 @@ const SiteConfigComponent = ({
                   DoubanProxy: e.target.value,
                 }))
               }
-              className='w-full px-3 py-2.5 border border-[var(--tm-line)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--tm-text)] focus:border-[var(--tm-line)] transition-all duration-200 bg-[var(--tm-surface)] text-[color:var(--tm-text)] placeholder-gray-500 dark:placeholder-gray-400 shadow-sm hover:border-[var(--tm-line)]'
+              className='w-full px-3 py-2.5 border border-[var(--tm-line)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--tm-text)] focus:border-[var(--tm-line)] transition-all duration-200 bg-[var(--tm-surface)] text-[color:var(--tm-text)] placeholder-gray-500 dark:placeholder-gray-400 shadow-sm hover:border-[var(--tm-line-strong)]'
             />
             <p className='mt-1 text-[13px] text-[color:var(--tm-muted)]'>
               自定义代理服务器地址
@@ -11640,7 +11701,7 @@ const SiteConfigComponent = ({
                   !isDoubanImageProxyDropdownOpen
                 )
               }
-              className='w-full px-3 py-2.5 pr-10 border border-[var(--tm-line)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--tm-text)] focus:border-[var(--tm-line)] transition-all duration-200 bg-[var(--tm-surface)] text-[color:var(--tm-text)] shadow-sm hover:border-[var(--tm-line)] text-left min-h-[44px] tm-press'
+              className='w-full px-3 py-2.5 pr-10 border border-[var(--tm-line)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--tm-text)] focus:border-[var(--tm-line)] transition-all duration-200 bg-[var(--tm-surface)] text-[color:var(--tm-text)] shadow-sm hover:border-[var(--tm-line-strong)] text-left min-h-[44px] tm-press'
             >
               {
                 doubanImageProxyTypeOptions.find(
@@ -11726,7 +11787,7 @@ const SiteConfigComponent = ({
                   DoubanImageProxy: e.target.value,
                 }))
               }
-              className='w-full px-3 py-2.5 border border-[var(--tm-line)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--tm-text)] focus:border-[var(--tm-line)] transition-all duration-200 bg-[var(--tm-surface)] text-[color:var(--tm-text)] placeholder-gray-500 dark:placeholder-gray-400 shadow-sm hover:border-[var(--tm-line)]'
+              className='w-full px-3 py-2.5 border border-[var(--tm-line)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--tm-text)] focus:border-[var(--tm-line)] transition-all duration-200 bg-[var(--tm-surface)] text-[color:var(--tm-text)] placeholder-gray-500 dark:placeholder-gray-400 shadow-sm hover:border-[var(--tm-line-strong)]'
             />
             <p className='mt-1 text-[13px] text-[color:var(--tm-muted)]'>
               自定义图片代理服务器地址
@@ -14036,7 +14097,7 @@ const CustomAdFilterConfig = ({
             onChange={(e) => setAdFilterCode(e.target.value)}
             rows={25}
             placeholder='请输入自定义去广告代码...'
-            className='w-full px-4 py-3 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)] font-mono text-sm leading-relaxed resize-none focus:ring-2 focus:ring-[var(--tm-text)] focus:border-transparent transition-all duration-200 hover:border-[var(--tm-line)]'
+            className='w-full px-4 py-3 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)] font-mono text-sm leading-relaxed resize-none focus:ring-2 focus:ring-[var(--tm-text)] focus:border-transparent transition-all duration-200 hover:border-[var(--tm-line-strong)]'
             style={{
               fontFamily:
                 'ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace',
@@ -16750,7 +16811,7 @@ const AIConfigComponent = ({
             className={`p-4 rounded-lg border-2 text-left transition-colors ${
               !enableNewMode
                 ? 'border-[var(--tm-line)] bg-[var(--tm-surface-raised)] min-h-[44px] tm-press'
-                : 'border-[var(--tm-line)] bg-[var(--tm-surface)] hover:border-[var(--tm-line)] min-h-[44px] tm-press'
+                : 'border-[var(--tm-line)] bg-[var(--tm-surface)] hover:border-[var(--tm-line-strong)] min-h-[44px] tm-press'
             }`}
           >
             <div className='flex items-center justify-between'>
@@ -16773,7 +16834,7 @@ const AIConfigComponent = ({
             className={`p-4 rounded-lg border-2 text-left transition-colors ${
               enableNewMode
                 ? 'border-[var(--tm-line)] bg-[var(--tm-surface-raised)] min-h-[44px] tm-press'
-                : 'border-[var(--tm-line)] bg-[var(--tm-surface)] hover:border-[var(--tm-line)] min-h-[44px] tm-press'
+                : 'border-[var(--tm-line)] bg-[var(--tm-surface)] hover:border-[var(--tm-line-strong)] min-h-[44px] tm-press'
             }`}
           >
             <div className='flex items-center justify-between'>

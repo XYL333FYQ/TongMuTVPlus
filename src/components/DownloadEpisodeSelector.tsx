@@ -144,7 +144,7 @@ const DownloadEpisodeSelector: React.FC<DownloadEpisodeSelectorProps> = ({
             </button>
             <button
               onClick={handleClearAll}
-              className='px-3 py-1.5 text-[13px] font-medium text-muted hover:text-muted hover:bg-line rounded-md transition-colors min-h-[44px] tm-press'
+              className='px-3 py-1.5 text-[13px] font-medium text-muted hover:text-fg hover:bg-line rounded-md transition-colors min-h-[44px] tm-press'
             >
               清空
             </button>

@@ -6,6 +6,7 @@ import {
   Film,
   Maximize2,
   MessageCircle,
+  Minus,
   Volume2,
   VolumeX,
   X,
@@ -71,6 +72,7 @@ export default function PlaybackSessionProvider({
   const [metadata, setMetadata] = useState<PlaybackMetadata>({
     title: '正在准备影片',
   });
+  const hostRef = useRef<HTMLDivElement>(null);
   const [slot, registerSlot] = useState<HTMLElement | null>(null);
   const [slotRect, setSlotRect] = useState<DOMRect | null>(null);
   const [pendingHref, setPendingHref] = useState<string | null>(null);
@@ -187,8 +189,40 @@ export default function PlaybackSessionProvider({
     // Notices above the stage move the slot without changing its own size.
     const roomContainer = slot.closest('.tm-rooms');
     if (roomContainer) observer.observe(roomContainer);
+
+    // 滚动时：每帧直接把占位框的位置写到样式变量上，不走 React 状态（否则整页每次滚动都重渲），
+    // 并临时关掉位置过渡，窗口才会紧贴页面；停下后再同步一次状态。
+    // 用户在显示设置里打开“缓动跟随”时保留过渡。
+    const mount = () =>
+      hostRef.current?.querySelector<HTMLElement>('[data-tm-player-mount]') ||
+      null;
+    let frame = 0;
+    let idle: ReturnType<typeof setTimeout> | undefined;
+    const follow = () => {
+      frame = 0;
+      const rect = slot.getBoundingClientRect();
+      const style = hostRef.current?.style;
+      if (!style) return;
+      style.setProperty('--tm-slot-left', `${rect.left}px`);
+      style.setProperty('--tm-slot-top', `${rect.top}px`);
+      style.setProperty('--tm-slot-width', `${rect.width}px`);
+      style.setProperty('--tm-slot-height', `${rect.height}px`);
+    };
+    const onScroll = () => {
+      if (document.documentElement.dataset.tmPlayerEase !== 'true') {
+        const element = mount();
+        if (element) element.style.transition = 'none';
+      }
+      if (!frame) frame = requestAnimationFrame(follow);
+      clearTimeout(idle);
+      idle = setTimeout(() => {
+        const element = mount();
+        if (element) element.style.transition = '';
+        measure();
+      }, 160);
+    };
     // Element scroll events do not bubble; capture BODY and nested page scrolling too.
-    window.addEventListener('scroll', measure, {
+    window.addEventListener('scroll', onScroll, {
       passive: true,
       capture: true,
     });
@@ -196,7 +230,11 @@ export default function PlaybackSessionProvider({
     measure();
     return () => {
       observer.disconnect();
-      window.removeEventListener('scroll', measure, true);
+      if (frame) cancelAnimationFrame(frame);
+      clearTimeout(idle);
+      const element = mount();
+      if (element) element.style.transition = '';
+      window.removeEventListener('scroll', onScroll, true);
       window.removeEventListener('resize', measure);
     };
   }, [slot]);
@@ -256,14 +294,54 @@ export default function PlaybackSessionProvider({
     return () => video.removeEventListener('volumechange', update);
   }, [controller]);
 
-  const hostRef = useRef<HTMLDivElement>(null);
   const minimize = useCallback(() => setFolded(true), []);
   const restore = useCallback(() => setFolded(false), []);
-  const endSession = useCallback(() => {
-    controller?.pause();
+  const controllerRef = useRef(controller);
+  controllerRef.current = controller;
+  // 把播放器彻底收掉：暂停、卸载画面、回到没有任何播放会话的状态
+  const stopPlayback = useCallback(() => {
+    controllerRef.current?.pause();
     setHref(null);
     attachController(null);
-  }, [controller]);
+    setFolded(false);
+    setPendingHref(null);
+    setRoomSelectionHref(null);
+    setActionError('');
+  }, []);
+  // 用户主动关闭小窗。正在跟随房间时先退出同步（房间和消息保留），
+  // 之后可以从“回到一起看”回去；退出失败就不关，免得房间那边还当他在看。
+  const endSession = useCallback(() => {
+    void (async () => {
+      const current = roomRef.current;
+      if (current?.currentRoom && followingRef.current) {
+        try {
+          await emitFollowing(false);
+        } catch (error) {
+          setActionError(
+            error instanceof Error ? error.message : '无法退出同步，请稍后重试'
+          );
+          return;
+        }
+        followingRef.current = false;
+        setFollowingRoom(false);
+      }
+      stopPlayback();
+    })();
+  }, [emitFollowing, stopPlayback]);
+
+  // 房间被删除：还在跟随这个房间的人，画面跟着收掉；“仅自己看”的人继续看自己的
+  const pathnameRef = useRef(pathname);
+  pathnameRef.current = pathname;
+  useEffect(() => {
+    const onDeleted = () => {
+      if (!followingRef.current || !hrefRef.current) return;
+      // 正在 /play 整页看的人，页面本身就是播放器，不能把页面掏空
+      if (pathnameRef.current === '/play') return;
+      stopPlayback();
+    };
+    window.addEventListener('tongmu:room-deleted', onDeleted);
+    return () => window.removeEventListener('tongmu:room-deleted', onDeleted);
+  }, [stopPlayback]);
 
   const shareCurrentPlayback = useCallback(() => {
     if (hrefRef.current) setRoomSelectionHref(hrefRef.current);
@@ -519,9 +597,16 @@ export default function PlaybackSessionProvider({
                   aria-label='收起画面，继续播放'
                   title='收起画面，继续播放'
                 >
-                  <X size={17} />
+                  <Minus size={17} />
                 </button>
               )}
+              <button
+                onClick={endSession}
+                aria-label='关闭播放'
+                title={roomId && followingRoom ? '关闭并退出同步' : '关闭播放'}
+              >
+                <X size={17} />
+              </button>
             </div>
           )}
         </div>

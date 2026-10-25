@@ -37,7 +37,7 @@ test('a preference change from another tab broadcasts motion changes for banner 
   window.addEventListener('tm-visual-preferences-change', listener);
   localStorage.setItem(
     'tm-visual-preferences-v1',
-    JSON.stringify({ noBlur: true, reduceMotion: true })
+    JSON.stringify({ noBlur: true, reduceMotion: true, playerEase: false })
   );
   fireEvent(
     window,
@@ -46,7 +46,20 @@ test('a preference change from another tab broadcasts motion changes for banner 
   expect(screen.getByRole('checkbox', { name: /减少动态效果/ })).toBeChecked();
   expect(document.documentElement.dataset.tmReducedMotion).toBe('true');
   expect(listener).toHaveBeenCalledWith(
-    expect.objectContaining({ detail: { noBlur: true, reduceMotion: true } })
+    expect.objectContaining({
+      detail: { noBlur: true, reduceMotion: true, playerEase: false },
+    })
   );
   window.removeEventListener('tm-visual-preferences-change', listener);
+});
+
+test('player ease is off by default and can be switched on', () => {
+  delete document.documentElement.dataset.tmPlayerEase;
+  render(<VisualPreferenceControls />);
+  const ease = screen.getByRole('checkbox', { name: /播放窗口缓动跟随/ });
+  expect(ease).not.toBeChecked();
+  expect(document.documentElement.dataset.tmPlayerEase).toBe('false');
+  fireEvent.click(ease);
+  expect(document.documentElement.dataset.tmPlayerEase).toBe('true');
+  delete document.documentElement.dataset.tmPlayerEase;
 });

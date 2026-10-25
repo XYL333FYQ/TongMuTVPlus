@@ -838,3 +838,41 @@ test.each([
     expect(view.result.current.lastError).toBe(message);
   }
 );
+
+test('deleting the room succeeds even though room:deleted arrives before the acknowledgement', async () => {
+  const view = await setup();
+  await join(view, room('A'));
+  // 服务端真实顺序：先广播 room:deleted，再回确认
+  view.socket.replies.set('room:delete', (_payload, ack) => {
+    view.socket.deliver('room:deleted', { reason: 'owner_deleted' });
+    ack(null, { success: true, deleted: true });
+  });
+  const deletedEvents = jest.fn();
+  window.addEventListener('tongmu:room-deleted', deletedEvents);
+
+  let outcome: unknown;
+  await act(async () => {
+    outcome = await view.result.current.roomCommand('room:delete', {});
+  });
+
+  expect(outcome).toEqual({ success: true });
+  expect(view.result.current.currentRoom).toBeNull();
+  expect(view.result.current.lastError).toBe('');
+  expect(deletedEvents).toHaveBeenCalledTimes(1);
+  window.removeEventListener('tongmu:room-deleted', deletedEvents);
+});
+
+test('other commands cancelled by a room deletion still report as superseded', async () => {
+  const view = await setup();
+  await join(view, room('A'));
+  view.socket.replies.set('queue:add', (_payload, ack) => {
+    view.socket.deliver('room:deleted', { reason: 'owner_deleted' });
+    ack(null, { success: true });
+  });
+
+  await act(async () => {
+    await expect(
+      view.result.current.roomCommand('queue:add', {})
+    ).rejects.toThrow('房间已切换');
+  });
+});

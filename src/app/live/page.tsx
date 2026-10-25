@@ -3014,7 +3014,7 @@ function LivePageClient() {
                         {searchKeyword && (
                           <button
                             onClick={() => handleSearch('')}
-                            className='absolute right-3 top-1/2 transform -translate-y-1/2 text-muted hover:text-muted min-h-[44px] tm-press'
+                            className='absolute right-3 top-1/2 transform -translate-y-1/2 text-muted hover:text-fg min-h-[44px] tm-press'
                           >
                             <svg
                               className='w-4 h-4'

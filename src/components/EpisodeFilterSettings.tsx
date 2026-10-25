@@ -353,7 +353,7 @@ export default function EpisodeFilterSettings({
                 ) : (
                   <ToggleLeft
                     size={28}
-                    className='text-muted hover:text-muted transition-colors duration-150'
+                    className='text-muted hover:text-fg transition-colors duration-150'
                   />
                 )}
               </button>
@@ -455,7 +455,7 @@ export default function EpisodeFilterSettings({
                       ) : (
                         <ToggleLeft
                           size={28}
-                          className='text-muted hover:text-muted transition-colors duration-150'
+                          className='text-muted hover:text-fg transition-colors duration-150'
                         />
                       )}
                     </button>

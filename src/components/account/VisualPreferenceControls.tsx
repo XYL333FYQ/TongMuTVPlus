@@ -40,6 +40,18 @@ export default function VisualPreferenceControls({
           onChange={(event) => update({ reduceMotion: event.target.checked })}
         />
       </label>
+      <label>
+        <span>
+          <strong>播放窗口缓动跟随</strong>
+          {!compact && <small>房间里滚动页面时，播放窗口慢半拍滑动跟随</small>}
+        </span>
+        <input
+          type='checkbox'
+          checked={preferences.playerEase}
+          disabled={!ready}
+          onChange={(event) => update({ playerEase: event.target.checked })}
+        />
+      </label>
       {!compact && (
         <p>仅保存在此浏览器，同时遵循系统的减少动态和透明效果设置。</p>
       )}

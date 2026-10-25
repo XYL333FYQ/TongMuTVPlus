@@ -128,6 +128,30 @@ test('a member is told the feature is not opened when the site owner disabled it
   );
 });
 
+test('the site owner is sent to the admin panel instead of asking themselves', () => {
+  (getAuthInfoFromBrowserCookie as jest.Mock).mockReturnValue({
+    username: 'boss',
+    role: 'owner',
+  });
+  window.RUNTIME_CONFIG = {
+    ...runtimeAllOpen,
+    SITE_MUSIC_ENABLED: false,
+    MUSIC_ENABLED: false,
+  } as never;
+  openExplore();
+  fireEvent.click(screen.getByRole('button', { name: /音乐/ }));
+
+  const notice = screen.getByRole('alertdialog');
+  expect(notice).toHaveTextContent('功能还没配置');
+  expect(screen.getByRole('link', { name: '去管理面板' })).toHaveAttribute(
+    'href',
+    '/admin'
+  );
+  expect(
+    screen.queryByRole('link', { name: '向站长申请' })
+  ).not.toBeInTheDocument();
+});
+
 test('a guest is guided to log in for available features', () => {
   (getAuthInfoFromBrowserCookie as jest.Mock).mockReturnValue(null);
   window.RUNTIME_CONFIG = { ...runtimeAllOpen } as never;
