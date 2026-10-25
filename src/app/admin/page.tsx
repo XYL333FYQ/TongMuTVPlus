@@ -10248,50 +10248,15 @@ const ThemeConfigComponent = ({
     });
   };
 
-  const builtInThemes = [
-    {
-      value: 'default',
-      label: '默认主题',
-      color:
-        /* TODO-P5: 内容色，展示主题/头像本身的颜色，不是界面配色 */ '#3b82f6',
-    },
-    {
-      value: 'dark_blue',
-      label: '深蓝夜空',
-      color:
-        /* TODO-P5: 内容色，展示主题/头像本身的颜色，不是界面配色 */ '#3b82f6',
-    },
-    {
-      value: 'purple_dream',
-      label: '紫色梦境',
-      color:
-        /* TODO-P5: 内容色，展示主题/头像本身的颜色，不是界面配色 */ '#a78bfa',
-    },
-    {
-      value: 'green_forest',
-      label: '翠绿森林',
-      color:
-        /* TODO-P5: 内容色，展示主题/头像本身的颜色，不是界面配色 */ '#10b981',
-    },
-    {
-      value: 'orange_sunset',
-      label: '橙色日落',
-      color:
-        /* TODO-P5: 内容色，展示主题/头像本身的颜色，不是界面配色 */ '#f97316',
-    },
-    {
-      value: 'pink_candy',
-      label: '粉色糖果',
-      color:
-        /* TODO-P5: 内容色，展示主题/头像本身的颜色，不是界面配色 */ '#ec4899',
-    },
-    {
-      value: 'cyan_ocean',
-      label: '青色海洋',
-      color:
-        /* TODO-P5: 内容色，展示主题/头像本身的颜色，不是界面配色 */ '#06b6d4',
-    },
-  ];
+  // 与 /api/theme/css 使用同一份定义，避免两边不一致
+  const builtInThemes = Object.entries(builtInThemeDefinitions).map(
+    ([value, theme]) => ({
+      value,
+      label: theme.name,
+      description: theme.description,
+      color: theme.color,
+    })
+  );
 
   return (
     <div className='space-y-6'>
@@ -10342,9 +10307,17 @@ const ThemeConfigComponent = ({
           <h3 className='text-lg font-medium text-[color:var(--tm-text)] mb-4'>
             选择内置主题
           </h3>
-          <div className='flex flex-wrap gap-3'>
+          <div
+            className='flex flex-wrap gap-3'
+            role='radiogroup'
+            aria-label='内置主题'
+          >
             {builtInThemes.map((theme) => (
-              <div
+              <button
+                type='button'
+                role='radio'
+                aria-checked={themeSettings.builtInTheme === theme.value}
+                title={theme.description}
                 key={theme.value}
                 onClick={() =>
                   setThemeSettings((prev) => ({
@@ -10352,7 +10325,7 @@ const ThemeConfigComponent = ({
                     builtInTheme: theme.value,
                   }))
                 }
-                className={`cursor-pointer rounded-lg border-2 p-3 transition-all hover:shadow-md ${
+                className={`cursor-pointer text-left rounded-lg border-2 p-3 min-h-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)] transition-all hover:shadow-md ${
                   themeSettings.builtInTheme === theme.value
                     ? 'border-[var(--tm-line)] ring-2 ring-[var(--tm-text)] bg-[var(--tm-surface-raised)]'
                     : 'border-[var(--tm-line)] hover:border-[var(--tm-line)]'
@@ -10372,7 +10345,7 @@ const ThemeConfigComponent = ({
                     {themeSettings.builtInTheme === theme.value && (
                       <div className='w-4 h-4 rounded-full bg-[var(--tm-text)] flex items-center justify-center flex-shrink-0'>
                         <svg
-                          className='w-2.5 h-2.5 text-[color:var(--tm-text)]'
+                          className='w-2.5 h-2.5 text-[color:var(--tm-accent-contrast)]'
                           fill='none'
                           stroke='currentColor'
                           viewBox='0 0 24 24'

@@ -1,378 +1,93 @@
-// 内置主题定义
-export const builtInThemes = {
+import presets from './theme-presets.json';
+
+// 内置主题：在现有设计令牌（--tm-*）上换一套带淡淡色调的底色。
+// 只改背景、卡片、分隔线和次要文字，不改正文色、强调色和报错红，
+// 对比度与深浅主题切换保持原设计；站长在管理面板的「个性化配置」里选择。
+// 键名沿用旧版本，已保存的选择不会失效。
+
+// 管理面板里「默认主题」的色块
+const DEFAULT_SWATCH = 'var(--tm-surface-raised)';
+
+interface Palette {
+  bg: string;
+  surface: string;
+  raised: string;
+  muted: string;
+  /** 分隔线用的 rgb 三元组 */
+  lineRgb: string;
+}
+
+interface Preset {
+  name: string;
+  description: string;
+  dark: Palette;
+  light: Palette;
+}
+
+interface ThemeDefinition {
+  name: string;
+  description: string;
+  /** 管理面板里的色块（取深色主题的卡片色调） */
+  color: string;
+  css: string;
+  dark?: Palette;
+  light?: Palette;
+}
+
+function block(selector: string, palette: Palette, dark: boolean): string {
+  const lineAlpha = dark ? [0.12, 0.22] : [0.1, 0.18];
+  const glassAlpha = dark ? 0.72 : 0.74;
+  return `${selector} {
+  --tm-bg: ${palette.bg};
+  --tm-surface: ${palette.surface};
+  --tm-surface-raised: ${palette.raised};
+  --tm-muted: ${palette.muted};
+  --tm-line: rgba(${palette.lineRgb}, ${lineAlpha[0]});
+  --tm-line-strong: rgba(${palette.lineRgb}, ${lineAlpha[1]});
+  --tm-glass-solid: ${palette.raised};
+  --tm-glass: color-mix(in srgb, ${palette.surface} ${
+    glassAlpha * 100
+  }%, transparent);
+  --tm-hero-bg: ${dark ? palette.surface : '#0a0a0b'};
+}
+`;
+}
+
+function makeTheme(
+  name: string,
+  description: string,
+  dark: Palette,
+  light: Palette
+): ThemeDefinition {
+  return {
+    name,
+    description,
+    color: dark.raised,
+    dark,
+    light,
+    // :root.dark / :root.light 的优先级高于 tokens.css 里的同名变量
+    css: `/* ${name} */\n${block(':root.dark', dark, true)}${block(
+      ':root.light',
+      light,
+      false
+    )}`,
+  };
+}
+
+// 各主题的调色板放在 theme-presets.json（纯数据，不参与界面颜色检查）
+export const builtInThemes: Record<string, ThemeDefinition> = {
   default: {
     name: '默认主题',
-    description: '使用系统默认样式',
-    color: '#3b82f6',
+    description: '使用站点原本的黑白灰',
+    color: DEFAULT_SWATCH,
     css: '',
   },
-  dark_blue: {
-    name: '深蓝夜空',
-    description: '深邃的蓝色科技风格',
-    color: '#3b82f6',
-    css: `
-/* 浅色模式 */
-:root:not(.dark) {
-  --theme-primary: #2563eb;
-  --theme-primary-hover: #1d4ed8;
-  --theme-bg: #dbeafe;
-  --theme-bg-secondary: #eff6ff;
-  --theme-text: #1e3a8a;
-  --theme-text-secondary: #3b82f6;
-  --theme-border: #93c5fd;
-}
-
-:root:not(.dark) body {
-  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%) !important;
-  color: var(--theme-text) !important;
-}
-
-/* 深色模式 */
-.dark {
-  --theme-primary: #3b82f6;
-  --theme-primary-hover: #2563eb;
-  --theme-bg: #0f172a;
-  --theme-bg-secondary: #1e293b;
-  --theme-text: #e2e8f0;
-  --theme-text-secondary: #94a3b8;
-  --theme-border: #334155;
-}
-
-.dark body {
-  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%) !important;
-  color: var(--theme-text) !important;
-}
-
-/* 通用样式 */
-[class*="bg-white"]:not(.dark *), [class*="bg-gray-50"]:not(.dark *) {
-  background: var(--theme-bg-secondary) !important;
-  color: var(--theme-text) !important;
-}
-
-.dark [class*="bg-gray-800"], .dark [class*="bg-gray-900"] {
-  background: var(--theme-bg-secondary) !important;
-  color: var(--theme-text) !important;
-}
-
-[class*="border-gray"] {
-  border-color: var(--theme-border) !important;
-}
-
-[class*="text-gray-600"], [class*="text-gray-700"], [class*="text-gray-800"] {
-  color: var(--theme-text-secondary) !important;
-}
-
-.dark [class*="text-gray-"] {
-  color: var(--theme-text-secondary) !important;
-}
-`,
-  },
-  purple_dream: {
-    name: '紫色梦境',
-    description: '神秘的紫色渐变风格',
-    color: '#a78bfa',
-    css: `
-/* 浅色模式 */
-:root:not(.dark) {
-  --theme-primary: #7c3aed;
-  --theme-primary-hover: #6d28d9;
-  --theme-bg: #f3e8ff;
-  --theme-bg-secondary: #faf5ff;
-  --theme-text: #581c87;
-  --theme-text-secondary: #7c3aed;
-  --theme-border: #d8b4fe;
-}
-
-:root:not(.dark) body {
-  background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%) !important;
-  color: var(--theme-text) !important;
-}
-
-/* 深色模式 */
-.dark {
-  --theme-primary: #a78bfa;
-  --theme-primary-hover: #8b5cf6;
-  --theme-bg: #1a0b2e;
-  --theme-bg-secondary: #2d1b4e;
-  --theme-text: #f3e8ff;
-  --theme-text-secondary: #c4b5fd;
-  --theme-border: #4c1d95;
-}
-
-.dark body {
-  background: linear-gradient(135deg, #1a0b2e 0%, #2d1b4e 50%, #4c1d95 100%) !important;
-  color: var(--theme-text) !important;
-}
-
-/* 通用样式 */
-[class*="bg-white"]:not(.dark *), [class*="bg-gray-50"]:not(.dark *) {
-  background: var(--theme-bg-secondary) !important;
-  color: var(--theme-text) !important;
-}
-
-.dark [class*="bg-gray-800"], .dark [class*="bg-gray-900"] {
-  background: rgba(45, 27, 78, 0.8) !important;
-  color: var(--theme-text) !important;
-  backdrop-filter: blur(10px);
-}
-
-[class*="border-gray"] {
-  border-color: var(--theme-border) !important;
-}
-
-[class*="text-gray-600"], [class*="text-gray-700"], [class*="text-gray-800"] {
-  color: var(--theme-text-secondary) !important;
-}
-
-.dark [class*="text-gray-"] {
-  color: var(--theme-text-secondary) !important;
-}
-`,
-  },
-  green_forest: {
-    name: '翠绿森林',
-    description: '清新的绿色自然风格',
-    color: '#10b981',
-    css: `
-/* 浅色模式 */
-:root:not(.dark) {
-  --theme-primary: #059669;
-  --theme-primary-hover: #047857;
-  --theme-bg: #d1fae5;
-  --theme-bg-secondary: #ecfdf5;
-  --theme-text: #064e3b;
-  --theme-text-secondary: #059669;
-  --theme-border: #6ee7b7;
-}
-
-:root:not(.dark) body {
-  background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%) !important;
-  color: var(--theme-text) !important;
-}
-
-/* 深色模式 */
-.dark {
-  --theme-primary: #10b981;
-  --theme-primary-hover: #059669;
-  --theme-bg: #064e3b;
-  --theme-bg-secondary: #065f46;
-  --theme-text: #d1fae5;
-  --theme-text-secondary: #6ee7b7;
-  --theme-border: #047857;
-}
-
-.dark body {
-  background: linear-gradient(135deg, #064e3b 0%, #065f46 100%) !important;
-  color: var(--theme-text) !important;
-}
-
-/* 通用样式 */
-[class*="bg-white"]:not(.dark *), [class*="bg-gray-50"]:not(.dark *) {
-  background: var(--theme-bg-secondary) !important;
-  color: var(--theme-text) !important;
-}
-
-.dark [class*="bg-gray-800"], .dark [class*="bg-gray-900"] {
-  background: rgba(6, 95, 70, 0.9) !important;
-  color: var(--theme-text) !important;
-}
-
-[class*="border-gray"] {
-  border-color: var(--theme-border) !important;
-}
-
-[class*="text-gray-600"], [class*="text-gray-700"], [class*="text-gray-800"] {
-  color: var(--theme-text-secondary) !important;
-}
-
-.dark [class*="text-gray-"] {
-  color: var(--theme-text-secondary) !important;
-}
-`,
-  },
-  orange_sunset: {
-    name: '橙色日落',
-    description: '温暖的橙色日落风格',
-    color: '#f97316',
-    css: `
-/* 浅色模式 */
-:root:not(.dark) {
-  --theme-primary: #ea580c;
-  --theme-primary-hover: #c2410c;
-  --theme-bg: #fed7aa;
-  --theme-bg-secondary: #ffedd5;
-  --theme-text: #7c2d12;
-  --theme-text-secondary: #ea580c;
-  --theme-border: #fdba74;
-}
-
-:root:not(.dark) body {
-  background: linear-gradient(135deg, #ffedd5 0%, #fed7aa 100%) !important;
-  color: var(--theme-text) !important;
-}
-
-/* 深色模式 */
-.dark {
-  --theme-primary: #f97316;
-  --theme-primary-hover: #ea580c;
-  --theme-bg: #431407;
-  --theme-bg-secondary: #7c2d12;
-  --theme-text: #fed7aa;
-  --theme-text-secondary: #fdba74;
-  --theme-border: #9a3412;
-}
-
-.dark body {
-  background: linear-gradient(135deg, #431407 0%, #7c2d12 50%, #9a3412 100%) !important;
-  color: var(--theme-text) !important;
-}
-
-/* 通用样式 */
-[class*="bg-white"]:not(.dark *), [class*="bg-gray-50"]:not(.dark *) {
-  background: var(--theme-bg-secondary) !important;
-  color: var(--theme-text) !important;
-}
-
-.dark [class*="bg-gray-800"], .dark [class*="bg-gray-900"] {
-  background: rgba(124, 45, 18, 0.85) !important;
-  color: var(--theme-text) !important;
-}
-
-[class*="border-gray"] {
-  border-color: var(--theme-border) !important;
-}
-
-[class*="text-gray-600"], [class*="text-gray-700"], [class*="text-gray-800"] {
-  color: var(--theme-text-secondary) !important;
-}
-
-.dark [class*="text-gray-"] {
-  color: var(--theme-text-secondary) !important;
-}
-`,
-  },
-  pink_candy: {
-    name: '粉色糖果',
-    description: '甜美的粉色糖果风格',
-    color: '#ec4899',
-    css: `
-/* 浅色模式 */
-:root:not(.dark) {
-  --theme-primary: #db2777;
-  --theme-primary-hover: #be185d;
-  --theme-bg: #fce7f3;
-  --theme-bg-secondary: #fdf2f8;
-  --theme-text: #831843;
-  --theme-text-secondary: #db2777;
-  --theme-border: #fbcfe8;
-}
-
-:root:not(.dark) body {
-  background: linear-gradient(135deg, #fdf2f8 0%, #fce7f3 100%) !important;
-  color: var(--theme-text) !important;
-}
-
-/* 深色模式 */
-.dark {
-  --theme-primary: #ec4899;
-  --theme-primary-hover: #db2777;
-  --theme-bg: #500724;
-  --theme-bg-secondary: #831843;
-  --theme-text: #fce7f3;
-  --theme-text-secondary: #fbcfe8;
-  --theme-border: #9f1239;
-}
-
-.dark body {
-  background: linear-gradient(135deg, #500724 0%, #831843 50%, #9f1239 100%) !important;
-  color: var(--theme-text) !important;
-}
-
-/* 通用样式 */
-[class*="bg-white"]:not(.dark *), [class*="bg-gray-50"]:not(.dark *) {
-  background: var(--theme-bg-secondary) !important;
-  color: var(--theme-text) !important;
-}
-
-.dark [class*="bg-gray-800"], .dark [class*="bg-gray-900"] {
-  background: rgba(131, 24, 67, 0.85) !important;
-  color: var(--theme-text) !important;
-}
-
-[class*="border-gray"] {
-  border-color: var(--theme-border) !important;
-}
-
-[class*="text-gray-600"], [class*="text-gray-700"], [class*="text-gray-800"] {
-  color: var(--theme-text-secondary) !important;
-}
-
-.dark [class*="text-gray-"] {
-  color: var(--theme-text-secondary) !important;
-}
-`,
-  },
-  cyan_ocean: {
-    name: '青色海洋',
-    description: '清爽的青色海洋风格',
-    color: '#06b6d4',
-    css: `
-/* 浅色模式 */
-:root:not(.dark) {
-  --theme-primary: #0891b2;
-  --theme-primary-hover: #0e7490;
-  --theme-bg: #cffafe;
-  --theme-bg-secondary: #ecfeff;
-  --theme-text: #164e63;
-  --theme-text-secondary: #0891b2;
-  --theme-border: #67e8f9;
-}
-
-:root:not(.dark) body {
-  background: linear-gradient(135deg, #ecfeff 0%, #cffafe 100%) !important;
-  color: var(--theme-text) !important;
-}
-
-/* 深色模式 */
-.dark {
-  --theme-primary: #06b6d4;
-  --theme-primary-hover: #0891b2;
-  --theme-bg: #083344;
-  --theme-bg-secondary: #164e63;
-  --theme-text: #cffafe;
-  --theme-text-secondary: #67e8f9;
-  --theme-border: #155e75;
-}
-
-.dark body {
-  background: linear-gradient(135deg, #083344 0%, #164e63 100%) !important;
-  color: var(--theme-text) !important;
-}
-
-/* 通用样式 */
-[class*="bg-white"]:not(.dark *), [class*="bg-gray-50"]:not(.dark *) {
-  background: var(--theme-bg-secondary) !important;
-  color: var(--theme-text) !important;
-}
-
-.dark [class*="bg-gray-800"], .dark [class*="bg-gray-900"] {
-  background: rgba(22, 78, 99, 0.9) !important;
-  color: var(--theme-text) !important;
-}
-
-[class*="border-gray"] {
-  border-color: var(--theme-border) !important;
-}
-
-[class*="text-gray-600"], [class*="text-gray-700"], [class*="text-gray-800"] {
-  color: var(--theme-text-secondary) !important;
-}
-
-.dark [class*="text-gray-"] {
-  color: var(--theme-text-secondary) !important;
-}
-`,
-  },
+  ...Object.fromEntries(
+    Object.entries(presets as Record<string, Preset>).map(([key, preset]) => [
+      key,
+      makeTheme(preset.name, preset.description, preset.dark, preset.light),
+    ])
+  ),
 };
 
 export type ThemeName = keyof typeof builtInThemes;

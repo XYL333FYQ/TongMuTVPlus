@@ -1,0 +1,110 @@
+{
+  "dark_blue": {
+    "name": "深蓝夜空",
+    "description": "偏冷的蓝灰底色",
+    "dark": {
+      "bg": "#090c14",
+      "surface": "#0f1421",
+      "raised": "#182034",
+      "muted": "#9aa6bf",
+      "lineRgb": "160, 185, 255"
+    },
+    "light": {
+      "bg": "#f1f4fb",
+      "surface": "#ffffff",
+      "raised": "#e6ebf7",
+      "muted": "#55607a",
+      "lineRgb": "20, 40, 100"
+    }
+  },
+  "purple_dream": {
+    "name": "紫色梦境",
+    "description": "带一点紫的底色",
+    "dark": {
+      "bg": "#0e0b14",
+      "surface": "#17121f",
+      "raised": "#221a30",
+      "muted": "#aca3c0",
+      "lineRgb": "200, 170, 255"
+    },
+    "light": {
+      "bg": "#f5f2fb",
+      "surface": "#ffffff",
+      "raised": "#ebe5f6",
+      "muted": "#625a7a",
+      "lineRgb": "60, 30, 110"
+    }
+  },
+  "green_forest": {
+    "name": "翠绿森林",
+    "description": "带一点绿的底色",
+    "dark": {
+      "bg": "#080e0b",
+      "surface": "#101a15",
+      "raised": "#19281f",
+      "muted": "#9ab3a5",
+      "lineRgb": "150, 230, 185"
+    },
+    "light": {
+      "bg": "#f0f6f2",
+      "surface": "#ffffff",
+      "raised": "#e3eee8",
+      "muted": "#546a5c",
+      "lineRgb": "20, 80, 50"
+    }
+  },
+  "orange_sunset": {
+    "name": "橙色日落",
+    "description": "偏暖的棕橙底色",
+    "dark": {
+      "bg": "#110c08",
+      "surface": "#1b140e",
+      "raised": "#2a1f15",
+      "muted": "#bfaa97",
+      "lineRgb": "255, 190, 130"
+    },
+    "light": {
+      "bg": "#fbf5ef",
+      "surface": "#ffffff",
+      "raised": "#f4e9dd",
+      "muted": "#7a6451",
+      "lineRgb": "110, 60, 20"
+    }
+  },
+  "pink_candy": {
+    "name": "粉色糖果",
+    "description": "带一点粉的底色",
+    "dark": {
+      "bg": "#130b10",
+      "surface": "#1e131a",
+      "raised": "#2d1c27",
+      "muted": "#c0a3b3",
+      "lineRgb": "255, 160, 205"
+    },
+    "light": {
+      "bg": "#fbf1f6",
+      "surface": "#ffffff",
+      "raised": "#f6e3ec",
+      "muted": "#7a5668",
+      "lineRgb": "120, 30, 70"
+    }
+  },
+  "cyan_ocean": {
+    "name": "青色海洋",
+    "description": "偏青的蓝绿底色",
+    "dark": {
+      "bg": "#070e11",
+      "surface": "#0e181d",
+      "raised": "#162630",
+      "muted": "#96b2bd",
+      "lineRgb": "130, 220, 240"
+    },
+    "light": {
+      "bg": "#eff7f9",
+      "surface": "#ffffff",
+      "raised": "#e0eef2",
+      "muted": "#50707b",
+      "lineRgb": "10, 70, 90"
+    }
+  }
+}
