@@ -276,7 +276,7 @@ html[data-tm-reduced-motion='true'] .tm-control-selection {
   }
 }
 
-/* 显示偏好：关闭模糊、减少动效两个开关（「更多」面板和「我的」页共用）。 */
+/* 显示偏好：「我的」页保留说明，账号菜单使用紧凑行。 */
 .tm-visual-preferences {
   min-width: 0;
   border: 0;
@@ -352,4 +352,34 @@ html[data-tm-reduced-motion='true'] .tm-control-selection {
 .tm-visual-preferences input:disabled {
   opacity: 0.5;
   cursor: default;
+}
+.tm-visual-preferences[data-layout='menu'] {
+  border: 0;
+  margin: 0;
+  padding: 0 12px 4px 42px;
+}
+.tm-visual-preferences[data-layout='menu'] label {
+  min-height: 44px;
+  gap: 12px;
+  padding: 0;
+}
+.tm-visual-preferences[data-layout='menu'] strong {
+  font-size: var(--tm-fs-small);
+}
+.tm-visual-preferences-disclosure > summary {
+  list-style: none;
+  cursor: pointer;
+}
+.tm-visual-preferences-disclosure > summary::-webkit-details-marker {
+  display: none;
+}
+.tm-visual-preferences-disclosure > summary:focus-visible {
+  outline: 2px solid var(--tm-text);
+  outline-offset: 2px;
+}
+.tm-visual-preferences-disclosure .tm-display-chevron {
+  margin-inline-start: auto;
+}
+.tm-visual-preferences-disclosure[open] .tm-display-chevron {
+  transform: rotate(180deg);
 }

@@ -30,6 +30,16 @@ export async function POST(request: NextRequest) {
     switch (action) {
       case 'toggleEnabled': {
         const { enabled } = body;
+        // 站长专属：网络直播的总开关不能被管理员改动，源的维护照常进行。
+        if (
+          username !== process.env.USERNAME &&
+          enabled !== (config.WebLiveEnabled === true)
+        ) {
+          return NextResponse.json(
+            { error: '只有站长可以开放或关闭网络直播' },
+            { status: 403 }
+          );
+        }
         config.WebLiveEnabled = enabled;
         break;
       }

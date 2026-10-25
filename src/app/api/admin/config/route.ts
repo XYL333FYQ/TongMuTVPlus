@@ -5,6 +5,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { AdminConfigResult } from '@/lib/admin.types';
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig } from '@/lib/config';
+import { describeModuleActivationChanges } from '@/lib/module-availability';
 
 export const runtime = 'nodejs';
 
@@ -82,6 +83,9 @@ export async function POST(request: NextRequest) {
 
   try {
     const newConfig = await request.json();
+    const { configSelfCheck, setCachedConfig } = await import('@/lib/config');
+    // 校验实际将写入的配置，防止旧格式转换等自检步骤改变开放状态。
+    const checkedConfig = configSelfCheck(newConfig);
 
     // 权限检查
     if (username !== process.env.USERNAME) {
@@ -95,15 +99,22 @@ export async function POST(request: NextRequest) {
       ) {
         return NextResponse.json({ error: '权限不足' }, { status: 401 });
       }
+
+      // 站长专属：功能模块的开放状态不能被管理员改动，其余配置照常保存。
+      const changed = describeModuleActivationChanges(
+        await getConfig(),
+        checkedConfig
+      );
+      if (changed.length > 0) {
+        return NextResponse.json(
+          { error: `只有站长可以开放或关闭站点功能（${changed.join('、')}）` },
+          { status: 403 }
+        );
+      }
     }
 
     // 保存配置
     const { db } = await import('@/lib/db');
-    const { configSelfCheck, setCachedConfig } = await import('@/lib/config');
-
-    // 自检配置
-    const checkedConfig = configSelfCheck(newConfig);
-
     // 保存到数据库
     await db.saveAdminConfig(checkedConfig);
 

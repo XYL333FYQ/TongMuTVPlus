@@ -171,17 +171,11 @@ html.light {
     --tm-header-height: 68px;
   }
 }
-/* The three main destinations share the same reference proportions, including
-   their header, body portals and development grid overlay. */
+/* Every route, standalone page and body portal shares the reference scale.
+   Keep it on :root: a persistent player's hidden shell must not select the
+   scale of whichever page the viewer is currently browsing. */
 @media (min-width: 1700px) {
-  body:has(
-      .tm-shell:is(
-          [data-page='/'],
-          [data-page='/douban'],
-          [data-page='/watch-room'],
-          [data-page='/admin']
-        )
-    ) {
+  :root {
     --tm-wide-unit: clamp(1px, 0.0588235294vw, 1.25px);
     --tm-container: calc(1320 * var(--tm-wide-unit));
     --tm-content-gutter: calc(40 * var(--tm-wide-unit));

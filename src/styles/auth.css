@@ -29,16 +29,17 @@
   position: relative;
   z-index: 1;
   width: 100%;
-  max-width: 400px;
-  padding: 40px 32px 32px;
+  max-width: calc(400 * var(--tm-wide-unit));
+  padding: calc(40 * var(--tm-wide-unit)) calc(32 * var(--tm-wide-unit))
+    calc(32 * var(--tm-wide-unit));
   border: 0;
   border-radius: var(--tm-radius-xl);
   background: var(--tm-surface);
   box-shadow: var(--tm-shadow-lg);
 }
 .tm-auth-title {
-  margin-bottom: 32px;
-  font-size: 28px;
+  margin-bottom: calc(32 * var(--tm-wide-unit));
+  font-size: calc(28 * var(--tm-wide-unit));
   font-weight: 600;
   line-height: 1.2;
   letter-spacing: -0.01em;
@@ -55,7 +56,7 @@
 }
 .tm-auth-form {
   display: grid;
-  gap: 16px;
+  gap: calc(16 * var(--tm-wide-unit));
 }
 
 /* 带图标的输入框 */
@@ -69,11 +70,11 @@
   pointer-events: none;
 }
 .tm-input.tm-auth-input {
-  min-height: 48px;
+  min-height: calc(48 * var(--tm-wide-unit));
   padding-inline: 44px 48px;
   border-radius: var(--tm-radius-md);
   background: var(--tm-bg);
-  font-size: 16px;
+  font-size: calc(16 * var(--tm-wide-unit));
 }
 .tm-auth-reveal {
   position: absolute;

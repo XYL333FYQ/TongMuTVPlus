@@ -52,6 +52,7 @@ import { CURRENT_VERSION } from '@/lib/version';
 import { UpdateStatus } from '@/lib/version_check';
 
 import ThemeSettings from '@/components/account/ThemeSettings';
+import VisualPreferenceControls from '@/components/account/VisualPreferenceControls';
 import Toast, { ToastProps } from '@/components/feedback/Toast';
 import { MoreMenu } from '@/components/shell/TongMuNavigation';
 
@@ -2995,6 +2996,7 @@ export const UserMenu: React.FC = () => {
         </button>
 
         <ThemeSettings />
+        <VisualPreferenceControls layout='menu' />
 
         {/* 个人 */}
         <div className='tm-menu-group'>

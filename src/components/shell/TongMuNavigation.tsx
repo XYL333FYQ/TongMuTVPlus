@@ -5,19 +5,16 @@ import {
   Blend,
   BookMarked,
   BookOpen,
-  Clapperboard,
   Compass,
   Container,
-  Download,
-  Film,
   Globe,
   Library,
   Link as LinkIcon,
   ListVideo,
   MessageSquarePlus,
+  MonitorPlay,
   Music2,
   Search,
-  Star,
   Tv,
   UserRound,
   Users,
@@ -28,8 +25,6 @@ import { useEffect, useId, useRef, useState } from 'react';
 
 import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
 
-import ThemeSettings from '@/components/account/ThemeSettings';
-import VisualPreferenceControls from '@/components/account/VisualPreferenceControls';
 import { useShellReducedMotion } from '@/components/shell/ShellMotionProvider';
 
 export function pageTitleForPath(path: string) {
@@ -105,151 +100,228 @@ export function isPrimaryNavigationActive(href: string, pathname: string) {
   return pathname === href || pathname.startsWith(href + '/');
 }
 
+type ExploreEntryState = 'open' | 'site-locked' | 'login' | 'no-permission';
+
+interface ExploreEntry {
+  icon: typeof Tv;
+  label: string;
+  description: string;
+  href: string;
+  siteEnabled: boolean;
+  userEnabled: boolean;
+}
+
+interface ExploreNotice {
+  title: string;
+  message: string;
+  loginHref?: string;
+}
+
+function resolveEntryState(
+  siteEnabled: boolean,
+  userEnabled: boolean,
+  loggedIn: boolean
+): ExploreEntryState {
+  if (!siteEnabled) return 'site-locked';
+  if (!loggedIn) return 'login';
+  if (!userEnabled) return 'no-permission';
+  return 'open';
+}
+
+const ENTRY_BADGE: Record<Exclude<ExploreEntryState, 'open'>, string> = {
+  'site-locked': '未开放',
+  login: '登录后可用',
+  'no-permission': '未授权',
+};
+
+function buildNotice(state: ExploreEntryState): ExploreNotice {
+  if (state === 'login') {
+    return {
+      title: '需要登录',
+      message: '登录后即可使用此功能。',
+    };
+  }
+  if (state === 'no-permission') {
+    return {
+      title: '暂无使用权限',
+      message: '当前账号没有使用权限。',
+    };
+  }
+  return {
+    title: '功能未开放',
+    message: '站长暂未开放此功能。',
+  };
+}
+
 export function MoreMenu({
   onNavigate,
   label = '更多',
 }: { onNavigate?: () => void; label?: string } = {}) {
   const [runtime, setRuntime] = useState<Record<string, unknown>>({});
-  const [canManageDownloads, setCanManageDownloads] = useState(false);
+  const [loggedIn, setLoggedIn] = useState(false);
+  const [notice, setNotice] = useState<ExploreNotice | null>(null);
   const dialogRef = useRef<HTMLDialogElement>(null);
+  const noticeRef = useRef<HTMLDialogElement>(null);
   const titleId = useId();
+  const noticeTitleId = useId();
+  const noticeMessageId = useId();
 
   useEffect(() => {
     setRuntime(window.RUNTIME_CONFIG || {});
-    const role = getAuthInfoFromBrowserCookie()?.role;
-    setCanManageDownloads(role === 'owner' || role === 'admin');
+    setLoggedIn(!!getAuthInfoFromBrowserCookie()?.username);
   }, []);
 
-  const entries = [
+  useEffect(() => {
+    const element = noticeRef.current;
+    if (!notice || !element) return;
+    if (!element.open) element.showModal();
+  }, [notice]);
+
+  const flag = (key: string) => runtime[key] === true;
+
+  const createEntry = (
+    icon: ExploreEntry['icon'],
+    entry: Omit<ExploreEntry, 'icon' | 'siteEnabled' | 'userEnabled'> & {
+      site: string;
+      user: string;
+    }
+  ): ExploreEntry => ({
+    icon,
+    label: entry.label,
+    description: entry.description,
+    href: entry.href,
+    siteEnabled: flag(entry.site),
+    userEnabled: flag(entry.user),
+  });
+
+  const groups: {
+    title: string;
+    gridClass: string;
+    entries: ExploreEntry[];
+  }[] = [
     {
-      icon: LinkIcon,
-      label: '打开直链',
-      description: '输入可直接播放的链接',
-      href: '/?open=directplay',
-      enabled: true,
+      title: '扩展内容',
+      gridClass: 'tm-explore-grid',
+      entries: [
+        createEntry(Tv, {
+          label: '电视直播',
+          description: '频道与节目单',
+          href: '/live',
+          site: 'SITE_LIVE_ENABLED',
+          user: 'LIVE_ENABLED',
+        }),
+        createEntry(Globe, {
+          label: '网络直播',
+          description: '已配置的直播频道',
+          href: '/web-live',
+          site: 'SITE_WEB_LIVE_ENABLED',
+          user: 'WEB_LIVE_ENABLED',
+        }),
+        createEntry(Music2, {
+          label: '音乐',
+          description: '歌曲与歌单',
+          href: '/music',
+          site: 'SITE_MUSIC_ENABLED',
+          user: 'MUSIC_ENABLED',
+        }),
+        createEntry(BookMarked, {
+          label: '电子书',
+          description: '书架、阅读与听书',
+          href: '/books',
+          site: 'SITE_BOOKS_ENABLED',
+          user: 'BOOKS_ENABLED',
+        }),
+        createEntry(BookOpen, {
+          label: '漫画',
+          description: '漫画书架与阅读记录',
+          href: '/manga',
+          site: 'SITE_MANGA_ENABLED',
+          user: 'SUWAYOMI_ENABLED',
+        }),
+        createEntry(Container, {
+          label: '私人影库',
+          description: '连接自己的媒体收藏',
+          href: '/private-library',
+          site: 'SITE_PRIVATE_LIBRARY_ENABLED',
+          user: 'PRIVATE_LIBRARY_ENABLED',
+        }),
+      ],
     },
     {
-      icon: Film,
-      label: '电影',
-      description: '发现电影与片源',
-      href: '/douban?type=movie',
-      enabled: true,
+      title: '影视辅助',
+      gridClass: 'tm-explore-grid tm-explore-grid-2',
+      entries: [
+        {
+          icon: ListVideo,
+          label: '源站寻片',
+          description: '浏览已经接入的内容来源',
+          href: '/source-search',
+          siteEnabled: runtime.ENABLE_SOURCE_SEARCH !== false,
+          userEnabled: true,
+        },
+        createEntry(Blend, {
+          label: '高级推荐',
+          description: '寻找更多合口味的作品',
+          href: '/advanced-recommendation',
+          site: 'SITE_ADVANCED_RECOMMENDATION_ENABLED',
+          user: 'ADVANCED_RECOMMENDATION_ENABLED',
+        }),
+      ],
     },
     {
-      icon: Tv,
-      label: '剧集',
-      description: '接着看下一集',
-      href: '/douban?type=tv',
-      enabled: true,
+      title: '工具与服务',
+      gridClass: 'tm-explore-grid tm-explore-grid-2',
+      entries: [
+        {
+          icon: LinkIcon,
+          label: '打开直链',
+          description: '输入可直接播放的链接',
+          href: '/?open=directplay',
+          siteEnabled: true,
+          userEnabled: true,
+        },
+        createEntry(MessageSquarePlus, {
+          label: '求片',
+          description: '告诉站长你想看的作品',
+          href: '/movie-request',
+          site: 'SITE_MOVIE_REQUEST_ENABLED',
+          user: 'ENABLE_MOVIE_REQUEST',
+        }),
+      ],
     },
     {
-      icon: Clapperboard,
-      label: '动漫',
-      description: '更多值得看的故事',
-      href: '/douban?type=anime',
-      enabled: true,
+      title: '使用模式',
+      gridClass: 'tm-explore-grid tm-explore-grid-1',
+      entries: [
+        {
+          icon: MonitorPlay,
+          label: '电视大屏',
+          description: '使用遥控器浏览',
+          href: '/tv',
+          siteEnabled: runtime.SITE_TV_MODE_ENABLED === true,
+          userEnabled: runtime.ENABLE_TV_MODE !== false,
+        },
+      ],
     },
-    {
-      icon: Clapperboard,
-      label: '综艺',
-      description: '轻松看一会儿',
-      href: '/douban?type=show',
-      enabled: true,
-    },
-    {
-      icon: Tv,
-      label: '电视直播',
-      description: '频道与节目单',
-      href: '/live',
-      enabled: !!runtime.LIVE_ENABLED,
-    },
-    {
-      icon: Globe,
-      label: '网络直播',
-      description: '已配置的直播频道',
-      href: '/web-live',
-      enabled: !!runtime.WEB_LIVE_ENABLED,
-    },
-    {
-      icon: Music2,
-      label: '音乐',
-      description: '歌曲与歌单',
-      href: '/music',
-      enabled: !!runtime.MUSIC_ENABLED,
-    },
-    {
-      icon: BookOpen,
-      label: '漫画',
-      description: '漫画书架与阅读记录',
-      href: '/manga',
-      enabled: !!runtime.SUWAYOMI_ENABLED,
-    },
-    {
-      icon: BookMarked,
-      label: '电子书',
-      description: '书架、阅读与听书',
-      href: '/books',
-      enabled: !!runtime.BOOKS_ENABLED,
-    },
-    {
-      icon: Container,
-      label: '私人影库',
-      description: '连接自己的媒体收藏',
-      href: '/private-library',
-      enabled: !!runtime.PRIVATE_LIBRARY_ENABLED,
-    },
-    {
-      icon: Blend,
-      label: '高级推荐',
-      description: '寻找更多合口味的作品',
-      href: '/advanced-recommendation',
-      enabled: !!runtime.ADVANCED_RECOMMENDATION_ENABLED,
-    },
-    {
-      icon: ListVideo,
-      label: '源站寻片',
-      description: '浏览已经接入的内容来源',
-      href: '/source-search',
-      enabled: runtime.ENABLE_SOURCE_SEARCH !== false,
-    },
-    {
-      icon: Clapperboard,
-      label: '短剧',
-      description: '轻松发现短篇故事',
-      href: '/duanju',
-      enabled: true,
-    },
-    {
-      icon: Tv,
-      label: '电视大屏',
-      description: '使用遥控器浏览',
-      href: '/tv',
-      enabled: runtime.ENABLE_TV_MODE !== false,
-    },
-    {
-      icon: Star,
-      label: '自定义分类',
-      description: '站点配置的精选分类',
-      href: '/douban?type=custom',
-      enabled:
-        Array.isArray(runtime.CUSTOM_CATEGORIES) &&
-        runtime.CUSTOM_CATEGORIES.length > 0,
-    },
-    {
-      icon: MessageSquarePlus,
-      label: '求片',
-      description: '告诉站长你想看的作品',
-      href: '/movie-request',
-      enabled: runtime.ENABLE_MOVIE_REQUEST === true,
-    },
-    {
-      icon: Download,
-      label: '离线下载',
-      description: '管理服务器上的下载任务',
-      href: '/my?panel=downloads',
-      enabled: runtime.ENABLE_OFFLINE_DOWNLOAD === true && canManageDownloads,
-    },
-  ].filter((entry) => entry.enabled);
+  ];
+
+  const openNotice = (state: ExploreEntryState) => {
+    const base = buildNotice(state);
+    if (state === 'login' && typeof window !== 'undefined') {
+      setNotice({
+        ...base,
+        loginHref:
+          '/login?redirect=' +
+          encodeURIComponent(window.location.pathname + window.location.search),
+      });
+      return;
+    }
+    setNotice(base);
+  };
+
+  const closeNotice = () => {
+    noticeRef.current?.close();
+  };
 
   return (
     <>
@@ -264,49 +336,149 @@ export function MoreMenu({
       </button>
       <dialog
         ref={dialogRef}
+        {...{ closedby: 'any' }}
         className='tm-explore-dialog'
         aria-labelledby={titleId}
         onClick={(event) => {
-          if (event.target === event.currentTarget) dialogRef.current?.close();
+          const element = event.currentTarget;
+          if (
+            'closedBy' in HTMLDialogElement.prototype ||
+            event.target !== element
+          )
+            return;
+          const rect = element.getBoundingClientRect();
+          if (
+            event.clientX < rect.left ||
+            event.clientX > rect.right ||
+            event.clientY < rect.top ||
+            event.clientY > rect.bottom
+          )
+            element.close();
         }}
       >
         <div className='tm-explore-content'>
           <div className='tm-explore-heading'>
             <div>
-              <h2 id={titleId}>更多</h2>
+              <h2 id={titleId}>更多功能</h2>
             </div>
             <button
               className='tm-icon-button'
-              aria-label='关闭更多'
+              aria-label='关闭更多功能'
               onClick={() => dialogRef.current?.close()}
             >
               <X size={22} />
             </button>
           </div>
-          <div className='tm-explore-grid'>
-            {entries.map((entry) => (
-              <Link
-                key={entry.href}
-                href={entry.href}
-                prefetch={false}
-                className='tm-explore-card'
-                onClick={() => {
-                  dialogRef.current?.close();
-                  onNavigate?.();
-                }}
-              >
-                <entry.icon size={24} strokeWidth={1.4} />
-                <span>
-                  <strong>{entry.label}</strong>
-                  <small>{entry.description}</small>
-                </span>
-              </Link>
-            ))}
-          </div>
-          <ThemeSettings />
-          <VisualPreferenceControls />
+          {groups.map((group) => (
+            <section key={group.title} className='tm-explore-group'>
+              <h3 className='tm-explore-group-title'>{group.title}</h3>
+              <div className={group.gridClass}>
+                {group.entries.map((entry) => {
+                  const state = resolveEntryState(
+                    entry.siteEnabled,
+                    entry.userEnabled,
+                    loggedIn
+                  );
+                  if (state === 'open') {
+                    return (
+                      <Link
+                        key={entry.href}
+                        href={entry.href}
+                        prefetch={false}
+                        className='tm-explore-card'
+                        onClick={() => {
+                          dialogRef.current?.close();
+                          onNavigate?.();
+                        }}
+                      >
+                        <entry.icon size={24} strokeWidth={1.4} />
+                        <span>
+                          <strong>{entry.label}</strong>
+                          <small>{entry.description}</small>
+                        </span>
+                      </Link>
+                    );
+                  }
+                  return (
+                    <button
+                      key={entry.href}
+                      type='button'
+                      className='tm-explore-card'
+                      data-locked='true'
+                      onClick={() => openNotice(state)}
+                    >
+                      <entry.icon size={24} strokeWidth={1.4} />
+                      <span>
+                        <strong>{entry.label}</strong>
+                        <small>{entry.description}</small>
+                        <em className='tm-explore-card-badge'>
+                          {ENTRY_BADGE[state]}
+                        </em>
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </section>
+          ))}
         </div>
       </dialog>
+      {notice && (
+        <dialog
+          ref={noticeRef}
+          {...{ closedby: 'any' }}
+          className='tm-explore-notice'
+          role='alertdialog'
+          aria-modal='true'
+          aria-labelledby={noticeTitleId}
+          aria-describedby={noticeMessageId}
+          onClose={() => setNotice(null)}
+          onClick={(event) => {
+            const element = event.currentTarget;
+            if (
+              'closedBy' in HTMLDialogElement.prototype ||
+              event.target !== element
+            )
+              return;
+            const rect = element.getBoundingClientRect();
+            if (
+              event.clientX < rect.left ||
+              event.clientX > rect.right ||
+              event.clientY < rect.top ||
+              event.clientY > rect.bottom
+            )
+              closeNotice();
+          }}
+        >
+          <div className='tm-explore-notice-panel'>
+            <h2 id={noticeTitleId}>{notice.title}</h2>
+            <p id={noticeMessageId}>{notice.message}</p>
+            <div className='tm-explore-notice-actions'>
+              {notice.loginHref && (
+                <Link
+                  href={notice.loginHref}
+                  prefetch={false}
+                  className='tm-btn tm-btn-primary tm-press'
+                  onClick={() => {
+                    closeNotice();
+                    dialogRef.current?.close();
+                    onNavigate?.();
+                  }}
+                >
+                  去登录
+                </Link>
+              )}
+              <button
+                type='button'
+                className='tm-btn tm-btn-secondary tm-press'
+                onClick={closeNotice}
+              >
+                知道了
+              </button>
+            </div>
+          </div>
+        </dialog>
+      )}
     </>
   );
 }

@@ -67,7 +67,7 @@ test('原生子弹窗的 Esc 交给子弹窗，不卸载整个账号菜单', asy
   // JSDOM 没有原生 showModal；只补打开状态，不模拟按键处理。
   dialog.showModal = () => dialog.setAttribute('open', '');
   fireEvent.click(more);
-  const close = screen.getByRole('button', { name: '关闭更多' });
+  const close = screen.getByRole('button', { name: '关闭更多功能' });
   close.focus();
   expect(fireEvent.keyDown(close, { key: 'Escape' })).toBe(true);
   expect(trigger).toHaveAttribute('aria-expanded', 'true');

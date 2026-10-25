@@ -3462,9 +3462,11 @@ const UserConfig = ({
 const OpenListConfigComponent = ({
   config,
   refreshConfig,
+  role,
 }: {
   config: AdminConfig | null;
   refreshConfig: () => Promise<void>;
+  role: 'owner' | 'admin' | null;
 }) => {
   const { alertModal, showAlert, hideAlert } = useAlertModal();
   const { isLoading, withLoading } = useLoadingState();
@@ -3861,13 +3863,16 @@ const OpenListConfigComponent = ({
             启用私人影库功能
           </h3>
           <p className='text-[13px] text-[color:var(--tm-muted)] mt-1'>
-            关闭后将不显示私人影库入口，也不会执行定时扫描
+            {role === 'owner'
+              ? '关闭后入口仍保留并提示未开放，也不会执行定时扫描'
+              : '私人影库的开放开关只有站长可以更改'}
           </p>
         </div>
         <label className='relative inline-flex items-center cursor-pointer'>
           <input
             type='checkbox'
             checked={enabled}
+            disabled={role !== 'owner'}
             onChange={(e) => setEnabled(e.target.checked)}
             className='sr-only peer'
           />
@@ -5634,9 +5639,11 @@ const NetDiskConfigComponent = ({
 const EmbyConfigComponent = ({
   config,
   refreshConfig,
+  role,
 }: {
   config: AdminConfig | null;
   refreshConfig: () => Promise<void>;
+  role: 'owner' | 'admin' | null;
 }) => {
   const { alertModal, showAlert, hideAlert } = useAlertModal();
   const { isLoading, withLoading } = useLoadingState();
@@ -5653,7 +5660,7 @@ const EmbyConfigComponent = ({
   const [formData, setFormData] = useState({
     key: '',
     name: '',
-    enabled: true,
+    enabled: role === 'owner',
     ServerURL: '',
     ApiKey: '',
     Username: '',
@@ -5698,7 +5705,7 @@ const EmbyConfigComponent = ({
     setFormData({
       key: '',
       name: '',
-      enabled: true,
+      enabled: role === 'owner',
       ServerURL: '',
       ApiKey: '',
       Username: '',
@@ -6132,21 +6139,25 @@ const EmbyConfigComponent = ({
             </span>
             <button
               onClick={handleBatchEnable}
-              disabled={isLoading('batchEnableEmby')}
+              disabled={isLoading('batchEnableEmby') || role !== 'owner'}
               className={buttonStyles.successSmall}
             >
               批量启用
             </button>
             <button
               onClick={handleBatchDisable}
-              disabled={isLoading('batchDisableEmby')}
+              disabled={isLoading('batchDisableEmby') || role !== 'owner'}
               className={buttonStyles.warningSmall}
             >
               批量禁用
             </button>
             <button
               onClick={handleBatchDelete}
-              disabled={isLoading('batchDeleteEmby')}
+              disabled={
+                isLoading('batchDeleteEmby') ||
+                (role !== 'owner' &&
+                  sources.some((s) => selectedSources.has(s.key) && s.enabled))
+              }
               className={buttonStyles.dangerSmall}
             >
               批量删除
@@ -6222,7 +6233,12 @@ const EmbyConfigComponent = ({
                 <div className='flex gap-2 flex-wrap sm:flex-nowrap'>
                   <button
                     onClick={() => handleToggleEnabled(source)}
-                    disabled={isLoading('toggleEmbySource')}
+                    disabled={isLoading('toggleEmbySource') || role !== 'owner'}
+                    title={
+                      role !== 'owner'
+                        ? '私人影库的开放状态只有站长可以更改'
+                        : undefined
+                    }
                     className={
                       source.enabled
                         ? buttonStyles.warningSmall
@@ -6246,7 +6262,10 @@ const EmbyConfigComponent = ({
                   </button>
                   <button
                     onClick={() => handleDelete(source)}
-                    disabled={isLoading('deleteEmbySource')}
+                    disabled={
+                      isLoading('deleteEmbySource') ||
+                      (role !== 'owner' && source.enabled)
+                    }
                     className={buttonStyles.dangerSmall}
                   >
                     删除
@@ -6450,6 +6469,8 @@ const EmbyConfigComponent = ({
                 onClick={() =>
                   setFormData({ ...formData, enabled: !formData.enabled })
                 }
+                disabled={role !== 'owner'}
+                aria-label='启用此 Emby 源（只有站长可以更改）'
                 className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
                   formData.enabled
                     ? 'bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] tm-press'
@@ -9045,7 +9066,7 @@ const CategoryConfig = ({
   );
 };
 
-const VideoSourceScriptLab = () => {
+const VideoSourceScriptLab = ({ role }: { role: 'owner' | 'admin' | null }) => {
   const { alertModal, showAlert, hideAlert } = useAlertModal();
   const { isLoading, withLoading } = useLoadingState();
   const [scripts, setScripts] = useState<StandaloneSourceScript[]>([]);
@@ -9066,7 +9087,7 @@ const VideoSourceScriptLab = () => {
     name: '',
     description: '',
     code: '',
-    enabled: true,
+    enabled: role === 'owner' || scripts.some((item) => item.enabled),
   });
   const [testHook, setTestHook] = useState<
     'getSources' | 'search' | 'recommend' | 'detail' | 'resolvePlayUrl'
@@ -9082,7 +9103,7 @@ const VideoSourceScriptLab = () => {
         name: '',
         description: '',
         code: template,
-        enabled: true,
+        enabled: role === 'owner' || scripts.some((item) => item.enabled),
       });
       setSelectedScriptId(null);
       return;
@@ -9130,7 +9151,7 @@ const VideoSourceScriptLab = () => {
           name: '',
           description: '',
           code: data.template || '',
-          enabled: true,
+          enabled: role === 'owner' || scripts.some((item) => item.enabled),
         });
         setSelectedScriptId(null);
       }
@@ -9155,7 +9176,7 @@ const VideoSourceScriptLab = () => {
       name: '',
       description: '',
       code: template,
-      enabled: true,
+      enabled: role === 'owner' || scripts.some((item) => item.enabled),
     });
     setTestOutput('');
   };
@@ -9372,6 +9393,11 @@ const VideoSourceScriptLab = () => {
 
   return (
     <div className='space-y-6'>
+      {role !== 'owner' && (
+        <p className='text-[13px] text-[color:var(--tm-muted)]'>
+          只有站长可以开放或关闭高级推荐；管理员可以维护已有脚本。
+        </p>
+      )}
       <div className='flex flex-col lg:flex-row gap-6'>
         <div className='lg:w-80 space-y-4'>
           <div className='flex items-center justify-between'>
@@ -9468,7 +9494,14 @@ const VideoSourceScriptLab = () => {
                         e.stopPropagation();
                         handleToggleEnabled(script.id);
                       }}
-                      disabled={isLoading(`toggleSourceScript_${script.id}`)}
+                      disabled={
+                        isLoading(`toggleSourceScript_${script.id}`) ||
+                        (role !== 'owner' &&
+                          (script.enabled
+                            ? scripts.filter((item) => item.enabled).length ===
+                              1
+                            : !scripts.some((item) => item.enabled)))
+                      }
                       className={
                         script.enabled
                           ? buttonStyles.warningSmall
@@ -9565,7 +9598,16 @@ const VideoSourceScriptLab = () => {
             >
               导出当前脚本
             </button>
-            <button onClick={handleDelete} className={buttonStyles.danger}>
+            <button
+              onClick={handleDelete}
+              disabled={
+                role !== 'owner' &&
+                !!editor.id &&
+                scripts.filter((item) => item.enabled).length === 1 &&
+                scripts.some((item) => item.id === editor.id && item.enabled)
+              }
+              className={buttonStyles.danger}
+            >
               {editor.id ? '删除脚本' : '清空编辑器'}
             </button>
           </div>
@@ -14067,9 +14109,11 @@ const CustomAdFilterConfig = ({
 const SuwayomiConfigComponent = ({
   config,
   refreshConfig,
+  role,
 }: {
   config: AdminConfig | null;
   refreshConfig: () => Promise<void>;
+  role: 'owner' | 'admin' | null;
 }) => {
   const { alertModal, showAlert, hideAlert } = useAlertModal();
   const { isLoading, withLoading } = useLoadingState();
@@ -14210,10 +14254,13 @@ const SuwayomiConfigComponent = ({
               启用漫画展馆
             </h3>
             <p className='text-[13px] text-[color:var(--tm-muted)] mt-1'>
-              关闭后仍保留代码，但不建议在未配置时对用户开放入口。
+              {role === 'owner'
+                ? '关闭后入口仍保留，点击会提示站长暂未开放。'
+                : '漫画展馆的开放开关只有站长可以更改。'}
             </p>
           </div>
           <button
+            disabled={role !== 'owner'}
             onClick={() => {
               if (!enabled) {
                 setShowMangaDisclaimer(true);
@@ -14445,9 +14492,11 @@ const SuwayomiConfigComponent = ({
 const OPDSConfigComponent = ({
   config,
   refreshConfig,
+  role,
 }: {
   config: AdminConfig | null;
   refreshConfig: () => Promise<void>;
+  role: 'owner' | 'admin' | null;
 }) => {
   const { alertModal, showAlert, hideAlert } = useAlertModal();
   const { isLoading, withLoading } = useLoadingState();
@@ -14715,10 +14764,13 @@ const OPDSConfigComponent = ({
             启用电子书馆
           </h3>
           <p className='mt-1 text-[13px] text-[color:var(--tm-muted)]'>
-            关闭后不会展示电子书入口。
+            {role === 'owner'
+              ? '关闭后入口仍保留，点击会提示站长暂未开放。'
+              : '电子书馆的开放开关只有站长可以更改。'}
           </p>
         </div>
         <button
+          disabled={role !== 'owner'}
           onClick={() => {
             if (!enabled) {
               setShowBooksDisclaimer(true);
@@ -15157,9 +15209,11 @@ const OPDSConfigComponent = ({
 const XiaoyaConfigComponent = ({
   config,
   refreshConfig,
+  role,
 }: {
   config: AdminConfig | null;
   refreshConfig: () => Promise<void>;
+  role: 'owner' | 'admin' | null;
 }) => {
   const { alertModal, showAlert, hideAlert } = useAlertModal();
   const { isLoading, withLoading } = useLoadingState();
@@ -15269,16 +15323,20 @@ const XiaoyaConfigComponent = ({
               启用小雅功能
             </h3>
             <p className='text-[13px] text-[color:var(--tm-muted)] mt-1'>
-              关闭后将不显示小雅入口
+              {role === 'owner'
+                ? '关闭后停止开放小雅内容；私人影库入口仍保留'
+                : '小雅的开放开关只有站长可以更改'}
             </p>
           </div>
           <button
             onClick={() => setEnabled(!enabled)}
+            disabled={role !== 'owner'}
             className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
               enabled
                 ? 'bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] tm-press'
                 : 'bg-[var(--tm-surface-raised)] tm-press'
             }`}
+            aria-label='启用小雅功能'
           >
             <span
               className={`inline-block h-4 w-4 transform rounded-full bg-[var(--tm-surface)] transition-transform ${
@@ -16189,9 +16247,11 @@ const EmailConfigComponent = ({
 const MovieRequestsComponent = ({
   config,
   refreshConfig,
+  role,
 }: {
   config: AdminConfig | null;
   refreshConfig: () => Promise<void>;
+  role: 'owner' | 'admin' | null;
 }) => {
   const { alertModal, showAlert, hideAlert } = useAlertModal();
   const { isLoading, withLoading } = useLoadingState();
@@ -16323,13 +16383,16 @@ const MovieRequestsComponent = ({
                 启用求片功能
               </label>
               <p className='text-[13px] text-[color:var(--tm-muted)] mt-1'>
-                关闭后用户将无法访问求片页面
+                {role === 'owner'
+                  ? '关闭后用户将无法访问求片页面'
+                  : '求片功能的开放开关只有站长可以更改'}
               </p>
             </div>
             <label className='relative inline-flex items-center cursor-pointer'>
               <input
                 type='checkbox'
                 checked={enableMovieRequest}
+                disabled={role !== 'owner'}
                 onChange={(e) => setEnableMovieRequest(e.target.checked)}
                 className='sr-only peer'
               />
@@ -17375,9 +17438,11 @@ const AIConfigComponent = ({
 const MusicConfigComponent = ({
   config,
   refreshConfig,
+  role,
 }: {
   config: AdminConfig | null;
   refreshConfig: () => Promise<void>;
+  role: 'owner' | 'admin' | null;
 }) => {
   const { alertModal, showAlert, hideAlert } = useAlertModal();
   const { isLoading, withLoading } = useLoadingState();
@@ -17491,13 +17556,16 @@ const MusicConfigComponent = ({
             启用音乐功能
           </h3>
           <p className='text-[13px] text-[color:var(--tm-muted)] mt-1'>
-            关闭后不显示音乐入口，前端音乐页与接口将不可用
+            {role === 'owner'
+              ? '关闭后入口仍保留并提示未开放，音乐页与接口将不可用'
+              : '音乐功能的开放开关只有站长可以更改'}
           </p>
         </div>
         <label className='relative inline-flex items-center cursor-pointer'>
           <input
             type='checkbox'
             checked={enabled}
+            disabled={role !== 'owner'}
             onChange={(e) => {
               if (e.target.checked) {
                 setShowMusicDisclaimer(true);
@@ -17653,9 +17721,11 @@ const MusicConfigComponent = ({
 const LiveSourceConfig = ({
   config,
   refreshConfig,
+  role,
 }: {
   config: AdminConfig | null;
   refreshConfig: () => Promise<void>;
+  role: 'owner' | 'admin' | null;
 }) => {
   const { alertModal, showAlert, hideAlert } = useAlertModal();
   const { isLoading, withLoading } = useLoadingState();
@@ -18010,13 +18080,31 @@ const LiveSourceConfig = ({
         <td className='px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2'>
           <button
             onClick={() => handleToggleEnable(liveSource.key)}
-            disabled={isLoading(`toggleLiveSource_${liveSource.key}`)}
+            disabled={
+              isLoading(`toggleLiveSource_${liveSource.key}`) ||
+              (role !== 'owner' &&
+                (!liveSources.some((s) => !s.disabled) ||
+                  (!liveSource.disabled &&
+                    liveSources.filter((s) => !s.disabled).length === 1)))
+            }
+            title={
+              role !== 'owner' &&
+              (!liveSources.some((s) => !s.disabled) ||
+                (!liveSource.disabled &&
+                  liveSources.filter((s) => !s.disabled).length === 1))
+                ? '电视直播的开放状态只有站长可以更改'
+                : undefined
+            }
             className={`inline-flex items-center px-3 py-1.5 rounded-full text-[13px] font-medium ${
               !liveSource.disabled
                 ? buttonStyles.roundedDanger
                 : buttonStyles.roundedSuccess
             } transition-colors ${
-              isLoading(`toggleLiveSource_${liveSource.key}`)
+              isLoading(`toggleLiveSource_${liveSource.key}`) ||
+              (role !== 'owner' &&
+                (!liveSources.some((s) => !s.disabled) ||
+                  (!liveSource.disabled &&
+                    liveSources.filter((s) => !s.disabled).length === 1)))
                 ? 'opacity-50 cursor-not-allowed min-h-[44px] tm-press'
                 : ' min-h-[44px] tm-press'
             }`}
@@ -18117,6 +18205,14 @@ const LiveSourceConfig = ({
             </button>
             <button
               onClick={() => setShowAddForm(!showAddForm)}
+              disabled={
+                role !== 'owner' && !liveSources.some((s) => !s.disabled)
+              }
+              title={
+                role !== 'owner' && !liveSources.some((s) => !s.disabled)
+                  ? '电视直播未开放，只有站长可以添加直播源'
+                  : undefined
+              }
               className={`${
                 showAddForm ? buttonStyles.secondary : buttonStyles.success
               } shrink-0 whitespace-nowrap`}
@@ -18412,9 +18508,11 @@ const LiveSourceConfig = ({
 const WebLiveConfig = ({
   config,
   refreshConfig,
+  role,
 }: {
   config: AdminConfig | null;
   refreshConfig: () => Promise<void>;
+  role: 'owner' | 'admin' | null;
 }) => {
   const { alertModal, showAlert, hideAlert } = useAlertModal();
   const { isLoading, withLoading } = useLoadingState();
@@ -18547,18 +18645,23 @@ const WebLiveConfig = ({
               网络直播功能总开关
             </h4>
             <p className='text-[13px] text-[color:var(--tm-muted)]'>
-              关闭后，侧边栏和底部导航栏的网络直播入口将被隐藏，用户无法访问网络直播页面
+              {role === 'owner'
+                ? '关闭后入口仍保留并提示未开放，网络直播页面将不可用'
+                : '网络直播的开放开关只有站长可以更改'}
             </p>
           </div>
           <button
             onClick={handleToggleWebLiveEnabled}
-            disabled={isLoading('toggleWebLiveEnabled')}
+            disabled={isLoading('toggleWebLiveEnabled') || role !== 'owner'}
+            title={
+              role !== 'owner' ? '只有站长可以开放或关闭网络直播' : undefined
+            }
             className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--tm-text)] ${
               config.WebLiveEnabled
                 ? buttonStyles.toggleOn
                 : buttonStyles.toggleOff
             } ${
-              isLoading('toggleWebLiveEnabled')
+              isLoading('toggleWebLiveEnabled') || role !== 'owner'
                 ? 'opacity-50 cursor-not-allowed min-h-[44px] tm-press'
                 : ' min-h-[44px] tm-press'
             }`}
@@ -19280,7 +19383,7 @@ function AdminPageClient() {
       key: 'sourceScriptLab',
       title: '视频源脚本',
       icon: <Bot size={20} className={navIconClass} />,
-      render: () => <VideoSourceScriptLab />,
+      render: () => <VideoSourceScriptLab role={role} />,
     },
     {
       key: 'musicConfig',
@@ -19303,7 +19406,11 @@ function AdminPageClient() {
         </svg>
       ),
       render: () => (
-        <MusicConfigComponent config={config} refreshConfig={fetchConfig} />
+        <MusicConfigComponent
+          config={config}
+          refreshConfig={fetchConfig}
+          role={role}
+        />
       ),
     },
     {
@@ -19311,7 +19418,11 @@ function AdminPageClient() {
       title: '漫画配置',
       icon: <BookOpen size={20} className={navIconClass} />,
       render: () => (
-        <SuwayomiConfigComponent config={config} refreshConfig={fetchConfig} />
+        <SuwayomiConfigComponent
+          config={config}
+          refreshConfig={fetchConfig}
+          role={role}
+        />
       ),
     },
     {
@@ -19319,7 +19430,11 @@ function AdminPageClient() {
       title: '电子书配置',
       icon: <BookMarked size={20} className={navIconClass} />,
       render: () => (
-        <OPDSConfigComponent config={config} refreshConfig={fetchConfig} />
+        <OPDSConfigComponent
+          config={config}
+          refreshConfig={fetchConfig}
+          role={role}
+        />
       ),
     },
     {
@@ -19327,7 +19442,11 @@ function AdminPageClient() {
       title: '电视直播源配置',
       icon: <Tv size={20} className={navIconClass} />,
       render: () => (
-        <LiveSourceConfig config={config} refreshConfig={fetchConfig} />
+        <LiveSourceConfig
+          config={config}
+          refreshConfig={fetchConfig}
+          role={role}
+        />
       ),
     },
     {
@@ -19335,7 +19454,11 @@ function AdminPageClient() {
       title: '网络直播配置',
       icon: <Globe size={20} className={navIconClass} />,
       render: () => (
-        <WebLiveConfig config={config} refreshConfig={fetchConfig} />
+        <WebLiveConfig
+          config={config}
+          refreshConfig={fetchConfig}
+          role={role}
+        />
       ),
     },
     {
@@ -19351,6 +19474,7 @@ function AdminPageClient() {
             <OpenListConfigComponent
               config={config}
               refreshConfig={fetchConfig}
+              role={role}
             />
           ),
         },
@@ -19359,7 +19483,11 @@ function AdminPageClient() {
           title: 'Emby 媒体库',
           icon: <FolderOpen size={20} className={navIconClass} />,
           render: () => (
-            <EmbyConfigComponent config={config} refreshConfig={fetchConfig} />
+            <EmbyConfigComponent
+              config={config}
+              refreshConfig={fetchConfig}
+              role={role}
+            />
           ),
         },
         {
@@ -19370,6 +19498,7 @@ function AdminPageClient() {
             <XiaoyaConfigComponent
               config={config}
               refreshConfig={fetchConfig}
+              role={role}
             />
           ),
         },
@@ -19381,6 +19510,7 @@ function AdminPageClient() {
             <MovieRequestsComponent
               config={config}
               refreshConfig={fetchConfig}
+              role={role}
             />
           ),
         },
@@ -19737,7 +19867,7 @@ function AdminPageClient() {
               isExpanded={expandedTabs.sourceScriptLab}
               onToggle={() => toggleTab('sourceScriptLab')}
             >
-              <VideoSourceScriptLab />
+              <VideoSourceScriptLab role={role} />
             </CollapsibleTab>
 
             <CollapsibleTab
@@ -19765,6 +19895,7 @@ function AdminPageClient() {
               <MusicConfigComponent
                 config={config}
                 refreshConfig={fetchConfig}
+                role={role}
               />
             </CollapsibleTab>
 
@@ -19779,6 +19910,7 @@ function AdminPageClient() {
               <SuwayomiConfigComponent
                 config={config}
                 refreshConfig={fetchConfig}
+                role={role}
               />
             </CollapsibleTab>
 
@@ -19796,6 +19928,7 @@ function AdminPageClient() {
               <OPDSConfigComponent
                 config={config}
                 refreshConfig={fetchConfig}
+                role={role}
               />
             </CollapsibleTab>
 
@@ -19806,7 +19939,11 @@ function AdminPageClient() {
               isExpanded={expandedTabs.liveSource}
               onToggle={() => toggleTab('liveSource')}
             >
-              <LiveSourceConfig config={config} refreshConfig={fetchConfig} />
+              <LiveSourceConfig
+                config={config}
+                refreshConfig={fetchConfig}
+                role={role}
+              />
             </CollapsibleTab>
 
             {/* 网络直播配置标签 */}
@@ -19818,7 +19955,11 @@ function AdminPageClient() {
               isExpanded={expandedTabs.webLive}
               onToggle={() => toggleTab('webLive')}
             >
-              <WebLiveConfig config={config} refreshConfig={fetchConfig} />
+              <WebLiveConfig
+                config={config}
+                refreshConfig={fetchConfig}
+                role={role}
+              />
             </CollapsibleTab>
 
             {/* 私人影库大类 */}
@@ -19847,6 +19988,7 @@ function AdminPageClient() {
                   <OpenListConfigComponent
                     config={config}
                     refreshConfig={fetchConfig}
+                    role={role}
                   />
                 </CollapsibleTab>
 
@@ -19865,6 +20007,7 @@ function AdminPageClient() {
                   <EmbyConfigComponent
                     config={config}
                     refreshConfig={fetchConfig}
+                    role={role}
                   />
                 </CollapsibleTab>
 
@@ -19883,6 +20026,7 @@ function AdminPageClient() {
                   <XiaoyaConfigComponent
                     config={config}
                     refreshConfig={fetchConfig}
+                    role={role}
                   />
                 </CollapsibleTab>
                 {/* 求片管理子标签 */}
@@ -19897,6 +20041,7 @@ function AdminPageClient() {
                   <MovieRequestsComponent
                     config={config}
                     refreshConfig={fetchConfig}
+                    role={role}
                   />
                 </CollapsibleTab>
 

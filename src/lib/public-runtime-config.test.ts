@@ -35,3 +35,30 @@ it('keeps public sign-in settings while withholding private source and proxy cre
   expect(result).not.toHaveProperty('UNKNOWN_FUTURE_SECRET');
   expect(configured.OPENLIST_ENABLED).toBe(true);
 });
+
+it('projects module availability booleans to guests without leaking credentials', () => {
+  const configured = {
+    SITE_MUSIC_ENABLED: true,
+    SITE_BOOKS_ENABLED: false,
+    SITE_TV_MODE_ENABLED: true,
+    SITE_PRIVATE_LIBRARY_ENABLED: true,
+    // 私密配置即使误传也必须被剔除
+    MUSIC_BASE_URL: 'https://lxserver.test?token=hidden',
+  };
+  const result = projectGuestRuntimeConfig(configured);
+  expect(result).toMatchObject({
+    SITE_MUSIC_ENABLED: true,
+    SITE_BOOKS_ENABLED: false,
+    SITE_TV_MODE_ENABLED: true,
+    SITE_PRIVATE_LIBRARY_ENABLED: true,
+  });
+  expect(result).not.toHaveProperty('MUSIC_BASE_URL');
+  expect(JSON.stringify(result)).not.toMatch(/hidden/);
+});
+
+it('defaults missing availability flags to false for guests', () => {
+  const result = projectGuestRuntimeConfig({});
+  expect(result.SITE_MUSIC_ENABLED).toBe(false);
+  expect(result.SITE_LIVE_ENABLED).toBe(false);
+  expect(result.SITE_MOVIE_REQUEST_ENABLED).toBe(false);
+});

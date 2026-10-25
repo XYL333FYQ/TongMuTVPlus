@@ -2,10 +2,10 @@
 
 /* 大号搜索框（搜索页） */
 .tm-search-page {
-  padding-top: 24px;
+  padding-top: calc(24 * var(--tm-wide-unit));
 }
 .tm-search-form {
-  max-width: 720px;
+  max-width: calc(720 * var(--tm-wide-unit));
   margin-inline: auto;
 }
 .tm-search-field {
@@ -14,20 +14,20 @@
 .tm-search-icon {
   position: absolute;
   top: 50%;
-  left: 18px;
+  left: calc(18 * var(--tm-wide-unit));
   color: var(--tm-muted);
   transform: translateY(-50%);
   pointer-events: none;
 }
 .tm-search-input {
   width: 100%;
-  height: 56px;
-  padding: 0 56px 0 52px;
+  height: calc(56 * var(--tm-wide-unit));
+  padding: 0 calc(56 * var(--tm-wide-unit)) 0 calc(52 * var(--tm-wide-unit));
   border: 1px solid var(--tm-line);
   border-radius: var(--tm-radius-lg);
   background: var(--tm-surface);
   color: var(--tm-text);
-  font-size: 16px;
+  font-size: calc(16 * var(--tm-wide-unit));
   box-shadow: var(--tm-shadow-sm);
   transition: border-color var(--tm-d-hover) var(--tm-ease-out),
     box-shadow var(--tm-d-hover) var(--tm-ease-out);
@@ -43,7 +43,7 @@
 .tm-search-clear {
   position: absolute;
   top: 50%;
-  right: 8px;
+  right: calc(8 * var(--tm-wide-unit));
   display: grid;
   place-items: center;
   width: 40px;
@@ -57,7 +57,7 @@
   color: var(--tm-text);
 }
 .tm-search-body {
-  margin-top: 32px;
+  margin-top: calc(32 * var(--tm-wide-unit));
 }
 .tm-search-results-head {
   align-items: flex-start;

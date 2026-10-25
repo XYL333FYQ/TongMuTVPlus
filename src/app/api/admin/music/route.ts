@@ -54,6 +54,14 @@ export async function POST(request: NextRequest) {
       if (!userInfo || userInfo.role !== 'admin' || userInfo.banned) {
         return NextResponse.json({ error: '权限不足' }, { status: 401 });
       }
+
+      // 站长专属：音乐功能的开放开关不能被管理员改动，其余字段照常保存。
+      if (Enabled !== (adminConfig.MusicConfig?.Enabled === true)) {
+        return NextResponse.json(
+          { error: '只有站长可以开放或关闭音乐功能' },
+          { status: 403 }
+        );
+      }
     }
 
     // 更新缓存中的音乐配置

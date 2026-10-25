@@ -284,6 +284,8 @@ export async function POST(request: NextRequest) {
 
     // 更新缓存中的站点设置
     // API Base URL 统一去尾斜杠，避免运行时拼接路径出现 //
+    // EnableMovieRequest / MovieRequestCooldown 属于求片设置，不在本接口范围内，
+    // 原样保留，避免保存站点配置时把站长关闭的求片功能重置为开启。
     adminConfig.SiteConfig = {
       SiteName,
       Announcement,
@@ -347,6 +349,9 @@ export async function POST(request: NextRequest) {
       AnalyticsScriptUrl,
       AnalyticsWebsiteId,
       AnalyticsCustomScript,
+      EnableMovieRequest: adminConfig.SiteConfig?.EnableMovieRequest ?? true,
+      MovieRequestCooldown:
+        adminConfig.SiteConfig?.MovieRequestCooldown ?? 3600,
     };
 
     // 写入数据库

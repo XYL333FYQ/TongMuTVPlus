@@ -630,8 +630,8 @@ html[data-tm-reduced-motion='true']
 /* —— 「更多」面板 —— */
 .tm-explore-dialog {
   position: fixed;
-  width: min(720px, calc(100vw - 32px));
-  max-height: min(760px, calc(100dvh - 48px));
+  width: min(calc(720 * var(--tm-wide-unit, 1px)), calc(100vw - 32px));
+  max-height: min(calc(760 * var(--tm-wide-unit, 1px)), calc(100dvh - 48px));
   padding: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
@@ -660,7 +660,7 @@ html[data-tm-no-blur='true'] .tm-explore-dialog::backdrop {
   -webkit-backdrop-filter: none;
 }
 .tm-explore-content {
-  padding: 28px;
+  padding: calc(28 * var(--tm-wide-unit, 1px));
 }
 .tm-explore-heading {
   display: flex;
@@ -694,7 +694,9 @@ html[data-tm-no-blur='true'] .tm-explore-dialog::backdrop {
   align-items: flex-start;
   gap: 12px;
   min-height: 64px;
-  padding: 16px;
+  padding: calc(16 * var(--tm-wide-unit, 1px));
+  text-align: start;
+  color: var(--tm-text);
   border: 0;
   border-radius: var(--tm-radius-md);
   background: var(--tm-bg);
@@ -712,6 +714,8 @@ html[data-tm-no-blur='true'] .tm-explore-dialog::backdrop {
 }
 .tm-explore-card > svg {
   color: var(--tm-text);
+  width: calc(24 * var(--tm-wide-unit, 1px));
+  height: calc(24 * var(--tm-wide-unit, 1px));
 }
 .tm-explore-card strong,
 .tm-explore-card small {
@@ -727,12 +731,100 @@ html[data-tm-no-blur='true'] .tm-explore-dialog::backdrop {
   line-height: 1.5;
   color: var(--tm-muted);
 }
+/* 「更多功能」分组：组标题 + 各组独立网格，入口数量固定不因开放状态变化 */
+.tm-explore-group {
+  margin-bottom: 20px;
+}
+.tm-explore-group:last-child {
+  margin-bottom: 0;
+}
+.tm-explore-group-title {
+  margin-bottom: 8px;
+  font-size: var(--tm-fs-caption);
+  font-weight: 500;
+  color: var(--tm-muted);
+}
+.tm-explore-grid-2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.tm-explore-grid-1 {
+  grid-template-columns: minmax(0, 1fr);
+}
+.tm-explore-card[data-locked='true'] > svg {
+  color: var(--tm-muted);
+}
+.tm-explore-card-badge {
+  display: inline-block;
+  margin-top: 6px;
+  padding: 2px 8px;
+  border-radius: var(--tm-radius-full);
+  background: var(--tm-surface-raised);
+  font-size: var(--tm-fs-caption);
+  font-style: normal;
+  line-height: 1.5;
+  color: var(--tm-muted);
+}
+/* 入口状态提示弹窗：只说明原因，关闭后回到「更多功能」面板 */
+.tm-explore-notice {
+  position: fixed;
+  width: min(calc(360 * var(--tm-wide-unit, 1px)), calc(100vw - 48px));
+  padding: 0;
+  border: 0;
+  border-radius: var(--tm-radius-lg);
+  background: var(--tm-surface);
+  color: var(--tm-text);
+  box-shadow: var(--tm-shadow-lg);
+}
+.tm-explore-notice[open] {
+  animation: tm-dialog-in var(--tm-d-panel) var(--tm-ease-out);
+}
+.tm-explore-notice::backdrop {
+  background: var(--tm-scrim);
+}
+.tm-explore-notice-panel {
+  padding: 24px;
+}
+.tm-explore-notice-panel h2 {
+  font-size: var(--tm-fs-body);
+  font-weight: 700;
+}
+.tm-explore-notice-panel p {
+  margin-top: 8px;
+  font-size: var(--tm-fs-small);
+  line-height: 1.6;
+  color: var(--tm-muted);
+}
+.tm-explore-notice-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 20px;
+}
+.tm-explore-notice-actions .tm-btn {
+  flex: 1;
+  min-height: 44px;
+}
+
+html[data-tm-reduced-motion='true']
+  :is(.tm-explore-dialog, .tm-explore-notice)[open] {
+  animation: tm-fade 120ms var(--tm-ease-out);
+}
+html[data-tm-reduced-motion='true'] .tm-explore-card:active {
+  scale: 1;
+}
+@media (prefers-reduced-motion: reduce) {
+  :is(.tm-explore-dialog, .tm-explore-notice)[open] {
+    animation: tm-fade 120ms var(--tm-ease-out);
+  }
+  .tm-explore-card:active {
+    scale: 1;
+  }
+}
 
 @media (max-width: 767px) {
   .tm-explore-content {
     padding: 20px 16px;
   }
-  .tm-explore-grid {
+  .tm-explore-grid:not(.tm-explore-grid-1) {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }

@@ -7,6 +7,7 @@ import { useViewerIdentity } from '@/hooks/useViewerIdentity';
 import { BRAND_NAME } from '@/lib/brand';
 
 import ThemeSettings from '@/components/account/ThemeSettings';
+import VisualPreferenceControls from '@/components/account/VisualPreferenceControls';
 import { MoreMenu } from '@/components/shell/TongMuNavigation';
 import { UserMenu } from '@/components/UserMenu';
 
@@ -35,6 +36,7 @@ export default function ViewerAccountButton() {
           </Link>
           <MoreMenu />
           <ThemeSettings />
+          <VisualPreferenceControls layout='menu' />
           <div className='tm-menu-group'>
             <Link href='/about' className='tm-menu-link'>
               <Info size={18} aria-hidden='true' />

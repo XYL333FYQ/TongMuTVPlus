@@ -14,10 +14,15 @@ afterEach(() => {
 });
 
 describe('project version information', () => {
-  it('shows only project information and never requests another project changelog', () => {
+  it('shows the project release record and never requests another project changelog', () => {
     render(<VersionPanel isOpen onClose={jest.fn()} />);
     expect(screen.getByText('TongMuTV Plus · 版本信息')).toBeTruthy();
-    expect(screen.getByText('暂无发布记录')).toBeTruthy();
+    expect(screen.getByText('v0.1.0 · 2026-10-25')).toBeTruthy();
+    expect(screen.getByText('新增功能')).toBeTruthy();
+    expect(
+      screen.getByText('新增分组功能导航和由站长控制的模块开放开关。')
+    ).toBeTruthy();
+    expect(screen.queryByText('暂无发布记录')).toBeNull();
     expect(document.body.textContent).not.toMatch(/MoonTV|LunaTV|上游|原项目/i);
     expect(document.querySelector('a[href*="mtvpls"]')).toBeNull();
     expect(global.fetch).not.toHaveBeenCalled();

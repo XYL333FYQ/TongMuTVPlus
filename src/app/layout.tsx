@@ -338,6 +338,9 @@ export default async function RootLayout({
     BANGUMI_API_BASE_URL: bangumiApiBaseUrl,
     BANGUMI_IMAGE_BASE_URL: bangumiImageBaseUrl,
     ENABLE_TV_MODE: process.env.ENABLE_TV_MODE !== 'false',
+    // 模块是否被站长开放（与登录账号无关），用于导航区分「未开放」与「无权限」。
+    // 只暴露可用性布尔值，不含服务地址、令牌等私密配置。
+    SITE_TV_MODE_ENABLED: process.env.ENABLE_TV_MODE !== 'false',
     ENABLE_TVBOX_SUBSCRIBE: process.env.ENABLE_TVBOX_SUBSCRIBE === 'true',
     ENABLE_OFFLINE_DOWNLOAD:
       process.env.NEXT_PUBLIC_ENABLE_OFFLINE_DOWNLOAD === 'true',
@@ -350,6 +353,8 @@ export default async function RootLayout({
       (openListEnabled && userFeatureAccess.private_library) ||
       (embyEnabled && userFeatureAccess.emby) ||
       (xiaoyaEnabled && userFeatureAccess.xiaoya),
+    SITE_PRIVATE_LIBRARY_ENABLED:
+      openListEnabled || embyEnabled || xiaoyaEnabled,
     LOGIN_BACKGROUND_IMAGE: loginBackgroundImage,
     REGISTER_BACKGROUND_IMAGE: registerBackgroundImage,
     HOME_BACKGROUND_IMAGE: homeBackgroundImage,
@@ -376,14 +381,21 @@ export default async function RootLayout({
     AI_DEFAULT_MESSAGE_NO_VIDEO: aiDefaultMessageNoVideo,
     AI_DEFAULT_MESSAGE_WITH_VIDEO: aiDefaultMessageWithVideo,
     ENABLE_MOVIE_REQUEST: enableMovieRequest,
+    SITE_MOVIE_REQUEST_ENABLED: !!enableMovieRequest,
     LIVE_ENABLED: liveEnabled && userFeatureAccess.live,
+    SITE_LIVE_ENABLED: liveEnabled,
     WEB_LIVE_ENABLED: webLiveEnabled && userFeatureAccess.web_live,
+    SITE_WEB_LIVE_ENABLED: !!webLiveEnabled,
     ADVANCED_RECOMMENDATION_ENABLED: advancedRecommendationEnabled,
+    SITE_ADVANCED_RECOMMENDATION_ENABLED: advancedRecommendationEnabled,
     CUSTOM_AD_FILTER_VERSION: customAdFilterVersion,
     MUSIC_ENABLED: musicFeatureEnabled && userFeatureAccess.music,
+    SITE_MUSIC_ENABLED: !!musicFeatureEnabled,
     MUSIC_PROXY_ENABLED: musicProxyEnabled,
     SUWAYOMI_ENABLED: suwayomiEnabled && userFeatureAccess.manga,
+    SITE_MANGA_ENABLED: suwayomiEnabled,
     BOOKS_ENABLED: booksEnabled && userFeatureAccess.books,
+    SITE_BOOKS_ENABLED: booksEnabled,
     NETDISK_SEARCH_ENABLED: userFeatureAccess.netdisk_search,
     MAGNET_SEARCH_ENABLED: userFeatureAccess.magnet_search,
     MAGNET_SAVE_PRIVATE_LIBRARY_ENABLED:

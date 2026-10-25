@@ -4,6 +4,7 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 const { spawnSync } = require('child_process');
+const prettier = require('prettier');
 
 it('generates only project records and never copies historical versions into the project version', () => {
   const base = path.resolve(os.tmpdir());
@@ -37,6 +38,15 @@ it('generates only project records and never copies historical versions into the
       path.join(workspace, 'src/lib/project-changelog.ts'),
       'utf8'
     );
+    const projectFile = path.resolve(
+      __dirname,
+      '../src/lib/project-changelog.ts'
+    );
+    const formatted = prettier.format(generated, {
+      ...prettier.resolveConfig.sync(projectFile),
+      filepath: projectFile,
+    });
+    expect(generated).toBe(formatted);
     expect(generated).toContain('Project release');
     expect(generated).not.toContain('Historical entry');
     expect(generated).not.toContain('226.1.0');

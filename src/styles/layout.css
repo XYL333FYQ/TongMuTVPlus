@@ -461,6 +461,13 @@ html[data-tm-reduced-motion='true'] .tm-spin {
   .tm-page-actions {
     gap: calc(10 * var(--tm-wide-unit));
   }
+  .tm-public-feedback {
+    padding: calc(96 * var(--tm-wide-unit)) var(--tm-content-gutter);
+  }
+  .tm-public-feedback[role='status']::before {
+    width: calc(40 * var(--tm-wide-unit));
+    height: calc(40 * var(--tm-wide-unit));
+  }
   .tm-section-header {
     gap: calc(16 * var(--tm-wide-unit));
     margin-bottom: calc(16 * var(--tm-wide-unit));

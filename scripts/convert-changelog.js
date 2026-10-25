@@ -2,6 +2,7 @@
 /* eslint-disable @typescript-eslint/no-var-requires, no-console */
 const fs = require('fs');
 const path = require('path');
+const prettier = require('prettier');
 
 function parseChangelog(content) {
   const versions = [];
@@ -63,7 +64,8 @@ function main() {
     const entries = parseChangelog(
       fs.readFileSync(path.join(root, 'PROJECT_CHANGELOG'), 'utf8')
     );
-    const output = `// TongMuTV Plus 的发布记录；由 scripts/convert-changelog.js 从 PROJECT_CHANGELOG 生成。
+    const outputPath = path.join(root, 'src/lib/project-changelog.ts');
+    const source = `// TongMuTV Plus 的发布记录；由 scripts/convert-changelog.js 从 PROJECT_CHANGELOG 生成。
 export interface ChangelogEntry {
   version: string;
   date: string;
@@ -74,7 +76,12 @@ export interface ChangelogEntry {
 
 export const changelog: ChangelogEntry[] = ${JSON.stringify(entries, null, 2)};
 `;
-    fs.writeFileSync(path.join(root, 'src/lib/project-changelog.ts'), output);
+    const configPath = path.join(__dirname, '../src/lib/project-changelog.ts');
+    const output = prettier.format(source, {
+      ...prettier.resolveConfig.sync(configPath),
+      filepath: outputPath,
+    });
+    fs.writeFileSync(outputPath, output);
     console.log(
       `已生成 TongMuTV Plus 发布记录，共 ${entries.length} 条；项目版本未改动`
     );

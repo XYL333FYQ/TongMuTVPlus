@@ -50,6 +50,22 @@ export async function POST(request: NextRequest) {
       // 保存配置
       const config = await getConfig();
 
+      // 站长专属：小雅是否让私人影库可用，不能被管理员改动；
+      // 启用状态下维护地址、凭据等照常保存。
+      if (authInfo.username !== process.env.USERNAME) {
+        const current = config.XiaoyaConfig;
+        const before = !!(current?.Enabled && current?.ServerURL);
+        const after = !!(
+          configData.Enabled && normalizeApiBaseUrl(configData.ServerURL)
+        );
+        if (before !== after || !!current?.Enabled !== !!configData.Enabled) {
+          return NextResponse.json(
+            { error: '只有站长可以开放或关闭私人影库（小雅）' },
+            { status: 403 }
+          );
+        }
+      }
+
       config.XiaoyaConfig = {
         Enabled: configData.Enabled || false,
         ServerURL: normalizeApiBaseUrl(configData.ServerURL),

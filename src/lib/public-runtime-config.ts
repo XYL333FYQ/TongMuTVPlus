@@ -14,6 +14,16 @@ const PUBLIC_RUNTIME_KEYS = [
   'ENABLE_TELEGRAM_LOGIN',
   'TELEGRAM_BOT_USERNAME',
   'RATE_BADGE_STYLE',
+  // 模块开放状态是纯布尔值：访客也需要区分「未开放」与「需要登录」。
+  'SITE_TV_MODE_ENABLED',
+  'SITE_PRIVATE_LIBRARY_ENABLED',
+  'SITE_MOVIE_REQUEST_ENABLED',
+  'SITE_LIVE_ENABLED',
+  'SITE_WEB_LIVE_ENABLED',
+  'SITE_ADVANCED_RECOMMENDATION_ENABLED',
+  'SITE_MUSIC_ENABLED',
+  'SITE_MANGA_ENABLED',
+  'SITE_BOOKS_ENABLED',
 ] as const;
 
 export function projectGuestRuntimeConfig(
@@ -51,6 +61,15 @@ export function projectGuestRuntimeConfig(
     NETDISK_TRANSFER_ENABLED: false,
     NETDISK_TEMP_PLAY_ENABLED: false,
     MAGNET_SAVE_PRIVATE_LIBRARY_ENABLED: false,
+    SITE_TV_MODE_ENABLED: false,
+    SITE_PRIVATE_LIBRARY_ENABLED: false,
+    SITE_MOVIE_REQUEST_ENABLED: false,
+    SITE_LIVE_ENABLED: false,
+    SITE_WEB_LIVE_ENABLED: false,
+    SITE_ADVANCED_RECOMMENDATION_ENABLED: false,
+    SITE_MUSIC_ENABLED: false,
+    SITE_MANGA_ENABLED: false,
+    SITE_BOOKS_ENABLED: false,
   };
   for (const key of PUBLIC_RUNTIME_KEYS) {
     if (Object.prototype.hasOwnProperty.call(configured, key)) {

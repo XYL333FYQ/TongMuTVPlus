@@ -80,6 +80,48 @@ export async function POST(request: NextRequest) {
     const body = (await request.json()) as Record<string, any>;
     const action = body.action as string;
 
+    // 高级推荐由启用的脚本决定。管理员可维护脚本，但不能通过保存、
+    // 导入或删除第一个/最后一个启用脚本来改变全站开放状态。
+    if (username !== process.env.USERNAME && action !== 'test') {
+      const items = await listSourceScripts();
+      const before = items.some((item) => item.enabled);
+      let next = items.map((item) => ({
+        id: item.id,
+        key: item.key,
+        enabled: item.enabled,
+      }));
+      if (action === 'save') {
+        const existing = next.find((item) => item.id === body.id);
+        if (existing) existing.enabled = body.enabled ?? existing.enabled;
+        else
+          next = [
+            ...next,
+            { id: body.id, key: body.key, enabled: body.enabled ?? true },
+          ];
+      } else if (action === 'delete') {
+        next = next.filter((item) => item.id !== body.id);
+      } else if (action === 'toggle_enabled') {
+        const existing = next.find((item) => item.id === body.id);
+        if (existing) existing.enabled = !existing.enabled;
+      } else if (action === 'import' && Array.isArray(body.items)) {
+        for (const item of body.items) {
+          const existing = next.find((entry) => entry.key === item?.key);
+          if (existing) existing.enabled = item.enabled ?? existing.enabled;
+          else
+            next = [
+              ...next,
+              { id: item?.id, key: item?.key, enabled: item?.enabled ?? true },
+            ];
+        }
+      }
+      if (before !== next.some((item) => item.enabled)) {
+        return NextResponse.json(
+          { error: '只有站长可以开放或关闭高级推荐' },
+          { status: 403 }
+        );
+      }
+    }
+
     switch (action) {
       case 'save': {
         const saved = await saveSourceScript({

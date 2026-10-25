@@ -34,6 +34,27 @@ export async function POST(request: NextRequest) {
       config.LiveConfig = [];
     }
 
+    // 站长专属：直播源的添加与最后一个启用源的停用/删除会改变电视直播的开放状态，
+    // 不能被管理员改动；编辑地址、排序、代理模式等维护操作照常进行。
+    if (username !== process.env.USERNAME) {
+      const enabledCount = config.LiveConfig.filter(
+        (source) => !source.disabled
+      ).length;
+      const target = config.LiveConfig.find((source) => source.key === key);
+      const closesLive = enabledCount === 1 && !!target && !target.disabled;
+      const opensLive = enabledCount === 0;
+      const availabilityChanged =
+        (action === 'add' && opensLive) ||
+        (action === 'enable' && opensLive) ||
+        ((action === 'disable' || action === 'delete') && closesLive);
+      if (availabilityChanged) {
+        return NextResponse.json(
+          { error: '只有站长可以开放或关闭电视直播' },
+          { status: 403 }
+        );
+      }
+    }
+
     switch (action) {
       case 'add':
         // 检查是否已存在相同的 key

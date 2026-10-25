@@ -87,6 +87,25 @@ export async function POST(request: NextRequest) {
       const normalizedOfflineDownloadURL =
         normalizeApiBaseUrl(OfflineDownloadURL);
 
+      // 站长专属：OpenList 是否让私人影库可用，不能被管理员改动；
+      // 启用状态下维护地址、账号密码、根目录等照常保存。
+      if (username !== process.env.USERNAME) {
+        const current = adminConfig.OpenListConfig;
+        const before = !!(
+          current?.Enabled &&
+          current?.URL &&
+          current?.Username &&
+          current?.Password
+        );
+        const after = !!(Enabled && normalizedURL && Username && Password);
+        if (before !== after || !!current?.Enabled !== !!Enabled) {
+          return NextResponse.json(
+            { error: '只有站长可以开放或关闭私人影库（OpenList）' },
+            { status: 403 }
+          );
+        }
+      }
+
       // 如果功能未启用，允许保存空配置
       if (!Enabled) {
         adminConfig.OpenListConfig = {
