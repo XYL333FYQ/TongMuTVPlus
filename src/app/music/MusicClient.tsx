@@ -2857,16 +2857,13 @@ export default function MusicClient({
           </div>
         )}
         {/* Header */}
-        <header
-          className='relative z-40 bg-canvas border-b border-line px-[var(--tm-content-gutter)]'
-          style={{ paddingTop: 'env(safe-area-inset-top)' }}
-        >
-          <div className='w-full max-w-[1344px] mx-auto flex items-center justify-between gap-3 md:gap-4 py-3'>
+        <header className='tm-music-toolbar relative z-40 bg-canvas border-b border-line px-[var(--tm-content-gutter)]'>
+          <div className='tm-music-toolbar-row w-full max-w-[1344px] mx-auto flex items-center justify-between gap-3 md:gap-4 py-3'>
             <div className='flex items-center justify-between md:justify-start md:gap-6 w-full md:w-auto'>
               <div className='flex items-center gap-3'>
                 <button
                   onClick={() => setShowSidebarDrawer(true)}
-                  className='p-0 text-fg transition-colors hover:text-fg min-h-[44px] tm-press'
+                  className='p-0 text-fg transition-colors hover:text-fg min-h-[44px] min-w-[44px] tm-press'
                   title='打开菜单'
                 >
                   <svg
@@ -2892,14 +2889,16 @@ export default function MusicClient({
                     <path d='M18 3a1 1 0 00-1.196-.98l-10 2A1 1 0 006 5v9.114A4.369 4.369 0 005 14c-1.657 0-3 .895-3 2s1.343 2 3 2 3-.895 3-2V7.82l8-1.6v5.894A4.37 4.37 0 0015 12c-1.657 0-3 .895-3 2s1.343 2 3 2 3-.895 3-2V3z' />
                   </svg>
                 </div>
-                <span className='font-bold text-lg text-fg'>音乐</span>
+                <span className='hidden font-bold text-lg text-fg md:inline'>
+                  音乐
+                </span>
               </div>
             </div>
           </div>
         </header>
 
         {/* Main Content */}
-        <main className='py-8 pb-32'>
+        <main className='tm-music-content py-8 pb-32'>
           <PageContainer>{_children}</PageContainer>
         </main>
 

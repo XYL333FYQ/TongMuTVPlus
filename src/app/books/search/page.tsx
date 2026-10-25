@@ -508,10 +508,16 @@ export default function BooksSearchPage() {
   return (
     <div className='space-y-6'>
       <section className={PANEL_CLASS}>
-        <h1 className={cn('text-2xl font-bold', LIBRARY_TEXT, LIBRARY_SERIF)}>
+        <h1
+          className={cn(
+            'hidden text-2xl font-bold md:block',
+            LIBRARY_TEXT,
+            LIBRARY_SERIF
+          )}
+        >
           搜索电子书
         </h1>
-        <p className={cn('mt-2 text-sm', LIBRARY_MUTED)}>
+        <p className={cn('text-sm md:mt-2', LIBRARY_MUTED)}>
           按书名或作者搜索全部已配置的书源。
         </p>
 

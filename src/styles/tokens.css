@@ -165,6 +165,11 @@ html.light {
     --tm-fs-title: 32px;
   }
 }
+@media (max-width: 767px) {
+  :root {
+    --tm-header-height: 52px;
+  }
+}
 @media (min-width: 1200px) {
   :root {
     --tm-content-gutter: 40px;

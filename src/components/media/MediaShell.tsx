@@ -65,7 +65,7 @@ export default function MediaShell({
   const HeaderContainer = isReader ? 'div' : PageContainer;
 
   return (
-    <PageLayout activePath={pathname} embedded={isReader}>
+    <PageLayout activePath={pathname} embedded={isReader} mobileTitle={title}>
       <div
         className={cn(
           'min-h-screen',
@@ -75,12 +75,14 @@ export default function MediaShell({
         )}
       >
         <header
-          className='fixed inset-x-0 top-0 z-40 border-b border-line bg-[color:color-mix(in_srgb,var(--tm-bg)_95%,transparent)] backdrop-blur-none'
-          style={{ paddingTop: 'env(safe-area-inset-top)' }}
+          className='tm-media-page-head fixed inset-x-0 top-0 z-40 border-b border-line bg-[color:color-mix(in_srgb,var(--tm-bg)_95%,transparent)] backdrop-blur-none'
+          style={{
+            paddingTop: isReader ? 'env(safe-area-inset-top)' : undefined,
+          }}
         >
           <HeaderContainer
             className={cn(
-              'flex h-14 items-center gap-3 sm:h-16',
+              'tm-media-page-head-row flex h-14 items-center gap-3 sm:h-16',
               isReader && 'mx-auto max-w-7xl px-3 sm:px-6'
             )}
           >
@@ -108,7 +110,10 @@ export default function MediaShell({
               )}
               <div className='min-w-0'>
                 <div
-                  className={cn('truncate text-lg font-medium', LIBRARY_SERIF)}
+                  className={cn(
+                    'tm-media-page-title truncate text-lg font-medium',
+                    LIBRARY_SERIF
+                  )}
                   title={title}
                 >
                   {title}

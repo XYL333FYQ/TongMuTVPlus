@@ -48,7 +48,7 @@ const WeekdaySelector: React.FC<WeekdaySelectorProps> = ({
   }, []); // 只在组件挂载时执行一次
 
   return (
-    <div className={'tm-capsule ' + className}>
+    <div className={'tm-capsule tm-capsule-track ' + className}>
       {weekdays.map((weekday) => {
         const isActive = selectedWeekday === weekday.value;
         return (

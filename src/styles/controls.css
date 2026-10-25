@@ -17,6 +17,11 @@
   border-radius: inherit;
   overscroll-behavior-x: contain;
 }
+/* 外层滚动的胶囊按全部按钮铺底，不能把底框截在可视窗口内。 */
+.tm-capsule-track {
+  width: max-content;
+  max-width: none;
+}
 .tm-capsule-option,
 .tm-animated-theme button {
   position: relative;

@@ -654,6 +654,16 @@ export default function PrivateLibraryPage() {
     };
   }, [hasMore, loadingMore, loading, page]);
 
+  const sourceTypeOptions = [
+    ...(runtimeConfig.OPENLIST_ENABLED
+      ? [{ label: 'OpenList', value: 'openlist' }]
+      : []),
+    ...(runtimeConfig.EMBY_ENABLED ? [{ label: 'Emby', value: 'emby' }] : []),
+    ...(runtimeConfig.XIAOYA_ENABLED
+      ? [{ label: '小雅', value: 'xiaoya' }]
+      : []),
+  ];
+
   return (
     <PageLayout activePath='/private-library'>
       <PageContainer className='pb-12'>
@@ -675,20 +685,10 @@ export default function PrivateLibraryPage() {
         />
 
         {/* 第一级：源类型选择（OpenList / Emby / 小雅） */}
-        {mounted && (
+        {mounted && sourceTypeOptions.length > 0 && (
           <div className='mb-6 flex justify-center'>
             <CapsuleSwitch
-              options={[
-                ...(runtimeConfig.OPENLIST_ENABLED
-                  ? [{ label: 'OpenList', value: 'openlist' }]
-                  : []),
-                ...(runtimeConfig.EMBY_ENABLED
-                  ? [{ label: 'Emby', value: 'emby' }]
-                  : []),
-                ...(runtimeConfig.XIAOYA_ENABLED
-                  ? [{ label: '小雅', value: 'xiaoya' }]
-                  : []),
-              ]}
+              options={sourceTypeOptions}
               active={sourceType}
               onChange={(value) => setSourceType(value as LibrarySourceType)}
             />

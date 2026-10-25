@@ -44,8 +44,8 @@ export default function MobileHeader({
         )}
         <motion.h1
           className='tm-mobile-page-title'
-          style={reduced ? { fontSize: compact ? 17 : 28 } : undefined}
-          animate={{ scale: reduced ? 1 : compact ? 17 / 28 : 1 }}
+          style={reduced ? { fontSize: 19 } : undefined}
+          animate={{ scale: 1 }}
           transition={{ duration: reduced ? 0 : 0.2, ease: [0.22, 1, 0.36, 1] }}
         >
           {title}

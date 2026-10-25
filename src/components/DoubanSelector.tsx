@@ -122,7 +122,7 @@ const DoubanSelector: React.FC<DoubanSelectorProps> = ({
     isPrimary = false
   ) => {
     return (
-      <div className='tm-capsule'>
+      <div className='tm-capsule tm-capsule-track'>
         {/* 滑动的白色背景指示器 */}
 
         {options.map((option) => {

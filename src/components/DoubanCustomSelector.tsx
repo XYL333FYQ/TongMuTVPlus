@@ -129,7 +129,7 @@ const DoubanCustomSelector: React.FC<DoubanCustomSelectorProps> = ({
     return (
       <div
         ref={isPrimary ? undefined : secondaryContainerRef}
-        className='tm-capsule'
+        className='tm-capsule tm-capsule-track'
       >
         {/* 滑动的白色背景指示器 */}
 
