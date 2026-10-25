@@ -16,7 +16,7 @@
 
 </div>
 
-![Room page (dark)](docs/images/room-dark.jpg)
+![Discover home (light)](docs/images/home-light.png)
 
 ## What it is
 
@@ -66,6 +66,18 @@ Prefer an app over a browser? Grab an installer from **[Releases · client downl
 IPTV (m3u + EPG), web live streams (Bilibili / Huya / Douyin live rooms), short dramas, music, manga, e-books (Legado book sources), private media library, movie requests, AI-assisted search, plus in-room synced music, synced live TV, screen sharing and voice.
 
 > A room's "direct link" only accepts video file URLs. It does **not** parse web pages such as Bilibili or Tencent Video.
+
+## Screenshots
+
+### Library · Light
+
+![Library (light)](docs/images/library-light.png)
+
+### Watch rooms · Dark and light
+
+| Dark theme                                      | Light theme                                       |
+| ----------------------------------------------- | ------------------------------------------------- |
+| ![Watch room (dark)](docs/images/room-dark.jpg) | ![Watch room (light)](docs/images/room-light.jpg) |
 
 ## Deploy on a VPS (Docker)
 

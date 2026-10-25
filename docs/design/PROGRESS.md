@@ -1,12 +1,29 @@
 # 界面改造进度
 
+## 2026-10-24 接入用户提供的两张宣传截图
+
+- 用户将发现首页与片库截图放入桌面，两张均为浅色主题、2549 × 1403 PNG。逐张查看后原样复制为 `docs/images/home-light.png` 与 `library-light.png`，桌面原件与原有房间截图保留，不裁切、不变色，不将它们描述为 1440 × 900 截图。
+- 中英文 README 顶部改用发现首页；新增片库大图与深浅房间并排预览，共展示 4 张不同页面 / 主题截图。原计划 6～8 张中的详情、搜索和手机图尚未补齐，未用旧验收图片或空白图代替。当前先交付用户提供的两张与已有房间两张。
+- 用户随后明确授权提交并推送本批 5 个文件：两份 README、两张新增 PNG 与本进度记录；按已记录的验证边界发布文档更新，不部署。
+- 对应 DESIGN.md 第 2.1 节深浅主题与第 5 节页面展示；仅改文档及图片，不改页面、业务行为、房间或禁区代码。不操作浏览器、不提交、推送或部署。贡献者侧栏的最终刷新仍待确认。
+- 验证：已逐张查看全部 4 张图；两份 README 各引用 4 个不同的有效图片路径，图片均可解码；新增两张图与桌面原件 SHA-256 完全相同；`git diff --check` 通过。常规 lint 退出 0（既有警告）；typecheck、正确参数重跑后的完整 Jest、全库及定向格式检查均原生退出 3221225477，没有得到完整通过结果。此前关闭预览重试的 typecheck 同样崩溃，仍待用户在自己的终端运行 `pnpm typecheck` 并回传结果，根因未定位。检查日志后缀含 `desktop-images`，存于 `output/readme-promo-20261024/`。一次新版 pnpm 的依赖状态检查要求重装，已中止而未允许清理依赖；一次 Jest 参数被当作路径，随后用正确参数重跑，均未计为通过。未运行房间专项测试，因为没有改动房间代码；没有进行新的浏览器或响应式验收。
+
+## 2026-10-24 README 宣传图与贡献者显示核查
+
+- 用户批准中英文 README 增加 6～8 张真实宣传图，覆盖两种主题与不同功能；桌面目标 1440 × 900，另附手机画面。仅修改文档与截图，不改页面或业务逻辑，不提交、推送或部署。
+- 已核实远端主分支为 `88b261f36cf89784262855f88c5f0e341ca08797`，发布标签 `clients` 指向 `bf919e12e4edfdb2dfdbee398a13b17bf8404f82`；两者可达历史没有 Claude / Anthropic 署名。REST contributors 只返回 XYL333FYQ，但用户截图明确显示侧栏仍有 Claude，不能将接口结果当作侧栏清理成功。
+- GitHub 官方文档说明历史重写后的贡献者统计约需 24 小时刷新，超过约 24 小时仍错误应联系 GitHub Support。当前没有继续强推、改默认分支或删除仓库；侧栏最终刷新尚待确认。依据：https://docs.github.com/en/repositories/viewing-activity-and-data-for-your-repository/viewing-a-projects-contributors#contributor-data-is-stale-after-history-changes 。
+- 本轮截图未完成：Edge 连接在刷新后连续超时，随后 Computer Use 无法可靠确认当前 Windows 浏览器 URL，明确终止本轮控制。没有绕过限制切换其他自动化方式；中英文 README 已恢复到本轮开始内容，避免留下指向未生成图片的链接；原有两张房间截图保留。下次从已批准的 8 张取景方案继续，无须重新设计。
+- 验证：常规 `pnpm lint` 退出 0（有既有警告）。`pnpm typecheck` 原生退出 3221225477，关闭本项目 3000 预览后串行重跑仍同类崩溃，无 TS 诊断，根因未定位，标记待用户手动验证；请用户在自己的终端运行 `pnpm typecheck` 并回传结果。完整 Jest 常规执行及解释模式重试均原生退出 3221225477，未得到完整通过结论；`pnpm format:check` 原生退出 2147483651。早期 `--jitless` 导致 lint 的 WebAssembly 不可用，随后去掉该参数后 lint 通过；一次将 regexp 标志放入 NODE_OPTIONS 被 Node 拒绝，这些尝试不计为检查通过。未修改测试、tsconfig 或源码绕过检查。原始日志：`output/readme-promo-20261024/`。
+- 预览已用项目原有 `scripts/start-local.cjs --no-browser` 恢复到 3000（日志曾确认 ready），浏览器最终画面未复核。未修改页面，对应 DESIGN.md 第 2.1 节深浅主题与第 5 节页面展示，不涉及新的界面实现；390 / 820 / 1280 深浅色截图及宣传图文件验收均未完成。只保留本进度说明的变更；没有提交、推送或部署。
+
 ## 2026-10-24 电视端改运行时填地址、Windows 便携包、客户端发布到 Releases、README 中文为主
 
 - **电视壳**（`apps/android-tv/`）：包名 `com.moontvplus.tv` → `com.tongmutvplus.tv`，项目名与 UA 换成 TongMuTV Plus；首次打开弹地址框（`ServerAddress.java`），遥控器长按菜单键换地址，WebView 版连接失败弹重试 / 改地址 / 退出；`BASE_URL` 变成可选默认值。**未改** `moontv:local-remote-*` 事件名与 `MoonTVLocalRemote` JS 桥（网页端依赖）。
 - **Windows 便携包**：工作流在安装包之外多收一个 `...-Portable.zip`（主程序 exe + 使用说明），需系统自带 WebView2。
 - **发布**：三个客户端工作流新增 `publish` 开关，测试通过后把固定文件名的安装包传到 Releases 的 `clients` 版本（页面标题「客户端下载」，每次运行覆盖更新）。电视端工作流新增模拟器冒烟测试，签名密钥改用 `ANDROID_MOBILE_KEYSTORE_*`。
 - **README**：`README.md` 改为中文（仓库首页），英文为 `README_en.md`，顶部互相切换；两份都加了「下载客户端」。仓库简介（About）已改成中文。
-- **Co-Authored-By 清理**：历史里 16 个提交带 `Co-Authored-By: Claude`，使仓库贡献者列表出现 @claude。已在本地用 filter-branch 去掉（内容逐字节一致，原历史备份在 ai 项目/备份/\*.bundle），**尚未强制推送到 GitHub**。
+- **Co-Authored-By 清理**：历史里 16 个提交带 `Co-Authored-By: Claude`，使仓库贡献者列表出现 @claude。已用 filter-branch 去掉（内容逐字节一致，原历史备份在 ai 项目/备份/\*.bundle）。2026-10-24 再核实远端主分支与发布标签均已是清理后历史；用户截图中的侧栏仍有 Claude，最终显示刷新未确认，详见本页顶部核查记录。
 - **验证（云端实测）**：Windows（含便携 zip 解压即启动）、安卓手机（API 24 / 34 模拟器）、电视壳 WebView 版（API 34 模拟器）都通过冒烟测试，并发布到 Releases `clients`；手机端 API 34 首轮曾因模拟器偶发慢失败，已改成轮询等待，重跑通过。GeckoView 版（250 ～ 570MB）不放 Releases，只在 Actions Artifacts。
 - **没验证**：电视壳没在真电视上测，遥控器输入地址的手感未知；真机视频播放同前。
 
