@@ -3051,6 +3051,16 @@ export const UserMenu: React.FC = () => {
             <Package aria-hidden />
             <span>客户端安装</span>
           </button>
+          <button
+            onClick={() => {
+              setIsOpen(false);
+              router.push('/feedback');
+            }}
+            className='tm-menu-item'
+          >
+            <MessageSquare aria-hidden />
+            <span>反馈与申请</span>
+          </button>
           {showOfflineDownload && (
             <button
               onClick={() => {

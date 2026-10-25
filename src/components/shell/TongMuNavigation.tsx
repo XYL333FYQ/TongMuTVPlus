@@ -45,6 +45,7 @@ export function pageTitleForPath(path: string) {
     '/movie-request': '求片',
     '/advanced-recommendation': '高级推荐',
     '/source-search': '源站寻片',
+    '/feedback': '反馈与申请',
     '/about': '关于',
     '/admin': '管理员设置',
   };
@@ -103,6 +104,8 @@ export function isPrimaryNavigationActive(href: string, pathname: string) {
 type ExploreEntryState = 'open' | 'site-locked' | 'login' | 'no-permission';
 
 interface ExploreEntry {
+  // 对应的功能权限 key；有它才能在提示里「向站长申请」
+  permission?: string;
   icon: typeof Tv;
   label: string;
   description: string;
@@ -115,6 +118,7 @@ interface ExploreNotice {
   title: string;
   message: string;
   loginHref?: string;
+  requestHref?: string;
 }
 
 function resolveEntryState(
@@ -184,9 +188,11 @@ export function MoreMenu({
     entry: Omit<ExploreEntry, 'icon' | 'siteEnabled' | 'userEnabled'> & {
       site: string;
       user: string;
+      permission?: string;
     }
   ): ExploreEntry => ({
     icon,
+    permission: entry.permission,
     label: entry.label,
     description: entry.description,
     href: entry.href,
@@ -209,6 +215,7 @@ export function MoreMenu({
           href: '/live',
           site: 'SITE_LIVE_ENABLED',
           user: 'LIVE_ENABLED',
+          permission: 'live',
         }),
         createEntry(Globe, {
           label: '网络直播',
@@ -216,6 +223,7 @@ export function MoreMenu({
           href: '/web-live',
           site: 'SITE_WEB_LIVE_ENABLED',
           user: 'WEB_LIVE_ENABLED',
+          permission: 'web_live',
         }),
         createEntry(Music2, {
           label: '音乐',
@@ -223,6 +231,7 @@ export function MoreMenu({
           href: '/music',
           site: 'SITE_MUSIC_ENABLED',
           user: 'MUSIC_ENABLED',
+          permission: 'music',
         }),
         createEntry(BookMarked, {
           label: '电子书',
@@ -230,6 +239,7 @@ export function MoreMenu({
           href: '/books',
           site: 'SITE_BOOKS_ENABLED',
           user: 'BOOKS_ENABLED',
+          permission: 'books',
         }),
         createEntry(BookOpen, {
           label: '漫画',
@@ -237,6 +247,7 @@ export function MoreMenu({
           href: '/manga',
           site: 'SITE_MANGA_ENABLED',
           user: 'SUWAYOMI_ENABLED',
+          permission: 'manga',
         }),
         createEntry(Container, {
           label: '私人影库',
@@ -244,6 +255,7 @@ export function MoreMenu({
           href: '/private-library',
           site: 'SITE_PRIVATE_LIBRARY_ENABLED',
           user: 'PRIVATE_LIBRARY_ENABLED',
+          permission: 'private_library',
         }),
       ],
     },
@@ -265,6 +277,7 @@ export function MoreMenu({
           href: '/advanced-recommendation',
           site: 'SITE_ADVANCED_RECOMMENDATION_ENABLED',
           user: 'ADVANCED_RECOMMENDATION_ENABLED',
+          permission: 'advanced_recommendation',
         }),
       ],
     },
@@ -286,6 +299,7 @@ export function MoreMenu({
           href: '/movie-request',
           site: 'SITE_MOVIE_REQUEST_ENABLED',
           user: 'ENABLE_MOVIE_REQUEST',
+          permission: 'movie_request',
         }),
       ],
     },
@@ -305,8 +319,19 @@ export function MoreMenu({
     },
   ];
 
-  const openNotice = (state: ExploreEntryState) => {
+  const openNotice = (state: ExploreEntryState, entry?: ExploreEntry) => {
     const base = buildNotice(state);
+    // 已登录但用不了的功能，可以直接向站长申请
+    if (
+      entry?.permission &&
+      (state === 'no-permission' || state === 'site-locked')
+    ) {
+      setNotice({
+        ...base,
+        requestHref: `/feedback?feature=${entry.permission}`,
+      });
+      return;
+    }
     if (state === 'login' && typeof window !== 'undefined') {
       setNotice({
         ...base,
@@ -405,7 +430,7 @@ export function MoreMenu({
                       type='button'
                       className='tm-explore-card'
                       data-locked='true'
-                      onClick={() => openNotice(state)}
+                      onClick={() => openNotice(state, entry)}
                     >
                       <entry.icon size={24} strokeWidth={1.4} />
                       <span>
@@ -466,6 +491,20 @@ export function MoreMenu({
                   }}
                 >
                   去登录
+                </Link>
+              )}
+              {notice.requestHref && loggedIn && (
+                <Link
+                  href={notice.requestHref}
+                  prefetch={false}
+                  className='tm-btn tm-btn-primary tm-press'
+                  onClick={() => {
+                    closeNotice();
+                    dialogRef.current?.close();
+                    onNavigate?.();
+                  }}
+                >
+                  向站长申请
                 </Link>
               )}
               <button

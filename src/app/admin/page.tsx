@@ -40,6 +40,7 @@ import {
   FileText,
   FolderOpen,
   Globe,
+  Inbox,
   Mail,
   Monitor,
   Palette,
@@ -84,6 +85,12 @@ import CorrectDialog from '@/components/CorrectDialog';
 import DataMigration from '@/components/DataMigration';
 import { askConfirm } from '@/components/feedback/AppDialogs';
 import PageLayout from '@/components/PageLayout';
+import Select from '@/components/ui/Select';
+
+import { builtInThemes as builtInThemeDefinitions } from '@/styles/themes';
+
+import FeatureAccessPanel from './FeatureAccessPanel';
+import FeedbackInboxPanel from './FeedbackInboxPanel';
 
 // 统一按钮样式系统（黑白 token：主操作反色，危险操作用报错红描边，其余中性）
 const buttonStyles = {
@@ -19020,6 +19027,8 @@ function AdminPageClient() {
   const [showResetConfigModal, setShowResetConfigModal] = useState(false);
   const [expandedTabs, setExpandedTabs] = useState<{ [key: string]: boolean }>({
     userConfig: false,
+    featureAccess: false,
+    feedbackInbox: false,
     videoSource: false,
     sourceScriptLab: false,
     musicConfig: false,
@@ -19360,6 +19369,18 @@ function AdminPageClient() {
           setUserSearch={setUserSearch}
         />
       ),
+    },
+    {
+      key: 'featureAccess',
+      title: '功能权限',
+      icon: <ShieldCheck size={20} className={navIconClass} />,
+      render: () => <FeatureAccessPanel />,
+    },
+    {
+      key: 'feedbackInbox',
+      title: '反馈收件箱',
+      icon: <Inbox size={20} className={navIconClass} />,
+      render: () => <FeedbackInboxPanel isOwner={role === 'owner'} />,
     },
     {
       key: 'videoSource',
@@ -19837,6 +19858,33 @@ function AdminPageClient() {
                 userSearch={userSearch}
                 setUserSearch={setUserSearch}
               />
+            </CollapsibleTab>
+
+            {/* 功能权限标签 */}
+            <CollapsibleTab
+              title='功能权限'
+              icon={
+                <ShieldCheck
+                  size={20}
+                  className='text-[color:var(--tm-muted)]'
+                />
+              }
+              isExpanded={expandedTabs.featureAccess}
+              onToggle={() => toggleTab('featureAccess')}
+            >
+              <FeatureAccessPanel />
+            </CollapsibleTab>
+
+            {/* 反馈收件箱标签 */}
+            <CollapsibleTab
+              title='反馈收件箱'
+              icon={
+                <Inbox size={20} className='text-[color:var(--tm-muted)]' />
+              }
+              isExpanded={expandedTabs.feedbackInbox}
+              onToggle={() => toggleTab('feedbackInbox')}
+            >
+              <FeedbackInboxPanel isOwner={role === 'owner'} />
             </CollapsibleTab>
 
             {/* 视频源配置标签 */}
