@@ -86,6 +86,11 @@ export async function POST(request: NextRequest) {
     const { configSelfCheck, setCachedConfig } = await import('@/lib/config');
     // 校验实际将写入的配置，防止旧格式转换等自检步骤改变开放状态。
     const checkedConfig = configSelfCheck(newConfig);
+    // 功能开放范围和单独授权只能通过 /api/admin/feature-access 由站长修改，
+    // 通用保存始终沿用当前值，避免被过期的页面副本覆盖或被管理员绕过。
+    const currentConfig = await getConfig();
+    checkedConfig.FeaturePolicies = currentConfig.FeaturePolicies;
+    checkedConfig.FeatureGrants = currentConfig.FeatureGrants;
 
     // 权限检查
     if (username !== process.env.USERNAME) {

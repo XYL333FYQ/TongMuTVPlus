@@ -353,6 +353,10 @@ export async function POST(request: NextRequest) {
         // 先终止目标用户所有会话，再删除V2存储中的用户
         await terminateUserSessions(targetUsername!, 'user deleted');
         await db.deleteUserV2(targetUsername!);
+        // 同名账号以后重新注册时，不能继承已删用户的单独授权
+        if (adminConfig.FeatureGrants?.[targetUsername!]) {
+          delete adminConfig.FeatureGrants[targetUsername!];
+        }
 
         break;
       }

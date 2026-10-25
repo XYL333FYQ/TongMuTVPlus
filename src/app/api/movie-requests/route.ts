@@ -1,7 +1,7 @@
 import { nanoid } from 'nanoid';
 import { NextRequest, NextResponse } from 'next/server';
 
-import { getAuthInfoFromCookie } from '@/lib/auth';
+import { requireFeaturePermission } from '@/lib/permissions';
 import { getStorage } from '@/lib/db';
 import { MovieRequest } from '@/lib/types';
 
@@ -9,10 +9,9 @@ export const runtime = 'nodejs';
 
 // GET: 获取求片列表
 export async function GET(request: NextRequest) {
-  const authInfo = getAuthInfoFromCookie(request);
-  if (!authInfo || !authInfo.username) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const access = await requireFeaturePermission(request, 'movie_request');
+  if (access instanceof NextResponse) return access;
+  const authInfo = { username: access.username };
 
   try {
     const { searchParams } = new URL(request.url);
@@ -65,10 +64,9 @@ export async function GET(request: NextRequest) {
 
 // POST: 创建或加入求片
 export async function POST(request: NextRequest) {
-  const authInfo = getAuthInfoFromCookie(request);
-  if (!authInfo || !authInfo.username) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const access = await requireFeaturePermission(request, 'movie_request');
+  if (access instanceof NextResponse) return access;
+  const authInfo = { username: access.username };
 
   try {
     // 检查求片功能是否启用并获取冷却时间

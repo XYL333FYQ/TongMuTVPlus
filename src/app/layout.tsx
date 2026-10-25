@@ -382,13 +382,15 @@ export default async function RootLayout({
     },
     AI_DEFAULT_MESSAGE_NO_VIDEO: aiDefaultMessageNoVideo,
     AI_DEFAULT_MESSAGE_WITH_VIDEO: aiDefaultMessageWithVideo,
-    ENABLE_MOVIE_REQUEST: enableMovieRequest,
+    ENABLE_MOVIE_REQUEST: enableMovieRequest && userFeatureAccess.movie_request,
     SITE_MOVIE_REQUEST_ENABLED: !!enableMovieRequest,
     LIVE_ENABLED: liveEnabled && userFeatureAccess.live,
     SITE_LIVE_ENABLED: liveEnabled,
     WEB_LIVE_ENABLED: webLiveEnabled && userFeatureAccess.web_live,
     SITE_WEB_LIVE_ENABLED: !!webLiveEnabled,
-    ADVANCED_RECOMMENDATION_ENABLED: advancedRecommendationEnabled,
+    ADVANCED_RECOMMENDATION_ENABLED:
+      advancedRecommendationEnabled &&
+      userFeatureAccess.advanced_recommendation,
     SITE_ADVANCED_RECOMMENDATION_ENABLED: advancedRecommendationEnabled,
     CUSTOM_AD_FILTER_VERSION: customAdFilterVersion,
     MUSIC_ENABLED: musicFeatureEnabled && userFeatureAccess.music,

@@ -1,15 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { getAuthInfoFromCookie } from '@/lib/auth';
+import { requireFeaturePermission } from '@/lib/permissions';
 import { listEnabledSourceScripts } from '@/lib/source-script';
 
 export const runtime = 'nodejs';
 
 export async function GET(request: NextRequest) {
-  const authInfo = getAuthInfoFromCookie(request);
-  if (!authInfo || !authInfo.username) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  const access = await requireFeaturePermission(
+    request,
+    'advanced_recommendation'
+  );
+  if (access instanceof NextResponse) return access;
 
   try {
     const scripts = await listEnabledSourceScripts();

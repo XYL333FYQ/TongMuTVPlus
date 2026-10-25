@@ -47,6 +47,7 @@ import {
   Search,
   Send,
   Settings,
+  ShieldCheck,
   Smartphone,
   Tablet,
   Tv,

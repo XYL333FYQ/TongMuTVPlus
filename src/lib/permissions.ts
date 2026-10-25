@@ -6,7 +6,10 @@ import { db } from '@/lib/db';
 import {
   ALL_FEATURE_PERMISSION_KEYS,
   type FeaturePermissionKey,
+  effectiveFeaturePolicy,
+  sanitizeFeatureGrants,
   sanitizeFeaturePermissions,
+  sanitizeFeaturePolicies,
 } from '@/lib/feature-permissions';
 
 export type FeatureAccessMap = Record<FeaturePermissionKey, boolean>;
@@ -48,23 +51,32 @@ async function getUserFeatureAccessMap(
 
   const config = await getConfig();
   const tags = Array.isArray(userInfo.tags) ? userInfo.tags : [];
+  const grants = new Set<FeaturePermissionKey>(
+    sanitizeFeatureGrants(config.FeatureGrants)[username] || []
+  );
 
-  // 兼容旧用户：未分配用户组时，默认拥有全部功能权限
+  // 用户组给出的权限；兼容旧用户：未分配用户组时默认拥有全部功能权限
+  const allowedByGroup = new Set<FeaturePermissionKey>();
   if (tags.length === 0) {
-    return createFullFeatureAccessMap();
+    ALL_FEATURE_PERMISSION_KEYS.forEach((key) => allowedByGroup.add(key));
+  } else {
+    tags.forEach((tagName) => {
+      const group = config.UserConfig.Tags?.find(
+        (item) => item.name === tagName
+      );
+      sanitizeFeaturePermissions(group?.permissions).forEach((permission) =>
+        allowedByGroup.add(permission)
+      );
+    });
   }
 
-  const allowedPermissions = new Set<FeaturePermissionKey>();
-
-  tags.forEach((tagName) => {
-    const group = config.UserConfig.Tags?.find((item) => item.name === tagName);
-    sanitizeFeaturePermissions(group?.permissions).forEach((permission) =>
-      allowedPermissions.add(permission)
-    );
-  });
-
+  const policies = sanitizeFeaturePolicies(config.FeaturePolicies);
   return ALL_FEATURE_PERMISSION_KEYS.reduce((acc, key) => {
-    acc[key] = allowedPermissions.has(key);
+    const policy = effectiveFeaturePolicy(policies, key);
+    acc[key] =
+      policy === 'everyone' ||
+      grants.has(key) ||
+      (policy === 'groups' && allowedByGroup.has(key));
     return acc;
   }, {} as FeatureAccessMap);
 }
