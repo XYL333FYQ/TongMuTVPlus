@@ -3,6 +3,8 @@
 import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 
+import { askConfirm, notifyError } from '@/components/feedback/AppDialogs';
+
 interface OfflineDownloadTask {
   id: string;
   source: string;
@@ -72,11 +74,11 @@ export function OfflineDownloadPanel({
         setTasks((prev) => prev.filter((t) => t.id !== taskId));
       } else {
         const data = await response.json();
-        alert(`删除失败: ${data.error}`);
+        notifyError(`删除失败: ${data.error}`);
       }
     } catch (error) {
       console.error('删除任务失败:', error);
-      alert('删除任务失败');
+      notifyError('删除任务失败');
     }
   };
 
@@ -109,11 +111,11 @@ export function OfflineDownloadPanel({
         fetchTasks();
       } else {
         const data = await response.json();
-        alert(`重试失败: ${data.error}`);
+        notifyError(`重试失败: ${data.error}`);
       }
     } catch (error) {
       console.error('重试任务失败:', error);
-      alert('重试任务失败');
+      notifyError('重试任务失败');
     }
   };
 
@@ -328,11 +330,14 @@ export function OfflineDownloadPanel({
                           >
                             <span>第{ep.episodeIndex + 1}集</span>
                             <button
-                              onClick={() => {
+                              onClick={async () => {
                                 if (
-                                  confirm(
-                                    `确定要删除第${ep.episodeIndex + 1}集吗？`
-                                  )
+                                  await askConfirm({
+                                    message: `确定要删除第${
+                                      ep.episodeIndex + 1
+                                    }集吗？`,
+                                    variant: 'danger',
+                                  })
                                 ) {
                                   handleDeleteTask(ep.id);
                                 }
@@ -359,13 +364,14 @@ export function OfflineDownloadPanel({
                       </div>
                       {/* 删除全部按钮 */}
                       <button
-                        onClick={() => {
+                        onClick={async () => {
                           if (
-                            confirm(
-                              `确定要删除《${
+                            await askConfirm({
+                              message: `确定要删除《${
                                 video.metadata?.videoTitle || video.title
-                              }》的所有已下载集数吗？`
-                            )
+                              }》的所有已下载集数吗？`,
+                              variant: 'danger',
+                            })
                           ) {
                             episodes.forEach((ep) => handleDeleteTask(ep.id));
                           }

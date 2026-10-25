@@ -32,6 +32,8 @@ import {
   isFansubPresetActive,
 } from '@/lib/anime-filter-presets';
 
+import Select from '@/components/ui/Select';
+
 import {
   AnimeSubscription,
   AnimeSubscriptionDownloadTool,
@@ -671,7 +673,7 @@ export default function AnimeSubscriptionComponent({
           </div>
           <div className='flex items-center gap-3'>
             <label className='text-sm font-medium text-muted'>下载方式</label>
-            <select
+            <Select
               value={downloadTool}
               onChange={(e) =>
                 handleDownloadToolChange(
@@ -686,7 +688,7 @@ export default function AnimeSubscriptionComponent({
                   {option.label}
                 </option>
               ))}
-            </select>
+            </Select>
           </div>
         </div>
         <button
@@ -1025,7 +1027,7 @@ export default function AnimeSubscriptionComponent({
                 <label className='block text-sm font-medium text-muted mb-1'>
                   搜索源
                 </label>
-                <select
+                <Select
                   value={formData.source}
                   onChange={(e) =>
                     setFormData({ ...formData, source: e.target.value as any })
@@ -1036,7 +1038,7 @@ export default function AnimeSubscriptionComponent({
                   <option value='acgrip'>ACG.RIP</option>
                   <option value='dmhy'>动漫花园 (DMHY)</option>
                   <option value='nyaa'>Nyaa</option>
-                </select>
+                </Select>
               </div>
               <div>
                 <label className='block text-sm font-medium text-muted mb-1'>

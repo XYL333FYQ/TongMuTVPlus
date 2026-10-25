@@ -53,6 +53,7 @@ import { UpdateStatus } from '@/lib/version_check';
 
 import ThemeSettings from '@/components/account/ThemeSettings';
 import VisualPreferenceControls from '@/components/account/VisualPreferenceControls';
+import { notifyError } from '@/components/feedback/AppDialogs';
 import Toast, { ToastProps } from '@/components/feedback/Toast';
 import { MoreMenu } from '@/components/shell/TongMuNavigation';
 
@@ -1298,11 +1299,11 @@ export const UserMenu: React.FC = () => {
               prevDevices.filter((device) => device.tokenId !== tokenId)
             );
           } else {
-            alert('撤销失败，请重试');
+            notifyError('撤销失败，请重试');
           }
         } catch (error) {
           console.error('撤销设备失败:', error);
-          alert('撤销失败，请重试');
+          notifyError('撤销失败，请重试');
         } finally {
           setRevoking(null);
         }
@@ -1328,11 +1329,11 @@ export const UserMenu: React.FC = () => {
             // 登出所有设备后，重定向到首页
             window.location.href = '/';
           } else {
-            alert('操作失败，请重试');
+            notifyError('操作失败，请重试');
           }
         } catch (error) {
           console.error('登出所有设备失败:', error);
-          alert('操作失败，请重试');
+          notifyError('操作失败，请重试');
         }
       },
     });

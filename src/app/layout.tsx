@@ -6,6 +6,7 @@ import { cookies } from 'next/headers';
 import '@/styles/tokens.css';
 import '@/styles/base.css';
 import '@/styles/primitives.css';
+import '@/styles/form-controls.css';
 import '@/styles/layout.css';
 import '@/styles/feedback.css';
 import '@/styles/shell.css';
@@ -22,6 +23,7 @@ import { projectGuestRuntimeConfig } from '@/lib/public-runtime-config';
 import { authenticateAuthInfo } from '@/lib/request-auth';
 import { listEnabledSourceScripts } from '@/lib/source-script';
 
+import { AppDialogHost } from '@/components/feedback/AppDialogs';
 import ShellMotionProvider from '@/components/shell/ShellMotionProvider';
 
 import PlaybackSessionProvider from '@/features/playback/PlaybackSessionProvider';
@@ -502,6 +504,7 @@ export default async function RootLayout({
                   <ChatFloatingWindow />
                   <DownloadBubble />
                   <DownloadPanel />
+                  <AppDialogHost />
                 </PlaybackSessionProvider>
               </DownloadProvider>
             </WatchRoomProvider>

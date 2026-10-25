@@ -36,6 +36,7 @@ import MediaCard from '@/components/media/MediaCard';
 import MediaGrid from '@/components/media/MediaGrid';
 import MediaGridSkeleton from '@/components/media/MediaGridSkeleton';
 import MediaSectionHeader from '@/components/media/MediaSectionHeader';
+import Select from '@/components/ui/Select';
 
 type RuntimeWindow = Window & { RUNTIME_CONFIG?: { FLUID_SEARCH?: boolean } };
 
@@ -581,7 +582,7 @@ export default function BooksSearchPage() {
               >
                 书源
               </span>
-              <select
+              <Select
                 value={sourceId}
                 onChange={(e) => setSourceId(e.target.value)}
                 aria-label='选择书源'
@@ -593,7 +594,7 @@ export default function BooksSearchPage() {
                     {source.name}
                   </option>
                 ))}
-              </select>
+              </Select>
             </label>
 
             <div className='flex items-end'>

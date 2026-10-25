@@ -21,6 +21,8 @@ import {
   isFansubPresetActive,
 } from '@/lib/anime-filter-presets';
 
+import Select from '@/components/ui/Select';
+
 import { type EpisodeTestResult } from '@/types/anime-subscription';
 
 export interface AnimeSubscribeModalProps {
@@ -556,7 +558,7 @@ export default function AnimeSubscribeModal({
               <label className='block text-sm font-medium text-muted mb-1'>
                 搜索源
               </label>
-              <select
+              <Select
                 value={form.source}
                 onChange={(e) =>
                   setForm({ ...form, source: e.target.value as SourceType })
@@ -567,7 +569,7 @@ export default function AnimeSubscribeModal({
                 <option value='acgrip'>ACG.RIP</option>
                 <option value='dmhy'>动漫花园</option>
                 <option value='nyaa'>Nyaa</option>
-              </select>
+              </Select>
             </div>
             <div>
               <label className='block text-sm font-medium text-muted mb-1'>

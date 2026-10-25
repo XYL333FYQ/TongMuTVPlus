@@ -16,6 +16,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { PansouLink, PansouSearchResult } from '@/lib/pansou.client';
 
 import Toast, { ToastProps } from '@/components/feedback/Toast';
+import Select from '@/components/ui/Select';
 
 interface PansouSearchProps {
   keyword: string;
@@ -1125,7 +1126,7 @@ export default function PansouSearch({
             <label className='mt-4 block text-sm font-medium text-muted'>
               下载方式
             </label>
-            <select
+            <Select
               value={downloadTool}
               onChange={(e) => setDownloadTool(e.target.value as DownloadTool)}
               className='mt-1 w-full px-3 py-2 border border-line rounded-lg bg-surface text-fg focus:outline-none focus:ring-2 focus:ring-fg'
@@ -1135,7 +1136,7 @@ export default function PansouSearch({
                   {option.label}
                 </option>
               ))}
-            </select>
+            </Select>
             <div className='mt-4 flex gap-2 justify-end'>
               <button
                 onClick={handleCloseDownloadDialog}

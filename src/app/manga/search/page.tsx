@@ -39,6 +39,7 @@ import MediaGrid from '@/components/media/MediaGrid';
 import MediaGridSkeleton from '@/components/media/MediaGridSkeleton';
 import MediaSectionHeader from '@/components/media/MediaSectionHeader';
 import ShelfChipButton from '@/components/media/ShelfChipButton';
+import Select from '@/components/ui/Select';
 
 const MANGA_SEARCH_STATE_KEY = 'manga_search_state';
 
@@ -519,7 +520,7 @@ export default function MangaSearchPage() {
               className={LIBRARY_FIELD}
             />
           </div>
-          <select
+          <Select
             value={sourceId}
             onChange={(e) => setSourceId(e.target.value)}
             aria-label='选择漫画来源'
@@ -531,7 +532,7 @@ export default function MangaSearchPage() {
                 {source.displayName || source.name}
               </option>
             ))}
-          </select>
+          </Select>
           <button className={cn(LIBRARY_BUTTON, 'lg:w-32')}>
             <Search className='h-4 w-4' /> 搜索
           </button>

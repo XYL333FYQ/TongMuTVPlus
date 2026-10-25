@@ -8,6 +8,7 @@ import { playMusicList } from '@/lib/music/actions';
 import { getApiErrorMessage } from '@/lib/music/errors';
 import { mapSong } from '@/lib/music/shared';
 
+import { askConfirm, notifyError } from '@/components/feedback/AppDialogs';
 import MusicEmpty, {
   MusicRowListSkeleton,
 } from '@/components/music/MusicEmpty';
@@ -130,7 +131,13 @@ export default function MusicMyPlaylistsPage() {
   };
 
   const deleteUserPlaylist = async (playlistId: string) => {
-    if (!window.confirm('确定要删除这个歌单吗？')) return;
+    if (
+      !(await askConfirm({
+        message: '确定要删除这个歌单吗？',
+        variant: 'danger',
+      }))
+    )
+      return;
 
     setDeletingPlaylistId(playlistId);
     try {
@@ -139,7 +146,7 @@ export default function MusicMyPlaylistsPage() {
       });
       if (!response.ok) {
         const data = await response.json().catch(() => ({}));
-        window.alert(getApiErrorMessage(data.error, '删除失败'));
+        notifyError(getApiErrorMessage(data.error, '删除失败'));
         return;
       }
 
@@ -150,7 +157,7 @@ export default function MusicMyPlaylistsPage() {
       loadUserPlaylists();
     } catch (error) {
       console.error('删除歌单失败:', error);
-      window.alert('删除歌单失败');
+      notifyError('删除歌单失败');
     } finally {
       setDeletingPlaylistId(null);
     }
@@ -158,7 +165,13 @@ export default function MusicMyPlaylistsPage() {
 
   const removeSongFromUserPlaylist = async (song: any) => {
     if (!selectedUserPlaylist) return;
-    if (!window.confirm(`确定要从歌单中移除 "${song.name}" 吗？`)) return;
+    if (
+      !(await askConfirm({
+        message: `确定要从歌单中移除 "${song.name}" 吗？`,
+        variant: 'danger',
+      }))
+    )
+      return;
 
     setRemovingSongId(song.id);
     try {
@@ -170,14 +183,14 @@ export default function MusicMyPlaylistsPage() {
       );
       if (!response.ok) {
         const data = await response.json().catch(() => ({}));
-        window.alert(getApiErrorMessage(data.error, '移除失败'));
+        notifyError(getApiErrorMessage(data.error, '移除失败'));
         return;
       }
 
       loadUserPlaylistSongs(selectedUserPlaylist.id);
     } catch (error) {
       console.error('移除歌曲失败:', error);
-      window.alert('移除歌曲失败');
+      notifyError('移除歌曲失败');
     } finally {
       setRemovingSongId(null);
     }

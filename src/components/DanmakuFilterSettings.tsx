@@ -10,6 +10,8 @@ import {
 } from '@/lib/db.client';
 import { DanmakuFilterConfig, DanmakuFilterRule } from '@/lib/types';
 
+import Select from '@/components/ui/Select';
+
 interface DanmakuFilterSettingsProps {
   isOpen: boolean;
   onClose: () => void;
@@ -307,7 +309,7 @@ export default function DanmakuFilterSettings({
                 className='w-full px-4 py-3 bg-surface text-fg rounded-lg border border-line focus:border-line focus:outline-none focus:ring-2 focus:ring-[color-mix(in_srgb,var(--tm-text)_20%,transparent)] transition-all duration-200'
               />
               <div className='flex gap-2'>
-                <select
+                <Select
                   value={newType}
                   onChange={(e) =>
                     setNewType(e.target.value as 'normal' | 'regex')
@@ -316,7 +318,7 @@ export default function DanmakuFilterSettings({
                 >
                   <option value='normal'>普通模式</option>
                   <option value='regex'>正则模式</option>
-                </select>
+                </Select>
                 <button
                   onClick={handleAddRule}
                   className='px-6 py-3 bg-fg hover:opacity-90 active:bg-fg text-inverse rounded-lg transition-all duration-200 flex items-center gap-2 active:scale-[0.98] shadow-sm hover:shadow-md min-h-[44px] tm-press'

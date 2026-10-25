@@ -49,7 +49,6 @@ import {
   Settings,
   Smartphone,
   Tablet,
-  Trash2,
   Tv,
   UserPlus,
   Users,
@@ -82,6 +81,7 @@ import {
 import AnimeSubscriptionComponent from '@/components/AnimeSubscriptionComponent';
 import CorrectDialog from '@/components/CorrectDialog';
 import DataMigration from '@/components/DataMigration';
+import { askConfirm } from '@/components/feedback/AppDialogs';
 import PageLayout from '@/components/PageLayout';
 
 // 统一按钮样式系统（黑白 token：主操作反色，危险操作用报错红描边，其余中性）
@@ -1522,7 +1522,7 @@ const UserConfig = ({
                 <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
                   用户组（可选）
                 </label>
-                <select
+                <Select
                   value={newUser.userGroup}
                   onChange={(e) =>
                     setNewUser((prev) => ({
@@ -1542,7 +1542,7 @@ const UserConfig = ({
                       )
                     </option>
                   ))}
-                </select>
+                </Select>
               </div>
               <div className='flex justify-end'>
                 <button
@@ -3003,7 +3003,7 @@ const UserConfig = ({
                   <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
                     选择用户组：
                   </label>
-                  <select
+                  <Select
                     value={
                       selectedUserGroups.length > 0 ? selectedUserGroups[0] : ''
                     }
@@ -3022,7 +3022,7 @@ const UserConfig = ({
                           : ''}
                       </option>
                     ))}
-                  </select>
+                  </Select>
                   <p className='mt-2 text-[13px] text-[color:var(--tm-muted)]'>
                     选择"无用户组"为无限制，选择特定用户组将限制用户只能访问该用户组允许的采集源
                   </p>
@@ -3393,7 +3393,7 @@ const UserConfig = ({
                     <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
                       选择用户组：
                     </label>
-                    <select
+                    <Select
                       onChange={(e) => setSelectedUserGroup(e.target.value)}
                       className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)] focus:ring-2 focus:ring-[var(--tm-text)] focus:border-transparent transition-colors'
                       value={selectedUserGroup}
@@ -3407,7 +3407,7 @@ const UserConfig = ({
                             : ''}
                         </option>
                       ))}
-                    </select>
+                    </Select>
                     <p className='mt-2 text-[13px] text-[color:var(--tm-muted)]'>
                       选择"无用户组"为无限制，选择特定用户组将限制用户只能访问该用户组允许的采集源
                     </p>
@@ -4099,7 +4099,7 @@ const OpenListConfigComponent = ({
           <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
             扫描模式
           </label>
-          <select
+          <Select
             value={scanMode}
             onChange={(e) =>
               setScanMode(e.target.value as 'torrent' | 'name' | 'hybrid')
@@ -4110,7 +4110,7 @@ const OpenListConfigComponent = ({
             <option value='hybrid'>混合模式（推荐）</option>
             <option value='torrent'>种子库匹配</option>
             <option value='name'>名字匹配</option>
-          </select>
+          </Select>
           <p className='mt-1 text-[13px] text-[color:var(--tm-muted)]'>
             混合模式：先用种子库匹配，失败后降级为名字匹配
           </p>
@@ -5119,7 +5119,7 @@ const NetDiskConfigComponent = ({
             <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
               播放方式
             </label>
-            <select
+            <Select
               value={quarkPlayMode}
               onChange={(e) =>
                 setQuarkPlayMode(
@@ -5133,7 +5133,7 @@ const NetDiskConfigComponent = ({
             >
               <option value='direct_first'>直链优先</option>
               <option value='transcode_first'>转码优先</option>
-            </select>
+            </Select>
             <p className='text-[13px] text-[color:var(--tm-muted)] mt-1'>
               直链优先会优先使用原画下载地址；转码优先会优先使用夸克转码播放地址。
             </p>
@@ -5816,7 +5816,12 @@ const EmbyConfigComponent = ({
 
   // 删除源
   const handleDelete = async (source: any) => {
-    if (!confirm(`确定要删除 "${source.name}" 吗？`)) {
+    if (
+      !(await askConfirm({
+        message: `确定要删除 "${source.name}" 吗？`,
+        variant: 'danger',
+      }))
+    ) {
       return;
     }
 
@@ -7926,11 +7931,7 @@ const VideoSourceConfig = ({
                 >
                   {isValidating ? (
                     <>
-                      <div
-                        className={
-                          'w-3 h-3 border border-[var(--tm-text)] border-t-transparent rounded-full animate-spin'
-                        }
-                      ></div>
+                      <div className='w-3 h-3 border border-[var(--tm-text)] border-t-transparent rounded-full animate-spin'></div>
                       <span>检测中...</span>
                     </>
                   ) : (
@@ -8943,7 +8944,7 @@ const CategoryConfig = ({
               }
               className='px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)]'
             />
-            <select
+            <Select
               value={newCategory.type}
               onChange={(e) =>
                 setNewCategory((prev) => ({
@@ -8955,7 +8956,7 @@ const CategoryConfig = ({
             >
               <option value='movie'>电影</option>
               <option value='tv'>电视剧</option>
-            </select>
+            </Select>
             <input
               type='text'
               placeholder='搜索关键词'
@@ -9618,7 +9619,7 @@ const VideoSourceScriptLab = ({ role }: { role: 'owner' | 'admin' | null }) => {
                 <label className='text-sm font-medium text-[color:var(--tm-muted)]'>
                   测试 Hook
                 </label>
-                <select
+                <Select
                   value={testHook}
                   onChange={(e) =>
                     setTestHook(
@@ -9637,7 +9638,7 @@ const VideoSourceScriptLab = ({ role }: { role: 'owner' | 'admin' | null }) => {
                   <option value='recommend'>recommend</option>
                   <option value='detail'>detail</option>
                   <option value='resolvePlayUrl'>resolvePlayUrl</option>
-                </select>
+                </Select>
               </div>
               <p className='text-[13px] text-[color:var(--tm-muted)]'>
                 现在脚本可以自己管理多个源，测试入参可传 `sourceId`。
@@ -9909,11 +9910,7 @@ const ConfigFileComponent = ({
             >
               {isLoading('fetchConfig') ? (
                 <div className='flex items-center justify-center gap-2'>
-                  <div
-                    className={
-                      'w-4 h-4 border-2 border-[var(--tm-text)] border-t-transparent rounded-full animate-spin'
-                    }
-                  ></div>
+                  <div className='w-4 h-4 border-2 border-[var(--tm-text)] border-t-transparent rounded-full animate-spin'></div>
                   拉取中…
                 </div>
               ) : (
@@ -10003,11 +10000,7 @@ const ConfigFileComponent = ({
               <div className='flex items-center space-x-2'>
                 {isLoading('uploadConfig') ? (
                   <>
-                    <div
-                      className={
-                        'w-4 h-4 border-2 border-[var(--tm-text)] border-t-transparent rounded-full animate-spin'
-                      }
-                    ></div>
+                    <div className='w-4 h-4 border-2 border-[var(--tm-text)] border-t-transparent rounded-full animate-spin'></div>
                     <span className='text-sm text-[color:var(--tm-muted)]'>
                       上传中...
                     </span>
@@ -10387,7 +10380,7 @@ const ThemeConfigComponent = ({
                     )}
                   </div>
                 </div>
-              </div>
+              </button>
             ))}
           </div>
           <p className='mt-4 text-sm text-[color:var(--tm-muted)]'>
@@ -11876,7 +11869,7 @@ const SiteConfigComponent = ({
         <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
           本地设置云同步
         </label>
-        <select
+        <Select
           value={siteSettings.LocalSettingsSyncMode || 'off'}
           onChange={(e) =>
             setSiteSettings((prev) => ({
@@ -11892,7 +11885,7 @@ const SiteConfigComponent = ({
           <option value='off'>关闭</option>
           <option value='manual'>手动模式</option>
           <option value='auto'>自动模式</option>
-        </select>
+        </Select>
         <p className='mt-1 text-[13px] text-[color:var(--tm-muted)]'>
           登录用户可把本地设置同步到云端，多设备保持一致。
           <br />
@@ -11912,7 +11905,7 @@ const SiteConfigComponent = ({
             <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
               轮播图数据源
             </label>
-            <select
+            <Select
               value={siteSettings.BannerDataSource || 'Douban'}
               onChange={(e) =>
                 setSiteSettings((prev) => ({
@@ -11925,7 +11918,7 @@ const SiteConfigComponent = ({
               <option value='Douban'>豆瓣</option>
               <option value='TMDB'>TMDB</option>
               <option value='TX'>TX</option>
-            </select>
+            </Select>
             <p className='mt-1 text-[13px] text-[color:var(--tm-muted)]'>
               选择首页轮播图的数据来源
             </p>
@@ -11936,7 +11929,7 @@ const SiteConfigComponent = ({
             <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
               更多推荐数据源
             </label>
-            <select
+            <Select
               value={siteSettings.RecommendationDataSource || 'Mixed'}
               onChange={(e) =>
                 setSiteSettings((prev) => ({
@@ -11949,7 +11942,7 @@ const SiteConfigComponent = ({
               <option value='Mixed'>混合</option>
               <option value='Douban'>豆瓣</option>
               <option value='TMDB'>TMDB</option>
-            </select>
+            </Select>
             <p className='mt-1 text-[13px] text-[color:var(--tm-muted)]'>
               选择详情页"更多推荐"的数据来源。混合模式会根据豆瓣ID和评论开关自动切换数据源
             </p>
@@ -12690,7 +12683,7 @@ const SiteConfigComponent = ({
                 <label className='block text-sm font-medium text-[color:var(--tm-muted)]'>
                   统计服务
                 </label>
-                <select
+                <Select
                   value={siteSettings.AnalyticsProvider}
                   onChange={(e) =>
                     setSiteSettings((prev) => ({
@@ -12710,7 +12703,7 @@ const SiteConfigComponent = ({
                     Microsoft Clarity（免费，热力图+会话回放）
                   </option>
                   <option value='custom'>自定义代码</option>
-                </select>
+                </Select>
               </div>
 
               {siteSettings.AnalyticsProvider === 'umami' && (
@@ -13136,7 +13129,7 @@ const RegistrationConfigComponent = ({
               <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
                 默认用户组
               </label>
-              <select
+              <Select
                 value={
                   registrationSettings.DefaultUserTags &&
                   registrationSettings.DefaultUserTags.length > 0
@@ -13162,7 +13155,7 @@ const RegistrationConfigComponent = ({
                         : ''}
                     </option>
                   ))}
-              </select>
+              </Select>
               <p className='mt-1 text-[13px] text-[color:var(--tm-muted)]'>
                 新注册的用户将自动分配到选中的用户组，选择"无用户组"为无限制
               </p>
@@ -15100,7 +15093,7 @@ const OPDSConfigComponent = ({
                       placeholder='https://example.com/opds'
                       className='rounded-lg border border-[var(--tm-line)] bg-[var(--tm-surface)] px-3 py-2 text-[color:var(--tm-text)] md:col-span-2'
                     />
-                    <select
+                    <Select
                       value={source.authMode || 'none'}
                       onChange={(e) =>
                         updateSource(index, {
@@ -15112,7 +15105,7 @@ const OPDSConfigComponent = ({
                       <option value='none'>无认证</option>
                       <option value='basic'>Basic Auth</option>
                       <option value='header'>自定义 Header</option>
-                    </select>
+                    </Select>
                     <input
                       type='text'
                       value={source.language || ''}
@@ -16469,11 +16462,7 @@ const MovieRequestsComponent = ({
 
         {loading ? (
           <div className='flex justify-center py-8'>
-            <div
-              className={
-                'w-6 h-6 border-2 border-[var(--tm-text)] border-t-transparent rounded-full animate-spin'
-              }
-            />
+            <div className='w-6 h-6 border-2 border-[var(--tm-text)] border-t-transparent rounded-full animate-spin' />
           </div>
         ) : requests.length === 0 ? (
           <div className='text-center py-8 text-[color:var(--tm-muted)]'>
@@ -16932,7 +16921,7 @@ const AIConfigComponent = ({
             <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
               调用协议
             </label>
-            <select
+            <Select
               value={newProtocol}
               onChange={(e) => setNewProtocol(e.target.value as any)}
               className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)]'
@@ -16946,7 +16935,7 @@ const AIConfigComponent = ({
               <option value='claude'>
                 Claude Messages 协议 (/v1/messages)
               </option>
-            </select>
+            </Select>
           </div>
 
           <div>
@@ -17110,7 +17099,7 @@ const AIConfigComponent = ({
               <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
                 搜索服务提供商
               </label>
-              <select
+              <Select
                 value={webSearchProvider}
                 onChange={(e) => setWebSearchProvider(e.target.value as any)}
                 className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)]'
@@ -17119,7 +17108,7 @@ const AIConfigComponent = ({
                 <option value='serper'>Serper.dev</option>
                 <option value='serpapi'>SerpAPI</option>
                 <option value='bing'>Bing RSS（免费，无需 API Key）</option>
-              </select>
+              </Select>
             </div>
 
             {webSearchProvider === 'tavily' && (
@@ -18057,7 +18046,7 @@ const LiveSourceConfig = ({
           </span>
         </td>
         <td className='px-6 py-4 whitespace-nowrap'>
-          <select
+          <Select
             value={liveSource.proxyMode || 'full'}
             onChange={(e) => {
               handleSetProxyMode(
@@ -18075,7 +18064,7 @@ const LiveSourceConfig = ({
             <option value='full'>全量代理</option>
             <option value='m3u8-only'>仅代理m3u8</option>
             <option value='direct'>直连</option>
-          </select>
+          </Select>
         </td>
         <td className='px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2'>
           <button
@@ -18760,7 +18749,7 @@ const WebLiveConfig = ({
               }
               className='px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)]'
             />
-            <select
+            <Select
               value={newSource.platform}
               onChange={(e) =>
                 setNewSource((prev) => ({ ...prev, platform: e.target.value }))
@@ -18770,7 +18759,7 @@ const WebLiveConfig = ({
               <option value='huya'>虎牙</option>
               <option value='bilibili'>哔哩哔哩</option>
               <option value='douyin'>抖音</option>
-            </select>
+            </Select>
             <input
               type='text'
               placeholder='房间ID'
@@ -18838,7 +18827,7 @@ const WebLiveConfig = ({
               <label className='block text-[13px] font-medium text-[color:var(--tm-muted)] mb-1'>
                 直播类型
               </label>
-              <select
+              <Select
                 value={editingSource.platform}
                 onChange={(e) =>
                   setEditingSource((prev: any) =>
@@ -18850,7 +18839,7 @@ const WebLiveConfig = ({
                 <option value='huya'>虎牙</option>
                 <option value='bilibili'>哔哩哔哩</option>
                 <option value='douyin'>抖音</option>
-              </select>
+              </Select>
             </div>
             <div>
               <label className='block text-[13px] font-medium text-[color:var(--tm-muted)] mb-1'>

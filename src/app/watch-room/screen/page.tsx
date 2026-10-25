@@ -11,8 +11,9 @@ import {
   useScreenShare,
 } from '@/hooks/useScreenShare';
 
-import PageContainer from '@/components/PageContainer';
 import Toast, { ToastProps } from '@/components/feedback/Toast';
+import PageContainer from '@/components/PageContainer';
+import Select from '@/components/ui/Select';
 import { useWatchRoomContext } from '@/components/WatchRoomProvider';
 
 const NEW_TAB_KEY_PREFIX = 'watch_room_screen_home_opened_';
@@ -270,7 +271,7 @@ export default function WatchRoomScreenPage() {
                   <label className='mb-2 block text-sm font-medium text-muted'>
                     共享画质
                   </label>
-                  <select
+                  <Select
                     value={qualityPreset}
                     onChange={(event) =>
                       setQualityPreset(
@@ -285,7 +286,7 @@ export default function WatchRoomScreenPage() {
                         {option.label}
                       </option>
                     ))}
-                  </select>
+                  </Select>
                   <p className='mt-2 text-[13px] text-muted'>
                     画质越高越清晰，但更依赖网络和设备性能。共享开始后不可切换。
                   </p>

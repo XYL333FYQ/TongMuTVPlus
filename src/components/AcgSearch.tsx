@@ -13,6 +13,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import CapsuleSwitch from '@/components/catalog/CapsuleSwitch';
 import Toast, { ToastProps } from '@/components/feedback/Toast';
+import Select from '@/components/ui/Select';
 
 interface AcgSearchItem {
   title: string;
@@ -722,7 +723,7 @@ export default function AcgSearch({
               <label className='mt-4 block text-sm font-medium text-muted'>
                 下载方式
               </label>
-              <select
+              <Select
                 value={downloadTool}
                 onChange={(e) =>
                   setDownloadTool(e.target.value as DownloadTool)
@@ -734,7 +735,7 @@ export default function AcgSearch({
                     {option.label}
                   </option>
                 ))}
-              </select>
+              </Select>
               <div className='mt-4 flex gap-2 justify-end'>
                 <button
                   onClick={() => {

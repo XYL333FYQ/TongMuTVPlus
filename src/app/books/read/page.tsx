@@ -68,6 +68,7 @@ import {
   READER_SHEET,
   READER_SLIDER,
 } from '@/components/media/library';
+import Select from '@/components/ui/Select';
 
 declare global {
   interface Window {
@@ -1811,7 +1812,7 @@ function ChapterReader({ manifest }: { manifest: BookReadManifest }) {
                     <Square className='h-4 w-4' />
                   </button>
                 </div>
-                <select
+                <Select
                   value={ttsSettings.voice}
                   onChange={(e) => {
                     stopTts(true);
@@ -1827,7 +1828,7 @@ function ChapterReader({ manifest }: { manifest: BookReadManifest }) {
                       {voice.displayName || voice.shortName}
                     </option>
                   ))}
-                </select>
+                </Select>
                 <label className='mb-3 block text-[13px] text-muted'>
                   语速 {ttsSettings.rate}
                   <input
@@ -4092,7 +4093,7 @@ export default function BookReadPage() {
                       <Waves className='h-3.5 w-3.5' />
                       <span>音色</span>
                     </div>
-                    <select
+                    <Select
                       value={ttsSettings.voice}
                       onChange={(e) => {
                         stopTts(true);
@@ -4108,7 +4109,7 @@ export default function BookReadPage() {
                           {voice.displayName || voice.shortName}
                         </option>
                       ))}
-                    </select>
+                    </Select>
                   </div>
 
                   <label className='block'>

@@ -12,6 +12,7 @@ import {
   getIndexedDBVideoSegments,
 } from '@/lib/indexeddb-video-cache';
 
+import { notifyError } from '@/components/feedback/AppDialogs';
 import { ConfirmDialog } from '@/components/feedback/ConfirmDialog';
 
 interface DownloadManagementPanelProps {
@@ -228,7 +229,7 @@ export function DownloadManagementPanel({
       setSelectedIds(new Set());
     } catch (error) {
       console.error('删除任务失败:', error);
-      alert('删除失败，请重试');
+      notifyError('删除失败，请重试');
     } finally {
       setIsDeleting(false);
     }
@@ -397,7 +398,7 @@ export function DownloadManagementPanel({
         (task) => task.downloadMode === 'browser'
       );
       if (unsupportedTasks.length > 0) {
-        alert(
+        notifyError(
           '浏览器下载模式的文件未保存在本地缓存中，无法从下载管理导出。请仅选择 File System API 或 IndexedDB 缓存记录。'
         );
         return;
@@ -407,7 +408,9 @@ export function DownloadManagementPanel({
       if (tasksToExport.some((task) => task.downloadMode === 'filesystem')) {
         dirHandle = await getStoredDownloadDirHandle();
         if (!dirHandle) {
-          alert('无法读取下载目录授权，请先在下载设置中重新选择保存目录。');
+          notifyError(
+            '无法读取下载目录授权，请先在下载设置中重新选择保存目录。'
+          );
           return;
         }
 
@@ -415,7 +418,7 @@ export function DownloadManagementPanel({
           mode: 'read',
         });
         if (permission !== 'granted') {
-          alert('未获得下载目录读取权限，无法导出。');
+          notifyError('未获得下载目录读取权限，无法导出。');
           return;
         }
       }
@@ -440,16 +443,20 @@ export function DownloadManagementPanel({
       }
 
       if (exportedCount === 0) {
-        alert(`导出失败：${failedTitles.join('、') || '未找到可导出的内容'}`);
+        notifyError(
+          `导出失败：${failedTitles.join('、') || '未找到可导出的内容'}`
+        );
         return;
       }
 
       if (failedTitles.length > 0) {
-        alert(`已导出可读取的内容，但以下条目失败：${failedTitles.join('、')}`);
+        notifyError(
+          `已导出可读取的内容，但以下条目失败：${failedTitles.join('、')}`
+        );
       }
     } catch (error) {
       console.error('导出失败:', error);
-      alert(
+      notifyError(
         `导出失败：${error instanceof Error ? error.message : String(error)}`
       );
     } finally {
