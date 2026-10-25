@@ -554,7 +554,7 @@ input:disabled ~ .tm-switch-thumb {
   transform: scale(1.06);
 }
 /* 过渡期间锁死全站普通 DOM 的颜色/背景/边框过渡与骨架动画，彻底消除首帧重绘与 1ms 抖动掉帧 */
-html[data-tm-theme-transition] *,
+html[data-tm-theme-transition] *:not(.tm-theme-morph):not(.tm-theme-morph *),
 html[data-tm-theme-transition] *::before,
 html[data-tm-theme-transition] *::after {
   transition-property: none !important;
@@ -585,26 +585,20 @@ html[data-tm-theme-transition='circle']::view-transition-group(
     tm-theme-control
   ) {
   z-index: 2;
-  animation: tm-theme-origin-pulse 420ms var(--tm-ease-out) both;
+  animation: tm-theme-origin-pulse var(--tm-d-theme) var(--tm-ease-theme) both;
 }
-/* 日冕 ⇄ 月神 法相无缝旋转交接：0ms 同频起手，无切换空档与剪辑感 */
+/*
+ * 日 ⇄ 月 同一图形变形：新层是按钮的实时画面，里面的 SVG 自己在做变形（光线收拢、
+ * 圆盘被咬成弯月）；旧层只是静态的起始帧，快速淡出把它让给实时画面，没有两个形状叠换。
+ */
 html[data-tm-theme-transition='circle']::view-transition-old(tm-theme-control) {
-  animation: tm-theme-solar-out 360ms var(--tm-ease-out) both;
+  animation: tm-theme-control-out calc(var(--tm-d-theme) * 0.4)
+    var(--tm-ease-theme) both;
   mix-blend-mode: normal;
 }
 html[data-tm-theme-transition='circle']::view-transition-new(tm-theme-control) {
-  animation: tm-theme-solar-in 420ms var(--tm-ease-out) both;
+  animation: none;
   mix-blend-mode: normal;
-}
-html[data-tm-theme-transition='circle'][data-tm-theme-target='dark']::view-transition-old(
-    tm-theme-control
-  ) {
-  animation-name: tm-theme-lunar-out;
-}
-html[data-tm-theme-transition='circle'][data-tm-theme-target='dark']::view-transition-new(
-    tm-theme-control
-  ) {
-  animation-name: tm-theme-lunar-in;
 }
 @keyframes tm-theme-origin-pulse {
   0% {
@@ -617,44 +611,61 @@ html[data-tm-theme-transition='circle'][data-tm-theme-target='dark']::view-trans
     filter: brightness(1);
   }
 }
-@keyframes tm-theme-solar-out {
+@keyframes tm-theme-control-out {
   from {
     opacity: 1;
-    transform: rotate(0deg) scale(1);
   }
   to {
     opacity: 0;
-    transform: rotate(100deg) scale(0.42);
   }
 }
-@keyframes tm-theme-solar-in {
-  from {
-    opacity: 0;
-    transform: rotate(-100deg) scale(0.42);
-  }
-  to {
-    opacity: 1;
-    transform: rotate(0deg) scale(1);
-  }
+/* 日月变形图标：状态由 data-tm-celestial 驱动，solar = 正显示太阳，lunar = 正显示月亮 */
+.tm-theme-morph {
+  width: 20px;
+  height: 20px;
+  overflow: visible;
+  transition: transform var(--tm-d-theme) var(--tm-ease-theme);
 }
-@keyframes tm-theme-lunar-out {
-  from {
-    opacity: 1;
-    transform: rotate(0deg) scale(1);
-  }
-  to {
-    opacity: 0;
-    transform: rotate(-100deg) scale(0.42);
-  }
+.tm-theme-morph * {
+  transform-box: view-box;
+  transform-origin: 12px 12px;
+  transition: transform var(--tm-d-theme) var(--tm-ease-theme),
+    opacity calc(var(--tm-d-theme) * 0.6) var(--tm-ease-theme);
 }
-@keyframes tm-theme-lunar-in {
-  from {
-    opacity: 0;
-    transform: rotate(100deg) scale(0.42);
-  }
-  to {
-    opacity: 1;
-    transform: rotate(0deg) scale(1);
+[data-tm-celestial='solar'] .tm-theme-morph {
+  transform: rotate(0deg);
+}
+[data-tm-celestial='solar'] .tm-morph-disc {
+  transform: scale(0.56);
+}
+[data-tm-celestial='solar'] .tm-morph-bite {
+  transform: translate(14px, -14px);
+}
+[data-tm-celestial='solar'] .tm-morph-rays {
+  opacity: 1;
+  transform: rotate(0deg) scale(1);
+}
+[data-tm-celestial='lunar'] .tm-theme-morph {
+  transform: rotate(-24deg);
+}
+[data-tm-celestial='lunar'] .tm-morph-disc {
+  transform: scale(1);
+}
+[data-tm-celestial='lunar'] .tm-morph-bite {
+  transform: translate(0, 0);
+}
+[data-tm-celestial='lunar'] .tm-morph-rays {
+  opacity: 0;
+  transform: rotate(-60deg) scale(0.4);
+}
+html[data-tm-reduced-motion='true'] .tm-theme-morph,
+html[data-tm-reduced-motion='true'] .tm-theme-morph * {
+  transition-duration: 0s;
+}
+@media (prefers-reduced-motion: reduce) {
+  .tm-theme-morph,
+  .tm-theme-morph * {
+    transition-duration: 0s;
   }
 }
 /*
@@ -689,7 +700,7 @@ html[data-tm-theme-transition='circle']::view-transition-group(tm-theme-aura) {
     color-mix(in srgb, var(--tm-on-art) 28%, transparent) 94.4%,
     transparent 98% 100%
   );
-  animation: tm-theme-corona-expand 420ms var(--tm-ease-out) both;
+  animation: tm-theme-corona-expand var(--tm-d-theme) var(--tm-ease-theme) both;
 }
 html[data-tm-theme-transition='circle'][data-tm-theme-target='dark']::view-transition-group(
     tm-theme-aura
@@ -704,7 +715,7 @@ html[data-tm-theme-transition='circle'][data-tm-theme-target='dark']::view-trans
     color-mix(in srgb, var(--tm-video-bg) 48%, transparent) 95.2%,
     transparent 98.5% 100%
   );
-  animation: tm-theme-lunar-retract 420ms var(--tm-ease-out) both;
+  animation: tm-theme-lunar-retract var(--tm-d-theme) var(--tm-ease-theme) both;
 }
 @keyframes tm-theme-corona-expand {
   0% {
@@ -787,6 +798,43 @@ html[data-tm-theme-transition='circle'][data-tm-theme-target='dark']::view-trans
     root
   ) {
   z-index: 0;
+}
+/*
+ * 底层画面的呼吸：被圆揭开 / 被圆吞回的那一层不裁切，让它朝点击点轻微收放，
+ * 和裁切圆同时长同缓动，新旧主题像一个东西在变形，而不是两张图叠换。
+ * 浅色：旧画面（底层）从点击点略微放大离场；深色：新画面（底层）从略大回落。
+ * 缩放只能 ≥ 1：小于 1 会让画面四边内缩，露出下面的页面底色，形成"边界"。
+ * 只动 transform，走合成层；被裁切的那层不加变换，日冕环位置不受影响。
+ */
+html[data-tm-theme-transition='circle'][data-tm-theme-target='light']::view-transition-old(
+    root
+  ) {
+  transform-origin: var(--tm-theme-x, 50vw) var(--tm-theme-y, 50vh);
+  will-change: clip-path, transform;
+  animation: tm-theme-under-recede var(--tm-d-theme) var(--tm-ease-theme) both;
+}
+html[data-tm-theme-transition='circle'][data-tm-theme-target='dark']::view-transition-new(
+    root
+  ) {
+  transform-origin: var(--tm-theme-x, 50vw) var(--tm-theme-y, 50vh);
+  will-change: clip-path, transform;
+  animation: tm-theme-under-settle var(--tm-d-theme) var(--tm-ease-theme) both;
+}
+@keyframes tm-theme-under-recede {
+  from {
+    transform: scale(1);
+  }
+  to {
+    transform: scale(1.015);
+  }
+}
+@keyframes tm-theme-under-settle {
+  from {
+    transform: scale(1.015);
+  }
+  to {
+    transform: scale(1);
+  }
 }
 
 /* 减少动态：去掉位移与缩放，只留淡入淡出 */

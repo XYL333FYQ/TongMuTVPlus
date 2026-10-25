@@ -114,6 +114,9 @@
   --tm-d-panel: 320ms;
   --tm-d-page: 360ms;
   --tm-d-hero: 600ms;
+  /* 主题切换：圆形裁切、日冕环、底层后退、图标交接共用这一组，保证同频 */
+  --tm-d-theme: 520ms;
+  --tm-ease-theme: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 html.light {

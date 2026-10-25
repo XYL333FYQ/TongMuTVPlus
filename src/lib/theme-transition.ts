@@ -3,7 +3,8 @@
 import { isReducedMotionSetting } from './motion';
 
 export type ThemeSetting = 'dark' | 'light' | 'system';
-const DEFAULT_EASE_OUT = 'cubic-bezier(0.22, 1, 0.36, 1)';
+const DEFAULT_EASE = 'cubic-bezier(0.4, 0, 0.2, 1)';
+const DEFAULT_DURATION = 520;
 let request = 0;
 let activeTransition: TMViewTransition | undefined;
 let activeAnimation: Animation | undefined;
@@ -123,9 +124,12 @@ export async function changeThemeWithTransition(
         Math.max(x, window.innerWidth - x),
         Math.max(y, window.innerHeight - y)
       );
+      // 时长与缓动从 CSS token 读，和日冕环、底层后退、图标交接保持同频。
+      const style = getComputedStyle(root);
       const easing =
-        getComputedStyle(root).getPropertyValue('--tm-ease-out').trim() ||
-        DEFAULT_EASE_OUT;
+        style.getPropertyValue('--tm-ease-theme').trim() || DEFAULT_EASE;
+      const parsed = parseFloat(style.getPropertyValue('--tm-d-theme'));
+      const duration = parsed > 0 ? parsed : DEFAULT_DURATION;
       root.dataset.tmThemeTransition = 'circle';
       root.dataset.tmThemeTarget = resolvesDark(theme) ? 'dark' : 'light';
       // 只命名本次触发控件，让图标独立交接，避免双入口重名导致快照失败。
@@ -146,7 +150,7 @@ export async function changeThemeWithTransition(
       ];
       if (dark) frames.reverse();
       activeAnimation = root.animate(frames, {
-        duration: 420,
+        duration,
         fill: 'forwards',
         easing,
         pseudoElement: dark

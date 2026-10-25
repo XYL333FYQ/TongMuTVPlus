@@ -28,9 +28,10 @@ beforeEach(() => {
   delete document.documentElement.dataset.tmReducedMotion;
   delete document.startViewTransition;
   document.documentElement.style.setProperty(
-    '--tm-ease-out',
+    '--tm-ease-theme',
     'cubic-bezier(.22,1,.36,1)'
   );
+  document.documentElement.style.setProperty('--tm-d-theme', '520ms');
   Object.defineProperty(window, 'matchMedia', {
     configurable: true,
     value: jest.fn((query: string) => ({
@@ -84,7 +85,7 @@ test('entering dark retracts the old light snapshot into the control', async () 
   expect(frames[0].clipPath).not.toContain('circle(0px');
   expect(frames[1].clipPath).toContain('circle(0px');
   expect(animate.mock.calls[0][1]).toMatchObject({
-    duration: 420,
+    duration: 520,
     fill: 'forwards',
     easing: 'cubic-bezier(.22,1,.36,1)',
     pseudoElement: '::view-transition-old(root)',
@@ -223,7 +224,7 @@ test('circle waits for the next-themes class update and uses the control centre'
     clipPath: 'circle(0px at 42px 52px)',
   });
   expect(animate.mock.calls[0][1]).toMatchObject({
-    duration: 420,
+    duration: 520,
     easing: 'cubic-bezier(.22,1,.36,1)',
     pseudoElement: '::view-transition-new(root)',
   });
@@ -274,7 +275,7 @@ test.each(['light', 'dark'] as const)(
         : [{ clipPath: fullClip }, { clipPath: zeroClip }]
     );
     expect(animate.mock.calls[0][1]).toMatchObject({
-      duration: 420,
+      duration: 520,
       fill: 'forwards',
       easing: 'cubic-bezier(.22,1,.36,1)',
       pseudoElement:
