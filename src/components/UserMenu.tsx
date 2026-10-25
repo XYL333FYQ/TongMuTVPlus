@@ -40,6 +40,12 @@ import { createPortal } from 'react-dom';
 
 import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
 import { BRAND_NAME } from '@/lib/brand';
+import {
+  type ClientPlatform,
+  CLIENT_PACKAGES,
+  clientDownloadUrl,
+  detectClientPlatform,
+} from '@/lib/client-downloads';
 import { clearAllDanmakuCache, getDanmakuCacheStats } from '@/lib/danmaku/api';
 import { SAVE_LIVE_PLAY_RECORDS_KEY } from '@/lib/db.client';
 import {
@@ -5738,6 +5744,19 @@ export const UserMenu: React.FC = () => {
   );
 
   // 客户端安装指南面板内容
+  const detectedPlatform =
+    typeof navigator === 'undefined'
+      ? null
+      : detectClientPlatform(navigator.userAgent);
+  const clientBase =
+    typeof window === 'undefined'
+      ? undefined
+      : window.RUNTIME_CONFIG?.CLIENT_DOWNLOAD_BASE_URL;
+  const clientGroups: { platform: ClientPlatform; title: string }[] = [
+    { platform: 'windows', title: 'Windows 电脑' },
+    { platform: 'android', title: '安卓手机 / 平板' },
+    { platform: 'tv', title: '安卓电视' },
+  ];
   const ecoAppsPanel = (
     <>
       {/* 背景遮罩 */}
@@ -5772,7 +5791,7 @@ export const UserMenu: React.FC = () => {
             <div>
               <h3 className='text-xl font-bold text-fg'>客户端安装指南</h3>
               <p className='mt-1 text-sm text-muted'>
-                无需单独下载安装包，直接将 {BRAND_NAME} 安装到桌面或手机主屏幕
+                优先使用原生客户端；没有对应安装包的系统，可以用浏览器安装到主屏幕
               </p>
             </div>
             <button
@@ -5787,6 +5806,60 @@ export const UserMenu: React.FC = () => {
           {/* 平台安装说明列表 */}
           <div className='flex-1 overflow-y-auto p-6'>
             <div className='grid gap-4'>
+              {/* 原生客户端安装包 */}
+              <div className='bg-raised rounded-lg p-5 border border-line'>
+                <div className='flex items-center gap-2 mb-1.5'>
+                  <h4 className='text-base font-bold text-fg'>原生客户端</h4>
+                  <span className='px-2 py-0.5 bg-surface border border-line text-fg text-[12px] font-medium rounded-full'>
+                    推荐
+                  </span>
+                </div>
+                <p className='text-sm text-muted leading-6 mb-4'>
+                  首次打开时填写本站地址即可，之后网站更新会自动同步，不用重新安装。
+                </p>
+                <div className='grid gap-4'>
+                  {clientGroups.map((group) => (
+                    <div key={group.platform}>
+                      <div className='mb-2 flex items-center gap-2 text-sm font-medium text-fg'>
+                        {group.title}
+                        {detectedPlatform === group.platform && (
+                          <span className='px-2 py-0.5 border border-line text-muted text-[12px] rounded-full'>
+                            你的设备
+                          </span>
+                        )}
+                      </div>
+                      <div className='grid gap-2'>
+                        {CLIENT_PACKAGES.filter(
+                          (item) => item.platform === group.platform
+                        ).map((item) => (
+                          <a
+                            key={item.file}
+                            href={clientDownloadUrl(item.file, clientBase)}
+                            download
+                            rel='noopener'
+                            className='flex items-center gap-3 rounded-lg border border-line bg-surface px-4 py-3 min-h-[44px] hover:border-fg transition-colors tm-press'
+                          >
+                            <Download className='w-5 h-5 shrink-0 text-fg' />
+                            <span className='min-w-0 flex-1'>
+                              <span className='block text-sm font-medium text-fg'>
+                                {item.label}
+                              </span>
+                              <span className='block text-[13px] text-muted'>
+                                {item.hint}
+                              </span>
+                            </span>
+                          </a>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <p className='mt-4 text-[13px] text-muted leading-6'>
+                  iPhone、iPad 和 Mac
+                  暂无原生客户端，请用下面的浏览器方式添加到主屏幕。
+                </p>
+              </div>
+
               {/* 电脑桌面端 */}
               <div className='bg-raised rounded-lg p-5 border border-line'>
                 <div className='flex items-start gap-4'>
@@ -5796,7 +5869,7 @@ export const UserMenu: React.FC = () => {
                   <div className='flex-1 min-w-0'>
                     <div className='flex items-center gap-2 mb-1.5'>
                       <h4 className='text-base font-bold text-fg'>
-                        电脑桌面端（Windows / macOS）
+                        浏览器安装：电脑（Windows / macOS）
                       </h4>
                       <span className='px-2 py-0.5 bg-surface border border-line text-fg text-[12px] font-medium rounded-full'>
                         推荐
@@ -5821,7 +5894,7 @@ export const UserMenu: React.FC = () => {
                   </div>
                   <div className='flex-1 min-w-0'>
                     <h4 className='text-base font-bold text-fg mb-1.5'>
-                      手机与平板端（iOS / Android）
+                      浏览器安装：手机与平板（iOS / Android）
                     </h4>
                     <div className='space-y-1.5 text-sm text-muted leading-6'>
                       <p>
@@ -5887,7 +5960,7 @@ export const UserMenu: React.FC = () => {
           {/* 底部说明 */}
           <div className='p-6 pt-4 border-t border-line'>
             <p className='text-[13px] text-muted text-center'>
-              安装到主屏幕后可获得无浏览器地址栏的沉浸式全屏观影体验
+              安装后可获得无浏览器地址栏的沉浸式全屏观影体验
             </p>
           </div>
         </div>

@@ -407,6 +407,8 @@ export default async function RootLayout({
     FESTIVE_EFFECT_ENABLED: process.env.FESTIVE_EFFECT_ENABLED === 'true',
     SPECIAL_SOURCE_APIS: specialSourceApis,
     RATE_BADGE_STYLE: rateBadgeStyle,
+    // 原生客户端安装包的下载地址前缀；留空用项目 Releases
+    CLIENT_DOWNLOAD_BASE_URL: process.env.CLIENT_DOWNLOAD_BASE_URL || '',
   };
   const clientRuntimeConfig = authenticatedViewer
     ? runtimeConfig
