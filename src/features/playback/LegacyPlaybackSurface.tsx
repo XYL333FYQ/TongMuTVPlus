@@ -11819,7 +11819,7 @@ function PlayPageClient() {
               }`}
             >
               {/* 播放器容器 */}
-              <div className='relative w-full h-[300px] lg:flex-1 lg:min-h-0'>
+              <div className='tm-playback-video-frame relative w-full h-[300px] lg:flex-1 lg:min-h-0'>
                 <div
                   ref={artRef}
                   data-tm-player-mount

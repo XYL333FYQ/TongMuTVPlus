@@ -1,0 +1,280 @@
+/* 后台的宽表格只在自身滚动，操作项不再挤成一整行。 */
+.tm-admin-page :is(section, form, fieldset),
+.tm-admin-page div:has(> table) {
+  min-width: 0;
+  max-width: 100%;
+}
+.tm-admin-page div:has(> table) {
+  overflow-x: auto;
+}
+.tm-admin-page :is(h2, h3, h4, p, label) {
+  overflow-wrap: anywhere;
+}
+.tm-admin-page :is(button, a):focus-visible,
+.tm-admin-page [data-table]:focus-visible {
+  outline: 2px solid var(--tm-text);
+  outline-offset: 2px;
+}
+.tm-admin-page [data-table='user-list'] table {
+  width: 100%;
+  min-width: 820px;
+  table-layout: fixed;
+}
+.tm-admin-page [data-table='user-list'] :is(th, td) {
+  padding: 12px 8px;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.tm-admin-page [data-table='user-list'] :is(th, td):nth-child(1) {
+  width: 18px;
+  padding-inline: 0;
+}
+.tm-admin-page [data-table='user-list'] :is(th, td):nth-child(2) {
+  width: 60px;
+}
+.tm-admin-page [data-table='user-list'] :is(th, td):nth-child(3) {
+  width: 105px;
+}
+.tm-admin-page [data-table='user-list'] :is(th, td):nth-child(4) {
+  width: 88px;
+}
+.tm-admin-page [data-table='user-list'] :is(th, td):nth-child(5) {
+  width: 70px;
+}
+.tm-admin-page [data-table='user-list'] :is(th, td):nth-child(6) {
+  width: 125px;
+}
+.tm-admin-page [data-table='user-list'] :is(th, td):nth-child(7) {
+  width: 130px;
+}
+.tm-admin-page [data-table='user-list'] td > .flex {
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.tm-admin-page [data-table='user-list'] td > .flex > * {
+  margin-left: 0;
+}
+.tm-admin-user-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 4px;
+}
+.tm-admin-row-select {
+  display: inline-grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  cursor: pointer;
+}
+.tm-admin-select-all {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-width: 44px;
+  min-height: 44px;
+  cursor: pointer;
+}
+.tm-admin-select-all-text {
+  display: none;
+}
+.tm-admin-user-actions button {
+  justify-content: center;
+  min-height: 44px;
+  padding: 6px 10px;
+  white-space: nowrap;
+}
+.tm-admin-proxy-switch {
+  display: inline-grid;
+  place-items: center;
+  width: 44px;
+  min-width: 44px;
+  height: 44px;
+  padding: 0;
+  border-radius: var(--tm-radius-sm);
+  background: transparent;
+  cursor: pointer;
+}
+.tm-admin-proxy-switch:disabled {
+  opacity: 0.5;
+  cursor: wait;
+}
+.tm-admin-proxy-track {
+  display: flex;
+  align-items: center;
+  width: 40px;
+  height: 22px;
+  padding: 3px;
+  border-radius: var(--tm-radius-full);
+  background: var(--tm-surface-raised);
+  box-shadow: inset 0 0 0 1px var(--tm-line-strong);
+  transition: background var(--tm-d-hover) var(--tm-ease-out);
+}
+.tm-admin-proxy-track > span {
+  width: 16px;
+  height: 16px;
+  border-radius: var(--tm-radius-full);
+  background: var(--tm-text);
+  transition: transform var(--tm-d-hover) var(--tm-ease-out);
+}
+.tm-admin-proxy-switch[aria-checked='true'] .tm-admin-proxy-track {
+  background: var(--tm-text);
+}
+.tm-admin-proxy-switch[aria-checked='true'] .tm-admin-proxy-track > span {
+  transform: translateX(18px);
+  background: var(--tm-accent-contrast);
+}
+.tm-admin-proxy-switch:hover .tm-admin-proxy-track {
+  outline: 1px solid var(--tm-muted);
+}
+.tm-theme-preset-preview {
+  display: flex;
+  flex: 0 0 56px;
+  width: 56px;
+  height: 38px;
+  overflow: hidden;
+  border-radius: var(--tm-radius-sm);
+  box-shadow: 0 0 0 1px var(--tm-line-strong);
+}
+.tm-theme-preset-preview > span {
+  display: grid;
+  place-items: center;
+  flex: 1;
+  background: var(--tm-preview-light-bg);
+}
+.tm-theme-preset-preview > span > span {
+  width: 18px;
+  height: 24px;
+  border-radius: var(--tm-radius-sm);
+  background: var(--tm-preview-light-card);
+}
+.tm-theme-preset-preview > [data-mode='dark'] {
+  background: var(--tm-preview-dark-bg);
+}
+.tm-theme-preset-preview > [data-mode='dark'] > span {
+  background: var(--tm-preview-dark-card);
+}
+html[data-tm-reduced-motion='true'] .tm-admin-proxy-track,
+html[data-tm-reduced-motion='true'] .tm-admin-proxy-track > span {
+  transition: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .tm-admin-proxy-track,
+  .tm-admin-proxy-track > span {
+    transition: none;
+  }
+}
+@media (max-width: 767px) {
+  .tm-admin-page [data-table='user-list'] {
+    max-height: none;
+    overflow: visible;
+  }
+  .tm-admin-page [data-table='user-list'] table {
+    display: block;
+    min-width: 0;
+  }
+  .tm-admin-page [data-table='user-list'] thead {
+    position: static;
+    display: block;
+  }
+  .tm-admin-page [data-table='user-list'] thead tr {
+    display: block;
+  }
+  .tm-admin-page [data-table='user-list'] thead th:not(:nth-child(2)) {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+  .tm-admin-page [data-table='user-list'] thead th:nth-child(2) {
+    display: block;
+    width: auto;
+    padding: 0 12px;
+    text-align: left;
+  }
+  .tm-admin-select-all-text {
+    display: inline;
+  }
+  .tm-admin-page [data-table='user-list'] tbody {
+    display: grid;
+    gap: 12px;
+    padding: 8px;
+  }
+  .tm-admin-page [data-table='user-list'] tbody tr {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px 12px;
+    padding: 12px;
+    border: 0;
+    border-radius: var(--tm-radius-sm);
+    background: var(--tm-surface);
+    box-shadow: var(--tm-shadow-sm);
+  }
+  .tm-admin-page [data-table='user-list'] tbody td:nth-child(n) {
+    display: block;
+    min-width: 0;
+    width: auto;
+    padding: 0;
+  }
+  .tm-admin-page [data-table='user-list'] tbody td:nth-child(1):not([colspan]) {
+    display: none;
+  }
+  .tm-admin-page [data-table='user-list'] tbody td:nth-child(2) {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+  }
+  .tm-admin-page [data-table='user-list'] tbody td:nth-child(3) {
+    grid-column: 1 / -1;
+    padding-right: 32px;
+    font-weight: 600;
+  }
+  .tm-admin-page [data-table='user-list'] tbody td:nth-child(8) {
+    grid-column: 1 / -1;
+    padding-top: 4px;
+  }
+  .tm-admin-page
+    [data-table='user-list']
+    tbody
+    td:nth-child(n + 4):nth-child(-n + 7)::before {
+    display: block;
+    margin-bottom: 6px;
+    color: var(--tm-muted);
+    font-size: 12px;
+  }
+  .tm-admin-page [data-table='user-list'] tbody td:nth-child(4)::before {
+    content: '角色' / '';
+  }
+  .tm-admin-page [data-table='user-list'] tbody td:nth-child(5)::before {
+    content: '状态' / '';
+  }
+  .tm-admin-page [data-table='user-list'] tbody td:nth-child(6)::before {
+    content: '用户组' / '';
+  }
+  .tm-admin-page [data-table='user-list'] tbody td:nth-child(7)::before {
+    content: '采集源权限' / '';
+  }
+  .tm-admin-user-actions {
+    justify-content: flex-start;
+  }
+  .tm-admin-page [role='radiogroup'][aria-label='内置主题'] {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+  .tm-admin-page [aria-label='内置主题'] > button {
+    min-width: 0;
+    padding: 10px;
+  }
+  .tm-admin-page [aria-label='内置主题'] > button > div {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+}

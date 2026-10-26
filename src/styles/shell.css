@@ -318,6 +318,13 @@
   grid-column: 3;
   grid-row: 1;
   justify-self: end;
+  min-width: 0;
+  flex-shrink: 0;
+}
+.tm-mobile-account > button {
+  min-width: 44px;
+  min-height: 44px;
+  flex-shrink: 0;
 }
 .tm-mobile-account > .tm-theme-toggle,
 .tm-mobile-account > .tm-theme-toggle-placeholder,
@@ -382,6 +389,44 @@
 }
 .tm-mobile-title-row:has(.tm-guest-login) .tm-mobile-account {
   grid-column: 2;
+}
+/* Extra actions share the same bounded title lane as the guest login controls. */
+.tm-mobile-header-v2[data-room-actions='true'] .tm-mobile-title-row {
+  grid-template-columns: minmax(0, 1fr) auto;
+  column-gap: 8px;
+}
+.tm-mobile-header-v2[data-room-actions='true'] .tm-mobile-page-title {
+  grid-column: 1;
+  max-width: 100%;
+}
+.tm-mobile-header-v2[data-room-actions='true'] .tm-mobile-account {
+  grid-column: 2;
+}
+.tm-mobile-title-row:has(.tm-mobile-back):has(.tm-guest-login),
+.tm-mobile-header-v2[data-room-actions='true']
+  .tm-mobile-title-row:has(.tm-mobile-back) {
+  grid-template-columns: 44px minmax(0, 1fr) auto;
+  column-gap: 4px;
+}
+.tm-mobile-title-row:has(.tm-mobile-back):has(.tm-guest-login)
+  .tm-mobile-page-title,
+.tm-mobile-header-v2[data-room-actions='true']
+  .tm-mobile-title-row:has(.tm-mobile-back)
+  .tm-mobile-page-title {
+  grid-column: 2;
+}
+.tm-mobile-title-row:has(.tm-mobile-back):has(.tm-guest-login)
+  .tm-mobile-account,
+.tm-mobile-header-v2[data-room-actions='true']
+  .tm-mobile-title-row:has(.tm-mobile-back)
+  .tm-mobile-account {
+  grid-column: 3;
+}
+.tm-mobile-title-row:has(.tm-guest-login) .tm-mobile-back,
+.tm-mobile-header-v2[data-room-actions='true'] .tm-mobile-back {
+  position: static;
+  grid-column: 1;
+  grid-row: 1;
 }
 @media (max-width: 767px) {
   .tm-main {

@@ -3,17 +3,17 @@
     "name": "深蓝夜空",
     "description": "偏冷的蓝灰底色",
     "dark": {
-      "bg": "#090c14",
-      "surface": "#0f1421",
-      "raised": "#182034",
-      "muted": "#9aa6bf",
+      "bg": "#0c1428",
+      "surface": "#14213a",
+      "raised": "#263e66",
+      "muted": "#b0c2e1",
       "lineRgb": "160, 185, 255"
     },
     "light": {
-      "bg": "#f1f4fb",
-      "surface": "#ffffff",
-      "raised": "#e6ebf7",
-      "muted": "#55607a",
+      "bg": "#e7eefb",
+      "surface": "#f7f9fe",
+      "raised": "#d6e2f8",
+      "muted": "#465976",
       "lineRgb": "20, 40, 100"
     }
   },
@@ -21,17 +21,17 @@
     "name": "紫色梦境",
     "description": "带一点紫的底色",
     "dark": {
-      "bg": "#0e0b14",
-      "surface": "#17121f",
-      "raised": "#221a30",
-      "muted": "#aca3c0",
+      "bg": "#1a1027",
+      "surface": "#281b3c",
+      "raised": "#493162",
+      "muted": "#c6b4de",
       "lineRgb": "200, 170, 255"
     },
     "light": {
-      "bg": "#f5f2fb",
-      "surface": "#ffffff",
-      "raised": "#ebe5f6",
-      "muted": "#625a7a",
+      "bg": "#f0e8f9",
+      "surface": "#fcf8ff",
+      "raised": "#e6d5f3",
+      "muted": "#685176",
       "lineRgb": "60, 30, 110"
     }
   },
@@ -39,17 +39,17 @@
     "name": "翠绿森林",
     "description": "带一点绿的底色",
     "dark": {
-      "bg": "#080e0b",
-      "surface": "#101a15",
-      "raised": "#19281f",
-      "muted": "#9ab3a5",
+      "bg": "#0b1b14",
+      "surface": "#122c20",
+      "raised": "#234a34",
+      "muted": "#b0d0ba",
       "lineRgb": "150, 230, 185"
     },
     "light": {
-      "bg": "#f0f6f2",
-      "surface": "#ffffff",
-      "raised": "#e3eee8",
-      "muted": "#546a5c",
+      "bg": "#e5f1e9",
+      "surface": "#f6fcf8",
+      "raised": "#d1e7d8",
+      "muted": "#41604c",
       "lineRgb": "20, 80, 50"
     }
   },
@@ -57,17 +57,17 @@
     "name": "橙色日落",
     "description": "偏暖的棕橙底色",
     "dark": {
-      "bg": "#110c08",
-      "surface": "#1b140e",
-      "raised": "#2a1f15",
-      "muted": "#bfaa97",
+      "bg": "#24160c",
+      "surface": "#342313",
+      "raised": "#543a23",
+      "muted": "#dcc2a3",
       "lineRgb": "255, 190, 130"
     },
     "light": {
-      "bg": "#fbf5ef",
-      "surface": "#ffffff",
-      "raised": "#f4e9dd",
-      "muted": "#7a6451",
+      "bg": "#f9eee0",
+      "surface": "#fffbf5",
+      "raised": "#f0dcc2",
+      "muted": "#745739",
       "lineRgb": "110, 60, 20"
     }
   },
@@ -75,17 +75,17 @@
     "name": "粉色糖果",
     "description": "带一点粉的底色",
     "dark": {
-      "bg": "#130b10",
-      "surface": "#1e131a",
-      "raised": "#2d1c27",
-      "muted": "#c0a3b3",
+      "bg": "#24101c",
+      "surface": "#351b2c",
+      "raised": "#573047",
+      "muted": "#dfb7ce",
       "lineRgb": "255, 160, 205"
     },
     "light": {
-      "bg": "#fbf1f6",
-      "surface": "#ffffff",
-      "raised": "#f6e3ec",
-      "muted": "#7a5668",
+      "bg": "#f9e7f0",
+      "surface": "#fff7fb",
+      "raised": "#f2d3e3",
+      "muted": "#775064",
       "lineRgb": "120, 30, 70"
     }
   },
@@ -93,17 +93,17 @@
     "name": "青色海洋",
     "description": "偏青的蓝绿底色",
     "dark": {
-      "bg": "#070e11",
-      "surface": "#0e181d",
-      "raised": "#162630",
-      "muted": "#96b2bd",
+      "bg": "#0b1c23",
+      "surface": "#12303b",
+      "raised": "#245363",
+      "muted": "#afd3dd",
       "lineRgb": "130, 220, 240"
     },
     "light": {
-      "bg": "#eff7f9",
-      "surface": "#ffffff",
-      "raised": "#e0eef2",
-      "muted": "#50707b",
+      "bg": "#e3f2f6",
+      "surface": "#f5fcfe",
+      "raised": "#cfe8ef",
+      "muted": "#3f616b",
       "lineRgb": "10, 70, 90"
     }
   }

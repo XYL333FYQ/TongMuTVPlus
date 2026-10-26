@@ -95,6 +95,7 @@ import FeatureAccessPanel from './FeatureAccessPanel';
 import FeedbackInboxPanel from './FeedbackInboxPanel';
 import LoadingStylePreview from './LoadingStylePreview';
 import ReleaseManager from './ReleaseManager';
+import ThemePresetPreview from './ThemePresetPreview';
 
 // 统一按钮样式系统（黑白 token：主操作反色，危险操作用报错红描边，其余中性）
 const buttonStyles = {
@@ -1661,6 +1662,9 @@ const UserConfig = ({
           <div
             className='border border-[var(--tm-line)] rounded-lg max-h-[28rem] overflow-y-auto overflow-x-auto relative'
             data-table='user-list'
+            role='region'
+            aria-label='用户列表，可横向滚动'
+            tabIndex={0}
           >
             <table className='min-w-full divide-y divide-[var(--tm-line)]'>
               <thead className='bg-[var(--tm-surface-raised)] sticky top-0 z-10'>
@@ -1678,14 +1682,23 @@ const UserConfig = ({
                       );
 
                       return hasAnyPermission ? (
-                        <input
-                          type='checkbox'
-                          checked={selectAllUsers}
-                          onChange={(e) =>
-                            handleSelectAllUsers(e.target.checked)
-                          }
-                          className='w-4 h-4 text-[color:var(--tm-text)] bg-[var(--tm-surface-raised)] rounded focus:ring-[var(--tm-text)] ring-offset-[var(--tm-text)] focus:ring-2'
-                        />
+                        <label className='tm-admin-select-all'>
+                          <input
+                            type='checkbox'
+                            checked={selectAllUsers}
+                            onChange={(e) =>
+                              handleSelectAllUsers(e.target.checked)
+                            }
+                            aria-label='全选本页用户'
+                            className='w-4 h-4 text-[color:var(--tm-text)] bg-[var(--tm-surface-raised)] rounded focus:ring-[var(--tm-text)] ring-offset-[var(--tm-text)] focus:ring-2'
+                          />
+                          <span
+                            className='tm-admin-select-all-text'
+                            aria-hidden='true'
+                          >
+                            全选本页
+                          </span>
+                        </label>
                       ) : (
                         <div className='w-4 h-4' />
                       );
@@ -1814,17 +1827,22 @@ const UserConfig = ({
                             (role === 'admin' &&
                               (user.role === 'user' ||
                                 user.username === currentUsername)) ? (
-                              <input
-                                type='checkbox'
-                                checked={selectedUsers.has(user.username)}
-                                onChange={(e) =>
-                                  handleSelectUser(
-                                    user.username,
-                                    e.target.checked
-                                  )
-                                }
-                                className='w-4 h-4 text-[color:var(--tm-text)] bg-[var(--tm-surface-raised)] rounded focus:ring-[var(--tm-text)] ring-offset-[var(--tm-text)] focus:ring-2'
-                              />
+                              <label className='tm-admin-row-select'>
+                                <span className='sr-only'>
+                                  选择用户 {user.username}
+                                </span>
+                                <input
+                                  type='checkbox'
+                                  checked={selectedUsers.has(user.username)}
+                                  onChange={(e) =>
+                                    handleSelectUser(
+                                      user.username,
+                                      e.target.checked
+                                    )
+                                  }
+                                  className='w-4 h-4 text-[color:var(--tm-text)] bg-[var(--tm-surface-raised)] rounded focus:ring-[var(--tm-text)] ring-offset-[var(--tm-text)] focus:ring-2'
+                                />
+                              </label>
                             ) : (
                               <div className='w-4 h-4' />
                             )}
@@ -1909,117 +1927,127 @@ const UserConfig = ({
                               )}
                             </div>
                           </td>
-                          <td className='px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2'>
-                            {/* 查看设备按钮 */}
-                            {canViewDevices && (
-                              <button
-                                onClick={() =>
-                                  handleViewUserDevices(user.username)
-                                }
-                                className={buttonStyles.roundedSecondary}
-                              >
-                                查看设备
-                              </button>
-                            )}
-                            {/* 修改密码按钮 */}
-                            {canChangePassword && (
-                              <button
-                                onClick={() =>
-                                  handleShowChangePasswordForm(user.username)
-                                }
-                                className={buttonStyles.roundedPrimary}
-                              >
-                                修改密码
-                              </button>
-                            )}
-                            {canOperate && (
-                              <>
-                                {/* 其他操作按钮 */}
-                                {user.role === 'user' && (
-                                  <button
-                                    onClick={() =>
-                                      handleSetAdmin(user.username)
-                                    }
-                                    disabled={isLoading(
-                                      `setAdmin_${user.username}`
-                                    )}
-                                    className={`${buttonStyles.roundedPurple} ${
-                                      isLoading(`setAdmin_${user.username}`)
-                                        ? 'opacity-50 cursor-not-allowed min-h-[44px] tm-press'
-                                        : ' min-h-[44px] tm-press'
-                                    }`}
-                                  >
-                                    设为管理
-                                  </button>
-                                )}
-                                {user.role === 'admin' && (
-                                  <button
-                                    onClick={() =>
-                                      handleRemoveAdmin(user.username)
-                                    }
-                                    disabled={isLoading(
-                                      `removeAdmin_${user.username}`
-                                    )}
-                                    className={`${
-                                      buttonStyles.roundedSecondary
-                                    } ${
-                                      isLoading(`removeAdmin_${user.username}`)
-                                        ? 'opacity-50 cursor-not-allowed min-h-[44px] tm-press'
-                                        : ' min-h-[44px] tm-press'
-                                    }`}
-                                  >
-                                    取消管理
-                                  </button>
-                                )}
-                                {user.role !== 'owner' &&
-                                  (!user.banned ? (
+                          <td className='px-6 py-4 text-sm font-medium'>
+                            <div className='tm-admin-user-actions'>
+                              {/* 查看设备按钮 */}
+                              {canViewDevices && (
+                                <button
+                                  onClick={() =>
+                                    handleViewUserDevices(user.username)
+                                  }
+                                  className={buttonStyles.roundedSecondary}
+                                >
+                                  查看设备
+                                </button>
+                              )}
+                              {/* 修改密码按钮 */}
+                              {canChangePassword && (
+                                <button
+                                  onClick={() =>
+                                    handleShowChangePasswordForm(user.username)
+                                  }
+                                  className={buttonStyles.roundedPrimary}
+                                >
+                                  修改密码
+                                </button>
+                              )}
+                              {canOperate && (
+                                <>
+                                  {/* 其他操作按钮 */}
+                                  {user.role === 'user' && (
                                     <button
                                       onClick={() =>
-                                        handleBanUser(user.username)
+                                        handleSetAdmin(user.username)
                                       }
                                       disabled={isLoading(
-                                        `banUser_${user.username}`
+                                        `setAdmin_${user.username}`
                                       )}
                                       className={`${
-                                        buttonStyles.roundedDanger
+                                        buttonStyles.roundedPurple
                                       } ${
-                                        isLoading(`banUser_${user.username}`)
+                                        isLoading(`setAdmin_${user.username}`)
                                           ? 'opacity-50 cursor-not-allowed min-h-[44px] tm-press'
                                           : ' min-h-[44px] tm-press'
                                       }`}
                                     >
-                                      封禁
+                                      设为管理
                                     </button>
-                                  ) : (
+                                  )}
+                                  {user.role === 'admin' && (
                                     <button
                                       onClick={() =>
-                                        handleUnbanUser(user.username)
+                                        handleRemoveAdmin(user.username)
                                       }
                                       disabled={isLoading(
-                                        `unbanUser_${user.username}`
+                                        `removeAdmin_${user.username}`
                                       )}
                                       className={`${
-                                        buttonStyles.roundedSuccess
+                                        buttonStyles.roundedSecondary
                                       } ${
-                                        isLoading(`unbanUser_${user.username}`)
+                                        isLoading(
+                                          `removeAdmin_${user.username}`
+                                        )
                                           ? 'opacity-50 cursor-not-allowed min-h-[44px] tm-press'
                                           : ' min-h-[44px] tm-press'
                                       }`}
                                     >
-                                      解封
+                                      取消管理
                                     </button>
-                                  ))}
-                              </>
-                            )}
-                            {/* 删除用户按钮 - 放在最后，使用更明显的红色样式 */}
-                            {canDeleteUser && (
-                              <button
-                                onClick={() => handleDeleteUser(user.username)}
-                                className={buttonStyles.roundedDanger}
-                              >
-                                删除用户
-                              </button>
-                            )}
+                                  )}
+                                  {user.role !== 'owner' &&
+                                    (!user.banned ? (
+                                      <button
+                                        onClick={() =>
+                                          handleBanUser(user.username)
+                                        }
+                                        disabled={isLoading(
+                                          `banUser_${user.username}`
+                                        )}
+                                        className={`${
+                                          buttonStyles.roundedDanger
+                                        } ${
+                                          isLoading(`banUser_${user.username}`)
+                                            ? 'opacity-50 cursor-not-allowed min-h-[44px] tm-press'
+                                            : ' min-h-[44px] tm-press'
+                                        }`}
+                                      >
+                                        封禁
+                                      </button>
+                                    ) : (
+                                      <button
+                                        onClick={() =>
+                                          handleUnbanUser(user.username)
+                                        }
+                                        disabled={isLoading(
+                                          `unbanUser_${user.username}`
+                                        )}
+                                        className={`${
+                                          buttonStyles.roundedSuccess
+                                        } ${
+                                          isLoading(
+                                            `unbanUser_${user.username}`
+                                          )
+                                            ? 'opacity-50 cursor-not-allowed min-h-[44px] tm-press'
+                                            : ' min-h-[44px] tm-press'
+                                        }`}
+                                      >
+                                        解封
+                                      </button>
+                                    ))}
+                                </>
+                              )}
+                              {/* 删除用户按钮 - 放在最后，使用更明显的红色样式 */}
+                              {canDeleteUser && (
+                                <button
+                                  onClick={() =>
+                                    handleDeleteUser(user.username)
+                                  }
+                                  className={buttonStyles.roundedDanger}
+                                >
+                                  删除用户
+                                </button>
+                              )}
+                            </div>
                           </td>
                         </tr>
                       );
@@ -7564,22 +7592,16 @@ const VideoSourceConfig = ({
               handleToggleProxyMode(source.key);
             }}
             disabled={isLoading(`toggleProxyMode_${source.key}`)}
-            className={`relative inline-flex items-center h-6 w-11 rounded-full transition-colors ${
-              source.proxyMode
-                ? 'bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] tm-press'
-                : 'bg-[var(--tm-surface-raised)] tm-press'
-            } ${
-              isLoading(`toggleProxyMode_${source.key}`)
-                ? 'opacity-50 cursor-not-allowed min-h-[44px] tm-press'
-                : 'cursor-pointer min-h-[44px] tm-press'
-            }`}
+            type='button'
+            role='switch'
+            aria-checked={!!source.proxyMode}
+            aria-label={`${source.name}代理模式`}
+            className='tm-admin-proxy-switch'
             title={source.proxyMode ? '代理模式已启用' : '代理模式已禁用'}
           >
-            <span
-              className={`inline-block h-4 w-4 transform rounded-full bg-[var(--tm-surface)] transition-transform ${
-                source.proxyMode ? 'translate-x-6' : 'translate-x-1'
-              }`}
-            />
+            <span className='tm-admin-proxy-track' aria-hidden='true'>
+              <span />
+            </span>
           </button>
         </td>
         <td className='px-6 py-4 whitespace-nowrap max-w-[1rem]'>
@@ -10397,11 +10419,7 @@ const ThemeConfigComponent = ({
                 }`}
               >
                 <div className='flex items-center gap-3'>
-                  {/* 圆形颜色预览 */}
-                  <div
-                    className='w-10 h-10 rounded-full flex-shrink-0 shadow-sm'
-                    style={{ backgroundColor: theme.color }}
-                  />
+                  <ThemePresetPreview name={theme.value} />
                   {/* 主题名称 */}
                   <div className='flex items-center gap-2'>
                     <span className='text-sm font-medium text-[color:var(--tm-text)] whitespace-nowrap'>
@@ -10430,7 +10448,7 @@ const ThemeConfigComponent = ({
             ))}
           </div>
           <p className='mt-4 text-sm text-[color:var(--tm-muted)]'>
-            注意：启用内置主题时，自定义CSS将被禁用
+            色块左侧为浅色、右侧为深色。启用内置主题时，自定义CSS将被禁用。
           </p>
         </div>
       )}

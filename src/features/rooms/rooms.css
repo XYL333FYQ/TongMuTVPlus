@@ -1325,10 +1325,12 @@ html[data-tm-room-presentation='true']
   }
   .tm-room-stage-footer > div:first-child {
     flex: 1;
+    min-width: 0;
   }
   .tm-room-stage-footer h2 {
     font-size: 18px;
     line-height: 1.3;
+    overflow-wrap: anywhere;
   }
   .tm-room-stage-actions {
     flex-wrap: nowrap;
@@ -1356,37 +1358,6 @@ html[data-tm-room-presentation='true']
     max-height: calc(var(--tm-visual-height, 100dvh) - 40px);
     padding: 20px;
     box-shadow: var(--tm-shadow-sm);
-  }
-  /* 手机顶栏：房间名最多两行，右侧放房间操作 */
-  html[data-tm-room-presentation='true'] .tm-mobile-title-row {
-    grid-template-columns: minmax(0, 1fr) auto;
-  }
-  html[data-tm-room-presentation='true'] .tm-mobile-account {
-    grid-column: 2;
-    gap: 4px;
-  }
-  html[data-tm-room-presentation='true'] .tm-mobile-account > button {
-    display: grid;
-    place-items: center;
-    min-width: 44px;
-    min-height: 44px;
-  }
-  .tm-mobile-header-v2[data-room-actions='true'] .tm-mobile-page-title {
-    grid-column: 1;
-    display: -webkit-box;
-    min-width: 0;
-    max-width: 100%;
-    overflow: hidden;
-    font-size: 28px !important;
-    overflow-wrap: anywhere;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 2;
-  }
-  .tm-mobile-header-v2[data-room-actions='true'][data-compact='true']
-    .tm-mobile-page-title {
-    font-size: 17px !important;
-    -webkit-line-clamp: 1;
-    transform: none !important;
   }
 }
 
@@ -1625,7 +1596,7 @@ html[data-tm-reduced-motion='true'] .tm-room-card-art::after {
     margin-inline: calc(-1 * var(--tm-content-gutter));
   }
   .tm-rooms[data-joined='true'] .tm-room-empty-stage {
-    min-height: 300px;
+    min-height: 0;
     border-radius: 0;
   }
   .tm-rooms[data-joined='true'] .tm-playback-slot,
@@ -1850,14 +1821,7 @@ dialog.tm-room-modal-root::backdrop {
   opacity: 1;
 }
 
-/* 房间顶栏只有两列，紧凑标题跨列居中，避免与右侧账号控件共用第二列。 */
 @media (max-width: 767px) {
-  html[data-tm-room-presentation='true']
-    .tm-mobile-header-v2[data-room-actions='false'][data-compact='true']
-    .tm-mobile-page-title {
-    grid-column: 1 / -1;
-  }
-
   /* 键盘移焦时为悬浮底栏留出空间，避免浏览器只滚到视窗边缘。 */
   .tm-room-chat-slot .tm-chat-panel--inline :is(button, input) {
     scroll-margin-bottom: calc(

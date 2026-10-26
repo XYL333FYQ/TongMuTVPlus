@@ -6,6 +6,21 @@
   background: var(--tm-room-cinema-bg);
   overflow: hidden;
 }
+@media (max-width: 767px) {
+  .tm-playback-slot {
+    aspect-ratio: var(--tm-video-aspect-ratio, 16 / 9);
+  }
+  .tm-playback-host[data-presentation='full'] .tm-playback-video-frame {
+    height: auto;
+    aspect-ratio: var(--tm-full-video-aspect-ratio, 16 / 9);
+  }
+  .tm-playback-host[data-presentation='full']
+    .tm-playback-video-frame
+    > [data-tm-player-mount] {
+    position: absolute;
+    inset: 0;
+  }
+}
 .tm-audio-focus-notice {
   position: fixed;
   top: 82px;
