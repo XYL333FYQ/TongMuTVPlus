@@ -562,6 +562,10 @@ html[data-tm-reduced-motion='true'] .tm-home-hero-thumb-progress {
   outline-offset: 4px;
 }
 @media (hover: hover) and (pointer: fine) {
+  .tm-home-hero-poster:hover,
+  .tm-home-hero-poster:focus-within {
+    z-index: 5;
+  }
   .tm-home-hero-poster-surface:hover,
   .tm-home-hero-poster-surface:focus-visible {
     transform: perspective(900px) translateY(-6px)
