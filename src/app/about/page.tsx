@@ -1,5 +1,5 @@
-import type { Metadata } from 'next';
 import { Github } from 'lucide-react';
+import type { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
 
@@ -8,9 +8,9 @@ import {
   BRAND_NAME,
   PROJECT_REPOSITORY_URL,
   PROJECT_STAR_MESSAGE,
-  PROJECT_VERSION,
 } from '@/lib/brand';
 
+import ReleaseVersion from '@/components/account/ReleaseVersion';
 import PageContainer from '@/components/PageContainer';
 import PageLayout from '@/components/PageLayout';
 
@@ -38,7 +38,7 @@ export default function AboutPage() {
           <section>
             <h2 className='text-lg font-medium text-fg'>本项目</h2>
             <p className='mt-2 text-sm leading-7 text-muted'>
-              当前版本 v{PROJECT_VERSION}
+              当前版本 <ReleaseVersion />
               。一起发现好内容，独自观看或与朋友同步观影。
             </p>
           </section>

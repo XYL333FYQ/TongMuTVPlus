@@ -94,6 +94,7 @@ import { builtInThemes as builtInThemeDefinitions } from '@/styles/themes';
 import FeatureAccessPanel from './FeatureAccessPanel';
 import FeedbackInboxPanel from './FeedbackInboxPanel';
 import LoadingStylePreview from './LoadingStylePreview';
+import ReleaseManager from './ReleaseManager';
 
 // 统一按钮样式系统（黑白 token：主操作反色，危险操作用报错红描边，其余中性）
 const buttonStyles = {
@@ -18973,6 +18974,7 @@ function AdminPageClient() {
     liveSource: false,
     webLive: false,
     siteConfig: false,
+    releases: false,
     registrationConfig: false,
     categoryConfig: false,
     configFile: false,
@@ -19287,6 +19289,13 @@ function AdminPageClient() {
       render: () => (
         <SiteConfigComponent config={config} refreshConfig={fetchConfig} />
       ),
+    },
+    {
+      key: 'releases',
+      title: '版本与发布记录',
+      ownerOnly: true,
+      icon: <FileText size={20} className={navIconClass} />,
+      render: () => <ReleaseManager />,
     },
     {
       key: 'registrationConfig',
@@ -19770,6 +19779,19 @@ function AdminPageClient() {
           >
             <SiteConfigComponent config={config} refreshConfig={fetchConfig} />
           </CollapsibleTab>
+
+          {role === 'owner' && (
+            <CollapsibleTab
+              title='版本与发布记录'
+              icon={
+                <FileText size={20} className='text-[color:var(--tm-muted)]' />
+              }
+              isExpanded={expandedTabs.releases}
+              onToggle={() => toggleTab('releases')}
+            >
+              <ReleaseManager />
+            </CollapsibleTab>
+          )}
 
           {/* 注册配置标签 */}
           <CollapsibleTab

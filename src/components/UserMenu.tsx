@@ -54,7 +54,7 @@ import {
   LOCAL_SETTINGS_SYNC_LAST_PULL_KEY,
 } from '@/lib/local-settings-sync';
 import { clearBangumiImageFallbackCache } from '@/lib/utils';
-import { CURRENT_VERSION } from '@/lib/version';
+import { useReleaseInfo } from '@/hooks/useReleaseInfo';
 import { UpdateStatus } from '@/lib/version_check';
 import { useUnreadNotificationCount } from '@/hooks/useUnreadNotificationCount';
 
@@ -92,6 +92,7 @@ export const UserMenu: React.FC = () => {
   const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
   const [isSubscribeOpen, setIsSubscribeOpen] = useState(false);
   const [isVersionPanelOpen, setIsVersionPanelOpen] = useState(false);
+  const { version: releaseVersion } = useReleaseInfo();
   const [isOfflineDownloadPanelOpen, setIsOfflineDownloadPanelOpen] =
     useState(false);
   const [isNotificationPanelOpen, setIsNotificationPanelOpen] = useState(false);
@@ -3042,10 +3043,10 @@ export const UserMenu: React.FC = () => {
               handleCloseMenu();
             }}
             className='tm-menu-version'
-            aria-label={`版本 v${CURRENT_VERSION}，查看版本信息`}
+            aria-label={`版本 v${releaseVersion}，查看版本信息`}
           >
             <span>
-              v{CURRENT_VERSION} ·{' '}
+              v{releaseVersion} ·{' '}
               {displayStorageType === 'localstorage'
                 ? '本地存储'
                 : displayStorageType}

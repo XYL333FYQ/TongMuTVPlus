@@ -18,24 +18,57 @@ describe('project version information', () => {
     render(<VersionPanel isOpen onClose={jest.fn()} />);
     expect(screen.getByText('TongMuTV Plus · 版本信息')).toBeTruthy();
     expect(screen.getByText('v0.1.0 · 2026-10-25')).toBeTruthy();
-    expect(screen.getByText('新增功能')).toBeTruthy();
+    expect(screen.getByText('v0.1.1 · 2026-10-25')).toBeTruthy();
+    expect(screen.getAllByText('新增功能')).toHaveLength(2);
     expect(
       screen.getByText('新增分组功能导航和由站长控制的模块开放开关。')
     ).toBeTruthy();
     expect(screen.queryByText('暂无发布记录')).toBeNull();
     expect(document.body.textContent).not.toMatch(/MoonTV|LunaTV|上游|原项目/i);
     expect(document.querySelector('a[href*="mtvpls"]')).toBeNull();
-    expect(global.fetch).not.toHaveBeenCalled();
+    expect(global.fetch).toHaveBeenCalledWith(
+      '/api/server-config',
+      expect.objectContaining({ cache: 'no-store' })
+    );
   });
 
-  it('does not fetch a changelog when reopened', () => {
+  it('shows the owner-published version and treats release content as text', async () => {
+    (global.fetch as jest.Mock).mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        ReleaseInfo: {
+          version: '0.2.0',
+          entries: [
+            {
+              version: '0.2.0',
+              date: '2026-10-26',
+              added: ['<script>not executable</script>'],
+              changed: [],
+              fixed: [],
+            },
+          ],
+        },
+      }),
+    });
+    render(<VersionPanel isOpen onClose={jest.fn()} />);
+    expect(await screen.findByText('v0.2.0 · 2026-10-26')).toBeTruthy();
+    expect(screen.getByText('<script>not executable</script>')).toBeTruthy();
+    expect(document.querySelector('script')).toBeNull();
+    expect(screen.queryByText('v0.1.1 · 2026-10-25')).toBeNull();
+  });
+
+  it('only refreshes the local public release source when reopened', () => {
     const { rerender } = render(
       <VersionPanel isOpen={false} onClose={jest.fn()} />
     );
     rerender(<VersionPanel isOpen onClose={jest.fn()} />);
     rerender(<VersionPanel isOpen={false} onClose={jest.fn()} />);
     rerender(<VersionPanel isOpen onClose={jest.fn()} />);
-    expect(global.fetch).not.toHaveBeenCalled();
+    expect(
+      (global.fetch as jest.Mock).mock.calls.every(
+        ([url]) => url === '/api/server-config'
+      )
+    ).toBe(true);
   });
 
   it('links to the verified TongMuTV Plus repository in a new tab', () => {
@@ -48,7 +81,11 @@ describe('project version information', () => {
     );
     expect(link.getAttribute('target')).toBe('_blank');
     expect(link.getAttribute('rel')).toBe('noopener noreferrer');
-    expect(global.fetch).not.toHaveBeenCalled();
+    expect(
+      (global.fetch as jest.Mock).mock.calls.every(
+        ([url]) => url === '/api/server-config'
+      )
+    ).toBe(true);
   });
 
   it('closes through its button and restores scrolling when closed', () => {

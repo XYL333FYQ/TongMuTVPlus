@@ -5,8 +5,7 @@ import { useEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 import { BRAND_NAME, PROJECT_REPOSITORY_URL } from '@/lib/brand';
-import { changelog } from '@/lib/project-changelog';
-import { CURRENT_VERSION } from '@/lib/version';
+import { useReleaseInfo } from '@/hooks/useReleaseInfo';
 
 interface VersionPanelProps {
   isOpen: boolean;
@@ -18,6 +17,7 @@ export const VersionPanel: React.FC<VersionPanelProps> = ({
   onClose,
 }) => {
   const [mounted, setMounted] = useState(false);
+  const { version, entries: changelog } = useReleaseInfo(isOpen);
   const titleId = useId();
   const closeButton = useRef<HTMLButtonElement>(null);
   const repositoryLink = useRef<HTMLAnchorElement>(null);
@@ -95,7 +95,7 @@ export const VersionPanel: React.FC<VersionPanelProps> = ({
         <div className='p-4 sm:p-6 overflow-y-auto max-h-[calc(90vh-100px)] space-y-6'>
           <section className='space-y-2'>
             <h4 className='text-base font-medium text-fg'>当前版本</h4>
-            <p className='text-sm text-muted'>v{CURRENT_VERSION}</p>
+            <p className='text-sm text-muted'>v{version}</p>
           </section>
           <section className='space-y-3'>
             <h4 className='text-base font-medium text-fg'>发布记录</h4>

@@ -1,6 +1,6 @@
 {
   "name": "tongmutvplus",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "scripts": {
     "dev": "pnpm gen:manifest && node -r ./scripts/dev-env.cjs server.js",

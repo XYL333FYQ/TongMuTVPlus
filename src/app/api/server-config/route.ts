@@ -4,6 +4,8 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { BRAND_NAME } from '@/lib/brand';
 import { getConfig } from '@/lib/config';
+import { defaultReleaseInfo } from '@/lib/release-info';
+import { getReleaseSnapshot } from '@/lib/server/release-store';
 import { CURRENT_VERSION } from '@/lib/version';
 
 export const runtime = 'nodejs';
@@ -38,6 +40,7 @@ export async function GET(request: NextRequest) {
       SiteName: process.env.NEXT_PUBLIC_SITE_NAME || BRAND_NAME,
       StorageType: 'localstorage',
       Version: CURRENT_VERSION,
+      ReleaseInfo: defaultReleaseInfo,
       TVModeEnabled: process.env.ENABLE_TV_MODE !== 'false',
       WatchRoom: watchRoomConfig,
       EnableOfflineDownload:
@@ -54,10 +57,14 @@ export async function GET(request: NextRequest) {
 
   // 非 localStorage 模式，从数据库读取配置
   const config = await getConfig();
+  const releaseInfo = await getReleaseSnapshot()
+    .then((snapshot) => snapshot.info)
+    .catch(() => defaultReleaseInfo);
   const result = {
     SiteName: config.SiteConfig.SiteName,
     StorageType: storageType,
-    Version: CURRENT_VERSION,
+    Version: releaseInfo.version,
+    ReleaseInfo: releaseInfo,
     TVModeEnabled: process.env.ENABLE_TV_MODE !== 'false',
     WatchRoom: watchRoomConfig,
     EnableOfflineDownload:
@@ -100,5 +107,7 @@ export async function GET(request: NextRequest) {
     AIDefaultMessageNoVideo: config.AIConfig?.DefaultMessageNoVideo || '',
     AIDefaultMessageWithVideo: config.AIConfig?.DefaultMessageWithVideo || '',
   };
-  return NextResponse.json(result);
+  return NextResponse.json(result, {
+    headers: { 'Cache-Control': 'no-store' },
+  });
 }
