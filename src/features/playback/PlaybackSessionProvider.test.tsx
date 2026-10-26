@@ -32,6 +32,10 @@ const FILM_B = '/play?source=fixture&id=film-b&episode=1';
 let mockPathname = '/play';
 let mockMounts = 0;
 let mockUnmounts = 0;
+let mockController: {
+  play: jest.Mock;
+  pause: jest.Mock;
+} | null = null;
 const mockRouter = { push: jest.fn(), replace: jest.fn() };
 const mockAudioFocus = { ownsSound: true, claimSound: jest.fn() };
 
@@ -76,14 +80,14 @@ function MockPlaybackSurface() {
     mockMounts += 1;
     if (!video.current)
       throw new Error('The test playback video was not mounted');
+    mockController = { play: jest.fn(), pause: jest.fn() };
     attachController({
       video: video.current,
       currentTime: 12,
       playing: true,
       muted: false,
       playbackRate: 1,
-      play: jest.fn(),
-      pause: jest.fn(),
+      ...mockController,
     });
     return () => {
       mockUnmounts += 1;
@@ -248,6 +252,7 @@ beforeEach(() => {
   mockPathname = '/play';
   mockMounts = 0;
   mockUnmounts = 0;
+  mockController = null;
   mockRoom = null;
   mockAudioFocus.ownsSound = true;
   Object.defineProperty(globalThis, 'crypto', {
@@ -589,4 +594,42 @@ it('keeps the easing transition when the user opted into eased following', async
 
   expect(mount.style.transition).toBe('');
   delete document.documentElement.dataset.tmPlayerEase;
+});
+
+it('the mini player has its own play/pause button that follows the video state', async () => {
+  mockPathname = '/search';
+  mockRoom = null;
+  render(<Harness />);
+  fireEvent.click(screen.getByRole('button', { name: '选择影片 A' }));
+  const video = (await screen.findByTestId(
+    'session-video'
+  )) as HTMLVideoElement;
+  // jsdom 不真的播放：自己指定 paused，再发事件，和浏览器的行为一致
+  let paused = false;
+  Object.defineProperty(video, 'paused', { get: () => paused });
+  act(() => {
+    video.dispatchEvent(new Event('play'));
+  });
+
+  fireEvent.click(screen.getByRole('button', { name: '暂停' }));
+  expect(mockController?.pause).toHaveBeenCalledTimes(1);
+
+  paused = true;
+  act(() => {
+    video.dispatchEvent(new Event('pause'));
+  });
+  const play = await screen.findByRole('button', { name: '播放' });
+  fireEvent.click(play);
+  expect(mockController?.play).toHaveBeenCalledTimes(1);
+});
+
+it('a room member without control cannot pause locally from the mini player', async () => {
+  mockPathname = '/search';
+  mockRoom = { ...makeRoom(), canControl: false };
+  render(<Harness />);
+  await screen.findByTestId('global-playback-host');
+  const button = screen.getByRole('button', { name: '播放进度由房主控制' });
+  expect(button).toBeDisabled();
+  fireEvent.click(button);
+  expect(mockController?.pause).not.toHaveBeenCalled();
 });

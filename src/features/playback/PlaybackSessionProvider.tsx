@@ -7,6 +7,8 @@ import {
   Maximize2,
   MessageCircle,
   Minus,
+  Pause,
+  Play,
   Volume2,
   VolumeX,
   X,
@@ -82,6 +84,7 @@ export default function PlaybackSessionProvider({
   const [actionError, setActionError] = useState('');
   const [actionPending, setActionPending] = useState(false);
   const [muted, setMuted] = useState(false);
+  const [paused, setPaused] = useState(false);
   const [keyboardVisible, setKeyboardVisible] = useState(false);
   const { ownsSound, claimSound } = useAudioFocus(controller?.video || null);
 
@@ -294,6 +297,18 @@ export default function PlaybackSessionProvider({
     return () => video.removeEventListener('volumechange', update);
   }, [controller]);
 
+  // 小窗里藏起了播放器自带的控制栏，这里自己跟踪播放状态，给小窗工具栏的播放/暂停按钮用
+  useEffect(() => {
+    if (!controller?.video) return;
+    const video = controller.video;
+    const update = () => setPaused(video.paused);
+    const events = ['play', 'playing', 'pause', 'ended', 'emptied'] as const;
+    events.forEach((name) => video.addEventListener(name, update));
+    update();
+    return () =>
+      events.forEach((name) => video.removeEventListener(name, update));
+  }, [controller]);
+
   const minimize = useCallback(() => setFolded(true), []);
   const restore = useCallback(() => setFolded(false), []);
   const controllerRef = useRef(controller);
@@ -476,6 +491,20 @@ export default function PlaybackSessionProvider({
       router.push(`/watch-room?room=${encodeURIComponent(roomId)}`);
     else if (href) router.push(href);
   };
+  // 在房间里跟随同步、又没有控制权的人，播放进度由房主决定，不给本地暂停
+  const playLocked = Boolean(
+    roomId && followingRoom && watchRoom && !watchRoom.canControl
+  );
+  const togglePlaying = () => {
+    if (!controller || playLocked) return;
+    if (controller.video.paused) {
+      void Promise.resolve(controller.play()).catch(() => {
+        /* 浏览器拒绝自动播放时保持暂停，用户可以再点一次 */
+      });
+    } else {
+      controller.pause();
+    }
+  };
   const toggleMuted = () => {
     if (!ownsSound) claimSound();
     else if (controller?.video)
@@ -565,6 +594,22 @@ export default function PlaybackSessionProvider({
                 </span>
               </button>
               <button
+                onClick={togglePlaying}
+                disabled={playLocked || !controller}
+                aria-label={
+                  playLocked ? '播放进度由房主控制' : paused ? '播放' : '暂停'
+                }
+                title={
+                  playLocked ? '播放进度由房主控制' : paused ? '播放' : '暂停'
+                }
+              >
+                {paused ? (
+                  <Play size={16} aria-hidden='true' />
+                ) : (
+                  <Pause size={16} aria-hidden='true' />
+                )}
+              </button>
+              <button
                 onClick={toggleMuted}
                 aria-label={muted ? '开启本机声音' : '静音本机'}
               >
@@ -588,9 +633,12 @@ export default function PlaybackSessionProvider({
                   )}
                 </button>
               )}
-              <button onClick={openFull} aria-label='打开完整观影界面'>
-                <Maximize2 size={15} />
-              </button>
+              {/* 小窗里点标题缩略图本来就是打开完整界面；这个按钮留给折叠态，小窗里让出位置给播放/暂停 */}
+              {presentation === 'folded' && (
+                <button onClick={openFull} aria-label='打开完整观影界面'>
+                  <Maximize2 size={15} />
+                </button>
+              )}
               {presentation === 'mini' && (
                 <button
                   onClick={minimize}

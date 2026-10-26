@@ -244,12 +244,12 @@ function LoginPageClient() {
           setTurnstileToken(null);
         }
 
-        if (res.status === 401) {
-          setError('密码错误');
-        } else {
-          const data = await res.json().catch(() => ({}));
-          setError(data.error ?? '服务器错误');
-        }
+        // 服务器会说明具体原因（用户名或密码错误 / 账号被封 / 被临时限制及剩余时间），
+        // 原样显示；读不到时才用兜底文案
+        const data = await res.json().catch(() => ({}));
+        setError(
+          data.error ?? (res.status === 401 ? '密码错误' : '服务器错误')
+        );
       }
     } catch (error) {
       // 网络错误，重置Turnstile

@@ -10,6 +10,7 @@ import { db } from '@/lib/db';
 import {
   checkAccountLock,
   checkLoginBan,
+  formatRetryWait,
   getLoginClientIp,
   recordAccountFailure,
   recordAccountSuccess,
@@ -209,7 +210,12 @@ export async function POST(req: NextRequest) {
     const banStatus = checkLoginBan(clientIp);
     if (banStatus.banned) {
       return NextResponse.json(
-        { error: '登录失败次数过多，请稍后再试' },
+        {
+          error: `登录失败次数过多，请 ${formatRetryWait(
+            banStatus.retryAfterSeconds
+          )}后再试`,
+          retryAfterSeconds: banStatus.retryAfterSeconds,
+        },
         {
           status: 429,
           headers: banStatus.retryAfterSeconds
@@ -283,7 +289,14 @@ export async function POST(req: NextRequest) {
     }
 
     // 数据库 / redis 模式——校验用户名并尝试连接数据库
-    const { username, password, turnstileToken } = await req.json();
+    const {
+      username: rawUsername,
+      password,
+      turnstileToken,
+    } = await req.json();
+    // 手机输入法常在用户名后面带空格，去掉首尾空格，免得"用户不存在"被当成登录失败累计
+    const username =
+      typeof rawUsername === 'string' ? rawUsername.trim() : rawUsername;
 
     if (!username || typeof username !== 'string') {
       return NextResponse.json({ error: '用户名不能为空' }, { status: 400 });
@@ -296,7 +309,12 @@ export async function POST(req: NextRequest) {
     const accountLock = checkAccountLock(username, Date.now(), clientIp);
     if (accountLock.banned) {
       return NextResponse.json(
-        { error: '这个账号密码错误次数过多，请 15 分钟后再试' },
+        {
+          error: `这个账号密码错误次数过多，请 ${formatRetryWait(
+            accountLock.retryAfterSeconds
+          )}后再试`,
+          retryAfterSeconds: accountLock.retryAfterSeconds,
+        },
         {
           status: 429,
           headers: accountLock.retryAfterSeconds

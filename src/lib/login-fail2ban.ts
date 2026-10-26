@@ -2,18 +2,15 @@ import { NextRequest } from 'next/server';
 
 const WINDOW_MS = 10 * 60 * 1000;
 const MAX_FAILURES = 5;
-const BAN_DURATIONS_MS = [
-  60 * 60 * 1000,
-  6 * 60 * 60 * 1000,
-  24 * 60 * 60 * 1000,
-];
+// 固定 15 分钟，不逐级加长：同一出口 IP 下常有多个真人（宿舍、校园网、运营商共享 IP），
+// 加长的封禁会让一个人输错连累所有人好几个小时
+const BAN_MS = 15 * 60 * 1000;
 const CLEANUP_INTERVAL_MS = 10 * 60 * 1000;
 const RECORD_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
 interface LoginFail2BanRecord {
   failures: number[];
   bannedUntil: number;
-  banLevel: number;
   lastSeen: number;
 }
 
@@ -34,7 +31,6 @@ export interface LoginBanStatus {
 
 export interface LoginFailureResult extends LoginBanStatus {
   failureCount: number;
-  banLevel: number;
 }
 
 function getStore(): LoginFail2BanStore {
@@ -75,27 +71,38 @@ function normalizeIp(ip: string): string | null {
   return normalized;
 }
 
+// 取访客 IP。只认反向代理自己写入的值，客户端能随便填的头一律不信：
+// - X-Real-IP：nginx 用 proxy_set_header X-Real-IP $remote_addr 写入，会覆盖客户端带来的同名头
+// - X-Forwarded-For 的最后一段：nginx 的 $proxy_add_x_forwarded_for 追加的是它看到的连接地址，
+//   第一段则是客户端可以伪造的，不能用
+// - CF-Connecting-IP：只有站点真的在 Cloudflare 后面（TRUST_CF_CONNECTING_IP=true）才信。
+//   否则任何人都能伪造它，去封别人的 IP 或绕过自己的封禁
 export function getLoginClientIp(req: NextRequest): string | null {
-  const cfConnectingIp = normalizeIp(req.headers.get('cf-connecting-ip') || '');
-  if (cfConnectingIp) return cfConnectingIp;
+  if (process.env.TRUST_CF_CONNECTING_IP === 'true') {
+    const cfConnectingIp = normalizeIp(
+      req.headers.get('cf-connecting-ip') || ''
+    );
+    if (cfConnectingIp) return cfConnectingIp;
+  }
 
   const xRealIp = normalizeIp(req.headers.get('x-real-ip') || '');
   if (xRealIp) return xRealIp;
 
   const xForwardedFor = req.headers.get('x-forwarded-for');
   if (xForwardedFor) {
-    const firstIp = normalizeIp(xForwardedFor.split(',')[0] || '');
-    if (firstIp) return firstIp;
-  }
-
-  const forwarded = req.headers.get('forwarded');
-  if (forwarded) {
-    const match = forwarded.match(/for=(?:"?)([^;,"]+)/i);
-    const forwardedIp = normalizeIp(match?.[1]?.replace(/^\[|\]$/g, '') || '');
-    if (forwardedIp) return forwardedIp;
+    const parts = xForwardedFor.split(',');
+    const lastIp = normalizeIp(parts[parts.length - 1] || '');
+    if (lastIp) return lastIp;
   }
 
   return null;
+}
+
+// 把剩余秒数说成人话：不足一分钟说秒，否则向上取整到分钟
+export function formatRetryWait(seconds: number | undefined): string {
+  const total = Math.max(1, Math.ceil(seconds || 0));
+  if (total < 60) return `${total} 秒`;
+  return `${Math.ceil(total / 60)} 分钟`;
 }
 
 export function checkLoginBan(
@@ -127,7 +134,7 @@ export function recordLoginFailure(
   now = Date.now()
 ): LoginFailureResult {
   if (!ip) {
-    return { banned: false, failureCount: 0, banLevel: 0 };
+    return { banned: false, failureCount: 0 };
   }
 
   cleanupExpiredRecords(now);
@@ -136,7 +143,6 @@ export function recordLoginFailure(
   const record = store.records.get(ip) || {
     failures: [],
     bannedUntil: 0,
-    banLevel: 0,
     lastSeen: now,
   };
 
@@ -145,12 +151,7 @@ export function recordLoginFailure(
   record.failures.push(now);
 
   if (record.failures.length >= MAX_FAILURES) {
-    record.banLevel += 1;
-    const durationIndex = Math.min(
-      record.banLevel - 1,
-      BAN_DURATIONS_MS.length - 1
-    );
-    record.bannedUntil = now + BAN_DURATIONS_MS[durationIndex];
+    record.bannedUntil = now + BAN_MS;
     record.failures = [];
   }
 
@@ -162,14 +163,12 @@ export function recordLoginFailure(
       bannedUntil: record.bannedUntil,
       retryAfterSeconds: Math.ceil((record.bannedUntil - now) / 1000),
       failureCount: record.failures.length,
-      banLevel: record.banLevel,
     };
   }
 
   return {
     banned: false,
     failureCount: record.failures.length,
-    banLevel: record.banLevel,
   };
 }
 
@@ -184,7 +183,7 @@ export function recordLoginSuccess(ip: string | null, now = Date.now()) {
 }
 
 // —— 按账号限流 ——
-// 按 IP 限流依赖代理头，直接暴露在公网时可被伪造的 X-Forwarded-For 绕过。
+// 按 IP 限流依赖代理写入的真实 IP，直接暴露在公网（没有反向代理）时读不到 IP，就不做 IP 限流。
 // 再按用户名限流：同一账号 15 分钟内输错 10 次，锁定 15 分钟（不逐级加长，
 // 避免被人故意锁死站长账号太久；重启服务也会清空）。
 // 曾经成功登录过这个账号的 IP 不受账号锁定影响：别人从各处乱试锁住账号时，

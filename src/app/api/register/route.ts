@@ -68,7 +68,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: '注册功能未开启' }, { status: 403 });
     }
 
-    const { username, password, inviteCode, turnstileToken } = await req.json();
+    const {
+      username: rawUsername,
+      password,
+      inviteCode,
+      turnstileToken,
+    } = await req.json();
+    // 去掉首尾空格（手机输入法常带），否则正则会直接拒绝
+    const username =
+      typeof rawUsername === 'string' ? rawUsername.trim() : rawUsername;
 
     // 验证输入
     if (!username || typeof username !== 'string') {
