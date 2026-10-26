@@ -1,5 +1,19 @@
 # 界面改造进度
 
+## 2026-10-25 后台加载样式预览与移除评分设置
+
+- 用户确认加载预览，并明确要求「不再出现角标设置」。本批只在后台 page.tsx 移除评分星标设置整块 UI，接入独立 LoadingStylePreview.tsx 与 settings-preview.css；不修改前台角标、接口、存储键和播放会话。
+- 加载预览复用真实 LoadingStyle，预览框内局部选择款式，演示步骤走一轮后静止，支持重新播放与减少动态。保留原保存流程，演示不请求影片。旧版选项的 emoji 换为 lucide Tv。
+- 已核对真实链路：layout.tsx 读取 ThemeConfig.loadingStyle 写入 html data-loading-style；loading.css 选择对应款式；播放页、直播页均使用 LoadingStyle。评分选项此前未被 VideoCard 使用，所以移除其 UI，保留配置兼容数据。
+- 对应 DESIGN.md §9 本日修订，沿用 §2 token、§3.2 减少动态、§4 控件、§6 文案。批前快照与日志：output/settings-preview-20261025（.txt，无 tsc 扫描的备份）。
+- 已完成组件定向测试 2/2：演示推进与结束、重播、换款式重置、卸载清理计时器、局部隔离与减少动态。真实浏览器发现并修复局部选择器被全站样式覆盖、300px 整页阵盘在预览中溢出两处问题；仅预览阵盘缩为 140px，前台不变。
+- 最新完整测试以 `node --regexp-interpret-all node_modules/jest/bin/jest.js --runInBand --no-cache` 运行，103 套 / 609 项通过。普通 `pnpm test --runInBand` 此前也通过过，后续出现原生退出 3221225477；解释模式曾有一次未修改的 ai-tool-agent.fetch 套件在依赖加载时失败（isArray），单独复查与无缓存完整复查通过。所有异常保留日志，不修改无关测试或依赖。
+- lint 和全量 Prettier 通过（lint 保留既有警告，新增组件无警告）；由于本机 Node 原生崩溃，最终用随应用附带的 Node 24.22.1 加 `--regexp-interpret-all` 运行相同 Next lint 和 Prettier 命令。此前的 `pnpm format:check` 也通过过。
+- **typecheck 待用户手动验证**：本批前几次 pnpm typecheck 通过；最后仅调整预览阵盘大小后的 pnpm typecheck 连续两次原生退出 3221225477，没有 TS 诊断。两次前均确认预览已退出；补充用 Node 24.22.1 检查仍原生崩溃（unreachable code）。未修改 tsconfig、未跳过类型项，根因未知。请用户在自己的终端运行 `pnpm typecheck` 并贴回结果。日志保存在 output/settings-preview-20261025/typecheck\*.log。
+- 真实有头 Chrome 从 1440×900 开始，检查三款预览仅当前款式可见、全站已保存款式不变、重播、演示结束停止、系统与站内减少动态；另用连续两帧旋转矩阵证实动画在变化（motion-frames.log）。390×844 / 820×1180 / 1280×900 深浅主题六张截图均已保存并读取相关截图核对；文档宽分别等于 390 / 820 / 1280，visualViewport.scale=1，设备缩放约 1。当前验收期间 pageerror / console error 均为 0，未发起配置写入请求。
+- 浏览器证据与最终截图：output/settings-preview-20261025/browser-check.log、loading-{宽度}-{主题}.png、settings-final.png。后台原有桌面与手机面板分别挂载，浏览器检查按可见面板定位，未改原布局。预览服务也曾原生崩溃，最终以临时 `--no-opt --regexp-interpret-all` 参数完成验收，未把参数写入项目配置。
+- 没做：未点击保存修改真实站点配置，未跑真实影片播放或直播；加载设置是否接入前台已通过源码链路核实，未将其描述成保存后端到端播放验收。未改房间，因此未运行 test:rooms；未推送或部署。用户随后明确要求「提交吧」，授权将本批六个文件提交到本地 Git；类型检查待手动验证的限制继续保留。下一步是用户手动类型检查与界面验收。
+
 ## 2026-10-25 手机横栏比例调整（用户最新续修，视觉核对完成，完整测试受阻）
 
 - 用户随后明确要求“提交吧”：将本次手机横栏、分类胶囊、重复页头和空控件占位修复及相关文档一并提交到本地 Git；不推送，不部署。下面的测试限制继续保留。

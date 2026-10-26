@@ -91,6 +91,7 @@ import { builtInThemes as builtInThemeDefinitions } from '@/styles/themes';
 
 import FeatureAccessPanel from './FeatureAccessPanel';
 import FeedbackInboxPanel from './FeedbackInboxPanel';
+import LoadingStylePreview from './LoadingStylePreview';
 
 // 统一按钮样式系统（黑白 token：主操作反色，危险操作用报错红描边，其余中性）
 const buttonStyles = {
@@ -10920,7 +10921,7 @@ const ThemeConfigComponent = ({
           初始化加载样式
         </h3>
         <p className='text-sm text-[color:var(--tm-muted)] mb-4'>
-          播放页、直播页首屏加载动画的款式。颜色跟随站点主题色，保存后刷新页面生效
+          播放页、直播页首屏加载动画的款式。点击下方选项即可预览，保存后刷新页面生效
         </p>
 
         <div className='grid grid-cols-1 sm:grid-cols-3 gap-3'>
@@ -10974,13 +10975,19 @@ const ThemeConfigComponent = ({
                 id: 'classic',
                 name: '旧版',
                 desc: '',
-                preview: <span className='text-4xl leading-none'>📺</span>,
+                preview: (
+                  <Tv
+                    className='w-10 h-10 text-[color:var(--tm-text)]'
+                    aria-hidden='true'
+                  />
+                ),
               },
             ] as const
           ).map((opt) => (
             <button
               key={opt.id}
               type='button'
+              aria-pressed={themeSettings.loadingStyle === opt.id}
               onClick={() =>
                 setThemeSettings((prev) => ({ ...prev, loadingStyle: opt.id }))
               }
@@ -11007,157 +11014,10 @@ const ThemeConfigComponent = ({
             </button>
           ))}
         </div>
-      </div>
-
-      {/* 评分星标样式配置 */}
-      <div className='bg-[var(--tm-surface)] rounded-lg p-6 border border-[var(--tm-line)]'>
-        <h3 className='text-lg font-medium text-[color:var(--tm-text)] mb-4 flex items-center gap-2'>
-          <Video className='w-5 h-5' />
-          评分星标样式
-        </h3>
-        <p className='text-sm text-[color:var(--tm-muted)] mb-4'>
-          视频卡片右上角评分徽章的款式
-        </p>
-
-        <div className='grid grid-cols-1 sm:grid-cols-3 gap-3'>
-          {(
-            [
-              {
-                id: 'default',
-                name: '圆点',
-                desc: '',
-                preview: (
-                  <div className='w-9 h-9 rounded-full bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)] text-[13px] font-bold flex items-center justify-center shadow-md'>
-                    8.5
-                  </div>
-                ),
-              },
-              {
-                id: 'flag',
-                name: '锦旗',
-                desc: '默认',
-                preview: (
-                  <div
-                    className='w-8 flex flex-col items-center pt-1 pb-2 text-[#4a2600] font-bold text-sm' /* TODO-P5: 内容色，评分角标样式预览 */
-                    style={{
-                      background:
-                        /* TODO-P5: 内容色，评分角标样式预览需还原角标实际配色 */ 'linear-gradient(180deg,#ffd54a,#ff8a3d)',
-                      clipPath: 'polygon(0 0,100% 0,100% 100%,50% 84%,0 100%)',
-                    }}
-                  >
-                    <span className='flex gap-[1px] mb-[1px]'>
-                      {Array.from({ length: 3 }).map((_, i) => (
-                        <svg
-                          key={i}
-                          viewBox='0 0 24 24'
-                          className='w-2 h-2'
-                          fill={
-                            /* TODO-P5: 内容色，评分角标样式预览 */ '#4a2600'
-                          }
-                        >
-                          <path d='M12 2l2.9 6.3 6.9.7-5.1 4.6 1.4 6.8L12 17.8 5.9 20.4l1.4-6.8L2.2 9l6.9-.7z' />
-                        </svg>
-                      ))}
-                    </span>
-                    8.5
-                  </div>
-                ),
-              },
-              {
-                id: 'medal',
-                name: '勋章',
-                desc: '',
-                preview: (
-                  <div className='flex flex-col items-center'>
-                    <div className='relative w-6 h-4 -mb-2'>
-                      <i
-                        className='absolute left-0 top-0 w-2.5 h-4 -rotate-6 bg-[var(--tm-surface)] block'
-                        style={{
-                          clipPath:
-                            'polygon(0 0,100% 0,100% 100%,50% 72%,0 100%)',
-                        }}
-                      />
-                      <i
-                        className='absolute right-0 top-0 w-2.5 h-4 rotate-6 bg-[var(--tm-surface)] block'
-                        style={{
-                          clipPath:
-                            'polygon(0 0,100% 0,100% 100%,50% 72%,0 100%)',
-                        }}
-                      />
-                    </div>
-                    <div
-                      className='relative z-10 w-8 h-8 rounded-full flex flex-col items-center justify-center text-[#4a2600] font-bold text-[13px] leading-none border-2 border-white/70' /* TODO-P5: 内容色，评分角标样式预览 */
-                      style={{
-                        background:
-                          /* TODO-P5: 内容色，评分角标样式预览需还原角标实际配色 */ 'linear-gradient(135deg,#ffd54a,#ff8a3d)',
-                      }}
-                    >
-                      <span className='flex flex-col items-center -mb-[1px]'>
-                        <span className='flex'>
-                          <svg
-                            viewBox='0 0 24 24'
-                            className='w-1.5 h-1.5'
-                            fill={
-                              /* TODO-P5: 内容色，评分角标样式预览 */ '#4a2600'
-                            }
-                          >
-                            <path d='M12 2l2.9 6.3 6.9.7-5.1 4.6 1.4 6.8L12 17.8 5.9 20.4l1.4-6.8L2.2 9l6.9-.7z' />
-                          </svg>
-                        </span>
-                        <span className='flex gap-[1px]'>
-                          {Array.from({ length: 2 }).map((_, i) => (
-                            <svg
-                              key={i}
-                              viewBox='0 0 24 24'
-                              className='w-1.5 h-1.5'
-                              fill={
-                                /* TODO-P5: 内容色，评分角标样式预览 */ '#4a2600'
-                              }
-                            >
-                              <path d='M12 2l2.9 6.3 6.9.7-5.1 4.6 1.4 6.8L12 17.8 5.9 20.4l1.4-6.8L2.2 9l6.9-.7z' />
-                            </svg>
-                          ))}
-                        </span>
-                      </span>
-                      8.5
-                    </div>
-                  </div>
-                ),
-              },
-            ] as const
-          ).map((opt) => (
-            <button
-              key={opt.id}
-              type='button'
-              onClick={() =>
-                setThemeSettings((prev) => ({
-                  ...prev,
-                  rateBadgeStyle: opt.id,
-                }))
-              }
-              className={`relative p-4 border-2 rounded-lg transition-all ${
-                themeSettings.rateBadgeStyle === opt.id
-                  ? 'border-[var(--tm-line)] bg-[var(--tm-surface-raised)] min-h-[44px] tm-press'
-                  : 'border-[var(--tm-line)] hover:border-[var(--tm-line-strong)] min-h-[44px] tm-press'
-              }`}
-            >
-              <div className='flex flex-col items-center gap-2'>
-                <div className='w-12 h-12 flex items-center justify-center'>
-                  {opt.preview}
-                </div>
-                <span className='text-sm font-medium text-[color:var(--tm-muted)] text-center'>
-                  {opt.name}
-                  {opt.desc ? `（${opt.desc}）` : ''}
-                </span>
-              </div>
-              {themeSettings.rateBadgeStyle === opt.id && (
-                <div className='absolute top-2 right-2'>
-                  <Check className='w-5 h-5 text-[color:var(--tm-text)]' />
-                </div>
-              )}
-            </button>
-          ))}
-        </div>
+        <LoadingStylePreview
+          key={themeSettings.loadingStyle}
+          style={themeSettings.loadingStyle}
+        />
       </div>
 
       {/* 保存按钮 */}
