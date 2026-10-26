@@ -58,6 +58,7 @@ import {
   X,
 } from 'lucide-react';
 import { GripVertical } from 'lucide-react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import {
   Fragment,
   memo,
@@ -79,6 +80,7 @@ import {
   ALL_FEATURE_PERMISSION_KEYS,
   FEATURE_PERMISSION_OPTIONS,
 } from '@/lib/feature-permissions';
+import { useNotificationTargetFocus } from '@/hooks/useNotificationTargetFocus';
 
 import AnimeSubscriptionComponent from '@/components/AnimeSubscriptionComponent';
 import CorrectDialog from '@/components/CorrectDialog';
@@ -16152,9 +16154,20 @@ const MovieRequestsComponent = ({
   const { isLoading, withLoading } = useLoadingState();
   const [requests, setRequests] = useState<any[]>([]);
   const [filter, setFilter] = useState<'pending' | 'fulfilled'>('pending');
+  const [loading, setLoading] = useState(true);
+  const notificationParams = useSearchParams();
+  const targetId = notificationParams.get('requestId');
+  const targetKey = notificationParams.get('notice');
+  const targetNavigation = `${targetId}:${targetKey}`;
+  const locatedTarget = useRef<string | null>(null);
+  const targetRequest = requests.find((request) => request.id === targetId);
+  const targetRef = useNotificationTargetFocus<HTMLDivElement>(
+    targetId,
+    !loading && !!targetRequest,
+    targetKey
+  );
   const [pendingCount, setPendingCount] = useState(0);
   const [fulfilledCount, setFulfilledCount] = useState(0);
-  const [loading, setLoading] = useState(true);
 
   // 求片功能设置
   const [enableMovieRequest, setEnableMovieRequest] = useState(
@@ -16166,15 +16179,25 @@ const MovieRequestsComponent = ({
   const [savingSettings, setSavingSettings] = useState(false);
 
   useEffect(() => {
-    loadRequests();
-    loadCounts();
-  }, [filter]);
+    const controller = new AbortController();
+    loadRequests(controller.signal);
+    loadCounts(controller.signal);
+    return () => controller.abort();
+  }, [filter, targetId, targetKey]);
 
-  const loadCounts = async () => {
+  const loadCounts = async (signal?: AbortSignal) => {
     try {
-      const response = await fetch('/api/movie-requests');
+      const response = await fetch('/api/movie-requests', { signal });
       const data = await response.json();
+      if (signal?.aborted) return;
       const allRequests = data.requests || [];
+      const target = allRequests.find(
+        (request: any) => request.id === targetId
+      );
+      if (target && locatedTarget.current !== targetNavigation) {
+        locatedTarget.current = targetNavigation;
+        setFilter(target.status === 'fulfilled' ? 'fulfilled' : 'pending');
+      }
       setPendingCount(
         allRequests.filter((r: any) => r.status === 'pending').length
       );
@@ -16182,22 +16205,26 @@ const MovieRequestsComponent = ({
         allRequests.filter((r: any) => r.status === 'fulfilled').length
       );
     } catch (error) {
+      if (signal?.aborted) return;
       console.error('加载求片数量失败:', error);
     }
   };
 
-  const loadRequests = async () => {
+  const loadRequests = async (signal?: AbortSignal) => {
     setLoading(true);
     try {
       const response = await fetch(
-        `/api/movie-requests?status=${filter}&detail=true`
+        `/api/movie-requests?status=${filter}&detail=true`,
+        { signal }
       );
       const data = await response.json();
+      if (signal?.aborted) return;
       setRequests(data.requests || []);
     } catch (error) {
+      if (signal?.aborted) return;
       console.error('加载求片列表失败:', error);
     } finally {
-      setLoading(false);
+      if (!signal?.aborted) setLoading(false);
     }
   };
 
@@ -16375,7 +16402,9 @@ const MovieRequestsComponent = ({
             {requests.map((req) => (
               <div
                 key={req.id}
-                className='p-4 bg-[var(--tm-surface-raised)] rounded-lg'
+                ref={req.id === targetId ? targetRef : undefined}
+                tabIndex={-1}
+                className='p-4 bg-[var(--tm-surface-raised)] rounded-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--tm-text)]'
               >
                 <div className='flex gap-4'>
                   {req.poster && (
@@ -18912,6 +18941,12 @@ const WebLiveConfig = ({
 };
 
 function AdminPageClient() {
+  const router = useRouter();
+  const notificationParams = useSearchParams();
+  const notificationSection = notificationParams.get('section');
+  const feedbackTargetId = notificationParams.get('feedbackId');
+  const notificationTargetKey = notificationParams.get('notice');
+
   const { alertModal, showAlert, hideAlert } = useAlertModal();
   const { isLoading, withLoading } = useLoadingState();
   const [config, setConfig] = useState<AdminConfig | null>(null);
@@ -18959,6 +18994,23 @@ function AdminPageClient() {
   const [expandedGroups, setExpandedGroups] = useState<{
     [key: string]: boolean;
   }>({ mediaLibrary: true });
+
+  useEffect(() => {
+    if (
+      notificationSection !== 'feedbackInbox' &&
+      notificationSection !== 'movieRequests'
+    )
+      return;
+    setActiveKey(notificationSection);
+    setExpandedTabs((prev) => ({
+      ...prev,
+      [notificationSection]: true,
+      ...(notificationSection === 'movieRequests'
+        ? { mediaLibrary: true }
+        : {}),
+    }));
+    setExpandedGroups((prev) => ({ ...prev, mediaLibrary: true }));
+  }, [notificationSection, notificationParams]);
 
   // 获取管理员配置
   // showLoading 用于控制是否在请求期间显示整体加载骨架。
@@ -19081,6 +19133,17 @@ function AdminPageClient() {
   // PC 左右布局：选中某个区块
   const selectSection = (key: string) => {
     setActiveKey(key);
+    // 手动切换后移除一次性通知目标，便于再次点击同一通知时重新定位。
+    if (notificationParams.has('section')) {
+      const params = new URLSearchParams(notificationParams.toString());
+      ['section', 'feedbackId', 'requestId', 'notice'].forEach((name) =>
+        params.delete(name)
+      );
+      const query = params.toString();
+      router.replace(`/admin${query ? `?${query}` : ''}`, {
+        scroll: false,
+      });
+    }
     if (typeof window !== 'undefined') {
       localStorage.setItem('admin_active_section', key);
     }
@@ -19274,7 +19337,13 @@ function AdminPageClient() {
       key: 'feedbackInbox',
       title: '反馈收件箱',
       icon: <Inbox size={20} className={navIconClass} />,
-      render: () => <FeedbackInboxPanel isOwner={role === 'owner'} />,
+      render: () => (
+        <FeedbackInboxPanel
+          isOwner={role === 'owner'}
+          targetId={feedbackTargetId}
+          targetKey={notificationTargetKey}
+        />
+      ),
     },
     {
       key: 'videoSource',
@@ -19778,7 +19847,11 @@ function AdminPageClient() {
               isExpanded={expandedTabs.feedbackInbox}
               onToggle={() => toggleTab('feedbackInbox')}
             >
-              <FeedbackInboxPanel isOwner={role === 'owner'} />
+              <FeedbackInboxPanel
+                isOwner={role === 'owner'}
+                targetId={feedbackTargetId}
+                targetKey={notificationTargetKey}
+              />
             </CollapsibleTab>
 
             {/* 视频源配置标签 */}

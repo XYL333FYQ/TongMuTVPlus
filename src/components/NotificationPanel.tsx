@@ -120,7 +120,21 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({
     }
 
     // 根据通知类型跳转
-    if (notification.type === 'favorite_update' && notification.metadata) {
+    if (notification.type === 'system' && notification.metadata?.feedbackId) {
+      const authInfo = getAuthInfoFromBrowserCookie();
+      const isAdmin = authInfo?.role === 'owner' || authInfo?.role === 'admin';
+      router.push(
+        isAdmin
+          ? `/admin?section=feedbackInbox&feedbackId=${encodeURIComponent(
+              notification.metadata.feedbackId
+            )}&notice=${Date.now()}`
+          : '/feedback'
+      );
+      onClose();
+    } else if (
+      notification.type === 'favorite_update' &&
+      notification.metadata
+    ) {
       const { source, id, title } = notification.metadata;
       router.push(
         `/play?source=${source}&id=${id}&title=${encodeURIComponent(title)}`
@@ -144,7 +158,14 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({
       const isAdmin = authInfo?.role === 'owner' || authInfo?.role === 'admin';
 
       // 管理员跳转到管理面板，普通用户跳转到我的求片
-      router.push(isAdmin ? '/admin' : '/movie-request');
+      const requestId = notification.metadata?.requestId;
+      router.push(
+        isAdmin
+          ? `/admin?section=movieRequests${
+              requestId ? `&requestId=${encodeURIComponent(requestId)}` : ''
+            }&notice=${Date.now()}`
+          : '/movie-request'
+      );
       onClose();
     }
   };

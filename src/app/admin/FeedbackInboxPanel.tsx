@@ -8,6 +8,7 @@ import {
   FEEDBACK_CATEGORIES,
   FEEDBACK_STATUS_LABEL,
 } from '@/lib/feedback';
+import { useNotificationTargetFocus } from '@/hooks/useNotificationTargetFocus';
 
 import { notify, notifyError } from '@/components/feedback/AppDialogs';
 import Select from '@/components/ui/Select';
@@ -27,12 +28,24 @@ const primary =
 const featureLabel = (key?: string) =>
   FEATURE_PERMISSION_OPTIONS.find((item) => item.key === key)?.label || '';
 
-export default function FeedbackInboxPanel({ isOwner }: { isOwner: boolean }) {
+export default function FeedbackInboxPanel({
+  isOwner,
+  targetId,
+  targetKey,
+}: {
+  isOwner: boolean;
+  targetId?: string | null;
+  targetKey?: string | null;
+}) {
   const [items, setItems] = useState<FeedbackItem[] | null>(null);
   const [error, setError] = useState('');
   const [filter, setFilter] = useState<Filter>('pending');
   const [replies, setReplies] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState('');
+
+  useEffect(() => {
+    if (targetId) setFilter('all');
+  }, [targetId, targetKey]);
 
   const load = useCallback(async () => {
     try {
@@ -66,6 +79,11 @@ export default function FeedbackInboxPanel({ isOwner }: { isOwner: boolean }) {
   const pendingCount = (items || []).filter(
     (item) => item.status === 'pending'
   ).length;
+  const targetRef = useNotificationTargetFocus<HTMLElement>(
+    targetId,
+    shown.some((item) => item.id === targetId),
+    targetKey
+  );
 
   const act = async (item: FeedbackItem, action: string) => {
     setBusy(item.id);
@@ -135,7 +153,12 @@ export default function FeedbackInboxPanel({ isOwner }: { isOwner: boolean }) {
       )}
 
       {shown.map((item) => (
-        <article key={item.id} className={card}>
+        <article
+          key={item.id}
+          ref={item.id === targetId ? targetRef : undefined}
+          tabIndex={-1}
+          className={`${card} focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--tm-text)]`}
+        >
           <div className='flex flex-wrap items-center justify-between gap-2'>
             <div className='text-sm font-medium text-[color:var(--tm-text)]'>
               {item.username} ·{' '}

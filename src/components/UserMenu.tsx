@@ -56,6 +56,7 @@ import {
 import { clearBangumiImageFallbackCache } from '@/lib/utils';
 import { CURRENT_VERSION } from '@/lib/version';
 import { UpdateStatus } from '@/lib/version_check';
+import { useUnreadNotificationCount } from '@/hooks/useUnreadNotificationCount';
 
 import ThemeSettings from '@/components/account/ThemeSettings';
 import VisualPreferenceControls from '@/components/account/VisualPreferenceControls';
@@ -106,7 +107,7 @@ export const UserMenu: React.FC = () => {
   const [displayStorageType, setDisplayStorageType] =
     useState<string>('localstorage');
   const [mounted, setMounted] = useState(false);
-  const [unreadCount, setUnreadCount] = useState(0);
+  const unreadCount = useUnreadNotificationCount(authInfo?.username);
 
   useEffect(() => {
     if (!isOpen || !mounted) return;
@@ -434,24 +435,6 @@ export const UserMenu: React.FC = () => {
     setMounted(true);
   }, []);
 
-  // 加载未读通知数量
-  const loadUnreadCount = async () => {
-    try {
-      const response = await fetch('/api/notifications');
-      if (response.ok) {
-        const data = await response.json();
-        const count = data.unreadCount || 0;
-        setUnreadCount(count);
-        // 同步到全局，让其他 UserMenu 实例也能获取
-        if (typeof window !== 'undefined') {
-          (window as any).__unreadNotificationCount = count;
-        }
-      }
-    } catch (error) {
-      console.error('加载未读通知数量失败:', error);
-    }
-  };
-
   const formatCacheSize = useCallback((size: number) => {
     if (size < 1024) return `${size} B`;
     if (size < 1024 * 1024) return `${(size / 1024).toFixed(2)} KB`;
@@ -468,64 +451,12 @@ export const UserMenu: React.FC = () => {
     }
   }, [formatCacheSize]);
 
-  // 首次加载时检查未读通知数量（使用全局标记避免多个实例重复请求）
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-
-    // 检查是否已经有其他实例在加载
-    const globalWindow = window as any;
-    if (globalWindow.__loadingNotifications) {
-      // 如果正在加载，等待加载完成后获取结果
-      const checkInterval = setInterval(() => {
-        if (
-          !globalWindow.__loadingNotifications &&
-          globalWindow.__unreadNotificationCount !== undefined
-        ) {
-          setUnreadCount(globalWindow.__unreadNotificationCount);
-          clearInterval(checkInterval);
-        }
-      }, 100);
-      return () => clearInterval(checkInterval);
-    }
-
-    // 检查是否已经加载过
-    if (globalWindow.__unreadNotificationCount !== undefined) {
-      setUnreadCount(globalWindow.__unreadNotificationCount);
-      return;
-    }
-
-    // 标记正在加载
-    globalWindow.__loadingNotifications = true;
-    loadUnreadCount().finally(() => {
-      globalWindow.__loadingNotifications = false;
-    });
-  }, []);
-
   useEffect(() => {
     if (!mounted || !isSettingsOpen || !isDanmakuSectionOpen) return;
     void (async () => {
       await loadDanmakuCacheUsage();
     })();
   }, [loadDanmakuCacheUsage, mounted, isSettingsOpen, isDanmakuSectionOpen]);
-
-  // 监听通知更新事件
-  useEffect(() => {
-    const handleNotificationsUpdated = () => {
-      // 清除缓存，强制重新加载
-      if (typeof window !== 'undefined') {
-        delete (window as any).__unreadNotificationCount;
-      }
-      loadUnreadCount();
-    };
-
-    window.addEventListener('notificationsUpdated', handleNotificationsUpdated);
-    return () => {
-      window.removeEventListener(
-        'notificationsUpdated',
-        handleNotificationsUpdated
-      );
-    };
-  }, []);
 
   // 从运行时配置读取订阅是否启用
   useEffect(() => {
