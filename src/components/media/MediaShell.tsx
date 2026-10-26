@@ -77,7 +77,7 @@ export default function MediaShell({
         <header
           className='tm-media-page-head fixed inset-x-0 top-0 z-40 border-b border-line bg-[color:color-mix(in_srgb,var(--tm-bg)_95%,transparent)] backdrop-blur-none'
           style={{
-            paddingTop: isReader ? 'env(safe-area-inset-top)' : undefined,
+            paddingTop: isReader ? 'var(--tm-safe-top)' : undefined,
           }}
         >
           <HeaderContainer
@@ -173,7 +173,7 @@ export default function MediaShell({
           className={cn(
             reader
               ? cn('mx-auto max-w-7xl', reader.mainClassName)
-              : 'pb-[calc(5rem+env(safe-area-inset-bottom))] pt-[calc(5rem+env(safe-area-inset-top))] sm:pt-[calc(6rem+env(safe-area-inset-top))] lg:pb-10'
+              : 'pb-[calc(5rem+env(safe-area-inset-bottom))] pt-[calc(5rem+var(--tm-safe-top))] sm:pt-[calc(6rem+var(--tm-safe-top))] lg:pb-10'
           )}
         >
           {isReader ? children : <PageContainer>{children}</PageContainer>}

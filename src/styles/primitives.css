@@ -320,6 +320,26 @@ html[data-tm-no-blur='true'] .tm-btn-art-glass {
   transition: border-color var(--tm-d-hover) var(--tm-ease-out),
     background-color var(--tm-d-hover) var(--tm-ease-out);
 }
+/* 触屏上输入框字号不得小于 16px：iOS Safari 聚焦小于 16px 的输入框会自动放大整页。后台沿用自己的紧凑尺寸。 */
+@media (pointer: coarse) {
+  body.tm-app
+    :is(
+      input:not(
+          [type='checkbox'],
+          [type='radio'],
+          [type='range'],
+          [type='file'],
+          [type='hidden'],
+          [type='button'],
+          [type='submit'],
+          [type='reset']
+        ),
+      textarea,
+      select
+    ):not(.tm-admin-page *) {
+    font-size: max(16px, 1em);
+  }
+}
 .tm-input::placeholder {
   color: var(--tm-muted);
 }

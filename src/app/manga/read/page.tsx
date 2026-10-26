@@ -1381,7 +1381,7 @@ export default function MangaReadPage() {
                 }}
                 data-index={index}
                 className={cn(
-                  'scroll-mt-[calc(3.5rem+env(safe-area-inset-top))] overflow-hidden shadow-sm sm:scroll-mt-[calc(4rem+env(safe-area-inset-top))]',
+                  'scroll-mt-[calc(3.5rem+var(--tm-safe-top))] overflow-hidden shadow-sm sm:scroll-mt-[calc(4rem+var(--tm-safe-top))]',
                   READER_CANVAS
                 )}
               >

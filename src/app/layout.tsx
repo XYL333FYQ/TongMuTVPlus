@@ -16,7 +16,11 @@ import '@/features/rooms/rooms.css';
 import './globals.css';
 
 import { parseAuthInfo } from '@/lib/auth';
-import { BRAND_DESCRIPTION, BRAND_NAME } from '@/lib/brand';
+import {
+  BRAND_DESCRIPTION,
+  BRAND_NAME,
+  INITIAL_THEME_COLOR,
+} from '@/lib/brand';
 import { getConfig } from '@/lib/config';
 import { getUserFeatureAccess } from '@/lib/permissions';
 import { projectGuestRuntimeConfig } from '@/lib/public-runtime-config';
@@ -71,8 +75,13 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
+// 初始状态栏 / 地址栏颜色：站点默认深色，用户选了浅色或跟随系统后由 ThemeProvider 改写。
+// 先给出这个值，安卓浏览器工具栏首屏就不会先闪一下白。
 export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
   viewportFit: 'cover',
+  themeColor: INITIAL_THEME_COLOR,
 };
 
 export default async function RootLayout({
@@ -429,10 +438,6 @@ export default async function RootLayout({
       <head>
         {/* 兼容浏览器扩展的识别指纹；仅本项目部署站应带此标记 */}
         <meta name='moontvplus-site' content='1' />
-        <meta
-          name='viewport'
-          content='width=device-width, initial-scale=1.0, viewport-fit=cover'
-        />
         <link rel='apple-touch-icon' href='/icons/icon-180x180.png' />
         {/* 主题CSS */}
         <link rel='stylesheet' href={`/api/theme/css?v=${themeCssVersion}`} />

@@ -1,11 +1,19 @@
 /* 全局基础：文档、焦点、滚动条、进度条、第三方播放器的最小覆盖。 */
 
+/*
+ * 滚动必须落在文档（viewport）上，而不是 body 内部：
+ * html 一旦写了 overflow 或固定高度，body 的 overflow 就不再向上传给 viewport，
+ * body 自己变成滚动容器，安卓 Chrome 的地址栏因此无法随滚动收起，可视区被它长期占着。
+ * 所以 overflow-x 只写在 body 上（会传给 viewport），html 保持默认。
+ * 弹层锁滚动用的 body.style.overflow = 'hidden' 同样经此传给 viewport，继续有效。
+ */
 html,
 body {
-  height: 100%;
-  overflow-x: hidden;
   /* 阻止 iOS Safari 拉动回弹 */
   overscroll-behavior: none;
+}
+body {
+  overflow-x: hidden;
 }
 
 html,

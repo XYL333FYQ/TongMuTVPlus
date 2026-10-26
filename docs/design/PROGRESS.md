@@ -656,3 +656,14 @@
 - 测试：`login-fail2ban.test.ts` 新增 5 项（固定 15 分钟、IP 互不影响、不信伪造头、Cloudflare 开关、等待时间措辞）；新增 `api/login/route.test.ts` 3 项（用户名去空格、5 次失败后 429 带剩余时间且其他 IP 正常、伪造 `cf-connecting-ip` 无效）；`PlaybackSessionProvider.test.tsx` 新增 2 项（播放 / 暂停随视频状态切换、房员禁用）。
 - 验证：`typecheck` 0；`lint` 退出 0（仅既有 warning）；Jest 115 套 / 657 项通过；本机浏览器（localhost:3000）用 `admin`（带首尾空格）登录成功；小窗工具栏 1280 宽按钮 5 个、标题宽 144px（原 140px）。
 - 没验证 / 风险：真实视频下小窗播放 / 暂停、手机 390 宽小窗布局没有实机看（本机没有可播放的媒体源）；`test:rooms` 未跑（未动房间代码）。线上要**重启服务**才能清掉现有内存里的封禁记录；之后依赖 nginx 的 `X-Real-IP`，若以后改成 Cloudflare 在前，需要设置 `TRUST_CF_CONNECTING_IP=true`。账号锁定（同一账号 15 分钟内错 10 次）规则未改。
+
+## 2026-10-26 手机 / 平板 / 电视排查与滚动、安全区修复
+
+- 用户反馈：安卓网页顶部横条臃肿，苹果正常；切换主题时圆形扩散的焦点没跟着按钮走；要求手机、平板、电视端整体检查。用户确认计划后实施，不改接口、存储键、Socket 事件名，不新增依赖。
+- 排查（本机 Chromium 仿真）：360 / 390 / 768 / 820 / 960 / 1280 / 1920 宽下，首页、片库、搜索、房间、我的、关于、求片、反馈、登录、注册以及 `/tv` 系列页面均无横向溢出，也没有小于 12px 的文字。用触屏仿真（`pointer: coarse`）重测，390 宽的片库、搜索、我的没有小于 44px 的可点元素——先前在桌面指针 iframe 里量到的小目标是量法问题，项目已有 `pointer: coarse` 的 44px 规则，**未改**。
+- 根因 1：`base.css` 给 `html, body` 同时写了 `height: 100%` 和 `overflow-x: hidden`，html 一旦不是默认 overflow，body 的 overflow 就不再传给 viewport，body 自己成了滚动容器（实测 body `scrollHeight` 2702、html 1100）。安卓 Chrome 的地址栏因此不能随滚动收起，可视区被它长期占着。改为只在 body 上写 `overflow-x: hidden`、去掉两处 `height: 100%`；改后 `window.scrollY` 随滚动变化。弹层锁滚动用的 `body.style.overflow = 'hidden'` 经 body 传给 viewport，继续有效，所以没有动 `admin/page.tsx`；`BackToTop`、`RouteScrollReset`、`PageLayout` 本来就同时处理 window 与 body，未改。
+- 根因 2：站点声明了 `viewport-fit=cover`，顶栏又无条件加 `env(safe-area-inset-top)`，部分安卓浏览器会上报状态栏高度，顶栏凭空变高；iOS Safari 普通标签页该值为 0。`--tm-safe-top` 现在默认 0，仅 `display-mode: standalone / fullscreen`（主屏幕独立窗口）才取 `env(safe-area-inset-top)`；电子书、漫画、媒体外壳里直接写的 `env(safe-area-inset-top)` 改用同一个 token。
+- viewport：删除 `layout.tsx` 里手写的第二个 `<meta name="viewport">`（原来页面里有两个），改由 `viewport` 配置输出 `width / initialScale / viewportFit / themeColor`；`themeColor` 先给默认深色 `#0b0b0d`，ThemeProvider 之后按真实 `--tm-bg` 改写，安卓工具栏首屏不再先闪白。
+- 输入框：触屏上 `input / textarea / select` 字号不小于 16px（`primitives.css`，后台 `.tm-admin-page` 内除外），避免 iOS 聚焦自动放大页面；求片页输入框原为 14px。
+- 主题切换错位：桌面仿真下按钮中心坐标、`::view-transition` 各层位置都与按钮一致，没有复现；怀疑与上面的 body 滚动模型有关（真机里 root 快照与固定定位顶栏的关系），**未改动 `theme-transition.ts` 与主题 CSS**，需要在真机上看修复滚动模型后是否还错位。
+- 没验证：安卓 / iOS 真机（地址栏是否收起、状态栏安全区、主题切换圆心）、平板触屏（本机 ≥768 宽没有触屏仿真）、电视遥控焦点与屏幕边缘安全区、`/tv` 实机观感。测试用的 `themeColor` 在浅色用户首次进入时先显示深色再切换。

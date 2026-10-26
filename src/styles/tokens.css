@@ -97,7 +97,9 @@
   --tm-section-gap: 36px;
   --tm-header-height: 64px;
   --tm-bottom-nav-height: 64px;
-  --tm-safe-top: env(safe-area-inset-top, 0px);
+  /* 顶部安全区只在独立窗口（主屏幕 / 全屏）里才让出：普通浏览器标签页里页面本来就在状态栏之下，
+     但部分安卓浏览器仍会上报状态栏高度，照单全收会让顶栏凭空变高。 */
+  --tm-safe-top: 0px;
   --tm-safe-bottom: env(safe-area-inset-bottom, 0px);
 
   /* —— 层级 —— */
@@ -149,6 +151,11 @@ html.light {
   --tm-shadow-poster-hover: 0 24px 40px -16px rgba(0, 0, 0, 0.38);
 }
 
+@media (display-mode: standalone), (display-mode: fullscreen) {
+  :root {
+    --tm-safe-top: env(safe-area-inset-top, 0px);
+  }
+}
 @media (min-width: 600px) {
   :root {
     --tm-content-gutter: 24px;
