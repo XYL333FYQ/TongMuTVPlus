@@ -68,6 +68,7 @@ const mockPlayback = {
 };
 const originalFetch = global.fetch;
 beforeEach(() => {
+  window.innerWidth = 1280;
   mockRoom = makeRoom();
   mockPlayback.followingRoom = true;
   mockPlayback.metadata.error = null;
@@ -75,6 +76,30 @@ beforeEach(() => {
   jest.clearAllMocks();
   // Presentation tests do not need directory responses.
   global.fetch = jest.fn(() => new Promise<Response>(() => undefined));
+});
+
+test('narrow screens open chat first and put film details after the room panel', () => {
+  window.innerWidth = 390;
+  if (mockRoom.currentRoom)
+    mockRoom.currentRoom.currentState = {
+      type: 'play',
+      url: '',
+      currentTime: 0,
+      isPlaying: true,
+      videoId: 'qa',
+      videoName: '验收影片',
+      source: 'directplay',
+    };
+  render(<RoomWorkspace />);
+  expect(screen.getByRole('tab', { name: '聊天' })).toHaveAttribute(
+    'aria-selected',
+    'true'
+  );
+  const panel = document.querySelector('.tm-room-side')!;
+  const details = screen.getByRole('region', { name: '当前影片资料' });
+  expect(
+    panel.compareDocumentPosition(details) & Node.DOCUMENT_POSITION_FOLLOWING
+  ).toBeTruthy();
 });
 afterEach(() => {
   global.fetch = originalFetch;

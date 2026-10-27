@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useId, useState } from 'react';
 
 import type { PlayState, RoomQueueItem } from '@/types/watch-room';
 
@@ -16,7 +16,11 @@ export default function RoomMediaInfo({
 }) {
   const key = JSON.stringify([roomId, state.source, state.videoId]);
   const [description, setDescription] = useState({ key: '', text: '' });
+  const descriptionId = useId();
+  const [expandedKey, setExpandedKey] = useState('');
+  const expanded = expandedKey === key;
   useEffect(() => {
+    setExpandedKey('');
     if (!state.source || !state.videoId || state.source === 'directplay')
       return;
     const request = new AbortController();
@@ -58,11 +62,26 @@ export default function RoomMediaInfo({
   );
   return (
     <section className='tm-room-media-info' aria-label='当前影片资料'>
-      <p className='tm-room-media-description'>
+      <p
+        id={descriptionId}
+        className='tm-room-media-description'
+        data-expanded={expanded}
+      >
         {description.key === key && description.text
           ? description.text
           : '暂无影片简介'}
       </p>
+      {description.key === key && description.text && (
+        <button
+          type='button'
+          className='tm-room-description-toggle'
+          aria-expanded={expanded}
+          aria-controls={descriptionId}
+          onClick={() => setExpandedKey(expanded ? '' : key)}
+        >
+          {expanded ? '收起简介' : '展开简介'}
+        </button>
+      )}
       <p className='tm-room-queue-progress'>
         {position >= 0
           ? `当前位于片单第 ${position + 1} 项，共 ${queue.length} 项`

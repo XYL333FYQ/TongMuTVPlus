@@ -1,3 +1,19 @@
+:root {
+  --tm-room-tools-bottom: 24px;
+  --tm-room-tools-right: 24px;
+  --tm-room-tools-height: 44px;
+  --tm-room-tools-gap: 8px;
+  --tm-room-return-bottom: calc(
+    var(--tm-room-tools-bottom) + var(--tm-room-tools-height) +
+      var(--tm-room-tools-gap)
+  );
+}
+@media (max-width: 767px) {
+  :root {
+    --tm-room-tools-bottom: calc(96px + var(--tm-safe-bottom));
+    --tm-room-tools-right: 16px;
+  }
+}
 .tm-playback-slot {
   position: relative;
   width: 100%;
@@ -300,6 +316,33 @@ html[data-tm-no-blur='true'] .tm-chat-panel {
   background: var(--tm-glass-solid);
   box-shadow: 0 12px 40px var(--tm-room-shadow);
   font-size: 13px;
+}
+.tm-chat-launcher,
+.tm-return-room {
+  min-height: var(--tm-room-tools-height);
+  padding: 0 14px;
+  gap: 6px;
+}
+/* 回房与返回顶部共用实际占用高度，避免折叠条或小窗出现后互相遮挡。 */
+.tm-return-room {
+  right: var(--tm-room-tools-right);
+  bottom: var(--tm-room-return-bottom);
+}
+body:has(.tm-playback-host[data-presentation='mini']) {
+  --tm-room-return-bottom: calc(88px + 202.5px + var(--tm-room-tools-gap));
+}
+body:has(.tm-playback-host[data-presentation='folded']) {
+  --tm-room-return-bottom: calc(
+    var(--tm-room-tools-bottom) + 64px + var(--tm-room-tools-gap)
+  );
+}
+@media (max-width: 767px) {
+  body:has(.tm-playback-host[data-presentation='mini']) {
+    --tm-room-return-bottom: calc(
+      160px + var(--tm-safe-bottom) + (100vw - 32px) * 0.5625 +
+        var(--tm-room-tools-gap)
+    );
+  }
 }
 
 /* Motion belongs to the existing media mount, never to a new video instance. */
@@ -899,8 +942,8 @@ html[data-tm-no-blur='true'] .tm-playback-host * {
   }
   .tm-chat-layer,
   .tm-room-reconnect {
-    right: 16px;
-    bottom: calc(96px + var(--tm-safe-bottom));
+    right: var(--tm-room-tools-right);
+    bottom: var(--tm-room-tools-bottom);
   }
   .tm-chat-with-mini .tm-room-notice {
     margin-bottom: calc(80px + (100vw - 32px) * 0.5625);

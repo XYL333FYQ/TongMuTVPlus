@@ -86,6 +86,10 @@ export default function RoomWorkspace() {
   const [panelTab, setPanelTab] = useState<'queue' | 'chat' | 'members'>(
     'queue'
   );
+  // 首次进入房间时让窄屏直接聊天；之后切换标签或旋转屏幕不覆盖用户选择。
+  useEffect(() => {
+    if (room?.id) setPanelTab(window.innerWidth < 1200 ? 'chat' : 'queue');
+  }, [room?.id]);
   const screening = useRoomScreening(
     playback.controller?.video || null,
     Boolean(
@@ -785,13 +789,6 @@ export default function RoomWorkspace() {
                   </Link>
                 )}
               </div>
-              {room.currentState?.type === 'play' && (
-                <RoomMediaInfo
-                  roomId={room.id}
-                  state={room.currentState}
-                  queue={room.queue || []}
-                />
-              )}
             </div>
             <aside className='tm-room-side'>
               <div
@@ -1043,6 +1040,13 @@ export default function RoomWorkspace() {
                 data-active={panelTab === 'chat'}
               />
             </aside>
+            {room.currentState?.type === 'play' && (
+              <RoomMediaInfo
+                roomId={room.id}
+                state={room.currentState}
+                queue={room.queue || []}
+              />
+            )}
             {!room.currentState && playback.followingRoom && (
               <RoomQuickStart onChoose={openPicker} />
             )}

@@ -37,6 +37,24 @@
   }
 }
 
+/* 聊天与回房共用右下角工具区；返回顶部排在实际显示的入口上方。 */
+body:has(.tm-chat-launcher) .tm-back-to-top {
+  right: var(--tm-room-tools-right);
+  bottom: calc(
+    var(--tm-room-tools-bottom) + var(--tm-room-tools-height) +
+      var(--tm-room-tools-gap)
+  );
+}
+html:not([data-tm-room-presentation='true'])
+  body:has(.tm-return-room)
+  .tm-back-to-top {
+  right: var(--tm-room-tools-right);
+  bottom: calc(
+    var(--tm-room-return-bottom) + var(--tm-room-tools-height) +
+      var(--tm-room-tools-gap)
+  );
+}
+
 /* 行内状态：筛选区里的「正在加载」「暂无」 */
 .tm-inline-state {
   display: flex;
