@@ -1,6 +1,0 @@
-{
-  "identifier": "titlebar",
-  "description": "本地标题条：控制窗口，并在加载后取一次当前主题色",
-  "webviews": ["titlebar"],
-  "permissions": ["allow-tm-window", "allow-tm-hello"]
-}

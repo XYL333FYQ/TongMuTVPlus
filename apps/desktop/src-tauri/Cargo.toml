@@ -8,8 +8,7 @@ edition = "2021"
 tauri-build = { version = "2", features = [] }
 
 [dependencies]
-# unstable：一个窗口里放两块页面（上面本地标题条、下面网站），Tauri 2 里这个功能还挂在这个开关后面
-tauri = { version = "2", features = ["unstable"] }
+tauri = { version = "2", features = [] }
 
 [profile.release]
 opt-level = "s"

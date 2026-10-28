@@ -1,9 +1,0 @@
-{
-  "identifier": "page",
-  "description": "页面区（本地填地址页和用户填写的服务器网站）：只能报主题色和全屏状态，不能控制窗口",
-  "webviews": ["page"],
-  "remote": {
-    "urls": ["http://*", "https://*", "http://*:*", "https://*:*"]
-  },
-  "permissions": ["allow-tm-sync", "allow-tm-fullscreen"]
-}

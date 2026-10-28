@@ -1,0 +1,9 @@
+{
+  "identifier": "main",
+  "description": "主窗口（本地填地址页和用户填写的服务器网站）：窗口按钮和全屏联动。只开这两个命令，别的一概没有",
+  "windows": ["main"],
+  "remote": {
+    "urls": ["http://*", "https://*", "http://*:*", "https://*:*"]
+  },
+  "permissions": ["allow-tm-window", "allow-tm-fullscreen"]
+}
