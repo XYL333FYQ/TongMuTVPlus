@@ -118,6 +118,7 @@ fn tm_sync(
     ms: f64,
     ease: String,
     dark: bool,
+    start: f64,
 ) {
     if webview.label() != "page" || !safe_css(&bg) || !safe_css(&fg) || !safe_css(&ease) {
         return;
@@ -130,9 +131,11 @@ fn tm_sync(
     }
     let (x, y, r) = (num(x, 0.0, 20000.0), num(y, 0.0, 20000.0), num(r, 0.0, 40000.0));
     let ms = num(ms, 0.0, 5000.0);
+    // start：页面动画真正开始的时刻（epoch 毫秒），标题条据此对齐，不受传递延迟影响
+    let start = num(start, 0.0, 1.0e14);
     if let Some(bar) = app.get_webview("titlebar") {
         let _ = bar.eval(format!(
-            "window.__tmTheme&&window.__tmTheme({{bg:'{bg}',fg:'{fg}',kind:'{kind}',x:{x},y:{y},r:{r},ms:{ms},ease:'{ease}',dark:{dark}}})"
+            "window.__tmTheme&&window.__tmTheme({{bg:'{bg}',fg:'{fg}',kind:'{kind}',x:{x},y:{y},r:{r},ms:{ms},ease:'{ease}',dark:{dark},start:{start}}})"
         ));
     }
 }

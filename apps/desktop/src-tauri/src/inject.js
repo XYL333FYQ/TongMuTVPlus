@@ -166,16 +166,38 @@
     return isDarkColor(bg);
   }
 
-  var last = '';
-  function sync() {
-    var c = readColors();
-    if (!c || !SAFE.test(c.bg) || !SAFE.test(c.fg)) return;
-    var key = c.bg + '|' + c.fg;
-    if (key === last) return;
-    var first = last === '';
-    last = key;
-    // 页面刚加载的前 1.2 秒只是样式陆续生效，不播动画
-    var a = first || performance.now() < 1200 ? { kind: 'none' } : animation();
+  // 现在的 epoch 毫秒（带小数），页面和标题条是两个进程，但系统时钟是同一个
+  function nowEpoch() {
+    return performance.timeOrigin + performance.now();
+  }
+
+  // 找站点自己的圆形扩散动画（挂在 ::view-transition 伪元素上、关键帧里有 clipPath 的那条）
+  // 同时存在好几条时取开始得最晚的（还没开始的算最晚），避开上一次残留的
+  function findThemeAnimation() {
+    var list = document.getAnimations ? document.getAnimations() : [];
+    var best = null;
+    for (var i = 0; i < list.length; i++) {
+      var e = list[i].effect;
+      if (
+        !e ||
+        !e.pseudoElement ||
+        e.pseudoElement.indexOf('::view-transition') !== 0
+      )
+        continue;
+      var kf = e.getKeyframes ? e.getKeyframes() : [];
+      var hasClip = false;
+      for (var j = 0; j < kf.length; j++) {
+        if ('clipPath' in kf[j]) hasClip = true;
+      }
+      if (!hasClip) continue;
+      var st = list[i].startTime;
+      if (typeof st !== 'number') return list[i];
+      if (!best || st > best.startTime) best = list[i];
+    }
+    return best;
+  }
+
+  function send(c, a, start) {
     invoke('tm_sync', {
       bg: c.bg,
       fg: c.fg,
@@ -186,7 +208,48 @@
       ms: a.ms || 0,
       ease: a.ease || DEFAULT_EASE,
       dark: targetDark(c.bg),
+      start: start,
     });
+  }
+
+  var last = '';
+  var seq = 0;
+  function sync() {
+    var c = readColors();
+    if (!c || !SAFE.test(c.bg) || !SAFE.test(c.fg)) return;
+    var key = c.bg + '|' + c.fg;
+    if (key === last) return;
+    var first = last === '';
+    last = key;
+    var mine = ++seq;
+    var flipped = nowEpoch();
+    // 页面刚加载的前 1.2 秒只是样式陆续生效，不播动画
+    var a = first || performance.now() < 1200 ? { kind: 'none' } : animation();
+    if (a.kind !== 'circle') {
+      send(c, a, flipped);
+      return;
+    }
+    // 站点是等新旧画面截好才开始放圆形动画，比主题 class 变化晚几帧。
+    // 跨进程传消息一定有延迟，所以不靠"收到消息就开始"，而是把页面动画真正开始的时刻
+    // 一起告诉标题条，标题条按这个时刻算出自己该走到哪一帧，延迟再大也对得上。
+    var tries = 0;
+    (function poll() {
+      if (mine !== seq) return; // 又切了一次主题，这次作废
+      var anim = findThemeAnimation();
+      var st = anim ? anim.startTime : null;
+      // 只认变色之后才开始的动画，上一次切换残留的不算
+      if (
+        typeof st === 'number' &&
+        performance.timeOrigin + st >= flipped - 30
+      ) {
+        send(c, a, performance.timeOrigin + st);
+      } else if (++tries > 175) {
+        // 等了约 700ms 还没等到（动画被跳过等），按变色时刻估一个起点
+        send(c, a, flipped + 50);
+      } else {
+        setTimeout(poll, 4);
+      }
+    })();
   }
 
   function watch(node) {

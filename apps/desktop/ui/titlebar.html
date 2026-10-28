@@ -187,14 +187,25 @@
           cur = next;
           curLayer = nl;
           var ms = Number(p.ms) || 0;
-          if (p.kind === 'none' || reduced.matches || !old || ms <= 0) {
+          // 消息从页面传到这里要时间：按页面动画真正开始的时刻算出已经走了多久，
+          // 从对应的那一帧接着播，延迟再大也和页面对得上；整段时长都过了就直接落到终点
+          var elapsed = p.start > 0 ? Math.max(0, Date.now() - p.start) : 0;
+          if (
+            p.kind === 'none' ||
+            reduced.matches ||
+            !old ||
+            ms <= 0 ||
+            elapsed >= ms
+          ) {
             bar.appendChild(nl);
             if (old) old.remove();
             syncLabels();
             return;
           }
+          // 负的 delay = 动画一开始就已经走了 elapsed 毫秒；再补半帧，因为动画要等下一帧才真正开始
           var opts = {
             duration: ms,
+            delay: elapsed > 0 ? -(elapsed + 8) : 0,
             easing: p.ease || 'ease',
             fill: 'forwards',
           };
