@@ -22,12 +22,13 @@ import { useViewerIdentity } from '@/hooks/useViewerIdentity';
 import AIChatPanel from '@/components/AIChatPanel';
 import BannerCarousel from '@/components/BannerCarousel';
 import HomeRooms from '@/components/catalog/HomeRooms';
+import PosterGrid from '@/components/catalog/PosterGrid';
 import PosterMotion from '@/components/catalog/PosterMotion';
 import PublicCatalogPage from '@/components/catalog/PublicCatalogPage';
 import SectionHeader from '@/components/catalog/SectionHeader';
-import PosterGrid from '@/components/catalog/PosterGrid';
 import ContinueWatching from '@/components/ContinueWatching';
 import HttpWarningDialog from '@/components/feedback/HttpWarningDialog';
+import ReleaseNoticeDialog from '@/components/feedback/ReleaseNoticeDialog';
 import Toast, { ToastProps } from '@/components/feedback/Toast';
 import PageContainer from '@/components/PageContainer';
 import PageLayout from '@/components/PageLayout';
@@ -870,6 +871,9 @@ function HomeClient() {
           </motion.div>
         </div>
       )}
+
+      {/* 新版本更新说明：后台每发布一个新版本，每个浏览器只弹一次；公告在显示时先让公告 */}
+      <ReleaseNoticeDialog blocked={showAnnouncement} />
 
       {showDirectPlayDialog && (
         <div
