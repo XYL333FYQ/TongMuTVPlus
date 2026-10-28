@@ -65,12 +65,13 @@
   // ---------- 窗口按钮 ----------
   var SHADOW_CSS =
     ':host { all: initial; }' +
+    // 颜色优先用站点的 --tm-*；没有就用 refreshColors() 从页面实际背景 / 文字色取到的 --tm-shell-*
     '.ctls { position: fixed; top: 0; right: 0; z-index: 2147483647; display: flex; height: 32px;' +
-    ' border-bottom-left-radius: 10px; color: var(--tm-text, CanvasText);' +
-    ' background: color-mix(in srgb, var(--tm-bg, Canvas) 72%, transparent);' +
+    ' border-bottom-left-radius: 10px; color: var(--tm-text, var(--tm-shell-fg, CanvasText));' +
+    ' background: color-mix(in srgb, var(--tm-bg, var(--tm-shell-bg, Canvas)) 72%, transparent);' +
     ' -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);' +
     ' font: 12px/1 sans-serif; }' +
-    ':host-context(html[data-tm-no-blur]) .ctls { background: var(--tm-bg, Canvas);' +
+    ':host-context(html[data-tm-no-blur]) .ctls { background: var(--tm-bg, var(--tm-shell-bg, Canvas));' +
     ' -webkit-backdrop-filter: none; backdrop-filter: none; }' +
     '.btn { display: grid; place-items: center; width: 46px; height: 32px; padding: 0; border: 0;' +
     ' background: transparent; color: inherit; cursor: default; }' +
@@ -123,6 +124,27 @@
     });
   }
 
+  // 本站有 --tm-bg / --tm-text 就直接用（随主题过渡）；其他页面（本地填地址页、别的网站）
+  // 取页面实际的背景色和文字色，免得深色页面上冒出一块浅色底板
+  function solid(c) {
+    // 浏览器把全透明报成 rgba(0, 0, 0, 0)；rgb(0, 0, 0) 是不透明的黑，别误判
+    return c && c !== 'transparent' && !/^rgba\(.*,\s*0\)$/.test(c) ? c : '';
+  }
+  function refreshColors() {
+    if (!host || !document.body) return;
+    var rs = getComputedStyle(document.documentElement);
+    if (rs.getPropertyValue('--tm-bg').trim()) {
+      host.style.removeProperty('--tm-shell-bg');
+      host.style.removeProperty('--tm-shell-fg');
+      return;
+    }
+    var bs = getComputedStyle(document.body);
+    var bg = solid(bs.backgroundColor) || solid(rs.backgroundColor);
+    if (bg) host.style.setProperty('--tm-shell-bg', bg);
+    else host.style.removeProperty('--tm-shell-bg');
+    host.style.setProperty('--tm-shell-fg', bs.color);
+  }
+
   function mount() {
     if (!document.body) return;
     if (host && host.isConnected) return;
@@ -146,6 +168,7 @@
     }
     // 追加在 body 末尾：React 水合时对 body 末尾多出来的节点是放过的
     document.body.appendChild(host);
+    refreshColors();
     act('state');
   }
 
@@ -179,6 +202,9 @@
     new MutationObserver(function () {
       if (host && !host.isConnected) mount();
     }).observe(document.body, { childList: true });
+    // 样式表陆续加载、页面自己换色时，隔一会儿对一次
+    window.addEventListener('load', refreshColors);
+    setInterval(refreshColors, 1500);
   }
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', start);
