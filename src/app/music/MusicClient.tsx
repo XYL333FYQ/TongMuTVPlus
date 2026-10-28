@@ -30,7 +30,13 @@ import {
   X,
 } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
-import { useEffect, useRef, useState } from 'react';
+import {
+  type MutableRefObject,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 import { createPortal } from 'react-dom';
 
 import { cn } from '@/lib/cn';
@@ -40,8 +46,10 @@ import {
   SourcePill,
 } from '@/lib/music/shared';
 import type { MusicQuality, MusicSource, Song } from '@/lib/music/types';
+import { useRoomMusicActivity } from '@/hooks/useRoomMusicActivity';
 
 import AddToPlaylistModal from '@/components/AddToPlaylistModal';
+import Toast, { ToastProps } from '@/components/feedback/Toast';
 import LyricsPiPWindow from '@/components/LyricsPiPWindow';
 import MusicEmpty from '@/components/music/MusicEmpty';
 import MusicSidebarDrawer from '@/components/music/MusicSidebarDrawer';
@@ -67,8 +75,9 @@ import {
   MUSIC_ROW_TEXT,
 } from '@/components/music/tokens';
 import PageContainer from '@/components/PageContainer';
-import Toast, { ToastProps } from '@/components/feedback/Toast';
-import { useWatchRoomContextSafe } from '@/components/WatchRoomProvider';
+
+import RoomActivityActions from '@/features/playback/RoomActivityActions';
+import { useAudioFocus } from '@/features/playback/useAudioFocus';
 
 import type { MusicQueueItem, MusicSyncState } from '@/types/watch-room';
 
@@ -519,7 +528,9 @@ export default function MusicClient({
 }) {
   const router = useRouter();
   const pathname = usePathname();
-  const watchRoom = useWatchRoomContextSafe();
+  // 房间连接只经过这个 hook：浏览和本地听歌不改变房间，显式共享才切活动
+  const musicRoom = useRoomMusicActivity();
+  const [roomActionError, setRoomActionError] = useState('');
   const [currentSource, setCurrentSource] = useState<MusicSource>('wy');
   const [currentSong, setCurrentSong] = useState<Song | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -716,7 +727,31 @@ export default function MusicClient({
     surroundDistance,
   ]);
 
-  const audioRef = useRef<HTMLAudioElement>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [audioElement, setAudioElement] = useState<HTMLAudioElement | null>(
+    null
+  );
+  const attachAudio = useCallback((element: HTMLAudioElement | null) => {
+    (audioRef as MutableRefObject<HTMLAudioElement | null>).current = element;
+    setAudioElement(element);
+  }, []);
+  const { ownsSound, claimSound } = useAudioFocus(audioElement, false);
+  // 本机真正开始出声：不是在给房间发布时，先退出跟随并停掉房间电影，再拿声音归属
+  useEffect(() => {
+    if (!audioElement) return;
+    const onPlay = () => {
+      void musicRoom.beginLocalPlayback().then((ok) => {
+        if (ok) {
+          claimSound();
+          return;
+        }
+        audioElement.pause();
+        setRoomActionError('未能退出房间同步，已暂停播放，请重试');
+      });
+    };
+    audioElement.addEventListener('play', onPlay);
+    return () => audioElement.removeEventListener('play', onPlay);
+  }, [audioElement, musicRoom.beginLocalPlayback, claimSound]);
   const lyricsContainerRef = useRef<HTMLDivElement>(null);
   const sleepHoursPickerRef = useRef<HTMLDivElement>(null);
   const sleepMinutesPickerRef = useRef<HTMLDivElement>(null);
@@ -740,13 +775,30 @@ export default function MusicClient({
   const volumeRef = useRef(volume);
   const spectrumSeedRef = useRef(Math.random() * Math.PI * 2);
   const qualitySwitchRequestRef = useRef(0);
+  // 每次选歌一个编号：慢的旧回包不能盖掉用户后来选的歌（本机和房间已经是新歌）
+  const songRequestRef = useRef(0);
   const currentSongRef = useRef<Song | null>(null);
   const currentSourceRef = useRef(currentSource);
   const plannedNextSongRef = useRef<Song | null>(null);
   const plannedNextSongKeyRef = useRef('');
 
-  const isMusicRoomOwner = Boolean(
-    watchRoom?.isOwner && watchRoom.currentRoom?.roomType === 'music'
+  // 房间已在放音乐、本设备有控制权且在跟随时，本机的操作才同步给房间
+  const isPublishingToRoom = musicRoom.publishing;
+  const publishToRoom = useCallback(
+    (
+      kind: 'update' | 'play' | 'pause' | 'seek' | 'change',
+      state: MusicSyncState
+    ) => {
+      void musicRoom
+        .publish(kind, state)
+        .then(() => setRoomActionError(''))
+        .catch((error) =>
+          setRoomActionError(
+            error instanceof Error ? error.message : '房间同步未成功'
+          )
+        );
+    },
+    [musicRoom.publish]
   );
 
   const toMusicQueueItem = (song: Song): MusicQueueItem => ({
@@ -837,8 +889,8 @@ export default function MusicClient({
   };
 
   const emitMusicChange = (state: MusicSyncState | null) => {
-    if (!isMusicRoomOwner || !watchRoom || !state) return;
-    watchRoom.changeMusic(state);
+    if (!state) return;
+    publishToRoom('change', state);
   };
 
   const buildStreamUrl = (
@@ -1226,12 +1278,12 @@ export default function MusicClient({
   }, [currentSource]);
 
   useEffect(() => {
-    if (!isMusicRoomOwner || !watchRoom || !currentSong) return;
+    if (!isPublishingToRoom || !currentSong) return;
 
-    watchRoom.updateMusicState(buildMusicRoomState(currentSong));
+    publishToRoom('update', buildMusicRoomState(currentSong));
   }, [
-    isMusicRoomOwner,
-    watchRoom,
+    isPublishingToRoom,
+    publishToRoom,
     currentSong,
     playlist,
     playlistIndex,
@@ -1240,10 +1292,11 @@ export default function MusicClient({
   ]);
 
   useEffect(() => {
-    if (!isMusicRoomOwner || !watchRoom || !currentSong || !isPlaying) return;
+    if (!isPublishingToRoom || !currentSong || !isPlaying) return;
 
     const interval = window.setInterval(() => {
-      watchRoom.updateMusicState(
+      publishToRoom(
+        'update',
         buildMusicRoomState(currentSong, {
           currentTime:
             audioRef.current?.currentTime || currentTimeRef.current || 0,
@@ -1254,8 +1307,8 @@ export default function MusicClient({
 
     return () => window.clearInterval(interval);
   }, [
-    isMusicRoomOwner,
-    watchRoom,
+    isPublishingToRoom,
+    publishToRoom,
     currentSong,
     isPlaying,
     playlist,
@@ -1391,6 +1444,8 @@ export default function MusicClient({
 
   // 播放歌曲
   const playSong = async (song: Song, index: number) => {
+    const songRequest = ++songRequestRef.current;
+    const isLatestSong = () => songRequest === songRequestRef.current;
     beginResolving();
     try {
       // 使用歌曲自己的平台信息，如果没有则使用当前选择的平台
@@ -1483,6 +1538,7 @@ export default function MusicClient({
 
         fetchPlayData(song, platform, quality, false)
           .then((data) => {
+            if (!isLatestSong()) return;
             if (data.success) {
               if (data.data.song?.cover) {
                 setCurrentSong({
@@ -1508,6 +1564,7 @@ export default function MusicClient({
           });
       } else {
         const data = await fetchPlayData(song, platform, quality, true);
+        if (!isLatestSong()) return;
         if (data.success && data.data?.play?.directUrl) {
           if (data.data.song?.cover) {
             setCurrentSong({
@@ -1601,9 +1658,10 @@ export default function MusicClient({
       if (isPlaying) {
         audioRef.current.pause();
         setIsPlaying(false);
-        if (isMusicRoomOwner) {
+        if (isPublishingToRoom) {
           if (currentSong) {
-            watchRoom?.pauseMusic(
+            publishToRoom(
+              'pause',
               buildMusicRoomState(currentSong, {
                 currentTime:
                   audioRef.current.currentTime || currentTimeRef.current || 0,
@@ -1639,9 +1697,10 @@ export default function MusicClient({
           setIsBuffering(false);
         });
         setIsPlaying(true);
-        if (isMusicRoomOwner) {
+        if (isPublishingToRoom) {
           if (currentSong) {
-            watchRoom?.playMusic(
+            publishToRoom(
+              'play',
               buildMusicRoomState(currentSong, {
                 currentTime:
                   audioRef.current.currentTime || currentTimeRef.current || 0,
@@ -2270,10 +2329,11 @@ export default function MusicClient({
     if (audioRef.current) {
       audioRef.current.currentTime = newTime;
     }
-    if (isMusicRoomOwner) {
+    if (isPublishingToRoom) {
       const syncSong = currentSongRef.current || currentSong;
       if (syncSong) {
-        watchRoom?.seekMusic(
+        publishToRoom(
+          'seek',
           buildMusicRoomState(syncSong, {
             currentTime: newTime,
             isPlaying,
@@ -2296,10 +2356,11 @@ export default function MusicClient({
     audio.currentTime = nextTime;
     setCurrentTime(nextTime);
     setCurrentLyricIndex(index);
-    if (isMusicRoomOwner) {
+    if (isPublishingToRoom) {
       const syncSong = currentSongRef.current || currentSong;
       if (syncSong) {
-        watchRoom?.seekMusic(
+        publishToRoom(
+          'seek',
           buildMusicRoomState(syncSong, {
             currentTime: nextTime,
             isPlaying,
@@ -2931,6 +2992,31 @@ export default function MusicClient({
                 />
               </div>
 
+              {musicRoom.hasRoom && (
+                <RoomActivityActions
+                  title={currentSong.name}
+                  selectionKey={`${currentSong.platform || currentSource}:${
+                    currentSong.id
+                  }`}
+                  active={musicRoom.active}
+                  hasSelection
+                  onShare={() =>
+                    musicRoom.share(buildMusicRoomState(currentSong))
+                  }
+                  returnHref='/music'
+                  soundBlocked={!ownsSound}
+                  onSound={async () => {
+                    claimSound();
+                    await audioRef.current?.play().catch(() => undefined);
+                  }}
+                />
+              )}
+              {roomActionError && (
+                <p role='status' className='tm-activity-error'>
+                  {roomActionError}
+                </p>
+              )}
+
               <div className='flex items-center justify-between gap-4 mt-1'>
                 {/* Song Info */}
                 <div className='flex items-center gap-3 min-w-0 flex-1'>
@@ -3142,7 +3228,7 @@ export default function MusicClient({
         )}
 
         {/* Audio Element */}
-        <audio ref={audioRef} className='hidden' />
+        <audio ref={attachAudio} className='hidden' />
 
         {/* Lyrics Modal */}
         {showLyrics && currentSong && (

@@ -63,6 +63,13 @@ import MobileActionSheet from '@/components/feedback/MobileActionSheet';
 import { ImagePlaceholder } from '@/components/ImagePlaceholder';
 import TrailerPickerDialog from '@/components/TrailerPickerDialog';
 
+import { usePlaybackSessionSafe } from '@/features/playback/context';
+import {
+  filmPlaybackHref,
+  togetherSelectionHref,
+} from '@/features/playback/selection-links';
+import { queuePlaybackHref } from '@/features/playback/session';
+
 export interface VideoCardProps {
   id?: string;
   source?: string;
@@ -159,6 +166,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
     ref
   ) {
     const router = useRouter();
+    const playback = usePlaybackSessionSafe();
     const [showAnimeSubscribe, setShowAnimeSubscribe] = useState(false);
     const [animeSubscribeToast, setAnimeSubscribeToast] = useState('');
     const isAdminUser = useMemo(() => {
@@ -396,97 +404,64 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
       [from, actualSource, actualId, onDelete]
     );
 
+    const selectedPlaybackHref = useMemo(() => {
+      const searchOnly = from === 'douban' || from === 'tmdb';
+      return appendSpecialSourceParam(
+        filmPlaybackHref({
+          title: actualTitle,
+          source: searchOnly ? undefined : actualSource,
+          id: searchOnly ? undefined : actualId,
+          year: actualYear,
+          searchType: actualSearchType,
+          searchTitle: actualQuery,
+          prefer: isAggregate,
+          duanju: isDuanju,
+        })
+      );
+    }, [
+      from,
+      actualTitle,
+      actualSource,
+      actualId,
+      actualYear,
+      actualSearchType,
+      actualQuery,
+      isAggregate,
+      isDuanju,
+    ]);
+
     const handleClick = useCallback(() => {
-      // 即将上映的电影：单击显示上映倒计时提示，不跳转
       if (isUpcoming) {
         setShowUpcomingInfo(true);
-        // 2秒后自动隐藏
-        setTimeout(() => {
-          setShowUpcomingInfo(false);
-        }, 2000);
+        setTimeout(() => setShowUpcomingInfo(false), 2000);
         return;
       }
-
       onBeforeNavigate?.();
-
       if (origin === 'live' && actualSource && actualId) {
-        // 直播内容跳转到直播页面
-        const url = `/live?source=${actualSource.replace(
-          'live_',
-          ''
-        )}&id=${actualId.replace('live_', '')}`;
-        router.push(url);
-      } else if (
-        from === 'douban' ||
-        from === 'tmdb' ||
-        (isAggregate && !actualSource && !actualId)
-      ) {
-        // 检测当前是否在 play 页面
-        const isCurrentlyOnPlayPage =
-          typeof window !== 'undefined' && window.location.pathname === '/play';
-
-        let url = appendSpecialSourceParam(
-          `/play?title=${encodeURIComponent(actualTitle.trim())}${
-            actualYear ? `&year=${actualYear}` : ''
-          }${actualSearchType ? `&stype=${actualSearchType}` : ''}${
-            isAggregate ? '&prefer=true' : ''
-          }${
-            actualQuery
-              ? `&stitle=${encodeURIComponent(actualQuery.trim())}`
-              : ''
-          }`
+        router.push(
+          '/live?' +
+            new URLSearchParams({
+              source: actualSource.replace('live_', ''),
+              id: actualId.replace('live_', ''),
+            })
         );
-
-        if (isCurrentlyOnPlayPage) {
-          // 在 play 页面内，添加 _reload 参数强制刷新
-          url += `&_reload=${Date.now()}`;
-          window.location.href = url;
-        } else {
-          // 不在 play 页面，正常跳转
-          router.push(url);
-        }
-      } else if (actualSource && actualId) {
-        // 检测当前是否在 play 页面
-        const isCurrentlyOnPlayPage =
-          typeof window !== 'undefined' && window.location.pathname === '/play';
-
-        let url = appendSpecialSourceParam(
-          `/play?source=${actualSource}&id=${actualId}&title=${encodeURIComponent(
-            actualTitle
-          )}${actualYear ? `&year=${actualYear}` : ''}${
-            isAggregate ? '&prefer=true' : ''
-          }${
-            actualQuery
-              ? `&stitle=${encodeURIComponent(actualQuery.trim())}`
-              : ''
-          }${actualSearchType ? `&stype=${actualSearchType}` : ''}${
-            isDuanju ? '&duanju=1' : ''
-          }`
-        );
-
-        if (isCurrentlyOnPlayPage) {
-          // 在 play 页面内，添加 _reload 参数强制刷新
-          url += `&_reload=${Date.now()}`;
-          window.location.href = url;
-        } else {
-          // 不在 play 页面，正常跳转
-          router.push(url);
-        }
+      } else {
+        if (
+          window.location.pathname + window.location.search ===
+          selectedPlaybackHref
+        )
+          playback?.requestPlayback(selectedPlaybackHref, 'personal');
+        else router.push(selectedPlaybackHref);
       }
     }, [
       isUpcoming,
+      onBeforeNavigate,
       origin,
-      from,
       actualSource,
       actualId,
+      selectedPlaybackHref,
+      playback?.requestPlayback,
       router,
-      actualTitle,
-      actualYear,
-      isAggregate,
-      actualQuery,
-      actualSearchType,
-      onBeforeNavigate,
-      isDuanju,
     ]);
 
     // 新标签页播放处理函数
@@ -2157,7 +2132,13 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
             sourceId={id}
             source={source}
             onPlay={handleClick}
-            onTogether={() => router.push('/watch-room')}
+            onTogether={() =>
+              router.push(
+                togetherSelectionHref(
+                  queuePlaybackHref(selectedPlaybackHref, currentEpisode || 1)
+                )
+              )
+            }
             onFavorite={
               from !== 'douban' && from !== 'tmdb' && actualSource && actualId
                 ? handleToggleFavorite

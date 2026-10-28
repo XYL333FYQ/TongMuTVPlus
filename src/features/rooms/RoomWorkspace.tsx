@@ -29,7 +29,6 @@ import { createPortal } from 'react-dom';
 
 import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
 import { useReducedMotionSetting } from '@/lib/motion';
-import { base58Encode } from '@/lib/utils';
 
 import PageContainer from '@/components/PageContainer';
 import PageLayout from '@/components/PageLayout';
@@ -38,16 +37,26 @@ import { useWatchRoomContext } from '@/components/WatchRoomProvider';
 import { usePlaybackSession } from '@/features/playback/context';
 import PlaybackSlot from '@/features/playback/PlaybackSlot';
 import {
+  liveActivityHref,
+  normalizeActivityReturnHref,
+} from '@/features/playback/room-live';
+import {
+  normalizePlaybackHref,
   queueItemFromHref,
   queuePlaybackHref,
 } from '@/features/playback/session';
 
+import {
+  EXTERNAL_ROOM_SERVER_NOTICE,
+  isExternalRoomServer,
+} from './external-room-server';
 import {
   defaultRoomName,
   displayRoomName,
   maskedRoomId,
 } from './room-presentation';
 import RoomActionMenu from './RoomActionMenu';
+import RoomFilmPicker from './RoomFilmPicker';
 import RoomMediaInfo from './RoomMediaInfo';
 import RoomPlaybackButton from './RoomPlaybackButton';
 import RoomQuickStart from './RoomQuickStart';
@@ -67,13 +76,6 @@ type RoomSummary = Pick<
   | 'lifecycle'
   | 'updatedAt'
 >;
-type FilmChoice = {
-  id: string;
-  title: string;
-  source: string;
-  source_name?: string;
-  year?: string;
-};
 
 export default function RoomWorkspace() {
   const router = useRouter();
@@ -82,6 +84,22 @@ export default function RoomWorkspace() {
   const watchRoom = useWatchRoomContext();
   const playback = usePlaybackSession();
   const room = watchRoom.currentRoom;
+  const activity = room?.currentState;
+  const activityHref =
+    activity?.type === 'live'
+      ? liveActivityHref(activity)
+      : activity?.type === 'music'
+      ? '/watch-room/music'
+      : activity?.type === 'screen'
+      ? '/watch-room/screen'
+      : null;
+  const activityLabel =
+    activity?.type === 'live'
+      ? '观看直播'
+      : activity?.type === 'music'
+      ? '一起听'
+      : '观看共享';
+  const waitingQueue = room?.queue?.filter((item) => !item.playedAt) || [];
   const reducedMotion = useReducedMotionSetting();
   const [panelTab, setPanelTab] = useState<'queue' | 'chat' | 'members'>(
     'queue'
@@ -141,6 +159,22 @@ export default function RoomWorkspace() {
   const [dialog, setDialog] = useState<
     'create' | 'join' | 'picker' | 'settings' | null
   >(null);
+  const mutationOperation = useRef(0);
+  const activeRoom = useRef(room?.id);
+  activeRoom.current = room?.id;
+  const pickerAttempt = useRef<{
+    roomId: string;
+    href: string;
+    commandId: string;
+  } | null>(null);
+  useEffect(() => {
+    mutationOperation.current += 1;
+    pickerAttempt.current = null;
+    setBusy(false);
+    setError('');
+    setNotice('');
+    setDialog(null);
+  }, [room?.id]);
   const [name, setName] = useState('');
   const [pickerTitle, setPickerTitle] = useState('');
   const [copiedRoomId, setCopiedRoomId] = useState('');
@@ -155,6 +189,16 @@ export default function RoomWorkspace() {
   const attemptedInvite = useRef('');
   const directoryRequest = useRef(0);
   const inviteId = params.get('room') || '';
+  const selectedFilm = normalizePlaybackHref(params.get('film') || '');
+  const activityReturn = normalizeActivityReturnHref(
+    params.get('activityReturn')
+  );
+  const roomLocation = (id: string) =>
+    `/watch-room?${new URLSearchParams({
+      room: id,
+      ...(selectedFilm ? { film: selectedFilm } : {}),
+      ...(activityReturn ? { activityReturn } : {}),
+    })}`;
 
   useEffect(() => {
     const element = modal.current;
@@ -184,8 +228,16 @@ export default function RoomWorkspace() {
     setLiveEnabled(Boolean(window.RUNTIME_CONFIG?.LIVE_ENABLED));
   }, []);
 
+  const externalServer = isExternalRoomServer(watchRoom.config);
   const refresh = useCallback(async () => {
     const request = ++directoryRequest.current;
+    if (externalServer) {
+      // 外部服务没有房间目录 REST：不请求必败的接口，直接说明边界
+      setRooms([]);
+      setDirectoryError(EXTERNAL_ROOM_SERVER_NOTICE);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     try {
       const response = await fetch(`/api/rooms?mode=${directory}`, {
@@ -213,7 +265,7 @@ export default function RoomWorkspace() {
     } finally {
       if (request === directoryRequest.current) setLoading(false);
     }
-  }, [directory]);
+  }, [directory, externalServer]);
   useEffect(() => {
     if (room?.id) return;
     void refresh();
@@ -224,12 +276,16 @@ export default function RoomWorkspace() {
     };
   }, [refresh, room?.id]);
 
-  const requireLogin = () => {
+  const requireLogin = (targetRoomId?: string) => {
     if (username) return true;
+    const destination = new URLSearchParams();
+    if (targetRoomId || inviteId)
+      destination.set('room', targetRoomId || inviteId);
+    if (selectedFilm) destination.set('film', selectedFilm);
+    if (activityReturn) destination.set('activityReturn', activityReturn);
     router.push(
       `/login?redirect=${encodeURIComponent(
-        '/watch-room' +
-          (inviteId ? `?room=${encodeURIComponent(inviteId)}` : '')
+        '/watch-room' + (destination.toString() ? `?${destination}` : '')
       )}`
     );
     return false;
@@ -239,7 +295,7 @@ export default function RoomWorkspace() {
     roomPassword?: string,
     replaceCurrent = false
   ) => {
-    if (!requireLogin()) return;
+    if (!requireLogin(id.trim())) return;
     if (!watchRoom.isConnected) {
       setError('正在连接房间服务，请稍后再试');
       return;
@@ -266,8 +322,7 @@ export default function RoomWorkspace() {
       setDialog(null);
       setPassword('');
       // An invitation already has its room parameter; retain its other query values.
-      if (inviteId !== id.trim())
-        router.replace(`/watch-room?room=${encodeURIComponent(id.trim())}`);
+      if (inviteId !== id.trim()) router.replace(roomLocation(id.trim()));
     } catch (failure) {
       setJoinId(id);
       setDialog('join');
@@ -305,20 +360,44 @@ export default function RoomWorkspace() {
   }, [inviteId, username, watchRoom.isConnected, room?.id, params, router]);
 
   const mutate = async (event: string, payload: Record<string, unknown>) => {
+    const target = room?.id;
+    if (!target) return false;
+    const operation = ++mutationOperation.current;
+    const isCurrent = () =>
+      operation === mutationOperation.current && target === activeRoom.current;
     setBusy(true);
     setError('');
     try {
-      await watchRoom.roomCommand(event, payload);
-      return true;
+      await watchRoom.roomCommand(event, { ...payload, roomId: target });
+      return isCurrent();
     } catch (failure) {
-      setError(failure instanceof Error ? failure.message : '操作未完成');
+      if (isCurrent())
+        setError(failure instanceof Error ? failure.message : '操作未完成');
       return false;
     } finally {
-      setBusy(false);
+      if (isCurrent()) setBusy(false);
     }
   };
   const addFilm = async (href: string) => {
-    if (await mutate('queue:add', queueItemFromHref(href))) {
+    const target = room?.id;
+    if (!target) return;
+    if (
+      pickerAttempt.current?.roomId !== target ||
+      pickerAttempt.current.href !== href
+    )
+      pickerAttempt.current = {
+        roomId: target,
+        href,
+        commandId: crypto.randomUUID(),
+      };
+    if (
+      (await mutate('queue:add', {
+        ...queueItemFromHref(href),
+        commandId: pickerAttempt.current.commandId,
+      })) &&
+      activeRoom.current === target
+    ) {
+      pickerAttempt.current = null;
       setDialog(null);
       // 只有正在放映时才需要说明“不会切换当前影片”
       setNotice(
@@ -353,7 +432,7 @@ export default function RoomWorkspace() {
         userName: username,
       });
       setDialog(null);
-      router.replace(`/watch-room?room=${encodeURIComponent(created.id)}`);
+      router.replace(roomLocation(created.id));
     } catch (failure) {
       setError(failure instanceof Error ? failure.message : '创建失败');
     } finally {
@@ -399,6 +478,10 @@ export default function RoomWorkspace() {
     }
   };
   const restore = async (id: string) => {
+    if (externalServer) {
+      setError(EXTERNAL_ROOM_SERVER_NOTICE);
+      return;
+    }
     setBusy(true);
     setError('');
     try {
@@ -610,6 +693,41 @@ export default function RoomWorkspace() {
             </button>
           </div>
         )}
+        {activityReturn && (
+          <div className='tm-room-feedback'>
+            <p>
+              {room
+                ? '房间已连接。返回已选内容，再明确共享到房间。'
+                : '创建或加入房间后，可返回继续共享已选内容。'}
+            </p>
+            {room && (
+              <Link className='tm-room-primary' href={activityReturn}>
+                返回已选内容
+              </Link>
+            )}
+          </div>
+        )}
+        {selectedFilm && (
+          <div className='tm-room-feedback'>
+            <p>
+              已选择「{queueItemFromHref(selectedFilm).title}」。
+              {room
+                ? '确认片源后加入待看，当前影片继续。'
+                : '创建或进入房间后继续选片。'}
+            </p>
+            {room && (
+              <Link
+                className='tm-room-primary'
+                href={`/watch-room/select?${new URLSearchParams({
+                  room: room.id,
+                  film: selectedFilm,
+                })}`}
+              >
+                添加这部到待看
+              </Link>
+            )}
+          </div>
+        )}
         {room ? (
           <div className='tm-room-workspace'>
             <section className='tm-room-stage'>
@@ -633,17 +751,19 @@ export default function RoomWorkspace() {
                       ? '你正在个人观看'
                       : room.currentState
                       ? '房间正在进行其他活动'
-                      : room.queue?.length
-                      ? `下一部：${room.queue[0].title}`
+                      : waitingQueue.length
+                      ? `下一部：${waitingQueue[0].title}`
                       : '选一部影片，开始一起看'}
                   </h2>
                   <p>
                     {!playback.followingRoom
                       ? '房间连接和消息保留'
-                      : room.queue?.length && !room.currentState
+                      : waitingQueue.length && !room.currentState
                       ? watchRoom.canControl
-                        ? `片单里有 ${room.queue.length} 部，准备好就开始`
-                        : `片单里有 ${room.queue.length} 部，等主持开始播放`
+                        ? `片单里有 ${waitingQueue.length} 部待看，准备好就开始`
+                        : `片单里有 ${waitingQueue.length} 部待看，等主持开始播放`
+                      : activityHref
+                      ? '当前活动会继续；添加待看不会切换活动。'
                       : '加入片单，再由主持播放'}
                   </p>
                   <div className='tm-room-empty-actions'>
@@ -654,17 +774,25 @@ export default function RoomWorkspace() {
                       >
                         回到一起看
                       </button>
-                    ) : room.queue?.length &&
+                    ) : activityHref ? (
+                      <Link className='tm-room-primary' href={activityHref}>
+                        {activityLabel}
+                      </Link>
+                    ) : waitingQueue.length > 0 &&
                       !room.currentState &&
                       watchRoom.canControl ? (
                       <button
                         className='tm-room-primary'
                         onClick={() => {
-                          const next = room.queue?.[0];
+                          const next = waitingQueue[0];
                           if (next)
                             playback.requestPlayback(
-                              queuePlaybackHref(next.href, next.episode || 1),
-                              'user'
+                              queuePlaybackHref(
+                                next.href,
+                                next.episode || 1,
+                                next.id
+                              ),
+                              'together'
                             );
                         }}
                       >
@@ -743,12 +871,20 @@ export default function RoomWorkspace() {
                 </div>
               </div>
               <div className='tm-room-activities'>
+                <Link
+                  href={`/watch-room/select?room=${encodeURIComponent(
+                    room.id
+                  )}`}
+                >
+                  <Plus size={16} />
+                  添加待看
+                </Link>
                 {!room.currentState &&
                   playback.href &&
                   watchRoom.canControl && (
                     <button
                       className='tm-room-share-current tm-btn tm-btn-ghost'
-                      onClick={playback.shareCurrentPlayback}
+                      onClick={() => playback.shareCurrentPlayback(room.id)}
                     >
                       分享当前正在看的影片
                     </button>
@@ -871,7 +1007,7 @@ export default function RoomWorkspace() {
                 {!room.queue?.length && (
                   <div className='tm-room-queue-empty'>
                     <p>片单为空</p>
-                    <span>选好的影片会排在这里，按顺序播放</span>
+                    <span>选好的影片会排在这里，由主持确认播放</span>
                   </div>
                 )}
                 <ol>
@@ -893,6 +1029,7 @@ export default function RoomWorkspace() {
                       <div className='tm-room-queue-copy'>
                         <h3>{item.title}</h3>
                         <p>
+                          {item.playedAt ? '已播放 · ' : ''}
                           {item.addedBy} 添加 · 第{item.episode || 1}集
                         </p>
                       </div>
@@ -901,8 +1038,12 @@ export default function RoomWorkspace() {
                           <button
                             onClick={() =>
                               playback.requestPlayback(
-                                queuePlaybackHref(item.href, item.episode || 1),
-                                'user'
+                                queuePlaybackHref(
+                                  item.href,
+                                  item.episode || 1,
+                                  item.id
+                                ),
+                                'together'
                               )
                             }
                             aria-label={`播放${item.title}`}
@@ -940,7 +1081,7 @@ export default function RoomWorkspace() {
                                   },
                                 ]
                               : []),
-                            ...(item.addedBy === username ||
+                            ...((item.addedBy === username && !item.playedAt) ||
                             watchRoom.isOwner ||
                             watchRoom.members.find(
                               (member) => member.id === watchRoom.socket?.id
@@ -1047,8 +1188,18 @@ export default function RoomWorkspace() {
                 queue={room.queue || []}
               />
             )}
-            {!room.currentState && playback.followingRoom && (
-              <RoomQuickStart onChoose={openPicker} />
+            {playback.followingRoom && (
+              <RoomQuickStart
+                playing={Boolean(room.currentState)}
+                onChoose={(title) =>
+                  router.push(
+                    `/watch-room/select?${new URLSearchParams({
+                      room: room.id,
+                      q: title,
+                    })}`
+                  )
+                }
+              />
             )}
           </div>
         ) : (
@@ -1245,7 +1396,7 @@ export default function RoomWorkspace() {
                     </button>
                   </header>
                   {dialog === 'picker' ? (
-                    <FilmPicker
+                    <RoomFilmPicker
                       busy={busy}
                       onAdd={addFilm}
                       initialQuery={pickerTitle}
@@ -1423,188 +1574,5 @@ export default function RoomWorkspace() {
           )}
       </PageContainer>
     </PageLayout>
-  );
-}
-
-function FilmPicker({
-  busy,
-  onAdd,
-  initialQuery = '',
-}: {
-  busy: boolean;
-  onAdd: (href: string) => Promise<void>;
-  initialQuery?: string;
-}) {
-  const [mode, setMode] = useState<'catalog' | 'direct'>('catalog');
-  const [query, setQuery] = useState(initialQuery);
-  const [title, setTitle] = useState('');
-  const [results, setResults] = useState<FilmChoice[]>([]);
-  const [searching, setSearching] = useState(false);
-  const [searched, setSearched] = useState(false);
-  const [error, setError] = useState('');
-  const searchRequest = useRef<AbortController | null>(null);
-  const searchSequence = useRef(0);
-  useEffect(
-    () => () => {
-      searchSequence.current += 1;
-      searchRequest.current?.abort();
-    },
-    []
-  );
-  const changeMode = (next: 'catalog' | 'direct') => {
-    // 模式独立，迟到的搜索结果不能覆盖新模式或重新锁住提交按钮。
-    searchSequence.current += 1;
-    searchRequest.current?.abort();
-    searchRequest.current = null;
-    setMode(next);
-    setQuery('');
-    setError('');
-    setResults([]);
-    setSearching(false);
-    setSearched(false);
-  };
-  const search = async () => {
-    setError('');
-    if (mode === 'direct') {
-      try {
-        const url = new URL(query.trim());
-        if (
-          !['http:', 'https:'].includes(url.protocol) ||
-          url.username ||
-          url.password ||
-          !/\.(mp4|m3u8)$/i.test(url.pathname)
-        )
-          throw new Error(
-            '请使用完整的 MP4 或 M3U8 直链。电影网页地址需要独立解析能力。'
-          );
-        await onAdd(
-          `/play?${new URLSearchParams({
-            source: 'directplay',
-            id: base58Encode(url.href),
-            title: title || '分享的影片',
-            episode: '1',
-          })}`
-        );
-      } catch (failure) {
-        setError(failure instanceof Error ? failure.message : '地址无效');
-      }
-      return;
-    }
-    searchRequest.current?.abort();
-    const request = new AbortController();
-    searchRequest.current = request;
-    const sequence = ++searchSequence.current;
-    setSearching(true);
-    setSearched(true);
-    try {
-      const response = await fetch(
-        `/api/search?q=${encodeURIComponent(query.trim())}`,
-        { cache: 'no-store', signal: request.signal }
-      );
-      if (!response.ok)
-        throw new Error('搜索失败，请检查登录和站长配置的数据源');
-      const data = await response.json();
-      if (sequence === searchSequence.current && !request.signal.aborted)
-        setResults(data.results || []);
-    } catch (failure) {
-      if (sequence === searchSequence.current && !request.signal.aborted)
-        setError(failure instanceof Error ? failure.message : '搜索失败');
-    } finally {
-      if (sequence === searchSequence.current) {
-        searchRequest.current = null;
-        setSearching(false);
-      }
-    }
-  };
-  return (
-    <div className='tm-room-picker'>
-      <div className='tm-room-picker-tabs'>
-        <button
-          aria-pressed={mode === 'catalog'}
-          onClick={() => changeMode('catalog')}
-        >
-          <Film size={15} />
-          影视库
-        </button>
-        <button
-          aria-pressed={mode === 'direct'}
-          onClick={() => changeMode('direct')}
-        >
-          <Link2 size={15} />
-          视频直链
-        </button>
-      </div>
-      <form
-        onSubmit={(event) => {
-          event.preventDefault();
-          void search();
-        }}
-      >
-        {mode === 'direct' && (
-          <label>
-            影片名称
-            <input
-              value={title}
-              onChange={(event) => setTitle(event.target.value)}
-              maxLength={240}
-              placeholder='给朋友一个好认的名字'
-            />
-          </label>
-        )}
-        <label>
-          {mode === 'catalog' ? '搜索影片' : 'MP4 / M3U8 地址'}
-          <input
-            required
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder={
-              mode === 'catalog'
-                ? '电影名、剧集名…'
-                : 'https://…/video.m3u8?token=…'
-            }
-          />
-        </label>
-        <button
-          className='tm-room-primary'
-          disabled={busy || searching || !query.trim()}
-        >
-          {searching ? '正在搜索…' : mode === 'catalog' ? '搜索' : '加入片单'}
-        </button>
-      </form>
-      <p>加入片单不会切换正在播放的影片。播放由当前主持确认。</p>
-      {error && <p role='alert'>{error}</p>}
-      <div className='tm-room-picker-results'>
-        {results.map((film, index) => (
-          <div key={`${film.source}:${film.id}:${index}`}>
-            <div>
-              <h3>{film.title}</h3>
-              <p>
-                {film.year || '年份未知'} · {film.source_name || film.source}
-              </p>
-            </div>
-            <button
-              disabled={busy}
-              onClick={() =>
-                onAdd(
-                  `/play?${new URLSearchParams({
-                    source: film.source,
-                    id: String(film.id),
-                    title: film.title,
-                    year: film.year || '',
-                    episode: '1',
-                  })}`
-                )
-              }
-              aria-label={`将${film.title}加入片单`}
-            >
-              <Plus size={18} />
-            </button>
-          </div>
-        ))}
-        {searched && !searching && !results.length && !error && (
-          <p>没有找到结果。可以换个关键词，或请站长检查数据源。</p>
-        )}
-      </div>
-    </div>
   );
 }

@@ -35,6 +35,12 @@ import LoadingStyle, {
 } from '@/components/feedback/LoadingStyle';
 import PageContainer from '@/components/PageContainer';
 import PageLayout from '@/components/PageLayout';
+import { useWatchRoomContextSafe } from '@/components/WatchRoomProvider';
+
+import { usePlaybackSessionSafe } from '@/features/playback/context';
+import RoomActivityActions from '@/features/playback/RoomActivityActions';
+import { RoomLiveMessages } from '@/features/playback/RoomLiveMessages';
+import { useAudioFocus } from '@/features/playback/useAudioFocus';
 
 // 扩展 HTMLVideoElement 类型以支持 hls 和 flv 属性
 declare global {
@@ -234,21 +240,82 @@ function LivePageClient() {
   const [favorited, setFavorited] = useState(false);
   const favoritedRef = useRef(false);
   const currentChannelRef = useRef<LiveChannel | null>(null);
+  const watchRoom = useWatchRoomContextSafe();
+  const playbackSession = usePlaybackSessionSafe();
+  const [roomPlayer, setRoomPlayer] = useState<HTMLElement | null>(null);
+  const [roomActionError, setRoomActionError] = useState('');
+  const localChannelOperation = useRef(0);
+  const roomLiveActive = useRef(false);
+  useEffect(() => {
+    localChannelOperation.current += 1;
+    setRoomActionError('');
+    return () => {
+      localChannelOperation.current += 1;
+    };
+  }, [watchRoom?.currentRoom?.id]);
 
   // 观影室同步功能
   const liveSync = useLiveSync({
     currentChannelId: currentChannel?.id || '',
     currentChannelName: currentChannel?.name || '',
     currentChannelUrl: currentChannel?.url || '',
-    onChannelChange: (channelId, _channelUrl) => {
-      // 房员接收到频道切换指令
-      if (!currentChannels || !Array.isArray(currentChannels)) return;
-      const channel = currentChannels.find((c) => c.id === channelId);
-      if (channel) {
-        handleChannelChange(channel);
-      }
+    isReady: () =>
+      Boolean(artPlayerRef.current?.video?.readyState >= 2 && !isVideoLoading),
+    onChannelChange: (channelId, channelUrl) => {
+      if (
+        currentChannel?.id === channelId &&
+        currentChannel?.url === channelUrl &&
+        artPlayerRef.current?.video?.readyState >= 2
+      )
+        return;
+      const state = watchRoom?.currentRoom?.currentState;
+      const channel = currentChannels.find(
+        (c) => c.id === channelId && c.url === channelUrl
+      ) || {
+        id: channelId,
+        url: channelUrl,
+        name: state?.type === 'live' ? state.channelName : channelId,
+        tvgId: channelId,
+        logo: '',
+        group: '房间频道',
+      };
+      void handleChannelChange(channel, 'snapshot');
     },
   });
+  roomLiveActive.current = liveSync.active;
+  const localVideo = roomPlayer?.querySelector('video') || null;
+  const { ownsSound, claimSound } = useAudioFocus(localVideo, false);
+  const soundScope = useRef('');
+  soundScope.current = JSON.stringify([
+    watchRoom?.currentRoom?.id,
+    currentChannel?.id,
+    currentChannel?.url,
+    watchRoom?.currentRoom?.currentState?.type,
+  ]);
+  const playLocalSound = async () => {
+    const scope = soundScope.current;
+    const video = localVideo;
+    if (!video) return;
+    if (
+      watchRoom?.currentRoom &&
+      playbackSession?.followingRoom &&
+      !liveSync.active
+    ) {
+      if (!(await playbackSession.enterPersonalViewing()))
+        throw Error('未能退出共同播放，请重试');
+    }
+    if (scope !== soundScope.current || artPlayerRef.current?.video !== video)
+      return;
+    if (!liveSync.active) playbackSession?.controller?.pause();
+    claimSound();
+    try {
+      await video.play();
+    } catch (error) {
+      if (scope === soundScope.current && artPlayerRef.current?.video === video)
+        artPlayerRef.current.notice.show = '声音已启用，点击画面开始播放';
+      throw error;
+    }
+  };
 
   // EPG数据清洗函数 - 去除重叠的节目，保留时间较短的，显示今日节目（18点后包含明天10点前的节目）
   const cleanEpgData = (
@@ -546,7 +613,7 @@ function LivePageClient() {
       );
 
       // 默认选中第一个频道
-      if (channels.length > 0) {
+      if (channels.length > 0 && !roomLiveActive.current) {
         let selectedChannel: LiveChannel | null = null;
 
         if (needLoadChannel) {
@@ -754,9 +821,36 @@ function LivePageClient() {
   };
 
   // 切换频道
-  const handleChannelChange = async (channel: LiveChannel) => {
+  const handleChannelChange = async (
+    channel: LiveChannel,
+    origin: 'user' | 'snapshot' = 'user'
+  ) => {
     // 如果正在切换直播源，则禁用频道切换
-    if (isSwitchingSource) return;
+    if (isSwitchingSource && origin !== 'snapshot') return;
+    if (origin === 'user' && liveSync.active) {
+      try {
+        await liveSync.broadcastChannelChange({
+          type: 'live',
+          channelId: channel.id,
+          channelName: channel.name,
+          channelUrl: channel.url,
+        });
+      } catch (error) {
+        setRoomActionError(
+          error instanceof Error ? error.message : '房间频道切换未成功'
+        );
+      }
+      return;
+    }
+    const selection = ++localChannelOperation.current;
+    if (
+      origin === 'user' &&
+      watchRoom?.currentRoom &&
+      playbackSession?.followingRoom
+    ) {
+      if (!(await playbackSession.enterPersonalViewing())) return;
+      if (selection !== localChannelOperation.current) return;
+    }
 
     // 首先销毁当前播放器
     cleanupPlayer();
@@ -1271,6 +1365,7 @@ function LivePageClient() {
 
   // 清理播放器资源的统一函数
   const cleanupPlayer = () => {
+    setRoomPlayer(null);
     // 重置不支持的类型状态
     setUnsupportedType(null);
 
@@ -2222,7 +2317,7 @@ function LivePageClient() {
           poster: currentChannel.logo,
           volume: 0.7,
           isLive: true, // 设置为直播模式
-          muted: false,
+          muted: true,
           autoplay: true,
           pip: true,
           autoSize: false,
@@ -2237,7 +2332,7 @@ function LivePageClient() {
           fullscreenWeb: true,
           subtitleOffset: false,
           miniProgressBar: false,
-          mutex: true,
+          mutex: false,
           playsInline: true,
           autoPlayback: false,
           airplay: true,
@@ -2352,6 +2447,7 @@ function LivePageClient() {
 
         // 监听播放器事件
         artPlayerRef.current.on('ready', () => {
+          setRoomPlayer(artPlayerRef.current?.template?.$player || null);
           setError(null);
           setIsVideoLoading(false);
         });
@@ -2689,6 +2785,22 @@ function LivePageClient() {
             </button>
           </div>
 
+          <RoomActivityActions
+            title={currentChannel?.name || '电视直播'}
+            selectionKey={`${currentChannel?.id}:${currentChannel?.url}`}
+            active={liveSync.active}
+            hasSelection={Boolean(currentChannel)}
+            onShare={() => liveSync.broadcastChannelChange()}
+            returnHref={`/live?${searchParams.toString()}`}
+            soundBlocked={Boolean(localVideo) && !ownsSound}
+            onSound={playLocalSound}
+          />
+          {roomActionError && (
+            <p role='status' className='tm-activity-error'>
+              {roomActionError}
+            </p>
+          )}
+
           <div
             className={`grid gap-4 lg:h-[500px] xl:h-[650px] 2xl:h-[750px] transition-all duration-300 ease-in-out ${
               isChannelListCollapsed
@@ -2770,6 +2882,11 @@ function LivePageClient() {
                 )}
               </div>
 
+              <RoomLiveMessages
+                target={roomPlayer}
+                active={liveSync.mediaMatches && Boolean(roomPlayer)}
+                activityKey={`${watchRoom?.currentRoom?.id}:${currentChannel?.id}:${currentChannel?.url}`}
+              />
               {/* 外部播放器按钮 - 观影室同步状态下隐藏 */}
               {videoUrl && !liveSync.isInRoom && (
                 <div className='mt-3 px-2 lg:flex-shrink-0 flex justify-end'>

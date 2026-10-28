@@ -46,6 +46,7 @@ export interface Member {
 
 export interface PlayState {
   type: 'play';
+  queueItemId?: string;
   url: string;
   currentTime: number;
   isPlaying: boolean;
@@ -118,6 +119,7 @@ export interface RoomQueueItem {
   episode?: number;
   addedBy: string;
   addedAt: number;
+  playedAt?: number;
 }
 
 export interface RoomCommandMeta {
@@ -169,6 +171,7 @@ export interface ServerToClientEvents {
   ) => void;
   'room:auth-required': (error: { code: string }) => void;
   'queue:updated': (state: {
+    roomId?: string;
     queue: RoomQueueItem[];
     revision: number;
   }) => void;
@@ -430,4 +433,6 @@ export interface StoredRoomInfo {
   userName: string;
   password?: string;
   timestamp: number;
+  following?: boolean;
+  personalHref?: string | null;
 }

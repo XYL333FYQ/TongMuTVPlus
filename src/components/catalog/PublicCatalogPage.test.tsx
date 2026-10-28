@@ -22,7 +22,9 @@ jest.mock('@/components/catalog/HomeRooms', () => ({
 }));
 jest.mock('@/components/catalog/HomeHero', () => ({
   __esModule: true,
-  default: () => null,
+  default: ({ onTogether }: { onTogether: () => void }) => (
+    <button onClick={onTogether}>一起看</button>
+  ),
 }));
 jest.mock('@/components/catalog/PosterMotion', () => ({
   __esModule: true,
@@ -52,6 +54,22 @@ beforeEach(() => {
       hasMore: false,
     }),
   });
+});
+
+test('guest together preserves the chosen film through the login destination', async () => {
+  render(<PublicCatalogPage mode='home' />);
+  fireEvent.click(await screen.findByRole('button', { name: '一起看' }));
+  const login = new URL(mockPush.mock.calls[0][0], 'https://site.test');
+  const room = new URL(
+    login.searchParams.get('redirect') || '/',
+    'https://site.test'
+  );
+  const film = new URL(
+    room.searchParams.get('film') || '/',
+    'https://site.test'
+  );
+  expect(room.pathname).toBe('/watch-room');
+  expect(film.searchParams.get('title')).toBe('作品甲');
 });
 afterEach(() => {
   global.fetch = originalFetch;

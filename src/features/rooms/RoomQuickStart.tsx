@@ -74,8 +74,10 @@ function shuffleCandidates(pool: DoubanItem[], previous: DoubanItem[] = []) {
 /** 公开目录只是找片资料；选择后仍由现有选片器查找可用来源。 */
 export default function RoomQuickStart({
   onChoose,
+  playing = false,
 }: {
   onChoose: (title: string) => void;
+  playing?: boolean;
 }) {
   const sectionRef = useRef<HTMLElement>(null);
   const [capacity, setCapacity] = useState(1);
@@ -173,10 +175,12 @@ export default function RoomQuickStart({
     <section
       ref={sectionRef}
       className='tm-room-quick-start'
-      aria-label='快速开始'
+      aria-label={playing ? '挑选下一部' : '快速开始'}
     >
       <div className='tm-section-header'>
-        <h2 className='tm-section-title'>快速开始</h2>
+        <h2 className='tm-section-title'>
+          {playing ? '挑选下一部' : '快速开始'}
+        </h2>
         <div className='tm-room-recommendation-actions'>
           <button
             type='button'

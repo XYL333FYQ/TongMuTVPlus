@@ -26,6 +26,17 @@ afterEach(() => {
   cleanup();
   global.fetch = originalFetch;
 });
+test('with an external room server the homepage does not ask the local REST endpoint and says why', async () => {
+  (mockContext as any).config = { enabled: true, serverType: 'external' };
+  render(<HomeRooms />);
+  await waitFor(() =>
+    expect(screen.getByRole('status')).toHaveTextContent(
+      '当前使用外部观影室服务'
+    )
+  );
+  expect(mockFetch).not.toHaveBeenCalled();
+  delete (mockContext as any).config;
+});
 test('guest homepage omits personal rooms and never requests private room data', () => {
   const { container } = render(<HomeRooms guest />);
   expect(mockFetch).not.toHaveBeenCalled();

@@ -572,6 +572,187 @@ html[data-tm-no-blur='true'] .tm-playback-host * {
   color: var(--tm-accent-contrast);
   font-size: 13px;
 }
+
+.tm-activity-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 12px 0;
+  color: var(--tm-text);
+}
+.tm-activity-actions :is(button, a) {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 8px 12px;
+  border: 1px solid var(--tm-line);
+  border-radius: var(--tm-radius-md);
+  background: var(--tm-surface-raised);
+  color: var(--tm-text);
+  font-size: 13px;
+}
+.tm-activity-actions :is(button, a):focus-visible {
+  outline: 2px solid var(--tm-text);
+  outline-offset: 2px;
+}
+.tm-activity-actions button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.tm-activity-actions p {
+  font-size: 12px;
+  color: var(--tm-muted);
+}
+.tm-activity-actions .tm-activity-error {
+  color: var(--tm-danger);
+}
+.tm-room-live-surface {
+  position: absolute;
+  inset: 0;
+  z-index: 65;
+  pointer-events: none;
+}
+.tm-room-live-messages {
+  position: absolute;
+  inset: 8px 0 52px;
+  overflow: hidden;
+}
+.tm-room-live-message {
+  position: absolute;
+  top: calc(var(--tm-live-lane) * 36px);
+  left: 0;
+  display: block;
+  max-width: min(80%, 520px);
+  padding: 6px 10px;
+  border-radius: var(--tm-radius-md);
+  color: var(--tm-text);
+  background: var(--tm-glass-solid);
+  box-shadow: 0 2px 12px var(--tm-room-shadow);
+  font-size: 14px;
+  line-height: 20px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  animation: tm-room-message-fly 7s linear both;
+}
+@keyframes tm-room-message-fly {
+  from {
+    transform: translateX(calc(var(--tm-live-width) + 16px));
+  }
+  to {
+    transform: translateX(-100%);
+  }
+}
+.tm-room-live-controls {
+  position: absolute;
+  left: 12px;
+  bottom: calc(96px + env(safe-area-inset-bottom, 0px));
+  width: min(520px, calc(100% - 24px));
+  max-height: calc(100% - 104px - env(safe-area-inset-bottom, 0px));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  pointer-events: auto;
+  color: var(--tm-text);
+}
+.tm-room-live-tools {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.tm-room-live-controls button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 8px 12px;
+  border: 0;
+  border-radius: var(--tm-radius-md);
+  background: var(--tm-glass-solid);
+  color: var(--tm-text);
+  font-size: 13px;
+  line-height: 20px;
+  cursor: pointer;
+}
+.tm-room-live-controls button:hover {
+  background: var(--tm-surface-raised);
+}
+.tm-room-live-controls button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.tm-room-live-form {
+  display: grid;
+  gap: 6px;
+  margin-top: 8px;
+  padding: 12px;
+  border-radius: var(--tm-radius-md);
+  background: var(--tm-glass-solid);
+  box-shadow: 0 4px 20px var(--tm-room-shadow);
+}
+.tm-room-live-form label {
+  font-size: 13px;
+  line-height: 18px;
+}
+.tm-room-live-input-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 44px 44px;
+  gap: 6px;
+}
+.tm-room-live-input-row input {
+  min-width: 0;
+  min-height: 44px;
+  padding: 8px;
+  border: 1px solid var(--tm-line);
+  border-radius: var(--tm-radius-sm);
+  background: var(--tm-surface-raised);
+  color: var(--tm-text);
+  font-size: 16px;
+  line-height: 24px;
+}
+.tm-room-live-form [role='status'] {
+  min-height: 18px;
+  margin: 0;
+  font-size: 12px;
+  line-height: 18px;
+  overflow-wrap: anywhere;
+}
+.tm-room-live-error {
+  color: var(--tm-danger);
+}
+.tm-room-live-controls :is(button, input):focus-visible {
+  outline: 2px solid var(--tm-text);
+  outline-offset: 2px;
+}
+@media (max-width: 640px) {
+  .art-video-player:not(:fullscreen):not(.art-fullscreen-web)
+    .tm-room-live-controls[data-composing='true'] {
+    bottom: 8px;
+    max-height: calc(100% - 16px);
+  }
+}
+.tm-playback-host:is([data-presentation='mini'], [data-presentation='folded'])
+  .tm-room-live-controls {
+  display: none;
+}
+.art-video-player:fullscreen .tm-room-live-controls,
+.art-video-player.art-fullscreen-web .tm-room-live-controls {
+  display: block;
+}
+html[data-tm-reduced-motion='true'] .tm-room-live-message {
+  animation: none;
+  transform: none;
+  left: 12px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .tm-room-live-message {
+    animation: none;
+    transform: none;
+    left: 12px;
+  }
+}
 .tm-chat-panel {
   width: min(380px, calc(100vw - 32px));
   height: min(570px, calc(var(--tm-visual-height, 100dvh) - 120px));

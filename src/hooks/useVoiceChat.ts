@@ -13,6 +13,8 @@ interface UseVoiceChatOptions {
   isMicEnabled: boolean;
   isSpeakerEnabled: boolean;
   members: Member[];
+  /** 站点是否开放语音；关闭时不监听语音事件、不申请麦克风、不播放，已有连接会挂断 */
+  enabled: boolean;
 }
 
 // 语音聊天策略类型
@@ -32,6 +34,7 @@ export function useVoiceChat({
   isMicEnabled,
   isSpeakerEnabled,
   members,
+  enabled,
 }: UseVoiceChatOptions) {
   const [isConnecting, setIsConnecting] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
@@ -700,7 +703,7 @@ export function useVoiceChat({
 
   // 监听麦克风状态变化
   useEffect(() => {
-    if (!socket || !roomId) return;
+    if (!socket || !roomId || !enabled) return;
 
     if (isMicEnabled) {
       // 开启麦克风
@@ -777,6 +780,7 @@ export function useVoiceChat({
     // 不需要 cleanup，因为我们希望保持连接
     // cleanup 只在房间变化时调用
   }, [
+    enabled,
     isMicEnabled,
     socket,
     roomId,
@@ -816,7 +820,8 @@ export function useVoiceChat({
 
   // 监听Socket.IO事件
   useEffect(() => {
-    if (!socket) return;
+    // 语音未开放：不接任何语音事件，陌生来电不会被自动接听，也不会出声
+    if (!socket || !enabled) return;
 
     // WebRTC信令事件
     socket.on('voice:offer', handleOffer);
@@ -864,6 +869,7 @@ export function useVoiceChat({
     };
   }, [
     socket,
+    enabled,
     strategy,
     handleOffer,
     handleAnswer,
@@ -917,6 +923,11 @@ export function useVoiceChat({
       cleanup();
     };
   }, [roomId, cleanup]);
+
+  // 语音被关闭时挂断所有连接并释放麦克风
+  useEffect(() => {
+    if (!enabled) cleanup();
+  }, [enabled, cleanup]);
 
   return {
     isConnecting,

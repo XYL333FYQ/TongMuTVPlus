@@ -358,6 +358,8 @@ export default async function RootLayout({
     ENABLE_TVBOX_SUBSCRIBE: process.env.ENABLE_TVBOX_SUBSCRIBE === 'true',
     ENABLE_OFFLINE_DOWNLOAD:
       process.env.NEXT_PUBLIC_ENABLE_OFFLINE_DOWNLOAD === 'true',
+    // 房间语音是否对本站开放（默认关）；关闭时聊天窗不显示语音控件，也不接收任何语音事件
+    ENABLE_ROOM_VOICE: process.env.ENABLE_ROOM_VOICE === 'true',
     VOICE_CHAT_STRATEGY:
       process.env.NEXT_PUBLIC_VOICE_CHAT_STRATEGY || 'webrtc-fallback',
     OPENLIST_ENABLED: openListEnabled && userFeatureAccess.private_library,

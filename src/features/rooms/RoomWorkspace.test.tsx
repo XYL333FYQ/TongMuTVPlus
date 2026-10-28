@@ -3,7 +3,8 @@ jest.mock('next/navigation', () => ({
   useSearchParams: () => mockParams,
 }));
 jest.mock('@/lib/auth', () => ({
-  getAuthInfoFromBrowserCookie: () => ({ username: 'qa-owner', role: 'user' }),
+  getAuthInfoFromBrowserCookie: () =>
+    mockLoggedIn ? { username: 'qa-owner', role: 'user' } : null,
 }));
 jest.mock('@/components/WatchRoomProvider', () => ({
   useWatchRoomContext: () => mockRoom,
@@ -32,7 +33,8 @@ import {
 import RoomWorkspace from './RoomWorkspace';
 
 const mockRouter = { push: jest.fn(), replace: jest.fn() };
-const mockParams = { get: () => null };
+let mockParams = new URLSearchParams();
+let mockLoggedIn = true;
 const mockPlayback = { controller: null };
 const mockRoom = {
   currentRoom: null,
@@ -61,8 +63,32 @@ function response() {
 
 beforeEach(() => {
   jest.clearAllMocks();
+  mockLoggedIn = true;
+  mockParams = new URLSearchParams();
   mockFetch = jest.fn();
   global.fetch = mockFetch;
+});
+
+test('a guest room card keeps both its room and chosen movie across login', async () => {
+  mockLoggedIn = false;
+  const film = '/play?title=选中的电影';
+  mockParams = new URLSearchParams({ film });
+  mockFetch.mockResolvedValue(response());
+  render(<RoomWorkspace />);
+  await screen.findByRole('heading', { name: '恢复验收' });
+  fireEvent.click(screen.getByRole('button', { name: '进入房间：恢复验收' }));
+  const login = new URL(mockRouter.push.mock.calls[0][0], 'https://site.test');
+  const target = new URL(
+    login.searchParams.get('redirect') || '/',
+    'https://site.test'
+  );
+  expect(target.searchParams.get('room')).toBe(directoryRoom.id);
+  expect(
+    new URL(
+      target.searchParams.get('film')!,
+      'https://site.test'
+    ).searchParams.get('title')
+  ).toBe('选中的电影');
 });
 afterEach(() => {
   global.fetch = originalFetch;

@@ -935,12 +935,14 @@
   border-radius: var(--tm-radius-full);
   background: var(--tm-surface-raised);
 }
-.tm-room-dialog form {
+.tm-room-dialog form,
+.tm-room-selection-card form {
   display: flex;
   flex-direction: column;
   gap: 16px;
 }
-.tm-room-dialog label {
+.tm-room-dialog label,
+.tm-room-selection-card label {
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -949,7 +951,8 @@
   color: var(--tm-muted);
 }
 .tm-room-dialog input:not([type='checkbox']),
-.tm-room-dialog textarea {
+.tm-room-dialog textarea,
+.tm-room-selection-card input {
   width: 100%;
   min-height: 44px;
   padding: 10px 14px;
@@ -960,12 +963,14 @@
   font-size: var(--tm-fs-small);
 }
 .tm-room-dialog input:not([type='checkbox']):focus,
-.tm-room-dialog textarea:focus {
+.tm-room-dialog textarea:focus,
+.tm-room-selection-card input:focus {
   outline: none;
   border-color: var(--tm-text);
   box-shadow: 0 0 0 1px var(--tm-text);
 }
-.tm-room-dialog p {
+.tm-room-dialog p,
+.tm-room-selection-card p {
   font-size: var(--tm-fs-small);
   color: var(--tm-muted);
 }
@@ -1029,6 +1034,27 @@
 }
 
 /* 选片 */
+.tm-room-selection-card {
+  display: grid;
+  gap: 24px;
+  width: min(720px, 100%);
+  margin-inline: auto;
+  padding: 24px;
+  border-radius: var(--tm-radius-md);
+  background: var(--tm-surface);
+  box-shadow: var(--tm-shadow-sm);
+}
+.tm-room-selection-candidate,
+.tm-room-selection-result {
+  display: grid;
+  justify-items: start;
+  gap: 16px;
+  overflow-wrap: anywhere;
+}
+.tm-room-selection-candidate h2 {
+  font-size: var(--tm-fs-section);
+  font-weight: 600;
+}
 .tm-room-picker-tabs {
   display: flex;
   gap: 2px;
@@ -1043,7 +1069,7 @@
   align-items: center;
   justify-content: center;
   gap: 6px;
-  min-height: 40px;
+  min-height: 44px;
   border-radius: var(--tm-radius-sm);
   font-size: var(--tm-fs-small);
   font-weight: 500;
@@ -1077,8 +1103,8 @@
   display: grid;
   place-items: center;
   flex-shrink: 0;
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   border-radius: var(--tm-radius-full);
   background: var(--tm-surface-raised);
 }

@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import Image from 'next/image';
+import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import {
   type CSSProperties,
@@ -25,11 +26,15 @@ import {
   useRef,
   useState,
 } from 'react';
-import type { Socket } from 'socket.io-client';
 
-import RoomPlaybackButton from '@/features/rooms/RoomPlaybackButton';
+import {
+  getStoredRoomViewing,
+  saveRoomViewingPreference,
+} from '@/hooks/useWatchRoom';
 
 import { useWatchRoomContextSafe } from '@/components/WatchRoomProvider';
+
+import RoomPlaybackButton from '@/features/rooms/RoomPlaybackButton';
 
 import {
   type PlaybackController,
@@ -37,6 +42,8 @@ import {
   type PlaybackPresentation,
   PlaybackSessionContext,
 } from './context';
+import { roomActivityKey } from './room-activity';
+import PlaybackRoomMessages from './RoomLiveMessages';
 import {
   normalizePlaybackHref,
   playbackHrefFromState,
@@ -46,9 +53,22 @@ import {
 import { useAudioFocus } from './useAudioFocus';
 import { useMiniPlayerDrag } from './useMiniPlayerDrag';
 
+import type { Room } from '@/types/watch-room';
+
 const PlaybackSurface = dynamic(() => import('./LegacyPlaybackSurface'), {
   ssr: false,
 });
+
+function withoutQueueItem(href: string) {
+  const url = new URL(href, 'https://tongmu.invalid');
+  url.searchParams.delete('queueId');
+  return `${url.pathname}${url.search}`;
+}
+
+/** 房间空闲或正在放电影，才算这个电影窗口就是当前共同活动。 */
+function isFilmActivity(state: Room['currentState'] | undefined) {
+  return !state || state.type === 'play';
+}
 
 export default function PlaybackSessionProvider({
   children,
@@ -65,7 +85,9 @@ export default function PlaybackSessionProvider({
   const hrefRef = useRef(href);
   hrefRef.current = href;
   const [folded, setFolded] = useState(false);
-  const [followingRoom, setFollowingRoom] = useState(true);
+  const [followingRoom, setFollowingRoom] = useState(
+    () => getStoredRoomViewing()?.following !== false
+  );
   const followingRef = useRef(followingRoom);
   followingRef.current = followingRoom;
   const [controller, attachController] = useState<PlaybackController | null>(
@@ -81,30 +103,88 @@ export default function PlaybackSessionProvider({
   const [roomSelectionHref, setRoomSelectionHref] = useState<string | null>(
     null
   );
+  const [roomSelectionKey, setRoomSelectionKey] = useState<string | null>(null);
+  const selectionRoom = useRef<string>();
+  const operation = useRef(0);
+  const personalIntent = useRef(!followingRoom);
+  const personalRoom = useRef(getStoredRoomViewing()?.roomId);
+  const requestPersonal = useRef<(selected: string) => void>(() => undefined);
+  const requestTogether = useRef<(selected: string) => void>(() => undefined);
   const [actionError, setActionError] = useState('');
   const [actionPending, setActionPending] = useState(false);
+  const queueAttempt = useRef<{
+    roomId: string;
+    href: string;
+    commandId: string;
+  } | null>(null);
+  const [queueNotice, setQueueNotice] = useState('');
+  const choicePending = useRef(false);
+  choicePending.current = Boolean(pendingHref) || actionPending;
   const [muted, setMuted] = useState(false);
   const [paused, setPaused] = useState(false);
   const [keyboardVisible, setKeyboardVisible] = useState(false);
   const { ownsSound, claimSound } = useAudioFocus(controller?.video || null);
 
   const updateHref = useCallback((nextHref: string) => {
+    if (choicePending.current) return false;
     const normalized = normalizePlaybackHref(nextHref);
-    if (normalized) setHref(normalized);
+    if (normalized) {
+      const previous = hrefRef.current;
+      setRoomSelectionHref((selection) =>
+        selection &&
+        previous &&
+        playbackIdentity(selection) === playbackIdentity(previous)
+          ? normalized
+          : selection
+      );
+      setHref(normalized);
+      return true;
+    }
+    return false;
   }, []);
 
   const requestPlayback = useCallback(
-    (nextHref: string, origin: 'user' | 'room' = 'user') => {
-      const normalized = normalizePlaybackHref(nextHref);
+    (
+      nextHref: string,
+      origin: 'user' | 'room' | 'personal' | 'together' = 'user'
+    ) => {
+      let normalized = normalizePlaybackHref(nextHref);
       if (!normalized) return;
+      if (origin === 'personal') normalized = withoutQueueItem(normalized);
+      if (origin === 'together') {
+        requestTogether.current(normalized);
+        return;
+      }
       if (origin === 'room' && !followingRef.current) return;
       const current = hrefRef.current;
+      if (origin === 'personal') {
+        personalIntent.current = true;
+        personalRoom.current =
+          roomRef.current?.currentRoom?.id || getStoredRoomViewing()?.roomId;
+        if (roomRef.current?.currentRoom) {
+          requestPersonal.current(normalized);
+          return;
+        }
+        operation.current += 1;
+        followingRef.current = false;
+        setFollowingRoom(false);
+        setRoomSelectionHref(null);
+        setRoomSelectionKey(null);
+        selectionRoom.current = undefined;
+        saveRoomViewingPreference(undefined, false, normalized);
+      } else if (origin === 'user') {
+        operation.current += 1;
+        setActionPending(false);
+      }
       if (
         origin === 'user' &&
-        roomRef.current?.currentRoom?.currentState &&
+        roomRef.current?.currentRoom &&
+        (roomRef.current.currentRoom.currentState ||
+          !roomRef.current.canControl) &&
         followingRef.current &&
         (!current || playbackIdentity(current) !== playbackIdentity(normalized))
       ) {
+        choicePending.current = true;
         setPendingHref(normalized);
         setActionError('');
         return;
@@ -112,9 +192,13 @@ export default function PlaybackSessionProvider({
       if (
         origin === 'user' &&
         roomRef.current?.currentRoom &&
-        roomRef.current.canControl
-      )
+        roomRef.current.canControl &&
+        followingRef.current
+      ) {
+        selectionRoom.current = roomRef.current.currentRoom.id;
         setRoomSelectionHref(normalized);
+        setRoomSelectionKey(roomActivityKey(roomRef.current.currentRoom));
+      }
       if (
         !current ||
         playbackIdentity(current) !== playbackIdentity(normalized)
@@ -132,9 +216,22 @@ export default function PlaybackSessionProvider({
   }, []);
 
   const resumeRoom = useCallback(async () => {
+    const generation = ++operation.current;
+    const target = roomRef.current?.currentRoom?.id;
+    if (!target) return;
     setActionError('');
     try {
       await emitFollowing(true);
+      if (
+        operation.current !== generation ||
+        roomRef.current?.currentRoom?.id !== target
+      )
+        return;
+      personalIntent.current = false;
+      personalRoom.current = undefined;
+      saveRoomViewingPreference(target, true);
+      setRoomSelectionHref(null);
+      setRoomSelectionKey(null);
       followingRef.current = true;
       setFollowingRoom(true);
       const state = roomRef.current?.currentRoom?.currentState;
@@ -147,8 +244,30 @@ export default function PlaybackSessionProvider({
           setSurfaceVersion((previous) => previous + 1);
         setHref(nextHref);
       }
+      if (!state) {
+        const current = roomRef.current;
+        const revision = current?.currentRoom?.revision;
+        await current?.roomCommand('room:sync-applied', {
+          roomId: target,
+          appliedRevision: revision,
+          controllerEpoch: current.currentRoom?.controllerEpoch,
+        });
+        if (
+          operation.current !== generation ||
+          roomRef.current?.currentRoom?.id !== target ||
+          roomRef.current.currentRoom.currentState
+        )
+          return;
+        await roomRef.current.roomCommand('room:ready', {
+          roomId: target,
+          ready: true,
+          appliedRevision: revision,
+        });
+        if (operation.current !== generation) return;
+      }
       setFolded(false);
     } catch (error) {
+      if (operation.current !== generation) return;
       setActionError(
         error instanceof Error ? error.message : '无法回到同步，请重连后重试'
       );
@@ -161,14 +280,76 @@ export default function PlaybackSessionProvider({
     if (previousRoomRef.current !== roomId) {
       const hadRoom = Boolean(previousRoomRef.current);
       previousRoomRef.current = roomId;
-      followingRef.current = true;
-      setFollowingRoom(true);
+      operation.current += 1;
+      const generation = operation.current;
+      const saved = getStoredRoomViewing(roomId);
+      const keepPersonal = Boolean(
+        roomId &&
+          !hadRoom &&
+          ((personalIntent.current &&
+            (!personalRoom.current || personalRoom.current === roomId)) ||
+            saved?.following === false)
+      );
+      followingRef.current = !keepPersonal;
+      setFollowingRoom(!keepPersonal);
+      personalIntent.current = keepPersonal;
+      personalRoom.current = keepPersonal ? roomId : undefined;
       setPendingHref(null);
-      if (hadRoom) setRoomSelectionHref(null);
+      setActionPending(false);
+      choicePending.current = false;
+      queueAttempt.current = null;
+      setQueueNotice('');
+      if (hadRoom && selectionRoom.current !== roomId) {
+        setRoomSelectionHref(null);
+        setRoomSelectionKey(null);
+        selectionRoom.current = undefined;
+      }
+      if (keepPersonal)
+        void emitFollowing(false).catch((error: unknown) => {
+          if (operation.current === generation)
+            setActionError(
+              error instanceof Error ? error.message : '无法退出房间同步'
+            );
+        });
+      if (keepPersonal && !hrefRef.current && saved?.personalHref) {
+        const restored = normalizePlaybackHref(saved.personalHref);
+        if (restored) setHref(restored);
+      }
     }
-  }, [roomId]);
+  }, [roomId, emitFollowing]);
+
+  // 重连后服务端给的是全新会话，默认“跟随”；本机还在个人观看时要重新声明，
+  // 否则这台设备会被当成跟随者（选主持、算就绪），而界面却是个人观看。
+  const rejoinCount = watchRoom?.rejoinCount ?? 0;
+  const seenRejoin = useRef(rejoinCount);
+  useEffect(() => {
+    if (seenRejoin.current === rejoinCount) return;
+    seenRejoin.current = rejoinCount;
+    if (!roomId || followingRef.current) return;
+    const generation = operation.current;
+    void emitFollowing(false).catch((error: unknown) => {
+      if (operation.current === generation)
+        setActionError(
+          error instanceof Error ? error.message : '无法退出房间同步'
+        );
+    });
+  }, [rejoinCount, roomId, emitFollowing]);
 
   const roomState = watchRoom?.currentRoom?.currentState;
+  const activityKey = watchRoom?.currentRoom
+    ? roomActivityKey(watchRoom.currentRoom)
+    : null;
+  useEffect(() => {
+    if (
+      selectionRoom.current === roomId &&
+      roomSelectionKey &&
+      roomSelectionKey !== activityKey
+    ) {
+      setRoomSelectionHref(null);
+      setRoomSelectionKey(null);
+      selectionRoom.current = undefined;
+    }
+  }, [activityKey, roomSelectionKey, roomId]);
   const roomMediaKey =
     roomState?.type === 'play'
       ? `${roomId}:${roomState.source}:${roomState.videoId}:${
@@ -315,23 +496,47 @@ export default function PlaybackSessionProvider({
   controllerRef.current = controller;
   // 把播放器彻底收掉：暂停、卸载画面、回到没有任何播放会话的状态
   const stopPlayback = useCallback(() => {
+    operation.current += 1;
     controllerRef.current?.pause();
     setHref(null);
     attachController(null);
     setFolded(false);
     setPendingHref(null);
+    choicePending.current = false;
     setRoomSelectionHref(null);
+    setRoomSelectionKey(null);
+    selectionRoom.current = undefined;
     setActionError('');
+    // 只记当前真实的跟随状态：只关旧电影窗口时人仍在跟随房间，不能存成“仅自己看”
+    saveRoomViewingPreference(
+      roomRef.current?.currentRoom?.id,
+      followingRef.current,
+      null
+    );
   }, []);
-  // 用户主动关闭小窗。正在跟随房间时先退出同步（房间和消息保留），
+  // 用户主动关闭小窗。电影正是房间当前活动且正在跟随时，先退出同步（房间和消息保留），
   // 之后可以从“回到一起看”回去；退出失败就不关，免得房间那边还当他在看。
+  // 房间已经切到直播/音乐/共享时，这个电影窗口只是旧窗口：只关窗口，
+  // 不动“跟随”状态，否则会把正在看当前活动的人一起退出同步。
   const endSession = useCallback(() => {
+    const generation = ++operation.current;
+    const target = roomRef.current?.currentRoom?.id;
     void (async () => {
       const current = roomRef.current;
-      if (current?.currentRoom && followingRef.current) {
+      if (
+        current?.currentRoom &&
+        followingRef.current &&
+        isFilmActivity(current.currentRoom.currentState)
+      ) {
         try {
           await emitFollowing(false);
+          if (
+            operation.current !== generation ||
+            roomRef.current?.currentRoom?.id !== target
+          )
+            return;
         } catch (error) {
+          if (operation.current !== generation) return;
           setActionError(
             error instanceof Error ? error.message : '无法退出同步，请稍后重试'
           );
@@ -339,6 +544,8 @@ export default function PlaybackSessionProvider({
         }
         followingRef.current = false;
         setFollowingRoom(false);
+        personalIntent.current = true;
+        personalRoom.current = target;
       }
       stopPlayback();
     })();
@@ -358,8 +565,37 @@ export default function PlaybackSessionProvider({
     return () => window.removeEventListener('tongmu:room-deleted', onDeleted);
   }, [stopPlayback]);
 
-  const shareCurrentPlayback = useCallback(() => {
-    if (hrefRef.current) setRoomSelectionHref(hrefRef.current);
+  const shareCurrentPlayback = useCallback((targetRoomId?: string) => {
+    const target = targetRoomId || roomRef.current?.currentRoom?.id;
+    if (hrefRef.current && target) {
+      const current = roomRef.current?.currentRoom;
+      const queueId = new URL(
+        hrefRef.current,
+        'https://tongmu.invalid'
+      ).searchParams.get('queueId');
+      const sharedHref =
+        queueId &&
+        !(
+          current &&
+          current.id === target &&
+          current.queue?.some((item) => item.id === queueId)
+        )
+          ? withoutQueueItem(hrefRef.current)
+          : hrefRef.current;
+      personalIntent.current = false;
+      personalRoom.current = undefined;
+      followingRef.current = true;
+      setFollowingRoom(true);
+      saveRoomViewingPreference(target, true);
+      selectionRoom.current = target;
+      setHref(sharedHref);
+      setRoomSelectionHref(sharedHref);
+      setRoomSelectionKey(
+        roomRef.current?.currentRoom?.id === target
+          ? roomActivityKey(roomRef.current.currentRoom)
+          : roomActivityKey({ id: target, currentState: null })
+      );
+    }
   }, []);
   const clearRoomSelection = useCallback(
     (selected: string) =>
@@ -378,70 +614,105 @@ export default function PlaybackSessionProvider({
       choice: 'queue' | 'room' | 'personal',
       selectedHref = pendingHref
     ) => {
-      if (!selectedHref) return;
+      if (!selectedHref && choice !== 'personal') return;
+      if (choice === 'personal' && selectedHref)
+        selectedHref = withoutQueueItem(selectedHref);
+      const generation = ++operation.current;
+      const target = roomRef.current?.currentRoom?.id;
+      const isCurrent = () =>
+        generation === operation.current &&
+        target === roomRef.current?.currentRoom?.id;
+      choicePending.current = true;
       setActionPending(true);
       setActionError('');
       try {
         if (choice === 'queue') {
+          if (!selectedHref) return;
           const current = roomRef.current;
-          const socket = current?.socket as Socket | null;
-          if (!socket?.connected)
+          if (!current?.isConnected || !target)
             throw new Error('房间连接中断，请重连后再添加');
-          await new Promise<void>((resolve, reject) => {
-            socket.timeout(8000).emit(
-              'queue:add',
-              {
-                ...queueItemFromHref(selectedHref),
-                commandId: crypto.randomUUID(),
-                baseRevision: current?.currentRoom?.revision,
-              },
-              (
-                timeout: Error | null,
-                response: { success?: boolean; error?: string }
-              ) =>
-                timeout
-                  ? reject(new Error('添加超时，请检查片单后重试'))
-                  : response?.success
-                  ? resolve()
-                  : reject(new Error(response?.error || '无法添加到片单'))
-            );
+          if (
+            queueAttempt.current?.roomId !== target ||
+            queueAttempt.current.href !== selectedHref
+          )
+            queueAttempt.current = {
+              roomId: target,
+              href: selectedHref,
+              commandId: crypto.randomUUID(),
+            };
+          await current.roomCommand('queue:add', {
+            ...queueItemFromHref(selectedHref),
+            roomId: target,
+            commandId: queueAttempt.current.commandId,
           });
-          if (hrefRef.current && pathname === '/play')
-            router.replace(hrefRef.current);
+          if (!isCurrent()) return;
+          queueAttempt.current = null;
+          setQueueNotice('已加入待看，当前影片继续播放');
         } else {
           if (choice === 'personal') {
-            await emitFollowing(false);
+            if (followingRef.current) await emitFollowing(false);
+            if (!isCurrent()) return;
+            personalIntent.current = true;
+            personalRoom.current = target;
+            saveRoomViewingPreference(target, false, selectedHref);
             followingRef.current = false;
             setFollowingRoom(false);
             setRoomSelectionHref(null);
+            setRoomSelectionKey(null);
+            selectionRoom.current = undefined;
           } else {
-            if (!roomRef.current?.canControl)
+            if (!selectedHref) return;
+            const selectedRoom = roomRef.current?.currentRoom;
+            if (!selectedRoom || !roomRef.current?.canControl)
               throw new Error('主持已更新，请加入片单或仅自己看');
+            if (!followingRef.current)
+              throw new Error('请先回到一起看，再切换房间影片');
+            personalIntent.current = false;
+            personalRoom.current = undefined;
+            saveRoomViewingPreference(target, true);
+            selectionRoom.current = selectedRoom.id;
             setRoomSelectionHref(selectedHref);
+            setRoomSelectionKey(roomActivityKey(selectedRoom));
           }
-          if (
-            !hrefRef.current ||
-            playbackIdentity(hrefRef.current) !== playbackIdentity(selectedHref)
-          )
-            setSurfaceVersion((previous) => previous + 1);
-          setHref(selectedHref);
+          if (selectedHref) {
+            if (
+              !hrefRef.current ||
+              playbackIdentity(hrefRef.current) !==
+                playbackIdentity(selectedHref)
+            )
+              setSurfaceVersion((previous) => previous + 1);
+            setHref(selectedHref);
+          }
         }
         setPendingHref(null);
       } catch (error) {
+        if (!isCurrent()) return;
         setActionError(
           error instanceof Error ? error.message : '操作失败，请重试'
         );
       } finally {
-        setActionPending(false);
+        if (isCurrent()) setActionPending(false);
       }
     },
-    [pendingHref, emitFollowing, pathname, router]
+    [pendingHref, emitFollowing]
   );
+  requestPersonal.current = (selected) => {
+    void choosePlayback('personal', selected);
+  };
+  requestTogether.current = (selected) => {
+    void choosePlayback('room', selected);
+  };
 
-  const enterPersonalViewing = useCallback(
-    () => choosePlayback('personal', hrefRef.current),
-    [choosePlayback]
-  );
+  const enterPersonalViewing = useCallback(async () => {
+    const generation = operation.current + 1;
+    const target = roomRef.current?.currentRoom?.id;
+    await choosePlayback('personal', hrefRef.current);
+    return (
+      operation.current === generation &&
+      roomRef.current?.currentRoom?.id === target &&
+      !followingRef.current
+    );
+  }, [choosePlayback]);
 
   const value = useMemo(
     () => ({
@@ -459,7 +730,14 @@ export default function PlaybackSessionProvider({
       restore,
       endSession,
       resumeRoom,
-      roomSelectionHref,
+      roomSelectionHref:
+        selectionRoom.current && selectionRoom.current !== roomId
+          ? null
+          : roomSelectionHref,
+      roomSelectionKey:
+        selectionRoom.current && selectionRoom.current !== roomId
+          ? null
+          : roomSelectionKey,
       shareCurrentPlayback,
       clearRoomSelection,
       reloadPlayback,
@@ -478,6 +756,8 @@ export default function PlaybackSessionProvider({
       endSession,
       resumeRoom,
       roomSelectionHref,
+      roomSelectionKey,
+      roomId,
       shareCurrentPlayback,
       clearRoomSelection,
       reloadPlayback,
@@ -545,6 +825,7 @@ export default function PlaybackSessionProvider({
           style={{ ...slotStyle, ...miniDrag.style }}
         >
           <PlaybackSurface key={surfaceVersion} />
+          <PlaybackRoomMessages />
           {presentation === 'docked' &&
             pathname === '/watch-room' &&
             followingRoom && (
@@ -651,7 +932,13 @@ export default function PlaybackSessionProvider({
               <button
                 onClick={endSession}
                 aria-label='关闭播放'
-                title={roomId && followingRoom ? '关闭并退出同步' : '关闭播放'}
+                title={
+                  roomId &&
+                  followingRoom &&
+                  isFilmActivity(watchRoom?.currentRoom?.currentState)
+                    ? '关闭并退出同步'
+                    : '关闭播放'
+                }
               >
                 <X size={17} />
               </button>
@@ -671,11 +958,22 @@ export default function PlaybackSessionProvider({
           <button onClick={reloadPlayback}>重新加载影片</button>
         </div>
       )}
-      {roomId && !followingRoom && (
-        <button className='tm-return-room' onClick={resumeRoom}>
+      {roomId && !pathname.startsWith('/watch-room') && (
+        <Link
+          className='tm-return-room'
+          href={`/watch-room?room=${encodeURIComponent(roomId)}`}
+        >
           <ArrowUpRight size={15} />
-          回到一起看{unread > 0 && ` · ${unread}条未读`}
-        </button>
+          返回房间{unread > 0 && ` · ${unread}条未读`}
+        </Link>
+      )}
+      {queueNotice && (
+        <div className='tm-playback-action-error' role='status'>
+          {queueNotice}
+          <button onClick={() => setQueueNotice('')} aria-label='关闭待看提示'>
+            <X size={14} />
+          </button>
+        </div>
       )}
       {actionError && !pendingHref && (
         <div className='tm-playback-action-error' role='alert'>

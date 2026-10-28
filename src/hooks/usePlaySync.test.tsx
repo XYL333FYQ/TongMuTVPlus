@@ -109,6 +109,19 @@ test('returning owner applies current room progress before becoming ready and ne
   expect(updates.length).toBeGreaterThan(0);
   expect(updates.every((call: any[]) => call[1].currentTime >= 200)).toBe(true);
 });
+
+test('a resolved queue selection publishes its stable queue identity as well as the resolved media', async () => {
+  const { Harness } = setup();
+  mockRoom.canControl = true;
+  mockSession.href = '/play?source=fixture&id=film-1&queueId=waiting-1';
+  mockSession.roomSelectionHref = mockSession.href;
+  render(<Harness />);
+  await settle();
+  expect(mockRoom.roomCommand).toHaveBeenCalledWith(
+    'play:change',
+    expect.objectContaining({ queueItemId: 'waiting-1' })
+  );
+});
 test('room media changes update the persistent player without navigating the current page', async () => {
   const { options, Harness } = setup();
   options.videoId = 'old-film';
@@ -157,6 +170,92 @@ test('a new selection cannot publish the previous decoded video while its own me
   expect(mockRoom.roomCommand).not.toHaveBeenCalled();
   expect(mockSession.clearRoomSelection).not.toHaveBeenCalled();
 });
+
+test('a selection from the previous activity cannot reclaim a live room', async () => {
+  const { player, Harness } = setup();
+  mockRoom.canControl = true;
+  mockSession.roomSelectionHref = '/play?source=fixture&id=film-1';
+  mockSession.roomSelectionKey = 'room-1:play:fixture:film-1:1';
+  mockRoom.currentRoom.currentState = {
+    type: 'live',
+    channelId: 'channel',
+    channelUrl: 'https://media.test/live.m3u8',
+  };
+  render(<Harness />);
+  await settle();
+  expect(mockRoom.roomCommand).not.toHaveBeenCalledWith(
+    'play:change',
+    expect.anything()
+  );
+  expect(mockSession.clearRoomSelection).toHaveBeenCalled();
+  expect(player.pause).toHaveBeenCalled();
+});
+
+test('an explicit movie request cannot publish a different decoded movie', async () => {
+  const { Harness } = setup();
+  mockRoom.canControl = true;
+  mockSession.roomSelectionHref = '/play?source=fixture&id=film-2';
+  render(<Harness />);
+  await settle();
+  expect(mockRoom.roomCommand).not.toHaveBeenCalledWith(
+    'play:update',
+    expect.anything()
+  );
+  expect(mockSession.clearRoomSelection).not.toHaveBeenCalled();
+});
+
+test('a former room readiness acknowledgement cannot mark the new room ready again', async () => {
+  const { Harness } = setup();
+  let completeOld: () => void = () => undefined;
+  const old = new Promise<void>((resolve) => {
+    completeOld = resolve;
+  });
+  mockRoom.roomCommand.mockReturnValueOnce(old);
+  const view = render(<Harness />);
+  await settle();
+  mockRoom = {
+    ...mockRoom,
+    currentRoom: { ...mockRoom.currentRoom, id: 'room-2' },
+  };
+  view.rerender(<Harness />);
+  await settle();
+  expect(
+    mockRoom.roomCommand.mock.calls.filter(
+      (call: any[]) => call[0] === 'room:ready'
+    )
+  ).toHaveLength(1);
+  await act(async () => completeOld());
+  const ready = mockRoom.roomCommand.mock.calls.filter(
+    (call: any[]) => call[0] === 'room:ready'
+  );
+  expect(ready).toHaveLength(1);
+});
+
+test.each([
+  [
+    '/api/proxy-m3u8?url=fixture',
+    new URL('/api/proxy-m3u8?url=fixture', window.location.origin).href,
+  ],
+  ['blob:http://localhost/device-only', ''],
+])(
+  'shared video state does not publish an unusable local URL: %s',
+  async (localUrl, sharedUrl) => {
+    const { options, Harness } = setup();
+    mockRoom.canControl = true;
+    mockSession.roomSelectionHref = '/play?source=fixture&id=film-1';
+    options.videoUrl = localUrl;
+    render(<Harness />);
+    await settle();
+    expect(mockRoom.roomCommand).toHaveBeenCalledWith(
+      'play:update',
+      expect.objectContaining({
+        url: sharedUrl,
+        source: 'fixture',
+        videoId: 'film-1',
+      })
+    );
+  }
+);
 
 test('a paused room stops native playback before seeking can make the wrapper report not playing', async () => {
   const { player, Harness } = setup();
@@ -253,3 +352,18 @@ test.each([0, NaN, Infinity])(
     );
   }
 );
+
+test('a queue item removed before it could start ends the selection instead of retrying every half second', async () => {
+  const { Harness } = setup();
+  mockRoom.canControl = true;
+  mockSession.href = '/play?source=fixture&id=film-1&queueId=waiting-1';
+  mockSession.roomSelectionHref = mockSession.href;
+  mockRoom.roomCommand.mockRejectedValueOnce(
+    Object.assign(new Error('所选待看片单已变化，请重新选择'), {
+      code: 'QUEUE_ITEM_NOT_FOUND',
+    })
+  );
+  render(<Harness />);
+  await settle();
+  expect(mockSession.clearRoomSelection).toHaveBeenCalledWith(mockSession.href);
+});

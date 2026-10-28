@@ -5,9 +5,11 @@ import { useCallback, useEffect, useRef } from 'react';
 import { useWatchRoomContextSafe } from '@/components/WatchRoomProvider';
 
 import { usePlaybackSessionSafe } from '@/features/playback/context';
+import { roomActivityKey } from '@/features/playback/room-activity';
 import {
   anchoredPlaybackTime,
   playbackHrefFromState,
+  playbackIdentity,
 } from '@/features/playback/session';
 
 import type { PlayState } from '@/types/watch-room';
@@ -67,12 +69,20 @@ export function usePlaySync(options: UsePlaySyncOptions) {
   const lastBroadcastAt = useRef(0);
   const serverOffset = useRef(0);
   const lastClockSample = useRef<number>();
+  const scopeGeneration = useRef(0);
   const isInRoom = Boolean(
     watchRoom?.currentRoom && session?.followingRoom !== false
   );
   const canControl = Boolean(isInRoom && watchRoom?.canControl);
 
   useEffect(() => {
+    scopeGeneration.current += 1;
+    readyKey.current = '';
+    readyEpoch.current = undefined;
+    lastMatchedMedia.current = '';
+    inFlight.current = false;
+    readyInFlight.current = false;
+    lastBroadcastAt.current = 0;
     isFollowingRoom = isInRoom;
     if (!isInRoom) {
       lastRemotePlaybackRate = null;
@@ -83,7 +93,11 @@ export function usePlaySync(options: UsePlaySyncOptions) {
     return () => {
       isFollowingRoom = false;
     };
-  }, [isInRoom, watchRoom?.currentRoom?.id]);
+  }, [
+    isInRoom,
+    watchRoom?.currentRoom?.id,
+    watchRoom?.currentRoom?.controllerEpoch,
+  ]);
 
   const buildState = useCallback((): PlayState | null => {
     const { options: current } = latest.current;
@@ -98,9 +112,28 @@ export function usePlaySync(options: UsePlaySyncOptions) {
       !current.videoUrl
     )
       return null;
+    // A local cache/blob is a device implementation detail. Peers resolve the
+    // stable source/id/episode themselves; only share portable HTTP(S) URLs.
+    let sharedUrl = '';
+    try {
+      const parsed = new URL(current.videoUrl, window.location.origin);
+      if (
+        ['http:', 'https:'].includes(parsed.protocol) &&
+        !parsed.username &&
+        !parsed.password
+      )
+        sharedUrl = parsed.href;
+    } catch {
+      // Keep the stable media reference even when the local URL is not portable.
+    }
     return {
       type: 'play',
-      url: current.videoUrl,
+      queueItemId:
+        new URL(
+          latest.current.session?.href || '/play',
+          window.location.origin
+        ).searchParams.get('queueId') || undefined,
+      url: sharedUrl,
       videoId: current.videoId,
       videoName: current.videoName,
       videoYear: current.videoYear,
@@ -137,6 +170,14 @@ export function usePlaySync(options: UsePlaySyncOptions) {
       const sameMedia =
         authoritative && mediaKey(authoritative) === mediaKey(state);
       const explicitSelection = playback?.roomSelectionHref;
+      if (
+        explicitSelection &&
+        (playbackIdentity(explicitSelection) !==
+          playbackIdentity(playbackHrefFromState(state)) ||
+          (playback?.roomSelectionKey &&
+            playback.roomSelectionKey !== roomActivityKey(room)))
+      )
+        return;
       // Local episode/source changes require this device to have applied the current lease's snapshot.
       const localAdvance =
         authoritative &&
@@ -150,21 +191,37 @@ export function usePlaySync(options: UsePlaySyncOptions) {
       )
         return;
       inFlight.current = true;
+      const generation = scopeGeneration.current;
       lastBroadcastAt.current = Date.now();
       try {
         await roomContext.roomCommand(
-          sameMedia ? 'play:update' : 'play:change',
+          sameMedia &&
+            !(
+              explicitSelection &&
+              state.queueItemId &&
+              state.queueItemId !== authoritative?.queueItemId
+            )
+            ? 'play:update'
+            : 'play:change',
           { ...state }
         );
+        if (generation !== scopeGeneration.current) return;
         lastMatchedMedia.current = mediaKey(state);
         readyEpoch.current = room.controllerEpoch;
         if (explicitSelection) playback?.clearRoomSelection(explicitSelection);
-      } catch {
+      } catch (error) {
+        if (generation !== scopeGeneration.current) return;
         // Never retry a stale mutation automatically; the latest snapshot must be applied first.
         readyKey.current = '';
         readyEpoch.current = undefined;
+        // 选中的待看项已被移除：这是永久失败，不是过期快照；留着选择会每半秒重发一次
+        if (
+          explicitSelection &&
+          (error as { code?: string } | null)?.code === 'QUEUE_ITEM_NOT_FOUND'
+        )
+          playback?.clearRoomSelection(explicitSelection);
       } finally {
-        inFlight.current = false;
+        if (generation === scopeGeneration.current) inFlight.current = false;
       }
     },
     [buildState]
@@ -195,8 +252,14 @@ export function usePlaySync(options: UsePlaySyncOptions) {
         lastClockSample.current = room.serverTime;
       }
       if (playback?.roomSelectionHref && roomContext.canControl) {
-        await broadcastPlayState(true);
-        return;
+        const matches = playback.roomSelectionKey
+          ? playback.roomSelectionKey === roomActivityKey(room)
+          : !state || state.type === 'play';
+        if (matches) {
+          await broadcastPlayState(true);
+          return;
+        }
+        playback.clearRoomSelection(playback.roomSelectionHref);
       }
       if (!state) return;
       if (state.type !== 'play') {
@@ -269,26 +332,28 @@ export function usePlaySync(options: UsePlaySyncOptions) {
       if (disposed || readyKey.current === key) return;
       // Returning owners acknowledge the latest state before becoming eligible to host.
       readyInFlight.current = true;
+      const generation = scopeGeneration.current;
       const revision = room.revision;
       try {
         await roomContext.roomCommand('room:sync-applied', {
           appliedRevision: revision,
           controllerEpoch: room.controllerEpoch,
         });
-        if (disposed) return;
+        if (disposed || generation !== scopeGeneration.current) return;
         await roomContext.roomCommand('room:ready', {
           ready: true,
           appliedRevision: revision,
         });
-        if (!disposed) {
+        if (!disposed && generation === scopeGeneration.current) {
           readyKey.current = key;
           readyEpoch.current = room.controllerEpoch;
           lastMatchedMedia.current = targetKey;
         }
       } catch {
-        readyKey.current = '';
+        if (generation === scopeGeneration.current) readyKey.current = '';
       } finally {
-        readyInFlight.current = false;
+        if (generation === scopeGeneration.current)
+          readyInFlight.current = false;
       }
     };
     void synchronize();
@@ -299,7 +364,14 @@ export function usePlaySync(options: UsePlaySyncOptions) {
       disposed = true;
       window.clearInterval(timer);
     };
-  }, [isInRoom, options.playerReady, watchRoom?.socket, broadcastPlayState]);
+  }, [
+    isInRoom,
+    options.playerReady,
+    watchRoom?.socket,
+    watchRoom?.currentRoom?.id,
+    watchRoom?.currentRoom?.controllerEpoch,
+    broadcastPlayState,
+  ]);
 
   useEffect(() => {
     if (!isInRoom || !options.playerReady) return;

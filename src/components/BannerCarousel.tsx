@@ -16,6 +16,11 @@ import DetailPanel from '@/components/DetailPanel';
 import ProxyImage from '@/components/ProxyImage';
 import { useWatchRoomContextSafe } from '@/components/WatchRoomProvider';
 
+import {
+  filmPlaybackHref,
+  togetherSelectionHref,
+} from '@/features/playback/selection-links';
+
 const LOCALSTORAGE_DURATION = 24 * 60 * 60 * 1000;
 
 interface BannerCarouselProps {
@@ -494,7 +499,17 @@ export default function BannerCarousel({
           )
         }
         onPlay={() => handlePlay(currentItem.title)}
-        onTogether={() => router.push('/watch-room')}
+        onTogether={() =>
+          router.push(
+            togetherSelectionHref(
+              filmPlaybackHref({
+                title: currentItem.title,
+                year: currentItem.release_date?.slice(0, 4),
+                searchType: currentItem.media_type === 'tv' ? 'tv' : 'movie',
+              })
+            )
+          )
+        }
         onDetail={() => setDetailOpen(true)}
         deck={items.map((item) => ({
           id: String(item.id),
@@ -529,7 +544,17 @@ export default function BannerCarousel({
         doubanId={dataSource === 'Douban' ? currentItem.id : undefined}
         type={currentItem.media_type === 'tv' ? 'tv' : 'movie'}
         onPlay={() => handlePlay(currentItem.title)}
-        onTogether={() => router.push('/watch-room')}
+        onTogether={() =>
+          router.push(
+            togetherSelectionHref(
+              filmPlaybackHref({
+                title: currentItem.title,
+                year: currentItem.release_date?.slice(0, 4),
+                searchType: currentItem.media_type === 'tv' ? 'tv' : 'movie',
+              })
+            )
+          )
+        }
         backdrop={getImageUrl(currentItem.backdrop_path || null)}
       />
     </>

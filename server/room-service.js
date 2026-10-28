@@ -89,6 +89,9 @@ function mediaState(input, now, previous = null) {
     return {
       ...common,
       type: 'play',
+      ...(input.queueItemId
+        ? { queueItemId: text(input.queueItemId, 128, true) }
+        : {}),
       url: url(input.url),
       videoId: text(String(input.videoId || ''), 8192, true),
       videoName: text(input.videoName, 240),
@@ -144,7 +147,8 @@ function projected(state, now) {
 }
 function queueItem(data, accountId, now) {
   const href = text(data.href, 16384, true);
-  if (!/^\/(play|live|web-live|music)(\?|$)/.test(href))
+  // 待看片单只放影片：播放页打不开直播/音乐入口，放进来只会卡住“开始播放”
+  if (!/^\/play(\?|$)/.test(href))
     fail('INVALID_MEDIA', '队列只接受站内播放入口');
   return {
     id: crypto.randomUUID(),
@@ -701,15 +705,28 @@ class RoomService {
     const room = this.getRoom(id, event === 'room:restore');
     const membership = this.store.membership(id, identity.accountId);
     if (!membership) fail('FORBIDDEN', '请先加入房间', 403);
+    if (data.roomId !== undefined && data.roomId !== id)
+      fail('ROOM_CHANGED', '目标房间已切换，请重新选择操作', 409);
     const commandId = meta.commandId || data?.commandId;
     if (commandId !== undefined) text(commandId, 128, true);
     if (commandId) {
       const old = this.store.command(id, identity.accountId, commandId);
       if (old) return { ...old, duplicate: true };
     }
-    if (meta.baseRevision !== undefined && meta.baseRevision !== room.revision)
+    // Messages use seq; append-only queue additions do not edit the playback timeline.
+    const playbackVersioned = ![
+      'chat:message',
+      'chat:read',
+      'queue:add',
+    ].includes(event);
+    if (
+      playbackVersioned &&
+      meta.baseRevision !== undefined &&
+      meta.baseRevision !== room.revision
+    )
       fail('REVISION_CONFLICT', '房间状态已经更新，请刷新后重试', 409);
     if (
+      playbackVersioned &&
       meta.controllerEpoch !== undefined &&
       meta.controllerEpoch !== room.controllerEpoch
     )
@@ -811,6 +828,15 @@ class RoomService {
         if (event === 'music:play') state.isPlaying = true;
         if (event === 'music:pause') state.isPlaying = false;
       }
+      let playedQueueItem;
+      if (event === 'play:change' && state?.queueItemId) {
+        playedQueueItem = room.queue.find(
+          (item) => item.id === state.queueItemId
+        );
+        if (!playedQueueItem)
+          fail('QUEUE_ITEM_NOT_FOUND', '所选待看片单已变化，请重新选择', 409);
+        playedQueueItem.playedAt ||= this.now();
+      }
       room.currentState = state;
       room.roomType =
         state?.type === 'music'
@@ -819,6 +845,12 @@ class RoomService {
           ? 'screen'
           : 'sync';
       this.touch(room);
+      if (playedQueueItem)
+        this.emit(id, 'queue:updated', {
+          roomId: id,
+          queue: room.queue,
+          revision: room.revision,
+        });
       if (
         event === 'play:change' ||
         event === 'live:change' ||
@@ -857,7 +889,9 @@ class RoomService {
         if (
           identity.accountId !== room.ownerAccountId &&
           !membershipCanHost(this.store, id, identity.accountId) &&
-          room.queue[index].addedBy !== identity.accountId
+          (event === 'queue:move' ||
+            room.queue[index].addedBy !== identity.accountId ||
+            room.queue[index].playedAt)
         )
           fail('FORBIDDEN', '不能修改他人的队列内容', 403);
         if (event === 'queue:remove') room.queue.splice(index, 1);
@@ -868,6 +902,7 @@ class RoomService {
       }
       this.touch(room);
       this.emit(id, 'queue:updated', {
+        roomId: id,
         queue: room.queue,
         revision: room.revision,
       });

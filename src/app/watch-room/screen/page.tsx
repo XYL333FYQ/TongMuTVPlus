@@ -3,7 +3,7 @@
 import { Monitor, MonitorPlay, Users } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useCallback, useEffect, useState } from 'react';
+import { type MutableRefObject, useCallback, useEffect, useState } from 'react';
 
 import {
   type ScreenShareQualityPreset,
@@ -11,15 +11,15 @@ import {
   useScreenShare,
 } from '@/hooks/useScreenShare';
 
-import Toast, { ToastProps } from '@/components/feedback/Toast';
 import PageContainer from '@/components/PageContainer';
 import Select from '@/components/ui/Select';
 import { useWatchRoomContext } from '@/components/WatchRoomProvider';
 
-const NEW_TAB_KEY_PREFIX = 'watch_room_screen_home_opened_';
+import { usePlaybackSessionSafe } from '@/features/playback/context';
+import { useAudioFocus } from '@/features/playback/useAudioFocus';
+
 const WATCH_ROOM_NO_CONNECT_KEY = 'watch_room_no_connect';
 const WATCH_ROOM_NO_CONNECT_TIMESTAMP_KEY = 'watch_room_no_connect_timestamp';
-const WATCH_ROOM_NO_CONNECT_TTL_MS = 10 * 60 * 1000;
 const SCREEN_SHARE_QUALITY_KEY = 'watch_room_screen_quality';
 
 function getScreenShareHostSupportError() {
@@ -54,12 +54,14 @@ export default function WatchRoomScreenPage() {
   const router = useRouter();
   const watchRoom = useWatchRoomContext();
   const { currentRoom, members, leaveRoom } = watchRoom;
-  const [toast, setToast] = useState<ToastProps | null>(null);
+  const session = usePlaybackSessionSafe();
   const [qualityPreset, setQualityPreset] =
     useState<ScreenShareQualityPreset>('smooth');
   const {
     currentRoom: screenRoom,
-    isOwner,
+    canShare,
+    following,
+    isLocalSharing,
     isSharing,
     isStarting,
     error,
@@ -69,15 +71,26 @@ export default function WatchRoomScreenPage() {
     startSharing,
     stopSharing,
   } = useScreenShare(qualityPreset);
+  const screenRoomId = screenRoom?.id;
 
-  const showToast = (message: string, type: ToastProps['type'] = 'info') => {
-    setToast({
-      message,
-      type,
-      duration: 3000,
-      onClose: () => setToast(null),
-    });
-  };
+  // 共享画面自带声音：观众真正播放时，电影等其他播放器让出声音
+  const [remoteElement, setRemoteElement] = useState<HTMLVideoElement | null>(
+    null
+  );
+  const attachRemoteVideo = useCallback(
+    (element: HTMLVideoElement | null) => {
+      (remoteVideoRef as MutableRefObject<HTMLVideoElement | null>).current =
+        element;
+      setRemoteElement(element);
+    },
+    [remoteVideoRef]
+  );
+  const { claimSound } = useAudioFocus(remoteElement, false);
+  useEffect(() => {
+    if (!remoteElement) return;
+    remoteElement.addEventListener('play', claimSound);
+    return () => remoteElement.removeEventListener('play', claimSound);
+  }, [claimSound, remoteElement]);
 
   const openDetachedPage = useCallback(() => {
     window.open('/', '_blank', 'noopener,noreferrer');
@@ -98,31 +111,22 @@ export default function WatchRoomScreenPage() {
   }, [qualityPreset]);
 
   useEffect(() => {
-    if (!currentRoom) {
-      router.replace('/watch-room');
-      return;
-    }
-
-    if (currentRoom.roomType !== 'screen') {
-      router.replace('/watch-room');
-    }
+    if (!currentRoom) router.replace('/watch-room');
   }, [currentRoom, router]);
 
+  // 浏览器不支持时只说明原因、禁用共享，不再把人退出房间
+  const [supportError, setSupportError] = useState<string | null>(null);
   useEffect(() => {
-    if (!screenRoom || screenRoom.roomType !== 'screen') return;
+    setSupportError(
+      canShare
+        ? getScreenShareHostSupportError()
+        : getScreenShareViewerSupportError()
+    );
+  }, [canShare, screenRoom?.id]);
 
-    const supportError = isOwner
-      ? getScreenShareHostSupportError()
-      : getScreenShareViewerSupportError();
-    if (supportError) {
-      showToast(`当前设备无法使用屏幕共享房间：${supportError}`, 'error');
-      leaveRoom();
-      router.replace('/watch-room');
-    }
-  }, [isOwner, leaveRoom, router, screenRoom?.id, screenRoom?.roomType]);
-
+  // 本设备有资格共享时，别让本浏览器的其他标签页也连进房间（同账号会多出一个连接）
   useEffect(() => {
-    if (!screenRoom || screenRoom.roomType !== 'screen' || !isOwner) return;
+    if (!screenRoomId || !canShare) return;
 
     localStorage.setItem(WATCH_ROOM_NO_CONNECT_KEY, '1');
     localStorage.setItem(
@@ -135,27 +139,28 @@ export default function WatchRoomScreenPage() {
         String(Date.now())
       );
     }, 30_000);
-    const key = `${NEW_TAB_KEY_PREFIX}${screenRoom.id}`;
-    if (!sessionStorage.getItem(key)) {
-      sessionStorage.setItem(key, '1');
-      openDetachedPage();
-    }
 
-    return () => {
+    const release = () => {
       localStorage.removeItem(WATCH_ROOM_NO_CONNECT_KEY);
       localStorage.removeItem(WATCH_ROOM_NO_CONNECT_TIMESTAMP_KEY);
+    };
+    // 整页刷新/关闭标签页时 React 不会执行卸载清理，只有 pagehide：
+    // 标记留着会让本浏览器在 10 分钟内都连不回房间
+    window.addEventListener('pagehide', release);
+
+    return () => {
+      release();
+      window.removeEventListener('pagehide', release);
       window.clearInterval(heartbeat);
     };
-  }, [isOwner, openDetachedPage, screenRoom?.id, screenRoom?.roomType]);
+  }, [canShare, screenRoomId]);
 
-  if (!screenRoom || screenRoom.roomType !== 'screen') {
+  if (!screenRoom) {
     return null;
   }
 
   const handleLeave = () => {
-    if (isOwner && isSharing) {
-      stopSharing(true);
-    }
+    if (isLocalSharing) stopSharing(true);
     leaveRoom();
     router.push('/watch-room');
   };
@@ -185,7 +190,13 @@ export default function WatchRoomScreenPage() {
             </p>
           </div>
           <div className='flex items-center gap-2'>
-            {isOwner && (
+            <Link
+              href='/watch-room'
+              className='rounded-lg bg-raised px-4 py-2 text-fg min-h-[44px] tm-press inline-flex items-center'
+            >
+              返回房间
+            </Link>
+            {canShare && (
               <Link
                 href='/'
                 target='_blank'
@@ -210,7 +221,7 @@ export default function WatchRoomScreenPage() {
 
         <div className='grid flex-1 grid-cols-1 gap-4 xl:grid-cols-[1fr_320px]'>
           <div className='relative flex min-h-[420px] items-center justify-center overflow-hidden rounded-2xl border border-line bg-ink'>
-            {isOwner ? (
+            {isLocalSharing || (canShare && !isSharing) ? (
               <video
                 ref={localVideoRef}
                 autoPlay
@@ -220,7 +231,7 @@ export default function WatchRoomScreenPage() {
               />
             ) : (
               <video
-                ref={remoteVideoRef}
+                ref={attachRemoteVideo}
                 autoPlay
                 playsInline
                 controls
@@ -232,13 +243,24 @@ export default function WatchRoomScreenPage() {
               <div className='absolute px-6 text-center text-[color:var(--tm-room-player-text)]'>
                 <MonitorPlay className='mx-auto mb-3 h-12 w-12 text-[color:var(--tm-room-player-text)] opacity-70' />
                 <p className='text-sm font-medium'>
-                  {isOwner
+                  {!following
+                    ? '正在个人观看，房间和消息保留'
+                    : canShare
                     ? '点击开始共享，向房员推送浏览器画面'
-                    : '等待房主开始共享屏幕'}
+                    : '等待主持开始共享屏幕'}
                 </p>
-                {isOwner && (
+                {!following && (
+                  <button
+                    type='button'
+                    onClick={() => void session?.resumeRoom()}
+                    className='mt-3 rounded-lg bg-fg px-4 py-2 text-inverse min-h-[44px] tm-press'
+                  >
+                    恢复一起看
+                  </button>
+                )}
+                {canShare && (
                   <p className='mt-2 text-sm text-[color:var(--tm-room-player-text)] opacity-70'>
-                    本页不要关闭；已尝试为你新开一个主页标签页方便继续浏览。
+                    共享期间本页不要关闭；想继续浏览可以点右上角“新开主页”。
                   </p>
                 )}
               </div>
@@ -254,9 +276,15 @@ export default function WatchRoomScreenPage() {
                 <p>成员：{members.length} 人</p>
               </div>
 
-              {isOwner && (
+              {canShare && (
                 <div className='mt-2 text-sm text-muted'>
                   实际采集：{captureSettingsText}
+                </div>
+              )}
+
+              {supportError && (
+                <div className='mt-3 rounded-lg border border-danger bg-raised px-3 py-2 text-sm text-fg'>
+                  {supportError}
                 </div>
               )}
 
@@ -266,7 +294,7 @@ export default function WatchRoomScreenPage() {
                 </div>
               )}
 
-              {isOwner && (
+              {canShare && (
                 <div className='mt-4'>
                   <label className='mb-2 block text-sm font-medium text-muted'>
                     共享画质
@@ -294,22 +322,26 @@ export default function WatchRoomScreenPage() {
               )}
 
               <div className='mt-4 flex gap-3'>
-                {isOwner ? (
+                {canShare ? (
                   <>
                     <button
                       onClick={() => startSharing()}
-                      disabled={isStarting || isSharing}
+                      disabled={
+                        isStarting || isLocalSharing || Boolean(supportError)
+                      }
                       className='flex-1 rounded-lg bg-fg px-4 py-2 text-inverse disabled:opacity-50 min-h-[44px] tm-press'
                     >
                       {isStarting
                         ? '启动中...'
-                        : isSharing
+                        : isLocalSharing
                         ? '共享中'
+                        : isSharing
+                        ? '重新开始共享'
                         : '开始共享'}
                     </button>
                     <button
                       onClick={() => stopSharing(true)}
-                      disabled={!isSharing}
+                      disabled={!isLocalSharing && !isSharing}
                       className='rounded-lg bg-fg px-4 py-2 text-inverse disabled:opacity-50 min-h-[44px] tm-press'
                     >
                       停止
@@ -317,7 +349,7 @@ export default function WatchRoomScreenPage() {
                   </>
                 ) : (
                   <div className='rounded-lg bg-raised px-3 py-2 text-sm text-fg'>
-                    房员无需操作，房主开始共享后会自动显示画面。
+                    无需操作，主持开始共享后会自动显示画面。
                   </div>
                 )}
               </div>
@@ -351,7 +383,6 @@ export default function WatchRoomScreenPage() {
           </div>
         </div>
       </PageContainer>
-      {toast && <Toast {...toast} />}
     </div>
   );
 }

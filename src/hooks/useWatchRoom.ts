@@ -9,6 +9,8 @@ import {
   watchRoomSocketManager,
 } from '@/lib/watch-room-socket';
 
+import { roomActivityKey } from '@/features/playback/room-activity';
+
 import type {
   ChatMessage,
   LiveState,
@@ -34,16 +36,23 @@ type Snapshot = { room: Room; members?: Member[]; messages?: ChatMessage[] };
 type Reply = Partial<Snapshot> & {
   success: boolean;
   error?: string;
+  code?: string;
   revision?: number;
   controllerEpoch?: number;
   unreadCount?: number;
   lastReadSeq?: number;
   messages?: ChatMessage[];
+  message?: ChatMessage;
 };
 export interface RoomNotice {
   id: string;
   message: string;
   timestamp: number;
+}
+
+export interface RoomRealtimeMessage {
+  roomId: string;
+  message: ChatMessage;
 }
 
 function mergeMessages(previous: ChatMessage[], incoming: ChatMessage[]) {
@@ -67,7 +76,12 @@ export function useWatchRoom(
   const [lastError, setLastError] = useState('');
   const [notices, setNotices] = useState<RoomNotice[]>([]);
   const rejoinInFlight = useRef<number | null>(null);
+  // 每次重连后成功重新加入就加一：服务端给的是全新会话（ready:false），要让就绪声明重新发一遍
+  const [rejoinCount, setRejoinCount] = useState(0);
   const seenMessageIds = useRef(new Set<string>());
+  const messageListeners = useRef(
+    new Set<(event: RoomRealtimeMessage) => void>()
+  );
   const receivedThroughSeq = useRef(0);
   const roomGeneration = useRef(0);
   const connectionGeneration = useRef(0);
@@ -75,6 +89,33 @@ export function useWatchRoom(
   const pendingReplayCursor = useRef<number | null>(null);
   const callbacks = useRef({ onRoomDeleted, onStateCleared });
   callbacks.current = { onRoomDeleted, onStateCleared };
+
+  const subscribeToRoomMessages = useCallback(
+    (listener: (event: RoomRealtimeMessage) => void) => {
+      messageListeners.current.add(listener);
+      return () => {
+        messageListeners.current.delete(listener);
+      };
+    },
+    []
+  );
+  const publishRoomMessage = useCallback((message: ChatMessage) => {
+    const roomId = roomRef.current?.id;
+    if (!roomId) return;
+    messageListeners.current.forEach((listener) => {
+      try {
+        listener({ roomId, message: { ...message } });
+      } catch {
+        // A display consumer must not interrupt the confirmed chat stream.
+      }
+    });
+  }, []);
+  useEffect(() => {
+    const listeners = messageListeners.current;
+    return () => {
+      listeners.clear();
+    };
+  }, []);
 
   const addNotice = useCallback(
     (message: string) =>
@@ -158,8 +199,28 @@ export function useWatchRoom(
               return;
             }
             if (!reply?.success) {
-              reject(new Error(reply?.error || '房间操作未成功'));
+              reject(
+                Object.assign(new Error(reply?.error || '房间操作未成功'), {
+                  code: reply?.code,
+                })
+              );
               return;
+            }
+            if (
+              event === 'chat:message' &&
+              reply.message &&
+              !seenMessageIds.current.has(reply.message.id)
+            ) {
+              const confirmed = reply.message;
+              seenMessageIds.current.add(confirmed.id);
+              receivedThroughSeq.current = Math.max(
+                receivedThroughSeq.current,
+                confirmed.seq || 0
+              );
+              setChatMessages((previous) =>
+                mergeMessages(previous, [confirmed])
+              );
+              publishRoomMessage(confirmed);
             }
             if (reply.room) applySnapshot(reply as Snapshot);
             else if (roomRef.current && reply.revision !== undefined) {
@@ -181,15 +242,25 @@ export function useWatchRoom(
           });
       });
     },
-    [applySnapshot]
+    [applySnapshot, publishRoomMessage]
   );
 
   const roomCommand = useCallback(
     async (event: string, payload: Record<string, unknown> = {}) => {
       try {
+        const roomId =
+          typeof payload.roomId === 'string'
+            ? payload.roomId
+            : roomRef.current?.id;
+        if (roomId !== roomRef.current?.id)
+          throw new SupersededRoomRequestError();
         return await request(event, {
           ...payload,
-          commandId: crypto.randomUUID(),
+          roomId,
+          commandId:
+            typeof payload.commandId === 'string'
+              ? payload.commandId
+              : crypto.randomUUID(),
           controllerEpoch: roomRef.current?.controllerEpoch,
           baseRevision: roomRef.current?.revision,
         });
@@ -211,6 +282,7 @@ export function useWatchRoom(
 
   const remember = useCallback((room: Room) => {
     const username = getAuthInfoFromBrowserCookie()?.username || '';
+    const viewing = getStoredRoomViewing(room.id);
     localStorage.setItem(
       STORAGE_KEY,
       JSON.stringify({
@@ -219,6 +291,9 @@ export function useWatchRoom(
         userName: username,
         isOwner: room.ownerAccountId === username,
         timestamp: Date.now(),
+        ...(viewing
+          ? { following: viewing.following, personalHref: viewing.personalHref }
+          : {}),
       })
     );
   }, []);
@@ -243,6 +318,8 @@ export function useWatchRoom(
         userName: username,
       });
       if (reply.room) remember(reply.room);
+      if (reply.room && connection === connectionGeneration.current)
+        setRejoinCount((count) => count + 1);
       const generation = roomGeneration.current;
       // Replay the full offline gap; the join snapshot contains only the most recent page.
       let cursor = resumeAfter;
@@ -447,22 +524,22 @@ export function useWatchRoom(
     const memberLeft = (id: string) =>
       setMembers((previous) => previous.filter((item) => item.id !== id));
     const mediaUpdated = (state: Room['currentState']) => {
-      setCurrentRoom((previous) => {
-        if (!previous) return previous;
-        if (
-          state &&
-          previous.currentState &&
-          'updatedAt' in state &&
-          'updatedAt' in previous.currentState &&
-          (state.updatedAt || 0) < (previous.currentState.updatedAt || 0)
-        )
-          return previous;
-        const next = { ...previous, currentState: state };
-        roomRef.current = next;
-        return next;
-      });
+      const previous = roomRef.current;
+      if (!previous) return;
+      if (
+        state &&
+        previous.currentState &&
+        'updatedAt' in state &&
+        'updatedAt' in previous.currentState &&
+        (state.updatedAt || 0) < (previous.currentState.updatedAt || 0)
+      )
+        return;
+      const next = { ...previous, currentState: state };
+      roomRef.current = next;
+      setCurrentRoom(next);
     };
     const chatMessage = (message: ChatMessage) => {
+      if (!roomRef.current) return;
       if (seenMessageIds.current.has(message.id)) return;
       seenMessageIds.current.add(message.id);
       receivedThroughSeq.current = Math.max(
@@ -470,21 +547,21 @@ export function useWatchRoom(
         message.seq || 0
       );
       setChatMessages((previous) => mergeMessages(previous, [message]));
+      publishRoomMessage(message);
       const username = getAuthInfoFromBrowserCookie()?.username;
-      if (message.accountId !== username && message.userName !== username)
-        setCurrentRoom((previous) => {
-          if (!previous) return previous;
-          const next = {
-            ...previous,
-            unreadCount: (previous.unreadCount || 0) + 1,
-            lastMessageSeq: Math.max(
-              previous.lastMessageSeq || 0,
-              message.seq || 0
-            ),
-          };
-          roomRef.current = next;
-          return next;
-        });
+      if (message.accountId !== username && message.userName !== username) {
+        const previous = roomRef.current;
+        const next = {
+          ...previous,
+          unreadCount: (previous.unreadCount || 0) + 1,
+          lastMessageSeq: Math.max(
+            previous.lastMessageSeq || 0,
+            message.seq || 0
+          ),
+        };
+        roomRef.current = next;
+        setCurrentRoom(next);
+      }
     };
     const controllerChanged = (data: {
       controllerAccountId: string | null;
@@ -498,8 +575,17 @@ export function useWatchRoom(
         );
       // The immediately following full snapshot is the authoritative room state.
     };
-    const queueUpdated = (data: { queue: Room['queue']; revision: number }) => {
-      if (!roomRef.current) return;
+    const queueUpdated = (data: {
+      roomId?: string;
+      queue: Room['queue'];
+      revision: number;
+    }) => {
+      if (
+        !roomRef.current ||
+        (data.roomId && data.roomId !== roomRef.current.id) ||
+        data.revision < (roomRef.current.revision || 0)
+      )
+        return;
       const next = {
         ...roomRef.current,
         queue: data.queue,
@@ -545,12 +631,19 @@ export function useWatchRoom(
     if (realtime.connected) void rejoin();
     return () =>
       events.forEach(([event, handler]) => realtime.off(event, handler));
-  }, [socket, rejoin, applySnapshot, addNotice]);
+  }, [socket, rejoin, applySnapshot, addNotice, publishRoomMessage]);
 
-  // An empty room needs a ready host before it can choose the first film.
+  // 房间页本身就是这个设备的“就绪”依据，只在没有电影实例可等的时候：
+  // 空房间要有就绪的主持才能选第一部电影；直播/音乐/共享房间在整页刷新后，
+  // 这个设备没有电影可加载，不声明就永远选不出主持，片单里的“播放”也就没了。
+  // 电影活动仍由播放器在视频真正可播后再声明；“仅自己看”的设备服务端会拒绝，不发。
+  const watchingAlone =
+    members.find((member) => member.id === socket?.id)?.following === false;
+  const activityReadyKey = currentRoom ? roomActivityKey(currentRoom) : '';
   useEffect(() => {
     const idleRoom = roomRef.current;
-    if (!socket?.connected || !idleRoom || idleRoom.currentState) return;
+    if (!socket?.connected || !idleRoom || watchingAlone) return;
+    if (idleRoom.currentState?.type === 'play') return;
     const realtime = socket as Socket;
     realtime.emit('room:sync-applied', {
       appliedRevision: idleRoom.revision,
@@ -560,7 +653,7 @@ export function useWatchRoom(
       ready: true,
       appliedRevision: idleRoom.revision,
     });
-  }, [socket, currentRoom?.id, currentRoom?.currentState]);
+  }, [socket, currentRoom?.id, activityReadyKey, watchingAlone, rejoinCount]);
 
   const self = members.find((member) => member.id === socket?.id);
   const username =
@@ -581,6 +674,7 @@ export function useWatchRoom(
   return {
     socket,
     isConnected,
+    rejoinCount,
     currentRoom,
     members,
     chatMessages,
@@ -597,6 +691,7 @@ export function useWatchRoom(
     leaveRoom,
     getRoomList,
     sendChatMessage,
+    subscribeToRoomMessages,
     roomCommand,
     markChatRead,
     loadChatHistory,
@@ -666,6 +761,34 @@ export function getStoredRoomInfo(): StoredRoomInfo | null {
     return value;
   } catch {
     return null;
+  }
+}
+export function getStoredRoomViewing(roomId?: string): StoredRoomInfo | null {
+  const stored = getStoredRoomInfo();
+  const username = getAuthInfoFromBrowserCookie()?.username;
+  if (
+    !stored ||
+    stored.userName !== username ||
+    (roomId && stored.roomId !== roomId)
+  )
+    return null;
+  return stored;
+}
+
+export function saveRoomViewingPreference(
+  roomId: string | undefined,
+  following: boolean,
+  personalHref: string | null = null
+) {
+  const stored = getStoredRoomViewing(roomId);
+  if (!stored) return;
+  try {
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({ ...stored, following, personalHref })
+    );
+  } catch {
+    // Storage may be unavailable; the current session still keeps its mode.
   }
 }
 function clearStoredRoomInfo() {

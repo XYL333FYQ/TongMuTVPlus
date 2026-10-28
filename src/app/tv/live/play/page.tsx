@@ -22,6 +22,8 @@ import { deleteFavorite, isFavorited, saveFavorite } from '@/lib/db.client';
 import TVNativeVideo from '@/components/tv/player/TVNativeVideo';
 import TVVirtualRemote from '@/components/tv/TVVirtualRemote';
 
+import { useStandalonePlayback } from '@/features/playback/useStandalonePlayback';
+
 const TV_CINEMA_STYLE = {
   '--tm-bg': 'var(--tm-room-cinema-bg)',
   '--tm-surface':
@@ -168,6 +170,8 @@ function TVLivePlayClient() {
   const [digitBuffer, setDigitBuffer] = useState('');
   const [playbackError, setPlaybackError] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
+  // TV 自己播放：先退出房间的一起看并让房间电影停下，播放时才拿声音归属
+  const standalone = useStandalonePlayback();
   const [favorited, setFavorited] = useState(false);
   const [epgPrograms, setEpgPrograms] = useState<EpgProgram[]>([]);
   const [epgLoading, setEpgLoading] = useState(false);
@@ -480,7 +484,7 @@ function TVLivePlayClient() {
       video.volume = volume;
       video.muted = muted;
     });
-  }, [muted, videoUrl, volume]);
+  }, [muted, videoUrl, volume, standalone.ready]);
 
   useEffect(() => {
     const togglePanelByRemoteKey = (event: { preventDefault: () => void }) => {
@@ -722,9 +726,10 @@ function TVLivePlayClient() {
             </button>
           </section>
         </div>
-      ) : videoUrl ? (
+      ) : videoUrl && standalone.ready ? (
         <TVNativeVideo
           key={`${videoType || 'auto'}:${videoUrl}`}
+          onElement={standalone.bindVideo}
           url={videoUrl}
           sourceType={videoType}
           poster={getLogoUrl(channel.logo, source?.key)}
@@ -734,8 +739,27 @@ function TVLivePlayClient() {
         />
       ) : (
         <div className='flex h-full items-center justify-center text-3xl font-bold'>
-          <span aria-hidden className='tm-skeleton mr-4 h-10 w-10 text-fg' />
-          正在解析直播地址...
+          {standalone.error ? (
+            <div role='alert' className='flex flex-col items-center gap-6'>
+              <span>{standalone.error}</span>
+              <button
+                type='button'
+                autoFocus
+                onClick={standalone.retry}
+                className='tv-focusable rounded-2xl bg-fg px-8 py-3 text-2xl text-inverse min-h-[44px] tm-press'
+              >
+                重试
+              </button>
+            </div>
+          ) : (
+            <>
+              <span
+                aria-hidden
+                className='tm-skeleton mr-4 h-10 w-10 text-fg'
+              />
+              正在解析直播地址...
+            </>
+          )}
         </div>
       )}
 

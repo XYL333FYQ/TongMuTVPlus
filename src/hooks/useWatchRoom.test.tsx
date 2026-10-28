@@ -2,9 +2,10 @@ import { act, cleanup, renderHook } from '@testing-library/react';
 
 import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
 import { watchRoomSocketManager } from '@/lib/watch-room-socket';
-import type { ChatMessage, Room } from '@/types/watch-room';
 
 import { useWatchRoom } from './useWatchRoom';
+
+import type { ChatMessage, Room } from '@/types/watch-room';
 
 jest.mock('@/lib/auth', () => ({ getAuthInfoFromBrowserCookie: jest.fn() }));
 jest.mock('@/lib/watch-room-socket', () => ({
@@ -143,6 +144,221 @@ beforeEach(() => {
   });
 });
 afterEach(cleanup);
+
+test('room realtime consumers receive new messages once, never snapshot or history replay, and can unsubscribe', async () => {
+  const view = await setup();
+  const live = jest.fn();
+  const unsubscribe = view.result.current.subscribeToRoomMessages(live);
+  await join(view, room('alpha'), messages('alpha', 3, 4));
+  expect(live).not.toHaveBeenCalled();
+  const message = messages('alpha', 5, 5)[0];
+  act(() => {
+    view.socket.deliver('chat:message', message);
+    view.socket.deliver('chat:message', message);
+  });
+  expect(live).toHaveBeenCalledTimes(1);
+  expect(live).toHaveBeenCalledWith({ roomId: 'alpha', message });
+  view.socket.replies.set('chat:history', (_payload, ack) =>
+    ack(null, { success: true, messages: messages('alpha', 1, 2) })
+  );
+  await act(async () => {
+    await view.result.current.loadChatHistory(3);
+  });
+  expect(live).toHaveBeenCalledTimes(1);
+  unsubscribe();
+  act(() => view.socket.deliver('chat:message', messages('alpha', 6, 6)[0]));
+  expect(live).toHaveBeenCalledTimes(1);
+  expect(view.result.current.chatMessages).toHaveLength(6);
+});
+
+test('an own confirmed message reaches chat and the realtime consumer once even if its broadcast is missing or repeated later', async () => {
+  const view = await setup();
+  await join(view, room('alpha'));
+  const live = jest.fn();
+  view.result.current.subscribeToRoomMessages(live);
+  const confirmed = {
+    ...messages('alpha', 1, 1)[0],
+    userName: 'alice',
+    accountId: 'alice',
+  };
+  view.socket.replies.set('chat:message', (_payload, ack) =>
+    ack(null, { success: true, message: confirmed })
+  );
+  await act(async () => {
+    await view.result.current.roomCommand('chat:message', {
+      content: confirmed.content,
+    });
+  });
+  act(() => view.socket.deliver('chat:message', confirmed));
+  expect(live).toHaveBeenCalledTimes(1);
+  expect(live).toHaveBeenCalledWith({ roomId: 'alpha', message: confirmed });
+  expect(view.result.current.chatMessages).toEqual([confirmed]);
+});
+
+test('a failed display consumer cannot interrupt other consumers or the stored chat list', async () => {
+  const view = await setup();
+  await join(view, room('alpha'));
+  view.result.current.subscribeToRoomMessages(() => {
+    throw new Error('display failed');
+  });
+  const live = jest.fn();
+  view.result.current.subscribeToRoomMessages(live);
+  const message = messages('alpha', 1, 1)[0];
+  act(() => view.socket.deliver('chat:message', message));
+  expect(live).toHaveBeenCalledTimes(1);
+  expect(view.result.current.chatMessages).toEqual([message]);
+});
+
+test('an old room message acknowledgement cannot enter the new room realtime stream', async () => {
+  const view = await setup();
+  await join(view, room('alpha'));
+  const live = jest.fn();
+  view.result.current.subscribeToRoomMessages(live);
+  let acknowledge!: Ack;
+  view.socket.replies.set('chat:message', (_payload, ack) => {
+    acknowledge = ack;
+  });
+  const pending = view.result.current
+    .roomCommand('chat:message', { content: '旧房待确认' })
+    .catch((error: Error) => error.name);
+  await join(view, room('beta'));
+  await act(async () => {
+    acknowledge(null, { success: true, message: messages('alpha', 1, 1)[0] });
+  });
+  expect(await pending).toBe('SupersededRoomRequestError');
+  expect(live).not.toHaveBeenCalled();
+  const message = messages('beta', 1, 1)[0];
+  act(() => view.socket.deliver('chat:message', message));
+  expect(live).toHaveBeenCalledWith({ roomId: 'beta', message });
+});
+
+test('remembering the same room preserves this account personal viewing preference', async () => {
+  const view = await setup();
+  localStorage.setItem(
+    'watch_room_info',
+    JSON.stringify({
+      roomId: 'room-a',
+      userName: 'alice',
+      timestamp: Date.now(),
+      following: false,
+      personalHref: '/play?source=fixture&id=personal',
+    })
+  );
+  await join(view, room('room-a'));
+  expect(
+    JSON.parse(localStorage.getItem('watch_room_info') || '{}')
+  ).toMatchObject({
+    following: false,
+    personalHref: '/play?source=fixture&id=personal',
+  });
+});
+
+test('a confirmed own message is visible even when its realtime broadcast is missing', async () => {
+  const view = await setup();
+  await join(view, room('A'));
+  const message = {
+    ...messages('A', 1, 1)[0],
+    accountId: 'alice',
+    userName: 'alice',
+  };
+  view.socket.replies.set('chat:message', (_payload, ack) =>
+    ack(null, { success: true, message })
+  );
+  await act(async () => {
+    await view.result.current.roomCommand('chat:message', {
+      content: message.content,
+    });
+  });
+  expect(view.result.current.chatMessages).toEqual([message]);
+  act(() => view.socket.deliver('chat:message', message));
+  expect(view.result.current.chatMessages).toEqual([message]);
+});
+
+test('retrying an uncertain message can preserve the original command identity', async () => {
+  const view = await setup();
+  await join(view, room('A'));
+  const payload = {
+    content: '同一条消息',
+    commandId: 'stable-message-command',
+  };
+  await act(async () => {
+    await view.result.current.roomCommand('chat:message', payload);
+    await view.result.current.roomCommand('chat:message', payload);
+  });
+  expect(
+    view.socket.calls
+      .filter((call) => call.event === 'chat:message')
+      .map((call) => call.payload.commandId)
+  ).toEqual(['stable-message-command', 'stable-message-command']);
+});
+
+test('room commands carry their target and reject a former room before sending', async () => {
+  const view = await setup();
+  await join(view, room('B'));
+  await act(async () => {
+    await view.result.current.roomCommand('chat:message', {
+      content: '当前房间',
+    });
+    await expect(
+      view.result.current.roomCommand('chat:message', {
+        content: '旧房间意图',
+        roomId: 'A',
+      })
+    ).rejects.toThrow('本次操作已取消');
+  });
+  const sent = view.socket.calls.filter(
+    (call) => call.event === 'chat:message'
+  );
+  expect(sent).toHaveLength(1);
+  expect(sent[0].payload.roomId).toBe('B');
+});
+
+test('an old or differently addressed queue update cannot overwrite the current snapshot', async () => {
+  const view = await setup();
+  await join(view, room('B', { revision: 5, queue: [] }));
+  act(() => {
+    view.socket.deliver('queue:updated', {
+      roomId: 'A',
+      revision: 10,
+      queue: [{ id: 'old' }],
+    });
+    view.socket.deliver('queue:updated', {
+      roomId: 'B',
+      revision: 2,
+      queue: [{ id: 'stale' }],
+    });
+  });
+  expect(view.result.current.currentRoom?.revision).toBe(5);
+  expect(view.result.current.currentRoom?.queue).toEqual([]);
+  await act(async () => {
+    await view.result.current.roomCommand('chat:read', { seq: 1 });
+  });
+  expect(
+    view.socket.calls.find((call) => call.event === 'chat:read')?.payload
+      .baseRevision
+  ).toBe(5);
+});
+
+test('batched messages and snapshots keep the command reference on the newest revision', async () => {
+  const view = await setup();
+  await join(view, room('A'));
+  act(() => {
+    view.socket.deliver('room:snapshot', snapshot(room('A', { revision: 5 })));
+    view.socket.deliver('chat:message', messages('A', 1, 1)[0]);
+    view.socket.deliver(
+      'room:snapshot',
+      snapshot(room('A', { revision: 6, unreadCount: 1 }))
+    );
+  });
+  expect(view.result.current.currentRoom?.revision).toBe(6);
+  await act(async () => {
+    await view.result.current.roomCommand('queue:add', { title: '下一部' });
+  });
+  expect(
+    view.socket.calls.find((call) => call.event === 'queue:add')?.payload
+      .baseRevision
+  ).toBe(6);
+});
 
 test('reconnect fills an offline gap longer than the 100-message join window without duplicates', async () => {
   const view = await setup();
@@ -875,4 +1091,106 @@ test('other commands cancelled by a room deletion still report as superseded', a
       view.result.current.roomCommand('queue:add', {})
     ).rejects.toThrow('房间已切换');
   });
+});
+
+// ---- 房间页本身就绪：没有电影实例的活动（直播 / 音乐 / 共享）----
+const liveState = (channelId = 'qa-a') =>
+  ({
+    type: 'live',
+    channelId,
+    channelName: channelId,
+    channelUrl: `https://media.test/${channelId}.m3u8`,
+    updatedAt: 1,
+  } as Room['currentState']);
+const readyCalls = (view: Awaited<ReturnType<typeof setup>>) =>
+  view.socket.calls.filter(
+    (call) => call.event === 'room:ready' && call.payload.ready === true
+  );
+
+test('a room on a live activity makes this device ready on its own, so a refreshed owner can host again', async () => {
+  const view = await setup();
+  await join(
+    view,
+    room('alpha', { currentState: liveState(), controllerSessionId: null })
+  );
+  expect(readyCalls(view)).toHaveLength(1);
+  expect(
+    view.socket.calls.some((call) => call.event === 'room:sync-applied')
+  ).toBe(true);
+});
+
+test('a room playing a film leaves readiness to the player, which only claims it once the video is playable', async () => {
+  const view = await setup();
+  await join(
+    view,
+    room('alpha', {
+      currentState: {
+        type: 'play',
+        source: 'fixture',
+        videoId: 'film-a',
+        videoName: 'film-a',
+        episode: 1,
+        url: 'https://media.test/a.m3u8',
+        currentTime: 0,
+        isPlaying: true,
+      } as Room['currentState'],
+    })
+  );
+  expect(readyCalls(view)).toHaveLength(0);
+});
+
+test('snapshots of the same live activity do not repeat the ready claim, a new activity does', async () => {
+  const view = await setup();
+  await join(view, room('alpha', { currentState: liveState('qa-a') }));
+  act(() =>
+    view.socket.deliver(
+      'room:snapshot',
+      snapshot(room('alpha', { revision: 2, currentState: liveState('qa-a') }))
+    )
+  );
+  expect(readyCalls(view)).toHaveLength(1);
+  act(() =>
+    view.socket.deliver(
+      'room:snapshot',
+      snapshot(room('alpha', { revision: 3, currentState: liveState('qa-b') }))
+    )
+  );
+  expect(readyCalls(view)).toHaveLength(2);
+});
+
+test('a member who chose to watch alone does not claim readiness for the room activity', async () => {
+  const view = await setup();
+  view.socket.replies.set('room:join', (_payload, ack) =>
+    ack(null, {
+      success: true,
+      room: room('alpha', { currentState: liveState() }),
+      members: [
+        {
+          id: 'alice-connection',
+          name: 'alice',
+          isOwner: true,
+          lastHeartbeat: 0,
+          following: false,
+        },
+      ],
+      messages: [],
+    })
+  );
+  await act(async () => {
+    await view.result.current.joinRoom({ roomId: 'alpha', userName: 'alice' });
+  });
+  expect(readyCalls(view)).toHaveLength(0);
+});
+
+test('after a socket reconnect the server starts a fresh session, so a device on a non-film activity claims readiness again', async () => {
+  const view = await setup();
+  await join(view, room('alpha', { currentState: liveState() }));
+  expect(readyCalls(view)).toHaveLength(1);
+  await act(async () => {
+    view.socket.deliver('disconnect');
+    view.socket.deliver('connect');
+  });
+  await settle();
+  // 重连后服务端新建会话（ready:false），房间 id 与活动都没变，仍要重新声明
+  expect(readyCalls(view)).toHaveLength(2);
 });

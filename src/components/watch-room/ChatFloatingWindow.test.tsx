@@ -47,6 +47,12 @@ const originalVisibility = Object.getOwnPropertyDescriptor(
   'visibilityState'
 );
 const originalIntersectionObserver = window.IntersectionObserver;
+const originalFullscreen = Object.getOwnPropertyDescriptor(
+  document,
+  'fullscreenElement'
+);
+let fullscreenElement: Element | null = null;
+const fullscreenFixtures: Element[] = [];
 const originalMatchMedia = window.matchMedia;
 let desktop = false;
 
@@ -95,11 +101,21 @@ class TestIntersectionObserver implements IntersectionObserver {
 
 beforeEach(() => {
   jest.useFakeTimers();
+  let commandSequence = 0;
+  Object.defineProperty(window, 'crypto', {
+    configurable: true,
+    value: { randomUUID: () => `chat-command-${++commandSequence}` },
+  });
   mockRoom = makeRoom();
   visibility = 'visible';
   focused = true;
   observers = [];
   desktop = false;
+  fullscreenElement = null;
+  Object.defineProperty(document, 'fullscreenElement', {
+    configurable: true,
+    get: () => fullscreenElement,
+  });
   window.matchMedia = jest.fn().mockImplementation((query: string) => ({
     matches: desktop,
     media: query,
@@ -115,6 +131,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  fullscreenFixtures.splice(0).forEach((element) => element.remove());
   jest.restoreAllMocks();
   jest.useRealTimers();
   window.IntersectionObserver = originalIntersectionObserver;
@@ -122,7 +139,39 @@ afterEach(() => {
   if (originalVisibility)
     Object.defineProperty(document, 'visibilityState', originalVisibility);
   else Reflect.deleteProperty(document, 'visibilityState');
+  if (originalFullscreen)
+    Object.defineProperty(document, 'fullscreenElement', originalFullscreen);
+  else Reflect.deleteProperty(document, 'fullscreenElement');
 });
+
+test.each(['native', 'web'])(
+  'messages covered by %s player fullscreen remain unread until the actual chat becomes visible again',
+  async (mode) => {
+    desktop = true;
+    const slot = document.createElement('div');
+    slot.dataset.tmRoomChatSlot = '';
+    slot.dataset.active = 'false';
+    const player = document.createElement('div');
+    player.className = 'art-video-player';
+    document.body.append(slot, player);
+    fullscreenFixtures.push(slot, player);
+    if (mode === 'native') fullscreenElement = player;
+    else player.classList.add('art-fullscreen-web');
+    const view = render(<ChatFloatingWindow />);
+    observers[observers.length - 1].show(2);
+    await advance(400);
+    expect(mockRoom.markChatRead).not.toHaveBeenCalled();
+    fullscreenElement = null;
+    player.classList.remove('art-fullscreen-web');
+    await advance(1000);
+    expect(mockRoom.markChatRead).toHaveBeenCalledWith(2);
+    await act(async () => {
+      view.unmount();
+      slot.remove();
+      player.remove();
+    });
+  }
+);
 
 test('desktop embeds one chat panel and only visible messages are read', async () => {
   desktop = true;
@@ -287,6 +336,28 @@ test('collapsed chat and opening alone do not read; only sufficiently visible me
   expect(mockRoom.markChatRead).toHaveBeenCalledTimes(1);
 });
 
+test('two chat send clicks in the same event turn keep a single in-flight command', async () => {
+  let confirm!: () => void;
+  mockRoom.roomCommand.mockImplementationOnce(
+    () =>
+      new Promise<void>((resolve) => {
+        confirm = resolve;
+      })
+  );
+  render(<ChatFloatingWindow />);
+  openChat();
+  fireEvent.change(screen.getByRole('textbox', { name: '消息内容' }), {
+    target: { value: '只发一次' },
+  });
+  const button = screen.getByRole('button', { name: '发送消息' });
+  act(() => {
+    fireEvent.click(button);
+    fireEvent.click(button);
+  });
+  expect(mockRoom.roomCommand).toHaveBeenCalledTimes(1);
+  await act(async () => confirm());
+});
+
 test('visible messages remain unread while hidden or unfocused, then read when foreground focus returns', async () => {
   render(<ChatFloatingWindow />);
   const observer = openChat();
@@ -383,10 +454,13 @@ test('发送回包保留等待期间编辑的下一条草稿', async () => {
   await act(async () => acknowledge());
   expect(input).toHaveValue('下一条尚未发送');
   expect(mockRoom.roomCommand).toHaveBeenCalledTimes(1);
-  expect(mockRoom.roomCommand).toHaveBeenCalledWith('chat:message', {
-    content: '第一条消息',
-    type: 'text',
-  });
+  expect(mockRoom.roomCommand).toHaveBeenCalledWith(
+    'chat:message',
+    expect.objectContaining({
+      content: '第一条消息',
+      type: 'text',
+    })
+  );
 });
 
 test('发送成功仍清空未经修改的已发送草稿', async () => {
@@ -397,6 +471,56 @@ test('发送成功仍清空未经修改的已发送草稿', async () => {
   await act(async () => {
     fireEvent.click(screen.getByRole('button', { name: '发送消息' }));
   });
+  expect(input).toHaveValue('');
+});
+
+test('an old room send failure cannot block or show an error in the next room', async () => {
+  let fail!: (error: Error) => void;
+  mockRoom.roomCommand.mockImplementationOnce(
+    () =>
+      new Promise<void>((_, reject) => {
+        fail = reject;
+      })
+  );
+  const view = render(<ChatFloatingWindow />);
+  openChat();
+  fireEvent.change(screen.getByRole('textbox', { name: '消息内容' }), {
+    target: { value: '旧房间消息' },
+  });
+  fireEvent.click(screen.getByRole('button', { name: '发送消息' }));
+  mockRoom = makeRoom();
+  mockRoom.currentRoom.id = 'room-b';
+  view.rerender(<ChatFloatingWindow />);
+  openChat();
+  fireEvent.change(screen.getByRole('textbox', { name: '消息内容' }), {
+    target: { value: '新房间草稿' },
+  });
+  expect(screen.getByRole('button', { name: '发送消息' })).toBeEnabled();
+  await act(async () => fail(new Error('旧房间取消')));
+  expect(screen.queryByText('旧房间取消')).not.toBeInTheDocument();
+  expect(screen.getByRole('textbox', { name: '消息内容' })).toHaveValue(
+    '新房间草稿'
+  );
+});
+
+test('retrying a message after an uncertain failure keeps its command id', async () => {
+  mockRoom.roomCommand.mockRejectedValueOnce(new Error('房间操作超时'));
+  render(<ChatFloatingWindow />);
+  openChat();
+  const input = screen.getByRole('textbox', { name: '消息内容' });
+  fireEvent.change(input, { target: { value: '只应保存一次' } });
+  await act(async () =>
+    fireEvent.click(screen.getByRole('button', { name: '发送消息' }))
+  );
+  expect(input).toHaveValue('只应保存一次');
+  await act(async () =>
+    fireEvent.click(screen.getByRole('button', { name: '发送消息' }))
+  );
+  const calls = mockRoom.roomCommand.mock.calls as unknown as Array<
+    [string, { commandId: string }]
+  >;
+  expect(calls[0][1].commandId).toEqual(expect.any(String));
+  expect(calls[1][1].commandId).toBe(calls[0][1].commandId);
   expect(input).toHaveValue('');
 });
 

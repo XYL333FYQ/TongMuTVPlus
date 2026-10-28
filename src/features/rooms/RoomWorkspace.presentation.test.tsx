@@ -6,6 +6,10 @@ jest.mock('@/lib/auth', () => ({
   getAuthInfoFromBrowserCookie: () => ({ username: 'qa-owner' }),
 }));
 jest.mock('@/lib/motion', () => ({ useReducedMotionSetting: () => true }));
+jest.mock('@/lib/utils', () => ({
+  ...jest.requireActual('@/lib/utils'),
+  base58Encode: () => 'encoded-controlled-media',
+}));
 jest.mock('@/components/WatchRoomProvider', () => ({
   useWatchRoomContext: () => mockRoom,
 }));
@@ -21,7 +25,13 @@ jest.mock('@/features/playback/PlaybackSlot', () => ({
   default: () => <div data-testid='player-slot' />,
 }));
 
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from '@testing-library/react';
 
 import RoomWorkspace from './RoomWorkspace';
 
@@ -54,9 +64,17 @@ const makeRoom = () => ({
   reconnectFailed: false,
   manualReconnect: jest.fn(),
   leaveRoom: jest.fn(),
+  roomCommand: jest.fn(
+    async (_event: string, _payload: Record<string, unknown>) => ({
+      success: true,
+    })
+  ),
 });
 let mockRoom = makeRoom();
 const mockPlayback = {
+  href: null as string | null,
+  shareCurrentPlayback: jest.fn(),
+  requestPlayback: jest.fn(),
   controller: null,
   followingRoom: true,
   presentation: 'docked',
@@ -68,14 +86,113 @@ const mockPlayback = {
 };
 const originalFetch = global.fetch;
 beforeEach(() => {
+  let command = 0;
+  Object.defineProperty(globalThis, 'crypto', {
+    configurable: true,
+    value: { randomUUID: () => `room-command-${++command}` },
+  });
   window.innerWidth = 1280;
   mockRoom = makeRoom();
   mockPlayback.followingRoom = true;
+  mockPlayback.href = null;
   mockPlayback.metadata.error = null;
   mockPlayback.presentation = 'docked';
   jest.clearAllMocks();
   // Presentation tests do not need directory responses.
   global.fetch = jest.fn(() => new Promise<Response>(() => undefined));
+});
+
+test('sharing the current film explicitly targets this room rather than passing the click event', () => {
+  mockRoom.canControl = true;
+  mockPlayback.href = '/play?source=fixture&id=current';
+  render(<RoomWorkspace />);
+  fireEvent.click(screen.getByRole('button', { name: '分享当前正在看的影片' }));
+  expect(mockPlayback.shareCurrentPlayback).toHaveBeenCalledWith('qa-room');
+});
+
+test.each([
+  [
+    {
+      type: 'live',
+      channelId: 'a',
+      channelName: '频道A',
+      channelUrl: 'https://media.test/live.m3u8',
+    },
+    '观看直播',
+    '/live',
+  ],
+  [
+    {
+      type: 'live',
+      channelId: 'a',
+      channelName: '主播A',
+      channelUrl: 'https://site.test/web-live?platform=huya&roomId=123',
+    },
+    '观看直播',
+    '/web-live?platform=huya&roomId=123',
+  ],
+  [{ type: 'music' }, '一起听', '/watch-room/music'],
+  [{ type: 'screen', status: 'sharing' }, '观看共享', '/watch-room/screen'],
+])(
+  'the room dispatches activity %j to a reachable adapter without starting a film',
+  (state, label, href) => {
+    mockRoom.currentRoom!.currentState = state as Room['currentState'];
+    render(<RoomWorkspace />);
+    expect(screen.getByRole('link', { name: label as string })).toHaveAttribute(
+      'href',
+      href
+    );
+    expect(mockPlayback.requestPlayback).not.toHaveBeenCalled();
+  }
+);
+
+function openDirectPicker() {
+  fireEvent.click(screen.getByRole('button', { name: '选择影片' }));
+  fireEvent.click(screen.getByRole('button', { name: '视频直链' }));
+  fireEvent.change(screen.getByLabelText('影片名称'), {
+    target: { value: '待看片' },
+  });
+  fireEvent.change(screen.getByLabelText('MP4 / M3U8 地址'), {
+    target: { value: 'https://media.test/next.mp4' },
+  });
+}
+
+test('the existing room picker binds additions to this room and reuses an uncertain command on retry', async () => {
+  mockRoom.roomCommand.mockRejectedValueOnce(new Error('确认超时'));
+  render(<RoomWorkspace />);
+  openDirectPicker();
+  fireEvent.click(screen.getByRole('button', { name: '加入片单' }));
+  await screen.findAllByText('确认超时');
+  fireEvent.click(screen.getByRole('button', { name: '加入片单' }));
+  await screen.findByText('已加入片单');
+  const first = mockRoom.roomCommand.mock.calls[0][1];
+  const retry = mockRoom.roomCommand.mock.calls[1][1];
+  expect(first).toEqual(
+    expect.objectContaining({
+      roomId: 'qa-room',
+      commandId: expect.any(String),
+    })
+  );
+  expect(retry.commandId).toBe(first.commandId);
+});
+
+test('an old room picker failure cannot leave an error or sending lock in a newly entered room', async () => {
+  let fail!: (reason: Error) => void;
+  mockRoom.roomCommand.mockImplementationOnce(
+    () =>
+      new Promise((_resolve, reject) => {
+        fail = reject;
+      })
+  );
+  const view = render(<RoomWorkspace />);
+  openDirectPicker();
+  fireEvent.click(screen.getByRole('button', { name: '加入片单' }));
+  if (mockRoom.currentRoom)
+    mockRoom.currentRoom = { ...mockRoom.currentRoom, id: 'new-room' };
+  view.rerender(<RoomWorkspace />);
+  await act(async () => fail(new Error('旧房取消')));
+  expect(screen.queryAllByText('旧房取消')).toHaveLength(0);
+  expect(screen.getByRole('button', { name: '选择影片' })).not.toBeDisabled();
 });
 
 test('narrow screens open chat first and put film details after the room panel', () => {
@@ -217,6 +334,78 @@ test('the empty queue has one central selection action and no duplicate add acti
   expect(
     screen.queryByRole('button', { name: '添加影片' })
   ).not.toBeInTheDocument();
+});
+
+test('a playing room with an empty queue keeps an explicit add-later route and recommendations', () => {
+  if (mockRoom.currentRoom)
+    mockRoom.currentRoom.currentState = {
+      type: 'play',
+      source: 'fixture',
+      videoId: 'playing',
+      videoName: '正在播放',
+      url: 'https://media.test/playing.mp4',
+      currentTime: 0,
+      isPlaying: true,
+    };
+  render(<RoomWorkspace />);
+  expect(screen.getByRole('link', { name: '添加待看' })).toHaveAttribute(
+    'href',
+    '/watch-room/select?room=qa-room'
+  );
+  expect(
+    screen.getByRole('heading', { name: '挑选下一部' })
+  ).toBeInTheDocument();
+});
+
+test('a host queue play action uses an explicit together intent', () => {
+  mockRoom.canControl = true;
+  if (mockRoom.currentRoom)
+    mockRoom.currentRoom.queue = [
+      {
+        id: 'next',
+        title: '下一部',
+        href: '/play?source=fixture&id=next',
+        source: 'fixture',
+        videoId: 'next',
+        episode: 1,
+        addedBy: 'qa-owner',
+        addedAt: 0,
+      },
+    ];
+  render(<RoomWorkspace />);
+  fireEvent.click(screen.getByRole('button', { name: '播放下一部' }));
+  expect(mockPlayback.requestPlayback).toHaveBeenCalledWith(
+    '/play?source=fixture&id=next&episode=1&queueId=next',
+    'together'
+  );
+});
+
+test('starting from an idle room chooses the first waiting item rather than replaying a completed one', () => {
+  mockRoom.canControl = true;
+  if (mockRoom.currentRoom)
+    mockRoom.currentRoom.queue = [
+      {
+        id: 'past',
+        title: '已看过',
+        href: '/play?source=fixture&id=past',
+        addedBy: 'qa-owner',
+        addedAt: 0,
+        playedAt: 1,
+      },
+      {
+        id: 'next',
+        title: '下一部',
+        href: '/play?source=fixture&id=next',
+        addedBy: 'qa-owner',
+        addedAt: 0,
+      },
+    ];
+  render(<RoomWorkspace />);
+  fireEvent.click(screen.getByRole('button', { name: '开始播放' }));
+  expect(mockPlayback.requestPlayback).toHaveBeenCalledWith(
+    '/play?source=fixture&id=next&episode=1&queueId=next',
+    'together'
+  );
 });
 
 test('room identifiers are masked on screen and copied in full', async () => {

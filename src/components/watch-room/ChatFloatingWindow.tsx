@@ -71,6 +71,12 @@ export default function ChatFloatingWindow() {
   const emojiTrigger = useRef<HTMLButtonElement>(null);
   const emojiPanel = useRef<HTMLDivElement>(null);
   const [sending, setSending] = useState(false);
+  const sendingRef = useRef(false);
+  const messageAttempt = useRef<{
+    content: string;
+    type: 'text' | 'emoji';
+    commandId: string;
+  } | null>(null);
   useEffect(() => {
     if (!emojiOpen) return;
     const first = emojiPanel.current?.querySelector<HTMLButtonElement>(
@@ -157,6 +163,7 @@ export default function ChatFloatingWindow() {
     isMicEnabled: voiceEnabled && micEnabled,
     isSpeakerEnabled: speakerEnabled,
     members: roomContext?.members || [],
+    enabled: voiceEnabled,
   });
 
   useEffect(() => {
@@ -176,6 +183,9 @@ export default function ChatFloatingWindow() {
     setEmojiOpen(false);
     setDraft('');
     setError('');
+    setSending(false);
+    sendingRef.current = false;
+    messageAttempt.current = null;
     setMicEnabled(false);
     lastRead.current = 0;
     atBottom.current = true;
@@ -193,15 +203,24 @@ export default function ChatFloatingWindow() {
     if (!panelVisible || !root || !room?.id) return;
     visibleSeqs.current.clear();
     let timer: ReturnType<typeof setTimeout> | undefined;
+    const generation = historyGeneration.current;
     const submit = () => {
       if (document.visibilityState !== 'visible' || !document.hasFocus())
         return;
+      const fullscreen =
+        document.fullscreenElement ||
+        document.querySelector('.art-video-player.art-fullscreen-web');
+      if (fullscreen && !fullscreen.contains(root)) return;
       const seq = Math.max(0, ...Array.from(visibleSeqs.current));
       if (seq <= lastRead.current) return;
       const previous = lastRead.current;
       lastRead.current = seq;
       void markReadRef.current?.(seq).catch(() => {
-        lastRead.current = previous;
+        if (
+          historyGeneration.current === generation &&
+          lastRead.current === seq
+        )
+          lastRead.current = previous;
       });
     };
     const schedule = () => {
@@ -242,24 +261,43 @@ export default function ChatFloatingWindow() {
   }, [panelVisible, chatSlot, roomContext?.chatMessages.length]);
 
   const send = async (content = draft, type: 'text' | 'emoji' = 'text') => {
-    if (!content.trim() || !roomContext?.isConnected || sending) return;
+    if (!content.trim() || !roomContext?.isConnected || sendingRef.current)
+      return;
     if (type === 'emoji') emojiTrigger.current?.focus({ preventScroll: true });
+    const generation = historyGeneration.current;
+    const text = content.trim();
+    if (
+      messageAttempt.current?.content !== text ||
+      messageAttempt.current.type !== type
+    )
+      messageAttempt.current = {
+        content: text,
+        type,
+        commandId: crypto.randomUUID(),
+      };
+    sendingRef.current = true;
     setSending(true);
     setError('');
     try {
       await roomContext.roomCommand('chat:message', {
-        content: content.trim(),
-        type,
+        ...messageAttempt.current,
+        roomId: room?.id,
       });
+      if (historyGeneration.current !== generation) return;
+      messageAttempt.current = null;
       setDraft((current) => (current === content ? '' : current));
       setEmojiOpen(false);
       atBottom.current = true;
     } catch (failure) {
+      if (historyGeneration.current !== generation) return;
       setError(
         failure instanceof Error ? failure.message : '消息发送失败，内容已保留'
       );
     } finally {
-      setSending(false);
+      if (historyGeneration.current === generation) {
+        sendingRef.current = false;
+        setSending(false);
+      }
     }
   };
   const copyInvite = async () => {

@@ -7,6 +7,10 @@ import { useEffect, useState } from 'react';
 import SectionHeader from '@/components/catalog/SectionHeader';
 import { useWatchRoomContextSafe } from '@/components/WatchRoomProvider';
 
+import {
+  EXTERNAL_ROOM_SERVER_NOTICE,
+  isExternalRoomServer,
+} from '@/features/rooms/external-room-server';
 import { displayRoomName } from '@/features/rooms/room-presentation';
 
 import type { Room } from '@/types/watch-room';
@@ -18,8 +22,16 @@ export default function HomeRooms({ guest = false }: { guest?: boolean }) {
   const [rooms, setRooms] = useState<Summary[]>([]);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(!guest && Boolean(context?.isEnabled));
+  const externalServer = isExternalRoomServer(context?.config);
   useEffect(() => {
     if (guest || !context?.isEnabled) {
+      setLoading(false);
+      return;
+    }
+    if (externalServer) {
+      // 外部观影室服务没有房间目录 REST，不请求必败的接口
+      setRooms([]);
+      setError(EXTERNAL_ROOM_SERVER_NOTICE);
       setLoading(false);
       return;
     }
@@ -49,7 +61,7 @@ export default function HomeRooms({ guest = false }: { guest?: boolean }) {
       controller.abort();
       clearInterval(timer);
     };
-  }, [guest, context?.isEnabled]);
+  }, [guest, context?.isEnabled, externalServer]);
   const current = context?.currentRoom;
   const visible = current
     ? [current, ...rooms.filter((room) => room.id !== current.id)]

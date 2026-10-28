@@ -99,3 +99,14 @@ test('older saved queue URLs receive their persisted episode at playback without
   ).toBe('3');
   expect(() => queuePlaybackHref('https://outside.test/play', 1)).toThrow();
 });
+
+test('a queue playback reference retains its item identity across the shared snapshot', () => {
+  const href = queuePlaybackHref('/play?title=测试片', 3, 'waiting-1');
+  expect(new URL(href, 'https://test').searchParams.get('queueId')).toBe(
+    'waiting-1'
+  );
+  const shared = playbackHrefFromState({ ...state, queueItemId: 'waiting-1' });
+  expect(new URL(shared, 'https://test').searchParams.get('queueId')).toBe(
+    'waiting-1'
+  );
+});

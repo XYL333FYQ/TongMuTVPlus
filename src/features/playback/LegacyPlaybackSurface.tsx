@@ -158,12 +158,12 @@ import LoadingStyle, {
   type LoadingStep,
   LoadingErrorStyle,
 } from '@/components/feedback/LoadingStyle';
+import Toast, { ToastProps } from '@/components/feedback/Toast';
 import PageLayout from '@/components/PageLayout';
 import PansouSearch from '@/components/PansouSearch';
 import ProxyImage from '@/components/ProxyImage';
 import { useSite } from '@/components/SiteProvider';
 import SmartRecommendations from '@/components/SmartRecommendations';
-import Toast, { ToastProps } from '@/components/feedback/Toast';
 import VideoCard from '@/components/VideoCard';
 import { useWatchRoomContextSafe } from '@/components/WatchRoomProvider';
 
@@ -332,7 +332,9 @@ function PlayPageClient() {
   }, []);
   const commitPlaybackHref = (url: URL) => {
     if (!surfaceActiveRef.current) return;
-    playbackSession.updateHref(`${url.pathname}${url.search}`);
+    const queueId = searchParams.get('queueId');
+    if (queueId) url.searchParams.set('queueId', queueId);
+    if (!playbackSession.updateHref(`${url.pathname}${url.search}`)) return;
     if (window.location.pathname === '/play')
       window.history.replaceState({}, '', `${url.pathname}${url.search}`);
   };
@@ -2827,6 +2829,12 @@ function PlayPageClient() {
 
   const handleCreateWatchRoom = async () => {
     const watchRoom = watchRoomContext;
+    if (watchRoom?.currentRoom) {
+      router.push(
+        `/watch-room?room=${encodeURIComponent(watchRoom.currentRoom.id)}`
+      );
+      return;
+    }
     if (!watchRoom || !watchRoom.isConnected) {
       setToast({
         message: '观影室服务未连接',
@@ -2846,7 +2854,7 @@ function PlayPageClient() {
         roomType: 'sync',
         userName: authInfo?.username || '游客',
       });
-      playbackSession.shareCurrentPlayback();
+      playbackSession.shareCurrentPlayback(room.id);
       // 创建成功直接进房间页：同一个播放实例从整页变成房间里的画面，不会重建
       router.push(`/watch-room?room=${encodeURIComponent(room.id)}`);
     } catch (error: any) {
@@ -12117,7 +12125,7 @@ function PlayPageClient() {
                           </span>
                         </button>
 
-                        {/* 创建观影室（观影室开启且未加入房间时显示） */}
+                        {/* 已在房间时只返回；无房间时创建并共享当前影片。 */}
                         {watchRoomContext?.isEnabled &&
                           watchRoomContext.isConnected && (
                             <button
@@ -12127,7 +12135,11 @@ function PlayPageClient() {
                               }}
                               disabled={isCreatingRoom}
                               className='group relative flex items-center justify-center gap-1 w-8 h-8 lg:w-auto lg:h-auto lg:px-2 lg:py-1.5 bg-fg hover:opacity-90 text-[13px] font-medium rounded-md transition-all duration-200 shadow-sm hover:shadow-md cursor-pointer overflow-hidden border border-line flex-shrink-0 disabled:opacity-60 disabled:cursor-wait text-inverse min-h-[44px] tm-press'
-                              title='创建观影室'
+                              title={
+                                watchRoomContext.currentRoom
+                                  ? '返回房间'
+                                  : '创建观影室'
+                              }
                             >
                               {isCreatingRoom ? (
                                 <Loader2 className='w-4 h-4 flex-shrink-0 text-inverse animate-spin' />
@@ -12135,7 +12147,11 @@ function PlayPageClient() {
                                 <Users className='w-4 h-4 flex-shrink-0 text-inverse' />
                               )}
                               <span className='hidden lg:inline max-w-0 group-hover:max-w-[120px] overflow-hidden whitespace-nowrap transition-all duration-200 ease-in-out text-inverse'>
-                                {isCreatingRoom ? '创建中' : '创建观影室'}
+                                {isCreatingRoom
+                                  ? '创建中'
+                                  : watchRoomContext.currentRoom
+                                  ? '返回房间'
+                                  : '创建观影室'}
                               </span>
                             </button>
                           )}

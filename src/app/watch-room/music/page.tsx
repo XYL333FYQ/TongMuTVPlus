@@ -1,13 +1,24 @@
 'use client';
 
 import { Music2 } from 'lucide-react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import {
+  type MutableRefObject,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 
 import { useReducedMotionSetting } from '@/lib/motion';
 
 import PageContainer from '@/components/PageContainer';
 import { useWatchRoomContext } from '@/components/WatchRoomProvider';
+
+import { usePlaybackSessionSafe } from '@/features/playback/context';
+import { useAudioFocus } from '@/features/playback/useAudioFocus';
 
 import type { MusicQueueItem, MusicSyncState } from '@/types/watch-room';
 
@@ -334,8 +345,25 @@ export default function WatchRoomMusicPage() {
   const router = useRouter();
   const reduced = useReducedMotionSetting();
   const watchRoom = useWatchRoomContext();
-  const { currentRoom, isOwner, socket } = watchRoom;
-  const audioRef = useRef<HTMLAudioElement>(null);
+  const { currentRoom, socket } = watchRoom;
+  const session = usePlaybackSessionSafe();
+  // 跟随房间才听房间的音乐；“仅自己看”时房间和消息保留，但不替他放歌
+  const following = session?.followingRoom !== false;
+  const roomOnMusic = currentRoom?.currentState?.type === 'music';
+  // 控制这首歌的设备在音乐播放器里操作，这里再放一遍会出现两路声音
+  const publishing = Boolean(roomOnMusic && following && watchRoom.canControl);
+  const listening = following && roomOnMusic && !publishing;
+  const listeningRef = useRef(listening);
+  listeningRef.current = listening;
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [audioElement, setAudioElement] = useState<HTMLAudioElement | null>(
+    null
+  );
+  const attachAudio = useCallback((element: HTMLAudioElement | null) => {
+    (audioRef as MutableRefObject<HTMLAudioElement | null>).current = element;
+    setAudioElement(element);
+  }, []);
+  const { claimSound } = useAudioFocus(audioElement, false);
   const analyserRef = useRef<AnalyserNode | null>(null);
   const mediaSourceRef = useRef<MediaElementAudioSourceNode | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
@@ -350,7 +378,7 @@ export default function WatchRoomMusicPage() {
   const desktopVolumeControlRef = useRef<HTMLDivElement>(null);
 
   const [state, setState] = useState<MusicSyncState | null>(() =>
-    currentRoom?.currentState?.type === 'music'
+    listening && currentRoom?.currentState?.type === 'music'
       ? currentRoom.currentState
       : null
   );
@@ -368,8 +396,7 @@ export default function WatchRoomMusicPage() {
 
   useEffect(() => {
     const nextState =
-      currentRoom?.roomType === 'music' &&
-      currentRoom.currentState?.type === 'music'
+      listening && currentRoom?.currentState?.type === 'music'
         ? currentRoom.currentState
         : null;
 
@@ -390,7 +417,7 @@ export default function WatchRoomMusicPage() {
     if (Number.isFinite(nextState.song.duration) && nextState.song.duration) {
       setDuration(nextState.song.duration);
     }
-  }, [currentRoom?.currentState, currentRoom?.id, currentRoom?.roomType]);
+  }, [currentRoom?.currentState, currentRoom?.id, listening]);
 
   const currentLyricIndex = useMemo(() => {
     let index = -1;
@@ -423,10 +450,7 @@ export default function WatchRoomMusicPage() {
       router.replace('/watch-room');
       return;
     }
-    if (currentRoom.roomType !== 'music' || isOwner) {
-      router.replace('/watch-room');
-    }
-  }, [currentRoom, isOwner, router]);
+  }, [currentRoom, router]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -587,6 +611,7 @@ export default function WatchRoomMusicPage() {
     if (!socket) return;
 
     const handleState = (nextState: MusicSyncState) => {
+      if (!listeningRef.current) return;
       setState(nextState);
       setCurrentTime(adjustedTime(nextState, nextState.isPlaying));
       if (Number.isFinite(nextState.song.duration) && nextState.song.duration) {
@@ -663,7 +688,15 @@ export default function WatchRoomMusicPage() {
     };
   }, []);
 
+  // 这一页真正出声时，电影等其他播放器让出声音
+  useEffect(() => {
+    if (!audioElement) return;
+    audioElement.addEventListener('play', claimSound);
+    return () => audioElement.removeEventListener('play', claimSound);
+  }, [audioElement, claimSound]);
+
   const activate = async () => {
+    claimSound();
     setNeedsActivation(false);
     await ensureAnalyser();
     if (state?.isPlaying) {
@@ -710,7 +743,7 @@ export default function WatchRoomMusicPage() {
           }
         }
       `}</style>
-      <audio ref={audioRef} className='hidden' />
+      <audio ref={attachAudio} className='hidden' />
 
       {song?.pic && (
         <img src={song.pic} alt='' className='hidden' aria-hidden />
@@ -1070,8 +1103,33 @@ export default function WatchRoomMusicPage() {
             </div>
           </>
         ) : (
-          <div className='flex flex-1 items-center justify-center text-muted'>
-            等待房主播放音乐
+          <div className='flex flex-1 flex-col items-center justify-center gap-3 text-center text-muted'>
+            {!following ? (
+              <>
+                <p>正在个人观看，房间和消息保留</p>
+                <button
+                  type='button'
+                  onClick={() => void session?.resumeRoom()}
+                  className='rounded-md bg-fg px-4 py-2 text-inverse min-h-[44px] tm-press'
+                >
+                  恢复一起听
+                </button>
+              </>
+            ) : publishing ? (
+              <>
+                <p>你的这台设备正在主持这首歌</p>
+                <Link
+                  href='/music'
+                  className='rounded-md bg-fg px-4 py-2 text-inverse min-h-[44px] tm-press inline-flex items-center'
+                >
+                  回到音乐播放器
+                </Link>
+              </>
+            ) : roomOnMusic ? (
+              <p>等待主持开始播放</p>
+            ) : (
+              <p>房间当前没有在一起听</p>
+            )}
           </div>
         )}
       </PageContainer>

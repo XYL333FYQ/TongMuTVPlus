@@ -85,6 +85,7 @@ export default function TVNativeVideo({
   command,
   sourceType,
   className = '',
+  onElement,
 }: {
   url: string;
   poster?: string;
@@ -100,8 +101,16 @@ export default function TVNativeVideo({
   command?: number;
   sourceType?: SourceType;
   className?: string;
+  /** 把 video 元素交给页面（用于声音归属），卸载时传 null */
+  onElement?: (element: HTMLVideoElement | null) => void;
 }) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
+  const onElementRef = useRef<typeof onElement>(onElement);
+  onElementRef.current = onElement;
+  useEffect(() => {
+    onElementRef.current?.(videoRef.current);
+    return () => onElementRef.current?.(null);
+  }, []);
   const onTimeRef = useRef<typeof onTime>(onTime);
   const onPlaybackErrorRef = useRef<typeof onPlaybackError>(onPlaybackError);
   const onPlayingChangeRef = useRef<typeof onPlayingChange>(onPlayingChange);

@@ -4,9 +4,37 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 const LEASE_KEY = 'tongmutvplus:audible-tab';
 const LEASE_MS = 6500;
+const LOCAL_FOCUS_EVENT = 'tongmu:audio-focus';
 interface Lease {
   id: string;
   expiresAt: number;
+}
+let memoryLease: Lease | null = null;
+let memoryOnly = false;
+let participants = 0;
+function readLease() {
+  if (!memoryOnly) {
+    try {
+      memoryLease = parseAudioLease(
+        localStorage.getItem(LEASE_KEY),
+        Date.now()
+      );
+    } catch {
+      memoryOnly = true;
+    }
+  }
+  return memoryLease && memoryLease.expiresAt > Date.now() ? memoryLease : null;
+}
+function writeLease(lease: Lease | null) {
+  memoryLease = lease;
+  if (!memoryOnly) {
+    try {
+      if (lease) localStorage.setItem(LEASE_KEY, JSON.stringify(lease));
+      else localStorage.removeItem(LEASE_KEY);
+    } catch {
+      memoryOnly = true;
+    }
+  }
 }
 
 export function parseAudioLease(
@@ -27,13 +55,16 @@ export function parseAudioLease(
 }
 
 /** A tab keeps decoding/synchronizing while another tab owns sound. */
-export function useAudioFocus(video: HTMLVideoElement | null) {
+export function useAudioFocus(
+  video: HTMLMediaElement | null,
+  initialMuted?: boolean
+) {
   const id = useRef('');
   const [ownsSound, setOwnsSound] = useState(true);
   const ownsRef = useRef(true);
   const preferredMuted = useRef(false);
   const channel = useRef<BroadcastChannel | null>(null);
-  const previousVideo = useRef<HTMLVideoElement | null>(null);
+  const previousVideo = useRef<HTMLMediaElement | null>(null);
 
   const enforce = useCallback(
     (owns: boolean) => {
@@ -46,25 +77,20 @@ export function useAudioFocus(video: HTMLVideoElement | null) {
   const claimSound = useCallback(() => {
     if (!id.current) id.current = crypto.randomUUID();
     preferredMuted.current = false;
-    try {
-      localStorage.setItem(
-        LEASE_KEY,
-        JSON.stringify({ id: id.current, expiresAt: Date.now() + LEASE_MS })
-      );
-    } catch {
-      /* In restricted storage the current tab can still play. */
-    }
+    writeLease({ id: id.current, expiresAt: Date.now() + LEASE_MS });
     channel.current?.postMessage({ type: 'lease' });
+    window.dispatchEvent(new Event(LOCAL_FOCUS_EVENT));
     enforce(true);
   }, [enforce]);
 
   useEffect(() => {
     if (!video) return;
+    participants += 1;
     if (!id.current) id.current = crypto.randomUUID();
     if (previousVideo.current !== video) {
       preferredMuted.current = previousVideo.current
         ? preferredMuted.current
-        : video.muted;
+        : initialMuted ?? video.muted;
       previousVideo.current = video;
     }
     try {
@@ -75,15 +101,9 @@ export function useAudioFocus(video: HTMLVideoElement | null) {
     }
     const reconcile = () => {
       try {
-        const lease = parseAudioLease(
-          localStorage.getItem(LEASE_KEY),
-          Date.now()
-        );
+        const lease = readLease();
         if (!lease || lease.id === id.current) {
-          localStorage.setItem(
-            LEASE_KEY,
-            JSON.stringify({ id: id.current, expiresAt: Date.now() + LEASE_MS })
-          );
+          writeLease({ id: id.current, expiresAt: Date.now() + LEASE_MS });
           if (!ownsRef.current) channel.current?.postMessage({ type: 'lease' });
           enforce(true);
         } else enforce(false);
@@ -101,18 +121,16 @@ export function useAudioFocus(video: HTMLVideoElement | null) {
     };
     const release = () => {
       try {
-        if (
-          parseAudioLease(localStorage.getItem(LEASE_KEY), Date.now())?.id ===
-          id.current
-        )
-          localStorage.removeItem(LEASE_KEY);
+        if (readLease()?.id === id.current) writeLease(null);
       } catch {
         /* No shared lease was available. */
       }
       channel.current?.postMessage({ type: 'lease' });
+      window.dispatchEvent(new Event(LOCAL_FOCUS_EVENT));
     };
     if (channel.current) channel.current.onmessage = reconcile;
     window.addEventListener('storage', storage);
+    window.addEventListener(LOCAL_FOCUS_EVENT, reconcile);
     window.addEventListener('pagehide', release);
     video.addEventListener('volumechange', changedVolume);
     reconcile();
@@ -121,11 +139,17 @@ export function useAudioFocus(video: HTMLVideoElement | null) {
       clearInterval(timer);
       video.removeEventListener('volumechange', changedVolume);
       window.removeEventListener('storage', storage);
+      window.removeEventListener(LOCAL_FOCUS_EVENT, reconcile);
       window.removeEventListener('pagehide', release);
       release();
       channel.current?.close();
       channel.current = null;
+      participants -= 1;
+      if (!participants) {
+        memoryLease = null;
+        memoryOnly = false;
+      }
     };
-  }, [video, enforce]);
+  }, [video, enforce, initialMuted]);
   return { ownsSound, claimSound };
 }

@@ -329,7 +329,13 @@ test('following=false yields control without leaving; stale revisions rejected a
   assert.equal(f.store.get(id).queue.length, 1);
   expectCode(
     () =>
-      f.command('host', id, 'queue:add', payload, { baseRevision: revision }),
+      f.command(
+        'host',
+        id,
+        'queue:move',
+        { id: f.store.get(id).queue[0].id, position: 0 },
+        { baseRevision: revision }
+      ),
     'REVISION_CONFLICT'
   );
   f.service.following('owner', { following: false });
@@ -338,6 +344,108 @@ test('following=false yields control without leaving; stale revisions rejected a
   f.advance(10000);
   f.service.tick();
   assert.equal(f.service.rt(id).controller.accountId, 'host');
+});
+
+test('adding a waiting film survives unrelated playback revisions and controller epochs', (t) => {
+  const f = setup(t);
+  const id = createAndHost(f);
+  f.join('guest', id);
+  const stale = {
+    baseRevision: f.store.get(id).revision,
+    controllerEpoch: f.store.get(id).controllerEpoch - 1,
+  };
+  f.command('owner', id, 'play:change', video(5));
+  f.command(
+    'guest',
+    id,
+    'queue:add',
+    {
+      title: '下一部',
+      href: '/play?source=fixture&id=next',
+      source: 'fixture',
+      videoId: 'next',
+    },
+    stale
+  );
+  assert.equal(f.store.get(id).queue.length, 1);
+  assert.equal(f.store.get(id).currentState.videoId, video(5).videoId);
+  expectCode(
+    () =>
+      f.command(
+        'stranger',
+        id,
+        'queue:add',
+        {
+          title: '越权',
+          href: '/play?title=bad',
+          source: 'fixture',
+          videoId: 'bad',
+        },
+        stale
+      ),
+    'FORBIDDEN'
+  );
+});
+
+test('the waiting list only accepts film entries the playback page can open', (t) => {
+  const f = setup(t);
+  const id = createAndHost(f);
+  f.join('owner', id);
+  for (const href of ['/music?x=1', '/live?x=1', '/web-live?platform=a']) {
+    expectCode(
+      () =>
+        f.command('owner', id, 'queue:add', {
+          title: '不是影片',
+          href,
+          source: 'fixture',
+          videoId: 'x',
+        }),
+      'INVALID_MEDIA'
+    );
+  }
+  assert.equal(f.store.get(id).queue.length, 0);
+});
+
+test('ordinary members may remove their waiting films but only hosts may reorder them', (t) => {
+  const f = setup(t);
+  const id = createAndHost(f);
+  f.join('guest', id);
+  f.command('guest', id, 'queue:add', {
+    title: '我的待看',
+    href: '/play?source=fixture&id=next',
+    source: 'fixture',
+    videoId: 'next',
+  });
+  const item = f.store.get(id).queue[0];
+  expectCode(
+    () => f.command('guest', id, 'queue:move', { id: item.id, position: 0 }),
+    'FORBIDDEN'
+  );
+  f.command('guest', id, 'queue:remove', { id: item.id });
+  assert.equal(f.store.get(id).queue.length, 0);
+});
+
+test('a confirmed queue selection stays marked played after switching films and cannot be removed by its ordinary submitter', (t) => {
+  const f = setup(t);
+  const id = createAndHost(f);
+  f.join('guest', id);
+  f.command('guest', id, 'queue:add', {
+    title: '搜索后待看',
+    href: '/play?title=测试电影',
+    source: 'catalog-search',
+    videoId: '测试电影',
+  });
+  const item = f.store.get(id).queue[0];
+  f.command('owner', id, 'play:change', { ...video(), queueItemId: item.id });
+  assert.equal(f.store.get(id).queue[0].playedAt, f.now());
+  assert.equal(f.store.get(id).currentState.queueItemId, item.id);
+  f.command('owner', id, 'play:change', { ...video(), videoId: 'other' });
+  expectCode(
+    () => f.command('guest', id, 'queue:remove', { id: item.id }),
+    'FORBIDDEN'
+  );
+  f.command('owner', id, 'queue:remove', { id: item.id });
+  assert.equal(f.store.get(id).queue.length, 0);
 });
 
 test('rooms, stable queue references, chat and read cursor persist across server restart', (t) => {
@@ -433,6 +541,60 @@ test('message reads are monotonic and isolated; credentials are stripped from me
   assert.equal(Object.hasOwn(state, 'credentials'), false);
   assert.equal(Object.hasOwn(state, 'headers'), false);
   assert.equal(Object.hasOwn(state, 'ownerToken'), false);
+});
+
+test('chat and reads remain valid across unrelated playback revisions and host epochs', (t) => {
+  const f = setup(t);
+  const id = createAndHost(f);
+  f.join('guest', id);
+  const before = f.store.get(id);
+  const stale = {
+    baseRevision: before.revision,
+    controllerEpoch: before.controllerEpoch,
+  };
+  f.command('owner', id, 'play:change', video());
+  const sent = f.command(
+    'guest',
+    id,
+    'chat:message',
+    { content: '仍然可以聊天' },
+    stale
+  ).message;
+  f.command('owner', id, 'play:update', video(20));
+  f.command(
+    'guest',
+    id,
+    'chat:read',
+    { seq: sent.seq },
+    {
+      ...stale,
+      controllerEpoch: stale.controllerEpoch - 1,
+    }
+  );
+  assert.equal(f.store.unread(id, 'guest'), 0);
+  expectCode(
+    () => f.command('owner', id, 'play:update', video(30), stale),
+    'REVISION_CONFLICT'
+  );
+  expectCode(
+    () => f.command('stranger', id, 'chat:message', { content: '越权' }, stale),
+    'FORBIDDEN'
+  );
+});
+
+test('a command addressed to a former room cannot execute in the current room', (t) => {
+  const f = setup(t);
+  const first = createAndHost(f);
+  const second = createAndHost(f);
+  expectCode(
+    () =>
+      f.command('owner', second, 'chat:message', {
+        roomId: first,
+        content: '旧房间',
+      }),
+    'ROOM_CHANGED'
+  );
+  assert.equal(f.service.history(identities.owner, second).length, 0);
 });
 
 test('same owner reconnect within grace resumes after readiness and two devices never share control', (t) => {

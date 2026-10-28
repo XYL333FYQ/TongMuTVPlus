@@ -30,14 +30,20 @@ export function playbackHrefFromState(state: PlayState): string {
   if (state.videoName) params.set('title', state.videoName);
   if (state.videoYear) params.set('year', state.videoYear);
   if (state.searchTitle) params.set('stitle', state.searchTitle);
+  if (state.queueItemId) params.set('queueId', state.queueItemId);
   return `/play?${params}`;
 }
 
-export function queuePlaybackHref(href: string, episode = 1) {
+export function queuePlaybackHref(
+  href: string,
+  episode = 1,
+  queueItemId?: string
+) {
   const normalized = normalizePlaybackHref(href);
   if (!normalized) throw new Error('无效的站内播放地址');
   const url = new URL(normalized, 'https://tongmu.invalid');
   url.searchParams.set('episode', String(episode));
+  if (queueItemId) url.searchParams.set('queueId', queueItemId);
   return `${url.pathname}${url.search}`;
 }
 

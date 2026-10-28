@@ -4,6 +4,8 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { useWatchRoomContextSafe } from '@/components/WatchRoomProvider';
 
+import { usePlaybackSessionSafe } from '@/features/playback/context';
+
 import type { ScreenState } from '@/types/watch-room';
 
 const iceServers = [
@@ -56,30 +58,60 @@ export interface ScreenShareCaptureSettings {
   frameRate: number | null;
 }
 
+/**
+ * 屏幕共享和房间的连接：
+ * - 谁能共享看“当前设备的控制权 + 是否跟随”，不看房主账号；常规房间也能共享；
+ * - 先拿到采集，再等房间确认 screen:start，之后才给其他设备发画面；失败/房间已切换就释放采集；
+ * - 本设备是共享者时只发不收，其余设备（包括同账号的其他设备）都是观众；
+ * - 房间不再是共享、切房、退出跟随时，本机采集一并释放。
+ */
 export function useScreenShare(
   qualityPreset: ScreenShareQualityPreset = 'smooth'
 ) {
   const watchRoom = useWatchRoomContextSafe();
+  const session = usePlaybackSessionSafe();
+  const following = session?.followingRoom !== false;
   const localVideoRef = useRef<HTMLVideoElement | null>(null);
   const remoteVideoRef = useRef<HTMLVideoElement | null>(null);
   const displayStreamRef = useRef<MediaStream | null>(null);
   const remoteStreamRef = useRef<MediaStream | null>(null);
   const peerConnectionsRef = useRef<Map<string, RTCPeerConnection>>(new Map());
   const stoppingRef = useRef(false);
+  const localSharingRef = useRef(false);
+  const roomSawSharing = useRef(false);
 
   const [error, setError] = useState<string | null>(null);
   const [isStarting, setIsStarting] = useState(false);
+  const [isLocalSharing, setIsLocalSharing] = useState(false);
   const [captureSettings, setCaptureSettings] =
     useState<ScreenShareCaptureSettings | null>(null);
 
   const currentRoom = watchRoom?.currentRoom || null;
   const socket = watchRoom?.socket || null;
   const isConnected = watchRoom?.isConnected || false;
-  const isOwner = watchRoom?.isOwner || false;
   const members = watchRoom?.members || [];
   const currentState = currentRoom?.currentState;
   const isSharing =
     currentState?.type === 'screen' && currentState.status === 'sharing';
+  const canShare = Boolean(currentRoom && following && watchRoom?.canControl);
+
+  // 异步回调里要看“现在”的房间和权限，不能用发起时的闭包
+  const latest = useRef({
+    watchRoom,
+    roomId: currentRoom?.id,
+    following,
+    canShare,
+    members,
+    roomSharing: isSharing,
+  });
+  latest.current = {
+    watchRoom,
+    roomId: currentRoom?.id,
+    following,
+    canShare,
+    members,
+    roomSharing: isSharing,
+  };
 
   const closePeerConnection = useCallback((userId: string) => {
     const pc = peerConnectionsRef.current.get(userId);
@@ -98,14 +130,18 @@ export function useScreenShare(
     }
   }, []);
 
-  const cleanupSharingResources = useCallback(() => {
-    if (stoppingRef.current) return;
-    stoppingRef.current = true;
-
+  const closeAllPeerConnections = useCallback(() => {
     peerConnectionsRef.current.forEach((_pc, userId) =>
       closePeerConnection(userId)
     );
     peerConnectionsRef.current.clear();
+  }, [closePeerConnection]);
+
+  const cleanupSharingResources = useCallback(() => {
+    if (stoppingRef.current) return;
+    stoppingRef.current = true;
+
+    closeAllPeerConnections();
 
     if (displayStreamRef.current) {
       displayStreamRef.current.getTracks().forEach((track) => {
@@ -119,24 +155,39 @@ export function useScreenShare(
       localVideoRef.current.srcObject = null;
     }
 
+    localSharingRef.current = false;
+    roomSawSharing.current = false;
+    setIsLocalSharing(false);
     setCaptureSettings(null);
     clearRemoteVideo();
     stoppingRef.current = false;
-  }, [clearRemoteVideo, closePeerConnection]);
+  }, [clearRemoteVideo, closeAllPeerConnections]);
 
   const stopSharing = useCallback(
     (notifyServer = true) => {
+      const wasSharing = localSharingRef.current;
+      const roomId = latest.current.roomId;
       cleanupSharingResources();
 
-      if (notifyServer && isOwner) {
-        watchRoom?.stopScreenShare();
+      // 主持设备刷新后采集已经丢了，房间却还显示“共享中”：
+      // 有控制权的设备也可以结束这场没人在采集的共享
+      const endsLeftBehind =
+        !wasSharing && latest.current.canShare && latest.current.roomSharing;
+      if (notifyServer && (wasSharing || endsLeftBehind) && roomId) {
+        latest.current.watchRoom
+          ?.roomCommand('screen:stop', { roomId })
+          .catch((err: unknown) => {
+            // 已经退出跟随时服务端本来就不再认这台设备，不必再报错
+            if (latest.current.following)
+              setError(err instanceof Error ? err.message : '停止共享未成功');
+          });
       }
     },
-    [cleanupSharingResources, isOwner, watchRoom]
+    [cleanupSharingResources]
   );
 
   const createPeerConnection = useCallback(
-    (userId: string, ownerMode: boolean) => {
+    (userId: string, senderMode: boolean) => {
       const existing = peerConnectionsRef.current.get(userId);
       if (existing) return existing;
 
@@ -151,7 +202,7 @@ export function useScreenShare(
         }
       };
 
-      if (ownerMode && displayStreamRef.current) {
+      if (senderMode && displayStreamRef.current) {
         displayStreamRef.current.getTracks().forEach((track) => {
           pc.addTrack(track, displayStreamRef.current!);
         });
@@ -192,14 +243,26 @@ export function useScreenShare(
   );
 
   const startSharing = useCallback(async () => {
-    if (!watchRoom || !currentRoom || !isOwner) return;
+    const start = latest.current;
+    const room = start.watchRoom?.currentRoom;
+    if (!start.watchRoom || !room || localSharingRef.current) return;
+    if (!start.following) {
+      setError('请先返回房间恢复一起看，再共享屏幕');
+      return;
+    }
+    if (!start.watchRoom.canControl) {
+      setError('当前设备没有房间播放控制权');
+      return;
+    }
 
+    const roomId = room.id;
     setIsStarting(true);
     setError(null);
 
+    let stream: MediaStream | null = null;
     try {
       const constraints = SCREEN_SHARE_CONSTRAINTS[qualityPreset];
-      const stream = await navigator.mediaDevices.getDisplayMedia({
+      stream = await navigator.mediaDevices.getDisplayMedia({
         video: {
           frameRate: constraints.frameRate,
           width: { ideal: constraints.width },
@@ -207,6 +270,13 @@ export function useScreenShare(
         },
         audio: true,
       });
+
+      // 选屏幕期间房间换了、或本设备不再有资格：不把画面共享进新房间
+      if (latest.current.roomId !== roomId || !latest.current.canShare) {
+        stream.getTracks().forEach((track) => track.stop());
+        setError('房间已切换或失去控制权，未开始共享');
+        return;
+      }
 
       displayStreamRef.current = stream;
       if (localVideoRef.current) {
@@ -230,32 +300,42 @@ export function useScreenShare(
       const state: ScreenState = {
         type: 'screen',
         status: 'sharing',
-        ownerName: currentRoom.ownerName,
+        ownerName: room.ownerName,
         hasAudio: stream.getAudioTracks().length > 0,
         startedAt: Date.now(),
       };
 
-      watchRoom.startScreenShare(state);
+      // 房间确认之后才算共享，确认前不给任何人发画面
+      await start.watchRoom.roomCommand('screen:start', { ...state, roomId });
+      if (
+        latest.current.roomId !== roomId ||
+        displayStreamRef.current !== stream
+      ) {
+        cleanupSharingResources();
+        return;
+      }
+      localSharingRef.current = true;
+      setIsLocalSharing(true);
 
       await Promise.all(
-        members
-          .filter((member) => !member.isOwner)
+        latest.current.members
+          .filter((member) => member.id !== socket?.id)
           .map((member) => sendOfferToMember(member.id))
       );
     } catch (err: any) {
       console.error('[ScreenShare] Failed to start sharing:', err);
+      if (displayStreamRef.current === stream) cleanupSharingResources();
+      else stream?.getTracks().forEach((track) => track.stop());
       setError(err?.message || '开启屏幕共享失败');
     } finally {
       setIsStarting(false);
     }
   }, [
-    currentRoom,
-    isOwner,
-    members,
+    cleanupSharingResources,
     qualityPreset,
     sendOfferToMember,
+    socket,
     stopSharing,
-    watchRoom,
   ]);
 
   useEffect(() => {
@@ -265,7 +345,8 @@ export function useScreenShare(
       userId: string;
       offer: RTCSessionDescriptionInit;
     }) => {
-      if (isOwner) return;
+      // 共享者只发不收；其余设备都是观众
+      if (localSharingRef.current) return;
 
       try {
         const pc = createPeerConnection(data.userId, false);
@@ -286,7 +367,7 @@ export function useScreenShare(
       userId: string;
       answer: RTCSessionDescriptionInit;
     }) => {
-      if (!isOwner) return;
+      if (!localSharingRef.current) return;
 
       const pc = peerConnectionsRef.current.get(data.userId);
       if (!pc) return;
@@ -313,27 +394,21 @@ export function useScreenShare(
     };
 
     const handleScreenStop = () => {
-      if (!isOwner) {
-        peerConnectionsRef.current.forEach((_pc, userId) =>
-          closePeerConnection(userId)
-        );
-        peerConnectionsRef.current.clear();
+      if (!localSharingRef.current) {
+        closeAllPeerConnections();
         clearRemoteVideo();
       }
     };
 
     const handleSocketDisconnect = () => {
-      if (!isOwner) {
-        peerConnectionsRef.current.forEach((_pc, userId) =>
-          closePeerConnection(userId)
-        );
-        peerConnectionsRef.current.clear();
+      if (!localSharingRef.current) {
+        closeAllPeerConnections();
         clearRemoteVideo();
       }
     };
 
     const handleViewerReady = (data: { userId: string }) => {
-      if (!isOwner || !displayStreamRef.current) return;
+      if (!localSharingRef.current || !displayStreamRef.current) return;
       sendOfferToMember(data.userId);
     };
 
@@ -354,19 +429,28 @@ export function useScreenShare(
     };
   }, [
     clearRemoteVideo,
-    closePeerConnection,
+    closeAllPeerConnections,
     createPeerConnection,
     currentRoom,
-    isOwner,
     sendOfferToMember,
     socket,
   ]);
 
+  // 本地预览 <video> 可能比采集晚挂载（刷新后重新开始共享，或房间快照先于确认到达），
+  // 采集开始那一刻没有元素可赋值，这里每次渲染后补上
   useEffect(() => {
-    if (!isOwner || !isSharing || !displayStreamRef.current) return;
+    const preview = localVideoRef.current;
+    const stream = displayStreamRef.current;
+    if (isLocalSharing && preview && stream && preview.srcObject !== stream)
+      preview.srcObject = stream;
+  });
+
+  // 有新成员进房间就补发画面，离开的成员关掉连接
+  useEffect(() => {
+    if (!isLocalSharing || !isSharing || !displayStreamRef.current) return;
 
     members
-      .filter((member) => !member.isOwner)
+      .filter((member) => member.id !== socket?.id)
       .forEach((member) => {
         if (!peerConnectionsRef.current.has(member.id)) {
           sendOfferToMember(member.id);
@@ -375,31 +459,70 @@ export function useScreenShare(
 
     Array.from(peerConnectionsRef.current.keys()).forEach((userId) => {
       const stillInRoom = members.some(
-        (member) => member.id === userId && !member.isOwner
+        (member) => member.id === userId && member.id !== socket?.id
       );
       if (!stillInRoom) {
         closePeerConnection(userId);
       }
     });
-  }, [closePeerConnection, isOwner, isSharing, members, sendOfferToMember]);
+  }, [
+    closePeerConnection,
+    isLocalSharing,
+    isSharing,
+    members,
+    sendOfferToMember,
+    socket,
+  ]);
 
+  // 房间不再是共享（被停止、被清空、主持换了）：本机采集一并释放
+  useEffect(() => {
+    if (isSharing) {
+      if (localSharingRef.current) roomSawSharing.current = true;
+      return;
+    }
+    if (localSharingRef.current && roomSawSharing.current)
+      cleanupSharingResources();
+  }, [cleanupSharingResources, isLocalSharing, isSharing]);
+
+  // 切房、卸载：采集不跟到别的房间
   useEffect(() => {
     return () => {
       cleanupSharingResources();
     };
-  }, [cleanupSharingResources]);
+  }, [cleanupSharingResources, currentRoom?.id]);
 
+  // 退出跟随（仅自己看）：不再共享也不再接收
   useEffect(() => {
-    if (!socket || !currentRoom || isOwner || !isConnected) return;
+    if (following) return;
+    if (localSharingRef.current) stopSharing(true);
+    else {
+      closeAllPeerConnections();
+      clearRemoteVideo();
+    }
+  }, [clearRemoteVideo, closeAllPeerConnections, following, stopSharing]);
+
+  // 观众：房间在共享且本机在跟随，就向共享设备要画面
+  useEffect(() => {
+    if (!socket || !currentRoom || !following || isLocalSharing || !isConnected)
+      return;
     if (currentState?.type !== 'screen' || currentState.status !== 'sharing')
       return;
 
     socket.emit('screen:viewer-ready');
-  }, [currentRoom, currentState, isConnected, isOwner, socket]);
+  }, [
+    currentRoom,
+    currentState,
+    following,
+    isConnected,
+    isLocalSharing,
+    socket,
+  ]);
 
   return {
     currentRoom,
-    isOwner,
+    canShare,
+    following,
+    isLocalSharing,
     isSharing,
     isStarting,
     error,

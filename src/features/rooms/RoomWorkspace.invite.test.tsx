@@ -96,6 +96,26 @@ test('an already joined invitation is consumed and only room is removed', async 
   expect(mockRoom.joinRoom).not.toHaveBeenCalled();
 });
 
+test('joining from an activity preserves its selected return page and provides an explicit return action', async () => {
+  const activity = '/web-live?platform=huya&roomId=123';
+  mockParams = new URLSearchParams({
+    room: targetRoom.id,
+    activityReturn: activity,
+  });
+  mockRoom.currentRoom = targetRoom;
+  render(<RoomWorkspace />);
+  expect(screen.getByRole('link', { name: '返回已选内容' })).toHaveAttribute(
+    'href',
+    activity
+  );
+  await waitFor(() =>
+    expect(mockRouter.replace).toHaveBeenCalledWith(
+      `/watch-room?activityReturn=${encodeURIComponent(activity)}`,
+      { scroll: false }
+    )
+  );
+});
+
 test('successful invitation waits for the joined snapshot and cannot rejoin on exit while URL cleanup is pending', async () => {
   mockRoom.joinRoom.mockResolvedValue(undefined);
   const view = render(<RoomWorkspace />);
@@ -124,6 +144,21 @@ test('failed invitation keeps its room parameter for password retry', async () =
   await screen.findAllByText('房间密码错误');
   expect(mockRouter.replace).not.toHaveBeenCalled();
   expect(mockParams.get('room')).toBe('invited-room');
+});
+
+test('the selected movie survives entry into a room and leads to explicit queue selection', () => {
+  const film = '/play?source=fixture&id=selected&title=选中的电影';
+  mockParams = new URLSearchParams({ film });
+  mockRoom.currentRoom = targetRoom;
+  render(<RoomWorkspace />);
+  const link = screen.getByRole('link', { name: '添加这部到待看' });
+  const target = new URL(link.getAttribute('href')!, 'https://site.test');
+  expect(target.pathname).toBe('/watch-room/select');
+  expect(target.searchParams.get('room')).toBe(targetRoom.id);
+  const chosen = new URL(target.searchParams.get('film')!, 'https://site.test');
+  expect(chosen.searchParams.get('source')).toBe('fixture');
+  expect(chosen.searchParams.get('id')).toBe('selected');
+  expect(chosen.searchParams.get('title')).toBe('选中的电影');
 });
 
 test('copy feedback belongs to the room whose invitation was copied', async () => {

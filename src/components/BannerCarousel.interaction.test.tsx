@@ -4,8 +4,9 @@ import { StrictMode } from 'react';
 import BannerCarousel from '@/components/BannerCarousel';
 
 jest.mock('next/navigation', () => ({
-  useRouter: () => ({ push: jest.fn() }),
+  useRouter: () => ({ push: mockPush }),
 }));
+const mockPush = jest.fn();
 jest.mock('@/lib/tmdb.client', () => ({
   getGenreNames: () => [],
   getTMDBImageUrl: (path: string) => path,
@@ -19,6 +20,7 @@ jest.mock('@/components/WatchRoomProvider', () => ({
 
 beforeEach(() => {
   jest.useFakeTimers();
+  mockPush.mockReset();
   mockRoomConnected = false;
   document.documentElement.dataset.tmReducedMotion = 'false';
   document.documentElement.dataset.tmPlaybackActive = 'false';
@@ -52,6 +54,18 @@ beforeEach(() => {
       })),
     })
   );
+});
+
+test('hero together carries the selected movie into the room flow', () => {
+  render(<BannerCarousel />);
+  fireEvent.click(screen.getByRole('button', { name: '一起看' }));
+  const destination = new URL(mockPush.mock.calls[0][0], 'https://site.test');
+  const film = new URL(
+    destination.searchParams.get('film') || '/',
+    'https://site.test'
+  );
+  expect(destination.pathname).toBe('/watch-room');
+  expect(film.searchParams.get('title')).toBe('甲');
 });
 
 afterEach(() => {

@@ -64,6 +64,8 @@ import {
 } from '@/components/tv/player/utils';
 import TVVirtualRemote from '@/components/tv/TVVirtualRemote';
 
+import { useStandalonePlayback } from '@/features/playback/useStandalonePlayback';
+
 const TV_DANMAKU_LANES = 8;
 const TV_DANMAKU_SPAWN_GRACE = 0.6;
 const TV_DANMAKU_SEEK_WINDOW = 8;
@@ -428,6 +430,8 @@ function TVPlayClient() {
   const [showDetail, setShowDetail] = useState(false);
   const [showDanmakuSettings, setShowDanmakuSettings] = useState(false);
   const [toggleCommand, setToggleCommand] = useState(0);
+  // TV 自己播放：先退出房间的一起看并让房间电影停下，播放时才拿声音归属
+  const standalone = useStandalonePlayback();
   const [retryNonce, setRetryNonce] = useState(0);
   const [startTime, setStartTime] = useState(0);
   const [digitBuffer, setDigitBuffer] = useState('');
@@ -965,7 +969,7 @@ function TVPlayClient() {
       video.volume = volume;
       video.muted = muted;
     });
-  }, [muted, videoUrl, volume]);
+  }, [muted, videoUrl, volume, standalone.ready]);
 
   useEffect(() => {
     if (showPanel || showEpisodes || showDanmakuSettings) revealPanel();
@@ -1325,9 +1329,10 @@ function TVPlayClient() {
       }}
       className='fixed inset-0 overflow-hidden bg-surface text-fg'
     >
-      {videoUrl ? (
+      {videoUrl && standalone.ready ? (
         <TVNativeVideo
           key={`${videoUrl}-${retryNonce}`}
+          onElement={standalone.bindVideo}
           url={videoUrl}
           poster={detail.poster}
           title={detail.title}
@@ -1342,8 +1347,24 @@ function TVPlayClient() {
         />
       ) : (
         <div className='flex h-full w-full items-center justify-center text-3xl font-bold text-fg'>
-          <Loader2 className='mr-4 h-10 w-10 animate-spin text-fg' />
-          {resolving ? '正在解析播放地址...' : '准备播放...'}
+          {standalone.error ? (
+            <div role='alert' className='flex flex-col items-center gap-6'>
+              <span>{standalone.error}</span>
+              <button
+                type='button'
+                autoFocus
+                onClick={standalone.retry}
+                className='tv-focusable rounded-2xl bg-fg px-8 py-3 text-2xl text-inverse min-h-[44px] tm-press'
+              >
+                重试
+              </button>
+            </div>
+          ) : (
+            <>
+              <Loader2 className='mr-4 h-10 w-10 animate-spin text-fg' />
+              {resolving ? '正在解析播放地址...' : '准备播放...'}
+            </>
+          )}
         </div>
       )}
       {activeDanmakuItems.length > 0 && (

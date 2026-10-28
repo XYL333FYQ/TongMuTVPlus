@@ -22,6 +22,11 @@ import SectionHeader from '@/components/catalog/SectionHeader';
 import PageContainer from '@/components/PageContainer';
 import PageLayout from '@/components/PageLayout';
 
+import {
+  filmPlaybackHref,
+  togetherSelectionHref,
+} from '@/features/playback/selection-links';
+
 function usePublicCatalog(
   type: PublicCatalogCategory,
   tag: string,
@@ -348,7 +353,16 @@ export default function PublicCatalogPage({
               onPlay={() => openWork(featured)}
               onTogether={() =>
                 router.push(
-                  '/login?redirect=' + encodeURIComponent('/watch-room')
+                  '/login?redirect=' +
+                    encodeURIComponent(
+                      togetherSelectionHref(
+                        filmPlaybackHref({
+                          title: featured.title,
+                          year: featured.year,
+                          searchType: featured.mediaType,
+                        })
+                      )
+                    )
                 )
               }
               deck={recommendations.map((item) => ({

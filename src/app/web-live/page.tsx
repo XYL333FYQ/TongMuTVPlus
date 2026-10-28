@@ -4,6 +4,7 @@ import { AlertTriangle, Download, Loader2, Play, Radio } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 
+import { useLatestMediaRequest } from '@/hooks/useLatestMediaRequest';
 import { useWebLiveSync } from '@/hooks/useWebLiveSync';
 
 import LoadingStyle, {
@@ -12,6 +13,13 @@ import LoadingStyle, {
 } from '@/components/feedback/LoadingStyle';
 import PageContainer from '@/components/PageContainer';
 import PageLayout from '@/components/PageLayout';
+import { useWatchRoomContextSafe } from '@/components/WatchRoomProvider';
+
+import { usePlaybackSessionSafe } from '@/features/playback/context';
+import { webLiveReference } from '@/features/playback/room-live';
+import RoomActivityActions from '@/features/playback/RoomActivityActions';
+import { RoomLiveMessages } from '@/features/playback/RoomLiveMessages';
+import { useAudioFocus } from '@/features/playback/useAudioFocus';
 
 let Artplayer: any = null;
 let Hls: any = null;
@@ -44,6 +52,12 @@ export default function WebLivePage() {
   const router = useRouter();
   const artRef = useRef<HTMLDivElement | null>(null);
   const artPlayerRef = useRef<any>(null);
+  const [roomPlayer, setRoomPlayer] = useState<HTMLElement | null>(null);
+  const watchRoom = useWatchRoomContextSafe();
+  const playbackSession = usePlaybackSessionSafe();
+  const mediaRequest = useLatestMediaRequest(
+    watchRoom?.currentRoom?.id || 'personal'
+  );
   const [loading, setLoading] = useState(true);
   const [loadingStage, setLoadingStage] = useState<
     'loading' | 'fetching' | 'ready'
@@ -67,6 +81,10 @@ export default function WebLivePage() {
   );
   const [librariesLoaded, setLibrariesLoaded] = useState(false);
   const hasAutoLoadedRef = useRef(false); // 防止重复自动加载
+  useEffect(() => {
+    setIsVideoLoading(false);
+    setErrorMessage(null);
+  }, [watchRoom?.currentRoom?.id]);
 
   // 观影室同步功能
   const webLiveSync = useWebLiveSync({
@@ -74,15 +92,60 @@ export default function WebLivePage() {
     currentSourceName: currentSource?.name || '',
     currentSourcePlatform: currentSource?.platform || '',
     currentSourceRoomId: currentSource?.roomId || '',
+    isReady: () =>
+      Boolean(artPlayerRef.current?.video?.readyState >= 2 && !isVideoLoading),
     onSourceChange: (sourceKey, platform, roomId) => {
-      // 房员接收到直播源切换指令
-      if (!sources || !Array.isArray(sources)) return;
-      const source = sources.find((s) => s.key === sourceKey);
-      if (source) {
-        handleSourceClick(source);
-      }
+      if (
+        currentSource?.platform === platform &&
+        currentSource?.roomId === roomId &&
+        artPlayerRef.current?.video?.readyState >= 2
+      )
+        return;
+      const state = watchRoom?.currentRoom?.currentState;
+      const source = sources.find(
+        (s) => s.platform === platform && s.roomId === roomId
+      ) || {
+        key: sourceKey,
+        platform,
+        roomId,
+        name: state?.type === 'live' ? state.channelName : sourceKey,
+      };
+      void handleSourceClick(source, 'snapshot');
     },
   });
+  const localVideo = roomPlayer?.querySelector('video') || null;
+  const { ownsSound, claimSound } = useAudioFocus(localVideo, false);
+  const soundScope = useRef('');
+  soundScope.current = JSON.stringify([
+    watchRoom?.currentRoom?.id,
+    currentSource?.platform,
+    currentSource?.roomId,
+    watchRoom?.currentRoom?.currentState?.type,
+  ]);
+  const playLocalSound = async () => {
+    const scope = soundScope.current;
+    const video = localVideo;
+    if (!video) return;
+    if (
+      watchRoom?.currentRoom &&
+      playbackSession?.followingRoom &&
+      !webLiveSync.active
+    ) {
+      if (!(await playbackSession.enterPersonalViewing()))
+        throw Error('未能退出共同播放，请重试');
+    }
+    if (scope !== soundScope.current || artPlayerRef.current?.video !== video)
+      return;
+    if (!webLiveSync.active) playbackSession?.controller?.pause();
+    claimSound();
+    try {
+      await video.play();
+    } catch (error) {
+      if (scope === soundScope.current && artPlayerRef.current?.video === video)
+        artPlayerRef.current.notice.show = '声音已启用，点击画面开始播放';
+      throw error;
+    }
+  };
 
   useEffect(() => {
     const meta = document.createElement('meta');
@@ -145,6 +208,7 @@ export default function WebLivePage() {
 
   // 当 sources 加载完成后，检查 URL 参数并自动加载对应的频道
   useEffect(() => {
+    if (webLiveSync.active) return;
     if (!sources || sources.length === 0) return;
     if (!librariesLoaded) return; // 等待库加载完成
 
@@ -177,11 +241,11 @@ export default function WebLivePage() {
       (s) => s.platform === needLoadPlatform && s.roomId === needLoadRoomId
     );
     if (foundSource) {
-      handleSourceClick(foundSource);
+      void handleSourceClick(foundSource, 'initial');
     } else {
       hasAutoLoadedRef.current = false; // 重置标志以便重试
     }
-  }, [sources, librariesLoaded, searchParams]);
+  }, [sources, librariesLoaded, searchParams, webLiveSync.active]);
 
   function m3u8Loader(video: HTMLVideoElement, url: string) {
     if (!Hls) return;
@@ -213,6 +277,7 @@ export default function WebLivePage() {
 
   // 清理播放器资源的统一函数
   const cleanupPlayer = () => {
+    setRoomPlayer(null);
     if (artPlayerRef.current) {
       try {
         // 先暂停播放
@@ -270,6 +335,8 @@ export default function WebLivePage() {
       theme: 'var(--tm-room-player-text)',
       url: videoUrl,
       isLive: true,
+      mutex: false,
+      muted: true,
       autoplay: true,
       fullscreen: true,
       customType: {
@@ -281,11 +348,14 @@ export default function WebLivePage() {
           '<span aria-hidden="true" class="tm-skeleton" style="display:block;width:48px;height:8px;border-radius:var(--tm-radius-full);background:color-mix(in srgb,var(--tm-room-player-text) 12%,transparent)"></span>',
       },
     });
+    artPlayerRef.current.on('ready', () => {
+      setRoomPlayer(artPlayerRef.current?.template?.$player || null);
+    });
 
     return () => {
       cleanupPlayer();
     };
-  }, [videoUrl]);
+  }, [videoUrl, librariesLoaded, loading]);
 
   // 组件卸载时清理
   useEffect(() => {
@@ -308,11 +378,30 @@ export default function WebLivePage() {
     };
   }, []);
 
-  const handleSourceClick = async (source: any) => {
+  const handleSourceClick = async (
+    source: any,
+    origin: 'user' | 'snapshot' | 'initial' = 'user'
+  ) => {
+    if (origin === 'user' && webLiveSync.active) {
+      try {
+        await webLiveSync.broadcastSourceChange({
+          type: 'live',
+          channelId: source.key,
+          channelName: source.name,
+          channelUrl: webLiveReference(source.platform, source.roomId),
+        });
+      } catch (error) {
+        setErrorMessage(
+          error instanceof Error ? error.message : '房间切换未成功'
+        );
+      }
+      return;
+    }
     // 立即清理旧的播放器
     cleanupPlayer();
 
     setCurrentSource(source);
+    setVideoUrl('');
     setIsVideoLoading(true);
     setErrorMessage(null);
     setStreamInfo(null);
@@ -323,26 +412,31 @@ export default function WebLivePage() {
     newSearchParams.set('roomId', source.roomId);
     router.replace(`/web-live?${newSearchParams.toString()}`);
 
-    try {
-      const res = await fetch(
-        `/api/web-live/stream?platform=${source.platform}&roomId=${source.roomId}`
-      );
-      if (res.ok) {
+    await mediaRequest.run(
+      async (signal) => {
+        if (
+          origin !== 'snapshot' &&
+          watchRoom?.currentRoom &&
+          playbackSession?.followingRoom
+        ) {
+          if (!(await playbackSession.enterPersonalViewing()))
+            throw Error('未能退出共同播放，请重试');
+        }
+        if (signal.aborted) throw Error('选源已取消');
+        const res = await fetch(
+          `/api/web-live/stream?${new URLSearchParams({
+            platform: source.platform,
+            roomId: source.roomId,
+          })}`,
+          { signal }
+        );
         const data = await res.json();
-
-        // 等待 DOM 渲染完成后再设置 videoUrl
-        const waitForDom = () => {
-          if (artRef.current) {
-            setVideoUrl(data.url);
-            setOriginalVideoUrl(data.originalUrl || data.url);
-          } else {
-            requestAnimationFrame(waitForDom);
-          }
-        };
-
-        // 使用 requestAnimationFrame 等待下一帧
-        requestAnimationFrame(waitForDom);
-
+        if (!res.ok || !data.url) throw Error(data.error || '获取直播流失败');
+        return data;
+      },
+      (data) => {
+        setVideoUrl(data.url);
+        setOriginalVideoUrl(data.originalUrl || data.url);
         // 保存主播信息
         if (data.name || data.title) {
           setStreamInfo({
@@ -350,16 +444,12 @@ export default function WebLivePage() {
             title: data.title,
           });
         }
-      } else {
-        const data = await res.json();
-        setErrorMessage(data.error || '获取直播流失败');
-      }
-    } catch (err) {
-      console.error('获取直播流失败:', err);
-      setErrorMessage(err instanceof Error ? err.message : '获取直播流失败');
-    } finally {
-      setIsVideoLoading(false);
-    }
+      },
+      (err) => {
+        setErrorMessage(err instanceof Error ? err.message : '获取直播流失败');
+      },
+      () => setIsVideoLoading(false)
+    );
   };
 
   const getRoomUrl = (source: any) => {
@@ -573,6 +663,17 @@ export default function WebLivePage() {
             </button>
           </div>
 
+          <RoomActivityActions
+            title={currentSource?.name || '网络直播'}
+            selectionKey={`${currentSource?.platform}:${currentSource?.roomId}`}
+            active={webLiveSync.active}
+            hasSelection={Boolean(currentSource)}
+            onShare={() => webLiveSync.broadcastSourceChange()}
+            returnHref={`/web-live?${searchParams.toString()}`}
+            soundBlocked={Boolean(localVideo) && !ownsSound}
+            onSound={playLocalSound}
+          />
+
           <div
             className={`grid gap-4 lg:h-[500px] xl:h-[650px] 2xl:h-[750px] transition-[transform,opacity] duration-300 ease-in-out ${
               isChannelListCollapsed
@@ -655,6 +756,17 @@ export default function WebLivePage() {
                 )}
               </div>
 
+              <RoomLiveMessages
+                target={roomPlayer}
+                active={webLiveSync.mediaMatches && Boolean(roomPlayer)}
+                activityKey={
+                  watchRoom?.currentRoom?.id +
+                  ':' +
+                  currentSource?.platform +
+                  ':' +
+                  currentSource?.roomId
+                }
+              />
               {/* 外部播放器按钮 */}
               {currentSource && !webLiveSync.isInRoom && (
                 <div className='mt-3 px-2 lg:flex-shrink-0 flex justify-end'>
