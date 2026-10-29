@@ -59,10 +59,15 @@ export default function MangaShelfPage() {
 
   return (
     <section className='space-y-4'>
-      <div className={cn('flex items-center gap-2 text-sm', LIBRARY_MUTED)}>
+      <div
+        className={cn(
+          'flex flex-wrap items-center gap-x-2 gap-y-1 text-sm',
+          LIBRARY_MUTED
+        )}
+      >
         <BookOpen className={cn('h-4 w-4', LIBRARY_ACCENT_ICON)} />共{' '}
         {shelfList.length} 本漫画
-        <span className='text-[13px]'>· 长按封面可移出书架</span>
+        <span className='text-[13px]'>· 点更多或长按封面管理</span>
       </div>
 
       {loading ? (

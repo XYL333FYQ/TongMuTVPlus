@@ -1186,3 +1186,50 @@ html[data-tm-no-blur='true'] .tm-playback-chrome {
 .tm-playback-host[data-presentation='mini'] .tm-playback-chrome button {
   cursor: pointer;
 }
+
+/* 手机：跨标签页声音提示放到底栏上方，不再压住顶部的影片标题 */
+@media (max-width: 767px) {
+  .tm-audio-focus-notice {
+    top: auto;
+    right: 12px;
+    bottom: calc(var(--tm-bottom-nav-height) + 24px + var(--tm-safe-bottom));
+    left: 12px;
+    z-index: var(--tm-z-nav);
+    text-align: center;
+    box-shadow: var(--tm-shadow-md);
+  }
+}
+
+/* 播放器设置面板：矮播放器（手机竖屏约 200px）里不能比画面还高，
+   否则顶部几项被裁掉、点到背景。限高后由面板内部滚动。 */
+.art-video-player .art-settings {
+  height: auto !important;
+  max-height: calc(100% - 52px) !important;
+}
+.art-video-player .art-settings .art-setting-panel {
+  max-height: calc(100% - 0px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+/* 设置面板条目不被 flex 压扁，超出高度时由面板滚动 */
+.art-video-player .art-settings .art-setting-panel > * {
+  flex-shrink: 0;
+}
+
+/* 折叠条：操作按钮不收缩，标题吃掉剩余宽度；桌面加宽，手机省掉缩略图，保证能读出片名 */
+.tm-playback-chrome > button {
+  flex-shrink: 0;
+}
+.tm-playback-chrome > .tm-playback-title {
+  flex: 1 1 0;
+  min-width: 0;
+}
+.tm-playback-host[data-presentation='folded'] .tm-playback-chrome {
+  width: min(480px, calc(100vw - 32px));
+}
+@media (max-width: 480px) {
+  .tm-playback-host[data-presentation='folded'] .tm-playback-thumbnail {
+    display: none;
+  }
+}

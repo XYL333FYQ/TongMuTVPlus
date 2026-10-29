@@ -1,11 +1,15 @@
 'use client';
 
+import { Sparkles } from 'lucide-react';
+import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 
+import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
 import { SearchResult } from '@/lib/types';
 
 import CapsuleSwitch from '@/components/catalog/CapsuleSwitch';
+import EmptyState from '@/components/media/EmptyState';
 import PageContainer from '@/components/PageContainer';
 import PageHeader from '@/components/shell/PageHeader';
 import PageLayout from '@/components/PageLayout';
@@ -18,6 +22,9 @@ interface ScriptSourceOption {
 }
 
 export default function AdvancedRecommendationPage() {
+  // 仅用于决定空态里是否给出管理面板入口（登录态存在客户端 cookie）
+  const authRole = getAuthInfoFromBrowserCookie()?.role;
+  const isManager = authRole === 'owner' || authRole === 'admin';
   const router = useRouter();
   const searchParams = useSearchParams();
   const loadMoreRef = useRef<HTMLDivElement>(null);
@@ -159,7 +166,27 @@ export default function AdvancedRecommendationPage() {
                 正在加载来源
               </div>
             ) : sources.length === 0 ? (
-              <div className='tm-inline-state'>还没有可用的视频源脚本</div>
+              <EmptyState
+                icon={<Sparkles className='h-6 w-6' aria-hidden />}
+                title='还没有可用的推荐来源'
+                description={
+                  isManager
+                    ? '高级推荐依赖「视频源脚本」。到管理面板的「视频源脚本」添加并启用后，这里就会出现来源。'
+                    : '高级推荐需要站长先配置视频源脚本，配置完成后这里会出现来源。'
+                }
+                action={
+                  <>
+                    <Link href='/' className='tm-btn tm-btn-secondary'>
+                      返回首页
+                    </Link>
+                    {isManager ? (
+                      <Link href='/admin' className='tm-btn tm-btn-primary'>
+                        前往管理面板
+                      </Link>
+                    ) : null}
+                  </>
+                }
+              />
             ) : (
               <div className='flex'>
                 <CapsuleSwitch

@@ -7,6 +7,7 @@ import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 
+import ModalLayer from '@/components/feedback/ModalLayer';
 import {
   EpisodeTitleCorrection,
   getEpisodeTitleCorrection,
@@ -164,16 +165,8 @@ export default function EpisodeTitleCorrectDialog({
   const hasTmdb = typeof correction.tmdbId === 'number';
 
   return createPortal(
-    <div
-      className='fixed inset-0 z-[1000] flex items-center justify-center bg-ink/50 p-4'
-      onClick={onClose}
-    >
-      <div
-        className='w-full max-w-md max-h-[85vh] overflow-hidden flex flex-col rounded-2xl bg-surface shadow-xl'
-        onClick={(e) => e.stopPropagation()}
-        role='dialog'
-        aria-modal='true'
-      >
+    <ModalLayer label='手动矫正标题' onClose={onClose}>
+      <div className='tm-modal w-full max-w-md max-h-[85dvh] overflow-hidden flex flex-col rounded-2xl bg-surface shadow-xl'>
         {/* 头部 */}
         <div className='flex items-center justify-between px-5 py-4 border-b border-line'>
           <span className='text-base font-medium text-fg'>手动矫正标题</span>
@@ -197,6 +190,7 @@ export default function EpisodeTitleCorrectDialog({
             </div>
             <SwitchButton
               checked={disabled}
+              label='禁用本剧集'
               disabled={!videoTitle}
               onClick={() => update({ disabled: !disabled })}
             />
@@ -214,6 +208,7 @@ export default function EpisodeTitleCorrectDialog({
                 </div>
                 <SwitchButton
                   checked={preferDanmaku}
+                  label='弹幕优先'
                   disabled={!videoTitle}
                   onClick={() =>
                     update({
@@ -270,13 +265,19 @@ export default function EpisodeTitleCorrectDialog({
 
               {/* 起始集数 */}
               <div className='space-y-1'>
-                <div className='text-sm font-medium text-fg'>起始集数</div>
+                <label
+                  htmlFor='episode-title-start-episode'
+                  className='block text-sm font-medium text-fg'
+                >
+                  起始集数
+                </label>
                 <p className='text-[13px] text-muted'>
                   视频第 1 集对应 TMDB 的第几集。TMDB
                   把多季合在一季连续编号（本剧其实是第 2/3
                   季）时，用它对齐，例如填 13。
                 </p>
                 <input
+                  id='episode-title-start-episode'
                   type='number'
                   min={1}
                   value={correction.startEpisode ?? ''}
@@ -299,7 +300,7 @@ export default function EpisodeTitleCorrectDialog({
           )}
         </div>
       </div>
-    </div>,
+    </ModalLayer>,
     document.body
   );
 }
@@ -309,33 +310,24 @@ function SwitchButton({
   checked,
   disabled,
   onClick,
+  label,
 }: {
   checked: boolean;
   disabled?: boolean;
   onClick: () => void;
+  label?: string;
 }) {
   return (
     <button
       type='button'
       role='switch'
       aria-checked={checked}
+      aria-label={label}
       disabled={disabled}
       onClick={onClick}
-      className={`relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors ${
-        checked
-          ? 'bg-fg text-inverse min-h-[44px] tm-press'
-          : 'bg-surface min-h-[44px] tm-press'
-      } ${
-        disabled
-          ? 'opacity-50 cursor-not-allowed min-h-[44px] tm-press'
-          : ' min-h-[44px] tm-press'
-      }`}
+      className='tm-switch-btn'
     >
-      <span
-        className={`inline-block h-4 w-4 transform rounded-full bg-surface transition-transform ${
-          checked ? 'translate-x-6' : 'translate-x-1'
-        }`}
-      />
+      <span className='tm-switch-btn-thumb' aria-hidden='true' />
     </button>
   );
 }
@@ -417,11 +409,13 @@ function TmdbSearchArea({
           onChange={(e) => setSearchQuery(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && onSearch()}
           placeholder='搜索剧名'
+          aria-label='搜索剧名'
           className='flex-1 px-3 py-2 border border-line rounded-lg bg-surface text-fg focus:ring-2 focus:ring-fg focus:border-transparent'
         />
         <button
           onClick={onSearch}
           disabled={searching}
+          aria-label='搜索剧名'
           className='px-3 py-2 bg-fg hover:opacity-90 text-inverse rounded-lg transition-colors disabled:bg-surface flex items-center min-h-[44px] tm-press'
         >
           <Search className='w-4 h-4' />

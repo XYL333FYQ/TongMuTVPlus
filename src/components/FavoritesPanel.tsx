@@ -6,6 +6,7 @@ import { AlertTriangle, Star, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 
+import { useEscapeKey } from '@/hooks/useEscapeKey';
 import {
   clearAllFavorites,
   getAllFavorites,
@@ -40,6 +41,10 @@ export const FavoritesPanel: React.FC<FavoritesPanelProps> = ({
   const [favoriteItems, setFavoriteItems] = useState<FavoriteItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+
+  // Esc：先关确认框，再关面板
+  useEscapeKey(onClose, !showConfirmDialog);
+  useEscapeKey(() => setShowConfirmDialog(false), showConfirmDialog);
 
   // 加载收藏数据
   const loadFavorites = async () => {
@@ -133,7 +138,12 @@ export const FavoritesPanel: React.FC<FavoritesPanelProps> = ({
       />
 
       {/* 收藏面板 */}
-      <div className='fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-4xl max-h-[85vh] bg-surface rounded-xl shadow-xl z-[1001] flex flex-col overflow-hidden'>
+      <div
+        role='dialog'
+        aria-modal='true'
+        aria-label='我的收藏'
+        className='fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-4xl max-h-[85dvh] bg-surface rounded-xl shadow-xl z-[1001] flex flex-col overflow-hidden'
+      >
         {/* 标题栏 */}
         <div className='flex items-center justify-between px-6 py-4 border-b border-line'>
           <div className='flex items-center gap-2'>
@@ -157,7 +167,7 @@ export const FavoritesPanel: React.FC<FavoritesPanelProps> = ({
             <button
               onClick={onClose}
               className='w-8 h-8 p-1 rounded-full flex items-center justify-center text-muted hover:bg-line transition-colors min-h-[44px] tm-press'
-              aria-label='Close'
+              aria-label='关闭我的收藏'
             >
               <X className='w-full h-full' />
             </button>

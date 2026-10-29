@@ -28,6 +28,7 @@ import PublicCatalogPage from '@/components/catalog/PublicCatalogPage';
 import SectionHeader from '@/components/catalog/SectionHeader';
 import ContinueWatching from '@/components/ContinueWatching';
 import HttpWarningDialog from '@/components/feedback/HttpWarningDialog';
+import ModalLayer from '@/components/feedback/ModalLayer';
 import ReleaseNoticeDialog from '@/components/feedback/ReleaseNoticeDialog';
 import Toast, { ToastProps } from '@/components/feedback/Toast';
 import PageContainer from '@/components/PageContainer';
@@ -876,14 +877,12 @@ function HomeClient() {
       <ReleaseNoticeDialog blocked={showAnnouncement} />
 
       {showDirectPlayDialog && (
-        <div
-          className='tm-modal-backdrop'
-          onClick={() => setShowDirectPlayDialog(false)}
+        <ModalLayer
+          label='直链播放'
+          onClose={() => setShowDirectPlayDialog(false)}
         >
           <motion.div
             className='tm-modal'
-            role='dialog'
-            aria-modal='true'
             aria-labelledby='home-direct-play-title'
             onClick={(event) => event.stopPropagation()}
             initial={{ opacity: 0, y: reduced ? 0 : 8 }}
@@ -942,7 +941,7 @@ function HomeClient() {
               </button>
             </div>
           </motion.div>
-        </div>
+        </ModalLayer>
       )}
 
       {toast && <Toast {...toast} />}

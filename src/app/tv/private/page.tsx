@@ -178,7 +178,13 @@ export default function TVPrivatePage() {
             <div>
               <h1 className='text-[28px] md:text-[32px] font-bold'>私人影库</h1>
               <p className='mt-2 text-sm text-muted'>
-                已接入真实 OpenList / Emby / 小雅数据。
+                {enabledSources.length > 0
+                  ? '可浏览已启用的 ' +
+                    enabledSources
+                      .map((item) => sourceLabel[item])
+                      .join(' / ') +
+                    ' 内容。'
+                  : '暂未启用任何私人影库来源，请站长在管理面板开启。'}
               </p>
             </div>
           </div>

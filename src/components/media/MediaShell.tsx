@@ -69,7 +69,7 @@ export default function MediaShell({
       <div
         className={cn(
           'min-h-screen',
-          !isReader && 'tm-media-shell',
+          isReader ? 'tm-media-reader' : 'tm-media-shell',
           LIBRARY_PAGE,
           LIBRARY_TEXT
         )}
@@ -82,7 +82,7 @@ export default function MediaShell({
         >
           <HeaderContainer
             className={cn(
-              'tm-media-page-head-row flex h-14 items-center gap-3 sm:h-16',
+              'tm-media-page-head-row flex min-w-0 h-14 items-center gap-3 sm:h-16',
               isReader && 'mx-auto max-w-7xl px-3 sm:px-6'
             )}
           >
@@ -111,7 +111,7 @@ export default function MediaShell({
               <div className='min-w-0'>
                 <div
                   className={cn(
-                    'tm-media-page-title truncate text-lg font-medium',
+                    'tm-media-page-title truncate text-lg font-bold',
                     LIBRARY_SERIF
                   )}
                   title={title}
@@ -130,45 +130,51 @@ export default function MediaShell({
               <div className='ml-auto flex shrink-0 items-center gap-1'>
                 {reader?.actions}
               </div>
-            ) : (
-              <>
-                <nav className='ml-auto hidden items-center gap-1 lg:flex'>
-                  {tabs.map((tab) => {
-                    const Icon = tab.icon;
-                    const active = isActive(tab.href);
-                    return (
-                      <Link
-                        key={tab.href}
-                        href={tab.href}
-                        aria-current={active ? 'page' : undefined}
-                        className={cn(
-                          'tm-media-nav-link inline-flex min-h-[44px] items-center gap-2 rounded-md px-4 py-2 text-sm font-medium tm-press',
-                          LIBRARY_FOCUS,
-                          active ? SPINE_TAB_ACTIVE : SPINE_TAB_IDLE
-                        )}
-                      >
-                        <Icon className='h-4 w-4' />
-                        {tab.label}
-                        {active && (
-                          <motion.span
-                            aria-hidden
-                            className='tm-media-nav-indicator'
-                            layoutId={`${navigationId}-desktop`}
-                            transition={{
-                              duration: reduced ? 0 : 0.2,
-                              ease: [0.22, 1, 0.36, 1],
-                            }}
-                          />
-                        )}
-                      </Link>
-                    );
-                  })}
-                </nav>
-              </>
-            )}
+            ) : null}
           </HeaderContainer>
         </header>
 
+        {!isReader && (
+          <nav
+            aria-label={`${tabs[0]?.href === '/books' ? '电子书' : '漫画'}导航`}
+            className='tm-media-subnav z-30 bg-canvas'
+          >
+            <PageContainer>
+              <div className='tm-media-nav-list'>
+                {tabs.map((tab) => {
+                  const Icon = tab.icon;
+                  const active = isActive(tab.href);
+                  return (
+                    <Link
+                      key={tab.href}
+                      href={tab.href}
+                      aria-current={active ? 'page' : undefined}
+                      className={cn(
+                        'tm-media-nav-link flex min-h-[44px] items-center justify-center gap-2 rounded-full px-4 py-2.5 text-sm font-medium tm-press',
+                        LIBRARY_FOCUS,
+                        active ? SPINE_TAB_ACTIVE : SPINE_TAB_IDLE
+                      )}
+                    >
+                      <Icon className='h-4 w-4 shrink-0' />
+                      <span>{tab.label}</span>
+                      {active && (
+                        <motion.span
+                          aria-hidden
+                          className='tm-media-nav-indicator'
+                          layoutId={`${navigationId}-navigation`}
+                          transition={{
+                            duration: reduced ? 0 : 0.2,
+                            ease: [0.22, 1, 0.36, 1],
+                          }}
+                        />
+                      )}
+                    </Link>
+                  );
+                })}
+              </div>
+            </PageContainer>
+          </nav>
+        )}
         <main
           className={cn(
             reader
@@ -178,54 +184,6 @@ export default function MediaShell({
         >
           {isReader ? children : <PageContainer>{children}</PageContainer>}
         </main>
-
-        {!isReader && (
-          <nav
-            className='fixed inset-x-0 bottom-0 z-40 border-t border-line bg-[color:color-mix(in_srgb,var(--tm-bg)_95%,transparent)] backdrop-blur-none lg:hidden'
-            style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
-          >
-            <PageContainer className='grid grid-cols-4'>
-              {tabs.map((tab) => {
-                const Icon = tab.icon;
-                const active = isActive(tab.href);
-                return (
-                  <Link
-                    key={tab.href}
-                    href={tab.href}
-                    aria-current={active ? 'page' : undefined}
-                    className={cn(
-                      'tm-media-nav-link flex min-h-16 flex-col items-center justify-center gap-1 py-2 text-[13px] hover:bg-raised tm-press',
-                      LIBRARY_FOCUS
-                    )}
-                  >
-                    <Icon
-                      className={cn(
-                        'h-5 w-5',
-                        active ? 'text-fg' : 'text-muted'
-                      )}
-                    />
-                    <span
-                      className={active ? 'font-medium text-fg' : 'text-muted'}
-                    >
-                      {tab.label}
-                    </span>
-                    {active && (
-                      <motion.span
-                        aria-hidden
-                        className='tm-media-nav-indicator'
-                        layoutId={`${navigationId}-mobile`}
-                        transition={{
-                          duration: reduced ? 0 : 0.2,
-                          ease: [0.22, 1, 0.36, 1],
-                        }}
-                      />
-                    )}
-                  </Link>
-                );
-              })}
-            </PageContainer>
-          </nav>
-        )}
       </div>
     </PageLayout>
   );

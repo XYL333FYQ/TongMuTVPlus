@@ -14,7 +14,7 @@ export default function MediaGrid({
     <div
       data-tm-reveal-group
       className={cn(
-        'grid grid-cols-2 gap-4 md:grid-cols-4 xl:grid-cols-6',
+        'tm-media-grid grid grid-cols-2 gap-x-3 gap-y-6 min-[480px]:grid-cols-3 md:grid-cols-4 xl:grid-cols-6',
         className
       )}
     >

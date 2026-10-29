@@ -1616,7 +1616,7 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
                                       handleRetestSource(source, e)
                                     }
                                     disabled={isTesting}
-                                    className={`text-[13px] font-medium transition-colors ${
+                                    className={`shrink-0 whitespace-nowrap px-2 text-[13px] font-medium transition-colors ${
                                       isTesting
                                         ? disabledTextClass
                                         : 'text-fg hover:text-fg cursor-pointer min-h-[44px] tm-press'

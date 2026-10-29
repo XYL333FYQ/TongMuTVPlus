@@ -518,7 +518,12 @@ export default function BooksSearchPage() {
           搜索电子书
         </h1>
         <p className={cn('text-sm md:mt-2', LIBRARY_MUTED)}>
-          按书名或作者搜索全部已配置的书源。
+          {sourceId
+            ? `按书名或作者搜索「${
+                sources.find((source) => source.id === sourceId)?.name ||
+                '所选书源'
+              }」。`
+            : '按书名或作者搜索全部已配置的书源。'}
         </p>
 
         <div className='mt-4 flex flex-wrap gap-2'>
@@ -658,6 +663,27 @@ export default function BooksSearchPage() {
           <MediaGridSkeleton count={12} />
         ) : null}
         {error ? <EmptyState tone='error' description={error} /> : null}
+        {!loading && result.failedSources.length > 0 ? (
+          <EmptyState
+            tone='error'
+            description={`有 ${
+              result.failedSources.length
+            } 个书源没有返回结果（${result.failedSources
+              .map((item) => item.sourceName)
+              .join('、')}），当前只显示其余书源的结果。`}
+            action={
+              <button
+                type='button'
+                onClick={() =>
+                  void performSearch(q.trim(), sourceId, { forceRefresh: true })
+                }
+                className={CHIP_CLASS}
+              >
+                重试搜索
+              </button>
+            }
+          />
+        ) : null}
 
         {result.results.length > 0 ? (
           <MediaGrid>

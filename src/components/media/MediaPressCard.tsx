@@ -1,5 +1,6 @@
 'use client';
 
+import { MoreHorizontal } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useCallback, useState } from 'react';
 
@@ -16,8 +17,7 @@ import MediaCard from './MediaCard';
 /**
  * 「长按 / 右键出菜单」的媒体卡片，历史页与书架页共用一套。
  *
- * 卡片上不摆操作按钮：同一个动作在一处是底部按钮、在另一处是菜单项，那是两套行为。
- * 收进菜单之后，小说 / 漫画 × 历史 / 书架四个页面只剩一套手势和一份菜单外观。
+ * 可见的更多按钮与长按 / 右键打开同一份菜单，便于触屏与键盘发现操作。
  * 具体有哪些动作由调用方给——这个组件不认识任何领域类型，只负责手势、菜单和海报大图。
  */
 interface MediaPressCardProps {
@@ -96,6 +96,22 @@ export default function MediaPressCard({
           onNavigate={onNavigate}
           interactive={href ? 'link' : 'press'}
           onPress={primaryAction}
+          overlayAction={
+            <button
+              type='button'
+              data-button
+              className='tm-library-chip tm-media-more inline-flex h-11 w-11 items-center justify-center rounded-full tm-press'
+              aria-label={`${title}的更多操作`}
+              aria-haspopup='dialog'
+              aria-expanded={menuOpen}
+              onClick={(event) => {
+                event.stopPropagation();
+                openMenu();
+              }}
+            >
+              <MoreHorizontal className='h-5 w-5' />
+            </button>
+          }
         />
       </div>
 

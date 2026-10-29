@@ -1398,3 +1398,10 @@ html[data-tm-reduced-motion='true']
     height: calc(4 * var(--tm-wide-unit));
   }
 }
+
+/* 触屏的粘滞悬停：遮罩只轻压封面，不再整块盖黑 */
+@media (hover: none) {
+  .tm-video-card:hover .tm-video-card-overlay {
+    opacity: 0.35;
+  }
+}

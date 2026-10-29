@@ -11817,13 +11817,13 @@ function PlayPageClient() {
             className={`grid gap-4 lg:h-[520px] xl:h-[620px] 2xl:h-[680px] transition-all duration-300 ease-in-out ${
               isEpisodeSelectorCollapsed
                 ? 'grid-cols-1'
-                : 'grid-cols-1 md:grid-cols-4'
+                : 'grid-cols-1 lg:grid-cols-4'
             }`}
           >
             {/* 播放器 */}
             <div
               className={`transition-all duration-300 ease-in-out rounded-xl border border-line flex flex-col ${
-                isEpisodeSelectorCollapsed ? 'col-span-1' : 'md:col-span-3'
+                isEpisodeSelectorCollapsed ? 'col-span-1' : 'lg:col-span-3'
               }`}
             >
               {/* 播放器容器 */}
@@ -12577,8 +12577,8 @@ function PlayPageClient() {
             <div
               className={`relative z-10 h-[350px] lg:h-full md:overflow-hidden transition-all duration-300 ease-in-out ${
                 isEpisodeSelectorCollapsed
-                  ? 'md:col-span-1 lg:hidden lg:opacity-0 lg:scale-95'
-                  : 'md:col-span-1 lg:opacity-100 lg:scale-100'
+                  ? 'lg:col-span-1 lg:hidden lg:opacity-0 lg:scale-95'
+                  : 'lg:col-span-1 lg:opacity-100 lg:scale-100'
               }`}
             >
               <EpisodeSelector
@@ -13097,7 +13097,8 @@ function PlayPageClient() {
                               >
                                 {index > 0 && (
                                   <span className='text-[13px] text-muted'>
-                                    +
+                                    {/* 含 Alt 才是同时按下；其余是两个独立按键 */}
+                                    {item.keys[0] === 'Alt' ? '+' : '/'}
                                   </span>
                                 )}
                                 <kbd className='min-w-7 rounded-md border border-line bg-surface px-2 py-1 text-center text-[13px] font-medium text-fg shadow-sm dark:shadow-inner shadow-ink/5'>

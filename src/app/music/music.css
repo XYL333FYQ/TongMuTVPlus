@@ -55,3 +55,100 @@
   box-shadow: 0 0 12px color-mix(in srgb, var(--tm-text) 90%, transparent);
   animation: music-buffer-scan-global 0.85s ease-in-out infinite;
 }
+
+.tm-music-song-main {
+  display: grid;
+  grid-template-columns: 22px 34px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  min-height: 60px;
+  width: 100%;
+  padding: 8px 4px;
+  text-align: left;
+  border-radius: 8px;
+}
+
+.tm-music-art-card {
+  min-width: 0;
+  border-radius: 14px;
+  transition: transform var(--tm-d-hover) var(--tm-ease-out),
+    opacity var(--tm-d-hover) var(--tm-ease-out);
+}
+
+.tm-music-art-card:focus-visible {
+  transform: translateY(-4px);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .tm-music-art-card:hover {
+    transform: translateY(-4px);
+  }
+}
+
+html[data-tm-reduced-motion='true']
+  :is(.tm-music-art-card, .tm-music-singer-image) {
+  transform: none !important;
+  transition: opacity 120ms linear;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tm-music-art-card,
+  .tm-music-singer-image {
+    transform: none !important;
+    transition: opacity 120ms linear;
+  }
+}
+
+.tm-music-song-main:focus-visible {
+  outline: 2px solid var(--tm-text);
+  outline-offset: 2px;
+}
+
+.music-theme :is(button, a, input, [role='button']) {
+  scroll-margin-block: 100px 180px;
+}
+
+@media (min-width: 768px) {
+  .tm-music-song-main {
+    grid-template-columns: 28px 36px minmax(0, 1fr) 48px 72px;
+    gap: 12px;
+    min-height: 64px;
+    padding-inline: 8px 12px;
+  }
+}
+
+@media (max-width: 359px) {
+  .tm-music-song-main {
+    grid-template-columns: 28px minmax(0, 1fr);
+    gap: 8px;
+  }
+  .tm-music-song-main > :first-child {
+    display: none;
+  }
+  .tm-music-song-row > :last-child {
+    gap: 0;
+  }
+}
+
+html[data-tm-reduced-motion='true'] .music-buffer-track-global::before {
+  animation: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .music-buffer-track-global::before {
+    animation: none;
+  }
+}
+
+/* 矮横屏（手机横握）：压缩页头与间距，让歌曲列表首屏就能露出来 */
+@media (max-height: 500px) and (orientation: landscape) {
+  .tm-music-bar {
+    margin-bottom: 12px;
+    padding-bottom: 10px;
+    gap: 8px;
+  }
+  .tm-music-bar h2 {
+    font-size: 20px;
+  }
+}

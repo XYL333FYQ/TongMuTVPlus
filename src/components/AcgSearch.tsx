@@ -109,6 +109,36 @@ function getStoredAcgSource(): AcgSearchSource {
     : 'acgrip';
 }
 
+/**
+ * 结果卡片里的预览图。图片加载失败，或尺寸小得像第三方的“图片未找到”占位图时直接隐藏，
+ * 全部不可用就整块不渲染，避免卡片中间留出无解释的空白。
+ */
+function AcgPreviewImages({ images }: { images?: string[] }) {
+  const [failed, setFailed] = useState<Set<string>>(() => new Set());
+  const list = (images ?? []).slice(0, 3).filter((img) => !failed.has(img));
+  if (list.length === 0) return null;
+  const markFailed = (img: string) =>
+    setFailed((prev) => new Set(prev).add(img));
+  return (
+    <div className='mb-3 flex gap-2 overflow-x-auto'>
+      {list.map((img) => (
+        <img
+          key={img}
+          src={img}
+          alt=''
+          className='h-20 w-auto rounded object-cover'
+          loading='lazy'
+          onError={() => markFailed(img)}
+          onLoad={(e) => {
+            const el = e.currentTarget;
+            if (el.naturalWidth < 80 || el.naturalHeight < 60) markFailed(img);
+          }}
+        />
+      ))}
+    </div>
+  );
+}
+
 export default function AcgSearch({
   keyword,
   triggerSearch,
@@ -581,19 +611,7 @@ export default function AcgSearch({
                 </div>
 
                 {/* 图片预览 */}
-                {item.images && item.images.length > 0 && (
-                  <div className='mb-3 flex gap-2 overflow-x-auto'>
-                    {item.images.slice(0, 3).map((img, imgIndex) => (
-                      <img
-                        key={imgIndex}
-                        src={img}
-                        alt=''
-                        className='h-20 w-auto rounded object-cover'
-                        loading='lazy'
-                      />
-                    ))}
-                  </div>
-                )}
+                <AcgPreviewImages images={item.images} />
 
                 {/* 测活结果 */}
                 {health && (

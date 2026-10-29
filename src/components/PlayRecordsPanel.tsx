@@ -4,6 +4,7 @@ import { AlertTriangle, Check, History, Trash2, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 
+import { useEscapeKey } from '@/hooks/useEscapeKey';
 import type { PlayRecord } from '@/lib/db.client';
 import {
   clearAllPlayRecords,
@@ -45,6 +46,17 @@ export default function PlayRecordsPanel({
   const [showDeleteSelectedDialog, setShowDeleteSelectedDialog] =
     useState(false);
   const [deletingSelected, setDeletingSelected] = useState(false);
+
+  // Esc：先关最上层确认框，再关面板
+  useEscapeKey(
+    () => setShowDeleteSelectedDialog(false),
+    showDeleteSelectedDialog
+  );
+  useEscapeKey(
+    () => setShowConfirmDialog(false),
+    showConfirmDialog && !showDeleteSelectedDialog
+  );
+  useEscapeKey(onClose, !showConfirmDialog && !showDeleteSelectedDialog);
 
   const loadPlayRecords = async () => {
     setLoading(true);
@@ -172,7 +184,12 @@ export default function PlayRecordsPanel({
         onClick={onClose}
       />
 
-      <div className='fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-4xl max-h-[85vh] bg-surface rounded-xl shadow-xl z-[1001] flex flex-col overflow-hidden'>
+      <div
+        role='dialog'
+        aria-modal='true'
+        aria-label='播放记录'
+        className='fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-4xl max-h-[85dvh] bg-surface rounded-xl shadow-xl z-[1001] flex flex-col overflow-hidden'
+      >
         <div className='flex items-center justify-between px-6 py-4 border-b border-line'>
           <div className='flex items-center gap-2'>
             <History className='w-5 h-5 text-fg' />
@@ -229,7 +246,7 @@ export default function PlayRecordsPanel({
             <button
               onClick={onClose}
               className='w-8 h-8 p-1 rounded-full flex items-center justify-center text-muted hover:bg-line transition-colors min-h-[44px] tm-press'
-              aria-label='Close'
+              aria-label='关闭播放记录'
             >
               <X className='w-full h-full' />
             </button>
@@ -287,16 +304,17 @@ export default function PlayRecordsPanel({
                           event.stopPropagation();
                           toggleSelected(record.key);
                         }}
-                        className={`absolute inset-0 z-20 rounded-lg transition-colors ${
+                        aria-pressed={checked}
+                        className={`absolute inset-0 z-20 rounded-lg transition-colors tm-press ${
                           checked
-                            ? 'bg-fg ring-2 ring-fg text-inverse min-h-[44px] tm-press'
-                            : 'bg-ink/5 hover:bg-line bg-ink/20 min-h-[44px] tm-press'
+                            ? 'bg-ink/10 ring-2 ring-inset ring-fg'
+                            : 'bg-transparent hover:bg-ink/10'
                         }`}
                       >
                         <span
                           className={`absolute left-2 top-2 flex h-6 w-6 items-center justify-center rounded-full border-2 shadow-md transition-colors ${
                             checked
-                              ? 'border-line bg-raised text-fg'
+                              ? 'border-fg bg-fg text-inverse'
                               : 'border-line bg-ink/40 text-transparent'
                           }`}
                         >

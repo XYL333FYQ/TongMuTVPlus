@@ -1127,7 +1127,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
 
               {/* 悬浮遮罩 */}
               <div
-                className='tm-video-card-overlay absolute inset-0 bg-[var(--tm-hero-bg)] transition-opacity duration-300 ease-in-out opacity-0 group-hover:opacity-100'
+                className='tm-video-card-overlay absolute inset-0 bg-[color:color-mix(in_srgb,var(--tm-hero-bg)_55%,transparent)] transition-opacity duration-300 ease-in-out opacity-0 group-hover:opacity-100'
                 style={
                   {
                     WebkitUserSelect: 'none',
@@ -1997,7 +1997,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
                   }
                 >
                   <span
-                    className='block text-sm font-medium truncate text-fg peer'
+                    className='block text-sm font-medium leading-snug line-clamp-2 break-words text-fg peer'
                     style={
                       {
                         WebkitUserSelect: 'none',
@@ -2014,7 +2014,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
                   </span>
                   {/* 自定义 tooltip */}
                   <div
-                    className='absolute bottom-full left-1/2 z-[70] mb-2 w-max max-w-[min(20rem,calc(100vw-2rem))] -translate-x-1/2 rounded-md bg-surface px-3 py-1 text-center text-[13px] text-fg shadow-lg opacity-0 invisible peer-hover:opacity-100 peer-hover:visible transition-all duration-200 ease-out delay-100 whitespace-normal break-words pointer-events-none'
+                    className='absolute bottom-full left-1/2 z-[70] mb-2 w-max max-w-full -translate-x-1/2 rounded-md bg-surface px-3 py-1 text-center text-[13px] text-fg shadow-lg opacity-0 invisible peer-hover:opacity-100 peer-hover:visible transition-all duration-200 ease-out delay-100 whitespace-normal break-words pointer-events-none'
                     style={
                       {
                         WebkitUserSelect: 'none',

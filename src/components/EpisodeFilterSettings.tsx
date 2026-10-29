@@ -1,7 +1,16 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
-import { Plus, ToggleLeft, ToggleRight, Trash2, X } from 'lucide-react';
+import {
+  Lightbulb,
+  Plus,
+  Repeat,
+  ToggleLeft,
+  ToggleRight,
+  Trash2,
+  Wrench,
+  X,
+} from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
@@ -292,7 +301,10 @@ export default function EpisodeFilterSettings({
 
       {/* 弹窗主体 */}
       <div
-        className='relative w-full bg-surface rounded-t-3xl shadow-2xl transition-all duration-300 ease-out max-h-[85vh] flex flex-col'
+        role='dialog'
+        aria-modal='true'
+        aria-label='集数屏蔽设置'
+        className='relative w-full md:max-w-2xl bg-surface rounded-t-3xl md:rounded-3xl md:mb-8 shadow-2xl transition-all duration-300 ease-out max-h-[85dvh] flex flex-col'
         onTouchMove={(e) => {
           // 允许弹窗内部滚动，阻止事件冒泡到外层
           e.stopPropagation();
@@ -320,7 +332,8 @@ export default function EpisodeFilterSettings({
           <h2 className='text-lg font-medium text-fg'>集数屏蔽设置</h2>
           <button
             onClick={onClose}
-            className='p-2 rounded-full hover:bg-line transition-colors duration-150 min-h-[44px] tm-press'
+            aria-label='关闭集数屏蔽设置'
+            className='p-2 rounded-full hover:bg-line transition-colors duration-150 min-h-[44px] min-w-[44px] tm-press'
           >
             <X size={20} className='text-muted' />
           </button>
@@ -342,6 +355,9 @@ export default function EpisodeFilterSettings({
               </div>
               <button
                 onClick={handleToggleReverseMode}
+                role='switch'
+                aria-checked={!!config.reverseMode}
+                aria-label='相反模式'
                 className='flex-shrink-0 active:scale-95 transition-transform duration-150 min-h-[44px] tm-press'
                 title={config.reverseMode ? '关闭相反模式' : '开启相反模式'}
               >
@@ -369,6 +385,7 @@ export default function EpisodeFilterSettings({
                 onChange={(e) => setNewKeyword(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && handleAddRule()}
                 placeholder='输入要屏蔽的集数关键字（如：预告、花絮）'
+                aria-label='屏蔽规则关键字'
                 autoComplete='off'
                 autoCorrect='off'
                 autoCapitalize='off'
@@ -397,14 +414,22 @@ export default function EpisodeFilterSettings({
                 </button>
               </div>
             </div>
-            <p className='text-[13px] text-muted leading-relaxed'>
-              💡 普通模式：集数标题包含关键字即命中规则
-              <br />
-              🔄 相反模式：仅显示命中规则的集数
-              <br />
-              🔧
-              正则模式：支持正则表达式匹配（如：^预告.*匹配以"预告"开头的集数）
-            </p>
+            <ul className='space-y-1.5 text-[13px] text-muted leading-relaxed'>
+              <li className='flex items-start gap-2'>
+                <Lightbulb size={14} className='mt-1 shrink-0' aria-hidden />
+                <span>普通模式：集数标题包含关键字即命中规则</span>
+              </li>
+              <li className='flex items-start gap-2'>
+                <Repeat size={14} className='mt-1 shrink-0' aria-hidden />
+                <span>相反模式：仅显示命中规则的集数</span>
+              </li>
+              <li className='flex items-start gap-2'>
+                <Wrench size={14} className='mt-1 shrink-0' aria-hidden />
+                <span>
+                  正则模式：支持正则表达式匹配（如：^预告.*匹配以"预告"开头的集数）
+                </span>
+              </li>
+            </ul>
           </div>
 
           {/* 规则列表 */}

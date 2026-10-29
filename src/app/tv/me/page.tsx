@@ -350,8 +350,8 @@ export default function TVMePage() {
               </div>
 
               <div className='w-full rounded-md border border-line bg-raised p-6 lg:max-w-[560px]'>
-                <div className='flex items-start justify-between gap-5'>
-                  <div>
+                <div className='flex flex-wrap items-start justify-between gap-x-5 gap-y-3'>
+                  <div className='min-w-0 flex-1 basis-[12rem]'>
                     <h3 className='text-[18px] font-medium text-fg'>
                       播放页上下键功能
                     </h3>
@@ -359,7 +359,7 @@ export default function TVMePage() {
                       播放页遥控器 ↑ / ↓ 键执行的操作。
                     </p>
                   </div>
-                  <div className='shrink-0 rounded-2xl bg-surface px-4 py-2 text-sm font-medium text-fg'>
+                  <div className='shrink-0 whitespace-nowrap rounded-2xl bg-surface px-4 py-2 text-sm font-medium text-fg'>
                     {upDownAction === 'wake-menu' ? '唤醒菜单' : '音量控制'}
                   </div>
                 </div>

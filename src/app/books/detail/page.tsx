@@ -51,7 +51,10 @@ function DetailSkeleton() {
   return (
     <div className='tm-skeleton space-y-6'>
       <section
-        className={cn('grid gap-6 md:grid-cols-[220px_1fr]', PANEL_CLASS)}
+        className={cn(
+          'tm-reading-detail grid gap-6 md:grid-cols-[220px_1fr]',
+          PANEL_CLASS
+        )}
       >
         <div className={cn('aspect-[3/4]', LIBRARY_SKELETON)} />
         <div className='space-y-4'>
@@ -144,6 +147,7 @@ export default function BookDetailPage() {
   const searchParams = useSearchParams();
   const sourceId = searchParams.get('sourceId') || '';
   const bookId = searchParams.get('bookId') || '';
+  const [summaryOpen, setSummaryOpen] = useState(false);
   const [detail, setDetail] = useState<BookDetail | null>(null);
   const [shelf, setShelf] = useState<Record<string, BookShelfItem>>({});
   const [chapters, setChapters] = useState<BookChapter[]>([]);
@@ -283,11 +287,14 @@ export default function BookDetailPage() {
   return (
     <div className='space-y-6'>
       <section
-        className={cn('grid gap-6 md:grid-cols-[220px_1fr]', PANEL_CLASS)}
+        className={cn(
+          'tm-reading-detail grid gap-6 md:grid-cols-[220px_1fr]',
+          PANEL_CLASS
+        )}
       >
         <div
           className={cn(
-            'relative aspect-[3/4] overflow-hidden rounded-md bg-raised',
+            'tm-detail-cover relative aspect-[3/4] overflow-hidden rounded-md bg-raised',
             BOOK_COVER_LIFT
           )}
         >
@@ -312,7 +319,7 @@ export default function BookDetailPage() {
             </div>
           )}
         </div>
-        <div className='flex min-w-0 flex-col justify-between gap-5'>
+        <div className='tm-detail-info flex min-w-0 flex-col justify-between gap-5'>
           <div>
             <span className='inline-flex items-center gap-1.5 rounded-sm bg-raised px-2.5 py-1 text-[13px] font-medium text-fg'>
               <BookOpen className='h-3.5 w-3.5' />
@@ -330,27 +337,46 @@ export default function BookDetailPage() {
             <div className={cn('mt-2 text-sm', LIBRARY_MUTED)}>
               {detail.author || '未知作者'}
             </div>
-            {detail.summary ? (
-              <div className='mt-4 line-clamp-5 text-base leading-[1.7] text-fg'>
+          </div>
+          {detail.summary ? (
+            <div className='mt-4'>
+              <div
+                id='book-summary'
+                className={cn(
+                  'tm-reading-summary text-sm leading-[1.7] text-fg',
+                  !summaryOpen && 'line-clamp-3 sm:line-clamp-5'
+                )}
+              >
                 {detail.summary}
               </div>
-            ) : null}
-            <div className='mt-4 flex flex-wrap gap-2'>
-              {(detail.categories || detail.tags || []).map((tag) => (
-                <span
-                  key={tag}
-                  className={cn(
-                    'inline-flex items-center gap-1.5 rounded-sm px-2.5 py-1 text-[13px] font-medium',
-                    'bg-canvas text-muted'
-                  )}
+              {detail.summary.length > 80 ? (
+                <button
+                  type='button'
+                  aria-expanded={summaryOpen}
+                  aria-controls='book-summary'
+                  onClick={() => setSummaryOpen((open) => !open)}
+                  className='mt-1 inline-flex min-h-[44px] items-center text-[13px] font-medium text-fg underline-offset-4 hover:underline tm-press'
                 >
-                  <Tags className='h-3 w-3' />
-                  {tag}
-                </span>
-              ))}
+                  {summaryOpen ? '收起简介' : '展开简介'}
+                </button>
+              ) : null}
             </div>
+          ) : null}
+          <div className='tm-detail-tags mt-4 flex flex-wrap gap-2'>
+            {(detail.categories || detail.tags || []).map((tag) => (
+              <span
+                key={tag}
+                className={cn(
+                  'inline-flex items-center gap-1.5 rounded-sm px-2.5 py-1 text-[13px] font-medium',
+                  'bg-canvas text-muted'
+                )}
+              >
+                <Tags className='h-3 w-3' />
+                {tag}
+              </span>
+            ))}
           </div>
-          <div className='flex flex-wrap gap-3'>
+          <div className='tm-detail-actions flex flex-wrap gap-3'>
             {readable ? (
               <Link
                 href={buildBookReadPath(detail.sourceId, detail.id)}
@@ -441,12 +467,25 @@ export default function BookDetailPage() {
               >
                 <div className='min-w-0'>
                   <div className={cn('truncate font-medium', LIBRARY_TEXT)}>
-                    {item.title || item.type}
+                    {item.title ||
+                      (format === 'chapters'
+                        ? '在线章节'
+                        : format === 'epub'
+                        ? 'EPUB 电子书'
+                        : format === 'pdf'
+                        ? 'PDF 文档'
+                        : '其他格式')}
                   </div>
                   <div
                     className={cn('mt-1 truncate text-[13px]', LIBRARY_MUTED)}
                   >
-                    {item.rel}
+                    {format === 'chapters'
+                      ? '按章节在线阅读'
+                      : format === 'epub'
+                      ? '支持目录与阅读设置'
+                      : format === 'pdf'
+                      ? '使用浏览器阅读器'
+                      : '此格式暂不支持在线阅读'}
                   </div>
                 </div>
                 <button

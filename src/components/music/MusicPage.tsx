@@ -39,7 +39,7 @@ export default function MusicPage({
           {actions ? (
             // 窄屏上动作会换行到标题下面，所以让它自己也能 wrap，而不是被压扁
             // 或者把这一行撑出横向滚动条。
-            <div className='flex min-w-0 flex-wrap items-center justify-end gap-2'>
+            <div className='flex w-full min-w-0 flex-wrap items-center justify-start gap-2 sm:w-auto sm:justify-end'>
               {actions}
             </div>
           ) : null}

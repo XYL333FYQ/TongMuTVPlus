@@ -1,6 +1,6 @@
 'use client';
 
-import { Play, RefreshCw, Search } from 'lucide-react';
+import { ArrowLeft, Play, RefreshCw, Search } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
@@ -24,6 +24,7 @@ import {
   MUSIC_COVER_GRID,
   MUSIC_FIELD,
   MUSIC_FIELD_INPUT,
+  MUSIC_GHOST_BUTTON,
   MUSIC_HOT_GRID,
   MUSIC_HOT_ITEM,
   MUSIC_HOT_RANK,
@@ -511,6 +512,13 @@ export default function MusicSearchPage() {
     }
   };
 
+  // 从歌手 / 专辑的歌曲列表回到搜索结果：清掉详情标题并重新拉取同一搜索
+  const backToResults = () => {
+    setDetailTitle('');
+    setPage(1);
+    void loadSearchPage(1, false);
+  };
+
   const currentSourceLabel =
     musicSources.find((item) => item.key === selectedSource)?.label || '音源';
   const currentTypeLabel =
@@ -591,6 +599,17 @@ export default function MusicSearchPage() {
           aria-label='搜索'
         />
       </form>
+
+      {detailTitle ? (
+        <button
+          type='button'
+          onClick={backToResults}
+          className={cn(MUSIC_GHOST_BUTTON, 'mb-4')}
+        >
+          <ArrowLeft className='h-4 w-4' strokeWidth={2} />
+          返回搜索结果
+        </button>
+      ) : null}
 
       {loading ? (
         selectedType === 'song' || detailTitle ? (

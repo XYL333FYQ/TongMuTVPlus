@@ -6,6 +6,7 @@ import { Bell, Check, Settings, Trash2, X } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
+import ModalLayer from '@/components/feedback/ModalLayer';
 import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
 import { Notification } from '@/lib/types';
 
@@ -182,15 +183,9 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({
   }, [isOpen]);
 
   return (
-    <>
-      {/* 背景遮罩 */}
-      <div
-        className='fixed inset-0 bg-ink/50 backdrop-blur-sm z-[1000]'
-        onClick={onClose}
-      />
-
-      {/* 通知面板 */}
-      <div className='fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-lg min-h-[520px] max-h-[80vh] bg-surface rounded-xl shadow-xl z-[1001] flex flex-col overflow-hidden max-sm:min-h-[70vh]'>
+    <ModalLayer label='通知中心' onClose={onClose}>
+      {/* 通知面板：原生模态层负责遮罩、焦点约束与 Esc */}
+      <div className='tm-modal w-full max-w-lg min-h-[520px] max-h-[80dvh] bg-surface rounded-xl shadow-xl flex flex-col overflow-hidden max-sm:min-h-[70dvh]'>
         {/* 标题栏 */}
         <div className='flex items-center justify-between px-6 py-4 border-b border-line'>
           <div className='flex items-center gap-2'>
@@ -214,7 +209,7 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({
             <button
               onClick={onClose}
               className='w-8 h-8 p-1 rounded-full flex items-center justify-center text-muted hover:bg-line transition-colors min-h-[44px] tm-press'
-              aria-label='Close'
+              aria-label='关闭通知中心'
             >
               <X className='w-full h-full' />
             </button>
@@ -280,18 +275,19 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({
                     </p>
                   </div>
 
-                  {/* 操作按钮 */}
-                  <div className='absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity'>
+                  {/* 操作按钮：常驻可见（触屏没有悬停），点按区 44×44 */}
+                  <div className='-mb-2 -mr-2 mt-1 flex items-center justify-end gap-1'>
                     {!notification.read && (
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
                           markAsRead(notification.id);
                         }}
-                        className='p-1.5 rounded-full bg-raised hover:bg-line transition-colors min-h-[44px] tm-press'
+                        className='flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full text-muted transition-colors hover:bg-line hover:text-fg tm-press'
                         title='标记为已读'
+                        aria-label='标记为已读'
                       >
-                        <Check className='w-3.5 h-3.5 text-fg' />
+                        <Check className='h-4 w-4' />
                       </button>
                     )}
                     <button
@@ -299,10 +295,11 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({
                         e.stopPropagation();
                         deleteNotification(notification.id);
                       }}
-                      className='p-1.5 rounded-full bg-raised hover:bg-line transition-colors min-h-[44px] tm-press'
+                      className='flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full text-muted transition-colors hover:bg-line hover:text-fg tm-press'
                       title='删除'
+                      aria-label='删除通知'
                     >
-                      <Trash2 className='w-3.5 h-3.5 text-fg' />
+                      <Trash2 className='h-4 w-4' />
                     </button>
                   </div>
                 </div>
@@ -311,6 +308,6 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({
           )}
         </div>
       </div>
-    </>
+    </ModalLayer>
   );
 };

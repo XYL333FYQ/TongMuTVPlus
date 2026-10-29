@@ -108,7 +108,7 @@ export default function MediaCard({
       <div className='space-y-1 px-2.5 pb-2.5 pt-2'>
         <div
           className={cn(
-            'min-h-[1.7em] truncate text-sm font-medium leading-[1.7] text-fg',
+            'line-clamp-2 break-words text-sm font-medium leading-[1.5] text-fg',
             LIBRARY_SERIF
           )}
         >
@@ -123,7 +123,10 @@ export default function MediaCard({
           </div>
         )}
         {item.subtitle && (
-          <div className={cn('line-clamp-2 text-[13px]', LIBRARY_MUTED)}>
+          <div
+            className={cn('line-clamp-1 text-[13px]', LIBRARY_MUTED)}
+            title={item.subtitle}
+          >
             {item.subtitle}
           </div>
         )}
@@ -148,7 +151,7 @@ export default function MediaCard({
   return (
     <motion.div
       ref={rootRef}
-      className='tm-media-card-motion relative flex flex-col gap-2'
+      className='tm-media-card-motion relative min-w-0 flex flex-col gap-2'
       tabIndex={-1}
       initial={{ opacity: 0, y: reduced ? 0 : 16 }}
       animate={reveal}

@@ -426,11 +426,12 @@ const MobileActionSheet: React.FC<MobileActionSheetProps> = ({
               </button>
             )}
             <div className='min-w-0 flex-1'>
-              <div className='flex items-center gap-2 mb-1 min-w-0'>
-                <div className='relative min-w-0 flex-1 group/title'>
+              {/* 书名独占一行，来源徽标另起一行并限宽，长来源名不再把标题挤成 0 宽 */}
+              <div className='flex flex-col items-start gap-1 mb-1 min-w-0'>
+                <div className='relative w-full min-w-0 group/title'>
                   <h3
                     ref={titleRef}
-                    className='text-lg font-medium text-fg truncate'
+                    className='text-lg font-medium text-fg line-clamp-2 break-words'
                   >
                     {title}
                   </h3>
@@ -442,7 +443,10 @@ const MobileActionSheet: React.FC<MobileActionSheetProps> = ({
                   )}
                 </div>
                 {sourceName && (
-                  <span className='flex-shrink-0 text-[13px] px-2 py-1 border border-line rounded text-muted bg-raised'>
+                  <span
+                    title={sourceName}
+                    className='max-w-full truncate text-[13px] px-2 py-1 border border-line rounded text-muted bg-raised'
+                  >
                     {origin === 'live' && (
                       <Radio
                         size={12}

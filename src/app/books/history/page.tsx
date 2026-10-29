@@ -34,6 +34,7 @@ import { cn } from '@/lib/cn';
 import { subscribeToDataUpdates } from '@/lib/db.client';
 import { processImageUrl } from '@/lib/utils';
 
+import ModalLayer from '@/components/feedback/ModalLayer';
 import EmptyState from '@/components/media/EmptyState';
 import {
   LIBRARY_ACCENT_ICON,
@@ -280,14 +281,12 @@ export default function BookHistoryPage() {
       {cacheModalOpen &&
         mounted &&
         createPortal(
-          <div
-            className='fixed inset-0 z-50 bg-ink/45'
-            onClick={() => setCacheModalOpen(false)}
+          <ModalLayer
+            label='缓存管理'
+            className='tm-drawer-layer'
+            onClose={() => setCacheModalOpen(false)}
           >
-            <div
-              className='absolute right-0 top-0 h-screen w-full max-w-lg overflow-y-auto border-l border-line bg-canvas shadow-2xl'
-              onClick={(event) => event.stopPropagation()}
-            >
+            <div className='h-full w-full max-w-lg overflow-y-auto overscroll-contain border-l border-line bg-canvas shadow-2xl'>
               <div className='space-y-5 p-5'>
                 <div className={cn(LIBRARY_PANEL, 'p-4')}>
                   <div className='flex items-start justify-between gap-4'>
@@ -402,20 +401,19 @@ export default function BookHistoryPage() {
                 </div>
               </div>
             </div>
-          </div>,
+          </ModalLayer>,
           document.body
         )}
 
       {confirmAction &&
         mounted &&
         createPortal(
-          <div
-            className='fixed inset-0 z-[60] flex items-center justify-center bg-ink/55 px-4'
-            onClick={() => setConfirmAction(null)}
+          <ModalLayer
+            label='确认删除缓存'
+            onClose={() => setConfirmAction(null)}
           >
             <div
               className={cn(LIBRARY_PANEL, 'w-full max-w-sm p-5 shadow-2xl')}
-              onClick={(event) => event.stopPropagation()}
             >
               <div
                 className={cn(
@@ -469,7 +467,7 @@ export default function BookHistoryPage() {
                 </button>
               </div>
             </div>
-          </div>,
+          </ModalLayer>,
           document.body
         )}
     </section>

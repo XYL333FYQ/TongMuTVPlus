@@ -111,6 +111,8 @@ export default function PlaybackSessionProvider({
   const requestPersonal = useRef<(selected: string) => void>(() => undefined);
   const requestTogether = useRef<(selected: string) => void>(() => undefined);
   const [actionError, setActionError] = useState('');
+  // 仅界面：用户手动收起的失败提示文案；出现新的错误文案时会重新显示
+  const [dismissedError, setDismissedError] = useState('');
   const [actionPending, setActionPending] = useState(false);
   const queueAttempt = useRef<{
     roomId: string;
@@ -946,18 +948,35 @@ export default function PlaybackSessionProvider({
           )}
         </div>
       )}
-      {href && metadata.error && presentation !== 'full' && (
-        <div
-          className='tm-playback-action-error tm-playback-recovery'
-          role='alert'
-        >
-          <div>
-            <strong>影片暂时无法播放</strong>
-            <p>{metadata.error}</p>
+      {href &&
+        metadata.error &&
+        metadata.error !== dismissedError &&
+        presentation !== 'full' && (
+          <div
+            className='tm-playback-action-error tm-playback-recovery'
+            role='alert'
+          >
+            <div>
+              <strong>影片暂时无法播放</strong>
+              <p>{metadata.error}</p>
+            </div>
+            <button
+              onClick={() => {
+                setDismissedError('');
+                reloadPlayback();
+              }}
+            >
+              重新加载影片
+            </button>
+            <button
+              onClick={() => setDismissedError(metadata.error ?? '')}
+              aria-label='收起错误提示'
+              title='收起提示'
+            >
+              <X size={16} />
+            </button>
           </div>
-          <button onClick={reloadPlayback}>重新加载影片</button>
-        </div>
-      )}
+        )}
       {roomId && !pathname.startsWith('/watch-room') && (
         <Link
           className='tm-return-room'

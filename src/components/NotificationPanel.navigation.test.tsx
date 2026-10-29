@@ -8,6 +8,15 @@ jest.mock('@/lib/auth', () => ({
   getAuthInfoFromBrowserCookie: () => ({ role: 'owner' }),
 }));
 const originalFetch = global.fetch;
+// jsdom 没有原生 <dialog> 模态接口，补一个最小实现
+beforeEach(() => {
+  HTMLDialogElement.prototype.showModal = function (this: HTMLDialogElement) {
+    this.setAttribute('open', '');
+  };
+  HTMLDialogElement.prototype.close = function (this: HTMLDialogElement) {
+    this.removeAttribute('open');
+  };
+});
 afterEach(() => {
   global.fetch = originalFetch;
   push.mockClear();
