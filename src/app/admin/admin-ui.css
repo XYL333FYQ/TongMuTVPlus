@@ -278,3 +278,40 @@ html[data-tm-reduced-motion='true'] .tm-admin-proxy-track > span {
     gap: 8px;
   }
 }
+
+/* —— 附加功能界面优化：窄屏表格、按钮与禁用态 —— */
+/* 按钮文案不逐字折行；空间不够时由所在行换行 */
+.tm-admin-page button {
+  white-space: nowrap;
+}
+/* 禁用的操作按钮要一眼看出不可点，不再和可用按钮同款黑底 */
+.tm-admin-page button:disabled:not(.tm-switch-btn):not([role='switch']) {
+  background-color: var(--tm-surface-raised) !important;
+  color: var(--tm-muted) !important;
+  box-shadow: inset 0 0 0 1px var(--tm-line);
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+/* 其余表格（用户列表另有卡片布局）：表头不逐字断行，窄屏时整表横向滚动 */
+.tm-admin-page div:has(> table):not([data-table='user-list']) th {
+  white-space: nowrap;
+}
+.tm-admin-page div:has(> table):not([data-table='user-list']) td {
+  min-width: 72px;
+  overflow-wrap: anywhere;
+}
+@media (max-width: 767px) {
+  .tm-admin-page div:has(> table):not([data-table='user-list']) > table {
+    min-width: 640px;
+  }
+}
+
+/* 单选按钮组（上传方式、认证方式等）：选中项整块反色，深浅主题都一眼可辨 */
+.tm-admin-page .tm-choice[aria-checked='true'] {
+  background: var(--tm-text);
+  border-color: var(--tm-text);
+  color: var(--tm-accent-contrast);
+}
+.tm-admin-page .tm-choice[aria-checked='true'] * {
+  color: inherit;
+}

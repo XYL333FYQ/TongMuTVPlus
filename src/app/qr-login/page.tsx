@@ -3,7 +3,7 @@
 import { CheckCircle, Loader2, LogIn, XCircle } from 'lucide-react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { Suspense, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 
 import '@/styles/auth.css';
 
@@ -16,7 +16,10 @@ function QrLoginClient() {
   const token = searchParams.get('token') || '';
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
-  const authed = Boolean(getAuthInfoFromBrowserCookie());
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  // Cookie 只存在浏览器中；服务端与水合首帧先显示相同的等待状态。
+  const authed = mounted ? Boolean(getAuthInfoFromBrowserCookie()) : null;
 
   const confirm = async () => {
     setLoading(true);
@@ -57,7 +60,11 @@ function QrLoginClient() {
         <p className='tm-auth-sub'>
           请确认电视屏幕上的二维码来自你正在使用的设备。
         </p>
-        {!authed ? (
+        {authed === null ? (
+          <p role='status' className='tm-auth-note'>
+            正在检查登录状态…
+          </p>
+        ) : !authed ? (
           <div className='tm-auth-note'>
             <LogIn size={28} aria-hidden />
             <p className='mt-3 text-[15px] font-medium'>
@@ -74,6 +81,11 @@ function QrLoginClient() {
           </div>
         ) : (
           <div className='grid gap-3'>
+            {!token && (
+              <p role='alert' className='tm-auth-note text-[15px]'>
+                没有读取到登录凭证，二维码可能已失效或链接不完整。请回到电视端刷新二维码，再重新扫码。
+              </p>
+            )}
             <button
               onClick={confirm}
               disabled={loading || !token}

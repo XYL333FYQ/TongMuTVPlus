@@ -14,6 +14,7 @@ import {
 
 import { notifyError } from '@/components/feedback/AppDialogs';
 import { ConfirmDialog } from '@/components/feedback/ConfirmDialog';
+import ModalLayer from '@/components/feedback/ModalLayer';
 
 interface DownloadManagementPanelProps {
   isOpen: boolean;
@@ -556,8 +557,11 @@ export function DownloadManagementPanel({
   return (
     <>
       {createPortal(
-        <div className='fixed inset-0 z-[9999] flex items-end justify-center p-0 sm:items-center sm:p-4'>
-          <div className='absolute inset-0 bg-ink/50' onClick={onClose} />
+        <ModalLayer
+          label='下载管理'
+          onClose={onClose}
+          className='tm-download-modal-layer'
+        >
           <div className='relative flex h-[92dvh] max-h-[92dvh] w-full max-w-4xl flex-col rounded-t-2xl bg-surface shadow-xl sm:h-auto sm:max-h-[90vh] sm:rounded-lg'>
             {/* Header */}
             <div className='flex items-center justify-between border-b border-line p-3 sm:p-4'>
@@ -566,7 +570,7 @@ export function DownloadManagementPanel({
               </h2>
               <button
                 onClick={onClose}
-                className='rounded p-2 transition-colors hover:bg-line min-h-[44px] tm-press'
+                className='min-w-[44px] rounded p-2 transition-colors hover:bg-line min-h-[44px] tm-press'
                 aria-label='关闭下载文件管理'
               >
                 <X className='w-5 h-5 text-muted' />
@@ -576,7 +580,7 @@ export function DownloadManagementPanel({
             {/* Toolbar */}
             <div className='flex items-center justify-between gap-3 border-b border-line p-3 sm:p-4'>
               <div className='min-w-0 flex-1 flex-col gap-2 sm:flex sm:flex-row sm:items-center sm:gap-4'>
-                <label className='flex items-center gap-2 cursor-pointer'>
+                <label className='flex min-h-[44px] items-center gap-2 cursor-pointer'>
                   <input
                     type='checkbox'
                     checked={
@@ -599,7 +603,7 @@ export function DownloadManagementPanel({
                   onClick={handleExport}
                   aria-label={isExporting ? '导出中' : '导出选中'}
                   disabled={selectedIds.size === 0 || isExporting || isDeleting}
-                  className='flex h-10 w-10 items-center justify-center rounded bg-fg text-inverse transition-colors hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 sm:h-auto sm:w-auto sm:gap-2 sm:px-4 sm:py-2 sm:text-sm min-h-[44px] tm-press'
+                  className='flex h-11 w-11 items-center justify-center rounded bg-fg text-inverse transition-colors hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 sm:h-auto sm:w-auto sm:gap-2 sm:px-4 sm:py-2 sm:text-sm min-h-[44px] tm-press'
                 >
                   <Download className='h-4 w-4' />
                   <span className='hidden sm:inline'>
@@ -610,7 +614,7 @@ export function DownloadManagementPanel({
                   onClick={handleDelete}
                   aria-label={isDeleting ? '删除中' : '删除选中'}
                   disabled={selectedIds.size === 0 || isDeleting || isExporting}
-                  className='flex h-10 w-10 items-center justify-center rounded bg-fg text-inverse transition-colors hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 sm:h-auto sm:w-auto sm:gap-2 sm:px-4 sm:py-2 sm:text-sm min-h-[44px] tm-press'
+                  className='flex h-11 w-11 items-center justify-center rounded bg-fg text-inverse transition-colors hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 sm:h-auto sm:w-auto sm:gap-2 sm:px-4 sm:py-2 sm:text-sm min-h-[44px] tm-press'
                 >
                   <Trash2 className='h-4 w-4' />
                   <span className='hidden sm:inline'>
@@ -645,17 +649,14 @@ export function DownloadManagementPanel({
                             : 'border-line'
                         }`}
                       >
-                        <div
-                          className='flex cursor-pointer items-start gap-2 p-3 hover:bg-line sm:gap-3 sm:p-4'
-                          onClick={() => handleToggleGroupExpand(group.key)}
-                        >
+                        <div className='flex items-start gap-2 p-3 hover:bg-line sm:gap-3 sm:p-4'>
                           <button
                             type='button'
                             onClick={(event) => {
                               event.stopPropagation();
                               handleToggleGroupSelect(group);
                             }}
-                            className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded border-2 transition-colors sm:mt-1 sm:h-5 sm:w-5 ${
+                            className={`flex h-11 w-11 flex-shrink-0 items-center justify-center rounded border-2 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-fg ${
                               isGroupSelected
                                 ? 'border-line bg-fg text-inverse min-h-[44px] tm-press'
                                 : isGroupPartiallySelected
@@ -663,21 +664,30 @@ export function DownloadManagementPanel({
                                 : 'border-line min-h-[44px] tm-press'
                             }`}
                             aria-label={`选择 ${group.title}`}
+                            aria-pressed={isGroupSelected}
                           >
                             {isGroupSelected ? (
-                              <Check className='h-4 w-4 text-fg sm:h-3 sm:w-3' />
+                              <Check className='h-4 w-4 text-inverse sm:h-3 sm:w-3' />
                             ) : isGroupPartiallySelected ? (
                               <span className='h-0.5 w-3 rounded bg-fg sm:w-2.5' />
                             ) : null}
                           </button>
 
-                          <div className='min-w-0 flex-1'>
-                            <div className='flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-3'>
-                              <div className='min-w-0 flex-1'>
-                                <h3 className='line-clamp-2 text-sm font-medium text-fg sm:truncate'>
+                          <button
+                            type='button'
+                            className='min-w-0 flex-1 rounded text-left min-h-[44px] tm-press focus-visible:outline focus-visible:outline-2 focus-visible:outline-fg'
+                            aria-label={`${isExpanded ? '收起' : '展开'} ${
+                              group.title
+                            }`}
+                            aria-expanded={isExpanded}
+                            onClick={() => handleToggleGroupExpand(group.key)}
+                          >
+                            <span className='flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-3'>
+                              <span className='min-w-0 flex-1'>
+                                <span className='line-clamp-2 text-sm font-medium text-fg sm:truncate'>
                                   {group.title}
-                                </h3>
-                                <div className='mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[13px] text-muted'>
+                                </span>
+                                <span className='mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[13px] text-muted'>
                                   <span>来源: {group.source}</span>
                                   <span>•</span>
                                   <span>{group.tasks.length} 集</span>
@@ -687,47 +697,49 @@ export function DownloadManagementPanel({
                                       .map(getDownloadModeLabel)
                                       .join(' / ')}
                                   </span>
-                                </div>
-                              </div>
-                              <div className='flex w-full flex-row-reverse items-center justify-between gap-3 text-left sm:w-auto sm:flex-row sm:items-start sm:text-right'>
-                                <div className='min-w-0 sm:min-w-[150px]'>
-                                  <div className='text-[13px] text-muted'>
+                                </span>
+                              </span>
+                              <span className='flex w-full flex-row-reverse items-center justify-between gap-3 text-left sm:w-auto sm:flex-row sm:items-start sm:text-right'>
+                                <span className='block min-w-0 sm:min-w-[150px]'>
+                                  <span className='block text-[13px] text-muted'>
                                     最近完成：
                                     {formatDate(group.lastCompletedAt)}
-                                  </div>
-                                  <div className='mt-1 text-[13px] text-muted'>
+                                  </span>
+                                  <span className='mt-1 block text-[13px] text-muted'>
                                     总大小：{formatFileSize(group.totalSize)}
-                                  </div>
+                                  </span>
                                   {selectedCount > 0 && (
-                                    <div className='mt-1 text-[13px] text-fg'>
+                                    <span className='mt-1 block text-[13px] text-fg'>
                                       已选 {selectedCount} 集
-                                    </div>
+                                    </span>
                                   )}
-                                </div>
+                                </span>
                                 <ChevronDown
                                   className={`h-5 w-5 flex-shrink-0 text-muted transition-transform sm:mt-1 ${
                                     isExpanded ? 'rotate-180' : ''
                                   }`}
                                 />
-                              </div>
-                            </div>
-                          </div>
+                              </span>
+                            </span>
+                          </button>
                         </div>
 
                         {isExpanded && (
                           <div className='border-t border-line bg-surface'>
                             {group.tasks.map((task) => (
-                              <div
+                              <button
+                                type='button'
+                                aria-pressed={selectedIds.has(task.id)}
                                 key={task.id}
-                                className={`flex cursor-pointer items-start gap-2 px-3 py-3.5 transition-colors sm:gap-3 sm:px-4 sm:py-3 ${
+                                className={`flex w-full cursor-pointer items-start gap-2 rounded text-left min-h-[44px] tm-press focus-visible:outline focus-visible:outline-2 focus-visible:outline-fg px-3 py-3.5 transition-colors sm:gap-3 sm:px-4 sm:py-3 ${
                                   selectedIds.has(task.id)
                                     ? 'bg-raised'
                                     : 'hover:bg-line'
                                 }`}
                                 onClick={() => handleToggleSelect(task.id)}
                               >
-                                <div className='flex-shrink-0 sm:mt-1'>
-                                  <div
+                                <span className='flex-shrink-0 sm:mt-1'>
+                                  <span
                                     className={`flex h-8 w-8 items-center justify-center rounded border-2 sm:h-5 sm:w-5 ${
                                       selectedIds.has(task.id)
                                         ? 'border-line bg-fg'
@@ -735,41 +747,41 @@ export function DownloadManagementPanel({
                                     }`}
                                   >
                                     {selectedIds.has(task.id) && (
-                                      <Check className='h-4 w-4 text-fg sm:h-3 sm:w-3' />
+                                      <Check className='h-4 w-4 text-inverse sm:h-3 sm:w-3' />
                                     )}
-                                  </div>
-                                </div>
-                                <div className='min-w-0 flex-1'>
-                                  <div className='flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between'>
-                                    <div className='min-w-0 flex-1'>
-                                      <h4 className='line-clamp-2 text-sm font-medium text-fg sm:truncate'>
+                                  </span>
+                                </span>
+                                <span className='min-w-0 flex-1'>
+                                  <span className='flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between'>
+                                    <span className='min-w-0 flex-1'>
+                                      <span className='line-clamp-2 text-sm font-medium text-fg sm:truncate'>
                                         第 {task.episodeIndex + 1} 集
                                         {task.episodeTitle
                                           ? `：${task.episodeTitle}`
                                           : ''}
-                                      </h4>
-                                      <p className='mt-1 truncate text-[13px] text-muted'>
+                                      </span>
+                                      <span className='mt-1 block truncate text-[13px] text-muted'>
                                         {task.title}
-                                      </p>
-                                    </div>
-                                    <div className='flex-shrink-0 text-left sm:text-right'>
-                                      <div className='text-[13px] text-muted'>
+                                      </span>
+                                    </span>
+                                    <span className='flex-shrink-0 text-left sm:text-right'>
+                                      <span className='block text-[13px] text-muted'>
                                         {formatDate(task.completedAt)}
-                                      </div>
-                                      <div className='mt-1 text-[13px] text-muted'>
+                                      </span>
+                                      <span className='mt-1 block text-[13px] text-muted'>
                                         {formatFileSize(task.fileSize)}
-                                      </div>
-                                    </div>
-                                  </div>
-                                  <div className='mt-2 flex flex-wrap items-center gap-2 text-[13px] text-muted'>
+                                      </span>
+                                    </span>
+                                  </span>
+                                  <span className='mt-2 flex flex-wrap items-center gap-2 text-[13px] text-muted'>
                                     <span>第 {task.episodeIndex + 1} 集</span>
                                     <span>•</span>
                                     <span>
                                       {getDownloadModeLabel(task.downloadMode)}
                                     </span>
-                                  </div>
-                                </div>
-                              </div>
+                                  </span>
+                                </span>
+                              </button>
                             ))}
                           </div>
                         )}
@@ -780,7 +792,7 @@ export function DownloadManagementPanel({
               )}
             </div>
           </div>
-        </div>,
+        </ModalLayer>,
         document.body
       )}
 

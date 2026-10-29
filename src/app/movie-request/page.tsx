@@ -373,7 +373,12 @@ export default function MovieRequestPage() {
                       </div>
                     )}
                     <div className='min-w-0'>
-                      <h3 className='tm-poster-title'>{request.title}</h3>
+                      <h3
+                        className='tm-poster-title line-clamp-2 whitespace-normal break-words'
+                        title={request.title}
+                      >
+                        {request.title}
+                      </h3>
                       <p className='tm-poster-meta mb-2'>
                         {request.year || '未知'} · {request.requestCount}人求片
                       </p>
@@ -407,7 +412,12 @@ export default function MovieRequestPage() {
                   </div>
                 )}
                 <div className='min-w-0'>
-                  <h3 className='tm-poster-title'>{item.title || item.name}</h3>
+                  <h3
+                    className='tm-poster-title line-clamp-2 whitespace-normal break-words'
+                    title={item.title || item.name}
+                  >
+                    {item.title || item.name}
+                  </h3>
                   <p className='tm-poster-meta mb-2'>
                     {(item.release_date || item.first_air_date)?.split(
                       '-'

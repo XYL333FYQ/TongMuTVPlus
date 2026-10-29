@@ -130,10 +130,13 @@ export default function MusicMyPlaylistsPage() {
     scrollToTopOnPhone();
   };
 
-  const deleteUserPlaylist = async (playlistId: string) => {
+  const deleteUserPlaylist = async (playlistId: string, name?: string) => {
     if (
       !(await askConfirm({
-        message: '确定要删除这个歌单吗？',
+        message: name
+          ? '确定要删除歌单「' + name + '」吗？'
+          : '确定要删除这个歌单吗？',
+        confirmText: '删除歌单',
         variant: 'danger',
       }))
     )
@@ -313,7 +316,12 @@ export default function MusicMyPlaylistsPage() {
                   </button>
                   <button
                     type='button'
-                    onClick={() => deleteUserPlaylist(selectedUserPlaylist.id)}
+                    onClick={() =>
+                      deleteUserPlaylist(
+                        selectedUserPlaylist.id,
+                        selectedUserPlaylist.name
+                      )
+                    }
                     disabled={deletingPlaylistId !== null}
                     className={MUSIC_DANGER_BUTTON}
                   >

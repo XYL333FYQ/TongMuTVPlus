@@ -18,9 +18,65 @@ export default function Toast({
   onClose,
 }: ToastProps) {
   const [isVisible, setIsVisible] = useState(true);
+  const [host, setHost] = useState<HTMLElement | null>(() => {
+    if (typeof document === 'undefined') return null;
+    const dialogs =
+      document.querySelectorAll<HTMLDialogElement>('dialog[open]');
+    return (
+      document.activeElement?.closest<HTMLDialogElement>('dialog[open]') ||
+      dialogs[dialogs.length - 1] ||
+      document.body
+    );
+  });
   const callback = useRef(onClose);
   callback.current = onClose;
   const dismiss = useRef<() => void>(() => undefined);
+
+  useEffect(() => {
+    // Keep the portal connected as modals open, close or unmount. Opening order
+    // and actual focus take precedence over a dialog's position in the DOM.
+    let order = Array.from(
+      document.querySelectorAll<HTMLDialogElement>('dialog[open]')
+    );
+    const refresh = (records: MutationRecord[] = []) => {
+      for (const record of records) {
+        if (
+          record.type === 'attributes' &&
+          record.target instanceof HTMLDialogElement
+        ) {
+          const dialog = record.target;
+          order = order.filter((item) => item !== dialog);
+          if (dialog.open && dialog.isConnected) order.push(dialog);
+        }
+      }
+      const opened = Array.from(
+        document.querySelectorAll<HTMLDialogElement>('dialog[open]')
+      );
+      order = order.filter((dialog) => opened.includes(dialog));
+      for (const dialog of opened) {
+        if (!order.includes(dialog)) order.push(dialog);
+      }
+      const focused =
+        document.activeElement?.closest<HTMLDialogElement>('dialog[open]');
+      if (focused)
+        order = [...order.filter((dialog) => dialog !== focused), focused];
+      setHost(order[order.length - 1] || document.body);
+    };
+    const observer = new MutationObserver(refresh);
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ['open'],
+    });
+    const focused = () => refresh();
+    document.addEventListener('focusin', focused);
+    refresh();
+    return () => {
+      observer.disconnect();
+      document.removeEventListener('focusin', focused);
+    };
+  }, []);
 
   useEffect(() => {
     let closing = false;
@@ -48,7 +104,7 @@ export default function Toast({
     info: <Info size={20} aria-hidden='true' />,
   };
 
-  if (typeof document === 'undefined') return null;
+  if (!host) return null;
 
   return createPortal(
     <div
@@ -74,6 +130,6 @@ export default function Toast({
         <X size={20} aria-hidden='true' />
       </button>
     </div>,
-    document.body
+    host
   );
 }

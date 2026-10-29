@@ -5381,7 +5381,7 @@ export const UserMenu: React.FC = () => {
                       </div>
                     </div>
                     <span
-                      className={`rounded-full px-2.5 py-1 text-[13px] font-bold ${
+                      className={`shrink-0 whitespace-nowrap rounded-full px-2.5 py-1 text-[13px] font-bold ${
                         subscribeEnabled
                           ? 'bg-raised text-fg'
                           : 'bg-raised text-muted'
@@ -5750,9 +5750,9 @@ export const UserMenu: React.FC = () => {
             <div className='grid gap-4'>
               {/* 原生客户端安装包 */}
               <div className='bg-raised rounded-lg p-5 border border-line'>
-                <div className='flex items-center gap-2 mb-1.5'>
+                <div className='flex flex-wrap items-center gap-2 mb-1.5'>
                   <h4 className='text-base font-bold text-fg'>原生客户端</h4>
-                  <span className='px-2 py-0.5 bg-surface border border-line text-fg text-[12px] font-medium rounded-full'>
+                  <span className='shrink-0 whitespace-nowrap px-2 py-0.5 bg-surface border border-line text-fg text-[12px] font-medium rounded-full'>
                     推荐
                   </span>
                 </div>
@@ -5809,11 +5809,11 @@ export const UserMenu: React.FC = () => {
                     <Monitor className='w-6 h-6' />
                   </div>
                   <div className='flex-1 min-w-0'>
-                    <div className='flex items-center gap-2 mb-1.5'>
+                    <div className='flex flex-wrap items-center gap-2 mb-1.5'>
                       <h4 className='text-base font-bold text-fg'>
                         浏览器安装：电脑（Windows / macOS）
                       </h4>
-                      <span className='px-2 py-0.5 bg-surface border border-line text-fg text-[12px] font-medium rounded-full'>
+                      <span className='shrink-0 whitespace-nowrap px-2 py-0.5 bg-surface border border-line text-fg text-[12px] font-medium rounded-full'>
                         推荐
                       </span>
                     </div>

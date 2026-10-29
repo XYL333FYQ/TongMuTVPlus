@@ -3,6 +3,8 @@ import { ArrowLeft, Disc3, Heart, ListMusic, Search, X } from 'lucide-react';
 import { cn } from '@/lib/cn';
 import type { MusicSource } from '@/lib/music/types';
 
+import ModalLayer from '@/components/feedback/ModalLayer';
+
 import {
   MUSIC_DRAWER,
   MUSIC_DRAWER_BRAND,
@@ -11,7 +13,6 @@ import {
   MUSIC_DRAWER_ITEM_IDLE,
   MUSIC_DRAWER_LABEL,
   MUSIC_DRAWER_MARK,
-  MUSIC_DRAWER_SCRIM,
   MUSIC_DRAWER_SUB,
   MUSIC_DRAWER_TITLE,
   MUSIC_ICON_BUTTON,
@@ -66,12 +67,7 @@ export default function MusicSidebarDrawer({
   };
 
   return (
-    <div className='fixed inset-0 z-[10000]'>
-      <button
-        className={MUSIC_DRAWER_SCRIM}
-        onClick={onClose}
-        aria-label='关闭菜单'
-      />
+    <ModalLayer label='音乐菜单' onClose={onClose}>
       <aside className={MUSIC_DRAWER}>
         <div className='mb-8 flex items-center justify-between gap-3'>
           <div className='flex min-w-0 items-center gap-3'>
@@ -80,7 +76,7 @@ export default function MusicSidebarDrawer({
             </div>
             <div className='min-w-0'>
               <div className={MUSIC_DRAWER_TITLE}>音乐菜单</div>
-              <div className={MUSIC_DRAWER_SUB}>Music · Reverse Side</div>
+              <div className={MUSIC_DRAWER_SUB}>浏览音乐与管理歌单</div>
             </div>
           </div>
           <button
@@ -137,6 +133,6 @@ export default function MusicSidebarDrawer({
           </button>
         </div>
       </aside>
-    </div>
+    </ModalLayer>
   );
 }

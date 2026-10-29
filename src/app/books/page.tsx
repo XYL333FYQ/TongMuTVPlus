@@ -189,7 +189,13 @@ export default function BooksHomePage() {
 
         <div className='grid gap-4 md:grid-cols-2 xl:grid-cols-3'>
           {sources.map((source) => (
-            <article key={source.id} className={cn(LIBRARY_PANEL, 'p-5')}>
+            <article
+              key={source.id}
+              className={cn(
+                LIBRARY_PANEL,
+                'tm-book-source flex min-w-0 flex-col p-5 sm:p-6'
+              )}
+            >
               <div className='min-w-0'>
                 <div
                   className={cn(
@@ -217,7 +223,7 @@ export default function BooksHomePage() {
                 </CapabilityPill>
               </div>
 
-              <div className='mt-5 flex flex-wrap gap-2'>
+              <div className='mt-auto flex flex-wrap gap-2 pt-5'>
                 {source.capabilities?.catalogSupported && (
                   <Link
                     href={`/books/catalog?sourceId=${encodeURIComponent(

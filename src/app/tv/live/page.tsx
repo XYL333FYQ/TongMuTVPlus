@@ -285,7 +285,7 @@ export default function TVLivePage() {
                   <Radio className='h-10 w-10 text-fg' />
                 )}
                 <div>
-                  <div className='line-clamp-1 text-base font-medium'>
+                  <div className='line-clamp-2 break-words text-base font-medium'>
                     {item.title}
                   </div>
                   <div className='text-base text-muted'>{item.type}</div>
@@ -347,7 +347,7 @@ export default function TVLivePage() {
             <div className='mb-4 text-base font-medium text-muted'>
               {selectedGroup} · {filteredChannels.length} 个频道
             </div>
-            <div className='grid grid-cols-2 gap-4 lg:grid-cols-4'>
+            <div className='grid grid-cols-2 gap-4 lg:grid-cols-2 2xl:grid-cols-4'>
               {visibleChannels.map((channel, index) => (
                 <button
                   key={channel.id}
@@ -370,7 +370,7 @@ export default function TVLivePage() {
                     <Radio className='h-8 w-8 shrink-0 text-fg' />
                   )}
                   <div className='min-w-0'>
-                    <div className='line-clamp-1 text-sm font-medium'>
+                    <div className='line-clamp-2 break-words text-sm font-medium'>
                       {channel.name}
                     </div>
                     <div className='mt-1 text-sm text-muted'>

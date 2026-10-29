@@ -61,10 +61,17 @@ export default function CoverCard({
         )}
       </span>
       <span className={cn(MUSIC_COVER_BODY, 'block')}>
-        <span className={cn(MUSIC_COVER_NAME, 'block')}>{name}</span>
+        <span className={cn(MUSIC_COVER_NAME, 'block')} title={name}>
+          {name}
+        </span>
         {sub || meta ? (
           <span className={MUSIC_COVER_META}>
-            <span className='truncate'>{sub}</span>
+            <span
+              className='truncate'
+              title={typeof sub === 'string' ? sub : undefined}
+            >
+              {sub}
+            </span>
             <span className='shrink-0'>{meta}</span>
           </span>
         ) : null}

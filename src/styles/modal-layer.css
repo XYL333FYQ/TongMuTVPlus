@@ -1,0 +1,49 @@
+.tm-modal-layer {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  padding: 16px;
+  border: 0;
+  background: transparent;
+  color: var(--tm-text);
+  overflow: hidden;
+}
+.tm-modal-layer[open] {
+  display: grid;
+  place-items: center;
+}
+.tm-modal-layer:modal,
+.tm-modal-layer::backdrop {
+  overscroll-behavior: contain;
+}
+.tm-modal-layer::backdrop {
+  background: var(--tm-scrim);
+  overflow: hidden;
+}
+.tm-modal-layer > .tm-modal {
+  max-height: calc(100dvh - 32px - var(--tm-safe-top) - var(--tm-safe-bottom));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+@media (max-width: 639px) {
+  .tm-modal-layer.tm-download-modal-layer {
+    padding: 0;
+    align-items: end;
+  }
+}
+
+/* 右侧抽屉：贴右、满高，原生模态层保证盖住全站顶栏与底部导航 */
+.tm-modal-layer.tm-drawer-layer {
+  padding: 0;
+}
+.tm-modal-layer.tm-drawer-layer[open] {
+  place-items: stretch end;
+}
+.tm-modal-layer.tm-drawer-layer > * {
+  padding-top: var(--tm-safe-top);
+  padding-bottom: var(--tm-safe-bottom);
+}

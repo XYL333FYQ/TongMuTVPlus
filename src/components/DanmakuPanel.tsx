@@ -344,6 +344,7 @@ export default function DanmakuPanel({
           />
           <button
             onClick={() => handleSearch(searchKeyword)}
+            aria-label='搜索弹幕'
             disabled={isSearching}
             className='flex flex-shrink-0 items-center justify-center gap-2 rounded-lg bg-fg px-3 py-2 text-sm font-medium text-inverse transition-colors hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 lg:px-4 min-w-[44px] min-h-[44px] tm-press'
           >

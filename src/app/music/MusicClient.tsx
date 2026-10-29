@@ -2926,6 +2926,7 @@ export default function MusicClient({
                   min='0'
                   max='100'
                   value={progress}
+                  aria-label='播放进度'
                   onChange={handleProgressChange}
                   className='absolute inset-0 w-full h-full opacity-0 cursor-pointer'
                 />
@@ -2978,6 +2979,7 @@ export default function MusicClient({
                 {/* Controls */}
                 <div className='relative flex items-center gap-4'>
                   <button
+                    aria-label='上一首'
                     onClick={playPrev}
                     className='text-muted hover:text-fg transition-colors min-h-[44px] tm-press'
                   >
@@ -2990,6 +2992,7 @@ export default function MusicClient({
                     </svg>
                   </button>
                   <button
+                    aria-label={isPlaying ? '暂停' : '播放'}
                     onClick={togglePlay}
                     className='w-10 h-10 rounded-full bg-fg text-inverse flex items-center justify-center hover:opacity-90 transition-colors min-h-[44px] tm-press'
                   >
@@ -3012,6 +3015,7 @@ export default function MusicClient({
                     )}
                   </button>
                   <button
+                    aria-label='下一首'
                     onClick={playNext}
                     className='text-muted hover:text-fg transition-colors min-h-[44px] tm-press'
                   >
@@ -3031,6 +3035,7 @@ export default function MusicClient({
                     <input
                       type='range'
                       value={volume}
+                      aria-label='音量'
                       onChange={handleVolumeChange}
                       className='w-16 h-1 bg-raised rounded-full appearance-none cursor-pointer'
                     />
@@ -3062,7 +3067,7 @@ export default function MusicClient({
                   </button>
                   <button
                     onClick={downloadSong}
-                    className='text-muted hover:text-fg transition-colors min-h-[44px] tm-press'
+                    className='max-sm:hidden text-muted hover:text-fg transition-colors min-h-[44px] tm-press'
                     title='下载歌曲'
                   >
                     <svg
@@ -3081,7 +3086,7 @@ export default function MusicClient({
                   </button>
                   <button
                     onClick={toggleMode}
-                    className='text-muted hover:text-fg transition-colors min-h-[44px] tm-press'
+                    className='max-sm:hidden text-muted hover:text-fg transition-colors min-h-[44px] tm-press'
                     title={
                       playMode === 'loop'
                         ? '列表循环'
@@ -3147,7 +3152,7 @@ export default function MusicClient({
         {/* Lyrics Modal */}
         {showLyrics && currentSong && (
           <div
-            className='fixed inset-0 bg-ink/90 backdrop-blur-sm z-[100] flex items-center justify-center p-4'
+            className='fixed inset-0 bg-ink/90 backdrop-blur-sm z-[1000] flex items-center justify-center p-4'
             onClick={(e) => {
               // 点击背景关闭音量条
               if (e.target === e.currentTarget) {
@@ -3160,6 +3165,7 @@ export default function MusicClient({
               onClick={() => setShowVolumeSlider(false)}
             >
               <button
+                aria-label='关闭歌词'
                 onClick={() => setShowLyrics(false)}
                 className='absolute top-2 right-2 md:top-4 md:right-4 z-10 w-8 h-8 rounded-full bg-raised hover:bg-line flex items-center justify-center transition-colors min-h-[44px] tm-press'
               >
@@ -3317,6 +3323,7 @@ export default function MusicClient({
                 {/* 上排：播放控制按钮 */}
                 <div className='relative flex items-center justify-center gap-4 md:gap-6 mb-2 md:mb-3'>
                   <button
+                    aria-label='上一首'
                     onClick={playPrev}
                     className='text-muted hover:text-fg transition-colors min-h-[44px] tm-press'
                   >
@@ -3329,6 +3336,7 @@ export default function MusicClient({
                     </svg>
                   </button>
                   <button
+                    aria-label={isPlaying ? '暂停' : '播放'}
                     onClick={togglePlay}
                     className='w-10 h-10 md:w-12 md:h-12 rounded-full bg-fg text-inverse flex items-center justify-center hover:opacity-90 transition-colors min-h-[44px] tm-press'
                   >
@@ -3351,6 +3359,7 @@ export default function MusicClient({
                     )}
                   </button>
                   <button
+                    aria-label='下一首'
                     onClick={playNext}
                     className='text-muted hover:text-fg transition-colors min-h-[44px] tm-press'
                   >
@@ -3423,6 +3432,7 @@ export default function MusicClient({
                     {getQualityLabel()}
                   </button>
                   <button
+                    aria-label='睡眠定时'
                     onClick={(e) => {
                       e.stopPropagation();
                       setShowSleepTimerMenu(true);
@@ -3704,6 +3714,7 @@ export default function MusicClient({
                         min='0'
                         max='100'
                         value={progress}
+                        aria-label='播放进度'
                         onChange={handleProgressChange}
                         className='absolute inset-0 w-full h-full opacity-0 cursor-pointer'
                       />
@@ -3718,7 +3729,7 @@ export default function MusicClient({
 
         {/* Playlist Modal */}
         {showPlaylist && (
-          <div className='fixed inset-0 bg-ink/90 backdrop-blur-sm z-[100] flex items-center justify-center p-4'>
+          <div className='fixed inset-0 bg-ink/90 backdrop-blur-sm z-[1000] flex items-center justify-center p-4'>
             <div className={MUSIC_QUEUE_SHELL}>
               <div className={MUSIC_QUEUE_HEAD}>
                 <div className='flex items-center gap-2.5'>
@@ -3799,7 +3810,7 @@ export default function MusicClient({
         {/* Sleep Timer Menu */}
         {showSleepTimerMenu && (
           <div
-            className='fixed inset-0 bg-ink/50 backdrop-blur-sm z-[110] flex items-end justify-center'
+            className='fixed inset-0 bg-ink/50 backdrop-blur-sm z-[1010] flex items-end justify-center'
             onClick={() => setShowSleepTimerMenu(false)}
           >
             <div
@@ -3812,6 +3823,7 @@ export default function MusicClient({
                 </h3>
                 <button
                   type='button'
+                  aria-label='关闭睡眠定时'
                   onClick={() => setShowSleepTimerMenu(false)}
                   className='absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-raised text-muted transition-colors hover:bg-line hover:text-fg min-h-[44px] tm-press'
                   title='关闭'
@@ -3926,12 +3938,11 @@ export default function MusicClient({
                             );
                           })}
                         </div>
+                        {/* 选中行高亮：只描边和轻微提亮，不能用不透明底色盖住数字 */}
                         <div
-                          className='pointer-events-none absolute inset-x-0 top-1/2 -translate-y-1/2 border-y border-line bg-raised'
+                          className='pointer-events-none absolute inset-x-0 top-1/2 -translate-y-1/2 border-y border-[var(--tm-line-strong)] bg-[color:color-mix(in_srgb,var(--tm-text)_8%,transparent)]'
                           style={{ height: `${sleepPickerItemHeight}px` }}
                         />
-                        <div className='pointer-events-none absolute inset-x-0 top-0 h-1/2 bg-surface to-transparent' />
-                        <div className='pointer-events-none absolute inset-x-0 bottom-0 h-1/2 bg-surface to-transparent' />
                       </div>
                     </div>
                   ))}
@@ -3974,7 +3985,7 @@ export default function MusicClient({
 
         {showAudioEffectsMenu && (
           <div
-            className='fixed inset-0 bg-ink/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4'
+            className='fixed inset-0 bg-ink/60 backdrop-blur-sm z-[1000] flex items-center justify-center p-4'
             onClick={() => setShowAudioEffectsMenu(false)}
           >
             <div
@@ -3988,6 +3999,7 @@ export default function MusicClient({
                   </h3>
                 </div>
                 <button
+                  aria-label='关闭音效设置'
                   onClick={() => setShowAudioEffectsMenu(false)}
                   className='w-8 h-8 rounded-lg text-muted hover:text-fg hover:bg-line min-h-[44px] tm-press'
                 >
@@ -4267,7 +4279,7 @@ export default function MusicClient({
         {/* Quality Selection Menu */}
         {showQualityMenu && (
           <div
-            className='fixed inset-0 bg-ink/50 backdrop-blur-sm z-[100] flex items-end justify-center'
+            className='fixed inset-0 bg-ink/50 backdrop-blur-sm z-[1000] flex items-end justify-center'
             onClick={() => setShowQualityMenu(false)}
           >
             <div
@@ -4494,6 +4506,7 @@ export default function MusicClient({
                       {confirmModal.title}
                     </h3>
                     <button
+                      aria-label='关闭'
                       onClick={confirmModal.onCancel}
                       className='text-muted hover:text-fg transition-colors min-h-[44px] tm-press'
                     >

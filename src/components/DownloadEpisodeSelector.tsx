@@ -2,6 +2,8 @@
 
 import React, { useMemo, useState } from 'react';
 
+import ModalLayer from '@/components/feedback/ModalLayer';
+
 interface DownloadEpisodeSelectorProps {
   /** 是否显示弹窗 */
   isOpen: boolean;
@@ -127,15 +129,15 @@ const DownloadEpisodeSelector: React.FC<DownloadEpisodeSelectorProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className='fixed inset-0 z-[9999] flex items-center justify-center bg-ink/50 backdrop-blur-sm'>
-      <div className='bg-surface rounded-xl shadow-2xl w-[90vw] max-w-4xl max-h-[80vh] flex flex-col overflow-hidden border border-line'>
-        {/* 标题栏 */}
-        <div className='flex items-center justify-between px-6 py-4 border-b border-line'>
-          <div className='flex-1'>
+    <ModalLayer label='选择要下载的集数' onClose={onClose}>
+      <div className='tm-modal bg-surface rounded-xl shadow-2xl w-[90vw] max-w-4xl max-h-[80dvh] flex flex-col overflow-hidden border border-line'>
+        {/* 标题栏：窄屏时标题独占一行，批量操作换到下一行 */}
+        <div className='flex flex-wrap items-start justify-between gap-x-4 gap-y-2 px-6 py-4 border-b border-line'>
+          <div className='min-w-0 basis-full sm:basis-auto sm:flex-1'>
             <h2 className='text-xl font-bold text-fg'>选择要下载的集数</h2>
-            <p className='text-sm text-muted mt-1'>{videoTitle}</p>
+            <p className='text-sm text-muted mt-1 break-words'>{videoTitle}</p>
           </div>
-          <div className='flex items-center gap-2'>
+          <div className='ml-auto flex shrink-0 items-center gap-2'>
             <button
               onClick={handleSelectAll}
               className='px-3 py-1.5 text-[13px] font-medium text-fg hover:text-fg hover:bg-line rounded-md transition-colors min-h-[44px] tm-press'
@@ -150,7 +152,8 @@ const DownloadEpisodeSelector: React.FC<DownloadEpisodeSelectorProps> = ({
             </button>
             <button
               onClick={onClose}
-              className='flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-muted hover:bg-line hover:text-fg transition-colors min-h-[44px] tm-press'
+              aria-label='关闭'
+              className='flex-shrink-0 w-11 h-11 rounded-full flex items-center justify-center text-muted hover:bg-line hover:text-fg transition-colors tm-press'
             >
               <svg
                 className='w-5 h-5'
@@ -207,18 +210,14 @@ const DownloadEpisodeSelector: React.FC<DownloadEpisodeSelectorProps> = ({
             </div>
             {/* 开关 */}
             <button
+              type='button'
+              role='switch'
+              aria-checked={offlineMode}
+              aria-label='服务器离线下载'
               onClick={() => setOfflineMode(!offlineMode)}
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                offlineMode
-                  ? 'bg-fg text-inverse min-h-[44px] tm-press'
-                  : 'bg-surface min-h-[44px] tm-press'
-              }`}
+              className='tm-switch-btn'
             >
-              <span
-                className={`inline-block h-5 w-5 transform rounded-full bg-surface shadow-sm transition-transform ${
-                  offlineMode ? 'translate-x-6' : 'translate-x-1'
-                }`}
-              />
+              <span className='tm-switch-btn-thumb' aria-hidden='true' />
             </button>
           </div>
         )}
@@ -249,8 +248,10 @@ const DownloadEpisodeSelector: React.FC<DownloadEpisodeSelectorProps> = ({
             </div>
             {/* 向上/向下按钮 */}
             <button
-              className='flex-shrink-0 w-8 h-8 rounded-md flex items-center justify-center text-muted hover:text-fg hover:bg-line transition-colors min-h-[44px] tm-press'
+              className='flex-shrink-0 w-11 h-11 rounded-md flex items-center justify-center text-muted hover:text-fg hover:bg-line transition-colors tm-press'
               onClick={() => setDescending((prev) => !prev)}
+              aria-label={descending ? '切换为正序' : '切换为倒序'}
+              title={descending ? '切换为正序' : '切换为倒序'}
             >
               <svg
                 className='w-4 h-4'
@@ -286,10 +287,14 @@ const DownloadEpisodeSelector: React.FC<DownloadEpisodeSelectorProps> = ({
                 <button
                   key={episodeIndex}
                   onClick={() => handleEpisodeClick(episodeIndex)}
-                  className={`h-10 min-w-10 px-3 py-2 flex items-center justify-center text-sm font-medium rounded-md transition-all duration-200 whitespace-nowrap font-mono relative ${
+                  aria-pressed={isSelected}
+                  aria-label={`第 ${episodeNumber} 集${
+                    isSelected ? '，已选择' : ''
+                  }`}
+                  className={`h-11 min-w-11 px-3 py-2 flex items-center justify-center text-sm font-medium rounded-md transition-colors duration-200 whitespace-nowrap font-mono relative ${
                     isSelected
-                      ? 'bg-raised text-fg shadow-lg shadow-ink/25'
-                      : 'bg-raised text-muted hover:bg-line hover:scale-105'
+                      ? 'bg-fg text-inverse ring-2 ring-fg ring-offset-2 ring-offset-surface'
+                      : 'bg-raised text-muted hover:bg-line hover:text-fg'
                   }
                   `.trim()}
                 >
@@ -354,7 +359,7 @@ const DownloadEpisodeSelector: React.FC<DownloadEpisodeSelectorProps> = ({
           </div>
         </div>
       </div>
-    </div>
+    </ModalLayer>
   );
 };
 

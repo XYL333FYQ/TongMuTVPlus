@@ -389,3 +389,8 @@ html[data-tm-reduced-motion='true'] .tm-tv-card-image {
     transition: none;
   }
 }
+
+/* 方向键 / 焦点滚动时，让目标停在固定导航下方，不被导航盖住 */
+html:has(.tm-tv-shell) {
+  scroll-padding-top: 112px;
+}

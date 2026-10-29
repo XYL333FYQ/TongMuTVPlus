@@ -37,7 +37,7 @@ import ShelfChipButton from '@/components/media/ShelfChipButton';
 
 /** 书墙：比通用网格更密，一眼看过去全是封面。 */
 const WALL_CLASS =
-  'grid-cols-3 gap-x-3 gap-y-5 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-7 xl:grid-cols-8';
+  'grid-cols-2 min-[400px]:grid-cols-3 gap-x-3 gap-y-5 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-7 xl:grid-cols-8';
 
 function buildDetailHref(item: {
   id: string;

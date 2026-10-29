@@ -19,25 +19,25 @@ export const MUSIC_FOCUS =
   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fg focus-visible:ring-offset-2 focus-visible:ring-offset-canvas';
 
 export const MUSIC_BAR =
-  'relative mb-6 flex flex-wrap items-center justify-between gap-3 border-b border-line pb-3.5';
+  'tm-music-bar relative mb-6 flex min-w-0 flex-wrap items-start justify-between gap-4 border-b border-line pb-5';
 
 export const MUSIC_BAR_TITLE =
-  'font-sans text-[28px] md:text-[32px] font-bold uppercase tracking-normal text-fg';
+  'font-sans text-2xl md:text-[32px] font-bold tracking-tight text-fg';
 
 export const MUSIC_BAR_SUB = MUSIC_LABEL;
 
 export const MUSIC_BUTTON = cn(
-  'inline-flex items-center gap-2 rounded-xl bg-fg px-3.5 py-2 font-sans text-[13px] font-medium uppercase tracking-normal text-inverse transition-colors duration-200 hover:bg-fg disabled:cursor-not-allowed disabled:opacity-40',
+  'inline-flex min-h-[44px] items-center justify-center gap-2 rounded-md bg-fg px-4 py-2.5 font-sans text-sm font-medium text-inverse hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40 tm-press',
   MUSIC_FOCUS
 );
 
 export const MUSIC_GHOST_BUTTON = cn(
-  'inline-flex items-center gap-2 rounded-xl border border-line bg-surface px-3.5 py-2 font-sans text-[13px] font-medium uppercase tracking-normal text-fg transition-colors duration-200 hover:border-muted hover:text-muted disabled:cursor-not-allowed disabled:opacity-40',
+  'inline-flex min-h-[44px] items-center justify-center gap-2 rounded-md border border-line bg-surface px-4 py-2.5 font-sans text-sm font-medium text-fg hover:border-[var(--tm-line-strong)] hover:bg-raised disabled:cursor-not-allowed disabled:opacity-40 tm-press',
   MUSIC_FOCUS
 );
 
 export const MUSIC_DANGER_BUTTON = cn(
-  'inline-flex items-center gap-2 rounded-xl border border-line bg-surface px-3.5 py-2 font-sans text-[13px] font-medium uppercase tracking-normal text-muted transition-colors duration-200 hover:border-line hover:text-fg disabled:cursor-not-allowed disabled:opacity-40',
+  'inline-flex min-h-[44px] items-center justify-center gap-2 rounded-md border border-line bg-surface px-4 py-2.5 font-sans text-sm font-medium text-muted hover:border-[var(--tm-line-strong)] hover:bg-raised hover:text-fg disabled:cursor-not-allowed disabled:opacity-40 tm-press',
   MUSIC_FOCUS
 );
 
@@ -52,7 +52,7 @@ export const MUSIC_ICON_BUTTON_DANGER = cn(
 );
 
 export const MUSIC_SWITCH = cn(
-  'inline-flex cursor-pointer items-center gap-0 border border-line bg-surface font-sans text-[13px] leading-none text-fg transition-colors duration-150 hover:border-muted',
+  'inline-flex min-h-[44px] max-w-full cursor-pointer items-center gap-0 rounded-md border border-line bg-surface font-sans text-sm leading-none text-fg hover:bg-raised tm-press',
   MUSIC_FOCUS
 );
 
@@ -65,10 +65,10 @@ export const MUSIC_SWITCH_VALUE =
 export const MUSIC_SWITCH_CARET = 'h-3 w-3 shrink-0 opacity-45';
 
 export const MUSIC_MENU =
-  'absolute right-0 top-[calc(100%+6px)] z-[60] grid w-[168px] gap-0.5 rounded-xl border border-line bg-canvas p-1 shadow-[0_14px_32px_-14px_rgba(0,0,0,0.55)] dark:bg-surface';
+  'absolute right-0 top-[calc(100%+6px)] z-[60] grid w-[min(240px,calc(100vw-32px))] max-h-[60dvh] overflow-y-auto gap-0.5 rounded-lg border border-line bg-surface p-1 shadow-[var(--tm-shadow-md)]';
 
 export const MUSIC_MENU_ITEM = cn(
-  'flex w-full cursor-pointer items-center gap-2.5 rounded-xl px-2 py-1.5 text-left font-sans text-[13px] text-fg transition-colors duration-150',
+  'flex min-h-[44px] w-full cursor-pointer items-center gap-2.5 rounded-md px-3 py-2.5 text-left font-sans text-sm text-fg tm-press',
   MUSIC_FOCUS
 );
 
@@ -82,10 +82,10 @@ export const MUSIC_MONOGRAM =
   'grid h-5 w-5 shrink-0 place-items-center rounded-xl bg-[color:color-mix(in_srgb,var(--tm-muted)_18%,transparent)] font-sans text-[13px] font-medium tracking-normal text-muted';
 
 export const MUSIC_SEG =
-  'inline-flex items-center gap-0.5 border border-line bg-surface p-0.5';
+  'inline-flex max-w-full flex-wrap items-center gap-1 rounded-full bg-raised p-1';
 
 export const MUSIC_SEG_ITEM = cn(
-  'shrink-0 cursor-pointer rounded-xl px-2.5 py-1.5 font-sans text-[13px] leading-none text-muted transition-colors duration-150',
+  'min-h-[44px] shrink-0 cursor-pointer rounded-full px-3 py-2.5 font-sans text-sm leading-none text-muted tm-press',
   MUSIC_FOCUS
 );
 
@@ -94,7 +94,7 @@ export const MUSIC_SEG_ITEM_ACTIVE = 'bg-fg font-medium text-inverse';
 export const MUSIC_SEG_ITEM_IDLE = 'hover:bg-raised hover:text-fg';
 
 export const MUSIC_FIELD =
-  'flex w-full items-center gap-2 border border-line bg-surface px-3 transition-colors duration-200 focus-within:border-fg';
+  'flex min-h-[48px] min-w-0 w-full items-center gap-2 rounded-md border border-line bg-surface px-3 focus-within:border-fg';
 
 export const MUSIC_FIELD_INPUT =
   'w-full border-none bg-transparent py-2.5 font-sans text-[14px] text-fg outline-none placeholder:text-muted focus:outline-none focus:ring-0';
@@ -102,7 +102,8 @@ export const MUSIC_FIELD_INPUT =
 export const MUSIC_SLEEVE_GRID =
   'grid grid-cols-2 gap-x-5 gap-y-6 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5';
 
-export const MUSIC_SLEEVE = 'relative block w-full text-left';
+export const MUSIC_SLEEVE =
+  'tm-music-art-card tm-press relative block w-full text-left';
 
 export const MUSIC_SLEEVE_DISC = cn(
   'absolute right-[-14px] top-1/2 aspect-square w-[64%] -translate-y-1/2 rounded-full bg-raised',
@@ -143,7 +144,7 @@ export const MUSIC_FACE_META =
 export const MUSIC_COVER_GRID =
   'grid grid-cols-2 gap-x-3.5 gap-y-6 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5';
 
-export const MUSIC_COVER = 'block w-full text-left';
+export const MUSIC_COVER = 'tm-music-art-card tm-press block w-full text-left';
 
 export const MUSIC_COVER_FRAME = cn(
   'relative block aspect-square overflow-hidden rounded-xl bg-raised shadow-[0_1px_2px_rgba(0,0,0,0.22),0_14px_24px_-16px_rgba(0,0,0,0.5)]',
@@ -158,7 +159,7 @@ export const MUSIC_ART_BROKEN_LABEL =
 
 export const MUSIC_COVER_BODY = 'px-0.5 pt-2';
 export const MUSIC_COVER_NAME =
-  'truncate font-sans text-[15px] font-medium tracking-normal text-fg';
+  'line-clamp-2 break-words font-sans text-[15px] font-medium leading-snug tracking-normal text-fg';
 export const MUSIC_COVER_META =
   'mt-1 flex items-center justify-between gap-2 font-sans text-[13px] tracking-normal text-muted';
 
@@ -173,12 +174,13 @@ export const MUSIC_SINGER_FRAME = cn(
 );
 
 export const MUSIC_SINGER_PIC =
-  'h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.06] motion-reduce:transform-none';
+  'tm-music-singer-image h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.06] motion-reduce:transform-none';
 
 export const MUSIC_SINGER_NAME =
-  'truncate font-sans text-[13px] font-medium tracking-normal text-fg';
+  'line-clamp-2 break-words font-sans text-[13px] font-medium leading-snug tracking-normal text-fg';
 
-export const MUSIC_SINGER_ALIAS = 'truncate font-sans text-[13px] text-muted';
+export const MUSIC_SINGER_ALIAS =
+  'line-clamp-1 break-words font-sans text-[13px] text-muted';
 
 export const MUSIC_SINGER_META = cn(MUSIC_LABEL, 'mt-1 block text-[13px]');
 
@@ -186,9 +188,8 @@ export const MUSIC_LIST =
   'mt-4 border-t border-[color:color-mix(in_srgb,var(--tm-muted)_45%,transparent)] dark:border-[color:color-mix(in_srgb,var(--tm-muted)_30%,transparent)]';
 
 export const MUSIC_ROW = cn(
-  'group relative grid cursor-pointer grid-cols-[22px_34px_minmax(0,1fr)_auto] items-center gap-2.5 rounded-xl px-2 py-2',
-  'md:grid-cols-[28px_36px_minmax(0,1fr)_auto_auto_auto]',
-  'transition-colors duration-150 hover:bg-[color:color-mix(in_srgb,var(--tm-surface-raised)_70%,transparent)]'
+  'tm-music-song-row group relative grid grid-cols-[minmax(0,1fr)_auto] items-center gap-1 rounded-md px-1 py-1',
+  'hover:bg-raised focus-within:bg-raised'
 );
 
 export const MUSIC_ROW_PLAYING =
@@ -210,15 +211,15 @@ export const MUSIC_ROW_NAME_THEME = 'text-fg';
 export const MUSIC_ROW_ARTIST = 'truncate font-sans text-[13px] text-muted';
 
 export const MUSIC_ROW_DURATION =
-  'hidden font-sans text-[13px] text-muted [font-variant-numeric:tabular-nums] md:block';
+  'hidden font-sans text-[13px] text-muted [font-variant-numeric:tabular-nums] lg:block';
 
 export const MUSIC_ROW_SOURCE =
-  'hidden shrink-0 font-sans text-[13px] uppercase tracking-normal text-[color:color-mix(in_srgb,var(--tm-muted)_80%,transparent)] md:block';
+  'hidden shrink-0 font-sans text-[13px] uppercase tracking-normal text-[color:color-mix(in_srgb,var(--tm-muted)_80%,transparent)] lg:block';
 
 export const MUSIC_ROW_ACTIONS = 'flex shrink-0 items-center gap-0.5';
 
 export const MUSIC_QUEUE_SHELL = cn(
-  'flex h-[90vh] max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-xl border border-line bg-canvas shadow-[0_24px_60px_-20px_rgba(0,0,0,0.7)] md:h-auto dark:bg-surface'
+  'flex h-[90dvh] max-h-[90dvh] w-full max-w-2xl flex-col overflow-hidden rounded-lg border border-line bg-surface shadow-[var(--tm-shadow-md)] md:h-auto'
 );
 
 export const MUSIC_QUEUE_HEAD =
@@ -245,7 +246,7 @@ export const MUSIC_TAG_GROUP_LABEL = cn(MUSIC_LABEL, 'mb-2 block');
 export const MUSIC_TAG_WRAP = 'flex flex-wrap gap-1.5';
 
 export const MUSIC_TAG = cn(
-  'cursor-pointer rounded-xl border px-2.5 py-1 font-sans text-[13px] transition-colors duration-150',
+  'min-h-[44px] cursor-pointer rounded-full border px-3 py-2 font-sans text-sm tm-press',
   MUSIC_FOCUS
 );
 
@@ -269,10 +270,10 @@ export const MUSIC_HOT_RANK_TOP = 'text-fg';
 export const MUSIC_HOT_WORD = 'truncate font-sans text-[13px] text-fg';
 
 export const MUSIC_DRAWER_SCRIM =
-  'absolute inset-0 cursor-default bg-black/55 backdrop-blur-sm';
+  'absolute inset-0 cursor-default bg-[var(--tm-scrim)]';
 
 export const MUSIC_DRAWER = cn(
-  'absolute left-0 top-0 flex h-full w-72 max-w-[85vw] flex-col border-r border-line bg-canvas px-5 py-6 shadow-[20px_0_40px_rgba(0,0,0,0.35)]',
+  'absolute left-0 top-0 flex h-full w-72 max-w-[85vw] flex-col overflow-y-auto overscroll-contain border-r border-line bg-canvas px-5 py-6 shadow-[20px_0_40px_rgba(0,0,0,0.35)]',
   'dark:border-line dark:bg-canvas'
 );
 

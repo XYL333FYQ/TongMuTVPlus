@@ -4,6 +4,8 @@ import {
   BookOpen,
   ChevronRight,
   ChevronUp,
+  Download,
+  ExternalLink,
   Gauge,
   Headphones,
   Loader2,
@@ -54,6 +56,8 @@ import {
   saveBookTtsProgress,
 } from '@/lib/book-tts-progress.client';
 import { cn } from '@/lib/cn';
+
+import ReaderDialog from '@/components/media/ReaderDialog';
 
 import {
   LIBRARY_BUTTON,
@@ -1035,6 +1039,7 @@ function ChapterReader({ manifest }: { manifest: BookReadManifest }) {
       new CustomEvent('books-read-update-header', {
         detail: {
           title: manifest.book.title,
+          format: manifest.format,
           subtitle:
             currentChapterTitle ||
             manifest.book.author ||
@@ -1326,7 +1331,7 @@ function ChapterReader({ manifest }: { manifest: BookReadManifest }) {
     return (
       <div
         className={cn(
-          'flex h-[calc(100vh-3.5rem)] items-center justify-center px-4',
+          'flex tm-reader-stage items-center justify-center px-4',
           LIBRARY_PAGE
         )}
       >
@@ -1353,20 +1358,27 @@ function ChapterReader({ manifest }: { manifest: BookReadManifest }) {
 
   return (
     <div
-      className='relative h-[calc(100vh-3.5rem)] overflow-hidden'
+      className='relative tm-reader-stage overflow-hidden'
       style={{ backgroundColor: palette.panelBg, color: palette.bodyColor }}
     >
       {tocOpen && typeof document !== 'undefined'
         ? createPortal(
-            <div
-              className='fixed inset-0 z-40 bg-ink/30'
-              onClick={() => setTocOpen(false)}
-            >
+            <ReaderDialog label='章节目录' onClose={() => setTocOpen(false)}>
               <div
-                className='absolute right-0 top-0 h-screen w-[22rem] max-w-[88vw] overflow-y-auto border-l border-line bg-surface shadow-xl'
+                className='tm-reader-drawer absolute right-0 top-0 w-[22rem] max-w-[88vw] overflow-y-auto border-l border-line bg-surface shadow-xl'
                 onClick={(event) => event.stopPropagation()}
               >
                 <div className='space-y-2 p-4'>
+                  <div className='tm-reader-drawer-head'>
+                    <h2 className='text-lg font-bold'>章节目录</h2>
+                    <button
+                      type='button'
+                      className={LIBRARY_GHOST_BUTTON}
+                      onClick={() => setTocOpen(false)}
+                    >
+                      关闭
+                    </button>
+                  </div>
                   {chapters.map((item, index) => {
                     const active = index === currentIndex;
                     return (
@@ -1390,16 +1402,16 @@ function ChapterReader({ manifest }: { manifest: BookReadManifest }) {
                   })}
                 </div>
               </div>
-            </div>,
+            </ReaderDialog>,
             document.body
           )
         : null}
 
       {settingsOpen && typeof document !== 'undefined'
         ? createPortal(
-            <div
-              className='fixed inset-0 z-40 flex items-center justify-center bg-ink/40 px-4'
-              onClick={() => setSettingsOpen(false)}
+            <ReaderDialog
+              label='阅读设置'
+              onClose={() => setSettingsOpen(false)}
             >
               <div
                 className={cn(READER_SHEET, 'w-full max-w-sm p-5')}
@@ -1431,6 +1443,7 @@ function ChapterReader({ manifest }: { manifest: BookReadManifest }) {
                       ).map((mode) => (
                         <button
                           key={mode.key}
+                          aria-pressed={settings.mode === mode.key}
                           onClick={() =>
                             setSettings((prev) => ({ ...prev, mode: mode.key }))
                           }
@@ -1455,6 +1468,7 @@ function ChapterReader({ manifest }: { manifest: BookReadManifest }) {
                         (theme) => (
                           <button
                             key={theme}
+                            aria-pressed={settings.theme === theme}
                             onClick={() =>
                               setSettings((prev) => ({ ...prev, theme }))
                             }
@@ -1480,6 +1494,7 @@ function ChapterReader({ manifest }: { manifest: BookReadManifest }) {
                     </div>
                     <input
                       type='range'
+                      aria-label='字号'
                       min='85'
                       max='140'
                       step='5'
@@ -1499,6 +1514,7 @@ function ChapterReader({ manifest }: { manifest: BookReadManifest }) {
                     </div>
                     <input
                       type='range'
+                      aria-label='行距'
                       min='1.4'
                       max='2.2'
                       step='0.1'
@@ -1526,7 +1542,7 @@ function ChapterReader({ manifest }: { manifest: BookReadManifest }) {
                   </div>
                 </div>
               </div>
-            </div>,
+            </ReaderDialog>,
             document.body
           )
         : null}
@@ -1629,6 +1645,7 @@ function ChapterReader({ manifest }: { manifest: BookReadManifest }) {
               <div className='px-2 pt-2'>
                 <input
                   type='range'
+                  aria-label='朗读进度'
                   min={0}
                   max={Math.max(ttsDuration, 0)}
                   step={0.1}
@@ -1650,6 +1667,9 @@ function ChapterReader({ manifest }: { manifest: BookReadManifest }) {
                 <div className='flex items-center gap-2'>
                   <button
                     type='button'
+                    aria-label={
+                      ttsStatus === 'playing' ? '暂停朗读' : '开始朗读'
+                    }
                     onClick={() => void toggleTtsPlayback()}
                     disabled={!ttsAvailable || ttsLoadingChunkIndex !== null}
                     className={cn(
@@ -1690,6 +1710,8 @@ function ChapterReader({ manifest }: { manifest: BookReadManifest }) {
                   </div>
                   <button
                     type='button'
+                    aria-label='展开或收起朗读设置'
+                    aria-expanded={ttsPanelOpen}
                     onClick={() => setTtsPanelOpen((prev) => !prev)}
                     className={cn(
                       READER_ICON_BUTTON,
@@ -1715,7 +1737,12 @@ function ChapterReader({ manifest }: { manifest: BookReadManifest }) {
           </div>
           {ttsPanelOpen ? (
             <div className='absolute inset-x-0 bottom-20 z-30 mx-auto w-[min(94vw,34rem)]'>
-              <div className={cn(READER_SHEET, 'p-4 shadow-2xl')}>
+              <div
+                className={cn(
+                  READER_SHEET,
+                  'tm-reader-tts-panel p-4 shadow-2xl'
+                )}
+              >
                 <div className='mb-3 flex items-center justify-between'>
                   <div className='flex items-center gap-2 text-sm font-medium text-fg'>
                     <Headphones className='h-4 w-4 text-fg' />
@@ -1723,6 +1750,7 @@ function ChapterReader({ manifest }: { manifest: BookReadManifest }) {
                   </div>
                   <button
                     type='button'
+                    aria-label='关闭朗读面板'
                     onClick={() => setTtsPanelOpen(false)}
                     className={cn(
                       READER_ICON_BUTTON,
@@ -1766,6 +1794,9 @@ function ChapterReader({ manifest }: { manifest: BookReadManifest }) {
                   </button>
                   <button
                     type='button'
+                    aria-label={
+                      ttsStatus === 'playing' ? '暂停朗读' : '开始朗读'
+                    }
                     onClick={() => void toggleTtsPlayback()}
                     disabled={!ttsAvailable || ttsLoadingChunkIndex !== null}
                     className={cn(
@@ -1814,6 +1845,7 @@ function ChapterReader({ manifest }: { manifest: BookReadManifest }) {
                 </div>
                 <Select
                   value={ttsSettings.voice}
+                  aria-label='朗读音色'
                   onChange={(e) => {
                     stopTts(true);
                     setTtsSettings((prev) => ({
@@ -1823,6 +1855,9 @@ function ChapterReader({ manifest }: { manifest: BookReadManifest }) {
                   }}
                   className={cn(LIBRARY_FIELD, 'mb-4 px-3 py-2')}
                 >
+                  {ttsVoices.length === 0 ? (
+                    <option value=''>暂无可用音色，使用默认音色</option>
+                  ) : null}
                   {ttsVoices.map((voice) => (
                     <option key={voice.shortName} value={voice.shortName}>
                       {voice.displayName || voice.shortName}
@@ -1833,6 +1868,7 @@ function ChapterReader({ manifest }: { manifest: BookReadManifest }) {
                   语速 {ttsSettings.rate}
                   <input
                     type='range'
+                    aria-label='语速'
                     min={0}
                     max={TTS_RATE_STEPS.length - 1}
                     step={1}
@@ -1854,6 +1890,7 @@ function ChapterReader({ manifest }: { manifest: BookReadManifest }) {
                   音调 {ttsSettings.pitch}
                   <input
                     type='range'
+                    aria-label='音调'
                     min={0}
                     max={TTS_PITCH_STEPS.length - 1}
                     step={1}
@@ -1875,6 +1912,7 @@ function ChapterReader({ manifest }: { manifest: BookReadManifest }) {
                   音量 {ttsSettings.volume}
                   <input
                     type='range'
+                    aria-label='音量'
                     min={0}
                     max={TTS_VOLUME_STEPS.length - 1}
                     step={1}
@@ -3269,11 +3307,14 @@ export default function BookReadPage() {
       new CustomEvent('books-read-update-header', {
         detail: {
           title: manifest.book.title,
+          format: manifest.format,
           subtitle:
-            currentTocLabel ||
-            currentChapter ||
-            manifest.book.author ||
-            (settings.mode === 'scrolled' ? '滚动阅读' : '分页阅读'),
+            manifest.format === 'pdf'
+              ? 'PDF · 浏览器阅读器'
+              : currentTocLabel ||
+                currentChapter ||
+                manifest.book.author ||
+                (settings.mode === 'scrolled' ? '滚动阅读' : '分页阅读'),
           backHref: `/books/detail?sourceId=${encodeURIComponent(
             manifest.book.sourceId
           )}&bookId=${encodeURIComponent(manifest.book.id)}`,
@@ -3580,7 +3621,7 @@ export default function BookReadPage() {
     return (
       <div
         className={cn(
-          'flex h-[calc(100vh-3.5rem)] items-center justify-center px-4',
+          'flex tm-reader-stage items-center justify-center px-4',
           LIBRARY_PAGE
         )}
       >
@@ -3606,16 +3647,38 @@ export default function BookReadPage() {
         </div>
       );
     return (
-      <iframe
-        src={pdfBlobUrl}
-        className='h-[calc(100vh-4rem)] w-full bg-surface dark:bg-canvas'
-        title={manifest.book.title}
-      />
+      <div className='relative'>
+        <iframe
+          src={pdfBlobUrl}
+          className='tm-reader-stage w-full bg-surface dark:bg-canvas'
+          title={manifest.book.title}
+        />
+        {/* 部分浏览器不支持内嵌 PDF，正文区可能是空白：始终提供新窗口 / 下载入口 */}
+        <div className='absolute bottom-4 right-4 flex flex-wrap items-center justify-end gap-2 max-sm:bottom-[calc(var(--tm-bottom-nav-height,0px)+1rem)]'>
+          <a
+            href={pdfBlobUrl}
+            target='_blank'
+            rel='noreferrer'
+            className={LIBRARY_GHOST_BUTTON}
+          >
+            <ExternalLink className='h-4 w-4' strokeWidth={2} />
+            新窗口打开
+          </a>
+          <a
+            href={pdfBlobUrl}
+            download={`${manifest.book.title}.pdf`}
+            className={LIBRARY_GHOST_BUTTON}
+          >
+            <Download className='h-4 w-4' strokeWidth={2} />
+            下载 PDF
+          </a>
+        </div>
+      </div>
     );
   }
 
   return (
-    <div className={cn('flex h-[calc(100vh-3.5rem)] flex-col', LIBRARY_PAGE)}>
+    <div className={cn('flex tm-reader-stage flex-col', LIBRARY_PAGE)}>
       {restoredMessage ? (
         <div className='absolute left-1/2 top-[4.5rem] z-30 -translate-x-1/2 rounded-full bg-fg px-4 py-2 text-[13px] text-inverse shadow-lg'>
           {restoredMessage}
@@ -3683,15 +3746,22 @@ export default function BookReadPage() {
 
       {tocOpen && typeof document !== 'undefined'
         ? createPortal(
-            <div
-              className='fixed inset-0 z-40 bg-ink/30'
-              onClick={() => setTocOpen(false)}
-            >
+            <ReaderDialog label='章节目录' onClose={() => setTocOpen(false)}>
               <div
-                className='absolute right-0 top-0 h-screen w-[22rem] max-w-[88vw] overflow-y-auto border-l border-line bg-surface shadow-xl'
+                className='tm-reader-drawer absolute right-0 top-0 w-[22rem] max-w-[88vw] overflow-y-auto border-l border-line bg-surface shadow-xl'
                 onClick={(event) => event.stopPropagation()}
               >
                 <div className='p-4'>
+                  <div className='tm-reader-drawer-head'>
+                    <h2 className='text-lg font-bold'>章节目录</h2>
+                    <button
+                      type='button'
+                      className={LIBRARY_GHOST_BUTTON}
+                      onClick={() => setTocOpen(false)}
+                    >
+                      关闭
+                    </button>
+                  </div>
                   <div className='space-y-2' ref={tocScrollRef}>
                     {tocItems.length === 0 ? (
                       <div className='p-3 text-sm text-muted'>
@@ -3703,16 +3773,16 @@ export default function BookReadPage() {
                   </div>
                 </div>
               </div>
-            </div>,
+            </ReaderDialog>,
             document.body
           )
         : null}
 
       {settingsOpen && typeof document !== 'undefined'
         ? createPortal(
-            <div
-              className='fixed inset-0 z-40 flex items-center justify-center bg-ink/40 px-4'
-              onClick={() => setSettingsOpen(false)}
+            <ReaderDialog
+              label='阅读设置'
+              onClose={() => setSettingsOpen(false)}
             >
               <div
                 className={cn(READER_SHEET, 'w-full max-w-sm p-5')}
@@ -3744,6 +3814,7 @@ export default function BookReadPage() {
                       ).map((mode) => (
                         <button
                           key={mode.key}
+                          aria-pressed={settings.mode === mode.key}
                           onClick={() => switchReaderMode(mode.key)}
                           className={`rounded-md border px-3 py-3 text-left ${
                             settings.mode === mode.key
@@ -3767,6 +3838,7 @@ export default function BookReadPage() {
                         (theme) => (
                           <button
                             key={theme}
+                            aria-pressed={settings.theme === theme}
                             onClick={() =>
                               setSettings((prev) => ({ ...prev, theme }))
                             }
@@ -3800,6 +3872,7 @@ export default function BookReadPage() {
                     </div>
                     <input
                       type='range'
+                      aria-label='字号'
                       min='85'
                       max='140'
                       step='5'
@@ -3820,6 +3893,7 @@ export default function BookReadPage() {
                     </div>
                     <input
                       type='range'
+                      aria-label='行距'
                       min='1.4'
                       max='2.2'
                       step='0.1'
@@ -3860,7 +3934,7 @@ export default function BookReadPage() {
                   </div>
                 </div>
               </div>
-            </div>,
+            </ReaderDialog>,
             document.body
           )
         : null}
@@ -3872,6 +3946,7 @@ export default function BookReadPage() {
               <div className='px-2 pt-2'>
                 <input
                   type='range'
+                  aria-label='朗读进度'
                   min={0}
                   max={Math.max(ttsDuration, 0)}
                   step={0.1}
@@ -3921,6 +3996,9 @@ export default function BookReadPage() {
                 <div className='flex items-center gap-2'>
                   <button
                     type='button'
+                    aria-label={
+                      ttsStatus === 'playing' ? '暂停朗读' : '开始朗读'
+                    }
                     onClick={() => void toggleTtsPlayback()}
                     disabled={!ttsAvailable || ttsLoadingChunkIndex !== null}
                     className={cn(
@@ -3964,6 +4042,8 @@ export default function BookReadPage() {
                   </div>
                   <button
                     type='button'
+                    aria-label='展开或收起朗读设置'
+                    aria-expanded={ttsPanelOpen}
                     onClick={() => setTtsPanelOpen((prev) => !prev)}
                     className={cn(
                       READER_ICON_BUTTON,
@@ -3990,7 +4070,12 @@ export default function BookReadPage() {
 
           {ttsPanelOpen ? (
             <div className='absolute inset-x-0 bottom-20 z-30 mx-auto w-[min(94vw,34rem)]'>
-              <div className={cn(READER_SHEET, 'p-4 shadow-2xl')}>
+              <div
+                className={cn(
+                  READER_SHEET,
+                  'tm-reader-tts-panel p-4 shadow-2xl'
+                )}
+              >
                 <div className='mb-3 flex items-center justify-between'>
                   <div className='flex items-center gap-2 text-sm font-medium text-fg'>
                     <Headphones className='h-4 w-4 text-fg' />
@@ -3998,6 +4083,7 @@ export default function BookReadPage() {
                   </div>
                   <button
                     type='button'
+                    aria-label='关闭朗读面板'
                     onClick={() => setTtsPanelOpen(false)}
                     className={cn(
                       READER_ICON_BUTTON,
@@ -4042,6 +4128,9 @@ export default function BookReadPage() {
                   </button>
                   <button
                     type='button'
+                    aria-label={
+                      ttsStatus === 'playing' ? '暂停朗读' : '开始朗读'
+                    }
                     onClick={() => void toggleTtsPlayback()}
                     disabled={!ttsAvailable || ttsLoadingChunkIndex !== null}
                     className={cn(
@@ -4095,6 +4184,7 @@ export default function BookReadPage() {
                     </div>
                     <Select
                       value={ttsSettings.voice}
+                      aria-label='朗读音色'
                       onChange={(e) => {
                         stopTts(true);
                         setTtsSettings((prev) => ({
@@ -4104,6 +4194,9 @@ export default function BookReadPage() {
                       }}
                       className={cn(LIBRARY_FIELD, 'px-3 py-2')}
                     >
+                      {ttsVoices.length === 0 ? (
+                        <option value=''>暂无可用音色，使用默认音色</option>
+                      ) : null}
                       {ttsVoices.map((voice) => (
                         <option key={voice.shortName} value={voice.shortName}>
                           {voice.displayName || voice.shortName}

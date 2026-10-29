@@ -41,6 +41,7 @@ type ReadHeaderPayload = {
   title?: string;
   subtitle?: string;
   backHref?: string;
+  format?: 'epub' | 'pdf' | 'chapters';
 };
 
 function getStaticMeta(pathname: string) {
@@ -52,6 +53,12 @@ function getStaticMeta(pathname: string) {
     return { title: '电子书搜索', subtitle: '按书名与作者搜索' };
   if (pathname === '/books/detail')
     return { title: '电子书详情', subtitle: '查看书籍信息与可用格式' };
+  if (pathname === '/books/catalog')
+    return {
+      title: '书源目录',
+      subtitle: '选择书源与分类浏览电子书',
+      backHref: '/books',
+    };
   if (pathname === '/books/read')
     return { title: '电子书阅读', subtitle: '分页阅读', backHref: '/books' };
   return { title: '电子书馆' };
@@ -130,64 +137,67 @@ export default function BooksLayout({
 
   const iconButtonClass = cn(LIBRARY_ICON_BUTTON_GHOST, LIBRARY_FOCUS);
 
-  const readerActions = (
-    <>
-      <button
-        type='button'
-        onClick={() =>
-          window.dispatchEvent(new CustomEvent('books-read-toggle-chapters'))
-        }
-        className={iconButtonClass}
-        aria-label='目录'
-      >
-        <List className='h-5 w-5' />
-      </button>
-      <div className='relative' ref={readMenuRef}>
+  const readerActions =
+    readHeader?.format === 'pdf' ? null : (
+      <>
         <button
           type='button'
-          onClick={() => setReadMenuOpen((prev) => !prev)}
+          onClick={() =>
+            window.dispatchEvent(new CustomEvent('books-read-toggle-chapters'))
+          }
           className={iconButtonClass}
-          aria-label='更多'
-          aria-expanded={readMenuOpen}
+          aria-label='目录'
         >
-          <MoreVertical className='h-5 w-5' />
+          <List className='h-5 w-5' />
         </button>
-        {readMenuOpen ? (
-          <div
-            className={cn(
-              LIBRARY_PANEL,
-              'absolute right-0 top-12 z-50 min-w-[9rem] overflow-hidden py-1 shadow-lg'
-            )}
+        <div className='relative' ref={readMenuRef}>
+          <button
+            type='button'
+            onClick={() => setReadMenuOpen((prev) => !prev)}
+            className={iconButtonClass}
+            aria-label='更多'
+            aria-expanded={readMenuOpen}
           >
-            <button
-              type='button'
-              onClick={() => {
-                setReadMenuOpen(false);
-                window.dispatchEvent(
-                  new CustomEvent('books-read-toggle-settings')
-                );
-              }}
-              className={LIBRARY_MENU_ITEM}
+            <MoreVertical className='h-5 w-5' />
+          </button>
+          {readMenuOpen ? (
+            <div
+              className={cn(
+                LIBRARY_PANEL,
+                'absolute right-0 top-12 z-50 min-w-[9rem] overflow-hidden py-1 shadow-lg'
+              )}
             >
-              <Settings2 className='h-4 w-4' />
-              设置
-            </button>
-            <button
-              type='button'
-              onClick={() => {
-                setReadMenuOpen(false);
-                window.dispatchEvent(new CustomEvent('books-read-toggle-tts'));
-              }}
-              className={LIBRARY_MENU_ITEM}
-            >
-              <Headphones className='h-4 w-4' />
-              听书
-            </button>
-          </div>
-        ) : null}
-      </div>
-    </>
-  );
+              <button
+                type='button'
+                onClick={() => {
+                  setReadMenuOpen(false);
+                  window.dispatchEvent(
+                    new CustomEvent('books-read-toggle-settings')
+                  );
+                }}
+                className={LIBRARY_MENU_ITEM}
+              >
+                <Settings2 className='h-4 w-4' />
+                设置
+              </button>
+              <button
+                type='button'
+                onClick={() => {
+                  setReadMenuOpen(false);
+                  window.dispatchEvent(
+                    new CustomEvent('books-read-toggle-tts')
+                  );
+                }}
+                className={LIBRARY_MENU_ITEM}
+              >
+                <Headphones className='h-4 w-4' />
+                听书
+              </button>
+            </div>
+          ) : null}
+        </div>
+      </>
+    );
 
   return (
     <MediaShell

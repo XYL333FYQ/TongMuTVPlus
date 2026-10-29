@@ -1439,6 +1439,7 @@ const UserConfig = ({
                 <div className='relative w-44 sm:w-56'>
                   <Search className='absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[color:var(--tm-muted)]' />
                   <input
+                    aria-label='按用户名搜索'
                     type='text'
                     value={userSearch}
                     onChange={(e) => setUserSearch(e.target.value)}
@@ -1507,6 +1508,7 @@ const UserConfig = ({
             <div className='space-y-4'>
               <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
                 <input
+                  aria-label='用户名'
                   type='text'
                   placeholder='用户名'
                   value={newUser.username}
@@ -1519,6 +1521,7 @@ const UserConfig = ({
                   className='px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)] focus:ring-2 focus:ring-[var(--tm-text)] focus:border-transparent'
                 />
                 <input
+                  aria-label='密码'
                   type='password'
                   placeholder='密码'
                   value={newUser.password}
@@ -1588,6 +1591,7 @@ const UserConfig = ({
             </h5>
             <div className='flex flex-col sm:flex-row gap-4 sm:gap-3'>
               <input
+                aria-label='用户名'
                 type='text'
                 placeholder='用户名'
                 value={changePasswordUser.username}
@@ -1595,6 +1599,7 @@ const UserConfig = ({
                 className='flex-1 px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)] cursor-not-allowed'
               />
               <input
+                aria-label='新密码'
                 type='password'
                 placeholder='新密码'
                 value={changePasswordUser.password}
@@ -2509,6 +2514,7 @@ const UserConfig = ({
                       用户组名称
                     </label>
                     <input
+                      aria-label='请输入用户组名称'
                       type='text'
                       placeholder='请输入用户组名称'
                       value={newUserGroup.name}
@@ -3910,13 +3916,15 @@ const OpenListConfigComponent = ({
         </div>
         <label className='relative inline-flex items-center cursor-pointer'>
           <input
+            aria-label='启用私人影库'
             type='checkbox'
             checked={enabled}
             disabled={role !== 'owner'}
             onChange={(e) => setEnabled(e.target.checked)}
             className='sr-only peer'
           />
-          <div className="w-11 h-6 bg-[var(--tm-surface-raised)] peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-[var(--tm-text)] rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-[var(--tm-line)] after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-[var(--tm-surface-raised)] after:border-[var(--tm-line)] after:border after:rounded-full after:h-5 after:w-5 after:transition-all border-[var(--tm-line)] peer-checked:bg-[var(--tm-surface-raised)]"></div>
+          <div className='tm-switch-track'></div>
+          <div className='tm-switch-thumb'></div>
         </label>
       </div>
 
@@ -3927,6 +3935,7 @@ const OpenListConfigComponent = ({
             OpenList URL
           </label>
           <input
+            aria-label='https://your-openlist-server.com'
             type='text'
             value={url}
             onChange={(e) => setUrl(e.target.value)}
@@ -3942,6 +3951,7 @@ const OpenListConfigComponent = ({
               账号
             </label>
             <input
+              aria-label='admin'
               type='text'
               value={username}
               onChange={(e) => setUsername(e.target.value)}
@@ -3955,6 +3965,7 @@ const OpenListConfigComponent = ({
               密码
             </label>
             <input
+              aria-label='password'
               type='password'
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -3973,6 +3984,7 @@ const OpenListConfigComponent = ({
             {rootPaths.map((path, index) => (
               <div key={index} className='flex gap-2'>
                 <input
+                  aria-label='/'
                   type='text'
                   value={path}
                   onChange={(e) => {
@@ -4018,6 +4030,7 @@ const OpenListConfigComponent = ({
             离线下载目录
           </label>
           <input
+            aria-label='/'
             type='text'
             value={offlineDownloadPath}
             onChange={(e) => setOfflineDownloadPath(e.target.value)}
@@ -4049,23 +4062,12 @@ const OpenListConfigComponent = ({
                 )
               }
               disabled={!enabled}
-              className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors ${
-                offlineDownloadUseCustomSource
-                  ? 'bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] tm-press'
-                  : 'bg-[var(--tm-surface-raised)] tm-press'
-              } ${
-                !enabled
-                  ? 'opacity-50 cursor-not-allowed min-h-[44px] tm-press'
-                  : ' min-h-[44px] tm-press'
-              }`}
+              className='tm-switch-btn'
+              role='switch'
+              aria-checked={!!offlineDownloadUseCustomSource}
+              aria-label='离线下载使用独立 OpenList 源'
             >
-              <span
-                className={`inline-block h-4 w-4 transform rounded-full bg-[var(--tm-surface)] transition-transform ${
-                  offlineDownloadUseCustomSource
-                    ? 'translate-x-6'
-                    : 'translate-x-1'
-                }`}
-              />
+              <span className='tm-switch-btn-thumb' aria-hidden='true' />
             </button>
           </div>
 
@@ -4076,6 +4078,7 @@ const OpenListConfigComponent = ({
                   离线下载 OpenList URL
                 </label>
                 <input
+                  aria-label='https://download-openlist-server.com'
                   type='text'
                   value={offlineDownloadUrl}
                   onChange={(e) => setOfflineDownloadUrl(e.target.value)}
@@ -4091,6 +4094,7 @@ const OpenListConfigComponent = ({
                     离线下载账号
                   </label>
                   <input
+                    aria-label='admin'
                     type='text'
                     value={offlineDownloadUsername}
                     onChange={(e) => setOfflineDownloadUsername(e.target.value)}
@@ -4104,6 +4108,7 @@ const OpenListConfigComponent = ({
                     离线下载密码
                   </label>
                   <input
+                    aria-label='password'
                     type='password'
                     value={offlineDownloadPassword}
                     onChange={(e) => setOfflineDownloadPassword(e.target.value)}
@@ -4122,6 +4127,7 @@ const OpenListConfigComponent = ({
             定时扫描间隔（分钟）
           </label>
           <input
+            aria-label='0'
             type='number'
             value={scanInterval}
             onChange={(e) => setScanInterval(parseInt(e.target.value) || 0)}
@@ -4168,21 +4174,12 @@ const OpenListConfigComponent = ({
           <button
             onClick={() => setDisableVideoPreview(!disableVideoPreview)}
             disabled={!enabled}
-            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-              disableVideoPreview
-                ? 'bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] tm-press'
-                : 'bg-[var(--tm-surface-raised)] tm-press'
-            } ${
-              !enabled
-                ? 'opacity-50 cursor-not-allowed min-h-[44px] tm-press'
-                : ' min-h-[44px] tm-press'
-            }`}
+            className='tm-switch-btn'
+            role='switch'
+            aria-checked={!!disableVideoPreview}
+            aria-label='禁用预览视频'
           >
-            <span
-              className={`inline-block h-4 w-4 transform rounded-full bg-[var(--tm-surface)] transition-transform ${
-                disableVideoPreview ? 'translate-x-6' : 'translate-x-1'
-              }`}
-            />
+            <span className='tm-switch-btn-thumb' aria-hidden='true' />
           </button>
         </div>
 
@@ -4285,6 +4282,7 @@ const OpenListConfigComponent = ({
                               )}
                             </button>
                             <input
+                              aria-label='路径，如 /videos'
                               type='text'
                               value={row.path}
                               onChange={(e) => {
@@ -4319,6 +4317,7 @@ const OpenListConfigComponent = ({
                                   分类
                                 </label>
                                 <input
+                                  aria-label='分类，如 动漫'
                                   type='text'
                                   value={row.category}
                                   onChange={(e) => {
@@ -4357,19 +4356,14 @@ const OpenListConfigComponent = ({
                                       )
                                     )
                                   }
-                                  className={`relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors ${
-                                    row.refresh14m
-                                      ? 'bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] tm-press'
-                                      : 'bg-[var(--tm-surface-raised)] tm-press'
-                                  }`}
+                                  className='tm-switch-btn'
+                                  role='switch'
+                                  aria-checked={!!row.refresh14m}
                                   aria-label='播放自动刷新'
                                 >
                                   <span
-                                    className={`inline-block h-4 w-4 transform rounded-full bg-[var(--tm-surface)] transition-transform ${
-                                      row.refresh14m
-                                        ? 'translate-x-6'
-                                        : 'translate-x-1'
-                                    }`}
+                                    className='tm-switch-btn-thumb'
+                                    aria-hidden='true'
                                   />
                                 </button>
                               </div>
@@ -4395,19 +4389,14 @@ const OpenListConfigComponent = ({
                                       )
                                     )
                                   }
-                                  className={`relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors ${
-                                    row.proxyPlay
-                                      ? 'bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] tm-press'
-                                      : 'bg-[var(--tm-surface-raised)] tm-press'
-                                  }`}
+                                  className='tm-switch-btn'
+                                  role='switch'
+                                  aria-checked={!!row.proxyPlay}
                                   aria-label='代理播放'
                                 >
                                   <span
-                                    className={`inline-block h-4 w-4 transform rounded-full bg-[var(--tm-surface)] transition-transform ${
-                                      row.proxyPlay
-                                        ? 'translate-x-6'
-                                        : 'translate-x-1'
-                                    }`}
+                                    className='tm-switch-btn-thumb'
+                                    aria-hidden='true'
                                   />
                                 </button>
                               </div>
@@ -4417,6 +4406,7 @@ const OpenListConfigComponent = ({
                                   代理缓存时长（分钟）
                                 </label>
                                 <input
+                                  aria-label='60'
                                   type='number'
                                   min={1}
                                   max={1440}
@@ -5118,12 +5108,14 @@ const NetDiskConfigComponent = ({
             </div>
             <label className='relative inline-flex items-center cursor-pointer'>
               <input
+                aria-label='启用夸克网盘'
                 type='checkbox'
                 checked={enabled}
                 onChange={(e) => setEnabled(e.target.checked)}
                 className='sr-only peer'
               />
-              <div className="w-11 h-6 bg-[var(--tm-surface-raised)] peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-[var(--tm-text)] rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-[var(--tm-line)] after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-[var(--tm-surface-raised)] after:border-[var(--tm-line)] after:border after:rounded-full after:h-5 after:w-5 after:transition-all border-[var(--tm-line)] peer-checked:bg-[var(--tm-surface-raised)]"></div>
+              <div className='tm-switch-track'></div>
+              <div className='tm-switch-thumb'></div>
             </label>
           </div>
 
@@ -5132,6 +5124,7 @@ const NetDiskConfigComponent = ({
               Cookie
             </label>
             <textarea
+              aria-label='粘贴夸克网盘 Cookie'
               value={cookie}
               onChange={(e) => setCookie(e.target.value)}
               disabled={!enabled}
@@ -5146,6 +5139,7 @@ const NetDiskConfigComponent = ({
               转存位置
             </label>
             <input
+              aria-label='/影视/正式转存'
               type='text'
               value={savePath}
               onChange={(e) => setSavePath(e.target.value)}
@@ -5190,13 +5184,15 @@ const NetDiskConfigComponent = ({
             </div>
             <label className='relative inline-flex items-center cursor-pointer'>
               <input
+                aria-label='夸克多线程播放'
                 type='checkbox'
                 checked={quarkMultiThreadPlayback}
                 onChange={(e) => setQuarkMultiThreadPlayback(e.target.checked)}
                 disabled={!enabled}
                 className='sr-only peer'
               />
-              <div className="w-11 h-6 bg-[var(--tm-surface-raised)] peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-[var(--tm-text)] rounded-full peer peer-disabled:opacity-50 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-[var(--tm-line)] after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-[var(--tm-surface-raised)] after:border-[var(--tm-line)] after:border after:rounded-full after:h-5 after:w-5 after:transition-all border-[var(--tm-line)] peer-checked:bg-[var(--tm-surface-raised)]"></div>
+              <div className='tm-switch-track'></div>
+              <div className='tm-switch-thumb'></div>
             </label>
           </div>
 
@@ -5235,12 +5231,14 @@ const NetDiskConfigComponent = ({
             </div>
             <label className='relative inline-flex items-center cursor-pointer'>
               <input
+                aria-label='启用移动云盘'
                 type='checkbox'
                 checked={mobileEnabled}
                 onChange={(e) => setMobileEnabled(e.target.checked)}
                 className='sr-only peer'
               />
-              <div className="w-11 h-6 bg-[var(--tm-surface-raised)] peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-[var(--tm-text)] rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-[var(--tm-line)] after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-[var(--tm-surface-raised)] after:border-[var(--tm-line)] after:border after:rounded-full after:h-5 after:w-5 after:transition-all border-[var(--tm-line)] peer-checked:bg-[var(--tm-surface-raised)]"></div>
+              <div className='tm-switch-track'></div>
+              <div className='tm-switch-thumb'></div>
             </label>
           </div>
 
@@ -5249,6 +5247,7 @@ const NetDiskConfigComponent = ({
               验证头
             </label>
             <textarea
+              aria-label='粘贴移动云盘验证头'
               value={mobileAuthorization}
               onChange={(e) => setMobileAuthorization(e.target.value)}
               disabled={!mobileEnabled}
@@ -5299,12 +5298,14 @@ const NetDiskConfigComponent = ({
             </div>
             <label className='relative inline-flex items-center cursor-pointer'>
               <input
+                aria-label='启用百度网盘'
                 type='checkbox'
                 checked={baiduEnabled}
                 onChange={(e) => setBaiduEnabled(e.target.checked)}
                 className='sr-only peer'
               />
-              <div className="w-11 h-6 bg-[var(--tm-surface-raised)] peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-[var(--tm-text)] rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-[var(--tm-line)] after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-[var(--tm-surface-raised)] after:border-[var(--tm-line)] after:border after:rounded-full after:h-5 after:w-5 after:transition-all border-[var(--tm-line)] peer-checked:bg-[var(--tm-surface-raised)]"></div>
+              <div className='tm-switch-track'></div>
+              <div className='tm-switch-thumb'></div>
             </label>
           </div>
 
@@ -5313,6 +5314,7 @@ const NetDiskConfigComponent = ({
               Cookie
             </label>
             <textarea
+              aria-label='粘贴百度网盘 Cookie'
               value={baiduCookie}
               onChange={(e) => setBaiduCookie(e.target.value)}
               disabled={!baiduEnabled}
@@ -5367,12 +5369,14 @@ const NetDiskConfigComponent = ({
             </div>
             <label className='relative inline-flex items-center cursor-pointer'>
               <input
+                aria-label='启用天翼云盘'
                 type='checkbox'
                 checked={tianyiEnabled}
                 onChange={(e) => setTianyiEnabled(e.target.checked)}
                 className='sr-only peer'
               />
-              <div className="w-11 h-6 bg-[var(--tm-surface-raised)] peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-[var(--tm-text)] rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-[var(--tm-line)] after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-[var(--tm-surface-raised)] after:border-[var(--tm-line)] after:border after:rounded-full after:h-5 after:w-5 after:transition-all border-[var(--tm-line)] peer-checked:bg-[var(--tm-surface-raised)]"></div>
+              <div className='tm-switch-track'></div>
+              <div className='tm-switch-thumb'></div>
             </label>
           </div>
 
@@ -5381,6 +5385,7 @@ const NetDiskConfigComponent = ({
               账号
             </label>
             <input
+              aria-label='手机号 / 邮箱 / 天翼账号'
               type='text'
               value={tianyiAccount}
               onChange={(e) => setTianyiAccount(e.target.value)}
@@ -5395,6 +5400,7 @@ const NetDiskConfigComponent = ({
               密码
             </label>
             <input
+              aria-label='输入天翼云盘密码'
               type='password'
               value={tianyiPassword}
               onChange={(e) => setTianyiPassword(e.target.value)}
@@ -5446,12 +5452,14 @@ const NetDiskConfigComponent = ({
             </div>
             <label className='relative inline-flex items-center cursor-pointer'>
               <input
+                aria-label='启用123网盘'
                 type='checkbox'
                 checked={pan123Enabled}
                 onChange={(e) => setPan123Enabled(e.target.checked)}
                 className='sr-only peer'
               />
-              <div className="w-11 h-6 bg-[var(--tm-surface-raised)] peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-[var(--tm-text)] rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-[var(--tm-line)] after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-[var(--tm-surface-raised)] after:border-[var(--tm-line)] after:border after:rounded-full after:h-5 after:w-5 after:transition-all border-[var(--tm-line)] peer-checked:bg-[var(--tm-surface-raised)]"></div>
+              <div className='tm-switch-track'></div>
+              <div className='tm-switch-thumb'></div>
             </label>
           </div>
 
@@ -5460,6 +5468,7 @@ const NetDiskConfigComponent = ({
               账号
             </label>
             <input
+              aria-label='输入123网盘账号'
               type='text'
               value={pan123Account}
               onChange={(e) => setPan123Account(e.target.value)}
@@ -5474,6 +5483,7 @@ const NetDiskConfigComponent = ({
               密码
             </label>
             <input
+              aria-label='输入123网盘密码'
               type='password'
               value={pan123Password}
               onChange={(e) => setPan123Password(e.target.value)}
@@ -5525,12 +5535,14 @@ const NetDiskConfigComponent = ({
             </div>
             <label className='relative inline-flex items-center cursor-pointer'>
               <input
+                aria-label='启用UC网盘'
                 type='checkbox'
                 checked={ucEnabled}
                 onChange={(e) => setUcEnabled(e.target.checked)}
                 className='sr-only peer'
               />
-              <div className="w-11 h-6 bg-[var(--tm-surface-raised)] peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-[var(--tm-text)] rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-[var(--tm-line)] after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-[var(--tm-surface-raised)] after:border-[var(--tm-line)] after:border after:rounded-full after:h-5 after:w-5 after:transition-all border-[var(--tm-line)] peer-checked:bg-[var(--tm-surface-raised)]"></div>
+              <div className='tm-switch-track'></div>
+              <div className='tm-switch-thumb'></div>
             </label>
           </div>
 
@@ -5539,6 +5551,7 @@ const NetDiskConfigComponent = ({
               Cookie
             </label>
             <textarea
+              aria-label='粘贴 UC 网盘 Cookie'
               value={ucCookie}
               onChange={(e) => setUcCookie(e.target.value)}
               disabled={!ucEnabled}
@@ -5553,6 +5566,7 @@ const NetDiskConfigComponent = ({
               Open API Token（可选）
             </label>
             <input
+              aria-label='可选，填写后优先尝试原画地址'
               type='text'
               value={ucToken}
               onChange={(e) => setUcToken(e.target.value)}
@@ -5567,6 +5581,7 @@ const NetDiskConfigComponent = ({
               临时转存位置
             </label>
             <input
+              aria-label='/影视/UC临时转存'
               type='text'
               value={ucSavePath}
               onChange={(e) => setUcSavePath(e.target.value)}
@@ -5613,12 +5628,14 @@ const NetDiskConfigComponent = ({
             </div>
             <label className='relative inline-flex items-center cursor-pointer'>
               <input
+                aria-label='启用115网盘'
                 type='checkbox'
                 checked={pan115Enabled}
                 onChange={(e) => setPan115Enabled(e.target.checked)}
                 className='sr-only peer'
               />
-              <div className="w-11 h-6 bg-[var(--tm-surface-raised)] peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-[var(--tm-text)] rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-[var(--tm-line)] after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-[var(--tm-surface-raised)] after:border-[var(--tm-line)] after:border after:rounded-full after:h-5 after:w-5 after:transition-all border-[var(--tm-line)] peer-checked:bg-[var(--tm-surface-raised)]"></div>
+              <div className='tm-switch-track'></div>
+              <div className='tm-switch-thumb'></div>
             </label>
           </div>
 
@@ -5627,6 +5644,7 @@ const NetDiskConfigComponent = ({
               Cookie
             </label>
             <textarea
+              aria-label='粘贴115网盘 Cookie'
               value={pan115Cookie}
               onChange={(e) => setPan115Cookie(e.target.value)}
               disabled={!pan115Enabled}
@@ -6336,6 +6354,7 @@ const EmbyConfigComponent = ({
                 标识符 *
               </label>
               <input
+                aria-label='home, office, etc.'
                 type='text'
                 value={formData.key}
                 onChange={(e) =>
@@ -6356,6 +6375,7 @@ const EmbyConfigComponent = ({
                 显示名称 *
               </label>
               <input
+                aria-label='家庭Emby, 公司Emby, etc.'
                 type='text'
                 value={formData.name}
                 onChange={(e) =>
@@ -6372,6 +6392,7 @@ const EmbyConfigComponent = ({
                 Emby 服务器地址 *
               </label>
               <input
+                aria-label='http://192.168.1.100:8096'
                 type='text'
                 value={formData.ServerURL}
                 onChange={(e) =>
@@ -6430,6 +6451,7 @@ const EmbyConfigComponent = ({
                     API Key *
                   </label>
                   <input
+                    aria-label='输入 Emby API Key'
                     type='password'
                     value={formData.ApiKey}
                     onChange={(e) =>
@@ -6449,6 +6471,7 @@ const EmbyConfigComponent = ({
                     用户 ID *
                   </label>
                   <input
+                    aria-label='aab507c58e874de6a9bd12388d72f4d2'
                     type='text'
                     value={formData.UserId}
                     onChange={(e) =>
@@ -6474,6 +6497,7 @@ const EmbyConfigComponent = ({
                     用户名 *
                   </label>
                   <input
+                    aria-label='Emby 用户名'
                     type='text'
                     value={formData.Username}
                     onChange={(e) =>
@@ -6490,6 +6514,7 @@ const EmbyConfigComponent = ({
                     密码（可选）
                   </label>
                   <input
+                    aria-label='Emby 密码（如果账号没有密码可留空）'
                     type='password'
                     value={formData.Password}
                     onChange={(e) =>
@@ -6516,17 +6541,11 @@ const EmbyConfigComponent = ({
                 }
                 disabled={role !== 'owner'}
                 aria-label='启用此 Emby 源（只有站长可以更改）'
-                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                  formData.enabled
-                    ? 'bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] tm-press'
-                    : 'bg-[var(--tm-surface-raised)] tm-press'
-                }`}
+                className='tm-switch-btn'
+                role='switch'
+                aria-checked={!!formData.enabled}
               >
-                <span
-                  className={`inline-block h-4 w-4 transform rounded-full bg-[var(--tm-surface)] transition-transform ${
-                    formData.enabled ? 'translate-x-6' : 'translate-x-1'
-                  }`}
-                />
+                <span className='tm-switch-btn-thumb' aria-hidden='true' />
               </button>
             </div>
 
@@ -6553,19 +6572,12 @@ const EmbyConfigComponent = ({
                       removeEmbyPrefix: !formData.removeEmbyPrefix,
                     })
                   }
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                    formData.removeEmbyPrefix
-                      ? 'bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] tm-press'
-                      : 'bg-[var(--tm-surface-raised)] tm-press'
-                  }`}
+                  className='tm-switch-btn'
+                  role='switch'
+                  aria-checked={!!formData.removeEmbyPrefix}
+                  aria-label='播放链接移除 /emby 前缀'
                 >
-                  <span
-                    className={`inline-block h-4 w-4 transform rounded-full bg-[var(--tm-surface)] transition-transform ${
-                      formData.removeEmbyPrefix
-                        ? 'translate-x-6'
-                        : 'translate-x-1'
-                    }`}
-                  />
+                  <span className='tm-switch-btn-thumb' aria-hidden='true' />
                 </button>
               </div>
 
@@ -6587,19 +6599,12 @@ const EmbyConfigComponent = ({
                       appendMediaSourceId: !formData.appendMediaSourceId,
                     })
                   }
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                    formData.appendMediaSourceId
-                      ? 'bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] tm-press'
-                      : 'bg-[var(--tm-surface-raised)] tm-press'
-                  }`}
+                  className='tm-switch-btn'
+                  role='switch'
+                  aria-checked={!!formData.appendMediaSourceId}
+                  aria-label='拼接 MediaSourceId 参数'
                 >
-                  <span
-                    className={`inline-block h-4 w-4 transform rounded-full bg-[var(--tm-surface)] transition-transform ${
-                      formData.appendMediaSourceId
-                        ? 'translate-x-6'
-                        : 'translate-x-1'
-                    }`}
-                  />
+                  <span className='tm-switch-btn-thumb' aria-hidden='true' />
                 </button>
               </div>
 
@@ -6620,17 +6625,12 @@ const EmbyConfigComponent = ({
                       transcodeMp4: !formData.transcodeMp4,
                     })
                   }
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                    formData.transcodeMp4
-                      ? 'bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] tm-press'
-                      : 'bg-[var(--tm-surface-raised)] tm-press'
-                  }`}
+                  className='tm-switch-btn'
+                  role='switch'
+                  aria-checked={!!formData.transcodeMp4}
+                  aria-label='转码 mp4'
                 >
-                  <span
-                    className={`inline-block h-4 w-4 transform rounded-full bg-[var(--tm-surface)] transition-transform ${
-                      formData.transcodeMp4 ? 'translate-x-6' : 'translate-x-1'
-                    }`}
-                  />
+                  <span className='tm-switch-btn-thumb' aria-hidden='true' />
                 </button>
               </div>
 
@@ -6648,17 +6648,12 @@ const EmbyConfigComponent = ({
                   onClick={() =>
                     setFormData({ ...formData, proxyPlay: !formData.proxyPlay })
                   }
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                    formData.proxyPlay
-                      ? 'bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] tm-press'
-                      : 'bg-[var(--tm-surface-raised)] tm-press'
-                  }`}
+                  className='tm-switch-btn'
+                  role='switch'
+                  aria-checked={!!formData.proxyPlay}
+                  aria-label='视频播放代理'
                 >
-                  <span
-                    className={`inline-block h-4 w-4 transform rounded-full bg-[var(--tm-surface)] transition-transform ${
-                      formData.proxyPlay ? 'translate-x-6' : 'translate-x-1'
-                    }`}
-                  />
+                  <span className='tm-switch-btn-thumb' aria-hidden='true' />
                 </button>
               </div>
 
@@ -6668,6 +6663,7 @@ const EmbyConfigComponent = ({
                   自定义User-Agent
                 </label>
                 <input
+                  aria-label='留空使用默认浏览器UA'
                   type='text'
                   value={formData.customUserAgent || ''}
                   onChange={(e) =>
@@ -6690,6 +6686,7 @@ const EmbyConfigComponent = ({
                   自定义 X-Emby-Authorization
                 </label>
                 <input
+                  aria-label='留空使用默认客户端认证头'
                   type='text'
                   value={formData.embyAuthorizationHeader || ''}
                   onChange={(e) =>
@@ -7917,7 +7914,7 @@ const VideoSourceConfig = ({
           )}
           <div className='flex w-full min-w-0 flex-col gap-2 order-1 sm:order-2 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center sm:justify-end sm:gap-2'>
             <div className='w-full min-w-0 sm:w-auto'>
-              <div className='flex flex-wrap items-center justify-end gap-2'>
+              <div className='flex flex-wrap items-center justify-start gap-2 sm:justify-end'>
                 <button
                   onClick={openSpecialSourcesModal}
                   className={`${buttonStyles.secondary} flex shrink-0 items-center gap-1.5 whitespace-nowrap`}
@@ -7955,7 +7952,7 @@ const VideoSourceConfig = ({
               </div>
             </div>
             <div className='w-full min-w-0 sm:w-auto'>
-              <div className='flex flex-wrap items-center justify-end gap-2'>
+              <div className='flex flex-wrap items-center justify-start gap-2 sm:justify-end'>
                 <button
                   onClick={() => setShowValidationModal(true)}
                   disabled={isValidating}
@@ -8070,6 +8067,7 @@ const VideoSourceConfig = ({
         <div className='p-4 bg-[var(--tm-surface-raised)] rounded-lg border border-[var(--tm-line)] space-y-4'>
           <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
             <input
+              aria-label='名称'
               type='text'
               placeholder='名称'
               value={newSource.name}
@@ -8079,6 +8077,7 @@ const VideoSourceConfig = ({
               className='px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)]'
             />
             <input
+              aria-label='Key'
               type='text'
               placeholder='Key'
               value={newSource.key}
@@ -8088,6 +8087,7 @@ const VideoSourceConfig = ({
               className='px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)]'
             />
             <input
+              aria-label='API 地址'
               type='text'
               placeholder='API 地址'
               value={newSource.api}
@@ -8097,6 +8097,7 @@ const VideoSourceConfig = ({
               className='px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)]'
             />
             <input
+              aria-label='Detail 地址（选填）'
               type='text'
               placeholder='Detail 地址（选填）'
               value={newSource.detail}
@@ -8590,6 +8591,7 @@ const VideoSourceConfig = ({
               </p>
               <div className='space-y-4'>
                 <input
+                  aria-label='请输入搜索关键词'
                   type='text'
                   placeholder='请输入搜索关键词'
                   value={searchKeyword}
@@ -8969,37 +8971,54 @@ const CategoryConfig = ({
       {showAddForm && (
         <div className='p-4 bg-[var(--tm-surface-raised)] rounded-lg border border-[var(--tm-line)] space-y-4'>
           <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
-            <input
-              type='text'
-              placeholder='分类名称'
-              value={newCategory.name}
-              onChange={(e) =>
-                setNewCategory((prev) => ({ ...prev, name: e.target.value }))
-              }
-              className='px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)]'
-            />
-            <Select
-              value={newCategory.type}
-              onChange={(e) =>
-                setNewCategory((prev) => ({
-                  ...prev,
-                  type: e.target.value as 'movie' | 'tv',
-                }))
-              }
-              className='px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)]'
-            >
-              <option value='movie'>电影</option>
-              <option value='tv'>电视剧</option>
-            </Select>
-            <input
-              type='text'
-              placeholder='搜索关键词'
-              value={newCategory.query}
-              onChange={(e) =>
-                setNewCategory((prev) => ({ ...prev, query: e.target.value }))
-              }
-              className='px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)]'
-            />
+            <label className='flex min-w-0 flex-col gap-1'>
+              <span className='text-[13px] text-[color:var(--tm-muted)]'>
+                分类名称
+              </span>
+              <input
+                aria-label='分类名称'
+                type='text'
+                placeholder='分类名称'
+                value={newCategory.name}
+                onChange={(e) =>
+                  setNewCategory((prev) => ({ ...prev, name: e.target.value }))
+                }
+                className='px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)]'
+              />
+            </label>
+            <label className='flex min-w-0 flex-col gap-1'>
+              <span className='text-[13px] text-[color:var(--tm-muted)]'>
+                类型
+              </span>
+              <Select
+                value={newCategory.type}
+                onChange={(e) =>
+                  setNewCategory((prev) => ({
+                    ...prev,
+                    type: e.target.value as 'movie' | 'tv',
+                  }))
+                }
+                className='px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)]'
+              >
+                <option value='movie'>电影</option>
+                <option value='tv'>电视剧</option>
+              </Select>
+            </label>
+            <label className='flex min-w-0 flex-col gap-1'>
+              <span className='text-[13px] text-[color:var(--tm-muted)]'>
+                搜索关键词
+              </span>
+              <input
+                aria-label='搜索关键词'
+                type='text'
+                placeholder='搜索关键词'
+                value={newCategory.query}
+                onChange={(e) =>
+                  setNewCategory((prev) => ({ ...prev, query: e.target.value }))
+                }
+                className='px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)]'
+              />
+            </label>
           </div>
           <div className='flex justify-end'>
             <button
@@ -9555,6 +9574,7 @@ const VideoSourceScriptLab = ({ role }: { role: 'owner' | 'admin' | null }) => {
         <div className='flex-1 space-y-6'>
           <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
             <input
+              aria-label='脚本名称'
               type='text'
               placeholder='脚本名称'
               value={editor.name}
@@ -9564,6 +9584,7 @@ const VideoSourceScriptLab = ({ role }: { role: 'owner' | 'admin' | null }) => {
               className='px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)]'
             />
             <input
+              aria-label='脚本 Key'
               type='text'
               placeholder='脚本 Key'
               value={editor.key}
@@ -9575,6 +9596,7 @@ const VideoSourceScriptLab = ({ role }: { role: 'owner' | 'admin' | null }) => {
           </div>
 
           <textarea
+            aria-label='脚本描述（可选）'
             placeholder='脚本描述（可选）'
             value={editor.description}
             onChange={(e) =>
@@ -9949,6 +9971,7 @@ const ConfigFileComponent = ({
               订阅URL
             </label>
             <input
+              aria-label='https://example.com/config.json'
               type='url'
               value={subscriptionUrl}
               onChange={(e) => setSubscriptionUrl(e.target.value)}
@@ -9997,19 +10020,12 @@ const ConfigFileComponent = ({
               type='button'
               onClick={() => setAutoUpdate(!autoUpdate)}
               disabled={false}
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--tm-text)] focus:ring-offset-2 ${
-                autoUpdate ? buttonStyles.toggleOn : buttonStyles.toggleOff
-              }`}
+              className='tm-switch-btn'
+              role='switch'
+              aria-checked={!!autoUpdate}
+              aria-label='自动更新配置'
             >
-              <span
-                className={`inline-block h-4 w-4 transform rounded-full ${
-                  buttonStyles.toggleThumb
-                } transition-transform ${
-                  autoUpdate
-                    ? buttonStyles.toggleThumbOn
-                    : buttonStyles.toggleThumbOff
-                }`}
-              />
+              <span className='tm-switch-btn-thumb' aria-hidden='true' />
             </button>
           </div>
         </div>
@@ -10019,6 +10035,7 @@ const ConfigFileComponent = ({
       <div className='space-y-4'>
         <div className='relative'>
           <textarea
+            aria-label='请输入配置文件内容（JSON 格式）...'
             value={configContent}
             onChange={(e) => setConfigContent(e.target.value)}
             rows={20}
@@ -10062,7 +10079,7 @@ const ConfigFileComponent = ({
                 aria-checked={uploadMode === mode}
                 title={hint}
                 onClick={() => setUploadMode(mode)}
-                className={`min-h-[44px] rounded-lg border px-4 text-sm font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)] ${
+                className={`tm-choice min-h-[44px] rounded-lg border px-4 text-sm font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)] ${
                   uploadMode === mode
                     ? 'border-[var(--tm-text)] bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)]'
                     : 'border-[var(--tm-line)] text-[color:var(--tm-muted)] hover:border-[var(--tm-text)] hover:text-[color:var(--tm-text)]'
@@ -10124,7 +10141,9 @@ const ConfigFileComponent = ({
             </label>
           </div>
           <p className='mt-2 text-[13px] text-[color:var(--tm-muted)]'>
-            上传的JSON配置将自动合并到当前配置，重复的API地址将被自动过滤
+            {uploadMode === 'merge'
+              ? '合并：保留输入框已有内容，上传的配置按API地址去重后追加；点击保存后才会生效'
+              : '覆盖：上传的JSON会替换输入框中的全部内容；点击保存后才会生效'}
           </p>
         </div>
 
@@ -10460,6 +10479,7 @@ const ThemeConfigComponent = ({
             自定义CSS
           </h3>
           <textarea
+            aria-label='在此输入自定义CSS代码...'
             value={themeSettings.customCSS}
             onChange={(e) =>
               setThemeSettings((prev) => ({
@@ -10543,6 +10563,7 @@ const ThemeConfigComponent = ({
               {loginBackgroundImages.map((url, index) => (
                 <div key={index} className='flex gap-2'>
                   <input
+                    aria-label='请输入登录界面背景图URL (http:// 或 https://)'
                     type='text'
                     value={url}
                     onChange={(e) => {
@@ -10615,6 +10636,7 @@ const ThemeConfigComponent = ({
               {registerBackgroundImages.map((url, index) => (
                 <div key={index} className='flex gap-2'>
                   <input
+                    aria-label='请输入注册界面背景图URL (http:// 或 https://)'
                     type='text'
                     value={url}
                     onChange={(e) => {
@@ -10687,6 +10709,7 @@ const ThemeConfigComponent = ({
               {homeBackgroundImages.map((url, index) => (
                 <div key={index} className='flex gap-2'>
                   <input
+                    aria-label='请输入首页背景图URL (http:// 或 https://)'
                     type='text'
                     value={url}
                     onChange={(e) => {
@@ -10817,7 +10840,11 @@ const ThemeConfigComponent = ({
             <label className='block text-sm font-medium text-[color:var(--tm-muted)]'>
               选择内置图标
             </label>
-            <div className='grid grid-cols-2 md:grid-cols-3 gap-3'>
+            <div
+              className='grid grid-cols-2 md:grid-cols-3 gap-3'
+              role='radiogroup'
+              aria-label='内置进度条图标'
+            >
               {[
                 {
                   id: 'renako',
@@ -10844,6 +10871,10 @@ const ThemeConfigComponent = ({
                 <button
                   key={thumb.id}
                   type='button'
+                  role='radio'
+                  aria-checked={
+                    themeSettings.progressThumbPresetId === thumb.id
+                  }
                   onClick={() =>
                     setThemeSettings((prev) => ({
                       ...prev,
@@ -10852,14 +10883,14 @@ const ThemeConfigComponent = ({
                   }
                   className={`relative p-4 border-2 rounded-lg transition-all ${
                     themeSettings.progressThumbPresetId === thumb.id
-                      ? 'border-[var(--tm-line)] bg-[var(--tm-surface-raised)] min-h-[44px] tm-press'
+                      ? 'border-[var(--tm-text)] bg-[var(--tm-surface-raised)] min-h-[44px] tm-press'
                       : 'border-[var(--tm-line)] hover:border-[var(--tm-line-strong)] min-h-[44px] tm-press'
                   }`}
                 >
                   <div className='flex flex-col items-center gap-2'>
                     <img
                       src={thumb.url}
-                      alt={thumb.name}
+                      alt=''
                       className='w-12 h-12 object-contain'
                       onError={(e) => {
                         (e.target as HTMLImageElement).src =
@@ -10893,6 +10924,7 @@ const ThemeConfigComponent = ({
               自定义图标URL
             </label>
             <input
+              aria-label='例如: https://example.com/icon.png'
               type='text'
               className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[var(--tm-text)] focus:border-[var(--tm-line)] transition-all duration-200 bg-[var(--tm-surface)] text-[color:var(--tm-text)] placeholder-gray-500 dark:placeholder-gray-400'
               placeholder='例如: https://example.com/icon.png'
@@ -11549,6 +11581,7 @@ const SiteConfigComponent = ({
               豆瓣代理地址
             </label>
             <input
+              aria-label='例如: https://proxy.example.com/fetch?url='
               type='text'
               placeholder='例如: https://proxy.example.com/fetch?url='
               value={siteSettings.DoubanProxy}
@@ -11659,6 +11692,7 @@ const SiteConfigComponent = ({
               豆瓣图片代理地址
             </label>
             <input
+              aria-label='例如: https://proxy.example.com/fetch?url='
               type='text'
               placeholder='例如: https://proxy.example.com/fetch?url='
               value={siteSettings.DoubanImageProxy}
@@ -11729,21 +11763,12 @@ const SiteConfigComponent = ({
                 DisableYellowFilter: !prev.DisableYellowFilter,
               }))
             }
-            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--tm-text)] focus:ring-offset-2 ${
-              siteSettings.DisableYellowFilter
-                ? buttonStyles.toggleOn
-                : buttonStyles.toggleOff
-            }`}
+            className='tm-switch-btn'
+            role='switch'
+            aria-checked={!!siteSettings.DisableYellowFilter}
+            aria-label='禁用黄色过滤器'
           >
-            <span
-              className={`inline-block h-4 w-4 transform rounded-full ${
-                buttonStyles.toggleThumb
-              } transition-transform ${
-                siteSettings.DisableYellowFilter
-                  ? buttonStyles.toggleThumbOn
-                  : buttonStyles.toggleThumbOff
-              }`}
-            />
+            <span className='tm-switch-btn-thumb' aria-hidden='true' />
           </button>
         </div>
         <p className='mt-1 text-[13px] text-[color:var(--tm-muted)]'>
@@ -11765,21 +11790,12 @@ const SiteConfigComponent = ({
                 FluidSearch: !prev.FluidSearch,
               }))
             }
-            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--tm-text)] focus:ring-offset-2 ${
-              siteSettings.FluidSearch
-                ? buttonStyles.toggleOn
-                : buttonStyles.toggleOff
-            }`}
+            className='tm-switch-btn'
+            role='switch'
+            aria-checked={!!siteSettings.FluidSearch}
+            aria-label='启用流式搜索'
           >
-            <span
-              className={`inline-block h-4 w-4 transform rounded-full ${
-                buttonStyles.toggleThumb
-              } transition-transform ${
-                siteSettings.FluidSearch
-                  ? buttonStyles.toggleThumbOn
-                  : buttonStyles.toggleThumbOff
-              }`}
-            />
+            <span className='tm-switch-btn-thumb' aria-hidden='true' />
           </button>
         </div>
         <p className='mt-1 text-[13px] text-[color:var(--tm-muted)]'>
@@ -11929,6 +11945,7 @@ const SiteConfigComponent = ({
                   弹幕 API 地址
                 </label>
                 <input
+                  aria-label='http://localhost:9321'
                   type='text'
                   placeholder='http://localhost:9321'
                   value={siteSettings.DanmakuApiBase}
@@ -11959,6 +11976,7 @@ const SiteConfigComponent = ({
                   弹幕 API Token
                 </label>
                 <input
+                  aria-label='87654321'
                   type='text'
                   placeholder='87654321'
                   value={siteSettings.DanmakuApiToken}
@@ -11991,6 +12009,7 @@ const SiteConfigComponent = ({
                 <input
                   type='checkbox'
                   className='sr-only peer'
+                  aria-label='默认自动加载弹幕'
                   checked={siteSettings.DanmakuAutoLoadDefault !== false}
                   onChange={(e) =>
                     setSiteSettings((prev) => ({
@@ -11999,8 +12018,8 @@ const SiteConfigComponent = ({
                     }))
                   }
                 />
-                <div className='w-11 h-6 bg-[var(--tm-surface)] rounded-full peer-checked:bg-[var(--tm-text)] transition-colors'></div>
-                <div className='absolute top-0.5 left-0.5 w-5 h-5 bg-[var(--tm-surface)] rounded-full transition-transform peer-checked:translate-x-5'></div>
+                <div className='tm-switch-track'></div>
+                <div className='tm-switch-thumb'></div>
               </div>
             </label>
           </div>
@@ -12022,6 +12041,7 @@ const SiteConfigComponent = ({
               TMDB API Key
             </label>
             <input
+              aria-label='请输入 TMDB API Key（多个key用英文逗号分隔）'
               type='text'
               placeholder='请输入 TMDB API Key（多个key用英文逗号分隔）'
               value={siteSettings.TMDBApiKey}
@@ -12054,6 +12074,7 @@ const SiteConfigComponent = ({
               TMDB 系统代理
             </label>
             <input
+              aria-label='请输入代理地址（可选）'
               type='text'
               placeholder='请输入代理地址（可选）'
               value={siteSettings.TMDBProxy}
@@ -12076,6 +12097,7 @@ const SiteConfigComponent = ({
               TMDB 反代代理
             </label>
             <input
+              aria-label='请输入反代 Base URL（可选）'
               type='text'
               placeholder='请输入反代 Base URL（可选）'
               value={siteSettings.TMDBReverseProxy}
@@ -12098,6 +12120,7 @@ const SiteConfigComponent = ({
               TMDB 图片默认地址
             </label>
             <input
+              aria-label='https://image.tmdb.org'
               type='text'
               placeholder='https://image.tmdb.org'
               value={siteSettings.TMDBImageBaseUrl}
@@ -12170,6 +12193,7 @@ const SiteConfigComponent = ({
               Bangumi Base URL
             </label>
             <input
+              aria-label='https://api.bgm.tv'
               type='text'
               placeholder='https://api.bgm.tv'
               value={siteSettings.BangumiApiBaseUrl || ''}
@@ -12192,6 +12216,7 @@ const SiteConfigComponent = ({
               Bangumi 图片 Base URL
             </label>
             <input
+              aria-label='例如: https://proxy.example.com'
               type='text'
               placeholder='例如: https://proxy.example.com'
               value={siteSettings.BangumiImageBaseUrl || ''}
@@ -12215,6 +12240,7 @@ const SiteConfigComponent = ({
               Bangumi 系统代理
             </label>
             <input
+              aria-label='例如: http://127.0.0.1:7890'
               type='text'
               placeholder='例如: http://127.0.0.1:7890'
               value={siteSettings.BangumiProxy || ''}
@@ -12237,6 +12263,7 @@ const SiteConfigComponent = ({
               LiveChart 系统代理
             </label>
             <input
+              aria-label='例如: http://127.0.0.1:7890'
               type='text'
               placeholder='例如: http://127.0.0.1:7890'
               value={siteSettings.LiveChartProxy || ''}
@@ -12304,6 +12331,7 @@ const SiteConfigComponent = ({
               系统代理
             </label>
             <input
+              aria-label='请输入代理地址（可选）'
               type='text'
               placeholder='请输入代理地址（可选）'
               value={siteSettings.MagnetProxy || ''}
@@ -12326,6 +12354,7 @@ const SiteConfigComponent = ({
               Mikan 反代代理
             </label>
             <input
+              aria-label='请输入 Mikan 反代 Base URL（可选）'
               type='text'
               placeholder='请输入 Mikan 反代 Base URL（可选）'
               value={siteSettings.MagnetMikanReverseProxy || ''}
@@ -12347,6 +12376,7 @@ const SiteConfigComponent = ({
               动漫花园反代代理
             </label>
             <input
+              aria-label='请输入动漫花园反代 Base URL（可选）'
               type='text'
               placeholder='请输入动漫花园反代 Base URL（可选）'
               value={siteSettings.MagnetDmhyReverseProxy || ''}
@@ -12368,6 +12398,7 @@ const SiteConfigComponent = ({
               ACG.RIP 反代代理
             </label>
             <input
+              aria-label='请输入 ACG.RIP 反代 Base URL（可选）'
               type='text'
               placeholder='请输入 ACG.RIP 反代 Base URL（可选）'
               value={siteSettings.MagnetAcgripReverseProxy || ''}
@@ -12389,6 +12420,7 @@ const SiteConfigComponent = ({
               Nyaa 反代代理
             </label>
             <input
+              aria-label='请输入 Nyaa 反代 Base URL（可选）'
               type='text'
               placeholder='请输入 Nyaa 反代 Base URL（可选）'
               value={siteSettings.MagnetNyaaReverseProxy || ''}
@@ -12419,6 +12451,7 @@ const SiteConfigComponent = ({
               Pansou API 地址
             </label>
             <input
+              aria-label='请输入 Pansou API 地址，如：http://localhost:8888'
               type='text'
               placeholder='请输入 Pansou API 地址，如：http://localhost:8888'
               value={siteSettings.PansouApiUrl}
@@ -12449,6 +12482,7 @@ const SiteConfigComponent = ({
               Pansou 账号（可选）
             </label>
             <input
+              aria-label='如果 Pansou 启用了认证，请输入账号'
               type='text'
               placeholder='如果 Pansou 启用了认证，请输入账号'
               value={siteSettings.PansouUsername}
@@ -12471,6 +12505,7 @@ const SiteConfigComponent = ({
               Pansou 密码（可选）
             </label>
             <input
+              aria-label='如果 Pansou 启用了认证，请输入密码'
               type='password'
               placeholder='如果 Pansou 启用了认证，请输入密码'
               value={siteSettings.PansouPassword}
@@ -12493,6 +12528,7 @@ const SiteConfigComponent = ({
               关键词屏蔽（可选）
             </label>
             <input
+              aria-label='多个关键词用中文或英文逗号分隔'
               type='text'
               placeholder='多个关键词用中文或英文逗号分隔'
               value={siteSettings.PansouKeywordBlocklist}
@@ -12528,21 +12564,12 @@ const SiteConfigComponent = ({
                 onClick={() =>
                   handleCommentsToggle(!siteSettings.EnableComments)
                 }
-                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--tm-text)] focus:ring-offset-2 ${
-                  siteSettings.EnableComments
-                    ? buttonStyles.toggleOn
-                    : buttonStyles.toggleOff
-                }`}
+                className='tm-switch-btn'
+                role='switch'
+                aria-checked={!!siteSettings.EnableComments}
+                aria-label='开启评论与相似推荐'
               >
-                <span
-                  className={`inline-block h-4 w-4 transform rounded-full ${
-                    buttonStyles.toggleThumb
-                  } transition-transform ${
-                    siteSettings.EnableComments
-                      ? buttonStyles.toggleThumbOn
-                      : buttonStyles.toggleThumbOff
-                  }`}
-                />
+                <span className='tm-switch-btn-thumb' aria-hidden='true' />
               </button>
             </div>
             <p className='mt-1 text-[13px] text-[color:var(--tm-muted)]'>
@@ -12581,21 +12608,12 @@ const SiteConfigComponent = ({
                   AnalyticsEnabled: !prev.AnalyticsEnabled,
                 }))
               }
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--tm-text)] focus:ring-offset-2 ${
-                siteSettings.AnalyticsEnabled
-                  ? buttonStyles.toggleOn
-                  : buttonStyles.toggleOff
-              }`}
+              className='tm-switch-btn'
+              role='switch'
+              aria-checked={!!siteSettings.AnalyticsEnabled}
+              aria-label='启用流量统计'
             >
-              <span
-                className={`inline-block h-4 w-4 transform rounded-full ${
-                  buttonStyles.toggleThumb
-                } transition-transform ${
-                  siteSettings.AnalyticsEnabled
-                    ? buttonStyles.toggleThumbOn
-                    : buttonStyles.toggleThumbOff
-                }`}
-              />
+              <span className='tm-switch-btn-thumb' aria-hidden='true' />
             </button>
           </div>
 
@@ -12636,6 +12654,7 @@ const SiteConfigComponent = ({
                       Umami 脚本地址
                     </label>
                     <input
+                      aria-label='https://your-umami-server.com/script.js'
                       type='text'
                       value={siteSettings.AnalyticsScriptUrl}
                       onChange={(e) =>
@@ -12656,6 +12675,7 @@ const SiteConfigComponent = ({
                       网站 ID (Website ID)
                     </label>
                     <input
+                      aria-label='e.g. 12345678-abcd-efgh-ijkl-1234567890ab'
                       type='text'
                       value={siteSettings.AnalyticsWebsiteId}
                       onChange={(e) =>
@@ -12680,6 +12700,7 @@ const SiteConfigComponent = ({
                     Measurement ID
                   </label>
                   <input
+                    aria-label='G-XXXXXXXXXX'
                     type='text'
                     value={siteSettings.AnalyticsWebsiteId}
                     onChange={(e) =>
@@ -12704,6 +12725,7 @@ const SiteConfigComponent = ({
                     Project ID
                   </label>
                   <input
+                    aria-label='e.g. abc1234567'
                     type='text'
                     value={siteSettings.AnalyticsWebsiteId}
                     onChange={(e) =>
@@ -12728,6 +12750,7 @@ const SiteConfigComponent = ({
                     自定义统计代码
                   </label>
                   <textarea
+                    aria-label='粘贴完整的统计脚本代码，如百度统计、Plausible、51la 等...'
                     value={siteSettings.AnalyticsCustomScript}
                     onChange={(e) =>
                       setSiteSettings((prev) => ({
@@ -13026,21 +13049,12 @@ const RegistrationConfigComponent = ({
                       !registrationSettings.EnableRegistration
                     )
                   }
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--tm-text)] focus:ring-offset-2 ${
-                    registrationSettings.EnableRegistration
-                      ? buttonStyles.toggleOn
-                      : buttonStyles.toggleOff
-                  }`}
+                  className='tm-switch-btn'
+                  role='switch'
+                  aria-checked={!!registrationSettings.EnableRegistration}
+                  aria-label='开启注册'
                 >
-                  <span
-                    className={`inline-block h-4 w-4 transform rounded-full ${
-                      buttonStyles.toggleThumb
-                    } transition-transform ${
-                      registrationSettings.EnableRegistration
-                        ? buttonStyles.toggleThumbOn
-                        : buttonStyles.toggleThumbOff
-                    }`}
-                  />
+                  <span className='tm-switch-btn-thumb' aria-hidden='true' />
                 </button>
               </div>
               <p className='mt-1 text-[13px] text-[color:var(--tm-muted)]'>
@@ -13105,21 +13119,14 @@ const RegistrationConfigComponent = ({
                         !prev.RequireRegistrationInviteCode,
                     }))
                   }
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--tm-text)] focus:ring-offset-2 ${
-                    registrationSettings.RequireRegistrationInviteCode
-                      ? buttonStyles.toggleOn
-                      : buttonStyles.toggleOff
-                  }`}
+                  className='tm-switch-btn'
+                  role='switch'
+                  aria-checked={
+                    !!registrationSettings.RequireRegistrationInviteCode
+                  }
+                  aria-label='要求注册邀请码'
                 >
-                  <span
-                    className={`inline-block h-4 w-4 transform rounded-full ${
-                      buttonStyles.toggleThumb
-                    } transition-transform ${
-                      registrationSettings.RequireRegistrationInviteCode
-                        ? buttonStyles.toggleThumbOn
-                        : buttonStyles.toggleThumbOff
-                    }`}
-                  />
+                  <span className='tm-switch-btn-thumb' aria-hidden='true' />
                 </button>
               </div>
               <p className='mt-1 text-[13px] text-[color:var(--tm-muted)]'>
@@ -13132,6 +13139,7 @@ const RegistrationConfigComponent = ({
                 通用注册邀请码
               </label>
               <input
+                aria-label='请输入通用注册邀请码'
                 type='text'
                 placeholder='请输入通用注册邀请码'
                 value={registrationSettings.RegistrationInviteCode || ''}
@@ -13166,24 +13174,14 @@ const RegistrationConfigComponent = ({
                         !prev.RegistrationRequireTurnstile,
                     }))
                   }
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--tm-text)] focus:ring-offset-2 ${
-                    !registrationSettings.TurnstileSiteKey ||
-                    !registrationSettings.TurnstileSecretKey
-                      ? 'opacity-50 cursor-not-allowed bg-[var(--tm-surface)] tm-press'
-                      : registrationSettings.RegistrationRequireTurnstile
-                      ? buttonStyles.toggleOn
-                      : buttonStyles.toggleOff
-                  }`}
+                  className='tm-switch-btn'
+                  role='switch'
+                  aria-checked={
+                    !!registrationSettings.RegistrationRequireTurnstile
+                  }
+                  aria-label='注册启用 Cloudflare Turnstile'
                 >
-                  <span
-                    className={`inline-block h-4 w-4 transform rounded-full ${
-                      buttonStyles.toggleThumb
-                    } transition-transform ${
-                      registrationSettings.RegistrationRequireTurnstile
-                        ? buttonStyles.toggleThumbOn
-                        : buttonStyles.toggleThumbOff
-                    }`}
-                  />
+                  <span className='tm-switch-btn-thumb' aria-hidden='true' />
                 </button>
               </div>
               <p className='mt-1 text-[13px] text-[color:var(--tm-muted)]'>
@@ -13215,24 +13213,12 @@ const RegistrationConfigComponent = ({
                       LoginRequireTurnstile: !prev.LoginRequireTurnstile,
                     }))
                   }
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--tm-text)] focus:ring-offset-2 ${
-                    !registrationSettings.TurnstileSiteKey ||
-                    !registrationSettings.TurnstileSecretKey
-                      ? 'opacity-50 cursor-not-allowed bg-[var(--tm-surface)] tm-press'
-                      : registrationSettings.LoginRequireTurnstile
-                      ? buttonStyles.toggleOn
-                      : buttonStyles.toggleOff
-                  }`}
+                  className='tm-switch-btn'
+                  role='switch'
+                  aria-checked={!!registrationSettings.LoginRequireTurnstile}
+                  aria-label='登录启用 Cloudflare Turnstile'
                 >
-                  <span
-                    className={`inline-block h-4 w-4 transform rounded-full ${
-                      buttonStyles.toggleThumb
-                    } transition-transform ${
-                      registrationSettings.LoginRequireTurnstile
-                        ? buttonStyles.toggleThumbOn
-                        : buttonStyles.toggleThumbOff
-                    }`}
-                  />
+                  <span className='tm-switch-btn-thumb' aria-hidden='true' />
                 </button>
               </div>
               <p className='mt-1 text-[13px] text-[color:var(--tm-muted)]'>
@@ -13252,6 +13238,7 @@ const RegistrationConfigComponent = ({
                 Cloudflare Turnstile Site Key
               </label>
               <input
+                aria-label='请输入Cloudflare Turnstile Site Key'
                 type='text'
                 placeholder='请输入Cloudflare Turnstile Site Key'
                 value={registrationSettings.TurnstileSiteKey || ''}
@@ -13273,6 +13260,7 @@ const RegistrationConfigComponent = ({
                 Cloudflare Turnstile Secret Key
               </label>
               <input
+                aria-label='请输入Cloudflare Turnstile Secret Key'
                 type='password'
                 placeholder='请输入Cloudflare Turnstile Secret Key'
                 value={registrationSettings.TurnstileSecretKey || ''}
@@ -13312,21 +13300,12 @@ const RegistrationConfigComponent = ({
                     EnableOIDCLogin: !prev.EnableOIDCLogin,
                   }))
                 }
-                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--tm-text)] focus:ring-offset-2 ${
-                  registrationSettings.EnableOIDCLogin
-                    ? buttonStyles.toggleOn
-                    : buttonStyles.toggleOff
-                }`}
+                className='tm-switch-btn'
+                role='switch'
+                aria-checked={!!registrationSettings.EnableOIDCLogin}
+                aria-label='启用 OIDC 登录'
               >
-                <span
-                  className={`inline-block h-4 w-4 transform rounded-full ${
-                    buttonStyles.toggleThumb
-                  } transition-transform ${
-                    registrationSettings.EnableOIDCLogin
-                      ? buttonStyles.toggleThumbOn
-                      : buttonStyles.toggleThumbOff
-                  }`}
-                />
+                <span className='tm-switch-btn-thumb' aria-hidden='true' />
               </button>
             </div>
             <p className='mt-1 text-[13px] text-[color:var(--tm-muted)]'>
@@ -13348,21 +13327,12 @@ const RegistrationConfigComponent = ({
                     EnableOIDCRegistration: !prev.EnableOIDCRegistration,
                   }))
                 }
-                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--tm-text)] focus:ring-offset-2 ${
-                  registrationSettings.EnableOIDCRegistration
-                    ? buttonStyles.toggleOn
-                    : buttonStyles.toggleOff
-                }`}
+                className='tm-switch-btn'
+                role='switch'
+                aria-checked={!!registrationSettings.EnableOIDCRegistration}
+                aria-label='启用 OIDC 注册'
               >
-                <span
-                  className={`inline-block h-4 w-4 transform rounded-full ${
-                    buttonStyles.toggleThumb
-                  } transition-transform ${
-                    registrationSettings.EnableOIDCRegistration
-                      ? buttonStyles.toggleThumbOn
-                      : buttonStyles.toggleThumbOff
-                  }`}
-                />
+                <span className='tm-switch-btn-thumb' aria-hidden='true' />
               </button>
             </div>
             <p className='mt-1 text-[13px] text-[color:var(--tm-muted)]'>
@@ -13377,6 +13347,7 @@ const RegistrationConfigComponent = ({
             </label>
             <div className='flex flex-col sm:flex-row gap-2'>
               <input
+                aria-label='https://your-oidc-provider.com/realms/your-realm'
                 type='text'
                 placeholder='https://your-oidc-provider.com/realms/your-realm'
                 value={registrationSettings.OIDCIssuer || ''}
@@ -13451,6 +13422,7 @@ const RegistrationConfigComponent = ({
               Authorization Endpoint（授权端点）
             </label>
             <input
+              aria-label='https://your-oidc-provider.com/realms/your-realm/protocol/openid-connect/auth'
               type='text'
               placeholder='https://your-oidc-provider.com/realms/your-realm/protocol/openid-connect/auth'
               value={registrationSettings.OIDCAuthorizationEndpoint || ''}
@@ -13473,6 +13445,7 @@ const RegistrationConfigComponent = ({
               Token Endpoint（Token端点）
             </label>
             <input
+              aria-label='https://your-oidc-provider.com/realms/your-realm/protocol/openid-connect/token'
               type='text'
               placeholder='https://your-oidc-provider.com/realms/your-realm/protocol/openid-connect/token'
               value={registrationSettings.OIDCTokenEndpoint || ''}
@@ -13495,6 +13468,7 @@ const RegistrationConfigComponent = ({
               UserInfo Endpoint（用户信息端点）
             </label>
             <input
+              aria-label='https://your-oidc-provider.com/realms/your-realm/protocol/openid-connect/userinfo'
               type='text'
               placeholder='https://your-oidc-provider.com/realms/your-realm/protocol/openid-connect/userinfo'
               value={registrationSettings.OIDCUserInfoEndpoint || ''}
@@ -13517,6 +13491,7 @@ const RegistrationConfigComponent = ({
               OIDC Client ID
             </label>
             <input
+              aria-label='请输入Client ID'
               type='text'
               placeholder='请输入Client ID'
               value={registrationSettings.OIDCClientId || ''}
@@ -13539,6 +13514,7 @@ const RegistrationConfigComponent = ({
               OIDC Client Secret
             </label>
             <input
+              aria-label='请输入Client Secret'
               type='password'
               placeholder='请输入Client Secret'
               value={registrationSettings.OIDCClientSecret || ''}
@@ -13600,6 +13576,7 @@ const RegistrationConfigComponent = ({
               OIDC登录按钮文字
             </label>
             <input
+              aria-label='使用OIDC登录'
               type='text'
               placeholder='使用OIDC登录'
               value={registrationSettings.OIDCButtonText || ''}
@@ -13622,6 +13599,7 @@ const RegistrationConfigComponent = ({
               最低信任等级
             </label>
             <input
+              aria-label='0'
               type='number'
               min='0'
               max='4'
@@ -13974,6 +13952,7 @@ const CustomAdFilterConfig = ({
         </div>
         <div className='relative'>
           <textarea
+            aria-label='请输入自定义去广告代码...'
             value={adFilterCode}
             onChange={(e) => setAdFilterCode(e.target.value)}
             rows={25}
@@ -14185,17 +14164,12 @@ const SuwayomiConfigComponent = ({
                 setEnabled(false);
               }
             }}
-            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-              enabled
-                ? 'bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] tm-press'
-                : 'bg-[var(--tm-surface-raised)] tm-press'
-            }`}
+            className='tm-switch-btn'
+            role='switch'
+            aria-checked={!!enabled}
+            aria-label='启用漫画展馆'
           >
-            <span
-              className={`inline-block h-4 w-4 transform rounded-full bg-[var(--tm-surface)] transition-transform ${
-                enabled ? 'translate-x-6' : 'translate-x-1'
-              }`}
-            />
+            <span className='tm-switch-btn-thumb' aria-hidden='true' />
           </button>
         </div>
 
@@ -14260,6 +14234,7 @@ const SuwayomiConfigComponent = ({
             Suwayomi 服务地址
           </label>
           <input
+            aria-label='http://127.0.0.1:4567'
             type='text'
             value={serverURL}
             onChange={(e) => setServerURL(e.target.value)}
@@ -14275,7 +14250,11 @@ const SuwayomiConfigComponent = ({
           <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
             认证方式
           </label>
-          <div className='grid grid-cols-1 gap-2 md:grid-cols-3'>
+          <div
+            className='grid grid-cols-1 gap-2 md:grid-cols-3'
+            role='radiogroup'
+            aria-label='认证方式'
+          >
             {[
               { value: 'none', label: '无认证' },
               { value: 'basic_auth', label: 'basic_auth' },
@@ -14284,12 +14263,14 @@ const SuwayomiConfigComponent = ({
               <button
                 key={item.value}
                 type='button'
+                role='radio'
+                aria-checked={authMode === item.value}
                 onClick={() =>
                   setAuthMode(
                     item.value as 'none' | 'basic_auth' | 'simple_login'
                   )
                 }
-                className={`rounded-lg border px-3 py-2 text-sm transition-colors ${
+                className={`tm-choice rounded-lg border px-3 py-2 text-sm transition-colors ${
                   authMode === item.value
                     ? 'border-[var(--tm-line)] bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)] min-h-[44px] tm-press'
                     : 'border-[var(--tm-line)] hover:bg-[var(--tm-line)] text-[color:var(--tm-text)] min-h-[44px] tm-press'
@@ -14312,6 +14293,7 @@ const SuwayomiConfigComponent = ({
                 用户名
               </label>
               <input
+                aria-label='登录用户名'
                 type='text'
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
@@ -14324,6 +14306,7 @@ const SuwayomiConfigComponent = ({
                 密码
               </label>
               <input
+                aria-label='登录密码'
                 type='password'
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -14340,6 +14323,7 @@ const SuwayomiConfigComponent = ({
               默认语言
             </label>
             <input
+              aria-label='zh'
               type='text'
               value={defaultLang}
               onChange={(e) => setDefaultLang(e.target.value)}
@@ -14366,6 +14350,7 @@ const SuwayomiConfigComponent = ({
             源白名单
           </label>
           <textarea
+            aria-label='留空表示使用默认语言下全部源；填写时用英文逗号分隔 sourceId'
             value={sourceIds}
             onChange={(e) => setSourceIds(e.target.value)}
             rows={3}
@@ -14695,17 +14680,12 @@ const OPDSConfigComponent = ({
               setEnabled(false);
             }
           }}
-          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-            enabled
-              ? 'bg-[var(--tm-text)] tm-press'
-              : 'bg-[var(--tm-surface-raised)] tm-press'
-          }`}
+          className='tm-switch-btn'
+          role='switch'
+          aria-checked={!!enabled}
+          aria-label='启用电子书馆'
         >
-          <span
-            className={`inline-block h-4 w-4 transform rounded-full bg-[var(--tm-surface)] transition-transform ${
-              enabled ? 'translate-x-6' : 'translate-x-1'
-            }`}
-          />
+          <span className='tm-switch-btn-thumb' aria-hidden='true' />
         </button>
       </div>
 
@@ -14804,6 +14784,7 @@ const OPDSConfigComponent = ({
         </div>
         <div className='grid grid-cols-1 gap-3 md:grid-cols-2'>
           <input
+            aria-label='订阅名称（可选）'
             type='text'
             value={legadoSubscriptionName}
             onChange={(e) => setLegadoSubscriptionName(e.target.value)}
@@ -14811,6 +14792,7 @@ const OPDSConfigComponent = ({
             className='rounded-lg border border-[var(--tm-line)] bg-[var(--tm-surface)] px-3 py-2 text-sm text-[color:var(--tm-text)]'
           />
           <input
+            aria-label='https://example.com/bookSource.json'
             type='text'
             value={legadoSubscriptionUrl}
             onChange={(e) => setLegadoSubscriptionUrl(e.target.value)}
@@ -14861,18 +14843,14 @@ const OPDSConfigComponent = ({
                           )
                         )
                       }
-                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                        sub.enabled !== false
-                          ? 'bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] tm-press'
-                          : 'bg-[var(--tm-surface-raised)] tm-press'
-                      }`}
+                      className='tm-switch-btn'
+                      role='switch'
+                      aria-checked={!!(sub.enabled !== false)}
+                      aria-label='启用该 Legado 订阅'
                     >
                       <span
-                        className={`inline-block h-4 w-4 transform rounded-full bg-[var(--tm-surface)] transition-transform ${
-                          sub.enabled !== false
-                            ? 'translate-x-6'
-                            : 'translate-x-1'
-                        }`}
+                        className='tm-switch-btn-thumb'
+                        aria-hidden='true'
                       />
                     </button>
                     <button
@@ -14947,18 +14925,14 @@ const OPDSConfigComponent = ({
                           enabled: source.enabled === false,
                         })
                       }
-                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                        source.enabled !== false
-                          ? 'bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] tm-press'
-                          : 'bg-[var(--tm-surface-raised)] tm-press'
-                      }`}
+                      className='tm-switch-btn'
+                      role='switch'
+                      aria-checked={!!(source.enabled !== false)}
+                      aria-label='启用该 OPDS 书源'
                     >
                       <span
-                        className={`inline-block h-4 w-4 transform rounded-full bg-[var(--tm-surface)] transition-transform ${
-                          source.enabled !== false
-                            ? 'translate-x-6'
-                            : 'translate-x-1'
-                        }`}
+                        className='tm-switch-btn-thumb'
+                        aria-hidden='true'
                       />
                     </button>
                     <button
@@ -14990,6 +14964,7 @@ const OPDSConfigComponent = ({
                 {isEditing ? (
                   <div className='mt-4 grid grid-cols-1 gap-4 border-t border-[var(--tm-line)] pt-4 md:grid-cols-2'>
                     <input
+                      aria-label='书源 ID'
                       type='text'
                       value={source.id}
                       onChange={(e) =>
@@ -14999,6 +14974,7 @@ const OPDSConfigComponent = ({
                       className='rounded-lg border border-[var(--tm-line)] bg-[var(--tm-surface)] px-3 py-2 text-[color:var(--tm-text)]'
                     />
                     <input
+                      aria-label='书源名称'
                       type='text'
                       value={source.name}
                       onChange={(e) =>
@@ -15008,6 +14984,7 @@ const OPDSConfigComponent = ({
                       className='rounded-lg border border-[var(--tm-line)] bg-[var(--tm-surface)] px-3 py-2 text-[color:var(--tm-text)]'
                     />
                     <input
+                      aria-label='https://example.com/opds'
                       type='text'
                       value={source.url}
                       onChange={(e) =>
@@ -15030,6 +15007,7 @@ const OPDSConfigComponent = ({
                       <option value='header'>自定义 Header</option>
                     </Select>
                     <input
+                      aria-label='语言 zh / en'
                       type='text'
                       value={source.language || ''}
                       onChange={(e) =>
@@ -15050,6 +15028,7 @@ const OPDSConfigComponent = ({
                     {source.authMode === 'basic' ? (
                       <>
                         <input
+                          aria-label='用户名'
                           type='text'
                           value={source.username || ''}
                           onChange={(e) =>
@@ -15059,6 +15038,7 @@ const OPDSConfigComponent = ({
                           className='rounded-lg border border-[var(--tm-line)] bg-[var(--tm-surface)] px-3 py-2 text-[color:var(--tm-text)]'
                         />
                         <input
+                          aria-label='密码'
                           type='password'
                           value={source.password || ''}
                           onChange={(e) =>
@@ -15072,6 +15052,7 @@ const OPDSConfigComponent = ({
                     {source.authMode === 'header' ? (
                       <>
                         <input
+                          aria-label='Header 名称'
                           type='text'
                           value={source.headerName || ''}
                           onChange={(e) =>
@@ -15081,6 +15062,7 @@ const OPDSConfigComponent = ({
                           className='rounded-lg border border-[var(--tm-line)] bg-[var(--tm-surface)] px-3 py-2 text-[color:var(--tm-text)]'
                         />
                         <input
+                          aria-label='Header 值'
                           type='password'
                           value={source.headerValue || ''}
                           onChange={(e) =>
@@ -15247,18 +15229,12 @@ const XiaoyaConfigComponent = ({
           <button
             onClick={() => setEnabled(!enabled)}
             disabled={role !== 'owner'}
-            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-              enabled
-                ? 'bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] tm-press'
-                : 'bg-[var(--tm-surface-raised)] tm-press'
-            }`}
+            className='tm-switch-btn'
+            role='switch'
+            aria-checked={!!enabled}
             aria-label='启用小雅功能'
           >
-            <span
-              className={`inline-block h-4 w-4 transform rounded-full bg-[var(--tm-surface)] transition-transform ${
-                enabled ? 'translate-x-6' : 'translate-x-1'
-              }`}
-            />
+            <span className='tm-switch-btn-thumb' aria-hidden='true' />
           </button>
         </div>
 
@@ -15267,6 +15243,7 @@ const XiaoyaConfigComponent = ({
             Alist 服务器地址
           </label>
           <input
+            aria-label='http://localhost:5244'
             type='text'
             value={serverURL}
             onChange={(e) => setServerURL(e.target.value)}
@@ -15283,6 +15260,7 @@ const XiaoyaConfigComponent = ({
             Token（推荐）
           </label>
           <input
+            aria-label='可选，使用 Token 认证'
             type='password'
             value={token}
             onChange={(e) => setToken(e.target.value)}
@@ -15297,6 +15275,7 @@ const XiaoyaConfigComponent = ({
               用户名
             </label>
             <input
+              aria-label='可选，用户名密码认证'
               type='text'
               value={username}
               onChange={(e) => setUsername(e.target.value)}
@@ -15309,6 +15288,7 @@ const XiaoyaConfigComponent = ({
               密码
             </label>
             <input
+              aria-label='可选'
               type='password'
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -15329,17 +15309,12 @@ const XiaoyaConfigComponent = ({
           </div>
           <button
             onClick={() => setDisableVideoPreview(!disableVideoPreview)}
-            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-              disableVideoPreview
-                ? 'bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] tm-press'
-                : 'bg-[var(--tm-surface-raised)] tm-press'
-            }`}
+            className='tm-switch-btn'
+            role='switch'
+            aria-checked={!!disableVideoPreview}
+            aria-label='禁用预览视频'
           >
-            <span
-              className={`inline-block h-4 w-4 transform rounded-full bg-[var(--tm-surface)] transition-transform ${
-                disableVideoPreview ? 'translate-x-6' : 'translate-x-1'
-              }`}
-            />
+            <span className='tm-switch-btn-thumb' aria-hidden='true' />
           </button>
         </div>
 
@@ -15563,17 +15538,12 @@ const TelegramConfigComponent = ({
           </div>
           <button
             onClick={() => setEnabled(!enabled)}
-            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-              enabled
-                ? 'bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] tm-press'
-                : 'bg-[var(--tm-surface-raised)] tm-press'
-            }`}
+            className='tm-switch-btn'
+            role='switch'
+            aria-checked={!!enabled}
+            aria-label='启用 Telegram Bot'
           >
-            <span
-              className={`inline-block h-4 w-4 transform rounded-full bg-[var(--tm-surface)] transition-transform ${
-                enabled ? 'translate-x-6' : 'translate-x-1'
-              }`}
-            />
+            <span className='tm-switch-btn-thumb' aria-hidden='true' />
           </button>
         </div>
 
@@ -15583,6 +15553,7 @@ const TelegramConfigComponent = ({
               Bot Token *
             </label>
             <input
+              aria-label='123456:ABC...'
               type='password'
               value={botToken}
               onChange={(e) => setBotToken(e.target.value)}
@@ -15595,6 +15566,7 @@ const TelegramConfigComponent = ({
               Bot 用户名 *
             </label>
             <input
+              aria-label='your_bot'
               type='text'
               value={botUsername}
               onChange={(e) => setBotUsername(e.target.value)}
@@ -15609,6 +15581,7 @@ const TelegramConfigComponent = ({
             Webhook Secret
           </label>
           <input
+            aria-label='建议填写随机长字符串'
             type='password'
             value={webhookSecret}
             onChange={(e) => setWebhookSecret(e.target.value)}
@@ -15639,6 +15612,7 @@ const TelegramConfigComponent = ({
               系统代理
             </label>
             <input
+              aria-label='http://127.0.0.1:7890'
               type='text'
               value={apiProxy}
               onChange={(e) => setApiProxy(e.target.value)}
@@ -15654,6 +15628,7 @@ const TelegramConfigComponent = ({
               反代 Base URL
             </label>
             <input
+              aria-label='https://telegram-api.example.com'
               type='text'
               value={apiBaseUrl}
               onChange={(e) => setApiBaseUrl(e.target.value)}
@@ -15704,6 +15679,7 @@ const TelegramConfigComponent = ({
           </label>
           <div className='flex flex-col gap-2 sm:flex-row'>
             <input
+              aria-label='用户或群组 chat_id'
               type='text'
               value={testChatId}
               onChange={(e) => setTestChatId(e.target.value)}
@@ -15928,17 +15904,12 @@ const EmailConfigComponent = ({
           </div>
           <button
             onClick={() => setEnabled(!enabled)}
-            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-              enabled
-                ? 'bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] tm-press'
-                : 'bg-[var(--tm-surface-raised)] tm-press'
-            }`}
+            className='tm-switch-btn'
+            role='switch'
+            aria-checked={!!enabled}
+            aria-label='启用邮件通知'
           >
-            <span
-              className={`inline-block h-4 w-4 transform rounded-full bg-[var(--tm-surface)] transition-transform ${
-                enabled ? 'translate-x-6' : 'translate-x-1'
-              }`}
-            />
+            <span className='tm-switch-btn-thumb' aria-hidden='true' />
           </button>
         </div>
 
@@ -15986,6 +15957,7 @@ const EmailConfigComponent = ({
                   SMTP 主机 *
                 </label>
                 <input
+                  aria-label='smtp.gmail.com'
                   type='text'
                   value={smtpHost}
                   onChange={(e) => setSmtpHost(e.target.value)}
@@ -15999,6 +15971,7 @@ const EmailConfigComponent = ({
                   SMTP 端口 *
                 </label>
                 <input
+                  aria-label='587'
                   type='number'
                   value={smtpPort}
                   onChange={(e) => setSmtpPort(parseInt(e.target.value))}
@@ -16025,6 +15998,7 @@ const EmailConfigComponent = ({
                 SMTP 用户名 *
               </label>
               <input
+                aria-label='your-email@gmail.com'
                 type='text'
                 value={smtpUser}
                 onChange={(e) => setSmtpUser(e.target.value)}
@@ -16038,6 +16012,7 @@ const EmailConfigComponent = ({
                 SMTP 密码 *
               </label>
               <input
+                aria-label='应用专用密码'
                 type='password'
                 value={smtpPassword}
                 onChange={(e) => setSmtpPassword(e.target.value)}
@@ -16051,6 +16026,7 @@ const EmailConfigComponent = ({
                 发件人邮箱 *
               </label>
               <input
+                aria-label='noreply@yourdomain.com'
                 type='email'
                 value={smtpFrom}
                 onChange={(e) => setSmtpFrom(e.target.value)}
@@ -16073,6 +16049,7 @@ const EmailConfigComponent = ({
                 Resend API Key *
               </label>
               <input
+                aria-label='re_xxxxx'
                 type='password'
                 value={resendApiKey}
                 onChange={(e) => setResendApiKey(e.target.value)}
@@ -16098,6 +16075,7 @@ const EmailConfigComponent = ({
                 发件人邮箱 *
               </label>
               <input
+                aria-label='noreply@yourdomain.com'
                 type='email'
                 value={resendFrom}
                 onChange={(e) => setResendFrom(e.target.value)}
@@ -16118,6 +16096,7 @@ const EmailConfigComponent = ({
           </h4>
           <div className='flex flex-col sm:flex-row gap-2'>
             <input
+              aria-label='输入测试邮箱地址'
               type='email'
               value={testEmail}
               onChange={(e) => setTestEmail(e.target.value)}
@@ -16331,13 +16310,15 @@ const MovieRequestsComponent = ({
             </div>
             <label className='relative inline-flex items-center cursor-pointer'>
               <input
+                aria-label='启用求片功能'
                 type='checkbox'
                 checked={enableMovieRequest}
                 disabled={role !== 'owner'}
                 onChange={(e) => setEnableMovieRequest(e.target.checked)}
                 className='sr-only peer'
               />
-              <div className="w-11 h-6 bg-[var(--tm-surface-raised)] peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-[var(--tm-text)] rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-[var(--tm-line)] after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-[var(--tm-surface-raised)] after:border-[var(--tm-line)] after:border after:rounded-full after:h-5 after:w-5 after:transition-all border-[var(--tm-line)] peer-checked:bg-[var(--tm-surface-raised)]"></div>
+              <div className='tm-switch-track'></div>
+              <div className='tm-switch-thumb'></div>
             </label>
           </div>
 
@@ -16697,12 +16678,14 @@ const AIConfigComponent = ({
         </div>
         <label className='relative inline-flex items-center cursor-pointer'>
           <input
+            aria-label='启用AI问片功能'
             type='checkbox'
             checked={enabled}
             onChange={(e) => setEnabled(e.target.checked)}
             className='sr-only peer'
           />
-          <div className="w-14 h-7 bg-[var(--tm-surface-raised)] peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-[var(--tm-text)] rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-[var(--tm-line)] after:content-[''] after:absolute after:top-0.5 after:start-[4px] after:bg-[var(--tm-surface-raised)] after:border-[var(--tm-line)] after:border after:rounded-full after:h-6 after:w-6 after:transition-all border-[var(--tm-line)] peer-checked:bg-[var(--tm-surface-raised)]"></div>
+          <div className='tm-switch-track'></div>
+          <div className='tm-switch-thumb'></div>
         </label>
       </div>
 
@@ -16779,6 +16762,7 @@ const AIConfigComponent = ({
                   API Key <span className='text-[color:var(--tm-text)]'>*</span>
                 </label>
                 <input
+                  aria-label='your-api-key'
                   type='password'
                   value={customApiKey}
                   onChange={(e) => setCustomApiKey(e.target.value)}
@@ -16792,6 +16776,7 @@ const AIConfigComponent = ({
                   <span className='text-[color:var(--tm-text)]'>*</span>
                 </label>
                 <input
+                  aria-label='https://your-api.example.com/v1'
                   type='text'
                   value={customBaseURL}
                   onChange={(e) => setCustomBaseURL(e.target.value)}
@@ -16805,6 +16790,7 @@ const AIConfigComponent = ({
                   <span className='text-[color:var(--tm-text)]'>*</span>
                 </label>
                 <input
+                  aria-label='model-name'
                   type='text'
                   value={customModel}
                   onChange={(e) => setCustomModel(e.target.value)}
@@ -16832,6 +16818,7 @@ const AIConfigComponent = ({
                   决策模型名称
                 </label>
                 <input
+                  aria-label='gpt-4o-mini (建议使用成本较低的小模型)'
                   type='text'
                   value={decisionCustomModel}
                   onChange={(e) => setDecisionCustomModel(e.target.value)}
@@ -16935,6 +16922,7 @@ const AIConfigComponent = ({
                   OpenAI API Key
                 </label>
                 <input
+                  aria-label='sk-...'
                   type='password'
                   value={openaiApiKey}
                   onChange={(e) => setOpenaiApiKey(e.target.value)}
@@ -16947,6 +16935,7 @@ const AIConfigComponent = ({
                   OpenAI Base URL
                 </label>
                 <input
+                  aria-label='https://api.openai.com'
                   type='text'
                   value={openaiBaseURL}
                   onChange={(e) => setOpenaiBaseURL(e.target.value)}
@@ -16959,6 +16948,7 @@ const AIConfigComponent = ({
                   OpenAI 模型
                 </label>
                 <input
+                  aria-label='gpt-4o-mini'
                   type='text'
                   value={openaiModel}
                   onChange={(e) => setOpenaiModel(e.target.value)}
@@ -16976,6 +16966,7 @@ const AIConfigComponent = ({
                   Claude API Key
                 </label>
                 <input
+                  aria-label='sk-ant-...'
                   type='password'
                   value={claudeApiKey}
                   onChange={(e) => setClaudeApiKey(e.target.value)}
@@ -16988,6 +16979,7 @@ const AIConfigComponent = ({
                   Claude Base URL
                 </label>
                 <input
+                  aria-label='https://api.anthropic.com'
                   type='text'
                   value={claudeBaseURL}
                   onChange={(e) => setClaudeBaseURL(e.target.value)}
@@ -17000,6 +16992,7 @@ const AIConfigComponent = ({
                   Claude 模型
                 </label>
                 <input
+                  aria-label='claude-sonnet-4-6'
                   type='text'
                   value={claudeModel}
                   onChange={(e) => setClaudeModel(e.target.value)}
@@ -17034,12 +17027,14 @@ const AIConfigComponent = ({
           </div>
           <label className='relative inline-flex items-center cursor-pointer'>
             <input
+              aria-label='启用联网搜索'
               type='checkbox'
               checked={enableWebSearch}
               onChange={(e) => setEnableWebSearch(e.target.checked)}
               className='sr-only peer'
             />
-            <div className="w-11 h-6 bg-[var(--tm-surface-raised)] peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-[var(--tm-text)] rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-[var(--tm-line)] after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-[var(--tm-surface-raised)] after:border-[var(--tm-line)] after:border after:rounded-full after:h-5 after:w-5 after:transition-all border-[var(--tm-line)] peer-checked:bg-[var(--tm-surface-raised)]"></div>
+            <div className='tm-switch-track'></div>
+            <div className='tm-switch-thumb'></div>
           </label>
         </div>
 
@@ -17067,6 +17062,7 @@ const AIConfigComponent = ({
                   Tavily API Key
                 </label>
                 <input
+                  aria-label='tvly-...'
                   type='password'
                   value={tavilyApiKey}
                   onChange={(e) => setTavilyApiKey(e.target.value)}
@@ -17093,6 +17089,7 @@ const AIConfigComponent = ({
                   Serper API Key
                 </label>
                 <input
+                  aria-label='your-serper-key'
                   type='password'
                   value={serperApiKey}
                   onChange={(e) => setSerperApiKey(e.target.value)}
@@ -17119,6 +17116,7 @@ const AIConfigComponent = ({
                   SerpAPI Key
                 </label>
                 <input
+                  aria-label='your-serpapi-key'
                   type='password'
                   value={serpApiKey}
                   onChange={(e) => setSerpApiKey(e.target.value)}
@@ -17199,12 +17197,14 @@ const AIConfigComponent = ({
             </div>
             <label className='relative inline-flex items-center cursor-pointer'>
               <input
+                aria-label={item.label}
                 type='checkbox'
                 checked={item.state}
                 onChange={(e) => item.setState(e.target.checked)}
                 className='sr-only peer'
               />
-              <div className="w-11 h-6 bg-[var(--tm-surface-raised)] peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-[var(--tm-text)] rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-[var(--tm-line)] after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-[var(--tm-surface-raised)] after:border-[var(--tm-line)] after:border after:rounded-full after:h-5 after:w-5 after:transition-all border-[var(--tm-line)] peer-checked:bg-[var(--tm-surface-raised)]"></div>
+              <div className='tm-switch-track'></div>
+              <div className='tm-switch-thumb'></div>
             </label>
           </div>
         ))}
@@ -17243,6 +17243,7 @@ const AIConfigComponent = ({
               最大回复Token数
             </label>
             <input
+              aria-label='留空则不设置'
               type='number'
               min='1'
               value={maxTokens}
@@ -17264,6 +17265,7 @@ const AIConfigComponent = ({
               自定义系统提示词
             </label>
             <textarea
+              aria-label='可自定义AI的角色和行为规则...'
               value={systemPrompt}
               onChange={(e) => setSystemPrompt(e.target.value)}
               rows={4}
@@ -17284,17 +17286,12 @@ const AIConfigComponent = ({
             </div>
             <button
               onClick={() => setEnableStreaming(!enableStreaming)}
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                enableStreaming
-                  ? 'bg-[var(--tm-text)] text-[color:var(--tm-accent-contrast)] tm-press'
-                  : 'bg-[var(--tm-surface-raised)] tm-press'
-              }`}
+              className='tm-switch-btn'
+              role='switch'
+              aria-checked={!!enableStreaming}
+              aria-label='流式响应'
             >
-              <span
-                className={`inline-block h-4 w-4 transform rounded-full bg-[var(--tm-surface)] transition-transform ${
-                  enableStreaming ? 'translate-x-6' : 'translate-x-1'
-                }`}
-              />
+              <span className='tm-switch-btn-thumb' aria-hidden='true' />
             </button>
           </div>
         </div>
@@ -17502,6 +17499,7 @@ const MusicConfigComponent = ({
         </div>
         <label className='relative inline-flex items-center cursor-pointer'>
           <input
+            aria-label='启用音乐功能'
             type='checkbox'
             checked={enabled}
             disabled={role !== 'owner'}
@@ -17515,7 +17513,8 @@ const MusicConfigComponent = ({
             }}
             className='sr-only peer'
           />
-          <div className="w-14 h-7 bg-[var(--tm-surface-raised)] peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-[var(--tm-text)] rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-[var(--tm-line)] after:content-[''] after:absolute after:top-0.5 after:start-[4px] after:bg-[var(--tm-surface-raised)] after:border-[var(--tm-line)] after:border after:rounded-full after:h-6 after:w-6 after:transition-all border-[var(--tm-line)] peer-checked:bg-[var(--tm-surface-raised)]"></div>
+          <div className='tm-switch-track'></div>
+          <div className='tm-switch-thumb'></div>
         </label>
       </div>
 
@@ -17587,12 +17586,14 @@ const MusicConfigComponent = ({
           </div>
           <label className='relative inline-flex items-center cursor-pointer'>
             <input
+              aria-label='启用播放代理'
               type='checkbox'
               checked={proxyEnabled}
               onChange={(e) => setProxyEnabled(e.target.checked)}
               className='sr-only peer'
             />
-            <div className="w-14 h-7 bg-[var(--tm-surface-raised)] peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-[var(--tm-text)] rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-[var(--tm-line)] after:content-[''] after:absolute after:top-0.5 after:start-[4px] after:bg-[var(--tm-surface-raised)] after:border-[var(--tm-line)] after:border after:rounded-full after:h-6 after:w-6 after:transition-all border-[var(--tm-line)] peer-checked:bg-[var(--tm-surface-raised)]"></div>
+            <div className='tm-switch-track'></div>
+            <div className='tm-switch-thumb'></div>
           </label>
         </div>
 
@@ -17601,6 +17602,7 @@ const MusicConfigComponent = ({
             lxserver Base URL
           </label>
           <input
+            aria-label='http://127.0.0.1:9527'
             type='text'
             value={baseUrl}
             onChange={(e) => setBaseUrl(e.target.value)}
@@ -17617,6 +17619,7 @@ const MusicConfigComponent = ({
             x-user-token
           </label>
           <input
+            aria-label='lx_tk_xxx'
             type='password'
             value={token}
             onChange={(e) => setToken(e.target.value)}
@@ -18166,6 +18169,7 @@ const LiveSourceConfig = ({
         <div className='p-4 bg-[var(--tm-surface-raised)] rounded-lg border border-[var(--tm-line)] space-y-4'>
           <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
             <input
+              aria-label='名称'
               type='text'
               placeholder='名称'
               value={newLiveSource.name}
@@ -18175,6 +18179,7 @@ const LiveSourceConfig = ({
               className='px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)]'
             />
             <input
+              aria-label='Key'
               type='text'
               placeholder='Key'
               value={newLiveSource.key}
@@ -18184,6 +18189,7 @@ const LiveSourceConfig = ({
               className='px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)]'
             />
             <input
+              aria-label='M3U 地址'
               type='text'
               placeholder='M3U 地址'
               value={newLiveSource.url}
@@ -18193,6 +18199,7 @@ const LiveSourceConfig = ({
               className='px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)]'
             />
             <input
+              aria-label='节目单地址（选填）'
               type='text'
               placeholder='节目单地址（选填）'
               value={newLiveSource.epg}
@@ -18202,6 +18209,7 @@ const LiveSourceConfig = ({
               className='px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)]'
             />
             <input
+              aria-label='自定义 UA（选填）'
               type='text'
               placeholder='自定义 UA（选填）'
               value={newLiveSource.ua}
@@ -18595,25 +18603,12 @@ const WebLiveConfig = ({
             title={
               role !== 'owner' ? '只有站长可以开放或关闭网络直播' : undefined
             }
-            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[var(--tm-text)] ${
-              config.WebLiveEnabled
-                ? buttonStyles.toggleOn
-                : buttonStyles.toggleOff
-            } ${
-              isLoading('toggleWebLiveEnabled') || role !== 'owner'
-                ? 'opacity-50 cursor-not-allowed min-h-[44px] tm-press'
-                : ' min-h-[44px] tm-press'
-            }`}
+            className='tm-switch-btn'
+            role='switch'
+            aria-checked={!!config.WebLiveEnabled}
+            aria-label='网络直播功能总开关'
           >
-            <span
-              className={`inline-block h-4 w-4 transform rounded-full transition-transform ${
-                buttonStyles.toggleThumb
-              } ${
-                config.WebLiveEnabled
-                  ? buttonStyles.toggleThumbOn
-                  : buttonStyles.toggleThumbOff
-              }`}
-            />
+            <span className='tm-switch-btn-thumb' aria-hidden='true' />
           </button>
         </div>
       </div>
@@ -18691,6 +18686,7 @@ const WebLiveConfig = ({
         <div className='p-4 bg-[var(--tm-surface-raised)] rounded-lg border border-[var(--tm-line)] space-y-4'>
           <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
             <input
+              aria-label='名称'
               type='text'
               placeholder='名称'
               value={newSource.name}
@@ -18711,6 +18707,7 @@ const WebLiveConfig = ({
               <option value='douyin'>抖音</option>
             </Select>
             <input
+              aria-label='房间ID'
               type='text'
               placeholder='房间ID'
               value={newSource.roomId}

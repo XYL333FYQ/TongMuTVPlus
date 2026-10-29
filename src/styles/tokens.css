@@ -18,6 +18,12 @@
   --tm-accent-contrast: #0a0a0b;
   --tm-accent-soft: var(--tm-line);
   --tm-danger: #e5484d;
+  /* 阅读器三档底色：由阅读设置独立选择，不随全站深浅主题翻转 */
+  --tm-reader-light-bg: #f6f6f4;
+  --tm-reader-light-text: #1b1b1d;
+  --tm-reader-soft-bg: #e9e7e1;
+  --tm-reader-dark-bg: #0b0b0d;
+  --tm-reader-dark-text: #e4e4e6;
   --tm-highlight: var(--tm-text);
   --tm-online: var(--tm-text);
   --tm-rating-star: var(--tm-on-art);

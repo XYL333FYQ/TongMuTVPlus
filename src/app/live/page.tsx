@@ -2693,13 +2693,13 @@ function LivePageClient() {
             className={`grid gap-4 lg:h-[500px] xl:h-[650px] 2xl:h-[750px] transition-all duration-300 ease-in-out ${
               isChannelListCollapsed
                 ? 'grid-cols-1'
-                : 'grid-cols-1 md:grid-cols-4'
+                : 'grid-cols-1 lg:grid-cols-4'
             }`}
           >
             {/* 播放器 */}
             <div
               className={`h-full transition-all duration-300 ease-in-out ${
-                isChannelListCollapsed ? 'col-span-1' : 'md:col-span-3'
+                isChannelListCollapsed ? 'col-span-1' : 'lg:col-span-3'
               }`}
             >
               <div className='relative w-full h-[300px] lg:h-full'>
@@ -2949,11 +2949,11 @@ function LivePageClient() {
             <div
               className={`h-[330px] lg:h-full md:overflow-hidden transition-all duration-300 ease-in-out ${
                 isChannelListCollapsed
-                  ? 'md:col-span-1 lg:hidden lg:opacity-0 lg:scale-95'
-                  : 'md:col-span-1 lg:opacity-100 lg:scale-100'
+                  ? 'lg:col-span-1 lg:hidden lg:opacity-0 lg:scale-95'
+                  : 'lg:col-span-1 lg:opacity-100 lg:scale-100'
               }`}
             >
-              <div className='md:ml-2 px-4 py-0 h-full rounded-xl bg-ink/10 bg-raised flex flex-col border border-line overflow-hidden'>
+              <div className='lg:ml-2 px-4 py-0 h-full rounded-xl bg-ink/10 bg-raised flex flex-col border border-line overflow-hidden'>
                 {/* 主要的 Tab 切换 */}
                 <div className='flex mb-1 -mx-6 flex-shrink-0'>
                   <div
@@ -3170,7 +3170,7 @@ function LivePageClient() {
                                       {channel.name}
                                     </div>
                                     <div
-                                      className='text-[13px] text-muted mt-1 flex items-center gap-2'
+                                      className='text-[13px] text-muted mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 [&>span]:max-w-full [&>span]:shrink-0 [&>span]:truncate'
                                       title={channel.group}
                                     >
                                       <span>{channel.group}</span>
@@ -3260,7 +3260,7 @@ function LivePageClient() {
                                     >
                                       {item.name}
                                     </div>
-                                    <div className='text-[13px] text-muted mt-1 flex items-center gap-2'>
+                                    <div className='text-[13px] text-muted mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 [&>span]:max-w-full [&>span]:shrink-0 [&>span]:truncate'>
                                       <span title={item.group}>
                                         {item.group}
                                       </span>

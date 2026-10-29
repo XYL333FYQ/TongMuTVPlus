@@ -78,7 +78,7 @@ export default function ContinueReadingCard({
       }}
       aria-label={`${ctaLabel} ${title}`}
       className={cn(
-        'tm-media-card group flex min-h-[44px] gap-4 p-4 hover:border-fg sm:gap-5 sm:p-5 tm-press',
+        'tm-media-card tm-continue-reading group flex min-h-[44px] gap-4 p-4 sm:gap-5 sm:p-6 tm-press',
         LIBRARY_PANEL,
         LIBRARY_FOCUS,
         className

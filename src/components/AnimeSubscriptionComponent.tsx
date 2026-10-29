@@ -11,7 +11,7 @@ import {
   Trash2,
   X,
 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 import { AdminConfig } from '@/lib/admin.types';
@@ -59,37 +59,23 @@ const Switch = ({
   checked,
   onChange,
   disabled,
+  label,
 }: {
   checked: boolean;
   onChange: (checked: boolean) => void;
   disabled?: boolean;
+  label?: string;
 }) => (
   <button
     type='button'
     role='switch'
     aria-checked={checked}
+    aria-label={label}
     disabled={disabled}
     onClick={() => onChange(!checked)}
-    className={`
-      relative inline-flex h-6 w-11 items-center rounded-full transition-colors
-      ${
-        checked
-          ? 'bg-fg text-inverse min-h-[44px] tm-press'
-          : 'bg-raised min-h-[44px] tm-press'
-      }
-      ${
-        disabled
-          ? 'opacity-50 cursor-not-allowed min-h-[44px] tm-press'
-          : 'cursor-pointer min-h-[44px] tm-press'
-      }
-    `}
+    className='tm-switch-btn'
   >
-    <span
-      className={` inline-block h-4 w-4 transform rounded-full bg-surface transition-transform ${
-        checked ? 'translate-x-6' : 'translate-x-1'
-      }
- `}
-    />
+    <span className='tm-switch-btn-thumb' aria-hidden='true' />
   </button>
 );
 
@@ -197,8 +183,14 @@ export default function AnimeSubscriptionComponent({
   const [subscriptions, setSubscriptions] = useState<AnimeSubscription[]>([]);
   const [loading, setLoading] = useState(false);
   const [showAddForm, setShowAddForm] = useState(false);
+  const formRef = useRef<HTMLDivElement>(null);
   const [editingSubscription, setEditingSubscription] =
     useState<AnimeSubscription | null>(null);
+  // 点“添加 / 编辑”后让表单进入可视区，避免按钮变灰却看不到结果
+  useEffect(() => {
+    if (!showAddForm && !editingSubscription) return;
+    formRef.current?.scrollIntoView({ block: 'start', behavior: 'smooth' });
+  }, [showAddForm, editingSubscription]);
   const [checkingId, setCheckingId] = useState<string | null>(null);
   const [recognizing, setRecognizing] = useState(false);
   const [recognizeError, setRecognizeError] = useState('');
@@ -667,6 +659,7 @@ export default function AnimeSubscriptionComponent({
             <span className='text-sm font-medium text-muted'>启用追番功能</span>
             <Switch
               checked={enabled}
+              label='启用追番功能'
               onChange={handleToggleEnabled}
               disabled={loading}
             />
@@ -734,7 +727,10 @@ export default function AnimeSubscriptionComponent({
 
       {/* 添加/编辑表单 */}
       {(showAddForm || editingSubscription) && (
-        <div className='bg-surface border border-line rounded-lg p-6'>
+        <div
+          ref={formRef}
+          className='bg-surface border border-line rounded-lg p-6 scroll-mt-24'
+        >
           <div className='flex items-center justify-between mb-4'>
             <h3 className='text-lg font-medium text-fg'>
               {editingSubscription ? '编辑订阅' : '添加订阅'}
@@ -1066,6 +1062,7 @@ export default function AnimeSubscriptionComponent({
                 </span>
                 <Switch
                   checked={formData.enabled}
+                  label='启用此订阅'
                   onChange={(checked) =>
                     setFormData({ ...formData, enabled: checked })
                   }
@@ -1077,6 +1074,7 @@ export default function AnimeSubscriptionComponent({
                 </span>
                 <Switch
                   checked={formData.onePerEpisode}
+                  label='单集只下载一次'
                   onChange={(checked) =>
                     setFormData({ ...formData, onePerEpisode: checked })
                   }
@@ -1088,6 +1086,7 @@ export default function AnimeSubscriptionComponent({
                 </span>
                 <Switch
                   checked={formData.refillMissingEpisodes}
+                  label='缺集重新检索'
                   onChange={(checked) =>
                     setFormData({ ...formData, refillMissingEpisodes: checked })
                   }
@@ -1171,6 +1170,7 @@ export default function AnimeSubscriptionComponent({
                 <div className='flex items-center gap-2'>
                   <Switch
                     checked={sub.enabled}
+                    label='启用此订阅'
                     onChange={() => handleToggleSubscription(sub)}
                     disabled={loading}
                   />
@@ -1248,6 +1248,7 @@ export default function AnimeSubscriptionComponent({
                   </div>
                   <Switch
                     checked={sub.enabled}
+                    label='启用此订阅'
                     onChange={() => handleToggleSubscription(sub)}
                     disabled={loading}
                   />

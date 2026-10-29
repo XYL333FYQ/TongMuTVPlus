@@ -3,6 +3,8 @@
 
 import { useEffect, useState } from 'react';
 
+import ModalLayer from '@/components/feedback/ModalLayer';
+
 interface Song {
   id: string;
   name: string;
@@ -212,21 +214,16 @@ export default function AddToPlaylistModal({
   if (!isOpen) return null;
 
   return (
-    <div
-      className='fixed inset-0 bg-ink/50 backdrop-blur-sm z-[110] flex items-center justify-center p-4'
-      onClick={onClose}
-    >
-      <div
-        className='bg-surface rounded-xl max-w-md w-full max-h-[80vh] overflow-hidden border border-line'
-        onClick={(e) => e.stopPropagation()}
-      >
+    <ModalLayer label='添加到歌单' onClose={onClose}>
+      <div className='tm-modal bg-surface rounded-xl max-w-md w-full max-h-[80dvh] overflow-hidden border border-line'>
         {/* Header */}
         <div className='p-4 border-b border-line'>
           <div className='flex items-center justify-between'>
             <h3 className='text-lg font-bold text-fg'>添加到歌单</h3>
             <button
               onClick={onClose}
-              className='text-muted hover:text-fg transition-colors min-h-[44px] tm-press'
+              aria-label='关闭'
+              className='flex min-h-[44px] min-w-[44px] items-center justify-center text-muted hover:text-fg transition-colors tm-press'
             >
               <svg
                 className='w-6 h-6'
@@ -251,7 +248,7 @@ export default function AddToPlaylistModal({
         </div>
 
         {/* Content */}
-        <div className='p-4 overflow-y-auto max-h-[calc(80vh-120px)]'>
+        <div className='p-4 overflow-y-auto max-h-[calc(80dvh-120px)]'>
           {/* Create New Playlist Button */}
           {!showCreateForm && (
             <button
@@ -361,7 +358,10 @@ export default function AddToPlaylistModal({
                     </div>
                   )}
                   <div className='flex-1 min-w-0'>
-                    <div className='text-fg font-medium truncate'>
+                    <div
+                      className='text-fg font-medium line-clamp-2 break-words'
+                      title={playlist.name}
+                    >
                       {playlist.name}
                     </div>
                     {playlist.description && (
@@ -393,6 +393,6 @@ export default function AddToPlaylistModal({
           )}
         </div>
       </div>
-    </div>
+    </ModalLayer>
   );
 }

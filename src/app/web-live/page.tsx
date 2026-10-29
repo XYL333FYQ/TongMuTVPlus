@@ -311,6 +311,8 @@ export default function WebLivePage() {
   const handleSourceClick = async (source: any) => {
     // 立即清理旧的播放器
     cleanupPlayer();
+    // 播放器已销毁：先清空地址，这样重复点同一个房间、流地址不变时也能重新触发创建
+    setVideoUrl('');
 
     setCurrentSource(source);
     setIsVideoLoading(true);
@@ -577,12 +579,12 @@ export default function WebLivePage() {
             className={`grid gap-4 lg:h-[500px] xl:h-[650px] 2xl:h-[750px] transition-[transform,opacity] duration-300 ease-in-out ${
               isChannelListCollapsed
                 ? 'grid-cols-1'
-                : 'grid-cols-1 md:grid-cols-4'
+                : 'grid-cols-1 lg:grid-cols-4'
             }`}
           >
             <div
               className={`h-full transition-[transform,opacity] duration-300 ease-in-out ${
-                isChannelListCollapsed ? 'col-span-1' : 'md:col-span-3'
+                isChannelListCollapsed ? 'col-span-1' : 'lg:col-span-3'
               }`}
             >
               <div className='relative w-full h-[300px] lg:h-full [--tm-surface:var(--tm-room-cinema-bg)] [--tm-surface-raised:color-mix(in_srgb,var(--tm-room-cinema-bg)_85%,var(--tm-room-player-text))] [--tm-text:var(--tm-room-player-text)] [--tm-muted:color-mix(in_srgb,var(--tm-room-player-text)_72%,var(--tm-room-cinema-bg))] [--tm-line:color-mix(in_srgb,var(--tm-room-player-text)_15%,transparent)]'>
@@ -590,6 +592,21 @@ export default function WebLivePage() {
                   ref={artRef}
                   className='bg-surface w-full h-full rounded-xl overflow-hidden shadow-lg border border-line'
                 ></div>
+
+                {!videoUrl && !isVideoLoading && !errorMessage && (
+                  <div className='pointer-events-none absolute inset-0 flex items-center justify-center rounded-xl px-6 text-center'>
+                    <div className='max-w-xs space-y-2'>
+                      <p className='text-base font-medium text-fg'>
+                        {currentSource ? '准备播放' : '还没有选择直播'}
+                      </p>
+                      <p className='text-sm text-muted'>
+                        {sources.length === 0
+                          ? '暂未配置网络直播源，请站长在管理面板添加。'
+                          : '从下方或右侧的列表里选一个房间开始观看。'}
+                      </p>
+                    </div>
+                  </div>
+                )}
 
                 {errorMessage && (
                   <div className='absolute inset-0 bg-ink/90 rounded-xl overflow-hidden shadow-lg border border-line flex items-center justify-center z-[600] transition-[transform,opacity] duration-300'>

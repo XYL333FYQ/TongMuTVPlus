@@ -12,7 +12,8 @@ import { cn } from '@/lib/cn';
 export const LIBRARY_PAGE = 'bg-canvas';
 
 /** 实心内容面板。 */
-export const LIBRARY_PANEL = 'rounded-lg border border-line bg-surface';
+export const LIBRARY_PANEL =
+  'tm-library-panel rounded-lg bg-surface shadow-[var(--tm-shadow-sm)]';
 
 /** 正文主色。 */
 export const LIBRARY_TEXT = 'text-fg';
@@ -32,7 +33,8 @@ export const LIBRARY_GHOST_BUTTON =
   'inline-flex min-h-[44px] items-center justify-center gap-2 rounded-md border border-line px-4 py-2.5 text-sm font-medium text-fg hover:bg-raised tm-press';
 
 /** 焦点环，统一给书库区的可聚焦元素用。 */
-export const LIBRARY_FOCUS = '';
+export const LIBRARY_FOCUS =
+  'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-fg';
 
 /** 输入框 / 下拉框：纸面凹陷，聚焦时边框转主色。 */
 export const LIBRARY_FIELD =
@@ -88,10 +90,10 @@ export const BOOK_SHELF_BOARD = 'border-b border-line';
 
 /** 横滑容器：隐藏滚动条，保留手势滚动。 */
 export const BOOK_RAIL =
-  'flex snap-x snap-mandatory gap-3 overflow-x-auto pb-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden';
+  'tm-media-rail flex snap-x snap-mandatory gap-3 overflow-x-auto px-1 pt-2 pb-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden';
 
 /** rail 中每一项的宽度。 */
-export const BOOK_RAIL_ITEM = 'w-24 shrink-0 snap-start sm:w-28';
+export const BOOK_RAIL_ITEM = 'w-32 shrink-0 snap-start sm:w-36';
 
 /**
  * 封面右下角的书架开关（书墙与搜索结果共用）。
@@ -106,10 +108,9 @@ export const SHELF_CHIP =
 
 /** 书脊标签（书源 / 分类切换）：方角 + 选中时底部一道主色。 */
 export const SPINE_TAB =
-  'relative min-h-[44px] shrink-0 whitespace-nowrap rounded-t-md px-3.5 pb-2.5 pt-2 text-lg font-medium tm-press';
+  'relative min-h-[44px] shrink-0 whitespace-nowrap rounded-md px-4 py-2.5 text-sm font-medium tm-press';
 
-export const SPINE_TAB_ACTIVE =
-  'bg-raised font-medium text-inverse after:absolute after:inset-x-0 after:bottom-0 after:h-[2px] after:bg-fg';
+export const SPINE_TAB_ACTIVE = 'bg-fg font-medium text-inverse';
 
 export const SPINE_TAB_IDLE = 'text-muted hover:bg-raised hover:text-fg';
 
@@ -126,7 +127,7 @@ export const READER_CANVAS_SKELETON = 'tm-skeleton bg-raised';
  * 比书库面板多一层投影——这些浮层是压在翻页画布上的，需要和画布分开。
  */
 export const READER_SHEET =
-  'rounded-lg border border-line bg-surface shadow-xl';
+  'tm-reader-sheet rounded-lg border border-line bg-surface shadow-xl';
 
 /**
  * 阅读器的分段选择（显示方式 / 缩放类型）。

@@ -18,12 +18,18 @@ export default function MediaSectionHeader({
 }) {
   return (
     <div className={cn('min-w-0', className)}>
-      <div className='flex items-baseline gap-3'>
-        <h2 className={cn('tm-section-title shrink-0', LIBRARY_SERIF)}>
+      <div className='flex min-w-0 flex-wrap items-center gap-x-3 gap-y-2'>
+        <h2
+          className={cn('tm-section-title min-w-0 break-words', LIBRARY_SERIF)}
+        >
           {title}
         </h2>
         <span className='h-px min-w-4 flex-1 bg-line' aria-hidden />
-        {action ? <div className='shrink-0'>{action}</div> : null}
+        {action ? (
+          <div className='flex min-w-0 flex-wrap items-center gap-2'>
+            {action}
+          </div>
+        ) : null}
       </div>
       {subtitle && (
         <p className={cn('mt-1.5 text-[13px]', LIBRARY_MUTED)}>{subtitle}</p>

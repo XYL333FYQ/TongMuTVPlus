@@ -54,14 +54,11 @@ function Toggle({
       aria-label={label}
       onClick={onChange}
       disabled={disabled}
-      className={`tm-press relative inline-flex h-11 w-12 shrink-0 items-center rounded-full bg-transparent before:pointer-events-none before:absolute before:inset-x-0 before:top-1/2 before:h-7 before:-translate-y-1/2 before:rounded-full before:transition-colors before:duration-200 disabled:cursor-not-allowed disabled:opacity-50 ${
-        checked ? 'before:bg-fg' : 'before:bg-raised'
-      }`}
+      className='tm-switch-btn'
     >
       <span
-        className={`relative inline-flex h-5 w-5 transform items-center justify-center rounded-full shadow-sm transition-transform duration-200 ${
-          checked ? 'translate-x-6 bg-inverse' : 'translate-x-1 bg-fg'
-        }`}
+        className='tm-switch-btn-thumb flex items-center justify-center'
+        aria-hidden='true'
       >
         {busy ? (
           <span className='h-3 w-3 animate-spin rounded-full border-2 border-line border-t-transparent' />

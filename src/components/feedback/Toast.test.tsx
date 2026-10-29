@@ -2,6 +2,67 @@ import { act, fireEvent, render, screen } from '@testing-library/react';
 
 import Toast from '@/components/feedback/Toast';
 
+test('a visible toast follows modal opening and closing without restarting its lifetime', async () => {
+  const close = jest.fn();
+  const result = render(<Toast message='保留原来的提示时间' onClose={close} />);
+  const dialog = document.createElement('dialog');
+  document.body.append(dialog);
+  try {
+    act(() => jest.advanceTimersByTime(1000));
+    await act(async () => {
+      dialog.setAttribute('open', '');
+      await Promise.resolve();
+    });
+    expect(dialog).toContainElement(screen.getByRole('status'));
+    await act(async () => {
+      dialog.removeAttribute('open');
+      await Promise.resolve();
+    });
+    expect(dialog).not.toContainElement(screen.getByRole('status'));
+    expect(close).not.toHaveBeenCalled();
+    act(() => jest.advanceTimersByTime(2320));
+    expect(close).toHaveBeenCalledTimes(1);
+  } finally {
+    result.unmount();
+    dialog.remove();
+  }
+});
+
+test('removing the hosting modal keeps the remaining error message in the document', async () => {
+  const dialog = document.createElement('dialog');
+  dialog.setAttribute('open', '');
+  document.body.append(dialog);
+  const result = render(
+    <Toast message='关闭下载面板后仍能阅读错误' type='error' />
+  );
+  try {
+    await act(async () => {
+      dialog.remove();
+      await Promise.resolve();
+    });
+    expect(screen.getByRole('alert')).toHaveTextContent(
+      '关闭下载面板后仍能阅读错误'
+    );
+  } finally {
+    result.unmount();
+    dialog.remove();
+  }
+});
+
+test('an error raised inside a modal remains inside the active dialog instead of the inert page', () => {
+  const first = document.createElement('dialog');
+  const active = document.createElement('dialog');
+  first.setAttribute('open', '');
+  active.setAttribute('open', '');
+  document.body.append(first, active);
+  const result = render(<Toast message='无法导出此下载' type='error' />);
+  expect(active).toContainElement(screen.getByRole('alert'));
+  expect(first).not.toContainElement(screen.getByRole('alert'));
+  result.unmount();
+  first.remove();
+  active.remove();
+});
+
 beforeEach(() => {
   jest.useFakeTimers();
 });

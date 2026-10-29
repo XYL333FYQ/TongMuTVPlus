@@ -67,6 +67,8 @@ export default function MangaSearchPage() {
   const flushTimerRef = useRef<number | null>(null);
   const [totalSources, setTotalSources] = useState(0);
   const [completedSources, setCompletedSources] = useState(0);
+  // 流式搜索中返回错误的来源数，用于提示结果可能不完整
+  const [failedSourceCount, setFailedSourceCount] = useState(0);
   const [useFluidSearch, setUseFluidSearch] = useState(true);
 
   const getCacheKey = useCallback(
@@ -280,6 +282,7 @@ export default function MangaSearchPage() {
               case 'start':
                 setTotalSources(payload.totalSources || 0);
                 setCompletedSources(0);
+                setFailedSourceCount(0);
                 break;
               case 'source_result':
                 setCompletedSources((prev) =>
@@ -296,6 +299,7 @@ export default function MangaSearchPage() {
                 setCompletedSources((prev) =>
                   Math.max(prev + 1, payload.completedSources || 0)
                 );
+                setFailedSourceCount((prev) => prev + 1);
                 break;
               case 'error':
                 setError(payload.error || '搜索失败');
@@ -551,6 +555,12 @@ export default function MangaSearchPage() {
           }
         />
         {error && <EmptyState tone='error' description={error} />}
+        {!loading && failedSourceCount > 0 ? (
+          <EmptyState
+            tone='error'
+            description={`有 ${failedSourceCount} 个来源没有返回结果，当前只显示其余来源的结果，可能不完整。`}
+          />
+        ) : null}
         {loading && results.length === 0 ? (
           <MediaGridSkeleton count={12} />
         ) : results.length === 0 ? (

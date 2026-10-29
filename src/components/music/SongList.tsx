@@ -74,51 +74,52 @@ function SongRow({
   const label = sourceLabel(song.platform);
 
   return (
-    <div
-      role='button'
-      tabIndex={0}
-      aria-current={playing ? 'true' : undefined}
-      onClick={() => playMusicSong(song, index)}
-      onKeyDown={(event) => {
-        if (event.key === 'Enter' || event.key === ' ') {
-          event.preventDefault();
-          playMusicSong(song, index);
-        }
-      }}
-      className={cn(MUSIC_ROW, playing && MUSIC_ROW_PLAYING)}
-    >
-      <span className={MUSIC_ROW_INDEX}>
-        {String(index + 1).padStart(2, '0')}
-      </span>
-
-      <span className={MUSIC_ROW_ART}>
-        {cover ? (
-          <img
-            src={cover}
-            alt=''
-            loading='lazy'
-            referrerPolicy='no-referrer'
-            onError={() => setCoverFailed(true)}
-            className='h-full w-full object-cover'
-          />
-        ) : (
-          // 歌曲的封面和歌单一样是实打实给的，走到这儿只有一个原因：图挂了。
-          // 所以是一个破图记号，不是"这个位置该有张图"的留白（那是热榜套面的事）。
-          <span className={MUSIC_ART_BROKEN}>
-            <ImageOff className='h-3.5 w-3.5' strokeWidth={1.6} />
-          </span>
-        )}
-      </span>
-
-      <span className={MUSIC_ROW_TEXT}>
-        <span className={cn(MUSIC_ROW_NAME, playing && MUSIC_ROW_NAME_THEME)}>
-          {song.name}
+    <div className={cn(MUSIC_ROW, playing && MUSIC_ROW_PLAYING)}>
+      <button
+        type='button'
+        className='tm-music-song-main'
+        aria-label={`播放 ${song.name}，${song.artist}`}
+        aria-current={playing ? 'true' : undefined}
+        onClick={() => playMusicSong(song, index)}
+      >
+        <span className={MUSIC_ROW_INDEX}>
+          {String(index + 1).padStart(2, '0')}
         </span>
-        <span className={MUSIC_ROW_ARTIST}>{song.artist}</span>
-      </span>
 
-      <span className={MUSIC_ROW_DURATION}>{duration}</span>
-      <span className={MUSIC_ROW_SOURCE}>{label}</span>
+        <span className={MUSIC_ROW_ART}>
+          {cover ? (
+            <img
+              src={cover}
+              alt=''
+              loading='lazy'
+              referrerPolicy='no-referrer'
+              onError={() => setCoverFailed(true)}
+              className='h-full w-full object-cover'
+            />
+          ) : (
+            // 歌曲的封面和歌单一样是实打实给的，走到这儿只有一个原因：图挂了。
+            // 所以是一个破图记号，不是"这个位置该有张图"的留白（那是热榜套面的事）。
+            <span className={MUSIC_ART_BROKEN}>
+              <ImageOff className='h-3.5 w-3.5' strokeWidth={1.6} />
+            </span>
+          )}
+        </span>
+
+        <span className={MUSIC_ROW_TEXT}>
+          <span
+            className={cn(MUSIC_ROW_NAME, playing && MUSIC_ROW_NAME_THEME)}
+            title={song.name}
+          >
+            {song.name}
+          </span>
+          <span className={MUSIC_ROW_ARTIST} title={song.artist}>
+            {song.artist}
+          </span>
+        </span>
+
+        <span className={MUSIC_ROW_DURATION}>{duration}</span>
+        <span className={MUSIC_ROW_SOURCE}>{label}</span>
+      </button>
 
       <span className={MUSIC_ROW_ACTIONS}>
         <button
