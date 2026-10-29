@@ -409,6 +409,25 @@ public class MainActivity extends Activity {
                 });
     }
 
+    /** 旋转手机：横屏且正在播放就尽量进入全屏，竖屏就退出全屏。浏览器可能要求用户手势而拒绝，拒绝时保持原样。 */
+    @Override
+    public void onConfigurationChanged(android.content.res.Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        if (webView == null) return;
+        boolean landscape = newConfig.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE;
+        if (landscape && playing && customView == null) {
+            webView.evaluateJavascript(
+                    "(function(){var v=Array.prototype.find.call(document.querySelectorAll('video'),"
+                            + "function(m){return !m.paused&&!m.ended});"
+                            + "if(v&&!document.fullscreenElement&&v.requestFullscreen){v.requestFullscreen().catch(function(){})}})()",
+                    null);
+        } else if (!landscape && customView != null) {
+            webView.evaluateJavascript(
+                    "if(document.fullscreenElement&&document.exitFullscreen){document.exitFullscreen().catch(function(){})}",
+                    null);
+        }
+    }
+
     @Override
     protected void onUserLeaveHint() {
         super.onUserLeaveHint();

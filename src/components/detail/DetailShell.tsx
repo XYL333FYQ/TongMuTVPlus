@@ -7,11 +7,34 @@ import {
   useTransform,
 } from 'framer-motion';
 import { X } from 'lucide-react';
-import { type ReactNode, useEffect, useId, useRef, useState } from 'react';
+import {
+  type ReactNode,
+  useEffect,
+  useId,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from 'react';
 
 import './detail.css';
 
 import { isReducedMotionSetting, useReducedMotionSetting } from '@/lib/motion';
+
+// 手机上点海报进详情：从被点的海报卡位置放大展开（只动 transform 和 opacity）。
+// 减少动态、桌面抽屉、没有触发元素或元素不在屏幕内时返回 null，沿用原来的底部滑入。
+function posterOrigin(
+  trigger: HTMLElement | null | undefined,
+  kind: string,
+  drawer: boolean
+): DOMRect | null {
+  if (typeof window === 'undefined' || !trigger) return null;
+  if (kind !== 'detail' || drawer || isReducedMotionSetting()) return null;
+  if (!window.matchMedia('(max-width: 767px)').matches) return null;
+  const rect = trigger.getBoundingClientRect();
+  if (rect.width < 40 || rect.height < 40) return null;
+  if (rect.bottom < 0 || rect.top > window.innerHeight) return null;
+  return rect;
+}
 
 export default function DetailShell({
   children,
@@ -37,6 +60,10 @@ export default function DetailShell({
   returnFocusRef?: React.RefObject<HTMLElement>;
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
+  const panel = useRef<HTMLElement>(null);
+  const [origin] = useState(() =>
+    posterOrigin(returnFocusRef?.current, kind, drawer)
+  );
   const close = useRef<HTMLButtonElement>(null);
   const callback = useRef(onClose);
   callback.current = onClose;
@@ -138,6 +165,28 @@ export default function DetailShell({
     };
   }, [drawer, returnFocusRef]);
   const sheet = mobile && !drawer && kind !== 'image';
+  useLayoutEffect(() => {
+    const element = panel.current;
+    if (!element || !origin || typeof element.animate !== 'function') return;
+    const to = element.getBoundingClientRect();
+    if (!to.width) return;
+    const scale = origin.width / to.width;
+    element.animate(
+      [
+        {
+          transformOrigin: 'top left',
+          transform: `translate(${origin.left - to.left}px, ${
+            origin.top - to.top
+          }px) scale(${scale})`,
+        },
+        {
+          transformOrigin: 'top left',
+          transform: 'translate(0px, 0px) scale(1)',
+        },
+      ],
+      { duration: 360, easing: 'cubic-bezier(0.22, 1, 0.36, 1)' }
+    );
+  }, [origin]);
   const shown = visible && !closing;
   return (
     <dialog
@@ -164,6 +213,7 @@ export default function DetailShell({
         </motion.div>
       )}
       <motion.section
+        ref={panel}
         className={`tm-detail-panel tm-detail-surface ${
           drawer ? drawerWidth : ''
         }`}
@@ -173,7 +223,7 @@ export default function DetailShell({
           opacity: 0,
           scale: initialReduced || drawer || sheet ? 1 : 0.98,
           x: drawer && !initialReduced ? '100%' : 0,
-          y: sheet && !initialReduced ? '100%' : 0,
+          y: sheet && !initialReduced && !origin ? '100%' : 0,
         }}
         animate={{
           opacity: shown ? 1 : 0,
