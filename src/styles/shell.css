@@ -479,6 +479,136 @@
   scale: 0.95;
 }
 
+/* 底栏按住拖动：滑块跟手，经过的项高亮，松手跳转 */
+.tm-mobile-nav {
+  touch-action: pan-y;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+.tm-mobile-nav-item {
+  position: relative;
+  z-index: 1;
+  -webkit-tap-highlight-color: transparent;
+}
+.tm-mobile-nav-thumb {
+  position: absolute;
+  top: 6px;
+  bottom: 6px;
+  left: 0;
+  z-index: 0;
+  border-radius: var(--tm-radius-md);
+  background: var(--tm-line);
+  pointer-events: none;
+  transition: transform var(--tm-d-panel) var(--tm-ease-out),
+    scale var(--tm-d-hover) var(--tm-ease-out);
+}
+.tm-mobile-nav[data-thumb='true'] .tm-mobile-nav-item[data-active='true'] {
+  background: transparent;
+}
+.tm-mobile-nav[data-scrubbing='true'] .tm-mobile-nav-thumb {
+  transition: scale var(--tm-d-hover) var(--tm-ease-out);
+  scale: 1.08;
+}
+.tm-mobile-nav-item[data-hover='true'] {
+  color: var(--tm-text);
+}
+html[data-tm-reduced-motion='true'] .tm-mobile-nav-thumb {
+  transition: none;
+  scale: 1;
+}
+@media (prefers-reduced-motion: reduce) {
+  .tm-mobile-nav-thumb {
+    transition: none;
+    scale: 1;
+  }
+}
+
+/* 下拉刷新指示 */
+.tm-ptr {
+  position: fixed;
+  left: 50%;
+  top: calc(var(--tm-safe-top) + var(--tm-header-height) + 8px);
+  z-index: var(--tm-z-nav);
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1px solid var(--tm-line);
+  background: var(--tm-surface-raised);
+  color: var(--tm-text);
+  box-shadow: var(--tm-shadow-sm);
+  opacity: 0;
+  transform: translate(-50%, -48px);
+  pointer-events: none;
+}
+@media (min-width: 768px) {
+  .tm-ptr {
+    display: none;
+  }
+}
+
+/* iPhone 安装到主屏幕引导 */
+.tm-install-hint {
+  position: fixed;
+  left: 12px;
+  right: 12px;
+  bottom: calc(var(--tm-bottom-nav-height) + 28px + var(--tm-safe-bottom));
+  z-index: var(--tm-z-nav);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: var(--tm-radius-md);
+  font-size: 14px;
+  color: var(--tm-text);
+  box-shadow: var(--tm-shadow-md);
+}
+.tm-install-hint p {
+  flex: 1;
+  margin: 0;
+}
+.tm-install-hint .tm-btn {
+  min-height: 44px;
+  flex-shrink: 0;
+}
+
+/* 手机页面切换：前进从右侧滑入，后退从左侧滑入（只动 transform 和 opacity） */
+@media (max-width: 767px) {
+  html:not([data-tm-reduced-motion='true'])[data-tm-nav='forward']
+    .tm-page-transition {
+    animation-name: tm-page-enter-forward;
+  }
+  html:not([data-tm-reduced-motion='true'])[data-tm-nav='back']
+    .tm-page-transition {
+    animation-name: tm-page-enter-back;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tm-page-transition {
+    animation-name: tm-page-fade !important;
+    animation-duration: 120ms !important;
+  }
+}
+@keyframes tm-page-enter-forward {
+  from {
+    opacity: 0;
+    transform: translateX(28px);
+  }
+}
+@keyframes tm-page-enter-back {
+  from {
+    opacity: 0;
+    transform: translateX(-28px);
+  }
+}
+@keyframes tm-page-fade {
+  from {
+    opacity: 0;
+  }
+}
+
 /* —— 账号菜单 —— */
 .tm-guest-account {
   position: relative;
