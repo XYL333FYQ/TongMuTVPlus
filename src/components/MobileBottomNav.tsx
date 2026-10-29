@@ -46,8 +46,17 @@ export default function MobileBottomNav({ activePath }: MobileBottomNavProps) {
   }, [activeIndex]);
   useLayoutEffect(() => {
     syncThumb();
-    window.addEventListener('resize', syncThumb);
-    return () => window.removeEventListener('resize', syncThumb);
+    // 底栏尺寸变化（旋转屏幕、从宽屏缩到手机宽度）时重新量
+    const nav = navRef.current;
+    if (!nav || typeof ResizeObserver === 'undefined') {
+      window.addEventListener('resize', syncThumb);
+      return () => window.removeEventListener('resize', syncThumb);
+    }
+    const observer = new ResizeObserver(() => {
+      if (!gesture.current?.moving) syncThumb();
+    });
+    observer.observe(nav);
+    return () => observer.disconnect();
   }, [syncThumb, pathname]);
 
   const indexAt = (clientX: number) => {
