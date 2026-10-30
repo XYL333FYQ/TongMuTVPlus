@@ -14,13 +14,13 @@ import zlib from 'node:zlib';
 const root = process.cwd();
 const manifestPath = path.join(root, '.next', 'app-build-manifest.json');
 
-// 预算（KB，gzip 后）。数字来自 2026-10-31 瘦身后的实测值再留约 10% 余量。
+// 预算（KB，gzip 后）。数字来自 2026-10-30 全站优化（首屏瘦身、账号菜单拆分、
+// 房间连接库按需下载）后的实测值再留约 10%～15% 余量：最重的普通页（我的）257KB、
+// 管理后台 246KB。原来的 480/640 是瘦身前定的，太松，大块代码塞回首屏也拦不住。
 // 页面真的需要变大时，改这里并在提交说明里写清原因。
 export const BUDGET_KB = {
-  default: 480,
-  '/admin/page': 640,
-  '/live/page': 560,
-  '/tv/play/page': 480,
+  default: 290,
+  '/admin/page': 280,
 };
 
 export function gzipSize(file) {
