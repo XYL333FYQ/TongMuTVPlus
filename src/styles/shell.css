@@ -624,26 +624,16 @@ html[data-tm-reduced-motion='true'] .tm-mobile-nav-thumb {
   flex-shrink: 0;
 }
 
-/*
- * 手机页面切换：前进从右侧滑入，后退从左侧滑入（只动 transform 和 opacity）。
- * 安卓客户端壳里整页位移会和新页面首次渲染抢帧，改成只淡入，更跟手。
- */
+/* 手机页面切换：前进从右侧滑入，后退从左侧滑入（只动 transform 和 opacity） */
 @media (max-width: 767px) {
-  html:not([data-tm-reduced-motion='true']):not(
-      [data-tm-shell]
-    )[data-tm-nav='forward']
+  html:not([data-tm-reduced-motion='true'])[data-tm-nav='forward']
     .tm-page-transition {
     animation-name: tm-page-enter-forward;
   }
-  html:not([data-tm-reduced-motion='true']):not(
-      [data-tm-shell]
-    )[data-tm-nav='back']
+  html:not([data-tm-reduced-motion='true'])[data-tm-nav='back']
     .tm-page-transition {
     animation-name: tm-page-enter-back;
   }
-}
-html[data-tm-shell] .tm-page-transition {
-  animation: tm-page-fade 140ms var(--tm-ease-out) backwards;
 }
 @media (prefers-reduced-motion: reduce) {
   .tm-page-transition {

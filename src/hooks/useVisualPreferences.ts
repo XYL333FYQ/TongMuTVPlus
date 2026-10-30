@@ -17,20 +17,13 @@ const defaults: VisualPreferences = {
 };
 let memoryPreferences = defaults;
 
-function inClientShell() {
-  return typeof window !== 'undefined' && Boolean(window.TMShell);
-}
-
 function normalize(value: unknown): VisualPreferences {
   const record =
     value && typeof value === 'object'
       ? (value as Record<string, unknown>)
       : {};
   return {
-    // 没设置过时：客户端壳（手机 App）默认关闭模糊——WebView 里实时模糊很吃力，滚动和动效会卡；
-    // 用户在显示设置里明确选过就按用户的来。
-    noBlur:
-      typeof record.noBlur === 'boolean' ? record.noBlur : inClientShell(),
+    noBlur: record.noBlur === true,
     reduceMotion: record.reduceMotion === true,
     playerEase: record.playerEase === true,
   };
