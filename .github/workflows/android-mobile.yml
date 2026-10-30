@@ -1,18 +1,13 @@
 name: Build Android Mobile APK
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/android-mobile/**'
+      - '.github/workflows/android-mobile.yml'
   workflow_dispatch:
     inputs:
-      version_name:
-        description: '版本名'
-        required: false
-        default: '1.0.0'
-        type: string
-      version_code:
-        description: '版本号，必须是整数'
-        required: false
-        default: '1'
-        type: string
       publish:
         description: '打包并测试通过后，发布到仓库 Releases（客户端下载）'
         required: false
@@ -33,6 +28,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       apk_name: ${{ steps.collect.outputs.apk_name }}
+      build: ${{ steps.stamp.outputs.build }}
     steps:
       - name: Checkout source code
         uses: actions/checkout@v4
@@ -79,11 +75,20 @@ jobs:
             echo "task=Debug" >> "$GITHUB_OUTPUT"
           fi
 
+      - name: Stamp build time
+        id: stamp
+        run: |
+          now=$(date -u +%s)
+          echo "build=$(date -u -d @$now +%Y%m%d%H%M)" >> "$GITHUB_OUTPUT"
+          echo "code=$(( (now - 1767225600) / 60 ))" >> "$GITHUB_OUTPUT"
+          echo "name=$(date -u -d @$now +%Y.%m.%d)" >> "$GITHUB_OUTPUT"
+
       - name: Build APK
         working-directory: apps/android-mobile
         env:
-          VERSION_NAME: ${{ inputs.version_name }}
-          VERSION_CODE: ${{ inputs.version_code }}
+          VERSION_NAME: ${{ steps.stamp.outputs.name }}
+          VERSION_CODE: ${{ steps.stamp.outputs.code }}
+          TM_BUILD: ${{ steps.stamp.outputs.build }}
           ANDROID_KEYSTORE_PATH: /tmp/android-mobile-release.keystore
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_MOBILE_KEYSTORE_PASSWORD }}
           ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_MOBILE_KEY_ALIAS }}
@@ -152,7 +157,9 @@ jobs:
   release:
     name: Publish to Releases
     needs: [build, smoke]
-    if: ${{ inputs.publish }}
+    # 推送触发时也走发布，但必须经过 release 环境里的人工批准；手动触发看 publish 开关
+    if: ${{ github.event_name == 'push' || inputs.publish }}
+    environment: release
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -174,3 +181,6 @@ jobs:
             --notes "Windows 桌面端、安卓手机端、安卓电视端安装包。首次打开填你自己的服务器地址即可。说明见仓库 README。" \
             2>/dev/null || true
           gh release upload clients release/*.apk --clobber
+          # 版本清单：客户端据此判断有没有新包（构建时间比自己新就提示更新）
+          echo '{"build":"${{ needs.build.outputs.build }}","file":"TongMuTV-Plus-Android.apk"}' > client-android.json
+          gh release upload clients client-android.json --clobber

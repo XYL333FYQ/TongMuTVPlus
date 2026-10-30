@@ -28,6 +28,7 @@ import { authenticateAuthInfo } from '@/lib/request-auth';
 import { listEnabledSourceScripts } from '@/lib/source-script';
 
 import { AppDialogHost } from '@/components/feedback/AppDialogs';
+import ClientUpdatePrompt from '@/components/shell/ClientUpdatePrompt';
 import MediaSessionBridge from '@/components/shell/MediaSessionBridge';
 import MobileGestures from '@/components/shell/MobileGestures';
 import ShellBridge from '@/components/shell/ShellBridge';
@@ -509,6 +510,7 @@ export default async function RootLayout({
           <ShellBridge />
           <MobileGestures />
           <MediaSessionBridge />
+          <ClientUpdatePrompt />
           <TokenRefreshManager />
           <SiteProvider
             siteName={siteName}

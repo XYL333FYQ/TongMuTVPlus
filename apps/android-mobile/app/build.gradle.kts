@@ -22,6 +22,8 @@ android {
         targetSdk = 35
         versionCode = versionCodeValue
         versionName = versionNameValue
+        // 构建时间（yyyyMMddHHmm，UTC）：写进应用资源，网页据此判断客户端新旧
+        resValue("string", "tm_build", propOrEnv("TM_BUILD", "TM_BUILD", "0"))
     }
 
     compileOptions {

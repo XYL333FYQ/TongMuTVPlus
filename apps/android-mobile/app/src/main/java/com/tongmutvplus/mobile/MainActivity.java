@@ -3,6 +3,7 @@ package com.tongmutvplus.mobile;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.DownloadManager;
 import android.app.PictureInPictureParams;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -17,8 +18,10 @@ import android.net.Uri;
 import android.net.http.SslError;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.VibrationEffect;
 import android.os.Vibrator;
+import android.provider.Settings;
 import android.text.InputType;
 import android.util.Rational;
 import android.view.KeyEvent;
@@ -69,6 +72,8 @@ public class MainActivity extends Activity {
     private boolean playing;
     private WindowInsets lastInsets;
     private BroadcastReceiver pauseReceiver;
+    private BroadcastReceiver updateReceiver;
+    private long updateDownloadId = -1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -128,7 +133,7 @@ public class MainActivity extends Activity {
         settings.setDisplayZoomControls(false);
         // 片源常是 http，页面是 https 时也放行
         settings.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
-        settings.setUserAgentString(settings.getUserAgentString() + " TongMuTVPlusAndroid WebView");
+        settings.setUserAgentString(settings.getUserAgentString() + " TongMuTVPlusAndroid WebView TMBuild/" + getString(R.string.tm_build));
 
         CookieManager cookies = CookieManager.getInstance();
         cookies.setAcceptCookie(true);
@@ -464,6 +469,10 @@ public class MainActivity extends Activity {
             unregisterReceiver(pauseReceiver);
             pauseReceiver = null;
         }
+        if (updateReceiver != null) {
+            unregisterReceiver(updateReceiver);
+            updateReceiver = null;
+        }
         stopService(new Intent(this, PlaybackService.class));
         if (filePathCallback != null) {
             filePathCallback.onReceiveValue(null);
@@ -503,6 +512,12 @@ public class MainActivity extends Activity {
         @JavascriptInterface
         public void setPlaying(boolean value) {
             runOnUiThread(() -> updatePlaying(value));
+        }
+
+        /** 网页点「立即更新」：下载新安装包并调起系统安装界面 */
+        @JavascriptInterface
+        public void installUpdate(String url) {
+            runOnUiThread(() -> downloadAndInstall(url));
         }
     }
 
@@ -639,6 +654,66 @@ public class MainActivity extends Activity {
             registerReceiver(pauseReceiver, filter, Context.RECEIVER_NOT_EXPORTED);
         } else {
             registerReceiver(pauseReceiver, filter);
+        }
+    }
+
+    /**
+     * 下载新安装包并安装。只接受来自「用户保存的服务器页面」的调用，且只接受固定文件名的 https 安装包，
+     * 最后仍要用户在系统界面点「安装」。
+     */
+    private void downloadAndInstall(String url) {
+        try {
+            Uri uri = Uri.parse(url);
+            Uri page = webView == null || webView.getUrl() == null ? null : Uri.parse(webView.getUrl());
+            Uri server = getSavedServer() == null ? null : Uri.parse(getSavedServer());
+            boolean fromServerPage = page != null && server != null && server.getHost() != null
+                    && server.getHost().equalsIgnoreCase(page.getHost());
+            String last = uri.getLastPathSegment();
+            if (!fromServerPage || !"https".equals(uri.getScheme())
+                    || !"TongMuTV-Plus-Android.apk".equals(last)) {
+                return;
+            }
+            // 8.0 以上要先允许本应用安装未知来源的应用
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && !getPackageManager().canRequestPackageInstalls()) {
+                startActivity(new Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
+                        Uri.parse("package:" + getPackageName())));
+                return;
+            }
+            DownloadManager manager = getSystemService(DownloadManager.class);
+            if (manager == null) return;
+            DownloadManager.Request request = new DownloadManager.Request(uri)
+                    .setTitle("TongMuTV Plus 更新")
+                    .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+                    .setMimeType("application/vnd.android.package-archive")
+                    .setDestinationInExternalFilesDir(this, Environment.DIRECTORY_DOWNLOADS, "TongMuTV-Plus-Android.apk");
+            updateDownloadId = manager.enqueue(request);
+            if (updateReceiver == null) {
+                updateReceiver = new BroadcastReceiver() {
+                    @Override
+                    public void onReceive(Context context, Intent intent) {
+                        long id = intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1);
+                        if (id != updateDownloadId) return;
+                        Uri file = manager.getUriForDownloadedFile(id);
+                        if (file == null) return;
+                        Intent install = new Intent(Intent.ACTION_VIEW)
+                                .setDataAndType(file, "application/vnd.android.package-archive")
+                                .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_ACTIVITY_NEW_TASK);
+                        try {
+                            startActivity(install);
+                        } catch (ActivityNotFoundException ignored) {
+                            // 没有可处理安装的应用时忽略
+                        }
+                    }
+                };
+                IntentFilter filter = new IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE);
+                if (Build.VERSION.SDK_INT >= 33) {
+                    registerReceiver(updateReceiver, filter, Context.RECEIVER_EXPORTED);
+                } else {
+                    registerReceiver(updateReceiver, filter);
+                }
+            }
+        } catch (RuntimeException ignored) {
+            // 下载服务不可用等情况：保持原样，网页会退回到打开下载链接
         }
     }
 }

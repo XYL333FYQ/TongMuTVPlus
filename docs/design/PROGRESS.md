@@ -1,5 +1,12 @@
 # 界面改造进度
 
+## 2026-10-30 客户端更新提醒与"批准后发布"（分支 feat/client-update）
+
+- 做了什么：构建时间进安装包（安卓 UA 的 TMBuild/、Windows 的 TMDesktop.build）；流水线发布时同时上传 client-android.json、client-windows.json；新增 /api/client-update；ClientUpdatePrompt 弹窗与"关于"页的 ClientBuildInfo；安卓壳 installUpdate（下载并调起安装）；三条流水线改为推送到 main 且改了对应目录时自动构建，发布需在 `release` 环境批准（已用 gh 建好环境并指定仓库所有者为审批人）。
+- 验证：typecheck 退出 0；全部 jest 147 套 928 项通过；格式检查通过；GitHub Actions（publish=false）三端编译和冒烟通过，手机冒烟新增"UA 带 12 位构建时间"检查通过。
+- 没验证：发布一步（批准后上传安装包与版本清单）没有真跑过——跑了会覆盖"客户端下载"页的真实安装包；真机上弹窗外观与安卓下载安装流程；Windows 点"立即更新"的下载体验；电视壳没有更新提示（不在范围内）。
+- 首次使用：先在手机上试好新包，再把 main 推送到 GitHub；推送若碰了 apps/ 目录会自动构建，到 Actions 页对应运行点 Review deployments 批准后才发布。
+
 # 界面改造进度
 
 ## 2026-10-29 手机端 App 体验改造（分支 feat/mobile-app-feel，用户授权一次性完成）
