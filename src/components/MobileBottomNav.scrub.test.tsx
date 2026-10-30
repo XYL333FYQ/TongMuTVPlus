@@ -5,7 +5,13 @@ jest.mock('next/navigation', () => ({
   useRouter: () => ({ push }),
 }));
 
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import {
+  act,
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+} from '@testing-library/react';
 
 import MobileBottomNav from './MobileBottomNav';
 
@@ -71,6 +77,38 @@ describe('手机底栏按住拖动', () => {
       pointerId: 1,
       pointerType: 'touch',
       clientX: 150,
+    });
+    expect(push).toHaveBeenCalledWith('/watch-room');
+  });
+
+  it('页面卡顿：最后一次移动后 React 还没渲染手指就抬起，仍然跳转', () => {
+    const { nav } = setup();
+    // 同一个 act 里连续派发，等价于主线程忙时 move 和 up 挤在同一次渲染之前
+    act(() => {
+      nav.dispatchEvent(
+        new PointerEvent('pointerdown', {
+          pointerId: 1,
+          pointerType: 'touch',
+          clientX: 30,
+          bubbles: true,
+        })
+      );
+      nav.dispatchEvent(
+        new PointerEvent('pointermove', {
+          pointerId: 1,
+          pointerType: 'touch',
+          clientX: 150,
+          bubbles: true,
+        })
+      );
+      nav.dispatchEvent(
+        new PointerEvent('pointerup', {
+          pointerId: 1,
+          pointerType: 'touch',
+          clientX: 150,
+          bubbles: true,
+        })
+      );
     });
     expect(push).toHaveBeenCalledWith('/watch-room');
   });

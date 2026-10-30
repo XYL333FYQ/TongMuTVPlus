@@ -32,6 +32,8 @@ interface PageLayoutProps {
   mobileTitle?: string;
   mobileSubtitle?: React.ReactNode;
   mobileActions?: React.ReactNode;
+  /** 加载占位用：不播进场动画（真正的页面到达时再播） */
+  instant?: boolean;
 }
 
 export default function PageLayout({
@@ -42,6 +44,7 @@ export default function PageLayout({
   mobileTitle,
   mobileSubtitle,
   mobileActions,
+  instant = false,
 }: PageLayoutProps) {
   const [backgroundImage, setBackgroundImage] = useState('');
   const pathname = usePathname();
@@ -192,7 +195,14 @@ export default function PageLayout({
             current !== '/play' &&
             current !== '/live' &&
             !current.startsWith('/music') ? (
-              <div className='tm-page-transition' key={pathname}>
+              <div
+                className={
+                  instant
+                    ? 'tm-page-transition tm-page-instant'
+                    : 'tm-page-transition'
+                }
+                key={pathname}
+              >
                 {children}
               </div>
             ) : (

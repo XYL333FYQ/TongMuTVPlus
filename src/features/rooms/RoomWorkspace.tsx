@@ -743,7 +743,10 @@ export default function RoomWorkspace() {
                   )}
                 </>
               ) : (
-                <div className='tm-room-empty-stage'>
+                <div
+                  className='tm-room-empty-stage'
+                  data-personal={!playback.followingRoom}
+                >
                   <div className='tm-room-screen-glow' aria-hidden='true' />
                   <Film size={32} strokeWidth={1.25} />
                   <h2>

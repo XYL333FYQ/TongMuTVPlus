@@ -1911,3 +1911,41 @@ dialog.tm-room-modal-root::backdrop {
     );
   }
 }
+
+/*
+ * 手机上"个人观看"：下面已经有一块完整的个人播放器，上面的提示卡不再撑成一整块 16:9 的黑屏，
+ * 缩成一条提示栏（说明在左，"回到一起看"在右），页面上只剩一个大画面。
+ */
+@media (max-width: 767px) {
+  .tm-room-empty-stage[data-personal='true'] {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas: 'title action' 'hint action';
+    align-items: center;
+    justify-items: start;
+    column-gap: 12px;
+    row-gap: 2px;
+    aspect-ratio: auto;
+    min-height: 0;
+    padding: 12px 16px;
+    text-align: left;
+  }
+  .tm-room-empty-stage[data-personal='true'] > svg,
+  .tm-room-empty-stage[data-personal='true'] > .tm-room-screen-glow {
+    display: none;
+  }
+  .tm-room-empty-stage[data-personal='true'] h2 {
+    grid-area: title;
+    max-width: 100%;
+    font-size: 16px;
+  }
+  .tm-room-empty-stage[data-personal='true'] p {
+    grid-area: hint;
+    max-width: 100%;
+    font-size: var(--tm-fs-caption);
+  }
+  .tm-room-empty-stage[data-personal='true'] .tm-room-empty-actions {
+    grid-area: action;
+    margin-top: 0;
+  }
+}

@@ -33,6 +33,9 @@ export default function MobileBottomNav({ activePath }: MobileBottomNavProps) {
   const [thumb, setThumb] = useState<Thumb | null>(null);
   const [scrubbing, setScrubbing] = useState(false);
   const [hover, setHover] = useState<number | null>(null);
+  // 松手时要读的“当前指到哪一项”必须是即时值：页面忙（卡）时 React 还没来得及渲染，
+  // 读 state 会读到旧值，导致松手不跳转。state 只负责高亮的显示。
+  const hoverRef = useRef<number | null>(null);
 
   const current = (activePath || pathname).split('?')[0];
   const activeIndex = primaryNavigation.findIndex((item) =>
@@ -75,8 +78,9 @@ export default function MobileBottomNav({ activePath }: MobileBottomNavProps) {
   };
 
   const finish = (navigate: boolean) => {
-    const target = hover;
+    const target = hoverRef.current;
     gesture.current = undefined;
+    hoverRef.current = null;
     setScrubbing(false);
     setHover(null);
     if (navigate && target !== null && target !== activeIndex) {
@@ -117,7 +121,8 @@ export default function MobileBottomNav({ activePath }: MobileBottomNavProps) {
           setScrubbing(true);
         }
         const index = indexAt(event.clientX);
-        if (index !== hover) {
+        if (index !== hoverRef.current) {
+          hoverRef.current = index;
           setHover(index);
           haptic(6);
         }
@@ -175,7 +180,8 @@ export default function MobileBottomNav({ activePath }: MobileBottomNavProps) {
               itemRefs.current[index] = el;
             }}
             href={item.href}
-            prefetch={false}
+            // 五个一级页提前取好页面和脚本，点下去不用再等服务器
+            prefetch={true}
             className='tm-mobile-nav-item tm-press'
             data-active={active}
             data-hover={hover === index || undefined}
