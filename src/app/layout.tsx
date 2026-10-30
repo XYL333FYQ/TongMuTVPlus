@@ -33,6 +33,7 @@ import ClientUpdatePrompt from '@/components/shell/ClientUpdatePrompt';
 import MediaSessionBridge from '@/components/shell/MediaSessionBridge';
 import MobileGestures from '@/components/shell/MobileGestures';
 import PerfProbe from '@/components/shell/PerfProbe';
+import PersistentHeader from '@/components/shell/PersistentHeader';
 import ShellBridge from '@/components/shell/ShellBridge';
 import ShellMotionProvider from '@/components/shell/ShellMotionProvider';
 
@@ -524,6 +525,8 @@ export default async function RootLayout({
               <DownloadProvider>
                 <PlaybackSessionProvider>
                   <StartupCacheCleanup />
+                  {/* 顶栏常驻一份，切页不重建（显示与否由页面里的导航标记决定） */}
+                  <PersistentHeader />
                   <ShellMotionProvider>{children}</ShellMotionProvider>
                   <GlobalErrorIndicator />
                   <ChatFloatingWindow />

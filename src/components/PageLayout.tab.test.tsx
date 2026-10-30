@@ -1,6 +1,7 @@
 import { render } from '@testing-library/react';
 
 import PageLayout from '@/components/PageLayout';
+import PersistentHeader from '@/components/shell/PersistentHeader';
 
 let mockPath = '/';
 jest.mock('next/navigation', () => ({
@@ -47,10 +48,14 @@ beforeAll(() => {
 
 function renderAt(path: string, props: Record<string, unknown> = {}) {
   mockPath = path;
+  // 顶栏常驻在根布局：与页面并排渲染，就像 layout.tsx 里那样
   const view = render(
-    <PageLayout {...props}>
-      <p>内容</p>
-    </PageLayout>
+    <>
+      <PersistentHeader />
+      <PageLayout {...props}>
+        <p>内容</p>
+      </PageLayout>
+    </>
   );
   return {
     shell: view.container.querySelector('.tm-shell') as HTMLElement,
@@ -64,7 +69,6 @@ describe('手机顶栏：底栏上的一级页不再重复页名', () => {
     (path) => {
       const { shell, header } = renderAt(path);
       expect(shell.dataset.tab).toBe('true');
-      expect(header.dataset.tab).toBe('true');
       // 页名仍在文档里，留给读屏软件
       expect(header.querySelector('h1')).not.toBeNull();
     }
@@ -75,13 +79,27 @@ describe('手机顶栏：底栏上的一级页不再重复页名', () => {
     (path) => {
       const { shell, header } = renderAt(path);
       expect(shell.dataset.tab).toBe('false');
-      expect(header.dataset.tab).toBe('false');
+      expect(header.querySelector('h1')).not.toBeNull();
     }
   );
 
-  test('进入房间后（页面指定了标题）恢复带页名的顶栏', () => {
-    const { shell } = renderAt('/watch-room', { mobileTitle: '房间' });
+  test('进入房间后（页面指定了标题）恢复带页名的顶栏，标题来自页面', () => {
+    const { shell, header } = renderAt('/watch-room', {
+      mobileTitle: '我的房间',
+    });
     expect(shell.dataset.tab).toBe('false');
+    expect(header.textContent).toContain('我的房间');
+  });
+
+  test('页面自带可见一级标题时，顶栏页名不再算标题', () => {
+    const { header } = renderAt('/about', { pageHasHeading: true });
+    expect(header.querySelector('h1')).toBeNull();
+    expect(header.textContent).toContain('关于');
+  });
+
+  test('顶栏不在页面外壳里（常驻在根布局），切页只换内容', () => {
+    const { shell, header } = renderAt('/search');
+    expect(shell.contains(header)).toBe(false);
   });
 
   test('带副标题的页面保持原样，不收窄', () => {
@@ -104,4 +122,33 @@ describe('手机顶栏：底栏上的一级页不再重复页名', () => {
     const { shell } = renderAt('/', { hideNavigation: true });
     expect(shell.querySelector('[data-tm-nav-page]')).toBeNull();
   });
+});
+
+test('切页时顶栏是同一份（不销毁重建），只是内容随新页面更新', () => {
+  mockPath = '/about';
+  const view = render(
+    <>
+      <PersistentHeader />
+      <PageLayout key='about' pageHasHeading>
+        <p>关于</p>
+      </PageLayout>
+    </>
+  );
+  const before = view.container.querySelector('.tm-mobile-header-v2');
+  const desktopBefore = view.container.querySelector('.tm-top-header');
+  mockPath = '/movie-request';
+  view.rerender(
+    <>
+      <PersistentHeader />
+      <PageLayout key='movie-request' mobileTitle='求片'>
+        <p>求片</p>
+      </PageLayout>
+    </>
+  );
+  const after = view.container.querySelector('.tm-mobile-header-v2');
+  expect(after).toBe(before);
+  expect(view.container.querySelector('.tm-top-header')).toBe(desktopBefore);
+  expect(after?.textContent).toContain('求片');
+  // 新页面没声明自带标题：页名恢复为一级标题
+  expect(after?.querySelector('h1')).not.toBeNull();
 });
