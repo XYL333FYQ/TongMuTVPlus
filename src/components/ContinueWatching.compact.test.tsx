@@ -29,7 +29,11 @@ jest.mock('@/lib/db.client', () => ({
   generateStorageKey: (source: string, id: string) => `${source}+${id}`,
   clearAllPlayRecords: jest.fn(),
 }));
-jest.mock('@/components/AIChatPanel', () => () => null);
+jest.mock('@/components/AIChatPanel.lazy', () => ({
+  __esModule: true,
+  default: () => null,
+  preloadAIChatPanel: () => undefined,
+}));
 jest.mock('@/components/AnimeSubscribeModal', () => () => null);
 jest.mock('@/components/DetailPanel', () => () => null);
 jest.mock('@/components/feedback/ImageViewer', () => () => null);

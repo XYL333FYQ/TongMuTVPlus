@@ -22,6 +22,7 @@ jest.mock('@/lib/special-source.client', () => ({
 }));
 jest.mock('@/lib/danmaku/traditional-to-simplified', () => ({
   loadTraditionalToSimplifiedConverter: async () => (text: string) => text,
+  getLoadedTraditionalToSimplifiedConverter: () => null,
 }));
 jest.mock('@/components/PageLayout', () => ({
   __esModule: true,

@@ -14,12 +14,13 @@ import {
 import { AI_WELCOME_MESSAGE } from '@/lib/brand';
 import { getDoubanCategories } from '@/lib/douban.client';
 import { useReducedMotionSetting } from '@/lib/motion';
-import { getTMDBImageUrl, TMDBItem } from '@/lib/tmdb.client';
+import type { TMDBItem } from '@/lib/tmdb.client';
+import { getTMDBImageUrl } from '@/lib/tmdb-image-base';
 import { DoubanItem } from '@/lib/types';
 import { base58Encode, processImageUrl } from '@/lib/utils';
 import { useViewerIdentity } from '@/hooks/useViewerIdentity';
 
-import AIChatPanel from '@/components/AIChatPanel';
+import AIChatPanel, { preloadAIChatPanel } from '@/components/AIChatPanel.lazy';
 import BannerCarousel from '@/components/BannerCarousel';
 import HomeRooms from '@/components/catalog/HomeRooms';
 import PosterGrid from '@/components/catalog/PosterGrid';
@@ -319,6 +320,8 @@ function HomeClient() {
         (window as any).RUNTIME_CONFIG?.AI_ENABLED &&
         (window as any).RUNTIME_CONFIG?.AI_ENABLE_HOMEPAGE_ENTRY;
       setAiEnabled(enabled);
+      // 开了 AI 才在空闲时预载问片面板代码
+      if (enabled) preloadAIChatPanel();
 
       // 加载AI默认消息配置
       const defaultMsg = (window as any).RUNTIME_CONFIG
@@ -792,6 +795,8 @@ function HomeClient() {
   return (
     <PageLayout>
       <div className='tm-home'>
+        {/* 桌面没有手机顶栏，页名留给读屏软件（手机上由顶栏提供） */}
+        <h1 className='tm-desktop-page-name'>发现</h1>
         {homeBannerEnabled && (
           <div className='tm-home-stage'>
             <BannerCarousel delayLoad={true} />

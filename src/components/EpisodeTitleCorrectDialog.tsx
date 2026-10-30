@@ -13,7 +13,7 @@ import {
   getEpisodeTitleCorrection,
   setEpisodeTitleCorrection,
 } from '@/lib/episode-title-correction';
-import { getTMDBImageUrl } from '@/lib/tmdb.search';
+import { getTMDBImageUrl } from '@/lib/tmdb-image-base';
 import { processImageUrl } from '@/lib/utils';
 
 interface TMDBResult {

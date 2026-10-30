@@ -19,7 +19,7 @@ export const metadata: Metadata = { title: '关于' };
 
 export default function AboutPage() {
   return (
-    <PageLayout activePath='/about'>
+    <PageLayout activePath='/about' pageHasHeading>
       <PageContainer className='py-12 sm:py-20'>
         <Image
           src='/brand/tm-mark.svg'

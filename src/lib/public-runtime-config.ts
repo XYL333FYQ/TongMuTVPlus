@@ -77,5 +77,30 @@ export function projectGuestRuntimeConfig(
       result[key] = configured[key];
     }
   }
+  result.DOUBAN_IMAGE_PROXY_TYPE = guestDoubanImageProxyType(
+    configured.DOUBAN_IMAGE_PROXY_TYPE
+  );
   return result;
+}
+
+// 豆瓣海报的取图方式，游客也要能看到海报：
+// - 公开镜像（腾讯/阿里 CDN、img3）只是个方式名，不含任何私密地址，原样给游客；
+// - 站长自定义的代理地址可能带密钥，不给游客，改走本站中转（游客可用，仅限海报图床）；
+// - 以前一律给 direct：浏览器直连豆瓣会被拒（HTTP 418），游客海报大面积先失败再换路。
+const PUBLIC_IMAGE_PROXY_TYPES = new Set([
+  'cmliussss-cdn-tencent',
+  'cmliussss-cdn-ali',
+  'img3',
+  'server',
+  'direct',
+]);
+
+function guestDoubanImageProxyType(configured: unknown): string {
+  if (
+    typeof configured === 'string' &&
+    PUBLIC_IMAGE_PROXY_TYPES.has(configured)
+  )
+    return configured;
+  if (configured === 'custom') return 'server';
+  return 'cmliussss-cdn-tencent';
 }

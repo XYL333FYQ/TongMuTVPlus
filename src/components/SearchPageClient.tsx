@@ -28,7 +28,10 @@ import '@/styles/search.css';
 
 import { isAnimeCategoryText } from '@/lib/anime-keyword-expr';
 import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
-import { loadTraditionalToSimplifiedConverter } from '@/lib/danmaku/traditional-to-simplified';
+import {
+  getLoadedTraditionalToSimplifiedConverter,
+  loadTraditionalToSimplifiedConverter,
+} from '@/lib/danmaku/traditional-to-simplified';
 import {
   addSearchHistory,
   clearSearchHistory,
@@ -36,7 +39,10 @@ import {
   getSearchHistory,
   subscribeToDataUpdates,
 } from '@/lib/db.client';
-import type { PublicCatalogItem } from '@/lib/public-catalog';
+import {
+  type PublicCatalogItem,
+  publicCatalogCategories,
+} from '@/lib/public-catalog';
 import {
   appendSpecialSourceParam,
   isSpecialSourceContext,
@@ -52,6 +58,7 @@ import ContinueWatching from '@/components/ContinueWatching';
 import ImageViewer from '@/components/feedback/ImageViewer';
 import PageContainer from '@/components/PageContainer';
 import PageLayout from '@/components/PageLayout';
+import { pageTitleForPath } from '@/components/shell/TongMuNavigation';
 import PansouSearch, { CLOUD_TYPE_NAMES } from '@/components/PansouSearch';
 import ProxyImage from '@/components/ProxyImage';
 import SearchResultFilter, {
@@ -83,6 +90,12 @@ const readStoredBoolean = (key: string): boolean | null => {
   } catch {
     return null;
   }
+};
+
+// 搜索词繁转简：字典已下载就转换，没下载好就原样返回（字典只在开了此设置时下载）
+const convertSearchText = (text: string): string => {
+  const converter = getLoadedTraditionalToSimplifiedConverter();
+  return converter ? converter(text) : text;
 };
 
 export function SearchPageClient({
@@ -127,8 +140,6 @@ export function SearchPageClient({
   const [featureFlagsReady, setFeatureFlagsReady] = useState(false);
   const [isGuest, setIsGuest] = useState(true);
   const [guestSearchError, setGuestSearchError] = useState('');
-  // 繁体转简体转换器
-  const converterRef = useRef<((text: string) => string) | null>(null);
   // 转换器是否已初始化
   const [converterReady, setConverterReady] = useState(false);
 
@@ -1156,11 +1167,14 @@ export function SearchPageClient({
     }
     setFeatureFlagsReady(true);
 
-    // 初始化繁体转简体转换器
-    if (typeof window !== 'undefined') {
+    // 初始化繁体转简体转换器：只有开了"搜索繁转简"才下载字典，
+    // 没开的用户不用等这本约 480KB 的字典就能直接搜
+    if (
+      typeof window !== 'undefined' &&
+      localStorage.getItem('searchTraditionalToSimplified') === 'true'
+    ) {
       loadTraditionalToSimplifiedConverter()
-        .then((converter) => {
-          converterRef.current = converter;
+        .then(() => {
           setConverterReady(true);
         })
         .catch(() => {
@@ -1271,10 +1285,10 @@ export function SearchPageClient({
         'searchTraditionalToSimplified'
       );
 
-      if (searchTraditionalToSimplified === 'true' && converterRef.current) {
+      if (searchTraditionalToSimplified === 'true') {
         try {
           const originalQuery = query;
-          query = converterRef.current(query);
+          query = convertSearchText(query);
 
           // 如果转换后的文本与原文本不同，更新 URL
           if (originalQuery !== query) {
@@ -1694,9 +1708,9 @@ export function SearchPageClient({
       const searchTraditionalToSimplified = localStorage.getItem(
         'searchTraditionalToSimplified'
       );
-      if (searchTraditionalToSimplified === 'true' && converterRef.current) {
+      if (searchTraditionalToSimplified === 'true') {
         try {
-          trimmed = converterRef.current(trimmed);
+          trimmed = convertSearchText(trimmed);
         } catch (error) {
           console.error('繁体转简体转换失败:', error);
         }
@@ -1734,9 +1748,9 @@ export function SearchPageClient({
       const searchTraditionalToSimplified = localStorage.getItem(
         'searchTraditionalToSimplified'
       );
-      if (searchTraditionalToSimplified === 'true' && converterRef.current) {
+      if (searchTraditionalToSimplified === 'true') {
         try {
-          processedSuggestion = converterRef.current(suggestion);
+          processedSuggestion = convertSearchText(suggestion);
         } catch (error) {
           console.error('繁体转简体转换失败:', error);
         }
@@ -1898,6 +1912,8 @@ export function SearchPageClient({
   return (
     <PageLayout activePath={searchBase}>
       <PageContainer className='tm-search-page'>
+        {/* 桌面没有手机顶栏，页名留给读屏软件（手机上由顶栏提供） */}
+        <h1 className='tm-desktop-page-name'>{pageTitleForPath(searchBase)}</h1>
         {/* 搜索框 */}
         <div>
           <form onSubmit={handleSearch} className='tm-search-form'>
@@ -2724,6 +2740,25 @@ export function SearchPageClient({
                       </div>
                     ))}
                   </div>
+                </section>
+              )}
+              {/* 没输入时给个去处：按类型进片库（游客也能看），不再是一片空白 */}
+              {activeTab === 'video' && !isSpecialEntry && (
+                <section className='tm-search-history'>
+                  <div className='tm-section-header'>
+                    <h2 className='tm-section-title'>按类型浏览</h2>
+                  </div>
+                  <nav className='tm-history-list' aria-label='按类型浏览'>
+                    {publicCatalogCategories.map((item) => (
+                      <Link
+                        key={item.type}
+                        href={item.href}
+                        className='tm-search-browse-link tm-press'
+                      >
+                        {item.label}
+                      </Link>
+                    ))}
+                  </nav>
                 </section>
               )}
             </>

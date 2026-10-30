@@ -17,7 +17,11 @@ jest.mock('@/components/DetailPanel', () => ({
   ),
 }));
 jest.mock('@/components/AnimeSubscribeModal', () => () => null);
-jest.mock('@/components/AIChatPanel', () => () => null);
+jest.mock('@/components/AIChatPanel.lazy', () => ({
+  __esModule: true,
+  default: () => null,
+  preloadAIChatPanel: () => undefined,
+}));
 jest.mock('@/components/TrailerPickerDialog', () => () => null);
 jest.mock('@/components/feedback/ImageViewer', () => () => null);
 jest.mock('@/components/feedback/MobileActionSheet', () => () => null);

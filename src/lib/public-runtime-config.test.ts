@@ -56,6 +56,29 @@ it('projects module availability booleans to guests without leaking credentials'
   expect(JSON.stringify(result)).not.toMatch(/hidden/);
 });
 
+it('gives guests a working poster route without leaking a custom proxy address', () => {
+  expect(
+    projectGuestRuntimeConfig({
+      DOUBAN_IMAGE_PROXY_TYPE: 'cmliussss-cdn-ali',
+      DOUBAN_IMAGE_PROXY: '',
+    }).DOUBAN_IMAGE_PROXY_TYPE
+  ).toBe('cmliussss-cdn-ali');
+  const custom = projectGuestRuntimeConfig({
+    DOUBAN_IMAGE_PROXY_TYPE: 'custom',
+    DOUBAN_IMAGE_PROXY: 'https://proxy.test/?apikey=hidden&url=',
+  });
+  expect(custom.DOUBAN_IMAGE_PROXY_TYPE).toBe('server');
+  expect(custom.DOUBAN_IMAGE_PROXY).toBe('');
+  expect(JSON.stringify(custom)).not.toMatch(/hidden/);
+  expect(projectGuestRuntimeConfig({}).DOUBAN_IMAGE_PROXY_TYPE).toBe(
+    'cmliussss-cdn-tencent'
+  );
+  expect(
+    projectGuestRuntimeConfig({ DOUBAN_IMAGE_PROXY_TYPE: 'javascript:x' })
+      .DOUBAN_IMAGE_PROXY_TYPE
+  ).toBe('cmliussss-cdn-tencent');
+});
+
 it('defaults missing availability flags to false for guests', () => {
   const result = projectGuestRuntimeConfig({});
   expect(result.SITE_MUSIC_ENABLED).toBe(false);

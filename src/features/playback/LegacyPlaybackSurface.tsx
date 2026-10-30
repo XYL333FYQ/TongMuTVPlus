@@ -122,7 +122,7 @@ import {
   convertSubtitleFileToVttObjectUrl,
   CUSTOM_SUBTITLE_ACCEPT,
 } from '@/lib/subtitle-converter';
-import { getTMDBImageUrl } from '@/lib/tmdb.search';
+import { getTMDBImageUrl } from '@/lib/tmdb-image-base';
 import {
   DanmakuFilterConfig,
   EpisodeFilterConfig,

@@ -509,6 +509,7 @@ export default function RoomWorkspace() {
     <PageLayout
       activePath='/watch-room'
       mobileTitle={room ? '房间' : undefined}
+      pageHasHeading
     >
       <PageContainer
         className='tm-rooms'

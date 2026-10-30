@@ -388,9 +388,9 @@ export default function HomeHero({
                 <div className='tm-home-hero-meta' key='meta'>
                   {meta}
                 </div>,
-                <h1 className='tm-home-hero-title' key='title'>
+                <h2 className='tm-home-hero-title' key='title'>
                   {title}
-                </h1>,
+                </h2>,
                 description ? (
                   <p className='tm-home-hero-description' key='description'>
                     {description}

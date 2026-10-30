@@ -33,6 +33,8 @@ interface PageLayoutProps {
   mobileActions?: React.ReactNode;
   /** 加载占位用：不播进场动画（真正的页面到达时再播） */
   instant?: boolean;
+  /** 页面自己有手机上也看得见的一级标题：手机顶栏的页名就不再算标题，避免读屏读到两个 */
+  pageHasHeading?: boolean;
 }
 
 export default function PageLayout({
@@ -44,6 +46,7 @@ export default function PageLayout({
   mobileSubtitle,
   mobileActions,
   instant = false,
+  pageHasHeading = false,
 }: PageLayoutProps) {
   const [backgroundImage, setBackgroundImage] = useState('');
   const pathname = usePathname();
@@ -115,6 +118,7 @@ export default function PageLayout({
               compact={compactTitle}
               scrolled={scrolled}
               tab={isTab}
+              heading={!pageHasHeading}
             />
           </>
         )}

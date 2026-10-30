@@ -114,7 +114,21 @@
 .tm-history-remove:hover {
   color: var(--tm-text);
 }
+/* 搜索页空状态的"按类型浏览"入口：外观与最近搜索一致 */
+.tm-search-browse-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+  padding: 0 16px;
+  border-radius: var(--tm-radius-pill);
+  font-size: var(--tm-fs-small);
+  color: var(--tm-text);
+  background: var(--tm-surface);
+}
 @media (pointer: coarse) {
+  .tm-search-browse-link {
+    min-height: 44px;
+  }
   .tm-history-query,
   .tm-history-remove {
     min-height: 44px;

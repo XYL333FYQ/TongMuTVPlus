@@ -46,7 +46,7 @@ import {
   clientDownloadUrl,
   detectClientPlatform,
 } from '@/lib/client-downloads';
-import { clearAllDanmakuCache, getDanmakuCacheStats } from '@/lib/danmaku/api';
+import { loadTraditionalToSimplifiedConverter } from '@/lib/danmaku/traditional-to-simplified';
 import { SAVE_LIVE_PLAY_RECORDS_KEY } from '@/lib/db.client';
 import {
   type LocalSettingsPayload,
@@ -54,8 +54,8 @@ import {
   LOCAL_SETTINGS_SYNC_LAST_PULL_KEY,
 } from '@/lib/local-settings-sync';
 import { clearBangumiImageFallbackCache } from '@/lib/utils';
-import { useReleaseInfo } from '@/hooks/useReleaseInfo';
 import { UpdateStatus } from '@/lib/version_check';
+import { useReleaseInfo } from '@/hooks/useReleaseInfo';
 import { useUnreadNotificationCount } from '@/hooks/useUnreadNotificationCount';
 
 import ThemeSettings from '@/components/account/ThemeSettings';
@@ -444,6 +444,8 @@ export const UserMenu: React.FC = () => {
 
   const loadDanmakuCacheUsage = useCallback(async () => {
     try {
+      // 弹幕模块较大，打开设置时再加载，不进每个页面的首屏脚本
+      const { getDanmakuCacheStats } = await import('@/lib/danmaku/api');
       const stats = await getDanmakuCacheStats();
       setDanmakuCacheUsage(formatCacheSize(stats.totalSize));
     } catch (error) {
@@ -2063,6 +2065,8 @@ export const UserMenu: React.FC = () => {
     setDanmakuTraditionalToSimplified(value);
     if (typeof window !== 'undefined') {
       localStorage.setItem('danmakuTraditionalToSimplified', String(value));
+      // 刚打开时就在后台下载字典，回到播放页时已可直接转换
+      if (value) void loadTraditionalToSimplifiedConverter();
     }
   };
 
@@ -2070,6 +2074,7 @@ export const UserMenu: React.FC = () => {
     setSearchTraditionalToSimplified(value);
     if (typeof window !== 'undefined') {
       localStorage.setItem('searchTraditionalToSimplified', String(value));
+      if (value) void loadTraditionalToSimplifiedConverter();
     }
   };
 
@@ -2836,6 +2841,7 @@ export const UserMenu: React.FC = () => {
     setClearCacheMessage(null);
 
     try {
+      const { clearAllDanmakuCache } = await import('@/lib/danmaku/api');
       await clearAllDanmakuCache();
       setClearCacheMessage('弹幕缓存已清除成功！');
       setDanmakuCacheUsage('0 B');

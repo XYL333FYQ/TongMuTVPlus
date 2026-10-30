@@ -325,6 +325,8 @@ export default function PublicCatalogPage({
   return (
     <PageLayout activePath='/'>
       <div className='tm-home'>
+        {/* 桌面没有手机顶栏，页名留给读屏软件（手机上由顶栏提供） */}
+        <h1 className='tm-desktop-page-name'>发现</h1>
         <div className='tm-home-stage'>
           {featured ? (
             <HomeHero

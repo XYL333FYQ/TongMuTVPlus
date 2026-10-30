@@ -7,7 +7,7 @@ import { createPortal } from 'react-dom';
 
 import '@/styles/controls.css';
 
-import { getTMDBImageUrl } from '@/lib/tmdb.client';
+import { getTMDBImageUrl } from '@/lib/tmdb-image-base';
 import { processImageUrl } from '@/lib/utils';
 
 import PageContainer from '@/components/PageContainer';

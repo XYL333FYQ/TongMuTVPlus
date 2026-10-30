@@ -6,7 +6,7 @@ import { API_CONFIG, getCacheTime } from '@/lib/config';
 import { getDuanjuSources } from '@/lib/duanju';
 import { isHlsPlaylistUrl } from '@/lib/hls-url';
 import { SearchResult } from '@/lib/types';
-import { cleanHtmlTags } from '@/lib/utils';
+import { cleanHtmlTags } from '@/lib/html-text';
 
 export const runtime = 'nodejs';
 

@@ -6,7 +6,7 @@ import { createPortal } from 'react-dom';
 import { getBangumiSubject, getBangumiSubjectUrl } from '@/lib/bangumi.client';
 import { useReducedMotionSetting } from '@/lib/motion';
 import { appendSpecialSourceParam } from '@/lib/special-source.client';
-import { getTMDBImageUrl } from '@/lib/tmdb.client';
+import { getTMDBImageUrl } from '@/lib/tmdb-image-base';
 import { processImageUrl } from '@/lib/utils';
 
 import ProxyImage from '@/components/ProxyImage';

@@ -7,7 +7,7 @@ jest.mock('next/navigation', () => ({
   useRouter: () => ({ push: mockPush }),
 }));
 const mockPush = jest.fn();
-jest.mock('@/lib/tmdb.client', () => ({
+jest.mock('@/lib/tmdb-image-base', () => ({
   getGenreNames: () => [],
   getTMDBImageUrl: (path: string) => path,
 }));
@@ -76,11 +76,11 @@ test('covers advance every eight seconds even while an idle room is connected', 
   mockRoomConnected = true;
   render(<BannerCarousel />);
   act(() => jest.advanceTimersByTime(7999));
-  expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('甲');
+  expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent('甲');
   act(() => jest.advanceTimersByTime(1));
-  expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('乙');
+  expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent('乙');
   act(() => jest.advanceTimersByTime(8000));
-  expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('丙');
+  expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent('丙');
 });
 
 test('the visible progress counts down the same cycle that advances the cover', () => {
@@ -91,9 +91,9 @@ test('the visible progress counts down the same cycle that advances the cover', 
   });
   expect(Number(progress.getAttribute('aria-valuenow'))).toBeGreaterThan(45);
   expect(Number(progress.getAttribute('aria-valuenow'))).toBeLessThan(55);
-  expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('甲');
+  expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent('甲');
   act(() => jest.advanceTimersByTime(4000));
-  expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('乙');
+  expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent('乙');
   expect(Number(progress.getAttribute('aria-valuenow'))).toBe(0);
 });
 
@@ -104,13 +104,13 @@ test('manual selection waits for twelve idle seconds then starts a fresh full cy
   fireEvent.click(next);
   act(() => next.focus());
   fireEvent.mouseEnter(screen.getByRole('region', { name: '精选推荐' }));
-  expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('乙');
+  expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent('乙');
   act(() => jest.advanceTimersByTime(12000));
-  expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('乙');
+  expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent('乙');
   act(() => jest.advanceTimersByTime(7999));
-  expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('乙');
+  expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent('乙');
   act(() => jest.advanceTimersByTime(1));
-  expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('丙');
+  expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent('丙');
   expect(next).toHaveFocus();
 });
 
@@ -123,9 +123,9 @@ test('continued input restarts the idle wait instead of leaving a stale automati
   });
   act(() => jest.advanceTimersByTime(12000));
   act(() => jest.advanceTimersByTime(7999));
-  expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('乙');
+  expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent('乙');
   act(() => jest.advanceTimersByTime(1));
-  expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('丙');
+  expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent('丙');
 });
 
 test('returning from a hidden page starts a full cycle without catching up skipped slides', () => {
@@ -136,15 +136,15 @@ test('returning from a hidden page starts a full cycle without catching up skipp
     document.dispatchEvent(new Event('visibilitychange'));
   });
   act(() => jest.advanceTimersByTime(60000));
-  expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('甲');
+  expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent('甲');
   act(() => {
     Object.defineProperty(document, 'visibilityState', { value: 'visible' });
     document.dispatchEvent(new Event('visibilitychange'));
   });
   act(() => jest.advanceTimersByTime(7999));
-  expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('甲');
+  expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent('甲');
   act(() => jest.advanceTimersByTime(1));
-  expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('乙');
+  expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent('乙');
 });
 
 test('active playback and the reduced-motion preference still suspend cover rotation', () => {
@@ -155,7 +155,7 @@ test('active playback and the reduced-motion preference still suspend cover rota
     );
   });
   act(() => jest.advanceTimersByTime(20000));
-  expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('甲');
+  expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent('甲');
   act(() => {
     document.documentElement.dataset.tmReducedMotion = 'true';
     window.dispatchEvent(
@@ -168,7 +168,7 @@ test('active playback and the reduced-motion preference still suspend cover rota
     );
   });
   act(() => jest.advanceTimersByTime(20000));
-  expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('甲');
+  expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent('甲');
   expect(screen.queryByRole('progressbar')).not.toBeInTheDocument();
 });
 
@@ -179,7 +179,7 @@ test('strict-mode effect replay does not create two advancing clocks', () => {
     </StrictMode>
   );
   act(() => jest.advanceTimersByTime(8000));
-  expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('乙');
+  expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent('乙');
 });
 
 test('a mostly vertical touch scroll does not change the selected film', () => {
@@ -188,7 +188,7 @@ test('a mostly vertical touch scroll does not change the selected film', () => {
   fireEvent.touchStart(hero, { touches: [{ clientX: 300, clientY: 100 }] });
   fireEvent.touchMove(hero, { touches: [{ clientX: 210, clientY: 450 }] });
   fireEvent.touchEnd(hero);
-  expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('甲');
+  expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent('甲');
 });
 
 test('a horizontal swipe starting at the left screen edge can select the previous film', () => {
@@ -197,7 +197,7 @@ test('a horizontal swipe starting at the left screen edge can select the previou
   fireEvent.touchStart(hero, { touches: [{ clientX: 0, clientY: 200 }] });
   fireEvent.touchMove(hero, { touches: [{ clientX: 90, clientY: 205 }] });
   fireEvent.touchEnd(hero);
-  expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('丙');
+  expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent('丙');
 });
 
 test('a horizontal swipe keeps the existing next-film action', () => {
@@ -206,5 +206,5 @@ test('a horizontal swipe keeps the existing next-film action', () => {
   fireEvent.touchStart(hero, { touches: [{ clientX: 300, clientY: 200 }] });
   fireEvent.touchMove(hero, { touches: [{ clientX: 210, clientY: 216 }] });
   fireEvent.touchEnd(hero);
-  expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('乙');
+  expect(screen.getByRole('heading', { level: 2 })).toHaveTextContent('乙');
 });

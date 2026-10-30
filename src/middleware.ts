@@ -2,6 +2,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 
+import { isGuestImageProxyRequest } from '@/lib/public-image-proxy';
 import { authenticateRequest } from '@/lib/request-auth';
 import { isTVModeEnabled, resolveLoginPath } from '@/lib/tv-mode';
 
@@ -25,7 +26,13 @@ export async function middleware(request: NextRequest) {
     (request.method === 'GET' && pathname === '/api/public/catalog') ||
     (request.method === 'GET' &&
       pathname === '/api/rooms' &&
-      request.nextUrl.searchParams.get('mode') === 'public')
+      request.nextUrl.searchParams.get('mode') === 'public') ||
+    // 游客页面的海报中转：只放白名单图床（豆瓣/TMDB/Bangumi），见 public-image-proxy.ts
+    isGuestImageProxyRequest(
+      request.method,
+      pathname,
+      request.nextUrl.searchParams
+    )
   ) {
     return NextResponse.next();
   }

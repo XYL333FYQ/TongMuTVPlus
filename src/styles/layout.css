@@ -91,6 +91,25 @@ html:not([data-tm-room-presentation='true'])
   flex-wrap: wrap;
   gap: 10px;
 }
+/* 桌面专用的读屏页名：首页、搜索页没有可见大标题，桌面又没有手机顶栏，
+   这里补一个只给读屏软件的一级标题；手机上页名由顶栏提供，这里不出现，避免重复 */
+.tm-desktop-page-name {
+  display: none;
+}
+@media (min-width: 768px) {
+  .tm-desktop-page-name {
+    display: block;
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+    border: 0;
+  }
+}
 /* 手机顶栏已经用 h1 显示页名，页头只留说明和操作，避免标题出现两次 */
 @media (max-width: 767px) {
   .tm-page-head {
