@@ -62,5 +62,12 @@ if [ "$PKG" = "com.tongmutvplus.mobile" ]; then
     grep REPORT "$OUT/server.log"
     status=1
   fi
+  if grep -Eq 'UA=.*TMBuild/[0-9]{12}' "$OUT/server.log"; then
+    echo "PASS: UA 里带有 12 位构建时间"
+  else
+    echo "FAIL: UA 里没有 TMBuild/构建时间"
+    grep "GET" "$OUT/server.log" | head -3
+    status=1
+  fi
 fi
 exit $status
