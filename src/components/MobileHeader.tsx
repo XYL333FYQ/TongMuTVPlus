@@ -15,6 +15,8 @@ interface MobileHeaderProps {
   compact: boolean;
   scrolled: boolean;
   actions?: React.ReactNode;
+  /** 底栏上的一级页：页名只留给读屏软件，顶栏只剩右侧按钮，随页面滚走 */
+  tab?: boolean;
 }
 
 export default function MobileHeader({
@@ -24,6 +26,7 @@ export default function MobileHeader({
   compact,
   scrolled,
   actions,
+  tab = false,
 }: MobileHeaderProps) {
   const reduced = useReducedMotionSetting();
   return (
@@ -33,6 +36,7 @@ export default function MobileHeader({
       data-scrolled={scrolled}
       data-room-actions={Boolean(actions)}
       data-has-subtitle={Boolean(subtitle)}
+      data-tab={tab}
     >
       <div className='tm-header-glass tm-glass' aria-hidden='true' />
       <div className='tm-mobile-title-row'>

@@ -438,6 +438,56 @@
   .tm-shell[data-page='/'] .tm-home-hero {
     margin-top: 0;
   }
+
+  /*
+   * 一级页（底栏上的五个页）：底栏已经写明页名，顶部不再重复一遍。
+   * 顶栏只剩右侧几个按钮，行高收到 44px，没有底色，随页面一起滚走（像 Apple TV App），
+   * 页名留给读屏软件。
+   */
+  .tm-shell[data-tab='true'] {
+    --tm-header-height: 44px;
+  }
+  .tm-mobile-header-v2[data-tab='true'] {
+    position: absolute;
+  }
+  .tm-mobile-header-v2[data-tab='true'] .tm-header-glass {
+    display: none;
+  }
+  .tm-mobile-header-v2[data-tab='true'] .tm-mobile-page-title {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+}
+/* 首页大图在手机上铺到屏幕最顶（顶栏按钮浮在图上），不再留一条空带 */
+@media (max-width: 599px) {
+  .tm-shell[data-tab='true'][data-page='/'] .tm-home-hero {
+    margin-top: calc(-1 * (var(--tm-safe-top) + var(--tm-header-height)));
+  }
+  .tm-shell[data-tab='true'][data-page='/'] .tm-home-hero-panel {
+    padding-top: calc(var(--tm-safe-top) + var(--tm-header-height));
+  }
+  /* 大图两种主题下都是深色的，浮在上面的按钮用图上的浅色 */
+  .tm-shell[data-tab='true'][data-page='/']:has(.tm-home-hero-panel)
+    .tm-mobile-header-v2 {
+    color: var(--tm-on-art);
+  }
+  .tm-shell[data-tab='true'][data-page='/']:has(.tm-home-hero-panel)
+    .tm-mobile-header-v2
+    :is(.tm-shell-icon, .tm-theme-toggle) {
+    color: inherit;
+  }
+  .tm-shell[data-tab='true'][data-page='/']:has(.tm-home-hero-panel)
+    .tm-mobile-header-v2
+    :is(.tm-guest-login, .tm-account-initial) {
+    background: var(--tm-on-art);
+    color: var(--tm-on-art-ink);
+  }
 }
 
 /* —— 手机悬浮底栏 —— */
@@ -574,16 +624,26 @@ html[data-tm-reduced-motion='true'] .tm-mobile-nav-thumb {
   flex-shrink: 0;
 }
 
-/* 手机页面切换：前进从右侧滑入，后退从左侧滑入（只动 transform 和 opacity） */
+/*
+ * 手机页面切换：前进从右侧滑入，后退从左侧滑入（只动 transform 和 opacity）。
+ * 安卓客户端壳里整页位移会和新页面首次渲染抢帧，改成只淡入，更跟手。
+ */
 @media (max-width: 767px) {
-  html:not([data-tm-reduced-motion='true'])[data-tm-nav='forward']
+  html:not([data-tm-reduced-motion='true']):not(
+      [data-tm-shell]
+    )[data-tm-nav='forward']
     .tm-page-transition {
     animation-name: tm-page-enter-forward;
   }
-  html:not([data-tm-reduced-motion='true'])[data-tm-nav='back']
+  html:not([data-tm-reduced-motion='true']):not(
+      [data-tm-shell]
+    )[data-tm-nav='back']
     .tm-page-transition {
     animation-name: tm-page-enter-back;
   }
+}
+html[data-tm-shell] .tm-page-transition {
+  animation: tm-page-fade 140ms var(--tm-ease-out) backwards;
 }
 @media (prefers-reduced-motion: reduce) {
   .tm-page-transition {
