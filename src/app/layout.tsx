@@ -28,6 +28,7 @@ import { authenticateAuthInfo } from '@/lib/request-auth';
 import { listEnabledSourceScripts } from '@/lib/source-script';
 
 import { AppDialogHost } from '@/components/feedback/AppDialogs';
+import MobileBottomNav from '@/components/MobileBottomNav';
 import ClientUpdatePrompt from '@/components/shell/ClientUpdatePrompt';
 import MediaSessionBridge from '@/components/shell/MediaSessionBridge';
 import MobileGestures from '@/components/shell/MobileGestures';
@@ -526,6 +527,7 @@ export default async function RootLayout({
                   <ShellMotionProvider>{children}</ShellMotionProvider>
                   <GlobalErrorIndicator />
                   <ChatFloatingWindow />
+                  <MobileBottomNav />
                   <DownloadBubble />
                   <DownloadPanel />
                   <AppDialogHost />

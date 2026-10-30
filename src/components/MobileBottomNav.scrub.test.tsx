@@ -178,8 +178,23 @@ describe('手机底栏按住拖动', () => {
 
   it('滑块出现在当前选中项上，当前项标记 aria-current', () => {
     mockPath = '/search';
+    // 记下底栏尺寸观察器的回调：底栏显示出来（有了尺寸）时由它触发重新定位
+    let resized: () => void = jest.fn();
+    const Original = window.ResizeObserver;
+    window.ResizeObserver = class {
+      constructor(callback: () => void) {
+        resized = callback;
+      }
+      observe = jest.fn();
+      unobserve = jest.fn();
+      disconnect = jest.fn();
+    } as unknown as typeof ResizeObserver;
     const { nav, links } = setup();
     expect(links[3]).toHaveAttribute('aria-current', 'page');
+    // 底栏被隐藏（量不到宽度）时不定位滑块；显示出来、尺寸有了之后才定位
+    expect(nav.querySelector('.tm-mobile-nav-thumb')).toBeNull();
+    act(() => resized());
+    window.ResizeObserver = Original;
     expect(nav.querySelector('.tm-mobile-nav-thumb')).toBeTruthy();
   });
 });
