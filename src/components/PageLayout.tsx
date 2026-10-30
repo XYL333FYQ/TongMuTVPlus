@@ -21,6 +21,9 @@ import PageContainer from './PageContainer';
 import { ThemeToggle } from './ThemeToggle';
 import { VersionCheckProvider } from './VersionCheckProvider';
 
+// 底栏上的五个一级页：手机上底栏已经标明身处何处，顶部不再重复页名
+const TAB_PATHS = ['/', '/douban', '/watch-room', '/search', '/my'];
+
 interface PageLayoutProps {
   children: React.ReactNode;
   activePath?: string;
@@ -77,11 +80,17 @@ export default function PageLayout({
   }, [activePath, embedded, hideNavigation]);
 
   if (embedded) return <main className='tm-embedded-page'>{children}</main>;
+  const isTab =
+    !hideNavigation &&
+    TAB_PATHS.includes(current) &&
+    !mobileTitle &&
+    !mobileSubtitle;
   return (
     <VersionCheckProvider>
       <DesignGridOverlay />
       <div
         data-page={current}
+        data-tab={isTab}
         className={
           'tm-shell tm-shell-v2 ' +
           (hideNavigation ? 'tm-shell-no-navigation' : '')
@@ -103,6 +112,7 @@ export default function PageLayout({
               actions={mobileActions}
               compact={compactTitle}
               scrolled={scrolled}
+              tab={isTab}
             />
           </>
         )}

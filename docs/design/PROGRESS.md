@@ -1,5 +1,13 @@
 # 界面改造进度
 
+## 2026-10-30 手机顶栏瘦身与 App 流畅度（分支 feat/mobile-polish）
+
+- 起因（用户真机截图）：铺满屏幕后顶部"状态栏 + 52px 顶栏"很厚、页名与底栏重复且不居中；整体动效卡。
+- 做了什么：PageLayout 识别五个一级页并给外壳和 MobileHeader 打 `data-tab`；shell.css 手机宽度下一级页顶栏改为 44px、无底色、绝对定位随页面滚走、页名视觉隐藏；首页大图（<600px）上拉到屏幕最顶，顶栏按钮用图上浅色。useVisualPreferences：壳里（有 `window.TMShell`）未设置过时默认关闭模糊；壳里页面切换只淡入 140ms。
+- 验证：typecheck 退出 0；eslint 0 错误（原有 console 警告）；jest 148 套 941 项通过；format:check 通过（typecheck 与 format:check 各偶发过一次无诊断的原生崩溃 3221225477/段错误，关闭预览后串行重跑均通过，按项目约定记录，根因未查）；新增 PageLayout.tab.test（11 项）、VisualPreferenceControls 壳默认值（2 项）。浏览器 390 深色（发现、片库、房间）、390 浅色（发现、搜索）、820、1280：桌面顶栏与首页大图不变，手机顶栏只剩右侧按钮。
+- 没验证：真机卡顿是否消除（没有设备性能分析，"关模糊 + 只淡入"是按已知开销来源做的推断，不是实测）；"我的"页需要登录没截图；登录态的账号圆点在大图上的观感（只按样式推断）；浅色主题下大图被换成未模糊的原图，观感待真机确认。
+- 用户可调：显示设置里"关闭背景模糊"可重新打开模糊。
+
 ## 2026-10-30 客户端更新提醒与"批准后发布"（分支 feat/client-update）
 
 - 做了什么：构建时间进安装包（安卓 UA 的 TMBuild/、Windows 的 TMDesktop.build）；流水线发布时同时上传 client-android.json、client-windows.json；新增 /api/client-update；ClientUpdatePrompt 弹窗与"关于"页的 ClientBuildInfo；安卓壳 installUpdate（下载并调起安装）；三条流水线改为推送到 main 且改了对应目录时自动构建，发布需在 `release` 环境批准（已用 gh 建好环境并指定仓库所有者为审批人）。
