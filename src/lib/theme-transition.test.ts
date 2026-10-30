@@ -1,5 +1,12 @@
 import { changeThemeWithTransition } from './theme-transition';
 
+// 测试里用简化的假实现替换浏览器的视图过渡接口，类型放宽到测试需要的部分
+const doc = document as unknown as {
+  startViewTransition?: (
+    update: () => void | Promise<void>
+  ) => TMViewTransition;
+};
+
 let reduced = false;
 let systemDark = false;
 let motionChange: () => void = () => undefined;
@@ -26,7 +33,7 @@ beforeEach(() => {
   });
   document.documentElement.className = 'dark';
   delete document.documentElement.dataset.tmReducedMotion;
-  delete document.startViewTransition;
+  delete doc.startViewTransition;
   document.documentElement.style.setProperty(
     '--tm-ease-theme',
     'cubic-bezier(.22,1,.36,1)'
@@ -63,7 +70,7 @@ test('entering dark retracts the old light snapshot into the control', async () 
   let capturedOrigin: string | null = null;
   let capturedTarget: string | undefined;
   let capturedAura = false;
-  document.startViewTransition = (update) => {
+  doc.startViewTransition = (update) => {
     capturedOrigin = origin.getAttribute('data-tm-theme-origin');
     capturedTarget = document.documentElement.dataset.tmThemeTarget;
     capturedAura = Boolean(
@@ -101,7 +108,7 @@ test('entering dark retracts the old light snapshot into the control', async () 
 test('same visual theme still saves system preference without replaying the page reveal', async () => {
   systemDark = true;
   const start = jest.fn();
-  document.startViewTransition = start;
+  doc.startViewTransition = start;
   await changeThemeWithTransition('system', setTheme, origin);
   expect(setTheme).toHaveBeenCalledWith('system');
   expect(document.documentElement).toHaveClass('dark');
@@ -123,7 +130,7 @@ test('an obsolete ready callback cannot remove the latest origin or overwrite it
   const second = deferred();
   const waits = [first, second];
   const skip = jest.fn();
-  document.startViewTransition = (update) => {
+  doc.startViewTransition = (update) => {
     const wait = waits.shift();
     if (!wait) throw new Error('unexpected extra transition');
     const completion = Promise.resolve(update());
@@ -154,7 +161,7 @@ test('an obsolete ready callback cannot remove the latest origin or overwrite it
 test('enabling reduced motion while waiting cancels the reveal and clears its control layer', async () => {
   const ready = deferred();
   const skip = jest.fn();
-  document.startViewTransition = (update) => {
+  doc.startViewTransition = (update) => {
     const completion = Promise.resolve(update());
     return {
       ready: ready.promise,
@@ -175,7 +182,7 @@ test('enabling reduced motion while waiting cancels the reveal and clears its co
   expect(document.documentElement.dataset.tmThemeTransition).toBeUndefined();
 });
 afterEach(() => {
-  delete document.startViewTransition;
+  delete doc.startViewTransition;
   delete document.documentElement.dataset.tmReducedMotion;
 });
 test.each(['site', 'system'])(
@@ -201,7 +208,7 @@ test('circle waits for the next-themes class update and uses the control centre'
   origin.getBoundingClientRect = () =>
     ({ left: 20, top: 30, width: 44, height: 44 } as DOMRect);
   let updateDone = false;
-  document.startViewTransition = (update) => {
+  doc.startViewTransition = (update) => {
     const completion = Promise.resolve(update()).then(() => {
       updateDone = true;
     });
@@ -232,7 +239,7 @@ test('circle waits for the next-themes class update and uses the control centre'
 });
 test('a failed snapshot still applies the theme and cleans up', async () => {
   const failure = Promise.reject(new Error('snapshot unavailable'));
-  document.startViewTransition = () => ({
+  doc.startViewTransition = () => ({
     ready: failure,
     updateCallbackDone: failure,
     finished: failure,
@@ -256,7 +263,7 @@ function startSuccessfulTransition(update: () => void | Promise<void>) {
 test.each(['light', 'dark'] as const)(
   '%s crisp circular clip-path uses the control centre and covers every corner before cleanup',
   async (theme) => {
-    document.startViewTransition = startSuccessfulTransition;
+    doc.startViewTransition = startSuccessfulTransition;
     document.documentElement.className = theme === 'light' ? 'dark' : 'light';
     origin.getBoundingClientRect = () =>
       ({ left: 20, top: 30, width: 44, height: 44 } as DOMRect);
@@ -287,7 +294,7 @@ test.each(['light', 'dark'] as const)(
 );
 
 test('reduced motion cancels the active circular clip-path animation', async () => {
-  document.startViewTransition = startSuccessfulTransition;
+  doc.startViewTransition = startSuccessfulTransition;
   const first = deferred();
   const started = deferred();
   const cancelFirst = jest.fn(first.resolve);

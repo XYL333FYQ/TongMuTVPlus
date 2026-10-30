@@ -27,8 +27,9 @@ const ACTION_STATUS: Record<string, FeedbackStatus> = {
 // PATCH：站长 / 管理员处理一条反馈。同意功能申请会直接给该用户授权，只有站长能做。
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  props: { params: Promise<{ id: string }> }
 ) {
+  const params = await props.params;
   const authInfo = getAuthInfoFromCookie(request);
   if (!authInfo?.username) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

@@ -7,10 +7,4 @@ declare global {
     readonly finished: Promise<void>;
     skipTransition(): void;
   }
-
-  interface Document {
-    startViewTransition?: (
-      update: () => void | Promise<void>
-    ) => TMViewTransition;
-  }
 }

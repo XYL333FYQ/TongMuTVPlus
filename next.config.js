@@ -36,7 +36,6 @@ const createNextConfig = (phase) => {
     },
 
     reactStrictMode: false,
-    swcMinify: true,
 
     // 安全响应头：
     // - 全站禁止 MIME 嗅探，防止把代理来的文本当脚本/页面执行；
@@ -89,18 +88,10 @@ const createNextConfig = (phase) => {
     ],
 
     experimental: {
-      instrumentationHook:
-        process.env.NODE_ENV === 'production' && !isEdgeBuild,
       optimizePackageImports: optimizedPackageImports,
       webpackBuildWorker: !isEdgeBuild,
-      // Next 14.2 仍可能读取此字段；与 serverExternalPackages 保持一致
-      serverComponentsExternalPackages: [
-        '@libsql/client',
-        '@libsql/hrana-client',
-        '@libsql/isomorphic-ws',
-        '@libsql/isomorphic-fetch',
-        'libsql',
-      ],
+      // Next 15 起切页缓存默认 0 秒（每次切回都重新取页面数据）；恢复 14 的 30 秒，切页速度不回退
+      staleTimes: { dynamic: 30 },
     },
 
     // Uncoment to add domain whitelist

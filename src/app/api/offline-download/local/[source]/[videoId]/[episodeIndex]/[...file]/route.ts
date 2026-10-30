@@ -36,17 +36,16 @@ function checkPermission(request: NextRequest): boolean {
  */
 export async function GET(
   request: NextRequest,
-  {
-    params,
-  }: {
-    params: {
+  props: {
+    params: Promise<{
       source: string;
       videoId: string;
       episodeIndex: string;
       file: string[];
-    };
+    }>;
   }
 ) {
+  const params = await props.params;
   if (!checkPermission(request)) {
     return NextResponse.json({ error: '无权限' }, { status: 403 });
   }

@@ -177,8 +177,10 @@ export function RoomLiveMessages({
       const message = event.message;
       if (seen.current.has(message.id)) return;
       seen.current.add(message.id);
-      if (seen.current.size > 500)
-        seen.current.delete(seen.current.values().next().value);
+      if (seen.current.size > 500) {
+        const oldest = seen.current.values().next().value;
+        if (oldest !== undefined) seen.current.delete(oldest);
+      }
       if (!visibleRef.current || document.visibilityState === 'hidden') return;
       if (pending.current.length >= 64) pending.current.shift();
       pending.current.push(message);
