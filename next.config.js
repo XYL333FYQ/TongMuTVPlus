@@ -46,7 +46,22 @@ const createNextConfig = (phase) => {
       return [
         {
           source: '/:path*',
-          headers: [{ key: 'X-Content-Type-Options', value: 'nosniff' }],
+          headers: [
+            { key: 'X-Content-Type-Options', value: 'nosniff' },
+            // 不许别的网站把本站套进框架（防"透明按钮"点击劫持）；本站自己内嵌不受影响
+            { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
+            // 去别的网站时只透露本站域名，不带具体页面地址（与浏览器默认一致，写明以免被改）
+            {
+              key: 'Referrer-Policy',
+              value: 'strict-origin-when-cross-origin',
+            },
+            // 只关掉本站从来不用的设备能力；摄像头、麦克风、屏幕共享、全屏、画中画、
+            // 自动播放（含首页预告片）都在用，不限制
+            {
+              key: 'Permissions-Policy',
+              value: 'geolocation=(), payment=(), usb=(), serial=(), hid=()',
+            },
+          ],
         },
         {
           source: '/api/:path*',

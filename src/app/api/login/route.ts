@@ -3,6 +3,7 @@ import { timingSafeEqual } from 'crypto';
 import { NextRequest, NextResponse } from 'next/server';
 
 import { parseAuthInfo } from '@/lib/auth';
+import { setAuthCookie } from '@/lib/auth-cookie';
 import { getAuthSigningSecret } from '@/lib/auth-secret';
 import { getConfig } from '@/lib/config';
 import { isSecureRequest } from '@/lib/cookie-security';
@@ -238,11 +239,10 @@ export async function POST(req: NextRequest) {
         const response = buildLoginResponse();
 
         // 清除可能存在的认证cookie
-        response.cookies.set('auth', '', {
+        setAuthCookie(response, '', {
           path: '/',
           expires: new Date(0),
           sameSite: 'lax',
-          httpOnly: false,
         });
 
         return response;
@@ -277,11 +277,10 @@ export async function POST(req: NextRequest) {
       const expires = new Date();
       expires.setDate(expires.getDate() + 60); // 60天过期（Refresh Token 有效期）
 
-      response.cookies.set('auth', cookieValue, {
+      setAuthCookie(response, cookieValue, {
         path: '/',
         expires,
         sameSite: 'lax',
-        httpOnly: false, // 允许客户端访问
         secure: isSecureRequest(req),
       });
 
@@ -369,11 +368,10 @@ export async function POST(req: NextRequest) {
       const expires = new Date();
       expires.setDate(expires.getDate() + 60); // 60天过期（Refresh Token 有效期）
 
-      response.cookies.set('auth', cookieValue, {
+      setAuthCookie(response, cookieValue, {
         path: '/',
         expires,
         sameSite: 'lax',
-        httpOnly: false, // 允许客户端访问
         secure: isSecureRequest(req),
       });
 
@@ -426,11 +424,10 @@ export async function POST(req: NextRequest) {
     const expires = new Date();
     expires.setDate(expires.getDate() + 60); // 60天过期（Refresh Token 有效期）
 
-    response.cookies.set('auth', cookieValue, {
+    setAuthCookie(response, cookieValue, {
       path: '/',
       expires,
       sameSite: 'lax',
-      httpOnly: false, // 允许客户端访问
     });
 
     console.log(`Cookie已设置`);

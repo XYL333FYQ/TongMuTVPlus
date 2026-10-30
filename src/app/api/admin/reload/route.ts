@@ -3,11 +3,25 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getAuthInfoFromCookie } from '@/lib/auth';
+import { isCrossSiteRequest } from '@/lib/request-origin';
 import { clearConfigCache } from '@/lib/config';
 
 export const runtime = 'nodejs';
 
+// 改动配置的操作用 POST（页面已改用 POST）。保留 GET 兼容旧脚本，
+// 但拒绝浏览器标明的跨站请求：防止站长登录时点开别人的链接就把配置重载了。
 export async function GET(request: NextRequest) {
+  if (isCrossSiteRequest(request)) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  }
+  return handle(request);
+}
+
+export async function POST(request: NextRequest) {
+  return handle(request);
+}
+
+async function handle(request: NextRequest) {
   const storageType = process.env.NEXT_PUBLIC_STORAGE_TYPE || 'localstorage';
   if (storageType === 'localstorage') {
     return NextResponse.json(

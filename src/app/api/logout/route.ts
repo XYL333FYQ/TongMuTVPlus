@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { invalidateDeviceAccessToken } from '@/lib/access-token-invalidation';
 import { getAuthInfoFromCookie } from '@/lib/auth';
+import { setAuthCookie } from '@/lib/auth-cookie';
 import { isSecureRequest } from '@/lib/cookie-security';
 import { getStorage } from '@/lib/db';
 import { revokeRefreshToken } from '@/lib/refresh-token';
@@ -29,11 +30,10 @@ export async function POST(request: NextRequest) {
   const response = NextResponse.json({ ok: true });
 
   // 清除认证cookie
-  response.cookies.set('auth', '', {
+  setAuthCookie(response, '', {
     path: '/',
     expires: new Date(0),
     sameSite: 'lax',
-    httpOnly: false,
     secure: isSecureRequest(request),
   });
 

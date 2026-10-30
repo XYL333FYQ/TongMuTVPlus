@@ -104,7 +104,9 @@ export function getAuthInfoFromBrowserCookie(): AuthInfo | null {
       return acc;
     }, {} as Record<string, string>);
 
-    const authCookie = cookies['auth'];
+    // 新登录：凭证 auth 脚本读不到，显示信息在 auth_info（见 auth-cookie.ts）；
+    // 升级前就登录的会话 auth 仍可读，续期一次后自动换成新写法
+    const authCookie = cookies['auth_info'] || cookies['auth'];
     if (!authCookie) {
       return null;
     }
@@ -122,14 +124,18 @@ export function clearAuthCookie(): void {
   }
 
   try {
-    // 清除 auth cookie，设置过期时间为过去
-    document.cookie =
-      'auth=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax';
-    // 如果有其他域名或路径的cookie，也尝试清除
-    document.cookie =
-      'auth=; path=/; domain=' +
-      window.location.hostname +
-      '; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax';
+    // 清除 auth / auth_info，设置过期时间为过去。
+    // 新写法的 auth 脚本删不掉（httpOnly），由 /api/logout 在服务端清；这里清掉显示信息，界面立即回到未登录
+    for (const name of ['auth', 'auth_info']) {
+      document.cookie =
+        name + '=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax';
+      // 如果有其他域名或路径的cookie，也尝试清除
+      document.cookie =
+        name +
+        '=; path=/; domain=' +
+        window.location.hostname +
+        '; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax';
+    }
   } catch (error) {
     console.error('[Auth] Failed to clear cookie:', error);
   }

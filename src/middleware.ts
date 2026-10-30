@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { isGuestImageProxyRequest } from '@/lib/public-image-proxy';
 import { authenticateRequest } from '@/lib/request-auth';
+import { isCrossSiteWrite } from '@/lib/request-origin';
 import { isTVModeEnabled, resolveLoginPath } from '@/lib/tv-mode';
 
 const PUBLIC_PAGES = new Set([
@@ -19,6 +20,10 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   if (!isTVModeEnabled() && isTVModePath(pathname)) {
     return new NextResponse('Not Found', { status: 404 });
+  }
+  // 别的网站借浏览器发来的"改数据"请求一律拒绝（跨站请求伪造防护）
+  if (pathname.startsWith('/api/') && isCrossSiteWrite(request)) {
+    return new NextResponse('Forbidden', { status: 403 });
   }
   if (
     shouldSkipAuth(pathname) ||

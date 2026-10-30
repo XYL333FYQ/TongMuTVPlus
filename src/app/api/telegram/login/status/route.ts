@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+import { setAuthCookie } from '@/lib/auth-cookie';
 import { isSecureRequest } from '@/lib/cookie-security';
 import {
   consumeConfirmedTelegramLogin,
@@ -21,11 +22,10 @@ export async function GET(request: NextRequest) {
     });
     const expires = new Date();
     expires.setDate(expires.getDate() + 60);
-    response.cookies.set('auth', session.authToken, {
+    setAuthCookie(response, session.authToken, {
       path: '/',
       expires,
       sameSite: 'lax',
-      httpOnly: false,
       secure: isSecureRequest(request),
     });
     return response;

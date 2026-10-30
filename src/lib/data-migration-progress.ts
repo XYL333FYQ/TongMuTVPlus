@@ -10,7 +10,7 @@ const progressStore = new Map<
   }
 >();
 
-// 清理过期的进度信息（超过5分钟）
+// 清理过期的进度信息（超过5分钟）。unref：这个后台清理不应阻止进程退出
 setInterval(() => {
   const now = Date.now();
   const entries = Array.from(progressStore.entries());
@@ -19,7 +19,7 @@ setInterval(() => {
       progressStore.delete(key);
     }
   }
-}, 60 * 1000);
+}, 60 * 1000).unref?.();
 
 // 辅助函数：更新进度
 export function updateProgress(

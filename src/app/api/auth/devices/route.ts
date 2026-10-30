@@ -7,6 +7,7 @@ import {
   invalidateUserAccessTokens,
 } from '@/lib/access-token-invalidation';
 import { getAuthInfoFromCookie } from '@/lib/auth';
+import { setAuthCookie } from '@/lib/auth-cookie';
 import { isSecureRequest } from '@/lib/cookie-security';
 import { getStorage } from '@/lib/db';
 import {
@@ -88,11 +89,10 @@ export async function POST(request: NextRequest) {
     const response = NextResponse.json({ ok: true });
 
     // 清除当前设备的 Cookie
-    response.cookies.set('auth', '', {
+    setAuthCookie(response, '', {
       path: '/',
       expires: new Date(0),
       sameSite: 'lax',
-      httpOnly: false,
       secure: isSecureRequest(request),
     });
 

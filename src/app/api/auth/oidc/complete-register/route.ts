@@ -1,6 +1,7 @@
 /* eslint-disable no-console,@typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from 'next/server';
 
+import { setAuthCookie } from '@/lib/auth-cookie';
 import { getAuthSigningSecret } from '@/lib/auth-secret';
 import { getConfig } from '@/lib/config';
 import { isSecureRequest } from '@/lib/cookie-security';
@@ -234,11 +235,10 @@ export async function POST(request: NextRequest) {
       );
       const expires = new Date(Date.now() + TOKEN_CONFIG.REFRESH_TOKEN_AGE);
 
-      response.cookies.set('auth', cookieValue, {
+      setAuthCookie(response, cookieValue, {
         path: '/',
         expires,
         sameSite: 'lax',
-        httpOnly: false,
         secure: isSecureRequest(request),
       });
 

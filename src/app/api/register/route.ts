@@ -5,6 +5,12 @@ import { getConfig } from '@/lib/config';
 import { db } from '@/lib/db';
 import { lockManager } from '@/lib/lock';
 import {
+  checkLoginBan,
+  formatRetryWait,
+  getLoginClientIp,
+  recordLoginFailure,
+} from '@/lib/login-fail2ban';
+import {
   createTelegramBindSession,
   getTelegramConfig,
   getTelegramDeepLink,
@@ -51,6 +57,25 @@ async function verifyTurnstileToken(
 
 export async function POST(req: NextRequest) {
   try {
+    // 与登录共用按 IP 的失败计数：邀请码填错算一次失败，防止被人挨个试邀请码
+    const clientIp = getLoginClientIp(req);
+    const banStatus = checkLoginBan(clientIp);
+    if (banStatus.banned) {
+      return NextResponse.json(
+        {
+          error: `尝试次数过多，请 ${formatRetryWait(
+            banStatus.retryAfterSeconds
+          )}后再试`,
+          retryAfterSeconds: banStatus.retryAfterSeconds,
+        },
+        {
+          status: 429,
+          headers: banStatus.retryAfterSeconds
+            ? { 'Retry-After': String(banStatus.retryAfterSeconds) }
+            : undefined,
+        }
+      );
+    }
     // localStorage 模式不支持注册
     if (STORAGE_TYPE === 'localstorage') {
       return NextResponse.json(
@@ -119,6 +144,7 @@ export async function POST(req: NextRequest) {
       }
 
       if (!inviteCode || inviteCode.trim() !== expectedInviteCode) {
+        recordLoginFailure(clientIp);
         return NextResponse.json({ error: '邀请码错误' }, { status: 400 });
       }
     }

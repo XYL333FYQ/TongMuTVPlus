@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getAuthInfoFromCookie, parseAuthInfo } from '@/lib/auth';
+import { setAuthCookie } from '@/lib/auth-cookie';
 import { isSecureRequest } from '@/lib/cookie-security';
 import { db } from '@/lib/db';
 import { refreshAccessToken } from '@/lib/middleware-auth';
@@ -51,11 +52,10 @@ export async function POST(request: NextRequest) {
     const response = buildRefreshResponse(authCookie.value);
     const expires = new Date();
     expires.setDate(expires.getDate() + 60);
-    response.cookies.set('auth', authCookie.value, {
+    setAuthCookie(response, authCookie.value, {
       path: '/',
       expires,
       sameSite: 'lax',
-      httpOnly: false,
       secure: isSecureRequest(request),
     });
     return response;
@@ -118,11 +118,10 @@ export async function POST(request: NextRequest) {
 
   const response = buildRefreshResponse(newAuthData);
   const expires = new Date(authInfo.refreshExpires);
-  response.cookies.set('auth', newAuthData, {
+  setAuthCookie(response, newAuthData, {
     path: '/',
     expires,
     sameSite: 'lax',
-    httpOnly: false,
     secure: isSecureRequest(request),
   });
   return response;

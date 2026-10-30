@@ -123,6 +123,7 @@ import {
   CUSTOM_SUBTITLE_ACCEPT,
 } from '@/lib/subtitle-converter';
 import { getTMDBImageUrl } from '@/lib/tmdb-image-base';
+import { getTranscoderCookieHeader } from '@/lib/transcoder-cookie.client';
 import {
   DanmakuFilterConfig,
   EpisodeFilterConfig,
@@ -2278,8 +2279,10 @@ function PlayPageClient() {
 
       const requestHeaders: Record<string, string> = {};
       if (sourceUrl.startsWith(window.location.origin)) {
-        if (document.cookie) {
-          requestHeaders.Cookie = document.cookie;
+        // 登录凭证脚本读不到了，向本站要一份短效副本交给转码程序
+        const cookie = await getTranscoderCookieHeader();
+        if (cookie) {
+          requestHeaders.Cookie = cookie;
         }
         requestHeaders.Referer = `${window.location.origin}/`;
       }
