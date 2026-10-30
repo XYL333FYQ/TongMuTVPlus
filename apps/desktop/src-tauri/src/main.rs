@@ -43,7 +43,9 @@ fn main() {
     tauri::Builder::default()
         .invoke_handler(tauri::generate_handler![tm_window, tm_fullscreen])
         .setup(|app| {
-            let script = INIT_SCRIPT.replace("__HOME__", HOME_URL);
+            let script = INIT_SCRIPT
+                .replace("__HOME__", HOME_URL)
+                .replace("__BUILD__", option_env!("TM_BUILD").unwrap_or("0"));
             WebviewWindowBuilder::new(app, "main", WebviewUrl::App("index.html".into()))
                 .title("TongMuTV Plus")
                 .inner_size(1280.0, 800.0)

@@ -7,6 +7,8 @@
 (function () {
   if (window.__tmDesktopInit) return;
   window.__tmDesktopInit = true;
+  // 构建时间（yyyyMMddHHmm，UTC），由 main.rs 在编译时填入；网页据此判断客户端新旧
+  window.TMDesktop = { build: '__BUILD__' };
 
   var HOME = '__HOME__';
   // 三个按钮各 46px 宽，顶栏右侧的操作区要让出这块位置

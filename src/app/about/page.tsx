@@ -11,6 +11,7 @@ import {
 } from '@/lib/brand';
 
 import ReleaseVersion from '@/components/account/ReleaseVersion';
+import ClientBuildInfo from '@/components/shell/ClientBuildInfo';
 import PageContainer from '@/components/PageContainer';
 import PageLayout from '@/components/PageLayout';
 
@@ -41,6 +42,7 @@ export default function AboutPage() {
               当前版本 <ReleaseVersion />
               。一起发现好内容，独自观看或与朋友同步观影。
             </p>
+            <ClientBuildInfo />
           </section>
           <section>
             <h2 className='text-lg font-medium text-fg'>一起看</h2>
