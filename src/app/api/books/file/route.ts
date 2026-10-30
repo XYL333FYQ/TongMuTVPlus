@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { db } from '@/lib/db';
-import { bookProvider } from '@/lib/book-provider';
 import type { BookSource } from '@/lib/book.types';
+import { bookProvider } from '@/lib/book-provider';
+import { db } from '@/lib/db';
 import { hostsOf, isProxyTargetAllowed } from '@/lib/server/ssrf';
 
 import { getAuthorizedBooksUsername } from '../_utils';

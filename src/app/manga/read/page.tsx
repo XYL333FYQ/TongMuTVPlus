@@ -21,8 +21,6 @@ import type {
 import { isReducedMotionSetting } from '@/lib/motion';
 import { processImageUrl } from '@/lib/utils';
 
-import ReaderDialog from '@/components/media/ReaderDialog';
-
 import {
   LIBRARY_BUTTON,
   LIBRARY_FIELD,
@@ -43,6 +41,7 @@ import {
   READER_SLIDER,
   READER_TOOLTIP,
 } from '@/components/media/library';
+import ReaderDialog from '@/components/media/ReaderDialog';
 import ProxyImage from '@/components/ProxyImage';
 
 type ReadMode = 'single' | 'double' | 'vertical' | 'horizontal';

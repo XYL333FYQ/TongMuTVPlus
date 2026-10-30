@@ -3,8 +3,8 @@
 import { NextResponse } from 'next/server';
 
 import { getConfig } from '@/lib/config';
-import { validateProxyUrlServerSide } from '@/lib/server/ssrf';
 import { buildProxyStreamHeaders } from '@/lib/server/proxy-headers';
+import { validateProxyUrlServerSide } from '@/lib/server/ssrf';
 
 export const runtime = 'nodejs';
 

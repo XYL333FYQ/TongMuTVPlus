@@ -1,8 +1,8 @@
 import {
-  THUMB_MS,
   pinThumb,
   resetThumbMotion,
   retargetThumb,
+  THUMB_MS,
   thumbNow,
 } from './mobileNavThumb';
 

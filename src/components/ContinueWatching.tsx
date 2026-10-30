@@ -15,9 +15,9 @@ import {
   subscribeToDataUpdates,
 } from '@/lib/db.client';
 
+import SectionHeader from '@/components/catalog/SectionHeader';
 import { ConfirmDialog } from '@/components/feedback/ConfirmDialog';
 import PlayRecordsPanel from '@/components/PlayRecordsPanel';
-import SectionHeader from '@/components/catalog/SectionHeader';
 import VideoCard from '@/components/VideoCard';
 import VirtualScrollableRow from '@/components/VirtualScrollableRow';
 

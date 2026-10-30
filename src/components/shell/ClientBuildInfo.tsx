@@ -9,9 +9,9 @@ import {
 } from '@/lib/client-update';
 
 import {
+  type UpdateResult,
   CHECK_EVENT,
   RESULT_EVENT,
-  type UpdateResult,
 } from '@/components/shell/ClientUpdatePrompt';
 
 const MESSAGES: Record<UpdateResult, string> = {

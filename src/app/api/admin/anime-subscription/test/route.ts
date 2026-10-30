@@ -1,12 +1,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from 'next/server';
 
-import { getAuthInfoFromCookie } from '@/lib/auth';
 import { validateKeywordExpr } from '@/lib/anime-keyword-expr';
 import {
   testEpisodeFilter,
   validateEpisodeRegex,
 } from '@/lib/anime-subscription';
+import { getAuthInfoFromCookie } from '@/lib/auth';
 
 export const runtime = 'nodejs';
 

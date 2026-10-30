@@ -14,15 +14,15 @@ import {
   normalizeMobileAuthorization,
 } from '@/lib/netdisk/mobile.client';
 import {
-  normalizePan123Account,
-  normalizePan123Password,
-  validatePan123Credentials,
-} from '@/lib/netdisk/pan123.client';
-import {
   assertPan115CookieHeaderSafe,
   normalizePan115Cookie,
   validatePan115Cookie,
 } from '@/lib/netdisk/pan115.client';
+import {
+  normalizePan123Account,
+  normalizePan123Password,
+  validatePan123Credentials,
+} from '@/lib/netdisk/pan123.client';
 import {
   assertQuarkCookieHeaderSafe,
   normalizeQuarkCookie,

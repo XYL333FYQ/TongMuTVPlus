@@ -6,9 +6,10 @@ import { Bell, Check, Settings, Trash2, X } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
-import ModalLayer from '@/components/feedback/ModalLayer';
 import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
 import { Notification } from '@/lib/types';
+
+import ModalLayer from '@/components/feedback/ModalLayer';
 
 interface NotificationPanelProps {
   isOpen: boolean;

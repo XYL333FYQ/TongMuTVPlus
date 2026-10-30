@@ -1,5 +1,5 @@
-import { getModuleAvailability } from './module-availability';
 import type { AdminConfig } from './admin.types';
+import { getModuleAvailability } from './module-availability';
 
 const emptyConfig = {} as AdminConfig;
 

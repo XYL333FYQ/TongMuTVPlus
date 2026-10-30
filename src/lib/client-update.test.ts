@@ -1,10 +1,10 @@
 import {
-  SNOOZE_MS,
   detectClient,
   formatBuild,
   isOutdated,
   isSnoozed,
   snooze,
+  SNOOZE_MS,
 } from './client-update';
 
 describe('detectClient', () => {

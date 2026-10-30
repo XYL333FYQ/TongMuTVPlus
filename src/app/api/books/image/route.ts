@@ -1,7 +1,7 @@
+import crypto from 'crypto';
 import { NextRequest, NextResponse } from 'next/server';
 
 import { legadoClient } from '@/lib/legado.client';
-import crypto from 'crypto';
 import {
   guardedFetch,
   ProxyTargetBlockedError,

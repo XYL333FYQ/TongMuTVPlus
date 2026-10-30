@@ -9,7 +9,8 @@
  */
 
 import { sql } from '@vercel/postgres';
-import { DatabaseAdapter, D1PreparedStatement, D1Result } from './d1-adapter';
+
+import { D1PreparedStatement, D1Result, DatabaseAdapter } from './d1-adapter';
 
 /**
  * Vercel Postgres 适配器

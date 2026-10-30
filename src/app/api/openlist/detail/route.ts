@@ -4,13 +4,13 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig } from '@/lib/config';
-import { requireFeaturePermission } from '@/lib/permissions';
 import { OpenListClient } from '@/lib/openlist.client';
 import {
   getCachedVideoInfo,
   setCachedVideoInfo,
   VideoInfo,
 } from '@/lib/openlist-cache';
+import { requireFeaturePermission } from '@/lib/permissions';
 import {
   formatEpisodeDisplayTitle,
   parseVideoFileName,

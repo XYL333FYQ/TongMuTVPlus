@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getAuthInfoFromCookie } from '@/lib/auth';
-import { createQuarkMultiThreadStream } from '@/lib/netdisk/quark-multithread-proxy';
 import {
   ensureQuarkPlayFolder,
   getQuarkPlayHeaders,
@@ -9,6 +8,7 @@ import {
   probeQuarkPlayRange,
   saveQuarkShareFile,
 } from '@/lib/netdisk/quark.client';
+import { createQuarkMultiThreadStream } from '@/lib/netdisk/quark-multithread-proxy';
 import { refreshQuarkNetdiskSession } from '@/lib/netdisk/quark-session-cache';
 import { resolveQuarkSession } from '@/lib/netdisk/quark-session-resolver';
 

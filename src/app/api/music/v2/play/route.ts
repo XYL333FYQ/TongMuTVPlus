@@ -3,10 +3,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import {
   extractSongmid,
   fetchLxLyric,
+  lxPostJson,
   MusicQuality,
   normalizeMusicQuality,
   normalizeSong,
-  lxPostJson,
 } from '@/lib/music-v2';
 import { badRequest, internalError } from '@/lib/music-v2-api';
 

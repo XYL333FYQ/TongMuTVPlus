@@ -10,10 +10,10 @@ import { createPortal } from 'react-dom';
 import { base58Encode } from '@/lib/utils';
 
 import CapsuleSwitch from '@/components/catalog/CapsuleSwitch';
-import PageContainer from '@/components/PageContainer';
-import PageHeader from '@/components/shell/PageHeader';
-import PageLayout from '@/components/PageLayout';
 import PosterGrid from '@/components/catalog/PosterGrid';
+import PageContainer from '@/components/PageContainer';
+import PageLayout from '@/components/PageLayout';
+import PageHeader from '@/components/shell/PageHeader';
 import VideoCard from '@/components/VideoCard';
 
 type LibrarySourceType =

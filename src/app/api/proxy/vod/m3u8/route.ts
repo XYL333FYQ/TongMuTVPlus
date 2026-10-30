@@ -4,11 +4,11 @@ import { NextResponse } from 'next/server';
 
 import { getConfig } from '@/lib/config';
 import { getBaseUrl, resolveUrl } from '@/lib/live';
-import { validateProxyUrlServerSide } from '@/lib/server/ssrf';
 import {
   buildProxyM3u8Headers,
   buildProxyStreamHeaders,
 } from '@/lib/server/proxy-headers';
+import { validateProxyUrlServerSide } from '@/lib/server/ssrf';
 
 export const runtime = 'nodejs';
 

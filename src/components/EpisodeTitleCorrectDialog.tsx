@@ -7,7 +7,6 @@ import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 
-import ModalLayer from '@/components/feedback/ModalLayer';
 import {
   EpisodeTitleCorrection,
   getEpisodeTitleCorrection,
@@ -15,6 +14,8 @@ import {
 } from '@/lib/episode-title-correction';
 import { getTMDBImageUrl } from '@/lib/tmdb-image-base';
 import { processImageUrl } from '@/lib/utils';
+
+import ModalLayer from '@/components/feedback/ModalLayer';
 
 interface TMDBResult {
   id: number;

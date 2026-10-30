@@ -100,3 +100,17 @@ test('账号菜单提供独立的关于入口，点击后关闭菜单', async ()
   expect(trigger).toHaveAttribute('aria-expanded', 'false');
   expect(screen.queryByRole('link', { name: '关于 TongMuTV Plus' })).toBeNull();
 });
+
+test.each([
+  ['设置', '本地设置'],
+  ['电视访问', '电视访问'],
+  ['客户端安装', '客户端安装指南'],
+])('按需下载的面板：点“%s”后面板完整出现', async (entry, heading) => {
+  render(<UserMenu />);
+  fireEvent.click(screen.getByRole('button', { name: '账号菜单' }));
+  const item = await screen.findByText(entry, { selector: 'span' });
+  fireEvent.click(item);
+  expect(
+    await screen.findByRole('heading', { name: heading })
+  ).toBeInTheDocument();
+});

@@ -4,8 +4,8 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { API_CONFIG, getCacheTime } from '@/lib/config';
 import { getDuanjuSources } from '@/lib/duanju';
-import { SearchResult } from '@/lib/types';
 import { cleanHtmlTags } from '@/lib/html-text';
+import { SearchResult } from '@/lib/types';
 
 export const runtime = 'nodejs';
 

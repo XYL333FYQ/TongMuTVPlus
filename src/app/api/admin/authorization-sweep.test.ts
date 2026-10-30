@@ -2,10 +2,9 @@
 // 管理接口权限总排查：每一个 /api/admin/** 接口的每一个方法，
 // 未登录、普通成员来访都必须被拒绝（401/403），且不能动到配置或数据库。
 // 新增管理接口会被自动纳入，不用记得补测试。
+import { NextRequest } from 'next/server';
 import fs from 'node:fs';
 import path from 'node:path';
-
-import { NextRequest } from 'next/server';
 
 // 被拒绝的请求不应该走到写配置、写数据库这一步。
 // 读用户信息（判断角色）返回空；其余任何数据库/存储调用直接抛错——

@@ -4,6 +4,9 @@ import { ListMusic } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
+import { musicSources, normalizeSource } from '@/lib/music/shared';
+import type { Playlist } from '@/lib/music/types';
+
 import MusicEmpty, {
   MusicSleeveGridSkeleton,
 } from '@/components/music/MusicEmpty';
@@ -11,8 +14,6 @@ import MusicPage from '@/components/music/MusicPage';
 import MusicSwitch from '@/components/music/MusicSwitch';
 import SleeveCard from '@/components/music/SleeveCard';
 import { MUSIC_SLEEVE_GRID } from '@/components/music/tokens';
-import { musicSources, normalizeSource } from '@/lib/music/shared';
-import type { Playlist } from '@/lib/music/types';
 
 /** 榜单卡的键名方块用音源缩写，和音源切换共用一套标识。 */
 const sourceOptions = musicSources.map((item) => ({

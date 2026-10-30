@@ -1,6 +1,5 @@
 // Socket.IO 客户端管理
 import type { Socket } from 'socket.io-client';
-import { io } from 'socket.io-client';
 
 import type {
   ClientToServerEvents,
@@ -16,6 +15,15 @@ export type WatchRoomSocket = Socket<
 const CONNECTION_ATTEMPT_TIMEOUT = 10_000;
 const MANUAL_RECONNECT_TIMEOUT = 5_000;
 
+// 房间连接库（约 13KB）按需下载：房间管理器挂在根布局里，静态引入会让每个页面的首屏
+// 都带上它，而真正连房间时才需要。第一次连接时下载一次，之后直接用。
+type IoFactory = typeof import('socket.io-client').io;
+let ioFactory: IoFactory | null = null;
+async function loadIo(): Promise<IoFactory> {
+  if (!ioFactory) ioFactory = (await import('socket.io-client')).io;
+  return ioFactory;
+}
+
 class WatchRoomSocketManager {
   private socket: WatchRoomSocket | null = null;
   private config: WatchRoomConfig | null = null;
@@ -27,10 +35,23 @@ class WatchRoomSocketManager {
   private reconnectFailedCallback: (() => void) | null = null;
   private reconnectSuccessCallback: (() => void) | null = null;
   private reconnectWaiters = new Set<(connected: boolean) => void>();
+  // 每次 disconnect() 加一；用来识别"等待下载连接库期间已被断开"的连接请求
+  private disconnectEpoch = 0;
 
   // Deliver the socket before its first network result so the hook can bind connect/rejoin.
   // The returned object may still be connecting; only socket.connected denotes success.
   async connect(config: WatchRoomConfig): Promise<WatchRoomSocket> {
+    let io = ioFactory;
+    if (!io) {
+      const epoch = this.disconnectEpoch;
+      io = await loadIo();
+      if (epoch !== this.disconnectEpoch) {
+        // 下载期间房间已被断开：不再建立连接，交回一个不会联网的空套接字，
+        // 与以前"先建好连接、随即被断开"时调用方拿到的已断开套接字等价。
+        return io({ autoConnect: false, forceNew: true }) as WatchRoomSocket;
+      }
+    }
+    // 以下与原来一致，全部同步执行：并发的两次 connect 在这里只会建立一个连接
     if (this.terminalError) throw this.terminalError;
     if (this.socket) {
       if (!this.socket.connected && !this.socket.active) this.socket.connect();
@@ -78,6 +99,7 @@ class WatchRoomSocketManager {
 
   disconnect() {
     const socket = this.socket;
+    this.disconnectEpoch += 1;
     // Invalidate handlers before transport shutdown can emit any final events.
     this.socket = null;
     this.config = null;

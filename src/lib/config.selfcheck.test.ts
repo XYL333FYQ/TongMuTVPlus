@@ -5,8 +5,8 @@
 
 jest.mock('@/lib/db', () => ({ db: {} }));
 
-import { configSelfCheck } from './config';
 import type { AdminConfig } from './admin.types';
+import { configSelfCheck } from './config';
 
 function makeConfig(overrides: Partial<AdminConfig>): AdminConfig {
   return {

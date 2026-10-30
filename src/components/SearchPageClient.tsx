@@ -58,7 +58,6 @@ import ContinueWatching from '@/components/ContinueWatching';
 import ImageViewer from '@/components/feedback/ImageViewer';
 import PageContainer from '@/components/PageContainer';
 import PageLayout from '@/components/PageLayout';
-import { pageTitleForPath } from '@/components/shell/TongMuNavigation';
 import PansouSearch, { CLOUD_TYPE_NAMES } from '@/components/PansouSearch';
 import ProxyImage from '@/components/ProxyImage';
 import SearchResultFilter, {
@@ -66,6 +65,7 @@ import SearchResultFilter, {
 } from '@/components/SearchResultFilter';
 import SearchSuggestions from '@/components/SearchSuggestions';
 import BackToTop from '@/components/shell/BackToTop';
+import { pageTitleForPath } from '@/components/shell/TongMuNavigation';
 import VideoCard, { VideoCardHandle } from '@/components/VideoCard';
 import VirtualScrollableGrid from '@/components/VirtualScrollableGrid';
 

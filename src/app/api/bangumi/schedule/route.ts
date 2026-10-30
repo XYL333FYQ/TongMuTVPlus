@@ -9,13 +9,13 @@ import {
   indexCards,
   parseLiveChart,
 } from '@/lib/bangumi-schedule.server';
-import { getConfig } from '@/lib/config';
 import {
   getBangumiScheduleDatabaseCache,
   getBangumiScheduleMemoryCache,
   setBangumiScheduleDatabaseCache,
   setBangumiScheduleMemoryCache,
 } from '@/lib/bangumi-schedule-cache.server';
+import { getConfig } from '@/lib/config';
 
 export const dynamic = 'force-dynamic';
 

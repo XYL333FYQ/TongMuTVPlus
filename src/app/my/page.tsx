@@ -16,14 +16,14 @@ import './my.css';
 
 import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
 
+import ThemeSettings from '@/components/account/ThemeSettings';
+import VisualPreferenceControls from '@/components/account/VisualPreferenceControls';
 import ContinueWatching from '@/components/ContinueWatching';
 import { FavoritesPanel } from '@/components/FavoritesPanel';
 import { OfflineDownloadPanel } from '@/components/OfflineDownloadPanel';
 import PageContainer from '@/components/PageContainer';
 import PageLayout from '@/components/PageLayout';
-import ThemeSettings from '@/components/account/ThemeSettings';
 import { UserMenu } from '@/components/UserMenu';
-import VisualPreferenceControls from '@/components/account/VisualPreferenceControls';
 
 const ROLE_LABEL: Record<string, string> = {
   owner: '站长',

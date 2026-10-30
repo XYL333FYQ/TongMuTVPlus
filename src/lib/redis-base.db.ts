@@ -1,24 +1,24 @@
 /* eslint-disable no-console, @typescript-eslint/no-explicit-any, @typescript-eslint/no-non-null-assertion */
 
 import { AdminConfig } from './admin.types';
-import { MangaReadRecord, MangaShelfItem } from './manga.types';
 import { BookReadRecord, BookShelfItem } from './book.types';
+import { MangaReadRecord, MangaShelfItem } from './manga.types';
 import {
   MusicV2HistoryRecord,
   MusicV2PlaylistItem,
   MusicV2PlaylistRecord,
   sortMusicV2History,
 } from './music-v2';
-import { RedisAdapter } from './redis-adapter';
+import { dispatchNotificationChannels } from './notification-dispatch';
 import {
   hashPassword as createPasswordHash,
   verifyPassword,
 } from './password-hash';
+import { RedisAdapter } from './redis-adapter';
 import {
   Favorite,
   IStorage,
   LocalSettingsSyncRecord,
-  Notification,
   PlayRecord,
   PushSubscriptionRecord,
   SetLocalSettingsSyncOptions,
@@ -26,7 +26,6 @@ import {
   SkipConfig,
 } from './types';
 import { userInfoCache } from './user-cache';
-import { dispatchNotificationChannels } from './notification-dispatch';
 
 // 搜索历史最大条数
 const SEARCH_HISTORY_LIMIT = 20;

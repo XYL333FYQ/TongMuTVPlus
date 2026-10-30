@@ -3,8 +3,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getAuthInfoFromCookie } from '@/lib/auth';
-import { isCrossSiteRequest } from '@/lib/request-origin';
 import { resetConfig } from '@/lib/config';
+import { isCrossSiteRequest } from '@/lib/request-origin';
 
 export const runtime = 'nodejs';
 

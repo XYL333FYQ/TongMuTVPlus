@@ -11,9 +11,9 @@ import {
 } from '@/lib/brand';
 
 import ReleaseVersion from '@/components/account/ReleaseVersion';
-import ClientBuildInfo from '@/components/shell/ClientBuildInfo';
 import PageContainer from '@/components/PageContainer';
 import PageLayout from '@/components/PageLayout';
+import ClientBuildInfo from '@/components/shell/ClientBuildInfo';
 
 export const metadata: Metadata = { title: '关于' };
 
