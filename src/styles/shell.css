@@ -562,6 +562,8 @@
   border-radius: var(--tm-radius-md);
   background: var(--tm-line);
   pointer-events: none;
+  /* 提前独占一层：滑动一开始就由合成器线程接手，不用临时建层、重画 */
+  will-change: transform;
   transition: transform var(--tm-d-panel) var(--tm-ease-out),
     scale var(--tm-d-hover) var(--tm-ease-out);
 }

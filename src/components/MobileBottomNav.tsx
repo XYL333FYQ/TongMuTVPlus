@@ -2,7 +2,13 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { useCallback, useLayoutEffect, useRef, useState } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from 'react';
 
 import { haptic } from '@/lib/shell-bridge';
 
@@ -24,6 +30,8 @@ interface MobileBottomNavProps {
 
 // 手指横向移动超过这个距离，才算“按住拖动”，否则仍是普通点按
 const SCRUB_THRESHOLD = 10;
+// 点了某一项但页面迟迟没到（网络断了、跳转被拦下）时，滑块等这么久就退回真实所在页
+const PENDING_TIMEOUT = 6000;
 
 export default function MobileBottomNav({ activePath }: MobileBottomNavProps) {
   const pathname = usePathname();
@@ -44,9 +52,24 @@ export default function MobileBottomNav({ activePath }: MobileBottomNavProps) {
     isPrimaryNavigationActive(item.href, current)
   );
 
+  // 点下去的那一刻，滑块和高亮就先动起来，不等新页面渲染完：
+  // 新页面渲染会占住主线程几十毫秒，要是滑块等到那之后才起步，点击后会先"卡一下"再滑。
+  // 滑块是合成器线程上的位移过渡，一旦起步，页面再忙也不影响它的流畅。
+  const [pending, setPending] = useState<number | null>(null);
+  const shownIndex = pending ?? activeIndex;
+  // 路由真的换了：真实位置追上来，临时的"将要去"不再需要
+  useEffect(() => {
+    setPending(null);
+  }, [pathname]);
+  useEffect(() => {
+    if (pending === null) return;
+    const timer = window.setTimeout(() => setPending(null), PENDING_TIMEOUT);
+    return () => window.clearTimeout(timer);
+  }, [pending]);
+
   // 滑块停在当前选中项上；窗口尺寸变化（旋转屏幕）时重新量
   const syncThumb = useCallback(() => {
-    const el = itemRefs.current[activeIndex];
+    const el = itemRefs.current[shownIndex];
     // 底栏被隐藏（当前页面不需要底栏）时量不到宽度，等它显示出来（尺寸变化）再定位，避免滑块从 0 滑出
     const next =
       el && el.offsetWidth > 0
@@ -57,7 +80,7 @@ export default function MobileBottomNav({ activePath }: MobileBottomNavProps) {
     if (next) void navRef.current?.offsetWidth;
     retargetThumb(next);
     setThumb(next);
-  }, [activeIndex]);
+  }, [shownIndex]);
   useLayoutEffect(() => {
     syncThumb();
     // 底栏尺寸变化（旋转屏幕、从宽屏缩到手机宽度）时重新量
@@ -94,7 +117,8 @@ export default function MobileBottomNav({ activePath }: MobileBottomNavProps) {
     hoverRef.current = null;
     setScrubbing(false);
     setHover(null);
-    if (navigate && target !== null && target !== activeIndex) {
+    if (navigate && target !== null && target !== shownIndex) {
+      setPending(target === activeIndex ? null : target);
       router.push(primaryNavigation[target].href);
     } else {
       syncThumb();
@@ -186,7 +210,8 @@ export default function MobileBottomNav({ activePath }: MobileBottomNavProps) {
         />
       )}
       {primaryNavigation.map((item, index) => {
-        const active = index === activeIndex;
+        // 高亮跟着"将要去的那一项"走；读屏软件认的当前页（aria-current）仍以真实路由为准
+        const active = index === shownIndex;
         return (
           <Link
             key={item.href}
@@ -199,8 +224,21 @@ export default function MobileBottomNav({ activePath }: MobileBottomNavProps) {
             className='tm-mobile-nav-item tm-press'
             data-active={active}
             data-hover={hover === index || undefined}
-            aria-current={active ? 'page' : undefined}
+            aria-current={index === activeIndex ? 'page' : undefined}
             draggable={false}
+            onClick={(event) => {
+              // 新标签页打开、中键等不是"在本页切换"，滑块不动
+              if (
+                event.button !== 0 ||
+                event.metaKey ||
+                event.ctrlKey ||
+                event.shiftKey ||
+                event.altKey
+              ) {
+                return;
+              }
+              if (index !== shownIndex) setPending(index);
+            }}
           >
             <item.icon size={22} strokeWidth={active ? 2 : 1.65} />
             <span>{item.label}</span>
