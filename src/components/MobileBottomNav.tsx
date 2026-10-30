@@ -11,17 +11,19 @@ import {
   primaryNavigation,
 } from '@/components/shell/TongMuNavigation';
 
+import {
+  type Thumb,
+  pinThumb,
+  retargetThumb,
+  thumbNow,
+} from './mobileNavThumb';
+
 interface MobileBottomNavProps {
   activePath?: string;
 }
 
 // 手指横向移动超过这个距离，才算“按住拖动”，否则仍是普通点按
 const SCRUB_THRESHOLD = 10;
-
-interface Thumb {
-  left: number;
-  width: number;
-}
 
 export default function MobileBottomNav({ activePath }: MobileBottomNavProps) {
   const pathname = usePathname();
@@ -30,7 +32,7 @@ export default function MobileBottomNav({ activePath }: MobileBottomNavProps) {
   const itemRefs = useRef<(HTMLAnchorElement | null)[]>([]);
   const gesture = useRef<{ id: number; startX: number; moving: boolean }>();
   const suppressClick = useRef(false);
-  const [thumb, setThumb] = useState<Thumb | null>(null);
+  const [thumb, setThumb] = useState<Thumb | null>(() => thumbNow());
   const [scrubbing, setScrubbing] = useState(false);
   const [hover, setHover] = useState<number | null>(null);
   // 松手时要读的“当前指到哪一项”必须是即时值：页面忙（卡）时 React 还没来得及渲染，
@@ -45,7 +47,12 @@ export default function MobileBottomNav({ activePath }: MobileBottomNavProps) {
   // 滑块停在当前选中项上；窗口尺寸变化（旋转屏幕）时重新量
   const syncThumb = useCallback(() => {
     const el = itemRefs.current[activeIndex];
-    setThumb(el ? { left: el.offsetLeft, width: el.offsetWidth } : null);
+    const next = el ? { left: el.offsetLeft, width: el.offsetWidth } : null;
+    // 新底栏一出生，滑块先在上一页底栏里它所在的位置；先强制排一次版，
+    // 再改到新位置，过渡才会从旧位置滑过去，而不是瞬移
+    if (next) void navRef.current?.offsetWidth;
+    retargetThumb(next);
+    setThumb(next);
   }, [activeIndex]);
   useLayoutEffect(() => {
     syncThumb();
@@ -136,6 +143,7 @@ export default function MobileBottomNav({ activePath }: MobileBottomNavProps) {
             last.offsetLeft,
             Math.max(first.offsetLeft, event.clientX - navLeft - width / 2)
           );
+          pinThumb({ left, width });
           setThumb({ left, width });
         }
       }}
