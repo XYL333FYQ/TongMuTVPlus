@@ -6,7 +6,7 @@
 - 首屏体积预算按优化后实测收紧：普通页 480 → 290KB、管理后台 640 → 280KB（`scripts/check-bundle-budget.mjs`），原来的数字是瘦身前定的，拦不住回退。
 - `docs/optimization-plan.md` 新增第八节：方案逐条的执行结果（做了 / 部分 / 没做及原因）。
 - 清理：体检用的临时库副本、测试账号文件、启动脚本、临时副本目录与本机日志都已删除；`exp/next15-assessment` 分支保留（本地，未推送）。
-- 没做与风险汇总见 `docs/optimization-plan.md` 第八节；其中需要用户的：Windows 开发人员模式、手机上的 `?perf=1` 与读屏实测、是否加强制 HTTPS、是否合并框架升级、客户端版本号方案。
+- 没做与风险汇总见 `docs/optimization-plan.md` 第八节；其中需要用户的：Windows 开发人员模式、手机上的 `?perf=1` 与读屏实测、是否加强制 HTTPS。（客户端版本号方案此前已定稿并实现，不再待议。）
 
 ## 2026-10-30 登录后各功能页体检（分支 feat/site-optimization，优化方案第 10 步）
 
