@@ -270,9 +270,11 @@ it.each([
   async (handler, params) => {
     const run = handler as (
       request: NextRequest,
-      context: { params: { token: string; filename: string } }
+      context: { params: Promise<{ token: string; filename: string }> }
     ) => Promise<Response>;
-    const context = { params: { filename: 'video.mp4', ...params } };
+    const context = {
+      params: Promise.resolve({ filename: 'video.mp4', ...params }),
+    };
     const forged = encodeURIComponent(
       JSON.stringify({ username: 'alice', role: 'owner' })
     );
@@ -289,7 +291,11 @@ it.each([
     expect(
       (
         await run(request('/api/private'), {
-          params: { ...context.params, token: 'external-tvbox-token' },
+          params: Promise.resolve({
+            filename: 'video.mp4',
+            ...params,
+            token: 'external-tvbox-token',
+          }),
         })
       ).status
     ).toBe(400);
@@ -303,7 +309,7 @@ it('does not authorize private Emby images with a forged cookie or disclose glob
   expect(
     (
       await embyImage(request('/api/emby/image/proxy/1', forged), {
-        params: { token: 'proxy', itemId: '1' },
+        params: Promise.resolve({ token: 'proxy', itemId: '1' }),
       })
     ).status
   ).toBe(401);

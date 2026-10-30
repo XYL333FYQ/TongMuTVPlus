@@ -20,7 +20,7 @@ export const dynamic = 'force-dynamic';
  */
 export default async function SpecialPage() {
   const config = await getConfig();
-  const enabled = cookies().get(SPECIAL_SOURCE_COOKIE)?.value === '1';
+  const enabled = (await cookies()).get(SPECIAL_SOURCE_COOKIE)?.value === '1';
   const specialCount = (config.SpecialSourceApis || []).length;
 
   return (

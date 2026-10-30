@@ -5,8 +5,9 @@ import { getConfig } from '@/lib/config';
 
 export async function GET(
   _request: NextRequest,
-  { params }: { params: { id: string } }
+  props: { params: Promise<{ id: string }> }
 ) {
+  const params = await props.params;
   try {
     const id = params.id;
     if (!/^\d+$/.test(id)) {
