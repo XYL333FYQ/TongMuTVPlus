@@ -531,7 +531,8 @@
 
 /* 底栏按住拖动：滑块跟手，经过的项高亮，松手跳转 */
 .tm-mobile-nav {
-  touch-action: pan-y;
+  /* 底栏上的手指动作全归底栏：浏览器不抢去滚动页面，拖动就不会被中途取消而不跳转 */
+  touch-action: none;
   user-select: none;
   -webkit-user-select: none;
   -webkit-touch-callout: none;
@@ -1192,4 +1193,74 @@ html[data-tm-reduced-motion='true'] .tm-page-transition {
   from {
     opacity: 0;
   }
+}
+
+/* —— 切页即时占位（RouteSkeleton）：不播进场动画，网格/列表铺满 —— */
+html .tm-page-transition.tm-page-instant {
+  animation: none !important;
+}
+.tm-route-skeleton-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 20px;
+}
+.tm-route-skeleton-list {
+  display: grid;
+  gap: 12px;
+  margin-top: 20px;
+}
+@media (min-width: 768px) {
+  .tm-route-skeleton-grid {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 16px;
+  }
+}
+
+/* 卡顿测速条（?perf=1 才出现）：只读，不挡操作 */
+.tm-perf-probe {
+  position: fixed;
+  top: calc(var(--tm-safe-top) + 4px);
+  left: 4px;
+  right: 4px;
+  z-index: 2147483000;
+  padding: 6px 8px;
+  border-radius: var(--tm-radius-sm);
+  background: var(--tm-surface);
+  color: var(--tm-text);
+  font: 12px/1.4 ui-monospace, monospace;
+  pointer-events: none;
+  overflow-wrap: anywhere;
+}
+
+/*
+ * 触屏像 App：去掉点按时的灰色高亮块；界面上的按钮、顶栏、底栏、海报卡不可被选中、
+ * 长按不弹系统菜单（正文、输入框、聊天消息不受影响，仍可选中复制）。
+ * 安卓壳里再去掉页面到顶/到底时的拉伸与发光（下拉刷新用的是自己的手势，不受影响）。
+ */
+@media (pointer: coarse) {
+  a,
+  button,
+  summary,
+  [role='button'],
+  [role='tab'] {
+    -webkit-tap-highlight-color: transparent;
+  }
+  button,
+  summary,
+  [role='button'],
+  [role='tab'],
+  .tm-mobile-header-v2,
+  .tm-mobile-nav,
+  .tm-video-card {
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+  }
+  .tm-video-card img {
+    -webkit-touch-callout: none;
+  }
+}
+html[data-tm-shell] {
+  overscroll-behavior-y: none;
 }
