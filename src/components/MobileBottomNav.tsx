@@ -47,7 +47,11 @@ export default function MobileBottomNav({ activePath }: MobileBottomNavProps) {
   // 滑块停在当前选中项上；窗口尺寸变化（旋转屏幕）时重新量
   const syncThumb = useCallback(() => {
     const el = itemRefs.current[activeIndex];
-    const next = el ? { left: el.offsetLeft, width: el.offsetWidth } : null;
+    // 底栏被隐藏（当前页面不需要底栏）时量不到宽度，等它显示出来（尺寸变化）再定位，避免滑块从 0 滑出
+    const next =
+      el && el.offsetWidth > 0
+        ? { left: el.offsetLeft, width: el.offsetWidth }
+        : null;
     // 新底栏一出生，滑块先在上一页底栏里它所在的位置；先强制排一次版，
     // 再改到新位置，过渡才会从旧位置滑过去，而不是瞬移
     if (next) void navRef.current?.offsetWidth;
@@ -105,6 +109,8 @@ export default function MobileBottomNav({ activePath }: MobileBottomNavProps) {
       className='tm-mobile-nav tm-glass md:hidden'
       aria-label='主导航'
       data-thumb={thumb ? 'true' : undefined}
+      // 当前就在底栏上的某一页：不管页面此刻处在加载占位还是别的过渡状态，底栏都保持显示
+      data-tab-route={activeIndex >= 0 ? 'true' : undefined}
       data-scrubbing={scrubbing || undefined}
       onPointerDown={(event) => {
         if (event.pointerType === 'mouse') return;

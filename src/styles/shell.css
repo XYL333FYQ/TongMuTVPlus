@@ -490,14 +490,18 @@
   }
 }
 
-/* —— 手机悬浮底栏 —— */
+/*
+ * —— 手机悬浮底栏 ——
+ * 底栏只有一份，常驻在根布局里，切页时不销毁重建（滑块、高亮因此能连续过渡）。
+ * 页面里有带导航的外壳时（PageLayout 放一个 data-tm-nav-page 标记）才显示。
+ */
 .tm-mobile-nav {
   position: fixed;
   left: 12px;
   right: 12px;
   bottom: calc(12px + var(--tm-safe-bottom));
   z-index: var(--tm-z-nav);
-  display: grid;
+  display: none;
   grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 2px;
   height: var(--tm-bottom-nav-height);
@@ -527,6 +531,13 @@
 }
 .tm-mobile-nav-item:active {
   scale: 0.95;
+}
+
+@media (max-width: 767px) {
+  body:has([data-tm-nav-page]) .tm-mobile-nav,
+  .tm-mobile-nav[data-tab-route] {
+    display: grid;
+  }
 }
 
 /* 底栏按住拖动：滑块跟手，经过的项高亮，松手跳转 */

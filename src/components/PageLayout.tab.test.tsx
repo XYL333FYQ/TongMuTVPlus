@@ -93,4 +93,15 @@ describe('手机顶栏：底栏上的一级页不再重复页名', () => {
     const { shell } = renderAt('/', { hideNavigation: true });
     expect(shell.dataset.tab).toBe('false');
   });
+
+  test('带导航的页面放一个底栏显示标记；底栏本身常驻在根布局，不在页面里', () => {
+    const { shell } = renderAt('/search');
+    expect(shell.querySelector('[data-tm-nav-page]')).not.toBeNull();
+    expect(shell.querySelector('.tm-mobile-nav')).toBeNull();
+  });
+
+  test('不带导航的页面（登录页、播放页全屏等）没有标记，底栏随之隐藏', () => {
+    const { shell } = renderAt('/', { hideNavigation: true });
+    expect(shell.querySelector('[data-tm-nav-page]')).toBeNull();
+  });
 });

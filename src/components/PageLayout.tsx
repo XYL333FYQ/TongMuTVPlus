@@ -15,7 +15,6 @@ import ViewerAccountButton from '@/components/shell/ViewerAccountButton';
 
 import { BackButton } from './BackButton';
 import DesignGridOverlay from './DesignGridOverlay';
-import MobileBottomNav from './MobileBottomNav';
 import MobileHeader from './MobileHeader';
 import PageContainer from './PageContainer';
 import { ThemeToggle } from './ThemeToggle';
@@ -210,7 +209,8 @@ export default function PageLayout({
             )}
           </main>
         </div>
-        {!hideNavigation && <MobileBottomNav activePath={activePath} />}
+        {/* 底栏常驻在根布局里；这个标记告诉样式：当前页面需要显示底栏 */}
+        {!hideNavigation && <span hidden data-tm-nav-page='' />}
       </div>
     </VersionCheckProvider>
   );
