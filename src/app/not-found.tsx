@@ -10,7 +10,7 @@ export const metadata: Metadata = { title: '找不到页面' };
 // 登录后访问不存在的地址时显示；保留顶栏和底部导航，方便直接去别处
 export default function NotFound() {
   return (
-    <PageLayout>
+    <PageLayout pageHasHeading>
       <PageContainer>
         <div className='tm-empty' role='status'>
           <Compass className='tm-empty-icon' aria-hidden />

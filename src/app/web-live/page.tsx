@@ -511,6 +511,8 @@ export default function WebLivePage() {
             </div>
 
             <div className='space-y-4'>
+              {/* 桌面端读屏用页名（手机顶栏已有） */}
+              <h1 className='tm-desktop-page-name'>网络直播</h1>
               <h3 className='text-lg font-medium text-fg'>功能未启用</h3>
               <div className='bg-raised border border-line rounded-lg p-4'>
                 <p className='text-sm text-muted leading-relaxed'>

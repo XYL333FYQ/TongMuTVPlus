@@ -78,7 +78,7 @@ function MyPageClient() {
   }, [downloadsEnabled, searchParams]);
 
   return (
-    <PageLayout activePath='/my'>
+    <PageLayout activePath='/my' pageHasHeading>
       <PageContainer className='tm-my-page'>
         <header className='tm-my-profile'>
           <div className='tm-my-avatar' aria-hidden>
