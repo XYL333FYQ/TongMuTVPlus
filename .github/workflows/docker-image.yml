@@ -22,7 +22,13 @@ permissions:
   actions: write
 
 jobs:
+  # 先跑完整检查；任何一项失败，镜像都不会打包发布
+  checks:
+    uses: ./.github/workflows/checks.yml
+
   build:
+    needs:
+      - checks
     strategy:
       matrix:
         include:
