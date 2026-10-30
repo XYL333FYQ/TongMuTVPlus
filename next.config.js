@@ -19,7 +19,6 @@ const optimizedPackageImports = [
   '@dnd-kit/utilities',
   '@heroicons/react',
   'lucide-react',
-  'react-icons',
 ];
 
 const createNextConfig = (phase) => {
