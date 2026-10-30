@@ -162,6 +162,11 @@ html.light {
     --tm-safe-top: env(safe-area-inset-top, 0px);
   }
 }
+/* 安卓客户端壳：壳让页面铺满屏幕后，把系统栏高度写进 --tm-shell-*，这里接过来 */
+html[data-tm-shell] {
+  --tm-safe-top: var(--tm-shell-top, 0px);
+  --tm-safe-bottom: var(--tm-shell-bottom, 0px);
+}
 @media (min-width: 600px) {
   :root {
     --tm-content-gutter: 24px;

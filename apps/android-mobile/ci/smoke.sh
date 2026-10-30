@@ -26,7 +26,11 @@ for _ in $(seq 1 45); do
   grep -q "TongMuTVPlusAndroid" "$OUT/server.log" && break
   sleep 1
 done
-sleep 3
+# 页面会在加载后约 3 秒报告壳注入的结果；最多再等 20 秒
+for _ in $(seq 1 20); do
+  grep -q "REPORT" "$OUT/server.log" && break
+  sleep 1
+done
 adb exec-out screencap -p >"$OUT/2-page.png"
 
 adb logcat -d >"$OUT/logcat.txt"
@@ -48,5 +52,15 @@ else
   echo "FAIL: 假服务器没收到带 TongMuTVPlusAndroid 的请求"
   cat "$OUT/server.log"
   status=1
+fi
+# 只有手机壳有 TMShell 对接；电视壳共用本脚本，不检查这一项
+if [ "$PKG" = "com.tongmutvplus.mobile" ]; then
+  if grep -q 'REPORT.*"bridge":true' "$OUT/server.log" && grep -q 'REPORT.*"shell":"android"' "$OUT/server.log"; then
+    echo "PASS: 网页认到了 TMShell，壳已铺满屏幕并注入系统栏高度"
+  else
+    echo "FAIL: 壳没有回应网页的 ready()（没有注入 data-tm-shell）"
+    grep REPORT "$OUT/server.log"
+    status=1
+  fi
 fi
 exit $status

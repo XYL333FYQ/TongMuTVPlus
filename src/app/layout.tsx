@@ -28,6 +28,9 @@ import { authenticateAuthInfo } from '@/lib/request-auth';
 import { listEnabledSourceScripts } from '@/lib/source-script';
 
 import { AppDialogHost } from '@/components/feedback/AppDialogs';
+import MediaSessionBridge from '@/components/shell/MediaSessionBridge';
+import MobileGestures from '@/components/shell/MobileGestures';
+import ShellBridge from '@/components/shell/ShellBridge';
 import ShellMotionProvider from '@/components/shell/ShellMotionProvider';
 
 import PlaybackSessionProvider from '@/features/playback/PlaybackSessionProvider';
@@ -503,6 +506,9 @@ export default async function RootLayout({
         <ThemeProvider attribute='class' defaultTheme='dark' enableSystem>
           <TopProgressBar />
           <RouteScrollReset />
+          <ShellBridge />
+          <MobileGestures />
+          <MediaSessionBridge />
           <TokenRefreshManager />
           <SiteProvider
             siteName={siteName}

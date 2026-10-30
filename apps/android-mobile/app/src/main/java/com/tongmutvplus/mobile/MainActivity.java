@@ -3,22 +3,33 @@ package com.tongmutvplus.mobile;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.PictureInPictureParams;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.content.pm.ActivityInfo;
 import android.graphics.Color;
 import android.net.Uri;
 import android.net.http.SslError;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.VibrationEffect;
+import android.os.Vibrator;
 import android.text.InputType;
+import android.util.Rational;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
+import android.view.WindowInsets;
 import android.view.WindowManager;
 import android.view.inputmethod.EditorInfo;
 import android.webkit.CookieManager;
+import android.webkit.JavascriptInterface;
 import android.webkit.SslErrorHandler;
 import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
@@ -51,6 +62,14 @@ public class MainActivity extends Activity {
     private AlertDialog dialog;
     private boolean errorShown;
 
+    // 网页告诉壳「我认识你」之后，页面铺满整个屏幕（边到边）；旧网站不会告诉，壳保持原来的留边样子
+    private boolean edgeToEdge;
+    private boolean pageDark = true;
+    private boolean revealed;
+    private boolean playing;
+    private WindowInsets lastInsets;
+    private BroadcastReceiver pauseReceiver;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -64,15 +83,11 @@ public class MainActivity extends Activity {
 
         // Android 15 起强制边到边：用系统栏 + 刘海的 inset 给网页留边
         root.setOnApplyWindowInsetsListener((v, insets) -> {
-            if (customView == null) {
-                webHolder.setPadding(
-                        insets.getSystemWindowInsetLeft(),
-                        insets.getSystemWindowInsetTop(),
-                        insets.getSystemWindowInsetRight(),
-                        insets.getSystemWindowInsetBottom());
-            }
+            lastInsets = insets;
+            applyInsets();
             return insets;
         });
+        registerPauseReceiver();
 
         setupWebView();
 
@@ -96,6 +111,8 @@ public class MainActivity extends Activity {
     private void setupWebView() {
         webView = new WebView(this);
         webView.setBackgroundColor(Color.BLACK);
+        webView.setAlpha(0f);
+        webView.addJavascriptInterface(new ShellBridge(), "TMShell");
         webHolder.addView(webView, new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
 
@@ -139,6 +156,13 @@ public class MainActivity extends Activity {
                     // 没有对应应用，忽略
                 }
                 return true;
+            }
+
+            @Override
+            public void onPageFinished(WebView view, String url) {
+                super.onPageFinished(view, url);
+                // 旧网站不会回应「铺满」，兜底：页面加载完稍等一下就显示
+                view.postDelayed(MainActivity.this::revealWeb, 1500);
             }
 
             @Override
@@ -223,6 +247,8 @@ public class MainActivity extends Activity {
             return;
         }
         errorShown = false;
+        revealed = false;
+        webView.setAlpha(0f);
         webView.loadUrl(url);
     }
 
@@ -331,7 +357,7 @@ public class MainActivity extends Activity {
                     WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_DEFAULT;
             getWindow().setAttributes(lp);
         }
-        getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_VISIBLE);
+        applyWindowFlags();
         root.requestApplyInsets();
     }
 
@@ -366,11 +392,55 @@ public class MainActivity extends Activity {
             hideCustomView();
             return;
         }
-        if (webView != null && webView.canGoBack()) {
-            webView.goBack();
+        if (webView == null) {
+            super.onBackPressed();
             return;
         }
-        super.onBackPressed();
+        // 先问网页：有弹层就关弹层；没有再后退，最后退出
+        webView.evaluateJavascript(
+                "(function(){try{return !!(window.__tmShellBack&&window.__tmShellBack())}catch(e){return false}})()",
+                value -> {
+                    if ("true".equals(value)) return;
+                    if (webView != null && webView.canGoBack()) {
+                        webView.goBack();
+                    } else {
+                        super.onBackPressed();
+                    }
+                });
+    }
+
+    /** 旋转手机：横屏且正在播放就尽量进入全屏，竖屏就退出全屏。浏览器可能要求用户手势而拒绝，拒绝时保持原样。 */
+    @Override
+    public void onConfigurationChanged(android.content.res.Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        if (webView == null) return;
+        boolean landscape = newConfig.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE;
+        if (landscape && playing && customView == null) {
+            webView.evaluateJavascript(
+                    "(function(){var v=Array.prototype.find.call(document.querySelectorAll('video'),"
+                            + "function(m){return !m.paused&&!m.ended});"
+                            + "if(v&&!document.fullscreenElement&&v.requestFullscreen){v.requestFullscreen().catch(function(){})}})()",
+                    null);
+        } else if (!landscape && customView != null) {
+            webView.evaluateJavascript(
+                    "if(document.fullscreenElement&&document.exitFullscreen){document.exitFullscreen().catch(function(){})}",
+                    null);
+        }
+    }
+
+    @Override
+    protected void onUserLeaveHint() {
+        super.onUserLeaveHint();
+        // 全屏看视频时按 Home：进入画中画继续看
+        if (customView != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            try {
+                enterPictureInPictureMode(new PictureInPictureParams.Builder()
+                        .setAspectRatio(new Rational(16, 9))
+                        .build());
+            } catch (RuntimeException ignored) {
+                // 系统不允许画中画时忽略
+            }
+        }
     }
 
     @Override
@@ -382,13 +452,19 @@ public class MainActivity extends Activity {
     @Override
     protected void onPause() {
         CookieManager.getInstance().flush();
-        if (webView != null) webView.onPause();
+        // 正在播放时不暂停 WebView，切后台也能继续（配合前台服务保活）
+        if (webView != null && !playing) webView.onPause();
         super.onPause();
     }
 
     @Override
     protected void onDestroy() {
         dismissDialog();
+        if (pauseReceiver != null) {
+            unregisterReceiver(pauseReceiver);
+            pauseReceiver = null;
+        }
+        stopService(new Intent(this, PlaybackService.class));
         if (filePathCallback != null) {
             filePathCallback.onReceiveValue(null);
             filePathCallback = null;
@@ -399,5 +475,170 @@ public class MainActivity extends Activity {
             webView = null;
         }
         super.onDestroy();
+    }
+
+    // ---------- 与网页对接：铺满屏幕、系统栏、触感、后台播放 ----------
+
+    /** 网页里的 window.TMShell。方法在 JS 线程回调，凡是碰界面的都切回主线程。 */
+    private class ShellBridge {
+        @JavascriptInterface
+        public void ready() {
+            runOnUiThread(MainActivity.this::enableEdgeToEdge);
+        }
+
+        @JavascriptInterface
+        public void setSystemBars(boolean dark) {
+            runOnUiThread(() -> {
+                pageDark = dark;
+                if (webView != null) webView.setBackgroundColor(dark ? Color.BLACK : Color.WHITE);
+                if (customView == null) applyWindowFlags();
+            });
+        }
+
+        @JavascriptInterface
+        public void haptic(int ms) {
+            vibrate(ms);
+        }
+
+        @JavascriptInterface
+        public void setPlaying(boolean value) {
+            runOnUiThread(() -> updatePlaying(value));
+        }
+    }
+
+    private void enableEdgeToEdge() {
+        if (!edgeToEdge) {
+            edgeToEdge = true;
+            Window w = getWindow();
+            w.setStatusBarColor(Color.TRANSPARENT);
+            w.setNavigationBarColor(Color.TRANSPARENT);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                w.setNavigationBarContrastEnforced(false);
+            }
+            if (customView == null) applyWindowFlags();
+            root.requestApplyInsets();
+        } else {
+            applyInsets();
+        }
+        if (webView != null) webView.postDelayed(this::revealWeb, 120);
+    }
+
+    private void revealWeb() {
+        if (revealed || webView == null) return;
+        revealed = true;
+        webView.animate().alpha(1f).setDuration(180).start();
+    }
+
+    /** 窗口布局标志：铺满时延伸到系统栏下面；页面是浅色时系统栏图标用深色。 */
+    @SuppressWarnings("deprecation")
+    private void applyWindowFlags() {
+        int flags = View.SYSTEM_UI_FLAG_VISIBLE;
+        if (edgeToEdge) {
+            flags |= View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                    | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                    | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION;
+            if (!pageDark) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    flags |= View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
+                }
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    flags |= View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR;
+                }
+            }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                WindowManager.LayoutParams lp = getWindow().getAttributes();
+                lp.layoutInDisplayCutoutMode =
+                        WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
+                getWindow().setAttributes(lp);
+            }
+        }
+        getWindow().getDecorView().setSystemUiVisibility(flags);
+    }
+
+    /** 没铺满时沿用原来的留边；铺满后只给键盘和刘海侧边留位置，并把状态栏/导航栏高度告诉网页。 */
+    @SuppressWarnings("deprecation")
+    private void applyInsets() {
+        if (lastInsets == null || customView != null) return;
+        int left = lastInsets.getSystemWindowInsetLeft();
+        int top = lastInsets.getSystemWindowInsetTop();
+        int right = lastInsets.getSystemWindowInsetRight();
+        int bottom = lastInsets.getSystemWindowInsetBottom();
+        if (!edgeToEdge) {
+            webHolder.setPadding(left, top, right, bottom);
+            return;
+        }
+        int navBottom = lastInsets.getStableInsetBottom();
+        int keyboard = Math.max(0, bottom - navBottom);
+        webHolder.setPadding(left, 0, right, keyboard);
+        injectInsets(top, keyboard > 0 ? 0 : navBottom);
+    }
+
+    private void injectInsets(int topPx, int bottomPx) {
+        if (webView == null) return;
+        float density = getResources().getDisplayMetrics().density;
+        String js = "(function(){var r=document.documentElement;"
+                + "r.setAttribute('data-tm-shell','android');"
+                + "r.style.setProperty('--tm-shell-top','" + Math.round(topPx / density) + "px');"
+                + "r.style.setProperty('--tm-shell-bottom','" + Math.round(bottomPx / density) + "px');})()";
+        webView.evaluateJavascript(js, null);
+    }
+
+    private void vibrate(int ms) {
+        try {
+            Vibrator vibrator = getSystemService(Vibrator.class);
+            if (vibrator == null || !vibrator.hasVibrator()) return;
+            long duration = Math.max(1, Math.min(ms, 50));
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                vibrator.vibrate(VibrationEffect.createOneShot(duration, VibrationEffect.DEFAULT_AMPLITUDE));
+            } else {
+                vibrator.vibrate(duration);
+            }
+        } catch (RuntimeException ignored) {
+            // 没有振动权限或设备不支持时忽略
+        }
+    }
+
+    /** 网页开始/停止播放：播放期间起前台服务保活，切后台不被系统杀掉。 */
+    private void updatePlaying(boolean value) {
+        if (playing == value) return;
+        playing = value;
+        Intent service = new Intent(this, PlaybackService.class);
+        try {
+            if (value) {
+                if (Build.VERSION.SDK_INT >= 33
+                        && checkSelfPermission("android.permission.POST_NOTIFICATIONS")
+                        != PackageManager.PERMISSION_GRANTED) {
+                    requestPermissions(new String[] {"android.permission.POST_NOTIFICATIONS"}, 1002);
+                }
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    startForegroundService(service);
+                } else {
+                    startService(service);
+                }
+            } else {
+                stopService(service);
+            }
+        } catch (RuntimeException ignored) {
+            // 系统不允许此刻启动前台服务时，退回普通行为（切后台会暂停）
+        }
+    }
+
+    /** 通知栏上的「暂停」：让网页里所有正在播的音视频暂停。 */
+    private void registerPauseReceiver() {
+        pauseReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                if (webView != null) {
+                    webView.evaluateJavascript(
+                            "document.querySelectorAll('video,audio').forEach(function(m){m.pause()})", null);
+                }
+            }
+        };
+        IntentFilter filter = new IntentFilter(PlaybackService.ACTION_PAUSE);
+        if (Build.VERSION.SDK_INT >= 33) {
+            registerReceiver(pauseReceiver, filter, Context.RECEIVER_NOT_EXPORTED);
+        } else {
+            registerReceiver(pauseReceiver, filter);
+        }
     }
 }
