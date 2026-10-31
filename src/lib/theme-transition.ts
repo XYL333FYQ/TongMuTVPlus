@@ -24,8 +24,7 @@ function resolvesDark(theme: ThemeSetting) {
  * 圆形过渡的两种做法：
  * - converge（收拢）：旧画面是静态截图，放在上层，被一个越缩越小的圆收回按钮，新主题从外围露出来；
  * - spread（铺开）：新画面是实时画面，放在上层，被一个越撑越大的圆从按钮铺满。
- * 实时画面套裁切在手机 GPU 上比静态截图重得多：安卓 App 里"进浅色"用铺开会卡，
- * 所以 App 里两个方向都用收拢（和一直很顺的"进深色"同一套）；网页、电脑客户端保持原来的方向。
+ * 安卓 App 里两个方向都用铺开（圆从按钮往外扩散）；网页、电脑客户端保持原来的方向（进深色收拢、进浅色铺开）。
  */
 export type ThemeMotion = 'converge' | 'spread';
 
@@ -33,7 +32,8 @@ export function resolveThemeMotion(
   dark: boolean,
   platform: ReturnType<typeof getPlatform> = getPlatform()
 ): ThemeMotion {
-  return dark || platform === 'app' ? 'converge' : 'spread';
+  if (platform === 'app') return 'spread';
+  return dark ? 'converge' : 'spread';
 }
 
 export interface SnapshotGeometry {

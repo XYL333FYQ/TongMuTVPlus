@@ -390,23 +390,23 @@ describe('readSnapshotGeometry：圆心取浏览器给出的真实位置', () =>
   });
 });
 
-describe('圆形过渡的收拢 / 铺开：App 里两个方向都收拢', () => {
+describe('圆形过渡的收拢 / 铺开：App 里两个方向都铺开（扩散）', () => {
   afterEach(() => {
     document.documentElement.removeAttribute('data-tm-platform');
   });
 
-  test('resolveThemeMotion：网页保持进深色收拢、进浅色铺开，App 全部收拢', () => {
+  test('resolveThemeMotion：网页保持进深色收拢、进浅色铺开，App 全部铺开', () => {
     expect(resolveThemeMotion(true, 'web')).toBe('converge');
     expect(resolveThemeMotion(false, 'web')).toBe('spread');
     expect(resolveThemeMotion(true, 'desktop')).toBe('converge');
     expect(resolveThemeMotion(false, 'desktop')).toBe('spread');
-    expect(resolveThemeMotion(true, 'app')).toBe('converge');
-    expect(resolveThemeMotion(false, 'app')).toBe('converge');
+    expect(resolveThemeMotion(true, 'app')).toBe('spread');
+    expect(resolveThemeMotion(false, 'app')).toBe('spread');
   });
 
-  test('App 里进浅色：旧画面（深色截图）在上层被圆收回按钮，而不是新画面铺开', async () => {
+  test('App 里进深色：新画面在上层被圆从按钮撑开（扩散），而不是旧画面收回', async () => {
     document.documentElement.setAttribute('data-tm-platform', 'app');
-    document.documentElement.className = 'dark';
+    document.documentElement.className = 'light';
     let motionAtStart: string | undefined;
     doc.startViewTransition = (update) => {
       motionAtStart = document.documentElement.dataset.tmThemeMotion;
@@ -414,14 +414,13 @@ describe('圆形过渡的收拢 / 铺开：App 里两个方向都收拢', () => 
     };
     origin.getBoundingClientRect = () =>
       ({ left: 20, top: 30, width: 44, height: 44 } as DOMRect);
-    await changeThemeWithTransition('light', setTheme, origin);
-    // 过渡开始前（给浏览器拍快照时）CSS 就要能看到收拢标记
-    expect(motionAtStart).toBe('converge');
+    await changeThemeWithTransition('dark', setTheme, origin);
+    expect(motionAtStart).toBe('spread');
     const frames = animate.mock.calls[0][0];
-    expect(frames[0].clipPath).not.toContain('circle(0px');
-    expect(frames[1].clipPath).toContain('circle(0px at 42px 52px)');
+    expect(frames[0].clipPath).toContain('circle(0px at 42px 52px)');
+    expect(frames[1].clipPath).not.toContain('circle(0px');
     expect(animate.mock.calls[0][1]).toMatchObject({
-      pseudoElement: '::view-transition-old(root)',
+      pseudoElement: '::view-transition-new(root)',
     });
     expect(document.documentElement.dataset.tmThemeMotion).toBeUndefined();
   });
