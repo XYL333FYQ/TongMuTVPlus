@@ -95,7 +95,7 @@
     "@svgr/webpack": "^8.1.0",
     "@tailwindcss/forms": "^0.5.10",
     "@tailwindcss/typography": "^0.5.19",
-    "@testing-library/jest-dom": "^5.17.0",
+    "@testing-library/jest-dom": "^7.0.1",
     "@testing-library/react": "^15.0.7",
     "@types/better-sqlite3": "^7.6.11",
     "@types/bs58": "^5.0.0",
