@@ -50,6 +50,7 @@ import {
 } from '@/lib/special-source.client';
 import { SearchResult } from '@/lib/types';
 import { processImageUrl } from '@/lib/utils';
+import { useClientMemoryState } from '@/hooks/useClientMemoryState';
 
 import AcgSearch from '@/components/AcgSearch';
 import CapsuleSwitch from '@/components/catalog/CapsuleSwitch';
@@ -147,7 +148,10 @@ export function SearchPageClient({
   const searchParams = useSearchParams();
   const submittedSearchQuery = searchParams.get('q')?.trim() || '';
   const currentQueryRef = useRef<string>('');
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery, restoredDraft] = useClientMemoryState(
+    `${searchBase}:draft:${submittedSearchQuery}`,
+    submittedSearchQuery
+  );
   const [isLoading, setIsLoading] = useState(false);
   const [showResults, setShowResults] = useState(false);
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
@@ -178,7 +182,10 @@ export function SearchPageClient({
   const [isFromCache, setIsFromCache] = useState(false);
   // 精确搜索开关
   const [exactSearch, setExactSearch] = useState(true);
-  const [advancedOpen, setAdvancedOpen] = useState(false);
+  const [advancedOpen, setAdvancedOpen] = useClientMemoryState(
+    `${searchBase}:advanced`,
+    false
+  );
   const [privateLibraryOnly, setPrivateLibraryOnly] = useState(false);
   const [privateLibraryOnlyReady, setPrivateLibraryOnlyReady] = useState(false);
   const privateLibraryOnlyLoadedRef = useRef(false);
@@ -306,23 +313,23 @@ export function SearchPageClient({
     return { episodes, source_names, douban_id };
   };
   // 过滤器：非聚合与聚合
-  const [filterAll, setFilterAll] = useState<{
+  const [filterAll, setFilterAll] = useClientMemoryState<{
     source: string;
     title: string;
     year: string;
     yearOrder: 'none' | 'asc' | 'desc';
-  }>({
+  }>(`${searchBase}:filters-all:${submittedSearchQuery}`, {
     source: 'all',
     title: 'all',
     year: 'all',
     yearOrder: 'none',
   });
-  const [filterAgg, setFilterAgg] = useState<{
+  const [filterAgg, setFilterAgg] = useClientMemoryState<{
     source: string;
     title: string;
     year: string;
     yearOrder: 'none' | 'asc' | 'desc';
-  }>({
+  }>(`${searchBase}:filters-agg:${submittedSearchQuery}`, {
     source: 'all',
     title: 'all',
     year: 'all',
@@ -1332,7 +1339,7 @@ export function SearchPageClient({
       setCompletedSources(0);
       setIsFromCache(false);
       if (query) {
-        setSearchQuery(query);
+        if (!restoredDraft) setSearchQuery(query);
         setShowResults(true);
         setShowSuggestions(false);
         addSearchHistory(query);
@@ -1347,7 +1354,7 @@ export function SearchPageClient({
     }
 
     if (query) {
-      setSearchQuery(query);
+      if (!restoredDraft) setSearchQuery(query);
 
       const trimmed = query.trim();
 
@@ -1642,13 +1649,13 @@ export function SearchPageClient({
     if (!query || !query.trim()) return;
 
     if (typeParam === 'pansou' && netdiskSearchEnabled) {
-      setSearchQuery(query);
+      if (!restoredDraft) setSearchQuery(query);
       setShowResults(true);
       setTimeout(() => {
         setTriggerPansouSearch((prev) => !prev);
       }, 100);
     } else if (typeParam === 'acg' && magnetSearchEnabled) {
-      setSearchQuery(query);
+      if (!restoredDraft) setSearchQuery(query);
       setShowResults(true);
       setTimeout(() => {
         setTriggerAcgSearch((prev) => !prev);

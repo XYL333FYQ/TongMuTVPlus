@@ -1,5 +1,7 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
 
+import { clearClientMemory } from '@/lib/client-memory';
+
 import DoubanPage from './page';
 
 jest.mock('next/navigation', () => ({
@@ -73,6 +75,49 @@ beforeEach(() => {
 afterEach(() => {
   bounds.mockRestore();
   global.IntersectionObserver = originalObserver;
+  document.documentElement.removeAttribute('data-tm-platform');
+  clearClientMemory();
+});
+
+test('client tab return keeps loaded pages and continues at the next page', async () => {
+  document.documentElement.dataset.tmPlatform = 'app';
+  mockCategories
+    .mockResolvedValueOnce(page('首批影片'))
+    .mockResolvedValueOnce(page('第二批影片'))
+    .mockResolvedValue(page('第三批影片'));
+  const first = render(<DoubanPage />);
+  await screen.findByText('首批影片');
+  fireEvent.click(screen.getByRole('button', { name: '加载更多' }));
+  await screen.findByText('第二批影片');
+  first.unmount();
+  render(<DoubanPage />);
+  await screen.findByText('第二批影片');
+  expect(screen.getByText('首批影片')).toBeInTheDocument();
+  expect(mockCategories).toHaveBeenCalledTimes(2);
+  fireEvent.click(screen.getByRole('button', { name: '加载更多' }));
+  await screen.findByText('第三批影片');
+  expect(
+    mockCategories.mock.calls.map(([request]) => request.pageStart)
+  ).toEqual([0, 25, 50]);
+});
+
+test('leaving during pagination never remembers the uncompleted page counter', async () => {
+  document.documentElement.dataset.tmPlatform = 'app';
+  mockCategories
+    .mockResolvedValueOnce(page('首批影片'))
+    .mockImplementationOnce(() => new Promise(() => undefined))
+    .mockResolvedValue(page('第二批影片'));
+  const first = render(<DoubanPage />);
+  await screen.findByText('首批影片');
+  fireEvent.click(screen.getByRole('button', { name: '加载更多' }));
+  first.unmount();
+  render(<DoubanPage />);
+  await screen.findByText('首批影片');
+  fireEvent.click(screen.getByRole('button', { name: '加载更多' }));
+  await screen.findByText('第二批影片');
+  expect(
+    mockCategories.mock.calls.map(([request]) => request.pageStart)
+  ).toEqual([0, 25, 25]);
 });
 
 test('a failed next page can be retried without skipping films or replacing earlier films', async () => {

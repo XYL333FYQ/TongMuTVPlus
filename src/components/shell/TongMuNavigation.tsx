@@ -24,6 +24,7 @@ import Link from 'next/link';
 import { useEffect, useId, useRef, useState } from 'react';
 
 import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
+import { useRememberedTabHref } from '@/hooks/useRememberedTabHref';
 
 import { useShellReducedMotion } from '@/components/shell/ShellMotionProvider';
 
@@ -54,6 +55,7 @@ export function pageTitleForPath(path: string) {
 
 export function DesktopNavigation({ current }: { current: string }) {
   const reduced = useShellReducedMotion();
+  const tabHref = useRememberedTabHref();
   return (
     <nav className='tm-primary-nav tm-glass' aria-label='主导航'>
       {primaryNavigation.slice(0, 3).map((item) => {
@@ -61,7 +63,8 @@ export function DesktopNavigation({ current }: { current: string }) {
         return (
           <Link
             key={item.href}
-            href={item.href}
+            href={tabHref(item.href)}
+            data-tm-tab-link=''
             prefetch={false}
             className='tm-primary-nav-item tm-press'
             data-active={active}

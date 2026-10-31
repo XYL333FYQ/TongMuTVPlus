@@ -11,6 +11,7 @@ import { usePathname } from 'next/navigation';
 import { useEffect, useId, useState, useSyncExternalStore } from 'react';
 
 import { BRAND_NAME, PROJECT_REPOSITORY_URL } from '@/lib/brand';
+import { useRememberedTabHref } from '@/hooks/useRememberedTabHref';
 
 import { BackButton } from '@/components/BackButton';
 import MobileHeader from '@/components/MobileHeader';
@@ -29,6 +30,7 @@ import { ThemeToggle } from '@/components/ThemeToggle';
 
 export default function PersistentHeader() {
   const pathname = usePathname() || '/';
+  const tabHref = useRememberedTabHref();
   const page = useSyncExternalStore(
     subscribePageHeader,
     getPageHeader,
@@ -124,7 +126,8 @@ export default function PersistentHeader() {
           <DesktopNavigation current={current} />
           <div className='tm-header-actions'>
             <Link
-              href='/search'
+              href={tabHref('/search')}
+              data-tm-tab-link=''
               className='tm-shell-icon tm-press'
               aria-label='搜索'
             >

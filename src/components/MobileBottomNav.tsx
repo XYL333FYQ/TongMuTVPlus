@@ -11,6 +11,8 @@ import {
 } from 'react';
 
 import { haptic } from '@/lib/shell-bridge';
+import { prepareTabNavigation } from '@/lib/tab-memory';
+import { useRememberedTabHref } from '@/hooks/useRememberedTabHref';
 
 import {
   isPrimaryNavigationActive,
@@ -36,6 +38,7 @@ const PENDING_TIMEOUT = 6000;
 export default function MobileBottomNav({ activePath }: MobileBottomNavProps) {
   const pathname = usePathname();
   const router = useRouter();
+  const tabHref = useRememberedTabHref();
   const navRef = useRef<HTMLElement>(null);
   const itemRefs = useRef<(HTMLAnchorElement | null)[]>([]);
   const gesture = useRef<{ id: number; startX: number; moving: boolean }>();
@@ -119,7 +122,7 @@ export default function MobileBottomNav({ activePath }: MobileBottomNavProps) {
     setHover(null);
     if (navigate && target !== null && target !== shownIndex) {
       setPending(target === activeIndex ? null : target);
-      router.push(primaryNavigation[target].href);
+      router.push(prepareTabNavigation(primaryNavigation[target].href));
     } else {
       syncThumb();
     }
@@ -218,7 +221,8 @@ export default function MobileBottomNav({ activePath }: MobileBottomNavProps) {
             ref={(el) => {
               itemRefs.current[index] = el;
             }}
-            href={item.href}
+            href={tabHref(item.href)}
+            data-tm-tab-link=''
             // 五个一级页提前取好页面和脚本，点下去不用再等服务器
             prefetch={true}
             className='tm-mobile-nav-item tm-press'
