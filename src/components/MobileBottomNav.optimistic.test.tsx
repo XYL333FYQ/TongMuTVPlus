@@ -189,3 +189,60 @@ describe('手机底栏：点下去立刻响应，不等新页面渲染完', () =
     expect(thumb()).toBe('translateX(0px)');
   });
 });
+
+it.each(['mouse', 'touch', 'keyboard'])(
+  'a later %s activation is not swallowed when a drag produced no compatibility click',
+  (kind) => {
+    const { nav, links } = setup();
+    fireEvent.pointerDown(nav, {
+      pointerId: 1,
+      pointerType: 'touch',
+      clientX: 30,
+    });
+    fireEvent.pointerMove(nav, {
+      pointerId: 1,
+      pointerType: 'touch',
+      clientX: 150,
+    });
+    fireEvent.pointerUp(nav, {
+      pointerId: 1,
+      pointerType: 'touch',
+      clientX: 150,
+    });
+    if (kind !== 'keyboard') {
+      fireEvent.pointerDown(links[4], {
+        pointerId: 2,
+        pointerType: kind,
+        clientX: 270,
+      });
+      fireEvent.pointerUp(links[4], {
+        pointerId: 2,
+        pointerType: kind,
+        clientX: 270,
+      });
+    }
+    fireEvent.click(links[4], { detail: kind === 'keyboard' ? 0 : 1 });
+    expect(links[4]).toHaveAttribute('data-active', 'true');
+  }
+);
+
+it('the immediate compatibility click after drag still cannot navigate back to the pressed link', () => {
+  const { nav, links } = setup();
+  fireEvent.pointerDown(nav, {
+    pointerId: 1,
+    pointerType: 'touch',
+    clientX: 30,
+  });
+  fireEvent.pointerMove(nav, {
+    pointerId: 1,
+    pointerType: 'touch',
+    clientX: 150,
+  });
+  fireEvent.pointerUp(nav, {
+    pointerId: 1,
+    pointerType: 'touch',
+    clientX: 150,
+  });
+  fireEvent.click(links[0], { detail: 1 });
+  expect(links[2]).toHaveAttribute('data-active', 'true');
+});

@@ -180,6 +180,9 @@ export default function MobileBottomNav({ activePath }: MobileBottomNavProps) {
       data-tab-route={activeIndex >= 0 ? 'true' : undefined}
       data-scrubbing={scrubbing || undefined}
       onPointerDown={(event) => {
+        // A new press is a new interaction. Some engines emit no compatibility
+        // click after captured drags, so the old suppression must not leak.
+        suppressClick.current = false;
         if (event.pointerType === 'mouse') return;
         measureNav();
         gesture.current = {
@@ -247,6 +250,8 @@ export default function MobileBottomNav({ activePath }: MobileBottomNavProps) {
       onClickCapture={(event) => {
         if (suppressClick.current) {
           suppressClick.current = false;
+          // Keyboard/assistive activation has no preceding pointerdown.
+          if (event.detail === 0) return;
           event.preventDefault();
           event.stopPropagation();
         }
