@@ -80,6 +80,8 @@ jobs:
         with:
           context: .
           file: ./Dockerfile
+          build-args: |
+            APP_COMMIT_SHA=${{ github.sha }}
           platforms: ${{ matrix.platform }}
           labels: ${{ steps.meta.outputs.labels }}
           tags: |

@@ -14,6 +14,8 @@ RUN pnpm install --frozen-lockfile
 
 # ---- 第 2 阶段：构建项目 ----
 FROM node:24-alpine AS builder
+ARG APP_COMMIT_SHA=unversioned
+ENV APP_COMMIT_SHA=$APP_COMMIT_SHA
 RUN corepack enable && corepack prepare pnpm@10.14.0 --activate
 WORKDIR /app
 
@@ -33,6 +35,8 @@ RUN pnpm deploy --filter=. --prod --legacy /tmp/prod-deps
 
 # ---- 第 3 阶段：生成运行时镜像 ----
 FROM node:24-alpine AS runner
+ARG APP_COMMIT_SHA=unversioned
+ENV APP_COMMIT_SHA=$APP_COMMIT_SHA
 
 # 启用 corepack 并激活 pnpm（用于安装额外依赖）
 RUN corepack enable && corepack prepare pnpm@10.14.0 --activate

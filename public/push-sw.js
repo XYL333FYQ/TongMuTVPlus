@@ -1,11 +1,34 @@
 /* TongMuTV Plus Web Push handlers; legacy storage and cache routes remain compatible. */
 
-self.addEventListener('install', (event) => {
-  event.waitUntil(self.skipWaiting());
-});
+// Imported by the single /sw.js worker. Installation/activation belongs to
+// Workbox; forcing skipWaiting here would replace a worker during playback.
 
+// Migrate only known old dynamic response caches. Never touch cookies,
+// IndexedDB video downloads, immutable assets, or unrelated application caches.
 self.addEventListener('activate', (event) => {
-  event.waitUntil(self.clients.claim());
+  event.waitUntil(
+    (async () => {
+      const legacy = new Set(['start-url', 'next-data', 'apis', 'others']);
+      for (const name of await caches.keys()) {
+        if (!legacy.has(name)) continue;
+        const cache = await caches.open(name);
+        for (const request of await cache.keys()) {
+          if (new URL(request.url).origin !== self.location.origin) continue;
+          const response = await cache.match(request);
+          const type = response?.headers.get('content-type') || '';
+          if (
+            /^(text\/html|application\/xhtml\+xml|application\/json|text\/x-component)(;|$)/i.test(
+              type
+            )
+          ) {
+            await cache.delete(request);
+          }
+        }
+      }
+    })().catch(() => {
+      // CacheStorage may be denied; activation must still permit normal browsing.
+    })
+  );
 });
 
 self.addEventListener('push', (event) => {

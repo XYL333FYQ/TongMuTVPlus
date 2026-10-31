@@ -26,6 +26,10 @@ export async function middleware(request: NextRequest) {
     return new NextResponse('Forbidden', { status: 403 });
   }
   if (
+    ((request.method === 'GET' || request.method === 'HEAD') &&
+      (pathname === '/sw.js' ||
+        pathname === '/push-sw.js' ||
+        /^\/workbox-[a-f0-9]+\.js$/.test(pathname))) ||
     shouldSkipAuth(pathname) ||
     (request.method === 'GET' && PUBLIC_PAGES.has(pathname)) ||
     (request.method === 'GET' && pathname === '/api/public/catalog') ||

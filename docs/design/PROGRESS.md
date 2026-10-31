@@ -1,5 +1,16 @@
 # 界面改造进度
 
+## 2026-10-31 三端体验完整优化（codex/client-experience，执行中）
+
+- 续做结果：完整 Jest 串行 161 套/1062 项通过；新增注册/激活/鉴权 8 项及 Node 策略/缓存迁移 3 项通过；最新 typecheck/lint/format 退出 0。改用独立注册，避免 next-pwa 隐式 history 包装和 next-data 缓存；非 PWA 构建保留推送入口。旧缓存只删已知缓存内同源 HTML/JSON/RSC，不碰媒体、Cookie、IndexedDB。
+- Docker 及页面已加入编译时提交号；全 public 预缓存已关闭，真实生成 Worker 检查加入 CI。本机编译/类型/230 路由生成完成，standalone 复制阶段因 Windows symlink EPERM 失败，日志 output/client-experience-build.log。待 GitHub Linux 验证新产物，生产未改。以下首次执行记录为历史过程，以此续做结果为准。
+
+- 用户确认前两轮完整推荐方案、GitHub 原生构建、提交推送及 VPS 部署；手机不能 USB 连接，最终采用诊断导出与录屏。精确允许 middleware 公开 Worker 必要脚本；其他禁区与播放/房间协议保持不变。
+- 完整执行账本：`CLIENT-EXPERIENCE-PLAN.md`。基线 132ca5f；线上运行镜像已核对，健康接口陈旧 SHA 不能替代镜像身份。未改变生产。
+- 第一批进行中：Worker 静态脚本精确公开；统一通知注册为 sw.js；取消重连自动 reload、前端导航缓存、首页缓存及强制 skipWaiting；运行时缓存仅限同源不可变构建资源。推送处理器不再强制抢占；已有 active 注册可继续订阅，不等待尚未激活的新 Worker。
+- 验证：中间件先红后绿 3 项，Worker 激活 3 项与缓存策略 2 项通过；typecheck 退出 0；lint 退出 0（既有 warnings）；format:check 退出 0。完整 Jest 首次无 FAIL/汇总即退出 1，原日志`output/client-experience-jest.log`，原因未定位；串行重跑日志`output/client-experience-jest-serial.log`，执行会话 26724，尚未取得最终结果，不称全量通过。
+- 未完成：生产 Worker 生成与订阅兼容验证、构建身份修复、底栏诊断及其余所有执行批次。未截图、未原生构建、未提交推送、未部署。既有用户数据与原生签名未动。
+
 ## 2026-10-31 三端分工整改（分支 feat/site-optimization，用户："开始整改"）
 
 - 问题：之前为了让 App 像 App，把"整页不回弹、选不中文字、自制下拉刷新"按屏幕特征（粗指针 + 窄屏）一刀切，手机浏览器被误当成 App；主题圆形扩散的圆心用点击时的页面坐标，手机浏览器地址栏伸缩后偏到按钮上方；安卓 App 深色 → 浅色卡顿。

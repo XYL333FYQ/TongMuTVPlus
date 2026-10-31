@@ -10,6 +10,39 @@ import { NextRequest } from 'next/server';
 
 import { middleware } from './middleware';
 
+test('worker scripts are public without exposing similarly named routes or APIs', async () => {
+  const original = process.env.PASSWORD;
+  process.env.PASSWORD = 'test';
+  try {
+    for (const route of [
+      '/sw.js',
+      '/push-sw.js',
+      '/workbox-abcdef0123456789.js',
+    ]) {
+      expect(
+        (
+          await middleware(new NextRequest('https://tongmu.test' + route))
+        ).headers.get('x-middleware-next')
+      ).toBe('1');
+    }
+    for (const route of [
+      '/sw.js/private',
+      '/push-sw.js/secret',
+      '/workbox-admin.js',
+      '/api/rooms',
+      '/api/search',
+    ]) {
+      const response = await middleware(
+        new NextRequest('https://tongmu.test' + route)
+      );
+      expect(response.headers.get('x-middleware-next')).not.toBe('1');
+    }
+  } finally {
+    if (original === undefined) delete process.env.PASSWORD;
+    else process.env.PASSWORD = original;
+  }
+});
+
 test('guests may relay posters from whitelisted image hosts only', async () => {
   const original = process.env.PASSWORD;
   process.env.PASSWORD = 'test';

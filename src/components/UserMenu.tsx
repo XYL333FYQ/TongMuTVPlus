@@ -37,6 +37,10 @@ import {
   LOCAL_SETTINGS_KEYS,
   LOCAL_SETTINGS_SYNC_LAST_PULL_KEY,
 } from '@/lib/local-settings-sync';
+import {
+  notificationWorkerScript,
+  waitForActiveWorker,
+} from '@/lib/service-worker';
 import { clearBangumiImageFallbackCache } from '@/lib/utils';
 import { UpdateStatus } from '@/lib/version_check';
 import { useReleaseInfo } from '@/hooks/useReleaseInfo';
@@ -1058,63 +1062,22 @@ export const UserMenu: React.FC = () => {
     return subscriptionKey === publicKey;
   };
 
-  const waitForServiceWorkerActivation = async (
-    registration: ServiceWorkerRegistration
-  ) => {
-    let pendingWorker = registration.installing || registration.waiting;
-
-    if (!pendingWorker) {
-      await registration.update();
-      pendingWorker = registration.installing || registration.waiting;
-    }
-
-    // 没有新的 installing/waiting worker 时，说明当前 active registration 可直接使用。
-    if (!pendingWorker) {
-      if (registration.active) return registration;
-      throw new Error('Service Worker 注册失败，请刷新页面后重试');
-    }
-
-    const activatingWorker = pendingWorker;
-    if (activatingWorker.state === 'activated') return registration;
-
-    await new Promise<void>((resolve, reject) => {
-      const handleStateChange = () => {
-        if (activatingWorker.state === 'activated') {
-          activatingWorker.removeEventListener(
-            'statechange',
-            handleStateChange
-          );
-          resolve();
-        } else if (activatingWorker.state === 'redundant') {
-          activatingWorker.removeEventListener(
-            'statechange',
-            handleStateChange
-          );
-          reject(new Error('Service Worker 激活失败，请刷新页面后重试'));
-        }
-      };
-
-      activatingWorker.addEventListener('statechange', handleStateChange);
-      handleStateChange();
-    });
-
-    return registration;
-  };
-
   const getReadyServiceWorkerRegistration = async () => {
     if (!('serviceWorker' in navigator)) {
       throw new Error('当前浏览器不支持 Service Worker');
     }
 
-    // 开启系统通知时明确使用带 push 事件处理器的 Service Worker。
-    // 如果浏览器里已有旧 /sw.js 注册，重新注册同一 scope 的 /push-sw.js 会更新该注册；
-    // push-sw.js 内部会 skipWaiting + clients.claim，激活后再订阅，确保 Push 到达能展示通知。
-    const registration = await navigator.serviceWorker.register('/push-sw.js', {
-      scope: '/',
-      updateViaCache: 'none',
-    });
+    // /sw.js 同时导入推送处理器；不再以同一 scope 的另一脚本替换缓存 Worker。
+    // 保留 registration（以及既有订阅），让更新在页面安全退出后激活。
+    const registration = await navigator.serviceWorker.register(
+      notificationWorkerScript(),
+      {
+        scope: '/',
+        updateViaCache: 'none',
+      }
+    );
 
-    return waitForServiceWorkerActivation(registration);
+    return waitForActiveWorker(registration);
   };
 
   const handlePushNotificationsChange = async (enabled: boolean) => {

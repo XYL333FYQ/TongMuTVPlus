@@ -27,6 +27,10 @@ const createNextConfig = (phase) => {
     process.env.NODE_ENV === 'development';
 
   const nextConfig = {
+    env: {
+      NEXT_PUBLIC_TM_PWA_ENABLED: String(!isDevelopment && !isEdgeBuild),
+      NEXT_PUBLIC_TM_BUILD_REVISION: process.env.APP_COMMIT_SHA || 'local',
+    },
     // Cloudflare Pages 不支持 standalone，使用默认输出
     output: isEdgeBuild ? undefined : 'standalone',
     eslint: {
@@ -290,12 +294,7 @@ const createNextConfig = (phase) => {
     return nextConfig;
   }
 
-  const withPWA = require('next-pwa')({
-    dest: 'public',
-    register: true,
-    skipWaiting: true,
-    importScripts: ['/push-sw.js'],
-  });
+  const withPWA = require('next-pwa')(require('./scripts/pwa-options.cjs'));
 
   return withPWA(nextConfig);
 };

@@ -35,6 +35,7 @@ import MediaSessionBridge from '@/components/shell/MediaSessionBridge';
 import MobileGestures from '@/components/shell/MobileGestures';
 import PerfProbe from '@/components/shell/PerfProbe';
 import PersistentHeader from '@/components/shell/PersistentHeader';
+import PwaRegistration from '@/components/shell/PwaRegistration';
 import ShellBridge from '@/components/shell/ShellBridge';
 import ShellMotionProvider from '@/components/shell/ShellMotionProvider';
 
@@ -442,6 +443,7 @@ export default async function RootLayout({
     <html
       lang='zh-CN'
       data-moontvplus='1'
+      data-tm-build={process.env.NEXT_PUBLIC_TM_BUILD_REVISION}
       data-loading-style={loadingStyle}
       suppressHydrationWarning
     >
@@ -515,6 +517,9 @@ export default async function RootLayout({
           <TopProgressBar />
           <RouteScrollReset />
           <ShellBridge />
+          <PwaRegistration
+            enabled={process.env.NEXT_PUBLIC_TM_PWA_ENABLED === 'true'}
+          />
           <MobileGestures />
           <PerfProbe />
           <MediaSessionBridge />
