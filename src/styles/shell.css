@@ -1261,6 +1261,14 @@ html .tm-page-transition.tm-page-instant {
   pointer-events: none;
   overflow-wrap: anywhere;
 }
+.tm-perf-control {
+  pointer-events: auto;
+  margin-top: 4px;
+}
+.tm-perf-control textarea {
+  width: 100%;
+  max-height: 160px;
+}
 
 /*
  * 按端区分点按与选中手感（data-tm-platform 见 src/lib/platform.ts）：

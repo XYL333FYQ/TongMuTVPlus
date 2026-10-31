@@ -1,4 +1,4 @@
-import { cleanup, render } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 
 import PerfProbe, { describeStall, readPerfFlag } from './PerfProbe';
 
@@ -84,5 +84,15 @@ describe('PerfProbe', () => {
     window.sessionStorage.setItem('tongmu:perf-probe', '1');
     const { container } = render(<PerfProbe />);
     expect(container.querySelector('.tm-perf-probe')).not.toBeNull();
+  });
+  it('诊断导出由用户打开，包含观察边界而不包含查询参数', () => {
+    window.sessionStorage.setItem('tongmu:perf-probe', '1');
+    render(<PerfProbe />);
+    fireEvent.click(screen.getByRole('button', { name: '诊断记录' }));
+    const record = screen.getByRole('textbox', {
+      name: '诊断内容',
+    }) as HTMLTextAreaElement;
+    expect(record.value).toContain('not GPU presented frames');
+    expect(record.value).not.toContain('perf=');
   });
 });

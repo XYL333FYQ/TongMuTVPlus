@@ -2,6 +2,8 @@
 
 ## 2026-10-31 三端体验完整优化（codex/client-experience，执行中）
 
+- 第一批 GitHub Checks 41185029429 已全部通过（1ebe4e4），含生产构建与真实 SW 边界检查。第二批整条底栏诊断入口与本地导出已实现；完整 Jest164 套/1069 项、定向 13 项、最新 typecheck/lint 通过。390/820/1280 深浅截图与真实 JSON 下载完成，无横向溢出，证据 output/client-experience/。预览使用隔离数据库，已关闭。默认不开诊断，尚未确定真机掉帧原因，未调整既有动效/时长，生产未部署。其余推荐项仍待执行。
+
 - 续做结果：完整 Jest 串行 161 套/1062 项通过；新增注册/激活/鉴权 8 项及 Node 策略/缓存迁移 3 项通过；最新 typecheck/lint/format 退出 0。改用独立注册，避免 next-pwa 隐式 history 包装和 next-data 缓存；非 PWA 构建保留推送入口。旧缓存只删已知缓存内同源 HTML/JSON/RSC，不碰媒体、Cookie、IndexedDB。
 - Docker 及页面已加入编译时提交号；全 public 预缓存已关闭，真实生成 Worker 检查加入 CI。本机编译/类型/230 路由生成完成，standalone 复制阶段因 Windows symlink EPERM 失败，日志 output/client-experience-build.log。待 GitHub Linux 验证新产物，生产未改。以下首次执行记录为历史过程，以此续做结果为准。
 

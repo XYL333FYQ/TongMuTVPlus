@@ -3,6 +3,9 @@
 import { usePathname } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 
+import { createNavigationCapture } from '@/lib/navigation-capture';
+import { summarizeIntervals } from '@/lib/navigation-diagnostics';
+
 const FLAG_KEY = 'tongmu:perf-probe';
 
 interface Snapshot {
@@ -11,6 +14,8 @@ interface Snapshot {
   slow: number;
   nav: string;
   stalls: string[];
+  p95: number;
+  overBudget: number;
 }
 
 /** 地址里带 ?perf=1 就开启（本次会话内一直开着），?perf=0 关闭。 */
@@ -62,7 +67,14 @@ export default function PerfProbe() {
     slow: 0,
     nav: '还没切过页',
     stalls: [],
+    p95: 0,
+    overBudget: 0,
   });
+  const capture = useRef<ReturnType<typeof createNavigationCapture> | null>(
+    null
+  );
+  const [exportText, setExportText] = useState('');
+  const [copyStatus, setCopyStatus] = useState('');
   const clickAt = useRef(0);
   const lastPath = useRef(pathname);
   const stalls = useRef<string[]>([]);
@@ -70,6 +82,16 @@ export default function PerfProbe() {
   useEffect(() => {
     setOn(readPerfFlag(window.location.search, window.sessionStorage));
   }, []);
+
+  useEffect(() => {
+    if (!on) return;
+    const recorder = createNavigationCapture();
+    capture.current = recorder;
+    return () => {
+      recorder.stop();
+      capture.current = null;
+    };
+  }, [on]);
 
   // 切页耗时：点击（或底栏滑动松手）→ 网址变化 → 两帧后画面出现
   useEffect(() => {
@@ -94,6 +116,7 @@ export default function PerfProbe() {
   useEffect(() => {
     if (!on || pathname === lastPath.current) return;
     lastPath.current = pathname;
+    capture.current?.mark('route');
     const started = clickAt.current;
     if (!started) return;
     const urlMs = Math.round(performance.now() - started);
@@ -102,7 +125,10 @@ export default function PerfProbe() {
         const paintMs = Math.round(performance.now() - started);
         setSnap((prev) => ({
           ...prev,
-          nav: `${pathname}：点击→网址 ${urlMs}ms，→画面 ${paintMs}ms`,
+          nav: `${pathname
+            .split('/')
+            .slice(0, 2)
+            .join('/')}：点击→路由 ${urlMs}ms，→回调 ${paintMs}ms`,
         }));
       })
     );
@@ -142,12 +168,15 @@ export default function PerfProbe() {
       const now = performance.now();
       frames = frames.filter((frame) => now - frame.at < 5000);
       const lastSecond = frames.filter((frame) => now - frame.at < 1000);
+      const timing = summarizeIntervals(frames.map((frame) => frame.dt));
       setSnap((prev) => ({
         ...prev,
         fps: lastSecond.length,
         worst: Math.round(Math.max(0, ...frames.map((frame) => frame.dt))),
         slow: frames.filter((frame) => frame.dt > 50).length,
         stalls: stalls.current,
+        p95: Math.round(timing.p95),
+        overBudget: timing.overBudget,
       }));
     }, 500);
     return () => {
@@ -159,14 +188,81 @@ export default function PerfProbe() {
 
   if (!on) return null;
   return (
-    <div className='tm-perf-probe' aria-hidden='true'>
+    <div className='tm-perf-probe' role='group' aria-label='性能诊断'>
       <div>
-        {snap.fps} fps · 最长帧 {snap.worst}ms · 卡顿帧 {snap.slow}
+        {snap.fps} fps · P95 {snap.p95}ms · 最长 {snap.worst}ms · 超预算{' '}
+        {snap.overBudget} · 超50ms {snap.slow}
       </div>
       <div>{snap.nav}</div>
       {snap.stalls.map((line, index) => (
         <div key={index}>长帧 {line}</div>
       ))}
+      <button
+        type='button'
+        className='tm-btn tm-btn-secondary tm-perf-control'
+        onClick={() => {
+          setExportText(
+            JSON.stringify(capture.current?.report() || {}, null, 2)
+          );
+          setCopyStatus('');
+        }}
+      >
+        诊断记录
+      </button>
+      {exportText && (
+        <div className='tm-perf-control'>
+          <textarea
+            aria-label='诊断内容'
+            className='tm-input tm-selectable'
+            readOnly
+            value={exportText}
+            rows={5}
+            onFocus={(event) => event.currentTarget.select()}
+          />
+          <div className='flex flex-wrap gap-2'>
+            <button
+              type='button'
+              className='tm-btn tm-btn-secondary'
+              onClick={() => {
+                if (!navigator.clipboard) {
+                  setCopyStatus('请在文本框中选择并复制');
+                  return;
+                }
+                void navigator.clipboard.writeText(exportText).then(
+                  () => setCopyStatus('已复制'),
+                  () => setCopyStatus('请在文本框中选择并复制')
+                );
+              }}
+            >
+              复制记录
+            </button>
+            <button
+              type='button'
+              className='tm-btn tm-btn-secondary'
+              onClick={() => {
+                const url = URL.createObjectURL(
+                  new Blob([exportText], { type: 'application/json' })
+                );
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = 'tongmu-navigation-diagnostics.json';
+                link.click();
+                setTimeout(() => URL.revokeObjectURL(url), 30000);
+              }}
+            >
+              下载记录
+            </button>
+            <button
+              type='button'
+              className='tm-btn tm-btn-secondary'
+              onClick={() => setExportText('')}
+            >
+              收起记录
+            </button>
+          </div>
+          <div role='status'>{copyStatus}</div>
+        </div>
+      )}
     </div>
   );
 }
