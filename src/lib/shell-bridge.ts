@@ -2,6 +2,8 @@
 // 壳在 WebView 里挂一个 TMShell 对象；浏览器里没有它，下面所有函数都安静地什么都不做。
 // 接口只增不改：旧壳缺少某个方法时，调用前先判断，网页不会报错。
 
+import { consumeBackLayer } from '@/lib/back-layers';
+
 export interface TMShellApi {
   /** 网页告诉壳：我认识你，可以让页面铺满整个屏幕了 */
   ready?: () => void;
@@ -39,15 +41,45 @@ export function haptic(ms = 8) {
   }
 }
 
-/** 关闭最上层的弹层。真的关掉了才返回 true，否则交还给浏览器历史后退。 */
+/** 关闭请求被接收（含退出动画/处理中拦截）即消费返回，不等待 DOM 移除。 */
 export function closeTopLayer(): boolean {
+  const focusedControl = document.activeElement;
+  // A focused menu/listbox has its own Escape contract and sits above the
+  // containing panel. Let that handler consume the request first.
+  if (focusedControl?.closest('[role="menu"], [role="listbox"]')) {
+    const escape = new KeyboardEvent('keydown', {
+      key: 'Escape',
+      bubbles: true,
+      cancelable: true,
+    });
+    focusedControl.dispatchEvent(escape);
+    if (escape.defaultPrevented || !focusedControl.isConnected) return true;
+  }
+  // Native dialogs own the platform top layer, including dialogs opened inside
+  // another registered panel. Send the same cancel request as Escape, not a
+  // synthetic keydown (which does not trigger the browser's default action).
+  const focused = document.activeElement?.closest('dialog[open]');
+  const dialogs = document.querySelectorAll<HTMLDialogElement>('dialog[open]');
+  const native = focused || dialogs[dialogs.length - 1];
+  if (native instanceof HTMLDialogElement) {
+    const cancel = new Event('cancel', { cancelable: true });
+    if (native.dispatchEvent(cancel)) {
+      native.close();
+    }
+    return true;
+  }
+  const result = consumeBackLayer();
+  if (result !== 'pass') return true;
   const layers = document.querySelectorAll(
     '[role="dialog"][aria-modal="true"]'
   );
   if (!layers.length) return false;
   const top = layers[layers.length - 1];
-  top.dispatchEvent(
-    new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })
-  );
-  return !document.contains(top);
+  const escape = new KeyboardEvent('keydown', {
+    key: 'Escape',
+    bubbles: true,
+    cancelable: true,
+  });
+  top.dispatchEvent(escape);
+  return escape.defaultPrevented || !document.contains(top);
 }

@@ -13,6 +13,8 @@ import '@/styles/panels.css';
 
 import { useReducedMotionSetting } from '@/lib/motion';
 
+import { useBackLayer } from '@/hooks/useBackLayer';
+
 export interface ActionItem {
   id: string;
   label: string;
@@ -71,6 +73,7 @@ const MobileActionSheet: React.FC<MobileActionSheetProps> = ({
     closeRef.current();
   }, []);
   const [isVisible, setIsVisible] = useState(false);
+  useBackLayer(isOpen || isVisible, requestClose);
   const [isAnimating, setIsAnimating] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [isTitleOverflowing, setIsTitleOverflowing] = useState(false);

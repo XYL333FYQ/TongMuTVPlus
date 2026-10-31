@@ -20,6 +20,8 @@ import './detail.css';
 
 import { isReducedMotionSetting, useReducedMotionSetting } from '@/lib/motion';
 
+import { useBackLayer } from '@/hooks/useBackLayer';
+
 // 手机上点海报进详情：从被点的海报卡位置放大展开（只动 transform 和 opacity）。
 // 减少动态、桌面抽屉、没有触发元素或元素不在屏幕内时返回 null，沿用原来的底部滑入。
 function posterOrigin(
@@ -82,6 +84,7 @@ export default function DetailShell({
   };
   const dismiss = useRef(requestClose);
   dismiss.current = requestClose;
+  useBackLayer(true, () => dismiss.current());
   const titleId = useId();
   const reduced = useReducedMotionSetting();
   const initialReduced = useRef(isReducedMotionSetting()).current;

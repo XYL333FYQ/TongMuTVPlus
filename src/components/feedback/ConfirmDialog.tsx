@@ -4,6 +4,8 @@ import { AlertTriangle, X } from 'lucide-react';
 import { useEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
+import { useBackLayer } from '@/hooks/useBackLayer';
+
 interface ConfirmDialogProps {
   isOpen: boolean;
   title: string;
@@ -35,6 +37,11 @@ export function ConfirmDialog({
   const [pending, setPending] = useState(false);
   const pendingRef = useRef(false);
   const mounted = useRef(true);
+  useBackLayer(isOpen, () => {
+    if (pendingRef.current) return 'blocked';
+    cancelCallback.current();
+    return 'handled';
+  });
 
   useEffect(() => {
     mounted.current = true;
@@ -83,7 +90,7 @@ export function ConfirmDialog({
     cancel.current?.focus({ preventScroll: true });
     const dismiss = (event: Event) => {
       event.preventDefault();
-      cancelCallback.current();
+      if (!pendingRef.current) cancelCallback.current();
     };
     const keys = (event: KeyboardEvent) => {
       if (event.defaultPrevented) return;
@@ -125,7 +132,8 @@ export function ConfirmDialog({
       aria-describedby={messageId}
       data-variant={variant}
       onClick={(event) => {
-        if (event.target === event.currentTarget) onCancel();
+        if (event.target === event.currentTarget && !pendingRef.current)
+          onCancel();
       }}
     >
       <div className='tm-confirm-panel'>
@@ -137,7 +145,8 @@ export function ConfirmDialog({
           <button
             type='button'
             aria-label='关闭确认'
-            onClick={onCancel}
+            onClick={() => !pendingRef.current && onCancel()}
+            disabled={pending}
             className='tm-feedback-close tm-press'
           >
             <X size={20} aria-hidden='true' />
@@ -152,7 +161,8 @@ export function ConfirmDialog({
           <button
             ref={cancel}
             type='button'
-            onClick={onCancel}
+            onClick={() => !pendingRef.current && onCancel()}
+            disabled={pending}
             className='tm-confirm-cancel tm-press'
           >
             {cancelText}

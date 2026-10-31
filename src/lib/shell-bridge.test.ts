@@ -41,4 +41,40 @@ describe('shell-bridge', () => {
     document.body.innerHTML = '<div role="dialog" aria-modal="true"></div>';
     expect(closeTopLayer()).toBe(false);
   });
+
+  it('native dialog receives cancel and consumes return during an asynchronous exit', () => {
+    document.body.innerHTML = '<dialog open><button>关闭</button></dialog>';
+    const dialog = document.querySelector('dialog') as HTMLDialogElement;
+    const cancel = jest.fn((event: Event) => event.preventDefault());
+    dialog.addEventListener('cancel', cancel);
+    expect(closeTopLayer()).toBe(true);
+    expect(cancel).toHaveBeenCalledTimes(1);
+    expect(dialog.open).toBe(true);
+  });
+
+  it('a legacy Escape handler can consume return before React removes the panel', () => {
+    document.body.innerHTML = '<div role="dialog" aria-modal="true"></div>';
+    const dialog = document.querySelector('[role="dialog"]') as HTMLElement;
+    dialog.addEventListener('keydown', (event) => event.preventDefault());
+    expect(closeTopLayer()).toBe(true);
+    expect(dialog.isConnected).toBe(true);
+  });
+
+  it('closes a focused menu before its containing native dialog', () => {
+    document.body.innerHTML =
+      '<dialog open><div role="menu"><button role="menuitem">操作</button></div></dialog>';
+    const dialog = document.querySelector('dialog') as HTMLDialogElement;
+    const menu = document.querySelector('[role="menu"]') as HTMLElement;
+    const cancel = jest.fn((event: Event) => event.preventDefault());
+    dialog.addEventListener('cancel', cancel);
+    menu.addEventListener('keydown', (event) => {
+      event.preventDefault();
+      menu.remove();
+    });
+    document.querySelector('button')?.focus();
+    expect(closeTopLayer()).toBe(true);
+    expect(document.querySelector('[role="menu"]')).toBeNull();
+    expect(cancel).not.toHaveBeenCalled();
+    expect(dialog.open).toBe(true);
+  });
 });
