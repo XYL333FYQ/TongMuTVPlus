@@ -55,7 +55,10 @@ jobs:
         run: pnpm test:ops
 
       - name: Build
-        run: pnpm build
+        # 构建时会预先打开本地数据库文件，CI 里是全新检出，数据目录要先建好
+        run: |
+          mkdir -p .data
+          pnpm build
         env:
           NEXT_PUBLIC_STORAGE_TYPE: d1
 
