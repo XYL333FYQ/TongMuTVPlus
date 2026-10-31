@@ -34,7 +34,9 @@ describe('readPerfFlag', () => {
   it('?perf=0 关闭并清除', () => {
     const store = memoryStorage();
     readPerfFlag('?perf=1', store);
+    store.setItem('tongmu:nav-document-trace', 'old diagnostic');
     expect(readPerfFlag('?perf=0', store)).toBe(false);
+    expect(store.getItem('tongmu:nav-document-trace')).toBeNull();
     expect(readPerfFlag('', store)).toBe(false);
   });
   it('存储不可用时只认地址里的参数', () => {

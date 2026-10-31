@@ -3,7 +3,10 @@
 import { usePathname } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 
-import { createNavigationCapture } from '@/lib/navigation-capture';
+import {
+  createNavigationCapture,
+  NAV_DOCUMENT_TRACE_KEY,
+} from '@/lib/navigation-capture';
 import { summarizeIntervals } from '@/lib/navigation-diagnostics';
 
 const FLAG_KEY = 'tongmu:perf-probe';
@@ -26,7 +29,10 @@ export function readPerfFlag(
   const asked = new URLSearchParams(search).get('perf');
   try {
     if (asked === '1') storage.setItem(FLAG_KEY, '1');
-    if (asked === '0') storage.removeItem(FLAG_KEY);
+    if (asked === '0') {
+      storage.removeItem(FLAG_KEY);
+      storage.removeItem(NAV_DOCUMENT_TRACE_KEY);
+    }
     return storage.getItem(FLAG_KEY) === '1';
   } catch {
     return asked === '1';

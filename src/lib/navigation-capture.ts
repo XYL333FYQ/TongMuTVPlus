@@ -25,8 +25,82 @@ interface Capture {
   frames: Frame[];
 }
 
+export const NAV_DOCUMENT_TRACE_KEY = 'tongmu:nav-document-trace';
+const NAVIGATION_TYPES = ['navigate', 'reload', 'back_forward', 'prerender'];
+interface DocumentSummary {
+  startedAt: number;
+  route: string;
+  revision: string;
+  navigationType: string;
+  captures: number;
+  frames: number;
+  lastTop: number | null;
+  suspended: boolean;
+}
+
+/** Read a tiny whitelist, never a previously serialized whole report or URL. */
+function previousDocuments(): DocumentSummary[] {
+  try {
+    const raw = sessionStorage.getItem(NAV_DOCUMENT_TRACE_KEY);
+    if (!raw || raw.length > 12_000) return [];
+    const saved: unknown = JSON.parse(raw);
+    if (!Array.isArray(saved)) return [];
+    return saved.slice(-3).flatMap((value: unknown) => {
+      if (!value || typeof value !== 'object') return [];
+      const item = value as Record<string, unknown>;
+      if (
+        typeof item.startedAt !== 'number' ||
+        !Number.isFinite(item.startedAt) ||
+        typeof item.route !== 'string'
+      )
+        return [];
+      const count = (field: string, max: number) => {
+        const value = item[field];
+        return typeof value === 'number' && Number.isFinite(value)
+          ? Math.max(0, Math.min(max, Math.floor(value)))
+          : 0;
+      };
+      return [
+        {
+          startedAt: item.startedAt,
+          route: diagnosticRoute(item.route),
+          revision:
+            typeof item.revision === 'string' &&
+            /^(?:[a-f0-9]{7,40}|local|unknown)$/.test(item.revision)
+              ? item.revision
+              : 'unknown',
+          navigationType:
+            typeof item.navigationType === 'string' &&
+            NAVIGATION_TYPES.includes(item.navigationType)
+              ? item.navigationType
+              : 'unknown',
+          captures: count('captures', 12),
+          frames: count('frames', 3600),
+          lastTop:
+            typeof item.lastTop === 'number' && Number.isFinite(item.lastTop)
+              ? item.lastTop
+              : null,
+          suspended: item.suspended === true,
+        },
+      ];
+    });
+  } catch {
+    return [];
+  }
+}
+
 /** Opt-in DOM/rAF observations. They are not GPU presented-frame measurements. */
 export function createNavigationCapture() {
+  const documentStart = performance.timeOrigin || 0;
+  const navigation = performance.getEntriesByType?.('navigation')[0] as
+    | PerformanceNavigationTiming
+    | undefined;
+  const navigationType =
+    navigation && NAVIGATION_TYPES.includes(navigation.type)
+      ? navigation.type
+      : 'unknown';
+  const entryRoute = diagnosticRoute(location.pathname);
+  let restoredFromBFCache = false;
   const captures: Capture[] = [];
   const identities = new WeakMap<Element, number>();
   let nextId = 0,
@@ -95,9 +169,40 @@ export function createNavigationCapture() {
   const foreground = () => {
     if (!document.hidden) mark('foreground');
   };
+  const pageHide = (event: PageTransitionEvent) => {
+    const lastFrames = captures[captures.length - 1]?.frames || [];
+    const summary: DocumentSummary = {
+      startedAt: documentStart,
+      route: diagnosticRoute(location.pathname),
+      revision: document.documentElement.dataset.tmBuild || 'unknown',
+      navigationType,
+      captures: captures.length,
+      frames: captures.reduce((sum, capture) => sum + capture.frames.length, 0),
+      lastTop: lastFrames[lastFrames.length - 1]?.top ?? null,
+      suspended: event.persisted === true,
+    };
+    try {
+      const trail = previousDocuments().filter(
+        (item) => item.startedAt !== documentStart
+      );
+      sessionStorage.setItem(
+        NAV_DOCUMENT_TRACE_KEY,
+        JSON.stringify([...trail, summary].slice(-3))
+      );
+    } catch {
+      /* Optional local diagnostic storage can be denied or full. */
+    }
+  };
+  const pageShow = (event: PageTransitionEvent) => {
+    if (!event.persisted) return;
+    restoredFromBFCache = true;
+    mark('foreground');
+  };
   document.addEventListener('click', input, true);
   document.addEventListener('pointerdown', input, true);
   document.addEventListener('visibilitychange', foreground);
+  window.addEventListener('pagehide', pageHide);
+  window.addEventListener('pageshow', pageShow);
   mark('initial');
   return {
     mark,
@@ -107,10 +212,19 @@ export function createNavigationCapture() {
         ? new URL(controller.scriptURL).pathname
         : '';
       return {
-        schema: 1,
+        schema: 2,
         measurement:
           'DOM geometry and requestAnimationFrame; not GPU presented frames; observer adds overhead',
         revision: document.documentElement.dataset.tmBuild || 'unknown',
+        document: {
+          startedAt: documentStart,
+          navigationType,
+          entryRoute,
+          restoredFromBFCache,
+        },
+        previousDocuments: previousDocuments().filter(
+          (item) => item.startedAt !== documentStart
+        ),
         platform: document.documentElement.dataset.tmPlatform || 'web',
         chrome: navigator.userAgent.match(/Chrome\/([\d.]+)/)?.[1] || 'unknown',
         shellBuild:
@@ -141,6 +255,8 @@ export function createNavigationCapture() {
       document.removeEventListener('click', input, true);
       document.removeEventListener('pointerdown', input, true);
       document.removeEventListener('visibilitychange', foreground);
+      window.removeEventListener('pagehide', pageHide);
+      window.removeEventListener('pageshow', pageShow);
     },
   };
 }
