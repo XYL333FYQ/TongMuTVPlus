@@ -198,3 +198,109 @@ describe('手机底栏按住拖动', () => {
     expect(nav.querySelector('.tm-mobile-nav-thumb')).toBeTruthy();
   });
 });
+
+it('drag reads geometry at gesture start instead of on every movement', () => {
+  const { nav, links } = setup();
+  fireEvent.pointerDown(nav, {
+    pointerId: 1,
+    pointerType: 'touch',
+    clientX: 30,
+  });
+  const reads = links.map((link) => jest.spyOn(link, 'getBoundingClientRect'));
+  const navRead = jest.spyOn(nav, 'getBoundingClientRect');
+  for (const clientX of [70, 110, 150, 190, 230])
+    fireEvent.pointerMove(nav, { pointerId: 1, pointerType: 'touch', clientX });
+  reads.forEach((read) => expect(read).not.toHaveBeenCalled());
+  expect(navRead).not.toHaveBeenCalled();
+  fireEvent.pointerUp(nav, {
+    pointerId: 1,
+    pointerType: 'touch',
+    clientX: 230,
+  });
+  expect(push).toHaveBeenCalledWith('/search');
+});
+
+it('multiple moves share one paint callback and release cancels stale paint', () => {
+  let paint: FrameRequestCallback | undefined;
+  const raf = jest
+    .spyOn(window, 'requestAnimationFrame')
+    .mockImplementation((callback) => {
+      paint = callback;
+      return 42;
+    });
+  const cancel = jest
+    .spyOn(window, 'cancelAnimationFrame')
+    .mockImplementation(() => undefined);
+  try {
+    const { nav } = setup();
+    raf.mockClear();
+    fireEvent.pointerDown(nav, {
+      pointerId: 1,
+      pointerType: 'touch',
+      clientX: 30,
+    });
+    for (const clientX of [70, 110, 150])
+      fireEvent.pointerMove(nav, {
+        pointerId: 1,
+        pointerType: 'touch',
+        clientX,
+      });
+    expect(raf).toHaveBeenCalledTimes(1);
+    act(() => paint?.(10));
+    expect(
+      nav.querySelector<HTMLElement>('.tm-mobile-nav-thumb')?.style.transform
+    ).toBe('translateX(120px)');
+    fireEvent.pointerMove(nav, {
+      pointerId: 1,
+      pointerType: 'touch',
+      clientX: 210,
+    });
+    fireEvent.pointerUp(nav, {
+      pointerId: 1,
+      pointerType: 'touch',
+      clientX: 210,
+    });
+    expect(cancel).toHaveBeenCalledWith(42);
+    expect(push).toHaveBeenCalledWith('/search');
+    cleanup();
+  } finally {
+    raf.mockRestore();
+    cancel.mockRestore();
+  }
+});
+
+it('changing route during a drag cancels queued paint from the old gesture', () => {
+  let paint: FrameRequestCallback | undefined;
+  const raf = jest
+    .spyOn(window, 'requestAnimationFrame')
+    .mockImplementation((callback) => {
+      paint = callback;
+      return 42;
+    });
+  const cancel = jest
+    .spyOn(window, 'cancelAnimationFrame')
+    .mockImplementation(() => undefined);
+  try {
+    const { nav } = setup();
+    fireEvent.pointerDown(nav, {
+      pointerId: 1,
+      pointerType: 'touch',
+      clientX: 30,
+    });
+    fireEvent.pointerMove(nav, {
+      pointerId: 1,
+      pointerType: 'touch',
+      clientX: 150,
+    });
+    mockPath = '/search';
+    render(<MobileBottomNav />, { container: nav.parentElement! });
+    act(() => paint?.(10));
+    expect(nav).not.toHaveAttribute('data-scrubbing');
+    expect(cancel).toHaveBeenCalledWith(42);
+    expect(push).not.toHaveBeenCalled();
+    cleanup();
+  } finally {
+    raf.mockRestore();
+    cancel.mockRestore();
+  }
+});

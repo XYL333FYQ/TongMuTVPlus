@@ -43,6 +43,12 @@ export default function MobileBottomNav({ activePath }: MobileBottomNavProps) {
   const itemRefs = useRef<(HTMLAnchorElement | null)[]>([]);
   const gesture = useRef<{ id: number; startX: number; moving: boolean }>();
   const suppressClick = useRef(false);
+  const geometry = useRef<{
+    navLeft: number;
+    items: { left: number; width: number }[];
+  }>();
+  const dragFrame = useRef(0);
+  const dragPaint = useRef<{ thumb: Thumb; index: number }>();
   const [thumb, setThumb] = useState<Thumb | null>(() => thumbNow());
   const [scrubbing, setScrubbing] = useState(false);
   const [hover, setHover] = useState<number | null>(null);
@@ -57,7 +63,7 @@ export default function MobileBottomNav({ activePath }: MobileBottomNavProps) {
 
   // 点下去的那一刻，滑块和高亮就先动起来，不等新页面渲染完：
   // 新页面渲染会占住主线程几十毫秒，要是滑块等到那之后才起步，点击后会先"卡一下"再滑。
-  // 滑块是合成器线程上的位移过渡，一旦起步，页面再忙也不影响它的流畅。
+  // 滑块沿用 transform 过渡；实际呈现仍受主线程、绘制及设备 GPU 影响。
   const [pending, setPending] = useState<number | null>(null);
   const shownIndex = pending ?? activeIndex;
   // 路由真的换了：真实位置追上来，临时的"将要去"不再需要
@@ -70,42 +76,75 @@ export default function MobileBottomNav({ activePath }: MobileBottomNavProps) {
     return () => window.clearTimeout(timer);
   }, [pending]);
 
+  // Read together at layout/gesture boundaries, never between pointer writes.
+  const measureNav = useCallback(() => {
+    const nav = navRef.current;
+    if (!nav) return;
+    const navLeft = nav.getBoundingClientRect().left;
+    const items = itemRefs.current.map((item) => ({
+      left: item?.offsetLeft || 0,
+      width: item?.offsetWidth || 0,
+    }));
+    geometry.current = { navLeft, items };
+  }, []);
+
+  const cancelDragPaint = useCallback(() => {
+    if (dragFrame.current) cancelAnimationFrame(dragFrame.current);
+    dragFrame.current = 0;
+    dragPaint.current = undefined;
+  }, []);
+  useEffect(() => cancelDragPaint, [cancelDragPaint]);
+  useLayoutEffect(() => {
+    cancelDragPaint();
+    gesture.current = undefined;
+    hoverRef.current = null;
+    setScrubbing(false);
+    setHover(null);
+  }, [pathname, cancelDragPaint]);
+
   // 滑块停在当前选中项上；窗口尺寸变化（旋转屏幕）时重新量
   const syncThumb = useCallback(() => {
-    const el = itemRefs.current[shownIndex];
+    const item = geometry.current?.items[shownIndex];
     // 底栏被隐藏（当前页面不需要底栏）时量不到宽度，等它显示出来（尺寸变化）再定位，避免滑块从 0 滑出
     const next =
-      el && el.offsetWidth > 0
-        ? { left: el.offsetLeft, width: el.offsetWidth }
-        : null;
-    // 新底栏一出生，滑块先在上一页底栏里它所在的位置；先强制排一次版，
-    // 再改到新位置，过渡才会从旧位置滑过去，而不是瞬移
-    if (next) void navRef.current?.offsetWidth;
+      item && item.width > 0 ? { left: item.left, width: item.width } : null;
     retargetThumb(next);
-    setThumb(next);
+    setThumb((current) =>
+      current?.left === next?.left && current?.width === next?.width
+        ? current
+        : next
+    );
   }, [shownIndex]);
   useLayoutEffect(() => {
+    measureNav();
     syncThumb();
     // 底栏尺寸变化（旋转屏幕、从宽屏缩到手机宽度）时重新量
     const nav = navRef.current;
     if (!nav || typeof ResizeObserver === 'undefined') {
-      window.addEventListener('resize', syncThumb);
-      return () => window.removeEventListener('resize', syncThumb);
+      const resized = () => {
+        measureNav();
+        syncThumb();
+      };
+      window.addEventListener('resize', resized);
+      return () => window.removeEventListener('resize', resized);
     }
     const observer = new ResizeObserver(() => {
+      measureNav();
       if (!gesture.current?.moving) syncThumb();
     });
     observer.observe(nav);
     return () => observer.disconnect();
-  }, [syncThumb, pathname]);
+  }, [measureNav, syncThumb, pathname]);
 
   const indexAt = (clientX: number) => {
     let best = 0;
     let bestDistance = Infinity;
-    itemRefs.current.forEach((el, index) => {
-      if (!el) return;
-      const rect = el.getBoundingClientRect();
-      const distance = Math.abs(clientX - (rect.left + rect.width / 2));
+    const cached = geometry.current;
+    cached?.items.forEach((item, index) => {
+      if (!item.width) return;
+      const distance = Math.abs(
+        clientX - (cached.navLeft + item.left + item.width / 2)
+      );
       if (distance < bestDistance) {
         best = index;
         bestDistance = distance;
@@ -115,6 +154,7 @@ export default function MobileBottomNav({ activePath }: MobileBottomNavProps) {
   };
 
   const finish = (navigate: boolean) => {
+    cancelDragPaint();
     const target = hoverRef.current;
     gesture.current = undefined;
     hoverRef.current = null;
@@ -141,6 +181,7 @@ export default function MobileBottomNav({ activePath }: MobileBottomNavProps) {
       data-scrubbing={scrubbing || undefined}
       onPointerDown={(event) => {
         if (event.pointerType === 'mouse') return;
+        measureNav();
         gesture.current = {
           id: event.pointerId,
           startX: event.clientX,
@@ -163,21 +204,30 @@ export default function MobileBottomNav({ activePath }: MobileBottomNavProps) {
         const index = indexAt(event.clientX);
         if (index !== hoverRef.current) {
           hoverRef.current = index;
-          setHover(index);
           haptic(6);
         }
         // 滑块跟着手指走，但不出第一项和最后一项的范围
-        const first = itemRefs.current[0];
-        const last = itemRefs.current[primaryNavigation.length - 1];
-        const navLeft = navRef.current?.getBoundingClientRect().left ?? 0;
-        if (first && last) {
-          const width = first.offsetWidth;
+        const cached = geometry.current;
+        const first = cached?.items[0];
+        const last = cached?.items[primaryNavigation.length - 1];
+        if (cached && first?.width && last?.width) {
+          const width = first.width;
           const left = Math.min(
-            last.offsetLeft,
-            Math.max(first.offsetLeft, event.clientX - navLeft - width / 2)
+            last.left,
+            Math.max(first.left, event.clientX - cached.navLeft - width / 2)
           );
-          pinThumb({ left, width });
-          setThumb({ left, width });
+          dragPaint.current = { thumb: { left, width }, index };
+          if (!dragFrame.current) {
+            dragFrame.current = requestAnimationFrame(() => {
+              dragFrame.current = 0;
+              const paint = dragPaint.current;
+              dragPaint.current = undefined;
+              if (!paint || !gesture.current?.moving) return;
+              pinThumb(paint.thumb);
+              setThumb(paint.thumb);
+              setHover(paint.index);
+            });
+          }
         }
       }}
       onPointerUp={(event) => {
