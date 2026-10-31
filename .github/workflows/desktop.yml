@@ -23,6 +23,17 @@ permissions:
   actions: read
 
 jobs:
+  native-policy:
+    name: Native recovery policy tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify recovery state without a browser engine
+        run: |
+          rustc --version
+          rustc --edition 2021 --test apps/desktop/src-tauri/src/recovery_policy.rs -o /tmp/tm-recovery-policy
+          /tmp/tm-recovery-policy
+
   stamp:
     name: Stamp build time
     runs-on: ubuntu-latest
@@ -34,7 +45,7 @@ jobs:
 
   build:
     name: Build ${{ matrix.arch }} (installer + portable)
-    needs: stamp
+    needs: [stamp, native-policy]
     runs-on: windows-latest
     strategy:
       fail-fast: false

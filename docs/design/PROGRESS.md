@@ -1069,3 +1069,4 @@
 - 最新在线 DB 备份为 backups/client-experience-20261031T172741Z，integrity=ok、目录 700/关键文件 600；保留 Compose/env/auth-secret/nginx 和旧镜像引用。首次非 sudo 创建/私有目录通配 chmod 被权限拒绝，确认已复制后逐个文件完成权限；未改正式数据。真实库副本与新镜像回退演练仍待运行，不能把备份等同已发布。
 - 导航后续点按小批最终验证：首次 typecheck 仅原生 3221225477、无 TS 诊断，确认本项目本机预览端口未监听后串行重跑退出 0；lint0、完整 Jest175 套 1134 项 0、完整 format0。原始与重跑日志独立保留；新真实浏览器/镜像仍待验证。9d 受控 Worker 实际通过 active/controller=/sw.js、456 项仅 static、私有 API 离线不可读、SPA/重连不 reload，尚未计作新点按修正验收。
 - 回退演练通过：9d 新镜像在 internal 网络的最新真实数据库副本上健康、登录、我的/搜索/片库/播放记录/收藏/我的房间均 200；只对隔离测试账号新增一条记录。随后旧 132ca5f 镜像读取同一副本，记录仍存在、鉴权页面正常、integrity 仍 ok；两测试容器均停止，无正式写入。
+- 第五批 Windows 开始：按官方 WebView2 ProcessFailed/BrowserProcessExited 分类；GPU/子框架可自行恢复不替换整应用，主 renderer 才弹原生恢复，browser 退出要求重启。先增加纯 Rust 门禁用例和 Windows 工作流前置测试；本机按批准范围不装 Rust，首次红测放到 GitHub 非发布验证引用，失败会阻止 EXE 构建/发布，不将占位测试视为实现完成。实际旧 Windows 成功构建 40989619519 使用 tauri2.12.5，后续平台绑定以该版本为准。
