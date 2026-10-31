@@ -15,6 +15,13 @@
 - 验证：typecheck、lint（0 错误）、format:check、jest（含新增 ShellBridge、MobileGestures、platform、readSnapshotGeometry 测试）通过。
 - 没做 / 没验证：安卓壳 Java 改动没有编译（本机无安卓工具链）、需重新打 APK；手机真机上的整页拉动、选中手感、深浅切换流畅度全部没有实测；iPhone 没测；电脑客户端（Tauri）除"整页不回弹"外没有另做专属优化；手机标签页的顶栏仍是随页面滚走（设计规范如此，没改）；这些改动都在本地分支上，没推送、没部署，手机上看不到。
 
+## 2026-10-31 App 里主题切换两个方向统一为收拢（分支 feat/site-optimization）
+
+- 用户反馈：安卓 App 里进浅色卡、进深色顺。原因判断：进浅色时上层是实时画面套圆形裁切，进深色时上层是静态截图套裁切，前者在手机 GPU 上更重；电脑无头浏览器复现不了，真机未测。
+- 做法：`theme-transition.ts` 新增 `resolveThemeMotion`，根元素带 `data-tm-theme-motion`（converge / spread）；`primitives.css` 的层级、底层呼吸、光环动画改为跟它走。`data-tm-platform=app` 时两个方向都用收拢，网页与电脑客户端保持原来的方向。
+- 验证：模拟安卓 App 的 UA 在手机宽度下截图，深 → 浅与浅 → 深都是旧画面圆圈收回按钮；typecheck、lint、format:check、jest 1058 项、构建通过。
+- 没验证：真机是否不再卡；视觉上深 → 浅从"圆从按钮撑开"变成"圆收回按钮"，用户需亲眼确认是否接受；若仍卡，用 `?perf=1` 测速条截图定位。
+
 ## 2026-10-30 框架升级体检与收尾（分支 feat/site-optimization，优化方案第 11、12 步）
 
 - 框架升级：按方案先体检、不直接合并。在临时副本、本地分支 `exp/next15-assessment` 上实际升级到 Next 15.5 + TypeScript 5.6 并全部验证通过（类型、规范、格式、1036 项测试、房间 27 项、构建、登录后页面与房间真机）；生产依赖严重漏洞 3 → 0。切页基准：升级后默认不缓存切过的页面，页面出现 111 → 144ms，加 `staleTimes.dynamic: 30` 恢复后 112 ～ 123ms，与升级前持平。改动清单、风险和"为什么不直接上 16"见 `docs/optimization-plan.md` 第八节。**用户同意后已合并**；合并后同库对比测速：底栏起步不变（约 30ms），页面出现中位约慢 15ms（14 版约 100ms → 15 版约 117ms，CPU 放慢 4 倍，区间大面积重叠），首屏各页约多 10KB 仍在预算内。

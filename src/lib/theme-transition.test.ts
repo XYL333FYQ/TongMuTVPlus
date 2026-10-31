@@ -1,6 +1,7 @@
 import {
   changeThemeWithTransition,
   readSnapshotGeometry,
+  resolveThemeMotion,
 } from './theme-transition';
 
 // 测试里用简化的假实现替换浏览器的视图过渡接口，类型放宽到测试需要的部分
@@ -386,5 +387,56 @@ describe('readSnapshotGeometry：圆心取浏览器给出的真实位置', () =>
         throw new Error('不支持读伪元素');
       })
     ).toMatchObject({ x: 100, y: 50, width: 390, height: 800 });
+  });
+});
+
+describe('圆形过渡的收拢 / 铺开：App 里两个方向都收拢', () => {
+  afterEach(() => {
+    document.documentElement.removeAttribute('data-tm-platform');
+  });
+
+  test('resolveThemeMotion：网页保持进深色收拢、进浅色铺开，App 全部收拢', () => {
+    expect(resolveThemeMotion(true, 'web')).toBe('converge');
+    expect(resolveThemeMotion(false, 'web')).toBe('spread');
+    expect(resolveThemeMotion(true, 'desktop')).toBe('converge');
+    expect(resolveThemeMotion(false, 'desktop')).toBe('spread');
+    expect(resolveThemeMotion(true, 'app')).toBe('converge');
+    expect(resolveThemeMotion(false, 'app')).toBe('converge');
+  });
+
+  test('App 里进浅色：旧画面（深色截图）在上层被圆收回按钮，而不是新画面铺开', async () => {
+    document.documentElement.setAttribute('data-tm-platform', 'app');
+    document.documentElement.className = 'dark';
+    let motionAtStart: string | undefined;
+    doc.startViewTransition = (update) => {
+      motionAtStart = document.documentElement.dataset.tmThemeMotion;
+      return startSuccessfulTransition(update);
+    };
+    origin.getBoundingClientRect = () =>
+      ({ left: 20, top: 30, width: 44, height: 44 } as DOMRect);
+    await changeThemeWithTransition('light', setTheme, origin);
+    // 过渡开始前（给浏览器拍快照时）CSS 就要能看到收拢标记
+    expect(motionAtStart).toBe('converge');
+    const frames = animate.mock.calls[0][0];
+    expect(frames[0].clipPath).not.toContain('circle(0px');
+    expect(frames[1].clipPath).toContain('circle(0px at 42px 52px)');
+    expect(animate.mock.calls[0][1]).toMatchObject({
+      pseudoElement: '::view-transition-old(root)',
+    });
+    expect(document.documentElement.dataset.tmThemeMotion).toBeUndefined();
+  });
+
+  test('网页里进浅色仍是新画面被圆撑开', async () => {
+    document.documentElement.className = 'dark';
+    let motionAtStart: string | undefined;
+    doc.startViewTransition = (update) => {
+      motionAtStart = document.documentElement.dataset.tmThemeMotion;
+      return startSuccessfulTransition(update);
+    };
+    await changeThemeWithTransition('light', setTheme, origin);
+    expect(motionAtStart).toBe('spread');
+    expect(animate.mock.calls[0][1]).toMatchObject({
+      pseudoElement: '::view-transition-new(root)',
+    });
   });
 });

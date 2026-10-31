@@ -1,6 +1,7 @@
 'use client';
 
 import { isReducedMotionSetting } from './motion';
+import { getPlatform } from './platform';
 
 export type ThemeSetting = 'dark' | 'light' | 'system';
 const DEFAULT_EASE = 'cubic-bezier(0.4, 0, 0.2, 1)';
@@ -17,6 +18,22 @@ function resolvesDark(theme: ThemeSetting) {
     (theme === 'system' &&
       window.matchMedia('(prefers-color-scheme: dark)').matches)
   );
+}
+
+/**
+ * 圆形过渡的两种做法：
+ * - converge（收拢）：旧画面是静态截图，放在上层，被一个越缩越小的圆收回按钮，新主题从外围露出来；
+ * - spread（铺开）：新画面是实时画面，放在上层，被一个越撑越大的圆从按钮铺满。
+ * 实时画面套裁切在手机 GPU 上比静态截图重得多：安卓 App 里"进浅色"用铺开会卡，
+ * 所以 App 里两个方向都用收拢（和一直很顺的"进深色"同一套）；网页、电脑客户端保持原来的方向。
+ */
+export type ThemeMotion = 'converge' | 'spread';
+
+export function resolveThemeMotion(
+  dark: boolean,
+  platform: ReturnType<typeof getPlatform> = getPlatform()
+): ThemeMotion {
+  return dark || platform === 'app' ? 'converge' : 'spread';
 }
 
 export interface SnapshotGeometry {
@@ -140,6 +157,7 @@ function mountThemeAura(x: number, y: number, radius: number) {
 function clearTransitionMarkers(root: HTMLElement) {
   delete root.dataset.tmThemeTransition;
   delete root.dataset.tmThemeTarget;
+  delete root.dataset.tmThemeMotion;
   root.style.removeProperty('--tm-theme-x');
   root.style.removeProperty('--tm-theme-y');
   root.style.removeProperty('--tm-theme-r');
@@ -239,6 +257,7 @@ export async function changeThemeWithTransition(
       const duration = parsed > 0 ? parsed : DEFAULT_DURATION;
       root.dataset.tmThemeTransition = 'circle';
       root.dataset.tmThemeTarget = resolvesDark(theme) ? 'dark' : 'light';
+      root.dataset.tmThemeMotion = resolveThemeMotion(resolvesDark(theme));
       // 只命名本次触发控件，让图标独立交接，避免双入口重名导致快照失败。
       origin.dataset.tmThemeOrigin = 'true';
       activeOrigin = origin;
@@ -262,7 +281,9 @@ export async function changeThemeWithTransition(
       root.style.setProperty('--tm-theme-ly', `${geometry.localY}px`);
       root.style.setProperty('--tm-theme-r', `${geometry.radius}px`);
       const dark = root.classList.contains('dark');
+      const converge = resolveThemeMotion(dark) === 'converge';
       root.dataset.tmThemeTarget = dark ? 'dark' : 'light';
+      root.dataset.tmThemeMotion = converge ? 'converge' : 'spread';
       const frames: Keyframe[] = [
         {
           clipPath: `circle(0px at ${geometry.localX}px ${geometry.localY}px)`,
@@ -271,12 +292,12 @@ export async function changeThemeWithTransition(
           clipPath: `circle(${geometry.radius}px at ${geometry.localX}px ${geometry.localY}px)`,
         },
       ];
-      if (dark) frames.reverse();
+      if (converge) frames.reverse();
       activeAnimation = root.animate(frames, {
         duration,
         fill: 'forwards',
         easing,
-        pseudoElement: dark
+        pseudoElement: converge
           ? '::view-transition-old(root)'
           : '::view-transition-new(root)',
       });
