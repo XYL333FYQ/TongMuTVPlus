@@ -12,6 +12,9 @@ module.exports = {
   // Public contains large optional media and authenticated auxiliary files.
   // Installing the worker must not eagerly fetch every one of them.
   publicExcludes: ['!**/*'],
+  // Next's App Router manifest is a compiler artifact, not a public URL.
+  // Precaching its 404 aborts the entire worker installation in production.
+  buildExcludes: [/^app-build-manifest\.json$/],
   importScripts: ['/push-sw.js'],
   runtimeCaching: [
     {

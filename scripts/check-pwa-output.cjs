@@ -30,7 +30,7 @@ vm.runInNewContext(
 assert.ok(precache?.length, 'generated precache must include build assets');
 for (const { url } of precache) {
   assert.ok(
-    url.startsWith('/_next/'),
+    url.startsWith('/_next/static/'),
     `unexpected precached public/page resource: ${url}`
   );
 }

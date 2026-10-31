@@ -14,6 +14,14 @@ test('updates and reconnects never force a running playback to reload', () => {
   assert.equal(options.cacheStartUrl, false);
 });
 
+test('the internal App Router build manifest is excluded without dropping served static assets', () => {
+  const excluded = (name) =>
+    (options.buildExcludes || []).some((rule) => rule.test(name));
+  assert.equal(excluded('app-build-manifest.json'), true);
+  assert.equal(excluded('static/chunks/app/layout-123abc.js'), false);
+  assert.equal(excluded('static/build-id/_buildManifest.js'), false);
+});
+
 test('activation removes only old dynamic responses, preserving media and unrelated caches', async () => {
   const handlers = new Map();
   const deleted = [];

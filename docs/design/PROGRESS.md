@@ -1006,3 +1006,7 @@
 - 键盘小批静态验证完成：完整 Jest 170 套 / 1100 项、lint、format:check 均退出 0；首次 typecheck 在 TypeScript 内部 instantiateSymbol 抛异常，无源码 TS 诊断，保留原日志后串行重跑退出 0（output/client-experience-keyboard-typecheck-retry.json）。未改依赖/tsconfig；APK 编译、API24/34 与实际软键盘仍待后续验证，不能将单测当真机通过。
 - 测试镜像实证：GitHub 41206909486 成功，client-audit-0e1434b 多架构 digest 为 sha256:1cbd05922ba1ed9268d826f1945bbf2908507ea0097935b45f30fa418d347d88；构建后 latest / v0.1.1 均仍为 ba65d689…，正式别名隔离已实际验证，尚未替换生产容器。
 - Ruling：首先用独立空数据库和随机测试账号验生产路由/诊断，不复制正式通知及后台任务配置到在线测试服务，以免隔离副本向真实外部服务发送任务。真实数据迁移与备份另在发布门禁验证，成本是该轮不能证明正式用户数据兼容。
+
+- Linux 隔离实例发现发布门禁问题：0e1434b 真实 SW 包含 /\_next/app-build-manifest.json；匿名实际请求 404，浏览器注册后 worker 无 active/waiting/installing，ready 不完成。该文件是 App Router 内部编译清单，开发环境关闭 PWA 所以不出现。原生成器校验只允许 /\_next/ 太宽，未阻止此坏清单；本轮精确 buildExcludes 排除，并把产物断言收紧至 /\_next/static/。新增回归先红后绿，Node 策略 8 项通过，修正镜像与真实安装验证仍待做；不称为手机整条入场根因。
+- 7e847cf 的 Checks 41208969404 通过；Android 41208971370 APK 编译及 API24/34 冒烟全部通过，Publish to Releases 按 publish=false 跳过。没有据启动冒烟声称软键盘/真机通过。
+- 清单修复验证：新增策略回归由 false !== true 失败转为通过；收紧的真实产物检查在旧 public/sw.js 上按预期拒绝 /\_next/app-build-manifest.json，日志 output/client-experience-pwa-generated-red.log。修复批 typecheck/lint/test/format 四项串行全部 0，完整 170 套 / 1100 项（output/client-experience-pwa-manifest-verification.json）；新构建产物及浏览器激活须继续由 CI / 新镜像证明，不用旧产物检查失败冒充修复通过。
