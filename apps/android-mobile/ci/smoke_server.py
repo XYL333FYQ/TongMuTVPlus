@@ -9,6 +9,7 @@ RECOVERY_CONTROLS = """<button onclick='TMShell.setSystemBars(false)' style='dis
 <a href='/unavailable' style='display:block;font-size:24px;line-height:56px'>HTTP failure test</a>
 <a href='https://10.0.2.2:8443/tls' style='display:block;font-size:24px;line-height:56px'>TLS failure test</a>
 <a href='/always-unavailable' style='display:block;font-size:24px;line-height:56px'>Back from failure test</a>
+<a href='/update-test' style='position:fixed;bottom:8px;right:8px;background:white;font-size:16px;line-height:48px'>Update permission test</a>
 <img src='/missing.png' width='1' height='1' alt=''>
 <img src='https://10.0.2.2:8443/missing.png' width='1' height='1' alt=''>""".encode()
 
@@ -65,7 +66,10 @@ class Handler(BaseHTTPRequestHandler):
             if self.server.failure_count == 1:
                 self.send_error(503)
                 return
-        page = PAGE.replace(b"__RECOVERY_CONTROLS__", RECOVERY_CONTROLS if getattr(self.server, "recovery_mode", False) else b"")
+        controls = RECOVERY_CONTROLS if getattr(self.server, "recovery_mode", False) else b""
+        if self.path == "/update-test" and controls:
+            controls = b"<button style='display:block;font-size:20px;min-height:48px' onclick=\"TMShell.installUpdate('https://example.com/TongMuTV-Plus-Android.apk')\">Update missing package test</button>"
+        page = PAGE.replace(b"__RECOVERY_CONTROLS__", controls)
         if getattr(self.server, "playing_reported", False):
             page = page.replace(b"TMShell.setPlaying(true);", b"TMShell.setPlaying(false);")
         else:

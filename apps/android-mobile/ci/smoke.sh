@@ -177,6 +177,30 @@ PY
       echo 'Renderer callback unavailable below API26; host recovery is not claimed'
     fi
     echo 'PASS: native HTTP/TLS recovery and applicable renderer recovery'
+    if [ "$API_LEVEL" -ge 26 ]; then
+      tap_target text 'Update permission test' || return 1
+      wait_target text 'Update missing package test' >/dev/null || return 1
+      adb shell appops set "$PKG" REQUEST_INSTALL_PACKAGES deny || return 1
+      tap_target text 'Update missing package test' || return 1
+      sleep 2
+      adb exec-out screencap -p >"$OUT/11-update-permission.png"
+      adb shell input keyevent 4
+      wait_target text 'Update missing package test' >/dev/null || return 1
+      adb logcat -d -s TongMuClient >"$OUT/update-denied.log"
+      grep -q 'update permission not granted' "$OUT/update-denied.log" || return 1
+      if grep -q 'update queued' "$OUT/update-denied.log"; then return 1; fi
+      tap_target text 'Update missing package test' || return 1
+      sleep 2
+      # Test-only permission change while the actual Settings Activity is open.
+      # The destination deliberately returns no APK; the test never installs.
+      adb shell appops set "$PKG" REQUEST_INSTALL_PACKAGES allow || return 1
+      adb shell input keyevent 4
+      wait_target text 'Update missing package test' >/dev/null || return 1
+      adb logcat -d -s TongMuClient >"$OUT/update-granted.log"
+      grep -q 'update queued' "$OUT/update-granted.log" || return 1
+      adb exec-out screencap -p >"$OUT/12-update-resumed.png"
+      echo 'PASS: denied permission does not download; granted Settings return queues original request'
+    fi
   }
   verify_recovery || recovery_status=1
 fi

@@ -100,6 +100,8 @@ jobs:
           mkdir -p /tmp/tm-load-state-test
           javac --release 17 -d /tmp/tm-load-state-test apps/android-mobile/app/src/main/java/com/tongmutvplus/mobile/LoadState.java apps/android-mobile/ci/LoadStateTest.java
           java -cp /tmp/tm-load-state-test com.tongmutvplus.mobile.LoadStateTest
+          javac --release 17 -d /tmp/tm-load-state-test apps/android-mobile/app/src/main/java/com/tongmutvplus/mobile/UpdateRequest.java apps/android-mobile/ci/UpdateRequestTest.java
+          java -cp /tmp/tm-load-state-test com.tongmutvplus.mobile.UpdateRequestTest
 
       - name: Collect APK
         id: collect

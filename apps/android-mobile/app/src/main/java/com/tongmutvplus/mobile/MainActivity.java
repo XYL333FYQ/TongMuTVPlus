@@ -14,6 +14,7 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.pm.ActivityInfo;
 import android.content.res.ColorStateList;
+import android.database.Cursor;
 import android.graphics.Color;
 import android.graphics.Bitmap;
 import android.net.Uri;
@@ -51,6 +52,7 @@ import android.webkit.WebBackForwardList;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.FrameLayout;
+import android.widget.Toast;
 
 /**
  * TongMuTV Plus 手机壳：一个全屏 WebView，打开用户填写的服务器地址。
@@ -88,11 +90,18 @@ public class MainActivity extends Activity {
     private WindowInsets lastInsets;
     private BroadcastReceiver pauseReceiver;
     private BroadcastReceiver updateReceiver;
-    private long updateDownloadId = -1;
+    private UpdateRequest updateRequest = new UpdateRequest();
+    private String updateServer;
+    private boolean resumed;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        if (savedInstanceState != null) {
+            updateRequest = new UpdateRequest(savedInstanceState.getString("update.pending"),
+                    savedInstanceState.getLong("update.id", -1), savedInstanceState.getBoolean("update.permission"));
+            updateServer = savedInstanceState.getString("update.server");
+        }
 
         root = new FrameLayout(this);
         root.setBackgroundColor(getColor(R.color.tm_bg));
@@ -111,6 +120,7 @@ public class MainActivity extends Activity {
             return insets;
         });
         registerPauseReceiver();
+        registerUpdateReceiver();
 
         if (ACTION_CHANGE_SERVER.equals(getIntent().getAction()) || getSavedServer() == null) {
             localSurface.showSetup();
@@ -641,11 +651,32 @@ public class MainActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
+        resumed = true;
         if (webView != null) webView.onResume();
+        if (updateRequest.awaitingPermission()) {
+            boolean granted = Build.VERSION.SDK_INT < Build.VERSION_CODES.O || getPackageManager().canRequestPackageInstalls();
+            String pending = updateRequest.resumePermission(granted);
+            if (pending != null && updateServer != null && updateServer.equals(getSavedServer())) enqueueUpdate(pending);
+            else {
+                Log.i("TongMuClient", "update permission not granted or server changed");
+                Toast.makeText(this, "未继续更新，可稍后重新点击更新。", Toast.LENGTH_LONG).show();
+            }
+        }
+        checkUpdateDownload();
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle state) {
+        state.putString("update.pending", updateRequest.pendingUrl());
+        state.putLong("update.id", updateRequest.downloadId());
+        state.putBoolean("update.permission", updateRequest.awaitingPermission());
+        state.putString("update.server", updateServer);
+        super.onSaveInstanceState(state);
     }
 
     @Override
     protected void onPause() {
+        resumed = false;
         if (webView != null) CookieManager.getInstance().flush();
         // 正在播放时不暂停 WebView，切后台也能继续（配合前台服务保活）
         if (webView != null && !playing) webView.onPause();
@@ -903,49 +934,91 @@ public class MainActivity extends Activity {
             String last = uri.getLastPathSegment();
             if (!fromServerPage || !"https".equals(uri.getScheme())
                     || !"TongMuTV-Plus-Android.apk".equals(last)) {
+                Toast.makeText(this, "无法使用此更新地址。", Toast.LENGTH_LONG).show();
                 return;
             }
+            if (!updateRequest.begin(url)) {
+                Toast.makeText(this, "更新已在进行中。", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            updateServer = getSavedServer();
             // 8.0 以上要先允许本应用安装未知来源的应用
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && !getPackageManager().canRequestPackageInstalls()) {
+                updateRequest.waitForPermission();
                 startActivity(new Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
                         Uri.parse("package:" + getPackageName())));
                 return;
             }
+            enqueueUpdate(url);
+        } catch (RuntimeException unavailable) {
+            updateRequest.clear();
+            Toast.makeText(this, "暂时无法开始更新，请稍后再试。", Toast.LENGTH_LONG).show();
+        }
+    }
+
+    private void enqueueUpdate(String url) {
+        try {
             DownloadManager manager = getSystemService(DownloadManager.class);
-            if (manager == null) return;
+            if (manager == null) throw new IllegalStateException("Download service unavailable");
+            Uri uri = Uri.parse(url);
             DownloadManager.Request request = new DownloadManager.Request(uri)
                     .setTitle("TongMuTV Plus 更新")
                     .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
                     .setMimeType("application/vnd.android.package-archive")
-                    .setDestinationInExternalFilesDir(this, Environment.DIRECTORY_DOWNLOADS, "TongMuTV-Plus-Android.apk");
-            updateDownloadId = manager.enqueue(request);
-            if (updateReceiver == null) {
-                updateReceiver = new BroadcastReceiver() {
-                    @Override
-                    public void onReceive(Context context, Intent intent) {
-                        long id = intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1);
-                        if (id != updateDownloadId) return;
-                        Uri file = manager.getUriForDownloadedFile(id);
-                        if (file == null) return;
-                        Intent install = new Intent(Intent.ACTION_VIEW)
-                                .setDataAndType(file, "application/vnd.android.package-archive")
-                                .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_ACTIVITY_NEW_TASK);
-                        try {
-                            startActivity(install);
-                        } catch (ActivityNotFoundException ignored) {
-                            // 没有可处理安装的应用时忽略
-                        }
-                    }
-                };
-                IntentFilter filter = new IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE);
-                if (Build.VERSION.SDK_INT >= 33) {
-                    registerReceiver(updateReceiver, filter, Context.RECEIVER_EXPORTED);
-                } else {
-                    registerReceiver(updateReceiver, filter);
-                }
+                    .setDestinationInExternalFilesDir(this, Environment.DIRECTORY_DOWNLOADS,
+                            "TongMuTV-Plus-Android-" + System.currentTimeMillis() + ".apk");
+            updateRequest.downloadStarted(manager.enqueue(request));
+            Log.i("TongMuClient", "update queued");
+            Toast.makeText(this, "正在下载更新，可在通知栏查看进度。", Toast.LENGTH_LONG).show();
+        } catch (RuntimeException unavailable) {
+            updateRequest.clear();
+            Toast.makeText(this, "下载未能开始，请稍后再试。", Toast.LENGTH_LONG).show();
+        }
+    }
+
+    private void registerUpdateReceiver() {
+        updateReceiver = new BroadcastReceiver() {
+            @Override public void onReceive(Context context, Intent intent) {
+                if (resumed && DownloadManager.ACTION_DOWNLOAD_COMPLETE.equals(intent.getAction())
+                        && intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1) == updateRequest.downloadId())
+                    checkUpdateDownload();
             }
-        } catch (RuntimeException ignored) {
-            // 下载服务不可用等情况：保持原样，网页会退回到打开下载链接
+        };
+        IntentFilter filter = new IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE);
+        if (Build.VERSION.SDK_INT >= 33) registerReceiver(updateReceiver, filter, Context.RECEIVER_EXPORTED);
+        else registerReceiver(updateReceiver, filter);
+    }
+
+    private void checkUpdateDownload() {
+        long id = updateRequest.downloadId();
+        if (id < 0 || !resumed) return;
+        DownloadManager manager = getSystemService(DownloadManager.class);
+        if (manager == null) return;
+        try (Cursor cursor = manager.query(new DownloadManager.Query().setFilterById(id))) {
+            if (cursor == null || !cursor.moveToFirst()) {
+                updateRequest.finish(id);
+                Toast.makeText(this, "更新下载已不存在，请重新点击更新。", Toast.LENGTH_LONG).show();
+                return;
+            }
+            int status = cursor.getInt(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_STATUS));
+            if (status == DownloadManager.STATUS_FAILED) {
+                updateRequest.finish(id);
+                Log.i("TongMuClient", "update download failed");
+                Toast.makeText(this, "更新下载失败，请检查网络或存储空间后重试。", Toast.LENGTH_LONG).show();
+            } else if (status == DownloadManager.STATUS_SUCCESSFUL) {
+                Uri file = manager.getUriForDownloadedFile(id);
+                if (!updateRequest.finish(id)) return;
+                if (file == null) {
+                    Toast.makeText(this, "安装包不可用，请重新下载。", Toast.LENGTH_LONG).show();
+                    return;
+                }
+                startActivity(new Intent(Intent.ACTION_VIEW)
+                        .setDataAndType(file, "application/vnd.android.package-archive")
+                        .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION));
+            }
+        } catch (RuntimeException unavailable) {
+            updateRequest.clear();
+            Toast.makeText(this, "暂时无法打开更新，请稍后重试。", Toast.LENGTH_LONG).show();
         }
     }
 }
