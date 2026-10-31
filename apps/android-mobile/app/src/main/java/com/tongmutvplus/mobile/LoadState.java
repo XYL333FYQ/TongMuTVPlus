@@ -19,6 +19,7 @@ final class LoadState {
     }
 
     long token() { return sequence; }
+    boolean callbackMayStart() { return phase != Phase.FAILED; }
 
     boolean matches(long token, String value) {
         return token == sequence && phase != Phase.FAILED && url.equals(documentUrl(value));

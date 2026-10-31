@@ -1038,3 +1038,7 @@
 
 - 第三批 C 静态检查收尾：typecheck 0、完整 lint 0；标准 pnpm Jest/format 各遇无 TS/断言诊断的原生退出 3221225477，原日志保留。备用 Node 24.22.1 --jitless 首次全量在 public-runtime-config 的依赖初始化报 undefined.isArray，173 套/1119 项已通过；该套单独 4 项通过，最终全量 174 套/1123 项全部通过（local-refresh-final.json）。所有 18 个改动/新增可格式化文件同版本 Prettier 逐文件退出 0；完整 format:check 仍由 Linux CI 补证，不标成本机完整通过。
 - 下一门禁：本批提交固定到 codex/client-refresh-verification 构建验证，后续原生改动不移动该引用，避免取消镜像门禁；新局部刷新仍未做实际浏览器/媒体单例验收，不能据静态检查称交付。b60eeea 的浏览器结果只证明上一批 Worker/栏目记忆，不覆盖当前未构建源码。
+
+- Android 第四批 A 接续：41218903663 的 API23 已走通 HTTP/TLS/输入法与原生恢复，最终失败是旧系统 pidof 返回多进程列表；改为解析 ps 的 PID 列并精确匹配主进程名。API34 在 HTTP503 后回到加载中，补充无 URL 的回调日志与失败状态保护，尚待下一轮实际证明，不能称已修复。
+- LoadState 新增“失败后引擎回调不得自行重开”回归，显式重试才解除；JDK17 测试通过，Python AST、shell 语法、旧新 ps 格式夹具、diff 检查通过。失败界面的系统返回直接走原生历史，不等失效页面 JS，并新增实际 UI 回归；共享 TV 冒烟不注入手机专属故障资源。
+- 本批不改网页、房间和播放会话逻辑；完整四项检查继续由提交后的 Linux Checks 验证，API23/24/34 和新返回流程尚未通过。发布仍为 publish=false，正式 VPS 未切换。

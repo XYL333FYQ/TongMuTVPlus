@@ -47,6 +47,7 @@ import android.webkit.RenderProcessGoneDetail;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.webkit.WebBackForwardList;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.FrameLayout;
@@ -229,7 +230,7 @@ public class MainActivity extends Activity {
         }
 
         @Override public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
-            if (!current(view)) return true;
+            if (!current(view) || !loadState.callbackMayStart()) return true;
             String scheme = request.getUrl().getScheme();
             if ("http".equals(scheme) || "https".equals(scheme) || "about".equals(scheme)) {
                 String next = request.getUrl().toString();
@@ -243,8 +244,13 @@ public class MainActivity extends Activity {
         }
 
         @Override public void onPageStarted(WebView view, String url, Bitmap favicon) {
-            if (!current(view) || !isWebUrl(url)) return;
+            Log.d("TongMuClient", "page start current=" + current(view) + " allowed=" + loadState.callbackMayStart());
+            if (!current(view) || !isWebUrl(url) || !loadState.callbackMayStart()) return;
             documentToken = beginNavigation(url);
+        }
+
+        @Override public void doUpdateVisitedHistory(WebView view, String url, boolean reload) {
+            if (current(view) && !errorShown && isWebUrl(url)) lastMainUrl = url;
         }
 
         @Override public void onPageCommitVisible(WebView view, String url) {
@@ -278,6 +284,9 @@ public class MainActivity extends Activity {
         }
 
         @Override public void onReceivedHttpError(WebView view, WebResourceRequest request, WebResourceResponse response) {
+            if (request.isForMainFrame()) Log.w("TongMuClient", "main HTTP=" + response.getStatusCode()
+                    + " current=" + current(view) + " token=" + documentToken + "/" + loadState.token()
+                    + " matches=" + loadState.matches(documentToken, request.getUrl().toString()));
             if (!current(view) || !request.isForMainFrame() || !loadState.matches(documentToken, request.getUrl().toString())) return;
             showNativeError(documentToken, "服务暂时不可用", "稍后重试，或检查服务器是否正常运行。", "HTTP " + response.getStatusCode());
         }
@@ -374,6 +383,7 @@ public class MainActivity extends Activity {
 
     private long beginNavigation(String url) {
         long token = loadState.begin(url);
+        Log.d("TongMuClient", "begin document=" + token);
         if (customView != null) hideCustomView();
         updatePlaying(false);
         lastMainUrl = url;
@@ -564,6 +574,20 @@ public class MainActivity extends Activity {
             return;
         }
         if (webView == null) {
+            super.onBackPressed();
+            return;
+        }
+        if (errorShown) {
+            // The native recovery surface must never wait for failed-page JS.
+            try {
+                WebBackForwardList history = webView.copyBackForwardList();
+                int previous = history.getCurrentIndex() - 1;
+                if (previous >= 0 && isWebUrl(history.getItemAtIndex(previous).getUrl())) {
+                    beginNavigation(history.getItemAtIndex(previous).getUrl());
+                    webView.goBack();
+                    return;
+                }
+            } catch (RuntimeException ignored) { }
             super.onBackPressed();
             return;
         }

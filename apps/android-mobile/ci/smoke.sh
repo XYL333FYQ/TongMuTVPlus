@@ -7,10 +7,18 @@ APK="$1"
 OUT="$2"
 PKG="${3:-com.tongmutvplus.mobile}"
 mkdir -p "$OUT"
+API_LEVEL=$(adb shell getprop ro.build.version.sdk | tr -d '\r')
+app_pid() {
+  if [ "$API_LEVEL" -ge 26 ]; then adb shell ps -A >"$OUT/app-processes.txt";
+  else adb shell ps >"$OUT/app-processes.txt"; fi
+  python3 "$(dirname "$0")/process_pid.py" "$OUT/app-processes.txt" "$PKG"
+}
 
 TLS_DIR=$(mktemp -d)
 openssl req -x509 -newkey rsa:2048 -nodes -keyout "$TLS_DIR/key.pem" -out "$TLS_DIR/cert.pem" -subj '/CN=smoke.invalid' -days 1 >/dev/null 2>&1 || exit 1
-python3 "$(dirname "$0")/smoke_server.py" 8080 "$TLS_DIR/cert.pem" "$TLS_DIR/key.pem" >"$OUT/server.log" 2>&1 &
+fixture_mode=standard
+[ "$PKG" = "com.tongmutvplus.mobile" ] && fixture_mode=recovery
+python3 "$(dirname "$0")/smoke_server.py" 8080 "$TLS_DIR/cert.pem" "$TLS_DIR/key.pem" "$fixture_mode" >"$OUT/server.log" 2>&1 &
 SERVER_PID=$!
 trap 'kill "$SERVER_PID" 2>/dev/null; rm -f "$TLS_DIR/key.pem" "$TLS_DIR/cert.pem"; rmdir "$TLS_DIR" 2>/dev/null' EXIT
 
@@ -18,8 +26,7 @@ adb install -r "$APK" || exit 1
 adb logcat -c
 adb shell am start -n "$PKG/.MainActivity"
 sleep 8
-APP_PID=$(adb shell pidof "$PKG" | tr -d '\r')
-[ -n "$APP_PID" ] || exit 1
+APP_PID=$(app_pid) || exit 1
 adb exec-out screencap -p >"$OUT/1-dialog.png"
 
 # 首次启动应弹出地址框：输入模拟器访问宿主机的地址并回车
@@ -132,12 +139,18 @@ if [ "$PKG" = "com.tongmutvplus.mobile" ]; then
     wait_target absent-id tm_load_surface >/dev/null || return 1
     wait_target text 'HTTP failure test' >/dev/null || return 1
     adb exec-out screencap -p >"$OUT/8-server-restored.png"
+    tap_target text 'Back from failure test' || return 1
+    wait_target text '服务暂时不可用' >/dev/null || return 1
+    adb shell input keyevent 4
+    wait_target absent-id tm_load_surface >/dev/null || return 1
+    wait_target text 'HTTP failure test' >/dev/null || return 1
+    adb exec-out screencap -p >"$OUT/8b-native-error-back.png"
 
     if [ "$(adb shell getprop ro.build.version.sdk | tr -d '\r')" -ge 26 ]; then
       adb root >/dev/null 2>&1
       timeout 30 adb wait-for-device || return 1
       local host_before renderer signal
-      host_before=$(adb shell pidof "$PKG" | tr -d '\r')
+      host_before=$(app_pid) || return 1
       [ "$host_before" = "$APP_PID" ] || return 1
       for signal in KILL SEGV; do
         adb shell ps -A >"$OUT/processes-before-$signal.txt"
@@ -153,7 +166,7 @@ PY
         ) || return 1
         adb shell kill -"$signal" "$renderer" || return 1
         wait_target text '显示内容已中断' >/dev/null || return 1
-        [ "$(adb shell pidof "$PKG" | tr -d '\r')" = "$host_before" ] || return 1
+        [ "$(app_pid)" = "$host_before" ] || return 1
         adb exec-out screencap -p >"$OUT/9-renderer-$signal-native-recovery.png"
         tap_target id tm_load_retry || return 1
         wait_target absent-id tm_load_surface >/dev/null || return 1
@@ -171,7 +184,7 @@ fi
 adb logcat -d >"$OUT/logcat.txt"
 
 status=$recovery_status
-if [ "$(adb shell pidof "$PKG" | tr -d '\r')" != "$APP_PID" ]; then
+if [ "$(app_pid)" != "$APP_PID" ]; then
   echo "FAIL: 应用进程已退出或意外重启"
   status=1
 fi

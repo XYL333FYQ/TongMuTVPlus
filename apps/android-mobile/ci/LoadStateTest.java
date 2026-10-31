@@ -15,8 +15,10 @@ public final class LoadStateTest {
         check(state.commit(first, "https://example.test/search#section"), "fragment belongs to same document");
         check(state.reveal(first), "committed ready document should become visible");
         check(state.fail(first), "a visible renderer can subsequently fail");
+        check(!state.callbackMayStart(), "engine error-page callbacks cannot restart a failed document");
         check(!state.reveal(first), "late ready cannot hide a recovery surface");
         long retry = state.begin("https://example.test/search");
+        check(state.callbackMayStart(), "an explicit user retry permits new document callbacks");
         check(!state.commit(first, "https://example.test/search"), "same-URL retry must fence old scheduled work");
         check(!state.fail(first), "old errors cannot replace the retry");
         check(state.commit(retry, "https://example.test/search"), "retry main document can commit");
