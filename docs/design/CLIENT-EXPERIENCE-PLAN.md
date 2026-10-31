@@ -29,6 +29,9 @@
 
 ## 当前进度
 
+- 1ee0196 的 Linux Checks 41217779457 全部通过，Android APK/Java 门禁编译通过；API24 的输入法、坏海报不接管、浅色 HTTP503 原生界面/重试、深色 TLS 拒绝/设置恢复通过。API34 同样完成上述流程及 renderer KILL/SEGV 后宿主 PID 不变、本地重试通过，但旧脚本因外部 UiAutomation 的 Bad file descriptor/FATAL 判整支失败，不能把整支标绿；已补应用 PID 前后核对与按进程识别的崩溃门禁，4 个 Java/native 宿主/工具/renderer 日志用例验证过滤不放过本应用崩溃。
+- API23 的启动/桥/IME/HTTP 原生恢复通过，主 TLS 阶段停留加载而未得到预期错误文案；其系统 Provider 是 Chrome44，补充 deprecated 主文档错误回调及无 URL 日志码，待再跑确认，不提前称原因已完全定位。API23 壳冒烟不证明旧 Chrome44 能渲染 Next 站点，真实网站还依赖可运行本站的系统 WebView。
+
 - 第四批 A 验证门禁：前台 pnpm typecheck/lint 退出 0；标准 Jest/format 再次原生退出 3221225477，备用 Node 24.22.1 --jitless 在执行用例前 V8 unreachable code 原生退出 2147483651，未出现源码断言，日志保留，不计通过。本批未改任何共享 TS/播放器/房间源码，其基线 2bc2ba2 的 Linux 完整检查已通过；新提交仍须等待 Linux 完整检查及 Android 编译/模拟器。四个可格式化文件逐文件同版本 Prettier 均 0，Java release17 状态测试、Python/XML/bash 解析及假 HTTP503→200 重试服务验证均通过。
 
 - 第四批 A 实施中，尚未编译/模拟器验收：MainActivity 接入 AppStateView 与纯 Java LoadState，本地品牌、连接、HTTP/TLS/超时和显示进程退出恢复；地址/错误码收进详情。主文档失败才接管，坏海报不接管整页，证书始终取消。下层网页不接收触摸/无障碍访问；正常 SPA 保留原 WebView。

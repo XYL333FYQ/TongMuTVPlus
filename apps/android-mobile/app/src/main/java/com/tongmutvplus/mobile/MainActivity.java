@@ -26,6 +26,7 @@ import android.os.Vibrator;
 import android.provider.Settings;
 import android.text.InputType;
 import android.util.Rational;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.ViewGroup;
@@ -256,13 +257,24 @@ public class MainActivity extends Activity {
             scheduleReveal(view, documentToken, shellReady ? 120 : 1500);
         }
 
+        @SuppressWarnings("deprecation")
+        @Override public void onReceivedError(WebView view, int code, String description, String failingUrl) {
+            // Older system providers still report main-document failures here.
+            if (current(view) && loadState.matches(documentToken, failingUrl)) showNetworkError(code);
+        }
+
         @Override public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
             if (!current(view) || !request.isForMainFrame() || !loadState.matches(documentToken, request.getUrl().toString())) return;
-            if (error.getErrorCode() == WebViewClient.ERROR_FAILED_SSL_HANDSHAKE) {
+            showNetworkError(error.getErrorCode());
+        }
+
+        private void showNetworkError(int code) {
+            Log.w("TongMuClient", "main document network error=" + code);
+            if (code == WebViewClient.ERROR_FAILED_SSL_HANDSHAKE) {
                 showNativeError(documentToken, "安全连接未通过验证", "请检查服务器证书和设备时间，再重试。", "安全连接失败");
                 return;
             }
-            showNativeError(documentToken, "暂时连接不上", "检查网络后重试，也可以更换服务器。", "网络错误 " + error.getErrorCode());
+            showNativeError(documentToken, "暂时连接不上", "检查网络后重试，也可以更换服务器。", "网络错误 " + code);
         }
 
         @Override public void onReceivedHttpError(WebView view, WebResourceRequest request, WebResourceResponse response) {

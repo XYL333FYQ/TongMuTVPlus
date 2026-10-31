@@ -2,6 +2,8 @@
 
 ## 2026-10-31 三端体验完整优化（codex/client-experience，执行中）
 
+- 第四批 A 首轮：1ee0196 Linux Checks 41217779457、APK/Java 门禁通过；API24 所有本轮壳冒烟通过。API34 故障恢复及两种 renderer 退出/原生重试、宿主 PID 保持通过，最终 CI 被外部 UiAutomation 工具异常误判为应用崩溃；已改为识别本应用 Java/native 崩溃并加启动前后 PID 核对，4 个日志用例通过，完整复跑待做。API23 通过启动/桥/IME/HTTP，但主 TLS 未得到预期错误界面，补旧 Provider 错误回调并等待复测；不把旧 Chrome44 假页面冒烟说成真实 Next 兼容通过。
+
 - 第四批 A 门禁：本机 typecheck/lint=0；Jest/format 标准进程原生退出 3221225477，备用 Node 在用例前 V8 unreachable code 退出 2147483651，无源码断言，不计通过。4 个格式文件隔离检查 0，纯 Java release17 状态回归和 Python/XML/bash/HTTP 假服务回归通过。共享 TS 基线 2bc2ba2 的 Linux 完整检查通过；新提交的 APK 编译、23/24/34 实际故障界面与 Linux 检查仍待，不能据 JVM 状态测试声称 App 效果通过。
 
 - 最新：第三批局部刷新 2bc2ba2 已提交，镜像工作流 41214003178 已通过，真实浏览器/播放单例验收待新镜像；不能拿 b60eeea 的旧验收代替。第四批 A 正在实现 AppStateView/LoadState 与 Android 宿主本地恢复，源码/纯 Java 文档回归已写，完整 APK 编译及故障模拟器验收待做。

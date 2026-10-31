@@ -18,6 +18,8 @@ adb install -r "$APK" || exit 1
 adb logcat -c
 adb shell am start -n "$PKG/.MainActivity"
 sleep 8
+APP_PID=$(adb shell pidof "$PKG" | tr -d '\r')
+[ -n "$APP_PID" ] || exit 1
 adb exec-out screencap -p >"$OUT/1-dialog.png"
 
 # 首次启动应弹出地址框：输入模拟器访问宿主机的地址并回车
@@ -136,6 +138,7 @@ if [ "$PKG" = "com.tongmutvplus.mobile" ]; then
       timeout 30 adb wait-for-device || return 1
       local host_before renderer signal
       host_before=$(adb shell pidof "$PKG" | tr -d '\r')
+      [ "$host_before" = "$APP_PID" ] || return 1
       for signal in KILL SEGV; do
         adb shell ps -A >"$OUT/processes-before-$signal.txt"
         renderer=$(python3 - "$OUT/processes-before-$signal.txt" <<'PY'
@@ -168,13 +171,11 @@ fi
 adb logcat -d >"$OUT/logcat.txt"
 
 status=$recovery_status
-if [ -z "$(adb shell pidof $PKG | tr -d '\r')" ]; then
-  echo "FAIL: 应用进程不在运行"
+if [ "$(adb shell pidof "$PKG" | tr -d '\r')" != "$APP_PID" ]; then
+  echo "FAIL: 应用进程已退出或意外重启"
   status=1
 fi
-if grep -q "FATAL EXCEPTION" "$OUT/logcat.txt"; then
-  echo "FAIL: logcat 里有崩溃"
-  grep -A 20 "FATAL EXCEPTION" "$OUT/logcat.txt" | head -60
+if ! python3 "$(dirname "$0")/check_logcat.py" "$OUT/logcat.txt" "$PKG" "$APP_PID"; then
   status=1
 fi
 if grep -q "TongMuTVPlusAndroid" "$OUT/server.log"; then
