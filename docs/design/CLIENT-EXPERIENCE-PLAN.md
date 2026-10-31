@@ -80,3 +80,7 @@
 - 五入口独立脚本最终退出 0：搜索草稿 → 片库剧集/日本/600px → 我的 → 房间 → 发现 → 搜索/片库，草稿、分类筛选和片库滚动恢复通过，pageerror 空。最初等待 load 被未完成资源拖住而超时，改为 DOMContentLoaded 后另等真实活动栏目/卡片，不修改产品代码；保留首次日志。资料为测试夹具，独立空库，未证明真实媒体、房间同步或用户手机。
 - 生产 DOM 取证中 390 深浅切页的整条底栏一直为同一节点，top=824、transform=none；这只是当前 Linux Chromium 的结果，仍不能反驳用户 OriginOS 实际看到的进场。Worker 缺陷与该体验的因果关系尚未建立。
 - Android 冒烟新增真实 IME 验收：假页面可访问输入框，通过 UIAutomator 定位后点击，等 native open 上报，再系统返回等 closed，并保存两张截图。Python AST 与 bash -n 通过；API24/34 执行待 GitHub 验证。此批仅测试脚本，不改 App 或网页业务。
+
+- API24 的真实 IME 开关在 41210025661 通过，已检查键盘截图与 native open/closed 上报。API34 失败的 XML 显示通知授权对话框遮住网页，并非输入法判断已证实有错；测试改为识别 permission_deny_button 明确拒绝后再找输入框。用首次失败 API34 XML 回放输出 permission 160 420，用 API24 XML 输出 input 139 132；bash -n 通过。未改 App 逻辑。
+- 备份已完成：VPS backups/client-experience-20261031T142823Z，SQLite 在线 backup 后 integrity_check=ok，保留 auth-secret、Compose/.env、nginx 与旧 static，共 16M；旧镜像另有本地 client-rollback-132ca5f 标签。生产仍是 ba65d689…；发布时仍须复核健康、静态兼容和代码回退，备份不等于已部署。
+- Ruling：本次输入法测试修正先推临时 codex/client-ime-verification 引用进行非发布构建；主任务远端保持 b60eeea，避免同 ref 的自动 Checks 取消正在运行的 41210096560 镜像门禁。镜像门禁结束后再把同一提交推回任务分支，不分叉应用实现、不发布测试 APK。

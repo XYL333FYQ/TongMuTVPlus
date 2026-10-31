@@ -37,25 +37,41 @@ adb exec-out screencap -p >"$OUT/2-page.png"
 # smaller synthetic viewport. API24 uses legacy insets; API34 uses Type.ime().
 if [ "$PKG" = "com.tongmutvplus.mobile" ]; then
   adb shell settings put secure show_ime_with_hard_keyboard 1
-  adb shell uiautomator dump /sdcard/keyboard-smoke.xml >/dev/null
-  adb exec-out cat /sdcard/keyboard-smoke.xml >"$OUT/keyboard-before.xml"
-  if point=$(python3 - "$OUT/keyboard-before.xml" <<'PY'
+  keyboard_input=false
+  for attempt in $(seq 1 5); do
+    adb shell uiautomator dump /sdcard/keyboard-smoke.xml >/dev/null
+    adb exec-out cat /sdcard/keyboard-smoke.xml >"$OUT/keyboard-before.xml"
+    if point=$(python3 - "$OUT/keyboard-before.xml" <<'PY'
 import re
 import sys
 import xml.etree.ElementTree as ET
 root = ET.parse(sys.argv[1]).getroot()
-for node in root.iter('node'):
-    if node.get('class') == 'android.widget.EditText':
-        x1, y1, x2, y2 = map(int, re.findall(r'\d+', node.get('bounds', '')))
-        print((x1 + x2) // 2, (y1 + y2) // 2)
-        break
-else:
-    sys.exit('Keyboard smoke input was absent from accessibility tree')
+nodes = list(root.iter('node'))
+# setPlaying() in this fixture also exercises the media service. On API33+
+# its notification permission prompt is a separate native layer above input.
+for kind, match in (
+    ('permission', lambda n: n.get('resource-id', '').endswith(':id/permission_deny_button')),
+    ('input', lambda n: n.get('class') == 'android.widget.EditText'),
+):
+    for node in nodes:
+        if match(node):
+            x1, y1, x2, y2 = map(int, re.findall(r'\d+', node.get('bounds', '')))
+            print(kind, (x1 + x2) // 2, (y1 + y2) // 2)
+            sys.exit(0)
+sys.exit('Keyboard smoke input was absent from accessibility tree')
 PY
-  ); then
-    # Two numeric coordinates emitted by the parser above.
-    read -r tap_x tap_y <<<"$point"
-    adb shell input tap "$tap_x" "$tap_y"
+    ); then
+      read -r target tap_x tap_y <<<"$point"
+      adb shell input tap "$tap_x" "$tap_y"
+      if [ "$target" = input ]; then
+        keyboard_input=true
+        break
+      fi
+      echo 'Notification permission declined in emulator; continuing IME check'
+    fi
+    sleep 1
+  done
+  if [ "$keyboard_input" = true ]; then
     for _ in $(seq 1 15); do
       grep -q 'IME_REPORT.*"keyboard":"open"' "$OUT/server.log" && break
       sleep 1
