@@ -2,6 +2,13 @@
 
 ## 2026-10-31 三端体验完整优化（codex/client-experience，执行中）
 
+- 第四批 A 门禁：本机 typecheck/lint=0；Jest/format 标准进程原生退出 3221225477，备用 Node 在用例前 V8 unreachable code 退出 2147483651，无源码断言，不计通过。4 个格式文件隔离检查 0，纯 Java release17 状态回归和 Python/XML/bash/HTTP 假服务回归通过。共享 TS 基线 2bc2ba2 的 Linux 完整检查通过；新提交的 APK 编译、23/24/34 实际故障界面与 Linux 检查仍待，不能据 JVM 状态测试声称 App 效果通过。
+
+- 最新：第三批局部刷新 2bc2ba2 已提交，镜像工作流 41214003178 已通过，真实浏览器/播放单例验收待新镜像；不能拿 b60eeea 的旧验收代替。第四批 A 正在实现 AppStateView/LoadState 与 Android 宿主本地恢复，源码/纯 Java 文档回归已写，完整 APK 编译及故障模拟器验收待做。
+- Native 边界：正常 SPA 不重建 WebView；故障后用户重试才重建，Cookie/服务器原存储键不变，未保存状态/网页历史可能丢失。HTTP/TLS 子资源失败不接管整页，证书始终 cancel；恢复 UI 在 WebView 外，网页下层不接收输入/无障碍焦点。
+- 最低版本核实为 minSdk=23（先前 24 记录有误）；CI 新增 23，与 24/34 一并验证，26+ renderer 回调独立加载，低系统/整个应用进程退出不承诺活体恢复。纯 Java release17 回归先红后绿，XML/Python/bash 解析通过。自动审批拒绝“写进度并启动后台验证”组合命令，仅 blocked by policy、无具体理由，未执行；前台检查接续中。
+- b60eeea 补验：Worker 确已控制页面，456 项缓存只有静态构建资源，离线私有 API 不可读，重连不 reload；断网隔离的真实 DB 副本内部健康/页面/记录/收藏/房间接口 200、integrity=ok。正式服务未切换，新 native 恢复尚未发布。
+
 - 键盘小批实施中：仅 App 下隐藏键盘期间的同一底栏节点；新 Android API30+ IME 状态优先，旧壳/PWA 以聚焦编辑器、无缩放和明显视口缩小回退判断，不覆盖播放器既有高度变量，不改会话逻辑。5 项定向先红后绿；整批、APK、软键盘实测待做，普通网页/Windows 不启用。
 - 0e1434b 的 Checks 41206297260 已完整通过。取证镜像运行 41206909486 标签/完整检查已通过、ARM64/AMD64 构建中；正式别名和运行镜像发布前 digest 已记录，生产未切换。
 

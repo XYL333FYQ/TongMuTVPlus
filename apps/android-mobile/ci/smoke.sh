@@ -8,8 +8,11 @@ OUT="$2"
 PKG="${3:-com.tongmutvplus.mobile}"
 mkdir -p "$OUT"
 
-python3 "$(dirname "$0")/smoke_server.py" 8080 >"$OUT/server.log" 2>&1 &
+TLS_DIR=$(mktemp -d)
+openssl req -x509 -newkey rsa:2048 -nodes -keyout "$TLS_DIR/key.pem" -out "$TLS_DIR/cert.pem" -subj '/CN=smoke.invalid' -days 1 >/dev/null 2>&1 || exit 1
+python3 "$(dirname "$0")/smoke_server.py" 8080 "$TLS_DIR/cert.pem" "$TLS_DIR/key.pem" >"$OUT/server.log" 2>&1 &
 SERVER_PID=$!
+trap 'kill "$SERVER_PID" 2>/dev/null; rm -f "$TLS_DIR/key.pem" "$TLS_DIR/cert.pem"; rmdir "$TLS_DIR" 2>/dev/null' EXIT
 
 adb install -r "$APK" || exit 1
 adb logcat -c
@@ -83,10 +86,88 @@ PY
   fi
 fi
 
-adb logcat -d >"$OUT/logcat.txt"
-kill "$SERVER_PID" 2>/dev/null
+# A real HTTP failure, invalid main-frame TLS and renderer loss must use the
+# native recovery surface. Broken poster HTTP/TLS must leave the page usable.
+recovery_status=0
+if [ "$PKG" = "com.tongmutvplus.mobile" ]; then
+  ui_target() {
+    adb shell uiautomator dump /sdcard/recovery-smoke.xml >/dev/null 2>&1
+    adb exec-out cat /sdcard/recovery-smoke.xml >"$OUT/recovery-latest.xml"
+    python3 "$(dirname "$0")/ui_target.py" "$OUT/recovery-latest.xml" "$1" "$2"
+  }
+  wait_target() {
+    for _ in $(seq 1 12); do
+      if ui_target "$1" "$2"; then return 0; fi
+      sleep 1
+    done
+    echo "Missing recovery target: $1 $2" >&2
+    return 1
+  }
+  tap_target() {
+    local point x y
+    point=$(wait_target "$1" "$2") || return 1
+    read -r x y <<<"$point"
+    adb shell input tap "$x" "$y"
+  }
+  verify_recovery() {
+    wait_target absent-id tm_load_surface >/dev/null || return 1
+    grep -q 'GET /missing.png' "$OUT/server.log" || return 1
+    tap_target text 'Light theme' || return 1
+    tap_target text 'HTTP failure test' || return 1
+    wait_target text '服务暂时不可用' >/dev/null || return 1
+    adb exec-out screencap -p >"$OUT/5-http-native-recovery.png"
+    tap_target id tm_load_retry || return 1
+    wait_target absent-id tm_load_surface >/dev/null || return 1
+    wait_target text 'HTTP failure test' >/dev/null || return 1
+    adb exec-out screencap -p >"$OUT/6-http-retried.png"
+    tap_target text 'TLS failure test' || return 1
+    wait_target text '安全连接未通过验证' >/dev/null || return 1
+    adb exec-out screencap -p >"$OUT/7-tls-native-recovery.png"
+    tap_target id tm_load_settings || return 1
+    # The address dialog retains the original HTTP server, not the bad TLS URL.
+    sleep 1
+    adb shell input keyevent 66
+    wait_target absent-id tm_load_surface >/dev/null || return 1
+    wait_target text 'HTTP failure test' >/dev/null || return 1
+    adb exec-out screencap -p >"$OUT/8-server-restored.png"
 
-status=0
+    if [ "$(adb shell getprop ro.build.version.sdk | tr -d '\r')" -ge 26 ]; then
+      adb root >/dev/null 2>&1
+      timeout 30 adb wait-for-device || return 1
+      local host_before renderer signal
+      host_before=$(adb shell pidof "$PKG" | tr -d '\r')
+      for signal in KILL SEGV; do
+        adb shell ps -A >"$OUT/processes-before-$signal.txt"
+        renderer=$(python3 - "$OUT/processes-before-$signal.txt" <<'PY'
+import sys
+lines = [line.split() for line in open(sys.argv[1]) if line.strip()]
+pid_index = lines[0].index('PID')
+pids = [row[pid_index] for row in lines[1:] if 'webview' in row[-1] and 'sandboxed_process' in row[-1]]
+if len(pids) != 1 or not pids[0].isdigit():
+    sys.exit('Expected one WebView renderer in this isolated emulator')
+print(pids[0])
+PY
+        ) || return 1
+        adb shell kill -"$signal" "$renderer" || return 1
+        wait_target text '显示内容已中断' >/dev/null || return 1
+        [ "$(adb shell pidof "$PKG" | tr -d '\r')" = "$host_before" ] || return 1
+        adb exec-out screencap -p >"$OUT/9-renderer-$signal-native-recovery.png"
+        tap_target id tm_load_retry || return 1
+        wait_target absent-id tm_load_surface >/dev/null || return 1
+        wait_target text 'HTTP failure test' >/dev/null || return 1
+        adb exec-out screencap -p >"$OUT/10-renderer-$signal-retried.png"
+      done
+    else
+      echo 'Renderer callback unavailable below API26; host recovery is not claimed'
+    fi
+    echo 'PASS: native HTTP/TLS recovery and applicable renderer recovery'
+  }
+  verify_recovery || recovery_status=1
+fi
+
+adb logcat -d >"$OUT/logcat.txt"
+
+status=$recovery_status
 if [ -z "$(adb shell pidof $PKG | tr -d '\r')" ]; then
   echo "FAIL: 应用进程不在运行"
   status=1

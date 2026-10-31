@@ -1,0 +1,13 @@
+<resources>
+    <!-- Native equivalents of src/styles/tokens.css; no remote CSS is needed. -->
+    <color name="tm_bg">#0b0b0d</color>
+    <color name="tm_text">#f2f2f3</color>
+    <color name="tm_muted">#a3a3ac</color>
+    <color name="tm_surface_raised">#1f1f23</color>
+    <color name="tm_line">#17ffffff</color>
+    <color name="tm_light_bg">#f7f7f8</color>
+    <color name="tm_light_text">#0f0f10</color>
+    <color name="tm_light_muted">#5f6068</color>
+    <color name="tm_light_surface_raised">#efeff1</color>
+    <color name="tm_light_line">#14000000</color>
+</resources>

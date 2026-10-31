@@ -1,0 +1,7 @@
+<resources>
+    <item name="tm_load_surface" type="id" />
+    <item name="tm_load_title" type="id" />
+    <item name="tm_load_retry" type="id" />
+    <item name="tm_load_settings" type="id" />
+    <item name="tm_load_details" type="id" />
+</resources>

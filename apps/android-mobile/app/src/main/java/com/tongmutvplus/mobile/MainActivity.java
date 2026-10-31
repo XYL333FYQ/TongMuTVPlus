@@ -13,7 +13,9 @@ import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.pm.ActivityInfo;
+import android.content.res.ColorStateList;
 import android.graphics.Color;
+import android.graphics.Bitmap;
 import android.net.Uri;
 import android.net.http.SslError;
 import android.os.Build;
@@ -30,6 +32,7 @@ import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowInsets;
 import android.view.WindowManager;
+import android.view.ContextThemeWrapper;
 import android.view.inputmethod.EditorInfo;
 import android.webkit.CookieManager;
 import android.webkit.JavascriptInterface;
@@ -38,6 +41,8 @@ import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceError;
 import android.webkit.WebResourceRequest;
+import android.webkit.WebResourceResponse;
+import android.webkit.RenderProcessGoneDetail;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
@@ -59,6 +64,12 @@ public class MainActivity extends Activity {
     private FrameLayout root;
     private FrameLayout webHolder;
     private WebView webView;
+    private AppStateView localSurface;
+    private final LoadState loadState = new LoadState();
+    private long webViewEpoch;
+    private String lastMainUrl;
+    private boolean shellReady;
+    private Runnable loadTimeout;
     private View customView;
     private WebChromeClient.CustomViewCallback customViewCallback;
     private ValueCallback<Uri[]> filePathCallback;
@@ -82,9 +93,12 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
 
         root = new FrameLayout(this);
-        root.setBackgroundColor(Color.BLACK);
+        root.setBackgroundColor(getColor(R.color.tm_bg));
         webHolder = new FrameLayout(this);
         root.addView(webHolder, new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        localSurface = new AppStateView(this, this::retryLoad, () -> showAddressDialog(null, getSavedServer() != null));
+        root.addView(localSurface, new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
         setContentView(root);
 
@@ -96,9 +110,8 @@ public class MainActivity extends Activity {
         });
         registerPauseReceiver();
 
-        setupWebView();
-
         if (ACTION_CHANGE_SERVER.equals(getIntent().getAction()) || getSavedServer() == null) {
+            localSurface.showSetup();
             showAddressDialog(null, getSavedServer() != null);
         } else {
             startLoad();
@@ -116,15 +129,19 @@ public class MainActivity extends Activity {
 
     @SuppressLint("SetJavaScriptEnabled")
     private void setupWebView() {
+        final long epoch = ++webViewEpoch;
+        barsSynced = false;
         webView = new WebView(this);
-        webView.setBackgroundColor(Color.BLACK);
+        webView.setBackgroundColor(getColor(pageDark ? R.color.tm_bg : R.color.tm_light_bg));
         // 关掉 WebView 自带的到顶/到底效果（Android 12 起是把整页拉伸），也不画滚动条：
         // App 里滑到头应该停住，而不是整个页面被拉动。网页侧另有 overscroll-behavior 兜底。
         webView.setOverScrollMode(View.OVER_SCROLL_NEVER);
         webView.setVerticalScrollBarEnabled(false);
         webView.setHorizontalScrollBarEnabled(false);
         webView.setAlpha(0f);
-        webView.addJavascriptInterface(new ShellBridge(), "TMShell");
+        webView.setEnabled(false);
+        webView.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS);
+        webView.addJavascriptInterface(new ShellBridge(epoch), "TMShell");
         webHolder.addView(webView, new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
 
@@ -154,46 +171,16 @@ public class MainActivity extends Activity {
             }
         });
 
-        webView.setWebViewClient(new WebViewClient() {
-            @Override
-            public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
-                String scheme = request.getUrl().getScheme();
-                if ("http".equals(scheme) || "https".equals(scheme) || "about".equals(scheme)) {
-                    return false;
-                }
-                // tel: mailto: intent: 等交给系统
-                try {
-                    startActivity(new Intent(Intent.ACTION_VIEW, request.getUrl()));
-                } catch (ActivityNotFoundException ignored) {
-                    // 没有对应应用，忽略
-                }
-                return true;
-            }
-
-            @Override
-            public void onPageFinished(WebView view, String url) {
-                super.onPageFinished(view, url);
-                // 旧网站不会回应「铺满」，兜底：页面加载完稍等一下就显示
-                view.postDelayed(MainActivity.this::revealWeb, 1500);
-            }
-
-            @Override
-            public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
-                super.onReceivedError(view, request, error);
-                if (request.isForMainFrame()) {
-                    showLoadError();
-                }
-            }
-
-            @Override
-            public void onReceivedSslError(WebView view, SslErrorHandler handler, SslError error) {
-                handler.cancel();
-            }
-        });
+        webView.setWebViewClient(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
+                ? new Api26WebViewClient(epoch) : new AppWebViewClient(epoch));
 
         webView.setWebChromeClient(new WebChromeClient() {
             @Override
             public void onShowCustomView(View view, CustomViewCallback callback) {
+                if (epoch != webViewEpoch) {
+                    try { callback.onCustomViewHidden(); } catch (RuntimeException ignored) { }
+                    return;
+                }
                 if (customView != null) {
                     callback.onCustomViewHidden();
                     return;
@@ -208,12 +195,13 @@ public class MainActivity extends Activity {
 
             @Override
             public void onHideCustomView() {
-                hideCustomView();
+                if (epoch == webViewEpoch) hideCustomView();
             }
 
             @Override
             public boolean onShowFileChooser(WebView view, ValueCallback<Uri[]> callback,
                                              FileChooserParams params) {
+                if (epoch != webViewEpoch || view != webView) return false;
                 if (filePathCallback != null) {
                     filePathCallback.onReceiveValue(null);
                 }
@@ -227,6 +215,97 @@ public class MainActivity extends Activity {
                 return true;
             }
         });
+    }
+
+    private class AppWebViewClient extends WebViewClient {
+        private final long epoch;
+        protected long documentToken;
+
+        AppWebViewClient(long epoch) { this.epoch = epoch; }
+
+        protected boolean current(WebView view) {
+            return view == webView && epoch == webViewEpoch && !isFinishing() && !isDestroyed();
+        }
+
+        @Override public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
+            if (!current(view)) return true;
+            String scheme = request.getUrl().getScheme();
+            if ("http".equals(scheme) || "https".equals(scheme) || "about".equals(scheme)) {
+                String next = request.getUrl().toString();
+                if (request.isForMainFrame() && isWebUrl(next) && !loadState.matches(loadState.token(), next))
+                    documentToken = beginNavigation(next);
+                return false;
+            }
+            try { startActivity(new Intent(Intent.ACTION_VIEW, request.getUrl())); }
+            catch (ActivityNotFoundException ignored) { /* Existing external intent fallback. */ }
+            return true;
+        }
+
+        @Override public void onPageStarted(WebView view, String url, Bitmap favicon) {
+            if (!current(view) || !isWebUrl(url)) return;
+            documentToken = beginNavigation(url);
+        }
+
+        @Override public void onPageCommitVisible(WebView view, String url) {
+            if (!current(view) || !loadState.commit(documentToken, url)) return;
+            scheduleReveal(view, documentToken, shellReady ? 120 : 1500);
+        }
+
+        @Override public void onPageFinished(WebView view, String url) {
+            if (!current(view) || !loadState.commit(documentToken, url)) return;
+            scheduleReveal(view, documentToken, shellReady ? 120 : 1500);
+        }
+
+        @Override public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
+            if (!current(view) || !request.isForMainFrame() || !loadState.matches(documentToken, request.getUrl().toString())) return;
+            if (error.getErrorCode() == WebViewClient.ERROR_FAILED_SSL_HANDSHAKE) {
+                showNativeError(documentToken, "安全连接未通过验证", "请检查服务器证书和设备时间，再重试。", "安全连接失败");
+                return;
+            }
+            showNativeError(documentToken, "暂时连接不上", "检查网络后重试，也可以更换服务器。", "网络错误 " + error.getErrorCode());
+        }
+
+        @Override public void onReceivedHttpError(WebView view, WebResourceRequest request, WebResourceResponse response) {
+            if (!current(view) || !request.isForMainFrame() || !loadState.matches(documentToken, request.getUrl().toString())) return;
+            showNativeError(documentToken, "服务暂时不可用", "稍后重试，或检查服务器是否正常运行。", "HTTP " + response.getStatusCode());
+        }
+
+        @Override public void onReceivedSslError(WebView view, SslErrorHandler handler, SslError error) {
+            handler.cancel();
+            // Poster/CDN failures must not replace the entire application.
+            if (!current(view) || !loadState.matches(documentToken, error.getUrl())) return;
+            showNativeError(documentToken, "安全连接未通过验证", "请检查服务器证书和设备时间，再重试。", "证书错误 " + error.getPrimaryError());
+        }
+    }
+
+    /** Kept in a separately loaded class: renderer callbacks do not exist on API23–25. */
+    private final class Api26WebViewClient extends AppWebViewClient {
+        Api26WebViewClient(long epoch) { super(epoch); }
+
+        @Override public boolean onRenderProcessGone(WebView view, RenderProcessGoneDetail detail) {
+            if (!current(view)) return true;
+            discardWebView(view);
+            if (customView != null) {
+                root.removeView(customView);
+                customView = null;
+                customViewCallback = null;
+                webHolder.setVisibility(View.VISIBLE);
+                exitFullscreen();
+            }
+            if (filePathCallback != null) {
+                try { filePathCallback.onReceiveValue(null); } catch (RuntimeException ignored) { }
+                filePathCallback = null;
+            }
+            showNativeError(documentToken, "显示内容已中断", "点重试重新打开。当前播放可能需要重新开始。",
+                    detail.didCrash() ? "显示进程异常退出" : "系统回收了显示进程");
+            return true;
+        }
+    }
+
+    private static boolean isWebUrl(String value) {
+        if (value == null) return false;
+        String scheme = Uri.parse(value).getScheme();
+        return "https".equalsIgnoreCase(scheme) || "http".equalsIgnoreCase(scheme);
     }
 
     // ---------- 服务器地址 ----------
@@ -258,15 +337,71 @@ public class MainActivity extends Activity {
             showAddressDialog(null, false);
             return;
         }
+        loadTarget(url);
+    }
+
+    private void retryLoad() {
+        String target = isWebUrl(lastMainUrl) ? lastMainUrl : getSavedServer();
+        if (target == null) { showAddressDialog(null, false); return; }
+        // Failed documents can still emit same-URL finish callbacks. A user retry
+        // gets a fresh view; ordinary SPA navigation always keeps its one view.
+        if (errorShown && webView != null) discardWebView(webView);
+        loadTarget(target);
+    }
+
+    private void loadTarget(String url) {
+        long token = beginNavigation(url);
+        try {
+            if (webView == null) setupWebView();
+            webView.loadUrl(url);
+        } catch (RuntimeException unavailable) {
+            discardWebView(webView);
+            showNativeError(token, "暂时无法打开内容", "可以重试，或检查系统 WebView 是否可用。", "显示组件初始化失败");
+        }
+    }
+
+    private long beginNavigation(String url) {
+        long token = loadState.begin(url);
+        if (customView != null) hideCustomView();
+        updatePlaying(false);
+        lastMainUrl = url;
         errorShown = false;
         revealed = false;
-        webView.setAlpha(0f);
-        webView.loadUrl(url);
+        shellReady = false;
+        if (webView != null) {
+            webView.animate().cancel();
+            webView.setAlpha(0f);
+            webView.setEnabled(false);
+            webView.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS);
+        }
+        localSurface.showLoading();
+        clearLoadTimeout();
+        loadTimeout = () -> {
+            if (!revealed && !isFinishing() && !isDestroyed())
+                showNativeError(token, "连接时间较长", "可以重试，或检查服务器和网络。", "连接等待超过 40 秒");
+        };
+        root.postDelayed(loadTimeout, 40000);
+        return token;
+    }
+
+    private void clearLoadTimeout() {
+        if (loadTimeout != null) { root.removeCallbacks(loadTimeout); loadTimeout = null; }
+    }
+
+    private void discardWebView(WebView view) {
+        if (view == webView) webView = null;
+        webViewEpoch += 1;
+        if (view == null) return;
+        webHolder.removeView(view);
+        try { view.destroy(); } catch (RuntimeException ignored) { /* Native recovery remains usable. */ }
     }
 
     private void showAddressDialog(String message, boolean cancelable) {
         dismissDialog();
-        final EditText input = new EditText(this);
+        Context formContext = new ContextThemeWrapper(this, pageDark
+                ? android.R.style.Theme_Material_Dialog_Alert : android.R.style.Theme_Material_Light_Dialog_Alert);
+        final EditText input = new EditText(formContext);
+        input.setBackgroundTintList(ColorStateList.valueOf(getColor(pageDark ? R.color.tm_muted : R.color.tm_light_muted)));
         input.setHint("例如 https://tv.example.com 或 192.168.1.10:3000");
         input.setSingleLine(true);
         input.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_URI);
@@ -275,12 +410,12 @@ public class MainActivity extends Activity {
         if (saved != null) input.setText(saved);
 
         int pad = (int) (20 * getResources().getDisplayMetrics().density);
-        FrameLayout wrap = new FrameLayout(this);
+        FrameLayout wrap = new FrameLayout(formContext);
         wrap.setPadding(pad, pad / 2, pad, 0);
         wrap.addView(input, new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
 
-        AlertDialog.Builder builder = new AlertDialog.Builder(this)
+        AlertDialog.Builder builder = new AlertDialog.Builder(formContext)
                 .setTitle("服务器地址")
                 .setMessage(message != null ? message : "填写 TongMuTV Plus 的访问地址")
                 .setView(wrap)
@@ -289,6 +424,8 @@ public class MainActivity extends Activity {
         if (cancelable) builder.setNegativeButton("取消", null);
         dialog = builder.create();
         dialog.show();
+        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(getColor(pageDark ? R.color.tm_text : R.color.tm_light_text));
+        if (cancelable) dialog.getButton(AlertDialog.BUTTON_NEGATIVE).setTextColor(getColor(pageDark ? R.color.tm_muted : R.color.tm_light_muted));
 
         final Runnable submit = () -> {
             String url = normalizeUrl(input.getText().toString());
@@ -314,21 +451,31 @@ public class MainActivity extends Activity {
         input.requestFocus();
     }
 
-    private void showLoadError() {
-        if (errorShown || isFinishing()) return;
+    private void showNativeError(long token, String title, String message, String reason) {
+        if (isFinishing() || isDestroyed() || !loadState.fail(token)) return;
         errorShown = true;
-        webView.post(() -> {
-            webView.loadUrl("about:blank");
-            dismissDialog();
-            dialog = new AlertDialog.Builder(this)
-                    .setTitle("连不上服务器")
-                    .setMessage(getSavedServer() + "\n\n请检查地址和网络。")
-                    .setCancelable(false)
-                    .setPositiveButton("重试", (d, w) -> startLoad())
-                    .setNeutralButton("修改地址", (d, w) -> showAddressDialog(null, true))
-                    .setNegativeButton("退出", (d, w) -> finish())
-                    .show();
-        });
+        clearLoadTimeout();
+        if (customView != null) hideCustomView();
+        if (webView != null) {
+            webView.animate().cancel();
+            webView.setAlpha(0f);
+            webView.setEnabled(false);
+            webView.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS);
+            webView.stopLoading();
+        }
+        updatePlaying(false);
+        dismissDialog();
+        localSurface.showError(title, message, serverLabel() + "\n" + reason);
+    }
+
+    private String serverLabel() {
+        String saved = getSavedServer();
+        if (saved == null) return "尚未设置服务器";
+        Uri uri = Uri.parse(saved);
+        String host = uri.getHost();
+        if (host == null) return "服务器地址不可用";
+        if (host.contains(":") && !host.startsWith("[")) host = "[" + host + "]";
+        return uri.getScheme() + "://" + host + (uri.getPort() < 0 ? "" : ":" + uri.getPort());
     }
 
     private void dismissDialog() {
@@ -463,7 +610,7 @@ public class MainActivity extends Activity {
 
     @Override
     protected void onPause() {
-        CookieManager.getInstance().flush();
+        if (webView != null) CookieManager.getInstance().flush();
         // 正在播放时不暂停 WebView，切后台也能继续（配合前台服务保活）
         if (webView != null && !playing) webView.onPause();
         super.onPause();
@@ -471,6 +618,8 @@ public class MainActivity extends Activity {
 
     @Override
     protected void onDestroy() {
+        loadState.invalidate();
+        clearLoadTimeout();
         dismissDialog();
         if (pauseReceiver != null) {
             unregisterReceiver(pauseReceiver);
@@ -485,11 +634,7 @@ public class MainActivity extends Activity {
             filePathCallback.onReceiveValue(null);
             filePathCallback = null;
         }
-        if (webView != null) {
-            webHolder.removeView(webView);
-            webView.destroy();
-            webView = null;
-        }
+        discardWebView(webView);
         super.onDestroy();
     }
 
@@ -497,37 +642,44 @@ public class MainActivity extends Activity {
 
     /** 网页里的 window.TMShell。方法在 JS 线程回调，凡是碰界面的都切回主线程。 */
     private class ShellBridge {
+        private final long epoch;
+        ShellBridge(long epoch) { this.epoch = epoch; }
+        private boolean current() { return epoch == webViewEpoch && webView != null && !isFinishing() && !isDestroyed(); }
+
         @JavascriptInterface
         public void ready() {
-            runOnUiThread(MainActivity.this::enableEdgeToEdge);
+            runOnUiThread(() -> { if (current() && !errorShown) { shellReady = true; enableEdgeToEdge(); } });
         }
 
         @JavascriptInterface
         public void setSystemBars(boolean dark) {
             runOnUiThread(() -> {
+                if (!current() || errorShown) return;
                 // 和上次一样就什么都不做：主题没变时少一次窗口级重排
                 if (pageDark == dark && barsSynced) return;
                 pageDark = dark;
                 barsSynced = true;
-                if (webView != null) webView.setBackgroundColor(dark ? Color.BLACK : Color.WHITE);
+                localSurface.setDark(dark);
+                root.setBackgroundColor(getColor(dark ? R.color.tm_bg : R.color.tm_light_bg));
+                webView.setBackgroundColor(getColor(dark ? R.color.tm_bg : R.color.tm_light_bg));
                 if (customView == null) applyWindowFlags();
             });
         }
 
         @JavascriptInterface
         public void haptic(int ms) {
-            vibrate(ms);
+            runOnUiThread(() -> { if (current()) vibrate(ms); });
         }
 
         @JavascriptInterface
         public void setPlaying(boolean value) {
-            runOnUiThread(() -> updatePlaying(value));
+            runOnUiThread(() -> { if (current() && !errorShown) updatePlaying(value); });
         }
 
         /** 网页点「立即更新」：下载新安装包并调起系统安装界面 */
         @JavascriptInterface
         public void installUpdate(String url) {
-            runOnUiThread(() -> downloadAndInstall(url));
+            runOnUiThread(() -> { if (current() && !errorShown) downloadAndInstall(url); });
         }
     }
 
@@ -545,13 +697,29 @@ public class MainActivity extends Activity {
         } else {
             applyInsets();
         }
-        if (webView != null) webView.postDelayed(this::revealWeb, 120);
+        if (webView != null) scheduleReveal(webView, loadState.token(), 120);
     }
 
-    private void revealWeb() {
-        if (revealed || webView == null) return;
-        revealed = true;
-        webView.animate().alpha(1f).setDuration(180).start();
+    private void scheduleReveal(WebView view, long token, long delay) {
+        loadState.requestReveal(token);
+        view.postDelayed(() -> {
+            if (view != webView || revealed || errorShown || isFinishing() || isDestroyed()) return;
+            try {
+                view.postVisualStateCallback(token, new WebView.VisualStateCallback() {
+                    @Override public void onComplete(long requestId) {
+                        if (view != webView || revealed || errorShown || isFinishing() || isDestroyed() || !loadState.reveal(requestId)) return;
+                        revealed = true;
+                        clearLoadTimeout();
+                        view.setEnabled(true);
+                        view.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_AUTO);
+                        localSurface.setVisibility(View.GONE);
+                        view.animate().alpha(1f).setDuration(180).start();
+                    }
+                });
+            } catch (RuntimeException unavailable) {
+                showNativeError(token, "暂时无法显示内容", "点重试重新打开。", "显示内容准备失败");
+            }
+        }, delay);
     }
 
     /** 窗口布局标志：铺满时延伸到系统栏下面；页面是浅色时系统栏图标用深色。 */
@@ -595,6 +763,7 @@ public class MainActivity extends Activity {
         int top = lastInsets.getSystemWindowInsetTop();
         int right = lastInsets.getSystemWindowInsetRight();
         int bottom = lastInsets.getSystemWindowInsetBottom();
+        localSurface.setSafeInsets(left, top, right, lastInsets.getStableInsetBottom());
         if (!edgeToEdge) {
             webHolder.setPadding(left, top, right, bottom);
             return;

@@ -95,6 +95,12 @@ jobs:
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_MOBILE_KEY_PASSWORD }}
         run: gradle assemble${{ steps.signing.outputs.task }} --stacktrace
 
+      - name: Verify document lifecycle gates
+        run: |
+          mkdir -p /tmp/tm-load-state-test
+          javac --release 17 -d /tmp/tm-load-state-test apps/android-mobile/app/src/main/java/com/tongmutvplus/mobile/LoadState.java apps/android-mobile/ci/LoadStateTest.java
+          java -cp /tmp/tm-load-state-test com.tongmutvplus.mobile.LoadStateTest
+
       - name: Collect APK
         id: collect
         run: |
@@ -115,11 +121,12 @@ jobs:
   smoke:
     name: Emulator smoke test (API ${{ matrix.api }})
     needs: build
+    timeout-minutes: 20
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        api: [24, 34]
+        api: [23, 24, 34]
     steps:
       - name: Checkout source code
         uses: actions/checkout@v4

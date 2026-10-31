@@ -29,6 +29,14 @@
 
 ## 当前进度
 
+- 第四批 A 验证门禁：前台 pnpm typecheck/lint 退出 0；标准 Jest/format 再次原生退出 3221225477，备用 Node 24.22.1 --jitless 在执行用例前 V8 unreachable code 原生退出 2147483651，未出现源码断言，日志保留，不计通过。本批未改任何共享 TS/播放器/房间源码，其基线 2bc2ba2 的 Linux 完整检查已通过；新提交仍须等待 Linux 完整检查及 Android 编译/模拟器。四个可格式化文件逐文件同版本 Prettier 均 0，Java release17 状态测试、Python/XML/bash 解析及假 HTTP503→200 重试服务验证均通过。
+
+- 第四批 A 实施中，尚未编译/模拟器验收：MainActivity 接入 AppStateView 与纯 Java LoadState，本地品牌、连接、HTTP/TLS/超时和显示进程退出恢复；地址/错误码收进详情。主文档失败才接管，坏海报不接管整页，证书始终取消。下层网页不接收触摸/无障碍访问；正常 SPA 保留原 WebView。
+- Ruling：错误文档的同 URL 遗留回调无法只靠 URL 判别，用户重试时重建失败的 WebView；Cookie/原服务器设置不变，代价是故障后的网页历史、未保存状态可能丢失，不能承诺无损恢复播放。此选择不应用于正常切页。
+- 最低系统事实更正：源码 minSdk=23，之前“实际 24”的记录有误。新冒烟增至 23/24/34，API26 renderer 客户端独立按版本加载；API23–25、整个宿主被 OS 结束时不承诺活体恢复。[Android 回调依据](https://developer.android.com/reference/android/webkit/WebViewClient)。
+- 纯 Java 文档状态测试先因缺类失败，补实现后 javac/java release17 通过；Python AST/XML/bash -n 通过。模拟器 HTTP503、主 TLS、坏海报不接管、设置恢复及 26+显示进程退出/重试场景均待运行，不称通过。写进度并启动后台验证的组合命令被自动审批拒绝，仅返回 blocked by policy、无具体原因，未执行；改用前台串行检查。
+- 上批补强证据：b60eeea 的受控 Worker 浏览器退出 0，active/controller 都是 activated /sw.js，456 项预缓存全为 /\_next/static/，离线私有 API 不可读、切页与重连不 reload。真实数据备份副本在 internal Docker 网络，内部健康及 my/search/douban/记录/收藏/我的房间接口均 200，SQLite integrity=ok；宿主 3010 不可达是该隔离网络边界，不能称启动失败。生产仍未切换。
+
 - 第三批键盘小批实施中：App 下输入法打开时隐藏同一底栏节点，不切 display、不重建导航；普通 web/Windows 不启用。新 Android 壳由 API30+ WindowInsets 的 IME 可见性提供真实标记，旧系统保留现有算法；PWA/旧壳在聚焦编辑器且无缩放、有明显可视高度缩小时才回退判断。原生标记优先，不写播放器 Provider 已有的 `--tm-visual-height`，不触碰会话逻辑。定向 5 项先红后绿；整批与 APK/真实软键盘验证待做。
 - 键盘边界：视口变小不必然是输入法（工具栏、缩放也会影响），故回退判断只在 App 生效；新壳采用真实 IME 状态。[VisualViewport 依据](https://developer.mozilla.org/en-US/docs/Web/API/VisualViewport)、[Android WindowInsets 依据](<https://developer.android.com/reference/android/view/WindowInsets#isVisible(int)>)。此时尚未用真机证明 OriginOS 的键盘表现。
 - 取证镜像构建 41206909486 已触发，固定源提交 0e1434b、请求标签 client-audit-0e1434b；标签门禁与复用完整检查已通过，两种架构构建中。发布前 latest/v0.1.1 与运行镜像均核对为原 digest ba65d689...，完整记录 output/client-experience/registry-before-image.log；正式服务未切换。
