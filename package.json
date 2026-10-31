@@ -74,7 +74,7 @@
     "node-fetch": "^2.7.0",
     "nodemailer": "^10.3.1",
     "nprogress": "^0.2.0",
-    "opencc-js": "^1.0.5",
+    "opencc-js": "^1.4.2",
     "parse-torrent-name": "^0.5.4",
     "qrcode": "^1.5.4",
     "react": "^18.3.1",
