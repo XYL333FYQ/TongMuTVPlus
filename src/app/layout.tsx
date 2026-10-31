@@ -33,6 +33,7 @@ import { AppDialogHost } from '@/components/feedback/AppDialogs';
 import MobileBottomNav from '@/components/MobileBottomNav';
 import ClientTabMemory from '@/components/shell/ClientTabMemory';
 import ClientUpdatePrompt from '@/components/shell/ClientUpdatePrompt';
+import KeyboardViewport from '@/components/shell/KeyboardViewport';
 import MediaSessionBridge from '@/components/shell/MediaSessionBridge';
 import MobileGestures from '@/components/shell/MobileGestures';
 import PerfProbe from '@/components/shell/PerfProbe';
@@ -526,6 +527,7 @@ export default async function RootLayout({
             enabled={process.env.NEXT_PUBLIC_TM_PWA_ENABLED === 'true'}
           />
           <MobileGestures />
+          <KeyboardViewport />
           <PerfProbe />
           <MediaSessionBridge />
           <ClientUpdatePrompt />

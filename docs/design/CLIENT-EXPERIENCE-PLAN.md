@@ -29,6 +29,10 @@
 
 ## 当前进度
 
+- 第三批键盘小批实施中：App 下输入法打开时隐藏同一底栏节点，不切 display、不重建导航；普通 web/Windows 不启用。新 Android 壳由 API30+ WindowInsets 的 IME 可见性提供真实标记，旧系统保留现有算法；PWA/旧壳在聚焦编辑器且无缩放、有明显可视高度缩小时才回退判断。原生标记优先，不写播放器 Provider 已有的 `--tm-visual-height`，不触碰会话逻辑。定向 5 项先红后绿；整批与 APK/真实软键盘验证待做。
+- 键盘边界：视口变小不必然是输入法（工具栏、缩放也会影响），故回退判断只在 App 生效；新壳采用真实 IME 状态。[VisualViewport 依据](https://developer.mozilla.org/en-US/docs/Web/API/VisualViewport)、[Android WindowInsets 依据](<https://developer.android.com/reference/android/view/WindowInsets#isVisible(int)>)。此时尚未用真机证明 OriginOS 的键盘表现。
+- 取证镜像构建 41206909486 已触发，固定源提交 0e1434b、请求标签 client-audit-0e1434b；标签门禁与复用完整检查已通过，两种架构构建中。发布前 latest/v0.1.1 与运行镜像均核对为原 digest ba65d689...，完整记录 output/client-experience/registry-before-image.log；正式服务未切换。
+
 - 第二批补证：诊断 schema 2 增加 document timeOrigin、Navigation Timing 类型、BFCache 恢复标记，pagehide 时只在本次会话保存最近 3 个文档的白名单摘要（安全路由、构建号、计数/最后 top），不存整份报告、查询参数或账号/房间标识。`?perf=0` 清理摘要，停止记录器后移除监听；默认关闭时不挂采样。新跨文档/隐私/有界历史回归先红后绿，BFCache 补充覆盖，定向 14 项通过；完整 Jest 169 套/1095 项、lint 退出 0；typecheck 初次无 TS 诊断原生崩溃，确认预览关闭后串行重跑退出 0，日志分别保留。
 - 补证验证限制：本机完整格式检查原生退出 3221225477，6 个改动文件以同版本 Prettier/Node 24 的逐文件 `--jitless` 检查均为 0，完整检查交 CI 接续。本地“启动预览并打开浏览器”组合命令被自动审批拒绝，仅返回 blocked by policy，无具体理由，未执行/未重试等同命令；浏览器验证待原计划 Linux 隔离生产实例，不声称新 schema 的实际整页跳转已验。
 - Ruling：保留文档边界摘要以判别整页重开和同文档切页；它不能证明触发重开的原因，也不等于 GPU 呈现帧。不能因为用户看到进场或一份 Timing 就将根因写成 VPS/缓存已定位。
@@ -63,3 +67,7 @@
 - 生成 Worker 检查发现全 public 预缓存会抓取可选字体/媒体和受保护文件，已关闭全 public 预缓存，保留 Next 构建资产。CI 将检查真实生成产物；当前旧产物的预期失败不算通过。
 - 下一步：第一批提交任务分支后由 CI 验证，同时开始整条底栏诊断。其他批次未完成。
 - 尚未验证：用户手机的整条底栏进场、GPU 呈现、原生返回/输入法、故障恢复与 Windows 真实客户端。
+
+- 键盘小批静态验证完成：完整 Jest 170 套 / 1100 项、lint、format:check 均退出 0；首次 typecheck 在 TypeScript 内部 instantiateSymbol 抛异常，无源码 TS 诊断，保留原日志后串行重跑退出 0（output/client-experience-keyboard-typecheck-retry.json）。未改依赖/tsconfig；APK 编译、API24/34 与实际软键盘仍待后续验证，不能将单测当真机通过。
+- 测试镜像实证：GitHub 41206909486 成功，client-audit-0e1434b 多架构 digest 为 sha256:1cbd05922ba1ed9268d826f1945bbf2908507ea0097935b45f30fa418d347d88；构建后 latest / v0.1.1 均仍为 ba65d689…，正式别名隔离已实际验证，尚未替换生产容器。
+- Ruling：首先用独立空数据库和随机测试账号验生产路由/诊断，不复制正式通知及后台任务配置到在线测试服务，以免隔离副本向真实外部服务发送任务。真实数据迁移与备份另在发布门禁验证，成本是该轮不能证明正式用户数据兼容。

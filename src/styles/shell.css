@@ -548,6 +548,13 @@
   .tm-mobile-nav[data-tab-route] {
     display: grid;
   }
+  /* Keep the same nav node/geometry while the IME is open, so closing the
+     keyboard does not restart display/entry transitions. Desktop/web unchanged. */
+  html[data-tm-platform='app'][data-tm-keyboard='open'] .tm-mobile-nav {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+  }
 }
 
 /* 底栏按住拖动：滑块跟手，经过的项高亮，松手跳转 */

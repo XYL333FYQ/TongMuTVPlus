@@ -601,15 +601,25 @@ public class MainActivity extends Activity {
         }
         int navBottom = lastInsets.getStableInsetBottom();
         int keyboard = Math.max(0, bottom - navBottom);
+        boolean imeVisible = keyboard > 0;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            navBottom = lastInsets.getInsetsIgnoringVisibility(WindowInsets.Type.navigationBars()).bottom;
+            imeVisible = lastInsets.isVisible(WindowInsets.Type.ime());
+            keyboard = imeVisible
+                    ? Math.max(0, lastInsets.getInsets(WindowInsets.Type.ime()).bottom - navBottom)
+                    : 0;
+        }
         webHolder.setPadding(left, 0, right, keyboard);
-        injectInsets(top, keyboard > 0 ? 0 : navBottom);
+        injectInsets(top, imeVisible ? 0 : navBottom, imeVisible);
     }
 
-    private void injectInsets(int topPx, int bottomPx) {
+    private void injectInsets(int topPx, int bottomPx, boolean imeVisible) {
         if (webView == null) return;
         float density = getResources().getDisplayMetrics().density;
         String js = "(function(){var r=document.documentElement;"
                 + "r.setAttribute('data-tm-shell','android');"
+                + "r.setAttribute('data-tm-ime-source','native');"
+                + "r.setAttribute('data-tm-keyboard','" + (imeVisible ? "open" : "closed") + "');"
                 + "r.style.setProperty('--tm-shell-top','" + Math.round(topPx / density) + "px');"
                 + "r.style.setProperty('--tm-shell-bottom','" + Math.round(bottomPx / density) + "px');})()";
         webView.evaluateJavascript(js, null);
