@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: 'Docker 标签'
+        description: 'Docker 标签（分支构建仅接受 client-audit-*；latest 自动转为提交标签）'
         required: false
         default: 'latest'
         type: string
@@ -17,18 +17,32 @@ concurrency:
   cancel-in-progress: true
 
 permissions:
-  contents: write
+  contents: read
   packages: write
-  actions: write
 
 jobs:
   # 先跑完整检查；任何一项失败，镜像都不会打包发布
   checks:
     uses: ./.github/workflows/checks.yml
 
+  tag-policy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate publication tags before building
+        env:
+          IMAGE_REPOSITORY: ghcr.io/${{ github.repository_owner }}/tongmutvplus
+          IMAGE_TAG: ${{ inputs.tag || 'latest' }}
+          COMMIT_SHA: ${{ github.sha }}
+          IS_DEFAULT_BRANCH: ${{ github.ref_name == github.event.repository.default_branch }}
+        run: |
+          export IMAGE_REPOSITORY="${IMAGE_REPOSITORY,,}"
+          IMAGE_VERSION="$(tr -d '[:space:]' < VERSION.txt)" node scripts/docker-image-tags.cjs
+
   build:
     needs:
       - checks
+      - tag-policy
     strategy:
       matrix:
         include:
@@ -84,10 +98,9 @@ jobs:
             APP_COMMIT_SHA=${{ github.sha }}
           platforms: ${{ matrix.platform }}
           labels: ${{ steps.meta.outputs.labels }}
-          tags: |
-            ghcr.io/${{ steps.lowercase.outputs.owner }}/tongmutvplus:${{ steps.version.outputs.version }}
-            ghcr.io/${{ steps.lowercase.outputs.owner }}/tongmutvplus:${{ github.event.inputs.tag || 'latest' }}
-          outputs: type=image,name=ghcr.io/${{ steps.lowercase.outputs.owner }}/tongmutvplus,name-canonical=true,push=true
+          # Architecture images are pushed by digest; only the merged manifest
+          # receives tags after both builds pass the publication policy.
+          outputs: type=image,name=ghcr.io/${{ steps.lowercase.outputs.owner }}/tongmutvplus,push-by-digest=true,name-canonical=true,push=true
 
       - name: Export digest
         run: |
@@ -138,36 +151,22 @@ jobs:
 
       - name: Create manifest list and push
         working-directory: /tmp/digests
+        env:
+          IMAGE_REPOSITORY: ghcr.io/${{ steps.lowercase.outputs.owner }}/tongmutvplus
+          IMAGE_VERSION: ${{ steps.version.outputs.version }}
+          IMAGE_TAG: ${{ inputs.tag || 'latest' }}
+          COMMIT_SHA: ${{ github.sha }}
+          IS_DEFAULT_BRANCH: ${{ github.ref_name == github.event.repository.default_branch }}
         run: |
+          IMAGE_VERSION="${IMAGE_VERSION#v}"
+          export IMAGE_VERSION
+          tag_lines=$(node "$GITHUB_WORKSPACE/scripts/docker-image-tags.cjs")
+          tag_args=()
+          while IFS= read -r tag; do tag_args+=(-t "$tag"); done <<< "$tag_lines"
           docker buildx imagetools create \
-            -t ghcr.io/${{ steps.lowercase.outputs.owner }}/tongmutvplus:${{ steps.version.outputs.version }} \
-            -t ghcr.io/${{ steps.lowercase.outputs.owner }}/tongmutvplus:${{ github.event.inputs.tag || 'latest' }} \
+            "${tag_args[@]}" \
             $(printf 'ghcr.io/${{ steps.lowercase.outputs.owner }}/tongmutvplus@sha256:%s ' *)
 
-  cleanup-untagged:
-    runs-on: ubuntu-latest
-    needs:
-      - merge
-    steps:
-      - name: Delete untagged image versions
-        uses: dataaxiom/ghcr-cleanup-action@v1
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          owner: ${{ github.repository_owner }}
-          package: tongmutvplus
-          delete-untagged: true
-          validate: true
-
-  cleanup-refresh:
-    runs-on: ubuntu-latest
-    needs:
-      - cleanup-untagged
-    if: always()
-    steps:
-      - name: Delete workflow runs
-        uses: Mattraks/delete-workflow-runs@main
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          repository: ${{ github.repository }}
-          retain_days: 0
-          keep_minimum_runs: 2
+  # Digest-pinned installations may still use untagged older images. A build
+  # must not delete those images or the workflow evidence needed for rollback.
+  # Retention is a separate inventory-based maintenance operation.

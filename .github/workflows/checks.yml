@@ -48,8 +48,8 @@ jobs:
       - name: Unit tests
         run: pnpm test --ci
 
-      - name: Worker update and cache policy tests
-        run: node --test scripts/pwa-options.test.cjs
+      - name: Worker and image publication policy tests
+        run: node --test scripts/pwa-options.test.cjs scripts/docker-image-tags.test.cjs
 
       - name: Room service tests
         run: pnpm test:rooms
