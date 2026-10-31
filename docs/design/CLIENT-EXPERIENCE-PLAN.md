@@ -75,3 +75,8 @@
 - Linux 隔离实例发现发布门禁问题：0e1434b 真实 SW 包含 /\_next/app-build-manifest.json；匿名实际请求 404，浏览器注册后 worker 无 active/waiting/installing，ready 不完成。该文件是 App Router 内部编译清单，开发环境关闭 PWA 所以不出现。原生成器校验只允许 /\_next/ 太宽，未阻止此坏清单；本轮精确 buildExcludes 排除，并把产物断言收紧至 /\_next/static/。新增回归先红后绿，Node 策略 8 项通过，修正镜像与真实安装验证仍待做；不称为手机整条入场根因。
 - 7e847cf 的 Checks 41208969404 通过；Android 41208971370 APK 编译及 API24/34 冒烟全部通过，Publish to Releases 按 publish=false 跳过。没有据启动冒烟声称软键盘/真机通过。
 - 清单修复验证：新增策略回归由 false !== true 失败转为通过；收紧的真实产物检查在旧 public/sw.js 上按预期拒绝 /\_next/app-build-manifest.json，日志 output/client-experience-pwa-generated-red.log。修复批 typecheck/lint/test/format 四项串行全部 0，完整 170 套 / 1100 项（output/client-experience-pwa-manifest-verification.json）；新构建产物及浏览器激活须继续由 CI / 新镜像证明，不用旧产物检查失败冒充修复通过。
+
+- 隔离生产浏览器补验：390/820/1280 深浅六组均完成 schema2 的真实 reload 边界和 SPA 同文档断言，图片及诊断 JSON 在 output/client-experience/vps-0e1434b；后续等待 Worker.ready 超时，整支脚本退出 124，故不称整支通过。底层 CDP 明确报告 bad-precaching-response，URL 为 /\_next/app-build-manifest.json、status 404，确认 Worker 安装失败原因。
+- 五入口独立脚本最终退出 0：搜索草稿 → 片库剧集/日本/600px → 我的 → 房间 → 发现 → 搜索/片库，草稿、分类筛选和片库滚动恢复通过，pageerror 空。最初等待 load 被未完成资源拖住而超时，改为 DOMContentLoaded 后另等真实活动栏目/卡片，不修改产品代码；保留首次日志。资料为测试夹具，独立空库，未证明真实媒体、房间同步或用户手机。
+- 生产 DOM 取证中 390 深浅切页的整条底栏一直为同一节点，top=824、transform=none；这只是当前 Linux Chromium 的结果，仍不能反驳用户 OriginOS 实际看到的进场。Worker 缺陷与该体验的因果关系尚未建立。
+- Android 冒烟新增真实 IME 验收：假页面可访问输入框，通过 UIAutomator 定位后点击，等 native open 上报，再系统返回等 closed，并保存两张截图。Python AST 与 bash -n 通过；API24/34 执行待 GitHub 验证。此批仅测试脚本，不改 App 或网页业务。

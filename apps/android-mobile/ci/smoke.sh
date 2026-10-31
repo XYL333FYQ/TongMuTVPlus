@@ -33,6 +33,40 @@ for _ in $(seq 1 20); do
 done
 adb exec-out screencap -p >"$OUT/2-page.png"
 
+# Exercise real system IME in the mobile APK, rather than inferring it from a
+# smaller synthetic viewport. API24 uses legacy insets; API34 uses Type.ime().
+if [ "$PKG" = "com.tongmutvplus.mobile" ]; then
+  adb shell settings put secure show_ime_with_hard_keyboard 1
+  adb shell uiautomator dump /sdcard/keyboard-smoke.xml >/dev/null
+  adb exec-out cat /sdcard/keyboard-smoke.xml >"$OUT/keyboard-before.xml"
+  if point=$(python3 - "$OUT/keyboard-before.xml" <<'PY'
+import re
+import sys
+import xml.etree.ElementTree as ET
+root = ET.parse(sys.argv[1]).getroot()
+for node in root.iter('node'):
+    if node.get('class') == 'android.widget.EditText':
+        x1, y1, x2, y2 = map(int, re.findall(r'\d+', node.get('bounds', '')))
+        print((x1 + x2) // 2, (y1 + y2) // 2)
+        break
+else:
+    sys.exit('Keyboard smoke input was absent from accessibility tree')
+PY
+  ); then
+    # Two numeric coordinates emitted by the parser above.
+    read -r tap_x tap_y <<<"$point"
+    adb shell input tap "$tap_x" "$tap_y"
+    for _ in $(seq 1 15); do
+      grep -q 'IME_REPORT.*"keyboard":"open"' "$OUT/server.log" && break
+      sleep 1
+    done
+    adb exec-out screencap -p >"$OUT/3-keyboard-open.png"
+    adb shell input keyevent 4
+    sleep 2
+    adb exec-out screencap -p >"$OUT/4-keyboard-closed.png"
+  fi
+fi
+
 adb logcat -d >"$OUT/logcat.txt"
 kill "$SERVER_PID" 2>/dev/null
 
@@ -55,6 +89,14 @@ else
 fi
 # 只有手机壳有 TMShell 对接；电视壳共用本脚本，不检查这一项
 if [ "$PKG" = "com.tongmutvplus.mobile" ]; then
+  if grep -q 'IME_REPORT.*"keyboard":"open","source":"native"' "$OUT/server.log" &&
+      [ "$(grep 'IME_REPORT' "$OUT/server.log" | tail -1)" = 'IME_REPORT {"keyboard":"closed","source":"native"}' ]; then
+    echo "PASS: 系统输入法打开/返回关闭，网页收到真实 native 标记"
+  else
+    echo "FAIL: 系统输入法开关未完整传递到网页"
+    grep IME_REPORT "$OUT/server.log"
+    status=1
+  fi
   if grep -q 'REPORT.*"bridge":true' "$OUT/server.log" && grep -q 'REPORT.*"shell":"android"' "$OUT/server.log"; then
     echo "PASS: 网页认到了 TMShell，壳已铺满屏幕并注入系统栏高度"
   else

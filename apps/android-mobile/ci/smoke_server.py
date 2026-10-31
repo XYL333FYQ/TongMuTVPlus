@@ -4,9 +4,21 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 
 # 页面模拟「认识壳的新网站」：调用 TMShell 的各个方法，再把壳注入的结果报告回来
 PAGE = """<!doctype html><meta charset=utf-8><title>SMOKE</title>
-<body style='background:#fff;font-size:48px'>SMOKE OK</body>
+<body style='background:#fff;font-size:48px'>SMOKE OK
+<input aria-label='Keyboard smoke input' placeholder='Keyboard smoke input'
+ style='display:block;margin-top:32px;width:85%;height:64px;font-size:24px'>
+</body>
 <script>
 var r = document.documentElement;
+var lastIme = '';
+new MutationObserver(function () {
+  var ime = r.getAttribute('data-tm-keyboard');
+  if (!ime || ime === lastIme) return;
+  lastIme = ime;
+  fetch('/ime-report', {method: 'POST', body: JSON.stringify({
+    keyboard: ime, source: r.getAttribute('data-tm-ime-source')
+  })});
+}).observe(r, {attributes: true, attributeFilter: ['data-tm-keyboard']});
 if (window.TMShell) {
   TMShell.ready();
   TMShell.setSystemBars(true);
@@ -38,7 +50,8 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_POST(self):
         length = int(self.headers.get("Content-Length") or 0)
-        print("REPORT %s" % self.rfile.read(length).decode(), flush=True)
+        label = "IME_REPORT" if self.path == "/ime-report" else "REPORT"
+        print("%s %s" % (label, self.rfile.read(length).decode()), flush=True)
         self.send_response(204)
         self.end_headers()
 
