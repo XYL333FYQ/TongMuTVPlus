@@ -1,4 +1,7 @@
-import { changeThemeWithTransition } from './theme-transition';
+import {
+  changeThemeWithTransition,
+  readSnapshotGeometry,
+} from './theme-transition';
 
 // 测试里用简化的假实现替换浏览器的视图过渡接口，类型放宽到测试需要的部分
 const doc = document as unknown as {
@@ -313,4 +316,75 @@ test('reduced motion cancels the active circular clip-path animation', async () 
   expect(cancelFirst).toHaveBeenCalled();
   expect(document.documentElement).toHaveClass('light');
   expect(origin).not.toHaveAttribute('data-tm-theme-origin');
+});
+
+describe('readSnapshotGeometry：圆心取浏览器给出的真实位置', () => {
+  const style = (transform: string, width = '', height = '') => ({
+    transform,
+    width,
+    height,
+  });
+  const fallback = { x: 100, y: 50, width: 390, height: 800 };
+  const make =
+    (table: Record<string, ReturnType<typeof style>>) =>
+    (_el: Element, pseudo: string) =>
+      table[pseudo] || style('none');
+
+  test('读到过渡层坐标：根画面比页面靠上 56px（手机地址栏）时，圆心跟着按钮', () => {
+    const geo = readSnapshotGeometry(
+      document.documentElement,
+      fallback,
+      make({
+        '::view-transition': style('none', '390px', '856px'),
+        '::view-transition-group(root)': style(
+          'matrix(1, 0, 0, 1, 0, 56)',
+          '390px',
+          '856px'
+        ),
+        // 按钮在过渡层里的位置 = 页面位置 + 56（过渡层从地址栏下面开始算）
+        '::view-transition-group(tm-theme-control)': style(
+          'matrix(1, 0, 0, 1, 80, 106)',
+          '44px',
+          '44px'
+        ),
+      })
+    );
+    expect(geo.x).toBe(102);
+    expect(geo.y).toBe(128);
+    // 根画面自己的坐标系要扣掉它的平移
+    expect(geo.localX).toBe(102);
+    expect(geo.localY).toBe(72);
+    expect(geo.width).toBe(390);
+    expect(geo.height).toBe(856);
+    expect(geo.radius).toBeGreaterThan(Math.hypot(390 - 102, 856 - 72) - 1);
+  });
+
+  test('没有平移时圆心等于控件中心，半径够到最远的角', () => {
+    const geo = readSnapshotGeometry(
+      document.documentElement,
+      fallback,
+      make({
+        '::view-transition': style('none', '400px', '800px'),
+        '::view-transition-group(root)': style('none', '400px', '800px'),
+        '::view-transition-group(tm-theme-control)': style(
+          'matrix(1, 0, 0, 1, 10, 20)',
+          '40px',
+          '40px'
+        ),
+      })
+    );
+    expect([geo.x, geo.y]).toEqual([30, 40]);
+    expect(geo.radius).toBeCloseTo(Math.hypot(370, 760) + 2, 5);
+  });
+
+  test('读不到有效尺寸、或读取时抛错，就退回页面坐标', () => {
+    expect(
+      readSnapshotGeometry(document.documentElement, fallback, make({}))
+    ).toMatchObject({ x: 100, y: 50, localX: 100, localY: 50 });
+    expect(
+      readSnapshotGeometry(document.documentElement, fallback, () => {
+        throw new Error('不支持读伪元素');
+      })
+    ).toMatchObject({ x: 100, y: 50, width: 390, height: 800 });
+  });
 });

@@ -1,5 +1,20 @@
 # 界面改造进度
 
+## 2026-10-31 三端分工整改（分支 feat/site-optimization，用户："开始整改"）
+
+- 问题：之前为了让 App 像 App，把"整页不回弹、选不中文字、自制下拉刷新"按屏幕特征（粗指针 + 窄屏）一刀切，手机浏览器被误当成 App；主题圆形扩散的圆心用点击时的页面坐标，手机浏览器地址栏伸缩后偏到按钮上方；安卓 App 深色 → 浅色卡顿。
+- 做了：
+  - `src/lib/platform.ts` + `layout.tsx` 头部内联脚本：根元素 `data-tm-platform` = app / desktop / web（规则见 `DESIGN.md` 三端分工一节）。
+  - `base.css`：整页不回弹只给 app / desktop；`shell.css`：长按选中、系统长按菜单、图片拖拽只在 app 关闭（输入框、聊天、代码块等白名单保留）。
+  - `MobileGestures.tsx`：自制下拉刷新只在 app 启用。
+  - 安卓壳 `MainActivity.java`：关闭 WebView 拉伸回弹与滚动条；系统栏通知相同值不重复设置、`setAttributes` 仅在值变化时调用。
+  - `theme-transition.ts`（`readSnapshotGeometry`）：圆心从浏览器给的过渡层真实位置读取，读不到退回页面坐标；`primitives.css` 底层缩放原点同步。
+  - `ShellBridge.tsx`：主题圆形过渡进行中不通知壳改系统栏，收尾后再发（有 1.5 秒兜底）。
+  - `scripts/perf/theme-bench.mjs`：分方向（深 → 浅 / 浅 → 深）测主题切换的帧间隔，本机用。
+- 深色 → 浅色卡顿：电脑端无头浏览器放慢 4 倍 CPU 也复现不了方向差异（两个方向都约 230 帧、2–3 个慢帧）。读代码发现的最可疑点是：切主题时壳的原生调用（改窗口标志、重画 WebView 底色）正好落在动画第一帧里，已推迟到动画收尾；但**没有真机证据证明这就是根因**。如果真机仍卡，手机地址栏加 `?perf=1` 切一次主题，截图测速条（最长帧与来源）发回来再定位。
+- 验证：typecheck、lint（0 错误）、format:check、jest（含新增 ShellBridge、MobileGestures、platform、readSnapshotGeometry 测试）通过。
+- 没做 / 没验证：安卓壳 Java 改动没有编译（本机无安卓工具链）、需重新打 APK；手机真机上的整页拉动、选中手感、深浅切换流畅度全部没有实测；iPhone 没测；电脑客户端（Tauri）除"整页不回弹"外没有另做专属优化；手机标签页的顶栏仍是随页面滚走（设计规范如此，没改）；这些改动都在本地分支上，没推送、没部署，手机上看不到。
+
 ## 2026-10-30 框架升级体检与收尾（分支 feat/site-optimization，优化方案第 11、12 步）
 
 - 框架升级：按方案先体检、不直接合并。在临时副本、本地分支 `exp/next15-assessment` 上实际升级到 Next 15.5 + TypeScript 5.6 并全部验证通过（类型、规范、格式、1036 项测试、房间 27 项、构建、登录后页面与房间真机）；生产依赖严重漏洞 3 → 0。切页基准：升级后默认不缓存切过的页面，页面出现 111 → 144ms，加 `staleTimes.dynamic: 30` 恢复后 112 ～ 123ms，与升级前持平。改动清单、风险和"为什么不直接上 16"见 `docs/optimization-plan.md` 第八节。**用户同意后已合并**；合并后同库对比测速：底栏起步不变（约 30ms），页面出现中位约慢 15ms（14 版约 100ms → 15 版约 117ms，CPU 放慢 4 倍，区间大面积重叠），首屏各页约多 10KB 仍在预算内。

@@ -7,9 +7,16 @@
  * 所以 overflow-x 只写在 body 上（会传给 viewport），html 保持默认。
  * 弹层锁滚动用的 body.style.overflow = 'hidden' 同样经此传给 viewport，继续有效。
  */
-html,
-body {
-  /* 阻止 iOS Safari 拉动回弹 */
+/*
+ * 到顶/到底时的回弹、拉伸，和浏览器自带的下拉刷新，按端分开处理（data-tm-platform 见 src/lib/platform.ts）：
+ *   app / desktop：整页不被拉动，像 App；下拉刷新由页面自己的手势负责（App）。
+ *   web（普通浏览器）：保持浏览器原样，回弹和下拉刷新都交给浏览器。
+ * 以前对所有端一律禁用，手机浏览器的用户也因此丢了浏览器自带的刷新。
+ */
+html[data-tm-platform='app'],
+html[data-tm-platform='app'] body,
+html[data-tm-platform='desktop'],
+html[data-tm-platform='desktop'] body {
   overscroll-behavior: none;
 }
 body {

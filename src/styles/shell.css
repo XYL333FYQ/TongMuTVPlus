@@ -1263,9 +1263,12 @@ html .tm-page-transition.tm-page-instant {
 }
 
 /*
- * 触屏像 App：去掉点按时的灰色高亮块；界面上的按钮、顶栏、底栏、海报卡不可被选中、
- * 长按不弹系统菜单（正文、输入框、聊天消息不受影响，仍可选中复制）。
- * 安卓壳里再去掉页面到顶/到底时的拉伸与发光（下拉刷新用的是自己的手势，不受影响）。
+ * 按端区分点按与选中手感（data-tm-platform 见 src/lib/platform.ts）：
+ *   所有触屏：去掉点按时的灰色高亮块（浏览器里也只是少一块灰，无副作用）。
+ *   app：像原生 App——界面文字、图片长按不出选择手柄和系统菜单；输入框、聊天消息、
+ *        代码块以及标了 tm-selectable 的内容仍可选中复制。
+ *   web / desktop：保持网页习惯，文字可选中，不拦长按。
+ * 以前只按 (pointer: coarse) 判断，手机浏览器也被一并禁了界面元素的选中。
  */
 @media (pointer: coarse) {
   a,
@@ -1275,20 +1278,31 @@ html .tm-page-transition.tm-page-instant {
   [role='tab'] {
     -webkit-tap-highlight-color: transparent;
   }
-  button,
-  summary,
-  [role='button'],
-  [role='tab'],
-  .tm-mobile-header-v2,
-  .tm-mobile-nav,
-  .tm-video-card {
-    -webkit-user-select: none;
-    user-select: none;
-    -webkit-touch-callout: none;
-  }
-  .tm-video-card img {
-    -webkit-touch-callout: none;
-  }
+}
+html[data-tm-platform='app'] body {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+html[data-tm-platform='app'] img,
+html[data-tm-platform='app'] a {
+  -webkit-touch-callout: none;
+  -webkit-user-drag: none;
+}
+html[data-tm-platform='app']
+  :is(
+    input,
+    textarea,
+    [contenteditable='true'],
+    pre,
+    code,
+    .tm-selectable,
+    .tm-chat-messages,
+    .tm-admin-select-all-text
+  ) {
+  -webkit-user-select: text;
+  user-select: text;
+  -webkit-touch-callout: default;
 }
 html[data-tm-shell] {
   overscroll-behavior-y: none;

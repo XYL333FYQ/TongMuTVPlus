@@ -4,9 +4,12 @@ import { RotateCw } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 
+import { getPlatform } from '@/lib/platform';
 import { haptic } from '@/lib/shell-bridge';
 
-// 只在这些“浏览型”页面启用下拉刷新；播放、房间等有长连接的页面不启用，免得整页刷新打断播放。
+// 自制下拉刷新只在 App（安卓壳、安装到主屏幕的网页应用）里启用：这两处没有浏览器自带的下拉刷新，
+// 而页面又禁了整页回弹。普通手机浏览器保留浏览器自己的下拉刷新，不重复做一套。
+// 只在这些“浏览型”页面启用；播放、房间等有长连接的页面不启用，免得整页刷新打断播放。
 const REFRESH_PATHS = ['/', '/douban', '/search', '/my'];
 const TRIGGER = 64;
 const IOS_HINT_KEY = 'tongmu:ios-install-hint-seen';
@@ -46,7 +49,7 @@ export default function MobileGestures() {
   // —— 下拉刷新 ——
   const enabled = REFRESH_PATHS.includes(pathname || '');
   useEffect(() => {
-    if (!enabled || !isPhoneTouch()) return;
+    if (!enabled || getPlatform() !== 'app' || !isPhoneTouch()) return;
     const el = indicator.current;
     if (!el) return;
     let startY = 0;

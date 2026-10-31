@@ -68,6 +68,8 @@ public class MainActivity extends Activity {
     // 网页告诉壳「我认识你」之后，页面铺满整个屏幕（边到边）；旧网站不会告诉，壳保持原来的留边样子
     private boolean edgeToEdge;
     private boolean pageDark = true;
+    /** 网页是否至少告诉过壳一次系统栏深浅（首次必须执行，之后相同的值直接跳过） */
+    private boolean barsSynced = false;
     private boolean revealed;
     private boolean playing;
     private WindowInsets lastInsets;
@@ -116,6 +118,11 @@ public class MainActivity extends Activity {
     private void setupWebView() {
         webView = new WebView(this);
         webView.setBackgroundColor(Color.BLACK);
+        // 关掉 WebView 自带的到顶/到底效果（Android 12 起是把整页拉伸），也不画滚动条：
+        // App 里滑到头应该停住，而不是整个页面被拉动。网页侧另有 overscroll-behavior 兜底。
+        webView.setOverScrollMode(View.OVER_SCROLL_NEVER);
+        webView.setVerticalScrollBarEnabled(false);
+        webView.setHorizontalScrollBarEnabled(false);
         webView.setAlpha(0f);
         webView.addJavascriptInterface(new ShellBridge(), "TMShell");
         webHolder.addView(webView, new FrameLayout.LayoutParams(
@@ -498,7 +505,10 @@ public class MainActivity extends Activity {
         @JavascriptInterface
         public void setSystemBars(boolean dark) {
             runOnUiThread(() -> {
+                // 和上次一样就什么都不做：主题没变时少一次窗口级重排
+                if (pageDark == dark && barsSynced) return;
                 pageDark = dark;
+                barsSynced = true;
                 if (webView != null) webView.setBackgroundColor(dark ? Color.BLACK : Color.WHITE);
                 if (customView == null) applyWindowFlags();
             });
@@ -562,12 +572,19 @@ public class MainActivity extends Activity {
             }
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
                 WindowManager.LayoutParams lp = getWindow().getAttributes();
-                lp.layoutInDisplayCutoutMode =
-                        WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
-                getWindow().setAttributes(lp);
+                // 已经是目标值就不再 setAttributes：它会向系统发一次窗口重排请求
+                if (lp.layoutInDisplayCutoutMode
+                        != WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES) {
+                    lp.layoutInDisplayCutoutMode =
+                            WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
+                    getWindow().setAttributes(lp);
+                }
             }
         }
-        getWindow().getDecorView().setSystemUiVisibility(flags);
+        // 标志没变就不重复设置，避免白白触发一次系统栏重算
+        if (getWindow().getDecorView().getSystemUiVisibility() != flags) {
+            getWindow().getDecorView().setSystemUiVisibility(flags);
+        }
     }
 
     /** 没铺满时沿用原来的留边；铺满后只给键盘和刘海侧边留位置，并把状态栏/导航栏高度告诉网页。 */

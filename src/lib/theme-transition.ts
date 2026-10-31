@@ -19,6 +19,111 @@ function resolvesDark(theme: ThemeSetting) {
   );
 }
 
+export interface SnapshotGeometry {
+  /** 控件中心，在整个过渡层（::view-transition）坐标系里：日冕环、底层缩放以它为准 */
+  x: number;
+  y: number;
+  /** 控件中心，在根画面（::view-transition-new/old(root)）自己的坐标系里：圆形裁切以它为准 */
+  localX: number;
+  localY: number;
+  /** 过渡层的大小 */
+  width: number;
+  height: number;
+  /** 铺满过渡层所需的最大半径 */
+  radius: number;
+}
+
+function matrixTranslate(value: string): { x: number; y: number } | null {
+  // computed transform 形如 matrix(a, b, c, d, e, f)；none 表示没有平移
+  if (!value || value === 'none') return { x: 0, y: 0 };
+  const match = /^matrix\(([^)]+)\)$/.exec(value.trim());
+  if (!match) return null;
+  const parts = match[1].split(',').map((part) => parseFloat(part));
+  if (parts.length !== 6 || parts.some((part) => !Number.isFinite(part)))
+    return null;
+  return { x: parts[4], y: parts[5] };
+}
+
+/**
+ * 过渡开始后，直接问浏览器：控件那一层动画实际摆在过渡层的哪个位置。
+ *
+ * 以前圆心用点击时按钮在页面里的位置（getBoundingClientRect）直接当裁切坐标，
+ * 默认"页面坐标系 = 过渡层坐标系"。手机浏览器的地址栏会伸缩、可视区会变，
+ * 两个坐标系可能差一截，圆就从按钮上方冒出来。浏览器自己给控件那层动画算好的位置
+ * 永远和画面一致，所以从它读：不用猜地址栏、缩放、弹出菜单的位置动画，哪种情况都对。
+ * 读不到（浏览器不支持读伪元素样式等）就退回页面坐标。
+ */
+export function readSnapshotGeometry(
+  root: HTMLElement,
+  fallback: { x: number; y: number; width: number; height: number },
+  getStyle: (
+    element: Element,
+    pseudo: string
+  ) => Pick<CSSStyleDeclaration, 'transform' | 'width' | 'height'> = (
+    element,
+    pseudo
+  ) => getComputedStyle(element, pseudo)
+): SnapshotGeometry {
+  const result = (
+    x: number,
+    y: number,
+    localX: number,
+    localY: number,
+    width: number,
+    height: number,
+    margin: number
+  ): SnapshotGeometry => ({
+    x,
+    y,
+    localX,
+    localY,
+    width,
+    height,
+    radius:
+      Math.hypot(
+        Math.max(localX, width - localX),
+        Math.max(localY, height - localY)
+      ) + margin,
+  });
+  const fromLayout = () =>
+    result(
+      fallback.x,
+      fallback.y,
+      fallback.x,
+      fallback.y,
+      fallback.width,
+      fallback.height,
+      0
+    );
+  try {
+    const layer = getStyle(root, '::view-transition');
+    const rootGroup = getStyle(root, '::view-transition-group(root)');
+    const control = getStyle(root, '::view-transition-group(tm-theme-control)');
+    const width = parseFloat(layer.width);
+    const height = parseFloat(layer.height);
+    const controlAt = matrixTranslate(control.transform);
+    const rootAt = matrixTranslate(rootGroup.transform);
+    const controlWidth = parseFloat(control.width);
+    const controlHeight = parseFloat(control.height);
+    if (
+      !controlAt ||
+      !rootAt ||
+      ![width, height, controlWidth, controlHeight].every(Number.isFinite) ||
+      width <= 0 ||
+      height <= 0 ||
+      controlWidth <= 0 ||
+      controlHeight <= 0
+    )
+      return fromLayout();
+    const x = controlAt.x + controlWidth / 2;
+    const y = controlAt.y + controlHeight / 2;
+    // 多留 2px，避免半径刚好卡在角上时露出一条缝
+    return result(x, y, x - rootAt.x, y - rootAt.y, width, height, 2);
+  } catch {
+    return fromLayout();
+  }
+}
+
 function mountThemeAura(x: number, y: number, radius: number) {
   const root = document.documentElement;
   root.style.setProperty('--tm-theme-x', `${x}px`);
@@ -38,6 +143,8 @@ function clearTransitionMarkers(root: HTMLElement) {
   root.style.removeProperty('--tm-theme-x');
   root.style.removeProperty('--tm-theme-y');
   root.style.removeProperty('--tm-theme-r');
+  root.style.removeProperty('--tm-theme-lx');
+  root.style.removeProperty('--tm-theme-ly');
   activeOrigin?.removeAttribute('data-tm-theme-origin');
   activeOrigin = undefined;
   activeAura?.remove();
@@ -142,11 +249,27 @@ export async function changeThemeWithTransition(
       void transition.updateCallbackDone.catch(() => undefined);
       await transition.ready;
       if (currentRequest !== request || isReducedMotionSetting()) return;
+      // 过渡层已经建好：用浏览器给出的真实位置校正圆心和半径（见 readSnapshotGeometry）
+      const geometry = readSnapshotGeometry(root, {
+        x,
+        y,
+        width: window.innerWidth,
+        height: window.innerHeight,
+      });
+      root.style.setProperty('--tm-theme-x', `${geometry.x}px`);
+      root.style.setProperty('--tm-theme-y', `${geometry.y}px`);
+      root.style.setProperty('--tm-theme-lx', `${geometry.localX}px`);
+      root.style.setProperty('--tm-theme-ly', `${geometry.localY}px`);
+      root.style.setProperty('--tm-theme-r', `${geometry.radius}px`);
       const dark = root.classList.contains('dark');
       root.dataset.tmThemeTarget = dark ? 'dark' : 'light';
       const frames: Keyframe[] = [
-        { clipPath: `circle(0px at ${x}px ${y}px)` },
-        { clipPath: `circle(${radius}px at ${x}px ${y}px)` },
+        {
+          clipPath: `circle(0px at ${geometry.localX}px ${geometry.localY}px)`,
+        },
+        {
+          clipPath: `circle(${geometry.radius}px at ${geometry.localX}px ${geometry.localY}px)`,
+        },
       ];
       if (dark) frames.reverse();
       activeAnimation = root.animate(frames, {

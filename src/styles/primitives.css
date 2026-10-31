@@ -909,14 +909,16 @@ html[data-tm-theme-transition='circle'][data-tm-theme-target='dark']::view-trans
 html[data-tm-theme-transition='circle'][data-tm-theme-target='light']::view-transition-old(
     root
   ) {
-  transform-origin: var(--tm-theme-x, 50vw) var(--tm-theme-y, 50vh);
+  transform-origin: var(--tm-theme-lx, var(--tm-theme-x, 50vw))
+    var(--tm-theme-ly, var(--tm-theme-y, 50vh));
   will-change: clip-path, transform;
   animation: tm-theme-under-recede var(--tm-d-theme) var(--tm-ease-theme) both;
 }
 html[data-tm-theme-transition='circle'][data-tm-theme-target='dark']::view-transition-new(
     root
   ) {
-  transform-origin: var(--tm-theme-x, 50vw) var(--tm-theme-y, 50vh);
+  transform-origin: var(--tm-theme-lx, var(--tm-theme-x, 50vw))
+    var(--tm-theme-ly, var(--tm-theme-y, 50vh));
   will-change: clip-path, transform;
   animation: tm-theme-under-settle var(--tm-d-theme) var(--tm-ease-theme) both;
 }
