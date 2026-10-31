@@ -1,4 +1,44 @@
 // Platform-independent recovery gate; verified with rustc --test on CI.
+#[derive(Clone, Copy, Debug)]
+pub enum Failure {
+    Navigation,
+    RendererExit,
+    RendererUnresponsive,
+    BrowserExit,
+    GpuExit,
+    SubframeExit,
+    UtilityExit,
+}
+
+#[derive(Default)]
+pub struct RecoveryGate {
+    handled: bool,
+    restart: bool,
+}
+
+impl RecoveryGate {
+    pub fn offer(&mut self, failure: Failure) -> bool {
+        if matches!(failure, Failure::GpuExit | Failure::SubframeExit | Failure::UtilityExit) {
+            return false;
+        }
+        if matches!(failure, Failure::BrowserExit) {
+            self.restart = true;
+        }
+        if self.handled {
+            return false;
+        }
+        self.handled = true;
+        true
+    }
+
+    pub fn restart_required(&self) -> bool { self.restart }
+    pub fn has_failure(&self) -> bool { self.handled }
+
+    pub fn retry(&mut self) {
+        self.handled = false;
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

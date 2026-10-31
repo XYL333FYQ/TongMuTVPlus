@@ -28,6 +28,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Format native candidate for review
+        run: rustfmt --edition 2021 apps/desktop/src-tauri/src/main.rs apps/desktop/src-tauri/src/native_recovery.rs apps/desktop/src-tauri/src/recovery_policy.rs
+      - name: Preserve formatted native source
+        uses: actions/upload-artifact@v4
+        with:
+          name: desktop-native-formatted
+          path: |
+            apps/desktop/src-tauri/src/main.rs
+            apps/desktop/src-tauri/src/native_recovery.rs
+            apps/desktop/src-tauri/src/recovery_policy.rs
       - name: Verify recovery state without a browser engine
         run: |
           rustc --version
@@ -88,6 +98,14 @@ jobs:
         env:
           TM_BUILD: ${{ needs.stamp.outputs.build }}
         run: npx tauri build --target ${{ matrix.target }} --bundles nsis
+
+      - name: Preserve exact native dependency resolution
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: desktop-cargo-lock-${{ matrix.arch }}
+          path: apps/desktop/src-tauri/Cargo.lock
+          if-no-files-found: ignore
 
       - name: Collect installer and portable zip
         shell: bash

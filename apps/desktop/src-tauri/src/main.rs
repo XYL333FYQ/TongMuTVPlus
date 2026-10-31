@@ -2,6 +2,9 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 use tauri::{WebviewUrl, WebviewWindow, WebviewWindowBuilder};
+mod recovery_policy;
+#[cfg(windows)]
+mod native_recovery;
 
 // 本地"填写服务器地址"页的地址：Windows 上 Tauri 2 用 http://tauri.localhost，其他平台用 tauri://localhost
 #[cfg(windows)]
@@ -43,10 +46,17 @@ fn main() {
     tauri::Builder::default()
         .invoke_handler(tauri::generate_handler![tm_window, tm_fullscreen])
         .setup(|app| {
+            #[cfg(windows)]
+            let initial_url = if std::env::var_os(native_recovery::SETTINGS_ONCE).is_some() {
+                std::env::remove_var(native_recovery::SETTINGS_ONCE);
+                WebviewUrl::External(format!("{}?change=1", HOME_URL).parse()?)
+            } else { WebviewUrl::App("index.html".into()) };
+            #[cfg(not(windows))]
+            let initial_url = WebviewUrl::App("index.html".into());
             let script = INIT_SCRIPT
                 .replace("__HOME__", HOME_URL)
                 .replace("__BUILD__", option_env!("TM_BUILD").unwrap_or("0"));
-            WebviewWindowBuilder::new(app, "main", WebviewUrl::App("index.html".into()))
+            let window = WebviewWindowBuilder::new(app, "main", initial_url)
                 .title("TongMuTV Plus")
                 .inner_size(1280.0, 800.0)
                 .min_inner_size(800.0, 500.0)
@@ -57,6 +67,8 @@ fn main() {
                 .shadow(true)
                 .initialization_script(&script)
                 .build()?;
+            #[cfg(windows)]
+            native_recovery::install(&window)?;
             Ok(())
         })
         .run(tauri::generate_context!())

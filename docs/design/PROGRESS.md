@@ -1070,3 +1070,7 @@
 - 导航后续点按小批最终验证：首次 typecheck 仅原生 3221225477、无 TS 诊断，确认本项目本机预览端口未监听后串行重跑退出 0；lint0、完整 Jest175 套 1134 项 0、完整 format0。原始与重跑日志独立保留；新真实浏览器/镜像仍待验证。9d 受控 Worker 实际通过 active/controller=/sw.js、456 项仅 static、私有 API 离线不可读、SPA/重连不 reload，尚未计作新点按修正验收。
 - 回退演练通过：9d 新镜像在 internal 网络的最新真实数据库副本上健康、登录、我的/搜索/片库/播放记录/收藏/我的房间均 200；只对隔离测试账号新增一条记录。随后旧 132ca5f 镜像读取同一副本，记录仍存在、鉴权页面正常、integrity 仍 ok；两测试容器均停止，无正式写入。
 - 第五批 Windows 开始：按官方 WebView2 ProcessFailed/BrowserProcessExited 分类；GPU/子框架可自行恢复不替换整应用，主 renderer 才弹原生恢复，browser 退出要求重启。先增加纯 Rust 门禁用例和 Windows 工作流前置测试；本机按批准范围不装 Rust，首次红测放到 GitHub 非发布验证引用，失败会阻止 EXE 构建/发布，不将占位测试视为实现完成。实际旧 Windows 成功构建 40989619519 使用 tauri2.12.5，后续平台绑定以该版本为准。
+
+- Windows 红测 41225926301 按预期因缺 RecoveryGate/Failure 失败（runner rustc1.99.1 已运行），两架构构建/安装/发布均被前置门禁跳过。现补纯 Rust 去重/升级状态，并接 Win32 宿主 TaskDialog、恢复系统标题栏、WebView2 主 HTTP/网络/renderer/browser 事件；GPU/子框架保留引擎自行恢复，证书不放行。对 COM 回调先返回再投递原生弹窗，单个 watchdog 监视 40 秒连接，不逐导航创建等待线程。
+- Ruling：直接绑定现有成功构建的 tauri2.12.5 与 webview2-com0.39.1/windows0.62；只增加用户已批准的 Windows 平台绑定。Tauri 默认 manifest 已有 Common Controls v6。故障仅 renderer 时原生 Reload，browser 退出时走宿主 request_restart，服务器设置用一次性进程环境标志回到现有本地地址页，不新建持久存储键。关闭/退出是显式用户动作。
+- Windows 当前仅候选，未编译/未实测，初始化失败兜底、合法下载/外链分流和完整原生故障冒烟仍待做；不声称 STATUS_ACCESS_VIOLATION 根因已修复。CI 临时输出 rustfmt 候选和 Cargo.lock 供审阅，取回后须将格式步骤改成 check、固定真实依赖锁，不能留下自动格式冒充源码格式已过。
