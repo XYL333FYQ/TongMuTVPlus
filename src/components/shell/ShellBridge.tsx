@@ -50,7 +50,7 @@ export default function ShellBridge() {
     });
 
     // 只读监听页面里的音视频事件（不碰播放器代码），告诉壳现在有没有在播
-    let lastPlaying = false;
+    let lastPlaying: boolean | undefined;
     const reportPlaying = () => {
       const now = Array.from(
         document.querySelectorAll<HTMLMediaElement>('video,audio')
@@ -63,12 +63,35 @@ export default function ShellBridge() {
     mediaEvents.forEach((type) =>
       document.addEventListener(type, reportPlaying, true)
     );
+    // Mount/removal need not emit play/pause (for example a failed renderer or
+    // a removed music element). Keep native service state tied to actual media.
+    const hasMedia = (node: Node) =>
+      node instanceof Element &&
+      (node.matches('video,audio') ||
+        Boolean(node.querySelector('video,audio')));
+    const mediaObserver = new MutationObserver((records) => {
+      if (
+        records.some((record) =>
+          [
+            ...Array.from(record.addedNodes),
+            ...Array.from(record.removedNodes),
+          ].some(hasMedia)
+        )
+      )
+        reportPlaying();
+    });
+    mediaObserver.observe(document.documentElement, {
+      childList: true,
+      subtree: true,
+    });
+    reportPlaying();
 
     window.__tmShellBack = closeTopLayer;
     return () => {
       mediaEvents.forEach((type) =>
         document.removeEventListener(type, reportPlaying, true)
       );
+      mediaObserver.disconnect();
       observer.disconnect();
       settleObserver.disconnect();
       window.clearTimeout(settleTimer);
