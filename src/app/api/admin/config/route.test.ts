@@ -36,6 +36,8 @@ const post = (payload: unknown) =>
   );
 
 beforeEach(() => {
+  // 接口在本地存储模式下直接拒绝；测试自己声明用数据库存储，不依赖本机 .env（CI 里没有 .env）
+  process.env.NEXT_PUBLIC_STORAGE_TYPE = 'd1';
   process.env.USERNAME = 'owner';
   (db.getUserInfoV2 as jest.Mock).mockResolvedValue({
     role: 'admin',
