@@ -5,19 +5,22 @@
 import { motion } from 'framer-motion';
 import { Bot, X } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Suspense, useEffect, useState } from 'react';
+import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
 
-import {
-  BangumiCalendarData,
-  GetBangumiCalendarData,
-} from '@/lib/bangumi.client';
+import type { BangumiCalendarData } from '@/lib/bangumi.client';
 import { AI_WELCOME_MESSAGE } from '@/lib/brand';
-import { getDoubanCategories } from '@/lib/douban.client';
+import {
+  type HomeCatalogueData,
+  HOME_CACHE_KEYS,
+  HOME_MODULE_KEYS,
+  loadHomeCatalogue,
+} from '@/lib/home-catalogue';
 import { useReducedMotionSetting } from '@/lib/motion';
 import type { TMDBItem } from '@/lib/tmdb.client';
 import { getTMDBImageUrl } from '@/lib/tmdb-image-base';
 import { DoubanItem } from '@/lib/types';
 import { base58Encode, processImageUrl } from '@/lib/utils';
+import { usePageRefresh } from '@/hooks/usePageRefresh';
 import { useViewerIdentity } from '@/hooks/useViewerIdentity';
 
 import AIChatPanel, { preloadAIChatPanel } from '@/components/AIChatPanel.lazy';
@@ -72,6 +75,47 @@ function HomeClient() {
   const [homeBannerEnabled, setHomeBannerEnabled] = useState(true);
   const [homeContinueWatchingEnabled, setHomeContinueWatchingEnabled] =
     useState(true);
+  const homeLoadGeneration = useRef(0);
+  const applyHomeCatalogue = useCallback((data: Partial<HomeCatalogueData>) => {
+    if (data.movies) setHotMovies(data.movies);
+    if (data.tvshows) setHotTvShows(data.tvshows);
+    if (data.variety) setHotVarietyShows(data.variety);
+    if (data.bangumi) setBangumiCalendarData(data.bangumi);
+    if (data.duanju) setHotDuanju(data.duanju);
+    if (data.upcoming) setUpcomingContent(data.upcoming);
+    for (const key of Object.keys(
+      HOME_CACHE_KEYS
+    ) as (keyof HomeCatalogueData)[]) {
+      if (!data[key]?.length) continue;
+      try {
+        localStorage.setItem(
+          HOME_CACHE_KEYS[key],
+          JSON.stringify({ data: data[key], timestamp: Date.now() })
+        );
+      } catch {
+        /* Optional catalogue cache must not block rendering. */
+      }
+    }
+  }, []);
+  useEffect(
+    () => () => {
+      homeLoadGeneration.current += 1;
+    },
+    []
+  );
+  usePageRefresh('/', async (signal) => {
+    const generation = ++homeLoadGeneration.current;
+    setLoading(false);
+    const keys = homeModules
+      .filter((module) => module.enabled)
+      .map((module) => HOME_MODULE_KEYS[module.id])
+      .filter(Boolean);
+    const result = await loadHomeCatalogue(keys, signal);
+    if (signal.aborted || generation !== homeLoadGeneration.current) return;
+    applyHomeCatalogue(result.data);
+    if (result.failed.length)
+      throw new Error('Some homepage sections could not refresh');
+  });
 
   const [showAnnouncement, setShowAnnouncement] = useState(false);
   const [showHttpWarning, setShowHttpWarning] = useState(true);
@@ -403,17 +447,6 @@ function HomeClient() {
       }
     };
 
-    const setCache = (key: string, data: any) => {
-      try {
-        localStorage.setItem(
-          key,
-          JSON.stringify({ data, timestamp: Date.now() })
-        );
-      } catch {
-        // Ignore localStorage errors
-      }
-    };
-
     const moviesCache = getCache('homepage_movies');
     const tvShowsCache = getCache('homepage_tvshows');
     const varietyCache = getCache('homepage_variety');
@@ -451,119 +484,21 @@ function HomeClient() {
       !upcomingCache ||
       upcomingCache.expired;
 
+    const generation = ++homeLoadGeneration.current;
+    let cancelled = false;
     if (needsRefresh) {
-      (async () => {
-        try {
-          const [
-            moviesData,
-            tvShowsData,
-            varietyShowsData,
-            bangumiCalendarData,
-          ] = await Promise.all([
-            getDoubanCategories({
-              kind: 'movie',
-              category: '热门',
-              type: '全部',
-            }).catch((error) => {
-              console.error('获取热门电影数据失败:', error);
-              return null;
-            }),
-            getDoubanCategories({
-              kind: 'tv',
-              category: 'tv',
-              type: 'tv',
-            }).catch((error) => {
-              console.error('获取热门剧集数据失败:', error);
-              return null;
-            }),
-            getDoubanCategories({
-              kind: 'tv',
-              category: 'show',
-              type: 'show',
-            }).catch((error) => {
-              console.error('获取热门综艺数据失败:', error);
-              return null;
-            }),
-            GetBangumiCalendarData().catch((error) => {
-              console.error('获取新番放送数据失败:', error);
-              return [];
-            }),
-          ]);
-
-          if (moviesData?.code === 200) {
-            setHotMovies(moviesData.list);
-            if (moviesData.list && moviesData.list.length > 0) {
-              setCache('homepage_movies', moviesData.list);
-            }
-          }
-          if (tvShowsData?.code === 200) {
-            setHotTvShows(tvShowsData.list);
-            if (tvShowsData.list && tvShowsData.list.length > 0) {
-              setCache('homepage_tvshows', tvShowsData.list);
-            }
-          }
-          if (varietyShowsData?.code === 200) {
-            setHotVarietyShows(varietyShowsData.list);
-            if (varietyShowsData.list && varietyShowsData.list.length > 0) {
-              setCache('homepage_variety', varietyShowsData.list);
-            }
-          }
-          setBangumiCalendarData(bangumiCalendarData);
-          if (bangumiCalendarData && bangumiCalendarData.length > 0) {
-            setCache('homepage_bangumi', bangumiCalendarData);
-          }
-
-          try {
-            const duanjuResponse = await fetch('/api/duanju/recommends');
-            if (duanjuResponse.ok) {
-              const duanjuResult = await duanjuResponse.json();
-              if (
-                duanjuResult.code === 200 &&
-                duanjuResult.data &&
-                duanjuResult.data.length > 0
-              ) {
-                setHotDuanju(duanjuResult.data);
-                setCache('homepage_duanju', duanjuResult.data);
-              }
-            }
-          } catch (error) {
-            console.error('获取热播短剧数据失败:', error);
-          }
-
-          try {
-            const response = await fetch('/api/tmdb/upcoming');
-            if (response.ok) {
-              const result = await response.json();
-              if (
-                result.code === 200 &&
-                result.data &&
-                result.data.length > 0
-              ) {
-                const sorted = [...result.data].sort((a, b) => {
-                  const dateA = new Date(
-                    a.release_date || '9999-12-31'
-                  ).getTime();
-                  const dateB = new Date(
-                    b.release_date || '9999-12-31'
-                  ).getTime();
-                  return dateA - dateB;
-                });
-                setUpcomingContent(sorted);
-                setCache('homepage_upcoming', sorted);
-              }
-            }
-          } catch (error) {
-            console.error('获取TMDB即将上映数据失败:', error);
-          }
-
-          setLoading(false);
-        } catch (error) {
-          console.error('获取推荐数据失败:', error);
-          setLoading(false);
-        }
-      })();
+      void loadHomeCatalogue().then((result) => {
+        if (cancelled || generation !== homeLoadGeneration.current) return;
+        applyHomeCatalogue(result.data);
+        if (result.failed.length)
+          console.error('首页部分内容暂时无法获取:', result.failed.join(', '));
+        setLoading(false);
+      });
     }
-  }, []);
+    return () => {
+      cancelled = true;
+    };
+  }, [applyHomeCatalogue]);
 
   const handleCloseAnnouncement = (announcement: string) => {
     setShowAnnouncement(false);
@@ -806,7 +741,11 @@ function HomeClient() {
         <PageContainer className='tm-home-body'>
           <div className='tm-home-pair'>
             {homeContinueWatchingEnabled && (
-              <ContinueWatching className='tm-home-resume' homeLayout />
+              <ContinueWatching
+                className='tm-home-resume'
+                homeLayout
+                refreshPath='/'
+              />
             )}
             <HomeRooms />
           </div>

@@ -18,6 +18,7 @@ import {
 import { publicCatalogCategories } from '@/lib/public-catalog';
 import { DoubanItem, DoubanResult } from '@/lib/types';
 import { useClientMemoryState } from '@/hooks/useClientMemoryState';
+import { usePageRefresh } from '@/hooks/usePageRefresh';
 import { useViewerIdentity } from '@/hooks/useViewerIdentity';
 
 import BangumiScheduleTimeline from '@/components/BangumiScheduleTimeline';
@@ -47,7 +48,14 @@ function DoubanPageClient() {
   const loadedSignature = useRef<string | null>(null);
   const loadedAt = useRef(0);
   const loadedPage = useRef(0);
+  const dataGeneration = useRef(0);
   const restoredPage = useRef<{ signature: string; page: number } | null>(null);
+  useEffect(
+    () => () => {
+      dataGeneration.current += 1;
+    },
+    []
+  );
 
   // 用于存储最新参数值的 refs
   const currentParamsRef = useRef({
@@ -346,7 +354,8 @@ function DoubanPageClient() {
 
   // 防抖的数据加载函数
   const loadInitialData = useCallback(
-    async (allowMemory = true) => {
+    async (allowMemory = true, signal?: AbortSignal) => {
+      const generation = ++dataGeneration.current;
       const saved = allowMemory
         ? readCatalogMemory(type, signature)
         : undefined;
@@ -361,7 +370,7 @@ function DoubanPageClient() {
         setLoadingError('');
         setLoading(false);
         setIsLoadingMore(false);
-        return;
+        return true;
       }
       loadedSignature.current = null;
       restoredPage.current = null;
@@ -372,16 +381,26 @@ function DoubanPageClient() {
         secondarySelection,
         multiLevelSelection: multiLevelValues,
         selectedWeekday,
-        currentPage: 0,
+        currentPage: signal ? currentParamsRef.current.currentPage : 0,
       };
+
+      const onAbort = () => {
+        if (generation !== dataGeneration.current) return;
+        dataGeneration.current += 1;
+        setLoading(false);
+        setIsLoadingMore(false);
+      };
+      signal?.addEventListener('abort', onAbort, { once: true });
 
       try {
         setLoading(true);
         setLoadingError('');
         // 确保在加载初始数据时重置页面状态
-        setDoubanData([]);
-        setCurrentPage(0);
-        setHasMore(true);
+        if (!signal) {
+          setDoubanData([]);
+          setCurrentPage(0);
+          setHasMore(true);
+        }
         setIsLoadingMore(false);
 
         let data: DoubanResult;
@@ -487,13 +506,19 @@ function DoubanPageClient() {
           // 使用 ref 获取最新的当前值
           const currentSnapshot = { ...currentParamsRef.current };
 
-          if (isSnapshotEqual(requestSnapshot, currentSnapshot)) {
+          if (
+            !signal?.aborted &&
+            generation === dataGeneration.current &&
+            isSnapshotEqual(requestSnapshot, currentSnapshot)
+          ) {
             loadedSignature.current = signature;
             loadedAt.current = Date.now();
             loadedPage.current = 0;
             setDoubanData(data.list);
+            if (signal) setCurrentPage(0);
             setHasMore(data.list.length !== 0);
             setLoading(false);
+            return true;
           } else {
             console.log('参数不一致，不执行任何操作，避免设置过期数据');
           }
@@ -503,11 +528,18 @@ function DoubanPageClient() {
         }
       } catch (err) {
         console.error(err);
-        if (isSnapshotEqual(requestSnapshot, currentParamsRef.current)) {
+        if (
+          !signal?.aborted &&
+          generation === dataGeneration.current &&
+          isSnapshotEqual(requestSnapshot, currentParamsRef.current)
+        ) {
           setLoadingError('影视信息暂时无法获取');
           setLoading(false);
         }
+      } finally {
+        signal?.removeEventListener('abort', onAbort);
       }
+      return false;
     },
     [
       type,
@@ -519,6 +551,17 @@ function DoubanPageClient() {
       customCategories,
       signature,
     ]
+  );
+
+  usePageRefresh(
+    '/douban',
+    async (signal) => {
+      const refreshed = await loadInitialData(false, signal);
+      if (!refreshed && !signal.aborted)
+        throw new Error('Catalogue refresh failed');
+    },
+    selectorsReady,
+    memoryScope + ':' + signature
   );
 
   // 只在选择器准备好后才加载数据
@@ -557,6 +600,7 @@ function DoubanPageClient() {
   // 单独处理 currentPage 变化（加载更多）
   useEffect(() => {
     let cancelled = false;
+    const generation = dataGeneration.current;
     if (
       restoredPage.current?.signature === signature &&
       restoredPage.current.page === currentPage
@@ -665,6 +709,7 @@ function DoubanPageClient() {
 
             if (
               !cancelled &&
+              generation === dataGeneration.current &&
               isSnapshotEqual(requestSnapshot, currentSnapshot)
             ) {
               loadedSignature.current = signature;
@@ -681,12 +726,14 @@ function DoubanPageClient() {
         } catch (err) {
           if (
             !cancelled &&
+            generation === dataGeneration.current &&
             isSnapshotEqual(requestSnapshot, currentParamsRef.current)
           ) {
             setLoadingError('下一页加载失败，已保留当前内容');
           }
         } finally {
-          if (!cancelled) setIsLoadingMore(false);
+          if (!cancelled && generation === dataGeneration.current)
+            setIsLoadingMore(false);
         }
       };
 

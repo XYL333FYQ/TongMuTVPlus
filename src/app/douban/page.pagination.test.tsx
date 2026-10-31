@@ -1,6 +1,7 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
 
 import { clearClientMemory } from '@/lib/client-memory';
+import { refreshPage } from '@/lib/page-refresh';
 
 import DoubanPage from './page';
 
@@ -161,4 +162,67 @@ test('a late page from the previous category cannot appear after changing the fi
   });
   expect(screen.queryByText('不应出现的旧页')).not.toBeInTheDocument();
   expect(screen.getByText('新分类影片')).toBeInTheDocument();
+});
+
+test('pull refresh bypasses tab memory and excludes a late page from before refresh', async () => {
+  document.documentElement.dataset.tmPlatform = 'app';
+  let finishOld!: (value: ReturnType<typeof page>) => void;
+  mockCategories
+    .mockResolvedValueOnce(page('旧首批'))
+    .mockImplementationOnce(
+      () => new Promise((resolve) => (finishOld = resolve))
+    )
+    .mockResolvedValueOnce(page('刷新首批'));
+  render(<DoubanPage />);
+  await screen.findByText('旧首批');
+  fireEvent.click(screen.getByRole('button', { name: '加载更多' }));
+  await act(async () => {
+    expect(await refreshPage('/douban')).toBe('success');
+    finishOld(page('过期第二页'));
+  });
+  expect(screen.getByText('刷新首批')).toBeInTheDocument();
+  expect(screen.queryByText('过期第二页')).not.toBeInTheDocument();
+  expect(
+    mockCategories.mock.calls.map(([request]) => request.pageStart)
+  ).toEqual([0, 25, 0]);
+});
+
+test('failed pull keeps existing catalogue content and reports failure', async () => {
+  document.documentElement.dataset.tmPlatform = 'app';
+  mockCategories
+    .mockResolvedValueOnce(page('保留影片'))
+    .mockRejectedValueOnce(new Error('offline'));
+  render(<DoubanPage />);
+  await screen.findByText('保留影片');
+  await act(async () => expect(await refreshPage('/douban')).toBe('failed'));
+  expect(screen.getByText('保留影片')).toBeInTheDocument();
+});
+
+test('timed-out refresh keeps the old catalogue and ignores its late response', async () => {
+  document.documentElement.dataset.tmPlatform = 'app';
+  let finishLate!: (value: ReturnType<typeof page>) => void;
+  mockCategories
+    .mockResolvedValueOnce(page('可继续浏览'))
+    .mockImplementationOnce(
+      () => new Promise((resolve) => (finishLate = resolve))
+    );
+  render(<DoubanPage />);
+  await screen.findByText('可继续浏览');
+  jest.useFakeTimers();
+  try {
+    let pending!: Promise<unknown>;
+    await act(async () => {
+      pending = refreshPage('/douban');
+    });
+    await act(async () => {
+      jest.advanceTimersByTime(20000);
+      expect(await pending).toBe('timeout');
+    });
+    expect(screen.getByText('可继续浏览')).toBeInTheDocument();
+    await act(async () => finishLate(page('迟到的刷新')));
+    expect(screen.queryByText('迟到的刷新')).not.toBeInTheDocument();
+    expect(screen.getByText('可继续浏览')).toBeInTheDocument();
+  } finally {
+    jest.useRealTimers();
+  }
 });

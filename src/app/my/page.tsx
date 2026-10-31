@@ -137,7 +137,7 @@ function MyPageClient() {
           <VisualPreferenceControls />
         </div>
 
-        <ContinueWatching className='tm-my-resume' />
+        <ContinueWatching className='tm-my-resume' refreshPath='/my' />
 
         {downloadsEnabled && showDownloads && (
           <OfflineDownloadPanel

@@ -7,13 +7,16 @@ import { createPortal } from 'react-dom';
 
 import '@/styles/panels.css';
 
+import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
 import type { PlayRecord } from '@/lib/db.client';
 import {
   clearAllPlayRecords,
+  fetchWithAuth,
   getAllPlayRecords,
   getCachedPlayRecordsSnapshot,
   subscribeToDataUpdates,
 } from '@/lib/db.client';
+import { usePageRefresh } from '@/hooks/usePageRefresh';
 
 import SectionHeader from '@/components/catalog/SectionHeader';
 import { ConfirmDialog } from '@/components/feedback/ConfirmDialog';
@@ -24,6 +27,7 @@ import VirtualScrollableRow from '@/components/VirtualScrollableRow';
 interface ContinueWatchingProps {
   className?: string;
   homeLayout?: boolean;
+  refreshPath?: '/' | '/my';
 }
 
 type PlayRecordItem = PlayRecord & { key: string };
@@ -35,6 +39,7 @@ function HomeRecordRow({ children }: { children: React.ReactNode }) {
 export default function ContinueWatching({
   className,
   homeLayout = false,
+  refreshPath,
 }: ContinueWatchingProps) {
   const RecordRow = homeLayout ? HomeRecordRow : VirtualScrollableRow;
   const storageType = process.env.NEXT_PUBLIC_STORAGE_TYPE || 'localstorage';
@@ -99,6 +104,36 @@ export default function ContinueWatching({
     fetchPlayRecords();
     return unsubscribe;
   }, [cachedDisplayLimit]);
+
+  usePageRefresh(
+    refreshPath || '',
+    async (signal) => {
+      if (storageType === 'localstorage') {
+        const records = await getAllPlayRecords();
+        if (!signal.aborted) updatePlayRecords(records);
+        return;
+      }
+      const username = getAuthInfoFromBrowserCookie()?.username;
+      if (!username) throw new Error('No authenticated records account');
+      const response = await fetchWithAuth('/api/playrecords', {
+        cache: 'no-store',
+        signal,
+      });
+      if (!response.ok) throw new Error('Records refresh failed');
+      const records: Record<string, PlayRecord> = await response.json();
+      if (signal.aborted) return;
+      if (getAuthInfoFromBrowserCookie()?.username !== username)
+        throw new Error('Records account changed');
+      if (!records || typeof records !== 'object' || Array.isArray(records))
+        throw new Error('Invalid records response');
+      // Existing subscribers apply the ordinary/special-source visibility rule.
+      // Do not replace private DB cache keys or write raw records into the UI.
+      window.dispatchEvent(
+        new CustomEvent('playRecordsUpdated', { detail: records })
+      );
+    },
+    Boolean(refreshPath)
+  );
 
   if (!loading && playRecords.length === 0) return null;
 

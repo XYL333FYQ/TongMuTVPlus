@@ -4,8 +4,11 @@ import { RotateCw } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 
+import { refreshPage } from '@/lib/page-refresh';
 import { getPlatform } from '@/lib/platform';
 import { haptic } from '@/lib/shell-bridge';
+
+import { notify } from '@/components/feedback/AppDialogs';
 
 // 自制下拉刷新只在 App（安卓壳、安装到主屏幕的网页应用）里启用：这两处没有浏览器自带的下拉刷新，
 // 而页面又禁了整页回弹。普通手机浏览器保留浏览器自己的下拉刷新，不重复做一套。
@@ -53,13 +56,18 @@ export default function MobileGestures() {
     const el = indicator.current;
     if (!el) return;
     let startY = 0;
+    let startX = 0;
     let pulling = false;
     let distance = 0;
+    let refreshing = false;
+    let disposed = false;
 
-    const reset = () => {
+    const reset = (settle = false) => {
       pulling = false;
       distance = 0;
-      el.style.transition = '';
+      el.style.transition = settle
+        ? 'transform 200ms ease-out, opacity 200ms'
+        : '';
       el.style.opacity = '0';
       el.style.transform = 'translate(-50%, -48px)';
     };
@@ -67,18 +75,38 @@ export default function MobileGestures() {
       Array.from(document.querySelectorAll('video')).some((v) => !v.paused);
 
     const onStart = (event: TouchEvent) => {
+      if (refreshing) return;
+      reset();
       if (event.touches.length !== 1 || window.scrollY > 0) return;
-      if (document.querySelector('[role="dialog"][aria-modal="true"]')) return;
+      if (document.documentElement.dataset.tmKeyboard === 'open') return;
+      if (
+        document.querySelector(
+          'dialog[open], [role="dialog"][aria-modal="true"]'
+        )
+      )
+        return;
+      if (
+        (event.target as Element | null)?.closest?.(
+          'input, textarea, select, [contenteditable="true"], .tm-mobile-nav, [role="menu"], [role="listbox"]'
+        )
+      )
+        return;
       if (videoPlaying()) return;
       startY = event.touches[0].clientY;
+      startX = event.touches[0].clientX;
       pulling = true;
       el.style.transition = 'none';
     };
     const onMove = (event: TouchEvent) => {
       if (!pulling) return;
+      if (event.touches.length !== 1) {
+        reset(true);
+        return;
+      }
       const dy = event.touches[0].clientY - startY;
-      if (dy <= 0 || window.scrollY > 0) {
-        reset();
+      const dx = event.touches[0].clientX - startX;
+      if (dy <= 0 || Math.abs(dx) > dy || window.scrollY > 0) {
+        reset(true);
         return;
       }
       distance = dy * 0.5;
@@ -91,27 +119,48 @@ export default function MobileGestures() {
     const onEnd = () => {
       if (!pulling) return;
       if (distance >= TRIGGER) {
+        pulling = false;
+        refreshing = true;
         haptic(12);
         el.style.transition = 'transform 160ms ease-out';
         el.style.transform = `translate(-50%, ${TRIGGER - 48}px)`;
-        window.location.reload();
+        void refreshPage(pathname || '')
+          .then((result) => {
+            if (disposed) return;
+            if (result === 'failed' || result === 'timeout')
+              notify('暂时无法刷新，请稍后再试。', 'error');
+            else if (result === 'unavailable')
+              notify('当前页面暂无可刷新的内容。');
+          })
+          .catch(() => {
+            if (!disposed) notify('暂时无法刷新，请稍后再试。', 'error');
+          })
+          .finally(() => {
+            if (disposed) return;
+            refreshing = false;
+            reset(true);
+          });
         return;
       }
-      el.style.transition = 'transform 200ms ease-out, opacity 200ms';
-      reset();
+      reset(true);
+    };
+    const onCancel = () => {
+      if (!refreshing) reset(true);
     };
 
     document.addEventListener('touchstart', onStart, { passive: true });
     document.addEventListener('touchmove', onMove, { passive: true });
     document.addEventListener('touchend', onEnd);
-    document.addEventListener('touchcancel', onEnd);
+    document.addEventListener('touchcancel', onCancel);
     return () => {
+      disposed = true;
       document.removeEventListener('touchstart', onStart);
       document.removeEventListener('touchmove', onMove);
       document.removeEventListener('touchend', onEnd);
-      document.removeEventListener('touchcancel', onEnd);
+      document.removeEventListener('touchcancel', onCancel);
+      reset();
     };
-  }, [enabled]);
+  }, [enabled, pathname]);
 
   // —— iPhone：浏览器里打开时，引导“添加到主屏幕”以获得全屏体验 ——
   useEffect(() => {

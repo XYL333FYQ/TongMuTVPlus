@@ -1019,3 +1019,13 @@
 - API24 的真实 IME 开关在 41210025661 通过，已检查键盘截图与 native open/closed 上报。API34 失败的 XML 显示通知授权对话框遮住网页，并非输入法判断已证实有错；测试改为识别 permission_deny_button 明确拒绝后再找输入框。用首次失败 API34 XML 回放输出 permission 160 420，用 API24 XML 输出 input 139 132；bash -n 通过。未改 App 逻辑。
 - 备份已完成：VPS backups/client-experience-20261031T142823Z，SQLite 在线 backup 后 integrity_check=ok，保留 auth-secret、Compose/.env、nginx 与旧 static，共 16M；旧镜像另有本地 client-rollback-132ca5f 标签。生产仍是 ba65d689…；发布时仍须复核健康、静态兼容和代码回退，备份不等于已部署。
 - Ruling：本次输入法测试修正先推临时 codex/client-ime-verification 引用进行非发布构建；主任务远端保持 b60eeea，避免同 ref 的自动 Checks 取消正在运行的 41210096560 镜像门禁。镜像门禁结束后再把同一提交推回任务分支，不分叉应用实现、不发布测试 APK。
+
+- 取证制品闭环：41210096560（b60eeea）双架构成功，digest sha256:46e5ac38f5af14232c18b308363c045be92ffd9943fb7abea09fdd3cf00afae8；latest/v0.1.1 仍是 ba65d689…；VPS ARM64 的 OCI revision 与 b60eeea 完整提交匹配。新隔离实例 127.0.0.1:3009 健康，浏览器容器 tm-client-audit-browser-b60eeea 退出 0，六组 390/820/1280 深浅真实 reload/SPA、Worker /sw.js 激活、脚本匿名可读、清除诊断及五栏恢复均通过，pageerror 空。证据服务器 services/client-experience-audit/b60eeea/artifacts，尚未切正式服务，非 OriginOS GPU 帧验证。
+- Android 输入法闭环：41210597220（e068670）APK 与 API24/34 真 IME 开关通过，release 跳过。已下载两组截图与日志，API34 有 native closed → open → closed；原“通知权限遮住输入框”失败证据保留。e068670 已推回主任务分支，临时验证引用仅用于测试。
+- 第三批 C 实施中：新增有界页面刷新登记/usePageRefresh，20 秒超时、重复合并、卸载取消和失败传播；MobileGestures 不再整页 reload，修复 touchcancel 触发刷新及横向/键盘/native dialog 抢手势。原 MobileGestures 五项平台边界测试恢复原样，新用例独立文件，未删除既有覆盖。
+- 片库接入绕过栏目缓存的局部刷新，失败/超时保留旧列表，初始与分页请求使用代次挡住旧结果；首载/回栏/分页既有回归仍通过。首页首载与手动刷新共用加载器，手动只取可见推荐模块，保留原缓存键/TTL/排序/可选空结果保留规则。搜索等实际 HTTP/SSE 完成才结束刷新，不改变流事件名或结果过滤；修复布尔刷新回置导致二次 Effect 请求，离开后旧流不重建缓存。我的/首页播放记录走既有鉴权 GET 和规范事件，取消/换账号不发布迟到数据，不改 db.client 私有缓存或持久键。
+- Ruling：播放记录只更新当前页与规范订阅者，不操作受保护的私有混合缓存；后续重新挂载仍沿用已有缓存先显/后台同步策略，不声称已重构全部账户缓存一致性。首页轮播/房间摘要、网盘/磁力子工具尚未接入本批下拉刷新，不将第三批打勾。
+- 第三批 C 定向 7 套/36 项通过（随后新增 SSE 完成/卸载回归，搜索单套 8 项通过）；当前源码 typecheck 退出 0，完整 lint/Jest/format 与浏览器/媒体单例验证待接续。所有证据在 output/client-experience-\*，不得把定向测试代替最终效果。
+
+- 第三批 C 静态检查收尾：typecheck 0、完整 lint 0；标准 pnpm Jest/format 各遇无 TS/断言诊断的原生退出 3221225477，原日志保留。备用 Node 24.22.1 --jitless 首次全量在 public-runtime-config 的依赖初始化报 undefined.isArray，173 套/1119 项已通过；该套单独 4 项通过，最终全量 174 套/1123 项全部通过（local-refresh-final.json）。所有 18 个改动/新增可格式化文件同版本 Prettier 逐文件退出 0；完整 format:check 仍由 Linux CI 补证，不标成本机完整通过。
+- 下一门禁：本批提交固定到 codex/client-refresh-verification 构建验证，后续原生改动不移动该引用，避免取消镜像门禁；新局部刷新仍未做实际浏览器/媒体单例验收，不能据静态检查称交付。b60eeea 的浏览器结果只证明上一批 Worker/栏目记忆，不覆盖当前未构建源码。

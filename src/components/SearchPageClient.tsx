@@ -36,6 +36,7 @@ import {
   addSearchHistory,
   clearSearchHistory,
   deleteSearchHistory,
+  fetchWithAuth,
   getSearchHistory,
   subscribeToDataUpdates,
 } from '@/lib/db.client';
@@ -51,6 +52,7 @@ import {
 import { SearchResult } from '@/lib/types';
 import { processImageUrl } from '@/lib/utils';
 import { useClientMemoryState } from '@/hooks/useClientMemoryState';
+import { usePageRefresh } from '@/hooks/usePageRefresh';
 
 import AcgSearch from '@/components/AcgSearch';
 import CapsuleSwitch from '@/components/catalog/CapsuleSwitch';
@@ -177,7 +179,21 @@ export function SearchPageClient({
     >
   >(new Map());
   // 强制刷新状态
-  const [forceRefresh, setForceRefresh] = useState(false);
+  const [searchRefreshVersion, setSearchRefreshVersion] = useState(0);
+  const forceSearchRefresh = useRef(false);
+  const searchAttempt = useRef(0);
+  useEffect(
+    () => () => {
+      searchAttempt.current += 1;
+    },
+    []
+  );
+  const pullRefresh = useRef<{
+    signal: AbortSignal;
+    account: string;
+    cancel: () => void;
+    finish: (error?: Error) => void;
+  } | null>(null);
   // 是否使用了缓存结果
   const [isFromCache, setIsFromCache] = useState(false);
   // 精确搜索开关
@@ -189,6 +205,75 @@ export function SearchPageClient({
   const [privateLibraryOnly, setPrivateLibraryOnly] = useState(false);
   const [privateLibraryOnlyReady, setPrivateLibraryOnlyReady] = useState(false);
   const privateLibraryOnlyLoadedRef = useRef(false);
+  usePageRefresh(
+    '/search',
+    async (signal) => {
+      if (!submittedSearchQuery) {
+        if (isGuest) return;
+        const username = getAuthInfoFromBrowserCookie()?.username;
+        if (!username) throw new Error('No search history account');
+        let history: string[];
+        if (
+          process.env.NEXT_PUBLIC_STORAGE_TYPE === 'localstorage' ||
+          !process.env.NEXT_PUBLIC_STORAGE_TYPE
+        )
+          history = await getSearchHistory();
+        else {
+          const response = await fetchWithAuth('/api/searchhistory', {
+            cache: 'no-store',
+            signal,
+          });
+          if (!response.ok) throw new Error('History refresh failed');
+          const data = await response.json();
+          if (!Array.isArray(data)) throw new Error('Invalid history response');
+          history = [
+            ...new Set(
+              data.filter((value): value is string => typeof value === 'string')
+            ),
+          ];
+        }
+        if (signal.aborted) return;
+        if (getAuthInfoFromBrowserCookie()?.username !== username)
+          throw new Error('History account changed');
+        setSearchHistory(history);
+        return;
+      }
+      if (signal.aborted) return;
+      await new Promise<void>((resolve, reject) => {
+        const ticket = {
+          signal,
+          account: getAuthInfoFromBrowserCookie()?.username || '',
+          cancel: () => undefined as void,
+          finish: (error?: Error) => {
+            if (pullRefresh.current !== ticket) return;
+            pullRefresh.current = null;
+            signal.removeEventListener('abort', onAbort);
+            if (error) reject(error);
+            else resolve();
+          },
+        };
+        const onAbort = () => {
+          ticket.cancel();
+          ticket.finish(
+            new DOMException('Search refresh cancelled', 'AbortError')
+          );
+        };
+        pullRefresh.current = ticket;
+        signal.addEventListener('abort', onAbort, { once: true });
+        forceSearchRefresh.current = true;
+        setSearchRefreshVersion((version) => version + 1);
+      });
+    },
+    searchBase === '/search' &&
+      converterReady &&
+      privateLibraryOnlyReady &&
+      (isGuest ||
+        !searchParams.get('type') ||
+        searchParams.get('type') === 'video'),
+    `${searchBase}:${isGuest}:${submittedSearchQuery}:${
+      searchParams.get('type') || ''
+    }`
+  );
   const advancedButtonRefs = useRef<HTMLButtonElement[]>([]);
   const advancedDropdownRefs = useRef<HTMLDivElement[]>([]);
 
@@ -1316,6 +1401,25 @@ export function SearchPageClient({
       }
     }
 
+    const forceRefresh = forceSearchRefresh.current;
+    forceSearchRefresh.current = false;
+    const attempt = ++searchAttempt.current;
+    const pull = pullRefresh.current;
+    const isCurrent = () =>
+      attempt === searchAttempt.current &&
+      (!pull ||
+        (!pull.signal.aborted &&
+          pull.account === (getAuthInfoFromBrowserCookie()?.username || '')));
+    const finish = (error?: Error) => {
+      if (isCurrent()) pull?.finish(error);
+    };
+    const setCancel = (cancel: () => void) => {
+      if (pull)
+        pull.cancel = () => {
+          cancel();
+          if (attempt === searchAttempt.current) setIsLoading(false);
+        };
+    };
     currentQueryRef.current = query.trim();
 
     const typeParam = searchParams.get('type');
@@ -1347,9 +1451,6 @@ export function SearchPageClient({
         setShowResults(false);
         setShowSuggestions(false);
       }
-      if (forceRefresh) {
-        setForceRefresh(false);
-      }
       return;
     }
 
@@ -1361,6 +1462,7 @@ export function SearchPageClient({
       // Guests query only public film metadata and never restore authenticated source caches.
       if (isGuest) {
         const controller = new AbortController();
+        setCancel(() => controller.abort());
         setIsLoading(true);
         setShowResults(true);
         setSearchResults([]);
@@ -1369,7 +1471,6 @@ export function SearchPageClient({
         setIsFromCache(false);
         setTotalSources(1);
         setCompletedSources(0);
-        if (forceRefresh) setForceRefresh(false);
         fetch(
           `/api/public/catalog?mode=search&q=${encodeURIComponent(trimmed)}`,
           { signal: controller.signal }
@@ -1381,6 +1482,7 @@ export function SearchPageClient({
           .then((data: { items: PublicCatalogItem[] }) => {
             if (
               currentQueryRef.current !== trimmed ||
+              !isCurrent() ||
               controller.signal.aborted
             )
               return;
@@ -1404,16 +1506,20 @@ export function SearchPageClient({
             );
           })
           .catch(() => {
-            if (!controller.signal.aborted)
+            if (!controller.signal.aborted && isCurrent()) {
               setGuestSearchError('影视信息暂时无法获取，请稍后重试。');
+              finish(new Error('Public search failed'));
+            }
           })
           .finally(() => {
             if (
               !controller.signal.aborted &&
+              isCurrent() &&
               currentQueryRef.current === trimmed
             ) {
               setIsLoading(false);
               setCompletedSources(1);
+              finish();
             }
           });
         return () => controller.abort();
@@ -1440,7 +1546,6 @@ export function SearchPageClient({
       // 如果是强制刷新，清除缓存
       if (forceRefresh) {
         clearCachedResults(trimmed);
-        setForceRefresh(false);
       }
 
       // 开始新搜索时，重置缓存标记
@@ -1492,12 +1597,17 @@ export function SearchPageClient({
         }`;
         const es = new EventSource(appendSpecialSourceParam(searchUrl));
         eventSourceRef.current = es;
+        setCancel(() => {
+          es.close();
+          if (eventSourceRef.current === es) eventSourceRef.current = null;
+        });
+        let streamFailed = false;
 
         es.onmessage = (event) => {
           if (!event.data) return;
           try {
             const payload = JSON.parse(event.data);
-            if (currentQueryRef.current !== trimmed) return;
+            if (currentQueryRef.current !== trimmed || !isCurrent()) return;
             switch (payload.type) {
               case 'start':
                 setTotalSources(payload.totalSources || 0);
@@ -1522,6 +1632,7 @@ export function SearchPageClient({
                   pendingResultsRef.current.push(...incoming);
                   if (!flushTimerRef.current) {
                     flushTimerRef.current = window.setTimeout(() => {
+                      if (!isCurrent()) return;
                       const toAppend = pendingResultsRef.current;
                       pendingResultsRef.current = [];
                       startTransition(() => {
@@ -1534,6 +1645,7 @@ export function SearchPageClient({
                 break;
               }
               case 'source_error':
+                streamFailed = true;
                 setCompletedSources((prev) => prev + 1);
                 break;
               case 'complete':
@@ -1562,6 +1674,11 @@ export function SearchPageClient({
                   });
                 }
                 setIsLoading(false);
+                finish(
+                  streamFailed
+                    ? new Error('Some search sources failed')
+                    : undefined
+                );
                 try {
                   es.close();
                 } catch {}
@@ -1574,7 +1691,9 @@ export function SearchPageClient({
         };
 
         es.onerror = () => {
+          if (!isCurrent()) return;
           setIsLoading(false);
+          finish(new Error('Search stream failed'));
           // 错误时也清空缓冲
           if (pendingResultsRef.current.length > 0) {
             const toAppend = pendingResultsRef.current;
@@ -1599,10 +1718,17 @@ export function SearchPageClient({
         const searchUrl = `/api/search?q=${encodeURIComponent(trimmed)}${
           privateLibraryOnly ? '&privateOnly=1' : ''
         }`;
-        fetch(appendSpecialSourceParam(searchUrl))
-          .then((response) => response.json())
+        const controller = new AbortController();
+        setCancel(() => controller.abort());
+        fetch(appendSpecialSourceParam(searchUrl), {
+          signal: controller.signal,
+        })
+          .then((response) => {
+            if (!response.ok) throw new Error('Search failed');
+            return response.json();
+          })
           .then((data) => {
-            if (currentQueryRef.current !== trimmed) return;
+            if (currentQueryRef.current !== trimmed || !isCurrent()) return;
 
             if (data.results && Array.isArray(data.results)) {
               const activeYearOrder =
@@ -1617,11 +1743,16 @@ export function SearchPageClient({
               setCachedResults(trimmed, results);
               setTotalSources(1);
               setCompletedSources(1);
+              finish();
+            } else {
+              finish(new Error('Invalid search response'));
             }
             setIsLoading(false);
           })
           .catch(() => {
+            if (!isCurrent()) return;
             setIsLoading(false);
+            finish(new Error('Search failed'));
           });
       }
       setShowSuggestions(false);
@@ -1634,7 +1765,7 @@ export function SearchPageClient({
     }
   }, [
     searchParams,
-    forceRefresh,
+    searchRefreshVersion,
     converterReady,
     privateLibraryOnlyReady,
     privateLibraryOnly,
@@ -2241,7 +2372,8 @@ export function SearchPageClient({
                       {searchQuery && (
                         <button
                           onClick={() => {
-                            setForceRefresh(true);
+                            forceSearchRefresh.current = true;
+                            setSearchRefreshVersion((version) => version + 1);
                           }}
                           disabled={isLoading}
                           className='tm-btn tm-btn-ghost tm-btn-sm'
