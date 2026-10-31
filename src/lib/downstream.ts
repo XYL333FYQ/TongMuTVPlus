@@ -1,9 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { API_CONFIG, ApiSite, getConfig } from '@/lib/config';
+import { cleanHtmlTags } from '@/lib/html-text';
 import { getCachedSearchPage, setCachedSearchPage } from '@/lib/search-cache';
 import { SearchResult } from '@/lib/types';
-import { cleanHtmlTags } from '@/lib/utils';
 
 interface ApiSearchItem {
   vod_id: string;

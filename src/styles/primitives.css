@@ -815,6 +815,11 @@ html[data-tm-theme-transition='circle'][data-tm-theme-target='dark']::view-trans
     color-mix(in srgb, var(--tm-video-bg) 48%, transparent) 95.2%,
     transparent 98.5% 100%
   );
+}
+/* 收拢式：光环随被裁切的旧画面一起往按钮收回（两个目标主题共用） */
+html[data-tm-theme-transition='circle'][data-tm-theme-motion='converge']::view-transition-group(
+    tm-theme-aura
+  ) {
   animation: tm-theme-lunar-retract var(--tm-d-theme) var(--tm-ease-theme) both;
 }
 @keyframes tm-theme-corona-expand {
@@ -889,12 +894,12 @@ html[data-tm-theme-transition='circle']::view-transition-old(root) {
 html[data-tm-theme-transition='circle']::view-transition-new(root) {
   z-index: 1;
 }
-html[data-tm-theme-transition='circle'][data-tm-theme-target='dark']::view-transition-old(
+html[data-tm-theme-transition='circle'][data-tm-theme-motion='converge']::view-transition-old(
     root
   ) {
   z-index: 1;
 }
-html[data-tm-theme-transition='circle'][data-tm-theme-target='dark']::view-transition-new(
+html[data-tm-theme-transition='circle'][data-tm-theme-motion='converge']::view-transition-new(
     root
   ) {
   z-index: 0;
@@ -902,21 +907,25 @@ html[data-tm-theme-transition='circle'][data-tm-theme-target='dark']::view-trans
 /*
  * 底层画面的呼吸：被圆揭开 / 被圆吞回的那一层不裁切，让它朝点击点轻微收放，
  * 和裁切圆同时长同缓动，新旧主题像一个东西在变形，而不是两张图叠换。
- * 浅色：旧画面（底层）从点击点略微放大离场；深色：新画面（底层）从略大回落。
+ * 铺开式（新画面在上层被圆撑开）：旧画面（底层）从点击点略微放大离场；
+ * 收拢式（旧画面在上层被圆收回）：新画面（底层）从略大回落。
+ * 铺开 / 收拢由 data-tm-theme-motion 决定：默认进深色收拢、进浅色铺开，App 里两个方向都收拢。
  * 缩放只能 ≥ 1：小于 1 会让画面四边内缩，露出下面的页面底色，形成"边界"。
  * 只动 transform，走合成层；被裁切的那层不加变换，日冕环位置不受影响。
  */
-html[data-tm-theme-transition='circle'][data-tm-theme-target='light']::view-transition-old(
+html[data-tm-theme-transition='circle'][data-tm-theme-motion='spread']::view-transition-old(
     root
   ) {
-  transform-origin: var(--tm-theme-x, 50vw) var(--tm-theme-y, 50vh);
+  transform-origin: var(--tm-theme-lx, var(--tm-theme-x, 50vw))
+    var(--tm-theme-ly, var(--tm-theme-y, 50vh));
   will-change: clip-path, transform;
   animation: tm-theme-under-recede var(--tm-d-theme) var(--tm-ease-theme) both;
 }
-html[data-tm-theme-transition='circle'][data-tm-theme-target='dark']::view-transition-new(
+html[data-tm-theme-transition='circle'][data-tm-theme-motion='converge']::view-transition-new(
     root
   ) {
-  transform-origin: var(--tm-theme-x, 50vw) var(--tm-theme-y, 50vh);
+  transform-origin: var(--tm-theme-lx, var(--tm-theme-x, 50vw))
+    var(--tm-theme-ly, var(--tm-theme-y, 50vh));
   will-change: clip-path, transform;
   animation: tm-theme-under-settle var(--tm-d-theme) var(--tm-ease-theme) both;
 }

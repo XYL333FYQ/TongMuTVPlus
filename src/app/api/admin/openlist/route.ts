@@ -7,9 +7,9 @@ import { getConfig } from '@/lib/config';
 import { db } from '@/lib/db';
 import { OpenListClient } from '@/lib/openlist.client';
 import {
+  type OpenListPathMetaMap,
   normalizeOpenListPath,
   normalizePathMetaMap,
-  type OpenListPathMetaMap,
 } from '@/lib/openlist-path-meta';
 import { normalizeApiBaseUrl } from '@/lib/url';
 

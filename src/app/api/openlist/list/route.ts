@@ -4,7 +4,6 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig } from '@/lib/config';
-import { requireFeaturePermission } from '@/lib/permissions';
 import { db } from '@/lib/db';
 import {
   getCachedMetaInfo,
@@ -15,6 +14,7 @@ import {
   listPathMetaCategories,
   resolvePathMeta,
 } from '@/lib/openlist-path-meta';
+import { requireFeaturePermission } from '@/lib/permissions';
 import { getTMDBImageUrl } from '@/lib/tmdb.search';
 
 export const runtime = 'nodejs';

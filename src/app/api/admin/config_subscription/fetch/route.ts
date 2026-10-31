@@ -27,8 +27,26 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: '缺少URL参数' }, { status: 400 });
     }
 
-    // 直接 fetch URL 获取配置内容
-    const response = await fetch(url);
+    // 只允许 http(s)，并限时 15 秒：防止填错地址（file:、data: 等）或对方不响应时一直挂着。
+    // 内网地址仍允许：站长可能把订阅放在局域网里；别的网站诱导站长浏览器发起的请求已由中间件拦截。
+    let target: URL;
+    try {
+      target = new URL(String(url));
+    } catch {
+      return NextResponse.json(
+        { error: '订阅地址格式不正确' },
+        { status: 400 }
+      );
+    }
+    if (target.protocol !== 'http:' && target.protocol !== 'https:') {
+      return NextResponse.json(
+        { error: '订阅地址只支持 http 或 https' },
+        { status: 400 }
+      );
+    }
+    const response = await fetch(target.toString(), {
+      signal: AbortSignal.timeout(15000),
+    });
 
     if (!response.ok) {
       return NextResponse.json(

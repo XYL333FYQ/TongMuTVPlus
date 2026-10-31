@@ -89,7 +89,7 @@ export default function RoomFilmSelection() {
     }
   };
   return (
-    <PageLayout activePath='/watch-room'>
+    <PageLayout activePath='/watch-room' pageHasHeading>
       <PageContainer className='tm-rooms'>
         <header className='tm-rooms-heading'>
           <div>

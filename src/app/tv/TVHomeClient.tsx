@@ -150,6 +150,8 @@ export default function TVHomeClient() {
 
   return (
     <TVLayout>
+      {/* 电视首页没有可见大标题，给读屏补一个页名 */}
+      <h1 className='sr-only'>电视首页</h1>
       {loading ? (
         <div
           role='status'

@@ -1,4 +1,15 @@
-import { changeThemeWithTransition } from './theme-transition';
+import {
+  changeThemeWithTransition,
+  readSnapshotGeometry,
+  resolveThemeMotion,
+} from './theme-transition';
+
+// 测试里用简化的假实现替换浏览器的视图过渡接口，类型放宽到测试需要的部分
+const doc = document as unknown as {
+  startViewTransition?: (
+    update: () => void | Promise<void>
+  ) => TMViewTransition;
+};
 
 let reduced = false;
 let systemDark = false;
@@ -26,7 +37,7 @@ beforeEach(() => {
   });
   document.documentElement.className = 'dark';
   delete document.documentElement.dataset.tmReducedMotion;
-  delete document.startViewTransition;
+  delete doc.startViewTransition;
   document.documentElement.style.setProperty(
     '--tm-ease-theme',
     'cubic-bezier(.22,1,.36,1)'
@@ -63,7 +74,7 @@ test('entering dark retracts the old light snapshot into the control', async () 
   let capturedOrigin: string | null = null;
   let capturedTarget: string | undefined;
   let capturedAura = false;
-  document.startViewTransition = (update) => {
+  doc.startViewTransition = (update) => {
     capturedOrigin = origin.getAttribute('data-tm-theme-origin');
     capturedTarget = document.documentElement.dataset.tmThemeTarget;
     capturedAura = Boolean(
@@ -101,7 +112,7 @@ test('entering dark retracts the old light snapshot into the control', async () 
 test('same visual theme still saves system preference without replaying the page reveal', async () => {
   systemDark = true;
   const start = jest.fn();
-  document.startViewTransition = start;
+  doc.startViewTransition = start;
   await changeThemeWithTransition('system', setTheme, origin);
   expect(setTheme).toHaveBeenCalledWith('system');
   expect(document.documentElement).toHaveClass('dark');
@@ -123,7 +134,7 @@ test('an obsolete ready callback cannot remove the latest origin or overwrite it
   const second = deferred();
   const waits = [first, second];
   const skip = jest.fn();
-  document.startViewTransition = (update) => {
+  doc.startViewTransition = (update) => {
     const wait = waits.shift();
     if (!wait) throw new Error('unexpected extra transition');
     const completion = Promise.resolve(update());
@@ -154,7 +165,7 @@ test('an obsolete ready callback cannot remove the latest origin or overwrite it
 test('enabling reduced motion while waiting cancels the reveal and clears its control layer', async () => {
   const ready = deferred();
   const skip = jest.fn();
-  document.startViewTransition = (update) => {
+  doc.startViewTransition = (update) => {
     const completion = Promise.resolve(update());
     return {
       ready: ready.promise,
@@ -175,7 +186,7 @@ test('enabling reduced motion while waiting cancels the reveal and clears its co
   expect(document.documentElement.dataset.tmThemeTransition).toBeUndefined();
 });
 afterEach(() => {
-  delete document.startViewTransition;
+  delete doc.startViewTransition;
   delete document.documentElement.dataset.tmReducedMotion;
 });
 test.each(['site', 'system'])(
@@ -201,7 +212,7 @@ test('circle waits for the next-themes class update and uses the control centre'
   origin.getBoundingClientRect = () =>
     ({ left: 20, top: 30, width: 44, height: 44 } as DOMRect);
   let updateDone = false;
-  document.startViewTransition = (update) => {
+  doc.startViewTransition = (update) => {
     const completion = Promise.resolve(update()).then(() => {
       updateDone = true;
     });
@@ -232,7 +243,7 @@ test('circle waits for the next-themes class update and uses the control centre'
 });
 test('a failed snapshot still applies the theme and cleans up', async () => {
   const failure = Promise.reject(new Error('snapshot unavailable'));
-  document.startViewTransition = () => ({
+  doc.startViewTransition = () => ({
     ready: failure,
     updateCallbackDone: failure,
     finished: failure,
@@ -256,7 +267,7 @@ function startSuccessfulTransition(update: () => void | Promise<void>) {
 test.each(['light', 'dark'] as const)(
   '%s crisp circular clip-path uses the control centre and covers every corner before cleanup',
   async (theme) => {
-    document.startViewTransition = startSuccessfulTransition;
+    doc.startViewTransition = startSuccessfulTransition;
     document.documentElement.className = theme === 'light' ? 'dark' : 'light';
     origin.getBoundingClientRect = () =>
       ({ left: 20, top: 30, width: 44, height: 44 } as DOMRect);
@@ -287,7 +298,7 @@ test.each(['light', 'dark'] as const)(
 );
 
 test('reduced motion cancels the active circular clip-path animation', async () => {
-  document.startViewTransition = startSuccessfulTransition;
+  doc.startViewTransition = startSuccessfulTransition;
   const first = deferred();
   const started = deferred();
   const cancelFirst = jest.fn(first.resolve);
@@ -306,4 +317,126 @@ test('reduced motion cancels the active circular clip-path animation', async () 
   expect(cancelFirst).toHaveBeenCalled();
   expect(document.documentElement).toHaveClass('light');
   expect(origin).not.toHaveAttribute('data-tm-theme-origin');
+});
+
+describe('readSnapshotGeometry：圆心取浏览器给出的真实位置', () => {
+  const style = (transform: string, width = '', height = '') => ({
+    transform,
+    width,
+    height,
+  });
+  const fallback = { x: 100, y: 50, width: 390, height: 800 };
+  const make =
+    (table: Record<string, ReturnType<typeof style>>) =>
+    (_el: Element, pseudo: string) =>
+      table[pseudo] || style('none');
+
+  test('读到过渡层坐标：根画面比页面靠上 56px（手机地址栏）时，圆心跟着按钮', () => {
+    const geo = readSnapshotGeometry(
+      document.documentElement,
+      fallback,
+      make({
+        '::view-transition': style('none', '390px', '856px'),
+        '::view-transition-group(root)': style(
+          'matrix(1, 0, 0, 1, 0, 56)',
+          '390px',
+          '856px'
+        ),
+        // 按钮在过渡层里的位置 = 页面位置 + 56（过渡层从地址栏下面开始算）
+        '::view-transition-group(tm-theme-control)': style(
+          'matrix(1, 0, 0, 1, 80, 106)',
+          '44px',
+          '44px'
+        ),
+      })
+    );
+    expect(geo.x).toBe(102);
+    expect(geo.y).toBe(128);
+    // 根画面自己的坐标系要扣掉它的平移
+    expect(geo.localX).toBe(102);
+    expect(geo.localY).toBe(72);
+    expect(geo.width).toBe(390);
+    expect(geo.height).toBe(856);
+    expect(geo.radius).toBeGreaterThan(Math.hypot(390 - 102, 856 - 72) - 1);
+  });
+
+  test('没有平移时圆心等于控件中心，半径够到最远的角', () => {
+    const geo = readSnapshotGeometry(
+      document.documentElement,
+      fallback,
+      make({
+        '::view-transition': style('none', '400px', '800px'),
+        '::view-transition-group(root)': style('none', '400px', '800px'),
+        '::view-transition-group(tm-theme-control)': style(
+          'matrix(1, 0, 0, 1, 10, 20)',
+          '40px',
+          '40px'
+        ),
+      })
+    );
+    expect([geo.x, geo.y]).toEqual([30, 40]);
+    expect(geo.radius).toBeCloseTo(Math.hypot(370, 760) + 2, 5);
+  });
+
+  test('读不到有效尺寸、或读取时抛错，就退回页面坐标', () => {
+    expect(
+      readSnapshotGeometry(document.documentElement, fallback, make({}))
+    ).toMatchObject({ x: 100, y: 50, localX: 100, localY: 50 });
+    expect(
+      readSnapshotGeometry(document.documentElement, fallback, () => {
+        throw new Error('不支持读伪元素');
+      })
+    ).toMatchObject({ x: 100, y: 50, width: 390, height: 800 });
+  });
+});
+
+describe('圆形过渡的收拢 / 铺开：App 里两个方向都收拢', () => {
+  afterEach(() => {
+    document.documentElement.removeAttribute('data-tm-platform');
+  });
+
+  test('resolveThemeMotion：网页保持进深色收拢、进浅色铺开，App 全部收拢', () => {
+    expect(resolveThemeMotion(true, 'web')).toBe('converge');
+    expect(resolveThemeMotion(false, 'web')).toBe('spread');
+    expect(resolveThemeMotion(true, 'desktop')).toBe('converge');
+    expect(resolveThemeMotion(false, 'desktop')).toBe('spread');
+    expect(resolveThemeMotion(true, 'app')).toBe('converge');
+    expect(resolveThemeMotion(false, 'app')).toBe('converge');
+  });
+
+  test('App 里进浅色：旧画面（深色截图）在上层被圆收回按钮，而不是新画面铺开', async () => {
+    document.documentElement.setAttribute('data-tm-platform', 'app');
+    document.documentElement.className = 'dark';
+    let motionAtStart: string | undefined;
+    doc.startViewTransition = (update) => {
+      motionAtStart = document.documentElement.dataset.tmThemeMotion;
+      return startSuccessfulTransition(update);
+    };
+    origin.getBoundingClientRect = () =>
+      ({ left: 20, top: 30, width: 44, height: 44 } as DOMRect);
+    await changeThemeWithTransition('light', setTheme, origin);
+    // 过渡开始前（给浏览器拍快照时）CSS 就要能看到收拢标记
+    expect(motionAtStart).toBe('converge');
+    const frames = animate.mock.calls[0][0];
+    expect(frames[0].clipPath).not.toContain('circle(0px');
+    expect(frames[1].clipPath).toContain('circle(0px at 42px 52px)');
+    expect(animate.mock.calls[0][1]).toMatchObject({
+      pseudoElement: '::view-transition-old(root)',
+    });
+    expect(document.documentElement.dataset.tmThemeMotion).toBeUndefined();
+  });
+
+  test('网页里进浅色仍是新画面被圆撑开', async () => {
+    document.documentElement.className = 'dark';
+    let motionAtStart: string | undefined;
+    doc.startViewTransition = (update) => {
+      motionAtStart = document.documentElement.dataset.tmThemeMotion;
+      return startSuccessfulTransition(update);
+    };
+    await changeThemeWithTransition('light', setTheme, origin);
+    expect(motionAtStart).toBe('spread');
+    expect(animate.mock.calls[0][1]).toMatchObject({
+      pseudoElement: '::view-transition-new(root)',
+    });
+  });
 });

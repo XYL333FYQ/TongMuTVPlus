@@ -11,8 +11,8 @@ import { SearchResult } from '@/lib/types';
 import CapsuleSwitch from '@/components/catalog/CapsuleSwitch';
 import EmptyState from '@/components/media/EmptyState';
 import PageContainer from '@/components/PageContainer';
-import PageHeader from '@/components/shell/PageHeader';
 import PageLayout from '@/components/PageLayout';
+import PageHeader from '@/components/shell/PageHeader';
 import VideoCard from '@/components/VideoCard';
 
 interface ScriptSourceOption {

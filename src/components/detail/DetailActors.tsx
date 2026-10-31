@@ -2,7 +2,7 @@
 import { Users } from 'lucide-react';
 import React from 'react';
 
-import { getTMDBImageUrl } from '@/lib/tmdb.client';
+import { getTMDBImageUrl } from '@/lib/tmdb-image-base';
 
 import ProxyImage from '@/components/ProxyImage';
 

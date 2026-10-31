@@ -1,9 +1,8 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 
+import type { PlaybackSession } from './context';
 import { PlaybackSessionContext } from './context';
 import PlaybackSlot from './PlaybackSlot';
-
-import type { PlaybackSession } from './context';
 
 function fixture(video: HTMLVideoElement | null) {
   return {

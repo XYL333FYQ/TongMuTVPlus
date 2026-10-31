@@ -57,8 +57,6 @@ import {
 } from '@/lib/book-tts-progress.client';
 import { cn } from '@/lib/cn';
 
-import ReaderDialog from '@/components/media/ReaderDialog';
-
 import {
   LIBRARY_BUTTON,
   LIBRARY_FIELD,
@@ -72,6 +70,7 @@ import {
   READER_SHEET,
   READER_SLIDER,
 } from '@/components/media/library';
+import ReaderDialog from '@/components/media/ReaderDialog';
 import Select from '@/components/ui/Select';
 
 declare global {

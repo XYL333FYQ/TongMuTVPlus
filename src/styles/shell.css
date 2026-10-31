@@ -276,7 +276,12 @@
 }
 
 /* —— 手机工具栏：页名从首屏起保持居中，控件随栏高协调放大 —— */
+/*
+ * 顶栏常驻在根布局（PersistentHeader），切页不重建。
+ * 页面里有 PageLayout 放的 data-tm-nav-page 标记才显示，与底栏同一规则。
+ */
 .tm-mobile-header-v2 {
+  display: none;
   position: fixed;
   inset: 0 0 auto;
   z-index: var(--tm-z-header);
@@ -444,16 +449,18 @@
    * 顶栏只剩右侧几个按钮，行高收到 44px，没有底色，随页面一起滚走（像 Apple TV App），
    * 页名留给读屏软件。
    */
-  .tm-shell[data-tab='true'] {
+  body:has(.tm-shell[data-tab='true']) {
     --tm-header-height: 44px;
   }
-  .tm-mobile-header-v2[data-tab='true'] {
+  body:has(.tm-shell[data-tab='true']) .tm-mobile-header-v2 {
     position: absolute;
   }
-  .tm-mobile-header-v2[data-tab='true'] .tm-header-glass {
+  body:has(.tm-shell[data-tab='true']) .tm-mobile-header-v2 .tm-header-glass {
     display: none;
   }
-  .tm-mobile-header-v2[data-tab='true'] .tm-mobile-page-title {
+  body:has(.tm-shell[data-tab='true'])
+    .tm-mobile-header-v2
+    .tm-mobile-page-title {
     position: absolute;
     width: 1px;
     height: 1px;
@@ -473,16 +480,16 @@
     padding-top: calc(var(--tm-safe-top) + var(--tm-header-height));
   }
   /* 大图两种主题下都是深色的，浮在上面的按钮用图上的浅色 */
-  .tm-shell[data-tab='true'][data-page='/']:has(.tm-home-hero-panel)
+  body:has(.tm-shell[data-tab='true'][data-page='/'] .tm-home-hero-panel)
     .tm-mobile-header-v2 {
     color: var(--tm-on-art);
   }
-  .tm-shell[data-tab='true'][data-page='/']:has(.tm-home-hero-panel)
+  body:has(.tm-shell[data-tab='true'][data-page='/'] .tm-home-hero-panel)
     .tm-mobile-header-v2
     :is(.tm-shell-icon, .tm-theme-toggle) {
     color: inherit;
   }
-  .tm-shell[data-tab='true'][data-page='/']:has(.tm-home-hero-panel)
+  body:has(.tm-shell[data-tab='true'][data-page='/'] .tm-home-hero-panel)
     .tm-mobile-header-v2
     :is(.tm-guest-login, .tm-account-initial) {
     background: var(--tm-on-art);
@@ -534,6 +541,9 @@
 }
 
 @media (max-width: 767px) {
+  body:has([data-tm-nav-page]) .tm-mobile-header-v2 {
+    display: block;
+  }
   body:has([data-tm-nav-page]) .tm-mobile-nav,
   .tm-mobile-nav[data-tab-route] {
     display: grid;
@@ -562,6 +572,8 @@
   border-radius: var(--tm-radius-md);
   background: var(--tm-line);
   pointer-events: none;
+  /* 提前独占一层：滑动一开始就由合成器线程接手，不用临时建层、重画 */
+  will-change: transform;
   transition: transform var(--tm-d-panel) var(--tm-ease-out),
     scale var(--tm-d-hover) var(--tm-ease-out);
 }
@@ -1114,12 +1126,18 @@ html[data-tm-reduced-motion='true'] .tm-explore-card:active {
 }
 
 @media (min-width: 768px) {
-  .tm-top-header {
-    position: sticky;
+  /* 顶栏常驻在根布局、不在页面流里：固定在顶部，页面主体留出同样的高度，版面与原来一致 */
+  body:has([data-tm-nav-page]) .tm-top-header {
+    position: fixed;
     top: 0;
+    left: 0;
+    right: 0;
     z-index: var(--tm-z-header);
     display: block;
     height: var(--tm-header-height);
+  }
+  .tm-shell:not(.tm-shell-no-navigation) > .tm-shell-body {
+    padding-top: var(--tm-header-height);
   }
   .tm-main {
     padding-top: 8px;
@@ -1245,9 +1263,12 @@ html .tm-page-transition.tm-page-instant {
 }
 
 /*
- * 触屏像 App：去掉点按时的灰色高亮块；界面上的按钮、顶栏、底栏、海报卡不可被选中、
- * 长按不弹系统菜单（正文、输入框、聊天消息不受影响，仍可选中复制）。
- * 安卓壳里再去掉页面到顶/到底时的拉伸与发光（下拉刷新用的是自己的手势，不受影响）。
+ * 按端区分点按与选中手感（data-tm-platform 见 src/lib/platform.ts）：
+ *   所有触屏：去掉点按时的灰色高亮块（浏览器里也只是少一块灰，无副作用）。
+ *   app：像原生 App——界面文字、图片长按不出选择手柄和系统菜单；输入框、聊天消息、
+ *        代码块以及标了 tm-selectable 的内容仍可选中复制。
+ *   web / desktop：保持网页习惯，文字可选中，不拦长按。
+ * 以前只按 (pointer: coarse) 判断，手机浏览器也被一并禁了界面元素的选中。
  */
 @media (pointer: coarse) {
   a,
@@ -1257,20 +1278,31 @@ html .tm-page-transition.tm-page-instant {
   [role='tab'] {
     -webkit-tap-highlight-color: transparent;
   }
-  button,
-  summary,
-  [role='button'],
-  [role='tab'],
-  .tm-mobile-header-v2,
-  .tm-mobile-nav,
-  .tm-video-card {
-    -webkit-user-select: none;
-    user-select: none;
-    -webkit-touch-callout: none;
-  }
-  .tm-video-card img {
-    -webkit-touch-callout: none;
-  }
+}
+html[data-tm-platform='app'] body {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+html[data-tm-platform='app'] img,
+html[data-tm-platform='app'] a {
+  -webkit-touch-callout: none;
+  -webkit-user-drag: none;
+}
+html[data-tm-platform='app']
+  :is(
+    input,
+    textarea,
+    [contenteditable='true'],
+    pre,
+    code,
+    .tm-selectable,
+    .tm-chat-messages,
+    .tm-admin-select-all-text
+  ) {
+  -webkit-user-select: text;
+  user-select: text;
+  -webkit-touch-callout: default;
 }
 html[data-tm-shell] {
   overscroll-behavior-y: none;

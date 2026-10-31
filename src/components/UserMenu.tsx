@@ -4,35 +4,21 @@
 
 import {
   Bell,
-  Check,
-  ChevronDown,
   ChevronRight,
-  ChevronUp,
-  CircleHelp,
-  Copy,
   Download,
-  ExternalLink,
-  Eye,
-  EyeOff,
-  Gauge,
-  Globe,
-  Home,
   Info,
   LogOut,
   MessageSquare,
   Monitor,
-  MoveDown,
-  MoveUp,
   Package,
-  Rss,
   Settings,
   Shield,
-  Sliders,
   Smartphone,
   Star,
   Tablet,
   X,
 } from 'lucide-react';
+import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
@@ -42,11 +28,9 @@ import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
 import { BRAND_NAME } from '@/lib/brand';
 import {
   type ClientPlatform,
-  CLIENT_PACKAGES,
-  clientDownloadUrl,
   detectClientPlatform,
 } from '@/lib/client-downloads';
-import { clearAllDanmakuCache, getDanmakuCacheStats } from '@/lib/danmaku/api';
+import { loadTraditionalToSimplifiedConverter } from '@/lib/danmaku/traditional-to-simplified';
 import { SAVE_LIVE_PLAY_RECORDS_KEY } from '@/lib/db.client';
 import {
   type LocalSettingsPayload,
@@ -54,8 +38,8 @@ import {
   LOCAL_SETTINGS_SYNC_LAST_PULL_KEY,
 } from '@/lib/local-settings-sync';
 import { clearBangumiImageFallbackCache } from '@/lib/utils';
-import { useReleaseInfo } from '@/hooks/useReleaseInfo';
 import { UpdateStatus } from '@/lib/version_check';
+import { useReleaseInfo } from '@/hooks/useReleaseInfo';
 import { useUnreadNotificationCount } from '@/hooks/useUnreadNotificationCount';
 
 import ThemeSettings from '@/components/account/ThemeSettings';
@@ -64,20 +48,86 @@ import { notifyError } from '@/components/feedback/AppDialogs';
 import Toast, { ToastProps } from '@/components/feedback/Toast';
 import { MoreMenu } from '@/components/shell/TongMuNavigation';
 
-import { DeviceManagementPanel } from './DeviceManagementPanel';
-import { DownloadManagementPanel } from './DownloadManagementPanel';
-import { EmailSettingsPanel } from './EmailSettingsPanel';
-import { FavoritesPanel } from './FavoritesPanel';
-import { NotificationPanel } from './NotificationPanel';
-import { OfflineDownloadPanel } from './OfflineDownloadPanel';
-import { PersonalCenterPanel } from './PersonalCenterPanel';
-import TVRemotePanel from './tv/TVRemotePanel';
 import { useVersionCheck } from './VersionCheckProvider';
-import { VersionPanel } from './VersionPanel';
 
 interface AuthInfo {
   username?: string;
   role?: 'owner' | 'admin' | 'user';
+}
+
+// 首页模块配置（设置面板也用，所以放在组件外并导出类型）
+export interface HomeModule {
+  id: string;
+  name: string;
+  enabled: boolean;
+  order: number;
+}
+
+export type HomeBannerHeightScale = '1' | '1.5' | '2';
+
+// 三个大面板（设置、电视访问、客户端安装）拆到单独文件按需下载：
+// 每个页面的顶栏都带着账号菜单，面板代码不再算进首屏。打开账号菜单时就开始预取，
+// 等用户点到具体面板时通常已经下载好。
+const loadSettingsPanel = () => import('./user-menu/UserMenuSettingsPanel');
+const loadSubscribePanel = () => import('./user-menu/UserMenuSubscribePanel');
+const loadEcoAppsPanel = () => import('./user-menu/UserMenuEcoAppsPanel');
+const UserMenuSettingsPanel = dynamic(loadSettingsPanel, { ssr: false });
+const UserMenuSubscribePanel = dynamic(loadSubscribePanel, { ssr: false });
+const UserMenuEcoAppsPanel = dynamic(loadEcoAppsPanel, { ssr: false });
+
+// 其余从账号菜单打开的面板同理。它们关着时本来就什么都不渲染、所有副作用都只在
+// 打开后才执行，所以改成"第一次打开时下载并挂载、之后一直留着"，行为与原来一致。
+const loadDeviceManagementPanel = () =>
+  import('./DeviceManagementPanel').then((m) => m.DeviceManagementPanel);
+const loadDownloadManagementPanel = () =>
+  import('./DownloadManagementPanel').then((m) => m.DownloadManagementPanel);
+const loadEmailSettingsPanel = () =>
+  import('./EmailSettingsPanel').then((m) => m.EmailSettingsPanel);
+const loadFavoritesPanel = () =>
+  import('./FavoritesPanel').then((m) => m.FavoritesPanel);
+const loadNotificationPanel = () =>
+  import('./NotificationPanel').then((m) => m.NotificationPanel);
+const loadOfflineDownloadPanel = () =>
+  import('./OfflineDownloadPanel').then((m) => m.OfflineDownloadPanel);
+const loadPersonalCenterPanel = () =>
+  import('./PersonalCenterPanel').then((m) => m.PersonalCenterPanel);
+const loadTVRemotePanel = () => import('./tv/TVRemotePanel');
+const loadVersionPanel = () =>
+  import('./VersionPanel').then((m) => m.VersionPanel);
+const DeviceManagementPanel = dynamic(loadDeviceManagementPanel, {
+  ssr: false,
+});
+const DownloadManagementPanel = dynamic(loadDownloadManagementPanel, {
+  ssr: false,
+});
+const EmailSettingsPanel = dynamic(loadEmailSettingsPanel, { ssr: false });
+const FavoritesPanel = dynamic(loadFavoritesPanel, { ssr: false });
+const NotificationPanel = dynamic(loadNotificationPanel, { ssr: false });
+const OfflineDownloadPanel = dynamic(loadOfflineDownloadPanel, { ssr: false });
+const PersonalCenterPanel = dynamic(loadPersonalCenterPanel, { ssr: false });
+const TVRemotePanel = dynamic(loadTVRemotePanel, { ssr: false });
+const VersionPanel = dynamic(loadVersionPanel, { ssr: false });
+
+function preloadUserMenuPanels() {
+  void loadSettingsPanel();
+  void loadSubscribePanel();
+  void loadEcoAppsPanel();
+  void loadDeviceManagementPanel();
+  void loadDownloadManagementPanel();
+  void loadEmailSettingsPanel();
+  void loadFavoritesPanel();
+  void loadNotificationPanel();
+  void loadOfflineDownloadPanel();
+  void loadPersonalCenterPanel();
+  void loadTVRemotePanel();
+  void loadVersionPanel();
+}
+
+/** 面板第一次打开后返回 true 并一直保持（用于"首次打开才挂载、之后常驻"） */
+function useOpenedOnce(open: boolean) {
+  const opened = useRef(false);
+  if (open) opened.current = true;
+  return opened.current;
 }
 
 export const UserMenu: React.FC = () => {
@@ -336,15 +386,6 @@ export const UserMenu: React.FC = () => {
     useState(false);
 
   // 首页模块配置
-  interface HomeModule {
-    id: string;
-    name: string;
-    enabled: boolean;
-    order: number;
-  }
-
-  type HomeBannerHeightScale = '1' | '1.5' | '2';
-
   const defaultHomeModules: HomeModule[] = [
     { id: 'hotMovies', name: '热门电影', enabled: true, order: 0 },
     { id: 'hotDuanju', name: '热播短剧', enabled: true, order: 1 },
@@ -444,6 +485,8 @@ export const UserMenu: React.FC = () => {
 
   const loadDanmakuCacheUsage = useCallback(async () => {
     try {
+      // 弹幕模块较大，打开设置时再加载，不进每个页面的首屏脚本
+      const { getDanmakuCacheStats } = await import('@/lib/danmaku/api');
       const stats = await getDanmakuCacheStats();
       setDanmakuCacheUsage(formatCacheSize(stats.totalSize));
     } catch (error) {
@@ -1417,6 +1460,7 @@ export const UserMenu: React.FC = () => {
   }, [isCloudBackupDropdownOpen]);
 
   const handleMenuClick = () => {
+    if (!isOpen) preloadUserMenuPanels();
     setIsOpen(!isOpen);
   };
 
@@ -2063,6 +2107,8 @@ export const UserMenu: React.FC = () => {
     setDanmakuTraditionalToSimplified(value);
     if (typeof window !== 'undefined') {
       localStorage.setItem('danmakuTraditionalToSimplified', String(value));
+      // 刚打开时就在后台下载字典，回到播放页时已可直接转换
+      if (value) void loadTraditionalToSimplifiedConverter();
     }
   };
 
@@ -2070,6 +2116,7 @@ export const UserMenu: React.FC = () => {
     setSearchTraditionalToSimplified(value);
     if (typeof window !== 'undefined') {
       localStorage.setItem('searchTraditionalToSimplified', String(value));
+      if (value) void loadTraditionalToSimplifiedConverter();
     }
   };
 
@@ -2836,6 +2883,7 @@ export const UserMenu: React.FC = () => {
     setClearCacheMessage(null);
 
     try {
+      const { clearAllDanmakuCache } = await import('@/lib/danmaku/api');
       await clearAllDanmakuCache();
       setClearCacheMessage('弹幕缓存已清除成功！');
       setDanmakuCacheUsage('0 B');
@@ -3061,2513 +3109,197 @@ export const UserMenu: React.FC = () => {
   );
 
   // 设置面板内容
-  const settingsPanel = (
-    <>
-      {/* 背景遮罩 */}
-      <div
-        className='fixed inset-0 bg-ink/50 backdrop-blur-sm z-[1000]'
-        onClick={handleCloseSettings}
-        onTouchMove={(e) => {
-          // 只阻止滚动，允许其他触摸事件
-          e.preventDefault();
-        }}
-        onWheel={(e) => {
-          // 阻止滚轮滚动
-          e.preventDefault();
-        }}
-        style={{
-          touchAction: 'none',
-        }}
-      />
-
-      {/* 设置面板 */}
-      <div className='fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-xl max-h-[90vh] bg-surface rounded-xl shadow-xl z-[1001] flex flex-col'>
-        {/* 内容容器 - 独立的滚动区域 */}
-        <div
-          className='flex-1 px-4 py-6 md:p-6 overflow-y-auto'
-          data-panel-content
-          style={{
-            touchAction: 'pan-y', // 只允许垂直滚动
-            overscrollBehavior: 'contain', // 防止滚动冒泡
-          }}
-        >
-          {/* 标题栏 */}
-          <div className='flex items-center justify-between mb-6'>
-            <div className='flex items-center gap-3'>
-              <h3 className='text-xl font-bold text-fg'>本地设置</h3>
-              <button
-                onClick={handleResetSettings}
-                className='px-2 py-1 text-[13px] text-fg hover:text-fg border border-line hover:border-line hover:bg-line rounded transition-colors min-h-[44px] tm-press'
-                title='重置为默认设置'
-              >
-                恢复默认
-              </button>
-              {/* 云备份：仅手动模式显示 */}
-              {syncAvailable && syncMode === 'manual' && (
-                <div className='relative' data-dropdown='cloud-backup'>
-                  <button
-                    onClick={() =>
-                      setIsCloudBackupDropdownOpen(!isCloudBackupDropdownOpen)
-                    }
-                    disabled={syncBusy}
-                    className='px-2 py-1 text-[13px] text-fg hover:text-fg border border-line hover:border-line hover:bg-line rounded transition-colors disabled:opacity-50 flex items-center gap-1 min-h-[44px] tm-press'
-                    title='云备份设置'
-                  >
-                    云备份
-                    {isCloudBackupDropdownOpen ? (
-                      <ChevronUp className='w-3.5 h-3.5' />
-                    ) : (
-                      <ChevronDown className='w-3.5 h-3.5' />
-                    )}
-                  </button>
-                  {isCloudBackupDropdownOpen && (
-                    <div className='absolute z-50 right-0 top-full mt-1 bg-surface border border-line rounded-lg shadow-lg overflow-hidden min-w-[150px]'>
-                      <button
-                        onClick={() => {
-                          setIsCloudBackupDropdownOpen(false);
-                          void pushRemoteSettings({ confirmBefore: true });
-                        }}
-                        disabled={syncBusy}
-                        className='w-full px-3 py-2 text-left text-sm text-fg hover:text-fg hover:bg-line transition-colors min-h-[44px] tm-press'
-                      >
-                        备份到云端
-                      </button>
-                      <button
-                        onClick={() => {
-                          setIsCloudBackupDropdownOpen(false);
-                          handleRestoreFromCloud();
-                        }}
-                        disabled={syncBusy}
-                        className='w-full px-3 py-2 text-left text-sm text-fg hover:text-fg hover:bg-line transition-colors min-h-[44px] tm-press'
-                      >
-                        恢复云端备份
-                      </button>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-            <button
-              onClick={handleCloseSettings}
-              className='w-8 h-8 p-1 rounded-full flex items-center justify-center text-muted hover:bg-line transition-colors min-h-[44px] tm-press'
-              aria-label='Close'
-            >
-              <X className='w-full h-full' />
-            </button>
-          </div>
-
-          {/* 设置项 */}
-          <div className='space-y-3 md:space-y-4'>
-            {/* 豆瓣设置 */}
-            <div className='border border-line rounded-lg overflow-visible'>
-              <button
-                onClick={() => setIsDoubanSectionOpen(!isDoubanSectionOpen)}
-                className='w-full px-3 py-2.5 md:px-4 md:py-3 bg-raised hover:bg-line transition-colors flex items-center justify-between min-h-[44px] tm-press'
-              >
-                <div className='flex items-center gap-2'>
-                  <Globe className='w-5 h-5 text-muted' />
-                  <h3 className='text-base font-medium text-fg'>数据源设置</h3>
-                </div>
-                {isDoubanSectionOpen ? (
-                  <ChevronUp className='w-5 h-5 text-muted' />
-                ) : (
-                  <ChevronDown className='w-5 h-5 text-muted' />
-                )}
-              </button>
-              {isDoubanSectionOpen && (
-                <div className='p-3 md:p-4 space-y-4 md:space-y-6'>
-                  {/* 豆瓣数据源选择 */}
-                  <div className='space-y-3'>
-                    <div>
-                      <h4 className='text-sm font-medium text-muted'>
-                        豆瓣数据代理
-                      </h4>
-                      <p className='text-[13px] text-muted mt-1'>
-                        选择获取豆瓣数据的方式
-                      </p>
-                    </div>
-                    <div className='relative' data-dropdown='douban-datasource'>
-                      {/* 自定义下拉选择框 */}
-                      <button
-                        type='button'
-                        onClick={() =>
-                          setIsDoubanDropdownOpen(!isDoubanDropdownOpen)
-                        }
-                        className='w-full px-3 py-2.5 pr-10 border border-line rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-fg focus:border-line transition-all duration-200 bg-surface text-fg shadow-sm hover:border-line text-left min-h-[44px] tm-press'
-                      >
-                        {
-                          doubanDataSourceOptions.find(
-                            (option) => option.value === doubanDataSource
-                          )?.label
-                        }
-                      </button>
-
-                      {/* 下拉箭头 */}
-                      <div className='absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none'>
-                        <ChevronDown
-                          className={`w-4 h-4 text-muted transition-transform duration-200 ${
-                            isDoubanDropdownOpen ? 'rotate-180' : ''
-                          }`}
-                        />
-                      </div>
-
-                      {/* 下拉选项列表 */}
-                      {isDoubanDropdownOpen && (
-                        <div className='absolute z-50 w-full mt-1 bg-surface border border-line rounded-lg shadow-lg max-h-60 overflow-auto'>
-                          {doubanDataSourceOptions.map((option) => (
-                            <button
-                              key={option.value}
-                              type='button'
-                              onClick={() => {
-                                handleDoubanDataSourceChange(option.value);
-                                setIsDoubanDropdownOpen(false);
-                              }}
-                              className={`w-full px-3 py-2.5 text-left text-sm transition-colors duration-150 flex items-center justify-between hover:bg-line ${
-                                doubanDataSource === option.value
-                                  ? 'bg-raised text-fg min-h-[44px] tm-press'
-                                  : 'text-fg min-h-[44px] tm-press'
-                              }`}
-                            >
-                              <span className='truncate'>{option.label}</span>
-                              {doubanDataSource === option.value && (
-                                <Check className='w-4 h-4 text-fg flex-shrink-0 ml-2' />
-                              )}
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-
-                    {/* 感谢信息 */}
-                    {getThanksInfo(doubanDataSource) && (
-                      <div className='mt-3'>
-                        <button
-                          type='button'
-                          onClick={() =>
-                            window.open(
-                              getThanksInfo(doubanDataSource)!.url,
-                              '_blank'
-                            )
-                          }
-                          className='flex items-center justify-center gap-1.5 w-full px-3 text-[13px] text-muted cursor-pointer min-h-[44px] tm-press'
-                        >
-                          <span className='font-medium'>
-                            {getThanksInfo(doubanDataSource)!.text}
-                          </span>
-                          <ExternalLink className='w-3.5 opacity-70' />
-                        </button>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* 豆瓣代理地址设置 - 仅在选择自定义代理时显示 */}
-                  {doubanDataSource === 'custom' && (
-                    <div className='space-y-3'>
-                      <div>
-                        <h4 className='text-sm font-medium text-muted'>
-                          豆瓣代理地址
-                        </h4>
-                        <p className='text-[13px] text-muted mt-1'>
-                          自定义代理服务器地址
-                        </p>
-                      </div>
-                      <input
-                        type='text'
-                        className='w-full px-3 py-2.5 border border-line rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-fg focus:border-line transition-all duration-200 bg-surface text-fg placeholder-gray-500 dark:placeholder-gray-400 shadow-sm hover:border-line'
-                        placeholder='例如: https://proxy.example.com/fetch?url='
-                        value={doubanProxyUrl}
-                        onChange={(e) =>
-                          handleDoubanProxyUrlChange(e.target.value)
-                        }
-                      />
-                      {!doubanProxyUrl.trim() && (
-                        <p className='text-[13px] text-fg mt-1'>
-                          未填写地址时将自动按直连处理
-                        </p>
-                      )}
-                    </div>
-                  )}
-
-                  <div className='space-y-3'>
-                    <div>
-                      <h4 className='text-sm font-medium text-muted'>
-                        豆瓣数据备用渠道
-                      </h4>
-                      <p className='text-[13px] text-muted mt-1'>
-                        主渠道失败后自动切换，默认直连
-                      </p>
-                    </div>
-                    <div
-                      className='relative'
-                      data-dropdown='douban-datasource-backup'
-                    >
-                      <button
-                        type='button'
-                        onClick={() =>
-                          setIsDoubanBackupDropdownOpen(
-                            !isDoubanBackupDropdownOpen
-                          )
-                        }
-                        className='w-full px-3 py-2.5 pr-10 border border-line rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-fg focus:border-line transition-all duration-200 bg-surface text-fg shadow-sm hover:border-line text-left min-h-[44px] tm-press'
-                      >
-                        {
-                          doubanDataSourceOptions.find(
-                            (option) => option.value === doubanDataSourceBackup
-                          )?.label
-                        }
-                      </button>
-                      <div className='absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none'>
-                        <ChevronDown
-                          className={`w-4 h-4 text-muted transition-transform duration-200 ${
-                            isDoubanBackupDropdownOpen ? 'rotate-180' : ''
-                          }`}
-                        />
-                      </div>
-                      {isDoubanBackupDropdownOpen && (
-                        <div className='absolute z-50 w-full mt-1 bg-surface border border-line rounded-lg shadow-lg max-h-60 overflow-auto'>
-                          {doubanDataSourceOptions.map((option) => (
-                            <button
-                              key={option.value}
-                              type='button'
-                              onClick={() => {
-                                handleDoubanDataSourceBackupChange(
-                                  option.value
-                                );
-                                setIsDoubanBackupDropdownOpen(false);
-                              }}
-                              className={`w-full px-3 py-2.5 text-left text-sm transition-colors duration-150 flex items-center justify-between hover:bg-line ${
-                                doubanDataSourceBackup === option.value
-                                  ? 'bg-raised text-fg min-h-[44px] tm-press'
-                                  : 'text-fg min-h-[44px] tm-press'
-                              }`}
-                            >
-                              <span className='truncate'>{option.label}</span>
-                              {doubanDataSourceBackup === option.value && (
-                                <Check className='w-4 h-4 text-fg flex-shrink-0 ml-2' />
-                              )}
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {doubanDataSourceBackup === 'custom' && (
-                    <div className='space-y-3'>
-                      <div>
-                        <h4 className='text-sm font-medium text-muted'>
-                          豆瓣备用代理地址
-                        </h4>
-                        <p className='text-[13px] text-muted mt-1'>
-                          备用渠道为自定义代理时生效
-                        </p>
-                      </div>
-                      <input
-                        type='text'
-                        className='w-full px-3 py-2.5 border border-line rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-fg focus:border-line transition-all duration-200 bg-surface text-fg placeholder-gray-500 dark:placeholder-gray-400 shadow-sm hover:border-line'
-                        placeholder='例如: https://proxy.example.com/fetch?url='
-                        value={doubanProxyUrlBackup}
-                        onChange={(e) =>
-                          handleDoubanProxyUrlBackupChange(e.target.value)
-                        }
-                      />
-                      {!doubanProxyUrlBackup.trim() && (
-                        <p className='text-[13px] text-fg mt-1'>
-                          未填写地址时备用渠道将自动按直连处理
-                        </p>
-                      )}
-                    </div>
-                  )}
-
-                  {/* 分割线 */}
-                  <div className='border-t border-line'></div>
-
-                  {/* 分割线 */}
-                  <div className='border-t border-line'></div>
-
-                  {/* 豆瓣图片代理设置 */}
-                  <div className='space-y-3'>
-                    <div>
-                      <h4 className='text-sm font-medium text-muted'>
-                        豆瓣图片代理
-                      </h4>
-                      <p className='text-[13px] text-muted mt-1'>
-                        选择获取豆瓣图片的方式
-                      </p>
-                    </div>
-                    <div
-                      className='relative'
-                      data-dropdown='douban-image-proxy'
-                    >
-                      {/* 自定义下拉选择框 */}
-                      <button
-                        type='button'
-                        onClick={() =>
-                          setIsDoubanImageProxyDropdownOpen(
-                            !isDoubanImageProxyDropdownOpen
-                          )
-                        }
-                        className='w-full px-3 py-2.5 pr-10 border border-line rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-fg focus:border-line transition-all duration-200 bg-surface text-fg shadow-sm hover:border-line text-left min-h-[44px] tm-press'
-                      >
-                        {
-                          doubanImageProxyTypeOptions.find(
-                            (option) => option.value === doubanImageProxyType
-                          )?.label
-                        }
-                      </button>
-
-                      {/* 下拉箭头 */}
-                      <div className='absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none'>
-                        <ChevronDown
-                          className={`w-4 h-4 text-muted transition-transform duration-200 ${
-                            isDoubanDropdownOpen ? 'rotate-180' : ''
-                          }`}
-                        />
-                      </div>
-
-                      {/* 下拉选项列表 */}
-                      {isDoubanImageProxyDropdownOpen && (
-                        <div className='absolute z-50 w-full mt-1 bg-surface border border-line rounded-lg shadow-lg max-h-60 overflow-auto'>
-                          {doubanImageProxyTypeOptions.map((option) => (
-                            <button
-                              key={option.value}
-                              type='button'
-                              onClick={() => {
-                                handleDoubanImageProxyTypeChange(option.value);
-                                setIsDoubanImageProxyDropdownOpen(false);
-                              }}
-                              className={`w-full px-3 py-2.5 text-left text-sm transition-colors duration-150 flex items-center justify-between hover:bg-line ${
-                                doubanImageProxyType === option.value
-                                  ? 'bg-raised text-fg min-h-[44px] tm-press'
-                                  : 'text-fg min-h-[44px] tm-press'
-                              }`}
-                            >
-                              <span className='truncate'>{option.label}</span>
-                              {doubanImageProxyType === option.value && (
-                                <Check className='w-4 h-4 text-fg flex-shrink-0 ml-2' />
-                              )}
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-
-                    {/* 感谢信息 */}
-                    {getThanksInfo(doubanImageProxyType) && (
-                      <div className='mt-3'>
-                        <button
-                          type='button'
-                          onClick={() =>
-                            window.open(
-                              getThanksInfo(doubanImageProxyType)!.url,
-                              '_blank'
-                            )
-                          }
-                          className='flex items-center justify-center gap-1.5 w-full px-3 text-[13px] text-muted cursor-pointer min-h-[44px] tm-press'
-                        >
-                          <span className='font-medium'>
-                            {getThanksInfo(doubanImageProxyType)!.text}
-                          </span>
-                          <ExternalLink className='w-3.5 opacity-70' />
-                        </button>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* 豆瓣图片代理地址设置 - 仅在选择自定义代理时显示 */}
-                  {doubanImageProxyType === 'custom' && (
-                    <div className='space-y-3'>
-                      <div>
-                        <h4 className='text-sm font-medium text-muted'>
-                          豆瓣图片代理地址
-                        </h4>
-                        <p className='text-[13px] text-muted mt-1'>
-                          自定义图片代理服务器地址
-                        </p>
-                      </div>
-                      <input
-                        type='text'
-                        className='w-full px-3 py-2.5 border border-line rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-fg focus:border-line transition-all duration-200 bg-surface text-fg placeholder-gray-500 dark:placeholder-gray-400 shadow-sm hover:border-line'
-                        placeholder='例如: https://proxy.example.com/fetch?url='
-                        value={doubanImageProxyUrl}
-                        onChange={(e) =>
-                          handleDoubanImageProxyUrlChange(e.target.value)
-                        }
-                      />
-                      {!doubanImageProxyUrl.trim() && (
-                        <p className='text-[13px] text-fg mt-1'>
-                          未填写地址时将自动按服务器代理处理
-                        </p>
-                      )}
-                    </div>
-                  )}
-
-                  <div className='space-y-3'>
-                    <div>
-                      <h4 className='text-sm font-medium text-muted'>
-                        豆瓣图片备用渠道
-                      </h4>
-                      <p className='text-[13px] text-muted mt-1'>
-                        主图片渠道失败后自动切换，默认服务器代理
-                      </p>
-                    </div>
-                    <div
-                      className='relative'
-                      data-dropdown='douban-image-proxy-backup'
-                    >
-                      <button
-                        type='button'
-                        onClick={() =>
-                          setIsDoubanImageProxyBackupDropdownOpen(
-                            !isDoubanImageProxyBackupDropdownOpen
-                          )
-                        }
-                        className='w-full px-3 py-2.5 pr-10 border border-line rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-fg focus:border-line transition-all duration-200 bg-surface text-fg shadow-sm hover:border-line text-left min-h-[44px] tm-press'
-                      >
-                        {
-                          doubanImageProxyTypeOptions.find(
-                            (option) =>
-                              option.value === doubanImageProxyTypeBackup
-                          )?.label
-                        }
-                      </button>
-                      <div className='absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none'>
-                        <ChevronDown
-                          className={`w-4 h-4 text-muted transition-transform duration-200 ${
-                            isDoubanImageProxyBackupDropdownOpen
-                              ? 'rotate-180'
-                              : ''
-                          }`}
-                        />
-                      </div>
-                      {isDoubanImageProxyBackupDropdownOpen && (
-                        <div className='absolute z-50 w-full mt-1 bg-surface border border-line rounded-lg shadow-lg max-h-60 overflow-auto'>
-                          {doubanImageProxyTypeOptions.map((option) => (
-                            <button
-                              key={option.value}
-                              type='button'
-                              onClick={() => {
-                                handleDoubanImageProxyTypeBackupChange(
-                                  option.value
-                                );
-                                setIsDoubanImageProxyBackupDropdownOpen(false);
-                              }}
-                              className={`w-full px-3 py-2.5 text-left text-sm transition-colors duration-150 flex items-center justify-between hover:bg-line ${
-                                doubanImageProxyTypeBackup === option.value
-                                  ? 'bg-raised text-fg min-h-[44px] tm-press'
-                                  : 'text-fg min-h-[44px] tm-press'
-                              }`}
-                            >
-                              <span className='truncate'>{option.label}</span>
-                              {doubanImageProxyTypeBackup === option.value && (
-                                <Check className='w-4 h-4 text-fg flex-shrink-0 ml-2' />
-                              )}
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {doubanImageProxyTypeBackup === 'custom' && (
-                    <div className='space-y-3'>
-                      <div>
-                        <h4 className='text-sm font-medium text-muted'>
-                          豆瓣图片备用代理地址
-                        </h4>
-                        <p className='text-[13px] text-muted mt-1'>
-                          备用图片渠道为自定义代理时生效
-                        </p>
-                      </div>
-                      <input
-                        type='text'
-                        className='w-full px-3 py-2.5 border border-line rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-fg focus:border-line transition-all duration-200 bg-surface text-fg placeholder-gray-500 dark:placeholder-gray-400 shadow-sm hover:border-line'
-                        placeholder='例如: https://proxy.example.com/fetch?url='
-                        value={doubanImageProxyUrlBackup}
-                        onChange={(e) =>
-                          handleDoubanImageProxyUrlBackupChange(e.target.value)
-                        }
-                      />
-                      {!doubanImageProxyUrlBackup.trim() && (
-                        <p className='text-[13px] text-fg mt-1'>
-                          未填写地址时备用图片渠道将自动按服务器代理处理
-                        </p>
-                      )}
-                    </div>
-                  )}
-
-                  {/* 分割线 */}
-                  <div className='border-t border-line'></div>
-
-                  {/* TMDB 图片网络请求地址设置 */}
-                  <div className='space-y-3'>
-                    <div>
-                      <h4 className='text-sm font-medium text-muted'>
-                        TMDB 图片网络请求地址
-                      </h4>
-                      <p className='text-[13px] text-muted mt-1'>
-                        TMDB 图片的 Base URL（默认: https://image.tmdb.org）
-                      </p>
-                    </div>
-                    <input
-                      type='text'
-                      className='w-full px-3 py-2.5 border border-line rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-fg focus:border-line transition-all duration-200 bg-surface text-fg placeholder-gray-500 dark:placeholder-gray-400 shadow-sm hover:border-line'
-                      placeholder='例如: https://image.tmdb.org'
-                      value={tmdbImageBaseUrl}
-                      onChange={(e) =>
-                        handleTmdbImageBaseUrlChange(e.target.value)
-                      }
-                    />
-                  </div>
-
-                  {/* 分割线 */}
-                  <div className='border-t border-line'></div>
-
-                  {/* 动漫数据源设置 */}
-                  <div className='space-y-4'>
-                    <div>
-                      <h4 className='text-sm font-medium text-muted'>
-                        动漫数据源
-                      </h4>
-                      <p className='text-[13px] text-muted mt-1'>
-                        用于 Bangumi
-                        新番放送和番剧详情；默认主源直连，备用源服务器代理。
-                      </p>
-                    </div>
-
-                    <div className='grid gap-3 md:grid-cols-2'>
-                      <div className='space-y-2'>
-                        <label className='text-[13px] font-medium text-muted'>
-                          主数据源
-                        </label>
-                        <div
-                          className='relative'
-                          data-dropdown='anime-datasource'
-                        >
-                          <button
-                            type='button'
-                            onClick={() =>
-                              setIsAnimeDropdownOpen(!isAnimeDropdownOpen)
-                            }
-                            className='w-full px-3 py-2.5 pr-10 border border-line rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-fg focus:border-line transition-all duration-200 bg-surface text-fg shadow-sm hover:border-line text-left min-h-[44px] tm-press'
-                          >
-                            {
-                              animeDataSourceOptions.find(
-                                (option) => option.value === animeDataSource
-                              )?.label
-                            }
-                          </button>
-                          <div className='absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none'>
-                            <ChevronDown
-                              className={`w-4 h-4 text-muted transition-transform duration-200 ${
-                                isAnimeDropdownOpen ? 'rotate-180' : ''
-                              }`}
-                            />
-                          </div>
-                          {isAnimeDropdownOpen && (
-                            <div className='absolute z-50 w-full mt-1 bg-surface border border-line rounded-lg shadow-lg max-h-60 overflow-auto'>
-                              {animeDataSourceOptions.map((option) => (
-                                <button
-                                  key={option.value}
-                                  type='button'
-                                  onClick={() => {
-                                    handleAnimeDataSourceChange(option.value);
-                                    setIsAnimeDropdownOpen(false);
-                                  }}
-                                  className={`w-full px-3 py-2.5 text-left text-sm transition-colors duration-150 flex items-center justify-between hover:bg-line ${
-                                    animeDataSource === option.value
-                                      ? 'bg-raised text-fg min-h-[44px] tm-press'
-                                      : 'text-fg min-h-[44px] tm-press'
-                                  }`}
-                                >
-                                  <span className='truncate'>
-                                    {option.label}
-                                  </span>
-                                  {animeDataSource === option.value && (
-                                    <Check className='w-4 h-4 text-fg flex-shrink-0 ml-2' />
-                                  )}
-                                </button>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-
-                      <div className='space-y-2'>
-                        <label className='text-[13px] font-medium text-muted'>
-                          备用数据源
-                        </label>
-                        <div
-                          className='relative'
-                          data-dropdown='anime-datasource-backup'
-                        >
-                          <button
-                            type='button'
-                            onClick={() =>
-                              setIsAnimeBackupDropdownOpen(
-                                !isAnimeBackupDropdownOpen
-                              )
-                            }
-                            className='w-full px-3 py-2.5 pr-10 border border-line rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-fg focus:border-line transition-all duration-200 bg-surface text-fg shadow-sm hover:border-line text-left min-h-[44px] tm-press'
-                          >
-                            {
-                              animeDataSourceOptions.find(
-                                (option) =>
-                                  option.value === animeDataSourceBackup
-                              )?.label
-                            }
-                          </button>
-                          <div className='absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none'>
-                            <ChevronDown
-                              className={`w-4 h-4 text-muted transition-transform duration-200 ${
-                                isAnimeBackupDropdownOpen ? 'rotate-180' : ''
-                              }`}
-                            />
-                          </div>
-                          {isAnimeBackupDropdownOpen && (
-                            <div className='absolute z-50 w-full mt-1 bg-surface border border-line rounded-lg shadow-lg max-h-60 overflow-auto'>
-                              {animeDataSourceOptions.map((option) => (
-                                <button
-                                  key={option.value}
-                                  type='button'
-                                  onClick={() => {
-                                    handleAnimeDataSourceBackupChange(
-                                      option.value
-                                    );
-                                    setIsAnimeBackupDropdownOpen(false);
-                                  }}
-                                  className={`w-full px-3 py-2.5 text-left text-sm transition-colors duration-150 flex items-center justify-between hover:bg-line ${
-                                    animeDataSourceBackup === option.value
-                                      ? 'bg-raised text-fg min-h-[44px] tm-press'
-                                      : 'text-fg min-h-[44px] tm-press'
-                                  }`}
-                                >
-                                  <span className='truncate'>
-                                    {option.label}
-                                  </span>
-                                  {animeDataSourceBackup === option.value && (
-                                    <Check className='w-4 h-4 text-fg flex-shrink-0 ml-2' />
-                                  )}
-                                </button>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-
-                    {(animeDataSource === 'custom-baseurl' ||
-                      animeDataSourceBackup === 'custom-baseurl') && (
-                      <div className='space-y-2'>
-                        <label className='text-[13px] font-medium text-muted'>
-                          动漫自定义 Base URL
-                        </label>
-                        <input
-                          type='text'
-                          className='w-full px-3 py-2.5 border border-line rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-fg focus:border-line transition-all duration-200 bg-surface text-fg placeholder-gray-500 dark:placeholder-gray-400 shadow-sm hover:border-line'
-                          placeholder='例如: https://api.bgm.tv 或 https://bangumi-proxy.example.com'
-                          value={animeCustomBaseUrl}
-                          onChange={(e) =>
-                            handleAnimeCustomBaseUrlChange(e.target.value)
-                          }
-                        />
-                        {!animeCustomBaseUrl.trim() && (
-                          <p className='text-[13px] text-fg mt-1'>
-                            未填写时自定义 Base URL 会自动按 Bangumi
-                            官方直连处理。
-                          </p>
-                        )}
-                      </div>
-                    )}
-                    <div className='space-y-2'>
-                      <label className='text-[13px] font-medium text-muted'>
-                        动漫图片 Base URL
-                      </label>
-                      <input
-                        type='text'
-                        className='w-full px-3 py-2.5 border border-line rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-fg focus:border-line transition-all duration-200 bg-surface text-fg placeholder-gray-500 dark:placeholder-gray-400 shadow-sm hover:border-line'
-                        placeholder='例如: https://proxy.example.com'
-                        value={animeImageBaseUrl}
-                        onChange={(e) =>
-                          handleAnimeImageBaseUrlChange(e.target.value)
-                        }
-                      />
-                      <p className='text-[13px] text-muted mt-1'>
-                        用于替换 Bangumi
-                        图片域名。只需填写基础部分，不需要填写完整图片路径。
-                      </p>
-                    </div>
-
-                    <details className='group rounded-lg border border-line bg-raised p-3'>
-                      <summary className='flex cursor-pointer list-none items-center justify-between gap-2'>
-                        <div className='min-w-0'>
-                          <label className='text-[13px] font-medium text-muted'>
-                            Bangumi Cloudflare Workers 代理脚本
-                          </label>
-                          <p className='mt-1 text-[13px] text-muted'>
-                            复制后粘贴到 Cloudflare Workers，部署地址可填入上方
-                            Base URL。
-                          </p>
-                        </div>
-                        <div className='flex shrink-0 items-center gap-2'>
-                          <button
-                            type='button'
-                            onClick={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              handleCopyBangumiProxyScript();
-                            }}
-                            disabled={!bangumiProxyScript}
-                            className='inline-flex items-center gap-1.5 rounded-lg bg-fg px-3 py-2 text-[13px] font-medium text-inverse transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 min-h-[44px] tm-press'
-                          >
-                            <Copy className='h-3.5 w-3.5' />
-                            {bangumiProxyScriptCopied ? '已复制' : '复制脚本'}
-                          </button>
-                          <ChevronDown className='h-4 w-4 text-fg transition-transform group-open:rotate-180' />
-                        </div>
-                      </summary>
-                      <pre className='mt-3 max-h-40 overflow-auto rounded-lg border border-line bg-surface p-3 text-[13px] text-muted'>
-                        <code>
-                          {bangumiProxyScript ||
-                            '正在加载 /scripts/bangumi-proxy.worker.js ...'}
-                        </code>
-                      </pre>
-                    </details>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <div className='border border-line rounded-lg overflow-visible'>
-              <button
-                onClick={() => setIsUsageSectionOpen(!isUsageSectionOpen)}
-                className='w-full px-3 py-2.5 md:px-4 md:py-3 bg-raised hover:bg-line transition-colors flex items-center justify-between min-h-[44px] tm-press'
-              >
-                <div className='flex items-center gap-2'>
-                  <Sliders className='w-5 h-5 text-muted' />
-                  <h3 className='text-base font-medium text-fg'>通用设置</h3>
-                </div>
-                {isUsageSectionOpen ? (
-                  <ChevronUp className='w-5 h-5 text-muted' />
-                ) : (
-                  <ChevronDown className='w-5 h-5 text-muted' />
-                )}
-              </button>
-              {isUsageSectionOpen && (
-                <div className='p-3 md:p-4 space-y-4 md:space-y-6'>
-                  {/* 默认聚合搜索结果 */}
-                  <div className='flex items-center justify-between'>
-                    <div>
-                      <h4 className='text-sm font-medium text-muted'>
-                        默认聚合搜索结果
-                      </h4>
-                      <p className='text-[13px] text-muted mt-1'>
-                        搜索时默认按标题和年份聚合显示结果
-                      </p>
-                    </div>
-                    <label className='flex items-center cursor-pointer'>
-                      <div className='relative'>
-                        <input
-                          type='checkbox'
-                          className='sr-only peer'
-                          checked={defaultAggregateSearch}
-                          onChange={(e) =>
-                            handleAggregateToggle(e.target.checked)
-                          }
-                        />
-                        <div className='tm-switch-track'></div>
-                        <div className='tm-switch-thumb'></div>
-                      </div>
-                    </label>
-                  </div>
-
-                  {/* 优选和测速 */}
-                  <div className='flex items-center justify-between'>
-                    <div>
-                      <h4 className='text-sm font-medium text-muted'>
-                        优选和测速
-                      </h4>
-                      <p className='text-[13px] text-muted mt-1'>
-                        如出现播放器劫持问题可关闭
-                      </p>
-                    </div>
-                    <label className='flex items-center cursor-pointer'>
-                      <div className='relative'>
-                        <input
-                          type='checkbox'
-                          className='sr-only peer'
-                          checked={enableOptimization}
-                          onChange={(e) =>
-                            handleOptimizationToggle(e.target.checked)
-                          }
-                        />
-                        <div className='tm-switch-track'></div>
-                        <div className='tm-switch-thumb'></div>
-                      </div>
-                    </label>
-                  </div>
-
-                  {/* 测速超时设置 */}
-                  {enableOptimization && (
-                    <div className='ml-4 mt-2 space-y-2'>
-                      <div className='space-y-2'>
-                        <div className='flex items-center justify-between gap-3'>
-                          <span className='flex items-center gap-1 text-[13px] text-muted'>
-                            优选策略
-                            <button
-                              type='button'
-                              className='group relative inline-flex h-4 w-4 items-center justify-center rounded-full text-muted transition-colors hover:text-fg focus:outline-none focus:ring-2 focus:ring-[color-mix(in_srgb,var(--tm-text)_50%,transparent)] min-h-[44px] tm-press'
-                              aria-label='优选策略说明'
-                            >
-                              <CircleHelp className='h-3.5 w-3.5' />
-                              <span className='pointer-events-none absolute left-1/2 top-full z-50 mt-2 hidden w-56 -translate-x-1/2 rounded-lg bg-surface px-3 py-2 text-left text-[13px] leading-relaxed text-fg shadow-lg group-hover:block group-focus:block'>
-                                快速策略：快速优选高权重播放源
-                                <br />
-                                全量策略：全量优选全部源
-                              </span>
-                            </button>
-                          </span>
-                          <div className='inline-flex rounded-lg border border-line bg-raised p-1'>
-                            <button
-                              type='button'
-                              onClick={() => handlePreferStrategyChange('fast')}
-                              className={`rounded-md px-4 py-1.5 text-[13px] font-medium transition-all ${
-                                preferStrategy === 'fast'
-                                  ? 'bg-surface text-fg shadow-sm min-h-[44px] tm-press'
-                                  : 'text-muted hover:text-fg min-h-[44px] tm-press'
-                              }`}
-                            >
-                              快速优选
-                            </button>
-                            <button
-                              type='button'
-                              onClick={() => handlePreferStrategyChange('full')}
-                              className={`rounded-md px-4 py-1.5 text-[13px] font-medium transition-all ${
-                                preferStrategy === 'full'
-                                  ? 'bg-surface text-fg shadow-sm min-h-[44px] tm-press'
-                                  : 'text-muted hover:text-fg min-h-[44px] tm-press'
-                              }`}
-                            >
-                              全量优选
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className='space-y-2'>
-                        <div className='flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3'>
-                          <span className='flex items-center gap-1 text-[13px] text-muted'>
-                            优选偏好
-                            <button
-                              type='button'
-                              className='group relative inline-flex h-4 w-4 items-center justify-center rounded-full text-muted transition-colors hover:text-fg focus:outline-none focus:ring-2 focus:ring-[color-mix(in_srgb,var(--tm-text)_50%,transparent)] min-h-[44px] tm-press'
-                              aria-label='优选偏好说明'
-                            >
-                              <CircleHelp className='h-3.5 w-3.5' />
-                              <span className='pointer-events-none absolute left-1/2 top-full z-50 mt-2 hidden w-56 -translate-x-1/2 rounded-lg bg-surface px-3 py-2 text-left text-[13px] leading-relaxed text-fg shadow-lg group-hover:block group-focus:block'>
-                                综合判定：分辨率与网速均衡评分
-                                <br />
-                                分辨率优先：优选时给分辨率加权重
-                                <br />
-                                网速优先：优选时给网速加权重
-                              </span>
-                            </button>
-                          </span>
-                          <div className='flex w-full rounded-lg border border-line bg-raised p-1 sm:inline-flex sm:w-auto'>
-                            <button
-                              type='button'
-                              onClick={() => handlePreferModeChange('balanced')}
-                              className={`flex-1 rounded-md px-3 py-1.5 text-[13px] font-medium transition-all sm:flex-none ${
-                                preferMode === 'balanced'
-                                  ? 'bg-surface text-fg shadow-sm min-h-[44px] tm-press'
-                                  : 'text-muted hover:text-fg min-h-[44px] tm-press'
-                              }`}
-                            >
-                              综合判定
-                            </button>
-                            <button
-                              type='button'
-                              onClick={() =>
-                                handlePreferModeChange('resolution')
-                              }
-                              className={`flex-1 rounded-md px-3 py-1.5 text-[13px] font-medium transition-all sm:flex-none ${
-                                preferMode === 'resolution'
-                                  ? 'bg-surface text-fg shadow-sm min-h-[44px] tm-press'
-                                  : 'text-muted hover:text-fg min-h-[44px] tm-press'
-                              }`}
-                            >
-                              分辨率优先
-                            </button>
-                            <button
-                              type='button'
-                              onClick={() => handlePreferModeChange('speed')}
-                              className={`flex-1 rounded-md px-3 py-1.5 text-[13px] font-medium transition-all sm:flex-none ${
-                                preferMode === 'speed'
-                                  ? 'bg-surface text-fg shadow-sm min-h-[44px] tm-press'
-                                  : 'text-muted hover:text-fg min-h-[44px] tm-press'
-                              }`}
-                            >
-                              网速优先
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className='flex items-center justify-between'>
-                        <span className='text-[13px] text-muted'>
-                          换源面板测速超时
-                        </span>
-                        <span className='text-[13px] font-medium text-muted'>
-                          {speedTestTimeout / 1000}秒
-                        </span>
-                      </div>
-                      <div className='flex items-center gap-2'>
-                        <input
-                          type='range'
-                          min='4000'
-                          max='30000'
-                          step='1000'
-                          value={speedTestTimeout}
-                          onChange={(e) =>
-                            handleSpeedTestTimeoutChange(Number(e.target.value))
-                          }
-                          className='flex-1 h-2 bg-raised rounded-lg appearance-auto cursor-pointer'
-                          style={{
-                            accentColor: 'var(--tm-text)',
-                          }}
-                        />
-                      </div>
-                      <div className='flex justify-between text-[13px] text-muted'>
-                        <button
-                          onClick={() => handleSpeedTestTimeoutChange(4000)}
-                          className={`px-2 py-0.5 rounded ${
-                            speedTestTimeout === 4000
-                              ? 'bg-fg text-inverse min-h-[44px] tm-press'
-                              : 'hover:bg-line min-h-[44px] tm-press'
-                          }`}
-                        >
-                          4秒
-                        </button>
-                        <button
-                          onClick={() => handleSpeedTestTimeoutChange(10000)}
-                          className={`px-2 py-0.5 rounded ${
-                            speedTestTimeout === 10000
-                              ? 'bg-fg text-inverse min-h-[44px] tm-press'
-                              : 'hover:bg-line min-h-[44px] tm-press'
-                          }`}
-                        >
-                          10秒
-                        </button>
-                        <button
-                          onClick={() => handleSpeedTestTimeoutChange(20000)}
-                          className={`px-2 py-0.5 rounded ${
-                            speedTestTimeout === 20000
-                              ? 'bg-fg text-inverse min-h-[44px] tm-press'
-                              : 'hover:bg-line min-h-[44px] tm-press'
-                          }`}
-                        >
-                          20秒
-                        </button>
-                        <button
-                          onClick={() => handleSpeedTestTimeoutChange(30000)}
-                          className={`px-2 py-0.5 rounded ${
-                            speedTestTimeout === 30000
-                              ? 'bg-fg text-inverse min-h-[44px] tm-press'
-                              : 'hover:bg-line min-h-[44px] tm-press'
-                          }`}
-                        >
-                          30秒
-                        </button>
-                      </div>
-                      <p className='text-[13px] text-muted italic'>
-                        注：此设置仅对换源面板测速生效，优选播放源时仍使用4秒超时
-                      </p>
-                    </div>
-                  )}
-
-                  {/* 流式搜索 */}
-                  <div className='flex items-center justify-between'>
-                    <div>
-                      <h4 className='text-sm font-medium text-muted'>
-                        流式搜索输出
-                      </h4>
-                      <p className='text-[13px] text-muted mt-1'>
-                        启用搜索结果实时流式输出，关闭后使用传统一次性搜索
-                      </p>
-                    </div>
-                    <label className='flex items-center cursor-pointer'>
-                      <div className='relative'>
-                        <input
-                          type='checkbox'
-                          className='sr-only peer'
-                          checked={fluidSearch}
-                          onChange={(e) =>
-                            handleFluidSearchToggle(e.target.checked)
-                          }
-                        />
-                        <div className='tm-switch-track'></div>
-                        <div className='tm-switch-thumb'></div>
-                      </div>
-                    </label>
-                  </div>
-
-                  {/* 禁用背景图渲染 */}
-                  <div className='flex items-center justify-between'>
-                    <div>
-                      <h4 className='text-sm font-medium text-muted'>
-                        禁用背景图渲染
-                      </h4>
-                      <p className='text-[13px] text-muted mt-1'>
-                        关闭播放页面的TMDB背景图显示（需手动刷新页面生效）
-                      </p>
-                    </div>
-                    <label className='flex items-center cursor-pointer'>
-                      <div className='relative'>
-                        <input
-                          type='checkbox'
-                          className='sr-only peer'
-                          checked={tmdbBackdropDisabled}
-                          onChange={(e) =>
-                            handleTmdbBackdropDisabledToggle(e.target.checked)
-                          }
-                        />
-                        <div className='tm-switch-track'></div>
-                        <div className='tm-switch-thumb'></div>
-                      </div>
-                    </label>
-                  </div>
-
-                  {/* 启用预告片 */}
-                  <div className='flex items-center justify-between'>
-                    <div>
-                      <h4 className='text-sm font-medium text-muted'>
-                        首页预告片
-                      </h4>
-                      <p className='text-[13px] text-muted mt-1'>
-                        在首页轮播图中显示视频预告片（需刷新页面生效）
-                      </p>
-                    </div>
-                    <label className='flex items-center cursor-pointer'>
-                      <div className='relative'>
-                        <input
-                          type='checkbox'
-                          className='sr-only peer'
-                          checked={enableTrailers}
-                          onChange={(e) =>
-                            handleEnableTrailersToggle(e.target.checked)
-                          }
-                        />
-                        <div className='tm-switch-track'></div>
-                        <div className='tm-switch-thumb'></div>
-                      </div>
-                    </label>
-                  </div>
-
-                  {/* 搜索繁体转简体 */}
-                  <div className='flex items-center justify-between'>
-                    <div>
-                      <h4 className='text-sm font-medium text-muted'>
-                        搜索繁体转简体
-                      </h4>
-                      <p className='text-[13px] text-muted mt-1'>
-                        搜索时自动将繁体中文转换为简体中文
-                      </p>
-                    </div>
-                    <label className='flex items-center cursor-pointer'>
-                      <div className='relative'>
-                        <input
-                          type='checkbox'
-                          className='sr-only peer'
-                          checked={searchTraditionalToSimplified}
-                          onChange={(e) =>
-                            handleSearchTraditionalToSimplifiedToggle(
-                              e.target.checked
-                            )
-                          }
-                        />
-                        <div className='tm-switch-track'></div>
-                        <div className='tm-switch-thumb'></div>
-                      </div>
-                    </label>
-                  </div>
-
-                  {/* 精确搜索 */}
-                  <div className='flex items-center justify-between'>
-                    <div>
-                      <h4 className='text-sm font-medium text-muted'>
-                        精确搜索
-                      </h4>
-                      <p className='text-[13px] text-muted mt-1'>
-                        开启后，搜索结果将过滤掉不包含搜索词的内容
-                      </p>
-                    </div>
-                    <label className='flex items-center cursor-pointer'>
-                      <div className='relative'>
-                        <input
-                          type='checkbox'
-                          className='sr-only peer'
-                          checked={exactSearch}
-                          onChange={(e) =>
-                            handleExactSearchToggle(e.target.checked)
-                          }
-                        />
-                        <div className='tm-switch-track'></div>
-                        <div className='tm-switch-thumb'></div>
-                      </div>
-                    </label>
-                  </div>
-
-                  {/* 直播播放记录 */}
-                  <div className='flex items-center justify-between'>
-                    <div>
-                      <h4 className='text-sm font-medium text-muted'>
-                        保存直播的播放记录
-                      </h4>
-                      <p className='text-[13px] text-muted mt-1'>
-                        开启后将保存直播频道观看记录
-                      </p>
-                    </div>
-                    <label className='flex items-center cursor-pointer'>
-                      <div className='relative'>
-                        <input
-                          type='checkbox'
-                          className='sr-only peer'
-                          checked={saveLivePlayRecords}
-                          onChange={(e) =>
-                            handleSaveLivePlayRecordsToggle(e.target.checked)
-                          }
-                        />
-                        <div className='tm-switch-track'></div>
-                        <div className='tm-switch-thumb'></div>
-                      </div>
-                    </label>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* 下载设置 */}
-            <div className='border border-line rounded-lg overflow-visible'>
-              <button
-                onClick={() => setIsDownloadSectionOpen(!isDownloadSectionOpen)}
-                className='w-full px-3 py-2.5 md:px-4 md:py-3 bg-raised hover:bg-line transition-colors flex items-center justify-between min-h-[44px] tm-press'
-              >
-                <div className='flex items-center gap-2'>
-                  <Download className='w-5 h-5 text-muted' />
-                  <h3 className='text-base font-medium text-fg'>下载设置</h3>
-                </div>
-                {isDownloadSectionOpen ? (
-                  <ChevronUp className='w-5 h-5 text-muted' />
-                ) : (
-                  <ChevronDown className='w-5 h-5 text-muted' />
-                )}
-              </button>
-              {isDownloadSectionOpen && (
-                <div className='p-3 md:p-4 space-y-4 md:space-y-6'>
-                  {/* 最大同时下载限制 */}
-                  <div className='space-y-2'>
-                    <div>
-                      <h4 className='text-sm font-medium text-muted'>
-                        最大同时下载限制
-                      </h4>
-                      <p className='text-[13px] text-muted mt-1'>
-                        控制播放页面下载时的同时下载数量
-                      </p>
-                    </div>
-                    <div className='flex items-center justify-between'>
-                      <span className='text-[13px] text-muted'>
-                        同时下载数量
-                      </span>
-                      <span className='text-[13px] font-medium text-muted'>
-                        {maxConcurrentDownloads}个
-                      </span>
-                    </div>
-                    <div className='flex items-center gap-2'>
-                      <input
-                        type='range'
-                        min='1'
-                        max='10'
-                        step='1'
-                        value={maxConcurrentDownloads}
-                        onChange={(e) =>
-                          handleMaxConcurrentDownloadsChange(
-                            Number(e.target.value)
-                          )
-                        }
-                        className='flex-1 h-2 bg-raised rounded-lg appearance-auto cursor-pointer'
-                        style={{
-                          accentColor: 'var(--tm-text)',
-                        }}
-                      />
-                    </div>
-                    <div className='flex justify-between text-[13px] text-muted'>
-                      <button
-                        onClick={() => handleMaxConcurrentDownloadsChange(1)}
-                        className={`px-2 py-0.5 rounded ${
-                          maxConcurrentDownloads === 1
-                            ? 'bg-fg text-inverse min-h-[44px] tm-press'
-                            : 'hover:bg-line min-h-[44px] tm-press'
-                        }`}
-                      >
-                        1个
-                      </button>
-                      <button
-                        onClick={() => handleMaxConcurrentDownloadsChange(10)}
-                        className={`px-2 py-0.5 rounded ${
-                          maxConcurrentDownloads === 10
-                            ? 'bg-fg text-inverse min-h-[44px] tm-press'
-                            : 'hover:bg-line min-h-[44px] tm-press'
-                        }`}
-                      >
-                        10个
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* 单任务线程数 */}
-                  <div className='space-y-2'>
-                    <div>
-                      <h4 className='text-sm font-medium text-muted'>
-                        单任务线程数
-                      </h4>
-                      <p className='text-[13px] text-muted mt-1'>
-                        控制每个下载任务使用的线程数量，线程越多下载越快但占用资源越多
-                      </p>
-                    </div>
-                    <div className='flex items-center justify-between'>
-                      <span className='text-[13px] text-muted'>线程数量</span>
-                      <span className='text-[13px] font-medium text-muted'>
-                        {downloadThreadsPerTask}个
-                      </span>
-                    </div>
-                    <div className='flex items-center gap-2'>
-                      <input
-                        type='range'
-                        min='1'
-                        max='32'
-                        step='1'
-                        value={downloadThreadsPerTask}
-                        onChange={(e) =>
-                          handleDownloadThreadsPerTaskChange(
-                            Number(e.target.value)
-                          )
-                        }
-                        className='flex-1 h-2 bg-raised rounded-lg appearance-auto cursor-pointer'
-                        style={{
-                          accentColor: 'var(--tm-text)',
-                        }}
-                      />
-                    </div>
-                    <div className='flex justify-between text-[13px] text-muted'>
-                      <button
-                        onClick={() => handleDownloadThreadsPerTaskChange(1)}
-                        className={`px-2 py-0.5 rounded ${
-                          downloadThreadsPerTask === 1
-                            ? 'bg-fg text-inverse min-h-[44px] tm-press'
-                            : 'hover:bg-line min-h-[44px] tm-press'
-                        }`}
-                      >
-                        1个
-                      </button>
-                      <button
-                        onClick={() => handleDownloadThreadsPerTaskChange(32)}
-                        className={`px-2 py-0.5 rounded ${
-                          downloadThreadsPerTask === 32
-                            ? 'bg-fg text-inverse min-h-[44px] tm-press'
-                            : 'hover:bg-line min-h-[44px] tm-press'
-                        }`}
-                      >
-                        32个
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* 分片下载超时 */}
-                  <div className='space-y-2'>
-                    <div>
-                      <h4 className='text-sm font-medium text-muted'>
-                        分片下载超时
-                      </h4>
-                      <p className='text-[13px] text-muted mt-1'>
-                        单个分片超过该时间仍未完成时会自动判定超时并按原分片重试
-                      </p>
-                    </div>
-                    <div className='flex items-center justify-between'>
-                      <span className='text-[13px] text-muted'>超时时间</span>
-                      <span className='text-[13px] font-medium text-muted'>
-                        {formatDownloadSegmentTimeout(downloadSegmentTimeout)}
-                      </span>
-                    </div>
-                    <div className='flex items-center gap-2'>
-                      <input
-                        type='range'
-                        min='30000'
-                        max='300000'
-                        step='10000'
-                        value={downloadSegmentTimeout}
-                        onChange={(e) =>
-                          handleDownloadSegmentTimeoutChange(
-                            Number(e.target.value)
-                          )
-                        }
-                        className='flex-1 h-2 bg-raised rounded-lg appearance-auto cursor-pointer'
-                        style={{
-                          accentColor: 'var(--tm-text)',
-                        }}
-                      />
-                    </div>
-                    <div className='flex justify-between text-[13px] text-muted'>
-                      <button
-                        onClick={() =>
-                          handleDownloadSegmentTimeoutChange(30000)
-                        }
-                        className={`px-2 py-0.5 rounded cursor-pointer ${
-                          downloadSegmentTimeout === 30000
-                            ? 'bg-fg text-inverse min-h-[44px] tm-press'
-                            : 'hover:bg-line min-h-[44px] tm-press'
-                        }`}
-                      >
-                        30秒
-                      </button>
-                      <button
-                        onClick={() =>
-                          handleDownloadSegmentTimeoutChange(120000)
-                        }
-                        className={`px-2 py-0.5 rounded cursor-pointer ${
-                          downloadSegmentTimeout === 120000
-                            ? 'bg-fg text-inverse min-h-[44px] tm-press'
-                            : 'hover:bg-line min-h-[44px] tm-press'
-                        }`}
-                      >
-                        2分钟
-                      </button>
-                      <button
-                        onClick={() =>
-                          handleDownloadSegmentTimeoutChange(300000)
-                        }
-                        className={`px-2 py-0.5 rounded cursor-pointer ${
-                          downloadSegmentTimeout === 300000
-                            ? 'bg-fg text-inverse min-h-[44px] tm-press'
-                            : 'hover:bg-line min-h-[44px] tm-press'
-                        }`}
-                      >
-                        5分钟
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* 下载模式 */}
-                  <div className='space-y-2'>
-                    <div>
-                      <h4 className='text-sm font-medium text-muted'>
-                        下载模式
-                      </h4>
-                    </div>
-                    <div className='space-y-2'>
-                      <label className='flex items-center gap-2 cursor-pointer'>
-                        <input
-                          type='radio'
-                          name='downloadMode'
-                          value='browser'
-                          checked={downloadMode === 'browser'}
-                          onChange={() => handleDownloadModeChange('browser')}
-                          className='w-4 h-4 text-fg'
-                        />
-                        <span className='text-sm text-muted'>
-                          浏览器下载（合并为单文件）
-                        </span>
-                      </label>
-                      <label className='flex items-center gap-2 cursor-pointer'>
-                        <input
-                          type='radio'
-                          name='downloadMode'
-                          value='filesystem'
-                          checked={downloadMode === 'filesystem'}
-                          onChange={() =>
-                            handleDownloadModeChange('filesystem')
-                          }
-                          className='w-4 h-4 text-fg'
-                        />
-                        <span className='text-sm text-muted'>
-                          File System API（保存分片到本地目录）
-                        </span>
-                      </label>
-                      <label className='flex items-start gap-2 cursor-pointer'>
-                        <input
-                          type='radio'
-                          name='downloadMode'
-                          value='indexeddb'
-                          checked={downloadMode === 'indexeddb'}
-                          onChange={() => handleDownloadModeChange('indexeddb')}
-                          className='mt-0.5 w-4 h-4 text-fg'
-                        />
-                        <span className='text-sm text-muted'>
-                          IndexedDB 缓存（应用内离线播放）
-                        </span>
-                      </label>
-                    </div>
-
-                    {/* 保存路径选择（仅在 filesystem 模式显示） */}
-                    {downloadMode === 'filesystem' && (
-                      <div className='mt-3 p-3 bg-raised rounded-lg space-y-2'>
-                        <label className='block text-[13px] font-medium text-muted'>
-                          保存路径
-                        </label>
-                        <div className='flex gap-2'>
-                          <input
-                            type='text'
-                            value={filesystemSavePath}
-                            readOnly
-                            placeholder='点击选择保存目录'
-                            className='flex-1 px-3 py-2 text-sm border border-line rounded bg-surface text-muted'
-                          />
-                          <button
-                            onClick={handleSelectSavePath}
-                            className='px-4 py-2 text-sm bg-fg text-inverse rounded hover:opacity-90 transition-colors min-h-[44px] tm-press'
-                          >
-                            选择目录
-                          </button>
-                        </div>
-                        <p className='text-[13px] text-muted'>
-                          需要 Chrome 86+ 或 Edge 86+ 浏览器支持
-                        </p>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* 下载文件管理 */}
-                  <div className='space-y-2'>
-                    <button
-                      onClick={() => setIsDownloadManagementOpen(true)}
-                      className='w-full px-4 py-2 text-sm bg-fg text-inverse rounded hover:opacity-90 transition-colors flex items-center justify-center gap-2 min-h-[44px] tm-press'
-                    >
-                      <Package className='w-4 h-4' />
-                      下载文件管理
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* 播放设置 */}
-            <div className='border border-line rounded-lg overflow-visible'>
-              <button
-                onClick={() => setIsBufferSectionOpen(!isBufferSectionOpen)}
-                className='w-full px-3 py-2.5 md:px-4 md:py-3 bg-raised hover:bg-line transition-colors flex items-center justify-between min-h-[44px] tm-press'
-              >
-                <div className='flex items-center gap-2'>
-                  <Gauge className='w-5 h-5 text-muted' />
-                  <h3 className='text-base font-medium text-fg'>播放设置</h3>
-                </div>
-                {isBufferSectionOpen ? (
-                  <ChevronUp className='w-5 h-5 text-muted' />
-                ) : (
-                  <ChevronDown className='w-5 h-5 text-muted' />
-                )}
-              </button>
-              {isBufferSectionOpen && (
-                <div className='p-3 md:p-4 space-y-4 md:space-y-6'>
-                  <div>
-                    <p className='text-[13px] text-muted'>
-                      调整播放器相关设置（仅在播放页面生效）
-                    </p>
-                  </div>
-
-                  {/* 缓冲策略 */}
-                  <div className='space-y-3'>
-                    <div>
-                      <h4 className='text-sm font-medium text-muted'>
-                        缓冲策略
-                      </h4>
-                      <p className='text-[13px] text-muted mt-1'>
-                        设置视频缓冲块大小，影响播放流畅度和流量消耗
-                      </p>
-                    </div>
-
-                    {/* 滑块控件 */}
-                    <div className='space-y-2'>
-                      <input
-                        type='range'
-                        min='0'
-                        max='3'
-                        step='1'
-                        value={getSliderValueFromStrategy(bufferStrategy)}
-                        onChange={(e) => {
-                          const sliderValue = parseInt(e.target.value);
-                          const strategy =
-                            getBufferStrategyFromSlider(sliderValue);
-                          handleBufferStrategyChange(strategy);
-                        }}
-                        className='w-full h-2 bg-raised rounded-lg appearance-auto cursor-pointer accent-fg'
-                        style={{
-                          accentColor: 'var(--tm-text)',
-                        }}
-                      />
-
-                      {/* 标签显示 */}
-                      <div className='flex justify-between text-[13px] text-muted px-1'>
-                        <span
-                          className={
-                            bufferStrategy === 'low'
-                              ? 'font-medium text-fg'
-                              : ''
-                          }
-                        >
-                          低缓冲
-                        </span>
-                        <span
-                          className={
-                            bufferStrategy === 'medium'
-                              ? 'font-medium text-fg'
-                              : ''
-                          }
-                        >
-                          中缓冲
-                        </span>
-                        <span
-                          className={
-                            bufferStrategy === 'high'
-                              ? 'font-medium text-fg'
-                              : ''
-                          }
-                        >
-                          高缓冲
-                        </span>
-                        <span
-                          className={
-                            bufferStrategy === 'ultra'
-                              ? 'font-medium text-fg'
-                              : ''
-                          }
-                        >
-                          超高缓冲
-                        </span>
-                      </div>
-
-                      {/* 当前选择的说明 */}
-                      <div className='text-center text-sm font-medium text-muted mt-2'>
-                        {
-                          bufferStrategyOptions.find(
-                            (option) => option.value === bufferStrategy
-                          )?.label
-                        }
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* 下集预缓冲 */}
-                  <div className='flex items-center justify-between'>
-                    <div>
-                      <h4 className='text-sm font-medium text-muted'>
-                        下集预缓冲
-                      </h4>
-                      <p className='text-[13px] text-muted mt-1'>
-                        播放进度达到90%时，自动预缓冲下一集内容
-                      </p>
-                    </div>
-                    <label className='flex items-center cursor-pointer'>
-                      <div className='relative'>
-                        <input
-                          type='checkbox'
-                          className='sr-only peer'
-                          checked={nextEpisodePreCache}
-                          onChange={(e) =>
-                            handleNextEpisodePreCacheToggle(e.target.checked)
-                          }
-                        />
-                        <div className='tm-switch-track'></div>
-                        <div className='tm-switch-thumb'></div>
-                      </div>
-                    </label>
-                  </div>
-
-                  {/* 禁用播放预览图 */}
-                  <div className='flex items-center justify-between'>
-                    <div>
-                      <h4 className='text-sm font-medium text-muted'>
-                        禁用播放预览图
-                      </h4>
-                      <p className='text-[13px] text-muted mt-1'>
-                        关闭后不再生成进度条悬停预览图。生成预览图需完整抽帧整个视频，流量开销较大，修改后重新进入播放页生效
-                      </p>
-                    </div>
-                    <label className='flex items-center cursor-pointer'>
-                      <div className='relative'>
-                        <input
-                          type='checkbox'
-                          className='sr-only peer'
-                          checked={disablePlaybackThumbnail}
-                          onChange={(e) =>
-                            handleDisablePlaybackThumbnailToggle(
-                              e.target.checked
-                            )
-                          }
-                        />
-                        <div className='tm-switch-track'></div>
-                        <div className='tm-switch-thumb'></div>
-                      </div>
-                    </label>
-                  </div>
-
-                  {/* 禁用集数标题获取并切换 */}
-                  <div className='flex items-center justify-between'>
-                    <div>
-                      <h4 className='text-sm font-medium text-muted'>
-                        禁用集数标题获取并切换
-                      </h4>
-                      <p className='text-[13px] text-muted mt-1'>
-                        开启后不再获取分集标题，选集面板保持数字网格视图，不自动切换为列表视图
-                      </p>
-                    </div>
-                    <label className='flex items-center cursor-pointer'>
-                      <div className='relative'>
-                        <input
-                          type='checkbox'
-                          className='sr-only peer'
-                          checked={disableEpisodeTitleFetch}
-                          onChange={(e) =>
-                            handleDisableEpisodeTitleFetchToggle(
-                              e.target.checked
-                            )
-                          }
-                        />
-                        <div className='tm-switch-track'></div>
-                        <div className='tm-switch-thumb'></div>
-                      </div>
-                    </label>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* 弹幕设置 */}
-            <div className='border border-line rounded-lg overflow-visible'>
-              <button
-                onClick={() => setIsDanmakuSectionOpen(!isDanmakuSectionOpen)}
-                className='w-full px-3 py-2.5 md:px-4 md:py-3 bg-raised hover:bg-line transition-colors flex items-center justify-between min-h-[44px] tm-press'
-              >
-                <div className='flex items-center gap-2'>
-                  <MessageSquare className='w-5 h-5 text-muted' />
-                  <h3 className='text-base font-medium text-fg'>弹幕设置</h3>
-                </div>
-                {isDanmakuSectionOpen ? (
-                  <ChevronUp className='w-5 h-5 text-muted' />
-                ) : (
-                  <ChevronDown className='w-5 h-5 text-muted' />
-                )}
-              </button>
-              {isDanmakuSectionOpen && (
-                <div className='p-3 md:p-4 space-y-4 md:space-y-6'>
-                  {/* 禁用自动装填弹幕 */}
-                  <div className='flex items-center justify-between'>
-                    <div>
-                      <h4 className='text-sm font-medium text-muted'>
-                        禁用自动装填弹幕
-                      </h4>
-                      <p className='text-[13px] text-muted mt-1'>
-                        开启后，播放页面不会自动匹配弹幕，只能手动匹配
-                      </p>
-                    </div>
-                    <label className='flex items-center cursor-pointer'>
-                      <div className='relative'>
-                        <input
-                          type='checkbox'
-                          className='sr-only peer'
-                          checked={disableAutoLoadDanmaku}
-                          onChange={(e) =>
-                            handleDisableAutoLoadDanmakuToggle(e.target.checked)
-                          }
-                        />
-                        <div className='tm-switch-track'></div>
-                        <div className='tm-switch-thumb'></div>
-                      </div>
-                    </label>
-                  </div>
-
-                  {/* 下集弹幕预加载 */}
-                  <div className='flex items-center justify-between'>
-                    <div>
-                      <h4 className='text-sm font-medium text-muted'>
-                        下集弹幕预加载
-                      </h4>
-                      <p className='text-[13px] text-muted mt-1'>
-                        播放进度达到90%时，自动预加载下一集弹幕
-                      </p>
-                    </div>
-                    <label className='flex items-center cursor-pointer'>
-                      <div className='relative'>
-                        <input
-                          type='checkbox'
-                          className='sr-only peer'
-                          checked={nextEpisodeDanmakuPreload}
-                          onChange={(e) =>
-                            handleNextEpisodeDanmakuPreloadToggle(
-                              e.target.checked
-                            )
-                          }
-                        />
-                        <div className='tm-switch-track'></div>
-                        <div className='tm-switch-thumb'></div>
-                      </div>
-                    </label>
-                  </div>
-
-                  {/* 禁用弹幕热力图 */}
-                  <div className='flex items-center justify-between'>
-                    <div>
-                      <h4 className='text-sm font-medium text-muted'>
-                        禁用弹幕热力图
-                      </h4>
-                      <p className='text-[13px] text-muted mt-1'>
-                        开启后不显示弹幕热力图和热力图开关
-                      </p>
-                    </div>
-                    <label className='flex items-center cursor-pointer'>
-                      <div className='relative'>
-                        <input
-                          type='checkbox'
-                          className='sr-only peer'
-                          checked={danmakuHeatmapDisabled}
-                          onChange={(e) =>
-                            handleDanmakuHeatmapDisabledToggle(e.target.checked)
-                          }
-                        />
-                        <div className='tm-switch-track'></div>
-                        <div className='tm-switch-thumb'></div>
-                      </div>
-                    </label>
-                  </div>
-
-                  {/* 弹幕繁简转换 */}
-                  <div className='flex items-center justify-between'>
-                    <div>
-                      <h4 className='text-sm font-medium text-muted'>
-                        弹幕繁简转换
-                      </h4>
-                      <p className='text-[13px] text-muted mt-1'>
-                        开启后，拉取弹幕时自动将繁体中文转换为简体中文
-                      </p>
-                    </div>
-                    <label className='flex items-center cursor-pointer'>
-                      <div className='relative'>
-                        <input
-                          type='checkbox'
-                          className='sr-only peer'
-                          checked={danmakuTraditionalToSimplified}
-                          onChange={(e) =>
-                            handleDanmakuTraditionalToSimplifiedToggle(
-                              e.target.checked
-                            )
-                          }
-                        />
-                        <div className='tm-switch-track'></div>
-                        <div className='tm-switch-thumb'></div>
-                      </div>
-                    </label>
-                  </div>
-
-                  {/* 弹幕加载上限 */}
-                  <div className='space-y-2'>
-                    <div className='flex items-center justify-between'>
-                      <span className='text-[13px] text-muted'>
-                        弹幕加载上限
-                      </span>
-                      <span className='text-[13px] font-medium text-muted'>
-                        {danmakuMaxCount === 0
-                          ? '无上限'
-                          : `${danmakuMaxCount} 条`}
-                      </span>
-                    </div>
-                    <div className='flex items-center gap-2'>
-                      <input
-                        type='range'
-                        min='0'
-                        max='10000'
-                        step='100'
-                        value={danmakuMaxCount}
-                        onChange={(e) =>
-                          handleDanmakuMaxCountChange(parseInt(e.target.value))
-                        }
-                        className='flex-1 h-2 bg-raised rounded-lg appearance-auto cursor-pointer'
-                        style={{
-                          accentColor: 'var(--tm-text)',
-                        }}
-                      />
-                    </div>
-                    <div
-                      className='relative text-[13px] text-muted'
-                      style={{ height: '24px' }}
-                    >
-                      <button
-                        onClick={() => handleDanmakuMaxCountChange(0)}
-                        className={`absolute px-2 py-0.5 rounded ${
-                          danmakuMaxCount === 0
-                            ? 'bg-fg text-inverse min-h-[44px] tm-press'
-                            : 'hover:bg-line min-h-[44px] tm-press'
-                        }`}
-                        style={{ left: '0%', transform: 'translateX(0%)' }}
-                      >
-                        无上限
-                      </button>
-                      <button
-                        onClick={() => handleDanmakuMaxCountChange(3000)}
-                        className={`absolute px-2 py-0.5 rounded ${
-                          danmakuMaxCount === 3000
-                            ? 'bg-fg text-inverse min-h-[44px] tm-press'
-                            : 'hover:bg-line min-h-[44px] tm-press'
-                        }`}
-                        style={{ left: '30%', transform: 'translateX(-50%)' }}
-                      >
-                        3000
-                      </button>
-                      <button
-                        onClick={() => handleDanmakuMaxCountChange(5000)}
-                        className={`absolute px-2 py-0.5 rounded ${
-                          danmakuMaxCount === 5000
-                            ? 'bg-fg text-inverse min-h-[44px] tm-press'
-                            : 'hover:bg-line min-h-[44px] tm-press'
-                        }`}
-                        style={{ left: '50%', transform: 'translateX(-50%)' }}
-                      >
-                        5000
-                      </button>
-                      <button
-                        onClick={() => handleDanmakuMaxCountChange(10000)}
-                        className={`absolute px-2 py-0.5 rounded ${
-                          danmakuMaxCount === 10000
-                            ? 'bg-fg text-inverse min-h-[44px] tm-press'
-                            : 'hover:bg-line min-h-[44px] tm-press'
-                        }`}
-                        style={{ left: '100%', transform: 'translateX(-100%)' }}
-                      >
-                        10000
-                      </button>
-                    </div>
-                    <p className='text-[13px] text-muted mt-1'>
-                      限制加载的弹幕数量，减少性能消耗
-                    </p>
-                  </div>
-
-                  {/* 清除弹幕缓存 */}
-                  <div className='space-y-3'>
-                    <div>
-                      <h4 className='text-sm font-medium text-muted'>
-                        弹幕缓存管理
-                      </h4>
-                      <p className='text-[13px] text-muted mt-1'>
-                        弹幕缓存空间占用：{danmakuCacheUsage}
-                      </p>
-                      <p className='text-[13px] text-muted mt-1'>
-                        清除所有已缓存的弹幕数据
-                      </p>
-                    </div>
-                    <button
-                      onClick={handleClearDanmakuCache}
-                      disabled={isClearingCache}
-                      className='w-full px-4 py-2.5 bg-fg hover:opacity-90 disabled:bg-fg text-inverse text-sm font-medium rounded-lg transition-colors duration-200 shadow-sm hover:shadow-md disabled:cursor-not-allowed flex items-center justify-center gap-2 min-h-[44px] tm-press'
-                    >
-                      {isClearingCache ? (
-                        <>
-                          <div className='w-4 h-4 border-2 border-line border-t-transparent rounded-full animate-spin'></div>
-                          <span>清除中...</span>
-                        </>
-                      ) : (
-                        <>
-                          <svg
-                            className='w-4 h-4'
-                            fill='none'
-                            stroke='currentColor'
-                            viewBox='0 0 24 24'
-                          >
-                            <path
-                              strokeLinecap='round'
-                              strokeLinejoin='round'
-                              strokeWidth={2}
-                              d='M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16'
-                            />
-                          </svg>
-                          <span>清除弹幕缓存</span>
-                        </>
-                      )}
-                    </button>
-
-                    {/* 成功/失败提示 */}
-                    {clearCacheMessage && (
-                      <div className='text-sm p-3 rounded-lg border bg-raised border-line text-fg'>
-                        {clearCacheMessage}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* 首页设置 */}
-            <div className='border border-line rounded-lg overflow-visible'>
-              <button
-                onClick={() => setIsHomepageSectionOpen(!isHomepageSectionOpen)}
-                className='w-full px-3 py-2.5 md:px-4 md:py-3 bg-raised hover:bg-line transition-colors flex items-center justify-between min-h-[44px] tm-press'
-              >
-                <div className='flex items-center gap-2'>
-                  <Home className='w-5 h-5 text-muted' />
-                  <h3 className='text-base font-medium text-fg'>首页设置</h3>
-                </div>
-                {isHomepageSectionOpen ? (
-                  <ChevronUp className='w-5 h-5 text-muted' />
-                ) : (
-                  <ChevronDown className='w-5 h-5 text-muted' />
-                )}
-              </button>
-              {isHomepageSectionOpen && (
-                <div className='p-3 md:p-4 space-y-4 md:space-y-6'>
-                  <div>
-                    <p className='text-[13px] text-muted mb-3'>
-                      配置首页轮播图显示效果，以及首页模块布局
-                    </p>
-                  </div>
-
-                  {/* 轮播图配置 */}
-                  <div className='space-y-2'>
-                    <div>
-                      <h4 className='text-sm font-medium text-fg'>
-                        轮播图配置
-                      </h4>
-                    </div>
-                    <div className='p-3 bg-raised rounded-lg border border-line space-y-3'>
-                      <div>
-                        <div className='text-sm font-medium text-fg'>
-                          轮播图高度
-                        </div>
-                        <p className='text-[13px] text-muted mt-1'>
-                          调整首页轮播图显示高度
-                        </p>
-                      </div>
-                      <div className='grid grid-cols-3 gap-2'>
-                        {homeBannerHeightOptions.map((option) => (
-                          <button
-                            key={option.value}
-                            onClick={() =>
-                              handleHomeBannerHeightScaleChange(option.value)
-                            }
-                            aria-pressed={
-                              homeBannerHeightScale === option.value
-                            }
-                            className='tm-chip'
-                            title={`${option.label}（${option.description}）`}
-                          >
-                            <span>{option.label}</span>
-                            <span className='text-[13px] opacity-70'>
-                              {option.description}
-                            </span>
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* 模块显示与排序 */}
-                  <div className='space-y-3 rounded-lg border border-line p-3'>
-                    <div>
-                      <h4 className='text-sm font-medium text-fg'>
-                        模块显示与排序
-                      </h4>
-                      <p className='text-[13px] text-muted mt-1'>
-                        控制首页组件和内容模块的显示/隐藏与顺序
-                      </p>
-                    </div>
-                    <div className='flex items-center gap-2 p-3 bg-raised rounded-lg border border-line'>
-                      <button
-                        onClick={() =>
-                          handleHomeBannerToggle(!homeBannerEnabled)
-                        }
-                        className='flex-shrink-0 min-h-[44px] tm-press'
-                        title={homeBannerEnabled ? '点击隐藏' : '点击显示'}
-                      >
-                        {homeBannerEnabled ? (
-                          <Eye className='w-5 h-5 text-fg' />
-                        ) : (
-                          <EyeOff className='w-5 h-5 text-muted' />
-                        )}
-                      </button>
-                      <div className='flex-1'>
-                        <span
-                          className={`text-sm font-medium ${
-                            homeBannerEnabled ? 'text-fg' : 'text-muted'
-                          }`}
-                        >
-                          首页轮播图
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className='flex items-center gap-2 p-3 bg-raised rounded-lg border border-line'>
-                      <button
-                        onClick={() =>
-                          handleHomeContinueWatchingToggle(
-                            !homeContinueWatchingEnabled
-                          )
-                        }
-                        className='flex-shrink-0 min-h-[44px] tm-press'
-                        title={
-                          homeContinueWatchingEnabled ? '点击隐藏' : '点击显示'
-                        }
-                      >
-                        {homeContinueWatchingEnabled ? (
-                          <Eye className='w-5 h-5 text-fg' />
-                        ) : (
-                          <EyeOff className='w-5 h-5 text-muted' />
-                        )}
-                      </button>
-                      <div className='flex-1'>
-                        <span
-                          className={`text-sm font-medium ${
-                            homeContinueWatchingEnabled
-                              ? 'text-fg'
-                              : 'text-muted'
-                          }`}
-                        >
-                          继续观看
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* 模块列表 */}
-                    <div className='space-y-2'>
-                      {homeModules.map((module, index) => (
-                        <div
-                          key={module.id}
-                          className='flex items-center gap-2 p-3 bg-raised rounded-lg border border-line'
-                        >
-                          {/* 左侧：显示/隐藏开关 */}
-                          <button
-                            onClick={() =>
-                              handleHomeModuleToggle(module.id, !module.enabled)
-                            }
-                            className='flex-shrink-0 min-h-[44px] tm-press'
-                            title={module.enabled ? '点击隐藏' : '点击显示'}
-                          >
-                            {module.enabled ? (
-                              <Eye className='w-5 h-5 text-fg' />
-                            ) : (
-                              <EyeOff className='w-5 h-5 text-muted' />
-                            )}
-                          </button>
-
-                          {/* 中间：模块名称 */}
-                          <div className='flex-1'>
-                            <span
-                              className={`text-sm font-medium ${
-                                module.enabled ? 'text-fg' : 'text-muted'
-                              }`}
-                            >
-                              {module.name}
-                            </span>
-                          </div>
-
-                          {/* 右侧：上下移动按钮 */}
-                          <div className='flex gap-1'>
-                            <button
-                              onClick={() => handleHomeModuleMoveUp(index)}
-                              disabled={index === 0}
-                              className='p-1.5 rounded hover:bg-line disabled:opacity-30 disabled:cursor-not-allowed transition-colors min-h-[44px] tm-press'
-                              title='上移'
-                            >
-                              <MoveUp className='w-4 h-4 text-muted' />
-                            </button>
-                            <button
-                              onClick={() => handleHomeModuleMoveDown(index)}
-                              disabled={index === homeModules.length - 1}
-                              className='p-1.5 rounded hover:bg-line disabled:opacity-30 disabled:cursor-not-allowed transition-colors min-h-[44px] tm-press'
-                              title='下移'
-                            >
-                              <MoveDown className='w-4 h-4 text-muted' />
-                            </button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* 恢复默认按钮 */}
-                  <button
-                    onClick={() => {
-                      setHomeModules(defaultHomeModules);
-                      setHomeBannerEnabled(true);
-                      setHomeBannerHeightScale('1');
-                      setHomeContinueWatchingEnabled(true);
-                      if (typeof window !== 'undefined') {
-                        localStorage.setItem(
-                          'homeModules',
-                          JSON.stringify(defaultHomeModules)
-                        );
-                        localStorage.setItem('homeBannerEnabled', 'true');
-                        localStorage.setItem('homeBannerHeightScale', '1');
-                        localStorage.setItem(
-                          'homeContinueWatchingEnabled',
-                          'true'
-                        );
-                        window.dispatchEvent(
-                          new CustomEvent('homeModulesUpdated')
-                        );
-                      }
-                    }}
-                    className='w-full px-4 py-2 bg-raised hover:bg-line text-muted text-sm font-medium rounded-lg transition-colors min-h-[44px] tm-press'
-                  >
-                    恢复默认配置
-                  </button>
-
-                  {/* 提示信息 */}
-                  <div className='text-[13px] text-muted p-3 bg-raised border border-line rounded-lg'>
-                    <p>
-                      💡
-                      提示：点击眼睛图标可显示/隐藏模块，使用箭头按钮调整模块顺序
-                    </p>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* 底部说明 */}
-          <div className='mt-6 pt-4 border-t border-line'>
-            <p className='text-[13px] text-muted text-center'>
-              这些设置保存在本地浏览器中
-            </p>
-          </div>
-        </div>
-      </div>
-    </>
+  const renderSettingsPanel = () => (
+    <UserMenuSettingsPanel
+      animeCustomBaseUrl={animeCustomBaseUrl}
+      animeDataSource={animeDataSource}
+      animeDataSourceBackup={animeDataSourceBackup}
+      animeDataSourceOptions={animeDataSourceOptions}
+      animeImageBaseUrl={animeImageBaseUrl}
+      bangumiProxyScript={bangumiProxyScript}
+      bangumiProxyScriptCopied={bangumiProxyScriptCopied}
+      bufferStrategy={bufferStrategy}
+      bufferStrategyOptions={bufferStrategyOptions}
+      clearCacheMessage={clearCacheMessage}
+      danmakuCacheUsage={danmakuCacheUsage}
+      danmakuHeatmapDisabled={danmakuHeatmapDisabled}
+      danmakuMaxCount={danmakuMaxCount}
+      danmakuTraditionalToSimplified={danmakuTraditionalToSimplified}
+      defaultAggregateSearch={defaultAggregateSearch}
+      defaultHomeModules={defaultHomeModules}
+      disableAutoLoadDanmaku={disableAutoLoadDanmaku}
+      disableEpisodeTitleFetch={disableEpisodeTitleFetch}
+      disablePlaybackThumbnail={disablePlaybackThumbnail}
+      doubanDataSource={doubanDataSource}
+      doubanDataSourceBackup={doubanDataSourceBackup}
+      doubanDataSourceOptions={doubanDataSourceOptions}
+      doubanImageProxyType={doubanImageProxyType}
+      doubanImageProxyTypeBackup={doubanImageProxyTypeBackup}
+      doubanImageProxyTypeOptions={doubanImageProxyTypeOptions}
+      doubanImageProxyUrl={doubanImageProxyUrl}
+      doubanImageProxyUrlBackup={doubanImageProxyUrlBackup}
+      doubanProxyUrl={doubanProxyUrl}
+      doubanProxyUrlBackup={doubanProxyUrlBackup}
+      downloadMode={downloadMode}
+      downloadSegmentTimeout={downloadSegmentTimeout}
+      downloadThreadsPerTask={downloadThreadsPerTask}
+      enableOptimization={enableOptimization}
+      enableTrailers={enableTrailers}
+      exactSearch={exactSearch}
+      filesystemSavePath={filesystemSavePath}
+      fluidSearch={fluidSearch}
+      formatDownloadSegmentTimeout={formatDownloadSegmentTimeout}
+      getBufferStrategyFromSlider={getBufferStrategyFromSlider}
+      getSliderValueFromStrategy={getSliderValueFromStrategy}
+      getThanksInfo={getThanksInfo}
+      handleAggregateToggle={handleAggregateToggle}
+      handleAnimeCustomBaseUrlChange={handleAnimeCustomBaseUrlChange}
+      handleAnimeDataSourceBackupChange={handleAnimeDataSourceBackupChange}
+      handleAnimeDataSourceChange={handleAnimeDataSourceChange}
+      handleAnimeImageBaseUrlChange={handleAnimeImageBaseUrlChange}
+      handleBufferStrategyChange={handleBufferStrategyChange}
+      handleClearDanmakuCache={handleClearDanmakuCache}
+      handleCloseSettings={handleCloseSettings}
+      handleCopyBangumiProxyScript={handleCopyBangumiProxyScript}
+      handleDanmakuHeatmapDisabledToggle={handleDanmakuHeatmapDisabledToggle}
+      handleDanmakuMaxCountChange={handleDanmakuMaxCountChange}
+      handleDanmakuTraditionalToSimplifiedToggle={
+        handleDanmakuTraditionalToSimplifiedToggle
+      }
+      handleDisableAutoLoadDanmakuToggle={handleDisableAutoLoadDanmakuToggle}
+      handleDisableEpisodeTitleFetchToggle={
+        handleDisableEpisodeTitleFetchToggle
+      }
+      handleDisablePlaybackThumbnailToggle={
+        handleDisablePlaybackThumbnailToggle
+      }
+      handleDoubanDataSourceBackupChange={handleDoubanDataSourceBackupChange}
+      handleDoubanDataSourceChange={handleDoubanDataSourceChange}
+      handleDoubanImageProxyTypeBackupChange={
+        handleDoubanImageProxyTypeBackupChange
+      }
+      handleDoubanImageProxyTypeChange={handleDoubanImageProxyTypeChange}
+      handleDoubanImageProxyUrlBackupChange={
+        handleDoubanImageProxyUrlBackupChange
+      }
+      handleDoubanImageProxyUrlChange={handleDoubanImageProxyUrlChange}
+      handleDoubanProxyUrlBackupChange={handleDoubanProxyUrlBackupChange}
+      handleDoubanProxyUrlChange={handleDoubanProxyUrlChange}
+      handleDownloadModeChange={handleDownloadModeChange}
+      handleDownloadSegmentTimeoutChange={handleDownloadSegmentTimeoutChange}
+      handleDownloadThreadsPerTaskChange={handleDownloadThreadsPerTaskChange}
+      handleEnableTrailersToggle={handleEnableTrailersToggle}
+      handleExactSearchToggle={handleExactSearchToggle}
+      handleFluidSearchToggle={handleFluidSearchToggle}
+      handleHomeBannerHeightScaleChange={handleHomeBannerHeightScaleChange}
+      handleHomeBannerToggle={handleHomeBannerToggle}
+      handleHomeContinueWatchingToggle={handleHomeContinueWatchingToggle}
+      handleHomeModuleMoveDown={handleHomeModuleMoveDown}
+      handleHomeModuleMoveUp={handleHomeModuleMoveUp}
+      handleHomeModuleToggle={handleHomeModuleToggle}
+      handleMaxConcurrentDownloadsChange={handleMaxConcurrentDownloadsChange}
+      handleNextEpisodeDanmakuPreloadToggle={
+        handleNextEpisodeDanmakuPreloadToggle
+      }
+      handleNextEpisodePreCacheToggle={handleNextEpisodePreCacheToggle}
+      handleOptimizationToggle={handleOptimizationToggle}
+      handlePreferModeChange={handlePreferModeChange}
+      handlePreferStrategyChange={handlePreferStrategyChange}
+      handleResetSettings={handleResetSettings}
+      handleRestoreFromCloud={handleRestoreFromCloud}
+      handleSaveLivePlayRecordsToggle={handleSaveLivePlayRecordsToggle}
+      handleSearchTraditionalToSimplifiedToggle={
+        handleSearchTraditionalToSimplifiedToggle
+      }
+      handleSelectSavePath={handleSelectSavePath}
+      handleSpeedTestTimeoutChange={handleSpeedTestTimeoutChange}
+      handleTmdbBackdropDisabledToggle={handleTmdbBackdropDisabledToggle}
+      handleTmdbImageBaseUrlChange={handleTmdbImageBaseUrlChange}
+      homeBannerEnabled={homeBannerEnabled}
+      homeBannerHeightOptions={homeBannerHeightOptions}
+      homeBannerHeightScale={homeBannerHeightScale}
+      homeContinueWatchingEnabled={homeContinueWatchingEnabled}
+      homeModules={homeModules}
+      isAnimeBackupDropdownOpen={isAnimeBackupDropdownOpen}
+      isAnimeDropdownOpen={isAnimeDropdownOpen}
+      isBufferSectionOpen={isBufferSectionOpen}
+      isClearingCache={isClearingCache}
+      isCloudBackupDropdownOpen={isCloudBackupDropdownOpen}
+      isDanmakuSectionOpen={isDanmakuSectionOpen}
+      isDoubanBackupDropdownOpen={isDoubanBackupDropdownOpen}
+      isDoubanDropdownOpen={isDoubanDropdownOpen}
+      isDoubanImageProxyBackupDropdownOpen={
+        isDoubanImageProxyBackupDropdownOpen
+      }
+      isDoubanImageProxyDropdownOpen={isDoubanImageProxyDropdownOpen}
+      isDoubanSectionOpen={isDoubanSectionOpen}
+      isDownloadSectionOpen={isDownloadSectionOpen}
+      isHomepageSectionOpen={isHomepageSectionOpen}
+      isUsageSectionOpen={isUsageSectionOpen}
+      maxConcurrentDownloads={maxConcurrentDownloads}
+      nextEpisodeDanmakuPreload={nextEpisodeDanmakuPreload}
+      nextEpisodePreCache={nextEpisodePreCache}
+      preferMode={preferMode}
+      preferStrategy={preferStrategy}
+      pushRemoteSettings={pushRemoteSettings}
+      saveLivePlayRecords={saveLivePlayRecords}
+      searchTraditionalToSimplified={searchTraditionalToSimplified}
+      setHomeBannerEnabled={setHomeBannerEnabled}
+      setHomeBannerHeightScale={setHomeBannerHeightScale}
+      setHomeContinueWatchingEnabled={setHomeContinueWatchingEnabled}
+      setHomeModules={setHomeModules}
+      setIsAnimeBackupDropdownOpen={setIsAnimeBackupDropdownOpen}
+      setIsAnimeDropdownOpen={setIsAnimeDropdownOpen}
+      setIsBufferSectionOpen={setIsBufferSectionOpen}
+      setIsCloudBackupDropdownOpen={setIsCloudBackupDropdownOpen}
+      setIsDanmakuSectionOpen={setIsDanmakuSectionOpen}
+      setIsDoubanBackupDropdownOpen={setIsDoubanBackupDropdownOpen}
+      setIsDoubanDropdownOpen={setIsDoubanDropdownOpen}
+      setIsDoubanImageProxyBackupDropdownOpen={
+        setIsDoubanImageProxyBackupDropdownOpen
+      }
+      setIsDoubanImageProxyDropdownOpen={setIsDoubanImageProxyDropdownOpen}
+      setIsDoubanSectionOpen={setIsDoubanSectionOpen}
+      setIsDownloadManagementOpen={setIsDownloadManagementOpen}
+      setIsDownloadSectionOpen={setIsDownloadSectionOpen}
+      setIsHomepageSectionOpen={setIsHomepageSectionOpen}
+      setIsUsageSectionOpen={setIsUsageSectionOpen}
+      speedTestTimeout={speedTestTimeout}
+      syncAvailable={syncAvailable}
+      syncBusy={syncBusy}
+      syncMode={syncMode}
+      tmdbBackdropDisabled={tmdbBackdropDisabled}
+      tmdbImageBaseUrl={tmdbImageBaseUrl}
+    />
   );
 
   // 电视访问面板内容
-  const subscribePanel = (
-    <>
-      {/* 背景遮罩 */}
-      <div
-        className='fixed inset-0 bg-ink/60 backdrop-blur-sm z-[1000]'
-        onClick={handleCloseSubscribe}
-        onTouchMove={(e) => {
-          e.preventDefault();
-        }}
-        onWheel={(e) => {
-          e.preventDefault();
-        }}
-        style={{
-          touchAction: 'none',
-        }}
-      />
-
-      {/* 电视访问面板 */}
-      <div className='fixed top-1/2 left-1/2 z-[1001] max-h-[92vh] w-full max-w-3xl -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-3xl border border-line bg-surface shadow-2xl shadow-ink/30'>
-        <div
-          className='max-h-[92vh] overflow-y-auto p-6 sm:p-7'
-          data-panel-content
-          onTouchMove={(e) => {
-            e.stopPropagation();
-          }}
-          style={{
-            touchAction: 'auto',
-          }}
-        >
-          {isTvQrScannerOpen ? (
-            <div className='relative -m-6 min-h-[72vh] overflow-hidden bg-surface sm:-m-7'>
-              <video
-                ref={tvQrVideoRef}
-                className='absolute inset-0 h-full w-full object-cover'
-                muted
-                playsInline
-              />
-              <div className='pointer-events-none absolute inset-0 grid place-items-center'>
-                <div className='h-64 w-64 rounded-xl border-4 border-line [box-shadow:0_0_0_9999px_rgba(0,0,0,0.58),0_0_30px_color-mix(in_srgb,var(--tm-text)_55%,transparent)] sm:h-80 sm:w-80' />
-              </div>
-              <div className='absolute left-0 right-0 top-0 flex items-start justify-between gap-4 bg-surface to-transparent p-5 text-fg sm:p-7'>
-                <div>
-                  <div className='inline-flex items-center gap-2 rounded-full bg-raised px-3 py-1 text-[13px] font-bold text-fg ring-1 ring-[color-mix(in_srgb,var(--tm-text)_20%,transparent)]'>
-                    <Smartphone className='h-4 w-4' />
-                    手机相机扫码
-                  </div>
-                  <h3 className='mt-3 text-2xl font-bold'>扫描电视二维码</h3>
-                  <p className='mt-1 text-sm text-[color:color-mix(in_srgb,var(--tm-text)_75%,transparent)]'>
-                    支持扫码登录，也支持打开局域网遥控器
-                  </p>
-                </div>
-                <button
-                  type='button'
-                  onClick={closeTvQrScanner}
-                  className='flex h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-raised text-fg backdrop-blur transition hover:bg-line focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--tm-text)_70%,transparent)] min-h-[44px] tm-press'
-                  aria-label='关闭扫码'
-                >
-                  <X className='h-5 w-5' />
-                </button>
-              </div>
-              <div className='absolute bottom-0 left-0 right-0 bg-surface to-transparent p-5 sm:p-7'>
-                {tvQrScannerStatus && (
-                  <p className='rounded-2xl bg-raised px-4 py-3 text-center text-sm font-bold text-fg backdrop-blur'>
-                    {tvQrScannerStatus}
-                  </p>
-                )}
-                {tvQrScannerError && (
-                  <p className='mt-3 rounded-2xl bg-raised px-4 py-3 text-center text-sm font-bold text-fg ring-1 ring-[color-mix(in_srgb,var(--tm-text)_20%,transparent)] backdrop-blur'>
-                    {tvQrScannerError}
-                  </p>
-                )}
-              </div>
-            </div>
-          ) : (
-            <>
-              {/* 标题栏 */}
-              <div className='mb-6 flex items-start justify-between gap-4'>
-                <div>
-                  <div className='inline-flex items-center gap-2 rounded-full bg-raised px-3 py-1 text-[13px] font-bold text-fg'>
-                    <Monitor className='h-4 w-4' />
-                    TV ACCESS
-                  </div>
-                  <h3 className='mt-3 text-2xl font-bold text-fg'>电视访问</h3>
-                </div>
-                <button
-                  onClick={handleCloseSubscribe}
-                  className='flex h-9 w-9 cursor-pointer items-center justify-center rounded-full text-muted transition hover:bg-line hover:text-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fg min-h-[44px] tm-press'
-                  aria-label='Close'
-                >
-                  <X className='h-5 w-5' />
-                </button>
-              </div>
-
-              <div className='mb-5 grid grid-cols-2 rounded-2xl bg-raised p-1'>
-                {[
-                  { key: 'tvbox' as const, label: 'TVBox 订阅', icon: Rss },
-                  { key: 'web' as const, label: 'Web 电视', icon: Monitor },
-                ].map((item) => {
-                  const Icon = item.icon;
-                  const active = tvAccessTab === item.key;
-                  return (
-                    <button
-                      key={item.key}
-                      type='button'
-                      onClick={() => {
-                        setTvAccessTab(item.key);
-                        if (item.key !== 'web') closeTvQrScanner();
-                      }}
-                      className={`flex cursor-pointer items-center justify-center gap-2 rounded-xl px-3 py-3 text-sm font-bold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--tm-text)_70%,transparent)] ${
-                        active
-                          ? 'bg-surface text-fg shadow-sm min-h-[44px] tm-press'
-                          : 'text-muted hover:text-fg min-h-[44px] tm-press'
-                      }`}
-                    >
-                      <Icon className='h-4 w-4' />
-                      <span className='hidden sm:inline'>{item.label}</span>
-                      <span className='sm:hidden'>
-                        {item.key === 'tvbox' ? 'TVBox' : 'Web'}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-
-              {tvAccessTab === 'tvbox' && (
-                <section className='rounded-2xl border border-line bg-raised p-5'>
-                  <div className='flex items-center justify-between gap-3'>
-                    <div className='flex items-center gap-3'>
-                      <div className='flex h-11 w-11 items-center justify-center rounded-2xl bg-raised text-fg shadow-lg shadow-ink/25'>
-                        <Rss className='h-5 w-5' />
-                      </div>
-                      <div>
-                        <h4 className='text-lg font-bold text-fg'>
-                          TVBox 订阅
-                        </h4>
-                        <p className='mt-1 text-sm text-muted'>
-                          复制订阅链接到 TVBox 使用
-                        </p>
-                      </div>
-                    </div>
-                    <span
-                      className={`shrink-0 whitespace-nowrap rounded-full px-2.5 py-1 text-[13px] font-bold ${
-                        subscribeEnabled
-                          ? 'bg-raised text-fg'
-                          : 'bg-raised text-muted'
-                      }`}
-                    >
-                      {subscribeEnabled ? '已启用' : '未启用'}
-                    </span>
-                  </div>
-
-                  {!subscribeEnabled ? (
-                    <div className='mt-5 rounded-xl border border-dashed border-line bg-raised px-4 py-3 text-sm font-medium text-muted'>
-                      TVBox 订阅功能未启用
-                    </div>
-                  ) : isLoadingSubscribeUrl ? (
-                    <div className='mt-5 space-y-3'>
-                      <div className='h-14 tm-skeleton rounded-xl bg-raised' />
-                      <div className='h-14 tm-skeleton rounded-xl bg-raised' />
-                      <div className='h-10 tm-skeleton rounded-xl bg-raised' />
-                    </div>
-                  ) : (
-                    <div className='mt-5 space-y-4'>
-                      <div className='grid gap-3 sm:grid-cols-2'>
-                        <button
-                          type='button'
-                          onClick={() =>
-                            setSubscribeAdFilterEnabled((prev) => !prev)
-                          }
-                          className='flex w-full cursor-pointer items-center justify-between rounded-xl border border-line bg-surface px-4 py-3 text-left transition hover:border-line min-h-[44px] tm-press'
-                        >
-                          <div>
-                            <div className='text-sm font-bold text-fg'>
-                              去广告
-                            </div>
-                            <div className='mt-1 text-[13px] text-muted'>
-                              开启后通过代理处理播放链接
-                            </div>
-                          </div>
-                          <span
-                            className={`h-5 w-9 rounded-full p-0.5 transition ${
-                              subscribeAdFilterEnabled ? 'bg-fg' : 'bg-surface'
-                            }`}
-                          >
-                            <span
-                              className={`block h-4 w-4 rounded-full bg-surface transition ${
-                                subscribeAdFilterEnabled ? 'translate-x-4' : ''
-                              }`}
-                            />
-                          </span>
-                        </button>
-                        <button
-                          type='button'
-                          onClick={() =>
-                            setSubscribeYellowFilterEnabled((prev) => !prev)
-                          }
-                          className='flex w-full cursor-pointer items-center justify-between rounded-xl border border-line bg-surface px-4 py-3 text-left transition hover:border-line min-h-[44px] tm-press'
-                        >
-                          <div>
-                            <div className='text-sm font-bold text-fg'>
-                              黄色过滤
-                            </div>
-                            <div className='mt-1 text-[13px] text-muted'>
-                              过滤代理搜索中的黄色内容
-                            </div>
-                          </div>
-                          <span
-                            className={`h-5 w-9 rounded-full p-0.5 transition ${
-                              subscribeYellowFilterEnabled
-                                ? 'bg-fg'
-                                : 'bg-surface'
-                            }`}
-                          >
-                            <span
-                              className={`block h-4 w-4 rounded-full bg-surface transition ${
-                                subscribeYellowFilterEnabled
-                                  ? 'translate-x-4'
-                                  : ''
-                              }`}
-                            />
-                          </span>
-                        </button>
-                      </div>
-
-                      <div>
-                        <h4 className='mb-2 text-sm font-medium text-muted'>
-                          订阅链接
-                        </h4>
-                        <div className='flex gap-2'>
-                          <input
-                            type='text'
-                            className='min-w-0 flex-1 rounded-xl border border-line bg-surface px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-fg text-fg'
-                            value={subscribeUrl}
-                            readOnly
-                          />
-                          <button
-                            onClick={handleCopySubscribeUrl}
-                            className='inline-flex cursor-pointer items-center justify-center gap-2 rounded-xl bg-fg px-4 py-2.5 text-sm font-bold text-inverse transition hover:opacity-90 min-h-[44px] tm-press'
-                          >
-                            <Copy className='h-4 w-4' />
-                            {copySuccess ? '已复制' : '复制'}
-                          </button>
-                        </div>
-                        {(subscribeAdFilterEnabled ||
-                          subscribeYellowFilterEnabled) && (
-                          <p className='mt-2 rounded-xl border border-line bg-raised px-3 py-2 text-[13px] font-medium text-fg'>
-                            💡
-                            代理模式已开启，某些源可能因为区域或兼容问题无法播放
-                          </p>
-                        )}
-                      </div>
-
-                      <div className='pt-1'>
-                        <button
-                          onClick={handleResetToken}
-                          disabled={isResettingToken}
-                          className='w-full cursor-pointer rounded-xl bg-fg px-4 py-2.5 text-sm font-bold text-inverse transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60 min-h-[44px] tm-press'
-                        >
-                          {isResettingToken ? '重置中...' : '重置订阅Token'}
-                        </button>
-                        <p className='mt-2 text-center text-[13px] text-muted'>
-                          ⚠️ 重置后旧链接将失效
-                        </p>
-                        <p
-                          id='tvbox-token-message'
-                          className='hidden text-center text-[13px]'
-                        ></p>
-                      </div>
-                    </div>
-                  )}
-                </section>
-              )}
-
-              {tvAccessTab === 'web' && (
-                <section className='rounded-2xl border border-line bg-raised p-5'>
-                  <div className='flex items-center gap-3'>
-                    <div className='flex h-11 w-11 items-center justify-center rounded-2xl bg-raised text-fg shadow-lg shadow-ink/25'>
-                      <Monitor className='h-5 w-5' />
-                    </div>
-                    <div>
-                      <h4 className='text-lg font-bold text-fg'>Web 电视</h4>
-                      <p className='mt-1 text-sm text-muted'>
-                        手机扫描电视屏幕二维码并确认登录
-                      </p>
-                    </div>
-                  </div>
-                  <p className='mt-5 text-sm leading-6 text-muted'>
-                    {tvModeEnabled
-                      ? '电视端打开 /tv 后可扫码登录；在电视端“我的”页也可扫描局域网遥控二维码。'
-                      : '当前部署未开启 TV 模式，/tv 页面和 Web 电视遥控不可用。'}
-                  </p>
-                  {!tvModeEnabled && (
-                    <div className='mt-5 rounded-2xl border border-line bg-raised px-4 py-3 text-sm font-bold text-fg'>
-                      TV 模式未开启。请在环境变量中设置 ENABLE_TV_MODE=true
-                      后重启服务。
-                    </div>
-                  )}
-                  <div className='mt-5 grid gap-2 sm:grid-cols-2'>
-                    <button
-                      type='button'
-                      onClick={startTvQrScanner}
-                      disabled={!tvModeEnabled}
-                      className='inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-fg px-4 py-3 text-sm font-bold text-inverse transition hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--tm-text)_70%,transparent)] disabled:cursor-not-allowed disabled:bg-raised disabled:text-muted min-h-[44px] tm-press'
-                    >
-                      打开相机扫码
-                      <Smartphone className='h-4 w-4' />
-                    </button>
-                    <button
-                      type='button'
-                      onClick={() => {
-                        if (!tvModeEnabled) return;
-                        setIsSubscribeOpen(false);
-                        setIsTVRemoteOpen(true);
-                      }}
-                      disabled={!tvModeEnabled}
-                      className='inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-raised px-4 py-3 text-sm font-bold text-fg transition hover:bg-line focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color-mix(in_srgb,var(--tm-text)_70%,transparent)] disabled:cursor-not-allowed disabled:bg-raised disabled:text-muted min-h-[44px] tm-press'
-                    >
-                      <Sliders className='h-4 w-4' />
-                      远程电视遥控器
-                    </button>
-                  </div>
-                </section>
-              )}
-            </>
-          )}
-        </div>
-      </div>
-    </>
+  const renderSubscribePanel = () => (
+    <UserMenuSubscribePanel
+      closeTvQrScanner={closeTvQrScanner}
+      copySuccess={copySuccess}
+      handleCloseSubscribe={handleCloseSubscribe}
+      handleCopySubscribeUrl={handleCopySubscribeUrl}
+      handleResetToken={handleResetToken}
+      isLoadingSubscribeUrl={isLoadingSubscribeUrl}
+      isResettingToken={isResettingToken}
+      isTvQrScannerOpen={isTvQrScannerOpen}
+      setIsSubscribeOpen={setIsSubscribeOpen}
+      setIsTVRemoteOpen={setIsTVRemoteOpen}
+      setSubscribeAdFilterEnabled={setSubscribeAdFilterEnabled}
+      setSubscribeYellowFilterEnabled={setSubscribeYellowFilterEnabled}
+      setTvAccessTab={setTvAccessTab}
+      startTvQrScanner={startTvQrScanner}
+      subscribeAdFilterEnabled={subscribeAdFilterEnabled}
+      subscribeEnabled={subscribeEnabled}
+      subscribeUrl={subscribeUrl}
+      subscribeYellowFilterEnabled={subscribeYellowFilterEnabled}
+      tvAccessTab={tvAccessTab}
+      tvModeEnabled={tvModeEnabled}
+      tvQrScannerError={tvQrScannerError}
+      tvQrScannerStatus={tvQrScannerStatus}
+      tvQrVideoRef={tvQrVideoRef}
+    />
   );
 
   // 修改密码面板内容
@@ -5699,216 +3431,22 @@ export const UserMenu: React.FC = () => {
     { platform: 'android', title: '安卓手机 / 平板' },
     { platform: 'tv', title: '安卓电视' },
   ];
-  const ecoAppsPanel = (
-    <>
-      {/* 背景遮罩 */}
-      <div
-        className='fixed inset-0 bg-ink/50 backdrop-blur-sm z-[1000]'
-        onClick={() => setIsEcoAppsOpen(false)}
-        onTouchMove={(e) => {
-          e.preventDefault();
-        }}
-        onWheel={(e) => {
-          e.preventDefault();
-        }}
-        style={{
-          touchAction: 'none',
-        }}
-      />
-
-      {/* 客户端安装指南面板 */}
-      <div className='fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl bg-surface rounded-xl shadow-xl z-[1001] overflow-hidden border border-line'>
-        <div
-          className='h-full max-h-[85vh] flex flex-col'
-          data-panel-content
-          onTouchMove={(e) => {
-            e.stopPropagation();
-          }}
-          style={{
-            touchAction: 'auto',
-          }}
-        >
-          {/* 标题栏 */}
-          <div className='flex items-center justify-between p-6 border-b border-line'>
-            <div>
-              <h3 className='text-xl font-bold text-fg'>客户端安装指南</h3>
-              <p className='mt-1 text-sm text-muted'>
-                优先使用原生客户端；没有对应安装包的系统，可以用浏览器安装到主屏幕
-              </p>
-            </div>
-            <button
-              onClick={() => setIsEcoAppsOpen(false)}
-              className='w-8 h-8 p-1 rounded-full flex items-center justify-center text-muted hover:bg-line transition-colors min-h-[44px] tm-press'
-              aria-label='Close'
-            >
-              <X className='w-full h-full' />
-            </button>
-          </div>
-
-          {/* 平台安装说明列表 */}
-          <div className='flex-1 overflow-y-auto p-6'>
-            <div className='grid gap-4'>
-              {/* 原生客户端安装包 */}
-              <div className='bg-raised rounded-lg p-5 border border-line'>
-                <div className='flex flex-wrap items-center gap-2 mb-1.5'>
-                  <h4 className='text-base font-bold text-fg'>原生客户端</h4>
-                  <span className='shrink-0 whitespace-nowrap px-2 py-0.5 bg-surface border border-line text-fg text-[12px] font-medium rounded-full'>
-                    推荐
-                  </span>
-                </div>
-                <p className='text-sm text-muted leading-6 mb-4'>
-                  首次打开时填写本站地址即可，之后网站更新会自动同步，不用重新安装。
-                </p>
-                <div className='grid gap-4'>
-                  {clientGroups.map((group) => (
-                    <div key={group.platform}>
-                      <div className='mb-2 flex items-center gap-2 text-sm font-medium text-fg'>
-                        {group.title}
-                        {detectedPlatform === group.platform && (
-                          <span className='px-2 py-0.5 border border-line text-muted text-[12px] rounded-full'>
-                            你的设备
-                          </span>
-                        )}
-                      </div>
-                      <div className='grid gap-2'>
-                        {CLIENT_PACKAGES.filter(
-                          (item) => item.platform === group.platform
-                        ).map((item) => (
-                          <a
-                            key={item.file}
-                            href={clientDownloadUrl(item.file, clientBase)}
-                            download
-                            rel='noopener'
-                            className='flex items-center gap-3 rounded-lg border border-line bg-surface px-4 py-3 min-h-[44px] hover:border-fg transition-colors tm-press'
-                          >
-                            <Download className='w-5 h-5 shrink-0 text-fg' />
-                            <span className='min-w-0 flex-1'>
-                              <span className='block text-sm font-medium text-fg'>
-                                {item.label}
-                              </span>
-                              <span className='block text-[13px] text-muted'>
-                                {item.hint}
-                              </span>
-                            </span>
-                          </a>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                <p className='mt-4 text-[13px] text-muted leading-6'>
-                  iPhone、iPad 和 Mac
-                  暂无原生客户端，请用下面的浏览器方式添加到主屏幕。
-                </p>
-              </div>
-
-              {/* 电脑桌面端 */}
-              <div className='bg-raised rounded-lg p-5 border border-line'>
-                <div className='flex items-start gap-4'>
-                  <div className='flex-shrink-0 w-12 h-12 rounded-xl bg-surface border border-line flex items-center justify-center text-fg'>
-                    <Monitor className='w-6 h-6' />
-                  </div>
-                  <div className='flex-1 min-w-0'>
-                    <div className='flex flex-wrap items-center gap-2 mb-1.5'>
-                      <h4 className='text-base font-bold text-fg'>
-                        浏览器安装：电脑（Windows / macOS）
-                      </h4>
-                      <span className='shrink-0 whitespace-nowrap px-2 py-0.5 bg-surface border border-line text-fg text-[12px] font-medium rounded-full'>
-                        推荐
-                      </span>
-                    </div>
-                    <p className='text-sm text-muted leading-6'>
-                      使用 Chrome 或 Edge 浏览器打开本站，点击浏览器地址栏右侧的
-                      <strong className='text-fg font-medium'>
-                        「安装 {BRAND_NAME}」
-                      </strong>
-                      图标，即可生成独立的桌面应用窗口与快捷方式，完整支持「一起看」同步观影房间与全部功能。
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* 手机与平板端 */}
-              <div className='bg-raised rounded-lg p-5 border border-line'>
-                <div className='flex items-start gap-4'>
-                  <div className='flex-shrink-0 w-12 h-12 rounded-xl bg-surface border border-line flex items-center justify-center text-fg'>
-                    <Smartphone className='w-6 h-6' />
-                  </div>
-                  <div className='flex-1 min-w-0'>
-                    <h4 className='text-base font-bold text-fg mb-1.5'>
-                      浏览器安装：手机与平板（iOS / Android）
-                    </h4>
-                    <div className='space-y-1.5 text-sm text-muted leading-6'>
-                      <p>
-                        <strong className='text-fg font-medium'>
-                          iPhone / iPad：
-                        </strong>
-                        使用 Safari 浏览器打开本站，点击底部「分享」按钮，选择
-                        <strong className='text-fg font-medium'>
-                          「添加到主屏幕」
-                        </strong>
-                        即可生成独立全屏应用。
-                      </p>
-                      <p>
-                        <strong className='text-fg font-medium'>
-                          Android 设备：
-                        </strong>
-                        使用 Chrome 或 Edge 浏览器打开本站，点击菜单选择
-                        <strong className='text-fg font-medium'>
-                          「安装应用」或「添加到主屏幕」
-                        </strong>
-                        。
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* 电视大屏端 */}
-              <div className='bg-raised rounded-lg p-5 border border-line'>
-                <div className='flex items-start gap-4'>
-                  <div className='flex-shrink-0 w-12 h-12 rounded-xl bg-surface border border-line flex items-center justify-center text-fg'>
-                    <Rss className='w-6 h-6' />
-                  </div>
-                  <div className='flex-1 min-w-0'>
-                    <h4 className='text-base font-bold text-fg mb-1.5'>
-                      电视大屏端（Web 电视 / TVBox）
-                    </h4>
-                    <p className='text-sm text-muted leading-6 mb-3'>
-                      智能电视浏览器可直接访问本站{' '}
-                      <code className='px-1.5 py-0.5 rounded bg-surface text-fg text-[13px]'>
-                        /tv
-                      </code>{' '}
-                      路径进入大屏遥控模式，并用手机扫码登录；或通过「电视访问」复制专属订阅地址到
-                      TVBox 使用。
-                    </p>
-                    <button
-                      type='button'
-                      onClick={() => {
-                        setIsEcoAppsOpen(false);
-                        void handleSubscribe();
-                      }}
-                      className='inline-flex items-center gap-2 px-4 py-2 bg-fg hover:opacity-90 text-inverse text-sm font-medium rounded-lg transition-colors min-h-[44px] tm-press'
-                    >
-                      <Monitor className='w-4 h-4' />
-                      打开电视访问
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* 底部说明 */}
-          <div className='p-6 pt-4 border-t border-line'>
-            <p className='text-[13px] text-muted text-center'>
-              安装后可获得无浏览器地址栏的沉浸式全屏观影体验
-            </p>
-          </div>
-        </div>
-      </div>
-    </>
+  const renderEcoAppsPanel = () => (
+    <UserMenuEcoAppsPanel
+      clientBase={clientBase}
+      clientGroups={clientGroups}
+      detectedPlatform={detectedPlatform}
+      handleSubscribe={handleSubscribe}
+      setIsEcoAppsOpen={setIsEcoAppsOpen}
+    />
   );
+
+  const profileCenterMounted = useOpenedOnce(isProfileCenterOpen);
+  const versionPanelMounted = useOpenedOnce(isVersionPanelOpen);
+  const offlineDownloadMounted = useOpenedOnce(isOfflineDownloadPanelOpen);
+  const emailSettingsMounted = useOpenedOnce(isEmailSettingsOpen);
+  const deviceManagementMounted = useOpenedOnce(isDeviceManagementOpen);
+  const tvRemoteMounted = useOpenedOnce(isTVRemoteOpen);
 
   return (
     <>
@@ -5936,35 +3474,39 @@ export const UserMenu: React.FC = () => {
       {/* 使用 Portal 将菜单面板渲染到 document.body */}
       {isOpen && mounted && createPortal(menuPanel, document.body)}
 
-      <PersonalCenterPanel
-        isOpen={isProfileCenterOpen}
-        mounted={mounted}
-        onClose={() => setIsProfileCenterOpen(false)}
-        username={currentUsername}
-        roleText={currentRoleText}
-        showRoleBadge={shouldShowRoleBadge}
-        avatarText={avatarText}
-        roleBadgeClassName={roleBadgeClassName}
-        showDeviceManagement={storageType !== 'localstorage'}
-        showChangePassword={showChangePassword}
-        onOpenEmailSettings={() => {
-          setIsProfileCenterOpen(false);
-          setIsEmailSettingsOpen(true);
-          loadEmailSettings();
-        }}
-        onOpenDeviceManagement={() => {
-          setIsProfileCenterOpen(false);
-          setIsDeviceManagementOpen(true);
-          loadDevices();
-        }}
-        onOpenChangePassword={() => {
-          setIsProfileCenterOpen(false);
-          handleChangePassword();
-        }}
-      />
+      {profileCenterMounted && (
+        <PersonalCenterPanel
+          isOpen={isProfileCenterOpen}
+          mounted={mounted}
+          onClose={() => setIsProfileCenterOpen(false)}
+          username={currentUsername}
+          roleText={currentRoleText}
+          showRoleBadge={shouldShowRoleBadge}
+          avatarText={avatarText}
+          roleBadgeClassName={roleBadgeClassName}
+          showDeviceManagement={storageType !== 'localstorage'}
+          showChangePassword={showChangePassword}
+          onOpenEmailSettings={() => {
+            setIsProfileCenterOpen(false);
+            setIsEmailSettingsOpen(true);
+            loadEmailSettings();
+          }}
+          onOpenDeviceManagement={() => {
+            setIsProfileCenterOpen(false);
+            setIsDeviceManagementOpen(true);
+            loadDevices();
+          }}
+          onOpenChangePassword={() => {
+            setIsProfileCenterOpen(false);
+            handleChangePassword();
+          }}
+        />
+      )}
 
       {/* 使用 Portal 将设置面板渲染到 document.body */}
-      {isSettingsOpen && mounted && createPortal(settingsPanel, document.body)}
+      {isSettingsOpen &&
+        mounted &&
+        createPortal(renderSettingsPanel(), document.body)}
 
       {/* 云备份操作结果 Toast */}
       {syncToast &&
@@ -5979,19 +3521,23 @@ export const UserMenu: React.FC = () => {
       {/* 使用 Portal 将订阅面板渲染到 document.body */}
       {isSubscribeOpen &&
         mounted &&
-        createPortal(subscribePanel, document.body)}
+        createPortal(renderSubscribePanel(), document.body)}
 
       {/* 版本面板 */}
-      <VersionPanel
-        isOpen={isVersionPanelOpen}
-        onClose={() => setIsVersionPanelOpen(false)}
-      />
+      {versionPanelMounted && (
+        <VersionPanel
+          isOpen={isVersionPanelOpen}
+          onClose={() => setIsVersionPanelOpen(false)}
+        />
+      )}
 
       {/* 离线下载面板 */}
-      <OfflineDownloadPanel
-        isOpen={isOfflineDownloadPanelOpen}
-        onClose={() => setIsOfflineDownloadPanelOpen(false)}
-      />
+      {offlineDownloadMounted && (
+        <OfflineDownloadPanel
+          isOpen={isOfflineDownloadPanelOpen}
+          onClose={() => setIsOfflineDownloadPanelOpen(false)}
+        />
+      )}
 
       {/* 使用 Portal 将通知面板渲染到 document.body */}
       {isNotificationPanelOpen &&
@@ -6034,53 +3580,61 @@ export const UserMenu: React.FC = () => {
           document.body
         )}
 
-      <EmailSettingsPanel
-        isOpen={isEmailSettingsOpen}
-        mounted={mounted}
-        onClose={() => setIsEmailSettingsOpen(false)}
-        userEmail={userEmail}
-        onUserEmailChange={setUserEmail}
-        emailNotifications={emailNotifications}
-        onEmailNotificationsChange={setEmailNotifications}
-        pushNotifications={pushNotifications}
-        onPushNotificationsChange={handlePushNotificationsChange}
-        pushNotificationsSupported={pushNotificationsSupported}
-        pushNotificationsConfigured={pushNotificationsConfigured}
-        pushNotificationsBusy={pushNotificationsBusy}
-        telegramEnabled={telegramEnabled}
-        telegramBound={telegramBound}
-        telegramUsername={telegramUsername}
-        telegramBindCode={telegramBindCode}
-        telegramDeepLink={telegramDeepLink}
-        telegramBindingBusy={telegramBindingBusy}
-        onCreateTelegramBindCode={handleCreateTelegramBindCode}
-        emailSettingsLoading={emailSettingsLoading}
-        emailSettingsSaving={emailSettingsSaving}
-        onSave={handleSaveEmailSettings}
-        statusMessage={emailSettingsMessage}
-        statusType={emailSettingsMessageType}
-      />
+      {emailSettingsMounted && (
+        <EmailSettingsPanel
+          isOpen={isEmailSettingsOpen}
+          mounted={mounted}
+          onClose={() => setIsEmailSettingsOpen(false)}
+          userEmail={userEmail}
+          onUserEmailChange={setUserEmail}
+          emailNotifications={emailNotifications}
+          onEmailNotificationsChange={setEmailNotifications}
+          pushNotifications={pushNotifications}
+          onPushNotificationsChange={handlePushNotificationsChange}
+          pushNotificationsSupported={pushNotificationsSupported}
+          pushNotificationsConfigured={pushNotificationsConfigured}
+          pushNotificationsBusy={pushNotificationsBusy}
+          telegramEnabled={telegramEnabled}
+          telegramBound={telegramBound}
+          telegramUsername={telegramUsername}
+          telegramBindCode={telegramBindCode}
+          telegramDeepLink={telegramDeepLink}
+          telegramBindingBusy={telegramBindingBusy}
+          onCreateTelegramBindCode={handleCreateTelegramBindCode}
+          emailSettingsLoading={emailSettingsLoading}
+          emailSettingsSaving={emailSettingsSaving}
+          onSave={handleSaveEmailSettings}
+          statusMessage={emailSettingsMessage}
+          statusType={emailSettingsMessageType}
+        />
+      )}
 
-      <DeviceManagementPanel
-        isOpen={isDeviceManagementOpen}
-        mounted={mounted}
-        onClose={() => setIsDeviceManagementOpen(false)}
-        devices={devices}
-        devicesLoading={devicesLoading}
-        revoking={revoking}
-        onRevokeDevice={handleRevokeDevice}
-        onRevokeAllDevices={handleRevokeAllDevices}
-        getDeviceIcon={getDeviceIcon}
-      />
+      {deviceManagementMounted && (
+        <DeviceManagementPanel
+          isOpen={isDeviceManagementOpen}
+          mounted={mounted}
+          onClose={() => setIsDeviceManagementOpen(false)}
+          devices={devices}
+          devicesLoading={devicesLoading}
+          revoking={revoking}
+          onRevokeDevice={handleRevokeDevice}
+          onRevokeAllDevices={handleRevokeAllDevices}
+          getDeviceIcon={getDeviceIcon}
+        />
+      )}
 
-      <TVRemotePanel
-        isOpen={isTVRemoteOpen}
-        mounted={mounted}
-        onClose={() => setIsTVRemoteOpen(false)}
-      />
+      {tvRemoteMounted && (
+        <TVRemotePanel
+          isOpen={isTVRemoteOpen}
+          mounted={mounted}
+          onClose={() => setIsTVRemoteOpen(false)}
+        />
+      )}
 
       {/* 使用 Portal 将客户端安装指南面板渲染到 document.body */}
-      {isEcoAppsOpen && mounted && createPortal(ecoAppsPanel, document.body)}
+      {isEcoAppsOpen &&
+        mounted &&
+        createPortal(renderEcoAppsPanel(), document.body)}
 
       {/* 确认对话框 */}
       {confirmDialog.isOpen &&

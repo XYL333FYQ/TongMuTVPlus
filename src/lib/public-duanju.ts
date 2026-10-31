@@ -1,7 +1,7 @@
 import { API_CONFIG } from '@/lib/config';
 import { getDuanjuSources } from '@/lib/duanju';
+import { cleanHtmlTags } from '@/lib/html-text';
 import type { PublicCatalogItem } from '@/lib/public-catalog';
-import { cleanHtmlTags } from '@/lib/utils';
 
 /** Public projection only. Never expose source keys, CMS configuration or play fields. */
 export async function browsePublicDuanju(

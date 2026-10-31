@@ -3,8 +3,8 @@
 import { Info, LogIn, UserRound } from 'lucide-react';
 import Link from 'next/link';
 
-import { useViewerIdentity } from '@/hooks/useViewerIdentity';
 import { BRAND_NAME } from '@/lib/brand';
+import { useViewerIdentity } from '@/hooks/useViewerIdentity';
 
 import ThemeSettings from '@/components/account/ThemeSettings';
 import VisualPreferenceControls from '@/components/account/VisualPreferenceControls';

@@ -177,8 +177,9 @@ const COOLDOWN_MS = 10 * 60 * 1000; // 10分钟冷却时间
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { password: string } }
+  props: { params: Promise<{ password: string }> }
 ) {
+  const params = await props.params;
   console.log(request.url);
 
   // 不再提供公开的默认密码：未设置 CRON_PASSWORD 时接口关闭，

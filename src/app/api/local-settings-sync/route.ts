@@ -1,7 +1,6 @@
 /* eslint-disable no-console */
 
 import { createHash } from 'crypto';
-
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getAuthInfoFromCookie } from '@/lib/auth';

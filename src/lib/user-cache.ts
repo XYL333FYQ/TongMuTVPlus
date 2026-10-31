@@ -112,7 +112,7 @@ if (!_userInfoCache) {
   // 每分钟清理一次过期缓存
   setInterval(() => {
     _userInfoCache?.cleanup();
-  }, 60 * 1000);
+  }, 60 * 1000).unref?.(); // 后台清理不阻止进程退出
 }
 
 export const userInfoCache = _userInfoCache as UserInfoCache;
@@ -129,7 +129,7 @@ if (!_ownerExistenceCache) {
   // 每分钟清理一次过期缓存
   setInterval(() => {
     _ownerExistenceCache?.cleanup();
-  }, 60 * 1000);
+  }, 60 * 1000).unref?.(); // 后台清理不阻止进程退出
 }
 
 export const ownerExistenceCache = _ownerExistenceCache as OwnerExistenceCache;

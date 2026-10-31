@@ -2,9 +2,14 @@
 'use client';
 
 import { Film } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
-/** Public posters never read private proxy preferences or call protected image APIs. */
+import { publicPosterCandidates } from '@/lib/public-poster';
+
+/**
+ * 游客页面的海报。不读用户本地的代理设置；按 publicPosterCandidates 的顺序取图
+ * （公开镜像 → 本站海报中转 → 直连），一个失败换下一个，全部失败显示占位。
+ */
 export default function PublicPoster({
   src,
   alt,
@@ -16,15 +21,24 @@ export default function PublicPoster({
   eager?: boolean;
   className?: string;
 }) {
-  const [image, setImage] = useState(src);
-  const [failed, setFailed] = useState(false);
+  const candidates = useMemo(() => publicPosterCandidates(src), [src]);
+  const [attempt, setAttempt] = useState(0);
   const [loaded, setLoaded] = useState(false);
+  const imageRef = useRef<HTMLImageElement>(null);
   useEffect(() => {
-    setImage(src);
-    setFailed(false);
+    setAttempt(0);
     setLoaded(false);
   }, [src]);
-  if (failed || !src)
+  const image = candidates[attempt];
+  // 服务端渲染的图片可能在页面接管前就已加载完（或已失败），那时 onLoad / onError 不会再触发：
+  // 接管后补查一次，否则图片一直停在"未加载"的透明状态
+  useEffect(() => {
+    const element = imageRef.current;
+    if (!element?.complete) return;
+    if (element.naturalWidth > 0) setLoaded(true);
+    else setAttempt((current) => current + 1);
+  }, [image]);
+  if (!image)
     return (
       <span
         className={'tm-public-image-missing ' + className}
@@ -36,6 +50,7 @@ export default function PublicPoster({
     );
   return (
     <img
+      ref={imageRef}
       data-loaded={loaded}
       onLoad={() => setLoaded(true)}
       src={image}
@@ -44,14 +59,7 @@ export default function PublicPoster({
       loading={eager ? 'eager' : 'lazy'}
       decoding='async'
       referrerPolicy='no-referrer'
-      onError={() => {
-        const backup = src.replace(
-          /img\d+\.doubanio\.com/g,
-          'img.doubanio.cmliussss.net'
-        );
-        if (image === src && backup !== src) setImage(backup);
-        else setFailed(true);
-      }}
+      onError={() => setAttempt((current) => current + 1)}
     />
   );
 }

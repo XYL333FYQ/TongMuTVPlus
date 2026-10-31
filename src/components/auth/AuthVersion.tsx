@@ -4,8 +4,8 @@ import { AlertCircle, CheckCircle } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
-import { useReleaseInfo } from '@/hooks/useReleaseInfo';
 import { checkForUpdates, UpdateStatus } from '@/lib/version_check';
+import { useReleaseInfo } from '@/hooks/useReleaseInfo';
 
 /** 登录、注册页底部的版本号，点进关于页；能查到更新状态时一并显示。 */
 export default function AuthVersion() {

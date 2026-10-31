@@ -5,8 +5,10 @@ jest.mock('@/lib/db', () => ({
 }));
 
 import { NextRequest } from 'next/server';
+
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { db } from '@/lib/db';
+
 import { GET, POST } from './route';
 
 const release = {

@@ -1,0 +1,63 @@
+name: Checks
+
+# 推送前的自动检查：类型、代码规范、测试、格式、房间服务、运维脚本、构建与首屏体积。
+# 其它分支推送和 PR 时单独运行；推到 main 时由 docker-image.yml 先调用它，通过了才打包镜像。
+on:
+  push:
+    branches-ignore: [main]
+  pull_request:
+  workflow_call:
+  workflow_dispatch:
+
+concurrency:
+  group: checks-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Format
+        run: pnpm format:check
+
+      - name: Unit tests
+        run: pnpm test --ci
+
+      - name: Room service tests
+        run: pnpm test:rooms
+
+      - name: Ops script tests
+        run: pnpm test:ops
+
+      - name: Build
+        run: pnpm build
+        env:
+          NEXT_PUBLIC_STORAGE_TYPE: d1
+
+      - name: First-load JavaScript budget
+        run: node scripts/check-bundle-budget.mjs

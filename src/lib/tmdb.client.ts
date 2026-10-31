@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any,no-console */
 
 import { safeFetch } from './safe-http';
-import { getTmdbImageBaseUrl } from './tmdb-image-base';
 
 // TMDB API 默认 Base URL（不包含 /3/，由程序拼接）
 const DEFAULT_TMDB_BASE_URL = 'https://api.themoviedb.org';
@@ -483,71 +482,8 @@ export async function getTMDBTrendingContent(
   }
 }
 
-/**
- * 获取 TMDB 图片完整 URL
- * @param path - 图片路径
- * @param size - 图片尺寸，默认 w500
- * @returns 完整的图片 URL
- */
-export function getTMDBImageUrl(path: string | null, size = 'w500'): string {
-  if (!path) return '';
-
-  // 如果已经是完整的 URL (http:// 或 https://),直接返回
-  if (path.startsWith('http://') || path.startsWith('https://')) {
-    return path;
-  }
-
-  const baseUrl = getTmdbImageBaseUrl();
-  return `${baseUrl}/t/p/${size}${path}`;
-}
-
-/**
- * TMDB 类型映射（中文）
- */
-export const TMDB_GENRES: Record<number, string> = {
-  // 电影类型
-  28: '动作',
-  12: '冒险',
-  16: '动画',
-  35: '喜剧',
-  80: '犯罪',
-  99: '纪录',
-  18: '剧情',
-  10751: '家庭',
-  14: '奇幻',
-  36: '历史',
-  27: '恐怖',
-  10402: '音乐',
-  9648: '悬疑',
-  10749: '爱情',
-  878: '科幻',
-  10770: '电视电影',
-  53: '惊悚',
-  10752: '战争',
-  37: '西部',
-  // 电视剧类型
-  10759: '动作冒险',
-  10762: '儿童',
-  10763: '新闻',
-  10764: '真人秀',
-  10765: '科幻奇幻',
-  10766: '肥皂剧',
-  10767: '脱口秀',
-  10768: '战争政治',
-};
-
-/**
- * 根据类型ID获取类型名称列表
- * @param genreIds - 类型ID数组
- * @param limit - 最多返回几个类型，默认2个
- * @returns 类型名称数组
- */
-export function getGenreNames(genreIds: number[] = [], limit = 2): string[] {
-  return genreIds
-    .map((id) => TMDB_GENRES[id])
-    .filter(Boolean)
-    .slice(0, limit);
-}
+// 图片地址与类型名是纯函数，放在轻量模块里供页面直接引用（不带网络库），这里转出保持原有导入方式可用
+export { getGenreNames, getTMDBImageUrl, TMDB_GENRES } from './tmdb-image-base';
 
 /**
  * 搜索多媒体内容

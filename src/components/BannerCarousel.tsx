@@ -5,11 +5,8 @@ import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { getDoubanDetail } from '@/lib/douban.client';
-import {
-  type TMDBItem,
-  getGenreNames,
-  getTMDBImageUrl,
-} from '@/lib/tmdb.client';
+import type { TMDBItem } from '@/lib/tmdb.client';
+import { getGenreNames, getTMDBImageUrl } from '@/lib/tmdb-image-base';
 
 import HomeHero from '@/components/catalog/HomeHero';
 import DetailPanel from '@/components/DetailPanel';

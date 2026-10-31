@@ -4,8 +4,8 @@ import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig } from '@/lib/config';
 import { db } from '@/lib/db';
 import {
-  ALL_FEATURE_PERMISSION_KEYS,
   type FeaturePermissionKey,
+  ALL_FEATURE_PERMISSION_KEYS,
   effectiveFeaturePolicy,
   sanitizeFeatureGrants,
   sanitizeFeaturePermissions,

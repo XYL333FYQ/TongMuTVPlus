@@ -19,7 +19,6 @@ const optimizedPackageImports = [
   '@dnd-kit/utilities',
   '@heroicons/react',
   'lucide-react',
-  'react-icons',
 ];
 
 const createNextConfig = (phase) => {
@@ -37,7 +36,6 @@ const createNextConfig = (phase) => {
     },
 
     reactStrictMode: false,
-    swcMinify: true,
 
     // 安全响应头：
     // - 全站禁止 MIME 嗅探，防止把代理来的文本当脚本/页面执行；
@@ -47,7 +45,22 @@ const createNextConfig = (phase) => {
       return [
         {
           source: '/:path*',
-          headers: [{ key: 'X-Content-Type-Options', value: 'nosniff' }],
+          headers: [
+            { key: 'X-Content-Type-Options', value: 'nosniff' },
+            // 不许别的网站把本站套进框架（防"透明按钮"点击劫持）；本站自己内嵌不受影响
+            { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
+            // 去别的网站时只透露本站域名，不带具体页面地址（与浏览器默认一致，写明以免被改）
+            {
+              key: 'Referrer-Policy',
+              value: 'strict-origin-when-cross-origin',
+            },
+            // 只关掉本站从来不用的设备能力；摄像头、麦克风、屏幕共享、全屏、画中画、
+            // 自动播放（含首页预告片）都在用，不限制
+            {
+              key: 'Permissions-Policy',
+              value: 'geolocation=(), payment=(), usb=(), serial=(), hid=()',
+            },
+          ],
         },
         {
           source: '/api/:path*',
@@ -75,18 +88,10 @@ const createNextConfig = (phase) => {
     ],
 
     experimental: {
-      instrumentationHook:
-        process.env.NODE_ENV === 'production' && !isEdgeBuild,
       optimizePackageImports: optimizedPackageImports,
       webpackBuildWorker: !isEdgeBuild,
-      // Next 14.2 仍可能读取此字段；与 serverExternalPackages 保持一致
-      serverComponentsExternalPackages: [
-        '@libsql/client',
-        '@libsql/hrana-client',
-        '@libsql/isomorphic-ws',
-        '@libsql/isomorphic-fetch',
-        'libsql',
-      ],
+      // Next 15 起切页缓存默认 0 秒（每次切回都重新取页面数据）；恢复 14 的 30 秒，切页速度不回退
+      staleTimes: { dynamic: 30 },
     },
 
     // Uncoment to add domain whitelist

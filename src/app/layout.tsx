@@ -23,6 +23,7 @@ import {
 } from '@/lib/brand';
 import { getConfig } from '@/lib/config';
 import { getUserFeatureAccess } from '@/lib/permissions';
+import { PLATFORM_BOOT_SCRIPT } from '@/lib/platform';
 import { projectGuestRuntimeConfig } from '@/lib/public-runtime-config';
 import { authenticateAuthInfo } from '@/lib/request-auth';
 import { listEnabledSourceScripts } from '@/lib/source-script';
@@ -33,6 +34,7 @@ import ClientUpdatePrompt from '@/components/shell/ClientUpdatePrompt';
 import MediaSessionBridge from '@/components/shell/MediaSessionBridge';
 import MobileGestures from '@/components/shell/MobileGestures';
 import PerfProbe from '@/components/shell/PerfProbe';
+import PersistentHeader from '@/components/shell/PersistentHeader';
 import ShellBridge from '@/components/shell/ShellBridge';
 import ShellMotionProvider from '@/components/shell/ShellMotionProvider';
 
@@ -447,6 +449,9 @@ export default async function RootLayout({
         {/* 兼容浏览器扩展的识别指纹；仅本项目部署站应带此标记 */}
         <meta name='moontvplus-site' content='1' />
         <link rel='apple-touch-icon' href='/icons/icon-180x180.png' />
+        {/* 端标记（app / desktop / web）：在任何页面脚本之前写到 <html> 上，样式与手势按它分端 */}
+        {/* eslint-disable-next-line @next/next/no-sync-scripts */}
+        <script dangerouslySetInnerHTML={{ __html: PLATFORM_BOOT_SCRIPT }} />
         {/* 主题CSS */}
         <link rel='stylesheet' href={`/api/theme/css?v=${themeCssVersion}`} />
         {/* 将配置序列化后直接写入脚本，浏览器端可通过 window.RUNTIME_CONFIG 获取 */}
@@ -524,6 +529,8 @@ export default async function RootLayout({
               <DownloadProvider>
                 <PlaybackSessionProvider>
                   <StartupCacheCleanup />
+                  {/* 顶栏常驻一份，切页不重建（显示与否由页面里的导航标记决定） */}
+                  <PersistentHeader />
                   <ShellMotionProvider>{children}</ShellMotionProvider>
                   <GlobalErrorIndicator />
                   <ChatFloatingWindow />

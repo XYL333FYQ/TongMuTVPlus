@@ -7,13 +7,13 @@ import { createPortal } from 'react-dom';
 
 import '@/styles/controls.css';
 
-import { getTMDBImageUrl } from '@/lib/tmdb.client';
+import { getTMDBImageUrl } from '@/lib/tmdb-image-base';
 import { processImageUrl } from '@/lib/utils';
 
-import PageContainer from '@/components/PageContainer';
 import RetryNotice from '@/components/feedback/RetryNotice';
-import PageHeader from '@/components/shell/PageHeader';
+import PageContainer from '@/components/PageContainer';
 import PageLayout from '@/components/PageLayout';
+import PageHeader from '@/components/shell/PageHeader';
 
 interface TMDBResult {
   id: number;

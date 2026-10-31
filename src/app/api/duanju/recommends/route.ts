@@ -5,8 +5,8 @@ import { NextResponse } from 'next/server';
 import { API_CONFIG, getCacheTime } from '@/lib/config';
 import { getDuanjuSources } from '@/lib/duanju';
 import { isHlsPlaylistUrl } from '@/lib/hls-url';
+import { cleanHtmlTags } from '@/lib/html-text';
 import { SearchResult } from '@/lib/types';
-import { cleanHtmlTags } from '@/lib/utils';
 
 export const runtime = 'nodejs';
 

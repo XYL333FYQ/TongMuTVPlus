@@ -5,15 +5,15 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getAvailableApiSites, getConfig } from '@/lib/config';
 import { searchFromApi } from '@/lib/downstream';
-import { hasFeaturePermission } from '@/lib/permissions';
-import { yellowWords } from '@/lib/yellow';
 import { getProxyToken } from '@/lib/emby-token';
+import { hasFeaturePermission } from '@/lib/permissions';
 import {
   executeSavedSourceScript,
   listEnabledSourceScripts,
   normalizeScriptSearchResults,
   normalizeScriptSources,
 } from '@/lib/source-script';
+import { yellowWords } from '@/lib/yellow';
 
 export const runtime = 'nodejs';
 

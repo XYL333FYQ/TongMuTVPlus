@@ -1,8 +1,8 @@
 import {
-  FEEDBACK_MAX_ITEMS,
-  FEEDBACK_MAX_PENDING_PER_USER,
   type FeedbackItem,
   checkNewFeedback,
+  FEEDBACK_MAX_ITEMS,
+  FEEDBACK_MAX_PENDING_PER_USER,
   parseFeedbackList,
   trimFeedback,
 } from './feedback';

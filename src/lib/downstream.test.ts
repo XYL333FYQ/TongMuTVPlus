@@ -15,7 +15,7 @@ jest.mock('@/lib/search-cache', () => ({
   getCachedSearchPage: jest.fn(() => undefined),
   setCachedSearchPage: jest.fn(),
 }));
-jest.mock('@/lib/utils', () => ({
+jest.mock('@/lib/html-text', () => ({
   cleanHtmlTags: (value: string) => value || '',
 }));
 

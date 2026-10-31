@@ -1,0 +1,17 @@
+# 每周检查一次依赖与自动流程里用到的动作有没有新版本 / 安全修复，开 PR 提醒。
+# PR 会自动跑 checks.yml，通过了再决定合不合。
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      security:
+        applies-to: security-updates
+        patterns: ['*']
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly

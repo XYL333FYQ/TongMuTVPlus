@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { parseStringPromise } from 'xml2js';
 
-import { getConfig } from './config';
 import {
   BookAcquisitionLink,
   BookCatalogResult,
@@ -12,6 +11,7 @@ import {
   BookSource,
   BookSourceCapabilities,
 } from './book.types';
+import { getConfig } from './config';
 
 interface ResolvedOPDSConfig {
   enabled: boolean;

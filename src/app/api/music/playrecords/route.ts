@@ -4,9 +4,9 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { db } from '@/lib/db';
-import { requireFeaturePermission } from '@/lib/permissions';
 import { MusicPlayRecord } from '@/lib/db.client';
 import { getCachedSongs, setCachedSong } from '@/lib/music-song-cache';
+import { requireFeaturePermission } from '@/lib/permissions';
 
 export const runtime = 'nodejs';
 

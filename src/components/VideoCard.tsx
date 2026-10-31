@@ -55,7 +55,7 @@ import {
 } from '@/lib/utils';
 import { useLongPress } from '@/hooks/useLongPress';
 
-import AIChatPanel from '@/components/AIChatPanel';
+import AIChatPanel, { preloadAIChatPanel } from '@/components/AIChatPanel.lazy';
 import AnimeSubscribeModal from '@/components/AnimeSubscribeModal';
 import DetailPanel from '@/components/DetailPanel';
 import ImageViewer from '@/components/feedback/ImageViewer';
@@ -219,6 +219,8 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
           (window as any).RUNTIME_CONFIG?.AI_ENABLED &&
           (window as any).RUNTIME_CONFIG?.AI_ENABLE_VIDEOCARD_ENTRY;
         setAiEnabled(enabled);
+        // 开了 AI 才在空闲时预载问片面板代码
+        if (enabled) preloadAIChatPanel();
 
         // 加载AI默认消息配置
         const defaultMsg = (window as any).RUNTIME_CONFIG

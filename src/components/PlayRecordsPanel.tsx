@@ -4,7 +4,6 @@ import { AlertTriangle, Check, History, Trash2, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 
-import { useEscapeKey } from '@/hooks/useEscapeKey';
 import type { PlayRecord } from '@/lib/db.client';
 import {
   clearAllPlayRecords,
@@ -12,6 +11,7 @@ import {
   getAllPlayRecords,
   subscribeToDataUpdates,
 } from '@/lib/db.client';
+import { useEscapeKey } from '@/hooks/useEscapeKey';
 
 import VideoCard from '@/components/VideoCard';
 

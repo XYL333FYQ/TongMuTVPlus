@@ -1,9 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from 'next/server';
 
-import { getAuthInfoFromCookie } from '@/lib/auth';
 import { validateKeywordExpr } from '@/lib/anime-keyword-expr';
 import { validateEpisodeRegex } from '@/lib/anime-subscription';
+import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig } from '@/lib/config';
 import { db } from '@/lib/db';
 
@@ -15,8 +15,9 @@ export const runtime = 'nodejs';
  */
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  props: { params: Promise<{ id: string }> }
 ) {
+  const params = await props.params;
   try {
     // 权限检查
     const authInfo = getAuthInfoFromCookie(req);
@@ -154,8 +155,9 @@ export async function PUT(
  */
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  props: { params: Promise<{ id: string }> }
 ) {
+  const params = await props.params;
   try {
     // 权限检查
     const authInfo = getAuthInfoFromCookie(req);

@@ -16,7 +16,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import ReactMarkdown from 'react-markdown';
 
-import { VideoContext } from '@/lib/ai-orchestrator';
+import type { VideoContext } from '@/lib/ai-orchestrator';
 import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
 import { AI_WELCOME_MESSAGE } from '@/lib/brand';
 
