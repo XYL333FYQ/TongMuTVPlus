@@ -76,3 +76,21 @@ flowchart TD
 Android 实际红测确认原新窗口在 WebView 内替换主页面；e8b24d3 修复后，API34 真实链接交 Chrome 且同原文档返回，API23/24/34 整套恢复流程通过。Chrome 停在首次启动向导，只证明系统交接，未证明目标网页已加载。对应[Android 验证 41302306587](https://github.com/XYL333FYQ/TongMuTVPlus/actions/runs/41302306587)。框架默认行为与入口约束见[Android WebSettings](<https://developer.android.com/reference/android/webkit/WebSettings#setSupportMultipleWindows(boolean)>)及[WebChromeClient](<https://developer.android.com/reference/android/webkit/WebChromeClient#onCreateWindow(android.webkit.WebView,boolean,boolean,android.os.Message)>)。
 
 Windows8cc95c5 已完整重建双架构，并通过 x64 安装/便携、能力声明、实际窗口/外链/下载/故障恢复；[Windows 验证 41302471462](https://github.com/XYL333FYQ/TongMuTVPlus/actions/runs/41302471462)。共享动作及复制弹层的新一批通过 179 套 1171 项单测，真实页面视觉仍待最终候选验收。**以上均未发布新客户端；普通下载、自定义协议、共享返回/刷新及跨端表单/安装说明仍未做完。**
+
+## 普通下载当前状态：现代系统通过，旧系统尚未通过
+
+```mermaid
+flowchart TD
+  A[原先：附件地址交浏览器] --> B[候选：App本地确认文件名和目录]
+  B --> C{是否携带登录凭据}
+  C -->|无| D[系统下载管理器]
+  C -->|有| E[原生前台下载<br/>原站Cookie不跨站转发]
+  E --> F[系统通知：进度与取消]
+  F --> G[保存完成后公开到下载目录]
+  G --> H[API34实际文件、后台通知<br/>原文档和音频连续性已通过]
+  B -.-> I[API23确认缺失<br/>API24Cookie缺失，继续诊断]
+```
+
+1ed573e 的[完整检查 41321017855](https://github.com/XYL333FYQ/TongMuTVPlus/actions/runs/41321017855)通过；[Android41321019799](https://github.com/XYL333FYQ/TongMuTVPlus/actions/runs/41321019799)只有 APK 和 API34 通过，整支仍失败。已实看下载确认、桌面后台进度、完成通知和返回原页面的四张截图，实际下载文件内容正确；不能把 API34 结果扩大为所有 Android 系统或 OriginOS 真机。
+
+登录附件不直接把 Cookie 交给系统下载器：AOSP 实现会在重定向循环中复用显式请求头，见[DownloadThread 源码](https://raw.githubusercontent.com/aosp-mirror/platform_packages_providers_downloadprovider/master/src/com/android/providers/downloads/DownloadThread.java)。候选按原站点约束凭据传输，且有真实跨主机重定向、截断、取消和错误响应测试；普通公开文件仍复用系统下载器。认证任务被系统结束后暂不自动续传，Blob 导出/阅读器与自定义协议仍待完成。尚未发布 APK。

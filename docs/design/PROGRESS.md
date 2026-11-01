@@ -1188,3 +1188,7 @@
 - 当前 typecheck/lint 均 0，完整 Jest179 套 1171 项 0；Python/XML/bash 解析、diff 检查 0。新的服务尚未 APK 编译，现代保存/旧系统授权、后台进度、同文档同音频尚需模拟器门禁，不提前标完成。冒烟已加入取消确认、真实存储拒绝/允许、Home 后台慢附件、通知及已保存字节检查。认证下载暂不承诺进程结束后断点续传，Blob/阅读器、自定义协议等仍在后续范围。
 
 - 本批完整 format 正常执行，仅保留的未跟踪全 NUL STATUS 文档失败；本批提交文件无格式诊断。其余 typecheck/lint/Jest179 套 1171 项及纯 Java/脚本验证通过。准备将下载候选固定到验证引用，运行非发布 APK/API23/24/34 与 Linux 完整检查；当前不发布、不改正式 VPS。
+
+- 1ed573e：Checks41321017855 完整通过，Android41321019799 APK 编译/纯 Java 门禁/API34 通过。API34 实际原生确认取消后重试、后台慢附件通知、公共 Downloads 保存字节（SHA256 141c37604f5fe328c0e8fab6cbf3beb2291af8345820dd30a538cd8ebdbb8aea）、同 document/同 audio/时间继续通过，四张 19 系列截图已取回实看；非 OriginOS 或正式业务播放器证明。
+- 整支仍失败：API23 本次严格 TLS 通过但下载确认未出现；API24 存储拒绝/允许流程走到通知检查，实际网络请求 UA 为 AndroidDownloadManager 且缺 Cookie，未进入登录下载服务。停止原样重跑；新诊断只记 callback/current/allowed/pending 及 Cookie 存在布尔值/同源布尔值，不记地址或凭据，并加服务器 HttpOnly Cookie 探针。旧 Chrome44 缺 performance.timeOrigin 和 Node.isConnected，测试改用同义兼容 API，仍严查文档/媒体身份，不把缺字段当功能成功。
+- 旧 API23 TLS 失败日志进一步确认：某次 TLS rejected matches=false 先发生，4ms 后才 HTTPS page-start，未收到后续 SSL 回调；通过那次则先 page-start 后 rejected matches=true。此为回调顺序证据，不直接归因为服务器握手或宣称完整根因已修。下一候选补 visibleMatches 布尔诊断，证书仍一律取消，海报子资源不接管主界面。与 OriginOS 底栏因果关系未建立。

@@ -192,6 +192,8 @@ public class MainActivity extends Activity {
         cookies.setAcceptThirdPartyCookies(webView, true);
 
         webView.setDownloadListener((url, userAgent, contentDisposition, mimeType, length) -> {
+            Log.d("TongMuClient", "file download callback current=" + (epoch == webViewEpoch)
+                    + " allowed=" + ExternalLinkPolicy.allowed(url) + " failed=" + errorShown);
             if (epoch == webViewEpoch && !errorShown && !isFinishing() && !isDestroyed())
                 confirmFileDownload(url, userAgent, contentDisposition, mimeType);
         });
@@ -419,7 +421,8 @@ public class MainActivity extends Activity {
 
         @Override public void onReceivedSslError(WebView view, SslErrorHandler handler, SslError error) {
             Log.w("TongMuClient", "TLS rejected code=" + error.getPrimaryError() + " current=" + current(view)
-                    + " matches=" + loadState.matches(documentToken, error.getUrl()) + " hasUrl=" + (error.getUrl() != null));
+                    + " matches=" + loadState.matches(documentToken, error.getUrl()) + " hasUrl=" + (error.getUrl() != null)
+                    + " visibleMatches=" + (current(view) && error.getUrl() != null && error.getUrl().equals(view.getUrl())));
             handler.cancel();
             // Poster/CDN failures must not replace the entire application.
             if (!current(view) || !loadState.matches(documentToken, error.getUrl())) return;
@@ -686,6 +689,8 @@ public class MainActivity extends Activity {
     // ---------- 生命周期 ----------
 
     private void confirmFileDownload(String url, String userAgent, String disposition, String mime) {
+        Log.d("TongMuClient", "file download confirmation pending=" + (pendingFileDownload != null)
+                + " dialog=" + (dialog != null && dialog.isShowing()));
         if (!ExternalLinkPolicy.allowed(url)) {
             Toast.makeText(this, "此文件暂不支持直接下载，可在网页端下载。", Toast.LENGTH_LONG).show();
             return;
@@ -741,6 +746,10 @@ public class MainActivity extends Activity {
             if (name == null || name.length() > 220 || name.indexOf('/') >= 0 || name.indexOf('\\') >= 0)
                 throw new IllegalArgumentException("Invalid destination name");
             String cookie = CookieManager.getInstance().getCookie(url);
+            String source = webView == null ? null : webView.getUrl();
+            Log.d("TongMuClient", "file download dispatch auth=" + FileDownload.headerValue(cookie)
+                    + " sameServer=" + ScopedDownload.sameOrigin(url, getSavedServer())
+                    + " sourceCookie=" + (source != null && FileDownload.headerValue(CookieManager.getInstance().getCookie(source))));
             if (FileDownload.headerValue(cookie)) {
                 Intent task = new Intent(this, FileDownloadService.class).putExtras(request).putExtra("cookie", cookie);
                 if (Build.VERSION.SDK_INT >= 26) startForegroundService(task); else startService(task);

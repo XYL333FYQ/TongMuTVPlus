@@ -29,7 +29,7 @@
 
 ## 当前进度
 
-最新交接：正式网页仍 c28ab11；Windows cbee5dd 完整非发布流程全绿。Android 0f9623e 的 APK/API23/24/34 与完整 Checks 全绿，系统媒体会话/通知/后台暂停恢复已实测；旧 TLS 间歇等待未再现但根因不明。当前 PiP 比例/能力/配置精化候选尚待真实影片与系统窗口验证。8fef3d1 响应式网页候选已在 VPS 隔离实例通过真实触摸和三宽深浅，未切正式服务。客户端均未发布；真机底栏根因仍未知。
+最新交接：正式网页仍 c28ab11，客户端均未发布。Windows8cc95c5 完整双架构构建及 x64 窗口/外链/下载/恢复通过；Android e8b24d3 外链及 909e427 实际缩小 PiP 通过。下载候选 1ed573e 的 Checks41321017855、APK 与 API34 真实登录附件保存/后台进度/同音频通过，整支 41321019799 失败：API23 未出现下载确认，API24 请求缺 Cookie；正在补无敏感信息诊断，未宣布兼容完成。b48b7e9 共享动作完整检查已过，仍需真实视觉/焦点验收。返回层级、普通/Blob 下载及自定义协议、附属刷新、表单安装说明、最终审查发布仍在范围；真机底栏原因未知，用户选择稍后测。
 
 - 1ee0196 的 Linux Checks 41217779457 全部通过，Android APK/Java 门禁编译通过；API24 的输入法、坏海报不接管、浅色 HTTP503 原生界面/重试、深色 TLS 拒绝/设置恢复通过。API34 同样完成上述流程及 renderer KILL/SEGV 后宿主 PID 不变、本地重试通过，但旧脚本因外部 UiAutomation 的 Bad file descriptor/FATAL 判整支失败，不能把整支标绿；已补应用 PID 前后核对与按进程识别的崩溃门禁，4 个 Java/native 宿主/工具/renderer 日志用例验证过滤不放过本应用崩溃。
 - API23 的启动/桥/IME/HTTP 原生恢复通过，主 TLS 阶段停留加载而未得到预期错误文案；其系统 Provider 是 Chrome44，补充 deprecated 主文档错误回调及无 URL 日志码，待再跑确认，不提前称原因已完全定位。API23 壳冒烟不证明旧 Chrome44 能渲染 Next 站点，真实网站还依赖可运行本站的系统 WebView。
@@ -257,3 +257,7 @@
 - 当前 typecheck/lint 均 0，完整 Jest179 套 1171 项 0；Python/XML/bash 解析、diff 检查 0。新的服务尚未 APK 编译，现代保存/旧系统授权、后台进度、同文档同音频尚需模拟器门禁，不提前标完成。冒烟已加入取消确认、真实存储拒绝/允许、Home 后台慢附件、通知及已保存字节检查。认证下载暂不承诺进程结束后断点续传，Blob/阅读器、自定义协议等仍在后续范围。
 
 - 本批完整 format 正常执行，仅保留的未跟踪全 NUL STATUS 文档失败；本批提交文件无格式诊断。其余 typecheck/lint/Jest179 套 1171 项及纯 Java/脚本验证通过。准备将下载候选固定到验证引用，运行非发布 APK/API23/24/34 与 Linux 完整检查；当前不发布、不改正式 VPS。
+
+- 1ed573e：Checks41321017855 完整通过，Android41321019799 APK 编译/纯 Java 门禁/API34 通过。API34 实际原生确认取消后重试、后台慢附件通知、公共 Downloads 保存字节（SHA256 141c37604f5fe328c0e8fab6cbf3beb2291af8345820dd30a538cd8ebdbb8aea）、同 document/同 audio/时间继续通过，四张 19 系列截图已取回实看；非 OriginOS 或正式业务播放器证明。
+- 整支仍失败：API23 本次严格 TLS 通过但下载确认未出现；API24 存储拒绝/允许流程走到通知检查，实际网络请求 UA 为 AndroidDownloadManager 且缺 Cookie，未进入登录下载服务。停止原样重跑；新诊断只记 callback/current/allowed/pending 及 Cookie 存在布尔值/同源布尔值，不记地址或凭据，并加服务器 HttpOnly Cookie 探针。旧 Chrome44 缺 performance.timeOrigin 和 Node.isConnected，测试改用同义兼容 API，仍严查文档/媒体身份，不把缺字段当功能成功。
+- 旧 API23 TLS 失败日志进一步确认：某次 TLS rejected matches=false 先发生，4ms 后才 HTTPS page-start，未收到后续 SSL 回调；通过那次则先 page-start 后 rejected matches=true。此为回调顺序证据，不直接归因为服务器握手或宣称完整根因已修。下一候选补 visibleMatches 布尔诊断，证书仍一律取消，海报子资源不接管主界面。与 OriginOS 底栏因果关系未建立。

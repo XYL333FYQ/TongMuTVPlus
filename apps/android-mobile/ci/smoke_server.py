@@ -183,9 +183,10 @@ DOWNLOAD_PAGE = """<!doctype html><meta charset=utf-8><title>Download fixture</t
 <button style='display:block;min-height:56px;font-size:24px' onclick='audio.pause();started=false;publish()'>Stop download audio</button>
 <a href='/' style='display:block;line-height:56px'>Return to recovery fixture</a>
 <audio id=audio loop src='/tone.wav'></audio>
+<img src='/download-cookie-probe' width='1' height='1' alt=''>
 <script>
-var audio=document.getElementById('audio'),originalAudio=audio,origin=performance.timeOrigin,started=false,clicked=false;
-function report(event){fetch('/download-report',{method:'POST',body:JSON.stringify({event:event,origin:origin,paused:audio.paused,time:audio.currentTime,sameAudio:audio===originalAudio&&audio.isConnected,clicked:clicked})})}
+var audio=document.getElementById('audio'),originalAudio=audio,origin=performance.timeOrigin||performance.timing.navigationStart,started=false,clicked=false;
+function report(event){fetch('/download-report',{method:'POST',credentials:'include',body:JSON.stringify({event:event,origin:origin,paused:audio.paused,time:audio.currentTime,sameAudio:audio===originalAudio&&document.documentElement.contains(audio),clicked:clicked})})}
 function publish(){TMShell.setMediaState(JSON.stringify({v:1,active:started,playing:started&&!audio.paused,canControl:true,title:'Download fixture'}))}
 audio.onplaying=function(){started=true;publish();report('download-playing')};
 audio.onpause=function(){publish();report('download-paused')};
@@ -196,6 +197,11 @@ TMShell.ready();publish();setInterval(function(){report('download-tick')},500);
 class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
         print("GET %s UA=%s" % (self.path, self.headers.get("User-Agent")), flush=True)
+        if self.path == '/download-cookie-probe':
+            print('DOWNLOAD_SOURCE_COOKIE ' + str('tm-download-smoke=download-only' in self.headers.get('Cookie', '')), flush=True)
+            self.send_response(204)
+            self.end_headers()
+            return
         if self.path == '/download-attachment':
             authenticated = 'tm-download-smoke=download-only' in self.headers.get('Cookie', '')
             print('DOWNLOAD_AUTHENTICATED ' + str(authenticated), flush=True)
