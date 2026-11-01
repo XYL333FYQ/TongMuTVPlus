@@ -135,7 +135,9 @@ async function main() {
         return;
       }
       const fail = req.url === '/unavailable' && failures++ === 0;
-      res.writeHead(fail ? 503 : 200, { 'Content-Type': 'text/html' });
+      res.writeHead(fail ? 503 : 200, {
+        'Content-Type': 'text/html; charset=utf-8',
+      });
       res.end(
         fail
           ? '<title>Unavailable</title>Controlled HTTP 503'
