@@ -2,6 +2,12 @@
 
 import { DoubanItem, DoubanResult } from './types';
 
+interface DoubanRequestOptions {
+  signal?: AbortSignal;
+  /** Manual refresh has its own single user-facing result. */
+  reportError?: boolean;
+}
+
 interface DoubanCategoriesParams {
   kind: 'tv' | 'movie';
   category: string;
@@ -125,7 +131,25 @@ async function fetchWithTimeout(
   url: string,
   proxyUrl: string
 ): Promise<Response> {
+  return withDoubanResponse(
+    url,
+    proxyUrl,
+    undefined,
+    async (response) => response
+  );
+}
+
+async function withDoubanResponse<T>(
+  url: string,
+  proxyUrl: string,
+  signal: AbortSignal | undefined,
+  read: (response: Response) => Promise<T>
+): Promise<T> {
+  if (signal?.aborted)
+    throw new DOMException('Request cancelled', 'AbortError');
   const controller = new AbortController();
+  const abort = () => controller.abort();
+  signal?.addEventListener('abort', abort, { once: true });
   const timeoutId = setTimeout(() => controller.abort(), 10000); // 10秒超时
 
   // 检查是否使用代理
@@ -138,6 +162,7 @@ async function fetchWithTimeout(
 
   const fetchOptions: RequestInit = {
     signal: controller.signal,
+    ...(signal ? { cache: 'no-store' as const } : {}),
     headers: {
       'User-Agent':
         'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
@@ -148,12 +173,34 @@ async function fetchWithTimeout(
 
   try {
     const response = await fetch(finalUrl, fetchOptions);
+    const result = await read(response);
+    if (signal?.aborted)
+      throw new DOMException('Request cancelled', 'AbortError');
+    return result;
+  } finally {
     clearTimeout(timeoutId);
-    return response;
-  } catch (error) {
-    clearTimeout(timeoutId);
-    throw error;
+    signal?.removeEventListener('abort', abort);
   }
+}
+
+async function readCatalogueResponse<T>(
+  url: string,
+  proxyUrl: string,
+  signal?: AbortSignal
+): Promise<T> {
+  const read = async (response: Response): Promise<T> => {
+    if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+    return response.json();
+  };
+  // Preserve the existing ordinary-request timeout boundary. A manual request
+  // remains cancellable through JSON decoding, not just until headers arrive.
+  return signal
+    ? withDoubanResponse(url, proxyUrl, signal, read)
+    : read(await fetchWithTimeout(url, proxyUrl));
+}
+
+function fetchCatalogueDirect(url: string, signal?: AbortSignal) {
+  return signal ? fetch(url, { signal, cache: 'no-store' }) : fetch(url);
 }
 
 function getDoubanProxyConfig(): {
@@ -263,8 +310,11 @@ function buildDoubanRequester(
 async function requestDoubanWithFallback<T>(
   primary: { proxyType: DoubanProxyType; proxyUrl: string },
   backup: { proxyType: DoubanProxyType; proxyUrl: string },
-  runner: (requester: ReturnType<typeof buildDoubanRequester>) => Promise<T>
+  runner: (requester: ReturnType<typeof buildDoubanRequester>) => Promise<T>,
+  signal?: AbortSignal
 ): Promise<T> {
+  if (signal?.aborted)
+    throw new DOMException('Request cancelled', 'AbortError');
   const primaryRequester = buildDoubanRequester(
     primary.proxyType,
     primary.proxyUrl
@@ -277,6 +327,7 @@ async function requestDoubanWithFallback<T>(
   try {
     return await runner(primaryRequester);
   } catch (primaryError) {
+    if (signal?.aborted) throw primaryError;
     const sameStrategy =
       primary.proxyType === backup.proxyType &&
       primary.proxyUrl === backup.proxyUrl;
@@ -309,7 +360,8 @@ export async function fetchDoubanCategories(
   params: DoubanCategoriesParams,
   proxyUrl: string,
   useTencentCDN = false,
-  useAliCDN = false
+  useAliCDN = false,
+  signal?: AbortSignal
 ): Promise<DoubanResult> {
   const { kind, category, type, pageLimit = 20, pageStart = 0 } = params;
 
@@ -337,16 +389,11 @@ export async function fetchDoubanCategories(
     : `https://m.douban.com/rexxar/api/v2/subject/recent_hot/${kind}?start=${pageStart}&limit=${pageLimit}&category=${category}&type=${type}`;
 
   try {
-    const response = await fetchWithTimeout(
+    const doubanData = await readCatalogueResponse<DoubanCategoryApiResponse>(
       target,
-      useTencentCDN || useAliCDN ? '' : proxyUrl
+      useTencentCDN || useAliCDN ? '' : proxyUrl,
+      signal
     );
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! Status: ${response.status}`);
-    }
-
-    const doubanData: DoubanCategoryApiResponse = await response.json();
 
     // 转换数据格式
     const list: DoubanItem[] = doubanData.items.map((item) => ({
@@ -371,7 +418,8 @@ export async function fetchDoubanCategories(
  * 统一的豆瓣分类数据获取函数，根据代理设置选择使用服务端 API 或客户端代理获取
  */
 export async function getDoubanCategories(
-  params: DoubanCategoriesParams
+  params: DoubanCategoriesParams,
+  options: DoubanRequestOptions = {}
 ): Promise<DoubanResult> {
   const { kind, category, type, pageLimit = 20, pageStart = 0 } = params;
   const { proxyType, proxyUrl, backupProxyType, backupProxyUrl } =
@@ -382,8 +430,9 @@ export async function getDoubanCategories(
       { proxyType: backupProxyType, proxyUrl: backupProxyUrl },
       async ({ useDirectApi, requestProxyUrl, useTencentCDN, useAliCDN }) => {
         if (useDirectApi) {
-          const response = await fetch(
-            `/api/douban/categories?kind=${kind}&category=${category}&type=${type}&limit=${pageLimit}&start=${pageStart}`
+          const response = await fetchCatalogueDirect(
+            `/api/douban/categories?kind=${kind}&category=${category}&type=${type}&limit=${pageLimit}&start=${pageStart}`,
+            options.signal
           );
           if (!response.ok) {
             throw new Error(`HTTP error! Status: ${response.status}`);
@@ -395,12 +444,15 @@ export async function getDoubanCategories(
           params,
           requestProxyUrl,
           useTencentCDN,
-          useAliCDN
+          useAliCDN,
+          options.signal
         );
-      }
+      },
+      options.signal
     );
   } catch (error) {
-    dispatchDoubanGlobalError('获取豆瓣分类数据失败');
+    if (!options.signal?.aborted && options.reportError !== false)
+      dispatchDoubanGlobalError('获取豆瓣分类数据失败');
     throw error;
   }
 }
@@ -413,7 +465,8 @@ interface DoubanListParams {
 }
 
 export async function getDoubanList(
-  params: DoubanListParams
+  params: DoubanListParams,
+  options: DoubanRequestOptions = {}
 ): Promise<DoubanResult> {
   const { tag, type, pageLimit = 20, pageStart = 0 } = params;
   const { proxyType, proxyUrl, backupProxyType, backupProxyUrl } =
@@ -424,8 +477,9 @@ export async function getDoubanList(
       { proxyType: backupProxyType, proxyUrl: backupProxyUrl },
       async ({ useDirectApi, requestProxyUrl, useTencentCDN, useAliCDN }) => {
         if (useDirectApi) {
-          const response = await fetch(
-            `/api/douban?tag=${tag}&type=${type}&pageSize=${pageLimit}&pageStart=${pageStart}`
+          const response = await fetchCatalogueDirect(
+            `/api/douban?tag=${tag}&type=${type}&pageSize=${pageLimit}&pageStart=${pageStart}`,
+            options.signal
           );
           if (!response.ok) {
             throw new Error(`HTTP error! Status: ${response.status}`);
@@ -437,12 +491,15 @@ export async function getDoubanList(
           params,
           requestProxyUrl,
           useTencentCDN,
-          useAliCDN
+          useAliCDN,
+          options.signal
         );
-      }
+      },
+      options.signal
     );
   } catch (error) {
-    dispatchDoubanGlobalError('获取豆瓣列表数据失败');
+    if (!options.signal?.aborted && options.reportError !== false)
+      dispatchDoubanGlobalError('获取豆瓣列表数据失败');
     throw error;
   }
 }
@@ -451,7 +508,8 @@ export async function fetchDoubanList(
   params: DoubanListParams,
   proxyUrl: string,
   useTencentCDN = false,
-  useAliCDN = false
+  useAliCDN = false,
+  signal?: AbortSignal
 ): Promise<DoubanResult> {
   const { tag, type, pageLimit = 20, pageStart = 0 } = params;
 
@@ -479,16 +537,11 @@ export async function fetchDoubanList(
     : `https://movie.douban.com/j/search_subjects?type=${type}&tag=${tag}&sort=recommend&page_limit=${pageLimit}&page_start=${pageStart}`;
 
   try {
-    const response = await fetchWithTimeout(
+    const doubanData = await readCatalogueResponse<DoubanListApiResponse>(
       target,
-      useTencentCDN || useAliCDN ? '' : proxyUrl
+      useTencentCDN || useAliCDN ? '' : proxyUrl,
+      signal
     );
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! Status: ${response.status}`);
-    }
-
-    const doubanData: DoubanListApiResponse = await response.json();
 
     // 转换数据格式
     const list: DoubanItem[] = doubanData.subjects.map((item) => ({
@@ -523,7 +576,8 @@ interface DoubanRecommendsParams {
 }
 
 export async function getDoubanRecommends(
-  params: DoubanRecommendsParams
+  params: DoubanRecommendsParams,
+  options: DoubanRequestOptions = {}
 ): Promise<DoubanResult> {
   const {
     kind,
@@ -545,8 +599,9 @@ export async function getDoubanRecommends(
       { proxyType: backupProxyType, proxyUrl: backupProxyUrl },
       async ({ useDirectApi, requestProxyUrl, useTencentCDN, useAliCDN }) => {
         if (useDirectApi) {
-          const response = await fetch(
-            `/api/douban/recommends?kind=${kind}&limit=${pageLimit}&start=${pageStart}&category=${category}&format=${format}&region=${region}&year=${year}&platform=${platform}&sort=${sort}&label=${label}`
+          const response = await fetchCatalogueDirect(
+            `/api/douban/recommends?kind=${kind}&limit=${pageLimit}&start=${pageStart}&category=${category}&format=${format}&region=${region}&year=${year}&platform=${platform}&sort=${sort}&label=${label}`,
+            options.signal
           );
           if (!response.ok) {
             throw new Error(`HTTP error! Status: ${response.status}`);
@@ -558,12 +613,15 @@ export async function getDoubanRecommends(
           params,
           requestProxyUrl,
           useTencentCDN,
-          useAliCDN
+          useAliCDN,
+          options.signal
         );
-      }
+      },
+      options.signal
     );
   } catch (error) {
-    dispatchDoubanGlobalError('获取豆瓣推荐数据失败');
+    if (!options.signal?.aborted && options.reportError !== false)
+      dispatchDoubanGlobalError('获取豆瓣推荐数据失败');
     throw error;
   }
 }
@@ -572,7 +630,8 @@ async function fetchDoubanRecommends(
   params: DoubanRecommendsParams,
   proxyUrl: string,
   useTencentCDN = false,
-  useAliCDN = false
+  useAliCDN = false,
+  signal?: AbortSignal
 ): Promise<DoubanResult> {
   const { kind, pageLimit = 20, pageStart = 0 } = params;
   let { category, format, region, year, platform, sort, label } = params;
@@ -645,16 +704,11 @@ async function fetchDoubanRecommends(
   const target = `${baseUrl}?${reqParams.toString()}`;
   console.log(target);
   try {
-    const response = await fetchWithTimeout(
+    const doubanData = await readCatalogueResponse<DoubanRecommendApiResponse>(
       target,
-      useTencentCDN || useAliCDN ? '' : proxyUrl
+      useTencentCDN || useAliCDN ? '' : proxyUrl,
+      signal
     );
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! Status: ${response.status}`);
-    }
-
-    const doubanData: DoubanRecommendApiResponse = await response.json();
     const list: DoubanItem[] = doubanData.items
       .filter((item) => item.type == 'movie' || item.type == 'tv')
       .map((item) => ({

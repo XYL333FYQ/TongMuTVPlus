@@ -263,10 +263,11 @@ PY
       adb shell input keyevent 3
       for _ in $(seq 1 10); do
         adb shell dumpsys activity activities >"$OUT/16-pip-activities.txt"
-        grep -E 'com.tongmutvplus.mobile.*mode=pinned' "$OUT/16-pip-activities.txt" && break
+        python3 "$(dirname "$0")/check_pip_window.py" "$OUT/16-pip-activities.txt" && break
         sleep 1
       done
-      grep -E 'com.tongmutvplus.mobile.*mode=pinned' "$OUT/16-pip-activities.txt" || return 1
+      python3 "$(dirname "$0")/check_pip_window.py" "$OUT/16-pip-activities.txt" || return 1
+      sleep 1
       adb exec-out screencap -p >"$OUT/16-pip-playing.png"
       adb shell cmd media_session dispatch pause || return 1
       sleep 1

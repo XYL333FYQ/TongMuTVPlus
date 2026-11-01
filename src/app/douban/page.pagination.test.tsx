@@ -196,6 +196,9 @@ test('failed pull keeps existing catalogue content and reports failure', async (
   await screen.findByText('保留影片');
   await act(async () => expect(await refreshPage('/douban')).toBe('failed'));
   expect(screen.getByText('保留影片')).toBeInTheDocument();
+  expect(
+    mockCategories.mock.calls[mockCategories.mock.calls.length - 1][1]
+  ).toMatchObject({ reportError: false, signal: expect.any(AbortSignal) });
 });
 
 test('timed-out refresh keeps the old catalogue and ignores its late response', async () => {

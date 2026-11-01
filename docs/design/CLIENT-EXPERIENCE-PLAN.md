@@ -228,3 +228,7 @@
 - PiP 候选本机完整 typecheck/lint/Jest176 套 1147 项/房间 27 项均 0，Java 策略与网页维度回归通过。完整格式仅报保留的未跟踪全 NUL STATUS 文档；本批源码/文档已同版本格式化，干净检出完整格式门禁待提交后的 Linux Checks。Android 真实全屏解码/进入 pinned/同实例暂停恢复与返回仍未运行，不把 API34 上一批系统音频通过当成 PiP 通过。
 - PiP 候选 6904a7e 已推 codex/client-pip-verification；Android41295832709 的 APK 已成功，API23/24/34 当前仍运行；Linux Checks41295830551 当前在 Build。须继续轮询同两个 run，不能因等待或日志不可用重新触发。尚未取得真实 PiP 结果，不发布。
 - 8fef3d1 网页验收已结束，按不可变镜像身份核对后停止 tm-client-audit-8fef3d1；浏览器容器先前退出 0。VPS 当前仅正式 tongmutvplus 与原有 3xui 运行，正式 health=ok/buildSha=c28ab11；截图/日志/镜像保留，未切线上。清理证据 resize-audit-cleanup.log。
+- 6904a7e 的 Android41295832709 APK/API23/24/34 与 Checks41295830551 全绿：真实 MDN 视频解码、task 进入 pinned、同视频同文档暂停恢复/时间继续、回前台仍全屏均通过。视觉复核纠正：16-pip-playing.png 仍是 640×320 全屏视频，dump 的 CurrentConfiguration 也仍为 fullscreen；只能证明已进入 pinned 任务状态，不能证明缩小后的视觉完成。新增 check_pip_window 实际窗口配置/面积断言，旧真实 dump 明确失败、160×90/320×640 夹具通过；测试等真正小于半屏后再截图。原生生产代码未因截图时机猜测而改动，需新实际闭环。
+- 刷新扫尾：已复现并修正手动刷新双重全局/局部反馈，分类/推荐/自定义请求只由刷新拥有者提示；默认错误广播保留。新增信号传递至直接请求与代理 JSON 读取，取消后不再切备用源；首页与片库手动日历绕过既有客户端缓存与 HTTP 缓存，普通访问缓存键/TTL 及既有服务端策略保留。日历请求代次阻止迟到旧请求改写新缓存，未修改保护 API/会话/数据库代码。
+- 4 套 24 项定向测试通过，11 项最初真实失败（其余旧规则先通过）；HTTP 缓存两项补充亦红 → 绿。本机完整 typecheck/lint/Jest178 套 1160 项 0。完整 format 初报保留的未跟踪 NUL 文档及新测试文件排版；新测试已修，最后完整格式仍待补证。房间逻辑未改，本批不新增房间测试。真实新网页单一 Toast/日历请求及 PiP 缩小视觉仍待 CI/生产候选验证，不提前声称用户真机已修好。
+- 刷新扫尾最终完整格式复查只剩保留的未跟踪全 NUL STATUS 文档；本批新测试排版已修，其他提交文件无格式诊断。日志 catalogue-refresh-format-final.log。完整源码格式以接下来 Linux 干净检出门禁为准，本机全量不标通过。

@@ -49,11 +49,18 @@ export async function loadHomeCatalogue(
       try {
         if (signal?.aborted) return;
         if (key === 'movies' || key === 'tvshows' || key === 'variety') {
-          const result = await getDoubanCategories(categories[key]);
+          const result = signal
+            ? await getDoubanCategories(categories[key], {
+                signal,
+                reportError: false,
+              })
+            : await getDoubanCategories(categories[key]);
           if (result.code !== 200) throw new Error('Catalogue unavailable');
           data[key] = result.list;
         } else if (key === 'bangumi') {
-          data.bangumi = await GetBangumiCalendarData();
+          data.bangumi = signal
+            ? await GetBangumiCalendarData({ force: true, signal })
+            : await GetBangumiCalendarData();
         } else {
           const response = await fetch(
             key === 'duanju' ? '/api/duanju/recommends' : '/api/tmdb/upcoming',

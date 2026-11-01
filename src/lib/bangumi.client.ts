@@ -191,31 +191,49 @@ export function getBangumiSubjectUrl(id: string | number): string {
 
 async function fetchBangumiJson<T>(
   source: AnimeDataSource,
-  path: string
+  path: string,
+  signal?: AbortSignal,
+  force = false
 ): Promise<T> {
-  const response = await fetch(buildBangumiUrl(source, path), {
-    signal: AbortSignal.timeout(15000),
-  });
-
-  if (!response.ok) {
-    throw new Error(`Bangumi 请求失败: ${response.status}`);
+  if (signal?.aborted)
+    throw new DOMException('Request cancelled', 'AbortError');
+  const controller = new AbortController();
+  const abort = () => controller.abort();
+  signal?.addEventListener('abort', abort, { once: true });
+  const timeout = setTimeout(abort, 15000);
+  try {
+    const response = await fetch(buildBangumiUrl(source, path), {
+      signal: controller.signal,
+      ...(force ? { cache: 'no-store' as const } : {}),
+    });
+    if (!response.ok) throw new Error(`Bangumi 请求失败: ${response.status}`);
+    const data = (await response.json()) as T;
+    if (signal?.aborted)
+      throw new DOMException('Request cancelled', 'AbortError');
+    return data;
+  } finally {
+    clearTimeout(timeout);
+    signal?.removeEventListener('abort', abort);
   }
-
-  return response.json() as Promise<T>;
 }
 
-async function requestWithFallback<T>(path: string): Promise<T> {
+async function requestWithFallback<T>(
+  path: string,
+  signal?: AbortSignal,
+  force = false
+): Promise<T> {
   const primary = getPrimaryAnimeDataSource();
   const backup = getBackupAnimeDataSource(primary);
 
   try {
-    return await fetchBangumiJson<T>(primary, path);
+    return await fetchBangumiJson<T>(primary, path, signal, force);
   } catch (primaryError) {
-    if (!backup) throw primaryError;
+    if (!backup || signal?.aborted) throw primaryError;
 
     try {
-      return await fetchBangumiJson<T>(backup, path);
+      return await fetchBangumiJson<T>(backup, path, signal, force);
     } catch (backupError) {
+      if (signal?.aborted) throw backupError;
       console.error('Bangumi 主源与备用源均请求失败:', {
         primary,
         backup,
@@ -231,6 +249,7 @@ async function requestWithFallback<T>(path: string): Promise<T> {
 // 首页 / tv 动漫更新时间表 / 豆瓣每日放送 共用同一份数据，避免重复请求 Bangumi。
 const BANGUMI_CALENDAR_CACHE_KEY = 'homepage_bangumi';
 const BANGUMI_CALENDAR_CACHE_TTL = 60 * 60 * 1000; // 1 小时，与首页保持一致
+let calendarGeneration = 0;
 
 function readBangumiCalendarCache(): BangumiCalendarData[] | null {
   if (typeof window === 'undefined') return null;
@@ -260,12 +279,23 @@ function writeBangumiCalendarCache(data: BangumiCalendarData[]): void {
 }
 
 /** 获取 BGM 日历（首页新番放送 / tv 每日放送 / 豆瓣每日放送共用），带 1 小时 localStorage 缓存 */
-export async function GetBangumiCalendarData(): Promise<BangumiCalendarData[]> {
-  const cached = readBangumiCalendarCache();
+export async function GetBangumiCalendarData(
+  options: { force?: boolean; signal?: AbortSignal } = {}
+): Promise<BangumiCalendarData[]> {
+  if (options.signal?.aborted)
+    throw new DOMException('Request cancelled', 'AbortError');
+  const cached = options.force ? null : readBangumiCalendarCache();
   if (cached) return cached;
 
-  const data = await requestWithFallback<BangumiCalendarData[]>('/calendar');
-  writeBangumiCalendarCache(data);
+  const generation = ++calendarGeneration;
+  const data = await requestWithFallback<BangumiCalendarData[]>(
+    '/calendar',
+    options.signal,
+    options.force
+  );
+  if (options.signal?.aborted)
+    throw new DOMException('Request cancelled', 'AbortError');
+  if (generation === calendarGeneration) writeBangumiCalendarCache(data);
   return data;
 }
 

@@ -60,3 +60,18 @@ test('an aborted home refresh cannot return data for application to a different 
     loadHomeCatalogue(['movies'], controller.signal)
   ).rejects.toThrow();
 });
+
+test('manual home refresh forwards cancellation and owns errors while forcing the inner calendar cache', async () => {
+  const controller = new AbortController();
+  (getDoubanCategories as jest.Mock).mockResolvedValue({ code: 200, list: [] });
+  (GetBangumiCalendarData as jest.Mock).mockResolvedValue([]);
+  await loadHomeCatalogue(['movies', 'bangumi'], controller.signal);
+  expect(getDoubanCategories).toHaveBeenCalledWith(expect.anything(), {
+    signal: controller.signal,
+    reportError: false,
+  });
+  expect(GetBangumiCalendarData).toHaveBeenCalledWith({
+    force: true,
+    signal: controller.signal,
+  });
+});
