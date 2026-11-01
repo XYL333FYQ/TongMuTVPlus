@@ -15,12 +15,17 @@ app_pid() {
 }
 
 TLS_DIR=$(mktemp -d)
+SERVER_PID=
+trap 'if [ -n "$SERVER_PID" ]; then kill "$SERVER_PID" 2>/dev/null; fi; rm -f "$TLS_DIR/key.pem" "$TLS_DIR/cert.pem" "$TLS_DIR/video.webm"; rmdir "$TLS_DIR" 2>/dev/null' EXIT
 openssl req -x509 -newkey rsa:2048 -nodes -keyout "$TLS_DIR/key.pem" -out "$TLS_DIR/cert.pem" -subj '/CN=smoke.invalid' -days 1 >/dev/null 2>&1 || exit 1
 fixture_mode=standard
 [ "$PKG" = "com.tongmutvplus.mobile" ] && fixture_mode=recovery
-python3 "$(dirname "$0")/smoke_server.py" 8080 "$TLS_DIR/cert.pem" "$TLS_DIR/key.pem" "$fixture_mode" >"$OUT/server.log" 2>&1 &
+if [ "$PKG" = "com.tongmutvplus.mobile" ] && [ "$API_LEVEL" -ge 33 ]; then
+  curl --fail --location --max-time 30 https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.webm -o "$TLS_DIR/video.webm" || exit 1
+  echo 'c6f8a348953395598a9a73b9bab1676436410797bce9f398f4be1531d6e76dda  '"$TLS_DIR/video.webm" | sha256sum -c - || exit 1
+fi
+python3 "$(dirname "$0")/smoke_server.py" 8080 "$TLS_DIR/cert.pem" "$TLS_DIR/key.pem" "$fixture_mode" "$TLS_DIR/video.webm" >"$OUT/server.log" 2>&1 &
 SERVER_PID=$!
-trap 'kill "$SERVER_PID" 2>/dev/null; rm -f "$TLS_DIR/key.pem" "$TLS_DIR/cert.pem"; rmdir "$TLS_DIR" 2>/dev/null' EXIT
 
 adb install -r "$APK" || exit 1
 adb logcat -c
@@ -247,6 +252,35 @@ PY
       native_session absent || return 1
       tap_target text 'Return to recovery fixture' || return 1
       echo 'PASS: single native session, actual metadata, background pause/resume, locked controls and removal cleanup'
+      tap_target text 'Native PiP test' || return 1
+      tap_target text 'Start full video' || return 1
+      for _ in $(seq 1 10); do
+        python3 "$(dirname "$0")/check_pip.py" "$OUT/server.log" fullscreen && break
+        sleep 1
+      done
+      python3 "$(dirname "$0")/check_pip.py" "$OUT/server.log" fullscreen || return 1
+      sleep 1
+      adb shell input keyevent 3
+      for _ in $(seq 1 10); do
+        adb shell dumpsys activity activities >"$OUT/16-pip-activities.txt"
+        grep -E 'com.tongmutvplus.mobile.*mode=pinned' "$OUT/16-pip-activities.txt" && break
+        sleep 1
+      done
+      grep -E 'com.tongmutvplus.mobile.*mode=pinned' "$OUT/16-pip-activities.txt" || return 1
+      adb exec-out screencap -p >"$OUT/16-pip-playing.png"
+      adb shell cmd media_session dispatch pause || return 1
+      sleep 1
+      python3 "$(dirname "$0")/check_pip.py" "$OUT/server.log" paused || return 1
+      adb shell cmd media_session dispatch play || return 1
+      sleep 2
+      python3 "$(dirname "$0")/check_pip.py" "$OUT/server.log" resumed || return 1
+      adb shell am start -n "$PKG/.MainActivity" >/dev/null || return 1
+      sleep 1
+      python3 "$(dirname "$0")/check_pip.py" "$OUT/server.log" returned || return 1
+      adb exec-out screencap -p >"$OUT/17-pip-returned.png"
+      adb shell input keyevent 4
+      tap_target text 'Return to recovery fixture' || return 1
+      echo 'PASS: actual Android PiP, same decoded video/document, system pause/resume and fullscreen return'
     fi
     if [ "$API_LEVEL" -ge 26 ]; then
       tap_target text 'Update permission test' || return 1

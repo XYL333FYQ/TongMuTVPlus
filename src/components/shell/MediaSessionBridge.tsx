@@ -71,6 +71,10 @@ export default function MediaSessionBridge() {
             current && !(current === controller?.video && locked)
           ),
           title: current ? Array.from(mediaTitle).slice(0, 160).join('') : '',
+          videoWidth:
+            current instanceof HTMLVideoElement ? current.videoWidth : 0,
+          videoHeight:
+            current instanceof HTMLVideoElement ? current.videoHeight : 0,
         });
         if (snapshot !== lastSnapshot) {
           try {
@@ -128,7 +132,15 @@ export default function MediaSessionBridge() {
       return true;
     };
     window.__tmShellMediaAction = action;
-    const events = ['play', 'playing', 'pause', 'ended', 'emptied'];
+    const events = [
+      'play',
+      'playing',
+      'pause',
+      'ended',
+      'emptied',
+      'loadedmetadata',
+      'resize',
+    ];
     events.forEach((event) => document.addEventListener(event, onMedia, true));
     const hasMedia = (node: Node) =>
       node instanceof Element &&

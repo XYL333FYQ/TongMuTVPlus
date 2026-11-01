@@ -32,6 +32,7 @@ RECOVERY_CONTROLS = """<button onclick='TMShell.setSystemBars(false)' style='dis
 <a href='/always-unavailable' style='display:block;font-size:24px;line-height:56px'>Back from failure test</a>
 <a href='/native-media-test' style='display:block;font-size:20px;line-height:48px'>Native media permission test</a>
 <a href='/native-session-test' style='display:block;font-size:20px;line-height:48px'>Native session test</a>
+<a href='/native-pip-test' style='display:block;font-size:20px;line-height:48px'>Native PiP test</a>
 <a href='/update-test' style='position:fixed;bottom:8px;right:8px;background:white;font-size:16px;line-height:48px'>Update permission test</a>
 <img src='/missing.png' width='1' height='1' alt=''>
 <img src='https://10.0.2.2:8443/missing.png' width='1' height='1' alt=''>""".encode()
@@ -132,12 +133,42 @@ audio.onpause=function(){publish();report('session-paused')};
 TMShell.ready();publish();
 </script>""".encode()
 
+PIP_PAGE = """<!doctype html><meta charset=utf-8><title>Native PiP fixture</title>
+<body style='background:white;color:black;font:24px sans-serif'>
+<button style='display:block;min-height:56px;font-size:24px' onclick='video.play().then(function(){return video.requestFullscreen()}).catch(function(){report("pip-start-rejected")})'>Start full video</button>
+<video id=video loop playsinline preload=metadata src='/pip-clip.webm' style='width:100%'></video>
+<a style='display:block;line-height:56px' href='/'>Return to recovery fixture</a></body>
+<script>
+var video=document.getElementById('video'),originalVideo=video,started=false,calls=0;
+function report(event){fetch('/media-report',{method:'POST',body:JSON.stringify({event:event,paused:video.paused,calls:calls,time:video.currentTime,duration:video.duration,origin:performance.timeOrigin,sameVideo:video===originalVideo&&video.isConnected,fullscreen:document.fullscreenElement===video})})}
+function publish(){TMShell.setMediaState(JSON.stringify({v:1,active:started&&video.isConnected,playing:!video.paused&&!video.ended,canControl:true,title:'Native PiP fixture',videoWidth:video.videoWidth,videoHeight:video.videoHeight}))}
+window.__tmShellMediaAction=function(action){
+ if(action==='play'){calls++;video.play()}else if(action==='pause'){calls++;video.pause()}else return false;
+ return true;
+};
+video.onplaying=function(){started=true;publish();report('pip-playing')};
+video.onpause=function(){publish();report('pip-paused')};
+video.onloadedmetadata=publish;
+document.addEventListener('fullscreenchange',function(){report('pip-fullscreen')});
+setInterval(function(){if(started)report('pip-tick')},500);
+TMShell.ready();publish();
+</script>""".encode()
+
 
 class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
         print("GET %s UA=%s" % (self.path, self.headers.get("User-Agent")), flush=True)
-        if self.path in ('/tone.wav', '/native-media-test', '/native-session-test') and getattr(self.server, 'recovery_mode', False):
-            body = tone_wave() if self.path == '/tone.wav' else SESSION_PAGE if self.path == '/native-session-test' else MEDIA_PAGE
+        if self.path == '/pip-clip.webm' and getattr(self.server, 'video_path', None):
+            with open(self.server.video_path, 'rb') as video:
+                body = video.read()
+            self.send_response(200)
+            self.send_header('Content-Type', 'video/webm')
+            self.send_header('Content-Length', str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+            return
+        if self.path in ('/tone.wav', '/native-media-test', '/native-session-test', '/native-pip-test') and getattr(self.server, 'recovery_mode', False):
+            body = tone_wave() if self.path == '/tone.wav' else SESSION_PAGE if self.path == '/native-session-test' else PIP_PAGE if self.path == '/native-pip-test' else MEDIA_PAGE
             self.send_response(200)
             self.send_header('Content-Type', 'audio/wav' if self.path == '/tone.wav' else 'text/html; charset=utf-8')
             self.send_header('Content-Length', str(len(body)))
@@ -190,4 +221,5 @@ if __name__ == "__main__":
         threading.Thread(target=secure.serve_forever, daemon=True).start()
     server = HTTPServer(("0.0.0.0", int(sys.argv[1])), Handler)
     server.recovery_mode = recovery
+    server.video_path = sys.argv[5] if len(sys.argv) > 5 else None
     server.serve_forever()

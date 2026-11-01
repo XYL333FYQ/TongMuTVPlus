@@ -17,6 +17,7 @@ import android.content.res.ColorStateList;
 import android.database.Cursor;
 import android.graphics.Color;
 import android.graphics.Bitmap;
+import android.graphics.Rect;
 import android.net.Uri;
 import android.net.http.SslError;
 import android.os.Build;
@@ -90,6 +91,9 @@ public class MainActivity extends Activity {
     private boolean mediaSnapshotMode;
     private boolean mediaServiceStarted;
     private MediaState nativeMedia;
+    private int mediaVideoWidth;
+    private int mediaVideoHeight;
+    private boolean mediaHasVideoDimensions;
     private WindowInsets lastInsets;
     private BroadcastReceiver pauseReceiver;
     private BroadcastReceiver updateReceiver;
@@ -629,6 +633,8 @@ public class MainActivity extends Activity {
     public void onConfigurationChanged(android.content.res.Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
         if (webView == null) return;
+        // PiP has its own small window configuration, not a user rotation out of fullscreen.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && isInPictureInPictureMode()) return;
         boolean landscape = newConfig.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE;
         if (landscape && playing && customView == null) {
             webView.evaluateJavascript(
@@ -646,12 +652,19 @@ public class MainActivity extends Activity {
     @Override
     protected void onUserLeaveHint() {
         super.onUserLeaveHint();
-        // 全屏看视频时按 Home：进入画中画继续看
-        if (customView != null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        // Keep the same fullscreen view; a paused/error/audio surface must not auto enter.
+        boolean videoPlaying = playing && (!mediaSnapshotMode || !mediaHasVideoDimensions
+                || (mediaVideoWidth > 0 && mediaVideoHeight > 0));
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && PipPolicy.canEnter(
+                getPackageManager().hasSystemFeature(PackageManager.FEATURE_PICTURE_IN_PICTURE),
+                customView != null, videoPlaying, errorShown, isInPictureInPictureMode())) {
             try {
-                enterPictureInPictureMode(new PictureInPictureParams.Builder()
-                        .setAspectRatio(new Rational(16, 9))
-                        .build());
+                int[] ratio = PipPolicy.aspect(mediaVideoWidth, mediaVideoHeight);
+                PictureInPictureParams.Builder params = new PictureInPictureParams.Builder()
+                        .setAspectRatio(new Rational(ratio[0], ratio[1]));
+                Rect source = new Rect();
+                if (customView.getGlobalVisibleRect(source) && !source.isEmpty()) params.setSourceRectHint(source);
+                enterPictureInPictureMode(params.build());
             } catch (RuntimeException ignored) {
                 // 系统不允许画中画时忽略
             }
@@ -766,6 +779,9 @@ public class MainActivity extends Activity {
                             || !(value.opt("playing") instanceof Boolean) || !(value.opt("canControl") instanceof Boolean)) return;
                     nativeMedia = new MediaState(value.getBoolean("active"), value.getBoolean("playing"),
                             value.getBoolean("canControl"), value.optString("title", ""));
+                    mediaVideoWidth = value.optInt("videoWidth", 0);
+                    mediaVideoHeight = value.optInt("videoHeight", 0);
+                    mediaHasVideoDimensions = value.has("videoWidth") && value.has("videoHeight");
                     mediaSnapshotMode = true;
                     dispatchPlayback(nativeMedia);
                 } catch (org.json.JSONException ignored) { /* Invalid snapshots do not replace current state. */ }
@@ -910,6 +926,8 @@ public class MainActivity extends Activity {
         if (playing == value && !mediaSnapshotMode) return;
         mediaSnapshotMode = false;
         nativeMedia = null;
+        mediaVideoWidth = mediaVideoHeight = 0;
+        mediaHasVideoDimensions = false;
         dispatchPlayback(new MediaState(value, value, true, null));
     }
 

@@ -246,3 +246,32 @@ test('native metadata and room permission update without clearing the active ses
     JSON.parse(publish.mock.calls[publish.mock.calls.length - 1][0])
   ).toMatchObject({ active: false });
 });
+
+test('native PiP dimensions follow actual video metadata without another play event', () => {
+  const publish = jest.fn();
+  Object.defineProperty(window, 'TMShell', {
+    configurable: true,
+    value: { setMediaState: publish },
+  });
+  const video = media();
+  Object.defineProperty(video, 'videoWidth', {
+    configurable: true,
+    value: 720,
+  });
+  Object.defineProperty(video, 'videoHeight', {
+    configurable: true,
+    value: 1280,
+  });
+  render(<MediaSessionBridge />);
+  expect(
+    JSON.parse(publish.mock.calls[publish.mock.calls.length - 1][0])
+  ).toMatchObject({ videoWidth: 720, videoHeight: 1280 });
+  Object.defineProperty(video, 'videoWidth', { value: 1920 });
+  Object.defineProperty(video, 'videoHeight', { value: 1080 });
+  act(() => {
+    video.dispatchEvent(new Event('resize'));
+  });
+  expect(
+    JSON.parse(publish.mock.calls[publish.mock.calls.length - 1][0])
+  ).toMatchObject({ videoWidth: 1920, videoHeight: 1080 });
+});

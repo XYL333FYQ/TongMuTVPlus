@@ -29,7 +29,7 @@
 
 ## 当前进度
 
-最新交接：正式网页仍固定 c28ab11；Windows cbee5dd 完整非发布构建 41280022405 和 Checks 41280021242 全绿，真实系统浏览器外链/原文档保留/自动弹窗拒绝及既有恢复下载回归通过。Android 媒体前置小批正在补系统动作权限与生命周期，原生通知/PiP 尚未完成。所有客户端均未发布；手机诊断由用户稍后测试，底栏根因仍未知。
+最新交接：正式网页仍 c28ab11；Windows cbee5dd 完整非发布流程全绿。Android 0f9623e 的 APK/API23/24/34 与完整 Checks 全绿，系统媒体会话/通知/后台暂停恢复已实测；旧 TLS 间歇等待未再现但根因不明。当前 PiP 比例/能力/配置精化候选尚待真实影片与系统窗口验证。8fef3d1 响应式网页候选已在 VPS 隔离实例通过真实触摸和三宽深浅，未切正式服务。客户端均未发布；真机底栏根因仍未知。
 
 - 1ee0196 的 Linux Checks 41217779457 全部通过，Android APK/Java 门禁编译通过；API24 的输入法、坏海报不接管、浅色 HTTP503 原生界面/重试、深色 TLS 拒绝/设置恢复通过。API34 同样完成上述流程及 renderer KILL/SEGV 后宿主 PID 不变、本地重试通过，但旧脚本因外部 UiAutomation 的 Bad file descriptor/FATAL 判整支失败，不能把整支标绿；已补应用 PID 前后核对与按进程识别的崩溃门禁，4 个 Java/native 宿主/工具/renderer 日志用例验证过滤不放过本应用崩溃。
 - API23 的启动/桥/IME/HTTP 原生恢复通过，主 TLS 阶段停留加载而未得到预期错误文案；其系统 Provider 是 Chrome44，补充 deprecated 主文档错误回调及无 URL 日志码，待再跑确认，不提前称原因已完全定位。API23 壳冒烟不证明旧 Chrome44 能渲染 Next 站点，真实网站还依赖可运行本站的系统 WebView。
@@ -222,3 +222,7 @@
 - API23 仍停在主 TLS，没有到本批媒体流程；并发服务器修复后仍失败，证伪“夹具串行阻塞是充分解释”。停止原样重跑；现只加无 URL/描述的网络/SSL 回调 current、matches、hasUrl 与 page-start scheme 顺序日志，并将严格 TLS 断言观察延长到本地 40 秒 watchdog 以后，失败自动保存截图。证书取消及错误判定未放宽，结果仍待新候选。
 - 8fef3d1 浏览器闭环：3015 独立生产候选+真实 CDP 触摸，从 1440 首次挂载变 390 可刷新、变宽取消未释放手势、再缩回可重新刷新；主动 503 保留列表，同 timeOrigin/同底栏 DOM，390/820/1280 深浅六图无溢出，pageerror 空。浏览器容器退出 0，全部图已取回并实看；测试资料/模拟 TMShell/Worker blocked，非真机。失败夹具下旧全局错误与局部刷新提示先后出现，记为后续 C11 反馈去重待处理，不能把截图称无错误提示。
 - 当前隔离网页容器 tm-client-audit-8fef3d1 仍运行 3015，浏览器 tm-client-browser-resize-8fef3d1 已退出 0；证据 output/client-experience/vps-8fef3d1。正式 VPS 仍 c28ab11，未发布任何新客户端。
+- 0f9623e 的 Android41294944738 APK/API23/24/34 全部通过，release 跳过；Checks41294943081 也通过。API23 主 HTTPS 开始后约 1ms 即 TLS rejected 且 matches=true，子图片 TLS matches=false，没有放宽证书规则；本次未再现等待，不能据此认定此前间歇延迟根因已解决。最新日志/制品 android-media-0f9623e-api23 保留。
+- PiP 新候选：PipPolicy 能力/全屏/暂停/故障/重复进入及实际宽高系统边界纯 Java 红 → 绿；网页实际视频维度与 resize 更新回归红 → 绿，2 套 13 项绿。新增可选视频宽高字段，旧 v1 快照缺字段继续兼容；PiP 配置变化不触发既有竖屏退出全屏逻辑。尚未 Android 编译/实际 PiP，不提前标已完成。
+- PiP 实际门禁已加入：仅 API34 下载官方 MDN CC0 flower.webm 并核对已验证 SHA256，不提交或打包此测试视频；真实点全屏按钮、系统 Home、检查应用 task 为 pinned、系统媒体暂停/恢复、同视频/同文档且时间继续、回前台仍全屏。比较考虑循环片段时间回绕；解析器正反用例/AST/shell 语法通过。临时片/证书按文件清理，未新增应用依赖。
+- PiP 候选本机完整 typecheck/lint/Jest176 套 1147 项/房间 27 项均 0，Java 策略与网页维度回归通过。完整格式仅报保留的未跟踪全 NUL STATUS 文档；本批源码/文档已同版本格式化，干净检出完整格式门禁待提交后的 Linux Checks。Android 真实全屏解码/进入 pinned/同实例暂停恢复与返回仍未运行，不把 API34 上一批系统音频通过当成 PiP 通过。

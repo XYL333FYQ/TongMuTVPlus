@@ -21,7 +21,7 @@ if expected == 'absent':
 else:
     assert len(records) == 1, 'Expected exactly one active app session, got %d' % len(records)
     record = records[0]
-    assert 'Native session fixture' in record, 'Actual system metadata is missing'
+    assert (sys.argv[3] if len(sys.argv) > 3 else 'Native session fixture') in record, 'Actual system metadata is missing'
     state = 'PAUSED' if expected == 'paused' else 'PLAYING'
     code = 2 if expected == 'paused' else 3
     assert re.search(r'state=(?:%s\(%d\)|%d)(?:,|\s)' % (state, code, code), record), 'Unexpected real playback state'
