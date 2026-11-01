@@ -9,6 +9,7 @@ use webview2_com::{
     BrowserProcessExitedEventHandler, DownloadStartingEventHandler,
     Microsoft::Web::WebView2::Win32::*, NavigationCompletedEventHandler,
     NavigationStartingEventHandler, NewWindowRequestedEventHandler, ProcessFailedEventHandler,
+    WebResourceResponseReceivedEventHandler,
 };
 use windows::{
     core::{w, Interface, BOOL, PCWSTR},
@@ -358,6 +359,67 @@ pub fn install(window: &WebviewWindow) -> tauri::Result<()> {
                 )?;
             }
 
+            if let Ok(responses) = core.cast::<ICoreWebView2_2>() {
+                let shared = state.clone();
+                responses.add_WebResourceResponseReceived(
+                    &WebResourceResponseReceivedEventHandler::create(Box::new(move |_, args| {
+                        if let Some(args) = args {
+                            let capture = || -> windows::core::Result<()> {
+                                let checking = shared
+                                    .loading
+                                    .lock()
+                                    .unwrap_or_else(|e| e.into_inner())
+                                    .is_some()
+                                    || shared
+                                        .aborted
+                                        .lock()
+                                        .unwrap_or_else(|e| e.into_inner())
+                                        .is_some();
+                                if !checking {
+                                    return Ok(());
+                                }
+                                let mut uri = windows::core::PWSTR::null();
+                                args.Request()?.Uri(&mut uri)?;
+                                let uri = webview2_com::take_pwstr(uri);
+                                if !shared
+                                    .downloads
+                                    .lock()
+                                    .unwrap_or_else(|e| e.into_inner())
+                                    .matches_uri(&uri)
+                                {
+                                    return Ok(());
+                                }
+                                let response = args.Response()?;
+                                let mut status = 0;
+                                response.StatusCode(&mut status)?;
+                                if !(200..300).contains(&status) {
+                                    return Ok(());
+                                }
+                                let mut disposition = windows::core::PWSTR::null();
+                                response
+                                    .Headers()?
+                                    .GetHeader(w!("Content-Disposition"), &mut disposition)?;
+                                let disposition = webview2_com::take_pwstr(disposition);
+                                let matched = shared
+                                    .downloads
+                                    .lock()
+                                    .unwrap_or_else(|e| e.into_inner())
+                                    .attachment_response(&uri, &disposition);
+                                if matched {
+                                    *shared.aborted.lock().unwrap_or_else(|e| e.into_inner()) = None;
+                                    *shared.loading.lock().unwrap_or_else(|e| e.into_inner()) = None;
+                                }
+                                Ok(())
+                            };
+                            // Informational header lookup must never break navigation.
+                            let _ = capture();
+                        }
+                        Ok(())
+                    })),
+                    &mut token,
+                )?;
+            }
+
             let handle = app.clone();
             let shared = state.clone();
             core.add_NavigationCompleted(
@@ -387,7 +449,7 @@ pub fn install(window: &WebviewWindow) -> tauri::Result<()> {
                         let detail = if status >= 400 {
                             format!("HTTP {status}")
                         } else {
-                            format!("连接错误 {}。未跳过安全证书验证。", error.0)
+                            format!("连接错误 {}。", error.0)
                         };
                         if error == COREWEBVIEW2_WEB_ERROR_STATUS_CONNECTION_ABORTED && status < 400
                         {

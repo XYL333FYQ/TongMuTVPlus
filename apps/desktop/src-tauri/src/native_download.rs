@@ -123,8 +123,8 @@ fn drain(app: AppHandle) {
                 );
             }
         }
-        // Do not hide the engine's existing progress/completion feedback until
-        // a complete native replacement is available. Never claim saved here.
+        // Native progress/completion feedback is the next required stage.
+        // Destination approval alone must never be reported as a saved file.
     }
     ACTIVE.with(|active| active.set(false));
 }
@@ -145,6 +145,9 @@ pub unsafe fn request(
         deferral,
         approved: Cell::new(false),
     };
+    // The host owns the destination UI; do not let default download UI choose
+    // another destination after this deferred native choice.
+    pending.args.SetHandled(true)?;
     // The deferral already postpones the decision. Match the SDK's final-decision
     // pattern instead of canceling first and trying to undo that cancellation.
     let full =

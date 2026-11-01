@@ -74,14 +74,35 @@ impl DownloadNavigation {
         self.uri = uri.into();
     }
 
-    pub fn download_started(&mut self, uri: &str) -> bool {
+    pub fn matches_uri(&self, uri: &str) -> bool {
         let uri = uri.split('#').next().unwrap_or("");
-        if self.uri.is_empty() || self.uri != uri {
+        !self.uri.is_empty() && self.uri == uri
+    }
+
+    pub fn download_started(&mut self, uri: &str) -> bool {
+        if !self.matches_uri(uri) {
             return false;
         }
         self.download = true;
         self.pending = false;
         true
+    }
+
+    pub fn attachment_response(&mut self, uri: &str, disposition: &str) -> bool {
+        if disposition.len() > 8192
+            || disposition
+                .bytes()
+                .any(|byte| byte == 127 || (byte < 32 && byte != b'\t'))
+            || !disposition
+                .split(';')
+                .next()
+                .unwrap_or("")
+                .trim()
+                .eq_ignore_ascii_case("attachment")
+        {
+            return false;
+        }
+        self.download_started(uri)
     }
 
     pub fn aborted(&mut self, id: u64) -> AbortDecision {
@@ -170,6 +191,40 @@ mod tests {
         assert!(!nav.download_started("https://fixture.test/other"));
         assert!(nav.report_abort(2));
         assert!(!nav.report_abort(2));
+    }
+
+    #[test]
+    fn attachment_headers_confirm_only_the_current_download_before_its_late_event() {
+        let mut nav = DownloadNavigation::default();
+        nav.start(20, "https://fixture.test/file");
+        assert_eq!(nav.aborted(20), AbortDecision::Pending);
+        assert!(nav.attachment_response(
+            "https://fixture.test/file",
+            " ATTACHMENT ; filename=\"a;b.txt\""
+        ));
+        assert!(!nav.report_abort(20));
+        assert!(nav.download_started("https://fixture.test/file"));
+        nav.start(21, "https://fixture.test/page");
+        assert_eq!(nav.aborted(21), AbortDecision::Pending);
+        assert!(!nav.attachment_response("https://fixture.test/file", "attachment"));
+        assert!(nav.report_abort(21));
+    }
+
+    #[test]
+    fn inline_malformed_or_oversized_headers_cannot_hide_a_connection_failure() {
+        for header in [
+            "inline; filename=attachment",
+            "attachment-other; filename=x",
+            "attachment\r\nInjected: value",
+            "attachment\0",
+            &format!("attachment; filename={}", "x".repeat(8192)),
+        ] {
+            let mut nav = DownloadNavigation::default();
+            nav.start(22, "https://fixture.test/file");
+            assert_eq!(nav.aborted(22), AbortDecision::Pending);
+            assert!(!nav.attachment_response("https://fixture.test/file", header));
+            assert!(nav.report_abort(22));
+        }
     }
 
     #[test]
