@@ -8,8 +8,9 @@ use tauri::{AppHandle, Manager, WebviewWindow};
 use webview2_com::{
     BrowserProcessExitedEventHandler, DownloadStartingEventHandler,
     Microsoft::Web::WebView2::Win32::*, NavigationCompletedEventHandler,
-    NavigationStartingEventHandler, NewWindowRequestedEventHandler, PermissionRequestedEventHandler,
-    ProcessFailedEventHandler, WebResourceResponseReceivedEventHandler,
+    NavigationStartingEventHandler, NewWindowRequestedEventHandler,
+    PermissionRequestedEventHandler, ProcessFailedEventHandler,
+    WebResourceResponseReceivedEventHandler,
 };
 use windows::{
     core::{w, Interface, BOOL, PCWSTR},

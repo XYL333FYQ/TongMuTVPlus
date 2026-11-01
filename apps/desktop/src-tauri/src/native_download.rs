@@ -26,8 +26,7 @@ use windows::{
                 SIGDN_FILESYSPATH,
             },
             WindowsAndMessaging::{
-                MessageBoxW, IDYES, MB_DEFBUTTON2, MB_ICONQUESTION, MB_ICONWARNING, MB_OK,
-                MB_YESNO,
+                MessageBoxW, IDYES, MB_DEFBUTTON2, MB_ICONQUESTION, MB_ICONWARNING, MB_OK, MB_YESNO,
             },
         },
     },
