@@ -8,7 +8,7 @@ use tauri::{AppHandle, Manager, WebviewWindow};
 use webview2_com::{
     BrowserProcessExitedEventHandler, DownloadStartingEventHandler,
     Microsoft::Web::WebView2::Win32::*, NavigationCompletedEventHandler,
-    NavigationStartingEventHandler, ProcessFailedEventHandler,
+    NavigationStartingEventHandler, NewWindowRequestedEventHandler, ProcessFailedEventHandler,
 };
 use windows::{
     core::{w, Interface, BOOL, PCWSTR},
@@ -282,6 +282,29 @@ pub fn install(window: &WebviewWindow) -> tauri::Result<()> {
             let core = view.controller().CoreWebView2()?;
             core.Settings()?.SetIsBuiltInErrorPageEnabled(false)?;
             let mut token = 0;
+
+            let handle = app.clone();
+            let shared = state.clone();
+            core.add_NewWindowRequested(
+                &NewWindowRequestedEventHandler::create(Box::new(move |_, args| {
+                    if let Some(args) = args {
+                        args.SetHandled(true)?;
+                        if !shared.closing.load(Ordering::Acquire) {
+                            let mut initiated = BOOL(0);
+                            args.IsUserInitiated(&mut initiated)?;
+                            let mut uri = windows::core::PWSTR::null();
+                            args.Uri(&mut uri)?;
+                            crate::native_external::request(
+                                &handle,
+                                &webview2_com::take_pwstr(uri),
+                                initiated.as_bool(),
+                            );
+                        }
+                    }
+                    Ok(())
+                })),
+                &mut token,
+            )?;
 
             let shared = state.clone();
             core.add_NavigationStarting(

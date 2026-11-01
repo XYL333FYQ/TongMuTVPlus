@@ -193,3 +193,7 @@
 
 - 持久资料视觉补证 41278859582（8c4d4d3）全绿：UIA 实际激活本应用窗口后 08 设置图可见，实看确认http://127.0.0.1:8085预填；正常重开/renderer/browser/启动恢复后的持久HttpOnly Cookie 及全部现有下载/网络/超时故障回归仍通过。截图激活是测试动作，未将其当作自动前台行为已验。
 - Windows 外链小批先做行为门禁：真实点 target=\_blank 链接，目标页面主动报告是否仍处于 WebView2/桌面桥，要求独立系统浏览器且当前 document/timeOrigin 不变；不仅检查请求计数，防止把内嵌弹窗算成外部浏览器。现有精确 wry0.57.1 源码的默认新窗口分支会拒绝请求，实际结果待复验后再实现宿主转交。Node 语法/PS AST、独立 HTTP 的目标探针、非法报告拒绝与计数通过；尚未新增外链原生能力。
+
+- Windows 外链红测 41279303786（bf26460）在 WebView2 155.0.4283.62 失败：实际点 target=\_blank 后 35 秒未收到目标页报告；正常连接、持久 Cookie 与重开已通过。精确 wry 默认分支拒绝新窗口，补 Windows 宿主转交候选：只接受原生 IsUserInitiated 为真、长度有界/无控制字符/无账号密码的 HTTP(S) URL，经现有 tauri::Url 解析后调用 Windows ShellExecuteW；不拼 shell 命令、不新开未受管 WebView、不新增 IPC 权限。先退出 COM 回调再投递宿主 UI 线程，失败原生提示不销毁当前页。
+- 仅增加已授权 Windows 平台绑定的 Win32_UI_Shell 特性，不新增应用库；原生源已改，须完整双架构重建而非复用旧包。追加自动 window.open 拒绝控制，真实目标还须报告非 WebView2 且无桌面桥、主文档不变。未知协议/磁力/Blob 等仍未接入本批，跨端文案及能力降级按后续批次，不将 HTTP(S)转交扩为全部动作完成。
+- 外链修复候选本机门禁：lint0、完整 Jest175 套 1134 项 0；typecheck 初次 V8 原生 2147483651 无 TS 诊断，确认无本项目预览后串行重跑 0；完整 format 两次原生 3221225477 均无文件诊断，五个改动的可格式化文件逐一/定向检查 0，完整格式交自动 Linux Checks 补证（windows-external-fix-\*.log 及 retry.json）。NativeSDK/新 Windows Shell 绑定未在本机编译，不提前标原生通过；本次走完整双架构非发布构建，后续共享标签与协议降级仍未完成。

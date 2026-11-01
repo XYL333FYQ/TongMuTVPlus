@@ -34,7 +34,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Check native source formatting
-        run: rustfmt --edition 2021 --check apps/desktop/src-tauri/src/main.rs apps/desktop/src-tauri/src/native_recovery.rs apps/desktop/src-tauri/src/recovery_policy.rs
+        run: rustfmt --edition 2021 --check apps/desktop/src-tauri/src/main.rs apps/desktop/src-tauri/src/native_recovery.rs apps/desktop/src-tauri/src/native_external.rs apps/desktop/src-tauri/src/recovery_policy.rs
       - name: Reject mismatched package audit sources
         shell: pwsh
         run: '& ./apps/desktop/ci/verify-audit-package.test.ps1'

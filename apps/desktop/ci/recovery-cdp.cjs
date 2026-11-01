@@ -13,8 +13,14 @@ async function main() {
     let hangingRequests = 0;
     let brokenRequests = 0;
     let externalRequests = 0;
+    let automaticRequests = 0;
     let externalReport = null;
     const handler = (req, res) => {
+      if (req.url === '/external-auto') {
+        automaticRequests++;
+        res.end('Unexpected automatic popup');
+        return;
+      }
       if (req.url === '/external-report' && req.method === 'POST') {
         let text = '';
         req.on('data', (chunk) => {
@@ -81,6 +87,7 @@ async function main() {
             hangingRequests,
             brokenRequests,
             externalRequests,
+            automaticRequests,
             externalReport,
           })
         );
@@ -229,6 +236,11 @@ async function main() {
         expression: 'window.__tmCiExternalOrigin=performance.timeOrigin',
       });
       await click('#fixture-external');
+    } else if (action === 'popup') {
+      await command('Runtime.evaluate', {
+        expression: 'setTimeout(()=>window.open("/external-auto","_blank"),0)',
+      });
+      await new Promise((resolve) => setTimeout(resolve, 1000));
     } else if (action === 'external-ready') {
       const result = await command('Runtime.evaluate', {
         expression:

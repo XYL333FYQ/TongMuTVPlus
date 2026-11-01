@@ -3,6 +3,8 @@
 
 use tauri::{WebviewUrl, WebviewWindow, WebviewWindowBuilder};
 #[cfg(windows)]
+mod native_external;
+#[cfg(windows)]
 mod native_recovery;
 mod recovery_policy;
 

@@ -188,6 +188,8 @@ try {
     if ($client.Id -eq $firstHostPid) { throw 'Relaunch did not create a new host process' }
     Wait-Check { Cdp 'profile' } 'persistent HttpOnly cookie survives normal relaunch'
     Capture '00-profile-relaunched'
+    if (-not (Cdp 'popup')) { throw 'Automatic popup probe did not execute' }
+    if ((Invoke-RestMethod 'http://127.0.0.1:8085/diagnostics').automaticRequests -ne 0) { throw 'Automatic popup escaped to an external browser' }
     if (-not (Cdp 'external')) { throw 'External link click failed' }
     Wait-Check { $null -ne (Invoke-RestMethod 'http://127.0.0.1:8085/diagnostics').externalReport } 'external link reports from its destination'
     $externalStats = Invoke-RestMethod 'http://127.0.0.1:8085/diagnostics'
