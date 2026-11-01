@@ -24,7 +24,26 @@ jest.mock('@/components/AIChatPanel.lazy', () => ({
 }));
 jest.mock('@/components/TrailerPickerDialog', () => () => null);
 jest.mock('@/components/feedback/ImageViewer', () => () => null);
-jest.mock('@/components/feedback/MobileActionSheet', () => () => null);
+jest.mock(
+  '@/components/feedback/MobileActionSheet',
+  () =>
+    ({
+      isOpen,
+      actions,
+    }: {
+      isOpen: boolean;
+      actions: { id: string; label: string; onClick: () => void }[];
+    }) =>
+      isOpen ? (
+        <>
+          {actions.map((action) => (
+            <button key={action.id} onClick={action.onClick}>
+              {action.label}
+            </button>
+          ))}
+        </>
+      ) : null
+);
 jest.mock('@/components/ImagePlaceholder', () => ({
   ImagePlaceholder: () => null,
 }));
@@ -37,6 +56,32 @@ const mockPush = jest.fn();
 beforeEach(() => {
   mockPush.mockReset();
   window.history.replaceState({}, '', '/');
+  document.documentElement.setAttribute('data-tm-platform', 'web');
+  delete window.TMDesktop;
+  delete window.TMShell;
+});
+
+test('native card action names external playback and keeps the original page', () => {
+  document.documentElement.setAttribute('data-tm-platform', 'app');
+  window.TMShell = { supportsExternalLinks: () => true };
+  const open = jest.spyOn(window, 'open').mockReturnValue(null);
+  render(<VideoCard from='search' source='fixture' id='next' title='下一部' />);
+  fireEvent.contextMenu(screen.getByRole('button', { name: '查看 下一部' }));
+  fireEvent.click(screen.getByRole('button', { name: '在外部播放' }));
+  expect(open).toHaveBeenCalledWith(
+    expect.stringContaining('/play?source=fixture&id=next'),
+    '_blank',
+    'noopener,noreferrer'
+  );
+  expect(mockPush).not.toHaveBeenCalled();
+  open.mockRestore();
+});
+
+test('old desktop card offers a copy action instead of a silently denied window', () => {
+  document.documentElement.setAttribute('data-tm-platform', 'desktop');
+  render(<VideoCard from='search' source='fixture' id='next' title='下一部' />);
+  fireEvent.contextMenu(screen.getByRole('button', { name: '查看 下一部' }));
+  expect(screen.getByRole('button', { name: '复制播放链接' })).toBeTruthy();
 });
 
 test('selecting from the playback page uses client navigation without reloading', () => {

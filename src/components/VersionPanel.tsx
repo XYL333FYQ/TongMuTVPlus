@@ -41,6 +41,8 @@ export const VersionPanel: React.FC<VersionPanelProps> = ({
 
     // Include the selectable fallback field if clipboard access is unavailable.
     const handleKeyDown = (event: KeyboardEvent) => {
+      // A native modal above this panel owns Escape and sequential focus.
+      if (document.activeElement?.closest('dialog[open]')) return;
       if (event.key === 'Escape') {
         event.preventDefault();
         onClose();

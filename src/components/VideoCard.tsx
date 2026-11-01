@@ -58,6 +58,7 @@ import { useLongPress } from '@/hooks/useLongPress';
 import AIChatPanel, { preloadAIChatPanel } from '@/components/AIChatPanel.lazy';
 import AnimeSubscribeModal from '@/components/AnimeSubscribeModal';
 import DetailPanel from '@/components/DetailPanel';
+import { useExternalAction } from '@/components/ExternalLink';
 import ImageViewer from '@/components/feedback/ImageViewer';
 import MobileActionSheet from '@/components/feedback/MobileActionSheet';
 import { ImagePlaceholder } from '@/components/ImagePlaceholder';
@@ -194,6 +195,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
     const [favorited, setFavorited] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [showMobileActions, setShowMobileActions] = useState(false);
+    const externalAction = useExternalAction();
     const [searchFavorited, setSearchFavorited] = useState<boolean | null>(
       null
     ); // 搜索结果的收藏状态
@@ -481,7 +483,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
           'live_',
           ''
         )}&id=${actualId.replace('live_', '')}`;
-        window.open(url, '_blank');
+        externalAction.open(url);
       } else if (
         from === 'douban' ||
         from === 'tmdb' ||
@@ -498,7 +500,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
               : ''
           }`
         );
-        window.open(url, '_blank');
+        externalAction.open(url);
       } else if (actualSource && actualId) {
         const url = appendSpecialSourceParam(
           `/play?source=${actualSource}&id=${actualId}&title=${encodeURIComponent(
@@ -513,10 +515,11 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
             isDuanju ? '&duanju=1' : ''
           }`
         );
-        window.open(url, '_blank');
+        externalAction.open(url);
       }
     }, [
       isUpcoming,
+      externalAction.open,
       origin,
       from,
       actualSource,
@@ -731,7 +734,16 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
         // 新标签页播放
         actions.push({
           id: 'play-new-tab',
-          label: origin === 'live' ? '新标签页观看' : '新标签页播放',
+          label:
+            externalAction.mode === 'copy'
+              ? '复制播放链接'
+              : externalAction.mode === 'external'
+              ? origin === 'live'
+                ? '在外部观看'
+                : '在外部播放'
+              : origin === 'live'
+              ? '新标签页观看'
+              : '新标签页播放',
           icon: <ExternalLink size={20} />,
           onClick: handlePlayInNewTab,
           color: 'default' as const,
@@ -840,7 +852,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
             const url = isBangumi
               ? getBangumiSubjectUrl(actualDoubanId.toString())
               : `https://movie.douban.com/subject/${actualDoubanId.toString()}`;
-            window.open(url, '_blank', 'noopener,noreferrer');
+            externalAction.open(url);
           },
           color: 'default' as const,
         });
@@ -923,6 +935,8 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
       handleToggleFavorite,
       handleDeleteRecord,
       handlePlayInNewTab,
+      externalAction.mode,
+      externalAction.open,
       aiEnabled,
       actualTitle,
       actualSearchType,
@@ -936,6 +950,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
 
     return (
       <>
+        {externalAction.feedback}
         <div
           ref={detailTriggerRef}
           className={`tm-video-card group relative w-full rounded-lg bg-transparent ${
@@ -2080,11 +2095,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
           onClose={() => setShowTrailerPicker(false)}
           onRetry={openTrailerPicker}
           onSelect={(video) => {
-            window.open(
-              `https://www.youtube.com/watch?v=${video.key}`,
-              '_blank',
-              'noopener,noreferrer'
-            );
+            externalAction.open(`https://www.youtube.com/watch?v=${video.key}`);
             setShowTrailerPicker(false);
           }}
         />

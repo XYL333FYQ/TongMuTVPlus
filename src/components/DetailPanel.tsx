@@ -10,6 +10,7 @@ import { getTMDBImageUrl } from '@/lib/tmdb-image-base';
 import { processImageUrl } from '@/lib/utils';
 
 import ProxyImage from '@/components/ProxyImage';
+import { useExternalAction } from '@/components/ExternalLink';
 
 import DetailActions from './detail/DetailActions';
 import DetailActors from './detail/DetailActors';
@@ -129,6 +130,7 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
   returnFocusRef,
 }) => {
   const reducedMotion = useReducedMotionSetting();
+  const externalAction = useExternalAction();
   const [isVisible, setIsVisible] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -1223,9 +1225,9 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
   }
   if (externalUrl) {
     menuItems.push({
-      label: '在新窗口打开',
+      label: externalAction.description,
       action: () => {
-        window.open(externalUrl, '_blank', 'noopener,noreferrer');
+        externalAction.open(externalUrl);
       },
     });
   }
@@ -1243,6 +1245,7 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
   );
   const content = (
     <>
+      {externalAction.feedback}
       <DetailShell
         title={detailData?.title || title}
         returnFocusRef={returnFocusRef}

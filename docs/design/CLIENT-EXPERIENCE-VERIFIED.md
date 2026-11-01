@@ -57,3 +57,22 @@ Windows 主要验证：[41280022405](https://github.com/XYL333FYQ/TongMuTVPlus/a
 | 手动局部刷新     | 909e427 / Checks41297277379、镜像 41297825887；隔离浏览器深浅三宽 12 图，失败只提示一次、旧内容保留、离开实际取消 HTTP、手动日历重新请求并更新缓存 | 测试元数据及模拟壳标记，不代表真实来源永远可用，不是手机帧呈现证明                      |
 
 隔离 909e427 测试容器已关闭；正式网页仍 c28ab11，健康正常。新 APK/EXE 尚未发布。接下来完成 Android 外链和下载、共享返回及跨端动作/表单/安装说明，再进入整分支验收。
+
+## 外链：网页习惯如何转换为客户端动作
+
+```mermaid
+flowchart TD
+  A[用户点仓库、资料或播放外链] --> B{运行环境与实际能力}
+  B -->|普通网页或PWA| C[保留新标签页]
+  B -->|新版Windows或Android| D[用户HTTP/HTTPS新窗口交系统]
+  B -->|旧客户端| E[复制绝对链接]
+  E --> F{复制成功?}
+  F -->|是| G[原有Toast反馈]
+  F -->|否| H[原有模态层显示可选择地址]
+  D --> I[原App文档保留]
+  D -.-> J[自定义协议、磁力和外部播放器<br/>尚待覆盖与明确降级]
+```
+
+Android 实际红测确认原新窗口在 WebView 内替换主页面；e8b24d3 修复后，API34 真实链接交 Chrome 且同原文档返回，API23/24/34 整套恢复流程通过。Chrome 停在首次启动向导，只证明系统交接，未证明目标网页已加载。对应[Android 验证 41302306587](https://github.com/XYL333FYQ/TongMuTVPlus/actions/runs/41302306587)。框架默认行为与入口约束见[Android WebSettings](<https://developer.android.com/reference/android/webkit/WebSettings#setSupportMultipleWindows(boolean)>)及[WebChromeClient](<https://developer.android.com/reference/android/webkit/WebChromeClient#onCreateWindow(android.webkit.WebView,boolean,boolean,android.os.Message)>)。
+
+Windows8cc95c5 已完整重建双架构，并通过 x64 安装/便携、能力声明、实际窗口/外链/下载/故障恢复；[Windows 验证 41302471462](https://github.com/XYL333FYQ/TongMuTVPlus/actions/runs/41302471462)。共享动作及复制弹层的新一批通过 179 套 1171 项单测，真实页面视觉仍待最终候选验收。**以上均未发布新客户端；普通下载、自定义协议、共享返回/刷新及跨端表单/安装说明仍未做完。**

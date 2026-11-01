@@ -16,6 +16,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { PansouLink, PansouSearchResult } from '@/lib/pansou.client';
 
 import Toast, { ToastProps } from '@/components/feedback/Toast';
+import { useExternalAction } from '@/components/ExternalLink';
 import Select from '@/components/ui/Select';
 
 interface PansouSearchProps {
@@ -165,6 +166,7 @@ export default function PansouSearch({
   cloudTypes = [],
 }: PansouSearchProps) {
   const router = useRouter();
+  const externalAction = useExternalAction();
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<PansouSearchResult | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -335,7 +337,7 @@ export default function PansouSearch({
   };
 
   const handleOpenLink = (url: string) => {
-    window.open(url, '_blank', 'noopener,noreferrer');
+    externalAction.open(url);
   };
 
   const handleQuarkTransfer = async (link: PansouLink) => {
@@ -1027,7 +1029,8 @@ export default function PansouSearch({
                         <button
                           onClick={() => handleOpenLink(link.url)}
                           className='p-2 rounded-md hover:bg-line transition-colors min-h-[44px] tm-press'
-                          title='打开链接'
+                          title={externalAction.description}
+                          aria-label={externalAction.description}
                         >
                           <ExternalLink className='h-4 w-4 text-muted' />
                         </button>
@@ -1156,6 +1159,7 @@ export default function PansouSearch({
         </div>
       )}
       {toast && <Toast {...toast} />}
+      {externalAction.feedback}
     </>
   );
 }

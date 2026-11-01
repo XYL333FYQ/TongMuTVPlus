@@ -3,6 +3,14 @@ import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { VersionPanel } from './VersionPanel';
 
 const originalFetch = global.fetch;
+beforeAll(() => {
+  HTMLDialogElement.prototype.showModal = function () {
+    this.setAttribute('open', '');
+  };
+  HTMLDialogElement.prototype.close = function () {
+    this.removeAttribute('open');
+  };
+});
 
 beforeEach(() => {
   global.fetch = jest.fn().mockResolvedValue({ ok: false });
@@ -15,7 +23,7 @@ afterEach(() => {
   delete window.TMShell;
 });
 
-test('old-client manual copy field stays reachable inside the version focus trap', async () => {
+test('manual copy modal owns focus and Escape above the version panel', async () => {
   document.documentElement.setAttribute('data-tm-platform', 'app');
   window.TMShell = {};
   Object.defineProperty(navigator, 'clipboard', {
@@ -26,19 +34,24 @@ test('old-client manual copy field stays reachable inside the version focus trap
     configurable: true,
     value: jest.fn().mockReturnValue(false),
   });
-  render(<VersionPanel isOpen onClose={jest.fn()} />);
+  const onClose = jest.fn();
+  render(<VersionPanel isOpen onClose={onClose} />);
   const link = screen.getByRole('link', {
     name: 'TongMuTV Plus 项目仓库（复制链接）',
   });
   fireEvent.click(link);
   const input = await screen.findByRole('textbox', { name: '可复制的链接' });
-  link.focus();
-  fireEvent.keyDown(link, { key: 'Tab' });
-  expect(document.activeElement).toBe(input);
+  input.focus();
   fireEvent.keyDown(input, { key: 'Tab' });
-  expect(document.activeElement).toBe(
-    screen.getByRole('button', { name: '关闭' })
+  expect(document.activeElement).toBe(input); // jsdom has no native Tab default.
+  fireEvent.keyDown(input, { key: 'Escape' });
+  expect(onClose).not.toHaveBeenCalled();
+  fireEvent(
+    screen.getByRole('dialog', { name: '复制链接' }),
+    new Event('cancel', { cancelable: true })
   );
+  expect(screen.queryByRole('textbox', { name: '可复制的链接' })).toBeNull();
+  expect(onClose).not.toHaveBeenCalled();
 });
 
 describe('project version information', () => {
