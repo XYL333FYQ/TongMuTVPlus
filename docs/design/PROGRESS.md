@@ -1118,3 +1118,6 @@
 - Windows 持久资料小批开始（只改 CI）：通过现有地址表单真实点连接保存服务器，不直接写应用存储键；测试端点只在/seed 设置一次带 Max-Age 的 HttpOnly 哨兵 Cookie，普通页面不补发。先正常关闭客户端及 browser、重新打开确认自动连接与 Cookie 持久化，再检查 renderer 恢复、browser 进程重启后的地址预填/Cookie，以及缺 runtime 重试返回已配置服务器。仅证明已保存的持久 Cookie 与地址，不等同真实账号验证、过期 token 或未保存草稿无损恢复。
 - Node 语法、PS AST、独立 HTTP 的无 Cookie 拒绝/有 Cookie 识别/HttpOnly 及持久属性/普通页面不重设均通过；新实际 Windows 流程待复验。原生生产源码仍 f5812c5，与 6ee457a 成功包相同，不触碰生产登录接口、账户或浏览器用户资料。
 - 持久资料小批静态门禁：lint0、完整 Jest175 套 1134 项 0、完整 format0；typecheck 初次仅原生 3221225477 无 TS 诊断，原日志保留，确认本项目无预览后串行重跑 0（windows-profile-retry.json）。Node 语法/PS AST/独立 cookie 夹具通过，真实配置预填、正常重开、崩溃恢复后的持久性仍待 Windows 复验，不把哨兵 Cookie 扩大为真实账号验证。
+
+- 持久资料 41278440780（f049cac，复验 6ee457a 包）全绿，WebView2 156.0.4314.50：实际地址表单连接、窗口关闭后 browser 退出、重新打开自动连接、一次 HTTP 设置的持久 HttpOnly Cookie 在正常重开/renderer 恢复/browser 进程重启/缺 runtime 重试后均存在，重启设置页预填地址正确。下载/TLS/断连/40 秒超时等全回归通过；不使用真实账号，不将哨兵 Cookie 验证等同 token 永不过期。
+- 视觉证据更正：实看 08-browser-restarted-settings.png 为宿主终端遮挡，不能把 DOM/地址值通过当成该截图已验。仅调整 CI Capture：截图前用 UIA 激活本应用 PID 的可见可用窗口，明示这是测试交互、不证明自动前台策略；PS AST 通过，重新进行实际截图/回归。原生/网页源码、证书与登录策略未改；本批既有四项检查结果保留，截图辅助改动用实际重跑补证。

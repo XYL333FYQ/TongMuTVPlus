@@ -24,6 +24,25 @@ function Clear-CiPolicy([string]$Policy) {
     $script:createdPolicies = @($createdPolicies | Where-Object { $_ -ne $key })
 }
 function Capture([string]$Name) {
+    # A restarted GUI can be behind the runner's terminal even when its page is
+    # ready. Activate only our enabled, onscreen window for visual inspection;
+    # this is a test interaction, not proof of automatic foreground activation.
+    if ($client -and -not $client.HasExited) {
+        try {
+            $owned = [System.Windows.Automation.PropertyCondition]::new(
+                [System.Windows.Automation.AutomationElement]::ProcessIdProperty, [int]$client.Id)
+            $windows = [System.Windows.Automation.AutomationElement]::RootElement.FindAll(
+                [System.Windows.Automation.TreeScope]::Children, $owned)
+            foreach ($window in $windows) {
+                if ($window.Current.IsEnabled -and -not $window.Current.IsOffscreen) {
+                    $window.SetFocus()
+                    Write-Host "Screenshot activation: $Name"
+                    Start-Sleep -Milliseconds 150
+                    break
+                }
+            }
+        } catch { Write-Warning "Screenshot window activation unavailable: $_" }
+    }
     $bounds = [System.Windows.Forms.SystemInformation]::VirtualScreen
     $bitmap = [System.Drawing.Bitmap]::new($bounds.Width, $bounds.Height)
     $graphics = [System.Drawing.Graphics]::FromImage($bitmap)
