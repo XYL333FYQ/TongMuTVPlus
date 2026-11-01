@@ -2,6 +2,18 @@ param([Parameter(Mandatory)][string]$Executable)
 $ErrorActionPreference = 'Stop'
 if ($env:GITHUB_ACTIONS -ne 'true') { throw 'This fault-injection script is only for a disposable GitHub runner.' }
 Add-Type -AssemblyName UIAutomationClient, UIAutomationTypes, System.Windows.Forms, System.Drawing
+Add-Type @'
+using System;
+using System.Runtime.InteropServices;
+public static class ClientWindowProbe {
+    [StructLayout(LayoutKind.Sequential)]
+    public struct Rect { public int Left, Top, Right, Bottom; }
+    [DllImport("user32.dll")] public static extern bool IsIconic(IntPtr window);
+    [DllImport("user32.dll")] public static extern bool IsZoomed(IntPtr window);
+    [DllImport("user32.dll")] public static extern bool ShowWindow(IntPtr window, int command);
+    [DllImport("user32.dll")] public static extern bool GetWindowRect(IntPtr window, out Rect rect);
+}
+'@
 $out = New-Item -ItemType Directory -Force 'recovery-out'
 $driver = Join-Path $PSScriptRoot 'recovery-cdp.cjs'
 $fixture = $null
@@ -188,6 +200,34 @@ try {
     if ($client.Id -eq $firstHostPid) { throw 'Relaunch did not create a new host process' }
     Wait-Check { Cdp 'profile' } 'persistent HttpOnly cookie survives normal relaunch'
     Capture '00-profile-relaunched'
+    if (-not (Cdp 'window-start')) { throw 'Window lifetime probe did not initialize' }
+    $client.Refresh()
+    $windowHandle = $client.MainWindowHandle
+    if ($windowHandle -eq [IntPtr]::Zero) { throw 'Owned main window handle missing' }
+    if (-not (Cdp 'window-maximize')) { throw 'Actual maximize button click failed' }
+    Wait-Check { [ClientWindowProbe]::IsZoomed($windowHandle) } 'native maximize button changes OS window state'
+    Capture '00-window-maximized'
+    if (-not (Cdp 'window-maximize')) { throw 'Actual restore button click failed' }
+    Wait-Check { -not [ClientWindowProbe]::IsZoomed($windowHandle) } 'native restore button returns normal window'
+    if (-not (Cdp 'window-minimize')) { throw 'Actual minimize button click failed' }
+    Wait-Check { [ClientWindowProbe]::IsIconic($windowHandle) } 'native minimize button minimizes the OS window'
+    # Explicit test interaction, equivalent to restoring from the taskbar.
+    [ClientWindowProbe]::ShowWindow($windowHandle, 9) | Out-Null
+    Wait-Check { -not [ClientWindowProbe]::IsIconic($windowHandle) } 'owned window can be restored through Windows'
+    Capture '00-window-restored'
+    if (-not (Cdp 'window-fullscreen')) { throw 'Real F11 input did not dispatch' }
+    Wait-Check { Cdp 'window-fullscreen-on' } 'real F11 activates document fullscreen'
+    Wait-Check {
+        $rect = [ClientWindowProbe+Rect]::new()
+        if (-not [ClientWindowProbe]::GetWindowRect($windowHandle, [ref]$rect)) { return $false }
+        $screen = [System.Windows.Forms.Screen]::FromHandle($windowHandle).Bounds
+        return $rect.Left -le $screen.Left -and $rect.Top -le $screen.Top -and
+            $rect.Right -ge $screen.Right - 2 -and $rect.Bottom -ge $screen.Bottom - 2
+    } 'document fullscreen expands the actual native host to the monitor'
+    Capture '00-window-fullscreen'
+    if (-not (Cdp 'window-fullscreen')) { throw 'F11 exit input did not dispatch' }
+    Wait-Check { Cdp 'window-fullscreen-off' } 'F11 returns from fullscreen'
+    if (-not (Cdp 'window-stable')) { throw 'Window operations lost the current document' }
     if (-not (Cdp 'popup')) { throw 'Automatic popup probe did not execute' }
     if ((Invoke-RestMethod 'http://127.0.0.1:8085/diagnostics').automaticRequests -ne 0) { throw 'Automatic popup escaped to an external browser' }
     if (-not (Cdp 'external')) { throw 'External link click failed' }

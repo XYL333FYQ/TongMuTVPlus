@@ -183,9 +183,9 @@ async function main() {
       socket.send(JSON.stringify({ id, method, params }));
     });
   }
-  async function click(selector) {
+  async function click(selector, root = 'document') {
     const point = await command('Runtime.evaluate', {
-      expression: `(()=>{const r=document.querySelector(${JSON.stringify(
+      expression: `(()=>{const r=${root}.querySelector(${JSON.stringify(
         selector
       )}).getBoundingClientRect();return {x:r.x+r.width/2,y:r.y+r.height/2}})()`,
       returnByValue: true,
@@ -219,6 +219,46 @@ async function main() {
       });
       if (result.result.value !== true)
         throw new Error('Persistent HttpOnly fixture cookie was not retained');
+    } else if (action === 'window-start') {
+      await command('Runtime.evaluate', {
+        expression:
+          'window.__tmCiWindowDocument=document;window.__tmCiWindowOrigin=performance.timeOrigin',
+      });
+    } else if (action === 'window-stable') {
+      const result = await command('Runtime.evaluate', {
+        expression:
+          'window.__tmCiWindowDocument===document && window.__tmCiWindowOrigin===performance.timeOrigin',
+        returnByValue: true,
+      });
+      if (result.result.value !== true)
+        throw new Error('Native window action recreated the document');
+    } else if (action === 'window-maximize' || action === 'window-minimize') {
+      await click(
+        action === 'window-minimize'
+          ? '[data-act=minimize]'
+          : '[data-act=toggle-maximize]',
+        'document.querySelector("tm-shell-controls").shadowRoot'
+      );
+    } else if (action === 'window-fullscreen') {
+      for (const type of ['keyDown', 'keyUp']) {
+        await command('Input.dispatchKeyEvent', {
+          type,
+          key: 'F11',
+          code: 'F11',
+          windowsVirtualKeyCode: 122,
+          nativeVirtualKeyCode: 122,
+        });
+      }
+    } else if (
+      action === 'window-fullscreen-on' ||
+      action === 'window-fullscreen-off'
+    ) {
+      const result = await command('Runtime.evaluate', {
+        expression: 'Boolean(document.fullscreenElement)',
+        returnByValue: true,
+      });
+      if (result.result.value !== (action === 'window-fullscreen-on'))
+        throw new Error('Unexpected actual document fullscreen state');
     } else if (action === 'close') {
       socket.send(
         JSON.stringify({
