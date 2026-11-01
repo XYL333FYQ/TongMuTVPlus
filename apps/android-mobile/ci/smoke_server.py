@@ -2,6 +2,10 @@
 import sys
 import ssl
 import threading
+import io
+import math
+import struct
+import wave
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
 # Failure resources are opt-in so the shared TV smoke keeps its normal fixture.
@@ -9,6 +13,7 @@ RECOVERY_CONTROLS = """<button onclick='TMShell.setSystemBars(false)' style='dis
 <a href='/unavailable' style='display:block;font-size:24px;line-height:56px'>HTTP failure test</a>
 <a href='https://10.0.2.2:8443/tls' style='display:block;font-size:24px;line-height:56px'>TLS failure test</a>
 <a href='/always-unavailable' style='display:block;font-size:24px;line-height:56px'>Back from failure test</a>
+<a href='/native-media-test' style='display:block;font-size:20px;line-height:48px'>Native media permission test</a>
 <a href='/update-test' style='position:fixed;bottom:8px;right:8px;background:white;font-size:16px;line-height:48px'>Update permission test</a>
 <img src='/missing.png' width='1' height='1' alt=''>
 <img src='https://10.0.2.2:8443/missing.png' width='1' height='1' alt=''>""".encode()
@@ -51,10 +56,54 @@ setTimeout(function () {
 }, 3000);
 </script>""".encode()
 
+# No network media dependency: a looped PCM tone only in the isolated emulator.
+def tone_wave():
+    buffer = io.BytesIO()
+    with wave.open(buffer, 'wb') as audio:
+        audio.setnchannels(1)
+        audio.setsampwidth(2)
+        audio.setframerate(8000)
+        audio.writeframes(b''.join(struct.pack('<h', int(500 * math.sin(i * math.pi / 20))) for i in range(16000)))
+    return buffer.getvalue()
+
+
+MEDIA_PAGE = """<!doctype html><meta charset=utf-8><title>Native media permission fixture</title>
+<body style='background:white;color:black;font:24px sans-serif'>
+<button style='min-height:56px;font-size:24px' onclick='audio.play()'>Start controlled media</button>
+<button style='display:block;min-height:56px;font-size:24px' onclick='locked=false'>Allow media pause</button>
+<audio id=audio loop src='/tone.wav'></audio>
+<a style='display:block;line-height:56px' href='/'>Return to recovery fixture</a></body>
+<script>
+var audio=document.getElementById('audio'),locked=true,calls=0;
+function report(event){fetch('/media-report',{method:'POST',body:JSON.stringify({event:event,paused:audio.paused,calls:calls})})}
+window.__tmShellMediaAction=function(action){
+ if(action!=='pause')return false;
+ calls++;
+ report(locked?'blocked':'allowed');
+ if(!locked)audio.pause();
+ return true;
+};
+audio.onplaying=function(){TMShell.setPlaying(true);report('playing')};
+audio.onpause=function(){TMShell.setPlaying(false);report('paused')};
+TMShell.ready();TMShell.setPlaying(false);
+if(navigator.mediaSession){
+ navigator.mediaSession.metadata=new MediaMetadata({title:'Native media permission fixture',artist:'TongMuTV Plus'});
+ navigator.mediaSession.setActionHandler('pause',function(){window.__tmShellMediaAction('pause')});
+}
+</script>""".encode()
+
 
 class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
         print("GET %s UA=%s" % (self.path, self.headers.get("User-Agent")), flush=True)
+        if self.path in ('/tone.wav', '/native-media-test') and getattr(self.server, 'recovery_mode', False):
+            body = tone_wave() if self.path == '/tone.wav' else MEDIA_PAGE
+            self.send_response(200)
+            self.send_header('Content-Type', 'audio/wav' if self.path == '/tone.wav' else 'text/html; charset=utf-8')
+            self.send_header('Content-Length', str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+            return
         if self.path == "/missing.png":
             self.send_error(404)
             return
@@ -82,7 +131,7 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_POST(self):
         length = int(self.headers.get("Content-Length") or 0)
-        label = "IME_REPORT" if self.path == "/ime-report" else "REPORT"
+        label = "MEDIA_REPORT" if self.path == "/media-report" else "IME_REPORT" if self.path == "/ime-report" else "REPORT"
         print("%s %s" % (label, self.rfile.read(length).decode()), flush=True)
         self.send_response(204)
         self.end_headers()

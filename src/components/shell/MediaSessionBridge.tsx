@@ -1,62 +1,147 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
+
+import { usePlaybackSessionSafe } from '@/features/playback/context';
+
+import { useWatchRoomContextSafe } from '@/components/WatchRoomProvider';
 
 /**
- * 锁屏 / 通知栏媒体控制：只读监听页面里的音视频，把当前页面标题交给系统的 MediaSession，
- * 并让系统的播放/暂停按钮作用到正在播放的那个元素。不碰播放器代码。
+ * 锁屏 / 通知栏共用现有播放控制器与房间权限；只观察媒体，不重建播放实例。
  */
 export default function MediaSessionBridge() {
+  const playback = usePlaybackSessionSafe();
+  const room = useWatchRoomContextSafe();
+  const controller = playback?.controller;
+  const title = playback?.metadata.title;
+  const locked = Boolean(
+    playback?.followingRoom && room?.currentRoom && !room.canControl
+  );
+  const selected = useRef<HTMLMediaElement | null>(null);
   useEffect(() => {
-    if (typeof navigator === 'undefined' || !('mediaSession' in navigator)) {
-      return;
-    }
     const session = navigator.mediaSession;
-    let current: HTMLMediaElement | null = null;
-
-    const onPlay = (event: Event) => {
+    let current = selected.current;
+    let disposed = false;
+    const sync = (preferred?: HTMLMediaElement) => {
+      const all = Array.from(
+        document.querySelectorAll<HTMLMediaElement>('video,audio')
+      );
+      const active = (media: HTMLMediaElement | null | undefined) =>
+        Boolean(media && all.includes(media) && !media.paused && !media.ended);
+      current = active(preferred)
+        ? preferred!
+        : active(current)
+        ? current
+        : all.find((media) => active(media)) ||
+          (current && all.includes(current) && !current.ended ? current : null);
+      selected.current = current;
+      if (!session) return;
+      try {
+        session.playbackState = current
+          ? current.paused
+            ? 'paused'
+            : 'playing'
+          : 'none';
+      } catch {
+        /* Partially supported MediaSession. */
+      }
+      try {
+        session.metadata = current
+          ? new MediaMetadata({
+              title:
+                (current === controller?.video && title) ||
+                document.title.split(' · ')[0] ||
+                'TongMuTV Plus',
+              artist: 'TongMuTV Plus',
+            })
+          : null;
+      } catch {
+        /* Controls still work without MediaMetadata. */
+      }
+    };
+    const onMedia = (event: Event) => {
       const media = event.target;
       if (!(media instanceof HTMLMediaElement)) return;
-      current = media;
+      if (event.type === 'play' && media.isConnected) current = media;
+      sync(media);
+    };
+    const action = (name: string) => {
+      if (name !== 'play' && name !== 'pause') return false;
+      if (disposed) return true;
+      sync();
+      if (!current) return true;
+      const target =
+        controller && current === controller.video ? controller : current;
+      if (current === controller?.video && locked) return true;
       try {
-        session.metadata = new MediaMetadata({
-          title: document.title.split(' · ')[0] || 'TongMuTV Plus',
-          artist: 'TongMuTV Plus',
+        if (name === 'play')
+          void Promise.resolve(target.play()).catch(() => {
+            /* The media events report the actual state after a rejected play. */
+          });
+        else target.pause();
+      } catch {
+        /* A rejected gesture or destroyed source must not escape to native. */
+      }
+      return true;
+    };
+    window.__tmShellMediaAction = action;
+    const events = ['play', 'playing', 'pause', 'ended', 'emptied'];
+    events.forEach((event) => document.addEventListener(event, onMedia, true));
+    const hasMedia = (node: Node) =>
+      node instanceof Element &&
+      (node.matches('video,audio') ||
+        Boolean(node.querySelector('video,audio')));
+    const observer = new MutationObserver((records) => {
+      if (
+        records.some((record) =>
+          [
+            ...Array.from(record.addedNodes),
+            ...Array.from(record.removedNodes),
+          ].some(hasMedia)
+        )
+      )
+        sync();
+    });
+    observer.observe(document.documentElement, {
+      childList: true,
+      subtree: true,
+    });
+    const actions = ['play', 'pause'] as const;
+    actions.forEach((name) => {
+      try {
+        session?.setActionHandler(name, () => {
+          action(name);
         });
-        session.playbackState = 'playing';
       } catch {
-        // 个别浏览器不支持 MediaMetadata
+        /* Register supported actions independently. */
       }
-    };
-    const onPause = (event: Event) => {
-      if (event.target === current) {
-        try {
-          session.playbackState = 'paused';
-        } catch {
-          // 忽略
-        }
-      }
-    };
-
-    document.addEventListener('play', onPlay, true);
-    document.addEventListener('pause', onPause, true);
-    try {
-      session.setActionHandler('play', () => void current?.play());
-      session.setActionHandler('pause', () => current?.pause());
-    } catch {
-      // 不支持某个动作时忽略
-    }
+    });
+    sync(controller?.video);
     return () => {
-      document.removeEventListener('play', onPlay, true);
-      document.removeEventListener('pause', onPause, true);
+      disposed = true;
+      events.forEach((event) =>
+        document.removeEventListener(event, onMedia, true)
+      );
+      observer.disconnect();
+      if (window.__tmShellMediaAction === action)
+        delete window.__tmShellMediaAction;
+      actions.forEach((name) => {
+        try {
+          session?.setActionHandler(name, null);
+        } catch {
+          /* Unsupported action. */
+        }
+      });
       try {
-        session.setActionHandler('play', null);
-        session.setActionHandler('pause', null);
+        if (session) {
+          session.playbackState = 'none';
+          session.metadata = null;
+        }
       } catch {
-        // 忽略
+        /* Unsupported state. */
       }
     };
-  }, []);
+  }, [controller, title, locked]);
 
   return null;
 }

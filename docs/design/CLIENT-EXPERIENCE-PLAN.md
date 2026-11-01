@@ -29,7 +29,7 @@
 
 ## 当前进度
 
-最新交接：正式网页固定 c28ab11；Windows 6ee457a 的完整非发布流程 41276238839 全绿：双架构构建、x64 安装/便携启动、默认附件保存与文档保留、HTTP/renderer/browser/缺 runtime 恢复通过，实际运行时 156.0.4314.50。原生生产源码为 f5812c5，受控 CDP 在 155 的失败证据保留，不能据不同版本测试单独归因。另存为窗口分支、Windows 外链/动作、Android 系统媒体/PiP、完整导航与真机诊断仍未完成；未发布新客户端。OriginOS 用户选择稍后测试，不催测、不称底栏根因已解决。
+最新交接：正式网页仍固定 c28ab11；Windows cbee5dd 完整非发布构建 41280022405 和 Checks 41280021242 全绿，真实系统浏览器外链/原文档保留/自动弹窗拒绝及既有恢复下载回归通过。Android 媒体前置小批正在补系统动作权限与生命周期，原生通知/PiP 尚未完成。所有客户端均未发布；手机诊断由用户稍后测试，底栏根因仍未知。
 
 - 1ee0196 的 Linux Checks 41217779457 全部通过，Android APK/Java 门禁编译通过；API24 的输入法、坏海报不接管、浅色 HTTP503 原生界面/重试、深色 TLS 拒绝/设置恢复通过。API34 同样完成上述流程及 renderer KILL/SEGV 后宿主 PID 不变、本地重试通过，但旧脚本因外部 UiAutomation 的 Bad file descriptor/FATAL 判整支失败，不能把整支标绿；已补应用 PID 前后核对与按进程识别的崩溃门禁，4 个 Java/native 宿主/工具/renderer 日志用例验证过滤不放过本应用崩溃。
 - API23 的启动/桥/IME/HTTP 原生恢复通过，主 TLS 阶段停留加载而未得到预期错误文案；其系统 Provider 是 Chrome44，补充 deprecated 主文档错误回调及无 URL 日志码，待再跑确认，不提前称原因已完全定位。API23 壳冒烟不证明旧 Chrome44 能渲染 Next 站点，真实网站还依赖可运行本站的系统 WebView。
@@ -197,3 +197,9 @@
 - Windows 外链红测 41279303786（bf26460）在 WebView2 155.0.4283.62 失败：实际点 target=\_blank 后 35 秒未收到目标页报告；正常连接、持久 Cookie 与重开已通过。精确 wry 默认分支拒绝新窗口，补 Windows 宿主转交候选：只接受原生 IsUserInitiated 为真、长度有界/无控制字符/无账号密码的 HTTP(S) URL，经现有 tauri::Url 解析后调用 Windows ShellExecuteW；不拼 shell 命令、不新开未受管 WebView、不新增 IPC 权限。先退出 COM 回调再投递宿主 UI 线程，失败原生提示不销毁当前页。
 - 仅增加已授权 Windows 平台绑定的 Win32_UI_Shell 特性，不新增应用库；原生源已改，须完整双架构重建而非复用旧包。追加自动 window.open 拒绝控制，真实目标还须报告非 WebView2 且无桌面桥、主文档不变。未知协议/磁力/Blob 等仍未接入本批，跨端文案及能力降级按后续批次，不将 HTTP(S)转交扩为全部动作完成。
 - 外链修复候选本机门禁：lint0、完整 Jest175 套 1134 项 0；typecheck 初次 V8 原生 2147483651 无 TS 诊断，确认无本项目预览后串行重跑 0；完整 format 两次原生 3221225477 均无文件诊断，五个改动的可格式化文件逐一/定向检查 0，完整格式交自动 Linux Checks 补证（windows-external-fix-\*.log 及 retry.json）。NativeSDK/新 Windows Shell 绑定未在本机编译，不提前标原生通过；本次走完整双架构非发布构建，后续共享标签与协议降级仍未完成。
+
+- Windows HTTP(S) 外链闭环：cbee5dd 的完整非发布流程 41280022405 全绿，x64/ARM64 构建、x64 安装/便携启动、真实点击目标报告非 WebView2 且无桌面桥、原 document/timeOrigin 不变、自动弹窗零请求均通过；现有 Cookie/下载/TLS/断连/40 秒超时/renderer/browser/缺 runtime 回归通过。Checks 41280021242 全绿，补足本机原生崩溃未完成的完整格式检查。日志与制品 windows-cbee5dd-external.log、windows-external-cbee5dd 已取回，实看外链返回图为原客户端页；未发布 EXE，不将 HTTP(S) 转交扩大为磁力/Blob/全部动作已验。
+- Android 媒体前置小批：发现既有 MediaSessionBridge 与原生通知暂停直接操作 DOM，可能绕开房间跟随者的页面控制锁。先在不改保护文件的前提下，将桥移入现有播放 Provider 内，读取既有控制器/房间权限；系统动作共用控制器，补挂载已播/媒体移除/多媒体选择、元数据不随浏览页面标题改变、失败 Promise 消化、能力独立降级。新 \_\_tmShellMediaAction 仅增量网页回调，原生通知尚未接入，不宣称全部系统按钮已修好。
+- 本批新 6 项生命周期/权限测试在旧代码实际失败后通过，补暂停后元数据变更及单动作不支持两项，共 2 套 10 项通过。首次标准与备用 Node 测试均原生崩溃、无 Jest 断言；保留日志后直接运行同版本 Jest 成功得到真实红测。当前 typecheck/lint 0，全量测试及格式、生产浏览器/Android 媒体会话/PiP 仍待验证；不把模拟 DOM 当真机锁屏证明。
+- Ruling：先复用 WebView 已有的 Web MediaSession，并用模拟器 dumpsys/实际系统按钮确认其可用性，再判断是否需要原生会话；避免未经证实新增后形成两套通知/控制器。保护播放器与房间 hook 的内部逻辑不变，网页和 Windows 继续使用既有 Web 媒体能力。
+- 媒体前置本机门禁：typecheck/lint 退出 0，完整 Jest176 套 1142 项与房间 27 项通过。完整 format:check 原生 3221225477、无文件格式诊断，日志保留；定向格式与 Linux 全量门禁补证。Android CI 新增本地 PCM 音频及实际通知按钮权限夹具：要求第一次拒绝保持播放、第二次允许才暂停，另取 dumpsys media_session。原生暂停实现尚未改，此为待运行红测，不把夹具内权限标志当真实房间权限证明。

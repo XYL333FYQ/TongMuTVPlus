@@ -177,6 +177,35 @@ PY
       echo 'Renderer callback unavailable below API26; host recovery is not claimed'
     fi
     echo 'PASS: native HTTP/TLS recovery and applicable renderer recovery'
+    if [ "$API_LEVEL" -ge 33 ]; then
+      # Grant only in this isolated emulator, after the earlier real IME test.
+      adb shell pm grant "$PKG" android.permission.POST_NOTIFICATIONS || return 1
+      tap_target text 'Native media permission test' || return 1
+      tap_target text 'Start controlled media' || return 1
+      for _ in $(seq 1 15); do
+        grep -q 'MEDIA_REPORT.*"event":"playing"' "$OUT/server.log" && break
+        sleep 1
+      done
+      grep -q 'MEDIA_REPORT.*"event":"playing"' "$OUT/server.log" || return 1
+      adb shell dumpsys media_session >"$OUT/13-media-sessions.txt"
+      adb shell cmd statusbar expand-notifications || return 1
+      tap_target text '暂停' || return 1
+      sleep 1
+      adb exec-out screencap -p >"$OUT/13-notification-blocked.png"
+      grep -q 'MEDIA_REPORT.*"event":"blocked","paused":false' "$OUT/server.log" || return 1
+      if grep -q 'MEDIA_REPORT.*"event":"paused"' "$OUT/server.log"; then return 1; fi
+      adb shell cmd statusbar collapse || return 1
+      tap_target text 'Allow media pause' || return 1
+      adb shell cmd statusbar expand-notifications || return 1
+      tap_target text '暂停' || return 1
+      sleep 1
+      grep -q 'MEDIA_REPORT.*"event":"allowed","paused":false' "$OUT/server.log" || return 1
+      grep -q 'MEDIA_REPORT.*"event":"paused","paused":true' "$OUT/server.log" || return 1
+      adb exec-out screencap -p >"$OUT/14-notification-paused.png"
+      adb shell cmd statusbar collapse || return 1
+      tap_target text 'Return to recovery fixture' || return 1
+      echo 'PASS: native notification uses page media action; denied action keeps playing, allowed action pauses'
+    fi
     if [ "$API_LEVEL" -ge 26 ]; then
       tap_target text 'Update permission test' || return 1
       wait_target text 'Update missing package test' >/dev/null || return 1

@@ -22,6 +22,8 @@ declare global {
     TMShell?: TMShellApi;
     /** 壳在按下返回键时调用：网页若有可关闭的弹层就关掉并返回 true */
     __tmShellBack?: () => boolean;
+    /** System media actions share the page controller and room permissions. */
+    __tmShellMediaAction?: (action: string) => boolean;
   }
 }
 

@@ -529,7 +529,6 @@ export default async function RootLayout({
           <MobileGestures />
           <KeyboardViewport />
           <PerfProbe />
-          <MediaSessionBridge />
           <ClientUpdatePrompt />
           <TokenRefreshManager />
           <SiteProvider
@@ -540,6 +539,7 @@ export default async function RootLayout({
             <WatchRoomProvider>
               <DownloadProvider>
                 <PlaybackSessionProvider>
+                  <MediaSessionBridge />
                   <StartupCacheCleanup />
                   {/* 顶栏常驻一份，切页不重建（显示与否由页面里的导航标记决定） */}
                   <PersistentHeader />

@@ -32,6 +32,7 @@ describe('MediaSessionBridge', () => {
     expect(handlers.pause).toEqual(expect.any(Function));
 
     const video = document.createElement('video');
+    Object.defineProperty(video, 'paused', { value: false });
     document.body.appendChild(video);
     video.dispatchEvent(new Event('play'));
     expect(session.playbackState).toBe('playing');
