@@ -152,8 +152,13 @@ function saveFixtureBlob(blob,name){
   a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();
   setTimeout(()=>URL.revokeObjectURL(url),60000);
 }
-document.querySelector('#fixture-blob').onclick=()=>saveFixtureBlob(new Blob(['TongMu generated Blob\\0文件\\n']),'tm-client-blob-audit.bin');
-document.querySelector('#fixture-post-blob').onclick=async()=>{
+document.querySelector('#fixture-download').onclick=event=>{window.__tmCiDownloadTrusted=event.isTrusted};
+document.querySelector('#fixture-blob').onclick=event=>{
+  window.__tmCiDownloadTrusted=event.isTrusted;
+  saveFixtureBlob(new Blob(['TongMu generated Blob\\0文件\\n']),'tm-client-blob-audit.bin');
+};
+document.querySelector('#fixture-post-blob').onclick=async event=>{
+  window.__tmCiDownloadTrusted=event.isTrusted;
   try {
     const response=await fetch('/post-file',{method:'POST',credentials:'same-origin'});
     if(!response.ok)throw new Error('Authenticated file request failed');
@@ -296,6 +301,13 @@ document.querySelector('#fixture-post-blob').onclick=async()=>{
           nativeVirtualKeyCode: 122,
         });
       }
+    } else if (action === 'download-mark') {
+      // This session closes before the OS accessibility input starts. No Page /
+      // Network domains or DevTools download handlers are enabled in this probe.
+      await command('Runtime.evaluate', {
+        expression:
+          'window.__tmCiDownloadOrigin = performance.timeOrigin; window.__tmCiDownloadTrusted = false',
+      });
     } else if (
       action === 'window-fullscreen-on' ||
       action === 'window-fullscreen-off'
@@ -408,7 +420,7 @@ document.querySelector('#fixture-post-blob').onclick=async()=>{
       }
       const result = await command('Runtime.evaluate', {
         expression:
-          'document.title === "NativeRecoveryFixture" && performance.timeOrigin === window.__tmCiDownloadOrigin && !window.__tmCiBlobError',
+          'document.title === "NativeRecoveryFixture" && performance.timeOrigin === window.__tmCiDownloadOrigin && !window.__tmCiBlobError && window.__tmCiDownloadTrusted === true',
         returnByValue: true,
       });
       if (result.result.value !== true) {

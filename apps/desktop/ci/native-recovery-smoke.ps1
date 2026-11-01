@@ -192,6 +192,36 @@ function Cdp([string]$Action, [string]$Url = '') {
     & node $driver $Action $Url
     return $LASTEXITCODE -eq 0
 }
+function Start-OwnedWebDownload([string]$Label) {
+    if (-not (Cdp 'download-mark')) { throw 'Could not mark the source document before native input' }
+    $client.Refresh()
+    $owner = [System.Windows.Automation.AutomationElement]::FromHandle($client.MainWindowHandle)
+    $name = [System.Windows.Automation.PropertyCondition]::new(
+        [System.Windows.Automation.AutomationElement]::NameProperty, $Label)
+    $link = [System.Windows.Automation.PropertyCondition]::new(
+        [System.Windows.Automation.AutomationElement]::ControlTypeProperty,
+        [System.Windows.Automation.ControlType]::Hyperlink)
+    $button = [System.Windows.Automation.PropertyCondition]::new(
+        [System.Windows.Automation.AutomationElement]::ControlTypeProperty,
+        [System.Windows.Automation.ControlType]::Button)
+    $types = [System.Windows.Automation.OrCondition]::new($link, $button)
+    $condition = [System.Windows.Automation.AndCondition]::new($name, $types)
+    $script:webDownloadTarget = $null
+    try {
+        Wait-Check {
+            $script:webDownloadTarget = $owner.FindFirst([System.Windows.Automation.TreeScope]::Descendants, $condition)
+            $null -ne $webDownloadTarget
+        } ('OS accessibility download target: ' + $Label)
+    } catch {
+        @($owner.FindAll([System.Windows.Automation.TreeScope]::Descendants,
+            [System.Windows.Automation.Condition]::TrueCondition) | Select-Object -First 200 | ForEach-Object {
+            [pscustomobject]@{ name = $_.Current.Name; id = $_.Current.AutomationId; type = $_.Current.ControlType.ProgrammaticName }
+        }) | ConvertTo-Json | Set-Content (Join-Path $out.FullName 'web-download-accessibility.json')
+        throw
+    }
+    $webDownloadTarget.SetFocus()
+    $webDownloadTarget.GetCurrentPattern([System.Windows.Automation.InvokePattern]::Pattern).Invoke()
+}
 try {
     # Runtime 150+ deliberately ignores WEBVIEW2_* overrides in elevated hosts.
     # Use the documented per-executable machine policy only on this disposable
@@ -283,7 +313,7 @@ try {
     $downloadFixturesStarted = $true
     [void]$ownedDownloadLocations.Add('http-selected')
     [void]$ownedDownloadLocations.Add('http-default')
-    if (-not (Cdp 'download-native' $out.FullName)) { throw 'Download cancellation click failed' }
+    Start-OwnedWebDownload 'Download fixture'
     Wait-Check { Save-OwnedDownload '' -Cancel } 'actual native Save As cancellation'
     Start-Sleep -Seconds 1
     if ((Test-Path -LiteralPath $defaultDownloadFile) -or (Test-Path -LiteralPath $downloadFile)) {
@@ -291,7 +321,7 @@ try {
     }
     if (-not (Cdp 'download-native-ready')) { throw 'Cancel discarded the current document' }
     if ($null -ne (Native-Button '重新打开')) { throw 'Canceled download triggered whole-app recovery' }
-    if (-not (Cdp 'download-native' $out.FullName)) { throw 'Native attachment click failed' }
+    Start-OwnedWebDownload 'Download fixture'
     $script:downloadSaveInvoked = $false
     Wait-Check {
         if ($null -ne (Native-Button '重新打开')) {
@@ -325,7 +355,7 @@ try {
         $blobLabel = if ($blobCase.action -eq 'download-blob') { 'blob' } else { 'post-blob' }
         [void]$ownedDownloadLocations.Add($blobLabel + '-selected')
         [void]$ownedDownloadLocations.Add($blobLabel + '-default')
-        if (-not (Cdp $blobCase.action $out.FullName)) { throw 'Blob download click failed' }
+        Start-OwnedWebDownload $(if ($blobCase.action -eq 'download-blob') { 'Save generated Blob' } else { 'Save authenticated POST response' })
         $script:downloadSaveInvoked = $false
         Wait-Check {
             if ($null -ne (Native-Button '重新打开')) { throw 'Blob download triggered whole-app failure' }
