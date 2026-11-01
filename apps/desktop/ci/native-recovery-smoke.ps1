@@ -141,10 +141,14 @@ function Save-OwnedDownload([string]$Destination, [switch]$Cancel) {
         }
         if (-not $owned) { continue }
         Capture $(if ($Cancel) { '00-native-save-cancel' } else { '00-native-save-dialog' })
+        $buttonType = [System.Windows.Automation.PropertyCondition]::new(
+            [System.Windows.Automation.AutomationElement]::ControlTypeProperty,
+            [System.Windows.Automation.ControlType]::Button)
         if ($Cancel) {
             $cancelId = [System.Windows.Automation.PropertyCondition]::new(
                 [System.Windows.Automation.AutomationElement]::AutomationIdProperty, '2')
-            $cancelButton = $dialog.FindFirst([System.Windows.Automation.TreeScope]::Descendants, $cancelId)
+            $cancelCondition = [System.Windows.Automation.AndCondition]::new($cancelId, $buttonType)
+            $cancelButton = $dialog.FindFirst([System.Windows.Automation.TreeScope]::Descendants, $cancelCondition)
             if (-not $cancelButton) { throw 'Owned Save As dialog has no Cancel action' }
             $cancelButton.GetCurrentPattern([System.Windows.Automation.InvokePattern]::Pattern).Invoke()
             return $true
@@ -155,11 +159,17 @@ function Save-OwnedDownload([string]$Destination, [switch]$Cancel) {
         $edits = $dialog.FindAll([System.Windows.Automation.TreeScope]::Descendants, $editType)
         $filename = @($edits | Where-Object { $_.Current.AutomationId -eq '1001' -or $_.Current.Name -eq 'File name:' })
         if ($filename.Count -ne 1) { throw 'Cannot identify the owned Save As filename field' }
-        $filename[0].GetCurrentPattern([System.Windows.Automation.ValuePattern]::Pattern).SetValue($Destination)
+        $filename[0].SetFocus()
+        $fieldValue = $filename[0].GetCurrentPattern([System.Windows.Automation.ValuePattern]::Pattern)
+        $fieldValue.SetValue($Destination)
+        if ($fieldValue.Current.Value -ne $Destination) { throw 'Native filename field did not retain the selected path' }
         $saveId = [System.Windows.Automation.PropertyCondition]::new(
             [System.Windows.Automation.AutomationElement]::AutomationIdProperty, '1')
-        $save = $dialog.FindFirst([System.Windows.Automation.TreeScope]::Descendants, $saveId)
+        $saveCondition = [System.Windows.Automation.AndCondition]::new($saveId, $buttonType)
+        $save = $dialog.FindFirst([System.Windows.Automation.TreeScope]::Descendants, $saveCondition)
         if (-not $save) { throw 'Owned Save As dialog has no Save action' }
+        $save.SetFocus()
+        Capture '00-native-save-selected-path'
         $save.GetCurrentPattern([System.Windows.Automation.InvokePattern]::Pattern).Invoke()
         return $true
     }
@@ -287,12 +297,10 @@ try {
         if (-not $downloadSaveInvoked) {
             $script:downloadSaveInvoked = Save-OwnedDownload $downloadFile
         }
-        (Test-Path -LiteralPath $downloadFile) -or (Test-Path -LiteralPath $defaultDownloadFile)
-    } 'real WebView attachment file received'
+        Test-Path -LiteralPath $downloadFile
+    } 'real WebView attachment received at the selected path'
     if (-not $downloadSaveInvoked) { throw 'Attachment bypassed the required native Save As choice' }
-    if (-not (Test-Path -LiteralPath $downloadFile)) {
-        Copy-Item -LiteralPath $defaultDownloadFile -Destination $downloadFile
-    }
+    if (Test-Path -LiteralPath $defaultDownloadFile) { throw 'Attachment also saved to an unselected default path' }
     if ([IO.File]::ReadAllText($downloadFile) -ne 'TongMu native download fixture') { throw 'Unexpected downloaded bytes' }
     Start-Sleep -Seconds 3
     Capture '00-attachment-download'
@@ -316,12 +324,10 @@ try {
             if (-not $downloadSaveInvoked) {
                 $script:downloadSaveInvoked = Save-OwnedDownload $blobPath
             }
-            (Test-Path -LiteralPath $blobPath) -or (Test-Path -LiteralPath $defaultBlobPath)
+            Test-Path -LiteralPath $blobPath
         } ('actual saved file: ' + $blobCase.action)
         if (-not $downloadSaveInvoked) { throw 'Blob bypassed the required native Save As choice' }
-        if (-not (Test-Path -LiteralPath $blobPath)) {
-            Copy-Item -LiteralPath $defaultBlobPath -Destination $blobPath
-        }
+        if (Test-Path -LiteralPath $defaultBlobPath) { throw 'Blob also saved to an unselected default path' }
         $expected = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($blobCase.text))
         $actual = [Convert]::ToBase64String([IO.File]::ReadAllBytes($blobPath))
         if ($actual -ne $expected) { throw 'Blob saved bytes differ, including binary/Unicode content' }
