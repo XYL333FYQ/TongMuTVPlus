@@ -1,10 +1,21 @@
 param([Parameter(Mandatory)][string]$Executable)
 $ErrorActionPreference = 'Stop'
+if ($env:GITHUB_ACTIONS -ne 'true') { throw 'This fault-injection script is only for a disposable GitHub runner.' }
 Add-Type -AssemblyName UIAutomationClient, UIAutomationTypes, System.Windows.Forms, System.Drawing
 $out = New-Item -ItemType Directory -Force 'recovery-out'
 $driver = Join-Path $PSScriptRoot 'recovery-cdp.cjs'
 $fixture = $null
 $client = $null
+$createdPolicies = @()
+$exeName = Split-Path -Leaf $Executable
+function Set-CiPolicy([string]$Policy, [string]$Value) {
+    $key = "HKLM:\SOFTWARE\Policies\Microsoft\Edge\WebView2\$Policy"
+    New-Item -Path $key -Force | Out-Null
+    $existing = Get-ItemProperty -LiteralPath $key -ErrorAction Stop
+    if ($null -ne $existing.PSObject.Properties[$exeName]) { throw "Existing test-app policy must not be overwritten: $Policy" }
+    New-ItemProperty -LiteralPath $key -Name $exeName -Value $Value -PropertyType String | Out-Null
+    $script:createdPolicies += $key
+}
 function Capture([string]$Name) {
     $bounds = [System.Windows.Forms.SystemInformation]::VirtualScreen
     $bitmap = [System.Drawing.Bitmap]::new($bounds.Width, $bounds.Height)
@@ -61,13 +72,24 @@ function Cdp([string]$Action, [string]$Url = '') {
     return $LASTEXITCODE -eq 0
 }
 try {
+    # Runtime 150+ deliberately ignores WEBVIEW2_* overrides in elevated hosts.
+    # Use the documented per-executable machine policy only on this disposable
+    # runner, and remove each value in finally. No release-app debug switches.
+    # https://github.com/MicrosoftEdge/WebView2Feedback/issues/5645
+    $principal = [Security.Principal.WindowsPrincipal]::new([Security.Principal.WindowsIdentity]::GetCurrent())
+    Write-Host "Elevated runner: $($principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator))"
+    Set-CiPolicy 'AdditionalBrowserArguments' '--remote-debugging-port=9222'
     $fixture = Start-Process node -ArgumentList @($driver, 'serve') -WindowStyle Hidden -PassThru
-    $env:WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS = '--remote-debugging-port=9222'
     $client = Start-Process -FilePath (Resolve-Path $Executable) -PassThru
     Wait-Check {
         try { $null = Invoke-RestMethod 'http://127.0.0.1:9222/json/list'; return $true }
         catch { return $false }
     } 'client DevTools reachable'
+    $ownedBrowser = Get-CimInstance Win32_Process -Filter "Name = 'msedgewebview2.exe'" |
+        Where-Object { $_.ParentProcessId -eq $client.Id -and $_.CommandLine -notmatch '--type=' }
+    if ($ownedBrowser.ExecutablePath) {
+        Write-Host "WebView2 version: $((Get-Item -LiteralPath $ownedBrowser.ExecutablePath).VersionInfo.FileVersion)"
+    }
     if (-not (Cdp 'navigate' 'http://127.0.0.1:8085/unavailable')) { throw 'Navigate failed' }
     Wait-Check { $null -ne (Native-Button '重新打开') } 'HTTP 503 native recovery'
     Capture '01-http-native'
@@ -117,7 +139,7 @@ try {
     # Official WebView2 environment override simulates unavailable runtime
     # without uninstalling or changing the runner's installed browser engine:
     # https://learn.microsoft.com/en-us/microsoft-edge/webview2/reference/win32/webview2-idl
-    $env:WEBVIEW2_BROWSER_EXECUTABLE_FOLDER = Join-Path $env:RUNNER_TEMP 'tm-deliberately-missing-runtime'
+    Set-CiPolicy 'BrowserExecutableFolder' (Join-Path $env:RUNNER_TEMP 'tm-deliberately-missing-runtime')
     $client = Start-Process -FilePath $exePath -PassThru
     $cancelCondition = [System.Windows.Automation.PropertyCondition]::new(
         [System.Windows.Automation.AutomationElement]::AutomationIdProperty, '2')
@@ -129,9 +151,10 @@ try {
     'HTTP retry, actual renderer crash, same host PID, network settings, browser restart and runtime startup fallback passed.' |
         Set-Content (Join-Path $out.FullName 'result.txt')
 } finally {
-    Capture 'final'
-    if ($client -and -not $client.HasExited) { Stop-Process -Id $client.Id -Force }
-    if ($fixture -and -not $fixture.HasExited) { Stop-Process -Id $fixture.Id -Force }
-    Remove-Item Env:WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS -ErrorAction SilentlyContinue
-    Remove-Item Env:WEBVIEW2_BROWSER_EXECUTABLE_FOLDER -ErrorAction SilentlyContinue
+    try { Capture 'final' } catch { Write-Warning "Final screenshot unavailable: $_" }
+    if ($client -and -not $client.HasExited) { Stop-Process -Id $client.Id -Force -ErrorAction SilentlyContinue }
+    if ($fixture -and -not $fixture.HasExited) { Stop-Process -Id $fixture.Id -Force -ErrorAction SilentlyContinue }
+    foreach ($key in $createdPolicies) {
+        Remove-ItemProperty -LiteralPath $key -Name $exeName -ErrorAction Continue
+    }
 }

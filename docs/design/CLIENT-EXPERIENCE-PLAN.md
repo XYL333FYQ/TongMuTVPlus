@@ -150,3 +150,5 @@
 - Windows 新故障门禁候选 a847ad9：本机 typecheck/lint/完整 Jest175 套 1134 项/完整 format 均退出 0；Node 脚本语法及 PowerShell AST 通过。CI 41272382962 在 Rust 解析阶段抓到新启动兜底的非 Windows return 语句误用逗号，已改分号（d6ea701），不归类环境崩溃；41272436931 纯 Rust 门禁已绿、两架构编译进行中，未声称实际恢复通过。
 - 已取回 d6ea701 的实际 rustfmt 输出并确认与源码无差异，后续工作流改为 rustfmt --check，移除临时自动改源码/输出格式候选步骤。增加测试脚本中的浏览器主进程精准终止与重启到设置、独立缺失 runtime 环境覆盖启动兜底场景；仅作用于隔离 runner 自己启动的进程，不卸载系统组件。扩展脚本和新 check 门禁还未在 runner 执行。
 - c28ab11 的导航六图、实际拖动图及 Worker 结果已完整取回 output/client-experience/vps-c28ab11，实看 390 浅色与 1280 深色；同一节点/timeOrigin/top、haptics8、pageerror 空。当前公开 /health 再核对 status=ok、buildSha=c28ab11；不将受控浏览器等同 OriginOS 帧呈现。
+
+- Windows d6ea701 的 41272436931 双架构编译、安装/便携启动全部成功；实际恢复门禁在第一次“client DevTools reachable”35 秒超时，截图为正常本地地址页，因此尚未触发 HTTP/renderer 故障，不能归因为恢复失败。微软官方 WebView2Feedback#5645 说明 150+高权限宿主忽略环境变量/HKCU 调试覆盖；CI 改用仅本测试 EXE 的 HKLM 策略，限定 GITHUB_ACTIONS 环境，拒绝覆盖已有值并 finally 删除自建值，记录实际 runtime 版本/权限。生产客户端无调试参数改动，不降级运行时，不移除失败门禁。新脚本待再跑。
