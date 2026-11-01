@@ -282,6 +282,24 @@ PY
       adb shell input keyevent 4
       tap_target text 'Return to recovery fixture' || return 1
       echo 'PASS: actual Android PiP, same decoded video/document, system pause/resume and fullscreen return'
+      tap_target text 'Native external test' || return 1
+      wait_target text 'Open external anchor' >/dev/null || return 1
+      sleep 2
+      python3 "$(dirname "$0")/check_external.py" "$OUT/server.log" automatic || return 1
+      for kind in anchor script; do
+        tap_target text "Open external $kind" || return 1
+        sleep 2
+        adb shell dumpsys activity activities >"$OUT/18-external-$kind-activities.txt"
+        adb exec-out screencap -p >"$OUT/18-external-$kind.png"
+        python3 "$(dirname "$0")/check_external.py" "$OUT/server.log" "$kind" "$OUT/18-external-$kind-activities.txt" || return 1
+        adb shell am start -n "$PKG/.MainActivity" >/dev/null || return 1
+        wait_target text 'Open external anchor' >/dev/null || return 1
+        sleep 1
+        python3 "$(dirname "$0")/check_external.py" "$OUT/server.log" automatic || return 1
+      done
+      adb exec-out screencap -p >"$OUT/18-external-returned.png"
+      tap_target text 'Return to recovery fixture' || return 1
+      echo 'PASS: actual anchor/window.open handoff, source retained and automatic popup blocked'
     fi
     if [ "$API_LEVEL" -ge 26 ]; then
       tap_target text 'Update permission test' || return 1

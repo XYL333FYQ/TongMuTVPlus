@@ -33,6 +33,7 @@ RECOVERY_CONTROLS = """<button onclick='TMShell.setSystemBars(false)' style='dis
 <a href='/native-media-test' style='display:block;font-size:20px;line-height:48px'>Native media permission test</a>
 <a href='/native-session-test' style='display:block;font-size:20px;line-height:48px'>Native session test</a>
 <a href='/native-pip-test' style='display:block;font-size:20px;line-height:48px'>Native PiP test</a>
+<a href='/native-external-test' style='position:fixed;bottom:8px;left:4px;background:white;font-size:14px;line-height:48px'>Native external test</a>
 <a href='/update-test' style='position:fixed;bottom:8px;right:8px;background:white;font-size:16px;line-height:48px'>Update permission test</a>
 <img src='/missing.png' width='1' height='1' alt=''>
 <img src='https://10.0.2.2:8443/missing.png' width='1' height='1' alt=''>""".encode()
@@ -155,9 +156,36 @@ TMShell.ready();publish();
 </script>""".encode()
 
 
+EXTERNAL_PAGE = """<!doctype html><meta charset=utf-8><title>External link fixture</title>
+<body style='background:white;color:black;font:24px sans-serif'>
+<a href='/external-destination?anchor' target='_blank' rel='noopener noreferrer' style='display:block;line-height:56px'>Open external anchor</a>
+<button style='display:block;min-height:56px;font-size:24px' onclick="window.open('/external-destination?script','_blank','noopener,noreferrer')">Open external script</button>
+<a href='/' style='display:block;line-height:56px'>Return to recovery fixture</a>
+<script>
+var originalOrigin=performance.timeOrigin;
+function report(){fetch('/external-report',{method:'POST',body:JSON.stringify({event:'source',origin:originalOrigin,path:location.pathname,bridge:!!window.TMShell})})}
+TMShell.ready();TMShell.setPlaying(false);report();setInterval(report,500);
+setTimeout(function(){window.open('/external-destination?automatic','_blank')},1000);
+</script></body>""".encode()
+
+EXTERNAL_DESTINATION = """<!doctype html><meta charset=utf-8><title>External destination</title>
+<body>External destination<script>
+fetch('/external-report',{method:'POST',body:JSON.stringify({event:'destination',bridge:!!window.TMShell,query:location.search})});
+if(window.TMShell)TMShell.ready();
+</script></body>""".encode()
+
+
 class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
         print("GET %s UA=%s" % (self.path, self.headers.get("User-Agent")), flush=True)
+        if self.path == '/native-external-test' or self.path.startswith('/external-destination?'):
+            body = EXTERNAL_PAGE if self.path == '/native-external-test' else EXTERNAL_DESTINATION
+            self.send_response(200)
+            self.send_header('Content-Type', 'text/html; charset=utf-8')
+            self.send_header('Content-Length', str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+            return
         if self.path == '/pip-clip.webm' and getattr(self.server, 'video_path', None):
             with open(self.server.video_path, 'rb') as video:
                 body = video.read()
@@ -202,7 +230,7 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_POST(self):
         length = int(self.headers.get("Content-Length") or 0)
-        label = "MEDIA_REPORT" if self.path == "/media-report" else "IME_REPORT" if self.path == "/ime-report" else "REPORT"
+        label = "EXTERNAL_REPORT" if self.path == "/external-report" else "MEDIA_REPORT" if self.path == "/media-report" else "IME_REPORT" if self.path == "/ime-report" else "REPORT"
         print("%s %s" % (label, self.rfile.read(length).decode()), flush=True)
         self.send_response(204)
         self.end_headers()
