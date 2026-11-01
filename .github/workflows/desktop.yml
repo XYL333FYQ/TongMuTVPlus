@@ -97,7 +97,7 @@ jobs:
         working-directory: apps/desktop
         env:
           TM_BUILD: ${{ needs.stamp.outputs.build }}
-        run: npx tauri build --target ${{ matrix.target }} --bundles nsis
+        run: npx tauri build --target ${{ matrix.target }} --bundles nsis -- --locked
 
       - name: Preserve exact native dependency resolution
         if: always()
@@ -212,9 +212,36 @@ jobs:
           if ($wv -eq 0) { throw "没有 WebView2 子进程" }
           Stop-Process -Id $proc.Id -Force
 
+  native-recovery-smoke:
+    name: Native failure and recovery smoke test (x64)
+    needs: build
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/download-artifact@v4
+        with:
+          name: tongmutvplus-windows-x64
+          path: dl
+      - name: Exercise real WebView2 failures through native controls
+        shell: pwsh
+        run: |
+          Expand-Archive dl/TongMuTV-Plus-Windows-x64-Portable.zip -DestinationPath portable
+          & ./apps/desktop/ci/native-recovery-smoke.ps1 -Executable 'portable/TongMuTV Plus.exe'
+      - name: Preserve native recovery evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: native-recovery-windows
+          path: recovery-out
+          if-no-files-found: ignore
+          retention-days: 14
+
   release:
     name: Publish to Releases
-    needs: [stamp, build, smoke, portable-smoke]
+    needs: [stamp, build, smoke, portable-smoke, native-recovery-smoke]
     # 推送触发时也走发布，但必须经过 release 环境里的人工批准；手动触发看 publish 开关
     if: ${{ github.event_name == 'push' || inputs.publish }}
     environment: release

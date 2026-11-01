@@ -1074,3 +1074,8 @@
 - Windows 红测 41225926301 按预期因缺 RecoveryGate/Failure 失败（runner rustc1.99.1 已运行），两架构构建/安装/发布均被前置门禁跳过。现补纯 Rust 去重/升级状态，并接 Win32 宿主 TaskDialog、恢复系统标题栏、WebView2 主 HTTP/网络/renderer/browser 事件；GPU/子框架保留引擎自行恢复，证书不放行。对 COM 回调先返回再投递原生弹窗，单个 watchdog 监视 40 秒连接，不逐导航创建等待线程。
 - Ruling：直接绑定现有成功构建的 tauri2.12.5 与 webview2-com0.39.1/windows0.62；只增加用户已批准的 Windows 平台绑定。Tauri 默认 manifest 已有 Common Controls v6。故障仅 renderer 时原生 Reload，browser 退出时走宿主 request_restart，服务器设置用一次性进程环境标志回到现有本地地址页，不新建持久存储键。关闭/退出是显式用户动作。
 - Windows 当前仅候选，未编译/未实测，初始化失败兜底、合法下载/外链分流和完整原生故障冒烟仍待做；不声称 STATUS_ACCESS_VIOLATION 根因已修复。CI 临时输出 rustfmt 候选和 Cargo.lock 供审阅，取回后须将格式步骤改成 check、固定真实依赖锁，不能留下自动格式冒充源码格式已过。
+
+- 网页第一增量已上线：c28ab11 双架构镜像、实际拖动后的下一次点按、同底栏/文档位置、三宽深浅、受控 Worker 均通过后，真实库副本再次验证新旧版本共享数据且 integrity=ok。正式服务固定 digest d91848e7…，health/OCI/编译 revision 均为 c28ab11；旧 132ca5f 与新两代 static 按 hash 保留，Nginx 仅静态资源 immutable。完整备份 backups/client-experience-20261031T180620Z，回退保留新 static、不覆盖后续用户数据库。正式服务已切换，不再沿用此前“尚未部署”状态；未发布新 APK/EXE。
+- 用户选择稍后进行 OriginOS 真机诊断；不反复催测，继续独立原生工作。网页导航工作量与吞点按问题已修，但整条底栏卡着上移的手机根因仍未证明，不标为已解决。
+- Windows 92f2aac 的 41226704056 通过纯 Rust 4 项、x64/ARM64 构建、安装及便携启动，release 跳过。取回两架构完全一致的 Cargo.lock（SHA256 217188da882f4c2942be85dd20953e4bc5843ed27743d4068e508755115a4fd3）纳入源码并启用 --locked；取回实际 rustfmt 输出，新增无 WebView 的启动失败原生兜底。该新增兜底尚未编译/实测，不把旧候选绿灯算作新补丁验收。
+- 第五批实际故障门禁实施：CI 专用 loopback HTTP 503→ 重试、CDP 实际 Page.crash→ 同宿主 PID 恢复、连接失败 → 原生按钮打开本地设置；以 Windows UIAutomation 操作真实宿主按钮、保存截图，不能用页面 JS 弹窗代替原生恢复验证。新门禁加入 release 的 needs，尚待 Windows runner 结果。无本地 Rust 安装、无应用依赖新增、无正式数据写入；浏览器主进程退出、启动失败真实冒烟、合法下载与外链分流仍待完成。

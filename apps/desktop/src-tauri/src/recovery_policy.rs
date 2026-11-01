@@ -18,7 +18,10 @@ pub struct RecoveryGate {
 
 impl RecoveryGate {
     pub fn offer(&mut self, failure: Failure) -> bool {
-        if matches!(failure, Failure::GpuExit | Failure::SubframeExit | Failure::UtilityExit) {
+        if matches!(
+            failure,
+            Failure::GpuExit | Failure::SubframeExit | Failure::UtilityExit
+        ) {
             return false;
         }
         if matches!(failure, Failure::BrowserExit) {
@@ -31,8 +34,12 @@ impl RecoveryGate {
         true
     }
 
-    pub fn restart_required(&self) -> bool { self.restart }
-    pub fn has_failure(&self) -> bool { self.handled }
+    pub fn restart_required(&self) -> bool {
+        self.restart
+    }
+    pub fn has_failure(&self) -> bool {
+        self.handled
+    }
 
     pub fn retry(&mut self) {
         self.handled = false;
@@ -46,7 +53,11 @@ mod tests {
     #[test]
     fn automatic_gpu_and_subframe_recovery_does_not_replace_the_application() {
         let mut gate = RecoveryGate::default();
-        for cause in [Failure::GpuExit, Failure::SubframeExit, Failure::UtilityExit] {
+        for cause in [
+            Failure::GpuExit,
+            Failure::SubframeExit,
+            Failure::UtilityExit,
+        ] {
             assert!(!gate.offer(cause));
         }
         assert!(!gate.restart_required());

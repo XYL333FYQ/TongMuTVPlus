@@ -2,9 +2,9 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 use tauri::{WebviewUrl, WebviewWindow, WebviewWindowBuilder};
-mod recovery_policy;
 #[cfg(windows)]
 mod native_recovery;
+mod recovery_policy;
 
 // 本地"填写服务器地址"页的地址：Windows 上 Tauri 2 用 http://tauri.localhost，其他平台用 tauri://localhost
 #[cfg(windows)]
@@ -50,7 +50,9 @@ fn main() {
             let initial_url = if std::env::var_os(native_recovery::SETTINGS_ONCE).is_some() {
                 std::env::remove_var(native_recovery::SETTINGS_ONCE);
                 WebviewUrl::External(format!("{}?change=1", HOME_URL).parse()?)
-            } else { WebviewUrl::App("index.html".into()) };
+            } else {
+                WebviewUrl::App("index.html".into())
+            };
             #[cfg(not(windows))]
             let initial_url = WebviewUrl::App("index.html".into());
             let script = INIT_SCRIPT
@@ -66,7 +68,20 @@ fn main() {
                 .decorations(false)
                 .shadow(true)
                 .initialization_script(&script)
-                .build()?;
+                .build();
+            let window = match window {
+                Ok(window) => window,
+                Err(error) => {
+                    #[cfg(windows)]
+                    {
+                        let _ = error;
+                        native_recovery::startup_failure(app.handle());
+                        return Ok(());
+                    }
+                    #[cfg(not(windows))]
+                    return Err(error.into()),
+                }
+            };
             #[cfg(windows)]
             native_recovery::install(&window)?;
             Ok(())

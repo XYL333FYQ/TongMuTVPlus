@@ -104,7 +104,6 @@ apps/android-tv/build/
 /apps/desktop/src-tauri/target/
 /apps/desktop/src-tauri/icons/
 /apps/desktop/src-tauri/gen/
-/apps/desktop/src-tauri/Cargo.lock
 /apps/android-mobile/.gradle/
 /apps/android-mobile/build/
 /apps/android-mobile/app/build/
