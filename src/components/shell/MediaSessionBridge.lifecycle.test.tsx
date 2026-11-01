@@ -44,6 +44,7 @@ afterEach(() => {
   cleanup();
   document.querySelectorAll('video,audio').forEach((node) => node.remove());
   delete (navigator as unknown as { mediaSession?: unknown }).mediaSession;
+  delete window.TMShell;
 });
 function media(playing = true) {
   const video = document.createElement('video');
@@ -182,4 +183,66 @@ test('an unsupported action does not prevent other supported controls from regis
   render(<MediaSessionBridge />);
   handlers.pause?.();
   expect(video.pause).toHaveBeenCalledTimes(1);
+});
+
+test('a capable Android host owns the media session and receives actual paused/removed snapshots', async () => {
+  const publish = jest.fn();
+  Object.defineProperty(window, 'TMShell', {
+    configurable: true,
+    value: { setMediaState: publish },
+  });
+  const video = media();
+  const view = render(<MediaSessionBridge />);
+  expect(session.setActionHandler).not.toHaveBeenCalled();
+  expect(
+    JSON.parse(publish.mock.calls[publish.mock.calls.length - 1][0])
+  ).toMatchObject({ v: 1, active: true, playing: true, canControl: true });
+  Object.defineProperty(video, 'paused', { value: true });
+  act(() => {
+    video.dispatchEvent(new Event('pause'));
+  });
+  expect(
+    JSON.parse(publish.mock.calls[publish.mock.calls.length - 1][0])
+  ).toMatchObject({ active: true, playing: false });
+  await act(async () => {
+    video.remove();
+  });
+  expect(
+    JSON.parse(publish.mock.calls[publish.mock.calls.length - 1][0])
+  ).toMatchObject({ active: false, playing: false });
+  view.unmount();
+});
+
+test('native metadata and room permission update without clearing the active session between renders', () => {
+  const publish = jest.fn();
+  Object.defineProperty(window, 'TMShell', {
+    configurable: true,
+    value: { setMediaState: publish },
+  });
+  const video = media();
+  playback = {
+    controller: { video },
+    followingRoom: true,
+    metadata: { title: 'Film A' },
+  };
+  room = { currentRoom: { id: 'room' }, canControl: false };
+  const view = render(<MediaSessionBridge />);
+  expect(
+    JSON.parse(publish.mock.calls[publish.mock.calls.length - 1][0])
+  ).toMatchObject({ title: 'Film A', canControl: false });
+  publish.mockClear();
+  room = { ...room, canControl: true };
+  playback = { ...playback, metadata: { title: 'Film B' } };
+  view.rerender(<MediaSessionBridge />);
+  expect(publish.mock.calls.every(([raw]) => JSON.parse(raw).active)).toBe(
+    true
+  );
+  expect(
+    JSON.parse(publish.mock.calls[publish.mock.calls.length - 1][0])
+  ).toMatchObject({ title: 'Film B', canControl: true });
+  publish.mockClear();
+  view.unmount();
+  expect(
+    JSON.parse(publish.mock.calls[publish.mock.calls.length - 1][0])
+  ).toMatchObject({ active: false });
 });

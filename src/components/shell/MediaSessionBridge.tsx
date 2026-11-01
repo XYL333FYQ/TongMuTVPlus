@@ -2,6 +2,8 @@
 
 import { useEffect, useRef } from 'react';
 
+import { getShell } from '@/lib/shell-bridge';
+
 import { usePlaybackSessionSafe } from '@/features/playback/context';
 
 import { useWatchRoomContextSafe } from '@/components/WatchRoomProvider';
@@ -19,7 +21,28 @@ export default function MediaSessionBridge() {
   );
   const selected = useRef<HTMLMediaElement | null>(null);
   useEffect(() => {
-    const session = navigator.mediaSession;
+    const shell = getShell();
+    return () => {
+      try {
+        shell?.setMediaState?.(
+          JSON.stringify({
+            v: 1,
+            active: false,
+            playing: false,
+            canControl: false,
+            title: '',
+          })
+        );
+      } catch {
+        /* A destroyed host needs no further state. */
+      }
+    };
+  }, []);
+  useEffect(() => {
+    const shell = getShell();
+    // A capable host owns one native session. Old hosts and browsers retain Web MediaSession.
+    const session = shell?.setMediaState ? undefined : navigator.mediaSession;
+    let lastSnapshot = '';
     let current = selected.current;
     let disposed = false;
     const sync = (preferred?: HTMLMediaElement) => {
@@ -35,6 +58,29 @@ export default function MediaSessionBridge() {
         : all.find((media) => active(media)) ||
           (current && all.includes(current) && !current.ended ? current : null);
       selected.current = current;
+      const mediaTitle =
+        (current === controller?.video && title) ||
+        document.title.split(' · ')[0] ||
+        'TongMuTV Plus';
+      if (shell?.setMediaState) {
+        const snapshot = JSON.stringify({
+          v: 1,
+          active: Boolean(current),
+          playing: Boolean(current && !current.paused && !current.ended),
+          canControl: Boolean(
+            current && !(current === controller?.video && locked)
+          ),
+          title: current ? Array.from(mediaTitle).slice(0, 160).join('') : '',
+        });
+        if (snapshot !== lastSnapshot) {
+          try {
+            shell.setMediaState(snapshot);
+            lastSnapshot = snapshot;
+          } catch {
+            /* Unavailable native state must not interrupt page playback. */
+          }
+        }
+      }
       if (!session) return;
       try {
         session.playbackState = current
@@ -48,10 +94,7 @@ export default function MediaSessionBridge() {
       try {
         session.metadata = current
           ? new MediaMetadata({
-              title:
-                (current === controller?.video && title) ||
-                document.title.split(' · ')[0] ||
-                'TongMuTV Plus',
+              title: mediaTitle,
               artist: 'TongMuTV Plus',
             })
           : null;

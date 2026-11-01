@@ -87,6 +87,9 @@ public class MainActivity extends Activity {
     private boolean barsSynced = false;
     private boolean revealed;
     private boolean playing;
+    private boolean mediaSnapshotMode;
+    private boolean mediaServiceStarted;
+    private MediaState nativeMedia;
     private WindowInsets lastInsets;
     private BroadcastReceiver pauseReceiver;
     private BroadcastReceiver updateReceiver;
@@ -653,6 +656,7 @@ public class MainActivity extends Activity {
         super.onResume();
         resumed = true;
         if (webView != null) webView.onResume();
+        if (mediaSnapshotMode && nativeMedia != null && nativeMedia.active) dispatchPlayback(nativeMedia);
         if (updateRequest.awaitingPermission()) {
             boolean granted = Build.VERSION.SDK_INT < Build.VERSION_CODES.O || getPackageManager().canRequestPackageInstalls();
             String pending = updateRequest.resumePermission(granted);
@@ -740,7 +744,25 @@ public class MainActivity extends Activity {
 
         @JavascriptInterface
         public void setPlaying(boolean value) {
-            runOnUiThread(() -> { if (current() && !errorShown) updatePlaying(value); });
+            runOnUiThread(() -> { if (current() && !errorShown && !mediaSnapshotMode) updatePlaying(value); });
+        }
+
+        /** Incremental v1 snapshot; legacy setPlaying remains available to old pages. */
+        @JavascriptInterface
+        public void setMediaState(String raw) {
+            if (raw == null || raw.length() > 4096) return;
+            runOnUiThread(() -> {
+                if (!current() || errorShown) return;
+                try {
+                    org.json.JSONObject value = new org.json.JSONObject(raw);
+                    if (value.optInt("v") != 1 || !(value.opt("active") instanceof Boolean)
+                            || !(value.opt("playing") instanceof Boolean) || !(value.opt("canControl") instanceof Boolean)) return;
+                    nativeMedia = new MediaState(value.getBoolean("active"), value.getBoolean("playing"),
+                            value.getBoolean("canControl"), value.optString("title", ""));
+                    mediaSnapshotMode = true;
+                    dispatchPlayback(nativeMedia);
+                } catch (org.json.JSONException ignored) { /* Invalid snapshots do not replace current state. */ }
+            });
         }
 
         /** 网页点「立即更新」：下载新安装包并调起系统安装界面 */
@@ -878,26 +900,38 @@ public class MainActivity extends Activity {
 
     /** 网页开始/停止播放：播放期间起前台服务保活，切后台不被系统杀掉。 */
     private void updatePlaying(boolean value) {
-        if (playing == value) return;
-        playing = value;
-        Intent service = new Intent(this, PlaybackService.class);
+        if (playing == value && !mediaSnapshotMode) return;
+        mediaSnapshotMode = false;
+        nativeMedia = null;
+        dispatchPlayback(new MediaState(value, value, true, null));
+    }
+
+    private void dispatchPlayback(MediaState value) {
+        playing = value.playing;
+        Intent service = new Intent(this, PlaybackService.class)
+                .putExtra("active", value.active).putExtra("playing", value.playing)
+                .putExtra("canControl", value.canControl).putExtra("title", value.title);
         try {
-            if (value) {
-                if (Build.VERSION.SDK_INT >= 33
+            if (value.active) {
+                if (resumed && value.playing && Build.VERSION.SDK_INT >= 33
                         && checkSelfPermission("android.permission.POST_NOTIFICATIONS")
                         != PackageManager.PERMISSION_GRANTED) {
                     requestPermissions(new String[] {"android.permission.POST_NOTIFICATIONS"}, 1002);
                 }
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                if (value.playing && Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                     startForegroundService(service);
-                } else {
+                    mediaServiceStarted = true;
+                } else if (value.playing || resumed || mediaServiceStarted) {
                     startService(service);
+                    mediaServiceStarted = true;
                 }
             } else {
                 stopService(service);
+                mediaServiceStarted = false;
             }
         } catch (RuntimeException ignored) {
-            // 系统不允许此刻启动前台服务时，退回普通行为（切后台会暂停）
+            mediaServiceStarted = false;
+            // The OS may reject a background service start; never fake success.
         }
     }
 
@@ -906,16 +940,25 @@ public class MainActivity extends Activity {
         pauseReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
+                String action;
+                if (PlaybackService.ACTION_PLAY.equals(intent.getAction())) action = "play";
+                else if (PlaybackService.ACTION_PAUSE.equals(intent.getAction())) action = "pause";
+                else return;
+                if (mediaSnapshotMode && (nativeMedia == null || !nativeMedia.allows(action))) return;
                 if (webView != null && !errorShown) {
+                    if ("play".equals(action)) webView.onResume();
                     webView.evaluateJavascript(
                             "(function(){try{if(typeof window.__tmShellMediaAction==='function'){"
-                                    + "window.__tmShellMediaAction('pause');return;}"
-                                    + "document.querySelectorAll('video,audio').forEach(function(m){m.pause()});"
+                                    + "window.__tmShellMediaAction('" + action + "');return;}"
+                                    + "var all=document.querySelectorAll('video,audio');for(var i=0;i<all.length;i++){var m=all[i];"
+                                    + ("pause".equals(action) ? "m.pause();" : "if(m.paused&&!m.ended){var p=m.play();if(p&&p.catch)p.catch(function(){});break;}")
+                                    + "}"
                                     + "}catch(e){}})()", null);
                 }
             }
         };
         IntentFilter filter = new IntentFilter(PlaybackService.ACTION_PAUSE);
+        filter.addAction(PlaybackService.ACTION_PLAY);
         if (Build.VERSION.SDK_INT >= 33) {
             registerReceiver(pauseReceiver, filter, Context.RECEIVER_NOT_EXPORTED);
         } else {

@@ -13,6 +13,8 @@ export interface TMShellApi {
   haptic?: (ms: number) => void;
   /** 页面里是否有音视频正在播放：壳据此保活并显示通知栏「正在播放」 */
   setPlaying?: (playing: boolean) => void;
+  /** v1 media snapshot for hosts with their own system MediaSession. */
+  setMediaState?: (snapshot: string) => void;
   /** 下载新安装包并调起系统安装界面（仅新版安卓壳有；旧壳没有时网页改为打开下载链接） */
   installUpdate?: (url: string) => void;
 }

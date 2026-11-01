@@ -102,6 +102,9 @@ jobs:
           java -cp /tmp/tm-load-state-test com.tongmutvplus.mobile.LoadStateTest
           javac --release 17 -d /tmp/tm-load-state-test apps/android-mobile/app/src/main/java/com/tongmutvplus/mobile/UpdateRequest.java apps/android-mobile/ci/UpdateRequestTest.java
           java -cp /tmp/tm-load-state-test com.tongmutvplus.mobile.UpdateRequestTest
+          javac --release 17 -d /tmp/tm-load-state-test apps/android-mobile/app/src/main/java/com/tongmutvplus/mobile/MediaState.java apps/android-mobile/ci/MediaStateTest.java
+          java -cp /tmp/tm-load-state-test com.tongmutvplus.mobile.MediaStateTest
+          python3 apps/android-mobile/ci/test_smoke_tls.py
 
       - name: Collect APK
         id: collect

@@ -189,7 +189,7 @@ PY
       grep -q 'MEDIA_REPORT.*"event":"playing"' "$OUT/server.log" || return 1
       adb shell dumpsys media_session >"$OUT/13-media-sessions.txt"
       adb shell cmd statusbar expand-notifications || return 1
-      tap_target text '暂停' || return 1
+      tap_target media-action pause || return 1
       sleep 1
       adb exec-out screencap -p >"$OUT/13-notification-blocked.png"
       grep -q 'MEDIA_REPORT.*"event":"blocked","paused":false' "$OUT/server.log" || return 1
@@ -197,7 +197,7 @@ PY
       adb shell cmd statusbar collapse || return 1
       tap_target text 'Allow media pause' || return 1
       adb shell cmd statusbar expand-notifications || return 1
-      tap_target text '暂停' || return 1
+      tap_target media-action pause || return 1
       sleep 1
       grep -q 'MEDIA_REPORT.*"event":"allowed","paused":false' "$OUT/server.log" || return 1
       grep -q 'MEDIA_REPORT.*"event":"paused","paused":true' "$OUT/server.log" || return 1
@@ -205,6 +205,45 @@ PY
       adb shell cmd statusbar collapse || return 1
       tap_target text 'Return to recovery fixture' || return 1
       echo 'PASS: native notification uses page media action; denied action keeps playing, allowed action pauses'
+      tap_target text 'Native session test' || return 1
+      tap_target text 'Start session media' || return 1
+      for _ in $(seq 1 10); do
+        grep -q 'MEDIA_REPORT.*"event":"session-playing"' "$OUT/server.log" && break
+        sleep 1
+      done
+      grep -q 'MEDIA_REPORT.*"event":"session-playing"' "$OUT/server.log" || return 1
+      native_session() {
+        local state="$1" snapshot="$OUT/15-session-$1.txt"
+        for _ in $(seq 1 10); do
+          adb shell dumpsys media_session >"$snapshot"
+          python3 "$(dirname "$0")/check_media_session.py" "$snapshot" "$state" && return 0
+          sleep 1
+        done
+        return 1
+      }
+      native_session playing || return 1
+      adb shell input keyevent 3
+      sleep 1
+      adb shell cmd media_session dispatch pause || return 1
+      native_session paused || return 1
+      grep -q 'MEDIA_REPORT.*"event":"session-paused","paused":true,"calls":1' "$OUT/server.log" || return 1
+      adb shell cmd statusbar expand-notifications || return 1
+      adb exec-out screencap -p >"$OUT/15-session-paused-notification.png"
+      adb shell cmd statusbar collapse || return 1
+      adb shell cmd media_session dispatch play || return 1
+      native_session playing || return 1
+      grep -q 'MEDIA_REPORT.*"event":"session-playing","paused":false,"calls":2' "$OUT/server.log" || return 1
+      adb shell am start -n "$PKG/.MainActivity" >/dev/null || return 1
+      tap_target text 'Lock session controls' || return 1
+      native_session locked || return 1
+      adb shell cmd media_session dispatch pause || return 1
+      sleep 1
+      native_session locked || return 1
+      if grep -q 'MEDIA_REPORT.*"calls":3' "$OUT/server.log"; then return 1; fi
+      tap_target text 'Remove session media' || return 1
+      native_session absent || return 1
+      tap_target text 'Return to recovery fixture' || return 1
+      echo 'PASS: single native session, actual metadata, background pause/resume, locked controls and removal cleanup'
     fi
     if [ "$API_LEVEL" -ge 26 ]; then
       tap_target text 'Update permission test' || return 1

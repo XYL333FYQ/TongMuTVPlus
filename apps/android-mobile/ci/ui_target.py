@@ -11,6 +11,10 @@ matches = [
     if (
         node.get("resource-id", "").endswith(":id/" + value)
         if kind in ("id", "absent-id")
+        else node.get('package') == 'com.android.systemui' and any(
+            label in (node.get('text', ''), node.get('content-desc', ''))
+            for label in ({'pause': ('暂停', 'Pause'), 'play': ('播放', 'Play')}.get(value, ()))
+        ) if kind == 'media-action'
         else value in (node.get("text", ""), node.get("content-desc", ""))
     )
 ]

@@ -6,7 +6,24 @@ import io
 import math
 import struct
 import wave
-from http.server import BaseHTTPRequestHandler, HTTPServer
+from http.server import BaseHTTPRequestHandler, HTTPServer, ThreadingHTTPServer
+
+
+class SecureFixtureServer(ThreadingHTTPServer):
+    """Do not serialize WebView speculative TLS handshakes in accept()."""
+    def __init__(self, address, handler, context):
+        self.context = context
+        super().__init__(address, handler)
+
+    def process_request_thread(self, request, client_address):
+        try:
+            request.settimeout(5)
+            secure = self.context.wrap_socket(request, server_side=True)
+        except OSError as error:
+            print('TLS handshake rejected: ' + type(error).__name__, flush=True)
+            request.close()
+            return
+        super().process_request_thread(secure, client_address)
 
 # Failure resources are opt-in so the shared TV smoke keeps its normal fixture.
 RECOVERY_CONTROLS = """<button onclick='TMShell.setSystemBars(false)' style='display:block;min-height:48px;font-size:24px'>Light theme</button>
@@ -14,6 +31,7 @@ RECOVERY_CONTROLS = """<button onclick='TMShell.setSystemBars(false)' style='dis
 <a href='https://10.0.2.2:8443/tls' style='display:block;font-size:24px;line-height:56px'>TLS failure test</a>
 <a href='/always-unavailable' style='display:block;font-size:24px;line-height:56px'>Back from failure test</a>
 <a href='/native-media-test' style='display:block;font-size:20px;line-height:48px'>Native media permission test</a>
+<a href='/native-session-test' style='display:block;font-size:20px;line-height:48px'>Native session test</a>
 <a href='/update-test' style='position:fixed;bottom:8px;right:8px;background:white;font-size:16px;line-height:48px'>Update permission test</a>
 <img src='/missing.png' width='1' height='1' alt=''>
 <img src='https://10.0.2.2:8443/missing.png' width='1' height='1' alt=''>""".encode()
@@ -92,12 +110,34 @@ if(navigator.mediaSession){
 }
 </script>""".encode()
 
+SESSION_PAGE = """<!doctype html><meta charset=utf-8><title>Native session fixture</title>
+<body style='background:white;color:black;font:24px sans-serif'>
+<button style='min-height:56px;font-size:24px' onclick='audio.play()'>Start session media</button>
+<button style='display:block;min-height:56px;font-size:24px' onclick='locked=true;publish();report("session-locked")'>Lock session controls</button>
+<button style='display:block;min-height:56px;font-size:24px' onclick='audio.remove();started=false;publish();report("session-removed")'>Remove session media</button>
+<audio id=audio loop src='/tone.wav'></audio>
+<a style='display:block;line-height:56px' href='/'>Return to recovery fixture</a></body>
+<script>
+var audio=document.getElementById('audio'),locked=false,started=false,calls=0;
+function report(event){fetch('/media-report',{method:'POST',body:JSON.stringify({event:event,paused:audio.paused,calls:calls})})}
+function publish(){TMShell.setMediaState(JSON.stringify({v:1,active:started&&document.body.contains(audio),playing:!audio.paused&&!audio.ended,canControl:!locked,title:'Native session fixture'}))}
+window.__tmShellMediaAction=function(action){
+ if(action!=='pause'&&action!=='play')return false;
+ calls++;
+ if(!locked){if(action==='play')audio.play();else audio.pause()}
+ return true;
+};
+audio.onplaying=function(){started=true;publish();TMShell.setPlaying(false);report('session-playing')};
+audio.onpause=function(){publish();report('session-paused')};
+TMShell.ready();publish();
+</script>""".encode()
+
 
 class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
         print("GET %s UA=%s" % (self.path, self.headers.get("User-Agent")), flush=True)
-        if self.path in ('/tone.wav', '/native-media-test') and getattr(self.server, 'recovery_mode', False):
-            body = tone_wave() if self.path == '/tone.wav' else MEDIA_PAGE
+        if self.path in ('/tone.wav', '/native-media-test', '/native-session-test') and getattr(self.server, 'recovery_mode', False):
+            body = tone_wave() if self.path == '/tone.wav' else SESSION_PAGE if self.path == '/native-session-test' else MEDIA_PAGE
             self.send_response(200)
             self.send_header('Content-Type', 'audio/wav' if self.path == '/tone.wav' else 'text/html; charset=utf-8')
             self.send_header('Content-Length', str(len(body)))
@@ -143,11 +183,10 @@ class Handler(BaseHTTPRequestHandler):
 if __name__ == "__main__":
     recovery = len(sys.argv) > 4 and sys.argv[4] == "recovery"
     if len(sys.argv) >= 4:
-        secure = HTTPServer(("0.0.0.0", 8443), Handler)
-        secure.recovery_mode = recovery
         context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
         context.load_cert_chain(sys.argv[2], sys.argv[3])
-        secure.socket = context.wrap_socket(secure.socket, server_side=True)
+        secure = SecureFixtureServer(("0.0.0.0", 8443), Handler, context)
+        secure.recovery_mode = recovery
         threading.Thread(target=secure.serve_forever, daemon=True).start()
     server = HTTPServer(("0.0.0.0", int(sys.argv[1])), Handler)
     server.recovery_mode = recovery
