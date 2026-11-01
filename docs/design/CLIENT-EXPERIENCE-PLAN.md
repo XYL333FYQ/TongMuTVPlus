@@ -29,7 +29,7 @@
 
 ## 当前进度
 
-最新交接：正式网页固定 c28ab11；Windows 验证引用 d2feacf，41273004104 的双架构/安装/便携启动通过，实际 HTTP/renderer/browser 故障恢复通过，但缺 runtime 启动被底层英文弹框抢先接管，整支仍失败。当前补 Tauri 创建前的同源 runtime 检查与原生详情按钮文案，待重新验证；Android 系统媒体/PiP、Windows 下载/外链、完整导航与真机诊断仍未完成。OriginOS 用户选择稍后测试，不催测、不称底栏根因已解决。
+最新交接：正式网页固定 c28ab11；Windows 36daf80 的 41273596558 已通过双架构/安装/便携启动与 HTTP、renderer、browser、缺 runtime 重试/取消、详情展开折叠实际恢复测试，release 跳过。下一小批仅增加真实附件下载的误报/文档保留检查，未预判现有实现有错；Android 系统媒体/PiP、Windows 下载/外链、完整导航与真机诊断仍未完成。OriginOS 用户选择稍后测试，不催测、不称底栏根因已解决。
 
 - 1ee0196 的 Linux Checks 41217779457 全部通过，Android APK/Java 门禁编译通过；API24 的输入法、坏海报不接管、浅色 HTTP503 原生界面/重试、深色 TLS 拒绝/设置恢复通过。API34 同样完成上述流程及 renderer KILL/SEGV 后宿主 PID 不变、本地重试通过，但旧脚本因外部 UiAutomation 的 Bad file descriptor/FATAL 判整支失败，不能把整支标绿；已补应用 PID 前后核对与按进程识别的崩溃门禁，4 个 Java/native 宿主/工具/renderer 日志用例验证过滤不放过本应用崩溃。
 - API23 的启动/桥/IME/HTTP 原生恢复通过，主 TLS 阶段停留加载而未得到预期错误文案；其系统 Provider 是 Chrome44，补充 deprecated 主文档错误回调及无 URL 日志码，待再跑确认，不提前称原因已完全定位。API23 壳冒烟不证明旧 Chrome44 能渲染 Next 站点，真实网站还依赖可运行本站的系统 WebView。
@@ -158,3 +158,7 @@
 - Windows 实际恢复结果：41273004104 运行在高权限/WebView2 155.0.4283.62，HKLM 仅测试 EXE 配置成功打开 CDP；HTTP503 原生界面/重试、实际 Page.crash 后同宿主 PID 恢复、网络故障进设置、只终止本应用 browser 后的原生提示和重启至设置均通过，截图/UIA 已取回 windows-recovery-d2feacf。整支仍失败：缺 runtime 时 Tauri 运行层先弹英文 Error，build()尚未返回，旧 startup_failure 无法抢先处理。
 - 已核对精确 tauri2.12.5 运行层源码：创建 WebView 前按 wry::webview_version 缓存状态并同步弹英文错误；补 main 创建 Tauri 前使用其公开同一 webview_version 检查，原生 Retry 重新检查、Cancel 直接返回，不补丁上游/不添依赖。保留 build 错误兜底；缺 runtime 真实重试/取消待新 runner 验证。实际截图还抓到详情默认折叠时按钮误写“收起详情”，按微软 TASKDIALOGCONFIG 语义交换两状态文案，并加实际展开/收起断言，待复验。
 - Windows 启动前检查小批：本机 typecheck/lint/完整 Jest175 套 1134 项/完整 format 均退出 0（windows-startup-checks.json）；Node 语法与 PowerShell AST 通过。新增 CDP 监听端口属主检查，避免重启后旧 WebView 短暂存活造成假验收；不触碰受保护播放器、房间、API 与数据代码。新的缺 runtime 重试/取消、详情展开折叠仍待 GitHub 实际验证，不把 d2feacf 已过的其他场景扩大为整批通过。
+
+- 第五批 A 实际闭环：36daf80/41273596558 全绿，纯 Rust4 项、x64/ARM64 锁定构建、安装/便携启动、真实 HTTP503 重试、Page.crash 后同宿主 PID 恢复、网络失败进设置、browser 精准终止后重启设置、缺 runtime 原生 Retry 修复续启及 Cancel 退出均通过。截图/UIA 已取回 windows-recovery-36daf80，实看 09 中文原生提示及 01 展开 HTTP503，按钮状态正确；系统按钮文字随 runner 英文 OS，不把它称为网页英文错误。release 跳过，未发布 EXE；TLS/超时、下载/外链与实际用户系统仍有验证边界。
+- 第五批 B 开始：新增 loopback 纯文本 attachment，通过真实 WebView 导航触发下载，CDP 只固定测试文件目的地，核对字节、无整应用原生报错、当前 document/timeOrigin 不变。此测试不证明原生另存为 UI，未修改下载生产行为，也不提前把 ConnectionAborted 分类认定为现有 bug。精确 wry0.57.1 源码确认无新窗口处理器时会拒绝新窗口；外链处理仍待实施。
+- 附件验证小批静态门禁：lint0、完整 Jest175 套 1134 项 0；typecheck 初次 V8 原生 2147483651、format 初次原生退出均保留日志，确认无本项目本机预览后串行重跑两者均 0（windows-attachment-retry.json）。未修改源码类型/tsconfig/依赖规避检查。Node 语法、PowerShell AST、独立 HTTP 夹具的 attachment 响应/文件名/字节均通过；真实 WebView 下载及误报检查待 CI，不称已验证下载 UI。

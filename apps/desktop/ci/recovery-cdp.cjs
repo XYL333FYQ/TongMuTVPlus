@@ -1,6 +1,7 @@
 // CI-only loopback fixture and DevTools driver; never shipped in the client.
 const http = require('node:http');
 const { once } = require('node:events');
+const path = require('node:path');
 
 async function main() {
   const action = process.argv[2];
@@ -8,6 +9,14 @@ async function main() {
     let failures = 0;
     http
       .createServer((req, res) => {
+        if (req.url === '/download') {
+          res.writeHead(200, {
+            'Content-Type': 'text/plain',
+            'Content-Disposition': 'attachment; filename="tm-client-audit.txt"',
+          });
+          res.end('TongMu native download fixture');
+          return;
+        }
         const fail = req.url === '/unavailable' && failures++ === 0;
         res.writeHead(fail ? 503 : 200, { 'Content-Type': 'text/html' });
         res.end(
@@ -47,6 +56,29 @@ async function main() {
   try {
     if (action === 'navigate') {
       await command('Page.navigate', { url: process.argv[3] });
+    } else if (action === 'download') {
+      await command('Runtime.evaluate', {
+        expression: 'window.__tmCiDownloadOrigin = performance.timeOrigin',
+      });
+      // CI controls only the destination. The real WebView still receives an
+      // attachment navigation and emits its ordinary native download events.
+      await command('Browser.setDownloadBehavior', {
+        behavior: 'allow',
+        downloadPath: path.resolve(process.argv[3]),
+      });
+      await command('Page.navigate', {
+        url: 'http://127.0.0.1:8085/download',
+      });
+    } else if (action === 'download-ready') {
+      await command('Browser.setDownloadBehavior', { behavior: 'default' });
+      const result = await command('Runtime.evaluate', {
+        expression:
+          'document.title === "NativeRecoveryFixture" && performance.timeOrigin === window.__tmCiDownloadOrigin',
+        returnByValue: true,
+      });
+      if (result.result.value !== true) {
+        throw new Error('Attachment navigation replaced the existing document');
+      }
     } else if (action === 'ready') {
       const result = await command('Runtime.evaluate', {
         expression: 'document.title',

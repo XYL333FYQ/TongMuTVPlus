@@ -107,6 +107,18 @@ try {
     if ($ownedBrowser.ExecutablePath) {
         Write-Host "WebView2 version: $((Get-Item -LiteralPath $ownedBrowser.ExecutablePath).VersionInfo.FileVersion)"
     }
+    if (-not (Cdp 'navigate' 'http://127.0.0.1:8085/ready')) { throw 'Initial fixture navigation failed' }
+    Wait-Check { Cdp 'ready' } 'ready before attachment download'
+    $downloadDir = New-Item -ItemType Directory -Force (Join-Path $out.FullName 'downloads')
+    if (-not (Cdp 'download' $downloadDir.FullName)) { throw 'Attachment navigation failed' }
+    $downloadFile = Join-Path $downloadDir.FullName 'tm-client-audit.txt'
+    Wait-Check { Test-Path -LiteralPath $downloadFile } 'real WebView attachment file received'
+    if ([IO.File]::ReadAllText($downloadFile) -ne 'TongMu native download fixture') { throw 'Unexpected downloaded bytes' }
+    Start-Sleep -Seconds 3
+    Capture '00-attachment-download'
+    if ($null -ne (Native-Button '重新打开')) { throw 'A legitimate attachment download was treated as whole-app failure' }
+    if (-not (Cdp 'download-ready')) { throw 'Download discarded the current document' }
+    Write-Host 'PASS: attachment download keeps the current document without native error'
     if (-not (Cdp 'navigate' 'http://127.0.0.1:8085/unavailable')) { throw 'Navigate failed' }
     Wait-Check { $null -ne (Native-Button '重新打开') } 'HTTP 503 native recovery'
     Capture '01-http-native'
