@@ -15,6 +15,7 @@ async function main() {
     let externalRequests = 0;
     let automaticRequests = 0;
     let externalReport = null;
+    let authenticatedFileRequests = 0;
     const handler = (req, res) => {
       if (req.url === '/external-auto') {
         automaticRequests++;
@@ -89,6 +90,7 @@ async function main() {
             externalRequests,
             automaticRequests,
             externalReport,
+            authenticatedFileRequests,
           })
         );
         return;
@@ -115,12 +117,48 @@ async function main() {
         res.end('TongMu native download fixture');
         return;
       }
+      if (req.url === '/post-file') {
+        const authenticated = (req.headers.cookie || '')
+          .split(';')
+          .some((part) => part.trim() === 'tm_ci_session=retained');
+        if (req.method !== 'POST' || !authenticated) {
+          res.writeHead(401);
+          res.end();
+          return;
+        }
+        authenticatedFileRequests++;
+        res.writeHead(200, {
+          'Content-Type': 'application/octet-stream',
+          'Cache-Control': 'no-store',
+        });
+        res.end(Buffer.from('TongMu authenticated Blob\0文件\n', 'utf8'));
+        return;
+      }
       const fail = req.url === '/unavailable' && failures++ === 0;
       res.writeHead(fail ? 503 : 200, { 'Content-Type': 'text/html' });
       res.end(
         fail
           ? '<title>Unavailable</title>Controlled HTTP 503'
-          : '<title>NativeRecoveryFixture</title><h1>Native recovery ready</h1><a id="fixture-download" href="/download">Download fixture</a><p><a id="fixture-external" href="/external" target="_blank" rel="noopener">Open external fixture</a></p>'
+          : `<title>NativeRecoveryFixture</title><h1>Native recovery ready</h1>
+<a id="fixture-download" href="/download">Download fixture</a>
+<p><button id="fixture-blob">Save generated Blob</button></p>
+<p><button id="fixture-post-blob">Save authenticated POST response</button></p>
+<p><a id="fixture-external" href="/external" target="_blank" rel="noopener">Open external fixture</a></p>
+<script>
+function saveFixtureBlob(blob,name){
+  const url=URL.createObjectURL(blob),a=document.createElement('a');
+  a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),60000);
+}
+document.querySelector('#fixture-blob').onclick=()=>saveFixtureBlob(new Blob(['TongMu generated Blob\\0文件\\n']),'tm-client-blob-audit.bin');
+document.querySelector('#fixture-post-blob').onclick=async()=>{
+  try {
+    const response=await fetch('/post-file',{method:'POST',credentials:'same-origin'});
+    if(!response.ok)throw new Error('Authenticated file request failed');
+    saveFixtureBlob(await response.blob(),'tm-client-post-blob-audit.bin');
+  }catch(error){window.__tmCiBlobError=String(error);}
+};
+</script>`
       );
     };
     http.createServer(handler).listen(8085, '127.0.0.1');
@@ -153,7 +191,9 @@ async function main() {
   socket.addEventListener('message', ({ data }) => {
     const response = JSON.parse(data);
     if (
-      (action === 'download' || action === 'download-native') &&
+      /^(download|download-native|download-blob|download-post-blob)$/.test(
+        action
+      ) &&
       /^(Browser|Page)\.download|^Network\.loadingFailed$/.test(
         response.method || ''
       ) &&
@@ -302,7 +342,11 @@ async function main() {
       await command('Runtime.evaluate', {
         expression: 'setTimeout(()=>location.assign("/hang"),0)',
       });
-    } else if (action === 'download' || action === 'download-native') {
+    } else if (
+      /^(download|download-native|download-blob|download-post-blob)$/.test(
+        action
+      )
+    ) {
       await command('Runtime.evaluate', {
         expression: 'window.__tmCiDownloadOrigin = performance.timeOrigin',
       });
@@ -318,8 +362,14 @@ async function main() {
       await command('Page.enable');
       await command('Network.enable');
       let navigation = {};
-      if (action === 'download-native') {
-        await click('#fixture-download');
+      if (action !== 'download') {
+        await click(
+          action === 'download-native'
+            ? '#fixture-download'
+            : action === 'download-blob'
+            ? '#fixture-blob'
+            : '#fixture-post-blob'
+        );
       } else {
         navigation = await command('Page.navigate', {
           url: 'http://127.0.0.1:8085/download',
@@ -328,11 +378,8 @@ async function main() {
       // Keep the CDP session alive while the asynchronous download starts.
       await new Promise((resolve) => setTimeout(resolve, 2000));
       fs.writeFileSync(
-        action === 'download-native'
-          ? path.join(
-              path.resolve(process.argv[3]),
-              'download-native-events.json'
-            )
+        action !== 'download'
+          ? path.join(path.resolve(process.argv[3]), `${action}-events.json`)
           : path.join(
               path.resolve(process.argv[3]),
               '..',
@@ -350,6 +397,11 @@ async function main() {
           2
         )
       );
+      const blobError = await command('Runtime.evaluate', {
+        expression: 'window.__tmCiBlobError || ""',
+        returnByValue: true,
+      });
+      if (blobError.result.value) throw new Error(blobError.result.value);
     } else if (
       action === 'download-ready' ||
       action === 'download-native-ready'

@@ -265,6 +265,39 @@ try {
     if ($null -ne (Native-Button '重新打开')) { throw 'A legitimate attachment download was treated as whole-app failure' }
     if (-not (Cdp 'download-native-ready')) { throw 'Download discarded the current document' }
     Write-Host 'PASS: attachment download keeps the current document without native error'
+    # No Browser.setDownloadBehavior: exercise the installed engine's real file
+    # destination/UI. In particular POST+HttpOnly cookies and Blob downloads must
+    # not be mistaken for external links or replacement document failures.
+    foreach ($blobCase in @(
+        @{ action = 'download-blob'; name = 'tm-client-blob-audit.bin'; text = "TongMu generated Blob`0文件`n" },
+        @{ action = 'download-post-blob'; name = 'tm-client-post-blob-audit.bin'; text = "TongMu authenticated Blob`0文件`n" }
+    )) {
+        $blobPath = Join-Path $downloadDir.FullName $blobCase.name
+        $defaultBlobPath = Join-Path $env:USERPROFILE ('Downloads/' + $blobCase.name)
+        if (Test-Path -LiteralPath $defaultBlobPath) { throw 'Unexpected preexisting Blob fixture; do not overwrite it' }
+        if (-not (Cdp $blobCase.action $out.FullName)) { throw 'Blob download click failed' }
+        $script:downloadSaveInvoked = $false
+        Wait-Check {
+            if ($null -ne (Native-Button '重新打开')) { throw 'Blob download triggered whole-app failure' }
+            if (-not $downloadSaveInvoked) {
+                $script:downloadSaveInvoked = Save-OwnedDownload $blobPath
+            }
+            (Test-Path -LiteralPath $blobPath) -or (Test-Path -LiteralPath $defaultBlobPath)
+        } ('actual saved file: ' + $blobCase.action)
+        if (-not (Test-Path -LiteralPath $blobPath)) {
+            Copy-Item -LiteralPath $defaultBlobPath -Destination $blobPath
+        }
+        $expected = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($blobCase.text))
+        $actual = [Convert]::ToBase64String([IO.File]::ReadAllBytes($blobPath))
+        if ($actual -ne $expected) { throw 'Blob saved bytes differ, including binary/Unicode content' }
+        Get-FileHash -LiteralPath $blobPath | Format-List | Out-String | Write-Host
+        Capture ('00-' + $blobCase.action)
+        if (-not (Cdp 'download-native-ready')) { throw 'Blob download discarded the current document' }
+    }
+    if ((Invoke-RestMethod 'http://127.0.0.1:8085/diagnostics').authenticatedFileRequests -ne 1) {
+        throw 'Authenticated POST file flow was not exercised exactly once'
+    }
+    Write-Host 'PASS: generated and authenticated POST Blob files saved with exact bytes, same document'
     if (-not (Cdp 'navigate' 'http://127.0.0.1:8085/unavailable')) { throw 'Navigate failed' }
     Wait-Check { $null -ne (Native-Button '重新打开') } 'HTTP 503 native recovery'
     Capture '01-http-native'
