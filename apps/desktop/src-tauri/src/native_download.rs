@@ -5,19 +5,30 @@ use std::path::Path;
 use tauri::{AppHandle, Manager};
 use webview2_com::Microsoft::Web::WebView2::Win32::{
     ICoreWebView2Deferral, ICoreWebView2DownloadStartingEventArgs,
+    ICoreWebView2PermissionRequestedEventArgs, ICoreWebView2PermissionRequestedEventArgs3,
+    COREWEBVIEW2_PERMISSION_KIND, COREWEBVIEW2_PERMISSION_KIND_MULTIPLE_AUTOMATIC_DOWNLOADS,
+    COREWEBVIEW2_PERMISSION_STATE_ALLOW, COREWEBVIEW2_PERMISSION_STATE_DENY,
 };
 use windows::{
-    core::{w, PCWSTR, PWSTR},
+    core::{w, Interface, PCWSTR, PWSTR},
     Win32::{
         Foundation::{ERROR_CANCELLED, HWND},
         System::Com::{CoCreateInstance, CLSCTX_INPROC_SERVER},
         UI::{
+            Controls::{
+                TaskDialogIndirect, TASKDIALOGCONFIG, TASKDIALOG_BUTTON,
+                TDF_ALLOW_DIALOG_CANCELLATION, TDF_POSITION_RELATIVE_TO_WINDOW,
+                TDF_SIZE_TO_CONTENT,
+            },
             Shell::{
                 FileSaveDialog, IFileSaveDialog, IShellItem, SHCreateItemFromParsingName,
                 FOS_FORCEFILESYSTEM, FOS_NOCHANGEDIR, FOS_OVERWRITEPROMPT, FOS_PATHMUSTEXIST,
                 SIGDN_FILESYSPATH,
             },
-            WindowsAndMessaging::{MessageBoxW, MB_ICONWARNING, MB_OK},
+            WindowsAndMessaging::{
+                MessageBoxW, IDYES, MB_DEFBUTTON2, MB_ICONQUESTION, MB_ICONWARNING, MB_OK,
+                MB_YESNO,
+            },
         },
     },
 };
@@ -29,13 +40,18 @@ thread_local! {
     static ACTIVE: Cell<bool> = const { Cell::new(false) };
 }
 
-struct Pending {
+enum Pending {
+    File(DownloadPending),
+    Permission(PermissionPending),
+}
+
+struct DownloadPending {
     args: ICoreWebView2DownloadStartingEventArgs,
     deferral: ICoreWebView2Deferral,
     approved: Cell<bool>,
 }
 
-impl Drop for Pending {
+impl Drop for DownloadPending {
     fn drop(&mut self) {
         unsafe {
             if !self.approved.get() {
@@ -46,8 +62,68 @@ impl Drop for Pending {
     }
 }
 
+struct PermissionPending {
+    args: ICoreWebView2PermissionRequestedEventArgs,
+    deferral: ICoreWebView2Deferral,
+    allowed: Cell<bool>,
+    site: String,
+    current: Box<dyn Fn() -> bool>,
+}
+
+impl Drop for PermissionPending {
+    fn drop(&mut self) {
+        unsafe {
+            let state = if self.allowed.get() && (self.current)() {
+                COREWEBVIEW2_PERMISSION_STATE_ALLOW
+            } else {
+                COREWEBVIEW2_PERMISSION_STATE_DENY
+            };
+            let _ = self.args.SetState(state);
+            let _ = self.deferral.Complete();
+        }
+    }
+}
+
 fn wide(value: &str) -> Vec<u16> {
     value.encode_utf16().chain(Some(0)).collect()
+}
+
+unsafe fn permission_prompt(owner: HWND, site: &str) -> bool {
+    let content = wide(&format!("来源：{site}\n每个文件仍需你选择保存位置。"));
+    let buttons = [
+        TASKDIALOG_BUTTON {
+            nButtonID: 200,
+            pszButtonText: w!("允许本次"),
+        },
+        TASKDIALOG_BUTTON {
+            nButtonID: 201,
+            pszButtonText: w!("暂不允许"),
+        },
+    ];
+    let config = TASKDIALOGCONFIG {
+        cbSize: std::mem::size_of::<TASKDIALOGCONFIG>() as u32,
+        hwndParent: owner,
+        dwFlags: TDF_ALLOW_DIALOG_CANCELLATION
+            | TDF_POSITION_RELATIVE_TO_WINDOW
+            | TDF_SIZE_TO_CONTENT,
+        pszWindowTitle: w!("TongMuTV Plus"),
+        pszMainInstruction: w!("允许连续下载文件？"),
+        pszContent: PCWSTR(content.as_ptr()),
+        cButtons: buttons.len() as u32,
+        pButtons: buttons.as_ptr(),
+        nDefaultButton: 201,
+        ..Default::default()
+    };
+    let mut choice = 201;
+    if TaskDialogIndirect(&config, Some(&mut choice), None, None).is_err() {
+        return MessageBoxW(
+            Some(owner),
+            PCWSTR(content.as_ptr()),
+            w!("是否允许连续下载文件？"),
+            MB_YESNO | MB_ICONQUESTION | MB_DEFBUTTON2,
+        ) == IDYES;
+    }
+    choice == 200
 }
 
 unsafe fn destination(owner: HWND, suggested: &str) -> windows::core::Result<Option<String>> {
@@ -96,6 +172,15 @@ fn drain(app: AppHandle) {
             continue; // Pending defaults to cancel and always completes.
         };
         let owner = window.hwnd().map(|value| HWND(value.0)).unwrap_or_default();
+        if let Pending::Permission(permission) = &pending {
+            if (permission.current)() && unsafe { permission_prompt(owner, &permission.site) } {
+                permission.allowed.set(true);
+            }
+            continue;
+        }
+        let Pending::File(pending) = pending else {
+            continue;
+        };
         unsafe {
             let choose = || -> windows::core::Result<()> {
                 let mut suggested = PWSTR::null();
@@ -140,7 +225,7 @@ pub unsafe fn request(
             return Err(error);
         }
     };
-    let pending = Pending {
+    let pending = DownloadPending {
         args: args.clone(),
         deferral,
         approved: Cell::new(false),
@@ -150,10 +235,62 @@ pub unsafe fn request(
     pending.args.SetHandled(true)?;
     // The deferral already postpones the decision. Match the SDK's final-decision
     // pattern instead of canceling first and trying to undo that cancellation.
+    enqueue(app, Pending::File(pending));
+    Ok(())
+}
+
+pub unsafe fn request_permission(
+    app: &AppHandle,
+    args: &ICoreWebView2PermissionRequestedEventArgs,
+    current: Box<dyn Fn() -> bool>,
+) -> windows::core::Result<bool> {
+    let mut kind = COREWEBVIEW2_PERMISSION_KIND::default();
+    args.PermissionKind(&mut kind)?;
+    if kind != COREWEBVIEW2_PERMISSION_KIND_MULTIPLE_AUTOMATIC_DOWNLOADS {
+        return Ok(false);
+    }
+    // Older runtimes retain their existing UI rather than silently persisting
+    // a decision whose intended scope is only this request.
+    let Ok(transient) = args.cast::<ICoreWebView2PermissionRequestedEventArgs3>() else {
+        return Ok(false);
+    };
+    let mut uri = PWSTR::null();
+    args.Uri(&mut uri)?;
+    let uri = webview2_com::take_pwstr(uri);
+    if uri.len() > 8192 {
+        return Ok(false);
+    }
+    let Ok(url) = tauri::Url::parse(&uri) else {
+        return Ok(false);
+    };
+    if !matches!(url.scheme(), "http" | "https") || url.host_str().is_none() {
+        return Ok(false);
+    }
+    transient.SetSavesInProfile(false)?;
+    let deferral = match args.GetDeferral() {
+        Ok(deferral) => deferral,
+        Err(error) => {
+            let _ = args.SetState(COREWEBVIEW2_PERMISSION_STATE_DENY);
+            return Err(error);
+        }
+    };
+    let pending = PermissionPending {
+        args: args.clone(),
+        deferral,
+        allowed: Cell::new(false),
+        site: url.origin().ascii_serialization(),
+        current,
+    };
+    transient.SetHandled(true)?;
+    enqueue(app, Pending::Permission(pending));
+    Ok(true)
+}
+
+fn enqueue(app: &AppHandle, pending: Pending) {
     let full =
         PENDING.with(|queue| queue.borrow().len()) + usize::from(ACTIVE.with(Cell::get)) >= 8;
     if full {
-        return Ok(()); // Bound queued modal choices; do not start unapproved files.
+        return; // Bound queued choices; drops cancel files or deny permission.
     }
     PENDING.with(|queue| queue.borrow_mut().push_back(pending));
     let app = app.clone();
@@ -163,5 +300,4 @@ pub unsafe fn request(
         let queued = app.clone();
         let _ = app.run_on_main_thread(move || drain(queued));
     });
-    Ok(())
 }

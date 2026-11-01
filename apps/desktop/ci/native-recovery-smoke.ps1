@@ -22,6 +22,8 @@ $tlsDir = $null
 $createdPolicies = @()
 $downloadFixturesStarted = $false
 $ownedDownloadLocations = [Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
+$downloadPermissionApprovals = 0
+$downloadPermissionDenied = $false
 $exeName = Split-Path -Leaf $Executable
 function Set-CiPolicy([string]$Policy, [string]$Value) {
     $key = "HKLM:\SOFTWARE\Policies\Microsoft\Edge\WebView2\$Policy"
@@ -108,6 +110,13 @@ function Click-Native([string]$Name) {
     $pattern.Invoke()
 }
 function Save-OwnedDownload([string]$Destination, [switch]$Cancel) {
+    $permission = Native-Button '允许本次'
+    if ($permission) {
+        Capture '00-native-download-permission'
+        $permission.GetCurrentPattern([System.Windows.Automation.InvokePattern]::Pattern).Invoke()
+        $script:downloadPermissionApprovals++
+        return $false
+    }
     $english = [System.Windows.Automation.PropertyCondition]::new(
         [System.Windows.Automation.AutomationElement]::NameProperty, 'Save As')
     $chinese = [System.Windows.Automation.PropertyCondition]::new(
@@ -322,6 +331,17 @@ try {
     if (-not (Cdp 'download-native-ready')) { throw 'Cancel discarded the current document' }
     if ($null -ne (Native-Button '重新打开')) { throw 'Canceled download triggered whole-app recovery' }
     Start-OwnedWebDownload 'Download fixture'
+    Wait-Check { $null -ne (Native-Button '暂不允许') } 'native multiple-download permission can be denied'
+    Capture '00-native-download-permission-deny'
+    Click-Native '暂不允许'
+    $downloadPermissionDenied = $true
+    Start-Sleep -Seconds 1
+    if ((Test-Path -LiteralPath $defaultDownloadFile) -or (Test-Path -LiteralPath $downloadFile)) {
+        throw 'Denied permission still saved a file'
+    }
+    if (-not (Cdp 'download-native-ready')) { throw 'Permission denial discarded the document' }
+    if ($null -ne (Native-Button '重新打开')) { throw 'Permission denial triggered whole-app failure' }
+    Start-OwnedWebDownload 'Download fixture'
     $script:downloadSaveInvoked = $false
     Wait-Check {
         if ($null -ne (Native-Button '重新打开')) {
@@ -375,6 +395,9 @@ try {
     }
     if ((Invoke-RestMethod 'http://127.0.0.1:8085/diagnostics').authenticatedFileRequests -ne 1) {
         throw 'Authenticated POST file flow was not exercised exactly once'
+    }
+    if (-not $downloadPermissionDenied -or $downloadPermissionApprovals -lt 1) {
+        throw 'Native download permission denial and explicit approval were not exercised'
     }
     Write-Host 'PASS: generated and authenticated POST Blob files saved with exact bytes, same document'
     if (-not (Cdp 'navigate' 'http://127.0.0.1:8085/unavailable')) { throw 'Navigate failed' }

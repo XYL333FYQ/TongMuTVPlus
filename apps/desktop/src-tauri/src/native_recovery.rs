@@ -8,8 +8,8 @@ use tauri::{AppHandle, Manager, WebviewWindow};
 use webview2_com::{
     BrowserProcessExitedEventHandler, DownloadStartingEventHandler,
     Microsoft::Web::WebView2::Win32::*, NavigationCompletedEventHandler,
-    NavigationStartingEventHandler, NewWindowRequestedEventHandler, ProcessFailedEventHandler,
-    WebResourceResponseReceivedEventHandler,
+    NavigationStartingEventHandler, NewWindowRequestedEventHandler, PermissionRequestedEventHandler,
+    ProcessFailedEventHandler, WebResourceResponseReceivedEventHandler,
 };
 use windows::{
     core::{w, Interface, BOOL, PCWSTR},
@@ -301,6 +301,32 @@ pub fn install(window: &WebviewWindow) -> tauri::Result<()> {
                                 initiated.as_bool(),
                             );
                         }
+                    }
+                    Ok(())
+                })),
+                &mut token,
+            )?;
+
+            let shared = state.clone();
+            let permission_app = app.clone();
+            core.add_PermissionRequested(
+                &PermissionRequestedEventHandler::create(Box::new(move |_, args| {
+                    if let Some(args) = args {
+                        let navigation = shared.navigation.load(Ordering::Acquire);
+                        let current = shared.clone();
+                        crate::native_download::request_permission(
+                            &permission_app,
+                            &args,
+                            Box::new(move || {
+                                !current.closing.load(Ordering::Acquire)
+                                    && current.navigation.load(Ordering::Acquire) == navigation
+                                    && !current
+                                        .gate
+                                        .lock()
+                                        .unwrap_or_else(|e| e.into_inner())
+                                        .has_failure()
+                            }),
+                        )?;
                     }
                     Ok(())
                 })),
