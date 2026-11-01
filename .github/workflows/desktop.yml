@@ -13,6 +13,11 @@ on:
         required: false
         default: true
         type: boolean
+      audit_package_run:
+        description: '仅复验：已成功的本工作流 run ID；必须关闭 publish，且原生源码必须完全一致'
+        required: false
+        default: ''
+        type: string
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -30,6 +35,9 @@ jobs:
       - uses: actions/checkout@v4
       - name: Check native source formatting
         run: rustfmt --edition 2021 --check apps/desktop/src-tauri/src/main.rs apps/desktop/src-tauri/src/native_recovery.rs apps/desktop/src-tauri/src/recovery_policy.rs
+      - name: Reject mismatched package audit sources
+        shell: pwsh
+        run: '& ./apps/desktop/ci/verify-audit-package.test.ps1'
       - name: Verify recovery state without a browser engine
         run: |
           rustc --version
@@ -48,6 +56,7 @@ jobs:
   build:
     name: Build ${{ matrix.arch }} (installer + portable)
     needs: [stamp, native-policy]
+    if: ${{ !inputs.audit_package_run }}
     runs-on: windows-latest
     strategy:
       fail-fast: false
@@ -232,11 +241,47 @@ jobs:
           if-no-files-found: ignore
           retention-days: 14
 
+  package-recovery-audit:
+    name: Audit unchanged native package (never publish)
+    if: ${{ inputs.audit_package_run != '' }}
+    needs: native-policy
+    runs-on: windows-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Verify successful package provenance and identical native source
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TM_AUDIT_RUN: ${{ inputs.audit_package_run }}
+          TM_AUDIT_PUBLISH: ${{ inputs.publish }}
+        run: |
+          if ($env:TM_AUDIT_PUBLISH -ne 'false') { throw 'Package audits cannot publish. Set publish=false.' }
+          & ./apps/desktop/ci/verify-audit-package.ps1 -PackageRun $env:TM_AUDIT_RUN
+          gh run download $env:TM_AUDIT_RUN -n tongmutvplus-windows-x64 -D dl
+          if ($LASTEXITCODE -ne 0) { throw 'Cannot download the verified package' }
+      - name: Exercise verified executable with the current fault fixtures
+        shell: pwsh
+        run: |
+          Expand-Archive dl/TongMuTV-Plus-Windows-x64-Portable.zip -DestinationPath portable
+          & ./apps/desktop/ci/native-recovery-smoke.ps1 -Executable 'portable/TongMuTV Plus.exe'
+      - name: Preserve audit provenance and evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: native-recovery-package-audit
+          path: recovery-out
+          if-no-files-found: ignore
+          retention-days: 14
+
   release:
     name: Publish to Releases
     needs: [stamp, build, smoke, portable-smoke, native-recovery-smoke]
     # 推送触发时也走发布，但必须经过 release 环境里的人工批准；手动触发看 publish 开关
-    if: ${{ github.event_name == 'push' || inputs.publish }}
+    if: ${{ !inputs.audit_package_run && (github.event_name == 'push' || inputs.publish) }}
     environment: release
     runs-on: ubuntu-latest
     permissions:

@@ -2,6 +2,7 @@
 const http = require('node:http');
 const { once } = require('node:events');
 const path = require('node:path');
+const fs = require('node:fs');
 
 async function main() {
   const action = process.argv[2];
@@ -37,8 +38,26 @@ async function main() {
   await once(socket, 'open');
   let serial = 0;
   const pending = new Map();
+  const downloadEvents = [];
   socket.addEventListener('message', ({ data }) => {
     const response = JSON.parse(data);
+    if (
+      action === 'download' &&
+      /^(Browser|Page)\.download|^Network\.loadingFailed$/.test(
+        response.method || ''
+      ) &&
+      downloadEvents.length < 30
+    ) {
+      const params = response.params || {};
+      downloadEvents.push({
+        method: response.method,
+        state: params.state,
+        receivedBytes: params.receivedBytes,
+        totalBytes: params.totalBytes,
+        errorText: params.errorText,
+        canceled: params.canceled,
+      });
+    }
     const waiter = pending.get(response.id);
     if (!waiter) return;
     pending.delete(response.id);
@@ -65,10 +84,29 @@ async function main() {
       await command('Browser.setDownloadBehavior', {
         behavior: 'allow',
         downloadPath: path.resolve(process.argv[3]),
+        eventsEnabled: true,
       });
-      await command('Page.navigate', {
+      await command('Page.enable');
+      await command('Network.enable');
+      const navigation = await command('Page.navigate', {
         url: 'http://127.0.0.1:8085/download',
       });
+      // Keep the CDP session alive while the asynchronous download starts.
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+      fs.writeFileSync(
+        path.join(path.resolve(process.argv[3]), '..', 'download-events.json'),
+        JSON.stringify(
+          {
+            navigation: {
+              errorText: navigation.errorText,
+              isDownload: navigation.isDownload,
+            },
+            events: downloadEvents,
+          },
+          null,
+          2
+        )
+      );
     } else if (action === 'download-ready') {
       await command('Browser.setDownloadBehavior', { behavior: 'default' });
       const result = await command('Runtime.evaluate', {

@@ -112,7 +112,14 @@ try {
     $downloadDir = New-Item -ItemType Directory -Force (Join-Path $out.FullName 'downloads')
     if (-not (Cdp 'download' $downloadDir.FullName)) { throw 'Attachment navigation failed' }
     $downloadFile = Join-Path $downloadDir.FullName 'tm-client-audit.txt'
-    Wait-Check { Test-Path -LiteralPath $downloadFile } 'real WebView attachment file received'
+    Wait-Check {
+        if ($null -ne (Native-Button '重新打开')) {
+            Click-Native '查看详情'
+            Capture '00-attachment-native-error'
+            throw 'A legitimate attachment download triggered native page recovery'
+        }
+        Test-Path -LiteralPath $downloadFile
+    } 'real WebView attachment file received'
     if ([IO.File]::ReadAllText($downloadFile) -ne 'TongMu native download fixture') { throw 'Unexpected downloaded bytes' }
     Start-Sleep -Seconds 3
     Capture '00-attachment-download'

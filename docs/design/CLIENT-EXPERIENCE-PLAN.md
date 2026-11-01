@@ -162,3 +162,7 @@
 - 第五批 A 实际闭环：36daf80/41273596558 全绿，纯 Rust4 项、x64/ARM64 锁定构建、安装/便携启动、真实 HTTP503 重试、Page.crash 后同宿主 PID 恢复、网络失败进设置、browser 精准终止后重启设置、缺 runtime 原生 Retry 修复续启及 Cancel 退出均通过。截图/UIA 已取回 windows-recovery-36daf80，实看 09 中文原生提示及 01 展开 HTTP503，按钮状态正确；系统按钮文字随 runner 英文 OS，不把它称为网页英文错误。release 跳过，未发布 EXE；TLS/超时、下载/外链与实际用户系统仍有验证边界。
 - 第五批 B 开始：新增 loopback 纯文本 attachment，通过真实 WebView 导航触发下载，CDP 只固定测试文件目的地，核对字节、无整应用原生报错、当前 document/timeOrigin 不变。此测试不证明原生另存为 UI，未修改下载生产行为，也不提前把 ConnectionAborted 分类认定为现有 bug。精确 wry0.57.1 源码确认无新窗口处理器时会拒绝新窗口；外链处理仍待实施。
 - 附件验证小批静态门禁：lint0、完整 Jest175 套 1134 项 0；typecheck 初次 V8 原生 2147483651、format 初次原生退出均保留日志，确认无本项目本机预览后串行重跑两者均 0（windows-attachment-retry.json）。未修改源码类型/tsconfig/依赖规避检查。Node 语法、PowerShell AST、独立 HTTP 夹具的 attachment 响应/文件名/字节均通过；真实 WebView 下载及误报检查待 CI，不称已验证下载 UI。
+
+- 附件实测 e48e1c9/41274082871 失败：正常 loopback attachment 导航后未收到目标文件，实际截图/UIA 出现整应用“暂时无法连接内容”原生恢复。尚未取得展开后的 WebError 码与下载事件，不能先认定缺文件完全是恢复逻辑导致；补有界 CDP 事件、保持调试会话 2 秒、故障时展开详情，下一步核对事件顺序再改生产分类。
+- Ruling（测试效率，不改发布资格）：工作流新增 publish=false 专用 audit_package_run 入口，只接受本仓库同一 desktop 工作流已整体成功的 run；核对原生目录、本地 UI、package.json 及图标源 Git 对象一致，保留包 SHA/测试 SHA 证明，原生输入变化必须完整重建。该入口明确禁止发布、不生成新包、不替代最终完整双架构/安装/便携/故障发布门禁。ID 非法、错误仓库/工作流、失败构建、原生/UI/package/图标不一致的 8 个拒绝与相同输入仅非发布通过均已本地验证，实际 GitHub 入口尚待运行；不把 CI 脚本测试等同客户端功能通过。
+- 故障复验入口小批：typecheck/lint/完整 Jest175 套 1134 项/完整 format 均 0（windows-package-audit-checks.json），PowerShell 拒绝/通过用例与 AST、Node 语法通过。只读抽取近 7 天最多 200 条 Application 崩溃事件中另见 2 条 pwsh/coreclr 的 c0000005，记录仅进 output；它证明开发主机还有其他原生异常，不能据此认定 TongMu、VPS 或硬件根因。当前先用同源码 36daf80 成功包核对附件事件与错误码，不发布。
