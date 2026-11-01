@@ -79,7 +79,7 @@ fn main() {
                         return Ok(());
                     }
                     #[cfg(not(windows))]
-                    return Err(error.into()),
+                    return Err(error.into());
                 }
             };
             #[cfg(windows)]
