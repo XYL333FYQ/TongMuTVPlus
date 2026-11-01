@@ -20,6 +20,8 @@ $fixture = $null
 $client = $null
 $tlsDir = $null
 $createdPolicies = @()
+$downloadFixturesStarted = $false
+$ownedDownloadLocations = [Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
 $exeName = Split-Path -Leaf $Executable
 function Set-CiPolicy([string]$Policy, [string]$Value) {
     $key = "HKLM:\SOFTWARE\Policies\Microsoft\Edge\WebView2\$Policy"
@@ -278,6 +280,9 @@ try {
     $downloadFile = Join-Path $downloadDir.FullName 'native-attachment.txt'
     $defaultDownloadFile = Join-Path $env:USERPROFILE 'Downloads/tm-client-audit.txt'
     if (Test-Path -LiteralPath $defaultDownloadFile) { throw 'Unexpected preexisting fixture file; do not overwrite it' }
+    $downloadFixturesStarted = $true
+    [void]$ownedDownloadLocations.Add('http-selected')
+    [void]$ownedDownloadLocations.Add('http-default')
     if (-not (Cdp 'download-native' $out.FullName)) { throw 'Download cancellation click failed' }
     Wait-Check { Save-OwnedDownload '' -Cancel } 'actual native Save As cancellation'
     Start-Sleep -Seconds 1
@@ -317,6 +322,9 @@ try {
         $blobPath = Join-Path $downloadDir.FullName $blobCase.name
         $defaultBlobPath = Join-Path $env:USERPROFILE ('Downloads/' + $blobCase.name)
         if (Test-Path -LiteralPath $defaultBlobPath) { throw 'Unexpected preexisting Blob fixture; do not overwrite it' }
+        $blobLabel = if ($blobCase.action -eq 'download-blob') { 'blob' } else { 'post-blob' }
+        [void]$ownedDownloadLocations.Add($blobLabel + '-selected')
+        [void]$ownedDownloadLocations.Add($blobLabel + '-default')
         if (-not (Cdp $blobCase.action $out.FullName)) { throw 'Blob download click failed' }
         $script:downloadSaveInvoked = $false
         Wait-Check {
@@ -452,10 +460,35 @@ try {
     $cancel = Native-Element $cancelCondition
     $cancel.GetCurrentPattern([System.Windows.Automation.InvokePattern]::Pattern).Invoke()
     Wait-Check { $client.HasExited } 'startup fallback Cancel exits client'
-    'Server form, persistent HttpOnly cookie across relaunch and recoveries, default attachment save, same document, HTTP retry, TLS rejection, broken transport, native timeout, renderer recovery, browser restart and runtime startup fallback passed.' |
+    'Server form, persistent HttpOnly cookie across relaunch and recoveries, native Save As cancellation and selected paths for HTTP/generated Blob/authenticated POST Blob, exact bytes, same document, HTTP retry, TLS rejection, broken transport, native timeout, renderer recovery, browser restart and runtime startup fallback passed.' |
         Set-Content (Join-Path $out.FullName 'result.txt')
 } finally {
     try { Capture 'final' } catch { Write-Warning "Final screenshot unavailable: $_" }
+    if ($downloadFixturesStarted) {
+        try {
+            # Preserve only these known CI payloads. A missing chosen file alone
+            # cannot distinguish a default-path save from a rejected download.
+            $locations = @(
+                @{ label = 'http-selected'; path = $downloadFile },
+                @{ label = 'http-default'; path = $defaultDownloadFile },
+                @{ label = 'blob-selected'; path = (Join-Path $downloadDir.FullName 'tm-client-blob-audit.bin') },
+                @{ label = 'blob-default'; path = (Join-Path $env:USERPROFILE 'Downloads/tm-client-blob-audit.bin') },
+                @{ label = 'post-blob-selected'; path = (Join-Path $downloadDir.FullName 'tm-client-post-blob-audit.bin') },
+                @{ label = 'post-blob-default'; path = (Join-Path $env:USERPROFILE 'Downloads/tm-client-post-blob-audit.bin') }
+            )
+            $evidence = New-Item -ItemType Directory -Force (Join-Path $out.FullName 'download-locations')
+            @($locations | ForEach-Object {
+                $owned = $ownedDownloadLocations.Contains($_.label)
+                $present = if ($owned) { Test-Path -LiteralPath $_.path -PathType Leaf } else { $null }
+                $length = if ($present) { (Get-Item -LiteralPath $_.path).Length } else { $null }
+                $hash = if ($present) { (Get-FileHash -LiteralPath $_.path).Hash } else { $null }
+                if ($present -and $length -le 1024) {
+                    Copy-Item -LiteralPath $_.path -Destination (Join-Path $evidence.FullName ($_.label + '.bin'))
+                }
+                [pscustomobject]@{ location = $_.label; owned = $owned; present = $present; bytes = $length; sha256 = $hash }
+            }) | ConvertTo-Json | Set-Content (Join-Path $evidence.FullName 'locations.json')
+        } catch { Write-Warning "Known download fixture evidence unavailable: $_" }
+    }
     if ($client -and -not $client.HasExited) { Stop-Process -Id $client.Id -Force -ErrorAction SilentlyContinue }
     if ($fixture -and -not $fixture.HasExited) { Stop-Process -Id $fixture.Id -Force -ErrorAction SilentlyContinue }
     foreach ($key in $createdPolicies) {
