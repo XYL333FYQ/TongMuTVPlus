@@ -11,6 +11,34 @@ beforeEach(() => {
 afterEach(() => {
   cleanup();
   global.fetch = originalFetch;
+  document.documentElement.removeAttribute('data-tm-platform');
+  delete window.TMShell;
+});
+
+test('old-client manual copy field stays reachable inside the version focus trap', async () => {
+  document.documentElement.setAttribute('data-tm-platform', 'app');
+  window.TMShell = {};
+  Object.defineProperty(navigator, 'clipboard', {
+    configurable: true,
+    value: undefined,
+  });
+  Object.defineProperty(document, 'execCommand', {
+    configurable: true,
+    value: jest.fn().mockReturnValue(false),
+  });
+  render(<VersionPanel isOpen onClose={jest.fn()} />);
+  const link = screen.getByRole('link', {
+    name: 'TongMuTV Plus 项目仓库（复制链接）',
+  });
+  fireEvent.click(link);
+  const input = await screen.findByRole('textbox', { name: '可复制的链接' });
+  link.focus();
+  fireEvent.keyDown(link, { key: 'Tab' });
+  expect(document.activeElement).toBe(input);
+  fireEvent.keyDown(input, { key: 'Tab' });
+  expect(document.activeElement).toBe(
+    screen.getByRole('button', { name: '关闭' })
+  );
 });
 
 describe('project version information', () => {

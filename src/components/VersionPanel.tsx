@@ -7,6 +7,8 @@ import { createPortal } from 'react-dom';
 import { BRAND_NAME, PROJECT_REPOSITORY_URL } from '@/lib/brand';
 import { useReleaseInfo } from '@/hooks/useReleaseInfo';
 
+import ExternalLink from '@/components/ExternalLink';
+
 interface VersionPanelProps {
   isOpen: boolean;
   onClose: () => void;
@@ -21,6 +23,7 @@ export const VersionPanel: React.FC<VersionPanelProps> = ({
   const titleId = useId();
   const closeButton = useRef<HTMLButtonElement>(null);
   const repositoryLink = useRef<HTMLAnchorElement>(null);
+  const panel = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -36,18 +39,22 @@ export const VersionPanel: React.FC<VersionPanelProps> = ({
     document.documentElement.style.overflow = 'hidden';
     closeButton.current?.focus();
 
-    // 在关闭按钮与仓库链接之间循环，键盘焦点留在面板内。
+    // Include the selectable fallback field if clipboard access is unavailable.
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         event.preventDefault();
         onClose();
       } else if (event.key === 'Tab') {
         event.preventDefault();
-        if (document.activeElement === closeButton.current) {
-          repositoryLink.current?.focus();
-        } else {
-          closeButton.current?.focus();
-        }
+        const items = Array.from(
+          panel.current?.querySelectorAll<HTMLElement>(
+            'button:not(:disabled), a[href], input:not(:disabled)'
+          ) || []
+        );
+        const index = items.indexOf(document.activeElement as HTMLElement);
+        const next =
+          (index + (event.shiftKey ? -1 : 1) + items.length) % items.length;
+        items[next]?.focus();
       }
     };
     document.addEventListener('keydown', handleKeyDown);
@@ -72,6 +79,7 @@ export const VersionPanel: React.FC<VersionPanelProps> = ({
         aria-hidden='true'
       />
       <div
+        ref={panel}
         role='dialog'
         aria-modal='true'
         aria-labelledby={titleId}
@@ -131,17 +139,17 @@ export const VersionPanel: React.FC<VersionPanelProps> = ({
             )}
           </section>
           <div className='space-y-3'>
-            <a
+            <ExternalLink
               ref={repositoryLink}
               href={PROJECT_REPOSITORY_URL}
               target='_blank'
               rel='noopener noreferrer'
-              aria-label={`${BRAND_NAME} 项目仓库（在新标签页打开）`}
+              label={`${BRAND_NAME} 项目仓库`}
               className='inline-flex min-h-[44px] items-center justify-center gap-2 rounded-full border border-line bg-raised px-5 py-2.5 text-sm font-medium text-fg transition hover:bg-line focus-visible:outline focus-visible:outline-2 focus-visible:outline-fg tm-press'
             >
               <Github className='h-4 w-4 shrink-0' aria-hidden='true' />
               {BRAND_NAME} 项目仓库
-            </a>
+            </ExternalLink>
           </div>
         </div>
       </div>

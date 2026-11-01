@@ -15,6 +15,8 @@ export interface TMShellApi {
   setPlaying?: (playing: boolean) => void;
   /** v1 media snapshot for hosts with their own system MediaSession. */
   setMediaState?: (snapshot: string) => void;
+  /** True only when user-created HTTP(S) windows are handed to the system. */
+  supportsExternalLinks?: () => boolean;
   /** 下载新安装包并调起系统安装界面（仅新版安卓壳有；旧壳没有时网页改为打开下载链接） */
   installUpdate?: (url: string) => void;
 }

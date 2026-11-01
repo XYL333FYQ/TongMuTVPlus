@@ -14,6 +14,7 @@ import { BRAND_NAME, PROJECT_REPOSITORY_URL } from '@/lib/brand';
 import { useRememberedTabHref } from '@/hooks/useRememberedTabHref';
 
 import { BackButton } from '@/components/BackButton';
+import ExternalLink from '@/components/ExternalLink';
 import MobileHeader from '@/components/MobileHeader';
 import PageContainer from '@/components/PageContainer';
 import {
@@ -99,19 +100,19 @@ export default function PersistentHeader() {
                 }
               }}
             >
-              <a
+              <ExternalLink
                 href={PROJECT_REPOSITORY_URL}
                 target='_blank'
                 rel='noopener noreferrer'
                 className='tm-shell-icon tm-press min-h-[44px] min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-fg'
-                aria-label={`${BRAND_NAME} GitHub 仓库（在新标签页打开）`}
+                label={`${BRAND_NAME} GitHub 仓库`}
                 aria-describedby={
                   repositoryHintVisible ? repositoryHintId : undefined
                 }
                 onClick={() => setRepositoryHintVisible(false)}
               >
                 <Github size={20} aria-hidden='true' />
-              </a>
+              </ExternalLink>
               {repositoryHintVisible && (
                 <span
                   id={repositoryHintId}

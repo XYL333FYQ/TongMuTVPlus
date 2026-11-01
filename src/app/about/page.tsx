@@ -11,6 +11,7 @@ import {
 } from '@/lib/brand';
 
 import ReleaseVersion from '@/components/account/ReleaseVersion';
+import ExternalLink from '@/components/ExternalLink';
 import PageContainer from '@/components/PageContainer';
 import PageLayout from '@/components/PageLayout';
 import ClientBuildInfo from '@/components/shell/ClientBuildInfo';
@@ -58,16 +59,16 @@ export default function AboutPage() {
           >
             返回影视
           </Link>
-          <a
+          <ExternalLink
             href={PROJECT_REPOSITORY_URL}
             target='_blank'
             rel='noopener noreferrer'
-            aria-label={`${BRAND_NAME} 项目仓库（在新标签页打开）`}
+            label={`${BRAND_NAME} 项目仓库`}
             className='inline-flex min-h-[44px] items-center justify-center gap-2 rounded-full border border-line bg-raised px-5 py-2.5 text-sm font-medium text-fg transition hover:bg-line focus-visible:outline focus-visible:outline-2 focus-visible:outline-fg tm-press'
           >
             <Github className='h-4 w-4 shrink-0' aria-hidden='true' />
             {BRAND_NAME} 项目仓库
-          </a>
+          </ExternalLink>
         </div>
         <p className='mt-3 text-sm leading-6 text-muted'>
           {PROJECT_STAR_MESSAGE}

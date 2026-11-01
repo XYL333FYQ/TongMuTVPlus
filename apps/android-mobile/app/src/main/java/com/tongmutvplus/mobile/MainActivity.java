@@ -23,6 +23,7 @@ import android.net.http.SslError;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.Message;
 import android.os.VibrationEffect;
 import android.os.Vibrator;
 import android.provider.Settings;
@@ -69,6 +70,7 @@ public class MainActivity extends Activity {
     private FrameLayout root;
     private FrameLayout webHolder;
     private WebView webView;
+    private ExternalWindow externalWindow;
     private AppStateView localSurface;
     private final LoadState loadState = new LoadState();
     private long webViewEpoch;
@@ -166,6 +168,8 @@ public class MainActivity extends Activity {
 
         WebSettings settings = webView.getSettings();
         settings.setJavaScriptEnabled(true);
+        settings.setSupportMultipleWindows(true);
+        settings.setJavaScriptCanOpenWindowsAutomatically(false);
         settings.setDomStorageEnabled(true);
         settings.setDatabaseEnabled(true);
         settings.setMediaPlaybackRequiresUserGesture(false);
@@ -194,6 +198,18 @@ public class MainActivity extends Activity {
                 ? new Api26WebViewClient(epoch) : new AppWebViewClient(epoch));
 
         webView.setWebChromeClient(new WebChromeClient() {
+            @Override
+            public boolean onCreateWindow(WebView view, boolean isDialog, boolean isUserGesture, Message result) {
+                if (!isUserGesture || epoch != webViewEpoch || view != webView || errorShown
+                        || isFinishing() || isDestroyed() || externalWindow != null
+                        || !(result.obj instanceof WebView.WebViewTransport)) return false;
+                ExternalWindow pending = new ExternalWindow(epoch);
+                externalWindow = pending;
+                ((WebView.WebViewTransport) result.obj).setWebView(pending.view);
+                result.sendToTarget();
+                return true;
+            }
+
             @Override
             public void onShowCustomView(View view, CustomViewCallback callback) {
                 if (epoch != webViewEpoch) {
@@ -234,6 +250,92 @@ public class MainActivity extends Activity {
                 return true;
             }
         });
+    }
+
+    /** A short-lived, script-free transport captures the requested URL. It never
+     * owns the application document, cookies interface, media or TMShell bridge. */
+    private final class ExternalWindow extends WebViewClient {
+        final WebView view;
+        final long epoch;
+        final long documentToken;
+        boolean finished;
+        boolean disposed;
+        final Runnable timeout = () -> finish(null);
+
+        ExternalWindow(long epoch) {
+            this.epoch = epoch;
+            documentToken = loadState.token();
+            view = new WebView(MainActivity.this);
+            view.getSettings().setJavaScriptEnabled(false);
+            view.getSettings().setAllowFileAccess(false);
+            view.getSettings().setAllowContentAccess(false);
+            view.setAlpha(0f);
+            view.setEnabled(false);
+            view.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS);
+            view.setWebViewClient(this);
+            root.addView(view, new FrameLayout.LayoutParams(1, 1));
+            root.postDelayed(timeout, 5000);
+        }
+
+        @SuppressWarnings("deprecation")
+        @Override public boolean shouldOverrideUrlLoading(WebView child, String url) {
+            finish(url);
+            return true;
+        }
+
+        @Override public boolean shouldOverrideUrlLoading(WebView child, WebResourceRequest request) {
+            if (request.isForMainFrame()) finish(request.getUrl().toString());
+            return true;
+        }
+
+        @Override public void onPageStarted(WebView child, String url, Bitmap icon) {
+            if (!"about:blank".equals(url)) finish(url);
+        }
+
+        @Override public WebResourceResponse shouldInterceptRequest(WebView child, WebResourceRequest request) {
+            // Never send a destination request (or app cookies) from this
+            // transport, even if a provider skips shouldOverrideUrlLoading.
+            if (request.isForMainFrame()) {
+                String url = request.getUrl().toString();
+                root.post(() -> { if (!"about:blank".equals(url)) finish(url); });
+            }
+            return new WebResourceResponse("text/plain", "UTF-8",
+                    new java.io.ByteArrayInputStream(new byte[0]));
+        }
+
+        void finish(String url) {
+            if (finished) return;
+            finished = true;
+            // Return from the engine callback before launching an Activity or
+            // destroying its transport. A stale/recovered document cannot act.
+            root.post(() -> {
+                boolean current = externalWindow == this && epoch == webViewEpoch
+                        && documentToken == loadState.token()
+                        && !errorShown && !isFinishing() && !isDestroyed();
+                dispose();
+                if (!current) return;
+                if (!ExternalLinkPolicy.allowed(url)) {
+                    Toast.makeText(MainActivity.this, "暂时无法打开此链接，请复制后在相应应用中打开。", Toast.LENGTH_LONG).show();
+                    return;
+                }
+                try {
+                    startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url).normalizeScheme()).addCategory(Intent.CATEGORY_BROWSABLE));
+                } catch (RuntimeException ignored) {
+                    Toast.makeText(MainActivity.this, "未能打开外部应用，请检查是否已安装浏览器。", Toast.LENGTH_LONG).show();
+                }
+            });
+        }
+
+        void dispose() {
+            if (disposed) return;
+            disposed = true;
+            finished = true;
+            root.removeCallbacks(timeout);
+            if (externalWindow == this) externalWindow = null;
+            root.removeView(view);
+            try { view.stopLoading(); } catch (RuntimeException ignored) { }
+            try { view.destroy(); } catch (RuntimeException ignored) { }
+        }
     }
 
     private class AppWebViewClient extends WebViewClient {
@@ -435,6 +537,7 @@ public class MainActivity extends Activity {
     }
 
     private void discardWebView(WebView view) {
+        if (externalWindow != null) externalWindow.dispose();
         if (view == webView) webView = null;
         webViewEpoch += 1;
         if (view == null) return;
@@ -736,6 +839,9 @@ public class MainActivity extends Activity {
         private final long epoch;
         ShellBridge(long epoch) { this.epoch = epoch; }
         private boolean current() { return epoch == webViewEpoch && webView != null && !isFinishing() && !isDestroyed(); }
+
+        @JavascriptInterface
+        public boolean supportsExternalLinks() { return true; }
 
         @JavascriptInterface
         public void ready() {

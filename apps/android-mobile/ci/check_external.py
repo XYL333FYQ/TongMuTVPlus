@@ -19,8 +19,9 @@ if re.search(r'GET /external-destination\?automatic', log):
 if mode != 'automatic':
     activities = open(sys.argv[3], encoding='utf-8').read()
     resumed = '\n'.join(line for line in activities.splitlines()
-                        if re.search(r'(?:mResumedActivity|topResumedActivity):', line))
-    if not resumed or 'com.tongmutvplus.mobile/' in resumed:
+                        if re.search(r'(?:mResumedActivity|topResumedActivity|ResumedActivity)[:=]', line))
+    if ('com.tongmutvplus.mobile/' in resumed or not
+            re.search(r'com\.android\.(?:chrome|browser)/|ResolverActivity|ChooserActivity', resumed)):
         sys.exit('User link did not hand off to a system browser or chooser')
     # Some clean emulator images show browser onboarding. Do not accept its
     # terms automatically or call that an actual destination-page visit.
