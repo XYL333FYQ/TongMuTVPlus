@@ -330,6 +330,7 @@ pub fn install(window: &WebviewWindow) -> tauri::Result<()> {
             )?;
 
             let shared = state.clone();
+            let download_app = app.clone();
             if let Ok(downloads) = core.cast::<ICoreWebView2_4>() {
                 downloads.add_DownloadStarting(
                     &DownloadStartingEventHandler::create(Box::new(move |_, args| {
@@ -344,6 +345,11 @@ pub fn install(window: &WebviewWindow) -> tauri::Result<()> {
                             if matched {
                                 *shared.aborted.lock().unwrap_or_else(|e| e.into_inner()) = None;
                                 *shared.loading.lock().unwrap_or_else(|e| e.into_inner()) = None;
+                            }
+                            if shared.closing.load(Ordering::Acquire) {
+                                args.SetCancel(true)?;
+                            } else {
+                                crate::native_download::request(&download_app, &args)?;
                             }
                         }
                         Ok(())
