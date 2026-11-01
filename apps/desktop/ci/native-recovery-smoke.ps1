@@ -105,7 +105,7 @@ function Click-Native([string]$Name) {
     $pattern = $button.GetCurrentPattern([System.Windows.Automation.InvokePattern]::Pattern)
     $pattern.Invoke()
 }
-function Save-OwnedDownload([string]$Destination) {
+function Save-OwnedDownload([string]$Destination, [switch]$Cancel) {
     $english = [System.Windows.Automation.PropertyCondition]::new(
         [System.Windows.Automation.AutomationElement]::NameProperty, 'Save As')
     $chinese = [System.Windows.Automation.PropertyCondition]::new(
@@ -123,7 +123,15 @@ function Save-OwnedDownload([string]$Destination) {
             $ownerId = $process.ParentProcessId
         }
         if (-not $owned) { continue }
-        Capture '00-native-save-dialog'
+        Capture $(if ($Cancel) { '00-native-save-cancel' } else { '00-native-save-dialog' })
+        if ($Cancel) {
+            $cancelId = [System.Windows.Automation.PropertyCondition]::new(
+                [System.Windows.Automation.AutomationElement]::AutomationIdProperty, '2')
+            $cancelButton = $dialog.FindFirst([System.Windows.Automation.TreeScope]::Descendants, $cancelId)
+            if (-not $cancelButton) { throw 'Owned Save As dialog has no Cancel action' }
+            $cancelButton.GetCurrentPattern([System.Windows.Automation.InvokePattern]::Pattern).Invoke()
+            return $true
+        }
         $editType = [System.Windows.Automation.PropertyCondition]::new(
             [System.Windows.Automation.AutomationElement]::ControlTypeProperty,
             [System.Windows.Automation.ControlType]::Edit)
@@ -243,6 +251,14 @@ try {
     $downloadFile = Join-Path $downloadDir.FullName 'native-attachment.txt'
     $defaultDownloadFile = Join-Path $env:USERPROFILE 'Downloads/tm-client-audit.txt'
     if (Test-Path -LiteralPath $defaultDownloadFile) { throw 'Unexpected preexisting fixture file; do not overwrite it' }
+    if (-not (Cdp 'download-native' $out.FullName)) { throw 'Download cancellation click failed' }
+    Wait-Check { Save-OwnedDownload '' -Cancel } 'actual native Save As cancellation'
+    Start-Sleep -Seconds 1
+    if ((Test-Path -LiteralPath $defaultDownloadFile) -or (Test-Path -LiteralPath $downloadFile)) {
+        throw 'Canceled Save As still created a downloaded file'
+    }
+    if (-not (Cdp 'download-native-ready')) { throw 'Cancel discarded the current document' }
+    if ($null -ne (Native-Button '重新打开')) { throw 'Canceled download triggered whole-app recovery' }
     if (-not (Cdp 'download-native' $out.FullName)) { throw 'Native attachment click failed' }
     $script:downloadSaveInvoked = $false
     Wait-Check {
@@ -256,6 +272,7 @@ try {
         }
         (Test-Path -LiteralPath $downloadFile) -or (Test-Path -LiteralPath $defaultDownloadFile)
     } 'real WebView attachment file received'
+    if (-not $downloadSaveInvoked) { throw 'Attachment bypassed the required native Save As choice' }
     if (-not (Test-Path -LiteralPath $downloadFile)) {
         Copy-Item -LiteralPath $defaultDownloadFile -Destination $downloadFile
     }
@@ -284,6 +301,7 @@ try {
             }
             (Test-Path -LiteralPath $blobPath) -or (Test-Path -LiteralPath $defaultBlobPath)
         } ('actual saved file: ' + $blobCase.action)
+        if (-not $downloadSaveInvoked) { throw 'Blob bypassed the required native Save As choice' }
         if (-not (Test-Path -LiteralPath $blobPath)) {
             Copy-Item -LiteralPath $defaultBlobPath -Destination $blobPath
         }

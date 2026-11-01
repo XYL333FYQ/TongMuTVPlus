@@ -399,11 +399,6 @@ document.querySelector('#fixture-post-blob').onclick=async()=>{
           2
         )
       );
-      const blobError = await command('Runtime.evaluate', {
-        expression: 'window.__tmCiBlobError || ""',
-        returnByValue: true,
-      });
-      if (blobError.result.value) throw new Error(blobError.result.value);
     } else if (
       action === 'download-ready' ||
       action === 'download-native-ready'
@@ -413,7 +408,7 @@ document.querySelector('#fixture-post-blob').onclick=async()=>{
       }
       const result = await command('Runtime.evaluate', {
         expression:
-          'document.title === "NativeRecoveryFixture" && performance.timeOrigin === window.__tmCiDownloadOrigin',
+          'document.title === "NativeRecoveryFixture" && performance.timeOrigin === window.__tmCiDownloadOrigin && !window.__tmCiBlobError',
         returnByValue: true,
       });
       if (result.result.value !== true) {
