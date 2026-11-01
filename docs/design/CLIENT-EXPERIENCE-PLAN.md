@@ -226,3 +226,5 @@
 - PiP 新候选：PipPolicy 能力/全屏/暂停/故障/重复进入及实际宽高系统边界纯 Java 红 → 绿；网页实际视频维度与 resize 更新回归红 → 绿，2 套 13 项绿。新增可选视频宽高字段，旧 v1 快照缺字段继续兼容；PiP 配置变化不触发既有竖屏退出全屏逻辑。尚未 Android 编译/实际 PiP，不提前标已完成。
 - PiP 实际门禁已加入：仅 API34 下载官方 MDN CC0 flower.webm 并核对已验证 SHA256，不提交或打包此测试视频；真实点全屏按钮、系统 Home、检查应用 task 为 pinned、系统媒体暂停/恢复、同视频/同文档且时间继续、回前台仍全屏。比较考虑循环片段时间回绕；解析器正反用例/AST/shell 语法通过。临时片/证书按文件清理，未新增应用依赖。
 - PiP 候选本机完整 typecheck/lint/Jest176 套 1147 项/房间 27 项均 0，Java 策略与网页维度回归通过。完整格式仅报保留的未跟踪全 NUL STATUS 文档；本批源码/文档已同版本格式化，干净检出完整格式门禁待提交后的 Linux Checks。Android 真实全屏解码/进入 pinned/同实例暂停恢复与返回仍未运行，不把 API34 上一批系统音频通过当成 PiP 通过。
+- PiP 候选 6904a7e 已推 codex/client-pip-verification；Android41295832709 的 APK 已成功，API23/24/34 当前仍运行；Linux Checks41295830551 当前在 Build。须继续轮询同两个 run，不能因等待或日志不可用重新触发。尚未取得真实 PiP 结果，不发布。
+- 8fef3d1 网页验收已结束，按不可变镜像身份核对后停止 tm-client-audit-8fef3d1；浏览器容器先前退出 0。VPS 当前仅正式 tongmutvplus 与原有 3xui 运行，正式 health=ok/buildSha=c28ab11；截图/日志/镜像保留，未切线上。清理证据 resize-audit-cleanup.log。
