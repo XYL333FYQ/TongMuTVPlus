@@ -32,11 +32,15 @@ thread_local! {
 struct Pending {
     args: ICoreWebView2DownloadStartingEventArgs,
     deferral: ICoreWebView2Deferral,
+    approved: Cell<bool>,
 }
 
 impl Drop for Pending {
     fn drop(&mut self) {
         unsafe {
+            if !self.approved.get() {
+                let _ = self.args.SetCancel(true);
+            }
             let _ = self.deferral.Complete();
         }
     }
@@ -97,14 +101,20 @@ fn drain(app: AppHandle) {
                 let mut suggested = PWSTR::null();
                 pending.args.ResultFilePath(&mut suggested)?;
                 if let Some(path) = destination(owner, &webview2_com::take_pwstr(suggested))? {
-                    let path = wide(&path);
-                    pending.args.SetResultFilePath(PCWSTR(path.as_ptr()))?;
-                    pending.args.SetCancel(false)?;
+                    let encoded = wide(&path);
+                    pending.args.SetResultFilePath(PCWSTR(encoded.as_ptr()))?;
+                    let mut accepted = PWSTR::null();
+                    pending.args.ResultFilePath(&mut accepted)?;
+                    if webview2_com::take_pwstr(accepted) != path {
+                        return Err(windows::core::Error::from_hresult(
+                            windows::Win32::Foundation::E_FAIL,
+                        ));
+                    }
+                    pending.approved.set(true);
                 }
                 Ok(())
             };
             if choose().is_err() {
-                let _ = pending.args.SetCancel(true);
                 let _ = MessageBoxW(
                     Some(owner),
                     w!("无法选择保存位置。请重新下载后再试。"),
@@ -123,11 +133,20 @@ pub unsafe fn request(
     app: &AppHandle,
     args: &ICoreWebView2DownloadStartingEventArgs,
 ) -> windows::core::Result<()> {
+    let deferral = match args.GetDeferral() {
+        Ok(deferral) => deferral,
+        Err(error) => {
+            let _ = args.SetCancel(true);
+            return Err(error);
+        }
+    };
     let pending = Pending {
         args: args.clone(),
-        deferral: args.GetDeferral()?,
+        deferral,
+        approved: Cell::new(false),
     };
-    pending.args.SetCancel(true)?;
+    // The deferral already postpones the decision. Match the SDK's final-decision
+    // pattern instead of canceling first and trying to undo that cancellation.
     let full =
         PENDING.with(|queue| queue.borrow().len()) + usize::from(ACTIVE.with(Cell::get)) >= 8;
     if full {
