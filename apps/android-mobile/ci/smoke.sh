@@ -105,11 +105,12 @@ if [ "$PKG" = "com.tongmutvplus.mobile" ]; then
     python3 "$(dirname "$0")/ui_target.py" "$OUT/recovery-latest.xml" "$1" "$2"
   }
   wait_target() {
-    for _ in $(seq 1 12); do
+    for _ in $(seq 1 "${3:-12}"); do
       if ui_target "$1" "$2"; then return 0; fi
       sleep 1
     done
     echo "Missing recovery target: $1 $2" >&2
+    adb exec-out screencap -p >"$OUT/missing-target.png"
     return 1
   }
   tap_target() {
@@ -130,7 +131,9 @@ if [ "$PKG" = "com.tongmutvplus.mobile" ]; then
     wait_target text 'HTTP failure test' >/dev/null || return 1
     adb exec-out screencap -p >"$OUT/6-http-retried.png"
     tap_target text 'TLS failure test' || return 1
-    wait_target text '安全连接未通过验证' >/dev/null || return 1
+    # Keep the assertion strict, but observe beyond the 40-second native watchdog
+    # so a missing callback is not confused with an already-visible loading view.
+    wait_target text '安全连接未通过验证' 22 >/dev/null || return 1
     adb exec-out screencap -p >"$OUT/7-tls-native-recovery.png"
     tap_target id tm_load_settings || return 1
     # The address dialog retains the original HTTP server, not the bad TLS URL.

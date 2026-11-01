@@ -257,7 +257,8 @@ public class MainActivity extends Activity {
         }
 
         @Override public void onPageStarted(WebView view, String url, Bitmap favicon) {
-            Log.d("TongMuClient", "page start current=" + current(view) + " allowed=" + loadState.callbackMayStart());
+            Log.d("TongMuClient", "page start current=" + current(view) + " allowed=" + loadState.callbackMayStart()
+                    + " scheme=" + (url == null ? "none" : Uri.parse(url).getScheme()));
             if (!current(view) || !isWebUrl(url) || !loadState.callbackMayStart()) return;
             documentToken = beginNavigation(url);
         }
@@ -278,11 +279,15 @@ public class MainActivity extends Activity {
 
         @SuppressWarnings("deprecation")
         @Override public void onReceivedError(WebView view, int code, String description, String failingUrl) {
+            Log.d("TongMuClient", "legacy network callback code=" + code + " current=" + current(view)
+                    + " matches=" + loadState.matches(documentToken, failingUrl) + " hasUrl=" + (failingUrl != null));
             // Older system providers still report main-document failures here.
             if (current(view) && loadState.matches(documentToken, failingUrl)) showNetworkError(code);
         }
 
         @Override public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
+            Log.d("TongMuClient", "network callback code=" + error.getErrorCode() + " current=" + current(view)
+                    + " main=" + request.isForMainFrame() + " matches=" + loadState.matches(documentToken, request.getUrl().toString()));
             if (!current(view) || !request.isForMainFrame() || !loadState.matches(documentToken, request.getUrl().toString())) return;
             showNetworkError(error.getErrorCode());
         }
@@ -305,6 +310,8 @@ public class MainActivity extends Activity {
         }
 
         @Override public void onReceivedSslError(WebView view, SslErrorHandler handler, SslError error) {
+            Log.w("TongMuClient", "TLS rejected code=" + error.getPrimaryError() + " current=" + current(view)
+                    + " matches=" + loadState.matches(documentToken, error.getUrl()) + " hasUrl=" + (error.getUrl() != null));
             handler.cancel();
             // Poster/CDN failures must not replace the entire application.
             if (!current(view) || !loadState.matches(documentToken, error.getUrl())) return;

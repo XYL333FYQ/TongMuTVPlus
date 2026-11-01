@@ -218,3 +218,7 @@
 - Android 夹具新增真实本地 PCM、cmd media_session 系统播放暂停、后台恢复、单应用会话/实际标题与播放状态、锁定 actions=0、移除清理的门禁；原通知按钮仍实际点击，兼容系统自带中英文播放暂停标签。夹具权限标志不是正式房间，正式权限另由网页控制器回归证明。尚未做真实锁屏/新 PiP 验收。
 - 8fef3d1 网页候选镜像 41292892315 完整双架构成功，digest c4d3b3b215ca8c731e3433946ff7153f7e7c0fe8122eca654b426caeef3bcc4a；正式服务未切。正以 3015 端口/独立数据库与容器取证响应式刷新，不使用该旧镜像证明本批未提交的媒体快照。
 - 系统媒体会话候选本机完整门禁：typecheck/lint 0、Jest176 套 1146 项 0、房间 27 项 0；Java --release17 状态测试与真实 TLS 并发测试 0，Python AST/冒烟 shell 语法/媒体会话解析正反夹具通过。完整格式正常运行，仅报先前保留的未跟踪全 NUL STATUS 文档，不是本批提交文件；其余文件检查通过，Linux 干净检出仍须完整门禁。当前尚未 Android 编译/系统按钮实测，不把纯 Java 或 Jest 当原生验收。
+- ca4b0fa 的 Checks41294340821 完整通过；Android41294341819 的 APK/Java/TLS 并发夹具门禁、API24/API34 通过。API34 实际 MediaSession 唯一应用会话、影片标题、后台暂停后恢复、权限锁 actions=0 与无多余回调、媒体移除后无活跃会话均通过；实看 15-session-paused-notification.png 为系统媒体卡片、有片名和播放按钮。旧通知两次真实点击回归及 HTTP/TLS/显示进程/更新授权流程也通过。尚未实际锁屏或新 PiP，不将系统卡片当 OriginOS 真机结论。
+- API23 仍停在主 TLS，没有到本批媒体流程；并发服务器修复后仍失败，证伪“夹具串行阻塞是充分解释”。停止原样重跑；现只加无 URL/描述的网络/SSL 回调 current、matches、hasUrl 与 page-start scheme 顺序日志，并将严格 TLS 断言观察延长到本地 40 秒 watchdog 以后，失败自动保存截图。证书取消及错误判定未放宽，结果仍待新候选。
+- 8fef3d1 浏览器闭环：3015 独立生产候选+真实 CDP 触摸，从 1440 首次挂载变 390 可刷新、变宽取消未释放手势、再缩回可重新刷新；主动 503 保留列表，同 timeOrigin/同底栏 DOM，390/820/1280 深浅六图无溢出，pageerror 空。浏览器容器退出 0，全部图已取回并实看；测试资料/模拟 TMShell/Worker blocked，非真机。失败夹具下旧全局错误与局部刷新提示先后出现，记为后续 C11 反馈去重待处理，不能把截图称无错误提示。
+- 当前隔离网页容器 tm-client-audit-8fef3d1 仍运行 3015，浏览器 tm-client-browser-resize-8fef3d1 已退出 0；证据 output/client-experience/vps-8fef3d1。正式 VPS 仍 c28ab11，未发布任何新客户端。
