@@ -146,3 +146,7 @@
 - 用户选择稍后进行 OriginOS 真机诊断；不反复催测，继续独立原生工作。网页导航工作量与吞点按问题已修，但整条底栏卡着上移的手机根因仍未证明，不标为已解决。
 - Windows 92f2aac 的 41226704056 通过纯 Rust 4 项、x64/ARM64 构建、安装及便携启动，release 跳过。取回两架构完全一致的 Cargo.lock（SHA256 217188da882f4c2942be85dd20953e4bc5843ed27743d4068e508755115a4fd3）纳入源码并启用 --locked；取回实际 rustfmt 输出，新增无 WebView 的启动失败原生兜底。该新增兜底尚未编译/实测，不把旧候选绿灯算作新补丁验收。
 - 第五批实际故障门禁实施：CI 专用 loopback HTTP 503→ 重试、CDP 实际 Page.crash→ 同宿主 PID 恢复、连接失败 → 原生按钮打开本地设置；以 Windows UIAutomation 操作真实宿主按钮、保存截图，不能用页面 JS 弹窗代替原生恢复验证。新门禁加入 release 的 needs，尚待 Windows runner 结果。无本地 Rust 安装、无应用依赖新增、无正式数据写入；浏览器主进程退出、启动失败真实冒烟、合法下载与外链分流仍待完成。
+
+- Windows 新故障门禁候选 a847ad9：本机 typecheck/lint/完整 Jest175 套 1134 项/完整 format 均退出 0；Node 脚本语法及 PowerShell AST 通过。CI 41272382962 在 Rust 解析阶段抓到新启动兜底的非 Windows return 语句误用逗号，已改分号（d6ea701），不归类环境崩溃；41272436931 纯 Rust 门禁已绿、两架构编译进行中，未声称实际恢复通过。
+- 已取回 d6ea701 的实际 rustfmt 输出并确认与源码无差异，后续工作流改为 rustfmt --check，移除临时自动改源码/输出格式候选步骤。增加测试脚本中的浏览器主进程精准终止与重启到设置、独立缺失 runtime 环境覆盖启动兜底场景；仅作用于隔离 runner 自己启动的进程，不卸载系统组件。扩展脚本和新 check 门禁还未在 runner 执行。
+- c28ab11 的导航六图、实际拖动图及 Worker 结果已完整取回 output/client-experience/vps-c28ab11，实看 390 浅色与 1280 深色；同一节点/timeOrigin/top、haptics8、pageerror 空。当前公开 /health 再核对 status=ok、buildSha=c28ab11；不将受控浏览器等同 OriginOS 帧呈现。
