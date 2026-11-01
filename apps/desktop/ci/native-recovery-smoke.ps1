@@ -188,6 +188,14 @@ try {
     if ($client.Id -eq $firstHostPid) { throw 'Relaunch did not create a new host process' }
     Wait-Check { Cdp 'profile' } 'persistent HttpOnly cookie survives normal relaunch'
     Capture '00-profile-relaunched'
+    if (-not (Cdp 'external')) { throw 'External link click failed' }
+    Wait-Check { $null -ne (Invoke-RestMethod 'http://127.0.0.1:8085/diagnostics').externalReport } 'external link reports from its destination'
+    $externalStats = Invoke-RestMethod 'http://127.0.0.1:8085/diagnostics'
+    if ($externalStats.externalRequests -lt 1 -or $externalStats.externalReport.webview -or $externalStats.externalReport.desktopBridge) {
+        throw 'External content was not opened in a separate system browser'
+    }
+    if (-not (Cdp 'external-ready')) { throw 'External link discarded the client document' }
+    Capture '00-external-return'
     Wait-Check { Cdp 'ready' } 'ready before attachment download'
     $downloadDir = New-Item -ItemType Directory -Force (Join-Path $out.FullName 'downloads')
     $downloadFile = Join-Path $downloadDir.FullName 'native-attachment.txt'

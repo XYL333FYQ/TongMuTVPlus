@@ -12,7 +12,47 @@ async function main() {
     let tlsRequests = 0;
     let hangingRequests = 0;
     let brokenRequests = 0;
+    let externalRequests = 0;
+    let externalReport = null;
     const handler = (req, res) => {
+      if (req.url === '/external-report' && req.method === 'POST') {
+        let text = '';
+        req.on('data', (chunk) => {
+          text += chunk;
+          if (text.length > 1024) req.destroy();
+        });
+        req.on('end', () => {
+          try {
+            const report = JSON.parse(text);
+            if (
+              typeof report.webview !== 'boolean' ||
+              typeof report.desktopBridge !== 'boolean'
+            ) {
+              throw new Error('Invalid browser report');
+            }
+            externalReport = {
+              webview: report.webview === true,
+              desktopBridge: report.desktopBridge === true,
+            };
+            res.end('ok');
+          } catch {
+            res.writeHead(400);
+            res.end();
+          }
+        });
+        return;
+      }
+      if (req.url === '/external') {
+        externalRequests++;
+        res.writeHead(200, {
+          'Content-Type': 'text/html',
+          'Cache-Control': 'no-store',
+        });
+        res.end(
+          '<title>ExternalBrowserFixture</title><h1>External browser fixture</h1><script>fetch("/external-report",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({webview:!!(window.chrome&&window.chrome.webview),desktopBridge:!!window.__tmDesktopInit})})</script>'
+        );
+        return;
+      }
       if (req.url === '/profile-check') {
         res.writeHead(200, {
           'Content-Type': 'application/json',
@@ -36,7 +76,13 @@ async function main() {
       if (req.url === '/diagnostics') {
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(
-          JSON.stringify({ tlsRequests, hangingRequests, brokenRequests })
+          JSON.stringify({
+            tlsRequests,
+            hangingRequests,
+            brokenRequests,
+            externalRequests,
+            externalReport,
+          })
         );
         return;
       }
@@ -67,7 +113,7 @@ async function main() {
       res.end(
         fail
           ? '<title>Unavailable</title>Controlled HTTP 503'
-          : '<title>NativeRecoveryFixture</title><h1>Native recovery ready</h1><a id="fixture-download" href="/download">Download fixture</a>'
+          : '<title>NativeRecoveryFixture</title><h1>Native recovery ready</h1><a id="fixture-download" href="/download">Download fixture</a><p><a id="fixture-external" href="/external" target="_blank" rel="noopener">Open external fixture</a></p>'
       );
     };
     http.createServer(handler).listen(8085, '127.0.0.1');
@@ -178,6 +224,21 @@ async function main() {
         })
       );
       await new Promise((resolve) => setTimeout(resolve, 500));
+    } else if (action === 'external') {
+      await command('Runtime.evaluate', {
+        expression: 'window.__tmCiExternalOrigin=performance.timeOrigin',
+      });
+      await click('#fixture-external');
+    } else if (action === 'external-ready') {
+      const result = await command('Runtime.evaluate', {
+        expression:
+          'document.title === "NativeRecoveryFixture" && performance.timeOrigin === window.__tmCiExternalOrigin',
+        returnByValue: true,
+      });
+      if (result.result.value !== true)
+        throw new Error(
+          'Opening external content replaced the client document'
+        );
     } else if (action === 'hang') {
       // The navigation deliberately never commits. Schedule it from the page
       // so the driver can return while the native watchdog keeps waiting.
