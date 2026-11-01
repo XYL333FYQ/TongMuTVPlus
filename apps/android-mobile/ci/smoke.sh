@@ -298,6 +298,26 @@ PY
         python3 "$(dirname "$0")/check_external.py" "$OUT/server.log" automatic || return 1
       done
       adb exec-out screencap -p >"$OUT/18-external-returned.png"
+      tap_target text 'Native download test' || return 1
+      tap_target text 'Start download audio' || return 1
+      sleep 1
+      tap_target text 'Download authenticated file' || return 1
+      wait_target text '下载文件' >/dev/null || return 1
+      adb exec-out screencap -p >"$OUT/19-download-confirm.png"
+      tap_target text '下载' || return 1
+      downloaded=
+      for _ in $(seq 1 30); do
+        downloaded=$(adb shell 'ls /sdcard/Download/TongMu-download-smoke-*.txt 2>/dev/null' | tr -d '\r')
+        [ -n "$downloaded" ] && break
+        sleep 1
+      done
+      [[ "$downloaded" =~ ^/sdcard/Download/TongMu-download-smoke-[0-9]+\.txt$ ]] || return 1
+      adb pull "$downloaded" "$OUT/download-smoke.txt" || return 1
+      wait_target text 'Stop download audio' >/dev/null || return 1
+      sleep 2
+      python3 "$(dirname "$0")/check_download.py" "$OUT/server.log" "$OUT/download-smoke.txt" || return 1
+      adb exec-out screencap -p >"$OUT/19-download-complete.png"
+      tap_target text 'Stop download audio' || return 1
       tap_target text 'Return to recovery fixture' || return 1
       echo 'PASS: actual anchor/window.open handoff, source retained and automatic popup blocked'
     fi

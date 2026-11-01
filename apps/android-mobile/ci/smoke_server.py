@@ -160,6 +160,7 @@ EXTERNAL_PAGE = """<!doctype html><meta charset=utf-8><title>External link fixtu
 <body style='background:white;color:black;font:24px sans-serif'>
 <a href='/external-destination?anchor' target='_blank' rel='noopener noreferrer' style='display:block;line-height:56px'>Open external anchor</a>
 <button style='display:block;min-height:56px;font-size:24px' onclick="window.open('/external-destination?script','_blank','noopener,noreferrer')">Open external script</button>
+<a href='/native-download-test' style='display:block;line-height:56px'>Native download test</a>
 <a href='/' style='display:block;line-height:56px'>Return to recovery fixture</a>
 <script>
 var originalOrigin=performance.timeOrigin;
@@ -174,10 +175,48 @@ fetch('/external-report',{method:'POST',body:JSON.stringify({event:'destination'
 if(window.TMShell)TMShell.ready();
 </script></body>""".encode()
 
+DOWNLOAD_PAGE = """<!doctype html><meta charset=utf-8><title>Download fixture</title>
+<body style='background:white;color:black;font:24px sans-serif'>
+<button style='display:block;min-height:56px;font-size:24px' onclick='audio.play()'>Start download audio</button>
+<a href='/download-attachment' download='TongMu-download-smoke.txt' style='display:block;line-height:56px' onclick='clicked=true;report("download-clicked")'>Download authenticated file</a>
+<button style='display:block;min-height:56px;font-size:24px' onclick='audio.pause();started=false;publish()'>Stop download audio</button>
+<a href='/' style='display:block;line-height:56px'>Return to recovery fixture</a>
+<audio id=audio loop src='/tone.wav'></audio>
+<script>
+var audio=document.getElementById('audio'),originalAudio=audio,origin=performance.timeOrigin,started=false,clicked=false;
+function report(event){fetch('/download-report',{method:'POST',body:JSON.stringify({event:event,origin:origin,paused:audio.paused,time:audio.currentTime,sameAudio:audio===originalAudio&&audio.isConnected,clicked:clicked})})}
+function publish(){TMShell.setMediaState(JSON.stringify({v:1,active:started,playing:started&&!audio.paused,canControl:true,title:'Download fixture'}))}
+audio.onplaying=function(){started=true;publish();report('download-playing')};
+audio.onpause=function(){publish();report('download-paused')};
+TMShell.ready();publish();setInterval(function(){report('download-tick')},500);
+</script></body>""".encode()
+
 
 class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
         print("GET %s UA=%s" % (self.path, self.headers.get("User-Agent")), flush=True)
+        if self.path == '/download-attachment':
+            authenticated = 'tm-download-smoke=download-only' in self.headers.get('Cookie', '')
+            print('DOWNLOAD_AUTHENTICATED ' + str(authenticated), flush=True)
+            if not authenticated:
+                self.send_error(401)
+                return
+            body = b'TongMu Android download smoke\n'
+            self.send_response(200)
+            self.send_header('Content-Type', 'text/plain')
+            self.send_header('Content-Disposition', 'attachment; filename="TongMu-download-smoke.txt"')
+            self.send_header('Content-Length', str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+            return
+        if self.path == '/native-download-test':
+            self.send_response(200)
+            self.send_header('Content-Type', 'text/html; charset=utf-8')
+            self.send_header('Set-Cookie', 'tm-download-smoke=download-only; Path=/; HttpOnly; SameSite=Lax')
+            self.send_header('Content-Length', str(len(DOWNLOAD_PAGE)))
+            self.end_headers()
+            self.wfile.write(DOWNLOAD_PAGE)
+            return
         if self.path == '/native-external-test' or self.path.startswith('/external-destination?'):
             body = EXTERNAL_PAGE if self.path == '/native-external-test' else EXTERNAL_DESTINATION
             self.send_response(200)
@@ -230,7 +269,7 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_POST(self):
         length = int(self.headers.get("Content-Length") or 0)
-        label = "EXTERNAL_REPORT" if self.path == "/external-report" else "MEDIA_REPORT" if self.path == "/media-report" else "IME_REPORT" if self.path == "/ime-report" else "REPORT"
+        label = "DOWNLOAD_REPORT" if self.path == "/download-report" else "EXTERNAL_REPORT" if self.path == "/external-report" else "MEDIA_REPORT" if self.path == "/media-report" else "IME_REPORT" if self.path == "/ime-report" else "REPORT"
         print("%s %s" % (label, self.rfile.read(length).decode()), flush=True)
         self.send_response(204)
         self.end_headers()
