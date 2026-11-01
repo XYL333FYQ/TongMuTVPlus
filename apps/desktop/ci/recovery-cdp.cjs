@@ -1,5 +1,6 @@
 // CI-only loopback fixture and DevTools driver; never shipped in the client.
 const http = require('node:http');
+const https = require('node:https');
 const { once } = require('node:events');
 const path = require('node:path');
 const fs = require('node:fs');
@@ -8,25 +9,62 @@ async function main() {
   const action = process.argv[2];
   if (action === 'serve') {
     let failures = 0;
-    http
-      .createServer((req, res) => {
-        if (req.url === '/download') {
-          res.writeHead(200, {
-            'Content-Type': 'text/plain',
-            'Content-Disposition': 'attachment; filename="tm-client-audit.txt"',
-          });
-          res.end('TongMu native download fixture');
-          return;
-        }
-        const fail = req.url === '/unavailable' && failures++ === 0;
-        res.writeHead(fail ? 503 : 200, { 'Content-Type': 'text/html' });
+    let tlsRequests = 0;
+    let hangingRequests = 0;
+    let brokenRequests = 0;
+    const handler = (req, res) => {
+      if (req.url === '/diagnostics') {
+        res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(
-          fail
-            ? '<title>Unavailable</title>Controlled HTTP 503'
-            : '<title>NativeRecoveryFixture</title><h1>Native recovery ready</h1><a id="fixture-download" href="/download">Download fixture</a>'
+          JSON.stringify({ tlsRequests, hangingRequests, brokenRequests })
         );
-      })
-      .listen(8085, '127.0.0.1');
+        return;
+      }
+      if (req.url === '/hang') {
+        hangingRequests++;
+        return;
+      }
+      if (req.url === '/broken') {
+        brokenRequests++;
+        res.writeHead(200, {
+          'Content-Length': '10000',
+          'Content-Type': 'text/html',
+        });
+        res.write('<title>Broken transport fixture</title>');
+        setTimeout(() => res.destroy(), 50);
+        return;
+      }
+      if (req.url === '/download') {
+        res.writeHead(200, {
+          'Content-Type': 'text/plain',
+          'Content-Disposition': 'attachment; filename="tm-client-audit.txt"',
+        });
+        res.end('TongMu native download fixture');
+        return;
+      }
+      const fail = req.url === '/unavailable' && failures++ === 0;
+      res.writeHead(fail ? 503 : 200, { 'Content-Type': 'text/html' });
+      res.end(
+        fail
+          ? '<title>Unavailable</title>Controlled HTTP 503'
+          : '<title>NativeRecoveryFixture</title><h1>Native recovery ready</h1><a id="fixture-download" href="/download">Download fixture</a>'
+      );
+    };
+    http.createServer(handler).listen(8085, '127.0.0.1');
+    if (process.argv[3] && process.argv[4]) {
+      https
+        .createServer(
+          {
+            cert: fs.readFileSync(process.argv[3]),
+            key: fs.readFileSync(process.argv[4]),
+          },
+          (req, res) => {
+            tlsRequests++;
+            handler(req, res);
+          }
+        )
+        .listen(8445, '127.0.0.1');
+    }
     return;
   }
   const targets = await fetch('http://127.0.0.1:9222/json/list').then((r) =>
@@ -75,6 +113,12 @@ async function main() {
   try {
     if (action === 'navigate') {
       await command('Page.navigate', { url: process.argv[3] });
+    } else if (action === 'hang') {
+      // The navigation deliberately never commits. Schedule it from the page
+      // so the driver can return while the native watchdog keeps waiting.
+      await command('Runtime.evaluate', {
+        expression: 'setTimeout(()=>location.assign("/hang"),0)',
+      });
     } else if (action === 'download' || action === 'download-native') {
       await command('Runtime.evaluate', {
         expression: 'window.__tmCiDownloadOrigin = performance.timeOrigin',

@@ -6,6 +6,7 @@ $out = New-Item -ItemType Directory -Force 'recovery-out'
 $driver = Join-Path $PSScriptRoot 'recovery-cdp.cjs'
 $fixture = $null
 $client = $null
+$tlsDir = $null
 $createdPolicies = @()
 $exeName = Split-Path -Leaf $Executable
 function Set-CiPolicy([string]$Policy, [string]$Value) {
@@ -46,8 +47,8 @@ function Capture([string]$Name) {
         }
     } catch { Write-Warning "UIAutomation snapshot unavailable: $_" }
 }
-function Wait-Check([scriptblock]$Check, [string]$Label) {
-    $deadline = [DateTime]::UtcNow.AddSeconds(35)
+function Wait-Check([scriptblock]$Check, [string]$Label, [int]$Seconds = 35) {
+    $deadline = [DateTime]::UtcNow.AddSeconds($Seconds)
     do {
         if (& $Check) { Write-Host "PASS: $Label"; return }
         Start-Sleep -Milliseconds 500
@@ -131,7 +132,16 @@ try {
     $principal = [Security.Principal.WindowsPrincipal]::new([Security.Principal.WindowsIdentity]::GetCurrent())
     Write-Host "Elevated runner: $($principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator))"
     Set-CiPolicy 'AdditionalBrowserArguments' '--remote-debugging-port=9222'
-    $fixture = Start-Process node -ArgumentList @($driver, 'serve') -WindowStyle Hidden -PassThru
+    $tlsDir = Join-Path $env:RUNNER_TEMP ('tm-native-tls-' + [Guid]::NewGuid().ToString('N'))
+    New-Item -ItemType Directory -Path $tlsDir | Out-Null
+    $opensslCommand = Get-Command openssl -ErrorAction SilentlyContinue
+    $opensslPath = if ($opensslCommand) { $opensslCommand.Source } else { Join-Path $env:ProgramFiles 'Git/usr/bin/openssl.exe' }
+    if (-not (Test-Path -LiteralPath $opensslPath)) { throw 'The CI Git/OpenSSL fixture tool is unavailable' }
+    $tlsCert = Join-Path $tlsDir 'cert.pem'
+    $tlsKey = Join-Path $tlsDir 'key.pem'
+    & $opensslPath req -x509 -newkey rsa:2048 -nodes -keyout $tlsKey -out $tlsCert -subj '/CN=smoke.invalid' -days 1 *> (Join-Path $out.FullName 'tls-setup.log')
+    if ($LASTEXITCODE -ne 0) { throw 'Cannot create the isolated untrusted TLS fixture' }
+    $fixture = Start-Process node -ArgumentList @($driver, 'serve', $tlsCert, $tlsKey) -WindowStyle Hidden -PassThru
     $client = Start-Process -FilePath (Resolve-Path $Executable) -PassThru
     Wait-Check {
         try { $null = Invoke-RestMethod 'http://127.0.0.1:9222/json/list'; return $true }
@@ -196,6 +206,37 @@ try {
     Click-Native '服务器设置'
     Wait-Check { Cdp 'settings' } 'native recovery opens local settings'
     Capture '06-settings'
+    if (-not (Cdp 'navigate' 'https://127.0.0.1:8445/untrusted')) { throw 'TLS navigation failed' }
+    Wait-Check { $null -ne (Native-Button '重新打开') } 'untrusted certificate native recovery'
+    Click-Native '查看详情'
+    $detailCondition = [System.Windows.Automation.PropertyCondition]::new(
+        [System.Windows.Automation.AutomationElement]::AutomationIdProperty, 'ExpandedInformationText')
+    $detail = Native-Element $detailCondition
+    if (-not $detail -or $detail.Current.Name -notmatch '^连接错误 [1-6]。') { throw 'TLS fixture did not report a certificate error' }
+    $stats = Invoke-RestMethod 'http://127.0.0.1:8085/diagnostics'
+    if ($stats.tlsRequests -ne 0) { throw 'Untrusted certificate was bypassed' }
+    Capture '06a-tls-native'
+    Click-Native '服务器设置'
+    Wait-Check { Cdp 'settings' } 'TLS failure returns to local settings'
+    if (-not (Cdp 'navigate' 'http://127.0.0.1:8085/broken')) { throw 'Broken transport navigation failed' }
+    Wait-Check { $null -ne (Native-Button '重新打开') } 'real broken transport still reports native failure'
+    Capture '06b-broken-native'
+    Click-Native '服务器设置'
+    Wait-Check { Cdp 'settings' } 'broken transport returns to local settings'
+    if (-not (Cdp 'navigate' 'http://127.0.0.1:8085/ready')) { throw 'Ready before timeout failed' }
+    Wait-Check { Cdp 'ready' } 'ready before native timeout'
+    $waitingAt = [DateTime]::UtcNow
+    if (-not (Cdp 'hang')) { throw 'Hanging navigation did not start' }
+    Wait-Check { $null -ne (Native-Button '重新打开') } 'native 40-second watchdog' 55
+    $instructionCondition = [System.Windows.Automation.PropertyCondition]::new(
+        [System.Windows.Automation.AutomationElement]::AutomationIdProperty, 'MainInstruction')
+    if ((Native-Element $instructionCondition).Current.Name -ne '连接时间较长') { throw 'Unexpected failure instead of watchdog timeout' }
+    if (([DateTime]::UtcNow - $waitingAt).TotalSeconds -lt 39) { throw 'Native timeout fired prematurely' }
+    $stats = Invoke-RestMethod 'http://127.0.0.1:8085/diagnostics'
+    if ($stats.hangingRequests -lt 1 -or $stats.brokenRequests -lt 1) { throw 'Failure fixture was not exercised' }
+    Capture '06c-timeout-native'
+    Click-Native '服务器设置'
+    Wait-Check { Cdp 'settings' } 'native timeout returns to local settings'
     if (-not (Cdp 'navigate' 'http://127.0.0.1:8085/ready')) { throw 'Ready navigation failed' }
     Wait-Check { Cdp 'ready' } 'ready before browser process failure'
     # Only kill the browser directly owned by this isolated test client. Never
@@ -248,7 +289,7 @@ try {
     $cancel = Native-Element $cancelCondition
     $cancel.GetCurrentPattern([System.Windows.Automation.InvokePattern]::Pattern).Invoke()
     Wait-Check { $client.HasExited } 'startup fallback Cancel exits client'
-    'HTTP retry, actual renderer crash, same host PID, network settings, browser restart and runtime startup fallback passed.' |
+    'Default attachment save, same document, HTTP retry, TLS rejection, broken transport, native timeout, renderer recovery, browser restart and runtime startup fallback passed.' |
         Set-Content (Join-Path $out.FullName 'result.txt')
 } finally {
     try { Capture 'final' } catch { Write-Warning "Final screenshot unavailable: $_" }
@@ -256,5 +297,12 @@ try {
     if ($fixture -and -not $fixture.HasExited) { Stop-Process -Id $fixture.Id -Force -ErrorAction SilentlyContinue }
     foreach ($key in $createdPolicies) {
         Remove-ItemProperty -LiteralPath $key -Name $exeName -ErrorAction Continue
+    }
+    if ($tlsDir) {
+        foreach ($name in @('cert.pem', 'key.pem')) {
+            $file = Join-Path $tlsDir $name
+            if (Test-Path -LiteralPath $file) { Remove-Item -LiteralPath $file -ErrorAction Continue }
+        }
+        try { [IO.Directory]::Delete($tlsDir) } catch { Write-Warning "TLS fixture cleanup: $_" }
     }
 }
