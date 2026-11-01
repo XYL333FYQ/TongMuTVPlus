@@ -2,6 +2,8 @@
 
 ## 2026-11-01 客户端 113cd9c 验证续记
 
+- c24cb31 完整新 Windows 构建 41330867104 已通过原生策略/Rust 格式，x64/ARM64 正在 Build NSIS；Checks41330865233 运行中，未发布。仅已有注入能力回归与语法/差异检查通过，新增 IFileSaveDialog 仍待编译及真实 UI/取消/字节/同文档门禁；不借旧包来源审计绕过新原生构建。
+
 - 上轮修正版 9b979fd 完整 Checks41329812251 已通过。系统保存红测 422677a/41330492620 使用来源匹配的 8cc95c5 旧包，确实因无原生另存/取消窗口而失败，未在来源核验或启动阶段失败；原始日志 windows-save-choice-red.log 保留。
 - 实现候选：native_download.rs 用 Windows IFileSaveDialog，DownloadStarting 获取 deferral、默认取消，仅用户保存后写入选择路径并解除取消，RAII 完成 deferral；COM 对象只留 UI STA，跨线程只传 AppHandle 后排队到主线程，避免在 WebView 回调中嵌套模态。选择队列有界且不嵌套弹窗，文件写入/认证/安全处理仍交引擎，未新增 JS 命令、依赖或本机 Rust。仅增加已有 windows SDK 的 System_Com 功能绑定，Cargo.lock 不变。保留现有引擎进度 UI，原生进度/系统阅读器仍待完成。尚未编译和原生对话框验收，不称通过；本轮需要完整双架构新构建，不能借旧包审计替代。
 
