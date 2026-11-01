@@ -6,11 +6,19 @@ $gitCalls = 0
 function gh {
     $script:ghCalls++
     $global:LASTEXITCODE = 0
+    if ($args[1] -like '*/jobs?*') {
+        @{ jobs = @(
+            @{name='Native recovery policy tests';conclusion=$(if($case -eq 'failed-policy'){'failure'}else{'success'})},
+            @{name='Build x64 (installer + portable)';conclusion=$(if($case -eq 'failed-build'){'failure'}else{'success'})},
+            @{name='Build arm64 (installer + portable)';conclusion='success'}
+        ) } | ConvertTo-Json -Depth 4
+        return
+    }
     @{
         repository = @{ full_name = $(if ($case -eq 'other-repo') { 'other/repo' } else { 'fixture/repo' }) }
         path = $(if ($case -eq 'other-workflow') { '.github/workflows/other.yml' } else { '.github/workflows/desktop.yml' })
         status = 'completed'
-        conclusion = $(if ($case -eq 'failed-build') { 'failure' } else { 'success' })
+        conclusion = $(if ($case -in @('failed-build','failed-policy','failed-smoke')) { 'failure' } else { 'success' })
         head_sha = ('a' * 40)
     } | ConvertTo-Json
 }
@@ -57,9 +65,13 @@ try {
     $env:GITHUB_SHA = 'd' * 40
     Reject 'invalid-id' '123;not-a-run' '*numeric workflow run ID*'
     if ($ghCalls -ne 0 -or $gitCalls -ne 0) { throw 'Invalid run ID reached an external command' }
-    foreach ($scenario in @('failed-build', 'other-repo', 'other-workflow')) {
-        Reject $scenario '123' '*successful desktop build*'
+    foreach ($scenario in @('other-repo', 'other-workflow')) {
+        Reject $scenario '123' '*completed desktop workflow*'
         if ($gitCalls -ne 0) { throw 'Untrusted package reached source retrieval' }
+    }
+    foreach ($scenario in @('failed-build', 'failed-policy')) {
+        Reject $scenario '123' '*successful native policy and both package builds*'
+        if ($gitCalls -ne 0) { throw 'Failed package build reached source retrieval' }
     }
     foreach ($scenario in @('changed-native', 'changed-ui', 'changed-package', 'changed-icon')) {
         Reject $scenario '123' '*differs from current source*'
@@ -72,6 +84,12 @@ try {
         throw 'Successful audit provenance is incomplete or marked release-eligible'
     }
     Write-Host 'PASS: accepts identical native/UI/package source only as a non-release audit'
+    $script:case = 'failed-smoke'
+    & $verifier -PackageRun '123'
+    $proof = Get-Content 'recovery-out/package-provenance.json' -Raw | ConvertFrom-Json
+    if ($proof.releaseEligible -ne $false -or $proof.packageRunConclusion -ne 'failure' -or
+        $proof.successfulBuildJobs.Count -ne 3) { throw 'Failed-smoke audit lost its explicit non-release status' }
+    Write-Host 'PASS: failed runtime smoke may be investigated only after both builds and policy passed'
 } finally {
     Pop-Location
     foreach ($name in $saved.Keys) { [Environment]::SetEnvironmentVariable($name, $saved[$name]) }

@@ -23,7 +23,7 @@ async function main() {
         res.end(
           fail
             ? '<title>Unavailable</title>Controlled HTTP 503'
-            : '<title>NativeRecoveryFixture</title><h1>Native recovery ready</h1>'
+            : '<title>NativeRecoveryFixture</title><h1>Native recovery ready</h1><a id="fixture-download" href="/download">Download fixture</a>'
         );
       })
       .listen(8085, '127.0.0.1');
@@ -42,7 +42,7 @@ async function main() {
   socket.addEventListener('message', ({ data }) => {
     const response = JSON.parse(data);
     if (
-      action === 'download' &&
+      (action === 'download' || action === 'download-native') &&
       /^(Browser|Page)\.download|^Network\.loadingFailed$/.test(
         response.method || ''
       ) &&
@@ -75,26 +75,56 @@ async function main() {
   try {
     if (action === 'navigate') {
       await command('Page.navigate', { url: process.argv[3] });
-    } else if (action === 'download') {
+    } else if (action === 'download' || action === 'download-native') {
       await command('Runtime.evaluate', {
         expression: 'window.__tmCiDownloadOrigin = performance.timeOrigin',
       });
       // CI controls only the destination. The real WebView still receives an
       // attachment navigation and emits its ordinary native download events.
-      await command('Browser.setDownloadBehavior', {
-        behavior: 'allow',
-        downloadPath: path.resolve(process.argv[3]),
-        eventsEnabled: true,
-      });
+      if (action === 'download') {
+        await command('Browser.setDownloadBehavior', {
+          behavior: 'allow',
+          downloadPath: path.resolve(process.argv[3]),
+          eventsEnabled: true,
+        });
+      }
       await command('Page.enable');
       await command('Network.enable');
-      const navigation = await command('Page.navigate', {
-        url: 'http://127.0.0.1:8085/download',
-      });
+      let navigation = {};
+      if (action === 'download-native') {
+        const point = await command('Runtime.evaluate', {
+          expression:
+            '(()=>{const r=document.querySelector("#fixture-download").getBoundingClientRect();return {x:r.x+r.width/2,y:r.y+r.height/2}})()',
+          returnByValue: true,
+        });
+        if (!point.result.value)
+          throw new Error('Fixture download link missing');
+        for (const type of ['mousePressed', 'mouseReleased']) {
+          await command('Input.dispatchMouseEvent', {
+            type,
+            ...point.result.value,
+            button: 'left',
+            clickCount: 1,
+          });
+        }
+      } else {
+        navigation = await command('Page.navigate', {
+          url: 'http://127.0.0.1:8085/download',
+        });
+      }
       // Keep the CDP session alive while the asynchronous download starts.
       await new Promise((resolve) => setTimeout(resolve, 2000));
       fs.writeFileSync(
-        path.join(path.resolve(process.argv[3]), '..', 'download-events.json'),
+        action === 'download-native'
+          ? path.join(
+              path.resolve(process.argv[3]),
+              'download-native-events.json'
+            )
+          : path.join(
+              path.resolve(process.argv[3]),
+              '..',
+              'download-events.json'
+            ),
         JSON.stringify(
           {
             navigation: {
@@ -107,8 +137,13 @@ async function main() {
           2
         )
       );
-    } else if (action === 'download-ready') {
-      await command('Browser.setDownloadBehavior', { behavior: 'default' });
+    } else if (
+      action === 'download-ready' ||
+      action === 'download-native-ready'
+    ) {
+      if (action === 'download-ready') {
+        await command('Browser.setDownloadBehavior', { behavior: 'default' });
+      }
       const result = await command('Runtime.evaluate', {
         expression:
           'document.title === "NativeRecoveryFixture" && performance.timeOrigin === window.__tmCiDownloadOrigin',

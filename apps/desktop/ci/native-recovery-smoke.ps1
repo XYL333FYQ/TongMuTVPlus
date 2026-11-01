@@ -73,6 +73,41 @@ function Click-Native([string]$Name) {
     $pattern = $button.GetCurrentPattern([System.Windows.Automation.InvokePattern]::Pattern)
     $pattern.Invoke()
 }
+function Save-OwnedDownload([string]$Destination) {
+    $english = [System.Windows.Automation.PropertyCondition]::new(
+        [System.Windows.Automation.AutomationElement]::NameProperty, 'Save As')
+    $chinese = [System.Windows.Automation.PropertyCondition]::new(
+        [System.Windows.Automation.AutomationElement]::NameProperty, '另存为')
+    $names = [System.Windows.Automation.OrCondition]::new($english, $chinese)
+    $windows = [System.Windows.Automation.AutomationElement]::RootElement.FindAll(
+        [System.Windows.Automation.TreeScope]::Children, $names)
+    foreach ($dialog in $windows) {
+        $ownerId = $dialog.Current.ProcessId
+        $owned = $false
+        for ($depth = 0; $depth -lt 8 -and $ownerId -gt 0; $depth++) {
+            if ($ownerId -eq $client.Id) { $owned = $true; break }
+            $process = Get-CimInstance Win32_Process -Filter "ProcessId = $ownerId"
+            if (-not $process) { break }
+            $ownerId = $process.ParentProcessId
+        }
+        if (-not $owned) { continue }
+        Capture '00-native-save-dialog'
+        $editType = [System.Windows.Automation.PropertyCondition]::new(
+            [System.Windows.Automation.AutomationElement]::ControlTypeProperty,
+            [System.Windows.Automation.ControlType]::Edit)
+        $edits = $dialog.FindAll([System.Windows.Automation.TreeScope]::Descendants, $editType)
+        $filename = @($edits | Where-Object { $_.Current.AutomationId -eq '1001' -or $_.Current.Name -eq 'File name:' })
+        if ($filename.Count -ne 1) { throw 'Cannot identify the owned Save As filename field' }
+        $filename[0].GetCurrentPattern([System.Windows.Automation.ValuePattern]::Pattern).SetValue($Destination)
+        $saveId = [System.Windows.Automation.PropertyCondition]::new(
+            [System.Windows.Automation.AutomationElement]::AutomationIdProperty, '1')
+        $save = $dialog.FindFirst([System.Windows.Automation.TreeScope]::Descendants, $saveId)
+        if (-not $save) { throw 'Owned Save As dialog has no Save action' }
+        $save.GetCurrentPattern([System.Windows.Automation.InvokePattern]::Pattern).Invoke()
+        return $true
+    }
+    return $false
+}
 function Cdp([string]$Action, [string]$Url = '') {
     # A recently stopped WebView may retain its port briefly. Never accept its
     # document as evidence for the replacement/current client.
@@ -110,21 +145,30 @@ try {
     if (-not (Cdp 'navigate' 'http://127.0.0.1:8085/ready')) { throw 'Initial fixture navigation failed' }
     Wait-Check { Cdp 'ready' } 'ready before attachment download'
     $downloadDir = New-Item -ItemType Directory -Force (Join-Path $out.FullName 'downloads')
-    if (-not (Cdp 'download' $downloadDir.FullName)) { throw 'Attachment navigation failed' }
-    $downloadFile = Join-Path $downloadDir.FullName 'tm-client-audit.txt'
+    $downloadFile = Join-Path $downloadDir.FullName 'native-attachment.txt'
+    $defaultDownloadFile = Join-Path $env:USERPROFILE 'Downloads/tm-client-audit.txt'
+    if (Test-Path -LiteralPath $defaultDownloadFile) { throw 'Unexpected preexisting fixture file; do not overwrite it' }
+    if (-not (Cdp 'download-native' $out.FullName)) { throw 'Native attachment click failed' }
+    $script:downloadSaveInvoked = $false
     Wait-Check {
         if ($null -ne (Native-Button '重新打开')) {
             Click-Native '查看详情'
             Capture '00-attachment-native-error'
             throw 'A legitimate attachment download triggered native page recovery'
         }
-        Test-Path -LiteralPath $downloadFile
+        if (-not $downloadSaveInvoked) {
+            $script:downloadSaveInvoked = Save-OwnedDownload $downloadFile
+        }
+        (Test-Path -LiteralPath $downloadFile) -or (Test-Path -LiteralPath $defaultDownloadFile)
     } 'real WebView attachment file received'
+    if (-not (Test-Path -LiteralPath $downloadFile)) {
+        Copy-Item -LiteralPath $defaultDownloadFile -Destination $downloadFile
+    }
     if ([IO.File]::ReadAllText($downloadFile) -ne 'TongMu native download fixture') { throw 'Unexpected downloaded bytes' }
     Start-Sleep -Seconds 3
     Capture '00-attachment-download'
     if ($null -ne (Native-Button '重新打开')) { throw 'A legitimate attachment download was treated as whole-app failure' }
-    if (-not (Cdp 'download-ready')) { throw 'Download discarded the current document' }
+    if (-not (Cdp 'download-native-ready')) { throw 'Download discarded the current document' }
     Write-Host 'PASS: attachment download keeps the current document without native error'
     if (-not (Cdp 'navigate' 'http://127.0.0.1:8085/unavailable')) { throw 'Navigate failed' }
     Wait-Check { $null -ne (Native-Button '重新打开') } 'HTTP 503 native recovery'

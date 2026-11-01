@@ -14,7 +14,7 @@ on:
         default: true
         type: boolean
       audit_package_run:
-        description: '仅复验：已成功的本工作流 run ID；必须关闭 publish，且原生源码必须完全一致'
+        description: '仅复验：本工作流原生门禁及双架构构建均成功的 run ID；必须关闭 publish、原生源码一致'
         required: false
         default: ''
         type: string
@@ -252,7 +252,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Verify successful package provenance and identical native source
+      - name: Verify successful build jobs and identical native source
         shell: pwsh
         env:
           GH_TOKEN: ${{ github.token }}

@@ -7,9 +7,18 @@ if ($LASTEXITCODE -ne 0) { throw 'Cannot verify package workflow metadata.' }
 $run = $metadata | ConvertFrom-Json
 if ($run.repository.full_name -ne $env:GITHUB_REPOSITORY -or
     $run.path -ne '.github/workflows/desktop.yml' -or
-    $run.status -ne 'completed' -or $run.conclusion -ne 'success' -or
+    $run.status -ne 'completed' -or $run.conclusion -notin @('success', 'failure') -or
     $run.head_sha -notmatch '^[0-9a-f]{40}$') {
-    throw 'Package must come from a successful desktop build in this repository.'
+    throw 'Package must come from a completed desktop workflow in this repository.'
+}
+$jobMetadata = & gh api "repos/$env:GITHUB_REPOSITORY/actions/runs/$PackageRun/jobs?per_page=100"
+if ($LASTEXITCODE -ne 0) { throw 'Cannot verify package build jobs.' }
+$jobs = ($jobMetadata | ConvertFrom-Json).jobs
+$verifiedJobs = @()
+foreach ($name in @('Native recovery policy tests', 'Build x64 (installer + portable)', 'Build arm64 (installer + portable)')) {
+    $matching = @($jobs | Where-Object { $_.name -eq $name -and $_.conclusion -eq 'success' })
+    if ($matching.Count -ne 1) { throw 'Package requires successful native policy and both package builds.' }
+    $verifiedJobs += $name
 }
 $packageSha = $run.head_sha
 & git fetch --no-tags --depth=1 origin $packageSha
@@ -28,6 +37,8 @@ $out = New-Item -ItemType Directory -Force 'recovery-out'
 [pscustomobject]@{
     packageRun = $PackageRun
     packageSha = $packageSha
+    packageRunConclusion = $run.conclusion
+    successfulBuildJobs = $verifiedJobs
     auditSha = $env:GITHUB_SHA
     sourceObjects = $verified
     releaseEligible = $false
