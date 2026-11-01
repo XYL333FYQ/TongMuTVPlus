@@ -111,8 +111,25 @@ function Save-OwnedDownload([string]$Destination, [switch]$Cancel) {
     $chinese = [System.Windows.Automation.PropertyCondition]::new(
         [System.Windows.Automation.AutomationElement]::NameProperty, '另存为')
     $names = [System.Windows.Automation.OrCondition]::new($english, $chinese)
-    $windows = [System.Windows.Automation.AutomationElement]::RootElement.FindAll(
-        [System.Windows.Automation.TreeScope]::Children, $names)
+    $windowType = [System.Windows.Automation.PropertyCondition]::new(
+        [System.Windows.Automation.AutomationElement]::ControlTypeProperty,
+        [System.Windows.Automation.ControlType]::Window)
+    $dialogCondition = [System.Windows.Automation.AndCondition]::new($names, $windowType)
+    $desktop = [System.Windows.Automation.AutomationElement]::RootElement
+    $windows = [Collections.Generic.List[System.Windows.Automation.AutomationElement]]::new()
+    foreach ($candidate in $desktop.FindAll([System.Windows.Automation.TreeScope]::Children, $dialogCondition)) {
+        $windows.Add($candidate)
+    }
+    # Common Item Dialog can be a child Window in the owner's UIA tree rather
+    # than a direct child of Desktop. Search only this client's windows; do not
+    # scan unrelated applications' descendants or accept a same-name title bar.
+    $ownerCondition = [System.Windows.Automation.PropertyCondition]::new(
+        [System.Windows.Automation.AutomationElement]::ProcessIdProperty, [int]$client.Id)
+    foreach ($ownedRoot in $desktop.FindAll([System.Windows.Automation.TreeScope]::Children, $ownerCondition)) {
+        foreach ($candidate in $ownedRoot.FindAll([System.Windows.Automation.TreeScope]::Descendants, $dialogCondition)) {
+            $windows.Add($candidate)
+        }
+    }
     foreach ($dialog in $windows) {
         $ownerId = $dialog.Current.ProcessId
         $owned = $false
