@@ -51,6 +51,7 @@ import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.webkit.WebBackForwardList;
+import android.webkit.URLUtil;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.FrameLayout;
@@ -65,6 +66,8 @@ public class MainActivity extends Activity {
     private static final String KEY_SERVER = "server_url";
     private static final String ACTION_CHANGE_SERVER = "com.tongmutvplus.mobile.CHANGE_SERVER";
     private static final int REQ_FILE = 1001;
+    private static final int REQ_DOWNLOAD_STORAGE = 1003;
+    private static final int REQ_DOWNLOAD_NOTIFICATIONS = 1004;
 
     // root 放全屏视频；webHolder 按系统栏/刘海留边，保证网页不被遮挡
     private FrameLayout root;
@@ -102,6 +105,7 @@ public class MainActivity extends Activity {
     private UpdateRequest updateRequest = new UpdateRequest();
     private String updateServer;
     private boolean resumed;
+    private Bundle pendingFileDownload;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -110,6 +114,7 @@ public class MainActivity extends Activity {
             updateRequest = new UpdateRequest(savedInstanceState.getString("update.pending"),
                     savedInstanceState.getLong("update.id", -1), savedInstanceState.getBoolean("update.permission"));
             updateServer = savedInstanceState.getString("update.server");
+            pendingFileDownload = savedInstanceState.getBundle("download.permissionRequest");
         }
 
         root = new FrameLayout(this);
@@ -187,11 +192,8 @@ public class MainActivity extends Activity {
         cookies.setAcceptThirdPartyCookies(webView, true);
 
         webView.setDownloadListener((url, userAgent, contentDisposition, mimeType, length) -> {
-            try {
-                startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
-            } catch (ActivityNotFoundException ignored) {
-                // 没有能处理下载的应用，忽略
-            }
+            if (epoch == webViewEpoch && !errorShown && !isFinishing() && !isDestroyed())
+                confirmFileDownload(url, userAgent, contentDisposition, mimeType);
         });
 
         webView.setWebViewClient(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
@@ -683,6 +685,99 @@ public class MainActivity extends Activity {
 
     // ---------- 生命周期 ----------
 
+    private void confirmFileDownload(String url, String userAgent, String disposition, String mime) {
+        if (!ExternalLinkPolicy.allowed(url)) {
+            Toast.makeText(this, "此文件暂不支持直接下载，可在网页端下载。", Toast.LENGTH_LONG).show();
+            return;
+        }
+        if (pendingFileDownload != null || (dialog != null && dialog.isShowing())) return;
+        Bundle request = new Bundle();
+        request.putString("url", url);
+        request.putString("userAgent", userAgent);
+        request.putString("mime", mime);
+        request.putString("name", FileDownload.fileName(URLUtil.guessFileName(url, disposition, mime), System.currentTimeMillis()));
+        request.putString("server", getSavedServer());
+        Context context = new ContextThemeWrapper(this, pageDark
+                ? android.R.style.Theme_Material_Dialog_Alert : android.R.style.Theme_Material_Light_Dialog_Alert);
+        AlertDialog confirm = new AlertDialog.Builder(context)
+                .setTitle("下载文件")
+                .setMessage(request.getString("name") + "\n\n保存到系统下载目录，可在通知栏查看进度。")
+                .setNegativeButton("取消", null)
+                .setPositiveButton("下载", (ignored, which) -> startConfirmedFileDownload(request)).create();
+        dialog = confirm;
+        confirm.setOnDismissListener(ignored -> { if (dialog == confirm) dialog = null; });
+        confirm.show();
+    }
+
+    private void startConfirmedFileDownload(Bundle request) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q
+                && checkSelfPermission("android.permission.WRITE_EXTERNAL_STORAGE") != PackageManager.PERMISSION_GRANTED) {
+            pendingFileDownload = request;
+            requestPermissions(new String[] {"android.permission.WRITE_EXTERNAL_STORAGE"}, REQ_DOWNLOAD_STORAGE);
+            return;
+        }
+        if (Build.VERSION.SDK_INT >= 33 && !request.getBoolean("notificationAsked")
+                && FileDownload.headerValue(CookieManager.getInstance().getCookie(request.getString("url")))
+                && checkSelfPermission("android.permission.POST_NOTIFICATIONS") != PackageManager.PERMISSION_GRANTED) {
+            request.putBoolean("notificationAsked", true);
+            pendingFileDownload = request;
+            requestPermissions(new String[] {"android.permission.POST_NOTIFICATIONS"}, REQ_DOWNLOAD_NOTIFICATIONS);
+            return;
+        }
+        enqueueFileDownload(request);
+    }
+
+    private void enqueueFileDownload(Bundle request) {
+        String url = request.getString("url");
+        String server = request.getString("server");
+        if (isFinishing() || isDestroyed() || !ExternalLinkPolicy.allowed(url)
+                || server == null || !server.equals(getSavedServer())) {
+            Toast.makeText(this, "下载已取消，请回到原页面重新下载。", Toast.LENGTH_LONG).show();
+            return;
+        }
+        try {
+            String name = request.getString("name");
+            // This name was generated locally before the permission round trip.
+            if (name == null || name.length() > 220 || name.indexOf('/') >= 0 || name.indexOf('\\') >= 0)
+                throw new IllegalArgumentException("Invalid destination name");
+            String cookie = CookieManager.getInstance().getCookie(url);
+            if (FileDownload.headerValue(cookie)) {
+                Intent task = new Intent(this, FileDownloadService.class).putExtras(request).putExtra("cookie", cookie);
+                if (Build.VERSION.SDK_INT >= 26) startForegroundService(task); else startService(task);
+                boolean visible = Build.VERSION.SDK_INT < 33 || checkSelfPermission("android.permission.POST_NOTIFICATIONS") == PackageManager.PERMISSION_GRANTED;
+                Toast.makeText(this, visible ? "下载已开始，可在通知栏查看进度。" : "下载已开始；系统通知未开启，可在下载目录查看文件。", Toast.LENGTH_LONG).show();
+                return;
+            }
+            DownloadManager manager = getSystemService(DownloadManager.class);
+            if (manager == null) throw new IllegalStateException("Download manager unavailable");
+            DownloadManager.Request download = new DownloadManager.Request(Uri.parse(url).normalizeScheme())
+                    .setTitle(name)
+                    .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+                    .setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, name);
+            String userAgent = request.getString("userAgent");
+            String mime = request.getString("mime");
+            if (FileDownload.headerValue(userAgent)) download.addRequestHeader("User-Agent", userAgent);
+            if (FileDownload.headerValue(mime) && mime.length() <= 256) download.setMimeType(mime);
+            manager.enqueue(download);
+            Toast.makeText(this, "已交给系统下载，可在通知栏查看进度。", Toast.LENGTH_LONG).show();
+        } catch (RuntimeException ignored) {
+            Toast.makeText(this, "暂时无法开始下载，请检查系统下载管理器和可用空间。", Toast.LENGTH_LONG).show();
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode != REQ_DOWNLOAD_STORAGE && requestCode != REQ_DOWNLOAD_NOTIFICATIONS) return;
+        Bundle request = pendingFileDownload;
+        pendingFileDownload = null;
+        if (request == null) return;
+        if (requestCode == REQ_DOWNLOAD_NOTIFICATIONS) enqueueFileDownload(request);
+        else if (checkSelfPermission("android.permission.WRITE_EXTERNAL_STORAGE") == PackageManager.PERMISSION_GRANTED)
+            startConfirmedFileDownload(request);
+        else Toast.makeText(this, "未授权存储，已取消本次下载。", Toast.LENGTH_LONG).show();
+    }
+
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == REQ_FILE && filePathCallback != null) {
@@ -794,6 +889,7 @@ public class MainActivity extends Activity {
 
     @Override
     protected void onSaveInstanceState(Bundle state) {
+        if (pendingFileDownload != null) state.putBundle("download.permissionRequest", pendingFileDownload);
         state.putString("update.pending", updateRequest.pendingUrl());
         state.putLong("update.id", updateRequest.downloadId());
         state.putBoolean("update.permission", updateRequest.awaitingPermission());

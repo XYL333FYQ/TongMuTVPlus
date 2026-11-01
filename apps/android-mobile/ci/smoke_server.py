@@ -6,6 +6,7 @@ import io
 import math
 import struct
 import wave
+import time
 from http.server import BaseHTTPRequestHandler, HTTPServer, ThreadingHTTPServer
 
 
@@ -206,8 +207,21 @@ class Handler(BaseHTTPRequestHandler):
             self.send_header('Content-Type', 'text/plain')
             self.send_header('Content-Disposition', 'attachment; filename="TongMu-download-smoke.txt"')
             self.send_header('Content-Length', str(len(body)))
+            self.send_header('Cache-Control', 'no-store')
             self.end_headers()
-            self.wfile.write(body)
+            # Native's second request is intentionally slow enough to exercise
+            # Home/background progress, rather than a completed-file screenshot.
+            self.server.download_requests = getattr(self.server, 'download_requests', 0) + 1
+            try:
+                if self.server.download_requests >= 3:
+                    for start in range(0, len(body), 5):
+                        self.wfile.write(body[start:start + 5])
+                        self.wfile.flush()
+                        time.sleep(3)
+                else:
+                    self.wfile.write(body)
+            except (BrokenPipeError, ConnectionResetError):
+                pass
             return
         if self.path == '/native-download-test':
             self.send_response(200)

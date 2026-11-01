@@ -124,6 +124,51 @@ if [ "$PKG" = "com.tongmutvplus.mobile" ]; then
     read -r x y <<<"$point"
     adb shell input tap "$x" "$y"
   }
+  verify_file_download() {
+    tap_target text 'Native download test' || return 1
+    tap_target text 'Start download audio' || return 1
+    sleep 1
+    tap_target text 'Download authenticated file' || return 1
+    wait_target text '下载文件' >/dev/null || return 1
+    adb exec-out screencap -p >"$OUT/19-download-confirm.png"
+    tap_target text '取消' || return 1
+    wait_target text 'Stop download audio' >/dev/null || return 1
+    tap_target text 'Download authenticated file' || return 1
+    tap_target text '下载' || return 1
+    if [ "$API_LEVEL" -lt 29 ]; then
+      tap_target id permission_deny_button || return 1
+      wait_target text 'Stop download audio' >/dev/null || return 1
+      adb exec-out screencap -p >"$OUT/19-download-storage-denied.png"
+      tap_target text 'Download authenticated file' || return 1
+      tap_target text '下载' || return 1
+      tap_target id permission_allow_button || return 1
+    fi
+    adb shell input keyevent 3
+    sleep 2
+    adb shell cmd statusbar expand-notifications || return 1
+    wait_target text '正在下载' >/dev/null || return 1
+    adb exec-out screencap -p >"$OUT/19-download-background-progress.png"
+    adb shell cmd statusbar collapse || return 1
+    adb shell am start -n "$PKG/.MainActivity" >/dev/null || return 1
+    for _ in $(seq 1 30); do
+      adb logcat -d -s TongMuClient >"$OUT/download-native.log"
+      grep -q 'file download completed' "$OUT/download-native.log" && break
+      sleep 1
+    done
+    grep -q 'file download completed' "$OUT/download-native.log" || return 1
+    downloaded=$(adb shell 'ls /sdcard/Download/TongMu-download-smoke-*.txt 2>/dev/null' | tr -d '\r')
+    [[ "$downloaded" =~ ^/sdcard/Download/TongMu-download-smoke-[0-9]+\.txt$ ]] || return 1
+    adb pull "$downloaded" "$OUT/download-smoke.txt" || return 1
+    wait_target text 'Stop download audio' >/dev/null || return 1
+    sleep 2
+    python3 "$(dirname "$0")/check_download.py" "$OUT/server.log" "$OUT/download-smoke.txt" || return 1
+    adb exec-out screencap -p >"$OUT/19-download-complete.png"
+    adb shell cmd statusbar expand-notifications || return 1
+    wait_target text '下载完成' >/dev/null || return 1
+    adb exec-out screencap -p >"$OUT/19-download-complete-notification.png"
+    adb shell cmd statusbar collapse || return 1
+    tap_target text 'Stop download audio' || return 1
+  }
   verify_recovery() {
     wait_target absent-id tm_load_surface >/dev/null || return 1
     grep -q 'GET /missing.png' "$OUT/server.log" || return 1
@@ -298,28 +343,14 @@ PY
         python3 "$(dirname "$0")/check_external.py" "$OUT/server.log" automatic || return 1
       done
       adb exec-out screencap -p >"$OUT/18-external-returned.png"
-      tap_target text 'Native download test' || return 1
-      tap_target text 'Start download audio' || return 1
-      sleep 1
-      tap_target text 'Download authenticated file' || return 1
-      wait_target text '下载文件' >/dev/null || return 1
-      adb exec-out screencap -p >"$OUT/19-download-confirm.png"
-      tap_target text '下载' || return 1
-      downloaded=
-      for _ in $(seq 1 30); do
-        downloaded=$(adb shell 'ls /sdcard/Download/TongMu-download-smoke-*.txt 2>/dev/null' | tr -d '\r')
-        [ -n "$downloaded" ] && break
-        sleep 1
-      done
-      [[ "$downloaded" =~ ^/sdcard/Download/TongMu-download-smoke-[0-9]+\.txt$ ]] || return 1
-      adb pull "$downloaded" "$OUT/download-smoke.txt" || return 1
-      wait_target text 'Stop download audio' >/dev/null || return 1
-      sleep 2
-      python3 "$(dirname "$0")/check_download.py" "$OUT/server.log" "$OUT/download-smoke.txt" || return 1
-      adb exec-out screencap -p >"$OUT/19-download-complete.png"
-      tap_target text 'Stop download audio' || return 1
+      verify_file_download || return 1
       tap_target text 'Return to recovery fixture' || return 1
       echo 'PASS: actual anchor/window.open handoff, source retained and automatic popup blocked'
+    fi
+    if [ "$API_LEVEL" -lt 29 ]; then
+      tap_target text 'Native external test' || return 1
+      verify_file_download || return 1
+      tap_target text 'Return to recovery fixture' || return 1
     fi
     if [ "$API_LEVEL" -ge 26 ]; then
       tap_target text 'Update permission test' || return 1
