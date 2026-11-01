@@ -220,10 +220,15 @@ async function main() {
       if (result.result.value !== true)
         throw new Error('Persistent HttpOnly fixture cookie was not retained');
     } else if (action === 'window-start') {
-      await command('Runtime.evaluate', {
+      const result = await command('Runtime.evaluate', {
         expression:
-          'window.__tmCiWindowDocument=document;window.__tmCiWindowOrigin=performance.timeOrigin',
+          'window.__tmCiWindowDocument=document;window.__tmCiWindowOrigin=performance.timeOrigin;window.TMDesktop?.externalLinks===true',
+        returnByValue: true,
       });
+      if (result.result.value !== true)
+        throw new Error(
+          'Native HTTP(S) external-link capability was not advertised'
+        );
     } else if (action === 'window-stable') {
       const result = await command('Runtime.evaluate', {
         expression:

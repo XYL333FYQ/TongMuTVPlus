@@ -35,6 +35,8 @@ jobs:
       - uses: actions/checkout@v4
       - name: Check native source formatting
         run: rustfmt --edition 2021 --check apps/desktop/src-tauri/src/main.rs apps/desktop/src-tauri/src/native_recovery.rs apps/desktop/src-tauri/src/native_external.rs apps/desktop/src-tauri/src/recovery_policy.rs
+      - name: Check public desktop capabilities
+        run: node apps/desktop/ci/test-inject.cjs
       - name: Reject mismatched package audit sources
         shell: pwsh
         run: '& ./apps/desktop/ci/verify-audit-package.test.ps1'
