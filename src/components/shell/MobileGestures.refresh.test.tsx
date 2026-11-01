@@ -51,6 +51,51 @@ async function pull(end = 'touchend', horizontal = false) {
   });
 }
 
+test('a mounted app gains pull refresh when its window changes to phone width', async () => {
+  let phone = false;
+  Object.defineProperty(window, 'matchMedia', {
+    configurable: true,
+    value: (query: string) => ({
+      matches: query === '(pointer: coarse)' || phone,
+    }),
+  });
+  render(<MobileGestures />);
+  await pull();
+  expect(refreshPage).not.toHaveBeenCalled();
+  phone = true;
+  act(() => {
+    window.dispatchEvent(new Event('resize'));
+  });
+  await pull();
+  expect(refreshPage).toHaveBeenCalledTimes(1);
+});
+
+test('leaving phone width cancels an in-progress pull before release', async () => {
+  let phone = true;
+  Object.defineProperty(window, 'matchMedia', {
+    configurable: true,
+    value: (query: string) => ({
+      matches: query === '(pointer: coarse)' || phone,
+    }),
+  });
+  const view = render(<MobileGestures />);
+  act(() => {
+    touch('touchstart', 100, 100);
+    touch('touchmove', 100, 250);
+  });
+  phone = false;
+  act(() => {
+    window.dispatchEvent(new Event('resize'));
+  });
+  expect(
+    (view.container.querySelector('.tm-ptr') as HTMLElement).style.opacity
+  ).toBe('0');
+  await act(async () => {
+    touch('touchend', 100, 250);
+  });
+  expect(refreshPage).not.toHaveBeenCalled();
+});
+
 test('a completed pull refreshes page data and restores the indicator', async () => {
   const { container } = render(<MobileGestures />);
   await pull();

@@ -29,6 +29,30 @@ export default function MobileGestures() {
   const pathname = usePathname();
   const indicator = useRef<HTMLDivElement>(null);
   const [iosHint, setIosHint] = useState(false);
+  const [phoneTouch, setPhoneTouch] = useState(false);
+
+  useEffect(() => {
+    if (getPlatform() !== 'app') return;
+    const queries = [
+      window.matchMedia('(pointer: coarse)'),
+      window.matchMedia('(max-width: 767px)'),
+    ];
+    const update = () => setPhoneTouch(isPhoneTouch());
+    update();
+    window.addEventListener('resize', update);
+    queries.forEach((query) => {
+      if (query.addEventListener) query.addEventListener('change', update);
+      else query.addListener?.(update);
+    });
+    return () => {
+      window.removeEventListener('resize', update);
+      queries.forEach((query) => {
+        if (query.removeEventListener)
+          query.removeEventListener('change', update);
+        else query.removeListener?.(update);
+      });
+    };
+  }, []);
 
   // —— 转场方向：返回键/手势返回用“后退”，点链接用“前进” ——
   useEffect(() => {
@@ -52,7 +76,7 @@ export default function MobileGestures() {
   // —— 下拉刷新 ——
   const enabled = REFRESH_PATHS.includes(pathname || '');
   useEffect(() => {
-    if (!enabled || getPlatform() !== 'app' || !isPhoneTouch()) return;
+    if (!enabled || getPlatform() !== 'app' || !phoneTouch) return;
     const el = indicator.current;
     if (!el) return;
     let startY = 0;
@@ -75,6 +99,7 @@ export default function MobileGestures() {
       Array.from(document.querySelectorAll('video')).some((v) => !v.paused);
 
     const onStart = (event: TouchEvent) => {
+      if (!isPhoneTouch()) return;
       if (refreshing) return;
       reset();
       if (event.touches.length !== 1 || window.scrollY > 0) return;
@@ -99,7 +124,7 @@ export default function MobileGestures() {
     };
     const onMove = (event: TouchEvent) => {
       if (!pulling) return;
-      if (event.touches.length !== 1) {
+      if (!isPhoneTouch() || event.touches.length !== 1) {
         reset(true);
         return;
       }
@@ -118,6 +143,10 @@ export default function MobileGestures() {
     };
     const onEnd = () => {
       if (!pulling) return;
+      if (!isPhoneTouch()) {
+        reset(true);
+        return;
+      }
       if (distance >= TRIGGER) {
         pulling = false;
         refreshing = true;
@@ -160,7 +189,7 @@ export default function MobileGestures() {
       document.removeEventListener('touchcancel', onCancel);
       reset();
     };
-  }, [enabled, pathname]);
+  }, [enabled, pathname, phoneTouch]);
 
   // —— iPhone：浏览器里打开时，引导“添加到主屏幕”以获得全屏体验 ——
   useEffect(() => {

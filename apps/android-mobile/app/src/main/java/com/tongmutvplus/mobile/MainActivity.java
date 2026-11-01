@@ -901,14 +901,17 @@ public class MainActivity extends Activity {
         }
     }
 
-    /** 通知栏上的「暂停」：让网页里所有正在播的音视频暂停。 */
+    /** 通知栏动作优先走网页现有控制器/权限；旧网页保留兼容暂停。 */
     private void registerPauseReceiver() {
         pauseReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
-                if (webView != null) {
+                if (webView != null && !errorShown) {
                     webView.evaluateJavascript(
-                            "document.querySelectorAll('video,audio').forEach(function(m){m.pause()})", null);
+                            "(function(){try{if(typeof window.__tmShellMediaAction==='function'){"
+                                    + "window.__tmShellMediaAction('pause');return;}"
+                                    + "document.querySelectorAll('video,audio').forEach(function(m){m.pause()});"
+                                    + "}catch(e){}})()", null);
                 }
             }
         };
