@@ -16,6 +16,12 @@ function Set-CiPolicy([string]$Policy, [string]$Value) {
     New-ItemProperty -LiteralPath $key -Name $exeName -Value $Value -PropertyType String | Out-Null
     $script:createdPolicies += $key
 }
+function Clear-CiPolicy([string]$Policy) {
+    $key = "HKLM:\SOFTWARE\Policies\Microsoft\Edge\WebView2\$Policy"
+    if ($createdPolicies -notcontains $key) { throw "Policy was not created by this test: $Policy" }
+    Remove-ItemProperty -LiteralPath $key -Name $exeName
+    $script:createdPolicies = @($createdPolicies | Where-Object { $_ -ne $key })
+}
 function Capture([string]$Name) {
     $bounds = [System.Windows.Forms.SystemInformation]::VirtualScreen
     $bitmap = [System.Drawing.Bitmap]::new($bounds.Width, $bounds.Height)
@@ -68,6 +74,17 @@ function Click-Native([string]$Name) {
     $pattern.Invoke()
 }
 function Cdp([string]$Action, [string]$Url = '') {
+    # A recently stopped WebView may retain its port briefly. Never accept its
+    # document as evidence for the replacement/current client.
+    $listeners = @(Get-NetTCPConnection -LocalPort 9222 -State Listen -ErrorAction SilentlyContinue)
+    $owned = $false
+    foreach ($listener in $listeners) {
+        $browser = Get-CimInstance Win32_Process -Filter "ProcessId = $($listener.OwningProcess)"
+        if ($browser.Name -eq 'msedgewebview2.exe' -and $browser.ParentProcessId -eq $client.Id) {
+            $owned = $true
+        }
+    }
+    if (-not $owned) { return $false }
     & node $driver $Action $Url
     return $LASTEXITCODE -eq 0
 }
@@ -93,6 +110,11 @@ try {
     if (-not (Cdp 'navigate' 'http://127.0.0.1:8085/unavailable')) { throw 'Navigate failed' }
     Wait-Check { $null -ne (Native-Button '重新打开') } 'HTTP 503 native recovery'
     Capture '01-http-native'
+    if ($null -eq (Native-Button '查看详情')) { throw 'Collapsed details has the wrong native label' }
+    Click-Native '查看详情'
+    Wait-Check { $null -ne (Native-Button '收起详情') } 'expanded details native label'
+    Capture '01-http-expanded'
+    Click-Native '收起详情'
     Click-Native '重新打开'
     Wait-Check { Cdp 'ready' } 'HTTP retry renders recovered content'
     Capture '02-http-recovered'
@@ -145,6 +167,21 @@ try {
         [System.Windows.Automation.AutomationElement]::AutomationIdProperty, '2')
     Wait-Check { $null -ne (Native-Element $cancelCondition) } 'startup failure has native Cancel without WebView'
     Capture '09-startup-native'
+    $retryCondition = [System.Windows.Automation.PropertyCondition]::new(
+        [System.Windows.Automation.AutomationElement]::AutomationIdProperty, '4')
+    $startupPid = $client.Id
+    Clear-CiPolicy 'BrowserExecutableFolder'
+    $retry = Native-Element $retryCondition
+    if ($null -eq $retry) { throw 'Startup fallback has no Retry button' }
+    $retry.GetCurrentPattern([System.Windows.Automation.InvokePattern]::Pattern).Invoke()
+    Wait-Check { Cdp 'local' } 'startup Retry continues after runtime is available'
+    if ($client.Id -ne $startupPid -or $client.HasExited) { throw 'Startup Retry unexpectedly lost the host' }
+    Capture '10-startup-repaired'
+    Stop-Process -Id $client.Id -Force
+    $client.WaitForExit()
+    Set-CiPolicy 'BrowserExecutableFolder' (Join-Path $env:RUNNER_TEMP 'tm-deliberately-missing-runtime')
+    $client = Start-Process -FilePath $exePath -PassThru
+    Wait-Check { $null -ne (Native-Element $cancelCondition) } 'startup failure Cancel available on next launch'
     $cancel = Native-Element $cancelCondition
     $cancel.GetCurrentPattern([System.Windows.Automation.InvokePattern]::Pattern).Invoke()
     Wait-Check { $client.HasExited } 'startup fallback Cancel exits client'

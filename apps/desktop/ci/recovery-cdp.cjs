@@ -55,10 +55,11 @@ async function main() {
       if (result.result.value !== 'NativeRecoveryFixture') {
         throw new Error(`Unexpected title: ${result.result.value}`);
       }
-    } else if (action === 'settings') {
+    } else if (action === 'settings' || action === 'local') {
       const result = await command('Runtime.evaluate', {
         expression:
-          'location.hostname === "tauri.localhost" && location.search === "?change=1" && !!document.querySelector("#addr")',
+          'location.hostname === "tauri.localhost" && !!document.querySelector("#addr")' +
+          (action === 'settings' ? ' && location.search === "?change=1"' : ''),
         returnByValue: true,
       });
       if (result.result.value !== true)

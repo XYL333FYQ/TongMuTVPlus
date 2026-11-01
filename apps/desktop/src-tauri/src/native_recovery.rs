@@ -26,17 +26,31 @@ use windows::{
 
 pub const SETTINGS_ONCE: &str = "TM_OPEN_SETTINGS_ONCE";
 
-pub fn startup_failure(app: &AppHandle) {
+fn startup_prompt() -> bool {
     // No WebView/window is required for this final startup fallback.
-    let retry = unsafe {
+    unsafe {
         MessageBoxW(
             None,
             w!("无法启动系统显示组件。请安装或修复 Microsoft Edge WebView2 运行时，再点重试。服务器设置和登录资料会保留。"),
             w!("TongMuTV Plus"),
             MB_RETRYCANCEL | MB_ICONWARNING,
         ) == IDRETRY
-    };
-    if retry {
+    }
+}
+
+pub fn runtime_ready() -> bool {
+    // Tauri's release runtime shows its own English error before build()
+    // returns. Check the same public runtime API before creating Tauri at all.
+    while tauri::webview_version().is_err() {
+        if !startup_prompt() {
+            return false;
+        }
+    }
+    true
+}
+
+pub fn startup_failure(app: &AppHandle) {
+    if startup_prompt() {
         app.request_restart();
     } else {
         app.exit(1);
@@ -87,8 +101,8 @@ unsafe fn prompt(owner: HWND, title: &str, detail: &str) -> i32 {
         pButtons: buttons.as_ptr(),
         nDefaultButton: 100,
         pszExpandedInformation: PCWSTR(detail.as_ptr()),
-        pszExpandedControlText: w!("查看详情"),
-        pszCollapsedControlText: w!("收起详情"),
+        pszExpandedControlText: w!("收起详情"),
+        pszCollapsedControlText: w!("查看详情"),
         ..Default::default()
     };
     let mut selected = 102;

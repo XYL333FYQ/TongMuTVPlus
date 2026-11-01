@@ -43,6 +43,10 @@ fn tm_fullscreen(window: WebviewWindow, on: bool) {
 }
 
 fn main() {
+    #[cfg(windows)]
+    if !native_recovery::runtime_ready() {
+        return;
+    }
     tauri::Builder::default()
         .invoke_handler(tauri::generate_handler![tm_window, tm_fullscreen])
         .setup(|app| {

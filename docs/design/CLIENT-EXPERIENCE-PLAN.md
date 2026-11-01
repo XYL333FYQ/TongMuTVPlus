@@ -29,6 +29,8 @@
 
 ## 当前进度
 
+最新交接：正式网页固定 c28ab11；Windows 验证引用 d2feacf，41273004104 的双架构/安装/便携启动通过，实际 HTTP/renderer/browser 故障恢复通过，但缺 runtime 启动被底层英文弹框抢先接管，整支仍失败。当前补 Tauri 创建前的同源 runtime 检查与原生详情按钮文案，待重新验证；Android 系统媒体/PiP、Windows 下载/外链、完整导航与真机诊断仍未完成。OriginOS 用户选择稍后测试，不催测、不称底栏根因已解决。
+
 - 1ee0196 的 Linux Checks 41217779457 全部通过，Android APK/Java 门禁编译通过；API24 的输入法、坏海报不接管、浅色 HTTP503 原生界面/重试、深色 TLS 拒绝/设置恢复通过。API34 同样完成上述流程及 renderer KILL/SEGV 后宿主 PID 不变、本地重试通过，但旧脚本因外部 UiAutomation 的 Bad file descriptor/FATAL 判整支失败，不能把整支标绿；已补应用 PID 前后核对与按进程识别的崩溃门禁，4 个 Java/native 宿主/工具/renderer 日志用例验证过滤不放过本应用崩溃。
 - API23 的启动/桥/IME/HTTP 原生恢复通过，主 TLS 阶段停留加载而未得到预期错误文案；其系统 Provider 是 Chrome44，补充 deprecated 主文档错误回调及无 URL 日志码，待再跑确认，不提前称原因已完全定位。API23 壳冒烟不证明旧 Chrome44 能渲染 Next 站点，真实网站还依赖可运行本站的系统 WebView。
 
@@ -152,3 +154,7 @@
 - c28ab11 的导航六图、实际拖动图及 Worker 结果已完整取回 output/client-experience/vps-c28ab11，实看 390 浅色与 1280 深色；同一节点/timeOrigin/top、haptics8、pageerror 空。当前公开 /health 再核对 status=ok、buildSha=c28ab11；不将受控浏览器等同 OriginOS 帧呈现。
 
 - Windows d6ea701 的 41272436931 双架构编译、安装/便携启动全部成功；实际恢复门禁在第一次“client DevTools reachable”35 秒超时，截图为正常本地地址页，因此尚未触发 HTTP/renderer 故障，不能归因为恢复失败。微软官方 WebView2Feedback#5645 说明 150+高权限宿主忽略环境变量/HKCU 调试覆盖；CI 改用仅本测试 EXE 的 HKLM 策略，限定 GITHUB_ACTIONS 环境，拒绝覆盖已有值并 finally 删除自建值，记录实际 runtime 版本/权限。生产客户端无调试参数改动，不降级运行时，不移除失败门禁。新脚本待再跑。
+
+- Windows 实际恢复结果：41273004104 运行在高权限/WebView2 155.0.4283.62，HKLM 仅测试 EXE 配置成功打开 CDP；HTTP503 原生界面/重试、实际 Page.crash 后同宿主 PID 恢复、网络故障进设置、只终止本应用 browser 后的原生提示和重启至设置均通过，截图/UIA 已取回 windows-recovery-d2feacf。整支仍失败：缺 runtime 时 Tauri 运行层先弹英文 Error，build()尚未返回，旧 startup_failure 无法抢先处理。
+- 已核对精确 tauri2.12.5 运行层源码：创建 WebView 前按 wry::webview_version 缓存状态并同步弹英文错误；补 main 创建 Tauri 前使用其公开同一 webview_version 检查，原生 Retry 重新检查、Cancel 直接返回，不补丁上游/不添依赖。保留 build 错误兜底；缺 runtime 真实重试/取消待新 runner 验证。实际截图还抓到详情默认折叠时按钮误写“收起详情”，按微软 TASKDIALOGCONFIG 语义交换两状态文案，并加实际展开/收起断言，待复验。
+- Windows 启动前检查小批：本机 typecheck/lint/完整 Jest175 套 1134 项/完整 format 均退出 0（windows-startup-checks.json）；Node 语法与 PowerShell AST 通过。新增 CDP 监听端口属主检查，避免重启后旧 WebView 短暂存活造成假验收；不触碰受保护播放器、房间、API 与数据代码。新的缺 runtime 重试/取消、详情展开折叠仍待 GitHub 实际验证，不把 d2feacf 已过的其他场景扩大为整批通过。
