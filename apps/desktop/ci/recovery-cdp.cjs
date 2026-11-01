@@ -152,13 +152,17 @@ function saveFixtureBlob(blob,name){
   a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();
   setTimeout(()=>URL.revokeObjectURL(url),60000);
 }
-document.querySelector('#fixture-download').onclick=event=>{window.__tmCiDownloadTrusted=event.isTrusted};
-document.querySelector('#fixture-blob').onclick=event=>{
+function recordDownloadInput(event){
   window.__tmCiDownloadTrusted=event.isTrusted;
+  window.__tmCiDownloadActive=!!(navigator.userActivation&&navigator.userActivation.isActive);
+}
+document.querySelector('#fixture-download').onclick=recordDownloadInput;
+document.querySelector('#fixture-blob').onclick=event=>{
+  recordDownloadInput(event);
   saveFixtureBlob(new Blob(['TongMu generated Blob\\0文件\\n']),'tm-client-blob-audit.bin');
 };
 document.querySelector('#fixture-post-blob').onclick=async event=>{
-  window.__tmCiDownloadTrusted=event.isTrusted;
+  recordDownloadInput(event);
   try {
     const response=await fetch('/post-file',{method:'POST',credentials:'same-origin'});
     if(!response.ok)throw new Error('Authenticated file request failed');
@@ -306,8 +310,16 @@ document.querySelector('#fixture-post-blob').onclick=async event=>{
       // Network domains or DevTools download handlers are enabled in this probe.
       await command('Runtime.evaluate', {
         expression:
-          'window.__tmCiDownloadOrigin = performance.timeOrigin; window.__tmCiDownloadTrusted = false',
+          'window.__tmCiDownloadOrigin = performance.timeOrigin; window.__tmCiDownloadTrusted = false; window.__tmCiDownloadActive = null',
       });
+    } else if (action === 'download-activation-idle') {
+      const result = await command('Runtime.evaluate', {
+        expression:
+          '!!navigator.userActivation && !navigator.userActivation.isActive',
+        returnByValue: true,
+      });
+      if (result.result.value !== true)
+        throw new Error('Transient user activation is still active');
     } else if (
       action === 'window-fullscreen-on' ||
       action === 'window-fullscreen-off'
@@ -413,14 +425,21 @@ document.querySelector('#fixture-post-blob').onclick=async event=>{
       );
     } else if (
       action === 'download-ready' ||
-      action === 'download-native-ready'
+      action === 'download-native-ready' ||
+      action === 'download-physical-ready' ||
+      action === 'download-assistive-ready'
     ) {
       if (action === 'download-ready') {
         await command('Browser.setDownloadBehavior', { behavior: 'default' });
       }
       const result = await command('Runtime.evaluate', {
         expression:
-          'document.title === "NativeRecoveryFixture" && performance.timeOrigin === window.__tmCiDownloadOrigin && !window.__tmCiBlobError && window.__tmCiDownloadTrusted === true',
+          'document.title === "NativeRecoveryFixture" && performance.timeOrigin === window.__tmCiDownloadOrigin && !window.__tmCiBlobError && window.__tmCiDownloadTrusted === true' +
+          (action === 'download-physical-ready'
+            ? ' && window.__tmCiDownloadActive === true'
+            : action === 'download-assistive-ready'
+            ? ' && window.__tmCiDownloadActive === false'
+            : ''),
         returnByValue: true,
       });
       if (result.result.value !== true) {

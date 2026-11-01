@@ -12,6 +12,20 @@ public static class ClientWindowProbe {
     [DllImport("user32.dll")] public static extern bool IsZoomed(IntPtr window);
     [DllImport("user32.dll")] public static extern bool ShowWindow(IntPtr window, int command);
     [DllImport("user32.dll")] public static extern bool GetWindowRect(IntPtr window, out Rect rect);
+    [StructLayout(LayoutKind.Sequential)]
+    public struct MouseInput { public int dx, dy; public uint mouseData, flags, time; public UIntPtr extraInfo; }
+    [StructLayout(LayoutKind.Sequential)]
+    public struct Input { public uint type; public MouseInput mouse; }
+    [DllImport("user32.dll")] private static extern bool SetPhysicalCursorPos(int x, int y);
+    [DllImport("user32.dll")] private static extern uint SendInput(uint count, Input[] inputs, int size);
+    public static bool Click(int x, int y) {
+        if (!SetPhysicalCursorPos(x, y)) return false;
+        var inputs = new[] {
+            new Input { mouse = new MouseInput { flags = 0x0002 } },
+            new Input { mouse = new MouseInput { flags = 0x0004 } }
+        };
+        return SendInput(2, inputs, Marshal.SizeOf(typeof(Input))) == 2;
+    }
 }
 '@
 $out = New-Item -ItemType Directory -Force 'recovery-out'
@@ -201,7 +215,7 @@ function Cdp([string]$Action, [string]$Url = '') {
     & node $driver $Action $Url
     return $LASTEXITCODE -eq 0
 }
-function Start-OwnedWebDownload([string]$Label) {
+function Start-OwnedWebDownload([string]$Label, [switch]$Assistive) {
     if (-not (Cdp 'download-mark')) { throw 'Could not mark the source document before native input' }
     $client.Refresh()
     $owner = [System.Windows.Automation.AutomationElement]::FromHandle($client.MainWindowHandle)
@@ -229,7 +243,15 @@ function Start-OwnedWebDownload([string]$Label) {
         throw
     }
     $webDownloadTarget.SetFocus()
-    $webDownloadTarget.GetCurrentPattern([System.Windows.Automation.InvokePattern]::Pattern).Invoke()
+    if ($Assistive) {
+        $webDownloadTarget.GetCurrentPattern([System.Windows.Automation.InvokePattern]::Pattern).Invoke()
+    } else {
+        $bounds = $webDownloadTarget.Current.BoundingRectangle
+        if ($bounds.IsEmpty -or $webDownloadTarget.Current.IsOffscreen) { throw 'Owned physical click target is not visible' }
+        if (-not [ClientWindowProbe]::Click([int]($bounds.Left + $bounds.Width / 2), [int]($bounds.Top + $bounds.Height / 2))) {
+            throw 'OS physical mouse input did not dispatch'
+        }
+    }
 }
 try {
     # Runtime 150+ deliberately ignores WEBVIEW2_* overrides in elevated hosts.
@@ -328,9 +350,10 @@ try {
     if ((Test-Path -LiteralPath $defaultDownloadFile) -or (Test-Path -LiteralPath $downloadFile)) {
         throw 'Canceled Save As still created a downloaded file'
     }
-    if (-not (Cdp 'download-native-ready')) { throw 'Cancel discarded the current document' }
+    if (-not (Cdp 'download-physical-ready')) { throw 'Cancel discarded the document or physical gesture' }
     if ($null -ne (Native-Button '重新打开')) { throw 'Canceled download triggered whole-app recovery' }
-    Start-OwnedWebDownload 'Download fixture'
+    Wait-Check { Cdp 'download-activation-idle' } 'transient activation expired before assistive permission probe' 10
+    Start-OwnedWebDownload 'Download fixture' -Assistive
     Wait-Check { $null -ne (Native-Button '暂不允许') } 'native multiple-download permission can be denied'
     Capture '00-native-download-permission-deny'
     Click-Native '暂不允许'
@@ -360,8 +383,22 @@ try {
     Start-Sleep -Seconds 3
     Capture '00-attachment-download'
     if ($null -ne (Native-Button '重新打开')) { throw 'A legitimate attachment download was treated as whole-app failure' }
-    if (-not (Cdp 'download-native-ready')) { throw 'Download discarded the current document' }
+    if (-not (Cdp 'download-physical-ready')) { throw 'Download discarded the document or physical gesture' }
     Write-Host 'PASS: attachment download keeps the current document without native error'
+    Wait-Check { Cdp 'download-activation-idle' } 'transient activation expired before explicit permission approval' 10
+    Start-OwnedWebDownload 'Download fixture' -Assistive
+    $assistiveFile = Join-Path $downloadDir.FullName 'native-assistive-attachment.txt'
+    [void]$ownedDownloadLocations.Add('assistive-selected')
+    $script:downloadSaveInvoked = $false
+    Wait-Check {
+        if (-not $downloadSaveInvoked) { $script:downloadSaveInvoked = Save-OwnedDownload $assistiveFile }
+        Test-Path -LiteralPath $assistiveFile
+    } 'assistive download after explicit native permission saved to selected path'
+    if (-not $downloadSaveInvoked -or [IO.File]::ReadAllText($assistiveFile) -ne 'TongMu native download fixture') {
+        throw 'Assistive permission/save flow did not preserve the selected file bytes'
+    }
+    if (Test-Path -LiteralPath $defaultDownloadFile) { throw 'Assistive download ignored the selected path' }
+    if (-not (Cdp 'download-assistive-ready')) { throw 'Assistive download discarded the document or lacked expected input evidence' }
     # No Browser.setDownloadBehavior: exercise the installed engine's real file
     # destination/UI. In particular POST+HttpOnly cookies and Blob downloads must
     # not be mistaken for external links or replacement document failures.
@@ -391,7 +428,7 @@ try {
         if ($actual -ne $expected) { throw 'Blob saved bytes differ, including binary/Unicode content' }
         Get-FileHash -LiteralPath $blobPath | Format-List | Out-String | Write-Host
         Capture ('00-' + $blobCase.action)
-        if (-not (Cdp 'download-native-ready')) { throw 'Blob download discarded the current document' }
+        if (-not (Cdp 'download-physical-ready')) { throw 'Blob download discarded the document or physical gesture' }
     }
     if ((Invoke-RestMethod 'http://127.0.0.1:8085/diagnostics').authenticatedFileRequests -ne 1) {
         throw 'Authenticated POST file flow was not exercised exactly once'
@@ -524,6 +561,7 @@ try {
             $locations = @(
                 @{ label = 'http-selected'; path = $downloadFile },
                 @{ label = 'http-default'; path = $defaultDownloadFile },
+                @{ label = 'assistive-selected'; path = (Join-Path $downloadDir.FullName 'native-assistive-attachment.txt') },
                 @{ label = 'blob-selected'; path = (Join-Path $downloadDir.FullName 'tm-client-blob-audit.bin') },
                 @{ label = 'blob-default'; path = (Join-Path $env:USERPROFILE 'Downloads/tm-client-blob-audit.bin') },
                 @{ label = 'post-blob-selected'; path = (Join-Path $downloadDir.FullName 'tm-client-post-blob-audit.bin') },
