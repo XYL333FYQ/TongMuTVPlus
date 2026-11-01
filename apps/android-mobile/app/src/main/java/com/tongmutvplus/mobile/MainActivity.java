@@ -193,7 +193,8 @@ public class MainActivity extends Activity {
 
         webView.setDownloadListener((url, userAgent, contentDisposition, mimeType, length) -> {
             Log.d("TongMuClient", "file download callback current=" + (epoch == webViewEpoch)
-                    + " allowed=" + ExternalLinkPolicy.allowed(url) + " failed=" + errorShown);
+                    + " allowed=" + ExternalLinkPolicy.allowed(url) + " failed=" + errorShown
+                    + " cookie=" + (ExternalLinkPolicy.allowed(url) && FileDownload.headerValue(CookieManager.getInstance().getCookie(url))));
             if (epoch == webViewEpoch && !errorShown && !isFinishing() && !isDestroyed())
                 confirmFileDownload(url, userAgent, contentDisposition, mimeType);
         });
@@ -928,7 +929,9 @@ public class MainActivity extends Activity {
             unregisterReceiver(updateReceiver);
             updateReceiver = null;
         }
-        stopService(new Intent(this, PlaybackService.class));
+        // Do not withdraw a foreground-service start before its onStartCommand
+        // has acknowledged it; Android can kill the whole app for that race.
+        requestPlaybackStop();
         if (filePathCallback != null) {
             filePathCallback.onReceiveValue(null);
             filePathCallback = null;
@@ -1162,12 +1165,21 @@ public class MainActivity extends Activity {
                     mediaServiceStarted = true;
                 }
             } else {
-                stopService(service);
+                if (mediaServiceStarted) startService(service);
                 mediaServiceStarted = false;
             }
         } catch (RuntimeException ignored) {
             mediaServiceStarted = false;
             // The OS may reject a background service start; never fake success.
+        }
+    }
+
+    private void requestPlaybackStop() {
+        try {
+            startService(new Intent(this, PlaybackService.class)
+                    .putExtra("active", false).putExtra("playing", false).putExtra("canControl", false));
+        } catch (RuntimeException unavailable) {
+            Log.i("TongMuClient", "media stop command unavailable");
         }
     }
 

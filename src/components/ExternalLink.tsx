@@ -12,7 +12,9 @@ import type { AnchorHTMLAttributes, MouseEvent } from 'react';
 import {
   copyExternalLink,
   externalLinkDescription,
+  externalLinkText,
   getExternalLinkMode,
+  getExternalLinkModeFor,
 } from '@/lib/external-links';
 import type { ExternalLinkMode } from '@/lib/external-links';
 
@@ -31,24 +33,28 @@ export function useExternalAction() {
   const [copied, setCopied] = useState(false);
   const [manual, setManual] = useState<string | null>(null);
   const fieldId = useId();
+  const modeFor = useCallback(
+    (href: string) => getExternalLinkModeFor(href, mode),
+    [mode]
+  );
   const open = useCallback(
     (href: string) => {
-      if (mode !== 'copy') {
+      if (modeFor(href) !== 'copy') {
         window.open(href, '_blank', 'noopener,noreferrer');
         return;
       }
       void copyExternalLink(href).then((success) => {
         setCopied(success);
-        setManual(success ? null : new URL(href, window.location.href).href);
+        setManual(success ? null : externalLinkText(href));
       });
     },
-    [mode]
+    [modeFor]
   );
   const feedback = (
     <>
       {copied && (
         <Toast
-          message='链接已复制，可粘贴到浏览器打开。'
+          message='链接已复制，可粘贴到相应应用打开。'
           type='success'
           onClose={() => setCopied(false)}
         />
@@ -79,7 +85,14 @@ export function useExternalAction() {
       )}
     </>
   );
-  return { mode, description: externalLinkDescription(mode), open, feedback };
+  return {
+    mode,
+    modeFor,
+    description: externalLinkDescription(mode),
+    descriptionFor: (href: string) => externalLinkDescription(modeFor(href)),
+    open,
+    feedback,
+  };
 }
 
 interface ExternalLinkProps
@@ -95,7 +108,7 @@ const ExternalLink = forwardRef<HTMLAnchorElement, ExternalLinkProps>(
   ) {
     const action = useExternalAction();
     const handle = (event: MouseEvent<HTMLAnchorElement>) => {
-      if (event.defaultPrevented || action.mode !== 'copy') return;
+      if (event.defaultPrevented || action.modeFor(href) !== 'copy') return;
       event.preventDefault();
       action.open(href);
     };
@@ -107,7 +120,7 @@ const ExternalLink = forwardRef<HTMLAnchorElement, ExternalLinkProps>(
           href={href}
           target='_blank'
           rel='noopener noreferrer'
-          aria-label={`${label}（${action.description}）`}
+          aria-label={`${label}（${action.descriptionFor(href)}）`}
           onClick={(event) => {
             onClick?.(event);
             handle(event);

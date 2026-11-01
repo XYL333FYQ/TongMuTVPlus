@@ -1029,8 +1029,8 @@ export default function PansouSearch({
                         <button
                           onClick={() => handleOpenLink(link.url)}
                           className='p-2 rounded-md hover:bg-line transition-colors min-h-[44px] tm-press'
-                          title={externalAction.description}
-                          aria-label={externalAction.description}
+                          title={externalAction.descriptionFor(link.url)}
+                          aria-label={externalAction.descriptionFor(link.url)}
                         >
                           <ExternalLink className='h-4 w-4 text-muted' />
                         </button>

@@ -62,6 +62,8 @@ if (window.TMShell) {
   TMShell.setSystemBars(true);
   TMShell.haptic(5);
   TMShell.setPlaying(true);
+  // A quick page transition/removal must not cancel an unacknowledged FGS start.
+  TMShell.setPlaying(false);
 }
 setTimeout(function () {
   fetch('/report', {

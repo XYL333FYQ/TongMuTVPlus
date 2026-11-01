@@ -1,6 +1,9 @@
 import { getPlatform } from '@/lib/platform';
 
 export type ExternalLinkMode = 'tab' | 'external' | 'copy';
+// Host capabilities are immutable for a document. Do not make synchronous Java
+// bridge calls for every card/useSyncExternalStore snapshot on every render.
+const shellModes = new WeakMap<object, ExternalLinkMode>();
 
 declare global {
   interface Window {
@@ -12,16 +15,21 @@ declare global {
 export function getExternalLinkMode(): ExternalLinkMode {
   if (typeof window === 'undefined') return 'tab';
   const platform = getPlatform();
+  const shell = window.TMShell;
   if (platform === 'desktop')
     return window.TMDesktop?.externalLinks === true ? 'external' : 'copy';
   if (
     platform === 'app' &&
-    (window.TMShell || /TongMuTVPlusAndroid/.test(navigator.userAgent))
+    (shell || /TongMuTVPlusAndroid/.test(navigator.userAgent))
   ) {
     try {
-      return window.TMShell?.supportsExternalLinks?.() === true
-        ? 'external'
-        : 'copy';
+      if (!shell) return 'copy';
+      const cached = shellModes.get(shell);
+      if (cached) return cached;
+      const mode =
+        shell.supportsExternalLinks?.() === true ? 'external' : 'copy';
+      shellModes.set(shell, mode);
+      return mode;
     } catch {
       return 'copy';
     }
@@ -36,8 +44,30 @@ export const externalLinkDescription = (mode: ExternalLinkMode) =>
     ? '在外部打开'
     : '在新标签页打开';
 
+export function getExternalLinkModeFor(
+  href: string,
+  mode = getExternalLinkMode()
+): ExternalLinkMode {
+  if (mode !== 'external') return mode;
+  try {
+    const protocol = new URL(href, window.location.href).protocol;
+    return protocol === 'http:' || protocol === 'https:' ? 'external' : 'copy';
+  } catch {
+    return 'copy';
+  }
+}
+
+/** Preserve malformed source text so manual/clipboard fallback itself cannot fail. */
+export function externalLinkText(href: string): string {
+  try {
+    return new URL(href, window.location.href).href;
+  } catch {
+    return href;
+  }
+}
+
 export async function copyExternalLink(href: string): Promise<boolean> {
-  const value = new URL(href, window.location.href).href;
+  const value = externalLinkText(href);
   try {
     await navigator.clipboard.writeText(value);
     return true;

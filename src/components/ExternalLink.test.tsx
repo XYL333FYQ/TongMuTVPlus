@@ -68,7 +68,7 @@ test('old Windows copies an absolute link instead of a silently denied new windo
     )
   );
   expect(
-    await screen.findByText('链接已复制，可粘贴到浏览器打开。')
+    await screen.findByText('链接已复制，可粘贴到相应应用打开。')
   ).toBeTruthy();
 });
 

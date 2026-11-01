@@ -43,11 +43,11 @@ public class PlaybackService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        if (intent == null) { stopSelf(); return START_NOT_STICKY; }
+        if (intent == null) { stopSelf(startId); return START_NOT_STICKY; }
         state = new MediaState(intent.getBooleanExtra("active", true),
                 intent.getBooleanExtra("playing", true), intent.getBooleanExtra("canControl", true),
                 intent.getStringExtra("title"));
-        if (!state.active) { stopSelf(); return START_NOT_STICKY; }
+        if (!state.active) { stopSelf(startId); return START_NOT_STICKY; }
         long actions = state.canControl ? PlaybackState.ACTION_PLAY | PlaybackState.ACTION_PAUSE | PlaybackState.ACTION_PLAY_PAUSE : 0;
         session.setMetadata(new MediaMetadata.Builder()
                 .putString(MediaMetadata.METADATA_KEY_TITLE, state.title)
