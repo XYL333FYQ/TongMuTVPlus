@@ -29,7 +29,7 @@
 
 ## 当前进度
 
-最新交接：正式网页固定 c28ab11；Windows 6ee457a 的完整非发布流程 41276238839 全绿：双架构构建、x64 安装/便携启动、默认附件保存与文档保留、HTTP/renderer/browser/缺 runtime 恢复通过，实际运行时 156.0.4314.50。原生生产源码为 f5812c5，受控 CDP 在 155 的失败证据保留，不能据不同版本测试单独归因。TLS/40 秒超时、另存为窗口分支、Windows 外链/动作、Android 系统媒体/PiP、完整导航与真机诊断仍未完成；未发布新客户端。OriginOS 用户选择稍后测试，不催测、不称底栏根因已解决。
+最新交接：正式网页固定 c28ab11；Windows 6ee457a 的完整非发布流程 41276238839 全绿：双架构构建、x64 安装/便携启动、默认附件保存与文档保留、HTTP/renderer/browser/缺 runtime 恢复通过，实际运行时 156.0.4314.50。原生生产源码为 f5812c5，受控 CDP 在 155 的失败证据保留，不能据不同版本测试单独归因。另存为窗口分支、Windows 外链/动作、Android 系统媒体/PiP、完整导航与真机诊断仍未完成；未发布新客户端。OriginOS 用户选择稍后测试，不催测、不称底栏根因已解决。
 
 - 1ee0196 的 Linux Checks 41217779457 全部通过，Android APK/Java 门禁编译通过；API24 的输入法、坏海报不接管、浅色 HTTP503 原生界面/重试、深色 TLS 拒绝/设置恢复通过。API34 同样完成上述流程及 renderer KILL/SEGV 后宿主 PID 不变、本地重试通过，但旧脚本因外部 UiAutomation 的 Bad file descriptor/FATAL 判整支失败，不能把整支标绿；已补应用 PID 前后核对与按进程识别的崩溃门禁，4 个 Java/native 宿主/工具/renderer 日志用例验证过滤不放过本应用崩溃。
 - API23 的启动/桥/IME/HTTP 原生恢复通过，主 TLS 阶段停留加载而未得到预期错误文案；其系统 Provider 是 Chrome44，补充 deprecated 主文档错误回调及无 URL 日志码，待再跑确认，不提前称原因已完全定位。API23 壳冒烟不证明旧 Chrome44 能渲染 Next 站点，真实网站还依赖可运行本站的系统 WebView。
@@ -180,3 +180,6 @@
 - 下一步按原计划补 TLS 拒绝、40 秒等待/普通断连控制与持久服务器/登录资料验证，再完成外链/窗口动作及 Android 媒体/PiP、共享导航/刷新扫尾。另存为 UI、ARM64 实际运行、用户 Windows 与 OriginOS 真机都保留为明确验证边界，任务尚未完成。
 
 - Windows 恢复补证小批开始：仅扩展 CI 夹具与断言，不改原生/网页生产源码。新增不受信 TLS 端点（现有 CI Git/OpenSSL 临时生成证书，不装入信任库、不上传密钥）、真实中途断连、永不响应端点。证书失败须为证书类错误且服务端未收到 HTTP；断连仍须显示原生故障；40 秒 watchdog 须在至少 39 秒后给出专属文案并能回设置。TLS 临时文件仅逐个删除、无递归清理；单次故障等待上限 55 秒，工作流总上限 8 分钟。Node 语法、PS AST、断连/挂起/计数独立 HTTP 验证通过，实际 Windows 补证待运行。
+
+- Windows 恢复补证 41277732257（af9419d，仅复验 6ee457a 同原生源码包）全绿，WebView2 156.0.4314.50：证书类错误 5 且 TLS 端点 HTTP 计数 0、真实中途断连仍报故障、发起挂起导航后约 41 秒出现“连接时间较长”并可回设置；下载、HTTP 重试、renderer 同 PID 恢复、browser 重启、缺 runtime 重试/取消全部回归通过。证据 windows-af9419d-network.log 及 windows-network-af9419d 截图/UIA/result，实看 TLS 与超时界面，制品无 pem/key/pfx。
+- 当前生产源码未改，保护既有鉴权/证书验证与下载行为；本机四项检查均 0（windows-network-faults-checks.json），测试 fixture 语法/AST 及 HTTP 独立验证通过。该次不生成新包、不发布，不代替最终全量门禁。下一步补真实配置/持久 cookie 跨进程恢复，再推进外链/窗口与 Android 媒体/PiP 及共享导航/刷新；真机底栏仍待用户诊断，不能将本轮 Windows 证据扩展为手机根因已修复。
