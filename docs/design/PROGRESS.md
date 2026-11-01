@@ -1114,3 +1114,7 @@
 
 - Windows 恢复补证 41277732257（af9419d，仅复验 6ee457a 同原生源码包）全绿，WebView2 156.0.4314.50：证书类错误 5 且 TLS 端点 HTTP 计数 0、真实中途断连仍报故障、发起挂起导航后约 41 秒出现“连接时间较长”并可回设置；下载、HTTP 重试、renderer 同 PID 恢复、browser 重启、缺 runtime 重试/取消全部回归通过。证据 windows-af9419d-network.log 及 windows-network-af9419d 截图/UIA/result，实看 TLS 与超时界面，制品无 pem/key/pfx。
 - 当前生产源码未改，保护既有鉴权/证书验证与下载行为；本机四项检查均 0（windows-network-faults-checks.json），测试 fixture 语法/AST 及 HTTP 独立验证通过。该次不生成新包、不发布，不代替最终全量门禁。下一步补真实配置/持久 cookie 跨进程恢复，再推进外链/窗口与 Android 媒体/PiP 及共享导航/刷新；真机底栏仍待用户诊断，不能将本轮 Windows 证据扩展为手机根因已修复。
+
+- Windows 持久资料小批开始（只改 CI）：通过现有地址表单真实点连接保存服务器，不直接写应用存储键；测试端点只在/seed 设置一次带 Max-Age 的 HttpOnly 哨兵 Cookie，普通页面不补发。先正常关闭客户端及 browser、重新打开确认自动连接与 Cookie 持久化，再检查 renderer 恢复、browser 进程重启后的地址预填/Cookie，以及缺 runtime 重试返回已配置服务器。仅证明已保存的持久 Cookie 与地址，不等同真实账号验证、过期 token 或未保存草稿无损恢复。
+- Node 语法、PS AST、独立 HTTP 的无 Cookie 拒绝/有 Cookie 识别/HttpOnly 及持久属性/普通页面不重设均通过；新实际 Windows 流程待复验。原生生产源码仍 f5812c5，与 6ee457a 成功包相同，不触碰生产登录接口、账户或浏览器用户资料。
+- 持久资料小批静态门禁：lint0、完整 Jest175 套 1134 项 0、完整 format0；typecheck 初次仅原生 3221225477 无 TS 诊断，原日志保留，确认本项目无预览后串行重跑 0（windows-profile-retry.json）。Node 语法/PS AST/独立 cookie 夹具通过，真实配置预填、正常重开、崩溃恢复后的持久性仍待 Windows 复验，不把哨兵 Cookie 扩大为真实账号验证。

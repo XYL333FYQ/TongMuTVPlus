@@ -152,7 +152,23 @@ try {
     if ($ownedBrowser.ExecutablePath) {
         Write-Host "WebView2 version: $((Get-Item -LiteralPath $ownedBrowser.ExecutablePath).VersionInfo.FileVersion)"
     }
-    if (-not (Cdp 'navigate' 'http://127.0.0.1:8085/ready')) { throw 'Initial fixture navigation failed' }
+    $serverAddress = 'http://127.0.0.1:8085'
+    Wait-Check { Cdp 'local' } 'local server form ready'
+    if (-not (Cdp 'connect' $serverAddress)) { throw 'Actual server form connection failed' }
+    Wait-Check { Cdp 'ready' } 'server form connects to the configured server'
+    if (-not (Cdp 'navigate' "$serverAddress/seed")) { throw 'Profile fixture seeding failed' }
+    Wait-Check { Cdp 'profile' } 'HttpOnly fixture cookie seeded through HTTP'
+    Capture '00-profile-configured'
+    $firstHostPid = $client.Id
+    $firstBrowserPid = $ownedBrowser.ProcessId
+    if (-not (Cdp 'close')) { throw 'Injected window Close command failed' }
+    Wait-Check { $client.HasExited } 'window Close exits the first host normally'
+    Wait-Check { -not (Get-Process -Id $firstBrowserPid -ErrorAction SilentlyContinue) } 'first browser exits and flushes its profile'
+    $client = Start-Process -FilePath (Resolve-Path $Executable) -PassThru
+    Wait-Check { Cdp 'ready' } 'configured server opens automatically after relaunch'
+    if ($client.Id -eq $firstHostPid) { throw 'Relaunch did not create a new host process' }
+    Wait-Check { Cdp 'profile' } 'persistent HttpOnly cookie survives normal relaunch'
+    Capture '00-profile-relaunched'
     Wait-Check { Cdp 'ready' } 'ready before attachment download'
     $downloadDir = New-Item -ItemType Directory -Force (Join-Path $out.FullName 'downloads')
     $downloadFile = Join-Path $downloadDir.FullName 'native-attachment.txt'
@@ -199,6 +215,7 @@ try {
     Click-Native '重新打开'
     Wait-Check { Cdp 'ready' } 'renderer retry creates working content'
     if ($client.Id -ne $hostPid -or $client.HasExited) { throw 'Unexpected host restart' }
+    Wait-Check { Cdp 'profile' } 'persistent HttpOnly cookie survives renderer recovery'
     Capture '04-renderer-recovered'
     if (-not (Cdp 'navigate' 'http://127.0.0.1:1/')) { throw 'Network navigation failed' }
     Wait-Check { $null -ne (Native-Button '服务器设置') } 'network failure native recovery'
@@ -258,8 +275,10 @@ try {
         $script:client = Get-Process -Id $replacement[0].ProcessId
         return $true
     } 'browser failure restarts only the client'
-    Wait-Check { Cdp 'settings' } 'restarted client opens local settings'
+    Wait-Check { Cdp 'settings' $serverAddress } 'restarted client keeps the configured server in settings'
     Capture '08-browser-restarted-settings'
+    if (-not (Cdp 'navigate' "$serverAddress/ready")) { throw 'Profile check navigation after browser restart failed' }
+    Wait-Check { Cdp 'profile' } 'persistent HttpOnly cookie survives browser process restart'
     Stop-Process -Id $client.Id -Force
     $client.WaitForExit()
     # Official WebView2 environment override simulates unavailable runtime
@@ -278,7 +297,8 @@ try {
     $retry = Native-Element $retryCondition
     if ($null -eq $retry) { throw 'Startup fallback has no Retry button' }
     $retry.GetCurrentPattern([System.Windows.Automation.InvokePattern]::Pattern).Invoke()
-    Wait-Check { Cdp 'local' } 'startup Retry continues after runtime is available'
+    Wait-Check { Cdp 'ready' } 'startup Retry returns to the configured server after runtime is available'
+    Wait-Check { Cdp 'profile' } 'persistent HttpOnly cookie survives startup recovery'
     if ($client.Id -ne $startupPid -or $client.HasExited) { throw 'Startup Retry unexpectedly lost the host' }
     Capture '10-startup-repaired'
     Stop-Process -Id $client.Id -Force
@@ -289,7 +309,7 @@ try {
     $cancel = Native-Element $cancelCondition
     $cancel.GetCurrentPattern([System.Windows.Automation.InvokePattern]::Pattern).Invoke()
     Wait-Check { $client.HasExited } 'startup fallback Cancel exits client'
-    'Default attachment save, same document, HTTP retry, TLS rejection, broken transport, native timeout, renderer recovery, browser restart and runtime startup fallback passed.' |
+    'Server form, persistent HttpOnly cookie across relaunch and recoveries, default attachment save, same document, HTTP retry, TLS rejection, broken transport, native timeout, renderer recovery, browser restart and runtime startup fallback passed.' |
         Set-Content (Join-Path $out.FullName 'result.txt')
 } finally {
     try { Capture 'final' } catch { Write-Warning "Final screenshot unavailable: $_" }

@@ -13,6 +13,26 @@ async function main() {
     let hangingRequests = 0;
     let brokenRequests = 0;
     const handler = (req, res) => {
+      if (req.url === '/profile-check') {
+        res.writeHead(200, {
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-store',
+        });
+        res.end(
+          JSON.stringify({
+            retained: (req.headers.cookie || '')
+              .split(';')
+              .some((part) => part.trim() === 'tm_ci_session=retained'),
+          })
+        );
+        return;
+      }
+      if (req.url === '/seed') {
+        res.setHeader(
+          'Set-Cookie',
+          'tm_ci_session=retained; HttpOnly; Max-Age=3600; SameSite=Lax; Path=/'
+        );
+      }
       if (req.url === '/diagnostics') {
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(
@@ -110,9 +130,54 @@ async function main() {
       socket.send(JSON.stringify({ id, method, params }));
     });
   }
+  async function click(selector) {
+    const point = await command('Runtime.evaluate', {
+      expression: `(()=>{const r=document.querySelector(${JSON.stringify(
+        selector
+      )}).getBoundingClientRect();return {x:r.x+r.width/2,y:r.y+r.height/2}})()`,
+      returnByValue: true,
+    });
+    if (!point.result.value) throw new Error('Fixture action target missing');
+    for (const type of ['mousePressed', 'mouseReleased']) {
+      await command('Input.dispatchMouseEvent', {
+        type,
+        ...point.result.value,
+        button: 'left',
+        clickCount: 1,
+      });
+    }
+  }
   try {
     if (action === 'navigate') {
       await command('Page.navigate', { url: process.argv[3] });
+    } else if (action === 'connect') {
+      await command('Runtime.evaluate', {
+        expression: `document.querySelector("#addr").value=${JSON.stringify(
+          process.argv[3]
+        )}`,
+      });
+      await click('#go');
+    } else if (action === 'profile') {
+      const result = await command('Runtime.evaluate', {
+        expression:
+          'fetch("/profile-check",{cache:"no-store"}).then(r=>r.json()).then(r=>r.retained && !document.cookie.includes("tm_ci_session"))',
+        awaitPromise: true,
+        returnByValue: true,
+      });
+      if (result.result.value !== true)
+        throw new Error('Persistent HttpOnly fixture cookie was not retained');
+    } else if (action === 'close') {
+      socket.send(
+        JSON.stringify({
+          id: ++serial,
+          method: 'Runtime.evaluate',
+          params: {
+            expression:
+              'document.querySelector("tm-shell-controls").shadowRoot.querySelector("[data-act=close]").click()',
+          },
+        })
+      );
+      await new Promise((resolve) => setTimeout(resolve, 500));
     } else if (action === 'hang') {
       // The navigation deliberately never commits. Schedule it from the page
       // so the driver can return while the native watchdog keeps waiting.
@@ -136,21 +201,7 @@ async function main() {
       await command('Network.enable');
       let navigation = {};
       if (action === 'download-native') {
-        const point = await command('Runtime.evaluate', {
-          expression:
-            '(()=>{const r=document.querySelector("#fixture-download").getBoundingClientRect();return {x:r.x+r.width/2,y:r.y+r.height/2}})()',
-          returnByValue: true,
-        });
-        if (!point.result.value)
-          throw new Error('Fixture download link missing');
-        for (const type of ['mousePressed', 'mouseReleased']) {
-          await command('Input.dispatchMouseEvent', {
-            type,
-            ...point.result.value,
-            button: 'left',
-            clickCount: 1,
-          });
-        }
+        await click('#fixture-download');
       } else {
         navigation = await command('Page.navigate', {
           url: 'http://127.0.0.1:8085/download',
@@ -208,7 +259,12 @@ async function main() {
       const result = await command('Runtime.evaluate', {
         expression:
           'location.hostname === "tauri.localhost" && !!document.querySelector("#addr")' +
-          (action === 'settings' ? ' && location.search === "?change=1"' : ''),
+          (action === 'settings' ? ' && location.search === "?change=1"' : '') +
+          (process.argv[3]
+            ? ` && document.querySelector("#addr").value === ${JSON.stringify(
+                process.argv[3]
+              )}`
+            : ''),
         returnByValue: true,
       });
       if (result.result.value !== true)
