@@ -1,13 +1,14 @@
 //! Recovery stays in the Rust/Win32 host; it must not depend on failed-page JS.
-use crate::recovery_policy::{Failure, RecoveryGate};
+use crate::recovery_policy::{AbortDecision, DownloadNavigation, Failure, RecoveryGate};
 use std::sync::{
     atomic::{AtomicBool, AtomicU64, Ordering},
     Arc, Mutex,
 };
 use tauri::{AppHandle, Manager, WebviewWindow};
 use webview2_com::{
-    BrowserProcessExitedEventHandler, Microsoft::Web::WebView2::Win32::*,
-    NavigationCompletedEventHandler, NavigationStartingEventHandler, ProcessFailedEventHandler,
+    BrowserProcessExitedEventHandler, DownloadStartingEventHandler,
+    Microsoft::Web::WebView2::Win32::*, NavigationCompletedEventHandler,
+    NavigationStartingEventHandler, ProcessFailedEventHandler,
 };
 use windows::{
     core::{w, Interface, BOOL, PCWSTR},
@@ -63,6 +64,8 @@ struct State {
     closing: AtomicBool,
     navigation: AtomicU64,
     loading: Mutex<Option<(u64, std::time::Instant)>>,
+    downloads: Mutex<DownloadNavigation>,
+    aborted: Mutex<Option<(u64, std::time::Instant, String)>>,
 }
 
 fn wide(value: &str) -> Vec<u16> {
@@ -226,6 +229,33 @@ pub fn install(window: &WebviewWindow) -> tauri::Result<()> {
         if shared.closing.load(Ordering::Acquire) {
             break;
         }
+        let aborted = {
+            let mut pending = shared.aborted.lock().unwrap_or_else(|e| e.into_inner());
+            if pending
+                .as_ref()
+                .is_some_and(|(_, at, _)| at.elapsed().as_secs() >= 1)
+            {
+                pending.take()
+            } else {
+                None
+            }
+        };
+        if let Some((id, _, detail)) = aborted {
+            let report = shared
+                .downloads
+                .lock()
+                .unwrap_or_else(|e| e.into_inner())
+                .report_abort(id);
+            if report {
+                failed(
+                    watchdog_app.clone(),
+                    shared.clone(),
+                    Failure::Navigation,
+                    "暂时无法连接内容",
+                    detail,
+                );
+            }
+        }
         let expired = {
             let mut loading = shared.loading.lock().unwrap_or_else(|e| e.into_inner());
             if loading
@@ -259,6 +289,14 @@ pub fn install(window: &WebviewWindow) -> tauri::Result<()> {
                     if let Some(args) = args {
                         let mut id = 0;
                         args.NavigationId(&mut id)?;
+                        let mut uri = windows::core::PWSTR::null();
+                        let _ = args.Uri(&mut uri);
+                        shared
+                            .downloads
+                            .lock()
+                            .unwrap_or_else(|e| e.into_inner())
+                            .start(id, &webview2_com::take_pwstr(uri));
+                        *shared.aborted.lock().unwrap_or_else(|e| e.into_inner()) = None;
                         shared.navigation.store(id, Ordering::Release);
                         *shared.loading.lock().unwrap_or_else(|e| e.into_inner()) =
                             Some((id, std::time::Instant::now()));
@@ -267,6 +305,29 @@ pub fn install(window: &WebviewWindow) -> tauri::Result<()> {
                 })),
                 &mut token,
             )?;
+
+            let shared = state.clone();
+            if let Ok(downloads) = core.cast::<ICoreWebView2_4>() {
+                downloads.add_DownloadStarting(
+                    &DownloadStartingEventHandler::create(Box::new(move |_, args| {
+                        if let Some(args) = args {
+                            let mut uri = windows::core::PWSTR::null();
+                            args.DownloadOperation()?.Uri(&mut uri)?;
+                            let matched = shared
+                                .downloads
+                                .lock()
+                                .unwrap_or_else(|e| e.into_inner())
+                                .download_started(&webview2_com::take_pwstr(uri));
+                            if matched {
+                                *shared.aborted.lock().unwrap_or_else(|e| e.into_inner()) = None;
+                                *shared.loading.lock().unwrap_or_else(|e| e.into_inner()) = None;
+                            }
+                        }
+                        Ok(())
+                    })),
+                    &mut token,
+                )?;
+            }
 
             let handle = app.clone();
             let shared = state.clone();
@@ -299,6 +360,25 @@ pub fn install(window: &WebviewWindow) -> tauri::Result<()> {
                         } else {
                             format!("连接错误 {}。未跳过安全证书验证。", error.0)
                         };
+                        if error == COREWEBVIEW2_WEB_ERROR_STATUS_CONNECTION_ABORTED && status < 400
+                        {
+                            // Downloads abort the document navigation. Correlate
+                            // the native event before deciding this is a fault;
+                            // other connection aborts still get native recovery.
+                            let decision = shared
+                                .downloads
+                                .lock()
+                                .unwrap_or_else(|e| e.into_inner())
+                                .aborted(id);
+                            if decision == AbortDecision::Download {
+                                return Ok(());
+                            }
+                            if decision == AbortDecision::Pending {
+                                *shared.aborted.lock().unwrap_or_else(|e| e.into_inner()) =
+                                    Some((id, std::time::Instant::now(), detail));
+                                return Ok(());
+                            }
+                        }
                         failed(
                             handle.clone(),
                             shared.clone(),

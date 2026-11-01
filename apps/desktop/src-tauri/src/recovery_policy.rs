@@ -46,6 +46,64 @@ impl RecoveryGate {
     }
 }
 
+#[derive(Debug, PartialEq, Eq)]
+pub enum AbortDecision {
+    Download,
+    Pending,
+    Untracked,
+}
+
+// Only one current main-frame navigation is retained, never a URL history.
+#[derive(Default)]
+pub struct DownloadNavigation {
+    id: u64,
+    uri: String,
+    download: bool,
+    pending: bool,
+}
+
+impl DownloadNavigation {
+    pub fn start(&mut self, id: u64, uri: &str) {
+        let uri = uri.split('#').next().unwrap_or("");
+        let uri = if uri.len() <= 8192 { uri } else { "" };
+        if self.id != id || self.uri != uri {
+            self.download = false;
+            self.pending = false;
+        }
+        self.id = id;
+        self.uri = uri.into();
+    }
+
+    pub fn download_started(&mut self, uri: &str) -> bool {
+        let uri = uri.split('#').next().unwrap_or("");
+        if self.uri.is_empty() || self.uri != uri {
+            return false;
+        }
+        self.download = true;
+        self.pending = false;
+        true
+    }
+
+    pub fn aborted(&mut self, id: u64) -> AbortDecision {
+        if self.id != id || id == 0 {
+            return AbortDecision::Untracked;
+        }
+        if self.download {
+            return AbortDecision::Download;
+        }
+        self.pending = true;
+        AbortDecision::Pending
+    }
+
+    pub fn report_abort(&mut self, id: u64) -> bool {
+        if self.id != id {
+            return false;
+        }
+        let pending = std::mem::take(&mut self.pending);
+        pending && !self.download
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -86,5 +144,62 @@ mod tests {
         assert!(!gate.offer(Failure::Navigation));
         gate.retry();
         assert!(gate.offer(Failure::RendererUnresponsive));
+    }
+
+    #[test]
+    fn a_confirmed_download_is_not_a_page_failure_in_either_callback_order() {
+        for download_first in [true, false] {
+            let mut nav = DownloadNavigation::default();
+            nav.start(1, "https://fixture.test/file#fragment");
+            if download_first {
+                assert!(nav.download_started("https://fixture.test/file"));
+                assert_eq!(nav.aborted(1), AbortDecision::Download);
+            } else {
+                assert_eq!(nav.aborted(1), AbortDecision::Pending);
+                assert!(nav.download_started("https://fixture.test/file"));
+            }
+            assert!(!nav.report_abort(1));
+        }
+    }
+
+    #[test]
+    fn a_real_abort_is_reported_once_and_unrelated_downloads_cannot_mask_it() {
+        let mut nav = DownloadNavigation::default();
+        nav.start(2, "https://fixture.test/page");
+        assert_eq!(nav.aborted(2), AbortDecision::Pending);
+        assert!(!nav.download_started("https://fixture.test/other"));
+        assert!(nav.report_abort(2));
+        assert!(!nav.report_abort(2));
+    }
+
+    #[test]
+    fn replacement_navigation_cannot_inherit_a_download_or_late_failure() {
+        let mut nav = DownloadNavigation::default();
+        nav.start(3, "https://fixture.test/file");
+        assert!(nav.download_started("https://fixture.test/file"));
+        nav.start(4, "https://fixture.test/file");
+        assert_eq!(nav.aborted(4), AbortDecision::Pending);
+        assert!(!nav.report_abort(3));
+        assert!(nav.report_abort(4));
+        nav.start(5, "https://fixture.test/page");
+        assert_eq!(nav.aborted(5), AbortDecision::Pending);
+        nav.start(6, "https://fixture.test/next");
+        assert!(!nav.report_abort(5));
+    }
+
+    #[test]
+    fn redirects_only_match_the_latest_uri_and_untracked_aborts_are_not_ignored() {
+        let mut nav = DownloadNavigation::default();
+        assert_eq!(nav.aborted(7), AbortDecision::Untracked);
+        nav.start(7, "https://fixture.test/redirect");
+        nav.start(7, "https://fixture.test/final");
+        assert!(!nav.download_started("https://fixture.test/redirect"));
+        assert_eq!(nav.aborted(7), AbortDecision::Pending);
+        assert!(nav.download_started("https://fixture.test/final"));
+        assert!(!nav.report_abort(7));
+        nav.start(8, &"x".repeat(8193));
+        assert!(!nav.download_started(&"x".repeat(8193)));
+        assert_eq!(nav.aborted(8), AbortDecision::Pending);
+        assert!(nav.report_abort(8));
     }
 }

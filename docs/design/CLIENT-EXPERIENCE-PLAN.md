@@ -166,3 +166,7 @@
 - 附件实测 e48e1c9/41274082871 失败：正常 loopback attachment 导航后未收到目标文件，实际截图/UIA 出现整应用“暂时无法连接内容”原生恢复。尚未取得展开后的 WebError 码与下载事件，不能先认定缺文件完全是恢复逻辑导致；补有界 CDP 事件、保持调试会话 2 秒、故障时展开详情，下一步核对事件顺序再改生产分类。
 - Ruling（测试效率，不改发布资格）：工作流新增 publish=false 专用 audit_package_run 入口，只接受本仓库同一 desktop 工作流已整体成功的 run；核对原生目录、本地 UI、package.json 及图标源 Git 对象一致，保留包 SHA/测试 SHA 证明，原生输入变化必须完整重建。该入口明确禁止发布、不生成新包、不替代最终完整双架构/安装/便携/故障发布门禁。ID 非法、错误仓库/工作流、失败构建、原生/UI/package/图标不一致的 8 个拒绝与相同输入仅非发布通过均已本地验证，实际 GitHub 入口尚待运行；不把 CI 脚本测试等同客户端功能通过。
 - 故障复验入口小批：typecheck/lint/完整 Jest175 套 1134 项/完整 format 均 0（windows-package-audit-checks.json），PowerShell 拒绝/通过用例与 AST、Node 语法通过。只读抽取近 7 天最多 200 条 Application 崩溃事件中另见 2 条 pwsh/coreclr 的 c0000005，记录仅进 output；它证明开发主机还有其他原生异常，不能据此认定 TongMu、VPS 或硬件根因。当前先用同源码 36daf80 成功包核对附件事件与错误码，不发布。
+
+- 附件因果补证：43f41dd/41274590158 以 36daf80 成功包通过真实 Git 对象核对后复验，发布/重建门禁按设计跳过；测试仍失败。CDP 明示 isDownload=true、ERR_ABORTED，下载进度已收 30/30 字节；原生展开详情为连接错误 9。代码将所有非取消连接错误立即弹整应用恢复，发生在下载回调处理前；保留原证据，不把收到数据等同文件已保存。
+- 修复候选：新增当前导航/URI 的有界内存关联（只一条、不落盘、忽略 fragment 且 8192 字符上限），匹配原生 DownloadStarting 才认定附件；ConnectionAborted 经现有单 watchdog 等待至少 1 秒再判定，普通中断仍报错，不创建逐次等待线程，不全局吞 9。新导航/重定向清旧归属，不支持 Core4 的旧 runtime 不导致整个恢复绑定失败。8 个纯 Rust 用例覆盖双回调顺序、真中断、无关下载、同 URL 新导航、旧失败、重定向、未知 ID/过长 URI；实际新编译与附件保存/页面保留待门禁，未标通过。
+- 下载误报修复候选本机四项检查均 0：typecheck/lint/完整 Jest175 套 1134 项/完整 format（windows-download-fix-checks.json）。本机未装 Rust，新增 8 项 Rust 门禁及 COM 绑定编译、真实附件保存/页面不重载须由完整 Windows CI 证明。原生源已变化，禁止用先前 36 包的复验入口冒充新编译；本次走完整双架构非发布流程。
