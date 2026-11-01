@@ -406,8 +406,10 @@ pub fn install(window: &WebviewWindow) -> tauri::Result<()> {
                                     .unwrap_or_else(|e| e.into_inner())
                                     .attachment_response(&uri, &disposition);
                                 if matched {
-                                    *shared.aborted.lock().unwrap_or_else(|e| e.into_inner()) = None;
-                                    *shared.loading.lock().unwrap_or_else(|e| e.into_inner()) = None;
+                                    *shared.aborted.lock().unwrap_or_else(|e| e.into_inner()) =
+                                        None;
+                                    *shared.loading.lock().unwrap_or_else(|e| e.into_inner()) =
+                                        None;
                                 }
                                 Ok(())
                             };
