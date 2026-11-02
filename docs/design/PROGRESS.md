@@ -2,6 +2,9 @@
 
 ## 2026-11-02 搜索工具局部刷新及原生终态
 
+- 调度更正：41419961526 因同分支推送触发 checks-${github.ref} 并发组而 cancelled，不算成功/产品失败；完整 type/lint/format/unit/rooms/ops 此前已通过，build被取消。镜像改固定在 codex/client-tools-image-ac92cd8，先取消该分支重复的独立 Checks，再由镜像流程完整重验，不弱化检查。4afacd6仅CI场景与文档，运行时树仍ac92cd8。
+- Windows41419967948新增证据：默认PDF关联MSEdgePDF，外部msedge进程存在、标题含native-pdf-audit.pdf，UIA offscreen=false/enabled=false。还不能判断模态阻挡还是UIA属性；仅CI补Win32 IsWindowEnabled/IsWindowVisible与活动弹窗对照，按真实OS可见/可操作窗口判进入正文门禁，正文必须仍实际读取。无宿主源码/关联修改，尚待该对照运行。
+
 - ac92cd8 已提交并推送；完整隔离审计镜像 41419961526、Windows 仅诊断非发布 41419967948 运行中，下一轮查询同句柄。新增 search-tools 受控真实页面场景：真实系统登录、只模拟壳标记/功能旗标与上游查询，使用现有 Mikan 源避免无限分页夹具，真实触摸/App 成功失败保留/网络中止、网页和 Windows 行为隔离、两标签各三宽深浅共 12 图。来源严格校验保留；Node 语法、11 项来源门禁、逐文件格式通过，场景尚未运行。API23/34 原生准备图已实看，文案明确准备阶段须保留页面。
 
 - PansouSearch/AcgSearch 沿用 usePageRefresh，只在 App 的 /search 结果标签注册；网盘保留当前筛选、磁力刷新首页，等待/失败保留旧结果，刷新失败只交共享提示；普通网页/Windows 不注册。新请求/换来源/离开中止旧请求，迟到 JSON 不发布；刷新使用已提交关键词，不用输入框尚未提交的草稿。未改 API、存储键、播放器/房间会话、页面结构/样式/时长，不加依赖；对应 DESIGN 第 3 节保留动效和已批局部刷新方案。

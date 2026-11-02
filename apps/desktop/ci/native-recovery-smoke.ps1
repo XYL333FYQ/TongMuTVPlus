@@ -13,6 +13,15 @@ public static class ClientWindowProbe {
     [DllImport("user32.dll")] public static extern bool IsZoomed(IntPtr window);
     [DllImport("user32.dll")] public static extern bool ShowWindow(IntPtr window, int command);
     [DllImport("user32.dll")] public static extern bool SetForegroundWindow(IntPtr window);
+    [DllImport("user32.dll")] public static extern bool IsWindowEnabled(IntPtr window);
+    [DllImport("user32.dll")] public static extern bool IsWindowVisible(IntPtr window);
+    [DllImport("user32.dll")] public static extern IntPtr GetLastActivePopup(IntPtr window);
+    [DllImport("user32.dll", CharSet = CharSet.Unicode)] private static extern int GetWindowText(IntPtr window, System.Text.StringBuilder text, int count);
+    public static string WindowTitle(IntPtr window) {
+        var text = new System.Text.StringBuilder(512);
+        GetWindowText(window, text, text.Capacity);
+        return text.ToString();
+    }
     [DllImport("user32.dll")] public static extern bool GetWindowRect(IntPtr window, out Rect rect);
     [StructLayout(LayoutKind.Sequential)]
     public struct MouseInput { public int dx, dy; public uint mouseData, flags, time; public UIntPtr extraInfo; }
@@ -168,7 +177,10 @@ function Verify-SystemFileActions([string]$FilePath, [string]$ExpectedText = 'To
         @($windows | ForEach-Object {
             [pscustomobject]@{ title = $_.Current.Name; pid = $_.Current.ProcessId;
                 handle = $_.Current.NativeWindowHandle; offscreen = $_.Current.IsOffscreen;
-                enabled = $_.Current.IsEnabled; focusable = $_.Current.IsKeyboardFocusable }
+                enabled = $_.Current.IsEnabled; focusable = $_.Current.IsKeyboardFocusable;
+                osEnabled = [ClientWindowProbe]::IsWindowEnabled([IntPtr]$_.Current.NativeWindowHandle);
+                osVisible = [ClientWindowProbe]::IsWindowVisible([IntPtr]$_.Current.NativeWindowHandle);
+                activePopup = [ClientWindowProbe]::WindowTitle([ClientWindowProbe]::GetLastActivePopup([IntPtr]$_.Current.NativeWindowHandle)) }
         }) | ConvertTo-Json -Depth 3 | Set-Content (Join-Path $out.FullName ($EvidencePrefix + '-windows.json'))
         Get-Process -Name msedge,chrome,AcroRd32,SumatraPDF -ErrorAction SilentlyContinue |
             Select-Object ProcessName,Id,MainWindowHandle,MainWindowTitle |
@@ -176,7 +188,9 @@ function Verify-SystemFileActions([string]$FilePath, [string]$ExpectedText = 'To
         $association = Get-ItemProperty 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\FileExts\.pdf\UserChoice' -ErrorAction SilentlyContinue
         if ($association) { $association | Select-Object ProgId | ConvertTo-Json | Set-Content (Join-Path $out.FullName ($EvidencePrefix + '-association.json')) }
         foreach ($window in $windows) {
-            if ($window.Current.ProcessId -ne $client.Id -and $window.Current.IsEnabled -and -not $window.Current.IsOffscreen -and
+            if ($window.Current.ProcessId -ne $client.Id -and
+                [ClientWindowProbe]::IsWindowEnabled([IntPtr]$window.Current.NativeWindowHandle) -and
+                [ClientWindowProbe]::IsWindowVisible([IntPtr]$window.Current.NativeWindowHandle) -and
                 $window.Current.Name.IndexOf($stem, [StringComparison]::OrdinalIgnoreCase) -ge 0) {
                 $script:fixtureReader = $window
                 return $true
