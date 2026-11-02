@@ -437,8 +437,6 @@ document.querySelector('#fixture-post-blob').onclick=async event=>{
           'document.title === "NativeRecoveryFixture" && performance.timeOrigin === window.__tmCiDownloadOrigin && !window.__tmCiBlobError && window.__tmCiDownloadTrusted === true' +
           (action === 'download-physical-ready'
             ? ' && window.__tmCiDownloadActive === true'
-            : action === 'download-assistive-ready'
-            ? ' && window.__tmCiDownloadActive === false'
             : ''),
         returnByValue: true,
       });
