@@ -6,6 +6,7 @@ const base = 'http://127.0.0.1:3017',
   out = '/audit/artifacts';
 const target = base + '/__audit_telegram';
 let activePage;
+let activePopup;
 let currentCase;
 const sessions = new WeakMap();
 async function activationExpired(context, page) {
@@ -120,8 +121,8 @@ async function until(check, label) {
           if (path === '/__audit_telegram') {
             state.destinations++;
             await route.fulfill({
-              contentType: 'text/html',
-              body: '<title>Controlled external authentication destination</title><h1>受控登录目标</h1>',
+              contentType: 'text/html; charset=utf-8',
+              body: '<meta charset="utf-8"><title>Controlled external authentication destination</title><h1>受控登录目标</h1>',
             });
             return;
           }
@@ -163,6 +164,7 @@ async function until(check, label) {
           : ['light'];
       for (const theme of themes) {
         currentCase = { platform, theme };
+        activePopup = null;
         state.mode = 'ok';
         state.status = 'pending';
         await page.goto(base + '/login', { waitUntil: 'domcontentloaded' });
@@ -195,6 +197,7 @@ async function until(check, label) {
           .click();
         if (web) {
           popup = await automatic;
+          activePopup = popup;
         } else {
           const action = page.getByRole('button', {
             name: old ? '复制 Telegram 登录链接' : '打开 Telegram',
@@ -237,6 +240,7 @@ async function until(check, label) {
               page.waitForEvent('popup'),
               action.click(),
             ]);
+            activePopup = popup;
             const proof = await page.evaluate(() => window.__authOpenProof);
             assert.deepEqual(proof, [
               { path: '/__audit_telegram', active: true },
@@ -244,6 +248,19 @@ async function until(check, label) {
           }
         }
         if (popup) {
+          activePopup = popup;
+          await popup.waitForURL(target);
+          await popup.waitForLoadState('domcontentloaded');
+          const destination = await popup.evaluate(() => ({
+            path: location.pathname,
+            charset: document.characterSet,
+            text: document.body.innerText,
+          }));
+          fs.writeFileSync(
+            `${out}/auth-destination-${platform}-${theme}.json`,
+            JSON.stringify(destination, null, 2)
+          );
+          assert.equal(destination.charset, 'UTF-8');
           await popup.getByRole('heading', { name: '受控登录目标' }).waitFor();
           await popup.close();
         }
@@ -413,6 +430,27 @@ async function until(check, label) {
       'PASS: actual login page gestures, clipboard, popup, challenge lifetime, failure retry, HTTP cancellation and sixteen screenshots'
     );
   } catch (error) {
+    if (activePopup && !activePopup.isClosed()) {
+      await activePopup
+        .screenshot({ path: out + '/failure-popup.png' })
+        .catch(() => {});
+      const address = new URL(activePopup.url());
+      const destination = { origin: address.origin, path: address.pathname };
+      if (address.origin === base && address.pathname === '/__audit_telegram')
+        Object.assign(
+          destination,
+          await activePopup
+            .evaluate(() => ({
+              charset: document.characterSet,
+              text: document.body.innerText.slice(0, 240),
+            }))
+            .catch(() => ({}))
+        );
+      fs.writeFileSync(
+        out + '/failure-popup.json',
+        JSON.stringify(destination, null, 2)
+      );
+    }
     if (activePage && !activePage.isClosed())
       await activePage
         .screenshot({ path: out + '/failure.png' })

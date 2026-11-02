@@ -2,6 +2,9 @@
 
 ## 2026-11-02 客户端 Telegram 登录接续
 
+- ba3253f 镜像 41448941085 完整成功，digest9628ca965e77bd10a07f2f2b8709ccd059a919bbe948719c9be7a4b219bf26e9；313414e 调用 auth41450613964 在 App 深色首场收到真实 popup 且激活/单请求断言越过，停在受控目标中文 heading 不可见。旧夹具 Content-Type text/html 且无 meta charset，候选仅补 UTF-8 声明、精确目标 URL/DOMContentLoaded 等待及子窗口字符集/受控文本/失败截图证据，中文标题断言保留，尚待同镜像复验，不猜为产品失败/已修好。父页失败截图已实看，单按钮及就绪文案存在。
+- 线上只读白名单核对：health buildSha=c28ab11b3e3fd3b8c2b0c412d73601ec3b1eb39d，storage=d1，Telegram/OIDC 登录开关均 false，OIDC 按钮空；未读取凭据、未修改配置或启用服务。真实提供商确认/回跳不能由受控响应替代；现有 Telegram status 仍在原 WebView 接收鉴权 Cookie，OIDC 主导航及 state Cookie 代码未改。调用分支重复 Checks41449595735 已请求取消，使用固定镜像内完整门禁，不重复镜像构建。
+
 - 最小接续：产品源 ba3253f32f19781f6c3188132dcbaa3a9be2a1f9 已推至固定分支 codex/client-auth-image-ba3253f；完整镜像 41448941085 当前 checks 运行中，只查同句柄，不重复构建/推该分支。工作分支 codex/client-auth-explicit-open 随后只有文档与 CI 变化，运行时树仍 ba3253f。镜像完成后取得合并 digest，再用含最新 auth.cjs 的调用分支跑 auth；该脚本又给每个旧壳复制场景先写不同哨兵值，防止上一用例剪贴板造成假通过，Node/格式通过，场景仍待验。不要用旧 5bc 的镜像或失败 UI 当新候选通过。
 - 当前图解已更新到 CURRENT 认证候选章节。余项仍为原七批：真实 Telegram/OIDC 确认与回跳、其他外部入口/菜单权限、旧引擎普通下载、共享返回其余层级及最终整分支审查/部署发布/真机底栏等；没有缩减或宣布完成。正式 VPS 仍 c28ab11b，未发布安装包；未知 NUL STATUS 文档保留。下一轮不重复调查已确认的 Playwright userGesture、AbortController 缺失及表单 required 前提。
 
