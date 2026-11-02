@@ -2,6 +2,8 @@
 
 ## 2026-11-01 客户端 113cd9c 验证续记
 
+- 首页附属刷新本地门禁：pnpm typecheck=0，lint=0（既有警告），pnpm test --runInBand=182 套/1193 项通过，pnpm test:rooms=27 项通过；本批 4 文件同版本格式通过。全仓 pnpm format:check=1 仅未知未跟踪全 NUL 的 CLIENT-EXPERIENCE-STATUS.md，保留不动、不提交；干净 CI 必须再验证完整格式。推荐/摘要只接现有 App 刷新；初始加载和 15 秒摘要轮询入口保留，刷新期间旧内容保留、轮询暂停、旧响应不能覆盖新数据，账户变化不发布旧响应，不改房间会话/API/样式/动效。真实 390/820/1280 深浅及网络/单例行为尚待隔离新镜像验证。
+
 - eb4a551/41372002344 环境对照无效：预启动 hook 把多行 shell 逐行调用，if 缺 fi 导致配置没有应用；新增实际 NavigationBar 前置检查使 API34 在安装前失败，不能据此判产品。Checks41372000277 通过。改成单一 Python 脚本调用，纯函数验证 API23/24 配置字节不变、API34 删除重复键并明确 hw.mainKeys=no、幂等且保留其他硬件参数；仍须新模拟器实际窗口及边缘事件证明，不放宽手势门禁。
 - 首页附属刷新未提交批次：Banner 与 HomeRooms 六项/十二项手动刷新回归和既有交互共 37 项通过，新增取消旧账号请求不阻塞下一账号加载的红测已修正；pnpm typecheck 退出 0。仍须 lint/test/format/test:rooms，以及 App 局部刷新与 web/Windows 隔离的真实界面/网络检查。未改 API、房间会话、存储键、Socket 或既有轮播时长/样式。
 

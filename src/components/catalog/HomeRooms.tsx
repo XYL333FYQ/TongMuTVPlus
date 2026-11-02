@@ -2,7 +2,10 @@
 
 import { ChevronRight, Plus, Users } from 'lucide-react';
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+
+import { clientMemoryScope } from '@/lib/client-memory';
+import { usePageRefresh } from '@/hooks/usePageRefresh';
 
 import SectionHeader from '@/components/catalog/SectionHeader';
 import { useWatchRoomContextSafe } from '@/components/WatchRoomProvider';
@@ -23,6 +26,46 @@ export default function HomeRooms({ guest = false }: { guest?: boolean }) {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(!guest && Boolean(context?.isEnabled));
   const externalServer = isExternalRoomServer(context?.config);
+  const generation = useRef(0);
+  const manual = useRef<symbol | null>(null);
+  const loadRooms = useCallback(async (signal: AbortSignal, quiet = false) => {
+    const request = ++generation.current;
+    const scope = quiet ? clientMemoryScope() : null;
+    const current = () => !signal.aborted && request === generation.current;
+    try {
+      const response = await fetch('/api/rooms?mode=mine', {
+        cache: 'no-store',
+        signal,
+      });
+      if (!response.ok) throw new Error('房间列表暂时无法刷新');
+      const data: { rooms: Summary[] } = await response.json();
+      if (!current()) return;
+      if (quiet && scope !== clientMemoryScope())
+        throw new Error('Rooms account changed');
+      if (quiet && !Array.isArray(data.rooms))
+        throw new Error('Invalid rooms summary');
+      setRooms(data.rooms || []);
+      setError('');
+    } catch (failure) {
+      if (quiet) throw failure;
+      if (current()) setError('房间列表暂时无法刷新');
+    } finally {
+      if (current()) setLoading(false);
+    }
+  }, []);
+  usePageRefresh(
+    '/',
+    async (signal) => {
+      const request = Symbol();
+      manual.current = request;
+      try {
+        await loadRooms(signal, true);
+      } finally {
+        if (manual.current === request) manual.current = null;
+      }
+    },
+    !guest && Boolean(context?.isEnabled) && !externalServer
+  );
   useEffect(() => {
     if (guest || !context?.isEnabled) {
       setLoading(false);
@@ -37,31 +80,18 @@ export default function HomeRooms({ guest = false }: { guest?: boolean }) {
     }
     setLoading(true);
     const controller = new AbortController();
-    const refresh = async () => {
-      try {
-        const response = await fetch('/api/rooms?mode=mine', {
-          cache: 'no-store',
-          signal: controller.signal,
-        });
-        if (!response.ok) throw new Error('房间列表暂时无法刷新');
-        const data: { rooms: Summary[] } = await response.json();
-        if (!controller.signal.aborted) {
-          setRooms(data.rooms || []);
-          setError('');
-        }
-      } catch {
-        if (!controller.signal.aborted) setError('房间列表暂时无法刷新');
-      } finally {
-        if (!controller.signal.aborted) setLoading(false);
-      }
+    const refresh = () => {
+      if (!manual.current) void loadRooms(controller.signal);
     };
     void refresh();
     const timer = window.setInterval(refresh, 15000);
     return () => {
+      generation.current += 1;
+      manual.current = null;
       controller.abort();
       clearInterval(timer);
     };
-  }, [guest, context?.isEnabled, externalServer]);
+  }, [guest, context?.isEnabled, externalServer, loadRooms]);
   const current = context?.currentRoom;
   const visible = current
     ? [current, ...rooms.filter((room) => room.id !== current.id)]

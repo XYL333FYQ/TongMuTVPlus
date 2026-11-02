@@ -7,6 +7,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { getDoubanDetail } from '@/lib/douban.client';
 import type { TMDBItem } from '@/lib/tmdb.client';
 import { getGenreNames, getTMDBImageUrl } from '@/lib/tmdb-image-base';
+import { usePageRefresh } from '@/hooks/usePageRefresh';
 
 import HomeHero from '@/components/catalog/HomeHero';
 import DetailPanel from '@/components/DetailPanel';
@@ -62,6 +63,13 @@ export default function BannerCarousel({
   const [isPageVisible, setIsPageVisible] = useState(true);
   const [hasActivePlayback, setHasActivePlayback] = useState(false);
   const [detailOpen, setDetailOpen] = useState(false);
+  const trendingGeneration = useRef(0);
+  useEffect(
+    () => () => {
+      trendingGeneration.current += 1;
+    },
+    []
+  );
   const watchRoom = useWatchRoomContextSafe();
   const previewAllowed =
     enableTrailers &&
@@ -117,6 +125,40 @@ export default function BannerCarousel({
   const getLocalStorageKey = (source: string) => {
     return `banner_trending_cache_${source}`;
   };
+
+  usePageRefresh(
+    '/',
+    async (signal) => {
+      const generation = ++trendingGeneration.current;
+      const response = await fetch('/api/tmdb/trending', {
+        cache: 'no-store',
+        signal,
+      });
+      if (!response.ok) throw new Error('Banner refresh failed');
+      const result = await response.json();
+      if (signal.aborted || generation !== trendingGeneration.current) return;
+      if (
+        result.code !== 200 ||
+        !Array.isArray(result.list) ||
+        !result.list.length
+      )
+        throw new Error('No refreshed banner recommendations');
+      const source = result.source || 'TMDB';
+      setItems(result.list);
+      setDataSource(source);
+      setCurrentIndex((index) => Math.min(index, result.list.length - 1));
+      setIsLoading(false);
+      try {
+        localStorage.setItem(
+          getLocalStorageKey(source),
+          JSON.stringify({ data: result.list, timestamp: Date.now() })
+        );
+      } catch {
+        // The existing optional cache must not turn a successful refresh into failure.
+      }
+    },
+    shouldLoad
+  );
 
   // 先查找片源，用户选择播放前保持当前播放会话。
   const handlePlay = (title: string) => {
@@ -243,6 +285,7 @@ export default function BannerCarousel({
   useEffect(() => {
     // 如果不应该加载，直接返回
     if (!shouldLoad) return;
+    const generation = ++trendingGeneration.current;
 
     const fetchTrending = async () => {
       try {
@@ -286,6 +329,7 @@ export default function BannerCarousel({
         if (!cachedData || cacheExpired) {
           const response = await fetch('/api/tmdb/trending');
           const result = await response.json();
+          if (generation !== trendingGeneration.current) return;
 
           if (result.code === 200 && result.list.length > 0) {
             const newDataSource = result.source || 'TMDB'; // 获取数据源标识
@@ -310,9 +354,10 @@ export default function BannerCarousel({
           }
         }
       } catch (error) {
-        console.error('获取热门内容失败:', error);
+        if (generation === trendingGeneration.current)
+          console.error('获取热门内容失败:', error);
       } finally {
-        setIsLoading(false);
+        if (generation === trendingGeneration.current) setIsLoading(false);
       }
     };
 
