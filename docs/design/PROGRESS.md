@@ -2,6 +2,11 @@
 
 ## 2026-11-01 客户端 113cd9c 验证续记
 
+- 本轮书籍候选已撤回并停止该实现批次：最终 pnpm typecheck 退出 2，新增测试 click mock 的 this 缺类型注解，TS2683 三处，属于源码错误而非环境崩溃。依 AGENTS“源码类型错误或测试失败才恢复该批开始前文件并停止”，仅将 books/detail/page.tsx 恢复 HEAD，删除本批创建的 helper/test；没有撤回此前已验首页/Android/Windows。原始 book-presentation-typecheck.log 与红/绿日志保留，未提交产品候选；下方候选描述只作尝试历史。书籍 PDF 仍待修复与真实业务/系统阅读器验收，本轮不继续新实现、不将行为单测 6 通过称完成。
+
+- 首页最终 2431d12/41378835412 成功：两主题真实触摸刷新推荐/房间摘要、失败旧数据和单提示、两实际 HTTP 中止及迟到不写缓存、播放保护/暂停刷新/同视频恢复且时间推进、web/desktop 行为隔离；六宽深浅图已实看，受控数据/壳标记/Worker blocked 边界保留。Android3f32ae9/41378149415 的 API34 整套成功，Checks41378147393 成功，退出全屏图已实看；API23/24 仍分别无下载确认/进度，整支失败、发布跳过。正式 VPS 未变，真实 OriginOS 底栏待用户稍后测试。
+- Windows 书籍候选：现有 POST /api/books/file→Blob 后 PDF“打开”走 window.open(blob)，不符合宿主 HTTP(S) 外链政策；仅 Windows 改用已有 WebView2 下载/系统保存及完成窗口的阅读器动作，按钮“保存后阅读”、格式说明同步，仍需用户选择保存与打开。网页/App 保持原路径、EPUB/章节在线阅读不改；无第二次请求/凭据转交/API 改动。呈现 helper 红测实际 1 失败/5 对照通过 → 6 通过。一次 Jest 无输出停滞，仅结束已确认本轮 PID 后串行重跑；原日志保留。完整门禁及真实 PDF/业务流程尚未验收，不把 TXT/通用 Blob 旧证明冒充业务 PDF 通过。
+
 - a1ee71b/41378534877 首页 App 两主题流程已完成，六宽主题图与两失败图已取回；最终整支失败在 web 隔离断言要求 .tm-ptr DOM 不存在。现有 MobileGestures 在四浏览路由保留隐藏指示器，只给 App 绑定手势；此前 DOM 数量不是平台行为契约。仅修测试为前后计算样式不可见、真实下拉无请求/无文档重建，保留网页/桌面严格行为隔离，未改产品。全套仍须新终态及截图实看后才记通过。
 
 - d1f8482/41378276996 触摸证据定位首页测试环境缺陷：首次真实 touchstart/move/end 时 coarse=true，CDP detach 后第二次完整触摸序列 coarse=false；scroll=0、视频已暂停、无 modal/键盘。产品按既定 isPhoneTouch 正确拒绝鼠标环境。仅 CI 改每页复用一条 CDP 会话、随 context.close 释放，并在每次手势前严格断言 coarse=true；不通过覆盖产品判断或合成 DOM 事件绕过门禁。新流程待跑全套数据/失败/取消/六图及单例恢复，当前未称通过。
