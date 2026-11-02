@@ -153,15 +153,38 @@ if [ "$PKG" = "com.tongmutvplus.mobile" ]; then
   }
   native_back() {
     if [ "$BACK_INPUT" = edge-swipe ]; then
+      local label=${1:-attempt}
+      adb shell dumpsys activity service com.android.systemui/.SystemUIService >"$OUT/back-system-before-$label.txt" 2>&1
+      adb shell dumpsys window windows >"$OUT/back-windows-before-$label.txt" 2>&1
+      adb shell dumpsys activity activities >"$OUT/back-activities-before-$label.txt" 2>&1
       adb shell wm size >"$OUT/back-window-size.txt" || return 1
       local size width height
       size=$(sed -n 's/.*size: \([0-9]*x[0-9]*\).*/\1/p' "$OUT/back-window-size.txt" | tail -1 | tr -d '\r')
       [[ "$size" =~ ^[0-9]+x[0-9]+$ ]] || return 1
       read -r width height <<<"${size/x/ }"
-      adb shell input swipe 2 "$((height / 2))" "$((width * 3 / 4))" "$((height / 2))" 350
+      adb shell input swipe 2 "$((height / 2))" "$((width * 3 / 4))" "$((height / 2))" 350 || return 1
+      adb shell dumpsys activity service com.android.systemui/.SystemUIService >"$OUT/back-system-after-$label.txt" 2>&1
+      adb shell dumpsys activity activities >"$OUT/back-activities-after-$label.txt" 2>&1
     else
       adb shell input keyevent 4
     fi
+  }
+  diagnose_back_input() {
+    [ "$BACK_INPUT" = edge-swipe ] || return 0
+    # Do not turn a failed gesture into a pass by falling back to key input.
+    # These controls only identify the boundary after the strict check failed.
+    adb shell input keyevent 4
+    sleep 2
+    adb exec-out screencap -p >"$OUT/back-key-control.png"
+    grep '^BACK_REPORT ' "$OUT/server.log" >"$OUT/back-key-control.txt"
+    adb shell am start -a android.settings.SETTINGS >"$OUT/back-settings-start.txt" 2>&1
+    sleep 1
+    adb shell am start -a android.settings.WIFI_SETTINGS >>"$OUT/back-settings-start.txt" 2>&1
+    sleep 2
+    adb exec-out screencap -p >"$OUT/back-settings-before.png"
+    native_back settings-control
+    sleep 2
+    adb exec-out screencap -p >"$OUT/back-settings-after.png"
   }
   verify_back_chain() {
     wait_target text 'BACK root' >/dev/null || return 1
@@ -170,10 +193,13 @@ if [ "$PKG" = "com.tongmutvplus.mobile" ]; then
     tap_target text 'Back overlay' || return 1
     wait_target text 'BACK overlay' >/dev/null || return 1
     adb exec-out screencap -p >"$OUT/4b-back-overlay.png"
-    native_back || return 1
-    wait_target text 'BACK detail' >/dev/null || return 1
+    native_back overlay || return 1
+    if ! wait_target text 'BACK detail' >/dev/null; then
+      diagnose_back_input
+      return 1
+    fi
     adb exec-out screencap -p >"$OUT/4c-back-overlay-closed.png"
-    native_back || return 1
+    native_back history || return 1
     wait_target text 'BACK root' >/dev/null || return 1
     for _ in $(seq 1 8); do
       grep -q '^BACK_REPORT .*"phase":"history-root"' "$OUT/server.log" && break
