@@ -4,6 +4,7 @@ if ($env:GITHUB_ACTIONS -ne 'true') { throw 'This fault-injection script is only
 Add-Type -AssemblyName UIAutomationClient, UIAutomationTypes, System.Windows.Forms, System.Drawing
 Add-Type @'
 using System;
+using System.Collections.Generic;
 using System.Runtime.InteropServices;
 public static class ClientWindowProbe {
     [StructLayout(LayoutKind.Sequential)]
@@ -15,16 +16,37 @@ public static class ClientWindowProbe {
     [StructLayout(LayoutKind.Sequential)]
     public struct MouseInput { public int dx, dy; public uint mouseData, flags, time; public UIntPtr extraInfo; }
     [StructLayout(LayoutKind.Sequential)]
-    public struct Input { public uint type; public MouseInput mouse; }
+    public struct KeyboardInput { public ushort key, scan; public uint flags, time; public UIntPtr extraInfo; }
+    [StructLayout(LayoutKind.Explicit)]
+    public struct InputData {
+        [FieldOffset(0)] public MouseInput mouse;
+        [FieldOffset(0)] public KeyboardInput keyboard;
+    }
+    [StructLayout(LayoutKind.Sequential)]
+    public struct Input { public uint type; public InputData data; }
     [DllImport("user32.dll")] private static extern bool SetPhysicalCursorPos(int x, int y);
     [DllImport("user32.dll")] private static extern uint SendInput(uint count, Input[] inputs, int size);
     public static bool Click(int x, int y) {
         if (!SetPhysicalCursorPos(x, y)) return false;
         var inputs = new[] {
-            new Input { mouse = new MouseInput { flags = 0x0002 } },
-            new Input { mouse = new MouseInput { flags = 0x0004 } }
+            new Input { data = new InputData { mouse = new MouseInput { flags = 0x0002 } } },
+            new Input { data = new InputData { mouse = new MouseInput { flags = 0x0004 } } }
         };
         return SendInput(2, inputs, Marshal.SizeOf(typeof(Input))) == 2;
+    }
+    private static Input Key(ushort key, ushort scan, uint flags) {
+        return new Input { type = 1, data = new InputData { keyboard = new KeyboardInput { key = key, scan = scan, flags = flags } } };
+    }
+    public static bool ReplaceText(string text) {
+        if (text == null || text.Length > 32767) return false;
+        var inputs = new List<Input> {
+            Key(0x11, 0, 0), Key(0x41, 0, 0), Key(0x41, 0, 2), Key(0x11, 0, 2)
+        };
+        foreach (char value in text) {
+            inputs.Add(Key(0, value, 4));
+            inputs.Add(Key(0, value, 6));
+        }
+        return SendInput((uint)inputs.Count, inputs.ToArray(), Marshal.SizeOf(typeof(Input))) == (uint)inputs.Count;
     }
 }
 '@
@@ -186,8 +208,8 @@ function Save-OwnedDownload([string]$Destination, [switch]$Cancel) {
         if ($filename.Count -ne 1) { throw 'Cannot identify the owned Save As filename field' }
         $filename[0].SetFocus()
         $fieldValue = $filename[0].GetCurrentPattern([System.Windows.Automation.ValuePattern]::Pattern)
-        $fieldValue.SetValue($Destination)
-        if ($fieldValue.Current.Value -ne $Destination) { throw 'Native filename field did not retain the selected path' }
+        if (-not [ClientWindowProbe]::ReplaceText($Destination)) { throw 'OS keyboard input did not dispatch' }
+        Wait-Check { $fieldValue.Current.Value -eq $Destination } 'native filename reflects actual OS keyboard input' 10
         $saveId = [System.Windows.Automation.PropertyCondition]::new(
             [System.Windows.Automation.AutomationElement]::AutomationIdProperty, '1')
         $saveCondition = [System.Windows.Automation.AndCondition]::new($saveId, $buttonType)
@@ -195,7 +217,11 @@ function Save-OwnedDownload([string]$Destination, [switch]$Cancel) {
         if (-not $save) { throw 'Owned Save As dialog has no Save action' }
         $save.SetFocus()
         Capture '00-native-save-selected-path'
-        $save.GetCurrentPattern([System.Windows.Automation.InvokePattern]::Pattern).Invoke()
+        $saveBounds = $save.Current.BoundingRectangle
+        if ($saveBounds.IsEmpty -or $save.Current.IsOffscreen) { throw 'Native Save button is not visible' }
+        if (-not [ClientWindowProbe]::Click([int]($saveBounds.Left + $saveBounds.Width / 2), [int]($saveBounds.Top + $saveBounds.Height / 2))) {
+            throw 'OS Save button mouse input did not dispatch'
+        }
         return $true
     }
     return $false
