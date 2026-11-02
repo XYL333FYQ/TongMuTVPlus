@@ -44,6 +44,15 @@ if [ "$PKG" = "com.tongmutvplus.mobile" ] && [ "$API_LEVEL" -ge 29 ]; then
   grep -qx 2 "$OUT/back-navigation-mode.txt" || exit 1
   adb shell cmd overlay list --user 0 >"$OUT/back-overlays-active.txt" || exit 1
   grep -Fq '[x] com.android.internal.systemui.navbar.gestural' "$OUT/back-overlays-active.txt" || exit 1
+  adb shell getprop qemu.hw.mainkeys | tr -d '\r' >"$OUT/back-mainkeys.txt"
+  for _ in $(seq 1 10); do
+    adb shell dumpsys window windows >"$OUT/back-navigation-window.txt"
+    grep -Eq 'Window\{.*NavigationBar' "$OUT/back-navigation-window.txt" && break
+    sleep 1
+  done
+  # A mode flag alone is insufficient: hardware-key AVDs can have no SystemUI
+  # navigation window and therefore no actual edge-back recognizer attached.
+  grep -Eq 'Window\{.*NavigationBar' "$OUT/back-navigation-window.txt" || exit 1
   BACK_INPUT=edge-swipe
 fi
 printf '%s\n' "$BACK_INPUT" >"$OUT/back-input.txt"
