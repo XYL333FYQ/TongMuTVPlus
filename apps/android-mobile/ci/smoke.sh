@@ -429,6 +429,17 @@ PY
         adb shell input tap "$hint_x" "$hint_y" || return 1
         sleep 1
       fi
+      if [ "$BACK_INPUT" = edge-swipe ]; then
+        # IMMERSIVE_STICKY consumes the first edge gesture to show system bars.
+        # Reveal them explicitly, then perform the actual Back gesture below.
+        adb exec-out screencap -p >"$OUT/back-screen-reveal.png" || return 1
+        point=$(python3 "$(dirname "$0")/back_swipe.py" "$OUT/back-screen-reveal.png" reveal) || return 1
+        read -r from_x from_y to_x to_y <<<"$point"
+        printf '%s\n' "$point" >"$OUT/back-point-reveal.txt"
+        adb shell input swipe "$from_x" "$from_y" "$to_x" "$to_y" 250 || return 1
+        adb shell dumpsys activity service com.android.systemui/.SystemUIService >"$OUT/back-system-revealed.txt" 2>&1
+        grep -q 'mIsNavBarShownTransiently=true' "$OUT/back-system-revealed.txt" || return 1
+      fi
       native_back fullscreen-exit || return 1
       wait_target text 'Return to recovery fixture' >/dev/null || return 1
       sleep 1

@@ -1,7 +1,7 @@
 """Portrait/landscape edge points must stay inside the actual display."""
 import struct
 import zlib
-from back_swipe import swipe
+from back_swipe import swipe, reveal
 
 
 def header(width, height):
@@ -12,6 +12,8 @@ def header(width, height):
 assert swipe(header(320, 640)) == (2, 320, 240, 320)
 assert swipe(header(640, 320)) == (2, 160, 480, 160)
 assert swipe(header(1440, 3168)) == (2, 1584, 1080, 1584)
+assert reveal(header(640, 320)) == (320, 318, 320, 240)
+assert reveal(header(320, 640)) == (160, 638, 160, 480)
 for data in (b'', header(320, 640)[:24], header(0, 640), header(640, 9000), header(320, 640)[:-1] + b'x'):
     try:
         swipe(data)
