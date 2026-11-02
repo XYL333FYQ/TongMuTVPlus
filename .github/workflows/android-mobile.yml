@@ -117,6 +117,7 @@ jobs:
           python3 apps/android-mobile/ci/test_check_back.py
           python3 apps/android-mobile/ci/test_configure_gesture_avd.py
           python3 apps/android-mobile/ci/test_fullscreen_hint_target.py
+          python3 apps/android-mobile/ci/test_back_swipe.py
 
       - name: Collect APK
         id: collect

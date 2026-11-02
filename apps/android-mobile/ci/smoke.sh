@@ -167,11 +167,12 @@ if [ "$PKG" = "com.tongmutvplus.mobile" ]; then
       adb shell dumpsys window windows >"$OUT/back-windows-before-$label.txt" 2>&1
       adb shell dumpsys activity activities >"$OUT/back-activities-before-$label.txt" 2>&1
       adb shell wm size >"$OUT/back-window-size.txt" || return 1
-      local size width height
-      size=$(sed -n 's/.*size: \([0-9]*x[0-9]*\).*/\1/p' "$OUT/back-window-size.txt" | tail -1 | tr -d '\r')
-      [[ "$size" =~ ^[0-9]+x[0-9]+$ ]] || return 1
-      read -r width height <<<"${size/x/ }"
-      adb shell input swipe 2 "$((height / 2))" "$((width * 3 / 4))" "$((height / 2))" 350 || return 1
+      adb exec-out screencap -p >"$OUT/back-screen-$label.png" || return 1
+      local point from_x from_y to_x to_y
+      point=$(python3 "$(dirname "$0")/back_swipe.py" "$OUT/back-screen-$label.png") || return 1
+      read -r from_x from_y to_x to_y <<<"$point"
+      printf '%s\n' "$point" >"$OUT/back-point-$label.txt"
+      adb shell input swipe "$from_x" "$from_y" "$to_x" "$to_y" 350 || return 1
       adb shell dumpsys activity service com.android.systemui/.SystemUIService >"$OUT/back-system-after-$label.txt" 2>&1
       adb shell dumpsys activity activities >"$OUT/back-activities-after-$label.txt" 2>&1
     else
