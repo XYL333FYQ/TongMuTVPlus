@@ -221,8 +221,8 @@ function exported(blob,name,label){window.__tmContentExport.saveBlob(blob,name).
 function saveBlob(){var data=new Uint8Array(131079);for(var i=0;i<data.length;i++)data[i]=i%251;exported(new Blob([data,'桐木导出'],{type:'application/octet-stream'}),'TM-content-blob.bin','Export');}
 function postBlob(){var xhr=new XMLHttpRequest();xhr.open('POST','/content-export-post');xhr.responseType='blob';xhr.onload=function(){if(xhr.status!==200){report('failed');return;}exported(xhr.response,'TM-content-post.bin','POST export');};xhr.send('{"bookId":"fixture"}');}
 // CI-only delayed FileReader producer: real Blob bytes and native ACKs are retained.
-function slowBlob(){var Original=window.FileReader;window.FileReader=function(){var reader=new Original(),self=this;
- this.readAsDataURL=function(blob){reader.onload=function(){self.result=reader.result;setTimeout(function(){if(self.onload)self.onload();},400);};reader.onerror=function(){if(self.onerror)self.onerror();};reader.readAsDataURL(blob);};this.abort=function(){reader.abort();};};
+function slowBlob(){var Original=window.FileReader,reads=0;window.FileReader=function(){var reader=new Original(),self=this;
+ this.readAsDataURL=function(blob){reader.onload=function(){self.result=reader.result;var delay=reads++===0?0:4000;setTimeout(function(){if(self.onload)self.onload();},delay);};reader.onerror=function(){if(self.onerror)self.onerror();};reader.readAsDataURL(blob);};this.abort=function(){reader.abort();};};
  window.__tmContentExport.saveBlob(new Blob([new Uint8Array(2097152)]),'TM-content-cancel.bin').then(function(state){window.FileReader=Original;document.getElementById('status').textContent='Slow export '+state;report('Slow export-'+state);},function(){window.FileReader=Original;report('failed');});}
 var timer=setInterval(function(){if(window.__tmContentExport){clearInterval(timer);document.getElementById('status').textContent='Export ready';report('ready');}},100);
 var foreign=document.getElementById('foreign');

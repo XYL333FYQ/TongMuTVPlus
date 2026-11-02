@@ -2,6 +2,9 @@
 
 ## 2026-11-02 Android 内容导出实际验收
 
+- 8220db6/41411685341：APK 成功，三个 API 仍失败，但均已越过首次排队进入实际生成文件完成；API23/34 取回的 131091 字节与预期完全相同，旧 SecurityException 未再出现。新的终态停在取消夹具“正在准备文件”不可见，报告已是 Slow export-queued；AOSP UiAutomator dump 明确 waitForIdle(1000,10000)，原 400ms 进度更新令采集等到任务结束。仅 CI 改首块立即写入、后续每 4 秒提供真实分片，给采集器空闲窗口，不减缓产品、不绕过原生取消/写盘；仍待新模拟器验证取消和认证 POST。
+- 7b0a3a4 网页镜像 41409950781 完整成功，digest0d633a093d760743ec7fad637921da96b85ca4f203b2db48489c52fe5e637829。8220db6 的 books 验收 41412362726 成功：新版 App 模拟能力的原 Blob/取消/无二次浏览器下载，两主题及三宽截图已取回；exportApiSimulated=true 且 nativeOsReaderTested=false，不当成实际 APK 或系统阅读器证明。其余旧 App/web/desktop 场景保留。下一轮先查询新 APK 与该分支 Checks 同句柄，原七批余项/普通旧下载/系统 PDF/真机底栏不缩减；未部署发布。
+
 - 7b0a3a4/41409725143：APK 编译及协议/核心检查通过，三模拟器整支失败、发布跳过。API34 截图确认被原媒体通知授权框挡在首次 Export Blob 前，不改产品来绕过权限，CI 明确处理音频触发的授权；API23/24 已有原生取消、实际存储拒绝/允许及 Export-queued，后续服务 SecurityException 无完成事件，不能将排队称已保存。原始三端制品 android-content-7b0a3a4-api\* 已取回。
 - 旧系统实现使用 addCompletedDownload(...,showNotification=false)，未声明隐藏下载通知所需权限；AOSP/SDK 明确此模式需要 DOWNLOAD_WITHOUT_NOTIFICATION，和当前异常相符，但仍须新实际运行确认完整归因。候选改为系统完成通知并不再重复发 App 完成通知，不新增静默下载权限；安全诊断只记录框架类/方法，不记录路径/异常消息/凭据。完成通知校验改按当前确切文件名，避免语言和旧通知误匹配。连续播放使用实际采样累计进度，避免循环音频同时间点的错误前提。
 - 7b0a3a4 网页镜像 41409950781 已过干净完整 checks，双架构构建中；下一轮查同句柄，不重复构建。新增 books 的 app-native 真页面场景，模拟能力仅验证 Blob/取消/无浏览器二次下载及六图，明确 exportApiSimulated=true，仍不能代替上述实际 APK/系统阅读器；脚本待来源镜像完成后运行。原七批、普通旧下载缺口、Windows 系统 PDF 及真机底栏保留，未部署/发布。
