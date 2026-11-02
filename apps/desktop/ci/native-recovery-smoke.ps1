@@ -12,6 +12,7 @@ public static class ClientWindowProbe {
     [DllImport("user32.dll")] public static extern bool IsIconic(IntPtr window);
     [DllImport("user32.dll")] public static extern bool IsZoomed(IntPtr window);
     [DllImport("user32.dll")] public static extern bool ShowWindow(IntPtr window, int command);
+    [DllImport("user32.dll")] public static extern bool SetForegroundWindow(IntPtr window);
     [DllImport("user32.dll")] public static extern bool GetWindowRect(IntPtr window, out Rect rect);
     [StructLayout(LayoutKind.Sequential)]
     public struct MouseInput { public int dx, dy; public uint mouseData, flags, time; public UIntPtr extraInfo; }
@@ -162,7 +163,7 @@ function Verify-SystemFileActions([string]$FilePath, [string]$ExpectedText = 'To
         $windows = [System.Windows.Automation.AutomationElement]::RootElement.FindAll(
             [System.Windows.Automation.TreeScope]::Children, [System.Windows.Automation.Condition]::TrueCondition)
         foreach ($window in $windows) {
-            if ($window.Current.ProcessId -ne $client.Id -and
+            if ($window.Current.ProcessId -ne $client.Id -and $window.Current.IsEnabled -and -not $window.Current.IsOffscreen -and
                 $window.Current.Name.IndexOf($stem, [StringComparison]::OrdinalIgnoreCase) -ge 0) {
                 $script:fixtureReader = $window
                 return $true
@@ -170,7 +171,12 @@ function Verify-SystemFileActions([string]$FilePath, [string]$ExpectedText = 'To
         }
         return $false
     } 'OS default reader opens the selected file outside the client'
-    $fixtureReader.SetFocus()
+    # A browser's top-level UIA window need not be keyboard-focusable. Activate
+    # its real OS window; the content assertion below remains mandatory.
+    $readerHandle = [IntPtr]$fixtureReader.Current.NativeWindowHandle
+    if ($readerHandle -eq [IntPtr]::Zero) { throw 'Reader has no native window handle' }
+    [ClientWindowProbe]::ShowWindow($readerHandle, 9) | Out-Null
+    [ClientWindowProbe]::SetForegroundWindow($readerHandle) | Out-Null
     Capture ($EvidencePrefix + '-reader-open') -KeepForeground
     Wait-Check {
         $elements = $fixtureReader.FindAll([System.Windows.Automation.TreeScope]::Descendants,
@@ -186,7 +192,7 @@ function Verify-SystemFileActions([string]$FilePath, [string]$ExpectedText = 'To
         }
         return $false
     } 'real system reader displays the downloaded file bytes'
-    $fixtureReader.SetFocus()
+    [ClientWindowProbe]::SetForegroundWindow($readerHandle) | Out-Null
     Capture ($EvidencePrefix + '-reader') -KeepForeground
     $fixtureReader.GetCurrentPattern([System.Windows.Automation.WindowPattern]::Pattern).Close()
     $folderPath = [IO.Path]::GetDirectoryName($FilePath)

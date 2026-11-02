@@ -278,7 +278,15 @@ if [ "$PKG" = "com.tongmutvplus.mobile" ]; then
     tap_target text '取消' || return 1
     wait_target text 'Slow export cancelled' >/dev/null || return 1
     [ -z "$(adb shell 'ls /sdcard/Download/TM-content-cancel-*.bin 2>/dev/null' | tr -d '\r')" ] || return 1
-    [ -z "$(adb shell ls -A "/data/user/0/$PKG/cache/content-exports" | tr -d '\r')" ] || return 1
+    # API23 toolbox ls does not implement -A. Keep the raw listing as evidence
+    # and reject every entry other than the two directory aliases from -a.
+    adb shell "ls -a /data/user/0/$PKG/cache/content-exports" >"$OUT/content-cache-after-cancel.txt" || return 1
+    python3 - "$OUT/content-cache-after-cancel.txt" <<'PY' || return 1
+import sys
+entries = open(sys.argv[1]).read().split()
+if any(entry not in ('.', '..') for entry in entries):
+    sys.exit('Content export cache is not empty after cancellation; see raw listing')
+PY
     tap_target text 'Export POST Blob' || return 1
     tap_target text '保存' || return 1
     wait_target text 'POST export queued' >/dev/null || return 1
