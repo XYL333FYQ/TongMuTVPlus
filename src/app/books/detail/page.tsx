@@ -11,12 +11,14 @@ import {
   saveBookShelf,
 } from '@/lib/book.db.client';
 import { BookChapter, BookDetail, BookShelfItem } from '@/lib/book.types';
+import { presentBookFile } from '@/lib/book-file-presentation';
 import {
   buildBookReadPath,
   cacheBookDetail,
   getBookRouteCache,
 } from '@/lib/book-route-cache.client';
 import { cn } from '@/lib/cn';
+import { getPlatform } from '@/lib/platform';
 
 import EmptyState from '@/components/media/EmptyState';
 import {
@@ -122,25 +124,17 @@ async function openBookFile(
     throw new Error(message);
   }
   const blob = await response.blob();
-  const url = URL.createObjectURL(blob);
-  if (download) {
-    const headerFilename = parseDownloadFilename(
-      response.headers.get('content-disposition')
-    );
-    const fallbackBaseName =
-      sanitizeFilename(title || bookId || 'book') || 'book';
-    const extension = format === 'pdf' ? 'pdf' : 'epub';
-    const finalFilename = headerFilename || `${fallbackBaseName}.${extension}`;
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = finalFilename;
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-  } else {
-    window.open(url, '_blank', 'noopener,noreferrer');
-  }
-  window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
+  const headerFilename = parseDownloadFilename(
+    response.headers.get('content-disposition')
+  );
+  const fallbackBaseName =
+    sanitizeFilename(title || bookId || 'book') || 'book';
+  const extension = format === 'pdf' ? 'pdf' : 'epub';
+  presentBookFile(
+    blob,
+    headerFilename || `${fallbackBaseName}.${extension}`,
+    download
+  );
 }
 
 export default function BookDetailPage() {
@@ -156,6 +150,11 @@ export default function BookDetailPage() {
   const [error, setError] = useState('');
   const [fileBusy, setFileBusy] = useState<'open' | 'download' | ''>('');
   const [showAllChapters, setShowAllChapters] = useState(false);
+  const [desktopFileReader, setDesktopFileReader] = useState(false);
+
+  useEffect(() => {
+    setDesktopFileReader(getPlatform() === 'desktop');
+  }, []);
 
   const cached = useMemo(
     () => (sourceId && bookId ? getBookRouteCache(sourceId, bookId) : null),
@@ -484,7 +483,9 @@ export default function BookDetailPage() {
                       : format === 'epub'
                       ? '支持目录与阅读设置'
                       : format === 'pdf'
-                      ? '使用浏览器阅读器'
+                      ? desktopFileReader
+                        ? '保存后用系统阅读器打开'
+                        : '使用浏览器阅读器'
                       : '此格式暂不支持在线阅读'}
                   </div>
                 </div>
@@ -508,7 +509,8 @@ export default function BookDetailPage() {
                         detail.id,
                         format,
                         false,
-                        item.href
+                        item.href,
+                        detail.title
                       );
                     } catch (err) {
                       setError((err as Error).message || '打开文件失败');
@@ -521,7 +523,9 @@ export default function BookDetailPage() {
                     LIBRARY_FOCUS
                   )}
                 >
-                  打开
+                  {desktopFileReader && format === 'pdf'
+                    ? '保存后阅读'
+                    : '打开'}
                 </button>
               </div>
             );

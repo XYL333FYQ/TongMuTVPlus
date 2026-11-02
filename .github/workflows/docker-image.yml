@@ -23,6 +23,12 @@ on:
         required: false
         default: ''
         type: string
+      ui_audit_kind:
+        description: '仅 UI 验收：home 或 books'
+        required: false
+        default: home
+        type: choice
+        options: [home, books]
   # 推送到 main 时构建镜像并发布到 ghcr.io/<你的用户名>/tongmutvplus
   push:
     branches: [main]
@@ -144,6 +150,7 @@ jobs:
       image_digest: ${{ inputs.ui_audit_digest }}
       source_sha: ${{ inputs.ui_source_sha }}
       source_run: ${{ inputs.ui_source_run }}
+      audit_kind: ${{ inputs.ui_audit_kind || 'home' }}
 
   merge:
     runs-on: ubuntu-latest

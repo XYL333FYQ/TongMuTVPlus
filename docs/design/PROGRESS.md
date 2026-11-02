@@ -2,6 +2,11 @@
 
 ## 2026-11-01 客户端 113cd9c 验证续记
 
+- 恢复后的完整书籍批次本机最终门禁：typecheck=0、lint=0（既有警告），完整 Jest184 套 1202 项=0、房间 27=0；Node 脚本语法及来源门禁 11 项通过，output 无 TS 备份。pnpm format:check 仍只报告未知未跟踪全 NUL CLIENT-EXPERIENCE-STATUS.md，保持原样不提交，其余本批文件已格式化。需干净 CI 完整检查、新双架构审计镜像与 books 真实界面，尚不称效果完成/原生 PDF 阅读器通过，不部署正式服务。
+
+- 用户继续目标后恢复书籍批次：测试 click mock 显式 this: HTMLAnchorElement，原行为红测 1 失败/5 通过 → 6 通过，typecheck/lint、183 套 1199 项和房间 27 通过；完整格式仍仅未知 NUL 文档失败。进一步只读确认 PDF 阅读页也有 Blob 新窗口入口，仅 Windows 改为已有下载锚点的“保存后阅读”，不重复显示下载；原 iframe/PDF/EPUB 引擎和下载缓存不变，web/app 仍原两入口。阅读动作红测 1 失败/2 对照通过 → 加既有顶栏及 helper 共 10 项通过。以上源码增量须重新完整门禁。
+- 书籍真实页面验收准备：复用隔离镜像来源/树一致门禁和临时数据，新增 home/books 白名单场景，不改默认 home 路径、不发布生产。要求详情一次 POST 后 PDF 实际字节/UTF-8 文件名、原文档不变，阅读页导出已有 Blob 不重复请求/iframe 不重建，网页/App 入口保留、六宽主题截图；固定一页无脚本 PDF 测试夹具。明确 nativeOsReaderTested=false，不能当 Windows 系统阅读器已实测。新脚本与新镜像均尚待运行，旧首页镜像不可代替新书籍源码。
+
 - 本轮书籍候选已撤回并停止该实现批次：最终 pnpm typecheck 退出 2，新增测试 click mock 的 this 缺类型注解，TS2683 三处，属于源码错误而非环境崩溃。依 AGENTS“源码类型错误或测试失败才恢复该批开始前文件并停止”，仅将 books/detail/page.tsx 恢复 HEAD，删除本批创建的 helper/test；没有撤回此前已验首页/Android/Windows。原始 book-presentation-typecheck.log 与红/绿日志保留，未提交产品候选；下方候选描述只作尝试历史。书籍 PDF 仍待修复与真实业务/系统阅读器验收，本轮不继续新实现、不将行为单测 6 通过称完成。
 
 - 首页最终 2431d12/41378835412 成功：两主题真实触摸刷新推荐/房间摘要、失败旧数据和单提示、两实际 HTTP 中止及迟到不写缓存、播放保护/暂停刷新/同视频恢复且时间推进、web/desktop 行为隔离；六宽深浅图已实看，受控数据/壳标记/Worker blocked 边界保留。Android3f32ae9/41378149415 的 API34 整套成功，Checks41378147393 成功，退出全屏图已实看；API23/24 仍分别无下载确认/进度，整支失败、发布跳过。正式 VPS 未变，真实 OriginOS 底栏待用户稍后测试。

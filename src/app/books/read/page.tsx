@@ -4,8 +4,6 @@ import {
   BookOpen,
   ChevronRight,
   ChevronUp,
-  Download,
-  ExternalLink,
   Gauge,
   Headphones,
   Loader2,
@@ -70,6 +68,7 @@ import {
   READER_SHEET,
   READER_SLIDER,
 } from '@/components/media/library';
+import BookPdfActions from '@/components/books/BookPdfActions';
 import ReaderDialog from '@/components/media/ReaderDialog';
 import Select from '@/components/ui/Select';
 
@@ -3652,26 +3651,8 @@ export default function BookReadPage() {
           className='tm-reader-stage w-full bg-surface dark:bg-canvas'
           title={manifest.book.title}
         />
-        {/* 部分浏览器不支持内嵌 PDF，正文区可能是空白：始终提供新窗口 / 下载入口 */}
-        <div className='absolute bottom-4 right-4 flex flex-wrap items-center justify-end gap-2 max-sm:bottom-[calc(var(--tm-bottom-nav-height,0px)+1rem)]'>
-          <a
-            href={pdfBlobUrl}
-            target='_blank'
-            rel='noreferrer'
-            className={LIBRARY_GHOST_BUTTON}
-          >
-            <ExternalLink className='h-4 w-4' strokeWidth={2} />
-            新窗口打开
-          </a>
-          <a
-            href={pdfBlobUrl}
-            download={`${manifest.book.title}.pdf`}
-            className={LIBRARY_GHOST_BUTTON}
-          >
-            <Download className='h-4 w-4' strokeWidth={2} />
-            下载 PDF
-          </a>
-        </div>
+        {/* Keep the embedded reader; desktop offers its native save/reader path. */}
+        <BookPdfActions url={pdfBlobUrl} title={manifest.book.title} />
       </div>
     );
   }

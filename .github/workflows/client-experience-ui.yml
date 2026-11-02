@@ -12,6 +12,10 @@ on:
       source_run:
         required: true
         type: string
+      audit_kind:
+        required: false
+        default: home
+        type: string
   workflow_dispatch:
     inputs:
       image_digest:
@@ -26,6 +30,12 @@ on:
         description: 'Successful docker-image.yml workflow run ID'
         required: true
         type: string
+      audit_kind:
+        description: 'Read-only audit scenario'
+        required: false
+        default: home
+        type: choice
+        options: [home, books]
 
 permissions:
   contents: read
@@ -45,6 +55,7 @@ jobs:
       UI_IMAGE_DIGEST: ${{ inputs.image_digest }}
       UI_SOURCE_SHA: ${{ inputs.source_sha }}
       UI_SOURCE_RUN: ${{ inputs.source_run }}
+      UI_AUDIT_KIND: ${{ inputs.audit_kind }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -88,7 +99,12 @@ jobs:
           node -e 'const fs=require("node:fs"),assert=require("node:assert/strict");assert.equal(JSON.parse(fs.readFileSync(process.env.UI_ARTIFACT_DIR+"/initial-health.json")).buildSha,process.env.UI_SOURCE_SHA)'
       - name: Exercise actual touch, media, cancellation and six viewport themes
         run: |
-          cp tests/client-experience/home-aux.cjs "$RUNNER_TEMP/client-home/home-aux.cjs"
+          case "$UI_AUDIT_KIND" in
+            home) scenario=home-aux.cjs ;;
+            books) scenario=books.cjs ;;
+            *) echo 'Unknown UI audit scenario' >&2; exit 1 ;;
+          esac
+          cp "tests/client-experience/$scenario" "$RUNNER_TEMP/client-home/home-aux.cjs"
           docker run --rm --name "tm-home-browser-$GITHUB_RUN_ID" --label "tm-ui-run=$GITHUB_RUN_ID" --network host --memory=1536m --memory-swap=2g -v "$RUNNER_TEMP/client-home:/audit" -v "$RUNNER_TEMP/client-home-runtime:/runtime:ro" -e NODE_PATH=/runtime/node_modules -e GITHUB_ACTIONS=true -e "UI_SOURCE_SHA=$UI_SOURCE_SHA" mcr.microsoft.com/playwright:v1.55.0-noble node /audit/home-aux.cjs
       - name: Preserve screenshots and evidence
         if: always()
