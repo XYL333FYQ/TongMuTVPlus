@@ -80,6 +80,35 @@ async function download(page, context, action, expected, identity) {
     'Download must retain the document'
   );
 }
+async function nativeExport(
+  page,
+  context,
+  action,
+  expected,
+  identity,
+  downloads
+) {
+  const before = await page.evaluate(() => window.__contentCaptures.length);
+  const browserBefore = downloads.length;
+  await action.click();
+  await page.waitForFunction(
+    (count) => window.__contentCaptures.length === count + 1,
+    before
+  );
+  const captured = await page.evaluate(
+    () => window.__contentCaptures[window.__contentCaptures.length - 1]
+  );
+  assert.equal(captured.name, expected);
+  assert.deepEqual(Buffer.from(captured.bytes), bytes);
+  await page.waitForTimeout(100);
+  assert.equal(
+    downloads.length,
+    browserBefore,
+    'Native handoff must not also start a browser download'
+  );
+  assert.equal(context.pages().length, 1);
+  assert.equal(await page.evaluate(() => performance.timeOrigin), identity);
+}
 (async () => {
   const browser = await chromium.launch({
     headless: true,
@@ -87,7 +116,8 @@ async function download(page, context, action, expected, identity) {
   });
   const results = [],
     errors = [];
-  for (const platform of ['desktop', 'web', 'app']) {
+  for (const platform of ['desktop', 'web', 'app', 'app-native']) {
+    const nativeActions = platform === 'desktop' || platform === 'app-native';
     const context = await browser.newContext({
       viewport: { width: 1440, height: 900 },
       acceptDownloads: true,
@@ -95,8 +125,24 @@ async function download(page, context, action, expected, identity) {
     });
     await context.addInitScript((platform) => {
       if (platform === 'desktop') window.__tmDesktopInit = true;
-      if (platform === 'app')
+      if (platform === 'app' || platform === 'app-native')
         window.TMShell = { ready() {}, setSystemBars() {} };
+      if (platform === 'app-native') {
+        // This isolates React handoff only. Actual native storage is exercised
+        // separately by the Android emulator workflow, never claimed here.
+        window.__contentCaptures = [];
+        window.__contentDecision = 'queued';
+        window.__tmContentExport = {
+          version: 1,
+          async saveBlob(blob, name) {
+            window.__contentCaptures.push({
+              name,
+              bytes: Array.from(new Uint8Array(await blob.arrayBuffer())),
+            });
+            return window.__contentDecision;
+          },
+        };
+      }
       sessionStorage.setItem('announcementShown', '1');
     }, platform);
     assert.equal(
@@ -111,6 +157,8 @@ async function download(page, context, action, expected, identity) {
     activePage = page;
     page.setDefaultTimeout(25000);
     page.on('pageerror', (error) => errors.push(error.message));
+    const downloads = [];
+    page.on('download', (file) => downloads.push(file.suggestedFilename()));
     let requests = 0;
     await page.route(
       (url) =>
@@ -151,9 +199,7 @@ async function download(page, context, action, expected, identity) {
           });
       }
     );
-    for (const theme of platform === 'desktop'
-      ? ['dark', 'light']
-      : ['light']) {
+    for (const theme of nativeActions ? ['dark', 'light'] : ['light']) {
       await page.goto(base + '/my', { waitUntil: 'domcontentloaded' });
       await dismiss(page);
       await page
@@ -174,10 +220,10 @@ async function download(page, context, action, expected, identity) {
       await page.getByRole('heading', { name: title, exact: true }).waitFor();
       assert.equal(
         await page.evaluate(() => document.documentElement.dataset.tmPlatform),
-        platform
+        platform === 'app-native' ? 'app' : platform
       );
       const action = page.getByRole('button', {
-        name: platform === 'desktop' ? '保存后阅读' : '打开',
+        name: nativeActions ? '保存后阅读' : '打开',
         exact: true,
       });
       await action.waitFor();
@@ -187,21 +233,31 @@ async function download(page, context, action, expected, identity) {
         'Opening details must not download the file automatically'
       );
       const identity = await page.evaluate(() => performance.timeOrigin);
-      await download(
-        page,
-        context,
-        platform === 'desktop'
-          ? action
-          : page.getByRole('button', { name: '下载文件', exact: true }),
-        filename,
-        identity
-      );
+      if (platform === 'app-native')
+        await nativeExport(
+          page,
+          context,
+          action,
+          filename,
+          identity,
+          downloads
+        );
+      else
+        await download(
+          page,
+          context,
+          platform === 'desktop'
+            ? action
+            : page.getByRole('button', { name: '下载文件', exact: true }),
+          filename,
+          identity
+        );
       assert.equal(
         requests,
         1,
         'Exactly one authenticated-response request per action'
       );
-      if (platform === 'desktop') {
+      if (nativeActions) {
         for (const width of [390, 820, 1280]) {
           await page.setViewportSize({ width, height: 900 });
           await action.scrollIntoViewIfNeeded();
@@ -213,7 +269,7 @@ async function download(page, context, action, expected, identity) {
             false
           );
           await page.screenshot({
-            path: `${out}/books-detail-${width}-${theme}.png`,
+            path: `${out}/books-detail-${platform}-${width}-${theme}.png`,
           });
         }
       }
@@ -222,7 +278,7 @@ async function download(page, context, action, expected, identity) {
         { waitUntil: 'domcontentloaded' }
       );
       const pdfLink = page.getByRole('link', {
-        name: platform === 'desktop' ? '保存后阅读' : '下载 PDF',
+        name: nativeActions ? '保存后阅读' : '下载 PDF',
         exact: true,
       });
       await pdfLink.waitFor();
@@ -231,7 +287,36 @@ async function download(page, context, action, expected, identity) {
         return performance.timeOrigin;
       });
       const before = requests;
-      await download(page, context, pdfLink, filename, readerIdentity);
+      if (platform === 'app-native') {
+        await page.waitForTimeout(400);
+        await nativeExport(
+          page,
+          context,
+          pdfLink,
+          filename,
+          readerIdentity,
+          downloads
+        );
+        await page.evaluate(() => {
+          window.__contentDecision = 'cancelled';
+        });
+        await nativeExport(
+          page,
+          context,
+          pdfLink,
+          filename,
+          readerIdentity,
+          downloads
+        );
+        assert.equal(
+          await page
+            .getByText('暂时无法保存文件，请保持此页面后重试。', {
+              exact: true,
+            })
+            .count(),
+          0
+        );
+      } else await download(page, context, pdfLink, filename, readerIdentity);
       assert.equal(
         requests,
         before,
@@ -243,7 +328,7 @@ async function download(page, context, action, expected, identity) {
         ),
         true
       );
-      if (platform === 'desktop')
+      if (nativeActions)
         assert.equal(
           await page
             .getByRole('link', { name: '新窗口打开', exact: true })
@@ -256,6 +341,7 @@ async function download(page, context, action, expected, identity) {
           .waitFor();
       results.push({
         platform,
+        exportApiSimulated: platform === 'app-native',
         theme,
         detailDownloadBytes: true,
         oneDetailRequest: true,

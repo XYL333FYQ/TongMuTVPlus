@@ -212,8 +212,9 @@ CONTENT_EXPORT_PAGE = """<!doctype html><meta charset=utf-8><title>Content expor
 <audio id=audio loop src='/tone.wav'></audio><iframe id=foreign sandbox='allow-scripts' style='display:none'></iframe>
 <script>
 var audio=document.getElementById('audio'),originalAudio=audio,doc=String(Date.now())+'-'+String(Math.random()),seq=0;
-var origin=performance.timeOrigin||(performance.timing&&performance.timing.navigationStart)||0;
-function report(event,extra){var row={event:event,seq:seq++,doc:doc,origin:origin,sameAudio:audio===originalAudio,paused:audio.paused,time:audio.currentTime};
+var origin=performance.timeOrigin||(performance.timing&&performance.timing.navigationStart)||0,advanced=0,lastAudioTime=0;
+setInterval(function(){var now=audio.currentTime;if(!audio.paused&&audio.duration>0)advanced+=(now-lastAudioTime+audio.duration)%audio.duration;lastAudioTime=now;},100);
+function report(event,extra){var row={event:event,seq:seq++,doc:doc,origin:origin,sameAudio:audio===originalAudio&&document.documentElement.contains(audio),paused:audio.paused,time:audio.currentTime,advance:advanced};
  if(extra)row.extra=extra;var xhr=new XMLHttpRequest();xhr.open('POST','/content-export-report');xhr.send(JSON.stringify(row));}
 audio.onplaying=function(){TMShell.setPlaying(true);report('playing');};
 function exported(blob,name,label){window.__tmContentExport.saveBlob(blob,name).then(function(state){document.getElementById('status').textContent=label+' '+state;report(label+'-'+state);},function(error){report('failed');document.getElementById('status').textContent='Export failed';});}

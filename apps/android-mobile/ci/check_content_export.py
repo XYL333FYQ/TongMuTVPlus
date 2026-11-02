@@ -15,7 +15,7 @@ def verify(log, generated, posted, api=34):
     assert sum(row['event'] == 'Export-cancelled' for row in rows) >= (2 if api < 29 else 1), 'Missing cancellation or storage denial'
     completed = [row for row in rows if row['event'] in ('Export-queued', 'POST export-queued')]
     assert len(completed) == 2 and all(not row['paused'] for row in completed), 'Export stopped playback or completed twice'
-    assert completed[0]['time'] != completed[1]['time'], 'Media time did not advance'
+    assert completed[1]['advance'] > completed[0]['advance'], 'Decoded media did not advance between saves'
     foreign = [row['extra'] for row in rows if row['event'] == 'foreign']
     assert foreign and all(row['native'] and not row['exportApi'] and not row['parentReadable'] for row in foreign), 'Foreign frame was not isolated'
     assert 'CONTENT_EXPORT_AUTHENTICATED True' in log and 'CONTENT_EXPORT_AUTHENTICATED False' not in log, 'POST lost browser authentication'

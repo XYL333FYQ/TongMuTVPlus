@@ -4,7 +4,7 @@ from check_content_export import verify
 
 generated = bytes(index % 251 for index in range(131079)) + '桐木导出'.encode()
 posted = bytes([0, 255, 1, 0]) + 'authenticated POST blob\n桐木'.encode()
-rows = [dict(event=event, seq=index, doc='one', origin=123, sameAudio=True, paused=False, time=index + 1)
+rows = [dict(event=event, seq=index, doc='one', origin=123, sameAudio=True, paused=False, time=index + 1, advance=index)
         for index, event in enumerate(['ready', 'playing', 'foreign', 'Export-cancelled', 'Export-queued', 'Slow export-cancelled', 'POST export-queued'])]
 rows[2]['extra'] = dict(native=True, exportApi=False, parentReadable=False)
 
@@ -14,7 +14,7 @@ def log(values):
 
 
 verify(log(rows), generated, posted)
-for change in ['missing', 'document', 'audio', 'paused', 'foreign', 'duplicate', 'permission']:
+for change in ['missing', 'document', 'audio', 'paused', 'foreign', 'duplicate', 'permission', 'clock']:
     bad = copy.deepcopy(rows)
     api = 34
     if change == 'missing': bad.pop()
@@ -24,6 +24,7 @@ for change in ['missing', 'document', 'audio', 'paused', 'foreign', 'duplicate',
     elif change == 'foreign': bad[2]['extra']['exportApi'] = True
     elif change == 'duplicate': bad.append(copy.deepcopy(bad[-1]))
     elif change == 'permission': api = 23
+    elif change == 'clock': bad[-1]['advance'] = bad[-3]['advance']
     try:
         verify(log(bad), generated, posted, api)
     except AssertionError:

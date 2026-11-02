@@ -242,6 +242,10 @@ if [ "$PKG" = "com.tongmutvplus.mobile" ]; then
     tap_target text 'Native content export' || return 1
     wait_target text 'Export ready' >/dev/null || return 1
     tap_target text 'Start export audio' || return 1
+    if [ "$API_LEVEL" -ge 33 ]; then
+      # The existing media bridge requests this first; it is not an export dialog.
+      tap_target id permission_allow_button || return 1
+    fi
     sleep 1
     tap_target text 'Export Blob' || return 1
     adb exec-out screencap -p >"$OUT/4e-content-consent.png"
@@ -256,8 +260,6 @@ if [ "$PKG" = "com.tongmutvplus.mobile" ]; then
       [ -z "$(adb shell 'ls /sdcard/Download/TM-content-blob-*.bin 2>/dev/null' | tr -d '\r')" ] || return 1
       tap_target text 'Export Blob' || return 1
       tap_target text '保存' || return 1
-      tap_target id permission_allow_button || return 1
-    elif [ "$API_LEVEL" -ge 33 ]; then
       tap_target id permission_allow_button || return 1
     fi
     wait_target text 'Export queued' >/dev/null || return 1
@@ -331,7 +333,7 @@ if [ "$PKG" = "com.tongmutvplus.mobile" ]; then
     python3 "$(dirname "$0")/check_download.py" "$OUT/server.log" "$OUT/download-smoke.txt" || return 1
     adb exec-out screencap -p >"$OUT/19-download-complete.png"
     adb shell cmd statusbar expand-notifications || return 1
-    wait_target text '下载完成' >/dev/null || return 1
+    wait_target text "$(basename "$downloaded")" >/dev/null || return 1
     adb exec-out screencap -p >"$OUT/19-download-complete-notification.png"
     adb shell cmd statusbar collapse || return 1
     tap_target text 'Stop download audio' || return 1

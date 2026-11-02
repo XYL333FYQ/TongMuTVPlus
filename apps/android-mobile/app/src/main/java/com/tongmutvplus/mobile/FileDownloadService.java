@@ -156,9 +156,15 @@ public final class FileDownloadService extends Service {
             if (destroyed || transfer.isCanceled()) throw new IOException("Service stopped or download canceled");
             Uri file = destination.finish(bytes);
             Log.i("TongMuClient", "file download completed");
-            notifyResult(id, "下载完成", name, file, finalMime);
+            // Legacy registration already posts the system completion notification.
+            if (Build.VERSION.SDK_INT >= 29) notifyResult(id, "下载完成", name, file, finalMime);
         } catch (Exception failure) {
             Log.i("TongMuClient", "file download ended: " + failure.getClass().getSimpleName());
+            if (failure instanceof SecurityException) {
+                StackTraceElement[] trace = failure.getStackTrace();
+                for (int index = 0; index < Math.min(8, trace.length); index++)
+                    Log.i("TongMuClient", "file permission boundary " + trace[index].getClassName() + "." + trace[index].getMethodName());
+            }
             if (!destroyed) notifyResult(id, transfer.isCanceled() ? "下载已取消" : "下载未完成，请检查网络或可用空间后重试", name, null, null);
         } finally {
             releaseImport(content);
@@ -277,7 +283,9 @@ public final class FileDownloadService extends Service {
             output.close();
             DownloadManager manager = context.getSystemService(DownloadManager.class);
             if (manager == null) throw new IOException("No download manager");
-            long id = manager.addCompletedDownload(file.getName(), file.getName(), true, mime, file.getAbsolutePath(), bytes, false);
+            // Hidden completion requires DOWNLOAD_WITHOUT_NOTIFICATION on old OSes.
+            // Use the system completion UI rather than add a silent-download permission.
+            long id = manager.addCompletedDownload(file.getName(), file.getName(), true, mime, file.getAbsolutePath(), bytes, true);
             Uri uri = manager.getUriForDownloadedFile(id);
             if (uri == null) throw new IOException("Could not publish download");
             complete = true;
