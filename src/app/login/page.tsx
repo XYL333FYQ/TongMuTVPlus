@@ -10,9 +10,11 @@ import { Suspense, useEffect, useRef, useState } from 'react';
 import '@/styles/auth.css';
 
 import { useReducedMotionSetting } from '@/lib/motion';
+import { getPlatform } from '@/lib/platform';
 import { decodeQueryText, getSafeRedirect } from '@/lib/safe-redirect';
 
 import AuthVersion from '@/components/auth/AuthVersion';
+import { useExternalAction } from '@/components/ExternalLink';
 import PageContainer from '@/components/PageContainer';
 import { useSite } from '@/components/SiteProvider';
 import { ThemeToggle } from '@/components/ThemeToggle';
@@ -51,6 +53,27 @@ function getOIDCProviderIcon(buttonText: string) {
   );
 }
 
+/** Keep copy feedback owned by this challenge, including expiry and denial. */
+function TelegramLoginAction({ href }: { href: string }) {
+  const externalAction = useExternalAction();
+  return (
+    <>
+      <button
+        type='button'
+        className='tm-btn tm-btn-secondary tm-btn-lg w-full'
+        aria-describedby='tm-telegram-login-hint'
+        onClick={() => externalAction.open(href)}
+      >
+        <Send size={18} aria-hidden />
+        {externalAction.modeFor(href) === 'copy'
+          ? '复制 Telegram 登录链接'
+          : '打开 Telegram'}
+      </button>
+      {externalAction.feedback}
+    </>
+  );
+}
+
 function LoginPageClient() {
   const reduced = useReducedMotionSetting();
   const router = useRouter();
@@ -74,17 +97,31 @@ function LoginPageClient() {
   const [telegramLoginHint, setTelegramLoginHint] = useState<string | null>(
     null
   );
+  const [telegramLoginLink, setTelegramLoginLink] = useState<string | null>(
+    null
+  );
 
   const { siteName } = useSite();
   // Telegram 确认轮询；离开页面时必须停掉，否则迟到的“已确认”会把人从别的页面拉走
   const telegramTimerRef = useRef<number | null>(null);
+  const telegramCreateRef = useRef<AbortController | null>(null);
+  const telegramStatusRef = useRef<AbortController | null>(null);
   const stopTelegramPolling = () => {
+    telegramStatusRef.current?.abort();
+    telegramStatusRef.current = null;
     if (telegramTimerRef.current !== null) {
       window.clearInterval(telegramTimerRef.current);
       telegramTimerRef.current = null;
     }
   };
-  useEffect(() => stopTelegramPolling, []);
+  useEffect(
+    () => () => {
+      telegramCreateRef.current?.abort();
+      telegramCreateRef.current = null;
+      stopTelegramPolling();
+    },
+    []
+  );
 
   // 处理URL中的error参数
   useEffect(() => {
@@ -268,15 +305,23 @@ function LoginPageClient() {
   };
 
   const handleTelegramLogin = async () => {
+    telegramCreateRef.current?.abort();
+    const request = new AbortController();
+    telegramCreateRef.current = request;
+    stopTelegramPolling();
     setError(null);
     setTelegramLoginHint(null);
+    setTelegramLoginLink(null);
 
     try {
       setTelegramLoginLoading(true);
       const createRes = await fetch('/api/telegram/login/create', {
         method: 'POST',
+        signal: request.signal,
       });
       const createData = await createRes.json().catch(() => ({}));
+      if (request.signal.aborted || telegramCreateRef.current !== request)
+        return;
       if (!createRes.ok) {
         const configDetail = createData.config
           ? `（enabled=${String(
@@ -292,11 +337,26 @@ function LoginPageClient() {
         setError(
           `${createData.error || 'Telegram 登录接口不可用'}${configDetail}`
         );
+        setTelegramLoginLoading(false);
         return;
       }
 
-      setTelegramLoginHint('请在 Telegram 中确认登录');
-      window.open(createData.deepLink, '_blank', 'noopener,noreferrer');
+      if (
+        typeof createData.deepLink !== 'string' ||
+        !createData.deepLink.trim() ||
+        typeof createData.token !== 'string' ||
+        !createData.token.trim()
+      ) {
+        throw new Error('Invalid Telegram challenge');
+      }
+
+      if (getPlatform() === 'web') {
+        setTelegramLoginHint('请在 Telegram 中确认登录');
+        window.open(createData.deepLink, '_blank', 'noopener,noreferrer');
+      } else {
+        setTelegramLoginHint('登录请求已就绪，请打开 Telegram 确认。');
+        setTelegramLoginLink(createData.deepLink);
+      }
 
       const startedAt = Date.now();
       stopTelegramPolling();
@@ -305,45 +365,63 @@ function LoginPageClient() {
           stopTelegramPolling();
           setTelegramLoginLoading(false);
           setTelegramLoginHint(null);
+          setTelegramLoginLink(null);
           setError('Telegram 登录已超时，请重试');
           return;
         }
 
         // 单次网络抖动不终止登录，下一轮继续查询
+        if (telegramStatusRef.current) return;
+        const statusRequest = new AbortController();
+        telegramStatusRef.current = statusRequest;
         let statusData: { status?: string } = {};
         try {
           const statusRes = await fetch(
             `/api/telegram/login/status?token=${encodeURIComponent(
               createData.token
-            )}`
+            )}`,
+            { signal: statusRequest.signal }
           );
           statusData = await statusRes.json().catch(() => ({}));
         } catch {
           return;
+        } finally {
+          if (telegramStatusRef.current === statusRequest)
+            telegramStatusRef.current = null;
         }
         // 轮询已被停止（离开页面或重新发起）时，忽略这次迟到的结果
-        if (telegramTimerRef.current !== timer) return;
+        if (statusRequest.signal.aborted || telegramTimerRef.current !== timer)
+          return;
         if (statusData.status === 'confirmed') {
           stopTelegramPolling();
+          setTelegramLoginLink(null);
           const redirect = getSafeRedirect(searchParams.get('redirect'));
           window.location.replace(redirect);
         } else if (statusData.status === 'denied') {
           stopTelegramPolling();
           setTelegramLoginLoading(false);
           setTelegramLoginHint(null);
+          setTelegramLoginLink(null);
           setError('已拒绝 Telegram 登录');
         } else if (statusData.status === 'expired') {
           stopTelegramPolling();
           setTelegramLoginLoading(false);
           setTelegramLoginHint(null);
+          setTelegramLoginLink(null);
           setError('Telegram 登录已过期');
         }
       }, 2000);
       telegramTimerRef.current = timer;
     } catch (error) {
+      if (request.signal.aborted || telegramCreateRef.current !== request)
+        return;
       setError('Telegram 登录请求失败，请稍后重试');
       setTelegramLoginLoading(false);
       setTelegramLoginHint(null);
+      setTelegramLoginLink(null);
+    } finally {
+      if (telegramCreateRef.current === request)
+        telegramCreateRef.current = null;
     }
   };
 
@@ -504,21 +582,33 @@ function LoginPageClient() {
               </div>
               <div className='space-y-3'>
                 {/* Telegram登录按钮 */}
-                {telegramLoginEnabled && (
-                  <button
-                    type='button'
-                    disabled={telegramLoginLoading}
-                    onClick={handleTelegramLogin}
-                    className='tm-btn tm-btn-secondary tm-btn-lg w-full'
-                  >
-                    <Send size={18} aria-hidden />
-                    {telegramLoginLoading
-                      ? '等待 Telegram 确认...'
-                      : '使用 Telegram 登录'}
-                  </button>
-                )}
+                {telegramLoginEnabled &&
+                  (telegramLoginLink ? (
+                    <TelegramLoginAction
+                      key={telegramLoginLink}
+                      href={telegramLoginLink}
+                    />
+                  ) : (
+                    <button
+                      type='button'
+                      disabled={telegramLoginLoading}
+                      onClick={handleTelegramLogin}
+                      className='tm-btn tm-btn-secondary tm-btn-lg w-full'
+                    >
+                      <Send size={18} aria-hidden />
+                      {telegramLoginLoading
+                        ? getPlatform() === 'web'
+                          ? '等待 Telegram 确认...'
+                          : '正在准备登录...'
+                        : '使用 Telegram 登录'}
+                    </button>
+                  ))}
                 {telegramLoginHint && (
-                  <p className='text-center text-[13px] text-muted'>
+                  <p
+                    id='tm-telegram-login-hint'
+                    role='status'
+                    className='text-center text-[13px] text-muted'
+                  >
                     {telegramLoginHint}
                   </p>
                 )}
