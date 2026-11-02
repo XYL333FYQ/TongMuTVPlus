@@ -145,6 +145,14 @@ function Click-Native([string]$Name) {
     $pattern = $button.GetCurrentPattern([System.Windows.Automation.InvokePattern]::Pattern)
     $pattern.Invoke()
 }
+function Close-CompletedDownload {
+    Wait-Check { $null -ne (Native-Button '下载完成') } 'native download completion reflects engine completion'
+    $folder = Native-Button '打开文件夹'
+    if ($null -eq $folder -or -not $folder.Current.IsEnabled) { throw 'Completed native download has no usable folder action' }
+    Capture '00-native-download-completed'
+    Click-Native '关闭下载窗口'
+    Wait-Check { $null -eq (Native-Button '关闭下载窗口') } 'completed download window closes independently'
+}
 function Save-OwnedDownload([string]$Destination, [switch]$Cancel) {
     $permission = Native-Button '允许本次'
     if ($permission) {
@@ -394,6 +402,7 @@ try {
     if (-not $downloadSaveInvoked) { throw 'Attachment bypassed the required native Save As choice' }
     if (Test-Path -LiteralPath $defaultDownloadFile) { throw 'Attachment also saved to an unselected default path' }
     if ([IO.File]::ReadAllText($downloadFile) -ne 'TongMu native download fixture') { throw 'Unexpected downloaded bytes' }
+    Close-CompletedDownload
     Start-Sleep -Seconds 3
     Capture '00-attachment-download'
     if ($null -ne (Native-Button '重新打开')) { throw 'A legitimate attachment download was treated as whole-app failure' }
@@ -412,6 +421,7 @@ try {
         throw 'Assistive permission/save flow did not preserve the selected file bytes'
     }
     if (Test-Path -LiteralPath $defaultDownloadFile) { throw 'Assistive download ignored the selected path' }
+    Close-CompletedDownload
     if (-not (Cdp 'download-assistive-ready')) { throw 'Assistive download discarded the document or lacked expected input evidence' }
     # No Browser.setDownloadBehavior: exercise the installed engine's real file
     # destination/UI. In particular POST+HttpOnly cookies and Blob downloads must
@@ -437,6 +447,7 @@ try {
         } ('actual saved file: ' + $blobCase.action)
         if (-not $downloadSaveInvoked) { throw 'Blob bypassed the required native Save As choice' }
         if (Test-Path -LiteralPath $defaultBlobPath) { throw 'Blob also saved to an unselected default path' }
+        Close-CompletedDownload
         $expected = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($blobCase.text))
         $actual = [Convert]::ToBase64String([IO.File]::ReadAllBytes($blobPath))
         if ($actual -ne $expected) { throw 'Blob saved bytes differ, including binary/Unicode content' }
