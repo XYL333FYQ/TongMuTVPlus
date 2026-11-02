@@ -443,7 +443,14 @@ document.querySelector('#fixture-post-blob').onclick=async event=>{
         returnByValue: true,
       });
       if (result.result.value !== true) {
-        throw new Error('Attachment navigation replaced the existing document');
+        const evidence = await command('Runtime.evaluate', {
+          expression:
+            'JSON.stringify({title:document.title,sameDocument:performance.timeOrigin===window.__tmCiDownloadOrigin,blobError:window.__tmCiBlobError||null,trusted:window.__tmCiDownloadTrusted,activeAtClick:window.__tmCiDownloadActive})',
+          returnByValue: true,
+        });
+        throw new Error(
+          `Download invariant failed (${action}): ${evidence.result.value}`
+        );
       }
     } else if (action === 'ready') {
       const result = await command('Runtime.evaluate', {
