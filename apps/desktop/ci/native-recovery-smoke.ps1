@@ -352,18 +352,6 @@ try {
     }
     if (-not (Cdp 'download-physical-ready')) { throw 'Cancel discarded the document or physical gesture' }
     if ($null -ne (Native-Button '重新打开')) { throw 'Canceled download triggered whole-app recovery' }
-    Wait-Check { Cdp 'download-activation-idle' } 'transient activation expired before assistive permission probe' 10
-    Start-OwnedWebDownload 'Download fixture' -Assistive
-    Wait-Check { $null -ne (Native-Button '暂不允许') } 'native multiple-download permission can be denied'
-    Capture '00-native-download-permission-deny'
-    Click-Native '暂不允许'
-    $downloadPermissionDenied = $true
-    Start-Sleep -Seconds 1
-    if ((Test-Path -LiteralPath $defaultDownloadFile) -or (Test-Path -LiteralPath $downloadFile)) {
-        throw 'Denied permission still saved a file'
-    }
-    if (-not (Cdp 'download-native-ready')) { throw 'Permission denial discarded the document' }
-    if ($null -ne (Native-Button '重新打开')) { throw 'Permission denial triggered whole-app failure' }
     Start-OwnedWebDownload 'Download fixture'
     $script:downloadSaveInvoked = $false
     Wait-Check {
@@ -433,10 +421,44 @@ try {
     if ((Invoke-RestMethod 'http://127.0.0.1:8085/diagnostics').authenticatedFileRequests -ne 1) {
         throw 'Authenticated POST file flow was not exercised exactly once'
     }
-    if (-not $downloadPermissionDenied -or $downloadPermissionApprovals -lt 1) {
-        throw 'Native download permission denial and explicit approval were not exercised'
-    }
     Write-Host 'PASS: generated and authenticated POST Blob files saved with exact bytes, same document'
+    if ($downloadPermissionApprovals -lt 1) { throw 'Native explicit permission approval was not exercised' }
+    # A rejected automatic-download batch intentionally remains blocked in its
+    # current WebContents. A fresh host independently verifies the deny branch
+    # and proves the earlier one-request approval was not persisted in profile.
+    $permissionBrowser = Get-CimInstance Win32_Process -Filter "Name = 'msedgewebview2.exe'" |
+        Where-Object { $_.ParentProcessId -eq $client.Id -and $_.CommandLine -notmatch '--type=' }
+    if (-not $permissionBrowser) { throw 'Browser process missing before transient permission relaunch' }
+    $permissionBrowserPid = $permissionBrowser.ProcessId
+    $permissionHostPid = $client.Id
+    if (-not (Cdp 'close')) { throw 'Normal close before independent permission denial failed' }
+    Wait-Check { $client.HasExited } 'normal host exit after transient permission approval'
+    Wait-Check { -not (Get-Process -Id $permissionBrowserPid -ErrorAction SilentlyContinue) } 'browser exits after transient permission approval'
+    $client = Start-Process -FilePath (Resolve-Path $Executable) -PassThru
+    Wait-Check { Cdp 'ready' } 'fresh host for independent native permission denial'
+    if ($client.Id -eq $permissionHostPid) { throw 'Independent permission test reused the previous host' }
+    Wait-Check { Cdp 'profile' } 'HttpOnly cookie survives transient permission relaunch'
+    Start-OwnedWebDownload 'Download fixture'
+    Wait-Check { Save-OwnedDownload '' -Cancel } 'fresh-host first download canceled without granting batch permission'
+    if (-not (Cdp 'download-physical-ready')) { throw 'Fresh-host cancel discarded the document or mouse input evidence' }
+    Wait-Check { Cdp 'download-activation-idle' } 'transient activation expired before independent permission denial' 10
+    $beforeDenied = @(Get-ChildItem -LiteralPath $downloadDir.FullName -File | Sort-Object Name | ForEach-Object {
+        [pscustomobject]@{ name = $_.Name; bytes = $_.Length; sha256 = (Get-FileHash -LiteralPath $_.FullName).Hash }
+    }) | ConvertTo-Json -Compress
+    Start-OwnedWebDownload 'Download fixture' -Assistive
+    Wait-Check { $null -ne (Native-Button '暂不允许') } 'native permission approval did not persist across runs'
+    Capture '00-native-download-permission-deny'
+    Click-Native '暂不允许'
+    $downloadPermissionDenied = $true
+    Start-Sleep -Seconds 1
+    if (Test-Path -LiteralPath $defaultDownloadFile) { throw 'Denied permission saved a default file' }
+    $afterDenied = @(Get-ChildItem -LiteralPath $downloadDir.FullName -File | Sort-Object Name | ForEach-Object {
+        [pscustomobject]@{ name = $_.Name; bytes = $_.Length; sha256 = (Get-FileHash -LiteralPath $_.FullName).Hash }
+    }) | ConvertTo-Json -Compress
+    if ($afterDenied -ne $beforeDenied) { throw 'Permission denial added or altered selected files' }
+    if (-not (Cdp 'download-assistive-ready')) { throw 'Permission denial discarded the document or input evidence' }
+    if ($null -ne (Native-Button '重新打开')) { throw 'Permission denial triggered whole-app failure' }
+    Write-Host 'PASS: explicit native approval is transient; fresh-host denial preserves files, document and HttpOnly cookie'
     if (-not (Cdp 'navigate' 'http://127.0.0.1:8085/unavailable')) { throw 'Navigate failed' }
     Wait-Check { $null -ne (Native-Button '重新打开') } 'HTTP 503 native recovery'
     Capture '01-http-native'
