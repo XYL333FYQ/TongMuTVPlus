@@ -114,6 +114,7 @@ jobs:
           java --add-modules jdk.httpserver -cp /tmp/tm-load-state-test com.tongmutvplus.mobile.ScopedDownloadTest
           python3 apps/android-mobile/ci/test_smoke_tls.py
           python3 apps/android-mobile/ci/test_check_external.py
+          python3 apps/android-mobile/ci/test_check_back.py
 
       - name: Collect APK
         id: collect

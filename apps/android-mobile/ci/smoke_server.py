@@ -39,6 +39,28 @@ RECOVERY_CONTROLS = """<button onclick='TMShell.setSystemBars(false)' style='dis
 <img src='/missing.png' width='1' height='1' alt=''>
 <img src='https://10.0.2.2:8443/missing.png' width='1' height='1' alt=''>""".encode()
 
+# ES5 fixture only: the production React layer registry is verified separately.
+BACK_CONTROLS = """<div style='position:fixed;top:0;left:0;right:0;z-index:9999;background:white;color:black;font:16px sans-serif'>
+<button id='back-detail' style='min-height:48px'>Back detail</button>
+<button id='back-overlay' style='min-height:48px'>Back overlay</button>
+<span id='back-status'>BACK root</span></div>
+<div id='back-layer' style='display:none;position:fixed;top:96px;bottom:32px;left:8px;right:8px;z-index:9998;background:white;color:black;font:24px sans-serif'>Controlled overlay</div>
+<script>
+(function(){
+ var doc=String(Date.now())+'-'+String(Math.random()),seq=0,calls=0,pops=0,overlay=false;
+ var origin=performance.timeOrigin||(performance.timing&&performance.timing.navigationStart)||0;
+ var status=document.getElementById('back-status'),layer=document.getElementById('back-layer');
+ function detail(){return location.search.indexOf('tmCiBack=detail')>=0;}
+ function draw(){status.textContent='BACK '+(overlay?'overlay':detail()?'detail':'root');layer.style.display=overlay?'block':'none';}
+ function report(phase){fetch('/back-report',{method:'POST',body:JSON.stringify({phase:phase,seq:seq++,doc:doc,origin:origin,calls:calls,pops:pops,overlay:overlay,detail:detail()})});}
+ document.getElementById('back-detail').onclick=function(){history.pushState({tmCiDetail:true},'','/?tmCiBack=detail');draw();report('detail');};
+ document.getElementById('back-overlay').onclick=function(){if(!detail())return;overlay=true;draw();report('overlay');};
+ window.__tmShellBack=function(){calls++;if(overlay){overlay=false;draw();report('overlay-closed');return true;}return false;};
+ window.addEventListener('popstate',function(){pops++;draw();report('history-root');});
+ draw();report('root');
+})();
+</script>""".encode()
+
 # 页面模拟「认识壳的新网站」：调用 TMShell 的各个方法，再把壳注入的结果报告回来
 PAGE = """<!doctype html><meta charset=utf-8><title>SMOKE</title>
 <body style='background:#fff;font-size:48px'>SMOKE OK
@@ -276,6 +298,8 @@ class Handler(BaseHTTPRequestHandler):
                 self.send_error(503)
                 return
         controls = RECOVERY_CONTROLS if getattr(self.server, "recovery_mode", False) else b""
+        if self.path == "/" and controls:
+            controls += BACK_CONTROLS
         if self.path == "/update-test" and controls:
             controls = b"<button style='display:block;font-size:20px;min-height:48px' onclick=\"TMShell.installUpdate('https://example.com/TongMuTV-Plus-Android.apk')\">Update missing package test</button>"
         page = PAGE.replace(b"__RECOVERY_CONTROLS__", controls)
@@ -291,7 +315,7 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_POST(self):
         length = int(self.headers.get("Content-Length") or 0)
-        label = "DOWNLOAD_REPORT" if self.path == "/download-report" else "EXTERNAL_REPORT" if self.path == "/external-report" else "MEDIA_REPORT" if self.path == "/media-report" else "IME_REPORT" if self.path == "/ime-report" else "REPORT"
+        label = "BACK_REPORT" if self.path == "/back-report" else "DOWNLOAD_REPORT" if self.path == "/download-report" else "EXTERNAL_REPORT" if self.path == "/external-report" else "MEDIA_REPORT" if self.path == "/media-report" else "IME_REPORT" if self.path == "/ime-report" else "REPORT"
         print("%s %s" % (label, self.rfile.read(length).decode()), flush=True)
         self.send_response(204)
         self.end_headers()

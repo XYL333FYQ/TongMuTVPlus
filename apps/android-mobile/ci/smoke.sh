@@ -8,6 +8,15 @@ OUT="$2"
 PKG="${3:-com.tongmutvplus.mobile}"
 mkdir -p "$OUT"
 API_LEVEL=$(adb shell getprop ro.build.version.sdk | tr -d '\r')
+BACK_NAV_RESTORE=
+BACK_INPUT=key
+restore_back_navigation() {
+  if [ "$BACK_NAV_RESTORE" = disable ]; then
+    adb shell cmd overlay disable --user 0 com.android.internal.systemui.navbar.gestural >/dev/null 2>&1
+  elif [ -n "$BACK_NAV_RESTORE" ]; then
+    adb shell cmd overlay enable-exclusive --user 0 --category "$BACK_NAV_RESTORE" >/dev/null 2>&1
+  fi
+}
 app_pid() {
   if [ "$API_LEVEL" -ge 26 ]; then adb shell ps -A >"$OUT/app-processes.txt";
   else adb shell ps >"$OUT/app-processes.txt"; fi
@@ -16,10 +25,28 @@ app_pid() {
 
 TLS_DIR=$(mktemp -d)
 SERVER_PID=
-trap 'if [ -n "$SERVER_PID" ]; then kill "$SERVER_PID" 2>/dev/null; fi; rm -f "$TLS_DIR/key.pem" "$TLS_DIR/cert.pem" "$TLS_DIR/video.webm"; rmdir "$TLS_DIR" 2>/dev/null' EXIT
+trap 'restore_back_navigation; if [ -n "$SERVER_PID" ]; then kill "$SERVER_PID" 2>/dev/null; fi; rm -f "$TLS_DIR/key.pem" "$TLS_DIR/cert.pem" "$TLS_DIR/video.webm"; rmdir "$TLS_DIR" 2>/dev/null' EXIT
 openssl req -x509 -newkey rsa:2048 -nodes -keyout "$TLS_DIR/key.pem" -out "$TLS_DIR/cert.pem" -subj '/CN=smoke.invalid' -days 1 >/dev/null 2>&1 || exit 1
 fixture_mode=standard
 [ "$PKG" = "com.tongmutvplus.mobile" ] && fixture_mode=recovery
+if [ "$PKG" = "com.tongmutvplus.mobile" ] && [ "$API_LEVEL" -ge 29 ]; then
+  # Disposable emulator only, before Activity creation. Keep gesture mode for
+  # the entire run so changing navigation mode cannot rebuild the test document.
+  adb shell cmd overlay list --user 0 >"$OUT/back-overlays-before.txt" || exit 1
+  previous=$(awk '$1 == "[x]" && $2 ~ /^com\.android\.internal\.systemui\.navbar\.(threebutton|twobutton|gestural)/ {print $2}' "$OUT/back-overlays-before.txt" | head -1 | tr -d '\r')
+  BACK_NAV_RESTORE=${previous:-disable}
+  adb shell cmd overlay enable-exclusive --user 0 --category com.android.internal.systemui.navbar.gestural || exit 1
+  for _ in $(seq 1 10); do
+    adb shell settings get secure navigation_mode | tr -d '\r' >"$OUT/back-navigation-mode.txt"
+    grep -qx 2 "$OUT/back-navigation-mode.txt" && break
+    sleep 1
+  done
+  grep -qx 2 "$OUT/back-navigation-mode.txt" || exit 1
+  adb shell cmd overlay list --user 0 >"$OUT/back-overlays-active.txt" || exit 1
+  grep -Fq '[x] com.android.internal.systemui.navbar.gestural' "$OUT/back-overlays-active.txt" || exit 1
+  BACK_INPUT=edge-swipe
+fi
+printf '%s\n' "$BACK_INPUT" >"$OUT/back-input.txt"
 if [ "$PKG" = "com.tongmutvplus.mobile" ] && [ "$API_LEVEL" -ge 33 ]; then
   curl --fail --location --max-time 30 https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.webm -o "$TLS_DIR/video.webm" || exit 1
   echo 'c6f8a348953395598a9a73b9bab1676436410797bce9f398f4be1531d6e76dda  '"$TLS_DIR/video.webm" | sha256sum -c - || exit 1
@@ -45,7 +72,7 @@ for _ in $(seq 1 45); do
 done
 # 页面会在加载后约 3 秒报告壳注入的结果；最多再等 20 秒
 for _ in $(seq 1 20); do
-  grep -q "REPORT" "$OUT/server.log" && break
+  grep -q '^REPORT ' "$OUT/server.log" && break
   sleep 1
 done
 adb exec-out screencap -p >"$OUT/2-page.png"
@@ -124,6 +151,39 @@ if [ "$PKG" = "com.tongmutvplus.mobile" ]; then
     read -r x y <<<"$point"
     adb shell input tap "$x" "$y"
   }
+  native_back() {
+    if [ "$BACK_INPUT" = edge-swipe ]; then
+      adb shell wm size >"$OUT/back-window-size.txt" || return 1
+      local size width height
+      size=$(sed -n 's/.*size: \([0-9]*x[0-9]*\).*/\1/p' "$OUT/back-window-size.txt" | tail -1 | tr -d '\r')
+      [[ "$size" =~ ^[0-9]+x[0-9]+$ ]] || return 1
+      read -r width height <<<"${size/x/ }"
+      adb shell input swipe 2 "$((height / 2))" "$((width * 3 / 4))" "$((height / 2))" 350
+    else
+      adb shell input keyevent 4
+    fi
+  }
+  verify_back_chain() {
+    wait_target text 'BACK root' >/dev/null || return 1
+    tap_target text 'Back detail' || return 1
+    wait_target text 'BACK detail' >/dev/null || return 1
+    tap_target text 'Back overlay' || return 1
+    wait_target text 'BACK overlay' >/dev/null || return 1
+    adb exec-out screencap -p >"$OUT/4b-back-overlay.png"
+    native_back || return 1
+    wait_target text 'BACK detail' >/dev/null || return 1
+    adb exec-out screencap -p >"$OUT/4c-back-overlay-closed.png"
+    native_back || return 1
+    wait_target text 'BACK root' >/dev/null || return 1
+    for _ in $(seq 1 8); do
+      grep -q '^BACK_REPORT .*"phase":"history-root"' "$OUT/server.log" && break
+      sleep 1
+    done
+    python3 "$(dirname "$0")/check_back.py" "$OUT/server.log" "$OUT/back-chain.json" || return 1
+    [ "$(app_pid)" = "$APP_PID" ] || return 1
+    adb exec-out screencap -p >"$OUT/4d-back-history-root.png"
+    echo "PASS: $BACK_INPUT closes overlay before SPA history without replacing document or host"
+  }
   verify_file_download() {
     tap_target text 'Native download test' || return 1
     tap_target text 'Start download audio' || return 1
@@ -172,6 +232,7 @@ if [ "$PKG" = "com.tongmutvplus.mobile" ]; then
   verify_recovery() {
     wait_target absent-id tm_load_surface >/dev/null || return 1
     grep -q 'GET /missing.png' "$OUT/server.log" || return 1
+    verify_back_chain || return 1
     tap_target text 'Light theme' || return 1
     tap_target text 'HTTP failure test' || return 1
     wait_target text '服务暂时不可用' >/dev/null || return 1
