@@ -252,7 +252,13 @@ function Cdp([string]$Action, [string]$Url = '') {
 function Start-OwnedWebDownload([string]$Label, [switch]$Assistive) {
     if (-not (Cdp 'download-mark')) { throw 'Could not mark the source document before native input' }
     $client.Refresh()
-    $owner = [System.Windows.Automation.AutomationElement]::FromHandle($client.MainWindowHandle)
+    # Cache the real content window before the first download. A separate native
+    # progress window must not become .NET's guessed MainWindowHandle afterward.
+    if ($script:downloadInputOwnerPid -ne $client.Id) {
+        $script:downloadInputOwnerPid = $client.Id
+        $script:downloadInputOwnerHandle = $client.MainWindowHandle
+    }
+    $owner = [System.Windows.Automation.AutomationElement]::FromHandle($script:downloadInputOwnerHandle)
     $name = [System.Windows.Automation.PropertyCondition]::new(
         [System.Windows.Automation.AutomationElement]::NameProperty, $Label)
     $link = [System.Windows.Automation.PropertyCondition]::new(

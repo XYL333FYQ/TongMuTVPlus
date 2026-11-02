@@ -194,6 +194,11 @@ fn drain(app: AppHandle) {
                             windows::Win32::Foundation::E_FAIL,
                         ));
                     }
+                    crate::native_download_progress::start(
+                        &app,
+                        pending.args.DownloadOperation()?,
+                        path,
+                    )?;
                     pending.approved.set(true);
                 }
                 Ok(())
@@ -201,14 +206,13 @@ fn drain(app: AppHandle) {
             if choose().is_err() {
                 let _ = MessageBoxW(
                     Some(owner),
-                    w!("无法选择保存位置。请重新下载后再试。"),
+                    w!("无法开始下载。请关闭已完成的下载窗口，或重新选择保存位置后再试。"),
                     w!("TongMuTV Plus"),
                     MB_OK | MB_ICONWARNING,
                 );
             }
         }
-        // Native progress/completion feedback is the next required stage.
-        // Destination approval alone must never be reported as a saved file.
+        // The progress window reports completion only from the engine's state.
     }
     ACTIVE.with(|active| active.set(false));
 }

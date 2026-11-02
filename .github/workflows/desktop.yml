@@ -34,7 +34,21 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Check native source formatting
-        run: rustfmt --edition 2021 --check apps/desktop/src-tauri/src/main.rs apps/desktop/src-tauri/src/native_download.rs apps/desktop/src-tauri/src/native_recovery.rs apps/desktop/src-tauri/src/native_external.rs apps/desktop/src-tauri/src/recovery_policy.rs
+        id: native-format
+        run: |
+          if ! rustfmt --edition 2021 --check apps/desktop/src-tauri/src/main.rs apps/desktop/src-tauri/src/native_download.rs apps/desktop/src-tauri/src/native_download_progress.rs apps/desktop/src-tauri/src/native_recovery.rs apps/desktop/src-tauri/src/native_external.rs apps/desktop/src-tauri/src/recovery_policy.rs; then
+            mkdir -p "$RUNNER_TEMP/native-format"
+            cp -R apps/desktop/src-tauri/src/. "$RUNNER_TEMP/native-format/"
+            rustfmt --edition 2021 "$RUNNER_TEMP/native-format/main.rs"
+            for source in "$RUNNER_TEMP/native-format/"*.rs; do mv "$source" "$source.txt"; done
+            exit 1
+          fi
+      - name: Preserve native formatting references
+        if: ${{ failure() && steps.native-format.outcome == 'failure' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: native-format-references
+          path: ${{ runner.temp }}/native-format/*.txt
       - name: Check public desktop capabilities
         run: node apps/desktop/ci/test-inject.cjs
       - name: Reject mismatched package audit sources
