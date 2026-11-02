@@ -2,6 +2,9 @@
 
 ## 2026-11-02 搜索工具局部刷新及原生终态
 
+- room-forms5b2406f/41424021525 整套通过：App/desktop/web 各创建与加入两实际表单，有效字段及真实连接先证明可提交；空值/纯空白+真实 Enter 均 invalid=0、submit=0，无 room:create/join/settings 帧；App 调用\_\_tmShellBack 关闭真实 React 原生 dialog、web/desktop 实际 Escape 均保留文档/URL。已实看 App 创建 390 及 desktop 加入 1280 截图。C08 最初“required 必然暴露气泡”的前提对这两入口不成立，保留原实现；FilmPicker 及其他程序化提交不在证明范围，不将此当全六类返回优先级真机已验。
+- 接续最小交接：当前分支 codex/client-pdf-os-probe，HEAD5b2406f；完整 Checks41424019033 仍运行，不为推文档再次取消。运行时仍 ac92cd8，固定镜像 41421317932/digest280f58e51bf9ab7359bb280c6282ccbcf49f357ee61fbda61f0d92a4401fb737，search-tools41422837112 及 Windows 强化 41423233425 均成功。下一产品项 C03：login/page.tsx 约 299 在 await 创建 Telegram 挑战后 window.open，客户端需可重试的明确用户动作/旧壳复制兜底，普通 web 保留行为；约 280 createRes 失败直接 return 仍 loading=true 也应红测核实。尚未写该批产品代码。原七批/旧普通下载/认证及自定义协议其余入口/菜单和权限/整分支审查/部署发布/真机底栏保留，未部署或发客户端。
+
 - 41422837112 search-tools 真实页面整套成功，源 ac92cd8 固定镜像严格校验通过；App 两标签/两主题实际触摸成功、失败单提示旧结果保留、离开时真实传输中止、同文档；web/desktop 不触发 App 请求。390/820/1280 深浅共 12 图逐张实看，无横向溢出。受控 API/功能旗标、模拟壳、Worker blocked 及 nativeDeviceTested=false 边界明确，不冒充手机现场。
 - ba69e88/Windows41423233425 完整非发布同包复验成功，新增真实激活过期前置及外链/PDF 后的迟到自动请求断言均通过；原生保存/真实 PDF 正文、目录及故障恢复保留。下一步不再重复重建该未改宿主，仅保留默认 Edge 已配置环境/x64 浅色限制。
 - C08 前提复核：RoomWorkspace 创建/加入和 FilmPicker 均在空白时禁用提交，不能仅凭 required 属性就判实际会弹浏览器气泡。仅新增 room-forms 只读 CI 场景，实际房间服务先证明有效字段可提交，再以空值/空白和真实 Enter 检查 invalid/submit 事件均无、无 Socket 创建/加入/设置事件；App 直接调用原生回调验证真实 React dialog 取消，web/desktop 真实 Escape。尚未运行，不据源码称 C08 已解决；未改房间产品/协议。语法/格式通过。
