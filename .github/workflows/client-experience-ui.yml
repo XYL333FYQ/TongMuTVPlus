@@ -35,7 +35,7 @@ on:
         required: false
         default: home
         type: choice
-        options: [home, books]
+        options: [home, books, search-tools]
 
 permissions:
   contents: read
@@ -102,6 +102,7 @@ jobs:
           case "$UI_AUDIT_KIND" in
             home) scenario=home-aux.cjs ;;
             books) scenario=books.cjs ;;
+            search-tools) scenario=search-tools.cjs ;;
             *) echo 'Unknown UI audit scenario' >&2; exit 1 ;;
           esac
           cp "tests/client-experience/$scenario" "$RUNNER_TEMP/client-home/home-aux.cjs"
