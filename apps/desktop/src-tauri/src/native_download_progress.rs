@@ -10,8 +10,8 @@ use tauri::AppHandle;
 use webview2_com::Microsoft::Web::WebView2::Win32::{
     ICoreWebView2DownloadOperation, COREWEBVIEW2_DOWNLOAD_INTERRUPT_REASON,
     COREWEBVIEW2_DOWNLOAD_INTERRUPT_REASON_USER_CANCELED, COREWEBVIEW2_DOWNLOAD_STATE,
-    COREWEBVIEW2_DOWNLOAD_STATE_COMPLETED, COREWEBVIEW2_DOWNLOAD_STATE_IN_PROGRESS,
-    COREWEBVIEW2_DOWNLOAD_STATE_INTERRUPTED,
+    COREWEBVIEW2_DOWNLOAD_STATE_COMPLETED, COREWEBVIEW2_DOWNLOAD_STATE_INTERRUPTED,
+    COREWEBVIEW2_DOWNLOAD_STATE_IN_PROGRESS,
 };
 use windows::{
     core::{w, HRESULT, PCWSTR},
@@ -28,7 +28,9 @@ use windows::{
                 TDM_SET_PROGRESS_BAR_POS, TDN_BUTTON_CLICKED, TDN_CREATED, TDN_TIMER,
             },
             Shell::ShellExecuteW,
-            WindowsAndMessaging::{MessageBoxW, SendMessageW, MB_ICONWARNING, MB_OK, SW_SHOWNORMAL},
+            WindowsAndMessaging::{
+                MessageBoxW, SendMessageW, MB_ICONWARNING, MB_OK, SW_SHOWNORMAL,
+            },
         },
     },
 };
@@ -161,13 +163,23 @@ fn poll(dialog: &Dialog) {
 }
 
 unsafe fn message(hwnd: HWND, message: TASKDIALOG_MESSAGES, value: usize, data: isize) {
-    let _ = SendMessageW(hwnd, message.0 as u32, Some(WPARAM(value)), Some(LPARAM(data)));
+    let _ = SendMessageW(
+        hwnd,
+        message.0 as u32,
+        Some(WPARAM(value)),
+        Some(LPARAM(data)),
+    );
 }
 
 unsafe fn text(hwnd: HWND, element: TASKDIALOG_ELEMENTS, value: &str) {
     let value = wide(value);
     // SendMessage copies the text synchronously; no pointer is posted or retained.
-    message(hwnd, TDM_SET_ELEMENT_TEXT, element.0 as usize, value.as_ptr() as isize);
+    message(
+        hwnd,
+        TDM_SET_ELEMENT_TEXT,
+        element.0 as usize,
+        value.as_ptr() as isize,
+    );
 }
 
 fn readable(path: &str) -> bool {
@@ -176,7 +188,10 @@ fn readable(path: &str) -> bool {
         .and_then(|value| value.to_str())
         .unwrap_or("")
         .to_ascii_lowercase();
-    matches!(extension.as_str(), "pdf" | "epub" | "txt" | "cbz" | "cbr" | "mobi" | "azw" | "azw3")
+    matches!(
+        extension.as_str(),
+        "pdf" | "epub" | "txt" | "cbz" | "cbr" | "mobi" | "azw" | "azw3"
+    )
 }
 
 unsafe fn render(hwnd: HWND, dialog: &Dialog) {
@@ -197,13 +212,23 @@ unsafe fn render(hwnd: HWND, dialog: &Dialog) {
     };
     let detail = match snapshot.stage {
         Stage::Downloading => match snapshot.total {
-            Some(total) => format!("已接收 {} / {} 字节\n保存位置：{}\n下载期间可以继续使用主窗口。", snapshot.received, total, dialog.path),
-            None => format!("已接收 {} 字节，总大小未知\n保存位置：{}\n下载期间可以继续使用主窗口。", snapshot.received, dialog.path),
+            Some(total) => format!(
+                "已接收 {} / {} 字节\n保存位置：{}\n下载期间可以继续使用主窗口。",
+                snapshot.received, total, dialog.path
+            ),
+            None => format!(
+                "已接收 {} 字节，总大小未知\n保存位置：{}\n下载期间可以继续使用主窗口。",
+                snapshot.received, dialog.path
+            ),
         },
         Stage::Completed => format!("已保存到：{}\n文件仅在你点击后交给系统打开。", dialog.path),
         Stage::Canceled => "本次下载已停止。可以关闭此窗口，回到内容页重新下载。".to_string(),
-        Stage::Interrupted(reason) => format!("连接或文件保存中断（错误码 {reason}）。请回到内容页重新下载。"),
-        Stage::Unavailable => "无法确认文件是否保存完成。请检查保存位置，回到内容页重新下载。".to_string(),
+        Stage::Interrupted(reason) => {
+            format!("连接或文件保存中断（错误码 {reason}）。请回到内容页重新下载。")
+        }
+        Stage::Unavailable => {
+            "无法确认文件是否保存完成。请检查保存位置，回到内容页重新下载。".to_string()
+        }
     };
     text(hwnd, TDE_MAIN_INSTRUCTION, instruction);
     text(hwnd, TDE_CONTENT, &detail);
@@ -214,14 +239,37 @@ unsafe fn render(hwnd: HWND, dialog: &Dialog) {
         let percent = if complete {
             100
         } else {
-            snapshot.total.map(|total| (snapshot.received.saturating_mul(100) / total).min(99)).unwrap_or(0)
+            snapshot
+                .total
+                .map(|total| (snapshot.received.saturating_mul(100) / total).min(99))
+                .unwrap_or(0)
         };
         message(hwnd, TDM_SET_PROGRESS_BAR_POS, percent as usize, 0);
     }
-    message(hwnd, TDM_ENABLE_BUTTON, CANCEL as usize, isize::from(active && !dialog.shared.cancel.load(Ordering::Acquire)));
-    message(hwnd, TDM_ENABLE_BUTTON, CLOSE as usize, isize::from(!active));
-    message(hwnd, TDM_ENABLE_BUTTON, FOLDER as usize, isize::from(complete));
-    message(hwnd, TDM_ENABLE_BUTTON, OPEN as usize, isize::from(complete && readable(&dialog.path)));
+    message(
+        hwnd,
+        TDM_ENABLE_BUTTON,
+        CANCEL as usize,
+        isize::from(active && !dialog.shared.cancel.load(Ordering::Acquire)),
+    );
+    message(
+        hwnd,
+        TDM_ENABLE_BUTTON,
+        CLOSE as usize,
+        isize::from(!active),
+    );
+    message(
+        hwnd,
+        TDM_ENABLE_BUTTON,
+        FOLDER as usize,
+        isize::from(complete),
+    );
+    message(
+        hwnd,
+        TDM_ENABLE_BUTTON,
+        OPEN as usize,
+        isize::from(complete && readable(&dialog.path)),
+    );
     *dialog.shown.borrow_mut() = Some(snapshot);
 }
 
@@ -230,8 +278,23 @@ unsafe fn open(hwnd: HWND, path: &Path) {
     let path = wide(path);
     // Keep OS associations and attachment checks. No command line, browser URL,
     // automatic launch, unrestricted executable button, or shell-script command.
-    if (ShellExecuteW(Some(hwnd), w!("open"), PCWSTR(path.as_ptr()), PCWSTR::null(), PCWSTR::null(), SW_SHOWNORMAL).0 as isize) <= 32 {
-        let _ = MessageBoxW(Some(hwnd), w!("系统未能打开。可以从保存位置手动打开，或在 Windows 中设置默认阅读器。"), w!("TongMuTV Plus"), MB_OK | MB_ICONWARNING);
+    if (ShellExecuteW(
+        Some(hwnd),
+        w!("open"),
+        PCWSTR(path.as_ptr()),
+        PCWSTR::null(),
+        PCWSTR::null(),
+        SW_SHOWNORMAL,
+    )
+    .0 as isize)
+        <= 32
+    {
+        let _ = MessageBoxW(
+            Some(hwnd),
+            w!("系统未能打开。可以从保存位置手动打开，或在 Windows 中设置默认阅读器。"),
+            w!("TongMuTV Plus"),
+            MB_OK | MB_ICONWARNING,
+        );
     }
 }
 
@@ -245,10 +308,22 @@ unsafe extern "system" fn callback(
     let dialog = &*(data as *const Dialog);
     if event == TDN_CREATED || event == TDN_TIMER {
         render(hwnd, dialog);
-        let active = dialog.shared.snapshot.lock().map(|value| value.stage == Stage::Downloading).unwrap_or(false);
-        if active { poll(dialog); }
+        let active = dialog
+            .shared
+            .snapshot
+            .lock()
+            .map(|value| value.stage == Stage::Downloading)
+            .unwrap_or(false);
+        if active {
+            poll(dialog);
+        }
     } else if event == TDN_BUTTON_CLICKED {
-        let stage = dialog.shared.snapshot.lock().map(|value| value.stage.clone()).unwrap_or(Stage::Unavailable);
+        let stage = dialog
+            .shared
+            .snapshot
+            .lock()
+            .map(|value| value.stage.clone())
+            .unwrap_or(Stage::Unavailable);
         let button = button.0 as i32;
         if button == CANCEL || button == 2 {
             if stage == Stage::Downloading {
@@ -262,7 +337,9 @@ unsafe extern "system" fn callback(
                 if button == OPEN && readable(&dialog.path) {
                     open(hwnd, Path::new(&dialog.path));
                 } else if button == FOLDER {
-                    if let Some(folder) = Path::new(&dialog.path).parent() { open(hwnd, folder); }
+                    if let Some(folder) = Path::new(&dialog.path).parent() {
+                        open(hwnd, folder);
+                    }
                 }
             }
             return S_FALSE;
@@ -279,7 +356,9 @@ fn release(app: &AppHandle, id: u64) {
         if let Some(entry) = entry {
             unsafe {
                 let mut state = COREWEBVIEW2_DOWNLOAD_STATE::default();
-                if entry.operation.State(&mut state).is_ok() && state == COREWEBVIEW2_DOWNLOAD_STATE_IN_PROGRESS {
+                if entry.operation.State(&mut state).is_ok()
+                    && state == COREWEBVIEW2_DOWNLOAD_STATE_IN_PROGRESS
+                {
                     let _ = entry.operation.Cancel();
                 }
             }
@@ -287,53 +366,101 @@ fn release(app: &AppHandle, id: u64) {
     });
 }
 
-pub unsafe fn start(app: &AppHandle, operation: ICoreWebView2DownloadOperation, path: String) -> windows::core::Result<()> {
+pub unsafe fn start(
+    app: &AppHandle,
+    operation: ICoreWebView2DownloadOperation,
+    path: String,
+) -> windows::core::Result<()> {
     let id = NEXT.fetch_add(1, Ordering::Relaxed);
     let inserted = OPERATIONS.with(|entries| {
         let mut entries = entries.borrow_mut();
-        if entries.len() >= 8 || entries.contains_key(&id) { return false; }
-        entries.insert(id, Entry { operation, cancel_sent: false });
+        if entries.len() >= 8 || entries.contains_key(&id) {
+            return false;
+        }
+        entries.insert(
+            id,
+            Entry {
+                operation,
+                cancel_sent: false,
+            },
+        );
         true
     });
-    if !inserted { return Err(windows::core::Error::from_hresult(E_FAIL)); }
+    if !inserted {
+        return Err(windows::core::Error::from_hresult(E_FAIL));
+    }
     let shared = Arc::new(Shared {
-        snapshot: Mutex::new(Snapshot { stage: Stage::Downloading, received: 0, total: None }),
+        snapshot: Mutex::new(Snapshot {
+            stage: Stage::Downloading,
+            received: 0,
+            total: None,
+        }),
         cancel: AtomicBool::new(false),
         queued: AtomicBool::new(false),
     });
     let app = app.clone();
     let failed = app.clone();
-    let spawned = std::thread::Builder::new().name("native-download-feedback".into()).spawn(move || {
-        // This thread owns only a native dialog and Send-safe snapshots, never a
-        // WebView2 object. Its modal loop does not disable the app's main window.
-        let initialized = CoInitializeEx(None, COINIT_APARTMENTTHREADED).is_ok();
-        let dialog = Dialog { app, id, path, shared, shown: RefCell::new(None) };
-        let buttons = [
-            TASKDIALOG_BUTTON { nButtonID: CANCEL, pszButtonText: w!("取消下载") },
-            TASKDIALOG_BUTTON { nButtonID: OPEN, pszButtonText: w!("用系统阅读器打开") },
-            TASKDIALOG_BUTTON { nButtonID: FOLDER, pszButtonText: w!("打开文件夹") },
-            TASKDIALOG_BUTTON { nButtonID: CLOSE, pszButtonText: w!("关闭下载窗口") },
-        ];
-        let config = TASKDIALOGCONFIG {
-            cbSize: std::mem::size_of::<TASKDIALOGCONFIG>() as u32,
-            dwFlags: TDF_ALLOW_DIALOG_CANCELLATION | TDF_CALLBACK_TIMER | TDF_CAN_BE_MINIMIZED | TDF_SHOW_MARQUEE_PROGRESS_BAR,
-            pszWindowTitle: w!("文件下载 · TongMuTV Plus"),
-            pszMainInstruction: w!("正在下载"),
-            cButtons: buttons.len() as u32,
-            pButtons: buttons.as_ptr(),
-            nDefaultButton: CLOSE,
-            pfCallback: Some(callback),
-            lpCallbackData: &dialog as *const Dialog as isize,
-            cxWidth: 330,
-            ..Default::default()
-        };
-        let result = TaskDialogIndirect(&config, None, None, None);
-        release(&dialog.app, id);
-        if result.is_err() {
-            let _ = MessageBoxW(None, w!("无法显示下载状态。请检查保存位置；尚未完成的下载将停止。"), w!("TongMuTV Plus"), MB_OK | MB_ICONWARNING);
-        }
-        if initialized { CoUninitialize(); }
-    });
+    let spawned = std::thread::Builder::new()
+        .name("native-download-feedback".into())
+        .spawn(move || {
+            // This thread owns only a native dialog and Send-safe snapshots, never a
+            // WebView2 object. Its modal loop does not disable the app's main window.
+            let initialized = CoInitializeEx(None, COINIT_APARTMENTTHREADED).is_ok();
+            let dialog = Dialog {
+                app,
+                id,
+                path,
+                shared,
+                shown: RefCell::new(None),
+            };
+            let buttons = [
+                TASKDIALOG_BUTTON {
+                    nButtonID: CANCEL,
+                    pszButtonText: w!("取消下载"),
+                },
+                TASKDIALOG_BUTTON {
+                    nButtonID: OPEN,
+                    pszButtonText: w!("用系统阅读器打开"),
+                },
+                TASKDIALOG_BUTTON {
+                    nButtonID: FOLDER,
+                    pszButtonText: w!("打开文件夹"),
+                },
+                TASKDIALOG_BUTTON {
+                    nButtonID: CLOSE,
+                    pszButtonText: w!("关闭下载窗口"),
+                },
+            ];
+            let config = TASKDIALOGCONFIG {
+                cbSize: std::mem::size_of::<TASKDIALOGCONFIG>() as u32,
+                dwFlags: TDF_ALLOW_DIALOG_CANCELLATION
+                    | TDF_CALLBACK_TIMER
+                    | TDF_CAN_BE_MINIMIZED
+                    | TDF_SHOW_MARQUEE_PROGRESS_BAR,
+                pszWindowTitle: w!("文件下载 · TongMuTV Plus"),
+                pszMainInstruction: w!("正在下载"),
+                cButtons: buttons.len() as u32,
+                pButtons: buttons.as_ptr(),
+                nDefaultButton: CLOSE,
+                pfCallback: Some(callback),
+                lpCallbackData: &dialog as *const Dialog as isize,
+                cxWidth: 330,
+                ..Default::default()
+            };
+            let result = TaskDialogIndirect(&config, None, None, None);
+            release(&dialog.app, id);
+            if result.is_err() {
+                let _ = MessageBoxW(
+                    None,
+                    w!("无法显示下载状态。请检查保存位置；尚未完成的下载将停止。"),
+                    w!("TongMuTV Plus"),
+                    MB_OK | MB_ICONWARNING,
+                );
+            }
+            if initialized {
+                CoUninitialize();
+            }
+        });
     if spawned.is_err() {
         release(&failed, id);
         return Err(windows::core::Error::from_hresult(E_FAIL));
