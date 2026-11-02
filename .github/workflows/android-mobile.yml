@@ -115,6 +115,7 @@ jobs:
           python3 apps/android-mobile/ci/test_smoke_tls.py
           python3 apps/android-mobile/ci/test_check_external.py
           python3 apps/android-mobile/ci/test_check_back.py
+          python3 apps/android-mobile/ci/test_configure_gesture_avd.py
 
       - name: Collect APK
         id: collect
@@ -165,10 +166,7 @@ jobs:
           arch: x86_64
           target: google_apis
           disable-animations: true
-          pre-emulator-launch-script: |
-            if [ '${{ matrix.api }}' -ge 29 ]; then
-              python3 -c 'import pathlib,sys; p=pathlib.Path(sys.argv[1]); lines=p.read_text().splitlines(); p.write_text("\n".join(line for line in lines if not line.strip().startswith("hw.mainKeys="))+"\nhw.mainKeys=no\n"); print("CI AVD software Back/Home keys enabled")' "$HOME/.android/avd/test.avd/config.ini"
-            fi
+          pre-emulator-launch-script: python3 apps/android-mobile/ci/configure_gesture_avd.py '${{ matrix.api }}' "$HOME/.android/avd/test.avd/config.ini"
           script: bash apps/android-mobile/ci/smoke.sh apk/${{ needs.build.outputs.apk_name }} smoke-out
 
       - name: Upload smoke screenshots and logs

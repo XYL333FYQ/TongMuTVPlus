@@ -2,6 +2,9 @@
 
 ## 2026-11-01 客户端 113cd9c 验证续记
 
+- eb4a551/41372002344 环境对照无效：预启动 hook 把多行 shell 逐行调用，if 缺 fi 导致配置没有应用；新增实际 NavigationBar 前置检查使 API34 在安装前失败，不能据此判产品。Checks41372000277 通过。改成单一 Python 脚本调用，纯函数验证 API23/24 配置字节不变、API34 删除重复键并明确 hw.mainKeys=no、幂等且保留其他硬件参数；仍须新模拟器实际窗口及边缘事件证明，不放宽手势门禁。
+- 首页附属刷新未提交批次：Banner 与 HomeRooms 六项/十二项手动刷新回归和既有交互共 37 项通过，新增取消旧账号请求不阻塞下一账号加载的红测已修正；pnpm typecheck 退出 0。仍须 lint/test/format/test:rooms，以及 App 局部刷新与 web/Windows 隔离的真实界面/网络检查。未改 API、房间会话、存储键、Socket 或既有轮播时长/样式。
+
 - 9549b47/41370909946 整支失败、Checks41370907932 通过。API34 控制键能关闭同一文档浮层，Settings 的 Wi-Fi 页同手势也未返回；系统窗口无 NavigationBar，Controller 模式 2。dump 中 mIsEnabled=false 的 EdgeBackGestureHandler 属未使用 TaskbarDelegate，不能误当手机导航处理器。启动日志确认未选硬件 profile；默认 AVD 硬件 Back/Home 是主要待证变量。只将 API34 启动前 hw.mainKeys 显式设为 no，并要求实际 NavigationBar 窗口存在才继续；仍保留真实边缘滑动及全部严格断言，不修改产品，需新模拟器验证后才判断原因。
 - 共享首页推荐附属刷新进行中：新增六项红测（原实现 4 项失败/2 项隔离通过），BannerCarousel 接入现有 App-only usePageRefresh、保留等待/失败时内容、离开中止/迟到不写缓存、旧初始请求不能覆盖新结果，17 项定向及既有交互通过。仅该产品文件与测试仍未提交，尚需首页房间摘要、完整检查与真实三宽深浅/网络行为验证；后端推荐缓存策略保留，不声称强制刷新上游接口缓存。
 
