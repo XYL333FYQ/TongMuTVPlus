@@ -145,13 +145,17 @@ function Click-Native([string]$Name) {
     $pattern = $button.GetCurrentPattern([System.Windows.Automation.InvokePattern]::Pattern)
     $pattern.Invoke()
 }
-function Verify-SystemFileActions([string]$FilePath) {
+function Verify-SystemFileActions([string]$FilePath, [string]$ExpectedText = 'TongMu native download fixture', [string]$EvidencePrefix = '00-system') {
     $stem = [IO.Path]::GetFileNameWithoutExtension($FilePath)
     $topWindows = [System.Windows.Automation.AutomationElement]::RootElement.FindAll(
         [System.Windows.Automation.TreeScope]::Children, [System.Windows.Automation.Condition]::TrueCondition)
-    $oldWindows = @($topWindows | ForEach-Object { $_.Current.NativeWindowHandle })
+    foreach ($window in $topWindows) {
+        if ($window.Current.ProcessId -ne $client.Id -and $window.Current.Name.IndexOf($stem, [StringComparison]::OrdinalIgnoreCase) -ge 0) {
+            throw 'Unexpected preexisting reader displaying this fixture'
+        }
+    }
     $reader = Native-Button '用系统阅读器打开'
-    if ($null -eq $reader -or -not $reader.Current.IsEnabled) { throw 'Completed text file has no system-reader action' }
+    if ($null -eq $reader -or -not $reader.Current.IsEnabled) { throw 'Completed file has no system-reader action' }
     Click-Native '用系统阅读器打开'
     $script:fixtureReader = $null
     Wait-Check {
@@ -159,30 +163,31 @@ function Verify-SystemFileActions([string]$FilePath) {
             [System.Windows.Automation.TreeScope]::Children, [System.Windows.Automation.Condition]::TrueCondition)
         foreach ($window in $windows) {
             if ($window.Current.ProcessId -ne $client.Id -and
-                $oldWindows -notcontains $window.Current.NativeWindowHandle -and
                 $window.Current.Name.IndexOf($stem, [StringComparison]::OrdinalIgnoreCase) -ge 0) {
                 $script:fixtureReader = $window
                 return $true
             }
         }
         return $false
-    } 'OS default reader opens the selected file in a separate native window'
+    } 'OS default reader opens the selected file outside the client'
+    $fixtureReader.SetFocus()
+    Capture ($EvidencePrefix + '-reader-open') -KeepForeground
     Wait-Check {
         $elements = $fixtureReader.FindAll([System.Windows.Automation.TreeScope]::Descendants,
             [System.Windows.Automation.Condition]::TrueCondition)
         foreach ($element in $elements) {
             $pattern = $null
             if ($element.TryGetCurrentPattern([System.Windows.Automation.TextPattern]::Pattern, [ref]$pattern)) {
-                if ($pattern.DocumentRange.GetText(256).Contains('TongMu native download fixture')) { return $true }
+                if ($pattern.DocumentRange.GetText(4096).Contains($ExpectedText)) { return $true }
             }
             if ($element.TryGetCurrentPattern([System.Windows.Automation.ValuePattern]::Pattern, [ref]$pattern)) {
-                if ($pattern.Current.Value.Contains('TongMu native download fixture')) { return $true }
+                if ($pattern.Current.Value.Contains($ExpectedText)) { return $true }
             }
         }
         return $false
     } 'real system reader displays the downloaded file bytes'
     $fixtureReader.SetFocus()
-    Capture '00-system-reader' -KeepForeground
+    Capture ($EvidencePrefix + '-reader') -KeepForeground
     $fixtureReader.GetCurrentPattern([System.Windows.Automation.WindowPattern]::Pattern).Close()
     $folderPath = [IO.Path]::GetDirectoryName($FilePath)
     $shell = New-Object -ComObject Shell.Application
@@ -202,16 +207,16 @@ function Verify-SystemFileActions([string]$FilePath) {
     } 'native folder action opens the exact selected directory in Explorer'
     $folderElement = [System.Windows.Automation.AutomationElement]::FromHandle([IntPtr]$fixtureFolder.HWND)
     $folderElement.SetFocus()
-    Capture '00-system-folder' -KeepForeground
+    Capture ($EvidencePrefix + '-folder') -KeepForeground
     $fixtureFolder.Quit()
     if (-not (Cdp 'download-physical-ready')) { throw 'System file actions replaced the content document' }
 }
-function Close-CompletedDownload([string]$FilePath, [switch]$ExerciseFileActions) {
+function Close-CompletedDownload([string]$FilePath, [switch]$ExerciseFileActions, [string]$ExpectedText = 'TongMu native download fixture', [string]$EvidencePrefix = '00-system') {
     Wait-Check { $null -ne (Native-Button '下载完成') } 'native download completion reflects engine completion'
     $folder = Native-Button '打开文件夹'
     if ($null -eq $folder -or -not $folder.Current.IsEnabled) { throw 'Completed native download has no usable folder action' }
     Capture '00-native-download-completed'
-    if ($ExerciseFileActions) { Verify-SystemFileActions $FilePath }
+    if ($ExerciseFileActions) { Verify-SystemFileActions -FilePath $FilePath -ExpectedText $ExpectedText -EvidencePrefix $EvidencePrefix }
     if ($FilePath -and [IO.Path]::GetExtension($FilePath) -eq '.bin') {
         $reader = Native-Button '用系统阅读器打开'
         if ($null -eq $reader -or $reader.Current.IsEnabled) { throw 'Unknown binary file exposes a direct open action' }
@@ -492,6 +497,22 @@ try {
     if ($null -ne (Native-Button '重新打开')) { throw 'A legitimate attachment download was treated as whole-app failure' }
     if (-not (Cdp 'download-physical-ready')) { throw 'Download discarded the document or physical gesture' }
     Write-Host 'PASS: attachment download keeps the current document without native error'
+    $pdfFile = Join-Path $downloadDir.FullName 'native-pdf-audit.pdf'
+    $defaultPdf = Join-Path $env:USERPROFILE 'Downloads/tm-client-pdf-audit.pdf'
+    if (Test-Path -LiteralPath $defaultPdf) { throw 'Unexpected preexisting PDF fixture; do not overwrite it' }
+    [void]$ownedDownloadLocations.Add('pdf-selected')
+    [void]$ownedDownloadLocations.Add('pdf-default')
+    Start-OwnedWebDownload 'Download PDF fixture'
+    $script:pdfSaveInvoked = $false
+    Wait-Check {
+        if (-not $pdfSaveInvoked) { $script:pdfSaveInvoked = Save-OwnedDownload $pdfFile }
+        $pdfSaveInvoked -and $null -ne (Native-Button '下载完成')
+    } 'authenticated PDF reaches actual engine completion at the selected path'
+    if ((Get-FileHash -LiteralPath $pdfFile -Algorithm SHA256).Hash.ToLowerInvariant() -ne '97444fdbfea671938c8cf7415766427714637cc2ad49401350b3c1e09c332d03') { throw 'Saved PDF bytes changed' }
+    if (Test-Path -LiteralPath $defaultPdf) { throw 'PDF also saved to an unselected default path' }
+    Close-CompletedDownload -FilePath $pdfFile -ExerciseFileActions -ExpectedText 'TongMu PDF acceptance' -EvidencePrefix '00-system-pdf'
+    if (-not (Cdp 'download-physical-ready')) { throw 'System PDF actions replaced the original document' }
+    Write-Host 'PASS: actual authenticated PDF bytes, native save, real default reader content and exact Explorer directory'
     Wait-Check { Cdp 'download-activation-idle' } 'transient activation expired before explicit permission approval' 10
     Start-OwnedWebDownload 'Download fixture' -Assistive
     $assistiveFile = Join-Path $downloadDir.FullName 'native-assistive-attachment.txt'

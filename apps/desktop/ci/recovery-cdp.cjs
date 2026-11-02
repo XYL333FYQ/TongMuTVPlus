@@ -4,6 +4,19 @@ const https = require('node:https');
 const { once } = require('node:events');
 const path = require('node:path');
 const fs = require('node:fs');
+// The same 596-byte one-page PDF used by the actual book-page audit.
+const pdfFixture = Buffer.from(
+  'JVBERi0xLjQKMSAwIG9iago8PCAvVHlwZSAvQ2F0YWxvZyAvUGFnZXMgMiAwIFIgPj4KZW5kb2JqCjIgMCBvYmoKPDwgL1R5cGUgL1BhZ2VzIC9LaWRzIFszIDAgUl0gL0NvdW50IDEgPj4KZW5kb2JqCjMgMCBvYmoKPDwgL1R5cGUgL1BhZ2UgL1BhcmVudCAyIDAgUiAvTWVkaWFCb3ggWzAgMCAzNjAgMjQwXSAvUmVzb3VyY2VzIDw8IC9Gb250IDw8IC9GMSA0IDAgUiA+PiA+PiAvQ29udGVudHMgNSAwIFIgPj4KZW5kb2JqCjQgMCBvYmoKPDwgL1R5cGUgL0ZvbnQgL1N1YnR5cGUgL1R5cGUxIC9CYXNlRm9udCAvSGVsdmV0aWNhID4+CmVuZG9iago1IDAgb2JqCjw8IC9MZW5ndGggNTIgPj4Kc3RyZWFtCkJUIC9GMSAxOCBUZiA0MCAxNjAgVGQgKFRvbmdNdSBQREYgYWNjZXB0YW5jZSkgVGogRVQKZW5kc3RyZWFtCmVuZG9iagp4cmVmCjAgNgowMDAwMDAwMDAwIDY1NTM1IGYgCjAwMDAwMDAwMDkgMDAwMDAgbiAKMDAwMDAwMDA1OCAwMDAwMCBuIAowMDAwMDAwMTE1IDAwMDAwIG4gCjAwMDAwMDAyNDEgMDAwMDAgbiAKMDAwMDAwMDMxMSAwMDAwMCBuIAp0cmFpbGVyCjw8IC9TaXplIDYgL1Jvb3QgMSAwIFIgPj4Kc3RhcnR4cmVmCjQxMwolJUVPRgo=',
+  'base64'
+);
+if (
+  require('node:crypto')
+    .createHash('sha256')
+    .update(pdfFixture)
+    .digest('hex') !==
+  '97444fdbfea671938c8cf7415766427714637cc2ad49401350b3c1e09c332d03'
+)
+  throw new Error('PDF fixture identity changed');
 
 async function main() {
   const action = process.argv[2];
@@ -115,6 +128,21 @@ async function main() {
         setTimeout(() => res.destroy(), 50);
         return;
       }
+      if (req.url === '/download-pdf') {
+        if (!(req.headers.cookie || '').includes('tm_ci_session=retained')) {
+          res.writeHead(401);
+          res.end();
+          return;
+        }
+        res.writeHead(200, {
+          'Content-Type': 'application/pdf',
+          'Content-Length': String(pdfFixture.length),
+          'Content-Disposition':
+            'attachment; filename="tm-client-pdf-audit.pdf"',
+        });
+        res.end(pdfFixture);
+        return;
+      }
       if (req.url === '/download') {
         res.writeHead(200, {
           'Content-Type': 'text/plain',
@@ -180,6 +208,7 @@ async function main() {
           ? '<title>Unavailable</title>Controlled HTTP 503'
           : `<title>NativeRecoveryFixture</title><h1>Native recovery ready</h1>
 <a id="fixture-download" href="/download">Download fixture</a>
+<p><a id="fixture-pdf" href="/download-pdf">Download PDF fixture</a></p>
 <p><button id="fixture-blob">Save generated Blob</button></p>
 <p><button id="fixture-post-blob">Save authenticated POST response</button></p>
 <p><a id="fixture-slow" href="/slow-download">Download slow fixture</a></p>
@@ -196,6 +225,7 @@ function recordDownloadInput(event){
   window.__tmCiDownloadActive=!!(navigator.userActivation&&navigator.userActivation.isActive);
 }
 document.querySelector('#fixture-download').onclick=recordDownloadInput;
+document.querySelector('#fixture-pdf').onclick=recordDownloadInput;
 document.querySelector('#fixture-slow').onclick=recordDownloadInput;
 document.querySelector('#fixture-interact').onclick=event=>{
   recordDownloadInput(event);

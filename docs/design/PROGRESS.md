@@ -2,6 +2,8 @@
 
 ## 2026-11-02 Android 内容导出实际验收
 
+- 6465c4e Android41415492478 与分支 Checks 运行中；只查询同句柄，不因等待重启。下一并行验证只改 Windows CI：复用 742d1ff 成功包 41369538858，新增和书籍场景同 SHA 的 596 字节 PDF、登录 Cookie 下载、真实选定保存路径、引擎完成后字节校验、系统默认阅读器实际内容及精确 Explorer 目录；不把 TXT 或浏览器模拟桥当 PDF 系统阅读器已验。语法解析通过，未在本机执行 UI/故障注入，未改 NativeSDK/应用源码或依赖，真实 Windows 运行尚待。
+
 - 8220db6/41411685341：APK 成功，三个 API 仍失败，但均已越过首次排队进入实际生成文件完成；API23/34 取回的 131091 字节与预期完全相同，旧 SecurityException 未再出现。新的终态停在取消夹具“正在准备文件”不可见，报告已是 Slow export-queued；AOSP UiAutomator dump 明确 waitForIdle(1000,10000)，原 400ms 进度更新令采集等到任务结束。仅 CI 改首块立即写入、后续每 4 秒提供真实分片，给采集器空闲窗口，不减缓产品、不绕过原生取消/写盘；仍待新模拟器验证取消和认证 POST。
 - 7b0a3a4 网页镜像 41409950781 完整成功，digest0d633a093d760743ec7fad637921da96b85ca4f203b2db48489c52fe5e637829。8220db6 的 books 验收 41412362726 成功：新版 App 模拟能力的原 Blob/取消/无二次浏览器下载，两主题及三宽截图已取回；exportApiSimulated=true 且 nativeOsReaderTested=false，不当成实际 APK 或系统阅读器证明。其余旧 App/web/desktop 场景保留。下一轮先查询新 APK 与该分支 Checks 同句柄，原七批余项/普通旧下载/系统 PDF/真机底栏不缩减；未部署发布。
 
