@@ -2,6 +2,8 @@
 
 ## 2026-11-02 搜索工具局部刷新及原生终态
 
+- Windows8aa2802/41421063264 仍失败；Win32 与 UIA 均确认含 PDF 标题的 Edge 父窗可见但禁用，尚不知阻挡原因。仅 CI 再对照已配置环境：默认 PDF 关联不变，按微软文档在无既有 Edge 进程的临时 runner 设置 HideFirstRunExperience=1，已有冲突策略拒绝覆盖、finally 只移除自建值；不批准文件安全提示，不用 HTML/文本阅读器替代 PDF 正文。该策略仅检验首次引导变量，不能写成已证实根因。固定镜像新 run41421317932 运行中，与该诊断分支隔离。
+
 - 调度更正：41419961526 因同分支推送触发 checks-${github.ref} 并发组而 cancelled，不算成功/产品失败；完整 type/lint/format/unit/rooms/ops 此前已通过，build 被取消。镜像改固定在 codex/client-tools-image-ac92cd8，先取消该分支重复的独立 Checks，再由镜像流程完整重验，不弱化检查。4afacd6 仅 CI 场景与文档，运行时树仍 ac92cd8。
 - Windows41419967948 新增证据：默认 PDF 关联 MSEdgePDF，外部 msedge 进程存在、标题含 native-pdf-audit.pdf，UIA offscreen=false/enabled=false。还不能判断模态阻挡还是 UIA 属性；仅 CI 补 Win32 IsWindowEnabled/IsWindowVisible 与活动弹窗对照，按真实 OS 可见/可操作窗口判进入正文门禁，正文必须仍实际读取。无宿主源码/关联修改，尚待该对照运行。
 

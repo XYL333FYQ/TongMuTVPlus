@@ -66,6 +66,8 @@ $fixture = $null
 $client = $null
 $tlsDir = $null
 $createdPolicies = @()
+$edgeFirstRunPolicyOwned = $false
+$edgePolicyPath = 'HKLM:\SOFTWARE\Policies\Microsoft\Edge'
 $downloadFixturesStarted = $false
 $ownedDownloadLocations = [Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
 $downloadPermissionApprovals = 0
@@ -410,6 +412,20 @@ function Start-OwnedWebDownload([string]$Label, [switch]$Assistive) {
     }
 }
 try {
+    # A disposable desktop has never completed browser onboarding. Test the OS
+    # reader in a configured Edge environment, without replacing its association
+    # or approving any file/security prompt. This is a CI precondition only.
+    # https://learn.microsoft.com/en-us/deployedge/microsoft-edge-policies/HideFirstRunExperience
+    if (Get-Process -Name msedge -ErrorAction SilentlyContinue) { throw 'Unexpected preexisting Edge process before owned reader test' }
+    $edgePolicy = Get-ItemProperty -LiteralPath $edgePolicyPath -ErrorAction SilentlyContinue
+    if ($edgePolicy -and $edgePolicy.PSObject.Properties['HideFirstRunExperience']) {
+        if ($edgePolicy.HideFirstRunExperience -ne 1) { throw 'Existing Edge onboarding policy must not be overwritten' }
+    } else {
+        New-Item -Path $edgePolicyPath -Force | Out-Null
+        New-ItemProperty -LiteralPath $edgePolicyPath -Name HideFirstRunExperience -PropertyType DWord -Value 1 | Out-Null
+        $edgeFirstRunPolicyOwned = $true
+    }
+    Write-Host 'Reader environment: default association unchanged; Edge first-run UI disabled only on this disposable runner'
     # Runtime 150+ deliberately ignores WEBVIEW2_* overrides in elevated hosts.
     # Use the documented per-executable machine policy only on this disposable
     # runner, and remove each value in finally. No release-app debug switches.
@@ -816,6 +832,9 @@ try {
     if ($fixture -and -not $fixture.HasExited) { Stop-Process -Id $fixture.Id -Force -ErrorAction SilentlyContinue }
     foreach ($key in $createdPolicies) {
         Remove-ItemProperty -LiteralPath $key -Name $exeName -ErrorAction Continue
+    }
+    if ($edgeFirstRunPolicyOwned) {
+        Remove-ItemProperty -LiteralPath $edgePolicyPath -Name HideFirstRunExperience -ErrorAction Continue
     }
     if ($tlsDir) {
         foreach ($name in @('cert.pem', 'key.pem')) {
