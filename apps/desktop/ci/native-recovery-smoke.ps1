@@ -75,11 +75,11 @@ function Clear-CiPolicy([string]$Policy) {
     Remove-ItemProperty -LiteralPath $key -Name $exeName
     $script:createdPolicies = @($createdPolicies | Where-Object { $_ -ne $key })
 }
-function Capture([string]$Name) {
+function Capture([string]$Name, [switch]$KeepForeground) {
     # A restarted GUI can be behind the runner's terminal even when its page is
     # ready. Activate only our enabled, onscreen window for visual inspection;
     # this is a test interaction, not proof of automatic foreground activation.
-    if ($client -and -not $client.HasExited) {
+    if (-not $KeepForeground -and $client -and -not $client.HasExited) {
         try {
             $owned = [System.Windows.Automation.PropertyCondition]::new(
                 [System.Windows.Automation.AutomationElement]::ProcessIdProperty, [int]$client.Id)
@@ -145,13 +145,91 @@ function Click-Native([string]$Name) {
     $pattern = $button.GetCurrentPattern([System.Windows.Automation.InvokePattern]::Pattern)
     $pattern.Invoke()
 }
-function Close-CompletedDownload {
+function Verify-SystemFileActions([string]$FilePath) {
+    $stem = [IO.Path]::GetFileNameWithoutExtension($FilePath)
+    $topWindows = [System.Windows.Automation.AutomationElement]::RootElement.FindAll(
+        [System.Windows.Automation.TreeScope]::Children, [System.Windows.Automation.Condition]::TrueCondition)
+    $oldWindows = @($topWindows | ForEach-Object { $_.Current.NativeWindowHandle })
+    $reader = Native-Button '用系统阅读器打开'
+    if ($null -eq $reader -or -not $reader.Current.IsEnabled) { throw 'Completed text file has no system-reader action' }
+    Click-Native '用系统阅读器打开'
+    $script:fixtureReader = $null
+    Wait-Check {
+        $windows = [System.Windows.Automation.AutomationElement]::RootElement.FindAll(
+            [System.Windows.Automation.TreeScope]::Children, [System.Windows.Automation.Condition]::TrueCondition)
+        foreach ($window in $windows) {
+            if ($window.Current.ProcessId -ne $client.Id -and
+                $oldWindows -notcontains $window.Current.NativeWindowHandle -and
+                $window.Current.Name.IndexOf($stem, [StringComparison]::OrdinalIgnoreCase) -ge 0) {
+                $script:fixtureReader = $window
+                return $true
+            }
+        }
+        return $false
+    } 'OS default reader opens the selected file in a separate native window'
+    Wait-Check {
+        $elements = $fixtureReader.FindAll([System.Windows.Automation.TreeScope]::Descendants,
+            [System.Windows.Automation.Condition]::TrueCondition)
+        foreach ($element in $elements) {
+            $pattern = $null
+            if ($element.TryGetCurrentPattern([System.Windows.Automation.TextPattern]::Pattern, [ref]$pattern)) {
+                if ($pattern.DocumentRange.GetText(256).Contains('TongMu native download fixture')) { return $true }
+            }
+            if ($element.TryGetCurrentPattern([System.Windows.Automation.ValuePattern]::Pattern, [ref]$pattern)) {
+                if ($pattern.Current.Value.Contains('TongMu native download fixture')) { return $true }
+            }
+        }
+        return $false
+    } 'real system reader displays the downloaded file bytes'
+    $fixtureReader.SetFocus()
+    Capture '00-system-reader' -KeepForeground
+    $fixtureReader.GetCurrentPattern([System.Windows.Automation.WindowPattern]::Pattern).Close()
+    $folderPath = [IO.Path]::GetDirectoryName($FilePath)
+    $shell = New-Object -ComObject Shell.Application
+    foreach ($window in @($shell.Windows())) {
+        if ([string]$window.Document.Folder.Self.Path -eq $folderPath) { throw 'Unexpected preexisting fixture folder window' }
+    }
+    Click-Native '打开文件夹'
+    $script:fixtureFolder = $null
+    Wait-Check {
+        foreach ($window in @($shell.Windows())) {
+            if ([string]$window.Document.Folder.Self.Path -eq $folderPath) {
+                $script:fixtureFolder = $window
+                return $true
+            }
+        }
+        return $false
+    } 'native folder action opens the exact selected directory in Explorer'
+    $folderElement = [System.Windows.Automation.AutomationElement]::FromHandle([IntPtr]$fixtureFolder.HWND)
+    $folderElement.SetFocus()
+    Capture '00-system-folder' -KeepForeground
+    $fixtureFolder.Quit()
+    if (-not (Cdp 'download-physical-ready')) { throw 'System file actions replaced the content document' }
+}
+function Close-CompletedDownload([string]$FilePath, [switch]$ExerciseFileActions) {
     Wait-Check { $null -ne (Native-Button '下载完成') } 'native download completion reflects engine completion'
     $folder = Native-Button '打开文件夹'
     if ($null -eq $folder -or -not $folder.Current.IsEnabled) { throw 'Completed native download has no usable folder action' }
     Capture '00-native-download-completed'
+    if ($ExerciseFileActions) { Verify-SystemFileActions $FilePath }
+    if ($FilePath -and [IO.Path]::GetExtension($FilePath) -eq '.bin') {
+        $reader = Native-Button '用系统阅读器打开'
+        if ($null -eq $reader -or $reader.Current.IsEnabled) { throw 'Unknown binary file exposes a direct open action' }
+    }
     Click-Native '关闭下载窗口'
     Wait-Check { $null -eq (Native-Button '关闭下载窗口') } 'completed download window closes independently'
+}
+function Native-DownloadBytes {
+    $owned = [System.Windows.Automation.PropertyCondition]::new(
+        [System.Windows.Automation.AutomationElement]::ProcessIdProperty, [int]$client.Id)
+    $items = [System.Windows.Automation.AutomationElement]::RootElement.FindAll(
+        [System.Windows.Automation.TreeScope]::Descendants, $owned)
+    foreach ($item in $items) {
+        if ($item.Current.Name -match '^已接收 (\d+) / (\d+) 字节') {
+            return [pscustomobject]@{ received = [long]$Matches[1]; total = [long]$Matches[2] }
+        }
+    }
+    return $null
 }
 function Save-OwnedDownload([string]$Destination, [switch]$Cancel) {
     $permission = Native-Button '允许本次'
@@ -408,7 +486,7 @@ try {
     if (-not $downloadSaveInvoked) { throw 'Attachment bypassed the required native Save As choice' }
     if (Test-Path -LiteralPath $defaultDownloadFile) { throw 'Attachment also saved to an unselected default path' }
     if ([IO.File]::ReadAllText($downloadFile) -ne 'TongMu native download fixture') { throw 'Unexpected downloaded bytes' }
-    Close-CompletedDownload
+    Close-CompletedDownload -FilePath $downloadFile -ExerciseFileActions
     Start-Sleep -Seconds 3
     Capture '00-attachment-download'
     if ($null -ne (Native-Button '重新打开')) { throw 'A legitimate attachment download was treated as whole-app failure' }
@@ -453,7 +531,7 @@ try {
         } ('actual saved file: ' + $blobCase.action)
         if (-not $downloadSaveInvoked) { throw 'Blob bypassed the required native Save As choice' }
         if (Test-Path -LiteralPath $defaultBlobPath) { throw 'Blob also saved to an unselected default path' }
-        Close-CompletedDownload
+        Close-CompletedDownload -FilePath $blobPath
         $expected = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($blobCase.text))
         $actual = [Convert]::ToBase64String([IO.File]::ReadAllBytes($blobPath))
         if ($actual -ne $expected) { throw 'Blob saved bytes differ, including binary/Unicode content' }
@@ -465,6 +543,41 @@ try {
         throw 'Authenticated POST file flow was not exercised exactly once'
     }
     Write-Host 'PASS: generated and authenticated POST Blob files saved with exact bytes, same document'
+    $slowFile = Join-Path $downloadDir.FullName 'native-cancelled-attachment.txt'
+    $defaultSlowFile = Join-Path $env:USERPROFILE 'Downloads/tm-client-slow-audit.txt'
+    if ((Test-Path -LiteralPath $slowFile) -or (Test-Path -LiteralPath $defaultSlowFile)) {
+        throw 'Unexpected preexisting slow-download fixture'
+    }
+    Start-OwnedWebDownload 'Download slow fixture'
+    $script:downloadSaveInvoked = $false
+    Wait-Check {
+        if (-not $downloadSaveInvoked) { $script:downloadSaveInvoked = Save-OwnedDownload $slowFile }
+        $bytes = Native-DownloadBytes
+        $downloadSaveInvoked -and $bytes -and $bytes.received -gt 0 -and $bytes.total -eq 16777216 -and $bytes.received -lt $bytes.total
+    } 'native progress shows actual partial bytes and total'
+    if (-not (Cdp 'download-physical-ready')) { throw 'Slow download replaced the source document' }
+    $mainOwner = [System.Windows.Automation.AutomationElement]::FromHandle($script:downloadInputOwnerHandle)
+    if (-not $mainOwner.Current.IsEnabled) { throw 'Native progress disabled the main content window' }
+    Capture '00-native-download-active'
+    Start-OwnedWebDownload 'Keep browsing'
+    if (-not (Cdp 'download-interaction-ready')) { throw 'Main content blocked during download' }
+    $bytes = Native-DownloadBytes
+    if (-not $bytes -or $bytes.received -le 0 -or $bytes.received -ge $bytes.total) { throw 'Download finished before cancellation test' }
+    Click-Native '取消下载'
+    Wait-Check { $null -ne (Native-Button '下载已取消') } 'engine confirms cancellation during transfer'
+    foreach ($name in @('打开文件夹', '用系统阅读器打开')) {
+        $button = Native-Button $name
+        if ($null -eq $button -or $button.Current.IsEnabled) { throw 'Canceled download exposes completed-file actions' }
+    }
+    Wait-Check { (Invoke-RestMethod 'http://127.0.0.1:8085/diagnostics').slowCanceled -eq 1 } 'native cancellation closes the real transport'
+    $slowDiagnostics = Invoke-RestMethod 'http://127.0.0.1:8085/diagnostics'
+    if ($slowDiagnostics.slowRequests -ne 1 -or $slowDiagnostics.slowCompleted -ne 0) { throw 'Slow fixture did not cancel exactly one unfinished transfer' }
+    if ((Test-Path -LiteralPath $slowFile) -and (Get-Item -LiteralPath $slowFile).Length -ge 16777216) { throw 'Canceled transfer published a complete file' }
+    if (Test-Path -LiteralPath $defaultSlowFile) { throw 'Canceled transfer wrote an unselected default file' }
+    Capture '00-native-download-canceled'
+    Click-Native '关闭下载窗口'
+    Wait-Check { $null -eq (Native-Button '关闭下载窗口') } 'canceled download window closes independently'
+    if (-not (Cdp 'download-interaction-ready')) { throw 'Cancel or close replaced the main document' }
     if ($downloadPermissionApprovals -lt 1) { throw 'Native explicit permission approval was not exercised' }
     # A rejected automatic-download batch intentionally remains blocked in its
     # current WebContents. A fresh host independently verifies the deny branch

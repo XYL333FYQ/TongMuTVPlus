@@ -312,7 +312,7 @@ unsafe extern "system" fn callback(
             .shared
             .snapshot
             .lock()
-            .map(|value| value.stage == Stage::Downloading)
+            .map(|value| matches!(value.stage, Stage::Downloading | Stage::Interrupted(_)))
             .unwrap_or(false);
         if active {
             poll(dialog);
@@ -326,7 +326,7 @@ unsafe extern "system" fn callback(
             .unwrap_or(Stage::Unavailable);
         let button = button.0 as i32;
         if button == CANCEL || button == 2 {
-            if stage == Stage::Downloading {
+            if matches!(stage, Stage::Downloading | Stage::Interrupted(_)) {
                 dialog.shared.cancel.store(true, Ordering::Release);
                 message(hwnd, TDM_ENABLE_BUTTON, CANCEL as usize, 0);
                 poll(dialog);
@@ -356,8 +356,8 @@ fn release(app: &AppHandle, id: u64) {
         if let Some(entry) = entry {
             unsafe {
                 let mut state = COREWEBVIEW2_DOWNLOAD_STATE::default();
-                if entry.operation.State(&mut state).is_ok()
-                    && state == COREWEBVIEW2_DOWNLOAD_STATE_IN_PROGRESS
+                if entry.operation.State(&mut state).is_err()
+                    || state != COREWEBVIEW2_DOWNLOAD_STATE_COMPLETED
                 {
                     let _ = entry.operation.Cancel();
                 }

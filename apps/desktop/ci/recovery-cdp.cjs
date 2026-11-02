@@ -16,6 +16,9 @@ async function main() {
     let automaticRequests = 0;
     let externalReport = null;
     let authenticatedFileRequests = 0;
+    let slowRequests = 0;
+    let slowCanceled = 0;
+    let slowCompleted = 0;
     const handler = (req, res) => {
       if (req.url === '/external-auto') {
         automaticRequests++;
@@ -91,6 +94,9 @@ async function main() {
             automaticRequests,
             externalReport,
             authenticatedFileRequests,
+            slowRequests,
+            slowCanceled,
+            slowCompleted,
           })
         );
         return;
@@ -115,6 +121,37 @@ async function main() {
           'Content-Disposition': 'attachment; filename="tm-client-audit.txt"',
         });
         res.end('TongMu native download fixture');
+        return;
+      }
+      if (req.url === '/slow-download') {
+        if (!(req.headers.cookie || '').includes('tm_ci_session=retained')) {
+          res.writeHead(401);
+          res.end();
+          return;
+        }
+        slowRequests++;
+        const total = 16 * 1024 * 1024;
+        const chunk = Buffer.alloc(16 * 1024, 90);
+        let sent = 0;
+        res.writeHead(200, {
+          'Content-Type': 'application/octet-stream',
+          'Content-Length': String(total),
+          'Content-Disposition':
+            'attachment; filename="tm-client-slow-audit.txt"',
+        });
+        const timer = setInterval(() => {
+          sent += chunk.length;
+          res.write(chunk);
+          if (sent === total) {
+            clearInterval(timer);
+            slowCompleted++;
+            res.end();
+          }
+        }, 100);
+        res.on('close', () => {
+          clearInterval(timer);
+          if (sent < total) slowCanceled++;
+        });
         return;
       }
       if (req.url === '/post-file') {
@@ -145,6 +182,8 @@ async function main() {
 <a id="fixture-download" href="/download">Download fixture</a>
 <p><button id="fixture-blob">Save generated Blob</button></p>
 <p><button id="fixture-post-blob">Save authenticated POST response</button></p>
+<p><a id="fixture-slow" href="/slow-download">Download slow fixture</a></p>
+<p><button id="fixture-interact">Keep browsing</button></p>
 <p><a id="fixture-external" href="/external" target="_blank" rel="noopener">Open external fixture</a></p>
 <script>
 function saveFixtureBlob(blob,name){
@@ -157,6 +196,11 @@ function recordDownloadInput(event){
   window.__tmCiDownloadActive=!!(navigator.userActivation&&navigator.userActivation.isActive);
 }
 document.querySelector('#fixture-download').onclick=recordDownloadInput;
+document.querySelector('#fixture-slow').onclick=recordDownloadInput;
+document.querySelector('#fixture-interact').onclick=event=>{
+  recordDownloadInput(event);
+  window.__tmCiBackgroundClicks=(window.__tmCiBackgroundClicks||0)+1;
+};
 document.querySelector('#fixture-blob').onclick=event=>{
   recordDownloadInput(event);
   saveFixtureBlob(new Blob(['TongMu generated Blob\\0文件\\n']),'tm-client-blob-audit.bin');
@@ -320,6 +364,16 @@ document.querySelector('#fixture-post-blob').onclick=async event=>{
       });
       if (result.result.value !== true)
         throw new Error('Transient user activation is still active');
+    } else if (action === 'download-interaction-ready') {
+      const result = await command('Runtime.evaluate', {
+        expression:
+          'document.title === "NativeRecoveryFixture" && performance.timeOrigin === window.__tmCiDownloadOrigin && window.__tmCiBackgroundClicks === 1 && window.__tmCiDownloadTrusted === true',
+        returnByValue: true,
+      });
+      if (result.result.value !== true)
+        throw new Error(
+          'Main content did not handle physical input during download'
+        );
     } else if (
       action === 'window-fullscreen-on' ||
       action === 'window-fullscreen-off'
