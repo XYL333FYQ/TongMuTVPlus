@@ -205,6 +205,17 @@ async function until(check, label) {
             await page.evaluate(() => window.__authOpenProof),
             []
           );
+          if (old) {
+            const sentinel = 'auth-audit-before-' + platform + '-' + theme;
+            await page.evaluate(
+              (text) => navigator.clipboard.writeText(text),
+              sentinel
+            );
+            assert.equal(
+              await page.evaluate(() => navigator.clipboard.readText()),
+              sentinel
+            );
+          }
           await until(
             () => activationExpired(context, page),
             'old challenge-creation click expires without observation renewing it'

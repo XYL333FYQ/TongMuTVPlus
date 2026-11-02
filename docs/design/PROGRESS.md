@@ -2,6 +2,9 @@
 
 ## 2026-11-02 客户端 Telegram 登录接续
 
+- 最小接续：产品源 ba3253f32f19781f6c3188132dcbaa3a9be2a1f9 已推至固定分支 codex/client-auth-image-ba3253f；完整镜像 41448941085 当前 checks 运行中，只查同句柄，不重复构建/推该分支。工作分支 codex/client-auth-explicit-open 随后只有文档与 CI 变化，运行时树仍 ba3253f。镜像完成后取得合并 digest，再用含最新 auth.cjs 的调用分支跑 auth；该脚本又给每个旧壳复制场景先写不同哨兵值，防止上一用例剪贴板造成假通过，Node/格式通过，场景仍待验。不要用旧 5bc 的镜像或失败 UI 当新候选通过。
+- 当前图解已更新到 CURRENT 认证候选章节。余项仍为原七批：真实 Telegram/OIDC 确认与回跳、其他外部入口/菜单权限、旧引擎普通下载、共享返回其余层级及最终整分支审查/部署发布/真机底栏等；没有缩减或宣布完成。正式 VPS 仍 c28ab11b，未发布安装包；未知 NUL STATUS 文档保留。下一轮不重复调查已确认的 Playwright userGesture、AbortController 缺失及表单 required 前提。
+
 - 含无 AbortController 降级的新候选最终本机门禁：typecheck 重跑 0、lint0、完整 Jest187 套 1239 项 0、房间 27 项 0；format:check 退出 1，仅原未知未跟踪 NUL STATUS 文档，所有本批源码/脚本/设计文档逐文件格式通过。没有源码类型/断言失败，无需恢复先前已验批次。新源码与 CI 观察修正须完整新镜像及 auth 场景，不能复用 5bc 作为来源证明；仍未部署发布。
 
 - 5bc9183 固定镜像 41444495197 完整成功（checks/双架构/合并），digest28af768f301ca71350ab2f3a126a3a1caaedf6a7d5a8e54a0d69726ef8c41684。auth41446319188 失败在首场“激活过期”观察，未出 15 图；Playwright1.55 官方 crExecutionContext 源码的函数求值明确 userGesture:true，原 page.evaluate 读取激活会自行续激活。仅 CI 改 CDP Runtime.evaluate userGesture:false 并有界等待真实过期，继续用真实点击/窗口/剪贴板，不因此更改产品或宣称交互已验。
