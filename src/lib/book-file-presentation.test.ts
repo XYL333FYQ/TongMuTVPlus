@@ -24,12 +24,25 @@ afterEach(() => {
   jest.useRealTimers();
   jest.restoreAllMocks();
   delete document.documentElement.dataset.tmPlatform;
+  delete window.__tmContentExport;
 });
 
-it('hands desktop reading to the engine download path with the actual Blob and filename', () => {
+it('new Android hands the actual response Blob to native and keeps cancellation quiet', async () => {
+  document.documentElement.dataset.tmPlatform = 'app';
+  const blob = new Blob(['private'], { type: 'application/pdf' });
+  const saveBlob = jest.fn(async () => 'cancelled' as const);
+  window.__tmContentExport = { version: 1, saveBlob };
+  await presentBookFile(blob, '书名.pdf', true);
+  expect(saveBlob).toHaveBeenCalledWith(blob, '书名.pdf');
+  expect(URL.createObjectURL).not.toHaveBeenCalled();
+  expect(window.open).not.toHaveBeenCalled();
+  expect(clicked).toEqual([]);
+});
+
+it('hands desktop reading to the engine download path with the actual Blob and filename', async () => {
   document.documentElement.dataset.tmPlatform = 'desktop';
   const blob = new Blob(['%PDF-1.7\nbook'], { type: 'application/pdf' });
-  presentBookFile(blob, '书名.pdf', false);
+  await presentBookFile(blob, '书名.pdf', false);
   expect(URL.createObjectURL).toHaveBeenCalledWith(blob);
   expect(clicked).toEqual([
     {
@@ -49,9 +62,9 @@ it('hands desktop reading to the engine download path with the actual Blob and f
 
 it.each(['web', 'app'])(
   'preserves existing %s reading behavior',
-  (platform) => {
+  async (platform) => {
     document.documentElement.dataset.tmPlatform = platform;
-    presentBookFile(new Blob(['book']), 'book.pdf', false);
+    await presentBookFile(new Blob(['book']), 'book.pdf', false);
     expect(window.open).toHaveBeenCalledWith(
       'blob:http://localhost/book-file',
       '_blank',
@@ -63,9 +76,9 @@ it.each(['web', 'app'])(
 
 it.each(['web', 'app', 'desktop'])(
   'preserves explicit download on %s',
-  (platform) => {
+  async (platform) => {
     document.documentElement.dataset.tmPlatform = platform;
-    presentBookFile(new Blob(['book']), 'book.epub', true);
+    await presentBookFile(new Blob(['book']), 'book.epub', true);
     expect(clicked).toEqual([
       {
         href: 'blob:http://localhost/book-file',

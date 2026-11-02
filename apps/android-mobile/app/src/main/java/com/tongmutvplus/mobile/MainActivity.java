@@ -74,6 +74,7 @@ public class MainActivity extends Activity {
     private FrameLayout webHolder;
     private WebView webView;
     private ExternalWindow externalWindow;
+    private ContentExportController contentExports;
     private AppStateView localSurface;
     private final LoadState loadState = new LoadState();
     private long webViewEpoch;
@@ -126,6 +127,15 @@ public class MainActivity extends Activity {
         root.addView(localSurface, new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
         setContentView(root);
+        try {
+            contentExports = new ContentExportController(this, new ContentExportController.Host() {
+                @Override public WebView view() { return webView; }
+                @Override public boolean dark() { return pageDark; }
+                @Override public boolean allowed() {
+                    return webView != null && !errorShown && ScopedDownload.sameOrigin(webView.getUrl(), getSavedServer());
+                }
+            });
+        } catch (java.io.IOException unavailable) { Log.i("TongMuClient", "content export unavailable"); }
 
         // Android 15 起强制边到边：用系统栏 + 刘海的 inset 给网页留边
         root.setOnApplyWindowInsetsListener((v, insets) -> {
@@ -380,11 +390,13 @@ public class MainActivity extends Activity {
 
         @Override public void onPageCommitVisible(WebView view, String url) {
             if (!current(view) || !loadState.commit(documentToken, url)) return;
+            if (contentExports != null) contentExports.documentReady();
             scheduleReveal(view, documentToken, shellReady ? 120 : 1500);
         }
 
         @Override public void onPageFinished(WebView view, String url) {
             if (!current(view) || !loadState.commit(documentToken, url)) return;
+            if (contentExports != null) contentExports.documentReady();
             scheduleReveal(view, documentToken, shellReady ? 120 : 1500);
         }
 
@@ -515,6 +527,7 @@ public class MainActivity extends Activity {
 
     private long beginNavigation(String url) {
         long token = loadState.begin(url);
+        if (contentExports != null) contentExports.newDocument();
         Log.d("TongMuClient", "begin document=" + token);
         if (customView != null) hideCustomView();
         updatePlaying(false);
@@ -543,6 +556,7 @@ public class MainActivity extends Activity {
     }
 
     private void discardWebView(WebView view) {
+        if (contentExports != null) contentExports.invalidate();
         if (externalWindow != null) externalWindow.dispose();
         if (view == webView) webView = null;
         webViewEpoch += 1;
@@ -608,6 +622,7 @@ public class MainActivity extends Activity {
 
     private void showNativeError(long token, String title, String message, String reason) {
         if (isFinishing() || isDestroyed() || !loadState.fail(token)) return;
+        if (contentExports != null) contentExports.invalidate();
         errorShown = true;
         clearLoadTimeout();
         if (customView != null) hideCustomView();
@@ -778,6 +793,7 @@ public class MainActivity extends Activity {
     @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (contentExports != null && contentExports.permissionResult(requestCode)) return;
         if (requestCode != REQ_DOWNLOAD_STORAGE && requestCode != REQ_DOWNLOAD_NOTIFICATIONS) return;
         Bundle request = pendingFileDownload;
         pendingFileDownload = null;
@@ -950,6 +966,22 @@ public class MainActivity extends Activity {
 
         @JavascriptInterface
         public boolean supportsExternalLinks() { return true; }
+
+        @JavascriptInterface
+        public void beginContentExport(String nonce, String raw) { if (current() && contentExports != null) contentExports.begin(nonce, raw); }
+
+        @JavascriptInterface
+        public long writeContentExport(String nonce, String id, int sequence, String base64) {
+            return current() && contentExports != null ? contentExports.write(nonce, id, sequence, base64) : -1;
+        }
+
+        @JavascriptInterface
+        public boolean completeContentExport(String nonce, String id) {
+            return current() && contentExports != null && contentExports.complete(nonce, id);
+        }
+
+        @JavascriptInterface
+        public void cancelContentExport(String nonce, String id) { if (current() && contentExports != null) contentExports.cancel(nonce, id); }
 
         @JavascriptInterface
         public void ready() {

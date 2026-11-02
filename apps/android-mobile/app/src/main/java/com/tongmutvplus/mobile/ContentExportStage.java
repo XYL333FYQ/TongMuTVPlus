@@ -56,7 +56,9 @@ final class ContentExportStage implements AutoCloseable {
         authorize(nonce, request);
         checkActive();
         if (written != expected) throw fail("Incomplete export");
-        try { output.getFD().sync(); output.close(); }
+        // This synchronous WebView call only hands off a closed private file.
+        // The foreground worker owns the final storage copy; no forced disk sync here.
+        try { output.close(); }
         catch (IOException failure) { close(); throw failure; }
         closed = true;
         handedOff = true;
@@ -64,10 +66,10 @@ final class ContentExportStage implements AutoCloseable {
     }
 
     private void authorize(String nonce, String request) throws IOException {
-        if (!same(this.nonce, nonce) || !this.request.equals(request)) throw new IOException("Export scope mismatch");
+        if (!sameToken(this.nonce, nonce) || !this.request.equals(request)) throw new IOException("Export scope mismatch");
     }
 
-    private static boolean same(String expected, String actual) {
+    static boolean sameToken(String expected, String actual) {
         if (actual == null || actual.length() != expected.length()) return false;
         int difference = 0;
         for (int index = 0; index < expected.length(); index++) difference |= expected.charAt(index) ^ actual.charAt(index);
@@ -80,6 +82,8 @@ final class ContentExportStage implements AutoCloseable {
         if (now - started < 0 || now - started > 300000 || now - lastWrite < 0 || now - lastWrite > 60000)
             throw fail("Export expired");
     }
+
+    synchronized void validateLive() throws IOException { checkActive(); }
 
     private IOException fail(String reason) {
         IOException failure = new IOException(reason);

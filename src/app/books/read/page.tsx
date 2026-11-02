@@ -2158,6 +2158,7 @@ export default function BookReadPage() {
   const [, setProgressPercent] = useState(0);
   const [restoredMessage, setRestoredMessage] = useState('');
   const [pdfBlobUrl, setPdfBlobUrl] = useState('');
+  const pdfBlobRef = useRef<Blob | null>(null);
   const [ttsVoices, setTtsVoices] = useState<BookTtsVoice[]>([]);
   const [ttsAvailable, setTtsAvailable] = useState(false);
   const [ttsStatus, setTtsStatus] = useState<TtsStatus>('idle');
@@ -3269,6 +3270,7 @@ export default function BookReadPage() {
         if (cancelled) return;
         const objectUrl = URL.createObjectURL(blob);
         revokedUrl = objectUrl;
+        pdfBlobRef.current = blob;
         setPdfBlobUrl(objectUrl);
         setFileLoadState('ready');
       })
@@ -3279,6 +3281,7 @@ export default function BookReadPage() {
     return () => {
       cancelled = true;
       if (revokedUrl) URL.revokeObjectURL(revokedUrl);
+      pdfBlobRef.current = null;
     };
   }, [manifest]);
 
@@ -3652,7 +3655,11 @@ export default function BookReadPage() {
           title={manifest.book.title}
         />
         {/* Keep the embedded reader; desktop offers its native save/reader path. */}
-        <BookPdfActions url={pdfBlobUrl} title={manifest.book.title} />
+        <BookPdfActions
+          url={pdfBlobUrl}
+          title={manifest.book.title}
+          blob={pdfBlobRef.current || undefined}
+        />
       </div>
     );
   }

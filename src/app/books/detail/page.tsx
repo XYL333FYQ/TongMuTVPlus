@@ -19,6 +19,7 @@ import {
 } from '@/lib/book-route-cache.client';
 import { cn } from '@/lib/cn';
 import { getPlatform } from '@/lib/platform';
+import { nativeContentExportAvailable } from '@/lib/content-export';
 
 import EmptyState from '@/components/media/EmptyState';
 import {
@@ -130,7 +131,7 @@ async function openBookFile(
   const fallbackBaseName =
     sanitizeFilename(title || bookId || 'book') || 'book';
   const extension = format === 'pdf' ? 'pdf' : 'epub';
-  presentBookFile(
+  await presentBookFile(
     blob,
     headerFilename || `${fallbackBaseName}.${extension}`,
     download
@@ -150,10 +151,16 @@ export default function BookDetailPage() {
   const [error, setError] = useState('');
   const [fileBusy, setFileBusy] = useState<'open' | 'download' | ''>('');
   const [showAllChapters, setShowAllChapters] = useState(false);
-  const [desktopFileReader, setDesktopFileReader] = useState(false);
+  const [nativeFileReader, setNativeFileReader] = useState(false);
 
   useEffect(() => {
-    setDesktopFileReader(getPlatform() === 'desktop');
+    const update = () =>
+      setNativeFileReader(
+        getPlatform() === 'desktop' || nativeContentExportAvailable()
+      );
+    update();
+    window.addEventListener('tm-content-export-ready', update);
+    return () => window.removeEventListener('tm-content-export-ready', update);
   }, []);
 
   const cached = useMemo(
@@ -483,7 +490,7 @@ export default function BookDetailPage() {
                       : format === 'epub'
                       ? '支持目录与阅读设置'
                       : format === 'pdf'
-                      ? desktopFileReader
+                      ? nativeFileReader
                         ? '保存后用系统阅读器打开'
                         : '使用浏览器阅读器'
                       : '此格式暂不支持在线阅读'}
@@ -523,9 +530,7 @@ export default function BookDetailPage() {
                     LIBRARY_FOCUS
                   )}
                 >
-                  {desktopFileReader && format === 'pdf'
-                    ? '保存后阅读'
-                    : '打开'}
+                  {nativeFileReader && format === 'pdf' ? '保存后阅读' : '打开'}
                 </button>
               </div>
             );

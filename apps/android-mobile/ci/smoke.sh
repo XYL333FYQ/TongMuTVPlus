@@ -220,7 +220,83 @@ if [ "$PKG" = "com.tongmutvplus.mobile" ]; then
     adb exec-out screencap -p >"$OUT/4d-back-history-root.png"
     echo "PASS: $BACK_INPUT closes overlay before SPA history without replacing document or host"
   }
+  finished_downloads() {
+    adb logcat -d -s TongMuClient | grep -c 'file download completed' || true
+  }
+  wait_downloads() {
+    local expected="$1" target="$2" count
+    for _ in $(seq 1 30); do
+      adb logcat -d -s TongMuClient >"$target"
+      count=$(grep -c 'file download completed' "$target" || true)
+      [ "$count" -ge "$expected" ] && return 0
+      sleep 1
+    done
+    return 1
+  }
+  verify_content_export() {
+    # Disposable AVD only; inspect our private stage without changing app permissions.
+    adb root >/dev/null 2>&1 || return 1
+    adb wait-for-device || return 1
+    local completed_before
+    completed_before=$(finished_downloads)
+    tap_target text 'Native content export' || return 1
+    wait_target text 'Export ready' >/dev/null || return 1
+    tap_target text 'Start export audio' || return 1
+    sleep 1
+    tap_target text 'Export Blob' || return 1
+    adb exec-out screencap -p >"$OUT/4e-content-consent.png"
+    tap_target text '取消' || return 1
+    wait_target text 'Export cancelled' >/dev/null || return 1
+    [ -z "$(adb shell 'ls /sdcard/Download/TM-content-blob-*.bin 2>/dev/null' | tr -d '\r')" ] || return 1
+    tap_target text 'Export Blob' || return 1
+    tap_target text '保存' || return 1
+    if [ "$API_LEVEL" -lt 29 ]; then
+      tap_target id permission_deny_button || return 1
+      wait_target text 'Export cancelled' >/dev/null || return 1
+      [ -z "$(adb shell 'ls /sdcard/Download/TM-content-blob-*.bin 2>/dev/null' | tr -d '\r')" ] || return 1
+      tap_target text 'Export Blob' || return 1
+      tap_target text '保存' || return 1
+      tap_target id permission_allow_button || return 1
+    elif [ "$API_LEVEL" -ge 33 ]; then
+      tap_target id permission_allow_button || return 1
+    fi
+    wait_target text 'Export queued' >/dev/null || return 1
+    wait_downloads "$((completed_before + 1))" "$OUT/content-native.log" || return 1
+    for _ in $(seq 1 10); do
+      generated=$(adb shell 'ls /sdcard/Download/TM-content-blob-*.bin 2>/dev/null' | tr -d '\r')
+      [[ "$generated" =~ ^/sdcard/Download/TM-content-blob-[0-9]+\.bin$ ]] && break
+      sleep 1
+    done
+    [[ "$generated" =~ ^/sdcard/Download/TM-content-blob-[0-9]+\.bin$ ]] || return 1
+    adb pull "$generated" "$OUT/content-generated.bin" || return 1
+    tap_target text 'Export slow Blob' || return 1
+    tap_target text '保存' || return 1
+    wait_target text '正在准备文件' >/dev/null || return 1
+    adb exec-out screencap -p >"$OUT/4g-content-preparing.png"
+    tap_target text '取消' || return 1
+    wait_target text 'Slow export cancelled' >/dev/null || return 1
+    [ -z "$(adb shell 'ls /sdcard/Download/TM-content-cancel-*.bin 2>/dev/null' | tr -d '\r')" ] || return 1
+    [ -z "$(adb shell ls -A "/data/user/0/$PKG/cache/content-exports" | tr -d '\r')" ] || return 1
+    tap_target text 'Export POST Blob' || return 1
+    tap_target text '保存' || return 1
+    wait_target text 'POST export queued' >/dev/null || return 1
+    wait_downloads "$((completed_before + 2))" "$OUT/content-native.log" || return 1
+    for _ in $(seq 1 10); do
+      posted=$(adb shell 'ls /sdcard/Download/TM-content-post-*.bin 2>/dev/null' | tr -d '\r')
+      [[ "$posted" =~ ^/sdcard/Download/TM-content-post-[0-9]+\.bin$ ]] && break
+      sleep 1
+    done
+    [[ "$posted" =~ ^/sdcard/Download/TM-content-post-[0-9]+\.bin$ ]] || return 1
+    adb pull "$posted" "$OUT/content-post.bin" || return 1
+    sleep 1
+    python3 "$(dirname "$0")/check_content_export.py" "$OUT/server.log" "$OUT/content-generated.bin" "$OUT/content-post.bin" "$OUT/content-export-result.json" "$API_LEVEL" || return 1
+    [ "$(app_pid)" = "$APP_PID" ] || return 1
+    adb exec-out screencap -p >"$OUT/4f-content-complete.png"
+    tap_target text 'Return to recovery fixture' || return 1
+  }
   verify_file_download() {
+    local completed_before
+    completed_before=$(finished_downloads)
     tap_target text 'Native download test' || return 1
     tap_target text 'Start download audio' || return 1
     sleep 1
@@ -231,7 +307,7 @@ if [ "$PKG" = "com.tongmutvplus.mobile" ]; then
     wait_target text 'Stop download audio' >/dev/null || return 1
     tap_target text 'Download authenticated file' || return 1
     tap_target text '下载' || return 1
-    if [ "$API_LEVEL" -lt 29 ]; then
+    if [ "$API_LEVEL" -lt 29 ] && ! adb shell dumpsys package "$PKG" | grep -q 'android.permission.WRITE_EXTERNAL_STORAGE: granted=true'; then
       tap_target id permission_deny_button || return 1
       wait_target text 'Stop download audio' >/dev/null || return 1
       adb exec-out screencap -p >"$OUT/19-download-storage-denied.png"
@@ -246,12 +322,7 @@ if [ "$PKG" = "com.tongmutvplus.mobile" ]; then
     adb exec-out screencap -p >"$OUT/19-download-background-progress.png"
     adb shell cmd statusbar collapse || return 1
     adb shell am start -n "$PKG/.MainActivity" >/dev/null || return 1
-    for _ in $(seq 1 30); do
-      adb logcat -d -s TongMuClient >"$OUT/download-native.log"
-      grep -q 'file download completed' "$OUT/download-native.log" && break
-      sleep 1
-    done
-    grep -q 'file download completed' "$OUT/download-native.log" || return 1
+    wait_downloads "$((completed_before + 1))" "$OUT/download-native.log" || return 1
     downloaded=$(adb shell 'ls /sdcard/Download/TongMu-download-smoke-*.txt 2>/dev/null' | tr -d '\r')
     [[ "$downloaded" =~ ^/sdcard/Download/TongMu-download-smoke-[0-9]+\.txt$ ]] || return 1
     adb pull "$downloaded" "$OUT/download-smoke.txt" || return 1
@@ -269,6 +340,7 @@ if [ "$PKG" = "com.tongmutvplus.mobile" ]; then
     wait_target absent-id tm_load_surface >/dev/null || return 1
     grep -q 'GET /missing.png' "$OUT/server.log" || return 1
     verify_back_chain || return 1
+    verify_content_export || return 1
     tap_target text 'Light theme' || return 1
     tap_target text 'HTTP failure test' || return 1
     wait_target text '服务暂时不可用' >/dev/null || return 1

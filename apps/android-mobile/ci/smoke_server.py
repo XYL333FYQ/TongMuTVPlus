@@ -34,6 +34,7 @@ RECOVERY_CONTROLS = """<button onclick='TMShell.setSystemBars(false)' style='dis
 <a href='/native-media-test' style='display:block;font-size:20px;line-height:48px'>Native media permission test</a>
 <a href='/native-session-test' style='display:block;font-size:20px;line-height:48px'>Native session test</a>
 <a href='/native-pip-test' style='display:block;font-size:20px;line-height:48px'>Native PiP test</a>
+<a href='/native-content-export' style='position:fixed;bottom:64px;left:4px;background:white;font-size:14px;line-height:44px'>Native content export</a>
 <a href='/native-external-test' style='position:fixed;bottom:8px;left:4px;background:white;font-size:14px;line-height:48px'>Native external test</a>
 <a href='/update-test' style='position:fixed;bottom:8px;right:8px;background:white;font-size:16px;line-height:48px'>Update permission test</a>
 <img src='/missing.png' width='1' height='1' alt=''>
@@ -200,6 +201,35 @@ fetch('/external-report',{method:'POST',body:JSON.stringify({event:'destination'
 if(window.TMShell)TMShell.ready();
 </script></body>""".encode()
 
+CONTENT_EXPORT_PAGE = """<!doctype html><meta charset=utf-8><title>Content export fixture</title>
+<body style='background:white;color:black;font:20px sans-serif'>
+<div id='status'>Waiting for export bridge</div>
+<button style='display:block;min-height:48px;font:20px sans-serif' onclick='audio.play()'>Start export audio</button>
+<button style='display:block;min-height:48px;font:20px sans-serif' onclick='saveBlob()'>Export Blob</button>
+<button style='display:block;min-height:48px;font:20px sans-serif' onclick='postBlob()'>Export POST Blob</button>
+<button style='display:block;min-height:48px;font:20px sans-serif' onclick='slowBlob()'>Export slow Blob</button>
+<a href='/' style='display:block;line-height:48px'>Return to recovery fixture</a>
+<audio id=audio loop src='/tone.wav'></audio><iframe id=foreign sandbox='allow-scripts' style='display:none'></iframe>
+<script>
+var audio=document.getElementById('audio'),originalAudio=audio,doc=String(Date.now())+'-'+String(Math.random()),seq=0;
+var origin=performance.timeOrigin||(performance.timing&&performance.timing.navigationStart)||0;
+function report(event,extra){var row={event:event,seq:seq++,doc:doc,origin:origin,sameAudio:audio===originalAudio,paused:audio.paused,time:audio.currentTime};
+ if(extra)row.extra=extra;var xhr=new XMLHttpRequest();xhr.open('POST','/content-export-report');xhr.send(JSON.stringify(row));}
+audio.onplaying=function(){TMShell.setPlaying(true);report('playing');};
+function exported(blob,name,label){window.__tmContentExport.saveBlob(blob,name).then(function(state){document.getElementById('status').textContent=label+' '+state;report(label+'-'+state);},function(error){report('failed');document.getElementById('status').textContent='Export failed';});}
+function saveBlob(){var data=new Uint8Array(131079);for(var i=0;i<data.length;i++)data[i]=i%251;exported(new Blob([data,'桐木导出'],{type:'application/octet-stream'}),'TM-content-blob.bin','Export');}
+function postBlob(){var xhr=new XMLHttpRequest();xhr.open('POST','/content-export-post');xhr.responseType='blob';xhr.onload=function(){if(xhr.status!==200){report('failed');return;}exported(xhr.response,'TM-content-post.bin','POST export');};xhr.send('{"bookId":"fixture"}');}
+// CI-only delayed FileReader producer: real Blob bytes and native ACKs are retained.
+function slowBlob(){var Original=window.FileReader;window.FileReader=function(){var reader=new Original(),self=this;
+ this.readAsDataURL=function(blob){reader.onload=function(){self.result=reader.result;setTimeout(function(){if(self.onload)self.onload();},400);};reader.onerror=function(){if(self.onerror)self.onerror();};reader.readAsDataURL(blob);};this.abort=function(){reader.abort();};};
+ window.__tmContentExport.saveBlob(new Blob([new Uint8Array(2097152)]),'TM-content-cancel.bin').then(function(state){window.FileReader=Original;document.getElementById('status').textContent='Slow export '+state;report('Slow export-'+state);},function(){window.FileReader=Original;report('failed');});}
+var timer=setInterval(function(){if(window.__tmContentExport){clearInterval(timer);document.getElementById('status').textContent='Export ready';report('ready');}},100);
+var foreign=document.getElementById('foreign');
+window.addEventListener('message',function(event){if(event.source===foreign.contentWindow)report('foreign',event.data);});
+foreign.srcdoc='<scr'+'ipt>var readable=false;try{readable=!!parent.document.body;}catch(e){};var native=!!window.TMShell;if(native)TMShell.beginContentExport(new Array(65).join("0"),JSON.stringify({v:1,nonce:new Array(65).join("0"),id:"foreign",name:"foreign.bin",mime:"application/octet-stream",bytes:1}));parent.postMessage({native:native,exportApi:!!window.__tmContentExport,parentReadable:readable},"*");<'+'/scr'+'ipt>';
+TMShell.ready();
+</script></body>""".encode()
+
 DOWNLOAD_PAGE = """<!doctype html><meta charset=utf-8><title>Download fixture</title>
 <body style='background:white;color:black;font:24px sans-serif'>
 <button style='display:block;min-height:56px;font-size:24px' onclick='audio.play()'>Start download audio</button>
@@ -220,6 +250,14 @@ TMShell.ready();publish();setInterval(function(){report('download-tick')},500);
 
 class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
+        if self.path == '/native-content-export':
+            self.send_response(200)
+            self.send_header('Content-Type', 'text/html; charset=utf-8')
+            self.send_header('Set-Cookie', 'tm-export-smoke=content-only; Path=/; HttpOnly; SameSite=Lax')
+            self.send_header('Content-Length', str(len(CONTENT_EXPORT_PAGE)))
+            self.end_headers()
+            self.wfile.write(CONTENT_EXPORT_PAGE)
+            return
         print("GET %s UA=%s" % (self.path, self.headers.get("User-Agent")), flush=True)
         if self.path == '/download-cookie-probe':
             print('DOWNLOAD_SOURCE_COOKIE ' + str('tm-download-smoke=download-only' in self.headers.get('Cookie', '')), flush=True)
@@ -315,6 +353,22 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_POST(self):
         length = int(self.headers.get("Content-Length") or 0)
+        if self.path == '/content-export-post':
+            self.rfile.read(length)
+            authorized = 'tm-export-smoke=content-only' in self.headers.get('Cookie', '')
+            print('CONTENT_EXPORT_AUTHENTICATED ' + str(authorized), flush=True)
+            body = bytes([0, 255, 1, 0]) + 'authenticated POST blob\n桐木'.encode()
+            self.send_response(200 if authorized else 401)
+            self.send_header('Content-Type', 'application/octet-stream')
+            self.send_header('Content-Length', str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+            return
+        if self.path == '/content-export-report':
+            print('CONTENT_EXPORT_REPORT ' + self.rfile.read(length).decode(), flush=True)
+            self.send_response(204)
+            self.end_headers()
+            return
         label = "BACK_REPORT" if self.path == "/back-report" else "DOWNLOAD_REPORT" if self.path == "/download-report" else "EXTERNAL_REPORT" if self.path == "/external-report" else "MEDIA_REPORT" if self.path == "/media-report" else "IME_REPORT" if self.path == "/ime-report" else "REPORT"
         print("%s %s" % (label, self.rfile.read(length).decode()), flush=True)
         self.send_response(204)

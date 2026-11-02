@@ -112,11 +112,15 @@ jobs:
           java -cp /tmp/tm-load-state-test com.tongmutvplus.mobile.FileDownloadTest
           javac --release 17 -d /tmp/tm-load-state-test apps/android-mobile/app/src/main/java/com/tongmutvplus/mobile/ContentExportStage.java apps/android-mobile/ci/ContentExportStageTest.java
           java -cp /tmp/tm-load-state-test com.tongmutvplus.mobile.ContentExportStageTest
+          javac --release 17 -d /tmp/tm-load-state-test apps/android-mobile/app/src/main/java/com/tongmutvplus/mobile/FileDownload.java apps/android-mobile/app/src/main/java/com/tongmutvplus/mobile/ExternalLinkPolicy.java apps/android-mobile/app/src/main/java/com/tongmutvplus/mobile/ScopedDownload.java apps/android-mobile/ci/ContentCopyTest.java
+          java -cp /tmp/tm-load-state-test com.tongmutvplus.mobile.ContentCopyTest
+          node --test apps/android-mobile/ci/content-export-script.test.cjs
           javac --release 17 --add-modules jdk.httpserver -d /tmp/tm-load-state-test apps/android-mobile/app/src/main/java/com/tongmutvplus/mobile/FileDownload.java apps/android-mobile/app/src/main/java/com/tongmutvplus/mobile/ExternalLinkPolicy.java apps/android-mobile/app/src/main/java/com/tongmutvplus/mobile/ScopedDownload.java apps/android-mobile/ci/ScopedDownloadTest.java
           java --add-modules jdk.httpserver -cp /tmp/tm-load-state-test com.tongmutvplus.mobile.ScopedDownloadTest
           python3 apps/android-mobile/ci/test_smoke_tls.py
           python3 apps/android-mobile/ci/test_check_external.py
           python3 apps/android-mobile/ci/test_check_back.py
+          python3 apps/android-mobile/ci/test_check_content_export.py
           python3 apps/android-mobile/ci/test_configure_gesture_avd.py
           python3 apps/android-mobile/ci/test_fullscreen_hint_target.py
           python3 apps/android-mobile/ci/test_back_swipe.py

@@ -1,11 +1,13 @@
 import { getPlatform } from '@/lib/platform';
+import { saveNativeContent } from '@/lib/content-export';
 
 /** Present an authenticated response without another request or credential handoff. */
-export function presentBookFile(
+export async function presentBookFile(
   blob: Blob,
   filename: string,
   download: boolean
 ) {
+  if (await saveNativeContent(blob, filename)) return;
   const url = URL.createObjectURL(blob);
   try {
     // Desktop blocks Blob new windows. Its engine download path already owns

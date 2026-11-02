@@ -21,6 +21,7 @@ import android.provider.MediaStore;
 import android.util.Log;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -28,6 +29,9 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
 /** Credential-bearing files use a scoped transport; public files use DownloadManager. */
 public final class FileDownloadService extends Service {
@@ -40,6 +44,40 @@ public final class FileDownloadService extends Service {
     private volatile ScopedDownload current;
     private volatile boolean destroyed;
     private int lastStartId;
+    private final Set<File> imported = Collections.synchronizedSet(new HashSet<>());
+
+    /** Only the native controller creates this path. No file path is accepted from JavaScript. */
+    static boolean startContentImport(Context context, File file, String name, String mime, long bytes) {
+        Intent task = new Intent(context, FileDownloadService.class).setAction("import-content")
+                .putExtra("contentPath", file.getAbsolutePath()).putExtra("contentBytes", bytes)
+                .putExtra("name", name).putExtra("mime", mime);
+        File owned = contentFile(context, task);
+        if (owned == null) return false;
+        try {
+            if (Build.VERSION.SDK_INT >= 26) context.startForegroundService(task); else context.startService(task);
+            return true;
+        } catch (RuntimeException unavailable) {
+            owned.delete();
+            return false;
+        }
+    }
+
+    private static File contentFile(Context context, Intent intent) {
+        if (intent == null || !"import-content".equals(intent.getAction())) return null;
+        String path = intent.getStringExtra("contentPath");
+        long bytes = intent.getLongExtra("contentBytes", -1);
+        if (path == null || bytes < 0 || bytes > ContentExportStage.MAX_BYTES) return null;
+        try {
+            File parent = new File(context.getCacheDir(), "content-exports").getCanonicalFile();
+            File file = new File(path).getCanonicalFile();
+            return parent.equals(file.getParentFile()) && file.getName().startsWith(".tm-content-")
+                    && file.getName().endsWith(".part") && file.isFile() && file.length() == bytes ? file : null;
+        } catch (IOException failure) { return null; }
+    }
+
+    private void releaseImport(File file) {
+        if (file != null) { imported.remove(file); file.delete(); }
+    }
 
     @Override public void onCreate() {
         super.onCreate();
@@ -56,7 +94,10 @@ public final class FileDownloadService extends Service {
         }
         String url = intent == null ? null : intent.getStringExtra("url");
         String name = intent == null ? null : intent.getStringExtra("name");
-        if (!ExternalLinkPolicy.allowed(url) || !validName(name)) {
+        File content = contentFile(this, intent);
+        boolean importing = intent != null && "import-content".equals(intent.getAction());
+        if (!validName(name) || (importing ? content == null : !ExternalLinkPolicy.allowed(url))) {
+            releaseImport(content);
             if (pending.get() == 0) stopSelf(startId);
             return START_NOT_STICKY;
         }
@@ -66,14 +107,17 @@ public final class FileDownloadService extends Service {
             else startForeground(ONGOING, preparing);
         } catch (RuntimeException unavailable) {
             Log.i("TongMuClient", "file download foreground start rejected");
-            stopSelf(startId);
+            releaseImport(content);
+            if (pending.get() == 0) stopSelf(startId);
             return START_NOT_STICKY;
         }
         int id = sequence.incrementAndGet();
         pending.incrementAndGet();
+        if (content != null) imported.add(content);
         try {
-            worker.execute(() -> download(intent, id));
+            worker.execute(() -> download(intent, id, content));
         } catch (RuntimeException rejected) {
+            releaseImport(content);
             pending.decrementAndGet();
             notifyResult(id, "下载队列已满，请稍后重试", name, null, null);
             stopIfIdle();
@@ -81,7 +125,7 @@ public final class FileDownloadService extends Service {
         return START_NOT_STICKY;
     }
 
-    private void download(Intent request, int id) {
+    private void download(Intent request, int id, File content) {
         String name = request.getStringExtra("name");
         String mime = request.getStringExtra("mime");
         if (!FileDownload.headerValue(mime) || mime.length() > 256) mime = "application/octet-stream";
@@ -91,19 +135,25 @@ public final class FileDownloadService extends Service {
         try (Destination destination = Build.VERSION.SDK_INT >= 29
                 ? ModernDestination.create(this, name, mime) : LegacyDestination.create(this, name, mime)) {
             String finalMime = mime;
-            long bytes = transfer.copy(request.getStringExtra("url"), request.getStringExtra("cookie"),
-                    request.getStringExtra("userAgent"), destination.output, (written, total) -> {
+            ScopedDownload.Progress progress = (written, total) -> {
                         long now = SystemClock.elapsedRealtime();
                         if (destroyed || now - notified[0] < 500) return;
                         notified[0] = now;
-                        int progress = total > 0 ? (int) Math.min(100, written * 100d / total) : 0;
+                        int percent = total > 0 ? (int) Math.min(100, written * 100d / total) : 0;
                         PendingIntent cancel = PendingIntent.getService(this, 0,
                                 new Intent(this, FileDownloadService.class).setAction("cancel"), PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
                         notifySafely(ONGOING, notification("正在下载", name)
-                                .setProgress(100, progress, total <= 0).setOngoing(true)
+                                .setProgress(100, percent, total <= 0).setOngoing(true)
                                 .addAction(android.R.drawable.ic_menu_close_clear_cancel, "取消", cancel).build());
-                    });
-            if (destroyed) throw new IOException("Service stopped");
+                    };
+            long bytes;
+            if (content != null) {
+                try (FileInputStream input = new FileInputStream(content)) {
+                    bytes = transfer.copyContent(input, request.getLongExtra("contentBytes", -1), destination.output, progress);
+                }
+            } else bytes = transfer.copy(request.getStringExtra("url"), request.getStringExtra("cookie"),
+                    request.getStringExtra("userAgent"), destination.output, progress);
+            if (destroyed || transfer.isCanceled()) throw new IOException("Service stopped or download canceled");
             Uri file = destination.finish(bytes);
             Log.i("TongMuClient", "file download completed");
             notifyResult(id, "下载完成", name, file, finalMime);
@@ -111,6 +161,7 @@ public final class FileDownloadService extends Service {
             Log.i("TongMuClient", "file download ended: " + failure.getClass().getSimpleName());
             if (!destroyed) notifyResult(id, transfer.isCanceled() ? "下载已取消" : "下载未完成，请检查网络或可用空间后重试", name, null, null);
         } finally {
+            releaseImport(content);
             current = null;
             pending.decrementAndGet();
             stopIfIdle();
@@ -150,6 +201,7 @@ public final class FileDownloadService extends Service {
         destroyed = true;
         if (current != null) current.cancel();
         worker.shutdownNow();
+        synchronized (imported) { for (File file : imported) file.delete(); imported.clear(); }
         super.onDestroy();
     }
 

@@ -78,6 +78,23 @@ final class ScopedDownload {
         throw new IOException("Too many download redirects");
     }
 
+    long copyContent(InputStream input, long total, OutputStream output, Progress progress) throws IOException {
+        if (total < 0 || canceled || Thread.currentThread().isInterrupted()) throw new IOException("Content copy canceled or invalid");
+        long bytes = 0;
+        byte[] buffer = new byte[65536];
+        progress.update(0, total);
+        int count;
+        while ((count = input.read(buffer)) != -1) {
+            if (canceled || Thread.currentThread().isInterrupted()) throw new IOException("Content copy canceled");
+            if (count > total - bytes) throw new IOException("Excess content bytes");
+            output.write(buffer, 0, count);
+            bytes += count;
+            progress.update(bytes, total);
+        }
+        if (canceled || Thread.currentThread().isInterrupted() || bytes != total) throw new IOException("Incomplete content copy");
+        return bytes;
+    }
+
     static boolean sameOrigin(String first, String second) {
         try {
             URI a = new URI(first), b = new URI(second);
