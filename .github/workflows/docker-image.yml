@@ -8,6 +8,21 @@ on:
         required: false
         default: 'latest'
         type: string
+      ui_audit_digest:
+        description: '仅 UI 验收：固定镜像 digest，跳过构建和标签发布'
+        required: false
+        default: ''
+        type: string
+      ui_source_sha:
+        description: '仅 UI 验收：镜像的完整源提交'
+        required: false
+        default: ''
+        type: string
+      ui_source_run:
+        description: '仅 UI 验收：成功镜像工作流 run ID'
+        required: false
+        default: ''
+        type: string
   # 推送到 main 时构建镜像并发布到 ghcr.io/<你的用户名>/tongmutvplus
   push:
     branches: [main]
@@ -40,6 +55,7 @@ jobs:
           IMAGE_VERSION="$(tr -d '[:space:]' < VERSION.txt)" node scripts/docker-image-tags.cjs
 
   build:
+    if: ${{ !inputs.ui_audit_digest }}
     needs:
       - checks
       - tag-policy
@@ -115,6 +131,19 @@ jobs:
           path: /tmp/digests/*
           if-no-files-found: error
           retention-days: 1
+
+  home-ui:
+    if: ${{ inputs.ui_audit_digest != '' }}
+    needs: checks
+    permissions:
+      contents: read
+      actions: read
+      packages: read
+    uses: ./.github/workflows/client-experience-ui.yml
+    with:
+      image_digest: ${{ inputs.ui_audit_digest }}
+      source_sha: ${{ inputs.ui_source_sha }}
+      source_run: ${{ inputs.ui_source_run }}
 
   merge:
     runs-on: ubuntu-latest

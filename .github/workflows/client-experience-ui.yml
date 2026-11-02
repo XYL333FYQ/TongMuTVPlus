@@ -1,6 +1,17 @@
 name: Client experience UI audit
 
 on:
+  workflow_call:
+    inputs:
+      image_digest:
+        required: true
+        type: string
+      source_sha:
+        required: true
+        type: string
+      source_run:
+        required: true
+        type: string
   workflow_dispatch:
     inputs:
       image_digest:
