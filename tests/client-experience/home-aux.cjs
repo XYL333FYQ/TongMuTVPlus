@@ -51,6 +51,36 @@ function seed(platform) {
   );
   sessionStorage.setItem('announcementShown', '1');
   window.__refreshErrors = [];
+  window.__touchTrace = [];
+  for (const type of ['touchstart', 'touchmove', 'touchend', 'touchcancel']) {
+    document.addEventListener(
+      type,
+      (event) => {
+        const target = event.target;
+        window.__touchTrace.push({
+          type,
+          trusted: event.isTrusted,
+          touches: event.touches.length,
+          y: event.touches[0]?.clientY,
+          scroll: scrollY,
+          coarse: matchMedia('(pointer: coarse)').matches,
+          phone: matchMedia('(max-width: 767px)').matches,
+          keyboard: document.documentElement.dataset.tmKeyboard,
+          modal: !!document.querySelector(
+            'dialog[open], [role="dialog"][aria-modal="true"]'
+          ),
+          video: [...document.querySelectorAll('video')].map((v) => ({
+            paused: v.paused,
+          })),
+          target: target?.tagName,
+          className: String(target?.className || '').slice(0, 120),
+          indicator: document.querySelector('.tm-ptr')?.getAttribute('style'),
+        });
+        window.__touchTrace = window.__touchTrace.slice(-80);
+      },
+      { passive: true }
+    );
+  }
   addEventListener('globalError', (event) =>
     window.__refreshErrors.push(event.detail?.message)
   );
@@ -494,7 +524,11 @@ async function media(page, origin, paused = true) {
       .writeFile(
         out + '/failure.json',
         JSON.stringify(
-          { error: error.message, path: new URL(activePage.url()).pathname },
+          {
+            error: error.message,
+            path: new URL(activePage.url()).pathname,
+            touches: await activePage.evaluate(() => window.__touchTrace || []),
+          },
           null,
           2
         )
