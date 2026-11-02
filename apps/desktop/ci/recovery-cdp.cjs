@@ -432,10 +432,27 @@ document.querySelector('#fixture-post-blob').onclick=async event=>{
       });
       await click('#fixture-external');
     } else if (action === 'popup') {
+      const activation = await command('Runtime.evaluate', {
+        expression: 'navigator.userActivation.isActive',
+        returnByValue: true,
+      });
+      if (activation.result.value !== false)
+        throw new Error(
+          'Automatic popup probe inherited a real preceding gesture'
+        );
       await command('Runtime.evaluate', {
         expression: 'setTimeout(()=>window.open("/external-auto","_blank"),0)',
       });
       await new Promise((resolve) => setTimeout(resolve, 1000));
+    } else if (action === 'no-user-activation') {
+      const activation = await command('Runtime.evaluate', {
+        expression: 'navigator.userActivation.isActive === false',
+        returnByValue: true,
+      });
+      if (activation.result.value !== true)
+        throw new Error(
+          'Real preceding gesture still has transient activation'
+        );
     } else if (action === 'external-ready') {
       const result = await command('Runtime.evaluate', {
         expression:

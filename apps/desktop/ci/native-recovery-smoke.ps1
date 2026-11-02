@@ -498,11 +498,13 @@ try {
     if (-not (Cdp 'window-fullscreen')) { throw 'F11 exit input did not dispatch' }
     Wait-Check { Cdp 'window-fullscreen-off' } 'F11 returns from fullscreen'
     if (-not (Cdp 'window-stable')) { throw 'Window operations lost the current document' }
+    Wait-Check { Cdp 'no-user-activation' } 'popup probe starts after previous keyboard activation expires'
     if (-not (Cdp 'popup')) { throw 'Automatic popup probe did not execute' }
     if ((Invoke-RestMethod 'http://127.0.0.1:8085/diagnostics').automaticRequests -ne 0) { throw 'Automatic popup escaped to an external browser' }
     if (-not (Cdp 'external')) { throw 'External link click failed' }
     Wait-Check { $null -ne (Invoke-RestMethod 'http://127.0.0.1:8085/diagnostics').externalReport } 'external link reports from its destination'
     $externalStats = Invoke-RestMethod 'http://127.0.0.1:8085/diagnostics'
+    if ($externalStats.automaticRequests -ne 0) { throw 'Delayed automatic popup escaped to an external browser' }
     if ($externalStats.externalRequests -lt 1 -or $externalStats.externalReport.webview -or $externalStats.externalReport.desktopBridge) {
         throw 'External content was not opened in a separate system browser'
     }
@@ -560,6 +562,7 @@ try {
     if ((Get-FileHash -LiteralPath $pdfFile -Algorithm SHA256).Hash.ToLowerInvariant() -ne '97444fdbfea671938c8cf7415766427714637cc2ad49401350b3c1e09c332d03') { throw 'Saved PDF bytes changed' }
     if (Test-Path -LiteralPath $defaultPdf) { throw 'PDF also saved to an unselected default path' }
     Close-CompletedDownload -FilePath $pdfFile -ExerciseFileActions -ExpectedText 'TongMu PDF acceptance' -EvidencePrefix '00-system-pdf'
+    if ((Invoke-RestMethod 'http://127.0.0.1:8085/diagnostics').automaticRequests -ne 0) { throw 'Late automatic popup escaped while testing the real PDF reader' }
     if (-not (Cdp 'download-physical-ready')) { throw 'System PDF actions replaced the original document' }
     Write-Host 'PASS: actual authenticated PDF bytes, native save, real default reader content and exact Explorer directory'
     Wait-Check { Cdp 'download-activation-idle' } 'transient activation expired before explicit permission approval' 10
