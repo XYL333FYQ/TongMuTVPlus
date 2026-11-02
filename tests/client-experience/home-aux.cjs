@@ -201,7 +201,7 @@ async function settled(page) {
     () => document.querySelector('.tm-ptr')?.style.opacity === '0'
   );
 }
-async function media(page, origin) {
+async function media(page, origin, paused = true) {
   const value = await page.evaluate(() => ({
     same: window.__auditVideo === document.querySelector('video'),
     connected: window.__auditVideo?.isConnected,
@@ -215,7 +215,7 @@ async function media(page, origin) {
   }));
   assert.equal(value.same, true);
   assert.equal(value.connected, true);
-  assert.equal(value.paused, false);
+  assert.equal(value.paused, paused);
   assert.equal(value.decoded, true);
   assert.equal(value.origin, origin.origin);
   assert.equal(value.src, origin.src);
@@ -304,6 +304,22 @@ async function media(page, origin) {
       'app'
     );
     const before = { banner: state.bannerRequests, rooms: state.roomRequests };
+    await media(page, origin, false);
+    await pull(context, page);
+    await page.waitForTimeout(200);
+    assert.equal(
+      state.bannerRequests,
+      before.banner,
+      'Playing media retains its existing no-pull-refresh guard'
+    );
+    assert.equal(
+      state.roomRequests,
+      before.rooms,
+      'Playing media must not refresh private summaries'
+    );
+    await media(page, origin, false);
+    await page.evaluate(() => window.__auditVideo.pause());
+    await media(page, origin, true);
     state.mode = 'fresh';
     state.label = '更新' + theme;
     await pull(context, page);
@@ -381,6 +397,21 @@ async function media(page, origin) {
     );
     await media(page, origin);
     assert.deepEqual(await page.evaluate(() => window.__refreshErrors), []);
+    await page.evaluate(() => window.__auditVideo.play());
+    await media(page, origin, false);
+    const playStart = await page.evaluate(
+      () => window.__auditVideo.currentTime
+    );
+    await page.waitForTimeout(400);
+    const playEnd = await page.evaluate(() => ({
+      time: window.__auditVideo.currentTime,
+      duration: window.__auditVideo.duration,
+    }));
+    assert(
+      (playEnd.time - playStart + playEnd.duration) % playEnd.duration > 0.1,
+      'Same media must actually advance after resume'
+    );
+    await media(page, origin, false);
     results.push({
       theme,
       freshAuxiliaryRequests: true,
@@ -388,7 +419,9 @@ async function media(page, origin) {
       singleFeedback: true,
       bothTransportsAborted: true,
       lateCacheWriteRejected: true,
-      samePlayingMedia: true,
+      playingGuardRetained: true,
+      pausedRefreshRetainedMedia: true,
+      resumedSameMedia: true,
     });
   }
   await context.close();

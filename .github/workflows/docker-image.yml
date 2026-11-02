@@ -38,6 +38,7 @@ permissions:
 jobs:
   # 先跑完整检查；任何一项失败，镜像都不会打包发布
   checks:
+    if: ${{ !inputs.ui_audit_digest }}
     uses: ./.github/workflows/checks.yml
 
   tag-policy:
@@ -134,7 +135,6 @@ jobs:
 
   home-ui:
     if: ${{ inputs.ui_audit_digest != '' }}
-    needs: checks
     permissions:
       contents: read
       actions: read
