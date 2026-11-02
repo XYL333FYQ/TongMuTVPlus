@@ -24,11 +24,11 @@ on:
         default: ''
         type: string
       ui_audit_kind:
-        description: '仅 UI 验收：home、books 或 search-tools'
+        description: '仅 UI 验收：home、books、search-tools 或 room-forms'
         required: false
         default: home
         type: choice
-        options: [home, books, search-tools]
+        options: [home, books, search-tools, room-forms]
   # 推送到 main 时构建镜像并发布到 ghcr.io/<你的用户名>/tongmutvplus
   push:
     branches: [main]
