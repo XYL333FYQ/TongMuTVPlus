@@ -10,10 +10,11 @@ import {
   Loader2,
   RefreshCw,
 } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { PansouLink, PansouSearchResult } from '@/lib/pansou.client';
+import { usePageRefresh } from '@/hooks/usePageRefresh';
 
 import Toast, { ToastProps } from '@/components/feedback/Toast';
 import { useExternalAction } from '@/components/ExternalLink';
@@ -166,6 +167,17 @@ export default function PansouSearch({
   cloudTypes = [],
 }: PansouSearchProps) {
   const router = useRouter();
+  const pathname = usePathname();
+  const searchRequest = useRef<AbortController | null>(null);
+  const submittedKeyword = useRef('');
+  const searchIdentity = JSON.stringify([triggerSearch, pathname]);
+  useEffect(
+    () => () => {
+      searchRequest.current?.abort();
+      searchRequest.current = null;
+    },
+    [searchIdentity]
+  );
   const externalAction = useExternalAction();
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<PansouSearchResult | null>(null);
@@ -278,44 +290,75 @@ export default function PansouSearch({
   }, [checkStatesByType]);
 
   // 提取搜索函数，以便在重试时调用
-  const searchPansou = useCallback(async () => {
-    const currentKeyword = keyword.trim();
-    if (!currentKeyword) {
-      return;
-    }
-
-    setLoading(true);
-    setError(null);
-    setResults(null);
-    setSelectedType('all');
-
-    try {
-      const response = await fetch('/api/pansou/search', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          keyword: currentKeyword,
-          cloud_types: cloudTypes,
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || '搜索失败');
+  const searchPansou = useCallback(
+    async (refreshSignal?: AbortSignal) => {
+      const currentKeyword = refreshSignal
+        ? submittedKeyword.current
+        : keyword.trim();
+      if (!currentKeyword) {
+        return;
       }
 
-      const data: PansouSearchResult = await response.json();
-      setResults(data);
-    } catch (err: any) {
-      const errorMsg = err.message || '搜索失败，请检查配置';
-      setError(errorMsg);
-      onError?.(errorMsg);
-    } finally {
-      setLoading(false);
-    }
-  }, [keyword, onError, cloudTypes]);
+      if (refreshSignal?.aborted) return;
+      if (!refreshSignal) submittedKeyword.current = currentKeyword;
+      searchRequest.current?.abort();
+      const controller = new AbortController();
+      searchRequest.current = controller;
+      const onAbort = () => controller.abort();
+      refreshSignal?.addEventListener('abort', onAbort, { once: true });
+      const current = () =>
+        searchRequest.current === controller && !controller.signal.aborted;
+      setLoading(true);
+      setError(null);
+      if (!refreshSignal) {
+        setResults(null);
+        setSelectedType('all');
+      }
+
+      try {
+        const response = await fetch('/api/pansou/search', {
+          method: 'POST',
+          signal: controller.signal,
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            keyword: currentKeyword,
+            cloud_types: cloudTypes,
+          }),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || '搜索失败');
+        }
+
+        const data: PansouSearchResult = await response.json();
+        if (!current()) return;
+        setResults(data);
+      } catch (err: any) {
+        if (!current()) return;
+        if (refreshSignal) throw err;
+        const errorMsg = err.message || '搜索失败，请检查配置';
+        setError(errorMsg);
+        onError?.(errorMsg);
+      } finally {
+        refreshSignal?.removeEventListener('abort', onAbort);
+        if (searchRequest.current === controller) {
+          searchRequest.current = null;
+          setLoading(false);
+        }
+      }
+    },
+    [keyword, onError, cloudTypes]
+  );
+
+  usePageRefresh(
+    '/search',
+    (signal) => searchPansou(signal),
+    pathname === '/search' && triggerSearch !== undefined,
+    searchIdentity
+  );
 
   useEffect(() => {
     // triggerSearch 变化时触发搜索（无论是 true 还是 false）
@@ -707,7 +750,7 @@ export default function PansouSearch({
   };
 
   const renderBody = () => {
-    if (loading) {
+    if (loading && !results) {
       return (
         <div className='flex items-center justify-center py-12'>
           <div className='text-center'>
@@ -725,7 +768,7 @@ export default function PansouSearch({
             <AlertCircle className='mx-auto h-12 w-12 text-danger' />
             <p className='mt-4 text-sm text-fg'>{error}</p>
             <button
-              onClick={searchPansou}
+              onClick={() => void searchPansou()}
               className='mt-4 inline-flex items-center gap-2 px-4 py-2 bg-fg hover:opacity-90 text-inverse text-sm font-medium rounded-lg transition-colors min-h-[44px] tm-press'
             >
               <RefreshCw className='h-4 w-4' />

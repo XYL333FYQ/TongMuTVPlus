@@ -10,6 +10,8 @@ import {
   Loader2,
 } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { usePathname } from 'next/navigation';
+import { usePageRefresh } from '@/hooks/usePageRefresh';
 
 import CapsuleSwitch from '@/components/catalog/CapsuleSwitch';
 import Toast, { ToastProps } from '@/components/feedback/Toast';
@@ -170,6 +172,23 @@ export default function AcgSearch({
   const loadMoreRef = useRef<HTMLDivElement>(null);
   const isLoadingMoreRef = useRef(false);
   const didInitSourceRef = useRef(false);
+  const pathname = usePathname();
+  const searchRequest = useRef<AbortController | null>(null);
+  const submittedKeyword = useRef('');
+  const searchIdentity = JSON.stringify([
+    triggerSearch,
+    source,
+    controlsOnly,
+    pathname,
+  ]);
+  useEffect(
+    () => () => {
+      searchRequest.current?.abort();
+      searchRequest.current = null;
+      isLoadingMoreRef.current = false;
+    },
+    [searchIdentity]
+  );
 
   useEffect(() => {
     const handleSourceChange = (event: Event) => {
@@ -197,12 +216,30 @@ export default function AcgSearch({
   };
 
   // 执行搜索
-  const performSearch = async (page: number, isLoadMore = false) => {
-    if (isLoadingMoreRef.current) return;
+  const performSearch = async (
+    page: number,
+    isLoadMore = false,
+    refreshSignal?: AbortSignal
+  ) => {
+    if (isLoadingMoreRef.current && !refreshSignal) return;
     if (source === 'mikan' && page > 1) return;
     if (source === 'dmhy' && page > 1) return;
     if (source === 'nyaa' && page > 1) return;
 
+    if (refreshSignal?.aborted) return;
+    const currentKeyword = refreshSignal
+      ? submittedKeyword.current
+      : keyword.trim();
+    if (!currentKeyword) return;
+    if (!refreshSignal && !isLoadMore)
+      submittedKeyword.current = currentKeyword;
+    searchRequest.current?.abort();
+    const controller = new AbortController();
+    searchRequest.current = controller;
+    const onAbort = () => controller.abort();
+    refreshSignal?.addEventListener('abort', onAbort, { once: true });
+    const current = () =>
+      searchRequest.current === controller && !controller.signal.aborted;
     isLoadingMoreRef.current = true;
     setLoading(true);
     setError(null);
@@ -218,11 +255,12 @@ export default function AcgSearch({
           : '/api/acg/acgrip';
       const response = await fetch(apiUrl, {
         method: 'POST',
+        signal: controller.signal,
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          keyword: keyword.trim(),
+          keyword: currentKeyword,
           page,
         }),
       });
@@ -233,6 +271,7 @@ export default function AcgSearch({
       }
 
       const data: AcgSearchResult = await response.json();
+      if (!current()) return;
       // 规范化字段，避免 guid 为对象时整表共用同一个 key
       const normalizedItems: AcgSearchItem[] = (data.items || []).map(
         (item, index) => {
@@ -315,14 +354,27 @@ export default function AcgSearch({
 
       setCurrentPage(page);
     } catch (err: any) {
+      if (!current()) return;
+      if (refreshSignal) throw err;
       const errorMsg = err.message || '搜索失败，请稍后重试';
       setError(errorMsg);
       onError?.(errorMsg);
     } finally {
-      setLoading(false);
-      isLoadingMoreRef.current = false;
+      refreshSignal?.removeEventListener('abort', onAbort);
+      if (searchRequest.current === controller) {
+        searchRequest.current = null;
+        setLoading(false);
+        isLoadingMoreRef.current = false;
+      }
     }
   };
+
+  usePageRefresh(
+    '/search',
+    (signal) => performSearch(1, false, signal),
+    pathname === '/search' && !controlsOnly && triggerSearch !== undefined,
+    searchIdentity
+  );
 
   useEffect(() => {
     // triggerSearch 变化时触发搜索（无论是 true 还是 false）

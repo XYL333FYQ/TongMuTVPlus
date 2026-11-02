@@ -158,10 +158,23 @@ function Verify-SystemFileActions([string]$FilePath, [string]$ExpectedText = 'To
     $reader = Native-Button '用系统阅读器打开'
     if ($null -eq $reader -or -not $reader.Current.IsEnabled) { throw 'Completed file has no system-reader action' }
     Click-Native '用系统阅读器打开'
+    Capture ($EvidencePrefix + '-launch') -KeepForeground
     $script:fixtureReader = $null
     Wait-Check {
         $windows = [System.Windows.Automation.AutomationElement]::RootElement.FindAll(
             [System.Windows.Automation.TreeScope]::Children, [System.Windows.Automation.Condition]::TrueCondition)
+        # Disposable runner only: retain the actual default-reader environment,
+        # without installing a reader or replacing the OS association to pass.
+        @($windows | ForEach-Object {
+            [pscustomobject]@{ title = $_.Current.Name; pid = $_.Current.ProcessId;
+                handle = $_.Current.NativeWindowHandle; offscreen = $_.Current.IsOffscreen;
+                enabled = $_.Current.IsEnabled; focusable = $_.Current.IsKeyboardFocusable }
+        }) | ConvertTo-Json -Depth 3 | Set-Content (Join-Path $out.FullName ($EvidencePrefix + '-windows.json'))
+        Get-Process -Name msedge,chrome,AcroRd32,SumatraPDF -ErrorAction SilentlyContinue |
+            Select-Object ProcessName,Id,MainWindowHandle,MainWindowTitle |
+            ConvertTo-Json | Set-Content (Join-Path $out.FullName ($EvidencePrefix + '-processes.json'))
+        $association = Get-ItemProperty 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\FileExts\.pdf\UserChoice' -ErrorAction SilentlyContinue
+        if ($association) { $association | Select-Object ProgId | ConvertTo-Json | Set-Content (Join-Path $out.FullName ($EvidencePrefix + '-association.json')) }
         foreach ($window in $windows) {
             if ($window.Current.ProcessId -ne $client.Id -and $window.Current.IsEnabled -and -not $window.Current.IsOffscreen -and
                 $window.Current.Name.IndexOf($stem, [StringComparison]::OrdinalIgnoreCase) -ge 0) {
