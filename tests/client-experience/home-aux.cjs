@@ -202,13 +202,26 @@ async function dismissNotices(page) {
     await page.waitForTimeout(200);
   }
 }
+const touchSessions = new WeakMap();
 async function pull(context, page) {
   await page.evaluate(() => {
     document.activeElement?.blur();
     scrollTo({ top: 0, behavior: 'instant' });
   });
   await page.waitForTimeout(250);
-  const cdp = await context.newCDPSession(page);
+  // Detaching a CDP session resets Chromium's touch emulation and changes
+  // pointer:coarse to false, despite the Playwright context's hasTouch option.
+  // Keep one session for the page; context.close() owns its disposal.
+  let cdp = touchSessions.get(page);
+  if (!cdp) {
+    cdp = await context.newCDPSession(page);
+    touchSessions.set(page, cdp);
+  }
+  assert.equal(
+    await page.evaluate(() => matchMedia('(pointer: coarse)').matches),
+    true,
+    'Touch acceptance requires the emulated device to remain touch-capable'
+  );
   await cdp.send('Input.dispatchTouchEvent', {
     type: 'touchStart',
     touchPoints: [{ x: 12, y: 185 }],
@@ -224,7 +237,6 @@ async function pull(context, page) {
     type: 'touchEnd',
     touchPoints: [],
   });
-  await cdp.detach();
 }
 async function settled(page) {
   await page.waitForFunction(
