@@ -1,0 +1,92 @@
+name: Client experience UI audit
+
+on:
+  workflow_dispatch:
+    inputs:
+      image_digest:
+        description: 'Verified tongmutvplus image sha256 digest; audit only'
+        required: true
+        type: string
+      source_sha:
+        description: 'Exact source SHA of the image'
+        required: true
+        type: string
+      source_run:
+        description: 'Successful docker-image.yml workflow run ID'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  actions: read
+  packages: read
+
+concurrency:
+  group: client-ui-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  home-aux:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      GH_TOKEN: ${{ github.token }}
+      UI_IMAGE_DIGEST: ${{ inputs.image_digest }}
+      UI_SOURCE_SHA: ${{ inputs.source_sha }}
+      UI_SOURCE_RUN: ${{ inputs.source_run }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Verify exact image source and successful gates
+        run: |
+          mkdir -p "$RUNNER_TEMP/client-home/artifacts"
+          export UI_ARTIFACT_DIR="$RUNNER_TEMP/client-home/artifacts"
+          echo "UI_ARTIFACT_DIR=$UI_ARTIFACT_DIR" >> "$GITHUB_ENV"
+          node --test tests/client-experience/verify-image.test.cjs
+          node tests/client-experience/verify-image.cjs
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+      - name: Prepare disposable data and matching browser tools
+        working-directory: ${{ runner.temp }}
+        run: |
+          npm install --prefix "$RUNNER_TEMP/client-home-runtime" --no-package-lock --ignore-scripts --no-audit --no-fund playwright@1.55.0
+          node <<'NODE'
+          const fs = require('node:fs'), crypto = require('node:crypto');
+          const password = crypto.randomBytes(24).toString('hex'), secret = crypto.randomBytes(32).toString('hex');
+          console.log('::add-mask::' + password); console.log('::add-mask::' + secret);
+          fs.writeFileSync(process.env.RUNNER_TEMP + '/client-home/audit.env', ['USERNAME=client-ui-audit','PASSWORD=' + password,'AUTH_SECRET=' + secret,'NEXT_PUBLIC_STORAGE_TYPE=d1','SQLITE_DB_PATH=/app/.data/moontv.db','WATCH_ROOM_ENABLED=true','WATCH_ROOM_SERVER_TYPE=internal'].join('\n'), { mode: 0o600 });
+          NODE
+          mkdir -p "$RUNNER_TEMP/client-home/data" "$RUNNER_TEMP/client-home/fixtures"
+          curl --fail --location --max-time 30 https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.webm -o "$RUNNER_TEMP/client-home/fixtures/flower.webm"
+          echo "c6f8a348953395598a9a73b9bab1676436410797bce9f398f4be1531d6e76dda  $RUNNER_TEMP/client-home/fixtures/flower.webm" | sha256sum -c -
+      - name: Start pinned isolated image
+        run: |
+          image="ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/tongmutvplus@$UI_IMAGE_DIGEST"
+          docker pull "$image"
+          test "$(docker image inspect "$image" --format '{{index .Config.Labels "org.opencontainers.image.revision"}}')" = "$UI_SOURCE_SHA"
+          docker run -d --name "tm-home-ui-$GITHUB_RUN_ID" --label "tm-ui-run=$GITHUB_RUN_ID" --memory=768m --memory-swap=1g -p 127.0.0.1:3017:3000 --env-file "$RUNNER_TEMP/client-home/audit.env" -v "$RUNNER_TEMP/client-home/data:/app/.data" -v "$RUNNER_TEMP/client-home/fixtures/flower.webm:/app/public/__audit-flower.webm:ro" "$image"
+          for attempt in $(seq 1 50); do
+            curl --fail --silent http://127.0.0.1:3017/health > "$UI_ARTIFACT_DIR/initial-health.json" && break
+            sleep 1
+          done
+          node -e 'const fs=require("node:fs"),assert=require("node:assert/strict");assert.equal(JSON.parse(fs.readFileSync(process.env.UI_ARTIFACT_DIR+"/initial-health.json")).buildSha,process.env.UI_SOURCE_SHA)'
+      - name: Exercise actual touch, media, cancellation and six viewport themes
+        run: |
+          cp tests/client-experience/home-aux.cjs "$RUNNER_TEMP/client-home/home-aux.cjs"
+          docker run --rm --name "tm-home-browser-$GITHUB_RUN_ID" --label "tm-ui-run=$GITHUB_RUN_ID" --network host --memory=1536m --memory-swap=2g -v "$RUNNER_TEMP/client-home:/audit" -v "$RUNNER_TEMP/client-home-runtime:/runtime:ro" -e NODE_PATH=/runtime/node_modules -e GITHUB_ACTIONS=true -e "UI_SOURCE_SHA=$UI_SOURCE_SHA" mcr.microsoft.com/playwright:v1.55.0-noble node /audit/home-aux.cjs
+      - name: Preserve screenshots and evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: client-home-ui
+          path: ${{ runner.temp }}/client-home/artifacts
+          if-no-files-found: warn
+      - name: Stop only this run's disposable containers
+        if: always()
+        run: |
+          for container in $(docker ps -aq --filter "label=tm-ui-run=$GITHUB_RUN_ID"); do docker rm -f "$container"; done
