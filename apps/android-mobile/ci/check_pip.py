@@ -19,4 +19,6 @@ elif sys.argv[2] == 'resumed':
                for row in rows), 'Video time did not advance after system resume'
 elif sys.argv[2] == 'returned':
     assert rows[-1]['fullscreen'] and rows[-1]['calls'] == 2 and not rows[-1]['paused'], 'Returning lost fullscreen or playback'
+elif sys.argv[2] == 'exited':
+    assert not rows[-1]['fullscreen'] and rows[-1]['calls'] == 2 and not rows[-1]['paused'], 'Native back did not exit fullscreen with the original playing video'
 print('PASS: same decoded video/document PiP ' + sys.argv[2])

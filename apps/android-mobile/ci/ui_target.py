@@ -18,6 +18,11 @@ matches = [
         else value in (node.get("text", ""), node.get("content-desc", ""))
     )
 ]
+if kind == 'fullscreen-hint':
+    hint = any(node.get('package') == 'android' and
+               node.get('resource-id') == 'android:id/immersive_cling_title' for node in nodes)
+    matches = [node for node in nodes if node.get('package') == 'android' and
+               node.get('resource-id') == 'android:id/ok'] if hint else []
 if kind == "absent-id":
     sys.exit(1 if matches else 0)
 for node in matches:

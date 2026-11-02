@@ -420,7 +420,19 @@ PY
       sleep 1
       python3 "$(dirname "$0")/check_pip.py" "$OUT/server.log" returned || return 1
       adb exec-out screencap -p >"$OUT/17-pip-returned.png"
-      adb shell input keyevent 4
+      # Software navigation exposes Android's own first-fullscreen education.
+      # Its resource-bound confirmation is a system layer above our Activity.
+      if point=$(ui_target fullscreen-hint system); then
+        read -r hint_x hint_y <<<"$point"
+        adb exec-out screencap -p >"$OUT/17-fullscreen-system-hint.png"
+        adb shell input tap "$hint_x" "$hint_y" || return 1
+        sleep 1
+      fi
+      native_back fullscreen-exit || return 1
+      wait_target text 'Return to recovery fixture' >/dev/null || return 1
+      sleep 1
+      python3 "$(dirname "$0")/check_pip.py" "$OUT/server.log" exited || return 1
+      adb exec-out screencap -p >"$OUT/17-fullscreen-exited.png"
       tap_target text 'Return to recovery fixture' || return 1
       echo 'PASS: actual Android PiP, same decoded video/document, system pause/resume and fullscreen return'
       tap_target text 'Native external test' || return 1
