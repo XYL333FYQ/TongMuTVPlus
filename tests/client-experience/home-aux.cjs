@@ -493,13 +493,19 @@ async function media(page, origin, paused = true) {
       await page.evaluate(() => document.documentElement.dataset.tmPlatform),
       platform
     );
-    assert.equal(await page.locator('.tm-ptr').count(), 0);
+    const indicatorHidden = () =>
+      page.evaluate(() => {
+        const indicator = document.querySelector('.tm-ptr');
+        return !indicator || getComputedStyle(indicator).opacity === '0';
+      });
+    assert.equal(await indicatorHidden(), true);
     const before = { banner: state.bannerRequests, rooms: state.roomRequests };
     const origin = await page.evaluate(() => performance.timeOrigin);
     state.mode = 'fresh';
     state.label = '不应手动更新';
     await pull(context, page);
     await page.waitForTimeout(500);
+    assert.equal(await indicatorHidden(), true);
     assert.equal(state.bannerRequests, before.banner);
     assert.equal(state.roomRequests, before.rooms);
     assert.equal(await page.evaluate(() => performance.timeOrigin), origin);
