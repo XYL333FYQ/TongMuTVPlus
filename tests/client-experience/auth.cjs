@@ -6,6 +6,24 @@ const base = 'http://127.0.0.1:3017',
   out = '/audit/artifacts';
 const target = base + '/__audit_telegram';
 let activePage;
+let currentCase;
+const sessions = new WeakMap();
+async function activationExpired(context, page) {
+  let session = sessions.get(page);
+  if (!session) {
+    session = await context.newCDPSession(page);
+    sessions.set(page, session);
+  }
+  // Playwright's function evaluation supplies userGesture:true. Observation
+  // must not itself renew the activation whose expiry we are checking.
+  const { result, exceptionDetails } = await session.send('Runtime.evaluate', {
+    expression: 'navigator.userActivation.isActive === false',
+    userGesture: false,
+    returnByValue: true,
+  });
+  assert.equal(exceptionDetails, undefined);
+  return result.value === true;
+}
 async function dismiss(page) {
   for (let i = 0; i < 4; i++) {
     const notice = page
@@ -36,8 +54,10 @@ async function until(check, label) {
       'old-app',
       'old-desktop',
       'web',
+      'web-no-abort',
     ]) {
       const old = platform.startsWith('old-');
+      const web = platform === 'web' || platform === 'web-no-abort';
       const context = await browser.newContext({
         viewport: { width: 1440, height: 900 },
         serviceWorkers: 'block',
@@ -142,6 +162,7 @@ async function until(check, label) {
           ? ['dark', 'light']
           : ['light'];
       for (const theme of themes) {
+        currentCase = { platform, theme };
         state.mode = 'ok';
         state.status = 'pending';
         await page.goto(base + '/login', { waitUntil: 'domcontentloaded' });
@@ -161,15 +182,18 @@ async function until(check, label) {
             document.documentElement.classList.contains('dark') === dark,
           theme === 'dark'
         );
+        if (platform === 'web-no-abort')
+          await page.evaluate(() => {
+            window.AbortController = undefined;
+          });
         const identity = await page.evaluate(() => performance.timeOrigin),
           creates = state.creates;
         let popup;
-        const automatic =
-          platform === 'web' ? page.waitForEvent('popup') : null;
+        const automatic = web ? page.waitForEvent('popup') : null;
         await page
           .getByRole('button', { name: '使用 Telegram 登录', exact: true })
           .click();
-        if (platform === 'web') {
+        if (web) {
           popup = await automatic;
         } else {
           const action = page.getByRole('button', {
@@ -181,11 +205,9 @@ async function until(check, label) {
             await page.evaluate(() => window.__authOpenProof),
             []
           );
-          await page.waitForTimeout(5500);
-          assert.equal(
-            await page.evaluate(() => navigator.userActivation.isActive),
-            false,
-            'Old challenge-creation click must expire'
+          await until(
+            () => activationExpired(context, page),
+            'old challenge-creation click expires without observation renewing it'
           );
           if (old) {
             await action.click();
@@ -306,7 +328,8 @@ async function until(check, label) {
           platform,
           theme,
           originalDocument: true,
-          explicitAction: platform !== 'web',
+          explicitAction: !web,
+          abortApiSimulatedUnavailable: platform === 'web-no-abort',
           realClipboard: old,
           realPopup: !old,
           expiredActionRemoved: true,
@@ -316,6 +339,7 @@ async function until(check, label) {
       }
       if (platform === 'app')
         for (const mode of ['hold-create', 'hold-status']) {
+          currentCase = { platform, cancellation: mode };
           state.mode = mode;
           state.status = 'pending';
           await page.goto(base + '/login', { waitUntil: 'domcontentloaded' });
@@ -375,7 +399,7 @@ async function until(check, label) {
       )
     );
     console.log(
-      'PASS: actual login page gestures, clipboard, popup, challenge lifetime, failure retry, HTTP cancellation and fifteen screenshots'
+      'PASS: actual login page gestures, clipboard, popup, challenge lifetime, failure retry, HTTP cancellation and sixteen screenshots'
     );
   } catch (error) {
     if (activePage && !activePage.isClosed())
@@ -383,6 +407,10 @@ async function until(check, label) {
         .screenshot({ path: out + '/failure.png' })
         .catch(() => {});
     fs.writeFileSync(out + '/failure.txt', String(error));
+    fs.writeFileSync(
+      out + '/failure-case.json',
+      JSON.stringify(currentCase || {}, null, 2)
+    );
     throw error;
   } finally {
     await browser.close();

@@ -29,6 +29,7 @@ jest.mock('@/components/auth/AuthVersion', () => ({
 jest.mock('@/components/ThemeToggle', () => ({ ThemeToggle: () => null }));
 
 const originalFetch = global.fetch;
+const originalAbortController = global.AbortController;
 const originalExec = Object.getOwnPropertyDescriptor(document, 'execCommand');
 const link = 'https://t.me/fixture_bot?start=fixture_login';
 let fetchMock: jest.Mock;
@@ -69,6 +70,11 @@ afterEach(() => {
   jest.useRealTimers();
   openMock.mockRestore();
   global.fetch = originalFetch;
+  Object.defineProperty(global, 'AbortController', {
+    configurable: true,
+    writable: true,
+    value: originalAbortController,
+  });
   delete window.TMShell;
   delete window.TMDesktop;
   delete document.documentElement.dataset.tmPlatform;
@@ -272,4 +278,58 @@ test('slow status requests do not overlap and leaving aborts the active request'
     jest.advanceTimersByTime(6000);
   });
   expect(fetchMock).toHaveBeenCalledTimes(2);
+});
+
+test.each(['app', 'web'])(
+  '%s still prepares a login when AbortController is absent',
+  async (platform) => {
+    document.documentElement.dataset.tmPlatform = platform;
+    Object.defineProperty(global, 'AbortController', {
+      configurable: true,
+      writable: true,
+      value: undefined,
+    });
+    await start();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock.mock.calls[0][1].signal).toBeUndefined();
+    if (platform === 'app')
+      expect(
+        screen.getByRole('button', { name: '打开 Telegram' })
+      ).toBeEnabled();
+    else
+      expect(openMock).toHaveBeenCalledWith(
+        link,
+        '_blank',
+        'noopener,noreferrer'
+      );
+  }
+);
+
+test('without network-abort support, a late create reply still cannot open a page or start polling after leave', async () => {
+  document.documentElement.dataset.tmPlatform = 'web';
+  Object.defineProperty(global, 'AbortController', {
+    configurable: true,
+    writable: true,
+    value: undefined,
+  });
+  let complete!: (value: unknown) => void;
+  fetchMock.mockReturnValueOnce(
+    new Promise((resolve) => {
+      complete = resolve;
+    })
+  );
+  const view = render(<LoginPage />);
+  fireEvent.click(screen.getByRole('button', { name: '使用 Telegram 登录' }));
+  view.unmount();
+  await act(async () => {
+    complete({
+      ok: true,
+      json: async () => ({ token: 'fixture_token', deepLink: link }),
+    });
+  });
+  await act(async () => {
+    jest.advanceTimersByTime(6000);
+  });
+  expect(fetchMock).toHaveBeenCalledTimes(1);
+  expect(openMock).not.toHaveBeenCalled();
 });

@@ -2,6 +2,12 @@
 
 ## 2026-11-02 客户端 Telegram 登录接续
 
+- 含无 AbortController 降级的新候选最终本机门禁：typecheck 重跑 0、lint0、完整 Jest187 套 1239 项 0、房间 27 项 0；format:check 退出 1，仅原未知未跟踪 NUL STATUS 文档，所有本批源码/脚本/设计文档逐文件格式通过。没有源码类型/断言失败，无需恢复先前已验批次。新源码与 CI 观察修正须完整新镜像及 auth 场景，不能复用 5bc 作为来源证明；仍未部署发布。
+
+- 5bc9183 固定镜像 41444495197 完整成功（checks/双架构/合并），digest28af768f301ca71350ab2f3a126a3a1caaedf6a7d5a8e54a0d69726ef8c41684。auth41446319188 失败在首场“激活过期”观察，未出 15 图；Playwright1.55 官方 crExecutionContext 源码的函数求值明确 userGesture:true，原 page.evaluate 读取激活会自行续激活。仅 CI 改 CDP Runtime.evaluate userGesture:false 并有界等待真实过期，继续用真实点击/窗口/剪贴板，不因此更改产品或宣称交互已验。
+- 后续兼容性红测 3 项确认新代码不能无条件依赖 AbortController；MDN 兼容数据为 Chrome66 起，而框架默认含 Chrome64。候选加可取消请求对象：有 API 传真实 signal 并中止，无 API 不传伪 signal、保留身份/取消标记及迟到隔离，不装 polyfill。最终定向/外链 22 项通过；type 首轮无 TS 诊断原生 3221225477，确认无预览后重跑 0；完整本机门禁运行中，仍待新来源镜像及真实界面，旧 5bc 不得冒充新 helper 验收。
+- auth 脚本另增网页加载后模拟缺少 AbortController 的降级场景，不能当真实旧引擎全站兼容；拟 16 图，保留 confirmationAndOidcNotTested/nativeOsAppTested=false。旧系统研究仅读取 AOSP 官方元数据：android-9.0.0_r1 固定提交 f1a9488d2ad48060c7c736b7ff48b189da3abf60，x86_64 APK blob bc952410f8e00d15e83bef22483c3c67725e209c；Android.mk 由系统开发证书签名，尚未下载/安装 APK 或验证版本/签名，不当零售更新包，不放宽旧下载门禁。既有诊断已含 Chrome 版本，无需重复加字段。
+
 - 最终单按钮候选 typecheck=0、lint=0、19 项定向/外链回归通过、房间 27 通过；本机完整 Jest 再次原生 3221225477 退出，只有 PASS 及既有 Console 离线测试记录，无 FAIL 或断言失败，不能称最终完整通过。全格式也原生退出，除未知 NUL 文件还警告未改的 searchhistory/route.ts；不擅改禁区/配置，以干净 Linux 完整门禁验证。所有本批源码/脚本/工作流逐文件格式及 Node 语法通过。未部署发布。
 
 - login/page.tsx 候选沿用原单按钮位置，客户端明确点击打开/旧壳复制，网页原自动打开保留；请求失败恢复重试、缺字段拒绝空窗口，拒绝/过期/超时清动作及其手动复制层。新增创建和查询的 AbortController、离开中止/迟到隔离及单查询保护，未改认证接口/凭据/回跳/OIDC 或房间播放逻辑。DESIGN 新增保守交互说明，已有样式/色彩/动效保留。

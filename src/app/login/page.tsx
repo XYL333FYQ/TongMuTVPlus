@@ -53,6 +53,23 @@ function getOIDCProviderIcon(buttonText: string) {
   );
 }
 
+/** Cancellation identity still works where fetch cannot be physically aborted. */
+function createTelegramRequest() {
+  const controller =
+    typeof AbortController === 'function' ? new AbortController() : null;
+  let aborted = false;
+  return {
+    signal: controller?.signal,
+    get aborted() {
+      return aborted;
+    },
+    abort() {
+      aborted = true;
+      controller?.abort();
+    },
+  };
+}
+
 /** Keep copy feedback owned by this challenge, including expiry and denial. */
 function TelegramLoginAction({ href }: { href: string }) {
   const externalAction = useExternalAction();
@@ -104,8 +121,12 @@ function LoginPageClient() {
   const { siteName } = useSite();
   // Telegram 确认轮询；离开页面时必须停掉，否则迟到的“已确认”会把人从别的页面拉走
   const telegramTimerRef = useRef<number | null>(null);
-  const telegramCreateRef = useRef<AbortController | null>(null);
-  const telegramStatusRef = useRef<AbortController | null>(null);
+  const telegramCreateRef = useRef<ReturnType<
+    typeof createTelegramRequest
+  > | null>(null);
+  const telegramStatusRef = useRef<ReturnType<
+    typeof createTelegramRequest
+  > | null>(null);
   const stopTelegramPolling = () => {
     telegramStatusRef.current?.abort();
     telegramStatusRef.current = null;
@@ -306,7 +327,7 @@ function LoginPageClient() {
 
   const handleTelegramLogin = async () => {
     telegramCreateRef.current?.abort();
-    const request = new AbortController();
+    const request = createTelegramRequest();
     telegramCreateRef.current = request;
     stopTelegramPolling();
     setError(null);
@@ -320,8 +341,7 @@ function LoginPageClient() {
         signal: request.signal,
       });
       const createData = await createRes.json().catch(() => ({}));
-      if (request.signal.aborted || telegramCreateRef.current !== request)
-        return;
+      if (request.aborted || telegramCreateRef.current !== request) return;
       if (!createRes.ok) {
         const configDetail = createData.config
           ? `（enabled=${String(
@@ -372,7 +392,7 @@ function LoginPageClient() {
 
         // 单次网络抖动不终止登录，下一轮继续查询
         if (telegramStatusRef.current) return;
-        const statusRequest = new AbortController();
+        const statusRequest = createTelegramRequest();
         telegramStatusRef.current = statusRequest;
         let statusData: { status?: string } = {};
         try {
@@ -390,8 +410,7 @@ function LoginPageClient() {
             telegramStatusRef.current = null;
         }
         // 轮询已被停止（离开页面或重新发起）时，忽略这次迟到的结果
-        if (statusRequest.signal.aborted || telegramTimerRef.current !== timer)
-          return;
+        if (statusRequest.aborted || telegramTimerRef.current !== timer) return;
         if (statusData.status === 'confirmed') {
           stopTelegramPolling();
           setTelegramLoginLink(null);
@@ -413,8 +432,7 @@ function LoginPageClient() {
       }, 2000);
       telegramTimerRef.current = timer;
     } catch (error) {
-      if (request.signal.aborted || telegramCreateRef.current !== request)
-        return;
+      if (request.aborted || telegramCreateRef.current !== request) return;
       setError('Telegram 登录请求失败，请稍后重试');
       setTelegramLoginLoading(false);
       setTelegramLoginHint(null);
