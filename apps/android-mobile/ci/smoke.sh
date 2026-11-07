@@ -66,11 +66,36 @@ SERVER_PID=$!
 adb install -r "$APK" || exit 1
 adb logcat -c
 adb shell am start -n "$PKG/.MainActivity"
-sleep 8
-APP_PID=$(app_pid) || exit 1
+APP_PID=
+for _ in $(seq 1 30); do
+  if APP_PID=$(app_pid 2>/dev/null); then break; fi
+  sleep 1
+done
+if [ -z "$APP_PID" ]; then
+  adb exec-out screencap -p >"$OUT/startup-process-missing.png"
+  adb logcat -d -v threadtime >"$OUT/startup-process-missing.log"
+  echo 'Tested app process did not start' >&2
+  exit 1
+fi
 adb exec-out screencap -p >"$OUT/1-dialog.png"
 
 # 首次启动应弹出地址框：输入模拟器访问宿主机的地址并回车
+address_ready=false
+for _ in $(seq 1 15); do
+  adb shell uiautomator dump /sdcard/startup-smoke.xml >/dev/null 2>&1 || true
+  adb exec-out cat /sdcard/startup-smoke.xml >"$OUT/startup-latest.xml" 2>/dev/null || true
+  if point=$(python3 "$(dirname "$0")/startup_target.py" "$OUT/startup-latest.xml" "$PKG" 2>/dev/null); then
+    read -r action tap_x tap_y <<<"$point"
+    adb shell input tap "$tap_x" "$tap_y"
+    if [ "$action" = address ]; then address_ready=true; break; fi
+  fi
+  sleep 1
+done
+if [ "$address_ready" != true ]; then
+  adb exec-out screencap -p >"$OUT/startup-address-missing.png"
+  echo 'Tested app address field was not available' >&2
+  exit 1
+fi
 adb shell input text "10.0.2.2:8080"
 sleep 1
 adb shell input keyevent 66

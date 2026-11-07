@@ -118,6 +118,7 @@ jobs:
           javac --release 17 --add-modules jdk.httpserver -d /tmp/tm-load-state-test apps/android-mobile/app/src/main/java/com/tongmutvplus/mobile/FileDownload.java apps/android-mobile/app/src/main/java/com/tongmutvplus/mobile/ExternalLinkPolicy.java apps/android-mobile/app/src/main/java/com/tongmutvplus/mobile/ScopedDownload.java apps/android-mobile/ci/ScopedDownloadTest.java
           java --add-modules jdk.httpserver -cp /tmp/tm-load-state-test com.tongmutvplus.mobile.ScopedDownloadTest
           python3 apps/android-mobile/ci/test_smoke_tls.py
+          python3 apps/android-mobile/ci/test_startup_target.py
           python3 apps/android-mobile/ci/test_check_external.py
           python3 apps/android-mobile/ci/test_check_back.py
           python3 apps/android-mobile/ci/test_check_content_export.py
