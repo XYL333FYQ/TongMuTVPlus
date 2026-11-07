@@ -27,6 +27,20 @@ public final class LoadStateTest {
         check(state.reveal(retry), "retry can recover");
         state.invalidate();
         check(!state.fail(retry) && !state.reveal(retry), "destroyed host rejects callbacks");
+        long beforeTls = state.begin("http://example.test/page");
+        state.rememberEarlyTls(beforeTls, "https://example.test/bad", 1000, 3);
+        check(state.takeEarlyTls(beforeTls, "https://example.test/poster", 1001) == -1,
+                "unrelated resource cannot become a main-frame failure");
+        state.rememberEarlyTls(beforeTls, "https://example.test/bad", 2000, 3);
+        check(state.takeEarlyTls(beforeTls, "https://example.test/bad", 2009) == 3,
+                "same main-frame URL can claim a fresh early certificate failure");
+        state.rememberEarlyTls(beforeTls, "https://example.test/bad", 3000, 3);
+        check(state.takeEarlyTls(beforeTls, "https://example.test/bad", 7001) == -1,
+                "expired certificate failures cannot affect a later navigation");
+        state.rememberEarlyTls(beforeTls, "https://example.test/bad", 8000, 3);
+        long later = state.begin("http://example.test/other");
+        check(state.takeEarlyTls(later, "https://example.test/bad", 8001) == -1,
+                "new document must fence callbacks from earlier document");
         System.out.println("PASS: document commit, failure, same-URL retry and stale callback gates");
     }
 }

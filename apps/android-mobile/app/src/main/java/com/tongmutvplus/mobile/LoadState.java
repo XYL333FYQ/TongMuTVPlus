@@ -8,8 +8,13 @@ final class LoadState {
     private Phase phase = Phase.FAILED;
     private boolean committed;
     private boolean revealRequested;
+    private String earlyTlsUrl = "";
+    private long earlyTlsToken = -1;
+    private long earlyTlsTime;
+    private int earlyTlsCode = -1;
 
     long begin(String value) {
+        earlyTlsToken = -1;
         sequence += 1;
         url = documentUrl(value);
         phase = Phase.LOADING;
@@ -20,6 +25,22 @@ final class LoadState {
 
     long token() { return sequence; }
     boolean callbackMayStart() { return phase != Phase.FAILED; }
+
+    void rememberEarlyTls(long token, String value, long time, int code) {
+        if (token != sequence || phase == Phase.FAILED || value == null || value.isEmpty()) return;
+        earlyTlsToken = token;
+        earlyTlsUrl = documentUrl(value);
+        earlyTlsTime = time;
+        earlyTlsCode = code;
+    }
+
+    int takeEarlyTls(long token, String value, long time) {
+        boolean matches = token == sequence && token == earlyTlsToken && phase != Phase.FAILED
+                && time >= earlyTlsTime && time - earlyTlsTime <= 3000
+                && earlyTlsUrl.equals(documentUrl(value));
+        earlyTlsToken = -1;
+        return matches ? earlyTlsCode : -1;
+    }
 
     boolean matches(long token, String value) {
         return token == sequence && phase != Phase.FAILED && url.equals(documentUrl(value));

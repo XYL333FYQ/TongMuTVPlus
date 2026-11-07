@@ -381,7 +381,10 @@ public class MainActivity extends Activity {
             Log.d("TongMuClient", "page start current=" + current(view) + " allowed=" + loadState.callbackMayStart()
                     + " scheme=" + (url == null ? "none" : Uri.parse(url).getScheme()));
             if (!current(view) || !isWebUrl(url) || !loadState.callbackMayStart()) return;
+            int earlyTls = Build.VERSION.SDK_INT <= 23
+                    ? loadState.takeEarlyTls(documentToken, url, android.os.SystemClock.elapsedRealtime()) : -1;
             documentToken = beginNavigation(url);
+            if (earlyTls >= 0) showNativeError(documentToken, "安全连接未通过验证", "请检查服务器证书和设备时间，再重试。", "证书错误 " + earlyTls);
         }
 
         @Override public void doUpdateVisitedHistory(WebView view, String url, boolean reload) {
@@ -438,7 +441,12 @@ public class MainActivity extends Activity {
                     + " visibleMatches=" + (current(view) && error.getUrl() != null && error.getUrl().equals(view.getUrl())));
             handler.cancel();
             // Poster/CDN failures must not replace the entire application.
-            if (!current(view) || !loadState.matches(documentToken, error.getUrl())) return;
+            if (!current(view)) return;
+            if (!loadState.matches(documentToken, error.getUrl())) {
+                if (Build.VERSION.SDK_INT <= 23 && isWebUrl(error.getUrl()))
+                    loadState.rememberEarlyTls(documentToken, error.getUrl(), android.os.SystemClock.elapsedRealtime(), error.getPrimaryError());
+                return;
+            }
             showNativeError(documentToken, "安全连接未通过验证", "请检查服务器证书和设备时间，再重试。", "证书错误 " + error.getPrimaryError());
         }
     }
