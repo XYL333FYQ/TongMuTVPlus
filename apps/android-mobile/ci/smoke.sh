@@ -335,6 +335,24 @@ PY
     tap_target text 'Native download test' || return 1
     tap_target text 'Start download audio' || return 1
     sleep 1
+    if [ "$API_LEVEL" -le 25 ]; then
+      tap_target text 'Download authenticated file' || return 1
+      wait_target text '保存文件' >/dev/null || return 1
+      tap_target text '取消' || return 1
+      wait_target text 'Stop download audio' >/dev/null || return 1
+      tap_target text 'Download authenticated file' || return 1
+      tap_target text '保存' || return 1
+      wait_downloads "$((completed_before + 1))" "$OUT/download-native.log" || return 1
+      downloaded=$(adb shell 'ls /sdcard/Download/TongMu-download-smoke-*.txt 2>/dev/null' | tr -d '\r')
+      [[ "$downloaded" =~ ^/sdcard/Download/TongMu-download-smoke-[0-9]+\.txt$ ]] || return 1
+      adb pull "$downloaded" "$OUT/download-smoke.txt" || return 1
+      wait_target text 'Stop download audio' >/dev/null || return 1
+      sleep 2
+      python3 "$(dirname "$0")/check_download.py" "$OUT/server.log" "$OUT/download-smoke.txt" || return 1
+      adb exec-out screencap -p >"$OUT/19-download-complete.png"
+      tap_target text 'Stop download audio' || return 1
+      return 0
+    fi
     tap_target text 'Download authenticated file' || return 1
     wait_target text '下载文件' >/dev/null || return 1
     adb exec-out screencap -p >"$OUT/19-download-confirm.png"

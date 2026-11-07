@@ -984,6 +984,9 @@ public class MainActivity extends Activity {
         public void cancelContentExport(String nonce, String id) { if (current() && contentExports != null) contentExports.cancel(nonce, id); }
 
         @JavascriptInterface
+        public void legacyDownloadError(String nonce) { if (current() && contentExports != null) contentExports.legacyDownloadError(nonce); }
+
+        @JavascriptInterface
         public void ready() {
             runOnUiThread(() -> { if (current() && !errorShown) { shellReady = true; enableEdgeToEdge(); } });
         }

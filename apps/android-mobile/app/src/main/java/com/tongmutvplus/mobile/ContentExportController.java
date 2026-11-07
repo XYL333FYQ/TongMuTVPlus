@@ -32,6 +32,7 @@ final class ContentExportController {
     private final Handler main = new Handler(Looper.getMainLooper());
     private final Object gate = new Object();
     private final String script;
+    private final String legacyDownloadScript;
     private volatile String nonce = "";
     private boolean installed;
     private Request pending;
@@ -46,7 +47,12 @@ final class ContentExportController {
     ContentExportController(Activity activity, Host host) throws IOException {
         this.activity = activity;
         this.host = host;
-        try (InputStream input = activity.getResources().openRawResource(R.raw.content_export);
+        script = loadScript(R.raw.content_export);
+        legacyDownloadScript = Build.VERSION.SDK_INT <= 25 ? loadScript(R.raw.legacy_download) : "";
+    }
+
+    private String loadScript(int resource) throws IOException {
+        try (InputStream input = activity.getResources().openRawResource(resource);
              ByteArrayOutputStream bytes = new ByteArrayOutputStream()) {
             byte[] buffer = new byte[4096]; int count;
             while ((count = input.read(buffer)) != -1) {
@@ -54,7 +60,7 @@ final class ContentExportController {
                 bytes.write(buffer, 0, count);
             }
             String loaded = new String(bytes.toByteArray(), StandardCharsets.UTF_8).trim();
-            script = loaded.endsWith(";") ? loaded.substring(0, loaded.length() - 1) : loaded;
+            return loaded.endsWith(";") ? loaded.substring(0, loaded.length() - 1) : loaded;
         }
     }
 
@@ -75,6 +81,16 @@ final class ContentExportController {
         if (view == null) return;
         installed = true;
         view.evaluateJavascript("(" + script + ")(" + JSONObject.quote(nonce) + ");", null);
+        if (!legacyDownloadScript.isEmpty())
+            view.evaluateJavascript("(" + legacyDownloadScript + ")(" + JSONObject.quote(nonce) + ");", null);
+    }
+
+    void legacyDownloadError(String scope) {
+        if (!ContentExportStage.sameToken(nonce, scope)) return;
+        main.post(() -> {
+            if (ContentExportStage.sameToken(nonce, scope) && host.allowed())
+                Toast.makeText(activity, "下载失败或文件过大，请重试。", Toast.LENGTH_LONG).show();
+        });
     }
 
     void invalidate() {
