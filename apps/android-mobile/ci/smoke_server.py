@@ -234,14 +234,14 @@ TMShell.ready();
 DOWNLOAD_PAGE = """<!doctype html><meta charset=utf-8><title>Download fixture</title>
 <body style='background:white;color:black;font:24px sans-serif'>
 <button style='display:block;min-height:56px;font-size:24px' onclick='audio.play()'>Start download audio</button>
-<a href='/download-attachment' download='TongMu-download-smoke.txt' style='display:block;line-height:56px' onclick='clicked=true;report("download-clicked")'>Download authenticated file</a>
+<a href='/download-attachment' download='TongMu-download-smoke.txt' style='display:block;line-height:56px' onclick='clicked=true;report("download-clicked",event)'>Download authenticated file</a>
 <button style='display:block;min-height:56px;font-size:24px' onclick='audio.pause();started=false;publish()'>Stop download audio</button>
 <a href='/' style='display:block;line-height:56px'>Return to recovery fixture</a>
 <audio id=audio loop src='/tone.wav'></audio>
 <img src='/download-cookie-probe' width='1' height='1' alt=''>
 <script>
 var audio=document.getElementById('audio'),originalAudio=audio,origin=performance.timeOrigin||performance.timing.navigationStart,started=false,clicked=false;
-function report(event){fetch('/download-report',{method:'POST',credentials:'include',body:JSON.stringify({event:event,origin:origin,paused:audio.paused,time:audio.currentTime,sameAudio:audio===originalAudio&&document.documentElement.contains(audio),clicked:clicked})})}
+function report(event,click){fetch('/download-report',{method:'POST',credentials:'include',body:JSON.stringify({event:event,origin:origin,paused:audio.paused,time:audio.currentTime,sameAudio:audio===originalAudio&&document.documentElement.contains(audio),clicked:clicked,trusted:click?click.isTrusted:null,button:click?click.button:null,exportReady:!!window.__tmContentExport})})}
 function publish(){TMShell.setMediaState(JSON.stringify({v:1,active:started,playing:started&&!audio.paused,canControl:true,title:'Download fixture'}))}
 audio.onplaying=function(){started=true;publish();report('download-playing')};
 audio.onpause=function(){publish();report('download-paused')};
