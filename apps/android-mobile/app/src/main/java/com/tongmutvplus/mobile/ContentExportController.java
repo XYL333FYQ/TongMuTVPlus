@@ -93,6 +93,10 @@ final class ContentExportController {
         });
     }
 
+    boolean legacyScopeAllowed(String scope) {
+        return ContentExportStage.sameToken(nonce, scope);
+    }
+
     void invalidate() {
         nonce = ""; installed = false;
         synchronized (gate) { cleanupStage(); pending = null; }

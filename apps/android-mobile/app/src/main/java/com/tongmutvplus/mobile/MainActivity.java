@@ -31,6 +31,7 @@ import android.text.InputType;
 import android.util.Rational;
 import android.util.Log;
 import android.view.KeyEvent;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
@@ -77,6 +78,7 @@ public class MainActivity extends Activity {
     private ContentExportController contentExports;
     private AppStateView localSurface;
     private final LoadState loadState = new LoadState();
+    private final LegacyDownloadGesture legacyDownloadGesture = new LegacyDownloadGesture();
     private long webViewEpoch;
     private String lastMainUrl;
     private boolean shellReady;
@@ -107,6 +109,12 @@ public class MainActivity extends Activity {
     private String updateServer;
     private boolean resumed;
     private Bundle pendingFileDownload;
+
+    @Override public boolean dispatchTouchEvent(MotionEvent event) {
+        if (Build.VERSION.SDK_INT <= 25 && event.getActionMasked() == MotionEvent.ACTION_UP)
+            legacyDownloadGesture.record(android.os.SystemClock.elapsedRealtime());
+        return super.dispatchTouchEvent(event);
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -993,6 +1001,13 @@ public class MainActivity extends Activity {
 
         @JavascriptInterface
         public void legacyDownloadError(String nonce) { if (current() && contentExports != null) contentExports.legacyDownloadError(nonce); }
+
+        @JavascriptInterface
+        public boolean consumeLegacyDownloadGesture(String nonce) {
+            return Build.VERSION.SDK_INT <= 25 && current() && contentExports != null
+                    && contentExports.legacyScopeAllowed(nonce)
+                    && legacyDownloadGesture.consume(android.os.SystemClock.elapsedRealtime());
+        }
 
         @JavascriptInterface
         public void ready() {

@@ -116,6 +116,8 @@ jobs:
           java -cp /tmp/tm-load-state-test com.tongmutvplus.mobile.ContentCopyTest
           node --test apps/android-mobile/ci/content-export-script.test.cjs
           node --test apps/android-mobile/ci/legacy-download-script.test.cjs
+          javac --release 17 -d /tmp/tm-load-state-test apps/android-mobile/app/src/main/java/com/tongmutvplus/mobile/LegacyDownloadGesture.java apps/android-mobile/ci/LegacyDownloadGestureTest.java
+          java -cp /tmp/tm-load-state-test com.tongmutvplus.mobile.LegacyDownloadGestureTest
           javac --release 17 --add-modules jdk.httpserver -d /tmp/tm-load-state-test apps/android-mobile/app/src/main/java/com/tongmutvplus/mobile/FileDownload.java apps/android-mobile/app/src/main/java/com/tongmutvplus/mobile/ExternalLinkPolicy.java apps/android-mobile/app/src/main/java/com/tongmutvplus/mobile/ScopedDownload.java apps/android-mobile/ci/ScopedDownloadTest.java
           java --add-modules jdk.httpserver -cp /tmp/tm-load-state-test com.tongmutvplus.mobile.ScopedDownloadTest
           python3 apps/android-mobile/ci/test_smoke_tls.py

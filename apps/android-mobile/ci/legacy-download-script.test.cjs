@@ -9,7 +9,7 @@ const source = fs.readFileSync(
   'utf8'
 );
 
-function fixture() {
+function fixture(gestureAllowed = true) {
   let listener;
   const requests = [];
   const saved = [];
@@ -57,6 +57,10 @@ function fixture() {
       },
     },
     TMShell: {
+      consumeLegacyDownloadGesture(scope) {
+        assert.equal(scope, 'scope');
+        return gestureAllowed;
+      },
       legacyDownloadError(scope) {
         failures.push(scope);
       },
@@ -118,6 +122,24 @@ test('leaves external links and non-user clicks alone', () => {
     undefined
   );
   assert.equal(f.requests.length, 0);
+});
+
+test('old engines without isTrusted require a real native touch', () => {
+  const permitted = fixture(true);
+  assert.equal(
+    permitted.click('https://example.test/file', {
+      event: { isTrusted: undefined },
+    }).prevented,
+    true
+  );
+  const denied = fixture(false);
+  assert.equal(
+    denied.click('https://example.test/file', {
+      event: { isTrusted: undefined },
+    }).prevented,
+    undefined
+  );
+  assert.equal(denied.requests.length, 0);
 });
 
 test('rejects failed and oversized responses without saving', () => {

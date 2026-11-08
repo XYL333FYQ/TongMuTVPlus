@@ -14,7 +14,7 @@
     function (event) {
       if (
         event.defaultPrevented ||
-        event.isTrusted !== true ||
+        event.isTrusted === false ||
         event.button !== 0 ||
         event.ctrlKey ||
         event.metaKey ||
@@ -33,6 +33,13 @@
         url.host !== window.location.host
       )
         return;
+      if (event.isTrusted !== true) {
+        try {
+          if (!window.TMShell.consumeLegacyDownloadGesture(nonce)) return;
+        } catch (ignored) {
+          return;
+        }
+      }
       event.preventDefault();
       if (busy) {
         try {
