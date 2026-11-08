@@ -8,6 +8,20 @@ OUT="$2"
 PKG="${3:-com.tongmutvplus.mobile}"
 mkdir -p "$OUT"
 API_LEVEL=$(adb shell getprop ro.build.version.sdk | tr -d '\r')
+if [ "$API_LEVEL" -eq 23 ]; then
+  # This factory image can reboot for storage initialization after reporting boot complete.
+  stable=0
+  for _ in $(seq 1 90); do
+    if [ "$(adb shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')" = 1 ]; then
+      stable=$((stable + 1))
+      [ "$stable" -ge 20 ] && break
+    else
+      stable=0
+    fi
+    sleep 1
+  done
+  [ "$stable" -ge 20 ] || { echo 'API23 emulator did not stabilize' >&2; exit 1; }
+fi
 BACK_NAV_RESTORE=
 BACK_INPUT=key
 restore_back_navigation() {
