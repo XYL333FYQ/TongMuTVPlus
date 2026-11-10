@@ -529,18 +529,27 @@ PY
         done
         return 1
       }
+      wait_session_report() {
+        local pattern="$1"
+        for _ in $(seq 1 10); do
+          grep -q "$pattern" "$OUT/server.log" && return 0
+          sleep 1
+        done
+        echo "Missing session page report: $pattern" >&2
+        return 1
+      }
       native_session playing || return 1
       adb shell input keyevent 3
       sleep 1
       adb shell cmd media_session dispatch pause || return 1
       native_session paused || return 1
-      grep -q 'MEDIA_REPORT.*"event":"session-paused","paused":true,"calls":1' "$OUT/server.log" || return 1
+      wait_session_report 'MEDIA_REPORT.*"event":"session-paused","paused":true,"calls":1' || return 1
       adb shell cmd statusbar expand-notifications || return 1
       adb exec-out screencap -p >"$OUT/15-session-paused-notification.png"
       adb shell cmd statusbar collapse || return 1
       adb shell cmd media_session dispatch play || return 1
       native_session playing || return 1
-      grep -q 'MEDIA_REPORT.*"event":"session-playing","paused":false,"calls":2' "$OUT/server.log" || return 1
+      wait_session_report 'MEDIA_REPORT.*"event":"session-playing","paused":false,"calls":2' || return 1
       adb shell am start -n "$PKG/.MainActivity" >/dev/null || return 1
       tap_target text 'Lock session controls' || return 1
       native_session locked || return 1
