@@ -524,8 +524,12 @@ export default async function RootLayout({
       <body className='tm-app min-h-screen'>
         <ThemeProvider attribute='class' defaultTheme='dark' enableSystem>
           <div className='tm-launch-cue' aria-hidden='true'>
-            <span className='tm-launch-line' />
-            <span>TongMuTV Plus</span>
+            <span className='tm-launch-aperture'>
+              <span className='tm-launch-beam' />
+            </span>
+            <span className='tm-launch-wordmark'>
+              TongMuTV <small>Plus</small>
+            </span>
           </div>
           <TopProgressBar />
           <RouteScrollReset />

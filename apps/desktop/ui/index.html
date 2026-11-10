@@ -7,6 +7,11 @@
     <style>
       :root {
         color-scheme: dark;
+        --tm-text: #f2f2f3;
+        --tm-muted: #a3a3ac;
+        --tm-line: rgba(255, 255, 255, 0.09);
+        --tm-line-strong: rgba(255, 255, 255, 0.18);
+        --tm-spot: rgba(255, 255, 255, 0.07);
       }
       * {
         box-sizing: border-box;
@@ -69,31 +74,93 @@
       }
       #status {
         text-align: center;
-        color: #9a9a9a;
+        color: var(--tm-muted);
       }
-      .launch-line {
+      body:has(#status:not([hidden])) {
+        background-image: radial-gradient(
+          ellipse at center,
+          var(--tm-spot),
+          transparent 67%
+        );
+      }
+      .launch-aperture {
+        position: relative;
         display: block;
         margin: 0 auto 18px;
-        width: 64px;
+        width: 156px;
+        height: 86px;
+        animation: tm-launch-open 460ms cubic-bezier(0.22, 1, 0.36, 1) both;
+      }
+      .launch-aperture::before,
+      .launch-aperture::after {
+        position: absolute;
+        content: '';
+        inset: 9px 20px;
+        border: 1px solid var(--tm-line-strong);
+        border-radius: 50%;
+        transform: rotate(-18deg);
+      }
+      .launch-aperture::after {
+        inset: 16px 27px;
+        border-color: var(--tm-line);
+        transform: rotate(18deg);
+      }
+      .launch-beam {
+        position: absolute;
+        top: 50%;
+        left: 0;
+        width: 100%;
         height: 2px;
-        background: currentColor;
-        animation: tm-launch-line 240ms cubic-bezier(0.22, 1, 0.36, 1) both;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          var(--tm-text),
+          transparent
+        );
+        animation: tm-launch-sweep 490ms cubic-bezier(0.22, 1, 0.36, 1) both;
       }
       .launch-wordmark {
         display: block;
         margin-bottom: 8px;
-        color: inherit;
-        font-size: 16px;
-        letter-spacing: 0.04em;
+        color: var(--tm-text);
+        font-size: 24px;
+        letter-spacing: -0.035em;
+        animation: tm-launch-type 370ms 70ms cubic-bezier(0.22, 1, 0.36, 1) both;
       }
-      @keyframes tm-launch-line {
+      .launch-wordmark small {
+        color: var(--tm-muted);
+        font-size: 0.68em;
+        letter-spacing: 0.05em;
+      }
+      @keyframes tm-launch-open {
         from {
-          opacity: 0.35;
-          transform: scaleX(0.22);
+          opacity: 0;
+          transform: scale(0.68) rotate(-12deg);
+        }
+      }
+      @keyframes tm-launch-sweep {
+        0% {
+          opacity: 0;
+          transform: translateX(-24%) scaleX(0.3);
+        }
+        46% {
+          opacity: 1;
+        }
+        100% {
+          opacity: 0.6;
+          transform: translateX(0) scaleX(1);
+        }
+      }
+      @keyframes tm-launch-type {
+        from {
+          opacity: 0;
+          transform: translateY(7px);
         }
       }
       @media (prefers-reduced-motion: reduce) {
-        .launch-line {
+        .launch-aperture,
+        .launch-beam,
+        .launch-wordmark {
           animation: none;
         }
       }
@@ -104,8 +171,10 @@
   </head>
   <body>
     <main id="status" hidden>
-      <span class="launch-line" aria-hidden="true"></span>
-      <strong class="launch-wordmark">TongMuTV Plus</strong>
+      <span class="launch-aperture" aria-hidden="true"
+        ><span class="launch-beam"></span
+      ></span>
+      <strong class="launch-wordmark">TongMuTV <small>Plus</small></strong>
       <p id="statusText">正在连接…</p>
     </main>
     <main id="form" hidden>

@@ -26,6 +26,16 @@ interface Pending {
   platform: UpdatePlatform;
 }
 
+const HANDOFF_MESSAGES = {
+  idle: '',
+  starting: '正在通过客户端下载安装包…',
+  handedOff: '已交给客户端处理，请查看系统下载提示。',
+  downloaded: '下载完成。安装包已保存到 Windows 的下载文件夹。',
+  canceled: '已取消下载。',
+  latest: '当前已是最新客户端。',
+  error: '无法完成应用内下载，可重试或复制链接。',
+};
+
 function report(state: UpdateResult) {
   window.dispatchEvent(new CustomEvent(RESULT_EVENT, { detail: state }));
 }
@@ -37,7 +47,7 @@ function report(state: UpdateResult) {
 export default function ClientUpdatePrompt() {
   const reduced = useReducedMotionSetting();
   const [pending, setPending] = useState<Pending | null>(null);
-  const [handoff, setHandoff] = useState<'idle' | 'starting' | 'error'>('idle');
+  const [handoff, setHandoff] = useState<keyof typeof HANDOFF_MESSAGES>('idle');
   const [showPackages, setShowPackages] = useState(false);
   const [downloadMessage, setDownloadMessage] = useState('');
   const [manualAddress, setManualAddress] = useState('');
@@ -120,12 +130,13 @@ export default function ClientUpdatePrompt() {
   const installAndroid = android && window.TMShell?.installUpdate;
   const desktop = (
     window as Window & {
-      TMDesktop?: { installUpdate?: () => Promise<void> };
+      TMDesktop?: { installUpdate?: () => Promise<unknown> };
     }
   ).TMDesktop;
   const installWindows = !android && desktop?.installUpdate;
   const canInstall = installAndroid || installWindows;
-  const packages = showPackages
+  const packagesVisible = showPackages || Boolean(installWindows);
+  const packages = packagesVisible
     ? CLIENT_PACKAGES.filter(({ platform }) => platform === pending.platform)
     : [];
 
@@ -147,12 +158,24 @@ export default function ClientUpdatePrompt() {
   const update = async () => {
     if (updating.current) return;
     updating.current = true;
+    setDownloadMessage('');
     setHandoff('starting');
     try {
-      if (installAndroid) window.TMShell?.installUpdate?.(pending.url);
-      else if (installWindows) await installWindows();
-      setPending(null);
-      setHandoff('idle');
+      if (installAndroid) {
+        window.TMShell?.installUpdate?.(pending.url);
+        setPending(null);
+        setHandoff('idle');
+      } else if (installWindows) {
+        const result = await installWindows();
+        setDownloadMessage('');
+        setHandoff(
+          result === 'downloaded' ||
+            result === 'canceled' ||
+            result === 'latest'
+            ? result
+            : 'handedOff'
+        );
+      }
     } catch {
       setHandoff('error');
     } finally {
@@ -187,14 +210,14 @@ export default function ClientUpdatePrompt() {
               : '此版本需要手动更新，请选择适合你的安装包。'}
           </p>
           <p role='status' className='mt-1 text-sm text-muted'>
-            {downloadMessage ||
-              (handoff === 'starting'
-                ? '正在启动更新…'
-                : handoff === 'error'
-                ? '无法启动更新，可重试或手动下载。'
-                : '')}
+            {HANDOFF_MESSAGES[handoff]}
           </p>
-          {showPackages && (
+          {downloadMessage && (
+            <p role='status' className='mt-1 text-sm text-muted'>
+              {downloadMessage}
+            </p>
+          )}
+          {packagesVisible && (
             <div id='client-update-packages' className='mt-3 grid gap-2'>
               {packages.map(({ file, label }) => {
                 const url = android
@@ -206,9 +229,14 @@ export default function ClientUpdatePrompt() {
                       href={url}
                       download={file}
                       className='tm-btn flex-1'
-                      onClick={() => {
+                      aria-disabled={handoff === 'starting'}
+                      onClick={(event) => {
+                        if (updating.current) {
+                          event.preventDefault();
+                          return;
+                        }
                         setDownloadMessage(
-                          '已请求下载。若未看到下载提示，请复制链接到浏览器。'
+                          '已请求下载，请在系统下载列表查看结果。也可以复制链接到浏览器下载。'
                         );
                       }}
                     >
@@ -245,16 +273,19 @@ export default function ClientUpdatePrompt() {
           >
             稍后
           </button>
-          {canInstall && !showPackages && (
-            <button
-              onClick={update}
-              disabled={handoff === 'starting'}
-              className='tm-btn tm-btn-primary flex-1'
-            >
-              {handoff === 'error' ? '重试' : '立即更新'}
-            </button>
-          )}
-          {(!canInstall || handoff === 'error') && (
+          {canInstall &&
+            !showPackages &&
+            handoff !== 'downloaded' &&
+            handoff !== 'latest' && (
+              <button
+                onClick={update}
+                disabled={handoff === 'starting'}
+                className='tm-btn tm-btn-primary flex-1'
+              >
+                {handoff === 'error' ? '重试' : '立即更新'}
+              </button>
+            )}
+          {!canInstall && (
             <button
               type='button'
               aria-expanded={showPackages}

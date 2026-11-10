@@ -51,9 +51,9 @@ fn tm_fullscreen(window: WebviewWindow, on: bool) {
 }
 
 #[tauri::command]
-fn tm_client_update(window: WebviewWindow) -> Result<(), String> {
+async fn tm_client_update(window: WebviewWindow) -> Result<&'static str, String> {
     #[cfg(windows)]
-    return native_update::start(&window);
+    return native_update::start(window).await;
     #[cfg(not(windows))]
     {
         let _ = window;

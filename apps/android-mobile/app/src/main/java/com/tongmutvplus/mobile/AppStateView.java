@@ -2,6 +2,13 @@ package com.tongmutvplus.mobile;
 
 import android.content.Context;
 import android.content.res.ColorStateList;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.LinearGradient;
+import android.graphics.Paint;
+import android.graphics.RadialGradient;
+import android.graphics.Shader;
+import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
 import android.graphics.drawable.RippleDrawable;
 import android.graphics.drawable.StateListDrawable;
@@ -23,7 +30,8 @@ final class AppStateView extends FrameLayout {
     private final TextView title;
     private final TextView message;
     private final TextView details;
-    private final View launchLine;
+    private final Aperture aperture;
+    private final TextView wordmark;
     private boolean launchPlayed;
     private final Button retry;
     private final Button settings;
@@ -44,9 +52,13 @@ final class AppStateView extends FrameLayout {
         scroll.addView(content, new ScrollView.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
         addView(scroll, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
 
-        launchLine = new View(context);
-        launchLine.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
-        column.addView(launchLine, new LinearLayout.LayoutParams(dp(64), dp(2)));
+        aperture = new Aperture(context);
+        aperture.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+        column.addView(aperture, new LinearLayout.LayoutParams(dp(156), dp(86)));
+        wordmark = text(context, 24);
+        wordmark.setText("TongMuTV Plus");
+        wordmark.setTypeface(Typeface.create("sans-serif-medium", Typeface.NORMAL));
+        addRow(wordmark, 16);
         title = text(context, 22);
         title.setId(R.id.tm_load_title);
         if (Build.VERSION.SDK_INT >= 28) title.setAccessibilityHeading(true);
@@ -72,9 +84,10 @@ final class AppStateView extends FrameLayout {
         int line = color(dark ? R.color.tm_line : R.color.tm_light_line);
         setBackgroundColor(bg);
         title.setTextColor(fg);
+        wordmark.setTextColor(fg);
         message.setTextColor(muted);
         details.setTextColor(muted);
-        launchLine.setBackgroundColor(muted);
+        aperture.setInk(fg);
         style(retry, fg, bg, line, muted);
         style(settings, surface, fg, line, muted);
         style(detailsButton, surface, fg, line, muted);
@@ -87,7 +100,7 @@ final class AppStateView extends FrameLayout {
     }
 
     void showLoading() {
-        show("正在连接", "TongMuTV Plus", true, "");
+        show("正在连接", "", true, "");
     }
 
     void showSetup() {
@@ -103,13 +116,21 @@ final class AppStateView extends FrameLayout {
         animate().cancel();
         setAlpha(1f);
         title.setText(heading);
+        title.setTextSize(loading ? 14 : 22);
         message.setText(explanation);
-        launchLine.setVisibility(loading ? View.VISIBLE : View.GONE);
+        message.setVisibility(loading ? View.GONE : View.VISIBLE);
+        wordmark.setVisibility(loading ? View.VISIBLE : View.GONE);
+        aperture.setVisibility(loading ? View.VISIBLE : View.GONE);
         if (loading && !launchPlayed) {
             launchPlayed = true;
-            launchLine.setScaleX(0.22f);
-            launchLine.setAlpha(0.35f);
-            launchLine.animate().scaleX(1f).alpha(1f).setDuration(240).start();
+            aperture.setAlpha(0f);
+            aperture.setScaleX(0.68f);
+            aperture.setScaleY(0.68f);
+            aperture.setRotation(-12f);
+            aperture.animate().alpha(1f).scaleX(1f).scaleY(1f).rotation(0f).setDuration(460).start();
+            wordmark.setAlpha(0f);
+            wordmark.setTranslationY(dp(7));
+            wordmark.animate().alpha(1f).translationY(0f).setStartDelay(70).setDuration(370).start();
         }
         retry.setVisibility(loading ? View.GONE : View.VISIBLE);
         settings.setVisibility(loading ? View.GONE : View.VISIBLE);
@@ -181,4 +202,60 @@ final class AppStateView extends FrameLayout {
 
     private int color(int resource) { return getResources().getColor(resource, getContext().getTheme()); }
     private int dp(int value) { return Math.round(value * getResources().getDisplayMetrics().density); }
+
+    private static final class Aperture extends View {
+        private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        private Shader glow;
+        private Shader beam;
+        private int ink;
+
+        Aperture(Context context) { super(context); }
+
+        void setInk(int color) {
+            ink = color;
+            updateShaders(getWidth(), getHeight());
+            invalidate();
+        }
+
+        @Override protected void onSizeChanged(int width, int height, int oldWidth, int oldHeight) {
+            super.onSizeChanged(width, height, oldWidth, oldHeight);
+            updateShaders(width, height);
+        }
+
+        private int tint(int alpha) {
+            return Color.argb(alpha, Color.red(ink), Color.green(ink), Color.blue(ink));
+        }
+
+        private void updateShaders(int width, int height) {
+            if (width == 0 || height == 0) return;
+            glow = new RadialGradient(width / 2f, height / 2f, height / 2f,
+                    tint(34), tint(0), Shader.TileMode.CLAMP);
+            beam = new LinearGradient(0f, 0f, width, 0f,
+                    new int[]{tint(0), tint(210), tint(0)}, null, Shader.TileMode.CLAMP);
+        }
+
+        @Override protected void onDraw(Canvas canvas) {
+            float w = getWidth(), h = getHeight();
+            if (glow == null || beam == null) return;
+            paint.setStyle(Paint.Style.FILL);
+            paint.setColor(ink);
+            paint.setShader(glow);
+            canvas.drawRect(0f, 0f, w, h, paint);
+            paint.setShader(null);
+            paint.setStyle(Paint.Style.STROKE);
+            paint.setStrokeWidth(getResources().getDisplayMetrics().density);
+            canvas.save();
+            canvas.rotate(-18f, w / 2f, h / 2f);
+            paint.setColor(tint(65));
+            canvas.drawOval(w * 0.13f, h * 0.17f, w * 0.87f, h * 0.83f, paint);
+            canvas.rotate(36f, w / 2f, h / 2f);
+            paint.setColor(tint(34));
+            canvas.drawOval(w * 0.18f, h * 0.24f, w * 0.82f, h * 0.76f, paint);
+            canvas.restore();
+            paint.setColor(ink);
+            paint.setShader(beam);
+            canvas.drawLine(0f, h / 2f, w, h / 2f, paint);
+            paint.setShader(null);
+        }
+    }
 }

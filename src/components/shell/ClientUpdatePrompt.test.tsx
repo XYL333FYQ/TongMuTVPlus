@@ -137,7 +137,7 @@ test('Windows 交给原生更新器，启动失败时保留重试入口', async 
   await flush();
   await act(async () => fireEvent.click(screen.getByText('立即更新')));
   expect(installUpdate).toHaveBeenCalledTimes(1);
-  expect(screen.getByRole('status')).toHaveTextContent('无法启动更新');
+  expect(screen.getByRole('status')).toHaveTextContent('无法完成应用内下载');
   expect(screen.getByText('重试')).toBeEnabled();
 });
 
@@ -166,8 +166,35 @@ test('旧 Windows 点击后在当前弹窗列出安装包，无需创建新窗�
       screen.getByRole('button', { name: '复制Windows 安装包（x64）链接' })
     );
   });
-  expect(screen.getByRole('status')).toHaveTextContent('请手动复制');
+  expect(screen.getByText('请手动复制下方地址。')).toBeInTheDocument();
   expect(screen.getByRole('textbox', { name: '安装包下载地址' })).toHaveValue(
     'https://dl.test/TongMuTV-Plus-Windows-x64-Setup.exe'
   );
+});
+
+test('新版 Windows 同时显示下载和复制，等原生确认落盘再提示完成', async () => {
+  setUa('Mozilla/5.0 Chrome Windows');
+  mockFetch('202610301530');
+  let finish!: (value: string) => void;
+  const installUpdate = jest.fn(
+    () =>
+      new Promise<string>((resolve) => {
+        finish = resolve;
+      })
+  );
+  Object.assign(window, {
+    __tmDesktopInit: true,
+    TMDesktop: { build: '202610301000', installUpdate },
+  });
+  render(<ClientUpdatePrompt />);
+  await flush();
+  expect(
+    screen.getByRole('button', { name: '复制Windows 安装包（x64）链接' })
+  ).toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: '立即更新' }));
+  expect(screen.getByRole('status')).not.toHaveTextContent('下载完成');
+  expect(screen.getByRole('button', { name: '立即更新' })).toBeDisabled();
+  await act(async () => finish('downloaded'));
+  expect(screen.getByRole('status')).toHaveTextContent('下载完成');
+  expect(screen.getByRole('dialog')).toBeInTheDocument();
 });

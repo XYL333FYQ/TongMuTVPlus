@@ -2,9 +2,9 @@
 use std::{
     ffi::{c_void, OsStr},
     fs::{self, OpenOptions},
-    io::Write,
-    os::windows::ffi::OsStrExt,
-    path::PathBuf,
+    io::{Read, Write},
+    os::windows::{ffi::OsStrExt, fs::OpenOptionsExt},
+    path::{Path, PathBuf},
     ptr::{null, null_mut},
     sync::atomic::{AtomicBool, Ordering},
     time::{Duration, Instant, SystemTime, UNIX_EPOCH},
@@ -21,10 +21,15 @@ use windows::{
             COINIT_APARTMENTTHREADED,
         },
         UI::{
+            Controls::{
+                TaskDialogIndirect, TASKDIALOGCONFIG, TASKDIALOG_BUTTON,
+                TDF_ALLOW_DIALOG_CANCELLATION, TDF_POSITION_RELATIVE_TO_WINDOW,
+                TDF_SIZE_TO_CONTENT,
+            },
             Shell::{CLSID_ProgressDialog, IProgressDialog, ShellExecuteW, PROGDLG_NOTIME},
             WindowsAndMessaging::{
                 MessageBoxW, IDYES, MB_DEFBUTTON2, MB_ICONINFORMATION, MB_ICONWARNING, MB_OK,
-                MB_YESNO, SW_SHOWNORMAL,
+                MB_SETFOREGROUND, MB_YESNO, SW_SHOWNORMAL,
             },
         },
     },
@@ -257,13 +262,13 @@ unsafe fn verified_package(dialog: &IProgressDialog, file: &str) -> Result<Optio
     Ok(Some(bytes))
 }
 
-unsafe fn launch_installer(owner: HWND, file: &str, bytes: &[u8]) -> Result<()> {
+fn save_installer(downloads: &Path, file: &str, bytes: &[u8]) -> Result<PathBuf> {
     let now = SystemTime::now().duration_since(UNIX_EPOCH)?.as_nanos();
-    let dir: PathBuf =
-        std::env::temp_dir().join(format!("TongMuTVPlus-update-{}-{now}", std::process::id()));
+    let dir = downloads.join(format!("TongMuTVPlus-update-{}-{now}", std::process::id()));
+    fs::create_dir_all(downloads)?;
     fs::create_dir(&dir)?;
     let path = dir.join(file);
-    let launch = || -> Result<()> {
+    let save = || -> Result<()> {
         let mut installer = OpenOptions::new()
             .create_new(true)
             .write(true)
@@ -279,30 +284,98 @@ unsafe fn launch_installer(owner: HWND, file: &str, bytes: &[u8]) -> Result<()> 
             zone,
             "[ZoneTransfer]\r\nZoneId=3\r\nHostUrl=https://{HOST}{RELEASE}{file}\r\n"
         )?;
-        drop(zone);
-        let path = wide(path.as_os_str());
-        let code = ShellExecuteW(
-            Some(owner),
-            w!("open"),
-            PCWSTR(path.as_ptr()),
-            PCWSTR::null(),
-            PCWSTR::null(),
-            SW_SHOWNORMAL,
-        );
-        if code.0 as isize <= 32 {
-            return Err("installer did not start".into());
-        }
+        zone.sync_all()?;
         Ok(())
     };
-    let result = launch();
+    let result = save();
     if result.is_err() {
-        let _ = fs::remove_file(path);
+        let _ = fs::remove_file(&path);
         let _ = fs::remove_dir(dir);
     }
-    result
+    result.map(|()| path)
 }
 
-unsafe fn show_update(owner: HWND) -> Result<bool> {
+unsafe fn open_path(owner: HWND, path: &Path) -> bool {
+    let path = wide(path.as_os_str());
+    ShellExecuteW(
+        Some(owner),
+        w!("open"),
+        PCWSTR(path.as_ptr()),
+        PCWSTR::null(),
+        PCWSTR::null(),
+        SW_SHOWNORMAL,
+    )
+    .0 as isize
+        > 32
+}
+
+const INSTALL: i32 = 100;
+const OPEN_FOLDER: i32 = 101;
+const LATER: i32 = 102;
+
+unsafe fn open_verified_installer(owner: HWND, path: &Path, verified: &[u8]) -> Result<bool> {
+    // FILE_SHARE_READ: hold the bytes against writes and replacement until
+    // the system has accepted the launch.
+    let file = OpenOptions::new().read(true).share_mode(1).open(path)?;
+    let mut on_disk = Vec::new();
+    (&file)
+        .take(verified.len() as u64 + 1)
+        .read_to_end(&mut on_disk)?;
+    if on_disk != verified {
+        return Err("saved update changed before launch".into());
+    }
+    Ok(open_path(owner, path))
+}
+
+unsafe fn completion_dialog(owner: HWND, path: &Path) -> i32 {
+    let title = w!("客户端更新 · TongMuTV Plus");
+    let detail = wide(format!(
+        "安装包已保存并通过校验。\n{}\n\n现在安装会退出当前客户端。便携版将通过向导切换到安装版。",
+        path.display()
+    ));
+    let buttons = [
+        TASKDIALOG_BUTTON {
+            nButtonID: INSTALL,
+            pszButtonText: w!("现在安装"),
+        },
+        TASKDIALOG_BUTTON {
+            nButtonID: OPEN_FOLDER,
+            pszButtonText: w!("打开所在文件夹"),
+        },
+        TASKDIALOG_BUTTON {
+            nButtonID: LATER,
+            pszButtonText: w!("稍后安装"),
+        },
+    ];
+    let config = TASKDIALOGCONFIG {
+        cbSize: std::mem::size_of::<TASKDIALOGCONFIG>() as u32,
+        hwndParent: owner,
+        dwFlags: TDF_ALLOW_DIALOG_CANCELLATION
+            | TDF_POSITION_RELATIVE_TO_WINDOW
+            | TDF_SIZE_TO_CONTENT,
+        pszWindowTitle: title,
+        pszMainInstruction: w!("下载完成"),
+        pszContent: PCWSTR(detail.as_ptr()),
+        cButtons: buttons.len() as u32,
+        pButtons: buttons.as_ptr(),
+        nDefaultButton: LATER,
+        ..Default::default()
+    };
+    let mut selected = LATER;
+    if TaskDialogIndirect(&config, Some(&mut selected), None, None).is_err()
+        && MessageBoxW(
+            Some(owner),
+            PCWSTR(detail.as_ptr()),
+            w!("下载完成 · TongMuTV Plus"),
+            MB_YESNO | MB_DEFBUTTON2 | MB_ICONINFORMATION | MB_SETFOREGROUND,
+        ) == IDYES
+    {
+        selected = INSTALL;
+    }
+    selected
+}
+
+unsafe fn show_update(owner: HWND, downloads: &Path) -> Result<&'static str> {
     let title = w!("客户端更新 · TongMuTV Plus");
     let dialog: IProgressDialog = CoCreateInstance(
         &CLSID_ProgressDialog,
@@ -326,7 +399,7 @@ unsafe fn show_update(owner: HWND) -> Result<bool> {
             title,
             MB_OK | MB_ICONINFORMATION,
         );
-        return Ok(false);
+        return Ok("canceled");
     }
     let Some(bytes) = download? else {
         MessageBoxW(
@@ -335,49 +408,94 @@ unsafe fn show_update(owner: HWND) -> Result<bool> {
             title,
             MB_OK | MB_ICONINFORMATION,
         );
-        return Ok(false);
+        return Ok("latest");
     };
-    if MessageBoxW(
-        Some(owner),
-        w!("安装包已下载并通过校验。现在打开安装向导吗？\n\n确定后当前客户端会退出。便携版会通过此向导切换为安装版。"),
-        title, MB_YESNO | MB_DEFBUTTON2 | MB_ICONINFORMATION,
-    ) != IDYES {
-        return Ok(false);
+    let path = save_installer(downloads, &file, &bytes)?;
+    let action = completion_dialog(owner, &path);
+    if action == INSTALL && open_verified_installer(owner, &path, &bytes)? {
+        return Ok("installing");
     }
-    launch_installer(owner, &file, &bytes)?;
-    Ok(true)
+    if (action == INSTALL)
+        || (action == OPEN_FOLDER && !open_path(owner, path.parent().unwrap_or(downloads)))
+    {
+        MessageBoxW(
+            Some(owner),
+            w!("安装包已保存。请从下载文件夹打开安装包。"),
+            title,
+            MB_OK | MB_ICONWARNING | MB_SETFOREGROUND,
+        );
+    }
+    Ok("downloaded")
 }
 
-pub fn start(window: &WebviewWindow) -> std::result::Result<(), String> {
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn completion_leaves_the_saved_package_and_internet_zone() {
+        let root = std::env::temp_dir().join(format!("tm-update-test-{}", std::process::id()));
+        fs::create_dir(&root).unwrap();
+        let bytes = b"verified update fixture";
+        let path = save_installer(&root, "fixture.exe", bytes).unwrap();
+        assert!(path.starts_with(&root));
+        assert_eq!(fs::read(&path).unwrap(), bytes);
+        let mut zone = path.as_os_str().to_owned();
+        zone.push(":Zone.Identifier");
+        assert!(fs::read_to_string(zone).unwrap().contains("ZoneId=3"));
+        let blocked = root.join("blocked");
+        fs::write(&blocked, b"not a folder").unwrap();
+        assert!(save_installer(&blocked, "fixture.exe", bytes).is_err());
+        fs::remove_file(blocked).unwrap();
+        fs::remove_file(&path).unwrap();
+        fs::remove_dir(path.parent().unwrap()).unwrap();
+        fs::remove_dir(root).unwrap();
+    }
+}
+
+pub async fn start(window: WebviewWindow) -> std::result::Result<&'static str, String> {
     let owner = window.hwnd().map_err(|error| error.to_string())?.0 as isize;
+    let app = window.app_handle().clone();
+    let downloads = app
+        .path()
+        .download_dir()
+        .map_err(|error| error.to_string())?;
     if ACTIVE.swap(true, Ordering::AcqRel) {
         return Err("已有更新任务在运行".into());
     }
-    let app = window.app_handle().clone();
     let guard = Active;
-    std::thread::Builder::new()
-        .name("tongmu-client-update".into())
-        .spawn(move || unsafe {
-            let _guard = guard;
-            let owner = HWND(owner as *mut c_void);
-            let com = CoInitializeEx(None, COINIT_APARTMENTTHREADED).ok();
-            let initialized = com.is_ok();
-            let result = match com {
-                Ok(()) => show_update(owner),
-                Err(error) => Err(error.into()),
-            };
-            match result {
-                Ok(true) => app.exit(0),
-                Ok(false) => {}
-                Err(_) => {
-                    MessageBoxW(Some(owner), w!("更新未完成。请检查网络、磁盘空间或 Windows 安全提示后，在“关于”中重试。"),
-                        w!("客户端更新 · TongMuTV Plus"), MB_OK | MB_ICONWARNING);
-                }
+    tauri::async_runtime::spawn_blocking(move || unsafe {
+        let _guard = guard;
+        let owner = HWND(owner as *mut c_void);
+        let com = CoInitializeEx(None, COINIT_APARTMENTTHREADED).ok();
+        let initialized = com.is_ok();
+        let result = match com {
+            Ok(()) => show_update(owner, &downloads),
+            Err(error) => Err(error.into()),
+        };
+        let response = match result {
+            Ok(status) => Ok(status),
+            Err(_) => {
+                MessageBoxW(
+                    Some(owner),
+                    w!("更新未完成。请检查网络、磁盘空间或 Windows 安全提示后，在“关于”中重试。"),
+                    w!("客户端更新 · TongMuTV Plus"),
+                    MB_OK | MB_ICONWARNING | MB_SETFOREGROUND,
+                );
+                Err("更新未完成".to_string())
             }
-            if initialized {
-                CoUninitialize();
-            }
-        })
-        .map(|_| ())
-        .map_err(|error| error.to_string())
+        };
+        if initialized {
+            CoUninitialize();
+        }
+        if response
+            .as_ref()
+            .is_ok_and(|status| *status == "installing")
+        {
+            app.exit(0);
+        }
+        response
+    })
+    .await
+    .map_err(|error| error.to_string())?
 }

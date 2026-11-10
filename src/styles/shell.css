@@ -1336,32 +1336,94 @@ html[data-tm-shell] {
   justify-content: center;
   background: inherit;
   background: var(--tm-bg);
+  background-image: radial-gradient(
+    ellipse at center,
+    var(--tm-spot),
+    transparent 67%
+  );
   color: var(--tm-text);
-  font-size: 16px;
-  font-weight: 600;
-  letter-spacing: 0.04em;
   pointer-events: none;
-  animation: tm-launch-out 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: tm-launch-out 680ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
-.tm-launch-line {
-  width: 64px;
+.tm-launch-aperture {
+  position: relative;
+  width: 156px;
+  height: 86px;
+  margin-bottom: 18px;
+  animation: tm-launch-open 460ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.tm-launch-aperture::before,
+.tm-launch-aperture::after {
+  position: absolute;
+  content: '';
+  inset: 9px 20px;
+  border: 1px solid var(--tm-line-strong);
+  border-radius: 50%;
+  transform: rotate(-18deg);
+}
+
+.tm-launch-aperture::after {
+  inset: 16px 27px;
+  border-color: var(--tm-line);
+  transform: rotate(18deg);
+}
+
+.tm-launch-beam {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 100%;
   height: 2px;
-  margin-bottom: 16px;
-  background: currentColor;
-  animation: tm-launch-expand 240ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  background: linear-gradient(90deg, transparent, currentColor, transparent);
+  animation: tm-launch-sweep 490ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
-@keyframes tm-launch-expand {
+.tm-launch-wordmark {
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: -0.035em;
+  animation: tm-launch-type 370ms 70ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.tm-launch-wordmark small {
+  color: var(--tm-muted);
+  font-size: 0.68em;
+  letter-spacing: 0.05em;
+}
+
+@keyframes tm-launch-open {
   from {
-    opacity: 0.35;
-    transform: scaleX(0.22);
+    opacity: 0;
+    transform: scale(0.68) rotate(-12deg);
+  }
+}
+
+@keyframes tm-launch-sweep {
+  0% {
+    opacity: 0;
+    transform: translateX(-24%) scaleX(0.3);
+  }
+  46% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.6;
+    transform: translateX(0) scaleX(1);
+  }
+}
+
+@keyframes tm-launch-type {
+  from {
+    opacity: 0;
+    transform: translateY(7px);
   }
 }
 
 @keyframes tm-launch-out {
   0%,
-  35% {
+  47% {
     opacity: 1;
   }
   100% {

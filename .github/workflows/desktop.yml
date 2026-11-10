@@ -124,6 +124,13 @@ jobs:
           path: apps/desktop/src-tauri/Cargo.lock
           if-no-files-found: ignore
 
+      - name: Verify update file persistence (x64)
+        if: ${{ matrix.arch == 'x64' }}
+        working-directory: apps/desktop/src-tauri
+        env:
+          TM_BUILD: ${{ needs.stamp.outputs.build }}
+        run: cargo test --release --locked --target ${{ matrix.target }} native_update::tests
+
       - name: Collect installer and portable zip
         shell: bash
         run: |
