@@ -107,6 +107,8 @@ final class AppStateView extends FrameLayout {
     }
 
     private void show(String heading, String explanation, boolean loading, String diagnostic) {
+        animate().cancel();
+        setAlpha(1f);
         title.setText(heading);
         message.setText(explanation);
         progress.setVisibility(loading ? View.VISIBLE : View.GONE);
@@ -125,22 +127,14 @@ final class AppStateView extends FrameLayout {
         if (scroll.getPaddingLeft() == left + dp(24) && scroll.getPaddingTop() == top + dp(24)
                 && scroll.getPaddingRight() == right + dp(24) && scroll.getPaddingBottom() == bottom + dp(24)) return;
         scroll.setPadding(left + dp(24), top + dp(24), right + dp(24), bottom + dp(24));
-        updateBounds(getWidth(), getHeight());
     }
 
-    @Override protected void onSizeChanged(int width, int height, int oldWidth, int oldHeight) {
-        super.onSizeChanged(width, height, oldWidth, oldHeight);
-        updateBounds(width, height);
-    }
-
-    private void updateBounds(int width, int height) {
-        content.setMinimumHeight(Math.max(0, height - scroll.getPaddingTop() - scroll.getPaddingBottom()));
-        ViewGroup.LayoutParams params = column.getLayoutParams();
-        int target = Math.max(1, Math.min(dp(420), width - scroll.getPaddingLeft() - scroll.getPaddingRight()));
-        if (params.width != target) {
-            params.width = target;
-            column.setLayoutParams(params);
-        }
+    @Override protected void onMeasure(int widthSpec, int heightSpec) {
+        // Insets can arrive before layout, when getWidth() is still zero.
+        // Size the column during measurement, before its descendants wrap text.
+        int available = MeasureSpec.getSize(widthSpec) - scroll.getPaddingLeft() - scroll.getPaddingRight();
+        column.getLayoutParams().width = Math.max(0, Math.min(dp(420), available));
+        super.onMeasure(widthSpec, heightSpec);
     }
 
     private TextView text(Context context, int size) {

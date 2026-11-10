@@ -354,6 +354,30 @@ document.querySelector('#fixture-post-blob').onclick=async event=>{
         throw new Error(
           'Native HTTP(S) external-link capability was not advertised'
         );
+    } else if (action === 'client-update-supported') {
+      const result = await command('Runtime.evaluate', {
+        expression: 'typeof window.TMDesktop?.installUpdate === "function"',
+        returnByValue: true,
+      });
+      if (result.result.value !== true)
+        throw new Error('Native update bridge unavailable');
+    } else if (action === 'client-update-click') {
+      await command('Runtime.evaluate', {
+        expression: `(() => {
+          const button = document.createElement('button');
+          button.id = 'native-client-update';
+          button.textContent = 'Update fixture';
+          button.style.cssText = 'position:fixed;top:70px;left:20px;z-index:9999';
+          button.onclick = () => {
+            button.remove();
+            window.TMDesktop.installUpdate().catch(error => {
+              window.__tmUpdateBridgeError = String(error);
+            });
+          };
+          document.body.appendChild(button);
+        })()`,
+      });
+      await click('#native-client-update');
     } else if (action === 'window-stable') {
       const result = await command('Runtime.evaluate', {
         expression:

@@ -49,6 +49,8 @@ afterEach(() => {
   cleanup();
   jest.useRealTimers();
   delete (window as { TMShell?: unknown }).TMShell;
+  Reflect.deleteProperty(window, '__tmDesktopInit');
+  Reflect.deleteProperty(window, 'TMDesktop');
 });
 
 async function flush() {
@@ -110,4 +112,31 @@ test('已是最新版本：不弹窗', async () => {
   render(<ClientUpdatePrompt />);
   await flush();
   expect(screen.queryByRole('dialog')).toBeNull();
+});
+
+test('客户端更新不读取网页发布记录', async () => {
+  setUa(ANDROID_UA);
+  mockFetch('202610301530');
+  render(<ClientUpdatePrompt />);
+  await flush();
+  expect(
+    screen.getByRole('heading', { name: '客户端更新' })
+  ).toBeInTheDocument();
+  expect(global.fetch).toHaveBeenCalledTimes(1);
+});
+
+test('Windows 交给原生更新器，启动失败时保留重试入口', async () => {
+  setUa('Mozilla/5.0 Chrome Windows');
+  mockFetch('202610301530');
+  const installUpdate = jest.fn().mockRejectedValue(new Error('unavailable'));
+  Object.assign(window, {
+    __tmDesktopInit: true,
+    TMDesktop: { build: '202610301000', installUpdate },
+  });
+  render(<ClientUpdatePrompt />);
+  await flush();
+  await act(async () => fireEvent.click(screen.getByText('立即更新')));
+  expect(installUpdate).toHaveBeenCalledTimes(1);
+  expect(screen.getByRole('status')).toHaveTextContent('无法启动更新');
+  expect(screen.getByText('重试')).toBeEnabled();
 });

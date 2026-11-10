@@ -321,6 +321,14 @@ jobs:
             --notes "Windows 桌面端、安卓手机端、安卓电视端安装包。首次打开填你自己的服务器地址即可。说明见仓库 README。" \
             2>/dev/null || true
           gh release upload clients release/* --clobber
+          # Keep each executable paired with its own build and digest. The
+          # native updater verifies both before handing anything to Windows.
+          for arch in x64 arm64; do
+            package="release/TongMuTV-Plus-Windows-${arch}-Setup.exe"
+            digest="$(sha256sum "$package" | cut -d ' ' -f 1)"
+            printf '%s\n%s\n' '${{ needs.stamp.outputs.build }}' "$digest" > "client-windows-${arch}.update"
+          done
+          gh release upload clients client-windows-{x64,arm64}.update --clobber
           # 版本清单：客户端据此判断有没有新包
           echo '{"build":"${{ needs.stamp.outputs.build }}","file":"TongMuTV-Plus-Windows-x64-Setup.exe"}' > client-windows.json
           gh release upload clients client-windows.json --clobber

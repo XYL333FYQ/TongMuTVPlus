@@ -19,6 +19,7 @@ export interface TMShellApi {
   supportsExternalLinks?: () => boolean;
   /** 下载新安装包并调起系统安装界面（仅新版安卓壳有；旧壳没有时网页改为打开下载链接） */
   installUpdate?: (url: string) => void;
+  supportsUpdateProgress?: () => boolean;
 }
 
 declare global {

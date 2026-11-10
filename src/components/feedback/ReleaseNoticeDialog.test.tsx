@@ -53,6 +53,15 @@ beforeEach(() => {
 afterEach(() => {
   cleanup();
   global.fetch = originalFetch;
+  Reflect.deleteProperty(window, '__tmDesktopInit');
+});
+
+test('Windows 客户端首页不会自动弹出网页更新记录', async () => {
+  Object.assign(window, { __tmDesktopInit: true });
+  serve({ ReleaseInfo: release('0.1.2') });
+  await mount();
+  expect(global.fetch).not.toHaveBeenCalled();
+  expect(screen.queryByRole('dialog')).toBeNull();
 });
 
 test("a newly published version pops up once with only that version's notes, even for a browser that has never seen any", async () => {

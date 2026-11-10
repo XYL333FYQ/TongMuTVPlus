@@ -1407,3 +1407,4 @@
 - API34 本次为真实本应用崩溃：PID3073、PlaybackService ForegroundServiceDidNotStartInTimeException；ActivityManager 记录刚 startForegroundService 后 1ms 即被 stopService 撤销，非外部工具 FATAL。修复候选将 inactive/Activity 关闭改为排队的停止命令，Service 按 startId 停止，避免杀掉尚未处理的新启动；夹具首次桥调用新增紧邻 true/false 回归。尚待新 APK 实测，不声称崩溃已解决。
 - 独立共享修正：原生 HTTP 能力不再外推到 magnet/vlc 等协议，网盘入口按实际 URL 显示复制；普通浏览器处理不变。畸形远端链接复制不再因 URL 构造拒绝产生未处理异常，保留原文可复制。只读能力按 TMShell 对象 WeakMap 缓存，避免影片卡每次 useSyncExternalStore 快照反复同步跨 Java 桥；换宿主对象会重新判断。4 项新回归均先红后绿，定向 5 套 30 项 0，不把调用次数证据称为手机帧率证明。
 - 本批 typecheck/lint0；完整 Jest 首跑原生 0xC0000005，无断言失败日志保留，结束类型进程后单独串行重跑 180 套 1175 项 0。原生队列停止、Cookie 回调前后布尔诊断及首载快速启停仍须新模拟器；当前全部任务继续，不发布、不改正式 VPS。
+- 2026-11-10 客户端回归：Android 启动层在测量阶段应用安全区与内容宽度，网页首帧接续 180ms 淡出；更新使用原生进度、取消、失败与系统安装确认。Windows 客户端新增固定官方来源、双架构、校验后的前台安装向导；旧版有下载页入口。客户端更新与站点版本说明分开，普通浏览器仍显示站点版本说明。Android OriginOS 真机和 Windows 覆盖安装需独立复验。

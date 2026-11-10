@@ -498,6 +498,28 @@ try {
     if (-not (Cdp 'window-fullscreen')) { throw 'F11 exit input did not dispatch' }
     Wait-Check { Cdp 'window-fullscreen-off' } 'F11 returns from fullscreen'
     if (-not (Cdp 'window-stable')) { throw 'Window operations lost the current document' }
+    if (Cdp 'client-update-supported') {
+        if (-not (Cdp 'client-update-click')) { throw 'Native update click did not dispatch' }
+        Wait-Check {
+            ($null -ne (Native-Button '更新未完成。请检查网络、磁盘空间或 Windows 安全提示后，在“关于”中重试。')) -or
+            ($null -ne (Native-Button '当前已是最新客户端。'))
+        } 'actual update click produces a native outcome with no newer published package' 60
+        Capture '00-native-client-update-outcome'
+        $updateDialog = Native-Button '客户端更新 · TongMuTV Plus'
+        if ($null -eq $updateDialog) { throw 'Owned native update outcome was not visible' }
+        $updateOk = $updateDialog.FindFirst(
+            [System.Windows.Automation.TreeScope]::Descendants,
+            [System.Windows.Automation.PropertyCondition]::new(
+                [System.Windows.Automation.AutomationElement]::AutomationIdProperty, '1'))
+        if ($null -ne $updateOk -and $updateOk.Current.ControlType -eq [System.Windows.Automation.ControlType]::Button) {
+            $updateOk.GetCurrentPattern([System.Windows.Automation.InvokePattern]::Pattern).Invoke()
+        } else {
+            $updateDialog.SetFocus()
+            [System.Windows.Forms.SendKeys]::SendWait('{ENTER}')
+        }
+        Wait-Check { $null -eq (Native-Button '客户端更新 · TongMuTV Plus') } 'update outcome closes'
+        if (-not (Cdp 'window-stable')) { throw 'Update replaced the active document' }
+    }
     Wait-Check { Cdp 'no-user-activation' } 'popup probe starts after previous keyboard activation expires'
     if (-not (Cdp 'popup')) { throw 'Automatic popup probe did not execute' }
     if ((Invoke-RestMethod 'http://127.0.0.1:8085/diagnostics').automaticRequests -ne 0) { throw 'Automatic popup escaped to an external browser' }

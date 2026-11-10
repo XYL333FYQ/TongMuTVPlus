@@ -1,9 +1,13 @@
 {
   "identifier": "main",
-  "description": "主窗口（本地填地址页和用户填写的服务器网站）：窗口按钮和全屏联动。只开这两个命令，别的一概没有",
+  "description": "主窗口：窗口控制、全屏和无参数的官方更新请求",
   "windows": ["main"],
   "remote": {
     "urls": ["http://*", "https://*", "http://*:*", "https://*:*"]
   },
-  "permissions": ["allow-tm-window", "allow-tm-fullscreen"]
+  "permissions": [
+    "allow-tm-window",
+    "allow-tm-fullscreen",
+    "allow-tm-client-update"
+  ]
 }

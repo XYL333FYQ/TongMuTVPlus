@@ -3,6 +3,7 @@
 import { motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
 
+import { detectClient } from '@/lib/client-update';
 import { useReducedMotionSetting } from '@/lib/motion';
 import { type ReleaseInfo, parseReleaseInfo } from '@/lib/release-info';
 
@@ -42,6 +43,13 @@ export default function ReleaseNoticeDialog({
   const [release, setRelease] = useState<ReleaseInfo | null>(null);
 
   useEffect(() => {
+    if (
+      detectClient(
+        navigator.userAgent,
+        window as Parameters<typeof detectClient>[1]
+      )
+    )
+      return;
     const controller = new AbortController();
     (async () => {
       try {

@@ -8,7 +8,19 @@
   if (window.__tmDesktopInit) return;
   window.__tmDesktopInit = true;
   // 构建时间（yyyyMMddHHmm，UTC），由 main.rs 在编译时填入；网页据此判断客户端新旧
-  window.TMDesktop = { build: '__BUILD__', externalLinks: true };
+  window.TMDesktop = {
+    build: '__BUILD__',
+    externalLinks: true,
+    installUpdate: function () {
+      var active = navigator.userActivation;
+      var bridge = window.__TAURI_INTERNALS__;
+      if (active && !active.isActive)
+        return Promise.reject(new Error('需要点击更新按钮'));
+      if (!bridge || typeof bridge.invoke !== 'function')
+        return Promise.reject(new Error('更新功能不可用'));
+      return bridge.invoke('tm_client_update', {});
+    },
+  };
 
   var HOME = '__HOME__';
   // 三个按钮各 46px 宽，顶栏右侧的操作区要让出这块位置

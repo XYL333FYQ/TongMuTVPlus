@@ -10,6 +10,8 @@ mod native_download_progress;
 mod native_external;
 #[cfg(windows)]
 mod native_recovery;
+#[cfg(windows)]
+mod native_update;
 mod recovery_policy;
 
 // 本地"填写服务器地址"页的地址：Windows 上 Tauri 2 用 http://tauri.localhost，其他平台用 tauri://localhost
@@ -48,13 +50,28 @@ fn tm_fullscreen(window: WebviewWindow, on: bool) {
     let _ = window.set_fullscreen(on);
 }
 
+#[tauri::command]
+fn tm_client_update(window: WebviewWindow) -> Result<(), String> {
+    #[cfg(windows)]
+    return native_update::start(&window);
+    #[cfg(not(windows))]
+    {
+        let _ = window;
+        Err("当前平台不支持客户端更新".into())
+    }
+}
+
 fn main() {
     #[cfg(windows)]
     if !native_recovery::runtime_ready() {
         return;
     }
     tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![tm_window, tm_fullscreen])
+        .invoke_handler(tauri::generate_handler![
+            tm_window,
+            tm_fullscreen,
+            tm_client_update
+        ])
         .setup(|app| {
             #[cfg(windows)]
             let initial_url = if std::env::var_os(native_recovery::SETTINGS_ONCE).is_some() {

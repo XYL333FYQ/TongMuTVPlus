@@ -3,6 +3,7 @@
 import { motion } from 'framer-motion';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import { PROJECT_REPOSITORY_URL } from '@/lib/brand';
 import {
   type UpdatePlatform,
   detectClient,
@@ -11,7 +12,6 @@ import {
   snooze,
 } from '@/lib/client-update';
 import { useReducedMotionSetting } from '@/lib/motion';
-import { type ReleaseInfo, parseReleaseInfo } from '@/lib/release-info';
 
 export const CHECK_EVENT = 'tm:check-client-update';
 export const RESULT_EVENT = 'tm:client-update-result';
@@ -23,7 +23,6 @@ interface Pending {
   build: string;
   url: string;
   platform: UpdatePlatform;
-  release: ReleaseInfo | null;
 }
 
 function report(state: UpdateResult) {
@@ -37,6 +36,8 @@ function report(state: UpdateResult) {
 export default function ClientUpdatePrompt() {
   const reduced = useReducedMotionSetting();
   const [pending, setPending] = useState<Pending | null>(null);
+  const [handoff, setHandoff] = useState<'idle' | 'starting' | 'error'>('idle');
+  const updating = useRef(false);
   const lastCheck = useRef(0);
 
   const check = useCallback(async (force: boolean) => {
@@ -65,21 +66,13 @@ export default function ClientUpdatePrompt() {
         return;
       }
       if (!force && isSnoozed(localStorage, data.build, Date.now())) return;
-      let release: ReleaseInfo | null = null;
-      try {
-        const config = await fetch('/api/server-config', {
-          cache: 'no-store',
-        });
-        if (config.ok)
-          release = parseReleaseInfo((await config.json()).ReleaseInfo);
-      } catch {
-        // 读不到发布记录就显示通用文案
-      }
+      const download = new URL(data.url, window.location.href);
+      if (!['https:', 'http:'].includes(download.protocol))
+        throw new Error('invalid download URL');
       setPending({
         build: data.build,
-        url: data.url,
+        url: download.href,
         platform: client.platform,
-        release,
       });
       if (force) report('update');
     } catch {
@@ -119,25 +112,34 @@ export default function ClientUpdatePrompt() {
   }, [check]);
 
   if (!pending) return null;
-  const entry = pending.release?.entries[0];
-  const sections = entry
-    ? [
-        { title: '新增功能', items: entry.added },
-        { title: '功能改进', items: entry.changed },
-        { title: '问题修复', items: entry.fixed },
-      ].filter(({ items }) => items.length > 0)
-    : [];
+  const android = pending.platform === 'android';
+  const installAndroid = android && window.TMShell?.installUpdate;
+  const desktop = (
+    window as Window & {
+      TMDesktop?: { installUpdate?: () => Promise<void> };
+    }
+  ).TMDesktop;
+  const installWindows = !android && desktop?.installUpdate;
 
   const later = () => {
     snooze(localStorage, pending.build, Date.now());
     setPending(null);
+    setHandoff('idle');
   };
-  const update = () => {
-    const shell = window.TMShell;
-    if (pending.platform === 'android' && shell?.installUpdate)
-      shell.installUpdate(pending.url);
-    else window.location.href = pending.url;
-    setPending(null);
+  const update = async () => {
+    if (updating.current) return;
+    updating.current = true;
+    setHandoff('starting');
+    try {
+      if (installAndroid) window.TMShell?.installUpdate?.(pending.url);
+      else if (installWindows) await installWindows();
+      setPending(null);
+      setHandoff('idle');
+    } catch {
+      setHandoff('error');
+    } finally {
+      updating.current = false;
+    }
   };
 
   return (
@@ -156,35 +158,47 @@ export default function ClientUpdatePrompt() {
       >
         <div className='tm-modal-body'>
           <h2 id='client-update-title' className='tm-modal-title'>
-            发现新版本{pending.release ? ` v${pending.release.version}` : ''}
+            客户端更新
           </h2>
           <p className='mt-1 text-sm text-muted'>
-            {pending.platform === 'android'
-              ? '建议更新，点“立即更新”会下载并打开安装界面。'
-              : '建议更新，点“立即更新”会下载新的安装包，运行即可覆盖安装。'}
+            {installWindows ||
+            (installAndroid && window.TMShell?.supportsUpdateProgress)
+              ? '下载时会显示进度。下载完成后，请确认安装。'
+              : installAndroid
+              ? '下载完成后，系统会提示确认安装。'
+              : '此版本需要手动更新。打开下载页，选择适合你的安装包。'}
           </p>
-          {sections.length > 0 && (
-            <div className='mt-3 max-h-[40vh] space-y-3 overflow-y-auto text-sm text-muted'>
-              {sections.map(({ title, items }) => (
-                <div key={title}>
-                  <p className='font-medium text-fg'>{title}</p>
-                  <ul className='list-disc space-y-1 pl-5'>
-                    {items.map((item, index) => (
-                      <li key={`${title}-${index}`}>{item}</li>
-                    ))}
-                  </ul>
-                </div>
-              ))}
-            </div>
-          )}
+          <p role='status' className='mt-1 text-sm text-muted'>
+            {handoff === 'starting' && '正在启动更新…'}
+            {handoff === 'error' && '无法启动更新，请重试。'}
+          </p>
         </div>
         <div className='tm-modal-footer flex gap-2'>
-          <button onClick={later} className='tm-btn flex-1'>
+          <button
+            onClick={later}
+            disabled={handoff === 'starting'}
+            className='tm-btn flex-1'
+          >
             稍后
           </button>
-          <button onClick={update} className='tm-btn tm-btn-primary flex-1'>
-            立即更新
-          </button>
+          {installAndroid || installWindows ? (
+            <button
+              onClick={update}
+              disabled={handoff === 'starting'}
+              className='tm-btn tm-btn-primary flex-1'
+            >
+              {handoff === 'error' ? '重试' : '立即更新'}
+            </button>
+          ) : (
+            <a
+              href={`${PROJECT_REPOSITORY_URL}/releases/tag/clients`}
+              target='_blank'
+              rel='noopener noreferrer'
+              className='tm-btn tm-btn-primary flex-1'
+            >
+              打开下载页
+            </a>
+          )}
         </div>
       </motion.div>
     </div>

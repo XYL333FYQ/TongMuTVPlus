@@ -12,7 +12,7 @@ tauri = { version = "=2.12.5", features = [] }
 
 [target.'cfg(windows)'.dependencies]
 webview2-com = "=0.39.1"
-windows = { version = "0.62", features = ["Win32_Foundation", "Win32_System_Com", "Win32_UI_Controls", "Win32_UI_Shell", "Win32_UI_WindowsAndMessaging"] }
+windows = { version = "0.62", features = ["Win32_Foundation", "Win32_Networking_WinHttp", "Win32_Security_Cryptography", "Win32_System_Com", "Win32_UI_Controls", "Win32_UI_Shell", "Win32_UI_WindowsAndMessaging"] }
 
 [profile.release]
 opt-level = "s"

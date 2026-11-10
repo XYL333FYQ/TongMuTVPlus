@@ -18,6 +18,7 @@ class SecureFixtureServer(ThreadingHTTPServer):
 
     def process_request_thread(self, request, client_address):
         try:
+            time.sleep(getattr(self, 'handshake_delay', 0))
             request.settimeout(5)
             secure = self.context.wrap_socket(request, server_side=True)
         except OSError as error:
@@ -339,8 +340,11 @@ class Handler(BaseHTTPRequestHandler):
         controls = RECOVERY_CONTROLS if getattr(self.server, "recovery_mode", False) else b""
         if self.path == "/" and controls:
             controls += BACK_CONTROLS
+            if not getattr(self.server, 'initial_request_seen', False):
+                self.server.initial_request_seen = True
+                time.sleep(10)
         if self.path == "/update-test" and controls:
-            controls = b"<button style='display:block;font-size:20px;min-height:48px' onclick=\"TMShell.installUpdate('https://example.com/TongMuTV-Plus-Android.apk')\">Update missing package test</button>"
+            controls = b"<button style='display:block;font-size:20px;min-height:48px' onclick=\"TMShell.installUpdate('https://10.0.2.2:8444/TongMuTV-Plus-Android.apk')\">Update missing package test</button>"
         page = PAGE.replace(b"__RECOVERY_CONTROLS__", controls)
         if getattr(self.server, "playing_reported", False):
             page = page.replace(b"TMShell.setPlaying(true);", b"TMShell.setPlaying(false);")
@@ -387,6 +391,10 @@ if __name__ == "__main__":
         secure = SecureFixtureServer(("0.0.0.0", 8443), Handler, context)
         secure.recovery_mode = recovery
         threading.Thread(target=secure.serve_forever, daemon=True).start()
+        if recovery:
+            update = SecureFixtureServer(("0.0.0.0", 8444), Handler, context)
+            update.handshake_delay = 18
+            threading.Thread(target=update.serve_forever, daemon=True).start()
     server = HTTPServer(("0.0.0.0", int(sys.argv[1])), Handler)
     server.recovery_mode = recovery
     server.video_path = sys.argv[5] if len(sys.argv) > 5 else None

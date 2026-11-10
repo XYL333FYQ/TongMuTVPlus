@@ -118,6 +118,25 @@ for _ in $(seq 1 45); do
   grep -q "TongMuTVPlusAndroid" "$OUT/server.log" && break
   sleep 1
 done
+if [ "$PKG" = "com.tongmutvplus.mobile" ]; then
+  adb exec-out screencap -p >"$OUT/01-loading-before-first-frame.png"
+  adb shell uiautomator dump /sdcard/tm-loading.xml >/dev/null || exit 1
+  adb exec-out cat /sdcard/tm-loading.xml >"$OUT/loading-before-first-frame.xml"
+  python3 - "$OUT/loading-before-first-frame.xml" <<'PY' || exit 1
+import re
+import sys
+import xml.etree.ElementTree as ET
+
+for node in ET.parse(sys.argv[1]).iter('node'):
+    if node.get('resource-id', '').endswith(':id/tm_load_title') and node.get('text') == '正在连接':
+        x0, y0, x1, y1 = map(int, re.findall(r'\d+', node.get('bounds', '')))
+        if x1 - x0 >= 100 and y1 > y0:
+            print('PASS: real native loading title is visible at full width before WebView paints')
+            break
+else:
+    sys.exit('Native loading text missing or collapsed to a narrow stripe')
+PY
+fi
 # 页面会在加载后约 3 秒报告壳注入的结果；最多再等 20 秒
 for _ in $(seq 1 20); do
   grep -q '^REPORT ' "$OUT/server.log" && break
@@ -629,11 +648,15 @@ PY
       # The destination deliberately returns no APK; the test never installs.
       adb shell appops set "$PKG" REQUEST_INSTALL_PACKAGES allow || return 1
       adb shell input keyevent 4
-      wait_target text 'Update missing package test' >/dev/null || return 1
+      wait_target text '取消下载' >/dev/null || return 1
       adb logcat -d -s TongMuClient >"$OUT/update-granted.log"
       grep -q 'update queued' "$OUT/update-granted.log" || return 1
       adb exec-out screencap -p >"$OUT/12-update-resumed.png"
-      echo 'PASS: denied permission does not download; granted Settings return queues original request'
+      tap_target text '取消下载' || return 1
+      wait_target text '已取消下载' >/dev/null || return 1
+      tap_target text '知道了' || return 1
+      wait_target text 'Update missing package test' >/dev/null || return 1
+      echo 'PASS: update permission denial, foreground progress and cancellation'
     fi
   }
   verify_recovery || recovery_status=1

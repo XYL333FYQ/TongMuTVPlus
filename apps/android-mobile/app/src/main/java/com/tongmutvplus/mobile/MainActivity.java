@@ -56,6 +56,7 @@ import android.webkit.URLUtil;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.FrameLayout;
+import android.widget.ProgressBar;
 import android.widget.Toast;
 
 /**
@@ -107,6 +108,10 @@ public class MainActivity extends Activity {
     private BroadcastReceiver updateReceiver;
     private UpdateRequest updateRequest = new UpdateRequest();
     private String updateServer;
+    private AlertDialog updateDialog;
+    private ProgressBar updateProgress;
+    private String updateProgressLabel;
+    private final Runnable pollUpdate = this::checkUpdateDownload;
     private boolean resumed;
     private Bundle pendingFileDownload;
 
@@ -942,6 +947,7 @@ public class MainActivity extends Activity {
     @Override
     protected void onPause() {
         resumed = false;
+        closeUpdateProgress();
         if (webView != null) CookieManager.getInstance().flush();
         // 正在播放时不暂停 WebView，切后台也能继续（配合前台服务保活）
         if (webView != null && !playing) webView.onPause();
@@ -953,6 +959,7 @@ public class MainActivity extends Activity {
         loadState.invalidate();
         clearLoadTimeout();
         dismissDialog();
+        closeUpdateProgress();
         if (pauseReceiver != null) {
             unregisterReceiver(pauseReceiver);
             pauseReceiver = null;
@@ -1065,6 +1072,9 @@ public class MainActivity extends Activity {
         public void installUpdate(String url) {
             runOnUiThread(() -> { if (current() && !errorShown) downloadAndInstall(url); });
         }
+
+        @JavascriptInterface
+        public boolean supportsUpdateProgress() { return true; }
     }
 
     private void enableEdgeToEdge() {
@@ -1096,8 +1106,12 @@ public class MainActivity extends Activity {
                         clearLoadTimeout();
                         view.setEnabled(true);
                         view.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_AUTO);
-                        localSurface.setVisibility(View.GONE);
-                        view.animate().alpha(1f).setDuration(180).start();
+                        view.setAlpha(1f);
+                        // Keep the painted loading layer over the WebView's first frame.
+                        localSurface.animate().alpha(0f).setDuration(180).withEndAction(() -> {
+                            if (view == webView && revealed && !errorShown && requestId == loadState.token())
+                                localSurface.setVisibility(View.GONE);
+                        }).start();
                     }
                 });
             } catch (RuntimeException unavailable) {
@@ -1279,12 +1293,10 @@ public class MainActivity extends Activity {
     private void downloadAndInstall(String url) {
         try {
             Uri uri = Uri.parse(url);
-            Uri page = webView == null || webView.getUrl() == null ? null : Uri.parse(webView.getUrl());
-            Uri server = getSavedServer() == null ? null : Uri.parse(getSavedServer());
-            boolean fromServerPage = page != null && server != null && server.getHost() != null
-                    && server.getHost().equalsIgnoreCase(page.getHost());
+            boolean fromServerPage = webView != null && ScopedDownload.sameOrigin(webView.getUrl(), getSavedServer());
             String last = uri.getLastPathSegment();
-            if (!fromServerPage || !"https".equals(uri.getScheme())
+            if (!fromServerPage || !"https".equals(uri.getScheme()) || uri.getHost() == null
+                    || uri.getUserInfo() != null
                     || !"TongMuTV-Plus-Android.apk".equals(last)) {
                 Toast.makeText(this, "无法使用此更新地址。", Toast.LENGTH_LONG).show();
                 return;
@@ -1297,6 +1309,7 @@ public class MainActivity extends Activity {
             // 8.0 以上要先允许本应用安装未知来源的应用
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && !getPackageManager().canRequestPackageInstalls()) {
                 updateRequest.waitForPermission();
+                Toast.makeText(this, "允许此应用安装更新后，会自动开始下载。", Toast.LENGTH_LONG).show();
                 startActivity(new Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
                         Uri.parse("package:" + getPackageName())));
                 return;
@@ -1304,7 +1317,7 @@ public class MainActivity extends Activity {
             enqueueUpdate(url);
         } catch (RuntimeException unavailable) {
             updateRequest.clear();
-            Toast.makeText(this, "暂时无法开始更新，请稍后再试。", Toast.LENGTH_LONG).show();
+            showUpdateMessage("无法开始更新", "可在“关于”中重新检查更新。");
         }
     }
 
@@ -1321,10 +1334,10 @@ public class MainActivity extends Activity {
                             "TongMuTV-Plus-Android-" + System.currentTimeMillis() + ".apk");
             updateRequest.downloadStarted(manager.enqueue(request));
             Log.i("TongMuClient", "update queued");
-            Toast.makeText(this, "正在下载更新，可在通知栏查看进度。", Toast.LENGTH_LONG).show();
+            checkUpdateDownload();
         } catch (RuntimeException unavailable) {
             updateRequest.clear();
-            Toast.makeText(this, "下载未能开始，请稍后再试。", Toast.LENGTH_LONG).show();
+            showUpdateMessage("无法开始下载", "检查网络或存储空间后，可以重新检查更新。");
         }
     }
 
@@ -1342,6 +1355,7 @@ public class MainActivity extends Activity {
     }
 
     private void checkUpdateDownload() {
+        root.removeCallbacks(pollUpdate);
         long id = updateRequest.downloadId();
         if (id < 0 || !resumed) return;
         DownloadManager manager = getSystemService(DownloadManager.class);
@@ -1349,17 +1363,18 @@ public class MainActivity extends Activity {
         try (Cursor cursor = manager.query(new DownloadManager.Query().setFilterById(id))) {
             if (cursor == null || !cursor.moveToFirst()) {
                 updateRequest.finish(id);
-                Toast.makeText(this, "更新下载已不存在，请重新点击更新。", Toast.LENGTH_LONG).show();
+                showUpdateMessage("下载已结束", "找不到安装包。可在“关于”中重新检查更新。");
                 return;
             }
             int status = cursor.getInt(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_STATUS));
             if (status == DownloadManager.STATUS_FAILED) {
                 updateRequest.finish(id);
                 Log.i("TongMuClient", "update download failed");
-                Toast.makeText(this, "更新下载失败，请检查网络或存储空间后重试。", Toast.LENGTH_LONG).show();
+                showUpdateMessage("下载失败", "检查网络或存储空间后，可以重新检查更新。");
             } else if (status == DownloadManager.STATUS_SUCCESSFUL) {
                 Uri file = manager.getUriForDownloadedFile(id);
                 if (!updateRequest.finish(id)) return;
+                closeUpdateProgress();
                 if (file == null) {
                     Toast.makeText(this, "安装包不可用，请重新下载。", Toast.LENGTH_LONG).show();
                     return;
@@ -1367,10 +1382,75 @@ public class MainActivity extends Activity {
                 startActivity(new Intent(Intent.ACTION_VIEW)
                         .setDataAndType(file, "application/vnd.android.package-archive")
                         .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION));
+            } else {
+                long bytes = cursor.getLong(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_BYTES_DOWNLOADED_SO_FAR));
+                long total = cursor.getLong(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_TOTAL_SIZE_BYTES));
+                showUpdateProgress(id, status, bytes, total);
+                root.postDelayed(pollUpdate, 500);
             }
         } catch (RuntimeException unavailable) {
             updateRequest.clear();
-            Toast.makeText(this, "暂时无法打开更新，请稍后重试。", Toast.LENGTH_LONG).show();
+            showUpdateMessage("暂时无法打开更新", "可在“关于”中重新检查更新。");
         }
+    }
+
+    private int updateDialogTheme() {
+        return pageDark ? android.R.style.Theme_Material_Dialog_Alert
+                : android.R.style.Theme_Material_Light_Dialog_Alert;
+    }
+
+    private void showUpdateProgress(long id, int status, long bytes, long total) {
+        if (updateDialog == null) {
+            updateProgress = new ProgressBar(new ContextThemeWrapper(this, updateDialogTheme()), null,
+                    android.R.attr.progressBarStyleHorizontal);
+            updateProgress.setMax(100);
+            FrameLayout padded = new FrameLayout(this);
+            int inset = Math.round(24 * getResources().getDisplayMetrics().density);
+            padded.setPadding(inset, 0, inset, 0);
+            padded.addView(updateProgress, new FrameLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+            updateDialog = new AlertDialog.Builder(this, updateDialogTheme())
+                    .setTitle("客户端更新")
+                    .setMessage("正在准备下载…")
+                    .setView(padded)
+                    .setNegativeButton("取消下载", (dialog, which) -> {
+                        try {
+                            DownloadManager manager = getSystemService(DownloadManager.class);
+                            if (manager == null) throw new IllegalStateException("Download service unavailable");
+                            if (updateRequest.finish(id)) manager.remove(id);
+                            showUpdateMessage("已取消下载", "可以稍后重新检查更新。");
+                        } catch (RuntimeException unavailable) {
+                            showUpdateMessage("无法取消下载", "可在系统下载管理中查看此次下载。");
+                        }
+                    })
+                    .setCancelable(false)
+                    .show();
+        }
+        updateProgress.setIndeterminate(total <= 0);
+        if (total > 0) updateProgress.setProgress((int) Math.min(99, Math.max(0, bytes * 100.0 / total)));
+        String received = android.text.format.Formatter.formatShortFileSize(this, Math.max(0, bytes));
+        String size = total > 0 ? " / " + android.text.format.Formatter.formatShortFileSize(this, total) : "";
+        String phase = status == DownloadManager.STATUS_RUNNING ? "正在下载" : "等待下载";
+        String label = phase + " · " + received + size;
+        if (!label.equals(updateProgressLabel)) {
+            updateDialog.setMessage(label);
+            updateProgressLabel = label;
+        }
+    }
+
+    private void closeUpdateProgress() {
+        root.removeCallbacks(pollUpdate);
+        if (updateDialog != null) {
+            updateDialog.dismiss();
+            updateDialog = null;
+            updateProgress = null;
+            updateProgressLabel = null;
+        }
+    }
+
+    private void showUpdateMessage(String title, String message) {
+        closeUpdateProgress();
+        new AlertDialog.Builder(this, updateDialogTheme())
+                .setTitle(title).setMessage(message).setPositiveButton("知道了", null).show();
     }
 }
