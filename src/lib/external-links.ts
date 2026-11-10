@@ -7,7 +7,11 @@ const shellModes = new WeakMap<object, ExternalLinkMode>();
 
 declare global {
   interface Window {
-    TMDesktop?: { build?: string; externalLinks?: boolean };
+    TMDesktop?: {
+      build?: string;
+      externalLinks?: boolean;
+      launchCue?: boolean;
+    };
   }
 }
 
