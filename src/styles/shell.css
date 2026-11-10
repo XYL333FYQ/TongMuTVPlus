@@ -1322,3 +1322,61 @@ html[data-tm-platform='app']
 html[data-tm-shell] {
   overscroll-behavior-y: none;
 }
+.tm-launch-cue {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 999;
+  z-index: calc(var(--tm-z-overlay) - 1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: inherit;
+  background: var(--tm-bg);
+  color: var(--tm-text);
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  pointer-events: none;
+  animation: tm-launch-out 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.tm-launch-line {
+  width: 64px;
+  height: 2px;
+  margin-bottom: 16px;
+  background: currentColor;
+  animation: tm-launch-expand 240ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes tm-launch-expand {
+  from {
+    opacity: 0.35;
+    transform: scaleX(0.22);
+  }
+}
+
+@keyframes tm-launch-out {
+  0%,
+  35% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+
+html[data-tm-native-launch='true'] .tm-launch-cue,
+html[data-tm-reduced-motion='true'] .tm-launch-cue {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tm-launch-cue {
+    display: none;
+  }
+}

@@ -3,7 +3,7 @@
 import { motion } from 'framer-motion';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { PROJECT_REPOSITORY_URL } from '@/lib/brand';
+import { CLIENT_PACKAGES } from '@/lib/client-downloads';
 import {
   type UpdatePlatform,
   detectClient,
@@ -11,6 +11,7 @@ import {
   isSnoozed,
   snooze,
 } from '@/lib/client-update';
+import { copyExternalLink } from '@/lib/external-links';
 import { useReducedMotionSetting } from '@/lib/motion';
 
 export const CHECK_EVENT = 'tm:check-client-update';
@@ -37,6 +38,9 @@ export default function ClientUpdatePrompt() {
   const reduced = useReducedMotionSetting();
   const [pending, setPending] = useState<Pending | null>(null);
   const [handoff, setHandoff] = useState<'idle' | 'starting' | 'error'>('idle');
+  const [showPackages, setShowPackages] = useState(false);
+  const [downloadMessage, setDownloadMessage] = useState('');
+  const [manualAddress, setManualAddress] = useState('');
   const updating = useRef(false);
   const lastCheck = useRef(0);
 
@@ -120,11 +124,25 @@ export default function ClientUpdatePrompt() {
     }
   ).TMDesktop;
   const installWindows = !android && desktop?.installUpdate;
+  const canInstall = installAndroid || installWindows;
+  const packages = showPackages
+    ? CLIENT_PACKAGES.filter(({ platform }) => platform === pending.platform)
+    : [];
 
   const later = () => {
     snooze(localStorage, pending.build, Date.now());
     setPending(null);
     setHandoff('idle');
+    setShowPackages(false);
+    setDownloadMessage('');
+    setManualAddress('');
+  };
+  const copyPackage = async (url: string) => {
+    const copied = await copyExternalLink(url);
+    setManualAddress(copied ? '' : url);
+    setDownloadMessage(
+      copied ? '链接已复制，可粘贴到浏览器下载。' : '请手动复制下方地址。'
+    );
   };
   const update = async () => {
     if (updating.current) return;
@@ -166,12 +184,58 @@ export default function ClientUpdatePrompt() {
               ? '下载时会显示进度。下载完成后，请确认安装。'
               : installAndroid
               ? '下载完成后，系统会提示确认安装。'
-              : '此版本需要手动更新。打开下载页，选择适合你的安装包。'}
+              : '此版本需要手动更新，请选择适合你的安装包。'}
           </p>
           <p role='status' className='mt-1 text-sm text-muted'>
-            {handoff === 'starting' && '正在启动更新…'}
-            {handoff === 'error' && '无法启动更新，请重试。'}
+            {downloadMessage ||
+              (handoff === 'starting'
+                ? '正在启动更新…'
+                : handoff === 'error'
+                ? '无法启动更新，可重试或手动下载。'
+                : '')}
           </p>
+          {showPackages && (
+            <div id='client-update-packages' className='mt-3 grid gap-2'>
+              {packages.map(({ file, label }) => {
+                const url = android
+                  ? pending.url
+                  : new URL(file, pending.url).href;
+                return (
+                  <div key={file} className='flex flex-wrap gap-2'>
+                    <a
+                      href={url}
+                      download={file}
+                      className='tm-btn flex-1'
+                      onClick={() => {
+                        setDownloadMessage(
+                          '已请求下载。若未看到下载提示，请复制链接到浏览器。'
+                        );
+                      }}
+                    >
+                      {label}
+                    </a>
+                    <button
+                      type='button'
+                      className='tm-btn'
+                      aria-label={`复制${label}链接`}
+                      onClick={() => void copyPackage(url)}
+                    >
+                      复制链接
+                    </button>
+                  </div>
+                );
+              })}
+              {manualAddress && (
+                <input
+                  className='tm-input w-full'
+                  aria-label='安装包下载地址'
+                  readOnly
+                  value={manualAddress}
+                  onFocus={(event) => event.currentTarget.select()}
+                />
+              )}
+            </div>
+          )}
         </div>
         <div className='tm-modal-footer flex gap-2'>
           <button
@@ -181,7 +245,7 @@ export default function ClientUpdatePrompt() {
           >
             稍后
           </button>
-          {installAndroid || installWindows ? (
+          {canInstall && !showPackages && (
             <button
               onClick={update}
               disabled={handoff === 'starting'}
@@ -189,15 +253,16 @@ export default function ClientUpdatePrompt() {
             >
               {handoff === 'error' ? '重试' : '立即更新'}
             </button>
-          ) : (
-            <a
-              href={`${PROJECT_REPOSITORY_URL}/releases/tag/clients`}
-              target='_blank'
-              rel='noopener noreferrer'
+          )}
+          {(!canInstall || handoff === 'error') && (
+            <button
+              type='button'
+              aria-expanded={showPackages}
+              onClick={() => setShowPackages(!showPackages)}
               className='tm-btn tm-btn-primary flex-1'
             >
-              打开下载页
-            </a>
+              {showPackages ? '收起安装包' : '选择安装包'}
+            </button>
           )}
         </div>
       </motion.div>

@@ -1,5 +1,9 @@
 /** @jest-environment jsdom */
-import { getPlatform, PLATFORM_BOOT_SCRIPT } from './platform';
+import {
+  getPlatform,
+  NATIVE_LAUNCH_BOOT_SCRIPT,
+  PLATFORM_BOOT_SCRIPT,
+} from './platform';
 
 type TestWindow = Window & {
   TMShell?: unknown;
@@ -59,6 +63,24 @@ test('安卓壳按 UA 或 TMShell 认出，是 app', () => {
 test('电脑客户端按初始化脚本认出，是 desktop', () => {
   expect(boot({ desktop: true })).toBe('desktop');
   expect(getPlatform()).toBe('desktop');
+});
+
+test('仅已提供原生启动动画的安装包跳过网页开场', () => {
+  const root = document.documentElement;
+  boot({ userAgent: 'Mozilla/5.0 TongMuTVPlusAndroidTV WebView' });
+  new Function(NATIVE_LAUNCH_BOOT_SCRIPT)();
+  expect(root).not.toHaveAttribute('data-tm-native-launch');
+
+  boot({ userAgent: 'Mozilla/5.0 TongMuTVPlusAndroid WebView TMLaunchCue/1' });
+  new Function(NATIVE_LAUNCH_BOOT_SCRIPT)();
+  expect(root).toHaveAttribute('data-tm-native-launch', 'true');
+  root.removeAttribute('data-tm-native-launch');
+
+  boot({ desktop: true });
+  (window as TestWindow).TMDesktop = { launchCue: true };
+  new Function(NATIVE_LAUNCH_BOOT_SCRIPT)();
+  expect(root).toHaveAttribute('data-tm-native-launch', 'true');
+  root.removeAttribute('data-tm-native-launch');
 });
 
 test('安装到主屏幕的网页应用是 app（含 iOS 的 navigator.standalone）', () => {

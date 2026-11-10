@@ -18,6 +18,9 @@ export type TMPlatform = 'app' | 'desktop' | 'web';
  */
 export const PLATFORM_BOOT_SCRIPT = `(function(){try{var w=window,d=document.documentElement,p='web';if(/TongMuTVPlusAndroid/.test(navigator.userAgent)||w.TMShell){p='app'}else if(w.__tmDesktopInit||w.TMDesktop){p='desktop'}else if(navigator.standalone===true||(w.matchMedia&&(w.matchMedia('(display-mode: standalone)').matches||w.matchMedia('(display-mode: fullscreen)').matches))){p='app'}d.setAttribute('data-tm-platform',p)}catch(e){}})();`;
 
+/** Hosts with their own connection animation already introduced the app. */
+export const NATIVE_LAUNCH_BOOT_SCRIPT = `(function(){if(/TMLaunchCue\\/1\\b/.test(navigator.userAgent)||(window.TMDesktop&&window.TMDesktop.launchCue===true))document.documentElement.setAttribute('data-tm-native-launch','true')})();`;
+
 /** 读取当前端；服务端渲染或脚本没跑时按普通网页处理 */
 export function getPlatform(): TMPlatform {
   if (typeof document === 'undefined') return 'web';

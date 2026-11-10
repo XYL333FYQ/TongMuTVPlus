@@ -71,6 +71,32 @@
         text-align: center;
         color: #9a9a9a;
       }
+      .launch-line {
+        display: block;
+        margin: 0 auto 18px;
+        width: 64px;
+        height: 2px;
+        background: currentColor;
+        animation: tm-launch-line 240ms cubic-bezier(0.22, 1, 0.36, 1) both;
+      }
+      .launch-wordmark {
+        display: block;
+        margin-bottom: 8px;
+        color: inherit;
+        font-size: 16px;
+        letter-spacing: 0.04em;
+      }
+      @keyframes tm-launch-line {
+        from {
+          opacity: 0.35;
+          transform: scaleX(0.22);
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .launch-line {
+          animation: none;
+        }
+      }
       [hidden] {
         display: none !important;
       }
@@ -78,6 +104,8 @@
   </head>
   <body>
     <main id="status" hidden>
+      <span class="launch-line" aria-hidden="true"></span>
+      <strong class="launch-wordmark">TongMuTV Plus</strong>
       <p id="statusText">正在连接…</p>
     </main>
     <main id="form" hidden>

@@ -11,6 +11,7 @@
   window.TMDesktop = {
     build: '__BUILD__',
     externalLinks: true,
+    launchCue: true,
     installUpdate: function () {
       var active = navigator.userActivation;
       var bridge = window.__TAURI_INTERNALS__;

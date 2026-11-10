@@ -11,9 +11,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.FrameLayout;
-import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.ProgressBar;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
@@ -25,7 +23,8 @@ final class AppStateView extends FrameLayout {
     private final TextView title;
     private final TextView message;
     private final TextView details;
-    private final ProgressBar progress;
+    private final View launchLine;
+    private boolean launchPlayed;
     private final Button retry;
     private final Button settings;
     private final Button detailsButton;
@@ -45,10 +44,9 @@ final class AppStateView extends FrameLayout {
         scroll.addView(content, new ScrollView.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
         addView(scroll, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
 
-        ImageView logo = new ImageView(context);
-        logo.setImageResource(R.drawable.logo);
-        logo.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
-        column.addView(logo, new LinearLayout.LayoutParams(dp(56), dp(56)));
+        launchLine = new View(context);
+        launchLine.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+        column.addView(launchLine, new LinearLayout.LayoutParams(dp(64), dp(2)));
         title = text(context, 22);
         title.setId(R.id.tm_load_title);
         if (Build.VERSION.SDK_INT >= 28) title.setAccessibilityHeading(true);
@@ -56,10 +54,6 @@ final class AppStateView extends FrameLayout {
         addRow(title, 24);
         message = text(context, 14);
         addRow(message, 12);
-        progress = new ProgressBar(context);
-        LinearLayout.LayoutParams progressParams = new LinearLayout.LayoutParams(dp(32), dp(32));
-        progressParams.topMargin = dp(24);
-        column.addView(progress, progressParams);
         retry = button(context, "重试", R.id.tm_load_retry, onRetry);
         settings = button(context, "服务器设置", R.id.tm_load_settings, onSettings);
         detailsButton = button(context, "查看详情", R.id.tm_load_details, this::toggleDetails);
@@ -68,7 +62,6 @@ final class AppStateView extends FrameLayout {
         addRow(details, 12);
         setDark(true);
         setSafeInsets(0, 0, 0, 0);
-        showLoading();
     }
 
     void setDark(boolean dark) {
@@ -81,7 +74,7 @@ final class AppStateView extends FrameLayout {
         title.setTextColor(fg);
         message.setTextColor(muted);
         details.setTextColor(muted);
-        progress.setIndeterminateTintList(ColorStateList.valueOf(muted));
+        launchLine.setBackgroundColor(muted);
         style(retry, fg, bg, line, muted);
         style(settings, surface, fg, line, muted);
         style(detailsButton, surface, fg, line, muted);
@@ -111,7 +104,13 @@ final class AppStateView extends FrameLayout {
         setAlpha(1f);
         title.setText(heading);
         message.setText(explanation);
-        progress.setVisibility(loading ? View.VISIBLE : View.GONE);
+        launchLine.setVisibility(loading ? View.VISIBLE : View.GONE);
+        if (loading && !launchPlayed) {
+            launchPlayed = true;
+            launchLine.setScaleX(0.22f);
+            launchLine.setAlpha(0.35f);
+            launchLine.animate().scaleX(1f).alpha(1f).setDuration(240).start();
+        }
         retry.setVisibility(loading ? View.GONE : View.VISIBLE);
         settings.setVisibility(loading ? View.GONE : View.VISIBLE);
         detailsButton.setVisibility(diagnostic.isEmpty() ? View.GONE : View.VISIBLE);

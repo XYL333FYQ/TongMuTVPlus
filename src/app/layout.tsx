@@ -24,7 +24,10 @@ import {
 } from '@/lib/brand';
 import { getConfig } from '@/lib/config';
 import { getUserFeatureAccess } from '@/lib/permissions';
-import { PLATFORM_BOOT_SCRIPT } from '@/lib/platform';
+import {
+  NATIVE_LAUNCH_BOOT_SCRIPT,
+  PLATFORM_BOOT_SCRIPT,
+} from '@/lib/platform';
 import { projectGuestRuntimeConfig } from '@/lib/public-runtime-config';
 import { authenticateAuthInfo } from '@/lib/request-auth';
 import { listEnabledSourceScripts } from '@/lib/source-script';
@@ -457,6 +460,9 @@ export default async function RootLayout({
         {/* 端标记（app / desktop / web）：在任何页面脚本之前写到 <html> 上，样式与手势按它分端 */}
         {/* eslint-disable-next-line @next/next/no-sync-scripts */}
         <script dangerouslySetInnerHTML={{ __html: PLATFORM_BOOT_SCRIPT }} />
+        <script
+          dangerouslySetInnerHTML={{ __html: NATIVE_LAUNCH_BOOT_SCRIPT }}
+        />
         {/* 主题CSS */}
         <link rel='stylesheet' href={`/api/theme/css?v=${themeCssVersion}`} />
         {/* 将配置序列化后直接写入脚本，浏览器端可通过 window.RUNTIME_CONFIG 获取 */}
@@ -517,6 +523,10 @@ export default async function RootLayout({
       </head>
       <body className='tm-app min-h-screen'>
         <ThemeProvider attribute='class' defaultTheme='dark' enableSystem>
+          <div className='tm-launch-cue' aria-hidden='true'>
+            <span className='tm-launch-line' />
+            <span>TongMuTV Plus</span>
+          </div>
           <TopProgressBar />
           <RouteScrollReset />
           <Suspense fallback={null}>

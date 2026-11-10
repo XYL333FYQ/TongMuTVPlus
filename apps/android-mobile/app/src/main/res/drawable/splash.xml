@@ -1,15 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- 启动页：黑底居中放应用图标（logo.png 由打包流水线从 public/icons 复制进来） -->
+<!-- 启动窗口使用与本地连接界面相同的底色。 -->
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
     <item>
         <color android:color="@color/tm_bg" />
-    </item>
-    <item
-        android:width="96dp"
-        android:height="96dp"
-        android:gravity="center">
-        <bitmap
-            android:gravity="fill"
-            android:src="@drawable/logo" />
     </item>
 </layer-list>

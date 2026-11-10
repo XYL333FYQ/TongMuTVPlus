@@ -208,7 +208,8 @@ public class MainActivity extends Activity {
         settings.setDisplayZoomControls(false);
         // 片源常是 http，页面是 https 时也放行
         settings.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
-        settings.setUserAgentString(settings.getUserAgentString() + " TongMuTVPlusAndroid WebView TMBuild/" + getString(R.string.tm_build));
+        settings.setUserAgentString(settings.getUserAgentString()
+                + " TongMuTVPlusAndroid WebView TMBuild/" + getString(R.string.tm_build) + " TMLaunchCue/1");
 
         CookieManager cookies = CookieManager.getInstance();
         cookies.setAcceptCookie(true);
