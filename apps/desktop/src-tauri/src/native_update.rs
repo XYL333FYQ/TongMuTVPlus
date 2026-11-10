@@ -359,16 +359,25 @@ unsafe fn completion_dialog(owner: HWND, path: &Path) -> i32 {
         cButtons: buttons.len() as u32,
         pButtons: buttons.as_ptr(),
         nDefaultButton: LATER,
+        #[cfg(test)]
+        pfCallback: Some(tests::dismiss_completion),
         ..Default::default()
     };
     let mut selected = LATER;
-    if TaskDialogIndirect(&config, Some(&mut selected), None, None).is_err()
-        && MessageBoxW(
-            Some(owner),
-            PCWSTR(detail.as_ptr()),
-            w!("下载完成 · TongMuTV Plus"),
-            MB_YESNO | MB_DEFBUTTON2 | MB_ICONINFORMATION | MB_SETFOREGROUND,
-        ) == IDYES
+    if TaskDialogIndirect(&config, Some(&mut selected), None, None).is_ok() {
+        return selected;
+    }
+    // The Windows test must observe the TaskDialog itself and never wait on
+    // an unattended fallback MessageBox.
+    if cfg!(test) {
+        return -1;
+    }
+    if MessageBoxW(
+        Some(owner),
+        PCWSTR(detail.as_ptr()),
+        w!("下载完成 · TongMuTV Plus"),
+        MB_YESNO | MB_DEFBUTTON2 | MB_ICONINFORMATION | MB_SETFOREGROUND,
+    ) == IDYES
     {
         selected = INSTALL;
     }
@@ -431,6 +440,37 @@ unsafe fn show_update(owner: HWND, downloads: &Path) -> Result<&'static str> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use windows::{
+        core::HRESULT,
+        Win32::{
+            Foundation::{LPARAM, WPARAM},
+            UI::{
+                Controls::{TASKDIALOG_NOTIFICATIONS, TDM_CLICK_BUTTON, TDN_CREATED},
+                WindowsAndMessaging::PostMessageW,
+            },
+        },
+    };
+
+    static SHOWN: AtomicBool = AtomicBool::new(false);
+
+    pub(super) unsafe extern "system" fn dismiss_completion(
+        hwnd: HWND,
+        notification: TASKDIALOG_NOTIFICATIONS,
+        _: WPARAM,
+        _: LPARAM,
+        _: isize,
+    ) -> HRESULT {
+        if notification == TDN_CREATED {
+            SHOWN.store(true, Ordering::Release);
+            let _ = PostMessageW(
+                Some(hwnd),
+                TDM_CLICK_BUTTON.0 as u32,
+                WPARAM(LATER as usize),
+                LPARAM(0),
+            );
+        }
+        HRESULT(0)
+    }
 
     #[test]
     fn completion_leaves_the_saved_package_and_internet_zone() {
@@ -443,6 +483,15 @@ mod tests {
         let mut zone = path.as_os_str().to_owned();
         zone.push(":Zone.Identifier");
         assert!(fs::read_to_string(zone).unwrap().contains("ZoneId=3"));
+        let selected = unsafe {
+            CoInitializeEx(None, COINIT_APARTMENTTHREADED).ok().unwrap();
+            let selected = completion_dialog(HWND::default(), &path);
+            CoUninitialize();
+            selected
+        };
+        assert!(SHOWN.load(Ordering::Acquire));
+        assert_eq!(selected, LATER);
+        assert_eq!(fs::read(&path).unwrap(), bytes);
         let blocked = root.join("blocked");
         fs::write(&blocked, b"not a folder").unwrap();
         assert!(save_installer(&blocked, "fixture.exe", bytes).is_err());

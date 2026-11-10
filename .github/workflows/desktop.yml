@@ -124,8 +124,9 @@ jobs:
           path: apps/desktop/src-tauri/Cargo.lock
           if-no-files-found: ignore
 
-      - name: Verify update file persistence (x64)
+      - name: Verify saved update and native completion dialog (x64)
         if: ${{ matrix.arch == 'x64' }}
+        timeout-minutes: 6
         working-directory: apps/desktop/src-tauri
         env:
           TM_BUILD: ${{ needs.stamp.outputs.build }}
