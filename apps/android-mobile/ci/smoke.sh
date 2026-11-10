@@ -666,6 +666,27 @@ PY
       tap_target text '知道了' || return 1
       wait_target text 'Update missing package test' >/dev/null || return 1
       echo 'PASS: update permission denial, foreground progress and cancellation'
+      # Real HTTPS download; no Home, relaunch, or tap on a download notification.
+      tap_target text 'Update published APK test' || return 1
+      installer_visible=false
+      for _ in $(seq 1 35); do
+        adb shell dumpsys activity activities >"$OUT/update-installer-activities.txt"
+        if grep -Ei '(topResumedActivity|mResumedActivity).*([.]packageinstaller/|InstallStart|InstallStaging|PackageInstallerActivity)' "$OUT/update-installer-activities.txt"; then
+          installer_visible=true
+          break
+        fi
+        sleep 1
+      done
+      adb exec-out screencap -p >"$OUT/12-update-system-installer.png"
+      adb logcat -d -s TongMuClient >"$OUT/update-installer.log"
+      if [ "$installer_visible" != true ]; then
+        echo 'APK update did not open the system installer in the foreground' >&2
+        return 1
+      fi
+      # Cancel the system prompt. The test must not install or downgrade an APK.
+      adb shell input keyevent 4 || return 1
+      wait_target text 'Update published APK test' >/dev/null || return 1
+      echo 'PASS: foreground APK download automatically opened the system installer'
     fi
   }
   verify_recovery || recovery_status=1

@@ -23,6 +23,8 @@ import android.net.http.SslError;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.Handler;
+import android.os.Looper;
 import android.os.Message;
 import android.os.VibrationEffect;
 import android.os.Vibrator;
@@ -111,7 +113,10 @@ public class MainActivity extends Activity {
     private AlertDialog updateDialog;
     private ProgressBar updateProgress;
     private String updateProgressLabel;
+    private final Handler updateHandler = new Handler(Looper.getMainLooper());
     private final Runnable pollUpdate = this::checkUpdateDownload;
+    private Runnable updateInstallWatchdog;
+    private AlertDialog updateInstallFallback;
     private boolean resumed;
     private Bundle pendingFileDownload;
 
@@ -949,6 +954,7 @@ public class MainActivity extends Activity {
     protected void onPause() {
         resumed = false;
         closeUpdateProgress();
+        clearUpdateInstallWatchdog();
         if (webView != null) CookieManager.getInstance().flush();
         // 正在播放时不暂停 WebView，切后台也能继续（配合前台服务保活）
         if (webView != null && !playing) webView.onPause();
@@ -961,6 +967,8 @@ public class MainActivity extends Activity {
         clearLoadTimeout();
         dismissDialog();
         closeUpdateProgress();
+        clearUpdateInstallWatchdog();
+        if (updateInstallFallback != null) updateInstallFallback.dismiss();
         if (pauseReceiver != null) {
             unregisterReceiver(pauseReceiver);
             pauseReceiver = null;
@@ -978,6 +986,15 @@ public class MainActivity extends Activity {
         }
         discardWebView(webView);
         super.onDestroy();
+    }
+
+    @Override
+    public void onWindowFocusChanged(boolean hasFocus) {
+        super.onWindowFocusChanged(hasFocus);
+        if (hasFocus && resumed && updateRequest.downloadId() >= 0) {
+            updateHandler.removeCallbacks(pollUpdate);
+            updateHandler.post(pollUpdate);
+        }
     }
 
     // ---------- 与网页对接：铺满屏幕、系统栏、触感、后台播放 ----------
@@ -1306,6 +1323,8 @@ public class MainActivity extends Activity {
                 Toast.makeText(this, "更新已在进行中。", Toast.LENGTH_SHORT).show();
                 return;
             }
+            clearUpdateInstallWatchdog();
+            if (updateInstallFallback != null) updateInstallFallback.dismiss();
             updateServer = getSavedServer();
             // 8.0 以上要先允许本应用安装未知来源的应用
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && !getPackageManager().canRequestPackageInstalls()) {
@@ -1356,11 +1375,15 @@ public class MainActivity extends Activity {
     }
 
     private void checkUpdateDownload() {
-        root.removeCallbacks(pollUpdate);
+        updateHandler.removeCallbacks(pollUpdate);
         long id = updateRequest.downloadId();
-        if (id < 0 || !resumed) return;
+        if (id < 0 || !resumed || isFinishing() || isDestroyed()) return;
         DownloadManager manager = getSystemService(DownloadManager.class);
-        if (manager == null) return;
+        if (manager == null) {
+            updateRequest.finish(id);
+            showUpdateMessage("无法读取下载状态", "可在“关于”中重新检查更新。");
+            return;
+        }
         try (Cursor cursor = manager.query(new DownloadManager.Query().setFilterById(id))) {
             if (cursor == null || !cursor.moveToFirst()) {
                 updateRequest.finish(id);
@@ -1380,14 +1403,16 @@ public class MainActivity extends Activity {
                     Toast.makeText(this, "安装包不可用，请重新下载。", Toast.LENGTH_LONG).show();
                     return;
                 }
-                startActivity(new Intent(Intent.ACTION_VIEW)
-                        .setDataAndType(file, "application/vnd.android.package-archive")
-                        .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION));
+                Toast.makeText(this, "下载完成，正在打开系统安装界面。", Toast.LENGTH_SHORT).show();
+                openDownloadedUpdate(file);
             } else {
                 long bytes = cursor.getLong(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_BYTES_DOWNLOADED_SO_FAR));
                 long total = cursor.getLong(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_TOTAL_SIZE_BYTES));
-                showUpdateProgress(id, status, bytes, total);
-                root.postDelayed(pollUpdate, 500);
+                int reason = cursor.getInt(cursor.getColumnIndexOrThrow(DownloadManager.COLUMN_REASON));
+                showUpdateProgress(id, status, reason, bytes, total);
+                // The Activity's main queue is independent of the progress window
+                // and still observes a finished download when a broadcast is delayed.
+                updateHandler.postDelayed(pollUpdate, 500);
             }
         } catch (RuntimeException unavailable) {
             updateRequest.clear();
@@ -1395,12 +1420,54 @@ public class MainActivity extends Activity {
         }
     }
 
+    private void openDownloadedUpdate(Uri file) {
+        clearUpdateInstallWatchdog();
+        try {
+            startActivity(new Intent(Intent.ACTION_VIEW)
+                    .setDataAndType(file, "application/vnd.android.package-archive")
+                    .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION));
+            Log.i("TongMuClient", "update installer requested");
+        } catch (RuntimeException unavailable) {
+            showUpdateInstallFallback(file);
+            return;
+        }
+        // Some systems can decline to show an Activity without throwing. If the
+        // app never yielded the foreground, keep a direct action for the same file.
+        updateInstallWatchdog = () -> {
+            updateInstallWatchdog = null;
+            showUpdateInstallFallback(file);
+        };
+        updateHandler.postDelayed(updateInstallWatchdog, 2500);
+    }
+
+    private void clearUpdateInstallWatchdog() {
+        if (updateInstallWatchdog != null) {
+            updateHandler.removeCallbacks(updateInstallWatchdog);
+            updateInstallWatchdog = null;
+        }
+    }
+
+    private void showUpdateInstallFallback(Uri file) {
+        if (!resumed || isFinishing() || isDestroyed()) return;
+        AlertDialog fallback = new AlertDialog.Builder(this, updateDialogTheme())
+                .setTitle("下载完成")
+                .setMessage("安装包已保存。可以再次打开系统安装界面。")
+                .setNegativeButton("稍后", null)
+                .setPositiveButton("打开安装界面", (dialog, which) -> openDownloadedUpdate(file))
+                .create();
+        updateInstallFallback = fallback;
+        fallback.setOnDismissListener(dialog -> {
+            if (updateInstallFallback == fallback) updateInstallFallback = null;
+        });
+        fallback.show();
+    }
+
     private int updateDialogTheme() {
         return pageDark ? android.R.style.Theme_Material_Dialog_Alert
                 : android.R.style.Theme_Material_Light_Dialog_Alert;
     }
 
-    private void showUpdateProgress(long id, int status, long bytes, long total) {
+    private void showUpdateProgress(long id, int status, int reason, long bytes, long total) {
         if (updateDialog == null) {
             updateProgress = new ProgressBar(new ContextThemeWrapper(this, updateDialogTheme()), null,
                     android.R.attr.progressBarStyleHorizontal);
@@ -1431,7 +1498,14 @@ public class MainActivity extends Activity {
         if (total > 0) updateProgress.setProgress((int) Math.min(99, Math.max(0, bytes * 100.0 / total)));
         String received = android.text.format.Formatter.formatShortFileSize(this, Math.max(0, bytes));
         String size = total > 0 ? " / " + android.text.format.Formatter.formatShortFileSize(this, total) : "";
-        String phase = status == DownloadManager.STATUS_RUNNING ? "正在下载" : "等待下载";
+        String phase = "正在连接下载服务器";
+        if (status == DownloadManager.STATUS_RUNNING) phase = "正在下载";
+        else if (status == DownloadManager.STATUS_PAUSED) {
+            if (reason == DownloadManager.PAUSED_WAITING_FOR_NETWORK) phase = "等待网络连接";
+            else if (reason == DownloadManager.PAUSED_QUEUED_FOR_WIFI) phase = "等待 Wi-Fi";
+            else if (reason == DownloadManager.PAUSED_WAITING_TO_RETRY) phase = "连接中断，等待重试";
+            else phase = "下载暂缓";
+        }
         String label = phase + " · " + received + size;
         if (!label.equals(updateProgressLabel)) {
             updateDialog.setMessage(label);
@@ -1440,7 +1514,7 @@ public class MainActivity extends Activity {
     }
 
     private void closeUpdateProgress() {
-        root.removeCallbacks(pollUpdate);
+        updateHandler.removeCallbacks(pollUpdate);
         if (updateDialog != null) {
             updateDialog.dismiss();
             updateDialog = null;

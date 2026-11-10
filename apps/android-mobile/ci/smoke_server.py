@@ -345,6 +345,7 @@ class Handler(BaseHTTPRequestHandler):
                 time.sleep(10)
         if self.path == "/update-test" and controls:
             controls = b"<button style='display:block;font-size:20px;min-height:48px' onclick=\"TMShell.installUpdate('https://10.0.2.2:8444/TongMuTV-Plus-Android.apk')\">Update missing package test</button>"
+            controls += b"<button style='display:block;font-size:20px;min-height:48px' onclick=\"TMShell.installUpdate('https://github.com/XYL333FYQ/TongMuTVPlus/releases/download/clients/TongMuTV-Plus-Android.apk')\">Update published APK test</button>"
         page = PAGE.replace(b"__RECOVERY_CONTROLS__", controls)
         if getattr(self.server, "playing_reported", False):
             page = page.replace(b"TMShell.setPlaying(true);", b"TMShell.setPlaying(false);")
