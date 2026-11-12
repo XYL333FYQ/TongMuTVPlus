@@ -666,7 +666,7 @@ export default function PlaybackSessionProvider({
             if (!selectedHref) return;
             const selectedRoom = roomRef.current?.currentRoom;
             if (!selectedRoom || !roomRef.current?.canControl)
-              throw new Error('主持已更新，请加入片单或仅自己看');
+              throw new Error('房主没有开放成员换片，请加入片单或仅自己看');
             if (!followingRef.current)
               throw new Error('请先回到一起看，再切换房间影片');
             personalIntent.current = false;

@@ -121,7 +121,7 @@ export function useRoomLiveActivity(options: {
     if (!currentRoom || !current.watchRoom?.isConnected)
       throw Error('房间未连接，请重连后重试');
     if (!current.watchRoom.canControl)
-      throw Error('当前设备没有房间播放控制权');
+      throw Error('房主没有开放成员切换房间活动');
     if (!selected) throw Error('请先选择频道');
     await current.watchRoom.roomCommand('live:change', {
       ...selected,

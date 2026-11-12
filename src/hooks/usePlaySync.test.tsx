@@ -11,46 +11,63 @@ jest.mock('@/features/playback/context', () => ({
   usePlaybackSessionSafe: () => mockSession,
 }));
 
+function roomState(overrides: Record<string, unknown> = {}) {
+  return {
+    type: 'play',
+    source: 'fixture',
+    videoId: 'film-1',
+    episode: 1,
+    url: 'https://media.test/1.mp4',
+    videoName: '第一部',
+    currentTime: 200,
+    isPlaying: true,
+    playbackRate: 1,
+    updatedAt: Date.now(),
+    ...overrides,
+  };
+}
+
 function setup() {
+  const listeners = new Map<string, Set<() => void>>();
   const player = {
-    video: { readyState: 4, seeking: false, paused: false, duration: Infinity },
+    video: {
+      readyState: 4,
+      seeking: false,
+      paused: false,
+      ended: false,
+      duration: Infinity,
+    },
     currentTime: 10,
     playbackRate: 1,
-    playing: true,
-    on: jest.fn(),
-    off: jest.fn(),
+    on: jest.fn((event: string, listener: () => void) => {
+      const set = listeners.get(event) || new Set();
+      set.add(listener);
+      listeners.set(event, set);
+    }),
+    off: jest.fn((event: string, listener: () => void) => {
+      listeners.get(event)?.delete(listener);
+    }),
     notice: { show: '' },
     play: jest.fn(async () => {
-      player.playing = true;
       player.video.paused = false;
     }),
     pause: jest.fn(() => {
-      player.playing = false;
       player.video.paused = true;
     }),
   };
+  const emit = (event: string) =>
+    listeners.get(event)?.forEach((listener) => listener());
   mockRoom = {
     isConnected: true,
     canControl: false,
     socket: { id: 'viewer' },
+    members: [{ id: 'viewer', accountId: 'viewer' }],
     roomCommand: jest.fn(async () => ({ success: true })),
     currentRoom: {
       id: 'room-1',
       revision: 12,
-      controllerEpoch: 3,
       serverTime: Date.now(),
-      currentState: {
-        type: 'play',
-        source: 'fixture',
-        videoId: 'film-1',
-        episode: 1,
-        url: 'https://media.test/1.mp4',
-        videoName: '第一部',
-        currentTime: 200,
-        isPlaying: true,
-        playbackRate: 1,
-        updatedAt: Date.now(),
-      },
+      currentState: roomState(),
     },
   };
   mockSession = {
@@ -73,14 +90,18 @@ function setup() {
     usePlaySync(options);
     return null;
   }
-  return { player, options, Harness };
+  return { player, options, Harness, emit };
 }
 async function settle() {
   await act(async () => {
     await Promise.resolve();
     await Promise.resolve();
+    await Promise.resolve();
   });
 }
+const commands = () =>
+  mockRoom.roomCommand.mock.calls.map((call: any[]) => call[0]);
+
 beforeEach(() => {
   jest.useFakeTimers();
   jest.setSystemTime(1800000000000);
@@ -90,39 +111,147 @@ afterEach(() => {
   jest.useRealTimers();
 });
 
-test('returning owner applies current room progress before becoming ready and never broadcasts its old progress', async () => {
+test('joining snaps to the room position without sending anything to the room', async () => {
   const { player, Harness } = setup();
-  mockRoom.canControl = true;
   render(<Harness />);
   await settle();
   expect(player.currentTime).toBe(200);
-  expect(
-    mockRoom.roomCommand.mock.calls.slice(0, 2).map((call: any[]) => call[0])
-  ).toEqual(['room:sync-applied', 'room:ready']);
-  await act(async () => {
-    jest.advanceTimersByTime(2100);
-  });
-  await settle();
-  const updates = mockRoom.roomCommand.mock.calls.filter(
-    (call: any[]) => call[0] === 'play:update'
-  );
-  expect(updates.length).toBeGreaterThan(0);
-  expect(updates.every((call: any[]) => call[1].currentTime >= 200)).toBe(true);
+  expect(mockRoom.roomCommand).not.toHaveBeenCalled();
 });
 
-test('a resolved queue selection publishes its stable queue identity as well as the resolved media', async () => {
-  const { Harness } = setup();
+test('a small drift is tolerated while a large one is corrected', async () => {
+  const { player, Harness } = setup();
+  player.currentTime = 200.5;
+  render(<Harness />);
+  await settle();
+  expect(player.currentTime).toBe(200.5);
+  player.currentTime = 195;
+  await act(async () => {
+    jest.advanceTimersByTime(1000);
+  });
+  await settle();
+  expect(player.currentTime).toBeCloseTo(201, 0);
+});
+
+test('a member with control pauses the whole room with their exact position', async () => {
+  const { player, Harness, emit } = setup();
+  mockRoom.canControl = true;
+  render(<Harness />);
+  await settle();
+  player.currentTime = 201.5;
+  player.video.paused = true;
+  await act(async () => emit('video:pause'));
+  await settle();
+  expect(mockRoom.roomCommand).toHaveBeenCalledWith(
+    'play:pause',
+    expect.objectContaining({
+      currentTime: 201.5,
+      videoId: 'film-1',
+      source: 'fixture',
+      episode: 1,
+    })
+  );
+});
+
+test('dragging the progress bar seeks everyone', async () => {
+  const { player, Harness, emit } = setup();
+  mockRoom.canControl = true;
+  render(<Harness />);
+  await settle();
+  // 第一次跳转是本机为了对齐房间做的，不能当成用户操作
+  await act(async () => emit('video:seeked'));
+  expect(commands()).not.toContain('play:seek');
+  player.currentTime = 600;
+  await act(async () => emit('video:seeked'));
+  await settle();
+  expect(mockRoom.roomCommand).toHaveBeenCalledWith(
+    'play:seek',
+    expect.objectContaining({ currentTime: 600, isPlaying: true })
+  );
+});
+
+test('without permission a pause is undone and explained instead of silently reverted', async () => {
+  const { player, Harness, emit } = setup();
+  render(<Harness />);
+  await settle();
+  player.video.paused = true;
+  await act(async () => emit('video:pause'));
+  await settle();
+  expect(mockRoom.roomCommand).not.toHaveBeenCalled();
+  expect(player.play).toHaveBeenCalled();
+  await act(async () => {
+    jest.advanceTimersByTime(300);
+  });
+  expect(player.notice.show).toContain('房主没有开放成员控制播放');
+});
+
+test('following a remote pause does not echo a pause back to the room', async () => {
+  const { player, Harness, emit } = setup();
+  mockRoom.canControl = true;
+  const view = render(<Harness />);
+  await settle();
+  mockRoom = {
+    ...mockRoom,
+    currentRoom: {
+      ...mockRoom.currentRoom,
+      currentState: roomState({
+        isPlaying: false,
+        currentTime: 230,
+        version: 2,
+        updatedBy: 'friend',
+      }),
+    },
+  };
+  view.rerender(<Harness />);
+  await settle();
+  expect(player.pause).toHaveBeenCalled();
+  expect(player.currentTime).toBe(230);
+  await act(async () => {
+    emit('video:pause');
+    emit('video:seeked');
+  });
+  await settle();
+  expect(mockRoom.roomCommand).not.toHaveBeenCalled();
+});
+
+test('clicking play after autoplay was blocked catches up instead of rewinding the room', async () => {
+  const { player, Harness, emit } = setup();
+  mockRoom.canControl = true;
+  player.video.paused = true;
+  player.play.mockRejectedValueOnce(new Error('NotAllowedError'));
+  render(<Harness />);
+  await settle();
+  expect(player.notice.show).toBe('点击播放，加入房间同步');
+  jest.setSystemTime(1800000030000);
+  player.video.paused = false;
+  await act(async () => emit('video:play'));
+  await settle();
+  expect(commands()).not.toContain('play:play');
+  expect(player.currentTime).toBeCloseTo(230, 0);
+});
+
+test('a resolved queue selection starts the room from the beginning with its queue identity', async () => {
+  const { player, Harness } = setup();
   mockRoom.canControl = true;
   mockSession.href = '/play?source=fixture&id=film-1&queueId=waiting-1';
   mockSession.roomSelectionHref = mockSession.href;
+  player.currentTime = 55;
   render(<Harness />);
   await settle();
   expect(mockRoom.roomCommand).toHaveBeenCalledWith(
     'play:change',
-    expect.objectContaining({ queueItemId: 'waiting-1' })
+    expect.objectContaining({
+      queueItemId: 'waiting-1',
+      currentTime: 0,
+      isPlaying: true,
+    })
+  );
+  expect(mockSession.clearRoomSelection).toHaveBeenCalledWith(
+    mockSession.roomSelectionHref
   );
 });
-test('room media changes update the persistent player without navigating the current page', async () => {
+
+test('room media changes load the room film in the persistent player', async () => {
   const { options, Harness } = setup();
   options.videoId = 'old-film';
   render(<Harness />);
@@ -131,239 +260,56 @@ test('room media changes update the persistent player without navigating the cur
     expect.stringContaining('id=film-1'),
     'room'
   );
-  expect(mockRoom.roomCommand).not.toHaveBeenCalledWith(
-    'play:change',
-    expect.anything()
-  );
+  expect(commands()).not.toContain('play:change');
 });
-test('personal viewing retains room connection while ignoring room media and emitting no playback controls', async () => {
-  const { player, Harness } = setup();
-  mockSession.followingRoom = false;
-  mockRoom.canControl = true;
-  render(<Harness />);
-  await act(async () => {
-    jest.advanceTimersByTime(6000);
-  });
-  expect(player.currentTime).toBe(10);
-  expect(player.pause).not.toHaveBeenCalled();
-  expect(mockRoom.roomCommand).not.toHaveBeenCalled();
-});
-test('unmount cleanup never tells other members to pause or leaves the room', async () => {
-  const { Harness } = setup();
-  const view = render(<Harness />);
-  await settle();
-  mockRoom.roomCommand.mockClear();
-  view.unmount();
-  expect(mockRoom.roomCommand).not.toHaveBeenCalled();
-});
-test('a new selection cannot publish the previous decoded video while its own media is loading', async () => {
+
+test('switching to the next episode locally changes it for everyone when allowed', async () => {
   const { options, Harness } = setup();
   mockRoom.canControl = true;
-  mockSession.roomSelectionHref = '/play?source=fixture&id=film-2';
-  options.videoId = 'film-2';
-  options.mediaLoading = true;
-  render(<Harness />);
-  await act(async () => {
-    jest.advanceTimersByTime(6000);
-  });
-  await settle();
-  expect(mockRoom.roomCommand).not.toHaveBeenCalled();
-  expect(mockSession.clearRoomSelection).not.toHaveBeenCalled();
-});
-
-test('a selection from the previous activity cannot reclaim a live room', async () => {
-  const { player, Harness } = setup();
-  mockRoom.canControl = true;
-  mockSession.roomSelectionHref = '/play?source=fixture&id=film-1';
-  mockSession.roomSelectionKey = 'room-1:play:fixture:film-1:1';
-  mockRoom.currentRoom.currentState = {
-    type: 'live',
-    channelId: 'channel',
-    channelUrl: 'https://media.test/live.m3u8',
-  };
-  render(<Harness />);
-  await settle();
-  expect(mockRoom.roomCommand).not.toHaveBeenCalledWith(
-    'play:change',
-    expect.anything()
-  );
-  expect(mockSession.clearRoomSelection).toHaveBeenCalled();
-  expect(player.pause).toHaveBeenCalled();
-});
-
-test('an explicit movie request cannot publish a different decoded movie', async () => {
-  const { Harness } = setup();
-  mockRoom.canControl = true;
-  mockSession.roomSelectionHref = '/play?source=fixture&id=film-2';
-  render(<Harness />);
-  await settle();
-  expect(mockRoom.roomCommand).not.toHaveBeenCalledWith(
-    'play:update',
-    expect.anything()
-  );
-  expect(mockSession.clearRoomSelection).not.toHaveBeenCalled();
-});
-
-test('a former room readiness acknowledgement cannot mark the new room ready again', async () => {
-  const { Harness } = setup();
-  let completeOld: () => void = () => undefined;
-  const old = new Promise<void>((resolve) => {
-    completeOld = resolve;
-  });
-  mockRoom.roomCommand.mockReturnValueOnce(old);
   const view = render(<Harness />);
   await settle();
-  mockRoom = {
-    ...mockRoom,
-    currentRoom: { ...mockRoom.currentRoom, id: 'room-2' },
-  };
+  options.currentEpisode = 2;
   view.rerender(<Harness />);
-  await settle();
-  expect(
-    mockRoom.roomCommand.mock.calls.filter(
-      (call: any[]) => call[0] === 'room:ready'
-    )
-  ).toHaveLength(1);
-  await act(async () => completeOld());
-  const ready = mockRoom.roomCommand.mock.calls.filter(
-    (call: any[]) => call[0] === 'room:ready'
-  );
-  expect(ready).toHaveLength(1);
-});
-
-test.each([
-  [
-    '/api/proxy-m3u8?url=fixture',
-    new URL('/api/proxy-m3u8?url=fixture', window.location.origin).href,
-  ],
-  ['blob:http://localhost/device-only', ''],
-])(
-  'shared video state does not publish an unusable local URL: %s',
-  async (localUrl, sharedUrl) => {
-    const { options, Harness } = setup();
-    mockRoom.canControl = true;
-    mockSession.roomSelectionHref = '/play?source=fixture&id=film-1';
-    options.videoUrl = localUrl;
-    render(<Harness />);
-    await settle();
-    expect(mockRoom.roomCommand).toHaveBeenCalledWith(
-      'play:update',
-      expect.objectContaining({
-        url: sharedUrl,
-        source: 'fixture',
-        videoId: 'film-1',
-      })
-    );
-  }
-);
-
-test('a paused room stops native playback before seeking can make the wrapper report not playing', async () => {
-  const { player, Harness } = setup();
-  mockRoom.currentRoom.currentState.isPlaying = false;
-  let time = 10;
-  Object.defineProperty(player, 'currentTime', {
-    get: () => time,
-    set: (value: number) => {
-      time = value;
-      // A real seek temporarily drops readyState, which makes Artplayer.playing false.
-      player.video.readyState = 1;
-      player.playing = false;
-    },
-  });
-  render(<Harness />);
-  await settle();
-  expect(player.pause).toHaveBeenCalledTimes(1);
-  expect(player.video.paused).toBe(true);
-  expect(player.currentTime).toBe(200);
-  expect(mockRoom.roomCommand).not.toHaveBeenCalled();
-  player.video.readyState = 4;
   await act(async () => {
-    jest.advanceTimersByTime(2000);
+    jest.advanceTimersByTime(1000);
   });
   await settle();
-  expect(player.video.paused).toBe(true);
-  expect(player.play).not.toHaveBeenCalled();
-  expect(player.currentTime).toBe(200);
   expect(mockRoom.roomCommand).toHaveBeenCalledWith(
-    'room:ready',
-    expect.objectContaining({ ready: true })
+    'play:change',
+    expect.objectContaining({ episode: 2, videoId: 'film-1' })
   );
 });
 
-test('buffering does not publish a false pause when native playback is still active', async () => {
-  const { player, Harness } = setup();
-  mockRoom.canControl = true;
-  render(<Harness />);
+test('without permission a local episode switch goes back to the room episode', async () => {
+  const { options, player, Harness } = setup();
+  const view = render(<Harness />);
   await settle();
-  mockRoom.roomCommand.mockClear();
-  player.video.readyState = 2;
-  player.playing = false;
-  player.video.paused = false;
+  options.currentEpisode = 2;
+  view.rerender(<Harness />);
   await act(async () => {
-    jest.advanceTimersByTime(2100);
+    jest.advanceTimersByTime(1000);
   });
   await settle();
-  const updates = mockRoom.roomCommand.mock.calls.filter(
-    (call: any[]) => call[0] === 'play:update'
+  expect(commands()).not.toContain('play:change');
+  expect(mockSession.requestPlayback).toHaveBeenCalledWith(
+    expect.stringContaining('episode=1'),
+    'room'
   );
-  expect(updates.length).toBeGreaterThan(0);
-  expect(updates.every((call: any[]) => call[1].isPlaying)).toBe(true);
+  expect(player.notice.show).toContain('房主没有开放成员换片');
 });
 
-test('a returning owner can become ready after the hostless timeline has passed the finite film end', async () => {
-  const { player, Harness } = setup();
-  player.video.duration = 120;
+test('personal viewing keeps the room connection but ignores room playback', async () => {
+  const { player, Harness, emit } = setup();
+  mockRoom.canControl = true;
+  mockSession.followingRoom = false;
+  render(<Harness />);
+  await settle();
   player.video.paused = true;
-  player.currentTime = 120;
-  player.play.mockRejectedValue(new Error('cannot resume beyond the film end'));
-  render(<Harness />);
-  await settle();
-  expect(player.currentTime).toBe(120);
-  expect(player.play).not.toHaveBeenCalled();
-  expect(
-    mockRoom.roomCommand.mock.calls.map((call: unknown[]) => call[0])
-  ).toEqual(['room:sync-applied', 'room:ready']);
-
-  mockRoom.canControl = true;
+  await act(async () => emit('video:pause'));
   await act(async () => {
-    jest.advanceTimersByTime(2100);
+    jest.advanceTimersByTime(3000);
   });
-  await settle();
-  expect(mockRoom.roomCommand).toHaveBeenCalledWith(
-    'play:update',
-    expect.objectContaining({ currentTime: 120, isPlaying: false })
-  );
-});
-
-test.each([0, NaN, Infinity])(
-  'an unknown or live duration %s does not turn an active room into a finished film',
-  async (duration) => {
-    const { player, Harness } = setup();
-    player.video.duration = duration;
-    player.video.paused = true;
-    render(<Harness />);
-    await settle();
-    expect(player.currentTime).toBe(200);
-    expect(player.play).toHaveBeenCalledTimes(1);
-    expect(player.pause).not.toHaveBeenCalled();
-    expect(mockRoom.roomCommand).toHaveBeenCalledWith(
-      'room:ready',
-      expect.objectContaining({ ready: true })
-    );
-  }
-);
-
-test('a queue item removed before it could start ends the selection instead of retrying every half second', async () => {
-  const { Harness } = setup();
-  mockRoom.canControl = true;
-  mockSession.href = '/play?source=fixture&id=film-1&queueId=waiting-1';
-  mockSession.roomSelectionHref = mockSession.href;
-  mockRoom.roomCommand.mockRejectedValueOnce(
-    Object.assign(new Error('所选待看片单已变化，请重新选择'), {
-      code: 'QUEUE_ITEM_NOT_FOUND',
-    })
-  );
-  render(<Harness />);
-  await settle();
-  expect(mockSession.clearRoomSelection).toHaveBeenCalledWith(mockSession.href);
+  expect(player.currentTime).toBe(10);
+  expect(mockRoom.roomCommand).not.toHaveBeenCalled();
+  expect(mockSession.requestPlayback).not.toHaveBeenCalled();
 });

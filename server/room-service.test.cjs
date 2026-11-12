@@ -183,7 +183,7 @@ test('authenticated account identity, revocation and public DTO do not trust bro
     'controllerSessionId',
   ])
     assert.equal(Object.hasOwn(summary, key), false, key);
-  expectCode(() => f.join('guest', room.id), 'WRONG_PASSWORD');
+  expectCode(() => f.join('guest', room.id), 'PASSWORD_REQUIRED');
   const joined = f.join('guest', room.id, 'guest', 'disposable-test');
   for (const key of ['password', 'passwordHash', 'ownerToken'])
     assert.equal(Object.hasOwn(joined, key), false, key);
@@ -233,117 +233,182 @@ test('room quota is three, management belongs to durable owner, leave never diss
   );
 });
 
-test('host transfers only to preauthorized ready member after grace, returns without rewinding playback', (t) => {
+test('members control playback directly; every change is broadcast with a monotonic version (SyncTV model)', (t) => {
+  const f = setup(t);
+  const id = createAndHost(f);
+  f.join('guest', id);
+  const changed = f.command('owner', id, 'play:change', video(10));
+  assert.equal(changed.state.version, 1);
+  assert.equal(changed.state.updatedBy, 'owner');
+  f.advance(5000);
+  const paused = f.command('guest', id, 'play:pause', { currentTime: 14.2 });
+  assert.equal(paused.state.isPlaying, false);
+  assert.equal(paused.state.currentTime, 14.2);
+  assert.equal(paused.state.updatedBy, 'guest');
+  assert.ok(paused.state.version > changed.state.version);
+  const broadcast = f.events
+    .filter((event) => event[1] === 'play:update')
+    .at(-1);
+  assert.equal(broadcast[0], id);
+  // 操作者自己从回执拿到新状态，不再收到自己的回声
+  assert.equal(broadcast[4], 'guest');
+  assert.equal(broadcast[2].isPlaying, false);
+  f.advance(10000);
+  assert.equal(
+    f.service.read(identities.owner, id).currentState.currentTime,
+    14.2
+  );
+  f.command('guest', id, 'play:seek', { currentTime: 100, isPlaying: true });
+  f.advance(2000);
+  const playing = f.service.read(identities.owner, id).currentState;
+  assert.equal(playing.isPlaying, true);
+  assert.equal(playing.currentTime, 102);
+  f.command('owner', id, 'play:rate', { playbackRate: 2, currentTime: 102 });
+  f.advance(1000);
+  assert.equal(
+    f.service.read(identities.owner, id).currentState.currentTime,
+    104
+  );
+  // 播放进度类操作不改房间结构版本，不会让并发的片单操作冲突
+  const revision = f.store.get(id).revision;
+  f.command('guest', id, 'play:pause', { currentTime: 104 });
+  assert.equal(f.store.get(id).revision, revision);
+});
+
+test('the owner can restrict playback control to the owner and room admins', (t) => {
   const f = setup(t);
   const id = createAndHost(f);
   f.command('owner', id, 'play:change', video());
   f.join('guest', id);
-  f.ready('guest');
   f.join('host', id);
-  f.ready('host');
+  f.command('owner', id, 'room:settings', { memberCanControl: false });
+  expectCode(
+    () => f.command('guest', id, 'play:pause', { currentTime: 1 }),
+    'NO_CONTROL_PERMISSION'
+  );
+  expectCode(
+    () => f.command('host', id, 'play:pause', { currentTime: 1 }),
+    'NO_CONTROL_PERMISSION'
+  );
   f.command('owner', id, 'room:authorize-host', {
     accountId: 'host',
     canHost: true,
   });
-  const firstEpoch = f.store.get(id).controllerEpoch;
-  f.service.leave('owner', false);
-  f.advance(29999);
-  f.service.heartbeat('host');
+  f.command('host', id, 'play:pause', { currentTime: 3 });
+  assert.equal(f.store.get(id).currentState.isPlaying, false);
+  const snapshot = f.service.read(identities.guest, id);
+  assert.equal(snapshot.canControl, false);
+  assert.equal(snapshot.settings.memberCanControl, false);
+  assert.equal(
+    f.service.read(identities.host, id).members.find((m) => m.id === 'host')
+      .canControl,
+    true
+  );
+  expectCode(
+    () => f.command('guest', id, 'room:settings', { memberCanControl: true }),
+    'FORBIDDEN'
+  );
+  expectCode(() => f.command('stranger', id, 'play:play', {}), 'FORBIDDEN');
+});
+
+test('owner leaving or reconnecting never stops the room; nobody has to be elected', (t) => {
+  const f = setup(t);
+  const id = createAndHost(f);
+  f.command('owner', id, 'play:change', video(50));
+  f.join('guest', id);
+  f.service.leave('owner');
+  f.advance(120000);
   f.service.heartbeat('guest');
   f.service.tick();
-  assert.equal(f.service.rt(id).controller.accountId, 'owner');
-  f.advance(2);
-  f.service.tick();
-  assert.equal(f.service.rt(id).controller.accountId, 'host');
+  const state = f.service.read(identities.guest, id).currentState;
+  assert.equal(state.isPlaying, true);
+  assert.equal(state.currentTime, 170);
+  f.command('guest', id, 'play:pause', { currentTime: 170 });
+  f.join('owner', id, 'owner-tab-2');
+  f.join('owner', id, 'owner-tab-3');
+  f.command('owner', id, 'play:play', { currentTime: 170 }, {}, 'owner-tab-3');
   assert.equal(f.store.get(id).currentState.isPlaying, true);
-  expectCode(() => f.command('guest', id, 'play:pause'), 'NOT_CONTROLLER');
+});
+
+test('personal viewing devices cannot drive the room until they return; commands are deduplicated', (t) => {
+  const f = setup(t);
+  const id = createAndHost(f);
+  f.command('owner', id, 'play:change', video());
+  f.join('guest', id);
+  f.service.following('guest', { following: false });
   expectCode(
-    () =>
-      f.command('host', id, 'play:pause', {}, { controllerEpoch: firstEpoch }),
-    'STALE_CONTROLLER'
+    () => f.command('guest', id, 'play:pause', { currentTime: 1 }),
+    'FOLLOWING_REQUIRED'
   );
-  f.command('host', id, 'play:seek', { currentTime: 200 });
-  const snapshot = f.join('owner', id, 'owner-return');
-  expectCode(
-    () => f.service.ready('owner-return', { revision: 0 }),
-    'SYNC_REQUIRED'
-  );
-  f.ready('owner-return');
-  f.advance(4999);
-  f.service.tick();
-  assert.equal(f.service.rt(id).controller.accountId, 'host');
-  f.advance(1);
-  f.service.tick();
-  assert.equal(f.service.rt(id).controller.sessionId, 'owner-return');
-  const restored = f.service.read(identities.owner, id);
-  assert.equal(restored.currentState.isPlaying, true);
-  assert.ok(restored.currentState.currentTime >= 205);
-  assert.equal(snapshot.currentState.currentTime, 200);
   assert.equal(
-    f.events.some((event) => event[1] === 'play:pause'),
+    f.service.read(identities.owner, id).members.find((m) => m.id === 'guest')
+      .following,
     false
   );
-});
-
-test('ordinary ready guests never acquire control; folding/page leave does not clear activity', (t) => {
-  const f = setup(t);
-  const id = createAndHost(f);
-  f.command('owner', id, 'play:change', video());
-  f.join('guest', id);
-  f.ready('guest');
-  f.service.leave('owner', false);
-  f.advance(30001);
-  f.service.heartbeat('guest');
-  f.service.tick();
-  assert.equal(f.service.rt(id).controller, null);
-  assert.equal(f.store.get(id).currentState.isPlaying, true);
-  assert.equal(f.service.sessions.has('guest'), true);
-});
-
-test('following=false yields control without leaving; stale revisions rejected and commands deduplicated', (t) => {
-  const f = setup(t);
-  const id = createAndHost(f);
-  f.join('host', id);
-  f.ready('host');
-  f.command('owner', id, 'room:authorize-host', {
-    accountId: 'host',
-    canHost: true,
-  });
+  f.service.following('guest', { following: true });
+  f.command('guest', id, 'play:pause', { currentTime: 1 });
   const payload = {
     title: '等待解析',
     href: '/play?title=电影',
     source: 'fixture',
     videoId: '1',
   };
-  const revision = f.store.get(id).revision;
-  const result = f.command('host', id, 'queue:add', payload, {
+  const result = f.command('guest', id, 'queue:add', payload, {
     commandId: 'same-command',
-    baseRevision: revision,
   });
-  const duplicate = f.command('host', id, 'queue:add', payload, {
+  const duplicate = f.command('guest', id, 'queue:add', payload, {
     commandId: 'same-command',
-    baseRevision: revision,
   });
   assert.equal(result.success, true);
   assert.equal(duplicate.duplicate, true);
   assert.equal(f.store.get(id).queue.length, 1);
+});
+
+test('simultaneous auto-advance to the same episode is applied once; stale player commands are rejected', (t) => {
+  const f = setup(t);
+  const id = createAndHost(f);
+  f.join('guest', id);
+  f.command('owner', id, 'play:change', video());
+  const next = { ...video(0), episode: 2 };
+  const first = f.command('owner', id, 'play:change', next);
+  const changes = f.events.filter((event) => event[1] === 'play:change').length;
+  const second = f.command('guest', id, 'play:change', next);
+  assert.equal(second.unchanged, true);
+  assert.equal(second.state.version, first.state.version);
+  assert.equal(
+    f.events.filter((event) => event[1] === 'play:change').length,
+    changes
+  );
   expectCode(
     () =>
-      f.command(
-        'host',
-        id,
-        'queue:move',
-        { id: f.store.get(id).queue[0].id, position: 0 },
-        { baseRevision: revision }
-      ),
-    'REVISION_CONFLICT'
+      f.command('guest', id, 'play:pause', {
+        currentTime: 5,
+        source: 'fixture',
+        videoId: 'movie-1',
+        episode: 1,
+      }),
+    'ACTIVITY_MISMATCH'
   );
-  f.service.following('owner', { following: false });
-  assert.equal(f.service.sessions.has('owner'), true);
-  assert.equal(f.service.rt(id).controller.accountId, 'host');
-  f.advance(10000);
-  f.service.tick();
-  assert.equal(f.service.rt(id).controller.accountId, 'host');
+});
+
+test('state versions keep increasing after a restart', (t) => {
+  const f = setup(t);
+  const id = createAndHost(f);
+  f.command('owner', id, 'play:change', video());
+  const before = f.command('owner', id, 'play:pause', { currentTime: 12 }).state
+    .version;
+  f.service.shutdown();
+  const restarted = new RoomService(f.store, { now: f.now });
+  restarted.join(identities.owner, id, {}, 'owner');
+  const after = restarted.execute(
+    identities.owner,
+    id,
+    'play:play',
+    { currentTime: 12 },
+    {},
+    'owner'
+  );
+  assert.ok(after.state.version > before);
 });
 
 test('adding a waiting film survives unrelated playback revisions and controller epochs', (t) => {
@@ -572,10 +637,8 @@ test('chat and reads remain valid across unrelated playback revisions and host e
     }
   );
   assert.equal(f.store.unread(id, 'guest'), 0);
-  expectCode(
-    () => f.command('owner', id, 'play:update', video(30), stale),
-    'REVISION_CONFLICT'
-  );
+  f.command('owner', id, 'play:update', video(30), stale);
+  assert.equal(f.store.get(id).currentState.currentTime, 30);
   expectCode(
     () => f.command('stranger', id, 'chat:message', { content: '越权' }, stale),
     'FORBIDDEN'
@@ -595,29 +658,6 @@ test('a command addressed to a former room cannot execute in the current room', 
     'ROOM_CHANGED'
   );
   assert.equal(f.service.history(identities.owner, second).length, 0);
-});
-
-test('same owner reconnect within grace resumes after readiness and two devices never share control', (t) => {
-  const f = setup(t);
-  const id = createAndHost(f);
-  f.command('owner', id, 'play:change', video(80));
-  f.service.leave('owner', false);
-  f.advance(1000);
-  f.join('owner', id, 'owner-reconnected');
-  f.ready('owner-reconnected');
-  f.advance(5000);
-  f.service.tick();
-  assert.equal(f.service.rt(id).controller.sessionId, 'owner-reconnected');
-  assert.equal(f.store.get(id).currentState.isPlaying, true);
-  f.join('owner', id, 'owner-another-tab');
-  f.ready('owner-another-tab');
-  f.advance(5000);
-  f.service.tick();
-  assert.equal(f.service.rt(id).controller.sessionId, 'owner-reconnected');
-  expectCode(
-    () => f.command('owner', id, 'play:pause', {}, {}, 'owner-another-tab'),
-    'NOT_CONTROLLER'
-  );
 });
 
 test('activity switches preserve music metadata, clear stale credentials and revoke candidate readiness', (t) => {
@@ -648,7 +688,6 @@ test('activity switches preserve music metadata, clear stale credentials and rev
   const music = f.service.read(identities.host, id).currentState;
   assert.equal(music.song.privateCookie, undefined);
   assert.equal(music.quality, 'lossless');
-  assert.equal(f.service.sessions.get('host').ready, false);
   f.command('owner', id, 'screen:start', {
     type: 'screen',
     status: 'sharing',
@@ -689,7 +728,6 @@ test('buffering and UI readiness changes do not revoke a connected host or pause
   f.service.heartbeat('owner');
   f.service.heartbeat('host');
   f.service.tick();
-  assert.equal(f.service.rt(id).controller.accountId, 'owner');
   assert.equal(f.store.get(id).currentState.isPlaying, true);
 });
 
@@ -831,7 +869,7 @@ test('real HTTP and Socket.IO share authentication, room state and cross-room si
   const ready = await ack(owner, 'room:ready', {
     revision: joined.room.revision,
   });
-  assert.equal(ready.room.controllerAccountId, 'owner');
+  assert.equal(ready.room.canControl, true);
   const sent = await ack(owner, 'chat:message', {
     content: 'Socket消息',
     type: 'text',
@@ -887,7 +925,7 @@ test('private room membership survives restart without storing its plaintext pas
   );
   expectCode(
     () => restarted.join(identities.stranger, room.id, {}, 'stranger'),
-    'WRONG_PASSWORD'
+    'PASSWORD_REQUIRED'
   );
   assert.equal(restarted.list({ accountId: '' }, 'public').length, 0);
 });
@@ -933,25 +971,41 @@ test('station owner can exempt a durable room from archiving; ordinary room owne
   assert.equal(f.store.get(id).lifecycle, 'sleeping');
 });
 
-test('default room capacity permits eight connections and rejects the ninth', (t) => {
+test('room capacity counts accounts: eight people fit, extra tabs are free, the ninth is rejected', (t) => {
   const f = setup(t);
   const id = createAndHost(f);
-  for (let index = 0; index < 7; index++) f.join('guest', id, `guest-${index}`);
-  expectCode(() => f.join('guest', id, 'ninth'), 'ROOM_FULL');
-  assert.equal(f.service.members(id).length, 8);
+  for (let index = 0; index < 7; index++)
+    f.service.join({ accountId: `member-${index}` }, id, {}, `member-${index}`);
+  f.join('owner', id, 'owner-second-tab');
+  expectCode(
+    () => f.service.join({ accountId: 'ninth' }, id, {}, 'ninth'),
+    'ROOM_FULL'
+  );
+  assert.equal(
+    new Set(f.service.members(id).map((member) => member.accountId)).size,
+    8
+  );
 });
 test('a connection already in another room cannot switch into a full room', (t) => {
   const f = setup(t);
   const full = createAndHost(f);
   for (let index = 0; index < 7; index++)
-    f.join('guest', full, `guest-${index}`);
+    f.service.join(
+      { accountId: `member-${index}` },
+      full,
+      {},
+      `member-${index}`
+    );
   const { id: other } = f.service.create(identities.host, {
     name: '另一个房间',
     isPublic: true,
   });
   f.join('stranger', other, 'switcher');
   expectCode(() => f.join('stranger', full, 'switcher'), 'ROOM_FULL');
-  assert.equal(f.service.members(full).length, 8);
+  assert.equal(
+    new Set(f.service.members(full).map((member) => member.accountId)).size,
+    8
+  );
   // 被拒绝时仍留在原房间
   assert.equal(f.service.sessions.get('switcher').roomId, other);
 });
@@ -1155,4 +1209,42 @@ test('guessing a room password is rate limited per account, and the right passwo
   f.join('guest', room.id, 'guest', 'right-password');
   f.advance(60000);
   f.join('stranger', room.id, 'stranger', 'right-password');
+});
+
+test('room covers: owners upload and remove; public rooms show them to everyone, private rooms only to members', (t) => {
+  const f = setup(t);
+  const id = createAndHost(f);
+  f.join('guest', id);
+  const png =
+    'data:image/png;base64,' +
+    Buffer.from([0x89, 0x50, 0x4e, 0x47, 1, 2, 3, 4]).toString('base64');
+  expectCode(
+    () => f.command('guest', id, 'room:cover', { image: png }),
+    'FORBIDDEN'
+  );
+  expectCode(
+    () =>
+      f.command('owner', id, 'room:cover', {
+        image: 'data:text/html;base64,PGgxPg==',
+      }),
+    'INVALID_INPUT'
+  );
+  f.command('owner', id, 'room:cover', { image: png });
+  const summary = f.service.list(identities.stranger, 'public')[0];
+  assert.match(summary.coverUrl, new RegExp(`/api/rooms/${id}/cover\\?v=`));
+  assert.equal(f.service.readCover(null, id).mime, 'image/png');
+  f.command('owner', id, 'room:settings', { isPublic: false });
+  expectCode(() => f.service.readCover(null, id), 'FORBIDDEN');
+  assert.equal(f.service.readCover(identities.guest, id).data.length, 8);
+  f.command('owner', id, 'play:change', {
+    ...video(),
+    poster: 'https://img.test/poster.jpg',
+  });
+  assert.equal(
+    f.service.read(identities.guest, id).nowPlaying.poster,
+    'https://img.test/poster.jpg'
+  );
+  f.command('owner', id, 'room:cover', { image: null });
+  assert.equal(f.service.read(identities.guest, id).coverUrl, null);
+  expectCode(() => f.service.readCover(identities.guest, id), 'NOT_FOUND');
 });

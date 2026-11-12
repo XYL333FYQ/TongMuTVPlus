@@ -110,10 +110,16 @@ class RoomSocketServer {
     });
     action('room:leave', () => {
       const id = this.service.sessions.get(socket.id)?.roomId;
-      this.service.leave(socket.id, true);
+      this.stopOwnedScreen(socket, identity);
+      this.service.leave(socket.id);
       if (id) socket.leave(id);
       this.helpers.delete(socket.id);
       return { success: true };
+    });
+    // 时钟校准（NTP 式）：客户端记录往返时间，用服务器时间推算房间播放位置。
+    socket.on('time:sync', (_data, callback) => {
+      if (typeof callback === 'function')
+        callback({ success: true, serverTime: this.service.now() });
     });
     action('room:list', (data) =>
       this.service.list(identity, data.mode || 'public')
@@ -134,6 +140,7 @@ class RoomSocketServer {
       'play:seek',
       'play:play',
       'play:pause',
+      'play:rate',
       'play:change',
       'live:change',
       'music:change',
@@ -149,7 +156,9 @@ class RoomSocketServer {
       'queue:add',
       'queue:remove',
       'queue:move',
+      'queue:clear-played',
       'room:settings',
+      'room:cover',
       'room:authorize-host',
       'room:delete',
       'room:restore',
@@ -159,16 +168,9 @@ class RoomSocketServer {
     for (const event of events)
       action(event, (data, extra) => {
         const session = this.service.requireSession(socket.id);
-        let controlSessionId = socket.id;
-        if (this.helpers.has(socket.id) && event.startsWith('screen:')) {
-          const control = this.service.rt(session.roomId).controller;
-          if (control?.accountId !== identity.accountId)
-            fail('NOT_CONTROLLER', '共享设备已失去授权', 403);
-          controlSessionId = control.sessionId;
-        }
         const meta = {
           ...extra,
-          ...(typeof data === 'object' ? data.meta || data : {}),
+          ...(data && typeof data === 'object' ? data.meta || data : {}),
         };
         return this.service.execute(
           identity,
@@ -176,7 +178,7 @@ class RoomSocketServer {
           event,
           data,
           meta,
-          controlSessionId
+          socket.id
         );
       });
     action('chat:history', (data) => {
@@ -204,9 +206,7 @@ class RoomSocketServer {
     });
     action('screen:helper-register', (data) => {
       const room = this.service.getRoom(data.roomId);
-      const controller = this.service.rt(room.id).controller;
-      if (controller?.accountId !== identity.accountId)
-        fail('NOT_CONTROLLER', '仅当前主持可注册共享窗口', 403);
+      this.service.requireControl(identity, room);
       this.service.join(identity, room.id, {}, socket.id);
       socket.join(room.id);
       for (const [helperId, roomId] of this.helpers)
@@ -217,14 +217,21 @@ class RoomSocketServer {
     action('screen:viewer-ready', () => {
       const session = this.service.requireSession(socket.id);
       const room = this.service.getRoom(session.roomId);
-      if (room.currentState?.type !== 'screen') return { success: true };
-      const controller = this.service.rt(room.id).controller;
+      const state = room.currentState;
+      if (state?.type !== 'screen') return { success: true };
+      const owner = state.ownerAccountId || state.ownerName;
       const helperId = [...this.helpers].find(
         ([id, roomId]) =>
           roomId === room.id &&
-          this.service.sessions.get(id)?.accountId === controller?.accountId
+          this.service.sessions.get(id)?.accountId === owner
       )?.[0];
-      const target = helperId || controller?.sessionId;
+      const target =
+        helperId ||
+        (this.service.sessions.has(state.ownerSessionId)
+          ? state.ownerSessionId
+          : [...this.service.sessions.values()].find(
+              (other) => other.roomId === room.id && other.accountId === owner
+            )?.id);
       if (target && target !== socket.id)
         this.io.to(target).emit('screen:viewer-ready', { userId: socket.id });
       return { success: true };
@@ -235,22 +242,20 @@ class RoomSocketServer {
           if (!this.service.sameRoom(socket.id, data.targetUserId))
             fail('FORBIDDEN', '只能连接同房间成员', 403);
           const session = this.service.requireSession(socket.id);
-          if (
-            prefix === 'screen' &&
-            kind === 'offer' &&
-            this.service.rt(session.roomId).controller?.accountId !==
-              identity.accountId
-          )
-            fail('NOT_CONTROLLER', '仅主持可发送共享画面', 403);
-          if (prefix === 'screen' && kind !== 'offer') {
-            const controllerAccount = this.service.rt(session.roomId).controller
-              ?.accountId;
+          if (prefix === 'screen') {
+            const state = this.service.getRoom(session.roomId).currentState;
+            const sharer =
+              state?.type === 'screen'
+                ? state.ownerAccountId || state.ownerName
+                : null;
+            if (kind === 'offer' && sharer !== identity.accountId)
+              fail('FORBIDDEN', '只有正在共享的人可以发送画面', 403);
             if (
-              identity.accountId !== controllerAccount &&
-              this.service.sessions.get(data.targetUserId)?.accountId !==
-                controllerAccount
+              kind !== 'offer' &&
+              identity.accountId !== sharer &&
+              this.service.sessions.get(data.targetUserId)?.accountId !== sharer
             )
-              fail('FORBIDDEN', '共享连接必须包含当前主持', 403);
+              fail('FORBIDDEN', '共享连接必须包含正在共享的人', 403);
           }
           const value = data[kind === 'ice' ? 'candidate' : kind];
           if (!value || JSON.stringify(value).length > 65536)
@@ -280,29 +285,37 @@ class RoomSocketServer {
       return { success: true };
     });
     socket.on('disconnect', () => {
-      const helperRoom = this.helpers.get(socket.id);
+      this.stopOwnedScreen(socket, identity);
       this.helpers.delete(socket.id);
-      if (
-        helperRoom &&
-        this.service.store.get(helperRoom)?.currentState?.type === 'screen'
-      ) {
-        const session = this.service.sessions.get(socket.id);
-        const controller = this.service.rt(helperRoom).controller;
-        if (session && controller?.accountId === session.accountId) {
-          try {
-            this.service.execute(
-              identity,
-              helperRoom,
-              'screen:stop',
-              {},
-              {},
-              controller.sessionId
-            );
-          } catch {}
-        }
-      }
-      this.service.leave(socket.id, false);
+      this.service.leave(socket.id);
     });
+  }
+  /** 共享画面的窗口断开或退出时结束共享，避免成员一直看着黑屏。 */
+  stopOwnedScreen(socket, identity) {
+    const session = this.service.sessions.get(socket.id);
+    if (!session) return;
+    const state = this.service.store.get(session.roomId)?.currentState;
+    if (
+      state?.type !== 'screen' ||
+      (state.ownerSessionId !== socket.id &&
+        !(
+          this.helpers.get(socket.id) === session.roomId &&
+          (state.ownerAccountId || state.ownerName) === identity.accountId
+        ))
+    )
+      return;
+    try {
+      this.service.execute(
+        identity,
+        session.roomId,
+        'screen:stop',
+        {},
+        {},
+        socket.id
+      );
+    } catch {
+      // 房间可能已被删除或权限已收回；断开流程继续。
+    }
   }
   destroy() {
     clearInterval(this.timer);
@@ -380,6 +393,23 @@ function createRoomHttpHandler(service, authenticator) {
           success: true,
           rooms: service.list({ accountId: '' }, 'public'),
         });
+        return true;
+      }
+      if (parts[1] === 'cover' && parts.length === 2 && req.method === 'GET') {
+        let viewer = null;
+        try {
+          viewer = authenticator.authenticate(req.headers);
+        } catch {
+          // 游客只能看公开房间的封面
+        }
+        const cover = service.readCover(viewer, id);
+        res.statusCode = 200;
+        res.setHeader('Content-Type', cover.mime);
+        res.setHeader('Content-Length', cover.data.length);
+        res.setHeader('X-Content-Type-Options', 'nosniff');
+        // 地址里带版本号，换封面就是新地址，可以放心缓存
+        res.setHeader('Cache-Control', 'private, max-age=86400');
+        res.end(cover.data);
         return true;
       }
       const identity = authenticator.authenticate(req.headers);

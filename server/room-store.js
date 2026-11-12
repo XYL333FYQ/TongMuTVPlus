@@ -25,6 +25,10 @@ function openRoomStore(
       'utf8'
     )
   );
+  // 房间封面单独存放：房间行会被频繁读取，封面图片不应该跟着每次解析。
+  db.exec(
+    'CREATE TABLE IF NOT EXISTS watch_room_covers (room_id TEXT PRIMARY KEY, mime TEXT NOT NULL, data BLOB NOT NULL, updated_at INTEGER NOT NULL)'
+  );
   return db;
 }
 
@@ -247,7 +251,28 @@ class RoomStore {
       .prepare('DELETE FROM watch_room_messages WHERE created_at < ?')
       .run(before);
   }
+  cover(id) {
+    const row = this.db
+      .prepare(
+        'SELECT mime, data, updated_at FROM watch_room_covers WHERE room_id = ?'
+      )
+      .get(id);
+    return row
+      ? { mime: row.mime, data: row.data, updatedAt: row.updated_at }
+      : null;
+  }
+  setCover(id, mime, data, now) {
+    this.db
+      .prepare(
+        'INSERT INTO watch_room_covers (room_id,mime,data,updated_at) VALUES (?,?,?,?) ON CONFLICT(room_id) DO UPDATE SET mime=excluded.mime,data=excluded.data,updated_at=excluded.updated_at'
+      )
+      .run(id, mime, data, now);
+  }
+  removeCover(id) {
+    this.db.prepare('DELETE FROM watch_room_covers WHERE room_id = ?').run(id);
+  }
   remove(id) {
+    this.removeCover(id);
     this.db.prepare('DELETE FROM watch_rooms WHERE id = ?').run(id);
   }
 }

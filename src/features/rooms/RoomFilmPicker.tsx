@@ -1,6 +1,6 @@
 'use client';
 
-import { Film, Link2, Plus } from 'lucide-react';
+import { Film, Link2, Play, Plus } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
 import { base58Encode } from '@/lib/utils';
@@ -11,15 +11,29 @@ type FilmChoice = {
   source: string;
   source_name?: string;
   year?: string;
+  poster?: string;
+  episodes?: string[];
 };
+
+const filmHref = (film: FilmChoice) =>
+  `/play?${new URLSearchParams({
+    source: film.source,
+    id: String(film.id),
+    title: film.title,
+    year: film.year || '',
+    episode: '1',
+  })}`;
 
 export default function RoomFilmPicker({
   busy,
   onAdd,
+  onPlayNow,
   initialQuery = '',
 }: {
   busy: boolean;
   onAdd: (href: string) => Promise<void>;
+  /** 有播放控制权时提供：直接在房间里开始放映 */
+  onPlayNow?: (href: string) => void;
   initialQuery?: string;
 }) {
   const [mode, setMode] = useState<'catalog' | 'direct'>('catalog');
@@ -31,6 +45,7 @@ export default function RoomFilmPicker({
   const [error, setError] = useState('');
   const searchRequest = useRef<AbortController | null>(null);
   const searchSequence = useRef(0);
+  const autoSearched = useRef(false);
   useEffect(
     () => () => {
       searchSequence.current += 1;
@@ -50,28 +65,31 @@ export default function RoomFilmPicker({
     setSearching(false);
     setSearched(false);
   };
-  const search = async () => {
+  const directHref = () => {
+    const url = new URL(query.trim());
+    if (
+      !['http:', 'https:'].includes(url.protocol) ||
+      url.username ||
+      url.password ||
+      !/\.(mp4|m3u8)$/i.test(url.pathname)
+    )
+      throw new Error(
+        '请使用完整的 MP4 或 M3U8 直链。电影网页地址需要独立解析能力。'
+      );
+    return `/play?${new URLSearchParams({
+      source: 'directplay',
+      id: base58Encode(url.href),
+      title: title || '分享的影片',
+      episode: '1',
+    })}`;
+  };
+  const search = async (playNow = false) => {
     setError('');
     if (mode === 'direct') {
       try {
-        const url = new URL(query.trim());
-        if (
-          !['http:', 'https:'].includes(url.protocol) ||
-          url.username ||
-          url.password ||
-          !/\.(mp4|m3u8)$/i.test(url.pathname)
-        )
-          throw new Error(
-            '请使用完整的 MP4 或 M3U8 直链。电影网页地址需要独立解析能力。'
-          );
-        await onAdd(
-          `/play?${new URLSearchParams({
-            source: 'directplay',
-            id: base58Encode(url.href),
-            title: title || '分享的影片',
-            episode: '1',
-          })}`
-        );
+        const href = directHref();
+        if (playNow && onPlayNow) onPlayNow(href);
+        else await onAdd(href);
       } catch (failure) {
         setError(failure instanceof Error ? failure.message : '地址无效');
       }
@@ -103,6 +121,15 @@ export default function RoomFilmPicker({
       }
     }
   };
+  // 从“快速开始”等入口带着片名打开时，直接搜出结果，省一次点击。
+  const searchRef = useRef(search);
+  searchRef.current = search;
+  useEffect(() => {
+    if (initialQuery.trim() && !autoSearched.current) {
+      autoSearched.current = true;
+      void searchRef.current();
+    }
+  }, [initialQuery]);
   return (
     <div className='tm-room-picker'>
       <div className='tm-room-picker-tabs'>
@@ -157,8 +184,23 @@ export default function RoomFilmPicker({
         >
           {searching ? '正在搜索…' : mode === 'catalog' ? '搜索' : '加入片单'}
         </button>
+        {mode === 'direct' && onPlayNow && (
+          <button
+            type='button'
+            className='tm-room-primary'
+            disabled={busy || !query.trim()}
+            onClick={() => void search(true)}
+          >
+            <Play size={15} fill='currentColor' />
+            立即一起看
+          </button>
+        )}
       </form>
-      <p>加入片单不会切换正在播放的影片。播放由当前主持确认。</p>
+      <p>
+        {onPlayNow
+          ? '「立即一起看」会马上为所有人切换影片；「加入片单」不会打断正在播放的影片。'
+          : '加入片单不会切换正在播放的影片，等房主开始播放。'}
+      </p>
       {error && <p role='alert'>{error}</p>}
       <div className='tm-room-picker-results'>
         {results.map((film, index) => (
@@ -167,22 +209,26 @@ export default function RoomFilmPicker({
               <h3>{film.title}</h3>
               <p>
                 {film.year || '年份未知'} · {film.source_name || film.source}
+                {film.episodes && film.episodes.length > 1
+                  ? ` · 共${film.episodes.length}集`
+                  : ''}
               </p>
             </div>
+            {onPlayNow && (
+              <button
+                disabled={busy}
+                onClick={() => onPlayNow(filmHref(film))}
+                aria-label={`立即一起看${film.title}`}
+                title='立即一起看'
+              >
+                <Play size={17} />
+              </button>
+            )}
             <button
               disabled={busy}
-              onClick={() =>
-                onAdd(
-                  `/play?${new URLSearchParams({
-                    source: film.source,
-                    id: String(film.id),
-                    title: film.title,
-                    year: film.year || '',
-                    episode: '1',
-                  })}`
-                )
-              }
+              onClick={() => onAdd(filmHref(film))}
               aria-label={`将${film.title}加入片单`}
+              title='加入片单'
             >
               <Plus size={18} />
             </button>

@@ -21,5 +21,6 @@ test('uses a readable name while keeping phone numbers and account identifiers o
       ownerAccountId: '14715857728',
     })
   ).toBe('周五电影夜');
-  expect(maskedRoomId('14715857728')).toBe('1471…7728');
+  expect(maskedRoomId('14715857728')).toBe('1471 5857 728');
+  expect(maskedRoomId('0123456789ABCDEF0123')).toBe('0123…0123');
 });

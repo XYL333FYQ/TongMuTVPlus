@@ -24,7 +24,11 @@ export function displayRoomName(room: RoomLabel) {
   return room.name;
 }
 
+/**
+ * 房间号本身就是邀请凭据的一半（还需要账号登录 / 可选密码），只有 12 位，
+ * 截断显示反而让人没法口头告诉朋友。按 4 位分组完整显示，过长的才截断。
+ */
 export function maskedRoomId(id: string) {
-  const visible = id.length > 8 ? 4 : 2;
-  return `${id.slice(0, visible)}…${id.slice(-visible)}`;
+  if (id.length <= 16) return id.match(/.{1,4}/g)?.join(' ') || id;
+  return `${id.slice(0, 4)}…${id.slice(-4)}`;
 }

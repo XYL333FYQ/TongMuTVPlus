@@ -125,7 +125,7 @@ export default function RoomFilmSelection() {
           </section>
         ) : (
           <section className='tm-room-selection-card' aria-label='房间选片'>
-            <p>加入待看不会切换当前影片。播放由当前主持确认。</p>
+            <p>加入待看不会切换当前影片，可以在片单里点播放开始。</p>
             {!watchRoom.isConnected && (
               <p role='alert'>房间连接中断，恢复后可以继续添加。</p>
             )}

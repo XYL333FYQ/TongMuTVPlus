@@ -91,7 +91,7 @@ export function WatchRoomProvider({ children }: WatchRoomProviderProps) {
     console.log('[WatchRoomProvider] Room state cleared');
 
     setToast({
-      message: '主持已结束本次播放，房间继续保留',
+      message: '本次放映已结束，房间继续保留',
       type: 'info',
       duration: 4000,
       onClose: () => setToast(null),

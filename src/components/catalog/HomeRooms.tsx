@@ -14,12 +14,15 @@ import {
   EXTERNAL_ROOM_SERVER_NOTICE,
   isExternalRoomServer,
 } from '@/features/rooms/external-room-server';
+import { roomCoverSource } from '@/features/rooms/room-cover';
 import { displayRoomName } from '@/features/rooms/room-presentation';
 
 import type { Room } from '@/types/watch-room';
 
 type Summary = Pick<Room, 'id' | 'name' | 'memberCount'> &
-  Partial<Pick<Room, 'ownerName' | 'ownerAccountId'>>;
+  Partial<
+    Pick<Room, 'ownerName' | 'ownerAccountId' | 'nowPlaying' | 'coverUrl'>
+  >;
 export default function HomeRooms({ guest = false }: { guest?: boolean }) {
   const context = useWatchRoomContextSafe();
   const [rooms, setRooms] = useState<Summary[]>([]);
@@ -113,7 +116,10 @@ export default function HomeRooms({ guest = false }: { guest?: boolean }) {
   const playing =
     room?.id === current?.id && current?.currentState?.type === 'play'
       ? current.currentState.videoName
+      : room?.nowPlaying?.isPlaying
+      ? room.nowPlaying.title
       : '';
+  const cover = roomCoverSource(room);
   return (
     <section className='tm-home-rooms' aria-label='我的房间'>
       <SectionHeader title='我的房间' linkLabel='管理房间' href='/watch-room' />
@@ -122,8 +128,22 @@ export default function HomeRooms({ guest = false }: { guest?: boolean }) {
           href={`/watch-room?room=${encodeURIComponent(room.id)}`}
           className='tm-home-room-summary tm-press'
         >
-          <span className='tm-home-room-avatar' aria-hidden='true'>
-            {Array.from(displayRoomName(room))[0] || '房'}
+          <span
+            className='tm-home-room-avatar'
+            aria-hidden='true'
+            data-has-cover={Boolean(cover)}
+          >
+            {cover ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={cover}
+                alt=''
+                loading='lazy'
+                referrerPolicy='no-referrer'
+              />
+            ) : (
+              Array.from(displayRoomName(room))[0] || '房'
+            )}
           </span>
           <div className='tm-home-room-details'>
             <strong>{displayRoomName(room)}</strong>

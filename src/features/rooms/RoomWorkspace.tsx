@@ -7,6 +7,7 @@ import {
   ChevronRight,
   Copy,
   Film,
+  ImagePlus,
   Link2,
   Lock,
   MessageCircle,
@@ -50,6 +51,7 @@ import {
   EXTERNAL_ROOM_SERVER_NOTICE,
   isExternalRoomServer,
 } from './external-room-server';
+import { compressRoomCover, roomCoverSource } from './room-cover';
 import {
   defaultRoomName,
   displayRoomName,
@@ -75,6 +77,8 @@ type RoomSummary = Pick<
   | 'memberCount'
   | 'lifecycle'
   | 'updatedAt'
+  | 'nowPlaying'
+  | 'coverUrl'
 >;
 
 export default function RoomWorkspace() {
@@ -114,21 +118,15 @@ export default function RoomWorkspace() {
       room && playback.followingRoom && playback.presentation === 'docked'
     )
   );
-  const controllerMember = watchRoom.members?.find(
-    (member) => member.id === room?.controllerSessionId
-  );
-  // A controller still assigned to a departed session is awaiting server handoff.
-  // No controller assignment means no host, not an invented election result.
-  const handingOver = Boolean(
-    watchRoom.isConnected && room?.controllerSessionId && !controllerMember
-  );
-  const hostLabel = handingOver
-    ? '房主交接中'
-    : watchRoom.canControl
-    ? '你正在主持'
-    : room?.controllerAccountId
-    ? `${room.controllerAccountId} 正在主持`
-    : '暂无主持';
+  // 与 SyncTV 一致：没有“唯一主持设备”，有权限的人都能直接控制播放。
+  const membersControl = room?.settings?.memberCanControl !== false;
+  const hostLabel = !watchRoom.canControl
+    ? '仅房主和管理员可控制播放'
+    : membersControl
+    ? '所有人都可以控制播放'
+    : watchRoom.isOwner
+    ? '你是房主'
+    : '你是管理员';
   useEffect(() => {
     const showChat = () => {
       setPanelTab('chat');
@@ -180,6 +178,8 @@ export default function RoomWorkspace() {
   const [copiedRoomId, setCopiedRoomId] = useState('');
   const [description, setDescription] = useState('');
   const [isPublic, setIsPublic] = useState(false);
+  const [memberCanControl, setMemberCanControl] = useState(true);
+  const [memberCanQueue, setMemberCanQueue] = useState(true);
   const [password, setPassword] = useState('');
   const [joinId, setJoinId] = useState('');
   const [copiedInviteRoomId, setCopiedInviteRoomId] = useState('');
@@ -407,10 +407,13 @@ export default function RoomWorkspace() {
   };
   const openCreate = () => {
     if (!requireLogin()) return;
-    setName(defaultRoomName(username));
+    // 名称留空，默认名只作为占位提示：直接输入不会和默认名拼在一起
+    setName('');
     setDescription('');
     setPassword('');
     setIsPublic(false);
+    setMemberCanControl(true);
+    setMemberCanQueue(true);
     setError('');
     setDialog('create');
   };
@@ -424,12 +427,13 @@ export default function RoomWorkspace() {
     watchRoom.clearError();
     try {
       const created = await watchRoom.createRoom({
-        name,
+        name: name.trim() || defaultRoomName(username),
         description,
         password: password || undefined,
         isPublic,
         roomType: 'sync',
         userName: username,
+        settings: { memberCanControl, memberCanQueue },
       });
       setDialog(null);
       router.replace(roomLocation(created.id));
@@ -459,6 +463,8 @@ export default function RoomWorkspace() {
     setName(room.name);
     setDescription(room.description);
     setIsPublic(room.isPublic);
+    setMemberCanControl(room.settings?.memberCanControl !== false);
+    setMemberCanQueue(room.settings?.memberCanQueue !== false);
     setPassword('');
     setAutoArchive(room.settings?.autoArchive !== false);
     setDeleteConfirmation('');
@@ -467,6 +473,19 @@ export default function RoomWorkspace() {
   const openPicker = (title = '') => {
     setPickerTitle(title);
     setDialog('picker');
+  };
+  const uploadCover = async (file?: File | null) => {
+    if (!file) return;
+    try {
+      const image = await compressRoomCover(file);
+      if (await mutate('room:cover', { image })) setNotice('封面已更新');
+    } catch (failure) {
+      setError(failure instanceof Error ? failure.message : '封面上传失败');
+    }
+  };
+  const removeCover = async () => {
+    if (await mutate('room:cover', { image: null }))
+      setNotice('已移除自定义封面');
   };
   const copyRoomId = async () => {
     if (!room) return;
@@ -765,10 +784,12 @@ export default function RoomWorkspace() {
                       : waitingQueue.length && !room.currentState
                       ? watchRoom.canControl
                         ? `片单里有 ${waitingQueue.length} 部待看，准备好就开始`
-                        : `片单里有 ${waitingQueue.length} 部待看，等主持开始播放`
+                        : `片单里有 ${waitingQueue.length} 部待看，等房主开始播放`
                       : activityHref
                       ? '当前活动会继续；添加待看不会切换活动。'
-                      : '加入片单，再由主持播放'}
+                      : watchRoom.canControl
+                      ? '选好影片就能直接开始，所有人同步播放'
+                      : '把想看的加入片单，等房主开始播放'}
                   </p>
                   <div className='tm-room-empty-actions'>
                     {!playback.followingRoom ? (
@@ -1011,7 +1032,11 @@ export default function RoomWorkspace() {
                 {!room.queue?.length && (
                   <div className='tm-room-queue-empty'>
                     <p>片单为空</p>
-                    <span>选好的影片会排在这里，由主持确认播放</span>
+                    <span>
+                      {watchRoom.canControl
+                        ? '选好的影片会排在这里，点播放就一起开始'
+                        : '选好的影片会排在这里，等房主开始播放'}
+                    </span>
                   </div>
                 )}
                 <ol>
@@ -1058,10 +1083,7 @@ export default function RoomWorkspace() {
                         <RoomActionMenu
                           label={`${item.title}的片单操作`}
                           items={[
-                            ...(watchRoom.isOwner ||
-                            watchRoom.members.find(
-                              (member) => member.id === watchRoom.socket?.id
-                            )?.canHost
+                            ...(watchRoom.isRoomAdmin
                               ? [
                                   {
                                     label: '上移',
@@ -1086,10 +1108,7 @@ export default function RoomWorkspace() {
                                 ]
                               : []),
                             ...((item.addedBy === username && !item.playedAt) ||
-                            watchRoom.isOwner ||
-                            watchRoom.members.find(
-                              (member) => member.id === watchRoom.socket?.id
-                            )?.canHost
+                            watchRoom.isRoomAdmin
                               ? [
                                   {
                                     label: '移除',
@@ -1142,18 +1161,23 @@ export default function RoomWorkspace() {
                         {member.id === watchRoom.socket?.id && '（你）'}
                       </h3>
                       <p>
-                        {member.isController
-                          ? '当前主持'
-                          : member.isOwner
-                          ? '房间创建者'
-                          : member.following === false
-                          ? '个人观看中'
-                          : member.canHost
-                          ? '可接替主持'
-                          : '一起观看'}
+                        {[
+                          member.isOwner
+                            ? '房主'
+                            : member.canHost
+                            ? '管理员'
+                            : '成员',
+                          member.following === false
+                            ? '个人观看中'
+                            : member.canControl
+                            ? '可控制播放'
+                            : '一起观看',
+                        ].join(' · ')}
                       </p>
                     </div>
-                    {member.isController && <Shield size={15} />}
+                    {(member.isOwner || member.canHost) && (
+                      <Shield size={15} aria-label='房主或管理员' />
+                    )}
                     {watchRoom.isOwner &&
                       !member.isOwner &&
                       member.accountId && (
@@ -1166,7 +1190,7 @@ export default function RoomWorkspace() {
                             })
                           }
                         >
-                          {member.canHost ? '取消授权' : '授权主持'}
+                          {member.canHost ? '取消管理员' : '设为管理员'}
                         </button>
                       )}
                   </div>
@@ -1269,10 +1293,24 @@ export default function RoomWorkspace() {
               <div className='tm-room-directory'>
                 {rooms.map((item) => (
                   <article key={item.id} className='tm-room-card'>
-                    <div className='tm-room-card-art'>
-                      <span className='tm-room-card-glyph' aria-hidden='true'>
-                        {Array.from(displayRoomName(item).trim())[0] || '房'}
-                      </span>
+                    <div
+                      className='tm-room-card-art'
+                      data-has-cover={Boolean(roomCoverSource(item))}
+                    >
+                      {roomCoverSource(item) ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          className='tm-room-card-cover'
+                          src={roomCoverSource(item) || ''}
+                          alt=''
+                          loading='lazy'
+                          referrerPolicy='no-referrer'
+                        />
+                      ) : (
+                        <span className='tm-room-card-glyph' aria-hidden='true'>
+                          {Array.from(displayRoomName(item).trim())[0] || '房'}
+                        </span>
+                      )}
                       <span
                         className='tm-badge tm-room-card-presence'
                         data-on-art='true'
@@ -1297,10 +1335,18 @@ export default function RoomWorkspace() {
                     <div className='tm-room-card-body'>
                       <h2>{displayRoomName(item)}</h2>
                       <p>
-                        {item.description ||
-                          (item.lifecycle === 'archived'
-                            ? '已归档'
-                            : `房主 ${item.ownerAccountId}`)}
+                        {item.nowPlaying && item.lifecycle !== 'archived'
+                          ? `${
+                              item.nowPlaying.isPlaying ? '正在放映' : '暂停在'
+                            }「${item.nowPlaying.title}」${
+                              item.nowPlaying.episode > 1
+                                ? ` 第${item.nowPlaying.episode}集`
+                                : ''
+                            }`
+                          : item.description ||
+                            (item.lifecycle === 'archived'
+                              ? '已归档'
+                              : `房主 ${item.ownerAccountId}`)}
                       </p>
                     </div>
                     <button
@@ -1403,6 +1449,14 @@ export default function RoomWorkspace() {
                     <RoomFilmPicker
                       busy={busy}
                       onAdd={addFilm}
+                      onPlayNow={
+                        watchRoom.canControl && playback.followingRoom
+                          ? (href) => {
+                              setDialog(null);
+                              playback.requestPlayback(href, 'together');
+                            }
+                          : undefined
+                      }
                       initialQuery={pickerTitle}
                     />
                   ) : dialog === 'join' ? (
@@ -1455,6 +1509,8 @@ export default function RoomWorkspace() {
                             name,
                             description,
                             isPublic,
+                            memberCanControl,
+                            memberCanQueue,
                             ...(password ? { password } : {}),
                             ...(isStationAdmin ? { autoArchive } : {}),
                           }).then((ok) => {
@@ -1465,12 +1521,16 @@ export default function RoomWorkspace() {
                       <label>
                         房间名称
                         <input
-                          required
+                          required={dialog === 'settings'}
                           maxLength={80}
                           autoComplete='off'
                           value={name}
                           onChange={(event) => setName(event.target.value)}
-                          placeholder='例如：周五夜场'
+                          placeholder={
+                            dialog === 'create'
+                              ? defaultRoomName(username)
+                              : '例如：周五夜场'
+                          }
                         />
                       </label>
                       <label>
@@ -1485,6 +1545,56 @@ export default function RoomWorkspace() {
                           placeholder='介绍这个房间（可选）'
                         />
                       </label>
+                      {dialog === 'settings' && room && (
+                        <div className='tm-room-cover-field'>
+                          <span>房间封面</span>
+                          <div className='tm-room-cover-preview'>
+                            {roomCoverSource(room) ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img
+                                src={roomCoverSource(room) || ''}
+                                alt='房间封面预览'
+                                referrerPolicy='no-referrer'
+                              />
+                            ) : (
+                              '还没有封面'
+                            )}
+                          </div>
+                          <p>
+                            {room.coverUrl
+                              ? '正在使用你上传的封面'
+                              : room.nowPlaying?.poster
+                              ? '未上传封面时，显示正在放映影片的海报'
+                              : '未上传封面时，显示默认占位'}
+                          </p>
+                          <div className='tm-room-cover-actions'>
+                            <label>
+                              <ImagePlus size={16} aria-hidden />
+                              {room.coverUrl ? '更换封面' : '上传封面'}
+                              <input
+                                type='file'
+                                accept='image/jpeg,image/png,image/webp'
+                                className='sr-only'
+                                disabled={busy}
+                                onChange={(event) => {
+                                  void uploadCover(event.target.files?.[0]);
+                                  event.target.value = '';
+                                }}
+                              />
+                            </label>
+                            {room.coverUrl && (
+                              <button
+                                type='button'
+                                disabled={busy}
+                                onClick={() => void removeCover()}
+                              >
+                                <Trash2 size={16} aria-hidden />
+                                移除封面
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      )}
                       <label className='tm-room-checkbox'>
                         <input
                           type='checkbox'
@@ -1494,6 +1604,26 @@ export default function RoomWorkspace() {
                           }
                         />
                         出现在公开房间列表
+                      </label>
+                      <label className='tm-room-checkbox'>
+                        <input
+                          type='checkbox'
+                          checked={memberCanControl}
+                          onChange={(event) =>
+                            setMemberCanControl(event.target.checked)
+                          }
+                        />
+                        成员可以播放、暂停、拖动和换片
+                      </label>
+                      <label className='tm-room-checkbox'>
+                        <input
+                          type='checkbox'
+                          checked={memberCanQueue}
+                          onChange={(event) =>
+                            setMemberCanQueue(event.target.checked)
+                          }
+                        />
+                        成员可以往片单里添加影片
                       </label>
                       <label>
                         {dialog === 'create'
@@ -1515,7 +1645,9 @@ export default function RoomWorkspace() {
                       <button
                         className='tm-room-primary'
                         disabled={
-                          busy || !name.trim() || !watchRoom.isConnected
+                          busy ||
+                          (dialog === 'settings' && !name.trim()) ||
+                          !watchRoom.isConnected
                         }
                       >
                         {busy

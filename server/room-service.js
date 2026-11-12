@@ -1,9 +1,25 @@
 'use strict';
 
+/*
+ * 一起看房间服务（参照 SyncTV 的模型重写）。
+ *
+ * 旧实现是“唯一主持设备”模型：服务器要在在线设备里选出一个主持（就绪、跟随、
+ * 租约、代次、房主回来等 5 秒再收回……），只有这台设备的播放器事件才会被采纳。
+ * 任何一环没跟上，全房间就“暂无主持”、成员点暂停会被强行恢复播放。
+ *
+ * 现在与 SyncTV 一致：
+ * - 权限按账号算：房主、被授权的管理员，以及房间开启“成员可控制播放”（默认开启）
+ *   时的所有成员，都可以直接播放 / 暂停 / 拖动 / 倍速 / 换片。
+ * - 服务器只保存一份播放状态：{ currentTime, isPlaying, playbackRate, updatedAt,
+ *   version }。任何人操作后立即广播；各端按服务器时钟推算当前位置并自行纠偏。
+ * - 后到的命令覆盖先到的（last writer wins），不再因为“房间版本已变化”拒绝操作。
+ */
+
 const crypto = require('node:crypto');
 
 const DEFAULTS = Object.freeze({
   maxOwnedRooms: 3,
+  // 以下两个保留为可配置项以兼容旧环境变量；新模型不再选举主持。
   reconnectGraceMs: 30000,
   ownerReadyMs: 5000,
   leaseMs: 90000,
@@ -29,7 +45,7 @@ function text(value, max, required = false) {
   return result;
 }
 function number(value, fallback = 0, max = Number.MAX_SAFE_INTEGER) {
-  if (value === undefined) return fallback;
+  if (value === undefined || value === null) return fallback;
   if (!Number.isFinite(value) || value < 0 || value > max)
     fail('INVALID_INPUT', '数值不符合要求');
   return value;
@@ -50,6 +66,27 @@ function url(value) {
   )
     fail('INVALID_MEDIA', '媒体地址必须使用 HTTP 或 HTTPS，且不能包含账号密码');
   return candidate;
+}
+function safeUrl(value) {
+  if (!value || typeof value !== 'string') return '';
+  try {
+    return url(value);
+  } catch {
+    return '';
+  }
+}
+const COVER_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
+const MAX_COVER_BYTES = 200 * 1024;
+/** data:image/...;base64,... -> { mime, data }，只接受常见图片格式和有限大小。 */
+function coverImage(value) {
+  if (typeof value !== 'string') fail('INVALID_INPUT', '封面图片无效');
+  const match = /^data:(image\/[a-z]+);base64,([A-Za-z0-9+/=]+)$/.exec(value);
+  if (!match || !COVER_TYPES.has(match[1]))
+    fail('INVALID_INPUT', '封面只支持 JPG、PNG 或 WebP 图片');
+  const data = Buffer.from(match[2], 'base64');
+  if (!data.length || data.length > MAX_COVER_BYTES)
+    fail('INVALID_INPUT', '封面图片太大，请换一张小一点的图片');
+  return { mime: match[1], data };
 }
 function passwordHash(password) {
   if (!password) return null;
@@ -81,6 +118,12 @@ function song(item) {
     durationText: text(item.durationText, 30),
   };
 }
+function rate(value, fallback = 1) {
+  if (value === undefined || value === null) return fallback;
+  if (!Number.isFinite(value) || value < 0.1 || value > 16)
+    fail('INVALID_INPUT', '倍速不符合要求');
+  return value;
+}
 function mediaState(input, now, previous = null) {
   if (!input || typeof input !== 'object')
     fail('INVALID_MEDIA', '播放状态无效');
@@ -96,12 +139,14 @@ function mediaState(input, now, previous = null) {
       videoId: text(String(input.videoId || ''), 8192, true),
       videoName: text(input.videoName, 240),
       videoYear: text(input.videoYear, 30),
+      // 海报只用于房间卡片在没有自定义封面时展示，地址无效就忽略，不影响播放
+      poster: safeUrl(input.poster),
       searchTitle: text(input.searchTitle, 240),
       source: text(input.source, 240, true),
-      episode: number(input.episode, 1, 100000),
+      episode: number(input.episode, 1, 100000) || 1,
       currentTime: number(input.currentTime, 0, 30 * 86400),
       isPlaying: !!input.isPlaying,
-      playbackRate: number(input.playbackRate, 1, 16) || 1,
+      playbackRate: rate(input.playbackRate, 1),
     };
   if (input.type === 'live')
     return {
@@ -135,6 +180,7 @@ function mediaState(input, now, previous = null) {
     };
   fail('INVALID_MEDIA', '不支持的活动类型');
 }
+/** 按服务器时钟推算“此刻”的播放位置。 */
 function projected(state, now) {
   if (!state) return null;
   const result = { ...state };
@@ -156,7 +202,8 @@ function queueItem(data, accountId, now) {
     href,
     source: text(data.source, 240),
     videoId: text(String(data.videoId || ''), 8192),
-    episode: number(data.episode, 1, 100000),
+    episode: number(data.episode, 1, 100000) || 1,
+    ...(data.poster ? { poster: url(data.poster) } : {}),
     addedBy: accountId,
     addedAt: now,
   };
@@ -181,6 +228,35 @@ function fromEnv(env = process.env) {
   }
   return config;
 }
+const mediaKey = (state) =>
+  state && state.type === 'play'
+    ? `${state.source}\u0000${state.videoId}\u0000${state.episode || 1}`
+    : '';
+
+// 只改播放进度、不改房间结构的命令：不递增房间 revision，不广播完整快照，
+// 也不写入命令去重表（重复执行结果相同，没必要占库）。
+const TRANSPORT_EVENTS = new Set([
+  'play:play',
+  'play:pause',
+  'play:seek',
+  'play:rate',
+  'play:update',
+  'music:update',
+  'music:play',
+  'music:pause',
+  'music:seek',
+]);
+const PLAYBACK_EVENTS = new Set([
+  ...TRANSPORT_EVENTS,
+  'play:change',
+  'live:change',
+  'music:change',
+  'music:queue',
+  'screen:start',
+  'screen:stop',
+  'state:clear',
+  'activity:change',
+]);
 
 class RoomService {
   constructor(store, options = {}) {
@@ -191,17 +267,15 @@ class RoomService {
     this.runtime = new Map();
     this.sessions = new Map();
     this.rate = new Map();
-    // A previous process's lease never grants control in this process.
+    // 进程重启：所有人都已断开，房间停在当时的位置（暂停），屏幕共享结束。
     for (const id of store.allIds()) {
       const room = store.get(id);
-      room.controllerEpoch += 1;
       room.emptySince = room.emptySince ?? this.now();
       if (room.currentState?.type === 'screen') room.currentState = null;
       else if (room.currentState && 'isPlaying' in room.currentState)
         room.currentState = {
-          ...room.currentState,
+          ...projected(room.currentState, this.now()),
           isPlaying: false,
-          updatedAt: this.now(),
         };
       store.save(room);
     }
@@ -214,28 +288,33 @@ class RoomService {
   }
   rt(id) {
     if (!this.runtime.has(id))
-      this.runtime.set(id, {
-        controller: null,
-        lostAt: null,
-        lastActiveAt: this.now(),
-        dormant: false,
-      });
+      this.runtime.set(id, { lastActiveAt: this.now(), stateVersion: 0 });
     return this.runtime.get(id);
   }
+  /** 是否允许该账号控制播放（SyncTV 的“设置当前播放状态”权限）。 */
+  canControl(room, accountId) {
+    if (!accountId) return false;
+    if (room.ownerAccountId === accountId) return true;
+    const membership = this.store.membership(room.id, accountId);
+    if (!membership) return false;
+    if (membership.can_host) return true;
+    return room.settings?.memberCanControl !== false;
+  }
   members(id) {
+    const room = this.getRoom(id, true);
     return [...this.sessions.values()]
       .filter((session) => session.roomId === id)
       .map((session) => {
-        const room = this.getRoom(id, true);
         const member = this.store.membership(id, session.accountId);
+        const isOwner = room.ownerAccountId === session.accountId;
         return {
           id: session.id,
           accountId: session.accountId,
           name: session.accountId,
-          isOwner: room.ownerAccountId === session.accountId,
-          isController: this.rt(id).controller?.sessionId === session.id,
-          canHost:
-            !!member?.can_host || room.ownerAccountId === session.accountId,
+          isOwner,
+          isController: false,
+          canHost: !!member?.can_host || isOwner,
+          canControl: this.canControl(room, session.accountId),
           ready: session.ready,
           following: session.following !== false,
           lastHeartbeat: session.lastSeen,
@@ -244,6 +323,17 @@ class RoomService {
   }
   summary(room, accountId) {
     const own = room.ownerAccountId === accountId;
+    const playing =
+      room.currentState?.type === 'play'
+        ? {
+            title: room.currentState.videoName,
+            episode: room.currentState.episode || 1,
+            isPlaying: !!room.currentState.isPlaying,
+            poster: room.currentState.poster || '',
+          }
+        : null;
+    // 封面显示顺序：房主上传的封面 > 正在放映影片的海报 > 前端占位
+    const coverVersion = room.settings?.coverVersion;
     return {
       id: room.id,
       name: room.name,
@@ -254,36 +344,45 @@ class RoomService {
       ownerAccountId: room.ownerAccountId,
       ownerName: room.ownerAccountId,
       memberCount: new Set(
-        this.members(room.id).map((member) => member.accountId)
+        [...this.sessions.values()]
+          .filter((session) => session.roomId === room.id)
+          .map((session) => session.accountId)
       ).size,
       createdAt: room.createdAt,
       updatedAt: room.updatedAt,
       lifecycle: room.lifecycle,
       revision: room.revision,
       isMine: own,
+      nowPlaying: playing,
+      coverUrl: coverVersion
+        ? `/api/rooms/${encodeURIComponent(room.id)}/cover?v=${coverVersion}`
+        : null,
     };
   }
   snapshot(room, accountId, sessionId = null) {
-    const runtime = this.rt(room.id);
     const members = this.members(room.id);
     const ownerSession = members.find((member) => member.isOwner);
-    const control = runtime.controller;
     return {
       ...this.summary(room, accountId),
       ownerId: ownerSession?.id || room.ownerAccountId,
-      controllerAccountId: control?.accountId || null,
-      controllerSessionId: control?.sessionId || null,
+      // 兼容旧客户端字段：新模型没有“唯一主持设备”。
+      controllerAccountId: null,
+      controllerSessionId: null,
       controllerEpoch: room.controllerEpoch,
-      leaseExpiresAt: control?.leaseExpiresAt || null,
+      leaseExpiresAt: null,
       currentState: projected(room.currentState, this.now()),
       queue: room.queue,
-      settings: room.settings,
+      settings: {
+        memberCanQueue: room.settings?.memberCanQueue !== false,
+        memberCanControl: room.settings?.memberCanControl !== false,
+        autoArchive: room.settings?.autoArchive !== false,
+      },
       lastOwnerHeartbeat: ownerSession?.lastHeartbeat || 0,
       lastMessageSeq: this.store.lastSeq(room.id),
       unreadCount: this.store.unread(room.id, accountId),
       members,
       serverTime: this.now(),
-      canControl: !!sessionId && control?.sessionId === sessionId,
+      canControl: this.canControl(room, accountId),
     };
   }
   list(identity, mode = 'all') {
@@ -304,6 +403,7 @@ class RoomService {
         if (mode === 'public') return room.isPublic;
         return room.isPublic || mine;
       })
+      .sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0))
       .map((room) => this.summary(room, identity.accountId));
   }
   touch(room) {
@@ -350,11 +450,9 @@ class RoomService {
         ? data.roomType
         : 'sync',
       settings: {
-        memberCanQueue: true,
+        memberCanQueue: data.settings?.memberCanQueue !== false,
+        memberCanControl: data.settings?.memberCanControl !== false,
         autoArchive: true,
-        ...(data.settings?.memberCanQueue === false
-          ? { memberCanQueue: false }
-          : {}),
       },
       currentState: null,
       queue: [],
@@ -380,6 +478,18 @@ class RoomService {
       fail('FORBIDDEN', '请先加入房间', 403);
     return this.snapshot(room, identity.accountId);
   }
+  /** 公开房间的封面谁都能看；私密房间只给成员看。 */
+  readCover(identity, id) {
+    const room = this.getRoom(id);
+    if (
+      !room.isPublic &&
+      !(identity?.accountId && this.store.membership(id, identity.accountId))
+    )
+      fail('FORBIDDEN', '请先加入房间', 403);
+    const cover = this.store.cover(id);
+    if (!cover) fail('NOT_FOUND', '房间没有自定义封面', 404);
+    return cover;
+  }
   join(identity, id, data = {}, sessionId) {
     const room = this.getRoom(id);
     const known = this.store.membership(id, identity.accountId);
@@ -388,13 +498,21 @@ class RoomService {
     if (!known && room.passwordHash)
       this.limit(`${identity.accountId}:join-password`, 10, 60000);
     if (!known && !passwordMatches(data.password, room.passwordHash))
-      fail('WRONG_PASSWORD', '房间密码错误', 403);
-    // 只有已经在这个房间里的连接（重复加入）才免检；
-    // 从别的房间切过来的连接要占新名额，必须同样受人数上限约束
+      fail(
+        data.password ? 'WRONG_PASSWORD' : 'PASSWORD_REQUIRED',
+        data.password ? '房间密码错误' : '这个房间需要密码',
+        403
+      );
+    // 人数上限按账号算：同一账号多开标签页不多占名额
+    const accounts = new Set(
+      [...this.sessions.values()]
+        .filter((session) => session.roomId === id && session.id !== sessionId)
+        .map((session) => session.accountId)
+    );
     if (
       sessionId &&
-      this.sessions.get(sessionId)?.roomId !== id &&
-      this.members(id).length >= this.config.maxMembers
+      !accounts.has(identity.accountId) &&
+      accounts.size >= this.config.maxMembers
     )
       fail('ROOM_FULL', '房间人数已满', 409);
     this.store.addMember(
@@ -404,52 +522,49 @@ class RoomService {
       this.now()
     );
     if (sessionId) {
-      if (this.sessions.get(sessionId)?.roomId !== id)
-        this.leave(sessionId, true);
+      const previous = this.sessions.get(sessionId);
+      if (previous && previous.roomId !== id) this.leave(sessionId, true);
       this.sessions.set(sessionId, {
         id: sessionId,
         accountId: identity.accountId,
         identity,
         roomId: id,
-        joinedAt: this.now(),
+        joinedAt: previous?.roomId === id ? previous.joinedAt : this.now(),
         lastSeen: this.now(),
         ready: false,
-        following: true,
-        readySince: null,
-        appliedRevision: 0,
-        requiredRevision: room.revision,
+        following: previous?.roomId === id ? previous.following : true,
       });
-      const runtime = this.rt(id);
-      runtime.dormant = false;
+      this.rt(id).lastActiveAt = this.now();
       room.emptySince = null;
       if (room.lifecycle === 'sleeping') room.lifecycle = 'active';
       this.store.save(room);
-      this.emit(
-        id,
-        'room:member-joined',
-        this.members(id).find((member) => member.id === sessionId)
-      );
+      if (previous?.roomId !== id)
+        this.emit(
+          id,
+          'room:member-joined',
+          this.members(id).find((member) => member.id === sessionId),
+          false,
+          sessionId
+        );
     }
     this.broadcastSnapshot(id);
-    return this.snapshot(room, identity.accountId, sessionId);
+    return this.snapshot(this.getRoom(id), identity.accountId, sessionId);
   }
-  leave(sessionId, explicit = false) {
+  leave(sessionId) {
     const session = this.sessions.get(sessionId);
     if (!session) return;
-    const room = this.getRoom(session.roomId, true);
-    const runtime = this.rt(room.id);
     this.sessions.delete(sessionId);
+    const room = this.store.get(session.roomId);
+    if (!room) return;
     this.emit(room.id, 'room:member-left', sessionId);
-    if (runtime.controller?.sessionId === sessionId) {
-      runtime.lostAt = this.now();
-      runtime.controller.disconnected = true;
-      if (explicit) runtime.lostAt -= this.config.reconnectGraceMs;
-    }
-    if (!this.members(room.id).length) {
+    if (
+      ![...this.sessions.values()].some(
+        (other) => other.roomId === session.roomId
+      )
+    ) {
       room.emptySince = this.now();
       this.store.save(room);
     }
-    this.tickRoom(room.id);
     this.broadcastSnapshot(room.id);
   }
   requireSession(sessionId) {
@@ -459,211 +574,74 @@ class RoomService {
   }
   heartbeat(sessionId) {
     const session = this.sessions.get(sessionId);
-    if (!session) return;
-    session.lastSeen = this.now();
-    const runtime = this.rt(session.roomId);
-    if (runtime.controller?.sessionId === sessionId) {
-      runtime.controller.leaseExpiresAt = this.now() + this.config.leaseMs;
-      runtime.lostAt = null;
-    }
+    if (session) session.lastSeen = this.now();
   }
+  /** 旧客户端的“就绪声明”：新模型不依赖它，只记录状态。 */
   ready(sessionId, data = {}) {
     const session = this.requireSession(sessionId);
-    const room = this.getRoom(session.roomId);
-    const applied =
-      data.appliedRevision ?? data.revision ?? session.appliedRevision;
-    if (data.ready === false) {
-      session.ready = false;
-      session.readySince = null;
-      return this.snapshot(room, session.accountId, sessionId);
-    }
-    if (session.following === false)
-      fail('FOLLOWING_REQUIRED', '请先返回房间共同播放', 409);
-    if (
-      !Number.isSafeInteger(applied) ||
-      applied < session.requiredRevision ||
-      applied > room.revision
-    )
-      fail('SYNC_REQUIRED', '请先恢复最新房间状态', 409);
-    session.appliedRevision = applied;
-    if (!session.ready) {
-      session.ready = true;
-      session.readySince = this.now();
-    }
+    session.ready = data.ready !== false;
     this.heartbeat(sessionId);
-    this.tickRoom(room.id);
-    return this.snapshot(this.getRoom(room.id), session.accountId, sessionId);
-  }
-  syncApplied(sessionId, data = {}) {
-    const session = this.requireSession(sessionId);
-    const room = this.getRoom(session.roomId);
-    const revision = data.appliedRevision ?? data.revision;
-    if (
-      !Number.isSafeInteger(revision) ||
-      revision < session.requiredRevision ||
-      revision > room.revision ||
-      (data.controllerEpoch !== undefined &&
-        data.controllerEpoch !== room.controllerEpoch)
-    )
-      fail('SYNC_REQUIRED', '快照已更新，请先同步最新状态', 409);
-    session.appliedRevision = revision;
-    return this.snapshot(room, session.accountId, sessionId);
-  }
-  following(sessionId, data = {}) {
-    const session = this.requireSession(sessionId);
-    session.following = data.following !== false;
-    if (!session.following) {
-      session.ready = false;
-      session.readySince = null;
-      const runtime = this.rt(session.roomId);
-      if (runtime.controller?.sessionId === sessionId)
-        runtime.lostAt = this.now() - this.config.reconnectGraceMs;
-    } else session.requiredRevision = this.getRoom(session.roomId).revision;
-    this.tickRoom(session.roomId);
-    this.broadcastSnapshot(session.roomId);
     return this.snapshot(
       this.getRoom(session.roomId),
       session.accountId,
       sessionId
     );
   }
-  assign(room, session) {
-    const runtime = this.rt(room.id);
-    const previous = runtime.controller;
-    if (previous?.sessionId === session?.id) return;
-    room.controllerEpoch += 1;
-    room.revision += 1;
-    room.updatedAt = this.now();
-    runtime.controller = session
-      ? {
-          accountId: session.accountId,
-          sessionId: session.id,
-          leaseExpiresAt: this.now() + this.config.leaseMs,
-          disconnected: false,
-        }
-      : null;
-    runtime.lostAt = null;
-    this.store.save(room);
-    this.emit(room.id, 'room:controller-changed', {
-      controllerAccountId: session?.accountId || null,
-      controllerSessionId: session?.id || null,
-      controllerEpoch: room.controllerEpoch,
-      revision: room.revision,
-      serverTime: this.now(),
-    });
-    this.broadcastSnapshot(room.id);
+  syncApplied(sessionId) {
+    const session = this.requireSession(sessionId);
+    return this.snapshot(
+      this.getRoom(session.roomId),
+      session.accountId,
+      sessionId
+    );
+  }
+  following(sessionId, data = {}) {
+    const session = this.requireSession(sessionId);
+    const next = data.following !== false;
+    if (session.following !== next) {
+      session.following = next;
+      this.broadcastSnapshot(session.roomId);
+    }
+    return this.snapshot(
+      this.getRoom(session.roomId),
+      session.accountId,
+      sessionId
+    );
   }
   tickRoom(id) {
     const room = this.getRoom(id, true);
     const now = this.now();
-    const members = [...this.sessions.values()].filter(
+    if (room.lifecycle === 'archived') return;
+    const online = [...this.sessions.values()].some(
       (session) => session.roomId === id
     );
-    if (room.lifecycle === 'archived') return;
-    if (room.lifecycle === 'sleeping' && !members.length) {
-      if (
-        room.settings.autoArchive !== false &&
-        room.emptySince !== null &&
-        now - room.emptySince >= this.config.archiveMs
-      ) {
-        room.lifecycle = 'archived';
-        room.archivedAt = now;
-        this.store.save(room);
-      }
-      this.runtime.delete(id);
-      return;
-    }
-    const runtime = this.rt(id);
-    const eligible = members
-      .filter(
-        (session) =>
-          session.ready &&
-          session.following !== false &&
-          now - session.lastSeen <= this.config.leaseMs &&
-          (session.accountId === room.ownerAccountId ||
-            this.store.membership(id, session.accountId)?.can_host)
-      )
-      .sort(
-        (a, b) =>
-          a.joinedAt - b.joinedAt ||
-          a.accountId.localeCompare(b.accountId) ||
-          a.id.localeCompare(b.id)
-      );
-    const controller = runtime.controller;
-    const current = controller ? this.sessions.get(controller.sessionId) : null;
-    const owner = eligible.find(
-      (session) =>
-        session.accountId === room.ownerAccountId &&
-        ((!controller && !room.currentState) ||
-          now - session.readySince >= this.config.ownerReadyMs)
-    );
+    if (online || room.emptySince === null) return;
+    const idle = now - room.emptySince;
     if (
-      owner &&
-      (controller?.accountId !== room.ownerAccountId ||
-        !current ||
-        controller.disconnected)
-    )
-      this.assign(room, owner);
-    else if (!controller)
-      this.assign(
-        room,
-        eligible.find((session) => session.accountId !== room.ownerAccountId) ||
-          owner ||
-          null
-      );
-    else {
-      // Buffering/hidden UI does not revoke an online controller. Readiness gates new elections only.
-      const valid =
-        current &&
-        current.following !== false &&
-        controller.leaseExpiresAt > now &&
-        !controller.disconnected &&
-        (current.accountId === room.ownerAccountId ||
-          this.store.membership(id, current.accountId)?.can_host);
-      if (!valid) {
-        if (runtime.lostAt === null) runtime.lostAt = now;
-        if (now - runtime.lostAt >= this.config.reconnectGraceMs)
-          this.assign(
-            room,
-            eligible.find((session) => session.id !== controller.sessionId) ||
-              null
-          );
-      }
+      idle >= this.config.emptyPauseMs &&
+      room.currentState &&
+      (room.currentState.type === 'screen' || room.currentState.isPlaying)
+    ) {
+      const state = projected(room.currentState, now);
+      room.currentState =
+        state.type === 'screen' ? null : { ...state, isPlaying: false };
+      this.store.save(room);
     }
-    if (!members.length && room.emptySince !== null) {
-      const idle = now - room.emptySince;
-      if (
-        idle >= this.config.emptyPauseMs &&
-        room.currentState &&
-        (room.currentState.type === 'screen' || room.currentState.isPlaying)
-      ) {
-        const state = projected(room.currentState, now);
-        if (state.type === 'screen') room.currentState = null;
-        else if (state.isPlaying)
-          room.currentState = { ...state, isPlaying: false };
-        else room.currentState = state;
-        this.store.save(room);
-      }
-      if (
-        room.settings.autoArchive !== false &&
-        idle >= this.config.archiveMs
-      ) {
-        room.lifecycle = 'archived';
-        room.archivedAt = now;
-        this.store.save(room);
-        this.runtime.delete(id);
-      } else if (idle >= this.config.sleepMs && room.lifecycle !== 'sleeping') {
-        room.lifecycle = 'sleeping';
-        this.store.save(room);
-        this.runtime.delete(id);
-      }
+    if (room.settings.autoArchive !== false && idle >= this.config.archiveMs) {
+      room.lifecycle = 'archived';
+      room.archivedAt = now;
+      this.store.save(room);
+      this.runtime.delete(id);
+    } else if (idle >= this.config.sleepMs && room.lifecycle !== 'sleeping') {
+      room.lifecycle = 'sleeping';
+      this.store.save(room);
+      this.runtime.delete(id);
     }
   }
   tick() {
     const now = this.now();
     for (const session of [...this.sessions.values()])
-      if (now - session.lastSeen > this.config.leaseMs)
-        this.leave(session.id, false);
+      if (now - session.lastSeen > this.config.leaseMs) this.leave(session.id);
     for (const id of this.store.allIds()) {
       const room = this.store.get(id);
       if (room.lifecycle === 'archived') {
@@ -686,52 +664,31 @@ class RoomService {
     if (room.ownerAccountId !== identity.accountId)
       fail('FORBIDDEN', '仅房主可管理房间', 403);
   }
-  requireControl(session, room, meta = {}) {
-    const controller = this.rt(room.id).controller;
+  requireAdmin(identity, room) {
     if (
-      !controller ||
-      controller.sessionId !== session.id ||
-      controller.disconnected ||
-      controller.leaseExpiresAt <= this.now()
+      room.ownerAccountId !== identity.accountId &&
+      !this.store.membership(room.id, identity.accountId)?.can_host
     )
-      fail('NOT_CONTROLLER', '当前没有播放控制权', 403);
-    if (
-      meta.controllerEpoch !== undefined &&
-      meta.controllerEpoch !== room.controllerEpoch
-    )
-      fail('STALE_CONTROLLER', '主持权已变更，请同步状态后重试', 409);
+      fail('FORBIDDEN', '仅房主或房间管理员可以这样做', 403);
+  }
+  requireControl(identity, room) {
+    if (!this.canControl(room, identity.accountId))
+      fail('NO_CONTROL_PERMISSION', '房主没有开放成员控制播放', 403);
   }
   execute(identity, id, event, data = {}, meta = {}, sessionId) {
     const room = this.getRoom(id, event === 'room:restore');
     const membership = this.store.membership(id, identity.accountId);
     if (!membership) fail('FORBIDDEN', '请先加入房间', 403);
-    if (data.roomId !== undefined && data.roomId !== id)
+    if (data && data.roomId !== undefined && data.roomId !== id)
       fail('ROOM_CHANGED', '目标房间已切换，请重新选择操作', 409);
+    const transport = TRANSPORT_EVENTS.has(event);
     const commandId = meta.commandId || data?.commandId;
     if (commandId !== undefined) text(commandId, 128, true);
-    if (commandId) {
+    if (commandId && !transport) {
       const old = this.store.command(id, identity.accountId, commandId);
       if (old) return { ...old, duplicate: true };
     }
-    // Messages use seq; append-only queue additions do not edit the playback timeline.
-    const playbackVersioned = ![
-      'chat:message',
-      'chat:read',
-      'queue:add',
-    ].includes(event);
-    if (
-      playbackVersioned &&
-      meta.baseRevision !== undefined &&
-      meta.baseRevision !== room.revision
-    )
-      fail('REVISION_CONFLICT', '房间状态已经更新，请刷新后重试', 409);
-    if (
-      playbackVersioned &&
-      meta.controllerEpoch !== undefined &&
-      meta.controllerEpoch !== room.controllerEpoch
-    )
-      fail('STALE_CONTROLLER', '主持权已经更新', 409);
-    const session = sessionId ? this.requireSession(sessionId) : null;
+    const session = sessionId ? this.sessions.get(sessionId) || null : null;
     if (
       session &&
       (session.roomId !== id || session.accountId !== identity.accountId)
@@ -741,10 +698,18 @@ class RoomService {
     const pending = [];
     const emit = this.emit;
     this.emit = (...args) => pending.push(args);
+    let structural = !transport;
     try {
       this.store.db.transaction(() => {
-        result = this.apply(identity, room, event, data, meta, session);
-        if (commandId && event !== 'room:delete')
+        result = this.apply(identity, room, event, data, session);
+        structural = !transport && !result?.unchanged;
+        // 聊天也记住命令号：断线重发同一条消息不会出现两次
+        if (
+          commandId &&
+          !transport &&
+          event !== 'room:delete' &&
+          event !== 'chat:read'
+        )
           this.store.remember(
             id,
             identity.accountId,
@@ -757,40 +722,75 @@ class RoomService {
       this.emit = emit;
     }
     for (const args of pending) emit(...args);
-    if (event !== 'room:delete') this.broadcastSnapshot(id);
+    if (event !== 'room:delete' && structural) this.broadcastSnapshot(id);
     return result;
   }
-  apply(identity, room, event, data, meta, session) {
+  apply(identity, room, event, data, session) {
     const id = room.id;
-    if (
-      event.startsWith('play:') ||
-      event.startsWith('music:') ||
-      event.startsWith('live:') ||
-      event === 'state:clear' ||
-      event === 'screen:start' ||
-      event === 'screen:stop' ||
-      event === 'activity:change'
-    ) {
-      if (!session)
-        fail('PLAYBACK_SESSION_REQUIRED', '播放操作需要已就绪的在线设备', 409);
-      this.requireControl(session, room, meta);
-      let state = projected(room.currentState, this.now());
+    const now = this.now();
+    if (PLAYBACK_EVENTS.has(event)) {
+      this.requireControl(identity, room);
+      if (session && session.following === false)
+        fail('FOLLOWING_REQUIRED', '你正在个人观看，请先回到一起看', 409);
+      const runtime = this.rt(id);
+      let state = projected(room.currentState, now);
+      const sentTime =
+        data && typeof data === 'object' && data.currentTime !== undefined
+          ? number(data.currentTime, 0, 30 * 86400)
+          : typeof data === 'number'
+          ? number(data, 0, 30 * 86400)
+          : undefined;
       if (event === 'state:clear' || event === 'screen:stop') state = null;
       else if (
         event === 'play:play' ||
         event === 'play:pause' ||
-        event === 'play:seek'
+        event === 'play:seek' ||
+        event === 'play:rate'
       ) {
         if (state?.type !== 'play')
-          fail('ACTIVITY_MISMATCH', '当前不是视频活动', 409);
-        if (event === 'play:seek')
-          state.currentTime = number(
-            typeof data === 'number' ? data : data.currentTime,
-            0,
-            30 * 86400
-          );
-        else state.isPlaying = event === 'play:play';
-        state.updatedAt = this.now();
+          fail('ACTIVITY_MISMATCH', '当前没有正在播放的影片', 409);
+        if (
+          data?.videoId !== undefined &&
+          mediaKey(state) !==
+            mediaKey({ type: 'play', ...data, episode: data.episode || 1 })
+        )
+          fail('ACTIVITY_MISMATCH', '影片已切换，请丢弃旧播放器的操作', 409);
+        if (sentTime !== undefined) state.currentTime = sentTime;
+        if (event === 'play:play') state.isPlaying = true;
+        if (event === 'play:pause') state.isPlaying = false;
+        if (event === 'play:seek' && data?.isPlaying !== undefined)
+          state.isPlaying = !!data.isPlaying;
+        if (data?.playbackRate !== undefined)
+          state.playbackRate = rate(data.playbackRate, state.playbackRate);
+        state.updatedAt = now;
+      } else if (event === 'play:change' || event === 'play:update') {
+        const next = mediaState(
+          {
+            ...data,
+            type: 'play',
+            currentTime: sentTime ?? 0,
+          },
+          now,
+          room.currentState
+        );
+        if (event === 'play:update') {
+          if (mediaKey(state) !== mediaKey(next))
+            fail('ACTIVITY_MISMATCH', '影片已切换，请丢弃旧播放器更新', 409);
+          next.queueItemId = state.queueItemId;
+        } else if (
+          state?.type === 'play' &&
+          mediaKey(state) === mediaKey(next) &&
+          (!next.queueItemId || next.queueItemId === state.queueItemId)
+        ) {
+          // 多个成员同时自动连播到同一集：结果相同，不重复广播换片。
+          return {
+            success: true,
+            unchanged: true,
+            state,
+            revision: room.revision,
+          };
+        }
+        state = next;
       } else {
         const expected = event.startsWith('music:')
           ? 'music'
@@ -798,18 +798,7 @@ class RoomService {
           ? 'live'
           : event.startsWith('screen:')
           ? 'screen'
-          : event.startsWith('play:')
-          ? 'play'
           : data.type;
-        if (
-          event === 'play:update' &&
-          state &&
-          (state.type !== 'play' ||
-            state.videoId !== data.videoId ||
-            state.source !== data.source ||
-            (state.episode || 1) !== (data.episode || 1))
-        )
-          fail('ACTIVITY_MISMATCH', '影片已切换，请丢弃旧播放器更新', 409);
         if (
           event.startsWith('music:') &&
           event !== 'music:change' &&
@@ -819,12 +808,12 @@ class RoomService {
             state.song.platform !== data.song?.platform)
         )
           fail('ACTIVITY_MISMATCH', '歌曲已切换，请先切换活动', 409);
-        state = mediaState(
-          { ...data, type: expected },
-          this.now(),
-          room.currentState
-        );
-        if (expected === 'screen') state.ownerName = identity.accountId;
+        state = mediaState({ ...data, type: expected }, now, room.currentState);
+        if (expected === 'screen') {
+          state.ownerName = identity.accountId;
+          state.ownerAccountId = identity.accountId;
+          state.ownerSessionId = session?.id || null;
+        }
         if (event === 'music:play') state.isPlaying = true;
         if (event === 'music:pause') state.isPlaying = false;
       }
@@ -835,7 +824,14 @@ class RoomService {
         );
         if (!playedQueueItem)
           fail('QUEUE_ITEM_NOT_FOUND', '所选待看片单已变化，请重新选择', 409);
-        playedQueueItem.playedAt ||= this.now();
+        playedQueueItem.playedAt ||= now;
+      }
+      // 版本号随状态一起入库，进程重启后仍然单调递增，客户端据此丢弃迟到的旧状态。
+      runtime.stateVersion =
+        Math.max(runtime.stateVersion, room.currentState?.version || 0) + 1;
+      if (state) {
+        state.version = runtime.stateVersion;
+        state.updatedBy = identity.accountId;
       }
       room.currentState = state;
       room.roomType =
@@ -844,61 +840,62 @@ class RoomService {
           : state?.type === 'screen'
           ? 'screen'
           : 'sync';
-      this.touch(room);
+      if (TRANSPORT_EVENTS.has(event)) {
+        room.updatedAt = now;
+        this.store.save(room);
+        runtime.lastActiveAt = now;
+      } else this.touch(room);
       if (playedQueueItem)
         this.emit(id, 'queue:updated', {
           roomId: id,
           queue: room.queue,
           revision: room.revision,
         });
-      if (
-        event === 'play:change' ||
-        event === 'live:change' ||
-        event === 'music:change' ||
-        event === 'activity:change'
-      ) {
-        for (const member of this.sessions.values())
-          if (member.roomId === id && member.id !== session.id) {
-            member.ready = false;
-            member.readySince = null;
-            member.requiredRevision = room.revision;
-          }
-      }
-      if (event !== 'activity:change')
-        this.emit(
-          id,
-          event === 'state:clear' ? 'state:cleared' : event,
-          event === 'play:seek' ? state.currentTime : state,
-          false,
-          session.id
-        );
-    } else if (event.startsWith('queue:')) {
-      if (
-        !room.settings.memberCanQueue &&
-        identity.accountId !== room.ownerAccountId &&
-        !membershipCanHost(this.store, id, identity.accountId)
-      )
-        fail('FORBIDDEN', '房间未允许成员点播', 403);
+      const broadcast =
+        event === 'state:clear'
+          ? 'state:cleared'
+          : event.startsWith('play:') && event !== 'play:change'
+          ? 'play:update'
+          : event === 'activity:change'
+          ? state?.type === 'screen'
+            ? 'screen:start'
+            : `${state?.type}:change`
+          : event;
+      this.emit(id, broadcast, state, false, session?.id);
+      return {
+        success: true,
+        state,
+        revision: room.revision,
+        controllerEpoch: room.controllerEpoch,
+      };
+    }
+    if (event.startsWith('queue:')) {
+      const admin =
+        identity.accountId === room.ownerAccountId ||
+        membershipCanHost(this.store, id, identity.accountId);
       if (event === 'queue:add') {
+        if (room.settings.memberCanQueue === false && !admin)
+          fail('FORBIDDEN', '房主没有开放成员添加片单', 403);
         if (room.queue.length >= this.config.maxQueue)
-          fail('QUEUE_FULL', '队列已满', 409);
-        room.queue.push(queueItem(data, identity.accountId, this.now()));
+          fail('QUEUE_FULL', '片单已满', 409);
+        room.queue.push(queueItem(data, identity.accountId, now));
       } else {
         const index = room.queue.findIndex((item) => item.id === data.id);
-        if (index < 0) fail('QUEUE_ITEM_NOT_FOUND', '队列内容不存在', 404);
+        if (index < 0) fail('QUEUE_ITEM_NOT_FOUND', '片单里没有这一项', 404);
         if (
-          identity.accountId !== room.ownerAccountId &&
-          !membershipCanHost(this.store, id, identity.accountId) &&
-          (event === 'queue:move' ||
+          !admin &&
+          (event !== 'queue:remove' ||
             room.queue[index].addedBy !== identity.accountId ||
             room.queue[index].playedAt)
         )
-          fail('FORBIDDEN', '不能修改他人的队列内容', 403);
+          fail('FORBIDDEN', '只能移除自己添加、还没播放的影片', 403);
         if (event === 'queue:remove') room.queue.splice(index, 1);
         else if (event === 'queue:move') {
           const to = number(data.position, 0, room.queue.length - 1);
           room.queue.splice(to, 0, room.queue.splice(index, 1)[0]);
-        } else fail('UNKNOWN_COMMAND', '不支持的队列操作');
+        } else if (event === 'queue:clear-played') {
+          room.queue = room.queue.filter((item) => !item.playedAt);
+        } else fail('UNKNOWN_COMMAND', '不支持的片单操作');
       }
       this.touch(room);
       this.emit(id, 'queue:updated', {
@@ -913,12 +910,6 @@ class RoomService {
         fail('MEMBER_NOT_FOUND', '请先让该成员加入房间', 404);
       this.store.authorize(id, accountId, data.canHost === true);
       this.touch(room);
-      if (
-        data.canHost !== true &&
-        this.rt(id).controller?.accountId === accountId &&
-        accountId !== room.ownerAccountId
-      )
-        this.assign(room, null);
     } else if (event === 'room:settings') {
       this.requireOwner(identity, room);
       if (data.name !== undefined) room.name = text(data.name, 80, true);
@@ -929,10 +920,23 @@ class RoomService {
         room.passwordHash = passwordHash(text(data.password, 128));
       if (data.memberCanQueue !== undefined)
         room.settings.memberCanQueue = data.memberCanQueue === true;
+      if (data.memberCanControl !== undefined)
+        room.settings.memberCanControl = data.memberCanControl === true;
       if (data.autoArchive !== undefined) {
         if (!['owner', 'admin'].includes(identity.role))
           fail('FORBIDDEN', '仅站长可设置长期保留房间', 403);
         room.settings.autoArchive = data.autoArchive !== false;
+      }
+      this.touch(room);
+    } else if (event === 'room:cover') {
+      this.requireAdmin(identity, room);
+      if (data.image === null || data.image === '') {
+        this.store.removeCover(id);
+        delete room.settings.coverVersion;
+      } else {
+        const cover = coverImage(data.image);
+        this.store.setCover(id, cover.mime, cover.data, now);
+        room.settings.coverVersion = now;
       }
       this.touch(room);
     } else if (event === 'room:delete') {
@@ -953,7 +957,7 @@ class RoomService {
         fail('ROOM_LIMIT', '请先清理其他房间后恢复', 409);
       room.lifecycle = 'sleeping';
       room.archivedAt = null;
-      room.emptySince = this.now();
+      room.emptySince = now;
       this.touch(room);
     } else if (event === 'chat:message') {
       this.limit(`${id}:${identity.accountId}:chat`, 20, 10000);
@@ -966,14 +970,20 @@ class RoomService {
         userName: identity.accountId,
         content,
         type: data.type === 'emoji' ? 'emoji' : 'text',
-        timestamp: this.now(),
+        timestamp: now,
       });
       this.emit(id, 'chat:message', message);
-      return { success: true, message, revision: room.revision };
+      return {
+        success: true,
+        message,
+        revision: room.revision,
+        unchanged: true,
+      };
     } else if (event === 'chat:read') {
       this.store.markRead(id, identity.accountId, number(data.seq, 0));
       return {
         success: true,
+        unchanged: true,
         revision: room.revision,
         controllerEpoch: room.controllerEpoch,
         unreadCount: this.store.unread(id, identity.accountId),

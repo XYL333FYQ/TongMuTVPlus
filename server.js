@@ -1,4 +1,14 @@
 // Next.js 自定义服务器 + Socket.IO
+// 先按 Next 的规则加载 .env 系列文件：下面的 SQLite 初始化、登录密钥和房间服务
+// 都在 app.prepare() 之前读取环境变量，否则全新环境 `pnpm dev` 不会建表而直接 500。
+// pnpm 不把 @next/env 提升到根 node_modules，从 next 自身的位置解析。
+try {
+  require(require.resolve('@next/env', {
+    paths: [require.resolve('next')],
+  })).loadEnvConfig(__dirname, process.env.NODE_ENV !== 'production');
+} catch (error) {
+  console.warn('[env] 无法预加载 .env 文件：', error && error.message);
+}
 const { createServer } = require('http');
 const { parse } = require('url');
 const next = require('next');
@@ -304,7 +314,8 @@ app.prepare().then(async () => {
       path: '/socket.io',
       pingInterval: 25000,
       pingTimeout: 35000,
-      maxHttpBufferSize: 262144,
+      // 房间封面通过 Socket 上传（客户端压缩到 200KB 以内，base64 后约 270KB）
+      maxHttpBufferSize: 400 * 1024,
       cors: {
         origin: true,
         credentials: true,

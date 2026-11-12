@@ -334,9 +334,8 @@ test('an old or differently addressed queue update cannot overwrite the current 
     await view.result.current.roomCommand('chat:read', { seq: 1 });
   });
   expect(
-    view.socket.calls.find((call) => call.event === 'chat:read')?.payload
-      .baseRevision
-  ).toBe(5);
+    view.socket.calls.find((call) => call.event === 'chat:read')?.payload.roomId
+  ).toBe('B');
 });
 
 test('batched messages and snapshots keep the command reference on the newest revision', async () => {
@@ -354,10 +353,12 @@ test('batched messages and snapshots keep the command reference on the newest re
   await act(async () => {
     await view.result.current.roomCommand('queue:add', { title: '下一部' });
   });
-  expect(
-    view.socket.calls.find((call) => call.event === 'queue:add')?.payload
-      .baseRevision
-  ).toBe(6);
+  // 新模型（SyncTV）不再用房间版本做乐观锁：后到的操作直接生效
+  const payload = view.socket.calls.find(
+    (call) => call.event === 'queue:add'
+  )?.payload;
+  expect(payload?.roomId).toBe('A');
+  expect(payload?.baseRevision).toBeUndefined();
 });
 
 test('reconnect fills an offline gap longer than the 100-message join window without duplicates', async () => {
@@ -449,9 +450,8 @@ test('markChatRead sends the sequence with command metadata and applies the serv
   ).toEqual(
     expect.objectContaining({
       seq: 200,
+      roomId: 'A',
       commandId: expect.any(String),
-      controllerEpoch: 3,
-      baseRevision: 1,
     })
   );
   expect(view.result.current.currentRoom?.unreadCount).toBe(0);
@@ -1102,95 +1102,97 @@ const liveState = (channelId = 'qa-a') =>
     channelUrl: `https://media.test/${channelId}.m3u8`,
     updatedAt: 1,
   } as Room['currentState']);
-const readyCalls = (view: Awaited<ReturnType<typeof setup>>) =>
-  view.socket.calls.filter(
-    (call) => call.event === 'room:ready' && call.payload.ready === true
-  );
+const filmState = (overrides: Record<string, unknown> = {}) =>
+  ({
+    type: 'play',
+    source: 'fixture',
+    videoId: 'film-a',
+    videoName: 'film-a',
+    episode: 1,
+    url: 'https://media.test/a.m3u8',
+    currentTime: 10,
+    isPlaying: true,
+    playbackRate: 1,
+    updatedAt: 100,
+    version: 4,
+    ...overrides,
+  } as Room['currentState']);
 
-test('a room on a live activity makes this device ready on its own, so a refreshed owner can host again', async () => {
+test('joining never claims readiness: there is no host election to take part in', async () => {
   const view = await setup();
-  await join(
-    view,
-    room('alpha', { currentState: liveState(), controllerSessionId: null })
-  );
-  expect(readyCalls(view)).toHaveLength(1);
+  await join(view, room('alpha', { currentState: liveState() }));
   expect(
-    view.socket.calls.some((call) => call.event === 'room:sync-applied')
-  ).toBe(true);
+    view.socket.calls.filter(
+      (call) =>
+        call.event === 'room:ready' || call.event === 'room:sync-applied'
+    )
+  ).toHaveLength(0);
 });
 
-test('a room playing a film leaves readiness to the player, which only claims it once the video is playable', async () => {
+test('playback permission comes from the server snapshot, not from a controller device', async () => {
   const view = await setup();
   await join(
     view,
     room('alpha', {
-      currentState: {
-        type: 'play',
-        source: 'fixture',
-        videoId: 'film-a',
-        videoName: 'film-a',
-        episode: 1,
-        url: 'https://media.test/a.m3u8',
-        currentTime: 0,
-        isPlaying: true,
-      } as Room['currentState'],
+      ownerAccountId: 'bob',
+      controllerSessionId: null,
+      canControl: true,
     })
   );
-  expect(readyCalls(view)).toHaveLength(0);
-});
-
-test('snapshots of the same live activity do not repeat the ready claim, a new activity does', async () => {
-  const view = await setup();
-  await join(view, room('alpha', { currentState: liveState('qa-a') }));
+  expect(view.result.current.canControl).toBe(true);
+  expect(view.result.current.isOwner).toBe(false);
   act(() =>
     view.socket.deliver(
       'room:snapshot',
-      snapshot(room('alpha', { revision: 2, currentState: liveState('qa-a') }))
+      snapshot(
+        room('alpha', { ownerAccountId: 'bob', revision: 2, canControl: false })
+      )
     )
   );
-  expect(readyCalls(view)).toHaveLength(1);
-  act(() =>
-    view.socket.deliver(
-      'room:snapshot',
-      snapshot(room('alpha', { revision: 3, currentState: liveState('qa-b') }))
-    )
-  );
-  expect(readyCalls(view)).toHaveLength(2);
+  expect(view.result.current.canControl).toBe(false);
 });
 
-test('a member who chose to watch alone does not claim readiness for the room activity', async () => {
+test('the acknowledgement of an own playback command updates the room immediately', async () => {
   const view = await setup();
-  view.socket.replies.set('room:join', (_payload, ack) =>
+  await join(view, room('alpha', { currentState: filmState() }));
+  view.socket.replies.set('play:pause', (_payload, ack) =>
     ack(null, {
       success: true,
-      room: room('alpha', { currentState: liveState() }),
-      members: [
-        {
-          id: 'alice-connection',
-          name: 'alice',
-          isOwner: true,
-          lastHeartbeat: 0,
-          following: false,
-        },
-      ],
-      messages: [],
+      state: filmState({ isPlaying: false, currentTime: 42, version: 5 }),
     })
   );
   await act(async () => {
-    await view.result.current.joinRoom({ roomId: 'alpha', userName: 'alice' });
+    await view.result.current.roomCommand('play:pause', { currentTime: 42 });
   });
-  expect(readyCalls(view)).toHaveLength(0);
+  const state = view.result.current.currentRoom?.currentState as {
+    isPlaying: boolean;
+    currentTime: number;
+  };
+  expect(state.isPlaying).toBe(false);
+  expect(state.currentTime).toBe(42);
 });
 
-test('after a socket reconnect the server starts a fresh session, so a device on a non-film activity claims readiness again', async () => {
+test('a late broadcast with an older state version cannot roll playback back', async () => {
   const view = await setup();
-  await join(view, room('alpha', { currentState: liveState() }));
-  expect(readyCalls(view)).toHaveLength(1);
-  await act(async () => {
-    view.socket.deliver('disconnect');
-    view.socket.deliver('connect');
-  });
-  await settle();
-  // 重连后服务端新建会话（ready:false），房间 id 与活动都没变，仍要重新声明
-  expect(readyCalls(view)).toHaveLength(2);
+  await join(view, room('alpha', { currentState: filmState({ version: 7 }) }));
+  act(() =>
+    view.socket.deliver(
+      'play:update',
+      filmState({ version: 6, isPlaying: false, updatedAt: 999 })
+    )
+  );
+  expect(
+    (view.result.current.currentRoom?.currentState as { isPlaying: boolean })
+      .isPlaying
+  ).toBe(true);
+  act(() =>
+    view.socket.deliver(
+      'play:update',
+      filmState({ version: 8, isPlaying: false, updatedAt: 50 })
+    )
+  );
+  expect(
+    (view.result.current.currentRoom?.currentState as { isPlaying: boolean })
+      .isPlaying
+  ).toBe(false);
 });

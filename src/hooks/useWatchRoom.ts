@@ -4,12 +4,11 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Socket } from 'socket.io-client';
 
 import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
+import { noteRoomServerTime, syncRoomClock } from '@/lib/room-clock';
 import {
   type WatchRoomSocket,
   watchRoomSocketManager,
 } from '@/lib/watch-room-socket';
-
-import { roomActivityKey } from '@/features/playback/room-activity';
 
 import type {
   ChatMessage,
@@ -43,6 +42,8 @@ type Reply = Partial<Snapshot> & {
   lastReadSeq?: number;
   messages?: ChatMessage[];
   message?: ChatMessage;
+  /** 播放类命令的回执：服务器确认后的最新播放状态 */
+  state?: Room['currentState'];
 };
 export interface RoomNotice {
   id: string;
@@ -53,6 +54,25 @@ export interface RoomNotice {
 export interface RoomRealtimeMessage {
   roomId: string;
   message: ChatMessage;
+}
+
+type ActivityState = Room['currentState'];
+const stateVersion = (state: ActivityState) =>
+  state && 'version' in state && typeof state.version === 'number'
+    ? state.version
+    : undefined;
+const stateUpdatedAt = (state: ActivityState) =>
+  state && 'updatedAt' in state ? state.updatedAt || 0 : 0;
+/** 新状态是否比已有状态旧（迟到的广播 / 回执），旧的直接丢弃。 */
+export function isOlderRoomState(next: ActivityState, previous: ActivityState) {
+  if (!next || !previous) return false;
+  const nextVersion = stateVersion(next);
+  const previousVersion = stateVersion(previous);
+  if (nextVersion !== undefined && previousVersion !== undefined) {
+    if (nextVersion !== previousVersion) return nextVersion < previousVersion;
+    return stateUpdatedAt(next) < stateUpdatedAt(previous);
+  }
+  return stateUpdatedAt(next) < stateUpdatedAt(previous);
 }
 
 function mergeMessages(previous: ChatMessage[], incoming: ChatMessage[]) {
@@ -132,6 +152,15 @@ export function useWatchRoom(
       (old.revision || 0) > (snapshot.room.revision || 0)
     )
       return;
+    noteRoomServerTime(snapshot.room.serverTime);
+    if (
+      old?.id === snapshot.room.id &&
+      isOlderRoomState(snapshot.room.currentState, old.currentState)
+    )
+      snapshot = {
+        ...snapshot,
+        room: { ...snapshot.room, currentState: old.currentState },
+      };
     if (old?.id !== snapshot.room.id) {
       roomGeneration.current += 1;
       seenMessageIds.current.clear();
@@ -222,6 +251,17 @@ export function useWatchRoom(
               );
               publishRoomMessage(confirmed);
             }
+            // 服务器不会把自己的播放操作再广播回来：用回执里的状态更新本机房间
+            if (
+              !reply.room &&
+              reply.state !== undefined &&
+              roomRef.current &&
+              !isOlderRoomState(reply.state, roomRef.current.currentState)
+            ) {
+              const next = { ...roomRef.current, currentState: reply.state };
+              roomRef.current = next;
+              setCurrentRoom(next);
+            }
             if (reply.room) applySnapshot(reply as Snapshot);
             else if (roomRef.current && reply.revision !== undefined) {
               if (reply.revision < (roomRef.current.revision || 0)) {
@@ -261,8 +301,6 @@ export function useWatchRoom(
             typeof payload.commandId === 'string'
               ? payload.commandId
               : crypto.randomUUID(),
-          controllerEpoch: roomRef.current?.controllerEpoch,
-          baseRevision: roomRef.current?.revision,
         });
       } catch (error) {
         if (!(error instanceof SupersededRoomRequestError))
@@ -410,6 +448,7 @@ export function useWatchRoom(
       isPublic: boolean;
       roomType: RoomType;
       userName: string;
+      settings?: { memberCanControl?: boolean; memberCanQueue?: boolean };
     }) => {
       const reply = await request('room:create', data);
       if (!reply.room) throw new Error('创建后未收到房间资料');
@@ -490,10 +529,20 @@ export function useWatchRoom(
   useEffect(() => {
     if (!socket) return;
     const realtime = socket as Socket;
+    const calibrate = () => {
+      void syncRoomClock(
+        realtime as unknown as Parameters<typeof syncRoomClock>[0]
+      );
+    };
     const connected = () => {
       setIsConnected(true);
+      calibrate();
       void rejoin();
     };
+    // 系统时钟会慢慢漂移，长时间观看时定期重新校准
+    const clockTimer = window.setInterval(() => {
+      if (realtime.connected) calibrate();
+    }, 120000);
     const disconnected = () => {
       connectionGeneration.current += 1;
       rejoinInFlight.current = null;
@@ -526,14 +575,7 @@ export function useWatchRoom(
     const mediaUpdated = (state: Room['currentState']) => {
       const previous = roomRef.current;
       if (!previous) return;
-      if (
-        state &&
-        previous.currentState &&
-        'updatedAt' in state &&
-        'updatedAt' in previous.currentState &&
-        (state.updatedAt || 0) < (previous.currentState.updatedAt || 0)
-      )
-        return;
+      if (isOlderRoomState(state, previous.currentState)) return;
       const next = { ...previous, currentState: state };
       roomRef.current = next;
       setCurrentRoom(next);
@@ -562,18 +604,6 @@ export function useWatchRoom(
         roomRef.current = next;
         setCurrentRoom(next);
       }
-    };
-    const controllerChanged = (data: {
-      controllerAccountId: string | null;
-      revision: number;
-    }) => {
-      if (roomRef.current && data.revision >= (roomRef.current.revision || 0))
-        addNotice(
-          data.controllerAccountId
-            ? '房间主持已更新，影片继续播放'
-            : '暂无在线主持，当前影片继续播放'
-        );
-      // The immediately following full snapshot is the authoritative room state.
     };
     const queueUpdated = (data: {
       roomId?: string;
@@ -607,7 +637,6 @@ export function useWatchRoom(
       ['disconnect', disconnected],
       ['room:joined', joined],
       ['room:snapshot', joined],
-      ['room:controller-changed', controllerChanged],
       ['room:deleted', deleted],
       ['room:member-joined', memberJoined],
       ['room:member-left', memberLeft],
@@ -628,32 +657,15 @@ export function useWatchRoom(
       ['error', error],
     ] as const;
     events.forEach(([event, handler]) => realtime.on(event, handler));
-    if (realtime.connected) void rejoin();
-    return () =>
+    if (realtime.connected) {
+      calibrate();
+      void rejoin();
+    }
+    return () => {
+      window.clearInterval(clockTimer);
       events.forEach(([event, handler]) => realtime.off(event, handler));
+    };
   }, [socket, rejoin, applySnapshot, addNotice, publishRoomMessage]);
-
-  // 房间页本身就是这个设备的“就绪”依据，只在没有电影实例可等的时候：
-  // 空房间要有就绪的主持才能选第一部电影；直播/音乐/共享房间在整页刷新后，
-  // 这个设备没有电影可加载，不声明就永远选不出主持，片单里的“播放”也就没了。
-  // 电影活动仍由播放器在视频真正可播后再声明；“仅自己看”的设备服务端会拒绝，不发。
-  const watchingAlone =
-    members.find((member) => member.id === socket?.id)?.following === false;
-  const activityReadyKey = currentRoom ? roomActivityKey(currentRoom) : '';
-  useEffect(() => {
-    const idleRoom = roomRef.current;
-    if (!socket?.connected || !idleRoom || watchingAlone) return;
-    if (idleRoom.currentState?.type === 'play') return;
-    const realtime = socket as Socket;
-    realtime.emit('room:sync-applied', {
-      appliedRevision: idleRoom.revision,
-      controllerEpoch: idleRoom.controllerEpoch,
-    });
-    realtime.emit('room:ready', {
-      ready: true,
-      appliedRevision: idleRoom.revision,
-    });
-  }, [socket, currentRoom?.id, activityReadyKey, watchingAlone, rejoinCount]);
 
   const self = members.find((member) => member.id === socket?.id);
   const username =
@@ -663,9 +675,12 @@ export function useWatchRoom(
   const isOwner = Boolean(
     currentRoom && (self?.isOwner || currentRoom.ownerAccountId === username)
   );
-  const isController = Boolean(
-    currentRoom && currentRoom.controllerSessionId === socket?.id
+  // 与 SyncTV 一致：权限按账号计算（房主 / 管理员 / 房间开放成员控制），
+  // 不再有“唯一主持设备”。服务器在每个人的快照里给出自己的权限。
+  const canControl = Boolean(
+    currentRoom && (currentRoom.canControl ?? self?.canControl ?? isOwner)
   );
+  const isRoomAdmin = Boolean(currentRoom && (isOwner || self?.canHost));
   const sendChatMessage = useCallback(
     (content: string, type: 'text' | 'emoji' = 'text') =>
       send('chat:message', { content, type }),
@@ -679,8 +694,9 @@ export function useWatchRoom(
     members,
     chatMessages,
     isOwner,
-    isController,
-    canControl: isController,
+    isRoomAdmin,
+    isController: canControl,
+    canControl,
     lastError,
     clearError: useCallback(() => setLastError(''), []),
     notices,

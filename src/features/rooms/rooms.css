@@ -287,6 +287,68 @@
     var(--tm-surface-raised);
   color: var(--tm-muted);
 }
+/* 房间封面：自定义封面或正在放映影片的海报铺满卡片，上方加压暗层保证角标可读 */
+.tm-room-card-cover {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.tm-room-card-art[data-has-cover='true']::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: var(--tm-scrim, rgb(0 0 0 / 0.35));
+}
+.tm-room-cover-field {
+  display: grid;
+  gap: 8px;
+}
+.tm-room-cover-field > p {
+  margin: 0;
+  color: var(--tm-muted);
+  font-size: var(--tm-fs-caption);
+}
+.tm-room-cover-preview {
+  position: relative;
+  display: grid;
+  place-items: center;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border-radius: var(--tm-radius-md, 12px);
+  background: var(--tm-surface-raised);
+  color: var(--tm-muted);
+  font-size: var(--tm-fs-caption);
+}
+.tm-room-cover-preview img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.tm-room-cover-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.tm-room-cover-actions :is(button, label) {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 14px;
+  border-radius: var(--tm-radius-full);
+  background: var(--tm-surface-raised);
+  cursor: pointer;
+}
+.tm-room-cover-actions label:focus-within {
+  outline: 2px solid var(--tm-focus, currentColor);
+  outline-offset: 2px;
+}
 /* 悬停时一道斜向反光扫过封面 */
 .tm-room-card-art::after {
   content: '';
@@ -1093,6 +1155,13 @@
   gap: 16px;
   padding: 12px 0;
   border-top: 1px solid var(--tm-line);
+}
+.tm-room-picker-results > div > div {
+  flex: 1;
+  min-width: 0;
+}
+.tm-room-picker-results > div > button + button {
+  margin-left: -8px;
 }
 .tm-room-picker-results h3 {
   margin-bottom: 2px;

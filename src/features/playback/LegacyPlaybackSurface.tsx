@@ -2431,7 +2431,7 @@ function PlayPageClient() {
 
     // 观影室房员不能自行调整倍速，由房主同步控制
     if (playSyncRef.current.shouldDisableControls) {
-      artPlayerRef.current.notice.show = '观影室中倍速由房主控制';
+      artPlayerRef.current.notice.show = '房主没有开放成员控制播放';
       return true;
     }
 
@@ -2482,7 +2482,7 @@ function PlayPageClient() {
 
     // 观影室房员不能自行调整倍速，由房主同步控制
     if (playSyncRef.current.shouldDisableControls) {
-      artPlayerRef.current.notice.show = '观影室中倍速由房主控制';
+      artPlayerRef.current.notice.show = '房主没有开放成员控制播放';
       return true;
     }
 
@@ -2794,6 +2794,7 @@ function PlayPageClient() {
     videoName: videoTitle || detail?.title || '正在加载...',
     videoYear: videoYear || detail?.year || '',
     searchTitle: searchTitle || '',
+    poster: detail?.poster || '',
     currentEpisode: currentEpisodeIndex + 1,
     currentSource: currentSource || '',
     videoUrl: videoUrl || '',
@@ -2828,6 +2829,27 @@ function PlayPageClient() {
     videoError,
     playbackSession.setMetadata,
   ]);
+  // 切集后把集数写回播放地址（不重建播放器）。否则地址仍是上一集：
+  // 刷新、复制链接、带着当前影片开房间时都会被当成另一部片而重新加载。
+  useEffect(() => {
+    if (loading || !detail || !currentSource || !currentId) return;
+    if (
+      detail.source !== currentSource ||
+      String(detail.id) !== String(currentId)
+    )
+      return;
+    const current = new URL(
+      playbackSession.href || '/play',
+      window.location.origin
+    );
+    if (current.pathname !== '/play') return;
+    const episode = String(currentEpisodeIndex + 1);
+    if (current.searchParams.get('episode') === episode) return;
+    current.searchParams.set('episode', episode);
+    commitPlaybackHref(current);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentEpisodeIndex, detail, currentSource, currentId, loading]);
+
   const [isCreatingRoom, setIsCreatingRoom] = useState(false);
 
   const handleCreateWatchRoom = async () => {
@@ -9407,8 +9429,7 @@ function PlayPageClient() {
                 // 房员禁用下一集按钮
                 if (playSyncRef.current.shouldDisableControls) {
                   if (artPlayerRef.current) {
-                    artPlayerRef.current.notice.show =
-                      '房员无法切换集数，请等待房主操作';
+                    artPlayerRef.current.notice.show = '房主没有开放成员换片';
                   }
                   return;
                 }
@@ -10631,7 +10652,9 @@ function PlayPageClient() {
         artPlayerRef.current.on('video:canplay', () => {
           let restoredResumeTime = false;
 
-          // 若存在需要恢复的播放进度，则跳转
+          // 若存在需要恢复的播放进度，则跳转。
+          // 跟随房间时进度由房间决定，不能跳到自己的个人观看记录。
+          if (playSyncRef.current.isInRoom) resumeTimeRef.current = null;
           if (resumeTimeRef.current && resumeTimeRef.current > 0) {
             try {
               const duration = artPlayerRef.current.duration || 0;
@@ -11054,7 +11077,7 @@ function PlayPageClient() {
           if (playSyncRef.current.shouldDisableControls) {
             console.log('[PlayPage] Member cannot auto-play next episode');
             if (artPlayerRef.current) {
-              artPlayerRef.current.notice.show = '等待房主切换下一集';
+              artPlayerRef.current.notice.show = '等待有权限的成员切换下一集';
             }
             return;
           }

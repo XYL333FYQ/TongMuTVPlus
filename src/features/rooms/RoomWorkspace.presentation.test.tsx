@@ -225,7 +225,7 @@ afterEach(() => {
 test('connected, no host and empty queue have direct copy', () => {
   render(<RoomWorkspace />);
   expect(screen.getByText('已连接')).toBeInTheDocument();
-  expect(screen.getByText('暂无主持')).toBeInTheDocument();
+  expect(screen.getByText('仅房主和管理员可控制播放')).toBeInTheDocument();
   expect(screen.getByText('片单为空')).toBeInTheDocument();
   expect(screen.getByRole('tab', { name: '片单 0' })).toHaveAttribute(
     'aria-selected',
@@ -245,7 +245,6 @@ test('reconnection and departed assigned controller are distinct states', () => 
   }
   const view = render(<RoomWorkspace />);
   expect(screen.getByText('已连接')).toBeInTheDocument();
-  expect(screen.getByText('房主交接中')).toBeInTheDocument();
   mockRoom.isConnected = false;
   view.rerender(<RoomWorkspace />);
   expect(screen.getByText('重连中 · 影片继续播放')).toHaveAttribute(
@@ -416,7 +415,7 @@ test('room identifiers are masked on screen and copied in full', async () => {
     value: { writeText },
   });
   render(<RoomWorkspace />);
-  expect(screen.getByText(/房间号 0123…89AB/)).toBeInTheDocument();
+  expect(screen.getByText(/房间号 0123 4567 89AB/)).toBeInTheDocument();
   expect(screen.queryByText('0123456789AB')).not.toBeInTheDocument();
   fireEvent.click(screen.getByRole('button', { name: '复制房间号' }));
   await waitFor(() => expect(writeText).toHaveBeenCalledWith('0123456789AB'));
@@ -436,5 +435,9 @@ test('new rooms start with a display name rather than an empty identifier', () =
   mockRoom.currentRoom = null;
   render(<RoomWorkspace />);
   fireEvent.click(screen.getByRole('button', { name: '创建房间' }));
-  expect(screen.getByLabelText('房间名称')).toHaveValue('qa-owner 的放映室');
+  expect(screen.getByLabelText('房间名称')).toHaveValue('');
+  expect(screen.getByLabelText('房间名称')).toHaveAttribute(
+    'placeholder',
+    'qa-owner 的放映室'
+  );
 });

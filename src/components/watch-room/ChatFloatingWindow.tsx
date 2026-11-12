@@ -368,12 +368,7 @@ export default function ChatFloatingWindow() {
             {roomContext?.isConnected
               ? `${room.memberCount} 人在线`
               : '连接中断，消息暂存'}{' '}
-            ·{' '}
-            {roomContext?.canControl
-              ? '你正在主持'
-              : room.controllerAccountId
-              ? `${room.controllerAccountId} 主持`
-              : '暂无主持'}
+            · {roomContext?.canControl ? '你可以控制播放' : '房主控制播放'}
           </p>
         </div>
         {!chatSlot && (

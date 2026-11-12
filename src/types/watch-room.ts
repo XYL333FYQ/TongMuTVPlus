@@ -19,7 +19,22 @@ export interface Room {
   updatedAt?: number;
   serverTime?: number;
   queue?: RoomQueueItem[];
-  settings?: { memberCanQueue: boolean; autoArchive?: boolean };
+  settings?: {
+    memberCanQueue: boolean;
+    /** 成员可以控制播放（SyncTV 默认行为）；关闭后只有房主和管理员可以。 */
+    memberCanControl?: boolean;
+    autoArchive?: boolean;
+  };
+  /** 房间目录里展示的“正在放映”摘要 */
+  nowPlaying?: {
+    title: string;
+    episode: number;
+    isPlaying: boolean;
+    poster?: string;
+  } | null;
+  /** 房主上传的封面（带版本号的同源地址），没有时为 null */
+  coverUrl?: string | null;
+  isMine?: boolean;
   lastMessageSeq?: number;
   unreadCount?: number;
   canControl?: boolean;
@@ -38,7 +53,10 @@ export interface Member {
   name: string;
   isOwner: boolean;
   isController?: boolean;
+  /** 房间管理员（房主授权），始终可以控制播放和整理片单 */
   canHost?: boolean;
+  /** 此刻是否可以控制播放 */
+  canControl?: boolean;
   ready?: boolean;
   following?: boolean;
   lastHeartbeat: number;
@@ -55,9 +73,15 @@ export interface PlayState {
   videoName: string;
   videoYear?: string;
   searchTitle?: string;
+  /** 影片海报，房间没有自定义封面时用作卡片封面 */
+  poster?: string;
   episode?: number;
   source: string;
   updatedAt?: number;
+  /** 服务器递增的状态版本，用来丢弃迟到的旧状态 */
+  version?: number;
+  /** 最近一次改变状态的账号 */
+  updatedBy?: string;
 }
 
 export interface LiveState {
@@ -74,6 +98,9 @@ export interface ScreenState {
   ownerName: string;
   hasAudio?: boolean;
   startedAt?: number;
+  ownerAccountId?: string;
+  ownerSessionId?: string | null;
+  version?: number;
 }
 
 export interface MusicQueueItem {
@@ -117,6 +144,7 @@ export interface RoomQueueItem {
   source?: string;
   videoId?: string;
   episode?: number;
+  poster?: string;
   addedBy: string;
   addedAt: number;
   playedAt?: number;
