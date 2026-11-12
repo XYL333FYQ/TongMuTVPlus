@@ -180,6 +180,11 @@ export async function guardedFetch(
     // 只允许公网：忽略站长白名单和 ALLOW_PRIVATE_PROXY_TARGETS。
     // 用于 AI 抓网页、订阅地址这类由成员或外部内容决定目标的请求
     publicOnly?: boolean;
+    // Optional credential scoping for private room media; legacy callers are unchanged.
+    headersForUrl?: (
+      url: string,
+      original: HeadersInit | undefined
+    ) => HeadersInit;
   } = {}
 ): Promise<Response> {
   const maxRedirects = options.maxRedirects ?? 5;
@@ -191,7 +196,13 @@ export async function guardedFetch(
     if (!allowed) {
       throw new ProxyTargetBlockedError(current);
     }
-    const response = await fetch(current, { ...init, redirect: 'manual' });
+    const requestInit = options.headersForUrl
+      ? { ...init, headers: options.headersForUrl(current, init.headers) }
+      : init;
+    const response = await fetch(current, {
+      ...requestInit,
+      redirect: 'manual',
+    });
     const location = response.headers.get('location');
     if (response.status >= 300 && response.status < 400 && location) {
       try {

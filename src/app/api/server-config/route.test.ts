@@ -35,3 +35,23 @@ test('public server config includes owner release fields but no private payload'
   expect(data.ReleaseInfo.secret).toBeUndefined();
   expect(response.headers.get('Cache-Control')).toBe('no-store');
 });
+
+test('SyncTV mode disables old client connections without exposing upstream configuration', async () => {
+  const previous = process.env.TOGETHER_BACKEND;
+  process.env.TOGETHER_BACKEND = 'synctv';
+  process.env.WATCH_ROOM_ENABLED = 'true';
+  (getConfig as jest.Mock).mockResolvedValue({ SiteConfig: {} });
+  try {
+    const response = await GET(
+      new NextRequest('https://tongmu.test/api/server-config')
+    );
+    const data = await response.json();
+    expect(data.WatchRoom.enabled).toBe(false);
+    expect(data.Together).toEqual({ backend: 'synctv' });
+    expect(data.Together.internalUrl).toBeUndefined();
+  } finally {
+    if (previous === undefined) delete process.env.TOGETHER_BACKEND;
+    else process.env.TOGETHER_BACKEND = previous;
+    delete process.env.WATCH_ROOM_ENABLED;
+  }
+});

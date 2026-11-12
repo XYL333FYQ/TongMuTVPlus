@@ -17,10 +17,12 @@ export default function RoomFilmPicker({
   busy,
   onAdd,
   initialQuery = '',
+  allowDirect = true,
 }: {
   busy: boolean;
   onAdd: (href: string) => Promise<void>;
   initialQuery?: string;
+  allowDirect?: boolean;
 }) {
   const [mode, setMode] = useState<'catalog' | 'direct'>('catalog');
   const [query, setQuery] = useState(initialQuery);
@@ -113,13 +115,15 @@ export default function RoomFilmPicker({
           <Film size={15} />
           影视库
         </button>
-        <button
-          aria-pressed={mode === 'direct'}
-          onClick={() => changeMode('direct')}
-        >
-          <Link2 size={15} />
-          视频直链
-        </button>
+        {allowDirect && (
+          <button
+            aria-pressed={mode === 'direct'}
+            onClick={() => changeMode('direct')}
+          >
+            <Link2 size={15} />
+            视频直链
+          </button>
+        )}
       </div>
       <form
         onSubmit={(event) => {

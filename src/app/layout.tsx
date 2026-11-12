@@ -46,6 +46,7 @@ import ShellBridge from '@/components/shell/ShellBridge';
 import ShellMotionProvider from '@/components/shell/ShellMotionProvider';
 
 import PlaybackSessionProvider from '@/features/playback/PlaybackSessionProvider';
+import { TogetherSessionProvider } from '@/features/rooms/TogetherSessionProvider';
 
 import { StartupCacheCleanup } from '../components/DanmakuCacheCleanup';
 import { DownloadBubble } from '../components/DownloadBubble';
@@ -553,17 +554,21 @@ export default async function RootLayout({
             <WatchRoomProvider>
               <DownloadProvider>
                 <PlaybackSessionProvider>
-                  <MediaSessionBridge />
-                  <StartupCacheCleanup />
-                  {/* 顶栏常驻一份，切页不重建（显示与否由页面里的导航标记决定） */}
-                  <PersistentHeader />
-                  <ShellMotionProvider>{children}</ShellMotionProvider>
-                  <GlobalErrorIndicator />
-                  <ChatFloatingWindow />
-                  <MobileBottomNav />
-                  <DownloadBubble />
-                  <DownloadPanel />
-                  <AppDialogHost />
+                  <TogetherSessionProvider
+                    enabled={process.env.TOGETHER_BACKEND === 'synctv'}
+                  >
+                    <MediaSessionBridge />
+                    <StartupCacheCleanup />
+                    {/* 顶栏常驻一份，切页不重建（显示与否由页面里的导航标记决定） */}
+                    <PersistentHeader />
+                    <ShellMotionProvider>{children}</ShellMotionProvider>
+                    <GlobalErrorIndicator />
+                    <ChatFloatingWindow />
+                    <MobileBottomNav />
+                    <DownloadBubble />
+                    <DownloadPanel />
+                    <AppDialogHost />
+                  </TogetherSessionProvider>
                 </PlaybackSessionProvider>
               </DownloadProvider>
             </WatchRoomProvider>

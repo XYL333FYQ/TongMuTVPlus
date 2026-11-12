@@ -315,7 +315,8 @@ export async function getDetailFromApi(
 
 export async function getDetailFromApiV2(
   apiSite: ApiSite,
-  id: string
+  id: string,
+  options: { requireExactId?: boolean } = {}
 ): Promise<SearchResult> {
   const detailUrl = `${apiSite.api}${API_CONFIG.detail.path}${id}`;
 
@@ -345,6 +346,9 @@ export async function getDetailFromApiV2(
   }
 
   const videoDetail = data.list[0];
+  if (options.requireExactId && String(videoDetail.vod_id) !== id) {
+    throw new Error('片源返回的影片 ID 与请求不一致');
+  }
   const parsedPlayUrls = parseCmsPlayUrls(videoDetail.vod_play_url);
   let episodes = parsedPlayUrls.episodes;
   const titles = parsedPlayUrls.titles;

@@ -143,3 +143,21 @@ test.each([
     expect(Object.keys(left)).toEqual(['recent']);
   }
 );
+
+test('bridge receives device/all-session revocations before storage work', async () => {
+  const { registerTogetherLifecycle } = await import(
+    '../../server/together/lifecycle.cjs'
+  );
+  const listener = jest.fn();
+  const unregister = registerTogetherLifecycle(listener);
+  try {
+    await revokeRefreshToken('alice', 'device-bridge');
+    await revokeAllRefreshTokens('alice');
+    expect(listener.mock.calls).toEqual([
+      ['alice', { sessionId: 'device-bridge' }],
+      ['alice', {}],
+    ]);
+  } finally {
+    unregister();
+  }
+});

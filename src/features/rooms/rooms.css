@@ -16,6 +16,76 @@
   color: var(--tm-text);
   transition: background-color var(--tm-d-hero) var(--tm-ease-out);
 }
+.tm-together-forms {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--tm-grid-gap);
+  margin-bottom: 32px;
+}
+.tm-together-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+  padding: 24px;
+  border-radius: var(--tm-radius-md);
+  background: var(--tm-surface);
+}
+.tm-together-form h2,
+.tm-together-picker h2 {
+  font-size: var(--tm-fs-body);
+  font-weight: 600;
+}
+.tm-together-form input:not([type='checkbox']) {
+  min-width: 0;
+  min-height: 48px;
+  padding: 10px 12px;
+  border: 1px solid var(--tm-line);
+  border-radius: var(--tm-radius-sm);
+  background: var(--tm-bg);
+  color: var(--tm-text);
+  font: inherit;
+  font-size: 16px;
+}
+.tm-together-form input[aria-invalid='true'] {
+  border-color: var(--tm-danger);
+}
+.tm-together-form .tm-room-checkbox {
+  min-height: 44px;
+}
+.tm-together-form input[type='checkbox'] {
+  accent-color: var(--tm-text);
+}
+.tm-together :is(input, button, a):focus-visible {
+  outline: 2px solid var(--tm-text);
+  outline-offset: 3px;
+}
+.tm-together-picker {
+  margin-top: 24px;
+  padding: 20px;
+  border-radius: var(--tm-radius-md);
+  background: var(--tm-surface);
+}
+.tm-together .tm-room-queue-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.tm-together .tm-room-directory-toolbar button {
+  min-height: 44px;
+  padding: 8px 12px;
+  border-radius: var(--tm-radius-sm);
+}
+.tm-together .tm-room-directory-toolbar button[aria-pressed='true'] {
+  background: var(--tm-surface-raised);
+  color: var(--tm-text);
+}
+@media (max-width: 820px) {
+  .tm-together-forms {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
 .tm-rooms button,
 .tm-rooms a {
   -webkit-tap-highlight-color: transparent;

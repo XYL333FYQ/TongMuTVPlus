@@ -19,6 +19,7 @@ import {
   SetLocalSettingsSyncResult,
   SkipConfig,
 } from './types';
+import { notifyTogetherRevocation } from '../../server/together/lifecycle.cjs';
 
 // storage type 常量: 'localstorage' | 'redis' | 'upstash' | 'kvrocks' | 'd1' | 'postgres' | 'turso'，默认 'localstorage'
 const IS_CLOUDFLARE_BUILD =
@@ -585,6 +586,7 @@ export class DbManager {
   }
 
   async deleteUser(userName: string): Promise<void> {
+    notifyTogetherRevocation(userName, { deleted: true });
     await this.storage.deleteUser(userName);
   }
 
@@ -643,6 +645,7 @@ export class DbManager {
       enabledApis?: string[];
     }
   ): Promise<void> {
+    if (updates.banned === true) notifyTogetherRevocation(userName);
     if (typeof (this.storage as any).updateUserInfoV2 === 'function') {
       await (this.storage as any).updateUserInfoV2(userName, updates);
     }
@@ -697,6 +700,7 @@ export class DbManager {
   }
 
   async deleteUserV2(userName: string): Promise<void> {
+    notifyTogetherRevocation(userName, { deleted: true });
     if (typeof (this.storage as any).deleteUserV2 === 'function') {
       await (this.storage as any).deleteUserV2(userName);
     }

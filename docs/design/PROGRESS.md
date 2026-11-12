@@ -1,5 +1,41 @@
 # 界面改造进度
 
+## 2026-11-11 SyncTV 第二批媒体接入进行中
+
+- 11 月 12 日继续：真实 MP4/HLS 双账号网关联调通过，强制过期刷新不串集；两个独立 Chrome 的 1440×900 实际解码、时间推进、暂停、跳转和 1.5 倍速恢复均通过。此为一次性媒体测试界面，不能替代本站房间同步和深浅主题验收。证据 media-integration-results.json 与 media-browser-\*.png。
+- 已新增根层 PlaybackPort 接口与不增加 DOM 的 Provider，49 项相关测试通过；旧同步尚未迁出，第三批尚未完成。当前类型检查串行重试通过，lint 通过，新接入层 46 项、旧房间 27 项通过。继续移植固定上游同步、时钟与重连规则。
+
+- 已实现加密影片引用、Range/HLS/字幕/海报同源网关和本站选片登记接口；登记不触发播放切换，成员和来源权限由服务端检查。未修改界面，沿用既有设计边界。
+- 类型检查、lint、完整格式检查通过；完整 Jest 的 193 个套件通过，另一个套件因沙箱回环 EACCES 失败，放行本机连接后 19 项全部通过。合计 194 套件 1270 个不同用例被覆盖，不能写成一次完整运行全绿。新接入层 45 项、旧房间 27 项通过。
+- 还未完成真实 MP4/HLS 双账号播放、地址失效刷新和浏览器验收；不能宣布第二批完成，也未切换默认房间。下一步为真实影片联调，之后才拆离播放器同步。详细证据及兼容限制见 SYNCTV-IMPLEMENTATION-LEDGER.md。
+
+## 2026-11-11 SyncTV 隔离验证继续
+
+- 最新结果：用户亲自完成官方协议确认后，两个独立持久化 Chrome 会话以房主和普通成员实际播放 90 秒本地动态 MP4。真实视频时间推进、同步暂停、跳转到 34.832 秒、恢复播放、成员刷新重入及聊天投递均通过观测与独立断言。刷新重入后顺序采样差约 0.064 秒，不作为 SLA。两端均观察为非静音，但未进行人工听音或音频回路采样。
+- 排查确认 Chrome 自动化的 Flutter 无障碍覆盖层会拦截播放按钮点击；切换为默认画面的原生鼠标测试后实播通过。此前首帧停顿不再作为上游缺陷结论。测试服务器补齐 Range 支持，并为 90 秒片源使用新媒体记录，排除旧两秒片源缓存干扰。没有修改上游或本站产品代码。
+- 浏览器证据：`output/synctv-evaluation-20261111/native-pointer-results.txt`、`browser-assertions.txt` 和 `*-native-playing.jpg` / `*-native-final.jpg`。详细范围见 `SYNCTV-REFACTOR-EXECUTION.md`。本站账号与真实片源适配、手机/公网、封面上传和旧数据迁移仍未验收。
+- 本阶段最终收尾：完整隔离启动脚本退出 0，协议 28 项与重启 5 项通过，保存为 `protocol-final.txt`、`restart-final.txt`；测试浏览器及服务已关闭，18180、18181、18182、25433 端口无监听。此前“服务保留”和失败退出状态均属于下文历史过程。
+
+- 用户已明确允许仅在本机隔离测试账号接受官方协议。已在内置浏览器以 `127.0.0.1` 与 `localhost` 两个来源的独立登录状态，用 root 与普通测试成员进入同一房间，看到在线 2 人及测试视频首帧；这仍是同一浏览器的两端，不等同两个独立浏览器。
+- 用 FFmpeg 生成 90 秒带测试音轨的动态 MP4。原生浏览器直链可以播放到动态画面；SyncTV 页面可显示媒体时长和共享进度，但所观察的视频元素持续为暂停、时间 0，未通过实际播放推进验收。补充隔离媒体服务器的 HTTP Range 支持后仍未证明恢复，不能将其归因于本站旧房间，也不能直接判定上游通用缺陷。
+- 为区分内置浏览器因素，准备了独立 Chrome 双上下文对照脚本。自动审批两次拒绝脚本接受协议，要求用户接管；已改为可见 Chrome 窗口由用户亲自点击同意，脚本只等待该对话框关闭。环境和脚本保留供接续，尚未报告 Chrome 实播成功。证据与诊断在 `output/synctv-evaluation-20261111/`。
+
+- 重建隔离环境后 SyncTV 与 PostgreSQL 成功启动，新的协议检查 28 项通过，服务及数据库重启检查 5 项通过。首次数据库段错误未复现，根因未定位，不能称根因已修复。
+- 复制测试脚本后相对媒体路径失效，补齐隔离媒体路径并使用新测试名称后完成检查。原外围启动脚本因首次失败仍退出 1，后续结果单独保存在 `output/synctv-evaluation-20261111/`。
+- 浏览器仅核实 1440×900 官方房间目录；双浏览器实际播放、声音和同步尚未验收。测试服务已停，相关端口无监听。
+- 新增 `SYNCTV-REFACTOR-EXECUTION.md`，记录替换顺序、文件边界、旧房间消费者及验收条件；业务代码未修改。下一步仍为上游双浏览器实播和身份/真实片源适配原型，不得将协议检查当成产品接入完成。
+- 后续将隔离运行目录改到 WSL `/var/tmp`，避免临时目录随重启清除；新环境整套协议检查再次 28 项通过。真实浏览器已查看官方登录协议，要求操作时用户确认，暂未接受。当前这次隔离服务保留供继续验证；上条端口清理结论仅指前一次已收尾的环境。
+- 项目 typecheck、lint 通过；Jest 首次被沙箱临时缓存 EPERM 拦住，改用项目内缓存并正常权限重跑后 187 套 / 1245 项通过；房间检查首次回环连接 EACCES，正常权限重跑后 27 项通过。全库格式检查只报告既有 `CLIENT-EXPERIENCE-STATUS.md`，未修改该文件；本轮文档已格式化。
+
+## 2026-11-10 SyncTV 模块接入调研
+
+- 用户补充四项约束：新模块仍在现有导航“房间”界面显示；高内聚低耦合；房间前端符合本站总体风格，不直接沿用 SyncTV UI；自己看和一起看职责独立但相辅相成、共享必要能力。原方案直接复用上游页面的建议已撤销。
+- 用户明确以 SyncTV 的实现为准，作为本站一起看模块；旧房间视为半废弃，完成迁移和验收后清理。此前“优先保留旧房间服务”的建议作废。已重写 `docs/superpowers/specs/2026-11-10-viewing-room-refactor-design.md`；未修改业务代码。
+- 本地隔离运行 SyncTV v1.0.14 和 PostgreSQL 18，双账号、房间、同步事件、权限、聊天及重启后数据检查 28+5 项通过。Chrome 实际打开官方房间目录并显示测试房间；登录窗有用户协议，未接受，因此未实测浏览器登录和播放。详情见 `docs/design/SYNCTV-VALIDATION-20261110.md`。
+- SyncTV App v1.1.32 源码已有上传及移除本地房间封面；实际上传及无封面时回退当前影片海报仍未验证。用户指定显示顺序：自定义图、当前影片海报、占位，切片不覆盖自定义图。
+- 旧 Socket.IO 和测试用本站片源格式不能直接对接 SyncTV；真实本站账号、片源、播放器生命周期、客户端版本及旧房间数据迁移均未接通。下一步以官方客户端作功能对照，验证双浏览器与身份/片源适配，再制定符合本站风格的实施及切换计划。
+- 本轮检查：类型检查和 lint 通过（lint 有既有警告），完整 Jest 187 套 1245 项及旧房间 27 项通过；全库格式检查仅报告原有未跟踪 `docs/design/CLIENT-EXPERIENCE-STATUS.md`，该文件未改；本轮文档单独格式检查通过。日志在 `output/synctv-evaluation-20261110/`。
+
 ## 2026-11-07 Android 6 下载点击兼容
 
 - Android 6 自带 Chromium 44 不提供点击事件 isTrusted，之前的严格判断会误拒真实点击。增加限时且一次性的原生触摸校验，并保留同源、用户确认、大小和跨站跳转限制。
@@ -1411,3 +1447,31 @@
 - 2026-11-10 启动和旧客户端更新：安卓手机和 Windows 本地连接阶段使用短线展开与小号字标，网页与电视在首次文档呈现使用同套开场，遵循减少动态。旧 Windows 点击后直接在原提示内展开 x64、ARM64 和便携包。安装包支持同窗口请求下载及复制，剪贴板不可用时显示可手动选择的地址。新原生包和实际旧 Windows 下载待复验。
 - 2026-11-10 Windows 更新完成反馈及开场：更新弹窗同时提供原生更新和手动安装包；成功落盘才显示完成，可打开文件夹或稍后安装。手机、Windows、网页和电视统一双环、掠光与字标开场。已补 Windows 落盘回归，待打包和运行门禁。
 - 2026-11-10 安卓更新交接：用主线程队列和下载完成广播观察真实状态，补回焦点检查、暂停原因和自动打开安装器失败时的同文件兜底。新增 HTTPS APK 前台下载到系统安装界面的模拟器实测，不在测试中覆盖安装。OriginOS 真机与实际下载耗时待复验。
+
+### 2026-11-11 SyncTV rebuild implementation in isolated worktree
+
+Active implementation: C:/Users/ss/.codex/worktrees/synctv-rebuild/TongMuTVPlus.
+Batch 1 in progress: fixed protocol generation, encrypted independent identities and sessions,
+ordinary-user upstream client, runtime/mode configuration, live site-principal revalidation,
+single-use room/browser tickets and initial same-origin Next routes. Core 25 Node tests
+and 3 route tests passed. No formal entrance switched and no legacy rooms retired.
+Pending: WS proxy and central revocation hooks, full service configuration and required
+batch checks, followed by real site media integration and the remaining five batches.
+Detailed evidence and rulings: SYNCTV-IMPLEMENTATION-LEDGER.md.
+
+### 2026-11-11 SyncTV batch1 foundation accepted
+
+Implemented encrypted persistent per-account identities, independent device sessions,
+ordinary-user API bridge, explicit room-operation allowlist, one-use browser/room tickets,
+native protobuf WebSocket proxy, immediate logout/ban/delete lifecycle revocation,
+exclusive legacy/new server configuration, generated pinned protocol/WASM and pinned
+SyncTV/PostgreSQL Compose services with persistent volumes and private secret initializer.
+Default stays legacy; no old room data or services retired.
+
+Validation: typecheck/lint pass; together33/33 and old rooms27/27 pass; live site bridge8/8
+passes. Complete190 Jest suites/1256 distinct assertions verified with explicit runtime
+split:189 Linux suites pass; the remaining SQLite migration suite passes5/5 on Windows.
+Windows full-suite/formatter native crashes are unresolved; full format passes in WSL.
+Compose validates both modes; container build/start not run because Docker engine is absent.
+No UI or media-playing acceptance claimed. Details and raw-log paths are in
+SYNCTV-IMPLEMENTATION-LEDGER.md. Continue with batch2 media gateway.

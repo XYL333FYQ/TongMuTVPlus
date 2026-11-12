@@ -1,0 +1,336 @@
+syntax = "proto3";
+
+package synctv.provider.common;
+
+import "proto/buf/validate/validate.proto";
+import "proto/source_config.proto";
+
+// A source prepared by the server during provider discovery. Clients submit
+// this value unchanged to AddMedia or CreatePlaylist.
+message DiscoveredSource {
+  oneof source_config {
+    synctv.source_config.MediaSourceConfig media = 1;
+    synctv.source_config.PlaylistSourceConfig playlist = 2;
+  }
+  string provider_instance_name = 3;
+}
+
+message PreparedMediaSource {
+  DiscoveredSource source = 1 [(buf.validate.field).required = true];
+  string suggested_name = 2;
+  synctv.source_config.PlaybackKind playback_kind = 3 [(buf.validate.field).enum.defined_only = true];
+}
+
+// Transport-neutral chunks for non-room provider resources such as images
+// shown while browsing before media is added to a room.
+message ResourceChunk {
+  bytes data = 1;
+  uint32 status = 2;
+  optional string content_type = 3;
+  optional uint64 content_length = 4;
+  optional string content_range = 5;
+  optional string accept_ranges = 6;
+  optional string cache_control = 7;
+  optional string etag = 8;
+  optional string last_modified = 9;
+  optional string expires = 10;
+  optional string content_disposition = 11;
+  optional string location = 12;
+  optional string content_encoding = 13;
+}
+
+message ResourceResponse {
+  ResourceChunk chunk = 1;
+}
+
+enum PlaybackProxyAutoReason {
+  PLAYBACK_PROXY_AUTO_REASON_UNSPECIFIED = 0;
+  PLAYBACK_PROXY_AUTO_REASON_PUBLIC_RESOURCE = 1;
+  PLAYBACK_PROXY_AUTO_REASON_REQUEST_CREDENTIALS = 2;
+  PLAYBACK_PROXY_AUTO_REASON_SIGNED_RESOURCE = 3;
+  PLAYBACK_PROXY_AUTO_REASON_PROVIDER_SESSION = 4;
+  PLAYBACK_PROXY_AUTO_REASON_SERVER_TRANSPORT = 5;
+}
+
+message PlaybackProxyAutoPolicy {
+  string variant = 1;
+  synctv.source_config.PlaybackProxyMode mode = 2 [(buf.validate.field).enum = {
+    defined_only: true
+    not_in: [0]
+  }];
+  PlaybackProxyAutoReason reason = 3 [(buf.validate.field).enum = {
+    defined_only: true
+    not_in: [0]
+  }];
+}
+
+message PlaybackProxyPolicy {
+  repeated synctv.source_config.PlaybackProxyMode supported_modes = 1
+      [(buf.validate.field).repeated = {
+        min_items: 1
+        unique: true
+        items: { enum: { defined_only: true } }
+      }];
+  synctv.source_config.PlaybackProxyMode current_mode = 2
+      [(buf.validate.field).enum.defined_only = true];
+  repeated PlaybackProxyAutoPolicy auto_policies = 3
+      [(buf.validate.field).repeated.min_items = 1];
+}
+
+message ResolvePlaybackProxyPolicyRequest {
+  DiscoveredSource source = 1 [(buf.validate.field).required = true];
+}
+
+message PrepareDirectUrlRequest {
+  string url = 1 [(buf.validate.field).string.min_len = 1];
+  map<string, string> headers = 2;
+  synctv.source_config.PlaybackKind playback_kind = 3 [(buf.validate.field).enum = {
+    defined_only: true
+    not_in: [0]
+  }];
+  synctv.source_config.PlaybackProxyMode proxy_mode = 4 [(buf.validate.field).enum.defined_only = true];
+  optional int64 expires_at = 6 [(buf.validate.field).int64.gt = 0];
+}
+
+message PrepareRtmpPullIntent {
+  string url = 1 [(buf.validate.field).string.min_len = 1];
+  synctv.source_config.RtmpStreamMode mode = 2 [(buf.validate.field).enum = {
+    defined_only: true
+    not_in: [0]
+  }];
+}
+
+message PrepareRtspTrackIntent {
+  oneof mode {
+    option (buf.validate.oneof).required = true;
+    bool first_compatible = 1;
+    uint32 index = 2;
+    bool disabled = 3;
+  }
+}
+
+message PrepareRtspPullIntent {
+  string url = 1 [(buf.validate.field).string.min_len = 1];
+  synctv.source_config.RtspTransport transport = 2 [(buf.validate.field).enum = {
+    defined_only: true
+    not_in: [0]
+  }];
+  PrepareRtspTrackIntent video_track = 3 [(buf.validate.field).required = true];
+  PrepareRtspTrackIntent audio_track = 4 [(buf.validate.field).required = true];
+}
+
+message PrepareHttpFlvPullIntent {
+  string url = 1 [(buf.validate.field).string.min_len = 1];
+}
+
+message PrepareWhepPullIntent {
+  string url = 1 [(buf.validate.field).string.min_len = 1];
+  optional string authorization = 2 [(buf.validate.field).string.max_len = 4096];
+}
+
+message PrepareLiveProxyRequest {
+  oneof source {
+    option (buf.validate.oneof).required = true;
+    PrepareRtmpPullIntent rtmp = 1;
+    PrepareRtspPullIntent rtsp = 2;
+    PrepareHttpFlvPullIntent http_flv = 3;
+    PrepareWhepPullIntent whep = 4;
+  }
+}
+
+message PrepareRtmpRequest {
+  synctv.source_config.RtmpStreamMode mode = 1 [(buf.validate.field).enum = {
+    defined_only: true
+    not_in: [0]
+  }];
+}
+
+message ProviderInstanceQuery {
+  string instance_name = 1 [(buf.validate.field).cel = {
+    id: "provider_instance_query.instance_name"
+    message: "instance_name must be empty or 1-64 characters of letters, numbers, underscores, or hyphens"
+    expression: "this == '' || (size(this) <= 64 && this.matches('^[A-Za-z0-9_-]+$'))"
+  }];
+}
+
+enum ProviderInstanceStatus {
+  PROVIDER_INSTANCE_STATUS_UNSPECIFIED = 0;
+  PROVIDER_INSTANCE_STATUS_CONNECTED = 1;
+  PROVIDER_INSTANCE_STATUS_DISCONNECTED = 2;
+  PROVIDER_INSTANCE_STATUS_ERROR = 3;
+}
+
+enum ProviderInstanceListSortBy {
+  PROVIDER_INSTANCE_LIST_SORT_BY_UNSPECIFIED = 0;
+  PROVIDER_INSTANCE_LIST_SORT_BY_NAME = 1;
+  PROVIDER_INSTANCE_LIST_SORT_BY_ENDPOINT = 2;
+  PROVIDER_INSTANCE_LIST_SORT_BY_CREATED_AT = 3;
+  PROVIDER_INSTANCE_LIST_SORT_BY_UPDATED_AT = 4;
+}
+
+enum SortDirection {
+  SORT_DIRECTION_UNSPECIFIED = 0;
+  SORT_DIRECTION_ASC = 1;
+  SORT_DIRECTION_DESC = 2;
+}
+
+message ProviderInstance {
+  string name = 1;
+  string endpoint = 2;
+  string comment = 3;
+  uint32 timeout_seconds = 4;
+  bool tls = 5;
+  bool insecure_tls = 6;
+  repeated synctv.source_config.SourceProvider providers = 7 [(buf.validate.field).repeated = {
+    min_items: 1
+    unique: true
+    items: { enum: { defined_only: true not_in: [0] } }
+  }];
+  bool enabled = 8;
+  ProviderInstanceStatus status = 9;
+  int64 created_at = 10;
+  int64 updated_at = 11;
+}
+
+message ListAvailableProviderInstancesRequest {
+  synctv.source_config.SourceProvider provider_type = 1 [(buf.validate.field).enum.defined_only = true];
+}
+
+message ListProviderInstancesRequest {
+  option (buf.validate.message).cel = {
+    id: "provider.list_provider_instances.page"
+    message: "page must be 0 (use default) or at least 1"
+    expression: "this.page == 0 || this.page >= 1"
+  };
+  option (buf.validate.message).cel = {
+    id: "provider.list_provider_instances.page_size"
+    message: "page_size must be 0 (use default) or between 1 and 100"
+    expression: "this.page_size == 0 || (this.page_size >= 1 && this.page_size <= 100)"
+  };
+  int32 page = 1;
+  int32 page_size = 2;
+  synctv.source_config.SourceProvider provider_type = 3 [(buf.validate.field).enum.defined_only = true];
+  string search = 4 [(buf.validate.field).string.max_len = 100];
+  optional bool enabled = 5;
+  optional bool tls = 6;
+  ProviderInstanceListSortBy sort_by = 7 [(buf.validate.field).enum.defined_only = true];
+  SortDirection sort_direction = 8 [(buf.validate.field).enum.defined_only = true];
+}
+
+message ListProviderInstancesResponse {
+  repeated ProviderInstance instances = 1;
+  int32 total = 2;
+}
+
+message AddProviderInstanceRequest {
+  string name = 1 [(buf.validate.field).string = {
+    min_len: 1
+    max_len: 64
+    pattern: "^[A-Za-z0-9_-]+$"
+  }];
+  string endpoint = 2;
+  string comment = 3;
+  uint32 timeout_seconds = 4;
+  bool tls = 5;
+  bool insecure_tls = 6;
+  repeated synctv.source_config.SourceProvider providers = 7 [(buf.validate.field).repeated = {
+    min_items: 1
+    unique: true
+    items: { enum: { defined_only: true not_in: [0] } }
+  }];
+  optional string jwt_secret = 8;
+  optional string custom_ca = 9;
+}
+
+message AddProviderInstanceResponse {
+  ProviderInstance instance = 1;
+}
+
+message UpdateProviderInstanceRequest {
+  string name = 1 [(buf.validate.field).string = {
+    min_len: 1
+    max_len: 64
+    pattern: "^[A-Za-z0-9_-]+$"
+  }];
+  optional string endpoint = 2;
+  optional string comment = 3;
+  optional uint32 timeout_seconds = 4;
+  optional bool tls = 5;
+  optional bool insecure_tls = 6;
+  repeated synctv.source_config.SourceProvider providers = 7 [(buf.validate.field).repeated = {
+    unique: true
+    items: { enum: { defined_only: true not_in: [0] } }
+  }];
+  optional string jwt_secret = 8;
+  optional string custom_ca = 9;
+  optional bool clear_comment = 10;
+  optional bool clear_jwt_secret = 11;
+  optional bool clear_custom_ca = 12;
+}
+
+message UpdateProviderInstanceResponse {
+  ProviderInstance instance = 1;
+}
+
+message DeleteProviderInstanceRequest {
+  string name = 1 [(buf.validate.field).string = {
+    min_len: 1
+    max_len: 64
+    pattern: "^[A-Za-z0-9_-]+$"
+  }];
+}
+
+message DeleteProviderInstanceResponse {
+  bool success = 1;
+}
+
+message ReconnectProviderInstanceRequest {
+  string name = 1 [(buf.validate.field).string = {
+    min_len: 1
+    max_len: 64
+    pattern: "^[A-Za-z0-9_-]+$"
+  }];
+}
+
+message ReconnectProviderInstanceResponse {
+  ProviderInstance instance = 1;
+}
+
+message EnableProviderInstanceRequest {
+  string name = 1 [(buf.validate.field).string = {
+    min_len: 1
+    max_len: 64
+    pattern: "^[A-Za-z0-9_-]+$"
+  }];
+}
+
+message EnableProviderInstanceResponse {
+  ProviderInstance instance = 1;
+}
+
+message DisableProviderInstanceRequest {
+  string name = 1 [(buf.validate.field).string = {
+    min_len: 1
+    max_len: 64
+    pattern: "^[A-Za-z0-9_-]+$"
+  }];
+}
+
+message DisableProviderInstanceResponse {
+  ProviderInstance instance = 1;
+}
+
+message ListProviderBackendsRequest {
+  synctv.source_config.SourceProvider provider_type = 1 [(buf.validate.field).enum = {
+    defined_only: true
+    not_in: [0]
+  }];
+}
+
+message ProviderInstancesResponse {
+  repeated string instances = 1;
+}
+
+message ProviderBackendsResponse {
+  repeated string backends = 1;
+}

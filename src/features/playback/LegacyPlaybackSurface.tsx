@@ -170,6 +170,7 @@ import { useWatchRoomContextSafe } from '@/components/WatchRoomProvider';
 
 import { useDownload } from '@/contexts/DownloadContext';
 import { enableArtKeyboardAccess } from '@/features/playback/art-keyboard';
+import { usePlaybackMediaDetail } from '@/features/playback/PlaybackPortProvider';
 import {
   usePlaybackSearchParams,
   usePlaybackSession,
@@ -324,6 +325,7 @@ function PlayPageClient() {
   const router = useRouter();
   const searchParams = usePlaybackSearchParams();
   const playbackSession = usePlaybackSession();
+  const mediaDetail = usePlaybackMediaDetail();
   const surfaceActiveRef = useRef(true);
   useEffect(() => {
     surfaceActiveRef.current = true;
@@ -6186,7 +6188,17 @@ function PlayPageClient() {
       let detailData: SearchResult | null = null;
       let sourcesInfo: SearchResult[] = [];
 
-      if (currentSource && currentId) {
+      if (
+        mediaDetail &&
+        mediaDetail.source === currentSource &&
+        mediaDetail.id === currentId
+      ) {
+        detailData = mediaDetail;
+        sourcesInfo = [mediaDetail];
+        setAvailableSources(sourcesInfo);
+        setSourceSearchLoading(false);
+        setBackgroundSourcesLoading(false);
+      } else if (currentSource && currentId) {
         const cachedSources = getCachedSourcesData(searchTitle || videoTitle);
         const cachedTarget = cachedSources.find(
           (source) => source.source === currentSource && source.id === currentId
@@ -8417,7 +8429,7 @@ function PlayPageClient() {
           volume: 0.7,
           isLive: false,
           muted: false,
-          autoplay: true,
+          autoplay: !mediaDetail,
           pip: true,
           autoSize: false,
           autoMini: false,

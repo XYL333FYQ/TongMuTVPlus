@@ -61,6 +61,8 @@ import RoomMediaInfo from './RoomMediaInfo';
 import RoomPlaybackButton from './RoomPlaybackButton';
 import RoomQuickStart from './RoomQuickStart';
 import useRoomScreening from './useRoomScreening';
+import SyncRoomWorkspace from './SyncRoomWorkspace';
+import { useTogetherSession } from './TogetherSessionProvider';
 
 import type { Room } from '@/types/watch-room';
 
@@ -78,6 +80,11 @@ type RoomSummary = Pick<
 >;
 
 export default function RoomWorkspace() {
+  const together = useTogetherSession();
+  return together?.enabled ? <SyncRoomWorkspace /> : <LegacyRoomWorkspace />;
+}
+
+function LegacyRoomWorkspace() {
   const router = useRouter();
   const params = useSearchParams();
   const modal = useRef<HTMLDialogElement>(null);

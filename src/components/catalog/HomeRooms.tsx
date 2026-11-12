@@ -15,12 +15,22 @@ import {
   isExternalRoomServer,
 } from '@/features/rooms/external-room-server';
 import { displayRoomName } from '@/features/rooms/room-presentation';
+import SyncHomeRooms from '@/features/rooms/SyncHomeRooms';
+import { useTogetherSession } from '@/features/rooms/TogetherSessionProvider';
 
 import type { Room } from '@/types/watch-room';
 
 type Summary = Pick<Room, 'id' | 'name' | 'memberCount'> &
   Partial<Pick<Room, 'ownerName' | 'ownerAccountId'>>;
 export default function HomeRooms({ guest = false }: { guest?: boolean }) {
+  const together = useTogetherSession();
+  return together?.enabled ? (
+    <SyncHomeRooms guest={guest} />
+  ) : (
+    <LegacyHomeRooms guest={guest} />
+  );
+}
+function LegacyHomeRooms({ guest = false }: { guest?: boolean }) {
   const context = useWatchRoomContextSafe();
   const [rooms, setRooms] = useState<Summary[]>([]);
   const [error, setError] = useState('');

@@ -25,6 +25,9 @@ services:
       AUTH_SECRET: '${AUTH_SECRET:-}'
       CRON_PASSWORD: '${CRON_PASSWORD:-}'
       ALLOW_PRIVATE_PROXY_TARGETS: '${ALLOW_PRIVATE_PROXY_TARGETS:-false}'
+      TOGETHER_BACKEND: '${TOGETHER_BACKEND:-legacy}'
+      SYNCTV_INTERNAL_URL: http://synctv:8080
+      TOGETHER_DATA_DIRECTORY: /app/.data
       WATCH_ROOM_ENABLED: 'true'
       WATCH_ROOM_SERVER_TYPE: internal
       ROOM_ALLOWED_ORIGINS: '${ROOM_ALLOWED_ORIGINS:-}'
@@ -50,6 +53,10 @@ services:
       - ./.data:/app/.data
       - ./data:/data
       - ./backups:/backups
+    env_file:
+      - path: ./.data/synctv-bridge.env
+        required: false
+    networks: [default, together_api]
     healthcheck:
       test:
         [
@@ -67,3 +74,75 @@ services:
       options:
         max-size: '10m'
         max-file: '3'
+
+  # Optional isolated rebuild services. No upstream or database host ports.
+  synctv:
+    profiles: ['together']
+    image: synctvorg/synctv:v1.0.14@sha256:0f58fb9b5c91571ab4e3048679b12b4b69f68269ca4e62c3cacfaa83c5cc4934
+    restart: unless-stopped
+    env_file:
+      - path: ./.data/synctv.env
+        required: true
+    environment:
+      SYNCTV_DATA_DIR: /data
+      SYNCTV_REDIS_URL: ''
+      # Private authenticated bridge traffic shares one upstream IP; retain bounded limiting.
+      SYNCTV_REQUEST_RATE_LIMITS_AUTH_MAX_REQUESTS: '${SYNCTV_BRIDGE_AUTH_MAX_REQUESTS:-120}'
+      SYNCTV_SERVER_HOST: 0.0.0.0
+      SYNCTV_SERVER_PORT: '8080'
+      SYNCTV_HEALTH_HOST: 0.0.0.0
+      SYNCTV_HEALTH_PORT: '8081'
+      SYNCTV_SERVER_ACCESS_LOG_ENABLED: 'false'
+      SYNCTV_BOOTSTRAP_CREATE_ROOT_USER: 'true'
+      SYNCTV_BOOTSTRAP_ROOT_USERNAME: tongmu_bridge_admin
+      SYNCTV_BOOTSTRAP_ROOT_PASSWORD_FILE: /run/secrets/synctv-root-password
+      SYNCTV_MANAGEMENT_ENABLED: 'true'
+      SYNCTV_MANAGEMENT_TRANSPORT: unix
+      SYNCTV_WEBRTC_ENABLE_BUILTIN_STUN: 'false'
+    secrets:
+      - synctv-root-password
+    volumes:
+      - synctv_data:/data
+      - synctv_uploads:/data/uploads
+    depends_on:
+      synctv-postgres:
+        condition: service_healthy
+    networks: [together_api, together_db]
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://127.0.0.1:8081/health/ready']
+      interval: 15s
+      timeout: 5s
+      start_period: 40s
+      retries: 3
+
+  synctv-postgres:
+    profiles: ['together']
+    image: postgres:18.6-alpine3.24@sha256:9ba53c7d41ea093baf5c1ba635ba5434c4f979880527d49bb7d9237d3193085b
+    restart: unless-stopped
+    env_file:
+      - path: ./.data/synctv-postgres.env
+        required: true
+    volumes:
+      - synctv_postgres:/var/lib/postgresql
+    networks: [together_db]
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U synctv -d synctv']
+      interval: 5s
+      timeout: 5s
+      start_period: 30s
+      retries: 5
+
+volumes:
+  synctv_data:
+  synctv_uploads:
+  synctv_postgres:
+
+networks:
+  default:
+  together_api:
+  together_db:
+    internal: true
+
+secrets:
+  synctv-root-password:
+    file: ./.data/synctv-root-password

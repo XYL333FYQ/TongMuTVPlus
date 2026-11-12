@@ -18,6 +18,7 @@ export function playbackIdentity(href: string) {
     params.get('source') || '',
     params.get('id') || params.get('title') || '',
     params.get('episode') || '1',
+    ...(params.get('mediaRef') ? [params.get('mediaRef')] : []),
   ].join('\u0000');
 }
 

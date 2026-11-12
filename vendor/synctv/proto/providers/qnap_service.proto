@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package synctv.provider.qnap;
+
+import "proto/providers/qnap.proto";
+import "proto/providers/common.proto";
+
+service QnapProviderService {
+  rpc Login(LoginRequest) returns (LoginResponse);
+  rpc List(ListRequest) returns (ListResponse);
+  rpc GetCapabilities(GetCapabilitiesRequest) returns (GetCapabilitiesResponse);
+  rpc Logout(LogoutRequest) returns (LogoutResponse);
+  rpc GetBinds(GetBindsRequest) returns (GetBindsResponse);
+  rpc GetThumbnail(GetThumbnailRequest) returns (stream synctv.provider.common.ResourceResponse);
+}

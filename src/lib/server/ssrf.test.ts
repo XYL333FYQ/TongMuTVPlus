@@ -171,6 +171,34 @@ describe('guarded proxy fetch', () => {
     process.env.ALLOW_PRIVATE_PROXY_TARGETS = 'true';
     expect(await isProxyTargetAllowed('http://internal.test/x')).toBe(true);
   });
+
+  test('a caller can scope private headers separately for each validated redirect', async () => {
+    const calls: Headers[] = [];
+    global.fetch = jest.fn(async (_url, init) => {
+      calls.push(new Headers(init?.headers));
+      return calls.length === 1
+        ? new Response(null, {
+            status: 302,
+            headers: { location: 'https://cdn.test/movie.mp4' },
+          })
+        : new Response('movie');
+    });
+    await guardedFetch(
+      'https://source.test/movie',
+      { headers: { Authorization: 'private', Range: 'bytes=0-3' } },
+      {
+        headersForUrl(url, original) {
+          const headers = new Headers(original);
+          if (new URL(url).hostname !== 'source.test')
+            headers.delete('authorization');
+          return headers;
+        },
+      }
+    );
+    expect(calls[0].get('authorization')).toBe('private');
+    expect(calls[1].get('authorization')).toBeNull();
+    expect(calls[1].get('range')).toBe('bytes=0-3');
+  });
 });
 
 test('proxied content types never pass HTML through', () => {

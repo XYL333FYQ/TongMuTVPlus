@@ -77,6 +77,8 @@ COPY --from=builder --chown=nextjs:nodejs /app/server ./server
 COPY --from=builder --chown=nextjs:nodejs /app/src/lib/tv-remote-hub.js ./src/lib/tv-remote-hub.js
 # 从构建器中复制 public 和 .next/static 目录
 COPY --from=builder --chown=nextjs:nodejs /app/public ./public
+# Preserve fixed upstream sources, hashes and license notices alongside the shipped codec/WASM.
+COPY --from=builder --chown=nextjs:nodejs /app/vendor/synctv ./vendor/synctv
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
 # 从构建器中复制生产依赖（包含 Socket.IO / better-sqlite3）

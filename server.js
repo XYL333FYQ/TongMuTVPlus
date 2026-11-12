@@ -90,6 +90,13 @@ function ensureCronPassword() {
     .toString('hex');
 }
 
+const { getTogetherRuntime } = require('./server/together/runtime.cjs');
+const {
+  createTogetherUpgradeHandler,
+} = require('./server/together/ws-proxy.cjs');
+// Initialize before accepting requests so account deletion/logout always reaches the bridge.
+let togetherRuntime = null;
+
 ensureAuthSecret();
 ensureCronPassword();
 ensureSQLiteReady();
@@ -105,7 +112,7 @@ const handle = app.getRequestHandler();
 async function getWatchRoomConfig() {
   // 观影室配置现在统一从环境变量读取
   const config = {
-    enabled: process.env.WATCH_ROOM_ENABLED === 'true',
+    enabled: !togetherRuntime && process.env.WATCH_ROOM_ENABLED === 'true',
     serverType: process.env.WATCH_ROOM_SERVER_TYPE || 'internal',
     externalServerUrl: process.env.WATCH_ROOM_EXTERNAL_SERVER_URL,
     externalServerAuth: process.env.WATCH_ROOM_EXTERNAL_SERVER_AUTH,
@@ -224,6 +231,8 @@ class TVRemoteServer {
 }
 
 app.prepare().then(async () => {
+  // Next has loaded environment files; register lifecycle before opening the listener.
+  togetherRuntime = getTogetherRuntime();
   let roomDatabase = null;
   let roomService = null;
   let roomAuthenticator = null;
@@ -232,6 +241,7 @@ app.prepare().then(async () => {
     roomDatabase,
     roomService,
     roomsRequired:
+      !togetherRuntime &&
       process.env.WATCH_ROOM_ENABLED === 'true' &&
       process.env.WATCH_ROOM_SERVER_TYPE !== 'external',
   }));
@@ -302,6 +312,7 @@ app.prepare().then(async () => {
   if (tvModeEnabled || shouldStartInternalWatchRoom) {
     io = new Server(httpServer, {
       path: '/socket.io',
+      destroyUpgrade: false,
       pingInterval: 25000,
       pingTimeout: 35000,
       maxHttpBufferSize: 262144,
@@ -341,6 +352,8 @@ app.prepare().then(async () => {
     }
   }
 
+  httpServer.on('upgrade', createTogetherUpgradeHandler(togetherRuntime));
+
   httpServer
     .once('error', (err) => {
       console.error(err);
@@ -360,6 +373,7 @@ app.prepare().then(async () => {
     watchRoomServer?.destroy();
     tvRemoteServer?.destroy();
     roomDatabase?.close();
+    togetherRuntime?.close();
     process.exit(0);
   };
 

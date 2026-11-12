@@ -62,3 +62,7 @@ pnpm-lock.yaml
 
 # Next 自动生成，格式由 Next 决定
 next-env.d.ts
+
+# Generated from fixed upstream protocol; regenerate instead of editing.
+/src/features/rooms/synctv/protocol/client.js
+/src/features/rooms/synctv/protocol/client.d.ts

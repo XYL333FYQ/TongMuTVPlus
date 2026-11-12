@@ -33,7 +33,7 @@ export interface PlaybackSession {
   reloadPlayback: () => void;
   requestPlayback: (
     href: string,
-    origin?: 'user' | 'room' | 'personal' | 'together'
+    origin?: 'user' | 'room' | 'personal' | 'together' | 'remote'
   ) => void;
   updateHref: (href: string) => boolean;
   setMetadata: (metadata: PlaybackMetadata) => void;

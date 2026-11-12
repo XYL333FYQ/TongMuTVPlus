@@ -43,6 +43,7 @@ import {
   PlaybackSessionContext,
 } from './context';
 import { roomActivityKey } from './room-activity';
+import { PlaybackPortProvider } from './PlaybackPortProvider';
 import PlaybackRoomMessages from './RoomLiveMessages';
 import {
   normalizePlaybackHref,
@@ -148,7 +149,7 @@ export default function PlaybackSessionProvider({
   const requestPlayback = useCallback(
     (
       nextHref: string,
-      origin: 'user' | 'room' | 'personal' | 'together' = 'user'
+      origin: 'user' | 'room' | 'personal' | 'together' | 'remote' = 'user'
     ) => {
       let normalized = normalizePlaybackHref(nextHref);
       if (!normalized) return;
@@ -809,252 +810,262 @@ export default function PlaybackSessionProvider({
 
   return (
     <PlaybackSessionContext.Provider value={value}>
-      {children}
-      {href &&
-        !ownsSound &&
-        (presentation === 'full' || presentation === 'docked') && (
-          <button className='tm-audio-focus-notice' onClick={claimSound}>
-            另一标签页正在出声 · 在这里听
-          </button>
-        )}
-      {href && (
-        <div
-          ref={hostRef}
-          className='tm-playback-host'
-          data-presentation={presentation}
-          data-dragging={miniDrag.dragging ? 'true' : undefined}
-          data-testid='global-playback-host'
-          style={{ ...slotStyle, ...miniDrag.style }}
-        >
-          <PlaybackSurface key={surfaceVersion} />
-          <PlaybackRoomMessages />
-          {presentation === 'docked' &&
-            pathname === '/watch-room' &&
-            followingRoom && (
-              <RoomPlaybackButton
-                className='tm-room-fold-button'
-                hint='收起画面，继续播放'
-                aria-label='收起画面'
-                onClick={minimize}
-              >
-                <ChevronsDown size={20} aria-hidden='true' />
-              </RoomPlaybackButton>
-            )}
-          {(presentation === 'mini' || presentation === 'folded') && (
-            <div
-              className={`tm-playback-chrome tm-playback-chrome--${presentation}`}
-            >
-              <button
-                className='tm-playback-title'
-                onClick={presentation === 'folded' ? restore : openFull}
-                title='恢复画面'
-              >
-                <span className='tm-playback-thumbnail'>
-                  {metadata.poster ? (
-                    <Image
-                      src={metadata.poster}
-                      alt=''
-                      fill
-                      sizes='72px'
-                      unoptimized
-                    />
-                  ) : (
-                    <Film size={20} aria-hidden='true' />
-                  )}
-                  {!followingRoom && roomId && (
-                    <small className='tm-playback-personal-badge'>
-                      个人观看
-                    </small>
-                  )}
-                </span>
-                <span className='tm-playback-copy'>
-                  <span>{metadata.title}</span>
-                  <span className='tm-playback-context'>
-                    {roomId && <small>{watchRoom?.currentRoom?.name}</small>}
-                    {roomId && !watchRoom?.isConnected && <small>重连中</small>}
-                    {!ownsSound && <small>此页静音</small>}
-                  </span>
-                </span>
-              </button>
-              <button
-                onClick={togglePlaying}
-                disabled={playLocked || !controller}
-                aria-label={
-                  playLocked ? '播放进度由房主控制' : paused ? '播放' : '暂停'
-                }
-                title={
-                  playLocked ? '播放进度由房主控制' : paused ? '播放' : '暂停'
-                }
-              >
-                {paused ? (
-                  <Play size={16} aria-hidden='true' />
-                ) : (
-                  <Pause size={16} aria-hidden='true' />
-                )}
-              </button>
-              <button
-                onClick={toggleMuted}
-                aria-label={muted ? '开启本机声音' : '静音本机'}
-              >
-                {muted ? <VolumeX size={16} /> : <Volume2 size={16} />}
-              </button>
-              {roomId && (
-                <button
-                  onClick={() =>
-                    window.dispatchEvent(new Event('tongmu:open-chat'))
-                  }
-                  aria-label={`房间消息${unread ? `，${unread}条未读` : ''}`}
-                >
-                  <MessageCircle size={16} />
-                  {unread > 0 && (
-                    <b
-                      key={unread}
-                      className='tm-unread-badge tm-room-unread-enter'
-                    >
-                      {unread > 99 ? '99+' : unread}
-                    </b>
-                  )}
-                </button>
-              )}
-              {/* 小窗里点标题缩略图本来就是打开完整界面；这个按钮留给折叠态，小窗里让出位置给播放/暂停 */}
-              {presentation === 'folded' && (
-                <button onClick={openFull} aria-label='打开完整观影界面'>
-                  <Maximize2 size={15} />
-                </button>
-              )}
-              {presentation === 'mini' && (
-                <button
+      <PlaybackPortProvider>
+        {children}
+        {href &&
+          !ownsSound &&
+          (presentation === 'full' || presentation === 'docked') && (
+            <button className='tm-audio-focus-notice' onClick={claimSound}>
+              另一标签页正在出声 · 在这里听
+            </button>
+          )}
+        {href && (
+          <div
+            ref={hostRef}
+            className='tm-playback-host'
+            data-presentation={presentation}
+            data-dragging={miniDrag.dragging ? 'true' : undefined}
+            data-testid='global-playback-host'
+            style={{ ...slotStyle, ...miniDrag.style }}
+          >
+            <PlaybackSurface key={surfaceVersion} />
+            <PlaybackRoomMessages />
+            {presentation === 'docked' &&
+              pathname === '/watch-room' &&
+              followingRoom && (
+                <RoomPlaybackButton
+                  className='tm-room-fold-button'
+                  hint='收起画面，继续播放'
+                  aria-label='收起画面'
                   onClick={minimize}
-                  aria-label='收起画面，继续播放'
-                  title='收起画面，继续播放'
                 >
-                  <Minus size={17} />
-                </button>
+                  <ChevronsDown size={20} aria-hidden='true' />
+                </RoomPlaybackButton>
               )}
-              <button
-                onClick={endSession}
-                aria-label='关闭播放'
-                title={
-                  roomId &&
-                  followingRoom &&
-                  isFilmActivity(watchRoom?.currentRoom?.currentState)
-                    ? '关闭并退出同步'
-                    : '关闭播放'
-                }
+            {(presentation === 'mini' || presentation === 'folded') && (
+              <div
+                className={`tm-playback-chrome tm-playback-chrome--${presentation}`}
               >
-                <X size={17} />
+                <button
+                  className='tm-playback-title'
+                  onClick={presentation === 'folded' ? restore : openFull}
+                  title='恢复画面'
+                >
+                  <span className='tm-playback-thumbnail'>
+                    {metadata.poster ? (
+                      <Image
+                        src={metadata.poster}
+                        alt=''
+                        fill
+                        sizes='72px'
+                        unoptimized
+                      />
+                    ) : (
+                      <Film size={20} aria-hidden='true' />
+                    )}
+                    {!followingRoom && roomId && (
+                      <small className='tm-playback-personal-badge'>
+                        个人观看
+                      </small>
+                    )}
+                  </span>
+                  <span className='tm-playback-copy'>
+                    <span>{metadata.title}</span>
+                    <span className='tm-playback-context'>
+                      {roomId && <small>{watchRoom?.currentRoom?.name}</small>}
+                      {roomId && !watchRoom?.isConnected && (
+                        <small>重连中</small>
+                      )}
+                      {!ownsSound && <small>此页静音</small>}
+                    </span>
+                  </span>
+                </button>
+                <button
+                  onClick={togglePlaying}
+                  disabled={playLocked || !controller}
+                  aria-label={
+                    playLocked ? '播放进度由房主控制' : paused ? '播放' : '暂停'
+                  }
+                  title={
+                    playLocked ? '播放进度由房主控制' : paused ? '播放' : '暂停'
+                  }
+                >
+                  {paused ? (
+                    <Play size={16} aria-hidden='true' />
+                  ) : (
+                    <Pause size={16} aria-hidden='true' />
+                  )}
+                </button>
+                <button
+                  onClick={toggleMuted}
+                  aria-label={muted ? '开启本机声音' : '静音本机'}
+                >
+                  {muted ? <VolumeX size={16} /> : <Volume2 size={16} />}
+                </button>
+                {roomId && (
+                  <button
+                    onClick={() =>
+                      window.dispatchEvent(new Event('tongmu:open-chat'))
+                    }
+                    aria-label={`房间消息${unread ? `，${unread}条未读` : ''}`}
+                  >
+                    <MessageCircle size={16} />
+                    {unread > 0 && (
+                      <b
+                        key={unread}
+                        className='tm-unread-badge tm-room-unread-enter'
+                      >
+                        {unread > 99 ? '99+' : unread}
+                      </b>
+                    )}
+                  </button>
+                )}
+                {/* 小窗里点标题缩略图本来就是打开完整界面；这个按钮留给折叠态，小窗里让出位置给播放/暂停 */}
+                {presentation === 'folded' && (
+                  <button onClick={openFull} aria-label='打开完整观影界面'>
+                    <Maximize2 size={15} />
+                  </button>
+                )}
+                {presentation === 'mini' && (
+                  <button
+                    onClick={minimize}
+                    aria-label='收起画面，继续播放'
+                    title='收起画面，继续播放'
+                  >
+                    <Minus size={17} />
+                  </button>
+                )}
+                <button
+                  onClick={endSession}
+                  aria-label='关闭播放'
+                  title={
+                    roomId &&
+                    followingRoom &&
+                    isFilmActivity(watchRoom?.currentRoom?.currentState)
+                      ? '关闭并退出同步'
+                      : '关闭播放'
+                  }
+                >
+                  <X size={17} />
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+        {href &&
+          metadata.error &&
+          metadata.error !== dismissedError &&
+          presentation !== 'full' && (
+            <div
+              className='tm-playback-action-error tm-playback-recovery'
+              role='alert'
+            >
+              <div>
+                <strong>影片暂时无法播放</strong>
+                <p>{metadata.error}</p>
+              </div>
+              <button
+                onClick={() => {
+                  setDismissedError('');
+                  reloadPlayback();
+                }}
+              >
+                重新加载影片
+              </button>
+              <button
+                onClick={() => setDismissedError(metadata.error ?? '')}
+                aria-label='收起错误提示'
+                title='收起提示'
+              >
+                <X size={16} />
               </button>
             </div>
           )}
-        </div>
-      )}
-      {href &&
-        metadata.error &&
-        metadata.error !== dismissedError &&
-        presentation !== 'full' && (
-          <div
-            className='tm-playback-action-error tm-playback-recovery'
-            role='alert'
+        {roomId && !pathname.startsWith('/watch-room') && (
+          <Link
+            className='tm-return-room'
+            href={`/watch-room?room=${encodeURIComponent(roomId)}`}
           >
-            <div>
-              <strong>影片暂时无法播放</strong>
-              <p>{metadata.error}</p>
-            </div>
+            <ArrowUpRight size={15} />
+            返回房间{unread > 0 && ` · ${unread}条未读`}
+          </Link>
+        )}
+        {queueNotice && (
+          <div className='tm-playback-action-error' role='status'>
+            {queueNotice}
             <button
-              onClick={() => {
-                setDismissedError('');
-                reloadPlayback();
-              }}
+              onClick={() => setQueueNotice('')}
+              aria-label='关闭待看提示'
             >
-              重新加载影片
-            </button>
-            <button
-              onClick={() => setDismissedError(metadata.error ?? '')}
-              aria-label='收起错误提示'
-              title='收起提示'
-            >
-              <X size={16} />
+              <X size={14} />
             </button>
           </div>
         )}
-      {roomId && !pathname.startsWith('/watch-room') && (
-        <Link
-          className='tm-return-room'
-          href={`/watch-room?room=${encodeURIComponent(roomId)}`}
-        >
-          <ArrowUpRight size={15} />
-          返回房间{unread > 0 && ` · ${unread}条未读`}
-        </Link>
-      )}
-      {queueNotice && (
-        <div className='tm-playback-action-error' role='status'>
-          {queueNotice}
-          <button onClick={() => setQueueNotice('')} aria-label='关闭待看提示'>
-            <X size={14} />
-          </button>
-        </div>
-      )}
-      {actionError && !pendingHref && (
-        <div className='tm-playback-action-error' role='alert'>
-          {actionError}
-          <button onClick={() => setActionError('')} aria-label='关闭播放提示'>
-            <X size={14} />
-          </button>
-        </div>
-      )}
-      {pendingHref && (
-        <div
-          className='tm-playback-choice-backdrop'
-          role='presentation'
-          onClick={() => !actionPending && setPendingHref(null)}
-        >
-          <section
-            className='tm-playback-choice'
-            role='dialog'
-            aria-modal='true'
-            aria-labelledby='tm-playback-choice-title'
-            onClick={(event) => event.stopPropagation()}
-          >
-            <Film size={24} />
-            <h2 id='tm-playback-choice-title'>这部影片，想怎么观看？</h2>
-            <p>
-              你仍在「{watchRoom?.currentRoom?.name}
-              」。浏览影片不会打断大家正在看的内容。
-            </p>
+        {actionError && !pendingHref && (
+          <div className='tm-playback-action-error' role='alert'>
+            {actionError}
             <button
-              disabled={actionPending}
-              onClick={() => choosePlayback('queue')}
+              onClick={() => setActionError('')}
+              aria-label='关闭播放提示'
             >
-              加入房间片单<span>当前影片继续，稍后一起看</span>
+              <X size={14} />
             </button>
-            {watchRoom?.canControl && (
+          </div>
+        )}
+        {pendingHref && (
+          <div
+            className='tm-playback-choice-backdrop'
+            role='presentation'
+            onClick={() => !actionPending && setPendingHref(null)}
+          >
+            <section
+              className='tm-playback-choice'
+              role='dialog'
+              aria-modal='true'
+              aria-labelledby='tm-playback-choice-title'
+              onClick={(event) => event.stopPropagation()}
+            >
+              <Film size={24} />
+              <h2 id='tm-playback-choice-title'>这部影片，想怎么观看？</h2>
+              <p>
+                你仍在「{watchRoom?.currentRoom?.name}
+                」。浏览影片不会打断大家正在看的内容。
+              </p>
               <button
                 disabled={actionPending}
-                onClick={() => choosePlayback('room')}
+                onClick={() => choosePlayback('queue')}
               >
-                现在一起看<span>切换整个房间的影片</span>
+                加入房间片单<span>当前影片继续，稍后一起看</span>
               </button>
-            )}
-            <button
-              disabled={actionPending}
-              onClick={() => choosePlayback('personal')}
-            >
-              仅自己看<span>暂离同步，保留房间连接和消息</span>
-            </button>
-            {actionError && <p role='alert'>{actionError}</p>}
-            <button
-              className='tm-choice-cancel'
-              disabled={actionPending}
-              onClick={() => {
-                setPendingHref(null);
-                if (href) router.replace(href);
-              }}
-            >
-              继续当前影片
-            </button>
-          </section>
-        </div>
-      )}
+              {watchRoom?.canControl && (
+                <button
+                  disabled={actionPending}
+                  onClick={() => choosePlayback('room')}
+                >
+                  现在一起看<span>切换整个房间的影片</span>
+                </button>
+              )}
+              <button
+                disabled={actionPending}
+                onClick={() => choosePlayback('personal')}
+              >
+                仅自己看<span>暂离同步，保留房间连接和消息</span>
+              </button>
+              {actionError && <p role='alert'>{actionError}</p>}
+              <button
+                className='tm-choice-cancel'
+                disabled={actionPending}
+                onClick={() => {
+                  setPendingHref(null);
+                  if (href) router.replace(href);
+                }}
+              >
+                继续当前影片
+              </button>
+            </section>
+          </div>
+        )}
+      </PlaybackPortProvider>
     </PlaybackSessionContext.Provider>
   );
 }

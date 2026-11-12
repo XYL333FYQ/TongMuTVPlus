@@ -17,6 +17,9 @@ export async function GET(request: NextRequest) {
   const storageType = process.env.NEXT_PUBLIC_STORAGE_TYPE || 'localstorage';
 
   const isLiteMode = process.env.MOONTV_LITE === 'true';
+  const togetherBackend = process.env.TOGETHER_BACKEND || 'legacy';
+  if (!['legacy', 'synctv'].includes(togetherBackend))
+    throw new Error('Invalid TOGETHER_BACKEND');
 
   // Lite 镜像不暴露内置观影室能力，避免前端尝试连接本地 Socket.IO 服务
   // 注意：不要暴露 externalServerAuth 到前端，这是敏感凭据
@@ -27,7 +30,9 @@ export async function GET(request: NextRequest) {
         externalServerUrl: undefined,
       }
     : {
-        enabled: process.env.WATCH_ROOM_ENABLED === 'true',
+        enabled:
+          togetherBackend === 'legacy' &&
+          process.env.WATCH_ROOM_ENABLED === 'true',
         serverType:
           (process.env.WATCH_ROOM_SERVER_TYPE as 'internal' | 'external') ||
           'internal',
@@ -43,6 +48,7 @@ export async function GET(request: NextRequest) {
       ReleaseInfo: defaultReleaseInfo,
       TVModeEnabled: process.env.ENABLE_TV_MODE !== 'false',
       WatchRoom: watchRoomConfig,
+      Together: { backend: togetherBackend },
       EnableOfflineDownload:
         process.env.NEXT_PUBLIC_ENABLE_OFFLINE_DOWNLOAD === 'true',
       DanmakuAutoLoadDefault: true,
@@ -67,6 +73,7 @@ export async function GET(request: NextRequest) {
     ReleaseInfo: releaseInfo,
     TVModeEnabled: process.env.ENABLE_TV_MODE !== 'false',
     WatchRoom: watchRoomConfig,
+    Together: { backend: togetherBackend },
     EnableOfflineDownload:
       process.env.NEXT_PUBLIC_ENABLE_OFFLINE_DOWNLOAD === 'true',
     EnableRegistration: config.SiteConfig.EnableRegistration || false,

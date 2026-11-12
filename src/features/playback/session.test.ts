@@ -36,6 +36,15 @@ test('playback can be retained independently of the visited route, without allow
   ])
     expect(normalizePlaybackHref(href)).toBeNull();
 });
+test('authorized media references cannot reuse a different room playback resource with the same film identity', () => {
+  const href = '/play?source=cms&id=film&episode=1';
+  expect(playbackIdentity(href + '&mediaRef=first')).not.toBe(
+    playbackIdentity(href + '&mediaRef=second')
+  );
+  expect(playbackIdentity(href)).not.toBe(
+    playbackIdentity(href + '&mediaRef=first')
+  );
+});
 test('room playback identity follows source and episode, independent of display metadata', () => {
   const href = playbackHrefFromState(state);
   expect(new URL(href, 'https://test').searchParams.get('title')).toBe(

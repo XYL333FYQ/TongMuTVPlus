@@ -1,6 +1,7 @@
 /* eslint-disable no-console */
 
 import { TOKEN_CONFIG } from './token-config';
+import { notifyTogetherRevocation } from '../../server/together/lifecycle.cjs';
 
 // Re-export TOKEN_CONFIG for backward compatibility
 export { TOKEN_CONFIG };
@@ -165,6 +166,7 @@ export async function revokeRefreshToken(
   username: string,
   tokenId: string
 ): Promise<void> {
+  notifyTogetherRevocation(username, { sessionId: tokenId });
   const hashKey = `user_tokens:${username}`;
   const storage = await loadStorage();
 
@@ -249,6 +251,7 @@ export async function getUserDevices(username: string): Promise<
 
 // 撤销所有 Token
 export async function revokeAllRefreshTokens(username: string): Promise<void> {
+  notifyTogetherRevocation(username);
   const hashKey = `user_tokens:${username}`;
   const storage = await loadStorage();
 

@@ -54,6 +54,8 @@ COPY --from=builder --chown=nextjs:nodejs /app/start.js ./start.js
 # 保持与完整镜像一致：如果运行时 server.js 引用了电视遥控 hub，确保该模块存在。
 COPY --from=builder --chown=nextjs:nodejs /app/src/lib/tv-remote-hub.js ./src/lib/tv-remote-hub.js
 COPY --from=builder --chown=nextjs:nodejs /app/public ./public
+# Preserve fixed upstream sources, hashes and license notices alongside the shipped codec/WASM.
+COPY --from=builder --chown=nextjs:nodejs /app/vendor/synctv ./vendor/synctv
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
 # 准备默认离线下载目录

@@ -1,0 +1,136 @@
+syntax = "proto3";
+
+package synctv.provider.youtube;
+
+import "proto/buf/validate/validate.proto";
+import "proto/source_config.proto";
+import "proto/providers/common.proto";
+
+message BindRequest {
+  string label = 1 [(buf.validate.field).string.min_len = 1];
+  optional string visitor_data = 2;
+  optional string po_token = 3;
+  optional string cookie = 4;
+  string instance_name = 5;
+}
+
+message BindResponse { string server_id = 1; }
+
+message GetBindsRequest { string instance_name = 1; }
+
+message GetBindsResponse { repeated BindInfo binds = 1; }
+
+message BindInfo {
+  string id = 1;
+  string server_id = 2;
+  string label = 3;
+  bool has_visitor_data = 4;
+  bool has_po_token = 5;
+  bool has_cookie = 6;
+  int64 created_at = 7;
+  string provider_instance_name = 8;
+}
+
+message UnbindRequest {
+  string server_id = 1 [(buf.validate.field).string.min_len = 1];
+}
+
+message UnbindResponse { bool removed = 1; }
+
+message ResolveRequest {
+  string resource = 1 [(buf.validate.field).string.min_len = 1];
+  string instance_name = 2;
+  bool shared = 3;
+}
+
+message Metadata {
+  string video_id = 1;
+  string title = 2;
+  string channel_id = 3;
+  string channel_name = 4;
+  string description = 5;
+  optional uint64 duration_seconds = 6;
+  optional uint64 view_count = 7;
+  optional string thumbnail_url = 8;
+  repeated string keywords = 9;
+  bool is_live = 10;
+  bool is_private = 11;
+  optional string publish_date = 12;
+  optional string upload_date = 13;
+  optional string category = 14;
+  optional string live_start = 15;
+  optional string live_end = 16;
+}
+
+message Format {
+  uint32 itag = 1;
+  string name = 2;
+  string container = 3;
+  uint64 bitrate = 4;
+  optional uint32 width = 5;
+  optional uint32 height = 6;
+  optional uint32 fps = 7;
+  repeated string codecs = 8;
+  bool adaptive = 9;
+  bool audio_only = 10;
+}
+
+message ResolveResponse {
+  Metadata metadata = 1;
+  repeated Format formats = 2;
+  uint32 subtitle_count = 3;
+  synctv.provider.common.DiscoveredSource source = 4;
+}
+
+message ListRequest {
+  message Playlist {
+    string resource = 1 [(buf.validate.field).string.min_len = 1];
+  }
+  message Channel {
+    string resource = 1 [(buf.validate.field).string.min_len = 1];
+    synctv.source_config.YoutubeChannelContent content = 2 [(buf.validate.field).enum = {
+      defined_only: true,
+      not_in: 0
+    }];
+  }
+  message Search {
+    string query = 1 [(buf.validate.field).string.min_len = 1];
+  }
+  message Subscriptions {}
+  message LikedVideos {}
+  message WatchLater {}
+
+  bool shared = 1;
+  optional string cursor = 2;
+  string instance_name = 3;
+  oneof source {
+    option (buf.validate.oneof).required = true;
+    Playlist playlist = 4;
+    Channel channel = 5;
+    Search search = 6;
+    Subscriptions subscriptions = 7;
+    LikedVideos liked_videos = 8;
+    WatchLater watch_later = 9;
+  }
+}
+
+message ListItem {
+  string video_id = 1;
+  string title = 2;
+  string channel_name = 3;
+  string channel_id = 4;
+  optional uint64 duration_seconds = 5;
+  string view_count_text = 6;
+  string published_time_text = 7;
+  optional string thumbnail_url = 8;
+  bool is_live = 9;
+  bool is_short = 10;
+  synctv.provider.common.DiscoveredSource source = 11;
+}
+
+message ListResponse {
+  repeated ListItem items = 1;
+  optional string cursor = 2;
+  bool has_more = 3;
+  synctv.provider.common.DiscoveredSource source = 4;
+}
