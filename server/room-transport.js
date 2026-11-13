@@ -136,6 +136,7 @@ class RoomSocketServer {
         return { success: true, room, members: room.members };
       });
     const events = [
+      'play:buffering',
       'play:update',
       'play:seek',
       'play:play',

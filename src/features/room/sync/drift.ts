@@ -15,6 +15,17 @@ export const CHANGED_DRIFT_SECONDS = 0.4;
 export const PAUSED_DRIFT_SECONDS = 0.3;
 /** 自动纠偏跳转的最小间隔，避免弱网下反复跳转。 */
 export const AUTO_SEEK_COOLDOWN_MS = 3000;
+/** 播放中差距不超过这么多秒时，用变速追赶而不是跳转 */
+export const CATCH_UP_MAX_SECONDS = 4;
+/** 追赶到差距小于这么多秒就恢复房间倍速 */
+export const CATCH_UP_DONE_SECONDS = 0.25;
+/** 落后时稍微加速、超前时稍微减速（人几乎察觉不到） */
+export const CATCH_UP_FASTER = 1.08;
+export const CATCH_UP_SLOWER = 0.93;
+/** 卡住超过这么久才算“在缓冲”，避免一闪而过的停顿也让全房间暂停 */
+export const BUFFERING_REPORT_MS = 1500;
+/** 缓冲好这么多秒就告诉房间可以继续 */
+export const BUFFER_READY_SECONDS = 6;
 
 export interface MediaIdentity {
   source: string;

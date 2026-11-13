@@ -20,6 +20,12 @@
 
 import {
   AUTO_SEEK_COOLDOWN_MS,
+  BUFFER_READY_SECONDS,
+  BUFFERING_REPORT_MS,
+  CATCH_UP_DONE_SECONDS,
+  CATCH_UP_FASTER,
+  CATCH_UP_MAX_SECONDS,
+  CATCH_UP_SLOWER,
   CHANGED_DRIFT_SECONDS,
   expectedRoomTime,
   mediaKey,
@@ -40,6 +46,8 @@ export interface PlayerPort {
   readonly readyState: number;
   readonly seeking: boolean;
   readonly playbackRate: number;
+  /** 当前位置之后已经缓冲好的秒数 */
+  readonly bufferedAhead: number;
   play(): Promise<unknown> | void;
   pause(): void;
   seek(time: number): void;
@@ -130,6 +138,7 @@ export class RoomSyncEngine {
   private changeInFlight = false;
   private autoplayBlocked = false;
   private noticedVersion: number | undefined;
+  private waitingNotice = '';
   private previousState: PlayState | null = null;
   private generation = 0;
   private expected: Record<ExpectKind, { until: number; count: number }> = {
@@ -138,6 +147,12 @@ export class RoomSyncEngine {
     seek: { until: 0, count: 0 },
     rate: { until: 0, count: 0 },
   };
+  /** 正在用变速追赶房间进度 */
+  private catchingUp = false;
+  /** 本机卡住开始的时间（0 表示没卡） */
+  private stalledSince = 0;
+  /** 已经告诉房间“我在缓冲” */
+  private reportedBuffering = false;
   /** 最近一次跟随的房间倍速；播放器恢复个人倍速时用 */
   remoteRate: number | null = null;
   private remoteRateUntil = 0;
@@ -167,6 +182,23 @@ export class RoomSyncEngine {
     this.input = input;
     const state = input.state;
     if (state?.type === 'play') {
+      const waiting = (state.waitingFor || []).join('、');
+      if (waiting !== this.waitingNotice) {
+        this.waitingNotice = waiting;
+        const others = (state.waitingFor || []).filter(
+          (account) => account !== input.selfAccountId
+        );
+        if (waiting)
+          setTimeout(
+            () =>
+              this.port?.notice(
+                others.length
+                  ? `正在等 ${others.join('、')} 缓冲…`
+                  : '正在缓冲，大家在等你'
+              ),
+            250
+          );
+      }
       this.announce(state, this.previousState);
       this.previousState = state;
     } else this.previousState = null;
@@ -248,6 +280,7 @@ export class RoomSyncEngine {
 
     // 4. 同一部影片：纠偏
     if (!local?.ready || !port || port.readyState < 1) return;
+    if (this.alignedKey === roomKey) this.trackBuffering(state, port);
     if (!force && this.effects.now() < this.pendingUntil) return;
     await this.apply(state, force);
     this.alignedKey = roomKey;
@@ -331,11 +364,6 @@ export class RoomSyncEngine {
 
     const rate = state.playbackRate || 1;
     this.remoteRate = rate;
-    if (Math.abs((port.playbackRate || 1) - rate) > 0.01) {
-      this.remoteRateUntil = this.effects.now() + 1500;
-      this.expect('rate');
-      port.setRate(rate);
-    }
 
     const duration = Number(port.duration);
     let target = expectedRoomTime(state, this.effects.serverNow());
@@ -348,7 +376,8 @@ export class RoomSyncEngine {
       this.expect('pause');
       port.pause();
     }
-    const drift = Math.abs((Number(port.currentTime) || 0) - target);
+    const offset = (Number(port.currentTime) || 0) - target;
+    const drift = Math.abs(offset);
     const threshold = !shouldPlay
       ? PAUSED_DRIFT_SECONDS
       : versionChanged || force
@@ -356,12 +385,32 @@ export class RoomSyncEngine {
       : PLAYING_DRIFT_SECONDS;
     // 缓冲中不追：位置本来就落后，追了只会反复卡住
     const buffering = port.seeking || port.readyState < 3;
+    // 播放中差得不多：用轻微加速/减速悄悄追上，不跳。
+    // 跳到的位置往往还没缓冲，网络慢的人会越跳越卡。
+    const gentle =
+      shouldPlay &&
+      !versionChanged &&
+      !force &&
+      drift > threshold &&
+      drift <= CATCH_UP_MAX_SECONDS;
+    let desiredRate = rate;
+    if (gentle && !buffering)
+      desiredRate = rate * (offset < 0 ? CATCH_UP_FASTER : CATCH_UP_SLOWER);
+    else if (this.catchingUp && drift > CATCH_UP_DONE_SECONDS && shouldPlay)
+      desiredRate = rate * (offset < 0 ? CATCH_UP_FASTER : CATCH_UP_SLOWER);
+    this.catchingUp = desiredRate !== rate;
+    if (Math.abs((port.playbackRate || 1) - desiredRate) > 0.005) {
+      this.remoteRateUntil = this.effects.now() + 1500;
+      this.expect('rate');
+      port.setRate(desiredRate);
+    }
     const cooled =
       force ||
       versionChanged ||
       this.effects.now() - this.lastAutoSeekAt > AUTO_SEEK_COOLDOWN_MS;
     if (
       drift > threshold &&
+      !gentle &&
       (!shouldPlay || !buffering || versionChanged || force) &&
       cooled
     ) {
@@ -394,6 +443,8 @@ export class RoomSyncEngine {
     if (first || !previous || !state.updatedBy) return;
     if (state.updatedBy === this.input.selfAccountId) return;
     if (keyOf(previous) !== keyOf(state)) return;
+    // 等缓冲造成的暂停/继续由“正在等 XX 缓冲”提示说明
+    if (state.autoPaused || previous.autoPaused) return;
     let message = '';
     if (previous.isPlaying !== state.isPlaying)
       message = `${state.updatedBy} ${state.isPlaying ? '继续播放' : '暂停了'}`;
@@ -407,6 +458,40 @@ export class RoomSyncEngine {
       message = `${state.updatedBy} 把倍速调为 ${state.playbackRate || 1}x`;
     // 播放器自己会先弹“播放 / 暂停”，稍后再显示是谁做的
     if (message) setTimeout(() => this.port?.notice(message), 250);
+  }
+
+  /**
+   * 本机卡住超过一会儿就告诉房间，房间会暂停等这台设备（房间开启“等缓冲”时）；
+   * 缓冲够了再告诉房间，所有人等到的人都好了才一起继续。
+   */
+  private trackBuffering(state: PlayState, port: PlayerPort) {
+    const now = this.effects.now();
+    const stalled = state.isPlaying && !port.paused && port.readyState < 3;
+    if (stalled) {
+      if (!this.stalledSince) this.stalledSince = now;
+    } else this.stalledSince = 0;
+    if (
+      !this.reportedBuffering &&
+      this.stalledSince &&
+      now - this.stalledSince >= BUFFERING_REPORT_MS
+    ) {
+      this.reportedBuffering = true;
+      void this.effects
+        .command('play:buffering', { buffering: true })
+        .catch(() => undefined);
+      return;
+    }
+    if (
+      this.reportedBuffering &&
+      !stalled &&
+      (port.bufferedAhead >= BUFFER_READY_SECONDS ||
+        (port.readyState >= 4 && port.bufferedAhead >= 2))
+    ) {
+      this.reportedBuffering = false;
+      void this.effects
+        .command('play:buffering', { buffering: false })
+        .catch(() => undefined);
+    }
   }
 
   // ---------------------------------------------------------------- 本机操作 -> 房间
@@ -532,5 +617,9 @@ export class RoomSyncEngine {
     this.autoplayBlocked = false;
     this.remoteRate = null;
     this.remoteRateUntil = 0;
+    this.catchingUp = false;
+    this.stalledSince = 0;
+    this.reportedBuffering = false;
+    this.waitingNotice = '';
   }
 }

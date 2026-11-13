@@ -84,6 +84,14 @@ export function playerPortFrom(controller: PlaybackController): PlayerPort {
     get playbackRate() {
       return Number(controller.playbackRate) || 1;
     },
+    get bufferedAhead() {
+      const time = video.currentTime;
+      const ranges = video.buffered;
+      for (let index = 0; index < ranges.length; index++)
+        if (ranges.start(index) <= time + 0.5 && ranges.end(index) > time)
+          return ranges.end(index) - time;
+      return 0;
+    },
     play: () => controller.play(),
     pause: () => controller.pause(),
     seek: (time) => {

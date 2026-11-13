@@ -1429,3 +1429,60 @@ test('the playlist can be cleared by managers, and settings carry auto play and 
   assert.equal(settings.maxMembers, 2);
   expectCode(() => f.join('stranger', id), 'ROOM_FULL');
 });
+
+test('the room pauses while someone buffers and continues when everyone is ready', (t) => {
+  const f = setup(t);
+  const id = createAndHost(f);
+  f.join('guest', id);
+  f.command('owner', id, 'play:change', video(100));
+  f.advance(10000);
+  // 成员没有控制权也能报告缓冲
+  f.command('owner', id, 'room:member-permissions', {
+    accountId: 'guest',
+    permissions: ['chat'],
+  });
+  f.command('guest', id, 'play:buffering', { buffering: true });
+  let state = f.store.get(id).currentState;
+  assert.equal(state.isPlaying, false);
+  assert.equal(state.autoPaused, true);
+  assert.deepEqual(state.waitingFor, ['guest']);
+  assert.equal(state.currentTime, 110);
+  f.command('owner', id, 'play:buffering', { buffering: true });
+  assert.deepEqual(f.store.get(id).currentState.waitingFor, ['guest', 'owner']);
+  f.advance(3000);
+  f.command('guest', id, 'play:buffering', { buffering: false });
+  assert.equal(f.store.get(id).currentState.isPlaying, false);
+  f.command('owner', id, 'play:buffering', { buffering: false });
+  state = f.store.get(id).currentState;
+  assert.equal(state.isPlaying, true);
+  assert.equal(state.currentTime, 110);
+  assert.equal(state.autoPaused, undefined);
+});
+
+test('a manual pause is never resumed by buffering, and waiting stops after 30 seconds', (t) => {
+  const f = setup(t);
+  const id = createAndHost(f);
+  f.join('guest', id);
+  f.command('owner', id, 'play:change', video(10));
+  f.command('owner', id, 'play:pause', { currentTime: 10 });
+  f.command('guest', id, 'play:buffering', { buffering: true });
+  assert.equal(f.store.get(id).currentState.waitingFor, undefined);
+  f.command('owner', id, 'play:play', { currentTime: 10 });
+  f.command('guest', id, 'play:buffering', { buffering: true });
+  assert.equal(f.store.get(id).currentState.isPlaying, false);
+  f.advance(30000);
+  f.service.tick();
+  const state = f.store.get(id).currentState;
+  assert.equal(state.isPlaying, true);
+  assert.equal(state.waitingFor, undefined);
+});
+
+test('waiting for buffering can be turned off in the room settings', (t) => {
+  const f = setup(t);
+  const id = createAndHost(f);
+  f.join('guest', id);
+  f.command('owner', id, 'room:settings', { waitForBuffering: false });
+  f.command('owner', id, 'play:change', video(10));
+  f.command('guest', id, 'play:buffering', { buffering: true });
+  assert.equal(f.store.get(id).currentState.isPlaying, true);
+});

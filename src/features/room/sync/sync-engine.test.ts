@@ -16,6 +16,7 @@ class FakePlayer implements PlayerPort {
   readyState = 4;
   seeking = false;
   playbackRate = 1;
+  bufferedAhead = 30;
   notices: string[] = [];
   blockPlay = false;
   private listeners = new Map<PlayerEvent, Set<() => void>>();
@@ -151,9 +152,10 @@ describe('following the room', () => {
     await engine.tick();
     expect(player.currentTime).toBe(110.8);
     clock += 4_000;
-    player.currentTime = 111; // expected 114
+    player.currentTime = 111; // expected 114: 3s behind -> catch up by speed
     await engine.tick();
-    expect(player.currentTime).toBe(114);
+    expect(player.currentTime).toBe(111);
+    expect(player.playbackRate).toBeCloseTo(1.08);
   });
 
   it('does not chase the room while the player is buffering', async () => {
@@ -356,4 +358,54 @@ it('a new room starts with a clean slate', async () => {
   expect(effects.follow).toHaveBeenCalledWith(
     expect.objectContaining({ videoId: 'film-c' })
   );
+});
+
+describe('slow networks', () => {
+  it('catches up a small lag by speeding up slightly instead of jumping', async () => {
+    const { engine, player } = setup();
+    await flush();
+    clock += 10_000;
+    player.currentTime = 107.5; // expected 110: 2.5s behind
+    await engine.tick();
+    expect(player.currentTime).toBe(107.5);
+    expect(player.playbackRate).toBeCloseTo(1.08);
+    // 追上后恢复原倍速
+    player.currentTime = 110.1;
+    clock += 0;
+    await engine.tick();
+    expect(player.playbackRate).toBe(1);
+  });
+
+  it('still jumps when far behind', async () => {
+    const { engine, player } = setup();
+    await flush();
+    clock += 10_000;
+    player.currentTime = 100;
+    await engine.tick();
+    expect(player.currentTime).toBe(110);
+  });
+
+  it('tells the room when this device is stuck buffering, and when it has buffered enough', async () => {
+    const { engine, player, effects } = setup();
+    await flush();
+    player.readyState = 2;
+    player.bufferedAhead = 0;
+    await engine.tick();
+    expect(effects.command).not.toHaveBeenCalledWith(
+      'play:buffering',
+      expect.anything()
+    );
+    clock += 2000;
+    await engine.tick();
+    expect(effects.command).toHaveBeenCalledWith('play:buffering', {
+      buffering: true,
+    });
+    player.readyState = 4;
+    player.bufferedAhead = 8;
+    player.paused = true;
+    await engine.tick();
+    expect(effects.command).toHaveBeenLastCalledWith('play:buffering', {
+      buffering: false,
+    });
+  });
 });

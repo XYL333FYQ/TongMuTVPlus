@@ -31,6 +31,8 @@ export interface Room {
     maxMembers?: number;
     chatEnabled?: boolean;
     autoPlay?: { enabled: boolean; mode: RoomAutoPlayMode };
+    /** 有人缓冲时全房间暂停等他 */
+    waitForBuffering?: boolean;
   };
   /** 本账号在房间里的角色与有效权限 */
   myRole?: RoomRole;
@@ -96,6 +98,10 @@ export interface PlayState {
   version?: number;
   /** 最近一次改变状态的账号 */
   updatedBy?: string;
+  /** 房间正在等这些账号缓冲（开启“等缓冲”时自动暂停） */
+  waitingFor?: string[];
+  /** 这次暂停是因为等人缓冲，不是有人按了暂停 */
+  autoPaused?: boolean;
 }
 
 export interface LiveState {

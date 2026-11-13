@@ -366,6 +366,7 @@ export default function RoomWorkspace() {
           maxMembers: values.maxMembers,
           chatEnabled: values.chatEnabled,
           autoPlay: values.autoPlay,
+          waitForBuffering: values.waitForBuffering,
         },
       });
       setDialog(null);
@@ -665,6 +666,7 @@ export default function RoomWorkspace() {
                       description: values.description,
                       chatEnabled: values.chatEnabled,
                       autoPlay: values.autoPlay,
+                      waitForBuffering: values.waitForBuffering,
                       maxMembers: values.maxMembers,
                       // 权限类设置只有房主能改，管理员保存时不带上
                       ...(room?.myRole === 'owner'

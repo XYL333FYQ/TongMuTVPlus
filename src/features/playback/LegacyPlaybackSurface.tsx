@@ -8628,7 +8628,25 @@ function PlayPageClient() {
                 }
               };
 
-              const bufferConfig = getBufferConfig(bufferStrategy);
+              const personalBuffer = getBufferConfig(bufferStrategy);
+              // 一起看时至少提前缓冲 2 分钟：网络高峰期时快时慢，
+              // 多缓冲才能撑过波动，不拖慢整个房间。
+              const bufferConfig = playSyncRef.current.isInRoom
+                ? {
+                    maxBufferLength: Math.max(
+                      personalBuffer.maxBufferLength,
+                      120
+                    ),
+                    backBufferLength: Math.min(
+                      personalBuffer.backBufferLength,
+                      30
+                    ),
+                    maxBufferSize: Math.max(
+                      personalBuffer.maxBufferSize,
+                      200 * 1000 * 1000
+                    ),
+                  }
+                : personalBuffer;
 
               // 选择合适的 Loader
               let loaderClass;

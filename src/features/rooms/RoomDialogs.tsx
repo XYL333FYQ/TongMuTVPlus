@@ -179,6 +179,7 @@ export interface RoomFormValues {
   maxMembers: number;
   chatEnabled: boolean;
   autoPlay: { enabled: boolean; mode: RoomAutoPlayMode };
+  waitForBuffering: boolean;
   /** 留空表示不设置 / 保留原密码 */
   password: string;
   autoArchive: boolean;
@@ -225,6 +226,9 @@ export function RoomForm({
   const [chatEnabled, setChatEnabled] = useState(
     editing?.settings?.chatEnabled !== false
   );
+  const [waitForBuffering, setWaitForBuffering] = useState(
+    editing?.settings?.waitForBuffering !== false
+  );
   const [autoPlayEnabled, setAutoPlayEnabled] = useState(
     editing?.settings?.autoPlay?.enabled !== false
   );
@@ -251,6 +255,7 @@ export function RoomForm({
           maxMembers,
           chatEnabled,
           autoPlay: { enabled: autoPlayEnabled, mode: autoPlayMode },
+          waitForBuffering,
           password,
           autoArchive,
         });
@@ -372,6 +377,14 @@ export function RoomForm({
           onChange={(event) => setChatEnabled(event.target.checked)}
         />
         开启聊天（关闭后只有房主和管理员能发言）
+      </label>
+      <label className='tm-room-checkbox'>
+        <input
+          type='checkbox'
+          checked={waitForBuffering}
+          onChange={(event) => setWaitForBuffering(event.target.checked)}
+        />
+        有人卡住时全房间暂停等他（最多等 30 秒）
       </label>
       <label className='tm-room-checkbox'>
         <input

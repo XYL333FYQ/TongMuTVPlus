@@ -26,6 +26,8 @@ const {
 } = require('./room-permissions');
 
 const AUTO_PLAY_MODES = ['sequential', 'loop', 'single'];
+/** 等人缓冲最多等这么久，之后照常继续，不让一个人卡住整个房间 */
+const MAX_BUFFER_WAIT_MS = 30000;
 /** 房间设置的完整形状（旧房间缺的字段用默认值补齐） */
 function roomSettings(settings = {}, maxMembers) {
   const auto = settings.autoPlay || {};
@@ -43,6 +45,7 @@ function roomSettings(settings = {}, maxMembers) {
       mode: AUTO_PLAY_MODES.includes(auto.mode) ? auto.mode : 'sequential',
     },
     autoArchive: settings.autoArchive !== false,
+    waitForBuffering: settings.waitForBuffering !== false,
     joinRequests: Array.isArray(settings.joinRequests)
       ? settings.joinRequests
       : [],
@@ -269,6 +272,7 @@ const mediaKey = (state) =>
 // 只改播放进度、不改房间结构的命令：不递增房间 revision，不广播完整快照，
 // 也不写入命令去重表（重复执行结果相同，没必要占库）。
 const TRANSPORT_EVENTS = new Set([
+  'play:buffering',
   'play:play',
   'play:pause',
   'play:seek',
@@ -462,6 +466,7 @@ class RoomService {
           maxMembers: settings.maxMembers,
           chatEnabled: settings.chatEnabled,
           autoPlay: settings.autoPlay,
+          waitForBuffering: settings.waitForBuffering,
           autoArchive: settings.autoArchive,
         };
       })(),
@@ -561,6 +566,7 @@ class RoomService {
             maxMembers: requested.maxMembers,
             chatEnabled: requested.chatEnabled !== false,
             autoPlay: requested.autoPlay,
+            waitForBuffering: requested.waitForBuffering !== false,
             autoArchive: true,
           },
           this.config.maxMembers
@@ -703,6 +709,14 @@ class RoomService {
     this.emit(room.id, 'room:member-left', sessionId);
     if (
       ![...this.sessions.values()].some(
+        (other) =>
+          other.roomId === session.roomId &&
+          other.accountId === session.accountId
+      )
+    )
+      this.releaseWaiting(room, session.accountId);
+    if (
+      ![...this.sessions.values()].some(
         (other) => other.roomId === session.roomId
       )
     ) {
@@ -795,7 +809,15 @@ class RoomService {
           this.store.remove(id);
           this.runtime.delete(id);
         }
-      } else this.tickRoom(id);
+      } else {
+        if (
+          room.currentState?.type === 'play' &&
+          room.currentState.waitingFor?.length &&
+          now - (room.currentState.updatedAt || now) >= MAX_BUFFER_WAIT_MS
+        )
+          this.releaseWaiting(room, null);
+        this.tickRoom(id);
+      }
     }
     this.store.purgeCommands(now - 7 * 86400000);
     if (this.config.chatRetentionMs > 0)
@@ -884,6 +906,8 @@ class RoomService {
   apply(identity, room, event, data, session) {
     const id = room.id;
     const now = this.now();
+    if (event === 'play:buffering')
+      return this.buffering(identity.accountId, room, data?.buffering === true);
     if (PLAYBACK_EVENTS.has(event)) {
       if (TRANSPORT_EVENTS.has(event)) this.requireControl(identity, room);
       else
@@ -919,6 +943,9 @@ class RoomService {
         if (sentTime !== undefined) state.currentTime = sentTime;
         if (event === 'play:play') state.isPlaying = true;
         if (event === 'play:pause') state.isPlaying = false;
+        // 有人手动操作就不再等缓冲
+        delete state.waitingFor;
+        delete state.autoPaused;
         if (event === 'play:seek' && data?.isPlaying !== undefined)
           state.isPlaying = !!data.isPlaying;
         if (data?.playbackRate !== undefined)
@@ -1232,6 +1259,8 @@ class RoomService {
         );
       if (data.chatEnabled !== undefined)
         room.settings.chatEnabled = data.chatEnabled === true;
+      if (data.waitForBuffering !== undefined)
+        room.settings.waitForBuffering = data.waitForBuffering === true;
       if (data.autoPlay && typeof data.autoPlay === 'object')
         room.settings.autoPlay = {
           enabled: data.autoPlay.enabled !== false,
@@ -1343,6 +1372,74 @@ class RoomService {
       revision: room.revision,
       controllerEpoch: room.controllerEpoch,
     };
+  }
+  /**
+   * 等缓冲（参照常见同步观影做法）：有人卡住时全房间暂停等他，
+   * 等到的人都缓冲好了再一起继续。手动播放/暂停会取消等待。
+   */
+  buffering(accountId, room, buffering, now = this.now()) {
+    const id = room.id;
+    const settings = roomSettings(room.settings, this.config.maxMembers);
+    let state = room.currentState;
+    const unchanged = {
+      success: true,
+      unchanged: true,
+      state,
+      revision: room.revision,
+    };
+    if (!state || state.type !== 'play') return unchanged;
+    const waiting = new Set(state.waitingFor || []);
+    if (buffering) {
+      if (!settings.waitForBuffering || waiting.has(accountId))
+        return unchanged;
+      // 已经有人手动暂停：不需要等
+      if (!state.isPlaying && !state.autoPaused) return unchanged;
+      waiting.add(accountId);
+      state = {
+        ...projected(state, now),
+        isPlaying: false,
+        autoPaused: true,
+        waitingFor: [...waiting],
+      };
+    } else {
+      if (!waiting.has(accountId)) return unchanged;
+      waiting.delete(accountId);
+      state = { ...state, waitingFor: [...waiting], updatedAt: now };
+      if (!waiting.size) state = this.resumeAfterWaiting(state, now);
+    }
+    return this.publishWaiting(room, state, accountId);
+  }
+  resumeAfterWaiting(state, now) {
+    const next = { ...state, updatedAt: now };
+    if (next.autoPaused) next.isPlaying = true;
+    delete next.autoPaused;
+    delete next.waitingFor;
+    return next;
+  }
+  publishWaiting(room, state, accountId) {
+    const runtime = this.rt(room.id);
+    runtime.stateVersion =
+      Math.max(runtime.stateVersion, room.currentState?.version || 0) + 1;
+    state.version = runtime.stateVersion;
+    state.updatedBy = accountId;
+    room.currentState = state;
+    room.updatedAt = this.now();
+    this.store.save(room);
+    this.emit(room.id, 'play:update', state);
+    return { success: true, state, revision: room.revision };
+  }
+  /** 账号离开或等太久：不再等他 */
+  releaseWaiting(room, accountId) {
+    const state = room.currentState;
+    if (state?.type !== 'play' || !state.waitingFor?.length) return;
+    const now = this.now();
+    const rest = accountId
+      ? state.waitingFor.filter((account) => account !== accountId)
+      : [];
+    if (rest.length === state.waitingFor.length) return;
+    let next = { ...state, waitingFor: rest, updatedAt: now };
+    if (!rest.length) next = this.resumeAfterWaiting(next, now);
+    this.publishWaiting(room, next, accountId || state.updatedBy);
   }
   limit(key, maximum, windowMs) {
     const now = this.now();
