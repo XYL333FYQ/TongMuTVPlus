@@ -1258,3 +1258,174 @@ test('room covers: owners upload and remove; public rooms show them to everyone,
   assert.equal(f.service.read(identities.guest, id).coverUrl, null);
   expectCode(() => f.service.readCover(identities.guest, id), 'NOT_FOUND');
 });
+
+// ------------------------------------------------------------------ SyncTV 式房间管理
+
+test('role defaults and per-member permission overrides decide what a member may do', (t) => {
+  const f = setup(t);
+  const id = createAndHost(f);
+  f.join('guest', id);
+  let guest = f.service.read(identities.guest, id);
+  assert.equal(guest.myRole, 'member');
+  assert.deepEqual(guest.myPermissions, [
+    'playback',
+    'changeMedia',
+    'addMedia',
+    'chat',
+  ]);
+  f.command('guest', id, 'play:change', video());
+  // 房主收回这名成员的播放权限
+  f.command('owner', id, 'room:member-permissions', {
+    accountId: 'guest',
+    permissions: ['chat'],
+  });
+  expectCode(
+    () => f.command('guest', id, 'play:pause', { currentTime: 3 }),
+    'NO_CONTROL_PERMISSION'
+  );
+  expectCode(
+    () =>
+      f.command('guest', id, 'queue:add', {
+        title: '电影',
+        href: '/play?source=fixture&id=x',
+      }),
+    'FORBIDDEN'
+  );
+  guest = f.service.read(identities.guest, id);
+  assert.deepEqual(guest.myPermissions, ['chat']);
+  assert.equal(
+    guest.roster.find((member) => member.accountId === 'guest')
+      .customPermissions,
+    true
+  );
+  // 恢复角色默认
+  f.command('owner', id, 'room:member-permissions', {
+    accountId: 'guest',
+    permissions: null,
+  });
+  f.command('guest', id, 'play:pause', { currentTime: 3 });
+});
+
+test('admins manage members but not other admins or the owner; only the owner sets room permissions', (t) => {
+  const f = setup(t);
+  const id = createAndHost(f);
+  f.join('host', id);
+  f.join('guest', id);
+  f.command('owner', id, 'room:authorize-host', {
+    accountId: 'host',
+    canHost: true,
+  });
+  expectCode(
+    () => f.command('host', id, 'room:kick', { accountId: 'owner' }),
+    'FORBIDDEN'
+  );
+  expectCode(
+    () => f.command('host', id, 'room:settings', { memberCanControl: false }),
+    'FORBIDDEN'
+  );
+  f.command('host', id, 'room:settings', { chatEnabled: false });
+  expectCode(
+    () => f.command('guest', id, 'chat:message', { content: '你好' }),
+    'CHAT_DISABLED'
+  );
+  // 管理员仍可以发言
+  f.command('host', id, 'chat:message', { content: '公告' });
+  f.command('host', id, 'room:kick', { accountId: 'guest' });
+  assert.equal(f.store.membership(id, 'guest'), undefined);
+  assert.ok(
+    f.events.some(
+      ([target, event]) => target === 'guest' && event === 'room:kicked'
+    )
+  );
+});
+
+test('a kicked and banned account cannot rejoin until unbanned', (t) => {
+  const f = setup(t);
+  const id = createAndHost(f);
+  f.join('guest', id);
+  f.command('owner', id, 'room:kick', { accountId: 'guest', ban: true });
+  expectCode(() => f.join('guest', id), 'BANNED');
+  f.command('owner', id, 'room:unban', { accountId: 'guest' });
+  assert.equal(f.join('guest', id).id, id);
+});
+
+test('rooms that require approval admit people only after an admin approves', (t) => {
+  const f = setup(t);
+  const id = createAndHost(f);
+  f.command('owner', id, 'room:settings', { requireApproval: true });
+  expectCode(() => f.join('guest', id), 'JOIN_PENDING');
+  // 重复申请只登记一次
+  expectCode(() => f.join('guest', id), 'JOIN_PENDING');
+  const owner = f.service.read(identities.owner, id);
+  assert.deepEqual(
+    owner.joinRequests.map((request) => request.accountId),
+    ['guest']
+  );
+  f.command('owner', id, 'room:join-review', {
+    accountId: 'guest',
+    approve: true,
+  });
+  assert.equal(f.join('guest', id).id, id);
+  expectCode(() => f.join('stranger', id), 'JOIN_PENDING');
+  f.command('owner', id, 'room:join-review', {
+    accountId: 'stranger',
+    approve: false,
+  });
+  expectCode(() => f.join('stranger', id), 'JOIN_PENDING');
+});
+
+test('ownership can be transferred to a member, and the old owner stays as admin', (t) => {
+  const f = setup(t);
+  const id = createAndHost(f);
+  f.join('guest', id);
+  expectCode(
+    () => f.command('guest', id, 'room:transfer', { accountId: 'guest' }),
+    'FORBIDDEN'
+  );
+  f.command('owner', id, 'room:transfer', { accountId: 'guest' });
+  const room = f.service.read(identities.guest, id);
+  assert.equal(room.ownerAccountId, 'guest');
+  assert.equal(room.myRole, 'owner');
+  assert.equal(f.service.read(identities.owner, id).myRole, 'admin');
+});
+
+test('people delete their own messages; managers can delete anyone’s', (t) => {
+  const f = setup(t);
+  const id = createAndHost(f);
+  f.join('guest', id);
+  const mine = f.command('guest', id, 'chat:message', {
+    content: '我的',
+  }).message;
+  const owners = f.command('owner', id, 'chat:message', {
+    content: '房主',
+  }).message;
+  expectCode(
+    () => f.command('guest', id, 'chat:delete', { id: owners.id }),
+    'FORBIDDEN'
+  );
+  f.command('guest', id, 'chat:delete', { id: mine.id });
+  f.command('owner', id, 'chat:delete', { id: owners.id });
+  assert.equal(f.store.messages(id).length, 0);
+  assert.ok(f.events.some(([, event]) => event === 'chat:deleted'));
+});
+
+test('the playlist can be cleared by managers, and settings carry auto play and member limits', (t) => {
+  const f = setup(t);
+  const id = createAndHost(f);
+  f.join('guest', id);
+  f.command('guest', id, 'queue:add', {
+    title: '一',
+    href: '/play?source=fixture&id=1',
+  });
+  expectCode(() => f.command('guest', id, 'queue:clear'), 'FORBIDDEN');
+  f.command('owner', id, 'queue:clear');
+  assert.equal(f.store.get(id).queue.length, 0);
+  f.command('owner', id, 'room:settings', {
+    autoPlay: { enabled: true, mode: 'loop' },
+    maxMembers: 2,
+  });
+  const settings = f.service.read(identities.owner, id).settings;
+  assert.deepEqual(settings.autoPlay, { enabled: true, mode: 'loop' });
+  assert.equal(settings.maxMembers, 2);
+  expectCode(() => f.join('stranger', id), 'ROOM_FULL');
+});

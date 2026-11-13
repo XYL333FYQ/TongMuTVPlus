@@ -29,6 +29,15 @@ function openRoomStore(
   db.exec(
     'CREATE TABLE IF NOT EXISTS watch_room_covers (room_id TEXT PRIMARY KEY, mime TEXT NOT NULL, data BLOB NOT NULL, updated_at INTEGER NOT NULL)'
   );
+  // 单个成员的权限调整（参照 SyncTV）：为空表示使用角色默认权限。
+  const memberColumns = db
+    .prepare('PRAGMA table_info(watch_room_memberships)')
+    .all()
+    .map((column) => column.name);
+  if (!memberColumns.includes('permissions_json'))
+    db.exec(
+      'ALTER TABLE watch_room_memberships ADD COLUMN permissions_json TEXT'
+    );
   return db;
 }
 
@@ -121,6 +130,43 @@ class RoomStore {
         'INSERT OR IGNORE INTO watch_room_memberships (room_id,account_id,can_host,joined_at) VALUES (?,?,?,?)'
       )
       .run(id, accountId, Number(canHost), now);
+  }
+  /** 房间的全部成员（含不在线的），按加入时间排序 */
+  memberships(id) {
+    return this.db
+      .prepare(
+        'SELECT * FROM watch_room_memberships WHERE room_id = ? ORDER BY joined_at'
+      )
+      .all(id);
+  }
+  removeMember(id, accountId) {
+    this.db
+      .prepare(
+        'DELETE FROM watch_room_memberships WHERE room_id = ? AND account_id = ?'
+      )
+      .run(id, accountId);
+  }
+  setMemberPermissions(id, accountId, permissions) {
+    this.db
+      .prepare(
+        'UPDATE watch_room_memberships SET permissions_json = ? WHERE room_id = ? AND account_id = ?'
+      )
+      .run(permissions ? JSON.stringify(permissions) : null, id, accountId);
+  }
+  setOwner(id, accountId) {
+    this.db
+      .prepare('UPDATE watch_rooms SET owner_account_id = ? WHERE id = ?')
+      .run(accountId, id);
+  }
+  message(id, messageId) {
+    return this.db
+      .prepare('SELECT * FROM watch_room_messages WHERE room_id = ? AND id = ?')
+      .get(id, messageId);
+  }
+  deleteMessage(id, messageId) {
+    this.db
+      .prepare('DELETE FROM watch_room_messages WHERE room_id = ? AND id = ?')
+      .run(id, messageId);
   }
   authorize(id, accountId, canHost) {
     this.db
