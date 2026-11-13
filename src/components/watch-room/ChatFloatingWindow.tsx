@@ -9,6 +9,7 @@ import {
   MicOff,
   Send,
   Smile,
+  Trash2,
   Volume2,
   VolumeX,
   X,
@@ -17,6 +18,7 @@ import Link from 'next/link';
 import { useEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
+import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
 import { useVoiceChat } from '@/hooks/useVoiceChat';
 
 import { useWatchRoomContextSafe } from '@/components/WatchRoomProvider';
@@ -428,6 +430,13 @@ export default function ChatFloatingWindow() {
           <p className='tm-chat-empty'>暂无消息</p>
         )}
         {roomContext?.chatMessages.map((message, index, list) => {
+          const myAccount = roomContext?.currentRoom?.myPermissions
+            ? getAuthInfoFromBrowserCookie()?.username
+            : undefined;
+          const canDelete = Boolean(
+            (myAccount && message.accountId === myAccount) ||
+              roomContext?.currentRoom?.myPermissions?.includes('manageMembers')
+          );
           const prev = index > 0 ? list[index - 1] : undefined;
           const grouped =
             Boolean(prev) &&
@@ -460,6 +469,23 @@ export default function ChatFloatingWindow() {
                 </time>
               </div>
               <p>{message.content}</p>
+              {canDelete && (
+                <button
+                  type='button'
+                  className='tm-chat-delete'
+                  aria-label='删除这条消息'
+                  title='删除'
+                  onClick={() =>
+                    void roomContext
+                      ?.deleteChatMessage(message.id)
+                      .catch(() => {
+                        /* 失败原因由房间错误提示显示 */
+                      })
+                  }
+                >
+                  <Trash2 size={13} aria-hidden />
+                </button>
+              )}
             </article>
           );
         })}

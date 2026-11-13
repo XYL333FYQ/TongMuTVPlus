@@ -1220,3 +1220,36 @@ html[data-tm-no-blur='true'] .tm-playback-chrome {
     display: none;
   }
 }
+/* 删除自己的消息（管理员可删任何人的）：悬停或聚焦时出现，触屏上常显 */
+.tm-chat-messages article {
+  position: relative;
+}
+.tm-chat-messages .tm-chat-delete {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  margin-top: 2px;
+  border-radius: var(--tm-radius-sm);
+  color: var(--tm-muted);
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+.tm-chat-messages article:hover .tm-chat-delete,
+.tm-chat-messages .tm-chat-delete:focus-visible {
+  opacity: 1;
+}
+.tm-chat-messages .tm-chat-delete:focus-visible {
+  outline: 2px solid var(--tm-text);
+  outline-offset: 2px;
+}
+@media (pointer: coarse) {
+  .tm-chat-messages .tm-chat-delete {
+    width: 44px;
+    height: 44px;
+    opacity: 0.7;
+  }
+}
+html[data-tm-reduced-motion] .tm-chat-messages .tm-chat-delete {
+  transition: none;
+}

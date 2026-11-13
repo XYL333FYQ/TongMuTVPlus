@@ -19,6 +19,8 @@ import PlaybackSlot from '@/features/playback/PlaybackSlot';
 import { queuePlaybackHref } from '@/features/playback/session';
 import { useRoomPlayback } from '@/features/room/RoomPlaybackBridge';
 
+import RoomEpisodes from './RoomEpisodes';
+
 import type { Room, RoomQueueItem } from '@/types/watch-room';
 
 /**
@@ -148,6 +150,12 @@ export default function RoomStage({
             </p>
           </div>
         </div>
+        {room.currentState?.type === 'play' && (
+          <RoomEpisodes
+            state={room.currentState}
+            canChange={Boolean(room.myPermissions?.includes('changeMedia'))}
+          />
+        )}
         <div className='tm-room-activities'>
           <Link href={`/watch-room/select?room=${encodeURIComponent(room.id)}`}>
             <Plus size={16} />

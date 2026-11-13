@@ -1960,3 +1960,178 @@ dialog.tm-room-modal-root::backdrop {
     );
   }
 }
+
+/* —— SyncTV 式房间管理：选集、放映控制、成员与权限 —— */
+.tm-room-episodes {
+  order: 2;
+  margin-top: 16px;
+}
+.tm-room-episodes header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+.tm-room-episodes h3 {
+  font-size: var(--tm-fs-small);
+  font-weight: 600;
+}
+.tm-room-episodes header span {
+  font-size: var(--tm-fs-caption);
+  color: var(--tm-muted);
+}
+.tm-room-episode-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(56px, 1fr));
+  gap: 8px;
+  max-height: 168px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.tm-room-episode-grid button {
+  min-height: 44px;
+  padding: 0 8px;
+  overflow: hidden;
+  border: 1px solid var(--tm-line);
+  border-radius: var(--tm-radius-sm);
+  background: var(--tm-surface);
+  color: var(--tm-text);
+  font-size: var(--tm-fs-small);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.tm-room-episode-grid button:hover:not(:disabled) {
+  border-color: var(--tm-text);
+}
+.tm-room-episode-grid button[aria-current='true'] {
+  border-color: var(--tm-text);
+  background: var(--tm-text);
+  color: var(--tm-accent-contrast);
+}
+.tm-room-episode-grid button:disabled:not([aria-current='true']) {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.tm-room-queue-controls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 4px 8px;
+  border-bottom: 1px solid var(--tm-line);
+  margin-bottom: 8px;
+}
+.tm-room-queue-controls > button {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--tm-radius-sm);
+  color: var(--tm-muted);
+}
+.tm-room-queue-controls > button:hover:not(:disabled) {
+  background: var(--tm-surface-raised);
+  color: var(--tm-text);
+}
+.tm-room-queue-controls > button:disabled {
+  opacity: 0.4;
+}
+.tm-room-queue-controls > :last-child {
+  margin-left: auto;
+}
+.tm-room-queue li[data-current='true'] {
+  background: var(--tm-surface-raised);
+  box-shadow: inset 2px 0 0 var(--tm-text);
+}
+.tm-room-member .tm-room-avatar {
+  position: relative;
+}
+.tm-room-member-presence {
+  position: absolute;
+  right: -1px;
+  bottom: -1px;
+  box-shadow: 0 0 0 2px var(--tm-surface);
+}
+.tm-room-member[data-online='false'] h3 {
+  color: var(--tm-muted);
+}
+.tm-room-join-requests {
+  padding-bottom: 8px;
+  margin-bottom: 8px;
+  border-bottom: 1px solid var(--tm-line);
+}
+.tm-room-join-requests > h3 {
+  font-size: var(--tm-fs-caption);
+  color: var(--tm-muted);
+}
+.tm-room-join-requests .tm-room-member > button {
+  min-height: 44px;
+  color: var(--tm-text);
+}
+.tm-room-permission-editor,
+.tm-room-permission-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.tm-room-permission-editor {
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px solid var(--tm-line);
+  border-radius: var(--tm-radius-md);
+  background: var(--tm-surface);
+}
+.tm-room-permission-editor > h3 {
+  margin-bottom: 4px;
+  font-size: var(--tm-fs-small);
+  font-weight: 600;
+}
+.tm-room-permission-grid {
+  min-width: 0;
+  padding: 0;
+  margin: 0;
+  border: 0;
+}
+.tm-room-permission-grid legend {
+  margin-bottom: 4px;
+  font-size: var(--tm-fs-small);
+  color: var(--tm-muted);
+}
+.tm-room-permission-grid:disabled {
+  opacity: 0.6;
+}
+.tm-room-permission-editor .tm-room-checkbox,
+.tm-room-permission-grid .tm-room-checkbox {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  font-size: var(--tm-fs-small);
+  cursor: pointer;
+}
+.tm-room-permission-editor .tm-room-checkbox small,
+.tm-room-permission-grid .tm-room-checkbox small {
+  display: block;
+  font-size: var(--tm-fs-caption);
+  color: var(--tm-muted);
+}
+.tm-room-permission-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+.tm-room-permission-actions button {
+  min-height: 44px;
+  padding: 0 14px;
+}
+:is(
+    .tm-room-episode-grid button,
+    .tm-room-queue-controls > button,
+    .tm-room-join-requests button,
+    .tm-room-permission-actions button
+  ):focus-visible {
+  outline: 2px solid var(--tm-text);
+  outline-offset: 2px;
+}

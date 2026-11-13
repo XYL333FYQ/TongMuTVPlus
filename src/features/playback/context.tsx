@@ -22,6 +22,8 @@ export interface PlaybackMetadata {
   poster?: string;
   loading?: boolean;
   error?: string | null;
+  /** 当前影片的全部分集名称（长度即总集数；没有名称的为空字符串） */
+  episodeTitles?: string[];
 }
 /** 播放页实际在放的影片（解析完片源之后），与地址里的参数不一定相同。 */
 export type PlaybackMedia = LocalMedia;

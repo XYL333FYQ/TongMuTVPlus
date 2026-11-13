@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Film, Play, Plus, Shield } from 'lucide-react';
+import { Film, Play, Plus, SkipBack, SkipForward, Square } from 'lucide-react';
 
 import { useReducedMotionSetting } from '@/lib/motion';
 
@@ -9,20 +9,19 @@ import { queuePlaybackHref } from '@/features/playback/session';
 import { useRoomPlayback } from '@/features/room/RoomPlaybackBridge';
 
 import RoomActionMenu from './RoomActionMenu';
+import RoomMembers from './RoomMembers';
 
-import type { Member, Room } from '@/types/watch-room';
+import type { Room } from '@/types/watch-room';
 
 export type RoomPanelTab = 'queue' | 'chat' | 'members';
 
-/** 房间侧栏：片单 / 聊天 / 成员三个标签。聊天内容由全站聊天窗口挂进来。 */
+/**
+ * 房间侧栏：片单 / 聊天 / 成员三个标签（参照 SyncTV）。
+ * 能做什么由服务器下发的权限决定；聊天内容由全站聊天窗口挂进来。
+ */
 export default function RoomSidePanel({
   room,
-  members,
-  selfId,
   username,
-  canControl,
-  isOwner,
-  isRoomAdmin,
   busy,
   panelTab,
   onTabChange,
@@ -30,12 +29,7 @@ export default function RoomSidePanel({
   openPicker,
 }: {
   room: Room;
-  members: Member[];
-  selfId?: string;
   username: string;
-  canControl: boolean;
-  isOwner: boolean;
-  isRoomAdmin: boolean;
   busy: boolean;
   panelTab: RoomPanelTab;
   onTabChange: (tab: RoomPanelTab) => void;
@@ -44,6 +38,32 @@ export default function RoomSidePanel({
 }) {
   const roomPlayback = useRoomPlayback();
   const reducedMotion = useReducedMotionSetting();
+  const permissions = room.myPermissions || [];
+  const canChangeMedia = permissions.includes('changeMedia');
+  const canManagePlaylist = permissions.includes('managePlaylist');
+  const canAdd = permissions.includes('addMedia');
+  const queue = room.queue || [];
+  const state = room.currentState;
+  const currentIndex =
+    state?.type === 'play' && state.queueItemId
+      ? queue.findIndex((item) => item.id === state.queueItemId)
+      : -1;
+  const playItem = (index: number) => {
+    const item = queue[index];
+    if (item)
+      roomPlayback.playTogether(
+        queuePlaybackHref(item.href, item.episode || 1, item.id)
+      );
+  };
+  // 下一个：当前项之后的第一项；没在放片单里的影片时，从第一部没看过的开始
+  const nextIndex =
+    currentIndex >= 0
+      ? currentIndex + 1 < queue.length
+        ? currentIndex + 1
+        : -1
+      : queue.findIndex((item) => !item.playedAt);
+  const previousIndex = currentIndex > 0 ? currentIndex - 1 : -1;
+  const played = queue.filter((item) => item.playedAt).length;
   return (
     <aside className='tm-room-side'>
       <div className='tm-room-panel-tabs' role='tablist' aria-label='房间面板'>
@@ -98,7 +118,7 @@ export default function RoomSidePanel({
                 ? `片单 ${room.queue?.length || 0}`
                 : tab === 'chat'
                 ? '聊天'
-                : `成员 ${room.memberCount}`}
+                : `成员 ${room.roster?.length || room.memberCount}`}
               {tab === 'chat' &&
                 Boolean(room.unreadCount) &&
                 panelTab !== 'chat' && (
@@ -119,13 +139,69 @@ export default function RoomSidePanel({
         data-active={panelTab === 'queue'}
         aria-label='片单'
       >
-        {!room.queue?.length && (
+        {(canChangeMedia || canManagePlaylist) &&
+          (queue.length > 0 || state) && (
+            <div className='tm-room-queue-controls' aria-label='放映控制'>
+              {canChangeMedia && (
+                <>
+                  <button
+                    type='button'
+                    disabled={previousIndex < 0}
+                    onClick={() => playItem(previousIndex)}
+                    aria-label='上一部'
+                    title='上一部'
+                  >
+                    <SkipBack size={15} />
+                  </button>
+                  <button
+                    type='button'
+                    disabled={nextIndex < 0}
+                    onClick={() => playItem(nextIndex)}
+                    aria-label='下一部'
+                    title='下一部'
+                  >
+                    <SkipForward size={15} />
+                  </button>
+                  {state && (
+                    <button
+                      type='button'
+                      disabled={busy}
+                      onClick={() => void mutate('state:clear', {})}
+                      aria-label='停止放映'
+                      title='停止放映'
+                    >
+                      <Square size={14} />
+                    </button>
+                  )}
+                </>
+              )}
+              {canManagePlaylist && queue.length > 0 && (
+                <RoomActionMenu
+                  label='片单整理'
+                  items={[
+                    {
+                      label: `清除已播放（${played}）`,
+                      disabled: busy || played === 0,
+                      onSelect: () => void mutate('queue:clear-played', {}),
+                    },
+                    {
+                      label: '清空片单',
+                      danger: true,
+                      disabled: busy,
+                      onSelect: () => void mutate('queue:clear', {}),
+                    },
+                  ]}
+                />
+              )}
+            </div>
+          )}
+        {!queue.length && (
           <div className='tm-room-queue-empty'>
             <p>片单为空</p>
             <span>
-              {canControl
+              {canChangeMedia
                 ? '选好的影片会排在这里，点播放就一起开始'
-                : '选好的影片会排在这里，等房主开始播放'}
+                : '选好的影片会排在这里，等有权限的人开始播放'}
             </span>
           </div>
         )}
@@ -135,6 +211,8 @@ export default function RoomSidePanel({
               key={item.id}
               layout={reducedMotion ? false : 'position'}
               transition={{ duration: reducedMotion ? 0 : 0.32 }}
+              data-current={index === currentIndex}
+              aria-current={index === currentIndex ? 'true' : undefined}
             >
               <span className='tm-room-queue-number'>
                 {String(index + 1).padStart(2, '0')}
@@ -145,12 +223,16 @@ export default function RoomSidePanel({
               <div className='tm-room-queue-copy'>
                 <h3>{item.title}</h3>
                 <p>
-                  {item.playedAt ? '已播放 · ' : ''}
+                  {index === currentIndex
+                    ? '正在放映 · '
+                    : item.playedAt
+                    ? '已播放 · '
+                    : ''}
                   {item.addedBy} 添加 · 第{item.episode || 1}集
                 </p>
               </div>
               <div className='tm-room-queue-actions'>
-                {canControl && (
+                {canChangeMedia && index !== currentIndex && (
                   <button
                     onClick={() =>
                       roomPlayback.playTogether(
@@ -165,7 +247,7 @@ export default function RoomSidePanel({
                 <RoomActionMenu
                   label={`${item.title}的片单操作`}
                   items={[
-                    ...(isRoomAdmin
+                    ...(canManagePlaylist
                       ? [
                           {
                             label: '上移',
@@ -189,7 +271,7 @@ export default function RoomSidePanel({
                         ]
                       : []),
                     ...((item.addedBy === username && !item.playedAt) ||
-                    isRoomAdmin
+                    canManagePlaylist
                       ? [
                           {
                             label: '移除',
@@ -207,67 +289,20 @@ export default function RoomSidePanel({
             </motion.li>
           ))}
         </ol>
-        {Boolean(room.queue?.length) && (
+        {queue.length > 0 && canAdd && (
           <button className='tm-room-add-film' onClick={() => openPicker()}>
             <Plus size={16} />
             添加影片
           </button>
         )}
       </section>
-      <section
-        className='tm-room-members'
-        id='tm-room-panel-members'
-        role='tabpanel'
-        aria-labelledby='tm-room-tab-members'
-        tabIndex={0}
-        data-active={panelTab === 'members'}
-        data-expanded={panelTab === 'members'}
-        aria-label='成员'
-      >
-        <header>
-          <h2>成员</h2>
-          <span>{room.memberCount}人</span>
-        </header>
-        {members.map((member) => (
-          <div key={member.id} className='tm-room-member'>
-            <span className='tm-room-avatar'>
-              {member.name.charAt(0).toUpperCase()}
-            </span>
-            <div>
-              <h3>
-                {member.name}
-                {member.id === selfId && '（你）'}
-              </h3>
-              <p>
-                {[
-                  member.isOwner ? '房主' : member.canHost ? '管理员' : '成员',
-                  member.following === false
-                    ? '个人观看中'
-                    : member.canControl
-                    ? '可控制播放'
-                    : '一起观看',
-                ].join(' · ')}
-              </p>
-            </div>
-            {(member.isOwner || member.canHost) && (
-              <Shield size={15} aria-label='房主或管理员' />
-            )}
-            {isOwner && !member.isOwner && member.accountId && (
-              <button
-                disabled={busy}
-                onClick={() =>
-                  mutate('room:authorize-host', {
-                    accountId: member.accountId,
-                    canHost: !member.canHost,
-                  })
-                }
-              >
-                {member.canHost ? '取消管理员' : '设为管理员'}
-              </button>
-            )}
-          </div>
-        ))}
-      </section>
+      <RoomMembers
+        room={room}
+        selfAccountId={username}
+        busy={busy}
+        active={panelTab === 'members'}
+        mutate={mutate}
+      />
       <div
         id='tm-room-panel-chat'
         className='tm-room-chat-slot'

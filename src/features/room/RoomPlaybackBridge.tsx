@@ -38,6 +38,7 @@ import {
   playbackHrefFromState,
   playbackIdentity,
   queueItemFromHref,
+  queuePlaybackHref,
 } from '@/features/playback/session';
 
 import { mediaKey } from './sync/drift';
@@ -260,6 +261,76 @@ export default function RoomPlaybackBridge({
       'system'
     );
   }, [onRoomPage, href, roomFilmKey, pendingHref]);
+
+  // 自动连播（参照 SyncTV 的 auto_play）：一部放完后，剧集的下一集由播放器自己切；
+  // 最后一集或电影放完时，按房间设置单部循环 / 播片单下一部 / 片单循环。
+  // 有换片权限的人都会尝试，服务器对同一部影片的换片只生效一次。
+  useEffect(() => {
+    const video = controller?.video;
+    if (!video) return;
+    let timer: number | undefined;
+    const onEnded = () => {
+      window.clearTimeout(timer);
+      const context = roomRef.current;
+      const endedRoom = context?.currentRoom;
+      const endedState = endedRoom?.currentState;
+      if (!endedRoom || endedState?.type !== 'play') return;
+      const endedKey = mediaKey(endedState);
+      timer = window.setTimeout(() => {
+        const current = roomRef.current;
+        const room = current?.currentRoom;
+        const state = room?.currentState;
+        const auto = room?.settings?.autoPlay;
+        if (
+          !room ||
+          room.id !== endedRoom.id ||
+          state?.type !== 'play' ||
+          mediaKey(state) !== endedKey ||
+          state.isPlaying ||
+          auto?.enabled === false ||
+          !room.myPermissions?.includes('changeMedia')
+        )
+          return;
+        const mode = auto?.mode || 'sequential';
+        if (mode === 'single') {
+          void current
+            ?.roomCommand('play:seek', {
+              currentTime: 0,
+              isPlaying: true,
+              source: state.source,
+              videoId: state.videoId,
+              episode: state.episode || 1,
+            })
+            .catch(() => undefined);
+          return;
+        }
+        // 剧集还有下一集：播放器会自己切过去
+        const episodes =
+          sessionRef.current?.metadata.episodeTitles?.length || 0;
+        if (episodes > (state.episode || 1)) return;
+        const queue = room.queue || [];
+        const index = state.queueItemId
+          ? queue.findIndex((item) => item.id === state.queueItemId)
+          : -1;
+        let next = -1;
+        if (index >= 0 && index + 1 < queue.length) next = index + 1;
+        else if (mode === 'loop' && queue.length) next = 0;
+        else if (index < 0) next = queue.findIndex((item) => !item.playedAt);
+        const item = queue[next];
+        if (!item || item.id === state.queueItemId) return;
+        engine.intend(null);
+        sessionRef.current?.requestPlayback(
+          queuePlaybackHref(item.href, item.episode || 1, item.id),
+          'system'
+        );
+      }, 2500);
+    };
+    video.addEventListener('ended', onEnded);
+    return () => {
+      video.removeEventListener('ended', onEnded);
+      window.clearTimeout(timer);
+    };
+  }, [controller, engine]);
 
   // 房间被删除：画面跟着收掉（/play 整页上的人页面本身就是播放器，保留）
   useEffect(() => {

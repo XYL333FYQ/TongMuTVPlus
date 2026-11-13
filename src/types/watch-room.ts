@@ -24,7 +24,21 @@ export interface Room {
     /** 成员可以控制播放（SyncTV 默认行为）；关闭后只有房主和管理员可以。 */
     memberCanControl?: boolean;
     autoArchive?: boolean;
+    /** 成员默认权限 */
+    memberPermissions?: RoomPermission[];
+    /** 加入需要房主或管理员同意 */
+    requireApproval?: boolean;
+    maxMembers?: number;
+    chatEnabled?: boolean;
+    autoPlay?: { enabled: boolean; mode: RoomAutoPlayMode };
   };
+  /** 本账号在房间里的角色与有效权限 */
+  myRole?: RoomRole;
+  myPermissions?: RoomPermission[];
+  /** 全部成员（含不在线） */
+  roster?: RoomRosterMember[];
+  /** 待审核的加入申请（只有能审核的人看得到） */
+  joinRequests?: { accountId: string; requestedAt: number }[];
   /** 房间目录里展示的“正在放映”摘要 */
   nowPlaying?: {
     title: string;
@@ -451,6 +465,28 @@ export interface WatchRoomConfig {
   externalServerUrl?: string;
   externalServerAuth?: string; // 通过 /api/watch-room-auth 接口获取（需要登录）
   externalAppId?: string; // 外部服务器多应用隔离 ID，通过 /api/watch-room-auth 接口获取（需要登录）
+}
+
+/** 房间权限（参照 SyncTV：角色默认权限 + 单个成员增减） */
+export type RoomPermission =
+  | 'playback'
+  | 'changeMedia'
+  | 'addMedia'
+  | 'managePlaylist'
+  | 'chat'
+  | 'manageMembers'
+  | 'editRoom';
+export type RoomRole = 'owner' | 'admin' | 'member' | 'none';
+export type RoomAutoPlayMode = 'sequential' | 'loop' | 'single';
+export interface RoomRosterMember {
+  accountId: string;
+  role: RoomRole;
+  permissions: RoomPermission[];
+  /** 是否单独调整过权限 */
+  customPermissions: boolean;
+  online: boolean;
+  connections: number;
+  joinedAt: number;
 }
 
 // LocalStorage 存储的房间信息

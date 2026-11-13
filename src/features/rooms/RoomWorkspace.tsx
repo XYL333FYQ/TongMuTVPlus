@@ -361,8 +361,11 @@ export default function RoomWorkspace() {
         roomType: 'sync',
         userName: username,
         settings: {
-          memberCanControl: values.memberCanControl,
-          memberCanQueue: values.memberCanQueue,
+          memberPermissions: values.memberPermissions,
+          requireApproval: values.requireApproval,
+          maxMembers: values.maxMembers,
+          chatEnabled: values.chatEnabled,
+          autoPlay: values.autoPlay,
         },
       });
       setDialog(null);
@@ -567,12 +570,7 @@ export default function RoomWorkspace() {
             />
             <RoomSidePanel
               room={room}
-              members={watchRoom.members}
-              selfId={watchRoom.socket?.id}
               username={username}
-              canControl={watchRoom.canControl}
-              isOwner={watchRoom.isOwner}
-              isRoomAdmin={watchRoom.isRoomAdmin}
               busy={busy}
               panelTab={panelTab}
               onTabChange={setPanelTab}
@@ -665,10 +663,20 @@ export default function RoomWorkspace() {
                     void mutate('room:settings', {
                       name: values.name,
                       description: values.description,
-                      isPublic: values.isPublic,
-                      memberCanControl: values.memberCanControl,
-                      memberCanQueue: values.memberCanQueue,
-                      ...(values.password ? { password: values.password } : {}),
+                      chatEnabled: values.chatEnabled,
+                      autoPlay: values.autoPlay,
+                      maxMembers: values.maxMembers,
+                      // 权限类设置只有房主能改，管理员保存时不带上
+                      ...(room?.myRole === 'owner'
+                        ? {
+                            isPublic: values.isPublic,
+                            requireApproval: values.requireApproval,
+                            memberPermissions: values.memberPermissions,
+                            ...(values.password
+                              ? { password: values.password }
+                              : {}),
+                          }
+                        : {}),
                       ...(isStationAdmin
                         ? { autoArchive: values.autoArchive }
                         : {}),

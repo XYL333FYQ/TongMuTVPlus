@@ -6,8 +6,26 @@ import { createPortal } from 'react-dom';
 
 import { roomCoverSource } from './room-cover';
 import { defaultRoomName } from './room-presentation';
+import { PERMISSION_LABELS, PERMISSION_ORDER } from './RoomMembers';
 
-import type { Room } from '@/types/watch-room';
+import type {
+  Room,
+  RoomAutoPlayMode,
+  RoomPermission,
+} from '@/types/watch-room';
+
+/** 新房间的成员默认权限（与服务器默认一致） */
+const MEMBER_DEFAULT: RoomPermission[] = [
+  'playback',
+  'changeMedia',
+  'addMedia',
+  'chat',
+];
+const AUTO_PLAY_LABEL: Record<RoomAutoPlayMode, string> = {
+  sequential: '按片单顺序播放',
+  loop: '片单循环',
+  single: '单部循环',
+};
 
 /** 房间对话框外壳：原生模态、焦点约束、标题、关闭按钮、错误提示。 */
 export function RoomDialogShell({
@@ -156,8 +174,11 @@ export interface RoomFormValues {
   name: string;
   description: string;
   isPublic: boolean;
-  memberCanControl: boolean;
-  memberCanQueue: boolean;
+  memberPermissions: RoomPermission[];
+  requireApproval: boolean;
+  maxMembers: number;
+  chatEnabled: boolean;
+  autoPlay: { enabled: boolean; mode: RoomAutoPlayMode };
   /** 留空表示不设置 / 保留原密码 */
   password: string;
   autoArchive: boolean;
@@ -192,12 +213,26 @@ export function RoomForm({
   const [name, setName] = useState(editing?.name || '');
   const [description, setDescription] = useState(editing?.description || '');
   const [isPublic, setIsPublic] = useState(Boolean(editing?.isPublic));
-  const [memberCanControl, setMemberCanControl] = useState(
-    editing?.settings?.memberCanControl !== false
+  const [memberPermissions, setMemberPermissions] = useState<RoomPermission[]>(
+    editing?.settings?.memberPermissions || MEMBER_DEFAULT
   );
-  const [memberCanQueue, setMemberCanQueue] = useState(
-    editing?.settings?.memberCanQueue !== false
+  const [requireApproval, setRequireApproval] = useState(
+    Boolean(editing?.settings?.requireApproval)
   );
+  const [maxMembers, setMaxMembers] = useState(
+    editing?.settings?.maxMembers || 8
+  );
+  const [chatEnabled, setChatEnabled] = useState(
+    editing?.settings?.chatEnabled !== false
+  );
+  const [autoPlayEnabled, setAutoPlayEnabled] = useState(
+    editing?.settings?.autoPlay?.enabled !== false
+  );
+  const [autoPlayMode, setAutoPlayMode] = useState<RoomAutoPlayMode>(
+    editing?.settings?.autoPlay?.mode || 'sequential'
+  );
+  // 权限类设置只有房主能改；管理员打开设置时只读显示
+  const ownerControls = mode === 'create' || editing?.myRole === 'owner';
   const [password, setPassword] = useState('');
   const [autoArchive, setAutoArchive] = useState(
     editing?.settings?.autoArchive !== false
@@ -211,8 +246,11 @@ export function RoomForm({
           name,
           description,
           isPublic,
-          memberCanControl,
-          memberCanQueue,
+          memberPermissions,
+          requireApproval,
+          maxMembers,
+          chatEnabled,
+          autoPlay: { enabled: autoPlayEnabled, mode: autoPlayMode },
           password,
           autoArchive,
         });
@@ -291,6 +329,7 @@ export function RoomForm({
         <input
           type='checkbox'
           checked={isPublic}
+          disabled={!ownerControls}
           onChange={(event) => setIsPublic(event.target.checked)}
         />
         出现在公开房间列表
@@ -298,18 +337,80 @@ export function RoomForm({
       <label className='tm-room-checkbox'>
         <input
           type='checkbox'
-          checked={memberCanControl}
-          onChange={(event) => setMemberCanControl(event.target.checked)}
+          checked={requireApproval}
+          disabled={!ownerControls}
+          onChange={(event) => setRequireApproval(event.target.checked)}
         />
-        成员可以播放、暂停、拖动和换片
+        加入需要房主或管理员同意
+      </label>
+      <fieldset className='tm-room-permission-grid' disabled={!ownerControls}>
+        <legend>成员默认可以</legend>
+        {PERMISSION_ORDER.map((permission) => (
+          <label key={permission} className='tm-room-checkbox'>
+            <input
+              type='checkbox'
+              checked={memberPermissions.includes(permission)}
+              onChange={(event) =>
+                setMemberPermissions((previous) =>
+                  event.target.checked
+                    ? [...previous, permission]
+                    : previous.filter((item) => item !== permission)
+                )
+              }
+            />
+            <span>
+              {PERMISSION_LABELS[permission].label}
+              <small>{PERMISSION_LABELS[permission].hint}</small>
+            </span>
+          </label>
+        ))}
+      </fieldset>
+      <label className='tm-room-checkbox'>
+        <input
+          type='checkbox'
+          checked={chatEnabled}
+          onChange={(event) => setChatEnabled(event.target.checked)}
+        />
+        开启聊天（关闭后只有房主和管理员能发言）
       </label>
       <label className='tm-room-checkbox'>
         <input
           type='checkbox'
-          checked={memberCanQueue}
-          onChange={(event) => setMemberCanQueue(event.target.checked)}
+          checked={autoPlayEnabled}
+          onChange={(event) => setAutoPlayEnabled(event.target.checked)}
         />
-        成员可以往片单里添加影片
+        一部放完自动放下一部
+      </label>
+      {autoPlayEnabled && (
+        <label>
+          连播方式
+          <select
+            value={autoPlayMode}
+            onChange={(event) =>
+              setAutoPlayMode(event.target.value as RoomAutoPlayMode)
+            }
+          >
+            {(Object.keys(AUTO_PLAY_LABEL) as RoomAutoPlayMode[]).map(
+              (option) => (
+                <option key={option} value={option}>
+                  {AUTO_PLAY_LABEL[option]}
+                </option>
+              )
+            )}
+          </select>
+        </label>
+      )}
+      <label>
+        人数上限
+        <input
+          type='number'
+          min={2}
+          max={50}
+          value={maxMembers}
+          onChange={(event) =>
+            setMaxMembers(Math.max(2, Number(event.target.value) || 2))
+          }
+        />
       </label>
       <label>
         {mode === 'create'
@@ -319,6 +420,7 @@ export function RoomForm({
           type='password'
           maxLength={128}
           autoComplete='new-password'
+          disabled={!ownerControls}
           value={password}
           onChange={(event) => setPassword(event.target.value)}
         />
@@ -344,7 +446,7 @@ export function RoomForm({
           空闲30天后自动归档（关闭可长期保留）
         </label>
       )}
-      {editing && (
+      {editing && editing.myRole === 'owner' && (
         <div className='tm-room-danger'>
           <label>
             删除房间请输入「{editing.name}」

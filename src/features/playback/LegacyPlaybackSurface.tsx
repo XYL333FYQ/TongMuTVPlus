@@ -2852,11 +2852,17 @@ function PlayPageClient() {
       poster: detail?.poster,
       loading,
       error: error || videoError,
+      episodeTitles: Array.from(
+        { length: detail?.episodes?.length || 0 },
+        (_, index) => detail?.episodes_titles?.[index] || ''
+      ),
     });
   }, [
     videoTitle,
     detail?.title,
     detail?.poster,
+    detail?.episodes?.length,
+    detail?.episodes_titles,
     currentEpisodeIndex,
     loading,
     error,

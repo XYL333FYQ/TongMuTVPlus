@@ -17,6 +17,7 @@ import type {
   MusicSyncState,
   PlayState,
   Room,
+  RoomPermission,
   RoomType,
   ScreenState,
   StoredRoomInfo,
@@ -444,7 +445,7 @@ export function useWatchRoom(
       isPublic: boolean;
       roomType: RoomType;
       userName: string;
-      settings?: { memberCanControl?: boolean; memberCanQueue?: boolean };
+      settings?: Partial<NonNullable<Room['settings']>>;
     }) => {
       const reply = await request('room:create', data);
       if (!reply.room) throw new Error('创建后未收到房间资料');
@@ -561,6 +562,34 @@ export function useWatchRoom(
       setMembers([]);
       setChatMessages([]);
     };
+    // 被房主或管理员移出房间：和房间被删除一样收场，但只影响自己
+    const kicked = (data?: { roomId?: string; banned?: boolean }) => {
+      if (
+        !roomRef.current ||
+        (data?.roomId && data.roomId !== roomRef.current.id)
+      )
+        return;
+      roomGeneration.current += 1;
+      window.dispatchEvent(
+        new CustomEvent('tongmu:room-deleted', {
+          detail: { roomId: roomRef.current.id },
+        })
+      );
+      clearStoredRoomInfo();
+      roomRef.current = null;
+      setCurrentRoom(null);
+      setMembers([]);
+      setChatMessages([]);
+      setLastError(
+        data?.banned ? '你已被移出房间，且不能再加入' : '你已被移出房间'
+      );
+    };
+    const chatDeleted = (data: { roomId?: string; id: string }) => {
+      if (data.roomId && data.roomId !== roomRef.current?.id) return;
+      setChatMessages((previous) =>
+        previous.filter((message) => message.id !== data.id)
+      );
+    };
     const memberJoined = (member: Member) =>
       setMembers((previous) => [
         ...previous.filter((item) => item.id !== member.id),
@@ -634,6 +663,8 @@ export function useWatchRoom(
       ['room:joined', joined],
       ['room:snapshot', joined],
       ['room:deleted', deleted],
+      ['room:kicked', kicked],
+      ['chat:deleted', chatDeleted],
       ['room:member-joined', memberJoined],
       ['room:member-left', memberLeft],
       ['play:update', mediaUpdated],
@@ -674,9 +705,25 @@ export function useWatchRoom(
   // 与 SyncTV 一致：权限按账号计算（房主 / 管理员 / 房间开放成员控制），
   // 不再有“唯一主持设备”。服务器在每个人的快照里给出自己的权限。
   const canControl = Boolean(
-    currentRoom && (currentRoom.canControl ?? self?.canControl ?? isOwner)
+    currentRoom &&
+      (currentRoom.myPermissions
+        ? currentRoom.myPermissions.includes('playback')
+        : currentRoom.canControl ?? self?.canControl ?? isOwner)
   );
-  const isRoomAdmin = Boolean(currentRoom && (isOwner || self?.canHost));
+  const isRoomAdmin = Boolean(
+    currentRoom &&
+      (currentRoom.myRole
+        ? currentRoom.myRole === 'owner' || currentRoom.myRole === 'admin'
+        : isOwner || self?.canHost)
+  );
+  /** 本账号在房间里是否有某项权限（参照 SyncTV） */
+  const hasPermission = useCallback(
+    (permission: RoomPermission) =>
+      Boolean(roomRef.current?.myPermissions?.includes(permission)),
+    // currentRoom 变化时重新计算
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [currentRoom]
+  );
   const sendChatMessage = useCallback(
     (content: string, type: 'text' | 'emoji' = 'text') =>
       send('chat:message', { content, type }),
@@ -693,6 +740,11 @@ export function useWatchRoom(
     isRoomAdmin,
     isController: canControl,
     canControl,
+    hasPermission,
+    deleteChatMessage: useCallback(
+      (id: string) => roomCommand('chat:delete', { id }),
+      [roomCommand]
+    ),
     lastError,
     clearError: useCallback(() => setLastError(''), []),
     notices,

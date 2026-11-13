@@ -345,8 +345,10 @@ test('a playing room with an empty queue keeps an explicit add-later route and r
   ).toBeInTheDocument();
 });
 
-test('a host queue play action uses an explicit together intent', () => {
+test('a member with the change-media permission plays a queue item for everyone', () => {
   mockRoom.canControl = true;
+  if (mockRoom.currentRoom)
+    mockRoom.currentRoom.myPermissions = ['changeMedia'];
   if (mockRoom.currentRoom)
     mockRoom.currentRoom.queue = [
       {
