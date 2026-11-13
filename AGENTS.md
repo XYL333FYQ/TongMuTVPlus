@@ -19,8 +19,8 @@ TongMuTV Plus：Next.js 14（App Router）+ React 18 + Tailwind 3.4 + TypeScript
 
 ## 禁区：只换皮，不改行为
 
-- 不改：`server/`（若存在）、`src/hooks/useWatchRoom.ts`、`src/hooks/usePlaySync.ts`、`src/features/playback/session.ts`、`PlaybackSessionProvider` 的会话逻辑、`src/lib/*.db.ts`、`src/app/api/**`、`src/middleware.ts`、`src/app/admin/page.tsx`。
-- 2026-11-13 用户授权重做“一起看”：房间同步已改为 SyncTV 模型（权限按账号、单一带版本播放状态、服务器时钟推算，见 `docs/architecture.md`）。改动上述房间文件时必须同时更新 `server/room-service.test.cjs` 与 `src/hooks/usePlaySync.test.tsx`，并用两个账号实际验证同步。不要恢复“唯一主持设备”选举。
+- 不改：`server/`（若存在）、`src/hooks/useWatchRoom.ts`、`src/features/room/`（同步引擎与房间 ↔ 播放器桥）、`src/features/playback/session.ts`、`PlaybackSessionProvider` 的会话逻辑、`src/lib/*.db.ts`、`src/app/api/**`、`src/middleware.ts`、`src/app/admin/page.tsx`。
+- 2026-11-13 用户授权重做“一起看”：房间同步已改为 SyncTV 模型（权限按账号、单一带版本播放状态、服务器时钟推算，见 `docs/architecture.md`）。改动上述房间文件时必须同时更新 `server/room-service.test.cjs`、`src/features/room/sync/sync-engine.test.ts` 与 `src/features/playback/PlaybackSessionProvider.test.tsx`，并用两个账号实际验证同步。不要恢复“唯一主持设备”选举，也不要恢复“个人观看 / 跟随”半脱离状态；代码边界见 `docs/architecture.md`“代码边界”。
 - `codex/synctv-rebuild-backup-20261112` 分支是旧的“桥接独立 SyncTV 服务”方案的未完成备份，已被上述方案取代，不要合并。
 - `LegacyPlaybackSurface.tsx`：只允许改 className、样式、文案，逐处说明；不碰内部逻辑。
 - 不改接口、存储键、Socket 事件名、数据库路径（见 `docs/PROJECT_IDENTITY.md`）。

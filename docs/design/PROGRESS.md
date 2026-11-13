@@ -1,5 +1,15 @@
 # 界面改造进度
 
+## 2026-11-13（二）两个模块重新设计：同步引擎 + 房间桥 + 房间页拆分
+
+- 做完了：
+  - 去掉“个人观看 / 跟随”：人在房间里播放器就是房间的；想自己看别的就退出房间。
+  - 新增 `src/features/room/sync/sync-engine.ts`（纯逻辑同步引擎，16 个单测）与 `src/features/room/RoomPlaybackBridge.tsx`（房间 ↔ 播放器唯一连接点，含房间内选片对话框）。删除 `usePlaySync`。
+  - `PlaybackSessionProvider` 不再有房间逻辑；播放页只上报实际在放的影片（`reportMedia`）。
+  - 房间页拆成 `RoomHeader / RoomStage / RoomSidePanel / RoomDirectory / RoomDialogs`，`RoomWorkspace` 从 1714 行降到约 700 行。
+- 验证：类型检查、房间与播放相关测试全部通过；两个账号浏览器实测：成员暂停/播放约 40ms 同步到另一端，一集结束两端一起进入下一集。
+- 没做：`useWatchRoom`（连接与消息补齐）仍是原实现，未改成独立的客户端类；`LegacyPlaybackSurface` 内部（片源、弹幕、超分等）未拆，只切断了与房间的耦合。手机、弱网、真实 HLS 片源未验证。
+
 ## 2026-11-13 一起看按 SyncTV 模型重做；自己看修复
 
 起因：旧房间的“唯一主持设备”模型实际体验很差——普通成员点暂停会在 0.5 秒内被强行恢复播放且没有提示；主持要先通过就绪/租约/代次选举，任一环节没跟上就“暂无主持”；主持设备每 2 秒上报进度，每次都递增房间版本并向所有人广播完整快照，导致并发的片单操作出现版本冲突。Codex 在 `codex/synctv-rebuild-backup-20261112` 分支尝试桥接独立部署的 SyncTV（Rust + PostgreSQL + 加密身份桥 + protobuf），做到第三批时停下，未接入界面、有已知失败测试，部署和维护成本也很高，已放弃（分支保留未删）。
