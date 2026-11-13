@@ -1244,11 +1244,7 @@ html[data-tm-no-blur='true'] .tm-room-fold-button {
   top: calc(100% + 8px);
   bottom: auto;
 }
-.tm-room-fold-button:is(
-    :hover,
-    :focus-visible,
-    [data-hint-open='true']
-  )
+.tm-room-fold-button:is(:hover, :focus-visible, [data-hint-open='true'])
   .tm-room-playback-hint {
   display: block;
 }
@@ -1964,5 +1960,3 @@ dialog.tm-room-modal-root::backdrop {
     );
   }
 }
-
-

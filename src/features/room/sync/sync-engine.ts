@@ -18,8 +18,6 @@
  *    抵消，避免回声。只有对齐过之后的本机事件才算用户操作。
  */
 
-import type { PlayState, Room } from '@/types/watch-room';
-
 import {
   AUTO_SEEK_COOLDOWN_MS,
   CHANGED_DRIFT_SECONDS,
@@ -28,6 +26,8 @@ import {
   PAUSED_DRIFT_SECONDS,
   PLAYING_DRIFT_SECONDS,
 } from './drift';
+
+import type { PlayState, Room } from '@/types/watch-room';
 
 export type PlayerEvent = 'play' | 'pause' | 'seeked' | 'ratechange';
 
@@ -398,8 +398,9 @@ export class RoomSyncEngine {
     if (previous.isPlaying !== state.isPlaying)
       message = `${state.updatedBy} ${state.isPlaying ? '继续播放' : '暂停了'}`;
     else if (
-      Math.abs(expectedRoomTime(previous, state.updatedAt || 0) - state.currentTime) >
-      2
+      Math.abs(
+        expectedRoomTime(previous, state.updatedAt || 0) - state.currentTime
+      ) > 2
     )
       message = `${state.updatedBy} 调整了进度`;
     else if ((previous.playbackRate || 1) !== (state.playbackRate || 1))

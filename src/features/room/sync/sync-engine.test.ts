@@ -1,12 +1,12 @@
-import type { PlayState } from '@/types/watch-room';
-
 import {
   type LocalMedia,
   type PlayerEvent,
   type PlayerPort,
-  RoomSyncEngine,
   type SyncInput,
+  RoomSyncEngine,
 } from './sync-engine';
+
+import type { PlayState } from '@/types/watch-room';
 
 class FakePlayer implements PlayerPort {
   currentTime = 0;
@@ -93,10 +93,12 @@ function local(overrides: Partial<LocalMedia> = {}): LocalMedia {
 function setup(input: Partial<SyncInput> = {}) {
   const player = new FakePlayer();
   const effects = {
-    command: jest.fn(async (_event: string, payload: Record<string, unknown>) => ({
-      success: true,
-      payload,
-    })),
+    command: jest.fn(
+      async (_event: string, payload: Record<string, unknown>) => ({
+        success: true,
+        payload,
+      })
+    ),
     follow: jest.fn(),
     stopLocal: jest.fn(),
     serverNow: () => clock,
@@ -170,7 +172,12 @@ describe('following the room', () => {
     expect(player.paused).toBe(false);
     engine.update({
       ...state,
-      state: { type: 'live', channelId: 'c', channelName: 'C', channelUrl: '' } as never,
+      state: {
+        type: 'live',
+        channelId: 'c',
+        channelName: 'C',
+        channelUrl: '',
+      } as never,
     });
     await flush();
     expect(player.paused).toBe(true);
@@ -179,13 +186,21 @@ describe('following the room', () => {
   it('shows who changed the room, but not for this account', async () => {
     const { engine, player, state } = setup();
     await flush();
-    engine.update({ ...state, state: film({ isPlaying: false, version: 2, updatedBy: 'friend' }) });
+    engine.update({
+      ...state,
+      state: film({ isPlaying: false, version: 2, updatedBy: 'friend' }),
+    });
     await flush();
     jest.advanceTimersByTime(300);
     expect(player.notices).toContain('friend 暂停了');
-    engine.update({ ...state, state: film({ isPlaying: true, version: 3, updatedBy: 'me' }) });
+    engine.update({
+      ...state,
+      state: film({ isPlaying: true, version: 3, updatedBy: 'me' }),
+    });
     jest.advanceTimersByTime(300);
-    expect(player.notices.filter((n) => n.includes('继续播放'))).toHaveLength(0);
+    expect(player.notices.filter((n) => n.includes('继续播放'))).toHaveLength(
+      0
+    );
   });
 });
 
@@ -198,7 +213,11 @@ describe('local actions become the room state', () => {
     await flush();
     expect(effects.command).toHaveBeenCalledWith(
       'play:pause',
-      expect.objectContaining({ currentTime: 130, videoId: 'film-a', episode: 1 })
+      expect.objectContaining({
+        currentTime: 130,
+        videoId: 'film-a',
+        episode: 1,
+      })
     );
   });
 
@@ -222,7 +241,9 @@ describe('local actions become the room state', () => {
     jest.advanceTimersByTime(300);
     expect(effects.command).not.toHaveBeenCalled();
     expect(player.paused).toBe(false);
-    expect(player.notices).toContain('房主没有开放成员控制播放，已回到房间进度');
+    expect(player.notices).toContain(
+      '房主没有开放成员控制播放，已回到房间进度'
+    );
   });
 
   it('a local episode change after alignment becomes the room film, starting where the player is', async () => {
@@ -254,11 +275,18 @@ describe('local actions become the room state', () => {
     const { engine, effects, state } = setup({ local: null });
     await flush();
     engine.intend(null);
-    engine.update({ ...state, local: local({ videoId: 'film-b', queueItemId: 'q1' }) });
+    engine.update({
+      ...state,
+      local: local({ videoId: 'film-b', queueItemId: 'q1' }),
+    });
     await flush();
     expect(effects.command).toHaveBeenCalledWith(
       'play:change',
-      expect.objectContaining({ videoId: 'film-b', queueItemId: 'q1', isPlaying: true })
+      expect.objectContaining({
+        videoId: 'film-b',
+        queueItemId: 'q1',
+        isPlaying: true,
+      })
     );
   });
 });
@@ -287,7 +315,11 @@ describe('an empty room', () => {
     await flush();
     expect(effects.command).toHaveBeenCalledWith(
       'play:change',
-      expect.objectContaining({ videoId: 'film-a', currentTime: 37, isPlaying: false })
+      expect.objectContaining({
+        videoId: 'film-a',
+        currentTime: 37,
+        isPlaying: false,
+      })
     );
   });
 
@@ -300,7 +332,10 @@ describe('an empty room', () => {
   });
 
   it('without control, puts the unrelated local film away once', async () => {
-    const { engine, effects, state } = setup({ canControl: false, state: null });
+    const { engine, effects, state } = setup({
+      canControl: false,
+      state: null,
+    });
     await flush();
     engine.update({ ...state });
     await flush();
@@ -312,7 +347,11 @@ describe('an empty room', () => {
 it('a new room starts with a clean slate', async () => {
   const { engine, effects, state } = setup();
   await flush();
-  engine.update({ ...state, roomId: 'room-2', state: film({ videoId: 'film-c' }) });
+  engine.update({
+    ...state,
+    roomId: 'room-2',
+    state: film({ videoId: 'film-c' }),
+  });
   await flush();
   expect(effects.follow).toHaveBeenCalledWith(
     expect.objectContaining({ videoId: 'film-c' })

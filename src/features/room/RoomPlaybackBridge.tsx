@@ -15,8 +15,8 @@
 import { Film, X } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import {
-  createContext,
   type ReactNode,
+  createContext,
   useCallback,
   useContext,
   useEffect,
@@ -416,9 +416,7 @@ export default function RoomPlaybackBridge({
           >
             <Film size={24} />
             <h2 id='tm-playback-choice-title'>这部影片，想怎么观看？</h2>
-            <p>
-              你在房间「{room?.name}」里，房间里的人看的是同一个画面。
-            </p>
+            <p>你在房间「{room?.name}」里，房间里的人看的是同一个画面。</p>
             <button disabled={choiceBusy} onClick={() => choose('queue')}>
               加入房间片单<span>当前影片继续，稍后一起看</span>
             </button>
