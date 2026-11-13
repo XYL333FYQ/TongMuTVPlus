@@ -36,6 +36,7 @@ import PageLayout from '@/components/PageLayout';
 import { useWatchRoomContext } from '@/components/WatchRoomProvider';
 
 import { usePlaybackSession } from '@/features/playback/context';
+import { useRoomPlayback } from '@/features/room/RoomPlaybackBridge';
 import PlaybackSlot from '@/features/playback/PlaybackSlot';
 import {
   liveActivityHref,
@@ -87,6 +88,7 @@ export default function RoomWorkspace() {
   const modal = useRef<HTMLDialogElement>(null);
   const watchRoom = useWatchRoomContext();
   const playback = usePlaybackSession();
+  const roomPlayback = useRoomPlayback();
   const room = watchRoom.currentRoom;
   const activity = room?.currentState;
   const activityHref =
@@ -794,13 +796,12 @@ export default function RoomWorkspace() {
                         onClick={() => {
                           const next = waitingQueue[0];
                           if (next)
-                            playback.requestPlayback(
+                            roomPlayback.playTogether(
                               queuePlaybackHref(
                                 next.href,
                                 next.episode || 1,
                                 next.id
-                              ),
-                              'together'
+                              )
                             );
                         }}
                       >
@@ -870,7 +871,7 @@ export default function RoomWorkspace() {
                   watchRoom.canControl && (
                     <button
                       className='tm-room-share-current tm-btn tm-btn-ghost'
-                      onClick={() => playback.shareCurrentPlayback(room.id)}
+                      onClick={roomPlayback.shareCurrent}
                     >
                       分享当前正在看的影片
                     </button>
@@ -1027,13 +1028,12 @@ export default function RoomWorkspace() {
                         {watchRoom.canControl && (
                           <button
                             onClick={() =>
-                              playback.requestPlayback(
+                              roomPlayback.playTogether(
                                 queuePlaybackHref(
                                   item.href,
                                   item.episode || 1,
                                   item.id
-                                ),
-                                'together'
+                                )
                               )
                             }
                             aria-label={`播放${item.title}`}
@@ -1412,7 +1412,7 @@ export default function RoomWorkspace() {
                         watchRoom.canControl
                           ? (href) => {
                               setDialog(null);
-                              playback.requestPlayback(href, 'together');
+                              roomPlayback.playTogether(href);
                             }
                           : undefined
                       }

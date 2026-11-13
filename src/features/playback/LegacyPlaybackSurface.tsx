@@ -140,11 +140,6 @@ import {
   parsePlaybackEpisodeIndex,
   usePlaybackEpisode,
 } from '@/hooks/usePlaybackEpisode';
-import {
-  getRoomRemotePlaybackRate,
-  isRemoteRoomRateActive,
-  usePlaySync,
-} from '@/hooks/usePlaySync';
 
 import AIChatPanel from '@/components/AIChatPanel';
 import AIComments from '@/components/AIComments';
@@ -174,6 +169,11 @@ import {
   usePlaybackSearchParams,
   usePlaybackSession,
 } from '@/features/playback/context';
+import {
+  getRoomRemotePlaybackRate,
+  isRemoteRoomRateActive,
+  useRoomPlayback,
+} from '@/features/room/RoomPlaybackBridge';
 
 // 扩展 HTMLVideoElement 类型以支持 hls 属性
 declare global {
@@ -2787,24 +2787,58 @@ function PlayPageClient() {
   // Wake Lock 相关
   const wakeLockRef = useRef<WakeLockSentinel | null>(null);
 
-  // 观影室同步功能
-  const playSync = usePlaySync({
-    artPlayerRef,
-    videoId: currentId || '', // 使用 currentId 状态而不是 searchParams
-    videoName: videoTitle || detail?.title || '正在加载...',
-    videoYear: videoYear || detail?.year || '',
-    searchTitle: searchTitle || '',
-    poster: detail?.poster || '',
-    currentEpisode: currentEpisodeIndex + 1,
-    currentSource: currentSource || '',
-    videoUrl: videoUrl || '',
-    playerReady: playerReady, // 传递播放器就绪状态
-    mediaLoading: isVideoLoading || loading,
-  });
-
-  // 观影室：一键创建房间（未加入房间时显示入口）
+  // 观影室：播放页不参与同步，只读两个状态——
+  // inRoom：跟着房间，不恢复个人进度；locked：没有控制权，禁用换集/倍速等。
+  // 同步由 RoomPlaybackBridge 根据下面上报的“实际在放的影片”完成。
+  const roomPlayback = useRoomPlayback();
+  const playSync = {
+    isInRoom: roomPlayback.inRoom,
+    shouldDisableControls: roomPlayback.locked,
+  };
   const playSyncRef = useRef(playSync);
   playSyncRef.current = playSync;
+  const mediaReady = Boolean(
+    playerReady && !isVideoLoading && !loading && videoUrl
+  );
+  const queueItemId = searchParams.get('queueId') || undefined;
+  useEffect(() => {
+    if (!currentSource || !currentId) {
+      playbackSession.reportMedia(null);
+      return;
+    }
+    playbackSession.reportMedia({
+      source: currentSource,
+      videoId: String(currentId),
+      episode: currentEpisodeIndex + 1,
+      videoName: videoTitle || detail?.title || '',
+      videoYear: videoYear || detail?.year || '',
+      searchTitle: searchTitle || '',
+      poster: detail?.poster || '',
+      url: videoUrl || '',
+      queueItemId,
+      ready: mediaReady,
+    });
+  }, [
+    currentSource,
+    currentId,
+    currentEpisodeIndex,
+    videoTitle,
+    videoYear,
+    searchTitle,
+    detail?.title,
+    detail?.year,
+    detail?.poster,
+    videoUrl,
+    queueItemId,
+    mediaReady,
+    playbackSession.reportMedia,
+  ]);
+  useEffect(
+    () => () => playbackSession.reportMedia(null),
+    // 卸载时清空：这个播放实例不再在放任何影片
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    []
+  );
   const watchRoomContext = useWatchRoomContextSafe();
   useEffect(() => {
     if (!playerReady || !artPlayerRef.current) return;
@@ -2879,8 +2913,8 @@ function PlayPageClient() {
         roomType: 'sync',
         userName: authInfo?.username || '游客',
       });
-      playbackSession.shareCurrentPlayback(room.id);
-      // 创建成功直接进房间页：同一个播放实例从整页变成房间里的画面，不会重建
+      // 创建成功直接进房间页：同一个播放实例从整页变成房间里的画面，不会重建；
+      // 空房间会自动接着这部影片和当前进度一起看（RoomPlaybackBridge）。
       router.push(`/watch-room?room=${encodeURIComponent(room.id)}`);
     } catch (error: any) {
       setToast({

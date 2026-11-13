@@ -2,10 +2,13 @@
 
 import { createContext, useContext, useMemo } from 'react';
 
+import type { LocalMedia } from '@/features/room/sync/sync-engine';
+
 export type PlaybackPresentation = 'full' | 'docked' | 'mini' | 'folded';
 export interface PlaybackController {
   video: HTMLVideoElement;
   readonly template?: { readonly $player: HTMLElement };
+  readonly notice?: { show: string };
   currentTime: number;
   playing: boolean;
   muted: boolean;
@@ -20,27 +23,41 @@ export interface PlaybackMetadata {
   loading?: boolean;
   error?: string | null;
 }
+/** 播放页实际在放的影片（解析完片源之后），与地址里的参数不一定相同。 */
+export type PlaybackMedia = LocalMedia;
+
+/**
+ * 播放请求的拦截器。返回 false 表示拦截（拦截方自己负责后续界面）。
+ * 播放会话本身不认识房间：房间模块通过它决定“这部影片在房间里怎么看”。
+ */
+export type PlaybackGuard = (href: string) => boolean;
+
+/**
+ * 全站唯一的播放会话：放什么（href）、在哪显示（presentation）、播放器控制器。
+ * 不包含任何房间逻辑。
+ */
 export interface PlaybackSession {
   href: string | null;
   presentation: PlaybackPresentation;
   controller: PlaybackController | null;
   metadata: PlaybackMetadata;
-  roomSelectionHref: string | null;
-  roomSelectionKey?: string | null;
-  shareCurrentPlayback: (roomId?: string) => void;
-  clearRoomSelection: (href: string) => void;
-  reloadPlayback: () => void;
-  requestPlayback: (
-    href: string,
-    origin?: 'user' | 'room' | 'together'
-  ) => void;
+  media: PlaybackMedia | null;
+  /**
+   * 打开一部影片。
+   * - user：用户操作，先经过拦截器（例如房间里的选片对话框）；
+   * - system：已经决定好的（房间跟随、对话框里的选择），不再拦截。
+   */
+  requestPlayback: (href: string, origin?: 'user' | 'system') => void;
   updateHref: (href: string) => boolean;
   setMetadata: (metadata: PlaybackMetadata) => void;
+  reportMedia: (media: PlaybackMedia | null) => void;
   attachController: (controller: PlaybackController | null) => void;
   registerSlot: (element: HTMLElement | null) => void;
+  setPlaybackGuard: (guard: PlaybackGuard | null) => void;
   minimize: () => void;
   restore: () => void;
   endSession: () => void;
+  reloadPlayback: () => void;
 }
 
 export const PlaybackSessionContext = createContext<PlaybackSession | null>(

@@ -20,6 +20,15 @@ jest.mock('@/components/PageLayout', () => ({
   __esModule: true,
   default: ({ children }: { children: React.ReactNode }) => children,
 }));
+jest.mock('@/features/room/RoomPlaybackBridge', () => ({
+  useRoomPlayback: () => mockRoomPlayback,
+}));
+const mockRoomPlayback = {
+  inRoom: true,
+  locked: false,
+  playTogether: jest.fn(),
+  shareCurrent: jest.fn(),
+};
 jest.mock('@/features/playback/PlaybackSlot', () => ({
   __esModule: true,
   default: () => <div data-testid='player-slot' />,
@@ -73,7 +82,6 @@ const makeRoom = () => ({
 let mockRoom = makeRoom();
 const mockPlayback = {
   href: null as string | null,
-  shareCurrentPlayback: jest.fn(),
   requestPlayback: jest.fn(),
   controller: null,
   presentation: 'docked',
@@ -98,12 +106,12 @@ beforeEach(() => {
   global.fetch = jest.fn(() => new Promise<Response>(() => undefined));
 });
 
-test('sharing the current film explicitly targets this room rather than passing the click event', () => {
+test('sharing the current film hands it to the room playback bridge', () => {
   mockRoom.canControl = true;
   mockPlayback.href = '/play?source=fixture&id=current';
   render(<RoomWorkspace />);
   fireEvent.click(screen.getByRole('button', { name: '分享当前正在看的影片' }));
-  expect(mockPlayback.shareCurrentPlayback).toHaveBeenCalledWith('qa-room');
+  expect(mockRoomPlayback.shareCurrent).toHaveBeenCalledTimes(1);
 });
 
 test.each([
@@ -354,9 +362,8 @@ test('a host queue play action uses an explicit together intent', () => {
     ];
   render(<RoomWorkspace />);
   fireEvent.click(screen.getByRole('button', { name: '播放下一部' }));
-  expect(mockPlayback.requestPlayback).toHaveBeenCalledWith(
-    '/play?source=fixture&id=next&episode=1&queueId=next',
-    'together'
+  expect(mockRoomPlayback.playTogether).toHaveBeenCalledWith(
+    '/play?source=fixture&id=next&episode=1&queueId=next'
   );
 });
 
@@ -382,9 +389,8 @@ test('starting from an idle room chooses the first waiting item rather than repl
     ];
   render(<RoomWorkspace />);
   fireEvent.click(screen.getByRole('button', { name: '开始播放' }));
-  expect(mockPlayback.requestPlayback).toHaveBeenCalledWith(
-    '/play?source=fixture&id=next&episode=1&queueId=next',
-    'together'
+  expect(mockRoomPlayback.playTogether).toHaveBeenCalledWith(
+    '/play?source=fixture&id=next&episode=1&queueId=next'
   );
 });
 
