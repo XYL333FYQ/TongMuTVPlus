@@ -482,19 +482,12 @@ export function useScreenShare(
 
   // 观众：房间在共享，就向共享设备要画面
   useEffect(() => {
-    if (!socket || !currentRoom || isLocalSharing || !isConnected)
-      return;
+    if (!socket || !currentRoom || isLocalSharing || !isConnected) return;
     if (currentState?.type !== 'screen' || currentState.status !== 'sharing')
       return;
 
     socket.emit('screen:viewer-ready');
-  }, [
-    currentRoom,
-    currentState,
-    isConnected,
-    isLocalSharing,
-    socket,
-  ]);
+  }, [currentRoom, currentState, isConnected, isLocalSharing, socket]);
 
   return {
     currentRoom,

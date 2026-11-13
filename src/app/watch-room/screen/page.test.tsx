@@ -159,9 +159,7 @@ it('a device that cannot share only waits and watches: no share controls, no con
   mockShare = { ...mockShare, canShare: false };
   render(<WatchRoomScreenPage />);
   expect(screen.queryByRole('button', { name: '开始共享' })).toBeNull();
-  expect(
-    screen.getByText('等待有控制权的人开始共享屏幕')
-  ).toBeInTheDocument();
+  expect(screen.getByText('等待有控制权的人开始共享屏幕')).toBeInTheDocument();
   expect(localStorage.getItem('watch_room_no_connect')).toBeNull();
 });
 

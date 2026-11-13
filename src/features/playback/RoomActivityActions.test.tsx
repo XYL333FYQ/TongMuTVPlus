@@ -58,9 +58,7 @@ it('does not substitute account ownership for current-device control', () => {
     />
   );
   expect(screen.getByRole('button', { name: '在房间播放' })).toBeDisabled();
-  expect(
-    screen.getByText('房主没有开放成员切换房间活动')
-  ).toBeInTheDocument();
+  expect(screen.getByText('房主没有开放成员切换房间活动')).toBeInTheDocument();
   expect(share).not.toHaveBeenCalled();
 });
 

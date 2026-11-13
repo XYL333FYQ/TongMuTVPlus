@@ -295,7 +295,7 @@ it.each(['docked', 'mini', 'folded'] as const)(
     expect(original.isConnected).toBe(false);
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
     expect(screen.getByTestId('session-href').textContent).toBe(originalHref);
-      expect(mockRoom.roomCommand).not.toHaveBeenCalled();
+    expect(mockRoom.roomCommand).not.toHaveBeenCalled();
     expect(mockRoom.socket.timeout().emit).not.toHaveBeenCalled();
     expect(mockRouter.push).not.toHaveBeenCalled();
     expect(mockRouter.replace).not.toHaveBeenCalled();
@@ -712,7 +712,9 @@ describe('in a room (RoomPlaybackBridge)', () => {
     await act(async () => {
       await new Promise((resolve) => setTimeout(resolve, 50));
     });
-    expect(screen.queryByTestId('global-playback-host')).not.toBeInTheDocument();
+    expect(
+      screen.queryByTestId('global-playback-host')
+    ).not.toBeInTheDocument();
     expect(room.leaveRoom).not.toHaveBeenCalled();
     expect(screen.getByRole('link', { name: /返回房间/ })).toBeInTheDocument();
     mockPathname = '/watch-room';

@@ -44,8 +44,7 @@ export function useRoomMusicActivity() {
     const currentRoom = current.watchRoom?.currentRoom;
     if (!currentRoom || !current.watchRoom?.isConnected)
       throw Error('房间未连接，请重连后重试');
-    if (!current.watchRoom.canControl)
-      throw Error('房主没有开放成员控制播放');
+    if (!current.watchRoom.canControl) throw Error('房主没有开放成员控制播放');
     if (!state) throw Error('请先选择歌曲');
     await current.watchRoom.roomCommand('music:change', {
       ...state,
