@@ -1,16 +1,6 @@
 'use client';
 
-import { AnimatePresence, motion } from 'framer-motion';
-import {
-  Check,
-  ChevronDown,
-  Copy,
-  Link2,
-  Monitor,
-  Plus,
-  Shield,
-  X,
-} from 'lucide-react';
+import { X } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -38,12 +28,7 @@ import {
   isExternalRoomServer,
 } from './external-room-server';
 import { compressRoomCover } from './room-cover';
-import {
-  defaultRoomName,
-  displayRoomName,
-  maskedRoomId,
-} from './room-presentation';
-import RoomActionMenu from './RoomActionMenu';
+import { defaultRoomName, displayRoomName } from './room-presentation';
 import {
   type RoomFormValues,
   JoinRoomForm,
@@ -52,6 +37,7 @@ import {
 } from './RoomDialogs';
 import RoomDirectory, { type RoomSummary } from './RoomDirectory';
 import RoomFilmPicker from './RoomFilmPicker';
+import RoomHeader from './RoomHeader';
 import RoomMediaInfo from './RoomMediaInfo';
 import RoomQuickStart from './RoomQuickStart';
 import RoomSidePanel from './RoomSidePanel';
@@ -481,150 +467,34 @@ export default function RoomWorkspace() {
             )}
           </div>
         )}
-        <div className='tm-rooms-heading'>
-          <div>
-            <div className='tm-room-title-line'>
-              <h1>{roomTitle}</h1>
-              {room && (
-                <div className='tm-room-heading-status' aria-live='polite'>
-                  <span className='tm-room-state-badge'>
-                    <span
-                      aria-hidden
-                      className={`tm-room-connection ${
-                        watchRoom.isConnected ? '' : 'is-offline'
-                      }`}
-                    />
-                    {watchRoom.isConnected ? '已连接' : '重连中'}
-                  </span>
-                  <motion.span
-                    key={hostLabel}
-                    className='tm-room-state-badge'
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ duration: reducedMotion ? 0.12 : 0.2 }}
-                  >
-                    <Shield size={13} aria-hidden />
-                    {hostLabel}
-                  </motion.span>
-                </div>
-              )}
-            </div>
-            {room && (
-              <p className='tm-room-identifier'>
-                房间号 {maskedRoomId(room.id)} ·{' '}
-                <button onClick={copyRoomId} aria-label='复制房间号'>
-                  {copiedRoomId === room.id ? '已复制' : '复制'}
-                </button>
-              </p>
-            )}
-            {(room?.description || !room) && (
-              <p>{room?.description || '创建房间，或用邀请码加入'}</p>
-            )}
-          </div>
-          <div className='tm-rooms-heading-actions'>
-            {room ? (
-              <>
-                <button
-                  className='tm-room-avatar-cluster'
-                  aria-label={`成员，${room.memberCount}人`}
-                  aria-expanded={panelTab === 'members'}
-                  aria-controls='tm-room-panel-members'
-                  onClick={() => {
-                    setPanelTab((value) =>
-                      value === 'members' ? 'queue' : 'members'
-                    );
-                  }}
-                >
-                  <AnimatePresence initial={false}>
-                    {/* 同一账号开多个页面会有多条连接；人数按账号算，头像也按账号去重 */}
-                    {watchRoom.members
-                      .filter(
-                        (member, i, all) =>
-                          all.findIndex(
-                            (other) => other.name === member.name
-                          ) === i
-                      )
-                      .slice(0, 4)
-                      .map((member) => (
-                        <motion.span
-                          key={member.id}
-                          className='tm-room-avatar'
-                          initial={{
-                            opacity: 0,
-                            scale: reducedMotion ? 1 : 0.8,
-                          }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          exit={{ opacity: 0, scale: reducedMotion ? 1 : 0.8 }}
-                          transition={
-                            reducedMotion
-                              ? { duration: 0.12 }
-                              : { type: 'spring', duration: 0.32, bounce: 0.2 }
-                          }
-                        >
-                          {member.name.charAt(0).toUpperCase()}
-                        </motion.span>
-                      ))}
-                  </AnimatePresence>
-                  <span className='tm-room-member-count'>
-                    {room.memberCount} 人
-                  </span>
-                  <ChevronDown size={14} aria-hidden />
-                </button>
-                <button className='tm-room-primary' onClick={copyInvite}>
-                  {copiedInviteRoomId === room.id ? (
-                    <Check size={16} />
-                  ) : (
-                    <Copy size={16} />
-                  )}
-                  {copiedInviteRoomId === room.id ? '已复制' : '邀请朋友'}
-                </button>
-                {watchRoom.canControl && (
-                  <Link
-                    href='/watch-room/screen'
-                    className='tm-room-screen-shortcut'
-                    aria-label='屏幕共享'
-                  >
-                    <Monitor size={16} aria-hidden />
-                    <span>屏幕共享</span>
-                  </Link>
-                )}
-                <RoomActionMenu
-                  label='房间操作'
-                  items={[
-                    ...(watchRoom.isOwner
-                      ? [{ label: '房间设置', onSelect: openSettings }]
-                      : []),
-                    {
-                      label: '退出房间',
-                      danger: true,
-                      onSelect: () => {
-                        watchRoom.leaveRoom();
-                        router.replace('/watch-room');
-                      },
-                    },
-                  ]}
-                />
-              </>
-            ) : (
-              <>
-                <button className='tm-room-primary' onClick={openCreate}>
-                  <Plus size={17} />
-                  创建房间
-                </button>
-                <button
-                  onClick={() => {
-                    setJoinId(inviteId);
-                    setError('');
-                    setDialog('join');
-                  }}
-                >
-                  <Link2 size={16} />
-                  用邀请码加入
-                </button>
-              </>
-            )}
-          </div>
-        </div>
+        <RoomHeader
+          room={room}
+          roomTitle={roomTitle}
+          members={watchRoom.members}
+          connected={watchRoom.isConnected}
+          canControl={watchRoom.canControl}
+          isOwner={watchRoom.isOwner}
+          hostLabel={hostLabel}
+          panelTab={panelTab}
+          copiedRoomId={copiedRoomId}
+          copiedInviteRoomId={copiedInviteRoomId}
+          copyRoomId={() => void copyRoomId()}
+          copyInvite={() => void copyInvite()}
+          openSettings={openSettings}
+          openCreate={openCreate}
+          openJoin={() => {
+            setJoinId(inviteId);
+            setError('');
+            setDialog('join');
+          }}
+          onToggleMembers={() =>
+            setPanelTab((value) => (value === 'members' ? 'queue' : 'members'))
+          }
+          onLeave={() => {
+            watchRoom.leaveRoom();
+            router.replace('/watch-room');
+          }}
+        />
         {(error || watchRoom.lastError || directoryError) && (
           <div className='tm-room-feedback tm-room-feedback-error' role='alert'>
             {error || watchRoom.lastError || directoryError}
