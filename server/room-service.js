@@ -267,15 +267,19 @@ class RoomService {
     this.runtime = new Map();
     this.sessions = new Map();
     this.rate = new Map();
-    // 进程重启：所有人都已断开，房间停在当时的位置（暂停），屏幕共享结束。
+    // 进程重启：所有人都已断开，房间停在最后记录的位置（暂停），屏幕共享结束。
+    // 不按停机时长推算进度：崩溃或强制结束时停机多久未知，正常关闭时
+    // shutdown() 已经把位置推算并暂停好了。
     for (const id of store.allIds()) {
       const room = store.get(id);
       room.emptySince = room.emptySince ?? this.now();
       if (room.currentState?.type === 'screen') room.currentState = null;
-      else if (room.currentState && 'isPlaying' in room.currentState)
+      else if (room.currentState?.isPlaying)
         room.currentState = {
-          ...projected(room.currentState, this.now()),
+          ...room.currentState,
           isPlaying: false,
+          updatedAt: this.now(),
+          version: (Number(room.currentState.version) || 0) + 1,
         };
       store.save(room);
     }

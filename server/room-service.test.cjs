@@ -411,6 +411,20 @@ test('state versions keep increasing after a restart', (t) => {
   assert.ok(after.state.version > before);
 });
 
+test('a crash restart pauses at the last recorded position instead of projecting downtime', (t) => {
+  const f = setup(t);
+  const id = createAndHost(f);
+  const before = f.command('owner', id, 'play:change', video(40)).state;
+  assert.equal(before.isPlaying, true);
+  // 没有调用 shutdown()：模拟进程崩溃后两小时才重启。
+  f.advance(2 * 3600000);
+  const restarted = new RoomService(f.store, { now: f.now });
+  const state = restarted.read(identities.owner, id).currentState;
+  assert.equal(state.isPlaying, false);
+  assert.equal(state.currentTime, 40);
+  assert.ok(state.version > before.version);
+});
+
 test('adding a waiting film survives unrelated playback revisions and controller epochs', (t) => {
   const f = setup(t);
   const id = createAndHost(f);
