@@ -71,8 +71,6 @@ const audioElement = () => document.querySelector('audio') as HTMLAudioElement;
 beforeEach(() => {
   jest.clearAllMocks();
   mockSession = {
-    followingRoom: true,
-    resumeRoom: jest.fn(),
     controller: null,
   };
   mockRoom = makeRoom();
@@ -130,25 +128,5 @@ it('the device that controls the music is sent to the music player rather than p
     'href',
     '/music'
   );
-  expect(audioElement().getAttribute('src')).toBeNull();
-});
-
-it('someone watching alone is not made to hear the room, and can come back explicitly', async () => {
-  mockSession.followingRoom = false;
-  await renderPage();
-  expect(audioElement().getAttribute('src')).toBeNull();
-  screen.getByRole('button', { name: '恢复一起听' }).click();
-  expect(mockSession.resumeRoom).toHaveBeenCalledTimes(1);
-});
-
-it('live music events are ignored while watching alone', async () => {
-  mockSession.followingRoom = false;
-  await renderPage();
-  const handler = mockRoom.socket.on.mock.calls.find(
-    ([event]: [string]) => event === 'music:change'
-  )?.[1];
-  if (handler) {
-    await act(async () => handler(musicState));
-  }
   expect(audioElement().getAttribute('src')).toBeNull();
 });

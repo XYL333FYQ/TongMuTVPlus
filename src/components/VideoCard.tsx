@@ -454,7 +454,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
           window.location.pathname + window.location.search ===
           selectedPlaybackHref
         )
-          playback?.requestPlayback(selectedPlaybackHref, 'personal');
+          playback?.requestPlayback(selectedPlaybackHref, 'user');
         else router.push(selectedPlaybackHref);
       }
     }, [

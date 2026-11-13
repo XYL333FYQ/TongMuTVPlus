@@ -13,7 +13,6 @@ jest.mock('@/features/playback/context', () => ({
   usePlaybackSession: () => ({
     controller: null,
     metadata: {},
-    followingRoom: true,
   }),
 }));
 jest.mock('@/components/PageLayout', () => ({

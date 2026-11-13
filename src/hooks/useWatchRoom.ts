@@ -320,7 +320,6 @@ export function useWatchRoom(
 
   const remember = useCallback((room: Room) => {
     const username = getAuthInfoFromBrowserCookie()?.username || '';
-    const viewing = getStoredRoomViewing(room.id);
     localStorage.setItem(
       STORAGE_KEY,
       JSON.stringify({
@@ -329,9 +328,6 @@ export function useWatchRoom(
         userName: username,
         isOwner: room.ownerAccountId === username,
         timestamp: Date.now(),
-        ...(viewing
-          ? { following: viewing.following, personalHref: viewing.personalHref }
-          : {}),
       })
     );
   }, []);
@@ -777,34 +773,6 @@ export function getStoredRoomInfo(): StoredRoomInfo | null {
     return value;
   } catch {
     return null;
-  }
-}
-export function getStoredRoomViewing(roomId?: string): StoredRoomInfo | null {
-  const stored = getStoredRoomInfo();
-  const username = getAuthInfoFromBrowserCookie()?.username;
-  if (
-    !stored ||
-    stored.userName !== username ||
-    (roomId && stored.roomId !== roomId)
-  )
-    return null;
-  return stored;
-}
-
-export function saveRoomViewingPreference(
-  roomId: string | undefined,
-  following: boolean,
-  personalHref: string | null = null
-) {
-  const stored = getStoredRoomViewing(roomId);
-  if (!stored) return;
-  try {
-    localStorage.setItem(
-      STORAGE_KEY,
-      JSON.stringify({ ...stored, following, personalHref })
-    );
-  } catch {
-    // Storage may be unavailable; the current session still keeps its mode.
   }
 }
 function clearStoredRoomInfo() {

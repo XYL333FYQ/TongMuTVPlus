@@ -71,7 +71,6 @@ function setup() {
     },
   };
   mockSession = {
-    followingRoom: true,
     roomSelectionHref: null,
     requestPlayback: jest.fn(),
     clearRoomSelection: jest.fn(),
@@ -296,20 +295,4 @@ test('without permission a local episode switch goes back to the room episode', 
     'room'
   );
   expect(player.notice.show).toContain('房主没有开放成员换片');
-});
-
-test('personal viewing keeps the room connection but ignores room playback', async () => {
-  const { player, Harness, emit } = setup();
-  mockRoom.canControl = true;
-  mockSession.followingRoom = false;
-  render(<Harness />);
-  await settle();
-  player.video.paused = true;
-  await act(async () => emit('video:pause'));
-  await act(async () => {
-    jest.advanceTimersByTime(3000);
-  });
-  expect(player.currentTime).toBe(10);
-  expect(mockRoom.roomCommand).not.toHaveBeenCalled();
-  expect(mockSession.requestPlayback).not.toHaveBeenCalled();
 });

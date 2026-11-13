@@ -27,16 +27,13 @@ const EVENTS: Record<PublishKind, string> = {
 export function useRoomMusicActivity() {
   const watchRoom = useWatchRoomContextSafe();
   const session = usePlaybackSessionSafe();
-  const following = session?.followingRoom !== false;
   const room = watchRoom?.currentRoom;
-  const active = Boolean(
-    room && following && room.currentState?.type === 'music'
-  );
-  const canControl = Boolean(room && following && watchRoom?.canControl);
+  const active = Boolean(room && room.currentState?.type === 'music');
+  const canControl = Boolean(room && watchRoom?.canControl);
   const publishing = active && canControl;
 
-  const latest = useRef({ watchRoom, session, following, publishing });
-  latest.current = { watchRoom, session, following, publishing };
+  const latest = useRef({ watchRoom, session, publishing });
+  latest.current = { watchRoom, session, publishing };
   // 同一房间的音乐命令一条一条发：前一条确认后，下一条才带上它产生的新房间版本，
   // 否则换歌后紧跟的进度更新必然带着旧版本被拒绝
   const publishQueue = useRef<Promise<unknown>>(Promise.resolve());
@@ -45,11 +42,10 @@ export function useRoomMusicActivity() {
   const share = useCallback(async (state: MusicSyncState | null) => {
     const current = latest.current;
     const currentRoom = current.watchRoom?.currentRoom;
-    if (!current.following) throw Error('请先返回房间恢复一起看，再共享歌曲');
     if (!currentRoom || !current.watchRoom?.isConnected)
       throw Error('房间未连接，请重连后重试');
     if (!current.watchRoom.canControl)
-      throw Error('当前设备没有房间播放控制权');
+      throw Error('房主没有开放成员控制播放');
     if (!state) throw Error('请先选择歌曲');
     await current.watchRoom.roomCommand('music:change', {
       ...state,
@@ -76,25 +72,19 @@ export function useRoomMusicActivity() {
   }, []);
 
   /**
-   * 本机要开始出声：不是正在给房间发布时，先退出跟随（房间和消息保留），
-   * 再让房间电影停下，避免两路声音。退出失败就返回 false，调用方不要播放。
+   * 本机要开始出声。不在房间时让之前的影片停下；在房间里不暂停房间的
+   * 影片（那是整个房间的进度），声音归属会自动让给本机音乐。
    */
   const beginLocalPlayback = useCallback(async () => {
     const current = latest.current;
-    if (
-      current.watchRoom?.currentRoom &&
-      current.following &&
-      !current.publishing
-    ) {
-      if (!(await current.session?.enterPersonalViewing())) return false;
-    }
-    if (!latest.current.publishing) latest.current.session?.controller?.pause();
+    if (!current.publishing && !current.watchRoom?.currentRoom)
+      current.session?.controller?.pause();
     return true;
   }, []);
 
   return {
     hasRoom: Boolean(room),
-    isInRoom: Boolean(room && following),
+    isInRoom: Boolean(room),
     active,
     canControl,
     publishing,

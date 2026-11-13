@@ -370,8 +370,7 @@ export default function PlaybackRoomMessages() {
   const room = watchRoom?.currentRoom;
   const state = room?.currentState;
   const active = Boolean(
-    session?.followingRoom &&
-      session.href &&
+    session?.href &&
       state?.type === 'play' &&
       playbackIdentity(session.href) ===
         playbackIdentity(playbackHrefFromState(state))

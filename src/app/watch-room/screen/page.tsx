@@ -15,7 +15,6 @@ import PageContainer from '@/components/PageContainer';
 import Select from '@/components/ui/Select';
 import { useWatchRoomContext } from '@/components/WatchRoomProvider';
 
-import { usePlaybackSessionSafe } from '@/features/playback/context';
 import { useAudioFocus } from '@/features/playback/useAudioFocus';
 
 const WATCH_ROOM_NO_CONNECT_KEY = 'watch_room_no_connect';
@@ -54,13 +53,11 @@ export default function WatchRoomScreenPage() {
   const router = useRouter();
   const watchRoom = useWatchRoomContext();
   const { currentRoom, members, leaveRoom } = watchRoom;
-  const session = usePlaybackSessionSafe();
   const [qualityPreset, setQualityPreset] =
     useState<ScreenShareQualityPreset>('smooth');
   const {
     currentRoom: screenRoom,
     canShare,
-    following,
     isLocalSharing,
     isSharing,
     isStarting,
@@ -243,21 +240,10 @@ export default function WatchRoomScreenPage() {
               <div className='absolute px-6 text-center text-[color:var(--tm-room-player-text)]'>
                 <MonitorPlay className='mx-auto mb-3 h-12 w-12 text-[color:var(--tm-room-player-text)] opacity-70' />
                 <p className='text-sm font-medium'>
-                  {!following
-                    ? '正在个人观看，房间和消息保留'
-                    : canShare
+                  {canShare
                     ? '点击开始共享，向房员推送浏览器画面'
-                    : '等待主持开始共享屏幕'}
+                    : '等待有控制权的人开始共享屏幕'}
                 </p>
-                {!following && (
-                  <button
-                    type='button'
-                    onClick={() => void session?.resumeRoom()}
-                    className='mt-3 rounded-lg bg-fg px-4 py-2 text-inverse min-h-[44px] tm-press'
-                  >
-                    恢复一起看
-                  </button>
-                )}
                 {canShare && (
                   <p className='mt-2 text-sm text-[color:var(--tm-room-player-text)] opacity-70'>
                     共享期间本页不要关闭；想继续浏览可以点右上角“新开主页”。

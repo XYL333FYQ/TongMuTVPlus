@@ -4,7 +4,6 @@ import { useCallback, useEffect, useRef } from 'react';
 
 import { useWatchRoomContextSafe } from '@/components/WatchRoomProvider';
 
-import { usePlaybackSessionSafe } from '@/features/playback/context';
 import { parseWebLiveReference } from '@/features/playback/room-live';
 
 import type { LiveState } from '@/types/watch-room';
@@ -25,18 +24,15 @@ export function useRoomLiveActivity(options: {
   isReady?: () => boolean;
 }) {
   const watchRoom = useWatchRoomContextSafe();
-  const session = usePlaybackSessionSafe();
-  const following = session?.followingRoom !== false;
   const room = watchRoom?.currentRoom;
   const state = room?.currentState?.type === 'live' ? room.currentState : null;
   const accepts =
     state && Boolean(parseWebLiveReference(state)) === (options.kind === 'web');
-  const active = Boolean(room && following && accepts);
+  const active = Boolean(room && accepts);
   const scope = JSON.stringify([
     room?.id,
     room?.controllerEpoch,
     watchRoom?.socket?.id,
-    following,
     active && identity(state),
     watchRoom?.isConnected,
   ]);
@@ -46,9 +42,8 @@ export function useRoomLiveActivity(options: {
     scope,
     state,
     active,
-    following,
   });
-  latest.current = { watchRoom, options, scope, state, active, following };
+  latest.current = { watchRoom, options, scope, state, active };
   const applied = useRef('');
   const ready = useRef('');
 
@@ -117,7 +112,6 @@ export function useRoomLiveActivity(options: {
     const current = latest.current;
     const currentRoom = current.watchRoom?.currentRoom;
     const selected = selection || current.options.selection;
-    if (!current.following) throw Error('请先返回房间恢复一起看，再共享频道');
     if (!currentRoom || !current.watchRoom?.isConnected)
       throw Error('房间未连接，请重连后重试');
     if (!current.watchRoom.canControl)
@@ -130,14 +124,14 @@ export function useRoomLiveActivity(options: {
   }, []);
 
   return {
-    isInRoom: Boolean(room && following),
+    isInRoom: Boolean(room),
     hasRoom: Boolean(room),
     active,
     mediaMatches: Boolean(
       active && identity(options.selection) === identity(state)
     ),
-    isOwner: Boolean(room && following && watchRoom?.canControl),
-    canControl: Boolean(room && following && watchRoom?.canControl),
+    isOwner: Boolean(room && watchRoom?.canControl),
+    canControl: Boolean(room && watchRoom?.canControl),
     shouldDisableControls: Boolean(active && !watchRoom?.canControl),
     broadcast,
   };

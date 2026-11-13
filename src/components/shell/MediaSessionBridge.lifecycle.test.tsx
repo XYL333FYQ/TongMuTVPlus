@@ -4,7 +4,6 @@ import MediaSessionBridge from './MediaSessionBridge';
 
 let playback: {
   controller: { video: HTMLVideoElement; play?: jest.Mock; pause?: jest.Mock };
-  followingRoom: boolean;
   metadata: { title: string };
 } | null;
 let room: { currentRoom: { id: string }; canControl: boolean } | null;
@@ -95,7 +94,7 @@ test('room listeners cannot bypass player controls through system actions; role 
     play: jest.fn().mockResolvedValue(undefined),
     pause: jest.fn(),
   };
-  playback = { controller, followingRoom: true, metadata: { title: '影片 A' } };
+  playback = { controller, metadata: { title: '影片 A' } };
   room = { currentRoom: { id: 'room' }, canControl: false };
   const view = render(<MediaSessionBridge />);
   act(() => {
@@ -115,7 +114,6 @@ test('singleton metadata survives page title changes and updates without another
   const video = media();
   playback = {
     controller: { video },
-    followingRoom: false,
     metadata: { title: '影片 A' },
   };
   const view = render(<MediaSessionBridge />);
@@ -160,7 +158,7 @@ test('paused singleton selection survives metadata changes and uses its controll
     play: jest.fn().mockResolvedValue(undefined),
     pause: jest.fn(),
   };
-  playback = { controller, followingRoom: false, metadata: { title: 'A' } };
+  playback = { controller, metadata: { title: 'A' } };
   const view = render(<MediaSessionBridge />);
   Object.defineProperty(video, 'paused', { value: true });
   act(() => {
@@ -222,7 +220,6 @@ test('native metadata and room permission update without clearing the active ses
   const video = media();
   playback = {
     controller: { video },
-    followingRoom: true,
     metadata: { title: 'Film A' },
   };
   room = { currentRoom: { id: 'room' }, canControl: false };

@@ -70,10 +70,10 @@ function makeRoom() {
       Promise.resolve()
     ),
     socket: { connected: true, timeout: jest.fn(() => ({ emit })) },
+    leaveRoom: jest.fn(),
   };
 }
 let mockRoom: ReturnType<typeof makeRoom> | null = null;
-let mockPersonalResult: unknown;
 
 // This intentionally does not load media: these are React lifetime and command-order tests.
 function MockPlaybackSurface() {
@@ -119,12 +119,6 @@ function Probe({ dock = false }: { dock?: boolean }) {
       <button onClick={() => session.requestPlayback(FILM_B)}>
         选择影片 B
       </button>
-      <button onClick={() => session.requestPlayback(FILM_B, 'personal')}>
-        明确自己看 B
-      </button>
-      <button onClick={() => session.requestPlayback(FILM_A, 'personal')}>
-        明确自己看 A
-      </button>
       <button onClick={() => session.requestPlayback(FILM_B, 'together')}>
         明确一起看 B
       </button>
@@ -144,15 +138,6 @@ function Probe({ dock = false }: { dock?: boolean }) {
       </button>
       <button onClick={session.minimize}>测试收起</button>
       <button onClick={session.restore}>测试恢复</button>
-      <button onClick={session.enterPersonalViewing}>测试个人观看</button>
-      <button
-        onClick={async () => {
-          mockPersonalResult = await session.enterPersonalViewing();
-        }}
-      >
-        测试个人观看返回结果
-      </button>
-      <button onClick={session.resumeRoom}>测试恢复一起看</button>
       <button
         onClick={() =>
           session.setMetadata({ title: '影片 A', error: '网络暂时断开' })
@@ -160,9 +145,6 @@ function Probe({ dock = false }: { dock?: boolean }) {
       >
         模拟影片加载失败
       </button>
-      <output data-testid='session-following'>
-        {String(session.followingRoom)}
-      </output>
       <output data-testid='session-href'>{session.href}</output>
       {dock && (
         <div ref={session.registerSlot} data-testid='room-playback-slot' />
@@ -189,33 +171,7 @@ function deferred() {
   return { promise, resolve };
 }
 
-it('uses the existing personal choice for the current film after acknowledgement without remounting', async () => {
-  mockPathname = '/watch-room';
-  mockRoom = makeRoom();
-  const acknowledgement = deferred();
-  mockRoom.roomCommand.mockReturnValueOnce(acknowledgement.promise);
-  render(<Harness dock />);
-  const video = await screen.findByTestId('session-video');
-  const href = screen.getByTestId('session-href').textContent;
-  fireEvent.click(screen.getByRole('button', { name: '测试个人观看' }));
-  expect(mockRoom.roomCommand).toHaveBeenCalledWith('room:following', {
-    following: false,
-  });
-  expect(screen.getByTestId('session-following')).toHaveTextContent('true');
-  await act(async () => acknowledgement.resolve());
-  expect(screen.getByTestId('session-following')).toHaveTextContent('false');
-  expect(screen.getByTestId('session-href')).toHaveTextContent(href || '');
-  expect(screen.getByTestId('session-video')).toBe(video);
-  expect(mockMounts).toBe(1);
-  expect(mockUnmounts).toBe(0);
-  fireEvent.click(screen.getByRole('button', { name: '测试恢复一起看' }));
-  await waitFor(() =>
-    expect(screen.getByTestId('session-following')).toHaveTextContent('true')
-  );
-  expect(screen.getByTestId('session-video')).toBe(video);
-});
-
-it('folds through the room corner icon independently from personal viewing', async () => {
+it('folds through the room corner icon without touching the room', async () => {
   mockPathname = '/watch-room';
   mockRoom = makeRoom();
   render(<Harness dock />);
@@ -227,7 +183,6 @@ it('folds through the room corner icon independently from personal viewing', asy
     'data-presentation',
     'folded'
   );
-  expect(screen.getByTestId('session-following')).toHaveTextContent('true');
   expect(mockRoom.roomCommand).not.toHaveBeenCalled();
   expect(screen.getByTestId('session-video')).toBe(video);
 });
@@ -326,8 +281,7 @@ it.each(['docked', 'mini', 'folded'] as const)(
     expect(original.isConnected).toBe(false);
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
     expect(screen.getByTestId('session-href').textContent).toBe(originalHref);
-    expect(screen.getByTestId('session-following')).toHaveTextContent('true');
-    expect(mockRoom.roomCommand).not.toHaveBeenCalled();
+      expect(mockRoom.roomCommand).not.toHaveBeenCalled();
     expect(mockRoom.socket.timeout().emit).not.toHaveBeenCalled();
     expect(mockRouter.push).not.toHaveBeenCalled();
     expect(mockRouter.replace).not.toHaveBeenCalled();
@@ -421,44 +375,10 @@ it('adds a selection to the room queue without replacing the playing film, befor
   expect(screen.getByTestId('session-href')).toHaveTextContent(
     currentHref || ''
   );
-  expect(mockRouter.replace).not.toHaveBeenCalled();
+  // 页面地址回到房间正在放的影片
+  expect(mockRouter.replace).toHaveBeenCalledWith(currentHref);
   expect(room.socket.timeout().emit).not.toHaveBeenCalled();
   expect(mockMounts).toBe(1);
-});
-
-it('keeps an explicit personal selection when an old room arrives after the selection', async () => {
-  const view = render(<Harness />);
-  fireEvent.click(screen.getByRole('button', { name: '明确自己看 B' }));
-  await waitFor(() =>
-    expect(screen.getByTestId('session-href')).toHaveTextContent('id=film-b')
-  );
-  mockRoom = makeRoom();
-  view.rerender(<Harness />);
-  await waitFor(() =>
-    expect(mockRoom?.roomCommand).toHaveBeenCalledWith('room:following', {
-      following: false,
-    })
-  );
-  expect(screen.getByTestId('session-following')).toHaveTextContent('false');
-  expect(screen.getByTestId('session-href')).toHaveTextContent('id=film-b');
-  expect(screen.getByTestId('room-selection')).toBeEmptyDOMElement();
-  expect(mockRouter.push).not.toHaveBeenCalled();
-});
-
-it('an already personal viewer can select another personal film while the room connection is offline', async () => {
-  mockRoom = makeRoom();
-  render(<Harness />);
-  fireEvent.click(screen.getByRole('button', { name: '明确自己看 B' }));
-  await waitFor(() =>
-    expect(screen.getByTestId('session-following')).toHaveTextContent('false')
-  );
-  mockRoom.isConnected = false;
-  mockRoom.roomCommand.mockRejectedValue(new Error('连接中断'));
-  fireEvent.click(screen.getByRole('button', { name: '明确自己看 A' }));
-  await waitFor(() =>
-    expect(screen.getByTestId('session-href')).toHaveTextContent('id=film-a')
-  );
-  expect(mockRoom.roomCommand).toHaveBeenCalledTimes(1);
 });
 
 it('room selection pages provide their own return link instead of a duplicate floating return', () => {
@@ -468,24 +388,6 @@ it('room selection pages provide their own return link instead of a duplicate fl
   expect(
     screen.queryByRole('link', { name: /返回房间/ })
   ).not.toBeInTheDocument();
-});
-
-it('personal viewing removes the former room queue item without remounting the film', async () => {
-  mockRoom = makeRoom();
-  mockRoom.currentRoom.currentState.queueItemId = 'old-room-item';
-  render(<Harness />);
-  const video = await screen.findByTestId('session-video');
-  expect(screen.getByTestId('session-href')).toHaveTextContent(
-    'queueId=old-room-item'
-  );
-  fireEvent.click(screen.getByRole('button', { name: '测试个人观看' }));
-  await waitFor(() =>
-    expect(screen.getByTestId('session-following')).toHaveTextContent('false')
-  );
-  expect(screen.getByTestId('session-href').textContent).not.toContain(
-    'queueId='
-  );
-  expect(screen.getByTestId('session-video')).toBe(video);
 });
 
 it('sharing into a new room never publishes an item belonging to the previous room queue', () => {
@@ -506,99 +408,6 @@ it('sharing into a new room never publishes an item belonging to the previous ro
   );
 });
 
-it('restores personal viewing for the remembered account and room after a reload', async () => {
-  localStorage.setItem(
-    'watch_room_info',
-    JSON.stringify({
-      roomId: 'room-1',
-      roomName: '测试房间',
-      userName: 'viewer',
-      timestamp: Date.now(),
-      following: false,
-      personalHref: FILM_B,
-    })
-  );
-  mockRoom = makeRoom();
-  render(<Harness />);
-  await waitFor(() =>
-    expect(screen.getByTestId('session-href')).toHaveTextContent('id=film-b')
-  );
-  expect(screen.getByTestId('session-following')).toHaveTextContent('false');
-  expect(mockRoom.roomCommand).toHaveBeenCalledWith('room:following', {
-    following: false,
-  });
-});
-
-it('does not restore the personal film or mode saved by another account', async () => {
-  localStorage.setItem(
-    'watch_room_info',
-    JSON.stringify({
-      roomId: 'room-1',
-      userName: 'another-account',
-      timestamp: Date.now(),
-      following: false,
-      personalHref: FILM_B,
-    })
-  );
-  mockRoom = makeRoom();
-  render(<Harness />);
-  await waitFor(() =>
-    expect(screen.getByTestId('session-href')).toHaveTextContent('id=film-a')
-  );
-  expect(screen.getByTestId('session-following')).toHaveTextContent('true');
-});
-
-it('does not apply a different room personal preference to a newly joined room', async () => {
-  localStorage.setItem(
-    'watch_room_info',
-    JSON.stringify({
-      roomId: 'old-room',
-      userName: 'viewer',
-      timestamp: Date.now(),
-      following: false,
-      personalHref: FILM_B,
-    })
-  );
-  mockRoom = makeRoom();
-  render(<Harness />);
-  await waitFor(() =>
-    expect(screen.getByTestId('session-href')).toHaveTextContent('id=film-a')
-  );
-  expect(screen.getByTestId('session-following')).toHaveTextContent('true');
-});
-
-it('an old close acknowledgement cannot stop a newer personal selection', async () => {
-  mockPathname = '/search';
-  mockRoom = makeRoom();
-  const closing = deferred();
-  const selecting = deferred();
-  mockRoom.roomCommand
-    .mockReturnValueOnce(closing.promise)
-    .mockReturnValueOnce(selecting.promise);
-  render(<Harness />);
-  await screen.findByTestId('session-video');
-  fireEvent.click(screen.getByRole('button', { name: '关闭播放' }));
-  fireEvent.click(screen.getByRole('button', { name: '明确自己看 B' }));
-  await act(async () => selecting.resolve());
-  expect(screen.getByTestId('session-href')).toHaveTextContent('id=film-b');
-  await act(async () => closing.resolve());
-  expect(screen.getByTestId('session-href')).toHaveTextContent('id=film-b');
-  expect(screen.getByTestId('session-video')).toBeInTheDocument();
-});
-
-it('late metadata cannot rewrite the playback URL during a new personal choice', async () => {
-  mockRoom = makeRoom();
-  const confirmation = deferred();
-  mockRoom.roomCommand.mockReturnValueOnce(confirmation.promise);
-  render(<Harness />);
-  const original = screen.getByTestId('session-href').textContent;
-  fireEvent.click(screen.getByRole('button', { name: '明确自己看 B' }));
-  fireEvent.click(screen.getByRole('button', { name: '旧播放器补资料' }));
-  expect(screen.getByTestId('session-href').textContent).toBe(original);
-  await act(async () => confirmation.resolve());
-  expect(screen.getByTestId('session-href')).toHaveTextContent('id=film-b');
-});
-
 it('an explicit together choice marks the selected film for the current room', async () => {
   mockRoom = makeRoom();
   render(<Harness />);
@@ -607,7 +416,6 @@ it('an explicit together choice marks the selected film for the current room', a
     expect(screen.getByTestId('room-selection')).toHaveTextContent('id=film-b')
   );
   expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
-  expect(screen.getByTestId('session-following')).toHaveTextContent('true');
 });
 
 it('sharing to a newly created room survives the room transition and never targets the old room', async () => {
@@ -655,130 +463,6 @@ it('ignores an old queue acknowledgement after a room switch and keeps a newer c
   expect(screen.getByTestId('session-href')).toHaveTextContent('id=film-c');
 });
 
-it('waits for room:following ACK before personal playback and again before rejoining the latest room film', async () => {
-  mockRoom = makeRoom();
-  const room = mockRoom;
-  const leaveAck = deferred();
-  const joinAck = deferred();
-  room.roomCommand.mockImplementation((_event, payload) =>
-    payload.following ? joinAck.promise : leaveAck.promise
-  );
-  const view = render(<Harness />);
-  const roomVideo = await screen.findByTestId('session-video');
-  fireEvent.click(screen.getByRole('button', { name: '选择影片 B' }));
-  fireEvent.click(screen.getByRole('button', { name: /仅自己看/ }));
-  expect(room.roomCommand).toHaveBeenCalledWith('room:following', {
-    following: false,
-  });
-  expect(screen.getByTestId('session-following')).toHaveTextContent('true');
-  expect(screen.getByTestId('session-video')).toBe(roomVideo);
-  expect(screen.getByTestId('session-href').textContent).toContain('id=film-a');
-  await act(async () => {
-    leaveAck.resolve();
-  });
-  const personalVideo = screen.getByTestId('session-video');
-  expect(personalVideo).not.toBe(roomVideo);
-  expect(screen.getByTestId('session-following')).toHaveTextContent('false');
-  expect(screen.getByTestId('session-href').textContent).toContain('id=film-b');
-  room.currentRoom.currentState = roomState('film-c');
-  view.rerender(<Harness />);
-  expect(screen.getByTestId('session-video')).toBe(personalVideo);
-  const back = screen.getByRole('link', { name: /返回房间/ });
-  expect(back).toHaveAttribute('href', '/watch-room?room=room-1');
-  expect(room.roomCommand).toHaveBeenCalledTimes(1);
-  fireEvent.click(screen.getByRole('button', { name: '测试恢复一起看' }));
-  expect(room.roomCommand).toHaveBeenLastCalledWith('room:following', {
-    following: true,
-  });
-  expect(screen.getByTestId('session-following')).toHaveTextContent('false');
-  expect(screen.getByTestId('session-video')).toBe(personalVideo);
-  expect(screen.getByTestId('session-href').textContent).toContain('id=film-b');
-  await act(async () => {
-    joinAck.resolve();
-  });
-  expect(screen.getByTestId('session-following')).toHaveTextContent('true');
-  expect(screen.getByTestId('session-href').textContent).toContain('id=film-c');
-  expect(screen.getByTestId('session-video')).not.toBe(personalVideo);
-  expect(mockMounts).toBe(3);
-});
-
-it('resuming an empty room acknowledges idle readiness so the device can start another activity', async () => {
-  mockRoom = makeRoom();
-  Object.assign(mockRoom.currentRoom, { currentState: null });
-  render(<Harness />);
-  await act(async () =>
-    fireEvent.click(screen.getByRole('button', { name: '测试个人观看' }))
-  );
-  expect(screen.getByTestId('session-following')).toHaveTextContent('false');
-  mockRoom.roomCommand.mockClear();
-  await act(async () =>
-    fireEvent.click(screen.getByRole('button', { name: '测试恢复一起看' }))
-  );
-  expect(mockRoom.roomCommand).toHaveBeenCalledWith(
-    'room:sync-applied',
-    expect.objectContaining({ roomId: 'room-1', appliedRevision: 7 })
-  );
-  expect(mockRoom.roomCommand).toHaveBeenCalledWith(
-    'room:ready',
-    expect.objectContaining({
-      roomId: 'room-1',
-      ready: true,
-      appliedRevision: 7,
-    })
-  );
-});
-
-it.each([true, false])(
-  'a nonmovie caller can distinguish personal transition success=%s before starting its media',
-  async (success) => {
-    mockRoom = makeRoom();
-    Object.assign(mockRoom.currentRoom, { currentState: null });
-    if (!success) mockRoom.roomCommand.mockRejectedValueOnce(new Error('断线'));
-    mockPersonalResult = undefined;
-    render(<Harness />);
-    await act(async () =>
-      fireEvent.click(
-        screen.getByRole('button', { name: '测试个人观看返回结果' })
-      )
-    );
-    expect(mockPersonalResult).toBe(success);
-    expect(screen.getByTestId('session-following')).toHaveTextContent(
-      String(!success)
-    );
-  }
-);
-
-it('a superseded personal transition does not report success from a later personal intent', async () => {
-  mockRoom = makeRoom();
-  const old = deferred();
-  mockRoom.roomCommand.mockImplementationOnce(() => old.promise);
-  const view = render(<Harness />);
-  fireEvent.click(screen.getByRole('button', { name: '测试个人观看返回结果' }));
-  mockRoom.currentRoom.id = 'room-2';
-  view.rerender(<Harness />);
-  await act(async () =>
-    fireEvent.click(screen.getByRole('button', { name: '测试个人观看' }))
-  );
-  await act(async () => old.resolve());
-  expect(mockPersonalResult).toBe(false);
-});
-
-it('keeps the current room video and surfaces an error when leaving synchronization is rejected', async () => {
-  mockRoom = makeRoom();
-  mockRoom.roomCommand.mockRejectedValueOnce(new Error('主持状态已改变'));
-  render(<Harness />);
-  const video = await screen.findByTestId('session-video');
-  fireEvent.click(screen.getByRole('button', { name: '选择影片 B' }));
-  fireEvent.click(screen.getByRole('button', { name: /仅自己看/ }));
-  await waitFor(() =>
-    expect(screen.getByRole('alert')).toHaveTextContent('主持状态已改变')
-  );
-  expect(screen.getByTestId('session-following')).toHaveTextContent('true');
-  expect(screen.getByTestId('session-video')).toBe(video);
-  expect(screen.getByTestId('session-href').textContent).toContain('id=film-a');
-  expect(mockMounts).toBe(1);
-});
-
 it('closes a solo mini player completely instead of only folding it', async () => {
   mockPathname = '/search';
   mockRoom = null;
@@ -815,111 +499,7 @@ it('folded player can also be closed', async () => {
   );
 });
 
-it('closing while following a room leaves the sync first and offers the way back', async () => {
-  mockPathname = '/search';
-  mockRoom = makeRoom();
-  render(<Harness />);
-  await screen.findByTestId('global-playback-host');
-
-  fireEvent.click(screen.getByRole('button', { name: '关闭播放' }));
-
-  await waitFor(() =>
-    expect(screen.queryByTestId('global-playback-host')).not.toBeInTheDocument()
-  );
-  expect(mockRoom.roomCommand).toHaveBeenCalledWith('room:following', {
-    following: false,
-  });
-  expect(screen.getByRole('link', { name: /返回房间/ })).toBeInTheDocument();
-});
-
-it('closing a leftover film window while the room is on another activity does not leave the room sync', async () => {
-  mockPathname = '/live';
-  const room = makeRoom();
-  mockRoom = room;
-  const view = render(<Harness />);
-  await screen.findByTestId('global-playback-host');
-  // 房间换成直播后，电影窗口还在：它只是旧窗口，不是当前共同活动
-  mockRoom = {
-    ...room,
-    currentRoom: {
-      ...room.currentRoom,
-      revision: room.currentRoom.revision + 1,
-      currentState: {
-        type: 'live',
-        channelId: 'qa',
-        channelName: 'QA',
-        channelUrl: 'https://media.test/live.m3u8',
-        updatedAt: 1,
-      } as never,
-    },
-  };
-  view.rerender(<Harness />);
-  await screen.findByTestId('global-playback-host');
-
-  fireEvent.click(screen.getByRole('button', { name: '关闭播放' }));
-
-  await waitFor(() =>
-    expect(screen.queryByTestId('global-playback-host')).not.toBeInTheDocument()
-  );
-  expect(room.roomCommand).not.toHaveBeenCalledWith(
-    'room:following',
-    expect.anything()
-  );
-});
-
-it('closing a leftover film window on another activity does not make the next reload start as personal viewing', async () => {
-  localStorage.setItem(
-    'watch_room_info',
-    JSON.stringify({
-      roomId: 'room-1',
-      roomName: '测试房间',
-      userName: 'viewer',
-      timestamp: Date.now(),
-    })
-  );
-  mockPathname = '/live';
-  const room = makeRoom();
-  mockRoom = room;
-  const view = render(<Harness />);
-  await screen.findByTestId('global-playback-host');
-  mockRoom = {
-    ...room,
-    currentRoom: {
-      ...room.currentRoom,
-      currentState: {
-        type: 'live',
-        channelId: 'qa',
-        channelName: 'QA',
-        channelUrl: 'https://media.test/live.m3u8',
-        updatedAt: 1,
-      } as never,
-    },
-  };
-  view.rerender(<Harness />);
-  fireEvent.click(screen.getByRole('button', { name: '关闭播放' }));
-  await waitFor(() =>
-    expect(screen.queryByTestId('global-playback-host')).not.toBeInTheDocument()
-  );
-  // 只关了旧窗口，人仍在跟随房间；刷新后不能被存成“仅自己看”
-  expect(
-    JSON.parse(localStorage.getItem('watch_room_info') || '{}').following
-  ).not.toBe(false);
-});
-
-it('keeps playing when leaving the room sync fails', async () => {
-  mockPathname = '/search';
-  mockRoom = makeRoom();
-  mockRoom.roomCommand.mockRejectedValueOnce(new Error('房间连接中断'));
-  render(<Harness />);
-  await screen.findByTestId('global-playback-host');
-
-  fireEvent.click(screen.getByRole('button', { name: '关闭播放' }));
-
-  expect(await screen.findByRole('alert')).toHaveTextContent('房间连接中断');
-  expect(screen.getByTestId('global-playback-host')).toBeInTheDocument();
-});
-
-it('a deleted room ends the playback of people still following it, but not personal viewers', async () => {
+it('a deleted room ends the playback of its members', async () => {
   mockPathname = '/search';
   mockRoom = makeRoom();
   render(<Harness />);
@@ -1028,37 +608,89 @@ it('a room member without control cannot pause locally from the mini player', as
   expect(mockController?.pause).not.toHaveBeenCalled();
 });
 
-it('after a reconnect the server forgets who watches alone, so the device says so again', async () => {
-  mockPathname = '/watch-room';
+it('entering an empty room while a film plays brings that film into the room for a member who can control', async () => {
+  mockPathname = '/search';
+  const view = render(<Harness />);
+  fireEvent.click(screen.getByRole('button', { name: '选择影片 A' }));
+  const video = await screen.findByTestId('session-video');
   mockRoom = makeRoom();
-  const room = mockRoom;
-  const view = render(<Harness dock />);
-  await screen.findByTestId('session-video');
-  fireEvent.click(screen.getByRole('button', { name: '测试个人观看' }));
+  mockRoom.currentRoom.currentState = null as unknown as PlayState;
+  view.rerender(<Harness />);
   await waitFor(() =>
-    expect(screen.getByTestId('session-following')).toHaveTextContent('false')
+    expect(screen.getByTestId('room-selection')).toHaveTextContent('id=film-a')
   );
-  expect(room.roomCommand).toHaveBeenCalledTimes(1);
-  // 重连后重新加入：服务端给了全新会话，默认是“跟随”
-  Object.assign(room, { rejoinCount: 1 });
-  view.rerender(<Harness dock />);
-  await waitFor(() => expect(room.roomCommand).toHaveBeenCalledTimes(2));
-  expect(room.roomCommand).toHaveBeenLastCalledWith('room:following', {
-    following: false,
-  });
-  expect(screen.getByTestId('session-following')).toHaveTextContent('false');
+  expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  expect(screen.getByTestId('session-video')).toBe(video);
+  expect(mockMounts).toBe(1);
 });
 
-it('a device that follows the room has nothing to restate after a reconnect', async () => {
-  mockPathname = '/watch-room';
+it('entering an empty room without control puts the solo film away until the room starts', async () => {
+  mockPathname = '/search';
+  const view = render(<Harness />);
+  fireEvent.click(screen.getByRole('button', { name: '选择影片 A' }));
+  await screen.findByTestId('global-playback-host');
+  mockRoom = { ...makeRoom(), canControl: false };
+  mockRoom.currentRoom.currentState = null as unknown as PlayState;
+  view.rerender(<Harness />);
+  await waitFor(() =>
+    expect(screen.queryByTestId('global-playback-host')).not.toBeInTheDocument()
+  );
+  expect(screen.getByTestId('room-selection')).toBeEmptyDOMElement();
+  // 房间开始放片：跟着打开
+  mockRoom.currentRoom.currentState = roomState('film-c');
+  view.rerender(<Harness />);
+  await waitFor(() =>
+    expect(screen.getByTestId('session-href')).toHaveTextContent('id=film-c')
+  );
+});
+
+it('in an empty room a member with control starts the chosen film together without asking', () => {
+  mockRoom = makeRoom();
+  mockRoom.currentRoom.currentState = null as unknown as PlayState;
+  render(<Harness />);
+  fireEvent.click(screen.getByRole('button', { name: '选择影片 B' }));
+  expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  expect(screen.getByTestId('room-selection')).toHaveTextContent('id=film-b');
+  expect(screen.getByTestId('session-href')).toHaveTextContent('id=film-b');
+});
+
+it('watching a different film alone means leaving the room first', async () => {
   mockRoom = makeRoom();
   const room = mockRoom;
-  const view = render(<Harness dock />);
+  render(<Harness />);
   await screen.findByTestId('session-video');
-  Object.assign(room, { rejoinCount: 1 });
+  fireEvent.click(screen.getByRole('button', { name: '选择影片 B' }));
+  expect(screen.getByRole('dialog')).toBeInTheDocument();
+  expect(screen.getByTestId('session-href')).toHaveTextContent('id=film-a');
+  await act(async () =>
+    fireEvent.click(screen.getByRole('button', { name: /退出房间，自己看/ }))
+  );
+  expect(room.leaveRoom).toHaveBeenCalledTimes(1);
+  expect(room.roomCommand).not.toHaveBeenCalled();
+  expect(screen.getByTestId('session-href')).toHaveTextContent('id=film-b');
+  expect(screen.getByTestId('room-selection')).toBeEmptyDOMElement();
+});
+
+it('closing the picture keeps the member in the room, and the room page opens the room film again', async () => {
+  mockPathname = '/search';
+  mockRoom = makeRoom();
+  const room = mockRoom;
+  const view = render(<Harness />);
+  await screen.findByTestId('global-playback-host');
+  fireEvent.click(screen.getByRole('button', { name: '关闭画面（仍在房间）' }));
+  await waitFor(() =>
+    expect(screen.queryByTestId('global-playback-host')).not.toBeInTheDocument()
+  );
+  expect(room.roomCommand).not.toHaveBeenCalled();
+  expect(room.leaveRoom).not.toHaveBeenCalled();
+  expect(screen.getByRole('link', { name: /返回房间/ })).toBeInTheDocument();
+  mockPathname = '/watch-room';
   view.rerender(<Harness dock />);
-  await act(async () => undefined);
-  expect(room.roomCommand).not.toHaveBeenCalledWith('room:following', {
-    following: false,
-  });
+  await waitFor(() =>
+    expect(screen.getByTestId('global-playback-host')).toHaveAttribute(
+      'data-presentation',
+      'docked'
+    )
+  );
+  expect(screen.getByTestId('session-href')).toHaveTextContent('id=film-a');
 });

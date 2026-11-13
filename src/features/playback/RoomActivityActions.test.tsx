@@ -16,11 +16,7 @@ beforeEach(() => {
     currentRoom: { id: 'room-a' },
     createRoom: jest.fn(),
   };
-  mockSession = {
-    followingRoom: true,
-    resumeRoom: jest.fn(async () => undefined),
-    enterPersonalViewing: jest.fn(async () => undefined),
-  };
+  mockSession = {};
 });
 
 it('requires an explicit share action and only shows success after its ACK', async () => {
@@ -62,43 +58,10 @@ it('does not substitute account ownership for current-device control', () => {
     />
   );
   expect(screen.getByRole('button', { name: '在房间播放' })).toBeDisabled();
-  expect(screen.getByText('仅当前主持设备可切换房间活动')).toBeInTheDocument();
+  expect(
+    screen.getByText('房主没有开放成员切换房间活动')
+  ).toBeInTheDocument();
   expect(share).not.toHaveBeenCalled();
-});
-
-it('personal mode offers explicit resume, never shares as a side effect of resuming', async () => {
-  mockSession.followingRoom = false;
-  const share = jest.fn();
-  render(
-    <RoomActivityActions
-      title='频道A'
-      selectionKey='a'
-      active={false}
-      hasSelection
-      onShare={share}
-    />
-  );
-  await act(async () =>
-    fireEvent.click(screen.getByRole('button', { name: '恢复一起看' }))
-  );
-  expect(mockSession.resumeRoom).toHaveBeenCalledTimes(1);
-  expect(share).not.toHaveBeenCalled();
-});
-
-it('uses the existing personal-viewing transition to leave a shared activity', async () => {
-  render(
-    <RoomActivityActions
-      title='频道A'
-      selectionKey='a'
-      active
-      hasSelection
-      onShare={jest.fn()}
-    />
-  );
-  await act(async () =>
-    fireEvent.click(screen.getByRole('button', { name: '仅自己看' }))
-  );
-  expect(mockSession.enterPersonalViewing).toHaveBeenCalledTimes(1);
 });
 
 it('preserves errors for retry without a false success or navigation', async () => {

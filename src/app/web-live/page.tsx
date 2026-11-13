@@ -126,17 +126,11 @@ export default function WebLivePage() {
     const scope = soundScope.current;
     const video = localVideo;
     if (!video) return;
-    if (
-      watchRoom?.currentRoom &&
-      playbackSession?.followingRoom &&
-      !webLiveSync.active
-    ) {
-      if (!(await playbackSession.enterPersonalViewing()))
-        throw Error('未能退出共同播放，请重试');
-    }
     if (scope !== soundScope.current || artPlayerRef.current?.video !== video)
       return;
-    if (!webLiveSync.active) playbackSession?.controller?.pause();
+    // 在房间里不暂停房间的影片（那是整个房间的进度），只把声音拿过来
+    if (!webLiveSync.active && !watchRoom?.currentRoom)
+      playbackSession?.controller?.pause();
     claimSound();
     try {
       await video.play();
@@ -416,14 +410,6 @@ export default function WebLivePage() {
 
     await mediaRequest.run(
       async (signal) => {
-        if (
-          origin !== 'snapshot' &&
-          watchRoom?.currentRoom &&
-          playbackSession?.followingRoom
-        ) {
-          if (!(await playbackSession.enterPersonalViewing()))
-            throw Error('未能退出共同播放，请重试');
-        }
         if (signal.aborted) throw Error('选源已取消');
         const res = await fetch(
           `/api/web-live/stream?${new URLSearchParams({

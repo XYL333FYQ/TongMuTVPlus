@@ -76,12 +76,9 @@ const mockPlayback = {
   shareCurrentPlayback: jest.fn(),
   requestPlayback: jest.fn(),
   controller: null,
-  followingRoom: true,
   presentation: 'docked',
   metadata: { error: null as string | null },
-  resumeRoom: jest.fn(),
   minimize: jest.fn(),
-  enterPersonalViewing: jest.fn(),
   restore: jest.fn(),
 };
 const originalFetch = global.fetch;
@@ -93,7 +90,6 @@ beforeEach(() => {
   });
   window.innerWidth = 1280;
   mockRoom = makeRoom();
-  mockPlayback.followingRoom = true;
   mockPlayback.href = null;
   mockPlayback.metadata.error = null;
   mockPlayback.presentation = 'docked';
@@ -253,15 +249,7 @@ test('reconnection and departed assigned controller are distinct states', () => 
   );
 });
 
-test('personal viewing returns using the existing session action', () => {
-  mockPlayback.followingRoom = false;
-  render(<RoomWorkspace />);
-  expect(screen.getByText('你正在个人观看')).toBeInTheDocument();
-  fireEvent.click(screen.getByRole('button', { name: '回到一起看' }));
-  expect(mockPlayback.resumeRoom).toHaveBeenCalledTimes(1);
-});
-
-test('folding preserves player slot and restores through existing session action', () => {
+test('the room stage always hosts the room film; folding keeps the slot and restores it', () => {
   if (mockRoom.currentRoom)
     mockRoom.currentRoom.currentState = {
       type: 'play',
@@ -274,25 +262,18 @@ test('folding preserves player slot and restores through existing session action
     };
   const view = render(<RoomWorkspace />);
   const slot = screen.getByTestId('player-slot');
-  fireEvent.click(screen.getByRole('button', { name: '仅自己看' }));
-  expect(mockPlayback.enterPersonalViewing).toHaveBeenCalledTimes(1);
-  expect(mockPlayback.minimize).not.toHaveBeenCalled();
+  expect(document.querySelector('.tm-room-main-anchor')).toContainElement(slot);
+  // 房间里没有“仅自己看 / 个人观看”：画面只属于房间
   expect(
-    screen.queryByRole('button', { name: '收起画面' })
+    screen.queryByRole('button', { name: '仅自己看' })
   ).not.toBeInTheDocument();
+  expect(screen.queryByText('你正在个人观看')).not.toBeInTheDocument();
   mockPlayback.presentation = 'folded';
   view.rerender(<RoomWorkspace />);
   expect(screen.getByTestId('player-slot')).toBe(slot);
   fireEvent.click(screen.getByRole('button', { name: '恢复画面' }));
   expect(mockPlayback.restore).toHaveBeenCalledTimes(1);
-  // Keeping the same slot avoids an old slot cleanup clearing the new anchor.
-  mockPlayback.followingRoom = false;
-  view.rerender(<RoomWorkspace />);
-  expect(screen.getByTestId('player-slot')).toBe(slot);
-  expect(document.querySelector('.tm-room-personal-anchor')).toContainElement(
-    slot
-  );
-  mockPlayback.followingRoom = true;
+  mockPlayback.presentation = 'docked';
   view.rerender(<RoomWorkspace />);
   expect(screen.getByTestId('player-slot')).toBe(slot);
 });

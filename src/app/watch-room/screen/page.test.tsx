@@ -13,7 +13,6 @@ const mockLeaveRoom = jest.fn();
 const mockClaimSound = jest.fn();
 const startSharing = jest.fn();
 const stopSharing = jest.fn();
-const resumeRoom = jest.fn();
 const localVideoRef = { current: null };
 const remoteVideoRef = { current: null };
 let mockShare: Record<string, unknown>;
@@ -65,7 +64,7 @@ beforeEach(() => {
   (window as any).RTCPeerConnection = function RTCPeerConnection() {
     return undefined;
   };
-  mockSession = { followingRoom: true, resumeRoom };
+  mockSession = {};
   mockRoom = {
     currentRoom: room(),
     members: [{ id: 'device-1', name: 'alice', isOwner: true }],
@@ -160,7 +159,9 @@ it('a device that cannot share only waits and watches: no share controls, no con
   mockShare = { ...mockShare, canShare: false };
   render(<WatchRoomScreenPage />);
   expect(screen.queryByRole('button', { name: '开始共享' })).toBeNull();
-  expect(screen.getByText('等待主持开始共享屏幕')).toBeInTheDocument();
+  expect(
+    screen.getByText('等待有控制权的人开始共享屏幕')
+  ).toBeInTheDocument();
   expect(localStorage.getItem('watch_room_no_connect')).toBeNull();
 });
 
@@ -206,14 +207,6 @@ it('leaving the room is a separate, explicit button that stops a running share f
   fireEvent.click(screen.getByRole('button', { name: '离开房间' }));
   expect(stopSharing).toHaveBeenCalledWith(true);
   expect(mockLeaveRoom).toHaveBeenCalledTimes(1);
-});
-
-it('someone watching alone sees why there is no picture and can come back explicitly', () => {
-  mockShare = { ...mockShare, canShare: false, following: false };
-  render(<WatchRoomScreenPage />);
-  expect(screen.getByText('正在个人观看，房间和消息保留')).toBeInTheDocument();
-  fireEvent.click(screen.getByRole('button', { name: '恢复一起看' }));
-  expect(resumeRoom).toHaveBeenCalledTimes(1);
 });
 
 it('the shared picture takes over the sound only when the viewer plays it', async () => {

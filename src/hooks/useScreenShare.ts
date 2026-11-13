@@ -4,8 +4,6 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { useWatchRoomContextSafe } from '@/components/WatchRoomProvider';
 
-import { usePlaybackSessionSafe } from '@/features/playback/context';
-
 import type { ScreenState } from '@/types/watch-room';
 
 const iceServers = [
@@ -69,8 +67,6 @@ export function useScreenShare(
   qualityPreset: ScreenShareQualityPreset = 'smooth'
 ) {
   const watchRoom = useWatchRoomContextSafe();
-  const session = usePlaybackSessionSafe();
-  const following = session?.followingRoom !== false;
   const localVideoRef = useRef<HTMLVideoElement | null>(null);
   const remoteVideoRef = useRef<HTMLVideoElement | null>(null);
   const displayStreamRef = useRef<MediaStream | null>(null);
@@ -93,13 +89,12 @@ export function useScreenShare(
   const currentState = currentRoom?.currentState;
   const isSharing =
     currentState?.type === 'screen' && currentState.status === 'sharing';
-  const canShare = Boolean(currentRoom && following && watchRoom?.canControl);
+  const canShare = Boolean(currentRoom && watchRoom?.canControl);
 
   // 异步回调里要看“现在”的房间和权限，不能用发起时的闭包
   const latest = useRef({
     watchRoom,
     roomId: currentRoom?.id,
-    following,
     canShare,
     members,
     roomSharing: isSharing,
@@ -107,7 +102,6 @@ export function useScreenShare(
   latest.current = {
     watchRoom,
     roomId: currentRoom?.id,
-    following,
     canShare,
     members,
     roomSharing: isSharing,
@@ -177,8 +171,7 @@ export function useScreenShare(
         latest.current.watchRoom
           ?.roomCommand('screen:stop', { roomId })
           .catch((err: unknown) => {
-            // 已经退出跟随时服务端本来就不再认这台设备，不必再报错
-            if (latest.current.following)
+            if (latest.current.roomId === roomId)
               setError(err instanceof Error ? err.message : '停止共享未成功');
           });
       }
@@ -246,12 +239,8 @@ export function useScreenShare(
     const start = latest.current;
     const room = start.watchRoom?.currentRoom;
     if (!start.watchRoom || !room || localSharingRef.current) return;
-    if (!start.following) {
-      setError('请先返回房间恢复一起看，再共享屏幕');
-      return;
-    }
     if (!start.watchRoom.canControl) {
-      setError('当前设备没有房间播放控制权');
+      setError('房主没有开放成员控制播放');
       return;
     }
 
@@ -491,19 +480,9 @@ export function useScreenShare(
     };
   }, [cleanupSharingResources, currentRoom?.id]);
 
-  // 退出跟随（仅自己看）：不再共享也不再接收
+  // 观众：房间在共享，就向共享设备要画面
   useEffect(() => {
-    if (following) return;
-    if (localSharingRef.current) stopSharing(true);
-    else {
-      closeAllPeerConnections();
-      clearRemoteVideo();
-    }
-  }, [clearRemoteVideo, closeAllPeerConnections, following, stopSharing]);
-
-  // 观众：房间在共享且本机在跟随，就向共享设备要画面
-  useEffect(() => {
-    if (!socket || !currentRoom || !following || isLocalSharing || !isConnected)
+    if (!socket || !currentRoom || isLocalSharing || !isConnected)
       return;
     if (currentState?.type !== 'screen' || currentState.status !== 'sharing')
       return;
@@ -512,7 +491,6 @@ export function useScreenShare(
   }, [
     currentRoom,
     currentState,
-    following,
     isConnected,
     isLocalSharing,
     socket,
@@ -521,7 +499,6 @@ export function useScreenShare(
   return {
     currentRoom,
     canShare,
-    following,
     isLocalSharing,
     isSharing,
     isStarting,

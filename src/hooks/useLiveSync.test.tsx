@@ -35,7 +35,7 @@ async function settle(ms = 0) {
 
 beforeEach(() => {
   jest.useFakeTimers();
-  mockSession = { followingRoom: true };
+  mockSession = {};
   mockRoom = {
     isConnected: true,
     isOwner: true,
@@ -159,22 +159,6 @@ describe.each(['iptv', 'web'] as const)('%s room live activity', (kind) => {
       'room:ready',
       expect.objectContaining({ roomId: 'room-a', ready: true })
     );
-  });
-
-  it('personal viewing neither applies nor broadcasts old room activity', async () => {
-    const { Harness, apply, state, getApi } = setup();
-    mockSession.followingRoom = false;
-    mockRoom.currentRoom.currentState = state;
-    render(<Harness />);
-    await settle(1000);
-    expect(apply).not.toHaveBeenCalled();
-    await expect(
-      getApi()[
-        kind === 'iptv' ? 'broadcastChannelChange' : 'broadcastSourceChange'
-      ]()
-    ).rejects.toThrow();
-    expect(mockRoom.roomCommand).not.toHaveBeenCalled();
-    expect(getApi().shouldDisableControls).toBe(false);
   });
 
   it('does not claim readiness until the actual selected stream is ready', async () => {

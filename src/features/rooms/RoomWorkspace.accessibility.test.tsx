@@ -27,7 +27,6 @@ jest.mock('@/components/WatchRoomProvider', () => ({
 jest.mock('@/features/playback/context', () => ({
   usePlaybackSession: () => ({
     controller: null,
-    followingRoom: true,
     presentation: 'docked',
     metadata: {},
   }),

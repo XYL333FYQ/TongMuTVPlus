@@ -114,9 +114,7 @@ export default function RoomWorkspace() {
   }, [room?.id]);
   const screening = useRoomScreening(
     playback.controller?.video || null,
-    Boolean(
-      room && playback.followingRoom && playback.presentation === 'docked'
-    )
+    Boolean(room && playback.presentation === 'docked')
   );
   // 与 SyncTV 一致：没有“唯一主持设备”，有权限的人都能直接控制播放。
   const membersControl = room?.settings?.memberCanControl !== false;
@@ -535,7 +533,6 @@ export default function RoomWorkspace() {
         data-screening={screening}
         data-joined={Boolean(room)}
         data-playing={room?.currentState?.type === 'play'}
-        data-personal={Boolean(room && !playback.followingRoom)}
       >
         {room && !watchRoom.isConnected && (
           <div className='tm-room-reconnecting' role='status'>
@@ -751,7 +748,7 @@ export default function RoomWorkspace() {
         {room ? (
           <div className='tm-room-workspace'>
             <section className='tm-room-stage'>
-              {room.currentState?.type === 'play' && playback.followingRoom ? (
+              {room.currentState?.type === 'play' ? (
                 <>
                   {playback.presentation === 'folded' && (
                     <button
@@ -763,25 +760,18 @@ export default function RoomWorkspace() {
                   )}
                 </>
               ) : (
-                <div
-                  className='tm-room-empty-stage'
-                  data-personal={!playback.followingRoom}
-                >
+                <div className='tm-room-empty-stage'>
                   <div className='tm-room-screen-glow' aria-hidden='true' />
                   <Film size={32} strokeWidth={1.25} />
                   <h2>
-                    {!playback.followingRoom
-                      ? '你正在个人观看'
-                      : room.currentState
+                    {room.currentState
                       ? '房间正在进行其他活动'
                       : waitingQueue.length
                       ? `下一部：${waitingQueue[0].title}`
                       : '选一部影片，开始一起看'}
                   </h2>
                   <p>
-                    {!playback.followingRoom
-                      ? '房间连接和消息保留'
-                      : waitingQueue.length && !room.currentState
+                    {waitingQueue.length && !room.currentState
                       ? watchRoom.canControl
                         ? `片单里有 ${waitingQueue.length} 部待看，准备好就开始`
                         : `片单里有 ${waitingQueue.length} 部待看，等房主开始播放`
@@ -792,14 +782,7 @@ export default function RoomWorkspace() {
                       : '把想看的加入片单，等房主开始播放'}
                   </p>
                   <div className='tm-room-empty-actions'>
-                    {!playback.followingRoom ? (
-                      <button
-                        className='tm-room-primary'
-                        onClick={playback.resumeRoom}
-                      >
-                        回到一起看
-                      </button>
-                    ) : activityHref ? (
+                    {activityHref ? (
                       <Link className='tm-room-primary' href={activityHref}>
                         {activityLabel}
                       </Link>
@@ -833,27 +816,18 @@ export default function RoomWorkspace() {
                         选择影片
                       </button>
                     )}
-                    {playback.followingRoom && (
-                      <Link
-                        href='/douban?type=movie'
-                        className='tm-room-screen-link'
-                      >
-                        <Search size={15} />
-                        浏览片库
-                      </Link>
-                    )}
+                    <Link
+                      href='/douban?type=movie'
+                      className='tm-room-screen-link'
+                    >
+                      <Search size={15} />
+                      浏览片库
+                    </Link>
                   </div>
                 </div>
               )}
-              {(room.currentState?.type === 'play' ||
-                !playback.followingRoom) && (
-                <div
-                  className={
-                    playback.followingRoom
-                      ? 'tm-room-main-anchor'
-                      : 'tm-room-personal-anchor'
-                  }
-                >
+              {room.currentState?.type === 'play' && (
+                <div className='tm-room-main-anchor'>
                   <PlaybackSlot />
                 </div>
               )}
@@ -880,19 +854,6 @@ export default function RoomWorkspace() {
                         }`
                       : '离开页面或收起画面，房间仍会继续'}
                   </p>
-                </div>
-                <div className='tm-room-stage-actions'>
-                  {room.currentState?.type === 'play' &&
-                    playback.followingRoom &&
-                    playback.presentation !== 'folded' && (
-                      <RoomPlaybackButton
-                        className='tm-room-personal-button'
-                        hint='暂时脱离同步，房间连接和消息保留'
-                        onClick={playback.enterPersonalViewing}
-                      >
-                        仅自己看
-                      </RoomPlaybackButton>
-                    )}
                 </div>
               </div>
               <div className='tm-room-activities'>
@@ -1216,19 +1177,17 @@ export default function RoomWorkspace() {
                 queue={room.queue || []}
               />
             )}
-            {playback.followingRoom && (
-              <RoomQuickStart
-                playing={Boolean(room.currentState)}
-                onChoose={(title) =>
-                  router.push(
-                    `/watch-room/select?${new URLSearchParams({
-                      room: room.id,
-                      q: title,
-                    })}`
-                  )
-                }
-              />
-            )}
+            <RoomQuickStart
+              playing={Boolean(room.currentState)}
+              onChoose={(title) =>
+                router.push(
+                  `/watch-room/select?${new URLSearchParams({
+                    room: room.id,
+                    q: title,
+                  })}`
+                )
+              }
+            />
           </div>
         ) : (
           <>
@@ -1450,7 +1409,7 @@ export default function RoomWorkspace() {
                       busy={busy}
                       onAdd={addFilm}
                       onPlayNow={
-                        watchRoom.canControl && playback.followingRoom
+                        watchRoom.canControl
                           ? (href) => {
                               setDialog(null);
                               playback.requestPlayback(href, 'together');

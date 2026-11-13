@@ -25,7 +25,7 @@ function RouteBridge() {
     const first = initialNavigation.current;
     initialNavigation.current = false;
     if (query && (first || currentHref.current !== `/play?${query}`))
-      requestPlayback(`/play?${query}`, 'personal');
+      requestPlayback(`/play?${query}`, 'user');
   }, [query, requestPlayback]);
   return null;
 }

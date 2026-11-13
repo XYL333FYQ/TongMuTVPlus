@@ -23,7 +23,6 @@ export interface PlaybackMetadata {
 export interface PlaybackSession {
   href: string | null;
   presentation: PlaybackPresentation;
-  followingRoom: boolean;
   controller: PlaybackController | null;
   metadata: PlaybackMetadata;
   roomSelectionHref: string | null;
@@ -33,7 +32,7 @@ export interface PlaybackSession {
   reloadPlayback: () => void;
   requestPlayback: (
     href: string,
-    origin?: 'user' | 'room' | 'personal' | 'together'
+    origin?: 'user' | 'room' | 'together'
   ) => void;
   updateHref: (href: string) => boolean;
   setMetadata: (metadata: PlaybackMetadata) => void;
@@ -42,8 +41,6 @@ export interface PlaybackSession {
   minimize: () => void;
   restore: () => void;
   endSession: () => void;
-  resumeRoom: () => void;
-  enterPersonalViewing: () => Promise<boolean>;
 }
 
 export const PlaybackSessionContext = createContext<PlaybackSession | null>(

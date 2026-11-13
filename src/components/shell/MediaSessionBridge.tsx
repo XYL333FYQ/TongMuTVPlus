@@ -16,9 +16,7 @@ export default function MediaSessionBridge() {
   const room = useWatchRoomContextSafe();
   const controller = playback?.controller;
   const title = playback?.metadata.title;
-  const locked = Boolean(
-    playback?.followingRoom && room?.currentRoom && !room.canControl
-  );
+  const locked = Boolean(room?.currentRoom && !room.canControl);
   const selected = useRef<HTMLMediaElement | null>(null);
   useEffect(() => {
     const shell = getShell();

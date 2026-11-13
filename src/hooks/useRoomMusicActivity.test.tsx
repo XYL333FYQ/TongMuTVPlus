@@ -53,8 +53,6 @@ function setup() {
 
 beforeEach(() => {
   mockSession = {
-    followingRoom: true,
-    enterPersonalViewing: jest.fn(async () => true),
     controller: { pause: jest.fn(), video: { paused: false } },
   };
   mockRoom = {
@@ -75,18 +73,12 @@ beforeEach(() => {
 afterEach(cleanup);
 
 describe('room music activity', () => {
-  it('is active only while following a room whose current activity is music', () => {
+  it('is active only while in a room whose current activity is music', () => {
     mockRoom.currentRoom.currentState = musicState();
     const on = setup();
     expect(on.api.active).toBe(true);
     cleanup();
 
-    mockSession.followingRoom = false;
-    const alone = setup();
-    expect(alone.api.active).toBe(false);
-    cleanup();
-
-    mockSession.followingRoom = true;
     mockRoom.currentRoom.currentState = { type: 'play' };
     const film = setup();
     expect(film.api.active).toBe(false);
@@ -119,18 +111,9 @@ describe('room music activity', () => {
     expect(view.api.active).toBe(true);
     expect(view.api.publishing).toBe(false);
     await expect(view.api.share(musicState())).rejects.toThrow(
-      '当前设备没有房间播放控制权'
+      '房主没有开放成员控制播放'
     );
     expect(await view.api.publish('play', musicState())).toBe(false);
-    expect(mockRoom.roomCommand).not.toHaveBeenCalled();
-  });
-
-  it('a person watching alone can neither share nor be published for', async () => {
-    mockSession.followingRoom = false;
-    mockRoom.currentRoom.currentState = musicState();
-    const view = setup();
-    await expect(view.api.share(musicState())).rejects.toThrow('恢复一起看');
-    expect(await view.api.publish('seek', musicState())).toBe(false);
     expect(mockRoom.roomCommand).not.toHaveBeenCalled();
   });
 
@@ -180,7 +163,7 @@ describe('room music activity', () => {
   });
 
   describe('starting local playback', () => {
-    it('leaves the room sync and stops the room film before music is heard on this device', async () => {
+    it('in a room it never pauses the room film (that would pause everyone); sound focus moves to the music', async () => {
       mockRoom.currentRoom.currentState = { type: 'play' };
       const view = setup();
       let ok = false;
@@ -188,29 +171,18 @@ describe('room music activity', () => {
         ok = await view.api.beginLocalPlayback();
       });
       expect(ok).toBe(true);
-      expect(mockSession.enterPersonalViewing).toHaveBeenCalledTimes(1);
-      expect(mockSession.controller.pause).toHaveBeenCalledTimes(1);
+      expect(mockSession.controller.pause).not.toHaveBeenCalled();
+      expect(mockRoom.roomCommand).not.toHaveBeenCalled();
     });
 
-    it('does not leave the sync while this device is publishing the room music', async () => {
+    it('changes nothing in the room while this device is publishing the room music', async () => {
       mockRoom.currentRoom.currentState = musicState();
       const view = setup();
       await act(async () => {
         await view.api.beginLocalPlayback();
       });
-      expect(mockSession.enterPersonalViewing).not.toHaveBeenCalled();
-    });
-
-    it('stops without changing anything when the room sync cannot be left', async () => {
-      mockRoom.currentRoom.currentState = { type: 'play' };
-      mockSession.enterPersonalViewing.mockResolvedValueOnce(false);
-      const view = setup();
-      let ok = true;
-      await act(async () => {
-        ok = await view.api.beginLocalPlayback();
-      });
-      expect(ok).toBe(false);
       expect(mockSession.controller.pause).not.toHaveBeenCalled();
+      expect(mockRoom.roomCommand).not.toHaveBeenCalled();
     });
 
     it('outside a room it only makes sure a playing film is not heard together with the music', async () => {
@@ -221,7 +193,6 @@ describe('room music activity', () => {
         ok = await view.api.beginLocalPlayback();
       });
       expect(ok).toBe(true);
-      expect(mockSession.enterPersonalViewing).not.toHaveBeenCalled();
       expect(mockSession.controller.pause).toHaveBeenCalledTimes(1);
     });
   });

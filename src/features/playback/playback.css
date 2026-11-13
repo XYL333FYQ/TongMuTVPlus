@@ -361,19 +361,6 @@ html[data-tm-room-presentation='true']
   bottom: auto;
   transition-property: width, height, opacity, border-radius;
 }
-.tm-playback-personal-badge {
-  position: absolute;
-  inset-inline: 0;
-  bottom: 0;
-  padding: 2px;
-  background: var(--tm-glass-solid);
-  color: var(--tm-text) !important;
-  font-size: 13px;
-  line-height: 16px;
-  white-space: nowrap;
-  border: 0;
-  border-radius: var(--tm-radius-sm);
-}
 /* The room stage already provides this action; the floating copy covers chat. */
 html[data-tm-room-presentation='true'] .tm-return-room {
   display: none;

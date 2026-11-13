@@ -113,7 +113,7 @@ beforeEach(() => {
       Object.assign(this, init);
     }
   };
-  mockSession = { followingRoom: true };
+  mockSession = {};
   mockRoom = {
     isConnected: true,
     isOwner: false,
@@ -189,15 +189,7 @@ describe('screen sharing in a regular room', () => {
     await act(async () => api.startSharing());
     expect(getDisplayMedia).not.toHaveBeenCalled();
     expect(mockRoom.roomCommand).not.toHaveBeenCalled();
-    expect(api.error).toBe('当前设备没有房间播放控制权');
-  });
-
-  it('a person watching alone cannot share', async () => {
-    mockSession.followingRoom = false;
-    render(<Probe />);
-    await act(async () => api.startSharing());
-    expect(getDisplayMedia).not.toHaveBeenCalled();
-    expect(api.error).toContain('恢复一起看');
+    expect(api.error).toBe('房主没有开放成员控制播放');
   });
 
   it('when the room refuses the start, the capture is released and nobody is offered anything', async () => {
@@ -306,12 +298,6 @@ describe('watching a screen share', () => {
   it('asks the sharing device for the picture once the room is sharing', () => {
     render(<Probe />);
     expect(emitted('screen:viewer-ready')).toHaveLength(1);
-  });
-
-  it('does not ask for the picture while watching alone', () => {
-    mockSession.followingRoom = false;
-    render(<Probe />);
-    expect(emitted('screen:viewer-ready')).toHaveLength(0);
   });
 
   it('the owner account on another device is a viewer too and answers the offer', async () => {

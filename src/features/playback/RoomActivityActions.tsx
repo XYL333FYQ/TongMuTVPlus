@@ -5,7 +5,6 @@ import { useEffect, useRef, useState } from 'react';
 
 import { useWatchRoomContextSafe } from '@/components/WatchRoomProvider';
 
-import { usePlaybackSessionSafe } from './context';
 import { normalizeActivityReturnHref } from './room-live';
 
 export default function RoomActivityActions({
@@ -28,10 +27,8 @@ export default function RoomActivityActions({
   onSound?: () => Promise<void> | void;
 }) {
   const watchRoom = useWatchRoomContextSafe();
-  const session = usePlaybackSessionSafe();
   const roomId = watchRoom?.currentRoom?.id;
-  const following = session?.followingRoom !== false;
-  const scope = JSON.stringify([roomId, selectionKey, following]);
+  const scope = JSON.stringify([roomId, selectionKey]);
   const current = useRef(scope);
   current.current = scope;
   const mounted = useRef(true);
@@ -96,47 +93,24 @@ export default function RoomActivityActions({
     >
       {roomId ? (
         <>
-          {following ? (
-            <>
-              <button
-                type='button'
-                disabled={
-                  pending ||
-                  !hasSelection ||
-                  !watchRoom.isConnected ||
-                  !watchRoom.canControl
-                }
-                onClick={() => void run(onShare, '已在房间共享')}
-              >
-                {pending ? '正在确认…' : '在房间播放'}
-              </button>
-              <button
-                type='button'
-                disabled={pending}
-                onClick={() => void run(() => session?.enterPersonalViewing())}
-              >
-                仅自己看
-              </button>
-            </>
-          ) : (
-            <button
-              type='button'
-              disabled={pending || !watchRoom.isConnected}
-              onClick={() => void run(() => session?.resumeRoom())}
-            >
-              恢复一起看
-            </button>
-          )}
+          <button
+            type='button'
+            disabled={
+              pending ||
+              !hasSelection ||
+              !watchRoom.isConnected ||
+              !watchRoom.canControl
+            }
+            onClick={() => void run(onShare, '已在房间共享')}
+          >
+            {pending ? '正在确认…' : '在房间播放'}
+          </button>
           <p>
-            {following
-              ? active
-                ? '正在一起看，切换内容将同步至房间'
-                : '浏览不会改变房间，共享后才切换活动'
-              : '正在个人观看，房间和消息保留'}
+            {active
+              ? '正在一起看，切换内容将同步至房间'
+              : '在这里看不会改变房间，点“在房间播放”才会让大家一起看'}
           </p>
-          {following && !watchRoom.canControl && (
-            <p>仅当前主持设备可切换房间活动</p>
-          )}
+          {!watchRoom.canControl && <p>房主没有开放成员切换房间活动</p>}
         </>
       ) : (
         <Link href={creationHref}>创建或加入房间</Link>

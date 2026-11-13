@@ -17,7 +17,6 @@ import { useReducedMotionSetting } from '@/lib/motion';
 import PageContainer from '@/components/PageContainer';
 import { useWatchRoomContext } from '@/components/WatchRoomProvider';
 
-import { usePlaybackSessionSafe } from '@/features/playback/context';
 import { useAudioFocus } from '@/features/playback/useAudioFocus';
 
 import type { MusicQueueItem, MusicSyncState } from '@/types/watch-room';
@@ -346,13 +345,10 @@ export default function WatchRoomMusicPage() {
   const reduced = useReducedMotionSetting();
   const watchRoom = useWatchRoomContext();
   const { currentRoom, socket } = watchRoom;
-  const session = usePlaybackSessionSafe();
-  // 跟随房间才听房间的音乐；“仅自己看”时房间和消息保留，但不替他放歌
-  const following = session?.followingRoom !== false;
   const roomOnMusic = currentRoom?.currentState?.type === 'music';
   // 控制这首歌的设备在音乐播放器里操作，这里再放一遍会出现两路声音
-  const publishing = Boolean(roomOnMusic && following && watchRoom.canControl);
-  const listening = following && roomOnMusic && !publishing;
+  const publishing = Boolean(roomOnMusic && watchRoom.canControl);
+  const listening = roomOnMusic && !publishing;
   const listeningRef = useRef(listening);
   listeningRef.current = listening;
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -1104,18 +1100,7 @@ export default function WatchRoomMusicPage() {
           </>
         ) : (
           <div className='flex flex-1 flex-col items-center justify-center gap-3 text-center text-muted'>
-            {!following ? (
-              <>
-                <p>正在个人观看，房间和消息保留</p>
-                <button
-                  type='button'
-                  onClick={() => void session?.resumeRoom()}
-                  className='rounded-md bg-fg px-4 py-2 text-inverse min-h-[44px] tm-press'
-                >
-                  恢复一起听
-                </button>
-              </>
-            ) : publishing ? (
+            {publishing ? (
               <>
                 <p>你的这台设备正在主持这首歌</p>
                 <Link

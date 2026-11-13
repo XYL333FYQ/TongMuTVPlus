@@ -599,13 +599,12 @@ class RoomService {
       sessionId
     );
   }
-  following(sessionId, data = {}) {
+  /**
+   * 旧客户端的“个人观看”开关。新模型（参考 SyncTV）里人在房间就跟着房间，
+   * 这个事件只为兼容保留，不再改变任何状态。
+   */
+  following(sessionId) {
     const session = this.requireSession(sessionId);
-    const next = data.following !== false;
-    if (session.following !== next) {
-      session.following = next;
-      this.broadcastSnapshot(session.roomId);
-    }
     return this.snapshot(
       this.getRoom(session.roomId),
       session.accountId,
@@ -734,8 +733,6 @@ class RoomService {
     const now = this.now();
     if (PLAYBACK_EVENTS.has(event)) {
       this.requireControl(identity, room);
-      if (session && session.following === false)
-        fail('FOLLOWING_REQUIRED', '你正在个人观看，请先回到一起看', 409);
       const runtime = this.rt(id);
       let state = projected(room.currentState, now);
       const sentTime =

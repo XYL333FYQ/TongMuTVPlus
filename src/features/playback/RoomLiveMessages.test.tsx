@@ -21,8 +21,7 @@ import type { ChatMessage } from '@/types/watch-room';
 const listeners = new Set<(event: RoomRealtimeMessage) => void>();
 let root: HTMLDivElement;
 let mockSession: {
-  href: string;
-  followingRoom: boolean;
+  href: string | null;
   controller: { video: HTMLVideoElement; template?: { $player: HTMLElement } };
 };
 let mockRoom: ReturnType<typeof makeRoom>;
@@ -92,7 +91,6 @@ beforeEach(() => {
   document.body.append(root);
   mockSession = {
     href: '/play?source=fixture&id=film-a&episode=1',
-    followingRoom: true,
     controller: { video },
   };
   mockRoom = makeRoom();
@@ -112,7 +110,7 @@ it('survives an activity player destroying its own HTML before React removes the
   document.body.append(container);
   container.append(root);
   container.innerHTML = '';
-  mockSession.followingRoom = false;
+  mockSession.href = null;
   expect(() => view.rerender(<PlaybackRoomMessages />)).not.toThrow();
   expect(listeners.size).toBe(0);
   container.remove();
@@ -168,19 +166,15 @@ test('a repeated message never displays twice, including after its first present
   expect(screen.queryByText('朋友：你好')).not.toBeInTheDocument();
 });
 
-test('personal or different-film viewing does not subscribe or display the old room messages', () => {
-  mockSession.followingRoom = false;
-  const view = render(<PlaybackRoomMessages />);
-  expect(listeners.size).toBe(0);
-  mockSession.followingRoom = true;
+test('a different film on this device does not subscribe or display the room messages', () => {
   mockSession.href = '/play?source=fixture&id=film-b';
-  view.rerender(<PlaybackRoomMessages />);
+  const view = render(<PlaybackRoomMessages />);
   expect(listeners.size).toBe(0);
   mockSession.href = '/play?source=fixture&id=film-a';
   view.rerender(<PlaybackRoomMessages />);
   expect(listeners.size).toBe(1);
   const old = Array.from(listeners)[0];
-  mockSession.followingRoom = false;
+  mockSession.href = '/play?source=fixture&id=film-b';
   view.rerender(<PlaybackRoomMessages />);
   act(() => old({ roomId: 'alpha', message: message('1') }));
   expect(screen.queryByText('朋友：你好')).not.toBeInTheDocument();

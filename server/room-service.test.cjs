@@ -330,22 +330,18 @@ test('owner leaving or reconnecting never stops the room; nobody has to be elect
   assert.equal(f.store.get(id).currentState.isPlaying, true);
 });
 
-test('personal viewing devices cannot drive the room until they return; commands are deduplicated', (t) => {
+test('legacy following toggles no longer detach a member from the room; commands are deduplicated', (t) => {
   const f = setup(t);
   const id = createAndHost(f);
   f.command('owner', id, 'play:change', video());
   f.join('guest', id);
+  // 旧客户端仍可能发 room:following=false：在房间里就跟着房间，照常可以控制
   f.service.following('guest', { following: false });
-  expectCode(
-    () => f.command('guest', id, 'play:pause', { currentTime: 1 }),
-    'FOLLOWING_REQUIRED'
-  );
   assert.equal(
     f.service.read(identities.owner, id).members.find((m) => m.id === 'guest')
       .following,
-    false
+    true
   );
-  f.service.following('guest', { following: true });
   f.command('guest', id, 'play:pause', { currentTime: 1 });
   const payload = {
     title: '等待解析',

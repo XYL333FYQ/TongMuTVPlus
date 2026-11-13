@@ -461,6 +461,4 @@ export interface StoredRoomInfo {
   userName: string;
   password?: string;
   timestamp: number;
-  following?: boolean;
-  personalHref?: string | null;
 }

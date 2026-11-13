@@ -99,9 +99,7 @@ export function usePlaySync(options: UsePlaySyncOptions) {
   const latest = useRef({ options, watchRoom, session });
   latest.current = { options, watchRoom, session };
 
-  const isInRoom = Boolean(
-    watchRoom?.currentRoom && session?.followingRoom !== false
-  );
+  const isInRoom = Boolean(watchRoom?.currentRoom);
   const canControl = Boolean(isInRoom && watchRoom?.canControl);
 
   // 已经与房间对齐过的影片（只有对齐过，本机的操作才算用户意图）
@@ -350,7 +348,6 @@ export function usePlaySync(options: UsePlaySyncOptions) {
       if (
         !room ||
         !roomContext?.isConnected ||
-        playback?.followingRoom === false ||
         !player?.video
       )
         return;

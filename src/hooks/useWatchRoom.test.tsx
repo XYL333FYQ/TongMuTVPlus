@@ -232,27 +232,6 @@ test('an old room message acknowledgement cannot enter the new room realtime str
   expect(live).toHaveBeenCalledWith({ roomId: 'beta', message });
 });
 
-test('remembering the same room preserves this account personal viewing preference', async () => {
-  const view = await setup();
-  localStorage.setItem(
-    'watch_room_info',
-    JSON.stringify({
-      roomId: 'room-a',
-      userName: 'alice',
-      timestamp: Date.now(),
-      following: false,
-      personalHref: '/play?source=fixture&id=personal',
-    })
-  );
-  await join(view, room('room-a'));
-  expect(
-    JSON.parse(localStorage.getItem('watch_room_info') || '{}')
-  ).toMatchObject({
-    following: false,
-    personalHref: '/play?source=fixture&id=personal',
-  });
-});
-
 test('a confirmed own message is visible even when its realtime broadcast is missing', async () => {
   const view = await setup();
   await join(view, room('A'));

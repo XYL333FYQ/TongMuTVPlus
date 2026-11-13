@@ -13,11 +13,10 @@ beforeEach(() => {
   mockRouteQuery = 'source=directplay&id=fixture';
 });
 
-test('opening the current room film as a personal route changes mode once, while metadata URL updates do not create another intent', () => {
+test('opening a play route requests it once as a user choice, while metadata URL updates do not create another intent', () => {
   const requestPlayback = jest.fn();
   const session = {
     href: `/play?${mockRouteQuery}`,
-    followingRoom: true,
     requestPlayback,
   } as unknown as PlaybackSession;
   const view = render(
@@ -25,7 +24,7 @@ test('opening the current room film as a personal route changes mode once, while
       <PlaybackRoute />
     </PlaybackSessionContext.Provider>
   );
-  expect(requestPlayback).toHaveBeenCalledWith(session.href, 'personal');
+  expect(requestPlayback).toHaveBeenCalledWith(session.href, 'user');
   mockRouteQuery = new URLSearchParams({
     source: 'directplay',
     id: 'fixture',
@@ -67,7 +66,7 @@ test('full-page presentation follows media dimensions without requesting playbac
   expect(requestPlayback).toHaveBeenCalledTimes(1);
   expect(requestPlayback).toHaveBeenCalledWith(
     '/play?source=directplay&id=fixture',
-    'personal'
+    'user'
   );
   unmount();
   expect(ratio()).toBe('');

@@ -296,17 +296,11 @@ function LivePageClient() {
     const scope = soundScope.current;
     const video = localVideo;
     if (!video) return;
-    if (
-      watchRoom?.currentRoom &&
-      playbackSession?.followingRoom &&
-      !liveSync.active
-    ) {
-      if (!(await playbackSession.enterPersonalViewing()))
-        throw Error('未能退出共同播放，请重试');
-    }
     if (scope !== soundScope.current || artPlayerRef.current?.video !== video)
       return;
-    if (!liveSync.active) playbackSession?.controller?.pause();
+    // 在房间里不暂停房间的影片（那是整个房间的进度），只把声音拿过来
+    if (!liveSync.active && !watchRoom?.currentRoom)
+      playbackSession?.controller?.pause();
     claimSound();
     try {
       await video.play();
@@ -842,15 +836,7 @@ function LivePageClient() {
       }
       return;
     }
-    const selection = ++localChannelOperation.current;
-    if (
-      origin === 'user' &&
-      watchRoom?.currentRoom &&
-      playbackSession?.followingRoom
-    ) {
-      if (!(await playbackSession.enterPersonalViewing())) return;
-      if (selection !== localChannelOperation.current) return;
-    }
+    localChannelOperation.current += 1;
 
     // 首先销毁当前播放器
     cleanupPlayer();
