@@ -66,10 +66,12 @@ export async function GET(request: NextRequest) {
     const tmdbProxy = config.SiteConfig.TMDBProxy;
     const tmdbReverseProxy = config.SiteConfig.TMDBReverseProxy;
 
+    // 没配置 TMDB 是正常的站点选择，不是服务器错误：返回空推荐，
+    // 播放页不会在每次打开时都报错。
     if (!tmdbApiKey) {
       return NextResponse.json(
-        { error: 'TMDB API Key 未配置' },
-        { status: 500 }
+        { recommendations: [], disabled: true },
+        { headers: { 'Cache-Control': 'private, max-age=300' } }
       );
     }
 
