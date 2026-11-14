@@ -76,7 +76,7 @@ main 已部署到 `225e149`：旧房间界面 + 同步引擎 + 权限/审核/片
   浏览器验收（DOM 量测，窗口隐藏无法截图）：390/820/1280 无横向溢出、触控 ≥44px；续播、换集、离开页面变小窗不断播、
   小窗回到播放页不断播、设置菜单与播放器内面板均正常。未做：浅色主题截图、小窗拖动实测。
   注意：`WatchEngine` 必须 `memo`（否则 onApi 循环）；播放页注册画面位置只能依赖 `registerSlot`。
-- [ ] 第 3 阶段：一起看服务端（`server/together/`）。
-- [ ] 第 4 阶段：一起看前端（`src/features/together/`），房间页用自己的 `WatchPlayer`，进房间时调用 `useWatchSession().suspend()`。
+- [x] 第 3 阶段 `3b478dd`：服务端沿用已按 SyncTV 重写的 room-service（权限/片单/等缓冲，42 个测试），只加了一次性清空旧房间数据（watch_room_meta.data_version=2）。
+- [x] 第 4 阶段 `3c0e633`：`/watch-room` → `TogetherRoute`（大厅 Lobby / 房间 RoomView）。房间播放器 `together/player/useRoomPlayer.ts` 只跟随房间状态，换片换集都发 play:change。两设备（localhost 与 127.0.0.1 同账号）验证：加入对齐、暂停/拖动/继续、换集、聊天、离开房间页不暂停全房间（port 忽略离开页面时的 pause）。旧 RoomPlaybackBridge 已从旧 provider 移除，旧 provider 的 17 个桥测试因此失败，第 6 阶段随旧代码一起删。未验：聊天弹幕实际飘出（窗口隐藏时 RAF 不跑）。
 - [ ] 第 5、6 阶段。还没推送：全部完成切换后再推 main。
 - 本机：mock-cms 需手动启动；登录用 friend 账号（admin 密码在 .env，工具不允许读取）。
