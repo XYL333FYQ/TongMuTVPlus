@@ -23,6 +23,7 @@ import {
   X,
   Zap,
 } from 'lucide-react';
+import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import {
   CSSProperties,
@@ -39,18 +40,8 @@ import { isNetdiskSource } from '@/lib/netdisk/source';
 import { useEnableAIComments } from '@/hooks/useEnableAIComments';
 import { useEnableComments } from '@/hooks/useEnableComments';
 
-import AIChatPanel from '@/components/AIChatPanel';
-import AIComments from '@/components/AIComments';
-import CorrectDialog from '@/components/CorrectDialog';
-import DanmakuFilterSettings from '@/components/DanmakuFilterSettings';
-import DanmakuPanel from '@/components/DanmakuPanel';
-import DetailPanel from '@/components/DetailPanel';
-import DoubanComments from '@/components/DoubanComments';
-import DownloadEpisodeSelector from '@/components/DownloadEpisodeSelector';
 import Drawer from '@/components/Drawer';
 import PageLayout from '@/components/PageLayout';
-import PansouSearch from '@/components/PansouSearch';
-import SmartRecommendations from '@/components/SmartRecommendations';
 
 import { useDownload } from '@/contexts/DownloadContext';
 
@@ -65,6 +56,41 @@ import { playerEnvironment } from './player/env';
 import { ANIME4K_MODES, ANIME4K_SCALES } from './player/plugins/anime4k';
 import { isM3u8LikeUrl, isNetdiskMountSource } from './player/source-policy';
 import { useWatchSession, WatchEngineApi } from './session/context';
+
+// 不在首屏的面板按需加载，播放页首屏脚本才不会超预算
+const AIChatPanel = dynamic(() => import('@/components/AIChatPanel'), {
+  ssr: false,
+});
+const AIComments = dynamic(() => import('@/components/AIComments'), {
+  ssr: false,
+});
+const CorrectDialog = dynamic(() => import('@/components/CorrectDialog'), {
+  ssr: false,
+});
+const DanmakuFilterSettings = dynamic(
+  () => import('@/components/DanmakuFilterSettings'),
+  { ssr: false }
+);
+const DanmakuPanel = dynamic(() => import('@/components/DanmakuPanel'), {
+  ssr: false,
+});
+const DetailPanel = dynamic(() => import('@/components/DetailPanel'), {
+  ssr: false,
+});
+const DoubanComments = dynamic(() => import('@/components/DoubanComments'), {
+  ssr: false,
+});
+const DownloadEpisodeSelector = dynamic(
+  () => import('@/components/DownloadEpisodeSelector'),
+  { ssr: false }
+);
+const PansouSearch = dynamic(() => import('@/components/PansouSearch'), {
+  ssr: false,
+});
+const SmartRecommendations = dynamic(
+  () => import('@/components/SmartRecommendations'),
+  { ssr: false }
+);
 
 type Tab = 'episodes' | 'sources' | 'danmaku';
 type Drawer = 'ai' | 'netdisk' | 'detail' | 'correct' | null;
