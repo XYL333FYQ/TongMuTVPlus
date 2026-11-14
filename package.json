@@ -100,7 +100,7 @@
     "@types/better-sqlite3": "^7.6.11",
     "@types/bs58": "^5.0.0",
     "@types/he": "^1.2.3",
-    "@types/node": "24.0.3",
+    "@types/node": "26.6.6",
     "@types/node-fetch": "^2.6.13",
     "@types/nodemailer": "^7.0.5",
     "@types/pg": "^8.16.0",
