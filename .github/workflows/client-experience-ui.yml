@@ -111,7 +111,7 @@ jobs:
           docker run --rm --name "tm-home-browser-$GITHUB_RUN_ID" --label "tm-ui-run=$GITHUB_RUN_ID" --network host --memory=1536m --memory-swap=2g -v "$RUNNER_TEMP/client-home:/audit" -v "$RUNNER_TEMP/client-home-runtime:/runtime:ro" -e NODE_PATH=/runtime/node_modules -e GITHUB_ACTIONS=true -e "UI_SOURCE_SHA=$UI_SOURCE_SHA" mcr.microsoft.com/playwright:v1.55.0-noble node /audit/home-aux.cjs
       - name: Preserve screenshots and evidence
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: client-home-ui
           path: ${{ runner.temp }}/client-home/artifacts

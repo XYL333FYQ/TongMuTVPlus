@@ -139,7 +139,7 @@ jobs:
           echo "apk_name=TongMuTV-Plus-Android.apk" >> "$GITHUB_OUTPUT"
 
       - name: Upload APK
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: tongmutvplus-android-mobile
           path: /tmp/apk/*.apk
@@ -183,7 +183,7 @@ jobs:
 
       - name: Upload smoke screenshots and logs
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: smoke-android-api${{ matrix.api }}
           path: smoke-out
