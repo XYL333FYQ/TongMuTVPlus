@@ -2188,10 +2188,17 @@ html[data-tm-reduced-motion='true']
   }
 }
 
-/* 触屏：小标签也要够点 */
-@media (pointer: coarse) {
+/* 触屏和窄屏：小标签也要够点（至少 44px） */
+@media (pointer: coarse), (max-width: 599px) {
   .tm-t-chip-button,
-  .tm-t-segment > button[role='tab'] {
+  .tm-t-segment > button[role='tab'],
+  .tm-t-segment > button[role='radio'] {
     min-height: 44px;
   }
+}
+.tm-t-faces {
+  min-width: 44px;
+}
+.tm-t-switch-row {
+  min-height: 44px;
 }

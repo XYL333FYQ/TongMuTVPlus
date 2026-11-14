@@ -767,9 +767,9 @@ html[data-tm-reduced-motion='true'] .tm-home-hero-poster-surface::after {
   min-height: 80px;
 }
 .tm-home-pair .tm-video-card[data-compact='true'] .tm-video-card-art {
+  --tm-art-radius: var(--tm-radius-sm);
   width: 100%;
   transform: none;
-  border-radius: var(--tm-radius-sm);
 }
 .tm-home-pair .tm-video-card[data-compact='true'] .tm-video-card-overlay {
   display: none;
@@ -1171,7 +1171,6 @@ html[data-tm-reduced-motion='true'] .tm-home-room-create-link {
   background: var(--tm-on-art);
 }
 .tm-home-resume .tm-video-card-art {
-  border-radius: var(--tm-radius-md);
   box-shadow: var(--tm-shadow-sm);
 }
 .tm-home-new-episodes {
@@ -1200,7 +1199,7 @@ html[data-tm-reduced-motion='true'] .tm-home-room-create-link {
   box-shadow: none;
 }
 .tm-video-card-art {
-  border-radius: var(--tm-radius-md);
+  border-radius: var(--tm-art-radius, var(--tm-radius-md));
   background: var(--tm-surface-raised);
   box-shadow: var(--tm-shadow-poster);
   transform: perspective(800px);
@@ -1222,6 +1221,15 @@ html[data-tm-reduced-motion='true'] .tm-home-room-create-link {
     transparent 55%
   );
   transition: opacity var(--tm-d-hover) var(--tm-ease-out);
+}
+/* 缩略图里的画面层和进度条跟着外框圆角走，底色、进度条不会从圆角下露出来 */
+.tm-video-card-art > .overflow-hidden {
+  border-radius: var(--tm-art-radius, var(--tm-radius-md));
+}
+.tm-video-card-art .tm-video-horizontal-progress {
+  overflow: hidden;
+  border-radius: 0 0 var(--tm-art-radius, var(--tm-radius-md))
+    var(--tm-art-radius, var(--tm-radius-md));
 }
 .tm-video-card-art img {
   transition: opacity var(--tm-d-panel) var(--tm-ease-out),

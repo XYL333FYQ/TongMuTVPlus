@@ -53,13 +53,9 @@ test('a preference change from another tab broadcasts motion changes for banner 
   window.removeEventListener('tm-visual-preferences-change', listener);
 });
 
-test('player ease is off by default and can be switched on', () => {
-  delete document.documentElement.dataset.tmPlayerEase;
+test('no longer offers the old room player-follow setting', () => {
   render(<VisualPreferenceControls />);
-  const ease = screen.getByRole('checkbox', { name: /播放窗口缓动跟随/ });
-  expect(ease).not.toBeChecked();
-  expect(document.documentElement.dataset.tmPlayerEase).toBe('false');
-  fireEvent.click(ease);
-  expect(document.documentElement.dataset.tmPlayerEase).toBe('true');
-  delete document.documentElement.dataset.tmPlayerEase;
+  expect(
+    screen.queryByRole('checkbox', { name: /播放窗口缓动跟随/ })
+  ).not.toBeInTheDocument();
 });

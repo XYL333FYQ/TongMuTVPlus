@@ -2376,7 +2376,7 @@ export function SearchPageClient({
                             setSearchRefreshVersion((version) => version + 1);
                           }}
                           disabled={isLoading}
-                          className='tm-btn tm-btn-ghost tm-btn-sm'
+                          className='tm-btn tm-btn-ghost tm-btn-sm min-h-[44px] min-w-[44px]'
                           aria-label='强制刷新搜索结果'
                         >
                           <RefreshCw

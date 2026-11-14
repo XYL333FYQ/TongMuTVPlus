@@ -1202,7 +1202,7 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
                         buttonRefs.current[idx] = el;
                       }}
                       onClick={() => handleCategoryClick(idx)}
-                      className={`w-20 relative py-2 text-sm font-medium transition-colors whitespace-nowrap flex-shrink-0 text-center ${
+                      className={`w-20 relative min-h-[44px] py-2 text-sm font-medium transition-colors whitespace-nowrap flex-shrink-0 text-center ${
                         isActive ? 'text-fg' : inactiveActionTextClass
                       }
                       `.trim()}
@@ -1218,7 +1218,7 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
             </div>
             {/* 向上/向下按钮 */}
             <button
-              className={`flex-shrink-0 w-8 h-8 rounded-md flex items-center justify-center ${iconButtonClass} transition-colors transform translate-y-[-4px]`}
+              className={`flex-shrink-0 w-11 h-11 rounded-md flex items-center justify-center ${iconButtonClass} transition-colors transform translate-y-[-4px]`}
               onClick={() => {
                 // 切换集数排序（正序/倒序）
                 setDescending((prev) => !prev);
@@ -1244,7 +1244,7 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
               ref={episodeMenuRef}
             >
               <button
-                className={`w-8 h-8 rounded-md flex items-center justify-center ${iconButtonClass} transition-colors`}
+                className={`w-11 h-11 rounded-md flex items-center justify-center ${iconButtonClass} transition-colors`}
                 onClick={() => setShowEpisodeMenu((v) => !v)}
                 title='更多'
                 aria-haspopup='menu'
