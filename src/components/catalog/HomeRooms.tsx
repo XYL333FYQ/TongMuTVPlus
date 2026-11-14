@@ -148,17 +148,15 @@ export default function HomeRooms({ guest = false }: { guest?: boolean }) {
           <div className='tm-home-room-details'>
             <strong>{displayRoomName(room)}</strong>
             <small>
-              <i className='tm-dot' data-live={room.memberCount > 0} />
-              {room.memberCount > 0 ? `${room.memberCount} 人在线` : '无人在线'}
+              {playing ? `正在放映《${playing}》` : '没有在放映'}
+              {room.memberCount > 1 ? ` · ${room.memberCount} 人在线` : ''}
             </small>
-            {playing && (
-              <span className='tm-home-room-playing'>正在播放 {playing}</span>
-            )}
           </div>
-          <span className='tm-home-room-enter' aria-hidden='true'>
-            进入
-            <ChevronRight size={14} />
-          </span>
+          <ChevronRight
+            className='tm-home-room-chevron'
+            size={18}
+            aria-hidden='true'
+          />
         </Link>
       ) : loading ? (
         <div

@@ -2202,3 +2202,56 @@ html[data-tm-reduced-motion='true']
 .tm-t-switch-row {
   min-height: 44px;
 }
+
+/* 自己看的小窗占着右下角时，房间入口和聊天让到它左边（手机上让到它上面） */
+html[data-tm-solo-mini] :is(.tm-t-pill-dock, .tm-t-dock) {
+  right: calc(20px + min(380px, calc(100vw - 32px)) + 12px);
+}
+@media (max-width: 767px) {
+  html[data-tm-solo-mini] :is(.tm-t-pill-dock, .tm-t-dock) {
+    right: 12px;
+  }
+  html[data-tm-solo-mini='folded'] :is(.tm-t-pill-dock, .tm-t-dock) {
+    bottom: calc(
+      var(--tm-bottom-nav-height, 64px) + 84px + var(--tm-safe-bottom, 0px)
+    );
+  }
+  html[data-tm-solo-mini='mini'] :is(.tm-t-pill-dock, .tm-t-dock) {
+    bottom: calc(
+      var(--tm-bottom-nav-height, 64px) + 84px + (100vw - 24px) * 9 / 16 +
+        var(--tm-safe-bottom, 0px)
+    );
+  }
+}
+
+/* 小窗只要画面：弹幕输入条等挂在播放器外面的东西不显示，也不许溢出到下面的按钮行 */
+.tm-t-mini-stage {
+  overflow: hidden;
+  border-radius: var(--tm-radius-lg) var(--tm-radius-lg) 0 0;
+}
+.tm-t-mini .artplayer-plugin-danmuku {
+  display: none !important;
+}
+
+/* 顶部信息是一行安静的文字，不做成一排标签 */
+.tm-t-head-meta {
+  gap: 4px 14px;
+}
+.tm-t-head-meta .tm-t-chip {
+  min-height: 24px;
+  padding: 0;
+  background: none;
+  box-shadow: none;
+  font-size: 13px;
+}
+.tm-t-head-meta .tm-t-chip-button {
+  padding: 0 6px;
+  margin-left: -6px;
+  border-radius: var(--tm-radius-sm);
+}
+/* 正在放映：直接放在舞台下面，不再套一层卡片 */
+.tm-t-now {
+  padding: 6px 2px 0;
+  background: none;
+  box-shadow: none;
+}

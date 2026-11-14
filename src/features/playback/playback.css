@@ -1253,3 +1253,97 @@ html[data-tm-no-blur='true'] .tm-playback-chrome {
 html[data-tm-reduced-motion] .tm-chat-messages .tm-chat-delete {
   transition: none;
 }
+
+/* ================================================================
+ * 小窗 / 收起（2026-11-14 重做）：和一起看小窗同一套样子——
+ * 一张实底卡片，上面是画面，下面一行：片名 + 播放 / 声音 / 收起 / 关闭。
+ * 只改外观，播放实例与拖动逻辑不变。
+ * ================================================================ */
+.tm-playback-host {
+  --tm-mini-w: min(380px, calc(100vw - 32px));
+  --tm-mini-bar: 60px;
+  --tm-mini-gap: 20px;
+}
+.tm-playback-host[data-presentation='mini'] [data-tm-player-mount] {
+  /* 旧规则用 top/left 定位，这里统一改为贴右下角，画面与按钮行对齐 */
+  inset: auto auto auto auto;
+  right: var(--tm-mini-gap);
+  bottom: calc(
+    var(--tm-mini-gap) + var(--tm-mini-bar) + var(--tm-safe-bottom, 0px)
+  );
+  width: var(--tm-mini-w);
+  height: calc(var(--tm-mini-w) * 9 / 16);
+  border-radius: var(--tm-radius-lg) var(--tm-radius-lg) 0 0;
+  box-shadow: var(--tm-shadow-lg);
+}
+.tm-playback-host:is([data-presentation='mini'], [data-presentation='folded'])
+  .tm-playback-chrome {
+  inset: auto auto auto auto;
+  right: var(--tm-mini-gap);
+  bottom: calc(var(--tm-mini-gap) + var(--tm-safe-bottom, 0px));
+  width: var(--tm-mini-w);
+  height: var(--tm-mini-bar);
+  gap: 2px;
+  padding: 6px 6px 6px 14px;
+  background: var(--tm-glass-solid, var(--tm-surface));
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  box-shadow: var(--tm-shadow-lg), inset 0 0 0 1px var(--tm-line);
+  border-radius: 0 0 var(--tm-radius-lg) var(--tm-radius-lg);
+}
+.tm-playback-host[data-presentation='folded'] .tm-playback-chrome {
+  border-radius: var(--tm-radius-lg);
+}
+/* 小窗里画面已经在上面，不再放一张缩略图 */
+.tm-playback-host[data-presentation='mini'] .tm-playback-thumbnail {
+  display: none;
+}
+.tm-playback-host:is([data-presentation='mini'], [data-presentation='folded'])
+  .tm-playback-title {
+  flex: 1;
+  min-width: 0;
+  min-height: 44px;
+  padding: 0;
+  border-radius: var(--tm-radius-sm);
+  background: none;
+}
+.tm-playback-host:is([data-presentation='mini'], [data-presentation='folded'])
+  .tm-playback-copy
+  > span:first-child {
+  font-size: 14px;
+  font-weight: 600;
+}
+.tm-playback-host:is([data-presentation='mini'], [data-presentation='folded'])
+  .tm-playback-context:empty {
+  display: none;
+}
+.tm-playback-host:is([data-presentation='mini'], [data-presentation='folded'])
+  .tm-playback-chrome
+  > button:not(.tm-playback-title) {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border-radius: 50%;
+}
+@media (max-width: 767px) {
+  .tm-playback-host {
+    --tm-mini-gap: 12px;
+    --tm-mini-w: calc(100vw - 24px);
+  }
+  .tm-playback-host[data-presentation='mini'] [data-tm-player-mount] {
+    bottom: calc(
+      var(--tm-bottom-nav-height, 64px) + var(--tm-mini-gap) +
+        var(--tm-mini-bar) + var(--tm-safe-bottom, 0px)
+    );
+  }
+  .tm-playback-host:is([data-presentation='mini'], [data-presentation='folded'])
+    .tm-playback-chrome {
+    bottom: calc(
+      var(--tm-bottom-nav-height, 64px) + var(--tm-mini-gap) +
+        var(--tm-safe-bottom, 0px)
+    );
+  }
+}

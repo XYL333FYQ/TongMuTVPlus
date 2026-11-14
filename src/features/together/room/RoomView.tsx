@@ -207,7 +207,11 @@ export default function RoomView({
                 className='tm-t-dot'
                 data-on={room.isConnected ? 'true' : undefined}
               />
-              {room.isConnected ? `${online} 人在线` : '正在重新连接…'}
+              {room.isConnected
+                ? online > 1
+                  ? `${online} 人在线`
+                  : '只有你在'
+                : '正在重新连接…'}
             </span>
             <button
               type='button'
@@ -329,11 +333,7 @@ export default function RoomView({
                   <Clapperboard size={30} aria-hidden='true' />
                 </span>
                 <strong>还没开始放映</strong>
-                <span>
-                  {can('changeMedia')
-                    ? '选一部片，房间里的人会同时开始看。'
-                    : '等房主或管理员选片，开始后这里会自动播放。'}
-                </span>
+                {!can('changeMedia') && <span>房主选片后会自动开始</span>}
                 {can('changeMedia') && (
                   <button
                     type='button'
@@ -401,13 +401,12 @@ export default function RoomView({
                           `第 ${player.episodeIndex + 1} 集`
                         : '',
                       detail?.source_name,
-                      state.updatedBy ? `${state.updatedBy} 最后操作` : '',
                     ]
                       .filter(Boolean)
                       .join(' · ')
                   : can('changeMedia')
-                  ? '从下面的推荐里挑一部，或者自己搜'
-                  : '房主选片后会自动开始'}
+                  ? '选一部开始放映'
+                  : '房主选片后自动开始'}
               </span>
             </div>
             <div className='tm-t-now-actions'>

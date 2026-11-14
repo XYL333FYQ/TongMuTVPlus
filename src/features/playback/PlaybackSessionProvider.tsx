@@ -343,6 +343,19 @@ export default function PlaybackSessionProvider({
     hostRef,
     Boolean(href) && presentation === 'mini'
   );
+  // 告诉页面右下角被小窗占着（一起看的入口据此让位），不涉及任何房间逻辑
+  const corner =
+    href && (presentation === 'mini' || presentation === 'folded')
+      ? presentation
+      : '';
+  useEffect(() => {
+    const root = document.documentElement;
+    if (corner) root.dataset.tmSoloMini = corner;
+    else delete root.dataset.tmSoloMini;
+    return () => {
+      delete root.dataset.tmSoloMini;
+    };
+  }, [corner]);
   const slotStyle = slotRect
     ? ({
         '--tm-slot-left': `${slotRect.left}px`,

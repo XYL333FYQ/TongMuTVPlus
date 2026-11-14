@@ -181,8 +181,7 @@ export default function ChatPanel(props: ChatPanelProps) {
         {!props.messages.length && (
           <div className='tm-t-chat-empty'>
             <MessageSquareText size={26} aria-hidden='true' />
-            <strong>还没有人说话</strong>
-            <span>打个招呼，或者发个表情</span>
+            <span>还没有消息</span>
           </div>
         )}
         {props.messages.map((message, index) => {

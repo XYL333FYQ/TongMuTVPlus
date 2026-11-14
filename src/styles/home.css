@@ -1421,3 +1421,9 @@ html[data-tm-reduced-motion='true']
     opacity: 0.35;
   }
 }
+
+/* 我的房间：整行就是入口，右边只留一个箭头 */
+.tm-home-room-chevron {
+  flex: 0 0 auto;
+  color: var(--tm-muted);
+}

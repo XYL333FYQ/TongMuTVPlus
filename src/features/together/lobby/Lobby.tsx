@@ -134,9 +134,6 @@ export default function Lobby(props: {
       <header className='tm-t-lobby-head'>
         <div>
           <h1 className='tm-t-h1'>一起看</h1>
-          <p className='tm-t-lead'>
-            和朋友在各自的设备上同步看同一部片，边看边聊。
-          </p>
         </div>
         <div className='tm-t-lobby-actions'>
           <form className='tm-t-join' onSubmit={submit}>

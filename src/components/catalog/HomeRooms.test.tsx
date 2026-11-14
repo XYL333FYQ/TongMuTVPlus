@@ -63,8 +63,7 @@ test('shows real membership, deduplicates the current room, and aborts on unmoun
   const { unmount } = render(<HomeRooms />);
   await waitFor(() => expect(mockFetch).toHaveBeenCalledTimes(1));
   expect(screen.getAllByText('当前房间')).toHaveLength(1);
-  expect(screen.getByText('2 人在线')).toBeInTheDocument();
-  expect(screen.getByText('正在播放 影片甲')).toBeInTheDocument();
+  expect(screen.getByText('正在放映《影片甲》 · 2 人在线')).toBeInTheDocument();
   expect(screen.queryByText('休眠房间')).not.toBeInTheDocument();
   expect(screen.queryByText('其他房间')).not.toBeInTheDocument();
   expect(screen.getByRole('link', { name: /当前房间/ })).toHaveAttribute(

@@ -95,7 +95,6 @@ export default function Recommendations(props: {
       <header className='tm-t-section-head'>
         <div>
           <h2 id='tm-t-recs-title'>今晚看什么</h2>
-          <p>豆瓣正在热的，挑一部和大家一起看</p>
         </div>
         <div className='tm-t-recs-tools'>
           <div className='tm-t-segment tm-t-segment-small' role='tablist'>
