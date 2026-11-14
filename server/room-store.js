@@ -38,7 +38,38 @@ function openRoomStore(
     db.exec(
       'ALTER TABLE watch_room_memberships ADD COLUMN permissions_json TEXT'
     );
+  resetLegacyRooms(db);
   return db;
+}
+
+/**
+ * 一起看重做（2026-11）：旧版房间、成员、片单、聊天全部清空，只做一次。
+ * 用 watch_room_meta 记录数据版本，之后重启不会再清。
+ */
+const ROOM_DATA_VERSION = 2;
+function resetLegacyRooms(db) {
+  db.exec(
+    'CREATE TABLE IF NOT EXISTS watch_room_meta (key TEXT PRIMARY KEY, value TEXT NOT NULL)'
+  );
+  const row = db
+    .prepare("SELECT value FROM watch_room_meta WHERE key = 'data_version'")
+    .get();
+  if (row && Number(row.value) >= ROOM_DATA_VERSION) return;
+  db.transaction(() => {
+    for (const table of [
+      'watch_room_message_cursors',
+      'watch_room_messages',
+      'watch_room_commands',
+      'watch_room_memberships',
+      'watch_room_creations',
+      'watch_room_covers',
+      'watch_rooms',
+    ])
+      db.exec(`DELETE FROM ${table}`);
+    db.prepare(
+      "INSERT INTO watch_room_meta (key, value) VALUES ('data_version', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value"
+    ).run(String(ROOM_DATA_VERSION));
+  })();
 }
 
 class RoomStore {

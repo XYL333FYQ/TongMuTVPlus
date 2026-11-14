@@ -1486,3 +1486,42 @@ test('waiting for buffering can be turned off in the room settings', (t) => {
   f.command('guest', id, 'play:buffering', { buffering: true });
   assert.equal(f.store.get(id).currentState.isPlaying, true);
 });
+
+test('legacy room data is wiped exactly once when the rebuilt rooms start', () => {
+  const directory = fs.mkdtempSync(
+    path.join(os.tmpdir(), 'tongmutvplus-room-reset-')
+  );
+  const filename = path.join(directory, 'test.sqlite');
+  try {
+    // 旧版本留下的数据库：有房间、没有版本记录
+    const Database = require('better-sqlite3');
+    const legacy = new Database(filename);
+    legacy.exec(
+      fs.readFileSync(
+        path.join(__dirname, '../migrations/013_persistent_rooms.sql'),
+        'utf8'
+      )
+    );
+    const insert = legacy.prepare(
+      "INSERT INTO watch_rooms (id,owner_account_id,name,description,password_hash,is_public,room_type,settings_json,state_json,queue_json,revision,controller_epoch,created_at,updated_at,empty_since,lifecycle,archived_at) VALUES (?,'owner','旧房间','',NULL,1,'movie','{}',NULL,'[]',1,0,1,1,NULL,'active',NULL)"
+    );
+    insert.run('old-room');
+    legacy.close();
+
+    const db = openRoomStore(filename);
+    assert.equal(db.prepare('SELECT COUNT(*) AS n FROM watch_rooms').get().n, 0);
+    db.prepare(
+      "INSERT INTO watch_rooms (id,owner_account_id,name,description,password_hash,is_public,room_type,settings_json,state_json,queue_json,revision,controller_epoch,created_at,updated_at,empty_since,lifecycle,archived_at) VALUES ('new-room','owner','新房间','',NULL,1,'movie','{}',NULL,'[]',1,0,1,1,NULL,'active',NULL)"
+    ).run();
+    db.close();
+
+    const reopened = openRoomStore(filename);
+    assert.deepEqual(
+      reopened.prepare('SELECT id FROM watch_rooms').all().map((row) => row.id),
+      ['new-room']
+    );
+    reopened.close();
+  } finally {
+    fs.rmSync(directory, { recursive: true, force: true });
+  }
+});
