@@ -162,6 +162,8 @@ export default function MobileBottomNav({ activePath }: MobileBottomNavProps) {
     setHover(null);
     if (navigate && target !== null && target !== shownIndex) {
       setPending(target === activeIndex ? null : target);
+      // 拖动底栏松手换页也算切换标签：不做整页滑入
+      document.documentElement.dataset.tmNav = 'tab';
       router.push(prepareTabNavigation(primaryNavigation[target].href));
     } else {
       syncThumb();

@@ -1347,3 +1347,9 @@ html[data-tm-reduced-motion] .tm-chat-messages .tm-chat-delete {
     );
   }
 }
+
+/* 小窗：控制栏层盖住了整个画面（点中间的播放键其实点在它上面），小窗里不显示它；
+ * 播放、声音等都在下面那一行。点画面中间照常播放 / 暂停。 */
+.tm-playback-host[data-presentation='mini'] .art-bottom {
+  display: none !important;
+}

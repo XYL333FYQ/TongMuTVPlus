@@ -964,3 +964,11 @@ html[data-tm-reduced-motion='true'] .tm-skeleton::after {
     background: none;
   }
 }
+
+/* 主题切换的圆形揭开期间，新画面是实时层、每一帧都要重画：
+ * 玻璃模糊（backdrop-filter）每帧重算是手机上掉帧的主因，这半秒里先关掉，其他页面动画也暂停 */
+html[data-tm-theme-transition] *:not(.tm-theme-morph):not(.tm-theme-morph *) {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  animation-play-state: paused !important;
+}

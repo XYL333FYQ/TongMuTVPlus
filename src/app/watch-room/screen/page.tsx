@@ -1,6 +1,6 @@
 'use client';
 
-import { Monitor, MonitorPlay, Users } from 'lucide-react';
+import { ArrowLeft, ExternalLink, LogOut, MonitorUp } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { type MutableRefObject, useCallback, useEffect, useState } from 'react';
@@ -11,7 +11,6 @@ import {
   useScreenShare,
 } from '@/hooks/useScreenShare';
 
-import PageContainer from '@/components/PageContainer';
 import Select from '@/components/ui/Select';
 import { useWatchRoomContext } from '@/components/WatchRoomProvider';
 
@@ -20,6 +19,40 @@ import { useAudioFocus } from '@/features/playback/useAudioFocus';
 const WATCH_ROOM_NO_CONNECT_KEY = 'watch_room_no_connect';
 const WATCH_ROOM_NO_CONNECT_TIMESTAMP_KEY = 'watch_room_no_connect_timestamp';
 const SCREEN_SHARE_QUALITY_KEY = 'watch_room_screen_quality';
+
+/** 浏览器给的英文错误换成能看懂的话 */
+function readableShareError(message: string | null) {
+  if (!message) return null;
+  if (/permission denied|notallowed|denied by/i.test(message))
+    return '没有开始共享：选择窗口时取消了，或系统没有允许。最小化的窗口不会出现在选择列表里，先把它还原再试。';
+  if (/notfound|no source|could not start/i.test(message))
+    return '没有找到可以共享的画面，换一个窗口或整个屏幕再试。';
+  if (/notreadable|abort/i.test(message))
+    return '画面被系统占用或采集中断，请再试一次。';
+  return message;
+}
+
+/** 画面按真实宽高比显示，不留上下黑边 */
+function useVideoAspect(element: HTMLVideoElement | null) {
+  const [ratio, setRatio] = useState<string | null>(null);
+  useEffect(() => {
+    if (!element) return;
+    const update = () =>
+      setRatio(
+        element.videoWidth && element.videoHeight
+          ? `${element.videoWidth} / ${element.videoHeight}`
+          : null
+      );
+    update();
+    element.addEventListener('loadedmetadata', update);
+    element.addEventListener('resize', update);
+    return () => {
+      element.removeEventListener('loadedmetadata', update);
+      element.removeEventListener('resize', update);
+    };
+  }, [element]);
+  return ratio;
+}
 
 function getScreenShareHostSupportError() {
   if (typeof window === 'undefined') return null;
@@ -81,6 +114,17 @@ export default function WatchRoomScreenPage() {
       setRemoteElement(element);
     },
     [remoteVideoRef]
+  );
+  const [localElement, setLocalElement] = useState<HTMLVideoElement | null>(
+    null
+  );
+  const attachLocalVideo = useCallback(
+    (element: HTMLVideoElement | null) => {
+      (localVideoRef as MutableRefObject<HTMLVideoElement | null>).current =
+        element;
+      setLocalElement(element);
+    },
+    [localVideoRef]
   );
   const { claimSound } = useAudioFocus(remoteElement, false);
   useEffect(() => {
@@ -152,6 +196,10 @@ export default function WatchRoomScreenPage() {
     };
   }, [canShare, screenRoomId]);
 
+  const ratio = useVideoAspect(
+    isLocalSharing || (canShare && !isSharing) ? localElement : remoteElement
+  );
+
   if (!screenRoom) {
     return null;
   }
@@ -162,213 +210,180 @@ export default function WatchRoomScreenPage() {
     router.push('/watch-room');
   };
 
-  const captureSettingsText = captureSettings
-    ? [
-        captureSettings.width && captureSettings.height
-          ? `${captureSettings.width}x${captureSettings.height}`
-          : '分辨率未知',
-        captureSettings.frameRate
-          ? `${Math.round(captureSettings.frameRate)} fps`
-          : '帧率未知',
-      ].join(' / ')
-    : '未开始';
+  const captureText =
+    captureSettings && captureSettings.width && captureSettings.height
+      ? `${captureSettings.width}×${captureSettings.height}${
+          captureSettings.frameRate
+            ? ` · ${Math.round(captureSettings.frameRate)} fps`
+            : ''
+        }`
+      : '';
+  const status = isSharing
+    ? isLocalSharing
+      ? `你正在共享${captureText ? ` · ${captureText}` : ''}`
+      : '正在共享'
+    : '还没开始共享';
+  const shownError = readableShareError(error);
+  const showLocal = isLocalSharing || (canShare && !isSharing);
 
   return (
-    <div className='min-h-screen bg-canvas text-fg'>
-      <PageContainer className='flex min-h-screen flex-col gap-4 py-4'>
-        <div className='flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-line bg-raised px-5 py-4 shadow-sm'>
-          <div>
-            <h1 className='flex items-center gap-2 text-[28px] md:text-[32px] font-bold'>
-              <Monitor className='h-6 w-6 text-fg' />
-              屏幕共享观影室
-            </h1>
-            <p className='mt-1 text-sm text-muted'>
-              房间：{screenRoom.name} · 房主：{screenRoom.ownerName}
-            </p>
+    <div className='tm-t-share'>
+      <header className='tm-t-head'>
+        <Link
+          href='/watch-room'
+          className='tm-t-icon tm-t-head-back'
+          aria-label='返回房间'
+          title='返回房间'
+        >
+          <ArrowLeft size={20} />
+        </Link>
+        <div className='tm-t-head-title'>
+          <h1>共享屏幕</h1>
+          <div className='tm-t-head-meta'>
+            <span className='tm-t-chip'>
+              <span
+                className='tm-t-dot'
+                data-on={isSharing ? 'true' : undefined}
+              />
+              {status}
+            </span>
+            <span className='tm-t-chip'>{screenRoom.name}</span>
           </div>
-          <div className='flex items-center gap-2'>
+        </div>
+        <div className='tm-t-head-actions'>
+          {canShare && (
             <Link
-              href='/watch-room'
-              className='rounded-lg bg-raised px-4 py-2 text-fg min-h-[44px] tm-press inline-flex items-center'
+              href='/'
+              target='_blank'
+              rel='noreferrer'
+              onClick={(event) => {
+                event.preventDefault();
+                openDetachedPage();
+              }}
+              className='tm-t-btn'
+              title='共享时这一页要留着，新开一个页面继续逛'
             >
-              返回房间
+              <ExternalLink size={16} />
+              <span>新开主页</span>
             </Link>
-            {canShare && (
-              <Link
-                href='/'
-                target='_blank'
-                rel='noreferrer'
-                onClick={(event) => {
-                  event.preventDefault();
-                  openDetachedPage();
-                }}
-                className='rounded-lg bg-fg px-4 py-2 text-inverse min-h-[44px] tm-press'
-              >
-                新开主页
-              </Link>
-            )}
-            <button
-              onClick={handleLeave}
-              className='rounded-lg bg-raised px-4 py-2 text-fg min-h-[44px] tm-press'
-            >
-              离开房间
-            </button>
-          </div>
+          )}
+          <button
+            type='button'
+            onClick={handleLeave}
+            className='tm-t-icon'
+            aria-label='离开房间'
+            title='离开房间'
+          >
+            <LogOut size={20} />
+          </button>
+        </div>
+      </header>
+
+      <div className='tm-t-share-layout'>
+        <div
+          className='tm-t-share-stage'
+          style={{ aspectRatio: ratio || '16 / 9' }}
+        >
+          {showLocal ? (
+            <video ref={attachLocalVideo} autoPlay muted playsInline />
+          ) : (
+            <video ref={attachRemoteVideo} autoPlay playsInline controls />
+          )}
+          {!isSharing && (
+            <div className='tm-t-stage-empty'>
+              <span className='tm-t-stage-icon'>
+                <MonitorUp size={28} aria-hidden='true' />
+              </span>
+              <strong>
+                {canShare
+                  ? '共享一个窗口或整个屏幕'
+                  : '等待有控制权的人开始共享屏幕'}
+              </strong>
+              {canShare && <span>共享期间这一页不要关</span>}
+            </div>
+          )}
         </div>
 
-        <div className='grid flex-1 grid-cols-1 gap-4 xl:grid-cols-[1fr_320px]'>
-          <div className='relative flex min-h-[420px] items-center justify-center overflow-hidden rounded-2xl border border-line bg-ink'>
-            {isLocalSharing || (canShare && !isSharing) ? (
-              <video
-                ref={localVideoRef}
-                autoPlay
-                muted
-                playsInline
-                className='h-full w-full bg-ink object-contain'
-              />
-            ) : (
-              <video
-                ref={attachRemoteVideo}
-                autoPlay
-                playsInline
-                controls
-                className='h-full w-full bg-ink object-contain'
-              />
-            )}
-
-            {!isSharing && (
-              <div className='absolute px-6 text-center text-[color:var(--tm-room-player-text)]'>
-                <MonitorPlay className='mx-auto mb-3 h-12 w-12 text-[color:var(--tm-room-player-text)] opacity-70' />
-                <p className='text-sm font-medium'>
-                  {canShare
-                    ? '点击开始共享，向房员推送浏览器画面'
-                    : '等待有控制权的人开始共享屏幕'}
-                </p>
-                {canShare && (
-                  <p className='mt-2 text-sm text-[color:var(--tm-room-player-text)] opacity-70'>
-                    共享期间本页不要关闭；想继续浏览可以点右上角“新开主页”。
-                  </p>
-                )}
+        <aside className='tm-t-share-side'>
+          {supportError && (
+            <p className='tm-t-error' role='alert'>
+              {supportError}
+            </p>
+          )}
+          {shownError && (
+            <p className='tm-t-error' role='alert'>
+              {shownError}
+            </p>
+          )}
+          {canShare ? (
+            <>
+              <label className='tm-t-field'>
+                <span>画质</span>
+                <Select
+                  value={qualityPreset}
+                  onChange={(event) =>
+                    setQualityPreset(
+                      event.target.value as ScreenShareQualityPreset
+                    )
+                  }
+                  disabled={isStarting || isSharing}
+                  className='min-h-[44px] w-full rounded-lg border border-line bg-raised px-3 py-2 text-sm text-fg disabled:cursor-not-allowed disabled:opacity-50'
+                >
+                  {screenShareQualityOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </Select>
+              </label>
+              <div className='tm-t-share-actions'>
+                <button
+                  type='button'
+                  onClick={() => startSharing()}
+                  disabled={
+                    isStarting || isLocalSharing || Boolean(supportError)
+                  }
+                  className='tm-t-btn tm-t-btn-primary'
+                >
+                  {isStarting
+                    ? '等待选择画面…'
+                    : isLocalSharing
+                    ? '共享中'
+                    : isSharing
+                    ? '重新开始共享'
+                    : '开始共享'}
+                </button>
+                <button
+                  type='button'
+                  onClick={() => stopSharing(true)}
+                  disabled={!isLocalSharing && !isSharing}
+                  className='tm-t-btn'
+                >
+                  停止
+                </button>
               </div>
-            )}
+            </>
+          ) : (
+            <p className='tm-t-hint'>开始共享后画面会自动出现在这里。</p>
+          )}
+          <div className='tm-t-share-members'>
+            <span className='tm-t-share-label'>
+              在看的人 · {members.length}
+            </span>
+            <ul>
+              {members.map((member) => (
+                <li key={member.id}>
+                  <span className='tm-t-share-face' aria-hidden='true'>
+                    {member.name.slice(0, 1).toUpperCase()}
+                  </span>
+                  {member.name}
+                  {member.isOwner && <small>房主</small>}
+                </li>
+              ))}
+            </ul>
           </div>
-
-          <div className='space-y-4'>
-            <div className='rounded-xl border border-line bg-surface p-4'>
-              <h2 className='mb-3 font-medium'>共享状态</h2>
-              <div className='space-y-2 text-sm text-muted'>
-                <p>类型：屏幕共享</p>
-                <p>状态：{isSharing ? '共享中' : '未开始'}</p>
-                <p>成员：{members.length} 人</p>
-              </div>
-
-              {canShare && (
-                <div className='mt-2 text-sm text-muted'>
-                  实际采集：{captureSettingsText}
-                </div>
-              )}
-
-              {supportError && (
-                <div className='mt-3 rounded-lg border border-danger bg-raised px-3 py-2 text-sm text-fg'>
-                  {supportError}
-                </div>
-              )}
-
-              {error && (
-                <div className='mt-3 rounded-lg border border-danger bg-raised px-3 py-2 text-sm text-fg'>
-                  {error}
-                </div>
-              )}
-
-              {canShare && (
-                <div className='mt-4'>
-                  <label className='mb-2 block text-sm font-medium text-muted'>
-                    共享画质
-                  </label>
-                  <Select
-                    value={qualityPreset}
-                    onChange={(event) =>
-                      setQualityPreset(
-                        event.target.value as ScreenShareQualityPreset
-                      )
-                    }
-                    disabled={isStarting || isSharing}
-                    className='min-h-[44px] w-full rounded-lg border border-line bg-raised px-3 py-2 text-sm text-fg disabled:cursor-not-allowed disabled:opacity-50'
-                  >
-                    {screenShareQualityOptions.map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </Select>
-                  <p className='mt-2 text-[13px] text-muted'>
-                    画质越高越清晰，但更依赖网络和设备性能。共享开始后不可切换。
-                  </p>
-                </div>
-              )}
-
-              <div className='mt-4 flex gap-3'>
-                {canShare ? (
-                  <>
-                    <button
-                      onClick={() => startSharing()}
-                      disabled={
-                        isStarting || isLocalSharing || Boolean(supportError)
-                      }
-                      className='flex-1 rounded-lg bg-fg px-4 py-2 text-inverse disabled:opacity-50 min-h-[44px] tm-press'
-                    >
-                      {isStarting
-                        ? '启动中...'
-                        : isLocalSharing
-                        ? '共享中'
-                        : isSharing
-                        ? '重新开始共享'
-                        : '开始共享'}
-                    </button>
-                    <button
-                      onClick={() => stopSharing(true)}
-                      disabled={!isLocalSharing && !isSharing}
-                      className='rounded-lg bg-fg px-4 py-2 text-inverse disabled:opacity-50 min-h-[44px] tm-press'
-                    >
-                      停止
-                    </button>
-                  </>
-                ) : (
-                  <div className='rounded-lg bg-raised px-3 py-2 text-sm text-fg'>
-                    无需操作，主持开始共享后会自动显示画面。
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div className='rounded-xl border border-line bg-surface p-4'>
-              <h2 className='mb-3 flex items-center gap-2 font-medium'>
-                <Users className='h-4 w-4' />
-                房间成员
-              </h2>
-              <div className='space-y-2'>
-                {members.map((member) => (
-                  <div
-                    key={member.id}
-                    className='flex items-center justify-between rounded-lg bg-raised px-3 py-2'
-                  >
-                    <span className='text-sm'>{member.name}</span>
-                    {member.isOwner && (
-                      <span className='rounded bg-raised px-2 py-1 text-[13px] text-fg'>
-                        房主
-                      </span>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className='rounded-xl border border-line bg-raised p-4 text-sm text-fg'>
-              建议使用桌面版 Chrome / Edge，并优先共享标签页。
-            </div>
-          </div>
-        </div>
-      </PageContainer>
+        </aside>
+      </div>
     </div>
   );
 }

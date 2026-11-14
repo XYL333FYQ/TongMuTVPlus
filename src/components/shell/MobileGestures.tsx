@@ -61,7 +61,11 @@ export default function MobileGestures() {
       root.dataset.tmNav = 'back';
     };
     const onClick = (event: MouseEvent) => {
-      if ((event.target as Element | null)?.closest?.('a[href]')) {
+      const target = event.target as Element | null;
+      // 底栏切换标签：像原生 App 一样直接换页，不做整页滑入（新页面渲染时动画只剩几帧，看着卡）
+      if (target?.closest?.('.tm-mobile-nav')) {
+        root.dataset.tmNav = 'tab';
+      } else if (target?.closest?.('a[href]')) {
         root.dataset.tmNav = 'forward';
       }
     };

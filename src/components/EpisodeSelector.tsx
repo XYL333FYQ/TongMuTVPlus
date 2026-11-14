@@ -1127,8 +1127,8 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
     <div className='md:ml-2 px-4 py-0 h-full rounded-xl bg-ink/10 bg-raised flex flex-col border border-line overflow-hidden'>
       {/* 主要的 Tab 切换 - 无缝融入设计 */}
       <div className='flex mb-1 -mx-6 flex-shrink-0'>
-        {/* 选集选项卡 - 仅在多集时显示 */}
-        {totalEpisodes > 1 && (
+        {/* 选集选项卡：单集（电影）也显示，否则点过“换源”就回不来了 */}
+        {totalEpisodes > 0 && (
           <div
             onClick={() => !isRoomMember && setActiveTab('episodes')}
             className={`flex-1 py-3 px-6 text-center transition-all duration-200 font-medium relative ${
@@ -1496,9 +1496,9 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
                         </div>
 
                         {/* 信息区域 */}
-                        <div className='flex-1 min-w-0 flex flex-col justify-between h-20'>
+                        <div className='flex-1 min-w-0 flex flex-col justify-between gap-1.5 min-h-20'>
                           {/* 标题和分辨率 - 顶部 */}
-                          <div className='flex items-start justify-between gap-3 h-6'>
+                          <div className='flex items-start justify-between gap-3 min-h-6'>
                             <div className='flex-1 min-w-0 relative group/title'>
                               <h3
                                 className={`font-medium text-base truncate ${sourceTitleClass} leading-none`}
@@ -1556,7 +1556,7 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
                           </div>
 
                           {/* 网络信息 - 底部 */}
-                          <div className='flex items-end justify-between h-6'>
+                          <div className='flex flex-wrap items-end justify-between gap-x-3 gap-y-1 min-h-6'>
                             <div className='flex items-end gap-3'>
                               {(() => {
                                 const sourceKey = `${source.source}-${source.id}`;
@@ -1564,16 +1564,16 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
                                 if (videoInfo) {
                                   if (!videoInfo.hasError) {
                                     return (
-                                      <div className='flex items-end gap-3 text-[13px]'>
-                                        <div className='text-fg font-medium text-[13px]'>
+                                      <div className='flex flex-wrap items-end gap-x-3 gap-y-0.5 text-[13px] whitespace-nowrap'>
+                                        <div className='text-fg font-medium text-[13px] whitespace-nowrap'>
                                           {videoInfo.loadSpeed}
                                         </div>
-                                        <div className='text-fg font-medium text-[13px]'>
+                                        <div className='text-fg font-medium text-[13px] whitespace-nowrap'>
                                           {videoInfo.pingTime}ms
                                         </div>
                                         {videoInfo.bitrate &&
                                           videoInfo.bitrate !== '未知' && (
-                                            <div className='text-fg font-medium text-[13px]'>
+                                            <div className='text-fg font-medium text-[13px] whitespace-nowrap'>
                                               {videoInfo.bitrate}
                                             </div>
                                           )}

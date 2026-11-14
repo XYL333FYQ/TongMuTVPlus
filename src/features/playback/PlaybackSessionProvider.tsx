@@ -436,12 +436,14 @@ export default function PlaybackSessionProvider({
               >
                 {muted ? <VolumeX size={16} /> : <Volume2 size={16} />}
               </button>
-              {/* 小窗里点标题缩略图本来就是打开完整界面；这个按钮留给折叠态，小窗里让出位置给播放/暂停 */}
-              {presentation === 'folded' && (
-                <button onClick={openFull} aria-label='打开完整观影界面'>
-                  <Maximize2 size={15} />
-                </button>
-              )}
+              {/* 回到播放页：小窗和收起态都有一个明确的按钮（不只靠点标题） */}
+              <button
+                onClick={openFull}
+                aria-label='回到播放页'
+                title='回到播放页'
+              >
+                <Maximize2 size={16} />
+              </button>
               {presentation === 'mini' && (
                 <button
                   onClick={minimize}

@@ -1442,3 +1442,9 @@ html[data-tm-reduced-motion='true'] .tm-launch-cue {
     display: none;
   }
 }
+
+/* 底栏切换标签：直接换页，不做整页位移动画（新页面渲染占住主线程时，位移动画只剩几帧，看着卡）。
+ * 只留一个很短的淡入，避免内容生硬地闪出来。 */
+html[data-tm-nav='tab'] .tm-page-transition {
+  animation: tm-page-fade 120ms linear backwards !important;
+}

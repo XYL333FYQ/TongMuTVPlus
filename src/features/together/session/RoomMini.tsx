@@ -117,6 +117,14 @@ export default function RoomMini(props: {
             </b>
           )}
         </button>
+        <Link
+          href='/watch-room'
+          className='tm-t-mini-btn'
+          aria-label='回到房间'
+          title='回到房间'
+        >
+          <Maximize2 size={18} />
+        </Link>
         <button
           type='button'
           className='tm-t-mini-btn'

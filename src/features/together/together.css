@@ -2255,3 +2255,226 @@ html[data-tm-solo-mini] :is(.tm-t-pill-dock, .tm-t-dock) {
   background: none;
   box-shadow: none;
 }
+
+/* ================================================================ 共享屏幕页 */
+.tm-t-share {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+  max-width: var(--tm-container);
+  margin-inline: auto;
+  padding: 12px var(--tm-content-gutter) 48px;
+}
+.tm-t-share-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 24px;
+  align-items: start;
+}
+/* 画面按共享内容的真实宽高比显示（行内 aspect-ratio），最高不超过一屏 */
+.tm-t-share-stage {
+  position: relative;
+  width: 100%;
+  max-height: min(78vh, 900px);
+  overflow: hidden;
+  border-radius: var(--tm-radius-lg);
+  background: var(--tm-video-bg);
+  box-shadow: 0 40px 80px -40px rgb(var(--tm-ink-rgb) / 0.75);
+}
+.tm-t-share-stage video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background: var(--tm-video-bg);
+}
+.tm-t-share-side {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 18px;
+  border-radius: var(--tm-radius-lg);
+  background: var(--tm-surface);
+  box-shadow: inset 0 0 0 1px var(--tm-line);
+}
+.tm-t-share-side .tm-t-error {
+  margin: 0;
+  line-height: 1.6;
+}
+.tm-t-share-side .tm-t-hint {
+  margin: 0;
+}
+.tm-t-share-actions {
+  display: flex;
+  gap: 8px;
+}
+.tm-t-share-actions .tm-t-btn-primary {
+  flex: 1;
+}
+.tm-t-share-label {
+  color: var(--tm-muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+.tm-t-share-members ul {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.tm-t-share-members li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 40px;
+  font-size: 14px;
+}
+.tm-t-share-members small {
+  margin-left: auto;
+  color: var(--tm-muted);
+  font-size: 12px;
+}
+.tm-t-share-face {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--tm-surface-raised);
+  font-size: 12px;
+  font-weight: 700;
+}
+@media (max-width: 1023px) {
+  .tm-t-share-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media (max-width: 767px) {
+  .tm-t-share {
+    gap: 14px;
+    padding-top: 4px;
+  }
+  .tm-t-share-stage {
+    width: calc(100% + 2 * var(--tm-content-gutter, 16px));
+    margin-inline: calc(-1 * var(--tm-content-gutter, 16px));
+    border-radius: 0;
+  }
+  .tm-t-share .tm-t-head-actions .tm-t-btn span {
+    display: none;
+  }
+}
+
+/* ================================================================ 手机 / 平板 */
+@media (max-width: 899px) {
+  /* 顶部一行：返回、房间名、几个图标按钮；在线头像在“成员”里看 */
+  .tm-t-head {
+    flex-wrap: nowrap;
+    gap: 6px;
+    min-height: 56px;
+  }
+  .tm-t-head-title h1 {
+    font-size: 19px;
+  }
+  .tm-t-head-meta {
+    flex-wrap: nowrap;
+    overflow: hidden;
+    margin-top: 2px;
+  }
+  .tm-t-head-meta .tm-t-chip {
+    font-size: 12px;
+  }
+  .tm-t-head-actions {
+    width: auto;
+    gap: 0;
+  }
+  .tm-t-head-actions .tm-t-faces,
+  .tm-t-head-actions .tm-t-voice + .tm-t-btn span,
+  .tm-t-head-actions .tm-t-btn-primary span {
+    display: none;
+  }
+  .tm-t-head-actions .tm-t-btn-primary {
+    width: 44px;
+    padding: 0;
+  }
+}
+@media (max-width: 767px) {
+  .tm-t-room,
+  .tm-t-share {
+    /* 底部留出底栏的位置，聊天输入框不会被底栏盖住 */
+    padding-bottom: calc(
+      var(--tm-bottom-nav-height, 64px) + 32px + var(--tm-safe-bottom, 0px)
+    );
+  }
+  /* 往下看聊天时画面钉在顶部 */
+  .tm-t-stage {
+    position: sticky;
+    top: 0;
+    z-index: 5;
+  }
+  .tm-t-side-body {
+    height: min(64vh, 560px);
+  }
+  .tm-t-tabs {
+    height: 56px;
+    padding: 6px;
+  }
+  .tm-t-head-meta .tm-t-chip-button {
+    display: none;
+  }
+}
+/* 平板竖屏：侧栏放到下面时两栏展示推荐 */
+@media (min-width: 768px) and (max-width: 1199px) {
+  .tm-t-side-body {
+    height: min(60vh, 560px);
+  }
+}
+@media (max-width: 767px) {
+  /* 拆掉两栏外壳，舞台的粘顶范围变成整页（否则只粘到“正在放映”那一段） */
+  .tm-t-layout,
+  .tm-t-main {
+    display: contents;
+  }
+}
+@media (max-width: 767px) {
+  /* 滚到聊天时：顶部是钉住的画面，下面正好是聊天，输入框在底栏上方 */
+  .tm-t-side-body {
+    height: max(
+      300px,
+      calc(
+        100dvh - 56.25vw - 56px - var(--tm-bottom-nav-height, 64px) - 64px -
+          var(--tm-safe-bottom, 0px)
+      )
+    );
+  }
+}
+
+/* 大厅（手机）：房间号输入占满一行，创建房间是整行主按钮 */
+@media (max-width: 599px) {
+  .tm-t-lobby-head {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 14px;
+  }
+  .tm-t-lobby-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    width: 100%;
+  }
+  .tm-t-join {
+    display: flex;
+    width: 100%;
+  }
+  .tm-t-join input {
+    flex: 1;
+    min-width: 0;
+  }
+  .tm-t-lobby-actions > .tm-t-btn-primary {
+    width: 100%;
+  }
+}

@@ -15,14 +15,21 @@ import type { Room } from '@/types/watch-room';
 type Directory = 'mine' | 'public';
 
 export function RoomCard({ room, onOpen }: { room: Room; onOpen(): void }) {
-  const cover = roomCoverSource(room);
+  const [broken, setBroken] = useState(false);
+  const cover = broken ? '' : roomCoverSource(room);
   const playing = room.nowPlaying;
   return (
     <button type='button' className='tm-t-card' onClick={onOpen}>
       <span className='tm-t-card-art'>
         {cover ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={cover} alt='' loading='lazy' referrerPolicy='no-referrer' />
+          <img
+            src={cover}
+            alt=''
+            loading='lazy'
+            referrerPolicy='no-referrer'
+            onError={() => setBroken(true)}
+          />
         ) : (
           <span className='tm-t-card-glyph' aria-hidden='true'>
             {displayRoomName(room).slice(0, 1)}

@@ -106,7 +106,10 @@ export default function TogetherSession({ children }: { children: ReactNode }) {
     if (onStage) setClosedMini(false);
   }, [onStage]);
   useEffect(() => setClosedMini(false), [current?.id]);
-  const live = !!current && !soloPlaying && (onStage || !closedMini);
+  // 共享屏幕、一起听等房间活动页有自己的画面和声音，房间影片在这些页面先停
+  const onActivityPage = pathname.startsWith('/watch-room/');
+  const live =
+    !!current && !soloPlaying && !onActivityPage && (onStage || !closedMini);
 
   const command = useCallback(
     async (event: string, payload: Record<string, unknown> = {}) => {
@@ -257,7 +260,10 @@ export default function TogetherSession({ children }: { children: ReactNode }) {
       ? '等人缓冲'
       : '已暂停'
     : '还没开始放映';
-  const offRoomPage = !!current && !onStage && pathname !== '/watch-room';
+  // 房间自己的页面（房间页，以及共享屏幕、一起听等房间活动页）不出小窗和房间入口：
+  // 那里本来就在房间里，小窗只会盖住页面上的按钮
+  const offRoomPage =
+    !!current && !onStage && !pathname.startsWith('/watch-room');
   const showMini = offRoomPage && live && !!state;
 
   const value = useMemo<Session>(
