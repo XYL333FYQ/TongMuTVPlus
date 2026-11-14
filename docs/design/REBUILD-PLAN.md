@@ -67,3 +67,16 @@ server/together/               房间服务（沿用已测的权限/片单/等�
 ## 当前线上状态（开始重做前）
 
 main 已部署到 `225e149`：旧房间界面 + 同步引擎 + 权限/审核/片单/等缓冲等。重做完成前不再在旧界面上修补。
+
+## 进度（接手看这里）
+
+- [x] 第 1 阶段 `046f626`：`src/features/watch/player/`（WatchPlayer + plugins），单测 `player-core.test.ts`、`WatchPlayer.test.ts`。
+- [x] 第 2 阶段 `7ef4c92`：`/play` 已切到新页（`WatchRoute` → `WatchPage`）；`WatchSessionProvider` 挂在根布局（与旧
+  `PlaybackSessionProvider` 并存，旧的只剩房间在用）；小窗 `mini/MiniPlayer.tsx`；样式 `watch.css`。
+  浏览器验收（DOM 量测，窗口隐藏无法截图）：390/820/1280 无横向溢出、触控 ≥44px；续播、换集、离开页面变小窗不断播、
+  小窗回到播放页不断播、设置菜单与播放器内面板均正常。未做：浅色主题截图、小窗拖动实测。
+  注意：`WatchEngine` 必须 `memo`（否则 onApi 循环）；播放页注册画面位置只能依赖 `registerSlot`。
+- [ ] 第 3 阶段：一起看服务端（`server/together/`）。
+- [ ] 第 4 阶段：一起看前端（`src/features/together/`），房间页用自己的 `WatchPlayer`，进房间时调用 `useWatchSession().suspend()`。
+- [ ] 第 5、6 阶段。还没推送：全部完成切换后再推 main。
+- 本机：mock-cms 需手动启动；登录用 friend 账号（admin 密码在 .env，工具不允许读取）。
