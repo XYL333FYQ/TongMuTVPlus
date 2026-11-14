@@ -64,12 +64,12 @@ import MobileActionSheet from '@/components/feedback/MobileActionSheet';
 import { ImagePlaceholder } from '@/components/ImagePlaceholder';
 import TrailerPickerDialog from '@/components/TrailerPickerDialog';
 
+import { usePlaybackSessionSafe } from '@/features/playback/context';
 import {
   filmPlaybackHref,
   togetherSelectionHref,
-  queuePlaybackHref,
-} from '@/features/watch/selection-links';
-import { useWatchSessionSafe } from '@/features/watch/session/context';
+} from '@/features/playback/selection-links';
+import { queuePlaybackHref } from '@/features/playback/session';
 
 export interface VideoCardProps {
   id?: string;
@@ -167,7 +167,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
     ref
   ) {
     const router = useRouter();
-    const watch = useWatchSessionSafe();
+    const playback = usePlaybackSessionSafe();
     const [showAnimeSubscribe, setShowAnimeSubscribe] = useState(false);
     const [animeSubscribeToast, setAnimeSubscribeToast] = useState('');
     const isAdminUser = useMemo(() => {
@@ -454,7 +454,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
           window.location.pathname + window.location.search ===
           selectedPlaybackHref
         )
-          watch?.open(selectedPlaybackHref);
+          playback?.requestPlayback(selectedPlaybackHref, 'user');
         else router.push(selectedPlaybackHref);
       }
     }, [
@@ -464,7 +464,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
       actualSource,
       actualId,
       selectedPlaybackHref,
-      watch?.open,
+      playback?.requestPlayback,
       router,
     ]);
 

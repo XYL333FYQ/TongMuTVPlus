@@ -9,8 +9,8 @@ let mockSession: any;
 jest.mock('@/components/WatchRoomProvider', () => ({
   useWatchRoomContextSafe: () => mockRoom,
 }));
-jest.mock('@/features/watch/session/context', () => ({
-  useWatchSessionSafe: () => mockSession,
+jest.mock('@/features/playback/context', () => ({
+  usePlaybackSessionSafe: () => mockSession,
 }));
 
 const song = {
@@ -53,7 +53,7 @@ function setup() {
 
 beforeEach(() => {
   mockSession = {
-    engine: { player: { pause: jest.fn() } },
+    controller: { pause: jest.fn(), video: { paused: false } },
   };
   mockRoom = {
     isConnected: true,
@@ -171,7 +171,7 @@ describe('room music activity', () => {
         ok = await view.api.beginLocalPlayback();
       });
       expect(ok).toBe(true);
-      expect(mockSession.engine.player.pause).not.toHaveBeenCalled();
+      expect(mockSession.controller.pause).not.toHaveBeenCalled();
       expect(mockRoom.roomCommand).not.toHaveBeenCalled();
     });
 
@@ -181,7 +181,7 @@ describe('room music activity', () => {
       await act(async () => {
         await view.api.beginLocalPlayback();
       });
-      expect(mockSession.engine.player.pause).not.toHaveBeenCalled();
+      expect(mockSession.controller.pause).not.toHaveBeenCalled();
       expect(mockRoom.roomCommand).not.toHaveBeenCalled();
     });
 
@@ -193,7 +193,7 @@ describe('room music activity', () => {
         ok = await view.api.beginLocalPlayback();
       });
       expect(ok).toBe(true);
-      expect(mockSession.engine.player.pause).toHaveBeenCalledTimes(1);
+      expect(mockSession.controller.pause).toHaveBeenCalledTimes(1);
     });
   });
 

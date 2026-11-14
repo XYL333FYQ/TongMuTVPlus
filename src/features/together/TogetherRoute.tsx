@@ -13,7 +13,7 @@ import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
 import PageLayout from '@/components/PageLayout';
 import { useWatchRoomContext } from '@/components/WatchRoomProvider';
 
-import { useWatchSessionSafe } from '@/features/watch/session/context';
+import { usePlaybackSessionSafe } from '@/features/playback/context';
 
 import { filmFromHref, playChange } from './commands';
 import { isExternalRoomServer } from './lib/external-room-server';
@@ -30,7 +30,7 @@ function Together() {
   const room = useWatchRoomContext();
   const router = useRouter();
   const params = useSearchParams();
-  const watch = useWatchSessionSafe();
+  const solo = usePlaybackSessionSafe();
   const [username, setUsername] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -43,6 +43,7 @@ function Together() {
   const attempted = useRef('');
   const inviteId = params.get('room') || '';
   const film = params.get('film') || '';
+  const pick = params.get('pick') || '';
   const current = room.currentRoom;
 
   useEffect(
@@ -50,11 +51,12 @@ function Together() {
     []
   );
 
-  // 进房间：暂停自己看的影片，收起小窗
-  const suspend = watch?.suspend;
+  // 进房间页：关掉“自己看”的播放（进度已存进播放记录），不让两个画面同时出声
+  const soloHref = solo?.href;
+  const endSolo = solo?.endSession;
   useEffect(() => {
-    if (current && !showLobby) suspend?.();
-  }, [current, showLobby, suspend]);
+    if (current && !showLobby && soloHref) endSolo?.();
+  }, [current, showLobby, soloHref, endSolo]);
 
   const requireLogin = useCallback(
     (roomId?: string) => {
@@ -182,6 +184,8 @@ function Together() {
     <>
       {current && !showLobby ? (
         <RoomView
+          pick={pick}
+          onPickHandled={() => router.replace('/watch-room', { scroll: false })}
           onBack={() => setShowLobby(true)}
           onLeave={() => {
             room.leaveRoom();

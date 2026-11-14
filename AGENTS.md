@@ -19,10 +19,10 @@ TongMuTV Plus：Next.js 14（App Router）+ React 18 + Tailwind 3.4 + TypeScript
 
 ## 禁区：只换皮，不改行为
 
-- 不改：`server/`（若存在）、`src/hooks/useWatchRoom.ts`、`src/features/together/sync/`（同步引擎）、`src/features/watch/session/`（全站播放会话）、`src/lib/*.db.ts`、`src/app/api/**`、`src/middleware.ts`、`src/app/admin/page.tsx`。
+- 不改：`server/`（若存在）、`src/hooks/useWatchRoom.ts`、`src/features/together/sync/`（同步引擎）、`src/features/playback/session.ts` 与 `PlaybackSessionProvider` 的会话逻辑（自己看）、`src/features/together/session/`（一起看的全站会话）、`src/lib/*.db.ts`、`src/app/api/**`、`src/middleware.ts`、`src/app/admin/page.tsx`。
 - 2026-11-13 用户授权重做“一起看”：房间同步已改为 SyncTV 模型（权限按账号、单一带版本播放状态、服务器时钟推算，见 `docs/architecture.md`）。改动上述房间文件时必须同时更新 `server/room-service.test.cjs`、`src/features/together/sync/sync-engine.test.ts` 与 `src/features/together/player/port.test.ts`，并用两个账号实际验证同步。不要恢复“唯一主持设备”选举，也不要恢复“个人观看 / 跟随”半脱离状态；代码边界见 `docs/architecture.md`“代码边界”。
 - `codex/synctv-rebuild-backup-20261112` 分支是旧的“桥接独立 SyncTV 服务”方案的未完成备份，已被上述方案取代，不要合并。
-- 2026-11-14 独立看与一起看已整体重写到 `src/features/watch/` 与 `src/features/together/`，旧的 `LegacyPlaybackSurface`、`PlaybackSessionProvider`、`src/features/rooms/` 已删除，不要恢复。
+- 2026-11-14：独立看保持原样（`src/features/playback/`，含 `LegacyPlaybackSurface`，只允许改 className、样式、文案）；一起看整体重写在 `src/features/together/`，有自己的播放器，与独立看互不依赖。旧的 `src/features/rooms/`、`src/features/room/`、`ChatFloatingWindow` 已删除，不要恢复。
 - 不改接口、存储键、Socket 事件名、数据库路径（见 `docs/PROJECT_IDENTITY.md`）。
 - 不新增依赖。已有可用：framer-motion、next-themes、lucide-react。确需新增，先问。
 - 不要 git init / commit / push / 部署，除非用户明确要求。
@@ -66,8 +66,8 @@ pnpm test:rooms    # 改动涉及房间时
 
 ## 项目事实
 
-- 独立看的播放器是单例，在 `src/app/layout.tsx` 的 `WatchSessionProvider` 层。换页面不能卸载它；整页 / 小窗是同一个播放实例，视频元素不得重建。
-- 一起看房间有自己的播放器，没有小窗；离开房间页即停止本机房间播放（不暂停整个房间）。
+- 独立看的播放器是单例，在 `src/app/layout.tsx` 的 `PlaybackSessionProvider` 层。换页面不能卸载它；完整 / 小窗 / 折叠是同一个播放实例，视频元素不得重建。
+- 一起看的房间播放器也是单例，在 `TogetherSession`（根布局）。房间页里是大画面，离开房间页转到房间小窗继续同步，同一个视频元素在两处之间搬家；自己看开始播放时房间画面先停（人还在房间里）。
 - Node 24，包管理器 pnpm，开发命令 `pnpm dev`。
 
 ## 进度记录（换人接手用）

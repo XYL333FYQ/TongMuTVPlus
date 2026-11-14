@@ -5,14 +5,14 @@
  */
 
 import { Film, ListPlus, Loader2, Play, Search } from 'lucide-react';
-import { FormEvent, useMemo, useState } from 'react';
+import { FormEvent, useEffect, useMemo, useState } from 'react';
 
 import type { SearchResult } from '@/lib/types';
 
 import {
   normalizeTitle,
   searchEverything,
-} from '@/features/watch/media/catalog';
+} from '@/features/together/media/catalog';
 
 import { Dialog } from './RoomForm';
 import { filmFromResult, FilmRef } from '../commands';
@@ -86,6 +86,18 @@ export default function FilmPicker(props: {
     }
   };
 
+  // 从推荐或站内其他地方带着片名进来：直接搜，同名的那部自动展开片源
+  useEffect(() => {
+    if (props.initialQuery) void search();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  useEffect(() => {
+    if (!props.initialQuery || !groups.length) return;
+    const wanted = normalizeTitle(props.initialQuery);
+    const exact = groups.find((item) => normalizeTitle(item.title) === wanted);
+    if (exact) setSelected(exact.key);
+  }, [groups, props.initialQuery]);
+
   const act = async (run: () => Promise<void>) => {
     setBusy(true);
     setError('');
@@ -115,7 +127,7 @@ export default function FilmPicker(props: {
           className='tm-t-btn tm-t-btn-primary'
           disabled={loading || !query.trim()}
         >
-          {loading ? <Loader2 size={16} className='tm-w-spin' /> : '搜索'}
+          {loading ? <Loader2 size={16} className='tm-t-spin' /> : '搜索'}
         </button>
       </form>
       {error && (

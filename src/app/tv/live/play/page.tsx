@@ -22,7 +22,7 @@ import { deleteFavorite, isFavorited, saveFavorite } from '@/lib/db.client';
 import TVNativeVideo from '@/components/tv/player/TVNativeVideo';
 import TVVirtualRemote from '@/components/tv/TVVirtualRemote';
 
-import { useStandalonePlayback } from '@/features/watch/session/useStandalonePlayback';
+import { useStandalonePlayback } from '@/features/playback/useStandalonePlayback';
 
 const TV_CINEMA_STYLE = {
   '--tm-bg': 'var(--tm-room-cinema-bg)',

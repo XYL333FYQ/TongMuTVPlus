@@ -12,8 +12,7 @@ import '@/styles/layout.css';
 import '@/styles/feedback.css';
 import '@/styles/shell.css';
 import '@/styles/home.css';
-import '@/styles/room-chat.css';
-import '@/features/watch/watch.css';
+import '@/features/playback/playback.css';
 import '@/features/together/together.css';
 import '@/styles/room-shared.css';
 import './globals.css';
@@ -47,7 +46,7 @@ import PwaRegistration from '@/components/shell/PwaRegistration';
 import ShellBridge from '@/components/shell/ShellBridge';
 import ShellMotionProvider from '@/components/shell/ShellMotionProvider';
 
-import WatchSessionProvider from '@/features/watch/session/WatchSessionProvider';
+import PlaybackSessionProvider from '@/features/playback/PlaybackSessionProvider';
 
 import { StartupCacheCleanup } from '../components/DanmakuCacheCleanup';
 import { DownloadBubble } from '../components/DownloadBubble';
@@ -58,7 +57,7 @@ import { SiteProvider } from '../components/SiteProvider';
 import { ThemeProvider } from '../components/ThemeProvider';
 import { TokenRefreshManager } from '../components/TokenRefreshManager';
 import TopProgressBar from '../components/TopProgressBar';
-import ChatFloatingWindow from '../components/watch-room/ChatFloatingWindow';
+import TogetherSession from '@/features/together/session/TogetherSession';
 import { WatchRoomProvider } from '../components/WatchRoomProvider';
 import { DownloadProvider } from '../contexts/DownloadContext';
 
@@ -554,19 +553,21 @@ export default async function RootLayout({
           >
             <WatchRoomProvider>
               <DownloadProvider>
-                <WatchSessionProvider>
-                  <MediaSessionBridge />
-                  <StartupCacheCleanup />
-                  {/* 顶栏常驻一份，切页不重建（显示与否由页面里的导航标记决定） */}
-                  <PersistentHeader />
-                  <ShellMotionProvider>{children}</ShellMotionProvider>
-                  <GlobalErrorIndicator />
-                  <ChatFloatingWindow />
-                  <MobileBottomNav />
-                  <DownloadBubble />
-                  <DownloadPanel />
-                  <AppDialogHost />
-                </WatchSessionProvider>
+                <PlaybackSessionProvider>
+                  {/* 一起看：房间播放器、房间小窗、房间聊天浮窗（换页不卸载） */}
+                  <TogetherSession>
+                    <MediaSessionBridge />
+                    <StartupCacheCleanup />
+                    {/* 顶栏常驻一份，切页不重建（显示与否由页面里的导航标记决定） */}
+                    <PersistentHeader />
+                    <ShellMotionProvider>{children}</ShellMotionProvider>
+                    <GlobalErrorIndicator />
+                    <MobileBottomNav />
+                    <DownloadBubble />
+                    <DownloadPanel />
+                    <AppDialogHost />
+                  </TogetherSession>
+                </PlaybackSessionProvider>
               </DownloadProvider>
             </WatchRoomProvider>
           </SiteProvider>

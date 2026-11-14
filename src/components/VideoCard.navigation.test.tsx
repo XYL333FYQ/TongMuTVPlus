@@ -7,6 +7,9 @@ jest.mock('@/lib/db.client', () => ({
   subscribeToDataUpdates: () => () => undefined,
   generateStorageKey: (source: string, id: string) => `${source}:${id}`,
 }));
+jest.mock('@/features/playback/context', () => ({
+  usePlaybackSessionSafe: () => null,
+}));
 jest.mock('@/components/DetailPanel', () => ({
   __esModule: true,
   default: ({ onTogether }: { onTogether: () => void }) => (

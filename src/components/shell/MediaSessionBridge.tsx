@@ -1,30 +1,22 @@
 'use client';
 
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 
 import { getShell } from '@/lib/shell-bridge';
 
-import { useWatchSessionSafe } from '@/features/watch/session/context';
+import { usePlaybackSessionSafe } from '@/features/playback/context';
+
+import { useWatchRoomContextSafe } from '@/components/WatchRoomProvider';
 
 /**
  * 锁屏 / 通知栏共用现有播放控制器与房间权限；只观察媒体，不重建播放实例。
  */
 export default function MediaSessionBridge() {
-  const watch = useWatchSessionSafe();
-  const player = watch?.engine?.player || null;
-  const video = player?.video || null;
-  // 独立看的播放器：锁屏控制直接作用于它（房间有自己的播放器）
-  const controller = useMemo(
-    () =>
-      player && video
-        ? { video, play: () => player.play(), pause: () => player.pause() }
-        : null,
-    [player, video]
-  );
-  const title =
-    watch?.engine?.media.detail?.title || watch?.engine?.media.params.title;
-  // 独立看的播放器不受房间权限限制（一起看有自己的播放器）
-  const locked = false;
+  const playback = usePlaybackSessionSafe();
+  const room = useWatchRoomContextSafe();
+  const controller = playback?.controller;
+  const title = playback?.metadata.title;
+  const locked = Boolean(room?.currentRoom && !room.canControl);
   const selected = useRef<HTMLMediaElement | null>(null);
   useEffect(() => {
     const shell = getShell();

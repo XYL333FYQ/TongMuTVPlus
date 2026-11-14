@@ -6,35 +6,23 @@ let playback: {
   controller: { video: HTMLVideoElement; play?: jest.Mock; pause?: jest.Mock };
   metadata: { title: string };
 } | null;
+let room: { currentRoom: { id: string }; canControl: boolean } | null;
 let handlers: Record<string, (() => void) | null>;
 let session: {
   metadata: { init: { title: string } } | null;
   playbackState: string;
   setActionHandler: jest.Mock;
 };
-jest.mock('@/features/watch/session/context', () => ({
-  useWatchSessionSafe: () =>
-    playback && {
-      engine: {
-        player: {
-          video: playback.controller.video,
-          play: () =>
-            (playback?.controller.play || playback?.controller.video.play)?.(),
-          pause: () =>
-            (
-              playback?.controller.pause || playback?.controller.video.pause
-            )?.(),
-        },
-        media: {
-          detail: { title: playback.metadata.title },
-          params: { title: '' },
-        },
-      },
-    },
+jest.mock('@/features/playback/context', () => ({
+  usePlaybackSessionSafe: () => playback,
+}));
+jest.mock('@/components/WatchRoomProvider', () => ({
+  useWatchRoomContextSafe: () => room,
 }));
 
 beforeEach(() => {
   playback = null;
+  room = null;
   handlers = {};
   session = {
     metadata: null,
@@ -99,7 +87,7 @@ test('pausing one element keeps another playing element selected', () => {
   expect(first.pause).not.toHaveBeenCalled();
 });
 
-test('system actions on the watch player go through its controller', () => {
+test('room listeners cannot bypass player controls through system actions; role changes apply immediately', () => {
   const video = media();
   const controller = {
     video,
@@ -107,10 +95,16 @@ test('system actions on the watch player go through its controller', () => {
     pause: jest.fn(),
   };
   playback = { controller, metadata: { title: '影片 A' } };
-  render(<MediaSessionBridge />);
+  room = { currentRoom: { id: 'room' }, canControl: false };
+  const view = render(<MediaSessionBridge />);
   act(() => {
     video.dispatchEvent(new Event('play'));
   });
+  handlers.pause?.();
+  expect(video.pause).not.toHaveBeenCalled();
+  expect(controller.pause).not.toHaveBeenCalled();
+  room = { ...room, canControl: true };
+  view.rerender(<MediaSessionBridge />);
   handlers.pause?.();
   expect(controller.pause).toHaveBeenCalledTimes(1);
   expect(video.pause).not.toHaveBeenCalled();
@@ -217,7 +211,7 @@ test('a capable Android host owns the media session and receives actual paused/r
   view.unmount();
 });
 
-test('native metadata updates without clearing the active session between renders', () => {
+test('native metadata and room permission update without clearing the active session between renders', () => {
   const publish = jest.fn();
   Object.defineProperty(window, 'TMShell', {
     configurable: true,
@@ -228,11 +222,13 @@ test('native metadata updates without clearing the active session between render
     controller: { video },
     metadata: { title: 'Film A' },
   };
+  room = { currentRoom: { id: 'room' }, canControl: false };
   const view = render(<MediaSessionBridge />);
   expect(
     JSON.parse(publish.mock.calls[publish.mock.calls.length - 1][0])
-  ).toMatchObject({ title: 'Film A', canControl: true });
+  ).toMatchObject({ title: 'Film A', canControl: false });
   publish.mockClear();
+  room = { ...room, canControl: true };
   playback = { ...playback, metadata: { title: 'Film B' } };
   view.rerender(<MediaSessionBridge />);
   expect(publish.mock.calls.every(([raw]) => JSON.parse(raw).active)).toBe(

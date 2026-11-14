@@ -10,7 +10,7 @@
 import { getIndexedDBVideoPlaybackUrl } from '@/lib/indexeddb-video-cache';
 import type { SearchResult } from '@/lib/types';
 
-import type { MediaType } from '../player/source-policy';
+import type { MediaType } from '../player/core/source-policy';
 
 export type PlaybackBadge = 'local' | 'offline' | null;
 

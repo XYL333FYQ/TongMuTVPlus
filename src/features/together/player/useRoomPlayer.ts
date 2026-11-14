@@ -26,23 +26,23 @@ import {
   type LocalMedia,
   RoomSyncEngine,
 } from '@/features/together/sync/sync-engine';
-import { fetchSourceDetail } from '@/features/watch/media/catalog';
-import { resolvePlayback } from '@/features/watch/media/playback-url';
+import { fetchSourceDetail } from '@/features/together/media/catalog';
+import { resolvePlayback } from '@/features/together/media/playback-url';
 import {
   iosOrientationPlugin,
   playbackRatePlugin,
   progressThumbPlugin,
   seekButtonsPlugin,
   wakeLockPlugin,
-} from '@/features/watch/player/plugins/basics';
-import { DanmakuController } from '@/features/watch/player/plugins/danmaku';
-import { heatmapPlugin } from '@/features/watch/player/plugins/heatmap';
-import { bindKeyboard } from '@/features/watch/player/plugins/keyboard';
+} from '@/features/together/player/core/plugins/basics';
+import { DanmakuController } from '@/features/together/player/core/plugins/danmaku';
+import { heatmapPlugin } from '@/features/together/player/core/plugins/heatmap';
+import { bindKeyboard } from '@/features/together/player/core/plugins/keyboard';
 import {
   SourceSubtitle,
   SubtitleController,
-} from '@/features/watch/player/plugins/subtitles';
-import { WatchPlayer } from '@/features/watch/player/WatchPlayer';
+} from '@/features/together/player/core/plugins/subtitles';
+import { WatchPlayer } from '@/features/together/player/core/WatchPlayer';
 
 import { portFor } from './port';
 
@@ -125,6 +125,8 @@ export function useRoomPlayer(options: {
   /** 可以播放 / 暂停 / 拖动 */
   canPlayback: boolean;
   commands: RoomCommands;
+  /** 只在房间页启用快捷键（小窗里不抢别的页面的按键） */
+  keyboard?: boolean;
 }): RoomPlayerState {
   const { container, room } = options;
   const state =
@@ -353,8 +355,9 @@ export function useRoomPlayer(options: {
   }, [player, options.canPlayback, local]);
 
   // 快捷键
+  const keyboard = options.keyboard !== false;
   useEffect(() => {
-    if (!player) return;
+    if (!player || !keyboard) return;
     return bindKeyboard({
       player,
       seekStep: () =>
@@ -364,7 +367,7 @@ export function useRoomPlayer(options: {
         latest.current.canPlayback ? null : '房主没有开放成员控制播放',
       rateControl: () => latest.current.canPlayback,
     });
-  }, [player]);
+  }, [player, keyboard]);
 
   const shoot = useCallback(
     (text: string, self = false) => {

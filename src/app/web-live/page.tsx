@@ -15,11 +15,11 @@ import PageContainer from '@/components/PageContainer';
 import PageLayout from '@/components/PageLayout';
 import { useWatchRoomContextSafe } from '@/components/WatchRoomProvider';
 
+import { usePlaybackSessionSafe } from '@/features/playback/context';
 import { webLiveReference } from '@/features/together/activities/room-live';
 import RoomActivityActions from '@/features/together/activities/RoomActivityActions';
 import { RoomLiveMessages } from '@/features/together/activities/RoomLiveMessages';
-import { useAudioFocus } from '@/features/watch/session/useAudioFocus';
-import { useWatchSessionSafe } from '@/features/watch/session/context';
+import { useAudioFocus } from '@/features/playback/useAudioFocus';
 
 let Artplayer: any = null;
 let Hls: any = null;
@@ -54,7 +54,7 @@ export default function WebLivePage() {
   const artPlayerRef = useRef<any>(null);
   const [roomPlayer, setRoomPlayer] = useState<HTMLElement | null>(null);
   const watchRoom = useWatchRoomContextSafe();
-  const watchSession = useWatchSessionSafe();
+  const playbackSession = usePlaybackSessionSafe();
   const mediaRequest = useLatestMediaRequest(
     watchRoom?.currentRoom?.id || 'personal'
   );
@@ -129,7 +129,8 @@ export default function WebLivePage() {
     if (scope !== soundScope.current || artPlayerRef.current?.video !== video)
       return;
     // 在房间里不暂停房间的影片（那是整个房间的进度），只把声音拿过来
-    if (!webLiveSync.active && !watchRoom?.currentRoom) watchSession?.suspend();
+    if (!webLiveSync.active && !watchRoom?.currentRoom)
+      playbackSession?.controller?.pause();
     claimSound();
     try {
       await video.play();

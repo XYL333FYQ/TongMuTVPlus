@@ -200,7 +200,7 @@ export default function Lobby(props: {
           onClick={() => void refresh()}
           aria-label='刷新'
         >
-          <RefreshCw size={16} className={loading ? 'tm-w-spin' : undefined} />
+          <RefreshCw size={16} className={loading ? 'tm-t-spin' : undefined} />
         </button>
       </div>
 

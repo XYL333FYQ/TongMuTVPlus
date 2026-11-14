@@ -17,7 +17,7 @@ import { useWatchRoomContextSafe } from '@/components/WatchRoomProvider';
 import {
   filmPlaybackHref,
   togetherSelectionHref,
-} from '@/features/watch/selection-links';
+} from '@/features/playback/selection-links';
 
 const LOCALSTORAGE_DURATION = 24 * 60 * 60 * 1000;
 

@@ -6,7 +6,7 @@ import type {
   PlayerEvent,
   PlayerPort,
 } from '@/features/together/sync/sync-engine';
-import type { WatchPlayer } from '@/features/watch/player/WatchPlayer';
+import type { WatchPlayer } from '@/features/together/player/core/WatchPlayer';
 
 export function portFor(player: WatchPlayer): PlayerPort {
   const video = () => player.video;

@@ -32,3 +32,12 @@ export function maskedRoomId(id: string) {
   if (id.length <= 16) return id.match(/.{1,4}/g)?.join(' ') || id;
   return `${id.slice(0, 4)}…${id.slice(-4)}`;
 }
+
+/** 选集按钮上的字：标题是“第 3 集 / EP03 / 03”时只显示数字，否则显示原标题 */
+export function episodeLabel(title: string | undefined, index: number) {
+  if (!title) return String(index + 1);
+  const match =
+    title.match(/^(?:第\s*)?0*(\d+)\s*(?:集|话|話)?$/) ||
+    title.match(/^EP?\s*0*(\d+)$/i);
+  return match ? match[1] : title;
+}

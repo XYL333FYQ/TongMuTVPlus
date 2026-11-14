@@ -395,7 +395,18 @@ export function useWatchRoom(
       )
         pendingReplayCursor.current = null;
     } catch (error) {
+      const code = (error as { code?: string } | null)?.code;
+      // 记住的房间已经没了（被删、被归档、被移出）：忘掉它，不在大厅挂一条报错
       if (
+        (code === 'ROOM_NOT_FOUND' || code === 'BANNED') &&
+        getStoredRoomInfo()?.roomId === stored.roomId
+      ) {
+        clearStoredRoomInfo();
+        if (roomRef.current?.id === stored.roomId) {
+          roomRef.current = null;
+          setCurrentRoom(null);
+        }
+      } else if (
         connection === connectionGeneration.current &&
         !(error instanceof SupersededRoomRequestError)
       )

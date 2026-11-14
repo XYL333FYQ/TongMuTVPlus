@@ -10,13 +10,13 @@ import {
   Film,
   Play,
   Plus,
-  Square,
+  CircleStop,
   Trash2,
 } from 'lucide-react';
 
 import type { SearchResult } from '@/lib/types';
 
-import { episodeLabel } from '@/features/watch/panels/EpisodesPanel';
+import { episodeLabel } from '../lib/room-presentation';
 
 import type { RoomQueueItem } from '@/types/watch-room';
 
@@ -54,8 +54,8 @@ export default function PlaylistPanel(props: {
                 className='tm-t-link'
                 onClick={props.onStop}
               >
-                <Square size={14} />
-                停止放映
+                <CircleStop size={15} />
+                结束放映
               </button>
             )}
           </div>
@@ -65,7 +65,7 @@ export default function PlaylistPanel(props: {
                 <button
                   key={index}
                   type='button'
-                  className='tm-w-episode'
+                  className='tm-t-ep'
                   aria-current={
                     index === props.episodeIndex ? 'true' : undefined
                   }
@@ -75,7 +75,7 @@ export default function PlaylistPanel(props: {
                     detail.episodes_titles?.[index] || `第 ${index + 1} 集`
                   }
                 >
-                  <span className='tm-w-episode-no'>
+                  <span className='tm-t-ep-no'>
                     {episodeLabel(detail.episodes_titles?.[index], index)}
                   </span>
                 </button>

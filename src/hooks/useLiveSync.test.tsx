@@ -8,6 +8,9 @@ let mockSession: any;
 jest.mock('@/components/WatchRoomProvider', () => ({
   useWatchRoomContextSafe: () => mockRoom,
 }));
+jest.mock('@/features/playback/context', () => ({
+  usePlaybackSessionSafe: () => mockSession,
+}));
 
 const direct = {
   type: 'live',
