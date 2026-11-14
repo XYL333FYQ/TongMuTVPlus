@@ -74,7 +74,7 @@ jobs:
       # 更改：使用动态镜像名和更强大的标签逻辑
       - name: Extract metadata
         id: meta
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v6
         with:
           images: ${{ env.IMAGE_NAME }}
           tags: |
@@ -148,7 +148,7 @@ jobs:
       # 新增步骤：在 merge 任务中也需要生成同样的标签列表
       - name: Extract metadata for manifest
         id: meta
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v6
         with:
           images: ${{ env.IMAGE_NAME }}
           tags: |
