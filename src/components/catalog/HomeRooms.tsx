@@ -13,9 +13,9 @@ import { useWatchRoomContextSafe } from '@/components/WatchRoomProvider';
 import {
   EXTERNAL_ROOM_SERVER_NOTICE,
   isExternalRoomServer,
-} from '@/features/rooms/external-room-server';
-import { roomCoverSource } from '@/features/rooms/room-cover';
-import { displayRoomName } from '@/features/rooms/room-presentation';
+} from '@/features/together/lib/external-room-server';
+import { roomCoverSource } from '@/features/together/lib/room-cover';
+import { displayRoomName } from '@/features/together/lib/room-presentation';
 
 import type { Room } from '@/types/watch-room';
 

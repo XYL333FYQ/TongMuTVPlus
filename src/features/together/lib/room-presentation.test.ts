@@ -2,7 +2,7 @@ import {
   defaultRoomName,
   displayRoomName,
   maskedRoomId,
-} from './room-presentation';
+} from '@/features/together/lib/room-presentation';
 
 test('uses a readable name while keeping phone numbers and account identifiers out of default names', () => {
   expect(defaultRoomName('admin')).toBe('admin 的放映室');

@@ -29,7 +29,6 @@ import {
 
 import { useWatchRoomContextSafe } from '@/components/WatchRoomProvider';
 
-import RoomPlaybackBridge from '@/features/room/RoomPlaybackBridge';
 import RoomPlaybackButton from '@/features/rooms/RoomPlaybackButton';
 
 import {
@@ -370,7 +369,8 @@ export default function PlaybackSessionProvider({
 
   return (
     <PlaybackSessionContext.Provider value={value}>
-      <RoomPlaybackBridge>{children}</RoomPlaybackBridge>
+      {/* 一起看改由房间页自己的播放器同步（src/features/together），旧桥已停用 */}
+      {children}
       {href &&
         !ownsSound &&
         (presentation === 'full' || presentation === 'docked') && (

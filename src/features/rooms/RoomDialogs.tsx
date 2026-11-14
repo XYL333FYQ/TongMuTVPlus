@@ -4,8 +4,9 @@ import { ImagePlus, Trash2, X } from 'lucide-react';
 import { type ReactNode, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
-import { roomCoverSource } from './room-cover';
-import { defaultRoomName } from './room-presentation';
+import { roomCoverSource } from '@/features/together/lib/room-cover';
+import { defaultRoomName } from '@/features/together/lib/room-presentation';
+
 import { PERMISSION_LABELS, PERMISSION_ORDER } from './RoomMembers';
 
 import type {

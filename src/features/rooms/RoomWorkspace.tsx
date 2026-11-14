@@ -22,13 +22,13 @@ import {
   queueItemFromHref,
 } from '@/features/playback/session';
 import { useRoomPlayback } from '@/features/room/RoomPlaybackBridge';
-
 import {
   EXTERNAL_ROOM_SERVER_NOTICE,
   isExternalRoomServer,
-} from './external-room-server';
-import { compressRoomCover } from './room-cover';
-import { defaultRoomName, displayRoomName } from './room-presentation';
+} from '@/features/together/lib/external-room-server';
+import { compressRoomCover } from '@/features/together/lib/room-cover';
+import { defaultRoomName, displayRoomName } from '@/features/together/lib/room-presentation';
+
 import {
   type RoomFormValues,
   JoinRoomForm,

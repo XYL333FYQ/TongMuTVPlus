@@ -2,8 +2,8 @@
 
 import { ChevronRight, Lock, RefreshCw, Users } from 'lucide-react';
 
-import { roomCoverSource } from './room-cover';
-import { displayRoomName } from './room-presentation';
+import { roomCoverSource } from '@/features/together/lib/room-cover';
+import { displayRoomName } from '@/features/together/lib/room-presentation';
 
 import type { Room } from '@/types/watch-room';
 

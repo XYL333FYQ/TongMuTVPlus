@@ -14,6 +14,7 @@ import '@/styles/shell.css';
 import '@/styles/home.css';
 import '@/features/playback/playback.css';
 import '@/features/watch/watch.css';
+import '@/features/together/together.css';
 import '@/features/rooms/rooms.css';
 import './globals.css';
 

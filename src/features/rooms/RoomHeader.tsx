@@ -14,7 +14,8 @@ import Link from 'next/link';
 
 import { useReducedMotionSetting } from '@/lib/motion';
 
-import { maskedRoomId } from './room-presentation';
+import { maskedRoomId } from '@/features/together/lib/room-presentation';
+
 import RoomActionMenu from './RoomActionMenu';
 
 import type { Member, Room } from '@/types/watch-room';
