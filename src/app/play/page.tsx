@@ -1,1 +1,1 @@
-export { default } from '@/features/playback/PlaybackRoute';
+export { default } from '@/features/watch/WatchRoute';

@@ -37,10 +37,10 @@ import PageContainer from '@/components/PageContainer';
 import PageLayout from '@/components/PageLayout';
 import { useWatchRoomContextSafe } from '@/components/WatchRoomProvider';
 
-import { usePlaybackSessionSafe } from '@/features/playback/context';
 import RoomActivityActions from '@/features/playback/RoomActivityActions';
 import { RoomLiveMessages } from '@/features/playback/RoomLiveMessages';
 import { useAudioFocus } from '@/features/playback/useAudioFocus';
+import { useWatchSessionSafe } from '@/features/watch/session/context';
 
 // 扩展 HTMLVideoElement 类型以支持 hls 和 flv 属性
 declare global {
@@ -241,7 +241,7 @@ function LivePageClient() {
   const favoritedRef = useRef(false);
   const currentChannelRef = useRef<LiveChannel | null>(null);
   const watchRoom = useWatchRoomContextSafe();
-  const playbackSession = usePlaybackSessionSafe();
+  const watchSession = useWatchSessionSafe();
   const [roomPlayer, setRoomPlayer] = useState<HTMLElement | null>(null);
   const [roomActionError, setRoomActionError] = useState('');
   const localChannelOperation = useRef(0);
@@ -299,8 +299,7 @@ function LivePageClient() {
     if (scope !== soundScope.current || artPlayerRef.current?.video !== video)
       return;
     // 在房间里不暂停房间的影片（那是整个房间的进度），只把声音拿过来
-    if (!liveSync.active && !watchRoom?.currentRoom)
-      playbackSession?.controller?.pause();
+    if (!liveSync.active && !watchRoom?.currentRoom) watchSession?.suspend();
     claimSound();
     try {
       await video.play();
