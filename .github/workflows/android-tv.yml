@@ -150,7 +150,7 @@ jobs:
           ls -lh /tmp/android-tv-apks
 
       - name: Upload APK artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: tongmutvplus-android-tv-${{ matrix.label }}
           path: /tmp/android-tv-apks/*.apk
@@ -188,7 +188,7 @@ jobs:
 
       - name: Upload smoke screenshots and logs
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: smoke-android-tv
           path: smoke-out

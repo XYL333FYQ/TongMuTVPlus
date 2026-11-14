@@ -45,7 +45,7 @@ jobs:
           fi
       - name: Preserve native formatting references
         if: ${{ failure() && steps.native-format.outcome == 'failure' }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: native-format-references
           path: ${{ runner.temp }}/native-format/*.txt
@@ -118,7 +118,7 @@ jobs:
 
       - name: Preserve exact native dependency resolution
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: desktop-cargo-lock-${{ matrix.arch }}
           path: apps/desktop/src-tauri/Cargo.lock
@@ -155,7 +155,7 @@ jobs:
           ls -lh dist
 
       - name: Upload installer and portable zip
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: tongmutvplus-windows-${{ matrix.arch }}
           path: dist/*
@@ -205,7 +205,7 @@ jobs:
 
       - name: Upload smoke screenshot
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: smoke-windows
           path: smoke-out
@@ -258,7 +258,7 @@ jobs:
           & ./apps/desktop/ci/native-recovery-smoke.ps1 -Executable 'portable/TongMuTV Plus.exe'
       - name: Preserve native recovery evidence
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: native-recovery-windows
           path: recovery-out
@@ -294,7 +294,7 @@ jobs:
           & ./apps/desktop/ci/native-recovery-smoke.ps1 -Executable 'portable/TongMuTV Plus.exe'
       - name: Preserve audit provenance and evidence
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: native-recovery-package-audit
           path: recovery-out
