@@ -4,7 +4,7 @@ import { useCallback, useRef } from 'react';
 
 import { useWatchRoomContextSafe } from '@/components/WatchRoomProvider';
 
-import { usePlaybackSessionSafe } from '@/features/playback/context';
+import { useWatchSessionSafe } from '@/features/watch/session/context';
 
 import type { MusicSyncState } from '@/types/watch-room';
 
@@ -26,7 +26,7 @@ const EVENTS: Record<PublishKind, string> = {
  */
 export function useRoomMusicActivity() {
   const watchRoom = useWatchRoomContextSafe();
-  const session = usePlaybackSessionSafe();
+  const session = useWatchSessionSafe();
   const room = watchRoom?.currentRoom;
   const active = Boolean(room && room.currentState?.type === 'music');
   const canControl = Boolean(room && watchRoom?.canControl);
@@ -77,7 +77,7 @@ export function useRoomMusicActivity() {
   const beginLocalPlayback = useCallback(async () => {
     const current = latest.current;
     if (!current.publishing && !current.watchRoom?.currentRoom)
-      current.session?.controller?.pause();
+      current.session?.engine?.player?.pause();
     return true;
   }, []);
 

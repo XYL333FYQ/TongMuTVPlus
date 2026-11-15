@@ -76,8 +76,8 @@ import {
 } from '@/components/music/tokens';
 import PageContainer from '@/components/PageContainer';
 
-import RoomActivityActions from '@/features/playback/RoomActivityActions';
-import { useAudioFocus } from '@/features/playback/useAudioFocus';
+import RoomActivityActions from '@/features/together/activities/RoomActivityActions';
+import { useAudioFocus } from '@/features/watch/session/useAudioFocus';
 
 import type { MusicQueueItem, MusicSyncState } from '@/types/watch-room';
 

@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef } from 'react';
 
 import { useWatchRoomContextSafe } from '@/components/WatchRoomProvider';
 
-import { parseWebLiveReference } from '@/features/playback/room-live';
+import { parseWebLiveReference } from '@/features/together/activities/room-live';
 
 import type { LiveState } from '@/types/watch-room';
 

@@ -3,7 +3,7 @@
 import {
   parseWebLiveReference,
   webLiveReference,
-} from '@/features/playback/room-live';
+} from '@/features/together/activities/room-live';
 
 import { useRoomLiveActivity } from './useRoomLiveActivity';
 

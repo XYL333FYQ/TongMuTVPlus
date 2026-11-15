@@ -14,10 +14,6 @@ import { createPortal } from 'react-dom';
 
 import { useWatchRoomContextSafe } from '@/components/WatchRoomProvider';
 
-import { usePlaybackSessionSafe } from './context';
-import { roomActivityKey } from './room-activity';
-import { playbackHrefFromState, playbackIdentity } from './session';
-
 import type { ChatMessage } from '@/types/watch-room';
 
 type DisplayMessage = ChatMessage & { lane: number };
@@ -361,29 +357,5 @@ export function RoomLiveMessages({
       </div>
     </div>,
     target
-  );
-}
-
-export default function PlaybackRoomMessages() {
-  const watchRoom = useWatchRoomContextSafe();
-  const session = usePlaybackSessionSafe();
-  const room = watchRoom?.currentRoom;
-  const state = room?.currentState;
-  const active = Boolean(
-    session?.href &&
-      state?.type === 'play' &&
-      playbackIdentity(session.href) ===
-        playbackIdentity(playbackHrefFromState(state))
-  );
-  const target =
-    session?.controller?.template?.$player ||
-    session?.controller?.video.closest<HTMLElement>('.art-video-player') ||
-    null;
-  return (
-    <RoomLiveMessages
-      target={target}
-      active={active}
-      activityKey={room ? roomActivityKey(room) : null}
-    />
   );
 }

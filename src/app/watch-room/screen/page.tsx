@@ -15,7 +15,7 @@ import PageContainer from '@/components/PageContainer';
 import Select from '@/components/ui/Select';
 import { useWatchRoomContext } from '@/components/WatchRoomProvider';
 
-import { useAudioFocus } from '@/features/playback/useAudioFocus';
+import { useAudioFocus } from '@/features/watch/session/useAudioFocus';
 
 const WATCH_ROOM_NO_CONNECT_KEY = 'watch_room_no_connect';
 const WATCH_ROOM_NO_CONNECT_TIMESTAMP_KEY = 'watch_room_no_connect_timestamp';

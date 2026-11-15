@@ -3,11 +3,9 @@ import { act, fireEvent, render, screen } from '@testing-library/react';
 import RoomActivityActions from './RoomActivityActions';
 
 let mockRoom: any;
-let mockSession: any;
 jest.mock('@/components/WatchRoomProvider', () => ({
   useWatchRoomContextSafe: () => mockRoom,
 }));
-jest.mock('./context', () => ({ usePlaybackSessionSafe: () => mockSession }));
 
 beforeEach(() => {
   mockRoom = {
@@ -16,7 +14,6 @@ beforeEach(() => {
     currentRoom: { id: 'room-a' },
     createRoom: jest.fn(),
   };
-  mockSession = {};
 });
 
 it('requires an explicit share action and only shows success after its ACK', async () => {

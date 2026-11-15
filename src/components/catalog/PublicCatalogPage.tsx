@@ -25,7 +25,7 @@ import PageLayout from '@/components/PageLayout';
 import {
   filmPlaybackHref,
   togetherSelectionHref,
-} from '@/features/playback/selection-links';
+} from '@/features/watch/selection-links';
 
 function usePublicCatalog(
   type: PublicCatalogCategory,

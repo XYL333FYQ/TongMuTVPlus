@@ -1,8 +1,8 @@
 jest.mock('@/components/WatchRoomProvider', () => ({
   useWatchRoomContextSafe: () => mockRoom,
 }));
-jest.mock('@/features/playback/context', () => ({
-  usePlaybackSessionSafe: () => null,
+jest.mock('@/features/watch/session/context', () => ({
+  useWatchSessionSafe: () => null,
 }));
 jest.mock('@/hooks/useVoiceChat', () => ({
   useVoiceChat: () => ({ isConnecting: false, error: null }),

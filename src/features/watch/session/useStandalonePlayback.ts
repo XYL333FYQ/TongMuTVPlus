@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 
-import { useAudioFocus } from '@/features/playback/useAudioFocus';
+import { useAudioFocus } from '@/features/watch/session/useAudioFocus';
 
 /**
  * 独立播放器（TV 播放页）和房间的边界。

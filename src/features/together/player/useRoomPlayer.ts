@@ -21,11 +21,11 @@ import { roomServerNow } from '@/lib/room-clock';
 import type { SearchResult } from '@/lib/types';
 import { base58Decode } from '@/lib/utils';
 
-import { mediaKey } from '@/features/room/sync/drift';
+import { mediaKey } from '@/features/together/sync/drift';
 import {
   type LocalMedia,
   RoomSyncEngine,
-} from '@/features/room/sync/sync-engine';
+} from '@/features/together/sync/sync-engine';
 import { fetchSourceDetail } from '@/features/watch/media/catalog';
 import { resolvePlayback } from '@/features/watch/media/playback-url';
 import {

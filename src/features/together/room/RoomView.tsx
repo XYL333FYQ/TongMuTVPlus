@@ -31,6 +31,7 @@ import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
 import { useWatchRoomContext } from '@/components/WatchRoomProvider';
 
 import ChatPanel from './ChatPanel';
+import { ActivityLaunchers, activityOf, ActivityStage } from './RoomActivities';
 import FilmPicker from './FilmPicker';
 import MembersPanel from './MembersPanel';
 import PlaylistPanel from './PlaylistPanel';
@@ -230,7 +231,8 @@ export default function RoomView({
               className='tm-t-stage-slot'
               data-hidden={state ? undefined : 'true'}
             />
-            {!state && (
+            <ActivityStage room={current} />
+            {!state && !activityOf(current) && (
               <div className='tm-t-stage-empty'>
                 <Clapperboard size={36} aria-hidden='true' />
                 <strong>还没开始放映</strong>
@@ -309,6 +311,7 @@ export default function RoomView({
               </button>
             )}
           </div>
+          {can('changeMedia') && <ActivityLaunchers />}
           {error && (
             <p className='tm-t-error' role='alert'>
               {error}

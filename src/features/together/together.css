@@ -1242,3 +1242,10 @@ html[data-tm-reduced-motion='true'] :is(.tm-t-dialog, .tm-t-dialog-backdrop) {
     margin-top: 0;
   }
 }
+
+/* 房间活动入口 */
+.tm-t-launchers {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}

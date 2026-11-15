@@ -67,8 +67,8 @@ import TrailerPickerDialog from '@/components/TrailerPickerDialog';
 import {
   filmPlaybackHref,
   togetherSelectionHref,
-} from '@/features/playback/selection-links';
-import { queuePlaybackHref } from '@/features/playback/session';
+  queuePlaybackHref,
+} from '@/features/watch/selection-links';
 import { useWatchSessionSafe } from '@/features/watch/session/context';
 
 export interface VideoCardProps {

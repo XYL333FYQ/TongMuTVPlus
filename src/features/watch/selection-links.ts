@@ -1,4 +1,14 @@
-import { normalizePlaybackHref } from './session';
+/** 只接受站内 /play 地址 */
+function normalizePlaybackHref(value: string): string | null {
+  try {
+    const url = new URL(value, 'https://tongmu.invalid');
+    if (url.origin !== 'https://tongmu.invalid' || url.pathname !== '/play')
+      return null;
+    return `${url.pathname}${url.search}`;
+  } catch {
+    return null;
+  }
+}
 
 export function filmPlaybackHref(film: {
   title: string;
@@ -30,4 +40,18 @@ export function filmPlaybackHref(film: {
 export function togetherSelectionHref(href: string) {
   const film = normalizePlaybackHref(href);
   return film ? `/watch-room?${new URLSearchParams({ film })}` : '/watch-room';
+}
+
+/** 片单 / 继续看用：同一部影片指定集数 */
+export function queuePlaybackHref(
+  href: string,
+  episode = 1,
+  queueItemId?: string
+) {
+  const normalized = normalizePlaybackHref(href);
+  if (!normalized) throw new Error('无效的站内播放地址');
+  const url = new URL(normalized, 'https://tongmu.invalid');
+  url.searchParams.set('episode', String(episode));
+  if (queueItemId) url.searchParams.set('queueId', queueItemId);
+  return `${url.pathname}${url.search}`;
 }

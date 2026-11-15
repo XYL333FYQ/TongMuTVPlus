@@ -1509,7 +1509,10 @@ test('legacy room data is wiped exactly once when the rebuilt rooms start', () =
     legacy.close();
 
     const db = openRoomStore(filename);
-    assert.equal(db.prepare('SELECT COUNT(*) AS n FROM watch_rooms').get().n, 0);
+    assert.equal(
+      db.prepare('SELECT COUNT(*) AS n FROM watch_rooms').get().n,
+      0
+    );
     db.prepare(
       "INSERT INTO watch_rooms (id,owner_account_id,name,description,password_hash,is_public,room_type,settings_json,state_json,queue_json,revision,controller_epoch,created_at,updated_at,empty_since,lifecycle,archived_at) VALUES ('new-room','owner','新房间','',NULL,1,'movie','{}',NULL,'[]',1,0,1,1,NULL,'active',NULL)"
     ).run();
@@ -1517,7 +1520,10 @@ test('legacy room data is wiped exactly once when the rebuilt rooms start', () =
 
     const reopened = openRoomStore(filename);
     assert.deepEqual(
-      reopened.prepare('SELECT id FROM watch_rooms').all().map((row) => row.id),
+      reopened
+        .prepare('SELECT id FROM watch_rooms')
+        .all()
+        .map((row) => row.id),
       ['new-room']
     );
     reopened.close();

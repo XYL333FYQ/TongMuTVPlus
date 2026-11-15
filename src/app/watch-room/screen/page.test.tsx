@@ -28,10 +28,7 @@ jest.mock('@/components/WatchRoomProvider', () => ({
   useWatchRoomContext: () => mockRoom,
   useWatchRoomContextSafe: () => mockRoom,
 }));
-jest.mock('@/features/playback/context', () => ({
-  usePlaybackSessionSafe: () => mockSession,
-}));
-jest.mock('@/features/playback/useAudioFocus', () => ({
+jest.mock('@/features/watch/session/useAudioFocus', () => ({
   useAudioFocus: () => ({ ownsSound: true, claimSound: mockClaimSound }),
 }));
 jest.mock('@/hooks/useScreenShare', () => ({

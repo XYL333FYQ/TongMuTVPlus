@@ -10,16 +10,13 @@ jest.mock('@/components/WatchRoomProvider', () => ({
   useWatchRoomContext: () => mockRoom,
   useWatchRoomContextSafe: () => mockRoom,
 }));
-jest.mock('@/features/playback/context', () => ({
-  usePlaybackSessionSafe: () => mockSession,
-}));
 // pnpm 的目录布局下 jest 找不到 styled-jsx/style，这里只需要它渲染成空
 jest.mock(
   'styled-jsx/style',
   () => ({ __esModule: true, default: () => null }),
   { virtual: true }
 );
-jest.mock('@/features/playback/useAudioFocus', () => ({
+jest.mock('@/features/watch/session/useAudioFocus', () => ({
   useAudioFocus: () => ({ ownsSound: true, claimSound: jest.fn() }),
 }));
 jest.mock('@/lib/motion', () => ({ useReducedMotionSetting: () => false }));

@@ -37,9 +37,9 @@ import PageContainer from '@/components/PageContainer';
 import PageLayout from '@/components/PageLayout';
 import { useWatchRoomContextSafe } from '@/components/WatchRoomProvider';
 
-import RoomActivityActions from '@/features/playback/RoomActivityActions';
-import { RoomLiveMessages } from '@/features/playback/RoomLiveMessages';
-import { useAudioFocus } from '@/features/playback/useAudioFocus';
+import RoomActivityActions from '@/features/together/activities/RoomActivityActions';
+import { RoomLiveMessages } from '@/features/together/activities/RoomLiveMessages';
+import { useAudioFocus } from '@/features/watch/session/useAudioFocus';
 import { useWatchSessionSafe } from '@/features/watch/session/context';
 
 // 扩展 HTMLVideoElement 类型以支持 hls 和 flv 属性

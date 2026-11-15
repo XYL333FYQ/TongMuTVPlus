@@ -8,7 +8,7 @@
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { enableArtKeyboardAccess } from '@/features/playback/art-keyboard';
+import { enableArtKeyboardAccess } from '@/features/watch/player/art-keyboard';
 
 import { isSafariLike, playerEnvironment } from './env';
 import {

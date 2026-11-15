@@ -12,10 +12,10 @@ import '@/styles/layout.css';
 import '@/styles/feedback.css';
 import '@/styles/shell.css';
 import '@/styles/home.css';
-import '@/features/playback/playback.css';
+import '@/styles/room-chat.css';
 import '@/features/watch/watch.css';
 import '@/features/together/together.css';
-import '@/features/rooms/rooms.css';
+import '@/styles/room-shared.css';
 import './globals.css';
 
 import { parseAuthInfo } from '@/lib/auth';
@@ -47,7 +47,6 @@ import PwaRegistration from '@/components/shell/PwaRegistration';
 import ShellBridge from '@/components/shell/ShellBridge';
 import ShellMotionProvider from '@/components/shell/ShellMotionProvider';
 
-import PlaybackSessionProvider from '@/features/playback/PlaybackSessionProvider';
 import WatchSessionProvider from '@/features/watch/session/WatchSessionProvider';
 
 import { StartupCacheCleanup } from '../components/DanmakuCacheCleanup';
@@ -555,21 +554,19 @@ export default async function RootLayout({
           >
             <WatchRoomProvider>
               <DownloadProvider>
-                <PlaybackSessionProvider>
-                  <WatchSessionProvider>
-                    <MediaSessionBridge />
-                    <StartupCacheCleanup />
-                    {/* 顶栏常驻一份，切页不重建（显示与否由页面里的导航标记决定） */}
-                    <PersistentHeader />
-                    <ShellMotionProvider>{children}</ShellMotionProvider>
-                    <GlobalErrorIndicator />
-                    <ChatFloatingWindow />
-                    <MobileBottomNav />
-                    <DownloadBubble />
-                    <DownloadPanel />
-                    <AppDialogHost />
-                  </WatchSessionProvider>
-                </PlaybackSessionProvider>
+                <WatchSessionProvider>
+                  <MediaSessionBridge />
+                  <StartupCacheCleanup />
+                  {/* 顶栏常驻一份，切页不重建（显示与否由页面里的导航标记决定） */}
+                  <PersistentHeader />
+                  <ShellMotionProvider>{children}</ShellMotionProvider>
+                  <GlobalErrorIndicator />
+                  <ChatFloatingWindow />
+                  <MobileBottomNav />
+                  <DownloadBubble />
+                  <DownloadPanel />
+                  <AppDialogHost />
+                </WatchSessionProvider>
               </DownloadProvider>
             </WatchRoomProvider>
           </SiteProvider>

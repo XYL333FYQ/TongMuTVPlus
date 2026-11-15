@@ -23,7 +23,7 @@ import { CUSTOM_SUBTITLE_ACCEPT } from '@/lib/subtitle-converter';
 
 import Toast, { type ToastProps } from '@/components/feedback/Toast';
 
-import { useAudioFocus } from '@/features/playback/useAudioFocus';
+import { useAudioFocus } from '@/features/watch/session/useAudioFocus';
 
 import type { PlaybackState, PlayerSheet, WatchEngineApi } from './context';
 import { createTranscodeSession } from '../media/external';

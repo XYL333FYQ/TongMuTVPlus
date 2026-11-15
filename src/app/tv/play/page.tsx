@@ -64,7 +64,7 @@ import {
 } from '@/components/tv/player/utils';
 import TVVirtualRemote from '@/components/tv/TVVirtualRemote';
 
-import { useStandalonePlayback } from '@/features/playback/useStandalonePlayback';
+import { useStandalonePlayback } from '@/features/watch/session/useStandalonePlayback';
 
 const TV_DANMAKU_LANES = 8;
 const TV_DANMAKU_SPAWN_GRACE = 0.6;

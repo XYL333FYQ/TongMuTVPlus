@@ -1,7 +1,6 @@
 jest.mock('@/components/WatchRoomProvider', () => ({
   useWatchRoomContextSafe: () => mockRoom,
 }));
-jest.mock('./context', () => ({ usePlaybackSessionSafe: () => mockSession }));
 
 import {
   act,
@@ -14,9 +13,43 @@ import {
 
 import type { RoomRealtimeMessage } from '@/hooks/useWatchRoom';
 
-import PlaybackRoomMessages from './RoomLiveMessages';
+import { roomActivityKey } from './room-activity';
+import { RoomLiveMessages } from './RoomLiveMessages';
 
 import type { ChatMessage } from '@/types/watch-room';
+
+/** 测试用的接线：房间在放的影片与本机在放的一致时，把消息叠到本机播放器上 */
+function filmOf(href: string | null) {
+  if (!href) return '';
+  const params = new URL(href, 'https://tongmu.invalid').searchParams;
+  return [
+    params.get('source'),
+    params.get('id'),
+    params.get('episode') || '1',
+  ].join('|');
+}
+function PlaybackRoomMessages() {
+  const room = mockRoom.currentRoom as never as Parameters<
+    typeof roomActivityKey
+  >[0] & {
+    currentState: { source: string; videoId: string; episode?: number };
+  };
+  const state = room.currentState;
+  const active =
+    filmOf(mockSession.href) ===
+    [state.source, state.videoId, String(state.episode || 1)].join('|');
+  const target =
+    mockSession.controller.template?.$player ||
+    mockSession.controller.video.closest<HTMLElement>('.art-video-player') ||
+    null;
+  return (
+    <RoomLiveMessages
+      target={target}
+      active={active}
+      activityKey={roomActivityKey(room)}
+    />
+  );
+}
 
 const listeners = new Set<(event: RoomRealtimeMessage) => void>();
 let root: HTMLDivElement;

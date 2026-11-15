@@ -1,17 +1,16 @@
-import { Suspense } from 'react';
+import { redirect } from 'next/navigation';
 
-import RoomFilmSelection from '@/features/rooms/RoomFilmSelection';
-
-export default function SelectRoomFilmPage() {
-  return (
-    <Suspense
-      fallback={
-        <p className='tm-public-feedback' role='status'>
-          正在打开选片…
-        </p>
-      }
-    >
-      <RoomFilmSelection />
-    </Suspense>
+/**
+ * 旧的“为房间选片”页：新房间页里直接选片。保留地址，带着影片转到房间页。
+ */
+export default async function SelectRoomFilmPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const params = await searchParams;
+  const film = typeof params.film === 'string' ? params.film : '';
+  redirect(
+    film ? `/watch-room?${new URLSearchParams({ film })}` : '/watch-room'
   );
 }

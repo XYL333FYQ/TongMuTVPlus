@@ -2,7 +2,10 @@
  * 新播放器 -> 同步引擎需要的播放器接口。
  */
 
-import type { PlayerEvent, PlayerPort } from '@/features/room/sync/sync-engine';
+import type {
+  PlayerEvent,
+  PlayerPort,
+} from '@/features/together/sync/sync-engine';
 import type { WatchPlayer } from '@/features/watch/player/WatchPlayer';
 
 export function portFor(player: WatchPlayer): PlayerPort {

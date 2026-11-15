@@ -1,5 +1,7 @@
 'use client';
 
+import { usePathname } from 'next/navigation';
+
 import {
   ArrowUpRight,
   Check,
@@ -23,13 +25,14 @@ import { useVoiceChat } from '@/hooks/useVoiceChat';
 
 import { useWatchRoomContextSafe } from '@/components/WatchRoomProvider';
 
-import { usePlaybackSessionSafe } from '@/features/playback/context';
+import { useWatchSessionSafe } from '@/features/watch/session/context';
 
 const EMOJIS = ['😀', '😂', '😍', '😎', '🤔', '👍', '👏', '🎉', '❤️', '🔥'];
 
 export default function ChatFloatingWindow() {
   const roomContext = useWatchRoomContextSafe();
-  const playback = usePlaybackSessionSafe();
+  const watch = useWatchSessionSafe();
+  const pathname = usePathname();
   const room = roomContext?.currentRoom;
   const [open, setOpen] = useState(false);
   const [chatSlot, setChatSlot] = useState<HTMLElement | null>(null);
@@ -343,11 +346,10 @@ export default function ChatFloatingWindow() {
     }
   };
   const unread = room?.unreadCount || 0;
-  const hasMini = Boolean(
-    playback?.href &&
-      (playback.presentation === 'mini' || playback.presentation === 'folded')
-  );
+  const hasMini = watch?.presentation === 'mini';
 
+  // 房间页自己有聊天
+  if (pathname === '/watch-room') return null;
   if (!room)
     return roomContext?.reconnectFailed ? (
       <button

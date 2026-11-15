@@ -3,7 +3,7 @@ import { act, cleanup, render } from '@testing-library/react';
 import { useStandalonePlayback } from './useStandalonePlayback';
 
 const mockClaimSound = jest.fn();
-jest.mock('@/features/playback/useAudioFocus', () => ({
+jest.mock('@/features/watch/session/useAudioFocus', () => ({
   useAudioFocus: () => ({ ownsSound: true, claimSound: mockClaimSound }),
 }));
 
