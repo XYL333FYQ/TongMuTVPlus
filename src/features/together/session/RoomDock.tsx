@@ -44,7 +44,7 @@ export function RoomChatSheet(props: {
           <strong>{props.roomName}</strong>
           <span>{props.online} 人在线</span>
         </div>
-        {props.voice.available && (
+        {props.voice.canSpeak && (
           <button
             type='button'
             className='tm-t-icon'

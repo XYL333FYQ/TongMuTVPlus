@@ -221,3 +221,21 @@ html[data-tm-shell] {
     --tm-fs-section: 18px;
   }
 }
+
+/* 两种小窗（自己看 / 一起看）共用的尺寸：一块画面，手机上缩小并让开底栏 */
+:root {
+  --tm-mini-w: 320px;
+  --tm-mini-h: calc(var(--tm-mini-w) * 9 / 16);
+  --tm-mini-gap: 20px;
+  --tm-mini-bottom: calc(var(--tm-mini-gap) + var(--tm-safe-bottom, 0px));
+}
+@media (max-width: 767px) {
+  :root {
+    --tm-mini-w: min(212px, 56vw);
+    --tm-mini-gap: 12px;
+    --tm-mini-bottom: calc(
+      var(--tm-bottom-nav-height, 64px) + var(--tm-mini-gap) +
+        var(--tm-safe-bottom, 0px)
+    );
+  }
+}

@@ -123,6 +123,7 @@ export default function TogetherSession({ children }: { children: ReactNode }) {
     room: live ? current : null,
     connected: !!room?.isConnected,
     canPlayback: can('playback'),
+    canChangeMedia: can('changeMedia'),
     commands: { roomCommand: command },
     keyboard: onStage,
   });
@@ -144,7 +145,24 @@ export default function TogetherSession({ children }: { children: ReactNode }) {
       // 存不下也不影响本次
     }
   }, []);
-  const { shoot } = player;
+  const { shoot, chat } = player;
+  const canChat =
+    (can('chat') && current?.settings?.chatEnabled !== false) ||
+    can('manageMembers');
+  // 播放器控制条里的“弹”开关和发弹幕输入框（全屏时也在）
+  useEffect(() => {
+    chat.configure({
+      enabled: danmakuChat,
+      canSend: canChat && !!room?.isConnected,
+      send: (text) =>
+        command('chat:message', {
+          content: text,
+          type: 'text',
+          commandId: crypto.randomUUID(),
+        }),
+      onToggle: setDanmakuChat,
+    });
+  }, [chat, danmakuChat, canChat, room?.isConnected, command, setDanmakuChat]);
   useEffect(() => {
     if (!room) return;
     const self = getAuthInfoFromBrowserCookie()?.username || '';
@@ -152,7 +170,8 @@ export default function TogetherSession({ children }: { children: ReactNode }) {
       if (danmakuChat && message.content)
         shoot(
           message.content,
-          (message.accountId || message.userName) === self
+          (message.accountId || message.userName) === self,
+          message.userName
         );
     });
   }, [room, danmakuChat, shoot]);
@@ -169,11 +188,16 @@ export default function TogetherSession({ children }: { children: ReactNode }) {
       )
     );
   }, []);
+  const canSpeak = voiceAvailable && can('voice');
   useEffect(() => setMic(false), [current?.id]);
+  // 房主收回语音发言权限时立刻关麦
+  useEffect(() => {
+    if (!canSpeak) setMic(false);
+  }, [canSpeak]);
   const voiceState = useVoiceChat({
     socket: room?.socket || null,
     roomId: current?.id || null,
-    isMicEnabled: voiceAvailable && mic,
+    isMicEnabled: canSpeak && mic,
     isSpeakerEnabled: speaker,
     members: room?.members || [],
     enabled: voiceAvailable && !!current,
@@ -181,7 +205,8 @@ export default function TogetherSession({ children }: { children: ReactNode }) {
   const voice = useMemo(
     () => ({
       available: voiceAvailable && !!current,
-      mic,
+      canSpeak: canSpeak && !!current,
+      mic: canSpeak && mic,
       speaker,
       connecting: voiceState.isConnecting,
       error: voiceState.error,
@@ -190,6 +215,7 @@ export default function TogetherSession({ children }: { children: ReactNode }) {
     }),
     [
       voiceAvailable,
+      canSpeak,
       current,
       mic,
       speaker,

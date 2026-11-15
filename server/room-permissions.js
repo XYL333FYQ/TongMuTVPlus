@@ -19,6 +19,8 @@ const PERMISSIONS = Object.freeze({
   MANAGE_PLAYLIST: 'managePlaylist',
   /** 发送聊天 */
   CHAT: 'chat',
+  /** 开麦克风说话（听别人说话不需要权限）。成员默认没有，由房主打开 */
+  VOICE: 'voice',
   /** 踢出成员、审核加入申请、调整成员权限、删除别人的消息 */
   MANAGE_MEMBERS: 'manageMembers',
   /** 修改房间名称、简介、封面和设置 */

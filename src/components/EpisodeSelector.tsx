@@ -303,6 +303,11 @@ interface EpisodeSelectorProps {
   episodeFilterConfig?: EpisodeFilterConfig | null;
   onFilterConfigUpdate?: (config: EpisodeFilterConfig) => void;
   onShowToast?: (message: string, type: 'success' | 'error' | 'info') => void;
+  /** 外面要求切到某个选项卡（手机上从底部操作坞打开时用）；nonce 变了才切 */
+  requestedTab?: {
+    tab: 'danmaku' | 'episodes' | 'sources';
+    nonce: number;
+  } | null;
 }
 
 /**
@@ -334,6 +339,7 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
   episodeFilterConfig = null,
   onFilterConfigUpdate,
   onShowToast,
+  requestedTab = null,
 }) => {
   const router = useRouter();
   const mutedTextClass = useLightTextOnBackdrop
@@ -599,6 +605,14 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
       setActiveTab('danmaku');
     }
   }, [isRoomMember, activeTab]);
+
+  // 外面点了“选集 / 换源 / 弹幕”：切到对应选项卡（房员仍只能看弹幕）
+  useEffect(() => {
+    if (!requestedTab) return;
+    if (isRoomMember && requestedTab.tab !== 'danmaku') return;
+    setActiveTab(requestedTab.tab);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [requestedTab?.nonce]);
 
   // 当前分组索引（0 开始）
   const initialPage = Math.max(

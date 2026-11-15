@@ -11,6 +11,8 @@ import type { RoomPlayerState } from '../player/useRoomPlayer';
 
 export interface RoomVoice {
   available: boolean;
+  /** 有“语音发言”权限，能开麦克风 */
+  canSpeak: boolean;
   mic: boolean;
   speaker: boolean;
   connecting: boolean;

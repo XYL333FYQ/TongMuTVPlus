@@ -25,6 +25,7 @@ export const MEMBER_PERMISSION_LABELS: Array<{
   { id: 'addMedia', label: '添加片单', hint: '往待看片单里加影片' },
   { id: 'managePlaylist', label: '管理片单', hint: '调整顺序、移除别人加的' },
   { id: 'chat', label: '聊天', hint: '发送消息和弹幕' },
+  { id: 'voice', label: '语音发言', hint: '开麦克风说话，听别人说话不需要' },
 ];
 
 export interface RoomFormValues {
@@ -82,11 +83,14 @@ export function Dialog({
   onClose,
   children,
   wide,
+  sheet,
 }: {
   title: string;
   onClose(): void;
   children: ReactNode;
   wide?: boolean;
+  /** 面板：手机上从底部拉起，平板和电脑上从右侧滑出 */
+  sheet?: boolean;
 }) {
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => event.key === 'Escape' && onClose();
@@ -101,11 +105,13 @@ export function Dialog({
   return (
     <div
       className='tm-t-dialog-backdrop'
+      data-sheet={sheet ? 'true' : undefined}
       onMouseDown={(event) => event.target === event.currentTarget && onClose()}
     >
       <div
         className='tm-t-dialog'
         data-wide={wide ? 'true' : undefined}
+        data-sheet={sheet ? 'true' : undefined}
         role='dialog'
         aria-modal='true'
         aria-label={title}

@@ -903,6 +903,38 @@ test('real HTTP and Socket.IO share authentication, room state and cross-room si
     offer: { type: 'offer', sdp: 'fixture' },
   });
   assert.equal(signal.code, 'FORBIDDEN');
+  // 语音发言：成员默认没有，房主打开后才能发起语音连接；房主一直可以
+  const guest = connect(`auth=${f.credential('guest')}`);
+  await once(guest, 'connect');
+  const guestJoined = await ack(guest, 'room:join', {
+    roomId: created.room.id,
+    userName: 'guest',
+  });
+  assert.equal(guestJoined.room.myPermissions.includes('voice'), false);
+  const muted = await ack(guest, 'voice:offer', {
+    targetUserId: owner.id,
+    offer: { type: 'offer', sdp: 'fixture' },
+  });
+  assert.equal(muted.code, 'FORBIDDEN');
+  const mutedChunk = await ack(guest, 'voice:audio-chunk', {
+    audioData: [1, 2, 3],
+  });
+  assert.equal(mutedChunk.code, 'FORBIDDEN');
+  const ownerOffer = await ack(owner, 'voice:offer', {
+    targetUserId: guest.id,
+    offer: { type: 'offer', sdp: 'fixture' },
+  });
+  assert.equal(ownerOffer.success, true);
+  await ack(owner, 'room:member-permissions', {
+    accountId: 'guest',
+    permissions: ['chat', 'voice'],
+  });
+  const allowed = await ack(guest, 'voice:offer', {
+    targetUserId: owner.id,
+    offer: { type: 'offer', sdp: 'fixture' },
+  });
+  assert.equal(allowed.success, true);
+  guest.disconnect();
   const list = await ack(stranger, 'room:list');
   assert.equal(list[0].currentState, undefined);
   assert.equal(list[0].ownerToken, undefined);

@@ -35,6 +35,7 @@ import {
   seekButtonsPlugin,
   wakeLockPlugin,
 } from '@/features/together/player/core/plugins/basics';
+import { ChatDanmaku } from '@/features/together/player/core/plugins/chat-danmaku';
 import { DanmakuController } from '@/features/together/player/core/plugins/danmaku';
 import { heatmapPlugin } from '@/features/together/player/core/plugins/heatmap';
 import { bindKeyboard } from '@/features/together/player/core/plugins/keyboard';
@@ -45,6 +46,7 @@ import {
 import { WatchPlayer } from '@/features/together/player/core/WatchPlayer';
 
 import { portFor } from './port';
+import { filmFromState, playChange } from '../commands';
 
 import type { PlayState, Room } from '@/types/watch-room';
 
@@ -115,7 +117,9 @@ export interface RoomPlayerState {
   error: string | null;
   danmaku: DanmakuController;
   /** 在播放器上飘一条聊天弹幕 */
-  shoot(text: string, self?: boolean): void;
+  shoot(text: string, self?: boolean, name?: string): void;
+  /** 房间聊天弹幕：飘过画面，全屏时控制条里可以发 */
+  chat: ChatDanmaku;
 }
 
 export function useRoomPlayer(options: {
@@ -124,6 +128,8 @@ export function useRoomPlayer(options: {
   connected: boolean;
   /** 可以播放 / 暂停 / 拖动 */
   canPlayback: boolean;
+  /** 可以换片换集（控制条里的“下一集”） */
+  canChangeMedia?: boolean;
   commands: RoomCommands;
   /** 只在房间页启用快捷键（小窗里不抢别的页面的按键） */
   keyboard?: boolean;
@@ -146,6 +152,7 @@ export function useRoomPlayer(options: {
   );
   const playerRef = useRef<WatchPlayer | null>(null);
   const danmaku = useMemo(() => new DanmakuController(notice), [notice]);
+  const chat = useMemo(() => new ChatDanmaku(), []);
   const subtitles = useMemo(
     () =>
       new SubtitleController(
@@ -155,6 +162,13 @@ export function useRoomPlayer(options: {
     []
   );
   const loadingKey = useRef('');
+  // 控制条“下一集”：有下一集且有换集权限时才出现，点了发换集命令
+  const nextEpisode = useRef<(() => void) | null>(null);
+  const nextControl = useRef<HTMLElement | null>(null);
+  const syncNext = useCallback(() => {
+    const element = nextControl.current;
+    if (element) element.style.display = nextEpisode.current ? '' : 'none';
+  }, []);
 
   const engine = useMemo(
     () =>
@@ -201,6 +215,26 @@ export function useRoomPlayer(options: {
                 DEFAULT_SEEK_STEP_SECONDS
               )
             ),
+            ({ art }) => {
+              art.controls.add({
+                name: 'tm-next',
+                position: 'left',
+                index: 11,
+                tooltip: '下一集',
+                html: '<i class="art-icon"><svg width="22" height="22" viewBox="0 0 22 22" fill="none" aria-hidden="true"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z" fill="currentColor"/></svg></i>',
+                click: () => nextEpisode.current?.(),
+              });
+              const element = art.template?.$player?.querySelector(
+                '.art-control-tm-next'
+              ) as HTMLElement | null;
+              element?.setAttribute('aria-label', '下一集');
+              nextControl.current = element;
+              syncNext();
+              return () => {
+                nextControl.current = null;
+              };
+            },
+            chat.plugin,
             ({ art }) => danmaku.attach(art),
             ({ art }) => subtitles.attach(art, [], ''),
             heatmapPlugin(() => danmaku.list()),
@@ -230,7 +264,31 @@ export function useRoomPlayer(options: {
       playerRef.current = null;
       setPlayer(null);
     };
-  }, [container, danmaku, subtitles, engine]);
+  }, [container, danmaku, chat, subtitles, engine, syncNext]);
+
+  const nextKey = state ? mediaKey(state) : '';
+  const episodeCount = detail?.episodes?.length || 0;
+  const currentEpisode = state?.episode || 1;
+  useEffect(() => {
+    nextEpisode.current =
+      state && options.canChangeMedia && currentEpisode < episodeCount
+        ? () =>
+            void latest.current.commands
+              .roomCommand(
+                'play:change',
+                playChange(
+                  filmFromState(state),
+                  currentEpisode + 1,
+                  state.queueItemId
+                ) as unknown as Record<string, unknown>
+              )
+              .catch((reason: unknown) =>
+                notice(reason instanceof Error ? reason.message : '换集失败')
+              )
+        : null;
+    syncNext();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [nextKey, options.canChangeMedia, currentEpisode, episodeCount, player]);
 
   useEffect(() => {
     engine.setPort(player ? portFor(player) : null);
@@ -370,16 +428,8 @@ export function useRoomPlayer(options: {
   }, [player, keyboard]);
 
   const shoot = useCallback(
-    (text: string, self = false) => {
-      const plugin = danmaku.plugin;
-      if (!plugin || !text) return;
-      try {
-        plugin.emit({ text, color: '#ffffff', border: self, mode: 0 });
-      } catch {
-        // 弹幕插件未就绪时忽略
-      }
-    },
-    [danmaku]
+    (text: string, self = false, name = '') => chat.shoot(text, self, name),
+    [chat]
   );
 
   return {
@@ -390,5 +440,6 @@ export function useRoomPlayer(options: {
     error: state ? error : null,
     danmaku,
     shoot,
+    chat,
   };
 }

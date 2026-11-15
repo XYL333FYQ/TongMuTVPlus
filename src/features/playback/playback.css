@@ -329,20 +329,14 @@ html[data-tm-no-blur='true'] .tm-chat-panel {
   bottom: var(--tm-room-return-bottom);
 }
 body:has(.tm-playback-host[data-presentation='mini']) {
-  --tm-room-return-bottom: calc(88px + 202.5px + var(--tm-room-tools-gap));
+  --tm-room-return-bottom: calc(
+    var(--tm-mini-bottom) + var(--tm-mini-h) + var(--tm-room-tools-gap)
+  );
 }
 body:has(.tm-playback-host[data-presentation='folded']) {
   --tm-room-return-bottom: calc(
     var(--tm-room-tools-bottom) + 64px + var(--tm-room-tools-gap)
   );
-}
-@media (max-width: 767px) {
-  body:has(.tm-playback-host[data-presentation='mini']) {
-    --tm-room-return-bottom: calc(
-      160px + var(--tm-safe-bottom) + (100vw - 32px) * 0.5625 +
-        var(--tm-room-tools-gap)
-    );
-  }
 }
 
 /* Motion belongs to the existing media mount, never to a new video instance. */
@@ -1255,69 +1249,214 @@ html[data-tm-reduced-motion] .tm-chat-messages .tm-chat-delete {
 }
 
 /* ================================================================
- * 小窗 / 收起（2026-11-14 重做）：和一起看小窗同一套样子——
- * 一张实底卡片，上面是画面，下面一行：片名 + 播放 / 声音 / 收起 / 关闭。
- * 只改外观，播放实例与拖动逻辑不变。
+ * 小窗 / 收起（2026-11-14 第三版，和一起看小窗同一个样子）：
+ * 小窗只有一块画面，按钮叠在画面上——左上放大回播放页、右上收起 / 关闭、
+ * 中间播放暂停、左下片名、右下声音。手机上缩小并让开底栏。只改外观，播放实例和拖动不变。
+ * 选择器带 html body 前缀，是为了压过上面几层历史规则。
  * ================================================================ */
-.tm-playback-host {
-  --tm-mini-w: min(380px, calc(100vw - 32px));
-  --tm-mini-bar: 60px;
-  --tm-mini-gap: 20px;
-}
-.tm-playback-host[data-presentation='mini'] [data-tm-player-mount] {
-  /* 旧规则用 top/left 定位，这里统一改为贴右下角，画面与按钮行对齐 */
-  inset: auto auto auto auto;
-  right: var(--tm-mini-gap);
-  bottom: calc(
-    var(--tm-mini-gap) + var(--tm-mini-bar) + var(--tm-safe-bottom, 0px)
-  );
+html
+  body
+  .tm-playback-host[data-testid][data-presentation='mini']
+  [data-tm-player-mount] {
+  inset: auto var(--tm-mini-gap) var(--tm-mini-bottom) auto;
   width: var(--tm-mini-w);
-  height: calc(var(--tm-mini-w) * 9 / 16);
-  border-radius: var(--tm-radius-lg) var(--tm-radius-lg) 0 0;
-  box-shadow: var(--tm-shadow-lg);
+  height: var(--tm-mini-h);
+  border-radius: var(--tm-radius-lg);
+  box-shadow: var(--tm-shadow-lg), inset 0 0 0 1px var(--tm-line);
 }
-.tm-playback-host:is([data-presentation='mini'], [data-presentation='folded'])
+html
+  body
+  .tm-playback-host[data-testid][data-presentation='mini']
   .tm-playback-chrome {
-  inset: auto auto auto auto;
-  right: var(--tm-mini-gap);
-  bottom: calc(var(--tm-mini-gap) + var(--tm-safe-bottom, 0px));
+  position: fixed;
+  inset: auto var(--tm-mini-gap) var(--tm-mini-bottom) auto;
+  display: block;
   width: var(--tm-mini-w);
-  height: var(--tm-mini-bar);
+  height: var(--tm-mini-h);
+  padding: 0;
+  gap: 0;
+  border-radius: var(--tm-radius-lg);
+  background: none;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  pointer-events: none;
+}
+html
+  body
+  .tm-playback-host[data-testid][data-presentation='mini']
+  .tm-playback-chrome
+  > button {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  min-height: 32px;
+  padding: 0;
+  border-radius: 50%;
+  background: var(--tm-scrim);
+  color: var(--tm-on-art);
+  box-shadow: inset 0 0 0 1px var(--tm-art-glass-line);
+  pointer-events: auto;
+}
+/* 看着是 32px，点按范围撑到 44px */
+html
+  body
+  .tm-playback-host[data-testid][data-presentation='mini']
+  .tm-playback-chrome
+  > button::after {
+  content: '';
+  position: absolute;
+  inset: -6px;
+}
+html
+  body
+  .tm-playback-host[data-testid][data-presentation='mini']
+  .tm-playback-chrome
+  > [data-mini='full'] {
+  top: 8px;
+  left: 8px;
+}
+html
+  body
+  .tm-playback-host[data-testid][data-presentation='mini']
+  .tm-playback-chrome
+  > [data-mini='close'] {
+  top: 8px;
+  right: 8px;
+}
+html
+  body
+  .tm-playback-host[data-testid][data-presentation='mini']
+  .tm-playback-chrome
+  > [data-mini='fold'] {
+  top: 8px;
+  right: 48px;
+}
+html
+  body
+  .tm-playback-host[data-testid][data-presentation='mini']
+  .tm-playback-chrome
+  > [data-mini='mute'] {
+  right: 8px;
+  bottom: 8px;
+}
+html
+  body
+  .tm-playback-host[data-testid][data-presentation='mini']
+  .tm-playback-chrome
+  > [data-mini='play'] {
+  top: 50%;
+  left: 50%;
+  width: 40px;
+  height: 40px;
+  transform: translate(-50%, -50%);
+}
+html
+  body
+  .tm-playback-host[data-testid][data-presentation='mini']
+  .tm-playback-chrome
+  > [data-mini='title'] {
+  top: auto;
+  right: auto;
+  bottom: 8px;
+  left: 8px;
+  width: auto;
+  max-width: calc(100% - 56px);
+  height: 28px;
+  min-height: 28px;
+  padding: 0 10px;
+  border-radius: 14px;
+  text-align: left;
+}
+html
+  body
+  .tm-playback-host[data-testid][data-presentation='mini']
+  .tm-playback-chrome
+  > [data-mini='title']::after {
+  inset: -8px -4px;
+}
+html
+  body
+  .tm-playback-host[data-testid][data-presentation='mini']
+  .tm-playback-thumbnail,
+html
+  body
+  .tm-playback-host[data-testid][data-presentation='mini']
+  .tm-playback-context {
+  display: none;
+}
+html
+  body
+  .tm-playback-host[data-testid][data-presentation='mini']
+  .tm-playback-copy {
+  min-width: 0;
+}
+html
+  body
+  .tm-playback-host[data-testid][data-presentation='mini']
+  .tm-playback-copy
+  > span {
+  display: block;
+  overflow: hidden;
+  font-size: 12px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* 鼠标设备：平时只看见画面，移上去才出按钮；触屏一直显示 */
+@media (hover: hover) {
+  html
+    body
+    .tm-playback-host[data-testid][data-presentation='mini']
+    .tm-playback-chrome
+    > button {
+    opacity: 0;
+    transition: opacity var(--tm-d-hover, 160ms);
+  }
+  html
+    body
+    .tm-playback-host[data-testid][data-presentation='mini']:is(
+      :hover,
+      :focus-within
+    )
+    .tm-playback-chrome
+    > button {
+    opacity: 1;
+  }
+}
+/* 手机竖屏的小窗很小，片名放不下，只留按钮 */
+@media (max-width: 767px) {
+  html
+    body
+    .tm-playback-host[data-testid][data-presentation='mini']
+    .tm-playback-chrome
+    > [data-mini='title'] {
+    display: none;
+  }
+}
+
+/* 收起（只听声音）：一条小胶囊，贴在小窗的位置 */
+html
+  body
+  .tm-playback-host[data-testid][data-presentation='folded']
+  .tm-playback-chrome {
+  inset: auto var(--tm-mini-gap) var(--tm-mini-bottom) auto;
+  width: min(340px, calc(100vw - 2 * var(--tm-mini-gap)));
+  height: 56px;
   gap: 2px;
   padding: 6px 6px 6px 14px;
+  border-radius: var(--tm-radius-lg);
   background: var(--tm-glass-solid, var(--tm-surface));
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
   box-shadow: var(--tm-shadow-lg), inset 0 0 0 1px var(--tm-line);
-  border-radius: 0 0 var(--tm-radius-lg) var(--tm-radius-lg);
 }
-.tm-playback-host[data-presentation='folded'] .tm-playback-chrome {
-  border-radius: var(--tm-radius-lg);
-}
-/* 小窗里画面已经在上面，不再放一张缩略图 */
-.tm-playback-host[data-presentation='mini'] .tm-playback-thumbnail {
-  display: none;
-}
-.tm-playback-host:is([data-presentation='mini'], [data-presentation='folded'])
-  .tm-playback-title {
-  flex: 1;
-  min-width: 0;
-  min-height: 44px;
-  padding: 0;
-  border-radius: var(--tm-radius-sm);
-  background: none;
-}
-.tm-playback-host:is([data-presentation='mini'], [data-presentation='folded'])
-  .tm-playback-copy
-  > span:first-child {
-  font-size: 14px;
-  font-weight: 600;
-}
-.tm-playback-host:is([data-presentation='mini'], [data-presentation='folded'])
-  .tm-playback-context:empty {
-  display: none;
-}
-.tm-playback-host:is([data-presentation='mini'], [data-presentation='folded'])
+html
+  body
+  .tm-playback-host[data-testid][data-presentation='folded']
   .tm-playback-chrome
   > button:not(.tm-playback-title) {
   display: grid;
@@ -1328,28 +1467,538 @@ html[data-tm-reduced-motion] .tm-chat-messages .tm-chat-delete {
   padding: 0;
   border-radius: 50%;
 }
-@media (max-width: 767px) {
-  .tm-playback-host {
-    --tm-mini-gap: 12px;
-    --tm-mini-w: calc(100vw - 24px);
+html
+  body
+  .tm-playback-host[data-testid][data-presentation='folded']
+  .tm-playback-title {
+  flex: 1;
+  min-width: 0;
+  min-height: 44px;
+  padding: 0;
+  background: none;
+}
+html
+  body
+  .tm-playback-host[data-testid][data-presentation='folded']
+  .tm-playback-thumbnail,
+html
+  body
+  .tm-playback-host[data-testid][data-presentation='folded']
+  .tm-playback-context:empty {
+  display: none;
+}
+
+/* 小窗：控制栏层盖住了整个画面（点中间其实点在它上面），小窗里不显示它；点画面中间照常播放 / 暂停 */
+.tm-playback-host[data-presentation='mini'] .art-bottom {
+  display: none !important;
+}
+
+/* ================================================================
+ * 独立看播放页（2026-11-14 C 版）：
+ * 手机 / 平板：选集、换源、弹幕、工具、详情收进底部操作坞，点开是半屏面板，画面留在上面；
+ * 电脑：右侧一列图标，选集 / 换源 / 弹幕开合右边的面板，详情、AI 问片、网盘打开抽屉。
+ * ================================================================ */
+.tm-solo-sheet-close,
+.tm-solo-sheet-head,
+.tm-solo-sheet-backdrop {
+  display: none;
+}
+@media (max-width: 1023px) {
+  .tm-solo-rail {
+    display: none;
   }
-  .tm-playback-host[data-presentation='mini'] [data-tm-player-mount] {
-    bottom: calc(
-      var(--tm-bottom-nav-height, 64px) + var(--tm-mini-gap) +
-        var(--tm-mini-bar) + var(--tm-safe-bottom, 0px)
-    );
+  .tm-solo-selector:not([data-tm-sheet]),
+  .tm-solo-tools:not([data-tm-sheet]) {
+    display: none;
   }
-  .tm-playback-host:is([data-presentation='mini'], [data-presentation='folded'])
-    .tm-playback-chrome {
-    bottom: calc(
-      var(--tm-bottom-nav-height, 64px) + var(--tm-mini-gap) +
-        var(--tm-safe-bottom, 0px)
+  .tm-solo-selector[data-tm-sheet],
+  .tm-solo-tools[data-tm-sheet] {
+    position: fixed;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: var(--tm-z-modal, 1000);
+    display: flex;
+    flex-direction: column;
+    /* 接在画面下方（画面宽 16:9），最少留半屏给面板 */
+    height: max(
+      45dvh,
+      calc(
+        100dvh -
+          var(
+            --tm-solo-sheet-top,
+            calc(56.25vw + var(--tm-header-height) + var(--tm-safe-top))
+          ) - 4px
+      )
     );
+    margin: 0;
+    padding: 52px 16px calc(16px + var(--tm-safe-bottom, 0px));
+    overflow: hidden;
+    border-radius: var(--tm-radius-lg) var(--tm-radius-lg) 0 0;
+    background: var(--tm-surface);
+    box-shadow: 0 -20px 50px -20px rgb(var(--tm-ink-rgb) / 0.6),
+      inset 0 1px 0 var(--tm-line);
+    opacity: 1;
+    transform: none;
+    animation: tm-solo-sheet-in var(--tm-d-panel) var(--tm-ease-out);
+  }
+  .tm-solo-selector[data-tm-sheet] > :not(.tm-solo-sheet-close) {
+    flex: 1;
+    min-height: 0;
+  }
+  .tm-solo-sheet-close {
+    position: absolute;
+    top: 4px;
+    right: 6px;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    color: var(--tm-muted);
+  }
+  [data-tm-sheet] > .tm-solo-sheet-close {
+    display: grid;
+    place-items: center;
+  }
+  .tm-solo-tools[data-tm-sheet] {
+    padding-top: 0;
+    overflow-y: auto;
+  }
+  .tm-solo-tools[data-tm-sheet] > .tm-solo-sheet-head {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    display: flex;
+    flex: none;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 52px;
+    background: var(--tm-surface);
+  }
+  .tm-solo-sheet-head h2 {
+    margin: 0;
+    font-size: 17px;
+    font-weight: 700;
+  }
+  .tm-solo-sheet-head button {
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    margin-right: -10px;
+    border-radius: 50%;
+    color: var(--tm-muted);
+  }
+  /* 工具面板里按钮带字、换行排，不再横向挤一条 */
+  .tm-solo-tools[data-tm-sheet] > div:not(.tm-solo-sheet-head) {
+    overflow: visible;
+    padding: 0;
+    border: 0;
+    background: none;
+  }
+  .tm-solo-tools[data-tm-sheet] .flex-nowrap {
+    flex-wrap: wrap;
+  }
+  .tm-solo-tools[data-tm-sheet] button {
+    width: auto;
+    height: 44px;
+    gap: 8px;
+    padding: 0 14px;
+  }
+  .tm-solo-tools[data-tm-sheet] button > span {
+    display: inline;
+    max-width: none;
+  }
+  .tm-solo-sheet-backdrop[data-open] {
+    position: fixed;
+    inset: 0;
+    z-index: calc(var(--tm-z-modal, 1000) - 1);
+    display: block;
+    border: 0;
+    /* 不压暗：上面的画面要照常看清楚，点空白处关面板 */
+    background: transparent;
+  }
+  .tm-solo-dock {
+    position: fixed;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 60;
+    display: flex;
+    gap: 2px;
+    padding: 4px max(4px, var(--tm-safe-left, 0px))
+      calc(4px + var(--tm-safe-bottom, 0px));
+    border-top: 1px solid var(--tm-line);
+    background: var(--tm-glass-solid, var(--tm-surface));
+    backdrop-filter: blur(18px) saturate(1.4);
+    -webkit-backdrop-filter: blur(18px) saturate(1.4);
+  }
+  html[data-tm-no-blur] .tm-solo-dock {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    background: var(--tm-surface);
+  }
+  .tm-solo-dock button {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    min-width: 0;
+    min-height: 56px;
+    padding: 0 2px;
+    border-radius: var(--tm-radius-md);
+    color: var(--tm-text);
+  }
+  .tm-solo-dock button:hover {
+    background: var(--tm-line);
+  }
+  .tm-solo-dock button:focus-visible {
+    outline: 2px solid var(--tm-text);
+    outline-offset: -2px;
+  }
+  .tm-solo-dock span {
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.2;
+  }
+  .tm-solo-dock em {
+    max-width: 100%;
+    overflow: hidden;
+    color: var(--tm-muted);
+    font-size: 12px;
+    font-style: normal;
+    line-height: 1.2;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  /* 播放页只在完整显示时：让出操作坞的位置，手机底栏不出现 */
+  body:has(.tm-playback-host[data-presentation='full'] .tm-solo-dock) .tm-main {
+    padding-bottom: calc(84px + var(--tm-safe-bottom, 0px));
+  }
+  html
+    body:has(.tm-playback-host[data-presentation='full'] .tm-solo-dock)
+    .tm-mobile-nav {
+    display: none;
+  }
+}
+@keyframes tm-solo-sheet-in {
+  from {
+    transform: translateY(32px);
+    opacity: 0.4;
+  }
+}
+@keyframes tm-solo-fade {
+  from {
+    opacity: 0;
+  }
+}
+html[data-tm-reduced-motion]
+  :is(.tm-solo-selector, .tm-solo-tools, .tm-solo-sheet-backdrop) {
+  animation: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  :is(.tm-solo-selector, .tm-solo-tools, .tm-solo-sheet-backdrop) {
+    animation: none;
+  }
+}
+@media (min-width: 1024px) {
+  .tm-solo-dock {
+    display: none;
+  }
+  .tm-solo-row {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+  }
+  .tm-solo-row > * {
+    margin-top: 0 !important;
+  }
+  .tm-solo-row > .grid {
+    flex: 1;
+    min-width: 0;
+  }
+  .tm-solo-rail {
+    display: flex;
+    flex: none;
+    flex-direction: column;
+    gap: 4px;
+    padding: 6px;
+    border-radius: var(--tm-radius-lg);
+    background: var(--tm-surface);
+    box-shadow: inset 0 0 0 1px var(--tm-line);
+  }
+  .tm-solo-rail button {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    width: 64px;
+    min-height: 60px;
+    border-radius: var(--tm-radius-md);
+    color: var(--tm-muted);
+    font-size: 12px;
+    font-weight: 600;
+    transition: background var(--tm-d-hover), color var(--tm-d-hover);
+  }
+  .tm-solo-rail button:hover,
+  .tm-solo-rail button[aria-pressed='true'] {
+    background: var(--tm-surface-raised);
+    color: var(--tm-text);
+  }
+  .tm-solo-rail button:focus-visible {
+    outline: 2px solid var(--tm-text);
+    outline-offset: 2px;
+  }
+}
+/* 半屏面板打开时，房间入口胶囊和聊天先让开 */
+body:has(.tm-solo-selector[data-tm-sheet], .tm-solo-tools[data-tm-sheet])
+  :is(.tm-t-pill-dock, .tm-t-dock) {
+  visibility: hidden;
+}
+
+/* ---------- 和原型对齐（2026-11-15）：手机 / 平板上画面在最上面，标题在画面下面 */
+/* 所有宽度：画面在最上面，标题在画面下面 */
+.tm-solo-page > * {
+  order: 3;
+}
+.tm-solo-page > .tm-solo-row {
+  order: 1;
+}
+.tm-solo-page > .tm-solo-title {
+  order: 2;
+}
+@media (max-width: 1023px) {
+  /* 详情：不再重复一个超大标题，和上面的标题同一级字号 */
+  .tm-solo-detail > div > div {
+    padding: 4px 0 0;
+  }
+  .tm-solo-detail h1 {
+    justify-content: flex-start;
+    margin-bottom: 4px;
+    font-size: 18px;
+    text-align: left;
+  }
+  .tm-solo-detail h1 svg {
+    width: 22px;
+    height: 22px;
+  }
+  /* 半屏面板里：去掉选集组件自带的卡片外框，集数是一格一格的块 */
+  .tm-solo-selector[data-tm-sheet] > :not(.tm-solo-sheet-close) {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: none;
+    box-shadow: none;
+  }
+  .tm-solo-selector[data-tm-sheet] button.font-mono {
+    height: 44px;
+    border-color: transparent;
+    border-radius: var(--tm-radius-md);
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 600;
+  }
+  .tm-solo-selector[data-tm-sheet] button.font-mono:not([aria-current]) {
+    background: var(--tm-surface-raised);
+  }
+}
+/* 手机 / 平板：画面贴满两边、不留圆角 */
+@media (max-width: 1023px) {
+  .tm-page-container.tm-solo-page {
+    padding-top: 0;
+  }
+  .tm-solo-row > .grid > div:has(> .tm-playback-video-frame) {
+    margin-inline: calc(-1 * var(--tm-content-gutter, 16px));
+    border: 0;
+    border-radius: 0;
+  }
+  .tm-solo-row .tm-playback-video-frame > [data-tm-player-mount] {
+    border-radius: 0;
+  }
+}
+@media (max-width: 1023px) {
+  /* 面板顶部：选集 / 换源 / 弹幕 和关闭按钮在同一行 */
+  .tm-solo-selector[data-tm-sheet] {
+    padding-top: 8px;
+  }
+  .tm-solo-selector[data-tm-sheet]
+    > :not(.tm-solo-sheet-close)
+    > div:first-child {
+    margin: 0 44px 4px 0;
+  }
+  .tm-solo-selector[data-tm-sheet]
+    > :not(.tm-solo-sheet-close)
+    > div:first-child
+    > div {
+    padding-inline: 8px;
+    border-radius: var(--tm-radius-md);
+    background: none;
+  }
+  .tm-solo-selector[data-tm-sheet] .tm-solo-sheet-close {
+    top: 10px;
   }
 }
 
-/* 小窗：控制栏层盖住了整个画面（点中间的播放键其实点在它上面），小窗里不显示它；
- * 播放、声音等都在下面那一行。点画面中间照常播放 / 暂停。 */
-.tm-playback-host[data-presentation='mini'] .art-bottom {
-  display: none !important;
+/* ---------- 收紧尺寸（2026-11-15 第二轮） */
+/* 手机 / 平板：标题、标签、详情字号降一级 */
+@media (max-width: 1023px) {
+  .tm-solo-title {
+    padding-block: 2px;
+  }
+  .tm-solo-title h1 {
+    gap: 6px;
+    font-size: 19px;
+    line-height: 1.3;
+  }
+  .tm-solo-title h1 span.rounded-full,
+  .tm-solo-title .mt-2 > span {
+    padding: 1px 9px;
+    font-size: 12px;
+  }
+  .tm-solo-title .mt-2 {
+    gap: 6px;
+    margin-top: 6px;
+  }
+  .tm-solo-detail h1 {
+    font-size: 16px;
+  }
+  .tm-solo-detail h1 button {
+    min-width: 40px;
+    min-height: 40px;
+  }
+  .tm-solo-detail .text-base {
+    font-size: 14px;
+  }
+  .tm-solo-dock button {
+    min-height: 50px;
+  }
+  .tm-solo-dock svg {
+    width: 19px;
+    height: 19px;
+  }
+}
+/* 电脑：右侧一条细的图标栏，和画面一样高；下载、外部播放器等收进“工具”抽屉 */
+@media (min-width: 1024px) {
+  .tm-solo-row {
+    align-items: stretch;
+  }
+  .tm-solo-rail {
+    gap: 2px;
+    width: 64px;
+    padding: 6px 4px;
+    border-radius: var(--tm-radius-lg);
+  }
+  .tm-solo-rail button {
+    width: 56px;
+    min-height: 54px;
+    gap: 3px;
+  }
+  .tm-solo-rail button svg {
+    width: 19px;
+    height: 19px;
+  }
+  .tm-solo-rail-sep {
+    height: 1px;
+    margin: 4px 10px;
+    background: var(--tm-line);
+  }
+  .tm-solo-rail-end {
+    margin-top: auto;
+  }
+  .tm-solo-tools:not([data-tm-sheet]) {
+    display: none;
+  }
+  .tm-solo-tools[data-tm-sheet] {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    z-index: var(--tm-z-modal, 1000);
+    display: block;
+    width: min(380px, 100vw);
+    margin: 0;
+    padding: 0 20px 24px;
+    overflow-y: auto;
+    background: var(--tm-surface);
+    box-shadow: -24px 0 60px -24px rgb(var(--tm-ink-rgb) / 0.6),
+      inset 1px 0 0 var(--tm-line);
+    animation: tm-solo-drawer-in var(--tm-d-panel) var(--tm-ease-out);
+  }
+  .tm-solo-tools[data-tm-sheet] > .tm-solo-sheet-head {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 60px;
+    background: var(--tm-surface);
+  }
+  .tm-solo-tools[data-tm-sheet] .tm-solo-sheet-head h2 {
+    margin: 0;
+    font-size: 17px;
+    font-weight: 700;
+  }
+  .tm-solo-tools[data-tm-sheet] .tm-solo-sheet-head button {
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    margin-right: -8px;
+    border-radius: 50%;
+    color: var(--tm-muted);
+  }
+  .tm-solo-tools[data-tm-sheet] > div:not(.tm-solo-sheet-head) {
+    overflow: visible;
+    padding: 0;
+    border: 0;
+    background: none;
+  }
+  .tm-solo-tools[data-tm-sheet] .flex,
+  .tm-solo-tools[data-tm-sheet] .flex-nowrap {
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
+  .tm-solo-tools[data-tm-sheet] button {
+    width: auto;
+    height: 40px;
+    gap: 8px;
+    padding: 0 14px;
+  }
+  .tm-solo-tools[data-tm-sheet] button > span {
+    display: inline;
+    max-width: none;
+  }
+  .tm-solo-sheet-backdrop[data-open] {
+    position: fixed;
+    inset: 0;
+    z-index: calc(var(--tm-z-modal, 1000) - 1);
+    display: block;
+    border: 0;
+    background: var(--tm-scrim);
+  }
+}
+@keyframes tm-solo-drawer-in {
+  from {
+    opacity: 0;
+    transform: translateX(24px);
+  }
+}
+html[data-tm-reduced-motion] .tm-solo-tools[data-tm-sheet] {
+  animation: none;
+}
+@media (min-width: 1024px) {
+  /* 页面容器自成一层（z-index 10），盖不过站点顶栏：抽屉从顶栏下面开始 */
+  .tm-solo-tools[data-tm-sheet] {
+    top: var(--tm-header-height);
+  }
+  .tm-solo-sheet-backdrop[data-open] {
+    top: var(--tm-header-height);
+  }
+  /* 工具按钮一排排往下排，去广告等开关另起一行 */
+  .tm-solo-tools[data-tm-sheet] .flex > .flex {
+    flex: 0 0 100%;
+  }
 }

@@ -6,11 +6,14 @@ import {
   AlertCircle,
   ArrowLeft,
   Cloud,
+  Ellipsis,
   FileText,
   Heart,
   Keyboard,
   Link2,
+  ListVideo,
   Loader2,
+  MessageSquareText,
   Play,
   RefreshCw,
   Router,
@@ -2639,8 +2642,62 @@ function PlayPageClient() {
   } | null>(null);
 
   // 折叠状态（仅在 lg 及以上屏幕有效）
+  // 电脑上一开始只露右侧图标栏，点“选集 / 换源 / 弹幕”再展开面板
   const [isEpisodeSelectorCollapsed, setIsEpisodeSelectorCollapsed] =
-    useState(false);
+    useState(true);
+
+  // 手机 / 平板：底部操作坞打开的半屏面板；电脑：右侧图标栏选中的面板
+  type SoloPanel = 'episodes' | 'sources' | 'danmaku';
+  const [soloSheet, setSoloSheet] = useState<SoloPanel | 'tools' | null>(null);
+  const [soloRail, setSoloRail] = useState<SoloPanel>('episodes');
+  const [selectorRequest, setSelectorRequest] = useState<{
+    tab: SoloPanel;
+    nonce: number;
+  } | null>(null);
+  const openSoloSheet = (panel: SoloPanel | 'tools') => {
+    if (panel !== 'tools')
+      setSelectorRequest({ tab: panel, nonce: Date.now() });
+    setSoloSheet(panel);
+    // 面板盖住下半屏：把画面滚到最上面，面板正好接在画面下方
+    const frame = document.querySelector<HTMLElement>(
+      '.tm-playback-host[data-presentation="full"] .tm-playback-video-frame'
+    );
+    if (frame) {
+      // 顶栏是固定的：画面停在顶栏下面
+      const header = document.querySelector<HTMLElement>(
+        '.tm-mobile-header-v2, .tm-top-header'
+      );
+      const headerHeight =
+        header && getComputedStyle(header).display !== 'none'
+          ? header.getBoundingClientRect().bottom
+          : 0;
+      const top =
+        frame.getBoundingClientRect().top + window.scrollY - headerHeight;
+      window.scrollTo({ top: Math.max(0, top), behavior: 'auto' });
+      // 页面短、滚不上去时，面板就从画面下沿开始
+      const host = frame.closest<HTMLElement>('.tm-playback-host');
+      host?.style.setProperty(
+        '--tm-solo-sheet-top',
+        `${Math.round(frame.getBoundingClientRect().bottom)}px`
+      );
+    }
+  };
+  const selectSoloRail = (panel: SoloPanel) => {
+    if (!isEpisodeSelectorCollapsed && soloRail === panel) {
+      setIsEpisodeSelectorCollapsed(true);
+      return;
+    }
+    setIsEpisodeSelectorCollapsed(false);
+    setSoloRail(panel);
+    setSelectorRequest({ tab: panel, nonce: Date.now() });
+  };
+  useEffect(() => {
+    if (!soloSheet) return;
+    const close = (event: KeyboardEvent) =>
+      event.key === 'Escape' && setSoloSheet(null);
+    window.addEventListener('keydown', close);
+    return () => window.removeEventListener('keydown', close);
+  }, [soloSheet]);
 
   // 下载选集面板显示状态
   const [showDownloadSelector, setShowDownloadSelector] = useState(false);
@@ -11775,9 +11832,9 @@ function PlayPageClient() {
         </div>
       )}
 
-      <div className='tm-page-container relative z-10 flex flex-col gap-3 py-4'>
+      <div className='tm-page-container relative z-10 flex flex-col gap-3 py-4 tm-solo-page'>
         {/* 第一行：影片标题 */}
-        <div className='py-1'>
+        <div className='py-1 tm-solo-title'>
           <h1
             className={`text-2xl font-semibold tracking-tight flex items-center gap-2 flex-wrap ${
               tmdbBackdrop ? 'text-on-art' : 'text-fg'
@@ -11850,9 +11907,9 @@ function PlayPageClient() {
           )}
         </div>
         {/* 第二行：播放器和选集 */}
-        <div className='space-y-2'>
-          {/* 折叠控制 - 仅在 lg 及以上屏幕显示 */}
-          <div className='hidden lg:flex justify-end'>
+        <div className='space-y-2 tm-solo-row'>
+          {/* 折叠控制：电脑上改由右侧图标栏开合，这里保留但不显示 */}
+          <div className='hidden'>
             <button
               onClick={() =>
                 setIsEpisodeSelectorCollapsed(!isEpisodeSelectorCollapsed)
@@ -12097,7 +12154,22 @@ function PlayPageClient() {
 
               {/* 第三方应用打开按钮 - 观影室同步状态下隐藏 */}
               {videoUrl && !playSync.isInRoom && (
-                <div className='mt-3 px-2 lg:flex-shrink-0'>
+                <div
+                  className='mt-3 px-2 lg:flex-shrink-0 tm-solo-tools'
+                  data-tm-sheet={soloSheet === 'tools' ? 'open' : undefined}
+                  role={soloSheet === 'tools' ? 'dialog' : undefined}
+                  aria-label={soloSheet === 'tools' ? '工具' : undefined}
+                >
+                  <div className='tm-solo-sheet-head'>
+                    <h2>工具</h2>
+                    <button
+                      type='button'
+                      onClick={() => setSoloSheet(null)}
+                      aria-label='关闭'
+                    >
+                      <X className='h-5 w-5' />
+                    </button>
+                  </div>
                   <div className='bg-raised backdrop-blur-sm rounded-lg p-2 border border-line w-full lg:w-auto overflow-x-auto'>
                     <div className='flex gap-1.5 flex-nowrap lg:flex-wrap items-center'>
                       <div className='flex gap-1.5 flex-wrap lg:justify-end lg:flex-1'>
@@ -12652,13 +12724,31 @@ function PlayPageClient() {
 
             {/* 选集和换源 - 在移动端始终显示，在 lg 及以上可折叠 */}
             <div
-              className={`relative z-10 h-[350px] lg:h-full md:overflow-hidden transition-all duration-300 ease-in-out ${
+              className={`relative z-10 h-[350px] lg:h-full md:overflow-hidden transition-all duration-300 ease-in-out tm-solo-selector ${
                 isEpisodeSelectorCollapsed
                   ? 'lg:col-span-1 lg:hidden lg:opacity-0 lg:scale-95'
                   : 'lg:col-span-1 lg:opacity-100 lg:scale-100'
               }`}
+              data-tm-sheet={
+                soloSheet && soloSheet !== 'tools' ? 'open' : undefined
+              }
+              role={soloSheet && soloSheet !== 'tools' ? 'dialog' : undefined}
+              aria-label={
+                soloSheet && soloSheet !== 'tools'
+                  ? '选集、换源和弹幕'
+                  : undefined
+              }
             >
+              <button
+                type='button'
+                className='tm-solo-sheet-close'
+                onClick={() => setSoloSheet(null)}
+                aria-label='关闭'
+              >
+                <X className='h-5 w-5' />
+              </button>
               <EpisodeSelector
+                requestedTab={selectorRequest}
                 totalEpisodes={totalEpisodes}
                 episodes_titles={detail?.episodes_titles || []}
                 richEpisodeNames={richEpisodeNames}
@@ -12668,7 +12758,10 @@ function PlayPageClient() {
                     ? () => {
                         /* disabled */
                       }
-                    : handleEpisodeChange
+                    : (episodeNumber: number) => {
+                        handleEpisodeChange(episodeNumber);
+                        setSoloSheet(null);
+                      }
                 }
                 onSourceChange={
                   playSyncRef.current.shouldDisableControls
@@ -12704,12 +12797,123 @@ function PlayPageClient() {
               />
             </div>
           </div>
+
+          {/* 电脑：右侧图标栏，选集 / 换源 / 弹幕开合右边的面板，其余打开抽屉 */}
+          <nav className='tm-solo-rail' aria-label='播放面板'>
+            {(
+              [
+                ['episodes', '选集', ListVideo],
+                ['sources', '换源', RefreshCw],
+                ['danmaku', '弹幕', MessageSquareText],
+              ] as const
+            ).map(([panel, label, Icon]) => (
+              <button
+                key={panel}
+                type='button'
+                aria-pressed={!isEpisodeSelectorCollapsed && soloRail === panel}
+                onClick={() => selectSoloRail(panel)}
+              >
+                <Icon className='h-5 w-5' aria-hidden='true' />
+                {label}
+              </button>
+            ))}
+            <span className='tm-solo-rail-sep' aria-hidden='true' />
+            {videoUrl && !playSync.isInRoom && (
+              <button
+                type='button'
+                aria-pressed={soloSheet === 'tools'}
+                onClick={() =>
+                  setSoloSheet(soloSheet === 'tools' ? null : 'tools')
+                }
+              >
+                <Ellipsis className='h-5 w-5' aria-hidden='true' />
+                工具
+              </button>
+            )}
+            {detail && (
+              <button type='button' onClick={() => openDrawer('detail')}>
+                <FileText className='h-5 w-5' aria-hidden='true' />
+                详情
+              </button>
+            )}
+            {aiEnabled && detail && (
+              <button type='button' onClick={() => openDrawer('aiChat')}>
+                <Sparkles className='h-5 w-5' aria-hidden='true' />
+                AI 问片
+              </button>
+            )}
+            {netdiskSearchEnabled && (
+              <button type='button' onClick={() => openDrawer('pansou')}>
+                <Cloud className='h-5 w-5' aria-hidden='true' />
+                网盘
+              </button>
+            )}
+            <button
+              type='button'
+              className='tm-solo-rail-end'
+              onClick={() => setShowShortcutDialog(true)}
+            >
+              <Keyboard className='h-5 w-5' aria-hidden='true' />
+              快捷键
+            </button>
+          </nav>
         </div>
+
+        {/* 手机 / 平板：底部操作坞，点开是半屏面板，画面一直在上面 */}
+        <button
+          type='button'
+          className='tm-solo-sheet-backdrop'
+          data-open={soloSheet ? 'true' : undefined}
+          tabIndex={-1}
+          aria-hidden='true'
+          onClick={() => setSoloSheet(null)}
+        />
+        <nav className='tm-solo-dock' aria-label='播放工具'>
+          <button type='button' onClick={() => openSoloSheet('episodes')}>
+            <ListVideo className='h-5 w-5' aria-hidden='true' />
+            <span>选集</span>
+            <em>
+              {totalEpisodes > 1 ? `第 ${currentEpisodeIndex + 1} 集` : '正片'}
+            </em>
+          </button>
+          <button type='button' onClick={() => openSoloSheet('sources')}>
+            <RefreshCw className='h-5 w-5' aria-hidden='true' />
+            <span>换源</span>
+            <em>{detail?.source_name || '片源'}</em>
+          </button>
+          <button type='button' onClick={() => openSoloSheet('danmaku')}>
+            <MessageSquareText className='h-5 w-5' aria-hidden='true' />
+            <span>弹幕</span>
+            <em>
+              {danmakuCount > 0
+                ? `${danmakuCount.toLocaleString()} 条`
+                : '未加载'}
+            </em>
+          </button>
+          {videoUrl && !playSync.isInRoom && (
+            <button type='button' onClick={() => openSoloSheet('tools')}>
+              <Ellipsis className='h-5 w-5' aria-hidden='true' />
+              <span>工具</span>
+              <em>下载等</em>
+            </button>
+          )}
+          {detail && (
+            <button type='button' onClick={() => openDrawer('detail')}>
+              <FileText className='h-5 w-5' aria-hidden='true' />
+              <span>详情</span>
+              <em>
+                {doubanRating && doubanRating.value > 0
+                  ? `豆瓣 ${doubanRating.value.toFixed(1)}`
+                  : '简介'}
+              </em>
+            </button>
+          )}
+        </nav>
 
         {!isDirectPlay && (
           <>
             {/* 详情展示 */}
-            <div className='grid grid-cols-1 md:grid-cols-5 lg:grid-cols-6 gap-4'>
+            <div className='grid grid-cols-1 md:grid-cols-5 lg:grid-cols-6 gap-4 tm-solo-detail'>
               {/* 文字区 */}
               <div className='md:col-span-4 lg:col-span-5'>
                 <div className='p-6 flex flex-col min-h-0'>

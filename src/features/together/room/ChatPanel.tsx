@@ -5,7 +5,14 @@
  * 由 RoomChat 接到房间连接上（同一套界面，只有一份代码）。
  */
 
-import { Loader2, MessageSquareText, Send, Smile, Trash2 } from 'lucide-react';
+import {
+  Loader2,
+  MessageSquareOff,
+  MessageSquareText,
+  Send,
+  Smile,
+  Trash2,
+} from 'lucide-react';
 import {
   FormEvent,
   useEffect,
@@ -196,6 +203,8 @@ export default function ChatPanel(props: ChatPanelProps) {
             <article
               key={message.id}
               className='tm-t-message'
+              // 触屏上点一下消息才露出删除按钮
+              tabIndex={mine || props.canModerate ? -1 : undefined}
               data-mine={mine ? 'true' : undefined}
               data-grouped={grouped ? 'true' : undefined}
             >
@@ -283,6 +292,21 @@ export default function ChatPanel(props: ChatPanelProps) {
           aria-label='聊天内容'
         />
         <button
+          type='button'
+          className='tm-t-compose-icon'
+          aria-pressed={props.danmaku}
+          aria-label='消息飘成弹幕'
+          title={props.danmaku ? '消息会飘成弹幕' : '消息不飘成弹幕'}
+          data-active={props.danmaku ? 'true' : undefined}
+          onClick={() => props.onDanmakuChange(!props.danmaku)}
+        >
+          {props.danmaku ? (
+            <MessageSquareText size={20} />
+          ) : (
+            <MessageSquareOff size={20} />
+          )}
+        </button>
+        <button
           type='submit'
           className='tm-t-send'
           disabled={disabled || !text.trim() || sending}
@@ -295,21 +319,27 @@ export default function ChatPanel(props: ChatPanelProps) {
           )}
         </button>
       </form>
-      <div className='tm-t-compose-foot'>
-        <label className='tm-t-switch'>
-          <input
-            type='checkbox'
-            role='switch'
-            checked={props.danmaku}
-            onChange={(event) => props.onDanmakuChange(event.target.checked)}
-          />
-          <span aria-hidden='true' />
+      {/* 电脑房间页的宽聊天栏用这一行开关（输入框里的弹幕图标藏起来），其他地方只显示报错 */}
+      <div
+        className='tm-t-compose-foot'
+        data-has-error={error ? 'true' : undefined}
+      >
+        <button
+          type='button'
+          className='tm-t-dm-row'
+          role='switch'
+          aria-checked={props.danmaku}
+          onClick={() => props.onDanmakuChange(!props.danmaku)}
+        >
+          <i className='tm-t-dm-row-switch' aria-hidden='true' />
           消息飘成弹幕
-        </label>
-        {error && (
+        </button>
+        {error ? (
           <span className='tm-t-compose-error' role='alert'>
             {error}
           </span>
+        ) : (
+          <span className='tm-t-dm-row-hint'>全屏时在控制条里也能发</span>
         )}
       </div>
     </div>

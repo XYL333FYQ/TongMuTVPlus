@@ -44,6 +44,9 @@ function shuffle<T>(items: T[]) {
 
 export default function Recommendations(props: {
   onChoose(title: string): void;
+  /** strip：手机房间页里聊天上方的一排片名；点“全部”看完整推荐 */
+  variant?: 'strip';
+  onMore?(): void;
 }) {
   const [kind, setKind] = useState<Kind>('movie');
   const [pool, setPool] = useState<Partial<Record<Kind, DoubanItem[]>>>({});
@@ -89,6 +92,43 @@ export default function Recommendations(props: {
     const start = offset % list.length;
     return [...list.slice(start), ...list.slice(0, start)].slice(0, PAGE);
   }, [list, offset]);
+
+  if (props.variant === 'strip')
+    return (
+      <nav className='tm-tc-recstrip' aria-label='今晚看什么'>
+        <span className='tm-tc-recstrip-label'>今晚看什么</span>
+        {state === 'error' ? (
+          <button
+            type='button'
+            className='tm-tc-chip'
+            onClick={() => void load(kind)}
+          >
+            读不到，点这里重试
+          </button>
+        ) : (
+          items.slice(0, 8).map((item) => (
+            <button
+              key={item.id || item.title}
+              type='button'
+              className='tm-tc-chip'
+              onClick={() => props.onChoose(item.title)}
+              title={`选这部：${item.title}`}
+            >
+              {item.title}
+            </button>
+          ))
+        )}
+        {props.onMore && (
+          <button
+            type='button'
+            className='tm-tc-chip tm-tc-chip-more'
+            onClick={props.onMore}
+          >
+            全部
+          </button>
+        )}
+      </nav>
+    );
 
   return (
     <section className='tm-t-recs' aria-labelledby='tm-t-recs-title'>

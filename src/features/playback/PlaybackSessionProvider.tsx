@@ -391,6 +391,7 @@ export default function PlaybackSessionProvider({
             >
               <button
                 className='tm-playback-title'
+                data-mini='title'
                 onClick={presentation === 'folded' ? restore : openFull}
                 title='恢复画面'
               >
@@ -415,6 +416,7 @@ export default function PlaybackSessionProvider({
                 </span>
               </button>
               <button
+                data-mini='play'
                 onClick={togglePlaying}
                 disabled={playLocked || !controller}
                 aria-label={
@@ -431,6 +433,7 @@ export default function PlaybackSessionProvider({
                 )}
               </button>
               <button
+                data-mini='mute'
                 onClick={toggleMuted}
                 aria-label={muted ? '开启本机声音' : '静音本机'}
               >
@@ -438,6 +441,7 @@ export default function PlaybackSessionProvider({
               </button>
               {/* 回到播放页：小窗和收起态都有一个明确的按钮（不只靠点标题） */}
               <button
+                data-mini='full'
                 onClick={openFull}
                 aria-label='回到播放页'
                 title='回到播放页'
@@ -446,6 +450,7 @@ export default function PlaybackSessionProvider({
               </button>
               {presentation === 'mini' && (
                 <button
+                  data-mini='fold'
                   onClick={minimize}
                   aria-label='收起画面，继续播放'
                   title='收起画面，继续播放'
@@ -454,6 +459,7 @@ export default function PlaybackSessionProvider({
                 </button>
               )}
               <button
+                data-mini='close'
                 onClick={endSession}
                 aria-label='关闭播放'
                 title='关闭播放'

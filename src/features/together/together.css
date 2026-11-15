@@ -1441,23 +1441,20 @@ html[data-tm-no-blur] .tm-t-ambient {
 }
 
 /* ================================================================ 房间小窗（离开房间页） */
+/* 只有一块画面，按钮叠在上面；尺寸、位置和自己看的小窗共用 tokens.css 里的 --tm-mini-* */
 
 .tm-t-mini {
   position: fixed;
   z-index: var(--tm-z-overlay);
-  right: 20px;
-  bottom: calc(20px + var(--tm-safe-bottom, 0px));
-  width: min(380px, calc(100vw - 32px));
+  right: var(--tm-mini-gap);
+  bottom: var(--tm-mini-bottom);
+  width: var(--tm-mini-w);
+  aspect-ratio: 16 / 9;
   overflow: hidden;
   border-radius: var(--tm-radius-lg);
-  background: var(--tm-glass-solid, var(--tm-surface));
+  background: var(--tm-video-bg);
   box-shadow: var(--tm-shadow-lg), inset 0 0 0 1px var(--tm-line);
   animation: tm-t-rise var(--tm-d-panel) var(--tm-ease-out);
-}
-.tm-t-mini-stage {
-  position: relative;
-  aspect-ratio: 16 / 9;
-  background: var(--tm-video-bg);
 }
 .tm-t-mini-slot {
   position: absolute;
@@ -1471,90 +1468,99 @@ html[data-tm-no-blur] .tm-t-ambient {
 .tm-t-mini .art-setting {
   display: none !important;
 }
-.tm-t-mini-open {
-  z-index: 30;
+.tm-t-mini-btn {
   position: absolute;
-  inset: 0;
+  z-index: 50;
   display: grid;
   place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--tm-scrim);
   color: var(--tm-on-art);
-  opacity: 0;
-  background: rgb(var(--tm-ink-rgb) / 0.35);
-  transition: opacity var(--tm-d-hover);
-}
-.tm-t-mini-stage:hover .tm-t-mini-open,
-.tm-t-mini-open:focus-visible {
-  opacity: 1;
-}
-.tm-t-mini-live {
-  z-index: 31;
-  position: absolute;
-  top: 10px;
-  left: 10px;
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 3px 9px;
-  border-radius: var(--tm-radius-full);
-  background: var(--tm-art-glass);
   box-shadow: inset 0 0 0 1px var(--tm-art-glass-line);
-  color: var(--tm-on-art);
+}
+/* 看着是 32px，点按范围撑到 44px */
+.tm-t-mini-btn::after {
+  content: '';
+  position: absolute;
+  inset: -6px;
+}
+.tm-t-mini-btn:focus-visible {
+  outline: 2px solid var(--tm-on-art);
+  outline-offset: 2px;
+}
+.tm-t-mini [data-mini='full'] {
+  top: 8px;
+  left: 8px;
+}
+.tm-t-mini [data-mini='close'] {
+  top: 8px;
+  right: 8px;
+}
+.tm-t-mini [data-mini='chat'] {
+  top: 8px;
+  right: 48px;
+}
+.tm-t-mini [data-mini='mute'] {
+  right: 8px;
+  bottom: 8px;
+}
+.tm-t-mini [data-mini='play'] {
+  top: 50%;
+  left: 50%;
+  width: 40px;
+  height: 40px;
+  transform: translate(-50%, -50%);
+}
+.tm-t-mini [data-mini='title'] {
+  bottom: 8px;
+  left: 8px;
+  width: auto;
+  max-width: calc(100% - 56px);
+  height: 28px;
+  padding: 0 10px;
+  border-radius: 14px;
+}
+.tm-t-mini [data-mini='title']::after {
+  inset: -8px -4px;
+}
+.tm-t-mini [data-mini='title'] strong {
+  overflow: hidden;
   font-size: 12px;
   font-weight: 600;
-  pointer-events: none;
-}
-.tm-t-mini-bar {
-  display: flex;
-  align-items: center;
-  gap: 2px;
-  padding: 6px 6px 6px 14px;
-}
-.tm-t-mini-text {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  min-width: 0;
-}
-.tm-t-mini-text strong,
-.tm-t-mini-text span {
-  overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.tm-t-mini-text strong {
-  font-size: 14px;
-}
-.tm-t-mini-text span {
-  color: var(--tm-muted);
-  font-size: 12px;
-}
-.tm-t-mini-btn {
-  position: relative;
-  display: grid;
-  flex-shrink: 0;
-  place-items: center;
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  color: var(--tm-text);
-  transition: background var(--tm-d-hover);
-}
-.tm-t-mini-btn:hover {
-  background: var(--tm-surface-raised);
-}
 .tm-t-mini-badge {
   position: absolute;
-  top: 4px;
-  right: 2px;
-  min-width: 18px;
-  height: 18px;
-  padding: 0 5px;
+  top: -4px;
+  right: -4px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
   border-radius: var(--tm-radius-full);
-  background: var(--tm-text);
-  color: var(--tm-accent-contrast);
-  font-size: 12px;
+  background: var(--tm-on-art);
+  color: var(--tm-on-art-ink);
+  font-size: 11px;
   font-weight: 700;
-  line-height: 18px;
+  line-height: 16px;
+}
+/* 鼠标设备：平时只看见画面，移上去才出按钮；触屏一直显示 */
+@media (hover: hover) {
+  .tm-t-mini-btn {
+    opacity: 0;
+    transition: opacity var(--tm-d-hover);
+  }
+  .tm-t-mini:is(:hover, :focus-within) .tm-t-mini-btn {
+    opacity: 1;
+  }
+}
+/* 手机竖屏的小窗很小，片名放不下 */
+@media (max-width: 767px) {
+  .tm-t-mini [data-mini='title'] {
+    display: none;
+  }
 }
 
 /* 房间胶囊（没有小窗时） */
@@ -1631,7 +1637,7 @@ html[data-tm-no-blur] .tm-t-ambient {
 }
 /* 有小窗时，聊天放在小窗左边 */
 .tm-t-mini ~ .tm-t-dock {
-  right: calc(20px + min(380px, calc(100vw - 32px)) + 12px);
+  right: calc(var(--tm-mini-gap) + var(--tm-mini-w) + 12px);
 }
 .tm-t-dock-head {
   display: flex;
@@ -1660,16 +1666,12 @@ html[data-tm-no-blur] .tm-t-ambient {
   flex: 1;
 }
 @media (max-width: 767px) {
-  .tm-t-mini,
   .tm-t-pill-dock,
   .tm-t-dock {
     right: 12px;
     bottom: calc(
       var(--tm-bottom-nav-height, 64px) + 12px + var(--tm-safe-bottom, 0px)
     );
-  }
-  .tm-t-mini {
-    width: calc(100vw - 24px);
   }
   .tm-t-dock {
     left: 12px;
@@ -2204,31 +2206,27 @@ html[data-tm-reduced-motion='true']
 }
 
 /* 自己看的小窗占着右下角时，房间入口和聊天让到它左边（手机上让到它上面） */
-html[data-tm-solo-mini] :is(.tm-t-pill-dock, .tm-t-dock) {
-  right: calc(20px + min(380px, calc(100vw - 32px)) + 12px);
+html[data-tm-solo-mini='mini'] :is(.tm-t-pill-dock, .tm-t-dock) {
+  right: calc(var(--tm-mini-gap) + var(--tm-mini-w) + 12px);
+}
+html[data-tm-solo-mini='folded'] :is(.tm-t-pill-dock, .tm-t-dock) {
+  right: calc(
+    var(--tm-mini-gap) + min(340px, 100vw - 2 * var(--tm-mini-gap)) + 12px
+  );
 }
 @media (max-width: 767px) {
   html[data-tm-solo-mini] :is(.tm-t-pill-dock, .tm-t-dock) {
     right: 12px;
   }
   html[data-tm-solo-mini='folded'] :is(.tm-t-pill-dock, .tm-t-dock) {
-    bottom: calc(
-      var(--tm-bottom-nav-height, 64px) + 84px + var(--tm-safe-bottom, 0px)
-    );
+    bottom: calc(var(--tm-mini-bottom) + 56px + 12px);
   }
   html[data-tm-solo-mini='mini'] :is(.tm-t-pill-dock, .tm-t-dock) {
-    bottom: calc(
-      var(--tm-bottom-nav-height, 64px) + 84px + (100vw - 24px) * 9 / 16 +
-        var(--tm-safe-bottom, 0px)
-    );
+    bottom: calc(var(--tm-mini-bottom) + var(--tm-mini-h) + 12px);
   }
 }
 
-/* 小窗只要画面：弹幕输入条等挂在播放器外面的东西不显示，也不许溢出到下面的按钮行 */
-.tm-t-mini-stage {
-  overflow: hidden;
-  border-radius: var(--tm-radius-lg) var(--tm-radius-lg) 0 0;
-}
+/* 小窗里不放弹幕输入条等挂在播放器外面的东西 */
 .tm-t-mini .artplayer-plugin-danmuku {
   display: none !important;
 }
@@ -2476,5 +2474,850 @@ html[data-tm-solo-mini] :is(.tm-t-pill-dock, .tm-t-dock) {
   }
   .tm-t-lobby-actions > .tm-t-btn-primary {
     width: 100%;
+  }
+}
+
+/* ================================================================ 聊天弹幕 */
+/* 弹幕层和控制条里的“弹”开关、发弹幕输入框都挂在播放器节点里，全屏下也看得见 */
+.tm-t-dm {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  overflow: hidden;
+  pointer-events: none;
+}
+.tm-t-dm-item {
+  position: absolute;
+  left: 0;
+  white-space: nowrap;
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 24px;
+  color: var(--tm-on-art);
+  text-shadow: 0 1px 3px rgb(var(--tm-ink-rgb) / 0.85),
+    0 0 8px rgb(var(--tm-ink-rgb) / 0.5);
+  will-change: transform;
+}
+/* 房间弹幕：描边胶囊 + 名字，和弹幕库里的白字分开 */
+.tm-t-dm-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 10px 0 3px;
+  border-radius: 14px;
+  box-shadow: inset 0 0 0 1.5px rgb(var(--tm-on-art-rgb) / 0.8);
+  background: rgb(var(--tm-ink-rgb) / 0.28);
+  text-shadow: 0 1px 2px rgb(var(--tm-ink-rgb) / 0.8);
+}
+.tm-t-dm-who {
+  padding: 0 7px;
+  border-radius: 10px;
+  background: var(--tm-on-art);
+  color: var(--tm-on-art-ink);
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 18px;
+  text-shadow: none;
+}
+.tm-t-dm-item[data-self='true'] {
+  box-shadow: inset 0 0 0 2px var(--tm-on-art);
+  background: var(--tm-art-glass);
+}
+.tm-t-dm-ctl {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+}
+.tm-t-dm-switch {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  color: var(--tm-on-art);
+  cursor: pointer;
+}
+.tm-t-dm-off {
+  display: none;
+}
+.tm-t-dm-switch[data-on='false'] .tm-t-dm-off {
+  display: block;
+}
+.tm-t-dm-switch[data-on='false'] .tm-t-dm-dots {
+  display: none;
+}
+.tm-t-dm-send {
+  min-height: 28px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 14px;
+  background: var(--tm-art-glass);
+  box-shadow: inset 0 0 0 1px var(--tm-art-glass-line);
+  color: var(--tm-on-art);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+.tm-t-dm-switch:focus-visible,
+.tm-t-dm-send:focus-visible,
+.tm-t-dm-input:focus-visible {
+  outline: 2px solid var(--tm-on-art);
+  outline-offset: 2px;
+}
+.tm-t-dm-input {
+  width: 200px;
+  min-height: 28px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 14px;
+  background: var(--tm-art-glass);
+  box-shadow: inset 0 0 0 1px var(--tm-art-glass-line);
+  color: var(--tm-on-art);
+  font: inherit;
+  font-size: 13px;
+}
+.tm-t-dm-input::placeholder {
+  color: var(--tm-on-art-muted);
+}
+.tm-t-dm-send:disabled,
+.tm-t-dm-input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+/* 输入框和发送按钮只在全屏出现（不全屏时下面就是聊天栏）；开关一直在 */
+.tm-t-dm-input,
+.tm-t-dm-send {
+  display: none;
+}
+[data-tm-dm-full] .tm-t-dm-input,
+[data-tm-dm-full] .tm-t-dm-send {
+  display: block;
+}
+@media (max-width: 767px) {
+  .tm-t-dm-item {
+    font-size: 15px;
+    line-height: 20px;
+  }
+  [data-tm-dm-full] .tm-t-dm-input {
+    width: 38vw;
+  }
+}
+.tm-t-mini .tm-t-dm,
+.tm-t-mini .tm-t-dm-ctl {
+  display: none !important;
+}
+
+/* ================================================================ 房间页（直播式） */
+/* 电脑：左边画面和放映信息，右边一整列聊天；1200 以下竖排，聊天占满画面下方 */
+.tm-tc {
+  gap: 16px;
+}
+.tm-tc-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  gap: 24px;
+  align-items: start;
+}
+.tm-tc-main {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+/* 粘在它一开始的位置（顶栏 + 房间栏下面），一进来就看得到输入框，往下滚也不动 */
+.tm-tc-chat {
+  position: sticky;
+  top: calc(var(--tm-header-height) + 92px);
+  display: flex;
+  flex-direction: column;
+  height: calc(100dvh - var(--tm-header-height) - 108px);
+  min-height: 420px;
+  overflow: hidden;
+  border-radius: var(--tm-radius-lg);
+  background: var(--tm-glass-solid, var(--tm-surface));
+  box-shadow: inset 0 0 0 1px var(--tm-line), var(--tm-shadow-sm);
+}
+.tm-tc-chat > .tm-t-chat {
+  flex: 1;
+  min-height: 0;
+}
+.tm-tc-chat-head {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--tm-line);
+}
+.tm-tc-chat-head h2 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+}
+.tm-tc-now .tm-t-now-actions {
+  gap: 2px;
+}
+.tm-tc-count {
+  position: relative;
+}
+.tm-tc-num {
+  position: absolute;
+  top: 2px;
+  right: 0;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: var(--tm-radius-full);
+  background: var(--tm-surface-raised);
+  box-shadow: inset 0 0 0 1px var(--tm-line);
+  color: var(--tm-text);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 16px;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+.tm-tc-num[data-alert] {
+  background: var(--tm-text);
+  box-shadow: none;
+  color: var(--tm-accent-contrast);
+}
+
+/* 今晚看什么：一排片名 */
+.tm-tc-recstrip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  overscroll-behavior-x: contain;
+}
+.tm-tc-recstrip::-webkit-scrollbar {
+  display: none;
+}
+.tm-tc-recstrip-label {
+  flex: none;
+  color: var(--tm-muted);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+.tm-tc-chip {
+  position: relative;
+  flex: none;
+  height: 34px;
+  padding: 0 12px;
+  border-radius: var(--tm-radius-full);
+  background: var(--tm-surface);
+  box-shadow: inset 0 0 0 1px var(--tm-line);
+  color: var(--tm-text);
+  font-size: 13px;
+  white-space: nowrap;
+  transition: background var(--tm-d-hover);
+}
+/* 看着 34px，点按范围撑到 44px */
+.tm-tc-chip::after {
+  content: '';
+  position: absolute;
+  inset: -5px 0;
+}
+.tm-tc-chip:hover {
+  background: var(--tm-surface-raised);
+}
+.tm-tc-chip-more {
+  background: none;
+  color: var(--tm-muted);
+}
+:is(.tm-tc-chip, .tm-tc-menu button):focus-visible {
+  outline: 2px solid var(--tm-text);
+  outline-offset: 2px;
+}
+
+/* 面板（片单、成员、活动、推荐、更多） */
+.tm-tc-panel {
+  min-height: 0;
+}
+.tm-tc-pad {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 4px 20px 20px;
+}
+.tm-tc-pad .tm-t-recs {
+  margin-top: 0;
+}
+.tm-tc-pad .tm-t-recs-row {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.tm-tc-menu {
+  display: flex;
+  flex-direction: column;
+  padding: 4px 8px 16px;
+}
+.tm-tc-menu button {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 52px;
+  padding: 0 12px;
+  border-radius: var(--tm-radius-md);
+  color: var(--tm-text);
+  font-size: 15px;
+  text-align: left;
+}
+.tm-tc-menu button:hover {
+  background: var(--tm-surface-raised);
+}
+.tm-tc-menu button[data-danger] {
+  color: var(--tm-danger);
+}
+.tm-t-dialog-backdrop[data-sheet] {
+  padding: 0;
+}
+@media (min-width: 768px) {
+  .tm-t-dialog-backdrop[data-sheet] {
+    place-items: stretch end;
+  }
+  .tm-t-dialog[data-sheet] {
+    width: min(420px, 100%);
+    max-height: none;
+    border-width: 0 0 0 1px;
+    border-radius: 0;
+    animation: tm-tc-from-right var(--tm-d-panel) var(--tm-ease-out);
+  }
+}
+@media (max-width: 767px) {
+  .tm-t-dialog-backdrop[data-sheet] {
+    align-items: end;
+  }
+  .tm-t-dialog[data-sheet] {
+    width: 100%;
+    max-height: 82dvh;
+    border-radius: var(--tm-radius-lg) var(--tm-radius-lg) 0 0;
+    padding-bottom: var(--tm-safe-bottom, 0px);
+  }
+}
+@keyframes tm-tc-from-right {
+  from {
+    opacity: 0;
+    transform: translateX(24px);
+  }
+}
+html[data-tm-reduced-motion='true'] .tm-t-dialog[data-sheet] {
+  animation: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .tm-t-dialog[data-sheet] {
+    animation: none;
+  }
+}
+
+/* 1200 以下：一屏装下，画面在上，聊天占满剩下的高度 */
+@media (max-width: 1199px) {
+  body:has(.tm-tc) .tm-main {
+    min-height: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+  }
+  .tm-tc {
+    gap: 0;
+    height: calc(100dvh - var(--tm-header-height));
+    max-width: none;
+    padding: 0;
+    overflow: hidden;
+  }
+  .tm-tc-head {
+    flex: none;
+    flex-wrap: nowrap;
+    gap: 4px;
+    min-height: 56px;
+    padding: 4px 8px 4px 12px;
+  }
+  .tm-tc-head .tm-t-head-back {
+    margin-left: -4px;
+  }
+  .tm-tc-head .tm-t-head-actions {
+    width: auto;
+    gap: 0;
+  }
+  .tm-tc-head .tm-t-head-actions .tm-t-faces {
+    display: flex;
+    margin-right: 0;
+    padding: 0 4px 0 12px;
+  }
+  .tm-tc-head .tm-t-face {
+    width: 28px;
+    height: 28px;
+    font-size: 12px;
+  }
+  .tm-tc-body {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0;
+    min-width: 0;
+    min-height: 0;
+  }
+  .tm-tc-main,
+  .tm-tc-chat {
+    min-width: 0;
+  }
+  .tm-tc-main {
+    flex: none;
+    gap: 0;
+  }
+  .tm-tc .tm-t-stage {
+    position: relative;
+    top: auto;
+    margin: 0;
+    border-radius: 0;
+  }
+  .tm-tc-now {
+    flex-wrap: nowrap;
+    gap: 10px;
+    padding: 10px 8px 10px 12px;
+  }
+  .tm-tc-now .tm-t-now-poster {
+    width: 32px;
+    height: 46px;
+  }
+  .tm-tc-now h2 {
+    font-size: 15px;
+  }
+  .tm-tc-now .tm-t-now-label {
+    font-size: 11px;
+  }
+  .tm-tc-now .tm-t-now-meta {
+    font-size: 12px;
+  }
+  .tm-tc-now .tm-t-now-actions {
+    width: auto;
+  }
+  .tm-tc-now .tm-t-now-actions .tm-t-btn-primary {
+    flex: none;
+    padding: 0 12px;
+  }
+  /* 换集在“片单”面板里 */
+  .tm-tc-strip {
+    display: none;
+  }
+  .tm-tc-recstrip {
+    padding: 0 12px 10px;
+  }
+  .tm-tc-main > .tm-t-error {
+    margin: 0 12px 10px;
+  }
+  .tm-tc-chat {
+    position: static;
+    flex: 1;
+    height: auto;
+    min-height: 0;
+    border-top: 1px solid var(--tm-line);
+    border-radius: 0;
+    background: none;
+    box-shadow: none;
+  }
+  .tm-tc-chat-head {
+    display: none;
+  }
+}
+/* 手机：房间页自己占满整屏，不要站点顶栏和底栏 */
+@media (max-width: 767px) {
+  html body:has(.tm-tc) .tm-mobile-header-v2,
+  html body:has(.tm-tc) .tm-mobile-nav {
+    display: none;
+  }
+  .tm-tc {
+    height: 100dvh;
+    padding: var(--tm-safe-top, 0px) 0 0;
+  }
+  .tm-tc .tm-t-compose {
+    margin-bottom: var(--tm-safe-bottom, 0px);
+  }
+}
+
+/* 房间弹幕面板 */
+.tm-tc-dm {
+  display: flex;
+  flex-direction: column;
+}
+.tm-tc-dm-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 20px 18px;
+}
+.tm-tc-dm-section + .tm-tc-dm-section {
+  padding-top: 16px;
+  border-top: 1px solid var(--tm-line);
+}
+.tm-tc-dm-section h3 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+}
+.tm-tc-dm-section .tm-t-hint {
+  margin: 0;
+}
+.tm-tc-dm-current {
+  margin: 0;
+  color: var(--tm-muted);
+  font-size: 13px;
+}
+.tm-tc-dm-search {
+  height: min(420px, 50dvh);
+  margin-top: 8px;
+}
+
+/* ---------- 和原型对齐（2026-11-15） */
+/* 电脑：画面下面一排带字的按钮，正在放映是一张卡 */
+.tm-tc-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.tm-tc-tools .tm-t-launchers {
+  display: contents;
+}
+.tm-tc-tools .tm-t-pill {
+  background: none;
+  box-shadow: inset 0 0 0 1px var(--tm-line-strong);
+  font-size: 13px;
+  font-weight: 600;
+}
+.tm-tc-tools .tm-t-pill:hover {
+  background: var(--tm-surface-raised);
+}
+.tm-tc-tools .tm-tc-num {
+  top: -6px;
+  right: -6px;
+}
+.tm-tc-ep {
+  display: none;
+}
+@media (min-width: 1200px) {
+  .tm-tc .tm-tc-now {
+    padding: 14px 16px;
+    border-radius: var(--tm-radius-lg);
+    background: var(--tm-surface);
+    box-shadow: inset 0 0 0 1px var(--tm-line);
+  }
+}
+/* 聊天输入：表情、输入框、弹幕、发送各自分开，输入框是一条圆角条 */
+.tm-tc .tm-t-compose {
+  gap: 6px;
+  margin: 0;
+  padding: 8px 10px;
+  border-top: 1px solid var(--tm-line);
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+}
+.tm-tc .tm-t-compose:focus-within {
+  box-shadow: none;
+}
+.tm-tc .tm-t-compose input {
+  height: 42px;
+  padding: 0 16px;
+  border-radius: var(--tm-radius-full);
+  background: var(--tm-surface-raised);
+}
+.tm-tc .tm-t-compose input:focus {
+  box-shadow: inset 0 0 0 1px var(--tm-line-strong);
+}
+.tm-tc .tm-t-compose-icon[data-active] {
+  background: var(--tm-surface-raised);
+}
+.tm-tc .tm-t-send {
+  width: 42px;
+  height: 42px;
+  background: var(--tm-text);
+  color: var(--tm-accent-contrast);
+}
+.tm-tc .tm-t-send:disabled {
+  opacity: 0.45;
+}
+@media (max-width: 1199px) {
+  .tm-tc-ep {
+    display: inline;
+  }
+  .tm-tc-now .tm-t-now-meta {
+    display: none;
+  }
+  .tm-tc-head .tm-t-head-meta .tm-t-chip-button {
+    display: inline-flex;
+  }
+}
+/* 面板里的集数：实心小块，和原型一致 */
+.tm-tc-panel .tm-t-ep:not([aria-current='true']) {
+  background: var(--tm-surface-raised);
+  box-shadow: none;
+}
+
+/* ---------- 收紧尺寸（2026-11-15 第二轮）：按原型的比例，去掉臃肿感 */
+.tm-t-message:focus {
+  outline: none;
+}
+@media (hover: none) {
+  .tm-tc .tm-t-message-delete {
+    opacity: 0;
+    pointer-events: none;
+  }
+  .tm-tc .tm-t-message:focus-within .tm-t-message-delete {
+    opacity: 1;
+    pointer-events: auto;
+  }
+}
+@media (max-width: 1199px) {
+  .tm-tc-head {
+    min-height: 52px;
+    padding: 2px 4px 2px 6px;
+  }
+  .tm-tc-head .tm-t-head-title h1 {
+    font-size: 16px;
+    line-height: 1.3;
+  }
+  .tm-tc-head .tm-t-head-meta {
+    gap: 2px 10px;
+    margin-top: 0;
+  }
+  .tm-tc-head .tm-t-head-meta .tm-t-chip {
+    min-height: 18px;
+    font-size: 12px;
+  }
+  .tm-tc-head .tm-t-icon {
+    width: 40px;
+    height: 40px;
+  }
+  .tm-tc-head .tm-t-head-actions .tm-t-faces {
+    min-height: 40px;
+    padding: 0 2px 0 10px;
+  }
+  .tm-tc-head .tm-t-face {
+    width: 26px;
+    height: 26px;
+    margin-left: -7px;
+    border-width: 1.5px;
+    font-size: 11px;
+  }
+  .tm-tc-now {
+    gap: 10px;
+    padding: 8px 6px 8px 12px;
+  }
+  .tm-tc-now .tm-t-now-poster {
+    width: 30px;
+    height: 42px;
+    border-radius: 6px;
+  }
+  .tm-tc-now .tm-t-now-text {
+    gap: 1px;
+  }
+  .tm-tc-now h2 {
+    font-size: 14px;
+  }
+  .tm-tc-now .tm-t-now-actions .tm-t-icon {
+    width: 40px;
+    height: 40px;
+  }
+  .tm-tc-now .tm-t-now-actions .tm-t-btn-primary {
+    gap: 4px;
+    min-height: 34px;
+    height: 34px;
+    padding: 0 12px;
+    font-size: 13px;
+  }
+  .tm-tc-now .tm-t-now-actions .tm-t-btn-primary svg {
+    width: 15px;
+    height: 15px;
+  }
+  .tm-tc-recstrip {
+    gap: 6px;
+    padding: 0 12px 8px;
+  }
+  .tm-tc-chip {
+    height: 30px;
+    padding: 0 11px;
+    font-size: 13px;
+  }
+  .tm-tc-chip::after {
+    inset: -7px 0;
+  }
+  .tm-tc .tm-t-messages {
+    padding: 8px 12px;
+  }
+  .tm-tc .tm-t-message .tm-t-avatar {
+    width: 22px;
+    height: 22px;
+    font-size: 11px;
+  }
+  .tm-tc .tm-t-bubble p {
+    padding: 7px 11px;
+  }
+  .tm-tc .tm-t-compose {
+    gap: 4px;
+    padding: 6px 8px;
+  }
+  .tm-tc .tm-t-compose input {
+    height: 40px;
+  }
+  .tm-tc .tm-t-send {
+    width: 40px;
+    height: 40px;
+  }
+}
+@media (min-width: 1200px) {
+  .tm-tc-head {
+    min-height: 56px;
+  }
+  .tm-tc-head .tm-t-head-title h1 {
+    font-size: 22px;
+  }
+  .tm-tc .tm-tc-now {
+    gap: 12px;
+    padding: 10px 14px;
+  }
+  .tm-tc .tm-tc-now .tm-t-now-poster {
+    width: 40px;
+    height: 58px;
+  }
+  .tm-tc .tm-tc-now h2 {
+    font-size: 16px;
+  }
+  .tm-tc .tm-tc-now .tm-t-btn-primary {
+    height: 36px;
+    min-height: 36px;
+    padding: 0 14px;
+    font-size: 13px;
+  }
+  .tm-tc-tools .tm-t-pill {
+    min-height: 34px;
+    padding: 0 12px;
+  }
+  .tm-tc-strip .tm-t-ep {
+    min-width: 46px;
+    height: 38px;
+    font-size: 13px;
+  }
+  .tm-tc .tm-t-recs-row {
+    gap: 12px;
+  }
+  .tm-tc .tm-t-section-head h2 {
+    font-size: 18px;
+  }
+}
+
+/* ---------- 第三轮（2026-11-15）：和原型逐项对齐 */
+/* 聊天底部“消息飘成弹幕”开关行：只在电脑房间页的宽聊天栏出现 */
+.tm-t-compose-foot {
+  display: none;
+}
+.tm-t-compose-foot[data-has-error] {
+  display: flex;
+}
+.tm-t-compose-foot[data-has-error] .tm-t-dm-row {
+  display: none;
+}
+.tm-t-dm-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 32px;
+  color: var(--tm-muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+.tm-t-dm-row:focus-visible {
+  outline: 2px solid var(--tm-text);
+  outline-offset: 2px;
+  border-radius: var(--tm-radius-sm);
+}
+.tm-t-dm-row-switch {
+  position: relative;
+  width: 30px;
+  height: 18px;
+  flex: none;
+  border-radius: var(--tm-radius-full);
+  background: var(--tm-line-strong);
+  transition: background var(--tm-d-hover);
+}
+.tm-t-dm-row-switch::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--tm-bg);
+  transition: transform var(--tm-d-hover) var(--tm-ease-out);
+}
+.tm-t-dm-row[aria-checked='true'] .tm-t-dm-row-switch {
+  background: var(--tm-text);
+}
+.tm-t-dm-row[aria-checked='true'] .tm-t-dm-row-switch::after {
+  transform: translateX(12px);
+}
+.tm-t-dm-row-hint {
+  color: var(--tm-muted);
+  opacity: 0.8;
+  font-size: 12px;
+}
+@media (min-width: 1200px) {
+  .tm-tc-chat .tm-t-compose-foot {
+    display: flex;
+    min-height: 0;
+    padding: 0 14px 10px;
+  }
+  .tm-tc-chat .tm-t-compose-icon[aria-pressed] {
+    display: none;
+  }
+}
+
+/* 电脑：正在放映和选集合成一张卡；手机平板上这层不占位 */
+.tm-tc-nowcard {
+  display: contents;
+}
+@media (min-width: 1200px) {
+  .tm-tc-nowcard {
+    display: block;
+    overflow: hidden;
+    border-radius: var(--tm-radius-lg);
+    background: var(--tm-surface);
+    box-shadow: inset 0 0 0 1px var(--tm-line);
+  }
+  .tm-tc-nowcard .tm-tc-now {
+    border-radius: 0;
+    background: none;
+    box-shadow: none;
+  }
+  .tm-tc-nowcard .tm-tc-strip {
+    padding: 0 14px 12px;
+  }
+  /* 房间号、密码房做成描边小标签 */
+  .tm-tc-head .tm-t-head-meta .tm-t-chip:not(:first-child) {
+    min-height: 22px;
+    margin-left: 0;
+    padding: 0 8px;
+    border-radius: var(--tm-radius-full);
+    box-shadow: inset 0 0 0 1px var(--tm-line-strong);
+    font-size: 12px;
+  }
+}
+/* 聊天栏粘在原位：滚到底时网格下面不能再留空，否则聊天栏会被顶到站点顶栏下面 */
+@media (min-width: 1200px) {
+  body:has(.tm-tc) .tm-main {
+    padding-bottom: 0;
+  }
+  .tm-t-room.tm-tc {
+    padding-bottom: 0;
+  }
+  .tm-tc-body {
+    padding-bottom: 16px;
   }
 }

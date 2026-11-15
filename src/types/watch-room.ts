@@ -480,6 +480,7 @@ export type RoomPermission =
   | 'addMedia'
   | 'managePlaylist'
   | 'chat'
+  | 'voice'
   | 'manageMembers'
   | 'editRoom';
 export type RoomRole = 'owner' | 'admin' | 'member' | 'none';

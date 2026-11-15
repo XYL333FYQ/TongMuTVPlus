@@ -11,6 +11,15 @@ function errorResult(error) {
 }
 
 class RoomSocketServer {
+  requireVoice(identity, session) {
+    this.service.requirePermission(
+      identity,
+      this.service.getRoom(session.roomId),
+      'voice',
+      '房主还没给你开语音发言'
+    );
+  }
+
   constructor(io, service, authenticator) {
     this.io = io;
     this.service = service;
@@ -250,6 +259,9 @@ class RoomSocketServer {
           if (!this.service.sameRoom(socket.id, data.targetUserId))
             fail('FORBIDDEN', '只能连接同房间成员', 403);
           const session = this.service.requireSession(socket.id);
+          // 发起语音连接（带自己的麦克风）需要“语音发言”权限，应答和 ICE 不需要
+          if (prefix === 'voice' && kind === 'offer')
+            this.requireVoice(identity, session);
           if (prefix === 'screen') {
             const state = this.service.getRoom(session.roomId).currentState;
             const sharer =
@@ -276,6 +288,7 @@ class RoomSocketServer {
         });
     action('voice:audio-chunk', (data) => {
       const session = this.service.requireSession(socket.id);
+      this.requireVoice(identity, session);
       this.service.limit(`${socket.id}:audio`, 60, 1000);
       if (
         !Array.isArray(data.audioData) ||
