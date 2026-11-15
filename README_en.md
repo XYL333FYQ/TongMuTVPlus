@@ -48,18 +48,20 @@ Prefer an app over a browser? Grab an installer from **[Releases · client downl
 
 ### Core (tested end to end)
 
-| Feature          | Details                                                                                                          |
-| ---------------- | ---------------------------------------------------------------------------------------------------------------- |
-| Library          | Aggregates owner-configured sources: search, details, episodes, Douban charts and recommendations                |
-| Playback         | HLS / MP4, danmaku, watch history, "Continue watching" on the home page                                          |
-| Site-wide player | Playback survives page navigation; shrink to a draggable mini player that snaps to corners, or collapse it       |
-| Watch rooms      | Public / private rooms, room passwords, invite links; shared playlist; real-time play, pause and seek sync; chat |
-| Host handover    | 30-second reconnect grace for the host, then handover to a pre-authorized member; "watch alone" mode             |
-| Persistent rooms | Auto-pause and sleep when empty; archived after 30 idle days (owner can disable)                                 |
-| Direct links     | Add `.mp4` / `.m3u8` URLs straight into a room                                                                   |
-| Accounts         | Invite-code registration, QR login for TV, OIDC single sign-on; owner / admin / member roles                     |
-| Admin panel      | Sources, users, site settings, announcements, online backup and restore                                          |
-| UI               | Dark / light / system theme, mobile portrait layout, reduced-motion support                                      |
+| Feature          | Details                                                                                                         |
+| ---------------- | --------------------------------------------------------------------------------------------------------------- |
+| Library          | Aggregates owner-configured sources: search, details, episodes, Douban charts and recommendations               |
+| Playback         | HLS / MP4, danmaku, watch history, "Continue watching" on the home page                                         |
+| Site-wide player | Playback survives page navigation; shrink to a draggable mini player that snaps to corners, or collapse it      |
+| Watch rooms      | Public / private rooms, room passwords, invite links; shared playlist; play, pause, seek and episode sync; chat |
+| Room layout      | Live-stream style: player, now playing, episodes and picks, chat always visible; fits one phone screen          |
+| Room permissions | Per-account permissions: playback, change media, add / manage playlist, chat, voice                             |
+| Room danmaku     | Chat can fly across the video with names, toggled separately from danmaku sources                               |
+| Persistent rooms | Auto-pause and sleep when empty; archived after 30 idle days (owner can disable)                                |
+| Direct links     | Add `.mp4` / `.m3u8` URLs straight into a room                                                                  |
+| Accounts         | Invite-code registration, QR login for TV, OIDC single sign-on; owner / admin / member roles                    |
+| Admin panel      | Sources, users, site settings, announcements, online backup and restore                                         |
+| UI               | Dark / light / system theme, mobile portrait layout, reduced-motion support                                     |
 
 ### Extras (inherited from upstream; usable but not individually audited)
 
