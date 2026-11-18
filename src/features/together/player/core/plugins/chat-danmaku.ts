@@ -179,6 +179,14 @@ export class ChatDanmaku {
     toggle.addEventListener('click', () =>
       this.options.onToggle(!this.options.enabled)
     );
+    // 控制条上只留一个“弹”开关（弹幕库插件的那个），房间聊天弹幕跟着它开关；
+    // 两种弹幕分开开关在房间的“弹幕”面板里（2026-11-18 设计稿）。
+    // 上面这个房间弹幕按钮因此不在控制条里显示（together.css）
+    const follow = (on: boolean) => () => {
+      if (this.options.enabled !== on) this.options.onToggle(on);
+    };
+    art.on('artplayerPluginDanmuku:show', follow(true));
+    art.on('artplayerPluginDanmuku:hide', follow(false));
     box.addEventListener('submit', (event) => {
       event.preventDefault();
       const text = input.value.trim();

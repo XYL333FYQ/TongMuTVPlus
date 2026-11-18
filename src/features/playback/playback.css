@@ -8,11 +8,9 @@
       var(--tm-room-tools-gap)
   );
 }
-@media (max-width: 767px) {
-  :root {
-    --tm-room-tools-bottom: calc(96px + var(--tm-safe-bottom));
-    --tm-room-tools-right: 16px;
-  }
+:root:where(:is([data-tm-device='phone'], [data-tm-device='phone-landscape'])) {
+  --tm-room-tools-bottom: calc(96px + var(--tm-safe-bottom));
+  --tm-room-tools-right: 16px;
 }
 .tm-playback-slot {
   position: relative;
@@ -27,23 +25,24 @@
     aspect-ratio: var(--tm-video-aspect-ratio, 16 / 9);
   }
 }
-/* 手机和平板（1024 以下）：画面按影片比例铺满宽度。
-   以前 768–1023 是固定 300px 高，平板上 16:9 影片两边各留一大块黑边。
-   横屏手机 / 平板高度不够时以屏幕高度为准，画面完整显示（两侧留边） */
-@media (max-width: 1023px) {
-  .tm-playback-host[data-presentation='full'] .tm-playback-video-frame {
-    height: auto;
-    max-height: calc(
-      100dvh - var(--tm-header-height, 56px) - var(--tm-safe-top, 0px) - 16px
-    );
-    aspect-ratio: var(--tm-full-video-aspect-ratio, 16 / 9);
-  }
+/* 播放页按设备档位排（lib/device-tier.ts）：wide（平板横屏、电脑）右侧一列面板；
+   其余三档（compact = :not([data-tm-device='wide'])）画面在上、底部操作坞。
+   紧凑排版里画面按影片比例铺满宽度；手机横屏高度不够时以屏幕高度为准，画面完整显示（两侧留边） */
+:where(html:not([data-tm-device='wide']))
   .tm-playback-host[data-presentation='full']
-    .tm-playback-video-frame
-    > [data-tm-player-mount] {
-    position: absolute;
-    inset: 0;
-  }
+  .tm-playback-video-frame {
+  height: auto;
+  max-height: calc(
+    100dvh - var(--tm-header-height, 56px) - var(--tm-safe-top, 0px) - 16px
+  );
+  aspect-ratio: var(--tm-full-video-aspect-ratio, 16 / 9);
+}
+:where(html:not([data-tm-device='wide']))
+  .tm-playback-host[data-presentation='full']
+  .tm-playback-video-frame
+  > [data-tm-player-mount] {
+  position: absolute;
+  inset: 0;
 }
 .tm-audio-focus-notice {
   position: fixed;
@@ -62,9 +61,12 @@
 .tm-playback-host:not([data-presentation='full']) {
   position: fixed;
   inset: 0;
-  z-index: 85;
   visibility: hidden;
   pointer-events: none;
+}
+/* 每种形态的层级各写一处：嵌入（docked）在这里，小窗 / 收起在 mini-player.css */
+.tm-playback-host[data-presentation='docked'] {
+  z-index: 85;
 }
 /* 不在播放页时画面节点脱离页面固定定位；小窗 / 收起的位置和尺寸见 components/mini-player/mini-player.css */
 .tm-playback-host:not([data-presentation='full']) [data-tm-player-mount] {
@@ -86,115 +88,15 @@
 .tm-playback-host:not([data-presentation='full']) [data-tm-player-mount] > div {
   border-radius: inherit;
 }
-.tm-playback-choice-backdrop {
-  position: fixed;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  z-index: 12000;
-  background: var(--tm-room-scrim);
-  padding: 20px;
-}
-.tm-playback-choice {
-  width: min(440px, 100%);
-  padding: 30px;
-  border-radius: var(--tm-radius-md);
-  background: var(--tm-surface);
-  color: var(--tm-text);
-  border: 0;
-  box-shadow: 0 30px 100px var(--tm-room-shadow);
-}
-.tm-playback-choice h2 {
-  font-size: 23px;
-  font-weight: 500;
-  margin: 18px 0 10px;
-}
-.tm-playback-choice p {
-  color: var(--tm-muted);
-  font-size: 13px;
-  line-height: 1.8;
-}
-.tm-playback-choice > button {
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  text-align: left;
-  padding: 15px 17px;
-  border-radius: var(--tm-radius-md);
-  margin-top: 12px;
-  background: var(--tm-surface);
-  border: 0;
-  font-size: 14px;
-}
-.tm-playback-choice > button span {
-  font-size: 13px;
-  color: var(--tm-muted);
-}
-.tm-playback-choice > button:hover {
-  background: var(--tm-line);
-}
-.tm-playback-choice > button:disabled {
-  opacity: 0.45;
-  cursor: wait;
-}
-.tm-playback-choice > .tm-choice-cancel {
-  text-align: center;
-  align-items: center;
-  background: none;
-  border: none;
-  color: var(--tm-muted);
-}
 @media (prefers-reduced-motion: reduce) {
-  .tm-playback-host *,
-  .tm-playback-choice * {
+  .tm-playback-host * {
     animation: none !important;
     transition: none !important;
   }
 }
-html[data-tm-reduced-motion='true'] .tm-playback-host *,
-html[data-tm-reduced-motion='true'] .tm-playback-choice *,
-html[data-tm-reduced-motion='true'] .tm-chat-layer * {
+html[data-tm-reduced-motion='true'] .tm-playback-host * {
   animation: none !important;
   transition: none !important;
-}
-html[data-tm-no-blur='true'] .tm-chat-panel {
-  backdrop-filter: none;
-  background: var(--tm-glass-solid);
-}
-@media (prefers-reduced-transparency: reduce) {
-  .tm-chat-panel {
-    backdrop-filter: none;
-    background: var(--tm-glass-solid);
-  }
-}
-.tm-chat-layer {
-  position: fixed;
-  z-index: 95;
-  right: 24px;
-  bottom: 24px;
-  color: var(--tm-text);
-  pointer-events: none;
-}
-.tm-chat-layer > * {
-  pointer-events: auto;
-}
-.tm-chat-launcher,
-.tm-room-reconnect {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 13px 18px;
-  border: 0;
-  border-radius: var(--tm-radius-md);
-  background: var(--tm-glass-solid);
-  box-shadow: 0 12px 40px var(--tm-room-shadow);
-  font-size: 13px;
-}
-.tm-chat-launcher {
-  min-height: var(--tm-room-tools-height);
-  padding: 0 14px;
-  gap: 6px;
 }
 
 /* Motion belongs to the existing media mount, never to a new video instance. */
@@ -214,69 +116,20 @@ html[data-tm-no-blur='true'] .tm-chat-panel {
   color: var(--tm-text) !important;
   border-color: var(--tm-line) !important;
 }
-.tm-chat-panel header .tm-chat-copy-invite {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 0 12px;
-  border-radius: var(--tm-radius-sm);
-  font-size: 13px;
-  width: auto;
-  min-height: 44px;
-  white-space: nowrap;
-  flex-shrink: 0;
-}
 .tm-playback-host [data-tm-player-mount] {
   transition: left 400ms var(--tm-ease-in-out), top 400ms var(--tm-ease-in-out),
     width 400ms var(--tm-ease-in-out), height 400ms var(--tm-ease-in-out),
     opacity 400ms var(--tm-ease-in-out),
     border-radius 400ms var(--tm-ease-in-out);
 }
-.tm-chat-panel[hidden] {
-  display: none;
-}
-.tm-chat-panel {
-  color: var(--tm-text);
-}
-.tm-chat-panel.tm-chat-panel--inline {
-  width: 100%;
-  height: 320px;
-  margin: 0 !important;
-  border-radius: var(--tm-radius-md);
-  background: var(--tm-surface);
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
-  box-shadow: none;
-}
-.tm-chat-panel--inline header {
-  padding: 12px 16px;
-}
-.tm-chat-panel--inline header p {
-  display: none;
-}
-.tm-chat-panel :is(button, a) {
-  min-width: 44px;
-  min-height: 44px;
-}
-.tm-chat-panel :is(button, a, input):focus-visible,
-.tm-playback-choice button:focus-visible,
 .tm-playback-recovery button:focus-visible,
 .tm-audio-focus-notice:focus-visible {
   outline: 2px solid var(--tm-text);
   outline-offset: 2px;
 }
-.tm-chat-panel input {
-  min-height: 44px;
-}
-.tm-chat-panel .tm-chat-error {
-  color: var(--tm-danger);
-}
 .tm-audio-focus-notice,
 .tm-playback-recovery > button {
   min-height: 44px;
-}
-.tm-room-unread-enter {
-  animation: tm-room-unread-enter 320ms var(--tm-spring) 1;
 }
 @keyframes tm-room-unread-enter {
   from {
@@ -287,30 +140,21 @@ html[data-tm-no-blur='true'] .tm-chat-panel {
   }
 }
 @media (max-width: 767px) {
-  .tm-chat-panel.tm-chat-panel--inline {
-    width: 100%;
-    height: 360px;
-  }
   .tm-audio-focus-notice {
     top: 72px;
     right: 16px;
     max-width: calc(100vw - 32px);
   }
 }
-html[data-tm-reduced-motion='true'] .tm-playback-host [data-tm-player-mount],
-html[data-tm-reduced-motion='true'] .tm-room-unread-enter {
+html[data-tm-reduced-motion='true'] .tm-playback-host [data-tm-player-mount] {
   transition: none !important;
   animation: none !important;
 }
 @media (prefers-reduced-motion: reduce) {
-  .tm-playback-host [data-tm-player-mount],
-  .tm-room-unread-enter {
+  .tm-playback-host [data-tm-player-mount] {
     transition: none !important;
     animation: none !important;
   }
-}
-html[data-tm-no-blur='true'] .tm-chat-panel {
-  -webkit-backdrop-filter: none;
 }
 html[data-tm-no-blur='true'] .tm-playback-host * {
   backdrop-filter: none !important;
@@ -341,13 +185,6 @@ html[data-tm-no-blur='true'] .tm-playback-host * {
 }
 .tm-playback-recovery > button:hover {
   background: var(--tm-glass-solid);
-}
-.tm-chat-launcher b {
-  border-radius: var(--tm-radius-md);
-  background: var(--tm-text);
-  padding: 2px 6px;
-  color: var(--tm-accent-contrast);
-  font-size: 13px;
 }
 
 .tm-activity-actions {
@@ -526,186 +363,6 @@ html[data-tm-reduced-motion='true'] .tm-room-live-message {
     left: 12px;
   }
 }
-.tm-chat-panel {
-  width: min(380px, calc(100vw - 32px));
-  height: min(570px, calc(var(--tm-visual-height, 100dvh) - 120px));
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  background: var(--tm-glass-solid);
-  border: 0;
-  border-radius: var(--tm-radius-md);
-  box-shadow: 0 22px 90px var(--tm-room-shadow);
-  backdrop-filter: blur(24px);
-}
-.tm-chat-panel header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 18px 16px;
-  border-bottom: 1px solid var(--tm-line);
-}
-.tm-chat-panel header > div {
-  flex: 1;
-  min-width: 0;
-}
-.tm-chat-panel h2 {
-  font-size: 14px;
-  font-weight: 500;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.tm-chat-panel header p {
-  margin-top: 4px;
-  font-size: 13px;
-  color: var(--tm-muted);
-}
-.tm-chat-panel button,
-.tm-chat-panel header a {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 30px;
-  min-height: 30px;
-  border-radius: var(--tm-radius-sm);
-}
-.tm-chat-panel button:hover {
-  background: var(--tm-surface-raised);
-}
-.tm-chat-panel button:disabled {
-  opacity: 0.4;
-}
-.tm-chat-messages {
-  flex: 1;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  padding: 14px 16px;
-}
-.tm-chat-messages article {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  margin-bottom: 12px;
-}
-.tm-chat-messages article[data-grouped='true'] {
-  margin-top: -6px;
-}
-.tm-chat-messages article[data-grouped='true'] > div {
-  display: none;
-}
-.tm-chat-messages article[data-self='true'] {
-  align-items: flex-end;
-}
-.tm-chat-messages article > div {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-  margin-bottom: 4px;
-  font-size: 12px;
-}
-.tm-chat-messages strong {
-  font-weight: 500;
-  color: var(--tm-muted);
-}
-.tm-chat-messages time {
-  font-size: 12px;
-  opacity: 0.45;
-}
-.tm-chat-messages article p {
-  width: fit-content;
-  max-width: 88%;
-  padding: 8px 12px;
-  background: var(--tm-surface-raised);
-  border-radius: var(--tm-radius-sm) var(--tm-radius-md) var(--tm-radius-md)
-    var(--tm-radius-md);
-  font-size: 13px;
-  line-height: 1.55;
-  overflow-wrap: anywhere;
-  white-space: pre-wrap;
-}
-.tm-chat-messages article[data-self='true'] p {
-  background: var(--tm-text);
-  color: var(--tm-accent-contrast);
-  border-radius: var(--tm-radius-md) var(--tm-radius-sm) var(--tm-radius-md)
-    var(--tm-radius-md);
-}
-.tm-chat-messages .tm-chat-emoji-message p {
-  font-size: 27px;
-  background: none;
-  color: var(--tm-text);
-  padding: 0;
-}
-.tm-chat-empty {
-  margin-top: 35%;
-  text-align: center;
-  font-size: 13px;
-  color: var(--tm-muted);
-}
-.tm-chat-panel form {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 12px;
-  border-top: 1px solid var(--tm-line);
-}
-.tm-chat-panel input {
-  min-width: 0;
-  flex: 1;
-  background: transparent;
-  border: none;
-  color: inherit;
-  font-size: 13px;
-  outline-offset: 3px;
-}
-.tm-chat-new-messages,
-.tm-chat-reconnect {
-  margin: 4px 16px;
-  font-size: 13px;
-}
-.tm-chat-error {
-  padding: 4px 16px;
-  color: var(--tm-danger);
-  font-size: 13px;
-}
-.tm-chat-voice {
-  display: flex;
-  gap: 8px;
-  padding: 0 14px;
-  font-size: 13px;
-}
-.tm-chat-voice button {
-  gap: 6px;
-}
-.tm-chat-emojis {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 3px;
-  padding: 6px 14px;
-  font-size: 22px;
-}
-.tm-room-notice {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  max-width: 330px;
-  padding: 12px 16px;
-  margin-bottom: 10px;
-  border-radius: var(--tm-radius-md);
-  background: var(--tm-glass-solid);
-  border: 0;
-  font-size: 13px;
-}
-.tm-chat-with-mini .tm-room-notice {
-  margin-bottom: 274px;
-}
-.tm-chat-load-older {
-  display: flex;
-  width: 100%;
-  margin-bottom: 18px;
-  color: var(--tm-muted);
-  font-size: 13px;
-}
 .tm-playback-action-error {
   position: fixed;
   left: 50%;
@@ -723,69 +380,6 @@ html[data-tm-reduced-motion='true'] .tm-room-live-message {
   color: var(--tm-text);
   font-size: 13px;
 }
-.tm-room-reconnect {
-  position: fixed;
-  right: 24px;
-  bottom: 24px;
-  z-index: 95;
-}
-@media (min-width: 768px) {
-  .tm-chat-with-mini .tm-chat-panel {
-    margin-right: 390px;
-  }
-}
-@media (max-width: 767px) {
-  .tm-chat-layer,
-  .tm-room-reconnect {
-    right: 12px;
-    bottom: calc(
-      var(--tm-bottom-nav-height, 76px) + env(safe-area-inset-bottom) + 6px
-    );
-  }
-  .tm-chat-panel {
-    width: calc(100vw - 24px);
-    height: min(
-      520px,
-      calc(
-        var(--tm-visual-height, 100dvh) - var(--tm-bottom-nav-height, 76px) -
-          80px
-      )
-    );
-  }
-  .tm-chat-with-mini .tm-room-notice {
-    margin-bottom: 185px;
-  }
-}
-.tm-room-notice {
-  font-size: 13px;
-  background: var(--tm-glass-solid);
-  border-color: var(--tm-line);
-  color: var(--tm-text);
-}
-.tm-room-notice button {
-  min-width: 44px;
-  min-height: 44px;
-  border-radius: var(--tm-radius-sm);
-}
-.tm-room-notice button:focus-visible {
-  outline: 2px solid var(--tm-text);
-  outline-offset: 2px;
-}
-.tm-chat-launcher b {
-  font-size: 13px;
-  background: var(--tm-text);
-  color: var(--tm-accent-contrast);
-}
-@media (max-width: 767px) {
-  .tm-chat-layer,
-  .tm-room-reconnect {
-    right: var(--tm-room-tools-right);
-    bottom: var(--tm-room-tools-bottom);
-  }
-  .tm-chat-with-mini .tm-room-notice {
-    margin-bottom: calc(80px + (100vw - 32px) * 0.5625);
-  }
-}
 
 /* 播放器工具栏、设置面板可用 Tab 到达（art-keyboard.ts），焦点环画在视频上方，用浅色 */
 .art-video-player
@@ -793,6 +387,11 @@ html[data-tm-reduced-motion='true'] .tm-room-live-message {
   outline: 2px solid var(--tm-on-art);
   outline-offset: -2px;
   border-radius: var(--tm-radius-xs);
+}
+/* Artplayer 把播放器里所有 svg 涂满文字色（.art-video-player svg { fill }）。
+   线条图标（svg 上写了 fill="none"）被涂满后成了一坨，例如房间弹幕开关。按图标自己声明的来 */
+.art-video-player svg[fill='none'] {
+  fill: none;
 }
 /* 拖动过程中跟手，不要过渡；松手后吸附到角落才有 220ms 动画 */
 .tm-playback-host[data-dragging='true'] [data-tm-player-mount] {
@@ -802,16 +401,15 @@ html[data-tm-reduced-motion='true'] .tm-room-live-message {
 }
 
 /* 手机：跨标签页声音提示放到底栏上方，不再压住顶部的影片标题 */
-@media (max-width: 767px) {
+:where(html:is([data-tm-device='phone'], [data-tm-device='phone-landscape']))
   .tm-audio-focus-notice {
-    top: auto;
-    right: 12px;
-    bottom: calc(var(--tm-bottom-nav-height) + 24px + var(--tm-safe-bottom));
-    left: 12px;
-    z-index: var(--tm-z-nav);
-    text-align: center;
-    box-shadow: var(--tm-shadow-md);
-  }
+  top: auto;
+  right: 12px;
+  bottom: calc(var(--tm-bottom-nav-height) + 24px + var(--tm-safe-bottom));
+  left: 12px;
+  z-index: var(--tm-z-nav);
+  text-align: center;
+  box-shadow: var(--tm-shadow-md);
 }
 
 /* 播放器设置面板：矮播放器（手机竖屏约 200px）里不能比画面还高，
@@ -830,41 +428,6 @@ html[data-tm-reduced-motion='true'] .tm-room-live-message {
 .art-video-player .art-settings .art-setting-panel > * {
   flex-shrink: 0;
 }
-/* 删除自己的消息（管理员可删任何人的）：悬停或聚焦时出现，触屏上常显 */
-.tm-chat-messages article {
-  position: relative;
-}
-.tm-chat-messages .tm-chat-delete {
-  display: grid;
-  place-items: center;
-  width: 32px;
-  height: 32px;
-  margin-top: 2px;
-  border-radius: var(--tm-radius-sm);
-  color: var(--tm-muted);
-  opacity: 0;
-  transition: opacity 0.15s ease;
-}
-.tm-chat-messages article:hover .tm-chat-delete,
-.tm-chat-messages .tm-chat-delete:focus-visible {
-  opacity: 1;
-}
-.tm-chat-messages .tm-chat-delete:focus-visible {
-  outline: 2px solid var(--tm-text);
-  outline-offset: 2px;
-}
-@media (pointer: coarse) {
-  .tm-chat-messages .tm-chat-delete {
-    width: 44px;
-    height: 44px;
-    opacity: 0.7;
-  }
-}
-html[data-tm-reduced-motion] .tm-chat-messages .tm-chat-delete {
-  transition: none;
-}
-/* 鼠标设备：平时只看见画面，移上去才出按钮；触屏一直显示 */
-/* 手机竖屏的小窗很小，片名放不下，只留按钮 */
 
 /* ================================================================
  * 独立看播放页（2026-11-14 C 版）：
@@ -876,184 +439,198 @@ html[data-tm-reduced-motion] .tm-chat-messages .tm-chat-delete {
 .tm-solo-sheet-backdrop {
   display: none;
 }
-@media (max-width: 1023px) {
-  .tm-solo-rail {
-    display: none;
-  }
+:where(html:not([data-tm-device='wide'])) .tm-solo-rail {
+  display: none;
+}
+:where(html:not([data-tm-device='wide']))
   .tm-solo-selector:not([data-tm-sheet]),
-  .tm-solo-tools:not([data-tm-sheet]) {
-    display: none;
-  }
-  .tm-solo-selector[data-tm-sheet],
-  .tm-solo-tools[data-tm-sheet] {
-    position: fixed;
-    right: 0;
-    bottom: 0;
-    left: 0;
-    z-index: var(--tm-z-modal, 1000);
-    display: flex;
-    flex-direction: column;
-    /* 接在画面下方（画面宽 16:9），最少留半屏给面板 */
-    height: max(
-      45dvh,
-      calc(
-        100dvh -
-          var(
-            --tm-solo-sheet-top,
-            calc(56.25vw + var(--tm-header-height) + var(--tm-safe-top))
-          ) - 4px
-      )
-    );
-    margin: 0;
-    padding: 52px 16px calc(16px + var(--tm-safe-bottom, 0px));
-    overflow: hidden;
-    border-radius: var(--tm-radius-lg) var(--tm-radius-lg) 0 0;
-    background: var(--tm-surface);
-    box-shadow: 0 -20px 50px -20px rgb(var(--tm-ink-rgb) / 0.6),
-      inset 0 1px 0 var(--tm-line);
-    opacity: 1;
-    transform: none;
-    animation: tm-solo-sheet-in var(--tm-d-panel) var(--tm-ease-out);
-  }
-  .tm-solo-selector[data-tm-sheet] > :not(.tm-solo-sheet-close) {
-    flex: 1;
-    min-height: 0;
-  }
-  .tm-solo-sheet-close {
-    position: absolute;
-    top: 4px;
-    right: 6px;
-    width: 44px;
-    height: 44px;
-    border-radius: 50%;
-    color: var(--tm-muted);
-  }
-  [data-tm-sheet] > .tm-solo-sheet-close {
-    display: grid;
-    place-items: center;
-  }
-  .tm-solo-tools[data-tm-sheet] {
-    padding-top: 0;
-    overflow-y: auto;
-  }
-  .tm-solo-tools[data-tm-sheet] > .tm-solo-sheet-head {
-    position: sticky;
-    top: 0;
-    z-index: 1;
-    display: flex;
-    flex: none;
-    align-items: center;
-    justify-content: space-between;
-    min-height: 52px;
-    background: var(--tm-surface);
-  }
-  .tm-solo-sheet-head h2 {
-    margin: 0;
-    font-size: 17px;
-    font-weight: 700;
-  }
-  .tm-solo-sheet-head button {
-    display: grid;
-    place-items: center;
-    width: 44px;
-    height: 44px;
-    margin-right: -10px;
-    border-radius: 50%;
-    color: var(--tm-muted);
-  }
-  /* 工具面板里按钮带字、换行排，不再横向挤一条 */
-  .tm-solo-tools[data-tm-sheet] > div:not(.tm-solo-sheet-head) {
-    overflow: visible;
-    padding: 0;
-    border: 0;
-    background: none;
-  }
-  .tm-solo-tools[data-tm-sheet] .flex-nowrap {
-    flex-wrap: wrap;
-  }
-  .tm-solo-tools[data-tm-sheet] button {
-    width: auto;
-    height: 44px;
-    gap: 8px;
-    padding: 0 14px;
-  }
-  .tm-solo-tools[data-tm-sheet] button > span {
-    display: inline;
-    max-width: none;
-  }
-  .tm-solo-sheet-backdrop[data-open] {
-    position: fixed;
-    inset: 0;
-    z-index: calc(var(--tm-z-modal, 1000) - 1);
-    display: block;
-    border: 0;
-    /* 不压暗：上面的画面要照常看清楚，点空白处关面板 */
-    background: transparent;
-  }
-  .tm-solo-dock {
-    position: fixed;
-    right: 0;
-    bottom: 0;
-    left: 0;
-    z-index: 60;
-    display: flex;
-    gap: 2px;
-    padding: 4px max(4px, var(--tm-safe-left, 0px))
-      calc(4px + var(--tm-safe-bottom, 0px));
-    border-top: 1px solid var(--tm-line);
-    background: var(--tm-glass-solid, var(--tm-surface));
-    backdrop-filter: blur(18px) saturate(1.4);
-    -webkit-backdrop-filter: blur(18px) saturate(1.4);
-  }
-  html[data-tm-no-blur] .tm-solo-dock {
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
-    background: var(--tm-surface);
-  }
-  .tm-solo-dock button {
-    display: flex;
-    flex: 1;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 2px;
-    min-width: 0;
-    min-height: 56px;
-    padding: 0 2px;
-    border-radius: var(--tm-radius-md);
-    color: var(--tm-text);
-  }
-  .tm-solo-dock button:hover {
-    background: var(--tm-line);
-  }
-  .tm-solo-dock button:focus-visible {
-    outline: 2px solid var(--tm-text);
-    outline-offset: -2px;
-  }
-  .tm-solo-dock span {
-    font-size: 12px;
-    font-weight: 600;
-    line-height: 1.2;
-  }
-  .tm-solo-dock em {
-    max-width: 100%;
-    overflow: hidden;
-    color: var(--tm-muted);
-    font-size: 12px;
-    font-style: normal;
-    line-height: 1.2;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-  /* 播放页只在完整显示时：让出操作坞的位置，手机底栏不出现 */
-  body:has(.tm-playback-host[data-presentation='full'] .tm-solo-dock) .tm-main {
-    padding-bottom: calc(84px + var(--tm-safe-bottom, 0px));
-  }
-  html
-    body:has(.tm-playback-host[data-presentation='full'] .tm-solo-dock)
-    .tm-mobile-nav {
-    display: none;
-  }
+:where(html:not([data-tm-device='wide'])) .tm-solo-tools:not([data-tm-sheet]) {
+  display: none;
+}
+:where(html:not([data-tm-device='wide'])) .tm-solo-selector[data-tm-sheet],
+:where(html:not([data-tm-device='wide'])) .tm-solo-tools[data-tm-sheet] {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: var(--tm-z-modal, 1000);
+  display: flex;
+  flex-direction: column;
+  /* 接在画面下方（画面宽 16:9），最少留半屏给面板 */
+  height: max(
+    45dvh,
+    calc(
+      100dvh -
+        var(
+          --tm-solo-sheet-top,
+          calc(56.25vw + var(--tm-header-height) + var(--tm-safe-top))
+        ) - 4px
+    )
+  );
+  margin: 0;
+  padding: 52px 16px calc(16px + var(--tm-safe-bottom, 0px));
+  overflow: hidden;
+  border-radius: var(--tm-radius-lg) var(--tm-radius-lg) 0 0;
+  background: var(--tm-surface);
+  box-shadow: 0 -20px 50px -20px rgb(var(--tm-ink-rgb) / 0.6),
+    inset 0 1px 0 var(--tm-line);
+  opacity: 1;
+  transform: none;
+  animation: tm-solo-sheet-in var(--tm-d-panel) var(--tm-ease-out);
+}
+:where(html:not([data-tm-device='wide']))
+  .tm-solo-selector[data-tm-sheet]
+  > :not(.tm-solo-sheet-close) {
+  flex: 1;
+  min-height: 0;
+}
+:where(html:not([data-tm-device='wide'])) .tm-solo-sheet-close {
+  position: absolute;
+  top: 4px;
+  right: 6px;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  color: var(--tm-muted);
+}
+:where(html:not([data-tm-device='wide']))
+  [data-tm-sheet]
+  > .tm-solo-sheet-close {
+  display: grid;
+  place-items: center;
+}
+:where(html:not([data-tm-device='wide'])) .tm-solo-tools[data-tm-sheet] {
+  padding-top: 0;
+  overflow-y: auto;
+}
+:where(html:not([data-tm-device='wide']))
+  .tm-solo-tools[data-tm-sheet]
+  > .tm-solo-sheet-head {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 52px;
+  background: var(--tm-surface);
+}
+:where(html:not([data-tm-device='wide'])) .tm-solo-sheet-head h2 {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+}
+:where(html:not([data-tm-device='wide'])) .tm-solo-sheet-head button {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  margin-right: -10px;
+  border-radius: 50%;
+  color: var(--tm-muted);
+}
+/* 工具面板里按钮带字、换行排，不再横向挤一条 */
+:where(html:not([data-tm-device='wide']))
+  .tm-solo-tools[data-tm-sheet]
+  > div:not(.tm-solo-sheet-head) {
+  overflow: visible;
+  padding: 0;
+  border: 0;
+  background: none;
+}
+:where(html:not([data-tm-device='wide']))
+  .tm-solo-tools[data-tm-sheet]
+  .flex-nowrap {
+  flex-wrap: wrap;
+}
+:where(html:not([data-tm-device='wide'])) .tm-solo-tools[data-tm-sheet] button {
+  width: auto;
+  height: 44px;
+  gap: 8px;
+  padding: 0 14px;
+}
+:where(html:not([data-tm-device='wide']))
+  .tm-solo-tools[data-tm-sheet]
+  button
+  > span {
+  display: inline;
+  max-width: none;
+}
+:where(html:not([data-tm-device='wide'])) .tm-solo-sheet-backdrop[data-open] {
+  position: fixed;
+  inset: 0;
+  z-index: calc(var(--tm-z-modal, 1000) - 1);
+  display: block;
+  border: 0;
+  /* 不压暗：上面的画面要照常看清楚，点空白处关面板 */
+  background: transparent;
+}
+:where(html:not([data-tm-device='wide'])) .tm-solo-dock {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 60;
+  display: flex;
+  gap: 2px;
+  padding: 4px max(4px, var(--tm-safe-left, 0px))
+    calc(4px + var(--tm-safe-bottom, 0px));
+  border-top: 1px solid var(--tm-line);
+  background: var(--tm-glass-solid, var(--tm-surface));
+  backdrop-filter: blur(18px) saturate(1.4);
+  -webkit-backdrop-filter: blur(18px) saturate(1.4);
+}
+html:where(:not([data-tm-device='wide']))[data-tm-no-blur] .tm-solo-dock {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  background: var(--tm-surface);
+}
+:where(html:not([data-tm-device='wide'])) .tm-solo-dock button {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-width: 0;
+  min-height: 56px;
+  padding: 0 2px;
+  border-radius: var(--tm-radius-md);
+  color: var(--tm-text);
+}
+:where(html:not([data-tm-device='wide'])) .tm-solo-dock button:hover {
+  background: var(--tm-line);
+}
+:where(html:not([data-tm-device='wide'])) .tm-solo-dock button:focus-visible {
+  outline: 2px solid var(--tm-text);
+  outline-offset: -2px;
+}
+:where(html:not([data-tm-device='wide'])) .tm-solo-dock span {
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+:where(html:not([data-tm-device='wide'])) .tm-solo-dock em {
+  max-width: 100%;
+  overflow: hidden;
+  color: var(--tm-muted);
+  font-size: 12px;
+  font-style: normal;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* 播放页只在完整显示时：让出操作坞的位置，手机底栏不出现 */
+:where(html:not([data-tm-device='wide']))
+  body:has(.tm-playback-host[data-presentation='full'] .tm-solo-dock)
+  .tm-main {
+  padding-bottom: calc(84px + var(--tm-safe-bottom, 0px));
+}
+html:where(:not([data-tm-device='wide']))
+  body:has(.tm-playback-host[data-presentation='full'] .tm-solo-dock)
+  .tm-mobile-nav {
+  display: none;
 }
 @keyframes tm-solo-sheet-in {
   from {
@@ -1075,55 +652,53 @@ html[data-tm-reduced-motion]
     animation: none;
   }
 }
-@media (min-width: 1024px) {
-  .tm-solo-dock {
-    display: none;
-  }
-  .tm-solo-row {
-    display: flex;
-    gap: 12px;
-    align-items: flex-start;
-  }
-  .tm-solo-row > * {
-    margin-top: 0 !important;
-  }
-  .tm-solo-row > .grid {
-    flex: 1;
-    min-width: 0;
-  }
-  .tm-solo-rail {
-    display: flex;
-    flex: none;
-    flex-direction: column;
-    gap: 4px;
-    padding: 6px;
-    border-radius: var(--tm-radius-lg);
-    background: var(--tm-surface);
-    box-shadow: inset 0 0 0 1px var(--tm-line);
-  }
-  .tm-solo-rail button {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 4px;
-    width: 64px;
-    min-height: 60px;
-    border-radius: var(--tm-radius-md);
-    color: var(--tm-muted);
-    font-size: 12px;
-    font-weight: 600;
-    transition: background var(--tm-d-hover), color var(--tm-d-hover);
-  }
-  .tm-solo-rail button:hover,
-  .tm-solo-rail button[aria-pressed='true'] {
-    background: var(--tm-surface-raised);
-    color: var(--tm-text);
-  }
-  .tm-solo-rail button:focus-visible {
-    outline: 2px solid var(--tm-text);
-    outline-offset: 2px;
-  }
+:where(html[data-tm-device='wide']) .tm-solo-dock {
+  display: none;
+}
+:where(html[data-tm-device='wide']) .tm-solo-row {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+:where(html[data-tm-device='wide']) .tm-solo-row > * {
+  margin-top: 0 !important;
+}
+:where(html[data-tm-device='wide']) .tm-solo-row > .grid {
+  flex: 1;
+  min-width: 0;
+}
+:where(html[data-tm-device='wide']) .tm-solo-rail {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  gap: 4px;
+  padding: 6px;
+  border-radius: var(--tm-radius-lg);
+  background: var(--tm-surface);
+  box-shadow: inset 0 0 0 1px var(--tm-line);
+}
+:where(html[data-tm-device='wide']) .tm-solo-rail button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  width: 64px;
+  min-height: 60px;
+  border-radius: var(--tm-radius-md);
+  color: var(--tm-muted);
+  font-size: 12px;
+  font-weight: 600;
+  transition: background var(--tm-d-hover), color var(--tm-d-hover);
+}
+:where(html[data-tm-device='wide']) .tm-solo-rail button:hover,
+:where(html[data-tm-device='wide']) .tm-solo-rail button[aria-pressed='true'] {
+  background: var(--tm-surface-raised);
+  color: var(--tm-text);
+}
+:where(html[data-tm-device='wide']) .tm-solo-rail button:focus-visible {
+  outline: 2px solid var(--tm-text);
+  outline-offset: 2px;
 }
 /* 半屏面板打开时，房间入口胶囊和聊天先让开 */
 body:has(.tm-solo-selector[data-tm-sheet], .tm-solo-tools[data-tm-sheet])
@@ -1142,216 +717,237 @@ body:has(.tm-solo-selector[data-tm-sheet], .tm-solo-tools[data-tm-sheet])
 .tm-solo-page > .tm-solo-title {
   order: 2;
 }
-@media (max-width: 1023px) {
-  /* 详情：不再重复一个超大标题，和上面的标题同一级字号 */
-  .tm-solo-detail > div > div {
-    padding: 4px 0 0;
-  }
-  .tm-solo-detail h1 {
-    justify-content: flex-start;
-    margin-bottom: 4px;
-    font-size: 18px;
-    text-align: left;
-  }
-  .tm-solo-detail h1 svg {
-    width: 22px;
-    height: 22px;
-  }
-  /* 半屏面板里：去掉选集组件自带的卡片外框，集数是一格一格的块 */
-  .tm-solo-selector[data-tm-sheet] > :not(.tm-solo-sheet-close) {
-    margin: 0;
-    padding: 0;
-    border: 0;
-    background: none;
-    box-shadow: none;
-  }
-  .tm-solo-selector[data-tm-sheet] button.font-mono {
-    height: 44px;
-    border-color: transparent;
-    border-radius: var(--tm-radius-md);
-    font-family: inherit;
-    font-size: 15px;
-    font-weight: 600;
-  }
-  .tm-solo-selector[data-tm-sheet] button.font-mono:not([aria-current]) {
-    background: var(--tm-surface-raised);
-  }
+/* 详情：不再重复一个超大标题，和上面的标题同一级字号 */
+:where(html:not([data-tm-device='wide'])) .tm-solo-detail > div > div {
+  padding: 4px 0 0;
+}
+:where(html:not([data-tm-device='wide'])) .tm-solo-detail h1 {
+  justify-content: flex-start;
+  margin-bottom: 4px;
+  font-size: 18px;
+  text-align: left;
+}
+:where(html:not([data-tm-device='wide'])) .tm-solo-detail h1 svg {
+  width: 22px;
+  height: 22px;
+}
+/* 半屏面板里：去掉选集组件自带的卡片外框，集数是一格一格的块 */
+:where(html:not([data-tm-device='wide']))
+  .tm-solo-selector[data-tm-sheet]
+  > :not(.tm-solo-sheet-close) {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  box-shadow: none;
+}
+:where(html:not([data-tm-device='wide']))
+  .tm-solo-selector[data-tm-sheet]
+  button.font-mono {
+  height: 44px;
+  border-color: transparent;
+  border-radius: var(--tm-radius-md);
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 600;
+}
+:where(html:not([data-tm-device='wide']))
+  .tm-solo-selector[data-tm-sheet]
+  button.font-mono:not([aria-current]) {
+  background: var(--tm-surface-raised);
 }
 /* 手机 / 平板：画面贴满两边、不留圆角 */
-@media (max-width: 1023px) {
-  .tm-page-container.tm-solo-page {
-    padding-top: 0;
-  }
-  .tm-solo-row > .grid > div:has(> .tm-playback-video-frame) {
-    margin-inline: calc(-1 * var(--tm-content-gutter, 16px));
-    border: 0;
-    border-radius: 0;
-  }
-  .tm-solo-row .tm-playback-video-frame > [data-tm-player-mount] {
-    border-radius: 0;
-  }
+:where(html:not([data-tm-device='wide'])) .tm-page-container.tm-solo-page {
+  padding-top: 0;
 }
-@media (max-width: 1023px) {
-  /* 面板顶部：选集 / 换源 / 弹幕 和关闭按钮在同一行 */
-  .tm-solo-selector[data-tm-sheet] {
-    padding-top: 8px;
-  }
+:where(html:not([data-tm-device='wide']))
+  .tm-solo-row
+  > .grid
+  > div:has(> .tm-playback-video-frame) {
+  margin-inline: calc(-1 * var(--tm-content-gutter, 16px));
+  border: 0;
+  border-radius: 0;
+}
+/* 只管播放页里的画面；以前没限定形态，画面转成小窗后这条还在，竖屏小窗四角变尖 */
+:where(html:not([data-tm-device='wide']))
+  .tm-playback-host[data-presentation='full']
+  .tm-solo-row
+  .tm-playback-video-frame
+  > [data-tm-player-mount] {
+  border-radius: 0;
+}
+/* 面板顶部：选集 / 换源 / 弹幕 和关闭按钮在同一行 */
+:where(html:not([data-tm-device='wide'])) .tm-solo-selector[data-tm-sheet] {
+  padding-top: 8px;
+}
+:where(html:not([data-tm-device='wide']))
   .tm-solo-selector[data-tm-sheet]
-    > :not(.tm-solo-sheet-close)
-    > div:first-child {
-    margin: 0 44px 4px 0;
-  }
+  > :not(.tm-solo-sheet-close)
+  > div:first-child {
+  margin: 0 44px 4px 0;
+}
+:where(html:not([data-tm-device='wide']))
   .tm-solo-selector[data-tm-sheet]
-    > :not(.tm-solo-sheet-close)
-    > div:first-child
-    > div {
-    padding-inline: 8px;
-    border-radius: var(--tm-radius-md);
-    background: none;
-  }
-  .tm-solo-selector[data-tm-sheet] .tm-solo-sheet-close {
-    top: 10px;
-  }
+  > :not(.tm-solo-sheet-close)
+  > div:first-child
+  > div {
+  padding-inline: 8px;
+  border-radius: var(--tm-radius-md);
+  background: none;
+}
+:where(html:not([data-tm-device='wide']))
+  .tm-solo-selector[data-tm-sheet]
+  .tm-solo-sheet-close {
+  top: 10px;
 }
 
 /* ---------- 收紧尺寸（2026-11-15 第二轮） */
 /* 手机 / 平板：标题、标签、详情字号降一级 */
-@media (max-width: 1023px) {
-  .tm-solo-title {
-    padding-block: 2px;
-  }
-  .tm-solo-title h1 {
-    gap: 6px;
-    font-size: 19px;
-    line-height: 1.3;
-  }
-  .tm-solo-title h1 span.rounded-full,
-  .tm-solo-title .mt-2 > span {
-    padding: 1px 9px;
-    font-size: 12px;
-  }
-  .tm-solo-title .mt-2 {
-    gap: 6px;
-    margin-top: 6px;
-  }
-  .tm-solo-detail h1 {
-    font-size: 16px;
-  }
-  .tm-solo-detail h1 button {
-    min-width: 40px;
-    min-height: 40px;
-  }
-  .tm-solo-detail .text-base {
-    font-size: 14px;
-  }
-  .tm-solo-dock button {
-    min-height: 50px;
-  }
-  .tm-solo-dock svg {
-    width: 19px;
-    height: 19px;
-  }
+:where(html:not([data-tm-device='wide'])) .tm-solo-title {
+  padding-block: 2px;
+}
+:where(html:not([data-tm-device='wide'])) .tm-solo-title h1 {
+  gap: 6px;
+  font-size: 19px;
+  line-height: 1.3;
+}
+:where(html:not([data-tm-device='wide'])) .tm-solo-title h1 span.rounded-full,
+:where(html:not([data-tm-device='wide'])) .tm-solo-title .mt-2 > span {
+  padding: 1px 9px;
+  font-size: 12px;
+}
+:where(html:not([data-tm-device='wide'])) .tm-solo-title .mt-2 {
+  gap: 6px;
+  margin-top: 6px;
+}
+:where(html:not([data-tm-device='wide'])) .tm-solo-detail h1 {
+  font-size: 16px;
+}
+:where(html:not([data-tm-device='wide'])) .tm-solo-detail h1 button {
+  min-width: 40px;
+  min-height: 40px;
+}
+:where(html:not([data-tm-device='wide'])) .tm-solo-detail .text-base {
+  font-size: 14px;
+}
+:where(html:not([data-tm-device='wide'])) .tm-solo-dock button {
+  min-height: 50px;
+}
+:where(html:not([data-tm-device='wide'])) .tm-solo-dock svg {
+  width: 19px;
+  height: 19px;
 }
 /* 电脑：右侧一条细的图标栏，和画面一样高；下载、外部播放器等收进“工具”抽屉 */
-@media (min-width: 1024px) {
-  .tm-solo-row {
-    align-items: stretch;
-  }
-  .tm-solo-rail {
-    gap: 2px;
-    width: 64px;
-    padding: 6px 4px;
-    border-radius: var(--tm-radius-lg);
-  }
-  .tm-solo-rail button {
-    width: 56px;
-    min-height: 54px;
-    gap: 3px;
-  }
-  .tm-solo-rail button svg {
-    width: 19px;
-    height: 19px;
-  }
-  .tm-solo-rail-sep {
-    height: 1px;
-    margin: 4px 10px;
-    background: var(--tm-line);
-  }
-  .tm-solo-rail-end {
-    margin-top: auto;
-  }
-  .tm-solo-tools:not([data-tm-sheet]) {
-    display: none;
-  }
-  .tm-solo-tools[data-tm-sheet] {
-    position: fixed;
-    top: 0;
-    right: 0;
-    bottom: 0;
-    z-index: var(--tm-z-modal, 1000);
-    display: block;
-    width: min(380px, 100vw);
-    margin: 0;
-    padding: 0 20px 24px;
-    overflow-y: auto;
-    background: var(--tm-surface);
-    box-shadow: -24px 0 60px -24px rgb(var(--tm-ink-rgb) / 0.6),
-      inset 1px 0 0 var(--tm-line);
-    animation: tm-solo-drawer-in var(--tm-d-panel) var(--tm-ease-out);
-  }
-  .tm-solo-tools[data-tm-sheet] > .tm-solo-sheet-head {
-    position: sticky;
-    top: 0;
-    z-index: 1;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    min-height: 60px;
-    background: var(--tm-surface);
-  }
-  .tm-solo-tools[data-tm-sheet] .tm-solo-sheet-head h2 {
-    margin: 0;
-    font-size: 17px;
-    font-weight: 700;
-  }
-  .tm-solo-tools[data-tm-sheet] .tm-solo-sheet-head button {
-    display: grid;
-    place-items: center;
-    width: 40px;
-    height: 40px;
-    margin-right: -8px;
-    border-radius: 50%;
-    color: var(--tm-muted);
-  }
-  .tm-solo-tools[data-tm-sheet] > div:not(.tm-solo-sheet-head) {
-    overflow: visible;
-    padding: 0;
-    border: 0;
-    background: none;
-  }
-  .tm-solo-tools[data-tm-sheet] .flex,
-  .tm-solo-tools[data-tm-sheet] .flex-nowrap {
-    flex-wrap: wrap;
-    justify-content: flex-start;
-  }
-  .tm-solo-tools[data-tm-sheet] button {
-    width: auto;
-    height: 40px;
-    gap: 8px;
-    padding: 0 14px;
-  }
-  .tm-solo-tools[data-tm-sheet] button > span {
-    display: inline;
-    max-width: none;
-  }
-  .tm-solo-sheet-backdrop[data-open] {
-    position: fixed;
-    inset: 0;
-    z-index: calc(var(--tm-z-modal, 1000) - 1);
-    display: block;
-    border: 0;
-    background: var(--tm-scrim);
-  }
+:where(html[data-tm-device='wide']) .tm-solo-row {
+  align-items: stretch;
+}
+:where(html[data-tm-device='wide']) .tm-solo-rail {
+  gap: 2px;
+  width: 64px;
+  padding: 6px 4px;
+  border-radius: var(--tm-radius-lg);
+}
+:where(html[data-tm-device='wide']) .tm-solo-rail button {
+  width: 56px;
+  min-height: 54px;
+  gap: 3px;
+}
+:where(html[data-tm-device='wide']) .tm-solo-rail button svg {
+  width: 19px;
+  height: 19px;
+}
+:where(html[data-tm-device='wide']) .tm-solo-rail-sep {
+  height: 1px;
+  margin: 4px 10px;
+  background: var(--tm-line);
+}
+:where(html[data-tm-device='wide']) .tm-solo-rail-end {
+  margin-top: auto;
+}
+:where(html[data-tm-device='wide']) .tm-solo-tools:not([data-tm-sheet]) {
+  display: none;
+}
+:where(html[data-tm-device='wide']) .tm-solo-tools[data-tm-sheet] {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: var(--tm-z-modal, 1000);
+  display: block;
+  width: min(380px, 100vw);
+  margin: 0;
+  padding: 0 20px 24px;
+  overflow-y: auto;
+  background: var(--tm-surface);
+  box-shadow: -24px 0 60px -24px rgb(var(--tm-ink-rgb) / 0.6),
+    inset 1px 0 0 var(--tm-line);
+  animation: tm-solo-drawer-in var(--tm-d-panel) var(--tm-ease-out);
+}
+:where(html[data-tm-device='wide'])
+  .tm-solo-tools[data-tm-sheet]
+  > .tm-solo-sheet-head {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 60px;
+  background: var(--tm-surface);
+}
+:where(html[data-tm-device='wide'])
+  .tm-solo-tools[data-tm-sheet]
+  .tm-solo-sheet-head
+  h2 {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+}
+:where(html[data-tm-device='wide'])
+  .tm-solo-tools[data-tm-sheet]
+  .tm-solo-sheet-head
+  button {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  margin-right: -8px;
+  border-radius: 50%;
+  color: var(--tm-muted);
+}
+:where(html[data-tm-device='wide'])
+  .tm-solo-tools[data-tm-sheet]
+  > div:not(.tm-solo-sheet-head) {
+  overflow: visible;
+  padding: 0;
+  border: 0;
+  background: none;
+}
+:where(html[data-tm-device='wide']) .tm-solo-tools[data-tm-sheet] .flex,
+:where(html[data-tm-device='wide']) .tm-solo-tools[data-tm-sheet] .flex-nowrap {
+  flex-wrap: wrap;
+  justify-content: flex-start;
+}
+:where(html[data-tm-device='wide']) .tm-solo-tools[data-tm-sheet] button {
+  width: auto;
+  height: 40px;
+  gap: 8px;
+  padding: 0 14px;
+}
+:where(html[data-tm-device='wide'])
+  .tm-solo-tools[data-tm-sheet]
+  button
+  > span {
+  display: inline;
+  max-width: none;
+}
+:where(html[data-tm-device='wide']) .tm-solo-sheet-backdrop[data-open] {
+  position: fixed;
+  inset: 0;
+  z-index: calc(var(--tm-z-modal, 1000) - 1);
+  display: block;
+  border: 0;
+  background: var(--tm-scrim);
 }
 @keyframes tm-solo-drawer-in {
   from {
@@ -1362,16 +958,17 @@ body:has(.tm-solo-selector[data-tm-sheet], .tm-solo-tools[data-tm-sheet])
 html[data-tm-reduced-motion] .tm-solo-tools[data-tm-sheet] {
   animation: none;
 }
-@media (min-width: 1024px) {
-  /* 页面容器自成一层（z-index 10），盖不过站点顶栏：抽屉从顶栏下面开始 */
-  .tm-solo-tools[data-tm-sheet] {
-    top: var(--tm-header-height);
-  }
-  .tm-solo-sheet-backdrop[data-open] {
-    top: var(--tm-header-height);
-  }
-  /* 工具按钮一排排往下排，去广告等开关另起一行 */
-  .tm-solo-tools[data-tm-sheet] .flex > .flex {
-    flex: 0 0 100%;
-  }
+/* 页面容器自成一层（z-index 10），盖不过站点顶栏：抽屉从顶栏下面开始 */
+:where(html[data-tm-device='wide']) .tm-solo-tools[data-tm-sheet] {
+  top: var(--tm-header-height);
+}
+:where(html[data-tm-device='wide']) .tm-solo-sheet-backdrop[data-open] {
+  top: var(--tm-header-height);
+}
+/* 工具按钮一排排往下排，去广告等开关另起一行 */
+:where(html[data-tm-device='wide'])
+  .tm-solo-tools[data-tm-sheet]
+  .flex
+  > .flex {
+  flex: 0 0 100%;
 }

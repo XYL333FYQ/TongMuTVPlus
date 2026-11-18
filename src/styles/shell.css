@@ -65,6 +65,11 @@
 .tm-top-header {
   display: none;
 }
+.tm-top-header,
+.tm-mobile-header-v2,
+.tm-mobile-nav {
+  transition: opacity var(--tm-d-hero) var(--tm-ease-out);
+}
 .tm-header-glass {
   position: absolute;
   inset: 0;
@@ -433,43 +438,52 @@
   grid-column: 1;
   grid-row: 1;
 }
-@media (max-width: 767px) {
+:where(html:is([data-tm-device='phone'], [data-tm-device='phone-landscape']))
   .tm-main {
-    padding-top: calc(var(--tm-header-height) + var(--tm-safe-top));
-  }
-  .tm-shell[data-page='/'] .tm-home {
-    padding-top: 0;
-  }
-  .tm-shell[data-page='/'] .tm-home-hero {
-    margin-top: 0;
-  }
-
-  /*
+  padding-top: calc(var(--tm-header-height) + var(--tm-safe-top));
+}
+:where(html:is([data-tm-device='phone'], [data-tm-device='phone-landscape']))
+  .tm-shell[data-page='/']
+  .tm-home {
+  padding-top: 0;
+}
+:where(html:is([data-tm-device='phone'], [data-tm-device='phone-landscape']))
+  .tm-shell[data-page='/']
+  .tm-home-hero {
+  margin-top: 0;
+}
+/*
    * 一级页（底栏上的五个页）：底栏已经写明页名，顶部不再重复一遍。
    * 顶栏只剩右侧几个按钮，行高收到 44px，没有底色，随页面一起滚走（像 Apple TV App），
    * 页名留给读屏软件。
    */
+:where(html:is([data-tm-device='phone'], [data-tm-device='phone-landscape']))
   body:has(.tm-shell[data-tab='true']) {
-    --tm-header-height: 44px;
-  }
-  body:has(.tm-shell[data-tab='true']) .tm-mobile-header-v2 {
-    position: absolute;
-  }
-  body:has(.tm-shell[data-tab='true']) .tm-mobile-header-v2 .tm-header-glass {
-    display: none;
-  }
+  --tm-header-height: 44px;
+}
+:where(html:is([data-tm-device='phone'], [data-tm-device='phone-landscape']))
   body:has(.tm-shell[data-tab='true'])
-    .tm-mobile-header-v2
-    .tm-mobile-page-title {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    margin: -1px;
-    padding: 0;
-    overflow: hidden;
-    clip: rect(0 0 0 0);
-    white-space: nowrap;
-  }
+  .tm-mobile-header-v2 {
+  position: absolute;
+}
+:where(html:is([data-tm-device='phone'], [data-tm-device='phone-landscape']))
+  body:has(.tm-shell[data-tab='true'])
+  .tm-mobile-header-v2
+  .tm-header-glass {
+  display: none;
+}
+:where(html:is([data-tm-device='phone'], [data-tm-device='phone-landscape']))
+  body:has(.tm-shell[data-tab='true'])
+  .tm-mobile-header-v2
+  .tm-mobile-page-title {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
 }
 /* 首页大图在手机上铺到屏幕最顶（顶栏按钮浮在图上），不再留一条空带 */
 @media (max-width: 599px) {
@@ -540,21 +554,30 @@
   scale: 0.95;
 }
 
-@media (max-width: 767px) {
-  body:has([data-tm-nav-page]) .tm-mobile-header-v2 {
-    display: block;
-  }
-  body:has([data-tm-nav-page]) .tm-mobile-nav,
+:where(html:is([data-tm-device='phone'], [data-tm-device='phone-landscape']))
+  body:has([data-tm-nav-page])
+  .tm-mobile-header-v2 {
+  display: block;
+}
+
+:where(html:is([data-tm-device='phone'], [data-tm-device='phone-landscape']))
+  body:has([data-tm-nav-page])
+  .tm-mobile-nav,
+:where(html:is([data-tm-device='phone'], [data-tm-device='phone-landscape']))
   .tm-mobile-nav[data-tab-route] {
-    display: grid;
-  }
-  /* Keep the same nav node/geometry while the IME is open, so closing the
+  display: grid;
+}
+
+/* Keep the same nav node/geometry while the IME is open, so closing the
      keyboard does not restart display/entry transitions. Desktop/web unchanged. */
-  html[data-tm-platform='app'][data-tm-keyboard='open'] .tm-mobile-nav {
-    opacity: 0;
-    visibility: hidden;
-    pointer-events: none;
-  }
+
+html:where(
+    :is([data-tm-device='phone'], [data-tm-device='phone-landscape'])
+  )[data-tm-platform='app'][data-tm-keyboard='open']
+  .tm-mobile-nav {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
 }
 
 /* 底栏按住拖动：滑块跟手，经过的项高亮，松手跳转 */
@@ -1132,32 +1155,43 @@ html[data-tm-reduced-motion='true'] .tm-explore-card:active {
   }
 }
 
-@media (min-width: 768px) {
-  /* 顶栏常驻在根布局、不在页面流里：固定在顶部，页面主体留出同样的高度，版面与原来一致 */
-  body:has([data-tm-nav-page]) .tm-top-header {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    z-index: var(--tm-z-header);
-    display: block;
-    height: var(--tm-header-height);
-  }
-  .tm-shell:not(.tm-shell-no-navigation) > .tm-shell-body {
-    padding-top: var(--tm-header-height);
-  }
+/* 顶栏常驻在根布局、不在页面流里：固定在顶部，页面主体留出同样的高度，版面与原来一致 */
+
+:where(html:not([data-tm-device='phone'], [data-tm-device='phone-landscape']))
+  body:has([data-tm-nav-page])
+  .tm-top-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: var(--tm-z-header);
+  display: block;
+  height: var(--tm-header-height);
+}
+
+:where(html:not([data-tm-device='phone'], [data-tm-device='phone-landscape']))
+  .tm-shell:not(.tm-shell-no-navigation)
+  > .tm-shell-body {
+  padding-top: var(--tm-header-height);
+}
+
+:where(html:not([data-tm-device='phone'], [data-tm-device='phone-landscape']))
   .tm-main {
-    padding-top: 8px;
-    padding-bottom: 96px;
-  }
+  padding-top: 8px;
+  padding-bottom: 96px;
+}
+
+:where(html:not([data-tm-device='phone'], [data-tm-device='phone-landscape']))
   .tm-mobile-header-v2,
+:where(html:not([data-tm-device='phone'], [data-tm-device='phone-landscape']))
   .tm-mobile-nav {
-    display: none;
-  }
+  display: none;
+}
+
+:where(html:not([data-tm-device='phone'], [data-tm-device='phone-landscape']))
   .tm-account-menu {
-    right: var(--tm-content-gutter);
-    box-shadow: var(--tm-shadow-sm);
-  }
+  right: var(--tm-content-gutter);
+  box-shadow: var(--tm-shadow-sm);
 }
 
 /* 音乐等自带二级导航的页面：放在全站顶栏下方的正常文档流里 */
@@ -1186,35 +1220,49 @@ html[data-tm-reduced-motion='true'] .tm-explore-card:active {
 .tm-shell .music-theme > .fixed.bottom-6 {
   bottom: calc(96px + var(--tm-safe-bottom));
 }
-@media (max-width: 767px) {
-  /* 子页名称交给共用顶栏，局部页头保留说明与返回入口。 */
-  .tm-shell .tm-media-shell > .tm-media-page-head {
-    border-bottom: 0;
-  }
-  .tm-shell .tm-media-page-head-row {
-    height: auto;
-  }
-  .tm-shell .tm-media-page-title {
-    display: none;
-  }
-  .tm-shell .tm-media-shell > main {
-    padding-top: 16px;
-  }
-  .tm-music-toolbar-row {
-    min-height: 44px;
-    padding-block: 0;
-  }
-  .tm-music-content {
-    padding-top: 16px;
-  }
+/* 子页名称交给共用顶栏，局部页头保留说明与返回入口。 */
+:where(html:is([data-tm-device='phone'], [data-tm-device='phone-landscape']))
+  .tm-shell
+  .tm-media-shell
+  > .tm-media-page-head {
+  border-bottom: 0;
 }
-@media (min-width: 768px) {
-  .tm-shell .tm-media-shell > nav {
-    top: var(--tm-header-height);
-  }
-  .tm-shell .music-theme > .fixed.bottom-6 {
-    bottom: 24px;
-  }
+:where(html:is([data-tm-device='phone'], [data-tm-device='phone-landscape']))
+  .tm-shell
+  .tm-media-page-head-row {
+  height: auto;
+}
+:where(html:is([data-tm-device='phone'], [data-tm-device='phone-landscape']))
+  .tm-shell
+  .tm-media-page-title {
+  display: none;
+}
+:where(html:is([data-tm-device='phone'], [data-tm-device='phone-landscape']))
+  .tm-shell
+  .tm-media-shell
+  > main {
+  padding-top: 16px;
+}
+:where(html:is([data-tm-device='phone'], [data-tm-device='phone-landscape']))
+  .tm-music-toolbar-row {
+  min-height: 44px;
+  padding-block: 0;
+}
+:where(html:is([data-tm-device='phone'], [data-tm-device='phone-landscape']))
+  .tm-music-content {
+  padding-top: 16px;
+}
+:where(html:not([data-tm-device='phone'], [data-tm-device='phone-landscape']))
+  .tm-shell
+  .tm-media-shell
+  > nav {
+  top: var(--tm-header-height);
+}
+:where(html:not([data-tm-device='phone'], [data-tm-device='phone-landscape']))
+  .tm-shell
+  .music-theme
+  > .fixed.bottom-6 {
+  bottom: 24px;
 }
 
 html[data-tm-reduced-motion='true'] .tm-page-transition {
@@ -1447,4 +1495,18 @@ html[data-tm-reduced-motion='true'] .tm-launch-cue {
  * 只留一个很短的淡入，避免内容生硬地闪出来。 */
 html[data-tm-nav='tab'] .tm-page-transition {
   animation: tm-page-fade 120ms linear backwards !important;
+}
+
+/* 手机横屏（lib/device-tier.ts）：页面开了 viewport-fit=cover，左右要让开刘海和圆角 */
+:where(html[data-tm-device='phone-landscape']) .tm-mobile-header-v2 {
+  padding-right: env(safe-area-inset-right);
+  padding-left: env(safe-area-inset-left);
+}
+:where(html[data-tm-device='phone-landscape']) .tm-mobile-nav {
+  right: max(12px, env(safe-area-inset-right));
+  left: max(12px, env(safe-area-inset-left));
+}
+:where(html[data-tm-device='phone-landscape']) .tm-main {
+  padding-right: env(safe-area-inset-right);
+  padding-left: env(safe-area-inset-left);
 }

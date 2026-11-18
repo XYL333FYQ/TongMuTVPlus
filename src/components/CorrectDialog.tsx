@@ -880,7 +880,7 @@ export default function CorrectDialog({
     useDrawer ? (
       <div className='fixed inset-0 z-[9999] flex items-center justify-end pointer-events-none'>
         <div
-          className={`relative ${drawerWidth} h-full bg-surface shadow-2xl flex flex-col pointer-events-auto`}
+          className={`tm-drawer-surface relative ${drawerWidth} h-full bg-surface shadow-2xl flex flex-col pointer-events-auto`}
         >
           {dialogContent}
         </div>

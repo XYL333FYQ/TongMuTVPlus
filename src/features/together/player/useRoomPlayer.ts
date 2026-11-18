@@ -17,6 +17,7 @@ import {
   loadStoredSeconds,
   SEEK_STEP_STORAGE_KEY,
 } from '@/lib/player-seek-settings';
+import { installTouchControls } from '@/lib/player-touch-controls';
 import { roomServerNow } from '@/lib/room-clock';
 import type { SearchResult } from '@/lib/types';
 import { base58Decode } from '@/lib/utils';
@@ -32,7 +33,6 @@ import {
   iosOrientationPlugin,
   playbackRatePlugin,
   progressThumbPlugin,
-  seekButtonsPlugin,
   wakeLockPlugin,
 } from '@/features/together/player/core/plugins/basics';
 import { ChatDanmaku } from '@/features/together/player/core/plugins/chat-danmaku';
@@ -211,12 +211,22 @@ export function useRoomPlayer(options: {
             ),
             progressThumbPlugin,
             iosOrientationPlugin,
-            seekButtonsPlugin(() =>
-              loadStoredSeconds(
-                SEEK_STEP_STORAGE_KEY,
-                DEFAULT_SEEK_STEP_SECONDS
-              )
-            ),
+            // 触屏：画面正中快退 / 播放暂停 / 快进，手机全屏左上退出（和自己看共用）。
+            // 没有播放权限的成员由样式藏起（[data-tm-locked]）
+            ({ art }) =>
+              installTouchControls(art, {
+                stepSeconds: () =>
+                  loadStoredSeconds(
+                    SEEK_STEP_STORAGE_KEY,
+                    DEFAULT_SEEK_STEP_SECONDS
+                  ),
+                exitFullscreen: () => {
+                  if (document.fullscreenElement)
+                    void document.exitFullscreen().catch(() => undefined);
+                  if (art.fullscreenWeb) art.fullscreenWeb = false;
+                  if (art.fullscreen) art.fullscreen = false;
+                },
+              }),
             ({ art }) => {
               art.controls.add({
                 name: 'tm-next',

@@ -20,7 +20,17 @@ import {
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
-import type { HTMLAttributes, ReactNode } from 'react';
+import {
+  type FocusEvent,
+  type HTMLAttributes,
+  type MouseEvent,
+  type PointerEvent,
+  type ReactNode,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 
 export interface MiniAction {
   label: string;
@@ -56,6 +66,91 @@ export interface MiniPlayerControlsProps
     unmuteLabel: string;
     onToggle(): void;
   };
+  /** 画面对应的视频：小窗底边的进度线跟着它走 */
+  video?: HTMLVideoElement | null;
+}
+
+/** 按钮多久没人碰就收起 */
+export const MINI_REVEAL_MS = 3000;
+
+/**
+ * 小窗按钮什么时候出现（2026-11-18 设计稿）：平时只有画面；
+ * 鼠标移上去、触屏点一下画面、键盘聚焦时出现，3 秒没有操作收起。
+ * 拖动小窗不算点：拖动结束后的那次 click 由 useMiniPlayerDrag 吞掉。
+ */
+function useReveal() {
+  const [revealed, setRevealed] = useState(false);
+  const timer = useRef(0);
+  const pointer = useRef('mouse');
+  const hideLater = useCallback(() => {
+    window.clearTimeout(timer.current);
+    timer.current = window.setTimeout(() => setRevealed(false), MINI_REVEAL_MS);
+  }, []);
+  const show = useCallback(() => {
+    setRevealed(true);
+    hideLater();
+  }, [hideLater]);
+  useEffect(() => () => window.clearTimeout(timer.current), []);
+  const handlers = {
+    onPointerDown(event: PointerEvent<HTMLDivElement>) {
+      pointer.current = event.pointerType;
+    },
+    onPointerMove(event: PointerEvent<HTMLDivElement>) {
+      if (event.pointerType === 'mouse') show();
+    },
+    onPointerLeave(event: PointerEvent<HTMLDivElement>) {
+      if (event.pointerType !== 'mouse') return;
+      window.clearTimeout(timer.current);
+      setRevealed(false);
+    },
+    onClick(event: MouseEvent<HTMLDivElement>) {
+      const onButton = (event.target as HTMLElement).closest(
+        '.tm-mini-btn, a, button'
+      );
+      if (onButton) return hideLater();
+      // 触屏点空白处：出 / 收按钮；鼠标点空白处保持出现
+      if (pointer.current === 'mouse') return show();
+      if (revealed) {
+        window.clearTimeout(timer.current);
+        setRevealed(false);
+      } else show();
+    },
+    onFocus: show,
+    onBlur(event: FocusEvent<HTMLDivElement>) {
+      if (!event.currentTarget.contains(event.relatedTarget as Node | null))
+        setRevealed(false);
+    },
+  };
+  return { revealed, handlers };
+}
+
+/** 底边 3px 进度线：直接改宽度，不触发重渲染 */
+function MiniProgress({ video }: { video?: HTMLVideoElement | null }) {
+  const bar = useRef<HTMLSpanElement>(null);
+  useEffect(() => {
+    if (!video) return;
+    const update = () => {
+      const ratio =
+        video.duration > 0
+          ? Math.min(1, video.currentTime / video.duration)
+          : 0;
+      if (bar.current) bar.current.style.transform = `scaleX(${ratio})`;
+    };
+    update();
+    video.addEventListener('timeupdate', update);
+    video.addEventListener('durationchange', update);
+    video.addEventListener('emptied', update);
+    return () => {
+      video.removeEventListener('timeupdate', update);
+      video.removeEventListener('durationchange', update);
+      video.removeEventListener('emptied', update);
+    };
+  }, [video]);
+  return (
+    <span className='tm-mini-progress' aria-hidden='true'>
+      <span ref={bar} />
+    </span>
+  );
 }
 
 function ActionButton({
@@ -107,9 +202,11 @@ export default function MiniPlayerControls({
   extra,
   play,
   sound,
+  video,
   className = '',
   ...rest
 }: MiniPlayerControlsProps) {
+  const reveal = useReveal();
   const titleBase = titleOverride || expand;
   const titleAction = { ...titleBase, label: `${titleBase.label}：${title}` };
   const playButton = play && (
@@ -198,9 +295,15 @@ export default function MiniPlayerControls({
   return (
     <div
       {...rest}
+      {...reveal.handlers}
       className={`tm-mini-controls ${className}`}
       data-variant='mini'
+      data-revealed={reveal.revealed ? 'true' : undefined}
     >
+      <MiniProgress video={video} />
+      {!!extra?.badge && extra.kind === 'chat' && (
+        <span className='tm-mini-dot' aria-hidden='true' />
+      )}
       <ActionButton action={expand} slot='full'>
         <Maximize2 size={16} aria-hidden='true' />
       </ActionButton>

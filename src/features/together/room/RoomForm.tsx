@@ -7,6 +7,8 @@
 import { ImagePlus, Trash2, X } from 'lucide-react';
 import { FormEvent, ReactNode, useEffect, useRef, useState } from 'react';
 
+import ModalLayer from '@/components/feedback/ModalLayer';
+
 import { compressRoomCover } from '../lib/room-cover';
 
 import type {
@@ -92,29 +94,20 @@ export function Dialog({
   /** 面板：手机上从底部拉起，平板和电脑上从右侧滑出 */
   sheet?: boolean;
 }) {
-  useEffect(() => {
-    const onKey = (event: KeyboardEvent) => event.key === 'Escape' && onClose();
-    document.addEventListener('keydown', onKey);
-    const overflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.removeEventListener('keydown', onKey);
-      document.body.style.overflow = overflow;
-    };
-  }, [onClose]);
+  // 用全站的原生模态层：在浏览器的最顶层，盖住顶栏和底栏，Esc / 安卓返回键都能关。
+  // 以前房间自己画了一层遮罩，被房间页的层级困住，顶栏压在面板上、关闭按钮点不到。
   return (
-    <div
-      className='tm-t-dialog-backdrop'
-      data-sheet={sheet ? 'true' : undefined}
-      onMouseDown={(event) => event.target === event.currentTarget && onClose()}
+    <ModalLayer
+      label={title}
+      onClose={onClose}
+      className={
+        sheet ? 'tm-t-dialog-layer tm-drawer-layer' : 'tm-t-dialog-layer'
+      }
     >
       <div
         className='tm-t-dialog'
         data-wide={wide ? 'true' : undefined}
         data-sheet={sheet ? 'true' : undefined}
-        role='dialog'
-        aria-modal='true'
-        aria-label={title}
       >
         <div className='tm-t-dialog-head'>
           <h2>{title}</h2>
@@ -129,7 +122,7 @@ export function Dialog({
         </div>
         {children}
       </div>
-    </div>
+    </ModalLayer>
   );
 }
 

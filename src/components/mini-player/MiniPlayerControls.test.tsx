@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 
 import MiniPlayerControls from './MiniPlayerControls';
 
@@ -79,4 +79,53 @@ it('folded bar: the title restores the window, the expand button opens the page'
   expect(
     screen.getByRole('button', { name: '回到播放页' })
   ).toBeInTheDocument();
+});
+
+describe('buttons appear only when asked for (2026-11-18 design)', () => {
+  beforeEach(() => jest.useFakeTimers());
+  afterEach(() => jest.useRealTimers());
+
+  const renderMini = () =>
+    render(<MiniPlayerControls {...base} data-testid='mini' />);
+
+  it('a tap on the picture shows them, a second tap hides them', () => {
+    renderMini();
+    const mini = screen.getByTestId('mini');
+    expect(mini).not.toHaveAttribute('data-revealed');
+    fireEvent.pointerDown(mini, { pointerType: 'touch' });
+    fireEvent.click(mini);
+    expect(mini).toHaveAttribute('data-revealed', 'true');
+    fireEvent.pointerDown(mini, { pointerType: 'touch' });
+    fireEvent.click(mini);
+    expect(mini).not.toHaveAttribute('data-revealed');
+  });
+
+  it('they hide on their own after 3 seconds without a touch', () => {
+    renderMini();
+    const mini = screen.getByTestId('mini');
+    fireEvent.pointerDown(mini, { pointerType: 'touch' });
+    fireEvent.click(mini);
+    act(() => jest.advanceTimersByTime(2900));
+    expect(mini).toHaveAttribute('data-revealed', 'true');
+    act(() => jest.advanceTimersByTime(200));
+    expect(mini).not.toHaveAttribute('data-revealed');
+  });
+
+  it('keyboard focus shows them too', () => {
+    renderMini();
+    act(() => screen.getByRole('button', { name: '关闭播放' }).focus());
+    expect(screen.getByTestId('mini')).toHaveAttribute('data-revealed', 'true');
+  });
+});
+
+it('the progress line follows the video', () => {
+  const video = document.createElement('video');
+  Object.defineProperty(video, 'duration', { value: 100 });
+  Object.defineProperty(video, 'currentTime', { value: 25, writable: true });
+  const { container } = render(<MiniPlayerControls {...base} video={video} />);
+  fireEvent(video, new Event('timeupdate'));
+  const bar = container.querySelector(
+    '.tm-mini-progress > span'
+  ) as HTMLElement;
+  expect(bar.style.transform).toBe('scaleX(0.25)');
 });

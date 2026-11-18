@@ -18,7 +18,10 @@ import {
 
 import './detail.css';
 
+import { getDeviceTier } from '@/lib/device-tier';
 import { isReducedMotionSetting, useReducedMotionSetting } from '@/lib/motion';
+
+import { useDeviceTier } from '@/hooks/useDeviceTier';
 
 import { useBackLayer } from '@/hooks/useBackLayer';
 
@@ -31,7 +34,7 @@ function posterOrigin(
 ): DOMRect | null {
   if (typeof window === 'undefined' || !trigger) return null;
   if (kind !== 'detail' || drawer || isReducedMotionSetting()) return null;
-  if (!window.matchMedia('(max-width: 767px)').matches) return null;
+  if (getDeviceTier() !== 'phone') return null;
   const rect = trigger.getBoundingClientRect();
   if (rect.width < 40 || rect.height < 40) return null;
   if (rect.bottom < 0 || rect.top > window.innerHeight) return null;
@@ -88,21 +91,11 @@ export default function DetailShell({
   const titleId = useId();
   const reduced = useReducedMotionSetting();
   const initialReduced = useRef(isReducedMotionSetting()).current;
-  const [mobile, setMobile] = useState(
-    () =>
-      typeof window !== 'undefined' &&
-      window.matchMedia('(max-width: 767px)').matches
-  );
+  // 手机竖屏是底部面板，其余（手机横屏、平板、电脑）是右侧抽屉：和房间面板同一规则
+  const mobile = useDeviceTier() === 'phone';
   const controls = useDragControls();
   const y = useMotionValue(0);
   const shade = useTransform(y, [0, 600], [1, 0]);
-  useEffect(() => {
-    const media = window.matchMedia('(max-width: 767px)');
-    const update = () => setMobile(media.matches);
-    update();
-    media.addEventListener('change', update);
-    return () => media.removeEventListener('change', update);
-  }, []);
   useEffect(() => {
     const element = dialog.current;
     if (!element) return;

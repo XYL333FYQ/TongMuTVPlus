@@ -25,13 +25,14 @@
   transform: translateY(12px);
   pointer-events: none;
 }
-@media (min-width: 768px) {
+:where(html:not([data-tm-device='phone'], [data-tm-device='phone-landscape']))
   .tm-back-to-top {
-    bottom: 24px;
-  }
-  body:has(.tm-chat-launcher) .tm-back-to-top {
-    bottom: 84px;
-  }
+  bottom: 24px;
+}
+:where(html:not([data-tm-device='phone'], [data-tm-device='phone-landscape']))
+  body:has(.tm-chat-launcher)
+  .tm-back-to-top {
+  bottom: 84px;
 }
 /* 有小窗或收起胶囊时，返回顶部排在它上面 */
 body:has(.tm-playback-host[data-presentation='mini'], .tm-mini)
@@ -101,32 +102,34 @@ html:not([data-tm-room-presentation='true'])
 .tm-desktop-page-name {
   display: none;
 }
-@media (min-width: 768px) {
+:where(html:not([data-tm-device='phone'], [data-tm-device='phone-landscape']))
   .tm-desktop-page-name {
-    display: block;
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    margin: -1px;
-    padding: 0;
-    overflow: hidden;
-    clip: rect(0 0 0 0);
-    white-space: nowrap;
-    border: 0;
-  }
+  display: block;
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
 }
 /* 手机顶栏已经用 h1 显示页名，页头只留说明和操作，避免标题出现两次 */
-@media (max-width: 767px) {
+:where(html:is([data-tm-device='phone'], [data-tm-device='phone-landscape']))
   .tm-page-head {
-    padding-top: 4px;
-    margin-bottom: 24px;
-  }
-  .tm-page-head .tm-page-title {
-    display: none;
-  }
-  .tm-page-head .tm-page-desc {
-    margin-top: 0;
-  }
+  padding-top: 4px;
+  margin-bottom: 24px;
+}
+:where(html:is([data-tm-device='phone'], [data-tm-device='phone-landscape']))
+  .tm-page-head
+  .tm-page-title {
+  display: none;
+}
+:where(html:is([data-tm-device='phone'], [data-tm-device='phone-landscape']))
+  .tm-page-head
+  .tm-page-desc {
+  margin-top: 0;
 }
 
 .tm-section {

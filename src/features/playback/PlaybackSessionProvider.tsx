@@ -375,11 +375,16 @@ export default function PlaybackSessionProvider({
           data-testid='global-playback-host'
           style={{ ...slotStyle, ...miniDrag.style }}
         >
-          <PlaybackSurface key={surfaceVersion} />
+          {/* 播放页整页内容。小窗 / 收起时它自成一层（mini-player.css），
+              页面里各种 z-index 都关在这一层里，按钮层永远在它上面 */}
+          <div className='tm-playback-page'>
+            <PlaybackSurface key={surfaceVersion} />
+          </div>
           {(presentation === 'mini' || presentation === 'folded') && (
             <MiniPlayerControls
               className='tm-playback-chrome'
               variant={presentation === 'folded' ? 'bar' : 'mini'}
+              video={controller?.video}
               title={metadata.title}
               hint={ownsSound ? undefined : '此页静音，点声音按钮在这里听'}
               poster={metadata.poster}

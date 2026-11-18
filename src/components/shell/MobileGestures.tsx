@@ -4,6 +4,7 @@ import { RotateCw } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 
+import { isHandheld, onDeviceTierChange } from '@/lib/device-tier';
 import { refreshPage } from '@/lib/page-refresh';
 import { getPlatform } from '@/lib/platform';
 import { haptic } from '@/lib/shell-bridge';
@@ -17,11 +18,9 @@ const REFRESH_PATHS = ['/', '/douban', '/search', '/my'];
 const TRIGGER = 64;
 const IOS_HINT_KEY = 'tongmu:ios-install-hint-seen';
 
+// 手机外壳（底栏 + 手机顶栏）只在手机两档出现，见 lib/device-tier.ts
 function isPhoneTouch() {
-  return (
-    window.matchMedia('(pointer: coarse)').matches &&
-    window.matchMedia('(max-width: 767px)').matches
-  );
+  return window.matchMedia('(pointer: coarse)').matches && isHandheld();
 }
 
 /** 手机端手势与提示：下拉刷新、前进/后退转场方向、iPhone 安装到主屏幕引导。 */
@@ -33,25 +32,9 @@ export default function MobileGestures() {
 
   useEffect(() => {
     if (getPlatform() !== 'app') return;
-    const queries = [
-      window.matchMedia('(pointer: coarse)'),
-      window.matchMedia('(max-width: 767px)'),
-    ];
     const update = () => setPhoneTouch(isPhoneTouch());
     update();
-    window.addEventListener('resize', update);
-    queries.forEach((query) => {
-      if (query.addEventListener) query.addEventListener('change', update);
-      else query.addListener?.(update);
-    });
-    return () => {
-      window.removeEventListener('resize', update);
-      queries.forEach((query) => {
-        if (query.removeEventListener)
-          query.removeEventListener('change', update);
-        else query.removeListener?.(update);
-      });
-    };
+    return onDeviceTierChange(update);
   }, []);
 
   // —— 转场方向：返回键/手势返回用“后退”，点链接用“前进” ——

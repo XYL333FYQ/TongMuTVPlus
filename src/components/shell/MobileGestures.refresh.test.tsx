@@ -14,6 +14,15 @@ jest.mock('@/components/feedback/AppDialogs', () => ({ notify: jest.fn() }));
 const originalLocation = Object.getOwnPropertyDescriptor(window, 'location')!;
 const reload = jest.fn();
 
+// 手机外壳按设备档位（lib/device-tier.ts）：页面最早期的脚本写 html[data-tm-device]，变化时派发事件
+function setTier(phone: boolean) {
+  document.documentElement.setAttribute(
+    'data-tm-device',
+    phone ? 'phone' : 'wide'
+  );
+  window.dispatchEvent(new Event('tm-device-tier'));
+}
+
 beforeEach(() => {
   jest.clearAllMocks();
   Object.defineProperty(window, 'location', {
@@ -26,12 +35,14 @@ beforeEach(() => {
   });
   Object.defineProperty(window, 'scrollY', { configurable: true, value: 0 });
   (refreshPage as jest.Mock).mockResolvedValue('success');
+  setTier(true);
 });
 afterEach(() => {
   cleanup();
   Object.defineProperty(window, 'location', originalLocation);
   expect(reload).not.toHaveBeenCalled();
   delete document.documentElement.dataset.tmKeyboard;
+  document.documentElement.removeAttribute('data-tm-device');
 });
 function touch(type: string, x: number, y: number) {
   const event = new Event(type, { bubbles: true });
@@ -51,7 +62,7 @@ async function pull(end = 'touchend', horizontal = false) {
   });
 }
 
-test('a mounted app gains pull refresh when its window changes to phone width', async () => {
+test('a mounted app gains pull refresh when its window becomes a phone', async () => {
   let phone = false;
   Object.defineProperty(window, 'matchMedia', {
     configurable: true,
@@ -59,18 +70,19 @@ test('a mounted app gains pull refresh when its window changes to phone width', 
       matches: query === '(pointer: coarse)' || phone,
     }),
   });
+  setTier(phone);
   render(<MobileGestures />);
   await pull();
   expect(refreshPage).not.toHaveBeenCalled();
   phone = true;
   act(() => {
-    window.dispatchEvent(new Event('resize'));
+    setTier(phone);
   });
   await pull();
   expect(refreshPage).toHaveBeenCalledTimes(1);
 });
 
-test('leaving phone width cancels an in-progress pull before release', async () => {
+test('leaving the phone tier cancels an in-progress pull before release', async () => {
   let phone = true;
   Object.defineProperty(window, 'matchMedia', {
     configurable: true,
@@ -85,7 +97,7 @@ test('leaving phone width cancels an in-progress pull before release', async () 
   });
   phone = false;
   act(() => {
-    window.dispatchEvent(new Event('resize'));
+    setTier(phone);
   });
   expect(
     (view.container.querySelector('.tm-ptr') as HTMLElement).style.opacity

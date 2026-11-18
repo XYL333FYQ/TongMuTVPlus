@@ -1,5 +1,6 @@
 import type { Config } from 'tailwindcss';
 import defaultTheme from 'tailwindcss/defaultTheme';
+import plugin from 'tailwindcss/plugin';
 
 // 颜色全部指向 src/styles/tokens.css 里的 --tm-* 变量，切主题只换变量，不换类名。
 const config: Config = {
@@ -59,7 +60,21 @@ const config: Config = {
       },
     },
   },
-  plugins: [require('@tailwindcss/forms'), require('@tailwindcss/typography')],
+  plugins: [
+    require('@tailwindcss/forms'),
+    require('@tailwindcss/typography'),
+    // 设备档位变体（src/lib/device-tier.ts 写在 <html data-tm-device> 上）。
+    // 整页排版用这些，不用 sm/md/lg 宽度：wide = 平板横屏和电脑，compact = 其余三档
+    plugin(({ addVariant }) => {
+      const tier = (value: string) =>
+        `:where(html[data-tm-device='${value}']) &`;
+      addVariant('phone', tier('phone'));
+      addVariant('phone-land', tier('phone-landscape'));
+      addVariant('tablet', tier('tablet'));
+      addVariant('wide', tier('wide'));
+      addVariant('compact', `:where(html:not([data-tm-device='wide'])) &`);
+    }),
+  ],
 } satisfies Config;
 
 export default config;

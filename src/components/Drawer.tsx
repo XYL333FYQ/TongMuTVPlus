@@ -75,7 +75,7 @@ export default function Drawer({
   const content = (
     <div className='fixed inset-0 z-[10000] flex items-center justify-end pointer-events-none'>
       <div
-        className={`relative ${width} h-full bg-surface shadow-2xl flex flex-col transition-transform duration-300 ease-out pointer-events-auto ${
+        className={`tm-drawer-surface relative ${width} h-full bg-surface shadow-2xl flex flex-col transition-transform duration-300 ease-out pointer-events-auto ${
           position === 'right'
             ? isAnimating
               ? 'translate-x-0'

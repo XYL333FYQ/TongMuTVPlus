@@ -30,19 +30,24 @@
   transition: transform 220ms var(--tm-ease-out);
   animation: tm-mini-in var(--tm-d-panel) var(--tm-ease-out);
 }
+/* 画面槽自成一层（z-index: 0），按钮层是它上面的一层（z-index: 1）。
+   播放器内部的视频、海报、字幕、弹幕各有 z-index（Artplayer 的视频是 10），
+   不关在这一层里就会和按钮层比大小，把按钮盖住（2026-11-18 房间小窗看不到按钮的原因） */
 .tm-mini-slot {
   position: absolute;
   inset: 0;
+  z-index: 0;
 }
 
-/* 自己看：画面节点在播放页里，小窗时把它和按钮层摆到同一个位置 */
-html
-  body
-  .tm-playback-host:is(
-    [data-presentation='mini'],
-    [data-presentation='folded']
-  ) {
+/* 自己看：画面节点在播放页里，小窗时把它和按钮层摆到同一个位置。
+   层次同上：整页内容（.tm-playback-page）一层，按钮层在它上面一层 */
+.tm-playback-host:is([data-presentation='mini'], [data-presentation='folded']) {
   z-index: var(--tm-z-mini);
+}
+.tm-playback-host:is([data-presentation='mini'], [data-presentation='folded'])
+  > .tm-playback-page {
+  position: relative;
+  z-index: 0;
 }
 .tm-playback-host[data-presentation='mini'] [data-tm-player-mount],
 .tm-playback-host[data-presentation='mini'] .tm-playback-chrome {
@@ -56,17 +61,14 @@ html
   animation: tm-mini-in var(--tm-d-panel) var(--tm-ease-out);
 }
 .tm-playback-host[data-presentation='mini'] [data-tm-player-mount] {
-  z-index: 1;
   overflow: hidden;
   visibility: visible;
   background: var(--tm-video-bg);
   box-shadow: var(--tm-shadow-lg), inset 0 0 0 1px var(--tm-line);
 }
-/* 按钮层必须在画面之上：画面节点在播放页的 .tm-page-container（z-index: 10）里，
-   按钮层要高过它，否则整块画面盖住全部按钮（2026-11-17 用户反馈“小窗没有返回按钮”的原因）。
-   外层宿主是 pointer-events: none，这里要打开 */
+/* 外层宿主是 pointer-events: none，按钮层要打开 */
 .tm-playback-host[data-presentation='mini'] .tm-playback-chrome {
-  z-index: 20;
+  z-index: 1;
   visibility: visible;
   pointer-events: auto;
 }
@@ -82,7 +84,7 @@ html
 }
 .tm-playback-host[data-presentation='folded'] .tm-playback-chrome {
   position: fixed;
-  z-index: 20;
+  z-index: 1;
   right: var(--tm-mini-gap);
   bottom: var(--tm-mini-bottom);
   visibility: visible;
@@ -119,8 +121,7 @@ html
     .art-contextmenus,
     .art-info,
     .art-layer-lock,
-    .art-layer-seek-buttons,
-    .art-layer-tm-seek-buttons,
+    .art-layer-tm-touch,
     .art-layer-danmuku,
     .art-layer-play-record-jump,
     .art-layer-auto-playback,
@@ -138,7 +139,7 @@ html
 .tm-mini-controls[data-variant='mini'] {
   position: absolute;
   inset: 0;
-  z-index: 2;
+  z-index: 1;
   touch-action: none;
   cursor: grab;
 }
@@ -194,7 +195,7 @@ html
 }
 .tm-mini-controls[data-variant='mini'] [data-mini='mute'] {
   right: 8px;
-  bottom: 8px;
+  bottom: 10px;
 }
 .tm-mini-controls[data-variant='mini'] [data-mini='play'] {
   top: 50%;
@@ -239,21 +240,98 @@ html
   font-weight: 700;
   line-height: 18px;
 }
-/* 鼠标设备：平时只看画面，移上去 / 键盘聚焦时出按钮；触屏一直显示 */
-@media (hover: hover) and (pointer: fine) {
-  .tm-mini-controls[data-variant='mini'] .tm-mini-btn {
-    opacity: 0;
-  }
-  .tm-mini-controls[data-variant='mini']:is(:hover, :focus-within)
-    .tm-mini-btn {
-    opacity: 1;
-  }
+/* 平时只有画面：按钮由 MiniPlayerControls 的 data-revealed 控制
+   （鼠标移上去、触屏点一下、键盘聚焦时出现，3 秒没操作收起）。
+   收起时按钮点不到（点画面只会让它们出现），但键盘仍能 Tab 到 */
+.tm-mini-controls[data-variant='mini'] .tm-mini-btn {
+  opacity: 0;
+  pointer-events: none;
 }
-/* 手机竖屏的小窗很小，片名放不下 */
-@media (max-width: 767px) {
-  .tm-mini-controls[data-variant='mini'] [data-mini='title'] {
-    display: none;
-  }
+.tm-mini-controls[data-variant='mini'][data-revealed='true'] .tm-mini-btn {
+  opacity: 1;
+  pointer-events: auto;
+}
+.tm-mini-controls[data-variant='mini'][data-revealed='true']::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: rgb(var(--tm-ink-rgb) / 0.42);
+  pointer-events: none;
+}
+/* 手机（竖 / 横）的小窗只出 3 个：回去、关闭、播放暂停。
+   收起、聊天、声音、片名在播放页 / 房间里操作；档位见 lib/device-tier.ts */
+:where(html:is([data-tm-device='phone'], [data-tm-device='phone-landscape']))
+  .tm-mini-controls[data-variant='mini']
+  :is(
+    [data-mini='title'],
+    [data-mini='mute'],
+    [data-mini='fold'],
+    [data-mini='chat']
+  ) {
+  display: none;
+}
+:where(html:is([data-tm-device='phone'], [data-tm-device='phone-landscape']))
+  .tm-mini-controls[data-variant='mini']
+  :is([data-mini='full'], [data-mini='close']) {
+  width: 28px;
+  height: 28px;
+}
+:where(html:is([data-tm-device='phone'], [data-tm-device='phone-landscape']))
+  .tm-mini-controls[data-variant='mini']
+  :is([data-mini='full'], [data-mini='close'])::after {
+  inset: -8px;
+}
+:where(html:is([data-tm-device='phone'], [data-tm-device='phone-landscape']))
+  .tm-mini-controls[data-variant='mini']
+  [data-mini='play'] {
+  width: 40px;
+  height: 40px;
+}
+:where(html:is([data-tm-device='phone'], [data-tm-device='phone-landscape']))
+  .tm-mini-controls[data-variant='mini']
+  [data-mini='play']::after {
+  inset: -2px;
+}
+/* 底边进度线，一直在 */
+.tm-mini-progress {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 3px;
+  overflow: hidden;
+  background: rgb(var(--tm-on-art-rgb) / 0.18);
+  pointer-events: none;
+}
+.tm-mini-progress > span {
+  display: block;
+  height: 100%;
+  background: var(--tm-on-art);
+  transform: scaleX(0);
+  transform-origin: left center;
+}
+/* 房间有未读：右上一个白点；按钮出来时由聊天按钮上的数字代替 */
+.tm-mini-dot {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--tm-on-art);
+  box-shadow: 0 0 0 2px rgb(var(--tm-ink-rgb) / 0.5);
+  pointer-events: none;
+}
+.tm-mini-controls[data-revealed='true'] .tm-mini-dot {
+  display: none;
+}
+:where(html:is([data-tm-device='phone'], [data-tm-device='phone-landscape']))
+  .tm-mini-controls[data-revealed='true']
+  .tm-mini-dot {
+  display: block;
+  top: auto;
+  bottom: 10px;
 }
 
 /* ---------------------------------------------------------------- 胶囊（收起） */

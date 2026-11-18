@@ -15,7 +15,7 @@ import '@/styles/home.css';
 import '@/features/playback/playback.css';
 import '@/features/together/together.css';
 import '@/components/mini-player/mini-player.css';
-import '@/styles/room-shared.css';
+import '@/styles/player-controls.css';
 import './globals.css';
 
 import { parseAuthInfo } from '@/lib/auth';
@@ -25,6 +25,7 @@ import {
   INITIAL_THEME_COLOR,
 } from '@/lib/brand';
 import { getConfig } from '@/lib/config';
+import { DEVICE_TIER_BOOT_SCRIPT } from '@/lib/device-tier';
 import { getUserFeatureAccess } from '@/lib/permissions';
 import {
   NATIVE_LAUNCH_BOOT_SCRIPT,
@@ -462,6 +463,8 @@ export default async function RootLayout({
         {/* 端标记（app / desktop / web）：在任何页面脚本之前写到 <html> 上，样式与手势按它分端 */}
         {/* eslint-disable-next-line @next/next/no-sync-scripts */}
         <script dangerouslySetInnerHTML={{ __html: PLATFORM_BOOT_SCRIPT }} />
+        {/* 设备档位（phone / phone-landscape / tablet / wide）：整页按哪套排版，见 lib/device-tier.ts */}
+        <script dangerouslySetInnerHTML={{ __html: DEVICE_TIER_BOOT_SCRIPT }} />
         <script
           dangerouslySetInnerHTML={{ __html: NATIVE_LAUNCH_BOOT_SCRIPT }}
         />

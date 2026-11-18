@@ -70,6 +70,7 @@ export default function RoomMini(props: {
       >
         <div ref={props.slot} className='tm-mini-slot' />
         <MiniPlayerControls
+          video={props.player?.video}
           title={props.title}
           expand={{ label: '回到房间', href: '/watch-room' }}
           close={{ label: '关闭小窗（仍在房间里）', onClick: props.onClose }}

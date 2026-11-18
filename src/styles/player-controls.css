@@ -1,0 +1,119 @@
+/*
+ * 播放器控件按设备（自己看和房间两个播放器共用，2026-11-18 设计稿；验收见 docs/design/ACCEPTANCE.md）。
+ * 设备档位：html[data-tm-device]（lib/device-tier.ts）；端：html[data-tm-platform]（lib/platform.ts）。
+ * Artplayer 的样式在运行时插到 <head> 最后，同等优先级会压过这里，所以隐藏按钮用 !important。
+ */
+
+/* ---------------------------------------------------------------- 哪些按钮在哪里出现 */
+
+/* 触屏（手机、平板）：没有画中画、网页全屏、音量（用设备的音量键）、截图（设备自带截屏） */
+@media (pointer: coarse) {
+  .art-video-player
+    :is(
+      .art-control-pip,
+      .art-control-fullscreenWeb,
+      .art-control-volume,
+      .art-control-screenshot
+    ) {
+    display: none !important;
+  }
+}
+/* 电脑客户端：窗口就是应用，网页全屏和全屏是一回事；画中画也不需要 */
+html:not([data-tm-platform='web'])
+  .art-video-player
+  :is(.art-control-pip, .art-control-fullscreenWeb) {
+  display: none !important;
+}
+/* 手机：弹幕设置不放在控制条里（房间在“弹幕”面板，自己看在“弹幕”标签） */
+:where(html:is([data-tm-device='phone'], [data-tm-device='phone-landscape']))
+  .art-video-player
+  .apd-config {
+  display: none !important;
+}
+
+/* ---------------------------------------------------------------- 触屏中间一组（player-touch-controls.ts） */
+
+/* 有中间这组时，Artplayer 自己的大播放图标不再出现（两个会叠在正中） */
+.art-video-player[data-tm-touch] .art-state {
+  display: none !important;
+}
+.art-video-player .art-layer-tm-touch {
+  z-index: 45;
+}
+.tm-touch {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: flex;
+  align-items: center;
+  gap: clamp(24px, 8vw, 56px);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+.tm-touch[hidden],
+.tm-touch-exit[hidden] {
+  display: none;
+}
+.tm-touch-btn {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgb(var(--tm-ink-rgb) / 0.45);
+  color: var(--tm-on-art);
+  pointer-events: auto;
+  cursor: pointer;
+}
+.tm-touch-btn[data-size='lg'] {
+  width: 64px;
+  height: 64px;
+  background: rgb(var(--tm-ink-rgb) / 0.55);
+}
+.tm-touch-btn[data-playing='true'] .tm-touch-icon-play,
+.tm-touch-btn[data-playing='false'] .tm-touch-icon-pause {
+  display: none;
+}
+.tm-touch-btn:focus-visible {
+  outline: 2px solid var(--tm-on-art);
+  outline-offset: 2px;
+}
+/* 手机全屏：左上一个退出全屏（右下控制条里还有一个） */
+.tm-touch-exit {
+  position: absolute;
+  top: max(8px, env(safe-area-inset-top));
+  left: max(8px, env(safe-area-inset-left));
+  width: 44px;
+  height: 44px;
+  background: none;
+}
+/* 房间里没有播放权限的成员：不出快退快进和播放 */
+[data-tm-locked='true'] .tm-touch {
+  display: none;
+}
+
+/* ---------------------------------------------------------------- 锁、安全区 */
+
+/* 锁在左边中间并让开刘海；快退快进在正中，二者不会再叠在一起 */
+.art-video-player .art-layer-lock {
+  left: max(16px, env(safe-area-inset-left)) !important;
+}
+/* 全屏时控制条让开刘海、圆角和 iPhone 底部横条 */
+.art-video-player:is(.art-fullscreen, .art-fullscreen-web) .art-bottom {
+  padding-right: max(var(--art-padding), env(safe-area-inset-right));
+  padding-bottom: env(safe-area-inset-bottom);
+  padding-left: max(var(--art-padding), env(safe-area-inset-left));
+}
+/* 控制条放不下时只缩“发条弹幕”输入框（房间），全屏 / 设置等按钮不被挤出屏幕 */
+.art-video-player :is(.art-controls-left, .art-controls-right) {
+  min-width: 0;
+}
+.art-video-player :is(.art-controls-left, .art-controls-right) > .art-control {
+  flex-shrink: 0;
+}
+.art-video-player .art-controls-right > .art-control-tm-dm {
+  min-width: 0;
+  flex-shrink: 1;
+}

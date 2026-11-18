@@ -5,7 +5,7 @@
  * 它们各有自己的页面（/watch-room/screen、/music、/live），这里负责入口和“正在进行”提示。
  */
 
-import { MonitorUp, Music2, Radio } from 'lucide-react';
+import { ChevronRight, Lock, MonitorUp, Music2, Radio } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
@@ -72,8 +72,8 @@ export function ActivityStage({ room }: { room: Room }) {
   );
 }
 
-/** 发起活动：需要“换片”权限 */
-export function ActivityLaunchers() {
+/** 哪些活动开着（后台配置） */
+function useActivityAvailability() {
   const [enabled, setEnabled] = useState({ music: false, live: false });
   useEffect(() => {
     const config = (
@@ -84,24 +84,130 @@ export function ActivityLaunchers() {
       live: !!config?.LIVE_ENABLED,
     });
   }, []);
+  return enabled;
+}
+
+const LAUNCHERS = [
+  {
+    key: 'screen',
+    href: '/watch-room/screen',
+    icon: MonitorUp,
+    title: '共享屏幕',
+    hint: '把整个屏幕或一个窗口给房间里的人看',
+  },
+  {
+    key: 'music',
+    href: '/music',
+    icon: Music2,
+    title: '一起听',
+    hint: '同一首歌，同一个进度',
+  },
+  {
+    key: 'live',
+    href: '/live',
+    icon: Radio,
+    title: '电视直播',
+    hint: '大家看同一个频道',
+  },
+] as const;
+
+function useLaunchers() {
+  const enabled = useActivityAvailability();
+  return LAUNCHERS.filter((item) => item.key === 'screen' || enabled[item.key]);
+}
+
+/** 发起活动（电脑房间页画面下面那一排）：需要“换片”权限 */
+export function ActivityLaunchers() {
+  const launchers = useLaunchers();
   return (
     <div className='tm-t-launchers'>
-      <Link href='/watch-room/screen' className='tm-t-pill'>
-        <MonitorUp size={16} aria-hidden='true' />
-        共享屏幕
-      </Link>
-      {enabled.music && (
-        <Link href='/music' className='tm-t-pill'>
-          <Music2 size={16} aria-hidden='true' />
-          一起听
+      {launchers.map((item) => (
+        <Link key={item.key} href={item.href} className='tm-t-pill'>
+          <item.icon size={16} aria-hidden='true' />
+          {item.title}
         </Link>
+      ))}
+    </div>
+  );
+}
+
+/**
+ * 房间活动面板（2026-11-18 设计稿）：正在进行的活动排最上面（白色卡片），
+ * 下面是能发起的活动，每个带一句说明；没有“换片”权限时整组变灰并说明原因。
+ */
+export function ActivityPanel({
+  room,
+  canStart,
+}: {
+  room: Room;
+  canStart: boolean;
+}) {
+  const launchers = useLaunchers();
+  const current = activityOf(room);
+  const CurrentIcon = current?.icon;
+  return (
+    <div className='tm-act'>
+      {current && CurrentIcon && (
+        <section className='tm-act-section' aria-label='正在进行'>
+          <span className='tm-act-label'>正在进行</span>
+          <div className='tm-act-now'>
+            <span className='tm-act-now-icon' aria-hidden='true'>
+              <CurrentIcon size={22} />
+            </span>
+            <span className='tm-act-text'>
+              <strong>{current.label}</strong>
+              <small>{current.title}</small>
+            </span>
+            <Link href={current.href} className='tm-act-go'>
+              去看
+            </Link>
+          </div>
+        </section>
       )}
-      {enabled.live && (
-        <Link href='/live' className='tm-t-pill'>
-          <Radio size={16} aria-hidden='true' />
-          电视直播
-        </Link>
-      )}
+      <section className='tm-act-section' aria-label='发起一个'>
+        <span className='tm-act-label'>发起一个</span>
+        <ul
+          className='tm-act-list'
+          data-disabled={canStart ? undefined : 'true'}
+        >
+          {launchers.map((item) => (
+            <li key={item.key}>
+              {canStart ? (
+                <Link href={item.href} className='tm-act-item'>
+                  <span className='tm-act-item-icon' aria-hidden='true'>
+                    <item.icon size={22} />
+                  </span>
+                  <span className='tm-act-text'>
+                    <strong>{item.title}</strong>
+                    <small>{item.hint}</small>
+                  </span>
+                  <ChevronRight size={16} aria-hidden='true' />
+                </Link>
+              ) : (
+                <span className='tm-act-item' aria-disabled='true'>
+                  <span className='tm-act-item-icon' aria-hidden='true'>
+                    <item.icon size={22} />
+                  </span>
+                  <span className='tm-act-text'>
+                    <strong>{item.title}</strong>
+                    <small>{item.hint}</small>
+                  </span>
+                </span>
+              )}
+            </li>
+          ))}
+        </ul>
+        {canStart ? (
+          <p className='tm-act-note'>
+            每个活动有自己的页面；发起后房间里所有人在这里都能看到入口。
+          </p>
+        ) : (
+          <p className='tm-act-note'>
+            <Lock size={15} aria-hidden='true' />
+            房主没有给你发起活动的权限
+          </p>
+        )}
+      </section>
     </div>
   );
 }

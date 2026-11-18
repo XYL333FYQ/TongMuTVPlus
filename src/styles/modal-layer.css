@@ -7,6 +7,8 @@
   max-height: none;
   margin: 0;
   padding: 16px;
+  /* Windows 客户端右上角的窗口按钮在最顶层，弹层顶边让开它（见 tokens.css） */
+  padding-top: max(16px, calc(var(--tm-window-controls-h) + 8px));
   border: 0;
   background: transparent;
   color: var(--tm-text);
@@ -44,6 +46,6 @@
   place-items: stretch end;
 }
 .tm-modal-layer.tm-drawer-layer > * {
-  padding-top: var(--tm-safe-top);
+  padding-top: max(var(--tm-safe-top), var(--tm-window-controls-h));
   padding-bottom: var(--tm-safe-bottom);
 }

@@ -40,6 +40,7 @@ import {
 } from 'react';
 
 import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
+import { useDeviceTier } from '@/hooks/useDeviceTier';
 import { processImageUrl } from '@/lib/utils';
 
 import { useWatchRoomContext } from '@/components/WatchRoomProvider';
@@ -49,7 +50,12 @@ import FilmPicker from './FilmPicker';
 import MembersPanel from './MembersPanel';
 import PlaylistPanel from './PlaylistPanel';
 import Recommendations from './Recommendations';
-import { ActivityLaunchers, activityOf, ActivityStage } from './RoomActivities';
+import {
+  ActivityLaunchers,
+  activityOf,
+  ActivityPanel,
+  ActivityStage,
+} from './RoomActivities';
 import RoomChat from './RoomChat';
 import RoomForm, { Dialog, valuesFromRoom } from './RoomForm';
 import {
@@ -76,24 +82,6 @@ type Panel =
   | 'danmaku'
   | 'menu';
 
-/** 1200px 以下用竖排（画面在上、聊天在下） */
-function useCompact() {
-  const [compact, setCompact] = useState(false);
-  useEffect(() => {
-    const query = window.matchMedia('(max-width: 1199px)');
-    const update = () => setCompact(query.matches);
-    update();
-    // 有的环境（旋转屏幕、模拟器）不发 change，再听一次 resize 兜底
-    query.addEventListener('change', update);
-    window.addEventListener('resize', update);
-    return () => {
-      query.removeEventListener('change', update);
-      window.removeEventListener('resize', update);
-    };
-  }, []);
-  return compact;
-}
-
 export default function RoomView({
   onLeave,
   onBack,
@@ -116,7 +104,8 @@ export default function RoomView({
     [current.myPermissions]
   );
   const isOwner = current.myRole === 'owner';
-  const compact = useCompact();
+  // 平板横屏和电脑（wide）用电脑排版；手机、手机横屏、平板竖屏用紧凑排版。见 lib/device-tier.ts
+  const compact = useDeviceTier() !== 'wide';
   const [panel, setPanel] = useState<Panel | null>(null);
   const [picker, setPicker] = useState<{ query?: string } | null>(null);
   const [settings, setSettings] = useState(false);
@@ -579,17 +568,16 @@ export default function RoomView({
                         </span>
                       )}
                     </button>
-                    {can('changeMedia') && (
-                      <button
-                        type='button'
-                        className='tm-t-icon'
-                        onClick={() => setPanel('activities')}
-                        aria-label='共享屏幕、一起听、电视直播'
-                        title='房间活动'
-                      >
-                        <MonitorUp size={19} />
-                      </button>
-                    )}
+                    {/* 所有人都能打开：看正在进行的活动；没有权限的人在面板里看到原因 */}
+                    <button
+                      type='button'
+                      className='tm-t-icon'
+                      onClick={() => setPanel('activities')}
+                      aria-label='房间活动：共享屏幕、一起听、电视直播'
+                      title='房间活动'
+                    >
+                      <MonitorUp size={19} />
+                    </button>
                   </>
                 )}
                 {canPick && (
@@ -686,11 +674,8 @@ export default function RoomView({
       )}
       {panel === 'activities' && (
         <Dialog title='房间活动' onClose={() => setPanel(null)} sheet>
-          <div className='tm-tc-panel tm-tc-pad'>
-            <p className='tm-t-hint'>
-              这些活动有自己的页面，开始后房间里的人都会看到入口。
-            </p>
-            <ActivityLaunchers />
+          <div className='tm-tc-panel'>
+            <ActivityPanel room={current} canStart={can('changeMedia')} />
           </div>
         </Dialog>
       )}

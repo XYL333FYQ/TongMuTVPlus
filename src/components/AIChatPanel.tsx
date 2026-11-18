@@ -925,7 +925,7 @@ export default function AIChatPanel({
       }`}
     >
       <div
-        className={`relative ${drawerWidth} h-full bg-surface shadow-2xl flex flex-col transition-transform duration-300 ease-out pointer-events-auto ${
+        className={`tm-drawer-surface relative ${drawerWidth} h-full bg-surface shadow-2xl flex flex-col transition-transform duration-300 ease-out pointer-events-auto ${
           isOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
       >

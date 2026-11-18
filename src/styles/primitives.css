@@ -4,6 +4,13 @@
  * 页面骨架见 layout.css，浮层见 feedback.css。
  */
 
+/* —— 贴右、满高的抽屉面板 ——
+   顶边让开刘海安全区和 Windows 客户端右上角的窗口按钮（--tm-window-controls-h，见 tokens.css），
+   否则抽屉标题行的关闭按钮和窗口关闭按钮叠在一起。所有右侧抽屉的面板都加这个类 */
+.tm-drawer-surface {
+  padding-top: max(var(--tm-safe-top), var(--tm-window-controls-h));
+}
+
 /* —— 材质 —— */
 .tm-glass {
   background: var(--tm-glass);

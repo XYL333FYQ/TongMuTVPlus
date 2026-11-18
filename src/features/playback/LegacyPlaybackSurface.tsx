@@ -37,6 +37,11 @@ import { isAnimeCategoryText } from '@/lib/anime-keyword-expr';
 import { createAnime4KRenderer } from '@/lib/anime4k';
 import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
 import {
+  DEVICE_TIER_EVENT,
+  getDeviceTier,
+  isHandheld,
+} from '@/lib/device-tier';
+import {
   clearDanmakuCacheByTitle,
   convertDanmakuFormat,
   getDanmakuById,
@@ -112,6 +117,7 @@ import {
   QUICK_FORWARD_STORAGE_KEY,
   SEEK_STEP_STORAGE_KEY,
 } from '@/lib/player-seek-settings';
+import { installTouchControls } from '@/lib/player-touch-controls';
 import {
   getRecommendationCache,
   recommendationCacheKeys,
@@ -138,6 +144,7 @@ import {
   getVideoResolutionFromM3u8,
   processImageUrl,
 } from '@/lib/utils';
+import { useDeviceTier } from '@/hooks/useDeviceTier';
 import { useEnableAIComments } from '@/hooks/useEnableAIComments';
 import { useEnableComments } from '@/hooks/useEnableComments';
 import {
@@ -448,19 +455,8 @@ function PlayPageClient() {
     };
   }, [showShortcutDialog]);
 
-  // 大屏设备检测（判断选集面板是否在右侧）
-  const [isLargeScreen, setIsLargeScreen] = useState(false);
-
-  // 检测是否为大屏设备
-  useEffect(() => {
-    const checkScreenSize = () => {
-      setIsLargeScreen(window.innerWidth >= 768); // md断点
-    };
-
-    checkScreenSize();
-    window.addEventListener('resize', checkScreenSize);
-    return () => window.removeEventListener('resize', checkScreenSize);
-  }, []);
+  // 面板用右侧抽屉还是底部面板：除了手机竖屏都用抽屉，和房间面板同一规则（lib/device-tier.ts）
+  const isLargeScreen = useDeviceTier() !== 'phone';
 
   // 抽屉管理：打开指定抽屉时关闭其他抽屉
   const openDrawer = (
@@ -9628,6 +9624,19 @@ function PlayPageClient() {
                         return;
                       }
 
+                      // iPhone：直接用系统全屏（会自己横过来）。网页全屏在竖着的手机上只是中间一小条画面，
+                      // 按钮还会被挤出屏幕（2026-11-18 问题文档第 6 条）。iPad 仍可以选
+                      if (isHandheld()) {
+                        const video = artPlayerRef.current.template
+                          ?.$video as any;
+                        if (video?.webkitEnterFullscreen)
+                          video.webkitEnterFullscreen();
+                        else if (video?.requestFullscreen)
+                          void video.requestFullscreen();
+                        else artPlayerRef.current.fullscreenWeb = true;
+                        return;
+                      }
+
                       // 非 PWA 模式：创建对话框（使用项目统一风格）
                       const dialog = document.createElement('div');
                       dialog.className = 'ios-fullscreen-dialog';
@@ -9955,14 +9964,16 @@ function PlayPageClient() {
               '.art-control-screenshot'
             ) as HTMLElement;
             if (screenshotBtn) {
-              const isPortrait = window.innerHeight > window.innerWidth;
-              const isSmallScreen = window.innerWidth < 768;
               screenshotBtn.style.display =
-                isPortrait && isSmallScreen ? 'none' : '';
+                getDeviceTier() === 'phone' ? 'none' : '';
             }
           };
           updateScreenshotVisibility();
           window.addEventListener('resize', updateScreenshotVisibility);
+          window.addEventListener(
+            DEVICE_TIER_EVENT,
+            updateScreenshotVisibility
+          );
           artPlayerRef.current.on('fullscreen', updateScreenshotVisibility);
           artPlayerRef.current.on('fullscreenWeb', updateScreenshotVisibility);
 
@@ -10664,101 +10675,21 @@ function PlayPageClient() {
           });
         }
 
-        // 添加全屏快进快退按钮
-        artPlayerRef.current.layers.add({
-          name: 'seek-buttons',
-          html: `
-          <div class="seek-buttons-container" style="display: none;">
-            <button class="seek-button seek-backward" style="position: fixed; left: 20px; top: 40%; transform: translateY(-50%); width: 48px; height: 48px; background: color-mix(in srgb, var(--tm-room-cinema-bg) 55%, transparent); border: none; border-radius: var(--tm-radius-full); display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 9999; transition: opacity 0.2s;">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M11 18V6l-8.5 6 8.5 6zm.5-6l8.5 6V6l-8.5 6z" fill="white"/>
-              </svg>
-            </button>
-            <button class="seek-button seek-forward" style="position: fixed; right: 20px; top: 40%; transform: translateY(-50%); width: 48px; height: 48px; background: color-mix(in srgb, var(--tm-room-cinema-bg) 55%, transparent); border: none; border-radius: var(--tm-radius-full); display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 9999; transition: opacity 0.2s;">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M4 18l8.5-6L4 6v12zm9-12v12l8.5-6L13 6z" fill="white"/>
-              </svg>
-            </button>
-          </div>
-        `,
-          mounted: ($el: HTMLElement) => {
-            const container = $el.querySelector(
-              '.seek-buttons-container'
-            ) as HTMLElement;
-            const backwardBtn = $el.querySelector(
-              '.seek-backward'
-            ) as HTMLElement;
-            const forwardBtn = $el.querySelector(
-              '.seek-forward'
-            ) as HTMLElement;
-
-            // 按「快进/倒退时间」配置快退
-            backwardBtn.onclick = () => {
-              if (artPlayerRef.current) {
-                artPlayerRef.current.currentTime = calculateSeekTime(
-                  artPlayerRef.current.currentTime,
-                  artPlayerRef.current.duration,
-                  -1,
-                  seekStepSecondsRef.current
-                );
-                artPlayerRef.current.notice.show = `快退 ${formatQuickForwardDuration(
-                  seekStepSecondsRef.current
-                )}`;
-              }
-            };
-
-            // 按「快进/倒退时间」配置快进
-            forwardBtn.onclick = () => {
-              if (artPlayerRef.current) {
-                artPlayerRef.current.currentTime = calculateSeekTime(
-                  artPlayerRef.current.currentTime,
-                  artPlayerRef.current.duration,
-                  1,
-                  seekStepSecondsRef.current
-                );
-                artPlayerRef.current.notice.show = `快进 ${formatQuickForwardDuration(
-                  seekStepSecondsRef.current
-                )}`;
-              }
-            };
-
-            // 监听全屏状态变化
-            const updateVisibility = () => {
-              const isFullscreen =
-                artPlayerRef.current?.fullscreen ||
-                artPlayerRef.current?.fullscreenWeb ||
-                !!document.fullscreenElement;
-              const isMobile =
-                Math.min(window.innerWidth, window.innerHeight) < 768;
-              const controlsVisible =
-                !artPlayerRef.current?.template?.$player?.classList.contains(
-                  'art-hide-cursor'
-                );
-
-              if (container) {
-                const shouldShow = isFullscreen && isMobile && controlsVisible;
-                container.style.display = shouldShow ? 'block' : 'none';
-              }
-            };
-
-            artPlayerRef.current.on('fullscreen', updateVisibility);
-            artPlayerRef.current.on('fullscreenWeb', updateVisibility);
-            document.addEventListener('fullscreenchange', updateVisibility);
-            window.addEventListener('resize', updateVisibility);
-
-            // 监听鼠标移动和视频事件来检测控件显示/隐藏
-            artPlayerRef.current.on('video:timeupdate', updateVisibility);
-            if (artPlayerRef.current.template?.$player) {
-              const observer = new MutationObserver(updateVisibility);
-              observer.observe(artPlayerRef.current.template.$player, {
-                attributes: true,
-                attributeFilter: ['class'],
-              });
-            }
-
-            updateVisibility();
-          },
-        });
+        // 触屏：画面正中快退 / 播放暂停 / 快进，手机全屏左上退出。和房间播放器共用一份
+        // （src/lib/player-touch-controls.ts）；以前这里自己写了一套，位置、样子都和房间不一样
+        {
+          const art = artPlayerRef.current;
+          const disposeTouch = installTouchControls(art, {
+            stepSeconds: () => seekStepSecondsRef.current,
+            exitFullscreen: () => {
+              if (document.fullscreenElement)
+                void document.exitFullscreen().catch(() => undefined);
+              if (art.fullscreenWeb) art.fullscreenWeb = false;
+              if (art.fullscreen) art.fullscreen = false;
+            },
+          });
+          art.on('destroy', disposeTouch);
+        }
 
         // 监听视频可播放事件，这时恢复播放进度更可靠
         artPlayerRef.current.on('video:canplay', () => {
@@ -11952,20 +11883,20 @@ function PlayPageClient() {
           </div>
 
           <div
-            className={`grid gap-4 lg:h-[520px] xl:h-[620px] 2xl:h-[680px] transition-all duration-300 ease-in-out ${
+            className={`grid gap-4 wide:h-[520px] wide:xl:h-[620px] wide:2xl:h-[680px] transition-all duration-300 ease-in-out ${
               isEpisodeSelectorCollapsed
                 ? 'grid-cols-1'
-                : 'grid-cols-1 lg:grid-cols-4'
+                : 'grid-cols-1 wide:grid-cols-4'
             }`}
           >
             {/* 播放器 */}
             <div
               className={`transition-all duration-300 ease-in-out rounded-xl border border-line flex flex-col ${
-                isEpisodeSelectorCollapsed ? 'col-span-1' : 'lg:col-span-3'
+                isEpisodeSelectorCollapsed ? 'col-span-1' : 'wide:col-span-3'
               }`}
             >
               {/* 播放器容器 */}
-              <div className='tm-playback-video-frame relative w-full h-[300px] lg:flex-1 lg:min-h-0'>
+              <div className='tm-playback-video-frame relative w-full h-[300px] wide:flex-1 wide:min-h-0'>
                 <div
                   ref={artRef}
                   data-tm-player-mount
@@ -11980,7 +11911,7 @@ function PlayPageClient() {
                         // 错误显示
                         <>
                           {/* 错误图标：跟页面级失败态同款，遮罩是深色底所以钉暗色 */}
-                          <div className='relative mb-4 lg:mb-8'>
+                          <div className='relative mb-4 wide:mb-8'>
                             {/* 失败态款式（旧版那一套各页自备） */}
                             <LoadingErrorStyle
                               steps={VIDEO_LOAD_STEPS}
@@ -11998,7 +11929,7 @@ function PlayPageClient() {
                           </div>
 
                           {/* 错误消息 */}
-                          <div className='space-y-2 lg:space-y-4'>
+                          <div className='space-y-2 wide:space-y-4'>
                             <p className='text-xl font-medium text-fg'>
                               播放失败
                             </p>
@@ -12159,7 +12090,7 @@ function PlayPageClient() {
               {/* 第三方应用打开按钮 - 观影室同步状态下隐藏 */}
               {videoUrl && !playSync.isInRoom && (
                 <div
-                  className='mt-3 px-2 lg:flex-shrink-0 tm-solo-tools'
+                  className='mt-3 px-2 wide:flex-shrink-0 tm-solo-tools'
                   data-tm-sheet={soloSheet === 'tools' ? 'open' : undefined}
                   role={soloSheet === 'tools' ? 'dialog' : undefined}
                   aria-label={soloSheet === 'tools' ? '工具' : undefined}
@@ -12174,16 +12105,16 @@ function PlayPageClient() {
                       <X className='h-5 w-5' />
                     </button>
                   </div>
-                  <div className='bg-raised backdrop-blur-sm rounded-lg p-2 border border-line w-full lg:w-auto overflow-x-auto'>
-                    <div className='flex gap-1.5 flex-nowrap lg:flex-wrap items-center'>
-                      <div className='flex gap-1.5 flex-wrap lg:justify-end lg:flex-1'>
+                  <div className='bg-raised backdrop-blur-sm rounded-lg p-2 border border-line w-full wide:w-auto overflow-x-auto'>
+                    <div className='flex gap-1.5 flex-nowrap wide:flex-wrap items-center'>
+                      <div className='flex gap-1.5 flex-wrap wide:justify-end wide:flex-1'>
                         {/* 下载按钮 */}
                         <button
                           onClick={(e) => {
                             e.preventDefault();
                             setShowDownloadSelector(true);
                           }}
-                          className='group relative flex items-center justify-center gap-1 w-11 h-11 lg:w-auto lg:h-auto lg:px-2 lg:py-1.5 bg-surface text-[13px] font-medium rounded-md transition-all duration-200 shadow-sm hover:shadow-md cursor-pointer overflow-hidden border border-line flex-shrink-0 min-h-[44px] tm-press'
+                          className='group relative flex items-center justify-center gap-1 w-11 h-11 wide:w-auto wide:h-auto wide:px-2 wide:py-1.5 bg-surface text-[13px] font-medium rounded-md transition-all duration-200 shadow-sm hover:shadow-md cursor-pointer overflow-hidden border border-line flex-shrink-0 min-h-[44px] tm-press'
                           title='下载视频'
                         >
                           <svg
@@ -12199,7 +12130,7 @@ function PlayPageClient() {
                               d='M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4'
                             />
                           </svg>
-                          <span className='hidden lg:inline max-w-0 group-hover:max-w-[100px] overflow-hidden whitespace-nowrap transition-all duration-200 ease-in-out text-fg'>
+                          <span className='hidden wide:inline max-w-0 group-hover:max-w-[100px] overflow-hidden whitespace-nowrap transition-all duration-200 ease-in-out text-fg'>
                             下载
                           </span>
                         </button>
@@ -12257,7 +12188,7 @@ function PlayPageClient() {
                                 });
                               });
                           }}
-                          className='group relative flex items-center justify-center gap-1 w-11 h-11 lg:w-auto lg:h-auto lg:px-2 lg:py-1.5 bg-fg hover:opacity-90 text-inverse text-[13px] font-medium rounded-md transition-all duration-200 shadow-sm hover:shadow-md cursor-pointer overflow-hidden border border-line flex-shrink-0 min-h-[44px] tm-press'
+                          className='group relative flex items-center justify-center gap-1 w-11 h-11 wide:w-auto wide:h-auto wide:px-2 wide:py-1.5 bg-fg hover:opacity-90 text-inverse text-[13px] font-medium rounded-md transition-all duration-200 shadow-sm hover:shadow-md cursor-pointer overflow-hidden border border-line flex-shrink-0 min-h-[44px] tm-press'
                           title='复制视频链接'
                         >
                           <svg
@@ -12273,7 +12204,7 @@ function PlayPageClient() {
                               d='M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z'
                             />
                           </svg>
-                          <span className='hidden lg:inline max-w-0 group-hover:max-w-[100px] overflow-hidden whitespace-nowrap transition-all duration-200 ease-in-out text-inverse'>
+                          <span className='hidden wide:inline max-w-0 group-hover:max-w-[100px] overflow-hidden whitespace-nowrap transition-all duration-200 ease-in-out text-inverse'>
                             复制链接
                           </span>
                         </button>
@@ -12287,7 +12218,7 @@ function PlayPageClient() {
                                 handleCreateWatchRoom();
                               }}
                               disabled={isCreatingRoom}
-                              className='group relative flex items-center justify-center gap-1 w-11 h-11 lg:w-auto lg:h-auto lg:px-2 lg:py-1.5 bg-fg hover:opacity-90 text-[13px] font-medium rounded-md transition-all duration-200 shadow-sm hover:shadow-md cursor-pointer overflow-hidden border border-line flex-shrink-0 disabled:opacity-60 disabled:cursor-wait text-inverse min-h-[44px] tm-press'
+                              className='group relative flex items-center justify-center gap-1 w-11 h-11 wide:w-auto wide:h-auto wide:px-2 wide:py-1.5 bg-fg hover:opacity-90 text-[13px] font-medium rounded-md transition-all duration-200 shadow-sm hover:shadow-md cursor-pointer overflow-hidden border border-line flex-shrink-0 disabled:opacity-60 disabled:cursor-wait text-inverse min-h-[44px] tm-press'
                               title={
                                 watchRoomContext.currentRoom
                                   ? '返回房间'
@@ -12299,7 +12230,7 @@ function PlayPageClient() {
                               ) : (
                                 <Users className='w-4 h-4 flex-shrink-0 text-inverse' />
                               )}
-                              <span className='hidden lg:inline max-w-0 group-hover:max-w-[120px] overflow-hidden whitespace-nowrap transition-all duration-200 ease-in-out text-inverse'>
+                              <span className='hidden wide:inline max-w-0 group-hover:max-w-[120px] overflow-hidden whitespace-nowrap transition-all duration-200 ease-in-out text-inverse'>
                                 {isCreatingRoom
                                   ? '创建中'
                                   : watchRoomContext.currentRoom
@@ -12316,7 +12247,7 @@ function PlayPageClient() {
                               await handleCreateTranscodeSession();
                             }}
                             disabled={isTranscoding}
-                            className={`group relative flex items-center justify-center gap-1 w-11 h-11 lg:w-auto lg:h-auto lg:px-2 lg:py-1.5 text-[13px] font-medium rounded-md transition-all duration-200 shadow-sm hover:shadow-md overflow-hidden border flex-shrink-0 ${
+                            className={`group relative flex items-center justify-center gap-1 w-11 h-11 wide:w-auto wide:h-auto wide:px-2 wide:py-1.5 text-[13px] font-medium rounded-md transition-all duration-200 shadow-sm hover:shadow-md overflow-hidden border flex-shrink-0 ${
                               isTranscoding
                                 ? 'bg-raised text-fg border-line cursor-wait min-h-[44px] tm-press'
                                 : 'bg-raised hover:bg-line text-fg border-line cursor-pointer min-h-[44px] tm-press'
@@ -12328,7 +12259,7 @@ function PlayPageClient() {
                             ) : (
                               <Router className='w-4 h-4 flex-shrink-0 text-fg' />
                             )}
-                            <span className='hidden lg:inline max-w-0 group-hover:max-w-[100px] overflow-hidden whitespace-nowrap transition-all duration-200 ease-in-out text-fg'>
+                            <span className='hidden wide:inline max-w-0 group-hover:max-w-[100px] overflow-hidden whitespace-nowrap transition-all duration-200 ease-in-out text-fg'>
                               {isTranscoding ? '转码中' : '转码'}
                             </span>
                           </button>
@@ -12340,12 +12271,12 @@ function PlayPageClient() {
                             e.preventDefault();
                             setShowShortcutDialog(true);
                           }}
-                          className='group relative flex items-center justify-center gap-1 w-11 h-11 lg:w-auto lg:h-auto lg:px-2 lg:py-1.5 bg-raised hover:bg-line text-[13px] font-medium rounded-md transition-all duration-200 shadow-sm hover:shadow-md cursor-pointer overflow-hidden border border-line flex-shrink-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-fg focus-visible:ring-offset-2 focus-visible:ring-offset-fg min-h-[44px] tm-press'
+                          className='group relative flex items-center justify-center gap-1 w-11 h-11 wide:w-auto wide:h-auto wide:px-2 wide:py-1.5 bg-raised hover:bg-line text-[13px] font-medium rounded-md transition-all duration-200 shadow-sm hover:shadow-md cursor-pointer overflow-hidden border border-line flex-shrink-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-fg focus-visible:ring-offset-2 focus-visible:ring-offset-fg min-h-[44px] tm-press'
                           title='快捷键说明'
                           aria-label='查看播放快捷键说明'
                         >
                           <Keyboard className='w-4 h-4 flex-shrink-0 text-fg' />
-                          <span className='hidden lg:inline max-w-0 group-hover:max-w-[100px] overflow-hidden whitespace-nowrap transition-all duration-200 ease-in-out text-fg'>
+                          <span className='hidden wide:inline max-w-0 group-hover:max-w-[100px] overflow-hidden whitespace-nowrap transition-all duration-200 ease-in-out text-fg'>
                             快捷键
                           </span>
                         </button>
@@ -12374,7 +12305,7 @@ function PlayPageClient() {
                             // URL encode 避免冒号被吃掉
                             window.open(`potplayer://${proxyUrl}`, '_blank');
                           }}
-                          className='group relative flex items-center justify-center gap-1 w-11 h-11 lg:w-auto lg:h-auto lg:px-2 lg:py-1.5 bg-raised hover:bg-line text-[13px] font-medium rounded-md transition-all duration-200 shadow-sm hover:shadow-md cursor-pointer overflow-hidden border border-line flex-shrink-0 min-h-[44px] tm-press'
+                          className='group relative flex items-center justify-center gap-1 w-11 h-11 wide:w-auto wide:h-auto wide:px-2 wide:py-1.5 bg-raised hover:bg-line text-[13px] font-medium rounded-md transition-all duration-200 shadow-sm hover:shadow-md cursor-pointer overflow-hidden border border-line flex-shrink-0 min-h-[44px] tm-press'
                           title='PotPlayer'
                         >
                           <img
@@ -12382,7 +12313,7 @@ function PlayPageClient() {
                             alt='PotPlayer'
                             className='w-4 h-4 flex-shrink-0'
                           />
-                          <span className='hidden lg:inline max-w-0 group-hover:max-w-[100px] overflow-hidden whitespace-nowrap transition-all duration-200 ease-in-out text-fg'>
+                          <span className='hidden wide:inline max-w-0 group-hover:max-w-[100px] overflow-hidden whitespace-nowrap transition-all duration-200 ease-in-out text-fg'>
                             PotPlayer
                           </span>
                         </button>
@@ -12411,7 +12342,7 @@ function PlayPageClient() {
                             // URL encode 避免冒号被吃掉
                             window.open(`vlc://${proxyUrl}`, '_blank');
                           }}
-                          className='group relative flex items-center justify-center gap-1 w-11 h-11 lg:w-auto lg:h-auto lg:px-2 lg:py-1.5 bg-raised hover:bg-line text-[13px] font-medium rounded-md transition-all duration-200 shadow-sm hover:shadow-md cursor-pointer overflow-hidden border border-line flex-shrink-0 min-h-[44px] tm-press'
+                          className='group relative flex items-center justify-center gap-1 w-11 h-11 wide:w-auto wide:h-auto wide:px-2 wide:py-1.5 bg-raised hover:bg-line text-[13px] font-medium rounded-md transition-all duration-200 shadow-sm hover:shadow-md cursor-pointer overflow-hidden border border-line flex-shrink-0 min-h-[44px] tm-press'
                           title='VLC'
                         >
                           <img
@@ -12419,7 +12350,7 @@ function PlayPageClient() {
                             alt='VLC'
                             className='w-4 h-4 flex-shrink-0'
                           />
-                          <span className='hidden lg:inline max-w-0 group-hover:max-w-[100px] overflow-hidden whitespace-nowrap transition-all duration-200 ease-in-out text-fg'>
+                          <span className='hidden wide:inline max-w-0 group-hover:max-w-[100px] overflow-hidden whitespace-nowrap transition-all duration-200 ease-in-out text-fg'>
                             VLC
                           </span>
                         </button>
@@ -12448,7 +12379,7 @@ function PlayPageClient() {
                             // URL encode 避免冒号被吃掉
                             window.open(`mpv://${proxyUrl}`, '_blank');
                           }}
-                          className='group relative flex items-center justify-center gap-1 w-11 h-11 lg:w-auto lg:h-auto lg:px-2 lg:py-1.5 bg-raised hover:bg-line text-[13px] font-medium rounded-md transition-all duration-200 shadow-sm hover:shadow-md cursor-pointer overflow-hidden border border-line flex-shrink-0 min-h-[44px] tm-press'
+                          className='group relative flex items-center justify-center gap-1 w-11 h-11 wide:w-auto wide:h-auto wide:px-2 wide:py-1.5 bg-raised hover:bg-line text-[13px] font-medium rounded-md transition-all duration-200 shadow-sm hover:shadow-md cursor-pointer overflow-hidden border border-line flex-shrink-0 min-h-[44px] tm-press'
                           title='MPV'
                         >
                           <img
@@ -12456,7 +12387,7 @@ function PlayPageClient() {
                             alt='MPV'
                             className='w-4 h-4 flex-shrink-0'
                           />
-                          <span className='hidden lg:inline max-w-0 group-hover:max-w-[100px] overflow-hidden whitespace-nowrap transition-all duration-200 ease-in-out text-fg'>
+                          <span className='hidden wide:inline max-w-0 group-hover:max-w-[100px] overflow-hidden whitespace-nowrap transition-all duration-200 ease-in-out text-fg'>
                             MPV
                           </span>
                         </button>
@@ -12489,7 +12420,7 @@ function PlayPageClient() {
                               '_blank'
                             );
                           }}
-                          className='group relative flex items-center justify-center gap-1 w-11 h-11 lg:w-auto lg:h-auto lg:px-2 lg:py-1.5 bg-raised hover:bg-line text-[13px] font-medium rounded-md transition-all duration-200 shadow-sm hover:shadow-md cursor-pointer overflow-hidden border border-line flex-shrink-0 min-h-[44px] tm-press'
+                          className='group relative flex items-center justify-center gap-1 w-11 h-11 wide:w-auto wide:h-auto wide:px-2 wide:py-1.5 bg-raised hover:bg-line text-[13px] font-medium rounded-md transition-all duration-200 shadow-sm hover:shadow-md cursor-pointer overflow-hidden border border-line flex-shrink-0 min-h-[44px] tm-press'
                           title='MX Player'
                         >
                           <img
@@ -12497,7 +12428,7 @@ function PlayPageClient() {
                             alt='MX Player'
                             className='w-4 h-4 flex-shrink-0'
                           />
-                          <span className='hidden lg:inline max-w-0 group-hover:max-w-[100px] overflow-hidden whitespace-nowrap transition-all duration-200 ease-in-out text-fg'>
+                          <span className='hidden wide:inline max-w-0 group-hover:max-w-[100px] overflow-hidden whitespace-nowrap transition-all duration-200 ease-in-out text-fg'>
                             MX Player
                           </span>
                         </button>
@@ -12525,7 +12456,7 @@ function PlayPageClient() {
                               : urlToUse;
                             window.open(`nplayer-${proxyUrl}`, '_blank');
                           }}
-                          className='group relative flex items-center justify-center gap-1 w-11 h-11 lg:w-auto lg:h-auto lg:px-2 lg:py-1.5 bg-raised hover:bg-line text-[13px] font-medium rounded-md transition-all duration-200 shadow-sm hover:shadow-md cursor-pointer overflow-hidden border border-line flex-shrink-0 min-h-[44px] tm-press'
+                          className='group relative flex items-center justify-center gap-1 w-11 h-11 wide:w-auto wide:h-auto wide:px-2 wide:py-1.5 bg-raised hover:bg-line text-[13px] font-medium rounded-md transition-all duration-200 shadow-sm hover:shadow-md cursor-pointer overflow-hidden border border-line flex-shrink-0 min-h-[44px] tm-press'
                           title='nPlayer'
                         >
                           <img
@@ -12533,7 +12464,7 @@ function PlayPageClient() {
                             alt='nPlayer'
                             className='w-4 h-4 flex-shrink-0'
                           />
-                          <span className='hidden lg:inline max-w-0 group-hover:max-w-[100px] overflow-hidden whitespace-nowrap transition-all duration-200 ease-in-out text-fg'>
+                          <span className='hidden wide:inline max-w-0 group-hover:max-w-[100px] overflow-hidden whitespace-nowrap transition-all duration-200 ease-in-out text-fg'>
                             nPlayer
                           </span>
                         </button>
@@ -12566,7 +12497,7 @@ function PlayPageClient() {
                               '_blank'
                             );
                           }}
-                          className='group relative flex items-center justify-center gap-1 w-11 h-11 lg:w-auto lg:h-auto lg:px-2 lg:py-1.5 bg-raised hover:bg-line text-[13px] font-medium rounded-md transition-all duration-200 shadow-sm hover:shadow-md cursor-pointer overflow-hidden border border-line flex-shrink-0 min-h-[44px] tm-press'
+                          className='group relative flex items-center justify-center gap-1 w-11 h-11 wide:w-auto wide:h-auto wide:px-2 wide:py-1.5 bg-raised hover:bg-line text-[13px] font-medium rounded-md transition-all duration-200 shadow-sm hover:shadow-md cursor-pointer overflow-hidden border border-line flex-shrink-0 min-h-[44px] tm-press'
                           title='IINA'
                         >
                           <img
@@ -12574,7 +12505,7 @@ function PlayPageClient() {
                             alt='IINA'
                             className='w-4 h-4 flex-shrink-0'
                           />
-                          <span className='hidden lg:inline max-w-0 group-hover:max-w-[100px] overflow-hidden whitespace-nowrap transition-all duration-200 ease-in-out text-fg'>
+                          <span className='hidden wide:inline max-w-0 group-hover:max-w-[100px] overflow-hidden whitespace-nowrap transition-all duration-200 ease-in-out text-fg'>
                             IINA
                           </span>
                         </button>
@@ -12728,10 +12659,10 @@ function PlayPageClient() {
 
             {/* 选集和换源 - 在移动端始终显示，在 lg 及以上可折叠 */}
             <div
-              className={`relative z-10 h-[350px] lg:h-full md:overflow-hidden transition-all duration-300 ease-in-out tm-solo-selector ${
+              className={`relative z-10 h-[350px] wide:h-full md:overflow-hidden transition-all duration-300 ease-in-out tm-solo-selector ${
                 isEpisodeSelectorCollapsed
-                  ? 'lg:col-span-1 lg:hidden lg:opacity-0 lg:scale-95'
-                  : 'lg:col-span-1 lg:opacity-100 lg:scale-100'
+                  ? 'wide:col-span-1 wide:hidden wide:opacity-0 wide:scale-95'
+                  : 'wide:col-span-1 wide:opacity-100 wide:scale-100'
               }`}
               data-tm-sheet={
                 soloSheet && soloSheet !== 'tools' ? 'open' : undefined

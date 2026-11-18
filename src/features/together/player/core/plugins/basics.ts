@@ -1,13 +1,12 @@
 /*
- * 小插件：防息屏、倍速记忆（含 Safari 重置补救）、移动端全屏快进快退按钮、
- * 自定义进度条图标、iOS 全屏选择。
+ * 小插件：防息屏、倍速记忆（含 Safari 重置补救）、自定义进度条图标、iOS 全屏。
+ * 触屏快进快退和全屏退出按钮两个播放器共用，见 src/lib/player-touch-controls.ts。
  */
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { calculateSeekTime } from '@/lib/player-seek-settings';
+import { isHandheld } from '@/lib/device-tier';
 
-import { formatDuration } from './format';
 import { playerEnvironment } from '../env';
 import type { PlayerPlugin } from '../WatchPlayer';
 
@@ -137,68 +136,7 @@ export function stepPlaybackRate(art: any, rates: number[], direction: 1 | -1) {
       : `倍速：${next}x`;
 }
 
-// ------------------------------------------------------------ 全屏快进快退按钮
-
-/** 手机全屏时屏幕两侧显示快退 / 快进按钮 */
-export function seekButtonsPlugin(stepSeconds: () => number): PlayerPlugin {
-  return ({ art }) => {
-    const layer = art.layers.add({
-      name: 'tm-seek-buttons',
-      html: `<div class="tm-seek-buttons" hidden>
-          <button type="button" class="tm-seek-button" data-dir="-1" aria-label="快退">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M11 18V6l-8.5 6 8.5 6zm.5-6l8.5 6V6l-8.5 6z"/></svg>
-          </button>
-          <button type="button" class="tm-seek-button" data-dir="1" aria-label="快进">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M4 18l8.5-6L4 6v12zm9-12v12l8.5-6L13 6z"/></svg>
-          </button>
-        </div>`,
-      style: { pointerEvents: 'none', inset: '0', position: 'absolute' },
-    });
-    const root = (layer || art.layers['tm-seek-buttons']) as HTMLElement;
-    const box = root?.querySelector('.tm-seek-buttons') as HTMLElement | null;
-    if (!box) return;
-    box.querySelectorAll<HTMLButtonElement>('button').forEach((button) => {
-      button.onclick = (event) => {
-        event.stopPropagation();
-        const direction = Number(button.dataset.dir) as 1 | -1;
-        const seconds = stepSeconds();
-        art.currentTime = calculateSeekTime(
-          art.currentTime,
-          art.duration,
-          direction,
-          seconds
-        );
-        art.notice.show = `${direction > 0 ? '快进' : '快退'} ${formatDuration(
-          seconds
-        )}`;
-      };
-    });
-    const update = () => {
-      const fullscreen =
-        art.fullscreen || art.fullscreenWeb || !!document.fullscreenElement;
-      const mobile = Math.min(window.innerWidth, window.innerHeight) < 768;
-      const controlsVisible =
-        !art.template?.$player?.classList.contains('art-hide-cursor');
-      box.hidden = !(fullscreen && mobile && controlsVisible);
-    };
-    const observer = new MutationObserver(update);
-    if (art.template?.$player)
-      observer.observe(art.template.$player, {
-        attributes: true,
-        attributeFilter: ['class'],
-      });
-    art.on('fullscreen', update);
-    art.on('fullscreenWeb', update);
-    document.addEventListener('fullscreenchange', update);
-    window.addEventListener('resize', update);
-    update();
-    return () => {
-      observer.disconnect();
-      document.removeEventListener('fullscreenchange', update);
-      window.removeEventListener('resize', update);
-    };
-  };
-}
+// 全屏快进快退按钮：和自己看共用，见 src/lib/player-touch-controls.ts
 
 // ------------------------------------------------------------ 进度条图标
 
@@ -250,7 +188,7 @@ export const progressThumbPlugin: PlayerPlugin = ({ art }) => {
 
 /**
  * iOS 原生全屏会切到系统播放器（没有弹幕）。
- * 添加到主屏幕时直接全屏，否则让用户选网页全屏或系统全屏。
+ * iPhone 直接用系统全屏；iPad 添加到主屏幕时网页全屏，否则让用户选网页全屏或系统全屏。
  */
 export function iosFullscreenControl(
   getArt: () => any,
@@ -279,6 +217,14 @@ export function iosFullscreenControl(
         art.fullscreenWeb = false;
         return;
       }
+      const nativeFullscreen = () => {
+        const video = art.template?.$video as any;
+        if (video?.requestFullscreen) video.requestFullscreen();
+        else video?.webkitEnterFullscreen?.();
+      };
+      // iPhone：直接用系统全屏（会自己横过来）。网页全屏在竖着的手机上只是中间一小条画面，
+      // 按钮还会被挤出屏幕（2026-11-18 问题文档第 6 条）。iPad 仍可以选
+      if (isHandheld()) return nativeFullscreen();
       const standalone =
         window.matchMedia('(display-mode: standalone)').matches ||
         window.matchMedia('(display-mode: fullscreen)').matches ||
@@ -289,11 +235,7 @@ export function iosFullscreenControl(
       }
       const choice = await choose();
       if (choice === 'web') art.fullscreenWeb = true;
-      if (choice === 'native') {
-        const video = art.template?.$video as any;
-        if (video?.requestFullscreen) video.requestFullscreen();
-        else video?.webkitEnterFullscreen?.();
-      }
+      if (choice === 'native') nativeFullscreen();
     },
   };
 }

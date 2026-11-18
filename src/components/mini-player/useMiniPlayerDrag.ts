@@ -2,6 +2,8 @@
 
 import { CSSProperties, RefObject, useEffect, useState } from 'react';
 
+import { isHandheld } from '@/lib/device-tier';
+
 // 小窗拖动（自己看和一起看的小窗共用）：只给小窗的画面和按钮层加一个位移（CSS 变量 → transform），
 // 不改它们的定位、尺寸，也不碰视频元素本身，拖动时不会断播。
 // 松手后吸附到最近的角落，位置记在本地，下次打开小窗还在原处。
@@ -87,7 +89,7 @@ function shift(box: Box, dx: number, dy: number): Box {
 // base 是不加位移时（默认位置）的外框。默认位置就是设计的最低点：
 // 手机上它已经让开了底部导航，所以不允许拖得比它更低
 function limits(base: Box) {
-  const margin = window.innerWidth < 768 ? 12 : 24;
+  const margin = isHandheld() ? 12 : 24;
   const width = base.right - base.left;
   const minLeft = margin;
   const maxLeft = Math.max(minLeft, window.innerWidth - margin - width);

@@ -7,7 +7,9 @@
  */
 
 import { Clapperboard, ListPlus, Loader2, MonitorPlay, X } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+
+import ModalLayer from '@/components/feedback/ModalLayer';
 
 import type { FilmRef } from '../commands';
 
@@ -32,14 +34,6 @@ export default function FilmSheet(props: {
   const [error, setError] = useState('');
   const [done, setDone] = useState(false);
 
-  useEffect(() => {
-    const close = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') props.onClose();
-    };
-    window.addEventListener('keydown', close);
-    return () => window.removeEventListener('keydown', close);
-  }, [props]);
-
   const run = async (kind: 'queue' | 'play', task: () => Promise<unknown>) => {
     setBusy(kind);
     setError('');
@@ -58,14 +52,12 @@ export default function FilmSheet(props: {
 
   const hasSource = !!props.choice.film;
   return (
-    <div className='tm-t-dialog-backdrop' onClick={props.onClose}>
-      <div
-        className='tm-t-dialog tm-t-sheet'
-        role='dialog'
-        aria-modal='true'
-        aria-label={`怎么看《${props.choice.title}》`}
-        onClick={(event) => event.stopPropagation()}
-      >
+    <ModalLayer
+      label={`怎么看《${props.choice.title}》`}
+      onClose={props.onClose}
+      className='tm-t-dialog-layer'
+    >
+      <div className='tm-t-dialog tm-t-sheet'>
         <header className='tm-t-dialog-head'>
           <div>
             <h2>{props.choice.title}</h2>
@@ -149,6 +141,6 @@ export default function FilmSheet(props: {
           </p>
         )}
       </div>
-    </div>
+    </ModalLayer>
   );
 }

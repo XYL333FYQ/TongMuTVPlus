@@ -183,10 +183,8 @@ html[data-tm-shell] {
     --tm-fs-title: 32px;
   }
 }
-@media (max-width: 767px) {
-  :root {
-    --tm-header-height: 52px;
-  }
+:root:where(:is([data-tm-device='phone'], [data-tm-device='phone-landscape'])) {
+  --tm-header-height: 52px;
 }
 @media (min-width: 1200px) {
   :root {
@@ -222,20 +220,41 @@ html[data-tm-shell] {
   }
 }
 
-/* 两种小窗（自己看 / 一起看）共用的尺寸：一块画面，手机上缩小并让开底栏 */
+/* 画面上的颜色（播放器、电视、直播、图片查看等全站共用）。
+   名字带 room 是历史原因：以前定义在旧房间样式 room-shared.css 里，旧房间删掉后挪到这里 */
+:root {
+  --tm-room-cinema-bg: var(--tm-video-bg);
+  --tm-room-player-text: var(--tm-on-art);
+  --tm-room-scrim: var(--tm-scrim);
+  --tm-room-shadow: rgba(0, 0, 0, 0.3);
+}
+
+/* Windows 客户端没有系统标题栏，最小化 / 最大化 / 关闭三个按钮由客户端画在页面右上角最顶层
+   （apps/desktop/src-tauri/src/inject.js，138×32）。贴着顶边的右上角按钮（抽屉、对话框的关闭）
+   都要让开这一块；网页和手机上是 0。data-tm-platform 由 lib/platform.ts 在首帧前写好 */
+:root {
+  --tm-window-controls-w: 0px;
+  --tm-window-controls-h: 0px;
+}
+html[data-tm-platform='desktop'] {
+  --tm-window-controls-w: 138px;
+  --tm-window-controls-h: 32px;
+}
+
+/* 两种小窗（自己看 / 一起看）共用的尺寸：一块画面。
+   按设备档位（lib/device-tier.ts）：手机竖 / 横用小号，并让开站点底栏（底栏也只在手机两档出现，shell.css）；
+   平板和电脑用大号 */
 :root {
   --tm-mini-w: 320px;
   --tm-mini-h: calc(var(--tm-mini-w) * 9 / 16);
   --tm-mini-gap: 20px;
-  --tm-mini-bottom: calc(var(--tm-mini-gap) + var(--tm-safe-bottom, 0px));
+  --tm-mini-nav-space: 0px;
+  --tm-mini-bottom: calc(
+    var(--tm-mini-gap) + var(--tm-mini-nav-space) + var(--tm-safe-bottom, 0px)
+  );
 }
-@media (max-width: 767px) {
-  :root {
-    --tm-mini-w: min(212px, 56vw);
-    --tm-mini-gap: 12px;
-    --tm-mini-bottom: calc(
-      var(--tm-bottom-nav-height, 64px) + var(--tm-mini-gap) +
-        var(--tm-safe-bottom, 0px)
-    );
-  }
+html:is([data-tm-device='phone'], [data-tm-device='phone-landscape']) {
+  --tm-mini-w: min(212px, 56vw);
+  --tm-mini-gap: 12px;
+  --tm-mini-nav-space: var(--tm-bottom-nav-height, 64px);
 }

@@ -7,12 +7,14 @@ jest.mock('next/navigation', () => ({
   usePathname: () => pathname,
 }));
 
-// 手机触屏：粗指针 + 窄屏
+// 手机触屏：粗指针 + 手机档位（lib/device-tier.ts）
 function phoneTouch(matches: boolean) {
+  document.documentElement.setAttribute(
+    'data-tm-device',
+    matches ? 'phone' : 'wide'
+  );
   window.matchMedia = jest.fn().mockImplementation((query: string) => ({
-    matches:
-      matches &&
-      (query === '(pointer: coarse)' || query === '(max-width: 767px)'),
+    matches: matches && query === '(pointer: coarse)',
     media: query,
     addEventListener: jest.fn(),
     removeEventListener: jest.fn(),
@@ -31,6 +33,7 @@ afterEach(() => {
   cleanup();
   jest.restoreAllMocks();
   document.documentElement.removeAttribute('data-tm-platform');
+  document.documentElement.removeAttribute('data-tm-device');
   pathname = '/';
 });
 
