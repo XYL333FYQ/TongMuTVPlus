@@ -1,0 +1,376 @@
+/* ================================================================
+ * 小窗（自己看 / 一起看共用，2026-11-17 重做）
+ * 一块 16:9 画面，按钮叠在画面上面：左上放大、右上收起或聊天 + 关闭、
+ * 中间播放暂停、右下声音、左下片名。手机缩小并让开底栏，可拖动、松手吸附角落。
+ * 播放器自带的控制栏、大播放图标、提示、弹幕等在小窗里一律不显示，
+ * 点画面不会暂停（一起看里那等于暂停整个房间），只能用按钮操作。
+ * 尺寸来自 tokens.css 的 --tm-mini-*，位移来自 useMiniPlayerDrag 写的 --tm-mini-x/y。
+ * ================================================================ */
+
+:root {
+  /* 在页面内容之上，在顶栏、底栏、对话框之下 */
+  --tm-z-mini: 600;
+}
+
+/* ---------------------------------------------------------------- 画面框 */
+
+/* 一起看：一整块（画面槽 + 按钮层） */
+.tm-mini {
+  position: fixed;
+  z-index: var(--tm-z-mini);
+  right: var(--tm-mini-gap);
+  bottom: var(--tm-mini-bottom);
+  width: var(--tm-mini-w);
+  height: var(--tm-mini-h);
+  overflow: hidden;
+  border-radius: var(--tm-radius-lg);
+  background: var(--tm-video-bg);
+  box-shadow: var(--tm-shadow-lg), inset 0 0 0 1px var(--tm-line);
+  transform: translate3d(var(--tm-mini-x, 0px), var(--tm-mini-y, 0px), 0);
+  transition: transform 220ms var(--tm-ease-out);
+  animation: tm-mini-in var(--tm-d-panel) var(--tm-ease-out);
+}
+.tm-mini-slot {
+  position: absolute;
+  inset: 0;
+}
+
+/* 自己看：画面节点在播放页里，小窗时把它和按钮层摆到同一个位置 */
+html
+  body
+  .tm-playback-host:is(
+    [data-presentation='mini'],
+    [data-presentation='folded']
+  ) {
+  z-index: var(--tm-z-mini);
+}
+.tm-playback-host[data-presentation='mini'] [data-tm-player-mount],
+.tm-playback-host[data-presentation='mini'] .tm-playback-chrome {
+  position: fixed;
+  inset: auto var(--tm-mini-gap) var(--tm-mini-bottom) auto;
+  width: var(--tm-mini-w);
+  height: var(--tm-mini-h);
+  border-radius: var(--tm-radius-lg);
+  transform: translate3d(var(--tm-mini-x, 0px), var(--tm-mini-y, 0px), 0);
+  transition: transform 220ms var(--tm-ease-out);
+  animation: tm-mini-in var(--tm-d-panel) var(--tm-ease-out);
+}
+.tm-playback-host[data-presentation='mini'] [data-tm-player-mount] {
+  z-index: 1;
+  overflow: hidden;
+  visibility: visible;
+  background: var(--tm-video-bg);
+  box-shadow: var(--tm-shadow-lg), inset 0 0 0 1px var(--tm-line);
+}
+/* 按钮层必须在画面之上：画面节点在播放页的 .tm-page-container（z-index: 10）里，
+   按钮层要高过它，否则整块画面盖住全部按钮（2026-11-17 用户反馈“小窗没有返回按钮”的原因）。
+   外层宿主是 pointer-events: none，这里要打开 */
+.tm-playback-host[data-presentation='mini'] .tm-playback-chrome {
+  z-index: 20;
+  visibility: visible;
+  pointer-events: auto;
+}
+/* 收起：画面藏起来继续出声，只留一条胶囊 */
+.tm-playback-host[data-presentation='folded'] [data-tm-player-mount] {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+.tm-playback-host[data-presentation='folded'] .tm-playback-chrome {
+  position: fixed;
+  z-index: 20;
+  right: var(--tm-mini-gap);
+  bottom: var(--tm-mini-bottom);
+  visibility: visible;
+  pointer-events: auto;
+  animation: tm-mini-in var(--tm-d-panel) var(--tm-ease-out);
+}
+.tm-playback-host[data-dragging='true']
+  :is([data-tm-player-mount], .tm-playback-chrome),
+.tm-mini-drag[data-dragging='true'] .tm-mini {
+  transition: none;
+}
+
+/* 小窗里的播放器只当画面用 */
+:is(
+    .tm-playback-host[data-presentation='mini'] [data-tm-player-mount],
+    .tm-mini
+  )
+  .art-video-player {
+  width: 100% !important;
+  height: 100% !important;
+  pointer-events: none;
+}
+:is(
+    .tm-playback-host[data-presentation='mini'] [data-tm-player-mount],
+    .tm-mini
+  )
+  :is(
+    .art-bottom,
+    .art-mask,
+    .art-state,
+    .art-notice,
+    .art-settings,
+    .art-setting,
+    .art-contextmenus,
+    .art-info,
+    .art-layer-lock,
+    .art-layer-seek-buttons,
+    .art-layer-tm-seek-buttons,
+    .art-layer-danmuku,
+    .art-layer-play-record-jump,
+    .art-layer-auto-playback,
+    .artplayer-plugin-danmuku,
+    #play-record-jump-container,
+    .tm-room-live-controls,
+    .tm-t-dm,
+    .tm-t-dm-ctl
+  ) {
+  display: none !important;
+}
+
+/* ---------------------------------------------------------------- 按钮层 */
+
+.tm-mini-controls[data-variant='mini'] {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  touch-action: none;
+  cursor: grab;
+}
+.tm-playback-host[data-presentation='mini']
+  .tm-mini-controls[data-variant='mini'] {
+  position: fixed;
+}
+.tm-mini-btn {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--tm-scrim);
+  color: var(--tm-on-art);
+  box-shadow: inset 0 0 0 1px var(--tm-art-glass-line);
+  cursor: pointer;
+  transition: opacity var(--tm-d-hover), background var(--tm-d-hover);
+}
+/* 看着是 32px，点按范围撑到 44px */
+.tm-mini-btn::after {
+  content: '';
+  position: absolute;
+  inset: -6px;
+}
+.tm-mini-btn:hover {
+  background: rgb(var(--tm-ink-rgb) / 0.72);
+}
+.tm-mini-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.tm-mini-btn:focus-visible,
+.tm-mini-title:focus-visible {
+  outline: 2px solid var(--tm-on-art);
+  outline-offset: 2px;
+}
+.tm-mini-controls[data-variant='mini'] [data-mini='full'] {
+  top: 8px;
+  left: 8px;
+}
+.tm-mini-controls[data-variant='mini'] [data-mini='close'] {
+  top: 8px;
+  right: 8px;
+}
+.tm-mini-controls[data-variant='mini']
+  :is([data-mini='fold'], [data-mini='chat']) {
+  top: 8px;
+  right: 48px;
+}
+.tm-mini-controls[data-variant='mini'] [data-mini='mute'] {
+  right: 8px;
+  bottom: 8px;
+}
+.tm-mini-controls[data-variant='mini'] [data-mini='play'] {
+  top: 50%;
+  left: 50%;
+  width: 44px;
+  height: 44px;
+  transform: translate(-50%, -50%);
+}
+.tm-mini-controls[data-variant='mini'] [data-mini='play']::after {
+  inset: 0;
+}
+.tm-mini-controls[data-variant='mini'] [data-mini='title'] {
+  bottom: 8px;
+  left: 8px;
+  width: auto;
+  max-width: calc(100% - 56px);
+  height: 28px;
+  padding: 0 10px;
+  border-radius: 14px;
+}
+.tm-mini-controls[data-variant='mini'] [data-mini='title']::after {
+  inset: -8px -4px;
+}
+.tm-mini-controls[data-variant='mini'] [data-mini='title'] strong {
+  overflow: hidden;
+  font-size: 12px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.tm-mini-badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: var(--tm-radius-full);
+  background: var(--tm-on-art);
+  color: var(--tm-on-art-ink);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 18px;
+}
+/* 鼠标设备：平时只看画面，移上去 / 键盘聚焦时出按钮；触屏一直显示 */
+@media (hover: hover) and (pointer: fine) {
+  .tm-mini-controls[data-variant='mini'] .tm-mini-btn {
+    opacity: 0;
+  }
+  .tm-mini-controls[data-variant='mini']:is(:hover, :focus-within)
+    .tm-mini-btn {
+    opacity: 1;
+  }
+}
+/* 手机竖屏的小窗很小，片名放不下 */
+@media (max-width: 767px) {
+  .tm-mini-controls[data-variant='mini'] [data-mini='title'] {
+    display: none;
+  }
+}
+
+/* ---------------------------------------------------------------- 胶囊（收起） */
+
+.tm-mini-controls[data-variant='bar'] {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  width: min(340px, calc(100vw - 2 * var(--tm-mini-gap)));
+  height: 56px;
+  padding: 6px;
+  border-radius: var(--tm-radius-lg);
+  background: var(--tm-glass-solid, var(--tm-surface));
+  color: var(--tm-text);
+  box-shadow: var(--tm-shadow-lg), inset 0 0 0 1px var(--tm-line);
+}
+.tm-mini-controls[data-variant='bar'] .tm-mini-btn {
+  position: relative;
+  flex: none;
+  width: 44px;
+  height: 44px;
+  background: none;
+  box-shadow: none;
+  color: var(--tm-text);
+}
+.tm-mini-controls[data-variant='bar'] .tm-mini-btn::after {
+  inset: 0;
+}
+.tm-mini-controls[data-variant='bar'] .tm-mini-btn:hover {
+  background: var(--tm-surface-raised);
+}
+.tm-mini-controls[data-variant='bar'] .tm-mini-btn:focus-visible,
+.tm-mini-title:focus-visible {
+  outline-color: var(--tm-text);
+}
+.tm-mini-title {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  min-height: 44px;
+  padding: 0 6px 0 4px;
+  border-radius: var(--tm-radius-md);
+  color: var(--tm-text);
+  text-align: left;
+}
+.tm-mini-title:hover {
+  background: var(--tm-surface-raised);
+}
+.tm-mini-thumb {
+  position: relative;
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 56px;
+  height: 32px;
+  overflow: hidden;
+  border-radius: var(--tm-radius-sm);
+  background: var(--tm-surface-raised);
+  color: var(--tm-muted);
+}
+.tm-mini-thumb img {
+  object-fit: cover;
+}
+.tm-mini-copy {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.tm-mini-copy :is(strong, small) {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.tm-mini-copy strong {
+  font-size: 13px;
+  font-weight: 600;
+}
+.tm-mini-copy small {
+  color: var(--tm-muted);
+  font-size: 12px;
+}
+@media (max-width: 480px) {
+  .tm-mini-thumb {
+    display: none;
+  }
+}
+
+/* ---------------------------------------------------------------- 动效 */
+
+@keyframes tm-mini-in {
+  from {
+    opacity: 0;
+    scale: 0.96;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tm-mini,
+  .tm-mini-btn,
+  .tm-playback-host:is([data-presentation='mini'], [data-presentation='folded'])
+    :is([data-tm-player-mount], .tm-playback-chrome) {
+    animation: none;
+    transition: none;
+  }
+}
+html[data-tm-reduced-motion]
+  :is(
+    .tm-mini,
+    .tm-mini-btn,
+    .tm-playback-host[data-presentation='mini'] [data-tm-player-mount],
+    .tm-playback-host:is(
+        [data-presentation='mini'],
+        [data-presentation='folded']
+      )
+      .tm-playback-chrome
+  ) {
+  animation: none;
+  transition: none;
+}

@@ -20,6 +20,7 @@ import {
 } from 'react';
 
 import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
+import { useAudioFocus } from '@/hooks/useAudioFocus';
 import { useVoiceChat } from '@/hooks/useVoiceChat';
 
 import { useWatchRoomContextSafe } from '@/components/WatchRoomProvider';
@@ -101,6 +102,8 @@ export default function TogetherSession({ children }: { children: ReactNode }) {
 
   // ------------------------------------------------ 房间画面开不开
   const soloPlaying = !!solo?.href;
+  const soloHref = useRef(solo?.href || null);
+  soloHref.current = solo?.href || null;
   const [closedMini, setClosedMini] = useState(false);
   useEffect(() => {
     if (onStage) setClosedMini(false);
@@ -127,6 +130,21 @@ export default function TogetherSession({ children }: { children: ReactNode }) {
     commands: { roomCommand: command },
     keyboard: onStage,
   });
+
+  // 房间画面也遵守“同一时刻只有一个出声”：TV、直播、音乐在放时，
+  // 房间影片照常同步但静音；用户在房间画面上按播放或打开声音就拿回声音
+  const [roomVideo, setRoomVideo] = useState<HTMLVideoElement | null>(null);
+  const roomPlayer = player.player;
+  useEffect(() => {
+    if (!roomPlayer) {
+      setRoomVideo(null);
+      return;
+    }
+    const sync = () => setRoomVideo(roomPlayer.video);
+    sync();
+    return roomPlayer.on('ready', sync);
+  }, [roomPlayer]);
+  const roomSound = useAudioFocus(roomVideo, false);
 
   // ------------------------------------------------ 聊天弹幕
   const [danmakuChat, setDanmakuChatState] = useState(true);
@@ -257,6 +275,15 @@ export default function TogetherSession({ children }: { children: ReactNode }) {
       if (onPlayPage && firstPath.current === '/play' && !navigated.current)
         return true;
       const film = filmFromHref(href);
+      // 自己正在看的就是这一部（例如从小窗点“回到播放页”）：直接显示，不再问怎么看
+      const watching = soloHref.current ? filmFromHref(soloHref.current) : null;
+      if (
+        film &&
+        watching &&
+        film.source === watching.source &&
+        film.videoId === watching.videoId
+      )
+        return true;
       let title = film?.title || '';
       if (!title) {
         try {
@@ -314,6 +341,9 @@ export default function TogetherSession({ children }: { children: ReactNode }) {
           status={status}
           player={player.player}
           canPlayback={can('playback')}
+          roomPlaying={!!state?.isPlaying}
+          soundBlocked={!roomSound.ownsSound}
+          onClaimSound={roomSound.claimSound}
           unread={chatOpen ? 0 : unread}
           slot={attachMini}
           onChat={() => setChatOpen((open) => !open)}

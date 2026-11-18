@@ -14,6 +14,7 @@ import '@/styles/shell.css';
 import '@/styles/home.css';
 import '@/features/playback/playback.css';
 import '@/features/together/together.css';
+import '@/components/mini-player/mini-player.css';
 import '@/styles/room-shared.css';
 import './globals.css';
 

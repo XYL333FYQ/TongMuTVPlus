@@ -133,3 +133,33 @@ test('listeners survive a rebuild', async () => {
   instances[1].emit('play');
   expect(handler).toHaveBeenCalledTimes(1);
 });
+
+test('a room player can turn off long-press speed-up while keeping the rate menu', async () => {
+  const room = new WatchPlayer({
+    container: document.createElement('div'),
+    rateControl: true,
+    fastForward: false,
+  });
+  await room.load(source('https://a/1.mp4'));
+  expect(instances[0].option.playbackRate).toBe(true);
+  expect(instances[0].option.fastForward).toBe(false);
+
+  const solo = new WatchPlayer({ container: document.createElement('div') });
+  await solo.load(source('https://a/2.mp4'));
+  expect(instances[1].option.fastForward).toBe(true);
+});
+
+test('never rotates the player in web fullscreen', async () => {
+  const player = new WatchPlayer({ container: document.createElement('div') });
+  await player.load(source('https://a/1.mp4'));
+  expect(instances[0].option.autoOrientation).toBe(false);
+});
+
+test('playOrThrow reports a blocked autoplay, play() stays quiet', async () => {
+  const player = new WatchPlayer({ container: document.createElement('div') });
+  await player.load(source('https://a/1.mp4'));
+  instances[0].play = () =>
+    Promise.reject(new DOMException('blocked', 'NotAllowedError'));
+  await expect(player.playOrThrow()).rejects.toThrow('blocked');
+  await expect(player.play()).resolves.toBeUndefined();
+});

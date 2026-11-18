@@ -1,22 +1,17 @@
 'use client';
 
 /*
- * 离开房间页后的房间小窗：只有一块画面，按钮叠在画面上（和自己看的小窗同一个样子）。
- * 左上放大回房间、右上聊天 / 关闭、中间播放暂停（走房间命令，没有权限时不显示）、
- * 右下本机声音、左下片名。关闭只停本机画面，人还在房间里（右下角留一个回房间的入口）。
+ * 离开房间页后的房间小窗。外观、按钮位置、拖动和自己看的小窗完全一样
+ * （共用 src/components/mini-player）：左上回房间、右上聊天 / 关闭、
+ * 中间播放暂停（走房间同步，没有权限时不显示）、右下本机声音、左下片名。
+ * 关闭只停本机画面，人还在房间里（右下角留一个回房间的胶囊）。
+ * 点画面本身不做任何事：在房间里点一下画面等于暂停全房间，太容易误触。
  */
 
-import {
-  Maximize2,
-  MessageCircle,
-  Pause,
-  Play,
-  Volume2,
-  VolumeX,
-  X,
-} from 'lucide-react';
-import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+
+import MiniPlayerControls from '@/components/mini-player/MiniPlayerControls';
+import { useMiniPlayerDrag } from '@/components/mini-player/useMiniPlayerDrag';
 
 import type { WatchPlayer } from '../player/core/WatchPlayer';
 
@@ -35,6 +30,7 @@ function useVideoState(player: WatchPlayer | null) {
       player.on('video:pause', sync),
       player.on('video:volumechange', sync),
       player.on('video:playing', sync),
+      player.on('video:emptied', sync),
     ];
     return () => off.forEach((dispose) => dispose());
   }, [player]);
@@ -47,82 +43,77 @@ export default function RoomMini(props: {
   status: string;
   player: WatchPlayer | null;
   canPlayback: boolean;
+  /** 房间正在放映（浏览器拦下自动播放时，没有权限的成员也能点一下跟上） */
+  roomPlaying?: boolean;
+  /** 另一个播放器（或另一个标签页）正在出声，这里先静音 */
+  soundBlocked?: boolean;
+  onClaimSound?(): void;
   unread: number;
   slot(element: HTMLDivElement | null): void;
   onChat(): void;
   onClose(): void;
 }) {
   const { paused, muted } = useVideoState(props.player);
+  const dragRef = useRef<HTMLDivElement>(null);
+  const drag = useMiniPlayerDrag(dragRef, true);
   return (
-    <section
-      className='tm-t-mini'
-      aria-label={`房间小窗：${props.roomName}，${props.status}`}
+    <div
+      ref={dragRef}
+      className='tm-mini-drag'
+      data-dragging={drag.dragging ? 'true' : undefined}
+      style={drag.style}
     >
-      <div ref={props.slot} className='tm-t-mini-slot' />
-      <Link
-        href='/watch-room'
-        data-mini='full'
-        className='tm-t-mini-btn'
-        aria-label='回到房间'
-        title='回到房间'
+      <section
+        className='tm-mini'
+        data-tm-mini-part=''
+        aria-label={`房间小窗：${props.roomName}，${props.status}`}
       >
-        <Maximize2 size={16} />
-      </Link>
-      <button
-        type='button'
-        data-mini='chat'
-        className='tm-t-mini-btn'
-        onClick={props.onChat}
-        aria-label={`房间聊天${props.unread ? `，${props.unread} 条未读` : ''}`}
-        title='房间聊天'
-      >
-        <MessageCircle size={16} />
-        {props.unread > 0 && (
-          <b className='tm-t-mini-badge'>
-            {props.unread > 99 ? '99+' : props.unread}
-          </b>
-        )}
-      </button>
-      <button
-        type='button'
-        data-mini='close'
-        className='tm-t-mini-btn'
-        onClick={props.onClose}
-        aria-label='关闭小窗（仍在房间里）'
-        title='关闭小窗，仍在房间里'
-      >
-        <X size={16} />
-      </button>
-      {props.canPlayback && (
-        <button
-          type='button'
-          data-mini='play'
-          className='tm-t-mini-btn'
-          onClick={() =>
-            paused ? props.player?.play() : props.player?.pause()
+        <div ref={props.slot} className='tm-mini-slot' />
+        <MiniPlayerControls
+          title={props.title}
+          expand={{ label: '回到房间', href: '/watch-room' }}
+          close={{ label: '关闭小窗（仍在房间里）', onClick: props.onClose }}
+          extra={{
+            kind: 'chat',
+            label: `房间聊天${props.unread ? `，${props.unread} 条未读` : ''}`,
+            onClick: props.onChat,
+            badge: props.unread,
+          }}
+          play={
+            props.canPlayback
+              ? {
+                  paused,
+                  disabled: !props.player,
+                  playLabel: '全房间继续播放',
+                  pauseLabel: '全房间暂停',
+                  onToggle: () =>
+                    paused ? void props.player?.play() : props.player?.pause(),
+                }
+              : props.roomPlaying && paused
+              ? {
+                  // 只是本机没在放（例如浏览器拦下了自动播放）：点了跟上房间进度
+                  paused: true,
+                  disabled: !props.player,
+                  playLabel: '跟上房间播放',
+                  pauseLabel: '跟上房间播放',
+                  onToggle: () => void props.player?.play(),
+                }
+              : undefined
           }
-          aria-label={paused ? '全房间继续播放' : '全房间暂停'}
-          title={paused ? '全房间继续播放' : '全房间暂停'}
-        >
-          {paused ? <Play size={18} /> : <Pause size={18} />}
-        </button>
-      )}
-      <button
-        type='button'
-        data-mini='mute'
-        className='tm-t-mini-btn'
-        onClick={() => {
-          const video = props.player?.video;
-          if (video) video.muted = !video.muted;
-        }}
-        aria-label={muted ? '打开本机声音' : '本机静音'}
-        title={muted ? '打开本机声音' : '本机静音'}
-      >
-        {muted ? <VolumeX size={16} /> : <Volume2 size={16} />}
-      </button>
-      <Link href='/watch-room' data-mini='title' className='tm-t-mini-btn'>
-        <strong>{props.title}</strong>
-      </Link>
-    </section>
+          sound={{
+            muted: muted || !!props.soundBlocked,
+            muteLabel: '本机静音',
+            unmuteLabel: props.soundBlocked
+              ? '在这里听（别处正在出声）'
+              : '打开本机声音',
+            onToggle: () => {
+              if (props.soundBlocked) return props.onClaimSound?.();
+              const video = props.player?.video;
+              if (video) video.muted = !video.muted;
+            },
+          }}
+        />
+      </section>
+    </div>
   );
 }

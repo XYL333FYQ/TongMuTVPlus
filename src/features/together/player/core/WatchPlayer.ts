@@ -8,6 +8,8 @@
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
+import { lockLandscapeInFullscreen } from '@/lib/player-orientation';
+
 import { enableArtKeyboardAccess } from '@/features/together/player/core/art-keyboard';
 
 import { isSafariLike, playerEnvironment } from './env';
@@ -68,8 +70,13 @@ export interface WatchPlayerOptions {
   minBufferAhead?: number;
   hlsModes?: Partial<HlsModes>;
   autoplay?: boolean;
-  /** false 时隐藏倍速和长按加速（一起看没有播放权限时） */
+  /** false 时隐藏倍速和长按加速 */
   rateControl?: boolean;
+  /**
+   * 手机长按临时 3 倍速。默认跟 rateControl 一样；一起看传 false：
+   * 房间只有一个倍速，长按会把全房间都变成 3 倍，松手又改回去，所有人跟着卡一下。
+   */
+  fastForward?: boolean;
   /** 截图、下一集等底栏按钮 */
   controls?: any[];
   settings?: any[];
@@ -184,7 +191,18 @@ export class WatchPlayer {
   }
 
   play() {
-    return Promise.resolve(this.art?.play?.()).catch(() => undefined);
+    return this.playOrThrow().catch(() => undefined);
+  }
+  /**
+   * 和 play() 一样，但浏览器拦下自动播放（NotAllowedError）时把错误抛出来。
+   * 一起看的同步引擎靠它提示“点击播放，加入房间同步”；play() 会吞掉错误。
+   */
+  playOrThrow(): Promise<unknown> {
+    try {
+      return Promise.resolve(this.art?.play?.());
+    } catch (error) {
+      return Promise.reject(error);
+    }
   }
   pause() {
     this.art?.pause?.();
@@ -439,8 +457,10 @@ export class WatchPlayer {
       theme: 'var(--tm-player-accent, #fff)',
       lang: 'zh-cn',
       hotkey: false,
-      fastForward: options.rateControl !== false,
-      autoOrientation: true,
+      fastForward: (options.fastForward ?? options.rateControl) !== false,
+      // 不自动旋转：手机竖着拿时 Artplayer 会把整个播放器转 90°，控制栏和退出按钮跟着歪掉、退不出来。
+      // 横屏看用系统旋转或“全屏”按钮（会请求横屏）
+      autoOrientation: false,
       lock: true,
       ...(source.qualities?.length
         ? {
@@ -499,6 +519,8 @@ export class WatchPlayer {
       art.template?.$setting,
     ]);
     this.disposers.push(stopKeyboard);
+    // 系统全屏时转横屏（替代关掉的 autoOrientation，不做网页全屏的 CSS 旋转）
+    this.disposers.push(lockLandscapeInFullscreen(art));
 
     this.listeners.forEach((handlers, event) =>
       handlers.forEach((handler) => art.on(event, handler))

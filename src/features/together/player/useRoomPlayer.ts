@@ -201,6 +201,8 @@ export function useRoomPlayer(options: {
           minBufferAhead: 120,
           autoplay: false,
           rateControl: true,
+          // 房间里不做长按加速：房间只有一个倍速，长按等于替全房间改倍速
+          fastForward: false,
           artPlugins: () => [danmaku.artPlugin((danmakuModule as any).default)],
           plugins: [
             wakeLockPlugin,

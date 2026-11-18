@@ -158,6 +158,41 @@ describe('following the room', () => {
     expect(player.playbackRate).toBeCloseTo(1.08);
   });
 
+  it('asks the user to press play once when the browser blocks autoplay', async () => {
+    const player = new FakePlayer();
+    player.blockPlay = true;
+    const effects = {
+      command: jest.fn(async () => ({ success: true })),
+      follow: jest.fn(),
+      stopLocal: jest.fn(),
+      serverNow: () => clock,
+      now: () => clock,
+    };
+    const engine = new RoomSyncEngine(effects);
+    engine.setPort(player);
+    engine.update({
+      roomId: 'room-1',
+      connected: true,
+      canControl: false,
+      state: film(),
+      selfAccountId: 'me',
+      local: local(),
+    });
+    await flush();
+    await engine.tick();
+    await flush();
+    expect(player.paused).toBe(true);
+    expect(
+      player.notices.filter((notice) => notice === '点击播放，加入房间同步')
+    ).toHaveLength(1);
+    // 用户点了播放：追上房间，不替房间发命令
+    player.blockPlay = false;
+    await player.play();
+    await flush();
+    expect(player.paused).toBe(false);
+    expect(effects.command).not.toHaveBeenCalled();
+  });
+
   it('does not chase the room while the player is buffering', async () => {
     const { engine, player } = setup();
     await flush();

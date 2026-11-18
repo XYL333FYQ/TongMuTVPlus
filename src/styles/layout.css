@@ -32,9 +32,14 @@
   body:has(.tm-chat-launcher) .tm-back-to-top {
     bottom: 84px;
   }
-  body:has(.tm-playback-chrome) .tm-back-to-top {
-    bottom: 96px;
-  }
+}
+/* 有小窗或收起胶囊时，返回顶部排在它上面 */
+body:has(.tm-playback-host[data-presentation='mini'], .tm-mini)
+  .tm-back-to-top {
+  bottom: calc(var(--tm-mini-bottom) + var(--tm-mini-h) + 12px);
+}
+body:has(.tm-playback-host[data-presentation='folded']) .tm-back-to-top {
+  bottom: calc(var(--tm-mini-bottom) + 56px + 12px);
 }
 
 /* 聊天与回房共用右下角工具区；返回顶部排在实际显示的入口上方。 */

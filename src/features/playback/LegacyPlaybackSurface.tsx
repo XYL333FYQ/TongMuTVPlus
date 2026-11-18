@@ -125,6 +125,7 @@ import {
   convertSubtitleFileToVttObjectUrl,
   CUSTOM_SUBTITLE_ACCEPT,
 } from '@/lib/subtitle-converter';
+import { lockLandscapeInFullscreen } from '@/lib/player-orientation';
 import { getTMDBImageUrl } from '@/lib/tmdb-image-base';
 import { getTranscoderCookieHeader } from '@/lib/transcoder-cookie.client';
 import {
@@ -8567,7 +8568,9 @@ function PlayPageClient() {
           hotkey: false,
           // 观影室房员禁用长按加速（会临时改变倍速）
           fastForward: !playSyncRef.current.shouldDisableControls,
-          autoOrientation: true,
+          // 不自动旋转：网页全屏时会把整个播放器转 90°，控制栏和退出按钮歪掉、退不出来。
+          // 系统全屏的横屏由下面的 lockLandscapeInFullscreen 负责
+          autoOrientation: false,
           lock: true,
           ...(videoQualities.length > 0
             ? {
@@ -9762,6 +9765,7 @@ function PlayPageClient() {
             art.template?.$setting,
           ]);
           art.on('destroy', stopKeyboardAccess);
+          art.on('destroy', lockLandscapeInFullscreen(art));
         }
 
         artPlayerRef.current.on('flip', syncAnime4KCanvasFlip);

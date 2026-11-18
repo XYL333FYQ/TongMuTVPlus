@@ -1,17 +1,7 @@
 'use client';
 
-import {
-  Film,
-  Maximize2,
-  Minus,
-  Pause,
-  Play,
-  Volume2,
-  VolumeX,
-  X,
-} from 'lucide-react';
+import { X } from 'lucide-react';
 import dynamic from 'next/dynamic';
-import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
 import {
   type CSSProperties,
@@ -22,6 +12,8 @@ import {
   useRef,
   useState,
 } from 'react';
+
+import MiniPlayerControls from '@/components/mini-player/MiniPlayerControls';
 
 import {
   type PlaybackController,
@@ -322,9 +314,8 @@ export default function PlaybackSessionProvider({
     setFolded(false);
     if (href) router.push(href);
   };
-  const playLocked = false;
   const togglePlaying = () => {
-    if (!controller || playLocked) return;
+    if (!controller) return;
     if (controller.video.paused) {
       void Promise.resolve(controller.play()).catch(() => {
         /* 浏览器拒绝自动播放时保持暂停，用户可以再点一次 */
@@ -386,87 +377,40 @@ export default function PlaybackSessionProvider({
         >
           <PlaybackSurface key={surfaceVersion} />
           {(presentation === 'mini' || presentation === 'folded') && (
-            <div
-              className={`tm-playback-chrome tm-playback-chrome--${presentation}`}
-            >
-              <button
-                className='tm-playback-title'
-                data-mini='title'
-                onClick={presentation === 'folded' ? restore : openFull}
-                title='恢复画面'
-              >
-                <span className='tm-playback-thumbnail'>
-                  {metadata.poster ? (
-                    <Image
-                      src={metadata.poster}
-                      alt=''
-                      fill
-                      sizes='72px'
-                      unoptimized
-                    />
-                  ) : (
-                    <Film size={20} aria-hidden='true' />
-                  )}
-                </span>
-                <span className='tm-playback-copy'>
-                  <span>{metadata.title}</span>
-                  <span className='tm-playback-context'>
-                    {!ownsSound && <small>此页静音</small>}
-                  </span>
-                </span>
-              </button>
-              <button
-                data-mini='play'
-                onClick={togglePlaying}
-                disabled={playLocked || !controller}
-                aria-label={
-                  playLocked ? '播放进度由房主控制' : paused ? '播放' : '暂停'
-                }
-                title={
-                  playLocked ? '播放进度由房主控制' : paused ? '播放' : '暂停'
-                }
-              >
-                {paused ? (
-                  <Play size={16} aria-hidden='true' />
-                ) : (
-                  <Pause size={16} aria-hidden='true' />
-                )}
-              </button>
-              <button
-                data-mini='mute'
-                onClick={toggleMuted}
-                aria-label={muted ? '开启本机声音' : '静音本机'}
-              >
-                {muted ? <VolumeX size={16} /> : <Volume2 size={16} />}
-              </button>
-              {/* 回到播放页：小窗和收起态都有一个明确的按钮（不只靠点标题） */}
-              <button
-                data-mini='full'
-                onClick={openFull}
-                aria-label='回到播放页'
-                title='回到播放页'
-              >
-                <Maximize2 size={16} />
-              </button>
-              {presentation === 'mini' && (
-                <button
-                  data-mini='fold'
-                  onClick={minimize}
-                  aria-label='收起画面，继续播放'
-                  title='收起画面，继续播放'
-                >
-                  <Minus size={17} />
-                </button>
-              )}
-              <button
-                data-mini='close'
-                onClick={endSession}
-                aria-label='关闭播放'
-                title='关闭播放'
-              >
-                <X size={17} />
-              </button>
-            </div>
+            <MiniPlayerControls
+              className='tm-playback-chrome'
+              variant={presentation === 'folded' ? 'bar' : 'mini'}
+              title={metadata.title}
+              hint={ownsSound ? undefined : '此页静音，点声音按钮在这里听'}
+              poster={metadata.poster}
+              expand={{ label: '回到播放页', onClick: openFull }}
+              titleAction={
+                presentation === 'folded'
+                  ? { label: '展开小窗', onClick: restore }
+                  : undefined
+              }
+              close={{ label: '关闭播放', onClick: endSession }}
+              extra={{
+                kind: 'fold',
+                label: '收起画面，继续播放',
+                onClick: minimize,
+              }}
+              play={{
+                paused,
+                disabled: !controller,
+                playLabel: '播放',
+                pauseLabel: '暂停',
+                onToggle: togglePlaying,
+              }}
+              sound={{
+                muted: muted || !ownsSound,
+                muteLabel: '静音本机',
+                unmuteLabel: ownsSound
+                  ? '开启本机声音'
+                  : '在这里听（另一标签页正在出声）',
+                onToggle: toggleMuted,
+              }}
+            />
           )}
         </div>
       )}
