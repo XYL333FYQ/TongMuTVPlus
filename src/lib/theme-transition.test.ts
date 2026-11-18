@@ -1,7 +1,9 @@
 import {
+  AURA_SIZE,
   changeThemeWithTransition,
   readSnapshotGeometry,
   resolveThemeMotion,
+  themeLayerFrames,
 } from './theme-transition';
 
 // 测试里用简化的假实现替换浏览器的视图过渡接口，类型放宽到测试需要的部分
@@ -156,7 +158,8 @@ test('an obsolete ready callback cannot remove the latest origin or overwrite it
   expect(nextOrigin).toHaveAttribute('data-tm-theme-origin', 'true');
   second.resolve();
   await secondRequest;
-  expect(animate).toHaveBeenCalledTimes(1);
+  // 只有最新那次真正动起来：一组 = 裁切、日冕环、底层收放
+  expect(animate).toHaveBeenCalledTimes(3);
   expect(skip).toHaveBeenCalled();
   expect(nextOrigin).not.toHaveAttribute('data-tm-theme-origin');
   expect(document.documentElement.dataset.tmThemeTransition).toBeUndefined();
@@ -272,7 +275,7 @@ test.each(['light', 'dark'] as const)(
     origin.getBoundingClientRect = () =>
       ({ left: 20, top: 30, width: 44, height: 44 } as DOMRect);
     await changeThemeWithTransition(theme, setTheme, origin);
-    expect(animate).toHaveBeenCalledTimes(1);
+    expect(animate).toHaveBeenCalledTimes(3);
     const frames = animate.mock.calls[0][0];
     const farthest = Math.hypot(
       Math.max(42, window.innerWidth - 42),
@@ -317,6 +320,59 @@ test('reduced motion cancels the active circular clip-path animation', async () 
   expect(cancelFirst).toHaveBeenCalled();
   expect(document.documentElement).toHaveClass('light');
   expect(origin).not.toHaveAttribute('data-tm-theme-origin');
+});
+
+test('the ring and the layer underneath only move with transform and opacity, without touching page-wide variables', async () => {
+  doc.startViewTransition = startSuccessfulTransition;
+  document.documentElement.className = 'dark';
+  origin.getBoundingClientRect = () =>
+    ({ left: 20, top: 30, width: 44, height: 44 } as DOMRect);
+  const setProperty = jest.spyOn(document.documentElement.style, 'setProperty');
+  await changeThemeWithTransition('light', setTheme, origin);
+  expect(setProperty).not.toHaveBeenCalled();
+  setProperty.mockRestore();
+  const [, ring, under] = animate.mock.calls;
+  expect(ring[1]).toMatchObject({
+    pseudoElement: '::view-transition-group(tm-theme-aura)',
+  });
+  expect(under[1]).toMatchObject({
+    pseudoElement: '::view-transition-old(root)',
+  });
+  [...ring[0], ...under[0]].forEach((frame) =>
+    Object.keys(frame).forEach((key) =>
+      expect(['transform', 'opacity', 'offset']).toContain(key)
+    )
+  );
+});
+
+test('themeLayerFrames centres the ring on the control and grows it to cover the screen', () => {
+  const geometry = {
+    x: 100,
+    y: 50,
+    localX: 100,
+    localY: 50,
+    width: 1280,
+    height: 800,
+    radius: 1000,
+  };
+  const { aura, under } = themeLayerFrames(geometry, false);
+  const half = AURA_SIZE / 2;
+  expect(aura[0].transform).toContain(
+    `translate(${100 - half}px, ${50 - half}px)`
+  );
+  expect(aura[aura.length - 1].transform).toContain(
+    `scale(${(1000 * 2.16) / AURA_SIZE})`
+  );
+  // 底层绕点击点放大：点击点本身不动
+  expect(under[1].transform).toBe(
+    `translate(${100 * (1 - 1.015)}px, ${50 * (1 - 1.015)}px) scale(1.015)`
+  );
+  // 收拢式反过来：环从外面收回，底层从略大回落
+  const back = themeLayerFrames(geometry, true);
+  expect(back.aura[back.aura.length - 1].transform).toContain(
+    `scale(${((1000 * 2.16) / AURA_SIZE) * 0.015})`
+  );
+  expect(back.under[1].transform).toBe('none');
 });
 
 describe('readSnapshotGeometry：圆心取浏览器给出的真实位置', () => {

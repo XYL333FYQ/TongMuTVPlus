@@ -34,8 +34,41 @@ export function computeDeviceTier(
   return 'wide';
 }
 
+/**
+ * 排版用的高度：软键盘弹出时不算数。
+ *
+ * 安卓 App（adjustResize）和部分浏览器在键盘弹出时把窗口高度压矮：平板横屏 1280×800
+ * 弹出键盘后只剩四百多，会被当成“横屏手机”整页换排版，正在输入的框跟着被换掉、键盘立刻收回，
+ * 看起来就是“点输入框没反应”。所以宽度没变、正在输入、高度变矮时，沿用键盘弹出前的高度。
+ * 同样只能用最朴素的语法（boot 脚本内联）。
+ */
+export function settleLayoutHeight(
+  memory: { width: number; height: number },
+  width: number,
+  height: number,
+  typing: boolean
+): number {
+  if (width === memory.width && typing && height < memory.height)
+    return memory.height;
+  memory.width = width;
+  memory.height = height;
+  return height;
+}
+
+/** 正在输入：焦点在可输入的框里，或 App 壳告诉我们键盘开着 */
+export function isTyping(doc: Document): boolean {
+  const active = doc.activeElement as HTMLElement | null;
+  if (doc.documentElement.getAttribute('data-tm-keyboard') === 'open')
+    return true;
+  if (!active) return false;
+  return (
+    active.isContentEditable ||
+    /^(INPUT|TEXTAREA|SELECT)$/.test(active.tagName || '')
+  );
+}
+
 /** 内联到 <head>、在页面脚本之前执行：写档位，并在尺寸 / 方向变化时更新 */
-export const DEVICE_TIER_BOOT_SCRIPT = `(function(){try{var compute=${computeDeviceTier.toString()};var d=document.documentElement,w=window,frame=0;function apply(){frame=0;var coarse=!!(w.matchMedia&&w.matchMedia('(pointer: coarse)').matches);var tier=compute(w.innerWidth,w.innerHeight,coarse);if(d.getAttribute('${DEVICE_TIER_ATTRIBUTE}')===tier)return;d.setAttribute('${DEVICE_TIER_ATTRIBUTE}',tier);try{w.dispatchEvent(new CustomEvent('${DEVICE_TIER_EVENT}',{detail:tier}))}catch(e){}}function schedule(){if(!frame)frame=w.requestAnimationFrame(apply)}apply();w.addEventListener('resize',schedule);w.addEventListener('orientationchange',schedule)}catch(e){}})();`;
+export const DEVICE_TIER_BOOT_SCRIPT = `(function(){try{var compute=${computeDeviceTier.toString()};var settle=${settleLayoutHeight.toString()};var typing=${isTyping.toString()};var d=document.documentElement,w=window,frame=0,memory={width:0,height:0};function apply(){frame=0;var coarse=!!(w.matchMedia&&w.matchMedia('(pointer: coarse)').matches);var height=settle(memory,w.innerWidth,w.innerHeight,typing(document));var tier=compute(w.innerWidth,height,coarse);if(d.getAttribute('${DEVICE_TIER_ATTRIBUTE}')===tier)return;d.setAttribute('${DEVICE_TIER_ATTRIBUTE}',tier);try{w.dispatchEvent(new CustomEvent('${DEVICE_TIER_EVENT}',{detail:tier}))}catch(e){}}function schedule(){if(!frame)frame=w.requestAnimationFrame(apply)}apply();w.addEventListener('resize',schedule);w.addEventListener('orientationchange',schedule)}catch(e){}})();`;
 
 const TIERS: DeviceTier[] = ['phone', 'phone-landscape', 'tablet', 'wide'];
 
@@ -46,6 +79,29 @@ export function getDeviceTier(): DeviceTier {
   if (value && (TIERS as string[]).includes(value)) return value as DeviceTier;
   const coarse = !!window.matchMedia?.('(pointer: coarse)').matches;
   return computeDeviceTier(window.innerWidth, window.innerHeight, coarse);
+}
+
+/**
+ * 页面排版：档位 + 是不是触屏（2026-11-18 用户要求电脑 / 平板 / 手机各有一套）。
+ *   compact  手机竖横两档；以及竖长的电脑窗口
+ *   tablet   触屏的平板，横竖都是（横屏也不照搬电脑）
+ *   desktop  鼠标操作的大屏（电脑网页、电脑客户端）
+ * 档位只看尺寸，“是不是平板”要再看触屏：同样 1280×800，平板和电脑是两套。
+ */
+export type PageLayout = 'compact' | 'tablet' | 'desktop';
+
+export function pageLayoutFor(tier: DeviceTier, coarse: boolean): PageLayout {
+  if (isHandheld(tier)) return 'compact';
+  if (coarse) return 'tablet';
+  return tier === 'wide' ? 'desktop' : 'compact';
+}
+
+/** 主要指针是不是手指 */
+export function isCoarsePointer(): boolean {
+  return (
+    typeof window !== 'undefined' &&
+    !!window.matchMedia?.('(pointer: coarse)').matches
+  );
 }
 
 /** 手机（竖或横） */

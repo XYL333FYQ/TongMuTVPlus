@@ -660,12 +660,28 @@ html[data-tm-reduced-motion] .tm-switch-thumb {
   opacity: 1;
   transform: scale(1.06);
 }
-/* 过渡期间锁死全站普通 DOM 的颜色/背景/边框过渡与骨架动画，彻底消除首帧重绘与 1ms 抖动掉帧 */
-html[data-tm-theme-transition] *:not(.tm-theme-morph):not(.tm-theme-morph *),
+/*
+ * 主题切换的圆形揭开期间（约半秒）：全站普通 DOM 不做颜色 / 背景 / 边框过渡，
+ * 玻璃模糊（backdrop-filter）先关、其他动画暂停——新画面是实时层，这些每一帧都要重画。
+ * 只用最简单的选择器：以前写成 *:not(.tm-theme-morph):not(.tm-theme-morph *)，
+ * 每个元素都要往上翻祖先，页面越大开头结尾那两次全站重算越慢。日月图标在下面单独放行。
+ */
+html[data-tm-theme-transition] *,
 html[data-tm-theme-transition] *::before,
 html[data-tm-theme-transition] *::after {
-  transition-property: none !important;
-  transition-duration: 0s !important;
+  transition: none !important;
+}
+html[data-tm-theme-transition] * {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  animation-play-state: paused !important;
+}
+html[data-tm-theme-transition] .tm-theme-morph {
+  transition: transform var(--tm-d-theme) var(--tm-ease-theme) !important;
+}
+html[data-tm-theme-transition] .tm-theme-morph * {
+  transition: transform var(--tm-d-theme) var(--tm-ease-theme),
+    opacity calc(var(--tm-d-theme) * 0.6) var(--tm-ease-theme) !important;
 }
 html[data-tm-theme-transition] .tm-skeleton::after {
   animation-play-state: paused !important;
@@ -673,10 +689,9 @@ html[data-tm-theme-transition] .tm-skeleton::after {
 [data-tm-theme-origin='true'] {
   view-transition-name: tm-theme-control;
 }
+/* 日冕环的占位：只为了在过渡层里有一个名字，位置由 theme-transition.ts 写在自己身上 */
 [data-tm-theme-aura='true'] {
   position: fixed;
-  left: var(--tm-theme-x, 50vw);
-  top: var(--tm-theme-y, 50vh);
   width: 2px;
   height: 2px;
   margin-left: -1px;
@@ -777,8 +792,10 @@ html[data-tm-reduced-motion='true'] .tm-theme-morph * {
 }
 /*
  * 日冕破晓波前 / 月神蚀日星环（纯 GPU Compositor 缩放层）：
- * 半径设为 1.08 * R，使得 92.59% 处恰好在每一帧严格贴合 clip-path 边界，
- * 用柔亮日冕/月华能量带完全包裹几何裁切线，消除数字剪辑硬边，且下方文字保持 100% 锐利。
+ * 环的外径是 1.08 * R，92.59% 处恰好在每一帧贴合 clip-path 边界，
+ * 用柔亮日冕/月华能量带包裹几何裁切线，消除数字剪辑硬边，且下方文字保持锐利。
+ * 这一层固定 1024px 见方（AURA_SIZE），位置、放大倍数和淡入淡出都由 theme-transition.ts
+ * 用 transform / opacity 动画给出——以前直接画成 2.16R 见方，平板上是六千多像素的图层。
  */
 html[data-tm-theme-transition='circle']::view-transition-old(tm-theme-aura),
 html[data-tm-theme-transition='circle']::view-transition-new(tm-theme-aura) {
@@ -786,16 +803,15 @@ html[data-tm-theme-transition='circle']::view-transition-new(tm-theme-aura) {
 }
 html[data-tm-theme-transition='circle']::view-transition-group(tm-theme-aura) {
   z-index: 1;
-  position: fixed;
-  top: var(--tm-theme-y, 50vh);
-  left: var(--tm-theme-x, 50vw);
-  width: calc(var(--tm-theme-r, 100vmax) * 2.16);
-  height: calc(var(--tm-theme-r, 100vmax) * 2.16);
-  margin-top: calc(var(--tm-theme-r, 100vmax) * -1.08);
-  margin-left: calc(var(--tm-theme-r, 100vmax) * -1.08);
+  top: 0;
+  left: 0;
+  width: 1024px;
+  height: 1024px;
   border-radius: var(--tm-radius-full);
   pointer-events: none;
   contain: layout style paint;
+  opacity: 0;
+  transform-origin: 50% 50%;
   will-change: transform, opacity;
   background: radial-gradient(
     circle,
@@ -807,7 +823,8 @@ html[data-tm-theme-transition='circle']::view-transition-group(tm-theme-aura) {
     color-mix(in srgb, var(--tm-on-art) 28%, transparent) 94.4%,
     transparent 98% 100%
   );
-  animation: tm-theme-corona-expand var(--tm-d-theme) var(--tm-ease-theme) both;
+  /* 盖掉浏览器默认的位置 / 尺寸动画，真正的动画在脚本里 */
+  animation: none;
 }
 html[data-tm-theme-transition='circle'][data-tm-theme-target='dark']::view-transition-group(
     tm-theme-aura
@@ -822,41 +839,6 @@ html[data-tm-theme-transition='circle'][data-tm-theme-target='dark']::view-trans
     color-mix(in srgb, var(--tm-video-bg) 48%, transparent) 95.2%,
     transparent 98.5% 100%
   );
-}
-/* 收拢式：光环随被裁切的旧画面一起往按钮收回（两个目标主题共用） */
-html[data-tm-theme-transition='circle'][data-tm-theme-motion='converge']::view-transition-group(
-    tm-theme-aura
-  ) {
-  animation: tm-theme-lunar-retract var(--tm-d-theme) var(--tm-ease-theme) both;
-}
-@keyframes tm-theme-corona-expand {
-  0% {
-    opacity: 0.9;
-    transform: scale(0.015);
-  }
-  78% {
-    opacity: 0.92;
-  }
-  100% {
-    opacity: 0;
-    transform: scale(1);
-  }
-}
-@keyframes tm-theme-lunar-retract {
-  0% {
-    opacity: 0;
-    transform: scale(1);
-  }
-  14% {
-    opacity: 0.92;
-  }
-  88% {
-    opacity: 0.95;
-  }
-  100% {
-    opacity: 0;
-    transform: scale(0.015);
-  }
 }
 html[data-tm-reduced-motion='true']::view-transition-old(root),
 html[data-tm-reduced-motion='true']::view-transition-new(root),
@@ -893,7 +875,7 @@ html[data-tm-theme-transition='circle']::view-transition-new(root) {
   animation: none;
   mix-blend-mode: normal;
   contain: paint;
-  will-change: clip-path;
+  will-change: clip-path, transform;
 }
 html[data-tm-theme-transition='circle']::view-transition-old(root) {
   z-index: 0;
@@ -916,41 +898,12 @@ html[data-tm-theme-transition='circle'][data-tm-theme-motion='converge']::view-t
  * 和裁切圆同时长同缓动，新旧主题像一个东西在变形，而不是两张图叠换。
  * 铺开式（新画面在上层被圆撑开）：旧画面（底层）从点击点略微放大离场；
  * 收拢式（旧画面在上层被圆收回）：新画面（底层）从略大回落。
- * 铺开 / 收拢由 data-tm-theme-motion 决定：默认进深色收拢、进浅色铺开，App 里两个方向都收拢。
  * 缩放只能 ≥ 1：小于 1 会让画面四边内缩，露出下面的页面底色，形成"边界"。
- * 只动 transform，走合成层；被裁切的那层不加变换，日冕环位置不受影响。
+ * 只动 transform，走合成层；动画由 theme-transition.ts 给（绕点击点 = 原点在左上角、先平移再缩放）。
  */
-html[data-tm-theme-transition='circle'][data-tm-theme-motion='spread']::view-transition-old(
-    root
-  ) {
-  transform-origin: var(--tm-theme-lx, var(--tm-theme-x, 50vw))
-    var(--tm-theme-ly, var(--tm-theme-y, 50vh));
-  will-change: clip-path, transform;
-  animation: tm-theme-under-recede var(--tm-d-theme) var(--tm-ease-theme) both;
-}
-html[data-tm-theme-transition='circle'][data-tm-theme-motion='converge']::view-transition-new(
-    root
-  ) {
-  transform-origin: var(--tm-theme-lx, var(--tm-theme-x, 50vw))
-    var(--tm-theme-ly, var(--tm-theme-y, 50vh));
-  will-change: clip-path, transform;
-  animation: tm-theme-under-settle var(--tm-d-theme) var(--tm-ease-theme) both;
-}
-@keyframes tm-theme-under-recede {
-  from {
-    transform: scale(1);
-  }
-  to {
-    transform: scale(1.015);
-  }
-}
-@keyframes tm-theme-under-settle {
-  from {
-    transform: scale(1.015);
-  }
-  to {
-    transform: scale(1);
-  }
+html[data-tm-theme-transition='circle']::view-transition-old(root),
+html[data-tm-theme-transition='circle']::view-transition-new(root) {
+  transform-origin: 0 0;
 }
 
 /* 减少动态：去掉位移与缩放，只留淡入淡出 */
@@ -970,12 +923,4 @@ html[data-tm-reduced-motion='true'] .tm-skeleton::after {
     animation: none !important;
     background: none;
   }
-}
-
-/* 主题切换的圆形揭开期间，新画面是实时层、每一帧都要重画：
- * 玻璃模糊（backdrop-filter）每帧重算是手机上掉帧的主因，这半秒里先关掉，其他页面动画也暂停 */
-html[data-tm-theme-transition] *:not(.tm-theme-morph):not(.tm-theme-morph *) {
-  -webkit-backdrop-filter: none !important;
-  backdrop-filter: none !important;
-  animation-play-state: paused !important;
 }

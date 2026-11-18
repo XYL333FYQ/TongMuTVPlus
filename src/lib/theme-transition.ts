@@ -8,7 +8,12 @@ const DEFAULT_EASE = 'cubic-bezier(0.4, 0, 0.2, 1)';
 const DEFAULT_DURATION = 520;
 let request = 0;
 let activeTransition: TMViewTransition | undefined;
-let activeAnimation: Animation | undefined;
+let activeAnimations: Animation[] = [];
+
+function cancelActiveAnimations() {
+  activeAnimations.forEach((animation) => animation.cancel());
+  activeAnimations = [];
+}
 let activeOrigin: HTMLElement | undefined;
 let activeAura: HTMLSpanElement | undefined;
 
@@ -141,15 +146,65 @@ export function readSnapshotGeometry(
   }
 }
 
-function mountThemeAura(x: number, y: number, radius: number) {
-  const root = document.documentElement;
-  root.style.setProperty('--tm-theme-x', `${x}px`);
-  root.style.setProperty('--tm-theme-y', `${y}px`);
-  root.style.setProperty('--tm-theme-r', `${radius}px`);
+/**
+ * 日冕环那一层的边长。环画在一块固定大小的方块上、用 transform 放大到铺满，
+ * 而不是直接画成 2.16 倍半径那么大：平板上那样是一块六千多像素见方的图层，GPU 吃不消。
+ */
+export const AURA_SIZE = 1024;
+/** 底层画面朝点击点轻微收放的幅度（只能 ≥ 1，见 primitives.css） */
+const UNDER_SCALE = 1.015;
+
+/**
+ * 过渡里每一层怎么动，全部算成具体数值交给 Web Animations，只动 transform / opacity / clip-path。
+ * 以前位置和半径写成 <html> 上的 CSS 变量：自定义属性会继承，改一次全站每个元素都要重算样式，
+ * 过渡开头和结尾各来一遍，页面越大越卡。
+ */
+export function themeLayerFrames(
+  geometry: SnapshotGeometry,
+  converge: boolean
+) {
+  const clip: Keyframe[] = [
+    { clipPath: `circle(0px at ${geometry.localX}px ${geometry.localY}px)` },
+    {
+      clipPath: `circle(${geometry.radius}px at ${geometry.localX}px ${geometry.localY}px)`,
+    },
+  ];
+  if (converge) clip.reverse();
+  const half = AURA_SIZE / 2;
+  const full = (geometry.radius * 2.16) / AURA_SIZE;
+  const ring = (scale: number) =>
+    `translate(${geometry.x - half}px, ${geometry.y - half}px) scale(${
+      full * scale
+    })`;
+  const aura: Keyframe[] = converge
+    ? [
+        { transform: ring(1), opacity: 0 },
+        { opacity: 0.92, offset: 0.14 },
+        { opacity: 0.95, offset: 0.88 },
+        { transform: ring(0.015), opacity: 0 },
+      ]
+    : [
+        { transform: ring(0.015), opacity: 0.9 },
+        { opacity: 0.92, offset: 0.78 },
+        { transform: ring(1), opacity: 0 },
+      ];
+  // 绕点击点缩放 = 先平移再缩放（变换原点固定在左上角）
+  const lean = `translate(${geometry.localX * (1 - UNDER_SCALE)}px, ${
+    geometry.localY * (1 - UNDER_SCALE)
+  }px) scale(${UNDER_SCALE})`;
+  const under: Keyframe[] = converge
+    ? [{ transform: lean }, { transform: 'none' }]
+    : [{ transform: 'none' }, { transform: lean }];
+  return { clip, aura, under };
+}
+
+function mountThemeAura(x: number, y: number) {
   if (!document.body) return;
   const aura = document.createElement('span');
   aura.setAttribute('data-tm-theme-aura', 'true');
   aura.setAttribute('aria-hidden', 'true');
+  aura.style.left = `${x}px`;
+  aura.style.top = `${y}px`;
   document.body.appendChild(aura);
   activeAura = aura;
 }
@@ -158,11 +213,6 @@ function clearTransitionMarkers(root: HTMLElement) {
   delete root.dataset.tmThemeTransition;
   delete root.dataset.tmThemeTarget;
   delete root.dataset.tmThemeMotion;
-  root.style.removeProperty('--tm-theme-x');
-  root.style.removeProperty('--tm-theme-y');
-  root.style.removeProperty('--tm-theme-r');
-  root.style.removeProperty('--tm-theme-lx');
-  root.style.removeProperty('--tm-theme-ly');
   activeOrigin?.removeAttribute('data-tm-theme-origin');
   activeOrigin = undefined;
   activeAura?.remove();
@@ -208,9 +258,8 @@ export async function changeThemeWithTransition(
   origin: HTMLElement
 ): Promise<void> {
   const currentRequest = ++request;
-  activeAnimation?.cancel();
+  cancelActiveAnimations();
   activeTransition?.skipTransition();
-  activeAnimation = undefined;
   activeTransition = undefined;
   const root = document.documentElement;
   clearTransitionMarkers(root);
@@ -223,7 +272,7 @@ export async function changeThemeWithTransition(
   const media = window.matchMedia('(prefers-reduced-motion: reduce)');
   const stopMovement = () => {
     if (isReducedMotionSetting() && currentRequest === request) {
-      activeAnimation?.cancel();
+      cancelActiveAnimations();
       activeTransition?.skipTransition();
     }
   };
@@ -245,10 +294,6 @@ export async function changeThemeWithTransition(
       const rect = origin.getBoundingClientRect();
       const x = rect.left + rect.width / 2;
       const y = rect.top + rect.height / 2;
-      const radius = Math.hypot(
-        Math.max(x, window.innerWidth - x),
-        Math.max(y, window.innerHeight - y)
-      );
       // 时长与缓动从 CSS token 读，和日冕环、底层后退、图标交接保持同频。
       const style = getComputedStyle(root);
       const easing =
@@ -261,7 +306,7 @@ export async function changeThemeWithTransition(
       // 只命名本次触发控件，让图标独立交接，避免双入口重名导致快照失败。
       origin.dataset.tmThemeOrigin = 'true';
       activeOrigin = origin;
-      mountThemeAura(x, y, radius);
+      mountThemeAura(x, y);
       const transition = document.startViewTransition(update);
       activeTransition = transition;
       void transition.finished.catch(() => undefined);
@@ -275,49 +320,57 @@ export async function changeThemeWithTransition(
         width: window.innerWidth,
         height: window.innerHeight,
       });
-      root.style.setProperty('--tm-theme-x', `${geometry.x}px`);
-      root.style.setProperty('--tm-theme-y', `${geometry.y}px`);
-      root.style.setProperty('--tm-theme-lx', `${geometry.localX}px`);
-      root.style.setProperty('--tm-theme-ly', `${geometry.localY}px`);
-      root.style.setProperty('--tm-theme-r', `${geometry.radius}px`);
+      // 目标主题已经应用：方向按真实结果定（属性选择器只匹配根元素自己，不牵动全站样式）
       const dark = root.classList.contains('dark');
       const converge = resolveThemeMotion(dark) === 'converge';
       root.dataset.tmThemeTarget = dark ? 'dark' : 'light';
       root.dataset.tmThemeMotion = converge ? 'converge' : 'spread';
-      const frames: Keyframe[] = [
-        {
-          clipPath: `circle(0px at ${geometry.localX}px ${geometry.localY}px)`,
-        },
-        {
-          clipPath: `circle(${geometry.radius}px at ${geometry.localX}px ${geometry.localY}px)`,
-        },
-      ];
-      if (converge) frames.reverse();
-      activeAnimation = root.animate(frames, {
-        duration,
+      const frames = themeLayerFrames(geometry, converge);
+      const timing = { duration, easing };
+      // 圆形裁切放第一个：它结束就是过渡结束
+      const clip = root.animate(frames.clip, {
+        ...timing,
         fill: 'forwards',
-        easing,
         pseudoElement: converge
           ? '::view-transition-old(root)'
           : '::view-transition-new(root)',
       });
-      void activeAnimation.finished.catch(() => undefined);
-      await activeAnimation.finished;
+      activeAnimations = [
+        clip,
+        root.animate(frames.aura, {
+          ...timing,
+          fill: 'both',
+          pseudoElement: '::view-transition-group(tm-theme-aura)',
+        }),
+        root.animate(frames.under, {
+          ...timing,
+          fill: 'both',
+          pseudoElement: converge
+            ? '::view-transition-new(root)'
+            : '::view-transition-old(root)',
+        }),
+      ];
+      activeAnimations.forEach(
+        (animation) => void animation.finished?.catch(() => undefined)
+      );
+      await clip.finished;
       await transition.finished;
     } else if (document.body.animate) {
-      activeAnimation = document.body.animate(
+      const fadeOut = document.body.animate(
         [{ opacity: 1 }, { opacity: 0.88 }],
         { duration: 125, fill: 'forwards' }
       );
-      await activeAnimation.finished;
+      activeAnimations = [fadeOut];
+      await fadeOut.finished;
       if (currentRequest !== request) return;
       await update();
-      activeAnimation.cancel();
-      activeAnimation = document.body.animate(
+      fadeOut.cancel();
+      const fadeIn = document.body.animate(
         [{ opacity: 0.88 }, { opacity: 1 }],
         { duration: isReducedMotionSetting() ? 0 : 125 }
       );
-      await activeAnimation.finished;
+      activeAnimations = [fadeIn];
+      await fadeIn.finished;
     } else {
       await update();
     }
@@ -328,9 +381,8 @@ export async function changeThemeWithTransition(
     observer.disconnect();
     media.removeEventListener('change', stopMovement);
     if (currentRequest === request) {
-      activeAnimation?.cancel();
+      cancelActiveAnimations();
       activeTransition?.skipTransition();
-      activeAnimation = undefined;
       activeTransition = undefined;
       clearTransitionMarkers(root);
     }

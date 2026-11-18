@@ -1,7 +1,7 @@
 /*
  * 触屏播放控件（自己看和房间两个播放器共用，2026-11-18 设计稿）。
  *
- * 手机竖 / 横、平板竖屏这三档的触屏上，控制条出现时画面正中是一组：快退 · 播放暂停 · 快进；
+ * 触屏（手机竖 / 横、平板竖 / 横）上，控制条出现时画面正中是一组：快退 · 播放暂停 · 快进；
  * 手机两档全屏时左上角多一个“退出全屏”。锁按钮在左边中间（样式见 player-controls.css），
  * 所以快退快进和锁不会再叠在一起。以前两个播放器各写一套快进快退，位置、样子都不一样。
  *
@@ -52,11 +52,12 @@ const ICONS = {
   exit: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>',
 };
 
-/** 这一档、这台设备要不要中间那一组 */
+/**
+ * 要不要中间那一组：看是不是触屏，不看档位。
+ * 平板横屏和电脑同一档（wide），但没有键盘的方向键，必须有按钮快退快进（2026-11-18 问题合集）。
+ */
 export function wantsTouchCluster() {
-  const tier = getDeviceTier();
-  const coarse = !!window.matchMedia?.('(pointer: coarse)').matches;
-  return coarse && tier !== 'wide';
+  return !!window.matchMedia?.('(pointer: coarse)').matches;
 }
 
 export function installTouchControls(

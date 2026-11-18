@@ -5,8 +5,11 @@
  * 手机和平板竖屏：顶部房间栏（返回、房间名、在线、麦克风、“更多”）→ 画面 → 正在放映一行
  *   （片单、成员、房间活动、选片）→ 今晚看什么一排片名 → 剩下整块是聊天，输入框在最底下。
  *   片单、成员、活动、完整推荐都从底部拉起面板，画面一直在上面。
- * 电脑和平板横屏：左边大画面 + 正在放映 + 选集条 + 今晚看什么；右边一整列聊天。
+ * 电脑：左边大画面 + 正在放映 + 选集条 + 今晚看什么；右边一整列聊天。
  *   片单、成员从右侧滑出。
+ * 平板（触屏，横竖都是；2026-11-18 设计稿方案 A）：不要站点顶栏，房间栏 → 画面（按屏幕高度收）
+ *   + 正在放映 + 大号选集 + 今晚看什么；侧栏是“聊天 / 片单 / 成员 / 活动”四个标签。
+ *   横屏左右两栏，竖屏上下排。
  */
 
 import {
@@ -40,7 +43,7 @@ import {
 } from 'react';
 
 import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
-import { useDeviceTier } from '@/hooks/useDeviceTier';
+import { usePageLayout } from '@/hooks/useDeviceTier';
 import { processImageUrl } from '@/lib/utils';
 
 import { useWatchRoomContext } from '@/components/WatchRoomProvider';
@@ -82,6 +85,9 @@ type Panel =
   | 'danmaku'
   | 'menu';
 
+type SideTab = 'chat' | 'playlist' | 'members' | 'activities';
+const SIDE_TABS: SideTab[] = ['chat', 'playlist', 'members', 'activities'];
+
 export default function RoomView({
   onLeave,
   onBack,
@@ -104,9 +110,19 @@ export default function RoomView({
     [current.myPermissions]
   );
   const isOwner = current.myRole === 'owner';
-  // 平板横屏和电脑（wide）用电脑排版；手机、手机横屏、平板竖屏用紧凑排版。见 lib/device-tier.ts
-  const compact = useDeviceTier() !== 'wide';
+  // 三套排版（lib/device-tier.ts 的 pageLayoutFor）：手机 compact、平板 tablet、电脑 desktop
+  const layout = usePageLayout();
+  const compact = layout === 'compact';
+  const tablet = layout === 'tablet';
   const [panel, setPanel] = useState<Panel | null>(null);
+  // 平板：片单、成员、活动是右侧栏里的标签页，和聊天并排，不再另开面板
+  const [tab, setTab] = useState<SideTab>('chat');
+  const openPanel = (next: Panel) => {
+    if (tablet && (SIDE_TABS as string[]).includes(next)) {
+      setPanel(null);
+      setTab(next as SideTab);
+    } else setPanel(next);
+  };
   const [picker, setPicker] = useState<{ query?: string } | null>(null);
   const [settings, setSettings] = useState(false);
   const [invite, setInvite] = useState(false);
@@ -273,6 +289,7 @@ export default function RoomView({
           : undefined
       }
       data-ambient={poster ? 'true' : undefined}
+      data-layout={layout}
     >
       <div className='tm-t-ambient' aria-hidden='true' />
 
@@ -323,7 +340,7 @@ export default function RoomView({
             <button
               type='button'
               className='tm-t-faces'
-              onClick={() => setPanel('members')}
+              onClick={() => openPanel('members')}
               aria-label={`在线成员：${onlineMembers
                 .map((member) => member.accountId)
                 .join('、')}`}
@@ -458,7 +475,7 @@ export default function RoomView({
             )}
           </div>
 
-          {!compact && (
+          {layout === 'desktop' && (
             <div className='tm-tc-tools'>
               <button
                 type='button'
@@ -627,7 +644,7 @@ export default function RoomView({
           </div>
 
           {canPick &&
-            (compact ? (
+            (layout !== 'desktop' ? (
               <Recommendations
                 variant='strip'
                 onChoose={(title) => openPicker(title)}
@@ -644,13 +661,60 @@ export default function RoomView({
           )}
         </div>
 
-        <aside className='tm-tc-chat' aria-label='聊天'>
-          <div className='tm-tc-chat-head'>
-            <MessageSquare size={16} aria-hidden='true' />
-            <h2>聊天</h2>
-            <span className='tm-t-count'>{room.chatMessages.length}</span>
-          </div>
+        <aside
+          className='tm-tc-chat'
+          aria-label={tablet ? '房间侧栏' : '聊天'}
+          data-tab={tablet ? tab : undefined}
+        >
+          {tablet ? (
+            <SideTabs
+              tab={tab}
+              onTab={setTab}
+              counts={{ playlist: waiting, members: online }}
+              alert={{ members: requests > 0 }}
+            />
+          ) : (
+            <div className='tm-tc-chat-head'>
+              <MessageSquare size={16} aria-hidden='true' />
+              <h2>聊天</h2>
+              <span className='tm-t-count'>{room.chatMessages.length}</span>
+            </div>
+          )}
+          {/* 聊天一直挂着（切到别的标签只是藏起来），输入到一半、滚动位置都不丢 */}
           <RoomChat />
+          {tablet && tab === 'playlist' && (
+            <div
+              className='tm-tc-tabpanel'
+              role='tabpanel'
+              id='tm-tc-tab-playlist'
+            >
+              {playlist}
+            </div>
+          )}
+          {tablet && tab === 'members' && (
+            <div
+              className='tm-tc-tabpanel'
+              role='tabpanel'
+              id='tm-tc-tab-members'
+            >
+              <MembersPanel
+                room={current}
+                self={self}
+                canManage={can('manageMembers')}
+                isOwner={isOwner}
+                command={command}
+              />
+            </div>
+          )}
+          {tablet && tab === 'activities' && (
+            <div
+              className='tm-tc-tabpanel'
+              role='tabpanel'
+              id='tm-tc-tab-activities'
+            >
+              <ActivityPanel room={current} canStart={can('changeMedia')} />
+            </div>
+          )}
         </aside>
       </div>
 
@@ -771,7 +835,7 @@ export default function RoomView({
           onPlay={(film) => playFilm(film).then(() => undefined)}
           onQueue={(film) =>
             command('queue:add', queueAdd(film)).then(() =>
-              setPanel('playlist')
+              openPanel('playlist')
             )
           }
         />
@@ -858,6 +922,71 @@ export default function RoomView({
           />
         </Dialog>
       )}
+    </div>
+  );
+}
+
+const TAB_LABELS: Record<SideTab, string> = {
+  chat: '聊天',
+  playlist: '片单',
+  members: '成员',
+  activities: '活动',
+};
+
+/** 平板侧栏的四个标签（2026-11-18 平板设计稿方案 A）；左右方向键切换 */
+function SideTabs({
+  tab,
+  onTab,
+  counts,
+  alert,
+}: {
+  tab: SideTab;
+  onTab(tab: SideTab): void;
+  counts: Partial<Record<SideTab, number>>;
+  alert: Partial<Record<SideTab, boolean>>;
+}) {
+  return (
+    <div
+      className='tm-tc-tabs'
+      role='tablist'
+      aria-label='侧栏内容'
+      onKeyDown={(event) => {
+        const step =
+          event.key === 'ArrowRight' ? 1 : event.key === 'ArrowLeft' ? -1 : 0;
+        if (!step) return;
+        event.preventDefault();
+        const next =
+          SIDE_TABS[
+            (SIDE_TABS.indexOf(tab) + step + SIDE_TABS.length) %
+              SIDE_TABS.length
+          ];
+        onTab(next);
+        event.currentTarget
+          .querySelector<HTMLButtonElement>(`[data-tab='${next}']`)
+          ?.focus();
+      }}
+    >
+      {SIDE_TABS.map((name) => (
+        <button
+          key={name}
+          type='button'
+          role='tab'
+          data-tab={name}
+          aria-selected={tab === name}
+          tabIndex={tab === name ? 0 : -1}
+          onClick={() => onTab(name)}
+        >
+          {TAB_LABELS[name]}
+          {!!counts[name] && (
+            <span
+              className='tm-tc-tab-count'
+              data-alert={alert[name] || undefined}
+            >
+              {counts[name]}
+            </span>
+          )}
+        </button>
+      ))}
     </div>
   );
 }

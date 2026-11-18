@@ -2159,11 +2159,7 @@ html[data-tm-solo-mini='folded'] :is(.tm-t-pill-dock, .tm-t-dock) {
   min-width: 0;
   margin: 0;
 }
-/* 控制条只留一个“弹”开关（弹幕库插件的），房间聊天弹幕跟着它（chat-danmaku.ts）；
-   分开开关在房间“弹幕”面板里。这个房间弹幕按钮不在控制条里显示 */
-.art-video-player .tm-t-dm-switch {
-  display: none;
-}
+/* 房间弹幕开关：和弹幕库的“弹”分开，各管各的（chat-danmaku.ts） */
 .tm-t-dm-switch {
   display: grid;
   place-items: center;
@@ -2242,10 +2238,11 @@ html[data-tm-solo-mini='folded'] :is(.tm-t-pill-dock, .tm-t-dock) {
 }
 
 /* ================================================================ 房间页（直播式） */
-/* 按设备档位排（lib/device-tier.ts）：
- * wide（平板横屏、电脑）：左边画面和放映信息，右边一整列聊天——下面这些不带档位的规则；
- * 其余三档（手机、手机横屏、平板竖屏）在后面 :not([data-tm-device='wide']) 里改成紧凑排版。
- * 平板横屏宽度只有 850 左右，所以聊天栏宽度和间距随屏幕收放 */
+/* 整页按哪套排由 RoomView 写在 .tm-tc[data-layout] 上（lib/device-tier.ts 的 pageLayoutFor）：
+ * desktop（电脑）：左边画面和放映信息，右边一整列聊天——下面这些不带条件的规则；
+ * compact（手机、手机横屏、竖长的电脑窗口）：后面 [data-layout='compact'] 里改成紧凑排版；
+ * tablet（触屏平板，横竖都是）：最后“平板”一段。
+ * 手机横屏、手机竖屏另有按档位（html[data-tm-device]）的细调。 */
 .tm-tc {
   gap: 16px;
 }
@@ -2448,33 +2445,33 @@ html[data-tm-reduced-motion='true'] .tm-t-dialog[data-sheet] {
 }
 
 /* 紧凑排版（手机、手机横屏、平板竖屏）：一屏装下，画面在上，聊天占满剩下的高度 */
-:where(html:not([data-tm-device='wide'])) body:has(.tm-tc) .tm-main {
+body:has(.tm-tc:where([data-layout='compact'])) .tm-main {
   min-height: 0;
   padding-top: 0;
   padding-bottom: 0;
 }
-:where(html:not([data-tm-device='wide'])) .tm-tc {
+.tm-tc:where([data-layout='compact']) {
   gap: 0;
   height: calc(100dvh - var(--tm-header-height));
   max-width: none;
   padding: 0;
   overflow: hidden;
 }
-:where(html:not([data-tm-device='wide'])) .tm-tc-head {
+:where(.tm-tc[data-layout='compact']) .tm-tc-head {
   flex: none;
   flex-wrap: nowrap;
   gap: 4px;
   min-height: 56px;
   padding: 4px 8px 4px 12px;
 }
-:where(html:not([data-tm-device='wide'])) .tm-tc-head .tm-t-head-back {
+:where(.tm-tc[data-layout='compact']) .tm-tc-head .tm-t-head-back {
   margin-left: -4px;
 }
-:where(html:not([data-tm-device='wide'])) .tm-tc-head .tm-t-head-actions {
+:where(.tm-tc[data-layout='compact']) .tm-tc-head .tm-t-head-actions {
   width: auto;
   gap: 0;
 }
-:where(html:not([data-tm-device='wide']))
+:where(.tm-tc[data-layout='compact'])
   .tm-tc-head
   .tm-t-head-actions
   .tm-t-faces {
@@ -2482,12 +2479,12 @@ html[data-tm-reduced-motion='true'] .tm-t-dialog[data-sheet] {
   margin-right: 0;
   padding: 0 4px 0 12px;
 }
-:where(html:not([data-tm-device='wide'])) .tm-tc-head .tm-t-face {
+:where(.tm-tc[data-layout='compact']) .tm-tc-head .tm-t-face {
   width: 28px;
   height: 28px;
   font-size: 12px;
 }
-:where(html:not([data-tm-device='wide'])) .tm-tc-body {
+:where(.tm-tc[data-layout='compact']) .tm-tc-body {
   display: flex;
   flex: 1;
   flex-direction: column;
@@ -2496,42 +2493,42 @@ html[data-tm-reduced-motion='true'] .tm-t-dialog[data-sheet] {
   min-width: 0;
   min-height: 0;
 }
-:where(html:not([data-tm-device='wide'])) .tm-tc-main,
-:where(html:not([data-tm-device='wide'])) .tm-tc-chat {
+:where(.tm-tc[data-layout='compact']) .tm-tc-main,
+:where(.tm-tc[data-layout='compact']) .tm-tc-chat {
   min-width: 0;
 }
-:where(html:not([data-tm-device='wide'])) .tm-tc-main {
+:where(.tm-tc[data-layout='compact']) .tm-tc-main {
   flex: none;
   gap: 0;
 }
-:where(html:not([data-tm-device='wide'])) .tm-tc .tm-t-stage {
+.tm-tc:where([data-layout='compact']) .tm-t-stage {
   position: relative;
   top: auto;
   margin: 0;
   border-radius: 0;
 }
-:where(html:not([data-tm-device='wide'])) .tm-tc-now {
+:where(.tm-tc[data-layout='compact']) .tm-tc-now {
   flex-wrap: nowrap;
   gap: 10px;
   padding: 10px 8px 10px 12px;
 }
-:where(html:not([data-tm-device='wide'])) .tm-tc-now .tm-t-now-poster {
+:where(.tm-tc[data-layout='compact']) .tm-tc-now .tm-t-now-poster {
   width: 32px;
   height: 46px;
 }
-:where(html:not([data-tm-device='wide'])) .tm-tc-now h2 {
+:where(.tm-tc[data-layout='compact']) .tm-tc-now h2 {
   font-size: 15px;
 }
-:where(html:not([data-tm-device='wide'])) .tm-tc-now .tm-t-now-label {
+:where(.tm-tc[data-layout='compact']) .tm-tc-now .tm-t-now-label {
   font-size: 12px;
 }
-:where(html:not([data-tm-device='wide'])) .tm-tc-now .tm-t-now-meta {
+:where(.tm-tc[data-layout='compact']) .tm-tc-now .tm-t-now-meta {
   font-size: 12px;
 }
-:where(html:not([data-tm-device='wide'])) .tm-tc-now .tm-t-now-actions {
+:where(.tm-tc[data-layout='compact']) .tm-tc-now .tm-t-now-actions {
   width: auto;
 }
-:where(html:not([data-tm-device='wide']))
+:where(.tm-tc[data-layout='compact'])
   .tm-tc-now
   .tm-t-now-actions
   .tm-t-btn-primary {
@@ -2539,16 +2536,16 @@ html[data-tm-reduced-motion='true'] .tm-t-dialog[data-sheet] {
   padding: 0 12px;
 }
 /* 换集在“片单”面板里 */
-:where(html:not([data-tm-device='wide'])) .tm-tc-strip {
+:where(.tm-tc[data-layout='compact']) .tm-tc-strip {
   display: none;
 }
-:where(html:not([data-tm-device='wide'])) .tm-tc-recstrip {
+:where(.tm-tc[data-layout='compact']) .tm-tc-recstrip {
   padding: 0 12px 10px;
 }
-:where(html:not([data-tm-device='wide'])) .tm-tc-main > .tm-t-error {
+:where(.tm-tc[data-layout='compact']) .tm-tc-main > .tm-t-error {
   margin: 0 12px 10px;
 }
-:where(html:not([data-tm-device='wide'])) .tm-tc-chat {
+:where(.tm-tc[data-layout='compact']) .tm-tc-chat {
   position: static;
   flex: 1;
   height: auto;
@@ -2558,7 +2555,7 @@ html[data-tm-reduced-motion='true'] .tm-t-dialog[data-sheet] {
   background: none;
   box-shadow: none;
 }
-:where(html:not([data-tm-device='wide'])) .tm-tc-chat-head {
+:where(.tm-tc[data-layout='compact']) .tm-tc-chat-head {
   display: none;
 }
 /* 手机：房间页自己占满整屏，不要站点顶栏和底栏 */
@@ -2633,7 +2630,7 @@ html:where([data-tm-device='phone']) body:has(.tm-tc) .tm-mobile-nav {
 .tm-tc-ep {
   display: none;
 }
-:where(html[data-tm-device='wide']) .tm-tc .tm-tc-now {
+.tm-tc:where([data-layout='desktop']) .tm-tc-now {
   padding: 14px 16px;
   border-radius: var(--tm-radius-lg);
   background: var(--tm-surface);
@@ -2673,13 +2670,13 @@ html:where([data-tm-device='phone']) body:has(.tm-tc) .tm-mobile-nav {
 .tm-tc .tm-t-send:disabled {
   opacity: 0.45;
 }
-:where(html:not([data-tm-device='wide'])) .tm-tc-ep {
+:where(.tm-tc[data-layout='compact']) .tm-tc-ep {
   display: inline;
 }
-:where(html:not([data-tm-device='wide'])) .tm-tc-now .tm-t-now-meta {
+:where(.tm-tc[data-layout='compact']) .tm-tc-now .tm-t-now-meta {
   display: none;
 }
-:where(html:not([data-tm-device='wide']))
+:where(.tm-tc[data-layout='compact'])
   .tm-tc-head
   .tm-t-head-meta
   .tm-t-chip-button {
@@ -2705,66 +2702,60 @@ html:where([data-tm-device='phone']) body:has(.tm-tc) .tm-mobile-nav {
     pointer-events: auto;
   }
 }
-:where(html:not([data-tm-device='wide'])) .tm-tc-head {
+:where(.tm-tc[data-layout='compact']) .tm-tc-head {
   min-height: 52px;
   padding: 2px 4px 2px 6px;
 }
-:where(html:not([data-tm-device='wide'])) .tm-tc-head .tm-t-head-title h1 {
+:where(.tm-tc[data-layout='compact']) .tm-tc-head .tm-t-head-title h1 {
   font-size: 16px;
   line-height: 1.3;
 }
-:where(html:not([data-tm-device='wide'])) .tm-tc-head .tm-t-head-meta {
+:where(.tm-tc[data-layout='compact']) .tm-tc-head .tm-t-head-meta {
   gap: 2px 10px;
   margin-top: 0;
 }
-:where(html:not([data-tm-device='wide']))
-  .tm-tc-head
-  .tm-t-head-meta
-  .tm-t-chip {
+:where(.tm-tc[data-layout='compact']) .tm-tc-head .tm-t-head-meta .tm-t-chip {
   min-height: 18px;
   font-size: 12px;
 }
-:where(html:not([data-tm-device='wide'])) .tm-tc-head .tm-t-icon {
+:where(.tm-tc[data-layout='compact']) .tm-tc-head .tm-t-icon {
   width: 40px;
   height: 40px;
 }
-:where(html:not([data-tm-device='wide']))
+:where(.tm-tc[data-layout='compact'])
   .tm-tc-head
   .tm-t-head-actions
   .tm-t-faces {
   min-height: 40px;
   padding: 0 2px 0 10px;
 }
-:where(html:not([data-tm-device='wide'])) .tm-tc-head .tm-t-face {
+:where(.tm-tc[data-layout='compact']) .tm-tc-head .tm-t-face {
   width: 26px;
   height: 26px;
   margin-left: -7px;
   border-width: 1.5px;
   font-size: 12px;
 }
-:where(html:not([data-tm-device='wide'])) .tm-tc-now {
+:where(.tm-tc[data-layout='compact']) .tm-tc-now {
   gap: 10px;
   padding: 8px 6px 8px 12px;
 }
-:where(html:not([data-tm-device='wide'])) .tm-tc-now .tm-t-now-poster {
+:where(.tm-tc[data-layout='compact']) .tm-tc-now .tm-t-now-poster {
   width: 30px;
   height: 42px;
   border-radius: 6px;
 }
-:where(html:not([data-tm-device='wide'])) .tm-tc-now .tm-t-now-text {
+:where(.tm-tc[data-layout='compact']) .tm-tc-now .tm-t-now-text {
   gap: 1px;
 }
-:where(html:not([data-tm-device='wide'])) .tm-tc-now h2 {
+:where(.tm-tc[data-layout='compact']) .tm-tc-now h2 {
   font-size: 14px;
 }
-:where(html:not([data-tm-device='wide']))
-  .tm-tc-now
-  .tm-t-now-actions
-  .tm-t-icon {
+:where(.tm-tc[data-layout='compact']) .tm-tc-now .tm-t-now-actions .tm-t-icon {
   width: 40px;
   height: 40px;
 }
-:where(html:not([data-tm-device='wide']))
+:where(.tm-tc[data-layout='compact'])
   .tm-tc-now
   .tm-t-now-actions
   .tm-t-btn-primary {
@@ -2774,7 +2765,7 @@ html:where([data-tm-device='phone']) body:has(.tm-tc) .tm-mobile-nav {
   padding: 0 12px;
   font-size: 13px;
 }
-:where(html:not([data-tm-device='wide']))
+:where(.tm-tc[data-layout='compact'])
   .tm-tc-now
   .tm-t-now-actions
   .tm-t-btn-primary
@@ -2782,76 +2773,76 @@ html:where([data-tm-device='phone']) body:has(.tm-tc) .tm-mobile-nav {
   width: 15px;
   height: 15px;
 }
-:where(html:not([data-tm-device='wide'])) .tm-tc-recstrip {
+:where(.tm-tc[data-layout='compact']) .tm-tc-recstrip {
   gap: 6px;
   padding: 0 12px 8px;
 }
-:where(html:not([data-tm-device='wide'])) .tm-tc-chip {
+:where(.tm-tc[data-layout='compact']) .tm-tc-chip {
   height: 30px;
   padding: 0 11px;
   font-size: 13px;
 }
-:where(html:not([data-tm-device='wide'])) .tm-tc-chip::after {
+:where(.tm-tc[data-layout='compact']) .tm-tc-chip::after {
   inset: -7px 0;
 }
-:where(html:not([data-tm-device='wide'])) .tm-tc .tm-t-messages {
+.tm-tc:where([data-layout='compact']) .tm-t-messages {
   padding: 8px 12px;
 }
-:where(html:not([data-tm-device='wide'])) .tm-tc .tm-t-message .tm-t-avatar {
+.tm-tc:where([data-layout='compact']) .tm-t-message .tm-t-avatar {
   width: 22px;
   height: 22px;
   font-size: 12px;
 }
-:where(html:not([data-tm-device='wide'])) .tm-tc .tm-t-bubble p {
+.tm-tc:where([data-layout='compact']) .tm-t-bubble p {
   padding: 7px 11px;
 }
-:where(html:not([data-tm-device='wide'])) .tm-tc .tm-t-compose {
+.tm-tc:where([data-layout='compact']) .tm-t-compose {
   gap: 4px;
   padding: 6px 8px;
 }
-:where(html:not([data-tm-device='wide'])) .tm-tc .tm-t-compose input {
+.tm-tc:where([data-layout='compact']) .tm-t-compose input {
   height: 40px;
 }
-:where(html:not([data-tm-device='wide'])) .tm-tc .tm-t-send {
+.tm-tc:where([data-layout='compact']) .tm-t-send {
   width: 40px;
   height: 40px;
 }
-:where(html[data-tm-device='wide']) .tm-tc-head {
+:where(.tm-tc[data-layout='desktop']) .tm-tc-head {
   min-height: 56px;
 }
-:where(html[data-tm-device='wide']) .tm-tc-head .tm-t-head-title h1 {
+:where(.tm-tc[data-layout='desktop']) .tm-tc-head .tm-t-head-title h1 {
   font-size: 22px;
 }
-:where(html[data-tm-device='wide']) .tm-tc .tm-tc-now {
+.tm-tc:where([data-layout='desktop']) .tm-tc-now {
   gap: 12px;
   padding: 10px 14px;
 }
-:where(html[data-tm-device='wide']) .tm-tc .tm-tc-now .tm-t-now-poster {
+.tm-tc:where([data-layout='desktop']) .tm-tc-now .tm-t-now-poster {
   width: 40px;
   height: 58px;
 }
-:where(html[data-tm-device='wide']) .tm-tc .tm-tc-now h2 {
+.tm-tc:where([data-layout='desktop']) .tm-tc-now h2 {
   font-size: 16px;
 }
-:where(html[data-tm-device='wide']) .tm-tc .tm-tc-now .tm-t-btn-primary {
+.tm-tc:where([data-layout='desktop']) .tm-tc-now .tm-t-btn-primary {
   height: 36px;
   min-height: 36px;
   padding: 0 14px;
   font-size: 13px;
 }
-:where(html[data-tm-device='wide']) .tm-tc-tools .tm-t-pill {
+:where(.tm-tc[data-layout='desktop']) .tm-tc-tools .tm-t-pill {
   min-height: 34px;
   padding: 0 12px;
 }
-:where(html[data-tm-device='wide']) .tm-tc-strip .tm-t-ep {
+:where(.tm-tc[data-layout='desktop']) .tm-tc-strip .tm-t-ep {
   min-width: 46px;
   height: 38px;
   font-size: 13px;
 }
-:where(html[data-tm-device='wide']) .tm-tc .tm-t-recs-row {
+.tm-tc:where([data-layout='desktop']) .tm-t-recs-row {
   gap: 12px;
 }
-:where(html[data-tm-device='wide']) .tm-tc .tm-t-section-head h2 {
+.tm-tc:where([data-layout='desktop']) .tm-t-section-head h2 {
   font-size: 18px;
 }
 
@@ -2911,12 +2902,12 @@ html:where([data-tm-device='phone']) body:has(.tm-tc) .tm-mobile-nav {
   opacity: 0.8;
   font-size: 12px;
 }
-:where(html[data-tm-device='wide']) .tm-tc-chat .tm-t-compose-foot {
+:where(.tm-tc[data-layout='desktop']) .tm-tc-chat .tm-t-compose-foot {
   display: flex;
   min-height: 0;
   padding: 0 14px 10px;
 }
-:where(html[data-tm-device='wide'])
+:where(.tm-tc[data-layout='desktop'])
   .tm-tc-chat
   .tm-t-compose-icon[aria-pressed] {
   display: none;
@@ -2926,23 +2917,23 @@ html:where([data-tm-device='phone']) body:has(.tm-tc) .tm-mobile-nav {
 .tm-tc-nowcard {
   display: contents;
 }
-:where(html[data-tm-device='wide']) .tm-tc-nowcard {
+:where(.tm-tc[data-layout='desktop']) .tm-tc-nowcard {
   display: block;
   overflow: hidden;
   border-radius: var(--tm-radius-lg);
   background: var(--tm-surface);
   box-shadow: inset 0 0 0 1px var(--tm-line);
 }
-:where(html[data-tm-device='wide']) .tm-tc-nowcard .tm-tc-now {
+:where(.tm-tc[data-layout='desktop']) .tm-tc-nowcard .tm-tc-now {
   border-radius: 0;
   background: none;
   box-shadow: none;
 }
-:where(html[data-tm-device='wide']) .tm-tc-nowcard .tm-tc-strip {
+:where(.tm-tc[data-layout='desktop']) .tm-tc-nowcard .tm-tc-strip {
   padding: 0 14px 12px;
 }
 /* 房间号、密码房做成描边小标签 */
-:where(html[data-tm-device='wide'])
+:where(.tm-tc[data-layout='desktop'])
   .tm-tc-head
   .tm-t-head-meta
   .tm-t-chip:not(:first-child) {
@@ -2954,13 +2945,13 @@ html:where([data-tm-device='phone']) body:has(.tm-tc) .tm-mobile-nav {
   font-size: 12px;
 }
 /* 聊天栏粘在原位：滚到底时网格下面不能再留空，否则聊天栏会被顶到站点顶栏下面 */
-:where(html[data-tm-device='wide']) body:has(.tm-tc) .tm-main {
+body:has(.tm-tc:where([data-layout='desktop'])) .tm-main {
   padding-bottom: 0;
 }
-:where(html[data-tm-device='wide']) .tm-t-room.tm-tc {
+.tm-t-room.tm-tc:where([data-layout='desktop']) {
   padding-bottom: 0;
 }
-:where(html[data-tm-device='wide']) .tm-tc-body {
+:where(.tm-tc[data-layout='desktop']) .tm-tc-body {
   padding-bottom: 16px;
 }
 
@@ -3015,6 +3006,206 @@ html:where([data-tm-device='phone-landscape'])
 }
 :where(html[data-tm-device='phone-landscape']) .tm-tc .tm-t-compose {
   margin-bottom: env(safe-area-inset-bottom);
+}
+
+/* ================================================================ 平板（data-layout='tablet'）
+ * 2026-11-18 平板设计稿方案 A：触屏平板不照搬电脑。
+ * 不要站点顶栏，整屏给房间；画面按屏幕高度收（键盘弹出时跟着缩小、不停播）；
+ * 侧栏是“聊天 / 片单 / 成员 / 活动”四个标签；按钮、选集都按手指的尺寸。
+ * 横屏（wide 档）左右两栏，竖屏（tablet 档）上下排。 */
+body:has(.tm-tc[data-layout='tablet'])
+  :is(.tm-top-header, .tm-mobile-header-v2, .tm-mobile-nav) {
+  display: none;
+}
+body:has(.tm-tc[data-layout='tablet']) .tm-shell > .tm-shell-body {
+  padding-top: 0;
+}
+body:has(.tm-tc[data-layout='tablet']) .tm-main {
+  min-height: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+.tm-t-room.tm-tc[data-layout='tablet'] {
+  gap: 0;
+  height: 100dvh;
+  max-width: none;
+  padding: var(--tm-safe-top, 0px) max(16px, env(safe-area-inset-right)) 0
+    max(16px, env(safe-area-inset-left));
+  overflow: hidden;
+}
+.tm-tc[data-layout='tablet'] .tm-tc-head {
+  flex: none;
+  flex-wrap: nowrap;
+  min-height: 64px;
+}
+.tm-tc[data-layout='tablet'] .tm-tc-head :is(.tm-t-icon, .tm-t-btn) {
+  min-width: 44px;
+  min-height: 44px;
+}
+.tm-tc[data-layout='tablet'] .tm-tc-body {
+  display: flex;
+  flex: 1;
+  align-items: stretch;
+  gap: 16px;
+  min-height: 0;
+  padding-bottom: max(16px, env(safe-area-inset-bottom));
+}
+.tm-tc[data-layout='tablet'] .tm-tc-main {
+  flex: 1 1 0;
+  gap: 12px;
+  min-width: 0;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+}
+.tm-tc[data-layout='tablet'] .tm-tc-main::-webkit-scrollbar {
+  display: none;
+}
+/* 画面宽度不超过“屏幕剩下的高度”对应的 16:9：键盘弹出时画面缩小，不被顶出屏幕 */
+.tm-tc[data-layout='tablet'] .tm-t-stage {
+  flex: none;
+  width: min(100%, calc((100dvh - 64px - 32px) * 16 / 9));
+  margin-inline: auto;
+}
+.tm-tc[data-layout='tablet'] .tm-tc-nowcard {
+  display: contents;
+}
+.tm-tc[data-layout='tablet'] .tm-tc-now {
+  flex: none;
+  gap: 14px;
+  padding: 12px 14px;
+  border-radius: var(--tm-radius-lg);
+  background: var(--tm-surface);
+  box-shadow: inset 0 0 0 1px var(--tm-line);
+}
+.tm-tc[data-layout='tablet'] .tm-tc-now .tm-t-now-poster {
+  width: 44px;
+  height: 62px;
+}
+.tm-tc[data-layout='tablet'] .tm-tc-now h2 {
+  font-size: 17px;
+}
+.tm-tc[data-layout='tablet'] .tm-tc-now .tm-t-btn-primary {
+  min-height: 44px;
+  padding: 0 18px;
+}
+/* 选集：一排大块，横着滑 */
+.tm-tc[data-layout='tablet'] .tm-tc-strip {
+  display: flex;
+  flex: none;
+  flex-wrap: nowrap;
+  gap: 8px;
+  padding: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.tm-tc[data-layout='tablet'] .tm-tc-strip::-webkit-scrollbar {
+  display: none;
+}
+.tm-tc[data-layout='tablet'] .tm-tc-strip .tm-t-ep {
+  flex: none;
+  min-width: 64px;
+  height: 48px;
+  padding: 0 16px;
+  font-size: 15px;
+}
+.tm-tc[data-layout='tablet'] .tm-tc-recstrip {
+  flex: none;
+}
+.tm-tc[data-layout='tablet'] .tm-tc-chip {
+  height: 44px;
+  padding: 0 16px;
+  font-size: 14px;
+}
+.tm-tc[data-layout='tablet'] .tm-tc-chip::after {
+  display: none;
+}
+/* 侧栏：四个标签 + 内容；聊天一直挂着，切到别的标签时藏起来 */
+.tm-tc[data-layout='tablet'] .tm-tc-chat {
+  position: static;
+  flex: 0 0 clamp(320px, 32vw, 400px);
+  height: auto;
+  min-height: 0;
+  border-radius: var(--tm-radius-xl);
+}
+.tm-tc[data-layout='tablet']
+  .tm-tc-chat[data-tab]:not([data-tab='chat'])
+  > .tm-t-chat {
+  display: none;
+}
+.tm-tc-tabs {
+  display: grid;
+  flex: none;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 4px;
+  margin: 10px;
+  padding: 4px;
+  border-radius: var(--tm-radius-md);
+  background: var(--tm-surface-raised);
+}
+.tm-tc-tabs button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-height: 44px;
+  border-radius: var(--tm-radius-sm);
+  color: var(--tm-muted);
+  font-size: 15px;
+  font-weight: 600;
+}
+.tm-tc-tabs button[aria-selected='true'] {
+  background: var(--tm-surface);
+  box-shadow: var(--tm-shadow-sm);
+  color: var(--tm-text);
+}
+.tm-tc-tabs button:focus-visible {
+  outline: 2px solid var(--tm-text);
+  outline-offset: 2px;
+}
+.tm-tc-tab-count {
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+.tm-tc-tab-count[data-alert] {
+  min-width: 18px;
+  padding: 0 5px;
+  border-radius: var(--tm-radius-full);
+  background: var(--tm-text);
+  color: var(--tm-accent-contrast);
+  line-height: 18px;
+}
+.tm-tc-tabpanel {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.tm-tc[data-layout='tablet'] .tm-t-compose input {
+  height: 48px;
+  font-size: 16px;
+}
+.tm-tc[data-layout='tablet'] .tm-t-send {
+  width: 48px;
+  height: 48px;
+}
+.tm-tc[data-layout='tablet'] .tm-t-compose-icon {
+  width: 44px;
+  height: 44px;
+}
+/* 平板竖屏：上下排，侧栏占剩下的高度（至少留 260 给聊天，键盘弹出时上面那块自己滚） */
+:where(html[data-tm-device='tablet']) .tm-tc[data-layout='tablet'] .tm-tc-body {
+  flex-direction: column;
+}
+:where(html[data-tm-device='tablet']) .tm-tc[data-layout='tablet'] .tm-tc-main {
+  flex: 0 1 auto;
+}
+:where(html[data-tm-device='tablet']) .tm-tc[data-layout='tablet'] .tm-t-stage {
+  width: 100%;
+}
+:where(html[data-tm-device='tablet']) .tm-tc[data-layout='tablet'] .tm-tc-chat {
+  flex: 1 0 260px;
 }
 
 /* ================================================================ 片单面板（2026-11-18 设计稿） */

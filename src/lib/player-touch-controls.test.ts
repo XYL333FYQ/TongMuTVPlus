@@ -63,6 +63,22 @@ test('phones get the centre group; the seek buttons move by the configured step'
   expect(art.currentTime).toBe(100);
 });
 
+test('tablets held sideways get it too, even though they share the desktop layout', () => {
+  setDevice('wide', true);
+  const { art, player, emit } = fakeArt();
+  installTouchControls(art, {
+    stepSeconds: () => 10,
+    exitFullscreen: jest.fn(),
+  });
+  expect((player.querySelector('.tm-touch') as HTMLElement).hidden).toBe(false);
+  // 平板全屏不需要左上角的退出（那是给手机的）
+  art.fullscreen = true;
+  emit('fullscreen');
+  expect((player.querySelector('.tm-touch-exit') as HTMLElement).hidden).toBe(
+    true
+  );
+});
+
 test('desktops with a mouse do not get it', () => {
   setDevice('wide', false);
   const { art, player } = fakeArt();

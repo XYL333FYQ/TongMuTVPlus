@@ -3,6 +3,8 @@ import {
   DEVICE_TIER_ATTRIBUTE,
   DEVICE_TIER_BOOT_SCRIPT,
   getDeviceTier,
+  pageLayoutFor,
+  settleLayoutHeight,
 } from './device-tier';
 
 describe('computeDeviceTier', () => {
@@ -55,4 +57,65 @@ test('the boot script writes the tier and updates it on resize', () => {
   expect(getDeviceTier()).toBe('wide');
   expect(events).toEqual(['wide']);
   raf.mockRestore();
+});
+
+test('opening the on-screen keyboard does not change the tier', () => {
+  document.documentElement.removeAttribute(DEVICE_TIER_ATTRIBUTE);
+  const raf = jest
+    .spyOn(window, 'requestAnimationFrame')
+    .mockImplementation((callback) => {
+      callback(0);
+      // 同步调用时 rAF 的返回值会在回调之后才赋给 frame，返回 0 才不会卡住后续的 resize
+      return 0;
+    });
+  const matchMedia = window.matchMedia;
+  window.matchMedia = ((query: string) => ({
+    matches: query.includes('coarse'),
+  })) as never;
+  // 平板横屏
+  Object.assign(window, { innerWidth: 1280, innerHeight: 800 });
+  // eslint-disable-next-line no-new-func
+  new Function(DEVICE_TIER_BOOT_SCRIPT)();
+  expect(getDeviceTier()).toBe('wide');
+  // 点聊天输入框，App 壳把窗口压矮到 420：仍是平板横屏，不换成横屏手机
+  const input = document.createElement('input');
+  document.body.appendChild(input);
+  input.focus();
+  Object.assign(window, { innerHeight: 420 });
+  window.dispatchEvent(new Event('resize'));
+  expect(getDeviceTier()).toBe('wide');
+  // 收起键盘、离开输入框以后，真的转成竖屏照样换档
+  input.blur();
+  Object.assign(window, { innerWidth: 800, innerHeight: 1280 });
+  window.dispatchEvent(new Event('resize'));
+  expect(getDeviceTier()).toBe('tablet');
+  input.remove();
+  window.matchMedia = matchMedia;
+  raf.mockRestore();
+});
+
+test('a shorter window without typing still changes the tier', () => {
+  const memory = { width: 1280, height: 800 };
+  expect(settleLayoutHeight(memory, 1280, 420, false)).toBe(420);
+  // 输入时变矮：沿用之前的高度；变高照常记下
+  expect(settleLayoutHeight(memory, 1280, 300, true)).toBe(420);
+  expect(settleLayoutHeight(memory, 1280, 500, true)).toBe(500);
+  expect(settleLayoutHeight(memory, 1280, 200, true)).toBe(500);
+  // 宽度变了（转屏、拖窗口）就不再沿用
+  expect(settleLayoutHeight(memory, 900, 200, true)).toBe(200);
+});
+
+describe('pageLayoutFor：电脑、平板、手机各一套', () => {
+  test.each([
+    ['phone', true, 'compact'],
+    ['phone-landscape', true, 'compact'],
+    // 平板横竖都是平板排版，不照搬电脑
+    ['wide', true, 'tablet'],
+    ['tablet', true, 'tablet'],
+    // 鼠标操作的大屏是电脑；竖长的电脑窗口按紧凑排
+    ['wide', false, 'desktop'],
+    ['tablet', false, 'compact'],
+  ] as const)('%s coarse=%s → %s', (tier, coarse, layout) => {
+    expect(pageLayoutFor(tier, coarse)).toBe(layout);
+  });
 });
