@@ -13,7 +13,7 @@ import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
 import PageLayout from '@/components/PageLayout';
 import { useWatchRoomContext } from '@/components/WatchRoomProvider';
 
-import { usePlaybackSessionSafe } from '@/features/playback/context';
+import { usePlaybackSessionSafe } from '@/hooks/usePlaybackSession';
 
 import { filmFromHref, playChange } from './lib/commands';
 import { isExternalRoomServer } from './lib/external-room-server';

@@ -10,7 +10,7 @@ jest.mock('@/components/WatchRoomProvider', () => ({
   useWatchRoomContext: () => mockRoom,
   useWatchRoomContextSafe: () => mockRoom,
 }));
-jest.mock('@/features/playback/context', () => ({
+jest.mock('@/hooks/usePlaybackSession', () => ({
   usePlaybackSessionSafe: () => mockSession,
 }));
 // pnpm 的目录布局下 jest 找不到 styled-jsx/style，这里只需要它渲染成空

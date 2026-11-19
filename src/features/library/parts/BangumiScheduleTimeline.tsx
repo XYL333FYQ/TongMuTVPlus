@@ -1,5 +1,3 @@
-/* eslint-disable react-hooks/exhaustive-deps */
-
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -114,6 +112,8 @@ function BangumiScheduleTimeline({
         setLoading(false);
       })
       .catch((err) => {
+        // 界面上已经提示“时刻表加载失败”，原始错误留给排查
+        // eslint-disable-next-line no-console
         console.error('获取时刻表失败:', err);
         setError('时刻表加载失败，请稍后重试');
         setLoading(false);

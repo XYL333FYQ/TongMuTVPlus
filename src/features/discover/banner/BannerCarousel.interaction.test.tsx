@@ -1,7 +1,7 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { StrictMode } from 'react';
 
-import BannerCarousel from '@/components/BannerCarousel';
+import BannerCarousel from '@/features/discover/banner/BannerCarousel';
 
 jest.mock('next/navigation', () => ({
   useRouter: () => ({ push: mockPush }),

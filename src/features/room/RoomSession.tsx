@@ -25,7 +25,7 @@ import { useAudioFocus } from '@/hooks/useAudioFocus';
 
 import { useWatchRoomContextSafe } from '@/components/WatchRoomProvider';
 
-import { usePlaybackSessionSafe } from '@/features/playback/context';
+import { usePlaybackSessionSafe } from '@/hooks/usePlaybackSession';
 import { useVoiceChat } from '@/features/room/hooks/useVoiceChat';
 
 import { filmFromHref, playChange, queueAdd } from './lib/commands';

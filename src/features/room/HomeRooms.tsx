@@ -15,7 +15,7 @@ import {
   EXTERNAL_ROOM_SERVER_NOTICE,
   isExternalRoomServer,
   roomCoverSource,
-} from '@/features/room';
+} from './index';
 
 import type { Room } from '@/types/watch-room';
 

@@ -26,8 +26,8 @@ import {
   type PlaybackPresentation,
   type PlaybackSession,
   PlaybackSessionContext,
-} from './context';
-import { normalizePlaybackHref, playbackIdentity } from './session';
+} from '@/hooks/usePlaybackSession';
+import { normalizePlaybackHref, playbackIdentity } from '@/lib/playback-links';
 
 const PlaybackSurface = dynamic(() => import('./LegacyPlaybackSurface'), {
   ssr: false,

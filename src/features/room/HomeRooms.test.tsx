@@ -3,7 +3,7 @@ jest.mock('@/components/WatchRoomProvider', () => ({
 }));
 import { act, cleanup, render, screen, waitFor } from '@testing-library/react';
 
-import HomeRooms from '@/components/catalog/HomeRooms';
+import HomeRooms from '@/features/room/HomeRooms';
 const mockContext = {
   isEnabled: true,
   currentRoom: null as null | {

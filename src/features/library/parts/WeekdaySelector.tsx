@@ -1,13 +1,17 @@
-/* eslint-disable react-hooks/exhaustive-deps */
-
 'use client';
 
 import { motion } from 'framer-motion';
-import React, { useEffect, useId, useState } from 'react';
+import React, { useEffect, useId, useRef, useState } from 'react';
 
 import '@/styles/controls.css';
 
 import { useReducedMotionSetting } from '@/lib/motion';
+
+// 今天是星期几（默认选中今天）。getDay() 返回 0-6，0 是周日
+function getTodayWeekday(): string {
+  const weekdayMap = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  return weekdayMap[new Date().getDay()];
+}
 
 interface WeekdaySelectorProps {
   onWeekdayChange: (weekday: string) => void;
@@ -30,22 +34,16 @@ const WeekdaySelector: React.FC<WeekdaySelectorProps> = ({
 }) => {
   const selectionId = useId();
   const reduced = useReducedMotionSetting();
-  // 获取今天的星期数，默认选中今天
-  const getTodayWeekday = (): string => {
-    const today = new Date().getDay();
-    // getDay() 返回 0-6，0 是周日，1-6 是周一到周六
-    const weekdayMap = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-    return weekdayMap[today];
-  };
-
   const [selectedWeekday, setSelectedWeekday] = useState<string>(
     getTodayWeekday()
   );
 
-  // 组件初始化时通知父组件默认选中的星期
+  // 组件初始化时通知父组件默认选中的星期（只在挂载时一次，用最新的回调）
+  const onWeekdayChangeRef = useRef(onWeekdayChange);
+  onWeekdayChangeRef.current = onWeekdayChange;
   useEffect(() => {
-    onWeekdayChange(getTodayWeekday());
-  }, []); // 只在组件挂载时执行一次
+    onWeekdayChangeRef.current(getTodayWeekday());
+  }, []);
 
   return (
     <div className={'tm-capsule tm-capsule-track ' + className}>

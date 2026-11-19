@@ -3,7 +3,7 @@
 import { useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useRef } from 'react';
 
-import { usePlaybackSession } from './context';
+import { usePlaybackSession } from '@/hooks/usePlaybackSession';
 import { useVideoAspectRatio } from './useVideoAspectRatio';
 
 function RouteBridge() {

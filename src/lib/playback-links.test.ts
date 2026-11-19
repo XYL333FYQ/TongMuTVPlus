@@ -7,7 +7,7 @@ import {
   playbackIdentity,
   queueItemFromHref,
   queuePlaybackHref,
-} from './session';
+} from '@/lib/playback-links';
 
 import type { PlayState } from '@/types/watch-room';
 

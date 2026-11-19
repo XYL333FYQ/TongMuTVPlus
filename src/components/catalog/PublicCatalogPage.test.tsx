@@ -16,10 +16,6 @@ jest.mock('@/components/PageLayout', () => ({
     <div>{children}</div>
   ),
 }));
-jest.mock('@/components/catalog/HomeRooms', () => ({
-  __esModule: true,
-  default: () => null,
-}));
 jest.mock('@/components/catalog/HomeHero', () => ({
   __esModule: true,
   default: ({ onWatchInRoom }: { onWatchInRoom: () => void }) => (

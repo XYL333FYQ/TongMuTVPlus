@@ -4,14 +4,14 @@ import {
 } from './bangumi.client';
 import { getDoubanCategories } from './douban.client';
 import type { TMDBItem } from './tmdb.client';
-import type { DoubanItem } from './types';
+import type { DoubanItem, SearchResult } from './types';
 
 export interface HomeCatalogueData {
   movies: DoubanItem[];
   tvshows: DoubanItem[];
   variety: DoubanItem[];
   bangumi: BangumiCalendarData[];
-  duanju: Record<string, unknown>[];
+  duanju: SearchResult[];
   upcoming: TMDBItem[];
 }
 export type HomeCatalogueKey = keyof HomeCatalogueData;

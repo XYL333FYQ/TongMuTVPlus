@@ -3,9 +3,16 @@
 import { Film, RefreshCw, Star } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import {
+  type ReactNode,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 
 import { posterTiltHandlers } from '@/lib/motion';
+import { filmPlaybackHref, roomSelectionHref } from '@/lib/playback-links';
 import {
   type PublicCatalogCategory,
   type PublicCatalogItem,
@@ -14,18 +21,12 @@ import {
 } from '@/lib/public-catalog';
 
 import HomeHero from '@/components/catalog/HomeHero';
-import HomeRooms from '@/components/catalog/HomeRooms';
 import PosterGrid from '@/components/catalog/PosterGrid';
 import PosterMotion from '@/components/catalog/PosterMotion';
 import PublicPoster from '@/components/catalog/PublicPoster';
 import SectionHeader from '@/components/catalog/SectionHeader';
 import PageContainer from '@/components/PageContainer';
 import PageLayout from '@/components/PageLayout';
-
-import {
-  filmPlaybackHref,
-  roomSelectionHref,
-} from '@/features/playback/selection-links';
 
 function usePublicCatalog(
   type: PublicCatalogCategory,
@@ -220,9 +221,12 @@ function CategoryLinks() {
 export default function PublicCatalogPage({
   mode,
   category,
+  rooms,
 }: {
   mode: 'home' | 'library';
   category?: PublicCatalogCategory;
+  /** 首页“正在一起看”那一栏，由页面传入（房间是另一个功能，共用组件不直接引用） */
+  rooms?: ReactNode;
 }) {
   const params = useSearchParams();
   const isHome = mode === 'home';
@@ -396,9 +400,7 @@ export default function PublicCatalogPage({
           )}
         </div>
         <PageContainer className='tm-home-body'>
-          <div className='tm-home-pair'>
-            <HomeRooms guest />
-          </div>
+          <div className='tm-home-pair'>{rooms}</div>
           <CategoryLinks />
           {[
             { title: '热门电影', href: '/douban?type=movie', feed: catalog },

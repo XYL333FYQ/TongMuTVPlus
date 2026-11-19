@@ -3,7 +3,7 @@ import { act, fireEvent, render, screen } from '@testing-library/react';
 import { clearClientMemory } from '@/lib/client-memory';
 import { refreshPage } from '@/lib/page-refresh';
 
-import DoubanPage from './page';
+import DoubanPage from './LibraryPage';
 
 jest.mock('next/navigation', () => ({
   useSearchParams: () => new URLSearchParams('type=movie'),
@@ -27,7 +27,7 @@ jest.mock('@/components/VideoCard', () => ({
   __esModule: true,
   default: ({ title }: { title: string }) => <article>{title}</article>,
 }));
-jest.mock('@/components/DoubanSelector', () => ({
+jest.mock('@/features/library/parts/DoubanSelector', () => ({
   __esModule: true,
   default: ({
     onPrimaryChange,
@@ -35,11 +35,11 @@ jest.mock('@/components/DoubanSelector', () => ({
     onPrimaryChange: (value: string) => void;
   }) => <button onClick={() => onPrimaryChange('全部')}>推荐分类</button>,
 }));
-jest.mock('@/components/DoubanCustomSelector', () => ({
+jest.mock('@/features/library/parts/DoubanCustomSelector', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('@/components/BangumiScheduleTimeline', () => ({
+jest.mock('@/features/library/parts/BangumiScheduleTimeline', () => ({
   __esModule: true,
   default: () => null,
 }));

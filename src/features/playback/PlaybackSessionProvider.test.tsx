@@ -25,7 +25,7 @@ import {
 } from '@testing-library/react';
 import { useEffect, useRef } from 'react';
 
-import { usePlaybackSession } from './context';
+import { usePlaybackSession } from '@/hooks/usePlaybackSession';
 import PlaybackSessionProvider from './PlaybackSessionProvider';
 
 import type { PlayState } from '@/types/watch-room';

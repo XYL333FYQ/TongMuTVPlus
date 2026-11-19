@@ -7,7 +7,7 @@ let mockSession: any;
 jest.mock('@/components/WatchRoomProvider', () => ({
   useWatchRoomContextSafe: () => mockRoom,
 }));
-jest.mock('@/features/playback/context', () => ({
+jest.mock('@/hooks/usePlaybackSession', () => ({
   usePlaybackSessionSafe: () => mockSession,
 }));
 

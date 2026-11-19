@@ -15,7 +15,7 @@ import PageContainer from '@/components/PageContainer';
 import PageLayout from '@/components/PageLayout';
 import { useWatchRoomContextSafe } from '@/components/WatchRoomProvider';
 
-import { usePlaybackSessionSafe } from '@/features/playback/context';
+import { usePlaybackSessionSafe } from '@/hooks/usePlaybackSession';
 import {
   RoomActivityActions,
   RoomLiveMessages,

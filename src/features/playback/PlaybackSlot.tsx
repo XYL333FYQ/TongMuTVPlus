@@ -2,7 +2,7 @@
 
 import { CSSProperties, useCallback, useEffect, useState } from 'react';
 
-import { usePlaybackSession } from './context';
+import { usePlaybackSession } from '@/hooks/usePlaybackSession';
 
 export default function PlaybackSlot() {
   const { registerSlot, controller } = usePlaybackSession();

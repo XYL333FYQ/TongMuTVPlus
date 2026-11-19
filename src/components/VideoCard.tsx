@@ -41,6 +41,8 @@ import {
 } from '@/lib/db.client';
 import { posterTiltHandlers } from '@/lib/motion';
 import { isNetdiskSource } from '@/lib/netdisk/source';
+import { filmPlaybackHref, roomSelectionHref } from '@/lib/playback-links';
+import { queuePlaybackHref } from '@/lib/playback-links';
 import { appendSpecialSourceParam } from '@/lib/special-source.client';
 import type { TMDBVideoItem } from '@/lib/tmdb.client';
 import {
@@ -54,6 +56,7 @@ import {
   tryApplyDoubanImageFallback,
 } from '@/lib/utils';
 import { useLongPress } from '@/hooks/useLongPress';
+import { usePlaybackSessionSafe } from '@/hooks/usePlaybackSession';
 
 import AIChatPanel, { preloadAIChatPanel } from '@/components/AIChatPanel.lazy';
 import AnimeSubscribeModal from '@/components/AnimeSubscribeModal';
@@ -63,13 +66,6 @@ import ImageViewer from '@/components/feedback/ImageViewer';
 import MobileActionSheet from '@/components/feedback/MobileActionSheet';
 import { ImagePlaceholder } from '@/components/ImagePlaceholder';
 import TrailerPickerDialog from '@/components/TrailerPickerDialog';
-
-import { usePlaybackSessionSafe } from '@/features/playback/context';
-import {
-  filmPlaybackHref,
-  roomSelectionHref,
-} from '@/features/playback/selection-links';
-import { queuePlaybackHref } from '@/features/playback/session';
 
 export interface VideoCardProps {
   id?: string;

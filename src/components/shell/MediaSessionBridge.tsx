@@ -3,8 +3,7 @@
 import { useEffect, useRef } from 'react';
 
 import { getShell } from '@/lib/shell-bridge';
-
-import { usePlaybackSessionSafe } from '@/features/playback/context';
+import { usePlaybackSessionSafe } from '@/hooks/usePlaybackSession';
 
 import { useWatchRoomContextSafe } from '@/components/WatchRoomProvider';
 

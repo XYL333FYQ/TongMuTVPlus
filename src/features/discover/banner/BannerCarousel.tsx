@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { getDoubanDetail } from '@/lib/douban.client';
+import { filmPlaybackHref, roomSelectionHref } from '@/lib/playback-links';
 import type { TMDBItem } from '@/lib/tmdb.client';
 import { getGenreNames, getTMDBImageUrl } from '@/lib/tmdb-image-base';
 import { usePageRefresh } from '@/hooks/usePageRefresh';
@@ -13,11 +14,6 @@ import HomeHero from '@/components/catalog/HomeHero';
 import DetailPanel from '@/components/DetailPanel';
 import ProxyImage from '@/components/ProxyImage';
 import { useWatchRoomContextSafe } from '@/components/WatchRoomProvider';
-
-import {
-  filmPlaybackHref,
-  roomSelectionHref,
-} from '@/features/playback/selection-links';
 
 const LOCALSTORAGE_DURATION = 24 * 60 * 60 * 1000;
 
@@ -312,8 +308,8 @@ export default function BannerCarousel({
                 latestTimestamp = timestamp;
                 cacheExpired = Date.now() - timestamp > LOCALSTORAGE_DURATION;
               }
-            } catch (e) {
-              console.error('解析缓存数据失败:', e);
+            } catch {
+              // 缓存坏了就当没有，下面会重新拉
             }
           }
         }
@@ -347,15 +343,17 @@ export default function BannerCarousel({
                   timestamp: Date.now(),
                 })
               );
-            } catch (e) {
-              // localStorage 可能已满，忽略错误
-              console.error('保存到 localStorage 失败:', e);
+            } catch {
+              // localStorage 可能已满，不缓存也能用
             }
           }
         }
       } catch (error) {
-        if (generation === trendingGeneration.current)
+        if (generation === trendingGeneration.current) {
+          // 拉不到就显示“暂时没有推荐内容”，原始错误留给排查
+          // eslint-disable-next-line no-console
           console.error('获取热门内容失败:', error);
+        }
       } finally {
         if (generation === trendingGeneration.current) setIsLoading(false);
       }

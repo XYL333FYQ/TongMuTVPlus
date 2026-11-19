@@ -4,7 +4,7 @@ import { useCallback, useRef } from 'react';
 
 import { useWatchRoomContextSafe } from '@/components/WatchRoomProvider';
 
-import { usePlaybackSessionSafe } from '@/features/playback/context';
+import { usePlaybackSessionSafe } from '@/hooks/usePlaybackSession';
 
 import type { MusicSyncState } from '@/types/watch-room';
 

@@ -11,7 +11,7 @@ pnpm check:structure   # 块名归属、令牌、层级、媒体查询、整文�
 
 ## 范围
 
-这套规范管本项目自己做的部分：站点外壳、发现（`/`）、片库（`/douban`）、房间（`/watch-room`）、播放页（`/play`），以及它们共用的组件、样式和工具。漫画、小说、音乐、直播、网络直播、电视、管理后台等页面来自上游 MoonTVPlus，暂时保持原样（可以继续用 Tailwind），以后要改它们时再按这里整理。
+这套规范管本项目自己做的部分：站点外壳、发现（`/`）、片库（`/douban`）、房间（`/watch-room`）、播放页（`/play`），以及它们共用的组件、样式和工具。漫画、小说、音乐、直播、网络直播、电视、管理后台等页面来自上游 MoonTVPlus，暂时保持原样（可以继续用 Tailwind），以后要改它们时再按这里整理。书和漫画用的卡片（`components/media/MediaCard`）也属于上游这一套，和影片卡片 `VideoCard` 是两样东西，暂不合并。
 
 检查覆盖的文件列在 `scripts/lib/structure-scope.mjs`。
 
@@ -37,6 +37,8 @@ src/
 站点外壳放在 `components/shell/` 而不是 `features/`：所有页面（包括上游页面）都套着它，它是共用的一层，不是一个功能。
 
 房间的**连接层**也是共用的一层，不在 `features/room` 里：`lib/watch-room-socket.ts`（连接）、`hooks/useWatchRoom.ts`（连接状态、确认回包、消息补齐）、`components/WatchRoomProvider.tsx`（全站共用一个连接）、`types/watch-room.ts`（房间、成员、播放状态的类型）。外壳、自己看、直播 / 音乐等页面都要知道“人在不在房间、有没有控制权”，它们只经这一层知道；房间的界面、会话、同步、播放器、活动都在 `features/room`，建在这一层上面。
+
+自己看也一样：全站播放会话的**接口**在共用层——`hooks/usePlaybackSession.tsx`（会话的类型、context、`usePlaybackSession` / `usePlaybackSessionSafe`），站内播放地址的纯函数在 `lib/playback-links.ts`（`filmPlaybackHref`、`roomSelectionHref`、`queuePlaybackHref` 等）。影片卡片、外壳的媒体会话、房间都只经这两个文件知道“正在放什么、怎么去放”；提供会话的 `PlaybackSessionProvider` 和播放页在 `features/playback`。
 
 ## 规则
 

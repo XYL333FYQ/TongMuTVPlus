@@ -1,11 +1,5 @@
 {
-  "imports": [
-    "src/components/BannerCarousel.tsx",
-    "src/components/VideoCard.tsx",
-    "src/components/catalog/HomeRooms.tsx",
-    "src/components/catalog/PublicCatalogPage.tsx",
-    "src/components/shell/MediaSessionBridge.tsx"
-  ],
+  "imports": [],
   "tokens": [],
   "zIndex": [
     "src/components/VideoCard.tsx :: z-[10001]",
@@ -125,8 +119,6 @@
     "src/styles/shell.css :: 未登记 tm-music-toolbar-row"
   ],
   "eslintDisable": [
-    "src/app/douban/page.tsx",
-    "src/app/page.tsx",
     "src/components/ContinueWatching.tsx",
     "src/components/VideoCard.tsx",
     "src/components/catalog/CapsuleSwitch.tsx",

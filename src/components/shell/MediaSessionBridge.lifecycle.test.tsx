@@ -13,7 +13,7 @@ let session: {
   playbackState: string;
   setActionHandler: jest.Mock;
 };
-jest.mock('@/features/playback/context', () => ({
+jest.mock('@/hooks/usePlaybackSession', () => ({
   usePlaybackSessionSafe: () => playback,
 }));
 jest.mock('@/components/WatchRoomProvider', () => ({
