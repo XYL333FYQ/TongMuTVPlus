@@ -28,6 +28,8 @@ import React, {
   useState,
 } from 'react';
 
+import './VideoCard.css';
+
 import { isAnimeCategoryText } from '@/lib/anime-keyword-expr';
 import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
 import { getBangumiSubjectUrl } from '@/lib/bangumi.client';
@@ -767,9 +769,12 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
               id: 'favorite',
               label: currentFavorited ? '取消收藏' : '添加收藏',
               icon: currentFavorited ? (
-                <Heart size={20} className='fill-fg stroke-fg' />
+                <Heart
+                  size={20}
+                  className='tm-video-card-menu-heart tm-video-card-menu-heart-on'
+                />
               ) : (
-                <Heart size={20} className='fill-transparent stroke-fg' />
+                <Heart size={20} className='tm-video-card-menu-heart' />
               ),
               onClick: () => {
                 const mockEvent = {
@@ -798,9 +803,12 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
             id: 'favorite',
             label: currentFavorited ? '取消收藏' : '添加收藏',
             icon: currentFavorited ? (
-              <Heart size={20} className='fill-fg stroke-fg' />
+              <Heart
+                size={20}
+                className='tm-video-card-menu-heart tm-video-card-menu-heart-on'
+              />
             ) : (
-              <Heart size={20} className='fill-transparent stroke-fg' />
+              <Heart size={20} className='tm-video-card-menu-heart' />
             ),
             onClick: () => {
               const mockEvent = {
@@ -949,9 +957,11 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
         {externalAction.feedback}
         <div
           ref={detailTriggerRef}
-          className={`tm-video-card group relative w-full rounded-lg bg-transparent ${
-            isUpcoming ? 'cursor-default' : 'cursor-pointer'
-          } ${showUpcomingInfo ? 'scale-[1.05] z-[500]' : ''}`}
+          className={
+            'tm-video-card tm-video-card-tile' +
+            (isUpcoming ? ' tm-video-card-upcoming' : '') +
+            (showUpcomingInfo ? ' tm-video-card-upcoming-open' : '')
+          }
           role='button'
           tabIndex={0}
           aria-label={(compactRecord ? '继续观看 ' : '查看 ') + actualTitle}
@@ -975,18 +985,6 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
             else handleClick();
           }}
           {...longPressProps}
-          style={
-            {
-              // 禁用所有默认的长按和选择效果
-              WebkitUserSelect: 'none',
-              userSelect: 'none',
-              WebkitTouchCallout: 'none',
-              WebkitTapHighlightColor: 'transparent',
-              touchAction: 'manipulation',
-              // 禁用右键菜单和长按菜单
-              pointerEvents: 'auto',
-            } as React.CSSProperties
-          }
           onContextMenu={(e) => {
             // 阻止默认右键菜单
             e.preventDefault();
@@ -1016,27 +1014,14 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
         >
           {/* 海报容器：不在外层 overflow-hidden，避免裁切来源数量浮层 */}
           <div
-            className={`tm-video-card-art relative rounded-lg ${
-              origin === 'live'
-                ? 'ring-1 ring-[color-mix(in_srgb,var(--tm-text)_80%,transparent)]'
-                : ''
-            } ${
-              orientation === 'horizontal' ? 'aspect-video' : 'aspect-[2/3]'
-            }`}
-            style={
-              {
-                WebkitUserSelect: 'none',
-                userSelect: 'none',
-                WebkitTouchCallout: 'none',
-              } as React.CSSProperties
+            className={
+              'tm-video-card-art tm-video-card-poster' +
+              (origin === 'live' ? ' tm-video-card-poster-live' : '') +
+              (orientation === 'horizontal' ? ' tm-video-card-poster-wide' : '')
             }
-            onContextMenu={(e) => {
-              e.preventDefault();
-              return false;
-            }}
           >
             {/* 仅图片层做圆角裁剪 */}
-            <div className='absolute inset-0 overflow-hidden rounded-lg'>
+            <div className='tm-video-card-clip'>
               {/* 骨架屏 */}
               {!isLoading && !isDirectPlaySource && (
                 <ImagePlaceholder
@@ -1051,7 +1036,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
               !displayPoster ||
               (from === 'playrecord' && !actualPoster) ? (
                 <div
-                  className='tm-media-initial absolute inset-0'
+                  className='tm-video-card-initial tm-media-initial'
                   aria-hidden='true'
                 >
                   {Array.from(actualTitle.trim())[0] || '影'}
@@ -1059,8 +1044,8 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
               ) : isNetdiskSource(actualSource) &&
                 !actualPoster &&
                 displayPoster === netdiskPosterPlaceholder ? (
-                <div className='absolute inset-0 flex flex-col items-center justify-center bg-raised text-muted'>
-                  <Cloud className='w-10 h-10 opacity-80' />
+                <div className='tm-video-card-netdisk'>
+                  <Cloud className='tm-video-card-netdisk-icon' />
                 </div>
               ) : (
                 <Image
@@ -1069,11 +1054,8 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
                   fill
                   data-loaded={isLoading}
                   className={
-                    origin === 'live'
-                      ? 'object-contain'
-                      : orientation === 'horizontal'
-                      ? 'object-cover object-center'
-                      : 'object-cover'
+                    'tm-video-card-image' +
+                    (origin === 'live' ? ' tm-video-card-image-contain' : '')
                   }
                   referrerPolicy='no-referrer'
                   loading='lazy'
@@ -1118,19 +1100,6 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
                       }, 2000);
                     }
                   }}
-                  style={
-                    {
-                      // 禁用图片的默认长按效果
-                      WebkitUserSelect: 'none',
-                      userSelect: 'none',
-                      WebkitTouchCallout: 'none',
-                      pointerEvents: 'none', // 海报点击交给卡片外层处理，确保点击播放
-                    } as React.CSSProperties
-                  }
-                  onContextMenu={(e) => {
-                    e.preventDefault();
-                    return false;
-                  }}
                   onDragStart={(e) => {
                     e.preventDefault();
                     return false;
@@ -1139,87 +1108,29 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
               )}
 
               {/* 悬浮遮罩 */}
-              <div
-                className='tm-video-card-overlay absolute inset-0 bg-[color:color-mix(in_srgb,var(--tm-hero-bg)_55%,transparent)] transition-opacity duration-300 ease-in-out opacity-0 group-hover:opacity-100'
-                style={
-                  {
-                    WebkitUserSelect: 'none',
-                    userSelect: 'none',
-                    WebkitTouchCallout: 'none',
-                  } as React.CSSProperties
-                }
-                onContextMenu={(e) => {
-                  e.preventDefault();
-                  return false;
-                }}
-              />
+              <div className='tm-video-card-overlay' />
             </div>
 
             {/* 播放按钮或上映倒计时 */}
             {isUpcoming && daysUntilRelease !== null ? (
               <div
-                className={`absolute inset-0 flex items-center justify-center transition-all duration-300 ease-in-out ${
-                  showUpcomingInfo
-                    ? 'opacity-100 scale-100'
-                    : 'opacity-0 scale-75'
-                }`}
-                style={
-                  {
-                    WebkitUserSelect: 'none',
-                    userSelect: 'none',
-                    WebkitTouchCallout: 'none',
-                  } as React.CSSProperties
+                className={
+                  'tm-video-card-countdown' +
+                  (showUpcomingInfo ? ' tm-video-card-countdown-open' : '')
                 }
-                onContextMenu={(e) => {
-                  e.preventDefault();
-                  return false;
-                }}
               >
-                <div
-                  className='bg-ink/70 backdrop-blur-sm text-on-art px-4 py-2 rounded-lg text-[13px] md:text-sm font-medium shadow-lg'
-                  style={
-                    {
-                      WebkitUserSelect: 'none',
-                      userSelect: 'none',
-                      WebkitTouchCallout: 'none',
-                    } as React.CSSProperties
-                  }
-                >
+                <div className='tm-video-card-countdown-text'>
                   {upcomingReleaseText}
                 </div>
               </div>
             ) : (
               config.showPlayButton &&
               !compactRecord && (
-                <div
-                  className='pointer-events-none absolute inset-0 flex items-center justify-center opacity-0 transition-all duration-300 ease-in-out delay-75 group-hover:opacity-100 group-hover:scale-100'
-                  style={
-                    {
-                      WebkitUserSelect: 'none',
-                      userSelect: 'none',
-                      WebkitTouchCallout: 'none',
-                    } as React.CSSProperties
-                  }
-                  onContextMenu={(e) => {
-                    e.preventDefault();
-                    return false;
-                  }}
-                >
+                <div className='tm-video-card-play'>
                   <PlayCircleIcon
                     size={50}
                     strokeWidth={0.8}
-                    className='text-on-art fill-transparent transition-all duration-300 ease-out hover:fill-on-art hover:scale-[1.1]'
-                    style={
-                      {
-                        WebkitUserSelect: 'none',
-                        userSelect: 'none',
-                        WebkitTouchCallout: 'none',
-                      } as React.CSSProperties
-                    }
-                    onContextMenu={(e) => {
-                      e.preventDefault();
-                      return false;
-                    }}
+                    className='tm-video-card-play-icon'
                   />
                 </div>
               )
@@ -1228,59 +1139,22 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
             {/* 操作按钮 - 继续观看不显示桌面端悬停按钮 */}
             {(config.showHeart || config.showCheckCircle) &&
               from !== 'playrecord' && (
-                <div
-                  data-button='true'
-                  className='absolute bottom-3 right-3 flex gap-3 opacity-0 translate-y-2 transition-all duration-300 ease-in-out sm:group-hover:opacity-100 sm:group-hover:translate-y-0'
-                  style={
-                    {
-                      WebkitUserSelect: 'none',
-                      userSelect: 'none',
-                      WebkitTouchCallout: 'none',
-                    } as React.CSSProperties
-                  }
-                  onContextMenu={(e) => {
-                    e.preventDefault();
-                    return false;
-                  }}
-                >
+                <div data-button='true' className='tm-video-card-actions'>
                   {config.showCheckCircle && (
                     <Trash2
                       onClick={handleDeleteRecord}
                       size={20}
-                      className='text-on-art transition-all duration-300 ease-out hover:scale-[1.1]'
-                      style={
-                        {
-                          WebkitUserSelect: 'none',
-                          userSelect: 'none',
-                          WebkitTouchCallout: 'none',
-                        } as React.CSSProperties
-                      }
-                      onContextMenu={(e) => {
-                        e.preventDefault();
-                        return false;
-                      }}
+                      className='tm-video-card-action'
                     />
                   )}
                   {config.showHeart && from !== 'search' && (
                     <Heart
                       onClick={handleToggleFavorite}
                       size={20}
-                      className={`transition-all duration-300 ease-out ${
-                        favorited
-                          ? 'fill-fg stroke-fg'
-                          : 'fill-transparent stroke-fg hover:stroke-fg'
-                      } hover:scale-[1.1]`}
-                      style={
-                        {
-                          WebkitUserSelect: 'none',
-                          userSelect: 'none',
-                          WebkitTouchCallout: 'none',
-                        } as React.CSSProperties
+                      className={
+                        'tm-video-card-heart' +
+                        (favorited ? ' tm-video-card-heart-on' : '')
                       }
-                      onContextMenu={(e) => {
-                        e.preventDefault();
-                        return false;
-                      }}
                     />
                   )}
                 </div>
@@ -1289,18 +1163,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
             {/* 季度徽章 */}
             {seasonNumber && (
               <div
-                className='absolute top-2 left-2 bg-raised text-fg text-[13px] font-medium px-2 py-1 rounded backdrop-blur-sm shadow-sm transition-all duration-300 ease-out group-hover:opacity-90'
-                style={
-                  {
-                    WebkitUserSelect: 'none',
-                    userSelect: 'none',
-                    WebkitTouchCallout: 'none',
-                  } as React.CSSProperties
-                }
-                onContextMenu={(e) => {
-                  e.preventDefault();
-                  return false;
-                }}
+                className='tm-video-card-season'
                 title={seasonName || `第${seasonNumber}季`}
               >
                 S{seasonNumber}
@@ -1318,35 +1181,8 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
             {orientation === 'vertical' &&
               isDirectPlaySource &&
               directLinkUrl && (
-                <div
-                  className='absolute top-1 left-1 right-1 sm:top-2 sm:left-2 sm:right-2 pt-1 px-1 sm:pt-2 sm:px-2'
-                  style={
-                    {
-                      WebkitUserSelect: 'none',
-                      userSelect: 'none',
-                      WebkitTouchCallout: 'none',
-                    } as React.CSSProperties
-                  }
-                  onContextMenu={(e) => {
-                    e.preventDefault();
-                    return false;
-                  }}
-                >
-                  <div
-                    className='text-[13px] sm:text-[13px] text-fg line-clamp-2 break-all'
-                    style={
-                      {
-                        WebkitUserSelect: 'none',
-                        userSelect: 'none',
-                        WebkitTouchCallout: 'none',
-                      } as React.CSSProperties
-                    }
-                    onContextMenu={(e) => {
-                      e.preventDefault();
-                      return false;
-                    }}
-                    title={directLinkUrl}
-                  >
+                <div className='tm-video-card-url'>
+                  <div className='tm-video-card-url-text' title={directLinkUrl}>
                     {directLinkUrl}
                   </div>
                 </div>
@@ -1355,35 +1191,9 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
             {actualEpisodes &&
               actualEpisodes > 1 &&
               orientation === 'vertical' && (
-                <div
-                  className='absolute top-1 right-1 sm:top-2 sm:right-2 flex flex-col gap-0.5 sm:gap-1.5'
-                  style={
-                    {
-                      WebkitUserSelect: 'none',
-                      userSelect: 'none',
-                      WebkitTouchCallout: 'none',
-                    } as React.CSSProperties
-                  }
-                  onContextMenu={(e) => {
-                    e.preventDefault();
-                    return false;
-                  }}
-                >
+                <div className='tm-video-card-badges'>
                   {/* 集数显示 */}
-                  <div
-                    className='bg-ink/60 text-on-art text-[13px] sm:text-[13px] font-medium px-2 sm:px-3 py-0.5 sm:py-1 rounded-full shadow-md transition-all duration-300 ease-out group-hover:scale-110 backdrop-blur-sm flex items-center justify-center'
-                    style={
-                      {
-                        WebkitUserSelect: 'none',
-                        userSelect: 'none',
-                        WebkitTouchCallout: 'none',
-                      } as React.CSSProperties
-                    }
-                    onContextMenu={(e) => {
-                      e.preventDefault();
-                      return false;
-                    }}
-                  >
+                  <div className='tm-video-card-badge'>
                     {currentEpisode !== undefined && currentEpisode !== null
                       ? `${currentEpisode}/${actualEpisodes}`
                       : `共${actualEpisodes}集`}
@@ -1391,22 +1201,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
 
                   {/* 年份显示 */}
                   {displayYear && (
-                    <div
-                      className='bg-ink/60 text-on-art text-[13px] sm:text-[13px] font-medium px-2 sm:px-3 py-0.5 sm:py-1 rounded-full shadow-md transition-all duration-300 ease-out group-hover:scale-110 backdrop-blur-sm flex items-center justify-center'
-                      style={
-                        {
-                          WebkitUserSelect: 'none',
-                          userSelect: 'none',
-                          WebkitTouchCallout: 'none',
-                        } as React.CSSProperties
-                      }
-                      onContextMenu={(e) => {
-                        e.preventDefault();
-                        return false;
-                      }}
-                    >
-                      {displayYear}年
-                    </div>
+                    <div className='tm-video-card-badge'>{displayYear}年</div>
                   )}
                 </div>
               )}
@@ -1416,39 +1211,10 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
               config.showSourceName &&
               source_name &&
               !cmsData && (
-                <div
-                  className='absolute bottom-1 right-1 sm:bottom-2 sm:right-2'
-                  style={
-                    {
-                      WebkitUserSelect: 'none',
-                      userSelect: 'none',
-                      WebkitTouchCallout: 'none',
-                    } as React.CSSProperties
-                  }
-                  onContextMenu={(e) => {
-                    e.preventDefault();
-                    return false;
-                  }}
-                >
-                  <span
-                    className='inline-block border rounded px-1 py-0.5 text-[13px] text-on-art bg-ink/60 border-line'
-                    style={
-                      {
-                        WebkitUserSelect: 'none',
-                        userSelect: 'none',
-                        WebkitTouchCallout: 'none',
-                      } as React.CSSProperties
-                    }
-                    onContextMenu={(e) => {
-                      e.preventDefault();
-                      return false;
-                    }}
-                  >
+                <div className='tm-video-card-source'>
+                  <span className='tm-video-card-source-tag'>
                     {origin === 'live' && (
-                      <Radio
-                        size={8}
-                        className='inline-block text-on-art mr-0.5'
-                      />
+                      <Radio size={8} className='tm-video-card-live-icon' />
                     )}
                     {source_name}
                   </span>
@@ -1468,44 +1234,10 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
                   target='_blank'
                   rel='noopener noreferrer'
                   onClick={(e) => e.stopPropagation()}
-                  className='absolute top-2 left-2 opacity-0 -translate-x-2 transition-all duration-300 ease-in-out delay-100 sm:group-hover:opacity-100 sm:group-hover:translate-x-0 min-h-[44px] inline-flex items-center tm-press'
-                  style={
-                    {
-                      WebkitUserSelect: 'none',
-                      userSelect: 'none',
-                      WebkitTouchCallout: 'none',
-                    } as React.CSSProperties
-                  }
-                  onContextMenu={(e) => {
-                    e.preventDefault();
-                    return false;
-                  }}
+                  className='tm-video-card-douban tm-press tm-press'
                 >
-                  <div
-                    className='bg-raised text-fg text-[13px] font-bold w-7 h-7 rounded-full flex items-center justify-center shadow-md hover:bg-line hover:scale-[1.1] transition-all duration-300 ease-out'
-                    style={
-                      {
-                        WebkitUserSelect: 'none',
-                        userSelect: 'none',
-                        WebkitTouchCallout: 'none',
-                      } as React.CSSProperties
-                    }
-                    onContextMenu={(e) => {
-                      e.preventDefault();
-                      return false;
-                    }}
-                  >
-                    <Link
-                      size={16}
-                      style={
-                        {
-                          WebkitUserSelect: 'none',
-                          userSelect: 'none',
-                          WebkitTouchCallout: 'none',
-                          pointerEvents: 'none',
-                        } as React.CSSProperties
-                      }
-                    />
+                  <div className='tm-video-card-douban-icon'>
+                    <Link size={16} />
                   </div>
                 </a>
               )}
@@ -1521,17 +1253,9 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
                 return (
                   <div
                     data-button='true'
-                    className={`absolute bottom-1 right-1 z-[55] sm:bottom-2 sm:right-2 transition-all duration-300 ease-in-out delay-75 ${
-                      from === 'search'
-                        ? 'opacity-100'
-                        : 'opacity-0 sm:group-hover:opacity-100'
-                    }`}
-                    style={
-                      {
-                        WebkitUserSelect: 'none',
-                        userSelect: 'none',
-                        WebkitTouchCallout: 'none',
-                      } as React.CSSProperties
+                    className={
+                      'tm-video-card-sources' +
+                      (from === 'search' ? ' tm-video-card-sources-shown' : '')
                     }
                     // 阻止冒泡到卡片：避免长按/右键同时弹出操作菜单
                     onClick={(e) => {
@@ -1561,26 +1285,8 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
                       e.stopPropagation();
                     }}
                   >
-                    <div
-                      className='relative group/sources'
-                      style={
-                        {
-                          WebkitUserSelect: 'none',
-                          userSelect: 'none',
-                          WebkitTouchCallout: 'none',
-                        } as React.CSSProperties
-                      }
-                    >
-                      <div
-                        className='bg-surface text-fg text-[13px] font-bold w-6 h-6 sm:w-7 sm:h-7 rounded-full flex items-center justify-center shadow-md hover:bg-line hover:scale-[1.1] transition-all duration-300 ease-out cursor-pointer'
-                        style={
-                          {
-                            WebkitUserSelect: 'none',
-                            userSelect: 'none',
-                            WebkitTouchCallout: 'none',
-                          } as React.CSSProperties
-                        }
-                      >
+                    <div className='tm-video-card-caption-inner'>
+                      <div className='tm-video-card-sources-count'>
                         {sourceCount}
                       </div>
 
@@ -1618,44 +1324,18 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
                           sortedSources.length - maxDisplayCount;
 
                         return (
-                          <div
-                            className='absolute bottom-full right-0 z-[60] mb-2 -translate-x-0 opacity-0 invisible pointer-events-none transition-all duration-200 ease-out delay-100 group-hover/sources:opacity-100 group-hover/sources:visible sm:right-0 sm:translate-x-0'
-                            style={
-                              {
-                                WebkitUserSelect: 'none',
-                                userSelect: 'none',
-                                WebkitTouchCallout: 'none',
-                              } as React.CSSProperties
-                            }
-                            onContextMenu={(e) => {
-                              e.preventDefault();
-                              return false;
-                            }}
-                          >
-                            <div
-                              className='relative rounded-lg border border-line bg-surface p-1.5 text-[13px] text-fg shadow-xl backdrop-blur-sm sm:p-2 sm:text-[13px] min-w-[100px] max-w-[140px] sm:min-w-[120px] sm:max-w-[200px]'
-                              style={
-                                {
-                                  WebkitUserSelect: 'none',
-                                  userSelect: 'none',
-                                  WebkitTouchCallout: 'none',
-                                } as React.CSSProperties
-                              }
-                              onContextMenu={(e) => {
-                                e.preventDefault();
-                                return false;
-                              }}
-                            >
+                          <div className='tm-video-card-sources-pop'>
+                            <div className='tm-video-card-sources-box'>
                               {/* 单列布局 */}
-                              <div className='space-y-0.5 sm:space-y-1'>
+                              <div className='tm-video-card-sources-list'>
                                 {displaySources.map((sourceName, index) => (
                                   <div
                                     key={index}
-                                    className='flex items-center gap-1 sm:gap-1.5'
+                                    className='tm-video-card-sources-item'
                                   >
-                                    <div className='h-0.5 w-0.5 flex-shrink-0 rounded-full bg-fg sm:h-1 sm:w-1'></div>
+                                    <div className='tm-video-card-sources-dot'></div>
                                     <span
-                                      className='truncate text-[13px] leading-tight sm:text-[13px]'
+                                      className='tm-video-card-sources-name'
                                       title={sourceName}
                                     >
                                       {sourceName}
@@ -1666,9 +1346,9 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
 
                               {/* 显示更多提示 */}
                               {hasMore && (
-                                <div className='mt-1 border-t border-line pt-1 sm:mt-2 sm:pt-1.5'>
-                                  <div className='flex items-center justify-center text-muted'>
-                                    <span className='text-[13px] font-medium sm:text-[13px]'>
+                                <div className='tm-video-card-sources-more'>
+                                  <div className='tm-video-card-sources-more-row'>
+                                    <span className='tm-video-card-sources-more-text'>
                                       +{remainingCount} 播放源
                                     </span>
                                   </div>
@@ -1676,7 +1356,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
                               )}
 
                               {/* 小箭头：放在内容盒外侧，避免被裁切 */}
-                              <div className='absolute top-full right-2 h-0 w-0 border-l-[4px] border-r-[4px] border-t-[4px] border-transparent border-t-line sm:right-3 sm:border-l-[6px] sm:border-r-[6px] sm:border-t-[6px]'></div>
+                              <div className='tm-video-card-sources-arrow'></div>
                             </div>
                           </div>
                         );
@@ -1690,44 +1370,11 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
             {orientation === 'horizontal' && (
               <>
                 {/* 顶部渐变遮罩 - 用于标题背景 */}
-                <div
-                  className='tm-video-horizontal-title absolute top-0 left-0 right-0 bg-[var(--tm-hero-bg)] pt-2 pb-8 px-2'
-                  style={
-                    {
-                      WebkitUserSelect: 'none',
-                      userSelect: 'none',
-                      WebkitTouchCallout: 'none',
-                    } as React.CSSProperties
-                  }
-                  onContextMenu={(e) => {
-                    e.preventDefault();
-                    return false;
-                  }}
-                >
+                <div className='tm-video-horizontal-title'>
                   {/* 标题 */}
-                  <div
-                    className='mb-1'
-                    style={
-                      {
-                        WebkitUserSelect: 'none',
-                        userSelect: 'none',
-                        WebkitTouchCallout: 'none',
-                      } as React.CSSProperties
-                    }
-                  >
+                  <div className='tm-video-horizontal-heading'>
                     <span
-                      className='block text-sm font-bold truncate text-on-art'
-                      style={
-                        {
-                          WebkitUserSelect: 'none',
-                          userSelect: 'none',
-                          WebkitTouchCallout: 'none',
-                        } as React.CSSProperties
-                      }
-                      onContextMenu={(e) => {
-                        e.preventDefault();
-                        return false;
-                      }}
+                      className='tm-video-horizontal-name'
                       title={actualTitle}
                     >
                       {actualTitle}
@@ -1736,20 +1383,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
 
                   {/* 集数信息 - 只有超过1集时才显示 */}
                   {currentEpisode && actualEpisodes && actualEpisodes > 1 && (
-                    <div
-                      className='text-[13px] text-on-art'
-                      style={
-                        {
-                          WebkitUserSelect: 'none',
-                          userSelect: 'none',
-                          WebkitTouchCallout: 'none',
-                        } as React.CSSProperties
-                      }
-                      onContextMenu={(e) => {
-                        e.preventDefault();
-                        return false;
-                      }}
-                    >
+                    <div className='tm-video-horizontal-meta'>
                       第{currentEpisode}集 · 共{actualEpisodes}集
                     </div>
                   )}
@@ -1757,18 +1391,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
                   {/* 直链地址 */}
                   {isDirectPlaySource && directLinkUrl && (
                     <div
-                      className='text-[13px] text-on-art-muted truncate'
-                      style={
-                        {
-                          WebkitUserSelect: 'none',
-                          userSelect: 'none',
-                          WebkitTouchCallout: 'none',
-                        } as React.CSSProperties
-                      }
-                      onContextMenu={(e) => {
-                        e.preventDefault();
-                        return false;
-                      }}
+                      className='tm-video-horizontal-url'
                       title={directLinkUrl}
                     >
                       {directLinkUrl}
@@ -1777,53 +1400,19 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
                 </div>
 
                 {/* 底部渐变遮罩 - 用于进度条背景 */}
-                <div
-                  className='tm-video-horizontal-progress absolute bottom-0 left-0 right-0 bg-[var(--tm-hero-bg)] pt-8 pb-2 px-2'
-                  style={
-                    {
-                      WebkitUserSelect: 'none',
-                      userSelect: 'none',
-                      WebkitTouchCallout: 'none',
-                    } as React.CSSProperties
-                  }
-                  onContextMenu={(e) => {
-                    e.preventDefault();
-                    return false;
-                  }}
-                >
+                <div className='tm-video-horizontal-progress'>
                   {/* 进度条 */}
                   {config.showProgress &&
                     progress !== undefined &&
                     origin !== 'live' && (
-                      <div
-                        style={
-                          {
-                            WebkitUserSelect: 'none',
-                            userSelect: 'none',
-                            WebkitTouchCallout: 'none',
-                          } as React.CSSProperties
-                        }
-                      >
+                      <div>
                         {/* 来源和时长显示 - 在进度条上方 */}
-                        <div className='flex items-center justify-between mb-1'>
+                        <div className='tm-video-horizontal-row'>
                           {/* 时长显示 - 左侧 */}
                           {from === 'playrecord' &&
                             playTime !== undefined &&
                             totalTime !== undefined && (
-                              <div
-                                className='text-[13px] text-on-art-muted'
-                                style={
-                                  {
-                                    WebkitUserSelect: 'none',
-                                    userSelect: 'none',
-                                    WebkitTouchCallout: 'none',
-                                  } as React.CSSProperties
-                                }
-                                onContextMenu={(e) => {
-                                  e.preventDefault();
-                                  return false;
-                                }}
-                              >
+                              <div className='tm-video-horizontal-time'>
                                 {(() => {
                                   const formatTime = (seconds: number) => {
                                     const mins = Math.floor(seconds / 60);
@@ -1841,52 +1430,15 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
 
                           {/* 来源 - 右侧 */}
                           {config.showSourceName && source_name && !cmsData && (
-                            <span
-                              className='inline-block border rounded px-1 py-0.5 text-[13px] text-on-art bg-ink/30 backdrop-blur-sm border-line'
-                              style={
-                                {
-                                  WebkitUserSelect: 'none',
-                                  userSelect: 'none',
-                                  WebkitTouchCallout: 'none',
-                                } as React.CSSProperties
-                              }
-                              onContextMenu={(e) => {
-                                e.preventDefault();
-                                return false;
-                              }}
-                            >
+                            <span className='tm-video-horizontal-source'>
                               {source_name}
                             </span>
                           )}
                         </div>
-                        <div
-                          className='h-1 w-full bg-raised rounded-full overflow-hidden'
-                          style={
-                            {
-                              WebkitUserSelect: 'none',
-                              userSelect: 'none',
-                              WebkitTouchCallout: 'none',
-                            } as React.CSSProperties
-                          }
-                          onContextMenu={(e) => {
-                            e.preventDefault();
-                            return false;
-                          }}
-                        >
+                        <div className='tm-video-horizontal-bar'>
                           <div
-                            className='h-full bg-surface transition-all duration-500 ease-out'
-                            style={
-                              {
-                                width: `${progress}%`,
-                                WebkitUserSelect: 'none',
-                                userSelect: 'none',
-                                WebkitTouchCallout: 'none',
-                              } as React.CSSProperties
-                            }
-                            onContextMenu={(e) => {
-                              e.preventDefault();
-                              return false;
-                            }}
+                            className='tm-video-horizontal-fill'
+                            style={{ width: `${progress}%` }}
                           />
                         </div>
                       </div>
@@ -1897,25 +1449,9 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
                     config.showSourceName &&
                     source_name &&
                     !cmsData && (
-                      <div className='flex items-center justify-end'>
-                        <span
-                          className='inline-block border rounded px-1 py-0.5 text-[13px] text-on-art bg-ink/30 backdrop-blur-sm border-line'
-                          style={
-                            {
-                              WebkitUserSelect: 'none',
-                              userSelect: 'none',
-                              WebkitTouchCallout: 'none',
-                            } as React.CSSProperties
-                          }
-                          onContextMenu={(e) => {
-                            e.preventDefault();
-                            return false;
-                          }}
-                        >
-                          <Radio
-                            size={8}
-                            className='inline-block text-on-art mr-0.5'
-                          />
+                      <div className='tm-video-horizontal-live'>
+                        <span className='tm-video-horizontal-source'>
+                          <Radio size={8} className='tm-video-card-live-icon' />
                           {source_name}
                         </span>
                       </div>
@@ -1952,105 +1488,22 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
             <>
               {/* 进度条 */}
               {config.showProgress && progress !== undefined && (
-                <div
-                  className='mt-1 h-1 w-full bg-raised rounded-full overflow-hidden'
-                  style={
-                    {
-                      WebkitUserSelect: 'none',
-                      userSelect: 'none',
-                      WebkitTouchCallout: 'none',
-                    } as React.CSSProperties
-                  }
-                  onContextMenu={(e) => {
-                    e.preventDefault();
-                    return false;
-                  }}
-                >
+                <div className='tm-video-card-progress'>
                   <div
-                    className='h-full bg-fg transition-all duration-500 ease-out'
-                    style={
-                      {
-                        width: `${progress}%`,
-                        WebkitUserSelect: 'none',
-                        userSelect: 'none',
-                        WebkitTouchCallout: 'none',
-                      } as React.CSSProperties
-                    }
-                    onContextMenu={(e) => {
-                      e.preventDefault();
-                      return false;
-                    }}
+                    className='tm-video-card-progress-fill'
+                    style={{ width: `${progress}%` }}
                   />
                 </div>
               )}
 
               {/* 标题 */}
-              <div
-                className='mt-2 text-left'
-                style={
-                  {
-                    WebkitUserSelect: 'none',
-                    userSelect: 'none',
-                    WebkitTouchCallout: 'none',
-                  } as React.CSSProperties
-                }
-                onContextMenu={(e) => {
-                  e.preventDefault();
-                  return false;
-                }}
-              >
-                <div
-                  className='relative'
-                  style={
-                    {
-                      WebkitUserSelect: 'none',
-                      userSelect: 'none',
-                      WebkitTouchCallout: 'none',
-                    } as React.CSSProperties
-                  }
-                >
-                  <span
-                    className='block text-sm font-medium leading-snug line-clamp-2 break-words text-fg peer'
-                    style={
-                      {
-                        WebkitUserSelect: 'none',
-                        userSelect: 'none',
-                        WebkitTouchCallout: 'none',
-                      } as React.CSSProperties
-                    }
-                    onContextMenu={(e) => {
-                      e.preventDefault();
-                      return false;
-                    }}
-                  >
-                    {actualTitle}
-                  </span>
+              <div className='tm-video-card-caption'>
+                <div className='tm-video-card-caption-inner'>
+                  <span className='tm-video-card-title'>{actualTitle}</span>
                   {/* 自定义 tooltip */}
-                  <div
-                    className='absolute bottom-full left-1/2 z-[70] mb-2 w-max max-w-full -translate-x-1/2 rounded-md bg-surface px-3 py-1 text-center text-[13px] text-fg shadow-lg opacity-0 invisible peer-hover:opacity-100 peer-hover:visible transition-all duration-200 ease-out delay-100 whitespace-normal break-words pointer-events-none'
-                    style={
-                      {
-                        WebkitUserSelect: 'none',
-                        userSelect: 'none',
-                        WebkitTouchCallout: 'none',
-                      } as React.CSSProperties
-                    }
-                    onContextMenu={(e) => {
-                      e.preventDefault();
-                      return false;
-                    }}
-                  >
+                  <div className='tm-video-card-tooltip'>
                     {actualTitle}
-                    <div
-                      className='absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-line'
-                      style={
-                        {
-                          WebkitUserSelect: 'none',
-                          userSelect: 'none',
-                          WebkitTouchCallout: 'none',
-                        } as React.CSSProperties
-                      }
-                    ></div>
+                    <div className='tm-video-card-tooltip-arrow'></div>
                   </div>
                 </div>
               </div>
@@ -2171,9 +1624,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
           }}
         />
         {animeSubscribeToast ? (
-          <div className='fixed bottom-24 left-1/2 z-[10001] -translate-x-1/2 rounded-full bg-raised px-4 py-2 text-sm text-fg shadow-lg'>
-            {animeSubscribeToast}
-          </div>
+          <div className='tm-video-card-toast'>{animeSubscribeToast}</div>
         ) : null}
 
         {/* 图片查看器 */}

@@ -1,5 +1,13 @@
 # 界面改造进度
 
+## 2026-11-19 代码整理第 3 步（进行中）：发现、片库、影片卡片
+
+- 3a（已推送 `c9fa6b7`）：首页 → `features/discover/DiscoverPage`（+ `banner/BannerCarousel`），片库 → `features/library/LibraryPage`（+ `parts/` 里只给片库用的筛选器、骨架、时间表），路由文件只剩一行转出。`HomeRooms` 搬到 `features/room`，访客首页 `PublicCatalogPage` 改成由页面把“正在一起看”那一栏传进来。站内播放地址的纯函数（原 `playback/session.ts` + `selection-links.ts`）→ `lib/playback-links.ts`，全站播放会话的接口（原 `playback/context.tsx`）→ `hooks/usePlaybackSession.tsx`：影片卡片、外壳的媒体会话、访客首页都不再引功能，依赖方向的待清理名单清空。搬过来的文件去掉整文件 `eslint-disable`：补类型；片库换分类时的选择重置改用 ref 读当时的值；**顺带修了一个隐患**：片库的几个选择回调没把 setter 放进依赖，换了分类后旧回调里的旧 setter 写的是上一个分类的键，改动会被丢掉（例如从电影切到动漫后点星期没反应）——测试站连不上豆瓣，没能实测，按代码修。
+- 3b（本条）：`VideoCard` 不再用 Tailwind：68 个元素的工具类换成 `tm-video-card-*` / `tm-video-horizontal-*` 类，样式在 `components/VideoCard.css`。换算用 Tailwind 自己的编译结果（同样的值和优先级，`group-hover` → `.tm-video-card:hover …`、`peer-hover` → `.tm-video-card-title:hover ~ …`，变量解析成具体值）。`home.css` / `layout.css` 里主体是卡片的规则一起搬过来（`tm-video` 块登记到 `VideoCard.css`），指向 Tailwind 类的选择器（`.peer`、`> .mt-2`、`> .overflow-hidden`、`> div > div:last-child`）改成指向类名。每个元素上重复的 `user-select` 行内样式（41 处）和只 `preventDefault` 的右键处理（36 处）删掉，由卡片一条规则 / 卡片外层的右键处理负责。访客卡片借用 `tm-video-card` / `tm-video-card-art` 的观感，所以 `VideoCard` 自己的排版用 `tm-video-card-tile` / `tm-video-card-poster`，不影响访客卡片。
+  - **发现一个事实**：开发环境里 Tailwind 的工具类实际排在全站样式的最前面（`globals.css` 注释说“放在最后”并不成立），同级时 `home.css` 的规则赢——比如悬停遮罩是 0.4 而不是工具类的 1。`VideoCard.css` 按实际先后排（元素排版在前、卡片观感在后、原行内样式最后），豆瓣链接的过渡仍由 `tm-press` 决定。
+  - 层级：卡片悬停 50 → 1、展开上映倒计时 500 → 2；画面里评分 20 → 1、高光 30 → 2、播放源数量 55 → 3；标题提示 70 → 3；追番提示 10001 → `--tm-z-toast`。相对顺序都不变；唯一的区别是展开的上映倒计时卡片不再盖住片架的翻页箭头（60）。
+  - 验证：首页、片库、搜索、播放页、播放页小窗 6 种窗口 × 深浅，外加“首页悬停一张卡片”（用 DevTools 强制 `:hover` 卡片和标题），按标签和位置对上元素比较：卡片元素上只有海报加载先后（模糊淡入）和标题提示随片名长短的位置差，悬停状态完全一致。**没覆盖到**：横版“继续观看”卡片、搜索结果的播放源数量角标、片库网格（测试站没有播放记录、搜索结果和豆瓣数据），靠代码核对。
+
 ## 2026-11-19 代码整理第 2 步 B：房间样式按规范收口
 
 - 重复选择器（S5）：房间 CSS 里同一选择器出现多次的 28 组合成一条。合并方法保证层叠结果不变：只有两处之间没有“优先级相同、可能落在同一元素上、写同一类属性”的规则时才合（同一元素按源码和快照里实际一起出现的类判断）。顺带删掉合并时暴露出来的死声明（例如 `.tm-room-view` 手机下的 `gap: 14px` 一直被后面的 `gap: 16px` 盖住，实际全档位都是 16）。`.tm-room-view.tm-room-view` 两处双写类名改回单个类（核对过同元素同属性的其他规则，结果不变）。

@@ -520,7 +520,8 @@ html[data-tm-reduced-motion] .tm-switch-thumb {
   align-items: center;
   gap: 3px;
   left: 8px;
-  z-index: 20;
+  /* 在影片卡片画面里：评分 1、指针高光 2、播放源数量 3 */
+  z-index: 1;
   padding: 2px 7px;
   border-radius: var(--tm-radius-xs);
   font-size: var(--tm-fs-badge);

@@ -514,13 +514,6 @@ html[data-tm-reduced-motion='true'] .tm-spin {
   .tm-poster-grid {
     row-gap: var(--tm-grid-gap);
   }
-  .tm-library-grid .tm-video-card .peer {
-    font-size: var(--tm-fs-small);
-    line-height: 1.5;
-  }
-  .tm-library-grid .tm-video-card > .mt-2 {
-    margin-top: calc(8 * var(--tm-wide-unit));
-  }
   .tm-library-grid .tm-media-initial {
     font-size: calc(48 * var(--tm-wide-unit));
   }

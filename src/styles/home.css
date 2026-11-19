@@ -759,21 +759,6 @@ html[data-tm-reduced-motion='true'] .tm-home-hero-poster-surface::after {
 .tm-home-resume-item {
   min-width: 0;
 }
-.tm-home-pair .tm-video-card[data-compact='true'] {
-  display: grid;
-  grid-template-columns: 128px minmax(0, 1fr) 44px;
-  align-items: center;
-  gap: 16px;
-  min-height: 80px;
-}
-.tm-home-pair .tm-video-card[data-compact='true'] .tm-video-card-art {
-  --tm-art-radius: var(--tm-radius-sm);
-  width: 100%;
-  transform: none;
-}
-.tm-home-pair .tm-video-card[data-compact='true'] .tm-video-card-overlay {
-  display: none;
-}
 .tm-home-pair .tm-video-card[data-compact='true'] .tm-media-initial {
   font-size: 32px;
 }
@@ -929,12 +914,6 @@ html[data-tm-reduced-motion='true'] .tm-home-hero-poster-surface::after {
     margin-top: 24px;
   }
 }
-@container (max-width: 360px) {
-  .tm-home-pair .tm-video-card[data-compact='true'] {
-    grid-template-columns: 96px minmax(0, 1fr) 44px;
-    gap: 12px;
-  }
-}
 .tm-video-card[data-compact='true']:active .tm-home-resume-play {
   transform: scale(0.94);
 }
@@ -998,28 +977,6 @@ html[data-tm-reduced-motion='true'] .tm-home-room-create-link {
   color: var(--tm-muted);
 }
 
-/* 继续观看：进度条贴画面底部，标题保留在下方。 */
-.tm-home-resume .tm-video-horizontal-title {
-  display: none;
-}
-.tm-home-resume .tm-video-horizontal-progress {
-  padding: 0;
-  background: none;
-}
-.tm-home-resume .tm-video-horizontal-progress > div > div:first-child {
-  display: none;
-}
-.tm-home-resume .tm-video-horizontal-progress > div > div:last-child {
-  height: 4px;
-  border-radius: 0;
-  background: var(--tm-line-strong);
-}
-.tm-home-resume .tm-video-horizontal-progress > div > div:last-child > div {
-  background: var(--tm-on-art);
-}
-.tm-home-resume .tm-video-card-art {
-  box-shadow: var(--tm-shadow-sm);
-}
 .tm-home-new-episodes {
   position: absolute;
   top: 8px;
@@ -1036,80 +993,6 @@ html[data-tm-reduced-motion='true'] .tm-home-room-create-link {
 .tm-home-skeleton {
   aspect-ratio: 2 / 3;
   border-radius: var(--tm-radius-md);
-}
-
-/* —— 海报卡（登录态 VideoCard 与访客 PublicPoster 共用的观感） —— */
-/* 悬停只抬起画面（倾斜、放大、投影加深），标题文字不动，避免跟着歪斜发虚 */
-.tm-video-card {
-  position: relative;
-  border-radius: var(--tm-radius-md);
-  box-shadow: none;
-}
-.tm-video-card-art {
-  border-radius: var(--tm-art-radius, var(--tm-radius-md));
-  background: var(--tm-surface-raised);
-  box-shadow: var(--tm-shadow-poster);
-  transform: perspective(800px);
-  transition: transform var(--tm-d-panel) var(--tm-ease-out),
-    box-shadow var(--tm-d-panel) var(--tm-ease-out);
-}
-.tm-video-card-art::after {
-  /* 跟随指针的高光 */
-  content: '';
-  position: absolute;
-  inset: 0;
-  z-index: 30;
-  border-radius: inherit;
-  pointer-events: none;
-  opacity: 0;
-  background: radial-gradient(
-    circle at var(--mx, 50%) var(--my, 50%),
-    rgba(255, 255, 255, 0.18),
-    transparent 55%
-  );
-  transition: opacity var(--tm-d-hover) var(--tm-ease-out);
-}
-/* 缩略图里的画面层和进度条跟着外框圆角走，底色、进度条不会从圆角下露出来 */
-.tm-video-card-art > .overflow-hidden {
-  border-radius: var(--tm-art-radius, var(--tm-radius-md));
-}
-.tm-video-card-art .tm-video-horizontal-progress {
-  overflow: hidden;
-  border-radius: 0 0 var(--tm-art-radius, var(--tm-radius-md))
-    var(--tm-art-radius, var(--tm-radius-md));
-}
-.tm-video-card-art img {
-  transition: opacity var(--tm-d-panel) var(--tm-ease-out),
-    filter var(--tm-d-panel) var(--tm-ease-out);
-}
-.tm-video-card-art img[data-loaded='false'] {
-  opacity: 0;
-  filter: blur(12px);
-}
-.tm-video-card:focus-visible .tm-video-card-art {
-  transform: perspective(800px) translateY(-6px) scale(1.04);
-}
-.tm-video-card:active .tm-video-card-art {
-  transform: perspective(800px) scale(0.97);
-  transition-duration: var(--tm-d-press);
-}
-@media (hover: hover) and (pointer: fine) {
-  .tm-video-card:hover {
-    z-index: 50;
-  }
-  .tm-video-card:hover .tm-video-card-art {
-    transform: perspective(800px) translateY(-6px)
-      rotateX(var(--tm-poster-rx, 0deg)) rotateY(var(--tm-poster-ry, 0deg))
-      scale(1.04);
-    box-shadow: var(--tm-shadow-poster-hover);
-    transition-duration: var(--tm-d-hover), var(--tm-d-panel);
-  }
-  .tm-video-card:hover .tm-video-card-art::after {
-    opacity: 1;
-  }
-  .tm-video-card:hover .tm-video-card-overlay {
-    opacity: 0.4;
-  }
 }
 
 /* 影片详情等处的氛围背景 */
@@ -1129,19 +1012,8 @@ html[data-tm-reduced-motion='true'] .tm-home-room-create-link {
 }
 
 /* —— 偏好：关闭模糊 / 减少动态 —— */
-html[data-tm-no-blur='true']
-  :is(.tm-detail-ambient img, .tm-home-hero-image, .tm-video-card-art img) {
+html[data-tm-no-blur='true'] :is(.tm-detail-ambient img, .tm-home-hero-image) {
   filter: none;
-}
-html[data-tm-reduced-motion='true'] .tm-video-card-art {
-  transition: none !important;
-  transform: none !important;
-}
-@media (prefers-reduced-motion: reduce) {
-  .tm-video-card-art {
-    transition: none !important;
-    transform: none !important;
-  }
 }
 @media (prefers-reduced-transparency: reduce) {
   .tm-home-hero .tm-btn-art-glass {
@@ -1227,21 +1099,8 @@ html[data-tm-reduced-motion='true'] .tm-video-card-art {
   .tm-home-body .tm-section-title {
     line-height: 1.6;
   }
-  .tm-home-body .tm-video-card .peer {
-    font-size: calc(15 * var(--tm-wide-unit));
-  }
   .tm-home-body .tm-media-initial {
     font-size: calc(48 * var(--tm-wide-unit));
-  }
-  .tm-home-resume .tm-video-horizontal-progress > div > div:last-child {
-    height: calc(4 * var(--tm-wide-unit));
-  }
-}
-
-/* 触屏的粘滞悬停：遮罩只轻压封面，不再整块盖黑 */
-@media (hover: none) {
-  .tm-video-card:hover .tm-video-card-overlay {
-    opacity: 0.35;
   }
 }
 

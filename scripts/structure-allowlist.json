@@ -2,11 +2,6 @@
   "imports": [],
   "tokens": [],
   "zIndex": [
-    "src/components/VideoCard.tsx :: z-[10001]",
-    "src/components/VideoCard.tsx :: z-[500]",
-    "src/components/VideoCard.tsx :: z-[55]",
-    "src/components/VideoCard.tsx :: z-[60]",
-    "src/components/VideoCard.tsx :: z-[70]",
     "src/components/feedback/HttpWarningDialog.tsx :: z-[9999]",
     "src/components/feedback/ImageViewer.tsx :: z-10",
     "src/components/feedback/ImageViewer.tsx :: z-[9999]",
@@ -25,11 +20,8 @@
     "src/features/playback/playback.css :: z-index: 60",
     "src/features/playback/playback.css :: z-index: 85",
     "src/features/playback/playback.css :: z-index: 86",
-    "src/styles/home.css :: z-index: 30",
     "src/styles/home.css :: z-index: 5",
-    "src/styles/home.css :: z-index: 50",
-    "src/styles/layout.css :: z-index: 60",
-    "src/styles/primitives.css :: z-index: 20"
+    "src/styles/layout.css :: z-index: 60"
   ],
   "pxMedia": [
     "src/features/playback/playback.css :: @media (max-width: 767px)"
@@ -107,7 +99,6 @@
     "src/styles/home.css :: tm-poster（属于 src/styles/layout.css）",
     "src/styles/home.css :: tm-section（属于 src/styles/layout.css）",
     "src/styles/layout.css :: tm-media-initial（属于 src/styles/home.css）",
-    "src/styles/layout.css :: tm-video（属于 src/styles/home.css）",
     "src/styles/modal-layer.css :: tm-modal（属于 src/styles/feedback.css）",
     "src/styles/shell.css :: tm-btn（属于 src/styles/primitives.css）",
     "src/styles/shell.css :: tm-home（属于 src/styles/home.css）",

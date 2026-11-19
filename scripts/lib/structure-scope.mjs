@@ -7,6 +7,7 @@ export const CORE_CSS = [
   'src/features/',
   'src/components/mini-player/',
   'src/components/detail/',
+  'src/components/VideoCard.css',
 ];
 
 /** 核心代码：整文件 eslint-disable、写死的 z-index、文件行数 */
