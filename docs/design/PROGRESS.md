@@ -1,5 +1,15 @@
 # 界面改造进度
 
+## 2026-11-19 代码整理第 2 步 A：房间代码归位（只搬家、改名，界面和行为不变）
+
+- `src/features/together` → `src/features/room`（`room/` 子目录 → `view/`）。根目录只放对外入口：`RoomRoute`、`RoomSession`、`MusicPage`、`ScreenSharePage`（原 `app/watch-room/{music,screen}/page.tsx` 的内容，路由文件只剩一行转出）、`index.ts`（纯函数）、`activities.ts`（直播 / 音乐页用）。`commands.ts` → `lib/`；房间专用 hooks 搬进 `features/room/hooks/`。内部名字 `Together*` → `Room*`，`onTogether` → `onWatchInRoom`，`togetherSelectionHref` → `roomSelectionHref`。路由、Socket 事件、存储键（`tm-together-dm-self`、`watch_room_info`）都没动。ESLint 依赖方向改成 `@/features/*/*/**` 一律不许跨功能引用。
+- 类名统一（S3 / S4）：`tm-t-* / tm-tc-* / tm-pl-* / tm-act-* / tm-activity-*` 225 个名字 → 登记过的 `tm-room-*` 块；总是一起出现的三组合成一个（`tm-room-view`、`-now`、`-strip`）。`--tm-t-ambient` / `--tm-tc-top` → `--tm-room-view-*`。
+- 样式拆分：2300 行的 `together.css` 按块拆进 16 个组件旁边的 CSS（`room.css` 放房间公用的按钮、弹窗、表单等，其余各归各的组件），各组件自己 import；`playback.css` 里的房间活动、直播消息样式搬到 `activities/`。根布局不再引房间样式（由 `RoomSession` 引，它本来就在根布局里，加载范围不变）。
+- 房间页不再改外壳的元素：原来 7 条 `body:has(.tm-room-view…) .tm-main / .tm-mobile-nav …` 规则删掉，换成 `hooks/useImmersiveShell`：页面请外壳让开，外壳自己在 `shell.css` 里按 `html[data-tm-immersive]` 收起。三种：`bare`（手机、触屏平板：不要顶栏底栏、不留位置）、`fit`（窄的电脑窗口：顶栏照常，一屏装下）、`flush`（电脑：主区域不留底部空白），和原来按设备 / 排版分的几种情况一一对应。
+- 结构检查：待清理名单里的条目跟着文件改名换了路径（数量不变，第 2 步 B 清掉）；`.prettierignore` 加 `.claude/`（本机工具目录，git 忽略），去掉已删的 `output/`、`references/`。
+- 验证：typecheck、lint、Jest、test:rooms、format、check:structure 全过；check-design 4 条全是原有的（两个播放器的 `#fff`、外壳 `0.68em`）。计算样式对比（6 种窗口 × 深浅 × 15 个页面，180 份，房间页这次真的进了测试房间并点开各面板）：房间、大厅各页除了预期的 `html[data-tm-immersive]` 属性外，只有内容 / 时机差异（推荐词每次不同；改前有 3 份恰好拍到视频“加载中”；小窗位置是页面之间共用的存储值，设成一样后完全一致）。
+- 没验证：首页 / 片库 / 搜索 / 播放页见下一条对比结果；两个账号实测同步留到第 2 步 B 一起做。
+
 ## 2026-11-19 代码整理第 0、1 步（执行 docs/plan/2026-11-19-cleanup-plan.md，用户同意“开始”）
 
 - 第 0 步（立规矩）：

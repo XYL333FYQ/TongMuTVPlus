@@ -1,0 +1,218 @@
+/* 今晚看什么 */
+.tm-room-recs {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 12px;
+}
+.tm-room-recs-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+}
+.tm-room-recs-head h2 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+.tm-room-recs-head p {
+  margin: 4px 0 0;
+  color: var(--tm-muted);
+  font-size: 13px;
+}
+.tm-room-recs-tools {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.tm-room-recs-row {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+@media (max-width: 1199px) {
+  .tm-room-recs-row {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+@media (max-width: 599px) {
+  .tm-room-recs-row {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+  }
+  .tm-room-recs-row > li:nth-child(n + 10) {
+    display: none;
+  }
+}
+.tm-room-recs-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+  text-align: left;
+}
+.tm-room-recs-poster {
+  position: relative;
+  display: block;
+  aspect-ratio: 2 / 3;
+  overflow: hidden;
+  border-radius: var(--tm-radius-md);
+  background: var(--tm-surface-raised);
+  box-shadow: var(--tm-shadow-poster);
+  transition: transform var(--tm-d-hover) var(--tm-ease-out),
+    box-shadow var(--tm-d-hover) var(--tm-ease-out);
+}
+.tm-room-recs-poster img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+@media (hover: hover) and (pointer: fine) {
+  .tm-room-recs-item:hover .tm-room-recs-poster {
+    box-shadow: var(--tm-shadow-poster-hover);
+    transform: translateY(-4px);
+  }
+}
+.tm-room-recs-rate {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 7px;
+  border-radius: var(--tm-radius-full);
+  background: var(--tm-rating-bg);
+  color: var(--tm-on-art);
+  font-size: 12px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.tm-room-recs-rate svg {
+  color: var(--tm-rating-star);
+  fill: currentColor;
+}
+.tm-room-recs-name {
+  overflow: hidden;
+  font-size: 14px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.tm-room-recs-year {
+  margin-top: -4px;
+  color: var(--tm-muted);
+  font-size: 12px;
+}
+.tm-room-recs-skeleton .tm-room-recs-poster {
+  box-shadow: none;
+  background: linear-gradient(
+      100deg,
+      transparent 30%,
+      var(--tm-skeleton-shine) 50%,
+      transparent 70%
+    )
+    var(--tm-surface-raised);
+  background-size: 200% 100%;
+  animation: tm-room-shine 1.4s linear infinite;
+}
+.tm-room-recs-skeleton .tm-room-recs-name {
+  width: 70%;
+  border-radius: var(--tm-radius-xs);
+  background: var(--tm-surface-raised);
+}
+@media (prefers-reduced-motion: reduce) {
+  .tm-room-recs-poster {
+    transition: none;
+  }
+}
+
+/* 今晚看什么：一排片名 */
+.tm-room-recs-strip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  overscroll-behavior-x: contain;
+}
+.tm-room-recs-strip::-webkit-scrollbar {
+  display: none;
+}
+.tm-room-recs-strip-label {
+  flex: none;
+  color: var(--tm-muted);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+.tm-room-recs-chip {
+  position: relative;
+  flex: none;
+  height: 34px;
+  padding: 0 12px;
+  border-radius: var(--tm-radius-full);
+  background: var(--tm-surface);
+  box-shadow: inset 0 0 0 1px var(--tm-line);
+  color: var(--tm-text);
+  font-size: 13px;
+  white-space: nowrap;
+  transition: background var(--tm-d-hover);
+}
+/* 看着 34px，点按范围撑到 44px */
+.tm-room-recs-chip::after {
+  content: '';
+  position: absolute;
+  inset: -5px 0;
+}
+.tm-room-recs-chip:hover {
+  background: var(--tm-surface-raised);
+}
+.tm-room-recs-chip-more {
+  background: none;
+  color: var(--tm-muted);
+}
+.tm-room-view-pad .tm-room-recs {
+  margin-top: 0;
+}
+.tm-room-view-pad .tm-room-recs-row {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+:where(.tm-room-view[data-layout='compact']) .tm-room-recs-strip {
+  padding: 0 12px 10px;
+}
+:where(.tm-room-view[data-layout='compact']) .tm-room-recs-strip {
+  gap: 6px;
+  padding: 0 12px 8px;
+}
+:where(.tm-room-view[data-layout='compact']) .tm-room-recs-chip {
+  height: 30px;
+  padding: 0 11px;
+  font-size: 13px;
+}
+:where(.tm-room-view[data-layout='compact']) .tm-room-recs-chip::after {
+  inset: -7px 0;
+}
+.tm-room-view:where([data-layout='desktop']) .tm-room-recs-row {
+  gap: 12px;
+}
+.tm-room-view:where([data-layout='desktop']) .tm-room-recs-head h2 {
+  font-size: 18px;
+}
+.tm-room-view[data-layout='tablet'] .tm-room-recs-strip {
+  flex: none;
+}
+.tm-room-view[data-layout='tablet'] .tm-room-recs-chip {
+  height: 44px;
+  padding: 0 16px;
+  font-size: 14px;
+}
+.tm-room-view[data-layout='tablet'] .tm-room-recs-chip::after {
+  display: none;
+}

@@ -1,0 +1,53 @@
+/* 站内点开影片时的“怎么看” */
+.tm-room-sheet {
+  width: min(460px, 100%);
+}
+.tm-room-sheet-sub {
+  margin: 2px 0 0;
+  color: var(--tm-muted);
+  font-size: 13px;
+}
+.tm-room-sheet-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 4px 20px 20px;
+}
+.tm-room-sheet-choice {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  min-height: 64px;
+  padding: 10px 16px;
+  border-radius: var(--tm-radius-md);
+  background: var(--tm-surface);
+  box-shadow: inset 0 0 0 1px var(--tm-line);
+  color: var(--tm-text);
+  text-align: left;
+  transition: background var(--tm-d-hover), transform var(--tm-d-press);
+}
+.tm-room-sheet-choice:hover:not(:disabled) {
+  background: var(--tm-surface-raised);
+}
+.tm-room-sheet-choice:active:not(:disabled) {
+  transform: scale(0.99);
+}
+.tm-room-sheet-choice:disabled {
+  opacity: 0.6;
+}
+.tm-room-sheet-choice > span {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.tm-room-sheet-choice strong {
+  font-size: 15px;
+}
+.tm-room-sheet-choice small {
+  color: var(--tm-muted);
+  font-size: 12px;
+}
+.tm-room-sheet-error {
+  margin: 0 20px 16px;
+}

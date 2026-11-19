@@ -181,7 +181,7 @@ import {
   usePlaybackSession,
 } from '@/features/playback/context';
 
-// 自己看的播放器不参与一起看（房间有自己的播放器，见 src/features/together）
+// 自己看的播放器不参与一起看（房间有自己的播放器，见 src/features/room）
 const isRemoteRoomRateActive = () => false;
 const getRoomRemotePlaybackRate = (): number | null => null;
 

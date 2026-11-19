@@ -171,3 +171,49 @@ src/
 - 删掉 `docs/plan/` 里已执行完的计划和草稿（计划完成后就是过时文档），提交并推送。
 - 停掉测试服务，删掉 `.data/test.db`；`.claude/test.env` 和启动配置留着下次测试用。
 - 更新记忆：项目结构已按 STANDARD.md 整理。
+
+## 九、执行状态（11-19 压缩前写，压缩后从这里接着做）
+
+### 已完成
+
+- 第 0、1 步：提交 `fb1a7f7` 已推送，GitHub 主流程和 `Deploy targets build`（EdgeOne + Cloudflare 只构建）都通过。PROGRESS.md 已记录。
+- 和计划不同、已写进 STANDARD.md 的决定：
+  - 外壳留在 `components/shell/`，不建 `features/shell`。
+  - 房间**连接层**（`lib/watch-room-socket.ts`、`hooks/useWatchRoom.ts`、`components/WatchRoomProvider.tsx`、`types/watch-room.ts`）留在共用层，不搬进 `features/room`。
+  - 功能根目录只放对外入口文件（`index.ts` + 页面 / 会话入口组件），子目录是内部；ESLint 规则是 `@/features/*/*/**` 禁止跨功能引用。不做总入口（会把整个功能打进别的页面的包）。
+  - z-index 层级数字沿用原值（表在 STANDARD.md）。
+
+### 第 2 步：已做、**未提交**
+
+- `src/features/together` → `src/features/room`，`room/` 子目录 → `view/`；`TogetherRoute/TogetherSession/useTogetherSession…` → `RoomRoute/RoomSession/useRoomSession…`；`onTogether` → `onWatchInRoom`，`togetherSelectionHref` → `roomSelectionHref`；存储键 `tm-together-dm-self` 不动。
+- 根目录入口：`RoomRoute.tsx`、`RoomSession.tsx`、`MusicPage.tsx`、`ScreenSharePage.tsx`（原 `app/watch-room/{music,screen}/page.tsx` 的内容，路由文件只剩一行转出）、`index.ts`（纯函数）、`activities.ts`（直播 / 音乐页用）。`commands.ts` → `lib/commands.ts`。
+- 房间专用 hooks（useVoiceChat、useScreenShare、useRoomLiveActivity、useRoomMusicActivity、useWebLiveSync、useLiveSync 及测试）→ `features/room/hooks/`。
+- 新增 `src/hooks/useImmersiveShell.ts`（+ 测试）：还没接上（接线在下面的脚本里）。
+- STANDARD.md 的 S1 和块名登记表已按新文件写好（登记的 CSS 文件还不存在，所以现在 `check:structure` 会报“文件不存在”，拆完就好）。
+- 这时 typecheck、lint 通过；依赖方向待清理名单剩 5 个文件。
+
+### 第 2 步：接着做（按顺序）
+
+工具都在 `.claude/tools/`（git 忽略，不会丢）。node 用 `C:/Users/XYL/tools/node2411/node.exe`；检查用 `.claude/tools/run.sh all`（会自动重试原生崩溃）。
+
+1. **改前快照**：测试站 `tongmu-test`（端口 3100，`preview_start`）。压缩前正在后台拍 `base2`（`scratchpad/snap/base2`，一共约 204 份，拍到 76 份）。压缩后先看它拍完没有；没拍完或测试站挂了，就重拍。**提速：只拍一遍，不再拍 noise2**，对比时用规则过滤已知噪声（海报加载：`tm-skeleton`、`tm-video-card-overlay`、图片的 opacity / filter / color 变化）。拍之前确认测试站活着（会随机崩溃；崩溃后删 `.next` 再启动）。
+2. **改名**：`node .claude/tools/room-rename.mjs apply`（225 个类名，映射在 `room-map.json`；三组总在一起的类合成一个：`tm-room-view`、`tm-room-view-now`、`tm-room-view-strip`）。再把自定义属性 `--tm-t-ambient` → `--tm-room-view-ambient`、`--tm-tc-top` → `--tm-room-view-top`。
+3. **拆分**：`node .claude/tools/split-css.mjs .claude/tools/split-room.json`，再 `… split-playback.json`（把 playback.css 里的房间活动、直播消息、入口条样式搬走）。
+4. **收尾**：`node .claude/tools/room-css-finish.mjs`（模态层那条规则换成以房间类结尾放进 room.css；改外壳的规则删掉，由沉浸模式接管；shell.css 加沉浸模式规则；RoomView 调 `useImmersiveShell(layout === 'desktop' ? 'flush' : 'bare')`；各组件 import 自己的 CSS；根布局去掉 together.css）。
+5. 检查 + 改后快照，对比：`SNAP_RENAME=.claude/rename-room.json node .claude/style-snapshot.mjs diff <改前> <改后>`。目标：除已知噪声外**零差异**。有差异就逐条查（最可能是：拆开后不同文件的加载顺序、mini-player.css / player-controls.css 和房间样式的先后）。
+6. 过了就提交推送“第 2 步 A”，看 CI。
+7. **第 2 步 B**（会改层叠，逐项用快照验证）：
+   - 每个房间 CSS 文件里同一选择器合并成一条（`check:structure` 的 duplicates）。
+   - 合并留下的 `.x.x` 写法改成 `.x`（只在不影响结果时）。
+   - 19 处像素宽度媒体查询：整页排版的换成 `data-layout` / 档位；组件内部“放不放得下”的（大厅卡片列数、推荐行等）改成不按窗口宽度的写法（如 `auto-fill`），或在 STANDARD.md“允许的例外”里写明理由。600–767 宽这类中间宽度会跟着整页排版走，汇报里写明。
+   - `MusicPage` 有 282 个 Tailwind 类（沿用上游音乐页写法）：这次在 STANDARD.md“允许的例外”里写明，不改。
+   - 两个账号实测房间同步（播放、暂停、拖进度、换集、聊天），账号在 `.claude/test.env`，测试房间号在 `.claude/test-room.txt`，`.claude/seed-test.mjs` 可重建。
+   - 更新 `docs/architecture.md` 的代码边界表（together → room 的新路径）、PROGRESS.md，提交推送，看 CI。
+
+### 第 3、4 步
+
+按第三节执行，不变。提速：只对改到的页面拍快照（`snap <目录> 页面名…`）。第 4 步先写 `docs/plan/playback-inventory.md` 清单，分多个提交，每个提交单独能跑。顺带：`features/playback` 根目录现在放着很多内部文件，第 4 步按“根目录只放入口”整理；`components/shell/MediaSessionBridge.tsx`、`components/VideoCard.tsx` 等 5 个文件引功能的问题在第 3、4 步消掉（`selection-links` 搬到 `lib/`）。
+
+### 最后
+
+第八节不变：删 `docs/plan/`，停测试服务，删 `.data/test.db`，更新记忆。用户说的“一次性跑完”：每步验证通过就提交推送，不用再问。

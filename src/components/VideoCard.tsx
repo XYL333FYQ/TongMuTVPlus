@@ -67,7 +67,7 @@ import TrailerPickerDialog from '@/components/TrailerPickerDialog';
 import { usePlaybackSessionSafe } from '@/features/playback/context';
 import {
   filmPlaybackHref,
-  togetherSelectionHref,
+  roomSelectionHref,
 } from '@/features/playback/selection-links';
 import { queuePlaybackHref } from '@/features/playback/session';
 
@@ -2145,9 +2145,9 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
             sourceId={id}
             source={source}
             onPlay={handleClick}
-            onTogether={() =>
+            onWatchInRoom={() =>
               router.push(
-                togetherSelectionHref(
+                roomSelectionHref(
                   queuePlaybackHref(selectedPlaybackHref, currentEpisode || 1)
                 )
               )

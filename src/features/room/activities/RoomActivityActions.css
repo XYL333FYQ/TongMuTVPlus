@@ -1,0 +1,34 @@
+.tm-room-activity-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 12px 0;
+  color: var(--tm-text);
+}
+.tm-room-activity-actions :is(button, a) {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 8px 12px;
+  border: 1px solid var(--tm-line);
+  border-radius: var(--tm-radius-md);
+  background: var(--tm-surface-raised);
+  color: var(--tm-text);
+  font-size: 13px;
+}
+.tm-room-activity-actions :is(button, a):focus-visible {
+  outline: 2px solid var(--tm-text);
+  outline-offset: 2px;
+}
+.tm-room-activity-actions button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.tm-room-activity-actions p {
+  font-size: 12px;
+  color: var(--tm-muted);
+}
+.tm-room-activity-actions .tm-room-activity-error {
+  color: var(--tm-danger);
+}

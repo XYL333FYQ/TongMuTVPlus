@@ -1,0 +1,286 @@
+/* ================================================================ 片单面板（2026-11-18 设计稿） */
+.tm-room-playlist {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 8px 20px 24px;
+}
+.tm-room-playlist-label {
+  color: var(--tm-muted);
+  font-size: 12px;
+  font-weight: 500;
+}
+.tm-room-playlist-poster {
+  display: grid;
+  flex: none;
+  place-items: center;
+  overflow: hidden;
+  width: 40px;
+  height: 56px;
+  border-radius: var(--tm-radius-sm);
+  background: var(--tm-surface-raised);
+  color: var(--tm-muted);
+}
+.tm-room-playlist-poster[data-size='lg'] {
+  width: 64px;
+  height: 92px;
+  border-radius: var(--tm-radius-sm);
+}
+.tm-room-playlist-poster img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+/* 正在放映 */
+.tm-room-playlist-now {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 16px;
+  border-radius: var(--tm-radius-lg);
+  background: var(--tm-surface-raised);
+}
+.tm-room-playlist-now .tm-room-playlist-poster {
+  background: var(--tm-line);
+}
+.tm-room-playlist-now-main {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.tm-room-playlist-now-text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.tm-room-playlist-now-text strong {
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+.tm-room-playlist-now-text small,
+.tm-room-playlist-text small {
+  color: var(--tm-muted);
+  font-size: 12px;
+}
+.tm-room-playlist-episodes {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(48px, 1fr));
+  gap: 6px;
+}
+.tm-room-playlist-episodes button {
+  min-height: 40px;
+  padding: 0 6px;
+  overflow: hidden;
+  border-radius: var(--tm-radius-sm);
+  background: var(--tm-line);
+  color: var(--tm-text);
+  font-size: 13px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.tm-room-playlist-episodes button[aria-current='true'] {
+  background: var(--tm-text);
+  color: var(--tm-accent-contrast);
+  font-weight: 700;
+}
+.tm-room-playlist-episodes button:disabled:not([aria-current='true']) {
+  opacity: 0.55;
+}
+.tm-room-playlist-hint {
+  margin: 0;
+  color: var(--tm-muted);
+  font-size: 12px;
+}
+.tm-room-playlist-secondary {
+  display: inline-flex;
+  align-self: flex-start;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 14px;
+  border-radius: var(--tm-radius-sm);
+  box-shadow: inset 0 0 0 1px var(--tm-line-strong);
+  color: var(--tm-text);
+  font-size: 13px;
+  font-weight: 500;
+}
+.tm-room-playlist-secondary:hover {
+  background: var(--tm-surface-raised);
+}
+/* 接下来 / 放过的 */
+.tm-room-playlist-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.tm-room-playlist-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.tm-room-playlist-head h3 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+}
+.tm-room-playlist-head h3 span {
+  color: var(--tm-muted);
+  font-weight: 500;
+}
+.tm-room-playlist-add {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 36px;
+  padding: 0 12px;
+  border-radius: var(--tm-radius-full);
+  background: var(--tm-text);
+  color: var(--tm-accent-contrast);
+  font-size: 13px;
+  font-weight: 700;
+}
+.tm-room-playlist-add::after {
+  content: '';
+  position: absolute;
+  inset: -4px 0;
+}
+.tm-room-playlist-add[data-size='lg'] {
+  min-height: 44px;
+  margin-top: 6px;
+  padding: 0 20px;
+  font-size: 14px;
+}
+.tm-room-playlist-list {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.tm-room-playlist-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 72px;
+}
+.tm-room-playlist-row[data-played] {
+  min-height: 52px;
+}
+.tm-room-playlist-text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.tm-room-playlist-text strong {
+  overflow: hidden;
+  font-size: 14px;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.tm-room-playlist-icon {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  color: var(--tm-text);
+}
+.tm-room-playlist-icon:hover,
+.tm-room-playlist-icon[aria-expanded='true'] {
+  background: var(--tm-surface-raised);
+}
+.tm-room-playlist-more {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 0 0 12px 52px;
+}
+.tm-room-playlist-more button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 14px;
+  border-radius: var(--tm-radius-sm);
+  background: var(--tm-surface-raised);
+  color: var(--tm-text);
+  font-size: 13px;
+}
+.tm-room-playlist-more button:disabled {
+  opacity: 0.4;
+}
+.tm-room-playlist-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 48px;
+  padding: 0 4px;
+  color: var(--tm-muted);
+  font-size: 14px;
+}
+.tm-room-playlist-toggle[data-rule] {
+  border-top: 1px solid var(--tm-line);
+}
+.tm-room-playlist-toggle svg {
+  transition: transform var(--tm-d-hover) var(--tm-ease-out);
+}
+.tm-room-playlist-toggle[aria-expanded='true'] svg {
+  transform: rotate(90deg);
+}
+.tm-room-playlist-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 28px 0 8px;
+  color: var(--tm-muted);
+  font-size: 13px;
+  text-align: center;
+}
+.tm-room-playlist-empty strong {
+  color: var(--tm-text);
+  font-size: 15px;
+  font-weight: 700;
+}
+.tm-room-playlist-empty-icon {
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--tm-surface-raised);
+}
+.tm-room-playlist :is(button):focus-visible {
+  outline: 2px solid var(--tm-text);
+  outline-offset: 2px;
+}
+:where(html[data-tm-device='phone']) .tm-room-playlist-now {
+  gap: 10px;
+  padding: 12px;
+}
+:where(html[data-tm-device='phone']) .tm-room-playlist-now-text strong {
+  overflow: hidden;
+  font-size: 14px;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+@media (prefers-reduced-motion: reduce) {
+  .tm-room-playlist-toggle svg {
+    transition: none;
+  }
+}
+html[data-tm-reduced-motion='true'] .tm-room-playlist-toggle svg {
+  transition: none;
+}

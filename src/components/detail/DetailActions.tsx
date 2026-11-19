@@ -4,17 +4,17 @@ import type { MouseEventHandler } from 'react';
 
 export interface DetailActionProps {
   onPlay?: () => void;
-  onTogether?: () => void;
+  onWatchInRoom?: () => void;
   onFavorite?: MouseEventHandler<HTMLButtonElement>;
   favorited?: boolean;
 }
 export default function DetailActions({
   onPlay,
-  onTogether,
+  onWatchInRoom,
   onFavorite,
   favorited,
 }: DetailActionProps) {
-  if (!onPlay && !onTogether && !onFavorite) return null;
+  if (!onPlay && !onWatchInRoom && !onFavorite) return null;
   return (
     <div className='tm-detail-actions'>
       {onPlay && (
@@ -27,11 +27,11 @@ export default function DetailActions({
           播放
         </button>
       )}
-      {onTogether && (
+      {onWatchInRoom && (
         <button
           type='button'
           className='tm-detail-secondary tm-glass tm-press'
-          onClick={onTogether}
+          onClick={onWatchInRoom}
         >
           <Users size={18} />
           一起看

@@ -1,0 +1,136 @@
+/* 开关 */
+.tm-room-dock-badge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: var(--tm-radius-full);
+  background: var(--tm-on-art);
+  color: var(--tm-on-art-ink);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 18px;
+}
+
+/* 房间胶囊（没有小窗时） */
+.tm-room-dock-pill {
+  position: fixed;
+  z-index: var(--tm-z-overlay);
+  right: 20px;
+  bottom: calc(20px + var(--tm-safe-bottom, 0px));
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  max-width: calc(100vw - 32px);
+  padding: 4px;
+  border-radius: var(--tm-radius-full);
+  background: var(--tm-glass-solid, var(--tm-surface));
+  box-shadow: var(--tm-shadow-lg), inset 0 0 0 1px var(--tm-line);
+  animation: tm-room-rise var(--tm-d-panel) var(--tm-ease-out);
+}
+.tm-room-dock-pill-room {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  min-height: 44px;
+  padding: 0 10px 0 14px;
+  border-radius: var(--tm-radius-full);
+}
+.tm-room-dock-pill-room:hover {
+  background: var(--tm-surface-raised);
+}
+.tm-room-dock-pill-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.25;
+}
+.tm-room-dock-pill-text strong {
+  overflow: hidden;
+  max-width: 180px;
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.tm-room-dock-pill-text span {
+  color: var(--tm-muted);
+  font-size: 12px;
+}
+.tm-room-dock-pill-chat {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--tm-text);
+  color: var(--tm-accent-contrast);
+}
+
+/* 房间聊天浮窗 */
+.tm-room-dock {
+  position: fixed;
+  z-index: var(--tm-z-overlay);
+  right: 20px;
+  bottom: calc(20px + var(--tm-safe-bottom, 0px));
+  display: flex;
+  flex-direction: column;
+  width: min(380px, calc(100vw - 32px));
+  height: min(560px, calc(100vh - var(--tm-header-height, 64px) - 48px));
+  overflow: hidden;
+  border-radius: var(--tm-radius-lg);
+  background: var(--tm-glass-solid, var(--tm-surface));
+  box-shadow: var(--tm-shadow-lg), inset 0 0 0 1px var(--tm-line);
+  animation: tm-room-rise var(--tm-d-panel) var(--tm-ease-out);
+}
+/* 有小窗时，聊天放在小窗左边 */
+body:has(.tm-mini) .tm-room-dock {
+  right: calc(var(--tm-mini-gap) + var(--tm-mini-w) + 12px);
+}
+.tm-room-dock-head {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 8px 8px 8px 16px;
+  border-bottom: 1px solid var(--tm-line);
+}
+.tm-room-dock-head > div {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+.tm-room-dock-head strong {
+  overflow: hidden;
+  font-size: 15px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.tm-room-dock-head span {
+  color: var(--tm-muted);
+  font-size: 12px;
+}
+:where(html:is([data-tm-device='phone'], [data-tm-device='phone-landscape']))
+  .tm-room-dock-pill,
+:where(html:is([data-tm-device='phone'], [data-tm-device='phone-landscape']))
+  .tm-room-dock {
+  right: 12px;
+  bottom: calc(
+    var(--tm-bottom-nav-height, 64px) + 12px + var(--tm-safe-bottom, 0px)
+  );
+}
+:where(html:is([data-tm-device='phone'], [data-tm-device='phone-landscape']))
+  .tm-room-dock {
+  left: 12px;
+  width: auto;
+  height: min(70vh, 560px);
+}
+:where(html:is([data-tm-device='phone'], [data-tm-device='phone-landscape']))
+  body:has(.tm-mini)
+  .tm-room-dock {
+  right: 12px;
+  z-index: calc(var(--tm-z-overlay) + 1);
+}

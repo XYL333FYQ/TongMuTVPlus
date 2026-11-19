@@ -52,7 +52,7 @@ const sameMedia = (a: PlaybackMedia | null, b: PlaybackMedia | null) =>
  * 全站唯一的播放会话：放什么、在哪里显示（整页 / 房间舞台 / 小窗 / 收起）。
  * 换页面不卸载播放器，四种形态是同一个播放实例。
  *
- * 只服务“自己看”；一起看有自己的播放器（src/features/together）
+ * 只服务“自己看”；一起看有自己的播放器（src/features/room）
  * （requestPlayback / setPlaybackGuard / controller / media）。
  */
 export default function PlaybackSessionProvider({

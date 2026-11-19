@@ -12,8 +12,9 @@ const features = fs
   .map((entry) => entry.name);
 
 const DEEP_FEATURE_IMPORT = {
-  group: ['@/features/*/**'],
-  message: '功能之间只经对方的 index.ts 引用（docs/STANDARD.md S1）',
+  group: ['@/features/*/*/**'],
+  message:
+    '只能引用功能根目录下的入口文件，子目录是功能内部（docs/STANDARD.md S1）',
 };
 
 const importDirection = [
@@ -49,7 +50,7 @@ const importDirection = [
           patterns: [
             {
               ...DEEP_FEATURE_IMPORT,
-              group: ['@/features/*/**', `!@/features/${name}/**`],
+              group: ['@/features/*/*/**', `!@/features/${name}/**`],
             },
           ],
         },

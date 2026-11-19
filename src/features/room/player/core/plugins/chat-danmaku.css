@@ -1,0 +1,131 @@
+/* ================================================================ 聊天弹幕 */
+/* 弹幕层和控制条里的“弹”开关、发弹幕输入框都挂在播放器节点里，全屏下也看得见 */
+.tm-room-dm {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  overflow: hidden;
+  pointer-events: none;
+}
+.tm-room-dm-item {
+  position: absolute;
+  left: 0;
+  white-space: nowrap;
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 24px;
+  color: var(--tm-on-art);
+  text-shadow: 0 1px 3px rgb(var(--tm-ink-rgb) / 0.85),
+    0 0 8px rgb(var(--tm-ink-rgb) / 0.5);
+  will-change: transform;
+}
+/* 房间弹幕：描边胶囊 + 名字，和弹幕库里的白字分开 */
+.tm-room-dm-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 10px 0 3px;
+  border-radius: 14px;
+  box-shadow: inset 0 0 0 1.5px rgb(var(--tm-on-art-rgb) / 0.8);
+  background: rgb(var(--tm-ink-rgb) / 0.28);
+  text-shadow: 0 1px 2px rgb(var(--tm-ink-rgb) / 0.8);
+}
+.tm-room-dm-who {
+  padding: 0 7px;
+  border-radius: 10px;
+  background: var(--tm-on-art);
+  color: var(--tm-on-art-ink);
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 18px;
+  text-shadow: none;
+}
+.tm-room-dm-item[data-self='true'] {
+  box-shadow: inset 0 0 0 2px var(--tm-on-art);
+  background: var(--tm-art-glass);
+}
+.tm-room-dm-ctl {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  margin: 0;
+}
+/* 房间弹幕开关：和弹幕库的“弹”分开，各管各的（chat-danmaku.ts） */
+.tm-room-dm-switch {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  color: var(--tm-on-art);
+  cursor: pointer;
+}
+.tm-room-dm-off {
+  display: none;
+}
+.tm-room-dm-switch[data-on='false'] .tm-room-dm-off {
+  display: block;
+}
+.tm-room-dm-switch[data-on='false'] .tm-room-dm-dots {
+  display: none;
+}
+.tm-room-dm-send {
+  min-height: 28px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 14px;
+  background: var(--tm-art-glass);
+  box-shadow: inset 0 0 0 1px var(--tm-art-glass-line);
+  color: var(--tm-on-art);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+.tm-room-dm-switch:focus-visible,
+.tm-room-dm-send:focus-visible,
+.tm-room-dm-input:focus-visible {
+  outline: 2px solid var(--tm-on-art);
+  outline-offset: 2px;
+}
+/* 最宽 220，控制条放不下时先缩它，不把退出全屏等按钮挤出屏幕 */
+.tm-room-dm-input {
+  width: min(220px, 30vw);
+  min-width: 0;
+  min-height: 28px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 14px;
+  background: var(--tm-art-glass);
+  box-shadow: inset 0 0 0 1px var(--tm-art-glass-line);
+  color: var(--tm-on-art);
+  font: inherit;
+  font-size: 13px;
+}
+.tm-room-dm-input::placeholder {
+  color: var(--tm-on-art-muted);
+}
+.tm-room-dm-send:disabled,
+.tm-room-dm-input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+/* 输入框和发送按钮只在全屏出现（不全屏时下面就是聊天栏）；开关一直在 */
+.tm-room-dm-input,
+.tm-room-dm-send {
+  display: none;
+}
+[data-tm-dm-full] .tm-room-dm-input,
+[data-tm-dm-full] .tm-room-dm-send {
+  display: block;
+}
+@media (max-width: 767px) {
+  .tm-room-dm-item {
+    font-size: 15px;
+    line-height: 20px;
+  }
+}

@@ -47,7 +47,6 @@ import {
 } from '@/lib/music/shared';
 import type { MusicQuality, MusicSource, Song } from '@/lib/music/types';
 import { useAudioFocus } from '@/hooks/useAudioFocus';
-import { useRoomMusicActivity } from '@/hooks/useRoomMusicActivity';
 
 import AddToPlaylistModal from '@/components/AddToPlaylistModal';
 import Toast, { ToastProps } from '@/components/feedback/Toast';
@@ -77,7 +76,10 @@ import {
 } from '@/components/music/tokens';
 import PageContainer from '@/components/PageContainer';
 
-import RoomActivityActions from '@/features/together/activities/RoomActivityActions';
+import {
+  RoomActivityActions,
+  useRoomMusicActivity,
+} from '@/features/room/activities';
 
 import type { MusicQueueItem, MusicSyncState } from '@/types/watch-room';
 
@@ -3013,7 +3015,7 @@ export default function MusicClient({
                 />
               )}
               {roomActionError && (
-                <p role='status' className='tm-activity-error'>
+                <p role='status' className='tm-room-activity-error'>
                   {roomActionError}
                 </p>
               )}

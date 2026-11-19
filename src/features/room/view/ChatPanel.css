@@ -1,0 +1,400 @@
+/* 聊天（房间页侧栏与房间聊天浮窗共用） */
+.tm-room-chat {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.tm-room-chat-messages {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  min-height: 0;
+  padding: 12px 14px 10px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.tm-room-chat-older {
+  align-self: center;
+  min-height: 32px;
+  margin-bottom: 6px;
+  padding: 0 12px;
+  border-radius: var(--tm-radius-full);
+  color: var(--tm-muted);
+  font-size: 12px;
+}
+.tm-room-chat-older:hover {
+  background: var(--tm-surface-raised);
+  color: var(--tm-text);
+}
+.tm-room-chat-empty {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  color: var(--tm-muted);
+  font-size: 13px;
+}
+.tm-room-chat-empty strong {
+  color: var(--tm-text);
+  font-size: 14px;
+}
+.tm-room-chat-message {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  margin-top: 12px;
+  animation: tm-room-in var(--tm-d-panel) var(--tm-ease-out);
+}
+.tm-room-chat-message[data-grouped] {
+  margin-top: 2px;
+}
+.tm-room-chat-message[data-mine] {
+  align-items: flex-end;
+}
+.tm-room-chat-message header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 2px;
+}
+.tm-room-chat-message-name {
+  color: var(--tm-text);
+  font-size: 12px;
+  font-weight: 600;
+}
+.tm-room-chat-message time {
+  color: var(--tm-muted);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+.tm-room-chat-bubble {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 86%;
+}
+.tm-room-chat-message[data-mine] .tm-room-chat-bubble {
+  flex-direction: row-reverse;
+}
+.tm-room-chat-bubble p {
+  margin: 0;
+  padding: 8px 12px;
+  border-radius: 16px 16px 16px 6px;
+  background: var(--tm-surface-raised);
+  color: var(--tm-text);
+  font-size: 14px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+.tm-room-chat-message[data-mine] .tm-room-chat-bubble p {
+  border-radius: 16px 16px 6px 16px;
+  background: var(--tm-text);
+  color: var(--tm-accent-contrast);
+}
+/* 单独发的表情：不要气泡，放大 */
+.tm-room-chat-bubble[data-emoji] p,
+.tm-room-chat-message[data-mine] .tm-room-chat-bubble[data-emoji] p {
+  padding: 0 2px;
+  background: none;
+  color: var(--tm-text);
+  font-size: 34px;
+  line-height: 1.15;
+}
+.tm-room-chat-message-delete {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  color: var(--tm-muted);
+  opacity: 0;
+  transition: opacity var(--tm-d-hover), background var(--tm-d-hover);
+}
+.tm-room-chat-bubble:hover .tm-room-chat-message-delete,
+.tm-room-chat-message-delete:focus-visible {
+  opacity: 1;
+}
+.tm-room-chat-message-delete:hover {
+  background: var(--tm-surface-raised);
+  color: var(--tm-danger);
+}
+@media (hover: none) {
+  .tm-room-chat-message-delete {
+    opacity: 0.7;
+  }
+}
+
+/* 表情面板 */
+.tm-room-chat-emojis {
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  gap: 2px;
+  margin: 0 12px 8px;
+  padding: 8px;
+  border-radius: var(--tm-radius-md);
+  background: var(--tm-surface-raised);
+  box-shadow: var(--tm-shadow-md);
+  animation: tm-room-in var(--tm-d-panel) var(--tm-ease-out);
+}
+.tm-room-chat[data-compact] .tm-room-chat-emojis {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+.tm-room-chat-emojis button {
+  display: grid;
+  place-items: center;
+  height: 44px;
+  border-radius: var(--tm-radius-sm);
+  font-size: 22px;
+  transition: background var(--tm-d-hover), transform var(--tm-d-press);
+}
+.tm-room-chat-emojis button:hover:not(:disabled) {
+  background: var(--tm-surface);
+  transform: scale(1.12);
+}
+
+/* 输入 */
+.tm-room-chat-compose {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin: 0 12px;
+  padding: 4px;
+  border-radius: var(--tm-radius-full);
+  background: var(--tm-surface-raised);
+  box-shadow: inset 0 0 0 1px var(--tm-line);
+  transition: box-shadow var(--tm-d-hover);
+}
+.tm-room-chat-compose:focus-within {
+  box-shadow: inset 0 0 0 1px var(--tm-line-strong);
+}
+.tm-room-chat-compose input {
+  flex: 1;
+  min-width: 0;
+  height: 40px;
+  padding: 0 4px;
+  border: 0;
+  background: transparent;
+  color: var(--tm-text);
+  font-size: 14px;
+  outline: none;
+  box-shadow: none;
+}
+.tm-room-chat-compose input:focus {
+  box-shadow: none;
+}
+.tm-room-chat-compose-icon,
+.tm-room-chat-send {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  color: var(--tm-muted);
+  transition: background var(--tm-d-hover), color var(--tm-d-hover);
+}
+.tm-room-chat-compose-icon:hover:not(:disabled),
+.tm-room-chat-compose-icon[data-active] {
+  background: var(--tm-surface);
+  color: var(--tm-text);
+}
+.tm-room-chat-send:not(:disabled) {
+  background: var(--tm-text);
+  color: var(--tm-accent-contrast);
+}
+.tm-room-chat-compose-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 40px;
+  padding: 2px 16px 8px;
+}
+.tm-room-chat-compose-error {
+  color: var(--tm-danger);
+  font-size: 12px;
+}
+.tm-room-dock .tm-room-chat {
+  flex: 1;
+}
+@media (pointer: coarse) {
+  .tm-room-chat-message-delete {
+    width: 44px;
+    height: 44px;
+    margin-top: 0;
+  }
+}
+.tm-room-view-chat > .tm-room-chat {
+  flex: 1;
+  min-height: 0;
+}
+:where(html[data-tm-device='phone']) .tm-room-view .tm-room-chat-compose {
+  margin-bottom: var(--tm-safe-bottom, 0px);
+}
+/* 聊天输入：表情、输入框、弹幕、发送各自分开，输入框是一条圆角条 */
+.tm-room-view .tm-room-chat-compose {
+  gap: 6px;
+  margin: 0;
+  padding: 8px 10px;
+  border-top: 1px solid var(--tm-line);
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+}
+.tm-room-view .tm-room-chat-compose:focus-within {
+  box-shadow: none;
+}
+.tm-room-view .tm-room-chat-compose input {
+  height: 42px;
+  padding: 0 16px;
+  border-radius: var(--tm-radius-full);
+  background: var(--tm-surface-raised);
+}
+.tm-room-view .tm-room-chat-compose input:focus {
+  box-shadow: inset 0 0 0 1px var(--tm-line-strong);
+}
+.tm-room-view .tm-room-chat-compose-icon[data-active] {
+  background: var(--tm-surface-raised);
+}
+.tm-room-view .tm-room-chat-send {
+  width: 42px;
+  height: 42px;
+  background: var(--tm-text);
+  color: var(--tm-accent-contrast);
+}
+.tm-room-view .tm-room-chat-send:disabled {
+  opacity: 0.45;
+}
+
+/* ---------- 收紧尺寸（2026-11-15 第二轮）：按原型的比例，去掉臃肿感 */
+.tm-room-chat-message:focus {
+  outline: none;
+}
+@media (hover: none) {
+  .tm-room-view .tm-room-chat-message-delete {
+    opacity: 0;
+    pointer-events: none;
+  }
+  .tm-room-view
+    .tm-room-chat-message:focus-within
+    .tm-room-chat-message-delete {
+    opacity: 1;
+    pointer-events: auto;
+  }
+}
+.tm-room-view:where([data-layout='compact']) .tm-room-chat-messages {
+  padding: 8px 12px;
+}
+.tm-room-view:where([data-layout='compact']) .tm-room-chat-bubble p {
+  padding: 7px 11px;
+}
+.tm-room-view:where([data-layout='compact']) .tm-room-chat-compose {
+  gap: 4px;
+  padding: 6px 8px;
+}
+.tm-room-view:where([data-layout='compact']) .tm-room-chat-compose input {
+  height: 40px;
+}
+.tm-room-view:where([data-layout='compact']) .tm-room-chat-send {
+  width: 40px;
+  height: 40px;
+}
+
+/* ---------- 第三轮（2026-11-15）：和原型逐项对齐 */
+/* 聊天底部“消息飘成弹幕”开关行：只在电脑房间页的宽聊天栏出现 */
+.tm-room-chat-compose-foot {
+  display: none;
+}
+.tm-room-chat-compose-foot[data-has-error] {
+  display: flex;
+}
+.tm-room-chat-compose-foot[data-has-error] .tm-room-chat-dm-row {
+  display: none;
+}
+.tm-room-chat-dm-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 32px;
+  color: var(--tm-muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+.tm-room-chat-dm-row:focus-visible {
+  outline: 2px solid var(--tm-text);
+  outline-offset: 2px;
+  border-radius: var(--tm-radius-sm);
+}
+.tm-room-chat-dm-row-switch {
+  position: relative;
+  width: 30px;
+  height: 18px;
+  flex: none;
+  border-radius: var(--tm-radius-full);
+  background: var(--tm-line-strong);
+  transition: background var(--tm-d-hover);
+}
+.tm-room-chat-dm-row-switch::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--tm-bg);
+  transition: transform var(--tm-d-hover) var(--tm-ease-out);
+}
+.tm-room-chat-dm-row[aria-checked='true'] .tm-room-chat-dm-row-switch {
+  background: var(--tm-text);
+}
+.tm-room-chat-dm-row[aria-checked='true'] .tm-room-chat-dm-row-switch::after {
+  transform: translateX(12px);
+}
+.tm-room-chat-dm-row-hint {
+  color: var(--tm-muted);
+  opacity: 0.8;
+  font-size: 12px;
+}
+:where(.tm-room-view[data-layout='desktop'])
+  .tm-room-view-chat
+  .tm-room-chat-compose-foot {
+  display: flex;
+  min-height: 0;
+  padding: 0 14px 10px;
+}
+:where(.tm-room-view[data-layout='desktop'])
+  .tm-room-view-chat
+  .tm-room-chat-compose-icon[aria-pressed] {
+  display: none;
+}
+:where(html[data-tm-device='phone-landscape'])
+  .tm-room-view
+  .tm-room-chat-compose {
+  margin-bottom: env(safe-area-inset-bottom);
+}
+.tm-room-view[data-layout='tablet']
+  .tm-room-view-chat[data-tab]:not([data-tab='chat'])
+  > .tm-room-chat {
+  display: none;
+}
+.tm-room-view[data-layout='tablet'] .tm-room-chat-compose input {
+  height: 48px;
+  font-size: 16px;
+}
+.tm-room-view[data-layout='tablet'] .tm-room-chat-send {
+  width: 48px;
+  height: 48px;
+}
+.tm-room-view[data-layout='tablet'] .tm-room-chat-compose-icon {
+  width: 44px;
+  height: 44px;
+}

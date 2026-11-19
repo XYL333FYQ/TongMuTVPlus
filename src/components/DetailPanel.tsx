@@ -9,8 +9,8 @@ import { appendSpecialSourceParam } from '@/lib/special-source.client';
 import { getTMDBImageUrl } from '@/lib/tmdb-image-base';
 import { processImageUrl } from '@/lib/utils';
 
-import ProxyImage from '@/components/ProxyImage';
 import { useExternalAction } from '@/components/ExternalLink';
+import ProxyImage from '@/components/ProxyImage';
 
 import DetailActions from './detail/DetailActions';
 import DetailActors from './detail/DetailActors';
@@ -48,7 +48,7 @@ interface DetailPanelProps {
   useDrawer?: boolean;
   drawerWidth?: string;
   onPlay?: () => void;
-  onTogether?: () => void;
+  onWatchInRoom?: () => void;
   backdrop?: string;
   onFavorite?: React.MouseEventHandler<HTMLButtonElement>;
   favorited?: boolean;
@@ -123,7 +123,7 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
   useDrawer = false,
   drawerWidth = 'w-full md:w-[25%]',
   onPlay,
-  onTogether,
+  onWatchInRoom,
   backdrop,
   onFavorite,
   favorited,
@@ -1190,7 +1190,7 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
   const actions = (
     <DetailActions
       onPlay={onPlay}
-      onTogether={onTogether}
+      onWatchInRoom={onWatchInRoom}
       onFavorite={onFavorite}
       favorited={favorited}
     />

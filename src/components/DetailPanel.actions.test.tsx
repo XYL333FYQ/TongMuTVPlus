@@ -48,7 +48,7 @@ test.each([false, true])(
   'both detail presentations expose the original playback and room actions (drawer=%s)',
   async (useDrawer) => {
     const onPlay = jest.fn(),
-      onTogether = jest.fn();
+      onWatchInRoom = jest.fn();
     render(
       <DetailPanel
         isOpen
@@ -57,13 +57,13 @@ test.each([false, true])(
         doubanId={123}
         useDrawer={useDrawer}
         onPlay={onPlay}
-        onTogether={onTogether}
+        onWatchInRoom={onWatchInRoom}
       />
     );
     fireEvent.click(await screen.findByRole('button', { name: '播放' }));
     fireEvent.click(screen.getByRole('button', { name: '一起看' }));
     expect(onPlay).toHaveBeenCalledTimes(1);
-    expect(onTogether).toHaveBeenCalledTimes(1);
+    expect(onWatchInRoom).toHaveBeenCalledTimes(1);
   }
 );
 

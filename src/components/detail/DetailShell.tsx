@@ -20,10 +20,8 @@ import './detail.css';
 
 import { getDeviceTier } from '@/lib/device-tier';
 import { isReducedMotionSetting, useReducedMotionSetting } from '@/lib/motion';
-
-import { useDeviceTier } from '@/hooks/useDeviceTier';
-
 import { useBackLayer } from '@/hooks/useBackLayer';
+import { useDeviceTier } from '@/hooks/useDeviceTier';
 
 // 手机上点海报进详情：从被点的海报卡位置放大展开（只动 transform 和 opacity）。
 // 减少动态、桌面抽屉、没有触发元素或元素不在屏幕内时返回 null，沿用原来的底部滑入。

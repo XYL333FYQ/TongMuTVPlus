@@ -11,11 +11,11 @@ import SectionHeader from '@/components/catalog/SectionHeader';
 import { useWatchRoomContextSafe } from '@/components/WatchRoomProvider';
 
 import {
+  displayRoomName,
   EXTERNAL_ROOM_SERVER_NOTICE,
   isExternalRoomServer,
-} from '@/features/together/lib/external-room-server';
-import { roomCoverSource } from '@/features/together/lib/room-cover';
-import { displayRoomName } from '@/features/together/lib/room-presentation';
+  roomCoverSource,
+} from '@/features/room';
 
 import type { Room } from '@/types/watch-room';
 

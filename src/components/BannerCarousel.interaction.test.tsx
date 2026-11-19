@@ -56,7 +56,7 @@ beforeEach(() => {
   );
 });
 
-test('hero together carries the selected movie into the room flow', () => {
+test('hero watch-in-room carries the selected movie into the room flow', () => {
   render(<BannerCarousel />);
   fireEvent.click(screen.getByRole('button', { name: '一起看' }));
   const destination = new URL(mockPush.mock.calls[0][0], 'https://site.test');

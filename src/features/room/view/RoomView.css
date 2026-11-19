@@ -1,0 +1,915 @@
+/* ================================================================ 房间页 */
+
+.tm-room-view {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+  max-width: var(--tm-container);
+  margin-inline: auto;
+  padding: 12px var(--tm-content-gutter) 48px;
+}
+/* 当前影片海报做成的环境光：只在顶部一圈，往下淡出 */
+.tm-room-view-ambient {
+  position: absolute;
+  z-index: -1;
+  inset: -40px -10vw auto;
+  height: 560px;
+  background-image: var(--tm-room-view-ambient);
+  background-position: center 30%;
+  background-size: cover;
+  opacity: 0;
+  filter: blur(90px) saturate(1.3);
+  transform: translateZ(0);
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    rgb(var(--tm-ink-rgb) / 1) 0%,
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to bottom,
+    rgb(var(--tm-ink-rgb) / 1) 0%,
+    transparent 100%
+  );
+  transition: opacity var(--tm-d-page) var(--tm-ease-out);
+  pointer-events: none;
+}
+.tm-room-view[data-ambient] .tm-room-view-ambient {
+  opacity: 0.32;
+}
+html[data-tm-no-blur] .tm-room-view-ambient {
+  display: none;
+}
+.tm-room-view-chip-button {
+  transition: color var(--tm-d-hover), background var(--tm-d-hover);
+}
+.tm-room-view-chip-button:hover {
+  background: var(--tm-surface-raised);
+  color: var(--tm-text);
+}
+.tm-room-view-faces {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 6px 0 12px;
+  border-radius: var(--tm-radius-full);
+}
+.tm-room-view-faces:hover .tm-room-view-face {
+  transform: translateX(-2px);
+}
+.tm-room-view-face {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  margin-left: -8px;
+  border: 2px solid var(--tm-bg);
+  border-radius: 50%;
+  background: var(--tm-surface-raised);
+  color: var(--tm-text);
+  font-size: 13px;
+  font-weight: 700;
+  transition: transform var(--tm-d-hover) var(--tm-ease-out);
+}
+.tm-room-view-face[data-self] {
+  background: var(--tm-text);
+  color: var(--tm-accent-contrast);
+}
+.tm-room-view-face-more {
+  font-size: 12px;
+}
+.tm-room-view-voice {
+  display: flex;
+  padding: 2px;
+  border-radius: var(--tm-radius-full);
+  background: var(--tm-surface);
+  box-shadow: inset 0 0 0 1px var(--tm-line);
+}
+@media (max-width: 899px) {
+  .tm-room-view-faces {
+    margin-right: auto;
+    padding-left: 8px;
+  }
+}
+
+/* 主体 */
+.tm-room-view-stage {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border-radius: var(--tm-radius-lg);
+  background: var(--tm-video-bg);
+  box-shadow: 0 1px 0 var(--tm-glass-highlight) inset,
+    0 40px 80px -40px rgb(var(--tm-ink-rgb) / 0.75);
+}
+.tm-room-view-stage-slot {
+  position: absolute;
+  inset: 0;
+}
+.tm-room-view-stage-slot[data-hidden] {
+  visibility: hidden;
+}
+.tm-room-view-stage-status {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 24px;
+  color: var(--tm-on-art);
+  text-align: center;
+}
+.tm-room-view-stage-status {
+  background: rgb(var(--tm-ink-rgb) / 0.45);
+  font-size: 14px;
+}
+.tm-room-view-loader {
+  width: 28px;
+  height: 28px;
+  border: 2px solid var(--tm-art-glass-line);
+  border-top-color: var(--tm-on-art);
+  border-radius: 50%;
+  animation: tm-room-rotate 0.9s linear infinite;
+}
+
+/* 正在放映 */
+.tm-room-view-now {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px;
+  border-radius: var(--tm-radius-lg);
+  background: var(--tm-surface);
+  box-shadow: inset 0 0 0 1px var(--tm-line);
+}
+.tm-room-view-now-poster {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 56px;
+  height: 80px;
+  overflow: hidden;
+  border-radius: var(--tm-radius-sm);
+  background: var(--tm-surface-raised);
+  color: var(--tm-muted);
+  box-shadow: var(--tm-shadow-sm);
+}
+.tm-room-view-now-poster img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.tm-room-view-now-text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.tm-room-view-now-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--tm-muted);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+.tm-room-view-now-label::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--tm-muted);
+}
+.tm-room-view-now-label[data-state='playing'] {
+  color: var(--tm-text);
+}
+.tm-room-view-now-label[data-state='playing']::before {
+  background: var(--tm-text);
+  animation: tm-room-pulse 1.8s var(--tm-ease-in-out) infinite;
+}
+.tm-room-view-now h2 {
+  margin: 0;
+  overflow: hidden;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.tm-room-view-now-meta {
+  overflow: hidden;
+  color: var(--tm-muted);
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.tm-room-view-now-actions {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 8px;
+}
+@media (max-width: 767px) {
+  .tm-room-view-now {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .tm-room-view-now-poster {
+    width: 44px;
+    height: 62px;
+  }
+  .tm-room-view-now h2 {
+    font-size: 17px;
+  }
+  .tm-room-view-now-actions {
+    width: 100%;
+  }
+}
+
+/* 快速选集 */
+.tm-room-view-strip {
+  display: flex;
+  gap: 8px;
+  padding: 2px 2px 6px;
+  overflow-x: auto;
+  scrollbar-width: thin;
+  overscroll-behavior-x: contain;
+}
+.tm-room-view-ep {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  min-width: 52px;
+  height: 44px;
+  padding: 0 12px;
+  border-radius: var(--tm-radius-sm);
+  background: var(--tm-surface);
+  box-shadow: inset 0 0 0 1px var(--tm-line);
+  color: var(--tm-text);
+  font-size: 14px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  transition: background var(--tm-d-hover), transform var(--tm-d-press);
+}
+.tm-room-view-ep:hover:not(:disabled) {
+  background: var(--tm-surface-raised);
+}
+.tm-room-view-ep:active:not(:disabled) {
+  transform: scale(0.96);
+}
+.tm-room-view-ep[aria-current='true'] {
+  background: var(--tm-text);
+  box-shadow: none;
+  color: var(--tm-accent-contrast);
+}
+.tm-room-view-ep:disabled:not([aria-current='true']) {
+  opacity: 0.55;
+}
+.tm-room-view-ep-no {
+  max-width: 9em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 侧栏：桌面上与左栏同高 */
+@media (max-width: 767px) {
+  .tm-room-view {
+    gap: 14px;
+    padding-top: 4px;
+  }
+  .tm-room-view-stage {
+    margin-inline: calc(-1 * var(--tm-content-gutter, 16px));
+    border-radius: 0;
+  }
+}
+.tm-room-view-chat-count {
+  color: var(--tm-muted);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+.tm-room-view-copy {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 0;
+}
+.tm-room-view-copy code {
+  flex: 1 1 220px;
+  min-width: 0;
+  padding: 10px 12px;
+  overflow: hidden;
+  border-radius: var(--tm-radius-sm);
+  background: var(--tm-bg);
+  color: var(--tm-muted);
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+@media (prefers-reduced-motion: reduce) {
+  .tm-room-view-face {
+    transition: none;
+  }
+}
+
+/* 触屏和窄屏：小标签也要够点（至少 44px） */
+@media (pointer: coarse), (max-width: 599px) {
+  .tm-room-view-chip-button {
+    min-height: 44px;
+  }
+}
+.tm-room-view-faces {
+  min-width: 44px;
+}
+.tm-room-head-meta .tm-room-view-chip-button {
+  padding: 0 6px;
+  margin-left: -6px;
+  border-radius: var(--tm-radius-sm);
+}
+/* 正在放映：直接放在舞台下面，不再套一层卡片 */
+.tm-room-view-now {
+  padding: 6px 2px 0;
+  background: none;
+  box-shadow: none;
+}
+@media (max-width: 899px) {
+  .tm-room-head-actions .tm-room-view-faces {
+    display: none;
+  }
+}
+:where(html:is([data-tm-device='phone'], [data-tm-device='phone-landscape']))
+  .tm-room-view {
+  /* 底部留出底栏的位置，聊天输入框不会被底栏盖住 */
+  padding-bottom: calc(
+    var(--tm-bottom-nav-height, 64px) + 32px + var(--tm-safe-bottom, 0px)
+  );
+}
+/* 往下看聊天时画面钉在顶部 */
+:where(html:is([data-tm-device='phone'], [data-tm-device='phone-landscape']))
+  .tm-room-view-stage {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+}
+:where(html:is([data-tm-device='phone'], [data-tm-device='phone-landscape']))
+  .tm-room-head-meta
+  .tm-room-view-chip-button {
+  display: none;
+}
+
+/* ================================================================ 房间页（直播式） */
+/* 整页按哪套排由 RoomView 写在 .tm-room-view[data-layout] 上（lib/device-tier.ts 的 pageLayoutFor）：
+ * desktop（电脑）：左边画面和放映信息，右边一整列聊天——下面这些不带条件的规则；
+ * compact（手机、手机横屏、竖长的电脑窗口）：后面 [data-layout='compact'] 里改成紧凑排版；
+ * tablet（触屏平板，横竖都是）：最后“平板”一段。
+ * 手机横屏、手机竖屏另有按档位（html[data-tm-device]）的细调。 */
+.tm-room-view {
+  gap: 16px;
+}
+.tm-room-view-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) clamp(280px, 32vw, 360px);
+  gap: clamp(16px, 2vw, 24px);
+  align-items: start;
+}
+.tm-room-view-main {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+/* 粘在它一开始的位置（顶栏 + 房间栏下面），一进来就看得到输入框，往下滚也不动 */
+.tm-room-view-chat {
+  position: sticky;
+  top: calc(var(--tm-header-height) + 92px);
+  display: flex;
+  flex-direction: column;
+  height: calc(100dvh - var(--tm-header-height) - 108px);
+  /* 矮屏（平板横屏约 550 高）不能比屏幕还高；以前固定 420 */
+  min-height: 300px;
+  overflow: hidden;
+  border-radius: var(--tm-radius-lg);
+  background: var(--tm-glass-solid, var(--tm-surface));
+  box-shadow: inset 0 0 0 1px var(--tm-line), var(--tm-shadow-sm);
+}
+.tm-room-view-chat-head {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--tm-line);
+}
+.tm-room-view-chat-head h2 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+}
+.tm-room-view-now .tm-room-view-now-actions {
+  gap: 2px;
+}
+.tm-room-view-badge {
+  position: relative;
+}
+.tm-room-view-num {
+  position: absolute;
+  top: 2px;
+  right: 0;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: var(--tm-radius-full);
+  background: var(--tm-surface-raised);
+  box-shadow: inset 0 0 0 1px var(--tm-line);
+  color: var(--tm-text);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 16px;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+.tm-room-view-num[data-alert] {
+  background: var(--tm-text);
+  box-shadow: none;
+  color: var(--tm-accent-contrast);
+}
+
+/* 面板（片单、成员、活动、推荐、更多） */
+.tm-room-view-panel {
+  min-height: 0;
+}
+.tm-room-view-pad {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 4px 20px 20px;
+}
+.tm-room-view-menu {
+  display: flex;
+  flex-direction: column;
+  padding: 4px 8px 16px;
+}
+.tm-room-view-menu button {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 52px;
+  padding: 0 12px;
+  border-radius: var(--tm-radius-md);
+  color: var(--tm-text);
+  font-size: 15px;
+  text-align: left;
+}
+.tm-room-view-menu button:hover {
+  background: var(--tm-surface-raised);
+}
+.tm-room-view-menu button[data-danger] {
+  color: var(--tm-danger);
+}
+@keyframes tm-room-view-from-right {
+  from {
+    opacity: 0;
+    transform: translateX(24px);
+  }
+}
+.tm-room-view:where([data-layout='compact']) {
+  gap: 0;
+  height: calc(100dvh - var(--tm-header-height));
+  max-width: none;
+  padding: 0;
+  overflow: hidden;
+}
+:where(.tm-room-view[data-layout='compact']) .tm-room-view-head {
+  flex: none;
+  flex-wrap: nowrap;
+  gap: 4px;
+  min-height: 56px;
+  padding: 4px 8px 4px 12px;
+}
+:where(.tm-room-view[data-layout='compact'])
+  .tm-room-view-head
+  .tm-room-head-actions
+  .tm-room-view-faces {
+  display: flex;
+  margin-right: 0;
+  padding: 0 4px 0 12px;
+}
+:where(.tm-room-view[data-layout='compact'])
+  .tm-room-view-head
+  .tm-room-view-face {
+  width: 28px;
+  height: 28px;
+  font-size: 12px;
+}
+:where(.tm-room-view[data-layout='compact']) .tm-room-view-body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0;
+  min-width: 0;
+  min-height: 0;
+}
+:where(.tm-room-view[data-layout='compact']) .tm-room-view-main,
+:where(.tm-room-view[data-layout='compact']) .tm-room-view-chat {
+  min-width: 0;
+}
+:where(.tm-room-view[data-layout='compact']) .tm-room-view-main {
+  flex: none;
+  gap: 0;
+}
+.tm-room-view:where([data-layout='compact']) .tm-room-view-stage {
+  position: relative;
+  top: auto;
+  margin: 0;
+  border-radius: 0;
+}
+:where(.tm-room-view[data-layout='compact']) .tm-room-view-now {
+  flex-wrap: nowrap;
+  gap: 10px;
+  padding: 10px 8px 10px 12px;
+}
+:where(.tm-room-view[data-layout='compact'])
+  .tm-room-view-now
+  .tm-room-view-now-poster {
+  width: 32px;
+  height: 46px;
+}
+:where(.tm-room-view[data-layout='compact']) .tm-room-view-now h2 {
+  font-size: 15px;
+}
+:where(.tm-room-view[data-layout='compact'])
+  .tm-room-view-now
+  .tm-room-view-now-label {
+  font-size: 12px;
+}
+:where(.tm-room-view[data-layout='compact'])
+  .tm-room-view-now
+  .tm-room-view-now-meta {
+  font-size: 12px;
+}
+:where(.tm-room-view[data-layout='compact'])
+  .tm-room-view-now
+  .tm-room-view-now-actions {
+  width: auto;
+}
+/* 换集在“片单”面板里 */
+:where(.tm-room-view[data-layout='compact']) .tm-room-view-strip {
+  display: none;
+}
+:where(.tm-room-view[data-layout='compact']) .tm-room-view-chat {
+  position: static;
+  flex: 1;
+  height: auto;
+  min-height: 0;
+  border-top: 1px solid var(--tm-line);
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+}
+:where(.tm-room-view[data-layout='compact']) .tm-room-view-chat-head {
+  display: none;
+}
+:where(html[data-tm-device='phone']) .tm-room-view {
+  height: 100dvh;
+  padding: var(--tm-safe-top, 0px) 0 0;
+}
+
+/* ---------- 和原型对齐（2026-11-15） */
+/* 电脑：画面下面一排带字的按钮，正在放映是一张卡 */
+.tm-room-view-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.tm-room-view-tools .tm-room-view-num {
+  top: -6px;
+  right: -6px;
+}
+.tm-room-view-now-episode {
+  display: none;
+}
+.tm-room-view:where([data-layout='desktop']) .tm-room-view-now {
+  padding: 14px 16px;
+  border-radius: var(--tm-radius-lg);
+  background: var(--tm-surface);
+  box-shadow: inset 0 0 0 1px var(--tm-line);
+}
+:where(.tm-room-view[data-layout='compact']) .tm-room-view-now-episode {
+  display: inline;
+}
+:where(.tm-room-view[data-layout='compact'])
+  .tm-room-view-now
+  .tm-room-view-now-meta {
+  display: none;
+}
+:where(.tm-room-view[data-layout='compact'])
+  .tm-room-view-head
+  .tm-room-head-meta
+  .tm-room-view-chip-button {
+  display: inline-flex;
+}
+/* 面板里的集数：实心小块，和原型一致 */
+.tm-room-view-panel .tm-room-view-ep:not([aria-current='true']) {
+  background: var(--tm-surface-raised);
+  box-shadow: none;
+}
+:where(.tm-room-view[data-layout='compact']) .tm-room-view-head {
+  min-height: 52px;
+  padding: 2px 4px 2px 6px;
+}
+:where(.tm-room-view[data-layout='compact'])
+  .tm-room-view-head
+  .tm-room-head-actions
+  .tm-room-view-faces {
+  min-height: 40px;
+  padding: 0 2px 0 10px;
+}
+:where(.tm-room-view[data-layout='compact'])
+  .tm-room-view-head
+  .tm-room-view-face {
+  width: 26px;
+  height: 26px;
+  margin-left: -7px;
+  border-width: 1.5px;
+  font-size: 12px;
+}
+:where(.tm-room-view[data-layout='compact']) .tm-room-view-now {
+  gap: 10px;
+  padding: 8px 6px 8px 12px;
+}
+:where(.tm-room-view[data-layout='compact'])
+  .tm-room-view-now
+  .tm-room-view-now-poster {
+  width: 30px;
+  height: 42px;
+  border-radius: 6px;
+}
+:where(.tm-room-view[data-layout='compact'])
+  .tm-room-view-now
+  .tm-room-view-now-text {
+  gap: 1px;
+}
+:where(.tm-room-view[data-layout='compact']) .tm-room-view-now h2 {
+  font-size: 14px;
+}
+:where(.tm-room-view[data-layout='desktop']) .tm-room-view-head {
+  min-height: 56px;
+}
+.tm-room-view:where([data-layout='desktop']) .tm-room-view-now {
+  gap: 12px;
+  padding: 10px 14px;
+}
+.tm-room-view:where([data-layout='desktop'])
+  .tm-room-view-now
+  .tm-room-view-now-poster {
+  width: 40px;
+  height: 58px;
+}
+.tm-room-view:where([data-layout='desktop']) .tm-room-view-now h2 {
+  font-size: 16px;
+}
+:where(.tm-room-view[data-layout='desktop'])
+  .tm-room-view-strip
+  .tm-room-view-ep {
+  min-width: 46px;
+  height: 38px;
+  font-size: 13px;
+}
+
+/* 电脑：正在放映和选集合成一张卡；手机平板上这层不占位 */
+.tm-room-view-nowcard {
+  display: contents;
+}
+:where(.tm-room-view[data-layout='desktop']) .tm-room-view-nowcard {
+  display: block;
+  overflow: hidden;
+  border-radius: var(--tm-radius-lg);
+  background: var(--tm-surface);
+  box-shadow: inset 0 0 0 1px var(--tm-line);
+}
+:where(.tm-room-view[data-layout='desktop'])
+  .tm-room-view-nowcard
+  .tm-room-view-now {
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+}
+:where(.tm-room-view[data-layout='desktop'])
+  .tm-room-view-nowcard
+  .tm-room-view-strip {
+  padding: 0 14px 12px;
+}
+.tm-room-view.tm-room-view:where([data-layout='desktop']) {
+  padding-bottom: 0;
+}
+:where(.tm-room-view[data-layout='desktop']) .tm-room-view-body {
+  padding-bottom: 16px;
+}
+
+/* ================================================================ 手机横屏（phone-landscape）
+ * 紧凑排版是“画面在上、聊天在下”，手机横着时光画面就比屏幕还高。这一档改成左右两栏：
+ * 左边画面按屏幕高度收、下面是正在放映，右边聊天占满高度；收起站点顶栏和底栏，把高度都给房间。
+ * 平板横屏不走这里，用电脑排版（wide）。 */
+:where(html[data-tm-device='phone-landscape']) .tm-room-view {
+  --tm-room-view-top: var(--tm-header-height);
+}
+:where(html[data-tm-device='phone-landscape']) .tm-room-view-body {
+  flex-direction: row;
+}
+:where(html[data-tm-device='phone-landscape']) .tm-room-view-main {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+:where(html[data-tm-device='phone-landscape'])
+  .tm-room-view
+  .tm-room-view-stage {
+  flex: none;
+  width: min(100%, calc((100dvh - var(--tm-room-view-top) - 56px) * 16 / 9));
+  margin-inline: auto;
+}
+:where(html[data-tm-device='phone-landscape']) .tm-room-view-chat {
+  display: flex;
+  flex: 0 0 clamp(280px, 36vw, 400px);
+  flex-direction: column;
+  min-height: 0;
+  border-top: 0;
+  border-left: 1px solid var(--tm-line);
+}
+:where(html[data-tm-device='phone-landscape']) .tm-room-view {
+  --tm-room-view-top: 0px;
+  height: 100dvh;
+  padding: 0 env(safe-area-inset-right) 0 env(safe-area-inset-left);
+}
+:where(html[data-tm-device='phone-landscape']) .tm-room-view-head {
+  min-height: 48px;
+}
+.tm-room-view.tm-room-view[data-layout='tablet'] {
+  gap: 0;
+  height: 100dvh;
+  max-width: none;
+  padding: var(--tm-safe-top, 0px) max(16px, env(safe-area-inset-right)) 0
+    max(16px, env(safe-area-inset-left));
+  overflow: hidden;
+}
+.tm-room-view[data-layout='tablet'] .tm-room-view-head {
+  flex: none;
+  flex-wrap: nowrap;
+  min-height: 64px;
+}
+.tm-room-view[data-layout='tablet']
+  .tm-room-view-head
+  :is(.tm-room-icon, .tm-room-btn) {
+  min-width: 44px;
+  min-height: 44px;
+}
+.tm-room-view[data-layout='tablet'] .tm-room-view-body {
+  display: flex;
+  flex: 1;
+  align-items: stretch;
+  gap: 16px;
+  min-height: 0;
+  padding-bottom: max(16px, env(safe-area-inset-bottom));
+}
+.tm-room-view[data-layout='tablet'] .tm-room-view-main {
+  flex: 1 1 0;
+  gap: 12px;
+  min-width: 0;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+}
+.tm-room-view[data-layout='tablet'] .tm-room-view-main::-webkit-scrollbar {
+  display: none;
+}
+/* 画面宽度不超过“屏幕剩下的高度”对应的 16:9：键盘弹出时画面缩小，不被顶出屏幕 */
+.tm-room-view[data-layout='tablet'] .tm-room-view-stage {
+  flex: none;
+  width: min(100%, calc((100dvh - 64px - 32px) * 16 / 9));
+  margin-inline: auto;
+}
+.tm-room-view[data-layout='tablet'] .tm-room-view-nowcard {
+  display: contents;
+}
+.tm-room-view[data-layout='tablet'] .tm-room-view-now {
+  flex: none;
+  gap: 14px;
+  padding: 12px 14px;
+  border-radius: var(--tm-radius-lg);
+  background: var(--tm-surface);
+  box-shadow: inset 0 0 0 1px var(--tm-line);
+}
+.tm-room-view[data-layout='tablet'] .tm-room-view-now .tm-room-view-now-poster {
+  width: 44px;
+  height: 62px;
+}
+.tm-room-view[data-layout='tablet'] .tm-room-view-now h2 {
+  font-size: 17px;
+}
+/* 选集：一排大块，横着滑 */
+.tm-room-view[data-layout='tablet'] .tm-room-view-strip {
+  display: flex;
+  flex: none;
+  flex-wrap: nowrap;
+  gap: 8px;
+  padding: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.tm-room-view[data-layout='tablet'] .tm-room-view-strip::-webkit-scrollbar {
+  display: none;
+}
+.tm-room-view[data-layout='tablet'] .tm-room-view-strip .tm-room-view-ep {
+  flex: none;
+  min-width: 64px;
+  height: 48px;
+  padding: 0 16px;
+  font-size: 15px;
+}
+/* 侧栏：四个标签 + 内容；聊天一直挂着，切到别的标签时藏起来 */
+.tm-room-view[data-layout='tablet'] .tm-room-view-chat {
+  position: static;
+  flex: 0 0 clamp(320px, 32vw, 400px);
+  height: auto;
+  min-height: 0;
+  border-radius: var(--tm-radius-xl);
+}
+.tm-room-view-tabs {
+  display: grid;
+  flex: none;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 4px;
+  margin: 10px;
+  padding: 4px;
+  border-radius: var(--tm-radius-md);
+  background: var(--tm-surface-raised);
+}
+.tm-room-view-tabs button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-height: 44px;
+  border-radius: var(--tm-radius-sm);
+  color: var(--tm-muted);
+  font-size: 15px;
+  font-weight: 600;
+}
+.tm-room-view-tabs button[aria-selected='true'] {
+  background: var(--tm-surface);
+  box-shadow: var(--tm-shadow-sm);
+  color: var(--tm-text);
+}
+.tm-room-view-tabs button:focus-visible {
+  outline: 2px solid var(--tm-text);
+  outline-offset: 2px;
+}
+.tm-room-view-tab-count {
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+.tm-room-view-tab-count[data-alert] {
+  min-width: 18px;
+  padding: 0 5px;
+  border-radius: var(--tm-radius-full);
+  background: var(--tm-text);
+  color: var(--tm-accent-contrast);
+  line-height: 18px;
+}
+.tm-room-view-tabpanel {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+/* 平板竖屏：上下排，侧栏占剩下的高度（至少留 260 给聊天，键盘弹出时上面那块自己滚） */
+:where(html[data-tm-device='tablet'])
+  .tm-room-view[data-layout='tablet']
+  .tm-room-view-body {
+  flex-direction: column;
+}
+:where(html[data-tm-device='tablet'])
+  .tm-room-view[data-layout='tablet']
+  .tm-room-view-main {
+  flex: 0 1 auto;
+}
+:where(html[data-tm-device='tablet'])
+  .tm-room-view[data-layout='tablet']
+  .tm-room-view-stage {
+  width: 100%;
+}
+:where(html[data-tm-device='tablet'])
+  .tm-room-view[data-layout='tablet']
+  .tm-room-view-chat {
+  flex: 1 0 260px;
+}

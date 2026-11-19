@@ -12,8 +12,8 @@ jest.mock('@/features/playback/context', () => ({
 }));
 jest.mock('@/components/DetailPanel', () => ({
   __esModule: true,
-  default: ({ onTogether }: { onTogether: () => void }) => (
-    <button onClick={onTogether}>一起看</button>
+  default: ({ onWatchInRoom }: { onWatchInRoom: () => void }) => (
+    <button onClick={onWatchInRoom}>一起看</button>
   ),
 }));
 jest.mock('@/components/AnimeSubscribeModal', () => () => null);
@@ -104,7 +104,7 @@ test('selecting from the playback page uses client navigation without reloading'
   expect(window.location.search).toBe('?source=fixture&id=old');
 });
 
-test('together from a movie detail preserves its source, title and year', () => {
+test('watch-in-room from a movie detail preserves its source, title and year', () => {
   render(
     <VideoCard
       from='search'
@@ -132,7 +132,7 @@ test('together from a movie detail preserves its source, title and year', () => 
   expect(film.searchParams.get('year')).toBe('2026');
 });
 
-test('together from a saved episode keeps that explicit episode for the room', () => {
+test('watch-in-room from a saved episode keeps that explicit episode for the room', () => {
   render(
     <VideoCard
       from='playrecord'

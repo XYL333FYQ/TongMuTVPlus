@@ -27,7 +27,7 @@ export function filmPlaybackHref(film: {
   return `/play?${params}`;
 }
 
-export function togetherSelectionHref(href: string) {
+export function roomSelectionHref(href: string) {
   const film = normalizePlaybackHref(href);
   return film ? `/watch-room?${new URLSearchParams({ film })}` : '/watch-room';
 }

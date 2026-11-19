@@ -37,7 +37,7 @@ export default function HomeHero({
   deck,
   renderPoster,
   onPlay,
-  onTogether,
+  onWatchInRoom,
   onDetail,
   titles,
   index,
@@ -59,7 +59,7 @@ export default function HomeHero({
   deck?: HeroDeckItem[];
   renderPoster?: (item: HeroDeckItem) => ReactNode;
   onPlay: () => void;
-  onTogether: () => void;
+  onWatchInRoom: () => void;
   onDetail?: () => void;
   titles: string[];
   index: number;
@@ -406,7 +406,7 @@ export default function HomeHero({
                   </button>
                   <button
                     className='tm-btn tm-btn-lg tm-btn-art-glass'
-                    onClick={onTogether}
+                    onClick={onWatchInRoom}
                   >
                     <Users size={18} />
                     一起看

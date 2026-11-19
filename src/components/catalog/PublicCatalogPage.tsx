@@ -24,7 +24,7 @@ import PageLayout from '@/components/PageLayout';
 
 import {
   filmPlaybackHref,
-  togetherSelectionHref,
+  roomSelectionHref,
 } from '@/features/playback/selection-links';
 
 function usePublicCatalog(
@@ -353,11 +353,11 @@ export default function PublicCatalogPage({
                 />
               }
               onPlay={() => openWork(featured)}
-              onTogether={() =>
+              onWatchInRoom={() =>
                 router.push(
                   '/login?redirect=' +
                     encodeURIComponent(
-                      togetherSelectionHref(
+                      roomSelectionHref(
                         filmPlaybackHref({
                           title: featured.title,
                           year: featured.year,

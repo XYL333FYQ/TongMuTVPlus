@@ -1,0 +1,864 @@
+/* 一起看：大厅、房间页、对话框。颜色只用 --tm-* token；按钮、标签与独立看共用节奏。 */
+
+/* ================================================================ 通用 */
+
+.tm-room-h1 {
+  margin: 0;
+  font-size: 32px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+@media (max-width: 767px) {
+  .tm-room-h1 {
+    font-size: 24px;
+  }
+}
+.tm-room-lead {
+  margin: 6px 0 0;
+  color: var(--tm-muted);
+  font-size: 14px;
+  line-height: 1.6;
+}
+.tm-room-hint {
+  margin: 8px 0 0;
+  color: var(--tm-muted);
+  font-size: 13px;
+}
+.tm-room-error {
+  margin: 8px 0 0;
+  color: var(--tm-danger);
+  font-size: 13px;
+}
+.tm-room-empty {
+  margin: 0;
+  padding: 16px;
+  color: var(--tm-muted);
+  font-size: 13px;
+  text-align: center;
+}
+.tm-room-spacer {
+  flex: 1;
+}
+.tm-room-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 16px;
+  border: 1px solid var(--tm-line-strong);
+  border-radius: var(--tm-radius-full);
+  color: var(--tm-text);
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+  transition: background var(--tm-d-hover),
+    transform var(--tm-d-press) var(--tm-ease-out);
+}
+.tm-room-btn:hover:not(:disabled) {
+  background: var(--tm-surface-raised);
+}
+.tm-room-btn:active:not(:disabled) {
+  transform: scale(0.97);
+}
+.tm-room-btn:disabled {
+  opacity: 0.5;
+}
+.tm-room-btn-primary {
+  border-color: transparent;
+  background: var(--tm-text);
+  color: var(--tm-accent-contrast);
+}
+.tm-room-btn-primary:hover:not(:disabled) {
+  background: var(--tm-text);
+  opacity: 0.9;
+}
+.tm-room-btn-danger {
+  border-color: transparent;
+  color: var(--tm-danger);
+}
+.tm-room-btn-on-art {
+  border-color: var(--tm-art-glass-line);
+  background: var(--tm-art-glass);
+  color: var(--tm-on-art);
+}
+.tm-room-icon {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--tm-radius-full);
+  color: var(--tm-muted);
+  transition: background var(--tm-d-hover), color var(--tm-d-hover);
+}
+.tm-room-icon:hover {
+  background: var(--tm-surface-raised);
+  color: var(--tm-text);
+}
+.tm-room-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 44px;
+  padding: 0 4px;
+  color: var(--tm-text);
+  font-size: 13px;
+  font-weight: 500;
+}
+.tm-room-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 40px;
+  padding: 0 14px;
+  border-radius: var(--tm-radius-full);
+  background: var(--tm-surface-raised);
+  color: var(--tm-text);
+  font-size: 14px;
+}
+.tm-room-dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--tm-muted);
+}
+.tm-room-dot[data-on] {
+  background: var(--tm-text);
+  box-shadow: 0 0 0 3px var(--tm-line);
+}
+.tm-room-segment {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px;
+  border-radius: var(--tm-radius-full);
+  background: var(--tm-surface);
+  box-shadow: inset 0 0 0 1px var(--tm-line);
+}
+.tm-room-segment > button[role='tab'],
+.tm-room-segment > button[role='radio'] {
+  min-height: 36px;
+  padding: 0 16px;
+  border-radius: var(--tm-radius-full);
+  color: var(--tm-muted);
+  font-size: 14px;
+  font-weight: 500;
+}
+.tm-room-segment > button[aria-selected='true'] {
+  background: var(--tm-text);
+  color: var(--tm-accent-contrast);
+}
+.tm-room-segment .tm-room-icon {
+  width: 36px;
+  height: 36px;
+}
+.tm-room-segment-small {
+  margin-top: 4px;
+}
+.tm-room-lobby-card-now .tm-room-dot {
+  background: var(--tm-on-art-muted);
+}
+.tm-room-lobby-card-now .tm-room-dot[data-on] {
+  background: var(--tm-on-art);
+  box-shadow: none;
+}
+
+/* 顶部 */
+.tm-room-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 64px;
+}
+.tm-room-head-back {
+  margin-left: -10px;
+}
+.tm-room-head-title {
+  flex: 1;
+  min-width: 0;
+}
+.tm-room-head-title h1 {
+  margin: 0;
+  overflow: hidden;
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.tm-room-head-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+}
+.tm-room-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 28px;
+  padding: 0 10px;
+  border-radius: var(--tm-radius-full);
+  background: var(--tm-surface);
+  box-shadow: inset 0 0 0 1px var(--tm-line);
+  color: var(--tm-muted);
+  font-size: 12px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.tm-room-head-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.tm-room-view-voice .tm-room-icon {
+  width: 40px;
+  height: 40px;
+}
+.tm-room-icon[data-active='true'] {
+  background: var(--tm-text);
+  color: var(--tm-accent-contrast);
+}
+.tm-room-icon[data-active='off'] {
+  color: var(--tm-danger);
+}
+@media (max-width: 899px) {
+  .tm-room-head {
+    flex-wrap: wrap;
+  }
+  .tm-room-head-title h1 {
+    font-size: 22px;
+  }
+  .tm-room-head-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+}
+.tm-room-player-host {
+  position: absolute;
+  inset: 0;
+}
+.tm-room-player-host .art-video-player {
+  width: 100% !important;
+  height: 100% !important;
+}
+/* 画面暂存区：在页面之间搬家的瞬间放这里（不离开文档，视频不会被暂停） */
+.tm-room-player-park {
+  position: fixed;
+  top: 0;
+  left: -10000px;
+  width: 480px;
+  height: 270px;
+  overflow: hidden;
+  pointer-events: none;
+}
+.tm-room-player-park > .tm-room-player-host {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+/* 没有播放权限：进度条不能拖（音量、全屏、弹幕照常） */
+[data-tm-locked='true'] .art-control-progress {
+  pointer-events: none;
+}
+.tm-room-stage-empty {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 24px;
+  color: var(--tm-on-art);
+  text-align: center;
+}
+.tm-room-stage-empty strong {
+  font-size: 20px;
+  font-weight: 700;
+}
+.tm-room-stage-empty > span:not(.tm-room-stage-icon) {
+  max-width: 340px;
+  color: var(--tm-on-art-muted);
+  font-size: 14px;
+  line-height: 1.6;
+}
+.tm-room-stage-empty .tm-room-btn {
+  margin-top: 6px;
+}
+.tm-room-stage-icon {
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  margin-bottom: 4px;
+  border-radius: 50%;
+  background: var(--tm-art-glass);
+  box-shadow: inset 0 0 0 1px var(--tm-art-glass-line);
+}
+@media (max-width: 767px) {
+  .tm-room-view-now-actions .tm-room-btn-primary {
+    flex: 1;
+  }
+}
+.tm-room-recs-tools .tm-room-segment-small {
+  margin: 0;
+}
+.tm-room-avatar {
+  position: relative;
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--tm-surface-raised);
+  color: var(--tm-text);
+  font-size: 14px;
+  font-weight: 700;
+}
+.tm-room-chat-message .tm-room-avatar {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--tm-surface-raised);
+  color: var(--tm-text);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+/* ================================================================ 对话框与表单 */
+
+/* 房间里的对话框和面板都放在全站的原生模态层里（components/feedback/ModalLayer），
+   层的位置、遮罩、盖住顶栏都由它负责；这里只管面板本身 */
+.tm-room-dialog {
+  display: flex;
+  flex-direction: column;
+  width: min(440px, 100%);
+  max-height: min(88vh, 860px);
+  overflow: hidden;
+  border: 1px solid var(--tm-line);
+  border-radius: var(--tm-radius-md);
+  background: var(--tm-surface);
+  color: var(--tm-text);
+  box-shadow: 0 32px 64px -24px rgb(var(--tm-ink-rgb) / 0.7);
+  animation: tm-room-rise var(--tm-d-panel) var(--tm-ease-out);
+}
+.tm-room-dialog[data-wide] {
+  width: min(600px, 100%);
+}
+.tm-room-dialog > :not(.tm-room-dialog-head) {
+  overflow-y: auto;
+}
+@media (max-width: 599px) {
+  .tm-modal-layer.tm-room-dialog-layer {
+    padding: 0;
+  }
+  .tm-modal-layer.tm-room-dialog-layer[open] {
+    place-items: end stretch;
+  }
+  .tm-room-dialog,
+  .tm-room-dialog[data-wide] {
+    width: 100%;
+    max-height: 92vh;
+    border-radius: var(--tm-radius-md) var(--tm-radius-md) 0 0;
+  }
+}
+.tm-room-dialog-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 12px 4px 20px;
+}
+.tm-room-dialog-head h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+}
+.tm-room-form {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 4px 20px 20px;
+}
+.tm-room-form-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 0;
+}
+.tm-room-form-section + .tm-room-form-section {
+  border-top: 1px solid var(--tm-line);
+}
+.tm-room-form-section h3 {
+  margin: 0;
+  color: var(--tm-muted);
+  font-size: 13px;
+  font-weight: 500;
+}
+.tm-room-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+}
+.tm-room-field-inline {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
+.tm-room-field-inline input {
+  width: 96px !important;
+}
+.tm-room-field input,
+.tm-room-field textarea {
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1px solid var(--tm-line-strong);
+  border-radius: var(--tm-radius-sm);
+  background: var(--tm-bg);
+  color: var(--tm-text);
+  font: inherit;
+  font-size: 14px;
+  resize: vertical;
+}
+.tm-room-switch-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 44px;
+  cursor: pointer;
+}
+.tm-room-switch-row > span {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.tm-room-switch-label {
+  font-size: 14px;
+}
+.tm-room-switch-row small,
+.tm-room-perm small {
+  color: var(--tm-muted);
+  font-size: 12px;
+}
+.tm-room-switch-row input,
+.tm-room-perm input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--tm-text);
+}
+.tm-room-perms {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+@media (max-width: 599px) {
+  .tm-room-perms {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+.tm-room-perm {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: var(--tm-radius-sm);
+  background: var(--tm-surface-raised);
+  cursor: pointer;
+  font-size: 14px;
+}
+.tm-room-perm > span {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.tm-room-form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding-top: 8px;
+}
+.tm-room-cover-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.tm-room-picker .tm-room-btn {
+  border-radius: var(--tm-radius-full);
+}
+.tm-room-picker-result-sources .tm-room-btn {
+  min-height: 40px;
+  padding: 0 12px;
+}
+
+/* ================================================================ 公共 */
+
+:is(
+    .tm-room-btn,
+    .tm-room-icon,
+    .tm-room-link,
+    .tm-room-pill,
+    .tm-room-lobby-card,
+    .tm-room-segment button,
+    .tm-room-picker-result-head,
+    .tm-room-chat-send,
+    .tm-room-chat-message-delete
+  ):focus-visible {
+  outline: 2px solid var(--tm-text);
+  outline-offset: 2px;
+}
+html[data-tm-reduced-motion='true'] .tm-room-dialog {
+  animation-duration: 1ms;
+}
+@media (prefers-reduced-motion: reduce) {
+  .tm-room-dialog {
+    animation-duration: 1ms;
+  }
+}
+
+/* ================================================================ 修正与动效 */
+
+/* 大厅的“我的房间 / 公开房间”只占内容宽度 */
+.tm-room-lobby > .tm-room-segment {
+  align-self: flex-start;
+}
+
+:is(
+    .tm-room-view-chip-button,
+    .tm-room-view-faces,
+    .tm-room-view-ep,
+    .tm-room-recs-item,
+    .tm-room-chat-older,
+    .tm-room-sheet-choice,
+    .tm-room-chat-compose-icon,
+    .tm-room-chat-emojis button,
+    .tm-room-dock-pill-room,
+    .tm-room-dock-pill-chat
+  ):focus-visible {
+  outline: 2px solid var(--tm-text);
+  outline-offset: 2px;
+}
+
+.tm-room-spin {
+  animation: tm-room-rotate 0.9s linear infinite;
+}
+@keyframes tm-room-rotate {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes tm-room-pulse {
+  50% {
+    opacity: 0.35;
+  }
+}
+@keyframes tm-room-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
+@keyframes tm-room-rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+  }
+}
+@keyframes tm-room-shine {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: -100% 0;
+  }
+}
+html[data-tm-reduced-motion='true']
+  :is(
+    .tm-room-chat-message,
+    .tm-room-chat-emojis,
+    .tm-room-dock-pill,
+    .tm-room-dock,
+    .tm-room-view-now-label::before,
+    .tm-room-recs-skeleton .tm-room-recs-poster
+  ) {
+  animation: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  :is(
+      .tm-room-chat-message,
+      .tm-room-chat-emojis,
+      .tm-room-dock-pill,
+      .tm-room-dock,
+      .tm-room-view-now-label::before,
+      .tm-room-recs-skeleton .tm-room-recs-poster
+    ) {
+    animation: none;
+  }
+}
+@media (pointer: coarse), (max-width: 599px) {
+  .tm-room-segment > button[role='tab'],
+  .tm-room-segment > button[role='radio'] {
+    min-height: 44px;
+  }
+}
+.tm-room-switch-row {
+  min-height: 44px;
+}
+
+/* 自己看的小窗占着右下角时，房间入口和聊天让到它左边（手机上让到它上面） */
+html[data-tm-solo-mini='mini'] :is(.tm-room-dock-pill, .tm-room-dock) {
+  right: calc(var(--tm-mini-gap) + var(--tm-mini-w) + 12px);
+}
+html[data-tm-solo-mini='folded'] :is(.tm-room-dock-pill, .tm-room-dock) {
+  right: calc(
+    var(--tm-mini-gap) + min(340px, 100vw - 2 * var(--tm-mini-gap)) + 12px
+  );
+}
+@media (max-width: 767px) {
+  html[data-tm-solo-mini] :is(.tm-room-dock-pill, .tm-room-dock) {
+    right: 12px;
+  }
+  html[data-tm-solo-mini='folded'] :is(.tm-room-dock-pill, .tm-room-dock) {
+    bottom: calc(var(--tm-mini-bottom) + 56px + 12px);
+  }
+  html[data-tm-solo-mini='mini'] :is(.tm-room-dock-pill, .tm-room-dock) {
+    bottom: calc(var(--tm-mini-bottom) + var(--tm-mini-h) + 12px);
+  }
+}
+
+/* 顶部信息是一行安静的文字，不做成一排标签 */
+.tm-room-head-meta {
+  gap: 4px 14px;
+}
+.tm-room-head-meta .tm-room-chip {
+  min-height: 24px;
+  padding: 0;
+  background: none;
+  box-shadow: none;
+  font-size: 13px;
+}
+.tm-room-share-side .tm-room-error {
+  margin: 0;
+  line-height: 1.6;
+}
+.tm-room-share-side .tm-room-hint {
+  margin: 0;
+}
+.tm-room-share-actions .tm-room-btn-primary {
+  flex: 1;
+}
+@media (max-width: 767px) {
+  .tm-room-share .tm-room-head-actions .tm-room-btn span {
+    display: none;
+  }
+}
+
+/* ================================================================ 手机 / 平板 */
+@media (max-width: 899px) {
+  /* 顶部一行：返回、房间名、几个图标按钮；在线头像在“成员”里看 */
+  .tm-room-head {
+    flex-wrap: nowrap;
+    gap: 6px;
+    min-height: 56px;
+  }
+  .tm-room-head-title h1 {
+    font-size: 19px;
+  }
+  .tm-room-head-meta {
+    flex-wrap: nowrap;
+    overflow: hidden;
+    margin-top: 2px;
+  }
+  .tm-room-head-meta .tm-room-chip {
+    font-size: 12px;
+  }
+  .tm-room-head-actions {
+    width: auto;
+    gap: 0;
+  }
+  .tm-room-head-actions .tm-room-view-voice + .tm-room-btn span,
+  .tm-room-head-actions .tm-room-btn-primary span {
+    display: none;
+  }
+  .tm-room-head-actions .tm-room-btn-primary {
+    width: 44px;
+    padding: 0;
+  }
+}
+@media (max-width: 599px) {
+  .tm-room-lobby-actions > .tm-room-btn-primary {
+    width: 100%;
+  }
+}
+:is(.tm-room-recs-chip, .tm-room-view-menu button):focus-visible {
+  outline: 2px solid var(--tm-text);
+  outline-offset: 2px;
+}
+/* 面板：平板和电脑上是全站的右侧抽屉层（tm-drawer-layer），手机上改成从底部拉起 */
+:where(html:not([data-tm-device='phone'])) .tm-room-dialog[data-sheet] {
+  width: min(420px, 100%);
+  max-height: none;
+  border-width: 0 0 0 1px;
+  border-radius: 0;
+  animation: tm-room-view-from-right var(--tm-d-panel) var(--tm-ease-out);
+}
+:where(html[data-tm-device='phone'])
+  .tm-room-dialog-layer.tm-drawer-layer
+  > .tm-room-dialog[data-sheet] {
+  padding-top: 0;
+}
+:where(html[data-tm-device='phone']) .tm-room-dialog[data-sheet] {
+  width: 100%;
+  max-height: 82dvh;
+  border-radius: var(--tm-radius-lg) var(--tm-radius-lg) 0 0;
+  padding-bottom: var(--tm-safe-bottom, 0px);
+}
+html[data-tm-reduced-motion='true'] .tm-room-dialog[data-sheet] {
+  animation: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .tm-room-dialog[data-sheet] {
+    animation: none;
+  }
+}
+:where(.tm-room-view[data-layout='compact'])
+  .tm-room-view-head
+  .tm-room-head-back {
+  margin-left: -4px;
+}
+:where(.tm-room-view[data-layout='compact'])
+  .tm-room-view-head
+  .tm-room-head-actions {
+  width: auto;
+  gap: 0;
+}
+:where(.tm-room-view[data-layout='compact'])
+  .tm-room-view-now
+  .tm-room-view-now-actions
+  .tm-room-btn-primary {
+  flex: none;
+  padding: 0 12px;
+}
+:where(.tm-room-view[data-layout='compact'])
+  .tm-room-view-main
+  > .tm-room-error {
+  margin: 0 12px 10px;
+}
+.tm-room-danmaku-section .tm-room-hint {
+  margin: 0;
+}
+.tm-room-view-tools .tm-room-pill {
+  background: none;
+  box-shadow: inset 0 0 0 1px var(--tm-line-strong);
+  font-size: 13px;
+  font-weight: 600;
+}
+.tm-room-view-tools .tm-room-pill:hover {
+  background: var(--tm-surface-raised);
+}
+:where(.tm-room-view[data-layout='compact'])
+  .tm-room-view-head
+  .tm-room-head-title
+  h1 {
+  font-size: 16px;
+  line-height: 1.3;
+}
+:where(.tm-room-view[data-layout='compact'])
+  .tm-room-view-head
+  .tm-room-head-meta {
+  gap: 2px 10px;
+  margin-top: 0;
+}
+:where(.tm-room-view[data-layout='compact'])
+  .tm-room-view-head
+  .tm-room-head-meta
+  .tm-room-chip {
+  min-height: 18px;
+  font-size: 12px;
+}
+:where(.tm-room-view[data-layout='compact']) .tm-room-view-head .tm-room-icon {
+  width: 40px;
+  height: 40px;
+}
+:where(.tm-room-view[data-layout='compact'])
+  .tm-room-view-now
+  .tm-room-view-now-actions
+  .tm-room-icon {
+  width: 40px;
+  height: 40px;
+}
+:where(.tm-room-view[data-layout='compact'])
+  .tm-room-view-now
+  .tm-room-view-now-actions
+  .tm-room-btn-primary {
+  gap: 4px;
+  min-height: 34px;
+  height: 34px;
+  padding: 0 12px;
+  font-size: 13px;
+}
+:where(.tm-room-view[data-layout='compact'])
+  .tm-room-view-now
+  .tm-room-view-now-actions
+  .tm-room-btn-primary
+  svg {
+  width: 15px;
+  height: 15px;
+}
+.tm-room-view:where([data-layout='compact'])
+  .tm-room-chat-message
+  .tm-room-avatar {
+  width: 22px;
+  height: 22px;
+  font-size: 12px;
+}
+:where(.tm-room-view[data-layout='desktop'])
+  .tm-room-view-head
+  .tm-room-head-title
+  h1 {
+  font-size: 22px;
+}
+.tm-room-view:where([data-layout='desktop'])
+  .tm-room-view-now
+  .tm-room-btn-primary {
+  height: 36px;
+  min-height: 36px;
+  padding: 0 14px;
+  font-size: 13px;
+}
+:where(.tm-room-view[data-layout='desktop']) .tm-room-view-tools .tm-room-pill {
+  min-height: 34px;
+  padding: 0 12px;
+}
+/* 房间号、密码房做成描边小标签 */
+:where(.tm-room-view[data-layout='desktop'])
+  .tm-room-view-head
+  .tm-room-head-meta
+  .tm-room-chip:not(:first-child) {
+  min-height: 22px;
+  margin-left: 0;
+  padding: 0 8px;
+  border-radius: var(--tm-radius-full);
+  box-shadow: inset 0 0 0 1px var(--tm-line-strong);
+  font-size: 12px;
+}
+.tm-room-view[data-layout='tablet'] .tm-room-view-now .tm-room-btn-primary {
+  min-height: 44px;
+  padding: 0 18px;
+}
+
+:where(html[data-tm-device='phone'])
+  .tm-modal-layer.tm-drawer-layer.tm-room-dialog-layer[open] {
+  place-items: end stretch;
+}

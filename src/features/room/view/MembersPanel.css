@@ -1,0 +1,94 @@
+/* 片单 / 成员共用的块 */
+.tm-room-members {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-bottom: 16px;
+}
+.tm-room-members-block {
+  padding: 4px 8px 8px;
+}
+.tm-room-members-block + .tm-room-members-block {
+  border-top: 1px solid var(--tm-line);
+}
+.tm-room-members-block-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 4px 8px;
+}
+.tm-room-members-block-head h3 {
+  margin: 0;
+  overflow: hidden;
+  color: var(--tm-muted);
+  font-size: 13px;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 成员 */
+.tm-room-members-roster {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.tm-room-members-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 56px;
+  padding: 6px 8px;
+  border-radius: var(--tm-radius-sm);
+}
+.tm-room-members-item[data-offline] {
+  opacity: 0.55;
+}
+.tm-room-members-presence {
+  position: absolute;
+  right: -1px;
+  bottom: -1px;
+  width: 11px;
+  height: 11px;
+  border: 2px solid var(--tm-surface);
+  border-radius: 50%;
+  background: var(--tm-muted);
+}
+.tm-room-members-presence[data-on] {
+  background: var(--tm-text);
+}
+.tm-room-members-item-text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.tm-room-members-item-text strong {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow: hidden;
+  font-size: 14px;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.tm-room-members-item-text small {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--tm-muted);
+  font-size: 12px;
+}
+.tm-room-members-me {
+  padding: 0 6px;
+  border-radius: var(--tm-radius-full);
+  background: var(--tm-surface-raised);
+  color: var(--tm-muted);
+  font-size: 12px;
+  font-weight: 500;
+}

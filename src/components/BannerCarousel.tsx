@@ -16,7 +16,7 @@ import { useWatchRoomContextSafe } from '@/components/WatchRoomProvider';
 
 import {
   filmPlaybackHref,
-  togetherSelectionHref,
+  roomSelectionHref,
 } from '@/features/playback/selection-links';
 
 const LOCALSTORAGE_DURATION = 24 * 60 * 60 * 1000;
@@ -541,9 +541,9 @@ export default function BannerCarousel({
           )
         }
         onPlay={() => handlePlay(currentItem.title)}
-        onTogether={() =>
+        onWatchInRoom={() =>
           router.push(
-            togetherSelectionHref(
+            roomSelectionHref(
               filmPlaybackHref({
                 title: currentItem.title,
                 year: currentItem.release_date?.slice(0, 4),
@@ -586,9 +586,9 @@ export default function BannerCarousel({
         doubanId={dataSource === 'Douban' ? currentItem.id : undefined}
         type={currentItem.media_type === 'tv' ? 'tv' : 'movie'}
         onPlay={() => handlePlay(currentItem.title)}
-        onTogether={() =>
+        onWatchInRoom={() =>
           router.push(
-            togetherSelectionHref(
+            roomSelectionHref(
               filmPlaybackHref({
                 title: currentItem.title,
                 year: currentItem.release_date?.slice(0, 4),

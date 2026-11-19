@@ -1,1 +1,1 @@
-export { default } from '@/features/together/TogetherRoute';
+export { default } from '@/features/room/RoomRoute';

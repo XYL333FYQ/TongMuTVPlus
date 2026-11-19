@@ -1,0 +1,105 @@
+/* ================================================================ 共享屏幕页 */
+.tm-room-share {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+  max-width: var(--tm-container);
+  margin-inline: auto;
+  padding: 12px var(--tm-content-gutter) 48px;
+}
+.tm-room-share-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 24px;
+  align-items: start;
+}
+/* 画面按共享内容的真实宽高比显示（行内 aspect-ratio），最高不超过一屏 */
+.tm-room-share-stage {
+  position: relative;
+  width: 100%;
+  max-height: min(78vh, 900px);
+  overflow: hidden;
+  border-radius: var(--tm-radius-lg);
+  background: var(--tm-video-bg);
+  box-shadow: 0 40px 80px -40px rgb(var(--tm-ink-rgb) / 0.75);
+}
+.tm-room-share-stage video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background: var(--tm-video-bg);
+}
+.tm-room-share-side {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 18px;
+  border-radius: var(--tm-radius-lg);
+  background: var(--tm-surface);
+  box-shadow: inset 0 0 0 1px var(--tm-line);
+}
+.tm-room-share-actions {
+  display: flex;
+  gap: 8px;
+}
+.tm-room-share-label {
+  color: var(--tm-muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+.tm-room-share-members ul {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.tm-room-share-members li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 40px;
+  font-size: 14px;
+}
+.tm-room-share-members small {
+  margin-left: auto;
+  color: var(--tm-muted);
+  font-size: 12px;
+}
+.tm-room-share-face {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--tm-surface-raised);
+  font-size: 12px;
+  font-weight: 700;
+}
+@media (max-width: 1023px) {
+  .tm-room-share-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media (max-width: 767px) {
+  .tm-room-share {
+    gap: 14px;
+    padding-top: 4px;
+  }
+  .tm-room-share-stage {
+    width: calc(100% + 2 * var(--tm-content-gutter, 16px));
+    margin-inline: calc(-1 * var(--tm-content-gutter, 16px));
+    border-radius: 0;
+  }
+}
+:where(html:is([data-tm-device='phone'], [data-tm-device='phone-landscape']))
+  .tm-room-share {
+  /* 底部留出底栏的位置，聊天输入框不会被底栏盖住 */
+  padding-bottom: calc(
+    var(--tm-bottom-nav-height, 64px) + 32px + var(--tm-safe-bottom, 0px)
+  );
+}

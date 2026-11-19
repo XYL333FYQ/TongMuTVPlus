@@ -1,0 +1,29 @@
+/* 房间弹幕面板 */
+.tm-room-danmaku {
+  display: flex;
+  flex-direction: column;
+}
+.tm-room-danmaku-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 20px 18px;
+}
+.tm-room-danmaku-section + .tm-room-danmaku-section {
+  padding-top: 16px;
+  border-top: 1px solid var(--tm-line);
+}
+.tm-room-danmaku-section h3 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+}
+.tm-room-danmaku-current {
+  margin: 0;
+  color: var(--tm-muted);
+  font-size: 13px;
+}
+.tm-room-danmaku-search {
+  height: min(420px, 50dvh);
+  margin-top: 8px;
+}

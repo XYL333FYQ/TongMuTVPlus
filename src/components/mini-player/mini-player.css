@@ -123,8 +123,8 @@
     .artplayer-plugin-danmuku,
     #play-record-jump-container,
     .tm-room-live-controls,
-    .tm-t-dm,
-    .tm-t-dm-ctl
+    .tm-room-dm,
+    .tm-room-dm-ctl
   ) {
   display: none !important;
 }

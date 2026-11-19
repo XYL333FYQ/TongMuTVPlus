@@ -41,7 +41,6 @@ CHANGELOG.md
 pnpm-lock.yaml
 
 # Generated browser evidence and immutable design sources are not application code.
-/output/
 /docs/design/reference-static/
 /docs/design/reference/
 
@@ -53,12 +52,12 @@ pnpm-lock.yaml
 
 # Local agent tool state and Android build output (gitignored).
 /.bug-hunter/
+/.claude/
 /.playwright-cli/
 /apps/android-tv/build/
 /public/sw.js
 /public/workbox-*.js
 /public/fallback-*.js
-/references/
 
 # Next 自动生成，格式由 Next 决定
 next-env.d.ts

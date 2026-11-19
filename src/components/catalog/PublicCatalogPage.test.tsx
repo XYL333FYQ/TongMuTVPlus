@@ -22,8 +22,8 @@ jest.mock('@/components/catalog/HomeRooms', () => ({
 }));
 jest.mock('@/components/catalog/HomeHero', () => ({
   __esModule: true,
-  default: ({ onTogether }: { onTogether: () => void }) => (
-    <button onClick={onTogether}>一起看</button>
+  default: ({ onWatchInRoom }: { onWatchInRoom: () => void }) => (
+    <button onClick={onWatchInRoom}>一起看</button>
   ),
 }));
 jest.mock('@/components/catalog/PosterMotion', () => ({
@@ -56,7 +56,7 @@ beforeEach(() => {
   });
 });
 
-test('guest together preserves the chosen film through the login destination', async () => {
+test('guest watch-in-room preserves the chosen film through the login destination', async () => {
   render(<PublicCatalogPage mode='home' />);
   fireEvent.click(await screen.findByRole('button', { name: '一起看' }));
   const login = new URL(mockPush.mock.calls[0][0], 'https://site.test');

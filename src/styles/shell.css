@@ -1508,3 +1508,23 @@ html[data-tm-nav='tab'] .tm-page-transition {
   padding-right: env(safe-area-inset-right);
   padding-left: env(safe-area-inset-left);
 }
+
+/* ---------------------------------------------------------------- 沉浸模式（hooks/useImmersiveShell） */
+/* bare：顶栏、手机顶栏、底栏都不显示，给它们留的位置也收回来（手机、触屏平板上的房间页） */
+html[data-tm-immersive='bare']
+  :is(.tm-top-header, .tm-mobile-header-v2, .tm-mobile-nav) {
+  display: none;
+}
+html[data-tm-immersive='bare'] .tm-shell > .tm-shell-body {
+  padding-top: 0;
+}
+/* fit：外壳照常，主区域不留上下空白、不撑满一屏（窄的电脑窗口上的房间页）；bare 也一样 */
+html:is([data-tm-immersive='bare'], [data-tm-immersive='fit']) .tm-main {
+  min-height: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+/* flush：外壳照常，主区域不留底部空白（电脑上的房间页） */
+html[data-tm-immersive='flush'] .tm-main {
+  padding-bottom: 0;
+}

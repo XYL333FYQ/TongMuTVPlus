@@ -13,7 +13,6 @@ import '@/styles/feedback.css';
 import '@/styles/shell.css';
 import '@/styles/home.css';
 import '@/features/playback/playback.css';
-import '@/features/together/together.css';
 import '@/components/mini-player/mini-player.css';
 import '@/styles/player-controls.css';
 import './globals.css';
@@ -49,6 +48,7 @@ import ShellBridge from '@/components/shell/ShellBridge';
 import ShellMotionProvider from '@/components/shell/ShellMotionProvider';
 
 import PlaybackSessionProvider from '@/features/playback/PlaybackSessionProvider';
+import RoomSession from '@/features/room/RoomSession';
 
 import { StartupCacheCleanup } from '../components/DanmakuCacheCleanup';
 import { DownloadBubble } from '../components/DownloadBubble';
@@ -59,7 +59,6 @@ import { SiteProvider } from '../components/SiteProvider';
 import { ThemeProvider } from '../components/ThemeProvider';
 import { TokenRefreshManager } from '../components/TokenRefreshManager';
 import TopProgressBar from '../components/TopProgressBar';
-import TogetherSession from '@/features/together/session/TogetherSession';
 import { WatchRoomProvider } from '../components/WatchRoomProvider';
 import { DownloadProvider } from '../contexts/DownloadContext';
 
@@ -559,7 +558,7 @@ export default async function RootLayout({
               <DownloadProvider>
                 <PlaybackSessionProvider>
                   {/* 一起看：房间播放器、房间小窗、房间聊天浮窗（换页不卸载） */}
-                  <TogetherSession>
+                  <RoomSession>
                     <MediaSessionBridge />
                     <StartupCacheCleanup />
                     {/* 顶栏常驻一份，切页不重建（显示与否由页面里的导航标记决定） */}
@@ -570,7 +569,7 @@ export default async function RootLayout({
                     <DownloadBubble />
                     <DownloadPanel />
                     <AppDialogHost />
-                  </TogetherSession>
+                  </RoomSession>
                 </PlaybackSessionProvider>
               </DownloadProvider>
             </WatchRoomProvider>

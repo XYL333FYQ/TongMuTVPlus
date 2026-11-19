@@ -6,7 +6,6 @@ import { useEffect, useRef, useState } from 'react';
 
 import { useAudioFocus } from '@/hooks/useAudioFocus';
 import { useLatestMediaRequest } from '@/hooks/useLatestMediaRequest';
-import { useWebLiveSync } from '@/hooks/useWebLiveSync';
 
 import LoadingStyle, {
   type LoadingStep,
@@ -17,9 +16,12 @@ import PageLayout from '@/components/PageLayout';
 import { useWatchRoomContextSafe } from '@/components/WatchRoomProvider';
 
 import { usePlaybackSessionSafe } from '@/features/playback/context';
-import { webLiveReference } from '@/features/together/activities/room-live';
-import RoomActivityActions from '@/features/together/activities/RoomActivityActions';
-import { RoomLiveMessages } from '@/features/together/activities/RoomLiveMessages';
+import {
+  RoomActivityActions,
+  RoomLiveMessages,
+  useWebLiveSync,
+  webLiveReference,
+} from '@/features/room/activities';
 
 let Artplayer: any = null;
 let Hls: any = null;

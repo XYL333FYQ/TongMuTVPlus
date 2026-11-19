@@ -11,7 +11,8 @@ jest.mock('next/navigation', () => ({
   usePathname: () => '/music',
   useRouter: () => ({ push: jest.fn(), replace: jest.fn() }),
 }));
-jest.mock('@/hooks/useRoomMusicActivity', () => ({
+jest.mock('@/features/room/activities', () => ({
+  RoomActivityActions: () => null,
   useRoomMusicActivity: () => ({
     hasRoom: false,
     isInRoom: false,
@@ -22,10 +23,6 @@ jest.mock('@/hooks/useRoomMusicActivity', () => ({
     publish: jest.fn(async () => undefined),
     beginLocalPlayback: jest.fn(async () => true),
   }),
-}));
-jest.mock('@/features/together/activities/RoomActivityActions', () => ({
-  __esModule: true,
-  default: () => null,
 }));
 jest.mock('@/hooks/useAudioFocus', () => ({
   useAudioFocus: () => ({ ownsSound: true, claimSound: jest.fn() }),

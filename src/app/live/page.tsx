@@ -27,7 +27,6 @@ import {
 import { createRequestGate } from '@/lib/request-gate';
 import { parseCustomTimeFormat } from '@/lib/time';
 import { useAudioFocus } from '@/hooks/useAudioFocus';
-import { useLiveSync } from '@/hooks/useLiveSync';
 
 import EpgScrollableRow from '@/components/EpgScrollableRow';
 import LoadingStyle, {
@@ -39,8 +38,11 @@ import PageLayout from '@/components/PageLayout';
 import { useWatchRoomContextSafe } from '@/components/WatchRoomProvider';
 
 import { usePlaybackSessionSafe } from '@/features/playback/context';
-import RoomActivityActions from '@/features/together/activities/RoomActivityActions';
-import { RoomLiveMessages } from '@/features/together/activities/RoomLiveMessages';
+import {
+  RoomActivityActions,
+  RoomLiveMessages,
+  useLiveSync,
+} from '@/features/room/activities';
 
 // 扩展 HTMLVideoElement 类型以支持 hls 和 flv 属性
 declare global {
@@ -2782,7 +2784,7 @@ function LivePageClient() {
             onSound={playLocalSound}
           />
           {roomActionError && (
-            <p role='status' className='tm-activity-error'>
+            <p role='status' className='tm-room-activity-error'>
               {roomActionError}
             </p>
           )}

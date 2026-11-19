@@ -24,7 +24,7 @@ const stageProps = {
   titles: ['甲', '乙', '丙'],
   index: 0,
   onPlay: jest.fn(),
-  onTogether: jest.fn(),
+  onWatchInRoom: jest.fn(),
 };
 
 test('portrait stage exposes both upcoming films and keeps their actual indices', () => {
@@ -164,7 +164,7 @@ test('up-next thumbnails select the original carousel index', () => {
       index={0}
       onSelect={onSelect}
       onPlay={jest.fn()}
-      onTogether={jest.fn()}
+      onWatchInRoom={jest.fn()}
     />
   );
   fireEvent.click(screen.getByRole('button', { name: '切换推荐：乙' }));
@@ -179,7 +179,7 @@ test('detects portrait art despite backdrop metadata and resets for the next ima
     contain: false,
     art: <img src='/portrait.jpg' alt='影片海报' />,
     onPlay: jest.fn(),
-    onTogether: jest.fn(),
+    onWatchInRoom: jest.fn(),
     titles: ['影片'],
     index: 0,
     onSelect: jest.fn(),
@@ -219,7 +219,7 @@ test('detects portrait art despite backdrop metadata and resets for the next ima
   fireEvent.click(screen.getByRole('button', { name: '播放' }));
   fireEvent.click(screen.getByRole('button', { name: '一起看' }));
   expect(props.onPlay).toHaveBeenCalledTimes(1);
-  expect(props.onTogether).toHaveBeenCalledTimes(1);
+  expect(props.onWatchInRoom).toHaveBeenCalledTimes(1);
 });
 
 test('retains the last loaded poster until the incoming poster is ready', () => {
@@ -230,7 +230,7 @@ test('retains the last loaded poster until the incoming poster is ready', () => 
     contain: true,
     art: <img src='/first.jpg' alt='第一部海报' />,
     onPlay: jest.fn(),
-    onTogether: jest.fn(),
+    onWatchInRoom: jest.fn(),
     titles: ['第一部', '第二部'],
     index: 0,
     onSelect: jest.fn(),
@@ -277,7 +277,7 @@ test('remembers a measured portrait when returning before its next load event', 
     contain: false,
     art: <img src='/first.jpg' alt='首张海报' />,
     onPlay: jest.fn(),
-    onTogether: jest.fn(),
+    onWatchInRoom: jest.fn(),
     titles: ['影片'],
     index: 0,
     onSelect: jest.fn(),
@@ -315,7 +315,7 @@ test('a departing image finishing decode cannot mark the next image ready', asyn
     contain: true,
     art: <img src='/a.jpg' alt='A海报' />,
     onPlay: jest.fn(),
-    onTogether: jest.fn(),
+    onWatchInRoom: jest.fn(),
     titles: ['影片'],
     index: 0,
     onSelect: jest.fn(),
