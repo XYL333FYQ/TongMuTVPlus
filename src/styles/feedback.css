@@ -71,7 +71,7 @@
 .tm-confirm-dialog {
   position: fixed;
   inset: 0;
-  z-index: 10000;
+  z-index: calc(var(--tm-z-toast) + 1);
   box-sizing: border-box;
   width: 100%;
   max-width: none;
@@ -186,7 +186,7 @@
   position: fixed;
   top: 80px;
   left: 50%;
-  z-index: 9999;
+  z-index: var(--tm-z-toast);
   display: flex;
   align-items: center;
   gap: 12px;

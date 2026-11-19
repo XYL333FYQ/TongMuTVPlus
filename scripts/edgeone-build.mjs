@@ -732,9 +732,8 @@ function patchSsrNodeHandlerStatus() {
 
 const isInsideEdgeOneBuilder = process.env.NEXT_PRIVATE_STANDALONE === 'true';
 
-const command = isInsideEdgeOneBuilder
-  ? 'BUILD_TARGET=edgeone EDGEONE_PAGES=1 pnpm build'
-  : 'BUILD_TARGET=edgeone EDGEONE_PAGES=1 edgeone makers build';
+// 构建目标通过下面的 env 传给子进程；不在命令里写 VAR=值 前缀，Windows 的 cmd 不认这种写法
+const command = isInsideEdgeOneBuilder ? 'pnpm build' : 'edgeone makers build';
 
 const child = spawn(command, {
   stdio: 'inherit',

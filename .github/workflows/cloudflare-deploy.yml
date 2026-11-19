@@ -169,7 +169,7 @@ jobs:
           for migration_file in ./migrations/*.sql; do
             if [ -f "$migration_file" ]; then
               echo "Executing migration: $(basename $migration_file)"
-              wrangler d1 execute moontvplus --remote --file="$migration_file" || echo "⚠️ Migration may have been skipped (already applied)"
+              wrangler d1 execute tongmutvplus --remote --file="$migration_file" || echo "⚠️ Migration may have been skipped (already applied)"
             fi
           done
 

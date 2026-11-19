@@ -38,7 +38,7 @@ html:not([data-tm-platform='web'])
   display: none !important;
 }
 .art-video-player .art-layer-tm-touch {
-  z-index: 45;
+  z-index: var(--tm-z-player-touch);
 }
 .tm-touch {
   position: absolute;

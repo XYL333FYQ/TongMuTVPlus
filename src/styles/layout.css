@@ -29,11 +29,6 @@
   .tm-back-to-top {
   bottom: 24px;
 }
-:where(html:not([data-tm-device='phone'], [data-tm-device='phone-landscape']))
-  body:has(.tm-chat-launcher)
-  .tm-back-to-top {
-  bottom: 84px;
-}
 /* 有小窗或收起胶囊时，返回顶部排在它上面 */
 body:has(.tm-playback-host[data-presentation='mini'], .tm-mini)
   .tm-back-to-top {
@@ -41,24 +36,6 @@ body:has(.tm-playback-host[data-presentation='mini'], .tm-mini)
 }
 body:has(.tm-playback-host[data-presentation='folded']) .tm-back-to-top {
   bottom: calc(var(--tm-mini-bottom) + 56px + 12px);
-}
-
-/* 聊天与回房共用右下角工具区；返回顶部排在实际显示的入口上方。 */
-body:has(.tm-chat-launcher) .tm-back-to-top {
-  right: var(--tm-room-tools-right);
-  bottom: calc(
-    var(--tm-room-tools-bottom) + var(--tm-room-tools-height) +
-      var(--tm-room-tools-gap)
-  );
-}
-html:not([data-tm-room-presentation='true'])
-  body:has(.tm-return-room)
-  .tm-back-to-top {
-  right: var(--tm-room-tools-right);
-  bottom: calc(
-    var(--tm-room-return-bottom) + var(--tm-room-tools-height) +
-      var(--tm-room-tools-gap)
-  );
 }
 
 /* 行内状态：筛选区里的「正在加载」「暂无」 */
@@ -476,7 +453,7 @@ html[data-tm-reduced-motion='true'] .tm-spin {
 .tm-design-grid-overlay {
   position: fixed;
   inset: 0;
-  z-index: 10000;
+  z-index: var(--tm-z-top);
   pointer-events: none;
 }
 .tm-design-grid-overlay > div {

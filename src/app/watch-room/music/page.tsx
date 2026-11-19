@@ -13,11 +13,10 @@ import {
 } from 'react';
 
 import { useReducedMotionSetting } from '@/lib/motion';
+import { useAudioFocus } from '@/hooks/useAudioFocus';
 
 import PageContainer from '@/components/PageContainer';
 import { useWatchRoomContext } from '@/components/WatchRoomProvider';
-
-import { useAudioFocus } from '@/features/playback/useAudioFocus';
 
 import type { MusicQueueItem, MusicSyncState } from '@/types/watch-room';
 

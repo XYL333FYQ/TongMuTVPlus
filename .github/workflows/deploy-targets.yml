@@ -1,0 +1,45 @@
+name: Deploy targets build
+
+# 只构建、不部署：确认 EdgeOne 和 Cloudflare 两种部署方式现在还能构建出来（docs/deploy.md）。
+# 平时不用这些平台，所以手动触发；改动部署配置、升级 Next.js 之后跑一次。
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [edgeone, cloudflare]
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build for EdgeOne Pages
+        if: matrix.target == 'edgeone'
+        run: pnpm build:edgeone
+
+      - name: Build for Cloudflare Workers
+        if: matrix.target == 'cloudflare'
+        env:
+          NEXT_PUBLIC_STORAGE_TYPE: d1
+        run: |
+          mkdir -p .data
+          pnpm build:cloudflare

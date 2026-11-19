@@ -13,7 +13,10 @@ import {
   useState,
 } from 'react';
 
+import { useAudioFocus } from '@/hooks/useAudioFocus';
+
 import MiniPlayerControls from '@/components/mini-player/MiniPlayerControls';
+import { useMiniPlayerDrag } from '@/components/mini-player/useMiniPlayerDrag';
 
 import {
   type PlaybackController,
@@ -25,8 +28,6 @@ import {
   PlaybackSessionContext,
 } from './context';
 import { normalizePlaybackHref, playbackIdentity } from './session';
-import { useAudioFocus } from './useAudioFocus';
-import { useMiniPlayerDrag } from './useMiniPlayerDrag';
 
 const PlaybackSurface = dynamic(() => import('./LegacyPlaybackSurface'), {
   ssr: false,

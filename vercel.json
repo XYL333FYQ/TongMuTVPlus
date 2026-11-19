@@ -12,7 +12,7 @@
   ],
   "crons": [
     {
-      "path": "/api/cron/mtvpls",
+      "path": "/api/cron/vercel",
       "schedule": "0 1 * * *"
     }
   ]

@@ -35,12 +35,8 @@ import {
 
 import { isAnimeCategoryText } from '@/lib/anime-keyword-expr';
 import { createAnime4KRenderer } from '@/lib/anime4k';
+import { enableArtKeyboardAccess } from '@/lib/art-keyboard';
 import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
-import {
-  DEVICE_TIER_EVENT,
-  getDeviceTier,
-  isHandheld,
-} from '@/lib/device-tier';
 import {
   clearDanmakuCacheByTitle,
   convertDanmakuFormat,
@@ -90,6 +86,11 @@ import {
   saveSkipConfig,
   subscribeToDataUpdates,
 } from '@/lib/db.client';
+import {
+  DEVICE_TIER_EVENT,
+  getDeviceTier,
+  isHandheld,
+} from '@/lib/device-tier';
 import { getDoubanDetail } from '@/lib/douban.client';
 import {
   isEpisodeHiddenByFilter,
@@ -108,6 +109,7 @@ import {
 } from '@/lib/episode-title-correction';
 import { getIndexedDBVideoPlaybackUrl } from '@/lib/indexeddb-video-cache';
 import { isNetdiskSource, normalizeNetdiskSource } from '@/lib/netdisk/source';
+import { lockLandscapeInFullscreen } from '@/lib/player-orientation';
 import {
   calculateSeekTime,
   DEFAULT_QUICK_FORWARD_SECONDS,
@@ -131,7 +133,6 @@ import {
   convertSubtitleFileToVttObjectUrl,
   CUSTOM_SUBTITLE_ACCEPT,
 } from '@/lib/subtitle-converter';
-import { lockLandscapeInFullscreen } from '@/lib/player-orientation';
 import { getTMDBImageUrl } from '@/lib/tmdb-image-base';
 import { getTranscoderCookieHeader } from '@/lib/transcoder-cookie.client';
 import {
@@ -175,7 +176,6 @@ import VideoCard from '@/components/VideoCard';
 import { useWatchRoomContextSafe } from '@/components/WatchRoomProvider';
 
 import { useDownload } from '@/contexts/DownloadContext';
-import { enableArtKeyboardAccess } from '@/features/playback/art-keyboard';
 import {
   usePlaybackSearchParams,
   usePlaybackSession,

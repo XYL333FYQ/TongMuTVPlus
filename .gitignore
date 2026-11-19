@@ -7,8 +7,7 @@
 
 # testing
 /coverage
-/docs/verification/screenshots/
-/docs/verification/*.json
+/screenshots/
 *.log
 
 # next.js
@@ -87,7 +86,6 @@ skills-lock.json
 
 # Local browser QA captures and compiler cache
 /.playwright-cli/
-/output/playwright/
 /.swc/
 
 # local agent state and screenshot output

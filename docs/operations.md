@@ -92,11 +92,11 @@ docker compose up -d tongmutvplus
 
 ```sh
 node --test --test-timeout=30000 scripts/ops/maintenance.test.cjs
-node scripts/ops/room-load.cjs --connections 50 --duration-ms 30000 --output docs/verification/room-load-local.json
+node scripts/ops/room-load.cjs --connections 50 --duration-ms 30000 --output output/room-load-local.json
 ```
 
 恢复测试使用专属临时库演练在线 WAL 备份、恢复到隔离目录、原数据不受影响、覆盖保护、校验清单、回退副本，并核对房主、片单、进度、聊天和已读游标。不会读取或替换当前站点 `.data`。
 
 负载脚本新建隔离 Node 子进程与 SQLite，使用生产房间模块和真实登录签名，建立 50 条真实 Socket.IO/WebSocket 连接，分成 7 房（6×8+2），持续发送播放状态、片单、聊天和心跳，进行一次断线重连并检查跨房间信令被拒绝。生成记录包含确认延迟、快照数量、服务进程内存、CPU 和事件循环延迟。它不启动 Next 页面、不请求媒体、不产生真实音视频，也不代表长时间运行、容器或生产网络验收。
 
-2026-10-08 本机记录见 [验证结果](verification/operations-20261008.md) 与 [50 连接原始数据](verification/room-load-50-20261008.json)。容器构建/启动、反向代理、真实视频代理吞吐和真实 WebRTC 音视频仍须在部署环境验证。
+容器构建/启动、反向代理、真实视频代理吞吐和真实 WebRTC 音视频仍须在部署环境验证。

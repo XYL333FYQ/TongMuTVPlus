@@ -50,13 +50,6 @@
 
 ### 注意：部署后项目为空壳项目，无内置播放源和直播源，需要自行收集
 
-<details>
-  <summary>点击查看项目截图</summary>
-  <img src="public/screenshot1.png" alt="项目截图" style="max-width:600px">
-  <img src="public/screenshot2.png" alt="项目截图" style="max-width:600px">
-  <img src="public/screenshot3.png" alt="项目截图" style="max-width:600px">
-</details>
-
 ### 请不要在 B 站、小红书、微信公众号、抖音、今日头条或其他中国大陆社交平台发布视频或文章宣传本项目，不授权任何“科技周刊/月刊”类项目或站点收录本项目。
 
 ## 🗺 目录

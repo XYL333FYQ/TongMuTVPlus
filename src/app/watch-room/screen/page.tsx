@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { type MutableRefObject, useCallback, useEffect, useState } from 'react';
 
+import { useAudioFocus } from '@/hooks/useAudioFocus';
 import {
   type ScreenShareQualityPreset,
   screenShareQualityOptions,
@@ -13,8 +14,6 @@ import {
 
 import Select from '@/components/ui/Select';
 import { useWatchRoomContext } from '@/components/WatchRoomProvider';
-
-import { useAudioFocus } from '@/features/playback/useAudioFocus';
 
 const WATCH_ROOM_NO_CONNECT_KEY = 'watch_room_no_connect';
 const WATCH_ROOM_NO_CONNECT_TIMESTAMP_KEY = 'watch_room_no_connect_timestamp';

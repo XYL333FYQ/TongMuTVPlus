@@ -50,12 +50,12 @@ jobs:
         id: set_image_name
         run: |
           if [[ "${{ github.ref_name }}" == "main" ]]; then
-            echo "IMAGE_NAME=ghcr.io/${{ github.repository_owner }}/moontvplus" >> $GITHUB_ENV
+            echo "IMAGE_NAME=ghcr.io/${{ github.repository_owner }}/tongmutvplus" >> $GITHUB_ENV
           elif [[ "${{ github.ref_name }}" == "dev" ]]; then
-            echo "IMAGE_NAME=ghcr.io/${{ github.repository_owner }}/moontvplus-dev2" >> $GITHUB_ENV
+            echo "IMAGE_NAME=ghcr.io/${{ github.repository_owner }}/tongmutvplus-dev" >> $GITHUB_ENV
           else
             # 为其他分支或手动触发设置一个默认值（可以根据需要调整）
-            echo "IMAGE_NAME=ghcr.io/${{ github.repository_owner }}/moontvplus-dev2" >> $GITHUB_ENV
+            echo "IMAGE_NAME=ghcr.io/${{ github.repository_owner }}/tongmutvplus-dev" >> $GITHUB_ENV
           fi
 
       - name: Set up Docker Buildx
@@ -138,11 +138,11 @@ jobs:
         id: set_image_name
         run: |
           if [[ "${{ github.ref_name }}" == "main" ]]; then
-            echo "IMAGE_NAME=ghcr.io/${{ github.repository_owner }}/moontvplus" >> $GITHUB_ENV
+            echo "IMAGE_NAME=ghcr.io/${{ github.repository_owner }}/tongmutvplus" >> $GITHUB_ENV
           elif [[ "${{ github.ref_name }}" == "dev" ]]; then
-            echo "IMAGE_NAME=ghcr.io/${{ github.repository_owner }}/moontvplus-dev2" >> $GITHUB_ENV
+            echo "IMAGE_NAME=ghcr.io/${{ github.repository_owner }}/tongmutvplus-dev" >> $GITHUB_ENV
           else
-            echo "IMAGE_NAME=ghcr.io/${{ github.repository_owner }}/moontvplus-dev2" >> $GITHUB_ENV
+            echo "IMAGE_NAME=ghcr.io/${{ github.repository_owner }}/tongmutvplus-dev" >> $GITHUB_ENV
           fi
 
       # 新增步骤：在 merge 任务中也需要生成同样的标签列表
@@ -183,9 +183,9 @@ jobs:
       - name: Set package name based on branch
         run: |
           if [[ "${{ github.ref_name }}" == "main" ]]; then
-            echo "PACKAGE_NAME=moontvplus" >> $GITHUB_ENV
+            echo "PACKAGE_NAME=tongmutvplus" >> $GITHUB_ENV
           else
-            echo "PACKAGE_NAME=moontvplus-dev2" >> $GITHUB_ENV
+            echo "PACKAGE_NAME=tongmutvplus-dev" >> $GITHUB_ENV
           fi
 
       - name: Delete untagged image versions

@@ -511,18 +511,6 @@ html[data-tm-reduced-motion] .tm-switch-thumb {
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
 }
-.tm-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: var(--tm-radius-full);
-  background: currentColor;
-  flex-shrink: 0;
-}
-.tm-dot[data-live='true'] {
-  color: inherit;
-  background: currentColor;
-  box-shadow: 0 0 0 3px color-mix(in srgb, currentColor 22%, transparent);
-}
 
 /* 评分角标：左上角，黑色半透明底与白字。 */
 .mtv-rate {

@@ -1,0 +1,150 @@
+# 代码规范
+
+整个项目要读起来像一个人按一套规矩写的。原则只有一条：**同一件事只有一个来源、一个名字、一种写法。** 新代码先对照这里，再对照旁边的文件；两者不一致时以这里为准，并把旁边的文件改过来。
+
+能让机器检查的规则都写成了检查（S10），进 CI，违反就失败：
+
+```bash
+pnpm lint              # 依赖方向（S1）
+pnpm check:structure   # 块名归属、令牌、层级、媒体查询、整文件 eslint-disable（S2 / S4 / S5 / S8）
+```
+
+## 范围
+
+这套规范管本项目自己做的部分：站点外壳、发现（`/`）、片库（`/douban`）、房间（`/watch-room`）、播放页（`/play`），以及它们共用的组件、样式和工具。漫画、小说、音乐、直播、网络直播、电视、管理后台等页面来自上游 MoonTVPlus，暂时保持原样（可以继续用 Tailwind），以后要改它们时再按这里整理。
+
+检查覆盖的文件列在 `scripts/lib/structure-scope.mjs`。
+
+## 目录
+
+```
+src/
+  app/          路由入口：取参数 + 渲染某个功能的页面组件，不放业务逻辑
+  features/     一个功能一个文件夹：组件、hooks、样式、测试放在一起，对外只经 index.ts
+    discover/   发现（首页）
+    library/    片库
+    room/       一起看：大厅、房间页、全站会话、房间小窗、同步、语音、共享屏幕、活动
+    playback/   自己看：播放页、全站会话、小窗
+    player/     播放器内核（两边共用）：WatchPlayer + 通用插件
+  components/   通用界面零件：不认识任何功能
+    shell/      站点外壳：顶栏、底栏、导航、手势、PWA、客户端桥接、沉浸模式
+  hooks/        跨功能、不带业务的 hooks
+  lib/          纯逻辑和数据访问：不引 React 组件
+  styles/       全局：令牌、基础样式、通用零件样式
+  types/        跨功能共享的类型
+```
+
+站点外壳放在 `components/shell/` 而不是 `features/`：所有页面（包括上游页面）都套着它，它是共用的一层，不是一个功能。
+
+房间的**连接层**也是共用的一层，不在 `features/room` 里：`lib/watch-room-socket.ts`（连接）、`hooks/useWatchRoom.ts`（连接状态、确认回包、消息补齐）、`components/WatchRoomProvider.tsx`（全站共用一个连接）、`types/watch-room.ts`（房间、成员、播放状态的类型）。外壳、自己看、直播 / 音乐等页面都要知道“人在不在房间、有没有控制权”，它们只经这一层知道；房间的界面、会话、同步、播放器、活动都在 `features/room`，建在这一层上面。
+
+## 规则
+
+### S1 依赖方向
+
+`app → features → components / hooks → lib`，只能向右引用。
+
+- `components/`、`hooks/`、`lib/` 不能引 `@/features/*`。
+- 功能之间只经对方的 `index.ts`：`import { X } from '@/features/room'`，不能 `@/features/room/session/...`。功能内部用相对路径或自己的深路径都可以。
+- `app/` 也只经 `index.ts` 引功能。
+- 需要“正在播放”这类跨功能状态的通用组件，通过 props 或 `hooks/` 里的通用接口拿，不直接引功能。
+
+由 ESLint `no-restricted-imports` 检查（`.eslintrc.js`）。
+
+### S2 一件事一个来源
+
+- 一套播放器内核：`features/player`。
+- 设计令牌（`--tm-*`）只在 `styles/tokens.css` 定义（`:root`、`html.light`、设备档位下的覆盖都写在那里）。组件内部用的局部变量可以写在组件的块上。
+- z-index 只用层级令牌（见下面的层级表）。
+- 时间格式化、本地存储读写、点外面关闭、设备档位各只有一个工具。
+
+### S3 一个东西一个名字
+
+- 一起看在代码里叫 `room`，自己看叫 `playback`，播放器内核叫 `player`。不再用 Legacy / solo / standalone / together / tc 这类名字。
+- 对外的名字不改：路由 `/watch-room`、接口路径、Socket 事件名、存储键（localStorage / IndexedDB 的键名）、数据库路径和字段（见 `docs/PROJECT_IDENTITY.md`）。
+
+### S4 样式只有一种写法
+
+- 核心功能用“组件旁边的 CSS 文件 + `tm-` 类名”，由组件自己 import（全站一直在用的写在 `styles/`，由根布局 import）。核心功能里不用 Tailwind 工具类。
+- 类名 `tm-<块>-<元素>`，`<块>` 必须登记在下面的块名登记表里。一个块只属于一个文件。
+- 样式文件只给自己的块定样式，不跨文件改别人的元素。需要别人配合时，由对方提供一个开关（属性或 hook），例如房间页要隐藏站点顶栏，就调用外壳提供的沉浸模式，而不是在房间样式里写 `.tm-shell-header { display: none }`。
+
+检查方法：每条选择器里“最靠右的 `tm-` 类”（不算 `:not()` / `:where()` / `:has()` 和属性选择器括号里的）就是这条规则在给谁定样式，它所属的块必须登记在这个文件名下。`tm-app` 是 body 上的全站根标记，不算块。
+
+### S5 改样式就改原规则
+
+- 不在文件末尾追加“第几轮 / 对齐 / 收紧”段落去覆盖前面的规则；同一选择器在一个文件里只出现一次。
+- 整页按哪套排版只认设备档位（`html[data-tm-device]`，见 `src/lib/device-tier.ts`）和页面上的 `data-layout`，`features/` 里不写像素宽度媒体查询。单个零件“放不放得下”（卡片列数、表单列数）在 `components/` 和 `styles/` 里仍可用宽度查询。
+- `!important` 只用来压 Artplayer 等第三方的内联样式。
+
+### S6 文件大小与职责
+
+- 一个文件一件事，超过约 400 行就该拆（`check:structure` 会列出来提醒）。播放器内核里确实拆不开的，在本文件末尾写明理由。
+- 页面组件只拼装；数据请求放 hooks，计算放 lib。
+- 不留只转发一行的空壳文件，引用直接改到真身。
+
+### S7 命名
+
+- 组件 `PascalCase.tsx`，hooks `useXxx.ts`，其他 `kebab-case.ts`。
+- 测试和被测文件放一起：`Xxx.test.tsx`。
+- 标识符用英文；注释用中文，写“为什么”，不写日期、轮次和改动记录（那些在 git 和 `docs/design/PROGRESS.md` 里）；测试名用英文。
+
+### S8 类型
+
+- 核心功能的文件开头不写整文件 `eslint-disable`；确实需要时用 `eslint-disable-next-line` 并写原因。
+- 不用 `any`。Artplayer 等没有类型的库，在一个声明文件里写好要用到的类型。
+
+### S9 仓库
+
+- 根目录只放配置、各部署平台规定必须在根目录的文件、各平台入口脚本和说明（README、CHANGELOG、LICENSE、AGENTS.md）。
+- 文档集中在 `docs/`，入口是 `docs/README.md`。
+- 截图、导出物、备份不进 git。
+
+### S10 机器守规矩
+
+能自动检查的都写成检查，进 CI（`.github/workflows/checks.yml`）。现有违规写在待清理名单 `scripts/structure-allowlist.json` 里：名单只能变短（修好一条就用 `node scripts/check-structure.mjs --shrink` 删掉），不能往里加新的。
+
+## 层级表
+
+z-index 只写下面的令牌（定义在 `styles/tokens.css`）。同一个组件内部的上下关系（自己建了层叠上下文的局部浮起）用 -1 到 3 的数字，不算层级。需要紧贴某一层的上方或下方时写 `calc(var(--tm-z-…) ± 1)`。
+
+| 令牌                  | 值    | 用途                                                  |
+| --------------------- | ----- | ----------------------------------------------------- |
+| `--tm-z-mini`         | 600   | 两种小窗                                              |
+| `--tm-z-header`       | 620   | 站点顶栏                                              |
+| `--tm-z-nav`          | 640   | 手机底栏、导航                                        |
+| `--tm-z-overlay`      | 1000  | 浮层：弹窗、抽屉、底部面板、菜单、详情                |
+| `--tm-z-popover`      | 3000  | 下拉选择（要能盖住弹窗里的内容）                      |
+| `--tm-z-toast`        | 9999  | 提示、确认框                                          |
+| `--tm-z-top`          | 10000 | 最顶层：顶部进度条、开发用的叠加层                    |
+| `--tm-z-player-touch` | 45    | 播放器内部：触屏中间一组，夹在 Artplayer 自带的层之间 |
+
+数字沿用整理前各处写死的值。播放器内部的层（`--tm-z-player-*`）只在播放器的层叠上下文里有意义，要和 Artplayer 自带的层（画面 10、弹幕 30、遮罩 50、控制条 60……）比较，所以不能缩成 1–3。
+
+## 块名登记表
+
+第一列是类名前缀（`tm-<块>`），第二列是唯一能给它定样式的文件。前缀按最长匹配：`tm-page-transition` 登记在外壳，`tm-page` 的其他元素登记在版面。
+
+| 块                                                                                                                                                                                                                                                                                                                                                                                     | 文件                                         | 说明                                   |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------- | -------------------------------------- |
+| `tm-btn` `tm-icon-btn` `tm-switch` `tm-tab` `tm-tabs` `tm-chip` `tm-chips` `tm-badge` `tm-skeleton` `tm-glass` `tm-press` `tm-input` `tm-field` `tm-dot` `tm-theme-emblem` `tm-theme-toggle` `tm-theme-morph` `tm-morph` `tm-drawer-surface`                                                                                                                                           | `src/styles/primitives.css`                  | 通用零件、主题切换                     |
+| `tm-visual-preferences` `tm-dropdown` `tm-dropdowns` `tm-capsule` `tm-expand-search` `tm-animated-theme` `tm-popover` `tm-control-selection` `tm-filter` `tm-display-chevron` `tm-theme-segments`                                                                                                                                                                                      | `src/styles/controls.css`                    | 筛选、下拉、外观设置                   |
+| `tm-select`                                                                                                                                                                                                                                                                                                                                                                            | `src/styles/form-controls.css`               | 下拉选择（另有原生表单控件的全站样式） |
+| `tm-confirm` `tm-toast` `tm-feedback` `tm-modal`                                                                                                                                                                                                                                                                                                                                       | `src/styles/feedback.css`                    | 提示、确认框、通用弹窗                 |
+| `tm-modal-layer` `tm-drawer-layer` `tm-download-modal`                                                                                                                                                                                                                                                                                                                                 | `src/styles/modal-layer.css`                 | 原生模态层                             |
+| `tm-loading`                                                                                                                                                                                                                                                                                                                                                                           | `src/styles/loading.css`                     | 加载样式                               |
+| `tm-action-sheet` `tm-http-warning` `tm-image-viewer` `tm-profile` `tm-search-suggestions` `tm-continue-header`                                                                                                                                                                                                                                                                        | `src/styles/panels.css`                      | 面板类零件                             |
+| `tm-search` `tm-history`                                                                                                                                                                                                                                                                                                                                                               | `src/styles/search.css`                      | 搜索页                                 |
+| `tm-auth`                                                                                                                                                                                                                                                                                                                                                                              | `src/styles/auth.css`                        | 登录、注册                             |
+| `tm-page` `tm-section` `tm-poster` `tm-shelf` `tm-library` `tm-public` `tm-back-to` `tm-fade-image` `tm-spin` `tm-design-grid` `tm-desktop-page` `tm-inline-state` `tm-empty` `tm-admin`                                                                                                                                                                                               | `src/styles/layout.css`                      | 页面版面、片架、片库网格               |
+| `tm-shell` `tm-main` `tm-top-header` `tm-header-glass` `tm-logo` `tm-primary-nav` `tm-mobile` `tm-explore` `tm-account` `tm-menu` `tm-guest` `tm-more-trigger` `tm-launch` `tm-page-transition` `tm-page-instant` `tm-route-skeleton` `tm-repository` `tm-perf` `tm-install-hint` `tm-ptr` `tm-icon-button` `tm-embedded` `tm-media-shell` `tm-media-page` `tm-selectable` `tm-header` | `src/styles/shell.css`                       | 站点外壳                               |
+| `tm-touch`                                                                                                                                                                                                                                                                                                                                                                             | `src/styles/player-controls.css`             | 播放器触屏按钮（两个播放器共用）       |
+| `tm-home` `tm-hero-score` `tm-video` `tm-media-initial`                                                                                                                                                                                                                                                                                                                                | `src/styles/home.css`                        | 发现页、影片卡片                       |
+| `tm-playback` `tm-solo` `tm-audio-focus`                                                                                                                                                                                                                                                                                                                                               | `src/features/playback/playback.css`         | 自己看                                 |
+| `tm-t` `tm-tc` `tm-pl` `tm-act` `tm-room-live` `tm-activity`                                                                                                                                                                                                                                                                                                                           | `src/features/together/together.css`         | 一起看                                 |
+| `tm-mini`                                                                                                                                                                                                                                                                                                                                                                              | `src/components/mini-player/mini-player.css` | 两种小窗共用的按钮层                   |
+| `tm-detail`                                                                                                                                                                                                                                                                                                                                                                            | `src/components/detail/detail.css`           | 影片详情                               |
+
+## 允许的例外
+
+（暂无。确实拆不开或必须破例的，在这里写明文件和理由。）

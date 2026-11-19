@@ -6,7 +6,7 @@ const path = require('path');
 const { spawnSync } = require('child_process');
 const prettier = require('prettier');
 
-it('generates only project records and never copies historical versions into the project version', () => {
+it('generates the release records and never changes the project version', () => {
   const base = path.resolve(os.tmpdir());
   const workspace = fs.mkdtempSync(path.join(base, 'tongmutv-changelog-'));
   const script = path.resolve(__dirname, 'convert-changelog.js');
@@ -18,12 +18,8 @@ it('generates only project records and never copies historical versions into the
       JSON.stringify({ version: '0.1.0' })
     );
     fs.writeFileSync(
-      path.join(workspace, 'CHANGELOG'),
-      '## [226.1.0] - 2026-10-05\n### Added\n- Historical entry'
-    );
-    fs.writeFileSync(
-      path.join(workspace, 'PROJECT_CHANGELOG'),
-      '## [0.1.0] - 2026-10-24\n### Added\n- Project release'
+      path.join(workspace, 'CHANGELOG.md'),
+      '## [0.1.0] - 2026-10-24\n\n### Added\n\n- Project release'
     );
     const result = spawnSync(process.execPath, [script], {
       cwd: workspace,
@@ -48,8 +44,6 @@ it('generates only project records and never copies historical versions into the
     });
     expect(generated).toBe(formatted);
     expect(generated).toContain('Project release');
-    expect(generated).not.toContain('Historical entry');
-    expect(generated).not.toContain('226.1.0');
     expect(fs.existsSync(path.join(workspace, 'src/lib/changelog.ts'))).toBe(
       false
     );

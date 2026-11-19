@@ -176,8 +176,3 @@
 .tm-input.tm-auth-input-plain {
   padding-inline: 16px;
 }
-
-/* 登录类页面不显示房间聊天入口 */
-body:has(.tm-auth) .tm-chat-launcher {
-  display: none;
-}

@@ -731,7 +731,7 @@ html[data-tm-reduced-motion='true'] .tm-mobile-nav-thumb {
   position: fixed;
   top: calc(var(--tm-header-height) + var(--tm-safe-top));
   right: 12px;
-  z-index: 1001;
+  z-index: calc(var(--tm-z-overlay) + 1);
   width: min(320px, calc(100vw - 24px));
   max-height: calc(100dvh - 96px);
   overflow-y: auto;
@@ -1307,7 +1307,7 @@ html .tm-page-transition.tm-page-instant {
   top: calc(var(--tm-safe-top) + 4px);
   left: 4px;
   right: 4px;
-  z-index: 2147483000;
+  z-index: calc(var(--tm-z-top) + 1);
   padding: 6px 8px;
   border-radius: var(--tm-radius-sm);
   background: var(--tm-surface);
@@ -1360,7 +1360,6 @@ html[data-tm-platform='app']
     pre,
     code,
     .tm-selectable,
-    .tm-chat-messages,
     .tm-admin-select-all-text
   ) {
   -webkit-user-select: text;
@@ -1376,7 +1375,6 @@ html[data-tm-shell] {
   right: 0;
   bottom: 0;
   left: 0;
-  z-index: 999;
   z-index: calc(var(--tm-z-overlay) - 1);
   display: flex;
   flex-direction: column;

@@ -60,12 +60,11 @@ function main() {
       return;
     }
 
-    // 只读取本项目发布记录；根 CHANGELOG 是历史资料，不参与产品构建。
     const entries = parseChangelog(
-      fs.readFileSync(path.join(root, 'PROJECT_CHANGELOG'), 'utf8')
+      fs.readFileSync(path.join(root, 'CHANGELOG.md'), 'utf8')
     );
     const outputPath = path.join(root, 'src/lib/project-changelog.ts');
-    const source = `// TongMuTV Plus 的发布记录；由 scripts/convert-changelog.js 从 PROJECT_CHANGELOG 生成。
+    const source = `// TongMuTV Plus 的发布记录；由 scripts/convert-changelog.js 从 CHANGELOG.md 生成。
 export interface ChangelogEntry {
   version: string;
   date: string;

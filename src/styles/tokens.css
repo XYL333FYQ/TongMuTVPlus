@@ -14,9 +14,7 @@
   --tm-line-strong: rgba(255, 255, 255, 0.18);
   --tm-text: #f2f2f3;
   --tm-muted: #a3a3ac;
-  --tm-accent: var(--tm-text);
   --tm-accent-contrast: #0a0a0b;
-  --tm-accent-soft: var(--tm-line);
   --tm-danger: #e5484d;
   /* 阅读器三档底色：由阅读设置独立选择，不随全站深浅主题翻转 */
   --tm-reader-light-bg: #f6f6f4;
@@ -25,7 +23,6 @@
   --tm-reader-dark-bg: #0b0b0d;
   --tm-reader-dark-text: #e4e4e6;
   --tm-highlight: var(--tm-text);
-  --tm-online: var(--tm-text);
   --tm-rating-star: var(--tm-on-art);
   --tm-hero-shade-start: rgba(8, 8, 10, 0.82);
   --tm-hero-shade-mid: rgba(8, 8, 10, 0.55);
@@ -41,8 +38,6 @@
   --tm-ink-rgb: 0 0 0;
   --tm-scrim: rgba(0, 0, 0, 0.56);
   --tm-rating-bg: rgba(0, 0, 0, 0.6);
-  --tm-badge-on-art: rgba(255, 255, 255, 0.9);
-  --tm-hero-overlay: rgba(10, 10, 11, 0.8);
   --tm-scrim-soft: rgba(0, 0, 0, 0.32);
   --tm-art-glass: rgba(255, 255, 255, 0.16);
   --tm-art-glass-line: rgba(255, 255, 255, 0.28);
@@ -72,7 +67,6 @@
   --tm-font-sans: -apple-system, BlinkMacSystemFont, 'SF Pro SC', 'PingFang SC',
     'HarmonyOS Sans SC', 'MiSans', 'Noto Sans SC', 'Microsoft YaHei UI',
     'Microsoft YaHei', sans-serif;
-  --tm-fs-display: clamp(34px, 4.2vw, 60px);
   --tm-fs-title: 32px;
   --tm-fs-section: 20px;
   --tm-fs-subtitle: 18px;
@@ -108,10 +102,17 @@
   --tm-safe-top: 0px;
   --tm-safe-bottom: env(safe-area-inset-bottom, 0px);
 
-  /* —— 层级 —— */
+  /* —— 层级 —— 只写这些令牌（见 docs/STANDARD.md 层级表）。
+     数字沿用以前各处写死的值 */
+  --tm-z-mini: 600; /* 两种小窗：在页面内容之上，在顶栏、底栏、浮层之下 */
   --tm-z-header: 620;
   --tm-z-nav: 640;
-  --tm-z-overlay: 1000;
+  --tm-z-overlay: 1000; /* 弹窗、抽屉、底部面板、菜单、详情 */
+  --tm-z-popover: 3000; /* 下拉选择：要能盖住弹窗里的内容 */
+  --tm-z-toast: 9999; /* 提示、确认框 */
+  --tm-z-top: 10000; /* 最顶层：顶部进度条、开发用的叠加层 */
+  /* 播放器内部：夹在 Artplayer 自带的层之间，只在播放器里有意义 */
+  --tm-z-player-touch: 45; /* 触屏中间一组，在弹幕层（30）之上 */
 
   /* —— 动效 —— */
   --tm-ease-out: cubic-bezier(0.22, 1, 0.36, 1);
@@ -125,6 +126,35 @@
   /* 主题切换：圆形裁切、日冕环、底层后退、图标交接共用这一组，保证同频 */
   --tm-d-theme: 520ms;
   --tm-ease-theme: cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* —— 画面上的颜色（播放器、电视、直播、图片查看等全站共用）——
+     名字带 room 是历史原因，对外名字不改 */
+  --tm-room-cinema-bg: var(--tm-video-bg);
+  --tm-room-player-text: var(--tm-on-art);
+  --tm-room-scrim: var(--tm-scrim);
+  --tm-room-shadow: rgba(0, 0, 0, 0.3);
+
+  /* —— 影片详情 —— */
+  --tm-detail-backdrop: #050505;
+  --tm-detail-surface: var(--tm-surface);
+  --tm-detail-control-glass: rgba(40, 40, 40, 0.7);
+  --tm-detail-poster-placeholder: #262626;
+
+  /* —— Windows 客户端的窗口按钮 ——
+     客户端没有系统标题栏，最小化 / 最大化 / 关闭三个按钮由客户端画在页面右上角最顶层
+     （apps/desktop/src-tauri/src/inject.js，138×32）。贴着顶边的右上角按钮（抽屉、对话框的关闭）
+     都要让开这一块；网页和手机上是 0。data-tm-platform 由 lib/platform.ts 在首帧前写好 */
+  --tm-window-controls-h: 0px;
+
+  /* —— 小窗 —— 两种小窗（自己看 / 一起看）共用的尺寸：一块画面。
+     按设备档位（lib/device-tier.ts）：手机竖 / 横用小号，并让开站点底栏；平板和电脑用大号 */
+  --tm-mini-w: 320px;
+  --tm-mini-h: calc(var(--tm-mini-w) * 9 / 16);
+  --tm-mini-gap: 20px;
+  --tm-mini-nav-space: 0px;
+  --tm-mini-bottom: calc(
+    var(--tm-mini-gap) + var(--tm-mini-nav-space) + var(--tm-safe-bottom, 0px)
+  );
 }
 
 html.light {
@@ -140,7 +170,6 @@ html.light {
   --tm-accent-contrast: #ffffff;
   --tm-danger: #e5484d;
 
-  --tm-hero-overlay: rgba(255, 255, 255, 0.8);
   --tm-glass: rgba(255, 255, 255, 0.74);
   --tm-glass-solid: #f6f6f7;
   --tm-glass-highlight: rgba(255, 255, 255, 0.6);
@@ -155,6 +184,11 @@ html.light {
   --tm-shadow-lg: 0 24px 48px -24px rgba(0, 0, 0, 0.2);
   --tm-shadow-poster: var(--tm-shadow-sm);
   --tm-shadow-poster-hover: 0 24px 40px -16px rgba(0, 0, 0, 0.38);
+
+  --tm-detail-backdrop: #b8b8b8;
+  --tm-detail-surface: var(--tm-bg);
+  --tm-detail-control-glass: var(--tm-glass);
+  --tm-detail-poster-placeholder: #e0e0e0;
 }
 
 @media (display-mode: standalone), (display-mode: fullscreen) {
@@ -220,39 +254,10 @@ html[data-tm-shell] {
   }
 }
 
-/* 画面上的颜色（播放器、电视、直播、图片查看等全站共用）。
-   名字带 room 是历史原因：以前定义在旧房间样式 room-shared.css 里，旧房间删掉后挪到这里 */
-:root {
-  --tm-room-cinema-bg: var(--tm-video-bg);
-  --tm-room-player-text: var(--tm-on-art);
-  --tm-room-scrim: var(--tm-scrim);
-  --tm-room-shadow: rgba(0, 0, 0, 0.3);
-}
-
-/* Windows 客户端没有系统标题栏，最小化 / 最大化 / 关闭三个按钮由客户端画在页面右上角最顶层
-   （apps/desktop/src-tauri/src/inject.js，138×32）。贴着顶边的右上角按钮（抽屉、对话框的关闭）
-   都要让开这一块；网页和手机上是 0。data-tm-platform 由 lib/platform.ts 在首帧前写好 */
-:root {
-  --tm-window-controls-w: 0px;
-  --tm-window-controls-h: 0px;
-}
 html[data-tm-platform='desktop'] {
-  --tm-window-controls-w: 138px;
   --tm-window-controls-h: 32px;
 }
 
-/* 两种小窗（自己看 / 一起看）共用的尺寸：一块画面。
-   按设备档位（lib/device-tier.ts）：手机竖 / 横用小号，并让开站点底栏（底栏也只在手机两档出现，shell.css）；
-   平板和电脑用大号 */
-:root {
-  --tm-mini-w: 320px;
-  --tm-mini-h: calc(var(--tm-mini-w) * 9 / 16);
-  --tm-mini-gap: 20px;
-  --tm-mini-nav-space: 0px;
-  --tm-mini-bottom: calc(
-    var(--tm-mini-gap) + var(--tm-mini-nav-space) + var(--tm-safe-bottom, 0px)
-  );
-}
 html:is([data-tm-device='phone'], [data-tm-device='phone-landscape']) {
   --tm-mini-w: min(212px, 56vw);
   --tm-mini-gap: 12px;

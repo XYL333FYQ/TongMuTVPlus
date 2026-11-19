@@ -1,16 +1,24 @@
+# Render 用本项目的 Docker 镜像部署（详见 docs/deploy.md）。
+# 镜像自带房间服务（Socket.IO），一起看可以直接用；数据在容器的 /app/.data，
+# 需要给服务挂一块持久磁盘到 /app/.data，否则重启后账号、房间和配置都会丢。
 services:
   - type: web
-    name: moontvplus
+    name: tongmutvplus
     runtime: image
-    plan: free
+    plan: starter
     image:
-      url: ghcr.io/mtvpls/moontvplus:latest
+      url: ghcr.io/xyl333fyq/tongmutvplus:latest
+    healthCheckPath: /health/ready
+    disk:
+      name: tongmutv-data
+      mountPath: /app/.data
+      sizeGB: 1
     envVars:
       - key: USERNAME
         sync: false
       - key: PASSWORD
         sync: false
-      - key: NEXT_PUBLIC_SITE_NAME
-        value: MoonTVPlus
+      - key: AUTH_SECRET
+        generateValue: true
       - key: CRON_PASSWORD
-        value: mtvpls
+        generateValue: true

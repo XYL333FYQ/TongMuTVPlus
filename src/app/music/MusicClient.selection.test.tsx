@@ -27,7 +27,7 @@ jest.mock('@/features/together/activities/RoomActivityActions', () => ({
   __esModule: true,
   default: () => null,
 }));
-jest.mock('@/features/playback/useAudioFocus', () => ({
+jest.mock('@/hooks/useAudioFocus', () => ({
   useAudioFocus: () => ({ ownsSound: true, claimSound: jest.fn() }),
 }));
 jest.mock('@/components/PageContainer', () => ({

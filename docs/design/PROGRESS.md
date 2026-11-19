@@ -1,5 +1,26 @@
 # 界面改造进度
 
+## 2026-11-19 代码整理第 0、1 步（执行 docs/plan/2026-11-19-cleanup-plan.md，用户同意“开始”）
+
+- 第 0 步（立规矩）：
+  - 新增 `docs/STANDARD.md`：目录、S1–S10、层级表、块名登记表。站点外壳定在 `components/shell/`（所有页面都套着它，是共用层，不是功能），计划里的 `features/shell` 不建。
+  - 重写 `AGENTS.md`（Next 15 / TS 5，删掉 Gemini 委托规则和过时禁区，指向 STANDARD.md），删空的 `GEMINI.md`。
+  - 新增 `pnpm check:structure`（`scripts/check-structure.mjs`，接进 CI）：块名归属、令牌只在 tokens.css、z-index 只用令牌、`features/` 不写像素宽度媒体查询、同一选择器一个文件只出现一次、核心文件不许整文件 `eslint-disable`，超过 400 行提醒。ESLint 加依赖方向（`no-restricted-imports`）。现有违规写进 `scripts/structure-allowlist.json`，只能变短（开始 229 条）。
+  - 本机测试站：`.claude/test.env`（生成的测试账号、单独的 `.data/test.db`）、`.claude/test-server.cjs`、`tongmu-test` 启动配置（端口 3100），`.claude/seed-test.mjs` 建第二个账号和测试房间；`.claude/style-snapshot.mjs` 用本机 Chrome 无头模式按 6 种窗口 × 深浅主题记录 8 个页面的计算样式，改前改后对比。都在 git 忽略的 `.claude/` 里。
+- 第 1 步（零风险清理）：
+  - 删空壳 `features/playback/useMiniPlayerDrag.ts`、`useAudioFocus.ts`（测试搬到真身旁边）；两份一字不差的 `art-keyboard` 合成一份放到 `lib/`（和 `player-touch-controls.ts` 一样是两个播放器共用的非 React 工具）；删没人用的 `catalog/Shelf.tsx`。
+  - 删死样式 20 个类（逐个确认代码里没有、也没有动态拼接）。计划里列的 `tm-home-hero-poster-left/right` 其实是 `tm-home-hero-poster-${…}` 拼出来的，**没删**。删掉后没人用的 12 个令牌一起删。
+  - 令牌归位：详情页、小窗的令牌搬进 tokens.css；tokens.css 合成一个 `:root` + 一个 `html.light`。
+  - 层级：新增 `--tm-z-popover / -toast / -top / -player-touch`，全站固定层的写死数字换成令牌，数字沿用原值。两处有意的变化：详情抽屉 9999 → 浮层 1000（它本来就是浮层，提示从此一定在它上面）；顶部进度条 9999 → 10000。`--tm-z-modal`（从没定义过）改用 `--tm-z-overlay`。房间、首页卡片、播放页内部的局部层级留到第 2–4 步随组件一起整理。
+  - 仓库：删 `screenshots/`（244 张）、`public/screenshot1-3.png`（上游截图 18 MB）、`references/`、`AUDIT.md`、过时文档（CLIENT-EXPERIENCE ×3、REBUILD-PLAN、p5-mapping、optimization-plan、implementation-status、verification/、superpowers/）、`output/`；引用它们的地方改掉。`PROJECT_CHANGELOG` 改名 `CHANGELOG.md`（转换脚本和测试跟着改），上游的 `CHANGELOG` 删掉；`SOURCE_SCRIPT.md` 移到 `docs/source-script.md`；新增 `docs/README.md` 目录。
+  - 部署：`render.yaml` 改成本项目镜像、持久磁盘、健康检查；`wrangler.toml`、Cloudflare / EdgeOne / dev 镜像工作流里的上游名字改掉；Turso 工作流 Node 20 → 24；`vercel.json` 的定时任务原来调 `/api/cron/mtvpls`，只有密码恰好是 mtvpls 才能用——定时任务接口新增 Vercel 约定的 `Authorization: Bearer CRON_SECRET`（`lib/cron-auth.ts`，有测试），路径改成 `/api/cron/vercel`；接口不再把带密码的请求地址打进日志。新增 `docs/deploy.md`（并入 `VERCEL_DEPLOYMENT.md`）。
+  - README 换成用户认可的新版（图片用现有 4 张），`README_en.md` 照着重写。
+  - GitHub 简介和标签已改（`gh repo view` 确认：新简介，标签加了 video-player、pwa）。
+  - EdgeOne 构建脚本去掉命令里的 `VAR=值` 前缀（env 本来就传了，Windows 上这个前缀会直接报错）；新增手动工作流 `deploy-targets.yml`，在 Linux 上只构建 EdgeOne 和 Cloudflare、不部署。
+- 验证：typecheck、lint、Jest 183 套件 / 1184 全过（新增 cron 鉴权 3 条）、test:rooms、format、check:structure 全过（待清理名单 229 → 193）。check-design 对改动文件 5 条，全是原有的（两个播放器里弹幕默认色 `#fff`、外壳 `0.68em` 角标），这次只改了它们的 import 行。
+- 计算样式对比（测试站登录后，6 种窗口 × 深浅 × 首页 / 片库 / 搜索 / 房间 / 房间小窗 / 播放页 / 播放页小窗 / 大厅，共 96 份）：除了海报图片加载先后（骨架、淡入、模糊）这类两次跑同一份代码也会不同的差异外，**没有任何差异**。
+- 没验证 / 跑不了：本机三种构建都没跑成（Next 构建在一次原生崩溃后报 Tailwind 内部错误、OpenNext 原生崩溃、EdgeOne 脚本的 Windows 问题已修），以推送后 GitHub Actions 的结果为准。详情抽屉的层级变化和进度条的层级变化不在快照覆盖的页面里，靠代码核对。
+
 ## 2026-11-18 问题合集第三版（部署 e052d67 后）
 
 - 做完了：

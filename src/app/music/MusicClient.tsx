@@ -46,6 +46,7 @@ import {
   SourcePill,
 } from '@/lib/music/shared';
 import type { MusicQuality, MusicSource, Song } from '@/lib/music/types';
+import { useAudioFocus } from '@/hooks/useAudioFocus';
 import { useRoomMusicActivity } from '@/hooks/useRoomMusicActivity';
 
 import AddToPlaylistModal from '@/components/AddToPlaylistModal';
@@ -77,7 +78,6 @@ import {
 import PageContainer from '@/components/PageContainer';
 
 import RoomActivityActions from '@/features/together/activities/RoomActivityActions';
-import { useAudioFocus } from '@/features/playback/useAudioFocus';
 
 import type { MusicQueueItem, MusicSyncState } from '@/types/watch-room';
 

@@ -26,6 +26,7 @@ import {
 } from '@/lib/db.client';
 import { createRequestGate } from '@/lib/request-gate';
 import { parseCustomTimeFormat } from '@/lib/time';
+import { useAudioFocus } from '@/hooks/useAudioFocus';
 import { useLiveSync } from '@/hooks/useLiveSync';
 
 import EpgScrollableRow from '@/components/EpgScrollableRow';
@@ -40,7 +41,6 @@ import { useWatchRoomContextSafe } from '@/components/WatchRoomProvider';
 import { usePlaybackSessionSafe } from '@/features/playback/context';
 import RoomActivityActions from '@/features/together/activities/RoomActivityActions';
 import { RoomLiveMessages } from '@/features/together/activities/RoomLiveMessages';
-import { useAudioFocus } from '@/features/playback/useAudioFocus';
 
 // 扩展 HTMLVideoElement 类型以支持 hls 和 flv 属性
 declare global {

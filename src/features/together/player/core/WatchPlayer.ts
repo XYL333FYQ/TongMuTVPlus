@@ -8,9 +8,8 @@
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
+import { enableArtKeyboardAccess } from '@/lib/art-keyboard';
 import { lockLandscapeInFullscreen } from '@/lib/player-orientation';
-
-import { enableArtKeyboardAccess } from '@/features/together/player/core/art-keyboard';
 
 import { isSafariLike, playerEnvironment } from './env';
 import {

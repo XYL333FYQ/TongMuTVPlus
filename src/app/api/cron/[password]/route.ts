@@ -1,11 +1,11 @@
 /* eslint-disable no-console,@typescript-eslint/no-explicit-any */
 
-import { timingSafeEqual } from 'crypto';
 import { NextRequest, NextResponse } from 'next/server';
 
 import { checkAnimeSubscriptions } from '@/lib/anime-subscription';
 import { BRAND_NAME } from '@/lib/brand';
 import { getConfig, refineConfig } from '@/lib/config';
+import { checkCronAuth } from '@/lib/cron-auth';
 import { db, getStorage } from '@/lib/db';
 import { EmailService } from '@/lib/email.service';
 import {
@@ -164,13 +164,6 @@ async function fetchMangaCoverAsDataUri(
   }
 }
 
-// 常量时间比较，避免按响应时间逐字符猜出密码
-function isSameSecret(input: string, expected: string): boolean {
-  const a = Buffer.from(input || '');
-  const b = Buffer.from(expected);
-  return a.length === b.length && timingSafeEqual(a, b);
-}
-
 // 内存中记录最后执行时间（毫秒时间戳）
 let lastExecutionTime = 0;
 const COOLDOWN_MS = 10 * 60 * 1000; // 10分钟冷却时间
@@ -180,12 +173,13 @@ export async function GET(
   props: { params: Promise<{ password: string }> }
 ) {
   const params = await props.params;
-  console.log(request.url);
+  // 不打印请求地址：路径里就是密码
 
-  // 不再提供公开的默认密码：未设置 CRON_PASSWORD 时接口关闭，
-  // 否则任何人都能用默认地址反复触发全站维护任务
-  const cronPassword = process.env.CRON_PASSWORD?.trim();
-  if (!cronPassword) {
+  const auth = checkCronAuth(
+    params.password,
+    request.headers.get('authorization')
+  );
+  if (auth === 'disabled') {
     return NextResponse.json(
       {
         success: false,
@@ -194,7 +188,7 @@ export async function GET(
       { status: 503 }
     );
   }
-  if (!isSameSecret(params.password, cronPassword)) {
+  if (auth === 'unauthorized') {
     return NextResponse.json(
       { success: false, message: 'Unauthorized' },
       { status: 401 }

@@ -9,7 +9,7 @@ jest.mock('next/dynamic', () => ({
 jest.mock('@/components/WatchRoomProvider', () => ({
   useWatchRoomContextSafe: () => mockRoom,
 }));
-jest.mock('./useAudioFocus', () => ({
+jest.mock('@/hooks/useAudioFocus', () => ({
   useAudioFocus: () => mockAudioFocus,
 }));
 jest.mock('@/lib/auth', () => ({

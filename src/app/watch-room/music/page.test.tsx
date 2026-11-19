@@ -19,7 +19,7 @@ jest.mock(
   () => ({ __esModule: true, default: () => null }),
   { virtual: true }
 );
-jest.mock('@/features/playback/useAudioFocus', () => ({
+jest.mock('@/hooks/useAudioFocus', () => ({
   useAudioFocus: () => ({ ownsSound: true, claimSound: jest.fn() }),
 }));
 jest.mock('@/lib/motion', () => ({ useReducedMotionSetting: () => false }));

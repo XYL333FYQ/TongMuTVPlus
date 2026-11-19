@@ -4,6 +4,7 @@ import { AlertTriangle, Download, Loader2, Play, Radio } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 
+import { useAudioFocus } from '@/hooks/useAudioFocus';
 import { useLatestMediaRequest } from '@/hooks/useLatestMediaRequest';
 import { useWebLiveSync } from '@/hooks/useWebLiveSync';
 
@@ -19,7 +20,6 @@ import { usePlaybackSessionSafe } from '@/features/playback/context';
 import { webLiveReference } from '@/features/together/activities/room-live';
 import RoomActivityActions from '@/features/together/activities/RoomActivityActions';
 import { RoomLiveMessages } from '@/features/together/activities/RoomLiveMessages';
-import { useAudioFocus } from '@/features/playback/useAudioFocus';
 
 let Artplayer: any = null;
 let Hls: any = null;

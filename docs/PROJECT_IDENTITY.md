@@ -2,7 +2,7 @@
 
 本项目版本为 `0.1.0`，上游本地快照标注版本为 `226.1.0`。上游为 [MoonTVPlus](https://github.com/mtvpls/MoonTVPlus)，进一步来源参见原始 README 的 MoonTV / LunaTV 与贡献者说明。没有经过验证的上游提交号，不推断提交号。
 
-改造前副本位于同级 `TongMuTVPlus-baselines/2026-10-08T05-24-38-745Z`。原始 README、LICENSE 和上游 CHANGELOG 保留，不将其改写成由本项目原创。根 LICENSE 文本为 CC BY-NC-SA 4.0，而原 README 标注 MIT，此矛盾尚待核实；此记录不构成法律判断或新增授权。第三方组件许可独立保留。
+改造前副本位于同级 `TongMuTVPlus-baselines/2026-10-08T05-24-38-745Z`。原始 README（`docs/upstream-moontvplus-README.md`）和 LICENSE 保留，不将其改写成由本项目原创；上游的版本记录在 git 历史里。根 LICENSE 文本为 CC BY-NC-SA 4.0，而原 README 标注 MIT，此矛盾尚待核实；此记录不构成法律判断或新增授权。第三方组件许可独立保留。
 
 ## 品牌与兼容
 
@@ -27,6 +27,6 @@ node scripts/migrate-branding.js --db /path/to/moontv.db --apply
 
 `VERSION.txt` 与 `brand.json` 保存本项目版本；`UPSTREAM_VERSION.txt` 仅在源码资料中保留来源快照版本。网站品牌元数据只包含本项目身份，不再导出来源项目字段。
 
-版本面板只展示本项目版本及 `PROJECT_CHANGELOG` 的发布记录。`scripts/convert-changelog.js` 只转换该文件为 `src/lib/project-changelog.ts`；空记录显示“暂无发布记录”。脚本不会从根历史 CHANGELOG 更新项目版本，`--sync-version` 只在版本文本与品牌配置一致时生成统一版本入口。尚未配置本项目发行端点时不请求外部项目、不显示“已是最新”。
+版本面板只展示本项目版本及 `CHANGELOG.md` 的发布记录。`scripts/convert-changelog.js` 只转换该文件为 `src/lib/project-changelog.ts`；空记录显示“暂无发布记录”。脚本不会改项目版本，`--sync-version` 只在版本文本与品牌配置一致时生成统一版本入口。尚未配置本项目发行端点时不请求外部项目、不显示“已是最新”。
 
 2026-10-24 用户确认：网站普通页面、版本弹窗及关于页不再展示来源项目的名称、日志、仓库推广或来源说明；真实归属保留在 GitHub README、许可证和源码资料中。原作者声明、历史记录不改写为本项目原创。

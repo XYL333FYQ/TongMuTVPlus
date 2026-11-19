@@ -1,6 +1,6 @@
 name: Checks
 
-# 推送前的自动检查：类型、代码规范、测试、格式、房间服务、运维脚本、构建与首屏体积。
+# 推送前的自动检查：类型、代码规范、格式、结构规范、测试、房间服务、运维脚本、构建与首屏体积。
 # 其它分支推送和 PR 时单独运行；推到 main 时由 docker-image.yml 先调用它，通过了才打包镜像。
 on:
   push:
@@ -44,6 +44,9 @@ jobs:
 
       - name: Format
         run: pnpm format:check
+
+      - name: Structure (docs/STANDARD.md)
+        run: pnpm check:structure
 
       - name: Unit tests
         run: pnpm test --ci
