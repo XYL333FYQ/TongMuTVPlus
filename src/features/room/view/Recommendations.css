@@ -30,25 +30,19 @@
 }
 .tm-room-recs-row {
   display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
+  /* 按自己的宽度放几列（电脑排版里主栏宽多少就放多少张，大窗口 6 张） */
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
   gap: 16px;
   margin: 0;
   padding: 0;
   list-style: none;
 }
-@media (max-width: 1199px) {
-  .tm-room-recs-row {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-  }
+:where(html[data-tm-device='phone']) .tm-room-recs-row {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
 }
-@media (max-width: 599px) {
-  .tm-room-recs-row {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 12px;
-  }
-  .tm-room-recs-row > li:nth-child(n + 10) {
-    display: none;
-  }
+:where(html[data-tm-device='phone']) .tm-room-recs-row > li:nth-child(n + 10) {
+  display: none;
 }
 .tm-room-recs-item {
   display: flex;
@@ -183,9 +177,6 @@
 }
 .tm-room-view-pad .tm-room-recs-row {
   grid-template-columns: repeat(3, minmax(0, 1fr));
-}
-:where(.tm-room-view[data-layout='compact']) .tm-room-recs-strip {
-  padding: 0 12px 10px;
 }
 :where(.tm-room-view[data-layout='compact']) .tm-room-recs-strip {
   gap: 6px;

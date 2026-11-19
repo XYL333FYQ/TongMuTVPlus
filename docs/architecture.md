@@ -48,16 +48,17 @@ flowchart LR
 
 自己看和一起看是两个平级模块，各有自己的播放器，互不依赖。一起看只通过自己看公开的两个点和它打交道：读“自己看是否在放”，以及“站内点开影片”的拦截挂点。
 
-| 模块                                | 负责                                                                                                                                                                                              | 不负责                 |
-| ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------- |
-| `src/features/playback/`            | 自己看：播放页（`LegacyPlaybackSurface`，含片源搜索加载动画、弹幕、字幕、Anime4K、下载等）、全站播放会话与小窗（`PlaybackSessionProvider`）                                                       | 任何房间逻辑           |
-| `src/features/room/session/`        | 一起看的全站会话（`TogetherSession` 在根布局）：房间播放器单例、画面在房间页 / 房间小窗之间搬家、房间聊天浮窗、语音、聊天弹幕、人在房间时站内点开影片的“怎么看”（加入片单 / 在房间里放 / 自己看） | 自己看的播放           |
-| `src/features/room/sync/`           | 同步引擎（纯逻辑）：房间状态 + 本机权限 + 播放器接口 `PlayerPort` → 发命令 / 对齐进度，用假播放器和假时钟做单元测试                                                                               | 界面、网络、React 状态 |
-| `src/features/room/player/`         | 房间播放器（`core/` 内核与插件 + `useRoomPlayer` + `portFor`）：只跟随房间状态；视频元素不在页面上时补发的 pause 不算用户操作                                                                     | 页面布局               |
-| `src/features/room/media/`          | 片源搜索、详情、播放地址                                                                                                                                                                          | 播放器内部             |
-| `src/features/room/commands.ts`     | 所有房间改动都走服务器命令（play:change、state:clear、queue:_、room:_、chat:message）                                                                                                             | 本地判定成功           |
-| `src/features/room/lobby/`、`room/` | 大厅、房间页、选片、片单、成员、聊天（含表情）、今晚看什么、其他活动入口                                                                                                                          | 播放器内部             |
-| `src/features/room/activities/`     | 共享屏幕 / 一起听 / 一起看直播的状态与消息                                                                                                                                                        | 视频同步               |
+| 模块                                | 负责                                                                                                                                                                                                    | 不负责                 |
+| ----------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------- |
+| `src/features/playback/`            | 自己看：播放页（`LegacyPlaybackSurface`，含片源搜索加载动画、弹幕、字幕、Anime4K、下载等）、全站播放会话与小窗（`PlaybackSessionProvider`）                                                             | 任何房间逻辑           |
+| `src/features/room/` 根目录         | 对外入口：`RoomRoute`（/watch-room）、`RoomSession`（根布局）、`MusicPage`、`ScreenSharePage`、`index.ts`（纯函数）、`activities.ts`（直播 / 音乐页用的房间活动）。别的功能只能从这里引用，子目录是内部 | 自己看的播放           |
+| `src/features/room/session/`        | 一起看的全站会话（`RoomSession` 在根布局）：房间播放器单例、画面在房间页 / 房间小窗之间搬家、房间聊天浮窗、语音、聊天弹幕、人在房间时站内点开影片的“怎么看”（加入片单 / 在房间里放 / 自己看）           | 自己看的播放           |
+| `src/features/room/sync/`           | 同步引擎（纯逻辑）：房间状态 + 本机权限 + 播放器接口 `PlayerPort` → 发命令 / 对齐进度，用假播放器和假时钟做单元测试                                                                                     | 界面、网络、React 状态 |
+| `src/features/room/player/`         | 房间播放器（`core/` 内核与插件 + `useRoomPlayer` + `portFor`）：只跟随房间状态；视频元素不在页面上时补发的 pause 不算用户操作                                                                           | 页面布局               |
+| `src/features/room/media/`          | 片源搜索、详情、播放地址                                                                                                                                                                                | 播放器内部             |
+| `src/features/room/lib/commands.ts` | 所有房间改动都走服务器命令（play:change、state:clear、queue:_、room:_、chat:message）                                                                                                                   | 本地判定成功           |
+| `src/features/room/lobby/`、`view/` | 大厅、房间页、选片、片单、成员、聊天（含表情）、今晚看什么、其他活动入口                                                                                                                                | 播放器内部             |
+| `src/features/room/activities/`     | 共享屏幕 / 一起听 / 一起看直播的状态与消息                                                                                                                                                              | 视频同步               |
 
 几条行为：
 

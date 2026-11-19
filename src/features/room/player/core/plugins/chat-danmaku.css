@@ -3,11 +3,12 @@
 .tm-room-dm {
   position: absolute;
   inset: 0;
-  z-index: 20;
+  z-index: var(--tm-z-player-chat);
   overflow: hidden;
   pointer-events: none;
 }
 .tm-room-dm-item {
+  /* 房间弹幕：描边胶囊 + 名字，和弹幕库里的白字分开 */
   position: absolute;
   left: 0;
   white-space: nowrap;
@@ -15,12 +16,7 @@
   font-weight: 600;
   line-height: 24px;
   color: var(--tm-on-art);
-  text-shadow: 0 1px 3px rgb(var(--tm-ink-rgb) / 0.85),
-    0 0 8px rgb(var(--tm-ink-rgb) / 0.5);
   will-change: transform;
-}
-/* 房间弹幕：描边胶囊 + 名字，和弹幕库里的白字分开 */
-.tm-room-dm-item {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -85,6 +81,7 @@
   font: inherit;
   font-size: 12px;
   cursor: pointer;
+  display: none;
 }
 .tm-room-dm-switch:focus-visible,
 .tm-room-dm-send:focus-visible,
@@ -94,6 +91,7 @@
 }
 /* 最宽 220，控制条放不下时先缩它，不把退出全屏等按钮挤出屏幕 */
 .tm-room-dm-input {
+  /* 输入框和发送按钮只在全屏出现（不全屏时下面就是聊天栏）；开关一直在 */
   width: min(220px, 30vw);
   min-width: 0;
   min-height: 28px;
@@ -105,6 +103,7 @@
   color: var(--tm-on-art);
   font: inherit;
   font-size: 13px;
+  display: none;
 }
 .tm-room-dm-input::placeholder {
   color: var(--tm-on-art-muted);
@@ -114,18 +113,11 @@
   opacity: 0.5;
   cursor: not-allowed;
 }
-/* 输入框和发送按钮只在全屏出现（不全屏时下面就是聊天栏）；开关一直在 */
-.tm-room-dm-input,
-.tm-room-dm-send {
-  display: none;
-}
 [data-tm-dm-full] .tm-room-dm-input,
 [data-tm-dm-full] .tm-room-dm-send {
   display: block;
 }
-@media (max-width: 767px) {
-  .tm-room-dm-item {
-    font-size: 15px;
-    line-height: 20px;
-  }
+:where(html[data-tm-device='phone']) .tm-room-dm-item {
+  font-size: 15px;
+  line-height: 20px;
 }

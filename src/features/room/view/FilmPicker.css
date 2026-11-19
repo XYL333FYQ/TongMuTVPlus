@@ -18,6 +18,9 @@
   color: var(--tm-text);
   font-size: 15px;
   outline: none;
+  box-shadow: none;
+  --tw-ring-shadow: 0 0 transparent;
+  --tw-ring-offset-shadow: 0 0 transparent;
 }
 .tm-room-picker-results {
   display: flex;
@@ -99,10 +102,8 @@
   color: var(--tm-muted);
   font-size: 12px;
 }
-@media (max-width: 599px) {
-  .tm-room-picker-result-sources {
-    padding-left: 8px;
-  }
+:where(html[data-tm-device='phone']) .tm-room-picker-result-sources {
+  padding-left: 8px;
 }
 /* 选片：搜索框固定在顶部，只滚结果；去掉表单插件给输入框加的描边 */
 .tm-room-dialog > .tm-room-picker {
@@ -112,7 +113,6 @@
 .tm-room-picker:focus-within {
   border-color: var(--tm-text);
 }
-.tm-room-picker input,
 .tm-room-picker input:focus {
   box-shadow: none;
   --tw-ring-shadow: 0 0 transparent;

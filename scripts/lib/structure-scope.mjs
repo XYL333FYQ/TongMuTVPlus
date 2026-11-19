@@ -26,8 +26,13 @@ export const CORE_CODE = [
   'src/app/watch-room/',
 ];
 
-/** 上游页面专用的样式，放在 styles/ 里但不属于核心 */
-const EXCLUDED = ['src/styles/media.css'];
+/** 不属于核心的文件（理由见 docs/STANDARD.md “允许的例外”） */
+const EXCLUDED = [
+  // 上游页面专用的样式，放在 styles/ 里
+  'src/styles/media.css',
+  // 房间里一起听音乐的页面：沿用上游音乐页的 Tailwind 写法
+  'src/features/room/MusicPage.tsx',
+];
 
 export function inScope(file, prefixes) {
   if (EXCLUDED.includes(file)) return false;

@@ -80,21 +80,17 @@
   font-size: 12px;
   font-weight: 700;
 }
-@media (max-width: 1023px) {
-  .tm-room-share-layout {
-    grid-template-columns: minmax(0, 1fr);
-  }
+:where(html:not([data-tm-device='wide'])) .tm-room-share-layout {
+  grid-template-columns: minmax(0, 1fr);
 }
-@media (max-width: 767px) {
-  .tm-room-share {
-    gap: 14px;
-    padding-top: 4px;
-  }
-  .tm-room-share-stage {
-    width: calc(100% + 2 * var(--tm-content-gutter, 16px));
-    margin-inline: calc(-1 * var(--tm-content-gutter, 16px));
-    border-radius: 0;
-  }
+:where(html[data-tm-device='phone']) .tm-room-share {
+  gap: 14px;
+  padding-top: 4px;
+}
+:where(html[data-tm-device='phone']) .tm-room-share-stage {
+  width: calc(100% + 2 * var(--tm-content-gutter, 16px));
+  margin-inline: calc(-1 * var(--tm-content-gutter, 16px));
+  border-radius: 0;
 }
 :where(html:is([data-tm-device='phone'], [data-tm-device='phone-landscape']))
   .tm-room-share {

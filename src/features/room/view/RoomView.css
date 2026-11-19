@@ -5,7 +5,7 @@
   isolation: isolate;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 16px;
   width: 100%;
   max-width: var(--tm-container);
   margin-inline: auto;
@@ -55,6 +55,7 @@ html[data-tm-no-blur] .tm-room-view-ambient {
   min-height: 44px;
   padding: 0 6px 0 12px;
   border-radius: var(--tm-radius-full);
+  min-width: 44px;
 }
 .tm-room-view-faces:hover .tm-room-view-face {
   transform: translateX(-2px);
@@ -87,11 +88,9 @@ html[data-tm-no-blur] .tm-room-view-ambient {
   background: var(--tm-surface);
   box-shadow: inset 0 0 0 1px var(--tm-line);
 }
-@media (max-width: 899px) {
-  .tm-room-view-faces {
-    margin-right: auto;
-    padding-left: 8px;
-  }
+:where(html:not([data-tm-device='wide'])) .tm-room-view-faces {
+  margin-right: auto;
+  padding-left: 8px;
 }
 
 /* 主体 */
@@ -122,8 +121,6 @@ html[data-tm-no-blur] .tm-room-view-ambient {
   padding: 24px;
   color: var(--tm-on-art);
   text-align: center;
-}
-.tm-room-view-stage-status {
   background: rgb(var(--tm-ink-rgb) / 0.45);
   font-size: 14px;
 }
@@ -138,13 +135,14 @@ html[data-tm-no-blur] .tm-room-view-ambient {
 
 /* 正在放映 */
 .tm-room-view-now {
+  /* 正在放映：直接放在舞台下面，不再套一层卡片 */
   display: flex;
   align-items: center;
   gap: 16px;
-  padding: 14px;
   border-radius: var(--tm-radius-lg);
-  background: var(--tm-surface);
-  box-shadow: inset 0 0 0 1px var(--tm-line);
+  padding: 6px 2px 0;
+  background: none;
+  box-shadow: none;
 }
 .tm-room-view-now-poster {
   display: grid;
@@ -215,21 +213,19 @@ html[data-tm-no-blur] .tm-room-view-ambient {
   align-items: center;
   gap: 8px;
 }
-@media (max-width: 767px) {
-  .tm-room-view-now {
-    flex-wrap: wrap;
-    gap: 12px;
-  }
-  .tm-room-view-now-poster {
-    width: 44px;
-    height: 62px;
-  }
-  .tm-room-view-now h2 {
-    font-size: 17px;
-  }
-  .tm-room-view-now-actions {
-    width: 100%;
-  }
+:where(html[data-tm-device='phone']) .tm-room-view-now {
+  flex-wrap: wrap;
+  gap: 12px;
+}
+:where(html[data-tm-device='phone']) .tm-room-view-now-poster {
+  width: 44px;
+  height: 62px;
+}
+:where(html[data-tm-device='phone']) .tm-room-view-now h2 {
+  font-size: 17px;
+}
+:where(html[data-tm-device='phone']) .tm-room-view-now-actions {
+  width: 100%;
 }
 
 /* 快速选集 */
@@ -279,15 +275,9 @@ html[data-tm-no-blur] .tm-room-view-ambient {
 }
 
 /* 侧栏：桌面上与左栏同高 */
-@media (max-width: 767px) {
-  .tm-room-view {
-    gap: 14px;
-    padding-top: 4px;
-  }
-  .tm-room-view-stage {
-    margin-inline: calc(-1 * var(--tm-content-gutter, 16px));
-    border-radius: 0;
-  }
+:where(html[data-tm-device='phone']) .tm-room-view-stage {
+  margin-inline: calc(-1 * var(--tm-content-gutter, 16px));
+  border-radius: 0;
 }
 .tm-room-view-chat-count {
   color: var(--tm-muted);
@@ -320,29 +310,23 @@ html[data-tm-no-blur] .tm-room-view-ambient {
 }
 
 /* 触屏和窄屏：小标签也要够点（至少 44px） */
-@media (pointer: coarse), (max-width: 599px) {
+@media (pointer: coarse) {
   .tm-room-view-chip-button {
     min-height: 44px;
   }
 }
-.tm-room-view-faces {
-  min-width: 44px;
+:where(html[data-tm-device='phone']) .tm-room-view-chip-button {
+  min-height: 44px;
 }
 .tm-room-head-meta .tm-room-view-chip-button {
   padding: 0 6px;
   margin-left: -6px;
   border-radius: var(--tm-radius-sm);
 }
-/* 正在放映：直接放在舞台下面，不再套一层卡片 */
-.tm-room-view-now {
-  padding: 6px 2px 0;
-  background: none;
-  box-shadow: none;
-}
-@media (max-width: 899px) {
-  .tm-room-head-actions .tm-room-view-faces {
-    display: none;
-  }
+:where(html:not([data-tm-device='wide']))
+  .tm-room-head-actions
+  .tm-room-view-faces {
+  display: none;
 }
 :where(html:is([data-tm-device='phone'], [data-tm-device='phone-landscape']))
   .tm-room-view {
@@ -356,7 +340,7 @@ html[data-tm-no-blur] .tm-room-view-ambient {
   .tm-room-view-stage {
   position: sticky;
   top: 0;
-  z-index: 5;
+  z-index: 1;
 }
 :where(html:is([data-tm-device='phone'], [data-tm-device='phone-landscape']))
   .tm-room-head-meta
@@ -370,9 +354,6 @@ html[data-tm-no-blur] .tm-room-view-ambient {
  * compact（手机、手机横屏、竖长的电脑窗口）：后面 [data-layout='compact'] 里改成紧凑排版；
  * tablet（触屏平板，横竖都是）：最后“平板”一段。
  * 手机横屏、手机竖屏另有按档位（html[data-tm-device]）的细调。 */
-.tm-room-view {
-  gap: 16px;
-}
 .tm-room-view-body {
   display: grid;
   grid-template-columns: minmax(0, 1fr) clamp(280px, 32vw, 360px);
@@ -490,8 +471,8 @@ html[data-tm-no-blur] .tm-room-view-ambient {
   flex: none;
   flex-wrap: nowrap;
   gap: 4px;
-  min-height: 56px;
-  padding: 4px 8px 4px 12px;
+  min-height: 52px;
+  padding: 2px 4px 2px 6px;
 }
 :where(.tm-room-view[data-layout='compact'])
   .tm-room-view-head
@@ -499,13 +480,16 @@ html[data-tm-no-blur] .tm-room-view-ambient {
   .tm-room-view-faces {
   display: flex;
   margin-right: 0;
-  padding: 0 4px 0 12px;
+  min-height: 40px;
+  padding: 0 2px 0 10px;
 }
 :where(.tm-room-view[data-layout='compact'])
   .tm-room-view-head
   .tm-room-view-face {
-  width: 28px;
-  height: 28px;
+  width: 26px;
+  height: 26px;
+  margin-left: -7px;
+  border-width: 1.5px;
   font-size: 12px;
 }
 :where(.tm-room-view[data-layout='compact']) .tm-room-view-body {
@@ -517,13 +501,21 @@ html[data-tm-no-blur] .tm-room-view-ambient {
   min-width: 0;
   min-height: 0;
 }
-:where(.tm-room-view[data-layout='compact']) .tm-room-view-main,
-:where(.tm-room-view[data-layout='compact']) .tm-room-view-chat {
-  min-width: 0;
-}
 :where(.tm-room-view[data-layout='compact']) .tm-room-view-main {
+  min-width: 0;
   flex: none;
   gap: 0;
+}
+:where(.tm-room-view[data-layout='compact']) .tm-room-view-chat {
+  min-width: 0;
+  position: static;
+  flex: 1;
+  height: auto;
+  min-height: 0;
+  border-top: 1px solid var(--tm-line);
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
 }
 .tm-room-view:where([data-layout='compact']) .tm-room-view-stage {
   position: relative;
@@ -534,16 +526,17 @@ html[data-tm-no-blur] .tm-room-view-ambient {
 :where(.tm-room-view[data-layout='compact']) .tm-room-view-now {
   flex-wrap: nowrap;
   gap: 10px;
-  padding: 10px 8px 10px 12px;
+  padding: 8px 6px 8px 12px;
 }
 :where(.tm-room-view[data-layout='compact'])
   .tm-room-view-now
   .tm-room-view-now-poster {
-  width: 32px;
-  height: 46px;
+  width: 30px;
+  height: 42px;
+  border-radius: 6px;
 }
 :where(.tm-room-view[data-layout='compact']) .tm-room-view-now h2 {
-  font-size: 15px;
+  font-size: 14px;
 }
 :where(.tm-room-view[data-layout='compact'])
   .tm-room-view-now
@@ -554,6 +547,7 @@ html[data-tm-no-blur] .tm-room-view-ambient {
   .tm-room-view-now
   .tm-room-view-now-meta {
   font-size: 12px;
+  display: none;
 }
 :where(.tm-room-view[data-layout='compact'])
   .tm-room-view-now
@@ -563,16 +557,6 @@ html[data-tm-no-blur] .tm-room-view-ambient {
 /* 换集在“片单”面板里 */
 :where(.tm-room-view[data-layout='compact']) .tm-room-view-strip {
   display: none;
-}
-:where(.tm-room-view[data-layout='compact']) .tm-room-view-chat {
-  position: static;
-  flex: 1;
-  height: auto;
-  min-height: 0;
-  border-top: 1px solid var(--tm-line);
-  border-radius: 0;
-  background: none;
-  box-shadow: none;
 }
 :where(.tm-room-view[data-layout='compact']) .tm-room-view-chat-head {
   display: none;
@@ -597,18 +581,14 @@ html[data-tm-no-blur] .tm-room-view-ambient {
   display: none;
 }
 .tm-room-view:where([data-layout='desktop']) .tm-room-view-now {
-  padding: 14px 16px;
   border-radius: var(--tm-radius-lg);
   background: var(--tm-surface);
   box-shadow: inset 0 0 0 1px var(--tm-line);
+  gap: 12px;
+  padding: 10px 14px;
 }
 :where(.tm-room-view[data-layout='compact']) .tm-room-view-now-episode {
   display: inline;
-}
-:where(.tm-room-view[data-layout='compact'])
-  .tm-room-view-now
-  .tm-room-view-now-meta {
-  display: none;
 }
 :where(.tm-room-view[data-layout='compact'])
   .tm-room-view-head
@@ -621,51 +601,13 @@ html[data-tm-no-blur] .tm-room-view-ambient {
   background: var(--tm-surface-raised);
   box-shadow: none;
 }
-:where(.tm-room-view[data-layout='compact']) .tm-room-view-head {
-  min-height: 52px;
-  padding: 2px 4px 2px 6px;
-}
-:where(.tm-room-view[data-layout='compact'])
-  .tm-room-view-head
-  .tm-room-head-actions
-  .tm-room-view-faces {
-  min-height: 40px;
-  padding: 0 2px 0 10px;
-}
-:where(.tm-room-view[data-layout='compact'])
-  .tm-room-view-head
-  .tm-room-view-face {
-  width: 26px;
-  height: 26px;
-  margin-left: -7px;
-  border-width: 1.5px;
-  font-size: 12px;
-}
-:where(.tm-room-view[data-layout='compact']) .tm-room-view-now {
-  gap: 10px;
-  padding: 8px 6px 8px 12px;
-}
-:where(.tm-room-view[data-layout='compact'])
-  .tm-room-view-now
-  .tm-room-view-now-poster {
-  width: 30px;
-  height: 42px;
-  border-radius: 6px;
-}
 :where(.tm-room-view[data-layout='compact'])
   .tm-room-view-now
   .tm-room-view-now-text {
   gap: 1px;
 }
-:where(.tm-room-view[data-layout='compact']) .tm-room-view-now h2 {
-  font-size: 14px;
-}
 :where(.tm-room-view[data-layout='desktop']) .tm-room-view-head {
   min-height: 56px;
-}
-.tm-room-view:where([data-layout='desktop']) .tm-room-view-now {
-  gap: 12px;
-  padding: 10px 14px;
 }
 .tm-room-view:where([data-layout='desktop'])
   .tm-room-view-now
@@ -707,7 +649,7 @@ html[data-tm-no-blur] .tm-room-view-ambient {
   .tm-room-view-strip {
   padding: 0 14px 12px;
 }
-.tm-room-view.tm-room-view:where([data-layout='desktop']) {
+.tm-room-view:where([data-layout='desktop']) {
   padding-bottom: 0;
 }
 :where(.tm-room-view[data-layout='desktop']) .tm-room-view-body {
@@ -719,7 +661,9 @@ html[data-tm-no-blur] .tm-room-view-ambient {
  * 左边画面按屏幕高度收、下面是正在放映，右边聊天占满高度；收起站点顶栏和底栏，把高度都给房间。
  * 平板横屏不走这里，用电脑排版（wide）。 */
 :where(html[data-tm-device='phone-landscape']) .tm-room-view {
-  --tm-room-view-top: var(--tm-header-height);
+  --tm-room-view-top: 0px;
+  height: 100dvh;
+  padding: 0 env(safe-area-inset-right) 0 env(safe-area-inset-left);
 }
 :where(html[data-tm-device='phone-landscape']) .tm-room-view-body {
   flex-direction: row;
@@ -745,15 +689,10 @@ html[data-tm-no-blur] .tm-room-view-ambient {
   border-top: 0;
   border-left: 1px solid var(--tm-line);
 }
-:where(html[data-tm-device='phone-landscape']) .tm-room-view {
-  --tm-room-view-top: 0px;
-  height: 100dvh;
-  padding: 0 env(safe-area-inset-right) 0 env(safe-area-inset-left);
-}
 :where(html[data-tm-device='phone-landscape']) .tm-room-view-head {
   min-height: 48px;
 }
-.tm-room-view.tm-room-view[data-layout='tablet'] {
+.tm-room-view[data-layout='tablet'] {
   gap: 0;
   height: 100dvh;
   max-width: none;

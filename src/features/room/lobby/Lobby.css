@@ -35,23 +35,9 @@
 }
 .tm-room-lobby-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  /* 按自己的宽度放几列：电脑 4 列，平板和横屏手机 2 列，手机 1 列 */
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 270px), 1fr));
   gap: 28px 20px;
-}
-@media (max-width: 1199px) {
-  .tm-room-lobby-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-}
-@media (max-width: 899px) {
-  .tm-room-lobby-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-@media (max-width: 599px) {
-  .tm-room-lobby-grid {
-    grid-template-columns: minmax(0, 1fr);
-  }
 }
 .tm-room-lobby-card {
   display: flex;
@@ -155,25 +141,23 @@
 }
 
 /* 大厅（手机）：房间号输入占满一行，创建房间是整行主按钮 */
-@media (max-width: 599px) {
-  .tm-room-lobby-head {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 14px;
-  }
-  .tm-room-lobby-actions {
-    display: flex;
-    flex-direction: column;
-    align-items: stretch;
-    gap: 10px;
-    width: 100%;
-  }
-  .tm-room-lobby-join {
-    display: flex;
-    width: 100%;
-  }
-  .tm-room-lobby-join input {
-    flex: 1;
-    min-width: 0;
-  }
+:where(html[data-tm-device='phone']) .tm-room-lobby-head {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 14px;
+}
+:where(html[data-tm-device='phone']) .tm-room-lobby-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+  width: 100%;
+}
+:where(html[data-tm-device='phone']) .tm-room-lobby-join {
+  display: flex;
+  width: 100%;
+}
+:where(html[data-tm-device='phone']) .tm-room-lobby-join input {
+  flex: 1;
+  min-width: 0;
 }

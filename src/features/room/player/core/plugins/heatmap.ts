@@ -135,7 +135,7 @@ export function heatmapPlugin(
         bottom: '5px',
         height: '48px',
         pointerEvents: 'none',
-        zIndex: '30',
+        zIndex: 'var(--tm-z-player-heatmap)',
         display: 'none',
       },
       mounted($el: HTMLElement) {

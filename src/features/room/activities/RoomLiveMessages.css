@@ -1,7 +1,7 @@
 .tm-room-live-surface {
   position: absolute;
   inset: 0;
-  z-index: 65;
+  z-index: var(--tm-z-player-live);
   pointer-events: none;
 }
 .tm-room-live-messages {
@@ -117,12 +117,11 @@
   outline: 2px solid var(--tm-text);
   outline-offset: 2px;
 }
-@media (max-width: 640px) {
+:where(html[data-tm-device='phone'])
   .art-video-player:not(:fullscreen):not(.art-fullscreen-web)
-    .tm-room-live-controls[data-composing='true'] {
-    bottom: 8px;
-    max-height: calc(100% - 16px);
-  }
+  .tm-room-live-controls[data-composing='true'] {
+  bottom: 8px;
+  max-height: calc(100% - 16px);
 }
 .art-video-player:fullscreen .tm-room-live-controls,
 .art-video-player.art-fullscreen-web .tm-room-live-controls {

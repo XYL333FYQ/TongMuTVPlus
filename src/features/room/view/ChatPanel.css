@@ -211,12 +211,14 @@
   color: var(--tm-accent-contrast);
 }
 .tm-room-chat-compose-foot {
-  display: flex;
+  /* ---------- 第三轮（2026-11-15）：和原型逐项对齐 */
+  /* 聊天底部“消息飘成弹幕”开关行：只在电脑房间页的宽聊天栏出现 */
   align-items: center;
   justify-content: space-between;
   gap: 8px;
   min-height: 40px;
   padding: 2px 16px 8px;
+  display: none;
 }
 .tm-room-chat-compose-error {
   color: var(--tm-danger);
@@ -306,12 +308,6 @@
 .tm-room-view:where([data-layout='compact']) .tm-room-chat-send {
   width: 40px;
   height: 40px;
-}
-
-/* ---------- 第三轮（2026-11-15）：和原型逐项对齐 */
-/* 聊天底部“消息飘成弹幕”开关行：只在电脑房间页的宽聊天栏出现 */
-.tm-room-chat-compose-foot {
-  display: none;
 }
 .tm-room-chat-compose-foot[data-has-error] {
   display: flex;

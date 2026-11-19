@@ -114,9 +114,7 @@ body:has(.tm-mini) .tm-room-dock {
   font-size: 12px;
 }
 :where(html:is([data-tm-device='phone'], [data-tm-device='phone-landscape']))
-  .tm-room-dock-pill,
-:where(html:is([data-tm-device='phone'], [data-tm-device='phone-landscape']))
-  .tm-room-dock {
+  .tm-room-dock-pill {
   right: 12px;
   bottom: calc(
     var(--tm-bottom-nav-height, 64px) + 12px + var(--tm-safe-bottom, 0px)
@@ -124,6 +122,10 @@ body:has(.tm-mini) .tm-room-dock {
 }
 :where(html:is([data-tm-device='phone'], [data-tm-device='phone-landscape']))
   .tm-room-dock {
+  right: 12px;
+  bottom: calc(
+    var(--tm-bottom-nav-height, 64px) + 12px + var(--tm-safe-bottom, 0px)
+  );
   left: 12px;
   width: auto;
   height: min(70vh, 560px);
