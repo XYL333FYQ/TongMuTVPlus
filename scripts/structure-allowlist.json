@@ -111,7 +111,6 @@
   ],
   "eslintDisable": [
     "src/components/ContinueWatching.tsx",
-    "src/components/VideoCard.tsx",
     "src/components/catalog/CapsuleSwitch.tsx",
     "src/components/catalog/PublicPoster.tsx",
     "src/features/playback/LegacyPlaybackSurface.tsx",

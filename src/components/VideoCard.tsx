@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any,react-hooks/exhaustive-deps,@typescript-eslint/no-empty-function */
-
 import {
   Cloud,
   ExternalLink,
@@ -43,8 +41,11 @@ import {
 } from '@/lib/db.client';
 import { posterTiltHandlers } from '@/lib/motion';
 import { isNetdiskSource } from '@/lib/netdisk/source';
-import { filmPlaybackHref, roomSelectionHref } from '@/lib/playback-links';
-import { queuePlaybackHref } from '@/lib/playback-links';
+import {
+  filmPlaybackHref,
+  queuePlaybackHref,
+  roomSelectionHref,
+} from '@/lib/playback-links';
 import { appendSpecialSourceParam } from '@/lib/special-source.client';
 import type { TMDBVideoItem } from '@/lib/tmdb.client';
 import {
@@ -165,7 +166,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
     ref
   ) {
     const router = useRouter();
-    const playback = usePlaybackSessionSafe();
+    const requestPlayback = usePlaybackSessionSafe()?.requestPlayback;
     const [showAnimeSubscribe, setShowAnimeSubscribe] = useState(false);
     const [animeSubscribeToast, setAnimeSubscribeToast] = useState('');
     const isAdminUser = useMemo(() => {
@@ -194,6 +195,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
     const [isLoading, setIsLoading] = useState(false);
     const [showMobileActions, setShowMobileActions] = useState(false);
     const externalAction = useExternalAction();
+    const { open: openExternal, mode: externalMode } = externalAction;
     const [searchFavorited, setSearchFavorited] = useState<boolean | null>(
       null
     ); // 搜索结果的收藏状态
@@ -216,15 +218,14 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
     useEffect(() => {
       if (typeof window !== 'undefined') {
         const enabled =
-          (window as any).RUNTIME_CONFIG?.AI_ENABLED &&
-          (window as any).RUNTIME_CONFIG?.AI_ENABLE_VIDEOCARD_ENTRY;
+          window.RUNTIME_CONFIG?.AI_ENABLED &&
+          window.RUNTIME_CONFIG?.AI_ENABLE_VIDEOCARD_ENTRY;
         setAiEnabled(enabled);
         // 开了 AI 才在空闲时预载问片面板代码
         if (enabled) preloadAIChatPanel();
 
         // 加载AI默认消息配置
-        const defaultMsg = (window as any).RUNTIME_CONFIG
-          ?.AI_DEFAULT_MESSAGE_WITH_VIDEO;
+        const defaultMsg = window.RUNTIME_CONFIG?.AI_DEFAULT_MESSAGE_WITH_VIDEO;
         if (defaultMsg) {
           setAiDefaultMessageWithVideo(defaultMsg);
         }
@@ -328,7 +329,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
       const storageKey = generateStorageKey(actualSource, actualId);
       const unsubscribe = subscribeToDataUpdates(
         'favoritesUpdated',
-        (newFavorites: Record<string, any>) => {
+        (newFavorites: Record<string, unknown>) => {
           // 检查当前项目是否在新的收藏列表中
           const isNowFavorited = !!newFavorites[storageKey];
           setFavorited(isNowFavorited);
@@ -339,9 +340,9 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
     }, [from, actualSource, actualId]);
 
     const handleToggleFavorite = useCallback(
-      async (e: React.MouseEvent) => {
-        e.preventDefault();
-        e.stopPropagation();
+      async (e?: React.MouseEvent) => {
+        e?.preventDefault();
+        e?.stopPropagation();
         if (from === 'douban' || !actualSource || !actualId) return;
 
         try {
@@ -392,9 +393,9 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
     );
 
     const handleDeleteRecord = useCallback(
-      async (e: React.MouseEvent) => {
-        e.preventDefault();
-        e.stopPropagation();
+      async (e?: React.MouseEvent) => {
+        e?.preventDefault();
+        e?.stopPropagation();
         if (from !== 'playrecord' || !actualSource || !actualId) return;
         try {
           await deletePlayRecord(actualSource, actualId);
@@ -452,7 +453,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
           window.location.pathname + window.location.search ===
           selectedPlaybackHref
         )
-          playback?.requestPlayback(selectedPlaybackHref, 'user');
+          requestPlayback?.(selectedPlaybackHref, 'user');
         else router.push(selectedPlaybackHref);
       }
     }, [
@@ -462,7 +463,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
       actualSource,
       actualId,
       selectedPlaybackHref,
-      playback?.requestPlayback,
+      requestPlayback,
       router,
     ]);
 
@@ -481,7 +482,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
           'live_',
           ''
         )}&id=${actualId.replace('live_', '')}`;
-        externalAction.open(url);
+        openExternal(url);
       } else if (
         from === 'douban' ||
         from === 'tmdb' ||
@@ -498,7 +499,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
               : ''
           }`
         );
-        externalAction.open(url);
+        openExternal(url);
       } else if (actualSource && actualId) {
         const url = appendSpecialSourceParam(
           `/play?source=${actualSource}&id=${actualId}&title=${encodeURIComponent(
@@ -513,11 +514,11 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
             isDuanju ? '&duanju=1' : ''
           }`
         );
-        externalAction.open(url);
+        openExternal(url);
       }
     }, [
       isUpcoming,
-      externalAction.open,
+      openExternal,
       origin,
       from,
       actualSource,
@@ -677,7 +678,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
         },
       };
       return configs[from] || configs.search;
-    }, [from, isAggregate, douban_id, rate, isUpcoming]);
+    }, [from, rate, isUpcoming]);
 
     const upcomingReleaseText = useMemo(() => {
       if (!isUpcoming || daysUntilRelease === null) return undefined;
@@ -733,9 +734,9 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
         actions.push({
           id: 'play-new-tab',
           label:
-            externalAction.mode === 'copy'
+            externalMode === 'copy'
               ? '复制播放链接'
-              : externalAction.mode === 'external'
+              : externalMode === 'external'
               ? origin === 'live'
                 ? '在外部观看'
                 : '在外部播放'
@@ -776,13 +777,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
               ) : (
                 <Heart size={20} className='tm-video-card-menu-heart' />
               ),
-              onClick: () => {
-                const mockEvent = {
-                  preventDefault: () => {},
-                  stopPropagation: () => {},
-                } as React.MouseEvent;
-                handleToggleFavorite(mockEvent);
-              },
+              onClick: () => handleToggleFavorite(),
               color: currentFavorited
                 ? ('danger' as const)
                 : ('default' as const),
@@ -793,7 +788,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
               id: 'favorite-loading',
               label: '收藏加载中...',
               icon: <Heart size={20} />,
-              onClick: () => {}, // 加载中时不响应点击
+              onClick: () => undefined, // 加载中时不响应点击
               disabled: true,
             });
           }
@@ -810,13 +805,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
             ) : (
               <Heart size={20} className='tm-video-card-menu-heart' />
             ),
-            onClick: () => {
-              const mockEvent = {
-                preventDefault: () => {},
-                stopPropagation: () => {},
-              } as React.MouseEvent;
-              handleToggleFavorite(mockEvent);
-            },
+            onClick: () => handleToggleFavorite(),
             color: currentFavorited
               ? ('danger' as const)
               : ('default' as const),
@@ -835,13 +824,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
           id: 'delete',
           label: '删除记录',
           icon: <Trash2 size={20} />,
-          onClick: () => {
-            const mockEvent = {
-              preventDefault: () => {},
-              stopPropagation: () => {},
-            } as React.MouseEvent;
-            handleDeleteRecord(mockEvent);
-          },
+          onClick: () => handleDeleteRecord(),
           color: 'danger' as const,
         });
       }
@@ -856,7 +839,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
             const url = isBangumi
               ? getBangumiSubjectUrl(actualDoubanId.toString())
               : `https://movie.douban.com/subject/${actualDoubanId.toString()}`;
-            externalAction.open(url);
+            openExternal(url);
           },
           color: 'default' as const,
         });
@@ -933,20 +916,16 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
       searchFavorited,
       actualDoubanId,
       isBangumi,
-      isAggregate,
-      dynamicSourceNames,
       handleClick,
       handleToggleFavorite,
       handleDeleteRecord,
       handlePlayInNewTab,
-      externalAction.mode,
-      externalAction.open,
+      externalMode,
+      openExternal,
       aiEnabled,
       actualTitle,
-      actualSearchType,
       isUpcoming,
       origin,
-      tmdb_id,
       openTrailerPicker,
       isAdminUser,
       resolvedIsAnime,
@@ -1544,7 +1523,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
           onClose={() => setShowTrailerPicker(false)}
           onRetry={openTrailerPicker}
           onSelect={(video) => {
-            externalAction.open(`https://www.youtube.com/watch?v=${video.key}`);
+            openExternal(`https://www.youtube.com/watch?v=${video.key}`);
             setShowTrailerPicker(false);
           }}
         />
