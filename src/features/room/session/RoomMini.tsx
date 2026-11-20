@@ -13,7 +13,7 @@ import { useEffect, useRef, useState } from 'react';
 import MiniPlayerControls from '@/components/mini-player/MiniPlayerControls';
 import { useMiniPlayerDrag } from '@/components/mini-player/useMiniPlayerDrag';
 
-import type { WatchPlayer } from '../player/core/WatchPlayer';
+import type { WatchPlayer } from '@/features/player';
 
 function useVideoState(player: WatchPlayer | null) {
   const [paused, setPaused] = useState(true);

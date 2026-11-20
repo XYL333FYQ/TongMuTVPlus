@@ -4,9 +4,10 @@
  * 选片：搜影片，选一个片源后“现在一起看”或“加入片单”。
  */
 
-import './FilmPicker.css';
 import { Film, ListPlus, Loader2, Play, Search } from 'lucide-react';
 import { FormEvent, useEffect, useMemo, useState } from 'react';
+
+import './FilmPicker.css';
 
 import type { SearchResult } from '@/lib/types';
 

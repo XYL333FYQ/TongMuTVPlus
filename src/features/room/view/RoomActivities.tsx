@@ -5,10 +5,11 @@
  * 它们各有自己的页面（/watch-room/screen、/music、/live），这里负责入口和“正在进行”提示。
  */
 
-import './RoomActivities.css';
 import { ChevronRight, Lock, MonitorUp, Music2, Radio } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
+
+import './RoomActivities.css';
 
 import { liveActivityHref } from '@/features/room/activities/room-live';
 

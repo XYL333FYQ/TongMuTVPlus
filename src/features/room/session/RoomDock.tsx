@@ -7,10 +7,11 @@
  * 聊天面板和房间页侧栏是同一个组件（RoomChat）。
  */
 
-import './RoomDock.css';
 import { ArrowUpRight, MessageCircle, Mic, MicOff, X } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useRef } from 'react';
+
+import './RoomDock.css';
 
 import type { RoomVoice } from './context';
 import RoomChat from '../view/RoomChat';

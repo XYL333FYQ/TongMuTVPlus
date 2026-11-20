@@ -112,15 +112,15 @@
   "eslintDisable": [
     "src/features/playback/LegacyPlaybackSurface.tsx",
     "src/features/room/media/playback-url.ts",
-    "src/features/room/player/core/WatchPlayer.ts",
-    "src/features/room/player/core/hls-engine.ts",
-    "src/features/room/player/core/plugins/anime4k.ts",
-    "src/features/room/player/core/plugins/basics.ts",
-    "src/features/room/player/core/plugins/danmaku.ts",
-    "src/features/room/player/core/plugins/heatmap.ts",
-    "src/features/room/player/core/plugins/link-refresh.ts",
-    "src/features/room/player/core/plugins/playback-flow.ts",
-    "src/features/room/player/core/plugins/subtitles.ts",
+    "src/features/player/core/WatchPlayer.ts",
+    "src/features/player/core/hls-engine.ts",
+    "src/features/player/core/plugins/anime4k.ts",
+    "src/features/player/core/plugins/basics.ts",
+    "src/features/player/core/plugins/danmaku.ts",
+    "src/features/player/core/plugins/heatmap.ts",
+    "src/features/player/core/plugins/link-refresh.ts",
+    "src/features/player/core/plugins/playback-flow.ts",
+    "src/features/player/core/plugins/subtitles.ts",
     "src/features/room/player/useRoomPlayer.ts"
   ]
 }

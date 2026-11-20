@@ -4,6 +4,7 @@
 
 - [代码规范](STANDARD.md)：目录、依赖方向、命名、样式写法、块名登记表、层级表。新代码先看它。
 - [架构说明](architecture.md)：自己看和一起看怎么工作、房间同步模型、代码边界。
+- [自己看重建清单](playback-rebuild.md)：自己看换到共用播放器内核要做的事、功能对照表、步骤。
 - [产品范围与验收约定](requirements.md)
 - [游客能看到什么](GUEST_BOUNDARY.md)
 - [品牌与来源](PROJECT_IDENTITY.md)、[品牌兼容](BRAND_COMPATIBILITY.md)：哪些对外名字不能改、为什么。

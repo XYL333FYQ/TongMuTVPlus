@@ -6,9 +6,10 @@
  * 片子没带片源（只有片名）时，去房间里选片源。
  */
 
-import './FilmSheet.css';
 import { Clapperboard, ListPlus, Loader2, MonitorPlay, X } from 'lucide-react';
 import { useState } from 'react';
+
+import './FilmSheet.css';
 
 import ModalLayer from '@/components/feedback/ModalLayer';
 

@@ -1,10 +1,11 @@
 'use client';
 
-import './ScreenSharePage.css';
 import { ArrowLeft, ExternalLink, LogOut, MonitorUp } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { type MutableRefObject, useCallback, useEffect, useState } from 'react';
+
+import './ScreenSharePage.css';
 
 import { useAudioFocus } from '@/hooks/useAudioFocus';
 

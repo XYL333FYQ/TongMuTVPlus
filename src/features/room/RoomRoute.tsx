@@ -9,11 +9,10 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
 
 import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
+import { usePlaybackSessionSafe } from '@/hooks/usePlaybackSession';
 
 import PageLayout from '@/components/PageLayout';
 import { useWatchRoomContext } from '@/components/WatchRoomProvider';
-
-import { usePlaybackSessionSafe } from '@/hooks/usePlaybackSession';
 
 import { filmFromHref, playChange } from './lib/commands';
 import { isExternalRoomServer } from './lib/external-room-server';

@@ -5,7 +5,8 @@
  */
 
 import './chat-danmaku.css';
-import type { PlayerPlugin } from '../WatchPlayer';
+
+import type { PlayerPlugin } from '@/features/player';
 
 export interface ChatDanmakuOptions {
   enabled: boolean;

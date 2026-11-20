@@ -8,7 +8,6 @@
  * 手机竖屏上“正在放映”压成一行，选集点开再看。
  */
 
-import './PlaylistPanel.css';
 import {
   ArrowDown,
   ArrowUp,
@@ -22,6 +21,8 @@ import {
   Trash2,
 } from 'lucide-react';
 import { useState } from 'react';
+
+import './PlaylistPanel.css';
 
 import type { SearchResult } from '@/lib/types';
 import { useDeviceTier } from '@/hooks/useDeviceTier';

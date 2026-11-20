@@ -12,7 +12,6 @@
  *   横屏左右两栏，竖屏上下排。
  */
 
-import './RoomView.css';
 import {
   ArrowLeft,
   Check,
@@ -43,11 +42,13 @@ import {
   useState,
 } from 'react';
 
+import './RoomView.css';
+
 import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
+import { isHandheld } from '@/lib/device-tier';
 import { processImageUrl } from '@/lib/utils';
 import { useDeviceTier, usePageLayout } from '@/hooks/useDeviceTier';
 import { useImmersiveShell } from '@/hooks/useImmersiveShell';
-import { isHandheld } from '@/lib/device-tier';
 
 import { useWatchRoomContext } from '@/components/WatchRoomProvider';
 

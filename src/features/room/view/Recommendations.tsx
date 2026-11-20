@@ -5,9 +5,10 @@
  * 点一部 → 打开选片，自动用片名搜片源，再选择现在放或加入片单。
  */
 
-import './Recommendations.css';
 import { RefreshCw, Star } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
+
+import './Recommendations.css';
 
 import { getDoubanCategories } from '@/lib/douban.client';
 import type { DoubanItem } from '@/lib/types';

@@ -22,29 +22,27 @@ import { roomServerNow } from '@/lib/room-clock';
 import type { SearchResult } from '@/lib/types';
 import { base58Decode } from '@/lib/utils';
 
-import { fetchSourceDetail } from '@/features/room/media/catalog';
-import { resolvePlayback } from '@/features/room/media/playback-url';
 import {
+  type SourceSubtitle,
+  bindKeyboard,
+  DanmakuController,
+  heatmapPlugin,
   iosOrientationPlugin,
   playbackRatePlugin,
   progressThumbPlugin,
-  wakeLockPlugin,
-} from '@/features/room/player/core/plugins/basics';
-import { ChatDanmaku } from '@/features/room/player/core/plugins/chat-danmaku';
-import { DanmakuController } from '@/features/room/player/core/plugins/danmaku';
-import { heatmapPlugin } from '@/features/room/player/core/plugins/heatmap';
-import { bindKeyboard } from '@/features/room/player/core/plugins/keyboard';
-import {
-  SourceSubtitle,
   SubtitleController,
-} from '@/features/room/player/core/plugins/subtitles';
-import { WatchPlayer } from '@/features/room/player/core/WatchPlayer';
+  wakeLockPlugin,
+  WatchPlayer,
+} from '@/features/player';
+import { fetchSourceDetail } from '@/features/room/media/catalog';
+import { resolvePlayback } from '@/features/room/media/playback-url';
 import { mediaKey } from '@/features/room/sync/drift';
 import {
   type LocalMedia,
   RoomSyncEngine,
 } from '@/features/room/sync/sync-engine';
 
+import { ChatDanmaku } from './chat-danmaku';
 import { portFor } from './port';
 import { filmFromState, playChange } from '../lib/commands';
 

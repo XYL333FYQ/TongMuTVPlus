@@ -2,7 +2,7 @@
  * 新播放器 -> 同步引擎需要的播放器接口。
  */
 
-import type { WatchPlayer } from '@/features/room/player/core/WatchPlayer';
+import type { WatchPlayer } from '@/features/player';
 import type { PlayerEvent, PlayerPort } from '@/features/room/sync/sync-engine';
 
 /** 视频暂停后等这么久，页面仍在前台才算用户暂停 */

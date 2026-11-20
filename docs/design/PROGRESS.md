@@ -1,5 +1,12 @@
 # 界面改造进度
 
+## 2026-11-20 代码整理第 4 步（开始）：播放器内核归位
+
+- 房间在用的播放器内核（`WatchPlayer` + 通用插件）从 `features/room/player/core` 搬到 `features/player/core`，对外只经 `features/player/index.ts`；只属于房间的聊天弹幕插件留在 `features/room/player/chat-danmaku.ts`。房间改从 `@/features/player` 引用。
+- 写了 `docs/playback-rebuild.md`：自己看（`LegacyPlaybackSurface`，13,583 行）里每一项功能和内核的对照（已有 / 部分 / 没有），以及分四步、每步单独能跑的做法。
+- **还没做**：自己看换内核、删 `LegacyPlaybackSurface`、`features/playback` 根目录整理。这是一项单独的大活（界面不变、所有功能都要对上，要分多次提交并分端手动验收），按清单另开来做。
+- 验证：typecheck、lint、Jest、test:rooms、check:structure 通过；房间的播放器只改了引用路径。
+
 ## 2026-11-19 代码整理第 3 步：发现、片库、影片卡片
 
 - 3a（已推送 `c9fa6b7`）：首页 → `features/discover/DiscoverPage`（+ `banner/BannerCarousel`），片库 → `features/library/LibraryPage`（+ `parts/` 里只给片库用的筛选器、骨架、时间表），路由文件只剩一行转出。`HomeRooms` 搬到 `features/room`，访客首页 `PublicCatalogPage` 改成由页面把“正在一起看”那一栏传进来。站内播放地址的纯函数（原 `playback/session.ts` + `selection-links.ts`）→ `lib/playback-links.ts`，全站播放会话的接口（原 `playback/context.tsx`）→ `hooks/usePlaybackSession.tsx`：影片卡片、外壳的媒体会话、访客首页都不再引功能，依赖方向的待清理名单清空。搬过来的文件去掉整文件 `eslint-disable`：补类型；片库换分类时的选择重置改用 ref 读当时的值；**顺带修了一个隐患**：片库的几个选择回调没把 setter 放进依赖，换了分类后旧回调里的旧 setter 写的是上一个分类的键，改动会被丢掉（例如从电影切到动漫后点星期没反应）——测试站连不上豆瓣，没能实测，按代码修。

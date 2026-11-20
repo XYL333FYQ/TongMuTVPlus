@@ -5,7 +5,6 @@
  * 由 RoomChat 接到房间连接上（同一套界面，只有一份代码）。
  */
 
-import './ChatPanel.css';
 import {
   Loader2,
   MessageSquareOff,
@@ -22,6 +21,8 @@ import {
   useRef,
   useState,
 } from 'react';
+
+import './ChatPanel.css';
 
 import type { ChatMessage } from '@/types/watch-room';
 

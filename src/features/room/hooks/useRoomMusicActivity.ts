@@ -2,9 +2,9 @@
 
 import { useCallback, useRef } from 'react';
 
-import { useWatchRoomContextSafe } from '@/components/WatchRoomProvider';
-
 import { usePlaybackSessionSafe } from '@/hooks/usePlaybackSession';
+
+import { useWatchRoomContextSafe } from '@/components/WatchRoomProvider';
 
 import type { MusicSyncState } from '@/types/watch-room';
 

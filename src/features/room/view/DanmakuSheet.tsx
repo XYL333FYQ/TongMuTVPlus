@@ -6,13 +6,15 @@
  * 房间弹幕：房间聊天飘成弹幕（带名字），可以关掉，也可以不显示自己发的。
  */
 
-import './DanmakuSheet.css';
 import { useEffect, useState } from 'react';
+
+import './DanmakuSheet.css';
 
 import DanmakuPanel from '@/components/DanmakuPanel';
 
-import type { ChatDanmaku } from '../player/core/plugins/chat-danmaku';
-import type { DanmakuController } from '../player/core/plugins/danmaku';
+import type { DanmakuController } from '@/features/player';
+
+import type { ChatDanmaku } from '../player/chat-danmaku';
 
 function Switch(props: {
   id: string;

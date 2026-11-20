@@ -9,7 +9,6 @@
  * 自己看（src/features/playback）不认识这里；这里只读它的“是否在放”和拦截挂点。
  */
 
-import './room.css';
 import { usePathname, useRouter } from 'next/navigation';
 import {
   ReactNode,
@@ -20,12 +19,14 @@ import {
   useState,
 } from 'react';
 
+import './room.css';
+
 import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
 import { useAudioFocus } from '@/hooks/useAudioFocus';
+import { usePlaybackSessionSafe } from '@/hooks/usePlaybackSession';
 
 import { useWatchRoomContextSafe } from '@/components/WatchRoomProvider';
 
-import { usePlaybackSessionSafe } from '@/hooks/usePlaybackSession';
 import { useVoiceChat } from '@/features/room/hooks/useVoiceChat';
 
 import { filmFromHref, playChange, queueAdd } from './lib/commands';

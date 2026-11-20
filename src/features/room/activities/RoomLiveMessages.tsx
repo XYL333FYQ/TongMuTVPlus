@@ -1,6 +1,5 @@
 'use client';
 
-import './RoomLiveMessages.css';
 import { Eye, EyeOff, MessageSquare, Send, X } from 'lucide-react';
 import {
   type CSSProperties,
@@ -12,6 +11,8 @@ import {
   useState,
 } from 'react';
 import { createPortal } from 'react-dom';
+
+import './RoomLiveMessages.css';
 
 import { useWatchRoomContextSafe } from '@/components/WatchRoomProvider';
 
