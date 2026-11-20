@@ -14,8 +14,14 @@
   color: var(--tm-text);
 }
 .tm-capsule-scroll {
+  display: flex;
+  overflow-x: auto;
   border-radius: inherit;
   overscroll-behavior-x: contain;
+}
+.tm-capsule-icon {
+  display: inline-flex;
+  align-items: center;
 }
 /* 外层滚动的胶囊按全部按钮铺底，不能把底框截在可视窗口内。 */
 .tm-capsule-track {
@@ -137,6 +143,9 @@
 }
 
 /* 下拉筛选（多级选择器）：文字按钮 + 浮层网格 */
+.tm-dropdown {
+  position: relative;
+}
 .tm-dropdowns {
   display: inline-flex;
   flex-wrap: wrap;

@@ -1,0 +1,224 @@
+/* 番剧时刻表（片库“动漫 · 每日放送”的时间轴）。重新加载按钮的过渡由 tm-press 决定 */
+.tm-schedule > :not([hidden]) ~ :not([hidden]) {
+  margin-top: 1.5rem;
+  margin-bottom: 0px;
+}
+.tm-schedule-skeleton-heading {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+.tm-schedule-skeleton-title {
+  height: 1.25rem;
+  width: 4rem;
+  border-radius: var(--tm-radius-sm);
+  background-color: var(--tm-surface-raised);
+}
+.tm-schedule-skeleton-count {
+  height: 0.75rem;
+  width: 5rem;
+  border-radius: var(--tm-radius-sm);
+  background-color: var(--tm-surface-raised);
+}
+.tm-schedule-axis {
+  position: relative;
+}
+.tm-schedule-line {
+  position: absolute;
+  bottom: 0px;
+  left: 5.25rem;
+  top: 0px;
+  width: 1px;
+  background-color: var(--tm-surface-raised);
+}
+.tm-schedule-skeleton-slots > :not([hidden]) ~ :not([hidden]) {
+  margin-top: 1.5rem;
+  margin-bottom: 0px;
+}
+.tm-schedule-slot {
+  position: relative;
+  display: grid;
+  grid-template-columns: 4.5rem 1.5rem 1fr;
+  align-items: flex-start;
+}
+.tm-schedule-skeleton-time {
+  padding-right: 0.75rem;
+  text-align: right;
+  line-height: 1.875rem;
+}
+.tm-schedule-skeleton-time-bar {
+  margin-left: auto;
+  height: 0.75rem;
+  width: 2.25rem;
+  border-radius: var(--tm-radius-sm);
+  background-color: var(--tm-surface-raised);
+}
+.tm-schedule-skeleton-node {
+  display: flex;
+  justify-content: center;
+  padding-top: 0.375rem;
+}
+.tm-schedule-skeleton-dot {
+  height: 0.625rem;
+  width: 0.625rem;
+  border-radius: var(--tm-radius-full);
+  background-color: var(--tm-surface);
+}
+.tm-schedule-skeleton-cards {
+  display: flex;
+  gap: 0.75rem;
+  overflow: hidden;
+}
+.tm-schedule-card {
+  width: 8rem;
+  flex-shrink: 0;
+}
+.tm-schedule-skeleton-card {
+  position: relative;
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  border-radius: var(--tm-radius-md);
+  background-color: transparent;
+}
+.tm-schedule-skeleton-caption {
+  position: absolute;
+  left: 0px;
+  right: 0px;
+  top: calc(100% + 0.5rem);
+  display: flex;
+  justify-content: center;
+}
+.tm-schedule-skeleton-caption-bar {
+  height: 1rem;
+  width: 6rem;
+  border-radius: var(--tm-radius-sm);
+  background-color: var(--tm-surface-raised);
+}
+.tm-schedule-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding-top: 4rem;
+  padding-bottom: 4rem;
+  color: var(--tm-muted);
+}
+.tm-schedule-error-text {
+  margin-bottom: 1rem;
+}
+.tm-schedule-retry {
+  min-height: 44px;
+  border-radius: var(--tm-radius-full);
+  background-color: var(--tm-surface-raised);
+  padding-left: 1rem;
+  padding-right: 1rem;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+}
+.tm-schedule-retry:hover {
+  background-color: var(--tm-line);
+}
+.tm-schedule-empty {
+  padding-top: 4rem;
+  padding-bottom: 4rem;
+  text-align: center;
+  color: var(--tm-muted);
+}
+.tm-schedule-heading {
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+.tm-schedule-day {
+  font-size: 1rem;
+  line-height: 1.5rem;
+  font-weight: 500;
+  color: var(--tm-text);
+}
+.tm-schedule-count {
+  font-size: 13px;
+  color: var(--tm-muted);
+}
+.tm-schedule-none {
+  padding-left: 6.25rem;
+  font-size: 13px;
+  color: var(--tm-muted);
+}
+.tm-schedule-slots > :not([hidden]) ~ :not([hidden]) {
+  margin-top: 1.25rem;
+  margin-bottom: 0px;
+}
+.tm-schedule-time {
+  padding-right: 0.75rem;
+  text-align: right;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    'Liberation Mono', 'Courier New', monospace;
+  font-size: 0.875rem;
+  line-height: 1.875rem;
+  color: var(--tm-muted);
+}
+.tm-schedule-node {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  padding-top: 0.375rem;
+}
+.tm-schedule-dot {
+  height: 0.625rem;
+  width: 0.625rem;
+  border-radius: var(--tm-radius-full);
+  background-color: var(--tm-text);
+  box-shadow: 0 0 0 calc(4px + 0px)
+    color-mix(in srgb, var(--tm-text) 20%, transparent);
+}
+.tm-schedule-cards {
+  margin-right: -0.5rem;
+  display: flex;
+  gap: 0.75rem;
+  overflow-x: auto;
+  padding-bottom: 0.25rem;
+  padding-right: 0.5rem;
+}
+.tm-schedule-unknown {
+  margin-top: 1rem;
+  border-top-width: 2px;
+  border-style: dashed;
+  border-color: var(--tm-line);
+  padding-top: 1.5rem;
+}
+.tm-schedule-unknown-heading {
+  margin-bottom: 1.25rem;
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+.tm-schedule-unknown-cards {
+  display: flex;
+  flex-wrap: wrap;
+  column-gap: 0.75rem;
+  row-gap: 2.5rem;
+}
+/* 手机以外（原来是 640px 以上） */
+:where(html:not([data-tm-device='phone'])) .tm-schedule-line {
+  left: 5.5rem;
+}
+:where(html:not([data-tm-device='phone'])) .tm-schedule-slot {
+  grid-template-columns: 5rem 1.5rem 1fr;
+}
+:where(html:not([data-tm-device='phone'])) .tm-schedule-card {
+  width: 10rem;
+}
+:where(html:not([data-tm-device='phone'])) .tm-schedule-skeleton-caption-bar {
+  width: 8rem;
+}
+:where(html:not([data-tm-device='phone'])) .tm-schedule-day {
+  font-size: 1.125rem;
+  line-height: 1.75rem;
+}
+:where(html:not([data-tm-device='phone'])) .tm-schedule-none {
+  padding-left: 6.5rem;
+}

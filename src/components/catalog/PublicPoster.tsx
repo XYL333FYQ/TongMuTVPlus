@@ -1,4 +1,3 @@
-/* eslint-disable @next/next/no-img-element -- Public posters bypass private proxy preferences and protected optimization routes. */
 'use client';
 
 import { Film } from 'lucide-react';
@@ -49,6 +48,8 @@ export default function PublicPoster({
       </span>
     );
   return (
+    // 访客海报不走私有代理设置和受保护的图片优化接口，所以直接用 <img>
+    // eslint-disable-next-line @next/next/no-img-element
     <img
       ref={imageRef}
       data-loaded={loaded}

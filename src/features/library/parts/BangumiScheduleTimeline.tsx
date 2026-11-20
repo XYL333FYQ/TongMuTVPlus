@@ -1,5 +1,7 @@
 'use client';
 
+import './BangumiScheduleTimeline.css';
+
 import { useEffect, useState } from 'react';
 
 import {
@@ -17,39 +19,36 @@ function TimelineSkeleton() {
   const SKELETON_ITEMS = [3, 2, 2, 1];
 
   return (
-    <div className='space-y-6 tm-skeleton'>
+    <div className='tm-schedule tm-skeleton'>
       {/* 标题占位 */}
-      <div className='flex items-baseline gap-2'>
-        <div className='h-5 w-16 bg-raised rounded' />
-        <div className='h-3 w-20 bg-raised rounded' />
+      <div className='tm-schedule-skeleton-heading'>
+        <div className='tm-schedule-skeleton-title' />
+        <div className='tm-schedule-skeleton-count' />
       </div>
 
-      <div className='relative'>
+      <div className='tm-schedule-axis'>
         {/* 垂直主线 */}
-        <div className='absolute left-[5.25rem] sm:left-[5.5rem] top-0 bottom-0 w-px bg-raised' />
+        <div className='tm-schedule-line' />
 
-        <div className='space-y-6'>
+        <div className='tm-schedule-skeleton-slots'>
           {SKELETON_SLOTS.map((time, i) => (
-            <div
-              key={time}
-              className='relative grid grid-cols-[4.5rem_1.5rem_1fr] sm:grid-cols-[5rem_1.5rem_1fr] items-start'
-            >
+            <div key={time} className='tm-schedule-slot'>
               {/* 时间标签占位 */}
-              <div className='text-right pr-3 leading-[1.875rem]'>
-                <div className='ml-auto h-3 w-9 bg-raised rounded' />
+              <div className='tm-schedule-skeleton-time'>
+                <div className='tm-schedule-skeleton-time-bar' />
               </div>
               {/* 时间节点占位 */}
-              <div className='flex justify-center pt-1.5'>
-                <span className='w-2.5 h-2.5 rounded-full bg-surface' />
+              <div className='tm-schedule-skeleton-node'>
+                <span className='tm-schedule-skeleton-dot' />
               </div>
               {/* 横向卡片条占位 */}
-              <div className='flex gap-3 overflow-hidden'>
+              <div className='tm-schedule-skeleton-cards'>
                 {Array.from({ length: SKELETON_ITEMS[i] }, (_, j) => (
-                  <div key={j} className='w-32 sm:w-40 shrink-0'>
-                    <div className='relative w-full rounded-lg bg-transparent flex flex-col'>
+                  <div key={j} className='tm-schedule-card'>
+                    <div className='tm-schedule-skeleton-card'>
                       <ImagePlaceholder aspectRatio='aspect-[2/3]' />
-                      <div className='absolute top-[calc(100%+0.5rem)] left-0 right-0 flex justify-center'>
-                        <div className='h-4 w-24 sm:w-32 bg-raised rounded'></div>
+                      <div className='tm-schedule-skeleton-caption'>
+                        <div className='tm-schedule-skeleton-caption-bar'></div>
                       </div>
                     </div>
                   </div>
@@ -73,7 +72,7 @@ function pickPoster(item: BangumiScheduleItem): string {
 /** 单条时刻表条目：固定宽度 + 复用 VideoCard（与网格卡片行为一致） */
 function TimelineVideoCard({ item }: { item: BangumiScheduleItem }) {
   return (
-    <div className='w-32 sm:w-40 shrink-0'>
+    <div className='tm-schedule-card'>
       <VideoCard
         from='douban'
         title={item.name_cn || item.name}
@@ -130,12 +129,9 @@ function BangumiScheduleTimeline({
 
   if (error) {
     return (
-      <div className='flex flex-col items-center justify-center py-16 text-muted'>
-        <p className='mb-4'>{error}</p>
-        <button
-          onClick={load}
-          className='px-4 py-2 text-sm rounded-full bg-raised hover:bg-line transition-colors min-h-[44px] tm-press'
-        >
+      <div className='tm-schedule-error'>
+        <p className='tm-schedule-error-text'>{error}</p>
+        <button onClick={load} className='tm-schedule-retry tm-press'>
           重新加载
         </button>
       </div>
@@ -156,21 +152,19 @@ function BangumiScheduleTimeline({
   const hasAny = day.slots.length > 0 || dayUnknown.length > 0;
 
   return (
-    <div className='space-y-6'>
+    <div className='tm-schedule'>
       {!hasAny ? (
-        <div className='text-center text-muted py-16'>{day.cn}暂无放送安排</div>
+        <div className='tm-schedule-empty'>{day.cn}暂无放送安排</div>
       ) : (
         <>
           {/* 已知放送时刻：垂直时间轴（仅当天） */}
-          <div className='relative'>
+          <div className='tm-schedule-axis'>
             {/* 垂直主线 */}
-            <div className='absolute left-[5.25rem] sm:left-[5.5rem] top-0 bottom-0 w-px bg-raised' />
+            <div className='tm-schedule-line' />
 
-            <div className='flex items-baseline gap-2 mb-4'>
-              <span className='text-base sm:text-lg font-medium text-fg'>
-                {day.cn}
-              </span>
-              <span className='text-[13px] text-muted'>
+            <div className='tm-schedule-heading'>
+              <span className='tm-schedule-day'>{day.cn}</span>
+              <span className='tm-schedule-count'>
                 {day.en} · 共{' '}
                 {day.slots.reduce((n, s) => n + s.items.length, 0) +
                   dayUnknown.length}{' '}
@@ -179,26 +173,19 @@ function BangumiScheduleTimeline({
             </div>
 
             {day.slots.length === 0 ? (
-              <div className='pl-[6.25rem] sm:pl-[6.5rem] text-[13px] text-muted'>
-                暂无固定放送时刻
-              </div>
+              <div className='tm-schedule-none'>暂无固定放送时刻</div>
             ) : (
-              <div className='space-y-5'>
+              <div className='tm-schedule-slots'>
                 {day.slots.map((slot) => (
-                  <div
-                    key={slot.time}
-                    className='relative grid grid-cols-[4.5rem_1.5rem_1fr] sm:grid-cols-[5rem_1.5rem_1fr] items-start'
-                  >
+                  <div key={slot.time} className='tm-schedule-slot'>
                     {/* 时间标签 */}
-                    <div className='text-right pr-3 text-sm font-mono text-muted leading-[1.875rem]'>
-                      {slot.time}
-                    </div>
+                    <div className='tm-schedule-time'>{slot.time}</div>
                     {/* 时间节点 */}
-                    <div className='relative flex justify-center pt-1.5'>
-                      <span className='w-2.5 h-2.5 rounded-full bg-fg ring-4 ring-[color-mix(in_srgb,var(--tm-text)_20%,transparent)]' />
+                    <div className='tm-schedule-node'>
+                      <span className='tm-schedule-dot' />
                     </div>
                     {/* 同一时间多部番横向排列 */}
-                    <div className='flex gap-3 overflow-x-auto pb-1 -mr-2 pr-2'>
+                    <div className='tm-schedule-cards'>
                       {slot.items.map((item) => (
                         <TimelineVideoCard key={item.id} item={item} />
                       ))}
@@ -211,16 +198,14 @@ function BangumiScheduleTimeline({
 
           {/* 该日未知放送时间：与已知时间轴切断开（虚线分隔） */}
           {dayUnknown.length > 0 && (
-            <section className='mt-4 border-t-2 border-dashed border-line pt-6'>
-              <h3 className='flex items-baseline gap-2 mb-5'>
-                <span className='text-base sm:text-lg font-medium text-fg'>
-                  未知时间
-                </span>
-                <span className='text-[13px] text-muted'>
+            <section className='tm-schedule-unknown'>
+              <h3 className='tm-schedule-unknown-heading'>
+                <span className='tm-schedule-day'>未知时间</span>
+                <span className='tm-schedule-count'>
                   共 {dayUnknown.length} 部
                 </span>
               </h3>
-              <div className='flex flex-wrap gap-x-3 gap-y-10'>
+              <div className='tm-schedule-unknown-cards'>
                 {dayUnknown.map((item) => (
                   <TimelineVideoCard key={item.id} item={item} />
                 ))}

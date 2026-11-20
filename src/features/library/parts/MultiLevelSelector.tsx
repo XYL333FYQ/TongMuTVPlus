@@ -521,7 +521,7 @@ const MultiLevelSelector: React.FC<MultiLevelSelectorProps> = ({
             ref={(el) => {
               categoryRefs.current[category.key] = el;
             }}
-            className='relative'
+            className='tm-dropdown'
           >
             <button
               type='button'

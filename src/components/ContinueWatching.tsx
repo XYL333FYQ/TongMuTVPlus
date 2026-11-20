@@ -1,8 +1,7 @@
-/* eslint-disable no-console */
 'use client';
 
 import { ChevronRight } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 import '@/styles/panels.css';
@@ -75,6 +74,10 @@ export default function ContinueWatching({
     return true;
   };
 
+  // 只跟着显示条数重新拉取；读缓存用最新的函数
+  const applyCachedSnapshotRef = useRef(applyCachedSnapshot);
+  applyCachedSnapshotRef.current = applyCachedSnapshot;
+
   useEffect(() => {
     const unsubscribe = subscribeToDataUpdates(
       'playRecordsUpdated',
@@ -86,7 +89,7 @@ export default function ContinueWatching({
 
     const fetchPlayRecords = async () => {
       try {
-        const hasCachedSnapshot = applyCachedSnapshot();
+        const hasCachedSnapshot = applyCachedSnapshotRef.current();
         if (!hasCachedSnapshot) {
           setLoading(true);
         }
@@ -94,6 +97,8 @@ export default function ContinueWatching({
         const allRecords = await getAllPlayRecords();
         updatePlayRecords(allRecords);
       } catch (error) {
+        // 拿不到就显示为空，原始错误留给排查
+        // eslint-disable-next-line no-console
         console.error('获取播放记录失败:', error);
         setPlayRecords([]);
       } finally {

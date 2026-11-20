@@ -1109,3 +1109,30 @@ html[data-tm-no-blur='true'] :is(.tm-detail-ambient img, .tm-home-hero-image) {
   flex: 0 0 auto;
   color: var(--tm-muted);
 }
+
+/* —— 首页的公告、直链播放对话框（外框是全站的 tm-modal） —— */
+.tm-home-announcement-text {
+  margin-top: 0.75rem;
+  white-space: pre-wrap;
+  color: var(--tm-muted);
+}
+.tm-home-dialog-action {
+  width: 100%;
+}
+.tm-home-direct-body > :not([hidden]) ~ :not([hidden]) {
+  margin-top: 0.75rem;
+  margin-bottom: 0px;
+}
+.tm-home-direct-hint {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  color: var(--tm-muted);
+}
+.tm-home-direct-note {
+  font-size: 13px;
+  color: var(--tm-muted);
+}
+/* 大图区的预告片：不接点击，点击交给大图本身 */
+.tm-home-hero-youtube {
+  pointer-events: none;
+}

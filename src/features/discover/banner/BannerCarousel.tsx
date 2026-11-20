@@ -521,7 +521,7 @@ export default function BannerCarousel({
               title={currentItem.title + ' 预告片'}
               src={`https://www.youtube.com/embed/${currentItem.video_key}?autoplay=1&mute=1&controls=0&loop=1&playlist=${currentItem.video_key}`}
               allow='autoplay; encrypted-media'
-              className='tm-hero-youtube pointer-events-none'
+              className='tm-home-hero-youtube'
               tabIndex={-1}
             />
           ) : (

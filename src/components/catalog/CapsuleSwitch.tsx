@@ -1,5 +1,4 @@
 'use client';
-/* eslint-disable react-hooks/exhaustive-deps */
 
 import { motion } from 'framer-motion';
 import React, { useEffect, useId, useRef } from 'react';
@@ -76,15 +75,19 @@ const CapsuleSwitch: React.FC<CapsuleSwitchProps> = ({
     }
   };
 
+  // effect 和滚动监听里用最新的定位函数（它每次渲染都会重建）
+  const updateIndicatorRef = useRef(updateIndicatorPosition);
+  updateIndicatorRef.current = updateIndicatorPosition;
+
   // 组件挂载时立即计算初始位置并滚动到选中项
   useEffect(() => {
-    const timeoutId = setTimeout(() => updateIndicatorPosition(true), 0);
+    const timeoutId = setTimeout(() => updateIndicatorRef.current(true), 0);
     return () => clearTimeout(timeoutId);
   }, []);
 
   // 选中项或选项集合变化时，保持当前项可见。
   useEffect(() => {
-    const timeoutId = setTimeout(() => updateIndicatorPosition(true), 0);
+    const timeoutId = setTimeout(() => updateIndicatorRef.current(true), 0);
     return () => clearTimeout(timeoutId);
   }, [activeIndex, optionsSignature]);
 
@@ -103,7 +106,7 @@ const CapsuleSwitch: React.FC<CapsuleSwitchProps> = ({
       }
 
       // 不触发自动滚动。
-      updateIndicatorPosition(false);
+      updateIndicatorRef.current(false);
 
       // 滚动结束后重置标记
       scrollTimeoutRef.current = setTimeout(() => {
@@ -181,7 +184,7 @@ const CapsuleSwitch: React.FC<CapsuleSwitchProps> = ({
       {/* 可滚动容器 */}
       <div
         ref={scrollContainerRef}
-        className='tm-capsule-scroll flex overflow-x-auto scrollbar-hide'
+        className='tm-capsule-scroll scrollbar-hide'
         style={{
           scrollbarWidth: 'none',
           msOverflowStyle: 'none',
@@ -219,9 +222,7 @@ const CapsuleSwitch: React.FC<CapsuleSwitchProps> = ({
                   aria-hidden='true'
                 />
               )}
-              {opt.icon && (
-                <span className='inline-flex items-center'>{opt.icon}</span>
-              )}
+              {opt.icon && <span className='tm-capsule-icon'>{opt.icon}</span>}
               <span>{opt.label}</span>
             </button>
           );

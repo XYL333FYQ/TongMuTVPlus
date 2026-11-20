@@ -1054,7 +1054,10 @@ function DoubanPageClient() {
                   ))
                 : // 显示实际数据
                   doubanData.map((item, index) => (
-                    <div key={`${item.title}-${index}`} className='w-full'>
+                    <div
+                      key={`${item.title}-${index}`}
+                      className='tm-library-cell'
+                    >
                       <VideoCard
                         from='douban'
                         title={item.title}

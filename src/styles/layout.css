@@ -156,6 +156,9 @@ body:has(.tm-playback-host[data-presentation='folded']) .tm-back-to-top {
 .tm-library-filters {
   margin-top: 20px;
 }
+.tm-library-cell {
+  width: 100%;
+}
 .tm-library-grid {
   margin-top: 28px;
 }
@@ -572,4 +575,38 @@ html[data-tm-reduced-motion='true'] .tm-spin {
 .tm-admin-page
   :is(input:not([type='checkbox']):not([type='radio']), select, textarea) {
   font-size: var(--tm-fs-body);
+}
+
+/* 片库加载中的卡片占位 */
+.tm-library-skeleton {
+  position: relative;
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  border-radius: var(--tm-radius-md);
+  background-color: transparent;
+  box-shadow: none;
+}
+.tm-library-skeleton-info {
+  position: absolute;
+  left: 0px;
+  right: 0px;
+  top: calc(100% + 0.5rem);
+}
+.tm-library-skeleton-row {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.tm-library-skeleton-bar {
+  margin-bottom: 0.5rem;
+  height: 1rem;
+  width: 6rem;
+  border-radius: var(--tm-radius-sm);
+}
+@media (min-width: 640px) {
+  .tm-library-skeleton-bar {
+    width: 8rem;
+  }
 }

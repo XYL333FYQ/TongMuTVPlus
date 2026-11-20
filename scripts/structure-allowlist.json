@@ -110,9 +110,6 @@
     "src/styles/shell.css :: 未登记 tm-music-toolbar-row"
   ],
   "eslintDisable": [
-    "src/components/ContinueWatching.tsx",
-    "src/components/catalog/CapsuleSwitch.tsx",
-    "src/components/catalog/PublicPoster.tsx",
     "src/features/playback/LegacyPlaybackSurface.tsx",
     "src/features/room/media/playback-url.ts",
     "src/features/room/player/core/WatchPlayer.ts",

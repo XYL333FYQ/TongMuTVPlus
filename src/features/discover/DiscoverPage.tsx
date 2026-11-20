@@ -803,14 +803,12 @@ function HomeClient() {
               <h2 id='home-announcement-title' className='tm-modal-title'>
                 公告
               </h2>
-              <p className='mt-3 whitespace-pre-wrap text-muted'>
-                {announcement}
-              </p>
+              <p className='tm-home-announcement-text'>{announcement}</p>
             </div>
             <div className='tm-modal-footer'>
               <button
                 onClick={() => handleCloseAnnouncement(announcement || '')}
-                className='tm-btn tm-btn-primary w-full'
+                className='tm-btn tm-btn-primary tm-home-dialog-action'
               >
                 知道了
               </button>
@@ -850,12 +848,12 @@ function HomeClient() {
                 <X size={20} />
               </button>
             </div>
-            <div className='tm-modal-body space-y-3'>
-              <div className='text-sm text-muted'>
+            <div className='tm-modal-body tm-home-direct-body'>
+              <div className='tm-home-direct-hint'>
                 粘贴可以直接播放的视频链接
               </div>
               {netdiskTempPlayEnabled && (
-                <div className='text-[13px] text-muted'>
+                <div className='tm-home-direct-note'>
                   支持夸克、UC、百度、天翼、移动、123、115 网盘在线播放。
                 </div>
               )}
