@@ -15,9 +15,7 @@
     "src/styles/home.css :: z-index: 5",
     "src/styles/layout.css :: z-index: 60"
   ],
-  "pxMedia": [
-    "src/features/playback/playback.css :: @media (max-width: 767px)"
-  ],
+  "pxMedia": [],
   "duplicates": [
     "src/components/detail/detail.css :: .tm-detail-original",
     "src/components/detail/detail.css :: .tm-detail-primary",
@@ -102,7 +100,6 @@
     "src/styles/shell.css :: 未登记 tm-music-toolbar-row"
   ],
   "eslintDisable": [
-    "src/features/playback/LegacyPlaybackSurface.tsx",
     "src/features/room/media/playback-url.ts",
     "src/features/player/core/WatchPlayer.ts",
     "src/features/player/core/hls-engine.ts",

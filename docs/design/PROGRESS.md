@@ -1,5 +1,25 @@
 # 界面改造进度
 
+## 2026-11-21 代码整理第 4 步之三、之四：接好全站会话，删掉 `LegacyPlaybackSurface`
+
+- **之三（全站播放会话）**：旧文件本来就接着会话（挂载点 `data-tm-player-mount`、汇报正在放什么、把播放器交给会话、媒体会话的标题和封面、完整 / 小窗 / 收起是同一个实例），这一步没改代码，只验证：`PlaybackSessionProvider` 的测试（含“房间里停靠时可以手动接管声音”）全过；两个账号的房间测试（`.claude/sync-test.mjs`）12 项全过；行为检查里整页 → 小窗 → 回播放页始终是同一个 `<video>`。
+- **之四（删旧文件、整理目录）**：
+  - `LegacyPlaybackSurface.tsx` 删除。播放页本体移到 `surface/PlaybackSurface.tsx`（2,790 行，去掉了整文件 `eslint-disable`），其余原样搬进子目录（代码不改，用到的页面状态从参数传进去；在调用处之后才声明的用 getter 晚取，行为和原来的闭包一样）：
+    - `data/`：进入播放页的详情 / 片源搜索 / 测速 / 恢复记录（`load-source-detail`）、TMDB 背景（`load-tmdb-backdrop`）、豆瓣评分（`load-douban-rating`）；
+    - `sources/`：解析播放地址（`update-video-url`）、测速优选和打分、换源、当前片源分辨率；
+    - `downloads/`：本机下载 / 离线缓存检查、下载选集；
+    - `player/`：加载播放器（`load-player`）、设置菜单、控制条、实例事件、转码、保存进度、跳过配置；
+    - `session/`：`useStandalonePlayback`（电视版播放页用，经 `index.ts` 对外）、`useVideoAspectRatio`；
+    - `lib/`：`hls-modes`（鸿蒙 / 网盘 HLS 模式和两个存储键，键名没改）、`xiaoya-correction`（小雅纠错，`any` 换成 `XiaoyaCorrection` 类型）。
+  - 根目录只剩入口：`PlaybackRoute`、`PlaybackSessionProvider`、`index.ts`、`playback.css`（根布局直接引用这张样式表，留在根目录）。
+  - 删掉没人用的 `PlaybackSlot`（房间早就有自己的画面挂点；它和 `useVideoAspectRatio` 重复）和它的测试、样式。
+  - `playback.css` 最后的 767px 媒体查询换成档位：手机两档原来只有 `max-width: calc(100vw - 32px)` 真正生效（`top` / `right` 被后面的手机规则盖掉），并进手机规则；**600–767px 宽的窗口（平板档）跨标签页声音提示改用平板 / 电脑的位置**（右上 82px / 24px），和平板档的其余部分一致。
+  - 待清理名单 103 → 101 条（旧文件的整文件 `eslint-disable`、767px 查询）。
+- 文档：`docs/architecture.md` 模块表、`docs/playback-rebuild.md` 写明完成情况。
+- 验证：全部检查通过，check-design 0 违规；行为检查和第 2 步结束时完全一致；计算样式快照（5 个场景 × 6 种窗口 × 深浅）和第 2 步结束时对比，见下一行。
+- 快照结果：页面部分只有 `margin: auto` 的读数差（盒子位置和大小没变，第一步就解释过的噪声）；其余都在 Artplayer 自己的层里（加载圈、播放图标、设置面板被拍到的时机不同）。第 2 步结束时（和 2a 比）同样只有 Artplayer 内部差异：热力图画布换成内核的类名，没有弹幕时隐藏（原来是一块看不见的空画布）。
+- 没验证：600–767px 平板档的声音提示位置（快照窗口里没有这个宽度）；真机分端手动验收（手机、平板、电视客户端）。
+
 ## 2026-11-21 代码整理第 4 步之二 c：设置菜单、控制条、实例事件搬出旧文件
 
 - 原样搬进 `src/features/playback/player/`（代码不改，只把用到的页面状态 / 函数从参数传进去，类型由 TS 推出）：

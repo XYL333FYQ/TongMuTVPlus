@@ -1,16 +1,3 @@
-.tm-playback-slot {
-  position: relative;
-  width: 100%;
-  aspect-ratio: 16 / 9;
-  border-radius: var(--tm-radius-md);
-  background: var(--tm-room-cinema-bg);
-  overflow: hidden;
-}
-@media (max-width: 767px) {
-  .tm-playback-slot {
-    aspect-ratio: var(--tm-video-aspect-ratio, 16 / 9);
-  }
-}
 /* 播放页按设备档位排（lib/device-tier.ts）：wide（平板横屏、电脑）右侧一列面板；
    其余三档（compact = :not([data-tm-device='wide'])）画面在上、底部操作坞。
    紧凑排版里画面按影片比例铺满宽度；手机横屏高度不够时以屏幕高度为准，画面完整显示（两侧留边） */
@@ -117,13 +104,6 @@ html[data-tm-reduced-motion='true'] .tm-playback-host * {
 .tm-playback-recovery > button {
   min-height: 44px;
 }
-@media (max-width: 767px) {
-  .tm-audio-focus-notice {
-    top: 72px;
-    right: 16px;
-    max-width: calc(100vw - 32px);
-  }
-}
 html[data-tm-reduced-motion='true'] .tm-playback-host [data-tm-player-mount] {
   transition: none !important;
   animation: none !important;
@@ -208,6 +188,7 @@ html[data-tm-no-blur='true'] .tm-playback-host * {
   right: 12px;
   bottom: calc(var(--tm-bottom-nav-height) + 24px + var(--tm-safe-bottom));
   left: 12px;
+  max-width: calc(100vw - 32px);
   z-index: var(--tm-z-nav);
   text-align: center;
   box-shadow: var(--tm-shadow-md);

@@ -29,3 +29,14 @@ export type ShowToast = (
   message: string,
   type: NonNullable<ToastProps['type']>
 ) => void;
+
+/** 当前播放来自本机下载 / 离线缓存时，画面角上的标记 */
+export type PlaybackSourceBadge = 'local' | 'offline' | null;
+
+/** 片源搜索结果的会话缓存 */
+export interface SearchCachePayload {
+  status: 'complete' | 'partial';
+  results: SearchResult[];
+  query: string;
+  updatedAt: number;
+}

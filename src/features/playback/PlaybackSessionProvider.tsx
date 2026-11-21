@@ -28,7 +28,7 @@ import {
 import MiniPlayerControls from '@/components/mini-player/MiniPlayerControls';
 import { useMiniPlayerDrag } from '@/components/mini-player/useMiniPlayerDrag';
 
-const PlaybackSurface = dynamic(() => import('./LegacyPlaybackSurface'), {
+const PlaybackSurface = dynamic(() => import('./surface/PlaybackSurface'), {
   ssr: false,
 });
 

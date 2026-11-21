@@ -2,6 +2,8 @@
 
 目标：自己看换到两边共用的播放器内核 `src/features/player`（房间已经在用），删掉 13,583 行的 `src/features/playback/LegacyPlaybackSurface.tsx`。**界面和行为不变**：每一处可见的东西和交互都要在新实现里有对应，验收用改前改后的计算样式对比 + 分端手动过一遍（`docs/design/ACCEPTANCE.md`）。
 
+**2026-11-21：四步都做完了。** 自己看用的是内核 `WatchPlayer` 和内核插件（倍速、防息屏、进度条图标、iOS 转屏、快捷键、热力图、链接续期、超分、字幕、弹幕），`LegacyPlaybackSurface.tsx` 已删除，播放页在 `features/playback/surface/PlaybackSurface.tsx`，其余按用途分在 `page/ player/ data/ sources/ downloads/ session/ lib/`。内核里没人用的 `playback-flow` 原型删掉了：跳过片头片尾、续播提示、自动下一集、进度保存以自己看的实现（`player/wire-instance.ts`）为准。每一步做了什么、和原来哪里不一样，见 `docs/design/PROGRESS.md` 2026-11-21 的几条。下面是开工时的清单，留作对照。
+
 2026-11-20 现状：
 
 - 内核已经从 `features/room/player/core` 搬到 `features/player/core`，对外只经 `features/player/index.ts`。房间用它；自己看还没用。

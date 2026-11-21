@@ -5,7 +5,7 @@ import { Suspense, useEffect, useRef } from 'react';
 
 import { usePlaybackSession } from '@/hooks/usePlaybackSession';
 
-import { useVideoAspectRatio } from './useVideoAspectRatio';
+import { useVideoAspectRatio } from './session/useVideoAspectRatio';
 
 function RouteBridge() {
   const params = useSearchParams();
