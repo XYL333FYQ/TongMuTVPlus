@@ -19,6 +19,8 @@ export interface LinkRefreshHost {
   fail(message: string): void;
   /** 刷新返回了新的清晰度列表 */
   qualities?(list: Array<{ name: string; url: string }>): void;
+  /** 正在换链接（画面上显示“正在刷新链接”） */
+  busy?(on: boolean): void;
 }
 
 export class LinkRefresher {
@@ -82,11 +84,13 @@ export class LinkRefresher {
     if (now - this.lastRefresh < 3000) return false;
     if (!scheduled && this.retries >= 3) {
       this.host.fail('链接已过期且刷新失败，请刷新页面');
+      this.destroyHls();
       return false;
     }
     if (!this.lazyUrl || !this.enabled()) return false;
     if (!scheduled) this.retries++;
     this.lastRefresh = now;
+    this.host.busy?.(true);
     try {
       const separator = this.lazyUrl.includes('?') ? '&' : '?';
       const response = await fetch(
@@ -121,13 +125,19 @@ export class LinkRefresher {
         window.setTimeout(() => void this.refresh(false), 2000);
       else {
         this.host.fail('链接刷新失败，请刷新页面');
-        try {
-          this.host.video()?.hls?.destroy?.();
-        } catch {
-          // 忽略
-        }
+        this.destroyHls();
       }
       return false;
+    } finally {
+      this.host.busy?.(false);
+    }
+  }
+
+  private destroyHls() {
+    try {
+      this.host.video()?.hls?.destroy?.();
+    } catch {
+      // 忽略
     }
   }
 }

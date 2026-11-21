@@ -7,7 +7,6 @@
     "src/components/feedback/ImageViewer.tsx :: z-[9999]",
     "src/components/feedback/MobileActionSheet.tsx :: z-10",
     "src/components/feedback/MobileActionSheet.tsx :: z-[9999]",
-    "src/features/playback/LegacyPlaybackSurface.tsx :: zIndex: '30",
     "src/features/playback/playback.css :: z-index: 100",
     "src/features/playback/playback.css :: z-index: 110",
     "src/features/playback/playback.css :: z-index: 60",

@@ -109,6 +109,21 @@ export function playbackRatePlugin(
     art.on('video:canplay', () => {
       restoreUntil = Date.now() + 4000;
       later(() => {
+        const video = art.video as HTMLVideoElement | undefined;
+        // Safari 刚跳转进度时立刻改倍速，容易卡在 seeking：等跳转完成（最多 300ms）再恢复
+        if (webkit && video?.seeking) {
+          let done = false;
+          const apply = () => {
+            if (done) return;
+            done = true;
+            video.removeEventListener('seeked', apply);
+            restore();
+            keepPitch();
+          };
+          video.addEventListener('seeked', apply, { once: true });
+          later(apply, 300);
+          return;
+        }
         restore();
         keepPitch();
       }, 0);

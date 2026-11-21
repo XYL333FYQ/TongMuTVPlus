@@ -19,6 +19,18 @@ export function heatmapEnabled() {
   }
 }
 
+const TOGGLE_EVENT = 'tm-heatmap:toggle';
+
+/** 设置菜单里的“弹幕热力”开关：记住选择，并让当前播放器马上显示 / 隐藏 */
+export function setHeatmapEnabled(art: any, enabled: boolean) {
+  try {
+    localStorage.setItem(HEATMAP_ENABLED_KEY, String(enabled));
+  } catch {
+    // 忽略
+  }
+  art?.emit?.(TOGGLE_EVENT);
+}
+
 /** 管理员 / 用户彻底关掉热力图功能 */
 export function heatmapDisabled() {
   try {
@@ -60,7 +72,9 @@ export function heatmapPlugin(
     let tip: HTMLElement | null = null;
 
     const fit = () => {
-      const progress = art.template?.$progress as HTMLElement | undefined;
+      const progress = art.template?.$player?.querySelector(
+        '.art-control-progress'
+      ) as HTMLElement | null;
       if (!host || !canvas || !progress || !host.parentElement) return;
       const rect = progress.getBoundingClientRect();
       const parent = host.parentElement.getBoundingClientRect();
@@ -75,9 +89,14 @@ export function heatmapPlugin(
 
     const draw = () => {
       if (!canvas || !host) return;
-      host.style.display = heatmapEnabled() && data.length ? 'block' : 'none';
+      const visible = heatmapEnabled() && data.length > 0;
+      const wasHidden = host.style.display === 'none';
+      host.style.display = visible ? 'block' : 'none';
+      if (!visible) return;
+      // 藏着的时候量不出画布尺寸：刚显示出来要重新量一次
+      if (wasHidden || !canvas.width) fit();
       const ctx = canvas.getContext('2d');
-      if (!ctx || !data.length) return;
+      if (!ctx) return;
       const dpr = window.devicePixelRatio || 1;
       const width = canvas.width / dpr;
       const height = canvas.height / dpr;
@@ -100,7 +119,7 @@ export function heatmapPlugin(
         ctx.closePath();
       };
       path();
-      ctx.fillStyle = 'rgba(255,255,255,0.18)';
+      ctx.fillStyle = 'rgba(128,128,128,0.3)';
       ctx.fill();
       const ratio = art.duration ? (art.currentTime || 0) / art.duration : 0;
       if (ratio > 0) {
@@ -109,7 +128,7 @@ export function heatmapPlugin(
         ctx.rect(0, 0, ratio * width, height);
         ctx.clip();
         path();
-        ctx.fillStyle = 'rgba(255,255,255,0.42)';
+        ctx.fillStyle = 'rgba(128,128,128,0.6)';
         ctx.fill();
         ctx.restore();
       }
@@ -133,7 +152,7 @@ export function heatmapPlugin(
         position: 'absolute',
         left: '0',
         bottom: '5px',
-        height: '48px',
+        height: '60px',
         pointerEvents: 'none',
         zIndex: 'var(--tm-z-player-heatmap)',
         display: 'none',
@@ -181,13 +200,17 @@ export function heatmapPlugin(
           })
         : null;
     later(() => {
-      if (art.template?.$progress) observer?.observe(art.template.$progress);
+      const progress = art.template?.$player?.querySelector(
+        '.art-control-progress'
+      );
+      if (progress) observer?.observe(progress);
       refresh();
     }, 300);
     const onResize = () => later(refresh, 300);
     art.on('video:timeupdate', draw);
     art.on('video:loadedmetadata', refresh);
     art.on('danmaku:loaded', refresh);
+    art.on(TOGGLE_EVENT, draw);
     art.on('fullscreen', onResize);
     art.on('fullscreenWeb', onResize);
     window.addEventListener('storage', draw);

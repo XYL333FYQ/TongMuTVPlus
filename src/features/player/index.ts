@@ -10,8 +10,9 @@ export {
   wakeLockPlugin,
 } from './core/plugins/basics';
 export { DanmakuController } from './core/plugins/danmaku';
-export { heatmapPlugin } from './core/plugins/heatmap';
+export { heatmapPlugin, setHeatmapEnabled } from './core/plugins/heatmap';
 export { bindKeyboard } from './core/plugins/keyboard';
+export { LinkRefresher } from './core/plugins/link-refresh';
 export {
   type SourceSubtitle,
   SubtitleController,

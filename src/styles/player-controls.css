@@ -117,3 +117,23 @@ html:not([data-tm-platform='web'])
   min-width: 0;
   flex-shrink: 1;
 }
+
+/* ---------------------------------------------------------------- 弹幕热力图（core/plugins/heatmap.ts） */
+
+/* 悬停在曲线上：时间和这一段的弹幕密度 */
+.tm-heatmap-tip {
+  position: absolute;
+  bottom: 100%;
+  margin-bottom: 8px;
+  padding: 4px 8px;
+  transform: translateX(-50%);
+  border-radius: var(--tm-radius-sm);
+  background: rgb(var(--tm-ink-rgb) / 0.8);
+  color: var(--tm-on-art);
+  font-size: 12px;
+  white-space: nowrap;
+  pointer-events: none;
+}
+.tm-heatmap-tip[hidden] {
+  display: none;
+}
