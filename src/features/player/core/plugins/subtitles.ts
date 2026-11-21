@@ -265,7 +265,7 @@ export class SubtitleController {
     this.art.subtitle.switch(url, {
       name: label,
       type: 'vtt',
-      style: { color: '#fff', fontSize: subtitleSize() },
+      style: { color: 'var(--tm-on-art)', fontSize: subtitleSize() },
       encoding: 'utf-8',
     });
     this.art.subtitle.show = true;

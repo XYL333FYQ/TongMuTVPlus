@@ -222,12 +222,12 @@ export class Anime4KController {
       this.running = { stop: controller.stop, canvas };
       this.syncFlip();
       this.update({ enabled: true });
-      art.notice.show = `超分已开启（${this.state.mode}，${scale}x）`;
+      art.notice.show = `超分已启用 (${this.state.mode}, ${scale}x)`;
     } catch (error) {
       canvas?.remove();
       this.restoreVideo();
       this.update({ enabled: false });
-      art.notice.show = `超分开启失败：${
+      art.notice.show = `超分启用失败：${
         error instanceof Error ? error.message : '未知错误'
       }`;
     }

@@ -13,7 +13,6 @@ import {
 } from 'react';
 
 import { isAnimeCategoryText } from '@/lib/anime-keyword-expr';
-import { createAnime4KRenderer } from '@/lib/anime4k';
 import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
 import {
   clearDanmakuCacheByTitle,
@@ -105,10 +104,7 @@ import {
   appendSpecialSourceParam,
   isSpecialSourceContext,
 } from '@/lib/special-source.client';
-import {
-  convertSubtitleFileToVttObjectUrl,
-  CUSTOM_SUBTITLE_ACCEPT,
-} from '@/lib/subtitle-converter';
+import { CUSTOM_SUBTITLE_ACCEPT } from '@/lib/subtitle-converter';
 import { getTMDBImageUrl } from '@/lib/tmdb-image-base';
 import { getTranscoderCookieHeader } from '@/lib/transcoder-cookie.client';
 import {
@@ -144,7 +140,9 @@ import { useWatchRoomContextSafe } from '@/components/WatchRoomProvider';
 
 import { useDownload } from '@/contexts/DownloadContext';
 import {
+  Anime4KController,
   bindKeyboard,
+  checkWebGPU,
   heatmapPlugin,
   iosOrientationPlugin,
   LinkRefresher,
@@ -152,6 +150,8 @@ import {
   playerEnvironment,
   progressThumbPlugin,
   setHeatmapEnabled,
+  type SourceSubtitle,
+  SubtitleController,
   WatchPlayer,
   wakeLockPlugin,
 } from '@/features/player';
@@ -200,58 +200,12 @@ interface SearchCachePayload {
   updatedAt: number;
 }
 
-type CustomSubtitleEngine = 'native' | 'jassub' | 'bitsub';
 type PlaybackSourceBadge = 'local' | 'offline' | null;
 type HarmonyHlsPlaybackMode = 'hlsjs' | 'native';
 type NetdiskHlsPlaybackMode = 'hlsjs' | 'native';
 
-interface CustomSubtitleState {
-  name: string;
-  format: string;
-  episodeIndex: number;
-  engine: CustomSubtitleEngine;
-  url?: string;
-  content?: string;
-  /** bitsub 引擎（PGS 位图字幕）的原始二进制内容 */
-  binaryContent?: ArrayBuffer;
-}
-
-interface SourceSubtitleItem {
-  label: string;
-  url: string;
-  fallbackUrl?: string;
-  fallbackFormat?: string;
-  format?: string;
-  sourceFormat?: string;
-  codec?: string;
-  renderMode?: 'native' | 'jassub' | 'bitsub';
-}
-
-interface BitsubRendererInstance {
-  dispose?: () => void;
-}
-
-interface JassubSubtitleInstance {
-  setTrack?: (content: string) => void | Promise<void>;
-  setTrackByUrl?: (url: string) => void | Promise<void>;
-  freeTrack?: () => void | Promise<void>;
-  destroy?: () => void | Promise<void>;
-}
-
 const HARMONY_HLS_PLAYBACK_MODE_KEY = 'harmony_hls_playback_mode';
 const NETDISK_HLS_PLAYBACK_MODE_KEY = 'netdisk_hls_playback_mode';
-const JASSUB_ASSET_BASE = '/assets/jassub';
-const JASSUB_CJK_FONT_FAMILY = 'noto sans cjk sc';
-const JASSUB_CJK_FONT_URL = `${JASSUB_ASSET_BASE}/NotoSansCJK-Regular.ttc`;
-const ADVANCED_SUBTITLE_FORMATS = new Set(['ass', 'ssa']);
-const BITSUB_SUBTITLE_FORMATS = new Set(['pgs', 'sup']);
-// libbitsub 以原生 ESM 形式自托管在 public/libbitsub/（由 next.config.js 从
-// node_modules 拷贝），运行时绕过 webpack 加载，避免 wasm 胶水被 swc 压缩破坏。
-// 注意必须运行时构造 URL：字面量 import('/libbitsub/...') 会被 OpenNext 的
-// esbuild 在 server 产物里当作可解析模块而报 Could not resolve
-const getBitsubModuleUrl = () =>
-  new URL('/libbitsub/dist/index.js', window.location.href).href;
-
 function PlayPageClient() {
   const LOCAL_TRANSCODER_BASE_URL = 'http://localhost:19080';
   const router = useRouter();
@@ -497,109 +451,9 @@ function PlayPageClient() {
     }
   }, [externalPlayerAdBlock]);
 
-  // Anime4K超分相关状态
-  const [webGPUSupported, setWebGPUSupported] = useState<boolean>(false);
-  const [anime4kEnabled, setAnime4kEnabled] = useState<boolean>(false);
-  const [anime4kMode, setAnime4kMode] = useState<string>(() => {
-    if (typeof window !== 'undefined') {
-      const v = localStorage.getItem('anime4k_mode');
-      if (v !== null) return v;
-    }
-    return 'ModeA';
-  });
-  const [anime4kScale, setAnime4kScale] = useState<number>(() => {
-    if (typeof window !== 'undefined') {
-      const v = localStorage.getItem('anime4k_scale');
-      if (v !== null) return parseFloat(v);
-    }
-    return 2.0;
-  });
-  const anime4kRef = useRef<any>(null);
-  const anime4kEnabledRef = useRef(anime4kEnabled);
-  const anime4kModeRef = useRef(anime4kMode);
-  const anime4kScaleRef = useRef(anime4kScale);
-  useEffect(() => {
-    anime4kEnabledRef.current = anime4kEnabled;
-    anime4kModeRef.current = anime4kMode;
-    anime4kScaleRef.current = anime4kScale;
-  }, [anime4kEnabled, anime4kMode, anime4kScale]);
-
-  // 检测WebGPU支持
-  useEffect(() => {
-    const checkWebGPUSupport = async () => {
-      if (typeof navigator === 'undefined' || !('gpu' in navigator)) {
-        setWebGPUSupported(false);
-        console.log('WebGPU不支持：浏览器不支持WebGPU API');
-        return;
-      }
-
-      try {
-        // 修复anime4k-webgpu库的buffer size限制问题
-        // 在全局层面patch requestAdapter，确保所有adapter都有正确的limits
-        const originalRequestAdapter = (
-          navigator as any
-        ).gpu.requestAdapter.bind((navigator as any).gpu);
-
-        (navigator as any).gpu.requestAdapter = async (options?: any) => {
-          const adapter = await originalRequestAdapter(options);
-          if (!adapter) return adapter;
-
-          // 保存原始的requestDevice方法
-          const originalRequestDevice = adapter.requestDevice.bind(adapter);
-
-          // 重写requestDevice方法，添加必要的buffer size限制
-          adapter.requestDevice = async (descriptor?: any) => {
-            const adapterLimits = adapter.limits;
-
-            // 合并用户提供的descriptor和我们需要的limits
-            const enhancedDescriptor = {
-              ...descriptor,
-              requiredLimits: {
-                ...descriptor?.requiredLimits,
-                // 使用adapter支持的最大值，但不超过2GB
-                maxBufferSize: Math.min(
-                  adapterLimits.maxBufferSize || 2147483648,
-                  2147483648
-                ),
-                maxStorageBufferBindingSize: Math.min(
-                  adapterLimits.maxStorageBufferBindingSize || 1073741824,
-                  1073741824
-                ),
-              },
-            };
-
-            console.log(
-              'WebGPU设备请求配置:',
-              enhancedDescriptor.requiredLimits
-            );
-            return originalRequestDevice(enhancedDescriptor);
-          };
-
-          return adapter;
-        };
-
-        const adapter = await (navigator as any).gpu.requestAdapter();
-        if (!adapter) {
-          setWebGPUSupported(false);
-          console.log('WebGPU不支持：无法获取GPU适配器');
-          return;
-        }
-
-        setWebGPUSupported(true);
-        console.log('WebGPU支持检测：✅ 支持');
-        console.log('Adapter limits:', {
-          maxBufferSize: adapter.limits.maxBufferSize,
-          maxStorageBufferBindingSize:
-            adapter.limits.maxStorageBufferBindingSize,
-        });
-      } catch (err) {
-        setWebGPUSupported(false);
-        console.log('WebGPU不支持：', err);
-      }
-    };
-
-    checkWebGPUSupport();
-  }, []);
+  // Anime4K 超分（内核 Anime4KController：开着时新实例自动重新启动；模式、倍数记在本机）
+  const anime4kRef = useRef<Anime4KController | null>(null);
+  const anime4k = (anime4kRef.current ??= new Anime4KController());
 
   // 弹幕相关状态
   const [danmakuSettings, setDanmakuSettings] = useState<DanmakuSettings>(
@@ -2433,23 +2287,22 @@ function PlayPageClient() {
   const stopKeyboardRef = useRef<(() => void) | null>(null);
   // 当前实例创建时的去广告开关（变了就要重建）
   const activeAdBlockRef = useRef<boolean | null>(null);
-  const syncAnime4KCanvasFlip = (flip?: string) => {
-    const canvas = anime4kRef.current?.canvas as HTMLCanvasElement | undefined;
-    if (!canvas) return;
-
-    const currentFlip = flip || artPlayerRef.current?.flip || 'normal';
-    canvas.style.transformOrigin = 'center center';
-    canvas.style.transform =
-      currentFlip === 'horizontal'
-        ? 'scaleX(-1)'
-        : currentFlip === 'vertical'
-        ? 'scaleY(-1)'
-        : 'none';
-  };
   const customSubtitleInputRef = useRef<HTMLInputElement | null>(null);
-  const customSubtitleRef = useRef<CustomSubtitleState | null>(null);
-  const currentSubtitleLabelRef = useRef<string>('关闭');
-  const bitsubRendererRef = useRef<BitsubRendererInstance | null>(null);
+  // 字幕（内核 SubtitleController，和房间同一份）：片源字幕、本地上传、ASS/SSA、PGS/SUP
+  const subtitlesRef = useRef<SubtitleController | null>(null);
+  const subtitles = (subtitlesRef.current ??= new SubtitleController(
+    (message, type) =>
+      setToast({
+        message,
+        type,
+        ...(type === 'info' ? { duration: 5000 } : {}),
+        onClose: () => setToast(null),
+      }),
+    () => customSubtitleInputRef.current?.click()
+  ));
+  const episodeSubtitles = () =>
+    (detailRef.current?.subtitles?.[currentEpisodeIndexRef.current] ||
+      []) as SourceSubtitle[];
 
   const mediaReady = Boolean(
     playerReady && !isVideoLoading && !loading && videoUrl
@@ -2591,555 +2444,6 @@ function PlayPageClient() {
   // -----------------------------------------------------------------------------
   // 工具函数（Utils）
   // -----------------------------------------------------------------------------
-
-  const getSubtitleStyle = () => ({
-    color: '#fff',
-    fontSize:
-      typeof window !== 'undefined'
-        ? localStorage.getItem('subtitleSize') || '2em'
-        : '2em',
-  });
-
-  const getSubtitleFileExtension = (fileName: string) => {
-    return fileName.toLowerCase().match(/\.([a-z0-9]+)$/)?.[1] || '';
-  };
-
-  const isAdvancedSubtitleFormat = (format: string) => {
-    return ADVANCED_SUBTITLE_FORMATS.has(format.toLowerCase());
-  };
-
-  const getSourceSubtitleFormat = (subtitle?: SourceSubtitleItem | null) => {
-    return (
-      subtitle?.format ||
-      subtitle?.sourceFormat ||
-      subtitle?.codec ||
-      ''
-    ).toLowerCase();
-  };
-
-  const isAdvancedSourceSubtitle = (subtitle?: SourceSubtitleItem | null) => {
-    return (
-      subtitle?.renderMode === 'jassub' ||
-      isAdvancedSubtitleFormat(getSourceSubtitleFormat(subtitle))
-    );
-  };
-
-  const isBitsubSourceSubtitle = (subtitle?: SourceSubtitleItem | null) => {
-    return (
-      subtitle?.renderMode === 'bitsub' ||
-      BITSUB_SUBTITLE_FORMATS.has(getSourceSubtitleFormat(subtitle))
-    );
-  };
-
-  // 位图字幕（PGS）无法走 Artplayer 原生 track / JASSUB，需要专用渲染器
-  const isCustomRendererSourceSubtitle = (
-    subtitle?: SourceSubtitleItem | null
-  ) => {
-    return (
-      isAdvancedSourceSubtitle(subtitle) || isBitsubSourceSubtitle(subtitle)
-    );
-  };
-
-  const getJassubSubtitleInstance = (): JassubSubtitleInstance | null => {
-    return (
-      artPlayerRef.current?.plugins?.artplayerPluginJassub?.instance || null
-    );
-  };
-
-  const clearJassubSubtitle = () => {
-    try {
-      getJassubSubtitleInstance()?.freeTrack?.();
-    } catch (error) {
-      console.warn('[Subtitle] 清理高级字幕失败:', error);
-    }
-  };
-
-  const revokeCustomSubtitle = () => {
-    const customSubtitle = customSubtitleRef.current;
-    if (customSubtitle?.engine === 'native' && customSubtitle.url) {
-      URL.revokeObjectURL(customSubtitle.url);
-    }
-
-    if (customSubtitle?.engine === 'jassub') {
-      clearJassubSubtitle();
-    }
-
-    if (customSubtitle?.engine === 'bitsub') {
-      clearBitsubSubtitle();
-    }
-
-    customSubtitleRef.current = null;
-  };
-
-  const switchSubtitle = (url: string, label: string) => {
-    if (!artPlayerRef.current) return;
-
-    clearJassubSubtitle();
-    clearBitsubSubtitle();
-    artPlayerRef.current.subtitle.switch(url, {
-      name: label,
-      type: 'vtt',
-      style: getSubtitleStyle(),
-      encoding: 'utf-8',
-    });
-    artPlayerRef.current.subtitle.show = true;
-    currentSubtitleLabelRef.current = label;
-  };
-
-  const closeSubtitle = () => {
-    if (!artPlayerRef.current) return;
-
-    artPlayerRef.current.subtitle.show = false;
-    clearJassubSubtitle();
-    clearBitsubSubtitle();
-    currentSubtitleLabelRef.current = '关闭';
-  };
-
-  const ensureJassubSubtitleInstance = async (initialTrack: {
-    content?: string;
-    url?: string;
-  }): Promise<{ instance: JassubSubtitleInstance; created: boolean }> => {
-    const existingInstance = getJassubSubtitleInstance();
-    if (existingInstance) {
-      return { instance: existingInstance, created: false };
-    }
-
-    if (!initialTrack.content && !initialTrack.url) {
-      throw new Error('缺少高级字幕内容');
-    }
-
-    if (!artPlayerRef.current) {
-      throw new Error('播放器尚未就绪');
-    }
-
-    const JassubPluginModule = await import('artplayer-plugin-jassub');
-    const artplayerPluginJassub = ((JassubPluginModule as any).default ||
-      JassubPluginModule) as any;
-
-    artPlayerRef.current.plugins.add(
-      artplayerPluginJassub({
-        ...(initialTrack.content
-          ? { subContent: initialTrack.content }
-          : { subUrl: initialTrack.url }),
-        workerUrl: `${JASSUB_ASSET_BASE}/jassub-worker.js`,
-        wasmUrl: `${JASSUB_ASSET_BASE}/jassub-worker.wasm`,
-        modernWasmUrl: `${JASSUB_ASSET_BASE}/jassub-worker-modern.wasm`,
-        availableFonts: {
-          [JASSUB_CJK_FONT_FAMILY]: JASSUB_CJK_FONT_URL,
-          'liberation sans': `${JASSUB_ASSET_BASE}/default.woff2`,
-        },
-        fallbackFont: JASSUB_CJK_FONT_FAMILY,
-      })
-    );
-
-    const instance = getJassubSubtitleInstance();
-    if (!instance) {
-      throw new Error('高级字幕渲染器初始化失败');
-    }
-
-    return { instance, created: true };
-  };
-
-  const switchAdvancedSubtitle = async (content: string, label: string) => {
-    if (!artPlayerRef.current) return;
-
-    artPlayerRef.current.subtitle.show = false;
-    const { instance, created } = await ensureJassubSubtitleInstance({
-      content,
-    });
-
-    // 新建实例时 subContent 已作为初始轨道传入；复用实例时需要显式切轨。
-    if (!created) {
-      await instance.setTrack?.(content);
-    }
-
-    currentSubtitleLabelRef.current = label;
-  };
-
-  const switchAdvancedSubtitleByUrl = async (url: string, label: string) => {
-    if (!artPlayerRef.current) return;
-
-    artPlayerRef.current.subtitle.show = false;
-    const { instance, created } = await ensureJassubSubtitleInstance({ url });
-
-    // 新建实例时 subUrl 已作为初始轨道传入；复用实例时需要显式切轨。
-    if (!created) {
-      if (instance.setTrackByUrl) {
-        await instance.setTrackByUrl(url);
-      } else {
-        const response = await fetch(url, {
-          credentials: 'include',
-          cache: 'no-store',
-        });
-        if (!response.ok) {
-          throw new Error(`高级字幕加载失败 (${response.status})`);
-        }
-        await instance.setTrack?.(await response.text());
-      }
-    }
-
-    currentSubtitleLabelRef.current = label;
-  };
-
-  const clearBitsubSubtitle = () => {
-    const renderer = bitsubRendererRef.current;
-    if (!renderer) return;
-    bitsubRendererRef.current = null;
-    try {
-      renderer.dispose?.();
-    } catch (error) {
-      console.warn('[Subtitle] 清理位图字幕失败:', error);
-    }
-  };
-
-  // PgsRenderer 无 setTrack 换轨接口：切换位图字幕 = 销毁重建
-  const ensureBitsubRenderer = async (source: {
-    url?: string;
-    content?: ArrayBuffer;
-  }) => {
-    if (!source.url && !source.content) {
-      throw new Error('缺少位图字幕内容');
-    }
-
-    const video = artPlayerRef.current?.video;
-    if (!video) {
-      throw new Error('播放器尚未就绪');
-    }
-
-    clearBitsubSubtitle();
-
-    // webpackIgnore：让浏览器原生 import public/ 下的 ESM 模块图，webpack 不介入；
-    // 非字面量参数同时也让 esbuild（OpenNext）/swc 无法静态分析，避免 Cloudflare 构建报错
-    const { PgsRenderer } = (await import(
-      /* webpackIgnore: true */ getBitsubModuleUrl()
-    )) as typeof import('libbitsub');
-
-    // loadSubtitles 内部吞掉异常并通过 onError 回调（loadSubtitles 的 catch 不向上抛），
-    // 用该回调把加载失败转成 promise 拒绝，以便上层统一走 catch 处理
-    let rejectLoad: ((error: Error) => void) | null = null;
-    const loadFailure = new Promise<never>((_, reject) => {
-      rejectLoad = reject;
-    });
-
-    const renderer = new PgsRenderer({
-      video,
-      ...(source.content
-        ? { subContent: source.content }
-        : { subUrl: source.url }),
-      onError: (error: Error) => {
-        rejectLoad?.(error);
-        rejectLoad = null;
-      },
-    });
-
-    bitsubRendererRef.current = renderer as unknown as BitsubRendererInstance;
-    try {
-      // wasm 初始化 + 字幕数据索引完成（失败时回收实例）
-      await (renderer as any).waitUntilInitialized();
-      await loadFailure;
-    } catch (error) {
-      clearBitsubSubtitle();
-      throw error instanceof Error ? error : new Error(String(error));
-    }
-    rejectLoad = null;
-    return renderer;
-  };
-
-  const switchBitsubSubtitle = async (
-    source: { url?: string; content?: ArrayBuffer },
-    label: string
-  ) => {
-    if (!artPlayerRef.current) return;
-
-    artPlayerRef.current.subtitle.show = false;
-    clearJassubSubtitle();
-    await ensureBitsubRenderer(source);
-    currentSubtitleLabelRef.current = label;
-  };
-
-  const switchSourceSubtitle = async (subtitle: SourceSubtitleItem) => {
-    if (!subtitle.url) return;
-
-    // 位图字幕（PGS）：走 libbitsub 渲染器，无法降级为文本字幕
-    if (isBitsubSourceSubtitle(subtitle)) {
-      await switchBitsubSubtitle({ url: subtitle.url }, subtitle.label);
-      return;
-    }
-
-    if (isAdvancedSourceSubtitle(subtitle)) {
-      try {
-        await switchAdvancedSubtitleByUrl(subtitle.url, subtitle.label);
-        return;
-      } catch (error) {
-        if (!subtitle.fallbackUrl) {
-          throw error;
-        }
-
-        console.warn('[Subtitle] 高级字幕加载失败，尝试降级为普通字幕:', error);
-        switchSubtitle(subtitle.fallbackUrl, subtitle.label);
-
-        const message = `高级字幕渲染失败，已降级为普通字幕：${subtitle.label}`;
-        if (artPlayerRef.current) {
-          artPlayerRef.current.notice.show = message;
-        }
-        setToast({
-          message,
-          type: 'info',
-          duration: 5000,
-          onClose: () => setToast(null),
-        });
-      }
-      return;
-    }
-
-    switchSubtitle(subtitle.url, subtitle.label);
-  };
-
-  const removeSubtitleSetting = () => {
-    try {
-      artPlayerRef.current?.setting.remove('subtitle-selector');
-    } catch (e) {
-      // 忽略错误，可能设置项不存在
-    }
-  };
-
-  const updateSubtitleSetting = () => {
-    if (!artPlayerRef.current) return;
-
-    const sourceSubtitles = (detailRef.current?.subtitles?.[
-      currentEpisodeIndexRef.current
-    ] || []) as SourceSubtitleItem[];
-    const customSubtitle =
-      customSubtitleRef.current?.episodeIndex === currentEpisodeIndexRef.current
-        ? customSubtitleRef.current
-        : null;
-
-    removeSubtitleSetting();
-
-    const subtitleOptions = [
-      { html: '关闭', action: 'close' },
-      { html: '上传本地字幕', action: 'upload' },
-      ...sourceSubtitles.map((sub: SourceSubtitleItem) => {
-        const isAdvanced = isAdvancedSourceSubtitle(sub);
-        const isBitsub = isBitsubSourceSubtitle(sub);
-        const format = getSourceSubtitleFormat(sub);
-        return {
-          html: sub.label,
-          action: 'switch',
-          engine: isBitsub ? 'bitsub' : isAdvanced ? 'jassub' : 'native',
-          url: sub.url,
-          fallbackUrl: sub.fallbackUrl,
-          fallbackFormat: sub.fallbackFormat,
-          format,
-        };
-      }),
-      ...(customSubtitle
-        ? [
-            {
-              html: `本地：${customSubtitle.name}`,
-              action: 'switch',
-              engine: customSubtitle.engine,
-              url: customSubtitle.url,
-              content: customSubtitle.content,
-              binaryContent: customSubtitle.binaryContent,
-            },
-          ]
-        : []),
-    ];
-
-    artPlayerRef.current.setting.add({
-      name: 'subtitle-selector',
-      html: '字幕',
-      selector: subtitleOptions,
-      onSelect: function (item: any) {
-        if (!artPlayerRef.current) {
-          return currentSubtitleLabelRef.current;
-        }
-
-        if (item.action === 'close') {
-          closeSubtitle();
-          return item.html;
-        }
-
-        if (item.action === 'upload') {
-          customSubtitleInputRef.current?.click();
-          return currentSubtitleLabelRef.current;
-        }
-
-        if (item.engine === 'bitsub') {
-          const switchPromise = item.binaryContent
-            ? switchBitsubSubtitle({ content: item.binaryContent }, item.html)
-            : item.url
-            ? switchBitsubSubtitle({ url: item.url }, item.html)
-            : Promise.resolve();
-
-          void switchPromise.catch((error) => {
-            console.warn('[Subtitle] 位图字幕切换失败:', error);
-            setToast({
-              message:
-                error instanceof Error ? error.message : '位图字幕切换失败',
-              type: 'error',
-              onClose: () => setToast(null),
-            });
-          });
-          return item.html;
-        }
-
-        if (item.engine === 'jassub') {
-          const switchPromise = item.content
-            ? switchAdvancedSubtitle(item.content, item.html)
-            : item.url
-            ? switchSourceSubtitle({
-                label: item.html,
-                url: item.url,
-                fallbackUrl: item.fallbackUrl,
-                fallbackFormat: item.fallbackFormat,
-                format: item.format,
-                renderMode: 'jassub',
-              })
-            : Promise.resolve();
-
-          void switchPromise.catch((error) => {
-            console.warn('[Subtitle] 高级字幕切换失败:', error);
-            setToast({
-              message:
-                error instanceof Error ? error.message : '高级字幕切换失败',
-              type: 'error',
-              onClose: () => setToast(null),
-            });
-          });
-          return item.html;
-        }
-
-        if (item.url) {
-          switchSubtitle(item.url, item.html);
-          return item.html;
-        }
-
-        return currentSubtitleLabelRef.current;
-      },
-      default: currentSubtitleLabelRef.current,
-    });
-  };
-
-  const loadNativeCustomSubtitle = async (file: File) => {
-    const convertedSubtitle = await convertSubtitleFileToVttObjectUrl(file);
-    revokeCustomSubtitle();
-
-    customSubtitleRef.current = {
-      ...convertedSubtitle,
-      engine: 'native',
-      episodeIndex: currentEpisodeIndexRef.current,
-    };
-
-    switchSubtitle(convertedSubtitle.url, `本地：${convertedSubtitle.name}`);
-    updateSubtitleSetting();
-
-    return convertedSubtitle;
-  };
-
-  const loadAdvancedCustomSubtitle = async (file: File, format: string) => {
-    const content = await file.text();
-    revokeCustomSubtitle();
-
-    customSubtitleRef.current = {
-      name: file.name,
-      format,
-      engine: 'jassub',
-      content,
-      episodeIndex: currentEpisodeIndexRef.current,
-    };
-
-    await switchAdvancedSubtitle(content, `本地：${file.name}`);
-    updateSubtitleSetting();
-  };
-
-  const loadBitsubCustomSubtitle = async (file: File, format: string) => {
-    const content = await file.arrayBuffer();
-    revokeCustomSubtitle();
-
-    customSubtitleRef.current = {
-      name: file.name,
-      format,
-      engine: 'bitsub',
-      binaryContent: content,
-      episodeIndex: currentEpisodeIndexRef.current,
-    };
-
-    await switchBitsubSubtitle({ content }, `本地：${file.name}`);
-    updateSubtitleSetting();
-  };
-
-  const handleCustomSubtitleFileChange = async (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    const file = event.target.files?.[0];
-    event.target.value = '';
-
-    if (!file) return;
-
-    const extension = getSubtitleFileExtension(file.name);
-
-    try {
-      if (isAdvancedSubtitleFormat(extension)) {
-        await loadAdvancedCustomSubtitle(file, extension);
-        setToast({
-          message: `已加载高级字幕：${file.name}`,
-          type: 'success',
-          onClose: () => setToast(null),
-        });
-        return;
-      }
-
-      if (BITSUB_SUBTITLE_FORMATS.has(extension)) {
-        await loadBitsubCustomSubtitle(file, extension);
-        setToast({
-          message: `已加载位图字幕：${file.name}`,
-          type: 'success',
-          onClose: () => setToast(null),
-        });
-        return;
-      }
-
-      const convertedSubtitle = await loadNativeCustomSubtitle(file);
-      setToast({
-        message: `已加载本地字幕：${convertedSubtitle.name}`,
-        type: 'success',
-        onClose: () => setToast(null),
-      });
-    } catch (error) {
-      let displayError = error;
-
-      if (isAdvancedSubtitleFormat(extension)) {
-        console.warn(
-          '[Subtitle] 高级字幕加载失败，尝试降级为普通字幕:',
-          displayError
-        );
-
-        try {
-          const convertedSubtitle = await loadNativeCustomSubtitle(file);
-          setToast({
-            message: `高级字幕渲染失败，已降级为普通字幕：${convertedSubtitle.name}`,
-            type: 'info',
-            duration: 5000,
-            onClose: () => setToast(null),
-          });
-          return;
-        } catch (fallbackError) {
-          console.warn('[Subtitle] 高级字幕降级加载失败:', fallbackError);
-          displayError = fallbackError;
-        }
-      }
-
-      console.warn('[Subtitle] 自定义字幕加载失败:', displayError);
-      setToast({
-        message:
-          displayError instanceof Error ? displayError.message : '字幕加载失败',
-        type: 'error',
-        onClose: () => setToast(null),
-      });
-    }
-  };
 
   // 获取当前源的视频信息（分辨率和码率）
   const fetchCurrentSourceVideoInfo = async () => {
@@ -4223,15 +3527,9 @@ function PlayPageClient() {
     setExternalPlayerAdBlock(!externalPlayerAdBlock);
   };
 
-  // 播放器实例销毁前（内核换实例、页面卸载时调用）：保存弹幕设置、停超分、清字幕和续期计时器
+  // 播放器实例销毁前（内核换实例、页面卸载时调用）：保存弹幕设置（超分、字幕、续期各自管）
   const releasePlayerResources = () => {
     if (surfaceActiveRef.current) setPlayerReady(false);
-    revokeCustomSubtitle();
-    // 位图字幕渲染器可能独立于 customSubtitle 存在（源字幕切换路径），兜底销毁
-    clearBitsubSubtitle();
-
-    // 先清理Anime4K，避免GPU纹理错误
-    void cleanupAnime4K();
 
     if (artPlayerRef.current) {
       try {
@@ -4288,267 +3586,6 @@ function PlayPageClient() {
     watchPlayerRef.current?.destroy();
     watchPlayerRef.current = null;
     artPlayerRef.current = null;
-  };
-
-  // 初始化Anime4K超分
-  const initAnime4K = async () => {
-    if (!artPlayerRef.current?.video) return;
-
-    let outputCanvas: HTMLCanvasElement | null = null; // 在外层声明，以便错误处理中清理
-
-    try {
-      if (anime4kRef.current) {
-        anime4kRef.current.controller?.stop?.();
-        anime4kRef.current = null;
-        // 等待旧实例完全停止，避免双重渲染
-        await new Promise((resolve) => setTimeout(resolve, 100));
-      }
-
-      const video = artPlayerRef.current.video as HTMLVideoElement;
-
-      // 等待视频元数据加载完成
-      if (!video.videoWidth || !video.videoHeight) {
-        console.warn('视频尺寸未就绪，等待loadedmetadata事件');
-        await new Promise<void>((resolve) => {
-          const handler = () => {
-            video.removeEventListener('loadedmetadata', handler);
-            resolve();
-          };
-          video.addEventListener('loadedmetadata', handler);
-          // 如果已经加载过了，立即resolve
-          if (video.videoWidth && video.videoHeight) {
-            video.removeEventListener('loadedmetadata', handler);
-            resolve();
-          }
-        });
-      }
-
-      // 再次检查视频尺寸
-      if (!video.videoWidth || !video.videoHeight) {
-        throw new Error('无法获取视频尺寸');
-      }
-
-      // 使用用户选择的超分倍数
-      const scale = anime4kScaleRef.current;
-
-      // 创建输出canvas（显示给用户的）
-      outputCanvas = document.createElement('canvas');
-      const container = artPlayerRef.current.template.$video.parentElement;
-
-      outputCanvas.width = Math.floor(video.videoWidth * scale); // 确保是整数
-      outputCanvas.height = Math.floor(video.videoHeight * scale);
-
-      // 验证outputCanvas尺寸
-      console.log(
-        '输出Canvas尺寸:',
-        outputCanvas.width,
-        'x',
-        outputCanvas.height
-      );
-      if (
-        !outputCanvas.width ||
-        !outputCanvas.height ||
-        !isFinite(outputCanvas.width) ||
-        !isFinite(outputCanvas.height)
-      ) {
-        throw new Error(
-          `outputCanvas尺寸无效: ${outputCanvas.width}x${outputCanvas.height}, scale: ${scale}`
-        );
-      }
-
-      outputCanvas.style.position = 'absolute';
-      outputCanvas.style.top = '0';
-      outputCanvas.style.left = '0';
-      outputCanvas.style.width = '100%';
-      outputCanvas.style.height = '100%';
-      outputCanvas.style.objectFit = 'contain';
-      outputCanvas.style.cursor = 'pointer';
-      outputCanvas.style.zIndex = '1';
-      // 确保canvas背景透明，避免Firefox中的渲染问题
-      outputCanvas.style.backgroundColor = 'transparent';
-
-      outputCanvas.addEventListener('click', () => {
-        if (artPlayerRef.current) {
-          artPlayerRef.current.toggle();
-        }
-      });
-      outputCanvas.addEventListener('dblclick', () => {
-        if (artPlayerRef.current) {
-          artPlayerRef.current.fullscreen = !artPlayerRef.current.fullscreen;
-        }
-      });
-
-      // 隐藏原始video元素（使用opacity而不是display:none以保持视频解码）
-      // Firefox在display:none时可能会停止视频解码，导致黑屏
-      video.style.opacity = '0';
-      video.style.pointerEvents = 'none';
-      video.style.position = 'absolute';
-      video.style.zIndex = '-1';
-
-      // 插入outputCanvas到容器
-      container.insertBefore(outputCanvas, video);
-
-      // 动态导入 anime4k-webgpu 及对应的模式
-      const { ModeA, ModeB, ModeC, ModeAA, ModeBB, ModeCA } = await import(
-        'anime4k-webgpu'
-      );
-
-      let ModeClass: any;
-      const modeName = anime4kModeRef.current;
-
-      switch (modeName) {
-        case 'ModeA':
-          ModeClass = ModeA;
-          break;
-        case 'ModeB':
-          ModeClass = ModeB;
-          break;
-        case 'ModeC':
-          ModeClass = ModeC;
-          break;
-        case 'ModeAA':
-          ModeClass = ModeAA;
-          break;
-        case 'ModeBB':
-          ModeClass = ModeBB;
-          break;
-        case 'ModeCA':
-          ModeClass = ModeCA;
-          break;
-        default:
-          ModeClass = ModeA;
-      }
-
-      // 使用自管理的 WebGPU 渲染器。内部自动处理各浏览器的帧源差异：
-      // 直接从 <video> 拷贝（Chrome/Edge），或退回 createImageBitmap 中转（Firefox）。
-      console.log('开始初始化Anime4K渲染器...');
-      console.log('视频尺寸:', video.videoWidth, 'x', video.videoHeight);
-      console.log(
-        '输出Canvas尺寸:',
-        outputCanvas.width,
-        'x',
-        outputCanvas.height
-      );
-
-      const controller = await createAnime4KRenderer({
-        video,
-        canvas: outputCanvas,
-        scale,
-        pipelineClass: ModeClass,
-      });
-      console.log('Anime4K渲染器初始化成功');
-
-      anime4kRef.current = {
-        controller,
-        canvas: outputCanvas,
-      };
-      syncAnime4KCanvasFlip();
-
-      console.log(
-        'Anime4K超分已启用，模式:',
-        anime4kModeRef.current,
-        '倍数:',
-        scale
-      );
-      if (artPlayerRef.current) {
-        artPlayerRef.current.notice.show = `超分已启用 (${anime4kModeRef.current}, ${scale}x)`;
-      }
-    } catch (err) {
-      console.error('初始化Anime4K失败:', err);
-      if (artPlayerRef.current) {
-        artPlayerRef.current.notice.show =
-          '超分启用失败：' + (err instanceof Error ? err.message : '未知错误');
-      }
-
-      // 移除outputCanvas（如果已创建）
-      if (outputCanvas && outputCanvas.parentNode) {
-        outputCanvas.parentNode.removeChild(outputCanvas);
-      }
-
-      // 恢复video显示
-      if (artPlayerRef.current?.video) {
-        artPlayerRef.current.video.style.opacity = '1';
-        artPlayerRef.current.video.style.pointerEvents = 'auto';
-        artPlayerRef.current.video.style.position = '';
-        artPlayerRef.current.video.style.zIndex = '';
-      }
-    }
-  };
-
-  // 清理Anime4K
-  const cleanupAnime4K = async () => {
-    if (anime4kRef.current) {
-      try {
-        // 停止渲染循环并释放 WebGPU 资源
-        anime4kRef.current.controller?.stop?.();
-
-        // 移除canvas
-        if (anime4kRef.current.canvas && anime4kRef.current.canvas.parentNode) {
-          anime4kRef.current.canvas.parentNode.removeChild(
-            anime4kRef.current.canvas
-          );
-        }
-
-        anime4kRef.current = null;
-
-        // 恢复原始video显示
-        if (artPlayerRef.current?.video) {
-          artPlayerRef.current.video.style.opacity = '1';
-          artPlayerRef.current.video.style.pointerEvents = 'auto';
-          artPlayerRef.current.video.style.position = '';
-          artPlayerRef.current.video.style.zIndex = '';
-        }
-
-        console.log('Anime4K已清理');
-      } catch (err) {
-        console.warn('清理Anime4K时出错:', err);
-      }
-    }
-  };
-
-  // 切换Anime4K状态
-  const toggleAnime4K = async (enabled: boolean) => {
-    try {
-      if (enabled) {
-        await initAnime4K();
-      } else {
-        await cleanupAnime4K();
-      }
-      setAnime4kEnabled(enabled);
-      localStorage.setItem('enable_anime4k', String(enabled));
-    } catch (err) {
-      console.error('切换超分状态失败:', err);
-    }
-  };
-
-  // 更改Anime4K模式
-  const changeAnime4KMode = async (mode: string) => {
-    try {
-      setAnime4kMode(mode);
-      localStorage.setItem('anime4k_mode', mode);
-
-      if (anime4kEnabledRef.current) {
-        await cleanupAnime4K();
-        await initAnime4K();
-      }
-    } catch (err) {
-      console.error('更改超分模式失败:', err);
-    }
-  };
-
-  // 更改Anime4K分辨率倍数
-  const changeAnime4KScale = async (scale: number) => {
-    try {
-      setAnime4kScale(scale);
-      localStorage.setItem('anime4k_scale', scale.toString());
-
-      if (anime4kEnabledRef.current) {
-        await cleanupAnime4K();
-        await initAnime4K();
-      }
-    } catch (err) {
-      console.error('更改超分倍数失败:', err);
-    }
   };
 
   // 跳过片头片尾配置相关函数
@@ -5493,24 +4530,10 @@ function PlayPageClient() {
   useEffect(() => {
     if (!artPlayerRef.current || !detail) return;
 
-    revokeCustomSubtitle();
-    const currentSubtitles = (detail.subtitles?.[currentEpisodeIndex] ||
-      []) as SourceSubtitleItem[];
-
-    // 如果有字幕，更新播放器字幕
-    if (currentSubtitles.length > 0) {
-      currentSubtitleLabelRef.current = currentSubtitles[0].label;
-      void switchSourceSubtitle(currentSubtitles[0]).catch((error) => {
-        console.warn('[Subtitle] 源字幕加载失败:', error);
-        artPlayerRef.current.subtitle.show = false;
-        currentSubtitleLabelRef.current = '关闭';
-      });
-    } else {
-      artPlayerRef.current.subtitle.show = false;
-      currentSubtitleLabelRef.current = '关闭';
-    }
-
-    updateSubtitleSetting();
+    subtitles.setTracks(
+      (detail.subtitles?.[currentEpisodeIndex] || []) as SourceSubtitle[],
+      String(currentEpisodeIndex)
+    );
   }, [detail, currentEpisodeIndex]);
 
   const getSourceSwitchResumeTime = async (
@@ -6870,10 +5893,13 @@ function PlayPageClient() {
     // 这里给它这一集要用的设置菜单、控制条按钮和每个新实例上的事件
     const initPlayer = async () => {
       try {
-        const [DanmukuPlugin, AutoThumbnailPlugin] = await Promise.all([
-          import('artplayer-plugin-danmuku'),
-          import('@/lib/artplayer-plugin-auto-thumbnail'),
-        ]);
+        // 超分的设置项要看有没有 WebGPU：等检测完再建菜单（检测只做一次）
+        const [DanmukuPlugin, AutoThumbnailPlugin, webGPUSupported] =
+          await Promise.all([
+            import('artplayer-plugin-danmuku'),
+            import('@/lib/artplayer-plugin-auto-thumbnail'),
+            checkWebGPU(),
+          ]);
         const artplayerPluginDanmuku = DanmukuPlugin.default as any;
         const artplayerPluginAutoThumbnail = AutoThumbnailPlugin.default as any;
         const playerTimeouts = new Set<number>();
@@ -6891,18 +5917,6 @@ function PlayPageClient() {
           });
           playerTimeouts.clear();
         };
-
-        // 获取当前集的字幕
-        const currentSubtitles = (detailRef.current?.subtitles?.[
-          currentEpisodeIndex
-        ] || []) as SourceSubtitleItem[];
-        const defaultSubtitle = currentSubtitles[0];
-        const shouldUseNativeInitialSubtitle =
-          !!defaultSubtitle && !isCustomRendererSourceSubtitle(defaultSubtitle);
-        const savedSubtitleSize =
-          typeof window !== 'undefined'
-            ? localStorage.getItem('subtitleSize') || '2em'
-            : '2em';
 
         if (!watchPlayerRef.current) {
           watchPlayerRef.current = new WatchPlayer({
@@ -6923,9 +5937,8 @@ function PlayPageClient() {
           // 自己看每次从 0.7 开始，换集后由 lastVolumeRef 恢复本次的音量
           initialVolume: 0.7,
           theme: 'var(--tm-room-player-text)',
-          subtitle: shouldUseNativeInitialSubtitle
-            ? { url: defaultSubtitle!.url, fontSize: savedSubtitleSize }
-            : null,
+          // 第一条字幕是普通字幕时交给 Artplayer 原生加载
+          subtitle: subtitles.initialNative(episodeSubtitles()),
           onError: (message, info) => {
             if (message === '视频播放失败' && proxyAttemptedRef.current) {
               // 走过代理后直连也失败：格式问题，不再提供代理按钮
@@ -6947,7 +5960,14 @@ function PlayPageClient() {
             heatmapPlugin(
               () => danmakuPluginRef.current?.option?.danmuku || []
             ),
-            // 实例销毁前：保存弹幕设置、停超分、清字幕
+            ({ art }) => anime4k.attach(art),
+            ({ art }) =>
+              subtitles.attach(
+                art,
+                episodeSubtitles(),
+                String(currentEpisodeIndexRef.current)
+              ),
+            // 实例销毁前：保存弹幕设置
             () => () => releasePlayerResources(),
           ],
           artPlugins: () => [
@@ -7073,11 +6093,10 @@ function PlayPageClient() {
                     name: 'Anime4K超分',
                     html: 'Anime4K超分',
                     icon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 2L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-10-5zm0 18c-4 0-7-3-7-7V9l7-3.5L19 9v4c0 4-3 7-7 7z" fill="currentColor"/><path d="M10 12l2 2 4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
-                    switch: anime4kEnabledRef.current,
+                    switch: anime4k.state.enabled,
                     onSwitch: async function (item: any) {
-                      const newVal = !item.switch;
-                      await toggleAnime4K(newVal);
-                      return newVal;
+                      await anime4k.setEnabled(!item.switch);
+                      return anime4k.state.enabled;
                     },
                   },
                   {
@@ -7087,36 +6106,36 @@ function PlayPageClient() {
                       {
                         html: 'ModeA (快速)',
                         value: 'ModeA',
-                        default: anime4kModeRef.current === 'ModeA',
+                        default: anime4k.state.mode === 'ModeA',
                       },
                       {
                         html: 'ModeB (平衡)',
                         value: 'ModeB',
-                        default: anime4kModeRef.current === 'ModeB',
+                        default: anime4k.state.mode === 'ModeB',
                       },
                       {
                         html: 'ModeC (质量)',
                         value: 'ModeC',
-                        default: anime4kModeRef.current === 'ModeC',
+                        default: anime4k.state.mode === 'ModeC',
                       },
                       {
                         html: 'ModeAA (增强快速)',
                         value: 'ModeAA',
-                        default: anime4kModeRef.current === 'ModeAA',
+                        default: anime4k.state.mode === 'ModeAA',
                       },
                       {
                         html: 'ModeBB (增强平衡)',
                         value: 'ModeBB',
-                        default: anime4kModeRef.current === 'ModeBB',
+                        default: anime4k.state.mode === 'ModeBB',
                       },
                       {
                         html: 'ModeCA (最高质量)',
                         value: 'ModeCA',
-                        default: anime4kModeRef.current === 'ModeCA',
+                        default: anime4k.state.mode === 'ModeCA',
                       },
                     ],
                     onSelect: async function (item: any) {
-                      await changeAnime4KMode(item.value);
+                      await anime4k.setMode(item.value);
                       return item.html;
                     },
                   },
@@ -7127,26 +6146,26 @@ function PlayPageClient() {
                       {
                         html: '1.5x',
                         value: '1.5',
-                        default: anime4kScaleRef.current === 1.5,
+                        default: anime4k.state.scale === 1.5,
                       },
                       {
                         html: '2.0x',
                         value: '2.0',
-                        default: anime4kScaleRef.current === 2.0,
+                        default: anime4k.state.scale === 2.0,
                       },
                       {
                         html: '3.0x',
                         value: '3.0',
-                        default: anime4kScaleRef.current === 3.0,
+                        default: anime4k.state.scale === 3.0,
                       },
                       {
                         html: '4.0x',
                         value: '4.0',
-                        default: anime4kScaleRef.current === 4.0,
+                        default: anime4k.state.scale === 4.0,
                       },
                     ],
                     onSelect: async function (item: any) {
-                      await changeAnime4KScale(parseFloat(item.value));
+                      await anime4k.setScale(parseFloat(item.value));
                       return item.html;
                     },
                   },
@@ -7800,9 +6819,7 @@ function PlayPageClient() {
 
         const wireInstance = (art: any) => {
           artPlayerRef.current = art;
-          currentSubtitleLabelRef.current = defaultSubtitle?.label || '关闭';
           art.on('destroy', clearPlayerTimeouts);
-          artPlayerRef.current.on('flip', syncAnime4KCanvasFlip);
 
           // 监听播放器事件
           artPlayerRef.current.on('ready', async () => {
@@ -7824,67 +6841,6 @@ function PlayPageClient() {
             // 标记播放器已就绪，触发 usePlaySync 设置事件监听器
             setPlayerReady(true);
             console.log('[PlayPage] Player ready, triggering sync setup');
-
-            // 添加字幕切换和本地字幕上传功能；ASS/SSA/PGS 需要播放器 ready 后挂载专用渲染器
-            const readySubtitles = (detailRef.current?.subtitles?.[
-              currentEpisodeIndexRef.current
-            ] || []) as SourceSubtitleItem[];
-            const readyDefaultSubtitle = readySubtitles[0];
-            if (
-              readyDefaultSubtitle &&
-              isCustomRendererSourceSubtitle(readyDefaultSubtitle)
-            ) {
-              void switchSourceSubtitle(readyDefaultSubtitle)
-                .catch((error) => {
-                  console.warn('[Subtitle] 高级字幕自动加载失败:', error);
-                  if (artPlayerRef.current) {
-                    artPlayerRef.current.subtitle.show = false;
-                  }
-                  currentSubtitleLabelRef.current = '关闭';
-                })
-                .finally(updateSubtitleSetting);
-            } else {
-              updateSubtitleSetting();
-            }
-
-            // 添加字幕大小设置
-            if (artPlayerRef.current) {
-              const savedSubtitleSize =
-                typeof window !== 'undefined'
-                  ? localStorage.getItem('subtitleSize') || '2em'
-                  : '2em';
-              const defaultOption =
-                savedSubtitleSize === '1em'
-                  ? '小'
-                  : savedSubtitleSize === '3em'
-                  ? '大'
-                  : savedSubtitleSize === '4em'
-                  ? '超大'
-                  : '中';
-
-              artPlayerRef.current.setting.add({
-                html: '字幕大小',
-                selector: [
-                  { html: '小', size: '1em' },
-                  { html: '中', size: '2em' },
-                  { html: '大', size: '3em' },
-                  { html: '超大', size: '4em' },
-                ],
-                onSelect: function (item: any) {
-                  if (artPlayerRef.current) {
-                    artPlayerRef.current.subtitle.style({
-                      fontSize: item.size,
-                    });
-                    // 保存到 localStorage
-                    if (typeof window !== 'undefined') {
-                      localStorage.setItem('subtitleSize', item.size);
-                    }
-                  }
-                  return item.html;
-                },
-                default: defaultOption,
-              });
-            }
 
             // 控制截图按钮在小屏幕竖屏时隐藏
             const updateScreenshotVisibility = () => {
@@ -8577,9 +7533,6 @@ function PlayPageClient() {
         clearInterval(saveIntervalRef.current);
       }
 
-      // 清理Anime4K
-      cleanupAnime4K();
-
       // 销毁播放器实例
       cleanupPlayer();
     };
@@ -8896,7 +7849,11 @@ function PlayPageClient() {
         type='file'
         accept={CUSTOM_SUBTITLE_ACCEPT}
         className='hidden'
-        onChange={handleCustomSubtitleFileChange}
+        onChange={(event) => {
+          const file = event.target.files?.[0];
+          event.target.value = '';
+          if (file) void subtitles.loadFile(file);
+        }}
       />
 
       {/* 下载选集面板 */}

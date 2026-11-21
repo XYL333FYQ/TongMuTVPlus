@@ -3,6 +3,7 @@
  * 别的功能只从这里引用；core/ 下面是内部。
  */
 export { playerEnvironment } from './core/env';
+export { Anime4KController, checkWebGPU } from './core/plugins/anime4k';
 export {
   iosOrientationPlugin,
   playbackRatePlugin,
