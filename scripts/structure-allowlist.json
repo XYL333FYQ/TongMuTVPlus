@@ -111,7 +111,6 @@
     "src/features/player/core/plugins/danmaku.ts",
     "src/features/player/core/plugins/heatmap.ts",
     "src/features/player/core/plugins/link-refresh.ts",
-    "src/features/player/core/plugins/playback-flow.ts",
     "src/features/player/core/plugins/subtitles.ts",
     "src/features/room/player/useRoomPlayer.ts"
   ]
