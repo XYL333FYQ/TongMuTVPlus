@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { playbackRatePlugin } from './basics';
+import { DanmakuController } from './danmaku';
 import { heatmapPlugin, setHeatmapEnabled } from './heatmap';
 
 jest.mock('../env', () => ({
@@ -107,5 +108,23 @@ describe('playback rate memory', () => {
     art.emit('video:canplay');
     timers.run(0);
     expect(art.playbackRate).toBe(2);
+  });
+});
+
+describe('danmaku display state', () => {
+  beforeEach(() => localStorage.clear());
+
+  test('the hide fired while the player is destroyed is not saved', () => {
+    const art = fakeArt();
+    art.storage = { get: () => null, set: () => undefined };
+    const controller = new DanmakuController(() => undefined);
+    const dispose = controller.attach(art);
+    art.emit('ready');
+    art.emit('artplayerPluginDanmuku:hide');
+    expect(localStorage.getItem('danmaku_display_enabled')).toBe('false');
+    art.emit('artplayerPluginDanmuku:show');
+    dispose();
+    art.emit('artplayerPluginDanmuku:hide');
+    expect(localStorage.getItem('danmaku_display_enabled')).toBe('true');
   });
 });

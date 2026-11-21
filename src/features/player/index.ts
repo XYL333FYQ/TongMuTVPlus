@@ -10,7 +10,7 @@ export {
   progressThumbPlugin,
   wakeLockPlugin,
 } from './core/plugins/basics';
-export { DanmakuController } from './core/plugins/danmaku';
+export { DanmakuController, type DanmakuState } from './core/plugins/danmaku';
 export { heatmapPlugin, setHeatmapEnabled } from './core/plugins/heatmap';
 export { bindKeyboard } from './core/plugins/keyboard';
 export { LinkRefresher } from './core/plugins/link-refresh';

@@ -16,7 +16,10 @@ import {
   saveDanmakuSettings,
   searchAnime,
 } from '@/lib/danmaku/api';
-import { setCachedDanmakuEpisodes } from '@/lib/danmaku/episodes-cache';
+import {
+  getCachedDanmakuEpisodes,
+  setCachedDanmakuEpisodes,
+} from '@/lib/danmaku/episodes-cache';
 import {
   getDanmakuAnimeId,
   getDanmakuSearchKeyword,
@@ -177,6 +180,9 @@ export function danmakuAutoLoadDisabled() {
 
 // ------------------------------------------------------------ 控制器
 
+/** 加载完再停 1.5 秒才收起“加载中”，让人看到弹幕条数 */
+const linger = () => new Promise((resolve) => setTimeout(resolve, 1500));
+
 interface Resolved {
   anime: { animeId: number; animeTitle: string };
   episode: DanmakuEpisode;
@@ -221,7 +227,7 @@ export class DanmakuController {
       speed: settings.speed,
       opacity: settings.opacity,
       fontSize: settings.fontSize,
-      color: '#ffffff',
+      color: 'var(--tm-room-player-text)',
       mode: 0,
       margin: [settings.marginTop, settings.marginBottom],
       antiOverlap: true,
@@ -246,16 +252,20 @@ export class DanmakuController {
 
   attach(art: Art) {
     this.art = art;
+    // 实例销毁时弹幕插件会发一次 hide：那不是用户关的，不能记成“关闭弹幕”
+    const live = () => this.art === art;
     art.on('ready', () => {
       const stored = art.storage?.get?.('danmaku_settings');
       if (stored) this.saveSettings({ ...this.settings, ...stored });
-      art.on('artplayerPluginDanmuku:config', () => this.captureSettings());
-      art.on('artplayerPluginDanmuku:show', () =>
-        saveDanmakuDisplayState(true)
-      );
-      art.on('artplayerPluginDanmuku:hide', () =>
-        saveDanmakuDisplayState(false)
-      );
+      art.on('artplayerPluginDanmuku:config', () => {
+        if (live()) this.captureSettings();
+      });
+      art.on('artplayerPluginDanmuku:show', () => {
+        if (live()) saveDanmakuDisplayState(true);
+      });
+      art.on('artplayerPluginDanmuku:hide', () => {
+        if (live()) saveDanmakuDisplayState(false);
+      });
       // 新实例：重新加载本集弹幕
       this.loadedFor = null;
       if (this.media) void this.autoLoad();
@@ -271,7 +281,12 @@ export class DanmakuController {
     const previousTitle = this.media?.title;
     this.media = media;
     if (!media) return;
-    if (media.title !== previousTitle) this.update({ ...EMPTY });
+    // 换片：清空状态；完整分集列表先用上次缓存的（不用重新搜索就能列出）
+    if (media.title !== previousTitle)
+      this.update({
+        ...EMPTY,
+        episodes: getCachedDanmakuEpisodes(media.title) ?? [],
+      });
     if (this.plugin) void this.autoLoad();
   }
 
@@ -343,6 +358,7 @@ export class DanmakuController {
       }
       const count = this.show(comments);
       this.notice(`上传成功，共 ${count} 条弹幕`);
+      await linger();
     } catch {
       this.notice('弹幕加载失败');
     } finally {
@@ -412,7 +428,8 @@ export class DanmakuController {
     this.listeners.forEach((listener) => listener(this.state));
   }
 
-  private setEpisodes(episodes: DanmakuEpisode[]) {
+  /** 完整分集列表（弹幕面板手动搜索后也会报上来），按片名缓存 */
+  setEpisodes(episodes: DanmakuEpisode[]) {
     this.update({ episodes });
     if (this.media?.title) setCachedDanmakuEpisodes(this.media.title, episodes);
   }
@@ -496,17 +513,20 @@ export class DanmakuController {
       );
       if (!comments.length) return;
       const count = this.show(comments);
-      this.update({
-        selection: {
-          animeId: metadata.animeId || 0,
-          episodeId,
-          animeTitle: metadata.animeTitle || '',
-          episodeTitle: metadata.episodeTitle || '',
-          searchKeyword: metadata.searchKeyword,
-          danmakuCount: count,
-          danmakuOriginalCount: this.state.originalCount || undefined,
-        },
-      });
+      // 只知道集 ID（记住的手动选择）时不改当前选择
+      if (metadata.animeId !== undefined)
+        this.update({
+          selection: {
+            animeId: metadata.animeId || 0,
+            episodeId,
+            animeTitle: metadata.animeTitle || '',
+            episodeTitle: metadata.episodeTitle || '',
+            searchKeyword: metadata.searchKeyword,
+            danmakuCount: count,
+            danmakuOriginalCount: this.state.originalCount || undefined,
+          },
+        });
+      await linger();
     } catch {
       this.update({ count: 0 });
     } finally {
@@ -595,6 +615,7 @@ export class DanmakuController {
               danmakuOriginalCount: this.state.originalCount || undefined,
             },
           });
+        await linger();
         return;
       }
       const manual = getManualDanmakuSelection(media.title, media.episodeIndex);
