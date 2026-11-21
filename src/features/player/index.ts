@@ -2,6 +2,7 @@
  * 播放器内核（两边共用）：WatchPlayer + 通用插件。不依赖 React，也不认识房间或自己看。
  * 别的功能只从这里引用；core/ 下面是内部。
  */
+export { playerEnvironment } from './core/env';
 export {
   iosOrientationPlugin,
   playbackRatePlugin,
@@ -15,10 +16,11 @@ export {
   type SourceSubtitle,
   SubtitleController,
 } from './core/plugins/subtitles';
-export type { MediaType } from './core/source-policy';
+export { type MediaType, isNetdiskMountSource } from './core/source-policy';
 export {
   type Art,
   type PlayerPlugin,
+  type WatchSource,
   PLAYBACK_RATES,
   WatchPlayer,
 } from './core/WatchPlayer';

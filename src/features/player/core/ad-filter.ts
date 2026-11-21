@@ -111,9 +111,23 @@ export function filterAds(source: string, content: string): string {
   return defaultAdFilter(content);
 }
 
+let synced = false;
+/** 第一次要去广告时，按后台版本号取一次自定义过滤代码（先用本机缓存） */
+function ensureCustomAdFilter() {
+  if (synced || typeof window === 'undefined') return;
+  synced = true;
+  const config = (
+    window as unknown as {
+      RUNTIME_CONFIG?: { CUSTOM_AD_FILTER_VERSION?: number };
+    }
+  ).RUNTIME_CONFIG;
+  void syncCustomAdFilter(Number(config?.CUSTOM_AD_FILTER_VERSION) || 0);
+}
+
 /** 生成会过滤 m3u8 清单的 hls.js loader */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function createAdFilterLoader(Hls: any, getSource: () => string) {
+  ensureCustomAdFilter();
   return class AdFilterLoader extends Hls.DefaultConfig.loader {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     constructor(config: any) {

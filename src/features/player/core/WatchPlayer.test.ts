@@ -163,3 +163,37 @@ test('playOrThrow reports a blocked autoplay, play() stays quiet', async () => {
   await expect(player.playOrThrow()).rejects.toThrow('blocked');
   await expect(player.play()).resolves.toBeUndefined();
 });
+
+test('recreate rebuilds even when the source could be switched', async () => {
+  const player = new WatchPlayer({ container: document.createElement('div') });
+  await player.load(source('https://a/1.mp4'));
+  await player.load(source('https://a/1.mp4'), { recreate: true });
+  expect(instances).toHaveLength(2);
+  expect(instances[0].destroyed).toBe(true);
+});
+
+test('theme, icons and a fixed starting volume are passed to Artplayer', async () => {
+  localStorage.setItem('tm_player_volume', '0.3');
+  const player = new WatchPlayer({
+    container: document.createElement('div'),
+    theme: 'red',
+    icons: { loading: '<i></i>' },
+    initialVolume: 0.7,
+  });
+  await player.load(source('https://a/1.mp4'));
+  expect(instances[0].option.theme).toBe('red');
+  expect(instances[0].option.icons).toEqual({ loading: '<i></i>' });
+  expect(instances[0].option.volume).toBe(0.7);
+  // 给了固定音量就不记音量
+  expect(instances[0].handlers.has('video:volumechange')).toBe(false);
+  localStorage.removeItem('tm_player_volume');
+});
+
+test('without a fixed volume the remembered volume is used', async () => {
+  localStorage.setItem('tm_player_volume', '0.3');
+  const player = new WatchPlayer({ container: document.createElement('div') });
+  await player.load(source('https://a/1.mp4'));
+  expect(instances[0].option.volume).toBe(0.3);
+  expect(instances[0].handlers.has('video:volumechange')).toBe(true);
+  localStorage.removeItem('tm_player_volume');
+});

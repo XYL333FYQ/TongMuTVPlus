@@ -81,6 +81,15 @@ export interface WatchPlayerOptions {
   settings?: any[];
   /** Artplayer 自带插件（弹幕、缩略图），每次创建实例时生成 */
   artPlugins?: () => any[];
+  /** 控制条主题色（默认跟着 --tm-player-accent） */
+  theme?: string;
+  /** 替换 Artplayer 自带的图标（如加载动画） */
+  icons?: Record<string, string>;
+  /**
+   * 每次创建实例时的音量。不给就用上次记住的音量，并且记住新的音量（一起看）；
+   * 给了就不记（自己看每次从 0.7 开始，换集时由页面恢复本次的音量）。
+   */
+  initialVolume?: number;
   /** 首次创建时的原生字幕 */
   subtitle?: { url: string; fontSize: string } | null;
   plugins?: PlayerPlugin[];
@@ -240,7 +249,8 @@ export class WatchPlayer {
     if (this.source) await this.rebuild();
   }
 
-  async load(source: WatchSource) {
+  /** recreate：即使能直接换地址也整体重建（如去广告开关改了） */
+  async load(source: WatchSource, { recreate = false } = {}) {
     if (this.destroyed) return;
     const previous = this.source;
     this.source = source;
@@ -248,6 +258,7 @@ export class WatchPlayer {
     const env = playerEnvironment();
     if (
       this.art &&
+      !recreate &&
       !env.webkit &&
       !this.modesChanged() &&
       previous?.mediaType === source.mediaType
@@ -422,7 +433,7 @@ export class WatchPlayer {
       ...(type ? { type } : {}),
       poster: source.poster || '',
       title: source.title,
-      volume: readVolume(),
+      volume: options.initialVolume ?? readVolume(),
       isLive: false,
       muted: false,
       autoplay: options.autoplay !== false,
@@ -453,7 +464,7 @@ export class WatchPlayer {
       playsInline: true,
       autoPlayback: false,
       airplay: true,
-      theme: 'var(--tm-player-accent, #fff)',
+      theme: options.theme || 'var(--tm-player-accent, #fff)',
       lang: 'zh-cn',
       hotkey: false,
       fastForward: (options.fastForward ?? options.rateControl) !== false,
@@ -505,6 +516,7 @@ export class WatchPlayer {
           });
         },
       },
+      ...(options.icons ? { icons: options.icons } : {}),
       plugins: options.artPlugins?.() || [],
       settings: options.settings || [],
       controls: options.controls || [],
@@ -537,7 +549,8 @@ export class WatchPlayer {
         rescueWebkitHls(art.video, this.later, () => this.art === art);
     });
 
-    art.on('video:volumechange', () => writeVolume(art.volume));
+    if (options.initialVolume === undefined)
+      art.on('video:volumechange', () => writeVolume(art.volume));
 
     art.on('video:canplay', () => {
       const resume = this.resume;

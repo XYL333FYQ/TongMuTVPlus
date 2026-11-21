@@ -1,5 +1,16 @@
 # 界面改造进度
 
+## 2026-11-20 代码整理第 4 步之二 a：自己看的播放器由内核 `WatchPlayer` 创建
+
+- `LegacyPlaybackSurface` 不再自己 `new Artplayer`：片源加载、hls.js（缓冲策略、去广告 loader、错误转中文）、换地址还是整体重建（WebKit、鸿蒙 / 网盘 HLS 模式变化）、私人影库的跨域乐观加载和一次性回退、Safari 启动补救、键盘可操作控制栏、系统全屏转横屏、实例销毁和残留清理，全部改走 `features/player` 的 `WatchPlayer`。页面只给它设置菜单、控制条按钮、Artplayer 插件（弹幕、缩略图）和每个新实例上的事件（`wireInstance`，原代码原样挪进去），实例销毁前的清理（保存弹幕设置、停超分、清字幕、清续期计时器）作为内核插件的清理函数。删掉旧文件里重复的 HLS / 去广告 / 暴露地址 / 跨域代码，旧文件 11,560 → 10,540 行。
+- 内核补的：`WatchPlayer` 新增 `theme`、`icons`、`initialVolume`（给了就每次从这个音量开始、不记音量——自己看一直是每次 0.7、换集恢复本次音量；一起看照旧记住音量）、`load(source, { recreate })`（去广告开关改了要整体重建）。
+- **顺带修了一个内核的问题**：后台下发的自定义去广告代码只有旧的自己看页面在拉，内核从来没调用过 `syncCustomAdFilter`，房间一直只用默认关键字去广告。现在内核第一次创建去广告 loader 时按后台版本号取一次（先用本机缓存），房间和自己看都生效。
+- 和原来有出入、已确认无害的两处：Artplayer 的 `title` 选项现在会传（原来只在换地址时设置，界面上不显示）；跨域回退的“已回退”标记改为按片源记（同一片源换集不再先试一次跨域），原来是每集重置。
+- 测试：`WatchPlayer.test.ts` 新增 3 条（`recreate` 重建、主题 / 图标 / 固定音量传给 Artplayer 且不记音量、不给固定音量时用记住的音量），新增 `ad-filter.test.ts` 2 条（第一次建 loader 用缓存的自定义代码、新版本只下载一次）。
+- 验证：typecheck、lint、Jest、test:rooms、format:check、check:structure 通过。新写了一个行为检查（`.claude/playback-check.mjs`，git 忽略：本机 200 秒 WAV 直链播放，登录后记录能否播放、控制条按钮、设置菜单各项、整页 → 小窗 → 回播放页是不是同一个 `<video>`、进度是否连续），改前改后结果一致：控制条 10 个按钮、设置菜单 11 项顺序和文字都一样，小窗来回同一个视频元素、进度一直往前、页面无报错。计算样式对比（5 个场景 × 6 种窗口 × 深浅）：页面部分零差异，剩下的都在 Artplayer 自己的节点里（设置面板、图标），是播放器就绪后才加的设置项被快照拍到的时机不同，菜单内容已经用上面的检查核对过。
+- 没验证：HLS 片源（本机没有 ffmpeg 做测试流，HLS 代码是从旧文件原样搬进内核的，房间一直在用）、鸿蒙和网盘原生 HLS 切换、iOS / Safari 真机、链接续期（小雅 / OpenList）。
+- 下一步（2b 起）：设置菜单、控制条、实例事件搬出旧文件；能和内核插件对上的（倍速记忆、防息屏、进度条图标、快捷键、字幕、弹幕、热力图、超分、链接续期、跳过片头片尾）逐项换成内核插件，文字不同的地方统一成一份并列出来。
+
 ## 2026-11-20 代码整理第 4 步之一：自己看页面拆成组件（界面和行为不变）
 
 - `LegacyPlaybackSurface.tsx` 里页面上的各块原样剪到 `features/playback/page/`（用脚本剪，JSX 不动）：整页加载 `PlaybackLoading`、整页失败 `PlaybackFailure` + “也许你想看” `FallbackRecommendations`、弹幕源选择 `DanmakuSourceDialog`、标题 `PlaybackTitle`、画面上的遮罩和提示 `VideoOverlays`、工具 `PlaybackTools`、选集面板外框 `EpisodePanel`、电脑右侧图标栏 `PlaybackRail`、手机 / 平板操作坞 `PlaybackDock`、影片信息 `PlaybackDetail`、短评 `PlaybackComments`、快捷键说明 `ShortcutDialog`、网盘搜索 `PansouDialog`、AI 问片 / 纠错 / 详情 `PlaybackDrawers`（四个面板的开关收进 `usePlaybackDrawers`）。加载步骤模型 → `page/loading-steps.tsx`；纯函数 → `features/playback/lib/`（`seriesStatus`、`isHlsPlaybackUrl`、外部播放器列表）。旧文件 13,583 → 11,560 行。
