@@ -168,7 +168,7 @@ jobs:
     runs-on: windows-latest
     steps:
       - name: Download installer
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: tongmutvplus-windows-x64
           path: installer
@@ -218,7 +218,7 @@ jobs:
     runs-on: windows-latest
     steps:
       - name: Download artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: tongmutvplus-windows-x64
           path: dl
@@ -247,7 +247,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: tongmutvplus-windows-x64
           path: dl
@@ -312,7 +312,7 @@ jobs:
       contents: write
     steps:
       - name: Download all Windows packages
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           pattern: tongmutvplus-windows-*
           merge-multiple: true
