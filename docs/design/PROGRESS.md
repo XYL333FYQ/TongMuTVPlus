@@ -1,5 +1,10 @@
 # 界面改造进度
 
+## 2026-11-21 代码整理收尾
+
+- 代码整理计划（原 `docs/plan/2026-11-19-cleanup-plan.md`）第 0–4 步全部完成，按计划第八节删掉 `docs/plan/`（计划和已经替换进 `README.md` 的 README 草稿）。测试站已停，测试库 `.data/test.db` 已删；`.claude/test.env`、`tongmu-test` 启动配置、快照 / 行为检查 / 两个账号同步测试的脚本留着下次用。
+- 留给以后的：`features/playback` 里还有几个超过 400 行的文件（`surface/PlaybackSurface.tsx` 2,790 行、`data/load-source-detail.ts` 880 行、`player/wire-instance.ts` 670 行等，结构检查只提醒）；这些是原样搬过去的，要再拆得按功能重写，单独做。`PlaybackSessionProvider` 的 `registerSlot`（房间停靠挂点）现在没有任何地方注册，可能也是死代码，没动。
+
 ## 2026-11-21 代码整理第 4 步之三、之四：接好全站会话，删掉 `LegacyPlaybackSurface`
 
 - **之三（全站播放会话）**：旧文件本来就接着会话（挂载点 `data-tm-player-mount`、汇报正在放什么、把播放器交给会话、媒体会话的标题和封面、完整 / 小窗 / 收起是同一个实例），这一步没改代码，只验证：`PlaybackSessionProvider` 的测试（含“房间里停靠时可以手动接管声音”）全过；两个账号的房间测试（`.claude/sync-test.mjs`）12 项全过；行为检查里整页 → 小窗 → 回播放页始终是同一个 `<video>`。
