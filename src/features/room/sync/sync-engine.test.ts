@@ -17,6 +17,7 @@ class FakePlayer implements PlayerPort {
   seeking = false;
   playbackRate = 1;
   bufferedAhead = 30;
+  pauseUnconfirmed = false;
   notices: string[] = [];
   blockPlay = false;
   private listeners = new Map<PlayerEvent, Set<() => void>>();
@@ -26,8 +27,29 @@ class FakePlayer implements PlayerPort {
     this.listeners.set(event, set);
     return () => set.delete(listener);
   }
+  /**
+   * 真实播放器的事件不一定立刻到、也不一定到：慢网下 seeked 要等缓冲；
+   * 跳转被下一次跳转打断时只有最后一次有 seeked；暂停后马上又播，
+   * 房间播放器接口的暂停防抖会把这次 pause 丢掉。held 时事件先攒着，release() 再发。
+   */
+  held: PlayerEvent[] | null = null;
   emit(event: PlayerEvent) {
+    if (this.held) {
+      this.held.push(event);
+      return;
+    }
     this.listeners.get(event)?.forEach((listener) => listener());
+  }
+  hold() {
+    this.held = [];
+  }
+  /** 发出攒着的事件；drop 列出的事件丢掉（模拟被打断或被防抖丢掉） */
+  release(drop: PlayerEvent[] = []) {
+    const events = this.held || [];
+    this.held = null;
+    events
+      .filter((event) => !drop.includes(event))
+      .forEach((event) => this.emit(event));
   }
   async play() {
     if (this.blockPlay) throw new Error('NotAllowedError');
@@ -55,6 +77,9 @@ class FakePlayer implements PlayerPort {
   }
   userSeek(time: number) {
     this.seek(time);
+  }
+  userRate(rate: number) {
+    this.setRate(rate);
   }
 }
 
@@ -261,7 +286,6 @@ describe('local actions become the room state', () => {
   it('sends a seek', async () => {
     const { player, effects } = setup();
     await flush();
-    clock += 5_000; // outside the expected-event window of the initial alignment
     player.userSeek(300);
     await flush();
     expect(effects.command).toHaveBeenCalledWith(
@@ -442,5 +466,182 @@ describe('slow networks', () => {
     expect(effects.command).toHaveBeenLastCalledWith('play:buffering', {
       buffering: false,
     });
+  });
+});
+
+describe('telling own alignment apart from user actions', () => {
+  it('a user seek right after an interrupted alignment seek still reaches the room', async () => {
+    const { engine, player, effects, state } = setup();
+    await flush();
+    // 别人拖到 200：本机跳过去，但这次跳转被下一次跳转打断，没有 seeked
+    player.hold();
+    engine.update({
+      ...state,
+      state: film({ currentTime: 200, version: 2, updatedAt: clock }),
+    });
+    await flush();
+    expect(player.currentTime).toBe(200);
+    player.release(['seeked']);
+    clock += 500;
+    player.userSeek(400);
+    await flush();
+    expect(effects.command).toHaveBeenCalledWith(
+      'play:seek',
+      expect.objectContaining({ currentTime: 400 })
+    );
+    expect(player.currentTime).toBe(400);
+  });
+
+  it('a user pause right after a room buffering pause and resume still reaches the room', async () => {
+    const { engine, player, effects, state } = setup();
+    await flush();
+    // 房间等别人缓冲：暂停，0.2 秒后继续。暂停防抖把这次 pause 丢了
+    player.hold();
+    engine.update({
+      ...state,
+      state: film({
+        currentTime: 100,
+        isPlaying: false,
+        autoPaused: true,
+        version: 2,
+        updatedAt: clock,
+      }),
+    });
+    await flush();
+    clock += 200;
+    engine.update({
+      ...state,
+      state: film({ currentTime: 100, version: 3, updatedAt: clock }),
+    });
+    await flush();
+    player.release(['pause']);
+    await flush();
+    expect(player.paused).toBe(false);
+    clock += 1000;
+    player.currentTime = 101;
+    player.userPause();
+    await flush();
+    expect(effects.command).toHaveBeenCalledWith(
+      'play:pause',
+      expect.objectContaining({ currentTime: 101 })
+    );
+    // 本机没有被拉回播放
+    await engine.tick();
+    expect(player.paused).toBe(true);
+  });
+
+  it('the seeked of its own alignment seek is not sent, even when it arrives late on a slow network', async () => {
+    const { engine, player, effects, state } = setup();
+    await flush();
+    player.hold();
+    engine.update({
+      ...state,
+      state: film({
+        currentTime: 300,
+        isPlaying: false,
+        version: 2,
+        updatedAt: clock,
+      }),
+    });
+    await flush();
+    clock += 6_000; // 缓冲了好几秒才跳到
+    player.release();
+    await flush();
+    expect(effects.command).not.toHaveBeenCalled();
+    expect(player.currentTime).toBe(300);
+  });
+
+  it('a late ratechange from catching up is not sent as a speed change', async () => {
+    const { engine, player, effects } = setup();
+    await flush();
+    player.hold();
+    clock += 10_000;
+    player.currentTime = 107.5; // 落后 2.5 秒：变速追赶
+    await engine.tick();
+    clock += 5_000;
+    player.release();
+    await flush();
+    expect(player.playbackRate).toBeCloseTo(1.08);
+    expect(effects.command).not.toHaveBeenCalled();
+  });
+
+  it('a user speed change is sent', async () => {
+    const { player, effects } = setup();
+    await flush();
+    player.userRate(1.5);
+    await flush();
+    expect(effects.command).toHaveBeenCalledWith(
+      'play:rate',
+      expect.objectContaining({ playbackRate: 1.5 })
+    );
+  });
+
+  it('a pause right after pressing play goes to the room', async () => {
+    const { engine, player, effects, state } = setup({
+      state: film({ isPlaying: false }),
+    });
+    await flush();
+    expect(player.paused).toBe(true);
+    await player.play(); // 用户点播放
+    await flush();
+    expect(effects.command).toHaveBeenLastCalledWith(
+      'play:play',
+      expect.anything()
+    );
+    engine.update({
+      ...state,
+      state: film({ isPlaying: true, version: 2, updatedAt: clock }),
+    });
+    await flush();
+    clock += 300;
+    player.userPause();
+    await flush();
+    expect(effects.command).toHaveBeenLastCalledWith(
+      'play:pause',
+      expect.anything()
+    );
+  });
+
+  it('does not restart a pause the player is still confirming as a user pause', async () => {
+    const { engine, player, effects } = setup();
+    await flush();
+    // 用户按了暂停：视频已停，播放器接口还在等 0.3 秒确认不是切后台
+    player.paused = true;
+    player.pauseUnconfirmed = true;
+    clock += 1000;
+    await engine.tick();
+    expect(player.paused).toBe(true);
+    // 确认了：pause 事件到达，送给房间
+    player.pauseUnconfirmed = false;
+    player.emit('pause');
+    await flush();
+    expect(effects.command).toHaveBeenCalledWith(
+      'play:pause',
+      expect.anything()
+    );
+  });
+
+  it('resumes at once after its own pause, even while the player is still confirming it', async () => {
+    const { engine, player, state } = setup();
+    await flush();
+    engine.update({
+      ...state,
+      state: film({
+        isPlaying: false,
+        autoPaused: true,
+        version: 2,
+        updatedAt: clock,
+      }),
+    });
+    await flush();
+    expect(player.paused).toBe(true);
+    player.pauseUnconfirmed = true; // 播放器接口还在确认这次（引擎自己的）暂停
+    clock += 200;
+    engine.update({
+      ...state,
+      state: film({ isPlaying: true, version: 3, updatedAt: clock }),
+    });
+    await flush();
+    expect(player.paused).toBe(false);
   });
 });

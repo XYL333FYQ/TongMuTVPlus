@@ -10,6 +10,8 @@ export const BACKGROUND_PAUSE_GRACE_MS = 300;
 
 export function portFor(player: WatchPlayer): PlayerPort {
   const video = () => player.video;
+  /** 正在确认的暂停个数（同一个端口上可能挂了不止一个 pause 监听） */
+  let confirming = 0;
   return {
     get currentTime() {
       return player.currentTime;
@@ -42,6 +44,9 @@ export function portFor(player: WatchPlayer): PlayerPort {
           return ranges.end(index) - time;
       return 0;
     },
+    get pauseUnconfirmed() {
+      return confirming > 0 && Boolean(video()?.paused);
+    },
     // 自动播放被浏览器拦下要让同步引擎知道（它会提示“点击播放”）
     play: () => player.playOrThrow(),
     pause: () => player.pause(),
@@ -67,11 +72,20 @@ export function portFor(player: WatchPlayer): PlayerPort {
       // 有的浏览器先暂停视频、稍后才把页面标成隐藏，所以暂停要等一小会儿再确认。
       if (event === 'pause') {
         let timer = 0;
+        const settle = () => {
+          if (!timer) return;
+          window.clearTimeout(timer);
+          timer = 0;
+          confirming -= 1;
+        };
         const off = player.on(name, () => {
           if (!player.video?.isConnected) return;
           if (document.visibilityState === 'hidden') return;
-          window.clearTimeout(timer);
+          settle();
+          confirming += 1;
           timer = window.setTimeout(() => {
+            timer = 0;
+            confirming -= 1;
             const video = player.video;
             if (!video?.isConnected || !video.paused) return;
             if (document.visibilityState === 'hidden') return;
@@ -82,7 +96,7 @@ export function portFor(player: WatchPlayer): PlayerPort {
           }, BACKGROUND_PAUSE_GRACE_MS);
         });
         return () => {
-          window.clearTimeout(timer);
+          settle();
           off();
         };
       }

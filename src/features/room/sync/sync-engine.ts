@@ -14,8 +14,11 @@
  * 3. 空房间：本机正放着影片且有控制权 → 带进房间（接着当前进度）；
  *    没有控制权 → 收起本机影片，等房间开始播放。
  * 4. 同一部影片：按服务器时钟推算位置，偏差超过阈值才跳；缓冲中不追。
- * 5. 本机为对齐房间做的播放/暂停/跳转/倍速会产生同样的播放器事件，用“预期事件”
- *    抵消，避免回声。只有对齐过之后的本机事件才算用户操作。
+ * 5. 本机为对齐房间做的播放/暂停/跳转/倍速会产生同样的播放器事件。引擎记住它让
+ *    播放器变成的样子（desired），事件和它一致就是回声，不一致才是用户操作。
+ *    不按“几秒内预期几个事件”抵消：那样用户在窗口里的真实暂停 / 拖动会被当成回声
+ *    吞掉；引擎的事件没来（被打断的跳转、被防抖丢掉的暂停）还会留下多余的预期。
+ *    只有对齐过之后的本机事件才算用户操作。
  */
 
 import {
@@ -48,6 +51,11 @@ export interface PlayerPort {
   readonly playbackRate: number;
   /** 当前位置之后已经缓冲好的秒数 */
   readonly bufferedAhead: number;
+  /**
+   * 视频刚停下，还在确认是不是用户暂停（切后台、移出页面造成的暂停不算），
+   * 确认后才发 pause 事件。这段时间引擎不能把它重新播起来，否则用户的暂停被吞掉。
+   */
+  readonly pauseUnconfirmed: boolean;
   play(): Promise<unknown> | void;
   pause(): void;
   seek(time: number): void;
@@ -93,7 +101,8 @@ export interface SyncEffects {
   now(): number;
 }
 
-type ExpectKind = 'play' | 'pause' | 'seek' | 'rate';
+/** 引擎跳转后，seeked 时的位置离目标不超过这么多秒，算引擎自己的跳转 */
+const SEEK_ECHO_SECONDS = 0.5;
 const NO_ROOM: SyncInput = {
   roomId: null,
   connected: false,
@@ -141,12 +150,16 @@ export class RoomSyncEngine {
   private waitingNotice = '';
   private previousState: PlayState | null = null;
   private generation = 0;
-  private expected: Record<ExpectKind, { until: number; count: number }> = {
-    play: { until: 0, count: 0 },
-    pause: { until: 0, count: 0 },
-    seek: { until: 0, count: 0 },
-    rate: { until: 0, count: 0 },
-  };
+  /**
+   * 本机播放器此刻应当的样子：引擎最后一次让它变成的样子，或用户刚做的操作。
+   * 播放器事件与它一致就是回声，不一致才是用户操作。null 表示还没定。
+   */
+  private desired: {
+    playing: boolean | null;
+    rate: number | null;
+    /** 引擎最近一次跳转的目标；它的 seeked 到达后清空 */
+    seekTo: number | null;
+  } = { playing: null, rate: null, seekTo: null };
   /** 正在用变速追赶房间进度 */
   private catchingUp = false;
   /** 本机卡住开始的时间（0 表示没卡） */
@@ -250,10 +263,8 @@ export class RoomSyncEngine {
 
     // 2. 房间在直播 / 音乐 / 屏幕共享：电影停下，避免两路声音
     if (state.type !== 'play') {
-      if (port && !port.paused) {
-        this.expect('pause');
-        port.pause();
-      }
+      this.desired.playing = false;
+      if (port && !port.paused) port.pause();
       return;
     }
 
@@ -372,10 +383,10 @@ export class RoomSyncEngine {
     if (finite) target = Math.min(target, Math.max(0, duration - 0.05));
     const shouldPlay = state.isPlaying && !reachedEnd;
 
-    if (!shouldPlay && !port.paused) {
-      this.expect('pause');
-      port.pause();
-    }
+    // 视频停着而引擎并没让它停：可能是用户刚按的暂停，播放器接口还在确认（见下）
+    const pausedByEngine = this.desired.playing === false;
+    this.desired.playing = shouldPlay;
+    if (!shouldPlay && !port.paused) port.pause();
     const offset = (Number(port.currentTime) || 0) - target;
     const drift = Math.abs(offset);
     const threshold = !shouldPlay
@@ -399,9 +410,9 @@ export class RoomSyncEngine {
     else if (this.catchingUp && drift > CATCH_UP_DONE_SECONDS && shouldPlay)
       desiredRate = rate * (offset < 0 ? CATCH_UP_FASTER : CATCH_UP_SLOWER);
     this.catchingUp = desiredRate !== rate;
+    this.desired.rate = desiredRate;
     if (Math.abs((port.playbackRate || 1) - desiredRate) > 0.005) {
       this.remoteRateUntil = this.effects.now() + 1500;
-      this.expect('rate');
       port.setRate(desiredRate);
     }
     const cooled =
@@ -415,17 +426,23 @@ export class RoomSyncEngine {
       cooled
     ) {
       this.lastAutoSeekAt = this.effects.now();
-      this.expect('seek');
+      this.desired.seekTo = target;
       port.seek(target);
     }
-    if (shouldPlay && port.paused) {
-      this.expect('play');
+    // 用户刚按的暂停还在确认中：等它的 pause 事件，不要替房间把它播起来
+    // （引擎自己做的暂停不用等，房间继续了就马上继续）
+    if (
+      shouldPlay &&
+      port.paused &&
+      (pausedByEngine || !port.pauseUnconfirmed)
+    ) {
       try {
         await port.play();
         this.autoplayBlocked = false;
       } catch {
-        // 浏览器不允许无交互自动播放：提示一次，用户点播放后会自动对齐
-        this.consume('play');
+        // 浏览器不允许无交互自动播放：提示一次，用户点播放后会自动对齐。
+        // 播放器仍停着，用户接下来点播放是真实操作，不是回声
+        this.desired.playing = false;
         if (!this.autoplayBlocked) {
           this.autoplayBlocked = true;
           port.notice('点击播放，加入房间同步');
@@ -554,8 +571,11 @@ export class RoomSyncEngine {
   }
 
   private onPlay() {
-    if (this.consume('play') || !this.ownsEvent()) return;
+    if (!this.ownsEvent()) return;
     this.autoplayBlocked = false;
+    // 引擎让它播的：回声
+    if (this.desired.playing === true) return;
+    this.desired.playing = true;
     // 房间本来就在播（例如自动播放被拦截后用户点了播放）：追上房间即可
     if (this.roomPlayState()?.isPlaying) {
       void this.tick(true);
@@ -565,43 +585,64 @@ export class RoomSyncEngine {
   }
 
   private onPause() {
-    if (this.consume('pause') || !this.ownsEvent()) return;
+    if (!this.ownsEvent()) return;
+    // 引擎让它停的：回声
+    if (this.desired.playing === false) return;
     // 播到结尾的自然暂停不是用户操作
     if (this.port?.ended) return;
+    this.desired.playing = false;
     if (this.roomPlayState()?.isPlaying === false) return;
     void this.sendTransport('play:pause');
   }
 
   private onSeeked() {
-    if (this.consume('seek') || !this.ownsEvent() || !this.port) return;
-    void this.sendTransport('play:seek', { isPlaying: !this.port.paused });
+    const port = this.port;
+    if (!this.ownsEvent() || !port) return;
+    if (this.isSeekEcho(port)) return;
+    this.desired.seekTo = null;
+    void this.sendTransport('play:seek', { isPlaying: !port.paused });
   }
 
   private onRate() {
-    if (this.consume('rate') || !this.ownsEvent() || !this.port) return;
+    const port = this.port;
+    if (!this.ownsEvent() || !port) return;
+    const current = port.playbackRate || 1;
+    // 引擎设的（跟随房间倍速或变速追赶）：回声
+    if (
+      this.desired.rate !== null &&
+      Math.abs(this.desired.rate - current) < 0.01
+    )
+      return;
+    this.desired.rate = current;
     const roomRate = this.roomPlayState()?.playbackRate || 1;
-    if (Math.abs(roomRate - (this.port.playbackRate || 1)) < 0.01) return;
+    if (Math.abs(roomRate - current) < 0.01) return;
     void this.sendTransport('play:rate');
   }
 
-  // ---------------------------------------------------------------- 工具
-
-  private expect(kind: ExpectKind, ms = 2500) {
-    const entry = this.expected[kind];
-    const now = this.effects.now();
-    entry.count = now > entry.until ? 1 : entry.count + 1;
-    entry.until = now + ms;
-  }
-
-  private consume(kind: ExpectKind) {
-    const entry = this.expected[kind];
-    if (entry.count > 0 && this.effects.now() <= entry.until) {
-      entry.count -= 1;
+  /**
+   * 这次跳转是引擎为对齐房间做的，或落点本来就和房间一致（不必告诉房间）。
+   * 按位置判断，不按时间窗口：用户紧跟在引擎跳转之后的真实拖动照样送出。
+   */
+  private isSeekEcho(port: PlayerPort) {
+    const position = Number(port.currentTime) || 0;
+    const seekTo = this.desired.seekTo;
+    if (seekTo !== null && Math.abs(position - seekTo) <= SEEK_ECHO_SECONDS) {
+      this.desired.seekTo = null;
       return true;
     }
-    entry.count = 0;
-    return false;
+    const state = this.roomPlayState();
+    if (!state) return false;
+    // 引擎在这个偏差内本来也不会纠正（例如播放器内部的小幅挪动）
+    const tolerance = state.isPlaying
+      ? PLAYING_DRIFT_SECONDS
+      : PAUSED_DRIFT_SECONDS;
+    return (
+      Math.abs(position - expectedRoomTime(state, this.effects.serverNow())) <=
+      tolerance
+    );
   }
+
+  // ---------------------------------------------------------------- 工具
 
   private reset() {
     this.generation += 1;
@@ -621,5 +662,6 @@ export class RoomSyncEngine {
     this.stalledSince = 0;
     this.reportedBuffering = false;
     this.waitingNotice = '';
+    this.desired = { playing: null, rate: null, seekTo: null };
   }
 }
