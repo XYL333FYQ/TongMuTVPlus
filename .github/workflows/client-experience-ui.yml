@@ -68,7 +68,7 @@ jobs:
           echo "UI_ARTIFACT_DIR=$UI_ARTIFACT_DIR" >> "$GITHUB_ENV"
           node --test tests/client-experience/verify-image.test.cjs
           node tests/client-experience/verify-image.cjs
-      - uses: docker/login-action@v3
+      - uses: docker/login-action@v4
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
