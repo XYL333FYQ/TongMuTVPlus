@@ -2,27 +2,6 @@
 
 'use client';
 
-import {
-  AlertCircle,
-  ArrowLeft,
-  Cloud,
-  Ellipsis,
-  FileText,
-  Heart,
-  Keyboard,
-  Link2,
-  ListVideo,
-  Loader2,
-  MessageSquareText,
-  Play,
-  RefreshCw,
-  Router,
-  Search,
-  Sparkles,
-  Star,
-  Users,
-  X,
-} from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import {
   Suspense,
@@ -152,34 +131,43 @@ import {
   parsePlaybackEpisodeIndex,
   usePlaybackEpisode,
 } from '@/hooks/usePlaybackEpisode';
-
-import AIChatPanel from '@/components/AIChatPanel';
-import AIComments from '@/components/AIComments';
-import CorrectDialog from '@/components/CorrectDialog';
-import DanmakuFilterSettings from '@/components/DanmakuFilterSettings';
-import DetailPanel from '@/components/DetailPanel';
-import DoubanComments from '@/components/DoubanComments';
-import DownloadEpisodeSelector from '@/components/DownloadEpisodeSelector';
-import Drawer from '@/components/Drawer';
-import EpisodeSelector from '@/components/EpisodeSelector';
-import LoadingStyle, {
-  type LoadingStep,
-  LoadingErrorStyle,
-} from '@/components/feedback/LoadingStyle';
-import Toast, { ToastProps } from '@/components/feedback/Toast';
-import PageLayout from '@/components/PageLayout';
-import PansouSearch from '@/components/PansouSearch';
-import ProxyImage from '@/components/ProxyImage';
-import { useSite } from '@/components/SiteProvider';
-import SmartRecommendations from '@/components/SmartRecommendations';
-import VideoCard from '@/components/VideoCard';
-import { useWatchRoomContextSafe } from '@/components/WatchRoomProvider';
-
-import { useDownload } from '@/contexts/DownloadContext';
 import {
   usePlaybackSearchParams,
   usePlaybackSession,
 } from '@/hooks/usePlaybackSession';
+
+import DanmakuFilterSettings from '@/components/DanmakuFilterSettings';
+import DownloadEpisodeSelector from '@/components/DownloadEpisodeSelector';
+import EpisodeSelector from '@/components/EpisodeSelector';
+import Toast, { ToastProps } from '@/components/feedback/Toast';
+import PageLayout from '@/components/PageLayout';
+import { useSite } from '@/components/SiteProvider';
+import SmartRecommendations from '@/components/SmartRecommendations';
+import { useWatchRoomContextSafe } from '@/components/WatchRoomProvider';
+
+import { useDownload } from '@/contexts/DownloadContext';
+
+import { isHlsPlaybackUrl } from './lib/playback-urls';
+import { seriesStatus } from './lib/series-status';
+import DanmakuSourceDialog from './page/DanmakuSourceDialog';
+import EpisodePanel from './page/EpisodePanel';
+import PansouDialog from './page/PansouDialog';
+import PlaybackComments from './page/PlaybackComments';
+import PlaybackDetail from './page/PlaybackDetail';
+import PlaybackDock from './page/PlaybackDock';
+import PlaybackDrawers, { usePlaybackDrawers } from './page/PlaybackDrawers';
+import PlaybackFailure from './page/PlaybackFailure';
+import PlaybackLoading from './page/PlaybackLoading';
+import PlaybackRail from './page/PlaybackRail';
+import PlaybackTitle from './page/PlaybackTitle';
+import PlaybackTools from './page/PlaybackTools';
+import ShortcutDialog from './page/ShortcutDialog';
+import type {
+  FallbackRecommendation,
+  PlaybackPanel,
+  ShowToast,
+} from './page/types';
+import VideoOverlays from './page/VideoOverlays';
 
 // 自己看的播放器不参与一起看（房间有自己的播放器，见 src/features/room）
 const isRemoteRoomRateActive = () => false;
@@ -198,14 +186,6 @@ interface WakeLockSentinel {
   release(): Promise<void>;
   addEventListener(type: 'release', listener: () => void): void;
   removeEventListener(type: 'release', listener: () => void): void;
-}
-
-interface PlayFallbackRecommendation {
-  key: string;
-  item: SearchResult;
-  episodes?: number;
-  sourceNames: string[];
-  doubanId?: number;
 }
 
 interface SearchCachePayload {
@@ -267,67 +247,6 @@ const BITSUB_SUBTITLE_FORMATS = new Set(['pgs', 'sup']);
 // esbuild 在 server 产物里当作可解析模块而报 Could not resolve
 const getBitsubModuleUrl = () =>
   new URL('/libbitsub/dist/index.js', window.location.href).href;
-
-const isHlsPlaybackUrl = (url: string) =>
-  /\.m3u8?(?:$|[/?#])/i.test(url) ||
-  url.includes('/api/proxy-m3u8') ||
-  url.includes('/api/proxy/vod/m3u8');
-
-const PLAY_SHORTCUT_GROUPS = [
-  {
-    title: '播放控制',
-    items: [
-      { keys: ['空格'], description: '播放 / 暂停' },
-      { keys: ['←', '→'], description: '快退 / 快进（快进/倒退时间）' },
-      { keys: ['P'], description: '快捷快进' },
-      { keys: ['↑', '↓'], description: '音量增加 / 减少' },
-      { keys: ['F'], description: '切换全屏' },
-    ],
-  },
-  {
-    title: '剧集切换',
-    items: [
-      { keys: ['Alt', '←'], description: '上一集' },
-      { keys: ['Alt', '→'], description: '下一集' },
-    ],
-  },
-  {
-    title: '倍速控制',
-    items: [
-      { keys: ['小键盘 +'], description: '提高一档倍速' },
-      { keys: ['小键盘 -'], description: '降低一档倍速' },
-      { keys: ['小键盘 /'], description: '恢复 1x' },
-    ],
-  },
-];
-
-/* -----------------------------------------------------------------------------
- * 初始化加载动画（后台「个性化配置 → 初始化加载样式」可切换旧版/方格/魔法阵）
- *
- * 步骤按真实入口生成，不是固定四步：
- *   directplay 入口 → 直链 → 就绪（两步，不经优选）
- *   其余入口       → 搜索/详情 → 优选 → 就绪（优选会被优选开关整个跳过）
- * 「搜索」用于没带 source/id 的入口，「详情」用于带 source+id 的入口，
- * 两者是第一步的两副面孔，不是先后两步。
- *
- * 款式本身见 components/LoadingStyle。
- * -------------------------------------------------------------------------- */
-type LoadingStepKey = 'search' | 'detail' | 'direct' | 'prefer' | 'ready';
-
-const LOADING_STEP_META: Record<LoadingStepKey, LoadingStep> = {
-  search: { label: '搜索', icon: <Search /> },
-  detail: { label: '详情', icon: <FileText /> },
-  direct: { label: '直链', icon: <Link2 /> },
-  prefer: { label: '优选', icon: <Star /> },
-  ready: { label: '就绪', icon: <Play /> },
-};
-
-/* 播放器遮罩只有两步：初始化，然后播放。
- * 换源、换集对观众都只是「要播了」，用「换源」这类内部说法没人看得懂。 */
-const VIDEO_LOAD_STEPS: LoadingStep[] = [
-  { label: '初始化', icon: <Loader2 /> },
-  { label: '播放', icon: <Play /> },
-];
 
 function PlayPageClient() {
   const LOCAL_TRANSCODER_BASE_URL = 'http://localhost:19080';
@@ -419,74 +338,21 @@ function PlayPageClient() {
   // 收藏状态
   const [favorited, setFavorited] = useState(false);
 
-  // 网盘搜索弹窗状态
-  const [showPansouDialog, setShowPansouDialog] = useState(false);
+  // 网盘搜索是否开启
   const [netdiskSearchEnabled, setNetdiskSearchEnabled] = useState(false);
 
   // AI问片状态
-  const [showAIChat, setShowAIChat] = useState(false);
   const [aiEnabled, setAiEnabled] = useState(false);
   const [aiDefaultMessageWithVideo, setAiDefaultMessageWithVideo] =
     useState('');
 
-  // 纠错弹窗状态
-  const [showCorrectDialog, setShowCorrectDialog] = useState(false);
-
-  // 详情面板状态
-  const [showDetailPanel, setShowDetailPanel] = useState(false);
-
   // 快捷键说明弹窗状态
   const [showShortcutDialog, setShowShortcutDialog] = useState(false);
 
-  useEffect(() => {
-    if (!showShortcutDialog) {
-      return;
-    }
-
-    const handleShortcutDialogKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        setShowShortcutDialog(false);
-      }
-    };
-
-    document.addEventListener('keydown', handleShortcutDialogKeyDown);
-    return () => {
-      document.removeEventListener('keydown', handleShortcutDialogKeyDown);
-    };
-  }, [showShortcutDialog]);
-
   // 面板用右侧抽屉还是底部面板：除了手机竖屏都用抽屉，和房间面板同一规则（lib/device-tier.ts）
   const isLargeScreen = useDeviceTier() !== 'phone';
-
-  // 抽屉管理：打开指定抽屉时关闭其他抽屉
-  const openDrawer = (
-    drawerName: 'pansou' | 'aiChat' | 'correct' | 'detail'
-  ) => {
-    if (!isLargeScreen) {
-      // 小屏设备不需要互斥
-      switch (drawerName) {
-        case 'pansou':
-          setShowPansouDialog(true);
-          break;
-        case 'aiChat':
-          setShowAIChat(true);
-          break;
-        case 'correct':
-          setShowCorrectDialog(true);
-          break;
-        case 'detail':
-          setShowDetailPanel(true);
-          break;
-      }
-      return;
-    }
-
-    // 大屏设备：关闭其他抽屉
-    setShowPansouDialog(drawerName === 'pansou');
-    setShowAIChat(drawerName === 'aiChat');
-    setShowCorrectDialog(drawerName === 'correct');
-    setShowDetailPanel(drawerName === 'detail');
-  };
+  const drawers = usePlaybackDrawers(isLargeScreen);
+  const openDrawer = drawers.show;
 
   // 检查AI功能是否启用
   useEffect(() => {
@@ -873,6 +739,8 @@ function PlayPageClient() {
     useState(false);
   const [currentSearchKeyword, setCurrentSearchKeyword] = useState<string>(''); // 当前搜索使用的关键词
   const [toast, setToast] = useState<ToastProps | null>(null);
+  const showToast: ShowToast = (message, type) =>
+    setToast({ message, type, onClose: () => setToast(null) });
   const [isTranscoding, setIsTranscoding] = useState(false);
 
   useEffect(() => {
@@ -2567,16 +2435,12 @@ function PlayPageClient() {
     null
   );
   const [fallbackRecommendations, setFallbackRecommendations] = useState<
-    PlayFallbackRecommendation[]
+    FallbackRecommendation[]
   >([]);
   const [hasCompletedSearchRequest, setHasCompletedSearchRequest] =
     useState(false);
   const [backgroundSourcesLoading, setBackgroundSourcesLoading] =
     useState(false);
-  const fallbackRecommendationsRowRef = useRef<HTMLDivElement>(null);
-  const fallbackRecommendationsDraggingRef = useRef(false);
-  const fallbackRecommendationsDragStartXRef = useRef(0);
-  const fallbackRecommendationsDragStartScrollLeftRef = useRef(0);
 
   useEffect(() => {
     try {
@@ -2644,14 +2508,15 @@ function PlayPageClient() {
     useState(true);
 
   // 手机 / 平板：底部操作坞打开的半屏面板；电脑：右侧图标栏选中的面板
-  type SoloPanel = 'episodes' | 'sources' | 'danmaku';
-  const [soloSheet, setSoloSheet] = useState<SoloPanel | 'tools' | null>(null);
-  const [soloRail, setSoloRail] = useState<SoloPanel>('episodes');
+  const [soloSheet, setSoloSheet] = useState<PlaybackPanel | 'tools' | null>(
+    null
+  );
+  const [soloRail, setSoloRail] = useState<PlaybackPanel>('episodes');
   const [selectorRequest, setSelectorRequest] = useState<{
-    tab: SoloPanel;
+    tab: PlaybackPanel;
     nonce: number;
   } | null>(null);
-  const openSoloSheet = (panel: SoloPanel | 'tools') => {
+  const openSoloSheet = (panel: PlaybackPanel | 'tools') => {
     if (panel !== 'tools')
       setSelectorRequest({ tab: panel, nonce: Date.now() });
     setSoloSheet(panel);
@@ -2679,7 +2544,7 @@ function PlayPageClient() {
       );
     }
   };
-  const selectSoloRail = (panel: SoloPanel) => {
+  const selectSoloRail = (panel: PlaybackPanel) => {
     if (!isEpisodeSelectorCollapsed && soloRail === panel) {
       setIsEpisodeSelectorCollapsed(true);
       return;
@@ -2745,58 +2610,6 @@ function PlayPageClient() {
 
   // 播放器就绪状态（用于触发 usePlaySync 的事件监听器设置）
   const [playerReady, setPlayerReady] = useState(false);
-
-  const handleFallbackRecommendationsWheel = (
-    e: React.WheelEvent<HTMLDivElement>
-  ) => {
-    const container = fallbackRecommendationsRowRef.current;
-    if (!container) return;
-
-    if (container.scrollWidth <= container.clientWidth + 1) return;
-
-    const delta =
-      Math.abs(e.deltaY) >= Math.abs(e.deltaX) ? e.deltaY : e.deltaX;
-    if (delta === 0) return;
-
-    const maxScrollLeft = container.scrollWidth - container.clientWidth;
-    const nextScrollLeft = container.scrollLeft + delta;
-    const willScroll =
-      (delta < 0 && container.scrollLeft > 0) ||
-      (delta > 0 && container.scrollLeft < maxScrollLeft);
-
-    if (!willScroll) return;
-
-    e.preventDefault();
-    container.scrollLeft = Math.max(0, Math.min(maxScrollLeft, nextScrollLeft));
-  };
-
-  const handleFallbackRecommendationsMouseDown = (
-    e: React.MouseEvent<HTMLDivElement>
-  ) => {
-    const container = fallbackRecommendationsRowRef.current;
-    if (!container || container.scrollWidth <= container.clientWidth) return;
-    if (e.button !== 0) return;
-
-    fallbackRecommendationsDraggingRef.current = true;
-    fallbackRecommendationsDragStartXRef.current = e.clientX;
-    fallbackRecommendationsDragStartScrollLeftRef.current =
-      container.scrollLeft;
-  };
-
-  const handleFallbackRecommendationsMouseMove = (
-    e: React.MouseEvent<HTMLDivElement>
-  ) => {
-    const container = fallbackRecommendationsRowRef.current;
-    if (!container || !fallbackRecommendationsDraggingRef.current) return;
-
-    const deltaX = e.clientX - fallbackRecommendationsDragStartXRef.current;
-    container.scrollLeft =
-      fallbackRecommendationsDragStartScrollLeftRef.current - deltaX;
-  };
-
-  const stopFallbackRecommendationsDragging = () => {
-    fallbackRecommendationsDraggingRef.current = false;
-  };
 
   // 播放进度保存相关
   const saveIntervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -3532,50 +3345,6 @@ function PlayPageClient() {
         onClose: () => setToast(null),
       });
     }
-  };
-
-  // 判断剧集状态
-  const getSeriesStatus = (
-    detail: SearchResult | null
-  ): 'completed' | 'ongoing' | 'unknown' => {
-    if (!detail) return 'unknown';
-
-    // 方法1：通过 vod_remarks 判断
-    if (detail.vod_remarks) {
-      const remarks = detail.vod_remarks.toLowerCase();
-      // 判定为完结的关键词
-      const completedKeywords = ['全', '完结', '大结局', 'end', '完'];
-      // 判定为连载的关键词
-      const ongoingKeywords = ['更新至', '连载', '第', '更新到'];
-
-      // 如果包含连载关键词，则为连载中
-      if (ongoingKeywords.some((keyword) => remarks.includes(keyword))) {
-        return 'ongoing';
-      }
-
-      // 如果包含完结关键词，则为已完结
-      if (completedKeywords.some((keyword) => remarks.includes(keyword))) {
-        return 'completed';
-      }
-    }
-
-    // 方法2：通过 vod_total 和实际集数对比判断
-    if (
-      detail.vod_total &&
-      detail.vod_total > 0 &&
-      detail.episodes &&
-      detail.episodes.length > 0
-    ) {
-      // 如果实际集数 >= 总集数，则为已完结
-      if (detail.episodes.length >= detail.vod_total) {
-        return 'completed';
-      }
-      // 如果实际集数 < 总集数，则为连载中
-      return 'ongoing';
-    }
-
-    // 无法判断，返回 unknown
-    return 'unknown';
   };
 
   // 获取当前源的视频信息（分辨率和码率）
@@ -5938,7 +5707,7 @@ function PlayPageClient() {
     const buildFallbackRecommendations = (
       items: SearchResult[],
       query: string
-    ): PlayFallbackRecommendation[] => {
+    ): FallbackRecommendation[] => {
       const typedItems = searchType
         ? items.filter((item) => getType(item) === searchType)
         : items;
@@ -5953,7 +5722,7 @@ function PlayPageClient() {
         preliminaryMap.set(preliminaryKey, group);
       });
 
-      const finalRecommendations: PlayFallbackRecommendation[] = [];
+      const finalRecommendations: FallbackRecommendation[] = [];
 
       preliminaryMap.forEach((group, preliminaryKey) => {
         const withYear = new Map<string, SearchResult[]>();
@@ -8115,7 +7884,7 @@ function PlayPageClient() {
           total_episodes: detailRef.current?.episodes.length || 1,
           save_time: Date.now(),
           search_title: searchTitle,
-          is_completed: getSeriesStatus(detailRef.current) === 'completed',
+          is_completed: seriesStatus(detailRef.current) === 'completed',
           vod_remarks: detailRef.current?.vod_remarks,
         });
         setFavorited(true);
@@ -11339,149 +11108,15 @@ function PlayPageClient() {
     };
   }, []);
 
-  // 初始化加载样式的步骤模型（说明见文件顶部 LOADING_STEP_META 上方注释）
-  // 入口参数用首帧定格的 initialLoadParams，不读 searchParams：详见其声明处注释。
-  const loadEntry: LoadingStepKey =
-    initialLoadParams.source === 'directplay'
-      ? 'direct'
-      : initialLoadParams.source && initialLoadParams.id
-      ? 'detail'
-      : 'search';
-  // 优选是否真的会跑：只有开了优选开关，且是搜索入口或带 prefer 标记时才有这一格
-  // （见 initAll 里 5636 一带的判定）。带 source+id 的详情入口默认不优选，
-  // 于是只剩「获取详情 → 就绪」两格，首格进度条正好落在正中。
-  const willPrefer =
-    optimizationEnabled &&
-    loadEntry !== 'direct' &&
-    (loadEntry === 'search' || initialLoadParams.prefer === 'true');
-  const loadSteps: LoadingStepKey[] =
-    loadEntry === 'direct'
-      ? ['direct', 'ready']
-      : willPrefer
-      ? [loadEntry, 'prefer', 'ready']
-      : [loadEntry, 'ready'];
-  const activeStepKey: LoadingStepKey =
-    loadingStage === 'ready'
-      ? 'ready'
-      : loadingStage === 'preferring'
-      ? 'prefer'
-      : loadEntry;
-  const activeStepIdx = Math.max(0, loadSteps.indexOf(activeStepKey));
-  // 方格/符阵不出现 emoji：阶段语义由描边图标承担，文案只留纯中文
-  const plainLoadingMessage = loadingMessage
-    .replace(/^[^一-龥]+/, '')
-    .replace(/[\s.．。]+$/, '');
-
-  // 播放器遮罩的两步（定义见文件顶部 VIDEO_LOAD_STEPS）
-  const videoLoadStepIdx = videoLoadingStage === 'initing' ? 0 : 1;
-  const videoLoadMessage =
-    videoLoadingStage === 'sourceChanging'
-      ? '切换播放源'
-      : videoLoadingStage === 'episodeChanging'
-      ? '切换剧集'
-      : '视频加载中';
-
   if (loading) {
     return (
       <PageLayout activePath='/play' hideNavigation={isWebFullscreen}>
-        {/* fixed 铺满视口：main 在移动端有 3rem 顶距和底部安全区，
-            用 min-h-screen 会把内容整体压到视口中心偏下 */}
-        <div className='mtv-load-overlay fixed inset-0 flex items-center justify-center pointer-events-none'>
-          <div className='text-center max-w-md mx-auto px-6'>
-            {/* 三种加载款式（旧版那一套各页自备） */}
-            <LoadingStyle
-              steps={loadSteps.map((stepKey) => LOADING_STEP_META[stepKey])}
-              activeStepIdx={activeStepIdx}
-              message={plainLoadingMessage}
-              legacy={
-                <>
-                  {/* 动画影院图标 */}
-                  <div className='relative mb-8'>
-                    <div className='relative mx-auto w-24 h-24 bg-surface rounded-2xl shadow-2xl flex items-center justify-center transform hover:scale-105 transition-transform duration-300'>
-                      <div className='text-fg text-4xl'>
-                        {loadingStage === 'searching' && '🔍'}
-                        {loadingStage === 'preferring' && '⚡'}
-                        {loadingStage === 'fetching' && '🎬'}
-                        {loadingStage === 'ready' && '✨'}
-                      </div>
-                      {/* 旋转光环 */}
-                      <div className='absolute -inset-2 bg-surface rounded-2xl opacity-20 animate-spin'></div>
-                    </div>
-
-                    {/* 浮动粒子效果 */}
-                    <div className='absolute top-0 left-0 w-full h-full pointer-events-none'>
-                      <div className='absolute top-2 left-2 w-2 h-2 bg-fg rounded-full animate-bounce'></div>
-                      <div
-                        className='absolute top-4 right-4 w-1.5 h-1.5 bg-fg rounded-full animate-bounce'
-                        style={{ animationDelay: '0.5s' }}
-                      ></div>
-                      <div
-                        className='absolute bottom-3 left-6 w-1 h-1 bg-fg rounded-full animate-bounce'
-                        style={{ animationDelay: '1s' }}
-                      ></div>
-                    </div>
-                  </div>
-
-                  {/* 进度指示器 */}
-                  <div className='mb-6 w-80 mx-auto'>
-                    <div className='flex justify-center space-x-2 mb-4'>
-                      <div
-                        className={`w-3 h-3 rounded-full transition-all duration-500 ${
-                          loadingStage === 'searching' ||
-                          loadingStage === 'fetching'
-                            ? 'bg-fg scale-125'
-                            : loadingStage === 'preferring' ||
-                              loadingStage === 'ready'
-                            ? 'bg-fg'
-                            : 'bg-surface'
-                        }`}
-                      ></div>
-                      <div
-                        className={`w-3 h-3 rounded-full transition-all duration-500 ${
-                          loadingStage === 'preferring'
-                            ? 'bg-fg scale-125'
-                            : loadingStage === 'ready'
-                            ? 'bg-fg'
-                            : 'bg-surface'
-                        }`}
-                      ></div>
-                      <div
-                        className={`w-3 h-3 rounded-full transition-all duration-500 ${
-                          loadingStage === 'ready'
-                            ? 'bg-fg scale-125'
-                            : 'bg-surface'
-                        }`}
-                      ></div>
-                    </div>
-
-                    {/* 进度条 */}
-                    <div className='w-full bg-raised rounded-full h-2 overflow-hidden'>
-                      <div
-                        className='h-full bg-surface rounded-full transition-all duration-1000 ease-out'
-                        style={{
-                          width:
-                            loadingStage === 'searching' ||
-                            loadingStage === 'fetching'
-                              ? '33%'
-                              : loadingStage === 'preferring'
-                              ? '66%'
-                              : '100%',
-                        }}
-                      ></div>
-                    </div>
-                  </div>
-
-                  {/* 加载消息 */}
-                  <div className='space-y-2'>
-                    <p className='text-xl font-medium text-fg tm-skeleton'>
-                      {loadingMessage}
-                    </p>
-                  </div>
-                </>
-              }
-            />
-          </div>
-        </div>
+        <PlaybackLoading
+          entry={initialLoadParams}
+          stage={loadingStage}
+          message={loadingMessage}
+          optimizationEnabled={optimizationEnabled}
+        />
       </PageLayout>
     );
   }
@@ -11489,130 +11124,17 @@ function PlayPageClient() {
   if (error) {
     return (
       <PageLayout activePath='/play' hideNavigation={isWebFullscreen}>
-        <div className='flex min-h-screen w-full items-center justify-center overflow-x-hidden bg-transparent px-4 py-6'>
-          <div className='flex w-full flex-col items-center'>
-            <div className='w-full max-w-md text-center'>
-              {/* 错误图标 */}
-              <div className='relative mb-8'>
-                {/* 失败态款式（旧版那一套各页自备） */}
-                <LoadingErrorStyle
-                  steps={loadSteps.map((stepKey) => LOADING_STEP_META[stepKey])}
-                  activeStepIdx={activeStepIdx}
-                  message={error}
-                  legacy={
-                    <>
-                      <div className='relative mx-auto flex h-24 w-24 items-center justify-center rounded-2xl bg-surface shadow-2xl transition-transform duration-300 hover:scale-105'>
-                        <div className='text-4xl text-fg'>😵</div>
-                        {/* 脉冲效果 */}
-                        <div className='absolute -inset-2 tm-skeleton rounded-2xl bg-surface opacity-20'></div>
-                      </div>
-
-                      {/* 浮动错误粒子 */}
-                      <div className='pointer-events-none absolute left-0 top-0 h-full w-full'>
-                        <div className='absolute left-2 top-2 h-2 w-2 animate-bounce rounded-full bg-fg'></div>
-                        <div
-                          className='absolute right-4 top-4 h-1.5 w-1.5 animate-bounce rounded-full bg-fg'
-                          style={{ animationDelay: '0.5s' }}
-                        ></div>
-                        <div
-                          className='absolute bottom-3 left-6 h-1 w-1 animate-bounce rounded-full bg-fg'
-                          style={{ animationDelay: '1s' }}
-                        ></div>
-                      </div>
-                    </>
-                  }
-                />
-              </div>
-
-              {/* 错误信息 */}
-              <div className='mb-8 space-y-4'>
-                <h2 className='text-2xl font-bold text-fg'>
-                  哎呀，出现了一些问题
-                </h2>
-                <div className='mtv-err-box rounded-lg border border-danger bg-raised p-4'>
-                  <p className='font-medium text-fg'>{error}</p>
-                </div>
-                <p className='text-sm text-muted'>
-                  请检查网络连接或尝试刷新页面
-                </p>
-              </div>
-
-              {/* 操作按钮 */}
-              <div className='space-y-3'>
-                <button
-                  onClick={() =>
-                    videoTitle
-                      ? router.push(
-                          `/search?q=${encodeURIComponent(videoTitle)}`
-                        )
-                      : router.back()
-                  }
-                  className='flex w-full items-center justify-center gap-2 rounded-xl bg-surface px-6 py-3 font-medium text-fg shadow-lg transition-all duration-200 hover:scale-105 hover:shadow-xl min-h-[44px] tm-press'
-                >
-                  {videoTitle ? (
-                    <>
-                      <Search className='h-4 w-4 flex-shrink-0' />
-                      返回搜索
-                    </>
-                  ) : (
-                    <>
-                      <ArrowLeft className='h-4 w-4 flex-shrink-0' />
-                      返回上页
-                    </>
-                  )}
-                </button>
-
-                <button
-                  onClick={playbackSession.reloadPlayback}
-                  className='flex w-full items-center justify-center gap-2 rounded-xl bg-raised px-6 py-3 font-medium text-muted transition-colors duration-200 hover:bg-line min-h-[44px] tm-press'
-                >
-                  <RefreshCw className='h-4 w-4 flex-shrink-0' />
-                  重新尝试
-                </button>
-              </div>
-            </div>
-
-            {hasCompletedSearchRequest &&
-              fallbackRecommendations.length > 0 && (
-                <div className='mt-4 w-full max-w-[calc(100vw-2rem)] overflow-hidden rounded-xl border border-line bg-raised p-3 text-left sm:max-w-3xl lg:max-w-5xl'>
-                  <div className='mb-3 flex items-center gap-2'>
-                    <Sparkles className='h-4 w-4 flex-shrink-0 text-fg' />
-                    <h3 className='text-sm font-medium text-fg'>也许你想看</h3>
-                  </div>
-                  <div
-                    ref={fallbackRecommendationsRowRef}
-                    className='w-full overflow-x-auto overflow-y-hidden pb-1 cursor-grab active:cursor-grabbing'
-                    onWheel={handleFallbackRecommendationsWheel}
-                    onMouseDown={handleFallbackRecommendationsMouseDown}
-                    onMouseMove={handleFallbackRecommendationsMouseMove}
-                    onMouseUp={stopFallbackRecommendationsDragging}
-                    onMouseLeave={stopFallbackRecommendationsDragging}
-                  >
-                    <div className='inline-flex gap-2.5 sm:gap-3'>
-                      {fallbackRecommendations.map((recommendation) => (
-                        <div
-                          key={recommendation.key}
-                          className='w-[118px] min-w-[118px] flex-shrink-0 sm:w-[150px] sm:min-w-[150px]'
-                        >
-                          <VideoCard
-                            title={recommendation.item.title}
-                            query={searchTitle || videoTitle}
-                            poster={recommendation.item.poster}
-                            episodes={recommendation.episodes}
-                            source_names={recommendation.sourceNames}
-                            year={recommendation.item.year}
-                            douban_id={recommendation.doubanId}
-                            from='search'
-                            isAggregate
-                          />
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              )}
-          </div>
-        </div>
+        <PlaybackFailure
+          error={error}
+          entry={initialLoadParams}
+          stage={loadingStage}
+          optimizationEnabled={optimizationEnabled}
+          videoTitle={videoTitle}
+          searchTitle={searchTitle}
+          recommendations={
+            hasCompletedSearchRequest ? fallbackRecommendations : []
+          }
+        />
       </PageLayout>
     );
   }
@@ -11632,258 +11154,37 @@ function PlayPageClient() {
           }}
         />
       )}
-      {/* 弹幕源选择对话框 */}
       {showDanmakuSourceSelector && danmakuMatches.length > 0 && (
-        <div className='fixed inset-0 z-[1000] flex items-center justify-center bg-ink/60 backdrop-blur-sm'>
-          <div className='relative w-full max-w-2xl max-h-[80vh] mx-4 bg-surface rounded-2xl shadow-2xl overflow-hidden'>
-            {/* 标题栏 */}
-            <div className='sticky top-0 z-10 bg-surface px-6 py-4'>
-              <h3 className='text-xl font-bold text-fg flex items-center gap-2'>
-                <svg
-                  className='w-6 h-6'
-                  fill='none'
-                  stroke='currentColor'
-                  viewBox='0 0 24 24'
-                >
-                  <path
-                    strokeLinecap='round'
-                    strokeLinejoin='round'
-                    strokeWidth={2}
-                    d='M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z'
-                  />
-                </svg>
-                选择弹幕源
-              </h3>
-              <p className='text-sm text-[color:color-mix(in_srgb,var(--tm-text)_90%,transparent)] mt-1'>
-                找到 {danmakuMatches.length} 个匹配的弹幕源，请选择一个
-              </p>
-            </div>
-
-            {/* 列表区域 */}
-            <div className='overflow-y-auto max-h-[60vh] p-4'>
-              <div className='space-y-4'>
-                {danmakuMatches.map((anime, index) => (
-                  <button
-                    key={anime.animeId}
-                    onClick={() => handleDanmakuSourceSelect(anime, index)}
-                    className='w-full flex flex-col p-5 bg-raised hover:bg-line rounded-xl transition-all duration-200 text-left group border-2 border-transparent hover:border-line hover:shadow-lg min-h-[44px] tm-press'
-                  >
-                    {/* 顶部：序号和标题 */}
-                    <div className='flex items-start gap-3 mb-3'>
-                      {/* 序号 */}
-                      <div className='flex-shrink-0 w-8 h-8 rounded-full bg-raised text-fg flex items-center justify-center font-bold text-sm group-hover:bg-line transition-colors duration-200'>
-                        {index + 1}
-                      </div>
-
-                      {/* 标题 */}
-                      <h4 className='flex-1 text-lg font-bold text-fg group-hover:text-fg transition-colors duration-200 leading-tight'>
-                        {anime.animeTitle}
-                      </h4>
-
-                      {/* 选择图标 */}
-                      <div className='flex-shrink-0'>
-                        <svg
-                          className='w-6 h-6 text-muted group-hover:text-fg transition-colors duration-200'
-                          fill='none'
-                          stroke='currentColor'
-                          viewBox='0 0 24 24'
-                        >
-                          <path
-                            strokeLinecap='round'
-                            strokeLinejoin='round'
-                            strokeWidth={2}
-                            d='M9 5l7 7-7 7'
-                          />
-                        </svg>
-                      </div>
-                    </div>
-
-                    {/* 主体内容 */}
-                    <div className='flex gap-4'>
-                      {/* 封面 */}
-                      {anime.imageUrl && (
-                        <div className='flex-shrink-0 w-20 h-28 rounded-lg overflow-hidden shadow-md group-hover:shadow-xl transition-shadow duration-200'>
-                          <img
-                            src={anime.imageUrl}
-                            alt={anime.animeTitle}
-                            className='w-full h-full object-cover'
-                            onError={(e) => {
-                              e.currentTarget.style.display = 'none';
-                            }}
-                          />
-                        </div>
-                      )}
-
-                      {/* 详细信息 */}
-                      <div className='flex-1 space-y-2'>
-                        {/* 基本信息标签 */}
-                        <div className='flex flex-wrap gap-2'>
-                          {anime.typeDescription && (
-                            <span className='inline-flex items-center px-2.5 py-1 rounded-md bg-raised text-fg text-sm font-medium'>
-                              {anime.typeDescription}
-                            </span>
-                          )}
-                          {anime.episodeCount && (
-                            <span className='inline-flex items-center px-2.5 py-1 rounded-md bg-raised text-fg text-sm font-medium'>
-                              {anime.episodeCount} 集
-                            </span>
-                          )}
-                          {anime.startDate && (
-                            <span className='inline-flex items-center px-2.5 py-1 rounded-md bg-raised text-muted text-sm font-medium'>
-                              {anime.startDate}
-                            </span>
-                          )}
-                        </div>
-
-                        {/* 动漫ID */}
-                        <div className='text-[13px] text-muted'>
-                          弹幕库 ID: {anime.animeId}
-                        </div>
-
-                        {/* 提示信息 */}
-                        <div className='text-sm text-muted pt-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200'>
-                          点击选择此弹幕源
-                        </div>
-                      </div>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* 底部操作栏 */}
-            <div className='sticky bottom-0 z-10 bg-surface border-t border-line px-6 py-4'>
-              <button
-                onClick={() => {
-                  setShowDanmakuSourceSelector(false);
-                  setDanmakuMatches([]);
-                }}
-                className='w-full px-4 py-2.5 bg-raised hover:bg-line text-muted rounded-lg font-medium transition-colors duration-200 min-h-[44px] tm-press'
-              >
-                取消
-              </button>
-            </div>
-          </div>
-        </div>
+        <DanmakuSourceDialog
+          matches={danmakuMatches}
+          onSelect={(anime, index) =>
+            void handleDanmakuSourceSelect(anime, index)
+          }
+          onCancel={() => {
+            setShowDanmakuSourceSelector(false);
+            setDanmakuMatches([]);
+          }}
+        />
       )}
 
-      <div className='tm-page-container relative z-10 flex flex-col gap-3 py-4 tm-solo-page'>
+      <div className='tm-page-container relative z-[1] flex flex-col gap-3 py-4 tm-solo-page'>
         {/* 第一行：影片标题 */}
-        <div className='py-1 tm-solo-title'>
-          <h1
-            className={`text-2xl font-semibold tracking-tight flex items-center gap-2 flex-wrap ${
-              tmdbBackdrop ? 'text-on-art' : 'text-fg'
-            }`}
-          >
-            <span>
-              {videoTitle || '影片标题'}
-              {shouldShowEpisodeLabel && (
-                <span
-                  className={tmdbBackdrop ? 'text-fg opacity-80' : 'text-muted'}
-                >
-                  {` > ${episodeLabel}`}
-                </span>
-              )}
-            </span>
-            {/* 完结状态标识 */}
-            {detail &&
-              totalEpisodes > 1 &&
-              (() => {
-                const status = getSeriesStatus(detail);
-                if (status === 'unknown') return null;
-
-                return (
-                  <span className='inline-flex items-center px-2.5 py-0.5 rounded-full text-[13px] font-medium bg-raised text-fg'>
-                    {status === 'completed' ? '已完结' : '连载中'}
-                  </span>
-                );
-              })()}
-            {playbackSourceBadge && (
-              <span className='inline-flex items-center px-2.5 py-0.5 rounded-full text-[13px] font-medium bg-raised text-fg'>
-                {playbackSourceBadge === 'local' ? '本地播放' : '离线播放'}
-              </span>
-            )}
-          </h1>
-          {/* 一行关键信息：年份 / 片源 / 类型 / 集数 / 评分，不用滚到页面下方才知道 */}
-          {(doubanYear ||
-            detail?.year ||
-            videoYear ||
-            detail?.source_name ||
-            detail?.type_name ||
-            totalEpisodes > 1 ||
-            (doubanRating && doubanRating.value > 0)) && (
-            <div className='mt-2 flex flex-wrap items-center gap-2 text-[13px]'>
-              {(doubanYear || detail?.year || videoYear) && (
-                <span className='inline-flex items-center rounded-full bg-raised px-2.5 py-0.5 text-fg'>
-                  {doubanYear || detail?.year || videoYear}
-                </span>
-              )}
-              {detail?.type_name && (
-                <span className='inline-flex items-center rounded-full bg-raised px-2.5 py-0.5 text-fg'>
-                  {detail.type_name}
-                </span>
-              )}
-              {totalEpisodes > 1 && (
-                <span className='inline-flex items-center rounded-full bg-raised px-2.5 py-0.5 text-fg'>
-                  共 {totalEpisodes} 集
-                </span>
-              )}
-              {doubanRating && doubanRating.value > 0 && (
-                <span className='inline-flex items-center rounded-full bg-raised px-2.5 py-0.5 text-fg'>
-                  豆瓣 {doubanRating.value.toFixed(1)}
-                </span>
-              )}
-              {detail?.source_name && (
-                <span className='inline-flex items-center rounded-full border border-line px-2.5 py-0.5 text-muted'>
-                  片源 · {detail.source_name}
-                </span>
-              )}
-            </div>
-          )}
-        </div>
+        <PlaybackTitle
+          detail={detail}
+          videoTitle={videoTitle}
+          videoYear={videoYear}
+          doubanYear={doubanYear}
+          doubanRating={doubanRating}
+          episodeLabel={shouldShowEpisodeLabel ? episodeLabel : null}
+          sourceBadge={playbackSourceBadge}
+          onArt={!!tmdbBackdrop}
+          totalEpisodes={totalEpisodes}
+        />
         {/* 第二行：播放器和选集 */}
         <div className='space-y-2 tm-solo-row'>
-          {/* 折叠控制：电脑上改由右侧图标栏开合，这里保留但不显示 */}
-          <div className='hidden'>
-            <button
-              onClick={() =>
-                setIsEpisodeSelectorCollapsed(!isEpisodeSelectorCollapsed)
-              }
-              className='group relative flex items-center space-x-1.5 px-3 py-1.5 rounded-full bg-raised hover:bg-line backdrop-blur-sm border border-line shadow-sm hover:shadow-md transition-all duration-200 min-h-[44px] tm-press'
-              title={
-                isEpisodeSelectorCollapsed ? '显示选集面板' : '隐藏选集面板'
-              }
-            >
-              <svg
-                className={`w-3.5 h-3.5 text-muted transition-transform duration-200 ${
-                  isEpisodeSelectorCollapsed ? 'rotate-180' : 'rotate-0'
-                }`}
-                fill='none'
-                stroke='currentColor'
-                viewBox='0 0 24 24'
-              >
-                <path
-                  strokeLinecap='round'
-                  strokeLinejoin='round'
-                  strokeWidth='2'
-                  d='M9 5l7 7-7 7'
-                />
-              </svg>
-              <span className='text-[13px] font-medium text-muted'>
-                {isEpisodeSelectorCollapsed ? '显示' : '隐藏'}
-              </span>
-
-              {/* 精致的状态指示点 */}
-              <div
-                className={`absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full transition-all duration-200 ${
-                  isEpisodeSelectorCollapsed ? 'bg-fg tm-skeleton' : 'bg-fg'
-                }`}
-              ></div>
-            </button>
-          </div>
-
           <div
-            className={`grid gap-4 wide:h-[520px] wide:xl:h-[620px] wide:2xl:h-[680px] transition-all duration-300 ease-in-out ${
+            // 手机 / 平板上和标题之间留 8px（电脑上由 playback.css 归零）
+            className={`mt-2 grid gap-4 wide:h-[520px] wide:xl:h-[620px] wide:2xl:h-[680px] transition-all duration-300 ease-in-out ${
               isEpisodeSelectorCollapsed
                 ? 'grid-cols-1'
                 : 'grid-cols-1 wide:grid-cols-4'
@@ -11903,809 +11204,110 @@ function PlayPageClient() {
                   className='bg-surface w-full h-full rounded-xl overflow-hidden shadow-lg'
                 ></div>
 
-                {/* 换源加载蒙层 */}
-                {(isVideoLoading || videoError) && (
-                  <div className='absolute inset-0 bg-ink/85 backdrop-blur-sm rounded-xl flex items-center justify-center z-[500] transition-all duration-300'>
-                    <div className='text-center max-w-md mx-auto px-6'>
-                      {videoError ? (
-                        // 错误显示
-                        <>
-                          {/* 错误图标：跟页面级失败态同款，遮罩是深色底所以钉暗色 */}
-                          <div className='relative mb-4 wide:mb-8'>
-                            {/* 失败态款式（旧版那一套各页自备） */}
-                            <LoadingErrorStyle
-                              steps={VIDEO_LOAD_STEPS}
-                              activeStepIdx={videoLoadStepIdx}
-                              message={videoError}
-                              onDark
-                              legacy={
-                                <>
-                                  <div className='relative mx-auto w-24 h-24 bg-surface rounded-2xl shadow-2xl flex items-center justify-center'>
-                                    <div className='text-fg text-4xl'>⚠️</div>
-                                  </div>
-                                </>
-                              }
-                            />
-                          </div>
-
-                          {/* 错误消息 */}
-                          <div className='space-y-2 wide:space-y-4'>
-                            <p className='text-xl font-medium text-fg'>
-                              播放失败
-                            </p>
-                            <p className='mtv-err-box text-base text-muted'>
-                              {videoError}
-                            </p>
-                            <button
-                              onClick={() => {
-                                setVideoError(null);
-                                setIsVideoLoading(true);
-                                // 重新加载视频
-                                if (artPlayerRef.current) {
-                                  artPlayerRef.current.url = videoUrl;
-                                }
-                              }}
-                              className='mt-4 px-6 py-2 bg-surface text-fg rounded-lg transition-all duration-200 min-h-[44px] tm-press'
-                            >
-                              重试
-                            </button>
-                            {/* 直链播放 CORS 失败时，显示"使用代理播放"按钮 */}
-                            {!proxyAttemptedRef.current &&
-                              (corsFailedUrl ||
-                                (isDirectPlay &&
-                                  videoUrl &&
-                                  !videoUrl.includes('/api/proxy-m3u8'))) && (
-                                <button
-                                  onClick={() => {
-                                    const originalUrl =
-                                      corsFailedUrl || videoUrl;
-                                    // 记忆域名到 localStorage
-                                    addDirectplayProxyDomain(originalUrl);
-                                    // 构建代理 URL
-                                    const proxyUrl = `/api/proxy-m3u8?url=${encodeURIComponent(
-                                      originalUrl
-                                    )}&source=directplay`;
-                                    // 清除错误状态并重新播放
-                                    setVideoError(null);
-                                    setCorsFailedUrl(null);
-                                    setIsVideoLoading(true);
-                                    proxyAttemptedRef.current = true;
-                                    setVideoUrl(proxyUrl);
-                                  }}
-                                  className='mt-4 ml-3 px-6 py-2 bg-surface text-fg rounded-lg transition-all duration-200 min-h-[44px] tm-press'
-                                >
-                                  使用代理播放
-                                </button>
-                              )}
-                          </div>
-                        </>
-                      ) : (
-                        // 加载显示（三种款式见 components/LoadingStyle）
-                        <LoadingStyle
-                          steps={VIDEO_LOAD_STEPS}
-                          activeStepIdx={videoLoadStepIdx}
-                          message={videoLoadMessage}
-                          onDark
-                          legacy={
-                            <>
-                              {/* 动画影院图标 */}
-                              <div className='relative mb-8'>
-                                <div className='relative mx-auto w-24 h-24 bg-surface rounded-2xl shadow-2xl flex items-center justify-center transform hover:scale-105 transition-transform duration-300'>
-                                  <div className='text-fg text-4xl'>🎬</div>
-                                  {/* 旋转光环 */}
-                                  <div className='absolute -inset-2 bg-surface rounded-2xl opacity-20 animate-spin'></div>
-                                </div>
-
-                                {/* 浮动粒子效果 */}
-                                <div className='absolute top-0 left-0 w-full h-full pointer-events-none'>
-                                  <div className='absolute top-2 left-2 w-2 h-2 bg-fg rounded-full animate-bounce'></div>
-                                  <div
-                                    className='absolute top-4 right-4 w-1.5 h-1.5 bg-fg rounded-full animate-bounce'
-                                    style={{ animationDelay: '0.5s' }}
-                                  ></div>
-                                  <div
-                                    className='absolute bottom-3 left-6 w-1 h-1 bg-fg rounded-full animate-bounce'
-                                    style={{ animationDelay: '1s' }}
-                                  ></div>
-                                </div>
-                              </div>
-
-                              {/* 换源消息 */}
-                              <div className='space-y-2'>
-                                <p className='text-xl font-medium text-fg tm-skeleton'>
-                                  {videoLoadingStage === 'sourceChanging'
-                                    ? '🔄 切换播放源...'
-                                    : '🔄 视频加载中...'}
-                                </p>
-                              </div>
-                            </>
-                          }
-                        />
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                {/* 链接刷新提示（右上角，无遮罩） */}
-                {isRefreshingUrl && (
-                  <div className='absolute top-3 right-3 z-50 pointer-events-none'>
-                    <div className='bg-ink/70 text-fg px-3 py-1.5 rounded-md flex items-center gap-2 text-sm border border-line shadow-lg'>
-                      <svg className='animate-spin h-4 w-4' viewBox='0 0 24 24'>
-                        <circle
-                          className='opacity-25'
-                          cx='12'
-                          cy='12'
-                          r='10'
-                          stroke='currentColor'
-                          strokeWidth='4'
-                          fill='none'
-                        />
-                        <path
-                          className='opacity-75'
-                          fill='currentColor'
-                          d='M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z'
-                        />
-                      </svg>
-                      <span>正在刷新链接...</span>
-                    </div>
-                  </div>
-                )}
-
-                {/* 弹幕加载蒙层 */}
-                {danmakuLoading && (
-                  <div className='absolute top-0 right-0 m-4 bg-ink/80 backdrop-blur-sm rounded-lg px-4 py-2 z-[600] flex items-center gap-2 border border-line'>
-                    {danmakuCount > 0 ? (
-                      <>
-                        <svg
-                          className='w-4 h-4 text-fg'
-                          fill='none'
-                          stroke='currentColor'
-                          viewBox='0 0 24 24'
-                        >
-                          <path
-                            strokeLinecap='round'
-                            strokeLinejoin='round'
-                            strokeWidth={2}
-                            d='M5 13l4 4L19 7'
-                          />
-                        </svg>
-                        <span className='text-sm font-medium text-fg'>
-                          {danmakuOriginalCount > 0
-                            ? `已加载 ${danmakuCount} 条弹幕（原始 ${danmakuOriginalCount} 条）`
-                            : `已加载 ${danmakuCount} 条弹幕`}
-                        </span>
-                      </>
-                    ) : (
-                      <>
-                        <div className='w-4 h-4 border-2 border-line border-t-transparent rounded-full animate-spin'></div>
-                        <span className='text-sm font-medium text-fg'>
-                          加载弹幕中...
-                        </span>
-                      </>
-                    )}
-                  </div>
-                )}
+                <VideoOverlays
+                  loading={isVideoLoading}
+                  stage={videoLoadingStage}
+                  error={videoError}
+                  canUseProxy={
+                    !proxyAttemptedRef.current &&
+                    Boolean(
+                      corsFailedUrl ||
+                        (isDirectPlay &&
+                          videoUrl &&
+                          !videoUrl.includes('/api/proxy-m3u8'))
+                    )
+                  }
+                  onRetry={() => {
+                    setVideoError(null);
+                    setIsVideoLoading(true);
+                    // 重新加载视频
+                    if (artPlayerRef.current) {
+                      artPlayerRef.current.url = videoUrl;
+                    }
+                  }}
+                  onUseProxy={() => {
+                    const originalUrl = corsFailedUrl || videoUrl;
+                    // 记忆域名到 localStorage
+                    addDirectplayProxyDomain(originalUrl);
+                    const proxyUrl = `/api/proxy-m3u8?url=${encodeURIComponent(
+                      originalUrl
+                    )}&source=directplay`;
+                    // 清除错误状态并重新播放
+                    setVideoError(null);
+                    setCorsFailedUrl(null);
+                    setIsVideoLoading(true);
+                    proxyAttemptedRef.current = true;
+                    setVideoUrl(proxyUrl);
+                  }}
+                  refreshingLink={isRefreshingUrl}
+                  danmakuLoading={danmakuLoading}
+                  danmakuCount={danmakuCount}
+                  danmakuOriginalCount={danmakuOriginalCount}
+                />
               </div>
 
-              {/* 第三方应用打开按钮 - 观影室同步状态下隐藏 */}
-              {videoUrl && !playSync.isInRoom && (
-                <div
-                  className='mt-3 px-2 wide:flex-shrink-0 tm-solo-tools'
-                  data-tm-sheet={soloSheet === 'tools' ? 'open' : undefined}
-                  role={soloSheet === 'tools' ? 'dialog' : undefined}
-                  aria-label={soloSheet === 'tools' ? '工具' : undefined}
-                >
-                  <div className='tm-solo-sheet-head'>
-                    <h2>工具</h2>
-                    <button
-                      type='button'
-                      onClick={() => setSoloSheet(null)}
-                      aria-label='关闭'
-                    >
-                      <X className='h-5 w-5' />
-                    </button>
-                  </div>
-                  <div className='bg-raised backdrop-blur-sm rounded-lg p-2 border border-line w-full wide:w-auto overflow-x-auto'>
-                    <div className='flex gap-1.5 flex-nowrap wide:flex-wrap items-center'>
-                      <div className='flex gap-1.5 flex-wrap wide:justify-end wide:flex-1'>
-                        {/* 下载按钮 */}
-                        <button
-                          onClick={(e) => {
-                            e.preventDefault();
-                            setShowDownloadSelector(true);
-                          }}
-                          className='group relative flex items-center justify-center gap-1 w-11 h-11 wide:w-auto wide:h-auto wide:px-2 wide:py-1.5 bg-surface text-[13px] font-medium rounded-md transition-all duration-200 shadow-sm hover:shadow-md cursor-pointer overflow-hidden border border-line flex-shrink-0 min-h-[44px] tm-press'
-                          title='下载视频'
-                        >
-                          <svg
-                            className='w-4 h-4 flex-shrink-0 text-fg'
-                            fill='none'
-                            stroke='currentColor'
-                            viewBox='0 0 24 24'
-                          >
-                            <path
-                              strokeLinecap='round'
-                              strokeLinejoin='round'
-                              strokeWidth='2'
-                              d='M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4'
-                            />
-                          </svg>
-                          <span className='hidden wide:inline max-w-0 group-hover:max-w-[100px] overflow-hidden whitespace-nowrap transition-all duration-200 ease-in-out text-fg'>
-                            下载
-                          </span>
-                        </button>
-
-                        {/* 复制视频链接按钮 */}
-                        <button
-                          onClick={(e) => {
-                            e.preventDefault();
-                            // 如果当前是代理播放模式，使用原始 URL；否则使用当前 videoUrl
-                            let urlToUse = videoUrl;
-                            if (
-                              sourceProxyMode &&
-                              detail?.episodes &&
-                              currentEpisodeIndex < detail.episodes.length
-                            ) {
-                              urlToUse = detail.episodes[currentEpisodeIndex];
-                            }
-                            // 使用代理 URL（与外部播放器逻辑一致）
-                            const proxyUrl = externalPlayerAdBlock
-                              ? `${
-                                  window.location.origin
-                                }/api/proxy-m3u8?url=${encodeURIComponent(
-                                  urlToUse
-                                )}&source=${encodeURIComponent(currentSource)}`
-                              : urlToUse;
-
-                            // 如果链接是相对路径，补充完整的 base URL
-                            let finalUrl = proxyUrl;
-                            if (
-                              proxyUrl &&
-                              !proxyUrl.startsWith('http://') &&
-                              !proxyUrl.startsWith('https://')
-                            ) {
-                              finalUrl = `${window.location.origin}${
-                                proxyUrl.startsWith('/') ? '' : '/'
-                              }${proxyUrl}`;
-                            }
-
-                            // 复制到剪贴板
-                            navigator.clipboard
-                              .writeText(finalUrl)
-                              .then(() => {
-                                setToast({
-                                  message: '视频链接已复制到剪贴板',
-                                  type: 'success',
-                                  onClose: () => setToast(null),
-                                });
-                              })
-                              .catch((err) => {
-                                console.error('复制失败:', err);
-                                setToast({
-                                  message: '复制失败，请重试',
-                                  type: 'error',
-                                  onClose: () => setToast(null),
-                                });
-                              });
-                          }}
-                          className='group relative flex items-center justify-center gap-1 w-11 h-11 wide:w-auto wide:h-auto wide:px-2 wide:py-1.5 bg-fg hover:opacity-90 text-inverse text-[13px] font-medium rounded-md transition-all duration-200 shadow-sm hover:shadow-md cursor-pointer overflow-hidden border border-line flex-shrink-0 min-h-[44px] tm-press'
-                          title='复制视频链接'
-                        >
-                          <svg
-                            className='w-4 h-4 flex-shrink-0 text-inverse'
-                            fill='none'
-                            stroke='currentColor'
-                            viewBox='0 0 24 24'
-                          >
-                            <path
-                              strokeLinecap='round'
-                              strokeLinejoin='round'
-                              strokeWidth='2'
-                              d='M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z'
-                            />
-                          </svg>
-                          <span className='hidden wide:inline max-w-0 group-hover:max-w-[100px] overflow-hidden whitespace-nowrap transition-all duration-200 ease-in-out text-inverse'>
-                            复制链接
-                          </span>
-                        </button>
-
-                        {/* 已在房间时只返回；无房间时创建并共享当前影片。 */}
-                        {watchRoomContext?.isEnabled &&
-                          watchRoomContext.isConnected && (
-                            <button
-                              onClick={(e) => {
-                                e.preventDefault();
-                                handleCreateWatchRoom();
-                              }}
-                              disabled={isCreatingRoom}
-                              className='group relative flex items-center justify-center gap-1 w-11 h-11 wide:w-auto wide:h-auto wide:px-2 wide:py-1.5 bg-fg hover:opacity-90 text-[13px] font-medium rounded-md transition-all duration-200 shadow-sm hover:shadow-md cursor-pointer overflow-hidden border border-line flex-shrink-0 disabled:opacity-60 disabled:cursor-wait text-inverse min-h-[44px] tm-press'
-                              title={
-                                watchRoomContext.currentRoom
-                                  ? '返回房间'
-                                  : '创建观影室'
-                              }
-                            >
-                              {isCreatingRoom ? (
-                                <Loader2 className='w-4 h-4 flex-shrink-0 text-inverse animate-spin' />
-                              ) : (
-                                <Users className='w-4 h-4 flex-shrink-0 text-inverse' />
-                              )}
-                              <span className='hidden wide:inline max-w-0 group-hover:max-w-[120px] overflow-hidden whitespace-nowrap transition-all duration-200 ease-in-out text-inverse'>
-                                {isCreatingRoom
-                                  ? '创建中'
-                                  : watchRoomContext.currentRoom
-                                  ? '返回房间'
-                                  : '创建观影室'}
-                              </span>
-                            </button>
-                          )}
-
-                        {showExternalTranscodeButton && (
-                          <button
-                            onClick={async (e) => {
-                              e.preventDefault();
-                              await handleCreateTranscodeSession();
-                            }}
-                            disabled={isTranscoding}
-                            className={`group relative flex items-center justify-center gap-1 w-11 h-11 wide:w-auto wide:h-auto wide:px-2 wide:py-1.5 text-[13px] font-medium rounded-md transition-all duration-200 shadow-sm hover:shadow-md overflow-hidden border flex-shrink-0 ${
-                              isTranscoding
-                                ? 'bg-raised text-fg border-line cursor-wait min-h-[44px] tm-press'
-                                : 'bg-raised hover:bg-line text-fg border-line cursor-pointer min-h-[44px] tm-press'
-                            }`}
-                            title='转码播放'
-                          >
-                            {isTranscoding ? (
-                              <Loader2 className='w-4 h-4 flex-shrink-0 text-fg animate-spin' />
-                            ) : (
-                              <Router className='w-4 h-4 flex-shrink-0 text-fg' />
-                            )}
-                            <span className='hidden wide:inline max-w-0 group-hover:max-w-[100px] overflow-hidden whitespace-nowrap transition-all duration-200 ease-in-out text-fg'>
-                              {isTranscoding ? '转码中' : '转码'}
-                            </span>
-                          </button>
-                        )}
-
-                        {/* 快捷键说明 */}
-                        <button
-                          onClick={(e) => {
-                            e.preventDefault();
-                            setShowShortcutDialog(true);
-                          }}
-                          className='group relative flex items-center justify-center gap-1 w-11 h-11 wide:w-auto wide:h-auto wide:px-2 wide:py-1.5 bg-raised hover:bg-line text-[13px] font-medium rounded-md transition-all duration-200 shadow-sm hover:shadow-md cursor-pointer overflow-hidden border border-line flex-shrink-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-fg focus-visible:ring-offset-2 focus-visible:ring-offset-fg min-h-[44px] tm-press'
-                          title='快捷键说明'
-                          aria-label='查看播放快捷键说明'
-                        >
-                          <Keyboard className='w-4 h-4 flex-shrink-0 text-fg' />
-                          <span className='hidden wide:inline max-w-0 group-hover:max-w-[100px] overflow-hidden whitespace-nowrap transition-all duration-200 ease-in-out text-fg'>
-                            快捷键
-                          </span>
-                        </button>
-
-                        {/* PotPlayer */}
-                        <button
-                          onClick={(e) => {
-                            e.preventDefault();
-                            // 如果当前是代理播放模式，使用原始 URL；否则使用当前 videoUrl
-                            let urlToUse = videoUrl;
-                            if (
-                              sourceProxyMode &&
-                              detail?.episodes &&
-                              currentEpisodeIndex < detail.episodes.length
-                            ) {
-                              urlToUse = detail.episodes[currentEpisodeIndex];
-                            }
-                            // 使用代理 URL
-                            const proxyUrl = externalPlayerAdBlock
-                              ? `${
-                                  window.location.origin
-                                }/api/proxy-m3u8?url=${encodeURIComponent(
-                                  urlToUse
-                                )}&source=${encodeURIComponent(currentSource)}`
-                              : urlToUse;
-                            // URL encode 避免冒号被吃掉
-                            window.open(`potplayer://${proxyUrl}`, '_blank');
-                          }}
-                          className='group relative flex items-center justify-center gap-1 w-11 h-11 wide:w-auto wide:h-auto wide:px-2 wide:py-1.5 bg-raised hover:bg-line text-[13px] font-medium rounded-md transition-all duration-200 shadow-sm hover:shadow-md cursor-pointer overflow-hidden border border-line flex-shrink-0 min-h-[44px] tm-press'
-                          title='PotPlayer'
-                        >
-                          <img
-                            src='/players/potplayer.png'
-                            alt='PotPlayer'
-                            className='w-4 h-4 flex-shrink-0'
-                          />
-                          <span className='hidden wide:inline max-w-0 group-hover:max-w-[100px] overflow-hidden whitespace-nowrap transition-all duration-200 ease-in-out text-fg'>
-                            PotPlayer
-                          </span>
-                        </button>
-
-                        {/* VLC */}
-                        <button
-                          onClick={(e) => {
-                            e.preventDefault();
-                            // 如果当前是代理播放模式，使用原始 URL；否则使用当前 videoUrl
-                            let urlToUse = videoUrl;
-                            if (
-                              sourceProxyMode &&
-                              detail?.episodes &&
-                              currentEpisodeIndex < detail.episodes.length
-                            ) {
-                              urlToUse = detail.episodes[currentEpisodeIndex];
-                            }
-                            // 使用代理 URL
-                            const proxyUrl = externalPlayerAdBlock
-                              ? `${
-                                  window.location.origin
-                                }/api/proxy-m3u8?url=${encodeURIComponent(
-                                  urlToUse
-                                )}&source=${encodeURIComponent(currentSource)}`
-                              : urlToUse;
-                            // URL encode 避免冒号被吃掉
-                            window.open(`vlc://${proxyUrl}`, '_blank');
-                          }}
-                          className='group relative flex items-center justify-center gap-1 w-11 h-11 wide:w-auto wide:h-auto wide:px-2 wide:py-1.5 bg-raised hover:bg-line text-[13px] font-medium rounded-md transition-all duration-200 shadow-sm hover:shadow-md cursor-pointer overflow-hidden border border-line flex-shrink-0 min-h-[44px] tm-press'
-                          title='VLC'
-                        >
-                          <img
-                            src='/players/vlc.png'
-                            alt='VLC'
-                            className='w-4 h-4 flex-shrink-0'
-                          />
-                          <span className='hidden wide:inline max-w-0 group-hover:max-w-[100px] overflow-hidden whitespace-nowrap transition-all duration-200 ease-in-out text-fg'>
-                            VLC
-                          </span>
-                        </button>
-
-                        {/* MPV */}
-                        <button
-                          onClick={(e) => {
-                            e.preventDefault();
-                            // 如果当前是代理播放模式，使用原始 URL；否则使用当前 videoUrl
-                            let urlToUse = videoUrl;
-                            if (
-                              sourceProxyMode &&
-                              detail?.episodes &&
-                              currentEpisodeIndex < detail.episodes.length
-                            ) {
-                              urlToUse = detail.episodes[currentEpisodeIndex];
-                            }
-                            // 使用代理 URL
-                            const proxyUrl = externalPlayerAdBlock
-                              ? `${
-                                  window.location.origin
-                                }/api/proxy-m3u8?url=${encodeURIComponent(
-                                  urlToUse
-                                )}&source=${encodeURIComponent(currentSource)}`
-                              : urlToUse;
-                            // URL encode 避免冒号被吃掉
-                            window.open(`mpv://${proxyUrl}`, '_blank');
-                          }}
-                          className='group relative flex items-center justify-center gap-1 w-11 h-11 wide:w-auto wide:h-auto wide:px-2 wide:py-1.5 bg-raised hover:bg-line text-[13px] font-medium rounded-md transition-all duration-200 shadow-sm hover:shadow-md cursor-pointer overflow-hidden border border-line flex-shrink-0 min-h-[44px] tm-press'
-                          title='MPV'
-                        >
-                          <img
-                            src='/players/mpv.png'
-                            alt='MPV'
-                            className='w-4 h-4 flex-shrink-0'
-                          />
-                          <span className='hidden wide:inline max-w-0 group-hover:max-w-[100px] overflow-hidden whitespace-nowrap transition-all duration-200 ease-in-out text-fg'>
-                            MPV
-                          </span>
-                        </button>
-
-                        {/* MX Player */}
-                        <button
-                          onClick={(e) => {
-                            e.preventDefault();
-                            // 如果当前是代理播放模式，使用原始 URL；否则使用当前 videoUrl
-                            let urlToUse = videoUrl;
-                            if (
-                              sourceProxyMode &&
-                              detail?.episodes &&
-                              currentEpisodeIndex < detail.episodes.length
-                            ) {
-                              urlToUse = detail.episodes[currentEpisodeIndex];
-                            }
-                            // 使用代理 URL
-                            const proxyUrl = externalPlayerAdBlock
-                              ? `${
-                                  window.location.origin
-                                }/api/proxy-m3u8?url=${encodeURIComponent(
-                                  urlToUse
-                                )}&source=${encodeURIComponent(currentSource)}`
-                              : urlToUse;
-                            window.open(
-                              `intent://${proxyUrl}#Intent;package=com.mxtech.videoplayer.ad;S.title=${encodeURIComponent(
-                                videoTitle
-                              )};end`,
-                              '_blank'
-                            );
-                          }}
-                          className='group relative flex items-center justify-center gap-1 w-11 h-11 wide:w-auto wide:h-auto wide:px-2 wide:py-1.5 bg-raised hover:bg-line text-[13px] font-medium rounded-md transition-all duration-200 shadow-sm hover:shadow-md cursor-pointer overflow-hidden border border-line flex-shrink-0 min-h-[44px] tm-press'
-                          title='MX Player'
-                        >
-                          <img
-                            src='/players/mxplayer.png'
-                            alt='MX Player'
-                            className='w-4 h-4 flex-shrink-0'
-                          />
-                          <span className='hidden wide:inline max-w-0 group-hover:max-w-[100px] overflow-hidden whitespace-nowrap transition-all duration-200 ease-in-out text-fg'>
-                            MX Player
-                          </span>
-                        </button>
-
-                        {/* nPlayer */}
-                        <button
-                          onClick={(e) => {
-                            e.preventDefault();
-                            // 如果当前是代理播放模式，使用原始 URL；否则使用当前 videoUrl
-                            let urlToUse = videoUrl;
-                            if (
-                              sourceProxyMode &&
-                              detail?.episodes &&
-                              currentEpisodeIndex < detail.episodes.length
-                            ) {
-                              urlToUse = detail.episodes[currentEpisodeIndex];
-                            }
-                            // 使用代理 URL
-                            const proxyUrl = externalPlayerAdBlock
-                              ? `${
-                                  window.location.origin
-                                }/api/proxy-m3u8?url=${encodeURIComponent(
-                                  urlToUse
-                                )}&source=${encodeURIComponent(currentSource)}`
-                              : urlToUse;
-                            window.open(`nplayer-${proxyUrl}`, '_blank');
-                          }}
-                          className='group relative flex items-center justify-center gap-1 w-11 h-11 wide:w-auto wide:h-auto wide:px-2 wide:py-1.5 bg-raised hover:bg-line text-[13px] font-medium rounded-md transition-all duration-200 shadow-sm hover:shadow-md cursor-pointer overflow-hidden border border-line flex-shrink-0 min-h-[44px] tm-press'
-                          title='nPlayer'
-                        >
-                          <img
-                            src='/players/nplayer.png'
-                            alt='nPlayer'
-                            className='w-4 h-4 flex-shrink-0'
-                          />
-                          <span className='hidden wide:inline max-w-0 group-hover:max-w-[100px] overflow-hidden whitespace-nowrap transition-all duration-200 ease-in-out text-fg'>
-                            nPlayer
-                          </span>
-                        </button>
-
-                        {/* IINA */}
-                        <button
-                          onClick={(e) => {
-                            e.preventDefault();
-                            // 如果当前是代理播放模式，使用原始 URL；否则使用当前 videoUrl
-                            let urlToUse = videoUrl;
-                            if (
-                              sourceProxyMode &&
-                              detail?.episodes &&
-                              currentEpisodeIndex < detail.episodes.length
-                            ) {
-                              urlToUse = detail.episodes[currentEpisodeIndex];
-                            }
-                            // 使用代理 URL
-                            const proxyUrl = externalPlayerAdBlock
-                              ? `${
-                                  window.location.origin
-                                }/api/proxy-m3u8?url=${encodeURIComponent(
-                                  urlToUse
-                                )}&source=${encodeURIComponent(currentSource)}`
-                              : urlToUse;
-                            window.open(
-                              `iina://weblink?url=${encodeURIComponent(
-                                proxyUrl
-                              )}`,
-                              '_blank'
-                            );
-                          }}
-                          className='group relative flex items-center justify-center gap-1 w-11 h-11 wide:w-auto wide:h-auto wide:px-2 wide:py-1.5 bg-raised hover:bg-line text-[13px] font-medium rounded-md transition-all duration-200 shadow-sm hover:shadow-md cursor-pointer overflow-hidden border border-line flex-shrink-0 min-h-[44px] tm-press'
-                          title='IINA'
-                        >
-                          <img
-                            src='/players/iina.png'
-                            alt='IINA'
-                            className='w-4 h-4 flex-shrink-0'
-                          />
-                          <span className='hidden wide:inline max-w-0 group-hover:max-w-[100px] overflow-hidden whitespace-nowrap transition-all duration-200 ease-in-out text-fg'>
-                            IINA
-                          </span>
-                        </button>
-                      </div>
-
-                      {/* 去广告开关 */}
-                      <button
-                        onClick={toggleToolbarAdBlock}
-                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[13px] font-medium transition-all duration-200 shadow-sm hover:shadow-md cursor-pointer border flex-shrink-0 ${
-                          externalPlayerAdBlock
-                            ? 'bg-surface text-fg border-line min-h-[44px] tm-press'
-                            : 'bg-raised hover:bg-line text-fg border-line min-h-[44px] tm-press'
-                        }`}
-                        title={
-                          externalPlayerAdBlock
-                            ? '去广告已开启'
-                            : '去广告已关闭'
-                        }
-                      >
-                        <svg
-                          className='w-4 h-4 flex-shrink-0'
-                          fill='none'
-                          stroke='currentColor'
-                          viewBox='0 0 24 24'
-                        >
-                          {externalPlayerAdBlock ? (
-                            <path
-                              strokeLinecap='round'
-                              strokeLinejoin='round'
-                              strokeWidth='2'
-                              d='M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z'
-                            />
-                          ) : (
-                            <path
-                              strokeLinecap='round'
-                              strokeLinejoin='round'
-                              strokeWidth='2'
-                              d='M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636'
-                            />
-                          )}
-                        </svg>
-                        <span className='whitespace-nowrap'>
-                          {externalPlayerAdBlock ? '去广告' : '去广告'}
-                        </span>
-                      </button>
-
-                      {/* 鸿蒙 HLS.js 开关：关闭后使用原生 HLS，便于浏览器投屏 */}
-                      {isHarmonyOS && isHlsPlaybackUrl(videoUrl) && (
-                        <button
-                          type='button'
-                          onClick={() =>
-                            switchHarmonyHlsPlaybackMode(
-                              harmonyHlsPlaybackMode === 'hlsjs'
-                                ? 'native'
-                                : 'hlsjs'
-                            )
-                          }
-                          aria-pressed={harmonyHlsPlaybackMode === 'hlsjs'}
-                          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[13px] font-medium transition-all duration-200 shadow-sm hover:shadow-md cursor-pointer border flex-shrink-0 ${
-                            harmonyHlsPlaybackMode === 'hlsjs'
-                              ? 'bg-surface text-fg border-line min-h-[44px] tm-press'
-                              : 'bg-raised hover:bg-line text-fg border-line min-h-[44px] tm-press'
-                          }`}
-                          title={
-                            harmonyHlsPlaybackMode === 'hlsjs'
-                              ? 'HLS.js 已开启，点击切换为原生 HLS'
-                              : 'HLS.js 已关闭，当前使用原生 HLS'
-                          }
-                        >
-                          <svg
-                            className='w-4 h-4 flex-shrink-0'
-                            fill='none'
-                            stroke='currentColor'
-                            viewBox='0 0 24 24'
-                          >
-                            {harmonyHlsPlaybackMode === 'hlsjs' ? (
-                              <path
-                                strokeLinecap='round'
-                                strokeLinejoin='round'
-                                strokeWidth='2'
-                                d='M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z'
-                              />
-                            ) : (
-                              <path
-                                strokeLinecap='round'
-                                strokeLinejoin='round'
-                                strokeWidth='2'
-                                d='M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636'
-                              />
-                            )}
-                          </svg>
-                          <span className='whitespace-nowrap'>HLS.js</span>
-                        </button>
-                      )}
-
-                      {/* 网盘挂载原生 HLS 开关：关闭 HLS.js 使用浏览器原生 HLS 直连，更快且无需代理/去广告 */}
-                      {isNetdiskMountSource(currentSource) &&
-                        supportsNativeHls &&
-                        isHlsPlaybackUrl(videoUrl) && (
-                          <button
-                            type='button'
-                            onClick={() =>
-                              switchNetdiskHlsPlaybackMode(
-                                netdiskHlsPlaybackMode === 'native'
-                                  ? 'hlsjs'
-                                  : 'native'
-                              )
-                            }
-                            aria-pressed={netdiskHlsPlaybackMode === 'native'}
-                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[13px] font-medium transition-all duration-200 shadow-sm hover:shadow-md cursor-pointer border flex-shrink-0 ${
-                              netdiskHlsPlaybackMode === 'native'
-                                ? 'bg-surface text-fg border-line min-h-[44px] tm-press'
-                                : 'bg-raised hover:bg-line text-fg border-line min-h-[44px] tm-press'
-                            }`}
-                            title={
-                              netdiskHlsPlaybackMode === 'native'
-                                ? '原生 HLS 已开启（直连网盘，最快），点击切换为 HLS.js'
-                                : '原生 HLS 已关闭（当前使用 HLS.js），点击切换为原生直连'
-                            }
-                          >
-                            <svg
-                              className='w-4 h-4 flex-shrink-0'
-                              fill='none'
-                              stroke='currentColor'
-                              viewBox='0 0 24 24'
-                            >
-                              {netdiskHlsPlaybackMode === 'native' ? (
-                                <path
-                                  strokeLinecap='round'
-                                  strokeLinejoin='round'
-                                  strokeWidth='2'
-                                  d='M13 10V3L4 14h7v7l9-11h-7z'
-                                />
-                              ) : (
-                                <path
-                                  strokeLinecap='round'
-                                  strokeLinejoin='round'
-                                  strokeWidth='2'
-                                  d='M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636'
-                                />
-                              )}
-                            </svg>
-                            <span className='whitespace-nowrap'>原生HLS</span>
-                          </button>
-                        )}
-                    </div>
-                  </div>
-                </div>
+              {videoUrl && (
+                <PlaybackTools
+                  open={soloSheet === 'tools'}
+                  onClose={() => setSoloSheet(null)}
+                  videoUrl={videoUrl}
+                  originalUrl={
+                    // 代理播放时交出原始地址
+                    sourceProxyMode &&
+                    detail?.episodes &&
+                    currentEpisodeIndex < detail.episodes.length
+                      ? detail.episodes[currentEpisodeIndex]
+                      : videoUrl
+                  }
+                  currentSource={currentSource}
+                  videoTitle={videoTitle}
+                  externalPlayerAdBlock={externalPlayerAdBlock}
+                  onToggleAdBlock={toggleToolbarAdBlock}
+                  onDownload={() => setShowDownloadSelector(true)}
+                  onShowShortcuts={() => setShowShortcutDialog(true)}
+                  roomEntry={
+                    watchRoomContext?.isEnabled && watchRoomContext.isConnected
+                      ? watchRoomContext.currentRoom
+                        ? 'return'
+                        : 'create'
+                      : null
+                  }
+                  creatingRoom={isCreatingRoom}
+                  onRoom={() => void handleCreateWatchRoom()}
+                  canTranscode={showExternalTranscodeButton}
+                  transcoding={isTranscoding}
+                  onTranscode={handleCreateTranscodeSession}
+                  harmonyMode={isHarmonyOS ? harmonyHlsPlaybackMode : null}
+                  onHarmonyMode={switchHarmonyHlsPlaybackMode}
+                  netdiskMode={
+                    isNetdiskMountSource(currentSource) && supportsNativeHls
+                      ? netdiskHlsPlaybackMode
+                      : null
+                  }
+                  onNetdiskMode={switchNetdiskHlsPlaybackMode}
+                  showToast={showToast}
+                />
               )}
             </div>
 
-            {/* 选集和换源 - 在移动端始终显示，在 lg 及以上可折叠 */}
-            <div
-              className={`relative z-10 h-[350px] wide:h-full md:overflow-hidden transition-all duration-300 ease-in-out tm-solo-selector ${
-                isEpisodeSelectorCollapsed
-                  ? 'wide:col-span-1 wide:hidden wide:opacity-0 wide:scale-95'
-                  : 'wide:col-span-1 wide:opacity-100 wide:scale-100'
-              }`}
-              data-tm-sheet={
-                soloSheet && soloSheet !== 'tools' ? 'open' : undefined
-              }
-              role={soloSheet && soloSheet !== 'tools' ? 'dialog' : undefined}
-              aria-label={
-                soloSheet && soloSheet !== 'tools'
-                  ? '选集、换源和弹幕'
-                  : undefined
-              }
+            {/* 选集和换源 - 在移动端始终显示，在电脑上可折叠 */}
+            <EpisodePanel
+              open={Boolean(soloSheet && soloSheet !== 'tools')}
+              collapsed={isEpisodeSelectorCollapsed}
+              onClose={() => setSoloSheet(null)}
             >
-              <button
-                type='button'
-                className='tm-solo-sheet-close'
-                onClick={() => setSoloSheet(null)}
-                aria-label='关闭'
-              >
-                <X className='h-5 w-5' />
-              </button>
               <EpisodeSelector
                 requestedTab={selectorRequest}
                 totalEpisodes={totalEpisodes}
                 episodes_titles={detail?.episodes_titles || []}
                 richEpisodeNames={richEpisodeNames}
                 value={currentEpisodeIndex + 1}
-                onChange={
-                  playSyncRef.current.shouldDisableControls
-                    ? () => {
-                        /* disabled */
-                      }
-                    : (episodeNumber: number) => {
-                        handleEpisodeChange(episodeNumber);
-                        setSoloSheet(null);
-                      }
-                }
-                onSourceChange={
-                  playSyncRef.current.shouldDisableControls
-                    ? () => {
-                        /* disabled */
-                      }
-                    : handleSourceChange
-                }
-                isRoomMember={playSyncRef.current.shouldDisableControls}
+                onChange={(episodeNumber: number) => {
+                  handleEpisodeChange(episodeNumber);
+                  setSoloSheet(null);
+                }}
+                onSourceChange={handleSourceChange}
+                isRoomMember={false}
                 currentSource={currentSource}
                 currentId={currentId}
                 episodeProgressContentKey={
@@ -12726,418 +11328,72 @@ function PlayPageClient() {
                 onUploadDanmaku={handleUploadDanmaku}
                 episodeFilterConfig={episodeFilterConfig}
                 onFilterConfigUpdate={setEpisodeFilterConfig}
-                onShowToast={(message, type) => {
-                  setToast({ message, type, onClose: () => setToast(null) });
-                }}
+                onShowToast={showToast}
               />
-            </div>
+            </EpisodePanel>
           </div>
 
           {/* 电脑：右侧图标栏，选集 / 换源 / 弹幕开合右边的面板，其余打开抽屉 */}
-          <nav className='tm-solo-rail' aria-label='播放面板'>
-            {(
-              [
-                ['episodes', '选集', ListVideo],
-                ['sources', '换源', RefreshCw],
-                ['danmaku', '弹幕', MessageSquareText],
-              ] as const
-            ).map(([panel, label, Icon]) => (
-              <button
-                key={panel}
-                type='button'
-                aria-pressed={!isEpisodeSelectorCollapsed && soloRail === panel}
-                onClick={() => selectSoloRail(panel)}
-              >
-                <Icon className='h-5 w-5' aria-hidden='true' />
-                {label}
-              </button>
-            ))}
-            <span className='tm-solo-rail-sep' aria-hidden='true' />
-            {videoUrl && !playSync.isInRoom && (
-              <button
-                type='button'
-                aria-pressed={soloSheet === 'tools'}
-                onClick={() =>
-                  setSoloSheet(soloSheet === 'tools' ? null : 'tools')
-                }
-              >
-                <Ellipsis className='h-5 w-5' aria-hidden='true' />
-                工具
-              </button>
-            )}
-            {detail && (
-              <button type='button' onClick={() => openDrawer('detail')}>
-                <FileText className='h-5 w-5' aria-hidden='true' />
-                详情
-              </button>
-            )}
-            {aiEnabled && detail && (
-              <button type='button' onClick={() => openDrawer('aiChat')}>
-                <Sparkles className='h-5 w-5' aria-hidden='true' />
-                AI 问片
-              </button>
-            )}
-            {netdiskSearchEnabled && (
-              <button type='button' onClick={() => openDrawer('pansou')}>
-                <Cloud className='h-5 w-5' aria-hidden='true' />
-                网盘
-              </button>
-            )}
-            <button
-              type='button'
-              className='tm-solo-rail-end'
-              onClick={() => setShowShortcutDialog(true)}
-            >
-              <Keyboard className='h-5 w-5' aria-hidden='true' />
-              快捷键
-            </button>
-          </nav>
+          <PlaybackRail
+            activePanel={isEpisodeSelectorCollapsed ? null : soloRail}
+            onPanel={selectSoloRail}
+            showTools={Boolean(videoUrl)}
+            toolsOpen={soloSheet === 'tools'}
+            onToggleTools={() =>
+              setSoloSheet(soloSheet === 'tools' ? null : 'tools')
+            }
+            showDetail={Boolean(detail)}
+            showAiChat={Boolean(aiEnabled && detail)}
+            showNetdisk={netdiskSearchEnabled}
+            onDrawer={openDrawer}
+            onShortcuts={() => setShowShortcutDialog(true)}
+          />
         </div>
 
-        {/* 手机 / 平板：底部操作坞，点开是半屏面板，画面一直在上面 */}
-        <button
-          type='button'
-          className='tm-solo-sheet-backdrop'
-          data-open={soloSheet ? 'true' : undefined}
-          tabIndex={-1}
-          aria-hidden='true'
-          onClick={() => setSoloSheet(null)}
+        <PlaybackDock
+          sheetOpen={Boolean(soloSheet)}
+          onOpen={openSoloSheet}
+          onClose={() => setSoloSheet(null)}
+          episodeHint={
+            totalEpisodes > 1 ? `第 ${currentEpisodeIndex + 1} 集` : '正片'
+          }
+          sourceName={detail?.source_name || '片源'}
+          danmakuCount={danmakuCount}
+          showTools={Boolean(videoUrl)}
+          detailHint={
+            detail
+              ? doubanRating && doubanRating.value > 0
+                ? `豆瓣 ${doubanRating.value.toFixed(1)}`
+                : '简介'
+              : null
+          }
+          onDetail={() => openDrawer('detail')}
         />
-        <nav className='tm-solo-dock' aria-label='播放工具'>
-          <button type='button' onClick={() => openSoloSheet('episodes')}>
-            <ListVideo className='h-5 w-5' aria-hidden='true' />
-            <span>选集</span>
-            <em>
-              {totalEpisodes > 1 ? `第 ${currentEpisodeIndex + 1} 集` : '正片'}
-            </em>
-          </button>
-          <button type='button' onClick={() => openSoloSheet('sources')}>
-            <RefreshCw className='h-5 w-5' aria-hidden='true' />
-            <span>换源</span>
-            <em>{detail?.source_name || '片源'}</em>
-          </button>
-          <button type='button' onClick={() => openSoloSheet('danmaku')}>
-            <MessageSquareText className='h-5 w-5' aria-hidden='true' />
-            <span>弹幕</span>
-            <em>
-              {danmakuCount > 0
-                ? `${danmakuCount.toLocaleString()} 条`
-                : '未加载'}
-            </em>
-          </button>
-          {videoUrl && !playSync.isInRoom && (
-            <button type='button' onClick={() => openSoloSheet('tools')}>
-              <Ellipsis className='h-5 w-5' aria-hidden='true' />
-              <span>工具</span>
-              <em>下载等</em>
-            </button>
-          )}
-          {detail && (
-            <button type='button' onClick={() => openDrawer('detail')}>
-              <FileText className='h-5 w-5' aria-hidden='true' />
-              <span>详情</span>
-              <em>
-                {doubanRating && doubanRating.value > 0
-                  ? `豆瓣 ${doubanRating.value.toFixed(1)}`
-                  : '简介'}
-              </em>
-            </button>
-          )}
-        </nav>
 
         {!isDirectPlay && (
           <>
             {/* 详情展示 */}
-            <div className='grid grid-cols-1 md:grid-cols-5 lg:grid-cols-6 gap-4 tm-solo-detail'>
-              {/* 文字区 */}
-              <div className='md:col-span-4 lg:col-span-5'>
-                <div className='p-6 flex flex-col min-h-0'>
-                  {/* 标题 */}
-                  <h1
-                    className={`text-3xl font-bold mb-2 tracking-wide flex items-center flex-shrink-0 text-center md:text-left w-full flex-wrap gap-2 ${
-                      tmdbBackdrop ? 'text-on-art' : 'text-fg'
-                    }`}
-                  >
-                    <span
-                      className={
-                        doubanAka.length > 0 ? 'relative group cursor-help' : ''
-                      }
-                    >
-                      {videoTitle || '影片标题'}
-                      {/* aka 悬浮提示 */}
-                      {doubanAka.length > 0 && (
-                        <div className='absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-surface text-fg text-sm rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 ease-out whitespace-nowrap z-[100] pointer-events-none'>
-                          <div className='font-medium text-[13px] text-muted mb-1'>
-                            又名：
-                          </div>
-                          {doubanAka.map((name, index) => (
-                            <div key={index} className='text-sm'>
-                              {name}
-                            </div>
-                          ))}
-                          <div className='absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-line'></div>
-                        </div>
-                      )}
-                    </span>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleToggleFavorite();
-                      }}
-                      className='flex-shrink-0 hover:opacity-80 transition-opacity min-h-[44px] min-w-[44px] inline-flex items-center justify-center tm-press'
-                    >
-                      <FavoriteIcon filled={favorited} />
-                    </button>
-                    {/* 网盘搜索按钮 */}
-                    {netdiskSearchEnabled && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          openDrawer('pansou');
-                        }}
-                        className='flex-shrink-0 hover:opacity-80 transition-opacity min-h-[44px] min-w-[44px] inline-flex items-center justify-center tm-press'
-                        title='搜索网盘资源'
-                      >
-                        <Cloud className='h-6 w-6 text-muted' />
-                      </button>
-                    )}
-                    {/* AI问片按钮 */}
-                    {aiEnabled && detail && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          openDrawer('aiChat');
-                        }}
-                        className='flex-shrink-0 hover:opacity-80 transition-opacity min-h-[44px] min-w-[44px] inline-flex items-center justify-center tm-press'
-                        title='AI问片'
-                      >
-                        <Sparkles className='h-6 w-6 text-muted' />
-                      </button>
-                    )}
-                    {/* 详情按钮 */}
-                    {detail && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          openDrawer('detail');
-                        }}
-                        className='flex-shrink-0 hover:opacity-80 transition-opacity min-w-[44px] px-2 py-1 text-base font-medium text-muted min-h-[44px] tm-press'
-                        title='详情'
-                      >
-                        详
-                      </button>
-                    )}
-                    {/* 纠错按钮 - 仅小雅源显示 */}
-                    {detail && detail.source === 'xiaoya' && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          openDrawer('correct');
-                        }}
-                        className='flex-shrink-0 hover:opacity-80 transition-opacity min-h-[44px] min-w-[44px] inline-flex items-center justify-center tm-press'
-                        title='纠错'
-                      >
-                        <AlertCircle className='h-6 w-6 text-muted' />
-                      </button>
-                    )}
-                    {/* 豆瓣评分显示 */}
-                    {doubanRating && doubanRating.value > 0 && (
-                      <div className='flex items-center gap-2 text-base font-normal'>
-                        {/* 星级显示 */}
-                        <div className='flex items-center gap-1'>
-                          {[1, 2, 3, 4, 5].map((star) => {
-                            const starValue = doubanRating.value / 2; // 转换为5星制
-                            const isFullStar = star <= Math.floor(starValue);
-                            const isHalfStar =
-                              !isFullStar &&
-                              star <= Math.ceil(starValue) &&
-                              starValue % 1 >= 0.25;
-
-                            return (
-                              <div key={star} className='relative w-5 h-5'>
-                                {isFullStar ? (
-                                  // 全星
-                                  <svg
-                                    className='w-5 h-5 text-fg fill-fg'
-                                    viewBox='0 0 24 24'
-                                    xmlns='http://www.w3.org/2000/svg'
-                                  >
-                                    <path d='M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z' />
-                                  </svg>
-                                ) : isHalfStar ? (
-                                  // 半星
-                                  <>
-                                    {/* 空星背景 */}
-                                    <svg
-                                      className='absolute w-5 h-5 text-muted fill-fg'
-                                      viewBox='0 0 24 24'
-                                      xmlns='http://www.w3.org/2000/svg'
-                                    >
-                                      <path d='M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z' />
-                                    </svg>
-                                    {/* 半星遮罩 */}
-                                    <svg
-                                      className='absolute w-5 h-5 text-fg fill-fg'
-                                      viewBox='0 0 24 24'
-                                      xmlns='http://www.w3.org/2000/svg'
-                                      style={{ clipPath: 'inset(0 50% 0 0)' }}
-                                    >
-                                      <path d='M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z' />
-                                    </svg>
-                                  </>
-                                ) : (
-                                  // 空星
-                                  <svg
-                                    className='w-5 h-5 text-muted fill-fg'
-                                    viewBox='0 0 24 24'
-                                    xmlns='http://www.w3.org/2000/svg'
-                                  >
-                                    <path d='M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z' />
-                                  </svg>
-                                )}
-                              </div>
-                            );
-                          })}
-                        </div>
-                        {/* 评分数值 */}
-                        <span
-                          className={`font-medium ${
-                            tmdbBackdrop ? 'text-fg' : 'text-muted'
-                          }`}
-                        >
-                          {doubanRating.value.toFixed(1)}
-                        </span>
-                        {/* 评分人数 */}
-                        <span
-                          className={`text-sm ${
-                            tmdbBackdrop
-                              ? 'text-[color:color-mix(in_srgb,var(--tm-text)_80%,transparent)]'
-                              : 'text-muted'
-                          }`}
-                        >
-                          ({doubanRating.count.toLocaleString()}人评价)
-                        </span>
-                      </div>
-                    )}
-                  </h1>
-
-                  {/* 关键信息行 */}
-                  <div
-                    className={`flex flex-wrap items-center gap-3 text-base mb-4 opacity-80 flex-shrink-0 ${
-                      tmdbBackdrop ? 'text-fg' : ''
-                    }`}
-                  >
-                    {detail?.class && (
-                      <span className='text-fg font-medium'>
-                        {detail.class}
-                      </span>
-                    )}
-                    {/* 优先使用 doubanYear，如果没有则使用 detail.year 或 videoYear */}
-                    {(doubanYear ||
-                      netdiskTMDBMeta?.year ||
-                      detail?.year ||
-                      videoYear) && (
-                      <span>
-                        {doubanYear ||
-                          netdiskTMDBMeta?.year ||
-                          detail?.year ||
-                          videoYear}
-                      </span>
-                    )}
-                    {detail?.source_name && (
-                      <span
-                        className='relative group cursor-pointer border px-2 py-[1px] rounded border-line'
-                        onClick={fetchCurrentSourceVideoInfo}
-                      >
-                        {detail.source_name}
-                        {/* 视频信息悬浮提示 */}
-                        {currentSourceVideoInfo && (
-                          <div className='absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-surface text-fg text-sm rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 ease-out whitespace-nowrap z-[100] pointer-events-none'>
-                            <div className='text-sm'>
-                              <div>
-                                分辨率: {currentSourceVideoInfo.quality}
-                              </div>
-                              <div>码率: {currentSourceVideoInfo.bitrate}</div>
-                            </div>
-                            <div className='absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-line'></div>
-                          </div>
-                        )}
-                      </span>
-                    )}
-                    {detail?.type_name && <span>{detail.type_name}</span>}
-                  </div>
-                  {/* 剧情简介 */}
-                  {(doubanCardSubtitle ||
-                    netdiskTMDBMeta?.desc ||
-                    correctedDesc ||
-                    detail?.desc) && (
-                    <div
-                      className={`mt-0 text-base leading-relaxed opacity-90 overflow-y-auto pr-2 flex-1 min-h-0 scrollbar-hide ${
-                        tmdbBackdrop ? 'text-fg' : ''
-                      }`}
-                      style={{ whiteSpace: 'pre-line' }}
-                    >
-                      {/* card_subtitle 在前，desc 在后 */}
-                      {doubanCardSubtitle && (
-                        <div className='mb-3 pb-3 border-b border-line'>
-                          {doubanCardSubtitle}
-                        </div>
-                      )}
-                      {netdiskTMDBMeta?.desc || correctedDesc || detail?.desc}
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* 封面展示 */}
-              <div className='hidden md:block md:col-span-1 md:order-first'>
-                <div className='pl-0 py-4 pr-6 max-w-sm mx-auto'>
-                  <div className='relative bg-surface aspect-[2/3] flex items-center justify-center rounded-xl overflow-hidden'>
-                    {videoCover ? (
-                      <>
-                        <ProxyImage
-                          originalSrc={videoCover}
-                          alt={videoTitle}
-                          className='w-full h-full object-cover'
-                        />
-
-                        {/* 豆瓣链接按钮 */}
-                        {videoDoubanId !== 0 && (
-                          <a
-                            href={`https://movie.douban.com/subject/${videoDoubanId.toString()}`}
-                            target='_blank'
-                            rel='noopener noreferrer'
-                            className='absolute top-3 left-3 min-h-[44px] inline-flex items-center tm-press'
-                          >
-                            <div className='bg-raised text-fg text-[13px] font-bold w-8 h-8 rounded-full flex items-center justify-center shadow-md hover:bg-line hover:scale-[1.1] transition-all duration-300 ease-out'>
-                              <svg
-                                width='16'
-                                height='16'
-                                viewBox='0 0 24 24'
-                                fill='none'
-                                stroke='currentColor'
-                                strokeWidth='2'
-                                strokeLinecap='round'
-                                strokeLinejoin='round'
-                              >
-                                <path d='M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71'></path>
-                                <path d='M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71'></path>
-                              </svg>
-                            </div>
-                          </a>
-                        )}
-                      </>
-                    ) : isNetdiskSource(detail?.source) ? (
-                      <div className='flex flex-col items-center justify-center text-muted'>
-                        <Cloud className='w-16 h-16 opacity-80' />
-                      </div>
-                    ) : (
-                      <span className='text-muted'>封面图片</span>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
+            <PlaybackDetail
+              detail={detail}
+              videoTitle={videoTitle}
+              videoYear={videoYear}
+              videoCover={videoCover}
+              videoDoubanId={videoDoubanId}
+              doubanYear={doubanYear}
+              doubanAka={doubanAka}
+              doubanCardSubtitle={doubanCardSubtitle}
+              doubanRating={doubanRating}
+              correctedDesc={correctedDesc}
+              netdiskTMDBMeta={netdiskTMDBMeta}
+              sourceInfo={currentSourceVideoInfo}
+              onSourceInfo={() => void fetchCurrentSourceVideoInfo()}
+              favorited={favorited}
+              onToggleFavorite={() => void handleToggleFavorite()}
+              aiEnabled={aiEnabled}
+              netdiskSearchEnabled={netdiskSearchEnabled}
+              onDrawer={openDrawer}
+              onArt={!!tmdbBackdrop}
+            />
 
             {/* 推荐区域 */}
             <SmartRecommendations
@@ -13145,57 +11401,12 @@ function PlayPageClient() {
               videoTitle={videoTitle}
             />
 
-            {/* 豆瓣评论区域 */}
-            {videoDoubanId !== 0 && enableComments && (
-              <div className='mt-6 -mx-3 md:mx-0 md:px-4'>
-                <div className='bg-raised backdrop-blur-sm rounded-xl border border-line overflow-hidden'>
-                  {/* 标题 */}
-                  <div className='px-3 md:px-6 py-4 border-b border-line'>
-                    <h3 className='text-lg font-medium text-fg flex items-center gap-2'>
-                      <svg
-                        className='w-5 h-5'
-                        fill='currentColor'
-                        viewBox='0 0 24 24'
-                      >
-                        <path d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z' />
-                      </svg>
-                      豆瓣评论
-                    </h3>
-                  </div>
-
-                  {/* 评论内容 */}
-                  <div className='p-3 md:p-6'>
-                    <DoubanComments doubanId={videoDoubanId} />
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* AI评论区域 */}
-            {videoTitle && enableAIComments && (
-              <div className='mt-6 -mx-3 md:mx-0 md:px-4'>
-                <div className='bg-raised backdrop-blur-sm rounded-xl border border-line overflow-hidden'>
-                  {/* 标题 */}
-                  <div className='px-3 md:px-6 py-4 border-b border-line'>
-                    <h3 className='text-lg font-medium text-fg flex items-center gap-2'>
-                      <svg
-                        className='w-5 h-5 text-fg'
-                        fill='currentColor'
-                        viewBox='0 0 24 24'
-                      >
-                        <path d='M13 10V3L4 14h7v7l9-11h-7z' />
-                      </svg>
-                      AI生成评论
-                    </h3>
-                  </div>
-
-                  {/* 评论内容 */}
-                  <div className='p-3 md:p-6'>
-                    <AIComments movieName={videoTitle} />
-                  </div>
-                </div>
-              </div>
-            )}
+            <PlaybackComments
+              enableAIComments={enableAIComments}
+              enableComments={enableComments}
+              videoDoubanId={videoDoubanId}
+              videoTitle={videoTitle}
+            />
           </>
         )}
       </div>
@@ -13251,240 +11462,29 @@ function PlayPageClient() {
         }}
       />
 
-      {/* 快捷键说明弹窗 */}
       {showShortcutDialog && (
-        <div
-          className='fixed inset-0 z-[10000] flex items-center justify-center bg-ink/50 px-4 py-6 backdrop-blur-sm'
-          onClick={() => setShowShortcutDialog(false)}
-        >
-          <div
-            className='relative w-full max-w-lg overflow-hidden rounded-2xl border border-line bg-surface text-fg shadow-2xl shadow-ink/20 shadow-ink/40'
-            onClick={(e) => e.stopPropagation()}
-            onKeyDown={(e) => e.stopPropagation()}
-            role='dialog'
-            aria-modal='true'
-            aria-labelledby='shortcut-dialog-title'
-          >
-            <div className='absolute inset-x-0 top-0 h-24 bg-surface to-transparent pointer-events-none' />
-            <div className='relative flex items-start justify-between gap-4 border-b border-line px-5 py-4'>
-              <div className='flex items-center gap-3'>
-                <div className='flex h-10 w-10 items-center justify-center rounded-xl border border-line bg-raised text-fg'>
-                  <Keyboard className='h-5 w-5' />
-                </div>
-                <div>
-                  <h2
-                    id='shortcut-dialog-title'
-                    className='text-base font-medium text-fg'
-                  >
-                    播放快捷键
-                  </h2>
-                </div>
-              </div>
-              <button
-                onClick={() => setShowShortcutDialog(false)}
-                className='rounded-lg p-2 text-muted transition-colors duration-200 hover:bg-line hover:text-fg focus:outline-none focus-visible:ring-2 focus-visible:ring-fg cursor-pointer min-h-[44px] tm-press'
-                aria-label='关闭快捷键说明'
-              >
-                <X className='h-5 w-5' />
-              </button>
-            </div>
-
-            <div className='relative max-h-[70vh] overflow-y-auto px-5 py-4'>
-              <div className='grid gap-3'>
-                {PLAY_SHORTCUT_GROUPS.map((group) => (
-                  <section
-                    key={group.title}
-                    className='rounded-xl border border-line bg-raised p-3'
-                  >
-                    <h3 className='mb-3 text-sm font-medium text-fg'>
-                      {group.title}
-                    </h3>
-                    <div className='space-y-2'>
-                      {group.items.map((item) => (
-                        <div
-                          key={`${group.title}-${item.description}`}
-                          className='flex items-center justify-between gap-4 rounded-lg px-2 py-1.5 transition-colors duration-200 hover:bg-line'
-                        >
-                          <div className='flex flex-wrap items-center gap-1.5'>
-                            {item.keys.map((key, index) => (
-                              <span
-                                key={`${item.description}-${key}`}
-                                className='flex items-center gap-1.5'
-                              >
-                                {index > 0 && (
-                                  <span className='text-[13px] text-muted'>
-                                    {/* 含 Alt 才是同时按下；其余是两个独立按键 */}
-                                    {item.keys[0] === 'Alt' ? '+' : '/'}
-                                  </span>
-                                )}
-                                <kbd className='min-w-7 rounded-md border border-line bg-surface px-2 py-1 text-center text-[13px] font-medium text-fg shadow-sm dark:shadow-inner shadow-ink/5'>
-                                  {key}
-                                </kbd>
-                              </span>
-                            ))}
-                          </div>
-                          <span className='text-right text-[13px] text-muted'>
-                            {item.description}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  </section>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
+        <ShortcutDialog onClose={() => setShowShortcutDialog(false)} />
       )}
 
-      {/* 网盘搜索弹窗 */}
-      {showPansouDialog &&
-        (isLargeScreen ? (
-          <Drawer
-            isOpen={showPansouDialog}
-            onClose={() => setShowPansouDialog(false)}
-            title={`搜索网盘资源: ${detail?.title || ''}`}
-            width='w-[400px]'
-          >
-            <div className='p-4'>
-              <PansouSearch
-                keyword={detail?.title || ''}
-                triggerSearch={showPansouDialog}
-              />
-            </div>
-          </Drawer>
-        ) : (
-          <div
-            className='fixed inset-0 z-[10000] flex items-center justify-center bg-ink/50'
-            onClick={() => setShowPansouDialog(false)}
-          >
-            <div
-              className='relative w-full max-w-4xl max-h-[80vh] overflow-y-auto bg-surface rounded-lg shadow-xl m-4'
-              onClick={(e) => e.stopPropagation()}
-            >
-              {/* 弹窗头部 */}
-              <div className='sticky top-0 z-10 flex items-center justify-between p-4 border-b border-line bg-surface'>
-                <h2 className='text-xl font-bold text-fg'>
-                  搜索网盘资源: {detail?.title || ''}
-                </h2>
-                <button
-                  onClick={() => setShowPansouDialog(false)}
-                  className='p-2 hover:bg-line rounded-lg transition-colors min-h-[44px] tm-press'
-                >
-                  <X className='h-5 w-5 text-muted' />
-                </button>
-              </div>
-
-              {/* 弹窗内容 */}
-              <div className='p-4'>
-                <PansouSearch
-                  keyword={detail?.title || ''}
-                  triggerSearch={showPansouDialog}
-                />
-              </div>
-            </div>
-          </div>
-        ))}
-
-      {/* AI问片面板 */}
-      {aiEnabled && detail && (
-        <AIChatPanel
-          isOpen={showAIChat}
-          onClose={() => setShowAIChat(false)}
-          context={{
-            title: detail.title,
-            year: detail.year,
-            douban_id: videoDoubanId !== 0 ? videoDoubanId : undefined,
-            currentEpisode: currentEpisodeIndex + 1,
-          }}
-          welcomeMessage={
-            aiDefaultMessageWithVideo
-              ? aiDefaultMessageWithVideo.replace('{title}', detail.title || '')
-              : `想了解《${detail.title}》的更多信息吗？我可以帮你查询剧情、演员、评价等。`
-          }
-          useDrawer={isLargeScreen}
-          drawerWidth='w-[400px]'
+      {drawers.open.pansou && (
+        <PansouDialog
+          keyword={detail?.title || ''}
+          drawer={isLargeScreen}
+          onClose={() => drawers.close('pansou')}
         />
       )}
 
-      {/* 纠错弹窗 - 仅小雅源显示 */}
-      {detail && detail.source === 'xiaoya' && (
-        <CorrectDialog
-          isOpen={showCorrectDialog}
-          onClose={() => setShowCorrectDialog(false)}
-          videoKey={`${detail.source}_${detail.id}`}
-          currentTitle={detail.title}
-          currentVideo={{
-            tmdbId: detail.tmdb_id,
-            doubanId: detail.douban_id ? String(detail.douban_id) : undefined,
-            poster: detail.poster,
-            releaseDate: detail.year,
-            overview: detail.desc,
-            voteAverage: detail.rating,
-            mediaType: detail.type_name === '电影' ? 'movie' : 'tv',
-          }}
-          source='xiaoya'
-          onCorrect={() => {
-            // 纠错成功后的回调
-            handleCorrectSuccess();
-          }}
-          useDrawer={isLargeScreen}
-          drawerWidth='w-[400px]'
-        />
-      )}
-
-      {/* 详情面板 */}
-      {detail && (
-        <DetailPanel
-          isOpen={showDetailPanel}
-          onClose={() => setShowDetailPanel(false)}
-          title={detail.title}
-          poster={detail.poster}
-          doubanId={
-            // 特殊源使用 tmdb，其他使用 cms（通过 doubanId）
-            // 如果有豆瓣ID且不为0，传入doubanId
-            detail.source === 'openlist' ||
-            isNetdiskSource(detail.source) ||
-            detail.source?.startsWith('emby') ||
-            detail.source === 'xiaoya'
-              ? undefined
-              : detail.douban_id && detail.douban_id !== 0
-              ? detail.douban_id
-              : undefined
-          }
-          tmdbId={
-            // 特殊源使用 tmdb
-            detail.source === 'openlist' ||
-            isNetdiskSource(detail.source) ||
-            detail.source?.startsWith('emby') ||
-            detail.source === 'xiaoya'
-              ? detail.tmdb_id
-              : undefined
-          }
-          type={detail.type_name === '电影' ? 'movie' : 'tv'}
-          year={detail.year}
-          currentEpisode={currentEpisodeIndex + 1}
-          cmsData={
-            // 非特殊源使用 cms 数据
-            // 但如果有豆瓣ID且不为0，则不传入cmsData，优先使用豆瓣数据
-            detail.source !== 'openlist' &&
-            !isNetdiskSource(detail.source) &&
-            !detail.source?.startsWith('emby') &&
-            detail.source !== 'xiaoya' &&
-            !(detail.douban_id && detail.douban_id !== 0)
-              ? {
-                  desc: detail.desc,
-                  episodes: detail.episodes,
-                  episodes_titles: detail.episodes_titles,
-                }
-              : undefined
-          }
-          sourceId={detail.id}
-          source={detail.source}
-          useDrawer={isLargeScreen}
-          drawerWidth='w-[400px]'
-        />
-      )}
+      <PlaybackDrawers
+        open={drawers.open}
+        onClose={drawers.close}
+        drawerMode={isLargeScreen}
+        detail={detail}
+        videoDoubanId={videoDoubanId}
+        currentEpisode={currentEpisodeIndex + 1}
+        aiEnabled={aiEnabled}
+        aiWelcomeTemplate={aiDefaultMessageWithVideo}
+        onCorrected={handleCorrectSuccess}
+      />
     </PageLayout>
   );
 }
@@ -13543,29 +11543,6 @@ const applyCorrectionsToSources = (sources: SearchResult[]): SearchResult[] => {
     }
     return source;
   });
-};
-
-// FavoriteIcon 组件
-const FavoriteIcon = ({ filled }: { filled: boolean }) => {
-  if (filled) {
-    return (
-      <svg
-        className='h-7 w-7'
-        viewBox='0 0 24 24'
-        xmlns='http://www.w3.org/2000/svg'
-      >
-        <path
-          d='M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z'
-          fill='var(--tm-danger)' /* Tailwind red-500 */
-          stroke='var(--tm-danger)'
-          strokeWidth='2'
-          strokeLinecap='round'
-          strokeLinejoin='round'
-        />
-      </svg>
-    );
-  }
-  return <Heart className='h-7 w-7 stroke-[1] text-muted' />;
 };
 
 export default function PlayPage() {

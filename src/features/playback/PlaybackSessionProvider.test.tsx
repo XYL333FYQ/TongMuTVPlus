@@ -26,6 +26,7 @@ import {
 import { useEffect, useRef } from 'react';
 
 import { usePlaybackSession } from '@/hooks/usePlaybackSession';
+
 import PlaybackSessionProvider from './PlaybackSessionProvider';
 
 import type { PlayState } from '@/types/watch-room';

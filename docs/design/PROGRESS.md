@@ -1,5 +1,14 @@
 # 界面改造进度
 
+## 2026-11-20 代码整理第 4 步之一：自己看页面拆成组件（界面和行为不变）
+
+- `LegacyPlaybackSurface.tsx` 里页面上的各块原样剪到 `features/playback/page/`（用脚本剪，JSX 不动）：整页加载 `PlaybackLoading`、整页失败 `PlaybackFailure` + “也许你想看” `FallbackRecommendations`、弹幕源选择 `DanmakuSourceDialog`、标题 `PlaybackTitle`、画面上的遮罩和提示 `VideoOverlays`、工具 `PlaybackTools`、选集面板外框 `EpisodePanel`、电脑右侧图标栏 `PlaybackRail`、手机 / 平板操作坞 `PlaybackDock`、影片信息 `PlaybackDetail`、短评 `PlaybackComments`、快捷键说明 `ShortcutDialog`、网盘搜索 `PansouDialog`、AI 问片 / 纠错 / 详情 `PlaybackDrawers`（四个面板的开关收进 `usePlaybackDrawers`）。加载步骤模型 → `page/loading-steps.tsx`；纯函数 → `features/playback/lib/`（`seriesStatus`、`isHlsPlaybackUrl`、外部播放器列表）。旧文件 13,583 → 11,560 行。
+- 整理：组件参数按用途命名（不再把 `setXxx` / ref / router 传进去）；恒为假的“房员”分支去掉；六个外部播放器按钮写成一张表（DOM 不变）；删掉一直 `hidden`、从不显示的“显示 / 隐藏”按钮——它原来占着第二行的第一个位置，`space-y-2` 因此给播放器那一格加了 8px 上边距，现在由那一格自己 `mt-2`（电脑上照旧被 `playback.css` 归零）。
+- 层级：搬出来的写死 z-index 换成令牌，新增 `--tm-z-player-badge`（50，链接刷新提示）、`--tm-z-player-cover`（500，加载 / 出错遮罩），弹幕加载提示为 `calc(cover + 1)`（原 600，上下关系不变）；组件内部的局部层级改成 1–3。待清理名单 112 → 105 条。
+- 验证：typecheck、lint、Jest、test:rooms、format:check、check:structure 通过，check-design 对新文件 0 违规。计算样式对比（播放页、小窗、工具面板、选集面板、快捷键说明 × 6 种窗口 × 深浅，改前拍两遍排除噪声）：剩下的差异都有解释——删掉的隐藏按钮、z-index 10 → 1 等令牌替换、Artplayer 自己的提示层出现时机不同（改前改后两个方向都有）、电脑宽度 4 张图里页面容器的 margin 读数不同但位置大小完全一致。
+- 没验证：除了快照里点开的工具 / 选集 / 快捷键三个面板，其他交互（换集、换源、弹幕、收藏、抽屉）没有手动点；这一步只搬了界面，逻辑没动。测试片源在无头浏览器里显示“播放失败”，改前改后一样。
+- 还没做：第 2–4 步（换 `WatchPlayer` 内核、接全站播放会话、删旧文件）。
+
 ## 2026-11-20 代码整理第 4 步（开始）：播放器内核归位
 
 - 房间在用的播放器内核（`WatchPlayer` + 通用插件）从 `features/room/player/core` 搬到 `features/player/core`，对外只经 `features/player/index.ts`；只属于房间的聊天弹幕插件留在 `features/room/player/chat-danmaku.ts`。房间改从 `@/features/player` 引用。
