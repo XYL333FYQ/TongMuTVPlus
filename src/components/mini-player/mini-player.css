@@ -34,60 +34,6 @@
   z-index: 0;
 }
 
-/* 自己看：画面节点在播放页里，小窗时把它和按钮层摆到同一个位置。
-   层次同上：整页内容（.tm-playback-page）一层，按钮层在它上面一层 */
-.tm-playback-host:is([data-presentation='mini'], [data-presentation='folded']) {
-  z-index: var(--tm-z-mini);
-}
-.tm-playback-host:is([data-presentation='mini'], [data-presentation='folded'])
-  > .tm-playback-page {
-  position: relative;
-  z-index: 0;
-}
-.tm-playback-host[data-presentation='mini'] [data-tm-player-mount],
-.tm-playback-host[data-presentation='mini'] .tm-playback-chrome {
-  position: fixed;
-  inset: auto var(--tm-mini-gap) var(--tm-mini-bottom) auto;
-  width: var(--tm-mini-w);
-  height: var(--tm-mini-h);
-  border-radius: var(--tm-radius-lg);
-  transform: translate3d(var(--tm-mini-x, 0px), var(--tm-mini-y, 0px), 0);
-  transition: transform 220ms var(--tm-ease-out);
-  animation: tm-mini-in var(--tm-d-panel) var(--tm-ease-out);
-}
-.tm-playback-host[data-presentation='mini'] [data-tm-player-mount] {
-  overflow: hidden;
-  visibility: visible;
-  background: var(--tm-video-bg);
-  box-shadow: var(--tm-shadow-lg), inset 0 0 0 1px var(--tm-line);
-}
-/* 外层宿主是 pointer-events: none，按钮层要打开 */
-.tm-playback-host[data-presentation='mini'] .tm-playback-chrome {
-  z-index: 1;
-  visibility: visible;
-  pointer-events: auto;
-}
-/* 收起：画面藏起来继续出声，只留一条胶囊 */
-.tm-playback-host[data-presentation='folded'] [data-tm-player-mount] {
-  position: fixed;
-  right: 0;
-  bottom: 0;
-  width: 1px;
-  height: 1px;
-  opacity: 0;
-  pointer-events: none;
-}
-.tm-playback-host[data-presentation='folded'] .tm-playback-chrome {
-  position: fixed;
-  z-index: 1;
-  right: var(--tm-mini-gap);
-  bottom: var(--tm-mini-bottom);
-  visibility: visible;
-  pointer-events: auto;
-  animation: tm-mini-in var(--tm-d-panel) var(--tm-ease-out);
-}
-.tm-playback-host[data-dragging='true']
-  :is([data-tm-player-mount], .tm-playback-chrome),
 .tm-mini-drag[data-dragging='true'] .tm-mini {
   transition: none;
 }
@@ -170,8 +116,7 @@
   opacity: 0.45;
   cursor: not-allowed;
 }
-.tm-mini-btn:focus-visible,
-.tm-mini-title:focus-visible {
+.tm-mini-btn:focus-visible {
   outline: 2px solid var(--tm-on-art);
   outline-offset: 2px;
 }
@@ -358,9 +303,12 @@
 .tm-mini-controls[data-variant='bar'] .tm-mini-btn:hover {
   background: var(--tm-surface-raised);
 }
-.tm-mini-controls[data-variant='bar'] .tm-mini-btn:focus-visible,
-.tm-mini-title:focus-visible {
+.tm-mini-controls[data-variant='bar'] .tm-mini-btn:focus-visible {
   outline-color: var(--tm-text);
+}
+.tm-mini-title:focus-visible {
+  outline: 2px solid var(--tm-text);
+  outline-offset: 2px;
 }
 .tm-mini-title {
   display: flex;
@@ -426,9 +374,7 @@
 }
 @media (prefers-reduced-motion: reduce) {
   .tm-mini,
-  .tm-mini-btn,
-  .tm-playback-host:is([data-presentation='mini'], [data-presentation='folded'])
-    :is([data-tm-player-mount], .tm-playback-chrome) {
+  .tm-mini-btn {
     animation: none;
     transition: none;
   }

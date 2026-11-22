@@ -328,7 +328,7 @@ const MobileActionSheet: React.FC<MobileActionSheetProps> = ({
           first?.focus();
         }
       }}
-      className='tm-action-sheet fixed inset-0 z-[9999] flex items-end justify-center'
+      className='tm-action-sheet fixed inset-0 z-[var(--tm-z-toast)] flex items-end justify-center'
       onTouchMove={(e) => {
         // 阻止最外层容器的触摸移动，防止背景滚动
         e.preventDefault();
@@ -439,7 +439,7 @@ const MobileActionSheet: React.FC<MobileActionSheetProps> = ({
                     {title}
                   </h3>
                   {isTitleOverflowing && (
-                    <div className='absolute bottom-full left-1/2 z-10 mb-2 w-max max-w-[min(20rem,calc(100vw-2rem))] -translate-x-1/2 rounded-lg bg-surface px-3 py-2 text-center text-sm text-fg shadow-xl opacity-0 invisible transition-[transform,opacity] duration-200 ease-out whitespace-normal break-words pointer-events-none group-hover/title:opacity-100 group-hover/title:visible'>
+                    <div className='absolute bottom-full left-1/2 z-[3] mb-2 w-max max-w-[min(20rem,calc(100vw-2rem))] -translate-x-1/2 rounded-lg bg-surface px-3 py-2 text-center text-sm text-fg shadow-xl opacity-0 invisible transition-[transform,opacity] duration-200 ease-out whitespace-normal break-words pointer-events-none group-hover/title:opacity-100 group-hover/title:visible'>
                       {title}
                       <div className='absolute top-full left-1/2 h-0 w-0 -translate-x-1/2 border-l-4 border-r-4 border-t-4 border-transparent border-t-line'></div>
                     </div>

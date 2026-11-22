@@ -152,3 +152,14 @@ html[data-tm-reduced-motion='true'] .music-buffer-track-global::before {
     font-size: 20px;
   }
 }
+
+/* 手机上：工具栏一行 44px 高，内容区上方只留 16px */
+:where(html:is([data-tm-device='phone'], [data-tm-device='phone-landscape']))
+  .tm-music-toolbar-row {
+  min-height: 44px;
+  padding-block: 0;
+}
+:where(html:is([data-tm-device='phone'], [data-tm-device='phone-landscape']))
+  .tm-music-content {
+  padding-top: 16px;
+}

@@ -1,17 +1,12 @@
 import {
   Cloud,
-  ExternalLink,
   Heart,
-  Info,
   Link,
-  ListPlus,
   Play,
   PlayCircleIcon,
   Radio,
-  Sparkles,
   Star,
   Trash2,
-  Youtube,
 } from 'lucide-react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
@@ -69,6 +64,9 @@ import ImageViewer from '@/components/feedback/ImageViewer';
 import MobileActionSheet from '@/components/feedback/MobileActionSheet';
 import { ImagePlaceholder } from '@/components/ImagePlaceholder';
 import TrailerPickerDialog from '@/components/TrailerPickerDialog';
+
+import { cardConfig } from './video-card/card-config';
+import { buildMobileActions } from './video-card/mobile-actions';
 
 export interface VideoCardProps {
   id?: string;
@@ -614,71 +612,10 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
       return diffDays;
     }, [isUpcoming, releaseDate]);
 
-    const config = useMemo(() => {
-      const configs = {
-        playrecord: {
-          showSourceName: true,
-          showProgress: true,
-          showPlayButton: true,
-          showHeart: true,
-          showCheckCircle: true,
-          showDoubanLink: false,
-          showRating: false,
-          showYear: false,
-        },
-        favorite: {
-          showSourceName: true,
-          showProgress: false,
-          showPlayButton: true,
-          showHeart: true,
-          showCheckCircle: false,
-          showDoubanLink: false,
-          showRating: false,
-          showYear: false,
-        },
-        search: {
-          showSourceName: true,
-          showProgress: false,
-          showPlayButton: true,
-          showHeart: true, // 移动端菜单中需要显示收藏选项
-          showCheckCircle: false,
-          showDoubanLink: true, // 移动端菜单中显示豆瓣链接
-          showRating: !!rate,
-          showYear: true,
-        },
-        douban: {
-          showSourceName: false,
-          showProgress: false,
-          showPlayButton: !isUpcoming, // 即将上映不显示播放按钮
-          showHeart: false,
-          showCheckCircle: false,
-          showDoubanLink: false,
-          showRating: !!rate,
-          showYear: false,
-        },
-        tmdb: {
-          showSourceName: false,
-          showProgress: false,
-          showPlayButton: !isUpcoming, // 即将上映不显示播放按钮
-          showHeart: false,
-          showCheckCircle: false,
-          showDoubanLink: false,
-          showRating: !!rate,
-          showYear: false,
-        },
-        'source-search': {
-          showSourceName: false,
-          showProgress: false,
-          showPlayButton: true,
-          showHeart: true,
-          showCheckCircle: false,
-          showDoubanLink: true,
-          showRating: !!rate,
-          showYear: true,
-        },
-      };
-      return configs[from] || configs.search;
-    }, [from, rate, isUpcoming]);
+    const config = useMemo(
+      () => cardConfig(from, rate, isUpcoming),
+      [from, rate, isUpcoming]
+    );
 
     const upcomingReleaseText = useMemo(() => {
       if (!isUpcoming || daysUntilRelease === null) return undefined;
@@ -717,219 +654,59 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
     }, [actualSearchType, actualTitle, actualYear, tmdb_id]);
 
     // 移动端操作菜单配置
-    const mobileActions = useMemo(() => {
-      const actions = [];
-
-      // 播放操作
-      if (config.showPlayButton) {
-        actions.push({
-          id: 'play',
-          label: origin === 'live' ? '观看直播' : '播放',
-          icon: <PlayCircleIcon size={20} />,
-          onClick: handleClick,
-          color: 'primary' as const,
-        });
-
-        // 新标签页播放
-        actions.push({
-          id: 'play-new-tab',
-          label:
-            externalMode === 'copy'
-              ? '复制播放链接'
-              : externalMode === 'external'
-              ? origin === 'live'
-                ? '在外部观看'
-                : '在外部播放'
-              : origin === 'live'
-              ? '新标签页观看'
-              : '新标签页播放',
-          icon: <ExternalLink size={20} />,
-          onClick: handlePlayInNewTab,
-          color: 'default' as const,
-        });
-      }
-
-      // 聚合源信息 - 直接在菜单中展示，不需要单独的操作项
-
-      // 收藏/取消收藏操作
-      if (
-        config.showHeart &&
-        from !== 'douban' &&
-        from !== 'tmdb' &&
-        actualSource &&
-        actualId
-      ) {
-        const currentFavorited =
-          from === 'search' ? searchFavorited : favorited;
-
-        if (from === 'search') {
-          // 搜索结果：根据加载状态显示不同的选项
-          if (searchFavorited !== null) {
-            // 已加载完成，显示实际的收藏状态
-            actions.push({
-              id: 'favorite',
-              label: currentFavorited ? '取消收藏' : '添加收藏',
-              icon: currentFavorited ? (
-                <Heart
-                  size={20}
-                  className='tm-video-card-menu-heart tm-video-card-menu-heart-on'
-                />
-              ) : (
-                <Heart size={20} className='tm-video-card-menu-heart' />
-              ),
-              onClick: () => handleToggleFavorite(),
-              color: currentFavorited
-                ? ('danger' as const)
-                : ('default' as const),
-            });
-          } else {
-            // 正在加载中，显示占位项
-            actions.push({
-              id: 'favorite-loading',
-              label: '收藏加载中...',
-              icon: <Heart size={20} />,
-              onClick: () => undefined, // 加载中时不响应点击
-              disabled: true,
-            });
-          }
-        } else {
-          // 非搜索结果：直接显示收藏选项
-          actions.push({
-            id: 'favorite',
-            label: currentFavorited ? '取消收藏' : '添加收藏',
-            icon: currentFavorited ? (
-              <Heart
-                size={20}
-                className='tm-video-card-menu-heart tm-video-card-menu-heart-on'
-              />
-            ) : (
-              <Heart size={20} className='tm-video-card-menu-heart' />
-            ),
-            onClick: () => handleToggleFavorite(),
-            color: currentFavorited
-              ? ('danger' as const)
-              : ('default' as const),
-          });
-        }
-      }
-
-      // 删除播放记录操作
-      if (
-        config.showCheckCircle &&
-        from === 'playrecord' &&
-        actualSource &&
-        actualId
-      ) {
-        actions.push({
-          id: 'delete',
-          label: '删除记录',
-          icon: <Trash2 size={20} />,
-          onClick: () => handleDeleteRecord(),
-          color: 'danger' as const,
-        });
-      }
-
-      // 豆瓣链接操作
-      if (config.showDoubanLink && actualDoubanId && actualDoubanId !== 0) {
-        actions.push({
-          id: 'douban',
-          label: isBangumi ? 'Bangumi 详情' : '豆瓣详情',
-          icon: <Link size={20} />,
-          onClick: () => {
-            const url = isBangumi
-              ? getBangumiSubjectUrl(actualDoubanId.toString())
-              : `https://movie.douban.com/subject/${actualDoubanId.toString()}`;
-            openExternal(url);
-          },
-          color: 'default' as const,
-        });
-      }
-
-      // 预告片操作：仅即将上映卡片显示
-      if (origin !== 'live' && isUpcoming && actualTitle) {
-        actions.push({
-          id: 'trailer',
-          label: '预告片',
-          icon: <Youtube size={20} />,
-          onClick: openTrailerPicker,
-          color: 'default' as const,
-        });
-      }
-
-      // 详情页面按钮（直播源不显示详情）
-      if (origin !== 'live') {
-        actions.push({
-          id: 'detail',
-          label: '详情',
-          icon: <Info size={20} />,
-          onClick: () => {
-            setShowMobileActions(false);
-            // 延迟打开 DetailPanel，确保 MobileActionSheet 完全清理完成
-            setTimeout(() => {
-              setShowDetailPanel(true);
-            }, 250);
-          },
-          color: 'default' as const,
-        });
-      }
-
-      // AI问片功能
-      if (aiEnabled && actualTitle) {
-        actions.push({
-          id: 'ai-chat',
-          label: 'AI问片',
-          icon: <Sparkles size={20} />,
-          onClick: () => {
-            setShowMobileActions(false);
-            // 延迟打开 AIChatPanel，确保 MobileActionSheet 完全清理完成
-            setTimeout(() => {
-              setShowAIChat(true);
-            }, 250);
-          },
-          color: 'default' as const,
-        });
-      }
-
-      // 添加追番订阅（仅管理员 + 判定为动漫）
-      if (isAdminUser && resolvedIsAnime && origin !== 'live' && actualTitle) {
-        actions.push({
-          id: 'anime-subscribe',
-          label: '添加追番订阅',
-          icon: <ListPlus size={20} />,
-          onClick: () => {
-            setShowMobileActions(false);
-            setTimeout(() => {
-              setShowAnimeSubscribe(true);
-            }, 250);
-          },
-          color: 'primary' as const,
-        });
-      }
-
-      return actions;
-    }, [
-      config,
-      from,
-      actualSource,
-      actualId,
-      favorited,
-      searchFavorited,
-      actualDoubanId,
-      isBangumi,
-      handleClick,
-      handleToggleFavorite,
-      handleDeleteRecord,
-      handlePlayInNewTab,
-      externalMode,
-      openExternal,
-      aiEnabled,
-      actualTitle,
-      isUpcoming,
-      origin,
-      openTrailerPicker,
-      isAdminUser,
-      resolvedIsAnime,
-    ]);
+    const mobileActions = useMemo(
+      () =>
+        buildMobileActions({
+          config,
+          from,
+          origin,
+          externalMode,
+          actualSource,
+          actualId,
+          favorited,
+          searchFavorited,
+          actualDoubanId,
+          isBangumi,
+          isUpcoming,
+          actualTitle,
+          aiEnabled,
+          isAdminUser,
+          resolvedIsAnime,
+          handleClick,
+          handlePlayInNewTab,
+          handleToggleFavorite,
+          handleDeleteRecord,
+          openExternal,
+          openTrailerPicker,
+          setShowMobileActions,
+          setShowDetailPanel,
+          setShowAIChat,
+          setShowAnimeSubscribe,
+        }),
+      [
+        config,
+        from,
+        actualSource,
+        actualId,
+        favorited,
+        searchFavorited,
+        actualDoubanId,
+        isBangumi,
+        handleClick,
+        handleToggleFavorite,
+        handleDeleteRecord,
+        handlePlayInNewTab,
+        externalMode,
+        openExternal,
+        aiEnabled,
+        actualTitle,
+        isUpcoming,
+        origin,
+        openTrailerPicker,
+        isAdminUser,
+        resolvedIsAnime,
+      ]
+    );
 
     return (
       <>

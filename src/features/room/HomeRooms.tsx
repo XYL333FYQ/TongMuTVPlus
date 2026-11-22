@@ -122,7 +122,12 @@ export default function HomeRooms({ guest = false }: { guest?: boolean }) {
   const cover = roomCoverSource(room);
   return (
     <section className='tm-home-rooms' aria-label='我的房间'>
-      <SectionHeader title='我的房间' linkLabel='管理房间' href='/watch-room' />
+      <SectionHeader
+        variant='home'
+        title='我的房间'
+        linkLabel='管理房间'
+        href='/watch-room'
+      />
       {room ? (
         <Link
           href={`/watch-room?room=${encodeURIComponent(room.id)}`}

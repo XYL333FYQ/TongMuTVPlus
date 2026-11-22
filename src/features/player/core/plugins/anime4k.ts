@@ -3,11 +3,12 @@
  * 默认关闭；模式和倍数记在本机。
  */
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
+import {
+  type Anime4KModeConstructor,
+  createAnime4KRenderer,
+} from '@/lib/anime4k';
 
-import { createAnime4KRenderer } from '@/lib/anime4k';
-
-import type { Art } from '../WatchPlayer';
+import type { Art } from '../art-types';
 
 export const ANIME4K_MODES = [
   { value: 'ModeA', label: 'A（快速）' },
@@ -34,13 +35,13 @@ export function checkWebGPU() {
   webgpuCheck = (async () => {
     if (typeof navigator === 'undefined' || !('gpu' in navigator)) return false;
     try {
-      const gpu = (navigator as any).gpu;
+      const gpu = navigator.gpu;
       const requestAdapter = gpu.requestAdapter.bind(gpu);
-      gpu.requestAdapter = async (options?: any) => {
+      gpu.requestAdapter = async (options?: GPURequestAdapterOptions) => {
         const adapter = await requestAdapter(options);
         if (!adapter) return adapter;
         const requestDevice = adapter.requestDevice.bind(adapter);
-        adapter.requestDevice = (descriptor?: any) =>
+        adapter.requestDevice = (descriptor?: GPUDeviceDescriptor) =>
           requestDevice({
             ...descriptor,
             requiredLimits: {
@@ -77,7 +78,7 @@ export class Anime4KController {
     mode: read('anime4k_mode', 'ModeA'),
     scale: parseFloat(read('anime4k_scale', '2')) || 2,
   };
-  private art: Art = null;
+  private art: Art | null = null;
   private running: { stop(): void; canvas: HTMLCanvasElement } | null = null;
   private listeners = new Set<(state: Anime4KState) => void>();
 
@@ -205,9 +206,16 @@ export class Anime4KController {
       video.style.pointerEvents = 'none';
       video.style.position = 'absolute';
       video.style.zIndex = '-1';
-      art.template.$video.parentElement.insertBefore(canvas, video);
-      const modes = (await import('anime4k-webgpu')) as any;
+      const frame = video.parentElement;
+      if (!frame) throw new Error('画面还没有放进播放器');
+      frame.insertBefore(canvas, video);
+      // 按名字取模式类（ModeA、ModeB……）
+      const modes = (await import('anime4k-webgpu')) as unknown as Record<
+        string,
+        Anime4KModeConstructor | undefined
+      >;
       const pipelineClass = modes[this.state.mode] || modes.ModeA;
+      if (!pipelineClass) throw new Error('超分模式加载失败');
       const controller = await createAnime4KRenderer({
         video,
         canvas,

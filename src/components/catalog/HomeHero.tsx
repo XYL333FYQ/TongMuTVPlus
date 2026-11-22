@@ -398,14 +398,14 @@ export default function HomeHero({
                 ) : null,
                 <div className='tm-home-hero-actions' key='actions'>
                   <button
-                    className='tm-btn tm-btn-lg tm-btn-primary tm-btn-art'
+                    className='tm-btn tm-btn-lg tm-btn-primary tm-btn-art tm-home-hero-action'
                     onClick={onPlay}
                   >
                     <Play size={16} fill='currentColor' />
                     播放
                   </button>
                   <button
-                    className='tm-btn tm-btn-lg tm-btn-art-glass'
+                    className='tm-btn tm-btn-lg tm-btn-art-glass tm-home-hero-action tm-home-hero-action-glass'
                     onClick={onWatchInRoom}
                   >
                     <Users size={18} />
@@ -413,7 +413,7 @@ export default function HomeHero({
                   </button>
                   {onDetail && (
                     <button
-                      className='tm-btn tm-btn-lg tm-btn-ghost tm-home-hero-detail'
+                      className='tm-btn tm-btn-lg tm-btn-ghost tm-home-hero-action tm-home-hero-detail'
                       onClick={onDetail}
                     >
                       详情

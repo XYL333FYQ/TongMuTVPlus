@@ -83,7 +83,7 @@ export default function PlaybackTools({
   const isHls = isHlsPlaybackUrl(videoUrl);
   return (
     <div
-      className='mt-3 px-2 wide:flex-shrink-0 tm-solo-tools'
+      className='mt-3 px-2 wide:flex-shrink-0 tm-solo-tools tm-solo-sheet'
       data-tm-sheet={open ? 'open' : undefined}
       role={open ? 'dialog' : undefined}
       aria-label={open ? '工具' : undefined}

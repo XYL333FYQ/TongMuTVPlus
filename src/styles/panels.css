@@ -4,16 +4,13 @@ html .tm-profile-backdrop {
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
 }
-html .tm-profile-panel,
-html .tm-http-warning-panel {
+html .tm-profile-panel {
   max-height: calc(100dvh - 32px);
   overflow-y: auto;
   overscroll-behavior: contain;
   color: var(--tm-text);
   font-family: var(--tm-font-sans);
   letter-spacing: 0;
-}
-html .tm-profile-panel {
   animation: tm-legacy-panel-enter var(--tm-d-panel) var(--tm-ease-out)
     backwards;
 }
@@ -30,6 +27,12 @@ html .tm-http-warning-backdrop {
   transition: opacity var(--tm-d-panel) var(--tm-ease-out);
 }
 html .tm-http-warning-panel {
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  color: var(--tm-text);
+  font-family: var(--tm-font-sans);
+  letter-spacing: 0;
   transition: opacity var(--tm-d-panel) var(--tm-ease-out),
     translate var(--tm-d-panel) var(--tm-ease-out);
 }

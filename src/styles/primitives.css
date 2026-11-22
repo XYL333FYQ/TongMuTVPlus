@@ -366,8 +366,10 @@ html[data-tm-no-blur='true'] .tm-btn-art-glass {
   color: var(--tm-muted);
 }
 
-/* 开关：<input class="peer sr-only"> 后跟 track + thumb，外层 relative */
+/* 开关：<input class="peer sr-only"> 后跟 track + thumb，外层 relative。
+ * 外层 label 常被 flex 压缩，轨道和圆钮都不允许变形（flex-shrink: 0） */
 .tm-switch-track {
+  flex-shrink: 0;
   width: 44px;
   height: 26px;
   border-radius: var(--tm-radius-pill);
@@ -376,6 +378,7 @@ html[data-tm-no-blur='true'] .tm-btn-art-glass {
   transition: background-color var(--tm-d-hover) var(--tm-ease-out);
 }
 .tm-switch-thumb {
+  flex-shrink: 0;
   position: absolute;
   top: 3px;
   left: 3px;
@@ -407,11 +410,6 @@ input:disabled ~ .tm-switch-thumb {
 /* 悬停：轨道边框加深，让“可点”可被察觉（关闭态） */
 label:hover > input:not(:checked):not(:disabled) ~ .tm-switch-track {
   box-shadow: inset 0 0 0 1px var(--tm-text);
-}
-/* 外层 label 常被 flex 压缩，轨道和圆钮不允许变形 */
-.tm-switch-track,
-.tm-switch-thumb {
-  flex-shrink: 0;
 }
 
 /* 按钮型开关：<button role="switch" aria-checked class="tm-switch-btn"> + thumb。
@@ -562,13 +560,15 @@ html[data-tm-reduced-motion] .tm-switch-thumb {
 }
 
 /* —— 主题切换按钮与「日冕形态 ⇄ 月神形态」圆形结界过渡 —— */
-.tm-theme-toggle,
 .tm-theme-toggle-placeholder {
   width: 44px;
   height: 44px;
   flex-shrink: 0;
 }
 .tm-theme-toggle {
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
   position: relative;
   isolation: isolate;
   display: inline-grid;
@@ -655,12 +655,12 @@ html[data-tm-reduced-motion] .tm-switch-thumb {
  * 只用最简单的选择器：以前写成 *:not(.tm-theme-morph):not(.tm-theme-morph *)，
  * 每个元素都要往上翻祖先，页面越大开头结尾那两次全站重算越慢。日月图标在下面单独放行。
  */
-html[data-tm-theme-transition] *,
 html[data-tm-theme-transition] *::before,
 html[data-tm-theme-transition] *::after {
   transition: none !important;
 }
 html[data-tm-theme-transition] * {
+  transition: none !important;
   -webkit-backdrop-filter: none !important;
   backdrop-filter: none !important;
   animation-play-state: paused !important;
@@ -859,18 +859,30 @@ html[data-tm-reduced-motion='true'] .tm-theme-emblem-core {
     transition-duration: var(--tm-d-press);
   }
 }
-html[data-tm-theme-transition='circle']::view-transition-old(root),
-html[data-tm-theme-transition='circle']::view-transition-new(root) {
+/*
+ * 新旧两层画面：默认新画面在上（铺开式），收拢式反过来（下面两条）。
+ * 底层画面的呼吸：被圆揭开 / 被圆吞回的那一层不裁切，让它朝点击点轻微收放，
+ * 和裁切圆同时长同缓动，新旧主题像一个东西在变形，而不是两张图叠换。
+ * 铺开式（新画面在上层被圆撑开）：旧画面（底层）从点击点略微放大离场；
+ * 收拢式（旧画面在上层被圆收回）：新画面（底层）从略大回落。
+ * 缩放只能 ≥ 1：小于 1 会让画面四边内缩，露出下面的页面底色，形成"边界"。
+ * 只动 transform，走合成层；动画由 theme-transition.ts 给（绕点击点 = 原点在左上角、先平移再缩放）。
+ */
+html[data-tm-theme-transition='circle']::view-transition-old(root) {
+  z-index: 0;
   animation: none;
   mix-blend-mode: normal;
   contain: paint;
   will-change: clip-path, transform;
-}
-html[data-tm-theme-transition='circle']::view-transition-old(root) {
-  z-index: 0;
+  transform-origin: 0 0;
 }
 html[data-tm-theme-transition='circle']::view-transition-new(root) {
   z-index: 1;
+  animation: none;
+  mix-blend-mode: normal;
+  contain: paint;
+  will-change: clip-path, transform;
+  transform-origin: 0 0;
 }
 html[data-tm-theme-transition='circle'][data-tm-theme-motion='converge']::view-transition-old(
     root
@@ -881,18 +893,6 @@ html[data-tm-theme-transition='circle'][data-tm-theme-motion='converge']::view-t
     root
   ) {
   z-index: 0;
-}
-/*
- * 底层画面的呼吸：被圆揭开 / 被圆吞回的那一层不裁切，让它朝点击点轻微收放，
- * 和裁切圆同时长同缓动，新旧主题像一个东西在变形，而不是两张图叠换。
- * 铺开式（新画面在上层被圆撑开）：旧画面（底层）从点击点略微放大离场；
- * 收拢式（旧画面在上层被圆收回）：新画面（底层）从略大回落。
- * 缩放只能 ≥ 1：小于 1 会让画面四边内缩，露出下面的页面底色，形成"边界"。
- * 只动 transform，走合成层；动画由 theme-transition.ts 给（绕点击点 = 原点在左上角、先平移再缩放）。
- */
-html[data-tm-theme-transition='circle']::view-transition-old(root),
-html[data-tm-theme-transition='circle']::view-transition-new(root) {
-  transform-origin: 0 0;
 }
 
 /* 减少动态：去掉位移与缩放，只留淡入淡出 */
@@ -911,5 +911,31 @@ html[data-tm-reduced-motion='true'] .tm-skeleton::after {
   .tm-skeleton::after {
     animation: none !important;
     background: none;
+  }
+}
+
+/* 主题切换按钮放在顶栏、手机账户区时的尺寸（外壳只摆位置，大小在这里） */
+.tm-mobile-account > .tm-theme-toggle,
+.tm-mobile-account > .tm-theme-toggle-placeholder {
+  width: 48px;
+  height: 48px;
+}
+.tm-mobile-account .tm-theme-emblem {
+  width: 36px;
+  height: 36px;
+}
+.tm-mobile-account .tm-theme-morph {
+  width: 24px;
+  height: 24px;
+}
+@media (min-width: 1700px) {
+  .tm-top-header .tm-theme-toggle,
+  .tm-top-header .tm-theme-toggle-placeholder {
+    width: calc(44 * var(--tm-wide-unit));
+    height: calc(44 * var(--tm-wide-unit));
+  }
+  .tm-top-header .tm-theme-toggle > svg {
+    width: calc(18 * var(--tm-wide-unit));
+    height: calc(18 * var(--tm-wide-unit));
   }
 }

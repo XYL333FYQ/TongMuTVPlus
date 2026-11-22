@@ -6,11 +6,19 @@
  * - 独立看和一起看各自 new 一个，互不影响。
  */
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import { enableArtKeyboardAccess } from '@/lib/art-keyboard';
 import { lockLandscapeInFullscreen } from '@/lib/player-orientation';
 
+import type {
+  Art,
+  ArtControl,
+  ArtplayerConstructor,
+  ArtPlugin,
+  ArtSetting,
+  HlsConstructor,
+  HlsInstance,
+  VideoWithHls,
+} from './art-types';
 import { isSafariLike, playerEnvironment } from './env';
 import {
   attachHls,
@@ -28,7 +36,13 @@ import {
   needsCrossOrigin,
 } from './source-policy';
 
-export type Art = any;
+export type { Art } from './art-types';
+
+/** 老 iOS 内联播放和不带来源页请求片源要的两个属性，Artplayer 的类型里没有，原样写到 <video> 上 */
+const LEGACY_VIDEO_ATTRS: Record<string, string> = {
+  'webkit-playsinline': 'true',
+  referrerpolicy: 'no-referrer',
+};
 
 export const PLAYBACK_RATES = [0.5, 0.75, 1, 1.25, 1.5, 2, 3, 4];
 
@@ -62,7 +76,7 @@ export interface PluginContext {
 export type PlayerPlugin = (ctx: PluginContext) => void | (() => void);
 
 export interface WatchPlayerOptions {
-  container: HTMLElement;
+  container: HTMLDivElement;
   adBlock?: boolean;
   bufferStrategy?: BufferStrategy;
   /** 至少提前缓冲秒数（一起看 120） */
@@ -77,10 +91,10 @@ export interface WatchPlayerOptions {
    */
   fastForward?: boolean;
   /** 截图、下一集等底栏按钮 */
-  controls?: any[];
-  settings?: any[];
+  controls?: ArtControl[];
+  settings?: ArtSetting[];
   /** Artplayer 自带插件（弹幕、缩略图），每次创建实例时生成 */
-  artPlugins?: () => any[];
+  artPlugins?: () => ArtPlugin[];
   /** 控制条主题色（默认跟着 --tm-player-accent） */
   theme?: string;
   /** 替换 Artplayer 自带的图标（如加载动画） */
@@ -100,13 +114,13 @@ export interface WatchPlayerOptions {
   /** 每次创建出新的 Artplayer 实例 */
   onInstance?: (art: Art) => void;
   /** hls.js 实例就绪（链接刷新用） */
-  onManifest?: (hls: any, video: HTMLVideoElement) => void;
-  onForbidden?: (hls: any, video: HTMLVideoElement) => boolean;
+  onManifest?: (hls: HlsInstance, video: HTMLVideoElement) => void;
+  onForbidden?: (hls: HlsInstance, video: HTMLVideoElement) => boolean;
 }
 
 interface Libraries {
-  Artplayer: any;
-  Hls: any;
+  Artplayer: ArtplayerConstructor;
+  Hls: HlsConstructor;
 }
 
 let libraries: Promise<Libraries> | null = null;
@@ -123,7 +137,7 @@ function loadLibraries() {
 
 /** 让 <video> 带上真实地址，浏览器投屏 / 外部播放器才能识别 */
 export function exposeVideoSource(
-  video: HTMLVideoElement & { hls?: any },
+  video: VideoWithHls,
   url: string,
   mediaType: MediaType = ''
 ) {
@@ -152,7 +166,7 @@ export function exposeVideoSource(
 }
 
 export class WatchPlayer {
-  art: Art = null;
+  art: Art | null = null;
   private libs: Libraries | null = null;
   private source: WatchSource | null = null;
   private modes: HlsModes;
@@ -169,7 +183,7 @@ export class WatchPlayer {
     webFullscreen: boolean;
   } | null = null;
   private generation = 0;
-  private listeners = new Map<string, Set<(...args: any[]) => void>>();
+  private listeners = new Map<string, Set<(...args: unknown[]) => void>>();
 
   constructor(private options: WatchPlayerOptions) {
     this.modes = {
@@ -182,7 +196,7 @@ export class WatchPlayer {
 
   // ------------------------------------------------------------ 对外接口
 
-  get video(): (HTMLVideoElement & { hls?: any }) | null {
+  get video(): VideoWithHls | null {
     return this.art?.video || null;
   }
   get currentSource() {
@@ -223,7 +237,7 @@ export class WatchPlayer {
   }
 
   /** 订阅播放器事件；重建实例后自动重新挂上 */
-  on(event: string, handler: (...args: any[]) => void) {
+  on(event: string, handler: (...args: unknown[]) => void) {
     let set = this.listeners.get(event);
     if (!set) this.listeners.set(event, (set = new Set()));
     set.add(handler);
@@ -351,10 +365,11 @@ export class WatchPlayer {
 
   private switchSource(source: WatchSource) {
     const art = this.art;
+    if (!art) return;
     art.option.type = artplayerTypeFor(source.url, source.mediaType) || '';
     if (art.video) this.applyCrossOrigin(art.video);
     // switch 不会回收旧的 hls 实例；切到直链时旧实例会继续拉分片
-    const previous = art.video as HTMLVideoElement & { hls?: any };
+    const previous = art.video as VideoWithHls;
     if (previous?.hls) {
       try {
         previous.hls.destroy?.();
@@ -427,12 +442,12 @@ export class WatchPlayer {
     Artplayer.USE_RAF = true;
 
     const type = artplayerTypeFor(source.url, source.mediaType);
+    // Artplayer 的类型不含它代理到实例上的 <video> 属性（paused 等），见 art-types.ts
     const art = new Artplayer({
       container: options.container,
       url: source.url,
       ...(type ? { type } : {}),
       poster: source.poster || '',
-      title: source.title,
       volume: options.initialVolume ?? readVolume(),
       isLive: false,
       muted: false,
@@ -483,14 +498,13 @@ export class WatchPlayer {
         : {}),
       moreVideoAttr: {
         playsInline: true,
-        'webkit-playsinline': 'true',
-        referrerpolicy: 'no-referrer',
+        ...LEGACY_VIDEO_ATTRS,
         ...(needsCrossOrigin(source.source) && !this.corsFallback
           ? { crossOrigin: 'anonymous' }
           : {}),
       },
       customType: {
-        m3u8: (video: HTMLVideoElement & { hls?: any }, url: string) => {
+        m3u8: (video: VideoWithHls, url: string) => {
           if (this.netdiskNativeActive() || this.harmonyNativeActive()) {
             video.hls?.destroy();
             delete video.hls;
@@ -520,7 +534,8 @@ export class WatchPlayer {
       plugins: options.artPlugins?.() || [],
       settings: options.settings || [],
       controls: options.controls || [],
-    });
+    }) as Art;
+    art.title = source.title;
     this.art = art;
     this.activeModes = { ...this.modes };
 

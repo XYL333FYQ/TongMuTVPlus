@@ -36,7 +36,7 @@ import {
 export interface LoadPlayerContext {
   activeAdBlockRef: MutableRefObject<boolean | null>;
   anime4k: Anime4KController;
-  artPlayerRef: MutableRefObject<Art>;
+  artPlayerRef: MutableRefObject<Art | null>;
   artRef: MutableRefObject<HTMLDivElement | null>;
   blockAdEnabled: boolean;
   blockAdEnabledRef: MutableRefObject<boolean>;
@@ -80,7 +80,7 @@ export interface LoadPlayerContext {
   nextEpisodePreCacheTriggeredRef: MutableRefObject<boolean>;
   playRecordJumpDismissedRef: MutableRefObject<boolean>;
   playRecordJumpInitialCheckRef: MutableRefObject<boolean>;
-  playRecordJumpLayerRef: MutableRefObject<Art>;
+  playRecordJumpLayerRef: MutableRefObject<HTMLElement | null>;
   playerEpisodeLabel: string;
   proxyAttemptedRef: MutableRefObject<boolean>;
   quickForwardSecondsRef: MutableRefObject<number>;
@@ -245,8 +245,8 @@ export function makeLoadPlayer(ctx: LoadPlayerContext) {
             import('@/lib/artplayer-plugin-auto-thumbnail'),
             checkWebGPU(),
           ]);
-        const artplayerPluginDanmuku = DanmukuPlugin.default as Art;
-        const artplayerPluginAutoThumbnail = AutoThumbnailPlugin.default as Art;
+        const artplayerPluginDanmuku = DanmukuPlugin.default;
+        const artplayerPluginAutoThumbnail = AutoThumbnailPlugin.default;
         const playerTimeouts = new Set<number>();
         const schedulePlayerTimeout = (callback: () => void, delay: number) => {
           const timeoutId = window.setTimeout(() => {

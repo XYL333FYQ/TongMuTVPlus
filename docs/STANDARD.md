@@ -97,7 +97,7 @@ src/
 ### S8 类型
 
 - 核心功能的文件开头不写整文件 `eslint-disable`；确实需要时用 `eslint-disable-next-line` 并写原因。
-- 不用 `any`。Artplayer 等没有类型的库，在一个声明文件里写好要用到的类型。
+- 不用 `any`（ESLint 在核心范围内按错误报，测试文件除外）。第三方库类型缺的部分只在一处补：播放器相关（Artplayer 实例、弹幕 / 字幕插件、hls.js）在 `features/player/core/art-types.ts`；浏览器带前缀的私有接口（Safari 全屏、iOS 主屏模式等）在 `src/types/vendor-dom.d.ts`。
 
 ### S9 仓库
 
@@ -115,6 +115,10 @@ z-index 只写下面的令牌（定义在 `styles/tokens.css`）。同一个组�
 
 | 令牌                    | 值    | 用途                                                  |
 | ----------------------- | ----- | ----------------------------------------------------- |
+| `--tm-z-page-float`     | 60    | 浮在页面内容上的控件：片架翻页按钮、自己看底部操作坞  |
+| `--tm-z-docked`         | 85    | 自己看嵌入在页面里的画面（画面节点 +1）               |
+| `--tm-z-page-notice`    | 100   | 自己看页上的提示条                                    |
+| `--tm-z-page-error`     | 110   | 自己看页上的操作出错条                                |
 | `--tm-z-mini`           | 600   | 两种小窗                                              |
 | `--tm-z-header`         | 620   | 站点顶栏                                              |
 | `--tm-z-nav`            | 640   | 手机底栏、导航                                        |
@@ -151,6 +155,7 @@ z-index 只写下面的令牌（定义在 `styles/tokens.css`）。同一个组�
 | `tm-touch` `tm-heatmap`                                                                                                                                                                                                                                                                                                                                                                | `src/styles/player-controls.css`                         | 播放器触屏按钮、弹幕热力图提示（两个播放器共用）                                           |
 | `tm-home` `tm-hero-score` `tm-media-initial`                                                                                                                                                                                                                                                                                                                                           | `src/styles/home.css`                                    | 发现页、影片卡片                                                                           |
 | `tm-video`                                                                                                                                                                                                                                                                                                                                                                             | `src/components/VideoCard.css`                           | 影片卡片（访客卡片 `PublicCatalogPage` 借用 `tm-video-card` / `tm-video-card-art` 的观感） |
+| `tm-music`                                                                                                                                                                                                                                                                                                                                                                             | `src/app/music/music.css`                                | 音乐页（上游页面，只登记手机档位下外壳要它让出的两处）                                     |
 | `tm-schedule`                                                                                                                                                                                                                                                                                                                                                                          | `src/features/library/parts/BangumiScheduleTimeline.css` | 片库的番剧时刻表                                                                           |
 | `tm-playback` `tm-solo` `tm-audio-focus`                                                                                                                                                                                                                                                                                                                                               | `src/features/playback/playback.css`                     | 自己看                                                                                     |
 | `tm-room`                                                                                                                                                                                                                                                                                                                                                                              | `src/features/room/room.css`                             | 一起看共用零件：按钮、图标、表单、对话框、房间头部                                         |

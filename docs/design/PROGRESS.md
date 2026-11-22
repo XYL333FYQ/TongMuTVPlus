@@ -1,5 +1,21 @@
 # 界面改造进度
 
+## 2026-11-22 代码规范第二轮：待清理名单清零，播放页、影片卡片拆出几块
+
+- **待清理名单 101 → 0**（`scripts/structure-allowlist.json` 全空），界面和行为不变：
+  - 层级（12）：数字全部换成令牌。新增 4 个令牌，值沿用原来的数字（`--tm-z-page-float` 60、`--tm-z-docked` 85、`--tm-z-page-notice` 100、`--tm-z-page-error` 110，见 STANDARD.md 层级表）；组件内部的 `z-10`、首页海报悬停的 5 改成 3（同一层叠上下文里没有更高的兄弟，前后顺序不变）。
+  - 重复选择器（62）：每个选择器在一个文件里只写一处。分组规则拆开并进各自规则；被后面覆盖的值直接写成最终值（例：手机上详情标题 18px 被 16px 覆盖，只留 16px）；`shell.css` 里两段减少动态的页面过渡，前一段完全被后一段的 `!important` 覆盖，删掉前一段。手机 / 平板的选集面板和工具面板共用的底部面板样式改挂在新类 `tm-solo-sheet` 上（两个元素都加了这个类）。
+  - 块名归属（17）：规则搬回样式所属的文件，或给元素加自己块的类名——首页大图按钮 `tm-home-hero-action(-glass)`、首页区块 / 片架 / 区块标题 `tm-home-section(-header/-title/-link)`、`tm-home-grid`（`SectionHeader` 新增 `variant='home'`）、安装提示和“更多”说明里的按钮；主题按钮在顶栏 / 手机账户区的尺寸归 `primitives.css`；主题分段选择归 `controls.css`；自己看小窗里宿主的规则从 `mini-player.css` 搬到 `playback.css`；自己看让出底栏的两条搬到 `shell.css`；影片详情的氛围背景搬到 `detail.css`；放在模态层里的弹窗高度归 `feedback.css`；音乐页的两条归 `app/music/music.css`（登记 `tm-music` 块）。
+  - 整文件 `eslint-disable`（10）：都是为了写 `any`。`.eslintrc.js` 原来对 `any` 只警告，现在核心范围内按错误报（S8）。第三方类型补在两处：`features/player/core/art-types.ts`（Artplayer 实例补上运行时代理的 `paused` 等、弹幕 / jassub 插件、hls.js）、`src/types/vendor-dom.d.ts`（Safari 全屏、iOS 主屏模式、文件夹权限）。
+- **顺带查出的隐藏问题**：`Art`（播放器实例的类型）原来就是 `any`，播放页 17 个文件把它当万能类型用（文档、窗口、TMDB 数据、文件夹句柄都写成 `as Art`），98 处没有类型检查。全部换成真实类型：TMDB 详情有了 `TmdbPlayDetails`，弹幕插件的边距 / 模式按插件的真实类型。两处行为上的细微差别：延迟 0.5 秒的“上次播放到”检查，若这期间换集重建了播放器就交给新实例；弹幕插件里如果字号被设成百分比就不记（本站只设数字）。
+- **拆文件**：
+  - 播放页 `surface/PlaybackSurface.tsx` 2,790 → 2,300 行。拆出的 hook 都在原来那段代码的位置调用，state 和 effect 的先后不变：`usePlayerPreferences`（跳过片头片尾、快进步长、去广告、弹幕热力图）、`useEpisodeNames`（弹幕 / TMDB 分集名）、`useFavorite`、`useFilterConfigs`、`useNetdiskTmdbMerge`、`usePlaybackFeatureFlags`。删掉死代码：没人读的原生全屏监听、没人调的 `parseSourceForApi`。
+  - 影片卡片 `VideoCard.tsx` 1,624 → 1,400 行：各页面显示什么（`video-card/card-config.ts`）、长按菜单（`video-card/mobile-actions.tsx`）。
+  - 结构检查范围去掉已不存在的 `components/BannerCarousel.tsx`，加上 `components/video-card/`。
+- **没拆完的**：播放页剩下的部分（换源、换集、快捷键、保存进度、页面结构）和播放器回调共用十几个 ref，再拆要先把页面状态收成一处（例如一个页面级 store），不是搬代码能解决的，要单独设计、真机测；影片卡片剩下的是 450 行的海报区 JSX，引用三十来个变量。超过 400 行的核心文件还有 37 个（只提醒）。
+- **验证**：typecheck、lint（0 错误）、format:check、check:structure 通过；Jest 185 套 / 1201 条全过；test:rooms 42 / 42（用 Node 24）。改前改后计算样式对比（17 页 × 6 种窗口 × 深浅色 = 204 份）：除了图片加载淡入、入场动画、小窗记住的拖动位置、测试站推荐内容这些两次之间本来就会变的，没有样式差异；平板横屏深色那一份改前没点开工具面板，同尺寸浅色那一份点开了且一致。自己看行为测试 5 项全过（播放、离开播放页同一个视频元素进小窗接着播、回来恢复）；两个账号房间测试 2 轮各 12 项全过。
+- **没验证**：真机（手机、平板、iOS、电脑客户端）。check-design 报的 `shell.css` `.tm-launch-wordmark small` 0.68em 是原有的，实际约 16px。
+
 ## 2026-11-20 房间同步：房主刚播放就暂停、或拖动后，操作偶尔没传到房间（修复）
 
 - 现象（第 2 步 B 实测时看到）：房主播放后约 3 秒暂停，或拖进度，偶尔不生效——房主自己的画面被拉回（又播起来 / 跳回原位），成员也没跟。

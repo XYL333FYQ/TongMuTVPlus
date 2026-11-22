@@ -24,7 +24,7 @@ type VoiceStrategy = 'webrtc-fallback' | 'server-only';
 function getVoiceStrategy(): VoiceStrategy {
   if (typeof window === 'undefined') return 'webrtc-fallback';
   const strategy =
-    (window as any).RUNTIME_CONFIG?.VOICE_CHAT_STRATEGY || 'webrtc-fallback';
+    window.RUNTIME_CONFIG?.VOICE_CHAT_STRATEGY || 'webrtc-fallback';
   return strategy as VoiceStrategy;
 }
 
@@ -53,7 +53,10 @@ export function useVoiceChat({
   const disconnectionTimersRef = useRef<Map<string, NodeJS.Timeout>>(new Map()); // 跟踪连接断开的定时器
 
   // 服务器中转相关
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  // 浏览器直连时是 MediaRecorder；服务器中转时存的是 ScriptProcessorNode（停止时断开）
+  const mediaRecorderRef = useRef<MediaRecorder | ScriptProcessorNode | null>(
+    null
+  );
 
   // 使用ref存储回退函数，避免循环依赖
   const switchToServerRelayRef = useRef<(() => void) | null>(null);
@@ -541,7 +544,7 @@ export function useVoiceChat({
 
       // 保存引用以便清理
       audioContextRef.current = audioContext;
-      mediaRecorderRef.current = processor as any; // 存储processor用于清理
+      mediaRecorderRef.current = processor; // 存储processor用于清理
 
       console.log('[VoiceChat] Server relay started');
     } catch (err) {
@@ -554,8 +557,8 @@ export function useVoiceChat({
   const stopServerRelay = useCallback(() => {
     if (mediaRecorderRef.current) {
       // ScriptProcessorNode没有stop方法，需要断开连接
-      const processor = mediaRecorderRef.current as any;
-      if (processor.disconnect) {
+      const processor = mediaRecorderRef.current;
+      if ('disconnect' in processor) {
         processor.disconnect();
       }
       mediaRecorderRef.current = null;

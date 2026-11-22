@@ -19,7 +19,8 @@ interface TouchArt {
   playing: boolean;
   fullscreen: boolean;
   fullscreenWeb: boolean;
-  notice: { show: string };
+  /** Artplayer：写入字符串弹出提示，读出来是“是否正在显示” */
+  notice: { show: string | boolean };
   template?: { $player?: HTMLElement };
   layers: { add(option: Record<string, unknown>): HTMLElement | undefined };
   on(name: string, handler: (...args: unknown[]) => void): void;

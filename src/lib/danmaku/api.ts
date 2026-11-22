@@ -256,7 +256,7 @@ export function convertDanmakuFormat(comments: DanmakuComment[]): Array<{
   time: number;
   color: string;
   border: boolean;
-  mode: number;
+  mode: 0 | 1 | 2;
 }> {
   return comments.map((comment) => {
     // 解析弹幕属性: "时间,类型,字体,颜色,时间戳,弹幕池,用户Hash,弹幕ID"
@@ -269,7 +269,7 @@ export function convertDanmakuFormat(comments: DanmakuComment[]): Array<{
     const color = `#${colorValue.toString(16).padStart(6, '0')}`;
 
     // 转换弹幕类型: 1=滚动(0), 4=底部(1), 5=顶部(2)
-    let mode = 0; // 默认滚动
+    let mode: 0 | 1 | 2 = 0; // 默认滚动
     if (type === 5) mode = 1; // 顶部
     else if (type === 4) mode = 2; // 底部
 

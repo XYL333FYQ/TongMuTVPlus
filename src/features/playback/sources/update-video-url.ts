@@ -14,7 +14,7 @@ import type { PlaybackSourceBadge } from '../page/types';
 
 /** 页面传进来的状态和函数（名字和页面里的一样） */
 export interface UpdateVideoUrlContext {
-  artPlayerRef: MutableRefObject<Art>;
+  artPlayerRef: MutableRefObject<Art | null>;
   checkFileSystemDownload: (
     title: string,
     source?: string,
@@ -300,7 +300,7 @@ export function makeUpdateVideoUrl(ctx: UpdateVideoUrlContext) {
         nextPlaybackSourceBadge = 'local';
 
         // 保存 Blob URLs 到 window，以便在切换视频时清理
-        (window as Art).__localFileBlobUrls = blobUrls;
+        window.__localFileBlobUrls = blobUrls;
 
         console.log(
           '使用 File System API 本地文件播放（Blob URL 模式）:',
@@ -331,7 +331,7 @@ export function makeUpdateVideoUrl(ctx: UpdateVideoUrlContext) {
       if (indexedDBCheck.hasLocal && indexedDBCheck.url) {
         cleanupLocalPlaybackBlobUrls();
         if (indexedDBCheck.objectUrls?.length) {
-          (window as Art).__localFileBlobUrls = indexedDBCheck.objectUrls;
+          window.__localFileBlobUrls = indexedDBCheck.objectUrls;
         }
         newUrl = indexedDBCheck.url;
         nextPlaybackSourceBadge = 'local';

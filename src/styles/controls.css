@@ -51,6 +51,27 @@
 .tm-capsule-option:active {
   scale: 0.97;
 }
+/* 主题分段选择（浅色 / 深色 / 跟随系统） */
+.tm-theme-segments {
+  display: flex;
+  gap: 2px;
+  padding: 3px;
+  border-radius: var(--tm-radius-md);
+  background: var(--tm-surface-raised);
+}
+.tm-theme-segments button {
+  flex: 1;
+  min-width: 0;
+  min-height: 36px;
+  border-radius: var(--tm-radius-sm);
+  font-size: var(--tm-fs-caption);
+  font-weight: 500;
+  color: var(--tm-muted);
+}
+.tm-theme-segments button[aria-checked='true'] {
+  background: var(--tm-text);
+  color: var(--tm-accent-contrast);
+}
 .tm-capsule-option[aria-pressed='true'],
 .tm-theme-segments.tm-animated-theme button[aria-checked='true'] {
   color: var(--tm-accent-contrast);
@@ -316,8 +337,7 @@ html[data-tm-reduced-motion='true'] .tm-control-selection {
   font-size: 14px;
   font-weight: 500;
 }
-.tm-visual-preferences small,
-.tm-visual-preferences p {
+.tm-visual-preferences small {
   display: block;
   margin-top: 4px;
   color: var(--tm-muted);
@@ -325,7 +345,11 @@ html[data-tm-reduced-motion='true'] .tm-control-selection {
   line-height: 1.7;
 }
 .tm-visual-preferences p {
+  display: block;
   margin: 12px 0 0;
+  color: var(--tm-muted);
+  font-size: 13px;
+  line-height: 1.7;
 }
 .tm-visual-preferences input {
   appearance: none;

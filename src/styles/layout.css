@@ -339,7 +339,7 @@ html[data-tm-no-blur='true'] .tm-fade-image {
 }
 .tm-shelf-nav {
   position: absolute;
-  z-index: 60;
+  z-index: var(--tm-z-page-float);
   top: calc(50% - 40px);
   display: none;
   place-items: center;
@@ -516,9 +516,6 @@ html[data-tm-reduced-motion='true'] .tm-spin {
   }
   .tm-poster-grid {
     row-gap: var(--tm-grid-gap);
-  }
-  .tm-library-grid .tm-media-initial {
-    font-size: calc(48 * var(--tm-wide-unit));
   }
 }
 @media (min-width: 1700px) and (pointer: coarse) {

@@ -28,7 +28,7 @@ import { applyCorrection, getXiaoyaCorrection } from '../lib/xiaoya-correction';
 
 /** 页面传进来的状态和函数（名字和页面里的一样） */
 export interface ChangeSourceContext {
-  artPlayerRef: MutableRefObject<Art>;
+  artPlayerRef: MutableRefObject<Art | null>;
   availableSources: SearchResult[];
   commitPlaybackHref: (url: URL) => void;
   currentEpisodeIndexRef: MutableRefObject<number>;

@@ -171,7 +171,7 @@ const ImageViewer: React.FC<ImageViewerProps> = ({
             ?.focus();
         }
       }}
-      className='tm-image-viewer fixed inset-0 z-[9999] flex items-center justify-center p-0 sm:p-4'
+      className='tm-image-viewer fixed inset-0 z-[var(--tm-z-toast)] flex items-center justify-center p-0 sm:p-4'
     >
       {/* 背景遮罩 */}
       <div
@@ -187,7 +187,7 @@ const ImageViewer: React.FC<ImageViewerProps> = ({
       {/* 关闭按钮 */}
       <button
         onClick={requestClose}
-        className='tm-image-viewer-close absolute top-4 right-4 z-10 p-2 rounded-full bg-ink/50 hover:bg-ink/70 transition-[opacity,transform] duration-150 min-h-[44px] tm-press min-w-[44px]'
+        className='tm-image-viewer-close absolute top-4 right-4 z-[3] p-2 rounded-full bg-ink/50 hover:bg-ink/70 transition-[opacity,transform] duration-150 min-h-[44px] tm-press min-w-[44px]'
         aria-label='关闭'
       >
         <X size={24} className='text-[color:var(--tm-room-player-text)]' />

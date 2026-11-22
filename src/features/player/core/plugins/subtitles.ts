@@ -4,11 +4,19 @@
  * 高级字幕渲染失败时，有备用地址就降级为普通字幕。
  */
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import { convertSubtitleFileToVttObjectUrl } from '@/lib/subtitle-converter';
 
-import type { Art } from '../WatchPlayer';
+import type { Art, ArtSetting, ArtSettingOption } from '../art-types';
+
+/** public/libbitsub 里的 PGS / SUP 位图字幕渲染器（用到的部分） */
+interface LibbitsubModule {
+  PgsRenderer: new (options: {
+    video: HTMLVideoElement;
+    subUrl?: string;
+    subContent?: ArrayBuffer;
+    onError?: (error: Error) => void;
+  }) => { waitUntilInitialized(): Promise<void>; dispose?: () => void };
+}
 
 export interface SourceSubtitle {
   label: string;
@@ -83,7 +91,7 @@ export type Notify = (
  * setTracks 在换集时调用；openFilePicker 由“上传本地字幕”触发。
  */
 export class SubtitleController {
-  private art: Art = null;
+  private art: Art | null = null;
   private tracks: SourceSubtitle[] = [];
   private episodeKey = '';
   private local: LocalSubtitle | null = null;
@@ -122,7 +130,7 @@ export class SubtitleController {
           ...item,
           default: item.size === subtitleSize(),
         })),
-        onSelect: (item: any) => {
+        onSelect: (item: ArtSettingOption) => {
           art.subtitle.style({ fontSize: item.size });
           try {
             localStorage.setItem(SIZE_KEY, item.size);
@@ -295,8 +303,7 @@ export class SubtitleController {
         }
       }
     } else {
-      const jassubModule = (await import('artplayer-plugin-jassub')) as any;
-      const plugin = jassubModule.default || jassubModule;
+      const plugin = (await import('artplayer-plugin-jassub')).default;
       art.plugins.add(
         plugin({
           ...(track.content
@@ -321,15 +328,16 @@ export class SubtitleController {
     source: { url?: string; content?: ArrayBuffer },
     label: string
   ) {
-    const video = this.art?.video;
-    if (!video) throw new Error('播放器尚未就绪');
-    this.art.subtitle.show = false;
+    const art = this.art;
+    const video = art?.video;
+    if (!art || !video) throw new Error('播放器尚未就绪');
+    art.subtitle.show = false;
     this.clearRenderers();
     // libbitsub 自托管在 public/libbitsub，绕过打包器加载
     const url = new URL('/libbitsub/dist/index.js', window.location.href).href;
     const { PgsRenderer } = (await import(
       /* webpackIgnore: true */ url
-    )) as any;
+    )) as LibbitsubModule;
     let reject: ((error: Error) => void) | null = null;
     const failure = new Promise<never>((_, fail) => {
       reject = fail;
@@ -367,7 +375,7 @@ export class SubtitleController {
         if (!subtitle.fallbackUrl) throw caught;
         this.showNative(subtitle.fallbackUrl, subtitle.label);
         const message = `高级字幕显示失败，已改用普通字幕：${subtitle.label}`;
-        this.art.notice.show = message;
+        if (this.art) this.art.notice.show = message;
         this.notify(message, 'info');
         return;
       }
@@ -385,7 +393,7 @@ export class SubtitleController {
     }
     const local =
       this.local?.episodeKey === this.episodeKey ? this.local : null;
-    const options: any[] = [
+    const options: ArtSetting[] = [
       { html: '关闭', act: 'close' },
       { html: '上传本地字幕', act: 'upload' },
       ...this.tracks.map((track) => ({
@@ -399,7 +407,7 @@ export class SubtitleController {
       name: 'tm-subtitle',
       html: '字幕',
       selector: options,
-      onSelect: (item: any) => {
+      onSelect: (item: ArtSettingOption) => {
         if (item.act === 'close') {
           this.close();
           return item.html;

@@ -1,3 +1,12 @@
+import type {
+  HlsConfig,
+  LoaderCallbacks,
+  LoaderConfiguration,
+  LoaderContext,
+  PlaylistLoaderContext,
+} from 'hls.js';
+
+import type { HlsConstructor } from './art-types';
 /*
  * m3u8 去广告：管理员可以在后台下发自定义过滤代码（带版本号缓存在本机），
  * 没有或出错时用默认关键字规则。
@@ -124,21 +133,26 @@ function ensureCustomAdFilter() {
   void syncCustomAdFilter(Number(config?.CUSTOM_AD_FILTER_VERSION) || 0);
 }
 
-/** 生成会过滤 m3u8 清单的 hls.js loader */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function createAdFilterLoader(Hls: any, getSource: () => string) {
+/** 生成会过滤 m3u8 清单的 hls.js loader：清单（manifest / level）下载完先去掉广告片段 */
+export function createAdFilterLoader(
+  Hls: HlsConstructor,
+  getSource: () => string
+) {
   ensureCustomAdFilter();
-  return class AdFilterLoader extends Hls.DefaultConfig.loader {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    constructor(config: any) {
+  const BaseLoader = Hls.DefaultConfig.loader;
+  return class AdFilterLoader extends BaseLoader {
+    constructor(config: HlsConfig) {
       super(config);
       const load = this.load.bind(this);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      this.load = (context: any, loadConfig: any, callbacks: any) => {
-        if (context.type === 'manifest' || context.type === 'level') {
+      this.load = (
+        context: LoaderContext,
+        loadConfig: LoaderConfiguration,
+        callbacks: LoaderCallbacks<LoaderContext>
+      ) => {
+        const type = (context as Partial<PlaylistLoaderContext>).type;
+        if (type === 'manifest' || type === 'level') {
           const onSuccess = callbacks.onSuccess;
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          callbacks.onSuccess = (response: any, stats: any, ctx: any) => {
+          callbacks.onSuccess = (response, stats, ctx) => {
             if (typeof response.data === 'string')
               response.data = filterAds(getSource(), response.data);
             return onSuccess(response, stats, ctx, null);

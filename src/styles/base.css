@@ -19,12 +19,12 @@ html[data-tm-platform='desktop'],
 html[data-tm-platform='desktop'] body {
   overscroll-behavior: none;
 }
+html {
+  background: var(--tm-bg);
+  color: var(--tm-text);
+}
 body {
   overflow-x: hidden;
-}
-
-html,
-body {
   background: var(--tm-bg);
   color: var(--tm-text);
 }

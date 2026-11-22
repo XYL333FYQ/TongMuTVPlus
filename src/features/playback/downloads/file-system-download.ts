@@ -78,13 +78,13 @@ export async function checkFileSystemDownload(
 
           try {
             // 请求读权限
-            const permission = await (dirHandle as Art).queryPermission({
+            const permission = await dirHandle.queryPermission({
               mode: 'read',
             });
             if (permission !== 'granted') {
-              const requestPermission = await (
-                dirHandle as Art
-              ).requestPermission({ mode: 'read' });
+              const requestPermission = await dirHandle.requestPermission({
+                mode: 'read',
+              });
               if (requestPermission !== 'granted') {
                 console.warn('未获得读权限');
                 resolve({ hasLocal: false });

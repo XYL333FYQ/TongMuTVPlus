@@ -128,7 +128,7 @@ export default function HttpWarningDialog({ onClose }: HttpWarningDialogProps) {
 
   return createPortal(
     <div
-      className={`tm-http-warning-backdrop fixed inset-0 bg-ink/50 z-[9999] flex items-center justify-center p-4 transition-opacity duration-300 ${
+      className={`tm-http-warning-backdrop fixed inset-0 bg-ink/50 z-[var(--tm-z-toast)] flex items-center justify-center p-4 transition-opacity duration-300 ${
         isVisible ? 'opacity-100' : 'opacity-0'
       } `}
       onClick={handleClose}

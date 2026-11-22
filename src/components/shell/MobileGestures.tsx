@@ -214,7 +214,11 @@ export default function MobileGestures() {
       {iosHint && (
         <div className='tm-install-hint tm-glass' role='status'>
           <p>全屏使用更像 App：点浏览器底部的“分享”，选“添加到主屏幕”。</p>
-          <button type='button' className='tm-btn' onClick={dismissHint}>
+          <button
+            type='button'
+            className='tm-btn tm-install-hint-btn'
+            onClick={dismissHint}
+          >
             知道了
           </button>
         </div>

@@ -512,9 +512,13 @@ function HomeClient() {
     switch (moduleId) {
       case 'hotMovies':
         return (
-          <section key='hotMovies' className='tm-section'>
-            <SectionHeader title='热门电影' href='/douban?type=movie' />
-            <PosterGrid>
+          <section key='hotMovies' className='tm-section tm-home-section'>
+            <SectionHeader
+              variant='home'
+              title='热门电影'
+              href='/douban?type=movie'
+            />
+            <PosterGrid className='tm-home-grid'>
               {loading
                 ? Array.from({ length: 12 }).map((_, index) => (
                     <PosterMotion key={index}>
@@ -543,9 +547,9 @@ function HomeClient() {
       case 'hotDuanju':
         if (hotDuanju.length === 0) return null;
         return (
-          <section key='hotDuanju' className='tm-section'>
-            <SectionHeader title='热播短剧' href='/duanju' />
-            <PosterGrid>
+          <section key='hotDuanju' className='tm-section tm-home-section'>
+            <SectionHeader variant='home' title='热播短剧' href='/duanju' />
+            <PosterGrid className='tm-home-grid'>
               {loading
                 ? Array.from({ length: 12 }).map((_, index) => (
                     <PosterMotion key={index}>
@@ -580,9 +584,13 @@ function HomeClient() {
 
       case 'bangumiCalendar':
         return (
-          <section key='bangumiCalendar' className='tm-section'>
-            <SectionHeader title='新番放送' href='/douban?type=anime' />
-            <PosterGrid>
+          <section key='bangumiCalendar' className='tm-section tm-home-section'>
+            <SectionHeader
+              variant='home'
+              title='新番放送'
+              href='/douban?type=anime'
+            />
+            <PosterGrid className='tm-home-grid'>
               {loading
                 ? Array.from({ length: 12 }).map((_, index) => (
                     <PosterMotion key={index}>
@@ -634,9 +642,13 @@ function HomeClient() {
 
       case 'hotTvShows':
         return (
-          <section key='hotTvShows' className='tm-section'>
-            <SectionHeader title='热门剧集' href='/douban?type=tv' />
-            <PosterGrid>
+          <section key='hotTvShows' className='tm-section tm-home-section'>
+            <SectionHeader
+              variant='home'
+              title='热门剧集'
+              href='/douban?type=tv'
+            />
+            <PosterGrid className='tm-home-grid'>
               {loading
                 ? Array.from({ length: 12 }).map((_, index) => (
                     <PosterMotion key={index}>
@@ -664,9 +676,13 @@ function HomeClient() {
 
       case 'hotVarietyShows':
         return (
-          <section key='hotVarietyShows' className='tm-section'>
-            <SectionHeader title='热门综艺' href='/douban?type=show' />
-            <PosterGrid>
+          <section key='hotVarietyShows' className='tm-section tm-home-section'>
+            <SectionHeader
+              variant='home'
+              title='热门综艺'
+              href='/douban?type=show'
+            />
+            <PosterGrid className='tm-home-grid'>
               {loading
                 ? Array.from({ length: 12 }).map((_, index) => (
                     <PosterMotion key={index}>
@@ -697,9 +713,13 @@ function HomeClient() {
       case 'upcomingContent':
         if (upcomingContent.length === 0) return null;
         return (
-          <section key='upcomingContent' className='tm-section'>
-            <SectionHeader title='即将上映' href='/douban?type=movie' />
-            <PosterGrid>
+          <section key='upcomingContent' className='tm-section tm-home-section'>
+            <SectionHeader
+              variant='home'
+              title='即将上映'
+              href='/douban?type=movie'
+            />
+            <PosterGrid className='tm-home-grid'>
               {upcomingContent.slice(0, 12).map((item) => (
                 <PosterMotion key={`${item.media_type}-${item.id}`}>
                   <VideoCard

@@ -6,8 +6,6 @@
  * 服务器广播新状态后本机再跟上。同步由 RoomSyncEngine 完成（时钟校准、变速追赶、等缓冲）。
  */
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
@@ -121,7 +119,7 @@ export interface RoomPlayerState {
 }
 
 export function useRoomPlayer(options: {
-  container: HTMLElement | null;
+  container: HTMLDivElement | null;
   room: Room | null;
   connected: boolean;
   /** 可以播放 / 暂停 / 拖动 */
@@ -201,7 +199,7 @@ export function useRoomPlayer(options: {
           rateControl: true,
           // 房间里不做长按加速：房间只有一个倍速，长按等于替全房间改倍速
           fastForward: false,
-          artPlugins: () => [danmaku.artPlugin((danmakuModule as any).default)],
+          artPlugins: () => [danmaku.artPlugin(danmakuModule.default)],
           plugins: [
             wakeLockPlugin,
             playbackRatePlugin(() =>

@@ -15,7 +15,7 @@ import type { Art } from '@/features/player';
 
 /** 页面传进来的状态和函数（名字和页面里的一样） */
 export interface WireInstanceContext {
-  artPlayerRef: MutableRefObject<Art>;
+  artPlayerRef: MutableRefObject<Art | null>;
   artRef: MutableRefObject<HTMLDivElement | null>;
   clearPlayerTimeouts: () => void;
   currentEpisodeIndexRef: MutableRefObject<number>;
@@ -34,7 +34,7 @@ export interface WireInstanceContext {
   nextEpisodePreCacheTriggeredRef: MutableRefObject<boolean>;
   playRecordJumpDismissedRef: MutableRefObject<boolean>;
   playRecordJumpInitialCheckRef: MutableRefObject<boolean>;
-  playRecordJumpLayerRef: MutableRefObject<Art>;
+  playRecordJumpLayerRef: MutableRefObject<HTMLElement | null>;
   restoreWebFullscreenOnReadyRef: MutableRefObject<boolean>;
   resumePlayingAfterHlsModeSwitchRef: MutableRefObject<boolean | null>;
   resumeTimeRef: MutableRefObject<number | null>;
@@ -99,14 +99,14 @@ export function makeWireInstance(ctx: WireInstanceContext) {
     art.on('destroy', clearPlayerTimeouts);
 
     // 监听播放器事件
-    artPlayerRef.current.on('ready', async () => {
+    art.on('ready', async () => {
       setError(null);
 
       // 换集重建前处于网页全屏则恢复，避免用户换集时被踢出全屏
-      if (restoreWebFullscreenOnReadyRef.current && artPlayerRef.current) {
+      if (restoreWebFullscreenOnReadyRef.current && art) {
         restoreWebFullscreenOnReadyRef.current = false;
         try {
-          artPlayerRef.current.fullscreenWeb = true;
+          art.fullscreenWeb = true;
         } catch (err) {
           console.warn('恢复网页全屏失败:', err);
         }
@@ -129,11 +129,11 @@ export function makeWireInstance(ctx: WireInstanceContext) {
       updateScreenshotVisibility();
       window.addEventListener('resize', updateScreenshotVisibility);
       window.addEventListener(DEVICE_TIER_EVENT, updateScreenshotVisibility);
-      artPlayerRef.current.on('fullscreen', updateScreenshotVisibility);
-      artPlayerRef.current.on('fullscreenWeb', updateScreenshotVisibility);
+      art.on('fullscreen', updateScreenshotVisibility);
+      art.on('fullscreenWeb', updateScreenshotVisibility);
 
       // iOS 设备：动态调整弹幕设置面板位置，避免被遮挡
-      if (isIOS && artPlayerRef.current) {
+      if (isIOS && art) {
         // 使用 MutationObserver 监听弹幕设置面板的显示
         let isAdjusting = false; // 防止重复调整的标记
         const observer = new MutationObserver(() => {
@@ -177,21 +177,21 @@ export function makeWireInstance(ctx: WireInstanceContext) {
         }
 
         // 清理函数
-        artPlayerRef.current.on('destroy', () => {
+        art.on('destroy', () => {
           observer.disconnect();
         });
       }
     });
 
-    artPlayerRef.current.on('pause', () => {
+    art.on('pause', () => {
       saveCurrentPlayProgress();
     });
 
-    artPlayerRef.current.on('video:volumechange', () => {
-      lastVolumeRef.current = artPlayerRef.current.volume;
+    art.on('video:volumechange', () => {
+      lastVolumeRef.current = art.volume;
     });
     // 监听网页全屏事件，控制导航栏显示隐藏
-    artPlayerRef.current.on('fullscreenWeb', (isFullscreen: boolean) => {
+    art.on('fullscreenWeb', (isFullscreen: boolean) => {
       console.log('网页全屏状态变化:', isFullscreen);
       setIsWebFullscreen(isFullscreen);
     });
@@ -199,7 +199,6 @@ export function makeWireInstance(ctx: WireInstanceContext) {
     // 触屏：画面正中快退 / 播放暂停 / 快进，手机全屏左上退出。和房间播放器共用一份
     // （src/lib/player-touch-controls.ts）；以前这里自己写了一套，位置、样子都和房间不一样
     {
-      const art = artPlayerRef.current;
       const disposeTouch = installTouchControls(art, {
         stepSeconds: () => seekStepSecondsRef.current,
         exitFullscreen: () => {
@@ -213,16 +212,16 @@ export function makeWireInstance(ctx: WireInstanceContext) {
     }
 
     // 监听视频可播放事件，这时恢复播放进度更可靠
-    artPlayerRef.current.on('video:canplay', () => {
+    art.on('video:canplay', () => {
       // 若存在需要恢复的播放进度，则跳转
       if (resumeTimeRef.current && resumeTimeRef.current > 0) {
         try {
-          const duration = artPlayerRef.current.duration || 0;
+          const duration = art.duration || 0;
           let target = resumeTimeRef.current;
           if (duration && target >= duration - 2) {
             target = Math.max(0, duration - 5);
           }
-          artPlayerRef.current.currentTime = target;
+          art.currentTime = target;
           console.log('成功恢复播放进度到:', resumeTimeRef.current);
         } catch (err) {
           console.warn('恢复播放进度失败:', err);
@@ -233,24 +232,22 @@ export function makeWireInstance(ctx: WireInstanceContext) {
       const shouldResumePlaying = resumePlayingAfterHlsModeSwitchRef.current;
       resumePlayingAfterHlsModeSwitchRef.current = null;
       if (shouldResumePlaying === false) {
-        artPlayerRef.current.pause();
+        art.pause();
       } else if (shouldResumePlaying === true) {
-        Promise.resolve(artPlayerRef.current.play()).catch((error) => {
+        Promise.resolve(art.play()).catch((error) => {
           console.warn('[Harmony HLS] 恢复播放失败:', error);
         });
       }
 
       schedulePlayerTimeout(() => {
-        if (!artPlayerRef.current) {
+        if (!art) {
           return;
         }
 
-        if (
-          Math.abs(artPlayerRef.current.volume - lastVolumeRef.current) > 0.01
-        ) {
-          artPlayerRef.current.volume = lastVolumeRef.current;
+        if (Math.abs(art.volume - lastVolumeRef.current) > 0.01) {
+          art.volume = lastVolumeRef.current;
         }
-        artPlayerRef.current.notice.show = '';
+        art.notice.show = '';
       }, 0);
 
       // 隐藏换源加载状态
@@ -260,7 +257,7 @@ export function makeWireInstance(ctx: WireInstanceContext) {
     });
 
     // 监听视频播放事件，检查是否需要显示播放记录跳转按钮
-    artPlayerRef.current.on('video:playing', () => {
+    art.on('video:playing', () => {
       // 检查是否需要显示播放记录跳转按钮
       // 条件：当前播放时间 < 10秒 且 播放记录时间 > 10秒
       const checkPlayRecordJump = async () => {
@@ -281,14 +278,14 @@ export function makeWireInstance(ctx: WireInstanceContext) {
             return;
           }
 
-          const currentTime = artPlayerRef.current?.currentTime || 0;
+          const currentTime = art?.currentTime || 0;
 
           // 如果当前播放时间已经大于等于10秒，不显示跳转按钮
           if (currentTime >= 10) {
             // 标记已经进行过首次检查，避免切集后再显示
             playRecordJumpInitialCheckRef.current = false;
             if (playRecordJumpLayerRef.current) {
-              artPlayerRef.current.layers.remove('play-record-jump');
+              art.layers.remove('play-record-jump');
               playRecordJumpLayerRef.current = null;
             }
             return;
@@ -334,9 +331,10 @@ export function makeWireInstance(ctx: WireInstanceContext) {
               };
 
               // 添加到播放器 layers
-              playRecordJumpLayerRef.current = artPlayerRef.current.layers.add({
-                name: 'play-record-jump',
-                html: `
+              playRecordJumpLayerRef.current =
+                art.layers.add({
+                  name: 'play-record-jump',
+                  html: `
                       <div id="play-record-jump-container" style="
                         position: absolute;
                         left: 16px;
@@ -385,15 +383,15 @@ export function makeWireInstance(ctx: WireInstanceContext) {
                         </button>
                       </div>
                     `,
-                style: {
-                  position: 'absolute',
-                  left: 0,
-                  bottom: 0,
-                  width: '100%',
-                  height: '100%',
-                  pointerEvents: 'none',
-                },
-              });
+                  style: {
+                    position: 'absolute',
+                    left: '0',
+                    bottom: '0',
+                    width: '100%',
+                    height: '100%',
+                    pointerEvents: 'none',
+                  },
+                }) ?? null;
 
               // 绑定事件
               const jumpBtn = document.getElementById('play-record-jump-btn');
@@ -409,15 +407,13 @@ export function makeWireInstance(ctx: WireInstanceContext) {
                   jumpBtn.style.backgroundColor = 'rgba(255, 255, 255, 0.2)';
                 });
                 jumpBtn.addEventListener('click', () => {
-                  if (artPlayerRef.current) {
-                    artPlayerRef.current.currentTime = recordTime;
-                    artPlayerRef.current.notice.show = `已跳转到 ${formatTime(
-                      recordTime
-                    )}`;
+                  if (art) {
+                    art.currentTime = recordTime;
+                    art.notice.show = `已跳转到 ${formatTime(recordTime)}`;
                   }
                   playRecordJumpDismissedRef.current = true;
                   if (playRecordJumpLayerRef.current) {
-                    artPlayerRef.current.layers.remove('play-record-jump');
+                    art.layers.remove('play-record-jump');
                     playRecordJumpLayerRef.current = null;
                   }
                 });
@@ -433,7 +429,7 @@ export function makeWireInstance(ctx: WireInstanceContext) {
                 dismissBtn.addEventListener('click', () => {
                   playRecordJumpDismissedRef.current = true;
                   if (playRecordJumpLayerRef.current) {
-                    artPlayerRef.current.layers.remove('play-record-jump');
+                    art.layers.remove('play-record-jump');
                     playRecordJumpLayerRef.current = null;
                   }
                 });
@@ -460,16 +456,18 @@ export function makeWireInstance(ctx: WireInstanceContext) {
         }
       };
 
-      // 延迟检查，确保播放器已经稳定
-      setTimeout(checkPlayRecordJump, 500);
+      // 延迟检查，确保播放器已经稳定（这期间换集重建了就交给新实例自己检查）
+      setTimeout(() => {
+        if (artPlayerRef.current === art) void checkPlayRecordJump();
+      }, 500);
     });
 
     // 监听视频时间更新事件，实现跳过片头片尾
-    artPlayerRef.current.on('video:timeupdate', () => {
+    art.on('video:timeupdate', () => {
       if (!skipConfigRef.current.enable) return;
 
-      const currentTime = artPlayerRef.current.currentTime || 0;
-      const duration = artPlayerRef.current.duration || 0;
+      const currentTime = art.currentTime || 0;
+      const duration = art.duration || 0;
       const now = Date.now();
 
       // 限制跳过检查频率为1.5秒一次
@@ -481,8 +479,8 @@ export function makeWireInstance(ctx: WireInstanceContext) {
         skipConfigRef.current.intro_time > 0 &&
         currentTime < skipConfigRef.current.intro_time
       ) {
-        artPlayerRef.current.currentTime = skipConfigRef.current.intro_time;
-        artPlayerRef.current.notice.show = `已跳过片头 (${formatTime(
+        art.currentTime = skipConfigRef.current.intro_time;
+        art.notice.show = `已跳过片头 (${formatTime(
           skipConfigRef.current.intro_time
         )})`;
       }
@@ -491,8 +489,7 @@ export function makeWireInstance(ctx: WireInstanceContext) {
       if (
         skipConfigRef.current.outro_time < 0 &&
         duration > 0 &&
-        currentTime >
-          artPlayerRef.current.duration + skipConfigRef.current.outro_time
+        currentTime > art.duration + skipConfigRef.current.outro_time
       ) {
         if (
           currentEpisodeIndexRef.current <
@@ -500,16 +497,16 @@ export function makeWireInstance(ctx: WireInstanceContext) {
         ) {
           handleNextEpisode();
         } else {
-          artPlayerRef.current.pause();
+          art.pause();
         }
-        artPlayerRef.current.notice.show = `已跳过片尾 (${formatTime(
+        art.notice.show = `已跳过片尾 (${formatTime(
           skipConfigRef.current.outro_time
         )})`;
       }
     });
 
     // 监听视频播放结束事件，自动播放下一集
-    artPlayerRef.current.on('video:ended', () => {
+    art.on('video:ended', () => {
       const d = detailRef.current;
       const idx = currentEpisodeIndexRef.current;
 
@@ -534,12 +531,12 @@ export function makeWireInstance(ctx: WireInstanceContext) {
       }
 
       // 所有后续集数都被屏蔽
-      if (artPlayerRef.current) {
-        artPlayerRef.current.notice.show = '后续集数均已屏蔽，已自动停止';
+      if (art) {
+        art.notice.show = '后续集数均已屏蔽，已自动停止';
       }
     });
 
-    artPlayerRef.current.on('video:timeupdate', () => {
+    art.on('video:timeupdate', () => {
       const now = Date.now();
       let interval = 5000;
       if (process.env.NEXT_PUBLIC_STORAGE_TYPE === 'upstash') {
@@ -557,8 +554,8 @@ export function makeWireInstance(ctx: WireInstanceContext) {
           : false;
 
       if (nextEpisodePreCacheEnabled) {
-        const currentTime = artPlayerRef.current?.currentTime || 0;
-        const duration = artPlayerRef.current?.duration || 0;
+        const currentTime = art?.currentTime || 0;
+        const duration = art?.duration || 0;
         const progress = duration > 0 ? currentTime / duration : 0;
 
         // 检查是否已经到达90%播放进度
@@ -646,8 +643,8 @@ export function makeWireInstance(ctx: WireInstanceContext) {
           : false;
 
       if (nextEpisodeDanmakuPreloadEnabled) {
-        const currentTime = artPlayerRef.current?.currentTime || 0;
-        const duration = artPlayerRef.current?.duration || 0;
+        const currentTime = art?.currentTime || 0;
+        const duration = art?.duration || 0;
         const progress = duration > 0 ? currentTime / duration : 0;
 
         // 检查是否已经到达90%播放进度

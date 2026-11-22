@@ -10,7 +10,7 @@ import type { Art } from '@/features/player';
 
 /** 页面传进来的状态和函数（名字和页面里的一样） */
 export interface ControlsContext {
-  artPlayerRef: MutableRefObject<Art>;
+  artPlayerRef: MutableRefObject<Art | null>;
   handleNextEpisode: () => Promise<void>;
   isIOS: boolean;
   seekQuickForward: () => boolean;
@@ -95,21 +95,20 @@ export function buildControls(ctx: ControlsContext) {
               const isPWA =
                 window.matchMedia('(display-mode: standalone)').matches ||
                 window.matchMedia('(display-mode: fullscreen)').matches ||
-                (window.navigator as Art).standalone === true;
+                window.navigator.standalone === true;
 
               // 检查是否已经在原生全屏状态
               const isInNativeFullscreen = !!(
-                document.fullscreenElement ||
-                (document as Art).webkitFullscreenElement
+                document.fullscreenElement || document.webkitFullscreenElement
               );
 
               // 如果已经在原生全屏状态，退出原生全屏
               if (isInNativeFullscreen) {
                 const exitFullscreen =
-                  (document as Art).exitFullscreen ||
-                  (document as Art).webkitExitFullscreen ||
-                  (document as Art).mozCancelFullScreen ||
-                  (document as Art).msExitFullscreen;
+                  document.exitFullscreen ||
+                  document.webkitExitFullscreen ||
+                  document.mozCancelFullScreen ||
+                  document.msExitFullscreen;
                 if (exitFullscreen) {
                   try {
                     const result = exitFullscreen.call(document);
@@ -135,11 +134,14 @@ export function buildControls(ctx: ControlsContext) {
               if (isPWA) {
                 const container = artPlayerRef.current.template.$container;
                 if (container && container.webkitEnterFullscreen) {
-                  container.webkitEnterFullscreen().catch((err: Error) => {
-                    console.error('PWA 全屏失败:', err);
-                    // 如果失败，降级使用网页全屏
-                    artPlayerRef.current.fullscreenWeb = true;
-                  });
+                  Promise.resolve(container.webkitEnterFullscreen()).catch(
+                    (err: Error) => {
+                      console.error('PWA 全屏失败:', err);
+                      // 如果失败，降级使用网页全屏
+                      if (artPlayerRef.current)
+                        artPlayerRef.current.fullscreenWeb = true;
+                    }
+                  );
                 } else {
                   // 不支持原生全屏，使用网页全屏
                   artPlayerRef.current.fullscreenWeb = true;
@@ -150,7 +152,7 @@ export function buildControls(ctx: ControlsContext) {
               // iPhone：直接用系统全屏（会自己横过来）。网页全屏在竖着的手机上只是中间一小条画面，
               // 按钮还会被挤出屏幕（2026-11-18 问题文档第 6 条）。iPad 仍可以选
               if (isHandheld()) {
-                const video = artPlayerRef.current.template?.$video as Art;
+                const video = artPlayerRef.current.template?.$video;
                 if (video?.webkitEnterFullscreen) video.webkitEnterFullscreen();
                 else if (video?.requestFullscreen)
                   void video.requestFullscreen();
@@ -262,8 +264,8 @@ export function buildControls(ctx: ControlsContext) {
                       const videoElement = artPlayerRef.current.template.$video;
                       if (videoElement.requestFullscreen) {
                         videoElement.requestFullscreen();
-                      } else if ((videoElement as Art).webkitEnterFullscreen) {
-                        (videoElement as Art).webkitEnterFullscreen();
+                      } else if (videoElement.webkitEnterFullscreen) {
+                        videoElement.webkitEnterFullscreen();
                       }
                     }
                   }

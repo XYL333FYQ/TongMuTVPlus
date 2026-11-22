@@ -73,8 +73,10 @@
   animation: tm-select-in var(--tm-d-hover) var(--tm-ease-out);
   transform-origin: top center;
 }
+/* 往上弹：从底边展开，入场动画改成向上 */
 .tm-select-menu[data-up] {
   transform-origin: bottom center;
+  animation-name: tm-select-in-up;
 }
 .tm-select-option {
   display: flex;
@@ -112,9 +114,6 @@
     opacity: 1;
     transform: none;
   }
-}
-.tm-select-menu[data-up] {
-  animation-name: tm-select-in-up;
 }
 @keyframes tm-select-in-up {
   from {

@@ -10,13 +10,13 @@ import {
   SEEK_STEP_STORAGE_KEY,
 } from '@/lib/player-seek-settings';
 
-import type { Art } from '@/features/player';
+import type { Art, ArtSetting, ArtSettingOption } from '@/features/player';
 import { type Anime4KController, setHeatmapEnabled } from '@/features/player';
 
 /** 页面传进来的状态和函数（名字和页面里的一样） */
 export interface SettingsContext {
   anime4k: Anime4KController;
-  artPlayerRef: MutableRefObject<Art>;
+  artPlayerRef: MutableRefObject<Art | null>;
   blockAdEnabled: boolean;
   danmakuHeatmapDisabledRef: MutableRefObject<boolean>;
   danmakuHeatmapEnabledRef: MutableRefObject<boolean>;
@@ -43,7 +43,7 @@ export interface SettingsContext {
   webGPUSupported: boolean;
 }
 
-export function buildSettings(ctx: SettingsContext) {
+export function buildSettings(ctx: SettingsContext): ArtSetting[] {
   const {
     anime4k,
     artPlayerRef,
@@ -109,7 +109,7 @@ export function buildSettings(ctx: SettingsContext) {
             html: '弹幕热力',
             icon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z" fill="currentColor"/></svg>',
             switch: danmakuHeatmapEnabledRef.current,
-            onSwitch: function (item: Art) {
+            onSwitch: function (item: ArtSettingOption) {
               const newVal = !item.switch;
               setHeatmapEnabled(artPlayerRef.current, newVal);
               setDanmakuHeatmapEnabled(newVal);
@@ -125,7 +125,7 @@ export function buildSettings(ctx: SettingsContext) {
             html: 'Anime4K超分',
             icon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 2L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-10-5zm0 18c-4 0-7-3-7-7V9l7-3.5L19 9v4c0 4-3 7-7 7z" fill="currentColor"/><path d="M10 12l2 2 4-4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
             switch: anime4k.state.enabled,
-            onSwitch: async function (item: Art) {
+            onSwitch: async function (item: ArtSettingOption) {
               await anime4k.setEnabled(!item.switch);
               return anime4k.state.enabled;
             },
@@ -165,7 +165,7 @@ export function buildSettings(ctx: SettingsContext) {
                 default: anime4k.state.mode === 'ModeCA',
               },
             ],
-            onSelect: async function (item: Art) {
+            onSelect: async function (item: ArtSettingOption) {
               await anime4k.setMode(item.value);
               return item.html;
             },
@@ -195,7 +195,7 @@ export function buildSettings(ctx: SettingsContext) {
                 default: anime4k.state.scale === 4.0,
               },
             ],
-            onSelect: async function (item: Art) {
+            onSelect: async function (item: ArtSettingOption) {
               await anime4k.setScale(parseFloat(item.value));
               return item.html;
             },
@@ -206,7 +206,7 @@ export function buildSettings(ctx: SettingsContext) {
       name: '跳过片头片尾',
       html: '跳过片头片尾',
       switch: skipConfigRef.current.enable,
-      onSwitch: function (item: Art) {
+      onSwitch: function (item: ArtSettingOption) {
         const newConfig = {
           ...skipConfigRef.current,
           enable: !item.switch,

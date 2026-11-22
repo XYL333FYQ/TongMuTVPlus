@@ -143,7 +143,30 @@ module.exports = {
     ],
     //#endregion  //*======== Import Sort ===========
   },
-  overrides: importDirection,
+  overrides: [
+    ...importDirection,
+    // S8：核心功能不用 any（范围和 scripts/lib/structure-scope.mjs 的 CORE_CODE 一致；
+    // Artplayer 等第三方库的类型在 features/player/core/art-types.ts 补齐）
+    {
+      files: [
+        'src/features/**',
+        'src/components/catalog/**',
+        'src/components/mini-player/**',
+        'src/components/shell/**',
+        'src/components/detail/**',
+        'src/components/feedback/**',
+        'src/components/VideoCard.tsx',
+        'src/components/video-card/**',
+        'src/components/ContinueWatching.tsx',
+        'src/app/page.tsx',
+        'src/app/douban/**',
+        'src/app/play/**',
+        'src/app/watch-room/**',
+      ],
+      excludedFiles: ['**/*.test.ts', '**/*.test.tsx'],
+      rules: { '@typescript-eslint/no-explicit-any': 'error' },
+    },
+  ],
   globals: {
     React: true,
     JSX: true,

@@ -6,7 +6,8 @@ export type PlaybackPresentation = 'full' | 'docked' | 'mini' | 'folded';
 export interface PlaybackController {
   video: HTMLVideoElement;
   readonly template?: { readonly $player: HTMLElement };
-  readonly notice?: { show: string };
+  /** 写入字符串弹出提示；Artplayer 读出来是“是否正在显示” */
+  readonly notice?: { show: string | boolean };
   currentTime: number;
   playing: boolean;
   muted: boolean;

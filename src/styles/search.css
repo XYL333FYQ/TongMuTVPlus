@@ -129,12 +129,13 @@
   .tm-search-browse-link {
     min-height: 44px;
   }
-  .tm-history-query,
-  .tm-history-remove {
+  .tm-history-query {
     min-height: 44px;
     height: 44px;
   }
   .tm-history-remove {
     width: 44px;
+    min-height: 44px;
+    height: 44px;
   }
 }

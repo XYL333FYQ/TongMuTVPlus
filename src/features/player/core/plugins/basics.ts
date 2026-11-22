@@ -3,11 +3,10 @@
  * 触屏快进快退和全屏退出按钮两个播放器共用，见 src/lib/player-touch-controls.ts。
  */
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import { isHandheld } from '@/lib/device-tier';
 
 import { playerEnvironment } from '../env';
+import type { Art } from '../art-types';
 import type { PlayerPlugin } from '../WatchPlayer';
 
 // ------------------------------------------------------------ 防息屏
@@ -17,7 +16,7 @@ export const wakeLockPlugin: PlayerPlugin = ({ art }) => {
   const request = async () => {
     try {
       if ('wakeLock' in navigator && !sentinel)
-        sentinel = await (navigator as any).wakeLock.request('screen');
+        sentinel = await navigator.wakeLock.request('screen');
     } catch {
       // 不支持或被拒绝
     }
@@ -134,7 +133,7 @@ export function playbackRatePlugin(
   };
 }
 
-export function stepPlaybackRate(art: any, rates: number[], direction: 1 | -1) {
+export function stepPlaybackRate(art: Art, rates: number[], direction: 1 | -1) {
   const current = art.playbackRate || 1;
   let next = current;
   if (direction > 0)
@@ -164,7 +163,7 @@ const THUMB_PRESETS: Record<string, { url: string; size?: [number, number] }> =
 
 /** 后台可配置的进度条拖动图标 */
 export const progressThumbPlugin: PlayerPlugin = ({ art }) => {
-  const config = (window as any).RUNTIME_CONFIG;
+  const config = window.RUNTIME_CONFIG;
   const id = 'tm-progress-thumb-style';
   document.getElementById(id)?.remove();
   if (
@@ -206,7 +205,7 @@ export const progressThumbPlugin: PlayerPlugin = ({ art }) => {
  * iPhone 直接用系统全屏；iPad 添加到主屏幕时网页全屏，否则让用户选网页全屏或系统全屏。
  */
 export function iosFullscreenControl(
-  getArt: () => any,
+  getArt: () => Art | null,
   choose: () => Promise<'web' | 'native' | null>
 ) {
   return {
@@ -218,7 +217,7 @@ export function iosFullscreenControl(
     click: async () => {
       const art = getArt();
       if (!art) return;
-      const doc = document as any;
+      const doc = document;
       if (doc.fullscreenElement || doc.webkitFullscreenElement) {
         const exit = doc.exitFullscreen || doc.webkitExitFullscreen;
         try {
@@ -233,7 +232,7 @@ export function iosFullscreenControl(
         return;
       }
       const nativeFullscreen = () => {
-        const video = art.template?.$video as any;
+        const video = art.template?.$video;
         if (video?.requestFullscreen) video.requestFullscreen();
         else video?.webkitEnterFullscreen?.();
       };
@@ -243,7 +242,7 @@ export function iosFullscreenControl(
       const standalone =
         window.matchMedia('(display-mode: standalone)').matches ||
         window.matchMedia('(display-mode: fullscreen)').matches ||
-        (navigator as any).standalone === true;
+        navigator.standalone === true;
       if (standalone) {
         art.fullscreenWeb = true;
         return;

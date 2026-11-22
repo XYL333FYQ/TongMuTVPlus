@@ -13,7 +13,20 @@ import {
 import { SearchResult } from '@/lib/types';
 import { processImageUrl } from '@/lib/utils';
 
-import type { Art } from '@/features/player';
+/** /api/tmdb-details 返回的内容（也原样存在推荐缓存里） */
+export interface TmdbPlayDetails {
+  /** 形如 "tv:123"；老缓存里可能是数字 */
+  tmdbId: string | number;
+  mediaType?: 'movie' | 'tv';
+  title?: string;
+  backdrop: string | null;
+  poster: string | null;
+  overview: string;
+  /** 一位小数的评分文字，没有评分时为空 */
+  rating: string;
+  releaseDate: string;
+  genres: Array<{ id?: number; name: string }>;
+}
 
 /** 页面传进来的状态和函数（名字和页面里的一样） */
 export interface LoadTmdbBackdropContext {
@@ -35,7 +48,7 @@ export interface LoadTmdbBackdropContext {
       tmdbId?: number;
     } | null>
   >;
-  setPendingNetdiskTMDBData: Dispatch<Art>;
+  setPendingNetdiskTMDBData: Dispatch<SetStateAction<TmdbPlayDetails | null>>;
   setResolvedTmdbIdStr: Dispatch<SetStateAction<string | null>>;
   setTmdbBackdrop: Dispatch<SetStateAction<string | null>>;
   setTmdbEpisodeNames: Dispatch<SetStateAction<string[]>>;
@@ -101,7 +114,8 @@ export function makeLoadTmdbBackdrop(ctx: LoadTmdbBackdropContext) {
           setResolvedTmdbIdStr(cachedId);
 
           const detailsCacheKey = recommendationCacheKeys.tmdbDetails(cachedId);
-          const detailsCache = getRecommendationCache<any>(detailsCacheKey);
+          const detailsCache =
+            getRecommendationCache<TmdbPlayDetails>(detailsCacheKey);
 
           if (detailsCache) {
             if (detailsCache.backdrop) {
@@ -130,7 +144,7 @@ export function makeLoadTmdbBackdrop(ctx: LoadTmdbBackdropContext) {
           return;
         }
 
-        const result = await response.json();
+        const result = (await response.json()) as TmdbPlayDetails;
 
         if (result.backdrop) {
           setTmdbBackdrop(processImageUrl(result.backdrop));
@@ -165,7 +179,7 @@ export function makeLoadTmdbBackdrop(ctx: LoadTmdbBackdropContext) {
       }
     };
 
-    const populatePlayMetadataFromTMDB = (tmdbData: Art) => {
+    const populatePlayMetadataFromTMDB = (tmdbData: TmdbPlayDetails) => {
       const currentDetail = detailRef.current;
       if (!currentDetail || !isNetdiskSource(currentDetail.source)) {
         setPendingNetdiskTMDBData(tmdbData);
@@ -223,7 +237,7 @@ export function makeLoadTmdbBackdrop(ctx: LoadTmdbBackdropContext) {
     };
 
     // 辅助函数：使用TMDb数据填充豆瓣字段
-    const populateDoubanFieldsFromTMDB = (tmdbData: Art) => {
+    const populateDoubanFieldsFromTMDB = (tmdbData: TmdbPlayDetails) => {
       // 设置评分
       if (tmdbData.rating) {
         const ratingValue = parseFloat(tmdbData.rating);
@@ -246,7 +260,7 @@ export function makeLoadTmdbBackdrop(ctx: LoadTmdbBackdropContext) {
         Array.isArray(tmdbData.genres) &&
         tmdbData.genres.length > 0
       ) {
-        const genreNames = tmdbData.genres.map((g: Art) => g.name).join(' / ');
+        const genreNames = tmdbData.genres.map((g) => g.name).join(' / ');
         setDoubanCardSubtitle(genreNames);
       } else if (tmdbData.mediaType && tmdbData.releaseDate) {
         // 兜底：如果没有genres，使用年份和类型

@@ -5,8 +5,6 @@
  * 3. 片源开了代理模式、或直链域名被设为走代理时，套上代理。
  */
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import { getIndexedDBVideoPlaybackUrl } from '@/lib/indexeddb-video-cache';
 import type { SearchResult } from '@/lib/types';
 
@@ -133,9 +131,8 @@ async function localFolderEpisode(
   );
   if (!root) return null;
   try {
-    const handle = root as any;
-    if ((await handle.queryPermission({ mode: 'read' })) !== 'granted') {
-      if ((await handle.requestPermission({ mode: 'read' })) !== 'granted')
+    if ((await root.queryPermission({ mode: 'read' })) !== 'granted') {
+      if ((await root.requestPermission({ mode: 'read' })) !== 'granted')
         return null;
     }
     const episode = await (
@@ -183,7 +180,7 @@ async function localPlaylistUrl(folder: FileSystemDirectoryHandle) {
 
 export function offlineDownloadAllowed() {
   if (typeof window === 'undefined') return false;
-  return !!(window as any).RUNTIME_CONFIG?.ENABLE_OFFLINE_DOWNLOAD;
+  return !!window.RUNTIME_CONFIG?.ENABLE_OFFLINE_DOWNLOAD;
 }
 
 async function serverHasOffline(

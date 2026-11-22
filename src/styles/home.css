@@ -18,6 +18,7 @@
 .tm-home-hero {
   position: relative;
   isolation: isolate;
+  margin-top: 16px;
 }
 .tm-home-hero-panel {
   position: relative;
@@ -29,13 +30,14 @@
   background: var(--tm-hero-bg);
   color: var(--tm-on-art);
 }
-.tm-home-hero-art,
+.tm-home-hero-art {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+}
 .tm-home-hero-frame {
   position: absolute;
   inset: 0;
-}
-.tm-home-hero-art {
-  z-index: -2;
 }
 .tm-home-hero-frame > img,
 .tm-home-hero-frame > video,
@@ -158,11 +160,11 @@
   gap: 10px;
   margin-top: 28px;
 }
-.tm-home-hero-actions .tm-btn {
+.tm-home-hero-actions .tm-home-hero-action {
   min-height: 44px;
   padding-inline: 20px;
 }
-.tm-home-hero-actions .tm-btn-art-glass {
+.tm-home-hero-actions .tm-home-hero-action-glass {
   border: 0;
 }
 .tm-home-hero-actions .tm-home-hero-detail {
@@ -307,9 +309,6 @@
   }
 }
 @media (max-width: 599px) {
-  .tm-home-hero {
-    margin-inline: calc(var(--tm-content-gutter) * -1);
-  }
   .tm-home-hero-panel {
     min-height: 420px;
     border-radius: 0;
@@ -321,7 +320,7 @@
     -webkit-line-clamp: 2;
     font-size: 14px;
   }
-  .tm-home-hero-actions .tm-btn {
+  .tm-home-hero-actions .tm-home-hero-action {
     flex: 1;
   }
   .tm-home-hero-detail {
@@ -343,9 +342,6 @@ html[data-tm-reduced-motion='true'] .tm-home-hero-thumb-progress {
 }
 
 /* 三联舞台：主海报完整显示，后续两部从两侧托出。 */
-.tm-home-hero {
-  margin-top: 16px;
-}
 .tm-home-hero-panel[data-showcase='true'] .tm-home-hero-inner {
   grid-template-columns: minmax(0, 0.96fr) minmax(0, 1.04fr);
   align-items: center;
@@ -378,11 +374,13 @@ html[data-tm-reduced-motion='true'] .tm-home-hero-thumb-progress {
   line-height: 1.75;
   font-weight: 500;
 }
-.tm-home-hero-panel[data-showcase='true'] .tm-home-hero-actions .tm-btn {
+.tm-home-hero-panel[data-showcase='true']
+  .tm-home-hero-actions
+  .tm-home-hero-action {
   min-height: calc(48 * var(--tm-wide-unit));
   font-size: calc(15 * var(--tm-wide-unit));
 }
-.tm-home-hero-panel[data-showcase='true'] .tm-btn-art-glass {
+.tm-home-hero-panel[data-showcase='true'] .tm-home-hero-action-glass {
   border: 1px solid var(--tm-art-glass-line);
   background: var(--tm-scrim-soft);
 }
@@ -404,17 +402,18 @@ html[data-tm-reduced-motion='true'] .tm-home-hero-thumb-progress {
   transform: translate(-50%, -50%);
   z-index: 2;
 }
-.tm-home-hero-poster-left,
-.tm-home-hero-poster-right {
+/* 两侧的海报：比主海报小、略低、压在主海报下面，向内转一点 */
+.tm-home-hero-poster-left {
   width: min(34%, calc(178 * var(--tm-wide-unit)));
   top: 57%;
   z-index: 1;
-}
-.tm-home-hero-poster-left {
   left: 18%;
   transform: translate(-50%, -50%) perspective(680px) rotateY(-24deg);
 }
 .tm-home-hero-poster-right {
+  width: min(34%, calc(178 * var(--tm-wide-unit)));
+  top: 57%;
+  z-index: 1;
   left: 82%;
   transform: translate(-50%, -50%) perspective(680px) rotateY(24deg);
 }
@@ -459,7 +458,6 @@ html[data-tm-reduced-motion='true'] .tm-home-hero-thumb-progress {
   overflow: clip;
   display: block;
 }
-.tm-home-hero-poster-face > img,
 .tm-home-hero-poster-face > span:not(.tm-home-hero-poster-fallback) {
   position: relative;
   display: block;
@@ -469,6 +467,12 @@ html[data-tm-reduced-motion='true'] .tm-home-hero-thumb-progress {
   border-radius: inherit;
 }
 .tm-home-hero-poster-face > img {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: inherit;
   opacity: 1;
   filter: none;
   transform: none;
@@ -564,7 +568,7 @@ html[data-tm-reduced-motion='true'] .tm-home-hero-thumb-progress {
 @media (hover: hover) and (pointer: fine) {
   .tm-home-hero-poster:hover,
   .tm-home-hero-poster:focus-within {
-    z-index: 5;
+    z-index: 3;
   }
   .tm-home-hero-poster-surface:hover,
   .tm-home-hero-poster-surface:focus-visible {
@@ -616,7 +620,9 @@ html[data-tm-reduced-motion='true'] .tm-home-hero-thumb-progress {
   .tm-home-hero-panel[data-showcase='true'] .tm-home-hero-description {
     font-size: 14px;
   }
-  .tm-home-hero-panel[data-showcase='true'] .tm-home-hero-actions .tm-btn {
+  .tm-home-hero-panel[data-showcase='true']
+    .tm-home-hero-actions
+    .tm-home-hero-action {
     padding-inline: 14px;
     font-size: 14px;
     min-height: 44px;
@@ -640,7 +646,9 @@ html[data-tm-reduced-motion='true'] .tm-home-hero-thumb-progress {
   }
 }
 @media (max-width: 599px) {
+  /* 手机上首页大图贴满屏宽 */
   .tm-home-hero {
+    margin-inline: calc(var(--tm-content-gutter) * -1);
     margin-top: 12px;
   }
   .tm-home-hero-panel[data-showcase='true'] {
@@ -662,7 +670,9 @@ html[data-tm-reduced-motion='true'] .tm-home-hero-thumb-progress {
   .tm-home-hero-panel[data-showcase='true'] .tm-home-hero-description {
     font-size: 14px;
   }
-  .tm-home-hero-panel[data-showcase='true'] .tm-home-hero-actions .tm-btn {
+  .tm-home-hero-panel[data-showcase='true']
+    .tm-home-hero-actions
+    .tm-home-hero-action {
     font-size: 15px;
     min-height: 48px;
   }
@@ -679,15 +689,14 @@ html[data-tm-reduced-motion='true'] .tm-home-hero-thumb-progress {
     left: 50%;
     top: 50%;
   }
-  .tm-home-hero-poster-left,
-  .tm-home-hero-poster-right {
+  .tm-home-hero-poster-left {
     width: min(31%, 108px);
     top: 54%;
-  }
-  .tm-home-hero-poster-left {
     left: 18%;
   }
   .tm-home-hero-poster-right {
+    width: min(31%, 108px);
+    top: 54%;
     left: 82%;
   }
   .tm-home-hero-controls {
@@ -741,15 +750,15 @@ html[data-tm-reduced-motion='true'] .tm-home-hero-poster-surface::after {
 .tm-home-pair > * {
   min-width: 0;
 }
-.tm-home-pair + .tm-section,
-.tm-home-pair + .tm-home-tools + .tm-section {
+.tm-home-pair + .tm-home-section,
+.tm-home-pair + .tm-home-tools + .tm-home-section {
   margin-top: 28px;
 }
-.tm-home-pair .tm-section-header {
+.tm-home-pair .tm-home-section-header {
   align-items: center;
   margin-bottom: 12px;
 }
-.tm-home-pair .tm-section-link {
+.tm-home-pair .tm-home-section-link {
   min-height: 44px;
 }
 .tm-home-resume {
@@ -762,8 +771,7 @@ html[data-tm-reduced-motion='true'] .tm-home-hero-poster-surface::after {
 .tm-home-pair .tm-video-card[data-compact='true'] .tm-media-initial {
   font-size: 32px;
 }
-.tm-home-resume-details,
-.tm-home-room-details {
+.tm-home-resume-details {
   min-width: 0;
 }
 .tm-home-resume-details strong,
@@ -775,8 +783,7 @@ html[data-tm-reduced-motion='true'] .tm-home-hero-poster-surface::after {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.tm-home-resume-details small,
-.tm-home-room-details small {
+.tm-home-resume-details small {
   display: block;
   overflow: hidden;
   margin-top: 5px;
@@ -827,12 +834,19 @@ html[data-tm-reduced-motion='true'] .tm-home-hero-poster-surface::after {
   object-fit: cover;
 }
 .tm-home-room-details {
+  min-width: 0;
   flex: 1;
 }
 .tm-home-room-details small {
   display: flex;
   align-items: center;
   gap: 6px;
+  overflow: hidden;
+  margin-top: 5px;
+  font-size: var(--tm-fs-caption);
+  color: var(--tm-muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .tm-home-room-create-link {
   display: inline-flex;
@@ -845,6 +859,7 @@ html[data-tm-reduced-motion='true'] .tm-home-hero-poster-surface::after {
   padding-inline: 12px;
   border: 1px solid var(--tm-line);
   border-radius: var(--tm-radius-sm);
+  margin-left: auto;
   font-size: var(--tm-fs-caption);
   color: var(--tm-text);
   transition: background-color var(--tm-d-hover) var(--tm-ease-out),
@@ -857,9 +872,6 @@ html[data-tm-reduced-motion='true'] .tm-home-hero-poster-surface::after {
   gap: 8px;
   font-size: var(--tm-fs-caption);
   color: var(--tm-muted);
-}
-.tm-home-room-create-link {
-  margin-left: auto;
 }
 .tm-home-personal-skeleton {
   display: flex;
@@ -952,21 +964,21 @@ html[data-tm-reduced-motion='true'] .tm-home-room-create-link {
     );
 }
 @media (max-width: 899px) {
-  .tm-home-body .tm-poster-grid {
+  .tm-home-body .tm-home-grid {
     display: flex;
     overflow-x: auto;
     scroll-snap-type: x mandatory;
     padding-block: 8px 20px;
     margin-block: -8px -20px;
   }
-  .tm-home-body .tm-poster-grid > * {
+  .tm-home-body .tm-home-grid > * {
     flex: 0 0 28%;
     min-width: 0;
     scroll-snap-align: start;
   }
 }
 @media (max-width: 599px) {
-  .tm-home-body .tm-poster-grid > * {
+  .tm-home-body .tm-home-grid > * {
     flex-basis: 40%;
   }
 }
@@ -995,28 +1007,12 @@ html[data-tm-reduced-motion='true'] .tm-home-room-create-link {
   border-radius: var(--tm-radius-md);
 }
 
-/* 影片详情等处的氛围背景 */
-.tm-detail-ambient {
-  position: absolute;
-  inset: 0;
-  overflow: hidden;
-  opacity: 0.35;
-  pointer-events: none;
-}
-.tm-detail-ambient img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  transform: scale(1.4);
-  filter: blur(80px) saturate(1.3);
-}
-
 /* —— 偏好：关闭模糊 / 减少动态 —— */
-html[data-tm-no-blur='true'] :is(.tm-detail-ambient img, .tm-home-hero-image) {
+html[data-tm-no-blur='true'] .tm-home-hero-image {
   filter: none;
 }
 @media (prefers-reduced-transparency: reduce) {
-  .tm-home-hero .tm-btn-art-glass {
+  .tm-home-hero .tm-home-hero-action-glass {
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
     background: var(--tm-scrim);
@@ -1078,7 +1074,7 @@ html[data-tm-no-blur='true'] :is(.tm-detail-ambient img, .tm-home-hero-image) {
     gap: calc(10 * var(--tm-wide-unit));
     margin-top: calc(28 * var(--tm-wide-unit));
   }
-  .tm-home-hero-actions .tm-btn {
+  .tm-home-hero-actions .tm-home-hero-action {
     min-height: calc(44 * var(--tm-wide-unit));
     padding-inline: calc(20 * var(--tm-wide-unit));
     font-size: calc(14 * var(--tm-wide-unit));
@@ -1093,11 +1089,14 @@ html[data-tm-no-blur='true'] :is(.tm-detail-ambient img, .tm-home-hero-image) {
   .tm-home-hero-thumb {
     width: calc(96 * var(--tm-wide-unit));
   }
-  .tm-home-body .tm-section-header {
+  .tm-home-body .tm-home-section-header {
     margin-bottom: calc(16 * var(--tm-wide-unit));
   }
-  .tm-home-body .tm-section-title {
+  .tm-home-body .tm-home-section-title {
     line-height: 1.6;
+  }
+  .tm-library-grid .tm-media-initial {
+    font-size: calc(48 * var(--tm-wide-unit));
   }
   .tm-home-body .tm-media-initial {
     font-size: calc(48 * var(--tm-wide-unit));
@@ -1135,4 +1134,25 @@ html[data-tm-no-blur='true'] :is(.tm-detail-ambient img, .tm-home-hero-image) {
 /* 大图区的预告片：不接点击，点击交给大图本身 */
 .tm-home-hero-youtube {
   pointer-events: none;
+}
+
+/* —— 手机上的首页：顶栏不占位，大图铺到屏幕最顶（顶栏按钮浮在图上） —— */
+:where(html:is([data-tm-device='phone'], [data-tm-device='phone-landscape']))
+  .tm-shell[data-page='/']
+  .tm-home {
+  padding-top: 0;
+}
+:where(html:is([data-tm-device='phone'], [data-tm-device='phone-landscape']))
+  .tm-shell[data-page='/']
+  .tm-home-hero {
+  margin-top: 0;
+}
+/* 首页大图在手机上铺到屏幕最顶（顶栏按钮浮在图上），不再留一条空带 */
+@media (max-width: 599px) {
+  .tm-shell[data-tab='true'][data-page='/'] .tm-home-hero {
+    margin-top: calc(-1 * (var(--tm-safe-top) + var(--tm-header-height)));
+  }
+  .tm-shell[data-tab='true'][data-page='/'] .tm-home-hero-panel {
+    padding-top: calc(var(--tm-safe-top) + var(--tm-header-height));
+  }
 }

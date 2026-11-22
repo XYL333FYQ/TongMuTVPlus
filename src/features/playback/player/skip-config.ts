@@ -6,11 +6,11 @@ import type { Dispatch, MutableRefObject, SetStateAction } from 'react';
 
 import { deleteSkipConfig, saveSkipConfig } from '@/lib/db.client';
 
-import type { Art } from '@/features/player';
+import type { Art, ArtSettingOption } from '@/features/player';
 
 /** 页面传进来的状态和函数（名字和页面里的一样） */
 export interface SkipConfigContext {
-  artPlayerRef: MutableRefObject<Art>;
+  artPlayerRef: MutableRefObject<Art | null>;
   currentIdRef: MutableRefObject<string>;
   currentSourceRef: MutableRefObject<string>;
   formatTime: (seconds: number) => string;
@@ -56,7 +56,7 @@ export function makeHandleSkipConfigChange(ctx: SkipConfigContext) {
               name: '跳过片头片尾',
               html: '跳过片头片尾',
               switch: skipConfigRef.current.enable,
-              onSwitch: function (item: Art) {
+              onSwitch: function (item: ArtSettingOption) {
                 const newConfig = {
                   ...skipConfigRef.current,
                   enable: !item.switch,

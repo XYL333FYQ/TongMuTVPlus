@@ -21,7 +21,7 @@ export default function EpisodePanel({
 }: EpisodePanelProps) {
   return (
     <div
-      className={`relative z-[1] h-[350px] wide:h-full md:overflow-hidden transition-all duration-300 ease-in-out tm-solo-selector ${
+      className={`relative z-[1] h-[350px] wide:h-full md:overflow-hidden transition-all duration-300 ease-in-out tm-solo-selector tm-solo-sheet ${
         collapsed
           ? 'wide:col-span-1 wide:hidden wide:opacity-0 wide:scale-95'
           : 'wide:col-span-1 wide:opacity-100 wide:scale-100'

@@ -6,7 +6,7 @@ import type { Art } from '@/features/player';
 
 /** 页面传进来的状态和函数（名字和页面里的一样） */
 export interface LocalDownloadContext {
-  enableOfflineDownload: Art;
+  enableOfflineDownload: boolean;
   hasOfflinePermission: boolean;
 }
 

@@ -6,34 +6,15 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import {
-  Suspense,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 
-import { isAnimeCategoryText } from '@/lib/anime-keyword-expr';
 import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
-import { initDanmakuModule } from '@/lib/danmaku/api';
-import { cleanEpisodeDisplayName } from '@/lib/danmaku/format';
 import {
-  deleteFavorite,
   generateStorageKey,
   getAllPlayRecords,
-  getDanmakuFilterConfig,
-  getEpisodeFilterConfig,
   getSkipConfig,
-  isFavorited,
-  saveFavorite,
-  subscribeToDataUpdates,
 } from '@/lib/db.client';
-import {
-  isEpisodeHiddenByFilter,
-  normalizeEpisodeFilterConfig,
-} from '@/lib/episode-filter';
+import { isEpisodeHiddenByFilter } from '@/lib/episode-filter';
 import {
   buildEpisodeProgressContentKey,
   loadLocalEpisodeProgress,
@@ -46,16 +27,9 @@ import {
   getEpisodeTitleCorrection,
 } from '@/lib/episode-title-correction';
 import { isNetdiskSource, normalizeNetdiskSource } from '@/lib/netdisk/source';
-import {
-  DEFAULT_QUICK_FORWARD_SECONDS,
-  DEFAULT_SEEK_STEP_SECONDS,
-  loadStoredSeconds,
-  QUICK_FORWARD_STORAGE_KEY,
-  SEEK_STEP_STORAGE_KEY,
-} from '@/lib/player-seek-settings';
 import { CUSTOM_SUBTITLE_ACCEPT } from '@/lib/subtitle-converter';
 import { getTMDBImageUrl } from '@/lib/tmdb-image-base';
-import { EpisodeFilterConfig, SearchResult } from '@/lib/types';
+import { SearchResult } from '@/lib/types';
 import { processImageUrl } from '@/lib/utils';
 import { useDeviceTier } from '@/hooks/useDeviceTier';
 import { useEnableAIComments } from '@/hooks/useEnableAIComments';
@@ -77,7 +51,9 @@ import { useWatchRoomContextSafe } from '@/components/WatchRoomProvider';
 
 import { useDownload } from '@/contexts/DownloadContext';
 import {
+  type Art,
   type DanmakuState,
+  type HlsInstance,
   type SourceSubtitle,
   Anime4KController,
   DanmakuController,
@@ -86,9 +62,18 @@ import {
   WatchPlayer,
 } from '@/features/player';
 
+import { useEpisodeNames } from './useEpisodeNames';
+import { useFavorite } from './useFavorite';
+import { useFilterConfigs } from './useFilterConfigs';
+import { useNetdiskTmdbMerge } from './useNetdiskTmdbMerge';
+import { usePlaybackFeatureFlags } from './usePlaybackFeatureFlags';
+import { usePlayerPreferences } from './usePlayerPreferences';
 import { makeLoadDoubanRating } from '../data/load-douban-rating';
 import { makeLoadSourceDetail } from '../data/load-source-detail';
-import { makeLoadTmdbBackdrop } from '../data/load-tmdb-backdrop';
+import {
+  type TmdbPlayDetails,
+  makeLoadTmdbBackdrop,
+} from '../data/load-tmdb-backdrop';
 import { makeHandleDownloadEpisode } from '../downloads/download-episode';
 import { checkFileSystemDownload } from '../downloads/file-system-download';
 import { makeCheckLocalDownload } from '../downloads/local-download';
@@ -99,7 +84,6 @@ import {
   NETDISK_HLS_PLAYBACK_MODE_KEY,
 } from '../lib/hls-modes';
 import { isHlsPlaybackUrl } from '../lib/playback-urls';
-import { seriesStatus } from '../lib/series-status';
 import {
   applyCorrection,
   applyCorrectionsToSources,
@@ -135,13 +119,6 @@ import { makeCalculateSourceScore } from '../sources/source-score';
 import { makeFetchCurrentSourceVideoInfo } from '../sources/source-video-info';
 import { makeUpdateVideoUrl } from '../sources/update-video-url';
 
-// 扩展 HTMLVideoElement 类型以支持 hls 属性
-declare global {
-  interface HTMLVideoElement {
-    hls?: any;
-  }
-}
-
 function PlayPageClient() {
   const LOCAL_TRANSCODER_BASE_URL = 'http://localhost:19080';
   const router = useRouter();
@@ -174,7 +151,7 @@ function PlayPageClient() {
   // 离线下载功能配置
   const enableOfflineDownload =
     typeof window !== 'undefined'
-      ? (window as any).RUNTIME_CONFIG?.ENABLE_OFFLINE_DOWNLOAD || false
+      ? window.RUNTIME_CONFIG?.ENABLE_OFFLINE_DOWNLOAD || false
       : false;
   const hasOfflinePermission =
     authInfo?.role === 'owner' || authInfo?.role === 'admin';
@@ -229,16 +206,8 @@ function PlayPageClient() {
   const [titleCorrection, setTitleCorrection] =
     useState<EpisodeTitleCorrection>({});
 
-  // 收藏状态
-  const [favorited, setFavorited] = useState(false);
-
-  // 网盘搜索是否开启
-  const [netdiskSearchEnabled, setNetdiskSearchEnabled] = useState(false);
-
-  // AI问片状态
-  const [aiEnabled, setAiEnabled] = useState(false);
-  const [aiDefaultMessageWithVideo, setAiDefaultMessageWithVideo] =
-    useState('');
+  const { netdiskSearchEnabled, aiEnabled, aiDefaultMessageWithVideo } =
+    usePlaybackFeatureFlags();
 
   // 快捷键说明弹窗状态
   const [showShortcutDialog, setShowShortcutDialog] = useState(false);
@@ -248,64 +217,8 @@ function PlayPageClient() {
   const drawers = usePlaybackDrawers(isLargeScreen);
   const openDrawer = drawers.show;
 
-  // 检查AI功能是否启用
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const enabled =
-        (window as any).RUNTIME_CONFIG?.AI_ENABLED &&
-        (window as any).RUNTIME_CONFIG?.AI_ENABLE_PLAYPAGE_ENTRY;
-      setAiEnabled(enabled);
-
-      // 加载AI默认消息配置
-      const defaultMsg = (window as any).RUNTIME_CONFIG
-        ?.AI_DEFAULT_MESSAGE_WITH_VIDEO;
-      if (defaultMsg) {
-        setAiDefaultMessageWithVideo(defaultMsg);
-      }
-    }
-  }, []);
-
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      setNetdiskSearchEnabled(
-        !!(window as any).RUNTIME_CONFIG?.NETDISK_SEARCH_ENABLED
-      );
-    }
-  }, []);
-
   // 网页全屏状态 - 控制导航栏的显示隐藏
   const [isWebFullscreen, setIsWebFullscreen] = useState(false);
-  // 原生全屏状态
-  const [isNativeFullscreen, setIsNativeFullscreen] = useState(false);
-
-  // 监听浏览器原生全屏事件
-  useEffect(() => {
-    const handleFullscreenChange = () => {
-      const isFullscreen = !!document.fullscreenElement;
-      setIsNativeFullscreen(isFullscreen);
-    };
-
-    document.addEventListener('fullscreenchange', handleFullscreenChange);
-    document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
-    document.addEventListener('mozfullscreenchange', handleFullscreenChange);
-    document.addEventListener('MSFullscreenChange', handleFullscreenChange);
-
-    return () => {
-      document.removeEventListener('fullscreenchange', handleFullscreenChange);
-      document.removeEventListener(
-        'webkitfullscreenchange',
-        handleFullscreenChange
-      );
-      document.removeEventListener(
-        'mozfullscreenchange',
-        handleFullscreenChange
-      );
-      document.removeEventListener(
-        'MSFullscreenChange',
-        handleFullscreenChange
-      );
-    };
-  }, []);
 
   // 组件卸载时停掉链接续期
   useEffect(() => {
@@ -314,78 +227,25 @@ function PlayPageClient() {
     };
   }, []);
 
-  // 跳过片头片尾配置
-  const [skipConfig, setSkipConfig] = useState<{
-    enable: boolean;
-    intro_time: number;
-    outro_time: number;
-  }>({
-    enable: false,
-    intro_time: 0,
-    outro_time: 0,
-  });
-  const skipConfigRef = useRef(skipConfig);
-  useEffect(() => {
-    skipConfigRef.current = skipConfig;
-  }, [
-    skipConfig,
-    skipConfig.enable,
-    skipConfig.intro_time,
-    skipConfig.outro_time,
-  ]);
-
-  // 快捷快进（P 键和控制栏按钮，默认 90 秒）
-  const [quickForwardSeconds, setQuickForwardSeconds] = useState(() =>
-    loadStoredSeconds(QUICK_FORWARD_STORAGE_KEY, DEFAULT_QUICK_FORWARD_SECONDS)
-  );
-  const quickForwardSecondsRef = useRef(quickForwardSeconds);
-  useEffect(() => {
-    quickForwardSecondsRef.current = quickForwardSeconds;
-  }, [quickForwardSeconds]);
-
-  // 左右方向键快进/倒退（默认 10 秒）
-  const [seekStepSeconds, setSeekStepSeconds] = useState(() =>
-    loadStoredSeconds(SEEK_STEP_STORAGE_KEY, DEFAULT_SEEK_STEP_SECONDS)
-  );
-  const seekStepSecondsRef = useRef(seekStepSeconds);
-  useEffect(() => {
-    seekStepSecondsRef.current = seekStepSeconds;
-  }, [seekStepSeconds]);
+  const {
+    setSkipConfig,
+    skipConfigRef,
+    setQuickForwardSeconds,
+    quickForwardSecondsRef,
+    setSeekStepSeconds,
+    seekStepSecondsRef,
+    blockAdEnabled,
+    setBlockAdEnabled,
+    blockAdEnabledRef,
+    externalPlayerAdBlock,
+    setExternalPlayerAdBlock,
+    danmakuHeatmapDisabledRef,
+    setDanmakuHeatmapEnabled,
+    danmakuHeatmapEnabledRef,
+  } = usePlayerPreferences();
 
   // 跳过检查的时间间隔控制
   const lastSkipCheckRef = useRef(0);
-
-  // 去广告开关（从 localStorage 继承，默认 true）
-  const [blockAdEnabled, setBlockAdEnabled] = useState<boolean>(() => {
-    if (typeof window !== 'undefined') {
-      const v = localStorage.getItem('enable_blockad');
-      if (v !== null) return v === 'true';
-    }
-    return true;
-  });
-  const blockAdEnabledRef = useRef(blockAdEnabled);
-  useEffect(() => {
-    blockAdEnabledRef.current = blockAdEnabled;
-  }, [blockAdEnabled]);
-
-  // 工具栏去广告开关：用于外部播放器及鸿蒙原生 HLS，默认 false
-  const [externalPlayerAdBlock, setExternalPlayerAdBlock] = useState<boolean>(
-    () => {
-      if (typeof window !== 'undefined') {
-        const v = localStorage.getItem('external_player_adblock');
-        if (v !== null) return v === 'true';
-      }
-      return false;
-    }
-  );
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(
-        'external_player_adblock',
-        String(externalPlayerAdBlock)
-      );
-    }
-  }, [externalPlayerAdBlock]);
 
   // Anime4K 超分（内核 Anime4KController：开着时新实例自动重新启动；模式、倍数记在本机）
   const anime4kRef = useRef<Anime4KController | null>(null);
@@ -404,82 +264,17 @@ function PlayPageClient() {
       unsubscribe();
     };
   }, [danmaku]);
-  const [episodeFilterConfig, setEpisodeFilterConfig] =
-    useState<EpisodeFilterConfig | null>(null);
-  const episodeFilterConfigRef = useRef<EpisodeFilterConfig | null>(null);
-  // 弹幕热力图完全禁用开关（默认不禁用，即启用热力图功能）
-  const [danmakuHeatmapDisabled, setDanmakuHeatmapDisabled] = useState<boolean>(
-    () => {
-      if (typeof window !== 'undefined') {
-        const v = localStorage.getItem('danmaku_heatmap_disabled');
-        if (v !== null) return v === 'true';
-      }
-      return false; // 默认不禁用
-    }
-  );
-  const danmakuHeatmapDisabledRef = useRef(danmakuHeatmapDisabled);
-  useEffect(() => {
-    danmakuHeatmapDisabledRef.current = danmakuHeatmapDisabled;
-  }, [danmakuHeatmapDisabled]);
-
-  // 弹幕热力图开关（默认开启）
-  const [danmakuHeatmapEnabled, setDanmakuHeatmapEnabled] = useState<boolean>(
-    () => {
-      if (typeof window !== 'undefined') {
-        const v = localStorage.getItem('danmaku_heatmap_enabled');
-        if (v !== null) return v === 'true';
-      }
-      return true; // 默认开启
-    }
-  );
-  const danmakuHeatmapEnabledRef = useRef(danmakuHeatmapEnabled);
-  useEffect(() => {
-    danmakuHeatmapEnabledRef.current = danmakuHeatmapEnabled;
-  }, [danmakuHeatmapEnabled]);
-
+  const {
+    episodeFilterConfig,
+    setEpisodeFilterConfig,
+    episodeFilterConfigRef,
+  } = useFilterConfigs(danmaku);
   const [showDanmakuFilterSettings, setShowDanmakuFilterSettings] =
     useState(false);
   const [toast, setToast] = useState<ToastProps | null>(null);
   const showToast: ShowToast = (message, type) =>
     setToast({ message, type, onClose: () => setToast(null) });
   const [isTranscoding, setIsTranscoding] = useState(false);
-
-  // 初始化弹幕模块（清理过期缓存）
-  useEffect(() => {
-    initDanmakuModule();
-  }, []);
-
-  // 加载弹幕过滤配置
-  useEffect(() => {
-    const loadFilterConfig = async () => {
-      try {
-        const config = await getDanmakuFilterConfig();
-        danmaku.setFilter(config || { rules: [] });
-
-        // 加载集数过滤配置
-        const episodeConfig = await getEpisodeFilterConfig();
-        if (episodeConfig) {
-          const normalizedEpisodeConfig =
-            normalizeEpisodeFilterConfig(episodeConfig);
-          setEpisodeFilterConfig(normalizedEpisodeConfig);
-          episodeFilterConfigRef.current = normalizedEpisodeConfig;
-        } else {
-          const defaultEpisodeConfig: EpisodeFilterConfig =
-            normalizeEpisodeFilterConfig();
-          setEpisodeFilterConfig(defaultEpisodeConfig);
-          episodeFilterConfigRef.current = defaultEpisodeConfig;
-        }
-      } catch (error) {
-        console.error('加载过滤配置失败:', error);
-      }
-    };
-    loadFilterConfig();
-  }, []);
-
-  // 同步集数过滤配置到ref
-  useEffect(() => {
-    episodeFilterConfigRef.current = episodeFilterConfig;
-  }, [episodeFilterConfig]);
 
   // 视频基本信息
   const [videoTitle, setVideoTitle] = useState(searchParams.get('title') || '');
@@ -514,9 +309,8 @@ function PlayPageClient() {
     year?: string;
     tmdbId?: number;
   } | null>(null);
-  const [pendingNetdiskTMDBData, setPendingNetdiskTMDBData] = useState<
-    any | null
-  >(null);
+  const [pendingNetdiskTMDBData, setPendingNetdiskTMDBData] =
+    useState<TmdbPlayDetails | null>(null);
 
   // 当前源和ID - source 直接存储完整格式（如 'emby_wumei' 或 'emby'）
   const [currentSource, setCurrentSource] = useState(
@@ -530,18 +324,6 @@ function PlayPageClient() {
     setNetdiskTMDBMeta(null);
     setPendingNetdiskTMDBData(null);
   }, [currentSource, currentId]);
-
-  // 解析 source 参数以获取 embyKey（仅用于 API 调用）
-  const parseSourceForApi = (
-    source: string
-  ): { source: string; embyKey?: string } => {
-    source = normalizeNetdiskSource(source);
-    if (source.startsWith('emby_')) {
-      const key = source.substring(5);
-      return { source: 'emby', embyKey: key };
-    }
-    return { source };
-  };
 
   const isLazyDetailSource = (source?: string) => {
     if (!source) return false;
@@ -751,222 +533,34 @@ function PlayPageClient() {
     [videoTitle, videoDoubanId, isDirectPlay]
   );
 
-  // 复用背景请求解析出的 tmdbId，拉取该剧集当前季的分集名称（懒加载，按需触发）
-  const loadTmdbEpisodeNames = useCallback(
-    async (tmdbIdStr: string, seasonOverride?: number) => {
-      try {
-        const [mediaType, idPart] = tmdbIdStr.split(':');
-        const id = parseInt(idPart, 10);
-        if (mediaType !== 'tv' || !id) {
-          return;
-        }
-
-        // 季度：优先手动指定，否则从标题解析，缺省第 1 季
-        let seasonNumber = seasonOverride;
-        if (!seasonNumber || seasonNumber < 1) {
-          const seasonMatch =
-            videoTitle?.match(/第\s*(\d+)\s*[季部]/) ||
-            videoTitle?.match(/[Ss]eason\s*(\d+)/) ||
-            videoTitle?.match(/\bS(\d+)\b/);
-          const parsedSeason = seasonMatch ? parseInt(seasonMatch[1], 10) : NaN;
-          seasonNumber =
-            Number.isNaN(parsedSeason) || parsedSeason < 1 ? 1 : parsedSeason;
-        }
-
-        // 指纹含 id + 季，避免重复拉取；手动改季时可重新拉取
-        const fingerprint = `${tmdbIdStr}#s${seasonNumber}`;
-        if (tmdbEpisodesFetchedIdRef.current === fingerprint) {
-          return;
-        }
-        tmdbEpisodesFetchedIdRef.current = fingerprint;
-
-        const resp = await fetch(
-          `/api/tmdb/episodes?id=${id}&season=${seasonNumber}`
-        );
-        if (!resp.ok) return;
-        const season = await resp.json();
-        const eps = season?.episodes;
-        if (!Array.isArray(eps) || eps.length === 0) return;
-
-        const names: string[] = [];
-        eps.forEach((ep: any) => {
-          const num =
-            typeof ep?.episode_number === 'number' ? ep.episode_number : NaN;
-          if (!Number.isNaN(num) && num >= 1 && ep?.name) {
-            names[num - 1] = String(ep.name);
-          }
-        });
-        if (names.some((n) => n && n.trim() !== '')) {
-          setTmdbEpisodeNames(names);
-        }
-      } catch (err) {
-        console.error('获取TMDB分集名称失败:', err);
-      }
-    },
-    [videoTitle]
-  );
-
-  // 换剧时重置分集名相关状态
-  useEffect(() => {
-    tmdbEpisodesFetchedIdRef.current = null;
-    setTmdbEpisodeNames([]);
-  }, [videoTitle]);
-
   // 总集数
   const totalEpisodes = detail?.episodes?.length || 0;
 
-  // 是否为动漫内容（决定分集名来源优先级：动漫弹幕优先，非动漫 TMDB 优先）
-  const isAnimeContent = useMemo(
-    () => isAnimeCategoryText(detail?.type_name, detail?.class),
-    [detail?.type_name, detail?.class]
-  );
-
-  // 分集标题里出现多个季度（SxxExx 中含 ≥2 个不同季号）时，弹幕（按番剧单季编号）无法跨季对齐、不可靠，
-  // 此时无论是否动漫都改用 TMDB。
-  const hasMultipleSeasons = useMemo(() => {
-    const titles = detail?.episodes_titles;
-    if (!titles || titles.length === 0) return false;
-    const seasons = new Set<number>();
-    for (const t of titles) {
-      const m = t?.match(/[Ss](\d+)[Ee]\d+/);
-      if (m) seasons.add(parseInt(m[1], 10));
-      if (seasons.size >= 2) return true;
-    }
-    return false;
-  }, [detail?.episodes_titles]);
-
-  // 分集名是否 TMDB 优先：手动矫正优先（弹幕优先→false / 指定 TMDB→true），
-  // 否则默认按类型：非动漫，或虽是动漫但含多个季度（弹幕不可靠）
-  const preferTmdbNames = titleCorrection.preferDanmaku
-    ? false
-    : titleCorrection.tmdbId
-    ? true
-    : !isAnimeContent || hasMultipleSeasons;
-
-  // 手动指定的 TMDB 剧集串（覆盖自动解析）
-  const effectiveTmdbIdStr = titleCorrection.tmdbId
-    ? `tv:${titleCorrection.tmdbId}`
-    : resolvedTmdbIdStr;
-
-  // 弹幕分集名（按番号对齐视频集，需完整分集列表；由 LRU 缓存或主动搜索提供）。
-  // 去掉来源标记与集号后仍有实质内容才返回，否则返回 null（视为不可用）。
-  const danmakuRichNames = useMemo<(string | undefined)[] | null>(() => {
-    if (totalEpisodes <= 1) return null;
-    if (episodeTitleFetchDisabled) return null;
-    if (danmakuState.episodes.length === 0) return null;
-
-    const extractEpNum = (title?: string): number | null => {
-      if (!title) return null;
-      const emby = title.match(/[Ss]\d+[Ee](\d+)/);
-      if (emby) return parseInt(emby[1], 10);
-      const zh = title.match(/^(\d+)$|第?\s*(\d+)\s*[集话話]?/);
-      return zh ? parseInt(zh[1] || zh[2], 10) : null;
-    };
-
-    // 番号 -> 弹幕标题，便于按集数对齐；无番号时回退索引对齐
-    const byNumber = new Map<number, string>();
-    danmakuState.episodes.forEach((ep) => {
-      const num = extractEpNum(ep.episodeTitle);
-      if (num !== null && !byNumber.has(num)) {
-        byNumber.set(num, ep.episodeTitle);
-      }
-    });
-
-    const names: (string | undefined)[] = [];
-    for (let i = 0; i < totalEpisodes; i += 1) {
-      const videoNum = extractEpNum(detail?.episodes_titles?.[i]) ?? i + 1;
-      const matched = byNumber.get(videoNum);
-      const fallback = danmakuState.episodes[i]?.episodeTitle;
-      const name = cleanEpisodeDisplayName(matched || fallback);
-      names[i] = name || undefined;
-    }
-    return names.some((n) => n) ? names : null;
-  }, [
-    totalEpisodes,
-    episodeTitleFetchDisabled,
-    danmakuState.episodes,
-    detail?.episodes_titles,
-  ]);
-
-  // 拉取 TMDB 分集名。TMDB 优先（非动漫或多季度动漫）：解析出 tmdbId 后即请求；
-  // 弹幕优先（单季动漫）：先等弹幕自动装填「尘埃落定」，且仅在弹幕未产出可用标题时才降级拉 TMDB。
-  // 手动「弹幕优先」时完全不搜 TMDB；手动指定 TMDB 时用指定的 id/季。
-  useEffect(() => {
-    if (isDirectPlay) return;
-    if (episodeTitleFetchDisabled) return;
-    if (titleCorrection.preferDanmaku) return; // 弹幕优先：不搜 TMDB
-    if (!detail) return; // 等类型判定就绪，避免误判非动漫而抢先拉 TMDB
-    if (!effectiveTmdbIdStr) return;
-    if (!preferTmdbNames) {
-      if (danmakuRichNames) return; // 弹幕已够用，无需 TMDB
-      if (!danmakuState.settled) return; // 弹幕优先：先等弹幕落定再决定是否降级
-    }
-    loadTmdbEpisodeNames(effectiveTmdbIdStr, titleCorrection.season);
-  }, [
-    isDirectPlay,
-    episodeTitleFetchDisabled,
-    titleCorrection.preferDanmaku,
-    titleCorrection.season,
+  // 选集面板里每一集的名字（弹幕库 / TMDB）
+  const richEpisodeNames = useEpisodeNames({
     detail,
-    effectiveTmdbIdStr,
-    preferTmdbNames,
-    danmakuRichNames,
-    danmakuState.settled,
-    loadTmdbEpisodeNames,
-  ]);
+    videoTitle,
+    isDirectPlay,
+    totalEpisodes,
+    titleCorrection,
+    episodeTitleFetchDisabled,
+    danmakuState,
+    resolvedTmdbIdStr,
+    tmdbEpisodeNames,
+    setTmdbEpisodeNames,
+    tmdbEpisodesFetchedIdRef,
+  });
 
-  useEffect(() => {
-    if (pendingNetdiskTMDBData && isNetdiskSource(detail?.source)) {
-      const currentDetail = detail;
-      if (!currentDetail) {
-        return;
-      }
-      const pending = pendingNetdiskTMDBData;
-      setPendingNetdiskTMDBData(null);
-      const tmdbYear = pending.releaseDate?.split('-')[0] || '';
-      const shouldReplaceDesc =
-        !currentDetail.desc ||
-        currentDetail.desc.startsWith('临时播放目录：') ||
-        currentDetail.desc.startsWith('移动云盘分享：');
-      const resolvedTmdbId =
-        typeof pending.tmdbId === 'string'
-          ? Number(String(pending.tmdbId).split(':')[1] || 0)
-          : pending.tmdbId;
-
-      setNetdiskTMDBMeta({
-        desc: shouldReplaceDesc
-          ? pending.overview || currentDetail.desc
-          : currentDetail.desc,
-        poster: currentDetail.poster || pending.poster || '',
-        year: currentDetail.year || tmdbYear,
-        tmdbId: currentDetail.tmdb_id || resolvedTmdbId,
-      });
-
-      setDetail((prev) =>
-        prev && isNetdiskSource(prev.source)
-          ? {
-              ...prev,
-              poster: prev.poster || pending.poster || '',
-              year: prev.year || tmdbYear,
-              desc: shouldReplaceDesc
-                ? pending.overview || prev.desc
-                : prev.desc,
-              tmdb_id: prev.tmdb_id || resolvedTmdbId,
-            }
-          : prev
-      );
-
-      if (pending.poster && !currentDetail.poster) {
-        setVideoCover(processImageUrl(pending.poster));
-      }
-      if (tmdbYear && !currentDetail.year) {
-        setVideoYear(tmdbYear);
-      }
-      if (pending.overview) {
-        setCorrectedDesc(pending.overview);
-      }
-    }
-  }, [pendingNetdiskTMDBData, detail]);
+  useNetdiskTmdbMerge({
+    detail,
+    pendingNetdiskTMDBData,
+    setPendingNetdiskTMDBData,
+    setNetdiskTMDBMeta,
+    setDetail,
+    setVideoCover,
+    setVideoYear,
+    setCorrectedDesc,
+  });
 
   // 视频播放地址
   const [videoUrl, setVideoUrl] = useState('');
@@ -1108,38 +702,6 @@ function PlayPageClient() {
         detail.source.startsWith('emby'))
   );
 
-  // TMDB 分集名。TMDB(zh-CN)对无本地化标题的集数会返回「第 N 集」占位，
-  // 与弹幕一样用 cleanEpisodeDisplayName 去集号：整列去号后无实质内容视为无有效名字（null），
-  // 避免占位名把选集面板误切到列表视图。
-  // 起始集数（startEpisode）：视频第 1 集对应 TMDB 第 startEpisode 集，据此平移取名。
-  const tmdbRichNames = useMemo<(string | undefined)[] | null>(() => {
-    if (totalEpisodes <= 1) return null;
-    if (episodeTitleFetchDisabled) return null;
-    const offset = Math.max(1, titleCorrection.startEpisode ?? 1) - 1;
-    const names = Array.from({ length: totalEpisodes }, (_, i) => {
-      const cleaned = cleanEpisodeDisplayName(tmdbEpisodeNames[offset + i]);
-      return cleaned || undefined;
-    });
-    return names.some((n) => n) ? names : null;
-  }, [
-    totalEpisodes,
-    episodeTitleFetchDisabled,
-    tmdbEpisodeNames,
-    titleCorrection.startEpisode,
-  ]);
-
-  // 选集列表的分集名称。优先级：
-  //   单季动漫：弹幕优先（可纠错性高、番剧标题更贴合），降级 TMDB
-  //   非动漫 / 多季度动漫：TMDB 优先，降级弹幕
-  const richEpisodeNames = useMemo<(string | undefined)[]>(() => {
-    const ordered = preferTmdbNames
-      ? [tmdbRichNames, danmakuRichNames]
-      : [danmakuRichNames, tmdbRichNames];
-    for (const names of ordered) {
-      if (names) return names;
-    }
-    return [];
-  }, [preferTmdbNames, danmakuRichNames, tmdbRichNames]);
   const directEpisodeLabel =
     detail?.episodes_titles?.[currentEpisodeIndex] || '直链';
   const shouldShowEpisodeLabel = totalEpisodes > 1 || isDirectPlay;
@@ -1199,7 +761,7 @@ function PlayPageClient() {
   const resumePlayingAfterHlsModeSwitchRef = useRef<boolean | null>(null);
   // 播放记录跳转按钮状态
   const playRecordJumpDismissedRef = useRef(false); // 记录用户是否已经关闭过跳转按钮
-  const playRecordJumpLayerRef = useRef<any>(null); // 保存跳转按钮层的引用
+  const playRecordJumpLayerRef = useRef<HTMLElement | null>(null); // 保存跳转按钮层的引用
   const playRecordJumpInitialCheckRef = useRef(true); // 记录是否是首次检查播放记录
   // 上次使用的音量，默认 0.7
   const lastVolumeRef = useRef<number>(0.7);
@@ -1394,10 +956,10 @@ function PlayPageClient() {
 
   // 下集预缓存相关
   const nextEpisodePreCacheTriggeredRef = useRef<boolean>(false);
-  const nextEpisodePreCacheHlsRef = useRef<any>(null);
+  const nextEpisodePreCacheHlsRef = useRef<HlsInstance | null>(null);
   const nextEpisodeDanmakuPreloadTriggeredRef = useRef<boolean>(false);
 
-  const artPlayerRef = useRef<any>(null);
+  const artPlayerRef = useRef<Art | null>(null);
   const artRef = useRef<HTMLDivElement | null>(null);
   // 换集重建播放器前记住网页全屏状态，新播放器 ready 后恢复
   const restoreWebFullscreenOnReadyRef = useRef(false);
@@ -1548,9 +1110,9 @@ function PlayPageClient() {
       // 创建成功直接进房间页：同一个播放实例从整页变成房间里的画面，不会重建；
       // 空房间会自动接着这部影片和当前进度一起看（RoomPlaybackBridge）。
       router.push(`/watch-room?room=${encodeURIComponent(room.id)}`);
-    } catch (error: any) {
+    } catch (error) {
       setToast({
-        message: error?.message || '创建观影室失败',
+        message: (error as Error | null)?.message || '创建观影室失败',
         type: 'error',
         duration: 3000,
         onClose: () => setToast(null),
@@ -1590,7 +1152,7 @@ function PlayPageClient() {
 
   const cleanupLocalPlaybackBlobUrls = () => {
     if (typeof window === 'undefined') return;
-    const urls = (window as any).__localFileBlobUrls;
+    const urls = window.__localFileBlobUrls;
     if (Array.isArray(urls)) {
       urls.forEach((url) => {
         if (typeof url === 'string' && url.startsWith('blob:')) {
@@ -1598,7 +1160,7 @@ function PlayPageClient() {
         }
       });
     }
-    (window as any).__localFileBlobUrls = [];
+    window.__localFileBlobUrls = [];
   };
 
   // 检查是否有本地下载的视频
@@ -2193,69 +1755,15 @@ function PlayPageClient() {
   // ---------------------------------------------------------------------------
   // 收藏相关
   // ---------------------------------------------------------------------------
-  // 每当 source 或 id 变化时检查收藏状态
-  useEffect(() => {
-    if (!currentSource || !currentId) return;
-    (async () => {
-      try {
-        const fav = await isFavorited(currentSource, currentId);
-        setFavorited(fav);
-      } catch (err) {
-        console.error('检查收藏状态失败:', err);
-      }
-    })();
-  }, [currentSource, currentId]);
-
-  // 监听收藏数据更新事件
-  useEffect(() => {
-    if (!currentSource || !currentId) return;
-
-    const unsubscribe = subscribeToDataUpdates(
-      'favoritesUpdated',
-      (favorites: Record<string, any>) => {
-        const key = generateStorageKey(currentSource, currentId);
-        const isFav = !!favorites[key];
-        setFavorited(isFav);
-      }
-    );
-
-    return unsubscribe;
-  }, [currentSource, currentId]);
-
-  // 切换收藏
-  const handleToggleFavorite = async () => {
-    if (
-      !videoTitleRef.current ||
-      !detailRef.current ||
-      !currentSourceRef.current ||
-      !currentIdRef.current
-    )
-      return;
-
-    try {
-      if (favorited) {
-        // 如果已收藏，删除收藏
-        await deleteFavorite(currentSourceRef.current, currentIdRef.current);
-        setFavorited(false);
-      } else {
-        // 如果未收藏，添加收藏
-        await saveFavorite(currentSourceRef.current, currentIdRef.current, {
-          title: videoTitleRef.current,
-          source_name: detailRef.current?.source_name || '',
-          year: detailRef.current?.year || 'unknown',
-          cover: detailRef.current?.poster || '',
-          total_episodes: detailRef.current?.episodes.length || 1,
-          save_time: Date.now(),
-          search_title: searchTitle,
-          is_completed: seriesStatus(detailRef.current) === 'completed',
-          vod_remarks: detailRef.current?.vod_remarks,
-        });
-        setFavorited(true);
-      }
-    } catch (err) {
-      console.error('切换收藏失败:', err);
-    }
-  };
+  const { favorited, handleToggleFavorite } = useFavorite({
+    currentSource,
+    currentId,
+    searchTitle,
+    currentSourceRef,
+    currentIdRef,
+    videoTitleRef,
+    detailRef,
+  });
 
   // 纠错成功后的回调
   const handleCorrectSuccess = () => {

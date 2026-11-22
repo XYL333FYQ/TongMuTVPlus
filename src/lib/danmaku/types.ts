@@ -46,13 +46,16 @@ export interface DanmakuComment {
 }
 
 // 弹幕设置
+/** 弹幕插件接受的上下边距：像素数字，或百分比字符串（如 "50%"） */
+export type DanmakuMargin = number | `${number}%`;
+
 export interface DanmakuSettings {
   enabled: boolean; // 是否开启弹幕
   opacity: number; // 不透明度 (0-1)
   fontSize: number; // 字体大小
   speed: number; // 弹幕速度 (5-20)
-  marginTop: number; // 顶部边距
-  marginBottom: number | string; // 底部边距（数字或百分比字符串如"50%"）
+  marginTop: DanmakuMargin; // 顶部边距
+  marginBottom: DanmakuMargin; // 底部边距
   maxlength: number; // 最大弹幕数
   filterRules: string[]; // 过滤规则（正则表达式）
   unlimited: boolean; // 无限弹幕

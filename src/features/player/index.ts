@@ -19,6 +19,14 @@ export {
   SubtitleController,
 } from './core/plugins/subtitles';
 export { type MediaType, isNetdiskMountSource } from './core/source-policy';
+export type {
+  ArtControl,
+  ArtSetting,
+  ArtSettingOption,
+  DanmakuPluginApi,
+  HlsInstance,
+  VideoWithHls,
+} from './core/art-types';
 export {
   type Art,
   type PlayerPlugin,

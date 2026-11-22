@@ -406,10 +406,14 @@ export default function PublicCatalogPage({
             { title: '热门电影', href: '/douban?type=movie', feed: catalog },
             { title: '热门剧集', href: '/douban?type=tv', feed: television },
           ].map((section) => (
-            <section key={section.title} className='tm-section'>
-              <SectionHeader title={section.title} href={section.href} />
+            <section key={section.title} className='tm-section tm-home-section'>
+              <SectionHeader
+                variant='home'
+                title={section.title}
+                href={section.href}
+              />
               {section.feed.items.length > 0 && (
-                <PosterGrid>
+                <PosterGrid className='tm-home-grid'>
                   {section.feed.items.slice(0, 12).map((item) => (
                     <PosterMotion key={item.provider + ':' + item.id}>
                       <CatalogCard item={item} onSelect={openWork} />

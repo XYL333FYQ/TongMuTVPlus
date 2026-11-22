@@ -13,7 +13,7 @@ import type { Art } from '@/features/player';
 
 /** 页面传进来的状态和函数（名字和页面里的一样） */
 export interface SaveProgressContext {
-  artPlayerRef: MutableRefObject<Art>;
+  artPlayerRef: MutableRefObject<Art | null>;
   currentEpisodeIndexRef: MutableRefObject<number>;
   currentIdRef: MutableRefObject<string>;
   currentSourceRef: MutableRefObject<string>;

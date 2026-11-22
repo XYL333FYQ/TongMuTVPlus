@@ -2,9 +2,10 @@
  * hls.js 接入：缓冲策略、去广告 loader、Safari 卡启动的补救、错误转成中文提示。
  */
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
+import type { ErrorData } from 'hls.js';
 
 import { createAdFilterLoader } from './ad-filter';
+import type { HlsConstructor, HlsInstance, VideoWithHls } from './art-types';
 import { playerEnvironment } from './env';
 import { isProxyM3u8Url } from './source-policy';
 
@@ -52,16 +53,16 @@ export interface HlsAttachOptions {
   /** 任务计时器：播放器销毁时一起清掉 */
   later: (fn: () => void, ms: number) => void;
   /** 清单解析完：小雅 / OpenList 链接需要定时刷新 */
-  onManifest?: (hls: any, video: HTMLVideoElement) => void;
+  onManifest?: (hls: HlsInstance, video: HTMLVideoElement) => void;
   /** 清单 403：交给链接刷新处理，返回 true 表示已处理 */
-  onForbidden?: (hls: any, video: HTMLVideoElement) => boolean;
+  onForbidden?: (hls: HlsInstance, video: HTMLVideoElement) => boolean;
   onFatal: (message: string, info?: { corsFailedUrl?: string }) => void;
   shouldAutoPlay: () => boolean;
   play: () => void;
 }
 
 /** hls.js 还没把视频接上时（Safari 偶发），重新接一次 */
-export function needsWebkitRescue(video: HTMLVideoElement & { hls?: any }) {
+export function needsWebkitRescue(video: VideoWithHls) {
   const hls = video.hls;
   if (!hls) return false;
   let buffered = false;
@@ -77,7 +78,7 @@ export function needsWebkitRescue(video: HTMLVideoElement & { hls?: any }) {
 }
 
 export function rescueWebkitHls(
-  video: HTMLVideoElement & { hls?: any },
+  video: VideoWithHls,
   later: (fn: () => void, ms: number) => void,
   stillCurrent: () => boolean
 ) {
@@ -105,8 +106,8 @@ function statusMessage(status: number) {
 }
 
 export function attachHls(
-  Hls: any,
-  video: HTMLVideoElement & { hls?: any },
+  Hls: HlsConstructor,
+  video: VideoWithHls,
   url: string,
   options: HlsAttachOptions
 ) {
@@ -157,9 +158,13 @@ export function attachHls(
     options.onManifest?.(hls, video);
   });
 
-  hls.on(Hls.Events.ERROR, (_event: unknown, data: any) => {
+  hls.on(Hls.Events.ERROR, (_event: unknown, data: ErrorData) => {
     if (!data?.fatal) return;
-    const status = data.response?.code || data.response?.status;
+    // 有的 loader 把 HTTP 状态放在 status 上
+    const response = data.response as
+      | (typeof data.response & { status?: number })
+      | undefined;
+    const status = response?.code || response?.status;
     if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
       if (data.details === 'manifestLoadError') {
         if (status === 403 && options.onForbidden?.(hls, video)) return;

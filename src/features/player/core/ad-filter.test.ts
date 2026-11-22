@@ -1,9 +1,12 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+import type { HlsConstructor } from './art-types';
 
 class BaseLoader {
-  load: (...args: any[]) => void = () => undefined;
+  load: (...args: unknown[]) => void = () => undefined;
 }
-const Hls = { DefaultConfig: { loader: BaseLoader } };
+// 只有 loader 的假 hls.js：测试只看清单过滤
+const Hls = {
+  DefaultConfig: { loader: BaseLoader },
+} as unknown as HlsConstructor;
 
 beforeEach(() => {
   jest.resetModules();

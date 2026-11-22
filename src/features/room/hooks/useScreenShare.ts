@@ -311,11 +311,11 @@ export function useScreenShare(
           .filter((member) => member.id !== socket?.id)
           .map((member) => sendOfferToMember(member.id))
       );
-    } catch (err: any) {
+    } catch (err) {
       console.error('[ScreenShare] Failed to start sharing:', err);
       if (displayStreamRef.current === stream) cleanupSharingResources();
       else stream?.getTracks().forEach((track) => track.stop());
-      setError(err?.message || '开启屏幕共享失败');
+      setError((err as Error | null)?.message || '开启屏幕共享失败');
     } finally {
       setIsStarting(false);
     }

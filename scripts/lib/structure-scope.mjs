@@ -19,7 +19,7 @@ export const CORE_CODE = [
   'src/components/detail/',
   'src/components/feedback/',
   'src/components/VideoCard.tsx',
-  'src/components/BannerCarousel.tsx',
+  'src/components/video-card/',
   'src/components/ContinueWatching.tsx',
   'src/app/page.tsx',
   'src/app/douban/',

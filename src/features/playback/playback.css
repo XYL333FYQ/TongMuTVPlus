@@ -21,10 +21,11 @@
   position: fixed;
   top: 82px;
   right: 24px;
-  z-index: 100;
+  z-index: var(--tm-z-page-notice);
   padding: 10px 16px;
   border-radius: var(--tm-radius-md);
   font-size: 13px;
+  min-height: 44px;
   background: var(--tm-glass-solid);
   border: 0;
 }
@@ -37,18 +38,18 @@
   visibility: hidden;
   pointer-events: none;
 }
-/* 每种形态的层级各写一处：嵌入（docked）在这里，小窗 / 收起在 mini-player.css */
+/* 每种形态的层级：嵌入（docked）、小窗 / 收起（下面）各写一处 */
 .tm-playback-host[data-presentation='docked'] {
-  z-index: 85;
+  z-index: var(--tm-z-docked);
 }
-/* 不在播放页时画面节点脱离页面固定定位；小窗 / 收起的位置和尺寸见 components/mini-player/mini-player.css */
+/* 不在播放页时画面节点脱离页面固定定位；小窗 / 收起的位置和尺寸见下面 */
 .tm-playback-host:not([data-presentation='full']) [data-tm-player-mount] {
   position: fixed;
   visibility: visible;
   pointer-events: auto;
 }
 .tm-playback-host[data-presentation='docked'] [data-tm-player-mount] {
-  z-index: 86;
+  z-index: calc(var(--tm-z-docked) + 1);
   left: var(--tm-slot-left);
   top: var(--tm-slot-top);
   width: var(--tm-slot-width);
@@ -57,6 +58,76 @@
   bottom: auto;
   border-radius: var(--tm-radius-md);
   box-shadow: none;
+}
+/* 小窗 / 收起：画面节点在播放页里，小窗时把它和按钮层摆到同一个位置（尺寸用两种小窗共用的 --tm-mini-*，
+   入场动画 tm-mini-in 和按钮层的样子在 components/mini-player/mini-player.css）。
+   整页内容（.tm-playback-page）一层，按钮层在它上面一层 */
+.tm-playback-host:is([data-presentation='mini'], [data-presentation='folded']) {
+  z-index: var(--tm-z-mini);
+}
+.tm-playback-host:is([data-presentation='mini'], [data-presentation='folded'])
+  > .tm-playback-page {
+  position: relative;
+  z-index: 0;
+}
+/* 小窗：画面和按钮层叠在同一块位置上，位置、尺寸、拖动偏移两者一致 */
+.tm-playback-host[data-presentation='mini'] [data-tm-player-mount] {
+  position: fixed;
+  inset: auto var(--tm-mini-gap) var(--tm-mini-bottom) auto;
+  width: var(--tm-mini-w);
+  height: var(--tm-mini-h);
+  border-radius: var(--tm-radius-lg);
+  transform: translate3d(var(--tm-mini-x, 0px), var(--tm-mini-y, 0px), 0);
+  transition: transform 220ms var(--tm-ease-out);
+  animation: tm-mini-in var(--tm-d-panel) var(--tm-ease-out);
+  overflow: hidden;
+  visibility: visible;
+  background: var(--tm-video-bg);
+  box-shadow: var(--tm-shadow-lg), inset 0 0 0 1px var(--tm-line);
+}
+/* 外层宿主是 pointer-events: none，按钮层要打开 */
+.tm-playback-host[data-presentation='mini'] .tm-playback-chrome {
+  position: fixed;
+  inset: auto var(--tm-mini-gap) var(--tm-mini-bottom) auto;
+  width: var(--tm-mini-w);
+  height: var(--tm-mini-h);
+  border-radius: var(--tm-radius-lg);
+  transform: translate3d(var(--tm-mini-x, 0px), var(--tm-mini-y, 0px), 0);
+  transition: transform 220ms var(--tm-ease-out);
+  animation: tm-mini-in var(--tm-d-panel) var(--tm-ease-out);
+  z-index: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+/* 收起：画面藏起来继续出声，只留一条胶囊 */
+.tm-playback-host[data-presentation='folded'] [data-tm-player-mount] {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+.tm-playback-host[data-presentation='folded'] .tm-playback-chrome {
+  position: fixed;
+  z-index: 1;
+  right: var(--tm-mini-gap);
+  bottom: var(--tm-mini-bottom);
+  visibility: visible;
+  pointer-events: auto;
+  animation: tm-mini-in var(--tm-d-panel) var(--tm-ease-out);
+}
+.tm-playback-host[data-dragging='true']
+  :is([data-tm-player-mount], .tm-playback-chrome) {
+  transition: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .tm-playback-host:is([data-presentation='mini'], [data-presentation='folded'])
+    :is([data-tm-player-mount], .tm-playback-chrome) {
+    animation: none;
+    transition: none;
+  }
 }
 .tm-playback-host:not([data-presentation='full']) [data-tm-player-mount] > div {
   border-radius: inherit;
@@ -99,10 +170,6 @@ html[data-tm-reduced-motion='true'] .tm-playback-host * {
 .tm-audio-focus-notice:focus-visible {
   outline: 2px solid var(--tm-text);
   outline-offset: 2px;
-}
-.tm-audio-focus-notice,
-.tm-playback-recovery > button {
-  min-height: 44px;
 }
 html[data-tm-reduced-motion='true'] .tm-playback-host [data-tm-player-mount] {
   transition: none !important;
@@ -149,7 +216,7 @@ html[data-tm-no-blur='true'] .tm-playback-host * {
   left: 50%;
   bottom: calc(var(--tm-bottom-nav-height, 0px) + 24px);
   transform: translateX(-50%);
-  z-index: 110;
+  z-index: var(--tm-z-page-error);
   display: flex;
   align-items: center;
   gap: 16px;
@@ -229,8 +296,8 @@ html[data-tm-no-blur='true'] .tm-playback-host * {
 :where(html:not([data-tm-device='wide'])) .tm-solo-tools:not([data-tm-sheet]) {
   display: none;
 }
-:where(html:not([data-tm-device='wide'])) .tm-solo-selector[data-tm-sheet],
-:where(html:not([data-tm-device='wide'])) .tm-solo-tools[data-tm-sheet] {
+/* 手机 / 平板：选集面板和工具面板都是从底部弹出的半屏面板（tm-solo-sheet） */
+:where(html:not([data-tm-device='wide'])) .tm-solo-sheet[data-tm-sheet] {
   position: fixed;
   right: 0;
   bottom: 0;
@@ -259,12 +326,6 @@ html[data-tm-no-blur='true'] .tm-playback-host * {
   opacity: 1;
   transform: none;
   animation: tm-solo-sheet-in var(--tm-d-panel) var(--tm-ease-out);
-}
-:where(html:not([data-tm-device='wide']))
-  .tm-solo-selector[data-tm-sheet]
-  > :not(.tm-solo-sheet-close) {
-  flex: 1;
-  min-height: 0;
 }
 :where(html:not([data-tm-device='wide'])) .tm-solo-sheet-close {
   position: absolute;
@@ -353,7 +414,7 @@ html[data-tm-no-blur='true'] .tm-playback-host * {
   right: 0;
   bottom: 0;
   left: 0;
-  z-index: 60;
+  z-index: var(--tm-z-page-float);
   display: flex;
   gap: 2px;
   padding: 4px max(4px, var(--tm-safe-left, 0px))
@@ -376,7 +437,7 @@ html:where(:not([data-tm-device='wide']))[data-tm-no-blur] .tm-solo-dock {
   justify-content: center;
   gap: 2px;
   min-width: 0;
-  min-height: 56px;
+  min-height: 50px;
   padding: 0 2px;
   border-radius: var(--tm-radius-md);
   color: var(--tm-text);
@@ -402,17 +463,6 @@ html:where(:not([data-tm-device='wide']))[data-tm-no-blur] .tm-solo-dock {
   line-height: 1.2;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-/* 播放页只在完整显示时：让出操作坞的位置，手机底栏不出现 */
-:where(html:not([data-tm-device='wide']))
-  body:has(.tm-playback-host[data-presentation='full'] .tm-solo-dock)
-  .tm-main {
-  padding-bottom: calc(84px + var(--tm-safe-bottom, 0px));
-}
-html:where(:not([data-tm-device='wide']))
-  body:has(.tm-playback-host[data-presentation='full'] .tm-solo-dock)
-  .tm-mobile-nav {
-  display: none;
 }
 @keyframes tm-solo-sheet-in {
   from {
@@ -440,7 +490,7 @@ html[data-tm-reduced-motion]
 :where(html[data-tm-device='wide']) .tm-solo-row {
   display: flex;
   gap: 12px;
-  align-items: flex-start;
+  align-items: stretch;
 }
 :where(html[data-tm-device='wide']) .tm-solo-row > * {
   margin-top: 0 !important;
@@ -449,12 +499,14 @@ html[data-tm-reduced-motion]
   flex: 1;
   min-width: 0;
 }
+/* 电脑：右侧一条细的图标栏，和画面一样高；下载、外部播放器等收进“工具”抽屉 */
 :where(html[data-tm-device='wide']) .tm-solo-rail {
   display: flex;
   flex: none;
   flex-direction: column;
-  gap: 4px;
-  padding: 6px;
+  gap: 2px;
+  width: 64px;
+  padding: 6px 4px;
   border-radius: var(--tm-radius-lg);
   background: var(--tm-surface);
   box-shadow: inset 0 0 0 1px var(--tm-line);
@@ -464,9 +516,9 @@ html[data-tm-reduced-motion]
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 4px;
-  width: 64px;
-  min-height: 60px;
+  gap: 3px;
+  width: 56px;
+  min-height: 54px;
   border-radius: var(--tm-radius-md);
   color: var(--tm-muted);
   font-size: 12px;
@@ -506,17 +558,19 @@ body:has(.tm-solo-selector[data-tm-sheet], .tm-solo-tools[data-tm-sheet])
 :where(html:not([data-tm-device='wide'])) .tm-solo-detail h1 {
   justify-content: flex-start;
   margin-bottom: 4px;
-  font-size: 18px;
+  font-size: 16px;
   text-align: left;
 }
 :where(html:not([data-tm-device='wide'])) .tm-solo-detail h1 svg {
   width: 22px;
   height: 22px;
 }
-/* 半屏面板里：去掉选集组件自带的卡片外框，集数是一格一格的块 */
+/* 半屏面板里：选集组件占满剩下的高度，去掉它自带的卡片外框，集数是一格一格的块 */
 :where(html:not([data-tm-device='wide']))
   .tm-solo-selector[data-tm-sheet]
   > :not(.tm-solo-sheet-close) {
+  flex: 1;
+  min-height: 0;
   margin: 0;
   padding: 0;
   border: 0;
@@ -602,9 +656,6 @@ body:has(.tm-solo-selector[data-tm-sheet], .tm-solo-tools[data-tm-sheet])
   gap: 6px;
   margin-top: 6px;
 }
-:where(html:not([data-tm-device='wide'])) .tm-solo-detail h1 {
-  font-size: 16px;
-}
 :where(html:not([data-tm-device='wide'])) .tm-solo-detail h1 button {
   min-width: 40px;
   min-height: 40px;
@@ -612,27 +663,9 @@ body:has(.tm-solo-selector[data-tm-sheet], .tm-solo-tools[data-tm-sheet])
 :where(html:not([data-tm-device='wide'])) .tm-solo-detail .text-base {
   font-size: 14px;
 }
-:where(html:not([data-tm-device='wide'])) .tm-solo-dock button {
-  min-height: 50px;
-}
 :where(html:not([data-tm-device='wide'])) .tm-solo-dock svg {
   width: 19px;
   height: 19px;
-}
-/* 电脑：右侧一条细的图标栏，和画面一样高；下载、外部播放器等收进“工具”抽屉 */
-:where(html[data-tm-device='wide']) .tm-solo-row {
-  align-items: stretch;
-}
-:where(html[data-tm-device='wide']) .tm-solo-rail {
-  gap: 2px;
-  width: 64px;
-  padding: 6px 4px;
-  border-radius: var(--tm-radius-lg);
-}
-:where(html[data-tm-device='wide']) .tm-solo-rail button {
-  width: 56px;
-  min-height: 54px;
-  gap: 3px;
 }
 :where(html[data-tm-device='wide']) .tm-solo-rail button svg {
   width: 19px;
@@ -649,9 +682,10 @@ body:has(.tm-solo-selector[data-tm-sheet], .tm-solo-tools[data-tm-sheet])
 :where(html[data-tm-device='wide']) .tm-solo-tools:not([data-tm-sheet]) {
   display: none;
 }
+/* 页面容器自成一层（z-index 10），盖不过站点顶栏：抽屉从顶栏下面开始 */
 :where(html[data-tm-device='wide']) .tm-solo-tools[data-tm-sheet] {
   position: fixed;
-  top: 0;
+  top: var(--tm-header-height);
   right: 0;
   bottom: 0;
   z-index: var(--tm-z-overlay);
@@ -726,6 +760,7 @@ body:has(.tm-solo-selector[data-tm-sheet], .tm-solo-tools[data-tm-sheet])
 :where(html[data-tm-device='wide']) .tm-solo-sheet-backdrop[data-open] {
   position: fixed;
   inset: 0;
+  top: var(--tm-header-height);
   z-index: calc(var(--tm-z-overlay) - 1);
   display: block;
   border: 0;
@@ -739,13 +774,6 @@ body:has(.tm-solo-selector[data-tm-sheet], .tm-solo-tools[data-tm-sheet])
 }
 html[data-tm-reduced-motion] .tm-solo-tools[data-tm-sheet] {
   animation: none;
-}
-/* 页面容器自成一层（z-index 10），盖不过站点顶栏：抽屉从顶栏下面开始 */
-:where(html[data-tm-device='wide']) .tm-solo-tools[data-tm-sheet] {
-  top: var(--tm-header-height);
-}
-:where(html[data-tm-device='wide']) .tm-solo-sheet-backdrop[data-open] {
-  top: var(--tm-header-height);
 }
 /* 工具按钮一排排往下排，去广告等开关另起一行 */
 :where(html[data-tm-device='wide'])

@@ -16,7 +16,7 @@ import type { PlaybackSourceBadge } from '../page/types';
 /** 页面传进来的状态和函数（名字和页面里的一样） */
 export interface TranscodeContext {
   LOCAL_TRANSCODER_BASE_URL: 'http://localhost:19080';
-  artPlayerRef: MutableRefObject<Art>;
+  artPlayerRef: MutableRefObject<Art | null>;
   isTranscoding: boolean;
   linkRefresher: LinkRefresher;
   proxyAttemptedRef: MutableRefObject<boolean>;

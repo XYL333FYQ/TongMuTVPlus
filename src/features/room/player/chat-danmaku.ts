@@ -6,7 +6,7 @@
 
 import './chat-danmaku.css';
 
-import type { PlayerPlugin } from '@/features/player';
+import type { Art, PlayerPlugin } from '@/features/player';
 
 export interface ChatDanmakuOptions {
   enabled: boolean;
@@ -38,7 +38,7 @@ export class ChatDanmaku {
     showSelf: readShowSelf(),
   };
   private layer: HTMLElement | null = null;
-  private art: any = null;
+  private art: Art | null = null;
   private lanes: number[] = [];
   private running = new Set<Animation>();
   private sync: (() => void) | null = null;

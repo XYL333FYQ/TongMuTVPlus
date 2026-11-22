@@ -3,8 +3,6 @@
  * 匹配顺序（与旧版一致）：本地缓存 → 手动选过的剧集 → 记住的番剧 → 关键词搜索（多个结果时用记住的下标，否则让用户选）。
  */
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import {
   convertDanmakuFormat,
   getDanmakuById,
@@ -38,7 +36,10 @@ import type {
 } from '@/lib/danmaku/types';
 import type { DanmakuFilterConfig } from '@/lib/types';
 
-import type { Art } from '../WatchPlayer';
+import type { Art } from '../art-types';
+
+/** artplayer-plugin-danmuku 的入口：传入配置，返回 Artplayer 插件 */
+type DanmakuPluginFactory = typeof import('artplayer-plugin-danmuku').default;
 
 export interface DanmakuEpisode {
   episodeId: number;
@@ -174,7 +175,7 @@ export function danmakuAutoLoadDisabled() {
   }
   return (
     typeof window !== 'undefined' &&
-    (window as any).RUNTIME_CONFIG?.DANMAKU_AUTO_LOAD_DEFAULT === false
+    window.RUNTIME_CONFIG?.DANMAKU_AUTO_LOAD_DEFAULT === false
   );
 }
 
@@ -205,7 +206,7 @@ export class DanmakuController {
   state: DanmakuState = EMPTY;
   settings: DanmakuSettings = loadDanmakuSettings();
   filter: DanmakuFilterConfig | null = null;
-  private art: Art = null;
+  private art: Art | null = null;
   private media: DanmakuMedia | null = null;
   private listeners = new Set<(state: DanmakuState) => void>();
   private loadedFor: string | null = null;
@@ -220,7 +221,7 @@ export class DanmakuController {
   }
 
   /** Artplayer 插件：每个实例创建时调用 */
-  artPlugin(factory: any) {
+  artPlugin(factory: DanmakuPluginFactory) {
     const settings = this.settings;
     return factory({
       danmuku: [],
@@ -246,8 +247,9 @@ export class DanmakuController {
   }
 
   /** 当前加载的弹幕（热力图用） */
-  list(): Array<{ time: number }> {
-    return this.plugin?.option?.danmuku || [];
+  list(): Array<{ time?: number }> {
+    const items = this.plugin?.option?.danmuku;
+    return Array.isArray(items) ? items : [];
   }
 
   attach(art: Art) {
@@ -440,7 +442,11 @@ export class DanmakuController {
     const next: DanmakuSettings = {
       ...this.settings,
       opacity: option.opacity || this.settings.opacity,
-      fontSize: option.fontSize || this.settings.fontSize,
+      // 本站只给插件设数字字号；插件允许百分比，那种情况不记
+      fontSize:
+        typeof option.fontSize === 'number' && option.fontSize
+          ? option.fontSize
+          : this.settings.fontSize,
       speed: option.speed || this.settings.speed,
       marginTop: option.margin?.[0] ?? this.settings.marginTop,
       marginBottom: option.margin?.[1] ?? this.settings.marginBottom,

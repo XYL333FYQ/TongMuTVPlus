@@ -500,7 +500,7 @@ export function MoreMenu({
                 <Link
                   href={notice.loginHref}
                   prefetch={false}
-                  className='tm-btn tm-btn-primary tm-press'
+                  className='tm-btn tm-btn-primary tm-press tm-explore-notice-btn'
                   onClick={() => {
                     closeNotice();
                     dialogRef.current?.close();
@@ -514,7 +514,7 @@ export function MoreMenu({
                 <Link
                   href={notice.adminHref}
                   prefetch={false}
-                  className='tm-btn tm-btn-primary tm-press'
+                  className='tm-btn tm-btn-primary tm-press tm-explore-notice-btn'
                   onClick={() => {
                     closeNotice();
                     dialogRef.current?.close();
@@ -528,7 +528,7 @@ export function MoreMenu({
                 <Link
                   href={notice.requestHref}
                   prefetch={false}
-                  className='tm-btn tm-btn-primary tm-press'
+                  className='tm-btn tm-btn-primary tm-press tm-explore-notice-btn'
                   onClick={() => {
                     closeNotice();
                     dialogRef.current?.close();

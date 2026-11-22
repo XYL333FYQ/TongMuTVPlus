@@ -109,18 +109,16 @@
 .tm-confirm-dialog[open] .tm-confirm-panel {
   animation: tm-dialog-in var(--tm-d-panel) var(--tm-ease-out);
 }
-.tm-confirm-header,
-.tm-confirm-heading,
-.tm-confirm-footer {
+.tm-confirm-header {
   display: flex;
   align-items: center;
-}
-.tm-confirm-header {
   justify-content: space-between;
   gap: 12px;
   padding: 16px 12px 0 24px;
 }
 .tm-confirm-heading {
+  display: flex;
+  align-items: center;
   min-width: 0;
   gap: 12px;
 }
@@ -146,11 +144,25 @@
   overflow-wrap: anywhere;
 }
 .tm-confirm-footer {
+  display: flex;
+  align-items: center;
   justify-content: flex-end;
   gap: 12px;
   padding: 24px;
 }
-.tm-confirm-cancel,
+/* 两个按钮：尺寸一样，只有颜色不同 */
+.tm-confirm-cancel {
+  min-width: 88px;
+  min-height: 44px;
+  padding: 10px 20px;
+  border-radius: var(--tm-radius-pill);
+  font-size: var(--tm-fs-small);
+  font-weight: 600;
+  color: var(--tm-text);
+  background: var(--tm-surface-raised);
+  transition: opacity var(--tm-d-hover) var(--tm-ease-out),
+    scale var(--tm-d-press) var(--tm-ease-out);
+}
 .tm-confirm-action {
   min-width: 88px;
   min-height: 44px;
@@ -158,20 +170,14 @@
   border-radius: var(--tm-radius-pill);
   font-size: var(--tm-fs-small);
   font-weight: 600;
+  color: var(--tm-accent-contrast);
+  background: var(--tm-text);
   transition: opacity var(--tm-d-hover) var(--tm-ease-out),
     scale var(--tm-d-press) var(--tm-ease-out);
 }
 .tm-confirm-cancel:active,
 .tm-confirm-action:active {
   scale: 0.97;
-}
-.tm-confirm-cancel {
-  color: var(--tm-text);
-  background: var(--tm-surface-raised);
-}
-.tm-confirm-action {
-  color: var(--tm-accent-contrast);
-  background: var(--tm-text);
 }
 .tm-confirm-action:disabled {
   opacity: 0.5;
@@ -236,4 +242,11 @@ html[data-tm-reduced-motion='true'] .tm-toast {
     transition: opacity 120ms linear;
     transform: translateX(-50%);
   }
+}
+
+/* 放在原生模态层（modal-layer.css）里的弹窗：高度不超过屏幕，内容多了在弹窗里滚 */
+.tm-modal-layer > .tm-modal {
+  max-height: calc(100dvh - 32px - var(--tm-safe-top) - var(--tm-safe-bottom));
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }

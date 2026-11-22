@@ -18,18 +18,13 @@
   display: grid;
   place-items: center;
 }
-.tm-modal-layer:modal,
-.tm-modal-layer::backdrop {
+.tm-modal-layer:modal {
   overscroll-behavior: contain;
 }
 .tm-modal-layer::backdrop {
+  overscroll-behavior: contain;
   background: var(--tm-scrim);
   overflow: hidden;
-}
-.tm-modal-layer > .tm-modal {
-  max-height: calc(100dvh - 32px - var(--tm-safe-top) - var(--tm-safe-bottom));
-  overflow-y: auto;
-  overscroll-behavior: contain;
 }
 @media (max-width: 639px) {
   .tm-modal-layer.tm-download-modal-layer {

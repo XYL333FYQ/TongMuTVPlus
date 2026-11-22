@@ -2,9 +2,8 @@
  * 弹幕热力图：进度条上方显示弹幕密度曲线，悬停看密度、点击跳转。
  */
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import { formatClock } from './format';
+import type { Art } from '../art-types';
 import type { PlayerPlugin } from '../WatchPlayer';
 
 export const HEATMAP_ENABLED_KEY = 'danmaku_heatmap_enabled';
@@ -22,7 +21,7 @@ export function heatmapEnabled() {
 const TOGGLE_EVENT = 'tm-heatmap:toggle';
 
 /** 设置菜单里的“弹幕热力”开关：记住选择，并让当前播放器马上显示 / 隐藏 */
-export function setHeatmapEnabled(art: any, enabled: boolean) {
+export function setHeatmapEnabled(art: Art | null, enabled: boolean) {
   try {
     localStorage.setItem(HEATMAP_ENABLED_KEY, String(enabled));
   } catch {
@@ -62,7 +61,7 @@ export function densityLabel(value: number) {
 
 /** danmaku()：当前弹幕列表（含 time 字段） */
 export function heatmapPlugin(
-  danmaku: () => Array<{ time: number }>
+  danmaku: () => Array<{ time?: number }>
 ): PlayerPlugin {
   return ({ art, later }) => {
     if (heatmapDisabled()) return;

@@ -1,9 +1,8 @@
+import type { HlsConstructor, VideoWithHls } from '../art-types';
 /*
  * 小雅 / OpenList 播放链接会过期：每 14 分钟静默换新链接，清单 403 时也立即刷新。
  * 换链接时记住进度和播放状态，换完回到原处。
  */
-
-/* eslint-disable @typescript-eslint/no-explicit-any */
 
 const REFRESH_MS = 14 * 60 * 1000;
 const RETRY_LATER_MS = 5 * 60 * 1000;
@@ -14,7 +13,7 @@ export function isM3u8LikePlayUrl(url: string) {
 }
 
 export interface LinkRefreshHost {
-  video(): (HTMLVideoElement & { hls?: any }) | null;
+  video(): VideoWithHls | null;
   notice(text: string): void;
   fail(message: string): void;
   /** 刷新返回了新的清晰度列表 */
@@ -143,7 +142,7 @@ export class LinkRefresher {
 }
 
 /** 换地址并回到原来的位置和播放状态 */
-function swapUrl(video: HTMLVideoElement & { hls?: any }, url: string) {
+function swapUrl(video: VideoWithHls, url: string) {
   const time = video.currentTime;
   const paused = video.paused;
   const restore = (done: () => void) => {
@@ -179,7 +178,7 @@ function swapUrl(video: HTMLVideoElement & { hls?: any }, url: string) {
     };
     const hls = video.hls;
     if (hls && typeof hls.loadSource === 'function') {
-      const Events = (hls.constructor as any).Events;
+      const Events = (hls.constructor as HlsConstructor).Events;
       try {
         hls.stopLoad();
       } catch {

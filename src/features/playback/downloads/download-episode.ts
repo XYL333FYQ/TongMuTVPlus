@@ -16,7 +16,7 @@ export interface DownloadEpisodeContext {
     type?: 'TS' | 'MP4',
     metadata?: { source?: string; videoId?: string; episodeIndex?: number }
   ) => Promise<void>;
-  artPlayerRef: MutableRefObject<Art>;
+  artPlayerRef: MutableRefObject<Art | null>;
   currentId: string;
   currentSource: string;
   detail: SearchResult | null;

@@ -170,11 +170,12 @@ export default function ContinueWatching({
       >
         {homeLayout ? (
           <SectionHeader
+            variant='home'
             title='继续观看'
             actions={
               !loading && playRecords.length > 0 ? (
                 <button
-                  className='tm-section-link'
+                  className='tm-section-link tm-home-section-link'
                   onClick={() => setShowPlayRecordsPanel(true)}
                 >
                   查看全部
