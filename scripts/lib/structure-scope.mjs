@@ -1,43 +1,43 @@
-// 结构检查的范围：本项目自己做的部分（站点外壳、发现、片库、房间、播放页和它们共用的东西）。
-// 上游页面（漫画、小说、音乐、直播、电视、管理后台……）暂不纳入，见 docs/STANDARD.md “范围”。
+// 检查范围只有一个来源：scripts/structure-scope.json。结构检查、设计检查、代码警告基线和
+// .eslintrc.js 都从它读，不再各抄一份。三档的含义见 docs/STANDARD.md “三档范围”。
+//
+// 列表里以 / 结尾的是目录前缀，其余是单个文件。
+
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const scopePath = path.resolve(
+  path.dirname(fileURLToPath(import.meta.url)),
+  '../structure-scope.json'
+);
+const scope = JSON.parse(fs.readFileSync(scopePath, 'utf8'));
 
 /** 核心样式：块名归属、令牌、z-index、像素宽度媒体查询 */
-export const CORE_CSS = [
-  'src/styles/',
-  'src/features/',
-  'src/components/mini-player/',
-  'src/components/detail/',
-  'src/components/VideoCard.css',
-];
+export const CORE_CSS = scope.coreCss;
 
-/** 核心代码：整文件 eslint-disable、写死的 z-index、文件行数 */
-export const CORE_CODE = [
-  'src/features/',
-  'src/components/catalog/',
-  'src/components/mini-player/',
-  'src/components/shell/',
-  'src/components/detail/',
-  'src/components/feedback/',
-  'src/components/VideoCard.tsx',
-  'src/components/video-card/',
-  'src/components/ContinueWatching.tsx',
-  'src/app/page.tsx',
-  'src/app/douban/',
-  'src/app/play/',
-  'src/app/watch-room/',
-];
+/** 核心代码：整文件 eslint-disable、写死的 z-index、文件行数、不许 any */
+export const CORE_CODE = scope.coreCode;
+
+/** 上游来的、但用户天天在用的文件（第二档） */
+export const DAILY_UPSTREAM = scope.dailyUpstream;
 
 /** 不属于核心的文件（理由见 docs/STANDARD.md “允许的例外”） */
-const EXCLUDED = [
-  // 上游页面专用的样式，放在 styles/ 里
-  'src/styles/media.css',
-  // 房间里一起听音乐的页面：沿用上游音乐页的 Tailwind 写法
-  'src/features/room/MusicPage.tsx',
-];
+const EXCLUDED = scope.excluded;
+
+const matches = (file, prefixes) =>
+  prefixes.some((prefix) =>
+    prefix.endsWith('/') ? file.startsWith(prefix) : file === prefix
+  );
 
 export function inScope(file, prefixes) {
   if (EXCLUDED.includes(file)) return false;
-  return prefixes.some((prefix) =>
-    prefix.endsWith('/') ? file.startsWith(prefix) : file === prefix
-  );
+  return matches(file, prefixes);
+}
+
+/** 1 = 核心，2 = 常用上游，3 = 其余上游 */
+export function tierOf(file) {
+  if (inScope(file, CORE_CODE) || inScope(file, CORE_CSS)) return 1;
+  if (matches(file, DAILY_UPSTREAM)) return 2;
+  return 3;
 }
