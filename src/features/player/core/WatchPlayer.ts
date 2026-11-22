@@ -468,7 +468,11 @@ export class WatchPlayer {
             subtitle: {
               url: options.subtitle.url,
               type: 'vtt',
-              style: { color: '#fff', fontSize: options.subtitle.fontSize },
+              style: {
+                /* TODO-P5: 字幕压在画面上，两种主题都是白字；缺播放器字幕色令牌，保留原值 */
+                color: '#fff',
+                fontSize: options.subtitle.fontSize,
+              },
               encoding: 'utf-8',
             },
           }
@@ -479,7 +483,10 @@ export class WatchPlayer {
       playsInline: true,
       autoPlayback: false,
       airplay: true,
-      theme: options.theme || 'var(--tm-player-accent, #fff)',
+      theme:
+        options.theme ||
+        /* TODO-P5: --tm-player-accent 还没定义，实际用的是后备白色；补令牌前保留原值 */
+        'var(--tm-player-accent, #fff)',
       lang: 'zh-cn',
       hotkey: false,
       fastForward: (options.fastForward ?? options.rateControl) !== false,

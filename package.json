@@ -14,6 +14,7 @@
     "lint:strict": "eslint --max-warnings=0 src",
     "check:structure": "node scripts/check-structure.mjs",
     "check:lint": "node scripts/check-lint-baseline.mjs",
+    "check:design": "node scripts/check-design.mjs --core",
     "typecheck": "tsc --noEmit --incremental false",
     "test:watch": "jest --watch",
     "test": "jest",

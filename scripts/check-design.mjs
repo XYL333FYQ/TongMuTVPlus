@@ -1,6 +1,15 @@
-import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
+// 设计检查（AGENTS.md “视觉硬规则”）：彩色类、写死 hex、bg-gradient、小于 12px 的字号。
+//
+//   node scripts/check-design.mjs <文件> [更多文件]   检查指定文件
+//   node scripts/check-design.mjs --core               检查整个核心范围（scripts/structure-scope.json）
+
+import { readdirSync, readFileSync } from 'node:fs';
+import { dirname, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
+
+import { CORE_CODE, CORE_CSS, inScope } from './lib/structure-scope.mjs';
+
+const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 
 const palettes =
   'red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose';
@@ -43,21 +52,20 @@ export function scanText(source, file = '') {
         todo,
       });
     for (const match of line.matchAll(colors)) add('彩色类', match);
-    // --tm-* definitions are the DESIGN.md-authorized color source.
-    if (!/^\s*--tm-[\w-]+\s*:/.test(line)) {
-      for (const match of line.matchAll(
-        /#[\da-fA-F]{8}\b|#[\da-fA-F]{6}\b|#[\da-fA-F]{4}\b|#[\da-fA-F]{3}\b/g
-      )) {
-        const before = line.slice(0, match.index);
-        if (/(?:href|src|url)\s*(?:=|:)\s*['"]?[^'"\s]*$/.test(before))
-          continue;
-        add('写死 hex', match);
-      }
+    for (const match of line.matchAll(
+      /#[\da-fA-F]{8}\b|#[\da-fA-F]{6}\b|#[\da-fA-F]{4}\b|#[\da-fA-F]{3}\b/g
+    )) {
+      const before = line.slice(0, match.index);
+      if (/(?:href|src|url)\s*(?:=|:)\s*['"]?[^'"\s]*$/.test(before)) continue;
+      // --tm-* 令牌的定义是 DESIGN.md 认可的颜色来源：hex 落在 --tm-x: 的值里就不算
+      if (/--tm-[\w-]+\s*:[^;{}]*$/.test(before)) continue;
+      add('写死 hex', match);
     }
     for (const match of line.matchAll(/\bbg-gradient-[\w-]+/g))
       add('bg-gradient', match);
+    // em 相对父元素，静态算不出实际大小，不判断；px 和 rem（按 16px）照旧
     for (const match of line.matchAll(
-      /\btext-\[(\d*\.?\d+)(px|rem|em)\]|\bfontSize\s*:\s*(\d*\.?\d+)\b|\bfont(?:-size|Size)\s*:\s*['"]?(\d*\.?\d+)(px|rem|em)/g
+      /\btext-\[(\d*\.?\d+)(px|rem)\]|\bfontSize\s*:\s*(\d*\.?\d+)\b|\bfont(?:-size|Size)\s*:\s*['"]?(\d*\.?\d+)(px|rem)\b/g
     )) {
       const value = Number(match[1] ?? match[3] ?? match[4]);
       const unit = match[2] ?? match[5] ?? 'px';
@@ -67,14 +75,39 @@ export function scanText(source, file = '') {
   return findings;
 }
 
+/** 核心范围里的 .css / .ts / .tsx（不含测试），正斜杠、相对仓库根目录 */
+export function coreFiles() {
+  const out = [];
+  const walk = (dir) => {
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      const full = resolve(dir, entry.name);
+      if (entry.isDirectory()) walk(full);
+      else out.push(relative(root, full).split(sep).join('/'));
+    }
+  };
+  walk(resolve(root, 'src'));
+  return out
+    .filter((file) =>
+      file.endsWith('.css')
+        ? inScope(file, CORE_CSS)
+        : /\.tsx?$/.test(file) &&
+          !/\.test\.tsx?$/.test(file) &&
+          inScope(file, CORE_CODE)
+    )
+    .sort();
+}
+
 if (
   process.argv[1] &&
   resolve(process.argv[1]) === fileURLToPath(import.meta.url)
 ) {
-  const paths = process.argv.slice(2);
+  const args = process.argv.slice(2);
+  const paths = args.includes('--core')
+    ? [...coreFiles(), ...args.filter((arg) => arg !== '--core')]
+    : args;
   if (!paths.length) {
     console.error(
-      '用法：node scripts/check-design.mjs <文件路径> [更多文件路径]'
+      '用法：node scripts/check-design.mjs <文件路径> [更多文件路径]，或 --core 检查整个核心范围'
     );
     process.exitCode = 2;
   } else {
