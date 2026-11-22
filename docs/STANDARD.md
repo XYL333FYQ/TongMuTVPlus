@@ -135,6 +135,24 @@ z-index 只写下面的令牌（定义在 `styles/tokens.css`）。同一个组�
 
 数字沿用整理前各处写死的值。播放器内部的层（`--tm-z-player-*`）只在播放器的层叠上下文里有意义，要和 Artplayer 自带的层（画面 10、弹幕 30、遮罩 50、控制条 60……）比较，所以不能缩成 1–3。
 
+## 公共零件登记表
+
+全站共用的零件，每个只有一个主人：只有“主人”列里的文件或目录能直接用这种“原材料”（例如 `createPortal`），别处要用就调主人提供的“用法”。`check:structure` 用“检查”列里的探测器统计主人以外的文件，旧账在待清理名单的 `parts:<探测器>` 类别里，只许减少。“检查”写 `—` 的零件不自动统计，靠审查。
+
+`src/components/feedback/`、`src/components/ui/` 里的每个文件都必须是某一行的主人；新加公共零件先在这里登记。
+
+| 零件       | 主人                                                                | 用法                                                                              | 检查         |
+| ---------- | ------------------------------------------------------------------- | --------------------------------------------------------------------------------- | ------------ |
+| 弹窗层     | `src/components/feedback/` `src/components/ui/Select.tsx`           | `ModalLayer`、`ConfirmDialog`、`MobileActionSheet`、`askConfirm()`                | `portal`     |
+| 浏览器存储 | `src/lib/`                                                          | 只在 lib 里读写，组件和功能调用 lib 的函数；键名不改                              | `storage`    |
+| 设备档位   | `src/lib/device-tier.ts`                                            | `html[data-tm-device]` 和 device-tier 的导出                                      | `screen`     |
+| 播放器     | `src/features/player/core/`                                         | `WatchPlayer`                                                                     | `player`     |
+| 时间格式   | `src/lib/time.ts`                                                   | 第二阶段在这里补 `formatDuration`（必须在 lib，S1 不许 components 引用 features） | `timeFormat` |
+| 提示       | `src/components/feedback/`                                          | `notify()`、`notifyError()`                                                       | `toast`      |
+| 加载       | `src/components/feedback/LoadingStyle.tsx` `src/styles/loading.css` | `LoadingStyle`                                                                    | `spinner`    |
+| 海报卡片   | `src/components/VideoCard.tsx` `src/components/video-card/`         | `VideoCard`                                                                       | —            |
+| 图标       | —                                                                   | 只用 lucide-react，不用 emoji                                                     | `emoji`      |
+
 ## 块名登记表
 
 第一列是类名前缀（`tm-<块>`），第二列是唯一能给它定样式的文件。前缀按最长匹配：`tm-page-transition` 登记在外壳，`tm-page` 的其他元素登记在版面。
