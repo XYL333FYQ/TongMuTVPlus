@@ -1,0 +1,22 @@
+#!/bin/sh
+# 提交前的快检查（docs/STANDARD.md S10）。启用：git config core.hooksPath scripts/git-hooks
+#
+# 只跑几秒钟能跑完的：结构检查、设计检查、暂存文件的格式检查。
+# 类型检查、单元测试、代码警告基线交给 GitHub 自动检查。
+
+major=$(node -p 'process.versions.node.split(".")[0]' 2>/dev/null)
+if [ "$major" != "24" ]; then
+  echo "提醒：当前 Node 是 ${major:-未知} 版，本项目用 Node 24（.nvmrc）。只提醒，不拦提交。" >&2
+fi
+
+pnpm -s check:structure || exit 1
+pnpm -s check:design || exit 1
+
+staged=$(git diff --cached --name-only --diff-filter=ACMR -- \
+  '*.ts' '*.tsx' '*.css' '*.md' '*.json' '*.mjs' '*.cjs')
+if [ -n "$staged" ]; then
+  printf '%s\n' "$staged" | tr '\n' '\0' | xargs -0 pnpm exec prettier --check || {
+    echo '格式不对：先运行 pnpm exec prettier --write <文件> 再提交。' >&2
+    exit 1
+  }
+fi

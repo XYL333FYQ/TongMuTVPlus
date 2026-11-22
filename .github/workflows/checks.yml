@@ -1,6 +1,6 @@
 name: Checks
 
-# 推送前的自动检查：类型、代码规范、格式、结构规范、测试、房间服务、运维脚本、构建与首屏体积。
+# 推送前的自动检查：类型、代码规范、代码警告基线、设计检查、格式、结构规范、测试、房间服务、运维脚本、构建与首屏体积。
 # 其它分支推送和 PR 时单独运行；推到 main 时由 docker-image.yml 先调用它，通过了才打包镜像。
 on:
   push:
@@ -23,6 +23,34 @@ jobs:
     steps:
       - name: Checkout source code
         uses: actions/checkout@v4
+        with:
+          # 规则改动报告要和推送前的提交比较
+          fetch-depth: 0
+
+      # 不拦截：把这次推送里改了规则、检查或测试的文件列进运行摘要（docs/STANDARD.md S10）。
+      # 这个工作流由 docker-image.yml 调用，github.event 就是那次推送。
+      - name: Rule change report
+        if: github.event_name == 'push' && github.event.before != '0000000000000000000000000000000000000000'
+        continue-on-error: true
+        env:
+          BEFORE: ${{ github.event.before }}
+          AFTER: ${{ github.sha }}
+        run: |
+          changed=$(git diff --name-only "$BEFORE" "$AFTER" -- \
+            'scripts/structure-allowlist.json' 'scripts/structure-scope.json' \
+            'scripts/check-*.mjs' 'scripts/lib/**' '.eslintrc.js' \
+            'docs/STANDARD.md' '*.test.*') || changed=''
+          {
+            echo '## 规则改动报告'
+            echo
+            if [ -n "$changed" ]; then
+              echo '这次推送改了下面这些规则、检查或测试文件，审查时请和代码改动分开看：'
+              echo
+              printf '%s\n' "$changed" | sed 's/^/- `/; s/$/`/'
+            else
+              echo '这次推送没有改规则、检查或测试文件。'
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
@@ -41,6 +69,15 @@ jobs:
 
       - name: Lint
         run: pnpm lint
+
+      - name: Lint warning baseline (only shrinks)
+        run: pnpm check:lint
+
+      - name: Design rules (core)
+        run: pnpm check:design
+
+      - name: Check script tests
+        run: node --test scripts/lib/*.test.mjs scripts/check-design.test.mjs
 
       - name: Format
         run: pnpm format:check

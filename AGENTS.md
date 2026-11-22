@@ -51,6 +51,7 @@ node scripts/check-design.mjs <改过的文件>
 ```
 
 - **用 Node 24 跑**（`.nvmrc`）。这台机器 PATH 上默认是 Node 26，先切：PowerShell `$env:Path = "$env:USERPROFILE\tools\node;" + $env:Path`，Git Bash `export PATH="/c/Users/XYL/tools/node:$PATH"`，再 `node -v` 确认是 `v24.x`。
+- **提交钩子**：第一次检出后执行 `git config core.hooksPath scripts/git-hooks`，提交前会自动跑结构检查、设计检查和暂存文件的格式检查。不要用 `--no-verify` 跳过。
 - `check:lint` 和 `check:structure` 的旧账只许减少；修好后用 `--shrink` 写回名单，规则见 `docs/STANDARD.md` S10。
 - **最后一次修改之后再完整跑一遍**，再提交。
 - Windows 上 Node 会随机原生崩溃（退出码 3221225477、139 之类，没有 TS 诊断）：关掉本项目的预览服务后重跑；仍崩溃就写明“待用户在自己终端运行”，不要改 `tsconfig`、跳过检查或排除测试。
