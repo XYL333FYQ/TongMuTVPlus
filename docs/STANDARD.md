@@ -5,15 +5,29 @@
 能让机器检查的规则都写成了检查（S10），进 CI，违反就失败：
 
 ```bash
-pnpm lint              # 依赖方向（S1）
-pnpm check:structure   # 块名归属、令牌、层级、媒体查询、整文件 eslint-disable（S2 / S4 / S5 / S8）
+pnpm lint              # 依赖方向（S1）、核心不用 any（S8）
+pnpm check:lint        # 代码警告只许减少（S10）
+pnpm check:structure   # 公共零件、块名归属、令牌、层级、媒体查询、!important、跳过检查注释、文档路径（S2 / S4 / S5 / S8）
+pnpm check:design      # 核心范围的视觉硬规则：彩色类、写死 hex、渐变、小于 12px 的字号
 ```
 
 ## 范围
 
 这套规范管本项目自己做的部分：站点外壳、发现（`/`）、片库（`/douban`）、房间（`/watch-room`）、播放页（`/play`），以及它们共用的组件、样式和工具。漫画、小说、音乐、直播、网络直播、电视、管理后台等页面来自上游 MoonTVPlus，暂时保持原样（可以继续用 Tailwind），以后要改它们时再按这里整理。书和漫画用的卡片（`components/media/MediaCard`）也属于上游这一套，和影片卡片 `VideoCard` 是两样东西，暂不合并。
 
-检查覆盖的文件列在 `scripts/lib/structure-scope.mjs`。
+检查覆盖的文件列在 `scripts/structure-scope.json`，分三档，见下面的“三档范围”。
+
+## 三档范围
+
+`scripts/structure-scope.json` 是检查范围的唯一来源：结构检查、设计检查、`.eslintrc.js`（核心不用 `any`）都从它读，不另抄一份。
+
+| 档       | JSON 里的键                              | 是什么                                                                         | 怎么管                                                                                 |
+| -------- | ---------------------------------------- | ------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------- |
+| 核心     | `coreCss`、`coreCode`（减去 `excluded`） | 本项目自己做的部分：外壳、发现、片库、房间、播放页和它们共用的组件、样式、工具 | 全部规则都管；`any` 按错误报                                                           |
+| 常用上游 | `dailyUpstream`                          | 上游来的、但用户天天在用的页面和接口：我的、搜索、登录、账号菜单、播放记录等   | 公共零件旧账按这一档单独计数，改到它们时优先收口                                       |
+| 上游     | 其余                                     | 管理后台、音乐、书、漫画、直播、电视等上游独立功能区                           | 暂时保持原样；公共零件、跳过检查注释、代码警告仍按棘轮只许减少，服务器权限以后统一收口 |
+
+以 `/` 结尾的是目录前缀，其余是单个文件。`scripts/lib/structure-scope.mjs` 的 `tierOf()` 给文件分档，`check:structure` 通过时按三档打印每个公共零件还剩多少旧账。
 
 ## 目录
 
@@ -58,10 +72,12 @@ src/
 
 ### S2 一件事一个来源
 
+一件事一个来源，见下面的公共零件登记表；登记表里每个零件只有它的主人能直接用原材料，旧账在待清理名单里只许减少。
+
 - 一套播放器内核：`features/player`。
 - 设计令牌（`--tm-*`）只在 `styles/tokens.css` 定义（`:root`、`html.light`、设备档位下的覆盖都写在那里）。组件内部用的局部变量可以写在组件的块上。
 - z-index 只用层级令牌（见下面的层级表）。
-- 时间格式化、本地存储读写、点外面关闭、设备档位各只有一个工具。
+- 时间格式化、浏览器存储读写、设备档位：现在还有多份实现（旧账数量见 `check:structure` 的输出），新代码只用登记表里的主人。“点外面关闭”还没有公共工具，记在登记表里待做。
 
 ### S3 一个东西一个名字
 
@@ -108,7 +124,13 @@ src/
 
 ### S10 机器守规矩
 
-能自动检查的都写成检查，进 CI（`.github/workflows/checks.yml`）。现有违规写在待清理名单 `scripts/structure-allowlist.json` 里：名单只能变短（修好一条就用 `node scripts/check-structure.mjs --shrink` 删掉），不能往里加新的。
+能自动检查的都写成检查，进 CI（`.github/workflows/checks.yml`）。现有违规写在待清理名单 `scripts/structure-allowlist.json` 里，每条是“键 × 数量”：名单只能变短（修好或变少就用 `node scripts/check-structure.mjs --shrink` / `pnpm check:lint --shrink` 写回），不能往里加新的，数量也不能变大。
+
+- **新类别**：新加一种检查时，用 `--baseline <类别>` 把现有的旧账记一次。每个类别只能做这一次，名单里已有的类别（哪怕是空的）拒绝重新生成，免得用它洗白新问题。
+- **改名、搬家**：旧路径的数量变 0、新路径冒出同样的数量时，检查会提示“像是改名”。在同一次提交里把名单里的键改成新路径，数量不能增加。
+- **代码警告**：`pnpm check:lint` 把现有 ESLint 警告按“文件 :: 规则”记成基线（`lintWarnings`），只许减少；错误一律失败。
+- **设计检查**：`pnpm check:design` 扫整个核心范围；改过的文件也可以单独跑 `node scripts/check-design.mjs <文件>`。`em` 字号相对父元素，不判断。确实要保留原值的，在同一行或上一行写 `/* TODO-P5: 原因 */`，它不算违规但要人工验收。
+- **规则改动报告**：推送后，GitHub 检查会把这次改了名单、范围、检查脚本、`.eslintrc.js`、本规范或测试的文件列在运行摘要里，方便看出“改规则”和“改代码”混在一起。
 
 ## 层级表
 
@@ -153,6 +175,20 @@ z-index 只写下面的令牌（定义在 `styles/tokens.css`）。同一个组�
 | 加载       | `src/components/feedback/LoadingStyle.tsx` `src/styles/loading.css` | `LoadingStyle`                                                                    | `spinner`    |
 | 海报卡片   | `src/components/VideoCard.tsx` `src/components/video-card/`         | `VideoCard`                                                                       | —            |
 | 图标       | —                                                                   | 只用 lucide-react，不用 emoji                                                     | `emoji`      |
+| 点外面关闭 | —                                                                   | 还没有公共工具（待做：第二阶段随公共弹窗层一起做）                                | —            |
+
+## 术语表
+
+同一个东西只用一个说法。这一阶段只定说法，界面文字暂不改；以后改到哪里，就按这里统一。
+
+| 说法                   | 代码名                                                 | 不再用的说法                     |
+| ---------------------- | ------------------------------------------------------ | -------------------------------- |
+| 自己看                 | `playback`                                             | Legacy、solo、standalone         |
+| 一起看（功能名）       | 房间 `room`（路由 `/watch-room` 不改）                 | together、tc                     |
+| 播放器内核             | `player`（`WatchPlayer`）                              | Legacy                           |
+| 播放记录（历史类统称） | `playRecords`（`PlayRecord`、接口 `/api/playrecords`） | 观看记录、历史记录（作界面词时） |
+| 继续观看               | 只指首页那一栏（`ContinueWatching`）                   | 用“继续观看”指全部播放记录       |
+| 收藏                   | `favorites`（`FavoritesPanel`、接口 `/api/favorites`） | 收藏夹（作功能名时）             |
 
 ## 块名登记表
 
@@ -198,6 +234,6 @@ z-index 只写下面的令牌（定义在 `styles/tokens.css`）。同一个组�
 
 ## 允许的例外
 
-确实拆不开或必须破例的，在这里写明文件和理由。检查范围同步排除（`scripts/lib/structure-scope.mjs`）。
+确实拆不开或必须破例的，在这里写明文件和理由。检查范围同步排除（`scripts/structure-scope.json` 的 `excluded`）。
 
 - `src/features/room/MusicPage.tsx`（`/watch-room/music`，房间里一起听音乐）：界面沿用上游音乐页，282 个 Tailwind 类，和音乐模块其他页面一个样子。它属于房间的入口所以放在 `features/room`，但样式按上游页面对待；以后整理音乐模块时一起改成 `tm-` 类。

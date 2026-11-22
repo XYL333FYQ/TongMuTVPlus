@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { readPartsRegistry } from './parts-registry.mjs';
+import { findMissingPaths, readPartsRegistry } from './parts-registry.mjs';
 
 test('reads rows with several owners and a dash', () => {
   const md =
@@ -51,5 +51,22 @@ test('a missing section or header is a problem', () => {
     readPartsRegistry('## 公共零件登记表\n\n| a | b |\n| - | - |\n').problems
       .length,
     1
+  );
+});
+
+test('finds missing backticked paths', () => {
+  const md = 'see `src/a.ts` and `docs/b.md` and `npm run x`';
+  assert.deepEqual(
+    findMissingPaths(md, (p) => p === 'src/a.ts'),
+    ['docs/b.md']
+  );
+});
+
+test('checks every path inside a code span, ignores globs and placeholders', () => {
+  const md =
+    '`src/a/` `src/b/` and `scripts/lib/**` and `src/**/*.{ts,tsx}` and `src/features/<名字>/` and `server/x.cjs:12`';
+  assert.deepEqual(
+    findMissingPaths(md, (p) => p === 'src/a/'),
+    ['src/b/', 'server/x.cjs']
   );
 });

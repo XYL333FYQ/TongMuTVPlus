@@ -21,7 +21,11 @@ import {
   subjectClass,
 } from './lib/css-rules.mjs';
 import { countMatches, isAllowedImportant } from './lib/detectors.mjs';
-import { ownedBy, readPartsRegistry } from './lib/parts-registry.mjs';
+import {
+  findMissingPaths,
+  ownedBy,
+  readPartsRegistry,
+} from './lib/parts-registry.mjs';
 import { baseline, compareCounts } from './lib/ratchet.mjs';
 import {
   CORE_CODE,
@@ -61,6 +65,8 @@ const isCode = (file) => /\.tsx?$/.test(file) && !isTest(file);
 const isScript = (file) => /\.[cm]?[jt]sx?$/.test(file);
 // 公共零件目录：里面的每个文件都必须是登记表里某个零件的主人
 const PART_DIRS = ['src/components/feedback/', 'src/components/ui/'];
+// 规范的“法律文件”：里面写的路径由检查保证存在
+const LAW_DOCS = ['AGENTS.md', 'docs/README.md', 'docs/STANDARD.md'];
 
 /** 计数：同一个键出现一次加一 */
 const bump = (counts, key) => counts.set(key, (counts.get(key) ?? 0) + 1);
@@ -297,6 +303,15 @@ function run() {
   const failures = [...problems];
   const counted = { ...violations };
   const partRows = checkParts(counted, failures);
+
+  // “法律文件”里写的路径必须真的存在（历史记录类文档不查）
+  for (const doc of LAW_DOCS) {
+    for (const missing of findMissingPaths(read(doc), (p) =>
+      fs.existsSync(path.join(root, p))
+    )) {
+      failures.push(`[docs] ${doc} 写了不存在的路径：${missing}`);
+    }
+  }
 
   const allowlist = JSON.parse(fs.readFileSync(allowlistPath, 'utf8'));
   const args = process.argv.slice(2);

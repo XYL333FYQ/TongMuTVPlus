@@ -80,6 +80,27 @@ export function readPartsRegistry(markdown) {
   return { rows, problems };
 }
 
+const PATH_ROOTS = /^(?:src|scripts|docs|server)\//;
+
+/**
+ * “法律文件”（AGENTS.md、docs/README.md、docs/STANDARD.md）里写的路径必须真的存在。
+ * 找反引号里以 src/、scripts/、docs/、server/ 开头的路径（一个代码片段里可以有几个，
+ * 例如命令里的脚本路径），返回不存在的那些。通配（* 、{}）和占位（<名字>）不查；
+ * 末尾的 :行号 去掉再查。围起来的代码块（```）不查。
+ */
+export function findMissingPaths(markdown, exists) {
+  const text = markdown.replace(/\r\n/g, '\n').replace(/```[\s\S]*?```/g, '');
+  const missing = [];
+  for (const [, span] of text.matchAll(/`([^`\n]+)`/g)) {
+    for (const token of span.split(/\s+/)) {
+      if (!PATH_ROOTS.test(token) || /[*{}<>]/.test(token)) continue;
+      const file = token.replace(/:\d+(?:-\d+)?$/, '');
+      if (!exists(file) && !missing.includes(file)) missing.push(file);
+    }
+  }
+  return missing;
+}
+
 /** 文件是否落在某个主人路径里（/ 结尾是目录前缀） */
 export function ownedBy(file, owners) {
   return owners.some((owner) =>
