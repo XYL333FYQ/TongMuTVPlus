@@ -1,0 +1,13 @@
+[
+  {
+    "name": "lobby",
+    "href": "/watch-room",
+    "wait": 6000
+  },
+  {
+    "name": "lobby-create",
+    "href": "/watch-room",
+    "wait": 6000,
+    "prepare": "(() => { const want = [\"创建房间\",\"建房间\",\"新建房间\"]; const vis = (el) => { const r = el.getBoundingClientRect(); return r.width > 0 && r.height > 0 && getComputedStyle(el).visibility !== 'hidden'; }; const all = [...document.querySelectorAll('button, [role=tab], a')].filter(vis); const hit = all.find((el) => want.some((w) => (el.getAttribute('aria-label') || '').startsWith(w) || el.textContent.trim() === w)); if (hit) hit.click(); return new Promise((r) => setTimeout(() => r(hit ? 'clicked' : 'none'), 1500)); })()"
+  }
+]

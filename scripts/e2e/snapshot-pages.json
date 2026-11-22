@@ -1,0 +1,99 @@
+[
+  {
+    "name": "home",
+    "href": "/",
+    "wait": 6000
+  },
+  {
+    "name": "library",
+    "href": "/douban",
+    "wait": 6000
+  },
+  {
+    "name": "search",
+    "href": "/search"
+  },
+  {
+    "name": "room",
+    "href": "/watch-room?room={ROOM}",
+    "wait": 6000
+  },
+  {
+    "name": "room-mini",
+    "href": "/watch-room?room={ROOM}",
+    "wait": 6000,
+    "prepare": "(() => { const a = [...document.querySelectorAll('a[href=\"/\"]')].find((x) => x.offsetParent); a && a.click(); return new Promise((r) => setTimeout(r, 3500)); })()"
+  },
+  {
+    "name": "play",
+    "href": "/play?source=directplay&id=axopD2eJJx4cCySw2YHLQGFH4LmW7Gr2RPUhuA1PYHWtPqBZYkrDiiGCN8AP&title=Big%20Buck%20Bunny",
+    "wait": 8000
+  },
+  {
+    "name": "play-mini",
+    "href": "/play?source=directplay&id=axopD2eJJx4cCySw2YHLQGFH4LmW7Gr2RPUhuA1PYHWtPqBZYkrDiiGCN8AP&title=Big%20Buck%20Bunny",
+    "wait": 8000,
+    "prepare": "(() => { const a = [...document.querySelectorAll('a[href=\"/douban\"]')].find((x) => x.offsetParent); a && a.click(); return new Promise((r) => setTimeout(r, 3500)); })()"
+  },
+  {
+    "name": "room-playlist",
+    "href": "/watch-room?room={ROOM}",
+    "wait": 6000,
+    "prepare": "(() => { const want = [\"片单和选集\",\"片单\"]; const vis = (el) => { const r = el.getBoundingClientRect(); return r.width > 0 && r.height > 0 && getComputedStyle(el).visibility !== 'hidden'; }; const all = [...document.querySelectorAll('button, [role=tab], a')].filter(vis); const hit = all.find((el) => want.some((w) => (el.getAttribute('aria-label') || '').startsWith(w) || el.textContent.trim() === w)); if (hit) hit.click(); return new Promise((r) => setTimeout(() => r(hit ? 'clicked' : 'none'), 1500)); })()"
+  },
+  {
+    "name": "room-members",
+    "href": "/watch-room?room={ROOM}",
+    "wait": 6000,
+    "prepare": "(() => { const want = [\"成员\",\"在线成员\"]; const vis = (el) => { const r = el.getBoundingClientRect(); return r.width > 0 && r.height > 0 && getComputedStyle(el).visibility !== 'hidden'; }; const all = [...document.querySelectorAll('button, [role=tab], a')].filter(vis); const hit = all.find((el) => want.some((w) => (el.getAttribute('aria-label') || '').startsWith(w) || el.textContent.trim() === w)); if (hit) hit.click(); return new Promise((r) => setTimeout(() => r(hit ? 'clicked' : 'none'), 1500)); })()"
+  },
+  {
+    "name": "room-activities",
+    "href": "/watch-room?room={ROOM}",
+    "wait": 6000,
+    "prepare": "(() => { const want = [\"房间活动\"]; const vis = (el) => { const r = el.getBoundingClientRect(); return r.width > 0 && r.height > 0 && getComputedStyle(el).visibility !== 'hidden'; }; const all = [...document.querySelectorAll('button, [role=tab], a')].filter(vis); const hit = all.find((el) => want.some((w) => (el.getAttribute('aria-label') || '').startsWith(w) || el.textContent.trim() === w)); if (hit) hit.click(); return new Promise((r) => setTimeout(() => r(hit ? 'clicked' : 'none'), 1500)); })()"
+  },
+  {
+    "name": "room-danmaku",
+    "href": "/watch-room?room={ROOM}",
+    "wait": 6000,
+    "prepare": "(() => { const want = [\"弹幕\"]; const vis = (el) => { const r = el.getBoundingClientRect(); return r.width > 0 && r.height > 0 && getComputedStyle(el).visibility !== 'hidden'; }; const all = [...document.querySelectorAll('button, [role=tab], a')].filter(vis); const hit = all.find((el) => want.some((w) => (el.getAttribute('aria-label') || '').startsWith(w) || el.textContent.trim() === w)); if (hit) hit.click(); return new Promise((r) => setTimeout(() => r(hit ? 'clicked' : 'none'), 1500)); })()"
+  },
+  {
+    "name": "room-settings",
+    "href": "/watch-room?room={ROOM}",
+    "wait": 6000,
+    "prepare": "(() => { const want = [\"房间设置\"]; const vis = (el) => { const r = el.getBoundingClientRect(); return r.width > 0 && r.height > 0 && getComputedStyle(el).visibility !== 'hidden'; }; const all = [...document.querySelectorAll('button, [role=tab], a')].filter(vis); const hit = all.find((el) => want.some((w) => (el.getAttribute('aria-label') || '').startsWith(w) || el.textContent.trim() === w)); if (hit) hit.click(); return new Promise((r) => setTimeout(() => r(hit ? 'clicked' : 'none'), 1500)); })()"
+  },
+  {
+    "name": "room-recs",
+    "href": "/watch-room?room={ROOM}",
+    "wait": 6000,
+    "prepare": "(() => { const want = [\"今晚看什么\",\"更多推荐\",\"换一批\"]; const vis = (el) => { const r = el.getBoundingClientRect(); return r.width > 0 && r.height > 0 && getComputedStyle(el).visibility !== 'hidden'; }; const all = [...document.querySelectorAll('button, [role=tab], a')].filter(vis); const hit = all.find((el) => want.some((w) => (el.getAttribute('aria-label') || '').startsWith(w) || el.textContent.trim() === w)); if (hit) hit.click(); return new Promise((r) => setTimeout(() => r(hit ? 'clicked' : 'none'), 1500)); })()"
+  },
+  {
+    "name": "home-hover",
+    "href": "/",
+    "wait": 6000,
+    "hover": true,
+    "prepare": "(() => { const card = document.querySelector('.tm-poster-grid .tm-video-card'); if (!card) return 'none'; card.setAttribute('data-snap-hover', ''); const title = card.querySelector('.peer, .tm-video-card-title'); if (title) title.setAttribute('data-snap-hover', ''); return 'tagged'; })()"
+  },
+  {
+    "name": "play-tools",
+    "href": "/play?source=directplay&id=axopD2eJJx4cCySw2YHLQGFH4LmW7Gr2RPUhuA1PYHWtPqBZYkrDiiGCN8AP&title=Big%20Buck%20Bunny",
+    "wait": 8000,
+    "prepare": "(() => { const want = [\"工具\"]; const vis = (el) => { const r = el.getBoundingClientRect(); return r.width > 0 && r.height > 0 && getComputedStyle(el).visibility !== 'hidden'; }; const all = [...document.querySelectorAll('button')].filter(vis); const hit = all.find((el) => want.some((w) => el.textContent.trim().startsWith(w))); if (hit) hit.click(); return new Promise((r) => setTimeout(() => r(hit ? 'clicked' : 'none'), 1500)); })()"
+  },
+  {
+    "name": "play-episodes",
+    "href": "/play?source=directplay&id=axopD2eJJx4cCySw2YHLQGFH4LmW7Gr2RPUhuA1PYHWtPqBZYkrDiiGCN8AP&title=Big%20Buck%20Bunny",
+    "wait": 8000,
+    "prepare": "(() => { const want = [\"选集\"]; const vis = (el) => { const r = el.getBoundingClientRect(); return r.width > 0 && r.height > 0 && getComputedStyle(el).visibility !== 'hidden'; }; const all = [...document.querySelectorAll('button')].filter(vis); const hit = all.find((el) => want.some((w) => el.textContent.trim().startsWith(w))); if (hit) hit.click(); return new Promise((r) => setTimeout(() => r(hit ? 'clicked' : 'none'), 1500)); })()"
+  },
+  {
+    "name": "play-keys",
+    "href": "/play?source=directplay&id=axopD2eJJx4cCySw2YHLQGFH4LmW7Gr2RPUhuA1PYHWtPqBZYkrDiiGCN8AP&title=Big%20Buck%20Bunny",
+    "wait": 8000,
+    "prepare": "(() => { const want = [\"快捷键\"]; const vis = (el) => { const r = el.getBoundingClientRect(); return r.width > 0 && r.height > 0 && getComputedStyle(el).visibility !== 'hidden'; }; const all = [...document.querySelectorAll('button')].filter(vis); const hit = all.find((el) => want.some((w) => el.textContent.trim().startsWith(w))); if (hit) hit.click(); return new Promise((r) => setTimeout(() => r(hit ? 'clicked' : 'none'), 1500)); })()"
+  }
+]
