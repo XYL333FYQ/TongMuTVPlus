@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { countMatches, DETECTORS } from './detectors.mjs';
+import { countMatches, DETECTORS, isAllowedImportant } from './detectors.mjs';
 
 test('counts each ingredient', () => {
   assert.equal(
@@ -45,4 +45,27 @@ test('repeated calls give the same count (no lastIndex leak)', () => {
 test('unknown detector id throws', () => {
   assert.throws(() => countMatches('x', 'nope'));
   assert.ok(DETECTORS.portal.label);
+});
+
+test('counts inline eslint disables', () => {
+  assert.equal(
+    countMatches(
+      '// eslint-disable-next-line no-console\n// eslint-disable-line x',
+      'eslintDisableInline'
+    ),
+    2
+  );
+});
+
+test('allows !important only in the agreed contexts', () => {
+  assert.equal(
+    isAllowedImportant("html[data-tm-reduced-motion='true'] .a", []),
+    true
+  );
+  assert.equal(
+    isAllowedImportant('.a', ['@media (prefers-reduced-motion: reduce)']),
+    true
+  );
+  assert.equal(isAllowedImportant('.tm-player .art-video-player', []), true);
+  assert.equal(isAllowedImportant('.tm-btn', []), false);
 });

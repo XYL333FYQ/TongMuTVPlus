@@ -80,7 +80,7 @@ src/
 
 - 不在文件末尾追加“第几轮 / 对齐 / 收紧”段落去覆盖前面的规则；同一选择器在一个文件里只出现一次。
 - 整页按哪套排版只认设备档位（`html[data-tm-device]`，见 `src/lib/device-tier.ts`）和页面上的 `data-layout`，`features/` 里不写像素宽度媒体查询。单个零件“放不放得下”（卡片列数、表单列数）在 `components/` 和 `styles/` 里仍可用宽度查询。
-- `!important` 只用来压 Artplayer 等第三方的内联样式。
+- `!important` 只许用在四种场合：压 Artplayer 等第三方的内联样式（选择器里有 `.art-` / `artplayer`）、减弱动效（`data-tm-reduced-motion` / `prefers-reduced-motion`）、关闭玻璃效果（`data-tm-no-blur`）、主题切换动画（`data-tm-theme-transition`）。核心样式里其余的 `!important` 是旧账，按文件记在待清理名单的 `important` 类别里，只许减少。
 
 ### S6 文件大小与职责
 
@@ -97,6 +97,7 @@ src/
 ### S8 类型
 
 - 核心功能的文件开头不写整文件 `eslint-disable`；确实需要时用 `eslint-disable-next-line` 并写原因。
+- 行内跳过检查的注释（`eslint-disable-next-line` / `eslint-disable-line`）全部 `src` 按文件计数，记在待清理名单的 `eslintDisableInline` 类别里，只许减少：新代码要跳过一条规则，先想办法不跳过；真要跳过，就在同一次提交里删掉别处的一条。
 - 不用 `any`（ESLint 在核心范围内按错误报，测试文件除外）。第三方库类型缺的部分只在一处补：播放器相关（Artplayer 实例、弹幕 / 字幕插件、hls.js）在 `features/player/core/art-types.ts`；浏览器带前缀的私有接口（Safari 全屏、iOS 主屏模式等）在 `src/types/vendor-dom.d.ts`。
 
 ### S9 仓库

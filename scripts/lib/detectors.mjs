@@ -33,7 +33,21 @@ export const DETECTORS = {
     pattern: /[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/gu,
     label: '用 emoji 当图标',
   },
+  // 不属于哪个零件：行内跳过代码检查的注释（S8），全部 src 都统计
+  eslintDisableInline: {
+    pattern: /eslint-disable-(?:next-)?line\b/g,
+    label: '行内跳过代码检查',
+  },
 };
+
+// S5：!important 只许用在这几种场合——压 Artplayer 的内联样式、减弱动效、关闭玻璃效果、
+// 主题切换动画。选择器或任一外层 @ 规则命中其一即可。
+const ALLOWED_IMPORTANT =
+  /data-tm-reduced-motion|prefers-reduced-motion|data-tm-no-blur|data-tm-theme-transition|\.art-|artplayer/;
+
+export function isAllowedImportant(selector, atRules) {
+  return [selector, ...atRules].some((text) => ALLOWED_IMPORTANT.test(text));
+}
 
 /** 统计一段文本里某种原材料出现的次数（先把 CRLF 统一成 LF） */
 export function countMatches(text, id) {

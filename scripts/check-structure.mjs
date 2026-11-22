@@ -20,7 +20,7 @@ import {
   selectorSpine,
   subjectClass,
 } from './lib/css-rules.mjs';
-import { countMatches } from './lib/detectors.mjs';
+import { countMatches, isAllowedImportant } from './lib/detectors.mjs';
 import { ownedBy, readPartsRegistry } from './lib/parts-registry.mjs';
 import { baseline, compareCounts } from './lib/ratchet.mjs';
 import {
@@ -56,7 +56,9 @@ const read = (file) => {
   }
   return texts.get(file);
 };
-const isCode = (file) => /.(ts|tsx)$/.test(file) && !/.test.tsx?$/.test(file);
+const isTest = (file) => /\.test\.[cm]?[jt]sx?$/.test(file);
+const isCode = (file) => /\.tsx?$/.test(file) && !isTest(file);
+const isScript = (file) => /\.[cm]?[jt]sx?$/.test(file);
 // 公共零件目录：里面的每个文件都必须是登记表里某个零件的主人
 const PART_DIRS = ['src/components/feedback/', 'src/components/ui/'];
 
@@ -135,6 +137,16 @@ function checkCss(file, owners, violations) {
         if (decl.prop.startsWith('--tm-')) {
           bump(violations.tokens, `${file} :: ${decl.prop}`);
         }
+      }
+    }
+
+    // S5：!important 只许压第三方内联样式、减弱动效、关闭玻璃、主题切换动画，其余按文件计数
+    for (const decl of rule.declarations) {
+      if (
+        /!\s*important$/i.test(decl.value) &&
+        !isAllowedImportant(rule.selector, rule.atRules)
+      ) {
+        bump(violations.important, file);
       }
     }
 
@@ -261,6 +273,8 @@ function run() {
     duplicates: new Map(),
     blocks: new Map(),
     eslintDisable: new Map(),
+    important: new Map(),
+    eslintDisableInline: new Map(),
   };
   const warnings = [];
 
@@ -272,6 +286,12 @@ function run() {
     } else if (isCode(file) && inScope(file, CORE_CODE)) {
       checkCode(file, violations, warnings);
     }
+  }
+
+  // S8：行内跳过代码检查的注释，全部 src（含测试）按文件计数，只许减少
+  for (const file of allFiles.filter(isScript)) {
+    const count = countMatches(read(file), 'eslintDisableInline');
+    if (count) violations.eslintDisableInline.set(file, count);
   }
 
   const failures = [...problems];
