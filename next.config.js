@@ -1,7 +1,10 @@
 /** @type {import('next').NextConfig} */
 /* eslint-disable @typescript-eslint/no-var-requires */
 
-const { PHASE_DEVELOPMENT_SERVER } = require('next/constants');
+const {
+  PHASE_DEVELOPMENT_SERVER,
+  PHASE_PRODUCTION_BUILD,
+} = require('next/constants');
 const fs = require('fs');
 const path = require('path');
 
@@ -291,6 +294,12 @@ const createNextConfig = (phase) => {
   // Cloudflare/OpenNext worker bundle and can make Cloudflare builds fail with
   // a generic "Build failed because of webpack errors" message.
   if (isDevelopment || isEdgeBuild) {
+    return nextConfig;
+  }
+
+  // next-pwa 只在构建时生成 public/sw.js，运行时用不到。server.js 启动时也会读这份配置
+  // （phase 是 production-server），这时不加载它：它在开发依赖里，生产镜像里没有。
+  if (phase !== PHASE_PRODUCTION_BUILD) {
     return nextConfig;
   }
 

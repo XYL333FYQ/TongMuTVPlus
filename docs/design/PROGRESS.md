@@ -1,5 +1,12 @@
 # 界面改造进度
 
+## 2026-11-22 依赖安全警报：升级 Next.js 15.5.29，next-pwa 只在构建时加载
+
+- GitHub 依赖安全警报开着后第一次扫描报 120 条。按包归类：真正跑在线上的只有 Next.js 自身 3 条中危（图片优化处理 SVG、Edge 路由泄露 cookie、原样转发上游响应时可能串号）。本站关了图片优化、没有 Edge 路由、中间件不设 cookie，第三条只在反向代理开了请求管线化时才会触发；补丁版本一起修掉，升到 15.5.29（`eslint-config-next` 同步）。
+- 约 70 条来自 `next-pwa` 带进来的构建工具（babel、rollup、workbox、lodash、serialize-javascript、minimatch 等）。它只在构建时生成 `public/sw.js`，但原来放在运行时依赖里，生产镜像也装着它；`server.js` 启动时读 `next.config.js` 会加载它，所以不能直接挪走。现在 `next.config.js` 只在构建阶段（`PHASE_PRODUCTION_BUILD`）加载 `next-pwa`，它挪到开发依赖，生产镜像里不再有它和它带进来的那些包。
+- 其余：开发 / 构建工具里的约 45 条（undici、js-yaml、svgo、sharp 等）不进镜像，不动；zod 的 2 条要求“不限长度的数组”，本站只在站长填的版本公告里用 zod，数组都限了长度，不受影响，不为此升大版本；glib 那条在电脑客户端的 Linux 构建里，Windows 版不用。
+- 验证：本机生产构建（Node 24）编译通过、`public/sw.js` 照常生成（Windows 上复制 standalone 时的 EPERM 是已知问题，Docker 里没有）；把 `node_modules/next-pwa` 藏起来后用生产模式启动 `server.js`：健康检查 200，登录页、样式文件、`sw.js` 都是 200。typecheck、lint、format、check:structure、`pwa-options` 测试通过；Jest 185 套 / 1201 条、test:rooms 42 / 42；首页、片库、房间、播放页在 6 种窗口 × 深浅色下和升级前的快照对比，除了图片淡入、入场动画、播放器提示 / 控制条自动隐藏的时机，没有差异；自己看行为测试 5 项、两个账号房间测试 12 项全过。
+
 ## 2026-11-22 代码规范第二轮：待清理名单清零，播放页、影片卡片拆出几块
 
 - **待清理名单 101 → 0**（`scripts/structure-allowlist.json` 全空），界面和行为不变：
