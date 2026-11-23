@@ -696,32 +696,12 @@ html[data-tm-solo-mini='mini']:where([data-tm-device='phone'])
   outline: 2px solid var(--tm-text);
   outline-offset: 2px;
 }
-/* 面板：平板和电脑上是全站的右侧抽屉层（tm-drawer-layer），手机上改成从底部拉起 */
-:where(html:not([data-tm-device='phone'])) .tm-room-dialog[data-sheet] {
-  width: min(420px, 100%);
-  max-height: none;
+/* 面板：弹窗层的 drawer 款式负责位置、尺寸和进场（平板和电脑贴右满高，手机从底部拉起）；
+   贴右时只留左边一条线、不要圆角 */
+:where(html:is([data-tm-device='tablet'], [data-tm-device='wide']))
+  .tm-room-dialog[data-sheet] {
   border-width: 0 0 0 1px;
   border-radius: 0;
-  animation: tm-room-view-from-right var(--tm-d-panel) var(--tm-ease-out);
-}
-:where(html[data-tm-device='phone'])
-  .tm-room-dialog-layer.tm-drawer-layer
-  > .tm-room-dialog[data-sheet] {
-  padding-top: 0;
-}
-:where(html[data-tm-device='phone']) .tm-room-dialog[data-sheet] {
-  width: 100%;
-  max-height: 82dvh;
-  border-radius: var(--tm-radius-lg) var(--tm-radius-lg) 0 0;
-  padding-bottom: var(--tm-safe-bottom, 0px);
-}
-html[data-tm-reduced-motion='true'] .tm-room-dialog[data-sheet] {
-  animation: none;
-}
-@media (prefers-reduced-motion: reduce) {
-  .tm-room-dialog[data-sheet] {
-    animation: none;
-  }
 }
 :where(.tm-room-view[data-layout='compact'])
   .tm-room-view-head
@@ -841,9 +821,4 @@ html[data-tm-reduced-motion='true'] .tm-room-dialog[data-sheet] {
 .tm-room-view[data-layout='tablet'] .tm-room-view-now .tm-room-btn-primary {
   min-height: 44px;
   padding: 0 18px;
-}
-
-:where(html[data-tm-device='phone'])
-  .tm-modal-layer.tm-drawer-layer.tm-room-dialog-layer[open] {
-  place-items: end stretch;
 }

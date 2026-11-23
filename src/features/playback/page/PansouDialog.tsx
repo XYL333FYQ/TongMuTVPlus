@@ -21,12 +21,7 @@ export default function PansouDialog({
   return (
     <>
       {drawer ? (
-        <Drawer
-          isOpen
-          onClose={onClose}
-          title={`搜索网盘资源: ${keyword}`}
-          width='w-[400px]'
-        >
+        <Drawer isOpen onClose={onClose} title={`搜索网盘资源: ${keyword}`}>
           <div className='p-4'>
             <PansouSearch keyword={keyword} triggerSearch />
           </div>

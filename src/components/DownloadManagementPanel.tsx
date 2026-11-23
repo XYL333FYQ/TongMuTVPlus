@@ -2,7 +2,6 @@
 
 import { Check, ChevronDown, Download, Trash2, X } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
-import { createPortal } from 'react-dom';
 
 import { CompletedTask, downloadDB } from '@/lib/download-db';
 import {
@@ -43,12 +42,7 @@ export function DownloadManagementPanel({
   );
   const [isDeleting, setIsDeleting] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
-  const [mounted, setMounted] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   useEffect(() => {
     if (isOpen) {
@@ -552,249 +546,240 @@ export function DownloadManagementPanel({
       .sort((a, b) => b.lastCompletedAt - a.lastCompletedAt);
   }, [completedTasks]);
 
-  if (!mounted || !isOpen) return null;
+  if (!isOpen) return null;
 
   return (
     <>
-      {createPortal(
-        <ModalLayer
-          label='下载管理'
-          onClose={onClose}
-          className='tm-download-modal-layer'
-        >
-          <div className='relative flex h-[92dvh] max-h-[92dvh] w-full max-w-4xl flex-col rounded-t-2xl bg-surface shadow-xl sm:h-auto sm:max-h-[90vh] sm:rounded-lg'>
-            {/* Header */}
-            <div className='flex items-center justify-between border-b border-line p-3 sm:p-4'>
-              <h2 className='text-lg font-medium text-fg sm:text-xl'>
-                下载文件管理
-              </h2>
+      <ModalLayer variant='drawer' label='下载管理' onClose={onClose}>
+        <div className='relative flex w-full flex-col bg-surface shadow-xl'>
+          {/* Header */}
+          <div className='flex items-center justify-between border-b border-line p-3 sm:p-4'>
+            <h2 className='text-lg font-medium text-fg sm:text-xl'>
+              下载文件管理
+            </h2>
+            <button
+              onClick={onClose}
+              className='min-w-[44px] rounded p-2 transition-colors hover:bg-line min-h-[44px] tm-press'
+              aria-label='关闭下载文件管理'
+            >
+              <X className='w-5 h-5 text-muted' />
+            </button>
+          </div>
+
+          {/* Toolbar */}
+          <div className='flex items-center justify-between gap-3 border-b border-line p-3 sm:p-4'>
+            <div className='min-w-0 flex-1 flex-col gap-2 sm:flex sm:flex-row sm:items-center sm:gap-4'>
+              <label className='flex min-h-[44px] items-center gap-2 cursor-pointer'>
+                <input
+                  type='checkbox'
+                  checked={
+                    selectedIds.size === completedTasks.length &&
+                    completedTasks.length > 0
+                  }
+                  onChange={handleSelectAll}
+                  className='w-4 h-4'
+                />
+                <span className='text-sm text-muted'>全选</span>
+              </label>
+              <span className='text-sm text-muted'>
+                已选择 {selectedIds.size} / {completedTasks.length} 集
+                {videoGroups.length > 0 && `，共 ${videoGroups.length} 个视频`}
+              </span>
+            </div>
+            <div className='ml-auto flex flex-shrink-0 items-center justify-end gap-2'>
               <button
-                onClick={onClose}
-                className='min-w-[44px] rounded p-2 transition-colors hover:bg-line min-h-[44px] tm-press'
-                aria-label='关闭下载文件管理'
+                onClick={handleExport}
+                aria-label={isExporting ? '导出中' : '导出选中'}
+                disabled={selectedIds.size === 0 || isExporting || isDeleting}
+                className='flex h-11 w-11 items-center justify-center rounded bg-fg text-inverse transition-colors hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 sm:h-auto sm:w-auto sm:gap-2 sm:px-4 sm:py-2 sm:text-sm min-h-[44px] tm-press'
               >
-                <X className='w-5 h-5 text-muted' />
+                <Download className='h-4 w-4' />
+                <span className='hidden sm:inline'>
+                  {isExporting ? '导出中...' : '导出选中'}
+                </span>
+              </button>
+              <button
+                onClick={handleDelete}
+                aria-label={isDeleting ? '删除中' : '删除选中'}
+                disabled={selectedIds.size === 0 || isDeleting || isExporting}
+                className='flex h-11 w-11 items-center justify-center rounded bg-fg text-inverse transition-colors hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 sm:h-auto sm:w-auto sm:gap-2 sm:px-4 sm:py-2 sm:text-sm min-h-[44px] tm-press'
+              >
+                <Trash2 className='h-4 w-4' />
+                <span className='hidden sm:inline'>
+                  {isDeleting ? '删除中...' : '删除选中'}
+                </span>
               </button>
             </div>
+          </div>
 
-            {/* Toolbar */}
-            <div className='flex items-center justify-between gap-3 border-b border-line p-3 sm:p-4'>
-              <div className='min-w-0 flex-1 flex-col gap-2 sm:flex sm:flex-row sm:items-center sm:gap-4'>
-                <label className='flex min-h-[44px] items-center gap-2 cursor-pointer'>
-                  <input
-                    type='checkbox'
-                    checked={
-                      selectedIds.size === completedTasks.length &&
-                      completedTasks.length > 0
-                    }
-                    onChange={handleSelectAll}
-                    className='w-4 h-4'
-                  />
-                  <span className='text-sm text-muted'>全选</span>
-                </label>
-                <span className='text-sm text-muted'>
-                  已选择 {selectedIds.size} / {completedTasks.length} 集
-                  {videoGroups.length > 0 &&
-                    `，共 ${videoGroups.length} 个视频`}
-                </span>
-              </div>
-              <div className='ml-auto flex flex-shrink-0 items-center justify-end gap-2'>
-                <button
-                  onClick={handleExport}
-                  aria-label={isExporting ? '导出中' : '导出选中'}
-                  disabled={selectedIds.size === 0 || isExporting || isDeleting}
-                  className='flex h-11 w-11 items-center justify-center rounded bg-fg text-inverse transition-colors hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 sm:h-auto sm:w-auto sm:gap-2 sm:px-4 sm:py-2 sm:text-sm min-h-[44px] tm-press'
-                >
-                  <Download className='h-4 w-4' />
-                  <span className='hidden sm:inline'>
-                    {isExporting ? '导出中...' : '导出选中'}
-                  </span>
-                </button>
-                <button
-                  onClick={handleDelete}
-                  aria-label={isDeleting ? '删除中' : '删除选中'}
-                  disabled={selectedIds.size === 0 || isDeleting || isExporting}
-                  className='flex h-11 w-11 items-center justify-center rounded bg-fg text-inverse transition-colors hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 sm:h-auto sm:w-auto sm:gap-2 sm:px-4 sm:py-2 sm:text-sm min-h-[44px] tm-press'
-                >
-                  <Trash2 className='h-4 w-4' />
-                  <span className='hidden sm:inline'>
-                    {isDeleting ? '删除中...' : '删除选中'}
-                  </span>
-                </button>
-              </div>
-            </div>
+          {/* Content */}
+          <div className='flex-1 overflow-y-auto p-3 sm:p-4'>
+            {completedTasks.length === 0 ? (
+              <div className='text-center py-12 text-muted'>暂无下载记录</div>
+            ) : (
+              <div className='space-y-3'>
+                {videoGroups.map((group) => {
+                  const isExpanded = expandedGroupKeys.has(group.key);
+                  const selectedCount = group.tasks.filter((task) =>
+                    selectedIds.has(task.id)
+                  ).length;
+                  const isGroupSelected = selectedCount === group.tasks.length;
+                  const isGroupPartiallySelected =
+                    selectedCount > 0 && !isGroupSelected;
 
-            {/* Content */}
-            <div className='flex-1 overflow-y-auto p-3 sm:p-4'>
-              {completedTasks.length === 0 ? (
-                <div className='text-center py-12 text-muted'>暂无下载记录</div>
-              ) : (
-                <div className='space-y-3'>
-                  {videoGroups.map((group) => {
-                    const isExpanded = expandedGroupKeys.has(group.key);
-                    const selectedCount = group.tasks.filter((task) =>
-                      selectedIds.has(task.id)
-                    ).length;
-                    const isGroupSelected =
-                      selectedCount === group.tasks.length;
-                    const isGroupPartiallySelected =
-                      selectedCount > 0 && !isGroupSelected;
+                  return (
+                    <div
+                      key={group.key}
+                      className={`border rounded-lg overflow-hidden transition-colors ${
+                        isGroupSelected || isGroupPartiallySelected
+                          ? 'border-line bg-raised'
+                          : 'border-line'
+                      }`}
+                    >
+                      <div className='flex items-start gap-2 p-3 hover:bg-line sm:gap-3 sm:p-4'>
+                        <button
+                          type='button'
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            handleToggleGroupSelect(group);
+                          }}
+                          className={`flex h-11 w-11 flex-shrink-0 items-center justify-center rounded border-2 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-fg ${
+                            isGroupSelected
+                              ? 'border-line bg-fg text-inverse min-h-[44px] tm-press'
+                              : isGroupPartiallySelected
+                              ? 'border-line bg-raised min-h-[44px] tm-press'
+                              : 'border-line min-h-[44px] tm-press'
+                          }`}
+                          aria-label={`选择 ${group.title}`}
+                          aria-pressed={isGroupSelected}
+                        >
+                          {isGroupSelected ? (
+                            <Check className='h-4 w-4 text-inverse sm:h-3 sm:w-3' />
+                          ) : isGroupPartiallySelected ? (
+                            <span className='h-0.5 w-3 rounded bg-fg sm:w-2.5' />
+                          ) : null}
+                        </button>
 
-                    return (
-                      <div
-                        key={group.key}
-                        className={`border rounded-lg overflow-hidden transition-colors ${
-                          isGroupSelected || isGroupPartiallySelected
-                            ? 'border-line bg-raised'
-                            : 'border-line'
-                        }`}
-                      >
-                        <div className='flex items-start gap-2 p-3 hover:bg-line sm:gap-3 sm:p-4'>
-                          <button
-                            type='button'
-                            onClick={(event) => {
-                              event.stopPropagation();
-                              handleToggleGroupSelect(group);
-                            }}
-                            className={`flex h-11 w-11 flex-shrink-0 items-center justify-center rounded border-2 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-fg ${
-                              isGroupSelected
-                                ? 'border-line bg-fg text-inverse min-h-[44px] tm-press'
-                                : isGroupPartiallySelected
-                                ? 'border-line bg-raised min-h-[44px] tm-press'
-                                : 'border-line min-h-[44px] tm-press'
-                            }`}
-                            aria-label={`选择 ${group.title}`}
-                            aria-pressed={isGroupSelected}
-                          >
-                            {isGroupSelected ? (
-                              <Check className='h-4 w-4 text-inverse sm:h-3 sm:w-3' />
-                            ) : isGroupPartiallySelected ? (
-                              <span className='h-0.5 w-3 rounded bg-fg sm:w-2.5' />
-                            ) : null}
-                          </button>
-
-                          <button
-                            type='button'
-                            className='min-w-0 flex-1 rounded text-left min-h-[44px] tm-press focus-visible:outline focus-visible:outline-2 focus-visible:outline-fg'
-                            aria-label={`${isExpanded ? '收起' : '展开'} ${
-                              group.title
-                            }`}
-                            aria-expanded={isExpanded}
-                            onClick={() => handleToggleGroupExpand(group.key)}
-                          >
-                            <span className='flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-3'>
-                              <span className='min-w-0 flex-1'>
-                                <span className='line-clamp-2 text-sm font-medium text-fg sm:truncate'>
-                                  {group.title}
-                                </span>
-                                <span className='mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[13px] text-muted'>
-                                  <span>来源: {group.source}</span>
-                                  <span>•</span>
-                                  <span>{group.tasks.length} 集</span>
-                                  <span>•</span>
-                                  <span>
-                                    {group.downloadModes
-                                      .map(getDownloadModeLabel)
-                                      .join(' / ')}
-                                  </span>
-                                </span>
+                        <button
+                          type='button'
+                          className='min-w-0 flex-1 rounded text-left min-h-[44px] tm-press focus-visible:outline focus-visible:outline-2 focus-visible:outline-fg'
+                          aria-label={`${isExpanded ? '收起' : '展开'} ${
+                            group.title
+                          }`}
+                          aria-expanded={isExpanded}
+                          onClick={() => handleToggleGroupExpand(group.key)}
+                        >
+                          <span className='flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-3'>
+                            <span className='min-w-0 flex-1'>
+                              <span className='line-clamp-2 text-sm font-medium text-fg sm:truncate'>
+                                {group.title}
                               </span>
-                              <span className='flex w-full flex-row-reverse items-center justify-between gap-3 text-left sm:w-auto sm:flex-row sm:items-start sm:text-right'>
-                                <span className='block min-w-0 sm:min-w-[150px]'>
-                                  <span className='block text-[13px] text-muted'>
-                                    最近完成：
-                                    {formatDate(group.lastCompletedAt)}
-                                  </span>
-                                  <span className='mt-1 block text-[13px] text-muted'>
-                                    总大小：{formatFileSize(group.totalSize)}
-                                  </span>
-                                  {selectedCount > 0 && (
-                                    <span className='mt-1 block text-[13px] text-fg'>
-                                      已选 {selectedCount} 集
-                                    </span>
-                                  )}
+                              <span className='mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[13px] text-muted'>
+                                <span>来源: {group.source}</span>
+                                <span>•</span>
+                                <span>{group.tasks.length} 集</span>
+                                <span>•</span>
+                                <span>
+                                  {group.downloadModes
+                                    .map(getDownloadModeLabel)
+                                    .join(' / ')}
                                 </span>
-                                <ChevronDown
-                                  className={`h-5 w-5 flex-shrink-0 text-muted transition-transform sm:mt-1 ${
-                                    isExpanded ? 'rotate-180' : ''
-                                  }`}
-                                />
                               </span>
                             </span>
-                          </button>
-                        </div>
-
-                        {isExpanded && (
-                          <div className='border-t border-line bg-surface'>
-                            {group.tasks.map((task) => (
-                              <button
-                                type='button'
-                                aria-pressed={selectedIds.has(task.id)}
-                                key={task.id}
-                                className={`flex w-full cursor-pointer items-start gap-2 rounded text-left min-h-[44px] tm-press focus-visible:outline focus-visible:outline-2 focus-visible:outline-fg px-3 py-3.5 transition-colors sm:gap-3 sm:px-4 sm:py-3 ${
-                                  selectedIds.has(task.id)
-                                    ? 'bg-raised'
-                                    : 'hover:bg-line'
+                            <span className='flex w-full flex-row-reverse items-center justify-between gap-3 text-left sm:w-auto sm:flex-row sm:items-start sm:text-right'>
+                              <span className='block min-w-0 sm:min-w-[150px]'>
+                                <span className='block text-[13px] text-muted'>
+                                  最近完成：
+                                  {formatDate(group.lastCompletedAt)}
+                                </span>
+                                <span className='mt-1 block text-[13px] text-muted'>
+                                  总大小：{formatFileSize(group.totalSize)}
+                                </span>
+                                {selectedCount > 0 && (
+                                  <span className='mt-1 block text-[13px] text-fg'>
+                                    已选 {selectedCount} 集
+                                  </span>
+                                )}
+                              </span>
+                              <ChevronDown
+                                className={`h-5 w-5 flex-shrink-0 text-muted transition-transform sm:mt-1 ${
+                                  isExpanded ? 'rotate-180' : ''
                                 }`}
-                                onClick={() => handleToggleSelect(task.id)}
-                              >
-                                <span className='flex-shrink-0 sm:mt-1'>
-                                  <span
-                                    className={`flex h-8 w-8 items-center justify-center rounded border-2 sm:h-5 sm:w-5 ${
-                                      selectedIds.has(task.id)
-                                        ? 'border-line bg-fg'
-                                        : 'border-line'
-                                    }`}
-                                  >
-                                    {selectedIds.has(task.id) && (
-                                      <Check className='h-4 w-4 text-inverse sm:h-3 sm:w-3' />
-                                    )}
-                                  </span>
-                                </span>
-                                <span className='min-w-0 flex-1'>
-                                  <span className='flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between'>
-                                    <span className='min-w-0 flex-1'>
-                                      <span className='line-clamp-2 text-sm font-medium text-fg sm:truncate'>
-                                        第 {task.episodeIndex + 1} 集
-                                        {task.episodeTitle
-                                          ? `：${task.episodeTitle}`
-                                          : ''}
-                                      </span>
-                                      <span className='mt-1 block truncate text-[13px] text-muted'>
-                                        {task.title}
-                                      </span>
-                                    </span>
-                                    <span className='flex-shrink-0 text-left sm:text-right'>
-                                      <span className='block text-[13px] text-muted'>
-                                        {formatDate(task.completedAt)}
-                                      </span>
-                                      <span className='mt-1 block text-[13px] text-muted'>
-                                        {formatFileSize(task.fileSize)}
-                                      </span>
-                                    </span>
-                                  </span>
-                                  <span className='mt-2 flex flex-wrap items-center gap-2 text-[13px] text-muted'>
-                                    <span>第 {task.episodeIndex + 1} 集</span>
-                                    <span>•</span>
-                                    <span>
-                                      {getDownloadModeLabel(task.downloadMode)}
-                                    </span>
-                                  </span>
-                                </span>
-                              </button>
-                            ))}
-                          </div>
-                        )}
+                              />
+                            </span>
+                          </span>
+                        </button>
                       </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
+
+                      {isExpanded && (
+                        <div className='border-t border-line bg-surface'>
+                          {group.tasks.map((task) => (
+                            <button
+                              type='button'
+                              aria-pressed={selectedIds.has(task.id)}
+                              key={task.id}
+                              className={`flex w-full cursor-pointer items-start gap-2 rounded text-left min-h-[44px] tm-press focus-visible:outline focus-visible:outline-2 focus-visible:outline-fg px-3 py-3.5 transition-colors sm:gap-3 sm:px-4 sm:py-3 ${
+                                selectedIds.has(task.id)
+                                  ? 'bg-raised'
+                                  : 'hover:bg-line'
+                              }`}
+                              onClick={() => handleToggleSelect(task.id)}
+                            >
+                              <span className='flex-shrink-0 sm:mt-1'>
+                                <span
+                                  className={`flex h-8 w-8 items-center justify-center rounded border-2 sm:h-5 sm:w-5 ${
+                                    selectedIds.has(task.id)
+                                      ? 'border-line bg-fg'
+                                      : 'border-line'
+                                  }`}
+                                >
+                                  {selectedIds.has(task.id) && (
+                                    <Check className='h-4 w-4 text-inverse sm:h-3 sm:w-3' />
+                                  )}
+                                </span>
+                              </span>
+                              <span className='min-w-0 flex-1'>
+                                <span className='flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between'>
+                                  <span className='min-w-0 flex-1'>
+                                    <span className='line-clamp-2 text-sm font-medium text-fg sm:truncate'>
+                                      第 {task.episodeIndex + 1} 集
+                                      {task.episodeTitle
+                                        ? `：${task.episodeTitle}`
+                                        : ''}
+                                    </span>
+                                    <span className='mt-1 block truncate text-[13px] text-muted'>
+                                      {task.title}
+                                    </span>
+                                  </span>
+                                  <span className='flex-shrink-0 text-left sm:text-right'>
+                                    <span className='block text-[13px] text-muted'>
+                                      {formatDate(task.completedAt)}
+                                    </span>
+                                    <span className='mt-1 block text-[13px] text-muted'>
+                                      {formatFileSize(task.fileSize)}
+                                    </span>
+                                  </span>
+                                </span>
+                                <span className='mt-2 flex flex-wrap items-center gap-2 text-[13px] text-muted'>
+                                  <span>第 {task.episodeIndex + 1} 集</span>
+                                  <span>•</span>
+                                  <span>
+                                    {getDownloadModeLabel(task.downloadMode)}
+                                  </span>
+                                </span>
+                              </span>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
-        </ModalLayer>,
-        document.body
-      )}
+        </div>
+      </ModalLayer>
 
       <ConfirmDialog
         isOpen={showConfirmDialog}

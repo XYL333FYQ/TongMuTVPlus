@@ -454,12 +454,6 @@ html[data-tm-no-blur] .tm-room-view-ambient {
 .tm-room-view-menu button[data-danger] {
   color: var(--tm-danger);
 }
-@keyframes tm-room-view-from-right {
-  from {
-    opacity: 0;
-    transform: translateX(24px);
-  }
-}
 .tm-room-view:where([data-layout='compact']) {
   gap: 0;
   height: calc(100dvh - var(--tm-header-height));

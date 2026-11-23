@@ -11,7 +11,6 @@ import {
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
-import { createPortal } from 'react-dom';
 
 import {
   deleteBookReadRecord,
@@ -89,7 +88,6 @@ export default function BookHistoryPage() {
   const [cacheModalOpen, setCacheModalOpen] = useState(false);
   const [cacheItems, setCacheItems] = useState<CachedBookFile[]>([]);
   const [cacheLoading, setCacheLoading] = useState(false);
-  const [mounted, setMounted] = useState(false);
   const [confirmAction, setConfirmAction] = useState<{
     type: 'delete-one' | 'clear-all';
     key?: string;
@@ -97,7 +95,6 @@ export default function BookHistoryPage() {
   } | null>(null);
 
   useEffect(() => {
-    setMounted(true);
     const cachedRecords = getCachedBookReadRecordsSnapshot();
     if (Object.keys(cachedRecords).length > 0) {
       setRecords(cachedRecords);
@@ -278,198 +275,174 @@ export default function BookHistoryPage() {
         </MediaGrid>
       )}
 
-      {cacheModalOpen &&
-        mounted &&
-        createPortal(
-          <ModalLayer
-            label='缓存管理'
-            className='tm-drawer-layer'
-            onClose={() => setCacheModalOpen(false)}
-          >
-            <div className='h-full w-full max-w-lg overflow-y-auto overscroll-contain border-l border-line bg-canvas shadow-2xl'>
-              <div className='space-y-5 p-5'>
-                <div className={cn(LIBRARY_PANEL, 'p-4')}>
-                  <div className='flex items-start justify-between gap-4'>
-                    <div>
-                      <div
-                        className={cn(
-                          'flex items-center gap-2 text-base font-medium',
-                          LIBRARY_TEXT,
-                          LIBRARY_SERIF
-                        )}
-                      >
-                        <Database
-                          className={cn('h-4 w-4', LIBRARY_ACCENT_ICON)}
-                        />
-                        缓存管理
-                      </div>
-                      <div className={cn('mt-1 text-[13px]', LIBRARY_MUTED)}>
-                        已缓存 {cacheItems.length} 本 ·{' '}
-                        {formatBytes(cacheTotalSize)}
-                      </div>
+      {cacheModalOpen && (
+        <ModalLayer
+          variant='drawer'
+          label='缓存管理'
+          onClose={() => setCacheModalOpen(false)}
+        >
+          <div className='w-full overflow-y-auto overscroll-contain border-l border-line bg-canvas shadow-2xl'>
+            <div className='space-y-5 p-5'>
+              <div className={cn(LIBRARY_PANEL, 'p-4')}>
+                <div className='flex items-start justify-between gap-4'>
+                  <div>
+                    <div
+                      className={cn(
+                        'flex items-center gap-2 text-base font-medium',
+                        LIBRARY_TEXT,
+                        LIBRARY_SERIF
+                      )}
+                    >
+                      <Database
+                        className={cn('h-4 w-4', LIBRARY_ACCENT_ICON)}
+                      />
+                      缓存管理
                     </div>
-                    <div className='flex gap-2'>
+                    <div className={cn('mt-1 text-[13px]', LIBRARY_MUTED)}>
+                      已缓存 {cacheItems.length} 本 ·{' '}
+                      {formatBytes(cacheTotalSize)}
+                    </div>
+                  </div>
+                  <div className='flex gap-2'>
+                    <button
+                      type='button'
+                      onClick={() => void loadCacheItems()}
+                      className={cn(LIBRARY_ICON_BUTTON, LIBRARY_FOCUS)}
+                      aria-label='刷新缓存'
+                      title='刷新缓存'
+                    >
+                      <RefreshCw className='h-4 w-4' />
+                    </button>
+                    <button
+                      type='button'
+                      onClick={() => setConfirmAction({ type: 'clear-all' })}
+                      className={cn(LIBRARY_ICON_BUTTON_DANGER, LIBRARY_FOCUS)}
+                      aria-label='清空全部缓存'
+                      title='清空全部缓存'
+                    >
+                      <Trash2 className='h-4 w-4' />
+                    </button>
+                    <button
+                      type='button'
+                      onClick={() => setCacheModalOpen(false)}
+                      className={cn(LIBRARY_ICON_BUTTON, LIBRARY_FOCUS)}
+                      aria-label='关闭'
+                      title='关闭'
+                    >
+                      <X className='h-4 w-4' />
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {cacheLoading ? <EmptyState description='正在读取缓存…' /> : null}
+              {!cacheLoading && cacheItems.length === 0 ? (
+                <EmptyState
+                  icon={<Database className='h-7 w-7' />}
+                  title='还没有缓存书籍'
+                  description='在线阅读过的电子书会把文件存在本地，这里可以查看与清理。'
+                />
+              ) : null}
+
+              <div className='space-y-3'>
+                {cacheItems.map((item) => (
+                  <div key={item.key} className={cn(CARD_CLASS, 'p-4')}>
+                    <div className='flex items-start justify-between gap-3'>
+                      <div className='min-w-0 flex-1'>
+                        <div
+                          className={cn('truncate font-medium', LIBRARY_TEXT)}
+                        >
+                          {item.title}
+                        </div>
+                        <div className={cn('mt-1 text-[13px]', LIBRARY_MUTED)}>
+                          格式 {item.format.toUpperCase()} · 大小{' '}
+                          {formatBytes(item.size)}
+                        </div>
+                        <div className={cn('mt-1 text-[13px]', LIBRARY_MUTED)}>
+                          最近打开{' '}
+                          {new Date(item.lastOpenTime).toLocaleString()}
+                        </div>
+                      </div>
                       <button
                         type='button'
-                        onClick={() => void loadCacheItems()}
-                        className={cn(LIBRARY_ICON_BUTTON, LIBRARY_FOCUS)}
-                        aria-label='刷新缓存'
-                        title='刷新缓存'
-                      >
-                        <RefreshCw className='h-4 w-4' />
-                      </button>
-                      <button
-                        type='button'
-                        onClick={() => setConfirmAction({ type: 'clear-all' })}
+                        onClick={() =>
+                          setConfirmAction({
+                            type: 'delete-one',
+                            key: item.key,
+                            title: item.title,
+                          })
+                        }
                         className={cn(
                           LIBRARY_ICON_BUTTON_DANGER,
                           LIBRARY_FOCUS
                         )}
-                        aria-label='清空全部缓存'
-                        title='清空全部缓存'
+                        aria-label='删除缓存'
+                        title='删除缓存'
                       >
                         <Trash2 className='h-4 w-4' />
                       </button>
-                      <button
-                        type='button'
-                        onClick={() => setCacheModalOpen(false)}
-                        className={cn(LIBRARY_ICON_BUTTON, LIBRARY_FOCUS)}
-                        aria-label='关闭'
-                        title='关闭'
-                      >
-                        <X className='h-4 w-4' />
-                      </button>
                     </div>
                   </div>
-                </div>
-
-                {cacheLoading ? (
-                  <EmptyState description='正在读取缓存…' />
-                ) : null}
-                {!cacheLoading && cacheItems.length === 0 ? (
-                  <EmptyState
-                    icon={<Database className='h-7 w-7' />}
-                    title='还没有缓存书籍'
-                    description='在线阅读过的电子书会把文件存在本地，这里可以查看与清理。'
-                  />
-                ) : null}
-
-                <div className='space-y-3'>
-                  {cacheItems.map((item) => (
-                    <div key={item.key} className={cn(CARD_CLASS, 'p-4')}>
-                      <div className='flex items-start justify-between gap-3'>
-                        <div className='min-w-0 flex-1'>
-                          <div
-                            className={cn('truncate font-medium', LIBRARY_TEXT)}
-                          >
-                            {item.title}
-                          </div>
-                          <div
-                            className={cn('mt-1 text-[13px]', LIBRARY_MUTED)}
-                          >
-                            格式 {item.format.toUpperCase()} · 大小{' '}
-                            {formatBytes(item.size)}
-                          </div>
-                          <div
-                            className={cn('mt-1 text-[13px]', LIBRARY_MUTED)}
-                          >
-                            最近打开{' '}
-                            {new Date(item.lastOpenTime).toLocaleString()}
-                          </div>
-                        </div>
-                        <button
-                          type='button'
-                          onClick={() =>
-                            setConfirmAction({
-                              type: 'delete-one',
-                              key: item.key,
-                              title: item.title,
-                            })
-                          }
-                          className={cn(
-                            LIBRARY_ICON_BUTTON_DANGER,
-                            LIBRARY_FOCUS
-                          )}
-                          aria-label='删除缓存'
-                          title='删除缓存'
-                        >
-                          <Trash2 className='h-4 w-4' />
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                ))}
               </div>
             </div>
-          </ModalLayer>,
-          document.body
-        )}
+          </div>
+        </ModalLayer>
+      )}
 
-      {confirmAction &&
-        mounted &&
-        createPortal(
-          <ModalLayer
-            label='确认删除缓存'
-            onClose={() => setConfirmAction(null)}
-          >
+      {confirmAction && (
+        <ModalLayer label='确认删除缓存' onClose={() => setConfirmAction(null)}>
+          <div className={cn(LIBRARY_PANEL, 'w-full max-w-sm p-5 shadow-2xl')}>
             <div
-              className={cn(LIBRARY_PANEL, 'w-full max-w-sm p-5 shadow-2xl')}
+              className={cn(
+                'flex items-center gap-2 text-base font-medium',
+                LIBRARY_TEXT,
+                LIBRARY_SERIF
+              )}
             >
-              <div
+              <Trash2 className='h-4 w-4 text-fg' />
+              {confirmAction.type === 'clear-all' ? '清空全部缓存' : '删除缓存'}
+            </div>
+            <div className={cn('mt-2 text-sm', LIBRARY_MUTED)}>
+              {confirmAction.type === 'clear-all'
+                ? '确认清空当前浏览器中的全部电子书缓存吗？此操作不可撤销。'
+                : `确认删除《${confirmAction.title || '该书'}》的本地缓存吗？`}
+            </div>
+            <div className='mt-5 flex justify-end gap-3'>
+              <button
+                type='button'
+                onClick={() => setConfirmAction(null)}
                 className={cn(
-                  'flex items-center gap-2 text-base font-medium',
-                  LIBRARY_TEXT,
-                  LIBRARY_SERIF
+                  LIBRARY_GHOST_BUTTON,
+                  'cursor-pointer px-4 py-2 text-sm min-h-[44px] tm-press'
                 )}
               >
-                <Trash2 className='h-4 w-4 text-fg' />
-                {confirmAction.type === 'clear-all'
-                  ? '清空全部缓存'
-                  : '删除缓存'}
-              </div>
-              <div className={cn('mt-2 text-sm', LIBRARY_MUTED)}>
-                {confirmAction.type === 'clear-all'
-                  ? '确认清空当前浏览器中的全部电子书缓存吗？此操作不可撤销。'
-                  : `确认删除《${
-                      confirmAction.title || '该书'
-                    }》的本地缓存吗？`}
-              </div>
-              <div className='mt-5 flex justify-end gap-3'>
-                <button
-                  type='button'
-                  onClick={() => setConfirmAction(null)}
-                  className={cn(
-                    LIBRARY_GHOST_BUTTON,
-                    'cursor-pointer px-4 py-2 text-sm min-h-[44px] tm-press'
-                  )}
-                >
-                  取消
-                </button>
-                <button
-                  type='button'
-                  onClick={async () => {
-                    if (confirmAction.type === 'clear-all') {
-                      await Promise.all(
-                        cacheItems.map((item) => deleteCachedBookFile(item.key))
-                      );
-                      setCacheItems([]);
-                    } else if (confirmAction.key) {
-                      await deleteCachedBookFile(confirmAction.key);
-                      setCacheItems((prev) =>
-                        prev.filter((item) => item.key !== confirmAction.key)
-                      );
-                    }
-                    setConfirmAction(null);
-                  }}
-                  className={cn(DANGER_BUTTON_CLASS, LIBRARY_FOCUS)}
-                >
-                  确认
-                </button>
-              </div>
+                取消
+              </button>
+              <button
+                type='button'
+                onClick={async () => {
+                  if (confirmAction.type === 'clear-all') {
+                    await Promise.all(
+                      cacheItems.map((item) => deleteCachedBookFile(item.key))
+                    );
+                    setCacheItems([]);
+                  } else if (confirmAction.key) {
+                    await deleteCachedBookFile(confirmAction.key);
+                    setCacheItems((prev) =>
+                      prev.filter((item) => item.key !== confirmAction.key)
+                    );
+                  }
+                  setConfirmAction(null);
+                }}
+                className={cn(DANGER_BUTTON_CLASS, LIBRARY_FOCUS)}
+              >
+                确认
+              </button>
             </div>
-          </ModalLayer>,
-          document.body
-        )}
+          </div>
+        </ModalLayer>
+      )}
     </section>
   );
 }

@@ -26,28 +26,8 @@
   background: var(--tm-scrim);
   overflow: hidden;
 }
-@media (max-width: 639px) {
-  .tm-modal-layer.tm-download-modal-layer {
-    padding: 0;
-    align-items: end;
-  }
-}
-
-/* 右侧抽屉：贴右、满高，原生模态层保证盖住全站顶栏与底部导航 */
-.tm-modal-layer.tm-drawer-layer {
-  padding: 0;
-}
-.tm-modal-layer.tm-drawer-layer[open] {
-  place-items: stretch end;
-}
-.tm-modal-layer.tm-drawer-layer > * {
-  padding-top: max(var(--tm-safe-top), var(--tm-window-controls-h));
-  padding-bottom: var(--tm-safe-bottom);
-}
-
 /* —— 款式（ModalLayer 的 variant，设计稿 docs/design/prototypes/modal-layer.html）——
-   默认 dialog 就是上面的样子，不加类名。tm-drawer-layer、tm-download-modal-layer
-   是更早的同类写法，第三阶段把调用方换到 variant 后删掉 */
+   默认 dialog 就是上面的样子，不加类名 */
 .tm-modal-layer--confirm > * {
   width: 100%;
   max-width: 400px;

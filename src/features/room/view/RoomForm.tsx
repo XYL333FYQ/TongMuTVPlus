@@ -91,7 +91,7 @@ export function Dialog({
   onClose(): void;
   children: ReactNode;
   wide?: boolean;
-  /** 面板：手机上从底部拉起，平板和电脑上从右侧滑出 */
+  /** 面板：弹窗层的 drawer 款式，手机上从底部拉起，平板和电脑上从右侧滑出 */
   sheet?: boolean;
 }) {
   // 用全站的原生模态层：在浏览器的最顶层，盖住顶栏和底栏，Esc / 安卓返回键都能关。
@@ -100,9 +100,8 @@ export function Dialog({
     <ModalLayer
       label={title}
       onClose={onClose}
-      className={
-        sheet ? 'tm-room-dialog-layer tm-drawer-layer' : 'tm-room-dialog-layer'
-      }
+      variant={sheet ? 'drawer' : 'dialog'}
+      className='tm-room-dialog-layer'
     >
       <div
         className='tm-room-dialog'
