@@ -109,6 +109,8 @@ export default function ModalLayer({
       className={`tm-modal-layer${variantClass} ${className}`}
       onCancel={(event) => {
         event.preventDefault();
+        // React 的事件沿组件树冒泡（门户也一样）：弹窗里再开的弹窗按 Esc 只关自己
+        event.stopPropagation();
         onClose();
       }}
       onKeyDown={(event) => {

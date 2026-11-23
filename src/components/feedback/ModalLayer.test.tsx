@@ -215,3 +215,21 @@ test('the layer content exists when the caller’s effects run in the same commi
   expect(seen).toHaveLength(1);
   expect(seen[0]).toBeInstanceOf(HTMLParagraphElement);
 });
+
+test('Escape on a layer opened from inside another layer closes only the inner one', () => {
+  const outer = jest.fn();
+  const inner = jest.fn();
+  render(
+    <ModalLayer label='成员' onClose={outer}>
+      <ModalLayer label='管理成员' onClose={inner}>
+        内容
+      </ModalLayer>
+    </ModalLayer>
+  );
+  fireEvent(
+    screen.getByRole('dialog', { name: '管理成员' }),
+    new Event('cancel', { cancelable: true })
+  );
+  expect(inner).toHaveBeenCalledTimes(1);
+  expect(outer).not.toHaveBeenCalled();
+});
