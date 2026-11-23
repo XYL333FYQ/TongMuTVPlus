@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>影片详情设计稿</title>
+    <!-- 颜色、圆角、动效全部来自站点令牌的唯一来源，本稿不另定义颜色 -->
+    <link rel="stylesheet" href="../../../src/styles/tokens.css" />
+    <style>
+      body {
+        margin: 0;
+        font-family: var(--tm-font-sans);
+        font-size: 14px;
+        line-height: 1.6;
+        color: var(--tm-text);
+        background: var(--tm-bg);
+      }
+      .sheet-page {
+        max-width: 1480px;
+        margin: 0 auto;
+        padding: 24px 16px 64px;
+      }
+      h1 {
+        margin: 0 0 4px;
+        font-size: 28px;
+      }
+      h2 {
+        margin: 32px 0 12px;
+        font-size: 20px;
+      }
+      p,
+      li {
+        color: var(--tm-muted);
+      }
+      .bar {
+        position: sticky;
+        top: 0;
+        z-index: 5;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-items: center;
+        padding: 12px 0;
+        background: var(--tm-bg);
+        border-bottom: 1px solid var(--tm-line);
+      }
+      .bar-group {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-right: 16px;
+      }
+      .pill {
+        min-height: 44px;
+        padding: 0 16px;
+        border: 1px solid var(--tm-line-strong);
+        border-radius: var(--tm-radius-full);
+        background: transparent;
+        color: var(--tm-text);
+        font: inherit;
+        cursor: pointer;
+      }
+      .pill[aria-pressed='true'] {
+        background: var(--tm-text);
+        color: var(--tm-accent-contrast);
+        border-color: var(--tm-text);
+      }
+      .pill:focus-visible {
+        outline: 2px solid var(--tm-text);
+        outline-offset: 2px;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+      }
+      th,
+      td {
+        padding: 8px 10px;
+        border-bottom: 1px solid var(--tm-line);
+        text-align: left;
+        vertical-align: top;
+      }
+      th {
+        color: var(--tm-text);
+        font-weight: 600;
+      }
+      td {
+        color: var(--tm-muted);
+      }
+      td:first-child {
+        color: var(--tm-text);
+        white-space: nowrap;
+      }
+      .table-wrap {
+        overflow-x: auto;
+      }
+      .rec {
+        color: var(--tm-text);
+        font-weight: 600;
+      }
+
+      /* —— 四种设备档位的画框 —— */
+      .frames {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 24px;
+        align-items: flex-start;
+      }
+      .frame-cell {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .frame-label {
+        font-size: 13px;
+        color: var(--tm-muted);
+      }
+      .frame-box {
+        position: relative;
+        overflow: hidden;
+        border-radius: var(--tm-radius-md);
+        box-shadow: 0 0 0 1px var(--tm-line-strong);
+      }
+      .device {
+        position: absolute;
+        top: 0;
+        left: 0;
+        transform-origin: 0 0;
+        overflow: hidden;
+        background: var(--tm-bg);
+      }
+      .fake-page {
+        position: absolute;
+        inset: 0;
+        padding: 16px;
+        display: grid;
+        gap: 12px;
+        align-content: start;
+      }
+      .fake-header {
+        height: 44px;
+        border-radius: var(--tm-radius-sm);
+        background: var(--tm-surface);
+      }
+      .fake-row {
+        display: grid;
+        grid-template-columns: repeat(var(--cols, 3), 1fr);
+        gap: 12px;
+      }
+      .fake-poster {
+        aspect-ratio: 2 / 3;
+        border-radius: var(--tm-radius-md);
+        background: var(--tm-surface-raised);
+      }
+      .device[data-device='phone-landscape'] .fake-row,
+      .device[data-device='tablet'] .fake-row {
+        --cols: 4;
+      }
+      .device[data-device='wide'] .fake-row {
+        --cols: 6;
+      }
+      .fake-video {
+        aspect-ratio: 16 / 9;
+        border-radius: var(--tm-radius-md);
+        background: var(--tm-video-bg);
+      }
+      .device[data-device='wide'] .fake-video,
+      .device[data-device='phone-landscape'] .fake-video {
+        max-height: 220px;
+      }
+
+      /* —— 弹窗层（同 modal-layer.html） —— */
+      .layer {
+        position: absolute;
+        inset: 0;
+        display: grid;
+        padding: 16px;
+        padding-top: max(16px, calc(var(--tm-window-controls-h) + 8px));
+      }
+      .scrim {
+        position: absolute;
+        inset: 0;
+        background: var(--tm-scrim);
+      }
+      .icon-btn {
+        display: inline-grid;
+        place-items: center;
+        width: 44px;
+        height: 44px;
+        border: 0;
+        border-radius: var(--tm-radius-full);
+        background: var(--tm-art-glass);
+        color: var(--tm-on-art);
+        font-size: 20px;
+      }
+
+      /* 详情面板本身（内容沿用现在的 detail.css 排版，这里只画轮廓） */
+      .detail {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+        overflow: hidden;
+        background: var(--tm-detail-surface, var(--tm-surface));
+        color: var(--tm-text);
+        box-shadow: var(--tm-shadow-lg);
+      }
+      .detail-art {
+        height: 180px;
+        flex: none;
+        background: linear-gradient(
+          180deg,
+          var(--tm-art-fallback-base),
+          var(--tm-detail-surface, var(--tm-surface))
+        );
+      }
+      .detail-tools {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        display: flex;
+        gap: 8px;
+      }
+      .detail-summary {
+        display: flex;
+        gap: 16px;
+        margin-top: -90px;
+        padding: 0 24px;
+      }
+      .detail-poster {
+        flex: none;
+        width: 112px;
+        aspect-ratio: 2 / 3;
+        border-radius: var(--tm-radius-sm);
+        background: var(--tm-surface-raised);
+        box-shadow: var(--tm-shadow-lg);
+      }
+      .detail-title {
+        align-self: end;
+        margin: 0;
+        font-size: 24px;
+        font-weight: 700;
+      }
+      .detail-lines {
+        display: grid;
+        gap: 10px;
+        padding: 20px 24px;
+      }
+      .detail-line {
+        height: 12px;
+        border-radius: var(--tm-radius-full);
+        background: var(--tm-surface-raised);
+      }
+      .detail-line:nth-child(2) {
+        width: 80%;
+      }
+      .detail-line:nth-child(3) {
+        width: 60%;
+      }
+      .detail-actions {
+        display: flex;
+        gap: 12px;
+        padding: 0 24px 24px;
+      }
+      .detail-btn {
+        min-height: 44px;
+        padding: 0 20px;
+        border-radius: var(--tm-radius-full);
+        background: var(--tm-text);
+        color: var(--tm-accent-contrast);
+        display: inline-flex;
+        align-items: center;
+        font-weight: 600;
+      }
+      .detail-btn.secondary {
+        background: var(--tm-surface-raised);
+        color: var(--tm-text);
+      }
+      .grabber {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        display: flex;
+        justify-content: center;
+        padding-top: 8px;
+        z-index: 1;
+      }
+      .grabber span {
+        width: 36px;
+        height: 4px;
+        border-radius: var(--tm-radius-full);
+        background: var(--tm-line-strong);
+      }
+
+      /* 详情：平板、电脑、手机横屏 = dialog 款式（居中，最宽 1000） */
+      .layer[data-kind='detail'] {
+        place-items: center;
+      }
+      .layer[data-kind='detail'] .detail {
+        width: min(100%, 1000px);
+        max-height: 100%;
+        border-radius: var(--tm-radius-md);
+      }
+      /* 详情：手机竖屏 = sheet 款式（贴底、几乎满高、可下拉关闭） */
+      .device[data-device='phone'] .layer[data-kind='detail'] {
+        padding: 56px 0 0;
+        place-items: end stretch;
+      }
+      .device[data-device='phone'] .layer[data-kind='detail'] .detail {
+        width: 100%;
+        height: 100%;
+        border-radius: var(--tm-radius-md) var(--tm-radius-md) 0 0;
+      }
+
+      /* 看海报大图：viewer 款式，和长按菜单里的“查看海报”同一个零件 */
+      .layer[data-kind='image'] {
+        padding: 0;
+        place-items: center;
+      }
+      .layer[data-kind='image'] .scrim {
+        background: var(--tm-video-bg);
+      }
+      .viewer-art {
+        position: relative;
+        width: min(70%, 420px);
+        aspect-ratio: 2 / 3;
+        max-height: 80%;
+        border-radius: var(--tm-radius-sm);
+        background: var(--tm-art-fallback-base);
+      }
+      .viewer-close {
+        position: absolute;
+        top: max(
+          8px,
+          calc(var(--tm-safe-top) + 8px),
+          var(--tm-window-controls-h)
+        );
+        right: 8px;
+      }
+
+      /* 播放页的详情侧栏：不是弹窗，页面和播放器照常能点（保持现状） */
+      .side {
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        width: min(400px, 100%);
+        border-left: 1px solid var(--tm-line);
+      }
+      .side .detail {
+        height: 100%;
+        box-shadow: var(--tm-shadow-sm);
+      }
+      .side .detail-art {
+        display: none;
+      }
+      .side .detail-summary {
+        margin-top: 0;
+        padding-top: 76px;
+      }
+      .note {
+        position: absolute;
+        left: 8px;
+        bottom: 8px;
+        padding: 2px 8px;
+        border-radius: var(--tm-radius-sm);
+        background: var(--tm-surface-raised);
+        color: var(--tm-muted);
+        font-size: 12px;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="sheet-page">
+      <h1>影片详情：换到公共弹窗层</h1>
+      <p>
+        “之后”第 2
+        项的设计稿。影片详情（<code>DetailShell</code>，影片卡片、首页大图、播放页都用）现在自己画遮罩、自己管焦点和返回键，
+        是第三阶段之后最大的一块“自己做的弹窗”。这里只定<strong>换到哪种款式、哪里看得出变化</strong>；
+        面板里面的内容（海报、标题、简介、选集、演员）排版不动。颜色全部来自
+        <code>src/styles/tokens.css</code>。
+      </p>
+
+      <div class="bar" role="toolbar" aria-label="设计稿选项">
+        <div class="bar-group" id="kind-group" aria-label="场景"></div>
+        <div class="bar-group">
+          <button
+            class="pill"
+            type="button"
+            id="toggle-light"
+            aria-pressed="false"
+          >
+            浅色主题
+          </button>
+          <button
+            class="pill"
+            type="button"
+            id="toggle-desktop"
+            aria-pressed="false"
+          >
+            Windows 客户端
+          </button>
+        </div>
+      </div>
+
+      <h2 id="kind-title">详情</h2>
+      <p id="kind-summary"></p>
+      <div class="frames" id="frames"></div>
+
+      <h2>要你拍板的四件事</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>编号</th>
+              <th>问题</th>
+              <th>建议（默认值）</th>
+              <th>另一个选择</th>
+              <th>看得见的变化</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>D-1</td>
+              <td>详情用哪种款式？</td>
+              <td class="rec">
+                手机竖屏用 <code>sheet</code>（贴底、离顶
+                56、带拖动条、手指下拉关闭）；手机横屏、平板、电脑用默认
+                <code>dialog</code>（居中，最宽 1000，和现在一样）
+              </td>
+              <td>
+                新加第六种款式 <code>detail</code>（大面板），四档都由它管
+              </td>
+              <td>
+                几乎没有：位置和大小都和现在一样。下拉手势换成全站共用的那一个（只认手指，鼠标拖不动）
+              </td>
+            </tr>
+            <tr>
+              <td>D-2</td>
+              <td>遮罩用哪种颜色？</td>
+              <td class="rec">
+                全站统一的 <code>--tm-scrim</code>，拉面板时遮罩不再跟着变淡
+              </td>
+              <td>
+                保留现在的 <code>--tm-hero-bg</code> 60%（浅色 40%）和下拉时变淡
+              </td>
+              <td>深色下遮罩略深一点、浅色下略不同；下拉时背景不再渐渐变亮</td>
+            </tr>
+            <tr>
+              <td>D-3</td>
+              <td>详情里“看海报大图”用什么？</td>
+              <td class="rec">
+                直接用看图零件 <code>ImageViewer</code>（<code>viewer</code>
+                款式：画面黑底、关闭在右上 44×44、下拉关闭）
+              </td>
+              <td>保留详情自己的大图面板（面板底色、居中）</td>
+              <td>大图从面板底色变成全屏黑底，和长按菜单里的“查看海报”一样</td>
+            </tr>
+            <tr>
+              <td>D-4</td>
+              <td>播放页右侧的详情侧栏怎么办？</td>
+              <td class="rec">
+                保持现状：它不是弹窗（页面和播放器照常能点），不进弹窗层；只把它从
+                <code>DetailShell</code>
+                拆成单独的侧栏零件，免得一个零件两种行为
+              </td>
+              <td>
+                也改成弹窗层的
+                <code>drawer</code>（打开时播放器不能点、页面锁住）
+              </td>
+              <td>建议方案没有变化</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2>不变的</h2>
+      <ul>
+        <li>
+          面板里面的内容和排版（<code>detail.css</code>
+          的内容部分）、按钮、选集、演员、更多菜单。
+        </li>
+        <li>
+          手机上点海报进详情时“从海报位置放大展开”的进场（减弱动效时照旧不放大）。
+        </li>
+        <li>
+          返回键 / Esc
+          关最上面一层、关掉后焦点回到点开它的卡片；弹窗里再打开更多菜单、确认框时叠在上面。
+        </li>
+        <li>路由、接口、存储键都不动。</li>
+      </ul>
+    </main>
+
+    <template id="tpl-detail">
+      <div class="scrim"></div>
+      <section class="detail" aria-label="影片详情">
+        <div class="grabber" data-phone-only><span></span></div>
+        <div class="detail-art"></div>
+        <div class="detail-tools">
+          <span class="icon-btn" aria-hidden="true">⋯</span>
+          <span class="icon-btn" aria-hidden="true">×</span>
+        </div>
+        <div class="detail-summary">
+          <div class="detail-poster"></div>
+          <h3 class="detail-title">影片标题</h3>
+        </div>
+        <div class="detail-lines">
+          <div class="detail-line"></div>
+          <div class="detail-line"></div>
+          <div class="detail-line"></div>
+        </div>
+        <div class="detail-actions">
+          <span class="detail-btn">立即播放</span>
+          <span class="detail-btn secondary">一起看</span>
+        </div>
+      </section>
+    </template>
+    <template id="tpl-image">
+      <div class="scrim"></div>
+      <div class="viewer-art" role="img" aria-label="海报"></div>
+      <span class="icon-btn viewer-close" aria-hidden="true">×</span>
+    </template>
+    <template id="tpl-side">
+      <aside class="side">
+        <section class="detail" aria-label="影片详情">
+          <div class="detail-tools">
+            <span class="icon-btn" aria-hidden="true">×</span>
+          </div>
+          <div class="detail-summary">
+            <div class="detail-poster"></div>
+            <h3 class="detail-title">影片标题</h3>
+          </div>
+          <div class="detail-lines">
+            <div class="detail-line"></div>
+            <div class="detail-line"></div>
+            <div class="detail-line"></div>
+          </div>
+        </section>
+      </aside>
+      <span class="note">不是弹窗：左边的播放器照常能点</span>
+    </template>
+
+    <script>
+      const kinds = {
+        detail: {
+          title: '详情（D-1、D-2）',
+          summary:
+            '手机竖屏：sheet 款式，贴底、离顶 56、带拖动条，手指下拉关闭。手机横屏、平板、电脑：默认 dialog 款式，居中、最宽 1000。遮罩是全站统一的 --tm-scrim。',
+        },
+        image: {
+          title: '看海报大图（D-3）',
+          summary:
+            '和长按菜单里的“查看海报”同一个零件 ImageViewer：全屏画面黑底，关闭在右上 44×44，触屏下拉关闭。',
+        },
+        side: {
+          title: '播放页的详情侧栏（D-4）',
+          summary:
+            '平板和电脑的播放页上，详情在右侧以侧栏打开，播放器照常能操作。建议保持现状、不进弹窗层，只拆成单独的侧栏零件。',
+        },
+      };
+      const devices = [
+        { id: 'phone', label: '手机竖屏 390×844', w: 390, h: 844, scale: 0.42 },
+        {
+          id: 'phone-landscape',
+          label: '手机横屏 844×390',
+          w: 844,
+          h: 390,
+          scale: 0.42,
+        },
+        { id: 'tablet', label: '平板 820×1180', w: 820, h: 1180, scale: 0.3 },
+        { id: 'wide', label: '电脑 1280×800', w: 1280, h: 800, scale: 0.42 },
+      ];
+      let current = 'detail';
+      const group = document.getElementById('kind-group');
+      for (const name of Object.keys(kinds)) {
+        const button = document.createElement('button');
+        button.className = 'pill';
+        button.type = 'button';
+        button.dataset.kind = name;
+        button.textContent = kinds[name].title.replace(/（.*）/, '');
+        button.addEventListener('click', () => {
+          current = name;
+          render();
+        });
+        group.appendChild(button);
+      }
+      function render() {
+        for (const b of group.children)
+          b.setAttribute('aria-pressed', String(b.dataset.kind === current));
+        document.getElementById('kind-title').textContent =
+          kinds[current].title;
+        document.getElementById('kind-summary').textContent =
+          kinds[current].summary;
+        const frames = document.getElementById('frames');
+        frames.innerHTML = '';
+        for (const d of devices) {
+          if (
+            current === 'side' &&
+            (d.id === 'phone' || d.id === 'phone-landscape')
+          )
+            continue;
+          const cell = document.createElement('div');
+          cell.className = 'frame-cell';
+          cell.innerHTML = `<div class="frame-label">${d.label}</div>`;
+          const box = document.createElement('div');
+          box.className = 'frame-box';
+          box.style.width = `${d.w * d.scale}px`;
+          box.style.height = `${d.h * d.scale}px`;
+          const device = document.createElement('div');
+          device.className = 'device';
+          device.dataset.device = d.id;
+          device.style.width = `${d.w}px`;
+          device.style.height = `${d.h}px`;
+          device.style.transform = `scale(${d.scale})`;
+          device.innerHTML = `<div class="fake-page"><div class="fake-header"></div><div class="fake-video"></div><div class="fake-row">${'<div class="fake-poster"></div>'.repeat(
+            6
+          )}</div></div>`;
+          const tpl = document
+            .getElementById(`tpl-${current}`)
+            .content.cloneNode(true);
+          if (current === 'side') {
+            device.appendChild(tpl);
+          } else {
+            const layer = document.createElement('div');
+            layer.className = 'layer';
+            layer.dataset.kind = current;
+            layer.appendChild(tpl);
+            if (d.id !== 'phone')
+              layer
+                .querySelectorAll('[data-phone-only]')
+                .forEach((n) => n.remove());
+            device.appendChild(layer);
+          }
+          box.appendChild(device);
+          cell.appendChild(box);
+          frames.appendChild(cell);
+        }
+      }
+      function toggle(id, apply) {
+        const button = document.getElementById(id);
+        button.addEventListener('click', () => {
+          const on = button.getAttribute('aria-pressed') !== 'true';
+          button.setAttribute('aria-pressed', String(on));
+          apply(on);
+          render();
+        });
+      }
+      toggle('toggle-light', (on) =>
+        document.documentElement.classList.toggle('light', on)
+      );
+      toggle('toggle-desktop', (on) => {
+        if (on) document.documentElement.dataset.tmPlatform = 'desktop';
+        else delete document.documentElement.dataset.tmPlatform;
+      });
+      render();
+    </script>
+  </body>
+</html>
