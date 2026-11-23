@@ -12,14 +12,14 @@
 
 ## 开工前用户一次性拍板（批准本计划即视为同意下列默认值，有异议在批准时改）
 
-| 编号  | 问题                                                       | 默认值                                                                                                                                                                                                                                                                                                                             |
-| ----- | ---------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| P2-D1 | 权限被拒时的报错文字要不要统一？（管理后台会把它显示出来） | 状态码一律保持原样；文字按原因统一成四句：没登录或登录失效“请先登录”、账号不存在“用户不存在”、被封禁“账号已被封禁”、角色不够“没有权限”。现在混用的 `Unauthorized`、`Forbidden`、`未授权`、`权限不足`、`无权限访问` 等不再出现                                                                                                      |
-| P2-D2 | 角色以哪里为准？                                           | 每次都按服务器配置里的用户表判断（站长 = 环境变量 `USERNAME`），不信 Cookie 里写的角色。影响：管理员被降级或封禁后，手里还没过期的登录立刻失去管理权限（现在有约 30 个接口只看 Cookie，要等登录过期）                                                                                                                              |
-| P2-D3 | 几种长得不一样的时间格式要不要统一？                       | 统一成 `src/lib/time.ts` 的三种：`formatClock`（`5:09`、`1:05:09`）、`formatPaddedClock`（`05:09`、`01:05:09`）、`formatDuration`（`30秒`、`1分30秒`、`2分钟`）。看得见的变化只有三处：影片卡片“已看 3 分 0 秒” → “已看 3 分钟”；音乐页超过一小时的歌 `61:40` → `1:01:40`；自己看页的跳过设置时间由四舍五入改为舍去（最多差 1 秒） |
-| P2-D4 | 设置读写这一阶段换到哪里？                                 | 只换核心范围的 26 个文件（清单见 Task 2）。常用上游、上游里的留给之后逐项做                                                                                                                                                                                                                                                        |
-| P2-D5 | 弹窗层设计稿什么样？                                       | 一个可以直接打开的 HTML 原型（`docs/design/prototypes/modal-layer.html`），五种款式 × 手机竖屏 / 手机横屏 / 平板 / 电脑 × 深浅两种主题；只用 `--tm-*` 令牌。这一阶段只做零件，不改现有弹窗的调用方（那是第三阶段试点）                                                                                                             |
-| P2-D6 | 提交和推送                                                 | 每个任务全部检查通过后直接提交到 main，不推送；全部做完再问要不要推送和部署                                                                                                                                                                                                                                                        |
+| 编号  | 问题                                                       | 默认值                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| ----- | ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| P2-D1 | 权限被拒时的报错文字要不要统一？（管理后台会把它显示出来） | 状态码一律保持原样。**没登录或登录失效照旧返回 `Unauthorized`**：它是给前端看的暗号，`src/components/TokenRefreshManager.tsx:199`、`src/lib/db.client.ts:674,720` 靠响应里有没有这个词决定要不要自动续登录，换掉会让用户被踢出（2026-11-23 用户同意）。其余三种按原因统一成中文：账号不存在“用户不存在”、被封禁“账号已被封禁”、角色不够“没有权限”。现在混用的 `Forbidden`、`未授权`、`权限不足`、`无权限访问` 等不再出现 |
+| P2-D2 | 角色以哪里为准？                                           | 每次都按服务器配置里的用户表判断（站长 = 环境变量 `USERNAME`），不信 Cookie 里写的角色。影响：管理员被降级或封禁后，手里还没过期的登录立刻失去管理权限（现在有约 30 个接口只看 Cookie，要等登录过期）                                                                                                                                                                                                                    |
+| P2-D3 | 几种长得不一样的时间格式要不要统一？                       | 统一成 `src/lib/time.ts` 的三种：`formatClock`（`5:09`、`1:05:09`）、`formatPaddedClock`（`05:09`、`01:05:09`）、`formatDuration`（`30秒`、`1分30秒`、`2分钟`）。看得见的变化只有三处：影片卡片“已看 3 分 0 秒” → “已看 3 分钟”；音乐页超过一小时的歌 `61:40` → `1:01:40`；自己看页的跳过设置时间由四舍五入改为舍去（最多差 1 秒）                                                                                       |
+| P2-D4 | 设置读写这一阶段换到哪里？                                 | 只换核心范围的 26 个文件（清单见 Task 2）。常用上游、上游里的留给之后逐项做                                                                                                                                                                                                                                                                                                                                              |
+| P2-D5 | 弹窗层设计稿什么样？什么时候做？                           | 一个可以直接打开的 HTML 原型（`docs/design/prototypes/modal-layer.html`），五种款式 × 手机竖屏 / 手机横屏 / 平板 / 电脑 × 深浅两种主题；只用 `--tm-*` 令牌。**Task 0 之后先做设计稿交给用户**，用户看稿期间接着做 Task 1–3，弹窗层代码等用户同意再写（2026-11-23 用户同意）。这一阶段只做零件，不改现有弹窗的调用方（那是第三阶段试点）                                                                                  |
+| P2-D6 | 提交、推送、部署                                           | 每个任务全部检查通过后直接提交到 main。**分两次部署**（2026-11-23 用户同意）：Task 1–2 做完问一次推送和部署，推送时只推到 Task 2 的最后一个提交（`git push origin <提交>:main`），Task 3 在本地接着做；Task 3 做完再单独问一次。这样权限改动出问题时只回退这一次                                                                                                                                                         |
 
 ## 执行中的自主权
 
@@ -27,11 +27,11 @@
 
 **必须停下来问用户（攒在一起问）：**
 
-1. Task 4 的设计稿做好之后（**硬关卡**：不经同意不写弹窗层代码）。
+1. Task 4 的设计稿做好之后交给用户看（不用等回复，接着做 Task 1–3）；**弹窗层代码不经同意不写**。
 2. “现在的行为”快照对比出本计划没列到的差异（状态码变了，或 P2-D1 以外的文字变了）。
 3. 计算样式对比出现 P2-D3 以外的差异。
 4. 要新增依赖、改对外名字（接口路径、Socket 事件、存储键、数据库字段、路由）。
-5. 推送、部署、开始第三阶段。
+5. 推送、部署（按 P2-D6 分两次问）、开始第三阶段。
 
 ## Global Constraints
 
@@ -49,10 +49,12 @@
 1. **被拒绝的请求不能碰数据**：换成 `requireRole` 后，未登录、成员、被封禁的人访问管理接口仍然在读写配置或数据库之前被拦下（Task 3 沿用 `authorization-sweep.test.ts` 的记录器断言“没有写操作”）。
 2. **站长在本地存储模式**：`NEXT_PUBLIC_STORAGE_TYPE=localstorage` 时没有用户表，站长仍然要能进管理接口、普通访问照旧（Task 3 单测覆盖）。
 3. **同一个设置在两个标签页**：一页改了，另一页用 `useSetting` 的组件要跟着变（`storage` 事件），同一页里的其他组件也要变（自定义事件）（Task 2 单测）。
-4. **非法时间值**：`NaN`、负数、`Infinity` 进时间格式不能显示 `NaN:NaN`（Task 1 单测：都返回 `0:00` / `00:00` / `0秒`，`MusicPage` 自己的 `--:--` 在调用方保留）。
+4. **自动续登录的暗号**：没登录或登录失效的 401 响应体里必须还有 `Unauthorized`，否则前端不会自动续登录、用户会被踢出（Task 3 的 `requireRole` 单测和“现在的行为”快照都锁住这一条；非法时间值的情形由 Task 1 的单测覆盖）。
 5. **弹窗叠弹窗**：两层弹窗都锁滚动时，关掉上层页面不能提前恢复滚动（Task 4 的滚动锁按引用计数，单测覆盖）。
 
 ---
+
+**执行顺序：** Task 0 → Task 4 的 Step 1–2（设计稿交给用户）→ Task 1 → Task 2 →（问推送、部署）→ Task 3 →（再问一次）→ Task 4 的 Step 3 起（用户同意设计稿之后）→ Task 5。
 
 ### Task 0：起点
 
@@ -185,24 +187,24 @@ test('LOCAL_SETTINGS_KEYS is unchanged', () => {
   - `type RoleLevel = 'owner' | 'admin' | 'user'`
   - `type Caller = { username: string; role: 'owner' | 'admin' | 'user' }`
   - `requireRole(request: NextRequest, level: RoleLevel, options?: { deniedStatus?: 401 | 403 }): Promise<Caller | NextResponse>`
-    - 没登录：401 `请先登录`；用户表里没有：401 `用户不存在`；被封禁：401 `账号已被封禁`；角色不够：`options.deniedStatus ?? 403`，`没有权限`（P2-D1）。
+    - 没登录或登录失效：401 `Unauthorized`（原样，见 P2-D1）；用户表里没有：401 `用户不存在`；被封禁：401 `账号已被封禁`；角色不够：`options.deniedStatus ?? 403`，`没有权限`（P2-D1）。
     - 角色按服务器配置判断，站长是环境变量 `USERNAME`（P2-D2）；本地存储模式没有用户表，只认站长。
   - `isCaller(value: Caller | NextResponse): value is Caller`
 - 探测器 `roleCheck`：`/\brole\s*[!=]==\s*'(?:owner|admin)'/g`；登记表新行：`| 服务器权限 | \`src/lib/require-role.ts\` | \`requireRole()\` | \`roleCheck\` |`。
 
 - [ ] **Step 1: 拍“现在的行为”快照**
 
-`src/app/api/auth-behaviour.test.ts`（`@jest-environment ./src/test/node-web-environment.cjs`，沿用 `admin/authorization-sweep.test.ts` 的模块桩和记录器）：对每个做角色或封禁检查的接口的每个方法，用五种来访者（未登录、成员、被封禁的成员、管理员、站长）各请求一次，记录 `{ route, method, caller, status, error }`；被拒绝（401 / 403）的那几次，记录器里不许出现任何写操作（Review Focus 1）。第一次运行带 `TM_RECORD_AUTH=1` 写出 `auth-behaviour.json` 并提交；之后运行时和它比较：状态码必须相同，`error` 文字只许按 P2-D1 的四句变化，其他不同就失败并列出。
+`src/app/api/auth-behaviour.test.ts`（`@jest-environment ./src/test/node-web-environment.cjs`，沿用 `admin/authorization-sweep.test.ts` 的模块桩和记录器）：对每个做角色或封禁检查的接口的每个方法，用五种来访者（未登录、成员、被封禁的成员、管理员、站长）各请求一次，记录 `{ route, method, caller, status, error }`；被拒绝（401 / 403）的那几次，记录器里不许出现任何写操作（Review Focus 1）。第一次运行带 `TM_RECORD_AUTH=1` 写出 `auth-behaviour.json` 并提交；之后运行时和它比较：状态码必须相同，`error` 文字只许按 P2-D1 的三句中文变化（原来是 `Unauthorized` 的必须仍是 `Unauthorized`），其他不同就失败并列出。
 
 - [ ] **Step 2:** `TM_RECORD_AUTH=1 pnpm -s test --ci src/app/api/auth-behaviour.test.ts`，再不带变量跑一次。Expected：第二次通过；JSON 里的接口数和 `grep` 出来的清单一致。提交 `test: record current auth behaviour of api routes`。
 - [ ] **Step 3: 写失败的测试** `src/lib/require-role.test.ts`
 
 ```ts
-test('anonymous gets 401 请先登录', async () => {
+test('anonymous gets 401 with the Unauthorized signal the client refreshes on', async () => {
   const res = await requireRole(request(), 'user');
   expect(isCaller(res)).toBe(false);
   expect((res as NextResponse).status).toBe(401);
-  expect(await (res as NextResponse).json()).toEqual({ error: '请先登录' });
+  expect(await (res as NextResponse).json()).toEqual({ error: 'Unauthorized' });
 });
 test('banned member gets 401 账号已被封禁' /* … */);
 test(
@@ -251,7 +253,8 @@ test('admin passes admin and user, not owner' /* … */);
 - [ ] **Step 2:** 测试站上 `style-snapshot.mjs snap <临时目录>/after`，`diff before after noise`。Expected：只有 P2-D3 列出的文字变化（影片卡片的“已看”时长）；其他差异逐条解释或撤掉。再跑 `solo-test.mjs`、`sync-test.mjs` 各一次。
 - [ ] **Step 3:** 按 ACCEPTANCE.md 分端（手机竖屏、横屏、平板、电脑，深浅两种）看一遍首页、片库、播放页、房间页、管理后台的一个设置页：截图不进 git，报告里写看了哪些。
 - [ ] **Step 4:** PROGRESS.md 记一条：做了什么、各零件旧账前后数量（`check:structure` 输出）、没验证的。提交 `docs: phase 2 shared parts done`。
-- [ ] **Step 5:** 一次性向用户报告，请用户决定：推送吗？部署吗？开始第三阶段（弹窗试点）计划吗？
+- [ ] **Step 5: 独立审查** 开一个审查代理（用户 2026-11-23 同意），在最强的模型上审查第二阶段全部提交，重点看 Review Focus 五条和 `requireRole` 的每一处替换；严重和重要的问题修掉（每条先写失败的测试），小问题列进报告。
+- [ ] **Step 6:** 一次性向用户报告，请用户决定：推送吗？部署吗？开始第三阶段（弹窗试点）计划吗？
 
 ---
 
