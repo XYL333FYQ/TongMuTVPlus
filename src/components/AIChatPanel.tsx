@@ -20,6 +20,8 @@ import type { VideoContext } from '@/lib/ai-orchestrator';
 import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
 import { AI_WELCOME_MESSAGE } from '@/lib/brand';
 
+import ModalLayer from '@/components/feedback/ModalLayer';
+
 interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
@@ -600,7 +602,7 @@ export default function AIChatPanel({
     onStreamingChange?.(isStreaming);
   }, [isStreaming, onStreamingChange]);
 
-  // 自动聚焦输入框和防止背景滚动
+  // 自动聚焦输入框（弹窗模式的滚动锁由弹窗层负责）
   useEffect(() => {
     if (isOpen) {
       // 检测是否为移动设备
@@ -613,26 +615,8 @@ export default function AIChatPanel({
       if (inputRef.current && window.innerWidth >= 768) {
         inputRef.current.focus();
       }
-
-      // 只在非抽屉模式下防止背景滚动
-      if (!useDrawer) {
-        const originalOverflow = document.body.style.overflow;
-        const originalPaddingRight = document.body.style.paddingRight;
-
-        // 获取滚动条宽度
-        const scrollbarWidth =
-          window.innerWidth - document.documentElement.clientWidth;
-
-        document.body.style.overflow = 'hidden';
-        document.body.style.paddingRight = `${scrollbarWidth}px`;
-
-        return () => {
-          document.body.style.overflow = originalOverflow;
-          document.body.style.paddingRight = originalPaddingRight;
-        };
-      }
     }
-  }, [isOpen, useDrawer]);
+  }, [isOpen]);
 
   const handleSendMessage = async (retryMessage?: string) => {
     const isRetry = typeof retryMessage === 'string';
@@ -917,8 +901,245 @@ export default function AIChatPanel({
     console.log('已清空聊天上下文');
   };
 
-  const modalContent = useDrawer ? (
-    // 抽屉模式
+  // 头部、消息列表、输入框：抽屉和弹窗两种模式共用一份
+  const content = (
+    <>
+      {/* 头部 */}
+      <div className='flex items-center justify-between border-b border-line p-4'>
+        <div className='flex items-center gap-3 min-w-0 flex-1'>
+          <div className='flex h-10 w-10 items-center justify-center rounded-full bg-fg flex-shrink-0'>
+            <Sparkles size={20} className='text-fg' />
+          </div>
+          <div className='min-w-0 flex-1'>
+            <h2 className='text-lg font-medium text-fg'>AI影视助手</h2>
+            {context?.title && (
+              <p className='text-[13px] text-muted truncate'>
+                正在讨论: {context.title}
+                {context.year && ` (${context.year})`}
+              </p>
+            )}
+          </div>
+        </div>
+        <button
+          onClick={onClose}
+          className='rounded-lg p-2 text-muted transition-colors hover:bg-line flex-shrink-0 min-h-[44px] tm-press'
+        >
+          <X size={20} />
+        </button>
+      </div>
+
+      {/* 消息列表 */}
+      <div className='flex-1 overflow-y-auto p-4'>
+        <div className='space-y-4'>
+          {messages.map((message, index) => (
+            <div
+              key={index}
+              className={`flex ${
+                message.role === 'user' ? 'justify-end' : 'justify-start'
+              }`}
+            >
+              <div
+                className={`flex gap-3 ${
+                  message.role === 'user'
+                    ? 'max-w-[80%] flex-row-reverse'
+                    : 'w-full'
+                }`}
+              >
+                {/* 头像 */}
+                <div
+                  className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${
+                    message.role === 'user'
+                      ? 'bg-fg text-inverse'
+                      : 'bg-raised text-fg'
+                  }`}
+                >
+                  {message.role === 'user' ? (
+                    <span className='text-[13px] font-medium'>
+                      {userAvatarText}
+                    </span>
+                  ) : (
+                    <Bot size={16} aria-hidden />
+                  )}
+                </div>
+
+                {/* 消息内容 */}
+                <div
+                  className={`rounded-2xl px-4 py-2 ${
+                    message.role === 'user'
+                      ? 'bg-raised text-fg'
+                      : 'flex-1 bg-raised text-fg'
+                  }`}
+                >
+                  {message.role === 'user' ? (
+                    <p className='whitespace-pre-wrap break-words text-sm leading-relaxed'>
+                      {message.content}
+                    </p>
+                  ) : (
+                    <div className='w-full'>
+                      {/* 历史消息中已固化的工具调用：持续显示 */}
+                      {message.toolCalls && message.toolCalls.length > 0 && (
+                        <div className='mb-2'>
+                          {renderToolChain(
+                            message.toolCalls as ToolChainItem[],
+                            false
+                          )}
+                        </div>
+                      )}
+                      {/* 流式中的最后一个 assistant 消息：实时工具链合并显示在气泡内 */}
+                      {isStreaming &&
+                        index === messages.length - 1 &&
+                        renderToolChain(toolChain, true)}
+                      <div className='prose prose-sm max-w-none dark:prose-invert prose-p:my-2 prose-p:leading-relaxed prose-pre:bg-raised prose-pre:text-fg prose-code:text-fg prose-code:bg-raised prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:before:content-none prose-code:after:content-none prose-a:text-inherit prose-a:no-underline hover:prose-a:underline prose-strong:text-fg prose-ul:my-2 prose-ol:my-2 prose-li:my-1'>
+                        {renderAssistantContent(message.content)}
+                      </div>
+                      {message.error &&
+                        index === messages.length - 1 &&
+                        !isStreaming &&
+                        message.retryMessage && (
+                          <button
+                            type='button'
+                            onClick={() =>
+                              handleSendMessage(message.retryMessage)
+                            }
+                            className='mt-3 inline-flex items-center gap-1.5 rounded-lg border border-line px-3 py-1.5 text-sm transition-colors hover:bg-line text-fg min-h-[44px] tm-press'
+                          >
+                            <RefreshCw size={14} />
+                            重试
+                          </button>
+                        )}
+                      {/* 流式但还没有任何文本时显示“AI正在思考...” */}
+                      {isStreaming &&
+                        index === messages.length - 1 &&
+                        !message.content &&
+                        toolChain.length === 0 && (
+                          <div className='flex items-center gap-2'>
+                            <Loader2
+                              size={16}
+                              className='animate-spin text-muted'
+                            />
+                            <span className='text-sm text-muted'>
+                              AI正在思考...
+                            </span>
+                          </div>
+                        )}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
+
+          <div ref={messagesEndRef} />
+        </div>
+      </div>
+
+      {/* 输入区域 */}
+      <div className='border-t border-line p-4'>
+        <div className='flex gap-2'>
+          <button
+            onClick={handleClearContext}
+            className='flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-line text-muted transition-colors hover:bg-line disabled:cursor-not-allowed disabled:opacity-50 min-h-[44px] tm-press'
+            title='清空聊天记录'
+            disabled={isStreaming}
+          >
+            <Trash2 size={20} />
+          </button>
+          <textarea
+            ref={inputRef}
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder={
+              isMobile ? '输入你的问题...' : '输入你的问题... (Shift+Enter换行)'
+            }
+            disabled={isStreaming}
+            rows={1}
+            className='flex-1 resize-none rounded-xl border border-line bg-surface px-4 py-3 text-sm text-fg placeholder-gray-400 transition-colors focus:border-line focus:outline-none focus:ring-2 focus:ring-[color-mix(in_srgb,var(--tm-text)_20%,transparent)] disabled:cursor-not-allowed disabled:opacity-50 dark:placeholder-gray-500'
+            style={{
+              minHeight: '48px',
+              maxHeight: '120px',
+            }}
+            onInput={(e) => {
+              const target = e.target as HTMLTextAreaElement;
+              target.style.height = 'auto';
+              target.style.height = `${Math.min(target.scrollHeight, 120)}px`;
+            }}
+          />
+          <button
+            onClick={() => handleSendMessage()}
+            disabled={!input.trim() || isStreaming}
+            className='flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-fg text-inverse transition-colors hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 min-h-[44px] tm-press'
+          >
+            {isStreaming ? (
+              <Loader2 size={20} className='animate-spin' />
+            ) : (
+              <Send size={20} />
+            )}
+          </button>
+        </div>
+
+        {/* 快捷提示 */}
+        {messages.length === 1 && !isStreaming && (
+          <div className='mt-3 flex flex-wrap gap-2'>
+            {context?.title ? (
+              <>
+                <button
+                  onClick={() => setInput(`${context.title}讲的是什么故事？`)}
+                  className='rounded-full bg-raised px-3 py-1 text-[13px] text-muted transition-colors hover:bg-line min-h-[44px] tm-press'
+                >
+                  剧情介绍
+                </button>
+                <button
+                  onClick={() =>
+                    setInput(`${context.title}这部作品评价怎么样？`)
+                  }
+                  className='rounded-full bg-raised px-3 py-1 text-[13px] text-muted transition-colors hover:bg-line min-h-[44px] tm-press'
+                >
+                  这部作品的评价
+                </button>
+                <button
+                  onClick={() => setInput(`${context.title}有没有续集？`)}
+                  className='rounded-full bg-raised px-3 py-1 text-[13px] text-muted transition-colors hover:bg-line min-h-[44px] tm-press'
+                >
+                  有没有续集
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  onClick={() => setInput('推荐一些高分电影')}
+                  className='rounded-full bg-raised px-3 py-1 text-[13px] text-muted transition-colors hover:bg-line min-h-[44px] tm-press'
+                >
+                  推荐高分电影
+                </button>
+                <button
+                  onClick={() => setInput('最近有什么新电影上映？')}
+                  className='rounded-full bg-raised px-3 py-1 text-[13px] text-muted transition-colors hover:bg-line min-h-[44px] tm-press'
+                >
+                  最新上映
+                </button>
+              </>
+            )}
+          </div>
+        )}
+      </div>
+    </>
+  );
+
+  if (!useDrawer) {
+    // 弹窗模式：遮罩、焦点、Esc / 返回键、点外面关闭、滚动锁都由弹窗层负责
+    if (!isOpen) return null;
+    return (
+      <ModalLayer label='AI影视助手' onClose={onClose}>
+        <div className='relative flex h-[85vh] sm:h-[80vh] max-h-[90vh] sm:max-h-[600px] w-full max-w-3xl flex-col rounded-2xl bg-surface shadow-2xl'>
+          {content}
+        </div>
+      </ModalLayer>
+    );
+  }
+
+  // 抽屉模式（播放页侧栏）：不是弹窗，页面和播放器照常能点，一直挂着、关闭时滑出
+  const drawer = (
     <div
       className={`fixed inset-0 z-[1002] flex items-center justify-end transition-opacity duration-200 pointer-events-none ${
         isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
@@ -929,469 +1150,12 @@ export default function AIChatPanel({
           isOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
       >
-        {/* 头部 */}
-        <div className='flex items-center justify-between border-b border-line p-4'>
-          <div className='flex items-center gap-3 min-w-0 flex-1'>
-            <div className='flex h-10 w-10 items-center justify-center rounded-full bg-fg flex-shrink-0'>
-              <Sparkles size={20} className='text-fg' />
-            </div>
-            <div className='min-w-0 flex-1'>
-              <h2 className='text-lg font-medium text-fg'>AI影视助手</h2>
-              {context?.title && (
-                <p className='text-[13px] text-muted truncate'>
-                  正在讨论: {context.title}
-                  {context.year && ` (${context.year})`}
-                </p>
-              )}
-            </div>
-          </div>
-          <button
-            onClick={onClose}
-            className='rounded-lg p-2 text-muted transition-colors hover:bg-line flex-shrink-0 min-h-[44px] tm-press'
-          >
-            <X size={20} />
-          </button>
-        </div>
-
-        {/* 消息列表 */}
-        <div className='flex-1 overflow-y-auto p-4'>
-          <div className='space-y-4'>
-            {messages.map((message, index) => (
-              <div
-                key={index}
-                className={`flex ${
-                  message.role === 'user' ? 'justify-end' : 'justify-start'
-                }`}
-              >
-                <div
-                  className={`flex gap-3 ${
-                    message.role === 'user'
-                      ? 'max-w-[80%] flex-row-reverse'
-                      : 'w-full'
-                  }`}
-                >
-                  {/* 头像 */}
-                  <div
-                    className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${
-                      message.role === 'user'
-                        ? 'bg-fg text-inverse'
-                        : 'bg-raised text-fg'
-                    }`}
-                  >
-                    {message.role === 'user' ? (
-                      <span className='text-[13px] font-medium'>
-                        {userAvatarText}
-                      </span>
-                    ) : (
-                      <Bot size={16} aria-hidden />
-                    )}
-                  </div>
-
-                  {/* 消息内容 */}
-                  <div
-                    className={`rounded-2xl px-4 py-2 ${
-                      message.role === 'user'
-                        ? 'bg-raised text-fg'
-                        : 'flex-1 bg-raised text-fg'
-                    }`}
-                  >
-                    {message.role === 'user' ? (
-                      <p className='whitespace-pre-wrap break-words text-sm leading-relaxed'>
-                        {message.content}
-                      </p>
-                    ) : (
-                      <div className='w-full'>
-                        {/* 历史消息中已固化的工具调用：持续显示 */}
-                        {message.toolCalls && message.toolCalls.length > 0 && (
-                          <div className='mb-2'>
-                            {renderToolChain(
-                              message.toolCalls as ToolChainItem[],
-                              false
-                            )}
-                          </div>
-                        )}
-                        {/* 流式中的最后一个 assistant 消息：实时工具链合并显示在气泡内 */}
-                        {isStreaming &&
-                          index === messages.length - 1 &&
-                          renderToolChain(toolChain, true)}
-                        <div className='prose prose-sm max-w-none dark:prose-invert prose-p:my-2 prose-p:leading-relaxed prose-pre:bg-raised prose-pre:text-fg prose-code:text-fg prose-code:bg-raised prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:before:content-none prose-code:after:content-none prose-a:text-inherit prose-a:no-underline hover:prose-a:underline prose-strong:text-fg prose-ul:my-2 prose-ol:my-2 prose-li:my-1'>
-                          {renderAssistantContent(message.content)}
-                        </div>
-                        {message.error &&
-                          index === messages.length - 1 &&
-                          !isStreaming &&
-                          message.retryMessage && (
-                            <button
-                              type='button'
-                              onClick={() =>
-                                handleSendMessage(message.retryMessage)
-                              }
-                              className='mt-3 inline-flex items-center gap-1.5 rounded-lg border border-line px-3 py-1.5 text-sm transition-colors hover:bg-line text-fg min-h-[44px] tm-press'
-                            >
-                              <RefreshCw size={14} />
-                              重试
-                            </button>
-                          )}
-                        {/* 流式但还没有任何文本时显示“AI正在思考...” */}
-                        {isStreaming &&
-                          index === messages.length - 1 &&
-                          !message.content &&
-                          toolChain.length === 0 && (
-                            <div className='flex items-center gap-2'>
-                              <Loader2
-                                size={16}
-                                className='animate-spin text-muted'
-                              />
-                              <span className='text-sm text-muted'>
-                                AI正在思考...
-                              </span>
-                            </div>
-                          )}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            ))}
-
-            <div ref={messagesEndRef} />
-          </div>
-        </div>
-
-        {/* 输入区域 */}
-        <div className='border-t border-line p-4'>
-          <div className='flex gap-2'>
-            <button
-              onClick={handleClearContext}
-              className='flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-line text-muted transition-colors hover:bg-line disabled:cursor-not-allowed disabled:opacity-50 min-h-[44px] tm-press'
-              title='清空聊天记录'
-              disabled={isStreaming}
-            >
-              <Trash2 size={20} />
-            </button>
-            <textarea
-              ref={inputRef}
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder={
-                isMobile
-                  ? '输入你的问题...'
-                  : '输入你的问题... (Shift+Enter换行)'
-              }
-              disabled={isStreaming}
-              rows={1}
-              className='flex-1 resize-none rounded-xl border border-line bg-surface px-4 py-3 text-sm text-fg placeholder-gray-400 transition-colors focus:border-line focus:outline-none focus:ring-2 focus:ring-[color-mix(in_srgb,var(--tm-text)_20%,transparent)] disabled:cursor-not-allowed disabled:opacity-50 dark:placeholder-gray-500'
-              style={{
-                minHeight: '48px',
-                maxHeight: '120px',
-              }}
-              onInput={(e) => {
-                const target = e.target as HTMLTextAreaElement;
-                target.style.height = 'auto';
-                target.style.height = `${Math.min(target.scrollHeight, 120)}px`;
-              }}
-            />
-            <button
-              onClick={() => handleSendMessage()}
-              disabled={!input.trim() || isStreaming}
-              className='flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-fg text-inverse transition-colors hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 min-h-[44px] tm-press'
-            >
-              {isStreaming ? (
-                <Loader2 size={20} className='animate-spin' />
-              ) : (
-                <Send size={20} />
-              )}
-            </button>
-          </div>
-
-          {/* 快捷提示 */}
-          {messages.length === 1 && !isStreaming && (
-            <div className='mt-3 flex flex-wrap gap-2'>
-              {context?.title ? (
-                <>
-                  <button
-                    onClick={() => setInput(`${context.title}讲的是什么故事？`)}
-                    className='rounded-full bg-raised px-3 py-1 text-[13px] text-muted transition-colors hover:bg-line min-h-[44px] tm-press'
-                  >
-                    剧情介绍
-                  </button>
-                  <button
-                    onClick={() =>
-                      setInput(`${context.title}这部作品评价怎么样？`)
-                    }
-                    className='rounded-full bg-raised px-3 py-1 text-[13px] text-muted transition-colors hover:bg-line min-h-[44px] tm-press'
-                  >
-                    这部作品的评价
-                  </button>
-                  <button
-                    onClick={() => setInput(`${context.title}有没有续集？`)}
-                    className='rounded-full bg-raised px-3 py-1 text-[13px] text-muted transition-colors hover:bg-line min-h-[44px] tm-press'
-                  >
-                    有没有续集
-                  </button>
-                </>
-              ) : (
-                <>
-                  <button
-                    onClick={() => setInput('推荐一些高分电影')}
-                    className='rounded-full bg-raised px-3 py-1 text-[13px] text-muted transition-colors hover:bg-line min-h-[44px] tm-press'
-                  >
-                    推荐高分电影
-                  </button>
-                  <button
-                    onClick={() => setInput('最近有什么新电影上映？')}
-                    className='rounded-full bg-raised px-3 py-1 text-[13px] text-muted transition-colors hover:bg-line min-h-[44px] tm-press'
-                  >
-                    最新上映
-                  </button>
-                </>
-              )}
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  ) : (
-    // 原有的居中弹窗模式
-    <div
-      className={`fixed inset-0 z-[1002] flex items-center justify-center bg-ink/50 backdrop-blur-sm overflow-hidden transition-opacity duration-200 ${
-        isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
-      }`}
-      onClick={(e) => {
-        // 点击遮罩层关闭弹窗
-        if (e.target === e.currentTarget && isOpen) {
-          onClose();
-        }
-      }}
-    >
-      <div className='relative mx-4 my-auto flex h-[85vh] sm:h-[80vh] max-h-[90vh] sm:max-h-[600px] w-full max-w-3xl flex-col rounded-2xl bg-surface shadow-2xl'>
-        {/* 头部 */}
-        <div className='flex items-center justify-between border-b border-line p-4'>
-          <div className='flex items-center gap-3 min-w-0 flex-1'>
-            <div className='flex h-10 w-10 items-center justify-center rounded-full bg-fg flex-shrink-0'>
-              <Sparkles size={20} className='text-fg' />
-            </div>
-            <div className='min-w-0 flex-1'>
-              <h2 className='text-lg font-medium text-fg'>AI影视助手</h2>
-              {context?.title && (
-                <p className='text-[13px] text-muted truncate'>
-                  正在讨论: {context.title}
-                  {context.year && ` (${context.year})`}
-                </p>
-              )}
-            </div>
-          </div>
-          <button
-            onClick={onClose}
-            className='rounded-lg p-2 text-muted transition-colors hover:bg-line flex-shrink-0 min-h-[44px] tm-press'
-          >
-            <X size={20} />
-          </button>
-        </div>
-
-        {/* 消息列表 */}
-        <div className='flex-1 overflow-y-auto p-4'>
-          <div className='space-y-4'>
-            {messages.map((message, index) => (
-              <div
-                key={index}
-                className={`flex ${
-                  message.role === 'user' ? 'justify-end' : 'justify-start'
-                }`}
-              >
-                <div
-                  className={`flex gap-3 ${
-                    message.role === 'user'
-                      ? 'max-w-[80%] flex-row-reverse'
-                      : 'w-full'
-                  }`}
-                >
-                  {/* 头像 */}
-                  <div
-                    className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${
-                      message.role === 'user'
-                        ? 'bg-fg text-inverse'
-                        : 'bg-raised text-fg'
-                    }`}
-                  >
-                    {message.role === 'user' ? (
-                      <span className='text-[13px] font-medium'>
-                        {userAvatarText}
-                      </span>
-                    ) : (
-                      <Bot size={16} aria-hidden />
-                    )}
-                  </div>
-
-                  {/* 消息内容 */}
-                  <div
-                    className={`rounded-2xl px-4 py-2 ${
-                      message.role === 'user'
-                        ? 'bg-raised text-fg'
-                        : 'flex-1 bg-raised text-fg'
-                    }`}
-                  >
-                    {message.role === 'user' ? (
-                      <p className='whitespace-pre-wrap break-words text-sm leading-relaxed'>
-                        {message.content}
-                      </p>
-                    ) : (
-                      <div className='w-full'>
-                        {/* 历史消息中已固化的工具调用：持续显示 */}
-                        {message.toolCalls && message.toolCalls.length > 0 && (
-                          <div className='mb-2'>
-                            {renderToolChain(
-                              message.toolCalls as ToolChainItem[],
-                              false
-                            )}
-                          </div>
-                        )}
-                        {/* 流式中的最后一个 assistant 消息：实时工具链合并显示在气泡内 */}
-                        {isStreaming &&
-                          index === messages.length - 1 &&
-                          renderToolChain(toolChain, true)}
-                        <div className='prose prose-sm max-w-none dark:prose-invert prose-p:my-2 prose-p:leading-relaxed prose-pre:bg-raised prose-pre:text-fg prose-code:text-fg prose-code:bg-raised prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:before:content-none prose-code:after:content-none prose-a:text-inherit prose-a:no-underline hover:prose-a:underline prose-strong:text-fg prose-ul:my-2 prose-ol:my-2 prose-li:my-1'>
-                          {renderAssistantContent(message.content)}
-                        </div>
-                        {message.error &&
-                          index === messages.length - 1 &&
-                          !isStreaming &&
-                          message.retryMessage && (
-                            <button
-                              type='button'
-                              onClick={() =>
-                                handleSendMessage(message.retryMessage)
-                              }
-                              className='mt-3 inline-flex items-center gap-1.5 rounded-lg border border-line px-3 py-1.5 text-sm transition-colors hover:bg-line text-fg min-h-[44px] tm-press'
-                            >
-                              <RefreshCw size={14} />
-                              重试
-                            </button>
-                          )}
-                        {/* 流式但还没有任何文本时显示“AI正在思考...” */}
-                        {isStreaming &&
-                          index === messages.length - 1 &&
-                          !message.content &&
-                          toolChain.length === 0 && (
-                            <div className='flex items-center gap-2'>
-                              <Loader2
-                                size={16}
-                                className='animate-spin text-muted'
-                              />
-                              <span className='text-sm text-muted'>
-                                AI正在思考...
-                              </span>
-                            </div>
-                          )}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            ))}
-
-            <div ref={messagesEndRef} />
-          </div>
-        </div>
-
-        {/* 输入区域 */}
-        <div className='border-t border-line p-4'>
-          <div className='flex gap-2'>
-            <button
-              onClick={handleClearContext}
-              className='flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-line text-muted transition-colors hover:bg-line disabled:cursor-not-allowed disabled:opacity-50 min-h-[44px] tm-press'
-              title='清空聊天记录'
-              disabled={isStreaming}
-            >
-              <Trash2 size={20} />
-            </button>
-            <textarea
-              ref={inputRef}
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder={
-                isMobile
-                  ? '输入你的问题...'
-                  : '输入你的问题... (Shift+Enter换行)'
-              }
-              disabled={isStreaming}
-              rows={1}
-              className='flex-1 resize-none rounded-xl border border-line bg-surface px-4 py-3 text-sm text-fg placeholder-gray-400 transition-colors focus:border-line focus:outline-none focus:ring-2 focus:ring-[color-mix(in_srgb,var(--tm-text)_20%,transparent)] disabled:cursor-not-allowed disabled:opacity-50 dark:placeholder-gray-500'
-              style={{
-                minHeight: '48px',
-                maxHeight: '120px',
-              }}
-              onInput={(e) => {
-                const target = e.target as HTMLTextAreaElement;
-                target.style.height = 'auto';
-                target.style.height = `${Math.min(target.scrollHeight, 120)}px`;
-              }}
-            />
-            <button
-              onClick={() => handleSendMessage()}
-              disabled={!input.trim() || isStreaming}
-              className='flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-fg text-inverse transition-colors hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 min-h-[44px] tm-press'
-            >
-              {isStreaming ? (
-                <Loader2 size={20} className='animate-spin' />
-              ) : (
-                <Send size={20} />
-              )}
-            </button>
-          </div>
-
-          {/* 快捷提示 */}
-          {messages.length === 1 && !isStreaming && (
-            <div className='mt-3 flex flex-wrap gap-2'>
-              {context?.title ? (
-                <>
-                  <button
-                    onClick={() => setInput(`${context.title}讲的是什么故事？`)}
-                    className='rounded-full bg-raised px-3 py-1 text-[13px] text-muted transition-colors hover:bg-line min-h-[44px] tm-press'
-                  >
-                    剧情介绍
-                  </button>
-                  <button
-                    onClick={() =>
-                      setInput(`${context.title}这部作品评价怎么样？`)
-                    }
-                    className='rounded-full bg-raised px-3 py-1 text-[13px] text-muted transition-colors hover:bg-line min-h-[44px] tm-press'
-                  >
-                    这部作品的评价
-                  </button>
-                  <button
-                    onClick={() => setInput(`${context.title}有没有续集？`)}
-                    className='rounded-full bg-raised px-3 py-1 text-[13px] text-muted transition-colors hover:bg-line min-h-[44px] tm-press'
-                  >
-                    有没有续集
-                  </button>
-                </>
-              ) : (
-                <>
-                  <button
-                    onClick={() => setInput('推荐一些高分电影')}
-                    className='rounded-full bg-raised px-3 py-1 text-[13px] text-muted transition-colors hover:bg-line min-h-[44px] tm-press'
-                  >
-                    推荐高分电影
-                  </button>
-                  <button
-                    onClick={() => setInput('最近有什么新电影上映？')}
-                    className='rounded-full bg-raised px-3 py-1 text-[13px] text-muted transition-colors hover:bg-line min-h-[44px] tm-press'
-                  >
-                    最新上映
-                  </button>
-                </>
-              )}
-            </div>
-          )}
-        </div>
+        {content}
       </div>
     </div>
   );
 
   return typeof window !== 'undefined'
-    ? createPortal(modalContent, document.body)
+    ? createPortal(drawer, document.body)
     : null;
 }

@@ -10,6 +10,7 @@ import {
 } from '@/lib/db.client';
 import { DanmakuFilterConfig, DanmakuFilterRule } from '@/lib/types';
 
+import ModalLayer from '@/components/feedback/ModalLayer';
 import Select from '@/components/ui/Select';
 
 interface DanmakuFilterSettingsProps {
@@ -65,56 +66,6 @@ export default function DanmakuFilterSettings({
       }
     };
   }, [isOpen]);
-
-  // 阻止背景滚动
-  useEffect(() => {
-    if (isVisible) {
-      // 保存当前滚动位置
-      const scrollY = window.scrollY;
-      const scrollX = window.scrollX;
-      const body = document.body;
-      const html = document.documentElement;
-
-      // 获取滚动条宽度
-      const scrollBarWidth = window.innerWidth - html.clientWidth;
-
-      // 保存原始样式
-      const originalBodyStyle = {
-        position: body.style.position,
-        top: body.style.top,
-        left: body.style.left,
-        right: body.style.right,
-        width: body.style.width,
-        paddingRight: body.style.paddingRight,
-        overflow: body.style.overflow,
-      };
-
-      // 设置body样式来阻止滚动，但保持原位置
-      body.style.position = 'fixed';
-      body.style.top = `-${scrollY}px`;
-      body.style.left = `-${scrollX}px`;
-      body.style.right = '0';
-      body.style.width = '100%';
-      body.style.overflow = 'hidden';
-      body.style.paddingRight = `${scrollBarWidth}px`;
-
-      return () => {
-        // 恢复所有原始样式
-        body.style.position = originalBodyStyle.position;
-        body.style.top = originalBodyStyle.top;
-        body.style.left = originalBodyStyle.left;
-        body.style.right = originalBodyStyle.right;
-        body.style.width = originalBodyStyle.width;
-        body.style.paddingRight = originalBodyStyle.paddingRight;
-        body.style.overflow = originalBodyStyle.overflow;
-
-        // 使用 requestAnimationFrame 确保样式恢复后再滚动
-        requestAnimationFrame(() => {
-          window.scrollTo(scrollX, scrollY);
-        });
-      };
-    }
-  }, [isVisible]);
 
   // 加载配置
   useEffect(() => {
@@ -218,55 +169,11 @@ export default function DanmakuFilterSettings({
   if (!isVisible) return null;
 
   return (
-    <div
-      className='fixed inset-0 z-[2000] flex items-end justify-center'
-      onTouchMove={(e) => {
-        // 阻止最外层容器的触摸移动，防止背景滚动
-        e.preventDefault();
-        e.stopPropagation();
-      }}
-      style={{
-        touchAction: 'none', // 禁用所有触摸操作
-      }}
-    >
-      {/* 背景遮罩 */}
+    <ModalLayer variant='sheet' label='弹幕关键字屏蔽设置' onClose={onClose}>
+      {/* 面板：位置、遮罩、进场由弹窗层的 sheet 款式负责（手机贴底，平板和电脑居中）；关闭时淡出 */}
       <div
-        className={`absolute inset-0 bg-ink/50 transition-opacity duration-300 ease-out ${
-          isAnimating ? 'opacity-100' : 'opacity-0'
-        }`}
-        onClick={onClose}
-        onTouchMove={(e) => {
-          // 只阻止滚动，允许其他触摸事件（包括点击）
-          e.preventDefault();
-        }}
-        onWheel={(e) => {
-          // 阻止滚轮滚动
-          e.preventDefault();
-        }}
-        style={{
-          backdropFilter: 'blur(4px)',
-          willChange: 'opacity',
-          touchAction: 'none', // 禁用所有触摸操作
-        }}
-      />
-
-      {/* 弹窗主体 */}
-      <div
-        className='relative w-full bg-surface rounded-t-3xl shadow-2xl transition-all duration-300 ease-out max-h-[85vh]'
-        onTouchMove={(e) => {
-          // 允许弹窗内部滚动，阻止事件冒泡到外层
-          e.stopPropagation();
-        }}
-        style={{
-          marginBottom: 'calc(0rem + env(safe-area-inset-bottom))',
-          willChange: 'transform, opacity',
-          backfaceVisibility: 'hidden', // 避免闪烁
-          transform: isAnimating
-            ? 'translateY(0) translateZ(0)'
-            : 'translateY(100%) translateZ(0)', // 组合变换保持滑入效果和硬件加速
-          opacity: isAnimating ? 1 : 0,
-          touchAction: 'auto', // 允许弹窗内的正常触摸操作
-        }}
+        className='relative flex w-full flex-col overflow-y-auto rounded-[var(--tm-radius-md)] bg-surface shadow-2xl transition-opacity duration-300 ease-out max-h-[85dvh]'
+        style={{ opacity: isAnimating ? 1 : 0 }}
       >
         {/* 顶部拖拽指示器 */}
         <div className='sticky top-0 z-10 bg-surface pt-3 pb-2'>
@@ -444,6 +351,6 @@ export default function DanmakuFilterSettings({
           </div>
         </div>
       </div>
-    </div>
+    </ModalLayer>
   );
 }
