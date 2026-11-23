@@ -38,6 +38,9 @@ import {
 
 export type { Art } from './art-types';
 
+/** 画面上的文字色（tokens.css，两种主题都是白色）：字幕和控制条主题色都用它 */
+const PLAYER_TEXT = 'var(--tm-room-player-text)';
+
 /** 老 iOS 内联播放和不带来源页请求片源要的两个属性，Artplayer 的类型里没有，原样写到 <video> 上 */
 const LEGACY_VIDEO_ATTRS: Record<string, string> = {
   'webkit-playsinline': 'true',
@@ -95,7 +98,7 @@ export interface WatchPlayerOptions {
   settings?: ArtSetting[];
   /** Artplayer 自带插件（弹幕、缩略图），每次创建实例时生成 */
   artPlugins?: () => ArtPlugin[];
-  /** 控制条主题色（默认跟着 --tm-player-accent） */
+  /** 控制条主题色（默认是画面上的文字色 --tm-room-player-text） */
   theme?: string;
   /** 替换 Artplayer 自带的图标（如加载动画） */
   icons?: Record<string, string>;
@@ -468,9 +471,9 @@ export class WatchPlayer {
             subtitle: {
               url: options.subtitle.url,
               type: 'vtt',
+              // 字幕压在画面上：用画面上的文字色，两种主题都是白字
               style: {
-                /* TODO-P5: 字幕压在画面上，两种主题都是白字；缺播放器字幕色令牌，保留原值 */
-                color: '#fff',
+                color: PLAYER_TEXT,
                 fontSize: options.subtitle.fontSize,
               },
               encoding: 'utf-8',
@@ -483,10 +486,7 @@ export class WatchPlayer {
       playsInline: true,
       autoPlayback: false,
       airplay: true,
-      theme:
-        options.theme ||
-        /* TODO-P5: --tm-player-accent 还没定义，实际用的是后备白色；补令牌前保留原值 */
-        'var(--tm-player-accent, #fff)',
+      theme: options.theme || PLAYER_TEXT,
       lang: 'zh-cn',
       hotkey: false,
       fastForward: (options.fastForward ?? options.rateControl) !== false,

@@ -281,7 +281,6 @@ export function makeLoadPlayer(ctx: LoadPlayerContext) {
           adBlock: blockAdEnabledRef.current,
           // 自己看每次从 0.7 开始，换集后由 lastVolumeRef 恢复本次的音量
           initialVolume: 0.7,
-          theme: 'var(--tm-room-player-text)',
           // 第一条字幕是普通字幕时交给 Artplayer 原生加载
           subtitle: subtitles.initialNative(episodeSubtitles()),
           onError: (message, info) => {

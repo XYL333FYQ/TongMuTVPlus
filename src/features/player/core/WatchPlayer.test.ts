@@ -189,6 +189,18 @@ test('theme, icons and a fixed starting volume are passed to Artplayer', async (
   localStorage.removeItem('tm_player_volume');
 });
 
+test('theme and subtitle colour default to the on-video text token, not a hex', async () => {
+  const player = new WatchPlayer({ container: document.createElement('div') });
+  player.setOptions({ subtitle: { url: 'https://a/1.vtt', fontSize: '20px' } });
+  await player.load(source('https://a/1.mp4'));
+  const option = instances[0].option as {
+    theme?: string;
+    subtitle?: { style?: Record<string, string> };
+  };
+  expect(option.theme).toBe('var(--tm-room-player-text)');
+  expect(option.subtitle?.style?.color).toBe('var(--tm-room-player-text)');
+});
+
 test('without a fixed volume the remembered volume is used', async () => {
   localStorage.setItem('tm_player_volume', '0.3');
   const player = new WatchPlayer({ container: document.createElement('div') });
