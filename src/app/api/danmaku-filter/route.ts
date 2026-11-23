@@ -2,32 +2,19 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 
-import { getAuthInfoFromCookie } from '@/lib/auth';
 import { db } from '@/lib/db';
+import { isCaller, requireRole } from '@/lib/require-role';
 import { DanmakuFilterConfig } from '@/lib/types';
 
 export const runtime = 'nodejs';
 
 export async function GET(request: NextRequest) {
   try {
-    const authInfo = getAuthInfoFromCookie(request);
-    if (!authInfo || !authInfo.username) {
-      return NextResponse.json({ error: '未登录' }, { status: 401 });
-    }
-
-    if (authInfo.username !== process.env.USERNAME) {
-      // 非站长，检查用户存在或被封禁
-      const userInfoV2 = await db.getUserInfoV2(authInfo.username);
-      if (!userInfoV2) {
-        return NextResponse.json({ error: '用户不存在' }, { status: 401 });
-      }
-      if (userInfoV2.banned) {
-        return NextResponse.json({ error: '用户已被封禁' }, { status: 401 });
-      }
-    }
+    const caller = await requireRole(request, 'user');
+    if (!isCaller(caller)) return caller;
 
     // 获取弹幕过滤配置
-    const filterConfig = await db.getDanmakuFilterConfig(authInfo.username);
+    const filterConfig = await db.getDanmakuFilterConfig(caller.username);
 
     // 如果没有配置，返回默认值
     if (!filterConfig) {
@@ -46,21 +33,8 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const authInfo = getAuthInfoFromCookie(request);
-    if (!authInfo || !authInfo.username) {
-      return NextResponse.json({ error: '未登录' }, { status: 401 });
-    }
-
-    if (authInfo.username !== process.env.USERNAME) {
-      // 非站长，检查用户存在或被封禁
-      const userInfoV2 = await db.getUserInfoV2(authInfo.username);
-      if (!userInfoV2) {
-        return NextResponse.json({ error: '用户不存在' }, { status: 401 });
-      }
-      if (userInfoV2.banned) {
-        return NextResponse.json({ error: '用户已被封禁' }, { status: 401 });
-      }
-    }
+    const caller = await requireRole(request, 'user');
+    if (!isCaller(caller)) return caller;
 
     const body = await request.json();
     const config: DanmakuFilterConfig = body;
@@ -82,7 +56,7 @@ export async function POST(request: NextRequest) {
       rules: validatedRules,
     };
 
-    await db.setDanmakuFilterConfig(authInfo.username, validatedConfig);
+    await db.setDanmakuFilterConfig(caller.username, validatedConfig);
 
     return NextResponse.json({ success: true });
   } catch (error) {

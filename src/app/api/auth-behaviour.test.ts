@@ -212,10 +212,15 @@ beforeAll(() => {
   ) as unknown as typeof fetch;
 });
 
-const recorded: Snapshot = RECORD
-  ? {}
-  : (JSON.parse(fs.readFileSync(SNAPSHOT, 'utf8')) as Snapshot);
-const routes = RECORD ? checkedRoutes() : Object.keys(recorded);
+const previous: Snapshot = fs.existsSync(SNAPSHOT)
+  ? (JSON.parse(fs.readFileSync(SNAPSHOT, 'utf8')) as Snapshot)
+  : {};
+const recorded: Snapshot = RECORD ? {} : previous;
+// 重新记录时保留已经记过的接口：换成 requireRole 以后，源码里搜不到角色判断了，
+// 但它们仍要留在快照里
+const routes = RECORD
+  ? [...new Set([...Object.keys(previous), ...checkedRoutes()])].sort()
+  : Object.keys(recorded);
 
 test('the snapshot covers the checked routes', () => {
   expect(routes.length).toBeGreaterThanOrEqual(60);

@@ -2,38 +2,29 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 
-import { getAuthInfoFromCookie } from '@/lib/auth';
 import { db } from '@/lib/db';
+import { isCaller, requireRole } from '@/lib/require-role';
 import { SkipConfig } from '@/lib/types';
 
 export const runtime = 'nodejs';
 
 export async function GET(request: NextRequest) {
   try {
-    const authInfo = getAuthInfoFromCookie(request);
-    if (!authInfo || !authInfo.username) {
-      return NextResponse.json({ error: '未登录' }, { status: 401 });
-    }
+    const caller = await requireRole(request, 'user');
+    if (!isCaller(caller)) return caller;
 
-    if (authInfo.username !== process.env.USERNAME) {
-      // 非站长，检查用户存在或被封禁
-      const userInfoV2 = await db.getUserInfoV2(authInfo.username);
-      if (!userInfoV2) {
-        return NextResponse.json({ error: '用户不存在' }, { status: 401 });
-      }
-      if (userInfoV2.banned) {
-        return NextResponse.json({ error: '用户已被封禁' }, { status: 401 });
-      }
+    if (caller.info) {
+      const userInfoV2 = caller.info;
 
       // 检查是否需要迁移跳过配置
       if (!userInfoV2.skip_migrated) {
-        await db.migrateSkipConfigs(authInfo.username);
+        await db.migrateSkipConfigs(caller.username);
       }
     } else {
       // 站长也需要检查迁移
-      const userInfoV2 = await db.getUserInfoV2(authInfo.username);
+      const userInfoV2 = await db.getUserInfoV2(caller.username);
       if (!userInfoV2?.skip_migrated) {
-        await db.migrateSkipConfigs(authInfo.username);
+        await db.migrateSkipConfigs(caller.username);
       }
     }
 
@@ -43,11 +34,11 @@ export async function GET(request: NextRequest) {
 
     if (source && id) {
       // 获取单个配置
-      const config = await db.getSkipConfig(authInfo.username, source, id);
+      const config = await db.getSkipConfig(caller.username, source, id);
       return NextResponse.json(config);
     } else {
       // 获取所有配置
-      const configs = await db.getAllSkipConfigs(authInfo.username);
+      const configs = await db.getAllSkipConfigs(caller.username);
       return NextResponse.json(configs);
     }
   } catch (error) {
@@ -61,21 +52,8 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const authInfo = getAuthInfoFromCookie(request);
-    if (!authInfo || !authInfo.username) {
-      return NextResponse.json({ error: '未登录' }, { status: 401 });
-    }
-
-    if (authInfo.username !== process.env.USERNAME) {
-      // 非站长，检查用户存在或被封禁
-      const userInfoV2 = await db.getUserInfoV2(authInfo.username);
-      if (!userInfoV2) {
-        return NextResponse.json({ error: '用户不存在' }, { status: 401 });
-      }
-      if (userInfoV2.banned) {
-        return NextResponse.json({ error: '用户已被封禁' }, { status: 401 });
-      }
-    }
+    const caller = await requireRole(request, 'user');
+    if (!isCaller(caller)) return caller;
 
     const body = await request.json();
     const { key, config } = body;
@@ -97,7 +75,7 @@ export async function POST(request: NextRequest) {
       outro_time: Number(config.outro_time) || 0,
     };
 
-    await db.setSkipConfig(authInfo.username, source, id, skipConfig);
+    await db.setSkipConfig(caller.username, source, id, skipConfig);
 
     return NextResponse.json({ success: true });
   } catch (error) {
@@ -111,21 +89,8 @@ export async function POST(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
-    const authInfo = getAuthInfoFromCookie(request);
-    if (!authInfo || !authInfo.username) {
-      return NextResponse.json({ error: '未登录' }, { status: 401 });
-    }
-
-    if (authInfo.username !== process.env.USERNAME) {
-      // 非站长，检查用户存在或被封禁
-      const userInfoV2 = await db.getUserInfoV2(authInfo.username);
-      if (!userInfoV2) {
-        return NextResponse.json({ error: '用户不存在' }, { status: 401 });
-      }
-      if (userInfoV2.banned) {
-        return NextResponse.json({ error: '用户已被封禁' }, { status: 401 });
-      }
-    }
+    const caller = await requireRole(request, 'user');
+    if (!isCaller(caller)) return caller;
 
     const { searchParams } = new URL(request.url);
     const key = searchParams.get('key');
@@ -140,7 +105,7 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: '无效的key格式' }, { status: 400 });
     }
 
-    await db.deleteSkipConfig(authInfo.username, source, id);
+    await db.deleteSkipConfig(caller.username, source, id);
 
     return NextResponse.json({ success: true });
   } catch (error) {

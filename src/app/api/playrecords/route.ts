@@ -2,50 +2,36 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 
-import { getAuthInfoFromCookie } from '@/lib/auth';
 import { db } from '@/lib/db';
+import { isCaller, requireRole } from '@/lib/require-role';
 import { PlayRecord } from '@/lib/types';
 
 export const runtime = 'nodejs';
 
 export async function GET(request: NextRequest) {
   try {
-    // 从 cookie 获取用户信息
-    const authInfo = getAuthInfoFromCookie(request);
-    if (!authInfo || !authInfo.username) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const caller = await requireRole(request, 'user');
+    if (!isCaller(caller)) return caller;
 
     // 检查用户状态和执行迁移
-    if (authInfo.username !== process.env.USERNAME) {
-      // 非站长，检查用户存在或被封禁
-      const userInfoV2 = await db.getUserInfoV2(authInfo.username);
-      if (!userInfoV2) {
-        return NextResponse.json({ error: '用户不存在' }, { status: 401 });
-      }
-      if (userInfoV2.banned) {
-        return NextResponse.json({ error: '用户已被封禁' }, { status: 401 });
-      }
+    if (caller.info) {
+      const userInfoV2 = caller.info;
 
       // 检查播放记录迁移标识，没有迁移标识时执行迁移
       if (!userInfoV2.playrecord_migrated) {
-        console.log(
-          `用户 ${authInfo.username} 播放记录未迁移，开始执行迁移...`
-        );
-        await db.migratePlayRecords(authInfo.username);
+        console.log(`用户 ${caller.username} 播放记录未迁移，开始执行迁移...`);
+        await db.migratePlayRecords(caller.username);
       }
     } else {
       // 站长也需要执行迁移（站长可能不在数据库中，直接尝试迁移）
-      const userInfoV2 = await db.getUserInfoV2(authInfo.username);
+      const userInfoV2 = await db.getUserInfoV2(caller.username);
       if (!userInfoV2 || !userInfoV2.playrecord_migrated) {
-        console.log(
-          `站长 ${authInfo.username} 播放记录未迁移，开始执行迁移...`
-        );
-        await db.migratePlayRecords(authInfo.username);
+        console.log(`站长 ${caller.username} 播放记录未迁移，开始执行迁移...`);
+        await db.migratePlayRecords(caller.username);
       }
     }
 
-    const records = await db.getAllPlayRecords(authInfo.username);
+    const records = await db.getAllPlayRecords(caller.username);
     return NextResponse.json(records, { status: 200 });
   } catch (err) {
     console.error('获取播放记录失败', err);
@@ -58,22 +44,8 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    // 从 cookie 获取用户信息
-    const authInfo = getAuthInfoFromCookie(request);
-    if (!authInfo || !authInfo.username) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    if (authInfo.username !== process.env.USERNAME) {
-      // 非站长，检查用户存在或被封禁
-      const userInfoV2 = await db.getUserInfoV2(authInfo.username);
-      if (!userInfoV2) {
-        return NextResponse.json({ error: '用户不存在' }, { status: 401 });
-      }
-      if (userInfoV2.banned) {
-        return NextResponse.json({ error: '用户已被封禁' }, { status: 401 });
-      }
-    }
+    const caller = await requireRole(request, 'user');
+    if (!isCaller(caller)) return caller;
 
     const body = await request.json();
     const { key, record }: { key: string; record: PlayRecord } = body;
@@ -107,11 +79,11 @@ export async function POST(request: NextRequest) {
       save_time: record.save_time ?? Date.now(),
     } as PlayRecord;
 
-    await db.savePlayRecord(authInfo.username, source, id, finalRecord);
+    await db.savePlayRecord(caller.username, source, id, finalRecord);
 
     // 异步清理旧的播放记录（不阻塞响应）
     (db as any).storage
-      .cleanupOldPlayRecords(authInfo.username)
+      .cleanupOldPlayRecords(caller.username)
       .catch((err: Error) => {
         console.error('异步清理播放记录失败:', err);
       });
@@ -128,24 +100,10 @@ export async function POST(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
-    // 从 cookie 获取用户信息
-    const authInfo = getAuthInfoFromCookie(request);
-    if (!authInfo || !authInfo.username) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const caller = await requireRole(request, 'user');
+    if (!isCaller(caller)) return caller;
 
-    if (authInfo.username !== process.env.USERNAME) {
-      // 非站长，检查用户存在或被封禁
-      const userInfoV2 = await db.getUserInfoV2(authInfo.username);
-      if (!userInfoV2) {
-        return NextResponse.json({ error: '用户不存在' }, { status: 401 });
-      }
-      if (userInfoV2.banned) {
-        return NextResponse.json({ error: '用户已被封禁' }, { status: 401 });
-      }
-    }
-
-    const username = authInfo.username;
+    const username = caller.username;
     const { searchParams } = new URL(request.url);
     const key = searchParams.get('key');
     let keys: string[] | undefined;

@@ -243,11 +243,11 @@
       },
       "member": {
         "status": 401,
-        "error": "你是管理员吗你就访问？"
+        "error": "没有权限"
       },
       "banned": {
         "status": 401,
-        "error": "你是管理员吗你就访问？"
+        "error": "账号已被封禁"
       },
       "admin": {
         "status": 200,
@@ -265,11 +265,11 @@
       },
       "member": {
         "status": 401,
-        "error": "权限不足"
+        "error": "没有权限"
       },
       "banned": {
         "status": 401,
-        "error": "权限不足"
+        "error": "账号已被封禁"
       },
       "admin": {
         "status": 500,
@@ -289,15 +289,15 @@
       },
       "member": {
         "status": 401,
-        "error": "权限不足，只有站长可以修改配置文件"
+        "error": "没有权限"
       },
       "banned": {
         "status": 401,
-        "error": "权限不足，只有站长可以修改配置文件"
+        "error": "没有权限"
       },
       "admin": {
         "status": 401,
-        "error": "权限不足，只有站长可以修改配置文件"
+        "error": "没有权限"
       },
       "owner": {
         "status": 400,
@@ -313,15 +313,15 @@
       },
       "member": {
         "status": 401,
-        "error": "权限不足，只有站长可以拉取配置订阅"
+        "error": "没有权限"
       },
       "banned": {
         "status": 401,
-        "error": "权限不足，只有站长可以拉取配置订阅"
+        "error": "没有权限"
       },
       "admin": {
         "status": 401,
-        "error": "权限不足，只有站长可以拉取配置订阅"
+        "error": "没有权限"
       },
       "owner": {
         "status": 400,
@@ -333,19 +333,19 @@
     "POST": {
       "anonymous": {
         "status": 401,
-        "error": "未登录"
+        "error": "Unauthorized"
       },
       "member": {
         "status": 401,
-        "error": "权限不足，只有站长可以导出数据"
+        "error": "没有权限"
       },
       "banned": {
         "status": 401,
-        "error": "权限不足，只有站长可以导出数据"
+        "error": "没有权限"
       },
       "admin": {
         "status": 401,
-        "error": "权限不足，只有站长可以导出数据"
+        "error": "没有权限"
       },
       "owner": {
         "status": 500,
@@ -357,19 +357,19 @@
     "POST": {
       "anonymous": {
         "status": 401,
-        "error": "未登录"
+        "error": "Unauthorized"
       },
       "member": {
         "status": 401,
-        "error": "权限不足，只有站长可以导入数据"
+        "error": "没有权限"
       },
       "banned": {
         "status": 401,
-        "error": "权限不足，只有站长可以导入数据"
+        "error": "没有权限"
       },
       "admin": {
         "status": 401,
-        "error": "权限不足，只有站长可以导入数据"
+        "error": "没有权限"
       },
       "owner": {
         "status": 500,
@@ -381,19 +381,19 @@
     "GET": {
       "anonymous": {
         "status": 401,
-        "error": null
+        "error": "Unauthorized"
       },
       "member": {
         "status": 403,
-        "error": null
+        "error": "没有权限"
       },
       "banned": {
         "status": 403,
-        "error": null
+        "error": "没有权限"
       },
       "admin": {
         "status": 403,
-        "error": null
+        "error": "没有权限"
       },
       "owner": {
         "status": 400,
@@ -409,11 +409,11 @@
       },
       "member": {
         "status": 403,
-        "error": "Forbidden"
+        "error": "没有权限"
       },
       "banned": {
         "status": 403,
-        "error": "Forbidden"
+        "error": "账号已被封禁"
       },
       "admin": {
         "status": 200,
@@ -431,11 +431,11 @@
       },
       "member": {
         "status": 403,
-        "error": "Forbidden"
+        "error": "没有权限"
       },
       "banned": {
         "status": 403,
-        "error": "Forbidden"
+        "error": "账号已被封禁"
       },
       "admin": {
         "status": 400,
@@ -455,15 +455,15 @@
       },
       "member": {
         "status": 403,
-        "error": "权限不足，仅站长可用"
+        "error": "没有权限"
       },
       "banned": {
         "status": 403,
-        "error": "权限不足，仅站长可用"
+        "error": "没有权限"
       },
       "admin": {
         "status": 403,
-        "error": "权限不足，仅站长可用"
+        "error": "没有权限"
       },
       "owner": {
         "status": 200,
@@ -479,15 +479,15 @@
       },
       "member": {
         "status": 403,
-        "error": "权限不足，仅站长可用"
+        "error": "没有权限"
       },
       "banned": {
         "status": 403,
-        "error": "权限不足，仅站长可用"
+        "error": "没有权限"
       },
       "admin": {
         "status": 403,
-        "error": "权限不足，仅站长可用"
+        "error": "没有权限"
       },
       "owner": {
         "status": 400,
@@ -503,11 +503,11 @@
       },
       "member": {
         "status": 401,
-        "error": "权限不足"
+        "error": "没有权限"
       },
       "banned": {
         "status": 401,
-        "error": "权限不足"
+        "error": "账号已被封禁"
       },
       "admin": {
         "status": 400,
@@ -527,11 +527,11 @@
       },
       "member": {
         "status": 401,
-        "error": "权限不足"
+        "error": "没有权限"
       },
       "banned": {
         "status": 401,
-        "error": "权限不足"
+        "error": "账号已被封禁"
       },
       "admin": {
         "status": 200,
@@ -549,11 +549,11 @@
       },
       "member": {
         "status": 401,
-        "error": "权限不足"
+        "error": "没有权限"
       },
       "banned": {
         "status": 401,
-        "error": "权限不足"
+        "error": "账号已被封禁"
       },
       "admin": {
         "status": 403,
@@ -573,11 +573,11 @@
       },
       "member": {
         "status": 401,
-        "error": "权限不足"
+        "error": "没有权限"
       },
       "banned": {
         "status": 401,
-        "error": "权限不足"
+        "error": "账号已被封禁"
       },
       "admin": {
         "status": 404,
@@ -597,11 +597,11 @@
       },
       "member": {
         "status": 401,
-        "error": "权限不足"
+        "error": "没有权限"
       },
       "banned": {
         "status": 401,
-        "error": "权限不足"
+        "error": "账号已被封禁"
       },
       "admin": {
         "status": 400,
@@ -621,11 +621,11 @@
       },
       "member": {
         "status": 401,
-        "error": "权限不足"
+        "error": "没有权限"
       },
       "banned": {
         "status": 401,
-        "error": "权限不足"
+        "error": "账号已被封禁"
       },
       "admin": {
         "status": 400,
@@ -641,15 +641,15 @@
     "POST": {
       "anonymous": {
         "status": 401,
-        "error": "权限不足"
+        "error": "Unauthorized"
       },
       "member": {
         "status": 401,
-        "error": "权限不足"
+        "error": "没有权限"
       },
       "banned": {
         "status": 401,
-        "error": "权限不足"
+        "error": "账号已被封禁"
       },
       "admin": {
         "status": 500,
@@ -665,15 +665,15 @@
     "POST": {
       "anonymous": {
         "status": 401,
-        "error": "权限不足"
+        "error": "Unauthorized"
       },
       "member": {
         "status": 401,
-        "error": "权限不足"
+        "error": "没有权限"
       },
       "banned": {
         "status": 401,
-        "error": "权限不足"
+        "error": "账号已被封禁"
       },
       "admin": {
         "status": 400,
@@ -693,15 +693,15 @@
       },
       "member": {
         "status": 401,
-        "error": "权限不足"
+        "error": "没有权限"
       },
       "banned": {
         "status": 401,
-        "error": "权限不足"
+        "error": "没有权限"
       },
       "admin": {
         "status": 401,
-        "error": "权限不足"
+        "error": "没有权限"
       },
       "owner": {
         "status": 500,
@@ -717,11 +717,11 @@
       },
       "member": {
         "status": 401,
-        "error": "权限不足"
+        "error": "没有权限"
       },
       "banned": {
         "status": 401,
-        "error": "权限不足"
+        "error": "账号已被封禁"
       },
       "admin": {
         "status": 403,
@@ -741,11 +741,11 @@
       },
       "member": {
         "status": 401,
-        "error": "权限不足"
+        "error": "没有权限"
       },
       "banned": {
         "status": 401,
-        "error": "权限不足"
+        "error": "账号已被封禁"
       },
       "admin": {
         "status": 400,
@@ -765,11 +765,11 @@
       },
       "member": {
         "status": 403,
-        "error": "Forbidden"
+        "error": "没有权限"
       },
       "banned": {
         "status": 403,
-        "error": "Forbidden"
+        "error": "账号已被封禁"
       },
       "admin": {
         "status": 400,
@@ -789,11 +789,11 @@
       },
       "member": {
         "status": 401,
-        "error": "权限不足"
+        "error": "没有权限"
       },
       "banned": {
         "status": 401,
-        "error": "权限不足"
+        "error": "账号已被封禁"
       },
       "admin": {
         "status": 400,
@@ -813,11 +813,11 @@
       },
       "member": {
         "status": 401,
-        "error": "权限不足"
+        "error": "没有权限"
       },
       "banned": {
         "status": 401,
-        "error": "权限不足"
+        "error": "账号已被封禁"
       },
       "admin": {
         "status": 400,
@@ -833,19 +833,19 @@
     "GET": {
       "anonymous": {
         "status": 401,
-        "error": "请先登录"
+        "error": "Unauthorized"
       },
       "member": {
         "status": 403,
-        "error": "只有站长可以维护版本与发布记录"
+        "error": "没有权限"
       },
       "banned": {
         "status": 403,
-        "error": "只有站长可以维护版本与发布记录"
+        "error": "没有权限"
       },
       "admin": {
         "status": 403,
-        "error": "只有站长可以维护版本与发布记录"
+        "error": "没有权限"
       },
       "owner": {
         "status": 200,
@@ -855,19 +855,19 @@
     "POST": {
       "anonymous": {
         "status": 401,
-        "error": "请先登录"
+        "error": "Unauthorized"
       },
       "member": {
         "status": 403,
-        "error": "只有站长可以维护版本与发布记录"
+        "error": "没有权限"
       },
       "banned": {
         "status": 403,
-        "error": "只有站长可以维护版本与发布记录"
+        "error": "没有权限"
       },
       "admin": {
         "status": 403,
-        "error": "只有站长可以维护版本与发布记录"
+        "error": "没有权限"
       },
       "owner": {
         "status": 428,
@@ -883,15 +883,15 @@
       },
       "member": {
         "status": 401,
-        "error": "仅支持站长重载配置"
+        "error": "没有权限"
       },
       "banned": {
         "status": 401,
-        "error": "仅支持站长重载配置"
+        "error": "没有权限"
       },
       "admin": {
         "status": 401,
-        "error": "仅支持站长重载配置"
+        "error": "没有权限"
       },
       "owner": {
         "status": 500,
@@ -905,15 +905,15 @@
       },
       "member": {
         "status": 401,
-        "error": "仅支持站长重载配置"
+        "error": "没有权限"
       },
       "banned": {
         "status": 401,
-        "error": "仅支持站长重载配置"
+        "error": "没有权限"
       },
       "admin": {
         "status": 401,
-        "error": "仅支持站长重载配置"
+        "error": "没有权限"
       },
       "owner": {
         "status": 500,
@@ -929,15 +929,15 @@
       },
       "member": {
         "status": 401,
-        "error": "仅支持站长重置配置"
+        "error": "没有权限"
       },
       "banned": {
         "status": 401,
-        "error": "仅支持站长重置配置"
+        "error": "没有权限"
       },
       "admin": {
         "status": 401,
-        "error": "仅支持站长重置配置"
+        "error": "没有权限"
       },
       "owner": {
         "status": 500,
@@ -951,15 +951,15 @@
       },
       "member": {
         "status": 401,
-        "error": "仅支持站长重置配置"
+        "error": "没有权限"
       },
       "banned": {
         "status": 401,
-        "error": "仅支持站长重置配置"
+        "error": "没有权限"
       },
       "admin": {
         "status": 401,
-        "error": "仅支持站长重置配置"
+        "error": "没有权限"
       },
       "owner": {
         "status": 500,
@@ -999,11 +999,11 @@
       },
       "member": {
         "status": 401,
-        "error": "Unauthorized"
+        "error": "没有权限"
       },
       "banned": {
         "status": 401,
-        "error": "Unauthorized"
+        "error": "账号已被封禁"
       },
       "admin": {
         "status": 200,
@@ -1021,11 +1021,11 @@
       },
       "member": {
         "status": 401,
-        "error": "Unauthorized"
+        "error": "没有权限"
       },
       "banned": {
         "status": 401,
-        "error": "Unauthorized"
+        "error": "账号已被封禁"
       },
       "admin": {
         "status": 400,
@@ -1093,11 +1093,11 @@
       },
       "member": {
         "status": 401,
-        "error": "权限不足"
+        "error": "没有权限"
       },
       "banned": {
         "status": 401,
-        "error": "权限不足"
+        "error": "账号已被封禁"
       },
       "admin": {
         "status": 400,
@@ -1117,11 +1117,11 @@
       },
       "member": {
         "status": 403,
-        "error": "Forbidden"
+        "error": "没有权限"
       },
       "banned": {
         "status": 403,
-        "error": "Forbidden"
+        "error": "账号已被封禁"
       },
       "admin": {
         "status": 200,
@@ -1139,11 +1139,11 @@
       },
       "member": {
         "status": 403,
-        "error": "Forbidden"
+        "error": "没有权限"
       },
       "banned": {
         "status": 403,
-        "error": "Forbidden"
+        "error": "账号已被封禁"
       },
       "admin": {
         "status": 400,
@@ -1257,11 +1257,11 @@
       },
       "member": {
         "status": 401,
-        "error": "权限不足"
+        "error": "没有权限"
       },
       "banned": {
         "status": 401,
-        "error": "权限不足"
+        "error": "账号已被封禁"
       },
       "admin": {
         "status": 500,
@@ -1277,15 +1277,15 @@
     "POST": {
       "anonymous": {
         "status": 401,
-        "error": "权限不足"
+        "error": "Unauthorized"
       },
       "member": {
         "status": 401,
-        "error": "权限不足"
+        "error": "没有权限"
       },
       "banned": {
         "status": 401,
-        "error": "权限不足"
+        "error": "账号已被封禁"
       },
       "admin": {
         "status": 400,
@@ -1373,7 +1373,7 @@
     "GET": {
       "anonymous": {
         "status": 401,
-        "error": "未登录"
+        "error": "Unauthorized"
       },
       "member": {
         "status": 200,
@@ -1381,7 +1381,7 @@
       },
       "banned": {
         "status": 401,
-        "error": "用户已被封禁"
+        "error": "账号已被封禁"
       },
       "admin": {
         "status": 200,
@@ -1395,7 +1395,7 @@
     "POST": {
       "anonymous": {
         "status": 401,
-        "error": "未登录"
+        "error": "Unauthorized"
       },
       "member": {
         "status": 400,
@@ -1403,7 +1403,7 @@
       },
       "banned": {
         "status": 401,
-        "error": "用户已被封禁"
+        "error": "账号已被封禁"
       },
       "admin": {
         "status": 400,
@@ -1523,7 +1523,7 @@
       },
       "banned": {
         "status": 401,
-        "error": "用户已被封禁"
+        "error": "账号已被封禁"
       },
       "admin": {
         "status": 500,
@@ -1545,7 +1545,7 @@
       },
       "banned": {
         "status": 401,
-        "error": "用户已被封禁"
+        "error": "账号已被封禁"
       },
       "admin": {
         "status": 400,
@@ -1567,7 +1567,7 @@
       },
       "banned": {
         "status": 401,
-        "error": "用户已被封禁"
+        "error": "账号已被封禁"
       },
       "admin": {
         "status": 500,
@@ -1587,11 +1587,11 @@
       },
       "member": {
         "status": 403,
-        "error": "权限不足"
+        "error": "没有权限"
       },
       "banned": {
         "status": 403,
-        "error": "权限不足"
+        "error": "账号已被封禁"
       },
       "admin": {
         "status": 400,
@@ -1703,11 +1703,11 @@
       },
       "member": {
         "status": 403,
-        "error": "无权限操作"
+        "error": "没有权限"
       },
       "banned": {
         "status": 403,
-        "error": "无权限操作"
+        "error": "账号已被封禁"
       },
       "admin": {
         "status": 404,
@@ -1725,11 +1725,11 @@
       },
       "member": {
         "status": 403,
-        "error": "无权限操作"
+        "error": "没有权限"
       },
       "banned": {
         "status": 403,
-        "error": "无权限操作"
+        "error": "账号已被封禁"
       },
       "admin": {
         "status": 404,
@@ -2137,7 +2137,7 @@
       },
       "member": {
         "status": 403,
-        "error": "只有管理员可以修改私人影库"
+        "error": "没有权限"
       },
       "banned": {
         "status": 403,
@@ -2161,7 +2161,7 @@
       },
       "member": {
         "status": 403,
-        "error": "只有管理员可以修改私人影库"
+        "error": "没有权限"
       },
       "banned": {
         "status": 403,
@@ -2233,7 +2233,7 @@
       },
       "member": {
         "status": 403,
-        "error": "只有管理员可以修改私人影库"
+        "error": "没有权限"
       },
       "banned": {
         "status": 403,
@@ -2261,7 +2261,7 @@
       },
       "banned": {
         "status": 401,
-        "error": "用户已被封禁"
+        "error": "账号已被封禁"
       },
       "admin": {
         "status": 500,
@@ -2283,7 +2283,7 @@
       },
       "banned": {
         "status": 401,
-        "error": "用户已被封禁"
+        "error": "账号已被封禁"
       },
       "admin": {
         "status": 400,
@@ -2305,7 +2305,7 @@
       },
       "banned": {
         "status": 401,
-        "error": "用户已被封禁"
+        "error": "账号已被封禁"
       },
       "admin": {
         "status": 500,
@@ -2353,7 +2353,7 @@
       },
       "banned": {
         "status": 401,
-        "error": "用户已被封禁"
+        "error": "账号已被封禁"
       },
       "admin": {
         "status": 200,
@@ -2375,7 +2375,7 @@
       },
       "banned": {
         "status": 401,
-        "error": "用户已被封禁"
+        "error": "账号已被封禁"
       },
       "admin": {
         "status": 400,
@@ -2397,7 +2397,7 @@
       },
       "banned": {
         "status": 401,
-        "error": "用户已被封禁"
+        "error": "账号已被封禁"
       },
       "admin": {
         "status": 500,
@@ -2413,7 +2413,7 @@
     "GET": {
       "anonymous": {
         "status": 401,
-        "error": "未登录"
+        "error": "Unauthorized"
       },
       "member": {
         "status": 500,
@@ -2421,7 +2421,7 @@
       },
       "banned": {
         "status": 401,
-        "error": "用户已被封禁"
+        "error": "账号已被封禁"
       },
       "admin": {
         "status": 500,
@@ -2435,7 +2435,7 @@
     "POST": {
       "anonymous": {
         "status": 401,
-        "error": "未登录"
+        "error": "Unauthorized"
       },
       "member": {
         "status": 400,
@@ -2443,7 +2443,7 @@
       },
       "banned": {
         "status": 401,
-        "error": "用户已被封禁"
+        "error": "账号已被封禁"
       },
       "admin": {
         "status": 400,
@@ -2457,7 +2457,7 @@
     "DELETE": {
       "anonymous": {
         "status": 401,
-        "error": "未登录"
+        "error": "Unauthorized"
       },
       "member": {
         "status": 400,
@@ -2465,7 +2465,7 @@
       },
       "banned": {
         "status": 401,
-        "error": "用户已被封禁"
+        "error": "账号已被封禁"
       },
       "admin": {
         "status": 400,
