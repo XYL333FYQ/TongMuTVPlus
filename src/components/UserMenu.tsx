@@ -3422,10 +3422,8 @@ export const UserMenu: React.FC = () => {
         </ModalLayer>
       )}
 
-      {/* 云备份操作结果 Toast */}
-      {syncToast &&
-        mounted &&
-        createPortal(<Toast {...syncToast} />, document.body)}
+      {/* 云备份操作结果（提示条自己挂到最上面的弹窗或 body 上） */}
+      {syncToast && <Toast {...syncToast} />}
 
       {isChangePasswordOpen && (
         <ModalLayer label='修改密码' onClose={handleCloseChangePassword}>
