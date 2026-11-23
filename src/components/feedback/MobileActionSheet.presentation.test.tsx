@@ -1,6 +1,9 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { useState } from 'react';
 
+import { closeTopLayer } from '@/lib/shell-bridge';
+
+import { ConfirmDialog } from '@/components/feedback/ConfirmDialog';
 import MobileActionSheet from '@/components/feedback/MobileActionSheet';
 
 let mockReduced = false;
@@ -195,4 +198,95 @@ test('the long-press release cannot close the sheet unless the press began on it
   fireEvent.pointerDown(backdrop);
   fireEvent.click(backdrop);
   expect(closed).toHaveBeenCalledTimes(1);
+});
+
+let clock = 0;
+// jsdom 16 没有 PointerEvent：用 MouseEvent 带上 pointerType，每个事件隔 100ms
+function pointer(
+  target: Element,
+  type: 'pointerdown' | 'pointermove' | 'pointerup',
+  clientY: number,
+  pointerType: 'touch' | 'mouse'
+) {
+  clock += 100;
+  const event = new MouseEvent(type, { bubbles: true, clientY });
+  Object.defineProperty(event, 'pointerType', { value: pointerType });
+  Object.defineProperty(event, 'pointerId', { value: 1 });
+  Object.defineProperty(event, 'timeStamp', { value: clock });
+  act(() => {
+    target.dispatchEvent(event);
+  });
+}
+
+test('the sheet opens in the sheet variant of the shared modal layer', () => {
+  render(<MobileActionSheet {...props} onClose={jest.fn()} />);
+  settle();
+  expect(screen.getByRole('dialog', { name: '影片操作' })).toHaveClass(
+    'tm-modal-layer',
+    'tm-modal-layer--sheet'
+  );
+});
+
+test('pulling the header down with a finger closes, dragging with a mouse does not', () => {
+  const closed = jest.fn();
+  render(<MobileActionSheet {...props} onClose={closed} />);
+  settle();
+  const header = document.querySelector('.tm-action-sheet-header');
+  if (!header) throw new Error('Missing header');
+  pointer(header, 'pointerdown', 100, 'mouse');
+  pointer(header, 'pointermove', 400, 'mouse');
+  pointer(header, 'pointerup', 400, 'mouse');
+  expect(closed).not.toHaveBeenCalled();
+  pointer(header, 'pointerdown', 100, 'touch');
+  pointer(header, 'pointermove', 200, 'touch');
+  pointer(header, 'pointermove', 300, 'touch');
+  pointer(header, 'pointerup', 300, 'touch');
+  expect(closed).toHaveBeenCalledTimes(1);
+});
+
+test('with a confirm open over the sheet, each back press closes only the top layer', () => {
+  const sheetClosed = jest.fn();
+  function Stack({ confirmOpen }: { confirmOpen: boolean }) {
+    const [sheetOpen, setSheetOpen] = useState(true);
+    return (
+      <>
+        <MobileActionSheet
+          {...props}
+          isOpen={sheetOpen}
+          onClose={() => {
+            sheetClosed();
+            setSheetOpen(false);
+          }}
+        />
+        <ConfirmDialog
+          isOpen={confirmOpen}
+          title='删除记录？'
+          message='不能恢复'
+          onConfirm={jest.fn()}
+          onCancel={confirmCancelled}
+        />
+      </>
+    );
+  }
+  const confirmCancelled = jest.fn();
+  const { rerender } = render(<Stack confirmOpen={false} />);
+  settle();
+  rerender(<Stack confirmOpen />);
+  act(() => {
+    expect(closeTopLayer()).toBe(true);
+  });
+  expect(confirmCancelled).toHaveBeenCalledTimes(1);
+  expect(sheetClosed).not.toHaveBeenCalled();
+  rerender(<Stack confirmOpen={false} />);
+  expect(document.body.style.position).toBe('fixed');
+  act(() => {
+    expect(closeTopLayer()).toBe(true);
+  });
+  expect(sheetClosed).toHaveBeenCalledTimes(1);
+  act(() => {
+    jest.advanceTimersByTime(320);
+  });
+  expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  expect(document.body.style.position).toBe('');
+  expect(closeTopLayer()).toBe(false);
 });

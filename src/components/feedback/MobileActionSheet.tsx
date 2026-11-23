@@ -1,19 +1,13 @@
-import {
-  type Transition,
-  motion,
-  useDragControls,
-  useMotionValue,
-} from 'framer-motion';
 import { Radio, X } from 'lucide-react';
 import Image from 'next/image';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
 
 import '@/styles/panels.css';
 
 import { useReducedMotionSetting } from '@/lib/motion';
+import { usePullDownClose } from '@/hooks/usePullDownClose';
 
-import { useBackLayer } from '@/hooks/useBackLayer';
+import ModalLayer from '@/components/feedback/ModalLayer';
 
 export interface ActionItem {
   id: string;
@@ -41,6 +35,7 @@ interface MobileActionSheetProps {
   description?: string; // 标题下方描述文案
 }
 
+/** 长按菜单：弹窗层的 sheet 款式（手机贴底、可下拉关闭；平板和电脑居中） */
 const MobileActionSheet: React.FC<MobileActionSheetProps> = ({
   isOpen,
   onClose,
@@ -58,9 +53,6 @@ const MobileActionSheet: React.FC<MobileActionSheetProps> = ({
   description = '选择操作',
 }) => {
   const reduced = useReducedMotionSetting();
-  const dragControls = useDragControls();
-  const panelY = useMotionValue(0);
-  const dialogRef = useRef<HTMLDialogElement>(null);
   const closing = useRef(false);
   const closeRef = useRef(onClose);
   closeRef.current = onClose;
@@ -73,18 +65,14 @@ const MobileActionSheet: React.FC<MobileActionSheetProps> = ({
     closeRef.current();
   }, []);
   const [isVisible, setIsVisible] = useState(false);
-  useBackLayer(isOpen || isVisible, requestClose);
-  const [isAnimating, setIsAnimating] = useState(false);
-  const [mounted, setMounted] = useState(false);
   const [isTitleOverflowing, setIsTitleOverflowing] = useState(false);
-  const backdropPressStarted = useRef(false);
   const titleRef = useRef<HTMLHeadingElement>(null);
   const actionsListRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (reduced || !isOpen) dragControls.cancel();
-    if (reduced) panelY.set(0);
-  }, [dragControls, isOpen, panelY, reduced]);
+  // 从头部往下拉关闭；链接文字可以选中，不当成下拉
+  const pull = usePullDownClose(requestClose, {
+    enabled: isOpen && !reduced,
+    ignore: 'button, a, p',
+  });
 
   // 操作区可滚动：有可用播放源最多显示 4 项，否则最多 6 项
   const hasPlaySources = Boolean(isAggregate && sources && sources.length > 0);
@@ -92,41 +80,19 @@ const MobileActionSheet: React.FC<MobileActionSheetProps> = ({
   const actionsMaxVisible = hasPlaySources ? 4 : 6;
   const actionsMaxHeight = `calc(3.5rem * ${actionsMaxVisible})`;
 
-  // 确保组件在客户端挂载后才渲染 Portal
+  // 进场由弹窗层的款式负责；关闭时先播退场，播完再拿掉
   useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  // 控制动画状态
-  useEffect(() => {
-    let animationId: number;
-
     if (isOpen) {
       closing.current = false;
-      backdropPressStarted.current = false;
+      if (exitTimer.current !== null) clearTimeout(exitTimer.current);
       setIsVisible(true);
-      // 使用双重 requestAnimationFrame 确保DOM完全渲染
-      animationId = requestAnimationFrame(() => {
-        animationId = requestAnimationFrame(() => {
-          setIsAnimating(true);
-        });
-      });
-    } else {
-      backdropPressStarted.current = false;
-      setIsAnimating(false);
-      // 等待动画完成后隐藏组件
-      exitTimer.current = setTimeout(() => {
-        setIsVisible(false);
-      }, exitDuration.current);
+      return;
     }
-
+    exitTimer.current = setTimeout(() => {
+      setIsVisible(false);
+    }, exitDuration.current);
     return () => {
-      if (animationId) {
-        cancelAnimationFrame(animationId);
-      }
-      if (exitTimer.current !== null) {
-        clearTimeout(exitTimer.current);
-      }
+      if (exitTimer.current !== null) clearTimeout(exitTimer.current);
     };
   }, [isOpen]);
 
@@ -138,56 +104,6 @@ const MobileActionSheet: React.FC<MobileActionSheetProps> = ({
       if (exitTimer.current !== null) clearTimeout(exitTimer.current);
     };
   }, [isOpen, isVisible, reduced]);
-
-  // 阻止背景滚动
-  useEffect(() => {
-    if (isVisible) {
-      // 保存当前滚动位置
-      const scrollY = window.scrollY;
-      const scrollX = window.scrollX;
-      const body = document.body;
-      const html = document.documentElement;
-
-      // 获取滚动条宽度
-      const scrollBarWidth = window.innerWidth - html.clientWidth;
-
-      // 保存原始样式
-      const originalBodyStyle = {
-        position: body.style.position,
-        top: body.style.top,
-        left: body.style.left,
-        right: body.style.right,
-        width: body.style.width,
-        paddingRight: body.style.paddingRight,
-        overflow: body.style.overflow,
-      };
-
-      // 设置body样式来阻止滚动，但保持原位置
-      body.style.position = 'fixed';
-      body.style.top = `-${scrollY}px`;
-      body.style.left = `-${scrollX}px`;
-      body.style.right = '0';
-      body.style.width = '100%';
-      body.style.overflow = 'hidden';
-      body.style.paddingRight = `${scrollBarWidth}px`;
-
-      return () => {
-        // 恢复所有原始样式
-        body.style.position = originalBodyStyle.position;
-        body.style.top = originalBodyStyle.top;
-        body.style.left = originalBodyStyle.left;
-        body.style.right = originalBodyStyle.right;
-        body.style.width = originalBodyStyle.width;
-        body.style.paddingRight = originalBodyStyle.paddingRight;
-        body.style.overflow = originalBodyStyle.overflow;
-
-        // 使用 requestAnimationFrame 确保样式恢复后再滚动
-        requestAnimationFrame(() => {
-          window.scrollTo(scrollX, scrollY);
-        });
-      };
-    }
-  }, [isVisible]);
 
   useEffect(() => {
     const element = titleRef.current;
@@ -240,20 +156,7 @@ const MobileActionSheet: React.FC<MobileActionSheetProps> = ({
     return () => el.removeEventListener('wheel', handleWheel);
   }, [isVisible, actionsMaxVisible]);
 
-  // Native top-layer focus and cancel keep nested previews independent.
-  useEffect(() => {
-    const dialog = dialogRef.current;
-    if (!mounted || !isVisible || !dialog) return;
-    const trigger = document.activeElement;
-    if (!dialog.open) dialog.showModal();
-    return () => {
-      if (dialog.open) dialog.close();
-      if (trigger instanceof HTMLElement && trigger.isConnected)
-        trigger.focus({ preventScroll: true });
-    };
-  }, [isVisible, mounted]);
-
-  if (!isVisible || !mounted) return null;
+  if (!isVisible) return null;
 
   const getActionColor = (color: ActionItem['color']) => {
     switch (color) {
@@ -266,145 +169,32 @@ const MobileActionSheet: React.FC<MobileActionSheetProps> = ({
     }
   };
 
-  const getActionHoverColor = (color: ActionItem['color']) => {
-    switch (color) {
-      case 'danger':
-        return 'hover:bg-raised';
-      case 'primary':
-        return 'hover:bg-raised';
-      default:
-        return 'hover:bg-raised';
-    }
-  };
+  // 下拉时跟手；关闭时从当前位置接着退场
+  const offset = pull.offset;
+  const transform = reduced
+    ? 'none'
+    : offset > 0
+    ? `translateY(${offset}px)`
+    : 'none';
 
-  const armBackdropClose = () => {
-    backdropPressStarted.current = true;
-  };
-
-  const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    // 菜单打开前那次长按的松手会产生一个“悬空 click”，
-    // 这次 click 并不是从遮罩开始按下的，所以不能拿来关闭菜单。
-    if (!backdropPressStarted.current) {
-      e.preventDefault();
-      e.stopPropagation();
-      return;
-    }
-
-    backdropPressStarted.current = false;
-    requestClose();
-  };
-
-  const panelTransition: Transition = {
-    duration: reduced ? 0.12 : 0.32,
-    ease: [0.22, 1, 0.36, 1],
-    y: reduced
-      ? { duration: 0 }
-      : { type: 'spring', duration: 0.32, bounce: 0.12, velocity: 0 },
-  };
-
-  const content = (
-    <dialog
-      ref={dialogRef}
-      aria-label={title}
-      onCancel={(event) => {
-        event.preventDefault();
-        requestClose();
-      }}
-      onKeyDown={(event) => {
-        if (event.key === 'Escape') event.stopPropagation();
-        if (event.key !== 'Tab') return;
-        const buttons = Array.from(
-          event.currentTarget.querySelectorAll<HTMLButtonElement>(
-            'button:not(:disabled):not([hidden])'
-          )
-        );
-        const first = buttons[0];
-        const last = buttons[buttons.length - 1];
-        if (event.shiftKey && document.activeElement === first) {
-          event.preventDefault();
-          last?.focus();
-        } else if (!event.shiftKey && document.activeElement === last) {
-          event.preventDefault();
-          first?.focus();
-        }
-      }}
-      className='tm-action-sheet fixed inset-0 z-[var(--tm-z-toast)] flex items-end justify-center'
-      onTouchMove={(e) => {
-        // 阻止最外层容器的触摸移动，防止背景滚动
-        e.preventDefault();
-        e.stopPropagation();
-      }}
-      style={{
-        touchAction: 'none', // 禁用所有触摸操作
-      }}
+  return (
+    <ModalLayer
+      variant='sheet'
+      label={title}
+      onClose={requestClose}
+      closeOnBackdrop='press'
+      className='tm-action-sheet-backdrop'
     >
-      {/* 背景遮罩 */}
       <div
-        className={`tm-action-sheet-backdrop absolute inset-0 bg-ink/50 transition-opacity duration-200 ease-out ${
-          isAnimating ? 'opacity-100' : 'opacity-0'
-        }`}
-        onPointerDown={armBackdropClose}
-        onTouchStart={armBackdropClose}
-        onClick={handleBackdropClick}
-        onTouchMove={(e) => {
-          // 只阻止滚动，允许其他触摸事件（包括点击）
-          e.preventDefault();
-        }}
-        onWheel={(e) => {
-          // 阻止滚轮滚动
-          e.preventDefault();
-        }}
-        style={{
-          touchAction: 'none', // 禁用所有触摸操作
-        }}
-      />
-
-      {/* 操作表单 */}
-      <motion.div
-        className='tm-action-sheet-panel relative w-full max-w-lg mx-4 mb-4 bg-surface rounded-2xl shadow-2xl'
-        initial={false}
-        animate={{
-          opacity: isAnimating ? 1 : 0,
-          y: reduced || isAnimating ? 0 : 24,
-        }}
-        transition={panelTransition}
-        drag={isOpen && !reduced ? 'y' : false}
-        dragControls={dragControls}
-        dragListener={false}
-        dragConstraints={{ top: 0, bottom: 0 }}
-        dragElastic={{ top: 0, bottom: 0.6 }}
-        dragMomentum={false}
-        onDragEnd={(_, info) => {
-          if (
-            info.offset.y > 120 ||
-            (info.offset.y > 20 && info.velocity.y > 600)
-          )
-            requestClose();
-        }}
-        onTouchMove={(e) => {
-          // 允许操作表单内部滚动，阻止事件冒泡到外层
-          e.stopPropagation();
-        }}
-        style={{
-          marginBottom: 'calc(1rem + env(safe-area-inset-bottom))',
-
-          backfaceVisibility: 'hidden', // 避免闪烁
-          y: panelY,
-          touchAction: 'auto', // 允许操作表单内的正常触摸操作
-        }}
+        className='tm-action-sheet-panel'
+        data-state={isOpen ? 'open' : 'closing'}
+        data-dragging={pull.dragging || undefined}
+        style={{ transform }}
       >
-        {/* 头部 */}
+        {/* 头部：手指按住往下拉可以关闭 */}
         <div
           className='tm-action-sheet-header flex items-center justify-between p-4 border-b border-line'
-          style={{ touchAction: 'none' }}
-          onPointerDown={(event) => {
-            if (
-              !reduced &&
-              isOpen &&
-              !(event.target as HTMLElement).closest('button, a, p')
-            )
-              dragControls.start(event);
-          }}
+          {...pull.handlers}
         >
           <div className='flex items-center gap-3 flex-1 min-w-0'>
             {poster && (
@@ -472,7 +262,7 @@ const MobileActionSheet: React.FC<MobileActionSheetProps> = ({
           <button
             aria-label='关闭操作菜单'
             onClick={requestClose}
-            className='tm-press p-2 rounded-full hover:bg-line transition-opacity duration-150 min-h-[44px] tm-press'
+            className='tm-press p-2 rounded-full hover:bg-line transition-opacity duration-150 min-h-[44px]'
           >
             <X size={20} className='text-muted' />
           </button>
@@ -486,10 +276,6 @@ const MobileActionSheet: React.FC<MobileActionSheetProps> = ({
             style={{
               maxHeight: actionsMaxHeight,
               WebkitOverflowScrolling: 'touch',
-            }}
-            onTouchMove={(e) => {
-              // 允许操作列表内部滑动，阻止冒泡到外层遮罩
-              e.stopPropagation();
             }}
           >
             {actions.map((action, index) => (
@@ -506,11 +292,11 @@ const MobileActionSheet: React.FC<MobileActionSheetProps> = ({
                   }}
                   disabled={action.disabled}
                   className={`
-                    w-full flex items-center gap-4 py-4 px-2 transition-[transform,opacity] duration-150 ease-out
+                    w-full flex items-center gap-4 py-4 px-2 transition-[transform,opacity] duration-150 ease-out tm-press
                     ${
                       action.disabled
-                        ? 'opacity-50 cursor-not-allowed min-h-[44px] tm-press'
-                        : `${getActionHoverColor(action.color)} tm-press`
+                        ? 'opacity-50 cursor-not-allowed min-h-[44px]'
+                        : 'hover:bg-raised'
                     }
                   `}
                 >
@@ -585,12 +371,9 @@ const MobileActionSheet: React.FC<MobileActionSheetProps> = ({
             </div>
           </div>
         )}
-      </motion.div>
-    </dialog>
+      </div>
+    </ModalLayer>
   );
-
-  // 使用 Portal 将组件渲染到 document.body
-  return createPortal(content, document.body);
 };
 
 export default MobileActionSheet;
