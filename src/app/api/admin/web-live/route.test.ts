@@ -27,6 +27,8 @@ const post = (body: Record<string, unknown>) =>
 
 beforeEach(() => {
   process.env.USERNAME = 'owner';
+  // 角色按用户表判断，本地存储模式没有用户表；不靠本机 .env 决定存储类型
+  process.env.NEXT_PUBLIC_STORAGE_TYPE = 'd1';
   (getAuthInfoFromCookie as jest.Mock).mockReturnValue({ username: 'owner' });
   (db.saveAdminConfig as jest.Mock).mockReset();
 });
