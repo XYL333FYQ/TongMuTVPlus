@@ -27,6 +27,7 @@ import {
   getEpisodeTitleCorrection,
 } from '@/lib/episode-title-correction';
 import { isNetdiskSource, normalizeNetdiskSource } from '@/lib/netdisk/source';
+import { readJson, readSetting, writeSetting } from '@/lib/settings';
 import { CUSTOM_SUBTITLE_ACCEPT } from '@/lib/subtitle-converter';
 import { formatDuration } from '@/lib/time';
 import { getTMDBImageUrl } from '@/lib/tmdb-image-base';
@@ -201,7 +202,7 @@ function PlayPageClient() {
   // 「禁用集数标题获取并切换」全局开关（本地设置，进入播放页时读取一次）
   const [globalTitleFetchDisabled] = useState<boolean>(() => {
     if (typeof window === 'undefined') return false;
-    return localStorage.getItem('disableEpisodeTitleFetch') === 'true';
+    return readSetting('disableEpisodeTitleFetch') === 'true';
   });
   // 「手动矫正标题」按剧集配置：随当前标题 / 用户矫正而更新
   const [titleCorrection, setTitleCorrection] =
@@ -583,12 +584,8 @@ function PlayPageClient() {
         return 'hlsjs';
       }
 
-      try {
-        const savedMode = localStorage.getItem(HARMONY_HLS_PLAYBACK_MODE_KEY);
-        return savedMode === 'native' ? 'native' : 'hlsjs';
-      } catch {
-        return 'hlsjs';
-      }
+      const savedMode = readSetting(HARMONY_HLS_PLAYBACK_MODE_KEY);
+      return savedMode === 'native' ? 'native' : 'hlsjs';
     });
   const nativeHlsAdBlockEnabled =
     isHarmonyOS && harmonyHlsPlaybackMode === 'native' && externalPlayerAdBlock;
@@ -610,13 +607,9 @@ function PlayPageClient() {
   const [netdiskHlsPlaybackMode, setNetdiskHlsPlaybackMode] =
     useState<NetdiskHlsPlaybackMode>(() => {
       if (!supportsNativeHls) return 'hlsjs';
-      try {
-        return localStorage.getItem(NETDISK_HLS_PLAYBACK_MODE_KEY) === 'hlsjs'
-          ? 'hlsjs'
-          : 'native';
-      } catch {
-        return 'native';
-      }
+      return readSetting(NETDISK_HLS_PLAYBACK_MODE_KEY) === 'hlsjs'
+        ? 'hlsjs'
+        : 'native';
     });
 
   // 视频清晰度列表
@@ -737,7 +730,7 @@ function PlayPageClient() {
       return true;
     }
 
-    const saved = localStorage.getItem('disablePlaybackThumbnail');
+    const saved = readSetting('disablePlaybackThumbnail');
     if (saved !== null) {
       return saved === 'true';
     }
@@ -781,7 +774,7 @@ function PlayPageClient() {
   // 优选和测速开关
   const [optimizationEnabled] = useState<boolean>(() => {
     if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('enableOptimization');
+      const saved = readSetting('enableOptimization');
       if (saved !== null) {
         try {
           return JSON.parse(saved);
@@ -795,7 +788,7 @@ function PlayPageClient() {
 
   const [preferStrategy] = useState<'fast' | 'full'>(() => {
     if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('preferStrategy');
+      const saved = readSetting('preferStrategy');
       if (saved === 'fast' || saved === 'full') {
         return saved;
       }
@@ -806,7 +799,7 @@ function PlayPageClient() {
   // 优选偏好：综合判定(balanced) / 分辨率优先(resolution) / 网速优先(speed)
   const [preferMode] = useState<'balanced' | 'resolution' | 'speed'>(() => {
     if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('preferMode');
+      const saved = readSetting('preferMode');
       if (saved === 'balanced' || saved === 'resolution' || saved === 'speed') {
         return saved;
       }
@@ -909,10 +902,9 @@ function PlayPageClient() {
   const isDirectplayDomainProxied = (url: string): boolean => {
     try {
       const domain = new URL(url).hostname;
-      const domains: string[] = JSON.parse(
-        localStorage.getItem('directplay_proxy_domains') || '[]'
+      return readJson<string[]>('directplay_proxy_domains', []).includes(
+        domain
       );
-      return domains.includes(domain);
     } catch {
       return false;
     }
@@ -921,15 +913,10 @@ function PlayPageClient() {
   const addDirectplayProxyDomain = (url: string) => {
     try {
       const domain = new URL(url).hostname;
-      const domains: string[] = JSON.parse(
-        localStorage.getItem('directplay_proxy_domains') || '[]'
-      );
+      const domains = readJson<string[]>('directplay_proxy_domains', []);
       if (!domains.includes(domain)) {
         domains.push(domain);
-        localStorage.setItem(
-          'directplay_proxy_domains',
-          JSON.stringify(domains)
-        );
+        writeSetting('directplay_proxy_domains', JSON.stringify(domains));
       }
     } catch {
       /* ignore */
@@ -1220,11 +1207,7 @@ function PlayPageClient() {
 
     prepareHarmonyHlsReinit();
 
-    try {
-      localStorage.setItem(HARMONY_HLS_PLAYBACK_MODE_KEY, mode);
-    } catch {
-      // 隐私模式等场景可能禁用 localStorage，但不应阻止本次切换。
-    }
+    writeSetting(HARMONY_HLS_PLAYBACK_MODE_KEY, mode);
     setHarmonyHlsPlaybackMode(mode);
   };
 
@@ -1233,11 +1216,7 @@ function PlayPageClient() {
 
     prepareHarmonyHlsReinit();
 
-    try {
-      localStorage.setItem(NETDISK_HLS_PLAYBACK_MODE_KEY, mode);
-    } catch {
-      // 隐私模式等场景可能禁用 localStorage，但不应阻止本次切换。
-    }
+    writeSetting(NETDISK_HLS_PLAYBACK_MODE_KEY, mode);
     setNetdiskHlsPlaybackMode(mode);
   };
 

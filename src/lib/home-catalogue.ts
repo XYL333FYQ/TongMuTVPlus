@@ -3,6 +3,7 @@ import {
   GetBangumiCalendarData,
 } from './bangumi.client';
 import { getDoubanCategories } from './douban.client';
+import type { SettingKey } from './settings';
 import type { TMDBItem } from './tmdb.client';
 import type { DoubanItem, SearchResult } from './types';
 
@@ -15,7 +16,7 @@ export interface HomeCatalogueData {
   upcoming: TMDBItem[];
 }
 export type HomeCatalogueKey = keyof HomeCatalogueData;
-export const HOME_CACHE_KEYS: Record<HomeCatalogueKey, string> = {
+export const HOME_CACHE_KEYS: Record<HomeCatalogueKey, SettingKey> = {
   movies: 'homepage_movies',
   tvshows: 'homepage_tvshows',
   variety: 'homepage_variety',

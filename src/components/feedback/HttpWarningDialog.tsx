@@ -8,6 +8,7 @@ import '@/styles/panels.css';
 
 import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
 import { useReducedMotionSetting } from '@/lib/motion';
+import { readSetting, writeSetting } from '@/lib/settings';
 
 interface HttpWarningDialogProps {
   onClose: () => void;
@@ -33,7 +34,7 @@ export default function HttpWarningDialog({ onClose }: HttpWarningDialogProps) {
       if (typeof window === 'undefined') return false;
 
       // 检查是否已经选择不再提示
-      const dontShowAgain = localStorage.getItem('httpWarningDismissed');
+      const dontShowAgain = readSetting('httpWarningDismissed');
       if (dontShowAgain === 'true') return false;
 
       // 检查是否是站长
@@ -63,7 +64,7 @@ export default function HttpWarningDialog({ onClose }: HttpWarningDialogProps) {
   }, []);
 
   const handleDontShowAgain = () => {
-    localStorage.setItem('httpWarningDismissed', 'true');
+    writeSetting('httpWarningDismissed', 'true');
     handleClose();
   };
 

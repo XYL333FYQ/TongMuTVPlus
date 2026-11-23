@@ -1,0 +1,238 @@
+/**
+ * 浏览器本地设置（localStorage / sessionStorage）的唯一入口。
+ *
+ * 组件和功能不直接碰浏览器存储，只经这里读写（STANDARD.md 公共零件“浏览器存储”）。
+ * 键名一个都不改（含 moontv_*），值照旧存原样字符串：布尔是 'true' / 'false'，
+ * 数字用 String()，对象用 JSON.stringify()，由调用方决定。
+ * 存储不可用（隐私模式、配额满、服务端渲染）时读返回 null、写静默失败。
+ */
+
+export type SettingArea = 'local' | 'session';
+
+interface SettingSpec {
+  area: SettingArea;
+  /** 是否随“本地设置云同步”上传（local-settings-sync 的白名单由此筛出） */
+  sync: boolean;
+}
+
+const synced = { area: 'local', sync: true } as const;
+const local = { area: 'local', sync: false } as const;
+const session = { area: 'session', sync: false } as const;
+
+/**
+ * 所有固定键的登记。sync: true 的键按这里的先后组成云同步白名单，
+ * 顺序就是原来 LOCAL_SETTINGS_KEYS 的顺序，不要随意调换。
+ */
+export const SETTINGS = {
+  // —— 本地设置面板（云同步） ——
+  defaultAggregateSearch: synced,
+  saveLivePlayRecords: synced,
+  enableOptimization: synced,
+  preferStrategy: synced,
+  preferMode: synced,
+  speedTestTimeout: synced,
+  maxConcurrentDownloads: synced,
+  downloadThreadsPerTask: synced,
+  downloadSegmentTimeout: synced,
+  downloadMode: synced,
+  filesystemSavePath: synced,
+  fluidSearch: synced,
+  tmdb_backdrop_disabled: synced,
+  enableTrailers: synced,
+  doubanProxyUrl: synced,
+  doubanDataSource: synced,
+  doubanDataSourceBackup: synced,
+  doubanProxyUrlBackup: synced,
+  animeDataSource: synced,
+  animeDataSourceBackup: synced,
+  animeCustomBaseUrl: synced,
+  animeImageBaseUrl: synced,
+  doubanImageProxyType: synced,
+  doubanImageProxyUrl: synced,
+  doubanImageProxyTypeBackup: synced,
+  doubanImageProxyUrlBackup: synced,
+  tmdbImageBaseUrl: synced,
+  bufferStrategy: synced,
+  nextEpisodePreCache: synced,
+  nextEpisodeDanmakuPreload: synced,
+  disablePlaybackThumbnail: synced,
+  disableEpisodeTitleFetch: synced,
+  disableAutoLoadDanmaku: synced,
+  danmakuMaxCount: synced,
+  danmaku_heatmap_disabled: synced,
+  homeBannerEnabled: synced,
+  homeBannerHeightScale: synced,
+  homeContinueWatchingEnabled: synced,
+  homeModules: synced,
+  danmakuTraditionalToSimplified: synced,
+  searchTraditionalToSimplified: synced,
+  exactSearch: synced,
+  // 播放器跳转时间：快捷快进与方向键步长分开存，两个键都跟着云同步走
+  quickForwardSeconds: synced,
+  seekStepSeconds: synced,
+
+  // —— 站点外壳与提示 ——
+  httpWarningDismissed: local,
+  'tongmu:release-notice-seen': local,
+  'tongmu:mini-player-offset': local,
+  'tongmu:ios-install-hint-seen': local,
+  hasSeenAnnouncement: local,
+  announcementShown: session,
+
+  // —— 首页缓存（一小时） ——
+  homepage_movies: local,
+  homepage_tvshows: local,
+  homepage_variety: local,
+  homepage_bangumi: local,
+  homepage_duanju: local,
+  homepage_upcoming: local,
+
+  // —— 播放器（自己看和房间共用） ——
+  tm_player_volume: local,
+  preferredPlaybackRate: local,
+  subtitleSize: local,
+  danmaku_heatmap_enabled: local,
+  enable_blockad: local,
+  external_player_adblock: local,
+  custom_ad_filter_code_cache: local,
+  custom_ad_filter_version_cache: local,
+  enable_anime4k: local,
+  anime4k_mode: local,
+  anime4k_scale: local,
+  harmony_hls_playback_mode: local,
+  netdisk_hls_playback_mode: local,
+  directplay_proxy_domains: local,
+
+  // —— 房间 ——
+  'tm-together-chat-danmaku': local,
+  'tm-together-dm-self': local,
+  watch_room_screen_quality: local,
+  watch_room_no_connect: local,
+  watch_room_no_connect_timestamp: local,
+} as const satisfies Record<string, SettingSpec>;
+
+/** 带变量的键：前缀登记在这里，后面拼影片、片源或搜索词 */
+export const SETTING_FAMILIES = {
+  banner_trending_cache_: local,
+  xiaoya_correction_: local,
+  search_cache_: session,
+} as const satisfies Record<string, SettingSpec>;
+
+type FixedKey = keyof typeof SETTINGS;
+type FamilyKey = {
+  [P in keyof typeof SETTING_FAMILIES]: `${P}${string}`;
+}[keyof typeof SETTING_FAMILIES];
+export type SettingKey = FixedKey | FamilyKey;
+
+/** 同一页面里写入时派发，别的标签页靠浏览器自带的 storage 事件 */
+const SAME_PAGE_EVENT = 'tm:setting';
+
+function specOf(key: SettingKey): SettingSpec {
+  if (key in SETTINGS) return SETTINGS[key as FixedKey];
+  for (const prefix of Object.keys(SETTING_FAMILIES)) {
+    if (key.startsWith(prefix))
+      return SETTING_FAMILIES[prefix as keyof typeof SETTING_FAMILIES];
+  }
+  return local;
+}
+
+function storageOf(key: SettingKey): Storage | null {
+  if (typeof window === 'undefined') return null;
+  // 浏览器禁用存储时，连取 window.localStorage 都会抛错
+  try {
+    return specOf(key).area === 'session'
+      ? window.sessionStorage
+      : window.localStorage;
+  } catch {
+    return null;
+  }
+}
+
+function announce(key: SettingKey, value: string | null) {
+  if (typeof window === 'undefined') return;
+  window.dispatchEvent(
+    new CustomEvent(SAME_PAGE_EVENT, { detail: { key, value } })
+  );
+}
+
+export function readSetting(key: SettingKey): string | null {
+  try {
+    return storageOf(key)?.getItem(key) ?? null;
+  } catch {
+    return null;
+  }
+}
+
+export function writeSetting(key: SettingKey, value: string): void {
+  try {
+    storageOf(key)?.setItem(key, value);
+  } catch {
+    // 隐私模式或配额满：这次存不下，不影响当前操作
+  }
+  announce(key, value);
+}
+
+export function removeSetting(key: SettingKey): void {
+  try {
+    storageOf(key)?.removeItem(key);
+  } catch {
+    // 同上
+  }
+  announce(key, null);
+}
+
+/** 'true' / 'false'，其他值（含没存过）用 fallback */
+export function readBool(key: SettingKey, fallback: boolean): boolean {
+  const value = readSetting(key);
+  if (value === 'true') return true;
+  if (value === 'false') return false;
+  return fallback;
+}
+
+/** 没存过或不是有限数字时用 fallback；范围由调用方判断 */
+export function readNumber(key: SettingKey, fallback: number): number {
+  const value = readSetting(key);
+  if (value === null || value.trim() === '') return fallback;
+  const number = Number(value);
+  return Number.isFinite(number) ? number : fallback;
+}
+
+/** 没存过或内容坏了时用 fallback；结构由调用方校验 */
+export function readJson<T>(key: SettingKey, fallback: T): T {
+  const value = readSetting(key);
+  if (value === null) return fallback;
+  try {
+    return JSON.parse(value) as T;
+  } catch {
+    return fallback;
+  }
+}
+
+/** 同页写入和别的标签页写入都会通知；返回退订函数 */
+export function subscribeSetting(
+  key: SettingKey,
+  listener: (value: string | null) => void
+): () => void {
+  if (typeof window === 'undefined') return () => undefined;
+  const onSamePage = (event: Event) => {
+    const detail = (event as CustomEvent<{ key: string; value: string | null }>)
+      .detail;
+    if (detail?.key === key) listener(detail.value);
+  };
+  const onOtherTab = (event: StorageEvent) => {
+    if (event.key === key) listener(event.newValue);
+  };
+  window.addEventListener(SAME_PAGE_EVENT, onSamePage);
+  window.addEventListener('storage', onOtherTab);
+  return () => {
+    window.removeEventListener(SAME_PAGE_EVENT, onSamePage);
+    window.removeEventListener('storage', onOtherTab);
+  };
+}
+
+/** 云同步白名单：登记里 sync: true 的键，顺序同登记 */
+export function syncedSettingKeys(): string[] {
+  return (Object.keys(SETTINGS) as FixedKey[]).filter(
+    (key) => SETTINGS[key].sync
+  );
+}

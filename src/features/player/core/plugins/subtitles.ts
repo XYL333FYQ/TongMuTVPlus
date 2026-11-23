@@ -4,6 +4,7 @@
  * 高级字幕渲染失败时，有备用地址就降级为普通字幕。
  */
 
+import { readSetting, writeSetting } from '@/lib/settings';
 import { convertSubtitleFileToVttObjectUrl } from '@/lib/subtitle-converter';
 
 import type { Art, ArtSetting, ArtSettingOption } from '../art-types';
@@ -53,11 +54,7 @@ const SIZES = [
 ];
 
 export function subtitleSize() {
-  try {
-    return localStorage.getItem(SIZE_KEY) || '2em';
-  } catch {
-    return '2em';
-  }
+  return readSetting(SIZE_KEY) || '2em';
 }
 
 function formatOf(subtitle?: SourceSubtitle | null) {
@@ -132,11 +129,7 @@ export class SubtitleController {
         })),
         onSelect: (item: ArtSettingOption) => {
           art.subtitle.style({ fontSize: item.size });
-          try {
-            localStorage.setItem(SIZE_KEY, item.size);
-          } catch {
-            // 忽略
-          }
+          writeSetting(SIZE_KEY, item.size);
           return item.html;
         },
       });

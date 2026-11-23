@@ -2,6 +2,7 @@
  * 弹幕热力图：进度条上方显示弹幕密度曲线，悬停看密度、点击跳转。
  */
 
+import { readSetting, writeSetting } from '@/lib/settings';
 import { formatClock } from '@/lib/time';
 
 import type { Art } from '../art-types';
@@ -11,33 +12,21 @@ export const HEATMAP_ENABLED_KEY = 'danmaku_heatmap_enabled';
 export const HEATMAP_DISABLED_KEY = 'danmaku_heatmap_disabled';
 
 export function heatmapEnabled() {
-  try {
-    const value = localStorage.getItem(HEATMAP_ENABLED_KEY);
-    return value === null ? true : value === 'true';
-  } catch {
-    return true;
-  }
+  const value = readSetting(HEATMAP_ENABLED_KEY);
+  return value === null ? true : value === 'true';
 }
 
 const TOGGLE_EVENT = 'tm-heatmap:toggle';
 
 /** 设置菜单里的“弹幕热力”开关：记住选择，并让当前播放器马上显示 / 隐藏 */
 export function setHeatmapEnabled(art: Art | null, enabled: boolean) {
-  try {
-    localStorage.setItem(HEATMAP_ENABLED_KEY, String(enabled));
-  } catch {
-    // 忽略
-  }
+  writeSetting(HEATMAP_ENABLED_KEY, String(enabled));
   art?.emit?.(TOGGLE_EVENT);
 }
 
 /** 管理员 / 用户彻底关掉热力图功能 */
 export function heatmapDisabled() {
-  try {
-    return localStorage.getItem(HEATMAP_DISABLED_KEY) === 'true';
-  } catch {
-    return false;
-  }
+  return readSetting(HEATMAP_DISABLED_KEY) === 'true';
 }
 
 export function heatmapSegments(times: number[], duration: number) {

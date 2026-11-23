@@ -6,6 +6,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { getDoubanDetail } from '@/lib/douban.client';
 import { filmPlaybackHref, roomSelectionHref } from '@/lib/playback-links';
+import { type SettingKey, readSetting, writeSetting } from '@/lib/settings';
 import type { TMDBItem } from '@/lib/tmdb.client';
 import { getGenreNames, getTMDBImageUrl } from '@/lib/tmdb-image-base';
 import { usePageRefresh } from '@/hooks/usePageRefresh';
@@ -27,7 +28,7 @@ type HomeBannerHeightScale = '1' | '1.5' | '2';
 const getSavedBannerHeightScale = (): HomeBannerHeightScale => {
   if (typeof window === 'undefined') return '1';
 
-  const saved = localStorage.getItem('homeBannerHeightScale');
+  const saved = readSetting('homeBannerHeightScale');
   return saved === '1.5' || saved === '2' ? saved : '1';
 };
 
@@ -118,9 +119,8 @@ export default function BannerCarousel({
   }, []);
 
   // 根据数据源获取缓存key
-  const getLocalStorageKey = (source: string) => {
-    return `banner_trending_cache_${source}`;
-  };
+  const getLocalStorageKey = (source: string): SettingKey =>
+    `banner_trending_cache_${source}`;
 
   usePageRefresh(
     '/',
@@ -145,7 +145,7 @@ export default function BannerCarousel({
       setCurrentIndex((index) => Math.min(index, result.list.length - 1));
       setIsLoading(false);
       try {
-        localStorage.setItem(
+        writeSetting(
           getLocalStorageKey(source),
           JSON.stringify({ data: result.list, timestamp: Date.now() })
         );
@@ -198,7 +198,7 @@ export default function BannerCarousel({
 
   // 读取本地设置
   useEffect(() => {
-    const setting = localStorage.getItem('enableTrailers');
+    const setting = readSetting('enableTrailers');
     if (setting !== null) {
       setEnableTrailers(setting === 'true');
     }
@@ -295,7 +295,7 @@ export default function BannerCarousel({
         // 遍历所有数据源，找到最新的缓存
         for (const source of sources) {
           const cacheKey = getLocalStorageKey(source);
-          const cached = localStorage.getItem(cacheKey);
+          const cached = readSetting(cacheKey);
 
           if (cached) {
             try {
@@ -336,7 +336,7 @@ export default function BannerCarousel({
 
             // 保存到 localStorage（使用数据源特定的key）
             try {
-              localStorage.setItem(
+              writeSetting(
                 cacheKey,
                 JSON.stringify({
                   data: result.list,

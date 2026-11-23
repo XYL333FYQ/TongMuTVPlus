@@ -3,6 +3,7 @@
 import { CSSProperties, RefObject, useEffect, useState } from 'react';
 
 import { isHandheld } from '@/lib/device-tier';
+import { readJson, writeSetting } from '@/lib/settings';
 
 // 小窗拖动（自己看和一起看的小窗共用）：只给小窗的画面和按钮层加一个位移（CSS 变量 → transform），
 // 不改它们的定位、尺寸，也不碰视频元素本身，拖动时不会断播。
@@ -25,21 +26,23 @@ interface Box {
 }
 
 function readStoredOffset(): Offset {
-  try {
-    const parsed = JSON.parse(
-      window.localStorage.getItem(MINI_PLAYER_OFFSET_KEY) || 'null'
-    );
-    if (Number.isFinite(parsed?.x) && Number.isFinite(parsed?.y))
-      return { x: parsed.x, y: parsed.y };
-  } catch {
-    // 存储不可用或内容损坏时回到默认位置
-  }
+  // 存储不可用或内容损坏时回到默认位置
+  const parsed = readJson<Partial<Offset> | null>(MINI_PLAYER_OFFSET_KEY, null);
+  const x = parsed?.x;
+  const y = parsed?.y;
+  if (
+    typeof x === 'number' &&
+    Number.isFinite(x) &&
+    typeof y === 'number' &&
+    Number.isFinite(y)
+  )
+    return { x, y };
   return { x: 0, y: 0 };
 }
 
 function storeOffset(offset: Offset) {
   try {
-    window.localStorage.setItem(MINI_PLAYER_OFFSET_KEY, JSON.stringify(offset));
+    writeSetting(MINI_PLAYER_OFFSET_KEY, JSON.stringify(offset));
   } catch {
     // 隐私模式等情况下存不了，不影响本次拖动
   }

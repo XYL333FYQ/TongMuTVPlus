@@ -1,63 +1,19 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
+import { syncedSettingKeys } from './settings';
+
 /**
  * 本地设置云同步 —— 白名单与校验
  * 仅同步"本地设置面板"的键，不上传播放记录、收藏、搜索历史、主题等隐私/非设置数据。
- * 新增本地设置项时，记得同步更新 LOCAL_SETTINGS_KEYS。
+ * 新增本地设置项时，在 settings.ts 的 SETTINGS 里登记并写 sync: true。
  */
 
 export const LOCAL_SETTINGS_SYNC_MODE_KEY = 'moontv_local_settings_sync_mode';
 export const LOCAL_SETTINGS_SYNC_LAST_PULL_KEY =
   'moontv_local_settings_sync_last_pull';
 
-// 本地设置面板同步白名单（键 = localStorage 中存储的 key）
-export const LOCAL_SETTINGS_KEYS: string[] = [
-  'defaultAggregateSearch',
-  'saveLivePlayRecords',
-  'enableOptimization',
-  'preferStrategy',
-  'preferMode',
-  'speedTestTimeout',
-  'maxConcurrentDownloads',
-  'downloadThreadsPerTask',
-  'downloadSegmentTimeout',
-  'downloadMode',
-  'filesystemSavePath',
-  'fluidSearch',
-  'tmdb_backdrop_disabled',
-  'enableTrailers',
-  'doubanProxyUrl',
-  'doubanDataSource',
-  'doubanDataSourceBackup',
-  'doubanProxyUrlBackup',
-  'animeDataSource',
-  'animeDataSourceBackup',
-  'animeCustomBaseUrl',
-  'animeImageBaseUrl',
-  'doubanImageProxyType',
-  'doubanImageProxyUrl',
-  'doubanImageProxyTypeBackup',
-  'doubanImageProxyUrlBackup',
-  'tmdbImageBaseUrl',
-  'bufferStrategy',
-  'nextEpisodePreCache',
-  'nextEpisodeDanmakuPreload',
-  'disablePlaybackThumbnail',
-  'disableEpisodeTitleFetch',
-  'disableAutoLoadDanmaku',
-  'danmakuMaxCount',
-  'danmaku_heatmap_disabled',
-  'homeBannerEnabled',
-  'homeBannerHeightScale',
-  'homeContinueWatchingEnabled',
-  'homeModules',
-  'danmakuTraditionalToSimplified',
-  'searchTraditionalToSimplified',
-  'exactSearch',
-  // 播放器跳转时间：快捷快进与方向键步长分开存，两个键都要跟着云同步走
-  'quickForwardSeconds',
-  'seekStepSeconds',
-];
+// 本地设置面板同步白名单（键 = 浏览器存储里的键名）：settings.ts 登记里 sync: true 的键，顺序不变
+export const LOCAL_SETTINGS_KEYS: string[] = syncedSettingKeys();
 
 export const LOCAL_SETTINGS_MAX_PAYLOAD_BYTES = 64 * 1024; // 64KB
 

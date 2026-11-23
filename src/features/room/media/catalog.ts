@@ -3,6 +3,7 @@
  * 搜不到时给出相近推荐。搜索结果缓存在 sessionStorage（与搜索页共用）。
  */
 
+import { type SettingKey, readSetting, writeSetting } from '@/lib/settings';
 import {
   appendSpecialSourceParam,
   isSpecialSourceContext,
@@ -104,7 +105,7 @@ export function xiaoyaCorrection(
   id: string
 ): Correction | null {
   try {
-    const raw = localStorage.getItem(`xiaoya_correction_${source}_${id}`);
+    const raw = readSetting(`xiaoya_correction_${source}_${id}`);
     return raw ? (JSON.parse(raw) as Correction) : null;
   } catch {
     return null;
@@ -156,7 +157,7 @@ interface SearchCache {
   updatedAt: number;
 }
 
-function cacheKey(query: string) {
+function cacheKey(query: string): SettingKey {
   return `search_cache_${query.trim()}${
     isSpecialSourceContext() ? '_special' : ''
   }`;
@@ -165,7 +166,7 @@ function cacheKey(query: string) {
 export function readSearchCache(query: string): SearchCache | null {
   if (!query.trim()) return null;
   try {
-    const raw = sessionStorage.getItem(cacheKey(query));
+    const raw = readSetting(cacheKey(query));
     if (!raw) return null;
     const parsed = JSON.parse(raw) as SearchCache;
     return (parsed?.status === 'complete' || parsed?.status === 'partial') &&
@@ -180,7 +181,7 @@ export function readSearchCache(query: string): SearchCache | null {
 function writeSearchCache(query: string, results: SearchResult[]) {
   if (!query.trim()) return;
   try {
-    sessionStorage.setItem(
+    writeSetting(
       cacheKey(query),
       JSON.stringify({
         status: 'complete',

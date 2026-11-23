@@ -7,6 +7,7 @@ import { type MutableRefObject, useCallback, useEffect, useState } from 'react';
 
 import './ScreenSharePage.css';
 
+import { readSetting, removeSetting, writeSetting } from '@/lib/settings';
 import { useAudioFocus } from '@/hooks/useAudioFocus';
 
 import Select from '@/components/ui/Select';
@@ -142,7 +143,7 @@ export default function ScreenSharePage() {
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
-    const saved = window.localStorage.getItem(SCREEN_SHARE_QUALITY_KEY);
+    const saved = readSetting(SCREEN_SHARE_QUALITY_KEY);
     if (saved === 'smooth' || saved === 'hd' || saved === 'ultra') {
       setQualityPreset(saved);
     }
@@ -150,7 +151,7 @@ export default function ScreenSharePage() {
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    window.localStorage.setItem(SCREEN_SHARE_QUALITY_KEY, qualityPreset);
+    writeSetting(SCREEN_SHARE_QUALITY_KEY, qualityPreset);
   }, [qualityPreset]);
 
   useEffect(() => {
@@ -171,21 +172,15 @@ export default function ScreenSharePage() {
   useEffect(() => {
     if (!screenRoomId || !canShare) return;
 
-    localStorage.setItem(WATCH_ROOM_NO_CONNECT_KEY, '1');
-    localStorage.setItem(
-      WATCH_ROOM_NO_CONNECT_TIMESTAMP_KEY,
-      String(Date.now())
-    );
+    writeSetting(WATCH_ROOM_NO_CONNECT_KEY, '1');
+    writeSetting(WATCH_ROOM_NO_CONNECT_TIMESTAMP_KEY, String(Date.now()));
     const heartbeat = window.setInterval(() => {
-      localStorage.setItem(
-        WATCH_ROOM_NO_CONNECT_TIMESTAMP_KEY,
-        String(Date.now())
-      );
+      writeSetting(WATCH_ROOM_NO_CONNECT_TIMESTAMP_KEY, String(Date.now()));
     }, 30_000);
 
     const release = () => {
-      localStorage.removeItem(WATCH_ROOM_NO_CONNECT_KEY);
-      localStorage.removeItem(WATCH_ROOM_NO_CONNECT_TIMESTAMP_KEY);
+      removeSetting(WATCH_ROOM_NO_CONNECT_KEY);
+      removeSetting(WATCH_ROOM_NO_CONNECT_TIMESTAMP_KEY);
     };
     // 整页刷新/关闭标签页时 React 不会执行卸载清理，只有 pagehide：
     // 标记留着会让本浏览器在 10 分钟内都连不回房间

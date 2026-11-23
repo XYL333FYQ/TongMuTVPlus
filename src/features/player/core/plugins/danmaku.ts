@@ -34,6 +34,7 @@ import type {
   DanmakuSelection,
   DanmakuSettings,
 } from '@/lib/danmaku/types';
+import { readSetting } from '@/lib/settings';
 import type { DanmakuFilterConfig } from '@/lib/types';
 
 import type { Art } from '../art-types';
@@ -159,20 +160,12 @@ export function limitDanmaku<T>(items: T[], max: number) {
 }
 
 function maxCount() {
-  try {
-    return parseInt(localStorage.getItem('danmakuMaxCount') || '5000', 10);
-  } catch {
-    return 5000;
-  }
+  return parseInt(readSetting('danmakuMaxCount') || '5000', 10);
 }
 
 export function danmakuAutoLoadDisabled() {
-  try {
-    const saved = localStorage.getItem('disableAutoLoadDanmaku');
-    if (saved !== null) return saved === 'true';
-  } catch {
-    // 忽略
-  }
+  const saved = readSetting('disableAutoLoadDanmaku');
+  if (saved !== null) return saved === 'true';
   return (
     typeof window !== 'undefined' &&
     window.RUNTIME_CONFIG?.DANMAKU_AUTO_LOAD_DEFAULT === false

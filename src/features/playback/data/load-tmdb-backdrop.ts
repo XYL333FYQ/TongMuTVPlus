@@ -10,6 +10,7 @@ import {
   recommendationCacheKeys,
   setRecommendationCache,
 } from '@/lib/recommendations/cache';
+import { readSetting } from '@/lib/settings';
 import { SearchResult } from '@/lib/types';
 import { processImageUrl } from '@/lib/utils';
 
@@ -89,7 +90,7 @@ export function makeLoadTmdbBackdrop(ctx: LoadTmdbBackdropContext) {
 
       // 检查是否禁用背景图
       if (typeof window !== 'undefined') {
-        const disabled = localStorage.getItem('tmdb_backdrop_disabled');
+        const disabled = readSetting('tmdb_backdrop_disabled');
         if (disabled === 'true') {
           setTmdbBackdrop(null);
           return;

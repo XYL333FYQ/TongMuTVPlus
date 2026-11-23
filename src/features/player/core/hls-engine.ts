@@ -4,6 +4,8 @@
 
 import type { ErrorData } from 'hls.js';
 
+import { readSetting } from '@/lib/settings';
+
 import { createAdFilterLoader } from './ad-filter';
 import type { HlsConstructor, HlsInstance, VideoWithHls } from './art-types';
 import { playerEnvironment } from './env';
@@ -22,12 +24,8 @@ const BUFFER_PRESETS: Record<
 };
 
 export function readBufferStrategy(): BufferStrategy {
-  try {
-    const value = localStorage.getItem('bufferStrategy');
-    if (value && value in BUFFER_PRESETS) return value as BufferStrategy;
-  } catch {
-    // 隐私模式
-  }
+  const value = readSetting('bufferStrategy');
+  if (value && value in BUFFER_PRESETS) return value as BufferStrategy;
   return 'medium';
 }
 

@@ -6,6 +6,8 @@
 
 import './chat-danmaku.css';
 
+import { readSetting, writeSetting } from '@/lib/settings';
+
 import type { Art, PlayerPlugin } from '@/features/player';
 
 export interface ChatDanmakuOptions {
@@ -21,11 +23,7 @@ const LANE_HEIGHT = 30;
 const SELF_KEY = 'tm-together-dm-self';
 
 function readShowSelf() {
-  try {
-    return localStorage.getItem(SELF_KEY) !== 'false';
-  } catch {
-    return true;
-  }
+  return readSetting(SELF_KEY) !== 'false';
 }
 const MAX_ON_SCREEN = 40;
 
@@ -63,11 +61,7 @@ export class ChatDanmaku {
   /** 开关“显示我自己发的”，记在本机 */
   setShowSelf(on: boolean) {
     this.configure({ showSelf: on });
-    try {
-      localStorage.setItem(SELF_KEY, String(on));
-    } catch {
-      // 存不下也不影响本次
-    }
+    writeSetting(SELF_KEY, String(on));
   }
 
   shoot(text: string, self = false, name = '') {

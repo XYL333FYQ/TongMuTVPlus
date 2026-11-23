@@ -14,6 +14,7 @@ import {
   loadHomeCatalogue,
 } from '@/lib/home-catalogue';
 import { useReducedMotionSetting } from '@/lib/motion';
+import { type SettingKey, readSetting, writeSetting } from '@/lib/settings';
 import type { TMDBItem } from '@/lib/tmdb.client';
 import { getTMDBImageUrl } from '@/lib/tmdb-image-base';
 import { type SearchResult, DoubanItem } from '@/lib/types';
@@ -87,7 +88,7 @@ function HomeClient() {
     ) as (keyof HomeCatalogueData)[]) {
       if (!data[key]?.length) continue;
       try {
-        localStorage.setItem(
+        writeSetting(
           HOME_CACHE_KEYS[key],
           JSON.stringify({ data: data[key], timestamp: Date.now() })
         );
@@ -312,7 +313,7 @@ function HomeClient() {
   const loadHomeLayoutSettings = () => {
     if (typeof window === 'undefined') return;
 
-    const savedHomeModules = localStorage.getItem('homeModules');
+    const savedHomeModules = readSetting('homeModules');
     if (savedHomeModules) {
       try {
         setHomeModules(JSON.parse(savedHomeModules));
@@ -323,12 +324,12 @@ function HomeClient() {
       }
     }
 
-    const savedHomeBannerEnabled = localStorage.getItem('homeBannerEnabled');
+    const savedHomeBannerEnabled = readSetting('homeBannerEnabled');
     if (savedHomeBannerEnabled !== null) {
       setHomeBannerEnabled(savedHomeBannerEnabled === 'true');
     }
 
-    const savedHomeContinueWatchingEnabled = localStorage.getItem(
+    const savedHomeContinueWatchingEnabled = readSetting(
       'homeContinueWatchingEnabled'
     );
     if (savedHomeContinueWatchingEnabled !== null) {
@@ -412,17 +413,17 @@ function HomeClient() {
   useEffect(() => {
     if (typeof window !== 'undefined' && announcement) {
       // 会话级标记：只在首次访问站点时弹出，导航切回首页不重复弹
-      if (sessionStorage.getItem('announcementShown')) {
+      if (readSetting('announcementShown')) {
         return;
       }
       // 每次显示模式：每次新会话首次访问弹出一次
       if (announcementDisplayMode === 'every') {
         setShowAnnouncement(true);
-        sessionStorage.setItem('announcementShown', '1');
+        writeSetting('announcementShown', '1');
         return;
       }
       // 单次显示模式：localStorage 记住已看过的公告文本，换公告则重新弹出
-      const hasSeenAnnouncement = localStorage.getItem('hasSeenAnnouncement');
+      const hasSeenAnnouncement = readSetting('hasSeenAnnouncement');
       if (hasSeenAnnouncement !== announcement) {
         setShowAnnouncement(true);
       } else {
@@ -435,9 +436,9 @@ function HomeClient() {
   useEffect(() => {
     const CACHE_DURATION = 60 * 60 * 1000; // 1小时
 
-    const getCache = (key: string) => {
+    const getCache = (key: SettingKey) => {
       try {
-        const cached = localStorage.getItem(key);
+        const cached = readSetting(key);
         if (!cached) return null;
         const { data, timestamp } = JSON.parse(cached);
         return { data, expired: Date.now() - timestamp > CACHE_DURATION };
@@ -504,7 +505,7 @@ function HomeClient() {
 
   const handleCloseAnnouncement = (announcement: string) => {
     setShowAnnouncement(false);
-    localStorage.setItem('hasSeenAnnouncement', announcement); // 记录已查看弹窗
+    writeSetting('hasSeenAnnouncement', announcement); // 记录已查看弹窗
   };
 
   // 渲染模块的函数

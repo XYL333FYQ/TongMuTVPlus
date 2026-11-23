@@ -6,6 +6,8 @@ import type {
   PlaylistLoaderContext,
 } from 'hls.js';
 
+import { readSetting, removeSetting, writeSetting } from '@/lib/settings';
+
 import type { HlsConstructor } from './art-types';
 /*
  * m3u8 去广告：管理员可以在后台下发自定义过滤代码（带版本号缓存在本机），
@@ -27,37 +29,29 @@ const AD_KEYWORDS = [
 
 let customCode = '';
 
-function readStorage(key: string) {
-  try {
-    return localStorage.getItem(key);
-  } catch {
-    return null;
-  }
-}
-
 /** 页面加载时调用一次：读取缓存并按后台版本号更新自定义过滤代码 */
 export async function syncCustomAdFilter(version: number) {
-  const cached = readStorage(CODE_CACHE_KEY);
+  const cached = readSetting(CODE_CACHE_KEY);
   if (cached) customCode = cached;
   try {
     if (!version) {
-      localStorage.removeItem(CODE_CACHE_KEY);
-      localStorage.removeItem(VERSION_CACHE_KEY);
+      removeSetting(CODE_CACHE_KEY);
+      removeSetting(VERSION_CACHE_KEY);
       customCode = '';
       return;
     }
-    const cachedVersion = readStorage(VERSION_CACHE_KEY);
+    const cachedVersion = readSetting(VERSION_CACHE_KEY);
     if (cachedVersion && parseInt(cachedVersion, 10) === version) return;
     const response = await fetch('/api/ad-filter?full=true');
     if (!response.ok) return;
     const { code } = (await response.json()) as { code?: string };
     if (code) {
-      localStorage.setItem(CODE_CACHE_KEY, code);
-      localStorage.setItem(VERSION_CACHE_KEY, String(version));
+      writeSetting(CODE_CACHE_KEY, code);
+      writeSetting(VERSION_CACHE_KEY, String(version));
       customCode = code;
     } else if (!cached) {
-      localStorage.removeItem(CODE_CACHE_KEY);
-      localStorage.removeItem(VERSION_CACHE_KEY);
+      removeSetting(CODE_CACHE_KEY);
+      removeSetting(VERSION_CACHE_KEY);
     }
   } catch {
     // 网络失败时继续用缓存

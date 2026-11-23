@@ -6,24 +6,17 @@ import { useEffect, useState } from 'react';
 import { detectClient } from '@/lib/client-update';
 import { useReducedMotionSetting } from '@/lib/motion';
 import { type ReleaseInfo, parseReleaseInfo } from '@/lib/release-info';
+import { readSetting, writeSetting } from '@/lib/settings';
 
 // 浏览器上次点过“知道了”的版本号。新增键，不动任何既有存储键。
 const SEEN_KEY = 'tongmu:release-notice-seen';
 
 function readSeen() {
-  try {
-    return localStorage.getItem(SEEN_KEY);
-  } catch {
-    return null;
-  }
+  return readSetting(SEEN_KEY);
 }
 
 function writeSeen(version: string) {
-  try {
-    localStorage.setItem(SEEN_KEY, version);
-  } catch {
-    // 存储不可用时只在本次打开期间关闭，不能让访客被弹窗卡住。
-  }
+  writeSetting(SEEN_KEY, version);
 }
 
 interface ReleaseNoticeDialogProps {

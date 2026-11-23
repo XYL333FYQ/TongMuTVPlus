@@ -8,6 +8,7 @@ import type { Dispatch, MutableRefObject, SetStateAction } from 'react';
 import { generateStorageKey, getAllPlayRecords } from '@/lib/db.client';
 import { DEVICE_TIER_EVENT, getDeviceTier } from '@/lib/device-tier';
 import { installTouchControls } from '@/lib/player-touch-controls';
+import { readSetting } from '@/lib/settings';
 import { formatClock, formatPaddedClock } from '@/lib/time';
 import type { SearchResult } from '@/lib/types';
 
@@ -536,7 +537,7 @@ export function makeWireInstance(ctx: WireInstanceContext) {
       // 下集预缓冲逻辑
       const nextEpisodePreCacheEnabled =
         typeof window !== 'undefined'
-          ? localStorage.getItem('nextEpisodePreCache') === 'true'
+          ? readSetting('nextEpisodePreCache') === 'true'
           : false;
 
       if (nextEpisodePreCacheEnabled) {
@@ -625,7 +626,7 @@ export function makeWireInstance(ctx: WireInstanceContext) {
       // 下集弹幕预加载逻辑
       const nextEpisodeDanmakuPreloadEnabled =
         typeof window !== 'undefined'
-          ? localStorage.getItem('nextEpisodeDanmakuPreload') === 'true'
+          ? readSetting('nextEpisodeDanmakuPreload') === 'true'
           : false;
 
       if (nextEpisodeDanmakuPreloadEnabled) {

@@ -13,14 +13,7 @@ import {
   QUICK_FORWARD_STORAGE_KEY,
   SEEK_STEP_STORAGE_KEY,
 } from '@/lib/player-seek-settings';
-
-function readStoredFlag(key: string, fallback: boolean) {
-  if (typeof window !== 'undefined') {
-    const v = localStorage.getItem(key);
-    if (v !== null) return v === 'true';
-  }
-  return fallback;
-}
+import { readBool, writeSetting } from '@/lib/settings';
 
 export function usePlayerPreferences() {
   // 跳过片头片尾配置
@@ -63,7 +56,7 @@ export function usePlayerPreferences() {
 
   // 去广告开关（从 localStorage 继承，默认 true）
   const [blockAdEnabled, setBlockAdEnabled] = useState<boolean>(() =>
-    readStoredFlag('enable_blockad', true)
+    readBool('enable_blockad', true)
   );
   const blockAdEnabledRef = useRef(blockAdEnabled);
   useEffect(() => {
@@ -72,20 +65,15 @@ export function usePlayerPreferences() {
 
   // 工具栏去广告开关：用于外部播放器及鸿蒙原生 HLS，默认 false
   const [externalPlayerAdBlock, setExternalPlayerAdBlock] = useState<boolean>(
-    () => readStoredFlag('external_player_adblock', false)
+    () => readBool('external_player_adblock', false)
   );
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(
-        'external_player_adblock',
-        String(externalPlayerAdBlock)
-      );
-    }
+    writeSetting('external_player_adblock', String(externalPlayerAdBlock));
   }, [externalPlayerAdBlock]);
 
   // 弹幕热力图完全禁用开关（默认不禁用，即启用热力图功能）
   const [danmakuHeatmapDisabled, setDanmakuHeatmapDisabled] = useState<boolean>(
-    () => readStoredFlag('danmaku_heatmap_disabled', false)
+    () => readBool('danmaku_heatmap_disabled', false)
   );
   const danmakuHeatmapDisabledRef = useRef(danmakuHeatmapDisabled);
   useEffect(() => {
@@ -94,7 +82,7 @@ export function usePlayerPreferences() {
 
   // 弹幕热力图开关（默认开启）
   const [danmakuHeatmapEnabled, setDanmakuHeatmapEnabled] = useState<boolean>(
-    () => readStoredFlag('danmaku_heatmap_enabled', true)
+    () => readBool('danmaku_heatmap_enabled', true)
   );
   const danmakuHeatmapEnabledRef = useRef(danmakuHeatmapEnabled);
   useEffect(() => {

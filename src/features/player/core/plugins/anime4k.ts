@@ -7,6 +7,7 @@ import {
   type Anime4KModeConstructor,
   createAnime4KRenderer,
 } from '@/lib/anime4k';
+import { type SettingKey, readSetting, writeSetting } from '@/lib/settings';
 
 import type { Art } from '../art-types';
 
@@ -20,12 +21,8 @@ export const ANIME4K_MODES = [
 ] as const;
 export const ANIME4K_SCALES = [1.5, 2, 3, 4];
 
-function read(key: string, fallback: string) {
-  try {
-    return localStorage.getItem(key) ?? fallback;
-  } catch {
-    return fallback;
-  }
+function read(key: SettingKey, fallback: string) {
+  return readSetting(key) ?? fallback;
 }
 
 /** 检测 WebGPU，并放宽设备缓冲上限（大分辨率超分需要） */
@@ -102,30 +99,18 @@ export class Anime4KController {
     if (enabled) await this.start();
     else this.stop();
     this.update({ enabled: enabled && !!this.running });
-    try {
-      localStorage.setItem('enable_anime4k', String(enabled));
-    } catch {
-      // 忽略
-    }
+    writeSetting('enable_anime4k', String(enabled));
   }
 
   async setMode(mode: string) {
     this.update({ mode });
-    try {
-      localStorage.setItem('anime4k_mode', mode);
-    } catch {
-      // 忽略
-    }
+    writeSetting('anime4k_mode', mode);
     if (this.state.enabled) await this.restart();
   }
 
   async setScale(scale: number) {
     this.update({ scale });
-    try {
-      localStorage.setItem('anime4k_scale', String(scale));
-    } catch {
-      // 忽略
-    }
+    writeSetting('anime4k_scale', String(scale));
     if (this.state.enabled) await this.restart();
   }
 

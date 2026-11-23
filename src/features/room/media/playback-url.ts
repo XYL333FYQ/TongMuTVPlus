@@ -6,6 +6,7 @@
  */
 
 import { getIndexedDBVideoPlaybackUrl } from '@/lib/indexeddb-video-cache';
+import { readJson, writeSetting } from '@/lib/settings';
 import type { SearchResult } from '@/lib/types';
 
 import type { MediaType } from '@/features/player';
@@ -41,11 +42,7 @@ export const isLazyPlayUrl = (url: string) =>
 const DIRECT_PROXY_KEY = 'directplay_proxy_domains';
 
 function proxyDomains(): string[] {
-  try {
-    return JSON.parse(localStorage.getItem(DIRECT_PROXY_KEY) || '[]');
-  } catch {
-    return [];
-  }
+  return readJson<string[]>(DIRECT_PROXY_KEY, []);
 }
 
 export function directplayProxied(url: string) {
@@ -63,7 +60,7 @@ export function addDirectplayProxyDomain(url: string) {
     const domains = proxyDomains();
     if (!domains.includes(domain)) {
       domains.push(domain);
-      localStorage.setItem(DIRECT_PROXY_KEY, JSON.stringify(domains));
+      writeSetting(DIRECT_PROXY_KEY, JSON.stringify(domains));
     }
   } catch {
     // 忽略

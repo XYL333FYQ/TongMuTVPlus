@@ -2,6 +2,7 @@
  * 小雅源的纠错信息（用户在“纠错”里选的 TMDB / 豆瓣条目），存在本机，播放页读出来覆盖片源信息。
  */
 
+import { type SettingKey, readSetting } from '@/lib/settings';
 import { getTMDBImageUrl } from '@/lib/tmdb-image-base';
 import type { SearchResult } from '@/lib/types';
 import { processImageUrl } from '@/lib/utils';
@@ -23,8 +24,8 @@ export const getXiaoyaCorrection = (
   id: string
 ): XiaoyaCorrection | null => {
   try {
-    const storageKey = `xiaoya_correction_${source}_${id}`;
-    const correctionJson = localStorage.getItem(storageKey);
+    const storageKey: SettingKey = `xiaoya_correction_${source}_${id}`;
+    const correctionJson = readSetting(storageKey);
     if (correctionJson) {
       return JSON.parse(correctionJson);
     }

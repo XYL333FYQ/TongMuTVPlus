@@ -8,6 +8,7 @@
 
 import { enableArtKeyboardAccess } from '@/lib/art-keyboard';
 import { lockLandscapeInFullscreen } from '@/lib/player-orientation';
+import { readSetting, writeSetting } from '@/lib/settings';
 
 import type {
   Art,
@@ -633,21 +634,13 @@ export class WatchPlayer {
 }
 
 function readVolume() {
-  try {
-    const value = Number(localStorage.getItem('tm_player_volume'));
-    return Number.isFinite(value) && value >= 0 && value <= 1 && value !== 0
-      ? value
-      : 0.7;
-  } catch {
-    return 0.7;
-  }
+  const value = Number(readSetting('tm_player_volume'));
+  return Number.isFinite(value) && value >= 0 && value <= 1 && value !== 0
+    ? value
+    : 0.7;
 }
 
 function writeVolume(volume: number) {
-  try {
-    if (Number.isFinite(volume) && volume > 0)
-      localStorage.setItem('tm_player_volume', String(volume));
-  } catch {
-    // 忽略
-  }
+  if (Number.isFinite(volume) && volume > 0)
+    writeSetting('tm_player_volume', String(volume));
 }

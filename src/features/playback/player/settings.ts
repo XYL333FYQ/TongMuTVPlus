@@ -9,6 +9,7 @@ import {
   QUICK_FORWARD_STORAGE_KEY,
   SEEK_STEP_STORAGE_KEY,
 } from '@/lib/player-seek-settings';
+import { writeSetting } from '@/lib/settings';
 import { formatDuration, formatPaddedClock } from '@/lib/time';
 
 import type { Art, ArtSetting, ArtSettingOption } from '@/features/player';
@@ -69,7 +70,7 @@ export function buildSettings(ctx: SettingsContext): ArtSetting[] {
       onClick() {
         const newVal = !blockAdEnabled;
         try {
-          localStorage.setItem('enable_blockad', String(newVal));
+          writeSetting('enable_blockad', String(newVal));
           if (artPlayerRef.current) {
             resumeTimeRef.current = artPlayerRef.current.currentTime;
           }
@@ -276,10 +277,7 @@ export function buildSettings(ctx: SettingsContext): ArtSetting[] {
 
           setQuickForwardSeconds(normalizedSeconds);
           quickForwardSecondsRef.current = normalizedSeconds;
-          localStorage.setItem(
-            QUICK_FORWARD_STORAGE_KEY,
-            String(normalizedSeconds)
-          );
+          writeSetting(QUICK_FORWARD_STORAGE_KEY, String(normalizedSeconds));
           if (artPlayerRef.current) {
             artPlayerRef.current.notice.show = `快捷快进已设置为${formatDuration(
               normalizedSeconds
@@ -366,10 +364,7 @@ export function buildSettings(ctx: SettingsContext): ArtSetting[] {
 
           setSeekStepSeconds(normalizedSeconds);
           seekStepSecondsRef.current = normalizedSeconds;
-          localStorage.setItem(
-            SEEK_STEP_STORAGE_KEY,
-            String(normalizedSeconds)
-          );
+          writeSetting(SEEK_STEP_STORAGE_KEY, String(normalizedSeconds));
           if (artPlayerRef.current) {
             artPlayerRef.current.notice.show = `快进/倒退时间已设为${formatDuration(
               normalizedSeconds

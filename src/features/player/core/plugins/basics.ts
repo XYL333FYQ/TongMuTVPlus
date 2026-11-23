@@ -4,9 +4,10 @@
  */
 
 import { isHandheld } from '@/lib/device-tier';
+import { readSetting, writeSetting } from '@/lib/settings';
 
-import { playerEnvironment } from '../env';
 import type { Art } from '../art-types';
+import { playerEnvironment } from '../env';
 import type { PlayerPlugin } from '../WatchPlayer';
 
 // ------------------------------------------------------------ 防息屏
@@ -53,12 +54,8 @@ export const wakeLockPlugin: PlayerPlugin = ({ art }) => {
 const RATE_KEY = 'preferredPlaybackRate';
 
 export function savedPlaybackRate() {
-  try {
-    const value = Number(localStorage.getItem(RATE_KEY));
-    return Number.isFinite(value) && value > 0 ? value : 1;
-  } catch {
-    return 1;
-  }
+  const value = Number(readSetting(RATE_KEY));
+  return Number.isFinite(value) && value > 0 ? value : 1;
 }
 
 /**
@@ -98,11 +95,7 @@ export function playbackRatePlugin(
         return keepPitch();
       }
       last = rate;
-      try {
-        localStorage.setItem(RATE_KEY, String(rate));
-      } catch {
-        // 忽略
-      }
+      writeSetting(RATE_KEY, String(rate));
       keepPitch();
     });
     art.on('video:canplay', () => {

@@ -9,6 +9,7 @@ import {
   buildEpisodeProgressContentKey,
   loadLocalEpisodeProgress,
 } from '@/lib/episode-progress';
+import { type SettingKey, readSetting, writeSetting } from '@/lib/settings';
 import {
   appendSpecialSourceParam,
   isSpecialSourceContext,
@@ -340,10 +341,10 @@ export function makeLoadSourceDetail(ctx: LoadSourceDetailContext) {
       }
 
       try {
-        const cacheKey = `search_cache_${query.trim()}${
+        const cacheKey: SettingKey = `search_cache_${query.trim()}${
           isSpecialSourceContext() ? '_special' : ''
         }`;
-        const cached = sessionStorage.getItem(cacheKey);
+        const cached = readSetting(cacheKey);
         if (!cached) return null;
 
         const parsed = JSON.parse(cached) as SearchCachePayload;
@@ -366,7 +367,7 @@ export function makeLoadSourceDetail(ctx: LoadSourceDetailContext) {
       if (typeof window === 'undefined' || !query.trim()) return;
 
       try {
-        const cacheKey = `search_cache_${query.trim()}${
+        const cacheKey: SettingKey = `search_cache_${query.trim()}${
           isSpecialSourceContext() ? '_special' : ''
         }`;
         const payload: SearchCachePayload = {
@@ -375,7 +376,7 @@ export function makeLoadSourceDetail(ctx: LoadSourceDetailContext) {
           query: query.trim(),
           updatedAt: Date.now(),
         };
-        sessionStorage.setItem(cacheKey, JSON.stringify(payload));
+        writeSetting(cacheKey, JSON.stringify(payload));
       } catch (error) {
         console.error('[Play] 写入缓存失败:', error);
       }

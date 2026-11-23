@@ -22,6 +22,7 @@ import {
 import './room.css';
 
 import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
+import { readSetting, writeSetting } from '@/lib/settings';
 import { useAudioFocus } from '@/hooks/useAudioFocus';
 import { usePlaybackSessionSafe } from '@/hooks/usePlaybackSession';
 
@@ -151,19 +152,11 @@ export default function RoomSession({ children }: { children: ReactNode }) {
   // ------------------------------------------------ 聊天弹幕
   const [danmakuChat, setDanmakuChatState] = useState(true);
   useEffect(() => {
-    try {
-      setDanmakuChatState(localStorage.getItem(DANMAKU_KEY) !== 'false');
-    } catch {
-      // 读不到就用默认
-    }
+    setDanmakuChatState(readSetting(DANMAKU_KEY) !== 'false');
   }, []);
   const setDanmakuChat = useCallback((on: boolean) => {
     setDanmakuChatState(on);
-    try {
-      localStorage.setItem(DANMAKU_KEY, String(on));
-    } catch {
-      // 存不下也不影响本次
-    }
+    writeSetting(DANMAKU_KEY, String(on));
   }, []);
   const { shoot, chat } = player;
   const canChat =

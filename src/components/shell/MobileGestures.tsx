@@ -7,6 +7,7 @@ import { useEffect, useRef, useState } from 'react';
 import { isHandheld, onDeviceTierChange } from '@/lib/device-tier';
 import { refreshPage } from '@/lib/page-refresh';
 import { getPlatform } from '@/lib/platform';
+import { readSetting, writeSetting } from '@/lib/settings';
 import { haptic } from '@/lib/shell-bridge';
 
 import { notify } from '@/components/feedback/AppDialogs';
@@ -186,21 +187,13 @@ export default function MobileGestures() {
       (navigator as Navigator & { standalone?: boolean }).standalone === true ||
       window.matchMedia('(display-mode: standalone)').matches;
     if (!isIos || standalone) return;
-    try {
-      if (localStorage.getItem(IOS_HINT_KEY)) return;
-    } catch {
-      return;
-    }
+    if (readSetting(IOS_HINT_KEY)) return;
     const timer = window.setTimeout(() => setIosHint(true), 4000);
     return () => window.clearTimeout(timer);
   }, []);
 
   const dismissHint = () => {
-    try {
-      localStorage.setItem(IOS_HINT_KEY, '1');
-    } catch {
-      // 存储不可用时本次关闭即可
-    }
+    writeSetting(IOS_HINT_KEY, '1');
     setIosHint(false);
   };
 
