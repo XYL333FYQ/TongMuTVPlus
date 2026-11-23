@@ -67,6 +67,8 @@ html:is([data-tm-device='phone'], [data-tm-device='phone-landscape'])
   :is(.tm-modal-layer--sheet, .tm-modal-layer--drawer) {
   padding: 0;
   place-items: end center;
+  /* 行高定死成整层高：面板的 max-height 百分比才有依据，内容比屏幕高时面板里面滚动、不出屏 */
+  grid-template-rows: minmax(0, 1fr);
 }
 html:is([data-tm-device='phone'], [data-tm-device='phone-landscape'])
   :is(.tm-modal-layer--sheet, .tm-modal-layer--drawer)
