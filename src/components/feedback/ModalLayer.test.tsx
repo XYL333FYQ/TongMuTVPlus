@@ -107,6 +107,7 @@ test('the back key and the backdrop close it', () => {
     expect(closeTopLayer()).toBe(true);
   });
   expect(onClose).toHaveBeenCalledTimes(1);
+  fireEvent.pointerDown(screen.getByRole('dialog'));
   fireEvent.click(screen.getByRole('dialog'));
   expect(onClose).toHaveBeenCalledTimes(2);
   fireEvent.click(screen.getByText('内容'));
@@ -184,10 +185,10 @@ test('an alert layer carries its role and description', () => {
   expect(dialog).toHaveAttribute('aria-modal', 'true');
 });
 
-test('a press-to-close layer ignores a click whose press began elsewhere', () => {
+test('the backdrop ignores a click whose press began elsewhere', () => {
   const onClose = jest.fn();
   render(
-    <ModalLayer label='菜单' onClose={onClose} closeOnBackdrop='press'>
+    <ModalLayer label='菜单' onClose={onClose}>
       <p>内容</p>
     </ModalLayer>
   );

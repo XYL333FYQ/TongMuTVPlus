@@ -21,7 +21,6 @@
     "src/components/SearchPageClient.tsx ×1",
     "src/components/SearchResultFilter.tsx ×1",
     "src/components/UserMenu.tsx ×1",
-    "src/components/VersionPanel.tsx ×1",
     "src/components/tv/TVRemotePanel.tsx ×1",
     "src/features/library/parts/MultiLevelSelector.tsx ×1",
     "src/features/room/activities/RoomLiveMessages.tsx ×1"
@@ -625,8 +624,5 @@
     "src/lib/anime-subscription.ts ×1",
     "src/lib/db.ts ×2"
   ],
-  "parts:scrollLock": [
-    "src/components/LyricsPiPWindow.tsx ×1",
-    "src/components/VersionPanel.tsx ×3"
-  ]
+  "parts:scrollLock": ["src/components/LyricsPiPWindow.tsx ×1"]
 }

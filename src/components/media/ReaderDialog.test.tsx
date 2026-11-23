@@ -28,6 +28,7 @@ test('opens a named native modal and routes Escape and backdrop dismissal to the
   expect(close).not.toHaveBeenCalled();
   fireEvent(dialog, new Event('cancel', { cancelable: true }));
   expect(close).toHaveBeenCalledTimes(1);
+  fireEvent.pointerDown(dialog);
   fireEvent.click(dialog);
   expect(close).toHaveBeenCalledTimes(2);
 });

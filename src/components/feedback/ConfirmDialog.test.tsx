@@ -53,6 +53,7 @@ test('Escape cancel and background clicks never confirm, content clicks leave di
   expect(onCancel).not.toHaveBeenCalled();
   fireEvent(dialog, new Event('cancel', { cancelable: true }));
   expect(onCancel).toHaveBeenCalledTimes(1);
+  fireEvent.pointerDown(dialog);
   fireEvent.click(dialog);
   expect(onCancel).toHaveBeenCalledTimes(2);
   expect(onConfirm).not.toHaveBeenCalled();

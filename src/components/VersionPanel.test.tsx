@@ -150,11 +150,15 @@ describe('project version information', () => {
       name: 'TongMuTV Plus 项目仓库（在新标签页打开）',
     });
     expect(document.activeElement).toBe(close);
-    fireEvent.keyDown(document, { key: 'Tab', shiftKey: true });
+    // Tab 和 Esc 归弹窗层：从焦点所在的元素发出，Esc 由浏览器变成弹窗的 cancel
+    fireEvent.keyDown(close, { key: 'Tab', shiftKey: true });
     expect(document.activeElement).toBe(repository);
-    fireEvent.keyDown(document, { key: 'Tab' });
+    fireEvent.keyDown(repository, { key: 'Tab' });
     expect(document.activeElement).toBe(close);
-    fireEvent.keyDown(document, { key: 'Escape' });
+    fireEvent(
+      screen.getByRole('dialog', { name: 'TongMuTV Plus · 版本信息' }),
+      new Event('cancel', { cancelable: true })
+    );
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 });

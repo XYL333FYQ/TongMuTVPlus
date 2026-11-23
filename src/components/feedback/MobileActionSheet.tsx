@@ -182,7 +182,6 @@ const MobileActionSheet: React.FC<MobileActionSheetProps> = ({
       variant='sheet'
       label={title}
       onClose={requestClose}
-      closeOnBackdrop='press'
       className='tm-action-sheet-backdrop'
     >
       <div

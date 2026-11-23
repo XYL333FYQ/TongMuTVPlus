@@ -1,95 +1,38 @@
 'use client';
 
 import { Github, X } from 'lucide-react';
-import { useEffect, useId, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
+import { useRef } from 'react';
 
 import { BRAND_NAME, PROJECT_REPOSITORY_URL } from '@/lib/brand';
 import { useReleaseInfo } from '@/hooks/useReleaseInfo';
 
 import ExternalLink from '@/components/ExternalLink';
+import ModalLayer from '@/components/feedback/ModalLayer';
 
 interface VersionPanelProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
+/** 版本信息：在公共弹窗层里（焦点、Esc、返回键、滚动锁都归 ModalLayer） */
 export const VersionPanel: React.FC<VersionPanelProps> = ({
   isOpen,
   onClose,
 }) => {
-  const [mounted, setMounted] = useState(false);
   const { version, entries: changelog } = useReleaseInfo(isOpen);
-  const titleId = useId();
   const closeButton = useRef<HTMLButtonElement>(null);
-  const repositoryLink = useRef<HTMLAnchorElement>(null);
-  const panel = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  if (!isOpen) return null;
 
-  useEffect(() => {
-    if (!isOpen || !mounted) return;
-
-    const bodyOverflow = document.body.style.overflow;
-    const htmlOverflow = document.documentElement.style.overflow;
-    const previousFocus = document.activeElement as HTMLElement | null;
-    document.body.style.overflow = 'hidden';
-    document.documentElement.style.overflow = 'hidden';
-    closeButton.current?.focus();
-
-    // Include the selectable fallback field if clipboard access is unavailable.
-    const handleKeyDown = (event: KeyboardEvent) => {
-      // A native modal above this panel owns Escape and sequential focus.
-      if (document.activeElement?.closest('dialog[open]')) return;
-      if (event.key === 'Escape') {
-        event.preventDefault();
-        onClose();
-      } else if (event.key === 'Tab') {
-        event.preventDefault();
-        const items = Array.from(
-          panel.current?.querySelectorAll<HTMLElement>(
-            'button:not(:disabled), a[href], input:not(:disabled)'
-          ) || []
-        );
-        const index = items.indexOf(document.activeElement as HTMLElement);
-        const next =
-          (index + (event.shiftKey ? -1 : 1) + items.length) % items.length;
-        items[next]?.focus();
-      }
-    };
-    document.addEventListener('keydown', handleKeyDown);
-    return () => {
-      document.body.style.overflow = bodyOverflow;
-      document.documentElement.style.overflow = htmlOverflow;
-      document.removeEventListener('keydown', handleKeyDown);
-      if (previousFocus?.isConnected) previousFocus.focus();
-    };
-  }, [isOpen, mounted, onClose]);
-
-  if (!mounted || !isOpen) return null;
-
-  return createPortal(
-    <>
-      <div
-        className='fixed inset-0 bg-ink/50 backdrop-blur-sm z-[1000]'
-        onClick={onClose}
-        onTouchMove={(event) => event.preventDefault()}
-        onWheel={(event) => event.preventDefault()}
-        style={{ touchAction: 'none' }}
-        aria-hidden='true'
-      />
-      <div
-        ref={panel}
-        role='dialog'
-        aria-modal='true'
-        aria-labelledby={titleId}
-        className='fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[calc(100%_-_32px)] max-w-xl max-h-[90vh] bg-surface rounded-xl shadow-xl z-[1001] overflow-hidden'
-        onTouchMove={(event) => event.stopPropagation()}
-      >
+  return (
+    <ModalLayer
+      label={`${BRAND_NAME} · 版本信息`}
+      onClose={onClose}
+      initialFocus={closeButton}
+    >
+      <div className='w-full max-w-xl max-h-[90vh] bg-surface rounded-xl shadow-xl overflow-hidden'>
         <div className='flex items-center justify-between gap-3 p-4 sm:p-6 border-b border-line'>
-          <h3 id={titleId} className='text-lg sm:text-xl font-bold text-fg'>
+          <h3 className='text-lg sm:text-xl font-bold text-fg'>
             {BRAND_NAME} · 版本信息
           </h3>
           <button
@@ -142,7 +85,6 @@ export const VersionPanel: React.FC<VersionPanelProps> = ({
           </section>
           <div className='space-y-3'>
             <ExternalLink
-              ref={repositoryLink}
               href={PROJECT_REPOSITORY_URL}
               target='_blank'
               rel='noopener noreferrer'
@@ -155,7 +97,6 @@ export const VersionPanel: React.FC<VersionPanelProps> = ({
           </div>
         </div>
       </div>
-    </>,
-    document.body
+    </ModalLayer>
   );
 };

@@ -32,8 +32,8 @@ const FOCUSABLE = [
  * 弹窗挂在 body 下：放在卡片、房间页里打开时，不继承它们的文字样式、不触发它们的悬停效果。
  *
  * onClose 返回 'blocked' 表示现在不能关（例如确认中），返回键也会被吃掉、不离开页面。
- * closeOnBackdrop='press'：只有在遮罩上按下、又在遮罩上松开才关。长按打开的菜单要用它，
- * 打开菜单的那次长按松手会落在遮罩上，不能把刚打开的菜单关掉。
+ * 点遮罩关闭：只有在遮罩上按下、又在遮罩上松开才关。在面板里按下拖到外面松手（选文字、拖滑块）
+ * 不会误关；长按打开的菜单，那次长按松手落在遮罩上，也不会把刚打开的菜单关掉。
  */
 const subscribeNothing = () => () => undefined;
 const onClientSnapshot = () => true;
@@ -47,7 +47,6 @@ export default function ModalLayer({
   variant = 'dialog',
   role,
   describedBy,
-  closeOnBackdrop = 'click',
   initialFocus,
 }: {
   label: string;
@@ -59,7 +58,6 @@ export default function ModalLayer({
   role?: 'dialog' | 'alertdialog';
   /** 说明文字的 id，读屏软件打开时读出 */
   describedBy?: string;
-  closeOnBackdrop?: 'click' | 'press';
   /** 打开后先聚焦它（例如确认框的“取消”），不给就交给浏览器 */
   initialFocus?: RefObject<HTMLElement>;
 }) {
@@ -136,7 +134,7 @@ export default function ModalLayer({
       }}
       onClick={(event) => {
         if (event.target !== event.currentTarget) return;
-        if (closeOnBackdrop === 'press' && !pressedBackdrop.current) return;
+        if (!pressedBackdrop.current) return;
         pressedBackdrop.current = false;
         onClose();
       }}
