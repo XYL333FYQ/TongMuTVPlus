@@ -2,12 +2,13 @@
 
 import { X } from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
 
 import '@/styles/panels.css';
 
 import { useReducedMotionSetting } from '@/lib/motion';
+import { usePullDownClose } from '@/hooks/usePullDownClose';
 
+import ModalLayer from '@/components/feedback/ModalLayer';
 import ProxyImage from '@/components/ProxyImage';
 
 interface ImageViewerProps {
@@ -17,6 +18,7 @@ interface ImageViewerProps {
   alt?: string;
 }
 
+/** 看图：弹窗层的 viewer 款式（整屏画面黑底、关闭在右上、触屏可下拉关闭） */
 const ImageViewer: React.FC<ImageViewerProps> = ({
   isOpen,
   onClose,
@@ -24,7 +26,6 @@ const ImageViewer: React.FC<ImageViewerProps> = ({
   alt = '图片',
 }) => {
   const reduced = useReducedMotionSetting();
-  const dialogRef = useRef<HTMLDialogElement>(null);
   const animationFrame = useRef<number | null>(null);
   const externalTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -35,11 +36,8 @@ const ImageViewer: React.FC<ImageViewerProps> = ({
   onCloseRef.current = onClose;
   const [isVisible, setIsVisible] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
-  const [mounted, setMounted] = useState(false);
 
-  // 确保组件在客户端挂载后才渲染 Portal
   useEffect(() => {
-    setMounted(true);
     return () => {
       if (animationFrame.current !== null)
         cancelAnimationFrame(animationFrame.current);
@@ -95,135 +93,53 @@ const ImageViewer: React.FC<ImageViewerProps> = ({
     };
   }, [isOpen]);
 
-  // 阻止背景滚动
-  useEffect(() => {
-    if (isVisible) {
-      const scrollY = window.scrollY;
-      const scrollX = window.scrollX;
-      const body = document.body;
-      const html = document.documentElement;
+  // 手指按住图片往下拉关闭；不够远就弹回
+  const pull = usePullDownClose(requestClose, { enabled: isOpen && !reduced });
 
-      const scrollBarWidth = window.innerWidth - html.clientWidth;
+  if (!isVisible) return null;
 
-      const originalBodyStyle = {
-        position: body.style.position,
-        top: body.style.top,
-        left: body.style.left,
-        right: body.style.right,
-        width: body.style.width,
-        paddingRight: body.style.paddingRight,
-        overflow: body.style.overflow,
-      };
-
-      body.style.position = 'fixed';
-      body.style.top = `-${scrollY}px`;
-      body.style.left = `-${scrollX}px`;
-      body.style.right = '0';
-      body.style.width = '100%';
-      body.style.overflow = 'hidden';
-      body.style.paddingRight = `${scrollBarWidth}px`;
-
-      return () => {
-        body.style.position = originalBodyStyle.position;
-        body.style.top = originalBodyStyle.top;
-        body.style.left = originalBodyStyle.left;
-        body.style.right = originalBodyStyle.right;
-        body.style.width = originalBodyStyle.width;
-        body.style.paddingRight = originalBodyStyle.paddingRight;
-        body.style.overflow = originalBodyStyle.overflow;
-
-        requestAnimationFrame(() => {
-          window.scrollTo(scrollX, scrollY);
-        });
-      };
-    }
-  }, [isVisible]);
-
-  // The top-layer dialog owns focus and Escape; older document listeners stay below it.
-  useEffect(() => {
-    const dialog = dialogRef.current;
-    if (!mounted || !isVisible || !dialog) return;
-    const trigger = document.activeElement;
-    if (!dialog.open) dialog.showModal();
-    return () => {
-      if (dialog.open) dialog.close();
-      if (trigger instanceof HTMLElement && trigger.isConnected)
-        trigger.focus({ preventScroll: true });
-    };
-  }, [isVisible, mounted]);
-
-  if (!isVisible || !mounted) return null;
-
-  const content = (
-    <dialog
-      ref={dialogRef}
-      aria-label={alt}
-      onCancel={(event) => {
-        event.preventDefault();
-        requestClose();
-      }}
-      onKeyDown={(event) => {
-        if (event.key === 'Escape') event.stopPropagation();
-        if (event.key === 'Tab') {
-          event.preventDefault();
-          event.currentTarget
-            .querySelector<HTMLButtonElement>('button')
-            ?.focus();
-        }
-      }}
-      className='tm-image-viewer fixed inset-0 z-[var(--tm-z-toast)] flex items-center justify-center p-0 sm:p-4'
+  return (
+    <ModalLayer
+      variant='viewer'
+      label={alt}
+      onClose={requestClose}
+      className='tm-image-viewer'
     >
-      {/* 背景遮罩 */}
-      <div
-        className={`tm-image-viewer-backdrop absolute inset-0 bg-ink/80 transition-opacity duration-200 ease-out ${
-          isAnimating ? 'opacity-100' : 'opacity-0'
-        } `}
-        onClick={requestClose}
-        style={{
-          backdropFilter: 'blur(4px)',
-        }}
-      />
-
       {/* 关闭按钮 */}
       <button
+        type='button'
         onClick={requestClose}
-        className='tm-image-viewer-close absolute top-4 right-4 z-[3] p-2 rounded-full bg-ink/50 hover:bg-ink/70 transition-[opacity,transform] duration-150 min-h-[44px] tm-press min-w-[44px]'
+        className='tm-image-viewer-close tm-press'
         aria-label='关闭'
       >
-        <X size={24} className='text-[color:var(--tm-room-player-text)]' />
+        <X size={24} />
       </button>
 
-      {/* 图片容器 */}
+      {/* 图片容器：点图片不关，点图片以外的黑底关 */}
       <div
-        className='tm-image-viewer-picture relative max-w-[100vw] max-h-[100vh] sm:max-w-[90vw] sm:max-h-[90vh] transition-[transform,opacity] duration-200 ease-out'
+        className='tm-image-viewer-picture'
+        data-dragging={pull.dragging || undefined}
         style={{
-          backfaceVisibility: 'hidden',
-          transform: reduced
-            ? 'none'
-            : isAnimating
-            ? 'translateY(0px)'
-            : 'translateY(8px)',
+          // 进场的缩放由弹窗层负责；这里只管下拉跟手
+          transform:
+            reduced || pull.offset === 0
+              ? 'none'
+              : `translateY(${pull.offset}px)`,
           opacity: isAnimating ? 1 : 0,
         }}
-        onClick={(e) => e.stopPropagation()}
+        {...pull.handlers}
       >
-        <div className='relative w-full h-full'>
+        <div className='tm-image-viewer-frame'>
           <ProxyImage
             originalSrc={imageUrl}
             alt={alt}
-            className='object-contain max-w-[100vw] max-h-[100vh] sm:max-w-[90vw] sm:max-h-[90vh] w-auto h-auto'
-            style={{
-              maxWidth: '100vw',
-              maxHeight: '100vh',
-            }}
+            className='tm-image-viewer-image'
             loading='eager'
           />
         </div>
       </div>
-    </dialog>
+    </ModalLayer>
   );
-
-  return createPortal(content, document.body);
 };
 
 export default ImageViewer;

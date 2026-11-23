@@ -1,5 +1,9 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
+import fs from 'node:fs';
+import path from 'node:path';
 import { useState } from 'react';
+
+import { consumeBackLayer } from '@/lib/back-layers';
 
 import ImageViewer from '@/components/feedback/ImageViewer';
 
@@ -161,4 +165,84 @@ test('Escape belongs to the native preview instead of an underlying document lis
   });
   expect(closed).toHaveBeenCalledTimes(1);
   document.removeEventListener('keydown', underlying);
+});
+
+let clock = 0;
+// jsdom 16 没有 PointerEvent：用 MouseEvent 带上 pointerType，每个事件隔 100ms
+function pointer(
+  target: Element,
+  type: 'pointerdown' | 'pointermove' | 'pointerup',
+  clientY: number,
+  pointerType: 'touch' | 'mouse'
+) {
+  clock += 100;
+  const event = new MouseEvent(type, { bubbles: true, clientY });
+  Object.defineProperty(event, 'pointerType', { value: pointerType });
+  Object.defineProperty(event, 'pointerId', { value: 1 });
+  Object.defineProperty(event, 'timeStamp', { value: clock });
+  act(() => {
+    target.dispatchEvent(event);
+  });
+}
+
+test('the preview opens in the viewer variant of the shared modal layer', () => {
+  render(<ImageViewer {...props} onClose={jest.fn()} />);
+  expect(screen.getByRole('dialog', { name: '查看海报' })).toHaveClass(
+    'tm-modal-layer',
+    'tm-modal-layer--viewer'
+  );
+});
+
+test('the back key closes the preview', () => {
+  const closed = jest.fn();
+  render(<ImageViewer {...props} onClose={closed} />);
+  act(() => {
+    jest.advanceTimersByTime(48);
+  });
+  act(() => {
+    expect(consumeBackLayer()).toBe('handled');
+  });
+  act(() => {
+    jest.advanceTimersByTime(320);
+  });
+  expect(closed).toHaveBeenCalledTimes(1);
+});
+
+test('the close button is a 44 by 44 target', () => {
+  render(<ImageViewer {...props} onClose={jest.fn()} />);
+  expect(screen.getByRole('button', { name: '关闭' })).toHaveClass(
+    'tm-image-viewer-close'
+  );
+  const css = fs.readFileSync(
+    path.join(process.cwd(), 'src/styles/panels.css'),
+    'utf8'
+  );
+  const rule = css.match(/\.tm-image-viewer-close \{([^}]*)\}/)?.[1] ?? '';
+  expect(rule).toMatch(/width: 44px;/);
+  expect(rule).toMatch(/height: 44px;/);
+});
+
+test('a touch pull-down closes the preview but a mouse drag does not', () => {
+  const closed = jest.fn();
+  render(<ImageViewer {...props} onClose={closed} />);
+  act(() => {
+    jest.advanceTimersByTime(48);
+  });
+  const picture = document.querySelector('.tm-image-viewer-picture');
+  if (!picture) throw new Error('Missing picture');
+  pointer(picture, 'pointerdown', 100, 'mouse');
+  pointer(picture, 'pointermove', 400, 'mouse');
+  pointer(picture, 'pointerup', 400, 'mouse');
+  act(() => {
+    jest.advanceTimersByTime(320);
+  });
+  expect(closed).not.toHaveBeenCalled();
+  pointer(picture, 'pointerdown', 100, 'touch');
+  pointer(picture, 'pointermove', 200, 'touch');
+  pointer(picture, 'pointermove', 300, 'touch');
+  pointer(picture, 'pointerup', 300, 'touch');
+  act(() => {
+    jest.advanceTimersByTime(320);
+  });
+  expect(closed).toHaveBeenCalledTimes(1);
 });

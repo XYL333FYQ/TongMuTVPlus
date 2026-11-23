@@ -91,47 +91,56 @@ html[data-tm-reduced-motion='true'] .tm-http-warning-backdrop {
   }
 }
 
-html .tm-image-viewer {
-  width: 100%;
-  height: 100dvh;
-  max-width: none;
-  max-height: none;
-  margin: 0;
-  border: 0;
-  background: transparent;
-  color: var(--tm-room-player-text);
+/* 看图：弹窗层的 viewer 款式（铺满、画面黑底、进场由 modal-layer.css 负责），
+   这里只管关闭按钮、图片尺寸、下拉跟手和退场淡出 */
+html .tm-image-viewer-close {
+  position: absolute;
+  top: max(8px, calc(var(--tm-safe-top) + 8px), var(--tm-window-controls-h));
+  right: 8px;
+  z-index: 3;
+  display: inline-grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--tm-radius-full);
+  color: var(--tm-on-art);
+  background: var(--tm-art-glass);
 }
-html .tm-image-viewer::backdrop {
-  background: transparent;
+html .tm-image-viewer-close:focus-visible {
+  outline: 2px solid var(--tm-on-art);
+  outline-offset: 2px;
 }
 html .tm-image-viewer-picture {
+  position: relative;
+  touch-action: none;
   transition: opacity var(--tm-d-panel) var(--tm-ease-out),
     transform var(--tm-d-panel) var(--tm-ease-out);
 }
-html .tm-image-viewer-backdrop {
+html .tm-image-viewer-picture[data-dragging] {
   transition: opacity var(--tm-d-panel) var(--tm-ease-out);
 }
-html .tm-image-viewer-close:focus-visible {
-  outline: 2px solid var(--tm-room-player-text);
-  outline-offset: 2px;
+html .tm-image-viewer-image {
+  display: block;
+  width: auto;
+  height: auto;
+  max-width: 100vw;
+  max-height: 100dvh;
+  object-fit: contain;
 }
-html[data-tm-no-blur='true'] .tm-image-viewer-backdrop {
-  backdrop-filter: none !important;
+html:is([data-tm-device='tablet'], [data-tm-device='wide'])
+  .tm-image-viewer-image {
+  max-width: 90vw;
+  max-height: 90dvh;
 }
+/* 减弱动效：不跟手、不弹回，只淡出 120ms */
 html[data-tm-reduced-motion='true'] .tm-image-viewer-picture {
   transform: none !important;
   transition: opacity 120ms var(--tm-ease-out);
-}
-html[data-tm-reduced-motion='true'] .tm-image-viewer-backdrop {
-  transition-duration: 120ms;
 }
 @media (prefers-reduced-motion: reduce) {
   html .tm-image-viewer-picture {
     transform: none !important;
     transition: opacity 120ms var(--tm-ease-out);
-  }
-  html .tm-image-viewer-backdrop {
-    transition-duration: 120ms;
   }
 }
 
