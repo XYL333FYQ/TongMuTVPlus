@@ -1,6 +1,6 @@
 # 界面改造进度
 
-更早的记录在 git 历史里（`git log -p -- docs/design/PROGRESS.md`），第二阶段计划见 `docs/plan/2026-11-23-phase2-shared-parts-plan.md`（已执行完）；下一步是第三阶段（弹窗试点），计划见 `docs/plan/2026-11-23-phase3-popup-pilot-plan.md`（等用户批准）。
+更早的记录在 git 历史里（`git log -p -- docs/design/PROGRESS.md`），第二阶段计划见 `docs/plan/2026-11-23-phase2-shared-parts-plan.md`（已执行完）；下一步是第三阶段（弹窗试点），计划见 `docs/plan/2026-11-23-phase3-popup-pilot-plan.md`（2026-11-23 用户批准；做完后按计划末尾清单逐项接着做，不再单独写计划）。
 
 ## 当前状态
 
