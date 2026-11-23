@@ -38,3 +38,22 @@ test('clearing all records requires confirmation and cancel never deletes', asyn
   fireEvent.click(screen.getByRole('button', { name: '确定清空' }));
   await waitFor(() => expect(clearAllPlayRecords).toHaveBeenCalledTimes(1));
 });
+
+test('the panel opens in the shared modal layer and its confirm stacks on top', async () => {
+  const onClose = jest.fn();
+  render(<PlayRecordsPanel isOpen onClose={onClose} />);
+  const layer = screen.getByRole('dialog', { name: '播放记录' });
+  expect(layer).toHaveClass('tm-modal-layer');
+  fireEvent.click(await screen.findByRole('button', { name: '清空全部' }));
+  expect(screen.getByRole('alertdialog', { name: '清空播放记录' })).toHaveClass(
+    'tm-modal-layer--confirm'
+  );
+  fireEvent(
+    screen.getByRole('alertdialog'),
+    new Event('cancel', { cancelable: true })
+  );
+  expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
+  expect(onClose).not.toHaveBeenCalled();
+  fireEvent(layer, new Event('cancel', { cancelable: true }));
+  expect(onClose).toHaveBeenCalledTimes(1);
+});

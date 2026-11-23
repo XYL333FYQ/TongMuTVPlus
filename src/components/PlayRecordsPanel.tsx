@@ -1,8 +1,7 @@
 'use client';
 
-import { AlertTriangle, Check, History, Trash2, X } from 'lucide-react';
+import { Check, History, Trash2, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { createPortal } from 'react-dom';
 
 import type { PlayRecord } from '@/lib/db.client';
 import {
@@ -11,8 +10,9 @@ import {
   getAllPlayRecords,
   subscribeToDataUpdates,
 } from '@/lib/db.client';
-import { useEscapeKey } from '@/hooks/useEscapeKey';
 
+import { ConfirmDialog } from '@/components/feedback/ConfirmDialog';
+import ModalLayer from '@/components/feedback/ModalLayer';
 import VideoCard from '@/components/VideoCard';
 
 type PlayRecordItem = PlayRecord & {
@@ -47,16 +47,7 @@ export default function PlayRecordsPanel({
     useState(false);
   const [deletingSelected, setDeletingSelected] = useState(false);
 
-  // Esc：先关最上层确认框，再关面板
-  useEscapeKey(
-    () => setShowDeleteSelectedDialog(false),
-    showDeleteSelectedDialog
-  );
-  useEscapeKey(
-    () => setShowConfirmDialog(false),
-    showConfirmDialog && !showDeleteSelectedDialog
-  );
-  useEscapeKey(onClose, !showConfirmDialog && !showDeleteSelectedDialog);
+  // Esc、返回键先关最上面的确认框，再关面板：由弹窗层按打开顺序处理
 
   const loadPlayRecords = async () => {
     setLoading(true);
@@ -177,253 +168,172 @@ export default function PlayRecordsPanel({
   const allSelected =
     playRecords.length > 0 && selectedCount === playRecords.length;
 
+  if (!isOpen) return null;
+
   return (
     <>
-      <div
-        className='fixed inset-0 bg-ink/50 backdrop-blur-sm z-[1000]'
-        onClick={onClose}
-      />
-
-      <div
-        role='dialog'
-        aria-modal='true'
-        aria-label='播放记录'
-        className='fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-4xl max-h-[85dvh] bg-surface rounded-xl shadow-xl z-[1001] flex flex-col overflow-hidden'
-      >
-        <div className='flex items-center justify-between px-6 py-4 border-b border-line'>
-          <div className='flex items-center gap-2'>
-            <History className='w-5 h-5 text-fg' />
-            <h3 className='text-lg font-bold text-fg'>播放记录</h3>
-            {playRecords.length > 0 && (
-              <span className='px-2 py-0.5 text-[13px] font-medium bg-raised text-fg rounded-full'>
-                {playRecords.length} 项
-              </span>
-            )}
-          </div>
-          <div className='flex items-center gap-2'>
-            {playRecords.length > 0 &&
-              (editMode ? (
-                <>
-                  <button
-                    onClick={
-                      allSelected ? () => setSelectedKeys(new Set()) : selectAll
-                    }
-                    className='text-[13px] text-muted hover:text-fg transition-colors min-h-[44px] tm-press'
-                  >
-                    {allSelected ? '取消全选' : '全选'}
-                  </button>
-                  <button
-                    onClick={() => setShowDeleteSelectedDialog(true)}
-                    disabled={selectedCount === 0 || deletingSelected}
-                    className='inline-flex items-center gap-1 text-[13px] text-fg hover:text-fg disabled:cursor-not-allowed disabled:opacity-40 transition-colors min-h-[44px] tm-press'
-                  >
-                    <Trash2 className='w-3.5 h-3.5' />
-                    删除{selectedCount > 0 ? `(${selectedCount})` : ''}
-                  </button>
-                  <button
-                    onClick={toggleEditMode}
-                    className='text-[13px] text-muted hover:text-fg transition-colors min-h-[44px] tm-press'
-                  >
-                    取消
-                  </button>
-                </>
-              ) : (
-                <>
-                  <button
-                    onClick={toggleEditMode}
-                    className='text-[13px] text-fg hover:text-fg transition-colors min-h-[44px] tm-press'
-                  >
-                    编辑
-                  </button>
-                  <button
-                    onClick={() => setShowConfirmDialog(true)}
-                    className='min-h-[44px] text-sm text-muted transition-colors hover:text-fg focus-visible:outline focus-visible:outline-2 focus-visible:outline-fg tm-press'
-                  >
-                    清空全部
-                  </button>
-                </>
-              ))}
-            <button
-              onClick={onClose}
-              className='w-8 h-8 p-1 rounded-full flex items-center justify-center text-muted hover:bg-line transition-colors min-h-[44px] tm-press'
-              aria-label='关闭播放记录'
-            >
-              <X className='w-full h-full' />
-            </button>
-          </div>
-        </div>
-
-        <div className='flex-1 overflow-y-auto p-6'>
-          {loading ? (
-            <div className='flex items-center justify-center py-12'>
-              <div className='w-8 h-8 border-4 border-line border-t-transparent rounded-full animate-spin'></div>
+      <ModalLayer label='播放记录' onClose={onClose}>
+        <div className='w-full max-w-4xl max-h-[85dvh] bg-surface rounded-xl shadow-xl flex flex-col overflow-hidden'>
+          <div className='flex items-center justify-between px-6 py-4 border-b border-line'>
+            <div className='flex items-center gap-2'>
+              <History className='w-5 h-5 text-fg' />
+              <h3 className='text-lg font-bold text-fg'>播放记录</h3>
+              {playRecords.length > 0 && (
+                <span className='px-2 py-0.5 text-[13px] font-medium bg-raised text-fg rounded-full'>
+                  {playRecords.length} 项
+                </span>
+              )}
             </div>
-          ) : playRecords.length === 0 ? (
-            <div className='flex flex-col items-center justify-center py-12 text-muted'>
-              <History className='w-12 h-12 mb-3 opacity-30' />
-              <p className='text-sm'>暂无播放记录</p>
-            </div>
-          ) : (
-            <div className='grid grid-cols-3 gap-x-2 gap-y-14 sm:gap-y-20 px-0 sm:px-2 sm:grid-cols-[repeat(auto-fill,_minmax(11rem,_1fr))] sm:gap-x-8'>
-              {playRecords.map((record) => {
-                const { source, id } = parseKey(record.key);
-                const checked = selectedKeys.has(record.key);
-
-                return (
-                  <div key={record.key} className='relative w-full'>
-                    <VideoCard
-                      id={id}
-                      title={record.title}
-                      poster={record.cover}
-                      year={record.year}
-                      source={source}
-                      source_name={record.source_name}
-                      progress={getProgress(record)}
-                      episodes={record.total_episodes}
-                      currentEpisode={record.index}
-                      query={record.search_title}
-                      from='playrecord'
-                      onDelete={() =>
-                        setPlayRecords((prev) =>
-                          prev.filter((item) => item.key !== record.key)
-                        )
+            <div className='flex items-center gap-2'>
+              {playRecords.length > 0 &&
+                (editMode ? (
+                  <>
+                    <button
+                      onClick={
+                        allSelected
+                          ? () => setSelectedKeys(new Set())
+                          : selectAll
                       }
-                      type={record.total_episodes > 1 ? 'tv' : ''}
-                      origin={record.origin}
-                      playTime={record.play_time}
-                      totalTime={record.total_time}
-                    />
-                    {editMode && (
-                      <button
-                        type='button'
-                        aria-label={
-                          checked ? '取消选择播放记录' : '选择播放记录'
+                      className='text-[13px] text-muted hover:text-fg transition-colors min-h-[44px] tm-press'
+                    >
+                      {allSelected ? '取消全选' : '全选'}
+                    </button>
+                    <button
+                      onClick={() => setShowDeleteSelectedDialog(true)}
+                      disabled={selectedCount === 0 || deletingSelected}
+                      className='inline-flex items-center gap-1 text-[13px] text-fg hover:text-fg disabled:cursor-not-allowed disabled:opacity-40 transition-colors min-h-[44px] tm-press'
+                    >
+                      <Trash2 className='w-3.5 h-3.5' />
+                      删除{selectedCount > 0 ? `(${selectedCount})` : ''}
+                    </button>
+                    <button
+                      onClick={toggleEditMode}
+                      className='text-[13px] text-muted hover:text-fg transition-colors min-h-[44px] tm-press'
+                    >
+                      取消
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      onClick={toggleEditMode}
+                      className='text-[13px] text-fg hover:text-fg transition-colors min-h-[44px] tm-press'
+                    >
+                      编辑
+                    </button>
+                    <button
+                      onClick={() => setShowConfirmDialog(true)}
+                      className='min-h-[44px] text-sm text-muted transition-colors hover:text-fg focus-visible:outline focus-visible:outline-2 focus-visible:outline-fg tm-press'
+                    >
+                      清空全部
+                    </button>
+                  </>
+                ))}
+              <button
+                onClick={onClose}
+                className='w-8 h-8 p-1 rounded-full flex items-center justify-center text-muted hover:bg-line transition-colors min-h-[44px] tm-press'
+                aria-label='关闭播放记录'
+              >
+                <X className='w-full h-full' />
+              </button>
+            </div>
+          </div>
+
+          <div className='flex-1 overflow-y-auto p-6'>
+            {loading ? (
+              <div className='flex items-center justify-center py-12'>
+                <div className='w-8 h-8 border-4 border-line border-t-transparent rounded-full animate-spin'></div>
+              </div>
+            ) : playRecords.length === 0 ? (
+              <div className='flex flex-col items-center justify-center py-12 text-muted'>
+                <History className='w-12 h-12 mb-3 opacity-30' />
+                <p className='text-sm'>暂无播放记录</p>
+              </div>
+            ) : (
+              <div className='grid grid-cols-3 gap-x-2 gap-y-14 sm:gap-y-20 px-0 sm:px-2 sm:grid-cols-[repeat(auto-fill,_minmax(11rem,_1fr))] sm:gap-x-8'>
+                {playRecords.map((record) => {
+                  const { source, id } = parseKey(record.key);
+                  const checked = selectedKeys.has(record.key);
+
+                  return (
+                    <div key={record.key} className='relative w-full'>
+                      <VideoCard
+                        id={id}
+                        title={record.title}
+                        poster={record.cover}
+                        year={record.year}
+                        source={source}
+                        source_name={record.source_name}
+                        progress={getProgress(record)}
+                        episodes={record.total_episodes}
+                        currentEpisode={record.index}
+                        query={record.search_title}
+                        from='playrecord'
+                        onDelete={() =>
+                          setPlayRecords((prev) =>
+                            prev.filter((item) => item.key !== record.key)
+                          )
                         }
-                        onClick={(event) => {
-                          event.preventDefault();
-                          event.stopPropagation();
-                          toggleSelected(record.key);
-                        }}
-                        aria-pressed={checked}
-                        className={`absolute inset-0 z-20 rounded-lg transition-colors tm-press ${
-                          checked
-                            ? 'bg-ink/10 ring-2 ring-inset ring-fg'
-                            : 'bg-transparent hover:bg-ink/10'
-                        }`}
-                      >
-                        <span
-                          className={`absolute left-2 top-2 flex h-6 w-6 items-center justify-center rounded-full border-2 shadow-md transition-colors ${
+                        type={record.total_episodes > 1 ? 'tv' : ''}
+                        origin={record.origin}
+                        playTime={record.play_time}
+                        totalTime={record.total_time}
+                      />
+                      {editMode && (
+                        <button
+                          type='button'
+                          aria-label={
+                            checked ? '取消选择播放记录' : '选择播放记录'
+                          }
+                          onClick={(event) => {
+                            event.preventDefault();
+                            event.stopPropagation();
+                            toggleSelected(record.key);
+                          }}
+                          aria-pressed={checked}
+                          className={`absolute inset-0 z-20 rounded-lg transition-colors tm-press ${
                             checked
-                              ? 'border-fg bg-fg text-inverse'
-                              : 'border-line bg-ink/40 text-transparent'
+                              ? 'bg-ink/10 ring-2 ring-inset ring-fg'
+                              : 'bg-transparent hover:bg-ink/10'
                           }`}
                         >
-                          <Check className='h-4 w-4' />
-                        </span>
-                      </button>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          )}
+                          <span
+                            className={`absolute left-2 top-2 flex h-6 w-6 items-center justify-center rounded-full border-2 shadow-md transition-colors ${
+                              checked
+                                ? 'border-fg bg-fg text-inverse'
+                                : 'border-line bg-ink/40 text-transparent'
+                            }`}
+                          >
+                            <Check className='h-4 w-4' />
+                          </span>
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         </div>
-      </div>
+      </ModalLayer>
 
-      {showConfirmDialog &&
-        createPortal(
-          <div
-            className='fixed inset-0 bg-[var(--tm-room-scrim)] z-[9999] flex items-center justify-center p-4 transition-opacity duration-300'
-            onClick={() => setShowConfirmDialog(false)}
-          >
-            <div
-              className='bg-surface rounded-lg shadow-xl max-w-md w-full border border-line transition-all duration-300'
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className='p-6'>
-                <div className='flex items-start gap-4 mb-4'>
-                  <div className='flex-shrink-0'>
-                    <AlertTriangle className='w-8 h-8 text-fg' />
-                  </div>
-                  <div className='flex-1'>
-                    <h3 className='text-lg font-medium text-fg mb-2'>
-                      清空播放记录
-                    </h3>
-                    <p className='text-sm text-muted'>
-                      清空全部观看记录？此操作不能撤销
-                    </p>
-                  </div>
-                </div>
+      <ConfirmDialog
+        isOpen={showConfirmDialog}
+        title='清空播放记录'
+        message='清空全部观看记录？此操作不能撤销'
+        confirmText='确定清空'
+        onConfirm={handleClearAll}
+        onCancel={() => setShowConfirmDialog(false)}
+      />
 
-                <div className='flex gap-3 mt-6'>
-                  <button
-                    onClick={() => setShowConfirmDialog(false)}
-                    className='min-h-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-fg flex-1 px-4 py-2 text-sm font-medium text-fg bg-raised rounded-lg transition-colors tm-press'
-                  >
-                    取消
-                  </button>
-                  <button
-                    onClick={handleClearAll}
-                    className='min-h-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-fg flex-1 px-4 py-2 text-sm font-medium text-inverse bg-fg rounded-lg transition-colors tm-press'
-                  >
-                    确定清空
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>,
-          document.body
-        )}
-
-      {showDeleteSelectedDialog &&
-        createPortal(
-          <div
-            className='fixed inset-0 bg-raised bg-opacity-50 z-[9999] flex items-center justify-center p-4 transition-opacity duration-300'
-            onClick={() =>
-              !deletingSelected && setShowDeleteSelectedDialog(false)
-            }
-          >
-            <div
-              className='bg-surface rounded-lg shadow-xl max-w-md w-full border border-line transition-all duration-300'
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className='p-6'>
-                <div className='flex items-start gap-4 mb-4'>
-                  <div className='flex-shrink-0'>
-                    <AlertTriangle className='w-8 h-8 text-fg' />
-                  </div>
-                  <div className='flex-1'>
-                    <h3 className='text-lg font-medium text-fg mb-2'>
-                      删除播放记录
-                    </h3>
-                    <p className='text-sm text-muted'>
-                      确定要删除选中的 {selectedCount}{' '}
-                      条播放记录吗？此操作不可恢复。
-                    </p>
-                  </div>
-                </div>
-
-                <div className='flex gap-3 mt-6'>
-                  <button
-                    onClick={() => setShowDeleteSelectedDialog(false)}
-                    disabled={deletingSelected}
-                    className='flex-1 px-4 py-2 text-sm font-medium text-muted bg-raised hover:bg-line disabled:opacity-60 rounded-lg transition-colors min-h-[44px] tm-press'
-                  >
-                    取消
-                  </button>
-                  <button
-                    onClick={handleDeleteSelected}
-                    disabled={deletingSelected}
-                    className='flex-1 px-4 py-2 text-sm font-medium text-inverse bg-fg hover:opacity-90 disabled:opacity-60 rounded-lg transition-colors min-h-[44px] tm-press'
-                  >
-                    {deletingSelected ? '删除中...' : '确定删除'}
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>,
-          document.body
-        )}
+      <ConfirmDialog
+        isOpen={showDeleteSelectedDialog}
+        title='删除播放记录'
+        message={`确定要删除选中的 ${selectedCount} 条播放记录吗？此操作不可恢复。`}
+        confirmText='确定删除'
+        onConfirm={handleDeleteSelected}
+        onCancel={() => setShowDeleteSelectedDialog(false)}
+      />
     </>
   );
 }

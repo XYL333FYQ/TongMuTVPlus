@@ -2,7 +2,6 @@
 
 import { ChevronRight } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
 
 import '@/styles/panels.css';
 
@@ -304,14 +303,10 @@ export default function ContinueWatching({
         />
       )}
 
-      {showPlayRecordsPanel &&
-        createPortal(
-          <PlayRecordsPanel
-            isOpen={showPlayRecordsPanel}
-            onClose={() => setShowPlayRecordsPanel(false)}
-          />,
-          document.body
-        )}
+      <PlayRecordsPanel
+        isOpen={showPlayRecordsPanel}
+        onClose={() => setShowPlayRecordsPanel(false)}
+      />
     </>
   );
 }

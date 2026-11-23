@@ -3461,46 +3461,34 @@ export const UserMenu: React.FC = () => {
         />
       )}
 
-      {/* 使用 Portal 将通知面板渲染到 document.body */}
-      {isNotificationPanelOpen &&
-        mounted &&
-        createPortal(
-          <NotificationPanel
-            isOpen={isNotificationPanelOpen}
-            onOpenNotificationSettings={() => {
-              setIsNotificationPanelOpen(false);
-              setIsEmailSettingsOpen(true);
-              void loadEmailSettings();
-            }}
-            onClose={() => {
-              setIsNotificationPanelOpen(false);
-              // 不需要在这里刷新，NotificationPanel 内部会触发事件
-            }}
-          />,
-          document.body
-        )}
+      {isNotificationPanelOpen && (
+        <NotificationPanel
+          isOpen={isNotificationPanelOpen}
+          onOpenNotificationSettings={() => {
+            setIsNotificationPanelOpen(false);
+            setIsEmailSettingsOpen(true);
+            void loadEmailSettings();
+          }}
+          onClose={() => {
+            setIsNotificationPanelOpen(false);
+            // 不需要在这里刷新，NotificationPanel 内部会触发事件
+          }}
+        />
+      )}
 
-      {/* 使用 Portal 将收藏面板渲染到 document.body */}
-      {isFavoritesPanelOpen &&
-        mounted &&
-        createPortal(
-          <FavoritesPanel
-            isOpen={isFavoritesPanelOpen}
-            onClose={() => setIsFavoritesPanelOpen(false)}
-          />,
-          document.body
-        )}
+      {isFavoritesPanelOpen && (
+        <FavoritesPanel
+          isOpen={isFavoritesPanelOpen}
+          onClose={() => setIsFavoritesPanelOpen(false)}
+        />
+      )}
 
-      {/* 使用 Portal 将下载文件管理面板渲染到 document.body */}
-      {isDownloadManagementOpen &&
-        mounted &&
-        createPortal(
-          <DownloadManagementPanel
-            isOpen={isDownloadManagementOpen}
-            onClose={() => setIsDownloadManagementOpen(false)}
-          />,
-          document.body
-        )}
+      {isDownloadManagementOpen && (
+        <DownloadManagementPanel
+          isOpen={isDownloadManagementOpen}
+          onClose={() => setIsDownloadManagementOpen(false)}
+        />
+      )}
 
       {emailSettingsMounted && (
         <EmailSettingsPanel
