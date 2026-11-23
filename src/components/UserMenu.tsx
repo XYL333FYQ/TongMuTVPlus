@@ -37,6 +37,7 @@ import {
   LOCAL_SETTINGS_KEYS,
   LOCAL_SETTINGS_SYNC_LAST_PULL_KEY,
 } from '@/lib/local-settings-sync';
+import { lockScroll } from '@/lib/scroll-lock';
 import {
   notificationWorkerScript,
   waitForActiveWorker,
@@ -49,6 +50,8 @@ import { useUnreadNotificationCount } from '@/hooks/useUnreadNotificationCount';
 import ThemeSettings from '@/components/account/ThemeSettings';
 import VisualPreferenceControls from '@/components/account/VisualPreferenceControls';
 import { notifyError } from '@/components/feedback/AppDialogs';
+import { ConfirmDialog } from '@/components/feedback/ConfirmDialog';
+import ModalLayer from '@/components/feedback/ModalLayer';
 import Toast, { ToastProps } from '@/components/feedback/Toast';
 import { MoreMenu } from '@/components/shell/TongMuNavigation';
 
@@ -208,51 +211,17 @@ export const UserMenu: React.FC = () => {
   const tvQrScanStopRef = useRef(false);
   const [tvAccessTab, setTvAccessTab] = useState<'tvbox' | 'web'>('tvbox');
 
-  // Body 滚动锁定 - 使用 overflow 方式避免布局问题
+  // 还没换到弹窗层的面板（个人中心、离线下载、邮件、设备、电视遥控）打开时锁住页面；
+  // 设置、改密码、电视访问、客户端安装、下载管理、确认框在弹窗层里，由它锁
+  const legacyPanelOpen =
+    isProfileCenterOpen ||
+    isOfflineDownloadPanelOpen ||
+    isEmailSettingsOpen ||
+    isDeviceManagementOpen ||
+    isTVRemoteOpen;
   useEffect(() => {
-    if (
-      isProfileCenterOpen ||
-      isSettingsOpen ||
-      isChangePasswordOpen ||
-      isSubscribeOpen ||
-      isOfflineDownloadPanelOpen ||
-      isEmailSettingsOpen ||
-      isDeviceManagementOpen ||
-      isEcoAppsOpen ||
-      isDownloadManagementOpen ||
-      isTvQrScannerOpen ||
-      isTVRemoteOpen
-    ) {
-      const body = document.body;
-      const html = document.documentElement;
-
-      // 保存原始样式
-      const originalBodyOverflow = body.style.overflow;
-      const originalHtmlOverflow = html.style.overflow;
-
-      // 只设置 overflow 来阻止滚动
-      body.style.overflow = 'hidden';
-      html.style.overflow = 'hidden';
-
-      return () => {
-        // 恢复所有原始样式
-        body.style.overflow = originalBodyOverflow;
-        html.style.overflow = originalHtmlOverflow;
-      };
-    }
-  }, [
-    isProfileCenterOpen,
-    isSettingsOpen,
-    isChangePasswordOpen,
-    isSubscribeOpen,
-    isOfflineDownloadPanelOpen,
-    isEmailSettingsOpen,
-    isDeviceManagementOpen,
-    isEcoAppsOpen,
-    isDownloadManagementOpen,
-    isTvQrScannerOpen,
-    isTVRemoteOpen,
-  ]);
+    if (legacyPanelOpen) return lockScroll();
+  }, [legacyPanelOpen]);
 
   // 设置相关状态
   const [defaultAggregateSearch, setDefaultAggregateSearch] = useState(true);
@@ -1604,6 +1573,8 @@ export const UserMenu: React.FC = () => {
   };
 
   const handleCloseSubscribe = () => {
+    // 扫码中关掉面板（Esc、返回键、点外面）时一并关相机
+    closeTvQrScanner();
     setIsSubscribeOpen(false);
     setCopySuccess(false);
   };
@@ -3265,119 +3236,99 @@ export const UserMenu: React.FC = () => {
     />
   );
 
-  // 修改密码面板内容
+  // 修改密码面板（遮罩、位置、关闭方式由外面的 ModalLayer 负责）
   const changePasswordPanel = (
-    <>
-      {/* 背景遮罩 */}
+    <div className='w-full max-w-md bg-surface rounded-xl shadow-xl overflow-hidden'>
+      {/* 内容容器 - 独立的滚动区域 */}
       <div
-        className='fixed inset-0 bg-ink/50 backdrop-blur-sm z-[1000]'
-        onClick={handleCloseChangePassword}
+        className='h-full p-6'
+        data-panel-content
         onTouchMove={(e) => {
-          // 只阻止滚动，允许其他触摸事件
-          e.preventDefault();
-        }}
-        onWheel={(e) => {
-          // 阻止滚轮滚动
-          e.preventDefault();
+          // 阻止事件冒泡到遮罩层，但允许内部滚动
+          e.stopPropagation();
         }}
         style={{
-          touchAction: 'none',
+          touchAction: 'auto', // 允许所有触摸操作
         }}
-      />
+      >
+        {/* 标题栏 */}
+        <div className='flex items-center justify-between mb-6'>
+          <h3 className='text-xl font-bold text-fg'>修改密码</h3>
+          <button
+            onClick={handleCloseChangePassword}
+            className='w-8 h-8 p-1 rounded-full flex items-center justify-center text-muted hover:bg-line transition-colors min-h-[44px] tm-press'
+            aria-label='Close'
+          >
+            <X className='w-full h-full' />
+          </button>
+        </div>
 
-      {/* 修改密码面板 */}
-      <div className='fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-surface rounded-xl shadow-xl z-[1001] overflow-hidden'>
-        {/* 内容容器 - 独立的滚动区域 */}
-        <div
-          className='h-full p-6'
-          data-panel-content
-          onTouchMove={(e) => {
-            // 阻止事件冒泡到遮罩层，但允许内部滚动
-            e.stopPropagation();
-          }}
-          style={{
-            touchAction: 'auto', // 允许所有触摸操作
-          }}
-        >
-          {/* 标题栏 */}
-          <div className='flex items-center justify-between mb-6'>
-            <h3 className='text-xl font-bold text-fg'>修改密码</h3>
-            <button
-              onClick={handleCloseChangePassword}
-              className='w-8 h-8 p-1 rounded-full flex items-center justify-center text-muted hover:bg-line transition-colors min-h-[44px] tm-press'
-              aria-label='Close'
-            >
-              <X className='w-full h-full' />
-            </button>
-          </div>
-
-          {/* 表单 */}
-          <div className='space-y-4'>
-            {/* 新密码输入 */}
-            <div>
-              <label className='block text-sm font-medium text-muted mb-2'>
-                新密码
-              </label>
-              <input
-                type='password'
-                className='w-full px-3 py-2 border border-line rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-fg focus:border-transparent transition-colors bg-surface text-fg placeholder-gray-500 dark:placeholder-gray-400'
-                placeholder='请输入新密码'
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                disabled={passwordLoading}
-              />
-            </div>
-
-            {/* 确认密码输入 */}
-            <div>
-              <label className='block text-sm font-medium text-muted mb-2'>
-                确认密码
-              </label>
-              <input
-                type='password'
-                className='w-full px-3 py-2 border border-line rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-fg focus:border-transparent transition-colors bg-surface text-fg placeholder-gray-500 dark:placeholder-gray-400'
-                placeholder='请再次输入新密码'
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                disabled={passwordLoading}
-              />
-            </div>
-
-            {/* 错误信息 */}
-            {passwordError && (
-              <div className='text-fg text-sm bg-raised p-3 rounded-md border border-line'>
-                {passwordError}
-              </div>
-            )}
-          </div>
-
-          {/* 操作按钮 */}
-          <div className='flex gap-3 mt-6 pt-4 border-t border-line'>
-            <button
-              onClick={handleCloseChangePassword}
-              className='flex-1 px-4 py-2 text-sm font-medium text-muted bg-raised hover:bg-line rounded-md transition-colors min-h-[44px] tm-press'
+        {/* 表单 */}
+        <div className='space-y-4'>
+          {/* 新密码输入 */}
+          <div>
+            <label className='block text-sm font-medium text-muted mb-2'>
+              新密码
+            </label>
+            <input
+              type='password'
+              className='w-full px-3 py-2 border border-line rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-fg focus:border-transparent transition-colors bg-surface text-fg placeholder-gray-500 dark:placeholder-gray-400'
+              placeholder='请输入新密码'
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
               disabled={passwordLoading}
-            >
-              取消
-            </button>
-            <button
-              onClick={handleSubmitChangePassword}
-              className='flex-1 px-4 py-2 text-sm font-medium text-inverse bg-fg hover:opacity-90 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px] tm-press'
-              disabled={passwordLoading || !newPassword || !confirmPassword}
-            >
-              {passwordLoading ? '修改中...' : '确认修改'}
-            </button>
+            />
           </div>
 
-          {/* 底部说明 */}
-          <div className='mt-4 pt-4 border-t border-line'>
-            <p className='text-[13px] text-muted text-center'>
-              修改密码后需要重新登录
-            </p>
+          {/* 确认密码输入 */}
+          <div>
+            <label className='block text-sm font-medium text-muted mb-2'>
+              确认密码
+            </label>
+            <input
+              type='password'
+              className='w-full px-3 py-2 border border-line rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-fg focus:border-transparent transition-colors bg-surface text-fg placeholder-gray-500 dark:placeholder-gray-400'
+              placeholder='请再次输入新密码'
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              disabled={passwordLoading}
+            />
           </div>
+
+          {/* 错误信息 */}
+          {passwordError && (
+            <div className='text-fg text-sm bg-raised p-3 rounded-md border border-line'>
+              {passwordError}
+            </div>
+          )}
+        </div>
+
+        {/* 操作按钮 */}
+        <div className='flex gap-3 mt-6 pt-4 border-t border-line'>
+          <button
+            onClick={handleCloseChangePassword}
+            className='flex-1 px-4 py-2 text-sm font-medium text-muted bg-raised hover:bg-line rounded-md transition-colors min-h-[44px] tm-press'
+            disabled={passwordLoading}
+          >
+            取消
+          </button>
+          <button
+            onClick={handleSubmitChangePassword}
+            className='flex-1 px-4 py-2 text-sm font-medium text-inverse bg-fg hover:opacity-90 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px] tm-press'
+            disabled={passwordLoading || !newPassword || !confirmPassword}
+          >
+            {passwordLoading ? '修改中...' : '确认修改'}
+          </button>
+        </div>
+
+        {/* 底部说明 */}
+        <div className='mt-4 pt-4 border-t border-line'>
+          <p className='text-[13px] text-muted text-center'>
+            修改密码后需要重新登录
+          </p>
         </div>
       </div>
-    </>
+    </div>
   );
 
   // 客户端安装指南面板内容
@@ -3466,25 +3417,33 @@ export const UserMenu: React.FC = () => {
         />
       )}
 
-      {/* 使用 Portal 将设置面板渲染到 document.body */}
-      {isSettingsOpen &&
-        mounted &&
-        createPortal(renderSettingsPanel(), document.body)}
+      {/* 设置：侧边抽屉 */}
+      {isSettingsOpen && (
+        <ModalLayer
+          variant='drawer'
+          label='本地设置'
+          onClose={handleCloseSettings}
+        >
+          {renderSettingsPanel()}
+        </ModalLayer>
+      )}
 
       {/* 云备份操作结果 Toast */}
       {syncToast &&
         mounted &&
         createPortal(<Toast {...syncToast} />, document.body)}
 
-      {/* 使用 Portal 将修改密码面板渲染到 document.body */}
-      {isChangePasswordOpen &&
-        mounted &&
-        createPortal(changePasswordPanel, document.body)}
+      {isChangePasswordOpen && (
+        <ModalLayer label='修改密码' onClose={handleCloseChangePassword}>
+          {changePasswordPanel}
+        </ModalLayer>
+      )}
 
-      {/* 使用 Portal 将订阅面板渲染到 document.body */}
-      {isSubscribeOpen &&
-        mounted &&
-        createPortal(renderSubscribePanel(), document.body)}
+      {isSubscribeOpen && (
+        <ModalLayer label='电视访问' onClose={handleCloseSubscribe}>
+          {renderSubscribePanel()}
+        </ModalLayer>
+      )}
 
       {/* 版本面板 */}
       {versionPanelMounted && (
@@ -3594,50 +3553,24 @@ export const UserMenu: React.FC = () => {
         />
       )}
 
-      {/* 使用 Portal 将客户端安装指南面板渲染到 document.body */}
-      {isEcoAppsOpen &&
-        mounted &&
-        createPortal(renderEcoAppsPanel(), document.body)}
+      {isEcoAppsOpen && (
+        <ModalLayer
+          label='客户端安装指南'
+          onClose={() => setIsEcoAppsOpen(false)}
+        >
+          {renderEcoAppsPanel()}
+        </ModalLayer>
+      )}
 
-      {/* 确认对话框 */}
-      {confirmDialog.isOpen &&
-        mounted &&
-        createPortal(
-          <div className='fixed inset-0 z-[10000] flex items-center justify-center bg-ink/50 backdrop-blur-sm'>
-            <div className='bg-surface rounded-lg shadow-xl w-full max-w-md m-4'>
-              {/* 标题 */}
-              <div className='p-6 border-b border-line'>
-                <h3 className='text-lg font-medium text-fg'>
-                  {confirmDialog.title}
-                </h3>
-              </div>
-
-              {/* 内容 */}
-              <div className='p-6'>
-                <p className='text-muted'>{confirmDialog.message}</p>
-              </div>
-
-              {/* 按钮 */}
-              <div className='p-6 pt-0 flex gap-3 justify-end'>
-                <button
-                  onClick={() =>
-                    setConfirmDialog({ ...confirmDialog, isOpen: false })
-                  }
-                  className='px-4 py-2 text-sm font-medium text-muted bg-raised hover:bg-line rounded-lg transition-colors min-h-[44px] tm-press'
-                >
-                  取消
-                </button>
-                <button
-                  onClick={confirmDialog.onConfirm}
-                  className='px-4 py-2 text-sm font-medium text-inverse bg-fg hover:opacity-90 rounded-lg transition-colors min-h-[44px] tm-press'
-                >
-                  确定
-                </button>
-              </div>
-            </div>
-          </div>,
-          document.body
-        )}
+      <ConfirmDialog
+        isOpen={confirmDialog.isOpen}
+        title={confirmDialog.title}
+        message={confirmDialog.message}
+        onConfirm={confirmDialog.onConfirm}
+        onCancel={() =>
+          setConfirmDialog((prev) => ({ ...prev, isOpen: false }))
+        }
+      />
     </>
   );
 };
