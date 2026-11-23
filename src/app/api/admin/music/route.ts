@@ -2,9 +2,9 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 
-import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig, setCachedConfig } from '@/lib/config';
 import { db } from '@/lib/db';
+import { isCaller, isOwner, requireRole } from '@/lib/require-role';
 import { normalizeApiBaseUrl } from '@/lib/url';
 
 export const runtime = 'nodejs';
@@ -23,11 +23,8 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
 
-    const authInfo = getAuthInfoFromCookie(request);
-    if (!authInfo || !authInfo.username) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-    const username = authInfo.username;
+    const caller = await requireRole(request, 'admin', { deniedStatus: 401 });
+    if (!isCaller(caller)) return caller;
 
     const { Enabled, BaseUrl, Token, ProxyEnabled } = body as {
       Enabled?: boolean;
@@ -48,13 +45,7 @@ export async function POST(request: NextRequest) {
 
     const adminConfig = await getConfig();
 
-    // 权限校验 - 使用v2用户系统
-    if (username !== process.env.USERNAME) {
-      const userInfo = await db.getUserInfoV2(username);
-      if (!userInfo || userInfo.role !== 'admin' || userInfo.banned) {
-        return NextResponse.json({ error: '权限不足' }, { status: 401 });
-      }
-
+    if (!isOwner(caller)) {
       // 站长专属：音乐功能的开放开关不能被管理员改动，其余字段照常保存。
       if (Enabled !== (adminConfig.MusicConfig?.Enabled === true)) {
         return NextResponse.json(

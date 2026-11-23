@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { getAuthInfoFromCookie } from '@/lib/auth';
 import { BookSource, BookSourceCapabilities } from '@/lib/book.types';
-import { db } from '@/lib/db';
 import { legadoClient } from '@/lib/legado.client';
 import { opdsClient } from '@/lib/opds.client';
+import { isCaller, requireRole } from '@/lib/require-role';
 
 export const runtime = 'nodejs';
 
@@ -23,26 +22,6 @@ interface TestSourceInput {
   preferFormat?: Array<'epub' | 'pdf'>;
   language?: string;
   legado?: BookSource['legado'];
-}
-
-async function ensureAdmin(request: NextRequest) {
-  const authInfo = getAuthInfoFromCookie(request);
-  if (!authInfo?.username) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
-  if (authInfo.username !== process.env.USERNAME) {
-    const userInfo = await db.getUserInfoV2(authInfo.username);
-    if (
-      !userInfo ||
-      (userInfo.role !== 'admin' && userInfo.role !== 'owner') ||
-      userInfo.banned
-    ) {
-      return NextResponse.json({ error: '权限不足' }, { status: 401 });
-    }
-  }
-
-  return authInfo.username;
 }
 
 async function detectCapabilitiesFromSource(
@@ -91,8 +70,8 @@ async function detectCapabilitiesFromSource(
 }
 
 export async function POST(request: NextRequest) {
-  const ensured = await ensureAdmin(request);
-  if (ensured instanceof NextResponse) return ensured;
+  const caller = await requireRole(request, 'admin', { deniedStatus: 401 });
+  if (!isCaller(caller)) return caller;
 
   try {
     const body = await request.json();

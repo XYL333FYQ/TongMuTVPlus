@@ -8,6 +8,7 @@ import { getAuthInfoFromCookie } from '@/lib/auth';
 import { SimpleCrypto } from '@/lib/crypto';
 import { clearProgress, updateProgress } from '@/lib/data-migration-progress';
 import { db } from '@/lib/db';
+import { isCaller, requireRole } from '@/lib/require-role';
 import { CURRENT_VERSION } from '@/lib/version';
 
 export const runtime = 'nodejs';
@@ -25,21 +26,10 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 验证身份和权限
-    const authInfo = getAuthInfoFromCookie(req);
-    if (!authInfo || !authInfo.username) {
-      return NextResponse.json({ error: '未登录' }, { status: 401 });
-    }
-
-    // 检查用户权限（只有站长可以导出数据）
-    if (authInfo.username !== process.env.USERNAME) {
-      return NextResponse.json(
-        { error: '权限不足，只有站长可以导出数据' },
-        { status: 401 }
-      );
-    }
-
-    const username = authInfo.username; // 存储到局部变量以便 TypeScript 类型推断
+    // 只有站长可以导出数据
+    const caller = await requireRole(req, 'owner', { deniedStatus: 401 });
+    if (!isCaller(caller)) return caller;
+    const username = caller.username;
 
     const config = await db.getAdminConfig();
     if (!config) {
@@ -81,7 +71,7 @@ export async function POST(req: NextRequest) {
 
     // 获取所有用户（getAllUsers返回的是V2用户）
     let allUsers = await db.getAllUsers();
-    allUsers.push(process.env.USERNAME); // 添加站长
+    allUsers.push(username); // 添加站长（只有站长能导出，就是调用者本人）
     // 添加V2用户列表中的用户
     usersV2Result.users.forEach((user) => {
       if (!allUsers.includes(user.username)) {

@@ -1,25 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { getAuthInfoFromCookie } from '@/lib/auth';
-import { db } from '@/lib/db';
+import { isCaller, requireRole } from '@/lib/require-role';
 import { SuwayomiClient } from '@/lib/suwayomi.client';
 
 export const runtime = 'nodejs';
 
 export async function POST(request: NextRequest) {
   try {
-    const authInfo = getAuthInfoFromCookie(request);
-    if (!authInfo || !authInfo.username) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const username = authInfo.username;
-    if (username !== process.env.USERNAME) {
-      const userInfo = await db.getUserInfoV2(username);
-      if (!userInfo || userInfo.role !== 'admin' || userInfo.banned) {
-        return NextResponse.json({ error: '权限不足' }, { status: 401 });
-      }
-    }
+    const caller = await requireRole(request, 'admin', { deniedStatus: 401 });
+    if (!isCaller(caller)) return caller;
 
     const body = await request.json();
     const { ServerURL, AuthMode, Username, Password, DefaultLang } = body as {

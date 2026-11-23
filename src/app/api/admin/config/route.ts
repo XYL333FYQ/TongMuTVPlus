@@ -3,9 +3,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { AdminConfigResult } from '@/lib/admin.types';
-import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig } from '@/lib/config';
 import { describeModuleActivationChanges } from '@/lib/module-availability';
+import { isCaller, isOwner, requireRole } from '@/lib/require-role';
 
 export const runtime = 'nodejs';
 
@@ -20,34 +20,15 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const authInfo = getAuthInfoFromCookie(request);
-  if (!authInfo || !authInfo.username) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-  const username = authInfo.username;
+  const caller = await requireRole(request, 'admin', { deniedStatus: 401 });
+  if (!isCaller(caller)) return caller;
 
   try {
     const config = await getConfig();
     const result: AdminConfigResult = {
-      Role: 'owner',
+      Role: isOwner(caller) ? 'owner' : 'admin',
       Config: config,
     };
-    if (username === process.env.USERNAME) {
-      result.Role = 'owner';
-    } else {
-      // 从新版数据库获取用户信息
-      const { db } = await import('@/lib/db');
-      const userInfoV2 = await db.getUserInfoV2(username);
-
-      if (userInfoV2 && userInfoV2.role === 'admin' && !userInfoV2.banned) {
-        result.Role = 'admin';
-      } else {
-        return NextResponse.json(
-          { error: '你是管理员吗你就访问？' },
-          { status: 401 }
-        );
-      }
-    }
 
     return NextResponse.json(result, {
       headers: {
@@ -75,11 +56,8 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const authInfo = getAuthInfoFromCookie(request);
-  if (!authInfo || !authInfo.username) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-  const username = authInfo.username;
+  const caller = await requireRole(request, 'admin', { deniedStatus: 401 });
+  if (!isCaller(caller)) return caller;
 
   try {
     const newConfig = await request.json();
@@ -92,19 +70,7 @@ export async function POST(request: NextRequest) {
     checkedConfig.FeaturePolicies = currentConfig.FeaturePolicies;
     checkedConfig.FeatureGrants = currentConfig.FeatureGrants;
 
-    // 权限检查
-    if (username !== process.env.USERNAME) {
-      const { db } = await import('@/lib/db');
-      const userInfoV2 = await db.getUserInfoV2(username);
-
-      if (
-        !userInfoV2 ||
-        (userInfoV2.role !== 'admin' && userInfoV2.role !== 'owner') ||
-        userInfoV2.banned
-      ) {
-        return NextResponse.json({ error: '权限不足' }, { status: 401 });
-      }
-
+    if (!isOwner(caller)) {
       // 站长专属：功能模块的开放状态不能被管理员改动，其余配置照常保存。
       const changed = describeModuleActivationChanges(
         await getConfig(),

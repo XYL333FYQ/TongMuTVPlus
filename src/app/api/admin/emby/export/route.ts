@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig } from '@/lib/config';
+import { isCaller, requireRole } from '@/lib/require-role';
 
 export const runtime = 'nodejs';
 
@@ -15,18 +15,9 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const authInfo = getAuthInfoFromCookie(request);
-    if (!authInfo || !authInfo.username) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
     // 仅站长可用
-    if (authInfo.username !== process.env.USERNAME) {
-      return NextResponse.json(
-        { error: '权限不足，仅站长可用' },
-        { status: 403 }
-      );
-    }
+    const caller = await requireRole(request, 'owner', { deniedStatus: 403 });
+    if (!isCaller(caller)) return caller;
 
     const adminConfig = await getConfig();
     const embyConfig = adminConfig.EmbyConfig || {};

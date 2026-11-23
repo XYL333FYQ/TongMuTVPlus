@@ -1,20 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig } from '@/lib/config';
 import { db } from '@/lib/db';
+import { isCaller, isOwner, requireRole } from '@/lib/require-role';
 
 export async function POST(request: NextRequest) {
   try {
-    const authInfo = getAuthInfoFromCookie(request);
-    const username = authInfo?.username;
+    const caller = await requireRole(request, 'admin', { deniedStatus: 401 });
+    if (!isCaller(caller)) return caller;
     const config = await getConfig();
-    if (username !== process.env.USERNAME) {
-      const userInfo = await db.getUserInfoV2(username || '');
-      if (!userInfo || userInfo.role !== 'admin' || userInfo.banned) {
-        return NextResponse.json({ error: '权限不足' }, { status: 401 });
-      }
-    }
 
     const body = await request.json();
     const { action } = body;
@@ -31,10 +25,7 @@ export async function POST(request: NextRequest) {
       case 'toggleEnabled': {
         const { enabled } = body;
         // 站长专属：网络直播的总开关不能被管理员改动，源的维护照常进行。
-        if (
-          username !== process.env.USERNAME &&
-          enabled !== (config.WebLiveEnabled === true)
-        ) {
+        if (!isOwner(caller) && enabled !== (config.WebLiveEnabled === true)) {
           return NextResponse.json(
             { error: '只有站长可以开放或关闭网络直播' },
             { status: 403 }

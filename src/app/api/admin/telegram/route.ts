@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import type { AdminConfig } from '@/lib/admin.types';
-import { getAuthInfoFromCookie } from '@/lib/auth';
 import { BRAND_NAME } from '@/lib/brand';
 import { getConfig } from '@/lib/config';
 import { getStorage } from '@/lib/db';
+import { isCaller, requireRole } from '@/lib/require-role';
 import {
   getTelegramConfig,
   sendTelegramMessage,
@@ -14,20 +14,6 @@ import {
 } from '@/lib/telegram';
 
 export const runtime = 'nodejs';
-
-async function assertAdmin(request: NextRequest) {
-  const authInfo = getAuthInfoFromCookie(request);
-  if (!authInfo?.username)
-    return { error: 'Unauthorized', status: 401 } as const;
-
-  const storage = getStorage();
-  const userInfo = await storage.getUserInfoV2?.(authInfo.username);
-  if (!userInfo || (userInfo.role !== 'admin' && userInfo.role !== 'owner')) {
-    return { error: 'Forbidden', status: 403 } as const;
-  }
-
-  return { storage } as const;
-}
 
 function maskTelegramConfig(config: AdminConfig['TelegramConfig']) {
   return {
@@ -46,18 +32,16 @@ function maskTelegramConfig(config: AdminConfig['TelegramConfig']) {
 }
 
 export async function GET(request: NextRequest) {
-  const auth = await assertAdmin(request);
-  if ('error' in auth)
-    return NextResponse.json({ error: auth.error }, { status: auth.status });
+  const caller = await requireRole(request, 'admin', { deniedStatus: 403 });
+  if (!isCaller(caller)) return caller;
 
   const adminConfig = await getConfig();
   return NextResponse.json(maskTelegramConfig(adminConfig.TelegramConfig));
 }
 
 export async function POST(request: NextRequest) {
-  const auth = await assertAdmin(request);
-  if ('error' in auth)
-    return NextResponse.json({ error: auth.error }, { status: auth.status });
+  const caller = await requireRole(request, 'admin', { deniedStatus: 403 });
+  if (!isCaller(caller)) return caller;
 
   const body = await request.json();
   const { action, config, testChatId, webhookUrl, origin } = body;
@@ -194,6 +178,6 @@ export async function POST(request: NextRequest) {
     telegramConfig.webhookSecret = oldConfig?.webhookSecret || '';
 
   adminConfig.TelegramConfig = telegramConfig;
-  await auth.storage.setAdminConfig(adminConfig);
+  await getStorage().setAdminConfig(adminConfig);
   return NextResponse.json({ success: true, message: 'Telegram 配置保存成功' });
 }

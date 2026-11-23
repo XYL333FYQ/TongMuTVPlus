@@ -2,25 +2,18 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 
-import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig } from '@/lib/config';
 import { db } from '@/lib/db';
 import { deleteCachedLiveChannels, refreshLiveChannels } from '@/lib/live';
+import { isCaller, isOwner, requireRole } from '@/lib/require-role';
 
 export const runtime = 'nodejs';
 
 export async function POST(request: NextRequest) {
   try {
-    // 权限检查 - 使用v2用户系统
-    const authInfo = getAuthInfoFromCookie(request);
-    const username = authInfo?.username;
+    const caller = await requireRole(request, 'admin', { deniedStatus: 401 });
+    if (!isCaller(caller)) return caller;
     const config = await getConfig();
-    if (username !== process.env.USERNAME) {
-      const userInfo = await db.getUserInfoV2(username || '');
-      if (!userInfo || userInfo.role !== 'admin' || userInfo.banned) {
-        return NextResponse.json({ error: '权限不足' }, { status: 401 });
-      }
-    }
 
     const body = await request.json();
     const { action, key, name, url, ua, epg, proxyMode } = body;
@@ -36,7 +29,7 @@ export async function POST(request: NextRequest) {
 
     // 站长专属：直播源的添加与最后一个启用源的停用/删除会改变电视直播的开放状态，
     // 不能被管理员改动；编辑地址、排序、代理模式等维护操作照常进行。
-    if (username !== process.env.USERNAME) {
+    if (!isOwner(caller)) {
       const enabledCount = config.LiveConfig.filter(
         (source) => !source.disabled
       ).length;

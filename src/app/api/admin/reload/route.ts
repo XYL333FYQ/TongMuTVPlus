@@ -2,9 +2,9 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 
-import { getAuthInfoFromCookie } from '@/lib/auth';
 import { clearConfigCache } from '@/lib/config';
 import { isCrossSiteRequest } from '@/lib/request-origin';
+import { isCaller, requireRole } from '@/lib/require-role';
 
 export const runtime = 'nodejs';
 
@@ -32,15 +32,8 @@ async function handle(request: NextRequest) {
     );
   }
 
-  const authInfo = getAuthInfoFromCookie(request);
-  if (!authInfo || !authInfo.username) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-  const username = authInfo.username;
-
-  if (username !== process.env.USERNAME) {
-    return NextResponse.json({ error: '仅支持站长重载配置' }, { status: 401 });
-  }
+  const caller = await requireRole(request, 'owner', { deniedStatus: 401 });
+  if (!isCaller(caller)) return caller;
 
   try {
     await clearConfigCache();

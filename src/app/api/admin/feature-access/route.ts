@@ -2,7 +2,6 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 
-import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig, setCachedConfig } from '@/lib/config';
 import { db } from '@/lib/db';
 import {
@@ -14,31 +13,15 @@ import {
   sanitizeFeaturePermissions,
   sanitizeFeaturePolicies,
 } from '@/lib/feature-permissions';
+import { isCaller, isOwner, requireRole } from '@/lib/require-role';
 
 export const runtime = 'nodejs';
 
 // 功能开放范围与单独授权。读取：站长和管理员；修改：只有站长。
 
-async function resolveRole(
-  request: NextRequest
-): Promise<{ username: string; owner: boolean } | NextResponse> {
-  const authInfo = getAuthInfoFromCookie(request);
-  if (!authInfo?.username) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-  if (authInfo.username === process.env.USERNAME) {
-    return { username: authInfo.username, owner: true };
-  }
-  const info = await db.getUserInfoV2(authInfo.username);
-  if (!info || info.banned || info.role !== 'admin') {
-    return NextResponse.json({ error: '权限不足' }, { status: 401 });
-  }
-  return { username: authInfo.username, owner: false };
-}
-
 export async function GET(request: NextRequest) {
-  const who = await resolveRole(request);
-  if (who instanceof NextResponse) return who;
+  const who = await requireRole(request, 'admin', { deniedStatus: 401 });
+  if (!isCaller(who)) return who;
   const config = await getConfig();
   const stored = sanitizeFeaturePolicies(config.FeaturePolicies);
   const policies = Object.fromEntries(
@@ -49,7 +32,7 @@ export async function GET(request: NextRequest) {
   );
   return NextResponse.json(
     {
-      canEdit: who.owner,
+      canEdit: isOwner(who),
       policies,
       grants: sanitizeFeatureGrants(config.FeatureGrants),
     },
@@ -58,9 +41,9 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const who = await resolveRole(request);
-  if (who instanceof NextResponse) return who;
-  if (!who.owner) {
+  const who = await requireRole(request, 'admin', { deniedStatus: 401 });
+  if (!isCaller(who)) return who;
+  if (!isOwner(who)) {
     return NextResponse.json(
       { error: '只有站长可以修改功能开放范围和授权' },
       { status: 403 }

@@ -1,9 +1,9 @@
 /* eslint-disable no-console,@typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from 'next/server';
 
-import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig } from '@/lib/config';
 import { db } from '@/lib/db';
+import { isCaller, requireRole } from '@/lib/require-role';
 
 export const runtime = 'nodejs';
 
@@ -19,15 +19,9 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const authInfo = getAuthInfoFromCookie(request);
-    if (!authInfo || !authInfo.username) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
     // 只有站长可以执行迁移
-    if (authInfo.username !== process.env.USERNAME) {
-      return NextResponse.json({ error: '权限不足' }, { status: 401 });
-    }
+    const caller = await requireRole(request, 'owner', { deniedStatus: 401 });
+    if (!isCaller(caller)) return caller;
 
     // 获取配置
     const adminConfig = await getConfig();

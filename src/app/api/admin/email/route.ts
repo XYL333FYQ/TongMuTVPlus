@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import type { AdminConfig } from '@/lib/admin.types';
-import { getAuthInfoFromCookie } from '@/lib/auth';
 import { BRAND_NAME } from '@/lib/brand';
 import { getConfig } from '@/lib/config';
 import { getStorage } from '@/lib/db';
 import { EmailService } from '@/lib/email.service';
+import { isCaller, requireRole } from '@/lib/require-role';
 
 export const runtime = 'nodejs';
 
@@ -13,20 +13,11 @@ export const runtime = 'nodejs';
  * GET - 获取邮件配置
  */
 export async function GET(request: NextRequest) {
-  const authInfo = getAuthInfoFromCookie(request);
-  if (!authInfo || !authInfo.username) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  // 只有管理员和站长可以访问
+  const caller = await requireRole(request, 'admin', { deniedStatus: 403 });
+  if (!isCaller(caller)) return caller;
 
   try {
-    const storage = getStorage();
-    const userInfo = await storage.getUserInfoV2?.(authInfo.username);
-
-    // 只有管理员和站长可以访问
-    if (!userInfo || (userInfo.role !== 'admin' && userInfo.role !== 'owner')) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-    }
-
     const adminConfig = await getConfig();
     const emailConfig = adminConfig?.EmailConfig || {
       enabled: false,
@@ -69,20 +60,11 @@ export async function GET(request: NextRequest) {
  * POST - 保存邮件配置或发送测试邮件
  */
 export async function POST(request: NextRequest) {
-  const authInfo = getAuthInfoFromCookie(request);
-  if (!authInfo || !authInfo.username) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  // 只有管理员和站长可以访问
+  const caller = await requireRole(request, 'admin', { deniedStatus: 403 });
+  if (!isCaller(caller)) return caller;
 
   try {
-    const storage = getStorage();
-    const userInfo = await storage.getUserInfoV2?.(authInfo.username);
-
-    // 只有管理员和站长可以访问
-    if (!userInfo || (userInfo.role !== 'admin' && userInfo.role !== 'owner')) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-    }
-
     const body = await request.json();
     const { action, config, testEmail } = body;
 
@@ -177,7 +159,7 @@ export async function POST(request: NextRequest) {
 
       // 更新配置
       adminConfig.EmailConfig = emailConfig;
-      await storage.setAdminConfig(adminConfig);
+      await getStorage().setAdminConfig(adminConfig);
 
       return NextResponse.json({ success: true, message: '邮件配置保存成功' });
     }

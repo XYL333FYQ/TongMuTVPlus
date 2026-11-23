@@ -2,7 +2,6 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 
-import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig, setCachedConfig } from '@/lib/config';
 import { db } from '@/lib/db';
 import {
@@ -38,12 +37,9 @@ import {
   normalizeUCCookie,
   validateUCCookieReadable,
 } from '@/lib/netdisk/uc.client';
+import { isCaller, requireRole } from '@/lib/require-role';
 
 export const runtime = 'nodejs';
-
-function requireOwner(username: string | undefined) {
-  return username === process.env.USERNAME;
-}
 
 export async function POST(request: NextRequest) {
   const storageType = process.env.NEXT_PUBLIC_STORAGE_TYPE || 'localstorage';
@@ -55,17 +51,8 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const authInfo = getAuthInfoFromCookie(request);
-    if (!authInfo?.username) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    if (!requireOwner(authInfo.username)) {
-      const userInfo = await db.getUserInfoV2(authInfo.username);
-      if (!userInfo || userInfo.role !== 'admin' || userInfo.banned) {
-        return NextResponse.json({ error: '权限不足' }, { status: 401 });
-      }
-    }
+    const caller = await requireRole(request, 'admin', { deniedStatus: 401 });
+    if (!isCaller(caller)) return caller;
 
     const body = await request.json();
     const {

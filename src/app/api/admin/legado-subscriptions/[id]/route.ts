@@ -1,34 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig, setCachedConfig } from '@/lib/config';
 import { db } from '@/lib/db';
 import { legadoSubscriptionStore } from '@/lib/legado/subscription-store';
+import { isCaller, requireRole } from '@/lib/require-role';
 
 export const runtime = 'nodejs';
-
-async function ensureAdmin(request: NextRequest) {
-  const authInfo = getAuthInfoFromCookie(request);
-  if (!authInfo?.username)
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  if (authInfo.username !== process.env.USERNAME) {
-    const userInfo = await db.getUserInfoV2(authInfo.username);
-    if (
-      !userInfo ||
-      (userInfo.role !== 'admin' && userInfo.role !== 'owner') ||
-      userInfo.banned
-    )
-      return NextResponse.json({ error: '权限不足' }, { status: 401 });
-  }
-  return authInfo.username;
-}
 
 export async function DELETE(
   request: NextRequest,
   context: { params: Promise<{ id: string }> }
 ) {
-  const ensured = await ensureAdmin(request);
-  if (ensured instanceof NextResponse) return ensured;
+  const caller = await requireRole(request, 'admin', { deniedStatus: 401 });
+  if (!isCaller(caller)) return caller;
   const { id } = await context.params;
   try {
     const config = await getConfig();

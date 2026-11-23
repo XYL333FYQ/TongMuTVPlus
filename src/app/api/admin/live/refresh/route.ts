@@ -2,25 +2,18 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 
-import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig } from '@/lib/config';
 import { db } from '@/lib/db';
 import { refreshLiveChannels } from '@/lib/live';
+import { isCaller, requireRole } from '@/lib/require-role';
 
 export const runtime = 'nodejs';
 
 export async function POST(request: NextRequest) {
   try {
-    // 权限检查 - 使用v2用户系统
-    const authInfo = getAuthInfoFromCookie(request);
-    const username = authInfo?.username;
+    const caller = await requireRole(request, 'admin', { deniedStatus: 401 });
+    if (!isCaller(caller)) return caller;
     const config = await getConfig();
-    if (username !== process.env.USERNAME) {
-      const userInfo = await db.getUserInfoV2(username || '');
-      if (!userInfo || userInfo.role !== 'admin' || userInfo.banned) {
-        return NextResponse.json({ error: '权限不足' }, { status: 401 });
-      }
-    }
 
     // 并发刷新所有启用的直播源
     const refreshPromises = (config.LiveConfig || [])

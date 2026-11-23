@@ -9,6 +9,7 @@ import { configSelfCheck, setCachedConfig } from '@/lib/config';
 import { SimpleCrypto } from '@/lib/crypto';
 import { clearProgress, updateProgress } from '@/lib/data-migration-progress';
 import { db } from '@/lib/db';
+import { isCaller, requireRole } from '@/lib/require-role';
 
 export const runtime = 'nodejs';
 
@@ -25,21 +26,10 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 验证身份和权限
-    const authInfo = getAuthInfoFromCookie(req);
-    if (!authInfo || !authInfo.username) {
-      return NextResponse.json({ error: '未登录' }, { status: 401 });
-    }
-
-    // 检查用户权限（只有站长可以导入数据）
-    if (authInfo.username !== process.env.USERNAME) {
-      return NextResponse.json(
-        { error: '权限不足，只有站长可以导入数据' },
-        { status: 401 }
-      );
-    }
-
-    const username = authInfo.username; // 存储到局部变量以便 TypeScript 类型推断
+    // 只有站长可以导入数据
+    const caller = await requireRole(req, 'owner', { deniedStatus: 401 });
+    if (!isCaller(caller)) return caller;
+    const username = caller.username;
 
     // 解析表单数据
     const formData = await req.formData();

@@ -2,23 +2,15 @@
 
 import { NextRequest } from 'next/server';
 
-import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getProgress } from '@/lib/data-migration-progress';
+import { isCaller, requireRole } from '@/lib/require-role';
 
 export const runtime = 'nodejs';
 
 export async function GET(req: NextRequest) {
-  // 验证身份和权限
-  const authInfo = getAuthInfoFromCookie(req);
-  if (!authInfo || !authInfo.username) {
-    return new Response('Unauthorized', { status: 401 });
-  }
-
-  if (authInfo.username !== process.env.USERNAME) {
-    return new Response('Forbidden', { status: 403 });
-  }
-
-  const username = authInfo.username; // 存储到局部变量以便 TypeScript 类型推断
+  const caller = await requireRole(req, 'owner', { deniedStatus: 403 });
+  if (!isCaller(caller)) return caller;
+  const username = caller.username;
 
   const { searchParams } = new URL(req.url);
   const operation = searchParams.get('operation'); // 'export' or 'import'

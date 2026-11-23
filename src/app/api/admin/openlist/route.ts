@@ -2,7 +2,6 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 
-import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig } from '@/lib/config';
 import { db } from '@/lib/db';
 import { OpenListClient } from '@/lib/openlist.client';
@@ -11,6 +10,7 @@ import {
   normalizeOpenListPath,
   normalizePathMetaMap,
 } from '@/lib/openlist-path-meta';
+import { isCaller, isOwner, requireRole } from '@/lib/require-role';
 import { normalizeApiBaseUrl } from '@/lib/url';
 
 export const runtime = 'nodejs';
@@ -64,22 +64,11 @@ export async function POST(request: NextRequest) {
       PathMeta,
     } = body;
 
-    const authInfo = getAuthInfoFromCookie(request);
-    if (!authInfo || !authInfo.username) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-    const username = authInfo.username;
+    const caller = await requireRole(request, 'admin', { deniedStatus: 401 });
+    if (!isCaller(caller)) return caller;
 
     // 获取配置
     const adminConfig = await getConfig();
-
-    // 权限检查 - 使用v2用户系统
-    if (username !== process.env.USERNAME) {
-      const userInfo = await db.getUserInfoV2(username);
-      if (!userInfo || userInfo.role !== 'admin' || userInfo.banned) {
-        return NextResponse.json({ error: '权限不足' }, { status: 401 });
-      }
-    }
 
     if (action === 'save') {
       const cleanedPathMeta = parsePathMeta(PathMeta);
@@ -89,7 +78,7 @@ export async function POST(request: NextRequest) {
 
       // 站长专属：OpenList 是否让私人影库可用，不能被管理员改动；
       // 启用状态下维护地址、账号密码、根目录等照常保存。
-      if (username !== process.env.USERNAME) {
+      if (!isOwner(caller)) {
         const current = adminConfig.OpenListConfig;
         const before = !!(
           current?.Enabled &&

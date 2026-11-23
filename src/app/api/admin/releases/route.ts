@@ -1,21 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { getAuthInfoFromCookie } from '@/lib/auth';
 import { parseReleaseInfo } from '@/lib/release-info';
+import { isCaller, requireRole } from '@/lib/require-role';
 import { getReleaseSnapshot, publishRelease } from '@/lib/server/release-store';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-function authorize(request: NextRequest) {
-  const auth = getAuthInfoFromCookie(request);
-  if (!auth?.username)
-    return NextResponse.json({ error: '请先登录' }, { status: 401 });
-  if (!process.env.USERNAME || auth.username !== process.env.USERNAME)
-    return NextResponse.json(
-      { error: '只有站长可以维护版本与发布记录' },
-      { status: 403 }
-    );
+async function authorize(request: NextRequest) {
+  const caller = await requireRole(request, 'owner', { deniedStatus: 403 });
+  if (!isCaller(caller)) return caller;
   if (
     (process.env.NEXT_PUBLIC_STORAGE_TYPE || 'localstorage') === 'localstorage'
   )
@@ -27,7 +21,7 @@ function authorize(request: NextRequest) {
 }
 
 export async function GET(request: NextRequest) {
-  const denied = authorize(request);
+  const denied = await authorize(request);
   if (denied) return denied;
   try {
     const snapshot = await getReleaseSnapshot();
@@ -43,7 +37,7 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const denied = authorize(request);
+  const denied = await authorize(request);
   if (denied) return denied;
   const expected = request.headers.get('if-match');
   if (!expected)

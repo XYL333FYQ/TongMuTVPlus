@@ -1,7 +1,7 @@
 /* eslint-disable no-console */
 import { NextRequest, NextResponse } from 'next/server';
 
-import { getAuthInfoFromCookie } from '@/lib/auth';
+import { isCaller, requireRole } from '@/lib/require-role';
 
 export const runtime = 'nodejs';
 
@@ -17,14 +17,9 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const authInfo = getAuthInfoFromCookie(request);
-    if (!authInfo || !authInfo.username) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
     // 管理接口：只有站长 / 管理员可以调用
-    if (authInfo.role !== 'owner' && authInfo.role !== 'admin') {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-    }
+    const caller = await requireRole(request, 'admin', { deniedStatus: 403 });
+    if (!isCaller(caller)) return caller;
 
     const { issuerUrl } = await request.json();
 

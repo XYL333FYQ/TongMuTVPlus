@@ -2,8 +2,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 
-import { getAuthInfoFromCookie } from '@/lib/auth';
-import { db } from '@/lib/db';
+import { isCaller, isOwner, requireRole } from '@/lib/require-role';
 import {
   deleteSourceScript,
   getDefaultSourceScriptTemplate,
@@ -22,33 +21,13 @@ async function assertAdmin(request: NextRequest) {
     throw new Error('不支持本地存储进行管理员配置');
   }
 
-  const authInfo = getAuthInfoFromCookie(request);
-  if (!authInfo?.username) {
-    return null;
-  }
-
-  if (authInfo.username === process.env.USERNAME) {
-    return authInfo.username;
-  }
-
-  const userInfoV2 = await db.getUserInfoV2(authInfo.username);
-  if (
-    !userInfoV2 ||
-    (userInfoV2.role !== 'admin' && userInfoV2.role !== 'owner') ||
-    userInfoV2.banned
-  ) {
-    return null;
-  }
-
-  return authInfo.username;
+  return requireRole(request, 'admin', { deniedStatus: 401 });
 }
 
 export async function GET(request: NextRequest) {
   try {
-    const username = await assertAdmin(request);
-    if (!username) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const caller = await assertAdmin(request);
+    if (!isCaller(caller)) return caller;
 
     const items = await listSourceScripts();
     return NextResponse.json(
@@ -72,17 +51,15 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const username = await assertAdmin(request);
-    if (!username) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const caller = await assertAdmin(request);
+    if (!isCaller(caller)) return caller;
 
     const body = (await request.json()) as Record<string, any>;
     const action = body.action as string;
 
     // 高级推荐由启用的脚本决定。管理员可维护脚本，但不能通过保存、
     // 导入或删除第一个/最后一个启用脚本来改变全站开放状态。
-    if (username !== process.env.USERNAME && action !== 'test') {
+    if (!isOwner(caller) && action !== 'test') {
       const items = await listSourceScripts();
       const before = items.some((item) => item.enabled);
       let next = items.map((item) => ({
