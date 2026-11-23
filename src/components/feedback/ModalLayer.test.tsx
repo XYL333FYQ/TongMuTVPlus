@@ -107,3 +107,92 @@ test('the back key and the backdrop close it', () => {
   fireEvent.click(screen.getByText('内容'));
   expect(onClose).toHaveBeenCalledTimes(2);
 });
+
+test('closing returns focus to the control that opened it', () => {
+  const trigger = document.createElement('button');
+  document.body.append(trigger);
+  trigger.focus();
+  try {
+    const { unmount } = render(
+      <ModalLayer label='公告' onClose={() => undefined}>
+        <button type='button'>里面</button>
+      </ModalLayer>
+    );
+    screen.getByRole('button', { name: '里面' }).focus();
+    unmount();
+    expect(trigger).toHaveFocus();
+  } finally {
+    trigger.remove();
+  }
+});
+
+test('Tab wraps inside the layer in both directions', () => {
+  render(
+    <ModalLayer label='公告' onClose={() => undefined}>
+      <button type='button'>一</button>
+      <button type='button' disabled>
+        停用
+      </button>
+      <button type='button'>二</button>
+    </ModalLayer>
+  );
+  const first = screen.getByRole('button', { name: '一' });
+  const last = screen.getByRole('button', { name: '二' });
+  last.focus();
+  expect(fireEvent.keyDown(last, { key: 'Tab' })).toBe(false);
+  expect(first).toHaveFocus();
+  expect(fireEvent.keyDown(first, { key: 'Tab', shiftKey: true })).toBe(false);
+  expect(last).toHaveFocus();
+});
+
+test('Escape inside the layer never reaches page-level key listeners', () => {
+  const underlying = jest.fn();
+  document.addEventListener('keydown', underlying);
+  try {
+    render(
+      <ModalLayer label='公告' onClose={() => undefined}>
+        <button type='button'>里面</button>
+      </ModalLayer>
+    );
+    fireEvent.keyDown(screen.getByRole('button', { name: '里面' }), {
+      key: 'Escape',
+    });
+    expect(underlying).not.toHaveBeenCalled();
+  } finally {
+    document.removeEventListener('keydown', underlying);
+  }
+});
+
+test('an alert layer carries its role and description', () => {
+  render(
+    <ModalLayer
+      label='删除？'
+      onClose={() => undefined}
+      role='alertdialog'
+      describedBy='why'
+    >
+      <p id='why'>不能恢复</p>
+    </ModalLayer>
+  );
+  const dialog = screen.getByRole('alertdialog', { name: '删除？' });
+  expect(dialog).toHaveAccessibleDescription('不能恢复');
+  expect(dialog).toHaveAttribute('aria-modal', 'true');
+});
+
+test('a press-to-close layer ignores a click whose press began elsewhere', () => {
+  const onClose = jest.fn();
+  render(
+    <ModalLayer label='菜单' onClose={onClose} closeOnBackdrop='press'>
+      <p>内容</p>
+    </ModalLayer>
+  );
+  const dialog = screen.getByRole('dialog');
+  fireEvent.click(dialog);
+  expect(onClose).not.toHaveBeenCalled();
+  fireEvent.pointerDown(screen.getByText('内容'));
+  fireEvent.click(dialog);
+  expect(onClose).not.toHaveBeenCalled();
+  fireEvent.pointerDown(dialog);
+  fireEvent.click(dialog);
+  expect(onClose).toHaveBeenCalledTimes(1);
+});

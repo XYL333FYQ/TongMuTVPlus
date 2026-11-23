@@ -1,5 +1,7 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
 
+import { lockScroll } from '@/lib/scroll-lock';
+
 import { ConfirmDialog } from '@/components/feedback/ConfirmDialog';
 
 beforeEach(() => {
@@ -98,4 +100,33 @@ test('an async confirmation cannot run twice while it is still pending', async (
   expect(confirm).toBeDisabled();
   await act(async () => finish());
   expect(confirm).not.toBeDisabled();
+});
+
+test('renders inside the shared modal layer as the confirm variant', () => {
+  openDialog();
+  const dialog = screen.getByRole('alertdialog', { name: '确认删除' });
+  expect(dialog.tagName).toBe('DIALOG');
+  expect(dialog).toHaveClass('tm-modal-layer', 'tm-modal-layer--confirm');
+});
+
+test('the confirm button comes after cancel', () => {
+  openDialog();
+  const footer = screen.getByRole('button', { name: '取消' }).parentElement;
+  const labels = Array.from(footer?.querySelectorAll('button') ?? []).map(
+    (button) => button.textContent
+  );
+  expect(labels).toEqual(['取消', '删除']);
+});
+
+test('closing a confirm opened from a sheet keeps the page locked', () => {
+  window.scrollTo = jest.fn() as unknown as typeof window.scrollTo;
+  const unlockLower = lockScroll();
+  try {
+    const { rerender, props } = openDialog();
+    rerender(<ConfirmDialog {...props} isOpen={false} />);
+    expect(document.body.style.position).toBe('fixed');
+  } finally {
+    unlockLower();
+  }
+  expect(document.body.style.position).toBe('');
 });

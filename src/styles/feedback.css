@@ -68,46 +68,15 @@
   background: var(--tm-surface-raised);
 }
 
-.tm-confirm-dialog {
-  position: fixed;
-  inset: 0;
-  z-index: calc(var(--tm-z-toast) + 1);
-  box-sizing: border-box;
-  width: 100%;
-  max-width: none;
-  height: 100%;
-  max-height: none;
-  margin: 0;
-  padding: 16px;
-  border: 0;
-  color: var(--tm-text);
-  background: transparent;
-  overflow: auto;
-  overscroll-behavior: contain;
-  box-shadow: var(--tm-shadow-sm);
-}
-.tm-confirm-dialog[open] {
-  display: grid;
-  place-items: center;
-}
-.tm-confirm-dialog::backdrop {
-  background: var(--tm-scrim);
-  overflow: hidden;
-  overscroll-behavior: contain;
-}
+/* 确认框的内容；外层的定位、遮罩、层级、进场由弹窗层的 confirm 款式负责（modal-layer.css） */
 .tm-confirm-panel {
-  width: 100%;
-  max-width: 448px;
   max-height: 100%;
   overflow: auto;
   overscroll-behavior: contain;
   border: 0;
-  border-radius: var(--tm-radius-xl);
+  border-radius: var(--tm-radius-md);
   background: var(--tm-surface);
   box-shadow: var(--tm-shadow-lg);
-}
-.tm-confirm-dialog[open] .tm-confirm-panel {
-  animation: tm-dialog-in var(--tm-d-panel) var(--tm-ease-out);
 }
 .tm-confirm-header {
   display: flex;
@@ -150,8 +119,9 @@
   gap: 12px;
   padding: 24px;
 }
-/* 两个按钮：尺寸一样，只有颜色不同 */
+/* 两个按钮：等宽、尺寸一样，只有颜色不同；确认在右 */
 .tm-confirm-cancel {
+  flex: 1;
   min-width: 88px;
   min-height: 44px;
   padding: 10px 20px;
@@ -164,6 +134,7 @@
     scale var(--tm-d-press) var(--tm-ease-out);
 }
 .tm-confirm-action {
+  flex: 1;
   min-width: 88px;
   min-height: 44px;
   padding: 10px 20px;

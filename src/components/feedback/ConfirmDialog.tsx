@@ -2,9 +2,8 @@
 
 import { AlertTriangle, X } from 'lucide-react';
 import { useEffect, useId, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
 
-import { useBackLayer } from '@/hooks/useBackLayer';
+import ModalLayer from '@/components/feedback/ModalLayer';
 
 interface ConfirmDialogProps {
   isOpen: boolean;
@@ -18,6 +17,7 @@ interface ConfirmDialogProps {
   variant?: 'danger' | 'warning' | 'info';
 }
 
+/** 确认框：弹窗层的 confirm 款式（最宽 400，两个按钮等宽，确认在右） */
 export function ConfirmDialog({
   isOpen,
   title,
@@ -28,20 +28,11 @@ export function ConfirmDialog({
   onCancel,
   variant = 'warning',
 }: ConfirmDialogProps) {
-  const dialog = useRef<HTMLDialogElement>(null);
   const cancel = useRef<HTMLButtonElement>(null);
-  const cancelCallback = useRef(onCancel);
-  cancelCallback.current = onCancel;
-  const titleId = useId();
   const messageId = useId();
   const [pending, setPending] = useState(false);
   const pendingRef = useRef(false);
   const mounted = useRef(true);
-  useBackLayer(isOpen, () => {
-    if (pendingRef.current) return 'blocked';
-    cancelCallback.current();
-    return 'handled';
-  });
 
   useEffect(() => {
     mounted.current = true;
@@ -52,11 +43,17 @@ export function ConfirmDialog({
 
   // 每次重新打开都允许再次确认
   useEffect(() => {
-    if (isOpen) {
-      pendingRef.current = false;
-      setPending(false);
-    }
+    if (!isOpen) return;
+    pendingRef.current = false;
+    setPending(false);
   }, [isOpen]);
+
+  const dismiss = () => {
+    // 确认中（按钮转圈时）Esc、返回键、点外面都不关
+    if (pendingRef.current) return 'blocked' as const;
+    onCancel();
+    return 'handled' as const;
+  };
 
   const handleConfirm = () => {
     if (pendingRef.current) return;
@@ -76,76 +73,28 @@ export function ConfirmDialog({
       });
   };
 
-  useEffect(() => {
-    const element = dialog.current;
-    if (!isOpen || !element) return;
-    const trigger =
-      document.activeElement instanceof HTMLElement
-        ? document.activeElement
-        : null;
-    const nativeModal = typeof element.showModal === 'function';
-    if (nativeModal) element.showModal();
-    else element.setAttribute('open', '');
-    // Deleting downloads is irreversible: opening a confirmation never selects Delete.
-    cancel.current?.focus({ preventScroll: true });
-    const dismiss = (event: Event) => {
-      event.preventDefault();
-      if (!pendingRef.current) cancelCallback.current();
-    };
-    const keys = (event: KeyboardEvent) => {
-      if (event.defaultPrevented) return;
-      if (!nativeModal && event.key === 'Escape') dismiss(event);
-      if (event.key !== 'Tab') return;
-      const buttons = Array.from(
-        element.querySelectorAll<HTMLButtonElement>('button:not(:disabled)')
-      );
-      const first = buttons[0];
-      const last = buttons[buttons.length - 1];
-      if (event.shiftKey && document.activeElement === first) {
-        event.preventDefault();
-        last?.focus();
-      } else if (!event.shiftKey && document.activeElement === last) {
-        event.preventDefault();
-        first?.focus();
-      }
-    };
-    element.addEventListener('cancel', dismiss);
-    element.addEventListener('keydown', keys);
-    return () => {
-      element.removeEventListener('cancel', dismiss);
-      element.removeEventListener('keydown', keys);
-      if (typeof element.close === 'function') element.close();
-      else element.removeAttribute('open');
-      if (trigger?.isConnected) trigger.focus({ preventScroll: true });
-    };
-  }, [isOpen]);
+  if (!isOpen) return null;
 
-  if (!isOpen || typeof document === 'undefined') return null;
-
-  return createPortal(
-    <dialog
-      ref={dialog}
-      className='tm-confirm-dialog'
+  return (
+    <ModalLayer
+      variant='confirm'
       role='alertdialog'
-      aria-modal='true'
-      aria-labelledby={titleId}
-      aria-describedby={messageId}
-      data-variant={variant}
-      onClick={(event) => {
-        if (event.target === event.currentTarget && !pendingRef.current)
-          onCancel();
-      }}
+      label={title}
+      describedBy={messageId}
+      onClose={dismiss}
+      // 打开时焦点在“取消”上：删除这类不可撤销的操作不会被回车误确认
+      initialFocus={cancel}
     >
-      <div className='tm-confirm-panel'>
+      <div className='tm-confirm-panel' data-variant={variant}>
         <div className='tm-confirm-header'>
           <div className='tm-confirm-heading'>
             <AlertTriangle size={24} aria-hidden='true' />
-            <h2 id={titleId}>{title}</h2>
+            <h2>{title}</h2>
           </div>
           <button
             type='button'
             aria-label='关闭确认'
-            onClick={() => !pendingRef.current && onCancel()}
+            onClick={dismiss}
             disabled={pending}
             className='tm-feedback-close tm-press'
           >
@@ -161,7 +110,7 @@ export function ConfirmDialog({
           <button
             ref={cancel}
             type='button'
-            onClick={() => !pendingRef.current && onCancel()}
+            onClick={dismiss}
             disabled={pending}
             className='tm-confirm-cancel tm-press'
           >
@@ -178,7 +127,6 @@ export function ConfirmDialog({
           </button>
         </div>
       </div>
-    </dialog>,
-    document.body
+    </ModalLayer>
   );
 }
