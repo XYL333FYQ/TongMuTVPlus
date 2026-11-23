@@ -8,10 +8,11 @@ import {
   X,
   Youtube,
 } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
-import { createPortal } from 'react-dom';
+import { useMemo } from 'react';
 
 import type { TMDBVideoItem } from '@/lib/tmdb.client';
+
+import ModalLayer from '@/components/feedback/ModalLayer';
 
 interface TrailerPickerDialogProps {
   isOpen: boolean;
@@ -34,23 +35,6 @@ export default function TrailerPickerDialog({
   onRetry,
   onSelect,
 }: TrailerPickerDialogProps) {
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  useEffect(() => {
-    if (!isOpen) return;
-
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-
-    window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
-  }, [isOpen, onClose]);
-
   const sortedVideos = useMemo(() => {
     return [...videos].sort((a, b) => {
       const aOfficial = a.official ? 1 : 0;
@@ -63,15 +47,12 @@ export default function TrailerPickerDialog({
     });
   }, [videos]);
 
-  if (!mounted || !isOpen) return null;
+  if (!isOpen) return null;
 
-  return createPortal(
-    <div className='fixed inset-0 z-[10000] flex items-end sm:items-center justify-center'>
-      <div
-        className='absolute inset-0 bg-ink/60 backdrop-blur-sm'
-        onClick={onClose}
-      />
-      <div className='relative w-full sm:max-w-2xl max-h-[85vh] overflow-hidden rounded-t-2xl sm:rounded-2xl bg-surface shadow-2xl border border-line'>
+  // 弹窗层的 sheet 款式：手机贴底，平板和电脑居中；遮罩、Esc / 返回键、滚动锁由它负责
+  return (
+    <ModalLayer variant='sheet' label='选择预告片' onClose={onClose}>
+      <div className='relative w-full max-h-[85vh] overflow-hidden rounded-[var(--tm-radius-md)] bg-surface shadow-2xl border border-line'>
         <div className='flex items-start justify-between gap-4 border-b border-line px-4 sm:px-6 py-4'>
           <div className='min-w-0'>
             <div className='flex items-center gap-2 text-muted text-sm mb-1'>
@@ -169,7 +150,6 @@ export default function TrailerPickerDialog({
           )}
         </div>
       </div>
-    </div>,
-    document.body
+    </ModalLayer>
   );
 }

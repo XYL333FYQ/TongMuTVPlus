@@ -10,6 +10,8 @@ import { createPortal } from 'react-dom';
 import { getTMDBImageUrl } from '@/lib/tmdb-image-base';
 import { processImageUrl } from '@/lib/utils';
 
+import ModalLayer from '@/components/feedback/ModalLayer';
+
 interface TMDBResult {
   id: number;
   title?: string;
@@ -876,22 +878,26 @@ export default function CorrectDialog({
     </>
   );
 
+  if (!useDrawer) {
+    // 弹窗模式：遮罩、Esc / 返回键 / 点外面关闭、滚动锁由弹窗层负责
+    return (
+      <ModalLayer label='影片纠错' onClose={onClose}>
+        <div className='bg-surface rounded-lg shadow-xl w-full max-w-2xl max-h-[80vh] overflow-hidden flex flex-col'>
+          {dialogContent}
+        </div>
+      </ModalLayer>
+    );
+  }
+
+  // 抽屉模式（播放页侧栏）：不是弹窗，页面和播放器照常能点
   return createPortal(
-    useDrawer ? (
-      <div className='fixed inset-0 z-[9999] flex items-center justify-end pointer-events-none'>
-        <div
-          className={`tm-drawer-surface relative ${drawerWidth} h-full bg-surface shadow-2xl flex flex-col pointer-events-auto`}
-        >
-          {dialogContent}
-        </div>
+    <div className='fixed inset-0 z-[9999] flex items-center justify-end pointer-events-none'>
+      <div
+        className={`tm-drawer-surface relative ${drawerWidth} h-full bg-surface shadow-2xl flex flex-col pointer-events-auto`}
+      >
+        {dialogContent}
       </div>
-    ) : (
-      <div className='fixed inset-0 z-[9999] flex items-center justify-center bg-ink/50 backdrop-blur-sm'>
-        <div className='bg-surface rounded-lg shadow-xl w-full max-w-2xl max-h-[80vh] overflow-hidden flex flex-col m-4'>
-          {dialogContent}
-        </div>
-      </div>
-    ),
+    </div>,
     document.body
   );
 }

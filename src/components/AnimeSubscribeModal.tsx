@@ -2,7 +2,6 @@
 
 import { FlaskConical, Loader2, Sparkles, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { createPortal } from 'react-dom';
 
 import {
   type FansubRecognition,
@@ -21,6 +20,7 @@ import {
   isFansubPresetActive,
 } from '@/lib/anime-filter-presets';
 
+import ModalLayer from '@/components/feedback/ModalLayer';
 import Select from '@/components/ui/Select';
 
 import { type EpisodeTestResult } from '@/types/anime-subscription';
@@ -263,14 +263,9 @@ export default function AnimeSubscribeModal({
     }
   };
 
-  return createPortal(
-    <div className='fixed inset-0 z-[10000] flex items-center justify-center p-4'>
-      <div
-        className={`absolute inset-0 bg-surface transition-opacity duration-200 ${
-          visible ? 'opacity-50' : 'opacity-0'
-        }`}
-        onClick={onClose}
-      />
+  // 遮罩、Esc / 返回键 / 点外面关闭、滚动锁由弹窗层负责
+  return (
+    <ModalLayer label='添加追番订阅' onClose={onClose}>
       <div
         className={`relative w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-xl bg-surface shadow-xl transition-all duration-200 ${
           visible ? 'opacity-100 scale-100' : 'opacity-0 scale-95'
@@ -636,7 +631,6 @@ export default function AnimeSubscribeModal({
           </div>
         </div>
       </div>
-    </div>,
-    document.body
+    </ModalLayer>
   );
 }

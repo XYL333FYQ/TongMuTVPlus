@@ -5,7 +5,6 @@
 import { Search, X } from 'lucide-react';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
-import { createPortal } from 'react-dom';
 
 import {
   EpisodeTitleCorrection,
@@ -165,7 +164,7 @@ export default function EpisodeTitleCorrectDialog({
   const preferDanmaku = !!correction.preferDanmaku;
   const hasTmdb = typeof correction.tmdbId === 'number';
 
-  return createPortal(
+  return (
     <ModalLayer label='手动矫正标题' onClose={onClose}>
       <div className='tm-modal w-full max-w-md max-h-[85dvh] overflow-hidden flex flex-col rounded-2xl bg-surface shadow-xl'>
         {/* 头部 */}
@@ -301,8 +300,7 @@ export default function EpisodeTitleCorrectDialog({
           )}
         </div>
       </div>
-    </ModalLayer>,
-    document.body
+    </ModalLayer>
   );
 }
 
