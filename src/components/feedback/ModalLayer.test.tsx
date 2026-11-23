@@ -5,6 +5,7 @@ import {
   render,
   screen,
 } from '@testing-library/react';
+import { useEffect, useRef } from 'react';
 
 import { closeTopLayer } from '@/lib/shell-bridge';
 
@@ -195,4 +196,22 @@ test('a press-to-close layer ignores a click whose press began elsewhere', () =>
   fireEvent.pointerDown(dialog);
   fireEvent.click(dialog);
   expect(onClose).toHaveBeenCalledTimes(1);
+});
+
+test('the layer content exists when the caller’s effects run in the same commit', () => {
+  const seen: Array<HTMLElement | null> = [];
+  function Caller() {
+    const inner = useRef<HTMLParagraphElement>(null);
+    useEffect(() => {
+      seen.push(inner.current);
+    }, []);
+    return (
+      <ModalLayer label='公告' onClose={() => undefined}>
+        <p ref={inner}>内容</p>
+      </ModalLayer>
+    );
+  }
+  render(<Caller />);
+  expect(seen).toHaveLength(1);
+  expect(seen[0]).toBeInstanceOf(HTMLParagraphElement);
 });

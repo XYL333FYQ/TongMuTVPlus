@@ -1,6 +1,6 @@
 'use client';
 
-import { type RefObject, useEffect, useRef, useState } from 'react';
+import { type RefObject, useEffect, useRef, useSyncExternalStore } from 'react';
 import { createPortal } from 'react-dom';
 
 import '@/styles/modal-layer.css';
@@ -35,6 +35,10 @@ const FOCUSABLE = [
  * closeOnBackdrop='press'：只有在遮罩上按下、又在遮罩上松开才关。长按打开的菜单要用它，
  * 打开菜单的那次长按松手会落在遮罩上，不能把刚打开的菜单关掉。
  */
+const subscribeNothing = () => () => undefined;
+const onClientSnapshot = () => true;
+const onServerSnapshot = () => false;
+
 export default function ModalLayer({
   label,
   onClose,
@@ -63,10 +67,15 @@ export default function ModalLayer({
   const pressedBackdrop = useRef(false);
   const focusRef = useRef(initialFocus);
   focusRef.current = initialFocus;
-  // 服务端没有 body：挂载后再渲染
-  const [host, setHost] = useState<HTMLElement | null>(null);
+  // 服务端和水合时没有 body，先不渲染；其余时候第一次渲染就挂上，
+  // 调用方同一次提交里的 effect 就能拿到弹窗里的元素
+  const onClient = useSyncExternalStore(
+    subscribeNothing,
+    onClientSnapshot,
+    onServerSnapshot
+  );
+  const host = onClient ? document.body : null;
   useBackLayer(true, onClose);
-  useEffect(() => setHost(document.body), []);
   useEffect(() => {
     const dialog = dialogRef.current;
     if (!host || !dialog) return;
