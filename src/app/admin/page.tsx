@@ -80,6 +80,7 @@ import {
   ALL_FEATURE_PERMISSION_KEYS,
   FEATURE_PERMISSION_OPTIONS,
 } from '@/lib/feature-permissions';
+import { lockScroll } from '@/lib/scroll-lock';
 import { useNotificationTargetFocus } from '@/hooks/useNotificationTargetFocus';
 
 import AnimeSubscriptionComponent from '@/components/AnimeSubscriptionComponent';
@@ -654,28 +655,7 @@ const UserConfig = ({
 
   // 查看用户设备弹窗打开时锁定背景滚动，避免滚动穿透
   useEffect(() => {
-    if (!showUserDevicesModal) return;
-
-    const scrollY = window.scrollY;
-    const originalStyle = {
-      position: document.body.style.position,
-      top: document.body.style.top,
-      width: document.body.style.width,
-      overflow: document.body.style.overflow,
-    };
-
-    document.body.style.position = 'fixed';
-    document.body.style.top = `-${scrollY}px`;
-    document.body.style.width = '100%';
-    document.body.style.overflow = 'hidden';
-
-    return () => {
-      document.body.style.position = originalStyle.position;
-      document.body.style.top = originalStyle.top;
-      document.body.style.width = originalStyle.width;
-      document.body.style.overflow = originalStyle.overflow;
-      window.scrollTo(0, scrollY);
-    };
+    if (showUserDevicesModal) return lockScroll();
   }, [showUserDevicesModal]);
 
   // 判断是否有旧版用户数据需要迁移
