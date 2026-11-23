@@ -96,3 +96,50 @@ test('a quick flick closes even when it is short', () => {
   pointer(panel, 'pointerup', 140, 'touch', 5);
   expect(onClose).toHaveBeenCalledTimes(1);
 });
+
+function Toggle({
+  enabled,
+  onClose,
+}: {
+  enabled: boolean;
+  onClose: () => void;
+}) {
+  const pull = usePullDownClose(onClose, { enabled });
+  return (
+    <div data-testid='panel' data-offset={pull.offset} {...pull.handlers} />
+  );
+}
+
+test('a pull that closed the panel keeps its offset for the exit and starts from zero when reopened', () => {
+  const onClose = jest.fn();
+  const { rerender } = render(<Toggle enabled onClose={onClose} />);
+  const panel = screen.getByTestId('panel');
+  pointer(panel, 'pointerdown', 100);
+  pointer(panel, 'pointermove', 200);
+  pointer(panel, 'pointermove', 300);
+  pointer(panel, 'pointerup', 300);
+  expect(onClose).toHaveBeenCalledTimes(1);
+  rerender(<Toggle enabled={false} onClose={onClose} />);
+  expect(panel).toHaveAttribute('data-offset', '200');
+  rerender(<Toggle enabled onClose={onClose} />);
+  expect(panel).toHaveAttribute('data-offset', '0');
+});
+
+test('losing the pointer capture ends the pull like a cancel', () => {
+  const onClose = jest.fn();
+  render(<Panel onClose={onClose} />);
+  const panel = screen.getByTestId('panel');
+  pointer(panel, 'pointerdown', 100);
+  pointer(panel, 'pointermove', 300);
+  act(() => {
+    panel.dispatchEvent(
+      new MouseEvent('lostpointercapture', { bubbles: true })
+    );
+  });
+  expect(panel).toHaveAttribute('data-offset', '0');
+  pointer(panel, 'pointerdown', 100);
+  pointer(panel, 'pointermove', 200);
+  pointer(panel, 'pointermove', 300);
+  pointer(panel, 'pointerup', 300);
+  expect(onClose).toHaveBeenCalledTimes(1);
+});

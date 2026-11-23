@@ -3,6 +3,7 @@
 import {
   type PointerEvent as ReactPointerEvent,
   useCallback,
+  useEffect,
   useRef,
   useState,
 } from 'react';
@@ -31,6 +32,14 @@ export function usePullDownClose(
   const drag = useRef<Drag | null>(null);
   const closeRef = useRef(onClose);
   closeRef.current = onClose;
+
+  // 关掉时停在松手的位置让退场接着走；面板常驻（卡片的长按菜单）时，下次打开要从 0 开始
+  useEffect(() => {
+    if (enabled) {
+      setOffset(0);
+      setDragging(false);
+    } else drag.current = null;
+  }, [enabled]);
 
   const onPointerDown = useCallback(
     (event: ReactPointerEvent<HTMLElement>) => {
@@ -85,6 +94,9 @@ export function usePullDownClose(
       onPointerUp: (event: ReactPointerEvent<HTMLElement>) =>
         finish(event, false),
       onPointerCancel: (event: ReactPointerEvent<HTMLElement>) =>
+        finish(event, true),
+      // 浏览器收回了指针（例如系统手势接管）：当成取消，免得手势卡住
+      onLostPointerCapture: (event: ReactPointerEvent<HTMLElement>) =>
         finish(event, true),
     },
   };
