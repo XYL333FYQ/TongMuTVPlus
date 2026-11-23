@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { syncedSettingKeys } from './settings';
+import { type SettingKey, syncedSettingKeys } from './settings';
 
 /**
  * 本地设置云同步 —— 白名单与校验
@@ -13,7 +13,7 @@ export const LOCAL_SETTINGS_SYNC_LAST_PULL_KEY =
   'moontv_local_settings_sync_last_pull';
 
 // 本地设置面板同步白名单（键 = 浏览器存储里的键名）：settings.ts 登记里 sync: true 的键，顺序不变
-export const LOCAL_SETTINGS_KEYS: string[] = syncedSettingKeys();
+export const LOCAL_SETTINGS_KEYS: SettingKey[] = syncedSettingKeys();
 
 export const LOCAL_SETTINGS_MAX_PAYLOAD_BYTES = 64 * 1024; // 64KB
 
@@ -28,7 +28,7 @@ export function sanitizeLocalSettingsData(
   data: Record<string, unknown>
 ): Record<string, string> {
   const result: Record<string, string> = {};
-  const allowed = new Set(LOCAL_SETTINGS_KEYS);
+  const allowed = new Set<string>(LOCAL_SETTINGS_KEYS);
   for (const key of Object.keys(data)) {
     if (!allowed.has(key)) continue;
     const value = data[key];

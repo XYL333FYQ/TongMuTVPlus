@@ -79,6 +79,12 @@ export const SETTINGS = {
   hasSeenAnnouncement: local,
   announcementShown: session,
 
+  // —— 账号菜单 ——
+  // 云同步上次拉取 / 上传的时间（local-settings-sync 的 LOCAL_SETTINGS_SYNC_LAST_PULL_KEY）
+  moontv_local_settings_sync_last_pull: local,
+  // 直播直连开关：“恢复默认”时写回 false
+  liveDirectConnect: local,
+
   // —— 首页缓存（一小时） ——
   homepage_movies: local,
   homepage_tvshows: local,
@@ -231,8 +237,16 @@ export function subscribeSetting(
 }
 
 /** 云同步白名单：登记里 sync: true 的键，顺序同登记 */
-export function syncedSettingKeys(): string[] {
+export function syncedSettingKeys(): SettingKey[] {
   return (Object.keys(SETTINGS) as FixedKey[]).filter(
     (key) => SETTINGS[key].sync
+  );
+}
+
+/** 云端传来的键是不是白名单里的（只认登记过、随云同步的键） */
+export function isSyncedSettingKey(key: string): key is SettingKey {
+  return (
+    Object.prototype.hasOwnProperty.call(SETTINGS, key) &&
+    SETTINGS[key as FixedKey].sync
   );
 }

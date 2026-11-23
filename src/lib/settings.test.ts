@@ -1,5 +1,6 @@
 import { LOCAL_SETTINGS_KEYS } from './local-settings-sync';
 import {
+  isSyncedSettingKey,
   readBool,
   readJson,
   readNumber,
@@ -132,4 +133,15 @@ test('LOCAL_SETTINGS_KEYS is unchanged', () => {
     'quickForwardSeconds',
     'seekStepSeconds',
   ]);
+});
+
+test('only synced keys from the registry are accepted from the cloud', () => {
+  expect(isSyncedSettingKey('doubanProxyUrl')).toBe(true);
+  // 账号菜单自己的时间戳和直连开关登记了，但不随云同步
+  expect(isSyncedSettingKey('moontv_local_settings_sync_last_pull')).toBe(
+    false
+  );
+  expect(isSyncedSettingKey('liveDirectConnect')).toBe(false);
+  expect(isSyncedSettingKey('theme')).toBe(false);
+  expect(isSyncedSettingKey('__proto__')).toBe(false);
 });

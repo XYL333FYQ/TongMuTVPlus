@@ -42,6 +42,13 @@ import {
   notificationWorkerScript,
   waitForActiveWorker,
 } from '@/lib/service-worker';
+import {
+  type SettingKey,
+  isSyncedSettingKey,
+  readSetting,
+  removeSetting,
+  writeSetting,
+} from '@/lib/settings';
 import { clearBangumiImageFallbackCache } from '@/lib/utils';
 import { UpdateStatus } from '@/lib/version_check';
 import { useReleaseInfo } from '@/hooks/useReleaseInfo';
@@ -598,24 +605,20 @@ export const UserMenu: React.FC = () => {
     }
   }, []);
 
-  // 从 localStorage 读取设置
+  // 从本地设置读取（键名、存法不变，经 lib/settings）
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const savedAggregateSearch = localStorage.getItem(
-        'defaultAggregateSearch'
-      );
+      const savedAggregateSearch = readSetting('defaultAggregateSearch');
       if (savedAggregateSearch !== null) {
         setDefaultAggregateSearch(JSON.parse(savedAggregateSearch));
       }
 
-      const savedSaveLivePlayRecords = localStorage.getItem(
-        SAVE_LIVE_PLAY_RECORDS_KEY
-      );
+      const savedSaveLivePlayRecords = readSetting(SAVE_LIVE_PLAY_RECORDS_KEY);
       if (savedSaveLivePlayRecords !== null) {
         setSaveLivePlayRecords(savedSaveLivePlayRecords === 'true');
       }
 
-      const savedDoubanDataSource = localStorage.getItem('doubanDataSource');
+      const savedDoubanDataSource = readSetting('doubanDataSource');
       const defaultDoubanProxyType =
         (window as any).RUNTIME_CONFIG?.DOUBAN_PROXY_TYPE ||
         'cmliussss-cdn-tencent';
@@ -625,7 +628,7 @@ export const UserMenu: React.FC = () => {
         setDoubanDataSource(defaultDoubanProxyType);
       }
 
-      const savedDoubanProxyUrl = localStorage.getItem('doubanProxyUrl');
+      const savedDoubanProxyUrl = readSetting('doubanProxyUrl');
       const defaultDoubanProxy =
         (window as any).RUNTIME_CONFIG?.DOUBAN_PROXY || '';
       if (savedDoubanProxyUrl !== null) {
@@ -634,31 +637,24 @@ export const UserMenu: React.FC = () => {
         setDoubanProxyUrl(defaultDoubanProxy);
       }
 
-      const savedDoubanDataSourceBackup = localStorage.getItem(
-        'doubanDataSourceBackup'
-      );
+      const savedDoubanDataSourceBackup = readSetting('doubanDataSourceBackup');
       setDoubanDataSourceBackup(savedDoubanDataSourceBackup || 'direct');
 
-      const savedDoubanProxyUrlBackup = localStorage.getItem(
-        'doubanProxyUrlBackup'
-      );
+      const savedDoubanProxyUrlBackup = readSetting('doubanProxyUrlBackup');
       setDoubanProxyUrlBackup(savedDoubanProxyUrlBackup || '');
 
-      const savedAnimeDataSource = localStorage.getItem('animeDataSource');
+      const savedAnimeDataSource = readSetting('animeDataSource');
       const defaultAnimeDataSource =
         (window as any).RUNTIME_CONFIG?.BANGUMI_DATA_SOURCE || 'direct';
       setAnimeDataSource(savedAnimeDataSource || defaultAnimeDataSource);
 
-      const savedAnimeDataSourceBackup = localStorage.getItem(
-        'animeDataSourceBackup'
-      );
+      const savedAnimeDataSourceBackup = readSetting('animeDataSourceBackup');
       setAnimeDataSourceBackup(savedAnimeDataSourceBackup || 'server-proxy');
 
-      const savedAnimeCustomBaseUrl =
-        localStorage.getItem('animeCustomBaseUrl');
+      const savedAnimeCustomBaseUrl = readSetting('animeCustomBaseUrl');
       setAnimeCustomBaseUrl(savedAnimeCustomBaseUrl || '');
 
-      const savedAnimeImageBaseUrl = localStorage.getItem('animeImageBaseUrl');
+      const savedAnimeImageBaseUrl = readSetting('animeImageBaseUrl');
       setAnimeImageBaseUrl(savedAnimeImageBaseUrl || '');
 
       fetch('/scripts/bangumi-proxy.worker.js')
@@ -668,9 +664,7 @@ export const UserMenu: React.FC = () => {
           console.error('加载 Bangumi Workers 脚本失败:', error);
         });
 
-      const savedDoubanImageProxyType = localStorage.getItem(
-        'doubanImageProxyType'
-      );
+      const savedDoubanImageProxyType = readSetting('doubanImageProxyType');
       const defaultDoubanImageProxyType =
         (window as any).RUNTIME_CONFIG?.DOUBAN_IMAGE_PROXY_TYPE ||
         'cmliussss-cdn-tencent';
@@ -680,9 +674,7 @@ export const UserMenu: React.FC = () => {
         setDoubanImageProxyType(defaultDoubanImageProxyType);
       }
 
-      const savedDoubanImageProxyUrl = localStorage.getItem(
-        'doubanImageProxyUrl'
-      );
+      const savedDoubanImageProxyUrl = readSetting('doubanImageProxyUrl');
       const defaultDoubanImageProxyUrl =
         (window as any).RUNTIME_CONFIG?.DOUBAN_IMAGE_PROXY || '';
       if (savedDoubanImageProxyUrl !== null) {
@@ -691,35 +683,34 @@ export const UserMenu: React.FC = () => {
         setDoubanImageProxyUrl(defaultDoubanImageProxyUrl);
       }
 
-      const savedDoubanImageProxyTypeBackup = localStorage.getItem(
+      const savedDoubanImageProxyTypeBackup = readSetting(
         'doubanImageProxyTypeBackup'
       );
       setDoubanImageProxyTypeBackup(
         savedDoubanImageProxyTypeBackup || 'server'
       );
 
-      const savedDoubanImageProxyUrlBackup = localStorage.getItem(
+      const savedDoubanImageProxyUrlBackup = readSetting(
         'doubanImageProxyUrlBackup'
       );
       setDoubanImageProxyUrlBackup(savedDoubanImageProxyUrlBackup || '');
 
-      const savedTmdbImageBaseUrl = localStorage.getItem('tmdbImageBaseUrl');
+      const savedTmdbImageBaseUrl = readSetting('tmdbImageBaseUrl');
       if (savedTmdbImageBaseUrl !== null) {
         setTmdbImageBaseUrl(savedTmdbImageBaseUrl);
       }
 
-      const savedEnableOptimization =
-        localStorage.getItem('enableOptimization');
+      const savedEnableOptimization = readSetting('enableOptimization');
       if (savedEnableOptimization !== null) {
         setEnableOptimization(JSON.parse(savedEnableOptimization));
       }
 
-      const savedPreferStrategy = localStorage.getItem('preferStrategy');
+      const savedPreferStrategy = readSetting('preferStrategy');
       if (savedPreferStrategy === 'fast' || savedPreferStrategy === 'full') {
         setPreferStrategy(savedPreferStrategy);
       }
 
-      const savedPreferMode = localStorage.getItem('preferMode');
+      const savedPreferMode = readSetting('preferMode');
       if (
         savedPreferMode === 'balanced' ||
         savedPreferMode === 'resolution' ||
@@ -728,12 +719,12 @@ export const UserMenu: React.FC = () => {
         setPreferMode(savedPreferMode);
       }
 
-      const savedSpeedTestTimeout = localStorage.getItem('speedTestTimeout');
+      const savedSpeedTestTimeout = readSetting('speedTestTimeout');
       if (savedSpeedTestTimeout !== null) {
         setSpeedTestTimeout(Number(savedSpeedTestTimeout));
       }
 
-      const savedFluidSearch = localStorage.getItem('fluidSearch');
+      const savedFluidSearch = readSetting('fluidSearch');
       const defaultFluidSearch =
         (window as any).RUNTIME_CONFIG?.FLUID_SEARCH !== false;
       if (savedFluidSearch !== null) {
@@ -742,54 +733,48 @@ export const UserMenu: React.FC = () => {
         setFluidSearch(defaultFluidSearch);
       }
 
-      const savedTmdbBackdropDisabled = localStorage.getItem(
-        'tmdb_backdrop_disabled'
-      );
+      const savedTmdbBackdropDisabled = readSetting('tmdb_backdrop_disabled');
       if (savedTmdbBackdropDisabled !== null) {
         setTmdbBackdropDisabled(savedTmdbBackdropDisabled === 'true');
       }
 
-      const savedEnableTrailers = localStorage.getItem('enableTrailers');
+      const savedEnableTrailers = readSetting('enableTrailers');
       if (savedEnableTrailers !== null) {
         setEnableTrailers(savedEnableTrailers === 'true');
       }
 
-      const savedBufferStrategy = localStorage.getItem('bufferStrategy');
+      const savedBufferStrategy = readSetting('bufferStrategy');
       if (savedBufferStrategy !== null) {
         setBufferStrategy(savedBufferStrategy);
       }
 
-      const savedNextEpisodePreCache = localStorage.getItem(
-        'nextEpisodePreCache'
-      );
+      const savedNextEpisodePreCache = readSetting('nextEpisodePreCache');
       if (savedNextEpisodePreCache !== null) {
         setNextEpisodePreCache(savedNextEpisodePreCache === 'true');
       }
 
-      const savedNextEpisodeDanmakuPreload = localStorage.getItem(
+      const savedNextEpisodeDanmakuPreload = readSetting(
         'nextEpisodeDanmakuPreload'
       );
       if (savedNextEpisodeDanmakuPreload !== null) {
         setNextEpisodeDanmakuPreload(savedNextEpisodeDanmakuPreload === 'true');
       }
 
-      const savedDisablePlaybackThumbnail = localStorage.getItem(
+      const savedDisablePlaybackThumbnail = readSetting(
         'disablePlaybackThumbnail'
       );
       if (savedDisablePlaybackThumbnail !== null) {
         setDisablePlaybackThumbnail(savedDisablePlaybackThumbnail === 'true');
       }
 
-      const savedDisableEpisodeTitleFetch = localStorage.getItem(
+      const savedDisableEpisodeTitleFetch = readSetting(
         'disableEpisodeTitleFetch'
       );
       if (savedDisableEpisodeTitleFetch !== null) {
         setDisableEpisodeTitleFetch(savedDisableEpisodeTitleFetch === 'true');
       }
 
-      const savedDisableAutoLoadDanmaku = localStorage.getItem(
-        'disableAutoLoadDanmaku'
-      );
+      const savedDisableAutoLoadDanmaku = readSetting('disableAutoLoadDanmaku');
       if (savedDisableAutoLoadDanmaku !== null) {
         setDisableAutoLoadDanmaku(savedDisableAutoLoadDanmaku === 'true');
       } else {
@@ -798,26 +783,24 @@ export const UserMenu: React.FC = () => {
         setDisableAutoLoadDanmaku(!runtimeDefault);
       }
 
-      const savedDanmakuMaxCount = localStorage.getItem('danmakuMaxCount');
+      const savedDanmakuMaxCount = readSetting('danmakuMaxCount');
       if (savedDanmakuMaxCount !== null) {
         setDanmakuMaxCount(parseInt(savedDanmakuMaxCount, 10));
       }
 
-      const savedDanmakuHeatmapDisabled = localStorage.getItem(
+      const savedDanmakuHeatmapDisabled = readSetting(
         'danmaku_heatmap_disabled'
       );
       if (savedDanmakuHeatmapDisabled !== null) {
         setDanmakuHeatmapDisabled(savedDanmakuHeatmapDisabled === 'true');
       }
 
-      const savedHomeBannerEnabled = localStorage.getItem('homeBannerEnabled');
+      const savedHomeBannerEnabled = readSetting('homeBannerEnabled');
       if (savedHomeBannerEnabled !== null) {
         setHomeBannerEnabled(savedHomeBannerEnabled === 'true');
       }
 
-      const savedHomeBannerHeightScale = localStorage.getItem(
-        'homeBannerHeightScale'
-      );
+      const savedHomeBannerHeightScale = readSetting('homeBannerHeightScale');
       if (
         savedHomeBannerHeightScale === '1' ||
         savedHomeBannerHeightScale === '1.5' ||
@@ -826,7 +809,7 @@ export const UserMenu: React.FC = () => {
         setHomeBannerHeightScale(savedHomeBannerHeightScale);
       }
 
-      const savedHomeContinueWatchingEnabled = localStorage.getItem(
+      const savedHomeContinueWatchingEnabled = readSetting(
         'homeContinueWatchingEnabled'
       );
       if (savedHomeContinueWatchingEnabled !== null) {
@@ -836,7 +819,7 @@ export const UserMenu: React.FC = () => {
       }
 
       // 加载首页模块配置
-      const savedHomeModules = localStorage.getItem('homeModules');
+      const savedHomeModules = readSetting('homeModules');
       if (savedHomeModules !== null) {
         try {
           setHomeModules(JSON.parse(savedHomeModules));
@@ -846,7 +829,7 @@ export const UserMenu: React.FC = () => {
       }
 
       // 加载弹幕繁简转换设置
-      const savedDanmakuTraditionalToSimplified = localStorage.getItem(
+      const savedDanmakuTraditionalToSimplified = readSetting(
         'danmakuTraditionalToSimplified'
       );
       if (savedDanmakuTraditionalToSimplified !== null) {
@@ -856,7 +839,7 @@ export const UserMenu: React.FC = () => {
       }
 
       // 加载搜索繁体转简体设置
-      const savedSearchTraditionalToSimplified = localStorage.getItem(
+      const savedSearchTraditionalToSimplified = readSetting(
         'searchTraditionalToSimplified'
       );
       if (savedSearchTraditionalToSimplified !== null) {
@@ -866,31 +849,25 @@ export const UserMenu: React.FC = () => {
       }
 
       // 加载精确搜索设置
-      const savedExactSearch = localStorage.getItem('exactSearch');
+      const savedExactSearch = readSetting('exactSearch');
       if (savedExactSearch !== null) {
         setExactSearch(savedExactSearch === 'true');
       }
 
       // 加载最大同时下载限制设置
-      const savedMaxConcurrentDownloads = localStorage.getItem(
-        'maxConcurrentDownloads'
-      );
+      const savedMaxConcurrentDownloads = readSetting('maxConcurrentDownloads');
       if (savedMaxConcurrentDownloads !== null) {
         setMaxConcurrentDownloads(Number(savedMaxConcurrentDownloads));
       }
 
       // 加载单任务线程数设置
-      const savedDownloadThreadsPerTask = localStorage.getItem(
-        'downloadThreadsPerTask'
-      );
+      const savedDownloadThreadsPerTask = readSetting('downloadThreadsPerTask');
       if (savedDownloadThreadsPerTask !== null) {
         setDownloadThreadsPerTask(Number(savedDownloadThreadsPerTask));
       }
 
       // 加载分片下载超时设置
-      const savedDownloadSegmentTimeout = localStorage.getItem(
-        'downloadSegmentTimeout'
-      );
+      const savedDownloadSegmentTimeout = readSetting('downloadSegmentTimeout');
       if (savedDownloadSegmentTimeout !== null) {
         const timeout = Number(savedDownloadSegmentTimeout);
         if (Number.isFinite(timeout)) {
@@ -899,7 +876,7 @@ export const UserMenu: React.FC = () => {
       }
 
       // 加载下载模式设置
-      const savedDownloadMode = localStorage.getItem('downloadMode');
+      const savedDownloadMode = readSetting('downloadMode');
       if (
         savedDownloadMode === 'browser' ||
         savedDownloadMode === 'filesystem' ||
@@ -909,8 +886,7 @@ export const UserMenu: React.FC = () => {
       }
 
       // 加载保存路径设置
-      const savedFilesystemSavePath =
-        localStorage.getItem('filesystemSavePath');
+      const savedFilesystemSavePath = readSetting('filesystemSavePath');
       if (savedFilesystemSavePath !== null) {
         setFilesystemSavePath(savedFilesystemSavePath);
       }
@@ -1660,35 +1636,35 @@ export const UserMenu: React.FC = () => {
   const handleAggregateToggle = (value: boolean) => {
     setDefaultAggregateSearch(value);
     if (typeof window !== 'undefined') {
-      localStorage.setItem('defaultAggregateSearch', JSON.stringify(value));
+      writeSetting('defaultAggregateSearch', JSON.stringify(value));
     }
   };
 
   const handleSaveLivePlayRecordsToggle = (value: boolean) => {
     setSaveLivePlayRecords(value);
     if (typeof window !== 'undefined') {
-      localStorage.setItem(SAVE_LIVE_PLAY_RECORDS_KEY, String(value));
+      writeSetting(SAVE_LIVE_PLAY_RECORDS_KEY, String(value));
     }
   };
 
   const handleDoubanProxyUrlChange = (value: string) => {
     setDoubanProxyUrl(value);
     if (typeof window !== 'undefined') {
-      localStorage.setItem('doubanProxyUrl', value);
+      writeSetting('doubanProxyUrl', value);
     }
   };
 
   const handleOptimizationToggle = (value: boolean) => {
     setEnableOptimization(value);
     if (typeof window !== 'undefined') {
-      localStorage.setItem('enableOptimization', JSON.stringify(value));
+      writeSetting('enableOptimization', JSON.stringify(value));
     }
   };
 
   const handlePreferStrategyChange = (value: 'fast' | 'full') => {
     setPreferStrategy(value);
     if (typeof window !== 'undefined') {
-      localStorage.setItem('preferStrategy', value);
+      writeSetting('preferStrategy', value);
     }
   };
 
@@ -1697,28 +1673,28 @@ export const UserMenu: React.FC = () => {
   ) => {
     setPreferMode(value);
     if (typeof window !== 'undefined') {
-      localStorage.setItem('preferMode', value);
+      writeSetting('preferMode', value);
     }
   };
 
   const handleSpeedTestTimeoutChange = (value: number) => {
     setSpeedTestTimeout(value);
     if (typeof window !== 'undefined') {
-      localStorage.setItem('speedTestTimeout', String(value));
+      writeSetting('speedTestTimeout', String(value));
     }
   };
 
   const handleMaxConcurrentDownloadsChange = (value: number) => {
     setMaxConcurrentDownloads(value);
     if (typeof window !== 'undefined') {
-      localStorage.setItem('maxConcurrentDownloads', String(value));
+      writeSetting('maxConcurrentDownloads', String(value));
     }
   };
 
   const handleDownloadThreadsPerTaskChange = (value: number) => {
     setDownloadThreadsPerTask(value);
     if (typeof window !== 'undefined') {
-      localStorage.setItem('downloadThreadsPerTask', String(value));
+      writeSetting('downloadThreadsPerTask', String(value));
     }
   };
 
@@ -1726,7 +1702,7 @@ export const UserMenu: React.FC = () => {
     const normalizedValue = Math.min(Math.max(value, 30000), 300000);
     setDownloadSegmentTimeout(normalizedValue);
     if (typeof window !== 'undefined') {
-      localStorage.setItem('downloadSegmentTimeout', String(normalizedValue));
+      writeSetting('downloadSegmentTimeout', String(normalizedValue));
     }
   };
 
@@ -1763,7 +1739,7 @@ export const UserMenu: React.FC = () => {
 
     setDownloadMode(mode);
     if (typeof window !== 'undefined') {
-      localStorage.setItem('downloadMode', mode);
+      writeSetting('downloadMode', mode);
     }
   };
 
@@ -1771,7 +1747,7 @@ export const UserMenu: React.FC = () => {
     try {
       const dirHandle = await (window as any).showDirectoryPicker();
       setFilesystemSavePath(dirHandle.name);
-      localStorage.setItem('filesystemSavePath', dirHandle.name);
+      writeSetting('filesystemSavePath', dirHandle.name);
 
       // 保存目录句柄到 IndexedDB
       const dbName = 'MoonTVPlus';
@@ -1845,35 +1821,35 @@ export const UserMenu: React.FC = () => {
   const handleFluidSearchToggle = (value: boolean) => {
     setFluidSearch(value);
     if (typeof window !== 'undefined') {
-      localStorage.setItem('fluidSearch', JSON.stringify(value));
+      writeSetting('fluidSearch', JSON.stringify(value));
     }
   };
 
   const handleTmdbBackdropDisabledToggle = (value: boolean) => {
     setTmdbBackdropDisabled(value);
     if (typeof window !== 'undefined') {
-      localStorage.setItem('tmdb_backdrop_disabled', String(value));
+      writeSetting('tmdb_backdrop_disabled', String(value));
     }
   };
 
   const handleEnableTrailersToggle = (value: boolean) => {
     setEnableTrailers(value);
     if (typeof window !== 'undefined') {
-      localStorage.setItem('enableTrailers', String(value));
+      writeSetting('enableTrailers', String(value));
     }
   };
 
   const handleDoubanDataSourceChange = (value: string) => {
     setDoubanDataSource(value);
     if (typeof window !== 'undefined') {
-      localStorage.setItem('doubanDataSource', value);
+      writeSetting('doubanDataSource', value);
     }
   };
 
   const handleDoubanDataSourceBackupChange = (value: string) => {
     setDoubanDataSourceBackup(value);
     if (typeof window !== 'undefined') {
-      localStorage.setItem('doubanDataSourceBackup', value);
+      writeSetting('doubanDataSourceBackup', value);
     }
   };
 
@@ -1881,7 +1857,7 @@ export const UserMenu: React.FC = () => {
     clearBangumiImageFallbackCache();
     setAnimeDataSource(value);
     if (typeof window !== 'undefined') {
-      localStorage.setItem('animeDataSource', value);
+      writeSetting('animeDataSource', value);
     }
   };
 
@@ -1889,7 +1865,7 @@ export const UserMenu: React.FC = () => {
     clearBangumiImageFallbackCache();
     setAnimeDataSourceBackup(value);
     if (typeof window !== 'undefined') {
-      localStorage.setItem('animeDataSourceBackup', value);
+      writeSetting('animeDataSourceBackup', value);
     }
   };
 
@@ -1897,7 +1873,7 @@ export const UserMenu: React.FC = () => {
     clearBangumiImageFallbackCache();
     setAnimeCustomBaseUrl(value);
     if (typeof window !== 'undefined') {
-      localStorage.setItem('animeCustomBaseUrl', value);
+      writeSetting('animeCustomBaseUrl', value);
     }
   };
 
@@ -1905,7 +1881,7 @@ export const UserMenu: React.FC = () => {
     clearBangumiImageFallbackCache();
     setAnimeImageBaseUrl(value);
     if (typeof window !== 'undefined') {
-      localStorage.setItem('animeImageBaseUrl', value);
+      writeSetting('animeImageBaseUrl', value);
     }
   };
 
@@ -1923,49 +1899,49 @@ export const UserMenu: React.FC = () => {
   const handleDoubanImageProxyTypeChange = (value: string) => {
     setDoubanImageProxyType(value);
     if (typeof window !== 'undefined') {
-      localStorage.setItem('doubanImageProxyType', value);
+      writeSetting('doubanImageProxyType', value);
     }
   };
 
   const handleDoubanImageProxyTypeBackupChange = (value: string) => {
     setDoubanImageProxyTypeBackup(value);
     if (typeof window !== 'undefined') {
-      localStorage.setItem('doubanImageProxyTypeBackup', value);
+      writeSetting('doubanImageProxyTypeBackup', value);
     }
   };
 
   const handleDoubanProxyUrlBackupChange = (value: string) => {
     setDoubanProxyUrlBackup(value);
     if (typeof window !== 'undefined') {
-      localStorage.setItem('doubanProxyUrlBackup', value);
+      writeSetting('doubanProxyUrlBackup', value);
     }
   };
 
   const handleDoubanImageProxyUrlChange = (value: string) => {
     setDoubanImageProxyUrl(value);
     if (typeof window !== 'undefined') {
-      localStorage.setItem('doubanImageProxyUrl', value);
+      writeSetting('doubanImageProxyUrl', value);
     }
   };
 
   const handleDoubanImageProxyUrlBackupChange = (value: string) => {
     setDoubanImageProxyUrlBackup(value);
     if (typeof window !== 'undefined') {
-      localStorage.setItem('doubanImageProxyUrlBackup', value);
+      writeSetting('doubanImageProxyUrlBackup', value);
     }
   };
 
   const handleTmdbImageBaseUrlChange = (value: string) => {
     setTmdbImageBaseUrl(value);
     if (typeof window !== 'undefined') {
-      localStorage.setItem('tmdbImageBaseUrl', value);
+      writeSetting('tmdbImageBaseUrl', value);
     }
   };
 
   const handleBufferStrategyChange = (value: string) => {
     setBufferStrategy(value);
     if (typeof window !== 'undefined') {
-      localStorage.setItem('bufferStrategy', value);
+      writeSetting('bufferStrategy', value);
     }
   };
 
@@ -1985,56 +1961,56 @@ export const UserMenu: React.FC = () => {
   const handleNextEpisodePreCacheToggle = (value: boolean) => {
     setNextEpisodePreCache(value);
     if (typeof window !== 'undefined') {
-      localStorage.setItem('nextEpisodePreCache', String(value));
+      writeSetting('nextEpisodePreCache', String(value));
     }
   };
 
   const handleNextEpisodeDanmakuPreloadToggle = (value: boolean) => {
     setNextEpisodeDanmakuPreload(value);
     if (typeof window !== 'undefined') {
-      localStorage.setItem('nextEpisodeDanmakuPreload', String(value));
+      writeSetting('nextEpisodeDanmakuPreload', String(value));
     }
   };
 
   const handleDisablePlaybackThumbnailToggle = (value: boolean) => {
     setDisablePlaybackThumbnail(value);
     if (typeof window !== 'undefined') {
-      localStorage.setItem('disablePlaybackThumbnail', String(value));
+      writeSetting('disablePlaybackThumbnail', String(value));
     }
   };
 
   const handleDisableEpisodeTitleFetchToggle = (value: boolean) => {
     setDisableEpisodeTitleFetch(value);
     if (typeof window !== 'undefined') {
-      localStorage.setItem('disableEpisodeTitleFetch', String(value));
+      writeSetting('disableEpisodeTitleFetch', String(value));
     }
   };
 
   const handleDisableAutoLoadDanmakuToggle = (value: boolean) => {
     setDisableAutoLoadDanmaku(value);
     if (typeof window !== 'undefined') {
-      localStorage.setItem('disableAutoLoadDanmaku', String(value));
+      writeSetting('disableAutoLoadDanmaku', String(value));
     }
   };
 
   const handleDanmakuMaxCountChange = (value: number) => {
     setDanmakuMaxCount(value);
     if (typeof window !== 'undefined') {
-      localStorage.setItem('danmakuMaxCount', String(value));
+      writeSetting('danmakuMaxCount', String(value));
     }
   };
 
   const handleDanmakuHeatmapDisabledToggle = (value: boolean) => {
     setDanmakuHeatmapDisabled(value);
     if (typeof window !== 'undefined') {
-      localStorage.setItem('danmaku_heatmap_disabled', String(value));
+      writeSetting('danmaku_heatmap_disabled', String(value));
     }
   };
 
   const handleDanmakuTraditionalToSimplifiedToggle = (value: boolean) => {
     setDanmakuTraditionalToSimplified(value);
     if (typeof window !== 'undefined') {
-      localStorage.setItem('danmakuTraditionalToSimplified', String(value));
+      writeSetting('danmakuTraditionalToSimplified', String(value));
       // 刚打开时就在后台下载字典，回到播放页时已可直接转换
       if (value) void loadTraditionalToSimplifiedConverter();
     }
@@ -2043,7 +2019,7 @@ export const UserMenu: React.FC = () => {
   const handleSearchTraditionalToSimplifiedToggle = (value: boolean) => {
     setSearchTraditionalToSimplified(value);
     if (typeof window !== 'undefined') {
-      localStorage.setItem('searchTraditionalToSimplified', String(value));
+      writeSetting('searchTraditionalToSimplified', String(value));
       if (value) void loadTraditionalToSimplifiedConverter();
     }
   };
@@ -2051,14 +2027,14 @@ export const UserMenu: React.FC = () => {
   const handleExactSearchToggle = (value: boolean) => {
     setExactSearch(value);
     if (typeof window !== 'undefined') {
-      localStorage.setItem('exactSearch', String(value));
+      writeSetting('exactSearch', String(value));
     }
   };
 
   const handleHomeBannerToggle = (value: boolean) => {
     setHomeBannerEnabled(value);
     if (typeof window !== 'undefined') {
-      localStorage.setItem('homeBannerEnabled', String(value));
+      writeSetting('homeBannerEnabled', String(value));
       window.dispatchEvent(new CustomEvent('homeModulesUpdated'));
     }
   };
@@ -2066,7 +2042,7 @@ export const UserMenu: React.FC = () => {
   const handleHomeBannerHeightScaleChange = (value: HomeBannerHeightScale) => {
     setHomeBannerHeightScale(value);
     if (typeof window !== 'undefined') {
-      localStorage.setItem('homeBannerHeightScale', value);
+      writeSetting('homeBannerHeightScale', value);
       window.dispatchEvent(new CustomEvent('homeModulesUpdated'));
     }
   };
@@ -2074,7 +2050,7 @@ export const UserMenu: React.FC = () => {
   const handleHomeContinueWatchingToggle = (value: boolean) => {
     setHomeContinueWatchingEnabled(value);
     if (typeof window !== 'undefined') {
-      localStorage.setItem('homeContinueWatchingEnabled', String(value));
+      writeSetting('homeContinueWatchingEnabled', String(value));
       window.dispatchEvent(new CustomEvent('homeModulesUpdated'));
     }
   };
@@ -2086,7 +2062,7 @@ export const UserMenu: React.FC = () => {
     );
     setHomeModules(updatedModules);
     if (typeof window !== 'undefined') {
-      localStorage.setItem('homeModules', JSON.stringify(updatedModules));
+      writeSetting('homeModules', JSON.stringify(updatedModules));
       // 触发自定义事件通知首页刷新
       window.dispatchEvent(new CustomEvent('homeModulesUpdated'));
     }
@@ -2104,7 +2080,7 @@ export const UserMenu: React.FC = () => {
     });
     setHomeModules(updatedModules);
     if (typeof window !== 'undefined') {
-      localStorage.setItem('homeModules', JSON.stringify(updatedModules));
+      writeSetting('homeModules', JSON.stringify(updatedModules));
       window.dispatchEvent(new CustomEvent('homeModulesUpdated'));
     }
   };
@@ -2121,7 +2097,7 @@ export const UserMenu: React.FC = () => {
     });
     setHomeModules(updatedModules);
     if (typeof window !== 'undefined') {
-      localStorage.setItem('homeModules', JSON.stringify(updatedModules));
+      writeSetting('homeModules', JSON.stringify(updatedModules));
       window.dispatchEvent(new CustomEvent('homeModulesUpdated'));
     }
   };
@@ -2202,45 +2178,42 @@ export const UserMenu: React.FC = () => {
     setSearchTraditionalToSimplified(false);
 
     if (typeof window !== 'undefined') {
-      localStorage.setItem('defaultAggregateSearch', JSON.stringify(true));
-      localStorage.setItem(SAVE_LIVE_PLAY_RECORDS_KEY, 'false');
-      localStorage.setItem('enableOptimization', JSON.stringify(true));
-      localStorage.setItem('preferStrategy', 'fast');
-      localStorage.setItem('preferMode', 'balanced');
-      localStorage.setItem('fluidSearch', JSON.stringify(defaultFluidSearch));
-      localStorage.setItem('liveDirectConnect', JSON.stringify(false));
-      localStorage.setItem('tmdb_backdrop_disabled', 'false');
-      localStorage.setItem('enableTrailers', 'false');
-      localStorage.setItem('doubanProxyUrl', defaultDoubanProxy);
-      localStorage.setItem('doubanDataSource', defaultDoubanProxyType);
-      localStorage.setItem('doubanDataSourceBackup', 'direct');
-      localStorage.setItem('doubanProxyUrlBackup', '');
-      localStorage.setItem('animeDataSource', defaultAnimeDataSource);
-      localStorage.setItem('animeDataSourceBackup', 'server-proxy');
-      localStorage.setItem('animeCustomBaseUrl', defaultAnimeBaseUrl);
-      localStorage.setItem('animeImageBaseUrl', defaultAnimeImageBaseUrl);
-      localStorage.setItem('doubanImageProxyType', defaultDoubanImageProxyType);
-      localStorage.setItem('doubanImageProxyUrl', defaultDoubanImageProxyUrl);
-      localStorage.setItem('doubanImageProxyTypeBackup', 'server');
-      localStorage.setItem('doubanImageProxyUrlBackup', '');
-      localStorage.setItem('tmdbImageBaseUrl', 'https://image.tmdb.org');
-      localStorage.setItem('bufferStrategy', 'medium');
-      localStorage.setItem('nextEpisodePreCache', 'true');
-      localStorage.setItem('nextEpisodeDanmakuPreload', 'true');
-      localStorage.setItem('disablePlaybackThumbnail', 'true');
-      localStorage.setItem('disableEpisodeTitleFetch', 'false');
-      localStorage.setItem(
-        'disableAutoLoadDanmaku',
-        String(!defaultDanmakuAutoLoad)
-      );
-      localStorage.setItem('danmakuMaxCount', '5000');
-      localStorage.setItem('danmaku_heatmap_disabled', 'false');
-      localStorage.setItem('homeBannerEnabled', 'true');
-      localStorage.setItem('homeBannerHeightScale', '1');
-      localStorage.setItem('homeContinueWatchingEnabled', 'true');
-      localStorage.setItem('homeModules', JSON.stringify(defaultHomeModules));
-      localStorage.setItem('danmakuTraditionalToSimplified', 'false');
-      localStorage.setItem('searchTraditionalToSimplified', 'false');
+      writeSetting('defaultAggregateSearch', JSON.stringify(true));
+      writeSetting(SAVE_LIVE_PLAY_RECORDS_KEY, 'false');
+      writeSetting('enableOptimization', JSON.stringify(true));
+      writeSetting('preferStrategy', 'fast');
+      writeSetting('preferMode', 'balanced');
+      writeSetting('fluidSearch', JSON.stringify(defaultFluidSearch));
+      writeSetting('liveDirectConnect', JSON.stringify(false));
+      writeSetting('tmdb_backdrop_disabled', 'false');
+      writeSetting('enableTrailers', 'false');
+      writeSetting('doubanProxyUrl', defaultDoubanProxy);
+      writeSetting('doubanDataSource', defaultDoubanProxyType);
+      writeSetting('doubanDataSourceBackup', 'direct');
+      writeSetting('doubanProxyUrlBackup', '');
+      writeSetting('animeDataSource', defaultAnimeDataSource);
+      writeSetting('animeDataSourceBackup', 'server-proxy');
+      writeSetting('animeCustomBaseUrl', defaultAnimeBaseUrl);
+      writeSetting('animeImageBaseUrl', defaultAnimeImageBaseUrl);
+      writeSetting('doubanImageProxyType', defaultDoubanImageProxyType);
+      writeSetting('doubanImageProxyUrl', defaultDoubanImageProxyUrl);
+      writeSetting('doubanImageProxyTypeBackup', 'server');
+      writeSetting('doubanImageProxyUrlBackup', '');
+      writeSetting('tmdbImageBaseUrl', 'https://image.tmdb.org');
+      writeSetting('bufferStrategy', 'medium');
+      writeSetting('nextEpisodePreCache', 'true');
+      writeSetting('nextEpisodeDanmakuPreload', 'true');
+      writeSetting('disablePlaybackThumbnail', 'true');
+      writeSetting('disableEpisodeTitleFetch', 'false');
+      writeSetting('disableAutoLoadDanmaku', String(!defaultDanmakuAutoLoad));
+      writeSetting('danmakuMaxCount', '5000');
+      writeSetting('danmaku_heatmap_disabled', 'false');
+      writeSetting('homeBannerEnabled', 'true');
+      writeSetting('homeBannerHeightScale', '1');
+      writeSetting('homeContinueWatchingEnabled', 'true');
+      writeSetting('homeModules', JSON.stringify(defaultHomeModules));
+      writeSetting('danmakuTraditionalToSimplified', 'false');
+      writeSetting('searchTraditionalToSimplified', 'false');
       window.dispatchEvent(new CustomEvent('homeModulesUpdated'));
     }
   };
@@ -2289,12 +2262,12 @@ export const UserMenu: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // 从 localStorage 读取白名单键的当前快照（仅含已设置的键）
+  // 读取白名单键的当前快照（仅含已设置的键）
   const snapshotLocalSettings = (): Record<string, string> => {
     if (typeof window === 'undefined') return {};
     const data: Record<string, string> = {};
     for (const key of LOCAL_SETTINGS_KEYS) {
-      const value = localStorage.getItem(key);
+      const value = readSetting(key);
       if (value !== null) {
         data[key] = value;
       }
@@ -2302,10 +2275,10 @@ export const UserMenu: React.FC = () => {
     return data;
   };
 
-  // 把单个键重置为「未设置」：删除 localStorage 并将组件状态恢复为默认值
-  const resetKeyToDefault = (key: string) => {
+  // 把单个键重置为「未设置」：删掉本地设置并将组件状态恢复为默认值
+  const resetKeyToDefault = (key: SettingKey) => {
     if (typeof window !== 'undefined') {
-      localStorage.removeItem(key);
+      removeSetting(key);
     }
     switch (key) {
       case 'defaultAggregateSearch':
@@ -2457,14 +2430,14 @@ export const UserMenu: React.FC = () => {
     }
   };
 
-  // 把云端 payload 写回 localStorage（不触发服务端，仅本地生效）
+  // 把云端 payload 写回本地设置（不触发服务端，仅本地生效）
   const applyRemotePayloadCore = (payload: LocalSettingsPayload | null) => {
     if (!payload || typeof payload.data !== 'object') return;
     if (typeof window === 'undefined') return;
     for (const key of Object.keys(payload.data)) {
-      if (!LOCAL_SETTINGS_KEYS.includes(key)) continue;
+      if (!isSyncedSettingKey(key)) continue;
       const value = payload.data[key];
-      localStorage.setItem(key, value);
+      writeSetting(key, value);
       // 同步更新状态，保证界面即时生效
       switch (key) {
         case 'defaultAggregateSearch':
@@ -2610,9 +2583,9 @@ export const UserMenu: React.FC = () => {
     }
     // 更新本地拉取时间标记，避免每次进入都重复写入
     try {
-      const last = localStorage.getItem(LOCAL_SETTINGS_SYNC_LAST_PULL_KEY);
+      const last = readSetting(LOCAL_SETTINGS_SYNC_LAST_PULL_KEY);
       if (payload.updatedAt && last !== String(payload.updatedAt)) {
-        localStorage.setItem(
+        writeSetting(
           LOCAL_SETTINGS_SYNC_LAST_PULL_KEY,
           String(payload.updatedAt)
         );
@@ -2622,7 +2595,7 @@ export const UserMenu: React.FC = () => {
     }
   };
 
-  // 应用远端 payload：写 localStorage + 广播事件，让所有 UserMenu 实例同步状态
+  // 应用远端 payload：写本地设置 + 广播事件，让所有 UserMenu 实例同步状态
   const applyRemotePayload = (payload: LocalSettingsPayload | null) => {
     if (!payload || typeof payload.data !== 'object') return;
     if (typeof window === 'undefined') return;
@@ -2690,7 +2663,7 @@ export const UserMenu: React.FC = () => {
 
       // 自动模式：仅在远端比本地上次同步新时才写入，避免重复刷新
       const lastLocal = Number(
-        localStorage.getItem(LOCAL_SETTINGS_SYNC_LAST_PULL_KEY) || 0
+        readSetting(LOCAL_SETTINGS_SYNC_LAST_PULL_KEY) || 0
       );
       if (data.payload && data.updatedAt && data.updatedAt > lastLocal) {
         applyRemotePayload(data.payload);
@@ -2742,7 +2715,7 @@ export const UserMenu: React.FC = () => {
         }
         // 记录本次上传时间，避免自动模式下反复推送
         try {
-          localStorage.setItem(
+          writeSetting(
             LOCAL_SETTINGS_SYNC_LAST_PULL_KEY,
             String(result.updatedAt ?? payload.updatedAt)
           );

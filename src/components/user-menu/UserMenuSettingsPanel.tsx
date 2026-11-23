@@ -26,6 +26,8 @@ import {
 } from 'lucide-react';
 import type { Dispatch, SetStateAction } from 'react';
 
+import { writeSetting } from '@/lib/settings';
+
 import type { HomeBannerHeightScale, HomeModule } from '../UserMenu';
 
 export interface UserMenuSettingsPanelProps {
@@ -2400,16 +2402,13 @@ export default function UserMenuSettingsPanel(
                     setHomeBannerHeightScale('1');
                     setHomeContinueWatchingEnabled(true);
                     if (typeof window !== 'undefined') {
-                      localStorage.setItem(
+                      writeSetting(
                         'homeModules',
                         JSON.stringify(defaultHomeModules)
                       );
-                      localStorage.setItem('homeBannerEnabled', 'true');
-                      localStorage.setItem('homeBannerHeightScale', '1');
-                      localStorage.setItem(
-                        'homeContinueWatchingEnabled',
-                        'true'
-                      );
+                      writeSetting('homeBannerEnabled', 'true');
+                      writeSetting('homeBannerHeightScale', '1');
+                      writeSetting('homeContinueWatchingEnabled', 'true');
                       window.dispatchEvent(
                         new CustomEvent('homeModulesUpdated')
                       );
