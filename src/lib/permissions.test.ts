@@ -83,3 +83,10 @@ test('owner, admin keep everything; banned and unknown users get nothing', async
   expect((await getUserFeatureAccess('u')).music).toBe(false);
   expect((await getUserFeatureAccess(null)).music).toBe(false);
 });
+
+test('privilege follows requireRole: only USERNAME is the owner, a table row saying owner is a member', async () => {
+  setup({ role: 'owner' }, { FeaturePolicies: { music: 'granted' } });
+  expect((await getUserFeatureAccess('u')).music).toBe(false);
+  setup({ role: 'user' }, { FeaturePolicies: { music: 'granted' } });
+  expect((await getUserFeatureAccess('boss')).music).toBe(true);
+});

@@ -26,6 +26,23 @@ export type Caller = {
 
 const RANK: Record<RoleLevel, number> = { user: 0, admin: 1, owner: 2 };
 
+/**
+ * 一个账号在权限上算什么角色——全站只有这一条规则（接口权限、功能权限都用它）：
+ * 站长只认环境变量 USERNAME；用户表里写着 owner 但名字不是 USERNAME 的，算普通成员。
+ */
+export function roleOf(
+  username: string,
+  info: { role?: string } | null
+): RoleLevel {
+  if (username === process.env.USERNAME) return 'owner';
+  return info?.role === 'admin' ? 'admin' : 'user';
+}
+
+/** 管理员和站长：不受功能开关、用户组限制 */
+export function isPrivileged(role: RoleLevel): boolean {
+  return RANK[role] >= RANK.admin;
+}
+
 function refuse(error: string, status: number) {
   return NextResponse.json({ error }, { status });
 }
@@ -60,8 +77,7 @@ export async function requireRole(
   if (!info) return refuse('用户不存在', status ?? 401);
   if (info.banned) return refuse('账号已被封禁', status ?? 401);
 
-  // 用户表里写着 owner 但名字不是 USERNAME 的，不算站长
-  const role: RoleLevel = info.role === 'admin' ? 'admin' : 'user';
+  const role = roleOf(username, info);
   if (RANK[role] < RANK[level]) return refuse('没有权限', status ?? 403);
   return { username, role, info };
 }

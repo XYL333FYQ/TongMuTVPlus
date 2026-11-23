@@ -11,6 +11,7 @@ import {
   sanitizeFeaturePermissions,
   sanitizeFeaturePolicies,
 } from '@/lib/feature-permissions';
+import { isPrivileged, roleOf } from '@/lib/require-role';
 
 export type FeatureAccessMap = Record<FeaturePermissionKey, boolean>;
 
@@ -28,10 +29,6 @@ function createFullFeatureAccessMap(): FeatureAccessMap {
   }, {} as FeatureAccessMap);
 }
 
-function isPrivilegedRole(role?: string) {
-  return role === 'owner' || role === 'admin';
-}
-
 async function getUserFeatureAccessMap(
   username: string
 ): Promise<FeatureAccessMap> {
@@ -45,7 +42,8 @@ async function getUserFeatureAccessMap(
     return createEmptyFeatureAccessMap();
   }
 
-  if (username === process.env.USERNAME || isPrivilegedRole(userInfo.role)) {
+  // 谁有特权和接口权限是同一条规则（require-role.ts 的 roleOf）
+  if (isPrivileged(roleOf(username, userInfo))) {
     return createFullFeatureAccessMap();
   }
 

@@ -623,8 +623,7 @@
     "src/features/playback/surface/PlaybackSurface.tsx ×2",
     "src/features/room/view/MembersPanel.tsx ×6",
     "src/lib/anime-subscription.ts ×1",
-    "src/lib/db.ts ×2",
-    "src/lib/permissions.ts ×2"
+    "src/lib/db.ts ×2"
   ],
   "parts:scrollLock": [
     "src/components/LyricsPiPWindow.tsx ×1",
