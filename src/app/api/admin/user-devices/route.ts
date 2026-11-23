@@ -7,27 +7,9 @@ import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig } from '@/lib/config';
 import { db, getStorage } from '@/lib/db';
 import { getUserDevices, revokeRefreshToken } from '@/lib/refresh-token';
+import { isCaller, isOwner, requireRole } from '@/lib/require-role';
 
 export const runtime = 'nodejs';
-
-async function getOperatorRole(
-  username: string
-): Promise<'owner' | 'admin' | 'user'> {
-  if (username === process.env.USERNAME) return 'owner';
-
-  const operatorInfo = await db.getUserInfoV2(username);
-  if (operatorInfo) {
-    if (operatorInfo.banned) return 'user';
-    return operatorInfo.role;
-  }
-
-  const adminConfig = await getConfig();
-  const userEntry = adminConfig.UserConfig.Users.find(
-    (u) => u.username === username
-  );
-  if (userEntry?.banned) return 'user';
-  return userEntry?.role || 'user';
-}
 
 async function getTargetRole(
   username: string
@@ -54,20 +36,15 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const authInfo = getAuthInfoFromCookie(request);
-    if (!authInfo?.username) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const caller = await requireRole(request, 'admin', { deniedStatus: 401 });
+    if (!isCaller(caller)) return caller;
+    // 只用来认出“当前这台设备”，权限由上面 requireRole 判断
+    const currentTokenId = getAuthInfoFromCookie(request)?.tokenId;
 
     const { searchParams } = new URL(request.url);
     const targetUsername = (searchParams.get('username') || '').trim();
     if (!targetUsername) {
       return NextResponse.json({ error: '缺少目标用户名' }, { status: 400 });
-    }
-
-    const operatorRole = await getOperatorRole(authInfo.username);
-    if (operatorRole !== 'owner' && operatorRole !== 'admin') {
-      return NextResponse.json({ error: '权限不足' }, { status: 401 });
     }
 
     const targetRole = await getTargetRole(targetUsername);
@@ -77,8 +54,8 @@ export async function GET(request: NextRequest) {
 
     // 管理员仅可查看普通用户和自己的设备；站长可查看所有用户设备。
     if (
-      operatorRole === 'admin' &&
-      targetUsername !== authInfo.username &&
+      !isOwner(caller) &&
+      targetUsername !== caller.username &&
       targetRole !== 'user'
     ) {
       return NextResponse.json({ error: '权限不足' }, { status: 401 });
@@ -88,8 +65,7 @@ export async function GET(request: NextRequest) {
     const devicesWithCurrent = devices.map((device) => ({
       ...device,
       isCurrent:
-        targetUsername === authInfo.username &&
-        device.tokenId === authInfo.tokenId,
+        targetUsername === caller.username && device.tokenId === currentTokenId,
     }));
 
     return NextResponse.json(
@@ -115,10 +91,10 @@ export async function DELETE(request: NextRequest) {
   }
 
   try {
-    const authInfo = getAuthInfoFromCookie(request);
-    if (!authInfo?.username) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const caller = await requireRole(request, 'admin', { deniedStatus: 401 });
+    if (!isCaller(caller)) return caller;
+    // 只用来认出“当前这台设备”，权限由上面 requireRole 判断
+    const currentTokenId = getAuthInfoFromCookie(request)?.tokenId;
 
     const { username: targetUsername, tokenId } = (await request.json()) as {
       username?: string;
@@ -132,11 +108,6 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    const operatorRole = await getOperatorRole(authInfo.username);
-    if (operatorRole !== 'owner' && operatorRole !== 'admin') {
-      return NextResponse.json({ error: '权限不足' }, { status: 401 });
-    }
-
     const targetRole = await getTargetRole(targetUsername);
     if (!targetRole) {
       return NextResponse.json({ error: '目标用户不存在' }, { status: 404 });
@@ -144,15 +115,15 @@ export async function DELETE(request: NextRequest) {
 
     // 管理员仅可登出普通用户和自己的设备；站长可登出所有用户设备。
     if (
-      operatorRole === 'admin' &&
-      targetUsername !== authInfo.username &&
+      !isOwner(caller) &&
+      targetUsername !== caller.username &&
       targetRole !== 'user'
     ) {
       return NextResponse.json({ error: '权限不足' }, { status: 401 });
     }
 
     // 避免通过管理面板误登出当前会话；当前设备可在个人设备管理中处理。
-    if (targetUsername === authInfo.username && tokenId === authInfo.tokenId) {
+    if (targetUsername === caller.username && tokenId === currentTokenId) {
       return NextResponse.json(
         { error: '不能在此处登出当前设备' },
         { status: 400 }

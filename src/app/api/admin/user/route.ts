@@ -3,11 +3,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { invalidateUserAccessTokens } from '@/lib/access-token-invalidation';
-import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig } from '@/lib/config';
 import { db, getStorage } from '@/lib/db';
 import { sanitizeFeaturePermissions } from '@/lib/feature-permissions';
 import { revokeAllRefreshTokens } from '@/lib/refresh-token';
+import { isCaller, isOwner, requireRole } from '@/lib/require-role';
 
 export const runtime = 'nodejs';
 
@@ -56,11 +56,9 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
 
-    const authInfo = getAuthInfoFromCookie(request);
-    if (!authInfo || !authInfo.username) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-    const username = authInfo.username;
+    const caller = await requireRole(request, 'admin', { deniedStatus: 401 });
+    if (!isCaller(caller)) return caller;
+    const username = caller.username;
 
     const {
       targetUsername, // 目标用户名
@@ -101,30 +99,6 @@ export async function POST(request: NextRequest) {
 
     // 获取配置与存储
     const adminConfig = await getConfig();
-
-    // 判定操作者角色
-    let operatorRole: 'owner' | 'admin';
-    if (username === process.env.USERNAME) {
-      operatorRole = 'owner';
-    } else {
-      // 优先从新版本获取用户信息
-      const operatorInfo = await db.getUserInfoV2(username);
-      if (operatorInfo) {
-        if (operatorInfo.role !== 'admin' || operatorInfo.banned) {
-          return NextResponse.json({ error: '权限不足' }, { status: 401 });
-        }
-        operatorRole = 'admin';
-      } else {
-        // 回退到配置中查找
-        const userEntry = adminConfig.UserConfig.Users.find(
-          (u) => u.username === username
-        );
-        if (!userEntry || userEntry.role !== 'admin' || userEntry.banned) {
-          return NextResponse.json({ error: '权限不足' }, { status: 401 });
-        }
-        operatorRole = 'admin';
-      }
-    }
 
     // 查找目标用户条目（用户组操作和批量操作不需要）
     let targetEntry: any = null;
@@ -210,7 +184,7 @@ export async function POST(request: NextRequest) {
         }
         if (isTargetAdmin) {
           // 目标是管理员
-          if (operatorRole !== 'owner') {
+          if (!isOwner(caller)) {
             return NextResponse.json(
               { error: '仅站长可封禁管理员' },
               { status: 401 }
@@ -231,7 +205,7 @@ export async function POST(request: NextRequest) {
           );
         }
         if (isTargetAdmin) {
-          if (operatorRole !== 'owner') {
+          if (!isOwner(caller)) {
             return NextResponse.json(
               { error: '仅站长可操作管理员' },
               { status: 401 }
@@ -256,7 +230,7 @@ export async function POST(request: NextRequest) {
             { status: 400 }
           );
         }
-        if (operatorRole !== 'owner') {
+        if (!isOwner(caller)) {
           return NextResponse.json(
             { error: '仅站长可设置管理员' },
             { status: 401 }
@@ -280,7 +254,7 @@ export async function POST(request: NextRequest) {
             { status: 400 }
           );
         }
-        if (operatorRole !== 'owner') {
+        if (!isOwner(caller)) {
           return NextResponse.json(
             { error: '仅站长可取消管理员' },
             { status: 401 }
@@ -311,11 +285,7 @@ export async function POST(request: NextRequest) {
           );
         }
 
-        if (
-          isTargetAdmin &&
-          operatorRole !== 'owner' &&
-          username !== targetUsername
-        ) {
+        if (isTargetAdmin && !isOwner(caller) && username !== targetUsername) {
           return NextResponse.json(
             { error: '仅站长可修改其他管理员密码' },
             { status: 401 }
@@ -343,7 +313,7 @@ export async function POST(request: NextRequest) {
           return NextResponse.json({ error: '不能删除自己' }, { status: 400 });
         }
 
-        if (isTargetAdmin && operatorRole !== 'owner') {
+        if (isTargetAdmin && !isOwner(caller)) {
           return NextResponse.json(
             { error: '仅站长可删除管理员' },
             { status: 401 }
@@ -371,11 +341,7 @@ export async function POST(request: NextRequest) {
         const { enabledApis } = body as { enabledApis?: string[] };
 
         // 权限检查：站长可配置所有人的采集源，管理员可配置普通用户和自己的采集源
-        if (
-          isTargetAdmin &&
-          operatorRole !== 'owner' &&
-          username !== targetUsername
-        ) {
+        if (isTargetAdmin && !isOwner(caller) && username !== targetUsername) {
           return NextResponse.json(
             { error: '仅站长可配置其他管理员的采集源' },
             { status: 401 }
@@ -491,11 +457,7 @@ export async function POST(request: NextRequest) {
         const { userGroups } = body as { userGroups: string[] };
 
         // 权限检查：站长可配置所有人的用户组，管理员可配置普通用户和自己的用户组
-        if (
-          isTargetAdmin &&
-          operatorRole !== 'owner' &&
-          username !== targetUsername
-        ) {
+        if (isTargetAdmin && !isOwner(caller) && username !== targetUsername) {
           return NextResponse.json(
             { error: '仅站长可配置其他管理员的用户组' },
             { status: 400 }
@@ -527,7 +489,7 @@ export async function POST(request: NextRequest) {
         }
 
         // 权限检查：站长可批量配置所有人的用户组，管理员只能批量配置普通用户
-        if (operatorRole !== 'owner') {
+        if (!isOwner(caller)) {
           for (const targetUsername of usernames) {
             // 从V2存储中查找用户
             const userV2 = await db.getUserInfoV2(targetUsername);

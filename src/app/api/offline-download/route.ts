@@ -6,11 +6,11 @@ import * as fs from 'fs';
 import { NextRequest, NextResponse } from 'next/server';
 import * as path from 'path';
 
-import { getAuthInfoFromCookie } from '@/lib/auth';
 import {
   OfflineDownloader,
   OfflineDownloadTask,
 } from '@/lib/offline-downloader';
+import { isCaller, requireRole } from '@/lib/require-role';
 
 // 检查是否启用离线下载功能
 const OFFLINE_DOWNLOAD_ENABLED =
@@ -107,27 +107,23 @@ function getDownloader(): OfflineDownloader {
 /**
  * 检查用户权限（仅管理员和站长）
  */
-function checkPermission(request: NextRequest): boolean {
+async function checkPermission(
+  request: NextRequest
+): Promise<NextResponse | null> {
   if (!OFFLINE_DOWNLOAD_ENABLED) {
-    return false;
+    return NextResponse.json({ error: '无权限' }, { status: 403 });
   }
-
-  const authInfo = getAuthInfoFromCookie(request);
-  if (!authInfo || !authInfo.username) {
-    return false;
-  }
-
   // 只有管理员和站长可以使用
-  return authInfo.role === 'owner' || authInfo.role === 'admin';
+  const caller = await requireRole(request, 'admin', { deniedStatus: 403 });
+  return isCaller(caller) ? null : caller;
 }
 
 /**
  * GET - 获取任务列表或检查下载状态
  */
 export async function GET(request: NextRequest) {
-  if (!checkPermission(request)) {
-    return NextResponse.json({ error: '无权限' }, { status: 403 });
-  }
+  const denied = await checkPermission(request);
+  if (denied) return denied;
 
   // 确保下载器已初始化（这会触发任务加载）
   getDownloader();
@@ -170,9 +166,8 @@ export async function GET(request: NextRequest) {
  * POST - 创建离线下载任务
  */
 export async function POST(request: NextRequest) {
-  if (!checkPermission(request)) {
-    return NextResponse.json({ error: '无权限' }, { status: 403 });
-  }
+  const denied = await checkPermission(request);
+  if (denied) return denied;
 
   try {
     const body = await request.json();
@@ -318,9 +313,8 @@ export async function POST(request: NextRequest) {
  * DELETE - 删除任务
  */
 export async function DELETE(request: NextRequest) {
-  if (!checkPermission(request)) {
-    return NextResponse.json({ error: '无权限' }, { status: 403 });
-  }
+  const denied = await checkPermission(request);
+  if (denied) return denied;
 
   try {
     const { searchParams } = new URL(request.url);
@@ -373,9 +367,8 @@ export async function DELETE(request: NextRequest) {
  * PUT - 重试任务
  */
 export async function PUT(request: NextRequest) {
-  if (!checkPermission(request)) {
-    return NextResponse.json({ error: '无权限' }, { status: 403 });
-  }
+  const denied = await checkPermission(request);
+  if (denied) return denied;
 
   try {
     const { searchParams } = new URL(request.url);

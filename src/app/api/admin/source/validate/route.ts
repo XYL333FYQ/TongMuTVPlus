@@ -1,22 +1,17 @@
 /* eslint-disable @typescript-eslint/no-explicit-any,no-console */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest } from 'next/server';
 
-import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig } from '@/lib/config';
 import { API_CONFIG } from '@/lib/config';
+import { isCaller, requireRole } from '@/lib/require-role';
 
 export const runtime = 'nodejs';
 
 export async function GET(request: NextRequest) {
-  const authInfo = getAuthInfoFromCookie(request);
-  if (!authInfo || !authInfo.username) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
   // 管理接口：只有站长 / 管理员可以调用
-  if (authInfo.role !== 'owner' && authInfo.role !== 'admin') {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-  }
+  const caller = await requireRole(request, 'admin', { deniedStatus: 403 });
+  if (!isCaller(caller)) return caller;
 
   const { searchParams } = new URL(request.url);
   const searchKeyword = searchParams.get('q');

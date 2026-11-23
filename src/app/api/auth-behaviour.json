@@ -6,12 +6,12 @@
         "error": "Unauthorized"
       },
       "member": {
-        "status": 400,
-        "error": "参数格式错误"
+        "status": 401,
+        "error": "没有权限"
       },
       "banned": {
-        "status": 400,
-        "error": "参数格式错误"
+        "status": 401,
+        "error": "账号已被封禁"
       },
       "admin": {
         "status": 400,
@@ -26,16 +26,16 @@
   "admin/anime-subscription/[id]/check/route.ts": {
     "POST": {
       "anonymous": {
-        "status": 403,
-        "error": "无权限访问"
+        "status": 401,
+        "error": "Unauthorized"
       },
       "member": {
         "status": 403,
-        "error": "无权限访问"
+        "error": "没有权限"
       },
       "banned": {
         "status": 403,
-        "error": "无权限访问"
+        "error": "账号已被封禁"
       },
       "admin": {
         "status": 404,
@@ -50,16 +50,16 @@
   "admin/anime-subscription/[id]/route.ts": {
     "PUT": {
       "anonymous": {
-        "status": 403,
-        "error": "无权限访问"
+        "status": 401,
+        "error": "Unauthorized"
       },
       "member": {
         "status": 403,
-        "error": "无权限访问"
+        "error": "没有权限"
       },
       "banned": {
         "status": 403,
-        "error": "无权限访问"
+        "error": "账号已被封禁"
       },
       "admin": {
         "status": 404,
@@ -72,16 +72,16 @@
     },
     "DELETE": {
       "anonymous": {
-        "status": 403,
-        "error": "无权限访问"
+        "status": 401,
+        "error": "Unauthorized"
       },
       "member": {
         "status": 403,
-        "error": "无权限访问"
+        "error": "没有权限"
       },
       "banned": {
         "status": 403,
-        "error": "无权限访问"
+        "error": "账号已被封禁"
       },
       "admin": {
         "status": 404,
@@ -96,16 +96,16 @@
   "admin/anime-subscription/recognize/route.ts": {
     "POST": {
       "anonymous": {
-        "status": 403,
-        "error": "无权限访问"
+        "status": 401,
+        "error": "Unauthorized"
       },
       "member": {
         "status": 403,
-        "error": "无权限访问"
+        "error": "没有权限"
       },
       "banned": {
         "status": 403,
-        "error": "无权限访问"
+        "error": "账号已被封禁"
       },
       "admin": {
         "status": 400,
@@ -120,16 +120,16 @@
   "admin/anime-subscription/route.ts": {
     "GET": {
       "anonymous": {
-        "status": 403,
-        "error": "无权限访问"
+        "status": 401,
+        "error": "Unauthorized"
       },
       "member": {
         "status": 403,
-        "error": "无权限访问"
+        "error": "没有权限"
       },
       "banned": {
         "status": 403,
-        "error": "无权限访问"
+        "error": "账号已被封禁"
       },
       "admin": {
         "status": 200,
@@ -142,16 +142,16 @@
     },
     "POST": {
       "anonymous": {
-        "status": 403,
-        "error": "无权限访问"
+        "status": 401,
+        "error": "Unauthorized"
       },
       "member": {
         "status": 403,
-        "error": "无权限访问"
+        "error": "没有权限"
       },
       "banned": {
         "status": 403,
-        "error": "无权限访问"
+        "error": "账号已被封禁"
       },
       "admin": {
         "status": 400,
@@ -166,16 +166,16 @@
   "admin/anime-subscription/test/route.ts": {
     "POST": {
       "anonymous": {
-        "status": 403,
-        "error": "无权限访问"
+        "status": 401,
+        "error": "Unauthorized"
       },
       "member": {
         "status": 403,
-        "error": "无权限访问"
+        "error": "没有权限"
       },
       "banned": {
         "status": 403,
-        "error": "无权限访问"
+        "error": "账号已被封禁"
       },
       "admin": {
         "status": 400,
@@ -190,16 +190,16 @@
   "admin/anime-subscription/toggle/route.ts": {
     "PUT": {
       "anonymous": {
-        "status": 403,
-        "error": "无权限访问"
+        "status": 401,
+        "error": "Unauthorized"
       },
       "member": {
         "status": 403,
-        "error": "无权限访问"
+        "error": "没有权限"
       },
       "banned": {
         "status": 403,
-        "error": "无权限访问"
+        "error": "账号已被封禁"
       },
       "admin": {
         "status": 400,
@@ -218,12 +218,12 @@
         "error": "Unauthorized"
       },
       "member": {
-        "status": 400,
-        "error": "参数格式错误"
+        "status": 401,
+        "error": "没有权限"
       },
       "banned": {
-        "status": 400,
-        "error": "参数格式错误"
+        "status": 401,
+        "error": "账号已被封禁"
       },
       "admin": {
         "status": 400,
@@ -974,12 +974,12 @@
         "error": "Unauthorized"
       },
       "member": {
-        "status": 400,
-        "error": "参数格式错误"
+        "status": 401,
+        "error": "没有权限"
       },
       "banned": {
-        "status": 400,
-        "error": "参数格式错误"
+        "status": 401,
+        "error": "账号已被封禁"
       },
       "admin": {
         "status": 400,
@@ -1044,12 +1044,12 @@
         "error": "Unauthorized"
       },
       "member": {
-        "status": 400,
-        "error": "参数格式错误"
+        "status": 401,
+        "error": "没有权限"
       },
       "banned": {
-        "status": 400,
-        "error": "参数格式错误"
+        "status": 401,
+        "error": "账号已被封禁"
       },
       "admin": {
         "status": 400,
@@ -1069,11 +1069,11 @@
       },
       "member": {
         "status": 403,
-        "error": "Forbidden"
+        "error": "没有权限"
       },
       "banned": {
         "status": 403,
-        "error": "Forbidden"
+        "error": "账号已被封禁"
       },
       "admin": {
         "status": 400,
@@ -1162,12 +1162,12 @@
         "error": "Unauthorized"
       },
       "member": {
-        "status": 400,
-        "error": "参数格式错误"
+        "status": 401,
+        "error": "没有权限"
       },
       "banned": {
-        "status": 400,
-        "error": "参数格式错误"
+        "status": 401,
+        "error": "账号已被封禁"
       },
       "admin": {
         "status": 400,
@@ -1186,12 +1186,12 @@
         "error": "Unauthorized"
       },
       "member": {
-        "status": 400,
-        "error": "缺少目标用户名"
+        "status": 401,
+        "error": "没有权限"
       },
       "banned": {
-        "status": 400,
-        "error": "缺少目标用户名"
+        "status": 401,
+        "error": "账号已被封禁"
       },
       "admin": {
         "status": 400,
@@ -1208,12 +1208,12 @@
         "error": "Unauthorized"
       },
       "member": {
-        "status": 400,
-        "error": "缺少目标用户名或设备 Token"
+        "status": 401,
+        "error": "没有权限"
       },
       "banned": {
-        "status": 400,
-        "error": "缺少目标用户名或设备 Token"
+        "status": 401,
+        "error": "账号已被封禁"
       },
       "admin": {
         "status": 400,
@@ -1232,12 +1232,12 @@
         "error": "Unauthorized"
       },
       "member": {
-        "status": 400,
-        "error": "参数格式错误"
+        "status": 401,
+        "error": "没有权限"
       },
       "banned": {
-        "status": 400,
-        "error": "参数格式错误"
+        "status": 401,
+        "error": "账号已被封禁"
       },
       "admin": {
         "status": 400,
@@ -1300,16 +1300,16 @@
   "admin/xiaoya/route.ts": {
     "POST": {
       "anonymous": {
-        "status": 403,
-        "error": "无权限"
+        "status": 401,
+        "error": "Unauthorized"
       },
       "member": {
         "status": 403,
-        "error": "无权限"
+        "error": "没有权限"
       },
       "banned": {
         "status": 403,
-        "error": "无权限"
+        "error": "账号已被封禁"
       },
       "admin": {
         "status": 400,

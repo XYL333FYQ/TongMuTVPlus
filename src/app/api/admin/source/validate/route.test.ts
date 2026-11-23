@@ -13,6 +13,9 @@ import { getConfig } from '@/lib/config';
 
 import { GET } from './route';
 
+// 站长只认环境变量 USERNAME，不信 Cookie 里写的角色（P2-D2）
+process.env.USERNAME = 'owner';
+
 const originalFetch = global.fetch;
 afterEach(() => {
   global.fetch = originalFetch;

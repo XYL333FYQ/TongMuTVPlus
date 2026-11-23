@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { recognizeFansubGroups } from '@/lib/anime-fansub-recognize';
 import { searchACG } from '@/lib/anime-subscription';
-import { getAuthInfoFromCookie } from '@/lib/auth';
+import { isCaller, requireRole } from '@/lib/require-role';
 
 export const runtime = 'nodejs';
 
@@ -14,10 +14,8 @@ export const runtime = 'nodejs';
 export async function POST(req: NextRequest) {
   try {
     // 权限检查
-    const authInfo = getAuthInfoFromCookie(req);
-    if (!authInfo || (authInfo.role !== 'admin' && authInfo.role !== 'owner')) {
-      return NextResponse.json({ error: '无权限访问' }, { status: 403 });
-    }
+    const caller = await requireRole(req, 'admin', { deniedStatus: 403 });
+    if (!isCaller(caller)) return caller;
 
     const { title, source } = await req.json();
     const keyword = typeof title === 'string' ? title.trim() : '';

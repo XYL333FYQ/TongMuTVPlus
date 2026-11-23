@@ -2,12 +2,11 @@
  * 本地下载视频播放代理 API - 动态路由版本
  * 路径格式: /api/offline-download/local/[source]/[videoId]/[episodeIndex]/[file]
  */
-
 import * as fs from 'fs';
 import { NextRequest, NextResponse } from 'next/server';
 import * as path from 'path';
 
-import { getAuthInfoFromCookie } from '@/lib/auth';
+import { isCaller, requireRole } from '@/lib/require-role';
 
 // 检查是否启用离线下载功能
 const OFFLINE_DOWNLOAD_ENABLED =
@@ -17,18 +16,15 @@ const OFFLINE_DOWNLOAD_DIR = process.env.OFFLINE_DOWNLOAD_DIR || '/data';
 /**
  * 检查用户权限（仅管理员和站长）
  */
-function checkPermission(request: NextRequest): boolean {
+async function checkPermission(
+  request: NextRequest
+): Promise<NextResponse | null> {
   if (!OFFLINE_DOWNLOAD_ENABLED) {
-    return false;
+    return NextResponse.json({ error: '无权限' }, { status: 403 });
   }
-
-  const authInfo = getAuthInfoFromCookie(request);
-  if (!authInfo || !authInfo.username) {
-    return false;
-  }
-
   // 只有管理员和站长可以访问
-  return authInfo.role === 'owner' || authInfo.role === 'admin';
+  const caller = await requireRole(request, 'admin', { deniedStatus: 403 });
+  return isCaller(caller) ? null : caller;
 }
 
 /**
@@ -46,9 +42,8 @@ export async function GET(
   }
 ) {
   const params = await props.params;
-  if (!checkPermission(request)) {
-    return NextResponse.json({ error: '无权限' }, { status: 403 });
-  }
+  const denied = await checkPermission(request);
+  if (denied) return denied;
 
   try {
     const { source, videoId, episodeIndex, file } = params;

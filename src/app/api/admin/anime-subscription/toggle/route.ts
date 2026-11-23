@@ -1,9 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from 'next/server';
 
-import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig } from '@/lib/config';
 import { db } from '@/lib/db';
+import { isCaller, requireRole } from '@/lib/require-role';
 
 export const runtime = 'nodejs';
 
@@ -23,10 +23,8 @@ function isDownloadTool(tool: unknown): tool is DownloadTool {
 export async function PUT(req: NextRequest) {
   try {
     // 权限检查
-    const authInfo = getAuthInfoFromCookie(req);
-    if (!authInfo || (authInfo.role !== 'admin' && authInfo.role !== 'owner')) {
-      return NextResponse.json({ error: '无权限访问' }, { status: 403 });
-    }
+    const caller = await requireRole(req, 'admin', { deniedStatus: 403 });
+    if (!isCaller(caller)) return caller;
 
     const { enabled, downloadTool } = await req.json();
 

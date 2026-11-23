@@ -2,9 +2,9 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 
-import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig } from '@/lib/config';
 import { db } from '@/lib/db';
+import { isCaller, isOwner, requireRole } from '@/lib/require-role';
 import { normalizeApiBaseUrl } from '@/lib/url';
 import { XiaoyaClient } from '@/lib/xiaoya.client';
 
@@ -16,10 +16,8 @@ export const runtime = 'nodejs';
  */
 export async function POST(request: NextRequest) {
   try {
-    const authInfo = getAuthInfoFromCookie(request);
-    if (!authInfo || (authInfo.role !== 'admin' && authInfo.role !== 'owner')) {
-      return NextResponse.json({ error: '无权限' }, { status: 403 });
-    }
+    const caller = await requireRole(request, 'admin', { deniedStatus: 403 });
+    if (!isCaller(caller)) return caller;
 
     const body = await request.json();
     const { action, ...configData } = body;
@@ -52,7 +50,7 @@ export async function POST(request: NextRequest) {
 
       // 站长专属：小雅是否让私人影库可用，不能被管理员改动；
       // 启用状态下维护地址、凭据等照常保存。
-      if (authInfo.username !== process.env.USERNAME) {
+      if (!isOwner(caller)) {
         const current = config.XiaoyaConfig;
         const before = !!(current?.Enabled && current?.ServerURL);
         const after = !!(

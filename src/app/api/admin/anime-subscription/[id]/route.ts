@@ -3,9 +3,9 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { validateKeywordExpr } from '@/lib/anime-keyword-expr';
 import { validateEpisodeRegex } from '@/lib/anime-subscription';
-import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig } from '@/lib/config';
 import { db } from '@/lib/db';
+import { isCaller, requireRole } from '@/lib/require-role';
 
 export const runtime = 'nodejs';
 
@@ -20,10 +20,8 @@ export async function PUT(
   const params = await props.params;
   try {
     // 权限检查
-    const authInfo = getAuthInfoFromCookie(req);
-    if (!authInfo || (authInfo.role !== 'admin' && authInfo.role !== 'owner')) {
-      return NextResponse.json({ error: '无权限访问' }, { status: 403 });
-    }
+    const caller = await requireRole(req, 'admin', { deniedStatus: 403 });
+    if (!isCaller(caller)) return caller;
 
     const config = await getConfig();
     const subscriptions = config.AnimeSubscriptionConfig?.Subscriptions || [];
@@ -160,10 +158,8 @@ export async function DELETE(
   const params = await props.params;
   try {
     // 权限检查
-    const authInfo = getAuthInfoFromCookie(req);
-    if (!authInfo || (authInfo.role !== 'admin' && authInfo.role !== 'owner')) {
-      return NextResponse.json({ error: '无权限访问' }, { status: 403 });
-    }
+    const caller = await requireRole(req, 'admin', { deniedStatus: 403 });
+    if (!isCaller(caller)) return caller;
 
     const config = await getConfig();
     const subscriptions = config.AnimeSubscriptionConfig?.Subscriptions || [];
