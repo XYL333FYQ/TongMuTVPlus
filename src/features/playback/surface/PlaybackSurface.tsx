@@ -28,6 +28,7 @@ import {
 } from '@/lib/episode-title-correction';
 import { isNetdiskSource, normalizeNetdiskSource } from '@/lib/netdisk/source';
 import { CUSTOM_SUBTITLE_ACCEPT } from '@/lib/subtitle-converter';
+import { formatDuration } from '@/lib/time';
 import { getTMDBImageUrl } from '@/lib/tmdb-image-base';
 import { SearchResult } from '@/lib/types';
 import { processImageUrl } from '@/lib/utils';
@@ -713,17 +714,6 @@ function PlayPageClient() {
     ? directEpisodeLabel
     : `第${currentEpisodeIndex + 1}集`;
 
-  const formatQuickForwardDuration = (seconds: number) => {
-    if (seconds >= 60) {
-      const minutes = Math.floor(seconds / 60);
-      const remainingSeconds = seconds % 60;
-      return remainingSeconds
-        ? `${minutes}分${remainingSeconds}秒`
-        : `${minutes}分钟`;
-    }
-    return `${seconds}秒`;
-  };
-
   const seekQuickForward = () => {
     const player = artPlayerRef.current;
     if (!player) return false;
@@ -736,7 +726,7 @@ function PlayPageClient() {
       (player.currentTime || 0) + quickForwardSecondsRef.current
     );
     player.currentTime = nextTime;
-    player.notice.show = `快进 ${formatQuickForwardDuration(
+    player.notice.show = `快进 ${formatDuration(
       quickForwardSecondsRef.current
     )}`;
     return true;
@@ -1294,35 +1284,12 @@ function PlayPageClient() {
     artPlayerRef,
     currentIdRef,
     currentSourceRef,
-    get formatTime() {
-      return formatTime;
-    },
     get handleSkipConfigChange() {
       return handleSkipConfigChange;
     },
     setSkipConfig,
     skipConfigRef,
   });
-
-  const formatTime = (seconds: number): string => {
-    if (seconds === 0) return '00:00';
-
-    const hours = Math.floor(seconds / 3600);
-    const minutes = Math.floor((seconds % 3600) / 60);
-    const remainingSeconds = Math.round(seconds % 60);
-
-    if (hours === 0) {
-      // 不到一小时，格式为 00:00
-      return `${minutes.toString().padStart(2, '0')}:${remainingSeconds
-        .toString()
-        .padStart(2, '0')}`;
-    } else {
-      // 超过一小时，格式为 00:00:00
-      return `${hours.toString().padStart(2, '0')}:${minutes
-        .toString()
-        .padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
-    }
-  };
 
   // 当集数索引变化时自动更新视频地址
   useEffect(() => {
@@ -1828,8 +1795,6 @@ function PlayPageClient() {
       detail,
       detailRef,
       episodeSubtitles,
-      formatQuickForwardDuration,
-      formatTime,
       handleNextEpisode,
       handleSkipConfigChange,
       harmonyHlsPlaybackMode,

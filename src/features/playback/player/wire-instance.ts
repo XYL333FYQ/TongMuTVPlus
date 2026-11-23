@@ -8,6 +8,7 @@ import type { Dispatch, MutableRefObject, SetStateAction } from 'react';
 import { generateStorageKey, getAllPlayRecords } from '@/lib/db.client';
 import { DEVICE_TIER_EVENT, getDeviceTier } from '@/lib/device-tier';
 import { installTouchControls } from '@/lib/player-touch-controls';
+import { formatClock, formatPaddedClock } from '@/lib/time';
 import type { SearchResult } from '@/lib/types';
 
 import type { DanmakuController } from '@/features/player';
@@ -23,7 +24,6 @@ export interface WireInstanceContext {
   currentSourceRef: MutableRefObject<string>;
   danmaku: DanmakuController;
   detailRef: MutableRefObject<SearchResult | null>;
-  formatTime: (seconds: number) => string;
   handleNextEpisode: () => Promise<void>;
   isEpisodeFilteredByTitle: (title: string) => boolean;
   isIOS: boolean;
@@ -66,7 +66,6 @@ export function makeWireInstance(ctx: WireInstanceContext) {
     currentSourceRef,
     danmaku,
     detailRef,
-    formatTime,
     handleNextEpisode,
     isEpisodeFilteredByTitle,
     isIOS,
@@ -317,19 +316,6 @@ export function makeWireInstance(ctx: WireInstanceContext) {
               // 标记已经进行过首次检查
               playRecordJumpInitialCheckRef.current = false;
 
-              // 格式化时间显示
-              const formatTime = (seconds: number): string => {
-                const h = Math.floor(seconds / 3600);
-                const m = Math.floor((seconds % 3600) / 60);
-                const s = Math.floor(seconds % 60);
-                if (h > 0) {
-                  return `${h}:${m.toString().padStart(2, '0')}:${s
-                    .toString()
-                    .padStart(2, '0')}`;
-                }
-                return `${m}:${s.toString().padStart(2, '0')}`;
-              };
-
               // 添加到播放器 layers
               playRecordJumpLayerRef.current =
                 art.layers.add({
@@ -354,7 +340,7 @@ export function makeWireInstance(ctx: WireInstanceContext) {
                         pointer-events: auto;
                       ">
                         <span style="margin-right: 4px;">
-                          上次播放到 ${formatTime(recordTime)}
+                          上次播放到 ${formatClock(recordTime)}
                         </span>
                         <button id="play-record-jump-btn" style="
                           padding: 4px 12px;
@@ -409,7 +395,7 @@ export function makeWireInstance(ctx: WireInstanceContext) {
                 jumpBtn.addEventListener('click', () => {
                   if (art) {
                     art.currentTime = recordTime;
-                    art.notice.show = `已跳转到 ${formatTime(recordTime)}`;
+                    art.notice.show = `已跳转到 ${formatClock(recordTime)}`;
                   }
                   playRecordJumpDismissedRef.current = true;
                   if (playRecordJumpLayerRef.current) {
@@ -480,7 +466,7 @@ export function makeWireInstance(ctx: WireInstanceContext) {
         currentTime < skipConfigRef.current.intro_time
       ) {
         art.currentTime = skipConfigRef.current.intro_time;
-        art.notice.show = `已跳过片头 (${formatTime(
+        art.notice.show = `已跳过片头 (${formatPaddedClock(
           skipConfigRef.current.intro_time
         )})`;
       }
@@ -499,7 +485,7 @@ export function makeWireInstance(ctx: WireInstanceContext) {
         } else {
           art.pause();
         }
-        art.notice.show = `已跳过片尾 (${formatTime(
+        art.notice.show = `已跳过片尾 (${formatPaddedClock(
           skipConfigRef.current.outro_time
         )})`;
       }

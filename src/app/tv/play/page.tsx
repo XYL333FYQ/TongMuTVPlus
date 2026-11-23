@@ -53,13 +53,13 @@ import {
   saveFavorite,
   savePlayRecord,
 } from '@/lib/db.client';
+import { formatPaddedClock } from '@/lib/time';
 import { loadTVPlayerUpDownAction } from '@/lib/tv-preferences';
 import { SearchResult } from '@/lib/types';
 
 import TVNativeVideo from '@/components/tv/player/TVNativeVideo';
 import {
   fetchTVDetail,
-  formatTVTime,
   resolveTVEpisodeUrl,
 } from '@/components/tv/player/utils';
 import TVVirtualRemote from '@/components/tv/TVVirtualRemote';
@@ -1612,7 +1612,8 @@ function TVPlayClient() {
               <Maximize className='h-6 w-6' />
             </button>
             <span className='shrink-0 whitespace-nowrap px-2 text-xl font-bold text-fg'>
-              {formatTVTime(time.current)} / {formatTVTime(time.duration)}
+              {formatPaddedClock(time.current)} /{' '}
+              {formatPaddedClock(time.duration)}
             </span>
           </div>
         </div>
@@ -1630,7 +1631,7 @@ function TVPlayClient() {
             className='h-3 w-full cursor-pointer accent-fg'
           />
           <div className='mt-2 flex items-center justify-between text-lg font-bold text-fg'>
-            <span>{formatTVTime(time.current)}</span>
+            <span>{formatPaddedClock(time.current)}</span>
             <span>
               {time.duration
                 ? `${Math.max(
@@ -1639,7 +1640,7 @@ function TVPlayClient() {
                   )}%`
                 : '0%'}
             </span>
-            <span>{formatTVTime(time.duration)}</span>
+            <span>{formatPaddedClock(time.duration)}</span>
           </div>
         </div>
       </div>
@@ -1962,8 +1963,8 @@ function TVPlayClient() {
                 : '定位进度'}
             </span>
             <span>
-              {formatTVTime(seekHint.current)} /{' '}
-              {formatTVTime(seekHint.duration)}
+              {formatPaddedClock(seekHint.current)} /{' '}
+              {formatPaddedClock(seekHint.duration)}
             </span>
           </div>
           <div className='h-3 overflow-hidden rounded-full bg-raised'>

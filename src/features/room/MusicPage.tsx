@@ -13,6 +13,7 @@ import {
 } from 'react';
 
 import { useReducedMotionSetting } from '@/lib/motion';
+import { formatClock } from '@/lib/time';
 import { useAudioFocus } from '@/hooks/useAudioFocus';
 
 import PageContainer from '@/components/PageContainer';
@@ -97,12 +98,9 @@ function adjustedTime(
   return Math.max(0, state.currentTime + (Date.now() - state.updatedAt) / 1000);
 }
 
-function formatTime(time: number) {
-  if (!Number.isFinite(time) || time < 0) return '--:--';
-  const total = Math.floor(time);
-  const minutes = Math.floor(total / 60);
-  const seconds = total % 60;
-  return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+/** 还不知道时长时显示占位，格式本身交给 lib/time */
+function clockOrPlaceholder(time: number) {
+  return Number.isFinite(time) && time >= 0 ? formatClock(time) : '--:--';
 }
 
 function AudioSpectrumCanvas({
@@ -872,7 +870,7 @@ export default function MusicPage() {
                       />
                       <div className='flex items-center gap-2 text-[13px] tabular-nums'>
                         <span className='w-10 text-muted'>
-                          {formatTime(currentTime)}
+                          {clockOrPlaceholder(currentTime)}
                         </span>
                         <div className='relative h-1.5 flex-1 overflow-hidden rounded-full bg-raised'>
                           <div
@@ -881,7 +879,7 @@ export default function MusicPage() {
                           />
                         </div>
                         <span className='w-10 text-right text-muted'>
-                          {formatTime(duration)}
+                          {clockOrPlaceholder(duration)}
                         </span>
                       </div>
                     </div>
@@ -936,7 +934,7 @@ export default function MusicPage() {
                     </div>
                     <div className='mt-4 flex items-center gap-2 text-[13px] tabular-nums'>
                       <span className='w-10 text-muted'>
-                        {formatTime(currentTime)}
+                        {clockOrPlaceholder(currentTime)}
                       </span>
                       <div className='relative h-1.5 flex-1 overflow-hidden rounded-full bg-raised'>
                         <div
@@ -945,7 +943,7 @@ export default function MusicPage() {
                         />
                       </div>
                       <span className='w-10 text-right text-muted'>
-                        {formatTime(duration)}
+                        {clockOrPlaceholder(duration)}
                       </span>
                     </div>
                   </div>
@@ -1040,7 +1038,7 @@ export default function MusicPage() {
                   </div>
                   <div className='mt-5 flex items-center gap-2 text-[13px] tabular-nums'>
                     <span className='w-10 text-muted'>
-                      {formatTime(currentTime)}
+                      {clockOrPlaceholder(currentTime)}
                     </span>
                     <div className='relative h-1.5 flex-1 overflow-hidden rounded-full bg-raised'>
                       <div
@@ -1049,7 +1047,7 @@ export default function MusicPage() {
                       />
                     </div>
                     <span className='w-10 text-right text-muted'>
-                      {formatTime(duration)}
+                      {clockOrPlaceholder(duration)}
                     </span>
                   </div>
                 </div>

@@ -51,8 +51,6 @@ export interface LoadPlayerContext {
   detail: SearchResult | null;
   detailRef: MutableRefObject<SearchResult | null>;
   episodeSubtitles: () => SourceSubtitle[];
-  formatQuickForwardDuration: (seconds: number) => string;
-  formatTime: (seconds: number) => string;
   handleNextEpisode: () => Promise<void>;
   handleSkipConfigChange: (newConfig: {
     enable: boolean;
@@ -140,8 +138,6 @@ export function makeLoadPlayer(ctx: LoadPlayerContext) {
     detail,
     detailRef,
     episodeSubtitles,
-    formatQuickForwardDuration,
-    formatTime,
     handleNextEpisode,
     handleSkipConfigChange,
     harmonyHlsPlaybackMode,
@@ -335,8 +331,6 @@ export function makeLoadPlayer(ctx: LoadPlayerContext) {
             blockAdEnabled,
             danmakuHeatmapDisabledRef,
             danmakuHeatmapEnabledRef,
-            formatQuickForwardDuration,
-            formatTime,
             handleSkipConfigChange,
             quickForwardSecondsRef,
             resumeTimeRef,
@@ -367,7 +361,6 @@ export function makeLoadPlayer(ctx: LoadPlayerContext) {
           currentSourceRef,
           danmaku,
           detailRef,
-          formatTime,
           handleNextEpisode,
           isEpisodeFilteredByTitle,
           isIOS,

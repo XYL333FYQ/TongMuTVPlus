@@ -1,3 +1,5 @@
+import { formatClock, formatDuration } from '@/lib/time';
+
 import { defaultAdFilter, filterAds } from './ad-filter';
 import { bufferConfig } from './hls-engine';
 import {
@@ -6,7 +8,6 @@ import {
   matchDanmakuEpisode,
   narrowDanmakuSources,
 } from './plugins/danmaku';
-import { formatClock, formatDuration } from './plugins/format';
 import { densityLabel, heatmapSegments } from './plugins/heatmap';
 import { isM3u8LikePlayUrl } from './plugins/link-refresh';
 import { engineOf } from './plugins/subtitles';

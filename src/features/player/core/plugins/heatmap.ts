@@ -2,7 +2,8 @@
  * 弹幕热力图：进度条上方显示弹幕密度曲线，悬停看密度、点击跳转。
  */
 
-import { formatClock } from './format';
+import { formatClock } from '@/lib/time';
+
 import type { Art } from '../art-types';
 import type { PlayerPlugin } from '../WatchPlayer';
 

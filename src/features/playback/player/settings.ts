@@ -9,6 +9,7 @@ import {
   QUICK_FORWARD_STORAGE_KEY,
   SEEK_STEP_STORAGE_KEY,
 } from '@/lib/player-seek-settings';
+import { formatDuration, formatPaddedClock } from '@/lib/time';
 
 import type { Art, ArtSetting, ArtSettingOption } from '@/features/player';
 import { type Anime4KController, setHeatmapEnabled } from '@/features/player';
@@ -20,8 +21,6 @@ export interface SettingsContext {
   blockAdEnabled: boolean;
   danmakuHeatmapDisabledRef: MutableRefObject<boolean>;
   danmakuHeatmapEnabledRef: MutableRefObject<boolean>;
-  formatQuickForwardDuration: (seconds: number) => string;
-  formatTime: (seconds: number) => string;
   handleSkipConfigChange: (newConfig: {
     enable: boolean;
     intro_time: number;
@@ -50,8 +49,6 @@ export function buildSettings(ctx: SettingsContext): ArtSetting[] {
     blockAdEnabled,
     danmakuHeatmapDisabledRef,
     danmakuHeatmapEnabledRef,
-    formatQuickForwardDuration,
-    formatTime,
     handleSkipConfigChange,
     quickForwardSecondsRef,
     resumeTimeRef,
@@ -219,7 +216,7 @@ export function buildSettings(ctx: SettingsContext): ArtSetting[] {
       name: '快捷快进配置',
       html: '快捷快进配置',
       icon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 5v14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="m16 17 5-5-5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M21 12H9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
-      tooltip: `${formatQuickForwardDuration(quickForwardSecondsRef.current)}`,
+      tooltip: `${formatDuration(quickForwardSecondsRef.current)}`,
       onClick: async function () {
         const player = artPlayerRef.current;
         if (player?.fullscreen) {
@@ -284,7 +281,7 @@ export function buildSettings(ctx: SettingsContext): ArtSetting[] {
             String(normalizedSeconds)
           );
           if (artPlayerRef.current) {
-            artPlayerRef.current.notice.show = `快捷快进已设置为${formatQuickForwardDuration(
+            artPlayerRef.current.notice.show = `快捷快进已设置为${formatDuration(
               normalizedSeconds
             )}`;
           }
@@ -309,7 +306,7 @@ export function buildSettings(ctx: SettingsContext): ArtSetting[] {
       name: '快进/倒退时间',
       html: '快进/倒退时间',
       icon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="m4 12 6-6v12l-6-6Z" fill="currentColor"/><path d="m20 12-6-6v12l6-6Z" fill="currentColor"/></svg>',
-      tooltip: `${formatQuickForwardDuration(seekStepSecondsRef.current)}`,
+      tooltip: `${formatDuration(seekStepSecondsRef.current)}`,
       onClick: async function () {
         const player = artPlayerRef.current;
         if (player?.fullscreen) {
@@ -374,7 +371,7 @@ export function buildSettings(ctx: SettingsContext): ArtSetting[] {
             String(normalizedSeconds)
           );
           if (artPlayerRef.current) {
-            artPlayerRef.current.notice.show = `快进/倒退时间已设为${formatQuickForwardDuration(
+            artPlayerRef.current.notice.show = `快进/倒退时间已设为${formatDuration(
               normalizedSeconds
             )}`;
           }
@@ -403,9 +400,9 @@ export function buildSettings(ctx: SettingsContext): ArtSetting[] {
         skipConfigRef.current.intro_time === 0 &&
         skipConfigRef.current.outro_time === 0
           ? '设置跳过配置'
-          : `片头: ${formatTime(
+          : `片头: ${formatPaddedClock(
               skipConfigRef.current.intro_time
-            )} | 片尾: ${formatTime(
+            )} | 片尾: ${formatPaddedClock(
               Math.abs(skipConfigRef.current.outro_time)
             )}`,
       onClick: async function () {

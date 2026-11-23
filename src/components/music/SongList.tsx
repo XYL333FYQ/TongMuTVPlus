@@ -12,6 +12,7 @@ import {
 import { songKey, useNowPlaying } from '@/lib/music/now-playing';
 import { musicSources } from '@/lib/music/shared';
 import type { Song } from '@/lib/music/types';
+import { formatPaddedClock } from '@/lib/time';
 
 import {
   MUSIC_ART_BROKEN,
@@ -31,16 +32,13 @@ import {
 } from './tokens';
 
 /** 时长：接口给的格式不统一（有的 "04:29"、有的就是秒数），能认的都认。 */
-function formatDuration(song: Song): string {
+function songDuration(song: Song): string {
   const text = song.durationText ? String(song.durationText) : '';
   if (/^\d+:\d{2}$/.test(text)) return text;
 
   const seconds = Number(song.duration) || Number(text) || 0;
   if (!Number.isFinite(seconds) || seconds <= 0) return '';
-  const minutes = Math.floor(seconds / 60);
-  return `${String(minutes).padStart(2, '0')}:${String(
-    Math.floor(seconds % 60)
-  ).padStart(2, '0')}`;
+  return formatPaddedClock(seconds);
 }
 
 function sourceLabel(platform?: string): string {
@@ -70,7 +68,7 @@ function SongRow({
 
   const playing = nowPlaying !== null && nowPlaying === songKey(song);
   const cover = song.pic && !coverFailed ? song.pic : '';
-  const duration = formatDuration(song);
+  const duration = songDuration(song);
   const label = sourceLabel(song.platform);
 
   return (

@@ -56,3 +56,38 @@ export function isValidTime(timeString: string): boolean {
     return false;
   }
 }
+
+// —— 时长（秒）：全站只在这里格式化。非法值（NaN、负数、Infinity）一律按 0 ——
+
+function wholeSeconds(seconds: number): number {
+  return Number.isFinite(seconds) && seconds > 0 ? Math.floor(seconds) : 0;
+}
+
+const pad2 = (n: number) => n.toString().padStart(2, '0');
+
+/** 播放器时间：5:09、1:05:09 */
+export function formatClock(seconds: number): string {
+  const value = wholeSeconds(seconds);
+  const h = Math.floor(value / 3600);
+  const m = Math.floor((value % 3600) / 60);
+  const s = value % 60;
+  return h > 0 ? `${h}:${pad2(m)}:${pad2(s)}` : `${m}:${pad2(s)}`;
+}
+
+/** 分、时都补两位：05:09、01:05:09 */
+export function formatPaddedClock(seconds: number): string {
+  const value = wholeSeconds(seconds);
+  const h = Math.floor(value / 3600);
+  const m = Math.floor((value % 3600) / 60);
+  const s = value % 60;
+  return h > 0 ? `${pad2(h)}:${pad2(m)}:${pad2(s)}` : `${pad2(m)}:${pad2(s)}`;
+}
+
+/** 说给人听的时长：30秒、1分30秒、2分钟 */
+export function formatDuration(seconds: number): string {
+  const value = wholeSeconds(seconds);
+  if (value < 60) return `${value}秒`;
+  const minutes = Math.floor(value / 60);
+  const rest = value % 60;
+  return rest ? `${minutes}分${rest}秒` : `${minutes}分钟`;
+}

@@ -42,6 +42,7 @@ import {
   roomSelectionHref,
 } from '@/lib/playback-links';
 import { appendSpecialSourceParam } from '@/lib/special-source.client';
+import { formatDuration } from '@/lib/time';
 import type { TMDBVideoItem } from '@/lib/tmdb.client';
 import {
   base58Decode,
@@ -1169,18 +1170,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
                             playTime !== undefined &&
                             totalTime !== undefined && (
                               <div className='tm-video-horizontal-time'>
-                                {(() => {
-                                  const formatTime = (seconds: number) => {
-                                    const mins = Math.floor(seconds / 60);
-                                    const secs = Math.floor(seconds % 60);
-                                    // 0分钟时不显示分钟
-                                    if (mins === 0) {
-                                      return `${secs}秒`;
-                                    }
-                                    return `${mins}分${secs}秒`;
-                                  };
-                                  return formatTime(playTime);
-                                })()}
+                                {formatDuration(playTime)}
                               </div>
                             )}
 

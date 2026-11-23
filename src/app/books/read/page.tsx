@@ -54,7 +54,9 @@ import {
   saveBookTtsProgress,
 } from '@/lib/book-tts-progress.client';
 import { cn } from '@/lib/cn';
+import { formatPaddedClock } from '@/lib/time';
 
+import BookPdfActions from '@/components/books/BookPdfActions';
 import {
   LIBRARY_BUTTON,
   LIBRARY_FIELD,
@@ -68,7 +70,6 @@ import {
   READER_SHEET,
   READER_SLIDER,
 } from '@/components/media/library';
-import BookPdfActions from '@/components/books/BookPdfActions';
 import ReaderDialog from '@/components/media/ReaderDialog';
 import Select from '@/components/ui/Select';
 
@@ -1726,8 +1727,8 @@ function ChapterReader({ manifest }: { manifest: BookReadManifest }) {
                 <div className='mt-2 flex items-center justify-between text-[13px] text-muted'>
                   <span>{selectedVoice?.displayName || '默认音色'}</span>
                   <span>
-                    {formatDurationTime(displayedTtsTime)} /{' '}
-                    {formatDurationTime(ttsDuration || 0)}
+                    {formatPaddedClock(displayedTtsTime)} /{' '}
+                    {formatPaddedClock(ttsDuration || 0)}
                   </span>
                 </div>
               </div>
@@ -1975,16 +1976,6 @@ function formatBytes(size: number): string {
   if (size < 1024) return `${size} B`;
   if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`;
   return `${(size / 1024 / 1024).toFixed(1)} MB`;
-}
-
-function formatDurationTime(value: number) {
-  const totalSeconds = Math.max(0, Math.floor(value || 0));
-  const minutes = Math.floor(totalSeconds / 60);
-  const seconds = totalSeconds % 60;
-  return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(
-    2,
-    '0'
-  )}`;
 }
 
 function sanitizeTtsText(text: string): string {
@@ -4047,8 +4038,8 @@ export default function BookReadPage() {
                 <div className='mt-2 flex items-center justify-between text-[13px] text-muted'>
                   <span>{selectedVoice?.displayName || '默认音色'}</span>
                   <span>
-                    {formatDurationTime(displayedTtsTime)} /{' '}
-                    {formatDurationTime(ttsDuration || 0)}
+                    {formatPaddedClock(displayedTtsTime)} /{' '}
+                    {formatPaddedClock(ttsDuration || 0)}
                   </span>
                 </div>
               </div>

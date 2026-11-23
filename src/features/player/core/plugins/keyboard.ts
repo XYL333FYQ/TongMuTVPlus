@@ -3,9 +3,9 @@
  */
 
 import { calculateSeekTime } from '@/lib/player-seek-settings';
+import { formatDuration } from '@/lib/time';
 
 import { stepPlaybackRate } from './basics';
-import { formatDuration } from './format';
 import { PLAYBACK_RATES, WatchPlayer } from '../WatchPlayer';
 
 export const SHORTCUT_GROUPS = [

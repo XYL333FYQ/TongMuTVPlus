@@ -5,6 +5,7 @@
 import type { Dispatch, MutableRefObject, SetStateAction } from 'react';
 
 import { deleteSkipConfig, saveSkipConfig } from '@/lib/db.client';
+import { formatPaddedClock } from '@/lib/time';
 
 import type { Art, ArtSettingOption } from '@/features/player';
 
@@ -13,7 +14,6 @@ export interface SkipConfigContext {
   artPlayerRef: MutableRefObject<Art | null>;
   currentIdRef: MutableRefObject<string>;
   currentSourceRef: MutableRefObject<string>;
-  formatTime: (seconds: number) => string;
   handleSkipConfigChange: (newConfig: {
     enable: boolean;
     intro_time: number;
@@ -73,9 +73,9 @@ export function makeHandleSkipConfigChange(ctx: SkipConfigContext) {
                 skipConfigRef.current.intro_time === 0 &&
                 skipConfigRef.current.outro_time === 0
                   ? '设置跳过配置'
-                  : `片头: ${ctx.formatTime(
+                  : `片头: ${formatPaddedClock(
                       skipConfigRef.current.intro_time
-                    )} | 片尾: ${ctx.formatTime(
+                    )} | 片尾: ${formatPaddedClock(
                       Math.abs(skipConfigRef.current.outro_time)
                     )}`,
             });

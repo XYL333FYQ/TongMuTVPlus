@@ -46,6 +46,7 @@ import {
   SourcePill,
 } from '@/lib/music/shared';
 import type { MusicQuality, MusicSource, Song } from '@/lib/music/types';
+import { formatClock } from '@/lib/time';
 import { useAudioFocus } from '@/hooks/useAudioFocus';
 
 import AddToPlaylistModal from '@/components/AddToPlaylistModal';
@@ -2507,13 +2508,6 @@ export default function MusicClient({
     setEqualizerEnabled(name !== 'Flat');
   };
 
-  const formatTime = (seconds: number) => {
-    if (isNaN(seconds) || seconds === 0) return '0:00';
-    const mins = Math.floor(seconds / 60);
-    const secs = Math.floor(seconds % 60);
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-  };
-
   const sleepPickerItemHeight = 40;
   const sleepPickerVisibleCount = 5;
   const sleepPickerHeight = sleepPickerItemHeight * sleepPickerVisibleCount;
@@ -3779,16 +3773,16 @@ export default function MusicClient({
                   {showSpectrum && (
                     <div className='relative mb-3 flex items-center gap-2 text-[13px]'>
                       <span className='invisible'>
-                        {formatTime(currentTime)}
+                        {formatClock(currentTime)}
                       </span>
                       <div className='flex-1'>
                         <AudioSpectrumCanvas bars={spectrumBars} />
                       </div>
-                      <span className='invisible'>{formatTime(duration)}</span>
+                      <span className='invisible'>{formatClock(duration)}</span>
                     </div>
                   )}
                   <div className='flex items-center gap-2 text-[13px] text-muted'>
-                    <span>{formatTime(currentTime)}</span>
+                    <span>{formatClock(currentTime)}</span>
                     <div className='flex-1 h-1 bg-raised rounded-full overflow-hidden relative'>
                       <div
                         className='relative z-10 h-full bg-fg transition-all pointer-events-none'
@@ -3807,7 +3801,7 @@ export default function MusicClient({
                         className='absolute inset-0 w-full h-full opacity-0 cursor-pointer'
                       />
                     </div>
-                    <span>{formatTime(duration)}</span>
+                    <span>{formatClock(duration)}</span>
                   </div>
                 </div>
               </div>
