@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>公共弹窗层设计稿</title>
+    <!-- 颜色、圆角、动效全部来自站点令牌的唯一来源，本稿不另定义颜色 -->
+    <link rel="stylesheet" href="../../../src/styles/tokens.css" />
+    <style>
+      body {
+        margin: 0;
+        font-family: var(--tm-font-sans);
+        font-size: 14px;
+        line-height: 1.6;
+        color: var(--tm-text);
+        background: var(--tm-bg);
+      }
+      .sheet-page {
+        max-width: 1480px;
+        margin: 0 auto;
+        padding: 24px 16px 64px;
+      }
+      h1 {
+        margin: 0 0 4px;
+        font-size: 28px;
+      }
+      h2 {
+        margin: 32px 0 12px;
+        font-size: 20px;
+      }
+      p,
+      li {
+        color: var(--tm-muted);
+      }
+      .bar {
+        position: sticky;
+        top: 0;
+        z-index: 5;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-items: center;
+        padding: 12px 0;
+        background: var(--tm-bg);
+        border-bottom: 1px solid var(--tm-line);
+      }
+      .bar-group {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-right: 16px;
+      }
+      .pill {
+        min-height: 44px;
+        padding: 0 16px;
+        border: 1px solid var(--tm-line-strong);
+        border-radius: var(--tm-radius-full);
+        background: transparent;
+        color: var(--tm-text);
+        font: inherit;
+        cursor: pointer;
+      }
+      .pill[aria-pressed='true'] {
+        background: var(--tm-text);
+        color: var(--tm-accent-contrast);
+        border-color: var(--tm-text);
+      }
+      .pill:focus-visible,
+      .demo-btn:focus-visible,
+      .demo-close:focus-visible {
+        outline: 2px solid var(--tm-text);
+        outline-offset: 2px;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+      }
+      th,
+      td {
+        padding: 8px 10px;
+        border-bottom: 1px solid var(--tm-line);
+        text-align: left;
+        vertical-align: top;
+      }
+      th {
+        color: var(--tm-text);
+        font-weight: 600;
+      }
+      td {
+        color: var(--tm-muted);
+      }
+      td:first-child {
+        color: var(--tm-text);
+        white-space: nowrap;
+      }
+      .table-wrap {
+        overflow-x: auto;
+      }
+
+      /* —— 四种设备档位的画框：按真实尺寸画，再整体缩小放进页面 —— */
+      .frames {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 24px;
+        align-items: flex-start;
+      }
+      .frame-cell {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .frame-label {
+        font-size: 13px;
+        color: var(--tm-muted);
+      }
+      .frame-box {
+        position: relative;
+        overflow: hidden;
+        border-radius: var(--tm-radius-md);
+        box-shadow: 0 0 0 1px var(--tm-line-strong);
+      }
+      .device {
+        position: absolute;
+        top: 0;
+        left: 0;
+        transform-origin: 0 0;
+        overflow: hidden;
+        background: var(--tm-bg);
+      }
+      /* 弹窗下面的假页面 */
+      .fake-page {
+        position: absolute;
+        inset: 0;
+        padding: 16px;
+        display: grid;
+        gap: 12px;
+        align-content: start;
+      }
+      .fake-header {
+        height: 44px;
+        border-radius: var(--tm-radius-sm);
+        background: var(--tm-surface);
+      }
+      .fake-row {
+        display: grid;
+        grid-template-columns: repeat(var(--cols, 3), 1fr);
+        gap: 12px;
+      }
+      .fake-poster {
+        aspect-ratio: 2 / 3;
+        border-radius: var(--tm-radius-md);
+        background: var(--tm-surface-raised);
+      }
+      .device[data-device='phone-landscape'] .fake-row,
+      .device[data-device='tablet'] .fake-row {
+        --cols: 4;
+      }
+      .device[data-device='wide'] .fake-row {
+        --cols: 6;
+      }
+      .fake-video {
+        aspect-ratio: 16 / 9;
+        border-radius: var(--tm-radius-md);
+        background: var(--tm-video-bg);
+      }
+      .device[data-device='phone-landscape'] .fake-video,
+      .device[data-device='wide'] .fake-video {
+        max-height: 180px;
+      }
+
+      /* —— 弹窗层本身（tm-modal-layer 的五种款式） —— */
+      .layer {
+        position: absolute;
+        inset: 0;
+        display: grid;
+        padding: 16px;
+        padding-top: max(16px, calc(var(--tm-window-controls-h) + 8px));
+      }
+      .scrim {
+        position: absolute;
+        inset: 0;
+        background: var(--tm-scrim);
+        animation: fade-in var(--tm-d-panel) var(--tm-ease-out) both;
+      }
+      .panel {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+        max-height: 100%;
+        overflow: auto;
+        color: var(--tm-text);
+        background: var(--tm-surface);
+        box-shadow: var(--tm-shadow-lg);
+      }
+      .panel-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 16px 12px 0 24px;
+      }
+      .panel-title {
+        margin: 0;
+        font-size: 18px;
+        font-weight: 600;
+      }
+      .panel-body {
+        padding: 8px 24px 0;
+        color: var(--tm-muted);
+      }
+      .panel-foot {
+        display: flex;
+        justify-content: flex-end;
+        gap: 12px;
+        padding: 24px;
+      }
+      .demo-close {
+        display: inline-grid;
+        place-items: center;
+        width: 44px;
+        height: 44px;
+        flex: 0 0 44px;
+        border: 0;
+        border-radius: var(--tm-radius-full);
+        background: transparent;
+        color: var(--tm-muted);
+        font-size: 20px;
+        cursor: pointer;
+      }
+      .demo-btn {
+        min-width: 88px;
+        min-height: 44px;
+        padding: 0 20px;
+        border: 0;
+        border-radius: var(--tm-radius-full);
+        font: inherit;
+        font-weight: 600;
+        cursor: pointer;
+        color: var(--tm-text);
+        background: var(--tm-surface-raised);
+      }
+      .demo-btn.primary {
+        color: var(--tm-accent-contrast);
+        background: var(--tm-text);
+      }
+      .list-item {
+        display: flex;
+        align-items: center;
+        min-height: 48px;
+        padding: 0 24px;
+        color: var(--tm-text);
+        border-top: 1px solid var(--tm-line);
+      }
+      .grabber {
+        width: 36px;
+        height: 4px;
+        margin: 8px auto 0;
+        border-radius: var(--tm-radius-full);
+        background: var(--tm-line-strong);
+      }
+      .tap-note {
+        position: absolute;
+        right: 8px;
+        bottom: 8px;
+        padding: 2px 8px;
+        border-radius: var(--tm-radius-sm);
+        background: var(--tm-surface-raised);
+        color: var(--tm-muted);
+        font-size: 12px;
+      }
+
+      /* dialog：居中面板，各档位都一样，最宽 460 */
+      .layer[data-variant='dialog'] {
+        place-items: center;
+      }
+      .layer[data-variant='dialog'] .panel {
+        width: 100%;
+        max-width: 460px;
+        border-radius: var(--tm-radius-md);
+        animation: dialog-in var(--tm-d-panel) var(--tm-ease-out) both;
+      }
+
+      /* confirm：更窄、两按钮等宽，层级在提示之上（--tm-z-toast + 1） */
+      .layer[data-variant='confirm'] {
+        place-items: center;
+      }
+      .layer[data-variant='confirm'] .panel {
+        width: 100%;
+        max-width: 400px;
+        border-radius: var(--tm-radius-md);
+        animation: dialog-in var(--tm-d-panel) var(--tm-ease-out) both;
+      }
+      .layer[data-variant='confirm'] .panel-foot .demo-btn {
+        flex: 1;
+      }
+
+      /* sheet：手机两档贴底、可下拉关闭；平板和电脑变成居中面板 */
+      .layer[data-variant='sheet'] {
+        place-items: center;
+      }
+      .layer[data-variant='sheet'] .panel {
+        width: 100%;
+        max-width: 480px;
+        border-radius: var(--tm-radius-md);
+        animation: dialog-in var(--tm-d-panel) var(--tm-ease-out) both;
+      }
+      .device:is([data-device='phone'], [data-device='phone-landscape'])
+        .layer[data-variant='sheet'] {
+        padding: 0;
+        place-items: end center;
+      }
+      .device:is([data-device='phone'], [data-device='phone-landscape'])
+        .layer[data-variant='sheet']
+        .panel {
+        max-width: 560px;
+        max-height: calc(100% - 32px);
+        border-radius: var(--tm-radius-md) var(--tm-radius-md) 0 0;
+        padding-bottom: var(--tm-safe-bottom);
+        animation: sheet-in var(--tm-d-panel) var(--tm-ease-out) both;
+      }
+
+      /* drawer：平板和电脑从右侧滑出，满高 400；手机两档改从底部拉起（ACCEPTANCE“面板从底部拉起”） */
+      .layer[data-variant='drawer'] {
+        padding: 0;
+        place-items: stretch end;
+      }
+      .layer[data-variant='drawer'] .panel {
+        width: min(400px, 100%);
+        height: 100%;
+        max-height: none;
+        padding-top: max(var(--tm-safe-top), var(--tm-window-controls-h));
+        animation: drawer-in var(--tm-d-panel) var(--tm-ease-out) both;
+      }
+      .device:is([data-device='phone'], [data-device='phone-landscape'])
+        .layer[data-variant='drawer'] {
+        place-items: end center;
+      }
+      .device:is([data-device='phone'], [data-device='phone-landscape'])
+        .layer[data-variant='drawer']
+        .panel {
+        width: 100%;
+        max-width: 560px;
+        height: auto;
+        max-height: calc(100% - 32px);
+        padding-top: 0;
+        border-radius: var(--tm-radius-md) var(--tm-radius-md) 0 0;
+        animation: sheet-in var(--tm-d-panel) var(--tm-ease-out) both;
+      }
+
+      /* viewer：整屏看图 / 看画面，底色是画面黑，按钮用画面上的文字色，不随主题翻转 */
+      .layer[data-variant='viewer'] {
+        padding: 0;
+        place-items: center;
+      }
+      .layer[data-variant='viewer'] .scrim {
+        background: var(--tm-video-bg);
+      }
+      .viewer-art {
+        position: relative;
+        width: min(70%, 420px);
+        aspect-ratio: 2 / 3;
+        max-height: 80%;
+        border-radius: var(--tm-radius-sm);
+        background: var(--tm-art-fallback-base);
+        animation: viewer-in var(--tm-d-panel) var(--tm-ease-out) both;
+      }
+      .viewer-close {
+        position: absolute;
+        top: max(
+          8px,
+          calc(var(--tm-safe-top) + 8px),
+          var(--tm-window-controls-h)
+        );
+        right: 8px;
+        color: var(--tm-on-art);
+        background: var(--tm-art-glass);
+      }
+      .viewer-count {
+        position: absolute;
+        bottom: calc(16px + var(--tm-safe-bottom));
+        left: 50%;
+        transform: translateX(-50%);
+        color: var(--tm-on-art-muted);
+        font-size: 13px;
+      }
+
+      @keyframes fade-in {
+        from {
+          opacity: 0;
+        }
+      }
+      @keyframes dialog-in {
+        from {
+          opacity: 0;
+          transform: translateY(8px) scale(0.98);
+        }
+      }
+      @keyframes sheet-in {
+        from {
+          transform: translateY(100%);
+        }
+      }
+      @keyframes drawer-in {
+        from {
+          transform: translateX(100%);
+        }
+      }
+      @keyframes viewer-in {
+        from {
+          opacity: 0;
+          transform: scale(0.96);
+        }
+      }
+
+      /* 减弱动效：只留 120ms 以内的淡入（DESIGN.md 3.2） */
+      html[data-tm-reduced-motion='true'] .layer *,
+      html[data-tm-reduced-motion='true'] .layer {
+        animation-name: fade-in !important;
+        animation-duration: 120ms !important;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .layer *,
+        .layer {
+          animation-name: fade-in !important;
+          animation-duration: 120ms !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="sheet-page">
+      <h1>公共弹窗层：五种款式</h1>
+      <p>
+        第二阶段 Task 4 设计稿。只做零件 <code>ModalLayer</code> 的
+        <code>variant</code>，这一阶段不改现有弹窗的调用方（第三阶段试点再换）。
+        默认款式 <code>dialog</code> 和现在的
+        <code>tm-modal-layer</code> 长得完全一样。颜色全部来自
+        <code>src/styles/tokens.css</code>。
+      </p>
+
+      <div class="bar" role="toolbar" aria-label="设计稿选项">
+        <div class="bar-group" id="variant-group" aria-label="款式"></div>
+        <div class="bar-group">
+          <button
+            class="pill"
+            type="button"
+            id="toggle-light"
+            aria-pressed="false"
+          >
+            浅色主题
+          </button>
+          <button
+            class="pill"
+            type="button"
+            id="toggle-motion"
+            aria-pressed="false"
+          >
+            减弱动效
+          </button>
+          <button
+            class="pill"
+            type="button"
+            id="toggle-desktop"
+            aria-pressed="false"
+          >
+            Windows 客户端
+          </button>
+          <button class="pill" type="button" id="replay">重播进场</button>
+        </div>
+      </div>
+
+      <h2 id="variant-title">dialog</h2>
+      <p id="variant-summary"></p>
+      <div class="frames" id="frames"></div>
+
+      <h2>五种款式在四种设备档位</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>款式</th>
+              <th>手机竖屏 phone</th>
+              <th>手机横屏 phone-landscape</th>
+              <th>平板 tablet</th>
+              <th>电脑 wide</th>
+              <th>以后用在哪（第三阶段）</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>dialog（默认）</td>
+              <td colspan="4">
+                居中，最宽 460，四周留
+                16px；内容多了在面板里滚，不超过屏幕高（减去安全区）。和现在一样
+              </td>
+              <td>公告、版本说明、下载设置等普通弹窗</td>
+            </tr>
+            <tr>
+              <td>sheet 底部面板</td>
+              <td>
+                贴底满宽，顶部两角圆，带拖动条，可下拉关闭；底部让开系统横条
+              </td>
+              <td>贴底，最宽 560 居中，最高屏幕高减 32</td>
+              <td colspan="2">变成居中面板，最宽 480（大屏上贴底面板太扁）</td>
+              <td>长按菜单、房间的片单 / 弹幕面板</td>
+            </tr>
+            <tr>
+              <td>drawer 侧边抽屉</td>
+              <td colspan="2">
+                改成从底部拉起（同 sheet），符合 ACCEPTANCE“面板从底部拉起”
+              </td>
+              <td colspan="2">
+                从右侧滑出，满高，宽 400；顶边让开安全区和 Windows 窗口按钮
+              </td>
+              <td>账号菜单里的设置、下载管理</td>
+            </tr>
+            <tr>
+              <td>confirm 确认框</td>
+              <td colspan="4">
+                居中，最宽 400；两个按钮等宽，确认在右；层级在提示之上（<code
+                  >--tm-z-toast</code
+                >
+                + 1），能盖住别的弹窗
+              </td>
+              <td><code>askConfirm()</code>、删除 / 退出确认</td>
+            </tr>
+            <tr>
+              <td>viewer 整屏查看</td>
+              <td colspan="4">
+                铺满，底色是画面黑（不随主题），关闭在右上
+                44×44、让开刘海和窗口按钮；触屏可下拉关闭
+              </td>
+              <td>图片查看、海报大图</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2>五种款式共用的行为</h2>
+      <div class="table-wrap">
+        <table>
+          <tbody>
+            <tr>
+              <td>打开</td>
+              <td>
+                原生
+                <code>&lt;dialog&gt;.showModal()</code
+                >：焦点关进弹窗，盖住顶栏、底栏和小窗；关闭后焦点回到打开它的按钮
+              </td>
+            </tr>
+            <tr>
+              <td>返回键</td>
+              <td>
+                沿用 <code>useBackLayer</code>：手机返回键 /
+                浏览器后退只关最上面一层，不离开页面
+              </td>
+            </tr>
+            <tr>
+              <td>Esc</td>
+              <td>
+                关最上面一层；确认框按 Esc
+                等于“取消”；确认中（按钮转圈时）Esc、点外面都不关
+              </td>
+            </tr>
+            <tr>
+              <td>点外面关闭</td>
+              <td>
+                点遮罩关闭（dialog、sheet、drawer、confirm）；viewer
+                点画面以外的黑底关闭。登记表里“点外面关闭”这一行由弹窗层承担，不另做公共工具
+              </td>
+            </tr>
+            <tr>
+              <td>滚动锁</td>
+              <td>
+                打开时锁住页面滚动，按引用计数：两层弹窗叠着时，关上层不解锁，关到最后一层才恢复原来的
+                <code>overflow</code>
+                和滚动位置（<code>src/lib/scroll-lock.ts</code>）
+              </td>
+            </tr>
+            <tr>
+              <td>进场</td>
+              <td>
+                遮罩淡入 320ms；dialog / confirm 上移 8px + 0.98 → 1 放大；sheet
+                从底部滑入；drawer 从右侧滑入；viewer 0.96 → 1 放大。缓动
+                <code>--tm-ease-out</code>，只动 transform 和 opacity
+              </td>
+            </tr>
+            <tr>
+              <td>退场</td>
+              <td>
+                200ms 反向（原生 dialog
+                关闭时没有动画，这一阶段只做进场；退场留给第三阶段按需加）
+              </td>
+            </tr>
+            <tr>
+              <td>减弱动效</td>
+              <td>
+                <code>html[data-tm-reduced-motion]</code>
+                或系统减弱动效时，全部只淡入 120ms，没有位移和缩放
+              </td>
+            </tr>
+            <tr>
+              <td>关闭模糊</td>
+              <td>
+                遮罩本来就是纯色
+                <code>--tm-scrim</code>，不用模糊；关闭模糊时样子不变
+              </td>
+            </tr>
+            <tr>
+              <td>点按目标</td>
+              <td>
+                关闭按钮 44×44，底部按钮高 44，列表项高 48；所有可点元素有
+                <code>:focus-visible</code> 环
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </main>
+
+    <template id="tpl-dialog">
+      <div class="panel" role="dialog" aria-label="示例弹窗">
+        <div class="panel-head">
+          <h3 class="panel-title">站点公告</h3>
+          <button class="demo-close" type="button" aria-label="关闭">×</button>
+        </div>
+        <div class="panel-body">
+          这里是公告正文。内容多的时候在面板里面滚动，面板不超过屏幕高度。
+        </div>
+        <div class="panel-foot">
+          <button class="demo-btn primary" type="button">知道了</button>
+        </div>
+      </div>
+    </template>
+    <template id="tpl-confirm">
+      <div class="panel" role="alertdialog" aria-label="确认">
+        <div class="panel-head">
+          <h3 class="panel-title">删除这条播放记录？</h3>
+        </div>
+        <div class="panel-body">删除后不能恢复。</div>
+        <div class="panel-foot">
+          <button class="demo-btn" type="button">取消</button>
+          <button class="demo-btn primary" type="button">删除</button>
+        </div>
+      </div>
+    </template>
+    <template id="tpl-sheet">
+      <div class="panel" role="dialog" aria-label="操作">
+        <div class="grabber" aria-hidden="true"></div>
+        <div class="panel-head">
+          <h3 class="panel-title">选择操作</h3>
+          <button class="demo-close" type="button" aria-label="关闭">×</button>
+        </div>
+        <div class="list-item" style="margin-top: 12px">播放</div>
+        <div class="list-item">一起看</div>
+        <div class="list-item">收藏</div>
+        <div class="list-item" style="color: var(--tm-danger)">删除记录</div>
+        <div style="height: 16px"></div>
+      </div>
+    </template>
+    <template id="tpl-drawer">
+      <div class="panel" role="dialog" aria-label="设置">
+        <div class="panel-head">
+          <h3 class="panel-title">显示设置</h3>
+          <button class="demo-close" type="button" aria-label="关闭">×</button>
+        </div>
+        <div class="list-item" style="margin-top: 12px">关闭背景模糊</div>
+        <div class="list-item">减少动态效果</div>
+        <div class="list-item">主题</div>
+        <div class="list-item">下载管理</div>
+      </div>
+    </template>
+    <template id="tpl-viewer">
+      <div class="viewer-art" role="img" aria-label="海报"></div>
+      <button class="demo-close viewer-close" type="button" aria-label="关闭">
+        ×
+      </button>
+      <div class="viewer-count">1 / 3</div>
+    </template>
+
+    <script>
+      const variants = {
+        dialog: '居中面板，四种档位一样；默认款式，等于现在的 tm-modal-layer。',
+        sheet: '手机两档贴底、可下拉关闭；平板和电脑变成居中面板。',
+        drawer: '平板和电脑从右侧滑出；手机两档改为从底部拉起。',
+        confirm: '更窄的居中面板，两个按钮等宽，层级在提示之上。',
+        viewer: '整屏画面黑底，按钮是画面上的白色，不随主题翻转。',
+      };
+      const devices = [
+        { id: 'phone', label: '手机竖屏 390×844', w: 390, h: 844, scale: 0.42 },
+        {
+          id: 'phone-landscape',
+          label: '手机横屏 844×390',
+          w: 844,
+          h: 390,
+          scale: 0.42,
+        },
+        { id: 'tablet', label: '平板 820×1180', w: 820, h: 1180, scale: 0.3 },
+        { id: 'wide', label: '电脑 1280×800', w: 1280, h: 800, scale: 0.42 },
+      ];
+      let current = 'dialog';
+      const group = document.getElementById('variant-group');
+      for (const name of Object.keys(variants)) {
+        const button = document.createElement('button');
+        button.className = 'pill';
+        button.type = 'button';
+        button.textContent = name;
+        button.addEventListener('click', () => {
+          current = name;
+          render();
+        });
+        group.appendChild(button);
+      }
+      function render() {
+        for (const b of group.children)
+          b.setAttribute('aria-pressed', String(b.textContent === current));
+        document.getElementById('variant-title').textContent = current;
+        document.getElementById('variant-summary').textContent =
+          variants[current];
+        const frames = document.getElementById('frames');
+        frames.innerHTML = '';
+        for (const d of devices) {
+          const cell = document.createElement('div');
+          cell.className = 'frame-cell';
+          cell.innerHTML = `<div class="frame-label">${d.label}</div>`;
+          const box = document.createElement('div');
+          box.className = 'frame-box';
+          box.style.width = `${d.w * d.scale}px`;
+          box.style.height = `${d.h * d.scale}px`;
+          const device = document.createElement('div');
+          device.className = 'device';
+          device.dataset.device = d.id;
+          device.style.width = `${d.w}px`;
+          device.style.height = `${d.h}px`;
+          device.style.transform = `scale(${d.scale})`;
+          device.innerHTML = `<div class="fake-page"><div class="fake-header"></div><div class="fake-video"></div><div class="fake-row">${'<div class="fake-poster"></div>'.repeat(
+            6
+          )}</div></div>`;
+          const layer = document.createElement('div');
+          layer.className = 'layer';
+          layer.dataset.variant = current;
+          layer.innerHTML = '<div class="scrim"></div>';
+          layer.appendChild(
+            document.getElementById(`tpl-${current}`).content.cloneNode(true)
+          );
+          device.appendChild(layer);
+          box.appendChild(device);
+          cell.appendChild(box);
+          frames.appendChild(cell);
+        }
+      }
+      function toggle(id, apply) {
+        const button = document.getElementById(id);
+        button.addEventListener('click', () => {
+          const on = button.getAttribute('aria-pressed') !== 'true';
+          button.setAttribute('aria-pressed', String(on));
+          apply(on);
+          render();
+        });
+      }
+      toggle('toggle-light', (on) =>
+        document.documentElement.classList.toggle('light', on)
+      );
+      toggle('toggle-motion', (on) => {
+        if (on) document.documentElement.dataset.tmReducedMotion = 'true';
+        else delete document.documentElement.dataset.tmReducedMotion;
+      });
+      toggle('toggle-desktop', (on) => {
+        if (on) document.documentElement.dataset.tmPlatform = 'desktop';
+        else delete document.documentElement.dataset.tmPlatform;
+      });
+      document.getElementById('replay').addEventListener('click', render);
+      render();
+    </script>
+  </body>
+</html>
