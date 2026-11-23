@@ -1,9 +1,5 @@
 /* 弹层面板：个人中心、HTTP 警告、图片查看、长按菜单、搜索联想。 */
 
-html .tm-profile-backdrop {
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-}
 html .tm-profile-panel {
   max-height: calc(100dvh - 32px);
   overflow-y: auto;
@@ -45,10 +41,6 @@ html .tm-http-warning-shown {
 html .tm-http-warning-panel p,
 html .tm-http-warning-panel li {
   line-height: 1.7;
-}
-html[data-tm-no-blur='true'] .tm-profile-backdrop {
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
 }
 html[data-tm-reduced-motion='true'] .tm-profile-panel {
   animation: tm-legacy-panel-fade 120ms var(--tm-ease-out) backwards;

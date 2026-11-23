@@ -211,17 +211,11 @@ export const UserMenu: React.FC = () => {
   const tvQrScanStopRef = useRef(false);
   const [tvAccessTab, setTvAccessTab] = useState<'tvbox' | 'web'>('tvbox');
 
-  // 还没换到弹窗层的面板（个人中心、离线下载、邮件、设备、电视遥控）打开时锁住页面；
-  // 设置、改密码、电视访问、客户端安装、下载管理、确认框在弹窗层里，由它锁
-  const legacyPanelOpen =
-    isProfileCenterOpen ||
-    isOfflineDownloadPanelOpen ||
-    isEmailSettingsOpen ||
-    isDeviceManagementOpen ||
-    isTVRemoteOpen;
+  // 电视遥控面板（上游“电视”区）还是自己的原生弹窗，打开时由这里锁住页面；
+  // 其余面板都在弹窗层里，由它锁
   useEffect(() => {
-    if (legacyPanelOpen) return lockScroll();
-  }, [legacyPanelOpen]);
+    if (isTVRemoteOpen) return lockScroll();
+  }, [isTVRemoteOpen]);
 
   // 设置相关状态
   const [defaultAggregateSearch, setDefaultAggregateSearch] = useState(true);

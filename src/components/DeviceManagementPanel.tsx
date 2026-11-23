@@ -1,9 +1,10 @@
 'use client';
 
 import { LucideIcon, Monitor, X } from 'lucide-react';
-import { createPortal } from 'react-dom';
 
 import { getDeviceDisplayName } from '@/lib/device-display';
+
+import ModalLayer from '@/components/feedback/ModalLayer';
 
 interface DeviceItem {
   tokenId: string;
@@ -38,17 +39,9 @@ export function DeviceManagementPanel({
 }: DeviceManagementPanelProps) {
   if (!isOpen || !mounted) return null;
 
-  return createPortal(
-    <>
-      <div
-        className='fixed inset-0 bg-ink/50 backdrop-blur-sm z-[1000]'
-        onClick={onClose}
-        onTouchMove={(e) => e.preventDefault()}
-        onWheel={(e) => e.preventDefault()}
-        style={{ touchAction: 'none' }}
-      />
-
-      <div className='fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-lg bg-surface rounded-xl shadow-xl z-[1001] overflow-hidden'>
+  return (
+    <ModalLayer label='设备管理' onClose={onClose}>
+      <div className='w-full max-w-lg bg-surface rounded-xl shadow-xl overflow-hidden'>
         <div
           className='h-full max-h-[80vh] flex flex-col'
           data-panel-content
@@ -162,7 +155,6 @@ export function DeviceManagementPanel({
           </div>
         </div>
       </div>
-    </>,
-    document.body
+    </ModalLayer>
   );
 }

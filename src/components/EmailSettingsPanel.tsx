@@ -2,7 +2,8 @@
 
 import { Bell, Info, Mail, MonitorSmartphone, Send, X } from 'lucide-react';
 import { useState } from 'react';
-import { createPortal } from 'react-dom';
+
+import ModalLayer from '@/components/feedback/ModalLayer';
 
 interface EmailSettingsPanelProps {
   isOpen: boolean;
@@ -113,17 +114,9 @@ export function EmailSettingsPanel({
     { key: 'telegram' as const, label: 'Telegram', icon: Send },
   ];
 
-  return createPortal(
-    <>
-      <div
-        className='fixed inset-0 z-[1000] bg-ink/50 backdrop-blur-sm'
-        onClick={onClose}
-        onTouchMove={(e) => e.preventDefault()}
-        onWheel={(e) => e.preventDefault()}
-        style={{ touchAction: 'none' }}
-      />
-
-      <div className='fixed left-1/2 top-1/2 z-[1001] w-[calc(100%-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-2xl bg-surface shadow-xl'>
+  return (
+    <ModalLayer label='通知设置' onClose={onClose}>
+      <div className='w-full max-w-lg overflow-hidden rounded-2xl bg-surface shadow-xl'>
         <div
           className='max-h-[85vh] overflow-y-auto p-6'
           data-panel-content
@@ -422,7 +415,6 @@ export function EmailSettingsPanel({
           </div>
         </div>
       </div>
-    </>,
-    document.body
+    </ModalLayer>
   );
 }

@@ -1,9 +1,9 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { createPortal } from 'react-dom';
 
 import { askConfirm, notifyError } from '@/components/feedback/AppDialogs';
+import ModalLayer from '@/components/feedback/ModalLayer';
 
 interface OfflineDownloadTask {
   id: string;
@@ -41,13 +41,7 @@ export function OfflineDownloadPanel({
 }: OfflineDownloadPanelProps) {
   const [tasks, setTasks] = useState<OfflineDownloadTask[]>([]);
   const [loading, setLoading] = useState(false);
-  const [mounted, setMounted] = useState(false);
   const [viewMode, setViewMode] = useState<'tasks' | 'library'>('tasks'); // 视图模式：任务列表或视频库
-
-  // 确保只在客户端渲染
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   // 获取任务列表
   const fetchTasks = async () => {
@@ -128,7 +122,7 @@ export function OfflineDownloadPanel({
     }
   }, [isOpen]);
 
-  if (!isOpen || !mounted) {
+  if (!isOpen) {
     return null;
   }
 
@@ -195,8 +189,9 @@ export function OfflineDownloadPanel({
 
   const libraryVideos = getLibraryVideos();
 
-  const panelContent = (
-    <div className='fixed inset-0 z-[9999] flex items-center justify-center bg-ink/50 backdrop-blur-sm p-4'>
+  // 遮罩、位置、Esc / 返回键 / 点外面关闭、滚动锁由弹窗层负责
+  return (
+    <ModalLayer label='离线下载' onClose={onClose}>
       <div className='bg-surface rounded-lg shadow-2xl w-full max-w-4xl max-h-[80vh] flex flex-col'>
         {/* 标题栏 */}
         <div className='flex items-center justify-between p-4 border-b border-line'>
@@ -539,8 +534,6 @@ export function OfflineDownloadPanel({
           )}
         </div>
       </div>
-    </div>
+    </ModalLayer>
   );
-
-  return createPortal(panelContent, document.body);
 }

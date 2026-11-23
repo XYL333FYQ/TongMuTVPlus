@@ -1,9 +1,10 @@
 'use client';
 
 import { Bell, KeyRound, Monitor, X } from 'lucide-react';
-import { createPortal } from 'react-dom';
 
 import '@/styles/panels.css';
+
+import ModalLayer from '@/components/feedback/ModalLayer';
 
 interface PersonalCenterPanelProps {
   isOpen: boolean;
@@ -38,21 +39,9 @@ export function PersonalCenterPanel({
 }: PersonalCenterPanelProps) {
   if (!isOpen || !mounted) return null;
 
-  return createPortal(
-    <>
-      <div
-        className='tm-profile-backdrop fixed inset-0 bg-ink/50 z-[1000]'
-        onClick={onClose}
-        onTouchMove={(e) => {
-          e.preventDefault();
-        }}
-        onWheel={(e) => {
-          e.preventDefault();
-        }}
-        style={{ touchAction: 'none' }}
-      />
-
-      <div className='tm-profile-panel fixed top-1/2 left-1/2 z-[1001] w-[calc(100%-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-2xl bg-surface shadow-xl'>
+  return (
+    <ModalLayer label='个人中心' onClose={onClose}>
+      <div className='tm-profile-panel w-full max-w-md overflow-hidden rounded-2xl bg-surface shadow-xl'>
         <div
           className='p-6'
           data-panel-content
@@ -134,7 +123,6 @@ export function PersonalCenterPanel({
           </div>
         </div>
       </div>
-    </>,
-    document.body
+    </ModalLayer>
   );
 }
