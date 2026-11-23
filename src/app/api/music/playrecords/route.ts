@@ -2,11 +2,11 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 
-import { getAuthInfoFromCookie } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { MusicPlayRecord } from '@/lib/db.client';
 import { getCachedSongs, setCachedSong } from '@/lib/music-song-cache';
 import { requireFeaturePermission } from '@/lib/permissions';
+import { isCaller, requireRole } from '@/lib/require-role';
 
 export const runtime = 'nodejs';
 
@@ -18,25 +18,10 @@ export async function GET(request: NextRequest) {
       '无权限访问音乐功能'
     );
     if (authResult instanceof NextResponse) return authResult;
-    // 从 cookie 获取用户信息
-    const authInfo = getAuthInfoFromCookie(request);
-    if (!authInfo || !authInfo.username) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const caller = await requireRole(request, 'user');
+    if (!isCaller(caller)) return caller;
 
-    // 检查用户状态
-    if (authInfo.username !== process.env.USERNAME) {
-      // 非站长，检查用户存在或被封禁
-      const userInfoV2 = await db.getUserInfoV2(authInfo.username);
-      if (!userInfoV2) {
-        return NextResponse.json({ error: '用户不存在' }, { status: 401 });
-      }
-      if (userInfoV2.banned) {
-        return NextResponse.json({ error: '用户已被封禁' }, { status: 401 });
-      }
-    }
-
-    const records = await db.getAllMusicPlayRecords(authInfo.username);
+    const records = await db.getAllMusicPlayRecords(caller.username);
 
     // 从缓存中获取歌曲信息并填充到记录中
     const keys = Object.keys(records).map((key) => {
@@ -76,22 +61,8 @@ export async function POST(request: NextRequest) {
       '无权限访问音乐功能'
     );
     if (authResult instanceof NextResponse) return authResult;
-    // 从 cookie 获取用户信息
-    const authInfo = getAuthInfoFromCookie(request);
-    if (!authInfo || !authInfo.username) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    if (authInfo.username !== process.env.USERNAME) {
-      // 非站长，检查用户存在或被封禁
-      const userInfoV2 = await db.getUserInfoV2(authInfo.username);
-      if (!userInfoV2) {
-        return NextResponse.json({ error: '用户不存在' }, { status: 401 });
-      }
-      if (userInfoV2.banned) {
-        return NextResponse.json({ error: '用户已被封禁' }, { status: 401 });
-      }
-    }
+    const caller = await requireRole(request, 'user');
+    if (!isCaller(caller)) return caller;
 
     const body = await request.json();
 
@@ -143,7 +114,7 @@ export async function POST(request: NextRequest) {
       }
 
       // 批量保存到数据库
-      await db.batchSaveMusicPlayRecords(authInfo.username, records);
+      await db.batchSaveMusicPlayRecords(caller.username, records);
 
       return NextResponse.json(
         { success: true, count: records.length },
@@ -177,7 +148,7 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      await db.saveMusicPlayRecord(authInfo.username, platform, id, record);
+      await db.saveMusicPlayRecord(caller.username, platform, id, record);
 
       // 缓存歌曲信息到服务器内存
       setCachedSong(platform, id, {
@@ -207,22 +178,8 @@ export async function DELETE(request: NextRequest) {
       '无权限访问音乐功能'
     );
     if (authResult instanceof NextResponse) return authResult;
-    // 从 cookie 获取用户信息
-    const authInfo = getAuthInfoFromCookie(request);
-    if (!authInfo || !authInfo.username) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    if (authInfo.username !== process.env.USERNAME) {
-      // 非站长，检查用户存在或被封禁
-      const userInfoV2 = await db.getUserInfoV2(authInfo.username);
-      if (!userInfoV2) {
-        return NextResponse.json({ error: '用户不存在' }, { status: 401 });
-      }
-      if (userInfoV2.banned) {
-        return NextResponse.json({ error: '用户已被封禁' }, { status: 401 });
-      }
-    }
+    const caller = await requireRole(request, 'user');
+    if (!isCaller(caller)) return caller;
 
     const { searchParams } = new URL(request.url);
     const key = searchParams.get('key');
@@ -236,10 +193,10 @@ export async function DELETE(request: NextRequest) {
           { status: 400 }
         );
       }
-      await db.deleteMusicPlayRecord(authInfo.username, platform, id);
+      await db.deleteMusicPlayRecord(caller.username, platform, id);
     } else {
       // 清空所有记录
-      await db.clearAllMusicPlayRecords(authInfo.username);
+      await db.clearAllMusicPlayRecords(caller.username);
     }
 
     return NextResponse.json({ success: true }, { status: 200 });

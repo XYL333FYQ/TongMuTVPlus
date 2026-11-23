@@ -25,15 +25,18 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
   try {
-    const list = parseFeedbackList(
-      await getStorage().getGlobalValue(FEEDBACK_STORAGE_KEY)
-    );
+    // 看全部要先过权限，再读数据
     const wantAll = new URL(request.url).searchParams.get('all') === '1';
     if (wantAll) {
       const caller = await requireRole(request, 'admin', {
         deniedStatus: 403,
       });
       if (!isCaller(caller)) return caller;
+    }
+    const list = parseFeedbackList(
+      await getStorage().getGlobalValue(FEEDBACK_STORAGE_KEY)
+    );
+    if (wantAll) {
       return NextResponse.json(
         { items: [...list].sort((a, b) => b.createdAt - a.createdAt) },
         { headers: { 'Cache-Control': 'no-store' } }
