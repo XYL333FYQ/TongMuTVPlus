@@ -83,6 +83,8 @@ export async function copyExternalLink(href: string): Promise<boolean> {
     field.readOnly = true;
     field.style.position = 'fixed';
     field.style.opacity = '0';
+    // 挂进打开的弹窗时是“客人”，弹窗层的款式规则不把它当面板
+    field.setAttribute('data-tm-layer-guest', '');
     const host =
       document.activeElement?.closest('dialog[open]') || document.body;
     host.appendChild(field);

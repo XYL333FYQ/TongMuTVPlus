@@ -1,6 +1,8 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { useState } from 'react';
 
+import ModalLayer from '@/components/feedback/ModalLayer';
+
 import Select from './Select';
 
 function Harness({ onPick }: { onPick: (value: string) => void }) {
@@ -80,4 +82,16 @@ test('a disabled option cannot be chosen', () => {
   fireEvent.click(screen.getByRole('combobox'));
   fireEvent.click(screen.getByRole('option', { name: '不可选' }));
   expect(onPick).not.toHaveBeenCalled();
+});
+
+test('a menu opened inside a modal layer joins it as a guest, not as a panel', () => {
+  render(
+    <ModalLayer label='设置' onClose={() => undefined} variant='drawer'>
+      <Harness onPick={jest.fn()} />
+    </ModalLayer>
+  );
+  fireEvent.click(screen.getByRole('combobox', { name: '下载方式' }));
+  const menu = screen.getByRole('listbox');
+  expect(menu.parentElement).toBe(screen.getByRole('dialog'));
+  expect(menu).toHaveAttribute('data-tm-layer-guest');
 });

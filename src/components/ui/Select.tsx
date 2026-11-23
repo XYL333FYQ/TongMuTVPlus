@@ -335,6 +335,8 @@ export default function Select({
                 active >= 0 ? `${listId}-${active}` : undefined
               }
               className='tm-select-menu'
+              // 挂进打开的弹窗时是“客人”，弹窗层的款式规则不把它当面板
+              data-tm-layer-guest=''
               data-up={box?.up ? '' : undefined}
               style={
                 box

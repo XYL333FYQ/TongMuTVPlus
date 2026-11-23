@@ -109,6 +109,8 @@ export default function Toast({
   return createPortal(
     <div
       className='tm-toast'
+      // 挂进打开的弹窗时是“客人”，弹窗层的款式规则不把它当面板
+      data-tm-layer-guest=''
       data-visible={isVisible}
       data-type={type}
       aria-hidden={!isVisible}

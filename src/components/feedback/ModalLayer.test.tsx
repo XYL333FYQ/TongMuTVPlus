@@ -4,12 +4,16 @@ import {
   fireEvent,
   render,
   screen,
+  waitFor,
 } from '@testing-library/react';
+import fs from 'node:fs';
+import path from 'node:path';
 import { useEffect, useRef } from 'react';
 
 import { closeTopLayer } from '@/lib/shell-bridge';
 
 import ModalLayer, { type ModalVariant } from './ModalLayer';
+import Toast from './Toast';
 
 const originalShowModal = HTMLDialogElement.prototype.showModal;
 const originalClose = HTMLDialogElement.prototype.close;
@@ -232,4 +236,32 @@ test('Escape on a layer opened from inside another layer closes only the inner o
   );
   expect(inner).toHaveBeenCalledTimes(1);
   expect(outer).not.toHaveBeenCalled();
+});
+
+test('variant rules style the layer’s own panels, never the guests that portal into it', () => {
+  const css = fs.readFileSync(
+    path.join(process.cwd(), 'src/styles/modal-layer.css'),
+    'utf8'
+  );
+  // 任何“弹窗层的子元素”规则都必须排除挂进来的提示条、下拉菜单
+  expect(css).not.toMatch(/>\s*\*/);
+  expect(css).toMatch(/:where\(:not\(\[data-tm-layer-guest\]\)\)/);
+});
+
+test('a toast shown over an open layer joins it as a guest', async () => {
+  render(
+    <ModalLayer label='设置' onClose={() => undefined} variant='drawer'>
+      <p>面板</p>
+      <Toast message='已备份' />
+    </ModalLayer>
+  );
+  // 提示条看到弹窗打开（open 属性变化）后搬进去
+  await waitFor(() =>
+    expect(screen.getByText('已备份').closest('.tm-toast')?.parentElement).toBe(
+      screen.getByRole('dialog')
+    )
+  );
+  expect(screen.getByText('已备份').closest('.tm-toast')).toHaveAttribute(
+    'data-tm-layer-guest'
+  );
 });

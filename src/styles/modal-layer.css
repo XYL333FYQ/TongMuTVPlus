@@ -27,18 +27,21 @@
   overflow: hidden;
 }
 /* —— 款式（ModalLayer 的 variant，设计稿 docs/design/prototypes/modal-layer.html）——
-   默认 dialog 就是上面的样子，不加类名 */
-.tm-modal-layer--confirm > * {
+   默认 dialog 就是上面的样子，不加类名。
+   “> :where(:not([data-tm-layer-guest]))” 是弹窗自己的面板：提示条、下拉菜单打开时会挂进最上面的弹窗
+   （这样才在浏览器顶层、盖得住面板），它们带 data-tm-layer-guest，不吃面板的尺寸和进场；
+   :where() 不抬高优先级 */
+.tm-modal-layer--confirm > :where(:not([data-tm-layer-guest])) {
   width: 100%;
   max-width: 400px;
   animation: tm-modal-layer-in var(--tm-d-panel) var(--tm-ease-out);
 }
-.tm-modal-layer--sheet > * {
+.tm-modal-layer--sheet > :where(:not([data-tm-layer-guest])) {
   width: 100%;
   max-width: 480px;
   animation: tm-modal-layer-in var(--tm-d-panel) var(--tm-ease-out);
 }
-.tm-modal-layer--drawer > * {
+.tm-modal-layer--drawer > :where(:not([data-tm-layer-guest])) {
   animation: tm-modal-layer-in var(--tm-d-panel) var(--tm-ease-out);
 }
 
@@ -51,7 +54,7 @@
 }
 html:is([data-tm-device='tablet'], [data-tm-device='wide'])
   .tm-modal-layer--drawer
-  > * {
+  > :where(:not([data-tm-layer-guest])) {
   width: min(400px, 100%);
   height: 100%;
   max-height: none;
@@ -67,7 +70,7 @@ html:is([data-tm-device='phone'], [data-tm-device='phone-landscape'])
 }
 html:is([data-tm-device='phone'], [data-tm-device='phone-landscape'])
   :is(.tm-modal-layer--sheet, .tm-modal-layer--drawer)
-  > * {
+  > :where(:not([data-tm-layer-guest])) {
   width: 100%;
   max-width: 560px;
   height: auto;
@@ -85,7 +88,7 @@ html:is([data-tm-device='phone'], [data-tm-device='phone-landscape'])
 .tm-modal-layer--viewer::backdrop {
   background: var(--tm-video-bg);
 }
-.tm-modal-layer--viewer > * {
+.tm-modal-layer--viewer > :where(:not([data-tm-layer-guest])) {
   animation: tm-modal-layer-viewer-in var(--tm-d-panel) var(--tm-ease-out);
 }
 
@@ -118,11 +121,13 @@ html:is([data-tm-device='phone'], [data-tm-device='phone-landscape'])
 }
 
 /* 减弱动效：只留 120ms 淡入（DESIGN.md 3.2） */
-html[data-tm-reduced-motion='true'] [class*='tm-modal-layer--'] > * {
+html[data-tm-reduced-motion='true']
+  [class*='tm-modal-layer--']
+  > :where(:not([data-tm-layer-guest])) {
   animation: tm-modal-layer-fade 120ms linear !important;
 }
 @media (prefers-reduced-motion: reduce) {
-  [class*='tm-modal-layer--'] > * {
+  [class*='tm-modal-layer--'] > :where(:not([data-tm-layer-guest])) {
     animation: tm-modal-layer-fade 120ms linear !important;
   }
 }
