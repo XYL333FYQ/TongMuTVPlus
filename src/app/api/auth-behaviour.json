@@ -1,0 +1,2504 @@
+{
+  "admin/ai/route.ts": {
+    "POST": {
+      "anonymous": {
+        "status": 401,
+        "error": "Unauthorized"
+      },
+      "member": {
+        "status": 400,
+        "error": "参数格式错误"
+      },
+      "banned": {
+        "status": 400,
+        "error": "参数格式错误"
+      },
+      "admin": {
+        "status": 400,
+        "error": "参数格式错误"
+      },
+      "owner": {
+        "status": 400,
+        "error": "参数格式错误"
+      }
+    }
+  },
+  "admin/anime-subscription/[id]/check/route.ts": {
+    "POST": {
+      "anonymous": {
+        "status": 403,
+        "error": "无权限访问"
+      },
+      "member": {
+        "status": 403,
+        "error": "无权限访问"
+      },
+      "banned": {
+        "status": 403,
+        "error": "无权限访问"
+      },
+      "admin": {
+        "status": 404,
+        "error": "订阅不存在"
+      },
+      "owner": {
+        "status": 404,
+        "error": "订阅不存在"
+      }
+    }
+  },
+  "admin/anime-subscription/[id]/route.ts": {
+    "PUT": {
+      "anonymous": {
+        "status": 403,
+        "error": "无权限访问"
+      },
+      "member": {
+        "status": 403,
+        "error": "无权限访问"
+      },
+      "banned": {
+        "status": 403,
+        "error": "无权限访问"
+      },
+      "admin": {
+        "status": 404,
+        "error": "订阅不存在"
+      },
+      "owner": {
+        "status": 404,
+        "error": "订阅不存在"
+      }
+    },
+    "DELETE": {
+      "anonymous": {
+        "status": 403,
+        "error": "无权限访问"
+      },
+      "member": {
+        "status": 403,
+        "error": "无权限访问"
+      },
+      "banned": {
+        "status": 403,
+        "error": "无权限访问"
+      },
+      "admin": {
+        "status": 404,
+        "error": "订阅不存在"
+      },
+      "owner": {
+        "status": 404,
+        "error": "订阅不存在"
+      }
+    }
+  },
+  "admin/anime-subscription/recognize/route.ts": {
+    "POST": {
+      "anonymous": {
+        "status": 403,
+        "error": "无权限访问"
+      },
+      "member": {
+        "status": 403,
+        "error": "无权限访问"
+      },
+      "banned": {
+        "status": 403,
+        "error": "无权限访问"
+      },
+      "admin": {
+        "status": 400,
+        "error": "番剧名称不能为空"
+      },
+      "owner": {
+        "status": 400,
+        "error": "番剧名称不能为空"
+      }
+    }
+  },
+  "admin/anime-subscription/route.ts": {
+    "GET": {
+      "anonymous": {
+        "status": 403,
+        "error": "无权限访问"
+      },
+      "member": {
+        "status": 403,
+        "error": "无权限访问"
+      },
+      "banned": {
+        "status": 403,
+        "error": "无权限访问"
+      },
+      "admin": {
+        "status": 200,
+        "error": null
+      },
+      "owner": {
+        "status": 200,
+        "error": null
+      }
+    },
+    "POST": {
+      "anonymous": {
+        "status": 403,
+        "error": "无权限访问"
+      },
+      "member": {
+        "status": 403,
+        "error": "无权限访问"
+      },
+      "banned": {
+        "status": 403,
+        "error": "无权限访问"
+      },
+      "admin": {
+        "status": 400,
+        "error": "缺少必填字段"
+      },
+      "owner": {
+        "status": 400,
+        "error": "缺少必填字段"
+      }
+    }
+  },
+  "admin/anime-subscription/test/route.ts": {
+    "POST": {
+      "anonymous": {
+        "status": 403,
+        "error": "无权限访问"
+      },
+      "member": {
+        "status": 403,
+        "error": "无权限访问"
+      },
+      "banned": {
+        "status": 403,
+        "error": "无权限访问"
+      },
+      "admin": {
+        "status": 400,
+        "error": "番剧名称不能为空"
+      },
+      "owner": {
+        "status": 400,
+        "error": "番剧名称不能为空"
+      }
+    }
+  },
+  "admin/anime-subscription/toggle/route.ts": {
+    "PUT": {
+      "anonymous": {
+        "status": 403,
+        "error": "无权限访问"
+      },
+      "member": {
+        "status": 403,
+        "error": "无权限访问"
+      },
+      "banned": {
+        "status": 403,
+        "error": "无权限访问"
+      },
+      "admin": {
+        "status": 400,
+        "error": "enabled 必须是布尔值"
+      },
+      "owner": {
+        "status": 400,
+        "error": "enabled 必须是布尔值"
+      }
+    }
+  },
+  "admin/category/route.ts": {
+    "POST": {
+      "anonymous": {
+        "status": 401,
+        "error": "Unauthorized"
+      },
+      "member": {
+        "status": 400,
+        "error": "参数格式错误"
+      },
+      "banned": {
+        "status": 400,
+        "error": "参数格式错误"
+      },
+      "admin": {
+        "status": 400,
+        "error": "参数格式错误"
+      },
+      "owner": {
+        "status": 400,
+        "error": "参数格式错误"
+      }
+    }
+  },
+  "admin/config/route.ts": {
+    "GET": {
+      "anonymous": {
+        "status": 401,
+        "error": "Unauthorized"
+      },
+      "member": {
+        "status": 401,
+        "error": "你是管理员吗你就访问？"
+      },
+      "banned": {
+        "status": 401,
+        "error": "你是管理员吗你就访问？"
+      },
+      "admin": {
+        "status": 200,
+        "error": null
+      },
+      "owner": {
+        "status": 200,
+        "error": null
+      }
+    },
+    "POST": {
+      "anonymous": {
+        "status": 401,
+        "error": "Unauthorized"
+      },
+      "member": {
+        "status": 401,
+        "error": "权限不足"
+      },
+      "banned": {
+        "status": 401,
+        "error": "权限不足"
+      },
+      "admin": {
+        "status": 500,
+        "error": "保存配置失败: request reached db.saveAdminConfig"
+      },
+      "owner": {
+        "status": 500,
+        "error": "保存配置失败: request reached db.saveAdminConfig"
+      }
+    }
+  },
+  "admin/config_file/route.ts": {
+    "POST": {
+      "anonymous": {
+        "status": 401,
+        "error": "Unauthorized"
+      },
+      "member": {
+        "status": 401,
+        "error": "权限不足，只有站长可以修改配置文件"
+      },
+      "banned": {
+        "status": 401,
+        "error": "权限不足，只有站长可以修改配置文件"
+      },
+      "admin": {
+        "status": 401,
+        "error": "权限不足，只有站长可以修改配置文件"
+      },
+      "owner": {
+        "status": 400,
+        "error": "配置文件内容不能为空"
+      }
+    }
+  },
+  "admin/config_subscription/fetch/route.ts": {
+    "POST": {
+      "anonymous": {
+        "status": 401,
+        "error": "Unauthorized"
+      },
+      "member": {
+        "status": 401,
+        "error": "权限不足，只有站长可以拉取配置订阅"
+      },
+      "banned": {
+        "status": 401,
+        "error": "权限不足，只有站长可以拉取配置订阅"
+      },
+      "admin": {
+        "status": 401,
+        "error": "权限不足，只有站长可以拉取配置订阅"
+      },
+      "owner": {
+        "status": 400,
+        "error": "缺少URL参数"
+      }
+    }
+  },
+  "admin/data_migration/export/route.ts": {
+    "POST": {
+      "anonymous": {
+        "status": 401,
+        "error": "未登录"
+      },
+      "member": {
+        "status": 401,
+        "error": "权限不足，只有站长可以导出数据"
+      },
+      "banned": {
+        "status": 401,
+        "error": "权限不足，只有站长可以导出数据"
+      },
+      "admin": {
+        "status": 401,
+        "error": "权限不足，只有站长可以导出数据"
+      },
+      "owner": {
+        "status": 500,
+        "error": "无法获取配置"
+      }
+    }
+  },
+  "admin/data_migration/import/route.ts": {
+    "POST": {
+      "anonymous": {
+        "status": 401,
+        "error": "未登录"
+      },
+      "member": {
+        "status": 401,
+        "error": "权限不足，只有站长可以导入数据"
+      },
+      "banned": {
+        "status": 401,
+        "error": "权限不足，只有站长可以导入数据"
+      },
+      "admin": {
+        "status": 401,
+        "error": "权限不足，只有站长可以导入数据"
+      },
+      "owner": {
+        "status": 500,
+        "error": "导入失败"
+      }
+    }
+  },
+  "admin/data_migration/progress/route.ts": {
+    "GET": {
+      "anonymous": {
+        "status": 401,
+        "error": null
+      },
+      "member": {
+        "status": 403,
+        "error": null
+      },
+      "banned": {
+        "status": 403,
+        "error": null
+      },
+      "admin": {
+        "status": 403,
+        "error": null
+      },
+      "owner": {
+        "status": 400,
+        "error": null
+      }
+    }
+  },
+  "admin/email/route.ts": {
+    "GET": {
+      "anonymous": {
+        "status": 401,
+        "error": "Unauthorized"
+      },
+      "member": {
+        "status": 403,
+        "error": "Forbidden"
+      },
+      "banned": {
+        "status": 403,
+        "error": "Forbidden"
+      },
+      "admin": {
+        "status": 200,
+        "error": null
+      },
+      "owner": {
+        "status": 200,
+        "error": null
+      }
+    },
+    "POST": {
+      "anonymous": {
+        "status": 401,
+        "error": "Unauthorized"
+      },
+      "member": {
+        "status": 403,
+        "error": "Forbidden"
+      },
+      "banned": {
+        "status": 403,
+        "error": "Forbidden"
+      },
+      "admin": {
+        "status": 400,
+        "error": "无效的操作"
+      },
+      "owner": {
+        "status": 400,
+        "error": "无效的操作"
+      }
+    }
+  },
+  "admin/emby/export/route.ts": {
+    "GET": {
+      "anonymous": {
+        "status": 401,
+        "error": "Unauthorized"
+      },
+      "member": {
+        "status": 403,
+        "error": "权限不足，仅站长可用"
+      },
+      "banned": {
+        "status": 403,
+        "error": "权限不足，仅站长可用"
+      },
+      "admin": {
+        "status": 403,
+        "error": "权限不足，仅站长可用"
+      },
+      "owner": {
+        "status": 200,
+        "error": null
+      }
+    }
+  },
+  "admin/emby/import/route.ts": {
+    "POST": {
+      "anonymous": {
+        "status": 401,
+        "error": "Unauthorized"
+      },
+      "member": {
+        "status": 403,
+        "error": "权限不足，仅站长可用"
+      },
+      "banned": {
+        "status": 403,
+        "error": "权限不足，仅站长可用"
+      },
+      "admin": {
+        "status": 403,
+        "error": "权限不足，仅站长可用"
+      },
+      "owner": {
+        "status": 400,
+        "error": "缺少导入数据"
+      }
+    }
+  },
+  "admin/emby/route.ts": {
+    "POST": {
+      "anonymous": {
+        "status": 401,
+        "error": "Unauthorized"
+      },
+      "member": {
+        "status": 401,
+        "error": "权限不足"
+      },
+      "banned": {
+        "status": 401,
+        "error": "权限不足"
+      },
+      "admin": {
+        "status": 400,
+        "error": "不支持的操作"
+      },
+      "owner": {
+        "status": 400,
+        "error": "不支持的操作"
+      }
+    }
+  },
+  "admin/feature-access/route.ts": {
+    "GET": {
+      "anonymous": {
+        "status": 401,
+        "error": "Unauthorized"
+      },
+      "member": {
+        "status": 401,
+        "error": "权限不足"
+      },
+      "banned": {
+        "status": 401,
+        "error": "权限不足"
+      },
+      "admin": {
+        "status": 200,
+        "error": null
+      },
+      "owner": {
+        "status": 200,
+        "error": null
+      }
+    },
+    "POST": {
+      "anonymous": {
+        "status": 401,
+        "error": "Unauthorized"
+      },
+      "member": {
+        "status": 401,
+        "error": "权限不足"
+      },
+      "banned": {
+        "status": 401,
+        "error": "权限不足"
+      },
+      "admin": {
+        "status": 403,
+        "error": "只有站长可以修改功能开放范围和授权"
+      },
+      "owner": {
+        "status": 400,
+        "error": "无效的操作"
+      }
+    }
+  },
+  "admin/legado-subscriptions/[id]/refresh/route.ts": {
+    "POST": {
+      "anonymous": {
+        "status": 401,
+        "error": "Unauthorized"
+      },
+      "member": {
+        "status": 401,
+        "error": "权限不足"
+      },
+      "banned": {
+        "status": 401,
+        "error": "权限不足"
+      },
+      "admin": {
+        "status": 404,
+        "error": "订阅不存在"
+      },
+      "owner": {
+        "status": 404,
+        "error": "订阅不存在"
+      }
+    }
+  },
+  "admin/legado-subscriptions/[id]/route.ts": {
+    "DELETE": {
+      "anonymous": {
+        "status": 401,
+        "error": "Unauthorized"
+      },
+      "member": {
+        "status": 401,
+        "error": "权限不足"
+      },
+      "banned": {
+        "status": 401,
+        "error": "权限不足"
+      },
+      "admin": {
+        "status": 400,
+        "error": "request reached db.deleteGlobalValue"
+      },
+      "owner": {
+        "status": 400,
+        "error": "request reached db.deleteGlobalValue"
+      }
+    }
+  },
+  "admin/legado-subscriptions/import/route.ts": {
+    "POST": {
+      "anonymous": {
+        "status": 401,
+        "error": "Unauthorized"
+      },
+      "member": {
+        "status": 401,
+        "error": "权限不足"
+      },
+      "banned": {
+        "status": 401,
+        "error": "权限不足"
+      },
+      "admin": {
+        "status": 400,
+        "error": "订阅 URL 不能为空"
+      },
+      "owner": {
+        "status": 400,
+        "error": "订阅 URL 不能为空"
+      }
+    }
+  },
+  "admin/live/refresh/route.ts": {
+    "POST": {
+      "anonymous": {
+        "status": 401,
+        "error": "权限不足"
+      },
+      "member": {
+        "status": 401,
+        "error": "权限不足"
+      },
+      "banned": {
+        "status": 401,
+        "error": "权限不足"
+      },
+      "admin": {
+        "status": 500,
+        "error": "request reached db.saveAdminConfig"
+      },
+      "owner": {
+        "status": 500,
+        "error": "request reached db.saveAdminConfig"
+      }
+    }
+  },
+  "admin/live/route.ts": {
+    "POST": {
+      "anonymous": {
+        "status": 401,
+        "error": "权限不足"
+      },
+      "member": {
+        "status": 401,
+        "error": "权限不足"
+      },
+      "banned": {
+        "status": 401,
+        "error": "权限不足"
+      },
+      "admin": {
+        "status": 400,
+        "error": "未知操作"
+      },
+      "owner": {
+        "status": 400,
+        "error": "未知操作"
+      }
+    }
+  },
+  "admin/migrate-users/route.ts": {
+    "POST": {
+      "anonymous": {
+        "status": 401,
+        "error": "Unauthorized"
+      },
+      "member": {
+        "status": 401,
+        "error": "权限不足"
+      },
+      "banned": {
+        "status": 401,
+        "error": "权限不足"
+      },
+      "admin": {
+        "status": 401,
+        "error": "权限不足"
+      },
+      "owner": {
+        "status": 500,
+        "error": "用户数据迁移失败"
+      }
+    }
+  },
+  "admin/music/route.ts": {
+    "POST": {
+      "anonymous": {
+        "status": 401,
+        "error": "Unauthorized"
+      },
+      "member": {
+        "status": 401,
+        "error": "权限不足"
+      },
+      "banned": {
+        "status": 401,
+        "error": "权限不足"
+      },
+      "admin": {
+        "status": 403,
+        "error": "只有站长可以开放或关闭音乐功能"
+      },
+      "owner": {
+        "status": 500,
+        "error": "更新音乐配置失败"
+      }
+    }
+  },
+  "admin/netdisk/route.ts": {
+    "POST": {
+      "anonymous": {
+        "status": 401,
+        "error": "Unauthorized"
+      },
+      "member": {
+        "status": 401,
+        "error": "权限不足"
+      },
+      "banned": {
+        "status": 401,
+        "error": "权限不足"
+      },
+      "admin": {
+        "status": 400,
+        "error": "未知操作"
+      },
+      "owner": {
+        "status": 400,
+        "error": "未知操作"
+      }
+    }
+  },
+  "admin/oidc-discover/route.ts": {
+    "POST": {
+      "anonymous": {
+        "status": 401,
+        "error": "Unauthorized"
+      },
+      "member": {
+        "status": 403,
+        "error": "Forbidden"
+      },
+      "banned": {
+        "status": 403,
+        "error": "Forbidden"
+      },
+      "admin": {
+        "status": 400,
+        "error": "Issuer URL不能为空"
+      },
+      "owner": {
+        "status": 400,
+        "error": "Issuer URL不能为空"
+      }
+    }
+  },
+  "admin/opds/route.ts": {
+    "POST": {
+      "anonymous": {
+        "status": 401,
+        "error": "Unauthorized"
+      },
+      "member": {
+        "status": 401,
+        "error": "权限不足"
+      },
+      "banned": {
+        "status": 401,
+        "error": "权限不足"
+      },
+      "admin": {
+        "status": 400,
+        "error": null
+      },
+      "owner": {
+        "status": 400,
+        "error": null
+      }
+    }
+  },
+  "admin/openlist/route.ts": {
+    "POST": {
+      "anonymous": {
+        "status": 401,
+        "error": "Unauthorized"
+      },
+      "member": {
+        "status": 401,
+        "error": "权限不足"
+      },
+      "banned": {
+        "status": 401,
+        "error": "权限不足"
+      },
+      "admin": {
+        "status": 400,
+        "error": "未知操作"
+      },
+      "owner": {
+        "status": 400,
+        "error": "未知操作"
+      }
+    }
+  },
+  "admin/releases/route.ts": {
+    "GET": {
+      "anonymous": {
+        "status": 401,
+        "error": "请先登录"
+      },
+      "member": {
+        "status": 403,
+        "error": "只有站长可以维护版本与发布记录"
+      },
+      "banned": {
+        "status": 403,
+        "error": "只有站长可以维护版本与发布记录"
+      },
+      "admin": {
+        "status": 403,
+        "error": "只有站长可以维护版本与发布记录"
+      },
+      "owner": {
+        "status": 200,
+        "error": null
+      }
+    },
+    "POST": {
+      "anonymous": {
+        "status": 401,
+        "error": "请先登录"
+      },
+      "member": {
+        "status": 403,
+        "error": "只有站长可以维护版本与发布记录"
+      },
+      "banned": {
+        "status": 403,
+        "error": "只有站长可以维护版本与发布记录"
+      },
+      "admin": {
+        "status": 403,
+        "error": "只有站长可以维护版本与发布记录"
+      },
+      "owner": {
+        "status": 428,
+        "error": "请先重新加载发布记录再保存"
+      }
+    }
+  },
+  "admin/reload/route.ts": {
+    "GET": {
+      "anonymous": {
+        "status": 401,
+        "error": "Unauthorized"
+      },
+      "member": {
+        "status": 401,
+        "error": "仅支持站长重载配置"
+      },
+      "banned": {
+        "status": 401,
+        "error": "仅支持站长重载配置"
+      },
+      "admin": {
+        "status": 401,
+        "error": "仅支持站长重载配置"
+      },
+      "owner": {
+        "status": 500,
+        "error": "重载配置失败"
+      }
+    },
+    "POST": {
+      "anonymous": {
+        "status": 401,
+        "error": "Unauthorized"
+      },
+      "member": {
+        "status": 401,
+        "error": "仅支持站长重载配置"
+      },
+      "banned": {
+        "status": 401,
+        "error": "仅支持站长重载配置"
+      },
+      "admin": {
+        "status": 401,
+        "error": "仅支持站长重载配置"
+      },
+      "owner": {
+        "status": 500,
+        "error": "重载配置失败"
+      }
+    }
+  },
+  "admin/reset/route.ts": {
+    "GET": {
+      "anonymous": {
+        "status": 401,
+        "error": "Unauthorized"
+      },
+      "member": {
+        "status": 401,
+        "error": "仅支持站长重置配置"
+      },
+      "banned": {
+        "status": 401,
+        "error": "仅支持站长重置配置"
+      },
+      "admin": {
+        "status": 401,
+        "error": "仅支持站长重置配置"
+      },
+      "owner": {
+        "status": 500,
+        "error": "重置管理员配置失败"
+      }
+    },
+    "POST": {
+      "anonymous": {
+        "status": 401,
+        "error": "Unauthorized"
+      },
+      "member": {
+        "status": 401,
+        "error": "仅支持站长重置配置"
+      },
+      "banned": {
+        "status": 401,
+        "error": "仅支持站长重置配置"
+      },
+      "admin": {
+        "status": 401,
+        "error": "仅支持站长重置配置"
+      },
+      "owner": {
+        "status": 500,
+        "error": "重置管理员配置失败"
+      }
+    }
+  },
+  "admin/site/route.ts": {
+    "POST": {
+      "anonymous": {
+        "status": 401,
+        "error": "Unauthorized"
+      },
+      "member": {
+        "status": 400,
+        "error": "参数格式错误"
+      },
+      "banned": {
+        "status": 400,
+        "error": "参数格式错误"
+      },
+      "admin": {
+        "status": 400,
+        "error": "参数格式错误"
+      },
+      "owner": {
+        "status": 400,
+        "error": "参数格式错误"
+      }
+    }
+  },
+  "admin/source-script/route.ts": {
+    "GET": {
+      "anonymous": {
+        "status": 401,
+        "error": "Unauthorized"
+      },
+      "member": {
+        "status": 401,
+        "error": "Unauthorized"
+      },
+      "banned": {
+        "status": 401,
+        "error": "Unauthorized"
+      },
+      "admin": {
+        "status": 200,
+        "error": null
+      },
+      "owner": {
+        "status": 200,
+        "error": null
+      }
+    },
+    "POST": {
+      "anonymous": {
+        "status": 401,
+        "error": "Unauthorized"
+      },
+      "member": {
+        "status": 401,
+        "error": "Unauthorized"
+      },
+      "banned": {
+        "status": 401,
+        "error": "Unauthorized"
+      },
+      "admin": {
+        "status": 400,
+        "error": "未知操作"
+      },
+      "owner": {
+        "status": 400,
+        "error": "未知操作"
+      }
+    }
+  },
+  "admin/source/route.ts": {
+    "POST": {
+      "anonymous": {
+        "status": 401,
+        "error": "Unauthorized"
+      },
+      "member": {
+        "status": 400,
+        "error": "参数格式错误"
+      },
+      "banned": {
+        "status": 400,
+        "error": "参数格式错误"
+      },
+      "admin": {
+        "status": 400,
+        "error": "参数格式错误"
+      },
+      "owner": {
+        "status": 400,
+        "error": "参数格式错误"
+      }
+    }
+  },
+  "admin/source/validate/route.ts": {
+    "GET": {
+      "anonymous": {
+        "status": 401,
+        "error": "Unauthorized"
+      },
+      "member": {
+        "status": 403,
+        "error": "Forbidden"
+      },
+      "banned": {
+        "status": 403,
+        "error": "Forbidden"
+      },
+      "admin": {
+        "status": 400,
+        "error": "搜索关键词不能为空"
+      },
+      "owner": {
+        "status": 400,
+        "error": "搜索关键词不能为空"
+      }
+    }
+  },
+  "admin/suwayomi/route.ts": {
+    "POST": {
+      "anonymous": {
+        "status": 401,
+        "error": "Unauthorized"
+      },
+      "member": {
+        "status": 401,
+        "error": "权限不足"
+      },
+      "banned": {
+        "status": 401,
+        "error": "权限不足"
+      },
+      "admin": {
+        "status": 400,
+        "error": null
+      },
+      "owner": {
+        "status": 400,
+        "error": null
+      }
+    }
+  },
+  "admin/telegram/route.ts": {
+    "GET": {
+      "anonymous": {
+        "status": 401,
+        "error": "Unauthorized"
+      },
+      "member": {
+        "status": 403,
+        "error": "Forbidden"
+      },
+      "banned": {
+        "status": 403,
+        "error": "Forbidden"
+      },
+      "admin": {
+        "status": 200,
+        "error": null
+      },
+      "owner": {
+        "status": 200,
+        "error": null
+      }
+    },
+    "POST": {
+      "anonymous": {
+        "status": 401,
+        "error": "Unauthorized"
+      },
+      "member": {
+        "status": 403,
+        "error": "Forbidden"
+      },
+      "banned": {
+        "status": 403,
+        "error": "Forbidden"
+      },
+      "admin": {
+        "status": 400,
+        "error": "无效的操作"
+      },
+      "owner": {
+        "status": 400,
+        "error": "无效的操作"
+      }
+    }
+  },
+  "admin/theme/route.ts": {
+    "POST": {
+      "anonymous": {
+        "status": 401,
+        "error": "Unauthorized"
+      },
+      "member": {
+        "status": 400,
+        "error": "参数格式错误"
+      },
+      "banned": {
+        "status": 400,
+        "error": "参数格式错误"
+      },
+      "admin": {
+        "status": 400,
+        "error": "参数格式错误"
+      },
+      "owner": {
+        "status": 400,
+        "error": "参数格式错误"
+      }
+    }
+  },
+  "admin/user-devices/route.ts": {
+    "GET": {
+      "anonymous": {
+        "status": 401,
+        "error": "Unauthorized"
+      },
+      "member": {
+        "status": 400,
+        "error": "缺少目标用户名"
+      },
+      "banned": {
+        "status": 400,
+        "error": "缺少目标用户名"
+      },
+      "admin": {
+        "status": 400,
+        "error": "缺少目标用户名"
+      },
+      "owner": {
+        "status": 400,
+        "error": "缺少目标用户名"
+      }
+    },
+    "DELETE": {
+      "anonymous": {
+        "status": 401,
+        "error": "Unauthorized"
+      },
+      "member": {
+        "status": 400,
+        "error": "缺少目标用户名或设备 Token"
+      },
+      "banned": {
+        "status": 400,
+        "error": "缺少目标用户名或设备 Token"
+      },
+      "admin": {
+        "status": 400,
+        "error": "缺少目标用户名或设备 Token"
+      },
+      "owner": {
+        "status": 400,
+        "error": "缺少目标用户名或设备 Token"
+      }
+    }
+  },
+  "admin/user/route.ts": {
+    "POST": {
+      "anonymous": {
+        "status": 401,
+        "error": "Unauthorized"
+      },
+      "member": {
+        "status": 400,
+        "error": "参数格式错误"
+      },
+      "banned": {
+        "status": 400,
+        "error": "参数格式错误"
+      },
+      "admin": {
+        "status": 400,
+        "error": "参数格式错误"
+      },
+      "owner": {
+        "status": 400,
+        "error": "参数格式错误"
+      }
+    }
+  },
+  "admin/users/route.ts": {
+    "GET": {
+      "anonymous": {
+        "status": 401,
+        "error": "Unauthorized"
+      },
+      "member": {
+        "status": 401,
+        "error": "权限不足"
+      },
+      "banned": {
+        "status": 401,
+        "error": "权限不足"
+      },
+      "admin": {
+        "status": 500,
+        "error": "获取用户列表失败"
+      },
+      "owner": {
+        "status": 500,
+        "error": "获取用户列表失败"
+      }
+    }
+  },
+  "admin/web-live/route.ts": {
+    "POST": {
+      "anonymous": {
+        "status": 401,
+        "error": "权限不足"
+      },
+      "member": {
+        "status": 401,
+        "error": "权限不足"
+      },
+      "banned": {
+        "status": 401,
+        "error": "权限不足"
+      },
+      "admin": {
+        "status": 400,
+        "error": "未知操作"
+      },
+      "owner": {
+        "status": 400,
+        "error": "未知操作"
+      }
+    }
+  },
+  "admin/xiaoya/route.ts": {
+    "POST": {
+      "anonymous": {
+        "status": 403,
+        "error": "无权限"
+      },
+      "member": {
+        "status": 403,
+        "error": "无权限"
+      },
+      "banned": {
+        "status": 403,
+        "error": "无权限"
+      },
+      "admin": {
+        "status": 400,
+        "error": "无效的操作"
+      },
+      "owner": {
+        "status": 400,
+        "error": "无效的操作"
+      }
+    }
+  },
+  "auth/oidc/callback/route.ts": {
+    "GET": {
+      "anonymous": {
+        "status": 307,
+        "error": null
+      },
+      "member": {
+        "status": 307,
+        "error": null
+      },
+      "banned": {
+        "status": 307,
+        "error": null
+      },
+      "admin": {
+        "status": 307,
+        "error": null
+      },
+      "owner": {
+        "status": 307,
+        "error": null
+      }
+    }
+  },
+  "auth/refresh/route.ts": {
+    "POST": {
+      "anonymous": {
+        "status": 401,
+        "error": "Unauthorized"
+      },
+      "member": {
+        "status": 401,
+        "error": "Unauthorized"
+      },
+      "banned": {
+        "status": 403,
+        "error": "User banned"
+      },
+      "admin": {
+        "status": 401,
+        "error": "Unauthorized"
+      },
+      "owner": {
+        "status": 401,
+        "error": "Unauthorized"
+      }
+    }
+  },
+  "danmaku-filter/route.ts": {
+    "GET": {
+      "anonymous": {
+        "status": 401,
+        "error": "未登录"
+      },
+      "member": {
+        "status": 200,
+        "error": null
+      },
+      "banned": {
+        "status": 401,
+        "error": "用户已被封禁"
+      },
+      "admin": {
+        "status": 200,
+        "error": null
+      },
+      "owner": {
+        "status": 200,
+        "error": null
+      }
+    },
+    "POST": {
+      "anonymous": {
+        "status": 401,
+        "error": "未登录"
+      },
+      "member": {
+        "status": 400,
+        "error": "配置格式错误"
+      },
+      "banned": {
+        "status": 401,
+        "error": "用户已被封禁"
+      },
+      "admin": {
+        "status": 400,
+        "error": "配置格式错误"
+      },
+      "owner": {
+        "status": 400,
+        "error": "配置格式错误"
+      }
+    }
+  },
+  "emby/cms-proxy/[token]/route.ts": {
+    "GET": {
+      "anonymous": {
+        "status": 400,
+        "error": null
+      },
+      "member": {
+        "status": 400,
+        "error": null
+      },
+      "banned": {
+        "status": 400,
+        "error": null
+      },
+      "admin": {
+        "status": 400,
+        "error": null
+      },
+      "owner": {
+        "status": 400,
+        "error": null
+      }
+    }
+  },
+  "emby/image/[token]/[itemId]/route.ts": {
+    "GET": {
+      "anonymous": {
+        "status": 401,
+        "error": "未授权"
+      },
+      "member": {
+        "status": 401,
+        "error": "未授权"
+      },
+      "banned": {
+        "status": 401,
+        "error": "未授权"
+      },
+      "admin": {
+        "status": 401,
+        "error": "未授权"
+      },
+      "owner": {
+        "status": 401,
+        "error": "未授权"
+      }
+    }
+  },
+  "emby/play/[token]/[filename]/route.ts": {
+    "GET": {
+      "anonymous": {
+        "status": 401,
+        "error": "未授权"
+      },
+      "member": {
+        "status": 401,
+        "error": "未授权"
+      },
+      "banned": {
+        "status": 401,
+        "error": "未授权"
+      },
+      "admin": {
+        "status": 401,
+        "error": "未授权"
+      },
+      "owner": {
+        "status": 401,
+        "error": "未授权"
+      }
+    }
+  },
+  "emby/subtitle/[token]/[filename]/route.ts": {
+    "GET": {
+      "anonymous": {
+        "status": 401,
+        "error": "未授权"
+      },
+      "member": {
+        "status": 401,
+        "error": "未授权"
+      },
+      "banned": {
+        "status": 401,
+        "error": "未授权"
+      },
+      "admin": {
+        "status": 401,
+        "error": "未授权"
+      },
+      "owner": {
+        "status": 401,
+        "error": "未授权"
+      }
+    }
+  },
+  "favorites/route.ts": {
+    "GET": {
+      "anonymous": {
+        "status": 401,
+        "error": "Unauthorized"
+      },
+      "member": {
+        "status": 500,
+        "error": "Internal Server Error"
+      },
+      "banned": {
+        "status": 401,
+        "error": "用户已被封禁"
+      },
+      "admin": {
+        "status": 500,
+        "error": "Internal Server Error"
+      },
+      "owner": {
+        "status": 500,
+        "error": "Internal Server Error"
+      }
+    },
+    "POST": {
+      "anonymous": {
+        "status": 401,
+        "error": "Unauthorized"
+      },
+      "member": {
+        "status": 400,
+        "error": "Missing key or favorite"
+      },
+      "banned": {
+        "status": 401,
+        "error": "用户已被封禁"
+      },
+      "admin": {
+        "status": 400,
+        "error": "Missing key or favorite"
+      },
+      "owner": {
+        "status": 400,
+        "error": "Missing key or favorite"
+      }
+    },
+    "DELETE": {
+      "anonymous": {
+        "status": 401,
+        "error": "Unauthorized"
+      },
+      "member": {
+        "status": 500,
+        "error": "Internal Server Error"
+      },
+      "banned": {
+        "status": 401,
+        "error": "用户已被封禁"
+      },
+      "admin": {
+        "status": 500,
+        "error": "Internal Server Error"
+      },
+      "owner": {
+        "status": 500,
+        "error": "Internal Server Error"
+      }
+    }
+  },
+  "feedback/[id]/route.ts": {
+    "PATCH": {
+      "anonymous": {
+        "status": 401,
+        "error": "Unauthorized"
+      },
+      "member": {
+        "status": 403,
+        "error": "权限不足"
+      },
+      "banned": {
+        "status": 403,
+        "error": "权限不足"
+      },
+      "admin": {
+        "status": 400,
+        "error": "无效的操作"
+      },
+      "owner": {
+        "status": 400,
+        "error": "无效的操作"
+      }
+    }
+  },
+  "feedback/route.ts": {
+    "GET": {
+      "anonymous": {
+        "status": 401,
+        "error": "Unauthorized"
+      },
+      "member": {
+        "status": 200,
+        "error": null
+      },
+      "banned": {
+        "status": 200,
+        "error": null
+      },
+      "admin": {
+        "status": 200,
+        "error": null
+      },
+      "owner": {
+        "status": 200,
+        "error": null
+      }
+    },
+    "POST": {
+      "anonymous": {
+        "status": 401,
+        "error": "Unauthorized"
+      },
+      "member": {
+        "status": 400,
+        "error": "请选择反馈类型"
+      },
+      "banned": {
+        "status": 400,
+        "error": "请选择反馈类型"
+      },
+      "admin": {
+        "status": 400,
+        "error": "请选择反馈类型"
+      },
+      "owner": {
+        "status": 400,
+        "error": "请选择反馈类型"
+      }
+    }
+  },
+  "login/route.ts": {
+    "POST": {
+      "anonymous": {
+        "status": 400,
+        "error": "用户名不能为空"
+      },
+      "member": {
+        "status": 400,
+        "error": "用户名不能为空"
+      },
+      "banned": {
+        "status": 400,
+        "error": "用户名不能为空"
+      },
+      "admin": {
+        "status": 400,
+        "error": "用户名不能为空"
+      },
+      "owner": {
+        "status": 400,
+        "error": "用户名不能为空"
+      }
+    }
+  },
+  "movie-requests/[id]/route.ts": {
+    "GET": {
+      "anonymous": {
+        "status": 401,
+        "error": "Unauthorized"
+      },
+      "member": {
+        "status": 404,
+        "error": "求片不存在"
+      },
+      "banned": {
+        "status": 404,
+        "error": "求片不存在"
+      },
+      "admin": {
+        "status": 404,
+        "error": "求片不存在"
+      },
+      "owner": {
+        "status": 404,
+        "error": "求片不存在"
+      }
+    },
+    "PATCH": {
+      "anonymous": {
+        "status": 401,
+        "error": "Unauthorized"
+      },
+      "member": {
+        "status": 403,
+        "error": "无权限操作"
+      },
+      "banned": {
+        "status": 403,
+        "error": "无权限操作"
+      },
+      "admin": {
+        "status": 404,
+        "error": "求片不存在"
+      },
+      "owner": {
+        "status": 404,
+        "error": "求片不存在"
+      }
+    },
+    "DELETE": {
+      "anonymous": {
+        "status": 401,
+        "error": "Unauthorized"
+      },
+      "member": {
+        "status": 403,
+        "error": "无权限操作"
+      },
+      "banned": {
+        "status": 403,
+        "error": "无权限操作"
+      },
+      "admin": {
+        "status": 404,
+        "error": "求片不存在"
+      },
+      "owner": {
+        "status": 404,
+        "error": "求片不存在"
+      }
+    }
+  },
+  "music/playlists/route.ts": {
+    "GET": {
+      "anonymous": {
+        "status": 401,
+        "error": "Unauthorized"
+      },
+      "member": {
+        "status": 200,
+        "error": null
+      },
+      "banned": {
+        "status": 403,
+        "error": "无权限访问音乐功能"
+      },
+      "admin": {
+        "status": 200,
+        "error": null
+      },
+      "owner": {
+        "status": 200,
+        "error": null
+      }
+    },
+    "POST": {
+      "anonymous": {
+        "status": 401,
+        "error": "Unauthorized"
+      },
+      "member": {
+        "status": 400,
+        "error": "歌单名称不能为空"
+      },
+      "banned": {
+        "status": 403,
+        "error": "无权限访问音乐功能"
+      },
+      "admin": {
+        "status": 400,
+        "error": "歌单名称不能为空"
+      },
+      "owner": {
+        "status": 400,
+        "error": "歌单名称不能为空"
+      }
+    },
+    "PUT": {
+      "anonymous": {
+        "status": 401,
+        "error": "Unauthorized"
+      },
+      "member": {
+        "status": 400,
+        "error": "歌单ID不能为空"
+      },
+      "banned": {
+        "status": 403,
+        "error": "无权限访问音乐功能"
+      },
+      "admin": {
+        "status": 400,
+        "error": "歌单ID不能为空"
+      },
+      "owner": {
+        "status": 400,
+        "error": "歌单ID不能为空"
+      }
+    },
+    "DELETE": {
+      "anonymous": {
+        "status": 401,
+        "error": "Unauthorized"
+      },
+      "member": {
+        "status": 400,
+        "error": "歌单ID不能为空"
+      },
+      "banned": {
+        "status": 403,
+        "error": "无权限访问音乐功能"
+      },
+      "admin": {
+        "status": 400,
+        "error": "歌单ID不能为空"
+      },
+      "owner": {
+        "status": 400,
+        "error": "歌单ID不能为空"
+      }
+    }
+  },
+  "music/playlists/songs/route.ts": {
+    "GET": {
+      "anonymous": {
+        "status": 401,
+        "error": "Unauthorized"
+      },
+      "member": {
+        "status": 400,
+        "error": "歌单ID不能为空"
+      },
+      "banned": {
+        "status": 403,
+        "error": "无权限访问音乐功能"
+      },
+      "admin": {
+        "status": 400,
+        "error": "歌单ID不能为空"
+      },
+      "owner": {
+        "status": 400,
+        "error": "歌单ID不能为空"
+      }
+    },
+    "POST": {
+      "anonymous": {
+        "status": 401,
+        "error": "Unauthorized"
+      },
+      "member": {
+        "status": 400,
+        "error": "歌单ID不能为空"
+      },
+      "banned": {
+        "status": 403,
+        "error": "无权限访问音乐功能"
+      },
+      "admin": {
+        "status": 400,
+        "error": "歌单ID不能为空"
+      },
+      "owner": {
+        "status": 400,
+        "error": "歌单ID不能为空"
+      }
+    },
+    "DELETE": {
+      "anonymous": {
+        "status": 401,
+        "error": "Unauthorized"
+      },
+      "member": {
+        "status": 400,
+        "error": "参数不完整"
+      },
+      "banned": {
+        "status": 403,
+        "error": "无权限访问音乐功能"
+      },
+      "admin": {
+        "status": 400,
+        "error": "参数不完整"
+      },
+      "owner": {
+        "status": 400,
+        "error": "参数不完整"
+      }
+    }
+  },
+  "music/playrecords/route.ts": {
+    "GET": {
+      "anonymous": {
+        "status": 401,
+        "error": "Unauthorized"
+      },
+      "member": {
+        "status": 500,
+        "error": "Internal Server Error"
+      },
+      "banned": {
+        "status": 403,
+        "error": "无权限访问音乐功能"
+      },
+      "admin": {
+        "status": 500,
+        "error": "Internal Server Error"
+      },
+      "owner": {
+        "status": 500,
+        "error": "Internal Server Error"
+      }
+    },
+    "POST": {
+      "anonymous": {
+        "status": 401,
+        "error": "Unauthorized"
+      },
+      "member": {
+        "status": 400,
+        "error": "Missing key or record"
+      },
+      "banned": {
+        "status": 403,
+        "error": "无权限访问音乐功能"
+      },
+      "admin": {
+        "status": 400,
+        "error": "Missing key or record"
+      },
+      "owner": {
+        "status": 400,
+        "error": "Missing key or record"
+      }
+    },
+    "DELETE": {
+      "anonymous": {
+        "status": 401,
+        "error": "Unauthorized"
+      },
+      "member": {
+        "status": 500,
+        "error": "Internal Server Error"
+      },
+      "banned": {
+        "status": 403,
+        "error": "无权限访问音乐功能"
+      },
+      "admin": {
+        "status": 500,
+        "error": "Internal Server Error"
+      },
+      "owner": {
+        "status": 500,
+        "error": "Internal Server Error"
+      }
+    }
+  },
+  "offline-download/local/[source]/[videoId]/[episodeIndex]/[...file]/route.ts": {
+    "GET": {
+      "anonymous": {
+        "status": 403,
+        "error": "无权限"
+      },
+      "member": {
+        "status": 403,
+        "error": "无权限"
+      },
+      "banned": {
+        "status": 403,
+        "error": "无权限"
+      },
+      "admin": {
+        "status": 403,
+        "error": "无权限"
+      },
+      "owner": {
+        "status": 403,
+        "error": "无权限"
+      }
+    }
+  },
+  "offline-download/local/route.ts": {
+    "GET": {
+      "anonymous": {
+        "status": 403,
+        "error": "无权限"
+      },
+      "member": {
+        "status": 403,
+        "error": "无权限"
+      },
+      "banned": {
+        "status": 403,
+        "error": "无权限"
+      },
+      "admin": {
+        "status": 403,
+        "error": "无权限"
+      },
+      "owner": {
+        "status": 403,
+        "error": "无权限"
+      }
+    }
+  },
+  "offline-download/route.ts": {
+    "GET": {
+      "anonymous": {
+        "status": 403,
+        "error": "无权限"
+      },
+      "member": {
+        "status": 403,
+        "error": "无权限"
+      },
+      "banned": {
+        "status": 403,
+        "error": "无权限"
+      },
+      "admin": {
+        "status": 403,
+        "error": "无权限"
+      },
+      "owner": {
+        "status": 403,
+        "error": "无权限"
+      }
+    },
+    "POST": {
+      "anonymous": {
+        "status": 403,
+        "error": "无权限"
+      },
+      "member": {
+        "status": 403,
+        "error": "无权限"
+      },
+      "banned": {
+        "status": 403,
+        "error": "无权限"
+      },
+      "admin": {
+        "status": 403,
+        "error": "无权限"
+      },
+      "owner": {
+        "status": 403,
+        "error": "无权限"
+      }
+    },
+    "PUT": {
+      "anonymous": {
+        "status": 403,
+        "error": "无权限"
+      },
+      "member": {
+        "status": 403,
+        "error": "无权限"
+      },
+      "banned": {
+        "status": 403,
+        "error": "无权限"
+      },
+      "admin": {
+        "status": 403,
+        "error": "无权限"
+      },
+      "owner": {
+        "status": 403,
+        "error": "无权限"
+      }
+    },
+    "DELETE": {
+      "anonymous": {
+        "status": 403,
+        "error": "无权限"
+      },
+      "member": {
+        "status": 403,
+        "error": "无权限"
+      },
+      "banned": {
+        "status": 403,
+        "error": "无权限"
+      },
+      "admin": {
+        "status": 403,
+        "error": "无权限"
+      },
+      "owner": {
+        "status": 403,
+        "error": "无权限"
+      }
+    }
+  },
+  "openlist/cms-proxy/[token]/route.ts": {
+    "GET": {
+      "anonymous": {
+        "status": 400,
+        "error": null
+      },
+      "member": {
+        "status": 400,
+        "error": null
+      },
+      "banned": {
+        "status": 400,
+        "error": null
+      },
+      "admin": {
+        "status": 400,
+        "error": null
+      },
+      "owner": {
+        "status": 400,
+        "error": null
+      }
+    }
+  },
+  "openlist/correct/route.ts": {
+    "POST": {
+      "anonymous": {
+        "status": 401,
+        "error": "Unauthorized"
+      },
+      "member": {
+        "status": 403,
+        "error": "只有管理员可以修改私人影库"
+      },
+      "banned": {
+        "status": 403,
+        "error": "无权限访问私人影库"
+      },
+      "admin": {
+        "status": 400,
+        "error": "缺少必要参数 (key 或 title)"
+      },
+      "owner": {
+        "status": 400,
+        "error": "缺少必要参数 (key 或 title)"
+      }
+    }
+  },
+  "openlist/delete/route.ts": {
+    "POST": {
+      "anonymous": {
+        "status": 401,
+        "error": "Unauthorized"
+      },
+      "member": {
+        "status": 403,
+        "error": "只有管理员可以修改私人影库"
+      },
+      "banned": {
+        "status": 403,
+        "error": "无权限访问私人影库"
+      },
+      "admin": {
+        "status": 400,
+        "error": "缺少 key 参数"
+      },
+      "owner": {
+        "status": 400,
+        "error": "缺少 key 参数"
+      }
+    }
+  },
+  "openlist/play/[token]/route.ts": {
+    "GET": {
+      "anonymous": {
+        "status": 401,
+        "error": "未授权"
+      },
+      "member": {
+        "status": 401,
+        "error": "未授权"
+      },
+      "banned": {
+        "status": 401,
+        "error": "未授权"
+      },
+      "admin": {
+        "status": 401,
+        "error": "未授权"
+      },
+      "owner": {
+        "status": 401,
+        "error": "未授权"
+      }
+    }
+  },
+  "openlist/proxy/[token]/[filename]/route.ts": {
+    "GET": {
+      "anonymous": {
+        "status": 401,
+        "error": "未授权"
+      },
+      "member": {
+        "status": 401,
+        "error": "未授权"
+      },
+      "banned": {
+        "status": 401,
+        "error": "未授权"
+      },
+      "admin": {
+        "status": 401,
+        "error": "未授权"
+      },
+      "owner": {
+        "status": 401,
+        "error": "未授权"
+      }
+    }
+  },
+  "openlist/refresh/route.ts": {
+    "POST": {
+      "anonymous": {
+        "status": 401,
+        "error": "Unauthorized"
+      },
+      "member": {
+        "status": 403,
+        "error": "只有管理员可以修改私人影库"
+      },
+      "banned": {
+        "status": 403,
+        "error": "无权限访问私人影库"
+      },
+      "admin": {
+        "status": 400,
+        "error": "请先在站点配置中配置 TMDB API Key"
+      },
+      "owner": {
+        "status": 400,
+        "error": "请先在站点配置中配置 TMDB API Key"
+      }
+    }
+  },
+  "playrecords/route.ts": {
+    "GET": {
+      "anonymous": {
+        "status": 401,
+        "error": "Unauthorized"
+      },
+      "member": {
+        "status": 500,
+        "error": "Internal Server Error"
+      },
+      "banned": {
+        "status": 401,
+        "error": "用户已被封禁"
+      },
+      "admin": {
+        "status": 500,
+        "error": "Internal Server Error"
+      },
+      "owner": {
+        "status": 500,
+        "error": "Internal Server Error"
+      }
+    },
+    "POST": {
+      "anonymous": {
+        "status": 401,
+        "error": "Unauthorized"
+      },
+      "member": {
+        "status": 400,
+        "error": "Missing key or record"
+      },
+      "banned": {
+        "status": 401,
+        "error": "用户已被封禁"
+      },
+      "admin": {
+        "status": 400,
+        "error": "Missing key or record"
+      },
+      "owner": {
+        "status": 400,
+        "error": "Missing key or record"
+      }
+    },
+    "DELETE": {
+      "anonymous": {
+        "status": 401,
+        "error": "Unauthorized"
+      },
+      "member": {
+        "status": 500,
+        "error": "Internal Server Error"
+      },
+      "banned": {
+        "status": 401,
+        "error": "用户已被封禁"
+      },
+      "admin": {
+        "status": 500,
+        "error": "Internal Server Error"
+      },
+      "owner": {
+        "status": 500,
+        "error": "Internal Server Error"
+      }
+    }
+  },
+  "register/route.ts": {
+    "POST": {
+      "anonymous": {
+        "status": 403,
+        "error": "注册功能未开启"
+      },
+      "member": {
+        "status": 403,
+        "error": "注册功能未开启"
+      },
+      "banned": {
+        "status": 403,
+        "error": "注册功能未开启"
+      },
+      "admin": {
+        "status": 403,
+        "error": "注册功能未开启"
+      },
+      "owner": {
+        "status": 403,
+        "error": "注册功能未开启"
+      }
+    }
+  },
+  "searchhistory/route.ts": {
+    "GET": {
+      "anonymous": {
+        "status": 401,
+        "error": "Unauthorized"
+      },
+      "member": {
+        "status": 200,
+        "error": null
+      },
+      "banned": {
+        "status": 401,
+        "error": "用户已被封禁"
+      },
+      "admin": {
+        "status": 200,
+        "error": null
+      },
+      "owner": {
+        "status": 200,
+        "error": null
+      }
+    },
+    "POST": {
+      "anonymous": {
+        "status": 401,
+        "error": "Unauthorized"
+      },
+      "member": {
+        "status": 400,
+        "error": "Keyword is required"
+      },
+      "banned": {
+        "status": 401,
+        "error": "用户已被封禁"
+      },
+      "admin": {
+        "status": 400,
+        "error": "Keyword is required"
+      },
+      "owner": {
+        "status": 400,
+        "error": "Keyword is required"
+      }
+    },
+    "DELETE": {
+      "anonymous": {
+        "status": 401,
+        "error": "Unauthorized"
+      },
+      "member": {
+        "status": 500,
+        "error": "Internal Server Error"
+      },
+      "banned": {
+        "status": 401,
+        "error": "用户已被封禁"
+      },
+      "admin": {
+        "status": 500,
+        "error": "Internal Server Error"
+      },
+      "owner": {
+        "status": 500,
+        "error": "Internal Server Error"
+      }
+    }
+  },
+  "skipconfigs/route.ts": {
+    "GET": {
+      "anonymous": {
+        "status": 401,
+        "error": "未登录"
+      },
+      "member": {
+        "status": 500,
+        "error": "获取跳过片头片尾配置失败"
+      },
+      "banned": {
+        "status": 401,
+        "error": "用户已被封禁"
+      },
+      "admin": {
+        "status": 500,
+        "error": "获取跳过片头片尾配置失败"
+      },
+      "owner": {
+        "status": 500,
+        "error": "获取跳过片头片尾配置失败"
+      }
+    },
+    "POST": {
+      "anonymous": {
+        "status": 401,
+        "error": "未登录"
+      },
+      "member": {
+        "status": 400,
+        "error": "缺少必要参数"
+      },
+      "banned": {
+        "status": 401,
+        "error": "用户已被封禁"
+      },
+      "admin": {
+        "status": 400,
+        "error": "缺少必要参数"
+      },
+      "owner": {
+        "status": 400,
+        "error": "缺少必要参数"
+      }
+    },
+    "DELETE": {
+      "anonymous": {
+        "status": 401,
+        "error": "未登录"
+      },
+      "member": {
+        "status": 400,
+        "error": "缺少必要参数"
+      },
+      "banned": {
+        "status": 401,
+        "error": "用户已被封禁"
+      },
+      "admin": {
+        "status": 400,
+        "error": "缺少必要参数"
+      },
+      "owner": {
+        "status": 400,
+        "error": "缺少必要参数"
+      }
+    }
+  },
+  "tvbox/subscribe/route.ts": {
+    "GET": {
+      "anonymous": {
+        "status": 403,
+        "error": "订阅功能未开启"
+      },
+      "member": {
+        "status": 403,
+        "error": "订阅功能未开启"
+      },
+      "banned": {
+        "status": 403,
+        "error": "订阅功能未开启"
+      },
+      "admin": {
+        "status": 403,
+        "error": "订阅功能未开启"
+      },
+      "owner": {
+        "status": 403,
+        "error": "订阅功能未开启"
+      }
+    }
+  }
+}
