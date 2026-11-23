@@ -25,6 +25,10 @@ export async function POST(request: NextRequest) {
   }
 
   try {
+    // 先查权限再读请求：没登录、没权限时不管请求内容是什么都直接拒绝
+    const caller = await requireRole(request, 'admin', { deniedStatus: 401 });
+    if (!isCaller(caller)) return caller;
+
     const body = await request.json();
     const {
       action,
@@ -34,9 +38,6 @@ export async function POST(request: NextRequest) {
       Password,
       embyAuthorizationHeader,
     } = body;
-
-    const caller = await requireRole(request, 'admin', { deniedStatus: 401 });
-    if (!isCaller(caller)) return caller;
 
     // 获取配置
     const adminConfig = await getConfig();

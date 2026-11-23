@@ -161,7 +161,8 @@ const PARAMS = {
 async function call(
   handler: (req: NextRequest, ctx: unknown) => Promise<Response>,
   method: string,
-  caller: Caller
+  caller: Caller,
+  rawBody?: string
 ): Promise<Outcome> {
   const cookie = cookieFor(caller);
   const request = new NextRequest(
@@ -172,7 +173,10 @@ async function call(
         'content-type': 'application/json',
         ...(cookie ? { cookie } : {}),
       },
-      body: method === 'GET' ? undefined : JSON.stringify({ action: 'x' }),
+      body:
+        method === 'GET'
+          ? undefined
+          : rawBody ?? JSON.stringify({ action: 'x' }),
     }
   );
   let timer: ReturnType<typeof setTimeout> | undefined;
@@ -285,6 +289,44 @@ describe.each(routes)('%s', (route) => {
     if (RECORD) recorded[route] = now;
     expect(problems).toEqual([]);
   });
+});
+
+// 这几个接口原来先读请求内容再查权限：没登录或没权限又带着坏数据时得到 500。
+// 权限检查必须在读请求之前，坏数据和好数据得到同样的拒绝
+const BODY_AFTER_ROLE = [
+  'admin/ai/route.ts',
+  'admin/category/route.ts',
+  'admin/emby/route.ts',
+  'admin/music/route.ts',
+  'admin/openlist/route.ts',
+  'admin/site/route.ts',
+  'admin/source/route.ts',
+  'admin/theme/route.ts',
+  'admin/user/route.ts',
+];
+describe.each(BODY_AFTER_ROLE)('%s with a body that is not JSON', (route) => {
+  test.each(['anonymous', 'member'] as const)(
+    '%s is refused like a normal request and nothing is written',
+    async (caller) => {
+      const mod = (await import(path.join(API_DIR, route))) as Record<
+        string,
+        unknown
+      >;
+      touched.length = 0;
+      const outcome = await call(
+        mod.POST as (req: NextRequest, ctx: unknown) => Promise<Response>,
+        'POST',
+        caller,
+        'not json'
+      );
+      const writes = touched.filter(
+        (label) => !READ_OK.test(label.split('.').pop() || '')
+      );
+      expect(outcome.status).toBe(previous[route].POST[caller].status);
+      expect(denied(outcome)).toBe(true);
+      expect(writes).toEqual([]);
+    }
+  );
 });
 
 afterAll(() => {

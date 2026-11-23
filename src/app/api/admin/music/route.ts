@@ -21,10 +21,11 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const body = await request.json();
-
+    // 先查权限再读请求：没登录、没权限时不管请求内容是什么都直接拒绝
     const caller = await requireRole(request, 'admin', { deniedStatus: 401 });
     if (!isCaller(caller)) return caller;
+
+    const body = await request.json();
 
     const { Enabled, BaseUrl, Token, ProxyEnabled } = body as {
       Enabled?: boolean;
