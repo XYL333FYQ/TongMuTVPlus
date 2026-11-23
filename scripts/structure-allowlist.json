@@ -479,7 +479,6 @@
     "src/components/catalog/HomeHero.test.tsx :: @next/next/no-img-element ×12",
     "src/components/catalog/PublicCatalogPage.test.tsx :: @typescript-eslint/no-non-null-assertion ×1",
     "src/components/feedback/ConfirmDialog.tsx :: no-console ×1",
-    "src/components/feedback/HttpWarningDialog.tsx :: react-hooks/exhaustive-deps ×1",
     "src/components/feedback/ImageViewer.presentation.test.tsx :: @next/next/no-img-element ×1",
     "src/components/feedback/MobileActionSheet.presentation.test.tsx :: @next/next/no-img-element ×1",
     "src/components/feedback/MobileActionSheet.tsx :: no-console ×1",

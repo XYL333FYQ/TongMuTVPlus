@@ -23,9 +23,6 @@ html .tm-http-warning-panel h3 {
   font-size: 18px;
   font-weight: 500;
 }
-html .tm-http-warning-backdrop {
-  transition: opacity var(--tm-d-panel) var(--tm-ease-out);
-}
 html .tm-http-warning-panel {
   max-height: calc(100dvh - 32px);
   overflow-y: auto;
@@ -36,10 +33,13 @@ html .tm-http-warning-panel {
   transition: opacity var(--tm-d-panel) var(--tm-ease-out),
     translate var(--tm-d-panel) var(--tm-ease-out);
 }
+/* 出现前和关闭时：淡出并下沉 8px（遮罩由弹窗层负责） */
 html .tm-http-warning-hidden {
+  opacity: 0;
   translate: 0 8px;
 }
 html .tm-http-warning-shown {
+  opacity: 1;
   translate: none;
 }
 html .tm-http-warning-panel p,
@@ -57,9 +57,6 @@ html[data-tm-reduced-motion='true'] .tm-http-warning-panel {
   translate: none !important;
   transition: opacity 120ms var(--tm-ease-out);
 }
-html[data-tm-reduced-motion='true'] .tm-http-warning-backdrop {
-  transition-duration: 120ms;
-}
 @media (prefers-reduced-motion: reduce) {
   html .tm-profile-panel {
     animation: tm-legacy-panel-fade 120ms var(--tm-ease-out) backwards;
@@ -67,9 +64,6 @@ html[data-tm-reduced-motion='true'] .tm-http-warning-backdrop {
   html .tm-http-warning-panel {
     translate: none !important;
     transition: opacity 120ms var(--tm-ease-out);
-  }
-  html .tm-http-warning-backdrop {
-    transition-duration: 120ms;
   }
 }
 @keyframes tm-legacy-panel-enter {

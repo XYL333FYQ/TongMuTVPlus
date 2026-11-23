@@ -1,14 +1,15 @@
 'use client';
 
 import { AlertTriangle } from 'lucide-react';
-import { useEffect, useId, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
+import { useEffect, useRef, useState } from 'react';
 
 import '@/styles/panels.css';
 
 import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
 import { useReducedMotionSetting } from '@/lib/motion';
 import { readSetting, writeSetting } from '@/lib/settings';
+
+import ModalLayer from '@/components/feedback/ModalLayer';
 
 interface HttpWarningDialogProps {
   onClose: () => void;
@@ -23,9 +24,7 @@ export default function HttpWarningDialog({ onClose }: HttpWarningDialogProps) {
   onCloseRef.current = onClose;
   const [isVisible, setIsVisible] = useState(false);
   const [shouldShow, setShouldShow] = useState(false);
-  const panelRef = useRef<HTMLDivElement>(null);
   const primaryRef = useRef<HTMLButtonElement>(null);
-  const titleId = useId();
 
   useEffect(() => {
     // 检查是否应该显示弹窗
@@ -84,65 +83,21 @@ export default function HttpWarningDialog({ onClose }: HttpWarningDialogProps) {
     );
   };
 
-  // 弹窗出现后把焦点放到“我知道了”，Esc 关闭，Tab 只在弹窗内循环；关闭后焦点交还原处
-  useEffect(() => {
-    if (!shouldShow) return;
-    const trigger =
-      document.activeElement instanceof HTMLElement
-        ? document.activeElement
-        : null;
-    primaryRef.current?.focus({ preventScroll: true });
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        event.preventDefault();
-        handleClose();
-        return;
-      }
-      if (event.key !== 'Tab' || !panelRef.current) return;
-      const buttons = Array.from(
-        panelRef.current.querySelectorAll<HTMLButtonElement>(
-          'button:not(:disabled)'
-        )
-      );
-      const first = buttons[0];
-      const last = buttons[buttons.length - 1];
-      if (!panelRef.current.contains(document.activeElement)) {
-        event.preventDefault();
-        first?.focus();
-      } else if (event.shiftKey && document.activeElement === first) {
-        event.preventDefault();
-        last?.focus();
-      } else if (!event.shiftKey && document.activeElement === last) {
-        event.preventDefault();
-        first?.focus();
-      }
-    };
-    document.addEventListener('keydown', onKeyDown);
-    return () => {
-      document.removeEventListener('keydown', onKeyDown);
-      if (trigger?.isConnected) trigger.focus({ preventScroll: true });
-    };
-  }, [shouldShow]);
-
   // 如果不需要显示，直接返回 null
   if (!shouldShow) return null;
 
-  return createPortal(
-    <div
-      className={`tm-http-warning-backdrop fixed inset-0 bg-ink/50 z-[var(--tm-z-toast)] flex items-center justify-center p-4 transition-opacity duration-300 ${
-        isVisible ? 'opacity-100' : 'opacity-0'
-      } `}
-      onClick={handleClose}
+  // 弹窗层负责遮罩、Esc / 返回键 / 点外面关闭、焦点和滚动锁；出现后焦点在“我知道了”
+  return (
+    <ModalLayer
+      label='HTTP 环境功能限制提示'
+      onClose={handleClose}
+      className='tm-http-warning-backdrop'
+      initialFocus={primaryRef}
     >
       <div
-        ref={panelRef}
-        role='dialog'
-        aria-modal='true'
-        aria-labelledby={titleId}
-        className={`tm-http-warning-panel bg-surface rounded-lg shadow-xl max-w-md w-full border border-line transition-[transform,opacity] duration-300 ${
+        className={`tm-http-warning-panel bg-surface rounded-lg shadow-xl max-w-md w-full border border-line ${
           isVisible ? 'tm-http-warning-shown' : 'tm-http-warning-hidden'
-        } `}
-        onClick={(e) => e.stopPropagation()}
+        }`}
       >
         <div className='p-6'>
           {/* 图标和标题 */}
@@ -151,7 +106,7 @@ export default function HttpWarningDialog({ onClose }: HttpWarningDialogProps) {
               <AlertTriangle className='w-8 h-8 text-fg' aria-hidden />
             </div>
             <div className='flex-1'>
-              <h3 id={titleId} className='text-lg font-medium text-fg mb-2'>
+              <h3 className='text-lg font-medium text-fg mb-2'>
                 HTTP 环境功能限制提示
               </h3>
               <div className='text-sm text-muted space-y-2'>
@@ -191,7 +146,6 @@ export default function HttpWarningDialog({ onClose }: HttpWarningDialogProps) {
           </div>
         </div>
       </div>
-    </div>,
-    document.body
+    </ModalLayer>
   );
 }

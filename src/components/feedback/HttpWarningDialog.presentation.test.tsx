@@ -1,5 +1,7 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
 
+import { consumeBackLayer } from '@/lib/back-layers';
+
 import HttpWarningDialog from '@/components/feedback/HttpWarningDialog';
 
 let mockReduced = false;
@@ -112,4 +114,48 @@ test.each([
   expect(
     screen.queryByRole('button', { name: '我知道了' })
   ).not.toBeInTheDocument();
+});
+
+test('the warning opens in the default variant of the shared modal layer', () => {
+  render(<HttpWarningDialog onClose={jest.fn()} />);
+  const dialog = screen.getByRole('dialog', { name: 'HTTP 环境功能限制提示' });
+  expect(dialog.tagName).toBe('DIALOG');
+  expect(dialog).toHaveClass('tm-modal-layer');
+  expect(dialog.className).not.toMatch(/tm-modal-layer--/);
+});
+
+test('Escape and the back key close the warning', () => {
+  const closed = jest.fn();
+  const { unmount } = render(<HttpWarningDialog onClose={closed} />);
+  act(() => {
+    jest.advanceTimersByTime(100);
+  });
+  fireEvent(
+    screen.getByRole('dialog'),
+    new Event('cancel', { cancelable: true })
+  );
+  act(() => {
+    jest.advanceTimersByTime(320);
+  });
+  expect(closed).toHaveBeenCalledTimes(1);
+  unmount();
+
+  const backClosed = jest.fn();
+  render(<HttpWarningDialog onClose={backClosed} />);
+  act(() => {
+    jest.advanceTimersByTime(100);
+  });
+  act(() => {
+    expect(consumeBackLayer()).toBe('handled');
+  });
+  act(() => {
+    jest.advanceTimersByTime(320);
+  });
+  expect(backClosed).toHaveBeenCalledTimes(1);
+});
+
+test('"不再提示" still writes the same storage key', () => {
+  render(<HttpWarningDialog onClose={jest.fn()} />);
+  fireEvent.click(screen.getByRole('button', { name: '不再提示' }));
+  expect(localStorage.getItem('httpWarningDismissed')).toBe('true');
 });
