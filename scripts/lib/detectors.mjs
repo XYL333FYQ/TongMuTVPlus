@@ -24,6 +24,10 @@ export const DETECTORS = {
       /\b(?:function|const)\s+format\w*(?:Time|Duration|Clock|Seconds)\b/g,
     label: '自己写时间格式化',
   },
+  roleCheck: {
+    pattern: /\brole\s*[!=]==\s*'(?:owner|admin)'/g,
+    label: '自己判断角色',
+  },
   toast: { pattern: /<Toast\b/g, label: '直接渲染 Toast' },
   spinner: {
     pattern: /\banimate-spin\b|\bLoader2\b/g,

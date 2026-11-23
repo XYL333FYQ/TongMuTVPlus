@@ -30,6 +30,8 @@ test('counts each ingredient', () => {
   assert.equal(countMatches("<Toast message='x' />", 'toast'), 1);
   assert.equal(countMatches("className='animate-spin'", 'spinner'), 1);
   assert.equal(countMatches("label: '🎬 电影'", 'emoji'), 1);
+  assert.equal(countMatches("authInfo.role !== 'admin'", 'roleCheck'), 1);
+  assert.equal(countMatches("role === 'owner' && x", 'roleCheck'), 1);
 });
 
 test('CRLF and LF count the same', () => {

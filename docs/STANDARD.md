@@ -172,6 +172,7 @@ z-index 只写下面的令牌（定义在 `styles/tokens.css`）。同一个组�
 | 设备档位   | `src/lib/device-tier.ts`                                            | `html[data-tm-device]` 和 device-tier 的导出                                      | `screen`     |
 | 播放器     | `src/features/player/core/`                                         | `WatchPlayer`                                                                     | `player`     |
 | 时间格式   | `src/lib/time.ts`                                                   | 第二阶段在这里补 `formatDuration`（必须在 lib，S1 不许 components 引用 features） | `timeFormat` |
+| 服务器权限 | `src/lib/require-role.ts`                                           | `requireRole()`                                                                   | `roleCheck`  |
 | 提示       | `src/components/feedback/`                                          | `notify()`、`notifyError()`                                                       | `toast`      |
 | 加载       | `src/components/feedback/LoadingStyle.tsx` `src/styles/loading.css` | `LoadingStyle`                                                                    | `spinner`    |
 | 海报卡片   | `src/components/VideoCard.tsx` `src/components/video-card/`         | `VideoCard`                                                                       | —            |
