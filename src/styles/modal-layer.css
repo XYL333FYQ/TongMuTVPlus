@@ -44,3 +44,105 @@
   padding-top: max(var(--tm-safe-top), var(--tm-window-controls-h));
   padding-bottom: var(--tm-safe-bottom);
 }
+
+/* —— 款式（ModalLayer 的 variant，设计稿 docs/design/prototypes/modal-layer.html）——
+   默认 dialog 就是上面的样子，不加类名。tm-drawer-layer、tm-download-modal-layer
+   是更早的同类写法，第三阶段把调用方换到 variant 后删掉 */
+.tm-modal-layer--confirm > * {
+  width: 100%;
+  max-width: 400px;
+  animation: tm-modal-layer-in var(--tm-d-panel) var(--tm-ease-out);
+}
+.tm-modal-layer--sheet > * {
+  width: 100%;
+  max-width: 480px;
+  animation: tm-modal-layer-in var(--tm-d-panel) var(--tm-ease-out);
+}
+.tm-modal-layer--drawer > * {
+  animation: tm-modal-layer-in var(--tm-d-panel) var(--tm-ease-out);
+}
+
+/* 抽屉：平板和电脑从右侧滑出，满高 400；顶边让开安全区和 Windows 窗口按钮 */
+.tm-modal-layer--drawer {
+  padding: 0;
+}
+.tm-modal-layer--drawer[open] {
+  place-items: stretch end;
+}
+html:is([data-tm-device='tablet'], [data-tm-device='wide'])
+  .tm-modal-layer--drawer
+  > * {
+  width: min(400px, 100%);
+  height: 100%;
+  max-height: none;
+  padding-top: max(var(--tm-safe-top), var(--tm-window-controls-h));
+  animation-name: tm-modal-layer-drawer-in;
+}
+
+/* 手机两档：底部面板和抽屉都从底部拉起，贴底、顶部两角圆，底部让开系统横条 */
+html:is([data-tm-device='phone'], [data-tm-device='phone-landscape'])
+  :is(.tm-modal-layer--sheet, .tm-modal-layer--drawer) {
+  padding: 0;
+  place-items: end center;
+}
+html:is([data-tm-device='phone'], [data-tm-device='phone-landscape'])
+  :is(.tm-modal-layer--sheet, .tm-modal-layer--drawer)
+  > * {
+  width: 100%;
+  max-width: 560px;
+  height: auto;
+  max-height: calc(100% - 32px);
+  padding-bottom: var(--tm-safe-bottom);
+  border-radius: var(--tm-radius-md) var(--tm-radius-md) 0 0;
+  animation-name: tm-modal-layer-sheet-in;
+}
+
+/* 整屏查看：画面黑底，文字用画面上的颜色，不随主题翻转 */
+.tm-modal-layer--viewer {
+  padding: 0;
+  color: var(--tm-on-art);
+}
+.tm-modal-layer--viewer::backdrop {
+  background: var(--tm-video-bg);
+}
+.tm-modal-layer--viewer > * {
+  animation: tm-modal-layer-viewer-in var(--tm-d-panel) var(--tm-ease-out);
+}
+
+@keyframes tm-modal-layer-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+}
+@keyframes tm-modal-layer-sheet-in {
+  from {
+    transform: translateY(100%);
+  }
+}
+@keyframes tm-modal-layer-drawer-in {
+  from {
+    transform: translateX(100%);
+  }
+}
+@keyframes tm-modal-layer-viewer-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+}
+@keyframes tm-modal-layer-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+/* 减弱动效：只留 120ms 淡入（DESIGN.md 3.2） */
+html[data-tm-reduced-motion='true'] [class*='tm-modal-layer--'] > * {
+  animation: tm-modal-layer-fade 120ms linear !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  [class*='tm-modal-layer--'] > * {
+    animation: tm-modal-layer-fade 120ms linear !important;
+  }
+}

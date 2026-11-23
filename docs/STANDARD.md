@@ -77,7 +77,7 @@ src/
 - 一套播放器内核：`features/player`。
 - 设计令牌（`--tm-*`）只在 `styles/tokens.css` 定义（`:root`、`html.light`、设备档位下的覆盖都写在那里）。组件内部用的局部变量可以写在组件的块上。
 - z-index 只用层级令牌（见下面的层级表）。
-- 时间格式化、浏览器存储读写、设备档位：现在还有多份实现（旧账数量见 `check:structure` 的输出），新代码只用登记表里的主人。“点外面关闭”还没有公共工具，记在登记表里待做。
+- 时间格式化、浏览器存储读写、设备档位：现在还有多份实现（旧账数量见 `check:structure` 的输出），新代码只用登记表里的主人。“点外面关闭”由弹窗层 `ModalLayer` 承担（点遮罩关闭），不在弹窗里的菜单第三阶段收口。
 
 ### S3 一个东西一个名字
 
@@ -177,7 +177,8 @@ z-index 只写下面的令牌（定义在 `styles/tokens.css`）。同一个组�
 | 加载       | `src/components/feedback/LoadingStyle.tsx` `src/styles/loading.css` | `LoadingStyle`                                                                    | `spinner`    |
 | 海报卡片   | `src/components/VideoCard.tsx` `src/components/video-card/`         | `VideoCard`                                                                       | —            |
 | 图标       | —                                                                   | 只用 lucide-react，不用 emoji                                                     | `emoji`      |
-| 点外面关闭 | —                                                                   | 还没有公共工具（待做：第二阶段随公共弹窗层一起做）                                | —            |
+| 滚动锁     | `src/lib/scroll-lock.ts`                                            | `lockScroll()`（弹窗层自带）                                                      | `scrollLock` |
+| 点外面关闭 | `src/components/feedback/ModalLayer.tsx`                            | `ModalLayer` 点遮罩关闭（五种款式都带）；不在弹窗里的菜单仍各自处理，第三阶段收口 | —            |
 
 ## 术语表
 

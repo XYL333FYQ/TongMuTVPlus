@@ -647,5 +647,16 @@
     "src/lib/anime-subscription.ts ×1",
     "src/lib/db.ts ×2",
     "src/lib/permissions.ts ×2"
+  ],
+  "parts:scrollLock": [
+    "src/app/admin/page.tsx ×3",
+    "src/components/AIChatPanel.tsx ×3",
+    "src/components/DanmakuFilterSettings.tsx ×3",
+    "src/components/EpisodeFilterSettings.tsx ×3",
+    "src/components/LyricsPiPWindow.tsx ×1",
+    "src/components/UserMenu.tsx ×3",
+    "src/components/VersionPanel.tsx ×3",
+    "src/components/feedback/ImageViewer.tsx ×3",
+    "src/components/feedback/MobileActionSheet.tsx ×3"
   ]
 }

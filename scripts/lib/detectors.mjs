@@ -28,6 +28,10 @@ export const DETECTORS = {
     pattern: /\brole\s*[!=]==\s*'(?:owner|admin)'/g,
     label: '自己判断角色',
   },
+  scrollLock: {
+    pattern: /\bbody\.style\.overflow\b/g,
+    label: '自己锁页面滚动',
+  },
   toast: { pattern: /<Toast\b/g, label: '直接渲染 Toast' },
   spinner: {
     pattern: /\banimate-spin\b|\bLoader2\b/g,
