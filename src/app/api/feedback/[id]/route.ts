@@ -2,7 +2,6 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 
-import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig, setCachedConfig } from '@/lib/config';
 import { db, getStorage } from '@/lib/db';
 import {
@@ -15,6 +14,7 @@ import {
   parseFeedbackList,
   withFeedbackLock,
 } from '@/lib/feedback';
+import { isCaller, isOwner, requireRole } from '@/lib/require-role';
 
 export const runtime = 'nodejs';
 
@@ -30,18 +30,10 @@ export async function PATCH(
   props: { params: Promise<{ id: string }> }
 ) {
   const params = await props.params;
-  const authInfo = getAuthInfoFromCookie(request);
-  if (!authInfo?.username) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-  const handler = authInfo.username;
-  const isOwner = handler === process.env.USERNAME;
-  if (!isOwner) {
-    const info = await db.getUserInfoV2(handler);
-    if (!info || info.banned || info.role !== 'admin') {
-      return NextResponse.json({ error: '权限不足' }, { status: 403 });
-    }
-  }
+  const caller = await requireRole(request, 'admin', { deniedStatus: 403 });
+  if (!isCaller(caller)) return caller;
+  const handler = caller.username;
+  const byOwner = isOwner(caller);
 
   try {
     const body = await request.json();
@@ -78,7 +70,7 @@ export async function PATCH(
             status: 400,
           };
         }
-        if (!isOwner) {
+        if (!byOwner) {
           return {
             ok: false as const,
             error: '只有站长可以授权功能',

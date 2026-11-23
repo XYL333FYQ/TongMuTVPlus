@@ -2,7 +2,6 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 
-import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig } from '@/lib/config';
 import { db } from '@/lib/db';
 import { OpenListClient } from '@/lib/openlist.client';
@@ -13,6 +12,7 @@ import {
   setCachedMetaInfo,
 } from '@/lib/openlist-cache';
 import { requireFeaturePermission } from '@/lib/permissions';
+import { isCaller, requireRole } from '@/lib/require-role';
 
 export const runtime = 'nodejs';
 
@@ -28,17 +28,9 @@ export async function POST(request: NextRequest) {
       '无权限访问私人影库'
     );
     if (authResult instanceof NextResponse) return authResult;
-    const authInfo = getAuthInfoFromCookie(request);
-    if (!authInfo || !authInfo.username) {
-      return NextResponse.json({ error: '未授权' }, { status: 401 });
-    }
     // 会修改全站共享的私人影库：只有站长 / 管理员可以操作
-    if (authInfo.role !== 'owner' && authInfo.role !== 'admin') {
-      return NextResponse.json(
-        { error: '只有管理员可以修改私人影库' },
-        { status: 403 }
-      );
-    }
+    const caller = await requireRole(request, 'admin', { deniedStatus: 403 });
+    if (!isCaller(caller)) return caller;
 
     const body = await request.json();
     const {

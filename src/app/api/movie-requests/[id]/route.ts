@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getStorage } from '@/lib/db';
+import { isCaller, requireRole } from '@/lib/require-role';
 
 export const runtime = 'nodejs';
 
@@ -40,26 +41,12 @@ export async function PATCH(
   props: { params: Promise<{ id: string }> }
 ) {
   const params = await props.params;
-  const authInfo = getAuthInfoFromCookie(request);
-  if (!authInfo || !authInfo.username) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  // 只有管理员和站长可以操作
+  const caller = await requireRole(request, 'admin', { deniedStatus: 403 });
+  if (!isCaller(caller)) return caller;
 
   try {
     const storage = getStorage();
-
-    // 检查权限：只有管理员和站长可以操作
-    if (storage.getUserInfoV2) {
-      const userInfo = await storage.getUserInfoV2(authInfo.username);
-      if (userInfo?.role !== 'admin' && userInfo?.role !== 'owner') {
-        return NextResponse.json({ error: '无权限操作' }, { status: 403 });
-      }
-    } else {
-      // 如果不支持 getUserInfoV2，只允许站长操作
-      if (authInfo.username !== process.env.USERNAME) {
-        return NextResponse.json({ error: '无权限操作' }, { status: 403 });
-      }
-    }
 
     const body = await request.json();
     const { status, fulfilledSource, fulfilledId } = body;
@@ -119,26 +106,12 @@ export async function DELETE(
   props: { params: Promise<{ id: string }> }
 ) {
   const params = await props.params;
-  const authInfo = getAuthInfoFromCookie(request);
-  if (!authInfo || !authInfo.username) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+  // 只有管理员和站长可以删除
+  const caller = await requireRole(request, 'admin', { deniedStatus: 403 });
+  if (!isCaller(caller)) return caller;
 
   try {
     const storage = getStorage();
-
-    // 检查权限：只有管理员和站长可以删除
-    if (storage.getUserInfoV2) {
-      const userInfo = await storage.getUserInfoV2(authInfo.username);
-      if (userInfo?.role !== 'admin' && userInfo?.role !== 'owner') {
-        return NextResponse.json({ error: '无权限操作' }, { status: 403 });
-      }
-    } else {
-      // 如果不支持 getUserInfoV2，只允许站长操作
-      if (authInfo.username !== process.env.USERNAME) {
-        return NextResponse.json({ error: '无权限操作' }, { status: 403 });
-      }
-    }
 
     const movieRequest = await storage.getMovieRequest(params.id);
     if (!movieRequest) {

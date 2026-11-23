@@ -4,7 +4,7 @@ import { nanoid } from 'nanoid';
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getAuthInfoFromCookie } from '@/lib/auth';
-import { db, getStorage } from '@/lib/db';
+import { getStorage } from '@/lib/db';
 import {
   type FeedbackItem,
   checkNewFeedback,
@@ -14,17 +14,9 @@ import {
   withFeedbackLock,
 } from '@/lib/feedback';
 import { getUserFeatureAccess } from '@/lib/permissions';
+import { isCaller, requireRole } from '@/lib/require-role';
 
 export const runtime = 'nodejs';
-
-async function operatorRole(
-  username: string
-): Promise<'owner' | 'admin' | 'user'> {
-  if (username === process.env.USERNAME) return 'owner';
-  const info = await db.getUserInfoV2(username);
-  if (!info || info.banned) return 'user';
-  return info.role === 'admin' || info.role === 'owner' ? 'admin' : 'user';
-}
 
 // GET：自己的记录；站长 / 管理员加 ?all=1 看全部
 export async function GET(request: NextRequest) {
@@ -38,9 +30,10 @@ export async function GET(request: NextRequest) {
     );
     const wantAll = new URL(request.url).searchParams.get('all') === '1';
     if (wantAll) {
-      if ((await operatorRole(authInfo.username)) === 'user') {
-        return NextResponse.json({ error: '权限不足' }, { status: 403 });
-      }
+      const caller = await requireRole(request, 'admin', {
+        deniedStatus: 403,
+      });
+      if (!isCaller(caller)) return caller;
       return NextResponse.json(
         { items: [...list].sort((a, b) => b.createdAt - a.createdAt) },
         { headers: { 'Cache-Control': 'no-store' } }
