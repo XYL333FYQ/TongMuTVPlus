@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>各端弹出方式</title>
+    <!-- 颜色、圆角全部来自站点令牌的唯一来源，本稿不另定义颜色 -->
+    <link rel="stylesheet" href="../../../src/styles/tokens.css" />
+    <style>
+      body {
+        margin: 0;
+        font-family: var(--tm-font-sans);
+        font-size: 14px;
+        line-height: 1.6;
+        color: var(--tm-text);
+        background: var(--tm-bg);
+      }
+      .page {
+        max-width: 1320px;
+        margin: 0 auto;
+        padding: 24px 16px 64px;
+      }
+      h1 {
+        margin: 0 0 4px;
+        font-size: 28px;
+      }
+      h2 {
+        margin: 36px 0 12px;
+        font-size: 20px;
+      }
+      p,
+      li {
+        color: var(--tm-muted);
+      }
+      strong {
+        color: var(--tm-text);
+      }
+      code {
+        font-size: 13px;
+        padding: 1px 6px;
+        border-radius: 6px;
+        background: var(--tm-surface-raised);
+        color: var(--tm-text);
+      }
+      .bar {
+        position: sticky;
+        top: 0;
+        z-index: 5;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-items: center;
+        padding: 12px 0;
+        background: var(--tm-bg);
+        border-bottom: 1px solid var(--tm-line);
+      }
+      .group {
+        display: flex;
+        gap: 6px;
+        margin-right: 16px;
+      }
+      .pill {
+        min-height: 44px;
+        padding: 0 16px;
+        border: 1px solid var(--tm-line-strong);
+        border-radius: var(--tm-radius-full);
+        background: transparent;
+        color: var(--tm-text);
+        font: inherit;
+        cursor: pointer;
+      }
+      .pill[aria-pressed='true'] {
+        background: var(--tm-text);
+        color: var(--tm-bg);
+        border-color: var(--tm-text);
+      }
+      .pill:focus-visible {
+        outline: 2px solid var(--tm-text);
+        outline-offset: 2px;
+      }
+      table.decide {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 14px;
+      }
+      .decide th,
+      .decide td {
+        text-align: left;
+        vertical-align: top;
+        padding: 10px 12px;
+        border-bottom: 1px solid var(--tm-line);
+      }
+      .decide th {
+        color: var(--tm-muted);
+        font-weight: 500;
+      }
+      .decide td:first-child {
+        white-space: nowrap;
+        font-weight: 600;
+      }
+      .matrix {
+        display: grid;
+        grid-template-columns: 200px repeat(4, minmax(0, 1fr));
+        gap: 12px 16px;
+        align-items: start;
+      }
+      .head {
+        color: var(--tm-muted);
+        font-size: 13px;
+      }
+      .rowname strong {
+        display: block;
+        font-size: 15px;
+      }
+      .rowname span {
+        display: block;
+        color: var(--tm-muted);
+        font-size: 13px;
+      }
+      .rowname .tag {
+        display: inline-block;
+        margin-top: 6px;
+        padding: 0 8px;
+        border-radius: var(--tm-radius-full);
+        border: 1px solid var(--tm-line-strong);
+        font-size: 12px;
+        color: var(--tm-text);
+      }
+      .cell {
+        display: grid;
+        gap: 6px;
+        justify-items: start;
+      }
+      .cell p {
+        margin: 0;
+        font-size: 13px;
+      }
+      .cell[data-changed] p {
+        color: var(--tm-text);
+      }
+      .cell[data-changed] p::before {
+        content: '改 · ';
+        font-weight: 600;
+      }
+      .frame {
+        position: relative;
+        box-sizing: border-box;
+        overflow: hidden;
+        border-radius: 10px;
+        border: 1px solid var(--tm-line-strong);
+        background: var(--tm-surface-raised);
+      }
+      .frame .page-lines {
+        position: absolute;
+        inset: 8px;
+        background: repeating-linear-gradient(
+          to bottom,
+          var(--tm-line) 0 6px,
+          transparent 6px 14px
+        );
+      }
+      .frame .scrim {
+        position: absolute;
+        inset: 0;
+        background: var(--tm-scrim);
+      }
+      .frame .panel {
+        position: absolute;
+        box-sizing: border-box;
+        background: var(--tm-surface);
+        border: 1px solid var(--tm-text);
+        border-radius: 6px;
+        box-shadow: var(--tm-shadow-lg);
+      }
+      .frame .panel[data-pos='bottom'] {
+        border-radius: 6px 6px 0 0;
+      }
+      .frame .panel[data-pos='right'],
+      .frame .panel[data-pos='side'] {
+        border-radius: 0;
+      }
+      .frame .panel[data-pos='full'] {
+        background: var(--tm-video-bg);
+        border-radius: 0;
+      }
+      .frame .panel[data-pos='full']::after {
+        content: '';
+        position: absolute;
+        inset: 22% 18%;
+        border-radius: 4px;
+        background: var(--tm-surface-raised);
+      }
+      .frame .panel::before {
+        content: '';
+        position: absolute;
+        left: 10%;
+        right: 30%;
+        top: 8px;
+        height: 4px;
+        border-radius: 2px;
+        background: var(--tm-line-strong);
+      }
+      .frame .panel[data-pos='full']::before {
+        display: none;
+      }
+      .frame .trigger {
+        position: absolute;
+        width: 14px;
+        height: 8px;
+        border-radius: 4px;
+        background: var(--tm-text);
+      }
+      .na {
+        display: grid;
+        place-items: center;
+        color: var(--tm-muted);
+        font-size: 12px;
+        text-align: center;
+        padding: 8px;
+      }
+      ul.rules li {
+        margin: 4px 0;
+      }
+      @media (max-width: 900px) {
+        .matrix {
+          grid-template-columns: 1fr 1fr;
+        }
+        .rowname {
+          grid-column: 1 / -1;
+          margin-top: 16px;
+        }
+        .head {
+          display: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <h1>各端弹出方式</h1>
+      <p>
+        原则：<strong>“怎么关、焦点、Esc / 返回键、锁页面”全站只有一份</strong
+        >（弹窗层 <code>ModalLayer</code>、浮层
+        <code>Popover</code
+        >）；<strong>“从哪出来、长什么样”每端各一套</strong>，
+        由零件按设备档位（<code>src/lib/device-tier.ts</code>）自己选，调用的页面不再各写一份。
+        下面把每种弹出物在四档上怎么出现一格一格画出来，切“现在 /
+        建议”对照。依据：<code>docs/design/ACCEPTANCE.md</code>
+        （手机“面板从底部拉起”、平板“其他面板从右侧滑出”）。Windows
+        客户端同电脑，贴顶的按钮让开右上窗口按钮。
+      </p>
+
+      <div class="bar">
+        <div class="group" id="mode-group" role="group" aria-label="对照"></div>
+        <div class="group" role="group" aria-label="主题">
+          <button class="pill" type="button" id="theme" aria-pressed="false">
+            浅色
+          </button>
+        </div>
+      </div>
+
+      <h2>要你拍板的四件事</h2>
+      <table class="decide">
+        <thead>
+          <tr>
+            <th>编号</th>
+            <th>问题</th>
+            <th>建议（默认值）</th>
+            <th>另一个选择</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>P-1</td>
+            <td>
+              普通弹窗（个人中心、通知设置、改密码、电视访问、播放记录、收藏、版本信息……）现在四档都居中
+            </td>
+            <td>手机两档从底部拉起；平板从右侧滑出；电脑居中不变</td>
+            <td>只改手机两档，平板仍居中</td>
+          </tr>
+          <tr>
+            <td>P-2</td>
+            <td>
+              贴着按钮弹出的（账号菜单、片库筛选、搜索下拉、网盘类型、设置里的下拉选择）现在四档都挂在按钮下面
+            </td>
+            <td>
+              手机两档改成从底部拉起的选项面板（选项 44
+              高、当前项打勾）；平板、电脑仍贴着按钮
+            </td>
+            <td>平板也改成从底部拉起</td>
+          </tr>
+          <tr>
+            <td>P-3</td>
+            <td>
+              影片详情在平板上是居中大面板，和验收标准“平板其他面板从右侧滑出”冲突
+            </td>
+            <td>
+              保持居中（详情是看内容的，400
+              宽的侧栏放不下海报、简介、选集），验收标准改成“工具面板从右侧滑出，影片详情居中”
+            </td>
+            <td>平板也从右侧滑出，宽 400，排版照播放页侧栏</td>
+          </tr>
+          <tr>
+            <td>P-4</td>
+            <td>手机横屏只有约 390 高，从底部拉起的面板最高约 358</td>
+            <td>
+              和手机竖屏一样从底部拉起（最宽
+              560、居中贴底），内容在面板里滚动——和房间面板已定的做法一致
+            </td>
+            <td>手机横屏改成从右侧滑出（满高、宽 400）</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2 id="matrix-title">对照</h2>
+      <div class="matrix" id="matrix"></div>
+
+      <h2>不变的</h2>
+      <ul class="rules">
+        <li>每种弹出物里面的内容和排版不动，只改“从哪出来、多大”。</li>
+        <li>
+          关闭方式：点遮罩（按下和松开都在遮罩上）、Esc /
+          返回键只关最上一层、底部面板手指下拉关闭；关掉后焦点回到打开它的按钮。
+        </li>
+        <li>
+          确认框四档都居中（最宽
+          400）；看图四档都是整屏黑底；原集名提示四档都贴着集数按钮、不接收点按。
+        </li>
+        <li>
+          播放页右侧不挡页面的侧栏（详情、AI
+          助手、纠错）只在大屏出现，行为不变；手机上打开的是对应的弹窗。
+        </li>
+        <li>接口、路由、存储键都不动。</li>
+      </ul>
+
+      <h2>改了以后代码怎么放</h2>
+      <ul class="rules">
+        <li>
+          <code>ModalLayer</code> 新增一种款式 <code>panel</code>：手机两档 =
+          底部面板，平板 = 右侧抽屉，电脑 = 居中（P-1）。普通弹窗的调用方只把
+          <code>variant</code> 换成 <code>panel</code>，不写设备判断。
+        </li>
+        <li>
+          <code>Popover</code>
+          在手机两档自己改用弹窗层的底部面板款式（P-2），调用方不变；<code
+            >Select</code
+          >
+          同理。
+        </li>
+        <li>
+          每个零件的“四档怎么出现”写成一张表放在零件旁边的注释里，验收时按表逐格对。
+        </li>
+      </ul>
+    </div>
+
+    <script>
+      // 设备：宽高是真实尺寸，s 是画在稿子里的缩放
+      const devices = [
+        { id: 'phone', label: '手机竖屏 390×844', w: 390, h: 844, s: 0.24 },
+        { id: 'landscape', label: '手机横屏 844×390', w: 844, h: 390, s: 0.24 },
+        { id: 'tablet', label: '平板 820×1180', w: 820, h: 1180, s: 0.17 },
+        { id: 'wide', label: '电脑 1280×800', w: 1280, h: 800, s: 0.16 },
+      ];
+      // 摆法（单位都是真实像素）
+      const center = (maxW, h) => ({ pos: 'center', maxW, h });
+      const bottom = (h) => ({ pos: 'bottom', h }); // h 为数字：面板高；为 'top:56' 之类：离顶
+      const right = () => ({ pos: 'right' });
+      const full = () => ({ pos: 'full' });
+      const anchor = (where, w, h) => ({ pos: 'anchor', where, w, h });
+      const side = () => ({ pos: 'side' });
+      const na = (text) => ({ pos: 'na', text });
+      const all = (spec) => ({
+        phone: spec,
+        landscape: spec,
+        tablet: spec,
+        wide: spec,
+      });
+
+      const rows = [
+        {
+          name: '确认框',
+          eg: '删除记录、退出登录、重置 Token',
+          now: all(center(400, 180)),
+          text: all('居中，最宽 400'),
+        },
+        {
+          name: '普通弹窗',
+          eg: '个人中心、通知设置、改密码、电视访问、播放记录、收藏、版本信息',
+          tag: 'P-1',
+          now: all(center(560, 620)),
+          next: {
+            phone: bottom(560),
+            landscape: bottom('max'),
+            tablet: right(),
+            wide: center(560, 620),
+          },
+          text: {
+            phone: '居中，最宽 560',
+            landscape: '居中',
+            tablet: '居中',
+            wide: '居中，最宽 560',
+          },
+          nextText: {
+            phone: '从底部拉起，内容多时最高到离顶 56',
+            landscape: '从底部拉起，最宽 560',
+            tablet: '从右侧滑出，宽 400、满高',
+            wide: '居中，最宽 560（不变）',
+          },
+        },
+        {
+          name: '抽屉',
+          eg: '账号设置、下载管理、读书缓存、房间面板、盘搜',
+          now: {
+            phone: bottom(520),
+            landscape: bottom('max'),
+            tablet: right(),
+            wide: right(),
+          },
+          text: {
+            phone: '从底部拉起',
+            landscape: '从底部拉起，最宽 560',
+            tablet: '从右侧滑出，宽 400',
+            wide: '从右侧滑出，宽 400',
+          },
+        },
+        {
+          name: '菜单类面板',
+          eg: '长按菜单、弹幕 / 选集过滤设置、预告片选择',
+          now: {
+            phone: bottom(300),
+            landscape: bottom(300),
+            tablet: center(480, 300),
+            wide: center(480, 300),
+          },
+          text: {
+            phone: '从底部拉起，下拉关闭',
+            landscape: '从底部拉起，最宽 560',
+            tablet: '居中，最宽 480',
+            wide: '居中，最宽 480',
+          },
+        },
+        {
+          name: '贴按钮的浮层',
+          eg: '片库筛选、搜索下拉、网盘类型、设置里的下拉选择',
+          tag: 'P-2',
+          now: all(anchor('tl', 300, 260)),
+          next: {
+            phone: bottom(380),
+            landscape: bottom('max'),
+            tablet: anchor('tl', 300, 260),
+            wide: anchor('tl', 300, 260),
+          },
+          text: all('挂在按钮下面，放不下翻到上面'),
+          nextText: {
+            phone: '从底部拉起的选项面板',
+            landscape: '从底部拉起的选项面板',
+            tablet: '挂在按钮下面（不变）',
+            wide: '挂在按钮下面（不变）',
+          },
+        },
+        {
+          name: '账号菜单',
+          eg: '点右上头像',
+          tag: 'P-2',
+          now: all(anchor('tr', 320, 640)),
+          next: {
+            phone: bottom(600),
+            landscape: bottom('max'),
+            tablet: anchor('tr', 320, 640),
+            wide: anchor('tr', 320, 640),
+          },
+          text: all('挂在头像下面，右对齐，宽 320'),
+          nextText: {
+            phone: '从底部拉起',
+            landscape: '从底部拉起，最宽 560',
+            tablet: '挂在头像下面（不变）',
+            wide: '挂在头像下面（不变）',
+          },
+        },
+        {
+          name: '影片详情',
+          eg: '卡片、首页大图、长按菜单的“详情”',
+          tag: 'P-3',
+          now: {
+            phone: bottom('top:56'),
+            landscape: center(1000, 'max'),
+            tablet: center(1000, 'max'),
+            wide: center(1000, 720),
+          },
+          text: {
+            phone: '从底部拉起，离顶 56',
+            landscape: '居中，满屏减边距',
+            tablet: '居中，满屏减边距',
+            wide: '居中，最宽 1000',
+          },
+        },
+        {
+          name: '看图',
+          eg: '查看海报、照片墙大图',
+          now: all(full()),
+          text: all('整屏黑底，关闭在右上'),
+        },
+        {
+          name: '播放页侧栏',
+          eg: '播放页里的详情、AI 助手、纠错',
+          now: {
+            phone: na('手机上打开的是对应弹窗'),
+            landscape: na('手机上打开的是对应弹窗'),
+            tablet: side(),
+            wide: side(),
+          },
+          text: {
+            phone: '—',
+            landscape: '—',
+            tablet: '右侧 400，不挡播放器',
+            wide: '右侧 400，不挡播放器',
+          },
+        },
+      ];
+
+      let mode = 'next';
+      const modeGroup = document.getElementById('mode-group');
+      for (const [id, label] of [
+        ['now', '现在'],
+        ['next', '建议'],
+      ]) {
+        const b = document.createElement('button');
+        b.className = 'pill';
+        b.type = 'button';
+        b.textContent = label;
+        b.dataset.mode = id;
+        b.addEventListener('click', () => {
+          mode = id;
+          render();
+        });
+        modeGroup.appendChild(b);
+      }
+      const theme = document.getElementById('theme');
+      theme.addEventListener('click', () => {
+        const on = theme.getAttribute('aria-pressed') !== 'true';
+        theme.setAttribute('aria-pressed', String(on));
+        document.documentElement.classList.toggle('light', on);
+      });
+
+      function frame(device, spec) {
+        const fw = Math.round(device.w * device.s);
+        const fh = Math.round(device.h * device.s);
+        const box = document.createElement('div');
+        box.className = 'frame';
+        box.style.width = fw + 'px';
+        box.style.height = fh + 'px';
+        if (spec.pos === 'na') {
+          box.classList.add('na');
+          box.textContent = spec.text;
+          return box;
+        }
+        box.innerHTML = '<div class="page-lines"></div>';
+        const s = device.s;
+        const modal = !['anchor', 'side'].includes(spec.pos);
+        if (modal)
+          box.insertAdjacentHTML('beforeend', '<div class="scrim"></div>');
+        const p = document.createElement('div');
+        p.className = 'panel';
+        p.dataset.pos = spec.pos;
+        const set = (x, y, w, h) =>
+          Object.assign(p.style, {
+            left: x + 'px',
+            top: y + 'px',
+            width: w + 'px',
+            height: h + 'px',
+          });
+        if (spec.pos === 'center') {
+          const w = Math.min(device.w - 32, spec.maxW) * s;
+          const h =
+            (spec.h === 'max'
+              ? device.h - 80
+              : Math.min(spec.h, device.h - 32)) * s;
+          set((fw - w) / 2, (fh - h) / 2, w, h);
+        } else if (spec.pos === 'bottom') {
+          const w = Math.min(device.w, 560) * s;
+          let h;
+          if (spec.h === 'max') h = (device.h - 32) * s;
+          else if (typeof spec.h === 'string')
+            h = (device.h - Number(spec.h.split(':')[1])) * s;
+          else h = Math.min(spec.h, device.h - 32) * s;
+          set((fw - w) / 2, fh - h, w, h);
+        } else if (spec.pos === 'right' || spec.pos === 'side') {
+          const w = Math.min(400, device.w) * s;
+          set(fw - w, 0, w, fh);
+        } else if (spec.pos === 'full') {
+          set(0, 0, fw, fh);
+        } else if (spec.pos === 'anchor') {
+          const w = Math.min(spec.w, device.w - 24) * s;
+          const top = 56 * s;
+          const h = Math.min(spec.h, device.h - 56 - 12) * s;
+          const x = spec.where === 'tr' ? fw - w - 12 * s : 16 * s;
+          const t = document.createElement('div');
+          t.className = 'trigger';
+          t.style.top = 24 * s + 'px';
+          t.style.left =
+            (spec.where === 'tr' ? fw - 14 - 12 * s : 16 * s) + 'px';
+          box.appendChild(t);
+          set(x, top, w, h);
+        }
+        box.appendChild(p);
+        return box;
+      }
+
+      function render() {
+        for (const b of modeGroup.children)
+          b.setAttribute('aria-pressed', String(b.dataset.mode === mode));
+        document.getElementById('matrix-title').textContent =
+          mode === 'now' ? '对照：现在' : '对照：建议（标“改”的格子是要改的）';
+        const m = document.getElementById('matrix');
+        m.innerHTML =
+          '<div class="head">弹出物</div>' +
+          devices.map((d) => `<div class="head">${d.label}</div>`).join('');
+        for (const row of rows) {
+          const name = document.createElement('div');
+          name.className = 'rowname';
+          name.innerHTML =
+            `<strong>${row.name}</strong><span>${row.eg}</span>` +
+            (row.tag ? `<span class="tag">${row.tag}</span>` : '');
+          m.appendChild(name);
+          for (const d of devices) {
+            const useNext = mode === 'next' && row.next;
+            const spec = useNext ? row.next[d.id] : row.now[d.id];
+            const text = useNext ? row.nextText[d.id] : row.text[d.id];
+            const changed =
+              useNext &&
+              JSON.stringify(row.next[d.id]) !== JSON.stringify(row.now[d.id]);
+            const cell = document.createElement('div');
+            cell.className = 'cell';
+            if (changed) cell.dataset.changed = '';
+            cell.appendChild(frame(d, spec));
+            const p = document.createElement('p');
+            p.textContent = text;
+            cell.appendChild(p);
+            m.appendChild(cell);
+          }
+        }
+      }
+      render();
+    </script>
+  </body>
+</html>
