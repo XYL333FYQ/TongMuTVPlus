@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from 'react';
 
+import './ClientBuildInfo.css';
+
 import {
   type ClientInfo,
   detectClient,
@@ -40,7 +42,7 @@ export default function ClientBuildInfo() {
 
   if (!client) return null;
   return (
-    <p className='mt-2 flex flex-wrap items-center gap-3 text-sm text-muted'>
+    <p className='tm-cbuild-p-1'>
       <span>
         {client.build
           ? `客户端构建于 ${formatBuild(client.build)}`

@@ -3,6 +3,8 @@
 import { motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
 
+import './ReleaseNoticeDialog.css';
+
 import { apiFetch } from '@/lib/api-client';
 import { detectClient } from '@/lib/client-update';
 import { useReducedMotionSetting } from '@/lib/motion';
@@ -93,12 +95,12 @@ export default function ReleaseNoticeDialog({
           <h2 id='release-notice-title' className='tm-modal-title'>
             已更新到 v{release.version}
           </h2>
-          <p className='mt-1 text-sm text-muted'>{entry.date}</p>
-          <div className='mt-3 max-h-[50vh] space-y-3 overflow-y-auto text-sm text-muted'>
+          <p className='tm-release-p-1'>{entry.date}</p>
+          <div className='tm-release-div-1'>
             {sections.map(({ title, items }) => (
               <div key={title}>
-                <p className='font-medium text-fg'>{title}</p>
-                <ul className='list-disc space-y-1 pl-5'>
+                <p className='tm-release-p-2'>{title}</p>
+                <ul className='tm-release-ul-1'>
                   {items.map((item, index) => (
                     <li key={`${title}-${index}`}>{item}</li>
                   ))}
@@ -108,7 +110,10 @@ export default function ReleaseNoticeDialog({
           </div>
         </div>
         <div className='tm-modal-footer'>
-          <button onClick={close} className='tm-btn tm-btn-primary w-full'>
+          <button
+            onClick={close}
+            className='tm-btn tm-btn-primary tm-release-button-1'
+          >
             知道了
           </button>
         </div>

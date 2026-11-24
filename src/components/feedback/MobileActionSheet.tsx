@@ -2,6 +2,7 @@ import { Radio, X } from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import '@/styles/panels.css';
+import './MobileActionSheet.css';
 
 import { logger } from '@/lib/logger';
 import { useReducedMotionSetting } from '@/lib/motion';
@@ -193,15 +194,15 @@ const MobileActionSheet: React.FC<MobileActionSheetProps> = ({
       >
         {/* 头部：手指按住往下拉可以关闭 */}
         <div
-          className='tm-action-sheet-header flex items-center justify-between p-4 border-b border-line'
+          className='tm-action-sheet-header tm-msheet-div-1'
           {...pull.handlers}
         >
-          <div className='flex items-center gap-3 flex-1 min-w-0'>
+          <div className='tm-msheet-div-2'>
             {poster && (
               <button
                 type='button'
                 aria-label='查看海报'
-                className='tm-press relative w-12 h-16 rounded-lg overflow-hidden bg-raised flex-shrink-0 cursor-pointer hover:opacity-90 transition-opacity'
+                className='tm-press tm-msheet-button-1'
                 onClick={(e) => {
                   e.stopPropagation();
                   onPosterClick?.();
@@ -216,61 +217,50 @@ const MobileActionSheet: React.FC<MobileActionSheetProps> = ({
                 />
               </button>
             )}
-            <div className='min-w-0 flex-1'>
+            <div className='tm-msheet-div-3'>
               {/* 书名独占一行，来源徽标另起一行并限宽，长来源名不再把标题挤成 0 宽 */}
-              <div className='flex flex-col items-start gap-1 mb-1 min-w-0'>
-                <div className='relative w-full min-w-0 group/title'>
-                  <h3
-                    ref={titleRef}
-                    className='text-lg font-medium text-fg line-clamp-2 break-words'
-                  >
+              <div className='tm-msheet-div-4'>
+                <div className='tm-msheet-div-5 tm-msheet-group-title'>
+                  <h3 ref={titleRef} className='tm-msheet-h3-1'>
                     {title}
                   </h3>
                   {isTitleOverflowing && (
-                    <div className='absolute bottom-full left-1/2 z-[3] mb-2 w-max max-w-[min(20rem,calc(100vw-2rem))] -translate-x-1/2 rounded-lg bg-surface px-3 py-2 text-center text-sm text-fg shadow-xl opacity-0 invisible transition-[transform,opacity] duration-200 ease-out whitespace-normal break-words pointer-events-none group-hover/title:opacity-100 group-hover/title:visible'>
+                    <div className='tm-msheet-div-6'>
                       {title}
-                      <div className='absolute top-full left-1/2 h-0 w-0 -translate-x-1/2 border-l-4 border-r-4 border-t-4 border-transparent border-t-line'></div>
+                      <div className='tm-msheet-div-7'></div>
                     </div>
                   )}
                 </div>
                 {sourceName && (
-                  <span
-                    title={sourceName}
-                    className='max-w-full truncate text-[13px] px-2 py-1 border border-line rounded text-muted bg-raised'
-                  >
+                  <span title={sourceName} className='tm-msheet-span-1'>
                     {origin === 'live' && (
-                      <Radio
-                        size={12}
-                        className='inline-block text-muted mr-1.5'
-                      />
+                      <Radio size={12} className='tm-msheet-radio-1' />
                     )}
                     {sourceName}
                   </span>
                 )}
               </div>
               {directLinkUrl && (
-                <p className='mb-2 text-[13px] text-muted break-all'>
-                  {directLinkUrl}
-                </p>
+                <p className='tm-msheet-p-1'>{directLinkUrl}</p>
               )}
-              <p className='text-sm text-muted'>{description}</p>
+              <p className='tm-msheet-p-2'>{description}</p>
             </div>
           </div>
 
           <button
             aria-label='关闭操作菜单'
             onClick={requestClose}
-            className='tm-press p-2 rounded-full hover:bg-line transition-opacity duration-150 min-h-[44px]'
+            className='tm-press tm-msheet-button-2'
           >
-            <X size={20} className='text-muted' />
+            <X size={20} className='tm-msheet-x-1' />
           </button>
         </div>
 
         {/* 操作列表：有源最多 4 项 / 无源最多 6 项，超出可滑动（支持触控与鼠标滚轮） */}
-        <div className='px-4 py-2'>
+        <div className='tm-msheet-div-8'>
           <div
             ref={actionsListRef}
-            className='overflow-y-auto overscroll-contain'
+            className='tm-msheet-div-9'
             style={{
               maxHeight: actionsMaxHeight,
               WebkitOverflowScrolling: 'touch',
@@ -290,20 +280,20 @@ const MobileActionSheet: React.FC<MobileActionSheetProps> = ({
                   }}
                   disabled={action.disabled}
                   className={`
-                    w-full flex items-center gap-4 py-4 px-2 transition-[transform,opacity] duration-150 ease-out tm-press
+                    tm-msheet-button-3 tm-press
                     ${
                       action.disabled
-                        ? 'opacity-50 cursor-not-allowed min-h-[44px]'
-                        : 'hover:bg-raised'
+                        ? 'tm-msheet-button-4'
+                        : 'tm-msheet-button-5'
                     }
                   `}
                 >
                   {/* 图标 - 使用线条风格 */}
-                  <div className='w-6 h-6 flex items-center justify-center flex-shrink-0'>
+                  <div className='tm-msheet-div-10'>
                     <span
-                      className={`transition-opacity duration-150 ${
+                      className={`tm-msheet-span-2 ${
                         action.disabled
-                          ? 'text-muted'
+                          ? 'tm-msheet-x-1'
                           : getActionColor(action.color)
                       }`}
                     >
@@ -313,8 +303,8 @@ const MobileActionSheet: React.FC<MobileActionSheetProps> = ({
 
                   {/* 文字 */}
                   <span
-                    className={` text-left font-medium text-sm flex-1 ${
-                      action.disabled ? 'text-muted' : 'text-fg'
+                    className={` tm-msheet-span-3 ${
+                      action.disabled ? 'tm-msheet-x-1' : 'tm-msheet-span-4'
                     }
                   `}
                   >
@@ -325,7 +315,7 @@ const MobileActionSheet: React.FC<MobileActionSheetProps> = ({
                   {action.id === 'play' &&
                     (currentEpisode ?? 0) > 0 &&
                     (totalEpisodes ?? 0) > 0 && (
-                      <span className='text-sm text-muted font-medium'>
+                      <span className='tm-msheet-span-5'>
                         {currentEpisode}/{totalEpisodes}
                       </span>
                     )}
@@ -333,7 +323,7 @@ const MobileActionSheet: React.FC<MobileActionSheetProps> = ({
 
                 {/* 分割线 - 最后一项不显示 */}
                 {index < actions.length - 1 && (
-                  <div className='border-b border-line ml-10'></div>
+                  <div className='tm-msheet-div-11'></div>
                 )}
               </div>
             ))}
@@ -342,27 +332,20 @@ const MobileActionSheet: React.FC<MobileActionSheetProps> = ({
 
         {/* 播放源信息展示区域 */}
         {isAggregate && sources && sources.length > 0 && (
-          <div className='px-4 py-3 border-t border-line'>
+          <div className='tm-msheet-div-12'>
             {/* 标题区域 */}
-            <div className='mb-3'>
-              <h4 className='text-sm font-medium text-fg mb-1'>可用播放源</h4>
-              <p className='text-[13px] text-muted'>
-                共 {sources.length} 个播放源
-              </p>
+            <div className='tm-msheet-div-13'>
+              <h4 className='tm-msheet-h4-1'>可用播放源</h4>
+              <p className='tm-msheet-p-3'>共 {sources.length} 个播放源</p>
             </div>
 
             {/* 播放源列表 */}
-            <div className='max-h-32 overflow-y-auto'>
-              <div className='grid grid-cols-2 gap-2'>
+            <div className='tm-msheet-div-14'>
+              <div className='tm-msheet-div-15'>
                 {sources.map((source, index) => (
-                  <div
-                    key={index}
-                    className='flex items-center gap-2 py-2 px-3 rounded-lg border border-line bg-raised'
-                  >
-                    <div className='w-1 h-1 bg-surface rounded-full flex-shrink-0' />
-                    <span className='text-[13px] text-muted truncate'>
-                      {source}
-                    </span>
+                  <div key={index} className='tm-msheet-div-16'>
+                    <div className='tm-msheet-div-17' />
+                    <span className='tm-msheet-span-6'>{source}</span>
                   </div>
                 ))}
               </div>

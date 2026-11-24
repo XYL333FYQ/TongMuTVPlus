@@ -3,6 +3,8 @@
 import { motion } from 'framer-motion';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import './ClientUpdatePrompt.css';
+
 import { apiFetch } from '@/lib/api-client';
 import { CLIENT_PACKAGES } from '@/lib/client-downloads';
 import {
@@ -202,7 +204,7 @@ export default function ClientUpdatePrompt() {
           <h2 id='client-update-title' className='tm-modal-title'>
             客户端更新
           </h2>
-          <p className='mt-1 text-sm text-muted'>
+          <p className='tm-cupdate-p-1'>
             {installWindows ||
             (installAndroid && window.TMShell?.supportsUpdateProgress)
               ? '下载时会显示进度。下载完成后，请确认安装。'
@@ -210,26 +212,26 @@ export default function ClientUpdatePrompt() {
               ? '下载完成后，系统会提示确认安装。'
               : '此版本需要手动更新，请选择适合你的安装包。'}
           </p>
-          <p role='status' className='mt-1 text-sm text-muted'>
+          <p role='status' className='tm-cupdate-p-1'>
             {HANDOFF_MESSAGES[handoff]}
           </p>
           {downloadMessage && (
-            <p role='status' className='mt-1 text-sm text-muted'>
+            <p role='status' className='tm-cupdate-p-1'>
               {downloadMessage}
             </p>
           )}
           {packagesVisible && (
-            <div id='client-update-packages' className='mt-3 grid gap-2'>
+            <div id='client-update-packages' className='tm-cupdate-div-1'>
               {packages.map(({ file, label }) => {
                 const url = android
                   ? pending.url
                   : new URL(file, pending.url).href;
                 return (
-                  <div key={file} className='flex flex-wrap gap-2'>
+                  <div key={file} className='tm-cupdate-div-2'>
                     <a
                       href={url}
                       download={file}
-                      className='tm-btn flex-1'
+                      className='tm-btn tm-cupdate-a-1'
                       aria-disabled={handoff === 'starting'}
                       onClick={(event) => {
                         if (updating.current) {
@@ -256,7 +258,7 @@ export default function ClientUpdatePrompt() {
               })}
               {manualAddress && (
                 <input
-                  className='tm-input w-full'
+                  className='tm-input tm-cupdate-input-1'
                   aria-label='安装包下载地址'
                   readOnly
                   value={manualAddress}
@@ -266,11 +268,11 @@ export default function ClientUpdatePrompt() {
             </div>
           )}
         </div>
-        <div className='tm-modal-footer flex gap-2'>
+        <div className='tm-modal-footer tm-cupdate-div-3'>
           <button
             onClick={later}
             disabled={handoff === 'starting'}
-            className='tm-btn flex-1'
+            className='tm-btn tm-cupdate-a-1'
           >
             稍后
           </button>
@@ -281,7 +283,7 @@ export default function ClientUpdatePrompt() {
               <button
                 onClick={update}
                 disabled={handoff === 'starting'}
-                className='tm-btn tm-btn-primary flex-1'
+                className='tm-btn tm-btn-primary tm-cupdate-a-1'
               >
                 {handoff === 'error' ? '重试' : '立即更新'}
               </button>
@@ -291,7 +293,7 @@ export default function ClientUpdatePrompt() {
               type='button'
               aria-expanded={showPackages}
               onClick={() => setShowPackages(!showPackages)}
-              className='tm-btn tm-btn-primary flex-1'
+              className='tm-btn tm-btn-primary tm-cupdate-a-1'
             >
               {showPackages ? '收起安装包' : '选择安装包'}
             </button>

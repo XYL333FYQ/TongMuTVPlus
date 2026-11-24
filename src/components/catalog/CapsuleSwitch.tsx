@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import React, { useEffect, useId, useRef } from 'react';
 
 import '@/styles/controls.css';
+import './CapsuleSwitch.css';
 
 import { isReducedMotionSetting, useReducedMotionSetting } from '@/lib/motion';
 

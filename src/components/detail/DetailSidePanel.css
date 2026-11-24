@@ -1,0 +1,13 @@
+/* DetailSidePanel.tsx 的样式（块 tm-dside）：由原来的 Tailwind 类按 Tailwind 自己的输出原样转来，计算样式不变。 */
+/* sr-only */
+.tm-dside-h2-1 {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}

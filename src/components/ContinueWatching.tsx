@@ -4,6 +4,7 @@ import { ChevronRight } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
 import '@/styles/panels.css';
+import './ContinueWatching.css';
 
 import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
 import type { PlayRecord } from '@/lib/db.client';
@@ -163,7 +164,7 @@ export default function ContinueWatching({
   return (
     <>
       <section
-        className={`${homeLayout ? 'tm-home-resume' : 'mb-8'} ${
+        className={`${homeLayout ? 'tm-home-resume' : 'tm-cw-section-1'} ${
           className || ''
         }`}
       >
@@ -184,22 +185,22 @@ export default function ContinueWatching({
             }
           />
         ) : (
-          <div className='tm-continue-header mb-4 flex items-center justify-between'>
-            <h2 className='text-xl font-medium text-fg'>继续观看</h2>
+          <div className='tm-continue-header tm-cw-div-1'>
+            <h2 className='tm-cw-h2-1'>继续观看</h2>
             {!loading && playRecords.length > 0 && (
-              <div className='flex items-center gap-1'>
+              <div className='tm-cw-div-2'>
                 <button
-                  className='text-sm text-muted hover:text-fg min-h-[44px] tm-press min-w-[44px]'
+                  className='tm-cw-button-1 tm-press'
                   onClick={() => setShowConfirmDialog(true)}
                 >
                   清空
                 </button>
                 <button
-                  className='inline-flex h-8 w-8 items-center justify-center rounded-full text-muted transition-opacity hover:bg-line hover:text-fg min-h-[44px] tm-press min-w-[44px]'
+                  className='tm-cw-button-2 tm-press'
                   onClick={() => setShowPlayRecordsPanel(true)}
                   aria-label='查看全部播放记录'
                 >
-                  <ChevronRight className='h-4 w-4' />
+                  <ChevronRight className='tm-cw-chevronright-1' />
                 </button>
               </div>
             )}
@@ -210,27 +211,16 @@ export default function ContinueWatching({
             className={
               homeLayout
                 ? 'tm-home-personal-skeleton tm-home-resume-skeleton'
-                : 'flex gap-2 overflow-x-auto scrollbar-hide pb-2 pt-2'
+                : 'tm-cw-div-3 scrollbar-hide'
             }
           >
             {Array.from({ length: homeLayout ? 1 : 8 }).map((_, index) => (
-              <div
-                key={index}
-                className={
-                  homeLayout
-                    ? ''
-                    : 'min-w-[180px] w-48 sm:min-w-[200px] sm:w-52'
-                }
-              >
-                <div className='relative aspect-video w-full overflow-hidden rounded-lg bg-raised tm-skeleton'>
-                  <div
-                    className={
-                      homeLayout ? 'hidden' : 'absolute inset-0 bg-surface'
-                    }
-                  />
+              <div key={index} className={homeLayout ? '' : 'tm-cw-div-4'}>
+                <div className='tm-cw-div-5 tm-skeleton'>
+                  <div className={homeLayout ? 'tm-cw-div-6' : 'tm-cw-div-7'} />
                 </div>
-                <div className='mt-1 h-1 rounded bg-raised tm-skeleton' />
-                <div className='mt-2 h-4 w-3/4 rounded bg-raised tm-skeleton' />
+                <div className='tm-cw-div-8 tm-skeleton' />
+                <div className='tm-cw-div-9 tm-skeleton' />
               </div>
             ))}
           </div>
@@ -245,8 +235,8 @@ export default function ContinueWatching({
                       key={record.key}
                       className={
                         homeLayout
-                          ? 'tm-home-resume-item relative'
-                          : 'relative min-w-[180px] w-48 sm:min-w-[200px] sm:w-52'
+                          ? 'tm-home-resume-item tm-cw-div-10'
+                          : 'tm-cw-div-11'
                       }
                     >
                       <VideoCard

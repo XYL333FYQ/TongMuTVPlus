@@ -3,6 +3,8 @@
 import { usePathname } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 
+import './PerfProbe.css';
+
 import {
   createNavigationCapture,
   NAV_DOCUMENT_TRACE_KEY,
@@ -225,7 +227,7 @@ export default function PerfProbe() {
             rows={5}
             onFocus={(event) => event.currentTarget.select()}
           />
-          <div className='flex flex-wrap gap-2'>
+          <div className='tm-perfprobe-div-1'>
             <button
               type='button'
               className='tm-btn tm-btn-secondary'

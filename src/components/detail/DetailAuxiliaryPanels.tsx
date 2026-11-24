@@ -1,6 +1,8 @@
 'use client';
 import React from 'react';
 
+import './DetailAuxiliaryPanels.css';
+
 import { getTMDBImageUrl } from '@/lib/tmdb-image-base';
 
 import EmptyState from '@/components/feedback/EmptyState';
@@ -54,10 +56,10 @@ export function GalleryContent({
   return (
     <div
       ref={galleryScrollRef}
-      className='tm-detail-gallery-scroll flex-1 overflow-y-auto overflow-x-hidden p-4'
+      className='tm-detail-gallery-scroll tm-daux-div-1'
     >
       {galleryLoading && (
-        <div className='flex items-center justify-center py-20'>
+        <div className='tm-daux-div-2'>
           <div
             className='tm-skeleton tm-detail-loading'
             aria-label='正在加载'
@@ -75,7 +77,7 @@ export function GalleryContent({
 
       {!galleryLoading && !galleryError && galleryImages.length > 0 && (
         <div
-          className='relative mx-auto'
+          className='tm-daux-div-3'
           style={{
             height: virtualGalleryLayout.totalHeight,
             width: virtualGalleryLayout.usedWidth || '100%',
@@ -94,7 +96,7 @@ export function GalleryContent({
             return (
               <div
                 key={`${image.imageType}-${image.file_path}-${image.index}`}
-                className='group absolute'
+                className='tm-daux-group tm-daux-div-4'
                 style={{
                   top: image.top,
                   left: image.left,
@@ -103,7 +105,7 @@ export function GalleryContent({
                 }}
               >
                 <div
-                  className='relative w-full h-full overflow-hidden rounded-md bg-raised cursor-pointer hover:opacity-90 transition-opacity'
+                  className='tm-daux-div-5'
                   onClick={() => handleImageClick(imageUrl)}
                   role='button'
                   tabIndex={0}
@@ -122,10 +124,10 @@ export function GalleryContent({
                     alt={`${detailData?.title || title}-gallery-${
                       image.index + 1
                     }`}
-                    className='absolute inset-0 w-full h-full object-cover'
+                    className='tm-daux-proxyimage-1'
                     draggable={false}
                   />
-                  <div className='absolute left-2 top-2 px-2 py-0.5 rounded-full text-[13px] bg-surface text-fg'>
+                  <div className='tm-daux-div-6'>
                     {image.imageType === 'poster' ? '海报' : '剧照'}
                   </div>
                 </div>
@@ -151,9 +153,9 @@ export function StillsContent({
   handleImageClick: (s: string) => void;
 }) {
   return (
-    <div className='flex-1 overflow-y-auto overflow-x-hidden p-4'>
+    <div className='tm-daux-div-1'>
       {episodeStillsLoading && (
-        <div className='flex items-center justify-center py-20'>
+        <div className='tm-daux-div-2'>
           <div
             className='tm-skeleton tm-detail-loading'
             aria-label='正在加载'
@@ -172,11 +174,11 @@ export function StillsContent({
       {!episodeStillsLoading &&
         !episodeStillsError &&
         episodeStills.length > 0 && (
-          <div className='grid grid-cols-1 sm:grid-cols-2 gap-3'>
+          <div className='tm-daux-div-7'>
             {episodeStills.map((stillUrl, index) => (
               <div
                 key={`${stillUrl}-${index}`}
-                className='relative aspect-video overflow-hidden rounded-md bg-raised cursor-pointer hover:opacity-90 transition-opacity'
+                className='tm-daux-div-8'
                 onClick={() => handleImageClick(stillUrl)}
                 role='button'
                 tabIndex={0}
@@ -193,7 +195,7 @@ export function StillsContent({
                 <ProxyImage
                   originalSrc={stillUrl}
                   alt={`${episodeStillsTitle}-${index + 1}`}
-                  className='absolute inset-0 w-full h-full object-cover'
+                  className='tm-daux-proxyimage-1'
                   draggable={false}
                 />
               </div>
@@ -213,8 +215,8 @@ export function CorrectionContent({
   handleSelectTmdbResult: (r: TmdbCandidate) => void;
 }) {
   return (
-    <div className='flex-1 overflow-y-auto overflow-x-hidden p-4'>
-      <div className='flex flex-col gap-2'>
+    <div className='tm-daux-div-1'>
+      <div className='tm-daux-div-9'>
         {tmdbResults.map((result: TmdbCandidate) => {
           const resultTitle = result.title || result.name || '未知标题';
           const resultDate = result.release_date || result.first_air_date || '';
@@ -227,10 +229,8 @@ export function CorrectionContent({
             <div
               key={`${result.media_type}-${result.id}`}
               onClick={() => handleSelectTmdbResult(result)}
-              className={`flex items-start gap-3 p-2 rounded-lg cursor-pointer transition-colors ${
-                isActive
-                  ? 'bg-raised ring-2 ring-fg'
-                  : 'bg-raised hover:bg-raised'
+              className={`tm-daux-div-10 ${
+                isActive ? 'tm-daux-div-11' : 'tm-daux-div-12'
               }`}
               role='button'
               tabIndex={0}
@@ -248,24 +248,18 @@ export function CorrectionContent({
                 src={resultPoster}
                 title={resultTitle}
                 alt={resultTitle}
-                className='w-12 h-16 flex-shrink-0 [--tm-art-radius:var(--tm-radius-sm)] [--tm-art-shadow:none] [--tm-poster-initial-size:20px]'
+                className='tm-daux-filmposter-1'
               />
-              <div className='flex-1 min-w-0'>
-                <div className='flex items-center gap-2'>
-                  <p className='text-sm font-medium text-muted truncate'>
-                    {resultTitle}
-                  </p>
-                  <span className='flex-shrink-0 px-1.5 py-0.5 rounded text-[13px] bg-raised text-muted'>
+              <div className='tm-daux-div-13'>
+                <div className='tm-daux-div-14'>
+                  <p className='tm-daux-p-1'>{resultTitle}</p>
+                  <span className='tm-daux-span-1'>
                     {result.media_type === 'tv' ? '剧集' : '电影'}
                   </span>
                 </div>
-                {resultYear && (
-                  <p className='text-[13px] text-muted mt-0.5'>{resultYear}</p>
-                )}
+                {resultYear && <p className='tm-daux-p-2'>{resultYear}</p>}
                 {result.overview && (
-                  <p className='text-[13px] text-muted mt-1 line-clamp-2'>
-                    {result.overview}
-                  </p>
+                  <p className='tm-daux-p-3'>{result.overview}</p>
                 )}
               </div>
             </div>

@@ -4,6 +4,7 @@ import { AlertTriangle } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
 import '@/styles/panels.css';
+import './HttpWarningDialog.css';
 
 import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
 import { useReducedMotionSetting } from '@/lib/motion';
@@ -96,31 +97,29 @@ export default function HttpWarningDialog({ onClose }: HttpWarningDialogProps) {
       initialFocus={primaryRef}
     >
       <div
-        className={`tm-http-warning-panel bg-surface rounded-lg shadow-xl max-w-md w-full border border-line ${
+        className={`tm-http-warning-panel tm-httpw-div-1 ${
           isVisible ? 'tm-http-warning-shown' : 'tm-http-warning-hidden'
         }`}
       >
-        <div className='p-6'>
+        <div className='tm-httpw-div-2'>
           {/* 图标和标题 */}
-          <div className='flex items-start gap-4 mb-4'>
-            <div className='flex-shrink-0'>
-              <AlertTriangle className='w-8 h-8 text-fg' aria-hidden />
+          <div className='tm-httpw-div-3'>
+            <div className='tm-httpw-div-4'>
+              <AlertTriangle className='tm-httpw-alerttriangle-1' aria-hidden />
             </div>
-            <div className='flex-1'>
-              <h3 className='text-lg font-medium text-fg mb-2'>
-                HTTP 环境功能限制提示
-              </h3>
-              <div className='text-sm text-muted space-y-2'>
+            <div className='tm-httpw-div-5'>
+              <h3 className='tm-httpw-h3-1'>HTTP 环境功能限制提示</h3>
+              <div className='tm-httpw-div-6'>
                 <p>
                   检测到您正在使用 HTTP
                   协议访问本站。由于浏览器安全策略限制，以下功能将无法正常使用:
                 </p>
-                <ul className='list-disc list-inside space-y-1 ml-2'>
+                <ul className='tm-httpw-ul-1'>
                   <li>视频超分（AI 画质增强）</li>
                   <li>麦克风语音功能</li>
                   <li>其他需要安全上下文的高级功能</li>
                 </ul>
-                <p className='mt-3 text-fg font-medium'>
+                <p className='tm-httpw-p-1'>
                   建议配置 HTTPS 证书以获得完整功能体验。
                 </p>
               </div>
@@ -128,11 +127,11 @@ export default function HttpWarningDialog({ onClose }: HttpWarningDialogProps) {
           </div>
 
           {/* 按钮组 */}
-          <div className='flex gap-3 mt-6'>
+          <div className='tm-httpw-div-7'>
             <button
               type='button'
               onClick={handleDontShowAgain}
-              className='flex-1 px-4 py-2 text-sm font-medium text-muted bg-raised hover:bg-line rounded-lg transition-[opacity,transform] min-h-[44px] tm-press min-w-[44px]'
+              className='tm-httpw-button-1 tm-press'
             >
               不再提示
             </button>
@@ -140,7 +139,7 @@ export default function HttpWarningDialog({ onClose }: HttpWarningDialogProps) {
               ref={primaryRef}
               type='button'
               onClick={handleClose}
-              className='flex-1 px-4 py-2 text-sm font-medium text-inverse bg-fg hover:opacity-90 rounded-lg transition-[opacity,transform] min-h-[44px] tm-press min-w-[44px]'
+              className='tm-httpw-button-2 tm-press'
             >
               我知道了
             </button>

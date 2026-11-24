@@ -1,0 +1,38 @@
+/* ClientUpdatePrompt.tsx 的样式（块 tm-cupdate）：由原来的 Tailwind 类按 Tailwind 自己的输出原样转来，计算样式不变。 */
+/* mt-1 text-sm text-muted */
+.tm-cupdate-p-1 {
+  margin-top: 0.25rem;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  color: var(--tm-muted);
+}
+
+/* mt-3 grid gap-2 */
+.tm-cupdate-div-1 {
+  margin-top: 0.75rem;
+  display: grid;
+  gap: 0.5rem;
+}
+
+/* flex flex-wrap gap-2 */
+.tm-cupdate-div-2 {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+/* flex-1 */
+.tm-cupdate-a-1 {
+  flex: 1 1 0%;
+}
+
+/* w-full */
+.tm-cupdate-input-1 {
+  width: 100%;
+}
+
+/* flex gap-2 */
+.tm-cupdate-div-3 {
+  display: flex;
+  gap: 0.5rem;
+}

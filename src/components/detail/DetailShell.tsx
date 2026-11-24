@@ -11,6 +11,7 @@ import {
 } from 'react';
 
 import './detail.css';
+import './DetailShell.css';
 
 import { getDeviceTier } from '@/lib/device-tier';
 import { isReducedMotionSetting, useReducedMotionSetting } from '@/lib/motion';
@@ -149,7 +150,7 @@ export default function DetailShell({
           transform: offset > 0 ? `translateY(${offset}px)` : undefined,
         }}
       >
-        <h2 id={titleId} className='sr-only'>
+        <h2 id={titleId} className='tm-dshell-h2-1'>
           {title}
         </h2>
         {sheet && (

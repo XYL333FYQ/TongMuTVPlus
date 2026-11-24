@@ -1,5 +1,7 @@
 import type { ReactNode } from 'react';
 
+import './PageHeader.css';
+
 interface PageHeaderProps {
   title: ReactNode;
   description?: ReactNode;
@@ -17,7 +19,7 @@ export default function PageHeader({
 }: PageHeaderProps) {
   return (
     <header className={`tm-page-head ${className}`}>
-      <div className='min-w-0'>
+      <div className='tm-phd-div-1'>
         <h1 className='tm-page-title'>{title}</h1>
         {description && <p className='tm-page-desc'>{description}</p>}
       </div>

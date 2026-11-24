@@ -1,0 +1,361 @@
+/* MobileActionSheet.tsx 的样式（块 tm-msheet）：由原来的 Tailwind 类按 Tailwind 自己的输出原样转来，计算样式不变。 */
+/* flex items-center justify-between p-4 border-b border-line */
+.tm-msheet-div-1 {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom-width: 1px;
+  border-color: var(--tm-line);
+  padding: 1rem;
+}
+
+/* flex items-center gap-3 flex-1 min-w-0 */
+.tm-msheet-div-2 {
+  display: flex;
+  min-width: 0px;
+  flex: 1 1 0%;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+/* relative w-12 h-16 rounded-lg overflow-hidden bg-raised flex-shrink-0 cursor-pointer hover:opacity-90 transition-opacity */
+.tm-msheet-button-1 {
+  position: relative;
+  height: 4rem;
+  width: 3rem;
+  flex-shrink: 0;
+  cursor: pointer;
+  overflow: hidden;
+  border-radius: var(--tm-radius-md);
+  background-color: var(--tm-surface-raised);
+  transition-property: opacity;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+.tm-msheet-button-1:hover {
+  opacity: 0.9;
+}
+
+/* min-w-0 flex-1 */
+.tm-msheet-div-3 {
+  min-width: 0px;
+  flex: 1 1 0%;
+}
+
+/* flex flex-col items-start gap-1 mb-1 min-w-0 */
+.tm-msheet-div-4 {
+  margin-bottom: 0.25rem;
+  display: flex;
+  min-width: 0px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.25rem;
+}
+
+/* relative w-full min-w-0 */
+.tm-msheet-div-5 {
+  position: relative;
+  width: 100%;
+  min-width: 0px;
+}
+
+/* text-lg font-medium text-fg line-clamp-2 break-words */
+.tm-msheet-h3-1 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow-wrap: break-word;
+  font-size: 1.125rem;
+  line-height: 1.75rem;
+  font-weight: 500;
+  color: var(--tm-text);
+}
+
+/* absolute bottom-full left-1/2 z-[3] mb-2 w-max max-w-[min(20rem,calc(100vw-2rem))] -translate-x-1/2 rounded-lg bg-surface px-3 py-2 text-center text-sm text-fg shadow-xl opacity-0 invisible transition-[transform,opacity] duration-200 ease-out whitespace-normal break-words pointer-events-none group-hover/title:opacity-100 group-hover/title:visible */
+.tm-msheet-div-6 {
+  pointer-events: none;
+  visibility: hidden;
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  z-index: 3;
+  margin-bottom: 0.5rem;
+  width: max-content;
+  max-width: min(20rem, calc(100vw - 2rem));
+  --tw-translate-x: -50%;
+  transform: translate(var(--tw-translate-x), var(--tw-translate-y))
+    rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y))
+    scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
+  white-space: normal;
+  overflow-wrap: break-word;
+  border-radius: var(--tm-radius-md);
+  background-color: var(--tm-surface);
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  text-align: center;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  color: var(--tm-text);
+  opacity: 0;
+  --tw-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1),
+    0 8px 10px -6px rgb(0 0 0 / 0.1);
+  --tw-shadow-colored: 0 20px 25px -5px var(--tw-shadow-color),
+    0 8px 10px -6px var(--tw-shadow-color);
+  box-shadow: var(--tw-ring-offset-shadow, 0 0 transparent),
+    var(--tw-ring-shadow, 0 0 transparent), var(--tw-shadow);
+  transition-property: transform, opacity;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+  transition-duration: 200ms;
+  transition-timing-function: var(--tm-ease-out);
+}
+.tm-msheet-group-title:hover .tm-msheet-div-6 {
+  visibility: visible;
+  opacity: 1;
+}
+
+/* absolute top-full left-1/2 h-0 w-0 -translate-x-1/2 border-l-4 border-r-4 border-t-4 border-transparent border-t-line */
+.tm-msheet-div-7 {
+  position: absolute;
+  left: 50%;
+  top: 100%;
+  height: 0px;
+  width: 0px;
+  --tw-translate-x: -50%;
+  transform: translate(var(--tw-translate-x), var(--tw-translate-y))
+    rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y))
+    scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
+  border-left-width: 4px;
+  border-right-width: 4px;
+  border-top-width: 4px;
+  border-color: transparent;
+  border-top-color: var(--tm-line);
+}
+
+/* max-w-full truncate text-[13px] px-2 py-1 border border-line rounded text-muted bg-raised */
+.tm-msheet-span-1 {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  border-radius: var(--tm-radius-sm);
+  border-width: 1px;
+  border-color: var(--tm-line);
+  background-color: var(--tm-surface-raised);
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+  font-size: 13px;
+  color: var(--tm-muted);
+}
+
+/* inline-block text-muted mr-1.5 */
+.tm-msheet-radio-1 {
+  margin-right: 0.375rem;
+  display: inline-block;
+  color: var(--tm-muted);
+}
+
+/* mb-2 text-[13px] text-muted break-all */
+.tm-msheet-p-1 {
+  margin-bottom: 0.5rem;
+  word-break: break-all;
+  font-size: 13px;
+  color: var(--tm-muted);
+}
+
+/* text-sm text-muted */
+.tm-msheet-p-2 {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  color: var(--tm-muted);
+}
+
+/* p-2 rounded-full hover:bg-line transition-opacity duration-150 min-h-[44px] */
+.tm-msheet-button-2 {
+  min-height: 44px;
+  border-radius: var(--tm-radius-full);
+  padding: 0.5rem;
+  transition-property: opacity;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+  transition-duration: 150ms;
+}
+.tm-msheet-button-2:hover {
+  background-color: var(--tm-line);
+}
+
+/* text-muted */
+.tm-msheet-x-1 {
+  color: var(--tm-muted);
+}
+
+/* px-4 py-2 */
+.tm-msheet-div-8 {
+  padding-left: 1rem;
+  padding-right: 1rem;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+
+/* overflow-y-auto overscroll-contain */
+.tm-msheet-div-9 {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+/* w-full flex items-center gap-4 py-4 px-2 transition-[transform,opacity] duration-150 ease-out */
+.tm-msheet-button-3 {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 1rem;
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+  transition-property: transform, opacity;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+  transition-duration: 150ms;
+  transition-timing-function: var(--tm-ease-out);
+}
+
+/* opacity-50 cursor-not-allowed min-h-[44px] */
+.tm-msheet-button-4 {
+  min-height: 44px;
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+/* hover:bg-raised */
+.tm-msheet-button-5:hover {
+  background-color: var(--tm-surface-raised);
+}
+
+/* w-6 h-6 flex items-center justify-center flex-shrink-0 */
+.tm-msheet-div-10 {
+  display: flex;
+  height: 1.5rem;
+  width: 1.5rem;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+}
+
+/* transition-opacity duration-150 */
+.tm-msheet-span-2 {
+  transition-property: opacity;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+  transition-duration: 150ms;
+}
+
+/* text-left font-medium text-sm flex-1 */
+.tm-msheet-span-3 {
+  flex: 1 1 0%;
+  text-align: left;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  font-weight: 500;
+}
+
+/* text-fg */
+.tm-msheet-span-4 {
+  color: var(--tm-text);
+}
+
+/* text-sm text-muted font-medium */
+.tm-msheet-span-5 {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  font-weight: 500;
+  color: var(--tm-muted);
+}
+
+/* border-b border-line ml-10 */
+.tm-msheet-div-11 {
+  margin-left: 2.5rem;
+  border-bottom-width: 1px;
+  border-color: var(--tm-line);
+}
+
+/* px-4 py-3 border-t border-line */
+.tm-msheet-div-12 {
+  border-top-width: 1px;
+  border-color: var(--tm-line);
+  padding-left: 1rem;
+  padding-right: 1rem;
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
+}
+
+/* mb-3 */
+.tm-msheet-div-13 {
+  margin-bottom: 0.75rem;
+}
+
+/* text-sm font-medium text-fg mb-1 */
+.tm-msheet-h4-1 {
+  margin-bottom: 0.25rem;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  font-weight: 500;
+  color: var(--tm-text);
+}
+
+/* text-[13px] text-muted */
+.tm-msheet-p-3 {
+  font-size: 13px;
+  color: var(--tm-muted);
+}
+
+/* max-h-32 overflow-y-auto */
+.tm-msheet-div-14 {
+  max-height: 8rem;
+  overflow-y: auto;
+}
+
+/* grid grid-cols-2 gap-2 */
+.tm-msheet-div-15 {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+
+/* flex items-center gap-2 py-2 px-3 rounded-lg border border-line bg-raised */
+.tm-msheet-div-16 {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-radius: var(--tm-radius-md);
+  border-width: 1px;
+  border-color: var(--tm-line);
+  background-color: var(--tm-surface-raised);
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+
+/* w-1 h-1 bg-surface rounded-full flex-shrink-0 */
+.tm-msheet-div-17 {
+  height: 0.25rem;
+  width: 0.25rem;
+  flex-shrink: 0;
+  border-radius: var(--tm-radius-full);
+  background-color: var(--tm-surface);
+}
+
+/* text-[13px] text-muted truncate */
+.tm-msheet-span-6 {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+  color: var(--tm-muted);
+}

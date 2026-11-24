@@ -2,6 +2,8 @@
 import { Users } from 'lucide-react';
 import React from 'react';
 
+import './DetailActors.css';
+
 import { getTMDBImageUrl } from '@/lib/tmdb-image-base';
 
 import ProxyImage from '@/components/ProxyImage';
@@ -33,9 +35,11 @@ export default function DetailActors({
       {' '}
       {detailData.actors && detailData.actors.length > 0 && (
         <div
-          className={currentSource === 'tmdb' ? 'mb-4' : 'tm-detail-credits'}
+          className={
+            currentSource === 'tmdb' ? 'tm-dactors-div-1' : 'tm-detail-credits'
+          }
         >
-          <h4 className='text-sm font-medium text-fg mb-2 flex items-center gap-2'>
+          <h4 className='tm-dactors-h4-1'>
             {currentSource === 'tmdb' && <Users size={16} />}
             演员
           </h4>
@@ -46,24 +50,24 @@ export default function DetailActors({
               onMouseMove={handleActorsMouseMove}
               onMouseUp={handleActorsMouseUp}
               onMouseLeave={handleActorsMouseLeave}
-              className='overflow-x-auto -mx-6 px-6 cursor-grab active:cursor-grabbing'
+              className='tm-dactors-div-2'
               style={{
                 scrollbarWidth: 'thin',
                 scrollBehavior: isActorsDragging ? 'auto' : 'smooth',
               }}
             >
-              <div className='flex gap-4 pb-2'>
+              <div className='tm-dactors-div-3'>
                 {detailData.actors.map((actor, index) => (
                   <div
                     key={index}
-                    className='flex flex-col items-center flex-shrink-0'
+                    className='tm-dactors-div-4'
                     style={{
                       pointerEvents: isActorsDragging ? 'none' : 'auto',
                     }}
                   >
                     {actor.profile_path ? (
                       <div
-                        className='relative w-20 h-20 rounded-full overflow-hidden bg-raised mb-2 cursor-pointer hover:opacity-80 transition-opacity'
+                        className='tm-dactors-div-5'
                         onClick={() =>
                           handleImageClick(
                             getTMDBImageUrl(actor.profile_path || null, 'w185')
@@ -87,13 +91,13 @@ export default function DetailActors({
                             'w185'
                           )}
                           alt={actor.name}
-                          className='absolute inset-0 w-full h-full object-cover'
+                          className='tm-dactors-proxyimage-1'
                           draggable={false}
                         />
                       </div>
                     ) : (
-                      <div className='w-20 h-20 rounded-full bg-raised mb-2 flex items-center justify-center'>
-                        <Users size={28} className='text-muted' />
+                      <div className='tm-dactors-div-6'>
+                        <Users size={28} className='tm-dactors-users-1' />
                       </div>
                     )}
                     <a
@@ -102,22 +106,20 @@ export default function DetailActors({
                       )}`}
                       target='_blank'
                       rel='noopener noreferrer'
-                      className='text-[13px] font-medium text-fg text-center w-20 line-clamp-2 hover:text-fg transition-colors cursor-pointer'
+                      className='tm-dactors-a-1'
                       onClick={(e) => e.stopPropagation()}
                     >
                       {actor.name}
                     </a>
                     {actor.character && (
-                      <p className='text-[13px] text-muted text-center w-20 line-clamp-2'>
-                        {actor.character}
-                      </p>
+                      <p className='tm-dactors-p-1'>{actor.character}</p>
                     )}
                   </div>
                 ))}
               </div>
             </div>
           ) : (
-            <p className='text-muted'>
+            <p className='tm-dactors-users-1'>
               {detailData.actors
                 .slice(0, 10)
                 .map((a) => a.name)

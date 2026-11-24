@@ -1,0 +1,144 @@
+/* ContinueWatching.tsx 的样式（块 tm-cw）：由原来的 Tailwind 类按 Tailwind 自己的输出原样转来，计算样式不变。 */
+/* mb-8 */
+.tm-cw-section-1 {
+  margin-bottom: 2rem;
+}
+
+/* mb-4 flex items-center justify-between */
+.tm-cw-div-1 {
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* text-xl font-medium text-fg */
+.tm-cw-h2-1 {
+  font-size: 1.25rem;
+  line-height: 1.75rem;
+  font-weight: 500;
+  color: var(--tm-text);
+}
+
+/* flex items-center gap-1 */
+.tm-cw-div-2 {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+/* text-sm text-muted hover:text-fg min-h-[44px] min-w-[44px] */
+.tm-cw-button-1 {
+  min-height: 44px;
+  min-width: 44px;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  color: var(--tm-muted);
+}
+.tm-cw-button-1:hover {
+  color: var(--tm-text);
+}
+
+/* inline-flex h-8 w-8 items-center justify-center rounded-full text-muted transition-opacity hover:bg-line hover:text-fg min-h-[44px] min-w-[44px] */
+.tm-cw-button-2 {
+  display: inline-flex;
+  height: 2rem;
+  min-height: 44px;
+  width: 2rem;
+  min-width: 44px;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--tm-radius-full);
+  color: var(--tm-muted);
+  transition-property: opacity;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+.tm-cw-button-2:hover {
+  background-color: var(--tm-line);
+  color: var(--tm-text);
+}
+
+/* h-4 w-4 */
+.tm-cw-chevronright-1 {
+  height: 1rem;
+  width: 1rem;
+}
+
+/* flex gap-2 overflow-x-auto scrollbar-hide pb-2 pt-2 */
+.tm-cw-div-3 {
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+  padding-bottom: 0.5rem;
+  padding-top: 0.5rem;
+}
+
+/* min-w-[180px] w-48 sm:min-w-[200px] sm:w-52 */
+.tm-cw-div-4 {
+  width: 12rem;
+  min-width: 180px;
+}
+@media (min-width: 640px) {
+  .tm-cw-div-4 {
+    width: 13rem;
+    min-width: 200px;
+  }
+}
+
+/* relative aspect-video w-full overflow-hidden rounded-lg bg-raised */
+.tm-cw-div-5 {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  width: 100%;
+  overflow: hidden;
+  border-radius: var(--tm-radius-md);
+  background-color: var(--tm-surface-raised);
+}
+
+/* hidden */
+.tm-cw-div-6 {
+  display: none;
+}
+
+/* absolute inset-0 bg-surface */
+.tm-cw-div-7 {
+  position: absolute;
+  inset: 0px;
+  background-color: var(--tm-surface);
+}
+
+/* mt-1 h-1 rounded bg-raised */
+.tm-cw-div-8 {
+  margin-top: 0.25rem;
+  height: 0.25rem;
+  border-radius: var(--tm-radius-sm);
+  background-color: var(--tm-surface-raised);
+}
+
+/* mt-2 h-4 w-3/4 rounded bg-raised */
+.tm-cw-div-9 {
+  margin-top: 0.5rem;
+  height: 1rem;
+  width: 75%;
+  border-radius: var(--tm-radius-sm);
+  background-color: var(--tm-surface-raised);
+}
+
+/* relative */
+.tm-cw-div-10 {
+  position: relative;
+}
+
+/* relative min-w-[180px] w-48 sm:min-w-[200px] sm:w-52 */
+.tm-cw-div-11 {
+  position: relative;
+  width: 12rem;
+  min-width: 180px;
+}
+@media (min-width: 640px) {
+  .tm-cw-div-11 {
+    width: 13rem;
+    min-width: 200px;
+  }
+}

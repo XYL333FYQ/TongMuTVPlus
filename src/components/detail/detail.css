@@ -144,8 +144,8 @@
 .tm-detail-story .tm-detail-credits p {
   color: var(--tm-text);
 }
-.tm-detail-intro {
-  margin-bottom: 20px !important;
+.tm-detail-story .tm-detail-intro {
+  margin-bottom: 20px;
 }
 .tm-detail-intro h4 {
   margin-bottom: 10px;
@@ -360,10 +360,11 @@
 .tm-detail-panel .font-semibold {
   font-weight: 500;
 }
-.tm-detail-story .text-sm {
+.tm-detail-story
+  :is(.tm-dactors-h4-1, .tm-daux-p-1, .tm-depisodes-p-1, .tm-depisodes-p-3) {
   color: var(--tm-text);
 }
-.tm-detail-story .overflow-x-auto {
+.tm-detail-story :is(.tm-dactors-div-2, .tm-depisodes-div-10) {
   margin-left: 0;
   margin-right: 0;
   padding-left: 0;
@@ -416,9 +417,6 @@
 .tm-detail-side .tm-detail-actions > :not(.tm-detail-favorite) {
   width: 100%;
 }
-.tm-detail-side .grid-cols-2 {
-  grid-template-columns: 1fr;
-}
 /* 手机竖屏：公共弹窗层的底部面板款式，面板离顶 56（设计稿 D-1） */
 :where(html[data-tm-device='phone']) .tm-detail-layer .tm-detail-surface {
   width: 100%;
@@ -432,7 +430,7 @@
   justify-content: center;
   flex-shrink: 0;
   height: 44px;
-  min-height: 44px !important;
+  min-height: 44px;
   touch-action: none;
   -webkit-user-select: none;
   user-select: none;
@@ -526,8 +524,8 @@ html:where([data-tm-device='phone']).light .tm-detail-icon {
 :where(html[data-tm-device='phone']) .tm-detail-intro h4 {
   margin-bottom: 6px;
 }
-:where(html[data-tm-device='phone']) .tm-detail-intro {
-  margin-bottom: 12px !important;
+:where(html[data-tm-device='phone']) .tm-detail-story .tm-detail-intro {
+  margin-bottom: 12px;
 }
 :where(html[data-tm-device='phone']) .tm-detail-mobile-actions {
   display: block;

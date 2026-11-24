@@ -5,6 +5,7 @@ import { X } from 'lucide-react';
 import { type ReactNode, useEffect, useId, useRef, useState } from 'react';
 
 import './detail.css';
+import './DetailSidePanel.css';
 
 import { isReducedMotionSetting, useReducedMotionSetting } from '@/lib/motion';
 
@@ -79,7 +80,7 @@ export default function DetailSidePanel({
           ease: [0.22, 1, 0.36, 1],
         }}
       >
-        <h2 id={titleId} className='sr-only'>
+        <h2 id={titleId} className='tm-dside-h2-1'>
           {title}
         </h2>
         <div className='tm-detail-tools'>

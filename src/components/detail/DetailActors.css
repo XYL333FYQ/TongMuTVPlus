@@ -1,0 +1,122 @@
+/* DetailActors.tsx 的样式（块 tm-dactors）：由原来的 Tailwind 类按 Tailwind 自己的输出原样转来，计算样式不变。 */
+/* mb-4 */
+.tm-dactors-div-1 {
+  margin-bottom: 1rem;
+}
+
+/* text-sm font-medium text-fg mb-2 flex items-center gap-2 */
+.tm-dactors-h4-1 {
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  font-weight: 500;
+  color: var(--tm-text);
+}
+
+/* overflow-x-auto -mx-6 px-6 cursor-grab active:cursor-grabbing */
+.tm-dactors-div-2 {
+  margin-left: -1.5rem;
+  margin-right: -1.5rem;
+  cursor: grab;
+  overflow-x: auto;
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+}
+.tm-dactors-div-2:active {
+  cursor: grabbing;
+}
+
+/* flex gap-4 pb-2 */
+.tm-dactors-div-3 {
+  display: flex;
+  gap: 1rem;
+  padding-bottom: 0.5rem;
+}
+
+/* flex flex-col items-center flex-shrink-0 */
+.tm-dactors-div-4 {
+  display: flex;
+  flex-shrink: 0;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* relative w-20 h-20 rounded-full overflow-hidden bg-raised mb-2 cursor-pointer hover:opacity-80 transition-opacity */
+.tm-dactors-div-5 {
+  position: relative;
+  margin-bottom: 0.5rem;
+  height: 5rem;
+  width: 5rem;
+  cursor: pointer;
+  overflow: hidden;
+  border-radius: var(--tm-radius-full);
+  background-color: var(--tm-surface-raised);
+  transition-property: opacity;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+.tm-dactors-div-5:hover {
+  opacity: 0.8;
+}
+
+/* absolute inset-0 w-full h-full object-cover */
+.tm-dactors-proxyimage-1 {
+  position: absolute;
+  inset: 0px;
+  height: 100%;
+  width: 100%;
+  object-fit: cover;
+}
+
+/* w-20 h-20 rounded-full bg-raised mb-2 flex items-center justify-center */
+.tm-dactors-div-6 {
+  margin-bottom: 0.5rem;
+  display: flex;
+  height: 5rem;
+  width: 5rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--tm-radius-full);
+  background-color: var(--tm-surface-raised);
+}
+
+/* text-muted */
+.tm-dactors-users-1 {
+  color: var(--tm-muted);
+}
+
+/* text-[13px] font-medium text-fg text-center w-20 line-clamp-2 hover:text-fg transition-colors cursor-pointer */
+.tm-dactors-a-1 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  width: 5rem;
+  cursor: pointer;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--tm-text);
+  transition-property: color, background-color, border-color,
+    text-decoration-color, fill, stroke;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+.tm-dactors-a-1:hover {
+  color: var(--tm-text);
+}
+
+/* text-[13px] text-muted text-center w-20 line-clamp-2 */
+.tm-dactors-p-1 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  width: 5rem;
+  text-align: center;
+  font-size: 13px;
+  color: var(--tm-muted);
+}

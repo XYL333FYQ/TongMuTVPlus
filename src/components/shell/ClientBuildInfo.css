@@ -1,0 +1,12 @@
+/* ClientBuildInfo.tsx 的样式（块 tm-cbuild）：由原来的 Tailwind 类按 Tailwind 自己的输出原样转来，计算样式不变。 */
+/* mt-2 flex flex-wrap items-center gap-3 text-sm text-muted */
+.tm-cbuild-p-1 {
+  margin-top: 0.5rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  color: var(--tm-muted);
+}

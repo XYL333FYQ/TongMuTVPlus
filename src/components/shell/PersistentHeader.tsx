@@ -10,6 +10,8 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useId, useState, useSyncExternalStore } from 'react';
 
+import './PersistentHeader.css';
+
 import { BRAND_NAME, PROJECT_REPOSITORY_URL } from '@/lib/brand';
 import { useRememberedTabHref } from '@/hooks/useRememberedTabHref';
 
@@ -104,7 +106,7 @@ export default function PersistentHeader() {
                 href={PROJECT_REPOSITORY_URL}
                 target='_blank'
                 rel='noopener noreferrer'
-                className='tm-shell-icon tm-press min-h-[44px] min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-fg'
+                className='tm-shell-icon tm-press tm-pheader-externallink-1'
                 label={`${BRAND_NAME} GitHub 仓库`}
                 aria-describedby={
                   repositoryHintVisible ? repositoryHintId : undefined

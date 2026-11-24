@@ -1,0 +1,139 @@
+/* HttpWarningDialog.tsx 的样式（块 tm-httpw）：由原来的 Tailwind 类按 Tailwind 自己的输出原样转来，计算样式不变。 */
+/* bg-surface rounded-lg shadow-xl max-w-md w-full border border-line */
+.tm-httpw-div-1 {
+  width: 100%;
+  max-width: 28rem;
+  border-radius: var(--tm-radius-md);
+  border-width: 1px;
+  border-color: var(--tm-line);
+  background-color: var(--tm-surface);
+  --tw-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1),
+    0 8px 10px -6px rgb(0 0 0 / 0.1);
+  --tw-shadow-colored: 0 20px 25px -5px var(--tw-shadow-color),
+    0 8px 10px -6px var(--tw-shadow-color);
+  box-shadow: var(--tw-ring-offset-shadow, 0 0 transparent),
+    var(--tw-ring-shadow, 0 0 transparent), var(--tw-shadow);
+}
+
+/* p-6 */
+.tm-httpw-div-2 {
+  padding: 1.5rem;
+}
+
+/* flex items-start gap-4 mb-4 */
+.tm-httpw-div-3 {
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+/* flex-shrink-0 */
+.tm-httpw-div-4 {
+  flex-shrink: 0;
+}
+
+/* w-8 h-8 text-fg */
+.tm-httpw-alerttriangle-1 {
+  height: 2rem;
+  width: 2rem;
+  color: var(--tm-text);
+}
+
+/* flex-1 */
+.tm-httpw-div-5 {
+  flex: 1 1 0%;
+}
+
+/* text-lg font-medium text-fg mb-2 */
+.tm-httpw-h3-1 {
+  margin-bottom: 0.5rem;
+  font-size: 1.125rem;
+  line-height: 1.75rem;
+  font-weight: 500;
+  color: var(--tm-text);
+}
+
+/* text-sm text-muted space-y-2 */
+.tm-httpw-div-6 > :not([hidden]) ~ :not([hidden]) {
+  --tw-space-y-reverse: 0;
+  margin-top: calc(0.5rem * calc(1 - var(--tw-space-y-reverse)));
+  margin-bottom: calc(0.5rem * var(--tw-space-y-reverse));
+}
+.tm-httpw-div-6 {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  color: var(--tm-muted);
+}
+
+/* list-disc list-inside space-y-1 ml-2 */
+.tm-httpw-ul-1 {
+  margin-left: 0.5rem;
+  list-style-position: inside;
+  list-style-type: disc;
+}
+.tm-httpw-ul-1 > :not([hidden]) ~ :not([hidden]) {
+  --tw-space-y-reverse: 0;
+  margin-top: calc(0.25rem * calc(1 - var(--tw-space-y-reverse)));
+  margin-bottom: calc(0.25rem * var(--tw-space-y-reverse));
+}
+
+/* mt-3 text-fg font-medium */
+.tm-httpw-p-1 {
+  margin-top: 0.75rem;
+  font-weight: 500;
+  color: var(--tm-text);
+}
+
+/* flex gap-3 mt-6 */
+.tm-httpw-div-7 {
+  margin-top: 1.5rem;
+  display: flex;
+  gap: 0.75rem;
+}
+
+/* flex-1 px-4 py-2 text-sm font-medium text-muted bg-raised hover:bg-line rounded-lg transition-[opacity,transform] min-h-[44px] min-w-[44px] */
+.tm-httpw-button-1 {
+  min-height: 44px;
+  min-width: 44px;
+  flex: 1 1 0%;
+  border-radius: var(--tm-radius-md);
+  background-color: var(--tm-surface-raised);
+  padding-left: 1rem;
+  padding-right: 1rem;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  font-weight: 500;
+  color: var(--tm-muted);
+  transition-property: opacity, transform;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+.tm-httpw-button-1:hover {
+  background-color: var(--tm-line);
+}
+
+/* flex-1 px-4 py-2 text-sm font-medium text-inverse bg-fg hover:opacity-90 rounded-lg transition-[opacity,transform] min-h-[44px] min-w-[44px] */
+.tm-httpw-button-2 {
+  min-height: 44px;
+  min-width: 44px;
+  flex: 1 1 0%;
+  border-radius: var(--tm-radius-md);
+  background-color: var(--tm-text);
+  padding-left: 1rem;
+  padding-right: 1rem;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  font-weight: 500;
+  color: var(--tm-accent-contrast);
+  transition-property: opacity, transform;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+.tm-httpw-button-2:hover {
+  opacity: 0.9;
+}

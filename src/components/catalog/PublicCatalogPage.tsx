@@ -11,6 +11,8 @@ import {
   useState,
 } from 'react';
 
+import './PublicCatalogPage.css';
+
 import { apiFetch } from '@/lib/api-client';
 import { posterTiltHandlers } from '@/lib/motion';
 import { filmPlaybackHref, roomSelectionHref } from '@/lib/playback-links';

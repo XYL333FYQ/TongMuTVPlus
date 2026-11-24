@@ -1,6 +1,8 @@
 'use client';
 import React from 'react';
 
+import './DetailEpisodes.css';
+
 import { getTMDBImageUrl } from '@/lib/tmdb-image-base';
 
 import FilmPoster from '@/components/poster/FilmPoster';
@@ -54,9 +56,9 @@ export default function DetailEpisodes({
       {' '}
       {/* 季度和集数信息（仅TMDB电视剧） */}
       {detailData.mediaType === 'tv' && (
-        <div className='mt-6'>
+        <div className='tm-depisodes-div-1'>
           {loadingSeasons && (
-            <div className='flex items-center justify-center py-4'>
+            <div className='tm-depisodes-div-2'>
               <div
                 className='tm-skeleton tm-detail-loading'
                 aria-label='正在加载'
@@ -68,17 +70,17 @@ export default function DetailEpisodes({
             <>
               {/* 季度列表 */}
               {seasonData.seasons.length > 0 && (
-                <div className='mb-6'>
-                  <h4 className='text-lg font-medium text-fg mb-3'>季度</h4>
-                  <div className='grid grid-cols-2 sm:grid-cols-3 gap-3'>
+                <div className='tm-depisodes-div-3'>
+                  <h4 className='tm-depisodes-h4-1'>季度</h4>
+                  <div className='tm-depisodes-div-4'>
                     {seasonData.seasons.map((season: Season) => (
                       <div
                         key={season.id}
                         onClick={() => handleSeasonChange(season.season_number)}
-                        className={`flex items-center gap-2 p-2 rounded cursor-pointer transition-colors ${
+                        className={`tm-depisodes-div-5 ${
                           selectedSeason === season.season_number
-                            ? 'bg-raised ring-2 ring-fg'
-                            : 'bg-raised hover:bg-raised'
+                            ? 'tm-depisodes-div-6'
+                            : 'tm-depisodes-div-7'
                         }`}
                         role='button'
                         tabIndex={0}
@@ -94,7 +96,7 @@ export default function DetailEpisodes({
                       >
                         {season.poster_path && (
                           <div
-                            className='relative w-12 h-16 rounded overflow-hidden bg-raised flex-shrink-0 hover:opacity-80 transition-opacity'
+                            className='tm-depisodes-div-8'
                             onClick={(e) => {
                               e.stopPropagation();
                               handleImageClick(
@@ -117,15 +119,13 @@ export default function DetailEpisodes({
                               src={getTMDBImageUrl(season.poster_path, 'w92')}
                               title={season.name}
                               alt={season.name}
-                              className='w-full h-full [--tm-art-radius:var(--tm-radius-sm)] [--tm-art-shadow:none] [--tm-poster-initial-size:20px]'
+                              className='tm-depisodes-filmposter-1'
                             />
                           </div>
                         )}
-                        <div className='flex-1 min-w-0'>
-                          <p className='text-sm font-medium text-fg truncate'>
-                            {season.name}
-                          </p>
-                          <p className='text-[13px] text-muted'>
+                        <div className='tm-depisodes-div-9'>
+                          <p className='tm-depisodes-p-1'>{season.name}</p>
+                          <p className='tm-depisodes-p-2'>
                             {season.episode_count} 集
                           </p>
                         </div>
@@ -138,7 +138,7 @@ export default function DetailEpisodes({
               {/* 集数列表 */}
               {seasonData.episodes.length > 0 && (
                 <div>
-                  <h4 className='text-lg font-medium text-fg mb-3'>
+                  <h4 className='tm-depisodes-h4-1'>
                     {seasonData.seasons.find(
                       (s: Season) => s.season_number === selectedSeason
                     )?.name || `第${selectedSeason}季`}
@@ -149,13 +149,13 @@ export default function DetailEpisodes({
                     onMouseMove={handleMouseMove}
                     onMouseUp={handleMouseUp}
                     onMouseLeave={handleMouseLeave}
-                    className='overflow-x-auto -mx-6 px-6 cursor-grab active:cursor-grabbing'
+                    className='tm-depisodes-div-10'
                     style={{
                       scrollbarWidth: 'thin',
                       scrollBehavior: isDragging ? 'auto' : 'smooth',
                     }}
                   >
-                    <div className='flex gap-3 py-2'>
+                    <div className='tm-depisodes-div-11'>
                       {seasonData.episodes.map((episode: Episode) => {
                         const isExpanded = expandedEpisodes.has(episode.id);
                         const isCurrentEpisode =
@@ -164,10 +164,10 @@ export default function DetailEpisodes({
                           <div
                             key={episode.id}
                             id={`episode-${episode.episode_number}`}
-                            className={`flex-shrink-0 w-64 p-3 rounded ${
+                            className={`tm-depisodes-div-12 ${
                               isCurrentEpisode
-                                ? 'bg-raised ring-2 ring-fg'
-                                : 'bg-raised'
+                                ? 'tm-depisodes-div-6'
+                                : 'tm-depisodes-div-13'
                             }`}
                             style={{
                               pointerEvents: isDragging ? 'none' : 'auto',
@@ -175,7 +175,7 @@ export default function DetailEpisodes({
                           >
                             {episode.still_path && (
                               <div
-                                className='relative w-full h-36 rounded overflow-hidden bg-raised mb-2 cursor-pointer hover:opacity-90 transition-opacity'
+                                className='tm-depisodes-div-14'
                                 onClick={() =>
                                   handleEpisodeStillsClick(episode)
                                 }
@@ -198,12 +198,12 @@ export default function DetailEpisodes({
                                     'w300'
                                   )}
                                   alt={episode.name}
-                                  className='absolute inset-0 w-full h-full object-cover'
+                                  className='tm-depisodes-proxyimage-1'
                                   draggable={false}
                                 />
                               </div>
                             )}
-                            <p className='text-sm font-medium text-fg mb-1'>
+                            <p className='tm-depisodes-p-3'>
                               第{episode.episode_number}集: {episode.name}
                             </p>
                             {episode.overview && (
@@ -217,15 +217,15 @@ export default function DetailEpisodes({
                                   }
                                   setExpandedEpisodes(newExpanded);
                                 }}
-                                className={`text-[13px] text-muted cursor-pointer ${
-                                  isExpanded ? '' : 'line-clamp-3'
+                                className={`tm-depisodes-p-4 ${
+                                  isExpanded ? '' : 'tm-depisodes-p-5'
                                 }`}
                               >
                                 {episode.overview}
                               </p>
                             )}
                             {episode.air_date && (
-                              <p className='text-[13px] text-muted mt-1'>
+                              <p className='tm-depisodes-p-6'>
                                 {episode.air_date}
                               </p>
                             )}

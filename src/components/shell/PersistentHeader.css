@@ -1,0 +1,11 @@
+/* PersistentHeader.tsx 的样式（块 tm-pheader）：由原来的 Tailwind 类按 Tailwind 自己的输出原样转来，计算样式不变。 */
+/* min-h-[44px] min-w-[44px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-fg */
+.tm-pheader-externallink-1 {
+  min-height: 44px;
+  min-width: 44px;
+}
+.tm-pheader-externallink-1:focus-visible {
+  outline-style: solid;
+  outline-width: 2px;
+  outline-color: var(--tm-text);
+}

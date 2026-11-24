@@ -1,0 +1,204 @@
+/* DetailAuxiliaryPanels.tsx 的样式（块 tm-daux）：由原来的 Tailwind 类按 Tailwind 自己的输出原样转来，计算样式不变。 */
+/* flex-1 overflow-y-auto overflow-x-hidden p-4 */
+.tm-daux-div-1 {
+  flex: 1 1 0%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 1rem;
+}
+
+/* flex items-center justify-center py-20 */
+.tm-daux-div-2 {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-top: 5rem;
+  padding-bottom: 5rem;
+}
+
+/* relative mx-auto */
+.tm-daux-div-3 {
+  position: relative;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* absolute */
+.tm-daux-div-4 {
+  position: absolute;
+}
+
+/* relative w-full h-full overflow-hidden rounded-md bg-raised cursor-pointer hover:opacity-90 transition-opacity */
+.tm-daux-div-5 {
+  position: relative;
+  height: 100%;
+  width: 100%;
+  cursor: pointer;
+  overflow: hidden;
+  border-radius: var(--tm-radius-md);
+  background-color: var(--tm-surface-raised);
+  transition-property: opacity;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+.tm-daux-div-5:hover {
+  opacity: 0.9;
+}
+
+/* absolute inset-0 w-full h-full object-cover */
+.tm-daux-proxyimage-1 {
+  position: absolute;
+  inset: 0px;
+  height: 100%;
+  width: 100%;
+  object-fit: cover;
+}
+
+/* absolute left-2 top-2 px-2 py-0.5 rounded-full text-[13px] bg-surface text-fg */
+.tm-daux-div-6 {
+  position: absolute;
+  left: 0.5rem;
+  top: 0.5rem;
+  border-radius: var(--tm-radius-full);
+  background-color: var(--tm-surface);
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+  padding-top: 0.125rem;
+  padding-bottom: 0.125rem;
+  font-size: 13px;
+  color: var(--tm-text);
+}
+
+/* grid grid-cols-1 sm:grid-cols-2 gap-3 */
+.tm-daux-div-7 {
+  display: grid;
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+@media (min-width: 640px) {
+  .tm-daux-div-7 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* relative aspect-video overflow-hidden rounded-md bg-raised cursor-pointer hover:opacity-90 transition-opacity */
+.tm-daux-div-8 {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  cursor: pointer;
+  overflow: hidden;
+  border-radius: var(--tm-radius-md);
+  background-color: var(--tm-surface-raised);
+  transition-property: opacity;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+.tm-daux-div-8:hover {
+  opacity: 0.9;
+}
+
+/* flex flex-col gap-2 */
+.tm-daux-div-9 {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+/* flex items-start gap-3 p-2 rounded-lg cursor-pointer transition-colors */
+.tm-daux-div-10 {
+  display: flex;
+  cursor: pointer;
+  align-items: flex-start;
+  gap: 0.75rem;
+  border-radius: var(--tm-radius-md);
+  padding: 0.5rem;
+  transition-property: color, background-color, border-color,
+    text-decoration-color, fill, stroke;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+
+/* bg-raised ring-2 ring-fg */
+.tm-daux-div-11 {
+  background-color: var(--tm-surface-raised);
+  --tw-ring-offset-shadow: var(--tw-ring-inset) 0 0 0
+    var(--tw-ring-offset-width) var(--tw-ring-offset-color);
+  --tw-ring-shadow: var(--tw-ring-inset) 0 0 0
+    calc(2px + var(--tw-ring-offset-width)) var(--tw-ring-color);
+  box-shadow: var(--tw-ring-offset-shadow), var(--tw-ring-shadow),
+    var(--tw-shadow, 0 0 transparent);
+  --tw-ring-color: var(--tm-text);
+}
+
+/* bg-raised hover:bg-raised */
+.tm-daux-div-12 {
+  background-color: var(--tm-surface-raised);
+}
+.tm-daux-div-12:hover {
+  background-color: var(--tm-surface-raised);
+}
+
+/* w-12 h-16 flex-shrink-0 [--tm-art-radius:var(--tm-radius-sm)] [--tm-art-shadow:none] [--tm-poster-initial-size:20px] */
+.tm-daux-filmposter-1 {
+  height: 4rem;
+  width: 3rem;
+  flex-shrink: 0;
+  --tm-art-radius: var(--tm-radius-sm);
+  --tm-art-shadow: none;
+  --tm-poster-initial-size: 20px;
+}
+
+/* flex-1 min-w-0 */
+.tm-daux-div-13 {
+  min-width: 0px;
+  flex: 1 1 0%;
+}
+
+/* flex items-center gap-2 */
+.tm-daux-div-14 {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* text-sm font-medium text-muted truncate */
+.tm-daux-p-1 {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  font-weight: 500;
+  color: var(--tm-muted);
+}
+
+/* flex-shrink-0 px-1.5 py-0.5 rounded text-[13px] bg-raised text-muted */
+.tm-daux-span-1 {
+  flex-shrink: 0;
+  border-radius: var(--tm-radius-sm);
+  background-color: var(--tm-surface-raised);
+  padding-left: 0.375rem;
+  padding-right: 0.375rem;
+  padding-top: 0.125rem;
+  padding-bottom: 0.125rem;
+  font-size: 13px;
+  color: var(--tm-muted);
+}
+
+/* text-[13px] text-muted mt-0.5 */
+.tm-daux-p-2 {
+  margin-top: 0.125rem;
+  font-size: 13px;
+  color: var(--tm-muted);
+}
+
+/* text-[13px] text-muted mt-1 line-clamp-2 */
+.tm-daux-p-3 {
+  margin-top: 0.25rem;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  font-size: 13px;
+  color: var(--tm-muted);
+}
