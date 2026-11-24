@@ -12,6 +12,10 @@ interface FileSystemFileHandle {
 }
 
 interface FileSystemDirectoryHandle {
+  /** Chromium 的权限接口（还没进 TS 自带的 DOM 类型） */
+  requestPermission(descriptor?: {
+    mode?: 'read' | 'readwrite';
+  }): Promise<PermissionState>;
   getFileHandle(
     name: string,
     options?: { create?: boolean }

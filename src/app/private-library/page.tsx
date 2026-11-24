@@ -57,8 +57,8 @@ export default function PrivateLibraryPage() {
 
   // 获取运行时配置
   const runtimeConfig = useMemo(() => {
-    if (typeof window !== 'undefined' && (window as any).RUNTIME_CONFIG) {
-      return (window as any).RUNTIME_CONFIG;
+    if (typeof window !== 'undefined' && window.RUNTIME_CONFIG) {
+      return window.RUNTIME_CONFIG;
     }
     return {
       OPENLIST_ENABLED: false,

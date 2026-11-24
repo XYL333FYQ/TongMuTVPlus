@@ -19,7 +19,7 @@ export function usePlaybackFeatureFlags() {
       const enabled =
         window.RUNTIME_CONFIG?.AI_ENABLED &&
         window.RUNTIME_CONFIG?.AI_ENABLE_PLAYPAGE_ENTRY;
-      setAiEnabled(enabled);
+      setAiEnabled(Boolean(enabled));
 
       // 加载AI默认消息配置
       const defaultMsg = window.RUNTIME_CONFIG?.AI_DEFAULT_MESSAGE_WITH_VIDEO;

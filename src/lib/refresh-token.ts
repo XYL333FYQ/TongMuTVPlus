@@ -6,7 +6,29 @@ import { TOKEN_CONFIG } from './token-config';
 export { TOKEN_CONFIG };
 
 // Lazy import to avoid Edge Runtime issues in middleware
-let getStorage: (() => any) | null = null;
+let getStorage: (() => unknown) | null = null;
+
+/** Redis 类存储暴露的哈希操作（只有部分存储实现带 adapter） */
+interface HashAdapter {
+  hGet(key: string, field: string): Promise<string | null | undefined>;
+  hSet(key: string, field: string, value: string): Promise<unknown>;
+  hDel(key: string, field: string): Promise<unknown>;
+  hGetAll(key: string): Promise<Record<string, string> | null | undefined>;
+  del(key: string): Promise<unknown>;
+}
+type HashStorage = { adapter: HashAdapter };
+
+/** 存储带着要用的哈希操作时返回它，否则返回 null（调用方记一条警告后跳过） */
+function hashStorageOf(
+  storage: unknown,
+  ...methods: (keyof HashAdapter)[]
+): HashStorage | null {
+  const adapter = (storage as { adapter?: Partial<HashAdapter> } | null)
+    ?.adapter;
+  if (!adapter || methods.some((name) => typeof adapter[name] !== 'function'))
+    return null;
+  return storage as HashStorage;
+}
 
 async function loadStorage() {
   if (!getStorage) {
@@ -36,7 +58,7 @@ function revocationKey(username: string) {
 }
 
 async function isRevoked(
-  storage: any,
+  storage: HashStorage,
   username: string,
   tokenId: string,
   createdAt: number
@@ -48,8 +70,8 @@ async function isRevoked(
 }
 
 // 撤销标记超过 refresh token 有效期后，它能匹配的 token 都已过期，可以删除
-async function pruneRevocations(storage: any, username: string) {
-  if (typeof storage.adapter?.hGetAll !== 'function') return;
+async function pruneRevocations(storage: HashStorage, username: string) {
+  if (typeof storage.adapter.hGetAll !== 'function') return;
   const key = revocationKey(username);
   const revocations = await storage.adapter.hGetAll(key);
   const now = Date.now();
@@ -84,19 +106,15 @@ export async function storeRefreshToken(
   tokenData: TokenData
 ): Promise<void> {
   const hashKey = `user_tokens:${username}`;
-  const storage = await loadStorage();
+  const storage = hashStorageOf(await loadStorage(), 'hSet');
 
-  if (!storage || typeof (storage as any).adapter?.hSet !== 'function') {
+  if (!storage) {
     logger.warn('Redis Hash not supported, skipping token storage');
     return;
   }
 
   try {
-    await (storage as any).adapter.hSet(
-      hashKey,
-      tokenId,
-      JSON.stringify(tokenData)
-    );
+    await storage.adapter.hSet(hashKey, tokenId, JSON.stringify(tokenData));
     logger.info(`Stored refresh token for ${username}:${tokenId}`);
   } catch (error) {
     logger.error('Failed to store refresh token:', error);
@@ -111,15 +129,15 @@ export async function verifyRefreshToken(
   refreshToken: string
 ): Promise<boolean> {
   const hashKey = `user_tokens:${username}`;
-  const storage = await loadStorage();
+  const storage = hashStorageOf(await loadStorage(), 'hGet', 'hDel', 'hSet');
 
-  if (!storage || typeof (storage as any).adapter?.hGet !== 'function') {
+  if (!storage) {
     logger.warn('Redis Hash not supported');
     return false;
   }
 
   try {
-    const dataStr = await (storage as any).adapter.hGet(hashKey, tokenId);
+    const dataStr = await storage.adapter.hGet(hashKey, tokenId);
 
     if (!dataStr) {
       return false;
@@ -130,7 +148,7 @@ export async function verifyRefreshToken(
     // 检查是否过期
     if (Date.now() > tokenData.expiresAt) {
       // 过期了，删除
-      await (storage as any).adapter.hDel(hashKey, tokenId);
+      await storage.adapter.hDel(hashKey, tokenId);
       return false;
     }
 
@@ -141,15 +159,11 @@ export async function verifyRefreshToken(
 
     // 更新最后使用时间
     tokenData.lastUsed = Date.now();
-    await (storage as any).adapter.hSet(
-      hashKey,
-      tokenId,
-      JSON.stringify(tokenData)
-    );
+    await storage.adapter.hSet(hashKey, tokenId, JSON.stringify(tokenData));
 
     // 写回之后再查撤销标记：期间若被撤销，删掉刚写回的旧记录并拒绝
     if (await isRevoked(storage, username, tokenId, tokenData.createdAt)) {
-      await (storage as any).adapter.hDel(hashKey, tokenId);
+      await storage.adapter.hDel(hashKey, tokenId);
       return false;
     }
 
@@ -166,22 +180,22 @@ export async function revokeRefreshToken(
   tokenId: string
 ): Promise<void> {
   const hashKey = `user_tokens:${username}`;
-  const storage = await loadStorage();
+  const storage = hashStorageOf(await loadStorage(), 'hSet', 'hDel', 'hGetAll');
 
-  if (!storage || typeof (storage as any).adapter?.hDel !== 'function') {
+  if (!storage) {
     logger.warn('Redis Hash not supported');
     return;
   }
 
   try {
     // 先留标记再删除，见 isRevoked 上方说明
-    if (typeof (storage as any).adapter.hSet === 'function')
-      await (storage as any).adapter.hSet(
+    if (typeof storage.adapter.hSet === 'function')
+      await storage.adapter.hSet(
         revocationKey(username),
         tokenId,
         String(Date.now())
       );
-    await (storage as any).adapter.hDel(hashKey, tokenId);
+    await storage.adapter.hDel(hashKey, tokenId);
     await pruneRevocations(storage, username);
     logger.info(`Revoked refresh token for ${username}:${tokenId}`);
   } catch (error) {
@@ -200,15 +214,15 @@ export async function getUserDevices(username: string): Promise<
   }>
 > {
   const hashKey = `user_tokens:${username}`;
-  const storage = await loadStorage();
+  const storage = hashStorageOf(await loadStorage(), 'hGetAll', 'hDel');
 
-  if (!storage || typeof (storage as any).adapter?.hGetAll !== 'function') {
+  if (!storage) {
     logger.warn('Redis Hash not supported');
     return [];
   }
 
   try {
-    const allTokens = await (storage as any).adapter.hGetAll(hashKey);
+    const allTokens = await storage.adapter.hGetAll(hashKey);
 
     if (!allTokens || typeof allTokens !== 'object') {
       return [];
@@ -224,7 +238,7 @@ export async function getUserDevices(username: string): Promise<
         // 检查是否过期
         if (now > tokenData.expiresAt) {
           // 过期了，删除
-          await (storage as any).adapter.hDel(hashKey, tokenId);
+          await storage.adapter.hDel(hashKey, tokenId);
           continue;
         }
 
@@ -250,22 +264,28 @@ export async function getUserDevices(username: string): Promise<
 // 撤销所有 Token
 export async function revokeAllRefreshTokens(username: string): Promise<void> {
   const hashKey = `user_tokens:${username}`;
-  const storage = await loadStorage();
+  const storage = hashStorageOf(
+    await loadStorage(),
+    'hSet',
+    'del',
+    'hGetAll',
+    'hDel'
+  );
 
-  if (!storage || typeof (storage as any).adapter?.del !== 'function') {
+  if (!storage) {
     logger.warn('Redis Hash not supported');
     return;
   }
 
   try {
     // 先留标记再删除；之后新登录的设备创建时间更晚，不受影响
-    if (typeof (storage as any).adapter.hSet === 'function')
-      await (storage as any).adapter.hSet(
+    if (typeof storage.adapter.hSet === 'function')
+      await storage.adapter.hSet(
         revocationKey(username),
         ALL_DEVICES,
         String(Date.now())
       );
-    await (storage as any).adapter.del(hashKey);
+    await storage.adapter.del(hashKey);
     await pruneRevocations(storage, username);
     logger.info(`Revoked all refresh tokens for ${username}`);
   } catch (error) {
@@ -276,14 +296,14 @@ export async function revokeAllRefreshTokens(username: string): Promise<void> {
 // 清理过期的 Token（定期任务）
 export async function cleanupExpiredTokens(username: string): Promise<number> {
   const hashKey = `user_tokens:${username}`;
-  const storage = await loadStorage();
+  const storage = hashStorageOf(await loadStorage(), 'hGetAll', 'hDel');
 
-  if (!storage || typeof (storage as any).adapter?.hGetAll !== 'function') {
+  if (!storage) {
     return 0;
   }
 
   try {
-    const allTokens = await (storage as any).adapter.hGetAll(hashKey);
+    const allTokens = await storage.adapter.hGetAll(hashKey);
 
     if (!allTokens || typeof allTokens !== 'object') {
       return 0;
@@ -297,7 +317,7 @@ export async function cleanupExpiredTokens(username: string): Promise<number> {
         const tokenData: TokenData = JSON.parse(dataStr as string);
 
         if (now > tokenData.expiresAt) {
-          await (storage as any).adapter.hDel(hashKey, tokenId);
+          await storage.adapter.hDel(hashKey, tokenId);
           cleanedCount++;
         }
       } catch (err) {

@@ -166,10 +166,10 @@ function LoginPageClient() {
   // 在客户端挂载后设置配置
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const runtimeConfig = (window as any).RUNTIME_CONFIG;
+      const runtimeConfig = window.RUNTIME_CONFIG;
       const storageType = runtimeConfig?.STORAGE_TYPE;
       const shouldAsk = storageType && storageType !== 'localstorage';
-      setShouldAskUsername(shouldAsk);
+      setShouldAskUsername(Boolean(shouldAsk));
 
       // 设置背景图（支持多张随机选择）
       const loginBg = runtimeConfig?.LOGIN_BACKGROUND_IMAGE;

@@ -236,7 +236,10 @@ function TVLivePlayClient() {
       })
       .then((data) => {
         if (!alive) return;
-        const list = (data.data || []).map((item: any) => ({
+        const list = (
+          (data.data || []) as (Omit<LiveChannel, 'tvgId' | 'group'> &
+            Partial<LiveChannel>)[]
+        ).map((item) => ({
           id: item.id,
           tvgId: item.tvgId || item.name,
           name: item.name,

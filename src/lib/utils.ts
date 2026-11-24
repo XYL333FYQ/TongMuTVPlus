@@ -80,12 +80,14 @@ function getDoubanImageProxyConfig(): {
   }
 
   const doubanImageProxyType =
-    localStorage.getItem('doubanImageProxyType') ||
-    (window as any).RUNTIME_CONFIG?.DOUBAN_IMAGE_PROXY_TYPE ||
+    (localStorage.getItem(
+      'doubanImageProxyType'
+    ) as DoubanImageProxyType | null) ||
+    window.RUNTIME_CONFIG?.DOUBAN_IMAGE_PROXY_TYPE ||
     'cmliussss-cdn-tencent';
   const doubanImageProxy =
     localStorage.getItem('doubanImageProxyUrl') ||
-    (window as any).RUNTIME_CONFIG?.DOUBAN_IMAGE_PROXY ||
+    window.RUNTIME_CONFIG?.DOUBAN_IMAGE_PROXY ||
     '';
   const doubanImageProxyBackupType =
     (localStorage.getItem(
@@ -213,7 +215,7 @@ function getPrimaryBangumiImageSource(): AnimeImageSource {
 
   return normalizeAnimeImageSource(
     localStorage.getItem('animeDataSource') ||
-      (window as any).RUNTIME_CONFIG?.BANGUMI_DATA_SOURCE ||
+      window.RUNTIME_CONFIG?.BANGUMI_DATA_SOURCE ||
       'direct'
   );
 }

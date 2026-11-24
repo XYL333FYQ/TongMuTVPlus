@@ -43,7 +43,15 @@ export default function MusicRankingsPage() {
       .then((data) => {
         if (data.success) {
           setPlaylists(
-            (data.data?.list || []).map((item: any) => ({
+            (
+              (data.data?.list || []) as {
+                id: string;
+                name: string;
+                source?: string;
+                updateFrequency?: string;
+                description?: string;
+              }[]
+            ).map((item) => ({
               id: item.id,
               name: item.name,
               // 榜单接口不给图：上游 /leaderboard/boards 回的每一项只有 id/name/bangid，

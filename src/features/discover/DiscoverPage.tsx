@@ -361,7 +361,7 @@ function HomeClient() {
       const enabled =
         window.RUNTIME_CONFIG?.AI_ENABLED &&
         window.RUNTIME_CONFIG?.AI_ENABLE_HOMEPAGE_ENTRY;
-      setAiEnabled(enabled);
+      setAiEnabled(Boolean(enabled));
       // 开了 AI 才在空闲时预载问片面板代码
       if (enabled) preloadAIChatPanel();
 

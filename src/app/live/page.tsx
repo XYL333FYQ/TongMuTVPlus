@@ -162,7 +162,7 @@ function LivePageClient() {
         })
         .catch((error) => logger.error('加载播放器失败:', error));
 
-      const runtimeConfig = (window as any).RUNTIME_CONFIG;
+      const runtimeConfig = window.RUNTIME_CONFIG;
       if (runtimeConfig?.LIVE_ENABLED === false) {
         router.replace('/');
       }

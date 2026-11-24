@@ -26,6 +26,8 @@ import DetailMoreMenu, { type DetailMenuItem } from './detail/DetailMoreMenu';
 import DetailShell from './detail/DetailShell';
 import DetailSidePanel from './detail/DetailSidePanel';
 import type { DetailData, Episode, GalleryImage } from './detail/types';
+import type { TMDBSearchResult, TMDBSeasonInfo } from '@/lib/tmdb.search';
+import type { TmdbCandidate } from '@/components/detail/DetailAuxiliaryPanels';
 
 interface DetailPanelProps {
   isOpen: boolean;
@@ -57,19 +59,29 @@ interface DetailPanelProps {
   returnFocusRef?: React.RefObject<HTMLElement>;
 }
 
+/** TMDB 详情里只带名字的列表项（类型、国家、语言、标签） */
+type TmdbNamed = { name: string };
+/** TMDB 演职员 */
+type TmdbPerson = {
+  name: string;
+  job?: string;
+  character?: string;
+  profile_path?: string | null;
+};
+
 // 从多个 TMDB 搜索结果中挑选最匹配的一个
 // 依据媒体类型（单集大概率是电影）与年份辅助打分，无有效线索时降级到第一个
 const pickBestTmdbResult = (
-  results: any[],
+  results: TMDBSearchResult[],
   hints: { mediaTypeHint?: 'movie' | 'tv'; year?: string }
-): any => {
+): TMDBSearchResult | undefined => {
   if (!results || results.length === 0) return undefined;
   if (results.length === 1) return results[0];
 
   const { mediaTypeHint, year } = hints;
   const targetYear = year ? parseInt(year, 10) : NaN;
 
-  const getResultYear = (r: any): number => {
+  const getResultYear = (r: TMDBSearchResult): number => {
     const date = r.media_type === 'movie' ? r.release_date : r.first_air_date;
     return date ? parseInt(String(date).substring(0, 4), 10) : NaN;
   };
@@ -170,7 +182,7 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [seasonData, setSeasonData] = useState<{
-    seasons: any[];
+    seasons: TMDBSeasonInfo[];
     episodes: Episode[];
   } | null>(null);
   const [loadingSeasons, setLoadingSeasons] = useState(false);
@@ -192,7 +204,7 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
   const galleryScrollRef = React.useRef<HTMLDivElement>(null);
 
   // TMDB 搜索结果（供纠错切换）
-  const [tmdbResults, setTmdbResults] = useState<any[]>([]);
+  const [tmdbResults, setTmdbResults] = useState<TMDBSearchResult[]>([]);
   const [showTmdbCorrection, setShowTmdbCorrection] = useState(false);
 
   // 集数剧照状态
@@ -469,7 +481,7 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
 
   // 根据指定的搜索结果加载 TMDB 详情
   const applyTmdbResult = async (
-    result: any,
+    result: TmdbCandidate,
     extractedSeasonNumber?: number
   ) => {
     const detailId = result.id;
@@ -534,9 +546,11 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
           }
         : undefined,
       intro: seasonDetail?.overview || detailResult.overview,
-      genres: detailResult.genres?.map((g: any) => g.name),
-      countries: detailResult.production_countries?.map((c: any) => c.name),
-      languages: detailResult.spoken_languages?.map((l: any) => l.name),
+      genres: detailResult.genres?.map((g: TmdbNamed) => g.name),
+      countries: detailResult.production_countries?.map(
+        (c: TmdbNamed) => c.name
+      ),
+      languages: detailResult.spoken_languages?.map((l: TmdbNamed) => l.name),
       duration: detailResult.runtime
         ? `${detailResult.runtime}分钟`
         : undefined,
@@ -559,7 +573,7 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
   };
 
   // 用户从纠错面板中选择某个搜索结果
-  const handleSelectTmdbResult = async (result: any) => {
+  const handleSelectTmdbResult = async (result: TmdbCandidate) => {
     setShowTmdbCorrection(false);
     setLoading(true);
     setError(null);
@@ -671,7 +685,7 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
                 }
               : undefined,
             intro: data.summary,
-            genres: data.tags?.map((tag: any) => tag.name).slice(0, 5),
+            genres: data.tags?.map((tag: TmdbNamed) => tag.name).slice(0, 5),
             episodesCount: data.eps,
             releaseDate: data.date,
           };
@@ -752,7 +766,7 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
           mediaTypeHint: getMediaTypeHint(),
           year,
         });
-        await applyTmdbResult(best, extractedSeasonNumber);
+        if (best) await applyTmdbResult(best, extractedSeasonNumber);
         return;
       }
 
@@ -827,7 +841,7 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
         mediaTypeHint: getMediaTypeHint(),
         year,
       });
-      await applyTmdbResult(best, extractedSeasonNumber);
+      if (best) await applyTmdbResult(best, extractedSeasonNumber);
       return;
     }
 
@@ -854,13 +868,13 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
         );
         if (!seasonsResponse.ok) return;
         const seasonsData = await seasonsResponse.json();
-        const seasons: any[] = seasonsData.seasons || [];
+        const seasons: TMDBSeasonInfo[] = seasonsData.seasons || [];
 
         // 计算默认选中季度：优先用标题提取的季度号，
         // 若该季度号不在实际季度列表中，则降级到第一个有效季度
         const preferredSeason = detailData.seasonNumber || 1;
         const hasPreferred = seasons.some(
-          (s: any) => s.season_number === preferredSeason
+          (s: TMDBSeasonInfo) => s.season_number === preferredSeason
         );
         const defaultSeason = hasPreferred
           ? preferredSeason
@@ -957,14 +971,14 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
                 ...prev,
                 directors:
                   creditsData.crew
-                    ?.filter((person: any) => person.job === 'Director')
+                    ?.filter((person: TmdbPerson) => person.job === 'Director')
                     .slice(0, 5)
-                    .map((person: any) => ({
+                    .map((person: TmdbPerson) => ({
                       name: person.name,
                       profile_path: person.profile_path,
                     })) || prev.directors,
                 actors:
-                  creditsData.cast?.slice(0, 15).map((person: any) => ({
+                  creditsData.cast?.slice(0, 15).map((person: TmdbPerson) => ({
                     name: person.name,
                     character: person.character,
                     profile_path: person.profile_path,
@@ -1000,7 +1014,7 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
 
       // 从当前 seasonData 中查找季度信息
       const season = seasonData?.seasons.find(
-        (s: any) => s.season_number === seasonNumber
+        (s: TMDBSeasonInfo) => s.season_number === seasonNumber
       );
 
       setSeasonData((prev) => ({

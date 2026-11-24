@@ -162,7 +162,7 @@ export function DownloadManagementPanel({
 
             if (dirHandle) {
               // 请求写权限
-              const permission = await (dirHandle as any).requestPermission({
+              const permission = await dirHandle.requestPermission({
                 mode: 'readwrite',
               });
               if (permission !== 'granted') {
@@ -411,7 +411,7 @@ export function DownloadManagementPanel({
           return;
         }
 
-        const permission = await (dirHandle as any).requestPermission({
+        const permission = await dirHandle.requestPermission({
           mode: 'read',
         });
         if (permission !== 'granted') {

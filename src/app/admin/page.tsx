@@ -13281,7 +13281,7 @@ const RegistrationConfigComponent = ({
                 value={
                   typeof window !== 'undefined'
                     ? `${
-                        (window as any).RUNTIME_CONFIG?.SITE_BASE ||
+                        window.RUNTIME_CONFIG?.SITE_BASE ||
                         window.location.origin
                       }/api/auth/oidc/callback`
                     : ''
@@ -13292,8 +13292,7 @@ const RegistrationConfigComponent = ({
                 type='button'
                 onClick={() => {
                   const uri = `${
-                    (window as any).RUNTIME_CONFIG?.SITE_BASE ||
-                    window.location.origin
+                    window.RUNTIME_CONFIG?.SITE_BASE || window.location.origin
                   }/api/auth/oidc/callback`;
                   navigator.clipboard.writeText(uri);
                   showSuccess('已复制到剪贴板', showAlert);

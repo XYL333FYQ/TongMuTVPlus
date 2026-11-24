@@ -96,7 +96,7 @@ interface DoubanDetailApiResponse {
   [key: string]: any; // 允许其他字段
 }
 
-type DoubanProxyType =
+export type DoubanProxyType =
   | 'direct'
   | 'cors-proxy-zwei'
   | 'cmliussss-cdn-tencent'
@@ -224,12 +224,12 @@ function getDoubanProxyConfig(): {
   backupProxyUrl: string;
 } {
   const doubanProxyType =
-    localStorage.getItem('doubanDataSource') ||
-    (window as any).RUNTIME_CONFIG?.DOUBAN_PROXY_TYPE ||
+    (localStorage.getItem('doubanDataSource') as DoubanProxyType | null) ||
+    window.RUNTIME_CONFIG?.DOUBAN_PROXY_TYPE ||
     'cmliussss-cdn-tencent';
   const doubanProxy =
     localStorage.getItem('doubanProxyUrl') ||
-    (window as any).RUNTIME_CONFIG?.DOUBAN_PROXY ||
+    window.RUNTIME_CONFIG?.DOUBAN_PROXY ||
     '';
   const doubanProxyBackupType =
     (localStorage.getItem(

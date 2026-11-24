@@ -507,7 +507,9 @@ export class OfflineDownloader {
     }
 
     const body =
-      (await (response as any).getBody?.()) ??
+      (await (
+        response as { getBody?: () => Promise<NodeJS.ReadableStream | null> }
+      ).getBody?.()) ??
       (response.body as unknown as NodeJS.ReadableStream | null);
 
     if (!body || typeof body.pipe !== 'function') {

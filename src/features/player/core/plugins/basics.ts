@@ -168,7 +168,7 @@ export const progressThumbPlugin: PlayerPlugin = ({ art }) => {
   let url = '';
   let size: [number, number] = [30, 30];
   if (config.PROGRESS_THUMB_TYPE === 'preset') {
-    const preset = THUMB_PRESETS[config.PROGRESS_THUMB_PRESET_ID];
+    const preset = THUMB_PRESETS[config.PROGRESS_THUMB_PRESET_ID ?? ''];
     if (preset) {
       url = preset.url;
       if (preset.size) size = preset.size;

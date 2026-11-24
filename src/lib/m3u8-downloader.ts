@@ -952,19 +952,22 @@ export class M3U8Downloader {
           duration: parseInt(task.durationSecond.toString()),
         });
 
-        transMuxer.on('data', (segment: any) => {
-          // 第一个片段需要包含初始化段
-          if (index === 0) {
-            const combinedData = new Uint8Array(
-              segment.initSegment.byteLength + segment.data.byteLength
-            );
-            combinedData.set(segment.initSegment, 0);
-            combinedData.set(segment.data, segment.initSegment.byteLength);
-            callback(combinedData.buffer);
-          } else {
-            callback(segment.data);
+        transMuxer.on(
+          'data',
+          (segment: { initSegment: Uint8Array; data: Uint8Array }) => {
+            // 第一个片段需要包含初始化段
+            if (index === 0) {
+              const combinedData = new Uint8Array(
+                segment.initSegment.byteLength + segment.data.byteLength
+              );
+              combinedData.set(segment.initSegment, 0);
+              combinedData.set(segment.data, segment.initSegment.byteLength);
+              callback(combinedData.buffer);
+            } else {
+              callback(segment.data);
+            }
           }
-        });
+        );
 
         transMuxer.push(new Uint8Array(data));
         transMuxer.flush();

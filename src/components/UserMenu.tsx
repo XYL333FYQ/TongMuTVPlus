@@ -322,7 +322,7 @@ export const UserMenu: React.FC = () => {
   // TMDB 图片设置（默认取站点配置的 TMDB 图片默认地址，用户可本地覆盖）
   const [tmdbImageBaseUrl, setTmdbImageBaseUrl] = useState(
     typeof window !== 'undefined'
-      ? ((window as any).RUNTIME_CONFIG?.TMDB_IMAGE_BASE_URL as string) ||
+      ? (window.RUNTIME_CONFIG?.TMDB_IMAGE_BASE_URL as string) ||
           'https://image.tmdb.org'
       : 'https://image.tmdb.org'
   );
@@ -459,12 +459,9 @@ export const UserMenu: React.FC = () => {
   // 从运行时配置读取订阅是否启用
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const enabled =
-        (window as any).RUNTIME_CONFIG?.ENABLE_TVBOX_SUBSCRIBE || false;
+      const enabled = window.RUNTIME_CONFIG?.ENABLE_TVBOX_SUBSCRIBE || false;
       setSubscribeEnabled(enabled);
-      setTvModeEnabled(
-        (window as any).RUNTIME_CONFIG?.ENABLE_TV_MODE !== false
-      );
+      setTvModeEnabled(window.RUNTIME_CONFIG?.ENABLE_TV_MODE !== false);
     }
   }, []);
 
@@ -577,7 +574,7 @@ export const UserMenu: React.FC = () => {
       const auth = getAuthInfoFromBrowserCookie();
       setAuthInfo(auth);
 
-      const runtimeConfig = (window as any).RUNTIME_CONFIG || {};
+      const runtimeConfig = window.RUNTIME_CONFIG || {};
       const type = runtimeConfig.STORAGE_TYPE || 'localstorage';
       const displayType = runtimeConfig.DISPLAY_STORAGE_TYPE || type;
       setStorageType(type);
@@ -600,8 +597,7 @@ export const UserMenu: React.FC = () => {
 
       const savedDoubanDataSource = readSetting('doubanDataSource');
       const defaultDoubanProxyType =
-        (window as any).RUNTIME_CONFIG?.DOUBAN_PROXY_TYPE ||
-        'cmliussss-cdn-tencent';
+        window.RUNTIME_CONFIG?.DOUBAN_PROXY_TYPE || 'cmliussss-cdn-tencent';
       if (savedDoubanDataSource !== null) {
         setDoubanDataSource(savedDoubanDataSource);
       } else if (defaultDoubanProxyType) {
@@ -609,8 +605,7 @@ export const UserMenu: React.FC = () => {
       }
 
       const savedDoubanProxyUrl = readSetting('doubanProxyUrl');
-      const defaultDoubanProxy =
-        (window as any).RUNTIME_CONFIG?.DOUBAN_PROXY || '';
+      const defaultDoubanProxy = window.RUNTIME_CONFIG?.DOUBAN_PROXY || '';
       if (savedDoubanProxyUrl !== null) {
         setDoubanProxyUrl(savedDoubanProxyUrl);
       } else if (defaultDoubanProxy) {
@@ -625,7 +620,7 @@ export const UserMenu: React.FC = () => {
 
       const savedAnimeDataSource = readSetting('animeDataSource');
       const defaultAnimeDataSource =
-        (window as any).RUNTIME_CONFIG?.BANGUMI_DATA_SOURCE || 'direct';
+        window.RUNTIME_CONFIG?.BANGUMI_DATA_SOURCE || 'direct';
       setAnimeDataSource(savedAnimeDataSource || defaultAnimeDataSource);
 
       const savedAnimeDataSourceBackup = readSetting('animeDataSourceBackup');
@@ -646,7 +641,7 @@ export const UserMenu: React.FC = () => {
 
       const savedDoubanImageProxyType = readSetting('doubanImageProxyType');
       const defaultDoubanImageProxyType =
-        (window as any).RUNTIME_CONFIG?.DOUBAN_IMAGE_PROXY_TYPE ||
+        window.RUNTIME_CONFIG?.DOUBAN_IMAGE_PROXY_TYPE ||
         'cmliussss-cdn-tencent';
       if (savedDoubanImageProxyType !== null) {
         setDoubanImageProxyType(savedDoubanImageProxyType);
@@ -656,7 +651,7 @@ export const UserMenu: React.FC = () => {
 
       const savedDoubanImageProxyUrl = readSetting('doubanImageProxyUrl');
       const defaultDoubanImageProxyUrl =
-        (window as any).RUNTIME_CONFIG?.DOUBAN_IMAGE_PROXY || '';
+        window.RUNTIME_CONFIG?.DOUBAN_IMAGE_PROXY || '';
       if (savedDoubanImageProxyUrl !== null) {
         setDoubanImageProxyUrl(savedDoubanImageProxyUrl);
       } else if (defaultDoubanImageProxyUrl) {
@@ -705,8 +700,7 @@ export const UserMenu: React.FC = () => {
       }
 
       const savedFluidSearch = readSetting('fluidSearch');
-      const defaultFluidSearch =
-        (window as any).RUNTIME_CONFIG?.FLUID_SEARCH !== false;
+      const defaultFluidSearch = window.RUNTIME_CONFIG?.FLUID_SEARCH !== false;
       if (savedFluidSearch !== null) {
         setFluidSearch(JSON.parse(savedFluidSearch));
       } else if (defaultFluidSearch !== undefined) {
@@ -759,7 +753,7 @@ export const UserMenu: React.FC = () => {
         setDisableAutoLoadDanmaku(savedDisableAutoLoadDanmaku === 'true');
       } else {
         const runtimeDefault =
-          (window as any).RUNTIME_CONFIG?.DANMAKU_AUTO_LOAD_DEFAULT !== false;
+          window.RUNTIME_CONFIG?.DANMAKU_AUTO_LOAD_DEFAULT !== false;
         setDisableAutoLoadDanmaku(!runtimeDefault);
       }
 
@@ -2103,19 +2097,15 @@ export const UserMenu: React.FC = () => {
 
   const handleResetSettings = () => {
     const defaultDoubanProxyType =
-      (window as any).RUNTIME_CONFIG?.DOUBAN_PROXY_TYPE ||
-      'cmliussss-cdn-tencent';
-    const defaultDoubanProxy =
-      (window as any).RUNTIME_CONFIG?.DOUBAN_PROXY || '';
+      window.RUNTIME_CONFIG?.DOUBAN_PROXY_TYPE || 'cmliussss-cdn-tencent';
+    const defaultDoubanProxy = window.RUNTIME_CONFIG?.DOUBAN_PROXY || '';
     const defaultDoubanImageProxyType =
-      (window as any).RUNTIME_CONFIG?.DOUBAN_IMAGE_PROXY_TYPE ||
-      'cmliussss-cdn-tencent';
+      window.RUNTIME_CONFIG?.DOUBAN_IMAGE_PROXY_TYPE || 'cmliussss-cdn-tencent';
     const defaultDoubanImageProxyUrl =
-      (window as any).RUNTIME_CONFIG?.DOUBAN_IMAGE_PROXY || '';
-    const defaultFluidSearch =
-      (window as any).RUNTIME_CONFIG?.FLUID_SEARCH !== false;
+      window.RUNTIME_CONFIG?.DOUBAN_IMAGE_PROXY || '';
+    const defaultFluidSearch = window.RUNTIME_CONFIG?.FLUID_SEARCH !== false;
     const defaultAnimeDataSource =
-      (window as any).RUNTIME_CONFIG?.BANGUMI_DATA_SOURCE || 'direct';
+      window.RUNTIME_CONFIG?.BANGUMI_DATA_SOURCE || 'direct';
     const defaultAnimeBaseUrl = '';
     const defaultAnimeImageBaseUrl = '';
 
@@ -2147,7 +2137,7 @@ export const UserMenu: React.FC = () => {
     setDisableEpisodeTitleFetch(false);
     const defaultDanmakuAutoLoad =
       (typeof window !== 'undefined' &&
-        (window as any).RUNTIME_CONFIG?.DANMAKU_AUTO_LOAD_DEFAULT !== false) ||
+        window.RUNTIME_CONFIG?.DANMAKU_AUTO_LOAD_DEFAULT !== false) ||
       false;
     setDisableAutoLoadDanmaku(!defaultDanmakuAutoLoad);
     setHomeBannerEnabled(true);
@@ -2203,7 +2193,7 @@ export const UserMenu: React.FC = () => {
   // 初始化：读取根布局注入的全局模式
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    const runtimeConfig = (window as any).RUNTIME_CONFIG || {};
+    const runtimeConfig = window.RUNTIME_CONFIG || {};
     const mode =
       runtimeConfig.LOCAL_SETTINGS_SYNC_MODE === 'manual' ||
       runtimeConfig.LOCAL_SETTINGS_SYNC_MODE === 'auto'
@@ -2297,7 +2287,7 @@ export const UserMenu: React.FC = () => {
       case 'fluidSearch':
         setFluidSearch(
           typeof window === 'undefined' ||
-            (window as any).RUNTIME_CONFIG?.FLUID_SEARCH !== false
+            window.RUNTIME_CONFIG?.FLUID_SEARCH !== false
         );
         break;
       case 'tmdb_backdrop_disabled':
@@ -2307,12 +2297,11 @@ export const UserMenu: React.FC = () => {
         setEnableTrailers(false);
         break;
       case 'doubanProxyUrl':
-        setDoubanProxyUrl((window as any).RUNTIME_CONFIG?.DOUBAN_PROXY || '');
+        setDoubanProxyUrl(window.RUNTIME_CONFIG?.DOUBAN_PROXY || '');
         break;
       case 'doubanDataSource':
         setDoubanDataSource(
-          (window as any).RUNTIME_CONFIG?.DOUBAN_PROXY_TYPE ||
-            'cmliussss-cdn-tencent'
+          window.RUNTIME_CONFIG?.DOUBAN_PROXY_TYPE || 'cmliussss-cdn-tencent'
         );
         break;
       case 'doubanDataSourceBackup':
@@ -2323,7 +2312,7 @@ export const UserMenu: React.FC = () => {
         break;
       case 'animeDataSource':
         setAnimeDataSource(
-          (window as any).RUNTIME_CONFIG?.BANGUMI_DATA_SOURCE || 'direct'
+          window.RUNTIME_CONFIG?.BANGUMI_DATA_SOURCE || 'direct'
         );
         break;
       case 'animeDataSourceBackup':
@@ -2337,14 +2326,12 @@ export const UserMenu: React.FC = () => {
         break;
       case 'doubanImageProxyType':
         setDoubanImageProxyType(
-          (window as any).RUNTIME_CONFIG?.DOUBAN_IMAGE_PROXY_TYPE ||
+          window.RUNTIME_CONFIG?.DOUBAN_IMAGE_PROXY_TYPE ||
             'cmliussss-cdn-tencent'
         );
         break;
       case 'doubanImageProxyUrl':
-        setDoubanImageProxyUrl(
-          (window as any).RUNTIME_CONFIG?.DOUBAN_IMAGE_PROXY || ''
-        );
+        setDoubanImageProxyUrl(window.RUNTIME_CONFIG?.DOUBAN_IMAGE_PROXY || '');
         break;
       case 'doubanImageProxyTypeBackup':
         setDoubanImageProxyTypeBackup('server');
@@ -2354,8 +2341,7 @@ export const UserMenu: React.FC = () => {
         break;
       case 'tmdbImageBaseUrl':
         setTmdbImageBaseUrl(
-          (window as any).RUNTIME_CONFIG?.TMDB_IMAGE_BASE_URL ||
-            'https://image.tmdb.org'
+          window.RUNTIME_CONFIG?.TMDB_IMAGE_BASE_URL || 'https://image.tmdb.org'
         );
         break;
       case 'bufferStrategy':
@@ -2375,7 +2361,7 @@ export const UserMenu: React.FC = () => {
         break;
       case 'disableAutoLoadDanmaku':
         setDisableAutoLoadDanmaku(
-          (window as any).RUNTIME_CONFIG?.DANMAKU_AUTO_LOAD_DEFAULT === false
+          window.RUNTIME_CONFIG?.DANMAKU_AUTO_LOAD_DEFAULT === false
         );
         break;
       case 'danmakuMaxCount':
@@ -2791,7 +2777,7 @@ export const UserMenu: React.FC = () => {
   const showOfflineDownload =
     isPrivilegedRole(authInfo?.role) &&
     typeof window !== 'undefined' &&
-    (window as any).RUNTIME_CONFIG?.ENABLE_OFFLINE_DOWNLOAD === true;
+    window.RUNTIME_CONFIG?.ENABLE_OFFLINE_DOWNLOAD === true;
 
   // 检查是否显示修改密码按钮
   const showChangePassword =

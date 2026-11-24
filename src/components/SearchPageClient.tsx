@@ -1231,7 +1231,7 @@ export function SearchPageClient({
       !authInfo?.username && !authInfo?.password && !authInfo?.signature;
     setIsGuest(guest);
     setCanManageSources(isPrivilegedRole(authInfo?.role));
-    const runtimeConfig = (window as any).RUNTIME_CONFIG || {};
+    const runtimeConfig = window.RUNTIME_CONFIG || {};
     setNetdiskSearchEnabled(!guest && !!runtimeConfig.NETDISK_SEARCH_ENABLED);
     setMagnetSearchEnabled(!guest && !!runtimeConfig.MAGNET_SEARCH_ENABLED);
     // 与首页口径一致：未显式关闭即为启用
@@ -1269,8 +1269,7 @@ export function SearchPageClient({
     // 读取流式搜索设置
     if (typeof window !== 'undefined') {
       const savedFluidSearch = readStoredBoolean('fluidSearch');
-      const defaultFluidSearch =
-        (window as any).RUNTIME_CONFIG?.FLUID_SEARCH !== false;
+      const defaultFluidSearch = window.RUNTIME_CONFIG?.FLUID_SEARCH !== false;
       if (savedFluidSearch !== null) {
         setUseFluidSearch(savedFluidSearch);
       } else if (defaultFluidSearch !== undefined) {
@@ -1565,7 +1564,7 @@ export function SearchPageClient({
           currentFluidSearch = savedFluidSearch;
         } else {
           const defaultFluidSearch =
-            (window as any).RUNTIME_CONFIG?.FLUID_SEARCH !== false;
+            window.RUNTIME_CONFIG?.FLUID_SEARCH !== false;
           currentFluidSearch = defaultFluidSearch;
         }
       }

@@ -36,7 +36,39 @@ export function normalizeSource(
   return 'wy';
 }
 
-export function mapSong(song: any): Song {
+/** 各家音乐接口里的一首歌：字段名五花八门，只列这里会读的 */
+export interface RawSong {
+  id?: string | number;
+  songId?: string | number;
+  rid?: string | number;
+  mid?: string;
+  name?: string;
+  title?: string;
+  artist?: string;
+  singer?: string;
+  artists?: string;
+  album?: string | { picUrl?: string; pic?: string };
+  albumName?: string;
+  pic?: string;
+  cover?: string;
+  img?: string;
+  image?: string;
+  imageUrl?: string;
+  albumPicUrl?: string;
+  meta?: { picUrl?: string };
+  al?: { picUrl?: string };
+  source?: string;
+  platform?: string;
+  vendor?: string;
+  origin?: string;
+  durationSec?: number;
+  duration?: number;
+  durationText?: string;
+  interval?: string;
+  songmid?: string;
+}
+
+export function mapSong(song: RawSong): Song {
   const rawSource = song.source || song.platform || song.vendor || song.origin;
   const pic =
     song.pic ||
@@ -46,15 +78,16 @@ export function mapSong(song: any): Song {
     song.imageUrl ||
     song.albumPicUrl ||
     song.meta?.picUrl ||
-    song.album?.picUrl ||
-    song.album?.pic ||
+    (typeof song.album === 'object'
+      ? song.album.picUrl || song.album.pic
+      : '') ||
     song.al?.picUrl;
 
   return {
     id: String(song.id ?? song.songId ?? song.rid ?? song.mid ?? ''),
     name: song.name || song.title || '未知歌曲',
     artist: song.artist || song.singer || song.artists || '未知艺术家',
-    album: song.album || song.albumName,
+    album: (typeof song.album === 'string' ? song.album : '') || song.albumName,
     pic,
     platform: normalizeSource(rawSource),
     duration: song.durationSec || song.duration,

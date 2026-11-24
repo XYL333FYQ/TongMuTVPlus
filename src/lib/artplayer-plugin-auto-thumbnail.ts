@@ -1,3 +1,5 @@
+import type Artplayer from 'artplayer';
+
 /**
  * 本地版 artplayer-plugin-auto-thumbnail。
  *
@@ -126,7 +128,7 @@ function startGeneration(
 export default function artplayerPluginAutoThumbnail(
   option: AutoThumbnailOption = {}
 ) {
-  return (art: any) => {
+  return (art: Artplayer) => {
     const width = option.width || 160;
     const number = option.number || 100;
     const scale = option.scale || 1;

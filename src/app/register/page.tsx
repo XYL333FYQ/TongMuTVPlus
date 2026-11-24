@@ -48,7 +48,7 @@ function RegisterPageClient() {
   // 在客户端挂载后设置配置
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const runtimeConfig = (window as any).RUNTIME_CONFIG;
+      const runtimeConfig = window.RUNTIME_CONFIG;
 
       // 设置背景图（支持多张随机选择）
       const registerBg = runtimeConfig?.REGISTER_BACKGROUND_IMAGE;

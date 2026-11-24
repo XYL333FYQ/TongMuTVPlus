@@ -20,7 +20,11 @@ function OIDCRegisterPageClient() {
   const [username, setUsername] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [oidcInfo, setOidcInfo] = useState<any>(null);
+  const [oidcInfo, setOidcInfo] = useState<{
+    email?: string;
+    name?: string;
+    trust_level?: number;
+  } | null>(null);
 
   const { siteName } = useSite();
 

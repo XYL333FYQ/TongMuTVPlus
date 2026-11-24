@@ -33,6 +33,8 @@ export default function EpgScrollableRow({
   const selectionId = useId();
   const containerRef = useRef<HTMLDivElement>(null);
   const timelineHorizontalRef = useRef<HTMLDivElement>(null);
+  // 鼠标在时间线上时把竖向滚轮转成横向滚动；离开时解绑
+  const timelineWheelRef = useRef<((e: WheelEvent) => void) | null>(null);
   const timelineVerticalRef = useRef<HTMLDivElement>(null);
   const [isHovered, setIsHovered] = useState(false);
   const [currentPlayingIndex, setCurrentPlayingIndex] = useState<number>(-1);
@@ -470,17 +472,15 @@ export default function EpgScrollableRow({
                     container.addEventListener('wheel', handleWheel, {
                       passive: false,
                     });
-                    (container as any)._wheelHandler = handleWheel;
+                    timelineWheelRef.current = handleWheel;
                   }
                 }}
                 onMouseLeave={() => {
                   const container = timelineHorizontalRef.current;
-                  if (container && (container as any)._wheelHandler) {
-                    container.removeEventListener(
-                      'wheel',
-                      (container as any)._wheelHandler
-                    );
-                    delete (container as any)._wheelHandler;
+                  const handleWheel = timelineWheelRef.current;
+                  if (container && handleWheel) {
+                    container.removeEventListener('wheel', handleWheel);
+                    timelineWheelRef.current = null;
                   }
                 }}
               >

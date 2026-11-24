@@ -27,8 +27,7 @@ type XiaoyaItem = { name: string; path: string };
 export default function TVPrivatePage() {
   const router = useRouter();
   const runtimeConfig = useMemo(
-    () =>
-      typeof window !== 'undefined' ? (window as any).RUNTIME_CONFIG || {} : {},
+    () => (typeof window !== 'undefined' ? window.RUNTIME_CONFIG || {} : {}),
     []
   );
   const enabledSources: SourceType[] = useMemo(

@@ -117,9 +117,9 @@ function normalizeBaseUrl(baseUrl: string): string {
   return baseUrl.trim().replace(/\/+$/, '');
 }
 
-function getRuntimeConfig() {
-  if (typeof window === 'undefined') return {} as any;
-  return (window as any).RUNTIME_CONFIG || {};
+function getRuntimeConfig(): NonNullable<Window['RUNTIME_CONFIG']> {
+  if (typeof window === 'undefined') return {};
+  return window.RUNTIME_CONFIG || {};
 }
 
 function getPrimaryAnimeDataSource(): AnimeDataSource {

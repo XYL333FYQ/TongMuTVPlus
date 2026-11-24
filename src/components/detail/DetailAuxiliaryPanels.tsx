@@ -16,8 +16,8 @@ export interface TmdbCandidate {
   name?: string;
   release_date?: string;
   first_air_date?: string;
-  poster_path?: string;
-  media_type?: string;
+  poster_path?: string | null;
+  media_type?: 'movie' | 'tv';
 }
 export type GalleryLayout = {
   totalHeight: number;

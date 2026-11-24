@@ -78,7 +78,7 @@ export default function MovieRequestPage() {
 
   // 检查求片功能是否启用
   useEffect(() => {
-    const runtimeConfig = (window as any).RUNTIME_CONFIG;
+    const runtimeConfig = window.RUNTIME_CONFIG;
     if (runtimeConfig && runtimeConfig.ENABLE_MOVIE_REQUEST === false) {
       setIsFeatureEnabled(false);
     }
@@ -136,7 +136,7 @@ export default function MovieRequestPage() {
         if (seasonRequestIdRef.current !== requestId) return;
         if (!Array.isArray(data.seasons)) throw new Error('季度格式不正确');
         const validSeasons = data.seasons.filter(
-          (s: any) => s.season_number > 0
+          (s: { season_number: number }) => s.season_number > 0
         );
         setSeasons(validSeasons);
 

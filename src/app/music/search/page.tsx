@@ -325,8 +325,8 @@ export default function MusicSearchPage() {
 
         setPage(pageNum);
         setHasMore(nextHasMore);
-      } catch (error: any) {
-        if (error?.name !== 'AbortError') {
+      } catch (error) {
+        if ((error as Error | null)?.name !== 'AbortError') {
           if (!append) {
             setSongs([]);
             setSingers([]);

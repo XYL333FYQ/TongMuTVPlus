@@ -1,11 +1,13 @@
 'use client';
 
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+
+type AppRouter = ReturnType<typeof useRouter>;
 import NProgress from 'nprogress';
 import { useEffect, useRef } from 'react';
 
 // 创建全局钩子来拦截 router
-let globalRouterRef: any = null;
+let globalRouterRef: AppRouter | null = null;
 
 export default function TopProgressBar() {
   const pathname = usePathname();

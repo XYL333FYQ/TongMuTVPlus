@@ -286,7 +286,51 @@ export function normalizeLxSong(song: LxServerSong): MusicV2Song {
   });
 }
 
-export function unwrapLxArray<T>(payload: any): T[] {
+/** 洛雪音乐接口常见的外层结构：列表、总数等字段按接口不同出现在不同层 */
+export interface LxPagePayload {
+  list?: unknown;
+  data?: LxPagePayload;
+  info?: unknown;
+  page?: number;
+  total?: number;
+  limit?: number;
+  tags?: unknown;
+  hotTag?: unknown;
+  sortList?: unknown;
+}
+
+/** 歌单列表里的一项（各家字段名不一样） */
+export interface LxSonglistItem {
+  id?: string;
+  songlistId?: string;
+  listId?: string;
+  name?: string;
+  title?: string;
+  img?: string;
+  cover?: string;
+  pic?: string;
+  coverImgUrl?: string;
+  source?: string;
+  author?: string;
+  creator?: { nickname?: string };
+  uname?: string;
+  desc?: string;
+  description?: string;
+  play_count?: string | number;
+  playCount?: string | number;
+  listencnt?: string | number;
+  visitnum?: string | number;
+  total?: number;
+  trackCount?: number;
+  songCount?: number;
+  updateFrequency?: string;
+  update_frequency?: string;
+  time?: string;
+}
+
+export function unwrapLxArray<T>(
+  payload: LxPagePayload | unknown[] | null | undefined
+): T[] {
   if (Array.isArray(payload)) return payload as T[];
   if (Array.isArray(payload?.list)) return payload.list as T[];
   if (Array.isArray(payload?.data)) return payload.data as T[];
@@ -359,7 +403,7 @@ export async function lxGetJson<T>(
 
 export async function lxPostJson<T>(
   path: string,
-  body: any,
+  body: unknown,
   authMode: LxFetchAuthMode = 'auto'
 ): Promise<T> {
   const response = await lxFetch(
@@ -381,7 +425,14 @@ export function extractSongmid(song: Pick<MusicV2Song, 'songId' | 'songmid'>) {
   return song.songmid || song.songId.split('_').slice(1).join('_');
 }
 
-function normalizeLyricPayload(payload: any) {
+function normalizeLyricPayload(
+  payload: {
+    lyric?: unknown;
+    lrc?: unknown;
+    tlyric?: unknown;
+    trc?: unknown;
+  } | null
+) {
   return {
     lyric:
       typeof payload?.lyric === 'string'
@@ -417,13 +468,14 @@ export async function fetchLxLyric(song: MusicV2Song) {
   if (song.trcUrl) query.set('trcUrl', song.trcUrl);
 
   try {
-    const payload = await lxGetJson<any>(
-      `/api/music/lyric?${query.toString()}`,
-      'none'
-    );
+    const payload = await lxGetJson<
+      Parameters<typeof normalizeLyricPayload>[0]
+    >(`/api/music/lyric?${query.toString()}`, 'none');
     return normalizeLyricPayload(payload);
   } catch {
-    const payload = await lxPostJson<any>(
+    const payload = await lxPostJson<
+      Parameters<typeof normalizeLyricPayload>[0]
+    >(
       '/api/music/lyric',
       {
         songInfo: {

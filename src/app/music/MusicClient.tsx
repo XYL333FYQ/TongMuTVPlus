@@ -608,7 +608,7 @@ export default function MusicClient({
   useEffect(() => {
     if (
       typeof window !== 'undefined' &&
-      !(window as any).RUNTIME_CONFIG?.MUSIC_ENABLED
+      !window.RUNTIME_CONFIG?.MUSIC_ENABLED
     ) {
       router.replace('/');
     }
@@ -907,7 +907,7 @@ export default function MusicClient({
 
   const getMusicProxyEnabled = () => {
     if (typeof window === 'undefined') return true;
-    return (window as any).RUNTIME_CONFIG?.MUSIC_PROXY_ENABLED !== false;
+    return window.RUNTIME_CONFIG?.MUSIC_PROXY_ENABLED !== false;
   };
 
   const fetchPlayData = async (

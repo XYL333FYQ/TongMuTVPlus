@@ -224,6 +224,19 @@ export class DbManager {
     this.storage = getStorage();
   }
 
+  // 清理旧记录（存储没实现的就跳过）
+  cleanupOldPlayRecords(userName: string): Promise<void> {
+    return this.storage.cleanupOldPlayRecords(userName);
+  }
+
+  async cleanupOldBookReadRecords(userName: string): Promise<void> {
+    await this.storage.cleanupOldBookReadRecords?.(userName);
+  }
+
+  async cleanupOldMangaReadRecords(userName: string): Promise<void> {
+    await this.storage.cleanupOldMangaReadRecords?.(userName);
+  }
+
   // 播放记录相关方法
   async getPlayRecord(
     userName: string,

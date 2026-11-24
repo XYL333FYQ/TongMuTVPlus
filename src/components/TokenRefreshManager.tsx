@@ -23,8 +23,7 @@ import { isLoginPathname, resolveLoginPath } from '@/lib/tv-mode';
 export function TokenRefreshManager() {
   useEffect(() => {
     // localStorage 模式不需要刷新
-    const storageType =
-      (window as any).RUNTIME_CONFIG?.STORAGE_TYPE || 'localstorage';
+    const storageType = window.RUNTIME_CONFIG?.STORAGE_TYPE || 'localstorage';
     if (storageType === 'localstorage') {
       return;
     }

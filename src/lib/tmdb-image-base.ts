@@ -27,7 +27,7 @@ export function getTmdbImageBaseUrl(): string {
     const local = localStorage.getItem('tmdbImageBaseUrl');
     if (local) return local;
 
-    const runtimeBaseUrl = (window as any).RUNTIME_CONFIG?.TMDB_IMAGE_BASE_URL;
+    const runtimeBaseUrl = window.RUNTIME_CONFIG?.TMDB_IMAGE_BASE_URL;
     if (typeof runtimeBaseUrl === 'string' && runtimeBaseUrl) {
       return runtimeBaseUrl;
     }

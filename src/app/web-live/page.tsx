@@ -177,7 +177,7 @@ export default function WebLivePage() {
       });
 
       // 检查网络直播功能是否启用
-      const runtimeConfig = (window as any).RUNTIME_CONFIG;
+      const runtimeConfig = window.RUNTIME_CONFIG;
       const enabled = runtimeConfig?.WEB_LIVE_ENABLED ?? false;
       setIsWebLiveEnabled(enabled);
 
