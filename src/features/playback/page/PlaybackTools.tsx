@@ -1,6 +1,8 @@
 'use client';
 
-import { Keyboard, Loader2, Router, Users, X } from 'lucide-react';
+import { Keyboard, Router, Users, X } from 'lucide-react';
+
+import BusyDots from '@/components/feedback/BusyDots';
 
 import type { ShowToast } from './types';
 import { EXTERNAL_PLAYERS } from '../lib/external-players';
@@ -159,11 +161,12 @@ export default function PlaybackTools({
                   onRoom();
                 }}
                 disabled={creatingRoom}
+                aria-busy={creatingRoom || undefined}
                 className='group relative flex items-center justify-center gap-1 w-11 h-11 wide:w-auto wide:h-auto wide:px-2 wide:py-1.5 bg-fg hover:opacity-90 text-[13px] font-medium rounded-md transition-all duration-200 shadow-sm hover:shadow-md cursor-pointer overflow-hidden border border-line flex-shrink-0 disabled:opacity-60 disabled:cursor-wait text-inverse min-h-[44px] tm-press'
                 title={roomEntry === 'return' ? '返回房间' : '创建观影室'}
               >
                 {creatingRoom ? (
-                  <Loader2 className='w-4 h-4 flex-shrink-0 text-inverse animate-spin' />
+                  <BusyDots className='flex-shrink-0' />
                 ) : (
                   <Users className='w-4 h-4 flex-shrink-0 text-inverse' />
                 )}
@@ -184,6 +187,7 @@ export default function PlaybackTools({
                   await onTranscode();
                 }}
                 disabled={transcoding}
+                aria-busy={transcoding || undefined}
                 className={`group relative flex items-center justify-center gap-1 w-11 h-11 wide:w-auto wide:h-auto wide:px-2 wide:py-1.5 text-[13px] font-medium rounded-md transition-all duration-200 shadow-sm hover:shadow-md overflow-hidden border flex-shrink-0 ${
                   transcoding
                     ? 'bg-raised text-fg border-line cursor-wait min-h-[44px] tm-press'
@@ -192,7 +196,7 @@ export default function PlaybackTools({
                 title='转码播放'
               >
                 {transcoding ? (
-                  <Loader2 className='w-4 h-4 flex-shrink-0 text-fg animate-spin' />
+                  <BusyDots className='flex-shrink-0' />
                 ) : (
                   <Router className='w-4 h-4 flex-shrink-0 text-fg' />
                 )}

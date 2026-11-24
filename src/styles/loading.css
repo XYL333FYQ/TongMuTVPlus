@@ -855,3 +855,44 @@ html[data-tm-reduced-motion='true']
     transform: none;
   }
 }
+
+/* —— 处理中（BusyDots）：三个小点依次淡入淡出，颜色跟文字走，不转圈 —— */
+.tm-busy {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--tm-busy-gap, 3px);
+  vertical-align: middle;
+}
+.tm-busy > span {
+  width: var(--tm-busy-dot, 4px);
+  height: var(--tm-busy-dot, 4px);
+  border-radius: var(--tm-radius-full);
+  background: currentColor;
+  opacity: 0.25;
+  animation: tm-busy-dot 1.2s ease-in-out infinite;
+}
+.tm-busy > span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+.tm-busy > span:nth-child(3) {
+  animation-delay: 0.4s;
+}
+@keyframes tm-busy-dot {
+  0%,
+  100% {
+    opacity: 0.25;
+  }
+  40% {
+    opacity: 1;
+  }
+}
+html[data-tm-reduced-motion='true'] .tm-busy > span {
+  animation: none;
+  opacity: 0.6;
+}
+@media (prefers-reduced-motion: reduce) {
+  .tm-busy > span {
+    animation: none;
+    opacity: 0.6;
+  }
+}

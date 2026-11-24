@@ -6,7 +6,6 @@
  */
 
 import {
-  Loader2,
   MessageSquareOff,
   MessageSquareText,
   Send,
@@ -23,6 +22,8 @@ import {
 } from 'react';
 
 import './ChatPanel.css';
+
+import BusyDots from '@/components/feedback/BusyDots';
 
 import type { ChatMessage } from '@/types/watch-room';
 
@@ -178,10 +179,13 @@ export default function ChatPanel(props: ChatPanelProps) {
             type='button'
             className='tm-room-chat-older'
             disabled={loadingOlder}
+            aria-busy={loadingOlder || undefined}
             onClick={() => void loadOlder()}
           >
             {loadingOlder ? (
-              <Loader2 size={14} className='tm-room-spin' />
+              <>
+                加载中 <BusyDots size={14} />
+              </>
             ) : (
               '更早的消息'
             )}
@@ -312,13 +316,10 @@ export default function ChatPanel(props: ChatPanelProps) {
           type='submit'
           className='tm-room-chat-send'
           disabled={disabled || !text.trim() || sending}
+          aria-busy={sending || undefined}
           aria-label='发送'
         >
-          {sending ? (
-            <Loader2 size={18} className='tm-room-spin' />
-          ) : (
-            <Send size={18} />
-          )}
+          {sending ? <BusyDots size={18} /> : <Send size={18} />}
         </button>
       </form>
       {/* 电脑房间页的宽聊天栏用这一行开关（输入框里的弹幕图标藏起来），其他地方只显示报错 */}

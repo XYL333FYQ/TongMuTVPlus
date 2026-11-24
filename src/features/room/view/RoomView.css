@@ -124,14 +124,6 @@ html[data-tm-no-blur] .tm-room-view-ambient {
   background: rgb(var(--tm-ink-rgb) / 0.45);
   font-size: 14px;
 }
-.tm-room-view-loader {
-  width: 28px;
-  height: 28px;
-  border: 2px solid var(--tm-art-glass-line);
-  border-top-color: var(--tm-on-art);
-  border-radius: 50%;
-  animation: tm-room-rotate 0.9s linear infinite;
-}
 
 /* 正在放映 */
 .tm-room-view-now {

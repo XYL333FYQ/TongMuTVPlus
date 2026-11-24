@@ -9,6 +9,8 @@ import { FormEvent, useCallback, useEffect, useRef, useState } from 'react';
 
 import './Lobby.css';
 
+import BusyDots from '@/components/feedback/BusyDots';
+
 import { roomCoverSource } from '../lib/room-cover';
 import { displayRoomName } from '../lib/room-presentation';
 
@@ -205,11 +207,9 @@ export default function Lobby(props: {
           className='tm-room-icon'
           onClick={() => void refresh()}
           aria-label='刷新'
+          aria-busy={loading || undefined}
         >
-          <RefreshCw
-            size={16}
-            className={loading ? 'tm-room-spin' : undefined}
-          />
+          {loading ? <BusyDots size={16} /> : <RefreshCw size={16} />}
         </button>
       </div>
 

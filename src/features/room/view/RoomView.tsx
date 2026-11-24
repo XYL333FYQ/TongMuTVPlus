@@ -50,6 +50,7 @@ import { processImageUrl } from '@/lib/utils';
 import { useDeviceTier, usePageLayout } from '@/hooks/useDeviceTier';
 import { useImmersiveShell } from '@/hooks/useImmersiveShell';
 
+import BusyDots from '@/components/feedback/BusyDots';
 import { useWatchRoomContext } from '@/components/WatchRoomProvider';
 
 import DanmakuSheet from './DanmakuSheet';
@@ -472,7 +473,7 @@ export default function RoomView({
             )}
             {state && player.loading && !player.error && (
               <div className='tm-room-view-stage-status'>
-                <span className='tm-room-view-loader' aria-hidden='true' />
+                <BusyDots size={28} />
                 正在准备画面…
               </div>
             )}

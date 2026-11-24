@@ -1,4 +1,4 @@
-import { FileText, Link2, Loader2, Play, Search, Star } from 'lucide-react';
+import { FileText, Hourglass, Link2, Play, Search, Star } from 'lucide-react';
 
 import type { LoadingStep } from '@/components/feedback/LoadingStyle';
 
@@ -31,7 +31,7 @@ export const LOADING_STEP_META: Record<LoadingStepKey, LoadingStep> = {
 /* 播放器遮罩只有两步：初始化，然后播放。
  * 换源、换集对观众都只是「要播了」，用「换源」这类内部说法没人看得懂。 */
 export const VIDEO_LOAD_STEPS: LoadingStep[] = [
-  { label: '初始化', icon: <Loader2 /> },
+  { label: '初始化', icon: <Hourglass /> },
   { label: '播放', icon: <Play /> },
 ];
 

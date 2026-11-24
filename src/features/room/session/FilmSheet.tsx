@@ -6,11 +6,12 @@
  * 片子没带片源（只有片名）时，去房间里选片源。
  */
 
-import { Clapperboard, ListPlus, Loader2, MonitorPlay, X } from 'lucide-react';
+import { Clapperboard, ListPlus, MonitorPlay, X } from 'lucide-react';
 import { useState } from 'react';
 
 import './FilmSheet.css';
 
+import BusyDots from '@/components/feedback/BusyDots';
 import ModalLayer from '@/components/feedback/ModalLayer';
 
 import type { FilmRef } from '../lib/commands';
@@ -81,9 +82,10 @@ export default function FilmSheet(props: {
               className='tm-room-sheet-choice'
               disabled={!!busy || done}
               onClick={() => void run('queue', props.onQueue)}
+              aria-busy={busy === 'queue' || undefined}
             >
               {busy === 'queue' ? (
-                <Loader2 size={22} className='tm-room-spin' />
+                <BusyDots size={22} />
               ) : (
                 <ListPlus size={22} />
               )}
@@ -99,9 +101,10 @@ export default function FilmSheet(props: {
               className='tm-room-sheet-choice'
               disabled={!!busy || done}
               onClick={() => void run('play', props.onPlay)}
+              aria-busy={busy === 'play' || undefined}
             >
               {busy === 'play' ? (
-                <Loader2 size={22} className='tm-room-spin' />
+                <BusyDots size={22} />
               ) : (
                 <Clapperboard size={22} />
               )}

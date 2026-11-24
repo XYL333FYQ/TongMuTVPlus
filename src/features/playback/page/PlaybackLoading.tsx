@@ -53,8 +53,6 @@ export default function PlaybackLoading({
                     {loadingStage === 'fetching' && <Clapperboard size={36} />}
                     {loadingStage === 'ready' && <Sparkles size={36} />}
                   </div>
-                  {/* 旋转光环 */}
-                  <div className='absolute -inset-2 bg-surface rounded-2xl opacity-20 animate-spin'></div>
                 </div>
 
                 {/* 浮动粒子效果 */}

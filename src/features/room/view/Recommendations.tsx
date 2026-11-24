@@ -14,6 +14,8 @@ import { getDoubanCategories } from '@/lib/douban.client';
 import type { DoubanItem } from '@/lib/types';
 import { processImageUrl } from '@/lib/utils';
 
+import BusyDots from '@/components/feedback/BusyDots';
+
 const KINDS = [
   {
     id: 'movie',
@@ -162,11 +164,13 @@ export default function Recommendations(props: {
             }
             aria-label='换一批'
             title='换一批'
+            aria-busy={state === 'loading' || undefined}
           >
-            <RefreshCw
-              size={18}
-              className={state === 'loading' ? 'tm-room-spin' : undefined}
-            />
+            {state === 'loading' ? (
+              <BusyDots size={18} />
+            ) : (
+              <RefreshCw size={18} />
+            )}
           </button>
         </div>
       </header>

@@ -4,12 +4,14 @@
  * 选片：搜影片，选一个片源后“现在一起看”或“加入片单”。
  */
 
-import { Film, ListPlus, Loader2, Play, Search } from 'lucide-react';
+import { Film, ListPlus, Play, Search } from 'lucide-react';
 import { FormEvent, useEffect, useMemo, useState } from 'react';
 
 import './FilmPicker.css';
 
 import type { SearchResult } from '@/lib/types';
+
+import BusyDots from '@/components/feedback/BusyDots';
 
 import {
   normalizeTitle,
@@ -128,8 +130,15 @@ export default function FilmPicker(props: {
           type='submit'
           className='tm-room-btn tm-room-btn-primary'
           disabled={loading || !query.trim()}
+          aria-busy={loading || undefined}
         >
-          {loading ? <Loader2 size={16} className='tm-room-spin' /> : '搜索'}
+          {loading ? (
+            <>
+              搜索中 <BusyDots />
+            </>
+          ) : (
+            '搜索'
+          )}
         </button>
       </form>
       {error && (

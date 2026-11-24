@@ -548,14 +548,6 @@ html[data-tm-reduced-motion='true'] .tm-room-dialog {
   outline-offset: 2px;
 }
 
-.tm-room-spin {
-  animation: tm-room-rotate 0.9s linear infinite;
-}
-@keyframes tm-room-rotate {
-  to {
-    transform: rotate(360deg);
-  }
-}
 @keyframes tm-room-pulse {
   50% {
     opacity: 0.35;
