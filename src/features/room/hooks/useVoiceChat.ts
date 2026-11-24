@@ -6,6 +6,13 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { logger } from '@/lib/logger';
 import type { WatchRoomSocket } from '@/lib/watch-room-socket';
 
+import {
+  decodeRelayChunk,
+  encodeMicChunk,
+  RELAY_SAMPLE_RATE,
+  scheduleRelayChunk,
+} from './voice-relay-audio';
+
 import type { Member } from '@/types/watch-room';
 
 // ICE服务器配置（使用多个免费的STUN服务器作为备份）
@@ -472,8 +479,7 @@ export function useVoiceChat({
     logger.info('[VoiceChat] Starting server relay');
 
     try {
-      // 创建AudioContext来处理音频
-      const audioContext = new AudioContext({ sampleRate: 16000 }); // 降低采样率以减少数据量
+      const audioContext = new AudioContext({ sampleRate: RELAY_SAMPLE_RATE });
       const source = audioContext.createMediaStreamSource(
         localStreamRef.current
       );
@@ -486,51 +492,14 @@ export function useVoiceChat({
       const currentRoomId = roomId;
 
       processor.onaudioprocess = (e) => {
-        if (!socket || !socket.connected) {
-          return;
-        }
-
-        const inputData = e.inputBuffer.getChannelData(0);
-
-        // 计算音频能量，判断是否为有效数据
-        let sum = 0;
-        for (let i = 0; i < inputData.length; i++) {
-          sum += inputData[i] * inputData[i];
-        }
-        const rms = Math.sqrt(sum / inputData.length);
-
-        // 如果音频能量低于阈值（静音或无效数据），则不发送
-        // RMS阈值设为0.01，可以过滤掉大部分静音和无效数据
-        const SILENCE_THRESHOLD = 0.01;
-        if (rms < SILENCE_THRESHOLD) {
-          return;
-        }
-
-        // 将Float32Array转换为Int16Array（PCM格式）以减少数据量
-        const pcmData = new Int16Array(inputData.length);
-        let zeroCount = 0;
-        for (let i = 0; i < inputData.length; i++) {
-          // 将-1到1的浮点数转换为-32768到32767的整数
-          const s = Math.max(-1, Math.min(1, inputData[i]));
-          pcmData[i] = s < 0 ? s * 0x8000 : s * 0x7fff;
-
-          // 统计接近0的样本数量（阈值为256，约为1%的最大值）
-          if (Math.abs(pcmData[i]) < 256) {
-            zeroCount++;
-          }
-        }
-
-        // 如果超过95%的数据接近0，则认为是无效数据包，不发送
-        const zeroRatio = zeroCount / pcmData.length;
-        if (zeroRatio > 0.95) {
-          return;
-        }
-
-        // 发送PCM数据到服务器
+        if (!socket || !socket.connected) return;
+        // 静音或几乎全零的包不发
+        const audioData = encodeMicChunk(e.inputBuffer.getChannelData(0));
+        if (!audioData) return;
         socket.emit('voice:audio-chunk', {
           roomId: currentRoomId,
-          audioData: Array.from(new Uint8Array(pcmData.buffer)),
-          sampleRate: 16000,
+          audioData,
+          sampleRate: RELAY_SAMPLE_RATE,
         });
       };
 
@@ -616,62 +585,21 @@ export function useVoiceChat({
         }
 
         const audioContext = audioContextRef.current;
-
-        // 将Uint8Array转换回Int16Array (PCM数据)
-        const uint8Array = new Uint8Array(audioData);
-        const int16Array = new Int16Array(uint8Array.buffer);
-
-        // 将Int16Array转换为Float32Array（AudioBuffer需要的格式）
-        const float32Array = new Float32Array(int16Array.length);
-        for (let i = 0; i < int16Array.length; i++) {
-          // 将-32768到32767的整数转换回-1到1的浮点数
-          float32Array[i] =
-            int16Array[i] / (int16Array[i] < 0 ? 0x8000 : 0x7fff);
-        }
-
-        // 创建AudioBuffer
-        const audioBuffer = audioContext.createBuffer(
-          1,
-          float32Array.length,
-          sampleRate
+        const next = scheduleRelayChunk(
+          audioContext,
+          decodeRelayChunk(audioData),
+          sampleRate,
+          nextPlayTimeRef.current.get(userId) || undefined
         );
-        audioBuffer.getChannelData(0).set(float32Array);
-
-        // 计算音频块的持续时间
-        const duration = float32Array.length / sampleRate;
-
-        // 获取当前时间和下一个播放时间
-        const currentTime = audioContext.currentTime;
-        let nextPlayTime = nextPlayTimeRef.current.get(userId) || currentTime;
-
-        // 检查播放队列是否堆积过多（说明网络延迟导致音频堆积）
-        const MAX_QUEUE_DELAY = 0.5; // 最大允许队列延迟 500ms
-        const queueDelay = nextPlayTime - currentTime;
-
-        if (queueDelay > MAX_QUEUE_DELAY) {
-          // 播放队列堆积太多，丢弃这个音频包并重置队列
+        if (next === null) {
+          // 播放队列堆积太多（网络延迟），丢掉这一段并把队列追到现在
           logger.warn(
-            `[VoiceChat] Dropping audio from ${userId} due to queue buildup: ${(
-              queueDelay * 1000
-            ).toFixed(0)}ms`
+            `[VoiceChat] Dropping audio from ${userId} due to queue buildup`
           );
-          nextPlayTimeRef.current.set(userId, currentTime);
-          return; // 丢弃这个音频包
+          nextPlayTimeRef.current.set(userId, audioContext.currentTime);
+          return;
         }
-
-        // 如果下一个播放时间已经过去，使用当前时间
-        if (nextPlayTime < currentTime) {
-          nextPlayTime = currentTime;
-        }
-
-        // 创建AudioBufferSourceNode并调度播放
-        const source = audioContext.createBufferSource();
-        source.buffer = audioBuffer;
-        source.connect(audioContext.destination);
-        source.start(nextPlayTime);
-
-        // 更新下一个播放时间
-        nextPlayTimeRef.current.set(userId, nextPlayTime + duration);
+        nextPlayTimeRef.current.set(userId, next);
       } catch (err) {
         logger.error('[VoiceChat] Failed to play audio:', err);
         setError('音频播放失败: ' + (err as Error).message);
