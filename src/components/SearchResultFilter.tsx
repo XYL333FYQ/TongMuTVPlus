@@ -5,8 +5,9 @@ import {
   ArrowUpDown,
   ArrowUpNarrowWide,
 } from 'lucide-react';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
+import React, { useMemo, useRef, useState } from 'react';
+
+import Popover from '@/components/feedback/Popover';
 
 export type SearchFilterKey = 'source' | 'title' | 'year' | 'yearOrder';
 
@@ -42,13 +43,7 @@ const SearchResultFilter: React.FC<SearchResultFilterProps> = ({
   const [activeCategory, setActiveCategory] = useState<SearchFilterKey | null>(
     null
   );
-  const [dropdownPosition, setDropdownPosition] = useState<{
-    x: number;
-    y: number;
-    width: number;
-  }>({ x: 0, y: 0, width: 0 });
   const categoryRefs = useRef<Record<string, HTMLDivElement | null>>({});
-  const dropdownRef = useRef<HTMLDivElement>(null);
 
   const mergedValues = useMemo(() => {
     return {
@@ -57,47 +52,11 @@ const SearchResultFilter: React.FC<SearchResultFilterProps> = ({
     } as Record<SearchFilterKey, string>;
   }, [values]);
 
-  const calculateDropdownPosition = (categoryKey: SearchFilterKey) => {
-    const element = categoryRefs.current[categoryKey];
-    if (element) {
-      const rect = element.getBoundingClientRect();
-      const viewportWidth = window.innerWidth;
-      const isMobile = viewportWidth < 768;
-
-      let x = rect.left;
-      // 为标题筛选设置更大的最小宽度，其他保持原来的最小宽度
-      const minWidth = categoryKey === 'title' ? 400 : 240;
-      let dropdownWidth = Math.max(rect.width, minWidth);
-      let useFixedWidth = false;
-
-      if (isMobile) {
-        const padding = 16;
-        const maxWidth = viewportWidth - padding * 2;
-        dropdownWidth = Math.min(dropdownWidth, maxWidth);
-        useFixedWidth = true;
-
-        if (x + dropdownWidth > viewportWidth - padding) {
-          x = viewportWidth - dropdownWidth - padding;
-        }
-        if (x < padding) {
-          x = padding;
-        }
-      }
-
-      setDropdownPosition({
-        x,
-        y: rect.bottom,
-        width: useFixedWidth ? dropdownWidth : rect.width,
-      });
-    }
-  };
-
   const handleCategoryClick = (categoryKey: SearchFilterKey) => {
     if (activeCategory === categoryKey) {
       setActiveCategory(null);
     } else {
       setActiveCategory(categoryKey);
-      calculateDropdownPosition(categoryKey);
     }
   };
 
@@ -134,41 +93,6 @@ const SearchResultFilter: React.FC<SearchResultFilterProps> = ({
     const value = mergedValues[categoryKey] ?? DEFAULTS[categoryKey];
     return value === optionValue;
   };
-
-  useEffect(() => {
-    const handleScroll = () => {
-      // 滚动时直接关闭面板，而不是重新计算位置
-      if (activeCategory) {
-        setActiveCategory(null);
-      }
-    };
-    const handleResize = () => {
-      if (activeCategory) calculateDropdownPosition(activeCategory);
-    };
-    // 监听 body 滚动事件，因为该项目的滚动容器是 document.body
-    document.body.addEventListener('scroll', handleScroll, { passive: true });
-    window.addEventListener('resize', handleResize);
-    return () => {
-      document.body.removeEventListener('scroll', handleScroll);
-      window.removeEventListener('resize', handleResize);
-    };
-  }, [activeCategory]);
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node) &&
-        !Object.values(categoryRefs.current).some(
-          (ref) => ref && ref.contains(event.target as Node)
-        )
-      ) {
-        setActiveCategory(null);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
 
   return (
     <>
@@ -255,50 +179,40 @@ const SearchResultFilter: React.FC<SearchResultFilterProps> = ({
         </div>
       </div>
 
-      {activeCategory &&
-        createPortal(
-          <div
-            ref={dropdownRef}
-            className='fixed z-[9999] bg-raised rounded-xl border border-line backdrop-blur-sm max-h-[50vh] flex flex-col'
-            style={{
-              left: `${dropdownPosition.x}px`,
-              top: `${dropdownPosition.y}px`,
-              ...(typeof window !== 'undefined' && window.innerWidth < 768
-                ? { width: `${dropdownPosition.width}px` }
-                : {
-                    minWidth: `${Math.max(
-                      dropdownPosition.width,
-                      activeCategory === 'title' ? 400 : 240
-                    )}px`,
-                  }),
-              maxWidth: '600px',
-              position: 'fixed',
-            }}
-          >
-            <div className='p-2 sm:p-4 overflow-y-auto flex-1 min-h-0'>
-              <div className='grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-1 sm:gap-2'>
-                {categories
-                  .find((cat) => cat.key === activeCategory)
-                  ?.options.map((option) => (
-                    <button
-                      key={option.value}
-                      onClick={() =>
-                        handleOptionSelect(activeCategory, option.value)
-                      }
-                      className={`px-2 py-1.5 sm:px-3 sm:py-2 text-[13px] sm:text-sm rounded-lg transition-all duration-200 text-left ${
-                        isOptionSelected(activeCategory, option.value)
-                          ? 'bg-raised text-fg border border-line min-h-[44px] tm-press'
-                          : 'text-muted hover:bg-line min-h-[44px] tm-press'
-                      }`}
-                    >
-                      {option.label}
-                    </button>
-                  ))}
-              </div>
+      {/* 贴着按钮弹出（位置、在外面按下关闭归公共浮层） */}
+      {activeCategory && categoryRefs.current[activeCategory] && (
+        <Popover
+          anchor={categoryRefs.current[activeCategory]}
+          onDismiss={() => setActiveCategory(null)}
+          label={categories.find((cat) => cat.key === activeCategory)?.label}
+          className='bg-raised rounded-xl border border-line flex flex-col'
+          minWidth={activeCategory === 'title' ? 400 : 240}
+          maxHeightRatio={0.5}
+          edge={16}
+        >
+          <div className='p-2 sm:p-4 overflow-y-auto flex-1 min-h-0'>
+            <div className='grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-1 sm:gap-2'>
+              {categories
+                .find((cat) => cat.key === activeCategory)
+                ?.options.map((option) => (
+                  <button
+                    key={option.value}
+                    onClick={() =>
+                      handleOptionSelect(activeCategory, option.value)
+                    }
+                    className={`px-2 py-1.5 sm:px-3 sm:py-2 text-[13px] sm:text-sm rounded-lg transition-all duration-200 text-left ${
+                      isOptionSelected(activeCategory, option.value)
+                        ? 'bg-raised text-fg border border-line min-h-[44px] tm-press'
+                        : 'text-muted hover:bg-line min-h-[44px] tm-press'
+                    }`}
+                  >
+                    {option.label}
+                  </button>
+                ))}
             </div>
-          </div>,
-          document.body
-        )}
+          </div>
+        </Popover>
+      )}
     </>
   );
 };

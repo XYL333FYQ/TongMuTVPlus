@@ -206,10 +206,8 @@
   }
 }
 
+/* 位置、层级、宽度上限归公共浮层（.tm-popover-layer / useAnchoredLayer），这里只管外观 */
 .tm-popover {
-  position: fixed;
-  z-index: var(--tm-z-overlay);
-  max-width: 600px;
   padding: 8px;
   border: 0;
   border-radius: var(--tm-radius-lg);

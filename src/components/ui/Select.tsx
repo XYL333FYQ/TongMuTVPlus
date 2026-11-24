@@ -12,7 +12,6 @@ import {
   useCallback,
   useEffect,
   useId,
-  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -20,6 +19,8 @@ import {
 import { createPortal } from 'react-dom';
 
 import { cn } from '@/lib/cn';
+
+import { useAnchoredLayer } from '@/components/feedback/useAnchoredLayer';
 
 // 全站统一的下拉选择。用法与原生 <select> 一致（value / onChange / <option>），
 // 但触发器和弹出的列表都是本站自绘的，不出现浏览器原生的下拉样式。
@@ -89,12 +90,6 @@ export interface SelectProps {
   'aria-labelledby'?: string;
 }
 
-// 个别环境（后台标签页、嵌入式浏览器）里 innerWidth 可能是 0，退回文档尺寸
-const viewportWidth = () =>
-  window.innerWidth || document.documentElement.clientWidth;
-const viewportHeight = () =>
-  window.innerHeight || document.documentElement.clientHeight;
-
 const NBSP = ' ';
 
 export default function Select({
@@ -122,14 +117,6 @@ export default function Select({
   const listId = useId();
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(-1);
-  const [box, setBox] = useState<{
-    left: number;
-    top: number;
-    width: number;
-    maxHeight: number;
-    up: boolean;
-  } | null>(null);
-  const [host, setHost] = useState<Element | null>(null);
 
   const enabledIndexes = options
     .map((option, index) => (option.disabled ? -1 : index))
@@ -154,69 +141,29 @@ export default function Select({
 
   const openList = () => {
     if (disabled || !options.length) return;
-    const trigger = triggerRef.current;
-    if (!trigger) return;
-    // 原生模态对话框之外的东西都不可点，所以列表要挂在最近的对话框里
-    setHost(trigger.closest('dialog[open]') || document.body);
+    if (!triggerRef.current) return;
     setActive(selectedIndex >= 0 ? selectedIndex : enabledIndexes[0] ?? -1);
     setOpen(true);
   };
 
-  // 弹层位置：优先在下方，放不下且上方更宽裕时翻到上方
-  const place = useCallback(() => {
-    const trigger = triggerRef.current;
-    if (!trigger) return;
-    const rect = trigger.getBoundingClientRect();
-    const gap = 6;
-    const below = viewportHeight() - rect.bottom - gap - 8;
-    const above = rect.top - gap - 8;
-    const wanted = Math.min(320, options.length * 44 + 12);
-    const up = below < wanted && above > below;
-    const room = Math.max(120, up ? above : below);
-    const width = Math.max(rect.width, 160);
-    const left = Math.min(
-      Math.max(8, rect.left),
-      Math.max(8, viewportWidth() - width - 8)
-    );
-    setBox({
-      left,
-      width,
-      maxHeight: Math.min(320, room),
-      up,
-      top: up ? rect.top - gap : rect.bottom + gap,
-    });
-  }, [options.length]);
-
-  useLayoutEffect(() => {
-    if (open) place();
-  }, [open, place]);
-
-  useEffect(() => {
-    if (!open) return;
-    const onPointerDown = (event: PointerEvent) => {
-      const node = event.target as Node;
-      if (listRef.current?.contains(node) || triggerRef.current?.contains(node))
-        return;
-      close(false);
-    };
-    const onScroll = (event: Event) => {
-      if (listRef.current?.contains(event.target as Node)) return;
-      place();
-    };
-    document.addEventListener('pointerdown', onPointerDown, true);
-    window.addEventListener('resize', place);
-    window.addEventListener('scroll', onScroll, true);
-    return () => {
-      document.removeEventListener('pointerdown', onPointerDown, true);
-      window.removeEventListener('resize', place);
-      window.removeEventListener('scroll', onScroll, true);
-    };
-  }, [open, close, place]);
+  // 位置、挂在哪（打开的弹窗里或 body）、在外面按下就关：公共浮层规则；Esc 自己处理（要把焦点还给按钮）
+  const { host, style, up, placed } = useAnchoredLayer({
+    open,
+    anchor: open ? triggerRef.current : null,
+    panelRef: listRef,
+    onDismiss: () => close(false),
+    closeOnEscape: false,
+    width: 160,
+    matchAnchorWidth: true,
+    maxWidth: Infinity,
+    maxHeight: 320,
+    preferredHeight: options.length * 44 + 12,
+  });
 
   // 打开后把焦点交给列表，才能用键盘操作
   useEffect(() => {
-    if (open && box) listRef.current?.focus({ preventScroll: true });
-  }, [open, box]);
+    if (open && placed) listRef.current?.focus({ preventScroll: true });
+  }, [open, placed]);
 
   // 当前项滚动到可见
   useEffect(() => {
@@ -224,7 +171,7 @@ export default function Select({
     listRef.current
       ?.querySelector<HTMLElement>(`[data-index='${active}']`)
       ?.scrollIntoView?.({ block: 'nearest' });
-  }, [open, active, box]);
+  }, [open, active, placed]);
 
   const move = (step: 1 | -1) => {
     if (!enabledIndexes.length) return;
@@ -337,19 +284,8 @@ export default function Select({
               className='tm-select-menu'
               // 挂进打开的弹窗时是“客人”，弹窗层的款式规则不把它当面板
               data-tm-layer-guest=''
-              data-up={box?.up ? '' : undefined}
-              style={
-                box
-                  ? {
-                      left: box.left,
-                      width: box.width,
-                      maxHeight: box.maxHeight,
-                      ...(box.up
-                        ? { bottom: viewportHeight() - box.top }
-                        : { top: box.top }),
-                    }
-                  : { visibility: 'hidden' }
-              }
+              data-up={up ? '' : undefined}
+              style={style}
               onKeyDown={onListKeyDown}
             >
               {options.map((option, index) => (

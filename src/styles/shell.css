@@ -687,14 +687,8 @@ html[data-tm-reduced-motion='true'] .tm-mobile-nav-thumb {
 .tm-guest-account summary::-webkit-details-marker {
   display: none;
 }
+/* 位置、宽度、层级、最大高度、入场归公共浮层（.tm-popover-layer / useAnchoredLayer），这里只管外观 */
 .tm-account-menu {
-  position: fixed;
-  top: calc(var(--tm-header-height) + var(--tm-safe-top));
-  right: 12px;
-  z-index: calc(var(--tm-z-overlay) + 1);
-  width: min(320px, calc(100vw - 24px));
-  max-height: calc(100dvh - 96px);
-  overflow-y: auto;
   padding: 6px;
   border: 0;
   border-radius: var(--tm-radius-lg);
@@ -702,14 +696,6 @@ html[data-tm-reduced-motion='true'] .tm-mobile-nav-thumb {
   color: var(--tm-text);
   font-size: var(--tm-fs-small);
   box-shadow: var(--tm-shadow-lg);
-  transform-origin: top right;
-  animation: tm-menu-in var(--tm-d-hover) var(--tm-ease-out);
-}
-@keyframes tm-menu-in {
-  from {
-    opacity: 0;
-    transform: translateY(-4px) scale(0.98);
-  }
 }
 .tm-account-menu svg {
   color: var(--tm-muted);
@@ -877,12 +863,11 @@ html[data-tm-reduced-motion='true'] .tm-mobile-nav-thumb {
     transform: translateY(-4px);
   }
 }
-html[data-tm-reduced-motion='true']
-  :is(.tm-account-menu, .tm-account-menu > *) {
+html[data-tm-reduced-motion='true'] .tm-account-menu > * {
   animation: none;
 }
 @media (prefers-reduced-motion: reduce) {
-  :is(.tm-account-menu, .tm-account-menu > *) {
+  .tm-account-menu > * {
     animation: none;
   }
 }

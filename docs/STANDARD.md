@@ -77,7 +77,7 @@ src/
 - 一套播放器内核：`features/player`。
 - 设计令牌（`--tm-*`）只在 `styles/tokens.css` 定义（`:root`、`html.light`、设备档位下的覆盖都写在那里）。组件内部用的局部变量可以写在组件的块上。
 - z-index 只用层级令牌（见下面的层级表）。
-- 时间格式化、浏览器存储读写、设备档位：现在还有多份实现（旧账数量见 `check:structure` 的输出），新代码只用登记表里的主人。“点外面关闭”由弹窗层 `ModalLayer` 承担（点遮罩关闭），不在弹窗里的菜单第三阶段收口。
+- 时间格式化、浏览器存储读写、设备档位：现在还有多份实现（旧账数量见 `check:structure` 的输出），新代码只用登记表里的主人。“点外面关闭”由弹窗层 `ModalLayer` 承担（点遮罩关闭），贴着按钮弹出的菜单、筛选、提示用 `Popover`（或 `useAnchoredLayer`），在它外面按下就关。
 
 ### S3 一个东西一个名字
 
@@ -165,20 +165,20 @@ z-index 只写下面的令牌（定义在 `styles/tokens.css`）。同一个组�
 
 `src/components/feedback/`、`src/components/ui/` 里的每个文件都必须是某一行的主人；新加公共零件先在这里登记。
 
-| 零件       | 主人                                                                | 用法                                                                              | 检查         |
-| ---------- | ------------------------------------------------------------------- | --------------------------------------------------------------------------------- | ------------ |
-| 弹窗层     | `src/components/feedback/` `src/components/ui/Select.tsx`           | `ModalLayer`、`ConfirmDialog`、`MobileActionSheet`、`askConfirm()`                | `portal`     |
-| 浏览器存储 | `src/lib/`                                                          | 只在 lib 里读写，组件和功能调用 lib 的函数；键名不改                              | `storage`    |
-| 设备档位   | `src/lib/device-tier.ts`                                            | `html[data-tm-device]` 和 device-tier 的导出                                      | `screen`     |
-| 播放器     | `src/features/player/core/`                                         | `WatchPlayer`                                                                     | `player`     |
-| 时间格式   | `src/lib/time.ts`                                                   | 第二阶段在这里补 `formatDuration`（必须在 lib，S1 不许 components 引用 features） | `timeFormat` |
-| 服务器权限 | `src/lib/require-role.ts`                                           | `requireRole()`                                                                   | `roleCheck`  |
-| 提示       | `src/components/feedback/`                                          | `notify()`、`notifyError()`                                                       | `toast`      |
-| 加载       | `src/components/feedback/LoadingStyle.tsx` `src/styles/loading.css` | `LoadingStyle`                                                                    | `spinner`    |
-| 海报卡片   | `src/components/VideoCard.tsx` `src/components/video-card/`         | `VideoCard`                                                                       | —            |
-| 图标       | —                                                                   | 只用 lucide-react，不用 emoji                                                     | `emoji`      |
-| 滚动锁     | `src/lib/scroll-lock.ts`                                            | `lockScroll()`（弹窗层自带）                                                      | `scrollLock` |
-| 点外面关闭 | `src/components/feedback/ModalLayer.tsx`                            | `ModalLayer` 点遮罩关闭（五种款式都带）；不在弹窗里的菜单仍各自处理，第三阶段收口 | —            |
+| 零件       | 主人                                                                | 用法                                                                                                               | 检查         |
+| ---------- | ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ | ------------ |
+| 弹窗层     | `src/components/feedback/` `src/components/ui/Select.tsx`           | `ModalLayer`、`ConfirmDialog`、`MobileActionSheet`、`askConfirm()`、`Popover` / `useAnchoredLayer`（贴按钮的浮层） | `portal`     |
+| 浏览器存储 | `src/lib/`                                                          | 只在 lib 里读写，组件和功能调用 lib 的函数；键名不改                                                               | `storage`    |
+| 设备档位   | `src/lib/device-tier.ts`                                            | `html[data-tm-device]` 和 device-tier 的导出                                                                       | `screen`     |
+| 播放器     | `src/features/player/core/`                                         | `WatchPlayer`                                                                                                      | `player`     |
+| 时间格式   | `src/lib/time.ts`                                                   | 第二阶段在这里补 `formatDuration`（必须在 lib，S1 不许 components 引用 features）                                  | `timeFormat` |
+| 服务器权限 | `src/lib/require-role.ts`                                           | `requireRole()`                                                                                                    | `roleCheck`  |
+| 提示       | `src/components/feedback/`                                          | `notify()`、`notifyError()`                                                                                        | `toast`      |
+| 加载       | `src/components/feedback/LoadingStyle.tsx` `src/styles/loading.css` | `LoadingStyle`                                                                                                     | `spinner`    |
+| 海报卡片   | `src/components/VideoCard.tsx` `src/components/video-card/`         | `VideoCard`                                                                                                        | —            |
+| 图标       | —                                                                   | 只用 lucide-react，不用 emoji                                                                                      | `emoji`      |
+| 滚动锁     | `src/lib/scroll-lock.ts`                                            | `lockScroll()`（弹窗层自带）                                                                                       | `scrollLock` |
+| 点外面关闭 | `src/components/feedback/`                                          | `ModalLayer` 点遮罩关闭（五种款式都带）；贴按钮的浮层由 `useAnchoredLayer` 在外面按下时关                          | —            |
 
 ## 术语表
 
@@ -203,7 +203,7 @@ z-index 只写下面的令牌（定义在 `styles/tokens.css`）。同一个组�
 | `tm-visual-preferences` `tm-dropdown` `tm-dropdowns` `tm-capsule` `tm-expand-search` `tm-animated-theme` `tm-popover` `tm-control-selection` `tm-filter` `tm-display-chevron` `tm-theme-segments`                                                                                                                                                                                      | `src/styles/controls.css`                                | 筛选、下拉、外观设置                                                                       |
 | `tm-select`                                                                                                                                                                                                                                                                                                                                                                            | `src/styles/form-controls.css`                           | 下拉选择（另有原生表单控件的全站样式）                                                     |
 | `tm-confirm` `tm-toast` `tm-feedback` `tm-modal`                                                                                                                                                                                                                                                                                                                                       | `src/styles/feedback.css`                                | 提示、确认框、通用弹窗                                                                     |
-| `tm-modal-layer`                                                                                                                                                                                                                                                                                                                                                                       | `src/styles/modal-layer.css`                             | 原生模态层                                                                                 |
+| `tm-modal-layer` `tm-popover-layer`                                                                                                                                                                                                                                                                                                                                                    | `src/styles/modal-layer.css`                             | 原生模态层；贴着按钮的浮层                                                                 |
 | `tm-loading`                                                                                                                                                                                                                                                                                                                                                                           | `src/styles/loading.css`                                 | 加载样式                                                                                   |
 | `tm-action-sheet` `tm-http-warning` `tm-image-viewer` `tm-profile` `tm-search-suggestions` `tm-continue-header`                                                                                                                                                                                                                                                                        | `src/styles/panels.css`                                  | 面板类零件                                                                                 |
 | `tm-search` `tm-history`                                                                                                                                                                                                                                                                                                                                                               | `src/styles/search.css`                                  | 搜索页                                                                                     |

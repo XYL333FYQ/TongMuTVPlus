@@ -16,7 +16,6 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import { createPortal } from 'react-dom';
 
 import type {
   DanmakuComment,
@@ -38,6 +37,7 @@ import { useLongPress } from '@/hooks/useLongPress';
 import DanmakuPanel from '@/components/DanmakuPanel';
 import EpisodeFilterSettings from '@/components/EpisodeFilterSettings';
 import EpisodeTitleCorrectDialog from '@/components/EpisodeTitleCorrectDialog';
+import Popover from '@/components/feedback/Popover';
 import ProxyImage from '@/components/ProxyImage';
 
 /** 选集按钮上显示的短标签（数字等）；全名仍保留在 originalTitle 供长按查看 */
@@ -94,9 +94,7 @@ function getEpisodeDisplayLabel(
 
 interface EpisodeNamePopupState {
   title: string;
-  x: number;
-  y: number;
-  placement: 'top' | 'bottom';
+  anchor: HTMLElement;
 }
 
 interface EpisodeButtonProps {
@@ -108,7 +106,7 @@ interface EpisodeButtonProps {
   /** 仅 netdisk 源启用长按/右键查看全名 */
   enableOriginalNamePopup?: boolean;
   onSelect: (zeroBasedIndex: number) => void;
-  onShowOriginalName: (title: string, rect: DOMRect) => void;
+  onShowOriginalName: (title: string, anchor: HTMLElement) => void;
 }
 
 /** 单集按钮：点击选集；netdisk 时移动端长按 / 桌面右键显示原集名 popup */
@@ -131,10 +129,7 @@ const EpisodeButton: React.FC<EpisodeButtonProps> = ({
 
   const showOriginalName = useCallback(() => {
     if (!canShowOriginalName || !buttonRef.current) return;
-    onShowOriginalName(
-      originalTitle!,
-      buttonRef.current.getBoundingClientRect()
-    );
+    onShowOriginalName(originalTitle!, buttonRef.current);
   }, [canShowOriginalName, onShowOriginalName, originalTitle]);
 
   const longPressProps = useLongPress({
@@ -480,17 +475,9 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
   }, [clearEpisodeNamePopupTimer]);
 
   const showEpisodeNamePopup = useCallback(
-    (title: string, rect: DOMRect) => {
-      const gap = 8;
-      const estimatedHeight = 40;
-      const spaceAbove = rect.top;
-      const placement: 'top' | 'bottom' =
-        spaceAbove < estimatedHeight + gap ? 'bottom' : 'top';
-      const x = rect.left + rect.width / 2;
-      const y = placement === 'top' ? rect.top - gap : rect.bottom + gap;
-
+    (title: string, anchor: HTMLElement) => {
       clearEpisodeNamePopupTimer();
-      setEpisodeNamePopup({ title, x, y, placement });
+      setEpisodeNamePopup({ title, anchor });
       // 自动消失，避免遮挡后续操作
       episodeNamePopupTimerRef.current = setTimeout(() => {
         setEpisodeNamePopup(null);
@@ -499,27 +486,6 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
     },
     [clearEpisodeNamePopupTimer]
   );
-
-  useEffect(() => {
-    if (!episodeNamePopup) return;
-
-    const handleDismiss = () => hideEpisodeNamePopup();
-    // 下一帧再绑定，避免触发本次的右键/触摸立即关闭
-    const bindId = window.setTimeout(() => {
-      window.addEventListener('scroll', handleDismiss, true);
-      window.addEventListener('touchstart', handleDismiss, { passive: true });
-      window.addEventListener('mousedown', handleDismiss);
-      window.addEventListener('keydown', handleDismiss);
-    }, 0);
-
-    return () => {
-      window.clearTimeout(bindId);
-      window.removeEventListener('scroll', handleDismiss, true);
-      window.removeEventListener('touchstart', handleDismiss);
-      window.removeEventListener('mousedown', handleDismiss);
-      window.removeEventListener('keydown', handleDismiss);
-    };
-  }, [episodeNamePopup, hideEpisodeNamePopup]);
 
   useEffect(() => {
     return () => clearEpisodeNamePopupTimer();
@@ -1694,32 +1660,25 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
       />
 
       {/* 原集名 popup：移动端长按 / 桌面右键，样式对齐标题上方 aka 提示 */}
-      {episodeNamePopup &&
-        typeof document !== 'undefined' &&
-        createPortal(
-          <div
-            className='fixed z-[1000] px-3 py-2 bg-surface text-fg text-sm rounded-lg shadow-xl pointer-events-none max-w-[min(80vw,20rem)]'
-            style={{
-              left: episodeNamePopup.x,
-              top: episodeNamePopup.y,
-              transform:
-                episodeNamePopup.placement === 'top'
-                  ? 'translate(-50%, -100%)'
-                  : 'translate(-50%, 0)',
-            }}
-            role='tooltip'
-          >
-            <div className='text-sm break-words whitespace-normal'>
-              {episodeNamePopup.title}
-            </div>
-            {episodeNamePopup.placement === 'top' ? (
-              <div className='absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-line' />
-            ) : (
-              <div className='absolute bottom-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-b-4 border-transparent border-b-line' />
-            )}
-          </div>,
-          document.body
-        )}
+      {episodeNamePopup && (
+        <Popover
+          anchor={episodeNamePopup.anchor}
+          onDismiss={hideEpisodeNamePopup}
+          role='tooltip'
+          interactive={false}
+          className='group px-3 py-2 bg-surface text-fg text-sm rounded-lg shadow-xl'
+          align='center'
+          prefer='above'
+          gap={8}
+          maxWidth={320}
+        >
+          <div className='text-sm break-words whitespace-normal'>
+            {episodeNamePopup.title}
+          </div>
+          {/* 小三角指向集数按钮：浮层在上方时朝下 */}
+          <div className='absolute left-1/2 -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-transparent bottom-full border-b-4 border-b-line group-data-[up]:bottom-auto group-data-[up]:top-full group-data-[up]:border-b-0 group-data-[up]:border-t-4 group-data-[up]:border-t-line' />
+        </Popover>
+      )}
     </div>
   );
 };

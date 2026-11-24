@@ -22,7 +22,6 @@ import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
 
 import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
 import { BRAND_NAME } from '@/lib/brand';
@@ -59,6 +58,7 @@ import VisualPreferenceControls from '@/components/account/VisualPreferenceContr
 import { notifyError } from '@/components/feedback/AppDialogs';
 import { ConfirmDialog } from '@/components/feedback/ConfirmDialog';
 import ModalLayer from '@/components/feedback/ModalLayer';
+import Popover from '@/components/feedback/Popover';
 import Toast, { ToastProps } from '@/components/feedback/Toast';
 import { MoreMenu } from '@/components/shell/TongMuNavigation';
 
@@ -148,7 +148,6 @@ export const UserMenu: React.FC = () => {
   const router = useRouter();
   const menuId = useId();
   const menuTrigger = useRef<HTMLButtonElement>(null);
-  const menuPanelRef = useRef<HTMLDivElement>(null);
   const { updateStatus, isChecking } = useVersionCheck();
   const [isOpen, setIsOpen] = useState(false);
   const [isProfileCenterOpen, setIsProfileCenterOpen] = useState(false);
@@ -174,27 +173,14 @@ export const UserMenu: React.FC = () => {
   const [mounted, setMounted] = useState(false);
   const unreadCount = useUnreadNotificationCount(authInfo?.username);
 
+  // 打开后焦点给第一个按钮；Esc、在外面按下关闭归公共浮层（Popover）
   useEffect(() => {
     if (!isOpen || !mounted) return;
-    menuPanelRef.current
+    document
+      .getElementById(menuId)
       ?.querySelector<HTMLButtonElement>('button:not(:disabled)')
       ?.focus({ preventScroll: true });
-    const dismiss = (event: KeyboardEvent) => {
-      // 子菜单已处理的按键不再触发外层关闭。
-      if (event.key !== 'Escape' || event.defaultPrevented) return;
-      // 原生弹窗的 cancel 在 keydown 之后发生，交由最上层弹窗处理。
-      if (
-        event.target instanceof Element &&
-        event.target.closest('dialog[open]')
-      )
-        return;
-      event.preventDefault();
-      setIsOpen(false);
-      menuTrigger.current?.focus({ preventScroll: true });
-    };
-    document.addEventListener('keydown', dismiss);
-    return () => document.removeEventListener('keydown', dismiss);
-  }, [isOpen, mounted]);
+  }, [isOpen, mounted, menuId]);
 
   // 订阅相关状态
   const [subscribeEnabled, setSubscribeEnabled] = useState(false);
@@ -2852,19 +2838,21 @@ export const UserMenu: React.FC = () => {
   // 菜单面板内容
   const menuPanel = (
     <>
-      {/* 背景遮罩 - 普通菜单无需模糊 */}
-      <div
-        className='fixed inset-0 bg-transparent z-[1000]'
-        onClick={handleCloseMenu}
-      />
-
-      {/* 菜单面板 */}
-      <div
-        ref={menuPanelRef}
+      {/* 菜单面板：贴着账号按钮弹出（位置、Esc、在外面按下关闭归公共浮层） */}
+      <Popover
+        anchor={menuTrigger.current}
+        onDismiss={(reason) => {
+          setIsOpen(false);
+          if (reason === 'escape')
+            menuTrigger.current?.focus({ preventScroll: true });
+        }}
         id={menuId}
         className='tm-account-menu'
         role='group'
-        aria-label='账号选项'
+        label='账号选项'
+        align='end'
+        width={320}
+        edge={12}
       >
         {/* 用户信息：头像 + 名字 + 身份，整行进入个人中心 */}
         <button
@@ -3005,7 +2993,7 @@ export const UserMenu: React.FC = () => {
             )}
           </button>
         </div>
-      </div>
+      </Popover>
     </>
   );
 
@@ -3353,7 +3341,7 @@ export const UserMenu: React.FC = () => {
       </div>
 
       {/* 使用 Portal 将菜单面板渲染到 document.body */}
-      {isOpen && mounted && createPortal(menuPanel, document.body)}
+      {isOpen && mounted && menuPanel}
 
       {profileCenterMounted && (
         <PersonalCenterPanel

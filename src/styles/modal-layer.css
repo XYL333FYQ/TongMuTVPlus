@@ -133,3 +133,41 @@ html[data-tm-reduced-motion='true']
     animation: tm-modal-layer-fade 120ms linear !important;
   }
 }
+
+/* —— 贴着按钮的浮层（Popover / useAnchoredLayer）——
+   位置和大小由钩子写在行内；这里只管层级、滚动和入场。外观由调用方的类名决定。 */
+.tm-popover-layer {
+  position: fixed;
+  z-index: var(--tm-z-popover);
+  margin: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  animation: tm-popover-layer-in var(--tm-d-panel) var(--tm-ease-out);
+}
+.tm-popover-layer[data-up] {
+  animation-name: tm-popover-layer-up;
+}
+.tm-popover-layer[data-passive] {
+  pointer-events: none;
+  overflow: visible;
+}
+@keyframes tm-popover-layer-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+@keyframes tm-popover-layer-up {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
+html[data-tm-reduced-motion='true'] .tm-popover-layer {
+  animation: tm-modal-layer-fade 120ms linear !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  .tm-popover-layer {
+    animation: tm-modal-layer-fade 120ms linear !important;
+  }
+}

@@ -22,7 +22,6 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import { createPortal } from 'react-dom';
 
 import '@/styles/search.css';
 
@@ -59,6 +58,7 @@ import CapsuleSwitch from '@/components/catalog/CapsuleSwitch';
 import PublicPoster from '@/components/catalog/PublicPoster';
 import ContinueWatching from '@/components/ContinueWatching';
 import ImageViewer from '@/components/feedback/ImageViewer';
+import Popover from '@/components/feedback/Popover';
 import PageContainer from '@/components/PageContainer';
 import PageLayout from '@/components/PageLayout';
 import PansouSearch, { CLOUD_TYPE_NAMES } from '@/components/PansouSearch';
@@ -123,13 +123,7 @@ export function SearchPageClient({
     string[]
   >([]);
   const [pansouCloudFilterOpen, setPansouCloudFilterOpen] = useState(false);
-  const [pansouCloudFilterPosition, setPansouCloudFilterPosition] = useState({
-    x: 0,
-    y: 0,
-    width: 0,
-  });
   const pansouCloudFilterButtonRef = useRef<HTMLButtonElement | null>(null);
-  const pansouCloudFilterDropdownRef = useRef<HTMLDivElement | null>(null);
   // 用户权限
   const [userRole, setUserRole] = useState<'owner' | 'admin' | 'user' | null>(
     null
@@ -1933,26 +1927,6 @@ export function SearchPageClient({
     );
   };
 
-  const calculatePansouCloudFilterPosition = () => {
-    const element = pansouCloudFilterButtonRef.current;
-    if (!element) return;
-
-    const rect = element.getBoundingClientRect();
-    const viewportWidth = window.innerWidth;
-    const padding = 16;
-    const width = Math.min(320, viewportWidth - padding * 2);
-    let x = rect.left;
-
-    if (x + width > viewportWidth - padding) {
-      x = viewportWidth - width - padding;
-    }
-    if (x < padding) {
-      x = padding;
-    }
-
-    setPansouCloudFilterPosition({ x, y: rect.bottom + 8, width });
-  };
-
   const selectedPansouCloudTypeLabels = selectedPansouCloudTypes
     .map((type) => CLOUD_TYPE_NAMES[type] || type)
     .filter(Boolean);
@@ -1970,12 +1944,7 @@ export function SearchPageClient({
         <button
           ref={pansouCloudFilterButtonRef}
           type='button'
-          onClick={() => {
-            if (!pansouCloudFilterOpen) {
-              calculatePansouCloudFilterPosition();
-            }
-            setPansouCloudFilterOpen((prev) => !prev);
-          }}
+          onClick={() => setPansouCloudFilterOpen((prev) => !prev)}
           className={`relative z-10 rounded-full px-3 py-1 text-[13px] font-medium transition-all duration-200 whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-fg focus:ring-offset-2 focus:ring-offset-fg ${
             hasFilter
               ? 'cursor-pointer text-fg hover:text-fg min-h-[44px] tm-press'
@@ -2005,34 +1974,6 @@ export function SearchPageClient({
       </PageContainer>
     );
   };
-
-  useEffect(() => {
-    if (!pansouCloudFilterOpen) return;
-
-    const handleClickOutside = (event: MouseEvent) => {
-      const target = event.target as Node;
-      if (
-        pansouCloudFilterButtonRef.current?.contains(target) ||
-        pansouCloudFilterDropdownRef.current?.contains(target)
-      ) {
-        return;
-      }
-      setPansouCloudFilterOpen(false);
-    };
-
-    const handleScroll = () => setPansouCloudFilterOpen(false);
-    const handleResize = () => calculatePansouCloudFilterPosition();
-
-    document.addEventListener('mousedown', handleClickOutside);
-    document.body.addEventListener('scroll', handleScroll, { passive: true });
-    window.addEventListener('resize', handleResize);
-
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-      document.body.removeEventListener('scroll', handleScroll);
-      window.removeEventListener('resize', handleResize);
-    };
-  }, [pansouCloudFilterOpen]);
 
   // 处理标签切换
   const handleTabChange = (newTab: 'video' | 'pansou' | 'acg') => {
@@ -2284,52 +2225,53 @@ export function SearchPageClient({
           )}
         </div>
 
-        {pansouCloudFilterOpen &&
-          createPortal(
-            <div
-              ref={pansouCloudFilterDropdownRef}
-              className='fixed z-[9999] max-h-[50vh] overflow-y-auto rounded-xl border border-line bg-raised p-2 backdrop-blur-sm'
-              style={{
-                left: `${pansouCloudFilterPosition.x}px`,
-                top: `${pansouCloudFilterPosition.y}px`,
-                width: `${pansouCloudFilterPosition.width}px`,
-              }}
-            >
-              <div className='grid grid-cols-3 gap-1.5 sm:grid-cols-4'>
-                <button
-                  type='button'
-                  onClick={() => setSelectedPansouCloudTypes([])}
-                  className={`rounded-lg px-2 py-1.5 text-left text-[13px] transition-all duration-200 ${
-                    selectedPansouCloudTypes.length === 0
-                      ? 'border border-line bg-raised text-fg min-h-[44px] tm-press'
-                      : 'text-muted hover:bg-line min-h-[44px] tm-press'
-                  }`}
-                  aria-pressed={selectedPansouCloudTypes.length === 0}
-                >
-                  全部类型
-                </button>
-                {PANSOU_CLOUD_TYPE_OPTIONS.map(({ value, label }) => {
-                  const selected = selectedPansouCloudTypes.includes(value);
-                  return (
-                    <button
-                      key={value}
-                      type='button'
-                      onClick={() => togglePansouCloudType(value)}
-                      className={`rounded-lg px-2 py-1.5 text-left text-[13px] transition-all duration-200 ${
-                        selected
-                          ? 'border border-line bg-raised text-fg min-h-[44px] tm-press'
-                          : 'text-muted hover:bg-line min-h-[44px] tm-press'
-                      }`}
-                      aria-pressed={selected}
-                    >
-                      {label}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>,
-            document.body
-          )}
+        {/* 网盘类型：贴着按钮弹出（位置、在外面按下关闭归公共浮层） */}
+        {pansouCloudFilterOpen && pansouCloudFilterButtonRef.current && (
+          <Popover
+            anchor={pansouCloudFilterButtonRef.current}
+            onDismiss={() => setPansouCloudFilterOpen(false)}
+            label='网盘类型'
+            className='rounded-xl border border-line bg-raised p-2'
+            align='end'
+            width={320}
+            gap={8}
+            edge={16}
+            maxHeightRatio={0.5}
+          >
+            <div className='grid grid-cols-3 gap-1.5 sm:grid-cols-4'>
+              <button
+                type='button'
+                onClick={() => setSelectedPansouCloudTypes([])}
+                className={`rounded-lg px-2 py-1.5 text-left text-[13px] transition-all duration-200 ${
+                  selectedPansouCloudTypes.length === 0
+                    ? 'border border-line bg-raised text-fg min-h-[44px] tm-press'
+                    : 'text-muted hover:bg-line min-h-[44px] tm-press'
+                }`}
+                aria-pressed={selectedPansouCloudTypes.length === 0}
+              >
+                全部类型
+              </button>
+              {PANSOU_CLOUD_TYPE_OPTIONS.map(({ value, label }) => {
+                const selected = selectedPansouCloudTypes.includes(value);
+                return (
+                  <button
+                    key={value}
+                    type='button'
+                    onClick={() => togglePansouCloudType(value)}
+                    className={`rounded-lg px-2 py-1.5 text-left text-[13px] transition-all duration-200 ${
+                      selected
+                        ? 'border border-line bg-raised text-fg min-h-[44px] tm-press'
+                        : 'text-muted hover:bg-line min-h-[44px] tm-press'
+                    }`}
+                    aria-pressed={selected}
+                  >
+                    {label}
+                  </button>
+                );
+              })}
+            </div>
+          </Popover>
+        )}
 
         {/* 搜索结果或搜索历史 */}
         <div className='tm-search-body'>

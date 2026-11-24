@@ -1,13 +1,11 @@
 'use client';
 
-import { motion } from 'framer-motion';
 import { ChevronDown } from 'lucide-react';
-import React, { useEffect, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
+import React, { useRef, useState } from 'react';
 
 import '@/styles/controls.css';
 
-import { useReducedMotionSetting } from '@/lib/motion';
+import Popover from '@/components/feedback/Popover';
 
 interface MultiLevelOption {
   label: string;
@@ -30,16 +28,9 @@ const MultiLevelSelector: React.FC<MultiLevelSelectorProps> = ({
   onChange,
   contentType = 'movie',
 }) => {
-  const reduced = useReducedMotionSetting();
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
-  const [dropdownPosition, setDropdownPosition] = useState<{
-    x: number;
-    y: number;
-    width: number;
-  }>({ x: 0, y: 0, width: 0 });
   const [values, setValues] = useState<Record<string, string>>({});
   const categoryRefs = useRef<Record<string, HTMLDivElement | null>>({});
-  const dropdownRef = useRef<HTMLDivElement>(null);
 
   // 根据内容类型获取对应的类型选项
   const getTypeOptions = (
@@ -342,51 +333,12 @@ const MultiLevelSelector: React.FC<MultiLevelSelectorProps> = ({
     },
   ];
 
-  // 计算下拉框位置
-  const calculateDropdownPosition = (categoryKey: string) => {
-    const element = categoryRefs.current[categoryKey];
-    if (element) {
-      const rect = element.getBoundingClientRect();
-      const viewportWidth = window.innerWidth;
-      const isMobile = viewportWidth < 768; // md breakpoint
-
-      let x = rect.left;
-      let dropdownWidth = Math.max(rect.width, 300);
-      let useFixedWidth = false; // 标记是否使用固定宽度
-
-      // 移动端优化：防止下拉框被右侧视口截断
-      if (isMobile) {
-        const padding = 16; // 左右各留16px的边距
-        const maxWidth = viewportWidth - padding * 2;
-        dropdownWidth = Math.min(dropdownWidth, maxWidth);
-        useFixedWidth = true; // 移动端使用固定宽度
-
-        // 如果右侧超出视口，则调整x位置
-        if (x + dropdownWidth > viewportWidth - padding) {
-          x = viewportWidth - dropdownWidth - padding;
-        }
-
-        // 如果左侧超出视口，则贴左边
-        if (x < padding) {
-          x = padding;
-        }
-      }
-
-      setDropdownPosition({
-        x,
-        y: rect.bottom,
-        width: useFixedWidth ? dropdownWidth : rect.width, // PC端保持原有逻辑
-      });
-    }
-  };
-
   // 处理分类点击
   const handleCategoryClick = (categoryKey: string) => {
     if (activeCategory === categoryKey) {
       setActiveCategory(null);
     } else {
       setActiveCategory(categoryKey);
-      calculateDropdownPosition(categoryKey);
     }
   };
 
@@ -469,48 +421,6 @@ const MultiLevelSelector: React.FC<MultiLevelSelectorProps> = ({
     return value === optionValue;
   };
 
-  // 监听滚动和窗口大小变化事件
-  useEffect(() => {
-    const handleScroll = () => {
-      // 滚动时直接关闭面板，而不是重新计算位置
-      if (activeCategory) {
-        setActiveCategory(null);
-      }
-    };
-
-    const handleResize = () => {
-      if (activeCategory) {
-        calculateDropdownPosition(activeCategory);
-      }
-    };
-
-    // 监听 body 滚动事件，因为该项目的滚动容器是 document.body
-    document.body.addEventListener('scroll', handleScroll, { passive: true });
-    window.addEventListener('resize', handleResize);
-    return () => {
-      document.body.removeEventListener('scroll', handleScroll);
-      window.removeEventListener('resize', handleResize);
-    };
-  }, [activeCategory]);
-
-  // 点击外部关闭下拉框
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node) &&
-        !Object.values(categoryRefs.current).some(
-          (ref) => ref && ref.contains(event.target as Node)
-        )
-      ) {
-        setActiveCategory(null);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
   return (
     <>
       {/* 胶囊样式筛选栏 */}
@@ -537,53 +447,40 @@ const MultiLevelSelector: React.FC<MultiLevelSelectorProps> = ({
         ))}
       </div>
 
-      {/* 展开的筛选选项 - 悬浮显示 */}
-      {activeCategory &&
-        createPortal(
-          <motion.div
-            initial={{ opacity: 0, y: reduced ? 0 : 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{
-              duration: reduced ? 0.12 : 0.32,
-              ease: [0.22, 1, 0.36, 1],
-            }}
-            ref={dropdownRef}
-            className='tm-popover'
-            style={{
-              left: `${dropdownPosition.x}px`,
-              top: `${dropdownPosition.y}px`,
-              ...(window.innerWidth < 768
-                ? { width: `${dropdownPosition.width}px` } // 移动端使用固定宽度
-                : { minWidth: `${Math.max(dropdownPosition.width, 300)}px` }), // PC端使用最小宽度
-              maxWidth: '600px',
-              position: 'fixed',
-            }}
-          >
-            <div>
-              <div className='tm-popover-grid'>
-                {categories
-                  .find((cat) => cat.key === activeCategory)
-                  ?.options.map((option) => (
-                    <button
-                      type='button'
-                      aria-pressed={isOptionSelected(
-                        activeCategory,
-                        option.value
-                      )}
-                      key={option.value}
-                      onClick={() =>
-                        handleOptionSelect(activeCategory, option.value)
-                      }
-                      className='tm-popover-option'
-                    >
-                      {option.label}
-                    </button>
-                  ))}
-              </div>
+      {/* 展开的筛选选项：贴着胶囊弹出（位置、在外面按下关闭归公共浮层） */}
+      {activeCategory && categoryRefs.current[activeCategory] && (
+        <Popover
+          anchor={categoryRefs.current[activeCategory]}
+          onDismiss={() => setActiveCategory(null)}
+          label={categories.find((cat) => cat.key === activeCategory)?.label}
+          className='tm-popover'
+          minWidth={300}
+          edge={16}
+        >
+          <div>
+            <div className='tm-popover-grid'>
+              {categories
+                .find((cat) => cat.key === activeCategory)
+                ?.options.map((option) => (
+                  <button
+                    type='button'
+                    aria-pressed={isOptionSelected(
+                      activeCategory,
+                      option.value
+                    )}
+                    key={option.value}
+                    onClick={() =>
+                      handleOptionSelect(activeCategory, option.value)
+                    }
+                    className='tm-popover-option'
+                  >
+                    {option.label}
+                  </button>
+                ))}
             </div>
-          </motion.div>,
-          document.body
-        )}
+          </div>
+        </Popover>
+      )}
     </>
   );
 };
