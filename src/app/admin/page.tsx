@@ -6125,20 +6125,23 @@ const EmbyConfigComponent = ({
             >
               <div className='flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3'>
                 <div className='flex items-center gap-3 flex-1'>
-                  <input
-                    type='checkbox'
-                    checked={selectedSources.has(source.key)}
-                    onChange={(e) => {
-                      const newSelected = new Set(selectedSources);
-                      if (e.target.checked) {
-                        newSelected.add(source.key);
-                      } else {
-                        newSelected.delete(source.key);
-                      }
-                      setSelectedSources(newSelected);
-                    }}
-                    className='w-4 h-4 text-[color:var(--tm-text)] rounded'
-                  />
+                  <label className='tm-admin-hit'>
+                    <input
+                      type='checkbox'
+                      aria-label={`选择 ${source.name || source.key}`}
+                      checked={selectedSources.has(source.key)}
+                      onChange={(e) => {
+                        const newSelected = new Set(selectedSources);
+                        if (e.target.checked) {
+                          newSelected.add(source.key);
+                        } else {
+                          newSelected.delete(source.key);
+                        }
+                        setSelectedSources(newSelected);
+                      }}
+                      className='w-4 h-4 text-[color:var(--tm-text)] rounded'
+                    />
+                  </label>
                   <div className='flex-1'>
                     <div className='flex items-center gap-3 flex-wrap'>
                       <h4 className='text-base font-medium text-[color:var(--tm-text)]'>
@@ -7365,12 +7368,15 @@ const VideoSourceConfig = ({
     return (
       <tr className='hover:bg-[var(--tm-line)] transition-colors'>
         <td className='px-2 py-4 text-center'>
-          <input
-            type='checkbox'
-            checked={selectedSources.has(source.key)}
-            onChange={(e) => handleSelectSource(source.key, e.target.checked)}
-            className='w-4 h-4 text-[color:var(--tm-text)] bg-[var(--tm-surface-raised)] rounded focus:ring-[var(--tm-text)] ring-offset-[var(--tm-text)] focus:ring-2'
-          />
+          <label className='tm-admin-hit'>
+            <input
+              type='checkbox'
+              aria-label={`选择 ${source.name || source.key}`}
+              checked={selectedSources.has(source.key)}
+              onChange={(e) => handleSelectSource(source.key, e.target.checked)}
+              className='w-4 h-4 text-[color:var(--tm-text)] bg-[var(--tm-surface-raised)] rounded focus:ring-[var(--tm-text)] ring-offset-[var(--tm-text)] focus:ring-2'
+            />
+          </label>
         </td>
         <td className='px-6 py-4 whitespace-nowrap text-sm text-[color:var(--tm-text)]'>
           {source.name}
@@ -7950,12 +7956,15 @@ const VideoSourceConfig = ({
           <thead className='bg-[var(--tm-surface-raised)] sticky top-0 z-10'>
             <tr>
               <th className='w-12 px-2 py-3 text-center'>
-                <input
-                  type='checkbox'
-                  checked={selectAll}
-                  onChange={(e) => handleSelectAll(e.target.checked)}
-                  className='w-4 h-4 text-[color:var(--tm-text)] bg-[var(--tm-surface-raised)] rounded focus:ring-[var(--tm-text)] ring-offset-[var(--tm-text)] focus:ring-2'
-                />
+                <label className='tm-admin-hit'>
+                  <input
+                    type='checkbox'
+                    aria-label='全选'
+                    checked={selectAll}
+                    onChange={(e) => handleSelectAll(e.target.checked)}
+                    className='w-4 h-4 text-[color:var(--tm-text)] bg-[var(--tm-surface-raised)] rounded focus:ring-[var(--tm-text)] ring-offset-[var(--tm-text)] focus:ring-2'
+                  />
+                </label>
               </th>
               <th className='px-6 py-3 text-left text-[13px] font-medium text-[color:var(--tm-muted)] uppercase tracking-wider'>
                 名称
@@ -15689,17 +15698,17 @@ const EmailConfigComponent = ({
               </div>
             </div>
 
-            <div className='flex items-center'>
+            <label className='flex items-center tm-admin-hit-row'>
               <input
                 type='checkbox'
                 checked={smtpSecure}
                 onChange={(e) => setSmtpSecure(e.target.checked)}
                 className='mr-2'
               />
-              <label className='text-sm text-[color:var(--tm-muted)]'>
+              <span className='text-sm text-[color:var(--tm-muted)]'>
                 使用 SSL/TLS（端口 465 时启用）
-              </label>
-            </div>
+              </span>
+            </label>
 
             <div>
               <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-1'>

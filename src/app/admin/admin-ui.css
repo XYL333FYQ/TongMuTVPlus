@@ -262,3 +262,38 @@
 .tm-admin-page .tm-choice[aria-checked='true'] * {
   color: inherit;
 }
+
+/* 触屏（手机、平板）：后台页面和它打开的弹窗里，点按目标至少 44px。
+   弹窗挂在 body 下，不在 .tm-admin-page 里面，用 body:has(.tm-admin-page) 认出后台。
+   开关零件（role=switch）自己有 44 的点按范围，不动它；复选框靠包着它的 label 点。 */
+@media (pointer: coarse) {
+  :is(.tm-admin-page, body:has(.tm-admin-page) .tm-modal-layer)
+    :is(
+      button:not([role='switch']):not(.tm-switch-btn),
+      select,
+      textarea,
+      input:not([type='checkbox']):not([type='radio']):not([type='hidden']):not(
+          [type='range']
+        )
+    ) {
+    min-height: 44px;
+  }
+  :is(.tm-admin-page, body:has(.tm-admin-page) .tm-modal-layer)
+    button:not([role='switch']):not(.tm-switch-btn) {
+    min-width: 44px;
+  }
+  :is(.tm-admin-page, body:has(.tm-admin-page) .tm-modal-layer)
+    label:has(> input:is([type='checkbox'], [type='radio'])) {
+    min-height: 44px;
+  }
+  .tm-admin-hit {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 44px;
+    cursor: pointer;
+  }
+  .tm-admin-hit-row {
+    cursor: pointer;
+  }
+}
