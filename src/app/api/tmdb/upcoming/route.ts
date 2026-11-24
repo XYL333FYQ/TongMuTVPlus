@@ -6,7 +6,7 @@ import { getTMDBUpcomingContent } from '@/lib/tmdb.client';
 
 // 内存缓存对象
 interface CacheItem {
-  data: any;
+  data: Awaited<ReturnType<typeof getTMDBUpcomingContent>>['list'];
   timestamp: number;
 }
 

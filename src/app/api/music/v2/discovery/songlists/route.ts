@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { isMusicSource, lxGetJson, unwrapLxArray } from '@/lib/music-v2';
+import {
+  isMusicSource,
+  lxGetJson,
+  unwrapLxArray,
+  type LxPagePayload,
+  type LxSonglistItem,
+} from '@/lib/music-v2';
 import { badRequest, internalError } from '@/lib/music-v2-api';
 
 export const runtime = 'nodejs';
@@ -15,13 +21,13 @@ export async function GET(request: NextRequest) {
 
     if (!isMusicSource(source)) return badRequest('不支持的音源');
 
-    const payload = await lxGetJson<any>(
+    const payload = await lxGetJson<LxPagePayload>(
       `/api/music/songList/list?source=${source}&tagId=${encodeURIComponent(
         tagId
       )}&sortId=${encodeURIComponent(sortId)}&page=${page}`,
       'none'
     );
-    const list = unwrapLxArray<any>(payload);
+    const list = unwrapLxArray<LxSonglistItem>(payload);
 
     return NextResponse.json({
       success: true,

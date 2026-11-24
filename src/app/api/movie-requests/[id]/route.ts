@@ -4,6 +4,7 @@ import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getStorage } from '@/lib/db';
 import { logger } from '@/lib/logger';
 import { isCaller, requireRole } from '@/lib/require-role';
+import type { MovieRequest } from '@/lib/types';
 
 export const runtime = 'nodejs';
 
@@ -58,7 +59,7 @@ export async function PATCH(
     }
 
     // 更新状态
-    const updates: any = {
+    const updates: Partial<MovieRequest> = {
       status,
       updatedAt: Date.now(),
     };

@@ -10,7 +10,14 @@ import {
 
 export const runtime = 'nodejs';
 
-function extractSubscriptionKeys(subscription: any) {
+type SubscriptionKeys = { p256dh?: string; auth?: string };
+/** 浏览器发来的推送订阅：可能是 JSON，也可能是带 toJSON 的 PushSubscription */
+type SubscriptionInput = {
+  keys?: SubscriptionKeys;
+  toJSON?: () => { keys?: SubscriptionKeys };
+} | null;
+
+function extractSubscriptionKeys(subscription: SubscriptionInput) {
   const p256dh =
     subscription?.keys?.p256dh || subscription?.toJSON?.()?.keys?.p256dh;
   const auth = subscription?.keys?.auth || subscription?.toJSON?.()?.keys?.auth;

@@ -10,6 +10,8 @@ import {
   normalizeScriptSources,
   parseScriptSourceValue,
 } from '@/lib/source-script';
+import type { MetaInfo } from '@/lib/openlist-cache';
+import type { OpenListFile } from '@/lib/openlist.client';
 
 export const runtime = 'nodejs';
 
@@ -91,8 +93,8 @@ export async function GET(request: NextRequest) {
       const rootPath = openListConfig.RootPath || '/';
 
       // 1. 读取 metainfo 获取元数据
-      let metaInfo: any = null;
-      let folderMeta: any = null;
+      let metaInfo: MetaInfo | null = null;
+      let folderMeta: MetaInfo['folders'][string] | undefined;
       try {
         const { getCachedMetaInfo, setCachedMetaInfo } = await import(
           '@/lib/openlist-cache'
@@ -104,8 +106,9 @@ export async function GET(request: NextRequest) {
         if (!metaInfo) {
           const metainfoJson = await db.getGlobalValue('video.metainfo');
           if (metainfoJson) {
-            metaInfo = JSON.parse(metainfoJson);
-            setCachedMetaInfo(metaInfo);
+            const parsed: MetaInfo = JSON.parse(metainfoJson);
+            metaInfo = parsed;
+            setCachedMetaInfo(parsed);
           }
         }
 
@@ -118,6 +121,7 @@ export async function GET(request: NextRequest) {
         throw new Error('读取视频信息失败: ' + (error as Error).message);
       }
 
+      if (!folderMeta) throw new Error('未找到该视频信息');
       // 使用 folderName 构建实际路径
       const folderName = folderMeta.folderName;
       const folderPath = `${rootPath}${
@@ -142,7 +146,7 @@ export async function GET(request: NextRequest) {
       let videoInfo = getCachedVideoInfo(folderPath);
 
       // 获取所有分页的视频文件
-      const allFiles: any[] = [];
+      const allFiles: OpenListFile[] = [];
       let currentPage = 1;
       const pageSize = 100;
       let total = 0;

@@ -5,6 +5,8 @@ import {
   lxGetJson,
   normalizeLxSong,
   unwrapLxArray,
+  type LxPagePayload,
+  type LxServerSong,
 } from '@/lib/music-v2';
 import { badRequest, internalError } from '@/lib/music-v2-api';
 
@@ -20,13 +22,13 @@ export async function GET(request: NextRequest) {
     if (!isMusicSource(source)) return badRequest('不支持的音源');
     if (!id) return badRequest('缺少歌单 ID');
 
-    const payload = await lxGetJson<any>(
+    const payload = await lxGetJson<LxPagePayload>(
       `/api/music/songList/detail?source=${source}&id=${encodeURIComponent(
         id
       )}&page=${page}`,
       'none'
     );
-    const list = unwrapLxArray<any>(payload);
+    const list = unwrapLxArray<LxServerSong>(payload);
 
     return NextResponse.json({
       success: true,

@@ -1,7 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { logger } from '@/lib/logger';
-import { isMusicSource, lxGetJson, unwrapLxArray } from '@/lib/music-v2';
+import {
+  isMusicSource,
+  lxGetJson,
+  unwrapLxArray,
+  type LxPagePayload,
+} from '@/lib/music-v2';
 import { badRequest, internalError } from '@/lib/music-v2-api';
 
 export const runtime = 'nodejs';
@@ -27,7 +32,7 @@ export async function GET(request: NextRequest) {
 
     for (const candidate of fallbackSources) {
       try {
-        const candidatePayload = await lxGetJson<any>(
+        const candidatePayload = await lxGetJson<LxPagePayload>(
           `/api/music/leaderboard/boards?source=${candidate}`,
           'none'
         );

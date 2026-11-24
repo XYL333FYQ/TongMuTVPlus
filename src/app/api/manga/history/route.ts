@@ -63,13 +63,9 @@ export async function POST(request: NextRequest) {
       saveTime: record.saveTime ?? Date.now(),
     });
 
-    if ((db as any).storage.cleanupOldMangaReadRecords) {
-      (db as any).storage
-        .cleanupOldMangaReadRecords(username)
-        .catch((err: Error) => {
-          logger.error('异步清理漫画阅读历史失败:', err);
-        });
-    }
+    db.cleanupOldMangaReadRecords(username).catch((err: Error) => {
+      logger.error('异步清理漫画阅读历史失败:', err);
+    });
 
     return NextResponse.json({ success: true }, { status: 200 });
   } catch (error) {

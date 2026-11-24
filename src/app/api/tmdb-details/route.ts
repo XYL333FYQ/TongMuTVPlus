@@ -28,7 +28,14 @@ function removeSeasonInfo(title: string): string {
 }
 
 // 精确匹配标题
-function findExactMatch(results: any[], originalTitle: string): any | null {
+type TMDBSearchResult = Awaited<
+  ReturnType<typeof searchTMDBMulti>
+>['results'][number];
+
+function findExactMatch(
+  results: TMDBSearchResult[],
+  originalTitle: string
+): TMDBSearchResult | null {
   if (!results || results.length === 0) return null;
   if (results.length === 1) return results[0];
 

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { isMusicSource, lxGetJson } from '@/lib/music-v2';
+import { isMusicSource, lxGetJson, type LxPagePayload } from '@/lib/music-v2';
 import { badRequest, internalError } from '@/lib/music-v2-api';
 
 export const runtime = 'nodejs';
@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
     const source = searchParams.get('source') || 'wy';
     if (!isMusicSource(source)) return badRequest('不支持的音源');
 
-    const payload = await lxGetJson<any>(
+    const payload = await lxGetJson<LxPagePayload>(
       `/api/music/songList/tags?source=${source}`,
       'none'
     );

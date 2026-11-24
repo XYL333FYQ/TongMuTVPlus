@@ -6,6 +6,7 @@ import {
   LxServerSong,
   normalizeLxSong,
   unwrapLxArray,
+  type LxPagePayload,
 } from '@/lib/music-v2';
 import { badRequest, internalError } from '@/lib/music-v2-api';
 
@@ -20,7 +21,7 @@ export async function GET(request: NextRequest) {
     if (!id) return badRequest('缺少专辑 ID');
     if (!isMusicSource(source)) return badRequest('不支持的音源');
 
-    const payload = await lxGetJson<any>(
+    const payload = await lxGetJson<LxPagePayload>(
       `/api/music/albumSongs?id=${encodeURIComponent(id)}&source=${source}`,
       'none'
     );

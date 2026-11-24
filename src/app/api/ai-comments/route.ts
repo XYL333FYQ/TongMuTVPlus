@@ -8,12 +8,13 @@ import {
 import { ToolDataSources } from '@/lib/ai-tool-agent';
 import { getConfig } from '@/lib/config';
 import { logger } from '@/lib/logger';
+import type { AdminConfig } from '@/lib/admin.types';
 
 export const runtime = 'nodejs';
 
 // 根据 AIConfig 解析出评论生成实际使用的协议与凭据，
 // 与首页 AI 助手（/api/ai/chat）保持一致，兼容新版 AI 方式。
-function resolveAICredentials(aiConfig: any): {
+function resolveAICredentials(aiConfig: NonNullable<AdminConfig['AIConfig']>): {
   protocol: AICommentProtocol;
   apiKey: string;
   baseURL: string;

@@ -20,8 +20,24 @@ import {
 
 export const runtime = 'nodejs';
 
+/** 客户端发来的一条历史记录：新旧两种字段名都可能有，歌曲信息可能包在 song 里 */
+type SongInput = Parameters<typeof normalizeSong>[0];
+type HistoryInput = SongInput & {
+  song?: SongInput;
+  playProgressSec?: number;
+  play_progress_sec?: number;
+  lastPlayedAt?: number;
+  last_played_at?: number;
+  playCount?: number;
+  play_count?: number;
+  lastQuality?: MusicV2HistoryRecord['lastQuality'];
+  last_quality?: MusicV2HistoryRecord['lastQuality'];
+  createdAt?: number;
+  created_at?: number;
+};
+
 function toHistoryRecord(
-  input: any,
+  input: HistoryInput,
   previous: MusicV2HistoryRecord | undefined,
   fallbackSortOrder: number
 ): MusicV2HistoryRecord {
@@ -96,8 +112,10 @@ export async function POST(request: NextRequest) {
 
     if (Array.isArray(body.records)) {
       const records = body.records
-        .map((item: any) => {
-          const previous = existingMap.get(item.song?.songId || item.songId);
+        .map((item: HistoryInput) => {
+          const previous = existingMap.get(
+            item.song?.songId || item.songId || ''
+          );
           const record = toHistoryRecord(item, previous, nextSortOrder);
           // 只有真正吃掉了分配值（即新记录）才推进游标，保证批量入队后顺序等于数组顺序
           if (record.sortOrder === nextSortOrder)

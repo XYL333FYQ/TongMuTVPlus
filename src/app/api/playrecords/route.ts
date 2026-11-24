@@ -81,11 +81,9 @@ export async function POST(request: NextRequest) {
     await db.savePlayRecord(caller.username, source, id, finalRecord);
 
     // 异步清理旧的播放记录（不阻塞响应）
-    (db as any).storage
-      .cleanupOldPlayRecords(caller.username)
-      .catch((err: Error) => {
-        logger.error('异步清理播放记录失败:', err);
-      });
+    db.cleanupOldPlayRecords(caller.username).catch((err: Error) => {
+      logger.error('异步清理播放记录失败:', err);
+    });
 
     return NextResponse.json({ success: true }, { status: 200 });
   } catch (err) {

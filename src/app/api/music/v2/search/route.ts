@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
       return badRequest('当前音源不支持歌手/专辑搜索');
     }
 
-    const list = await lxGetJson<any[]>(
+    const list = await lxGetJson<unknown[]>(
       `/api/music/search?name=${encodeURIComponent(
         q
       )}&source=${source}&type=${type}&page=${page}&limit=${limit}`,

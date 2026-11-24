@@ -55,7 +55,8 @@ export async function GET(request: NextRequest) {
         { status: 400 }
       );
     const source = await legadoClient.getSourceById(sourceId);
-    let imageOptions: any = {};
+    let imageOptions: { headers?: unknown; method?: string; body?: string } =
+      {};
     try {
       const rawOptions = searchParams.get('options') || '';
       imageOptions = rawOptions ? JSON.parse(rawOptions) : {};

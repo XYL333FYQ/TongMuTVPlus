@@ -98,13 +98,9 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    if ((db as any).storage.cleanupOldBookReadRecords) {
-      (db as any).storage
-        .cleanupOldBookReadRecords(username)
-        .catch((err: Error) => {
-          logger.error('异步清理电子书阅读历史失败:', err);
-        });
-    }
+    db.cleanupOldBookReadRecords(username).catch((err: Error) => {
+      logger.error('异步清理电子书阅读历史失败:', err);
+    });
 
     return NextResponse.json({ success: true }, { status: 200 });
   } catch {
