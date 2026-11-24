@@ -1,5 +1,7 @@
 'use client';
 
+import { Clapperboard, TriangleAlert } from 'lucide-react';
+
 import LoadingStyle, {
   LoadingErrorStyle,
 } from '@/components/feedback/LoadingStyle';
@@ -67,7 +69,11 @@ export default function VideoOverlays({
                     legacy={
                       <>
                         <div className='relative mx-auto w-24 h-24 bg-surface rounded-2xl shadow-2xl flex items-center justify-center'>
-                          <div className='text-fg text-4xl'>⚠️</div>
+                          <TriangleAlert
+                            size={36}
+                            className='text-fg'
+                            aria-hidden='true'
+                          />
                         </div>
                       </>
                     }
@@ -109,7 +115,11 @@ export default function VideoOverlays({
                     {/* 动画影院图标 */}
                     <div className='relative mb-8'>
                       <div className='relative mx-auto w-24 h-24 bg-surface rounded-2xl shadow-2xl flex items-center justify-center transform hover:scale-105 transition-transform duration-300'>
-                        <div className='text-fg text-4xl'>🎬</div>
+                        <Clapperboard
+                          size={36}
+                          className='text-fg'
+                          aria-hidden='true'
+                        />
                         {/* 旋转光环 */}
                         <div className='absolute -inset-2 bg-surface rounded-2xl opacity-20 animate-spin'></div>
                       </div>
@@ -132,8 +142,8 @@ export default function VideoOverlays({
                     <div className='space-y-2'>
                       <p className='text-xl font-medium text-fg tm-skeleton'>
                         {videoLoadingStage === 'sourceChanging'
-                          ? '🔄 切换播放源...'
-                          : '🔄 视频加载中...'}
+                          ? '切换播放源...'
+                          : '视频加载中...'}
                       </p>
                     </div>
                   </>

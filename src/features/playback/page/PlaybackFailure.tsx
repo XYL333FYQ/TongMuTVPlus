@@ -1,6 +1,6 @@
 'use client';
 
-import { ArrowLeft, RefreshCw, Search } from 'lucide-react';
+import { ArrowLeft, Frown, RefreshCw, Search } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 import { usePlaybackSession } from '@/hooks/usePlaybackSession';
@@ -56,7 +56,7 @@ export default function PlaybackFailure({
               legacy={
                 <>
                   <div className='relative mx-auto flex h-24 w-24 items-center justify-center rounded-2xl bg-surface shadow-2xl transition-transform duration-300 hover:scale-105'>
-                    <div className='text-4xl text-fg'>😵</div>
+                    <Frown size={36} className='text-fg' aria-hidden='true' />
                     {/* 脉冲效果 */}
                     <div className='absolute -inset-2 tm-skeleton rounded-2xl bg-surface opacity-20'></div>
                   </div>

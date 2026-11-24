@@ -173,10 +173,10 @@ function PlayPageClient() {
   );
   const [loadingMessage, setLoadingMessage] = useState(() =>
     searchParams.get('source') === 'directplay'
-      ? '🎬 正在准备直链播放...'
+      ? '正在准备直链播放...'
       : searchParams.get('source') && searchParams.get('id')
-      ? '🎬 正在获取视频详情...'
-      : '🔍 正在搜索播放源...'
+      ? '正在获取视频详情...'
+      : '正在搜索播放源...'
   );
   // 加载步骤模型的入口参数只在首帧定格：initAll 拿到详情后会把 source/id 写回 URL、
   // 删掉 prefer（见 ~5814），若让步骤跟着 searchParams 现算，方格会在「就绪」那一刻

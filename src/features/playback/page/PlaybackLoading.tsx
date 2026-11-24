@@ -1,5 +1,7 @@
 'use client';
 
+import { Clapperboard, Search, Sparkles, Zap } from 'lucide-react';
+
 import LoadingStyle from '@/components/feedback/LoadingStyle';
 
 import {
@@ -45,11 +47,11 @@ export default function PlaybackLoading({
               {/* 动画影院图标 */}
               <div className='relative mb-8'>
                 <div className='relative mx-auto w-24 h-24 bg-surface rounded-2xl shadow-2xl flex items-center justify-center transform hover:scale-105 transition-transform duration-300'>
-                  <div className='text-fg text-4xl'>
-                    {loadingStage === 'searching' && '🔍'}
-                    {loadingStage === 'preferring' && '⚡'}
-                    {loadingStage === 'fetching' && '🎬'}
-                    {loadingStage === 'ready' && '✨'}
+                  <div className='text-fg' aria-hidden='true'>
+                    {loadingStage === 'searching' && <Search size={36} />}
+                    {loadingStage === 'preferring' && <Zap size={36} />}
+                    {loadingStage === 'fetching' && <Clapperboard size={36} />}
+                    {loadingStage === 'ready' && <Sparkles size={36} />}
                   </div>
                   {/* 旋转光环 */}
                   <div className='absolute -inset-2 bg-surface rounded-2xl opacity-20 animate-spin'></div>

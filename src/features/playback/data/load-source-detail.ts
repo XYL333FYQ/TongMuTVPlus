@@ -486,7 +486,7 @@ export function makeLoadSourceDetail(ctx: LoadSourceDetailContext) {
 
         setLoading(true);
         setLoadingStage('fetching');
-        setLoadingMessage('🎬 正在准备直链播放...');
+        setLoadingMessage('正在准备直链播放...');
 
         let directUrl = '';
         try {
@@ -541,7 +541,7 @@ export function makeLoadSourceDetail(ctx: LoadSourceDetailContext) {
         commitPlaybackHref(newUrl);
 
         setLoadingStage('ready');
-        setLoadingMessage('✨ 准备就绪，即将开始播放...');
+        setLoadingMessage('准备就绪，即将开始播放...');
         setTimeout(() => {
           setLoading(false);
         }, 500);
@@ -556,9 +556,7 @@ export function makeLoadSourceDetail(ctx: LoadSourceDetailContext) {
       setLoading(true);
       setLoadingStage(currentSource && currentId ? 'fetching' : 'searching');
       setLoadingMessage(
-        currentSource && currentId
-          ? '🎬 正在获取视频详情...'
-          : '🔍 正在搜索播放源...'
+        currentSource && currentId ? '正在获取视频详情...' : '正在搜索播放源...'
       );
 
       // 如果已经有了source和id，优先通过单个详情接口快速获取
@@ -668,7 +666,7 @@ export function makeLoadSourceDetail(ctx: LoadSourceDetailContext) {
         optimizationEnabled
       ) {
         setLoadingStage('preferring');
-        setLoadingMessage('⚡ 正在优选最佳播放源...');
+        setLoadingMessage('正在优选最佳播放源...');
 
         // 过滤掉 openlist、所有 emby 源和 xiaoya 源，它们不参与测速
         const sourcesToTest = sourcesInfo.filter((s) => {
@@ -774,7 +772,7 @@ export function makeLoadSourceDetail(ctx: LoadSourceDetailContext) {
       commitPlaybackHref(newUrl);
 
       setLoadingStage('ready');
-      setLoadingMessage('✨ 准备就绪，即将开始播放...');
+      setLoadingMessage('准备就绪，即将开始播放...');
 
       // 加载播放记录
       try {
