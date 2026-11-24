@@ -1,3 +1,5 @@
+import { viewportSize } from '@/lib/device-tier';
+
 import {
   diagnosticResource,
   diagnosticRoute,
@@ -141,7 +143,7 @@ export function createNavigationCapture() {
       opacity: style?.opacity || '',
       transform: style?.transform || '',
       safeBottom: rootStyle.getPropertyValue('--tm-safe-bottom').trim(),
-      viewportHeight: window.visualViewport?.height ?? window.innerHeight,
+      viewportHeight: window.visualViewport?.height ?? viewportSize().height,
       viewportTop: window.visualViewport?.offsetTop ?? 0,
       rootTransform: rootStyle.transform,
       animations:
@@ -230,8 +232,8 @@ export function createNavigationCapture() {
         shellBuild:
           navigator.userAgent.match(/TMBuild\/(\d+)/)?.[1] || 'unknown',
         viewport: {
-          width: window.innerWidth,
-          height: window.innerHeight,
+          width: viewportSize().width,
+          height: viewportSize().height,
           dpr: window.devicePixelRatio,
         },
         worker: ['/sw.js', '/push-sw.js'].includes(workerPath)

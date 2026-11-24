@@ -13,6 +13,7 @@ import {
   useState,
 } from 'react';
 
+import { viewportSize } from '@/lib/device-tier';
 import { normalizePlaybackHref, playbackIdentity } from '@/lib/playback-links';
 import { useAudioFocus } from '@/hooks/useAudioFocus';
 import {
@@ -210,7 +211,7 @@ export default function PlaybackSessionProvider({
   useEffect(() => {
     const viewport = window.visualViewport;
     const update = () => {
-      const height = viewport?.height || window.innerHeight;
+      const height = viewport?.height || viewportSize().height;
       document.documentElement.style.setProperty(
         '--tm-visual-height',
         `${height}px`
@@ -218,7 +219,7 @@ export default function PlaybackSessionProvider({
       const inputFocused = /^(INPUT|TEXTAREA)$/.test(
         document.activeElement?.tagName || ''
       );
-      setKeyboardVisible(inputFocused && window.innerHeight - height > 120);
+      setKeyboardVisible(inputFocused && viewportSize().height - height > 120);
     };
     viewport?.addEventListener('resize', update);
     document.addEventListener('focusin', update);

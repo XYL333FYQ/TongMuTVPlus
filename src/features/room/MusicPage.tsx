@@ -12,6 +12,7 @@ import {
   useState,
 } from 'react';
 
+import { viewportSize } from '@/lib/device-tier';
 import { useReducedMotionSetting } from '@/lib/motion';
 import { formatClock } from '@/lib/time';
 import { useAudioFocus } from '@/hooks/useAudioFocus';
@@ -424,7 +425,7 @@ export default function MusicPage() {
   useEffect(() => {
     if (currentLyricIndex < 0) return;
     const container =
-      window.innerWidth < 768
+      viewportSize().width < 768
         ? mobileLyricsContainerRef.current
         : desktopLyricsContainerRef.current;
     if (!container) return;

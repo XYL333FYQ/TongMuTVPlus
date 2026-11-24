@@ -1,6 +1,8 @@
 'use client';
 
-import { isReducedMotionSetting } from './motion';
+import { matchesMedia, viewportSize, watchMedia } from '@/lib/device-tier';
+
+import { isReducedMotionSetting, REDUCED_MOTION_QUERY } from './motion';
 import { getPlatform } from './platform';
 
 export type ThemeSetting = 'dark' | 'light' | 'system';
@@ -20,8 +22,7 @@ let activeAura: HTMLSpanElement | undefined;
 function resolvesDark(theme: ThemeSetting) {
   return (
     theme === 'dark' ||
-    (theme === 'system' &&
-      window.matchMedia('(prefers-color-scheme: dark)').matches)
+    (theme === 'system' && matchesMedia('(prefers-color-scheme: dark)'))
   );
 }
 
@@ -269,7 +270,6 @@ export async function changeThemeWithTransition(
     applied = true;
     await applyTheme(theme, setTheme, currentRequest);
   };
-  const media = window.matchMedia('(prefers-reduced-motion: reduce)');
   const stopMovement = () => {
     if (isReducedMotionSetting() && currentRequest === request) {
       cancelActiveAnimations();
@@ -281,7 +281,7 @@ export async function changeThemeWithTransition(
     attributes: true,
     attributeFilter: ['data-tm-reduced-motion'],
   });
-  media.addEventListener('change', stopMovement);
+  const stopWatching = watchMedia(REDUCED_MOTION_QUERY, stopMovement);
   try {
     if (
       isReducedMotionSetting() ||
@@ -317,8 +317,8 @@ export async function changeThemeWithTransition(
       const geometry = readSnapshotGeometry(root, {
         x,
         y,
-        width: window.innerWidth,
-        height: window.innerHeight,
+        width: viewportSize().width,
+        height: viewportSize().height,
       });
       // 目标主题已经应用：方向按真实结果定（属性选择器只匹配根元素自己，不牵动全站样式）
       const dark = root.classList.contains('dark');
@@ -379,7 +379,7 @@ export async function changeThemeWithTransition(
     if (!applied && currentRequest === request) setTheme(theme);
   } finally {
     observer.disconnect();
-    media.removeEventListener('change', stopMovement);
+    stopWatching();
     if (currentRequest === request) {
       cancelActiveAnimations();
       activeTransition?.skipTransition();

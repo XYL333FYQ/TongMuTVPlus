@@ -3,8 +3,11 @@ import {
   DEVICE_TIER_ATTRIBUTE,
   DEVICE_TIER_BOOT_SCRIPT,
   getDeviceTier,
+  matchesMedia,
   pageLayoutFor,
   settleLayoutHeight,
+  viewportSize,
+  watchMedia,
 } from './device-tier';
 
 describe('computeDeviceTier', () => {
@@ -117,5 +120,46 @@ describe('pageLayoutFor：电脑、平板、手机各一套', () => {
     ['tablet', false, 'compact'],
   ] as const)('%s coarse=%s → %s', (tier, coarse, layout) => {
     expect(pageLayoutFor(tier, coarse)).toBe(layout);
+  });
+});
+
+describe('视口和媒体查询', () => {
+  const original = window.matchMedia;
+  afterEach(() => {
+    window.matchMedia = original;
+  });
+
+  it('没有 matchMedia 时当不成立，订阅返回空的取消函数', () => {
+    // @ts-expect-error 模拟老浏览器 / 测试环境
+    window.matchMedia = undefined;
+    expect(matchesMedia('(pointer: coarse)')).toBe(false);
+    expect(() => watchMedia('(pointer: coarse)', jest.fn())()).not.toThrow();
+  });
+
+  it('订阅时把当前结果交给回调，取消后不再通知', () => {
+    const listeners = new Set<() => void>();
+    const media = {
+      matches: false,
+      addEventListener: (_: string, fn: () => void) => listeners.add(fn),
+      removeEventListener: (_: string, fn: () => void) => listeners.delete(fn),
+    };
+    window.matchMedia = jest.fn(() => media) as never;
+    const seen: boolean[] = [];
+    const stop = watchMedia('(prefers-reduced-motion: reduce)', (m) =>
+      seen.push(m)
+    );
+    media.matches = true;
+    listeners.forEach((fn) => fn());
+    stop();
+    listeners.forEach((fn) => fn());
+    expect(seen).toEqual([true]);
+  });
+
+  it('视口大小可以读别的窗口；没有窗口时是 0', () => {
+    expect(viewportSize(null)).toEqual({ width: 0, height: 0 });
+    expect(viewportSize()).toEqual({
+      width: window.innerWidth,
+      height: window.innerHeight,
+    });
   });
 });

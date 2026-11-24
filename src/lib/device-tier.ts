@@ -115,3 +115,57 @@ export function onDeviceTierChange(listener: (tier: DeviceTier) => void) {
   window.addEventListener(DEVICE_TIER_EVENT, handler);
   return () => window.removeEventListener(DEVICE_TIER_EVENT, handler);
 }
+
+// —— 视口和媒体查询：全站只在这里直接读（STANDARD.md 公共零件“设备档位”） ——
+// 整页排版用上面的档位；这里给“这一块放不放得下”、拖动边界、键盘高度、
+// 系统偏好（减弱动效、深色、触屏、装成 App）这类局部判断用。服务端和测试环境里没有窗口时给安全的默认值。
+
+/** 窗口内的宽高（含滚动条，同 innerWidth / innerHeight）；可以传别的窗口（画中画、iframe） */
+export function viewportSize(win: Window | null | undefined = globalWindow()): {
+  width: number;
+  height: number;
+} {
+  if (!win) return { width: 0, height: 0 };
+  return { width: win.innerWidth, height: win.innerHeight };
+}
+
+/** 媒体查询现在是否成立；没有 matchMedia 时当不成立 */
+export function matchesMedia(query: string): boolean {
+  const win = globalWindow();
+  return !!win?.matchMedia?.(query).matches;
+}
+
+/** 订阅媒体查询变化（立即不回调），返回取消函数 */
+export function watchMedia(
+  query: string,
+  listener: (matches: boolean) => void
+): () => void {
+  const media = globalWindow()?.matchMedia?.(query);
+  if (!media) return () => undefined;
+  const onChange = () => listener(media.matches);
+  // 老 Safari 只有 addListener
+  if (media.addEventListener) media.addEventListener('change', onChange);
+  else media.addListener(onChange);
+  return () => {
+    if (media.removeEventListener)
+      media.removeEventListener('change', onChange);
+    else media.removeListener(onChange);
+  };
+}
+
+function globalWindow(): Window | null {
+  return typeof window === 'undefined' ? null : window;
+}
+
+/** 装成 App 打开（PWA 独立窗口 / 全屏，或 iOS 添加到主屏幕） */
+export function isInstalledWebApp(): boolean {
+  return (
+    matchesMedia('(display-mode: standalone)') ||
+    matchesMedia('(display-mode: fullscreen)') ||
+    (
+      globalWindow()?.navigator as
+        | (Navigator & { standalone?: boolean })
+        | undefined
+    )?.standalone === true
+  );
+}

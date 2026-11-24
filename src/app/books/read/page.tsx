@@ -54,6 +54,7 @@ import {
   saveBookTtsProgress,
 } from '@/lib/book-tts-progress.client';
 import { cn } from '@/lib/cn';
+import { viewportSize } from '@/lib/device-tier';
 import { formatPaddedClock } from '@/lib/time';
 
 import BookPdfActions from '@/components/books/BookPdfActions';
@@ -415,7 +416,8 @@ function getIframeScrollMetrics(viewer: HTMLDivElement | null) {
     : null;
   const rootOverflow = root
     ? Math.max(
-        (root.scrollHeight || 0) - (root.clientHeight || win?.innerHeight || 0),
+        (root.scrollHeight || 0) -
+          (root.clientHeight || viewportSize(win ?? null).height || 0),
         0
       )
     : 0;
@@ -429,7 +431,7 @@ function getIframeScrollMetrics(viewer: HTMLDivElement | null) {
         root.scrollHeight || 0,
         doc?.body?.scrollHeight || 0
       ),
-      clientHeight: root.clientHeight || win?.innerHeight || 0,
+      clientHeight: root.clientHeight || viewportSize(win ?? null).height || 0,
       setScrollTop: (value: number) => {
         if (typeof root.scrollTo === 'function') {
           root.scrollTo({ top: value, behavior: 'auto' });
@@ -541,7 +543,7 @@ function getWindowScrollMetrics() {
   const clientHeight =
     root?.clientHeight ||
     document.documentElement?.clientHeight ||
-    window.innerHeight ||
+    viewportSize().height ||
     0;
   const maxScrollTop = Math.max(0, scrollHeight - clientHeight);
   return { scrollTop, scrollHeight, clientHeight, maxScrollTop };

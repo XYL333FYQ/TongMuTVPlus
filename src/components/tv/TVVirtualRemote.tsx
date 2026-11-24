@@ -15,6 +15,7 @@ import {
 import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 
+import { viewportSize } from '@/lib/device-tier';
 import { isReducedMotionSetting, useReducedMotionSetting } from '@/lib/motion';
 import { fireTVRemoteKey } from '@/lib/tv-remote-core';
 
@@ -243,7 +244,7 @@ function focusElement(element: HTMLElement) {
     window.requestAnimationFrame(() => {
       const rect = element.getBoundingClientRect();
       const safeTop = 150;
-      const safeBottom = window.innerHeight - 96;
+      const safeBottom = viewportSize().height - 96;
 
       if (rect.top < safeTop) {
         window.scrollBy({

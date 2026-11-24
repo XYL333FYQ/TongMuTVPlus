@@ -19,6 +19,7 @@ import ReactMarkdown from 'react-markdown';
 import type { VideoContext } from '@/lib/ai-orchestrator';
 import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
 import { AI_WELCOME_MESSAGE } from '@/lib/brand';
+import { viewportSize } from '@/lib/device-tier';
 
 import ModalLayer from '@/components/feedback/ModalLayer';
 
@@ -607,12 +608,12 @@ export default function AIChatPanel({
     if (isOpen) {
       // 检测是否为移动设备
       const checkMobile = () => {
-        setIsMobile(window.innerWidth < 768);
+        setIsMobile(viewportSize().width < 768);
       };
       checkMobile();
 
       // 只在非移动设备上聚焦输入框
-      if (inputRef.current && window.innerWidth >= 768) {
+      if (inputRef.current && viewportSize().width >= 768) {
         inputRef.current.focus();
       }
     }

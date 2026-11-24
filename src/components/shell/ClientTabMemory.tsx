@@ -4,6 +4,7 @@ import { usePathname, useSearchParams } from 'next/navigation';
 import { useEffect } from 'react';
 
 import { clearClientMemory, clientMemoryScope } from '@/lib/client-memory';
+import { viewportSize } from '@/lib/device-tier';
 import {
   prepareTabNavigation,
   rememberTabVisit,
@@ -59,7 +60,7 @@ export default function ClientTabMemory() {
         Math.max(
           document.body.scrollHeight,
           document.documentElement.scrollHeight
-        ) - window.innerHeight;
+        ) - viewportSize().height;
       if (available + 1 < target.top) return;
       const root = document.documentElement;
       const previous = root.style.scrollBehavior;

@@ -12,6 +12,7 @@ import {
   saveMangaReadRecord,
   saveMangaShelf,
 } from '@/lib/db.client';
+import { viewportSize } from '@/lib/device-tier';
 import type {
   MangaChapter,
   MangaDetail,
@@ -542,7 +543,7 @@ export default function MangaReadPage() {
 
     const watchScrollPosition = () => {
       const nextScrollTop = getVerticalScrollTop();
-      const nextInnerHeight = window.innerHeight;
+      const nextInnerHeight = viewportSize().height;
 
       if (
         nextScrollTop !== lastScrollTop ||
@@ -884,7 +885,7 @@ export default function MangaReadPage() {
     if (!pages.length) return;
     if (readMode === 'vertical') {
       getVerticalScroller().scrollBy({
-        top: -window.innerHeight * 0.85,
+        top: -viewportSize().height * 0.85,
         behavior: isReducedMotionSetting() ? 'auto' : 'smooth',
       });
       hideTransientUi();
@@ -906,7 +907,7 @@ export default function MangaReadPage() {
     if (readMode === 'vertical') {
       if (openChapterComplete()) return;
       getVerticalScroller().scrollBy({
-        top: window.innerHeight * 0.85,
+        top: viewportSize().height * 0.85,
         behavior: isReducedMotionSetting() ? 'auto' : 'smooth',
       });
       hideTransientUi();
@@ -1027,7 +1028,7 @@ export default function MangaReadPage() {
     }
 
     const { clientX } = event;
-    const width = window.innerWidth;
+    const width = viewportSize().width;
     const leftBoundary = width / 3;
     const rightBoundary = (width / 3) * 2;
 

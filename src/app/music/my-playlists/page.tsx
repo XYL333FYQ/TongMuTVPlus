@@ -4,6 +4,7 @@ import { ArrowLeft, ImageOff, Play, Trash2 } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 
 import { cn } from '@/lib/cn';
+import { matchesMedia } from '@/lib/device-tier';
 import { playMusicList } from '@/lib/music/actions';
 import { getApiErrorMessage } from '@/lib/music/errors';
 import { mapSong } from '@/lib/music/shared';
@@ -114,8 +115,7 @@ export default function MusicMyPlaylistsPage() {
   // 手机上"进入 / 返回"都是换屏，要把页面带回顶部，否则会落在上一屏滚到的位置。
   // 桌面是两栏并排、没有换屏，别把页面拽走——所以只在小屏做。
   const scrollToTopOnPhone = () => {
-    if (window.matchMedia('(max-width: 767px)').matches)
-      window.scrollTo({ top: 0 });
+    if (matchesMedia('(max-width: 767px)')) window.scrollTo({ top: 0 });
   };
 
   const selectPlaylist = (playlist: any) => {

@@ -8,6 +8,7 @@ import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { GetBangumiCalendarData } from '@/lib/bangumi.client';
 import { readCatalogMemory, writeCatalogMemory } from '@/lib/catalog-memory';
 import { clientMemoryScope } from '@/lib/client-memory';
+import { viewportSize } from '@/lib/device-tier';
 import {
   getDoubanCategories,
   getDoubanList,
@@ -825,7 +826,7 @@ function DoubanPageClient() {
       if (!contentEl) return;
 
       const rect = contentEl.getBoundingClientRect();
-      const preloadThreshold = window.innerHeight + 120;
+      const preloadThreshold = viewportSize().height + 120;
 
       if (rect.bottom < preloadThreshold) {
         setCurrentPage(1);

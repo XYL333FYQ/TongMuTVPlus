@@ -4,7 +4,7 @@
 
 import type { MutableRefObject } from 'react';
 
-import { isHandheld } from '@/lib/device-tier';
+import { isHandheld, isInstalledWebApp } from '@/lib/device-tier';
 
 import type { Art } from '@/features/player';
 
@@ -92,10 +92,7 @@ export function buildControls(ctx: ControlsContext) {
               if (!artPlayerRef.current) return;
 
               // 检测是否在 PWA 模式下
-              const isPWA =
-                window.matchMedia('(display-mode: standalone)').matches ||
-                window.matchMedia('(display-mode: fullscreen)').matches ||
-                window.navigator.standalone === true;
+              const isPWA = isInstalledWebApp();
 
               // 检查是否已经在原生全屏状态
               const isInNativeFullscreen = !!(

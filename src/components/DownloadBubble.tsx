@@ -2,6 +2,8 @@
 
 import React, { useEffect, useState } from 'react';
 
+import { viewportSize } from '@/lib/device-tier';
+
 import { useDownload } from '@/contexts/DownloadContext';
 
 export function DownloadBubble() {
@@ -16,8 +18,8 @@ export function DownloadBubble() {
   useEffect(() => {
     const initPosition = () => {
       setPosition({
-        x: window.innerWidth - 80,
-        y: window.innerHeight - 80,
+        x: viewportSize().width - 80,
+        y: viewportSize().height - 80,
       });
     };
 
@@ -35,8 +37,8 @@ export function DownloadBubble() {
       const newY = e.clientY - dragOffset.y;
 
       // 限制在视口范围内
-      const maxX = window.innerWidth - 64;
-      const maxY = window.innerHeight - 64;
+      const maxX = viewportSize().width - 64;
+      const maxY = viewportSize().height - 64;
 
       setPosition({
         x: Math.max(0, Math.min(newX, maxX)),
@@ -53,8 +55,8 @@ export function DownloadBubble() {
       const newY = touch.clientY - dragOffset.y;
 
       // 限制在视口范围内
-      const maxX = window.innerWidth - 64;
-      const maxY = window.innerHeight - 64;
+      const maxX = viewportSize().width - 64;
+      const maxY = viewportSize().height - 64;
 
       setPosition({
         x: Math.max(0, Math.min(newX, maxX)),

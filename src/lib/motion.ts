@@ -3,6 +3,8 @@
 import type { Variants } from 'framer-motion';
 import { type PointerEvent, useSyncExternalStore } from 'react';
 
+import { matchesMedia, watchMedia } from '@/lib/device-tier';
+
 // Pass useReducedMotionSetting() as the motion component's `custom` prop.
 export const fadeUp: Variants = {
   hidden: (reducedMotion = false) => ({
@@ -26,25 +28,27 @@ export const stagger: Variants = {
   }),
 };
 
+/** 系统的减弱动效设置 */
+export const REDUCED_MOTION_QUERY = '(prefers-reduced-motion: reduce)';
+
 export function isReducedMotionSetting(): boolean {
   return (
     typeof window === 'undefined' ||
     document.documentElement.dataset.tmReducedMotion === 'true' ||
-    window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    matchesMedia(REDUCED_MOTION_QUERY)
   );
 }
 
 function subscribeToReducedMotion(update: () => void): () => void {
-  const media = window.matchMedia('(prefers-reduced-motion: reduce)');
+  const stopWatching = watchMedia(REDUCED_MOTION_QUERY, update);
   const observer = new MutationObserver(update);
   observer.observe(document.documentElement, {
     attributes: true,
     attributeFilter: ['data-tm-reduced-motion'],
   });
-  media.addEventListener('change', update);
   return () => {
     observer.disconnect();
-    media.removeEventListener('change', update);
+    stopWatching();
   };
 }
 
@@ -68,7 +72,7 @@ export const posterTiltHandlers = {
     if (
       event.pointerType !== 'mouse' ||
       isReducedMotionSetting() ||
-      !window.matchMedia('(hover: hover) and (pointer: fine)').matches
+      !matchesMedia('(hover: hover) and (pointer: fine)')
     )
       return;
     const box = event.currentTarget.getBoundingClientRect();

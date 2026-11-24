@@ -4,7 +4,9 @@ import { Star, Volume2, VolumeX } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import { viewportSize } from '@/lib/device-tier';
 import { getDoubanDetail } from '@/lib/douban.client';
+import { useReducedMotionSetting } from '@/lib/motion';
 import { filmPlaybackHref, roomSelectionHref } from '@/lib/playback-links';
 import { type SettingKey, readSetting, writeSetting } from '@/lib/settings';
 import type { TMDBItem } from '@/lib/tmdb.client';
@@ -56,7 +58,8 @@ export default function BannerCarousel({
   const [_bannerHeightScale, setBannerHeightScale] =
     useState<HomeBannerHeightScale>('1'); // 轮播图高度倍率
   const [isMobileView, setIsMobileView] = useState(true);
-  const [reducedMotion, setReducedMotion] = useState(false);
+  // 减弱动效：系统设置或站内开关，全站同一个来源（lib/motion）
+  const reducedMotion = useReducedMotionSetting();
   const [isPageVisible, setIsPageVisible] = useState(true);
   const [hasActivePlayback, setHasActivePlayback] = useState(false);
   const [detailOpen, setDetailOpen] = useState(false);
@@ -77,12 +80,6 @@ export default function BannerCarousel({
     isPageVisible;
 
   useEffect(() => {
-    const preference = window.matchMedia('(prefers-reduced-motion: reduce)');
-    const updateMotion = () =>
-      setReducedMotion(
-        preference.matches ||
-          document.documentElement.dataset.tmReducedMotion === 'true'
-      );
     const updateVisibility = () =>
       setIsPageVisible(document.visibilityState === 'visible');
     const updatePlayback = (event: Event) => {
@@ -90,20 +87,15 @@ export default function BannerCarousel({
         Boolean((event as CustomEvent<{ active: boolean }>).detail?.active)
       );
     };
-    updateMotion();
     updateVisibility();
     setHasActivePlayback(
       document.documentElement.dataset.tmPlaybackActive === 'true'
     );
-    preference.addEventListener('change', updateMotion);
     document.addEventListener('visibilitychange', updateVisibility);
     window.addEventListener('tm-playback-state', updatePlayback);
-    window.addEventListener('tm-visual-preferences-change', updateMotion);
     return () => {
-      preference.removeEventListener('change', updateMotion);
       document.removeEventListener('visibilitychange', updateVisibility);
       window.removeEventListener('tm-playback-state', updatePlayback);
-      window.removeEventListener('tm-visual-preferences-change', updateMotion);
     };
   }, []);
   const videoRefs = useRef<Map<number, HTMLVideoElement>>(new Map()); // 所有视频元素的引用
@@ -221,7 +213,7 @@ export default function BannerCarousel({
   // 移动端保持静态推荐，避免额外视频资源占用
   useEffect(() => {
     const updateIsMobileView = () => {
-      setIsMobileView(window.innerWidth < 768);
+      setIsMobileView(viewportSize().width < 768);
     };
 
     updateIsMobileView();

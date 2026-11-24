@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react';
 
+import { viewportSize } from '@/lib/device-tier';
 import { getPlatform } from '@/lib/platform';
 
 function editable(element: Element | null): boolean {
@@ -36,20 +37,20 @@ export default function KeyboardViewport() {
     const root = document.documentElement;
     const viewport = window.visualViewport;
     const previous = root.getAttribute('data-tm-keyboard');
-    let fullHeight = window.innerHeight;
-    let width = window.innerWidth;
+    let fullHeight = viewportSize().height;
+    let width = viewportSize().width;
     let frame = 0;
     const update = () => {
       frame = 0;
       if (root.dataset.tmImeSource === 'native') return;
       const focused = editable(document.activeElement);
-      if (width !== window.innerWidth) {
-        width = window.innerWidth;
-        fullHeight = window.innerHeight;
+      if (width !== viewportSize().width) {
+        width = viewportSize().width;
+        fullHeight = viewportSize().height;
       }
-      if (!focused) fullHeight = window.innerHeight;
-      else fullHeight = Math.max(fullHeight, window.innerHeight);
-      const visible = viewport?.height || window.innerHeight;
+      if (!focused) fullHeight = viewportSize().height;
+      else fullHeight = Math.max(fullHeight, viewportSize().height);
+      const visible = viewport?.height || viewportSize().height;
       const unzoomed = !viewport || Math.abs(viewport.scale - 1) < 0.01;
       const open =
         focused &&

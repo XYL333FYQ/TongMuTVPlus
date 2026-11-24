@@ -34,6 +34,7 @@ import {
   saveFavorite,
   subscribeToDataUpdates,
 } from '@/lib/db.client';
+import { matchesMedia } from '@/lib/device-tier';
 import { posterTiltHandlers } from '@/lib/motion';
 import { isNetdiskSource } from '@/lib/netdisk/source';
 import {
@@ -737,7 +738,7 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
           onClick={() => {
             if (
               detailOnTouch &&
-              window.matchMedia('(hover: none), (pointer: coarse)').matches
+              matchesMedia('(hover: none), (pointer: coarse)')
             )
               setShowDetailPanel(true);
             else handleClick();

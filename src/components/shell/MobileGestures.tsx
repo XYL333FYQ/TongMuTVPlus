@@ -4,7 +4,12 @@ import { RotateCw } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 
-import { isHandheld, onDeviceTierChange } from '@/lib/device-tier';
+import {
+  isCoarsePointer,
+  isHandheld,
+  isInstalledWebApp,
+  onDeviceTierChange,
+} from '@/lib/device-tier';
 import { refreshPage } from '@/lib/page-refresh';
 import { getPlatform } from '@/lib/platform';
 import { readSetting, writeSetting } from '@/lib/settings';
@@ -21,7 +26,7 @@ const IOS_HINT_KEY = 'tongmu:ios-install-hint-seen';
 
 // 手机外壳（底栏 + 手机顶栏）只在手机两档出现，见 lib/device-tier.ts
 function isPhoneTouch() {
-  return window.matchMedia('(pointer: coarse)').matches && isHandheld();
+  return isCoarsePointer() && isHandheld();
 }
 
 /** 手机端手势与提示：下拉刷新、前进/后退转场方向、iPhone 安装到主屏幕引导。 */
@@ -183,9 +188,7 @@ export default function MobileGestures() {
   useEffect(() => {
     const ua = navigator.userAgent;
     const isIos = /iPhone|iPad|iPod/.test(ua);
-    const standalone =
-      (navigator as Navigator & { standalone?: boolean }).standalone === true ||
-      window.matchMedia('(display-mode: standalone)').matches;
+    const standalone = isInstalledWebApp();
     if (!isIos || standalone) return;
     if (readSetting(IOS_HINT_KEY)) return;
     const timer = window.setTimeout(() => setIosHint(true), 4000);

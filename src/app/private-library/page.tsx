@@ -7,6 +7,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
+import { viewportSize } from '@/lib/device-tier';
 import { base58Encode } from '@/lib/utils';
 
 import CapsuleSwitch from '@/components/catalog/CapsuleSwitch';
@@ -391,7 +392,7 @@ export default function PrivateLibraryPage() {
     const element = sortButtonRef.current;
     if (element) {
       const rect = element.getBoundingClientRect();
-      const viewportWidth = window.innerWidth;
+      const viewportWidth = viewportSize().width;
       const isMobile = viewportWidth < 768;
 
       let x = rect.left;

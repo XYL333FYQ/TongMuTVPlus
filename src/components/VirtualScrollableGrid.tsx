@@ -2,6 +2,8 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 
+import { viewportSize } from '@/lib/device-tier';
+
 interface VirtualScrollableGridProps {
   children: React.ReactNode[];
   gridClassName: string;
@@ -72,10 +74,10 @@ export default function VirtualScrollableGrid({
 
   const computeFallbackColumns = () => {
     if (typeof window === 'undefined') return mobileColumns;
-    if (window.innerWidth < 640) return mobileColumns;
+    if (viewportSize().width < 640) return mobileColumns;
 
     const containerWidth = Math.min(
-      containerRef.current?.clientWidth ?? window.innerWidth - 32,
+      containerRef.current?.clientWidth ?? viewportSize().width - 32,
       maxContentWidth
     );
 
@@ -157,7 +159,7 @@ export default function VirtualScrollableGrid({
     }
 
     const scrollTop = getViewportScrollTop();
-    const viewportBottom = scrollTop + window.innerHeight;
+    const viewportBottom = scrollTop + viewportSize().height;
     const containerTop = el.getBoundingClientRect().top + scrollTop;
 
     const startRow =

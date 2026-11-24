@@ -3,7 +3,7 @@
  * 触屏快进快退和全屏退出按钮两个播放器共用，见 src/lib/player-touch-controls.ts。
  */
 
-import { isHandheld } from '@/lib/device-tier';
+import { isHandheld, isInstalledWebApp, matchesMedia } from '@/lib/device-tier';
 import { readSetting, writeSetting } from '@/lib/settings';
 
 import type { Art } from '../art-types';
@@ -232,10 +232,7 @@ export function iosFullscreenControl(
       // iPhone：直接用系统全屏（会自己横过来）。网页全屏在竖着的手机上只是中间一小条画面，
       // 按钮还会被挤出屏幕（2026-11-18 问题文档第 6 条）。iPad 仍可以选
       if (isHandheld()) return nativeFullscreen();
-      const standalone =
-        window.matchMedia('(display-mode: standalone)').matches ||
-        window.matchMedia('(display-mode: fullscreen)').matches ||
-        navigator.standalone === true;
+      const standalone = isInstalledWebApp();
       if (standalone) {
         art.fullscreenWeb = true;
         return;
@@ -252,7 +249,7 @@ export const iosOrientationPlugin: PlayerPlugin = ({ art, later }) => {
   if (!playerEnvironment().ios) return;
   const onChange = () => {
     if (!art.fullscreenWeb) return;
-    if (!window.matchMedia('(orientation: landscape)').matches) return;
+    if (!matchesMedia('(orientation: landscape)')) return;
     art.fullscreenWeb = false;
     later(() => {
       art.fullscreenWeb = true;

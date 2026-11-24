@@ -2,7 +2,7 @@
 
 import { CSSProperties, RefObject, useEffect, useState } from 'react';
 
-import { isHandheld } from '@/lib/device-tier';
+import { isHandheld, viewportSize } from '@/lib/device-tier';
 import { readJson, writeSetting } from '@/lib/settings';
 
 // 小窗拖动（自己看和一起看的小窗共用）：只给小窗的画面和按钮层加一个位移（CSS 变量 → transform），
@@ -95,7 +95,7 @@ function limits(base: Box) {
   const margin = isHandheld() ? 12 : 24;
   const width = base.right - base.left;
   const minLeft = margin;
-  const maxLeft = Math.max(minLeft, window.innerWidth - margin - width);
+  const maxLeft = Math.max(minLeft, viewportSize().width - margin - width);
   const maxTop = base.top;
   const minTop = Math.min(HEADER_CLEARANCE, maxTop);
   return { minLeft, maxLeft, minTop, maxTop };

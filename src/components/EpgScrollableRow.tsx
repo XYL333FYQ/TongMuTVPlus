@@ -6,6 +6,7 @@ import { useEffect, useId, useRef, useState } from 'react';
 
 import '@/styles/controls.css';
 
+import { viewportSize } from '@/lib/device-tier';
 import { isReducedMotionSetting, useReducedMotionSetting } from '@/lib/motion';
 import { formatTimeToHHMM, parseCustomTimeFormat } from '@/lib/time';
 
@@ -97,7 +98,7 @@ export default function EpgScrollableRow({
     if (currentProgramIndex === -1) return;
 
     // 横向时间线
-    if (timelineHorizontalRef.current && window.innerWidth >= 768) {
+    if (timelineHorizontalRef.current && viewportSize().width >= 768) {
       const programElement = timelineHorizontalRef.current.children[
         currentProgramIndex
       ] as HTMLElement;
