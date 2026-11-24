@@ -1,7 +1,7 @@
 'use client';
 
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { isReducedMotionSetting, useReducedMotionSetting } from '@/lib/motion';
 
@@ -26,7 +26,7 @@ export default function VirtualScrollableRow({
   });
 
   // 检查滚动状态
-  const checkScroll = () => {
+  const checkScroll = useCallback(() => {
     if (!containerRef.current) return;
 
     const { scrollLeft, scrollWidth, clientWidth } = containerRef.current;
@@ -50,7 +50,7 @@ export default function VirtualScrollableRow({
     );
 
     setVisibleRange({ start: newStart, end: newEnd });
-  };
+  }, [children.length]);
 
   useEffect(() => {
     checkScroll();
@@ -60,13 +60,13 @@ export default function VirtualScrollableRow({
       container.addEventListener('scroll', checkScroll);
       return () => container.removeEventListener('scroll', checkScroll);
     }
-  }, [children.length]);
+  }, [checkScroll]);
 
   // 监听窗口大小变化
   useEffect(() => {
     window.addEventListener('resize', checkScroll);
     return () => window.removeEventListener('resize', checkScroll);
-  }, []);
+  }, [checkScroll]);
 
   const scrollLeft = () => {
     if (containerRef.current) {

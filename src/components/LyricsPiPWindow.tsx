@@ -6,6 +6,7 @@ import { useEffect, useRef } from 'react';
 import ReactDOM from 'react-dom/client';
 
 import { logger } from '@/lib/logger';
+import { useLatest } from '@/hooks/useLatest';
 
 interface Song {
   id: string;
@@ -406,6 +407,8 @@ export default function LyricsPiPWindow({
   }, [currentSong, lyrics, currentLyricIndex, opacity, minimized, onLyricSeek]);
 
   // 打开 PiP 窗口
+  const onCloseLatest = useLatest(onClose);
+  const renderPiPContentLatest = useLatest(renderPiPContent);
   useEffect(() => {
     const openPiPWindow = async () => {
       if (!('documentPictureInPicture' in window)) {
@@ -433,14 +436,14 @@ export default function LyricsPiPWindow({
             rootRef.current = null;
           }
           pipWindowRef.current = null;
-          onClose();
+          onCloseLatest.current();
         });
 
         // 渲染内容
-        renderPiPContent(pipWin);
+        renderPiPContentLatest.current(pipWin);
       } catch (error) {
         logger.error('打开画中画窗口失败:', error);
-        onClose();
+        onCloseLatest.current();
       }
     };
 
@@ -456,7 +459,7 @@ export default function LyricsPiPWindow({
         rootRef.current = null;
       }
     };
-  }, []); // 只在组件挂载时执行一次
+  }, [onCloseLatest, renderPiPContentLatest]); // 只在组件挂载时执行一次
 
   return null; // 此组件不渲染任何内容到主窗口
 }

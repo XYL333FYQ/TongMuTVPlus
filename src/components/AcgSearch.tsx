@@ -13,6 +13,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { apiFetch } from '@/lib/api-client';
 import { readSetting, writeSetting } from '@/lib/settings';
+import { useLatest } from '@/hooks/useLatest';
 import { usePageRefresh } from '@/hooks/usePageRefresh';
 
 import CapsuleSwitch from '@/components/catalog/CapsuleSwitch';
@@ -373,6 +374,8 @@ export default function AcgSearch({
       }
     }
   };
+  const performSearchLatest = useLatest(performSearch);
+  const keywordLatest = useLatest(keyword);
 
   usePageRefresh(
     '/search',
@@ -387,7 +390,7 @@ export default function AcgSearch({
       return;
     }
 
-    const currentKeyword = keyword.trim();
+    const currentKeyword = keywordLatest.current.trim();
     if (!currentKeyword) {
       return;
     }
@@ -396,8 +399,8 @@ export default function AcgSearch({
     setAllItems([]);
     setCurrentPage(1);
     setHasMore(true);
-    performSearch(1, false);
-  }, [triggerSearch, controlsOnly]);
+    performSearchLatest.current(1, false);
+  }, [triggerSearch, controlsOnly, keywordLatest, performSearchLatest]);
 
   // 切换搜索源时，自动重新搜索（避免组件初次挂载时重复触发）
   useEffect(() => {
@@ -408,14 +411,14 @@ export default function AcgSearch({
       return;
     }
 
-    const currentKeyword = keyword.trim();
+    const currentKeyword = keywordLatest.current.trim();
     if (!currentKeyword) return;
 
     setAllItems([]);
     setCurrentPage(1);
     setHasMore(true);
-    performSearch(1, false);
-  }, [source, controlsOnly]);
+    performSearchLatest.current(1, false);
+  }, [source, controlsOnly, keywordLatest, performSearchLatest]);
 
   // 加载更多数据
   const loadMore = useCallback(() => {
@@ -423,9 +426,9 @@ export default function AcgSearch({
     if (source === 'dmhy') return;
     if (source === 'nyaa') return;
     if (!loading && hasMore && !isLoadingMoreRef.current) {
-      performSearch(currentPage + 1, true);
+      performSearchLatest.current(currentPage + 1, true);
     }
-  }, [loading, hasMore, currentPage, source]);
+  }, [loading, hasMore, currentPage, source, performSearchLatest]);
 
   // 使用 Intersection Observer 监听滚动到底部
   useEffect(() => {

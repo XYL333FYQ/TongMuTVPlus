@@ -17,6 +17,7 @@ import { viewportSize } from '@/lib/device-tier';
 import { useReducedMotionSetting } from '@/lib/motion';
 import { formatClock } from '@/lib/time';
 import { useAudioFocus } from '@/hooks/useAudioFocus';
+import { useLatest } from '@/hooks/useLatest';
 
 import PageContainer from '@/components/PageContainer';
 import ProxyImage from '@/components/ProxyImage';
@@ -600,10 +601,11 @@ export default function MusicPage() {
     }
   };
 
+  const applyPlaybackStateLatest = useLatest(applyPlaybackState);
   useEffect(() => {
     if (!state) return;
-    void applyPlaybackState(state);
-  }, [state, needsActivation]);
+    void applyPlaybackStateLatest.current(state);
+  }, [state, needsActivation, applyPlaybackStateLatest]);
 
   useEffect(() => {
     if (!socket) return;

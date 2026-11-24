@@ -6,7 +6,10 @@ import { logger } from '@/lib/logger';
 
 import { useWatchRoomContextSafe } from '@/components/WatchRoomProvider';
 
-import type { ScreenState } from '@/types/watch-room';
+import type { Member, ScreenState } from '@/types/watch-room';
+
+// 没有房间时的成员表：固定一个空数组，依赖它的 effect 不会每次渲染都重跑
+const NO_MEMBERS: Member[] = [];
 
 const iceServers = [
   { urls: 'stun:stun.cloudflare.com:3478' },
@@ -87,7 +90,7 @@ export function useScreenShare(
   const currentRoom = watchRoom?.currentRoom || null;
   const socket = watchRoom?.socket || null;
   const isConnected = watchRoom?.isConnected || false;
-  const members = watchRoom?.members || [];
+  const members = watchRoom?.members ?? NO_MEMBERS;
   const currentState = currentRoom?.currentState;
   const isSharing =
     currentState?.type === 'screen' && currentState.status === 'sharing';

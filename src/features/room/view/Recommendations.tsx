@@ -12,6 +12,7 @@ import './Recommendations.css';
 
 import { getDoubanCategories } from '@/lib/douban.client';
 import type { DoubanItem } from '@/lib/types';
+import { useLatest } from '@/hooks/useLatest';
 
 import BusyDots from '@/components/feedback/BusyDots';
 import RetryNotice from '@/components/feedback/RetryNotice';
@@ -83,16 +84,17 @@ export default function Recommendations(props: {
     }
   }, []);
 
+  // 只在切换分类时决定要不要拉；已经拉过的分类直接用
+  const poolLatest = useLatest(pool);
   useEffect(() => {
-    if (pool[kind]) {
+    if (poolLatest.current[kind]) {
       setState('ready');
       return;
     }
     void load(kind);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [kind]);
+  }, [kind, load, poolLatest]);
 
-  const list = pool[kind] || [];
+  const list = useMemo(() => pool[kind] || [], [pool, kind]);
   const items = useMemo(() => {
     if (!list.length) return [];
     const start = offset % list.length;

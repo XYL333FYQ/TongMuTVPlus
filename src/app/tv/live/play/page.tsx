@@ -20,6 +20,7 @@ import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { apiFetch } from '@/lib/api-client';
 import { deleteFavorite, isFavorited, saveFavorite } from '@/lib/db.client';
 import { readSetting, writeSetting } from '@/lib/settings';
+import { useLatest } from '@/hooks/useLatest';
 
 import ProxyImage from '@/components/ProxyImage';
 import TVNativeVideo from '@/components/tv/player/TVNativeVideo';
@@ -492,6 +493,7 @@ function TVLivePlayClient() {
     });
   }, [muted, videoUrl, volume, standalone.ready]);
 
+  const switchChannelLatest = useLatest(switchChannel);
   useEffect(() => {
     const togglePanelByRemoteKey = (event: { preventDefault: () => void }) => {
       const now = Date.now();
@@ -526,7 +528,7 @@ function TVLivePlayClient() {
         digitTimerRef.current = window.setTimeout(() => {
           const target = Number(nextBuffer);
           const next = channels[target - 1];
-          if (next) switchChannel(next);
+          if (next) switchChannelLatest.current(next);
           setDigitBuffer('');
         }, 850);
       }
@@ -562,7 +564,8 @@ function TVLivePlayClient() {
             event.key === 'ArrowUp' ? currentIndex - 1 : currentIndex + 1;
           const next =
             channels[Math.max(0, Math.min(channels.length - 1, nextIndex))];
-          if (next && next.id !== channel?.id) switchChannel(next, false);
+          if (next && next.id !== channel?.id)
+            switchChannelLatest.current(next, false);
         }
         return;
       }
@@ -596,7 +599,7 @@ function TVLivePlayClient() {
             event.key === 'PageUp' ? currentIndex - 1 : currentIndex + 1;
           const next =
             channels[Math.max(0, Math.min(channels.length - 1, nextIndex))];
-          if (next) switchChannel(next);
+          if (next) switchChannelLatest.current(next);
         }
       }
     };
@@ -606,7 +609,16 @@ function TVLivePlayClient() {
       window.removeEventListener('keydown', onKey, true);
       window.removeEventListener('keyup', onKey, true);
     };
-  }, [channel?.id, channels, digitBuffer, router, showPanel, source, volume]);
+  }, [
+    channel?.id,
+    channels,
+    digitBuffer,
+    router,
+    showPanel,
+    source,
+    volume,
+    switchChannelLatest,
+  ]);
 
   useEffect(() => {
     if (!showPanel || !channel?.id) return;

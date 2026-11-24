@@ -3,6 +3,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 
 import { viewportSize } from '@/lib/device-tier';
+import { useLatest } from '@/hooks/useLatest';
 
 interface VirtualScrollableGridProps {
   children: React.ReactNode[];
@@ -236,15 +237,16 @@ export default function VirtualScrollableGrid({
     });
   };
 
+  const scheduleUpdateLatest = useLatest(scheduleUpdate);
   useEffect(() => {
-    scheduleUpdate(true);
+    scheduleUpdateLatest.current(true);
 
     const handleScroll = () => {
-      scheduleUpdate();
+      scheduleUpdateLatest.current();
     };
 
     const handleResize = () => {
-      scheduleUpdate(true);
+      scheduleUpdateLatest.current(true);
     };
 
     const bodyEl = document.body;
@@ -259,7 +261,7 @@ export default function VirtualScrollableGrid({
     let resizeObserver: ResizeObserver | null = null;
     if (typeof ResizeObserver !== 'undefined') {
       resizeObserver = new ResizeObserver(() => {
-        scheduleUpdate(true);
+        scheduleUpdateLatest.current(true);
       });
 
       if (containerRef.current) {
@@ -286,6 +288,7 @@ export default function VirtualScrollableGrid({
     mobileColumns,
     minItemWidth,
     maxContentWidth,
+    scheduleUpdateLatest,
   ]);
 
   const columns = layout.columns;

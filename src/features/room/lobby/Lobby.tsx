@@ -119,14 +119,19 @@ export default function Lobby(props: {
     }
   }, [directory]);
 
+  // 让还在路上的请求作废（回来后不再写状态）
+  const dropPendingRequests = useCallback(() => {
+    request.current++;
+  }, []);
+
   useEffect(() => {
     void refresh();
     const timer = window.setInterval(refresh, 15000);
     return () => {
       window.clearInterval(timer);
-      request.current++;
+      dropPendingRequests();
     };
-  }, [refresh]);
+  }, [refresh, dropPendingRequests]);
 
   const submit = (event: FormEvent) => {
     event.preventDefault();

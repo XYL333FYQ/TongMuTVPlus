@@ -52,6 +52,7 @@ import {
 } from '@/lib/settings';
 import { clearBangumiImageFallbackCache } from '@/lib/utils';
 import { UpdateStatus } from '@/lib/version_check';
+import { useLatest } from '@/hooks/useLatest';
 import { useReleaseInfo } from '@/hooks/useReleaseInfo';
 import { useUnreadNotificationCount } from '@/hooks/useUnreadNotificationCount';
 
@@ -2730,15 +2731,16 @@ export const UserMenu: React.FC = () => {
 
   // 自动模式：关闭本地设置面板时，把本地设置同步到云端
   const prevSettingsOpenRef = useRef(false);
+  const pushRemoteSettingsLatest = useLatest(pushRemoteSettings);
   useEffect(() => {
     if (prevSettingsOpenRef.current && !isSettingsOpen) {
       // 面板从打开 → 关闭：自动模式下静默上传本地设置
       if (syncAvailable && syncMode === 'auto') {
-        void pushRemoteSettings({ silent: true });
+        void pushRemoteSettingsLatest.current({ silent: true });
       }
     }
     prevSettingsOpenRef.current = isSettingsOpen;
-  }, [isSettingsOpen, syncAvailable, syncMode]);
+  }, [isSettingsOpen, syncAvailable, syncMode, pushRemoteSettingsLatest]);
 
   // 清除弹幕缓存
   const handleClearDanmakuCache = async () => {

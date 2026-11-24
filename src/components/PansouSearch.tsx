@@ -15,6 +15,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { apiFetch } from '@/lib/api-client';
 import { logger } from '@/lib/logger';
 import { PansouLink, PansouSearchResult } from '@/lib/pansou.client';
+import { useLatest } from '@/hooks/useLatest';
 import { usePageRefresh } from '@/hooks/usePageRefresh';
 
 import { useExternalAction } from '@/components/ExternalLink';
@@ -362,14 +363,15 @@ export default function PansouSearch({
     searchIdentity
   );
 
+  const searchPansouLatest = useLatest(searchPansou);
   useEffect(() => {
     // triggerSearch 变化时触发搜索（无论是 true 还是 false）
     if (triggerSearch === undefined) {
       return;
     }
 
-    searchPansou();
-  }, [triggerSearch]); // 只在触发标志变化时搜索，避免 keyword 变化自动搜索
+    searchPansouLatest.current();
+  }, [triggerSearch, searchPansouLatest]); // 只在触发标志变化时搜索，避免 keyword 变化自动搜索
 
   const handleCopy = async (text: string, url: string) => {
     try {

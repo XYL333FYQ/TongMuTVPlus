@@ -9,6 +9,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { apiFetch } from '@/lib/api-client';
 import { logger } from '@/lib/logger';
 import { base58Encode } from '@/lib/utils';
+import { useLatest } from '@/hooks/useLatest';
 
 import CapsuleSwitch from '@/components/catalog/CapsuleSwitch';
 import PosterGrid from '@/components/catalog/PosterGrid';
@@ -54,6 +55,7 @@ interface EmbyView {
 export default function PrivateLibraryPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const searchParamsLatest = useLatest(searchParams);
 
   // 获取运行时配置
   const runtimeConfig = useMemo(() => {
@@ -201,8 +203,9 @@ export default function PrivateLibraryPage() {
           setEmbySourceOptions(data.sources || []);
 
           // 如果没有设置embyKey，使用第一个源
-          if (!embyKey && data.sources && data.sources.length > 0) {
-            setEmbyKey(data.sources[0].key);
+          if (data.sources && data.sources.length > 0) {
+            // 还没选源时默认第一个（不覆盖已经选好的）
+            setEmbyKey((current) => current || data.sources[0].key);
           }
         }
       } catch (error) {
@@ -310,7 +313,7 @@ export default function PrivateLibraryPage() {
 
           // 分类加载完成后，检查URL中是否有view参数（只在第一次加载时恢复）
           if (!hasRestoredViewRef.current) {
-            const urlView = searchParams.get('view');
+            const urlView = searchParamsLatest.current.get('view');
             if (urlView && data.views && data.views.length > 0) {
               // 检查该view是否存在于分类列表中
               const viewExists = data.views.some(
@@ -332,7 +335,7 @@ export default function PrivateLibraryPage() {
     };
 
     fetchEmbyViews();
-  }, [sourceType, embyKey]);
+  }, [sourceType, embyKey, searchParamsLatest]);
 
   // 鼠标拖动滚动
   const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {

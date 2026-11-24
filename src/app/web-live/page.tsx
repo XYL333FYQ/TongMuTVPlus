@@ -15,6 +15,7 @@ import {
   detachHlsStream,
 } from '@/lib/media-engines';
 import { useAudioFocus } from '@/hooks/useAudioFocus';
+import { useLatest } from '@/hooks/useLatest';
 import { useLatestMediaRequest } from '@/hooks/useLatestMediaRequest';
 import { usePlaybackSessionSafe } from '@/hooks/usePlaybackSession';
 
@@ -227,6 +228,10 @@ export default function WebLivePage() {
     }
   };
 
+  // 自动加载只看来源列表和地址参数；当前频道、切换函数读最新的，不触发重跑
+  const currentSourceLatest = useLatest(currentSource);
+  const handleSourceClickRef = useRef<typeof handleSourceClick | null>(null);
+
   // 当 sources 加载完成后，检查 URL 参数并自动加载对应的频道
   useEffect(() => {
     if (webLiveSync.active) return;
@@ -243,9 +248,10 @@ export default function WebLivePage() {
     }
 
     // 检查是否已经加载了这个频道
+    const current = currentSourceLatest.current;
     if (
-      currentSource?.platform === needLoadPlatform &&
-      currentSource?.roomId === needLoadRoomId
+      current?.platform === needLoadPlatform &&
+      current?.roomId === needLoadRoomId
     ) {
       return;
     }
@@ -262,11 +268,17 @@ export default function WebLivePage() {
       (s) => s.platform === needLoadPlatform && s.roomId === needLoadRoomId
     );
     if (foundSource) {
-      void handleSourceClick(foundSource, 'initial');
+      void handleSourceClickRef.current?.(foundSource, 'initial');
     } else {
       hasAutoLoadedRef.current = false; // 重置标志以便重试
     }
-  }, [sources, librariesLoaded, searchParams, webLiveSync.active]);
+  }, [
+    sources,
+    librariesLoaded,
+    searchParams,
+    webLiveSync.active,
+    currentSourceLatest,
+  ]);
 
   function m3u8Loader(video: HTMLVideoElement, url: string) {
     if (!Hls) return;
@@ -431,6 +443,7 @@ export default function WebLivePage() {
       () => setIsVideoLoading(false)
     );
   };
+  handleSourceClickRef.current = handleSourceClick;
 
   const getRoomUrl = (source: WebLiveSource) => {
     if (source.platform === 'huya') {

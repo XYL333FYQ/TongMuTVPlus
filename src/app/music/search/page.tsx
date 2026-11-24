@@ -220,65 +220,68 @@ export default function MusicSearchPage() {
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
   const userScrolledRef = useRef(false);
 
-  const loadHotSearch = async (forceRefresh = false) => {
-    const cacheKey = getHotSearchCacheKey(source);
-    let cachedData: HotSearchItem[] | null = null;
-    let cacheExpired = true;
+  const loadHotSearch = useCallback(
+    async (forceRefresh = false) => {
+      const cacheKey = getHotSearchCacheKey(source);
+      let cachedData: HotSearchItem[] | null = null;
+      let cacheExpired = true;
 
-    if (!forceRefresh) {
-      try {
-        const cached = readSetting(cacheKey);
-        if (cached) {
-          const { data, timestamp } = JSON.parse(cached);
-          if (Array.isArray(data)) {
-            cachedData = data;
-            cacheExpired =
-              Date.now() - Number(timestamp || 0) > HOT_SEARCH_CACHE_DURATION;
+      if (!forceRefresh) {
+        try {
+          const cached = readSetting(cacheKey);
+          if (cached) {
+            const { data, timestamp } = JSON.parse(cached);
+            if (Array.isArray(data)) {
+              cachedData = data;
+              cacheExpired =
+                Date.now() - Number(timestamp || 0) > HOT_SEARCH_CACHE_DURATION;
+            }
           }
+        } catch {
+          cachedData = null;
         }
-      } catch {
-        cachedData = null;
       }
-    }
 
-    if (cachedData) {
-      setHotSearches(cachedData);
-      setHotLoading(false);
-    } else {
-      setHotSearches([]);
-      setHotLoading(true);
-    }
-
-    if (!cachedData || cacheExpired || forceRefresh) {
-      try {
-        const res = await apiFetch(
-          `/api/music/v2/discovery/hot-search?source=${source}`
-        );
-        const data = await res.json();
-        if (data.success) {
-          const nextHotSearches = (data.data?.list || []).slice(
-            0,
-            HOT_SEARCH_LIMIT
-          );
-          setHotSearches(nextHotSearches);
-          try {
-            writeSetting(
-              cacheKey,
-              JSON.stringify({ data: nextHotSearches, timestamp: Date.now() })
-            );
-          } catch {
-            // ignore cache write failure
-          }
-        } else if (!cachedData) {
-          setHotSearches([]);
-        }
-      } catch {
-        if (!cachedData) setHotSearches([]);
-      } finally {
+      if (cachedData) {
+        setHotSearches(cachedData);
         setHotLoading(false);
+      } else {
+        setHotSearches([]);
+        setHotLoading(true);
       }
-    }
-  };
+
+      if (!cachedData || cacheExpired || forceRefresh) {
+        try {
+          const res = await apiFetch(
+            `/api/music/v2/discovery/hot-search?source=${source}`
+          );
+          const data = await res.json();
+          if (data.success) {
+            const nextHotSearches = (data.data?.list || []).slice(
+              0,
+              HOT_SEARCH_LIMIT
+            );
+            setHotSearches(nextHotSearches);
+            try {
+              writeSetting(
+                cacheKey,
+                JSON.stringify({ data: nextHotSearches, timestamp: Date.now() })
+              );
+            } catch {
+              // ignore cache write failure
+            }
+          } else if (!cachedData) {
+            setHotSearches([]);
+          }
+        } catch {
+          if (!cachedData) setHotSearches([]);
+        } finally {
+          setHotLoading(false);
+        }
+      }
+    },
+    [source]
+  );
 
   const loadSearchPage = useCallback(
     async (pageNum: number, append = false, signal?: AbortSignal) => {
@@ -366,7 +369,7 @@ export default function MusicSearchPage() {
     setPage(1);
     void loadSearchPage(1, false, controller.signal);
     return () => controller.abort();
-  }, [source, q, searchType, loadSearchPage]);
+  }, [source, q, searchType, loadSearchPage, loadHotSearch]);
 
   useEffect(() => {
     userScrolledRef.current = false;

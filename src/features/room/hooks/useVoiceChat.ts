@@ -8,6 +8,19 @@ import type { WatchRoomSocket } from '@/lib/watch-room-socket';
 
 import type { Member } from '@/types/watch-room';
 
+// ICE服务器配置（使用多个免费的STUN服务器作为备份）
+const ICE_SERVERS: RTCIceServer[] = [
+  // Cloudflare STUN 服务器（主选，全球 CDN）
+  { urls: 'stun:stun.cloudflare.com:3478' },
+  // Numb/Viagenie（备选，老牌稳定服务）
+  { urls: 'stun:stun.numb.viagenie.ca:3478' },
+  // Annatel（备选）
+  { urls: 'stun:stun.annatel.net:3478' },
+  // Google STUN 服务器（最后备选）
+  { urls: 'stun:stun.l.google.com:19302' },
+  { urls: 'stun:stun1.l.google.com:19302' },
+];
+
 interface UseVoiceChatOptions {
   socket: WatchRoomSocket | null;
   roomId: string | null;
@@ -65,19 +78,6 @@ export function useVoiceChat({
     ((peerId: string, stream: MediaStream) => void) | null
   >(null);
 
-  // ICE服务器配置（使用多个免费的STUN服务器作为备份）
-  const iceServers = [
-    // Cloudflare STUN 服务器（主选，全球 CDN）
-    { urls: 'stun:stun.cloudflare.com:3478' },
-    // Numb/Viagenie（备选，老牌稳定服务）
-    { urls: 'stun:stun.numb.viagenie.ca:3478' },
-    // Annatel（备选）
-    { urls: 'stun:stun.annatel.net:3478' },
-    // Google STUN 服务器（最后备选）
-    { urls: 'stun:stun.l.google.com:19302' },
-    { urls: 'stun:stun1.l.google.com:19302' },
-  ];
-
   // 获取本地麦克风流
   const getLocalStream = useCallback(async () => {
     try {
@@ -132,7 +132,7 @@ export function useVoiceChat({
   // 创建 RTCPeerConnection
   const createPeerConnection = useCallback(
     (peerId: string) => {
-      const pc = new RTCPeerConnection({ iceServers });
+      const pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
 
       // ICE候选收集
       pc.onicecandidate = (event) => {
@@ -800,6 +800,8 @@ export function useVoiceChat({
 
   // 监听喇叭状态变化
   useEffect(() => {
+    // 远程音频元素表是同一个 Map，清理时用这一次拿到的
+    const remoteAudios = remoteAudioElementsRef.current;
     if (isSpeakerEnabled) {
       // 开启喇叭 - 播放所有远程流
       remoteStreamsRef.current.forEach((stream, peerId) => {
@@ -807,7 +809,7 @@ export function useVoiceChat({
       });
     } else {
       // 关闭喇叭 - 静音所有远程流
-      remoteAudioElementsRef.current.forEach((audio) => {
+      remoteAudios.forEach((audio) => {
         audio.muted = true;
       });
     }
@@ -815,7 +817,7 @@ export function useVoiceChat({
     // 恢复音量
     return () => {
       if (isSpeakerEnabled) {
-        remoteAudioElementsRef.current.forEach((audio) => {
+        remoteAudios.forEach((audio) => {
           audio.muted = false;
         });
       }
