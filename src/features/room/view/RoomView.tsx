@@ -43,6 +43,9 @@ import {
 } from 'react';
 
 import './RoomView.css';
+import './RoomView-room-view-now.css';
+import './RoomView-room-view-chat.css';
+import './RoomView-room-view-tabs.css';
 
 import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
 import { isHandheld } from '@/lib/device-tier';

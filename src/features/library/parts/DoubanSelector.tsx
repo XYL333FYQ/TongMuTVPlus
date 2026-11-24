@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import React, { useId } from 'react';
 
 import '@/styles/controls.css';
+import '@/styles/controls-expand-search.css';
 
 import { useReducedMotionSetting } from '@/lib/motion';
 

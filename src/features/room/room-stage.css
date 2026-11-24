@@ -1,0 +1,274 @@
+/* room.css 按块拆出的一段（tm-room-stage、tm-room-avatar、tm-room-dialog、tm-room-form、tm-room-field、tm-room-switch、tm-room-perm、tm-room-perms、tm-room-cover），引入顺序紧跟前一段，层叠结果不变 */
+.tm-room-stage-empty {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 24px;
+  color: var(--tm-on-art);
+  text-align: center;
+}
+
+.tm-room-stage-empty strong {
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.tm-room-stage-empty > span:not(.tm-room-stage-icon) {
+  max-width: 340px;
+  color: var(--tm-on-art-muted);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.tm-room-stage-icon {
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  margin-bottom: 4px;
+  border-radius: 50%;
+  background: var(--tm-art-glass);
+  box-shadow: inset 0 0 0 1px var(--tm-art-glass-line);
+}
+
+.tm-room-avatar {
+  position: relative;
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--tm-surface-raised);
+  color: var(--tm-text);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.tm-room-chat-message .tm-room-avatar {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--tm-surface-raised);
+  color: var(--tm-text);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.tm-room-view:where([data-layout='compact'])
+  .tm-room-chat-message
+  .tm-room-avatar {
+  width: 22px;
+  height: 22px;
+  font-size: 12px;
+}
+
+/* ================================================================ 对话框与表单 */
+/* 房间里的对话框和面板都放在全站的原生模态层里（components/feedback/ModalLayer），
+   层的位置、遮罩、盖住顶栏都由它负责；这里只管面板本身 */
+.tm-room-dialog {
+  display: flex;
+  flex-direction: column;
+  width: min(440px, 100%);
+  max-height: min(88vh, 860px);
+  overflow: hidden;
+  border: 1px solid var(--tm-line);
+  border-radius: var(--tm-radius-md);
+  background: var(--tm-surface);
+  color: var(--tm-text);
+  box-shadow: 0 32px 64px -24px rgb(var(--tm-ink-rgb) / 0.7);
+  animation: tm-room-rise var(--tm-d-panel) var(--tm-ease-out);
+}
+
+.tm-room-dialog[data-wide] {
+  width: min(600px, 100%);
+}
+
+.tm-room-dialog > :not(.tm-room-dialog-head) {
+  overflow-y: auto;
+}
+
+:where(html[data-tm-device='phone']) .tm-modal-layer.tm-room-dialog-layer {
+  padding: 0;
+}
+
+:where(html[data-tm-device='phone'])
+  .tm-modal-layer.tm-room-dialog-layer[open] {
+  place-items: end stretch;
+}
+
+:where(html[data-tm-device='phone']) .tm-room-dialog,
+:where(html[data-tm-device='phone']) .tm-room-dialog[data-wide] {
+  width: 100%;
+  max-height: 92vh;
+  border-radius: var(--tm-radius-md) var(--tm-radius-md) 0 0;
+}
+
+.tm-room-dialog-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 12px 4px 20px;
+}
+
+.tm-room-dialog-head h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+html[data-tm-reduced-motion='true'] .tm-room-dialog {
+  animation-duration: 1ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tm-room-dialog {
+    animation-duration: 1ms;
+  }
+}
+
+/* 面板：弹窗层的 drawer 款式负责位置、尺寸和进场（平板和电脑贴右满高，手机从底部拉起）；
+   贴右时只留左边一条线、不要圆角 */
+:where(html:is([data-tm-device='tablet'], [data-tm-device='wide']))
+  .tm-room-dialog[data-sheet] {
+  border-width: 0 0 0 1px;
+  border-radius: 0;
+}
+
+.tm-room-form {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 4px 20px 20px;
+}
+
+.tm-room-form-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 0;
+}
+
+.tm-room-form-section + .tm-room-form-section {
+  border-top: 1px solid var(--tm-line);
+}
+
+.tm-room-form-section h3 {
+  margin: 0;
+  color: var(--tm-muted);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.tm-room-form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding-top: 8px;
+}
+
+.tm-room-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+}
+
+.tm-room-field-inline {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.tm-room-field input,
+.tm-room-field textarea {
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1px solid var(--tm-line-strong);
+  border-radius: var(--tm-radius-sm);
+  background: var(--tm-bg);
+  color: var(--tm-text);
+  font: inherit;
+  font-size: 14px;
+  resize: vertical;
+}
+
+.tm-room-field-inline input {
+  width: 96px;
+}
+
+.tm-room-switch-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  cursor: pointer;
+  min-height: 44px;
+}
+
+.tm-room-switch-row > span {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.tm-room-switch-label {
+  font-size: 14px;
+}
+
+.tm-room-switch-row small {
+  color: var(--tm-muted);
+  font-size: 12px;
+}
+
+.tm-room-perm small {
+  color: var(--tm-muted);
+  font-size: 12px;
+}
+
+.tm-room-perm input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--tm-text);
+}
+
+.tm-room-perm {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: var(--tm-radius-sm);
+  background: var(--tm-surface-raised);
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.tm-room-perm > span {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.tm-room-perms {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+:where(html[data-tm-device='phone']) .tm-room-perms {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.tm-room-cover-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}

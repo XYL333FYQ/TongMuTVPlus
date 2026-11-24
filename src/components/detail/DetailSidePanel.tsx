@@ -5,6 +5,8 @@ import { X } from 'lucide-react';
 import { type ReactNode, useEffect, useId, useRef, useState } from 'react';
 
 import './detail.css';
+import './detail-ambient.css';
+import './detail-facts.css';
 
 import { isReducedMotionSetting, useReducedMotionSetting } from '@/lib/motion';
 

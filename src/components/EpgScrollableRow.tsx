@@ -5,6 +5,7 @@ import { BarChart3, Clock, List, Target, Tv } from 'lucide-react';
 import { useEffect, useId, useRef, useState } from 'react';
 
 import '@/styles/controls.css';
+import '@/styles/controls-expand-search.css';
 
 import { viewportSize } from '@/lib/device-tier';
 import { isReducedMotionSetting, useReducedMotionSetting } from '@/lib/motion';

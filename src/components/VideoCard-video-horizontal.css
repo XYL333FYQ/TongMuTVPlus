@@ -1,0 +1,283 @@
+/* VideoCard.css 按块拆出的一段（tm-video-horizontal、tm-video-card-progress、tm-video-card-caption、tm-video-card-title、tm-video-card-tooltip、tm-video-card-toast、tm-video-card），引入顺序紧跟前一段，层叠结果不变 */
+.tm-video-horizontal-title {
+  position: absolute;
+  left: 0px;
+  right: 0px;
+  top: 0px;
+  background-color: var(--tm-hero-bg);
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+  padding-bottom: 2rem;
+  padding-top: 0.5rem;
+}
+
+.tm-video-horizontal-heading {
+  margin-bottom: 0.25rem;
+}
+
+.tm-video-horizontal-name {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  font-weight: 700;
+  color: rgb(var(--tm-on-art-rgb) / 1);
+}
+
+.tm-video-horizontal-meta {
+  font-size: 13px;
+  color: rgb(var(--tm-on-art-rgb) / 1);
+}
+
+.tm-video-horizontal-url {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+  color: var(--tm-on-art-muted);
+}
+
+.tm-video-horizontal-progress {
+  position: absolute;
+  bottom: 0px;
+  left: 0px;
+  right: 0px;
+  background-color: var(--tm-hero-bg);
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+  padding-bottom: 0.5rem;
+  padding-top: 2rem;
+}
+
+.tm-video-horizontal-row {
+  margin-bottom: 0.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.tm-video-horizontal-time {
+  font-size: 13px;
+  color: var(--tm-on-art-muted);
+}
+
+.tm-video-horizontal-source {
+  display: inline-block;
+  border-radius: var(--tm-radius-sm);
+  border-width: 1px;
+  border-color: var(--tm-line);
+  background-color: rgb(var(--tm-ink-rgb) / 0.3);
+  padding-left: 0.25rem;
+  padding-right: 0.25rem;
+  padding-top: 0.125rem;
+  padding-bottom: 0.125rem;
+  font-size: 13px;
+  color: rgb(var(--tm-on-art-rgb) / 1);
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+}
+
+.tm-video-horizontal-bar {
+  height: 0.25rem;
+  width: 100%;
+  overflow: hidden;
+  border-radius: var(--tm-radius-full);
+  background-color: var(--tm-surface-raised);
+}
+
+.tm-video-horizontal-fill {
+  height: 100%;
+  background-color: var(--tm-surface);
+  transition-property: all;
+  transition-timing-function: var(--tm-ease-out);
+  transition-duration: 500ms;
+}
+
+.tm-video-horizontal-live {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+/* 继续观看：进度条贴画面底部，标题保留在下方。 */
+.tm-home-resume .tm-video-horizontal-title {
+  display: none;
+}
+
+.tm-home-resume .tm-video-horizontal-progress {
+  padding: 0;
+  background: none;
+}
+
+.tm-home-resume .tm-video-horizontal-row {
+  display: none;
+}
+
+.tm-home-resume .tm-video-horizontal-bar {
+  height: 4px;
+  border-radius: 0;
+  background: var(--tm-line-strong);
+}
+
+.tm-home-resume .tm-video-horizontal-fill {
+  background: var(--tm-on-art);
+}
+
+@media (min-width: 1700px) {
+  .tm-home-resume .tm-video-horizontal-bar {
+    height: calc(4 * var(--tm-wide-unit));
+  }
+}
+
+.tm-video-card-progress {
+  margin-top: 0.25rem;
+  height: 0.25rem;
+  width: 100%;
+  overflow: hidden;
+  border-radius: var(--tm-radius-full);
+  background-color: var(--tm-surface-raised);
+}
+
+.tm-video-card-progress-fill {
+  height: 100%;
+  background-color: var(--tm-text);
+  transition-property: all;
+  transition-timing-function: var(--tm-ease-out);
+  transition-duration: 500ms;
+}
+
+.tm-video-card-caption {
+  margin-top: 0.5rem;
+  text-align: left;
+}
+
+.tm-video-card-caption-inner {
+  position: relative;
+}
+
+@media (min-width: 1700px) {
+  .tm-library-grid .tm-video-card-caption {
+    margin-top: calc(8 * var(--tm-wide-unit));
+  }
+}
+
+.tm-video-card-title {
+  overflow: hidden;
+  display: block;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow-wrap: break-word;
+  font-size: 0.875rem;
+  line-height: 1.375;
+  font-weight: 500;
+  color: var(--tm-text);
+}
+
+/* —— 卡片观感 —— */
+@media (min-width: 1700px) {
+  .tm-library-grid .tm-video-card-title {
+    font-size: var(--tm-fs-small);
+    line-height: 1.5;
+  }
+  .tm-home-body .tm-video-card-title {
+    font-size: calc(15 * var(--tm-wide-unit));
+  }
+}
+
+.tm-video-card-tooltip {
+  pointer-events: none;
+  visibility: hidden;
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  z-index: 3;
+  margin-bottom: 0.5rem;
+  width: max-content;
+  max-width: 100%;
+  transform: translate(-50%, 0) scale(1, 1);
+  white-space: normal;
+  overflow-wrap: break-word;
+  border-radius: var(--tm-radius-md);
+  background-color: var(--tm-surface);
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+  text-align: center;
+  font-size: 13px;
+  color: var(--tm-text);
+  opacity: 0;
+  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  transition-property: all;
+  transition-timing-function: var(--tm-ease-out);
+  transition-duration: 200ms;
+  transition-delay: 100ms;
+}
+
+.tm-video-card-title:hover ~ .tm-video-card-tooltip {
+  visibility: visible;
+  opacity: 1;
+}
+
+.tm-video-card-tooltip-arrow {
+  position: absolute;
+  left: 50%;
+  top: 100%;
+  height: 0px;
+  width: 0px;
+  transform: translate(-50%, 0) scale(1, 1);
+  border-left-width: 4px;
+  border-right-width: 4px;
+  border-top-width: 4px;
+  border-color: transparent;
+  border-top-color: var(--tm-line);
+}
+
+.tm-video-card-toast {
+  position: fixed;
+  bottom: 6rem;
+  left: 50%;
+  z-index: var(--tm-z-toast);
+  transform: translate(-50%, 0) scale(1, 1);
+  border-radius: var(--tm-radius-full);
+  background-color: var(--tm-surface-raised);
+  padding-left: 1rem;
+  padding-right: 1rem;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  color: var(--tm-text);
+  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+}
+
+.tm-home-pair .tm-video-card[data-compact='true'] {
+  display: grid;
+  grid-template-columns: 128px minmax(0, 1fr) 44px;
+  align-items: center;
+  gap: 16px;
+  min-height: 80px;
+}
+
+@container (max-width: 360px) {
+  .tm-home-pair .tm-video-card[data-compact='true'] {
+    grid-template-columns: 96px minmax(0, 1fr) 44px;
+    gap: 12px;
+  }
+}
+
+/* —— 海报卡（登录态 VideoCard 与访客 PublicPoster 共用的观感） —— */
+/* 悬停只抬起画面（倾斜、放大、投影加深），标题文字不动，避免跟着歪斜发虚 */
+.tm-video-card {
+  position: relative;
+  border-radius: var(--tm-radius-md);
+  box-shadow: none;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .tm-video-card:hover {
+    z-index: 1;
+  }
+}

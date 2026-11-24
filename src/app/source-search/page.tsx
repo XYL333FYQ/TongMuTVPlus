@@ -13,6 +13,7 @@ import {
 } from 'react';
 
 import '@/styles/controls.css';
+import '@/styles/controls-expand-search.css';
 
 import { isAnimeCategoryText } from '@/lib/anime-keyword-expr';
 import { apiFetch } from '@/lib/api-client';

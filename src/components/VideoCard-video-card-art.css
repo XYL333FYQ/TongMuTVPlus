@@ -1,0 +1,92 @@
+/* VideoCard.css 按块拆出的一段（tm-video-card-art、tm-video-card-clip），引入顺序紧跟前一段，层叠结果不变 */
+.tm-home-pair .tm-video-card[data-compact='true'] .tm-video-card-art {
+  --tm-art-radius: var(--tm-radius-sm);
+  width: 100%;
+  transform: none;
+}
+
+.tm-home-resume .tm-video-card-art {
+  box-shadow: var(--tm-shadow-sm);
+}
+
+.tm-video-card-art {
+  border-radius: var(--tm-art-radius, var(--tm-radius-md));
+  background: var(--tm-surface-raised);
+  box-shadow: var(--tm-shadow-poster);
+  transform: perspective(800px);
+  transition: transform var(--tm-d-panel) var(--tm-ease-out),
+    box-shadow var(--tm-d-panel) var(--tm-ease-out);
+}
+
+.tm-video-card-art::after {
+  /* 跟随指针的高光 */
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  background: radial-gradient(
+    circle at var(--mx, 50%) var(--my, 50%),
+    rgba(255, 255, 255, 0.18),
+    transparent 55%
+  );
+  transition: opacity var(--tm-d-hover) var(--tm-ease-out);
+}
+
+.tm-video-card-art img {
+  transition: opacity var(--tm-d-panel) var(--tm-ease-out),
+    filter var(--tm-d-panel) var(--tm-ease-out);
+}
+
+.tm-video-card-art img[data-loaded='false'] {
+  opacity: 0;
+  filter: blur(12px);
+}
+
+.tm-video-card:focus-visible .tm-video-card-art {
+  transform: perspective(800px) translateY(-6px) scale(1.04);
+}
+
+.tm-video-card:active .tm-video-card-art {
+  transform: perspective(800px) scale(0.97);
+  transition-duration: var(--tm-d-press);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .tm-video-card:hover .tm-video-card-art {
+    transform: perspective(800px) translateY(-6px)
+      rotateX(var(--tm-poster-rx, 0deg)) rotateY(var(--tm-poster-ry, 0deg))
+      scale(1.04);
+    box-shadow: var(--tm-shadow-poster-hover);
+    transition-duration: var(--tm-d-hover), var(--tm-d-panel);
+  }
+  .tm-video-card:hover .tm-video-card-art::after {
+    opacity: 1;
+  }
+}
+
+html[data-tm-no-blur='true'] .tm-video-card-art img {
+  filter: none;
+}
+
+html[data-tm-reduced-motion='true'] .tm-video-card-art {
+  transition: none !important;
+  transform: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tm-video-card-art {
+    transition: none !important;
+    transform: none !important;
+  }
+}
+
+/* 缩略图里的画面层（含横向卡片的标题条、进度条）跟着外框圆角裁，底色不会从圆角下露出来 */
+.tm-video-card-clip {
+  border-radius: var(--tm-art-radius, var(--tm-radius-md));
+  position: absolute;
+  inset: 0px;
+  overflow: hidden;
+}

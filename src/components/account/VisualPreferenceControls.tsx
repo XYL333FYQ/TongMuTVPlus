@@ -3,6 +3,7 @@
 import { ChevronDown, SlidersHorizontal } from 'lucide-react';
 
 import '@/styles/controls.css';
+import '@/styles/controls-expand-search.css';
 
 import { useVisualPreferences } from '@/hooks/useVisualPreferences';
 

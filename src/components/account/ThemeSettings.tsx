@@ -4,6 +4,7 @@ import { useTheme } from 'next-themes';
 import { useEffect, useId, useState } from 'react';
 
 import '@/styles/controls.css';
+import '@/styles/controls-expand-search.css';
 
 import { useReducedMotionSetting } from '@/lib/motion';
 import {

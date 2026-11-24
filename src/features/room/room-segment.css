@@ -1,0 +1,319 @@
+/* room.css 按块拆出的一段（tm-room-segment、tm-room-head、tm-room-chip、tm-room-player），引入顺序紧跟前一段，层叠结果不变 */
+.tm-room-segment {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px;
+  border-radius: var(--tm-radius-full);
+  background: var(--tm-surface);
+  box-shadow: inset 0 0 0 1px var(--tm-line);
+}
+
+.tm-room-segment > button[role='tab'],
+.tm-room-segment > button[role='radio'] {
+  min-height: 36px;
+  padding: 0 16px;
+  border-radius: var(--tm-radius-full);
+  color: var(--tm-muted);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.tm-room-segment > button[aria-selected='true'] {
+  background: var(--tm-text);
+  color: var(--tm-accent-contrast);
+}
+
+.tm-room-segment-small {
+  margin-top: 4px;
+}
+
+.tm-room-recs-tools .tm-room-segment-small {
+  margin: 0;
+}
+
+/* ================================================================ 修正与动效 */
+/* 大厅的“我的房间 / 公开房间”只占内容宽度 */
+.tm-room-lobby > .tm-room-segment {
+  align-self: flex-start;
+}
+
+:is(
+    .tm-room-view-chip-button,
+    .tm-room-view-faces,
+    .tm-room-view-ep,
+    .tm-room-recs-item,
+    .tm-room-chat-older,
+    .tm-room-sheet-choice,
+    .tm-room-chat-compose-icon,
+    .tm-room-chat-emojis button,
+    .tm-room-dock-pill-room,
+    .tm-room-dock-pill-chat
+  ):focus-visible {
+  outline: 2px solid var(--tm-text);
+  outline-offset: 2px;
+}
+
+@keyframes tm-room-pulse {
+  50% {
+    opacity: 0.35;
+  }
+}
+
+@keyframes tm-room-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
+
+@keyframes tm-room-rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+  }
+}
+
+html[data-tm-reduced-motion='true']
+  :is(
+    .tm-room-chat-message,
+    .tm-room-chat-emojis,
+    .tm-room-dock-pill,
+    .tm-room-dock,
+    .tm-room-view-now-label::before
+  ) {
+  animation: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :is(
+      .tm-room-chat-message,
+      .tm-room-chat-emojis,
+      .tm-room-dock-pill,
+      .tm-room-dock,
+      .tm-room-view-now-label::before
+    ) {
+    animation: none;
+  }
+}
+
+@media (pointer: coarse) {
+  .tm-room-segment > button[role='tab'],
+  .tm-room-segment > button[role='radio'] {
+    min-height: 44px;
+  }
+}
+
+:where(html[data-tm-device='phone']) .tm-room-segment > button[role='tab'],
+:where(html[data-tm-device='phone']) .tm-room-segment > button[role='radio'] {
+  min-height: 44px;
+}
+
+/* 自己看的小窗占着右下角时，房间入口和聊天让到它左边（手机上让到它上面） */
+html[data-tm-solo-mini='mini'] :is(.tm-room-dock-pill, .tm-room-dock) {
+  right: calc(var(--tm-mini-gap) + var(--tm-mini-w) + 12px);
+}
+
+html[data-tm-solo-mini='folded'] :is(.tm-room-dock-pill, .tm-room-dock) {
+  right: calc(
+    var(--tm-mini-gap) + min(340px, 100vw - 2 * var(--tm-mini-gap)) + 12px
+  );
+}
+
+html[data-tm-solo-mini]:where([data-tm-device='phone'])
+  :is(.tm-room-dock-pill, .tm-room-dock) {
+  right: 12px;
+}
+
+html[data-tm-solo-mini='folded']:where([data-tm-device='phone'])
+  :is(.tm-room-dock-pill, .tm-room-dock) {
+  bottom: calc(var(--tm-mini-bottom) + 56px + 12px);
+}
+
+html[data-tm-solo-mini='mini']:where([data-tm-device='phone'])
+  :is(.tm-room-dock-pill, .tm-room-dock) {
+  bottom: calc(var(--tm-mini-bottom) + var(--tm-mini-h) + 12px);
+}
+
+/* 顶部 */
+.tm-room-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 64px;
+}
+
+.tm-room-head-back {
+  margin-left: -10px;
+}
+
+.tm-room-head-title {
+  flex: 1;
+  min-width: 0;
+}
+
+.tm-room-head-title h1 {
+  margin: 0;
+  overflow: hidden;
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tm-room-head-meta {
+  /* 顶部信息是一行安静的文字，不做成一排标签 */
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-top: 6px;
+  gap: 4px 14px;
+}
+
+.tm-room-head-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+:where(html:not([data-tm-device='wide'])) .tm-room-head {
+  /* 顶部一行：返回、房间名、几个图标按钮；在线头像在“成员”里看 */
+  flex-wrap: nowrap;
+  gap: 6px;
+  min-height: 56px;
+}
+
+:where(html:not([data-tm-device='wide'])) .tm-room-head-title h1 {
+  font-size: 19px;
+}
+
+:where(html:not([data-tm-device='wide'])) .tm-room-head-actions {
+  justify-content: flex-end;
+  width: auto;
+  gap: 0;
+}
+
+/* ================================================================ 手机 / 平板 */
+:where(html:not([data-tm-device='wide'])) .tm-room-head-meta {
+  flex-wrap: nowrap;
+  overflow: hidden;
+  margin-top: 2px;
+}
+
+:where(.tm-room-view[data-layout='compact'])
+  .tm-room-view-head
+  .tm-room-head-back {
+  margin-left: -4px;
+}
+
+:where(.tm-room-view[data-layout='compact'])
+  .tm-room-view-head
+  .tm-room-head-actions {
+  width: auto;
+  gap: 0;
+}
+
+:where(.tm-room-view[data-layout='compact'])
+  .tm-room-view-head
+  .tm-room-head-title
+  h1 {
+  font-size: 16px;
+  line-height: 1.3;
+}
+
+:where(.tm-room-view[data-layout='compact'])
+  .tm-room-view-head
+  .tm-room-head-meta {
+  gap: 2px 10px;
+  margin-top: 0;
+}
+
+:where(.tm-room-view[data-layout='desktop'])
+  .tm-room-view-head
+  .tm-room-head-title
+  h1 {
+  font-size: 22px;
+}
+
+.tm-room-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 28px;
+  padding: 0 10px;
+  border-radius: var(--tm-radius-full);
+  background: var(--tm-surface);
+  box-shadow: inset 0 0 0 1px var(--tm-line);
+  color: var(--tm-muted);
+  font-size: 12px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.tm-room-head-meta .tm-room-chip {
+  min-height: 24px;
+  padding: 0;
+  background: none;
+  box-shadow: none;
+  font-size: 13px;
+}
+
+:where(html:not([data-tm-device='wide'])) .tm-room-head-meta .tm-room-chip {
+  font-size: 12px;
+}
+
+:where(.tm-room-view[data-layout='compact'])
+  .tm-room-view-head
+  .tm-room-head-meta
+  .tm-room-chip {
+  min-height: 18px;
+  font-size: 12px;
+}
+
+/* 房间号、密码房做成描边小标签 */
+:where(.tm-room-view[data-layout='desktop'])
+  .tm-room-view-head
+  .tm-room-head-meta
+  .tm-room-chip:not(:first-child) {
+  min-height: 22px;
+  margin-left: 0;
+  padding: 0 8px;
+  border-radius: var(--tm-radius-full);
+  box-shadow: inset 0 0 0 1px var(--tm-line-strong);
+  font-size: 12px;
+}
+
+.tm-room-player-host {
+  position: absolute;
+  inset: 0;
+}
+
+.tm-room-player-host .art-video-player {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* 画面暂存区：在页面之间搬家的瞬间放这里（不离开文档，视频不会被暂停） */
+.tm-room-player-park {
+  position: fixed;
+  top: 0;
+  left: -10000px;
+  width: 480px;
+  height: 270px;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.tm-room-player-park > .tm-room-player-host {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+/* 没有播放权限：进度条不能拖（音量、全屏、弹幕照常） */
+[data-tm-locked='true'] .art-control-progress {
+  pointer-events: none;
+}

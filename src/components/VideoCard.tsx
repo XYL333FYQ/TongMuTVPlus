@@ -22,6 +22,9 @@ import React, {
 } from 'react';
 
 import './VideoCard.css';
+import './VideoCard-video-card-badge.css';
+import './VideoCard-video-horizontal.css';
+import './VideoCard-video-card-art.css';
 
 import { isAnimeCategoryText } from '@/lib/anime-keyword-expr';
 import { apiFetch } from '@/lib/api-client';

@@ -3,6 +3,10 @@
 import type { CSSProperties } from 'react';
 
 import '@/styles/loading.css';
+import '@/styles/loading-bubble.css';
+import '@/styles/loading-grid.css';
+import '@/styles/loading-loading.css';
+import '@/styles/loading-classic.css';
 
 import { cn } from '@/lib/cn';
 

@@ -4,6 +4,7 @@ import { ChevronDown } from 'lucide-react';
 import React, { useRef, useState } from 'react';
 
 import '@/styles/controls.css';
+import '@/styles/controls-expand-search.css';
 
 import Popover from '@/components/feedback/Popover';
 

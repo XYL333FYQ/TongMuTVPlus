@@ -10,6 +10,7 @@
   );
   aspect-ratio: var(--tm-full-video-aspect-ratio, 16 / 9);
 }
+
 :where(html:not([data-tm-device='wide']))
   .tm-playback-host[data-presentation='full']
   .tm-playback-video-frame
@@ -17,37 +18,30 @@
   position: absolute;
   inset: 0;
 }
-.tm-audio-focus-notice {
-  position: fixed;
-  top: 82px;
-  right: 24px;
-  z-index: var(--tm-z-page-notice);
-  padding: 10px 16px;
-  border-radius: var(--tm-radius-md);
-  font-size: 13px;
-  min-height: 44px;
-  background: var(--tm-glass-solid);
-  border: 0;
-}
+
 .tm-playback-host[data-presentation='full'] {
   position: relative;
 }
+
 .tm-playback-host:not([data-presentation='full']) {
   position: fixed;
   inset: 0;
   visibility: hidden;
   pointer-events: none;
 }
+
 /* 每种形态的层级：嵌入（docked）、小窗 / 收起（下面）各写一处 */
 .tm-playback-host[data-presentation='docked'] {
   z-index: var(--tm-z-docked);
 }
+
 /* 不在播放页时画面节点脱离页面固定定位；小窗 / 收起的位置和尺寸见下面 */
 .tm-playback-host:not([data-presentation='full']) [data-tm-player-mount] {
   position: fixed;
   visibility: visible;
   pointer-events: auto;
 }
+
 .tm-playback-host[data-presentation='docked'] [data-tm-player-mount] {
   z-index: calc(var(--tm-z-docked) + 1);
   left: var(--tm-slot-left);
@@ -59,17 +53,20 @@
   border-radius: var(--tm-radius-md);
   box-shadow: none;
 }
+
 /* 小窗 / 收起：画面节点在播放页里，小窗时把它和按钮层摆到同一个位置（尺寸用两种小窗共用的 --tm-mini-*，
    入场动画 tm-mini-in 和按钮层的样子在 components/mini-player/mini-player.css）。
    整页内容（.tm-playback-page）一层，按钮层在它上面一层 */
 .tm-playback-host:is([data-presentation='mini'], [data-presentation='folded']) {
   z-index: var(--tm-z-mini);
 }
+
 .tm-playback-host:is([data-presentation='mini'], [data-presentation='folded'])
   > .tm-playback-page {
   position: relative;
   z-index: 0;
 }
+
 /* 小窗：画面和按钮层叠在同一块位置上，位置、尺寸、拖动偏移两者一致 */
 .tm-playback-host[data-presentation='mini'] [data-tm-player-mount] {
   position: fixed;
@@ -85,6 +82,7 @@
   background: var(--tm-video-bg);
   box-shadow: var(--tm-shadow-lg), inset 0 0 0 1px var(--tm-line);
 }
+
 /* 外层宿主是 pointer-events: none，按钮层要打开 */
 .tm-playback-host[data-presentation='mini'] .tm-playback-chrome {
   position: fixed;
@@ -99,6 +97,7 @@
   visibility: visible;
   pointer-events: auto;
 }
+
 /* 收起：画面藏起来继续出声，只留一条胶囊 */
 .tm-playback-host[data-presentation='folded'] [data-tm-player-mount] {
   position: fixed;
@@ -109,6 +108,7 @@
   opacity: 0;
   pointer-events: none;
 }
+
 .tm-playback-host[data-presentation='folded'] .tm-playback-chrome {
   position: fixed;
   z-index: 1;
@@ -118,10 +118,12 @@
   pointer-events: auto;
   animation: tm-mini-in var(--tm-d-panel) var(--tm-ease-out);
 }
+
 .tm-playback-host[data-dragging='true']
   :is([data-tm-player-mount], .tm-playback-chrome) {
   transition: none;
 }
+
 @media (prefers-reduced-motion: reduce) {
   .tm-playback-host:is([data-presentation='mini'], [data-presentation='folded'])
     :is([data-tm-player-mount], .tm-playback-chrome) {
@@ -129,15 +131,18 @@
     transition: none;
   }
 }
+
 .tm-playback-host:not([data-presentation='full']) [data-tm-player-mount] > div {
   border-radius: inherit;
 }
+
 @media (prefers-reduced-motion: reduce) {
   .tm-playback-host * {
     animation: none !important;
     transition: none !important;
   }
 }
+
 html[data-tm-reduced-motion='true'] .tm-playback-host * {
   animation: none !important;
   transition: none !important;
@@ -147,59 +152,70 @@ html[data-tm-reduced-motion='true'] .tm-playback-host * {
 .tm-playback-host .art-video-player {
   --art-theme: var(--tm-room-player-text) !important;
 }
+
 .tm-playback-host #play-record-jump-container {
   background: var(--tm-glass-solid);
   color: var(--tm-text);
   border: 0;
   box-shadow: 0 2px 8px var(--tm-room-shadow);
 }
+
 .tm-playback-host #play-record-jump-btn,
 .tm-playback-host #play-record-dismiss-btn {
   background: var(--tm-surface-raised);
   color: var(--tm-text);
   border-color: var(--tm-line);
 }
+
 .tm-playback-host [data-tm-player-mount] {
   transition: left 400ms var(--tm-ease-in-out), top 400ms var(--tm-ease-in-out),
     width 400ms var(--tm-ease-in-out), height 400ms var(--tm-ease-in-out),
     opacity 400ms var(--tm-ease-in-out),
     border-radius 400ms var(--tm-ease-in-out);
 }
-.tm-playback-recovery button:focus-visible,
-.tm-audio-focus-notice:focus-visible {
+
+.tm-playback-recovery button:focus-visible {
   outline: 2px solid var(--tm-text);
   outline-offset: 2px;
 }
+
 html[data-tm-reduced-motion='true'] .tm-playback-host [data-tm-player-mount] {
   transition: none !important;
   animation: none !important;
 }
+
 @media (prefers-reduced-motion: reduce) {
   .tm-playback-host [data-tm-player-mount] {
     transition: none !important;
     animation: none !important;
   }
 }
+
 html[data-tm-no-blur='true'] .tm-playback-host * {
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
 }
+
 .tm-playback-recovery {
   width: min(520px, calc(100vw - 32px));
   flex-wrap: wrap;
 }
+
 .tm-playback-recovery > div {
   flex: 1 1 180px;
   min-width: 0;
 }
+
 .tm-playback-recovery strong {
   display: block;
   margin-bottom: 4px;
 }
+
 .tm-playback-recovery p {
   color: var(--tm-muted);
   overflow-wrap: anywhere;
 }
+
 .tm-playback-recovery > button {
   flex-shrink: 0;
   padding: 8px 12px;
@@ -207,9 +223,11 @@ html[data-tm-no-blur='true'] .tm-playback-host * {
   border: 0;
   border-radius: var(--tm-radius-sm);
 }
+
 .tm-playback-recovery > button:hover {
   background: var(--tm-glass-solid);
 }
+
 .tm-playback-action-error {
   position: fixed;
   left: 50%;
@@ -235,16 +253,45 @@ html[data-tm-no-blur='true'] .tm-playback-host * {
   outline-offset: -2px;
   border-radius: var(--tm-radius-xs);
 }
+
 /* Artplayer 把播放器里所有 svg 涂满文字色（.art-video-player svg { fill }）。
    线条图标（svg 上写了 fill="none"）被涂满后成了一坨，例如房间弹幕开关。按图标自己声明的来 */
 .art-video-player svg[fill='none'] {
   fill: none;
 }
+
 /* 拖动过程中跟手，不要过渡；松手后吸附到角落才有 220ms 动画 */
 .tm-playback-host[data-dragging='true'] [data-tm-player-mount] {
   transition: none;
   cursor: grabbing;
   user-select: none;
+}
+
+/* 只管播放页里的画面；以前没限定形态，画面转成小窗后这条还在，竖屏小窗四角变尖 */
+:where(html:not([data-tm-device='wide']))
+  .tm-playback-host[data-presentation='full']
+  .tm-solo-row
+  .tm-playback-video-frame
+  > [data-tm-player-mount] {
+  border-radius: 0;
+}
+
+.tm-audio-focus-notice {
+  position: fixed;
+  top: 82px;
+  right: 24px;
+  z-index: var(--tm-z-page-notice);
+  padding: 10px 16px;
+  border-radius: var(--tm-radius-md);
+  font-size: 13px;
+  min-height: 44px;
+  background: var(--tm-glass-solid);
+  border: 0;
+}
+
+.tm-audio-focus-notice:focus-visible {
+  outline: 2px solid var(--tm-text);
+  outline-offset: 2px;
 }
 
 /* 手机：跨标签页声音提示放到底栏上方，不再压住顶部的影片标题 */
@@ -266,6 +313,7 @@ html[data-tm-no-blur='true'] .tm-playback-host * {
   height: auto !important;
   max-height: calc(100% - 52px) !important;
 }
+
 .art-video-player .art-settings .art-setting-panel {
   max-height: calc(100% - 0px);
   overflow-y: auto;
@@ -275,521 +323,4 @@ html[data-tm-no-blur='true'] .tm-playback-host * {
 /* 设置面板条目不被 flex 压扁，超出高度时由面板滚动 */
 .art-video-player .art-settings .art-setting-panel > * {
   flex-shrink: 0;
-}
-
-/* ================================================================
- * 独立看播放页（2026-11-14 C 版）：
- * 手机 / 平板：选集、换源、弹幕、工具、详情收进底部操作坞，点开是半屏面板，画面留在上面；
- * 电脑：右侧一列图标，选集 / 换源 / 弹幕开合右边的面板，详情、AI 问片、网盘打开抽屉。
- * ================================================================ */
-.tm-solo-sheet-close,
-.tm-solo-sheet-head,
-.tm-solo-sheet-backdrop {
-  display: none;
-}
-:where(html:not([data-tm-device='wide'])) .tm-solo-rail {
-  display: none;
-}
-:where(html:not([data-tm-device='wide']))
-  .tm-solo-selector:not([data-tm-sheet]),
-:where(html:not([data-tm-device='wide'])) .tm-solo-tools:not([data-tm-sheet]) {
-  display: none;
-}
-/* 手机 / 平板：选集面板和工具面板都是从底部弹出的半屏面板（tm-solo-sheet） */
-:where(html:not([data-tm-device='wide'])) .tm-solo-sheet[data-tm-sheet] {
-  position: fixed;
-  right: 0;
-  bottom: 0;
-  left: 0;
-  z-index: var(--tm-z-overlay);
-  display: flex;
-  flex-direction: column;
-  /* 接在画面下方（画面宽 16:9），最少留半屏给面板 */
-  height: max(
-    45dvh,
-    calc(
-      100dvh -
-        var(
-          --tm-solo-sheet-top,
-          calc(56.25vw + var(--tm-header-height) + var(--tm-safe-top))
-        ) - 4px
-    )
-  );
-  margin: 0;
-  padding: 52px 16px calc(16px + var(--tm-safe-bottom, 0px));
-  overflow: hidden;
-  border-radius: var(--tm-radius-lg) var(--tm-radius-lg) 0 0;
-  background: var(--tm-surface);
-  box-shadow: 0 -20px 50px -20px rgb(var(--tm-ink-rgb) / 0.6),
-    inset 0 1px 0 var(--tm-line);
-  opacity: 1;
-  transform: none;
-  animation: tm-solo-sheet-in var(--tm-d-panel) var(--tm-ease-out);
-}
-:where(html:not([data-tm-device='wide'])) .tm-solo-sheet-close {
-  position: absolute;
-  top: 4px;
-  right: 6px;
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  color: var(--tm-muted);
-}
-:where(html:not([data-tm-device='wide']))
-  [data-tm-sheet]
-  > .tm-solo-sheet-close {
-  display: grid;
-  place-items: center;
-}
-:where(html:not([data-tm-device='wide'])) .tm-solo-tools[data-tm-sheet] {
-  padding-top: 0;
-  overflow-y: auto;
-}
-:where(html:not([data-tm-device='wide']))
-  .tm-solo-tools[data-tm-sheet]
-  > .tm-solo-sheet-head {
-  position: sticky;
-  top: 0;
-  z-index: 1;
-  display: flex;
-  flex: none;
-  align-items: center;
-  justify-content: space-between;
-  min-height: 52px;
-  background: var(--tm-surface);
-}
-:where(html:not([data-tm-device='wide'])) .tm-solo-sheet-head h2 {
-  margin: 0;
-  font-size: 17px;
-  font-weight: 700;
-}
-:where(html:not([data-tm-device='wide'])) .tm-solo-sheet-head button {
-  display: grid;
-  place-items: center;
-  width: 44px;
-  height: 44px;
-  margin-right: -10px;
-  border-radius: 50%;
-  color: var(--tm-muted);
-}
-/* 工具面板里按钮带字、换行排，不再横向挤一条 */
-:where(html:not([data-tm-device='wide']))
-  .tm-solo-tools[data-tm-sheet]
-  > div:not(.tm-solo-sheet-head) {
-  overflow: visible;
-  padding: 0;
-  border: 0;
-  background: none;
-}
-:where(html:not([data-tm-device='wide'])) .tm-solo-tools[data-tm-sheet] button {
-  width: auto;
-  height: 44px;
-  gap: 8px;
-  padding: 0 14px;
-}
-:where(html:not([data-tm-device='wide']))
-  .tm-solo-tools[data-tm-sheet]
-  button
-  > span {
-  display: inline;
-  max-width: none;
-}
-:where(html:not([data-tm-device='wide'])) .tm-solo-sheet-backdrop[data-open] {
-  position: fixed;
-  inset: 0;
-  z-index: calc(var(--tm-z-overlay) - 1);
-  display: block;
-  border: 0;
-  /* 不压暗：上面的画面要照常看清楚，点空白处关面板 */
-  background: transparent;
-}
-:where(html:not([data-tm-device='wide'])) .tm-solo-dock {
-  position: fixed;
-  right: 0;
-  bottom: 0;
-  left: 0;
-  z-index: var(--tm-z-page-float);
-  display: flex;
-  gap: 2px;
-  padding: 4px max(4px, var(--tm-safe-left, 0px))
-    calc(4px + var(--tm-safe-bottom, 0px));
-  border-top: 1px solid var(--tm-line);
-  background: var(--tm-glass-solid, var(--tm-surface));
-  backdrop-filter: blur(18px) saturate(1.4);
-  -webkit-backdrop-filter: blur(18px) saturate(1.4);
-}
-html:where(:not([data-tm-device='wide']))[data-tm-no-blur] .tm-solo-dock {
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
-  background: var(--tm-surface);
-}
-:where(html:not([data-tm-device='wide'])) .tm-solo-dock button {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 2px;
-  min-width: 0;
-  min-height: 50px;
-  padding: 0 2px;
-  border-radius: var(--tm-radius-md);
-  color: var(--tm-text);
-}
-:where(html:not([data-tm-device='wide'])) .tm-solo-dock button:hover {
-  background: var(--tm-line);
-}
-:where(html:not([data-tm-device='wide'])) .tm-solo-dock button:focus-visible {
-  outline: 2px solid var(--tm-text);
-  outline-offset: -2px;
-}
-:where(html:not([data-tm-device='wide'])) .tm-solo-dock span {
-  font-size: 12px;
-  font-weight: 600;
-  line-height: 1.2;
-}
-:where(html:not([data-tm-device='wide'])) .tm-solo-dock em {
-  max-width: 100%;
-  overflow: hidden;
-  color: var(--tm-muted);
-  font-size: 12px;
-  font-style: normal;
-  line-height: 1.2;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-@keyframes tm-solo-sheet-in {
-  from {
-    transform: translateY(32px);
-    opacity: 0.4;
-  }
-}
-@keyframes tm-solo-fade {
-  from {
-    opacity: 0;
-  }
-}
-html[data-tm-reduced-motion]
-  :is(.tm-solo-selector, .tm-solo-tools, .tm-solo-sheet-backdrop) {
-  animation: none;
-}
-@media (prefers-reduced-motion: reduce) {
-  :is(.tm-solo-selector, .tm-solo-tools, .tm-solo-sheet-backdrop) {
-    animation: none;
-  }
-}
-:where(html[data-tm-device='wide']) .tm-solo-dock {
-  display: none;
-}
-:where(html[data-tm-device='wide']) .tm-solo-row {
-  display: flex;
-  gap: 12px;
-  align-items: stretch;
-}
-/* 电脑：右侧一条细的图标栏，和画面一样高；下载、外部播放器等收进“工具”抽屉 */
-:where(html[data-tm-device='wide']) .tm-solo-rail {
-  display: flex;
-  flex: none;
-  flex-direction: column;
-  gap: 2px;
-  width: 64px;
-  padding: 6px 4px;
-  border-radius: var(--tm-radius-lg);
-  background: var(--tm-surface);
-  box-shadow: inset 0 0 0 1px var(--tm-line);
-}
-:where(html[data-tm-device='wide']) .tm-solo-rail button {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 3px;
-  width: 56px;
-  min-height: 54px;
-  border-radius: var(--tm-radius-md);
-  color: var(--tm-muted);
-  font-size: 12px;
-  font-weight: 600;
-  transition: background var(--tm-d-hover), color var(--tm-d-hover);
-}
-:where(html[data-tm-device='wide']) .tm-solo-rail button:hover,
-:where(html[data-tm-device='wide']) .tm-solo-rail button[aria-pressed='true'] {
-  background: var(--tm-surface-raised);
-  color: var(--tm-text);
-}
-:where(html[data-tm-device='wide']) .tm-solo-rail button:focus-visible {
-  outline: 2px solid var(--tm-text);
-  outline-offset: 2px;
-}
-/* 半屏面板打开时，房间入口胶囊和聊天先让开 */
-body:has(.tm-solo-selector[data-tm-sheet], .tm-solo-tools[data-tm-sheet])
-  :is(.tm-room-dock-pill, .tm-room-dock) {
-  visibility: hidden;
-}
-
-/* ---------- 和原型对齐（2026-11-15）：手机 / 平板上画面在最上面，标题在画面下面 */
-/* 所有宽度：画面在最上面，标题在画面下面 */
-.tm-solo-page > * {
-  order: 3;
-}
-.tm-solo-page > .tm-solo-row {
-  order: 1;
-}
-.tm-solo-page > .tm-solo-title {
-  order: 2;
-}
-/* 详情：不再重复一个超大标题，和上面的标题同一级字号 */
-:where(html:not([data-tm-device='wide'])) .tm-solo-detail > div > div {
-  padding: 4px 0 0;
-}
-:where(html:not([data-tm-device='wide'])) .tm-solo-detail h1 {
-  justify-content: flex-start;
-  margin-bottom: 4px;
-  font-size: 16px;
-  text-align: left;
-}
-:where(html:not([data-tm-device='wide'])) .tm-solo-detail h1 svg {
-  width: 22px;
-  height: 22px;
-}
-/* 半屏面板里：选集组件占满剩下的高度，去掉它自带的卡片外框，集数是一格一格的块 */
-:where(html:not([data-tm-device='wide']))
-  .tm-solo-selector[data-tm-sheet]
-  > :not(.tm-solo-sheet-close) {
-  flex: 1;
-  min-height: 0;
-  margin: 0;
-  padding: 0;
-  border: 0;
-  background: none;
-  box-shadow: none;
-}
-:where(html:not([data-tm-device='wide']))
-  .tm-solo-selector[data-tm-sheet]
-  button.font-mono {
-  height: 44px;
-  border-color: transparent;
-  border-radius: var(--tm-radius-md);
-  font-family: inherit;
-  font-size: 15px;
-  font-weight: 600;
-}
-:where(html:not([data-tm-device='wide']))
-  .tm-solo-selector[data-tm-sheet]
-  button.font-mono:not([aria-current]) {
-  background: var(--tm-surface-raised);
-}
-/* 手机 / 平板：画面贴满两边、不留圆角 */
-:where(html:not([data-tm-device='wide'])) .tm-page-container.tm-solo-page {
-  padding-top: 0;
-}
-/* 只管播放页里的画面；以前没限定形态，画面转成小窗后这条还在，竖屏小窗四角变尖 */
-:where(html:not([data-tm-device='wide']))
-  .tm-playback-host[data-presentation='full']
-  .tm-solo-row
-  .tm-playback-video-frame
-  > [data-tm-player-mount] {
-  border-radius: 0;
-}
-/* 面板顶部：选集 / 换源 / 弹幕 和关闭按钮在同一行 */
-:where(html:not([data-tm-device='wide'])) .tm-solo-selector[data-tm-sheet] {
-  padding-top: 8px;
-}
-:where(html:not([data-tm-device='wide']))
-  .tm-solo-selector[data-tm-sheet]
-  > :not(.tm-solo-sheet-close)
-  > div:first-child {
-  margin: 0 44px 4px 0;
-}
-:where(html:not([data-tm-device='wide']))
-  .tm-solo-selector[data-tm-sheet]
-  > :not(.tm-solo-sheet-close)
-  > div:first-child
-  > div {
-  padding-inline: 8px;
-  border-radius: var(--tm-radius-md);
-  background: none;
-}
-:where(html:not([data-tm-device='wide']))
-  .tm-solo-selector[data-tm-sheet]
-  .tm-solo-sheet-close {
-  top: 10px;
-}
-
-/* ---------- 收紧尺寸（2026-11-15 第二轮） */
-/* 手机 / 平板：标题、标签、详情字号降一级 */
-:where(html:not([data-tm-device='wide'])) .tm-solo-title {
-  padding-block: 2px;
-}
-:where(html:not([data-tm-device='wide'])) .tm-solo-title h1 {
-  gap: 6px;
-  font-size: 19px;
-  line-height: 1.3;
-}
-:where(html:not([data-tm-device='wide']))
-  .tm-solo-title
-  h1
-  span:is(.tm-ptitle-span-3, .tm-ptitle-span-4, .tm-ptitle-span-5) {
-  padding: 1px 9px;
-  font-size: 12px;
-}
-:where(html:not([data-tm-device='wide']))
-  .tm-solo-detail
-  :is(
-    .tm-pdetail-button-2,
-    .tm-pdetail-div-8,
-    .tm-pdetail-div-11,
-    .tm-pdetail-div-12
-  ) {
-  font-size: 14px;
-}
-:where(html:not([data-tm-device='wide'])) .tm-solo-dock svg {
-  width: 19px;
-  height: 19px;
-}
-:where(html[data-tm-device='wide']) .tm-solo-rail button svg {
-  width: 19px;
-  height: 19px;
-}
-:where(html[data-tm-device='wide']) .tm-solo-rail-sep {
-  height: 1px;
-  margin: 4px 10px;
-  background: var(--tm-line);
-}
-:where(html[data-tm-device='wide']) .tm-solo-rail-end {
-  margin-top: auto;
-}
-:where(html[data-tm-device='wide']) .tm-solo-tools:not([data-tm-sheet]) {
-  display: none;
-}
-/* 页面容器自成一层（z-index 10），盖不过站点顶栏：抽屉从顶栏下面开始 */
-:where(html[data-tm-device='wide']) .tm-solo-tools[data-tm-sheet] {
-  position: fixed;
-  top: var(--tm-header-height);
-  right: 0;
-  bottom: 0;
-  z-index: var(--tm-z-overlay);
-  display: block;
-  width: min(380px, 100vw);
-  margin: 0;
-  padding: 0 20px 24px;
-  overflow-y: auto;
-  background: var(--tm-surface);
-  box-shadow: -24px 0 60px -24px rgb(var(--tm-ink-rgb) / 0.6),
-    inset 1px 0 0 var(--tm-line);
-  animation: tm-solo-drawer-in var(--tm-d-panel) var(--tm-ease-out);
-}
-:where(html[data-tm-device='wide'])
-  .tm-solo-tools[data-tm-sheet]
-  > .tm-solo-sheet-head {
-  position: sticky;
-  top: 0;
-  z-index: 1;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  min-height: 60px;
-  background: var(--tm-surface);
-}
-:where(html[data-tm-device='wide'])
-  .tm-solo-tools[data-tm-sheet]
-  .tm-solo-sheet-head
-  h2 {
-  margin: 0;
-  font-size: 17px;
-  font-weight: 700;
-}
-:where(html[data-tm-device='wide'])
-  .tm-solo-tools[data-tm-sheet]
-  .tm-solo-sheet-head
-  button {
-  display: grid;
-  place-items: center;
-  width: 40px;
-  height: 40px;
-  margin-right: -8px;
-  border-radius: 50%;
-  color: var(--tm-muted);
-}
-:where(html[data-tm-device='wide'])
-  .tm-solo-tools[data-tm-sheet]
-  > div:not(.tm-solo-sheet-head) {
-  overflow: visible;
-  padding: 0;
-  border: 0;
-  background: none;
-}
-:where(html[data-tm-device='wide'])
-  .tm-solo-tools[data-tm-sheet]
-  :is(
-    .tm-ptools-div-3,
-    .tm-ptools-div-4,
-    .tm-ptools-button-1,
-    .tm-ptools-button-2,
-    .tm-ptools-button-3,
-    .tm-ptools-button-4,
-    .tm-ptools-button-7,
-    .tm-ptools-button-8,
-    .tm-ptools-button-9
-  ) {
-  flex-wrap: wrap;
-  justify-content: flex-start;
-}
-:where(html[data-tm-device='wide']) .tm-solo-tools[data-tm-sheet] button {
-  width: auto;
-  height: 40px;
-  gap: 8px;
-  padding: 0 14px;
-}
-:where(html[data-tm-device='wide'])
-  .tm-solo-tools[data-tm-sheet]
-  button
-  > span {
-  display: inline;
-  max-width: none;
-}
-:where(html[data-tm-device='wide']) .tm-solo-sheet-backdrop[data-open] {
-  position: fixed;
-  inset: 0;
-  top: var(--tm-header-height);
-  z-index: calc(var(--tm-z-overlay) - 1);
-  display: block;
-  border: 0;
-  background: var(--tm-scrim);
-}
-@keyframes tm-solo-drawer-in {
-  from {
-    opacity: 0;
-    transform: translateX(24px);
-  }
-}
-html[data-tm-reduced-motion] .tm-solo-tools[data-tm-sheet] {
-  animation: none;
-}
-/* 工具按钮一排排往下排，去广告等开关另起一行 */
-:where(html[data-tm-device='wide'])
-  .tm-solo-tools[data-tm-sheet]
-  :is(
-    .tm-ptools-div-3,
-    .tm-ptools-div-4,
-    .tm-ptools-button-1,
-    .tm-ptools-button-2,
-    .tm-ptools-button-3,
-    .tm-ptools-button-4,
-    .tm-ptools-button-7,
-    .tm-ptools-button-8,
-    .tm-ptools-button-9
-  )
-  > :is(
-    .tm-ptools-div-3,
-    .tm-ptools-div-4,
-    .tm-ptools-button-1,
-    .tm-ptools-button-2,
-    .tm-ptools-button-3,
-    .tm-ptools-button-4,
-    .tm-ptools-button-7,
-    .tm-ptools-button-8,
-    .tm-ptools-button-9
-  ) {
-  flex: 0 0 100%;
 }

@@ -20,6 +20,8 @@ import {
 } from 'react';
 
 import './room.css';
+import './room-segment.css';
+import './room-stage.css';
 
 import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
 import { readSetting, writeSetting } from '@/lib/settings';

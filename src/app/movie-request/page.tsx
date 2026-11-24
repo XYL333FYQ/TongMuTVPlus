@@ -4,6 +4,7 @@ import { AlertCircle, CheckCircle } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
 import '@/styles/controls.css';
+import '@/styles/controls-expand-search.css';
 
 import { apiFetch } from '@/lib/api-client';
 import { logger } from '@/lib/logger';

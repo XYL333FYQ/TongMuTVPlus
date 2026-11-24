@@ -1,0 +1,300 @@
+/* RoomView.css 按块拆出的一段（tm-room-view-now、tm-room-view-strip、tm-room-view-ep），引入顺序紧跟前一段，层叠结果不变 */
+/* 正在放映 */
+.tm-room-view-now {
+  /* 正在放映：直接放在舞台下面，不再套一层卡片 */
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  border-radius: var(--tm-radius-lg);
+  padding: 6px 2px 0;
+  background: none;
+  box-shadow: none;
+}
+
+.tm-room-view-now-poster {
+  --tm-art-radius: var(--tm-radius-sm);
+  --tm-art-shadow: var(--tm-shadow-sm);
+  --tm-poster-initial-size: 22px;
+  flex-shrink: 0;
+  width: 56px;
+  height: 80px;
+}
+
+.tm-room-view-now-text {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.tm-room-view-now-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--tm-muted);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.tm-room-view-now-label::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--tm-muted);
+}
+
+.tm-room-view-now-label[data-state='playing'] {
+  color: var(--tm-text);
+}
+
+.tm-room-view-now-label[data-state='playing']::before {
+  background: var(--tm-text);
+  animation: tm-room-pulse 1.8s var(--tm-ease-in-out) infinite;
+}
+
+.tm-room-view-now h2 {
+  margin: 0;
+  overflow: hidden;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tm-room-view-now-meta {
+  overflow: hidden;
+  color: var(--tm-muted);
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tm-room-view-now-actions {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 8px;
+}
+
+:where(html[data-tm-device='phone']) .tm-room-view-now {
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+:where(html[data-tm-device='phone']) .tm-room-view-now-poster {
+  width: 44px;
+  height: 62px;
+}
+
+:where(html[data-tm-device='phone']) .tm-room-view-now h2 {
+  font-size: 17px;
+}
+
+:where(html[data-tm-device='phone']) .tm-room-view-now-actions {
+  width: 100%;
+}
+
+.tm-room-view-now .tm-room-view-now-actions {
+  gap: 2px;
+}
+
+:where(.tm-room-view[data-layout='compact']) .tm-room-view-now {
+  flex-wrap: nowrap;
+  gap: 10px;
+  padding: 8px 6px 8px 12px;
+}
+
+:where(.tm-room-view[data-layout='compact'])
+  .tm-room-view-now
+  .tm-room-view-now-poster {
+  --tm-art-radius: var(--tm-radius-xs);
+  --tm-poster-initial-size: 14px;
+  width: 30px;
+  height: 42px;
+}
+
+:where(.tm-room-view[data-layout='compact']) .tm-room-view-now h2 {
+  font-size: 14px;
+}
+
+:where(.tm-room-view[data-layout='compact'])
+  .tm-room-view-now
+  .tm-room-view-now-label {
+  font-size: 12px;
+}
+
+:where(.tm-room-view[data-layout='compact'])
+  .tm-room-view-now
+  .tm-room-view-now-meta {
+  font-size: 12px;
+  display: none;
+}
+
+:where(.tm-room-view[data-layout='compact'])
+  .tm-room-view-now
+  .tm-room-view-now-actions {
+  width: auto;
+}
+
+.tm-room-view-now-episode {
+  display: none;
+}
+
+.tm-room-view:where([data-layout='desktop']) .tm-room-view-now {
+  border-radius: var(--tm-radius-lg);
+  background: var(--tm-surface);
+  box-shadow: inset 0 0 0 1px var(--tm-line);
+  gap: 12px;
+  padding: 10px 14px;
+}
+
+:where(.tm-room-view[data-layout='compact']) .tm-room-view-now-episode {
+  display: inline;
+}
+
+:where(.tm-room-view[data-layout='compact'])
+  .tm-room-view-now
+  .tm-room-view-now-text {
+  gap: 1px;
+}
+
+.tm-room-view:where([data-layout='desktop'])
+  .tm-room-view-now
+  .tm-room-view-now-poster {
+  width: 40px;
+  height: 58px;
+}
+
+.tm-room-view:where([data-layout='desktop']) .tm-room-view-now h2 {
+  font-size: 16px;
+}
+
+:where(.tm-room-view[data-layout='desktop'])
+  .tm-room-view-nowcard
+  .tm-room-view-now {
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+}
+
+.tm-room-view[data-layout='tablet'] .tm-room-view-now {
+  flex: none;
+  gap: 14px;
+  padding: 12px 14px;
+  border-radius: var(--tm-radius-lg);
+  background: var(--tm-surface);
+  box-shadow: inset 0 0 0 1px var(--tm-line);
+}
+
+.tm-room-view[data-layout='tablet'] .tm-room-view-now .tm-room-view-now-poster {
+  width: 44px;
+  height: 62px;
+}
+
+.tm-room-view[data-layout='tablet'] .tm-room-view-now h2 {
+  font-size: 17px;
+}
+
+/* 快速选集 */
+.tm-room-view-strip {
+  display: flex;
+  gap: 8px;
+  padding: 2px 2px 6px;
+  overflow-x: auto;
+  scrollbar-width: thin;
+  overscroll-behavior-x: contain;
+}
+
+/* 换集在“片单”面板里 */
+:where(.tm-room-view[data-layout='compact']) .tm-room-view-strip {
+  display: none;
+}
+
+:where(.tm-room-view[data-layout='desktop'])
+  .tm-room-view-nowcard
+  .tm-room-view-strip {
+  padding: 0 14px 12px;
+}
+
+/* 选集：一排大块，横着滑 */
+.tm-room-view[data-layout='tablet'] .tm-room-view-strip {
+  display: flex;
+  flex: none;
+  flex-wrap: nowrap;
+  gap: 8px;
+  padding: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.tm-room-view[data-layout='tablet'] .tm-room-view-strip::-webkit-scrollbar {
+  display: none;
+}
+
+.tm-room-view-ep {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+  min-width: 52px;
+  height: 44px;
+  padding: 0 12px;
+  border-radius: var(--tm-radius-sm);
+  background: var(--tm-surface);
+  box-shadow: inset 0 0 0 1px var(--tm-line);
+  color: var(--tm-text);
+  font-size: 14px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  transition: background var(--tm-d-hover), transform var(--tm-d-press);
+}
+
+.tm-room-view-ep:hover:not(:disabled) {
+  background: var(--tm-surface-raised);
+}
+
+.tm-room-view-ep:active:not(:disabled) {
+  transform: scale(0.96);
+}
+
+.tm-room-view-ep[aria-current='true'] {
+  background: var(--tm-text);
+  box-shadow: none;
+  color: var(--tm-accent-contrast);
+}
+
+.tm-room-view-ep:disabled:not([aria-current='true']) {
+  opacity: 0.55;
+}
+
+.tm-room-view-ep-no {
+  max-width: 9em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 面板里的集数：实心小块，和原型一致 */
+.tm-room-view-panel .tm-room-view-ep:not([aria-current='true']) {
+  background: var(--tm-surface-raised);
+  box-shadow: none;
+}
+
+:where(.tm-room-view[data-layout='desktop'])
+  .tm-room-view-strip
+  .tm-room-view-ep {
+  min-width: 46px;
+  height: 38px;
+  font-size: 13px;
+}
+
+.tm-room-view[data-layout='tablet'] .tm-room-view-strip .tm-room-view-ep {
+  flex: none;
+  min-width: 64px;
+  height: 48px;
+  padding: 0 16px;
+  font-size: 15px;
+}
