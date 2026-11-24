@@ -9,7 +9,12 @@ import { matchesMedia } from '@/lib/device-tier';
 import { logger } from '@/lib/logger';
 import { playMusicList } from '@/lib/music/actions';
 import { getApiErrorMessage } from '@/lib/music/errors';
-import { mapSong } from '@/lib/music/shared';
+import { type RawSong, mapSong } from '@/lib/music/shared';
+import type { Song } from '@/lib/music/types';
+import type {
+  MusicV2PlaylistItem,
+  MusicV2PlaylistRecord,
+} from '@/lib/music-v2';
 
 import { askConfirm, notifyError } from '@/components/feedback/AppDialogs';
 import MusicEmpty, {
@@ -69,12 +74,19 @@ function PickThumb({ src }: { src?: string }) {
   );
 }
 
+/** 歌单里的一首歌：新接口是 MusicV2PlaylistItem，旧数据可能带 id / pic 等字段 */
+type PlaylistSong = MusicV2PlaylistItem &
+  Pick<RawSong, 'id' | 'platform' | 'pic' | 'duration'>;
+
 export default function MusicMyPlaylistsPage() {
-  const [userPlaylists, setUserPlaylists] = useState<any[]>([]);
-  const [selectedUserPlaylist, setSelectedUserPlaylist] = useState<any | null>(
-    null
+  const [userPlaylists, setUserPlaylists] = useState<MusicV2PlaylistRecord[]>(
+    []
   );
-  const [userPlaylistSongs, setUserPlaylistSongs] = useState<any[]>([]);
+  const [selectedUserPlaylist, setSelectedUserPlaylist] =
+    useState<MusicV2PlaylistRecord | null>(null);
+  const [userPlaylistSongs, setUserPlaylistSongs] = useState<PlaylistSong[]>(
+    []
+  );
   // 歌单列表挂载即拉，初值给 true 才不会先闪一帧"还没有歌单"。
   // 下面的曲目列表是人点出来的，初值就留 false。
   const [loadingUserPlaylists, setLoadingUserPlaylists] = useState(true);
@@ -98,7 +110,7 @@ export default function MusicMyPlaylistsPage() {
     loadUserPlaylists();
   }, [loadUserPlaylists]);
 
-  const normalizePlaylistSong = (song: any) =>
+  const normalizePlaylistSong = (song: PlaylistSong) =>
     mapSong({
       ...song,
       id: song.songId || song.id,
@@ -122,7 +134,7 @@ export default function MusicMyPlaylistsPage() {
     if (matchesMedia('(max-width: 767px)')) window.scrollTo({ top: 0 });
   };
 
-  const selectPlaylist = (playlist: any) => {
+  const selectPlaylist = (playlist: MusicV2PlaylistRecord) => {
     setSelectedUserPlaylist(playlist);
     loadUserPlaylistSongs(playlist.id);
     scrollToTopOnPhone();
@@ -170,7 +182,7 @@ export default function MusicMyPlaylistsPage() {
     }
   };
 
-  const removeSongFromUserPlaylist = async (song: any) => {
+  const removeSongFromUserPlaylist = async (song: Song) => {
     if (!selectedUserPlaylist) return;
     if (
       !(await askConfirm({

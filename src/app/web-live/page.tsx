@@ -33,10 +33,18 @@ import {
   useWebLiveSync,
   webLiveReference,
 } from '@/features/room/activities';
+import type { AdminConfig } from '@/lib/admin.types';
 
-let Artplayer: any = null;
-let Hls: any = null;
-let flvjs: any = null;
+// 播放器库按需加载，首次进页面时才 import
+let Artplayer: typeof import('artplayer').default | null = null;
+let Hls: typeof import('hls.js').default | null = null;
+let flvjs: typeof import('flv.js').default | null = null;
+
+/** 直播源：后台配置里的一项，房间同步快照只带前四个字段 */
+type WebLiveSource = Pick<
+  NonNullable<AdminConfig['WebLiveConfig']>[number],
+  'key' | 'name' | 'platform' | 'roomId'
+>;
 
 /* 初始化加载动画（后台「个性化配置 → 初始化加载样式」可切换旧版/方格/魔法阵）。
  * 款式本身见 components/LoadingStyle。 */
@@ -64,7 +72,9 @@ export default function WebLivePage() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const artRef = useRef<HTMLDivElement | null>(null);
-  const artPlayerRef = useRef<any>(null);
+  const artPlayerRef = useRef<InstanceType<
+    typeof import('artplayer').default
+  > | null>(null);
   const [roomPlayer, setRoomPlayer] = useState<HTMLElement | null>(null);
   const watchRoom = useWatchRoomContextSafe();
   const playbackSession = usePlaybackSessionSafe();
@@ -76,8 +86,10 @@ export default function WebLivePage() {
     'loading' | 'fetching' | 'ready'
   >('loading');
   const [loadingMessage, setLoadingMessage] = useState('正在加载直播源...');
-  const [sources, setSources] = useState<any[]>([]);
-  const [currentSource, setCurrentSource] = useState<any | null>(null);
+  const [sources, setSources] = useState<WebLiveSource[]>([]);
+  const [currentSource, setCurrentSource] = useState<WebLiveSource | null>(
+    null
+  );
   const [videoUrl, setVideoUrl] = useState('');
   const [originalVideoUrl, setOriginalVideoUrl] = useState('');
   const [streamInfo, setStreamInfo] = useState<{
@@ -106,12 +118,14 @@ export default function WebLivePage() {
     currentSourcePlatform: currentSource?.platform || '',
     currentSourceRoomId: currentSource?.roomId || '',
     isReady: () =>
-      Boolean(artPlayerRef.current?.video?.readyState >= 2 && !isVideoLoading),
+      Boolean(
+        (artPlayerRef.current?.video?.readyState ?? 0) >= 2 && !isVideoLoading
+      ),
     onSourceChange: (sourceKey, platform, roomId) => {
       if (
         currentSource?.platform === platform &&
         currentSource?.roomId === roomId &&
-        artPlayerRef.current?.video?.readyState >= 2
+        (artPlayerRef.current?.video?.readyState ?? 0) >= 2
       )
         return;
       const state = watchRoom?.currentRoom?.currentState;
@@ -351,7 +365,7 @@ export default function WebLivePage() {
   }, []);
 
   const handleSourceClick = async (
-    source: any,
+    source: WebLiveSource,
     origin: 'user' | 'snapshot' | 'initial' = 'user'
   ) => {
     if (origin === 'user' && webLiveSync.active) {
@@ -418,7 +432,7 @@ export default function WebLivePage() {
     );
   };
 
-  const getRoomUrl = (source: any) => {
+  const getRoomUrl = (source: WebLiveSource) => {
     if (source.platform === 'huya') {
       return `https://huya.com/${source.roomId}`;
     }

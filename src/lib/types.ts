@@ -1,5 +1,6 @@
 import { AdminConfig } from './admin.types';
 import { BookReadRecord, BookShelfItem } from './book.types';
+import type { MusicPlayRecord } from './db.client';
 import { MangaReadRecord, MangaShelfItem } from './manga.types';
 
 // 播放记录数据结构
@@ -60,13 +61,22 @@ export interface IStorage {
   migrateFavorites(userName: string): Promise<void>;
 
   // 音乐播放记录相关
-  getMusicPlayRecord(userName: string, key: string): Promise<any | null>;
-  setMusicPlayRecord(userName: string, key: string, record: any): Promise<void>;
+  getMusicPlayRecord(
+    userName: string,
+    key: string
+  ): Promise<MusicPlayRecord | null>;
+  setMusicPlayRecord(
+    userName: string,
+    key: string,
+    record: MusicPlayRecord
+  ): Promise<void>;
   batchSetMusicPlayRecords(
     userName: string,
-    records: { key: string; record: any }[]
+    records: { key: string; record: MusicPlayRecord }[]
   ): Promise<void>;
-  getAllMusicPlayRecords(userName: string): Promise<{ [key: string]: any }>;
+  getAllMusicPlayRecords(
+    userName: string
+  ): Promise<{ [key: string]: MusicPlayRecord }>;
   deleteMusicPlayRecord(userName: string, key: string): Promise<void>;
   clearAllMusicPlayRecords(userName: string): Promise<void>;
 
@@ -455,7 +465,7 @@ export interface Notification {
   message: string; // 通知内容
   timestamp: number; // 通知时间戳
   read: boolean; // 是否已读
-  metadata?: Record<string, any>; // 额外的元数据（如收藏更新的source、id等）
+  metadata?: Record<string, unknown>; // 额外的元数据（如收藏更新的source、id等）
 }
 
 // 收藏更新检查结果

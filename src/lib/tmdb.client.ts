@@ -82,6 +82,22 @@ export interface TMDBTVShow {
 }
 
 // 统一的类型，用于显示
+/** /search/multi 的一项（电影、剧集，也可能是人物） */
+export type TMDBMultiResult = {
+  id: number;
+  media_type?: string;
+  title?: string;
+  name?: string;
+  original_title?: string;
+  original_name?: string;
+  poster_path?: string | null;
+  backdrop_path?: string | null;
+  release_date?: string;
+  first_air_date?: string;
+  overview?: string;
+  vote_average?: number;
+};
+
 export interface TMDBItem {
   id: number;
   title: string;
@@ -500,7 +516,7 @@ export async function searchTMDBMulti(
   query: string,
   proxy?: string,
   reverseProxyBaseUrl?: string
-): Promise<{ code: number; results: any[] }> {
+): Promise<{ code: number; results: TMDBMultiResult[] }> {
   try {
     const actualKey = getNextApiKey(apiKey);
     if (!actualKey || !query) {

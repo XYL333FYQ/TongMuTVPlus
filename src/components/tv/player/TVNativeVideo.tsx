@@ -1,5 +1,12 @@
 'use client';
 
+import type {
+  HlsConfig,
+  LoaderCallbacks,
+  LoaderConfiguration,
+  LoaderContext,
+  PlaylistLoaderContext,
+} from 'hls.js';
 import { Pause, Play } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
@@ -210,33 +217,36 @@ export default function TVNativeVideo({
           if (Hls.isSupported()) {
             const CustomLoader = adFilterEnabled
               ? class TVAdFilterLoader extends Hls.DefaultConfig.loader {
-                  constructor(config: any) {
+                  constructor(config: HlsConfig) {
                     super(config);
                     const load = this.load.bind(this);
-                    this.load = (context: any, config: any, callbacks: any) => {
-                      if (
-                        context?.type === 'manifest' ||
-                        context?.type === 'level'
-                      ) {
+                    this.load = (
+                      context: LoaderContext,
+                      loadConfig: LoaderConfiguration,
+                      callbacks: LoaderCallbacks<LoaderContext>
+                    ) => {
+                      const type = (context as Partial<PlaylistLoaderContext>)
+                        .type;
+                      if (type === 'manifest' || type === 'level') {
                         const onSuccess = callbacks.onSuccess;
                         callbacks.onSuccess = (
-                          response: any,
-                          stats: any,
-                          context: any,
-                          networkDetails: any
+                          response,
+                          stats,
+                          ctx,
+                          networkDetails
                         ) => {
-                          if (typeof response?.data === 'string') {
+                          if (typeof response.data === 'string') {
                             response.data = filterAdsFromM3U8(response.data);
                           }
                           return onSuccess(
                             response,
                             stats,
-                            context,
+                            ctx,
                             networkDetails
                           );
                         };
                       }
-                      load(context, config, callbacks);
+                      load(context, loadConfig, callbacks);
                     };
                   }
                 }

@@ -38,29 +38,29 @@ const globalVapidPromiseKey = Symbol.for(
   '__MOONTV_WEB_PUSH_VAPID_KEYS_PROMISE__'
 );
 
+// 开发时模块会被重新加载，密钥放在全局对象上才不会每次重新生成
+const vapidStore = globalThis as typeof globalThis & {
+  [globalVapidCacheKey]?: VapidKeys;
+  [globalVapidPromiseKey]?: Promise<VapidKeys>;
+};
+
 function getCachedVapidKeys(): VapidKeys | null {
-  return (
-    ((globalThis as any)[globalVapidCacheKey] as VapidKeys | undefined) || null
-  );
+  return vapidStore[globalVapidCacheKey] || null;
 }
 
 function setCachedVapidKeys(keys: VapidKeys): void {
-  (globalThis as any)[globalVapidCacheKey] = keys;
+  vapidStore[globalVapidCacheKey] = keys;
 }
 
 function getCachedVapidKeysPromise(): Promise<VapidKeys> | null {
-  return (
-    ((globalThis as any)[globalVapidPromiseKey] as
-      | Promise<VapidKeys>
-      | undefined) || null
-  );
+  return vapidStore[globalVapidPromiseKey] || null;
 }
 
 function setCachedVapidKeysPromise(promise: Promise<VapidKeys> | null): void {
   if (promise) {
-    (globalThis as any)[globalVapidPromiseKey] = promise;
+    vapidStore[globalVapidPromiseKey] = promise;
   } else {
-    delete (globalThis as any)[globalVapidPromiseKey];
+    delete vapidStore[globalVapidPromiseKey];
   }
 }
 
@@ -142,7 +142,7 @@ async function fetchWebPushEndpoint(
     return fetch(requestUrl, init) as Promise<Response>;
   }
 
-  const fetchOptions: any = {
+  const fetchOptions: RequestInit = {
     method: init.method,
     headers: init.headers,
     body: init.body,

@@ -90,7 +90,8 @@ export async function GET(request: NextRequest) {
       }
 
       mediaId = matched.id;
-      mediaType = matched.media_type;
+      // 搜索结果只取电影和剧集两类
+      mediaType = matched.media_type as 'movie' | 'tv';
     }
 
     const response = await getTMDBVideoList(

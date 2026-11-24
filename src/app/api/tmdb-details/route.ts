@@ -127,7 +127,8 @@ export async function GET(request: NextRequest) {
         }
 
         tmdbId = match.id;
-        mediaType = match.media_type;
+        // 搜索结果只取电影和剧集两类
+        mediaType = match.media_type as 'movie' | 'tv';
 
         // 保存到服务器缓存
         searchCache.set(cacheKey, {

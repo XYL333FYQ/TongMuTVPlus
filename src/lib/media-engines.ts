@@ -119,10 +119,14 @@ const LIVE_PLAYER_DEFAULTS = {
 
 /** 建直播用的 Artplayer：在共同样子上叠调用方的选项 */
 export function createLivePlayer<T>(
-  Artplayer: new (options: Record<string, unknown>) => T,
+  // Artplayer 自己的选项类型要求齐全；这里只合并默认值，构造参数原样交给它
+  Artplayer: new (options: never) => T,
   options: Record<string, unknown> & { icons?: Record<string, string> }
 ): T {
-  return new Artplayer({
+  const Player = Artplayer as unknown as new (
+    options: Record<string, unknown>
+  ) => T;
+  return new Player({
     ...LIVE_PLAYER_DEFAULTS,
     ...options,
     icons: { ...LIVE_PLAYER_DEFAULTS.icons, ...options.icons },

@@ -107,7 +107,7 @@ async function callAIForComments(params: {
   // Claude Messages 协议
   if (protocol === 'claude') {
     // Claude API 要求必填 max_tokens；未设置时用一个保守上限兜底
-    const body: any = {
+    const body: Record<string, unknown> = {
       model,
       system: systemPrompt,
       messages: [{ role: 'user', content: userPrompt }],
@@ -134,16 +134,17 @@ async function callAIForComments(params: {
       throw new Error(`AI API调用失败: ${response.status}`);
     }
 
-    const data = await response.json();
+    const data: { content?: { type?: string; text?: string }[] } =
+      await response.json();
     return (data.content || [])
-      .filter((block: any) => block.type === 'text')
-      .map((block: any) => block.text || '')
+      .filter((block) => block.type === 'text')
+      .map((block) => block.text || '')
       .join('');
   }
 
   // OpenAI Responses 协议（/responses）
   if (protocol === 'openai-responses') {
-    const responsesBody: any = {
+    const responsesBody: Record<string, unknown> = {
       model,
       instructions: systemPrompt,
       input: [
@@ -166,21 +167,27 @@ async function callAIForComments(params: {
       throw new Error(`AI API调用失败: ${response.status}`);
     }
 
-    const data = await response.json();
+    const data: {
+      output_text?: unknown;
+      output?: {
+        type?: string;
+        content?: { type?: string; text?: string }[];
+      }[];
+    } = await response.json();
     // 优先使用便捷字段，否则从 output 数组中提取 output_text
     if (typeof data.output_text === 'string' && data.output_text) {
       return data.output_text;
     }
     return (data.output || [])
-      .filter((item: any) => item.type === 'message')
-      .flatMap((item: any) => item.content || [])
-      .filter((c: any) => c.type === 'output_text')
-      .map((c: any) => c.text || '')
+      .filter((item) => item.type === 'message')
+      .flatMap((item) => item.content || [])
+      .filter((c) => c.type === 'output_text')
+      .map((c) => c.text || '')
       .join('');
   }
 
   // OpenAI Chat Completions 协议（默认，兼容旧版自定义 API）
-  const completionsBody: any = {
+  const completionsBody: Record<string, unknown> = {
     model,
     messages: [
       { role: 'system', content: systemPrompt },
@@ -286,7 +293,7 @@ async function searchMovieInfo(
       if (response.ok) {
         const data = await response.json();
         searchResults = data.results
-          ?.map((r: any) => r.content)
+          ?.map((r: { content?: string }) => r.content)
           .join('\n')
           .slice(0, 1000);
       }
@@ -306,7 +313,7 @@ async function searchMovieInfo(
       if (response.ok) {
         const data = await response.json();
         searchResults = data.organic
-          ?.map((r: any) => r.snippet)
+          ?.map((r: { snippet?: string }) => r.snippet)
           .join('\n')
           .slice(0, 1000);
       }
@@ -320,7 +327,7 @@ async function searchMovieInfo(
       if (response.ok) {
         const data = await response.json();
         searchResults = data.organic_results
-          ?.map((r: any) => r.snippet)
+          ?.map((r: { snippet?: string }) => r.snippet)
           .join('\n')
           .slice(0, 1000);
       }
@@ -343,7 +350,9 @@ async function searchMovieInfo(
         const items = parsed?.rss?.channel?.[0]?.item || [];
         searchResults = items
           .slice(0, 5)
-          .map((item: any) => item.description?.[0] || '')
+          .map(
+            (item: { description?: string[] }) => item.description?.[0] || ''
+          )
           .join('\n')
           .slice(0, 1000);
       }

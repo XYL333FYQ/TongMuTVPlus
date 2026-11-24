@@ -133,7 +133,7 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({
       router.push(
         isAdmin
           ? `/admin?section=feedbackInbox&feedbackId=${encodeURIComponent(
-              notification.metadata.feedbackId
+              String(notification.metadata.feedbackId)
             )}&notice=${Date.now()}`
           : '/feedback'
       );
@@ -144,18 +144,20 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({
     ) {
       const { source, id, title } = notification.metadata;
       router.push(
-        `/play?source=${source}&id=${id}&title=${encodeURIComponent(title)}`
+        `/play?source=${String(source)}&id=${String(
+          id
+        )}&title=${encodeURIComponent(String(title ?? ''))}`
       );
       onClose();
     } else if (notification.type === 'manga_update' && notification.metadata) {
       const { sourceId, mangaId, title, cover, sourceName } =
         notification.metadata;
       const params = new URLSearchParams({
-        sourceId,
-        mangaId,
-        title: title || '',
-        cover: cover || '',
-        sourceName: sourceName || '',
+        sourceId: String(sourceId ?? ''),
+        mangaId: String(mangaId ?? ''),
+        title: String(title || ''),
+        cover: String(cover || ''),
+        sourceName: String(sourceName || ''),
       });
       router.push(`/manga/detail?${params.toString()}`);
       onClose();
@@ -169,7 +171,9 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({
       router.push(
         isAdmin
           ? `/admin?section=movieRequests${
-              requestId ? `&requestId=${encodeURIComponent(requestId)}` : ''
+              requestId
+                ? `&requestId=${encodeURIComponent(String(requestId))}`
+                : ''
             }&notice=${Date.now()}`
           : '/movie-request'
       );
