@@ -37,7 +37,6 @@ import {
   useRef,
   useState,
 } from 'react';
-import { createPortal } from 'react-dom';
 
 import { cn } from '@/lib/cn';
 import {
@@ -52,6 +51,7 @@ import { useAudioFocus } from '@/hooks/useAudioFocus';
 import AddToPlaylistModal from '@/components/AddToPlaylistModal';
 import { notify } from '@/components/feedback/AppDialogs';
 import BusyDots from '@/components/feedback/BusyDots';
+import ModalLayer from '@/components/feedback/ModalLayer';
 import LyricsPiPWindow from '@/components/LyricsPiPWindow';
 import MusicEmpty from '@/components/music/MusicEmpty';
 import MusicSidebarDrawer from '@/components/music/MusicSidebarDrawer';
@@ -4501,69 +4501,65 @@ export default function MusicClient({
           }}
         />
 
-        {/* Toast */}
-
         {/* Confirm Modal */}
-        {confirmModal.isOpen &&
-          createPortal(
+        {confirmModal.isOpen && (
+          <ModalLayer
+            variant='confirm'
+            label={confirmModal.title}
+            onClose={confirmModal.onCancel}
+          >
             <div
-              className='music-theme-portal fixed inset-0 bg-ink/50 backdrop-blur-sm flex items-center justify-center p-4'
-              style={{ zIndex: 99999 }}
-              onClick={confirmModal.onCancel}
+              className='bg-surface rounded-xl max-w-md w-full border border-line'
+              onClick={(e) => e.stopPropagation()}
             >
-              <div
-                className='bg-surface rounded-xl max-w-md w-full border border-line'
-                onClick={(e) => e.stopPropagation()}
-              >
-                <div className='p-6'>
-                  <div className='flex items-center justify-between mb-4'>
-                    <h3 className='text-lg font-medium text-fg'>
-                      {confirmModal.title}
-                    </h3>
-                    <button
-                      aria-label='关闭'
-                      onClick={confirmModal.onCancel}
-                      className='text-muted hover:text-fg transition-colors min-h-[44px] tm-press'
+              <div className='p-6'>
+                <div className='flex items-center justify-between mb-4'>
+                  <h3 className='text-lg font-medium text-fg'>
+                    {confirmModal.title}
+                  </h3>
+                  <button
+                    aria-label='关闭'
+                    onClick={confirmModal.onCancel}
+                    className='text-muted hover:text-fg transition-colors min-h-[44px] tm-press'
+                  >
+                    <svg
+                      className='w-5 h-5'
+                      fill='none'
+                      stroke='currentColor'
+                      viewBox='0 0 24 24'
                     >
-                      <svg
-                        className='w-5 h-5'
-                        fill='none'
-                        stroke='currentColor'
-                        viewBox='0 0 24 24'
-                      >
-                        <path
-                          strokeLinecap='round'
-                          strokeLinejoin='round'
-                          strokeWidth={2}
-                          d='M6 18L18 6M6 6l12 12'
-                        />
-                      </svg>
-                    </button>
-                  </div>
+                      <path
+                        strokeLinecap='round'
+                        strokeLinejoin='round'
+                        strokeWidth={2}
+                        d='M6 18L18 6M6 6l12 12'
+                      />
+                    </svg>
+                  </button>
+                </div>
 
-                  <div className='mb-6'>
-                    <p className='text-sm text-muted'>{confirmModal.message}</p>
-                  </div>
+                <div className='mb-6'>
+                  <p className='text-sm text-muted'>{confirmModal.message}</p>
+                </div>
 
-                  <div className='flex justify-end space-x-3'>
-                    <button
-                      onClick={confirmModal.onCancel}
-                      className='px-4 py-2 bg-surface hover:bg-line text-fg rounded-lg transition-colors min-h-[44px] tm-press'
-                    >
-                      取消
-                    </button>
-                    <button
-                      onClick={confirmModal.onConfirm}
-                      className='px-4 py-2 bg-fg hover:opacity-90 text-inverse rounded-lg transition-colors flex items-center gap-2 min-h-[44px] tm-press'
-                    >
-                      确定
-                    </button>
-                  </div>
+                <div className='flex justify-end space-x-3'>
+                  <button
+                    onClick={confirmModal.onCancel}
+                    className='px-4 py-2 bg-surface hover:bg-line text-fg rounded-lg transition-colors min-h-[44px] tm-press'
+                  >
+                    取消
+                  </button>
+                  <button
+                    onClick={confirmModal.onConfirm}
+                    className='px-4 py-2 bg-fg hover:opacity-90 text-inverse rounded-lg transition-colors flex items-center gap-2 min-h-[44px] tm-press'
+                  >
+                    确定
+                  </button>
                 </div>
               </div>
-            </div>,
-            document.body
-          )}
+            </div>
+          </ModalLayer>
+        )}
 
         {/* PiP Lyrics Window */}
         {showPiPLyrics && (

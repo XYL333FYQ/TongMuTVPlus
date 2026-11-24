@@ -5,12 +5,12 @@
 import { Search, X } from 'lucide-react';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
-import { createPortal } from 'react-dom';
 
 import { getTMDBImageUrl } from '@/lib/tmdb-image-base';
 import { processImageUrl } from '@/lib/utils';
 
 import ModalLayer from '@/components/feedback/ModalLayer';
+import SideLayer from '@/components/feedback/SideLayer';
 
 interface TMDBResult {
   id: number;
@@ -890,14 +890,13 @@ export default function CorrectDialog({
   }
 
   // 抽屉模式（播放页侧栏）：不是弹窗，页面和播放器照常能点
-  return createPortal(
-    <div className='fixed inset-0 z-[9999] flex items-center justify-end pointer-events-none'>
+  return (
+    <SideLayer semantics='region' label='影片纠错' onClose={onClose}>
       <div
         className={`tm-drawer-surface relative ${drawerWidth} h-full bg-surface shadow-2xl flex flex-col pointer-events-auto`}
       >
         {dialogContent}
       </div>
-    </div>,
-    document.body
+    </SideLayer>
   );
 }

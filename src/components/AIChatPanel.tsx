@@ -5,7 +5,6 @@ import { Bot, Check, RefreshCw, Send, Sparkles, Trash2, X } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
 import ReactMarkdown from 'react-markdown';
 
 import type { VideoContext } from '@/lib/ai-orchestrator';
@@ -15,6 +14,7 @@ import { viewportSize } from '@/lib/device-tier';
 
 import BusyDots from '@/components/feedback/BusyDots';
 import ModalLayer from '@/components/feedback/ModalLayer';
+import SideLayer from '@/components/feedback/SideLayer';
 
 interface ChatMessage {
   role: 'user' | 'assistant';
@@ -1130,11 +1130,13 @@ export default function AIChatPanel({
   }
 
   // 抽屉模式（播放页侧栏）：不是弹窗，页面和播放器照常能点，一直挂着、关闭时滑出
-  const drawer = (
-    <div
-      className={`fixed inset-0 z-[1002] flex items-center justify-end transition-opacity duration-200 pointer-events-none ${
-        isOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
-      }`}
+  // 一直挂着，关着时滑到右边外面；挂法和 Esc / 返回键归 SideLayer
+  return (
+    <SideLayer
+      open={isOpen}
+      semantics='region'
+      label='AI影视助手'
+      onClose={onClose}
     >
       <div
         className={`tm-drawer-surface relative ${drawerWidth} h-full bg-surface shadow-2xl flex flex-col transition-transform duration-300 ease-out pointer-events-auto ${
@@ -1143,10 +1145,6 @@ export default function AIChatPanel({
       >
         {content}
       </div>
-    </div>
+    </SideLayer>
   );
-
-  return typeof window !== 'undefined'
-    ? createPortal(drawer, document.body)
-    : null;
 }

@@ -19,7 +19,6 @@ import {
 } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
 
 import { saveBookReadRecord } from '@/lib/book.db.client';
 import {
@@ -1362,191 +1361,182 @@ function ChapterReader({ manifest }: { manifest: BookReadManifest }) {
       className='relative tm-reader-stage overflow-hidden'
       style={{ backgroundColor: palette.panelBg, color: palette.bodyColor }}
     >
-      {tocOpen && typeof document !== 'undefined'
-        ? createPortal(
-            <ReaderDialog label='章节目录' onClose={() => setTocOpen(false)}>
-              <div
-                className='tm-reader-drawer absolute right-0 top-0 w-[22rem] max-w-[88vw] overflow-y-auto border-l border-line bg-surface shadow-xl'
-                onClick={(event) => event.stopPropagation()}
-              >
-                <div className='space-y-2 p-4'>
-                  <div className='tm-reader-drawer-head'>
-                    <h2 className='text-lg font-bold'>章节目录</h2>
-                    <button
-                      type='button'
-                      className={LIBRARY_GHOST_BUTTON}
-                      onClick={() => setTocOpen(false)}
-                    >
-                      关闭
-                    </button>
-                  </div>
-                  {chapters.map((item, index) => {
-                    const active = index === currentIndex;
-                    return (
-                      <button
-                        key={`${item.href}-${item.order}-${index}`}
-                        onClick={() => {
-                          persistChapterProgress();
-                          setCurrentIndex(index);
-                          setTocOpen(false);
-                        }}
-                        className={`block w-full rounded-md border px-4 py-3 text-left text-sm transition-colors duration-200 ${
-                          active
-                            ? 'border-fg bg-fg text-inverse min-h-[44px] tm-press'
-                            : 'border-line text-fg hover:bg-raised hover:text-fg min-h-[44px] tm-press'
-                        }`}
-                        title={item.title}
-                      >
-                        {item.title}
-                      </button>
-                    );
-                  })}
-                </div>
+      {tocOpen ? (
+        <ReaderDialog label='章节目录' onClose={() => setTocOpen(false)}>
+          <div
+            className='tm-reader-drawer absolute right-0 top-0 w-[22rem] max-w-[88vw] overflow-y-auto border-l border-line bg-surface shadow-xl'
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className='space-y-2 p-4'>
+              <div className='tm-reader-drawer-head'>
+                <h2 className='text-lg font-bold'>章节目录</h2>
+                <button
+                  type='button'
+                  className={LIBRARY_GHOST_BUTTON}
+                  onClick={() => setTocOpen(false)}
+                >
+                  关闭
+                </button>
               </div>
-            </ReaderDialog>,
-            document.body
-          )
-        : null}
+              {chapters.map((item, index) => {
+                const active = index === currentIndex;
+                return (
+                  <button
+                    key={`${item.href}-${item.order}-${index}`}
+                    onClick={() => {
+                      persistChapterProgress();
+                      setCurrentIndex(index);
+                      setTocOpen(false);
+                    }}
+                    className={`block w-full rounded-md border px-4 py-3 text-left text-sm transition-colors duration-200 ${
+                      active
+                        ? 'border-fg bg-fg text-inverse min-h-[44px] tm-press'
+                        : 'border-line text-fg hover:bg-raised hover:text-fg min-h-[44px] tm-press'
+                    }`}
+                    title={item.title}
+                  >
+                    {item.title}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </ReaderDialog>
+      ) : null}
 
-      {settingsOpen && typeof document !== 'undefined'
-        ? createPortal(
-            <ReaderDialog
-              label='阅读设置'
-              onClose={() => setSettingsOpen(false)}
-            >
-              <div
-                className={cn(READER_SHEET, 'w-full max-w-sm p-5')}
-                onClick={(event) => event.stopPropagation()}
-              >
-                <div className='mb-4'>
-                  <div className='text-base font-medium text-fg'>阅读设置</div>
-                  <div className='mt-1 text-[13px] text-muted'>
-                    Legado 源支持翻页和滚动阅读
-                  </div>
-                </div>
-                <div className='space-y-6 p-1 text-sm'>
-                  <div>
-                    <div className='mb-2 font-medium'>阅读模式</div>
-                    <div className='grid grid-cols-2 gap-2'>
-                      {(
-                        [
-                          {
-                            key: 'paginated',
-                            label: '翻页模式',
-                            desc: '左右点击翻页/章节',
-                          },
-                          {
-                            key: 'scrolled',
-                            label: '滚动模式',
-                            desc: '上下连续滚动',
-                          },
-                        ] as { key: ReaderMode; label: string; desc: string }[]
-                      ).map((mode) => (
-                        <button
-                          key={mode.key}
-                          aria-pressed={settings.mode === mode.key}
-                          onClick={() =>
-                            setSettings((prev) => ({ ...prev, mode: mode.key }))
-                          }
-                          className={`rounded-md border px-3 py-3 text-left ${
-                            settings.mode === mode.key
-                              ? 'border-fg bg-raised text-fg min-h-[44px] tm-press'
-                              : 'border-line min-h-[44px] tm-press'
-                          }`}
-                        >
-                          <div className='font-medium'>{mode.label}</div>
-                          <div className='mt-1 text-[13px] opacity-70'>
-                            {mode.desc}
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                  <div>
-                    <div className='mb-2 font-medium'>主题</div>
-                    <div className='grid grid-cols-3 gap-2'>
-                      {(['light', 'sepia', 'dark'] as ReaderTheme[]).map(
-                        (theme) => (
-                          <button
-                            key={theme}
-                            aria-pressed={settings.theme === theme}
-                            onClick={() =>
-                              setSettings((prev) => ({ ...prev, theme }))
-                            }
-                            className={`rounded-md border px-3 py-2 ${
-                              settings.theme === theme
-                                ? 'border-fg bg-raised text-fg min-h-[44px] tm-press'
-                                : 'border-line min-h-[44px] tm-press'
-                            }`}
-                          >
-                            {theme === 'light'
-                              ? '浅色'
-                              : theme === 'sepia'
-                              ? '护眼'
-                              : '深色'}
-                          </button>
-                        )
-                      )}
-                    </div>
-                  </div>
-                  <div>
-                    <div className='mb-2 flex items-center justify-between font-medium'>
-                      字号 <span>{settings.fontSize}%</span>
-                    </div>
-                    <input
-                      type='range'
-                      aria-label='字号'
-                      min='85'
-                      max='140'
-                      step='5'
-                      value={settings.fontSize}
-                      onChange={(e) =>
-                        setSettings((prev) => ({
-                          ...prev,
-                          fontSize: Number(e.target.value),
-                        }))
-                      }
-                      className={READER_SLIDER}
-                    />
-                  </div>
-                  <div>
-                    <div className='mb-2 flex items-center justify-between font-medium'>
-                      行距 <span>{settings.lineHeight.toFixed(1)}</span>
-                    </div>
-                    <input
-                      type='range'
-                      aria-label='行距'
-                      min='1.4'
-                      max='2.2'
-                      step='0.1'
-                      value={settings.lineHeight}
-                      onChange={(e) =>
-                        setSettings((prev) => ({
-                          ...prev,
-                          lineHeight: Number(e.target.value),
-                        }))
-                      }
-                      className={READER_SLIDER}
-                    />
-                  </div>
-                  <div className='flex justify-end'>
+      {settingsOpen ? (
+        <ReaderDialog label='阅读设置' onClose={() => setSettingsOpen(false)}>
+          <div
+            className={cn(READER_SHEET, 'w-full max-w-sm p-5')}
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className='mb-4'>
+              <div className='text-base font-medium text-fg'>阅读设置</div>
+              <div className='mt-1 text-[13px] text-muted'>
+                Legado 源支持翻页和滚动阅读
+              </div>
+            </div>
+            <div className='space-y-6 p-1 text-sm'>
+              <div>
+                <div className='mb-2 font-medium'>阅读模式</div>
+                <div className='grid grid-cols-2 gap-2'>
+                  {(
+                    [
+                      {
+                        key: 'paginated',
+                        label: '翻页模式',
+                        desc: '左右点击翻页/章节',
+                      },
+                      {
+                        key: 'scrolled',
+                        label: '滚动模式',
+                        desc: '上下连续滚动',
+                      },
+                    ] as { key: ReaderMode; label: string; desc: string }[]
+                  ).map((mode) => (
                     <button
-                      type='button'
-                      className={cn(
-                        LIBRARY_BUTTON,
-                        'px-4 py-2 min-h-[44px] tm-press'
-                      )}
-                      onClick={() => setSettingsOpen(false)}
+                      key={mode.key}
+                      aria-pressed={settings.mode === mode.key}
+                      onClick={() =>
+                        setSettings((prev) => ({ ...prev, mode: mode.key }))
+                      }
+                      className={`rounded-md border px-3 py-3 text-left ${
+                        settings.mode === mode.key
+                          ? 'border-fg bg-raised text-fg min-h-[44px] tm-press'
+                          : 'border-line min-h-[44px] tm-press'
+                      }`}
                     >
-                      完成
+                      <div className='font-medium'>{mode.label}</div>
+                      <div className='mt-1 text-[13px] opacity-70'>
+                        {mode.desc}
+                      </div>
                     </button>
-                  </div>
+                  ))}
                 </div>
               </div>
-            </ReaderDialog>,
-            document.body
-          )
-        : null}
+              <div>
+                <div className='mb-2 font-medium'>主题</div>
+                <div className='grid grid-cols-3 gap-2'>
+                  {(['light', 'sepia', 'dark'] as ReaderTheme[]).map(
+                    (theme) => (
+                      <button
+                        key={theme}
+                        aria-pressed={settings.theme === theme}
+                        onClick={() =>
+                          setSettings((prev) => ({ ...prev, theme }))
+                        }
+                        className={`rounded-md border px-3 py-2 ${
+                          settings.theme === theme
+                            ? 'border-fg bg-raised text-fg min-h-[44px] tm-press'
+                            : 'border-line min-h-[44px] tm-press'
+                        }`}
+                      >
+                        {theme === 'light'
+                          ? '浅色'
+                          : theme === 'sepia'
+                          ? '护眼'
+                          : '深色'}
+                      </button>
+                    )
+                  )}
+                </div>
+              </div>
+              <div>
+                <div className='mb-2 flex items-center justify-between font-medium'>
+                  字号 <span>{settings.fontSize}%</span>
+                </div>
+                <input
+                  type='range'
+                  aria-label='字号'
+                  min='85'
+                  max='140'
+                  step='5'
+                  value={settings.fontSize}
+                  onChange={(e) =>
+                    setSettings((prev) => ({
+                      ...prev,
+                      fontSize: Number(e.target.value),
+                    }))
+                  }
+                  className={READER_SLIDER}
+                />
+              </div>
+              <div>
+                <div className='mb-2 flex items-center justify-between font-medium'>
+                  行距 <span>{settings.lineHeight.toFixed(1)}</span>
+                </div>
+                <input
+                  type='range'
+                  aria-label='行距'
+                  min='1.4'
+                  max='2.2'
+                  step='0.1'
+                  value={settings.lineHeight}
+                  onChange={(e) =>
+                    setSettings((prev) => ({
+                      ...prev,
+                      lineHeight: Number(e.target.value),
+                    }))
+                  }
+                  className={READER_SLIDER}
+                />
+              </div>
+              <div className='flex justify-end'>
+                <button
+                  type='button'
+                  className={cn(
+                    LIBRARY_BUTTON,
+                    'px-4 py-2 min-h-[44px] tm-press'
+                  )}
+                  onClick={() => setSettingsOpen(false)}
+                >
+                  完成
+                </button>
+              </div>
+            </div>
+          </div>
+        </ReaderDialog>
+      ) : null}
 
       {settings.mode === 'paginated' && !tocOpen && !settingsOpen ? (
         <>
@@ -3726,200 +3716,191 @@ export default function BookReadPage() {
         </div>
       ) : null}
 
-      {tocOpen && typeof document !== 'undefined'
-        ? createPortal(
-            <ReaderDialog label='章节目录' onClose={() => setTocOpen(false)}>
-              <div
-                className='tm-reader-drawer absolute right-0 top-0 w-[22rem] max-w-[88vw] overflow-y-auto border-l border-line bg-surface shadow-xl'
-                onClick={(event) => event.stopPropagation()}
-              >
-                <div className='p-4'>
-                  <div className='tm-reader-drawer-head'>
-                    <h2 className='text-lg font-bold'>章节目录</h2>
-                    <button
-                      type='button'
-                      className={LIBRARY_GHOST_BUTTON}
-                      onClick={() => setTocOpen(false)}
-                    >
-                      关闭
-                    </button>
+      {tocOpen ? (
+        <ReaderDialog label='章节目录' onClose={() => setTocOpen(false)}>
+          <div
+            className='tm-reader-drawer absolute right-0 top-0 w-[22rem] max-w-[88vw] overflow-y-auto border-l border-line bg-surface shadow-xl'
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className='p-4'>
+              <div className='tm-reader-drawer-head'>
+                <h2 className='text-lg font-bold'>章节目录</h2>
+                <button
+                  type='button'
+                  className={LIBRARY_GHOST_BUTTON}
+                  onClick={() => setTocOpen(false)}
+                >
+                  关闭
+                </button>
+              </div>
+              <div className='space-y-2' ref={tocScrollRef}>
+                {tocItems.length === 0 ? (
+                  <div className='p-3 text-sm text-muted'>
+                    当前 EPUB 未提供目录
                   </div>
-                  <div className='space-y-2' ref={tocScrollRef}>
-                    {tocItems.length === 0 ? (
-                      <div className='p-3 text-sm text-muted'>
-                        当前 EPUB 未提供目录
+                ) : (
+                  renderTocItems(tocItems)
+                )}
+              </div>
+            </div>
+          </div>
+        </ReaderDialog>
+      ) : null}
+
+      {settingsOpen ? (
+        <ReaderDialog label='阅读设置' onClose={() => setSettingsOpen(false)}>
+          <div
+            className={cn(READER_SHEET, 'w-full max-w-sm p-5')}
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className='mb-4'>
+              <div className='text-base font-medium text-fg'>阅读设置</div>
+              <div className='mt-1 text-[13px] text-muted'>
+                可切换翻页或滚动阅读，默认翻页模式
+              </div>
+            </div>
+            <div className='space-y-6 p-1 text-sm'>
+              <div>
+                <div className='mb-2 font-medium'>阅读模式</div>
+                <div className='grid grid-cols-2 gap-2'>
+                  {(
+                    [
+                      {
+                        key: 'paginated',
+                        label: '翻页模式',
+                        desc: '左右点击翻页',
+                      },
+                      {
+                        key: 'scrolled',
+                        label: '滚动模式',
+                        desc: '上下连续滚动',
+                      },
+                    ] as { key: ReaderMode; label: string; desc: string }[]
+                  ).map((mode) => (
+                    <button
+                      key={mode.key}
+                      aria-pressed={settings.mode === mode.key}
+                      onClick={() => switchReaderMode(mode.key)}
+                      className={`rounded-md border px-3 py-3 text-left ${
+                        settings.mode === mode.key
+                          ? 'border-fg bg-raised text-fg min-h-[44px] tm-press'
+                          : 'border-line min-h-[44px] tm-press'
+                      }`}
+                    >
+                      <div className='font-medium'>{mode.label}</div>
+                      <div className='mt-1 text-[13px] opacity-70'>
+                        {mode.desc}
                       </div>
-                    ) : (
-                      renderTocItems(tocItems)
-                    )}
-                  </div>
-                </div>
-              </div>
-            </ReaderDialog>,
-            document.body
-          )
-        : null}
-
-      {settingsOpen && typeof document !== 'undefined'
-        ? createPortal(
-            <ReaderDialog
-              label='阅读设置'
-              onClose={() => setSettingsOpen(false)}
-            >
-              <div
-                className={cn(READER_SHEET, 'w-full max-w-sm p-5')}
-                onClick={(event) => event.stopPropagation()}
-              >
-                <div className='mb-4'>
-                  <div className='text-base font-medium text-fg'>阅读设置</div>
-                  <div className='mt-1 text-[13px] text-muted'>
-                    可切换翻页或滚动阅读，默认翻页模式
-                  </div>
-                </div>
-                <div className='space-y-6 p-1 text-sm'>
-                  <div>
-                    <div className='mb-2 font-medium'>阅读模式</div>
-                    <div className='grid grid-cols-2 gap-2'>
-                      {(
-                        [
-                          {
-                            key: 'paginated',
-                            label: '翻页模式',
-                            desc: '左右点击翻页',
-                          },
-                          {
-                            key: 'scrolled',
-                            label: '滚动模式',
-                            desc: '上下连续滚动',
-                          },
-                        ] as { key: ReaderMode; label: string; desc: string }[]
-                      ).map((mode) => (
-                        <button
-                          key={mode.key}
-                          aria-pressed={settings.mode === mode.key}
-                          onClick={() => switchReaderMode(mode.key)}
-                          className={`rounded-md border px-3 py-3 text-left ${
-                            settings.mode === mode.key
-                              ? 'border-fg bg-raised text-fg min-h-[44px] tm-press'
-                              : 'border-line min-h-[44px] tm-press'
-                          }`}
-                        >
-                          <div className='font-medium'>{mode.label}</div>
-                          <div className='mt-1 text-[13px] opacity-70'>
-                            {mode.desc}
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div>
-                    <div className='mb-2 font-medium'>主题</div>
-                    <div className='grid grid-cols-3 gap-2'>
-                      {(['light', 'sepia', 'dark'] as ReaderTheme[]).map(
-                        (theme) => (
-                          <button
-                            key={theme}
-                            aria-pressed={settings.theme === theme}
-                            onClick={() =>
-                              setSettings((prev) => ({ ...prev, theme }))
-                            }
-                            className={`rounded-md border px-3 py-2 ${
-                              settings.theme === theme
-                                ? 'border-fg bg-raised text-fg min-h-[44px] tm-press'
-                                : 'border-line min-h-[44px] tm-press'
-                            }`}
-                          >
-                            <div className='mb-1 flex justify-center'>
-                              {theme === 'dark' ? (
-                                <Moon className='h-4 w-4' />
-                              ) : (
-                                <Sun className='h-4 w-4' />
-                              )}
-                            </div>
-                            {theme === 'light'
-                              ? '浅色'
-                              : theme === 'sepia'
-                              ? '护眼'
-                              : '深色'}
-                          </button>
-                        )
-                      )}
-                    </div>
-                  </div>
-
-                  <div>
-                    <div className='mb-2 flex items-center justify-between font-medium'>
-                      字号 <span>{settings.fontSize}%</span>
-                    </div>
-                    <input
-                      type='range'
-                      aria-label='字号'
-                      min='85'
-                      max='140'
-                      step='5'
-                      value={settings.fontSize}
-                      onChange={(e) =>
-                        setSettings((prev) => ({
-                          ...prev,
-                          fontSize: Number(e.target.value),
-                        }))
-                      }
-                      className={READER_SLIDER}
-                    />
-                  </div>
-
-                  <div>
-                    <div className='mb-2 flex items-center justify-between font-medium'>
-                      行距 <span>{settings.lineHeight.toFixed(1)}</span>
-                    </div>
-                    <input
-                      type='range'
-                      aria-label='行距'
-                      min='1.4'
-                      max='2.2'
-                      step='0.1'
-                      value={settings.lineHeight}
-                      onChange={(e) =>
-                        setSettings((prev) => ({
-                          ...prev,
-                          lineHeight: Number(e.target.value),
-                        }))
-                      }
-                      className={READER_SLIDER}
-                    />
-                  </div>
-
-                  <div
-                    className={cn(
-                      'rounded-md p-4 text-[13px]',
-                      LIBRARY_PAGE,
-                      LIBRARY_MUTED
-                    )}
-                  >
-                    首次会缓存到当前浏览器，之后再次打开同一本书通常不需要重新整包下载。
-                    当前缓存状态：
-                    {cacheHit ? '已命中本地缓存' : '本次为网络加载'}。
-                  </div>
-
-                  <div className='flex justify-end'>
-                    <button
-                      type='button'
-                      className={cn(
-                        LIBRARY_BUTTON,
-                        'px-4 py-2 min-h-[44px] tm-press'
-                      )}
-                      onClick={() => setSettingsOpen(false)}
-                    >
-                      完成
                     </button>
-                  </div>
+                  ))}
                 </div>
               </div>
-            </ReaderDialog>,
-            document.body
-          )
-        : null}
+
+              <div>
+                <div className='mb-2 font-medium'>主题</div>
+                <div className='grid grid-cols-3 gap-2'>
+                  {(['light', 'sepia', 'dark'] as ReaderTheme[]).map(
+                    (theme) => (
+                      <button
+                        key={theme}
+                        aria-pressed={settings.theme === theme}
+                        onClick={() =>
+                          setSettings((prev) => ({ ...prev, theme }))
+                        }
+                        className={`rounded-md border px-3 py-2 ${
+                          settings.theme === theme
+                            ? 'border-fg bg-raised text-fg min-h-[44px] tm-press'
+                            : 'border-line min-h-[44px] tm-press'
+                        }`}
+                      >
+                        <div className='mb-1 flex justify-center'>
+                          {theme === 'dark' ? (
+                            <Moon className='h-4 w-4' />
+                          ) : (
+                            <Sun className='h-4 w-4' />
+                          )}
+                        </div>
+                        {theme === 'light'
+                          ? '浅色'
+                          : theme === 'sepia'
+                          ? '护眼'
+                          : '深色'}
+                      </button>
+                    )
+                  )}
+                </div>
+              </div>
+
+              <div>
+                <div className='mb-2 flex items-center justify-between font-medium'>
+                  字号 <span>{settings.fontSize}%</span>
+                </div>
+                <input
+                  type='range'
+                  aria-label='字号'
+                  min='85'
+                  max='140'
+                  step='5'
+                  value={settings.fontSize}
+                  onChange={(e) =>
+                    setSettings((prev) => ({
+                      ...prev,
+                      fontSize: Number(e.target.value),
+                    }))
+                  }
+                  className={READER_SLIDER}
+                />
+              </div>
+
+              <div>
+                <div className='mb-2 flex items-center justify-between font-medium'>
+                  行距 <span>{settings.lineHeight.toFixed(1)}</span>
+                </div>
+                <input
+                  type='range'
+                  aria-label='行距'
+                  min='1.4'
+                  max='2.2'
+                  step='0.1'
+                  value={settings.lineHeight}
+                  onChange={(e) =>
+                    setSettings((prev) => ({
+                      ...prev,
+                      lineHeight: Number(e.target.value),
+                    }))
+                  }
+                  className={READER_SLIDER}
+                />
+              </div>
+
+              <div
+                className={cn(
+                  'rounded-md p-4 text-[13px]',
+                  LIBRARY_PAGE,
+                  LIBRARY_MUTED
+                )}
+              >
+                首次会缓存到当前浏览器，之后再次打开同一本书通常不需要重新整包下载。
+                当前缓存状态：
+                {cacheHit ? '已命中本地缓存' : '本次为网络加载'}。
+              </div>
+
+              <div className='flex justify-end'>
+                <button
+                  type='button'
+                  className={cn(
+                    LIBRARY_BUTTON,
+                    'px-4 py-2 min-h-[44px] tm-press'
+                  )}
+                  onClick={() => setSettingsOpen(false)}
+                >
+                  完成
+                </button>
+              </div>
+            </div>
+          </div>
+        </ReaderDialog>
+      ) : null}
 
       {manifest.format === 'epub' && ttsBarVisible ? (
         <>

@@ -7,12 +7,13 @@ import { type ReactNode, useEffect, useId, useRef, useState } from 'react';
 import './detail.css';
 
 import { isReducedMotionSetting, useReducedMotionSetting } from '@/lib/motion';
-import { useBackLayer } from '@/hooks/useBackLayer';
+
+import SideLayer from '@/components/feedback/SideLayer';
 
 /**
  * 播放页右侧的详情侧栏（设计稿 docs/design/prototypes/detail-shell.html D-4）：
- * 不是弹窗——左边的播放器和页面照常能点，所以不进公共弹窗层。
- * 返回键 / Esc 只在它是最上面一层、上面没有模态弹窗时关它。
+ * 不是弹窗——左边的播放器和页面照常能点：挂法、Esc / 返回键归公共零件 SideLayer，
+ * 这里只管面板的样子和滑进滑出。
  */
 export default function DetailSidePanel({
   children,
@@ -32,7 +33,6 @@ export default function DetailSidePanel({
   tools?: ReactNode;
   kind?: 'detail' | 'auxiliary' | 'gallery';
 }) {
-  const dialog = useRef<HTMLDialogElement>(null);
   const close = useRef<HTMLButtonElement>(null);
   const callback = useRef(onClose);
   callback.current = onClose;
@@ -49,52 +49,21 @@ export default function DetailSidePanel({
       isReducedMotionSetting() ? 120 : 320
     );
   };
-  const dismiss = useRef(requestClose);
-  dismiss.current = requestClose;
-  useBackLayer(true, () => dismiss.current());
   const titleId = useId();
   const reduced = useReducedMotionSetting();
   const initialReduced = useRef(isReducedMotionSetting()).current;
   useEffect(() => {
-    const element = dialog.current;
-    if (!element) return;
-    const trigger =
-      document.activeElement instanceof HTMLElement
-        ? document.activeElement
-        : null;
-    if (typeof element.show === 'function') element.show();
-    else element.setAttribute('open', '');
-    close.current?.focus({ preventScroll: true });
-    const keys = (event: KeyboardEvent) => {
-      if (event.defaultPrevented || event.key !== 'Escape') return;
-      // 上面有模态弹窗、或者还有更靠上的侧栏时，Esc 归它们
-      if (document.querySelector('dialog[open][aria-modal="true"]')) return;
-      if (
-        Array.from(
-          document.querySelectorAll('dialog.tm-detail-side[open]')
-        ).pop() !== element
-      )
-        return;
-      event.preventDefault();
-      dismiss.current();
-    };
-    document.addEventListener('keydown', keys);
     return () => {
       if (dismissTimer.current !== null) clearTimeout(dismissTimer.current);
-      document.removeEventListener('keydown', keys);
-      if (typeof element.close === 'function') element.close();
-      else element.removeAttribute('open');
-      if (trigger?.isConnected) trigger.focus({ preventScroll: true });
     };
   }, []);
   const shown = visible && !closing;
   return (
-    <dialog
-      ref={dialog}
+    <SideLayer
       className='tm-detail-side'
-      role='dialog'
-      aria-modal={false}
-      aria-labelledby={titleId}
+      labelledBy={titleId}
+      initialFocus={close}
+      onClose={requestClose}
     >
       <motion.section
         className={`tm-detail-panel tm-detail-surface ${width}`}
@@ -127,6 +96,6 @@ export default function DetailSidePanel({
         </div>
         <div className='tm-detail-scroll'>{children}</div>
       </motion.section>
-    </dialog>
+    </SideLayer>
   );
 }

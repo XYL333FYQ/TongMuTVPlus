@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { createPortal } from 'react-dom';
 
 import { getBangumiSubject, getBangumiSubjectUrl } from '@/lib/bangumi.client';
 import { useReducedMotionSetting } from '@/lib/motion';
@@ -1399,6 +1398,7 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
       />
     </>
   );
-  return createPortal(content, document.body);
+  // 里面每一层（详情弹窗 / 侧栏、图集、看大图、复制链接）都自己挂到顶层，不用再包一层
+  return content;
 };
 export default DetailPanel;

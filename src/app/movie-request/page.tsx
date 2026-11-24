@@ -3,13 +3,13 @@
 import { AlertCircle, CheckCircle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
 
 import '@/styles/controls.css';
 
 import { getTMDBImageUrl } from '@/lib/tmdb-image-base';
 import { processImageUrl } from '@/lib/utils';
 
+import ModalLayer from '@/components/feedback/ModalLayer';
 import RetryNotice from '@/components/feedback/RetryNotice';
 import PageContainer from '@/components/PageContainer';
 import PageLayout from '@/components/PageLayout';
@@ -446,98 +446,89 @@ export default function MovieRequestPage() {
       </PageContainer>
 
       {/* 提示弹窗 */}
-      {alertModal.isOpen &&
-        typeof window !== 'undefined' &&
-        createPortal(
-          <div className='tm-modal-backdrop'>
-            <div
-              className='tm-modal tm-modal-body pb-6 text-center'
-              role='alertdialog'
-              aria-modal='true'
-            >
-              <div className='flex justify-center mb-4'>
-                {alertModal.type === 'success' ? (
-                  <CheckCircle className='h-10 w-10 text-fg' aria-hidden />
-                ) : (
-                  <AlertCircle className='h-10 w-10 text-danger' aria-hidden />
-                )}
-              </div>
-              <h3 className='tm-modal-title mb-2'>{alertModal.title}</h3>
-              <p className='text-muted text-center mb-4'>
-                {alertModal.message}
-              </p>
-              <button
-                onClick={() => setAlertModal({ ...alertModal, isOpen: false })}
-                className='tm-btn tm-btn-primary w-full'
-              >
-                确定
-              </button>
+      {alertModal.isOpen && (
+        <ModalLayer
+          variant='dialog'
+          label={alertModal.title}
+          onClose={() => setAlertModal({ ...alertModal, isOpen: false })}
+        >
+          <div className='tm-modal tm-modal-body pb-6 text-center'>
+            <div className='flex justify-center mb-4'>
+              {alertModal.type === 'success' ? (
+                <CheckCircle className='h-10 w-10 text-fg' aria-hidden />
+              ) : (
+                <AlertCircle className='h-10 w-10 text-danger' aria-hidden />
+              )}
             </div>
-          </div>,
-          document.body
-        )}
+            <h3 className='tm-modal-title mb-2'>{alertModal.title}</h3>
+            <p className='text-muted text-center mb-4'>{alertModal.message}</p>
+            <button
+              onClick={() => setAlertModal({ ...alertModal, isOpen: false })}
+              className='tm-btn tm-btn-primary w-full'
+            >
+              确定
+            </button>
+          </div>
+        </ModalLayer>
+      )}
 
       {/* 季度选择弹窗 */}
-      {showSeasonDialog &&
-        typeof window !== 'undefined' &&
-        createPortal(
-          <div className='tm-modal-backdrop' onClick={cancelSeasonRequest}>
-            <div
-              className='tm-modal'
-              role='dialog'
-              aria-modal='true'
-              aria-labelledby='season-dialog-title'
-              onClick={(event) => event.stopPropagation()}
-            >
-              <div className='tm-modal-body'>
-                <h3 id='season-dialog-title' className='tm-modal-title'>
-                  选择季度
-                </h3>
-                <p className='mt-1 mb-4 text-sm text-muted'>
-                  {selectedItem?.title || selectedItem?.name}
+      {showSeasonDialog && (
+        <ModalLayer
+          variant='panel'
+          label='选择季度'
+          onClose={cancelSeasonRequest}
+        >
+          <div
+            className='tm-modal'
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className='tm-modal-body'>
+              <h3 id='season-dialog-title' className='tm-modal-title'>
+                选择季度
+              </h3>
+              <p className='mt-1 mb-4 text-sm text-muted'>
+                {selectedItem?.title || selectedItem?.name}
+              </p>
+              {loadingSeasons ? (
+                <div className='tm-inline-state'>正在加载季度</div>
+              ) : seasonsError ? (
+                <p className='tm-inline-state' role='alert'>
+                  {seasonsError}
                 </p>
-                {loadingSeasons ? (
-                  <div className='tm-inline-state'>正在加载季度</div>
-                ) : seasonsError ? (
-                  <p className='tm-inline-state' role='alert'>
-                    {seasonsError}
-                  </p>
-                ) : (
-                  <div className='max-h-60 space-y-1 overflow-y-auto'>
-                    {seasons.map((season) => (
-                      <button
-                        key={season.season_number}
-                        onClick={() => setSelectedSeason(season.season_number)}
-                        aria-pressed={selectedSeason === season.season_number}
-                        className='tm-popover-option w-full'
-                      >
-                        {season.name}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-              <div className='tm-modal-footer'>
-                <button
-                  onClick={cancelSeasonRequest}
-                  className='tm-btn tm-btn-secondary'
-                >
-                  取消
-                </button>
-                <button
-                  onClick={handleSeasonConfirm}
-                  disabled={
-                    loadingSeasons || seasons.length === 0 || submitting
-                  }
-                  className='tm-btn tm-btn-primary'
-                >
-                  确认
-                </button>
-              </div>
+              ) : (
+                <div className='max-h-60 space-y-1 overflow-y-auto'>
+                  {seasons.map((season) => (
+                    <button
+                      key={season.season_number}
+                      onClick={() => setSelectedSeason(season.season_number)}
+                      aria-pressed={selectedSeason === season.season_number}
+                      className='tm-popover-option w-full'
+                    >
+                      {season.name}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
-          </div>,
-          document.body
-        )}
+            <div className='tm-modal-footer'>
+              <button
+                onClick={cancelSeasonRequest}
+                className='tm-btn tm-btn-secondary'
+              >
+                取消
+              </button>
+              <button
+                onClick={handleSeasonConfirm}
+                disabled={loadingSeasons || seasons.length === 0 || submitting}
+                className='tm-btn tm-btn-primary'
+              >
+                确认
+              </button>
+            </div>
+          </div>
+        </ModalLayer>
+      )}
     </PageLayout>
   );
 }

@@ -12,9 +12,9 @@ import {
   Upload,
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
 
 import BusyDots from '@/components/feedback/BusyDots';
+import ModalLayer from '@/components/feedback/ModalLayer';
 
 interface DataMigrationProps {
   onRefreshConfig?: () => Promise<void>;
@@ -45,20 +45,13 @@ const AlertModal = ({
   showConfirm = false,
   timer,
 }: AlertModalProps) => {
-  const [isVisible, setIsVisible] = useState(false);
-
-  // 控制动画状态
+  // 出现和消失的动画由弹窗层负责；这里只管定时自动关
   useEffect(() => {
-    if (isOpen) {
-      setIsVisible(true);
-      if (timer) {
-        setTimeout(() => {
-          onClose();
-        }, timer);
-      }
-    } else {
-      setIsVisible(false);
-    }
+    if (!isOpen || !timer) return;
+    const handle = setTimeout(() => {
+      onClose();
+    }, timer);
+    return () => clearTimeout(handle);
   }, [isOpen, timer, onClose]);
 
   if (!isOpen) return null;
@@ -89,18 +82,14 @@ const AlertModal = ({
     }
   };
 
-  return createPortal(
-    <div
-      className={`fixed inset-0 bg-raised bg-opacity-50 z-50 flex items-center justify-center p-4 transition-opacity duration-200 ${
-        isVisible ? 'opacity-100' : 'opacity-0'
-      }`}
-      onClick={onClose}
+  return (
+    <ModalLayer
+      variant={showConfirm && onConfirm ? 'confirm' : 'dialog'}
+      label={title}
+      onClose={onClose}
     >
       <div
-        className={`bg-surface rounded-lg shadow-xl max-w-md w-full border ${getBgColor()} transition-all duration-200 ${
-          isVisible ? 'scale-100' : 'scale-95'
-        }`}
-        onClick={(e) => e.stopPropagation()}
+        className={`bg-surface rounded-lg shadow-xl max-w-md w-full border ${getBgColor()}`}
       >
         <div className='p-6 text-center'>
           <div className='flex justify-center mb-4'>{getIcon()}</div>
@@ -146,8 +135,7 @@ const AlertModal = ({
           </div>
         </div>
       </div>
-    </div>,
-    document.body
+    </ModalLayer>
   );
 };
 

@@ -188,3 +188,27 @@ html[data-tm-reduced-motion='true'] .tm-popover-layer {
     animation: tm-modal-layer-fade 120ms linear !important;
   }
 }
+
+/* —— 不挡页面的右侧面板（SideLayer）：铺满窗口，面板自己写 pointer-events: auto 才接收点按 —— */
+.tm-side-layer {
+  position: fixed;
+  inset: 0;
+  z-index: var(--tm-z-overlay);
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  padding: 0;
+  margin: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  overflow: hidden;
+  overscroll-behavior: contain;
+  pointer-events: none;
+  display: flex;
+  justify-content: flex-end;
+}
+dialog.tm-side-layer:not([open]) {
+  display: none;
+}

@@ -1,24 +1,5 @@
 /* 播放页右侧的详情侧栏（DetailSidePanel，不是弹窗）；弹窗里的详情由公共弹窗层定位（.tm-detail-layer） */
-.tm-detail-side {
-  position: fixed;
-  inset: 0;
-  z-index: var(--tm-z-overlay);
-  width: 100%;
-  height: 100%;
-  max-width: none;
-  max-height: none;
-  padding: 0;
-  margin: 0;
-  border: 0;
-  background: transparent;
-  overflow: hidden;
-  overscroll-behavior: contain;
-  /* 不是弹窗：只有右边的面板接收点按，左边的播放器照常能点 */
-  pointer-events: none;
-}
-.tm-detail-side:not([open]) {
-  display: none;
-}
+/* 侧栏的挂法（铺满、只让面板接收点按）归公共零件 SideLayer（modal-layer.css 的 .tm-side-layer） */
 .tm-detail-surface {
   position: relative;
   display: flex;

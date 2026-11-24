@@ -11,7 +11,6 @@ import {
   X,
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
 
 import { AdminConfig } from '@/lib/admin.types';
 import {
@@ -33,6 +32,7 @@ import {
 import { formatTimeAgo } from '@/lib/time';
 
 import BusyDots from '@/components/feedback/BusyDots';
+import ModalLayer from '@/components/feedback/ModalLayer';
 import Select from '@/components/ui/Select';
 
 import {
@@ -102,16 +102,6 @@ const AlertModal = ({
   onConfirm,
   showConfirm = false,
 }: AlertModalProps) => {
-  const [isVisible, setIsVisible] = useState(false);
-
-  useEffect(() => {
-    if (isOpen) {
-      setIsVisible(true);
-    } else {
-      setIsVisible(false);
-    }
-  }, [isOpen]);
-
   if (!isOpen) return null;
 
   const icons = {
@@ -121,19 +111,14 @@ const AlertModal = ({
     info: <AlertCircle className='w-12 h-12 text-fg' />,
   };
 
-  return createPortal(
-    <div className='fixed inset-0 z-[9999] flex items-center justify-center'>
-      <div
-        className={`absolute inset-0 bg-surface transition-opacity duration-300 ${
-          isVisible ? 'opacity-50' : 'opacity-0'
-        }`}
-        onClick={onClose}
-      />
-      <div
-        className={`relative bg-surface rounded-lg shadow-xl max-w-md w-full mx-4 p-6 transition-all duration-300 ${
-          isVisible ? 'opacity-100 scale-100' : 'opacity-0 scale-95'
-        }`}
-      >
+  // 出现和消失的动画、遮罩、Esc / 返回键都由弹窗层负责
+  return (
+    <ModalLayer
+      variant={showConfirm && onConfirm ? 'confirm' : 'dialog'}
+      label={title}
+      onClose={onClose}
+    >
+      <div className='bg-surface rounded-lg shadow-xl max-w-md w-full p-6'>
         <div className='flex flex-col items-center text-center'>
           {icons[type]}
           <h3 className='mt-4 text-lg font-medium text-fg'>{title}</h3>
@@ -169,8 +154,7 @@ const AlertModal = ({
           </div>
         </div>
       </div>
-    </div>,
-    document.body
+    </ModalLayer>
   );
 };
 

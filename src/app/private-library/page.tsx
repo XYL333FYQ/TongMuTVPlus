@@ -5,13 +5,12 @@
 import { ArrowDownWideNarrow, ArrowUpNarrowWide, Film } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
 
-import { viewportSize } from '@/lib/device-tier';
 import { base58Encode } from '@/lib/utils';
 
 import CapsuleSwitch from '@/components/catalog/CapsuleSwitch';
 import PosterGrid from '@/components/catalog/PosterGrid';
+import Popover from '@/components/feedback/Popover';
 import PageContainer from '@/components/PageContainer';
 import PageLayout from '@/components/PageLayout';
 import PageHeader from '@/components/shell/PageHeader';
@@ -99,13 +98,7 @@ export default function PrivateLibraryPage() {
     'Ascending'
   );
   const [showSortDropdown, setShowSortDropdown] = useState(false);
-  const [sortDropdownPosition, setSortDropdownPosition] = useState<{
-    x: number;
-    y: number;
-    width: number;
-  }>({ x: 0, y: 0, width: 0 });
   const sortButtonRef = useRef<HTMLDivElement | null>(null);
-  const sortDropdownRef = useRef<HTMLDivElement | null>(null);
   // 小雅相关状态
   const [xiaoyaPath, setXiaoyaPath] = useState<string>('/');
   const [xiaoyaFolders, setXiaoyaFolders] = useState<
@@ -388,47 +381,8 @@ export default function PrivateLibraryPage() {
     return sortBy === 'SortName' && sortOrder === 'Ascending';
   };
 
-  const calculateSortDropdownPosition = () => {
-    const element = sortButtonRef.current;
-    if (element) {
-      const rect = element.getBoundingClientRect();
-      const viewportWidth = viewportSize().width;
-      const isMobile = viewportWidth < 768;
-
-      let x = rect.left;
-      const minWidth = 200;
-      let dropdownWidth = Math.max(rect.width, minWidth);
-      let useFixedWidth = false;
-
-      if (isMobile) {
-        const padding = 16;
-        const maxWidth = viewportWidth - padding * 2;
-        dropdownWidth = Math.min(dropdownWidth, maxWidth);
-        useFixedWidth = true;
-
-        if (x + dropdownWidth > viewportWidth - padding) {
-          x = viewportWidth - dropdownWidth - padding;
-        }
-        if (x < padding) {
-          x = padding;
-        }
-      }
-
-      setSortDropdownPosition({
-        x,
-        y: rect.bottom + 4,
-        width: useFixedWidth ? dropdownWidth : rect.width,
-      });
-    }
-  };
-
   const handleSortButtonClick = () => {
-    if (showSortDropdown) {
-      setShowSortDropdown(false);
-    } else {
-      setShowSortDropdown(true);
-      calculateSortDropdownPosition();
-    }
+    setShowSortDropdown((open) => !open);
   };
 
   const handleSortOptionSelect = (value: string) => {
@@ -439,22 +393,6 @@ export default function PrivateLibraryPage() {
   const toggleSortOrder = () => {
     setSortOrder(sortOrder === 'Ascending' ? 'Descending' : 'Ascending');
   };
-
-  // 点击外部关闭排序下拉框
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        sortDropdownRef.current &&
-        !sortDropdownRef.current.contains(event.target as Node) &&
-        sortButtonRef.current &&
-        !sortButtonRef.current.contains(event.target as Node)
-      ) {
-        setShowSortDropdown(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
 
   // 滚动时关闭排序下拉框
   useEffect(() => {
@@ -893,41 +831,37 @@ export default function PrivateLibraryPage() {
           </div>
         )}
 
-        {/* 排序下拉框 Portal */}
-        {mounted &&
-          showSortDropdown &&
-          createPortal(
-            <div
-              ref={sortDropdownRef}
-              className='fixed z-[9999] bg-raised rounded-xl border border-line max-h-[50vh] flex flex-col'
-              style={{
-                left: `${sortDropdownPosition.x}px`,
-                top: `${sortDropdownPosition.y}px`,
-                minWidth: `${Math.max(sortDropdownPosition.width, 200)}px`,
-                maxWidth: '300px',
-                position: 'fixed',
-              }}
-            >
-              <div className='p-2 sm:p-4 overflow-y-auto flex-1 min-h-0'>
-                <div className='grid grid-cols-2 gap-1 sm:gap-2'>
-                  {sortOptions.map((option) => (
-                    <button
-                      key={option.value}
-                      onClick={() => handleSortOptionSelect(option.value)}
-                      className={`px-2 py-1.5 sm:px-3 sm:py-2 text-[13px] sm:text-sm rounded-lg transition-[transform,opacity] duration-200 text-left min-w-[44px] ${
-                        sortBy === option.value
-                          ? 'bg-fg text-inverse border border-fg min-h-[44px] tm-press'
-                          : 'text-muted hover:bg-line min-h-[44px] tm-press'
-                      }`}
-                    >
-                      {option.label}
-                    </button>
-                  ))}
-                </div>
+        {/* 排序：贴着按钮的浮层（手机上从底部拉起） */}
+        {showSortDropdown && (
+          <Popover
+            anchor={sortButtonRef.current}
+            onDismiss={() => setShowSortDropdown(false)}
+            label='排序'
+            className='bg-raised rounded-xl border border-line flex flex-col'
+            minWidth={200}
+            maxWidth={300}
+            maxHeightRatio={0.5}
+            edge={16}
+          >
+            <div className='p-2 sm:p-4 overflow-y-auto flex-1 min-h-0'>
+              <div className='grid grid-cols-2 gap-1 sm:gap-2'>
+                {sortOptions.map((option) => (
+                  <button
+                    key={option.value}
+                    onClick={() => handleSortOptionSelect(option.value)}
+                    className={`px-2 py-1.5 sm:px-3 sm:py-2 text-[13px] sm:text-sm rounded-lg transition-[transform,opacity] duration-200 text-left min-w-[44px] ${
+                      sortBy === option.value
+                        ? 'bg-fg text-inverse border border-fg min-h-[44px] tm-press'
+                        : 'text-muted hover:bg-line min-h-[44px] tm-press'
+                    }`}
+                  >
+                    {option.label}
+                  </button>
+                ))}
               </div>
-            </div>,
-            document.body
-          )}
+            </div>
+          </Popover>
+        )}
 
         {error && (
           <div className='bg-raised border border-danger rounded-lg p-4 mb-6'>
