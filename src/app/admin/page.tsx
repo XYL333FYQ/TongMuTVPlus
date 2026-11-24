@@ -73,7 +73,6 @@ import {
   useRef,
   useState,
 } from 'react';
-import { createPortal } from 'react-dom';
 
 import { AdminConfig, AdminConfigResult } from '@/lib/admin.types';
 import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
@@ -93,6 +92,7 @@ import CorrectDialog from '@/components/CorrectDialog';
 import DataMigration from '@/components/DataMigration';
 import { askConfirm } from '@/components/feedback/AppDialogs';
 import BusyDots from '@/components/feedback/BusyDots';
+import ModalLayer from '@/components/feedback/ModalLayer';
 import PageLayout from '@/components/PageLayout';
 import Select from '@/components/ui/Select';
 
@@ -186,19 +186,13 @@ const AlertModal = ({
   showConfirm = false,
   onConfirm,
 }: AlertModalProps) => {
-  const [isVisible, setIsVisible] = useState(false);
-
+  // 出现和消失的动画由弹窗层负责；这里只管定时自动关
   useEffect(() => {
-    if (isOpen) {
-      setIsVisible(true);
-      if (timer) {
-        setTimeout(() => {
-          onClose();
-        }, timer);
-      }
-    } else {
-      setIsVisible(false);
-    }
+    if (!isOpen || !timer) return;
+    const handle = setTimeout(() => {
+      onClose();
+    }, timer);
+    return () => clearTimeout(handle);
   }, [isOpen, timer, onClose]);
 
   if (!isOpen) return null;
@@ -231,16 +225,14 @@ const AlertModal = ({
     }
   };
 
-  return createPortal(
-    <div
-      className={`fixed inset-0 bg-[var(--tm-scrim)] z-[10050] flex items-center justify-center p-4 transition-opacity duration-200 ${
-        isVisible ? 'opacity-100' : 'opacity-0'
-      }`}
+  return (
+    <ModalLayer
+      variant={showConfirm && onConfirm ? 'confirm' : 'dialog'}
+      label={title}
+      onClose={onClose}
     >
       <div
-        className={`bg-[var(--tm-surface)] bg-[var(--tm-surface)] rounded-lg shadow-xl max-w-sm w-full border ${getBgColor()} transition-all duration-200 ${
-          isVisible ? 'scale-100' : 'scale-95'
-        }`}
+        className={`bg-[var(--tm-surface)] rounded-lg shadow-xl max-w-sm w-full border ${getBgColor()}`}
       >
         <div className='p-6 text-center'>
           <div className='flex justify-center mb-4'>{getIcon()}</div>
@@ -290,8 +282,7 @@ const AlertModal = ({
           )}
         </div>
       </div>
-    </div>,
-    document.body
+    </ModalLayer>
   );
 };
 
@@ -2112,191 +2103,202 @@ const UserConfig = ({
       </div>
 
       {/* 查看用户设备弹窗 */}
-      {showUserDevicesModal &&
-        selectedDeviceUsername &&
-        createPortal(
+      {showUserDevicesModal && selectedDeviceUsername && (
+        <ModalLayer
+          variant='panel'
+          label='用户设备'
+          onClose={() => {
+            setShowUserDevicesModal(false);
+            setSelectedDeviceUsername(null);
+            setUserDevices([]);
+          }}
+        >
           <div
-            className='fixed inset-0 bg-[var(--tm-scrim)] z-[10002] flex items-center justify-center p-4'
-            onClick={() => {
-              setShowUserDevicesModal(false);
-              setSelectedDeviceUsername(null);
-              setUserDevices([]);
-            }}
-            onTouchMove={(e) => e.preventDefault()}
-            onWheel={(e) => e.preventDefault()}
-            style={{ touchAction: 'none' }}
+            className='bg-[var(--tm-surface)] rounded-lg shadow-xl max-w-2xl w-full max-h-[80vh] overflow-hidden flex flex-col'
+            onClick={(e) => e.stopPropagation()}
+            onTouchMove={(e) => e.stopPropagation()}
+            onWheel={(e) => e.stopPropagation()}
+            style={{ touchAction: 'auto' }}
           >
-            <div
-              className='bg-[var(--tm-surface)] rounded-lg shadow-xl max-w-2xl w-full max-h-[80vh] overflow-hidden flex flex-col'
-              onClick={(e) => e.stopPropagation()}
-              onTouchMove={(e) => e.stopPropagation()}
-              onWheel={(e) => e.stopPropagation()}
-              style={{ touchAction: 'auto' }}
-            >
-              <div className='p-6 border-b border-[var(--tm-line)] flex items-center justify-between'>
-                <div>
-                  <h3 className='text-xl font-medium text-[color:var(--tm-text)]'>
-                    用户设备 - {selectedDeviceUsername}
-                  </h3>
-                  <p className='mt-1 text-sm text-[color:var(--tm-muted)]'>
-                    查看该用户当前仍有效的登录设备
+            <div className='p-6 border-b border-[var(--tm-line)] flex items-center justify-between'>
+              <div>
+                <h3 className='text-xl font-medium text-[color:var(--tm-text)]'>
+                  用户设备 - {selectedDeviceUsername}
+                </h3>
+                <p className='mt-1 text-sm text-[color:var(--tm-muted)]'>
+                  查看该用户当前仍有效的登录设备
+                </p>
+              </div>
+              <button
+                onClick={() => {
+                  setShowUserDevicesModal(false);
+                  setSelectedDeviceUsername(null);
+                  setUserDevices([]);
+                }}
+                className='text-[color:var(--tm-muted)] hover:text-[color:var(--tm-muted)] min-h-[44px] tm-press'
+              >
+                <X size={24} />
+              </button>
+            </div>
+
+            <div className='flex-1 overflow-y-auto overscroll-contain p-6'>
+              {userDevicesLoading ? (
+                <div className='space-y-3'>
+                  {[1, 2, 3].map((i) => (
+                    <div
+                      key={i}
+                      className='h-20 bg-[var(--tm-surface-raised)] rounded-lg tm-skeleton'
+                    />
+                  ))}
+                  <div className='text-center text-sm text-[color:var(--tm-muted)]'>
+                    加载中...
+                  </div>
+                </div>
+              ) : userDevices.length === 0 ? (
+                <div className='text-center py-10'>
+                  <Monitor className='w-12 h-12 mx-auto text-[color:var(--tm-muted)] mb-3' />
+                  <p className='text-sm text-[color:var(--tm-muted)]'>
+                    暂无登录设备
                   </p>
                 </div>
-                <button
-                  onClick={() => {
-                    setShowUserDevicesModal(false);
-                    setSelectedDeviceUsername(null);
-                    setUserDevices([]);
-                  }}
-                  className='text-[color:var(--tm-muted)] hover:text-[color:var(--tm-muted)] min-h-[44px] tm-press'
-                >
-                  <X size={24} />
-                </button>
-              </div>
-
-              <div className='flex-1 overflow-y-auto overscroll-contain p-6'>
-                {userDevicesLoading ? (
-                  <div className='space-y-3'>
-                    {[1, 2, 3].map((i) => (
-                      <div
-                        key={i}
-                        className='h-20 bg-[var(--tm-surface-raised)] rounded-lg tm-skeleton'
-                      />
-                    ))}
-                    <div className='text-center text-sm text-[color:var(--tm-muted)]'>
-                      加载中...
-                    </div>
-                  </div>
-                ) : userDevices.length === 0 ? (
-                  <div className='text-center py-10'>
-                    <Monitor className='w-12 h-12 mx-auto text-[color:var(--tm-muted)] mb-3' />
-                    <p className='text-sm text-[color:var(--tm-muted)]'>
-                      暂无登录设备
-                    </p>
-                  </div>
-                ) : (
-                  <div className='space-y-3'>
-                    {userDevices
-                      .slice()
-                      .sort((a, b) => b.lastUsed - a.lastUsed)
-                      .map((device) => {
-                        const DeviceIcon = getDeviceIcon(device.deviceInfo);
-                        return (
-                          <div
-                            key={device.tokenId}
-                            className={`p-4 rounded-lg border ${
-                              device.isCurrent
-                                ? 'bg-[var(--tm-surface-raised)] border-[var(--tm-line)]'
-                                : 'bg-[var(--tm-surface-raised)] border-[var(--tm-line)]'
-                            }`}
-                          >
-                            <div className='flex items-start gap-3'>
-                              <DeviceIcon className='w-5 h-5 mt-0.5 text-[color:var(--tm-muted)] flex-shrink-0' />
-                              <div className='min-w-0 flex-1'>
-                                <div className='flex items-center gap-2'>
-                                  <div className='text-sm font-medium text-[color:var(--tm-text)] break-all'>
-                                    {getDeviceDisplayName(
-                                      device.deviceInfo || '未知设备'
-                                    )}
-                                  </div>
-                                  {device.isCurrent && (
-                                    <span className='px-2 py-0.5 text-[13px] font-medium bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)] rounded-full whitespace-nowrap'>
-                                      当前设备
-                                    </span>
+              ) : (
+                <div className='space-y-3'>
+                  {userDevices
+                    .slice()
+                    .sort((a, b) => b.lastUsed - a.lastUsed)
+                    .map((device) => {
+                      const DeviceIcon = getDeviceIcon(device.deviceInfo);
+                      return (
+                        <div
+                          key={device.tokenId}
+                          className={`p-4 rounded-lg border ${
+                            device.isCurrent
+                              ? 'bg-[var(--tm-surface-raised)] border-[var(--tm-line)]'
+                              : 'bg-[var(--tm-surface-raised)] border-[var(--tm-line)]'
+                          }`}
+                        >
+                          <div className='flex items-start gap-3'>
+                            <DeviceIcon className='w-5 h-5 mt-0.5 text-[color:var(--tm-muted)] flex-shrink-0' />
+                            <div className='min-w-0 flex-1'>
+                              <div className='flex items-center gap-2'>
+                                <div className='text-sm font-medium text-[color:var(--tm-text)] break-all'>
+                                  {getDeviceDisplayName(
+                                    device.deviceInfo || '未知设备'
                                   )}
                                 </div>
-                                <div className='mt-2 grid grid-cols-1 sm:grid-cols-2 gap-1 text-[13px] text-[color:var(--tm-muted)]'>
-                                  <div>
-                                    登录时间:{' '}
-                                    {new Date(device.createdAt).toLocaleString(
-                                      'zh-CN'
-                                    )}
-                                  </div>
-                                  <div>
-                                    最后活跃:{' '}
-                                    {new Date(device.lastUsed).toLocaleString(
-                                      'zh-CN'
-                                    )}
-                                  </div>
-                                  <div>
-                                    过期时间:{' '}
-                                    {new Date(device.expiresAt).toLocaleString(
-                                      'zh-CN'
-                                    )}
-                                  </div>
+                                {device.isCurrent && (
+                                  <span className='px-2 py-0.5 text-[13px] font-medium bg-[var(--tm-surface-raised)] text-[color:var(--tm-text)] rounded-full whitespace-nowrap'>
+                                    当前设备
+                                  </span>
+                                )}
+                              </div>
+                              <div className='mt-2 grid grid-cols-1 sm:grid-cols-2 gap-1 text-[13px] text-[color:var(--tm-muted)]'>
+                                <div>
+                                  登录时间:{' '}
+                                  {new Date(device.createdAt).toLocaleString(
+                                    'zh-CN'
+                                  )}
+                                </div>
+                                <div>
+                                  最后活跃:{' '}
+                                  {new Date(device.lastUsed).toLocaleString(
+                                    'zh-CN'
+                                  )}
+                                </div>
+                                <div>
+                                  过期时间:{' '}
+                                  {new Date(device.expiresAt).toLocaleString(
+                                    'zh-CN'
+                                  )}
                                 </div>
                               </div>
-                              {!device.isCurrent && (
-                                <button
-                                  onClick={() =>
-                                    handleRevokeUserDevice(device.tokenId)
-                                  }
-                                  disabled={
-                                    revokingUserDevice === device.tokenId
-                                  }
-                                  className='ml-2 px-3 py-1.5 text-[13px] font-medium text-[color:var(--tm-text)] hover:text-[color:var(--tm-text)] border border-[var(--tm-line)] hover:border-[var(--tm-line-strong)] hover:bg-[var(--tm-line)] rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap min-h-[44px] tm-press'
-                                >
-                                  {revokingUserDevice === device.tokenId
-                                    ? '登出中...'
-                                    : '登出'}
-                                </button>
-                              )}
                             </div>
+                            {!device.isCurrent && (
+                              <button
+                                onClick={() =>
+                                  handleRevokeUserDevice(device.tokenId)
+                                }
+                                disabled={revokingUserDevice === device.tokenId}
+                                className='ml-2 px-3 py-1.5 text-[13px] font-medium text-[color:var(--tm-text)] hover:text-[color:var(--tm-text)] border border-[var(--tm-line)] hover:border-[var(--tm-line-strong)] hover:bg-[var(--tm-line)] rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap min-h-[44px] tm-press'
+                              >
+                                {revokingUserDevice === device.tokenId
+                                  ? '登出中...'
+                                  : '登出'}
+                              </button>
+                            )}
                           </div>
-                        );
-                      })}
-                  </div>
-                )}
-              </div>
-
-              <div className='p-6 border-t border-[var(--tm-line)] flex justify-end'>
-                <button
-                  onClick={() => {
-                    setShowUserDevicesModal(false);
-                    setSelectedDeviceUsername(null);
-                    setUserDevices([]);
-                  }}
-                  className={buttonStyles.secondary}
-                >
-                  关闭
-                </button>
-              </div>
+                        </div>
+                      );
+                    })}
+                </div>
+              )}
             </div>
-          </div>,
-          document.body
-        )}
+
+            <div className='p-6 border-t border-[var(--tm-line)] flex justify-end'>
+              <button
+                onClick={() => {
+                  setShowUserDevicesModal(false);
+                  setSelectedDeviceUsername(null);
+                  setUserDevices([]);
+                }}
+                className={buttonStyles.secondary}
+              >
+                关闭
+              </button>
+            </div>
+          </div>
+        </ModalLayer>
+      )}
 
       {/* 配置用户采集源权限弹窗 */}
-      {showConfigureApisModal &&
-        selectedUser &&
-        createPortal(
+      {showConfigureApisModal && selectedUser && (
+        <ModalLayer
+          variant='panel'
+          label='配置用户采集源权限'
+          onClose={() => {
+            setShowConfigureApisModal(false);
+            setSelectedUser(null);
+            setSelectedApis([]);
+          }}
+        >
           <div
-            className='fixed inset-0 bg-[var(--tm-scrim)] z-50 flex items-center justify-center p-4'
-            onClick={() => {
-              setShowConfigureApisModal(false);
-              setSelectedUser(null);
-              setSelectedApis([]);
-            }}
+            className='bg-[var(--tm-surface)] rounded-lg shadow-xl max-w-4xl w-full max-h-[80vh] overflow-y-auto'
+            onClick={(e) => e.stopPropagation()}
           >
-            <div
-              className='bg-[var(--tm-surface)] rounded-lg shadow-xl max-w-4xl w-full max-h-[80vh] overflow-y-auto'
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className='p-6'>
-                <div className='flex items-center justify-between mb-6'>
-                  <h3 className='text-xl font-medium text-[color:var(--tm-text)]'>
-                    配置用户采集源权限 - {selectedUser.username}
-                  </h3>
-                  <button
-                    onClick={() => {
-                      setShowConfigureApisModal(false);
-                      setSelectedUser(null);
-                      setSelectedApis([]);
-                    }}
-                    className='text-[color:var(--tm-muted)] hover:text-[color:var(--tm-muted)] transition-colors min-h-[44px] tm-press'
+            <div className='p-6'>
+              <div className='flex items-center justify-between mb-6'>
+                <h3 className='text-xl font-medium text-[color:var(--tm-text)]'>
+                  配置用户采集源权限 - {selectedUser.username}
+                </h3>
+                <button
+                  onClick={() => {
+                    setShowConfigureApisModal(false);
+                    setSelectedUser(null);
+                    setSelectedApis([]);
+                  }}
+                  className='text-[color:var(--tm-muted)] hover:text-[color:var(--tm-muted)] transition-colors min-h-[44px] tm-press'
+                >
+                  <svg
+                    className='w-6 h-6'
+                    fill='none'
+                    stroke='currentColor'
+                    viewBox='0 0 24 24'
                   >
+                    <path
+                      strokeLinecap='round'
+                      strokeLinejoin='round'
+                      strokeWidth={2}
+                      d='M6 18L18 6M6 6l12 12'
+                    />
+                  </svg>
+                </button>
+              </div>
+
+              <div className='mb-6'>
+                <div className='bg-[var(--tm-surface-raised)] border border-[var(--tm-line)] rounded-lg p-4'>
+                  <div className='flex items-center space-x-2 mb-2'>
                     <svg
-                      className='w-6 h-6'
+                      className='w-5 h-5 text-[color:var(--tm-text)]'
                       fill='none'
                       stroke='currentColor'
                       viewBox='0 0 24 24'
@@ -2305,44 +2307,273 @@ const UserConfig = ({
                         strokeLinecap='round'
                         strokeLinejoin='round'
                         strokeWidth={2}
-                        d='M6 18L18 6M6 6l12 12'
+                        d='M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z'
                       />
                     </svg>
+                    <span className='text-sm font-medium text-[color:var(--tm-text)]'>
+                      配置说明
+                    </span>
+                  </div>
+                  <p className='text-sm text-[color:var(--tm-text)] mt-1'>
+                    提示：全不选为无限制，选中的采集源将限制用户只能访问这些源
+                  </p>
+                </div>
+              </div>
+
+              {/* 采集源选择 - 多列布局 */}
+              <div className='mb-6'>
+                <h4 className='text-sm font-medium text-[color:var(--tm-muted)] mb-4'>
+                  选择可用的采集源：
+                </h4>
+                <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4'>
+                  {config?.SourceConfig?.map((source) => (
+                    <label
+                      key={source.key}
+                      className='flex items-center space-x-3 p-3 border border-[var(--tm-line)] rounded-lg hover:bg-[var(--tm-line)] cursor-pointer transition-colors'
+                    >
+                      <input
+                        type='checkbox'
+                        checked={selectedApis.includes(source.key)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setSelectedApis([...selectedApis, source.key]);
+                          } else {
+                            setSelectedApis(
+                              selectedApis.filter((api) => api !== source.key)
+                            );
+                          }
+                        }}
+                        className='rounded text-[color:var(--tm-text)] focus:ring-[var(--tm-text)] bg-[var(--tm-surface)]'
+                      />
+                      <div className='flex-1 min-w-0'>
+                        <div className='text-sm font-medium text-[color:var(--tm-text)] truncate'>
+                          {source.name}
+                        </div>
+                        {source.api && (
+                          <div className='text-[13px] text-[color:var(--tm-muted)] truncate'>
+                            {extractDomain(source.api)}
+                          </div>
+                        )}
+                      </div>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              {/* 快速操作按钮 */}
+              <div className='flex flex-wrap items-center justify-between mb-6 p-4 bg-[var(--tm-surface-raised)] rounded-lg'>
+                <div className='flex space-x-2'>
+                  <button
+                    onClick={() => setSelectedApis([])}
+                    className={buttonStyles.quickAction}
+                  >
+                    全不选（无限制）
+                  </button>
+                  <button
+                    onClick={() => {
+                      const allApis =
+                        config?.SourceConfig?.filter(
+                          (source) => !source.disabled
+                        ).map((s) => s.key) || [];
+                      setSelectedApis(allApis);
+                    }}
+                    className={buttonStyles.quickAction}
+                  >
+                    全选
                   </button>
                 </div>
+                <div className='text-sm text-[color:var(--tm-muted)]'>
+                  已选择：
+                  <span className='font-medium text-[color:var(--tm-text)]'>
+                    {selectedApis.length > 0
+                      ? `${selectedApis.length} 个源`
+                      : '无限制'}
+                  </span>
+                </div>
+              </div>
 
-                <div className='mb-6'>
-                  <div className='bg-[var(--tm-surface-raised)] border border-[var(--tm-line)] rounded-lg p-4'>
-                    <div className='flex items-center space-x-2 mb-2'>
-                      <svg
-                        className='w-5 h-5 text-[color:var(--tm-text)]'
-                        fill='none'
-                        stroke='currentColor'
-                        viewBox='0 0 24 24'
+              {/* 操作按钮 */}
+              <div className='flex justify-end space-x-3'>
+                <button
+                  onClick={() => {
+                    setShowConfigureApisModal(false);
+                    setSelectedUser(null);
+                    setSelectedApis([]);
+                  }}
+                  className={`px-6 py-2.5 text-sm font-medium ${buttonStyles.secondary}`}
+                >
+                  取消
+                </button>
+                <button
+                  onClick={handleSaveUserApis}
+                  disabled={isLoading(`saveUserApis_${selectedUser?.username}`)}
+                  className={`px-6 py-2.5 text-sm font-medium ${
+                    isLoading(`saveUserApis_${selectedUser?.username}`)
+                      ? buttonStyles.disabled
+                      : buttonStyles.success
+                  }`}
+                >
+                  {isLoading(`saveUserApis_${selectedUser?.username}`)
+                    ? '配置中...'
+                    : '确认配置'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </ModalLayer>
+      )}
+
+      {/* 添加用户组弹窗 */}
+      {showAddUserGroupForm && (
+        <ModalLayer
+          variant='panel'
+          label='添加新用户组'
+          onClose={() => {
+            setShowAddUserGroupForm(false);
+            setNewUserGroup({
+              name: '',
+              enabledApis: [],
+              permissions: [...DEFAULT_GROUP_PERMISSIONS],
+            });
+          }}
+        >
+          <div
+            className='bg-[var(--tm-surface)] rounded-lg shadow-xl max-w-4xl w-full max-h-[80vh] overflow-y-auto'
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className='p-6'>
+              <div className='flex items-center justify-between mb-6'>
+                <h3 className='text-xl font-medium text-[color:var(--tm-text)]'>
+                  添加新用户组
+                </h3>
+                <button
+                  onClick={() => {
+                    setShowAddUserGroupForm(false);
+                    setNewUserGroup({
+                      name: '',
+                      enabledApis: [],
+                      permissions: [...DEFAULT_GROUP_PERMISSIONS],
+                    });
+                  }}
+                  className='text-[color:var(--tm-muted)] hover:text-[color:var(--tm-muted)] transition-colors min-h-[44px] tm-press'
+                >
+                  <svg
+                    className='w-6 h-6'
+                    fill='none'
+                    stroke='currentColor'
+                    viewBox='0 0 24 24'
+                  >
+                    <path
+                      strokeLinecap='round'
+                      strokeLinejoin='round'
+                      strokeWidth={2}
+                      d='M6 18L18 6M6 6l12 12'
+                    />
+                  </svg>
+                </button>
+              </div>
+
+              <div className='space-y-6'>
+                {/* 用户组名称 */}
+                <div>
+                  <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
+                    用户组名称
+                  </label>
+                  <input
+                    aria-label='请输入用户组名称'
+                    type='text'
+                    placeholder='请输入用户组名称'
+                    value={newUserGroup.name}
+                    onChange={(e) =>
+                      setNewUserGroup((prev) => ({
+                        ...prev,
+                        name: e.target.value,
+                      }))
+                    }
+                    className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)] focus:ring-2 focus:ring-[var(--tm-text)] focus:border-transparent'
+                  />
+                </div>
+
+                <div>
+                  <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-4'>
+                    功能权限
+                  </label>
+                  <div className='grid grid-cols-1 md:grid-cols-2 gap-3'>
+                    {FEATURE_PERMISSION_OPTIONS.map((permission) => (
+                      <label
+                        key={permission.key}
+                        className='flex items-start space-x-3 p-3 border border-[var(--tm-line)] rounded-lg hover:bg-[var(--tm-line)] cursor-pointer transition-colors'
                       >
-                        <path
-                          strokeLinecap='round'
-                          strokeLinejoin='round'
-                          strokeWidth={2}
-                          d='M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z'
+                        <input
+                          type='checkbox'
+                          checked={newUserGroup.permissions.includes(
+                            permission.key
+                          )}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setNewUserGroup((prev) => ({
+                                ...prev,
+                                permissions: [
+                                  ...prev.permissions,
+                                  permission.key,
+                                ],
+                              }));
+                            } else {
+                              setNewUserGroup((prev) => ({
+                                ...prev,
+                                permissions: prev.permissions.filter(
+                                  (item) => item !== permission.key
+                                ),
+                              }));
+                            }
+                          }}
+                          className='mt-0.5 rounded text-[color:var(--tm-text)] focus:ring-[var(--tm-text)] bg-[var(--tm-surface)]'
                         />
-                      </svg>
-                      <span className='text-sm font-medium text-[color:var(--tm-text)]'>
-                        配置说明
-                      </span>
-                    </div>
-                    <p className='text-sm text-[color:var(--tm-text)] mt-1'>
-                      提示：全不选为无限制，选中的采集源将限制用户只能访问这些源
-                    </p>
+                        <div className='flex-1 min-w-0'>
+                          <div className='text-sm font-medium text-[color:var(--tm-text)]'>
+                            {permission.label}
+                          </div>
+                          <div className='text-[13px] text-[color:var(--tm-muted)]'>
+                            {permission.description}
+                          </div>
+                        </div>
+                      </label>
+                    ))}
+                  </div>
+                  <div className='mt-4 flex space-x-2'>
+                    <button
+                      type='button'
+                      onClick={() =>
+                        setNewUserGroup((prev) => ({
+                          ...prev,
+                          permissions: [],
+                        }))
+                      }
+                      className={buttonStyles.quickAction}
+                    >
+                      全不选
+                    </button>
+                    <button
+                      type='button'
+                      onClick={() =>
+                        setNewUserGroup((prev) => ({
+                          ...prev,
+                          permissions: [...DEFAULT_GROUP_PERMISSIONS],
+                        }))
+                      }
+                      className={buttonStyles.quickAction}
+                    >
+                      全选
+                    </button>
                   </div>
                 </div>
 
-                {/* 采集源选择 - 多列布局 */}
-                <div className='mb-6'>
-                  <h4 className='text-sm font-medium text-[color:var(--tm-muted)] mb-4'>
-                    选择可用的采集源：
-                  </h4>
-                  <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4'>
+                {/* 可用视频源 */}
+                <div>
+                  <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-4'>
+                    可用视频源
+                  </label>
+                  <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3'>
                     {config?.SourceConfig?.map((source) => (
                       <label
                         key={source.key}
@@ -2350,13 +2581,192 @@ const UserConfig = ({
                       >
                         <input
                           type='checkbox'
-                          checked={selectedApis.includes(source.key)}
+                          checked={newUserGroup.enabledApis.includes(
+                            source.key
+                          )}
                           onChange={(e) => {
                             if (e.target.checked) {
-                              setSelectedApis([...selectedApis, source.key]);
+                              setNewUserGroup((prev) => ({
+                                ...prev,
+                                enabledApis: [...prev.enabledApis, source.key],
+                              }));
                             } else {
-                              setSelectedApis(
-                                selectedApis.filter((api) => api !== source.key)
+                              setNewUserGroup((prev) => ({
+                                ...prev,
+                                enabledApis: prev.enabledApis.filter(
+                                  (api) => api !== source.key
+                                ),
+                              }));
+                            }
+                          }}
+                          className='rounded text-[color:var(--tm-text)] focus:ring-[var(--tm-text)] bg-[var(--tm-surface)]'
+                        />
+                        <div className='flex-1 min-w-0'>
+                          <div className='text-sm font-medium text-[color:var(--tm-text)] truncate'>
+                            {source.name}
+                          </div>
+                          {source.api && (
+                            <div className='text-[13px] text-[color:var(--tm-muted)] truncate'>
+                              {extractDomain(source.api)}
+                            </div>
+                          )}
+                        </div>
+                      </label>
+                    ))}
+                  </div>
+
+                  {/* 快速操作按钮 */}
+                  <div className='mt-4 flex space-x-2'>
+                    <button
+                      onClick={() =>
+                        setNewUserGroup((prev) => ({
+                          ...prev,
+                          enabledApis: [],
+                        }))
+                      }
+                      className={buttonStyles.quickAction}
+                    >
+                      全不选（无限制）
+                    </button>
+                    <button
+                      onClick={() => {
+                        const allApis =
+                          config?.SourceConfig?.filter(
+                            (source) => !source.disabled
+                          ).map((s) => s.key) || [];
+                        setNewUserGroup((prev) => ({
+                          ...prev,
+                          enabledApis: allApis,
+                        }));
+                      }}
+                      className={buttonStyles.quickAction}
+                    >
+                      全选
+                    </button>
+                  </div>
+                </div>
+
+                {/* 操作按钮 */}
+                <div className='flex justify-end space-x-3 pt-4 border-t border-[var(--tm-line)]'>
+                  <button
+                    onClick={() => {
+                      setShowAddUserGroupForm(false);
+                      setNewUserGroup({
+                        name: '',
+                        enabledApis: [],
+                        permissions: [...DEFAULT_GROUP_PERMISSIONS],
+                      });
+                    }}
+                    className={`px-6 py-2.5 text-sm font-medium ${buttonStyles.secondary}`}
+                  >
+                    取消
+                  </button>
+                  <button
+                    onClick={handleAddUserGroup}
+                    disabled={
+                      !newUserGroup.name.trim() ||
+                      isLoading('userGroup_add_new')
+                    }
+                    className={`px-6 py-2.5 text-sm font-medium ${
+                      !newUserGroup.name.trim() ||
+                      isLoading('userGroup_add_new')
+                        ? buttonStyles.disabled
+                        : buttonStyles.primary
+                    }`}
+                  >
+                    {isLoading('userGroup_add_new')
+                      ? '添加中...'
+                      : '添加用户组'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </ModalLayer>
+      )}
+
+      {/* 编辑用户组弹窗 */}
+      {showEditUserGroupForm && editingUserGroup && (
+        <ModalLayer
+          variant='panel'
+          label='编辑用户组'
+          onClose={() => {
+            setShowEditUserGroupForm(false);
+            setEditingUserGroup(null);
+          }}
+        >
+          <div
+            className='bg-[var(--tm-surface)] rounded-lg shadow-xl max-w-4xl w-full max-h-[80vh] overflow-y-auto'
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className='p-6'>
+              <div className='flex items-center justify-between mb-6'>
+                <h3 className='text-xl font-medium text-[color:var(--tm-text)]'>
+                  编辑用户组 - {editingUserGroup.name}
+                </h3>
+                <button
+                  onClick={() => {
+                    setShowEditUserGroupForm(false);
+                    setEditingUserGroup(null);
+                  }}
+                  className='text-[color:var(--tm-muted)] hover:text-[color:var(--tm-muted)] transition-colors min-h-[44px] tm-press'
+                >
+                  <svg
+                    className='w-6 h-6'
+                    fill='none'
+                    stroke='currentColor'
+                    viewBox='0 0 24 24'
+                  >
+                    <path
+                      strokeLinecap='round'
+                      strokeLinejoin='round'
+                      strokeWidth={2}
+                      d='M6 18L18 6M6 6l12 12'
+                    />
+                  </svg>
+                </button>
+              </div>
+
+              <div className='space-y-6'>
+                {/* 可用视频源 */}
+                <div>
+                  <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-4'>
+                    可用视频源
+                  </label>
+                  <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3'>
+                    {config?.SourceConfig?.map((source) => (
+                      <label
+                        key={source.key}
+                        className='flex items-center space-x-3 p-3 border border-[var(--tm-line)] rounded-lg hover:bg-[var(--tm-line)] cursor-pointer transition-colors'
+                      >
+                        <input
+                          type='checkbox'
+                          checked={editingUserGroup.enabledApis.includes(
+                            source.key
+                          )}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setEditingUserGroup((prev) =>
+                                prev
+                                  ? {
+                                      ...prev,
+                                      enabledApis: [
+                                        ...prev.enabledApis,
+                                        source.key,
+                                      ],
+                                    }
+                                  : null
+                              );
+                            } else {
+                              setEditingUserGroup((prev) =>
+                                prev
+                                  ? {
+                                      ...prev,
+                                      enabledApis: prev.enabledApis.filter(
+                                        (api) => api !== source.key
+                                      ),
+                                    }
+                                  : null
                               );
                             }
                           }}
@@ -2375,13 +2785,15 @@ const UserConfig = ({
                       </label>
                     ))}
                   </div>
-                </div>
 
-                {/* 快速操作按钮 */}
-                <div className='flex flex-wrap items-center justify-between mb-6 p-4 bg-[var(--tm-surface-raised)] rounded-lg'>
-                  <div className='flex space-x-2'>
+                  {/* 快速操作按钮 */}
+                  <div className='mt-4 flex space-x-2'>
                     <button
-                      onClick={() => setSelectedApis([])}
+                      onClick={() =>
+                        setEditingUserGroup((prev) =>
+                          prev ? { ...prev, enabledApis: [] } : null
+                        )
+                      }
                       className={buttonStyles.quickAction}
                     >
                       全不选（无限制）
@@ -2392,604 +2804,184 @@ const UserConfig = ({
                           config?.SourceConfig?.filter(
                             (source) => !source.disabled
                           ).map((s) => s.key) || [];
-                        setSelectedApis(allApis);
+                        setEditingUserGroup((prev) =>
+                          prev ? { ...prev, enabledApis: allApis } : null
+                        );
                       }}
                       className={buttonStyles.quickAction}
                     >
                       全选
                     </button>
                   </div>
-                  <div className='text-sm text-[color:var(--tm-muted)]'>
-                    已选择：
-                    <span className='font-medium text-[color:var(--tm-text)]'>
-                      {selectedApis.length > 0
-                        ? `${selectedApis.length} 个源`
-                        : '无限制'}
-                    </span>
+                </div>
+
+                <div>
+                  <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-4'>
+                    功能权限
+                  </label>
+                  <div className='grid grid-cols-1 md:grid-cols-2 gap-3'>
+                    {FEATURE_PERMISSION_OPTIONS.map((permission) => (
+                      <label
+                        key={permission.key}
+                        className='flex items-start space-x-3 p-3 border border-[var(--tm-line)] rounded-lg hover:bg-[var(--tm-line)] cursor-pointer transition-colors'
+                      >
+                        <input
+                          type='checkbox'
+                          checked={editingUserGroup.permissions.includes(
+                            permission.key
+                          )}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setEditingUserGroup((prev) =>
+                                prev
+                                  ? {
+                                      ...prev,
+                                      permissions: [
+                                        ...prev.permissions,
+                                        permission.key,
+                                      ],
+                                    }
+                                  : null
+                              );
+                            } else {
+                              setEditingUserGroup((prev) =>
+                                prev
+                                  ? {
+                                      ...prev,
+                                      permissions: prev.permissions.filter(
+                                        (item) => item !== permission.key
+                                      ),
+                                    }
+                                  : null
+                              );
+                            }
+                          }}
+                          className='mt-0.5 rounded text-[color:var(--tm-text)] focus:ring-[var(--tm-text)] bg-[var(--tm-surface)]'
+                        />
+                        <div className='flex-1 min-w-0'>
+                          <div className='text-sm font-medium text-[color:var(--tm-text)]'>
+                            {permission.label}
+                          </div>
+                          <div className='text-[13px] text-[color:var(--tm-muted)]'>
+                            {permission.description}
+                          </div>
+                        </div>
+                      </label>
+                    ))}
+                  </div>
+                  <div className='mt-4 flex space-x-2'>
+                    <button
+                      type='button'
+                      onClick={() =>
+                        setEditingUserGroup((prev) =>
+                          prev ? { ...prev, permissions: [] } : null
+                        )
+                      }
+                      className={buttonStyles.quickAction}
+                    >
+                      全不选
+                    </button>
+                    <button
+                      type='button'
+                      onClick={() =>
+                        setEditingUserGroup((prev) =>
+                          prev
+                            ? {
+                                ...prev,
+                                permissions: [...DEFAULT_GROUP_PERMISSIONS],
+                              }
+                            : null
+                        )
+                      }
+                      className={buttonStyles.quickAction}
+                    >
+                      全选
+                    </button>
                   </div>
                 </div>
 
                 {/* 操作按钮 */}
-                <div className='flex justify-end space-x-3'>
+                <div className='flex justify-end space-x-3 pt-4 border-t border-[var(--tm-line)]'>
                   <button
                     onClick={() => {
-                      setShowConfigureApisModal(false);
-                      setSelectedUser(null);
-                      setSelectedApis([]);
+                      setShowEditUserGroupForm(false);
+                      setEditingUserGroup(null);
                     }}
                     className={`px-6 py-2.5 text-sm font-medium ${buttonStyles.secondary}`}
                   >
                     取消
                   </button>
                   <button
-                    onClick={handleSaveUserApis}
+                    onClick={handleEditUserGroup}
                     disabled={isLoading(
-                      `saveUserApis_${selectedUser?.username}`
+                      `userGroup_edit_${editingUserGroup?.name}`
                     )}
                     className={`px-6 py-2.5 text-sm font-medium ${
-                      isLoading(`saveUserApis_${selectedUser?.username}`)
+                      isLoading(`userGroup_edit_${editingUserGroup?.name}`)
                         ? buttonStyles.disabled
-                        : buttonStyles.success
+                        : buttonStyles.primary
                     }`}
                   >
-                    {isLoading(`saveUserApis_${selectedUser?.username}`)
-                      ? '配置中...'
-                      : '确认配置'}
+                    {isLoading(`userGroup_edit_${editingUserGroup?.name}`)
+                      ? '保存中...'
+                      : '保存修改'}
                   </button>
                 </div>
               </div>
             </div>
-          </div>,
-          document.body
-        )}
-
-      {/* 添加用户组弹窗 */}
-      {showAddUserGroupForm &&
-        createPortal(
-          <div
-            className='fixed inset-0 bg-[var(--tm-scrim)] z-50 flex items-center justify-center p-4'
-            onClick={() => {
-              setShowAddUserGroupForm(false);
-              setNewUserGroup({
-                name: '',
-                enabledApis: [],
-                permissions: [...DEFAULT_GROUP_PERMISSIONS],
-              });
-            }}
-          >
-            <div
-              className='bg-[var(--tm-surface)] rounded-lg shadow-xl max-w-4xl w-full max-h-[80vh] overflow-y-auto'
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className='p-6'>
-                <div className='flex items-center justify-between mb-6'>
-                  <h3 className='text-xl font-medium text-[color:var(--tm-text)]'>
-                    添加新用户组
-                  </h3>
-                  <button
-                    onClick={() => {
-                      setShowAddUserGroupForm(false);
-                      setNewUserGroup({
-                        name: '',
-                        enabledApis: [],
-                        permissions: [...DEFAULT_GROUP_PERMISSIONS],
-                      });
-                    }}
-                    className='text-[color:var(--tm-muted)] hover:text-[color:var(--tm-muted)] transition-colors min-h-[44px] tm-press'
-                  >
-                    <svg
-                      className='w-6 h-6'
-                      fill='none'
-                      stroke='currentColor'
-                      viewBox='0 0 24 24'
-                    >
-                      <path
-                        strokeLinecap='round'
-                        strokeLinejoin='round'
-                        strokeWidth={2}
-                        d='M6 18L18 6M6 6l12 12'
-                      />
-                    </svg>
-                  </button>
-                </div>
-
-                <div className='space-y-6'>
-                  {/* 用户组名称 */}
-                  <div>
-                    <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
-                      用户组名称
-                    </label>
-                    <input
-                      aria-label='请输入用户组名称'
-                      type='text'
-                      placeholder='请输入用户组名称'
-                      value={newUserGroup.name}
-                      onChange={(e) =>
-                        setNewUserGroup((prev) => ({
-                          ...prev,
-                          name: e.target.value,
-                        }))
-                      }
-                      className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)] focus:ring-2 focus:ring-[var(--tm-text)] focus:border-transparent'
-                    />
-                  </div>
-
-                  <div>
-                    <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-4'>
-                      功能权限
-                    </label>
-                    <div className='grid grid-cols-1 md:grid-cols-2 gap-3'>
-                      {FEATURE_PERMISSION_OPTIONS.map((permission) => (
-                        <label
-                          key={permission.key}
-                          className='flex items-start space-x-3 p-3 border border-[var(--tm-line)] rounded-lg hover:bg-[var(--tm-line)] cursor-pointer transition-colors'
-                        >
-                          <input
-                            type='checkbox'
-                            checked={newUserGroup.permissions.includes(
-                              permission.key
-                            )}
-                            onChange={(e) => {
-                              if (e.target.checked) {
-                                setNewUserGroup((prev) => ({
-                                  ...prev,
-                                  permissions: [
-                                    ...prev.permissions,
-                                    permission.key,
-                                  ],
-                                }));
-                              } else {
-                                setNewUserGroup((prev) => ({
-                                  ...prev,
-                                  permissions: prev.permissions.filter(
-                                    (item) => item !== permission.key
-                                  ),
-                                }));
-                              }
-                            }}
-                            className='mt-0.5 rounded text-[color:var(--tm-text)] focus:ring-[var(--tm-text)] bg-[var(--tm-surface)]'
-                          />
-                          <div className='flex-1 min-w-0'>
-                            <div className='text-sm font-medium text-[color:var(--tm-text)]'>
-                              {permission.label}
-                            </div>
-                            <div className='text-[13px] text-[color:var(--tm-muted)]'>
-                              {permission.description}
-                            </div>
-                          </div>
-                        </label>
-                      ))}
-                    </div>
-                    <div className='mt-4 flex space-x-2'>
-                      <button
-                        type='button'
-                        onClick={() =>
-                          setNewUserGroup((prev) => ({
-                            ...prev,
-                            permissions: [],
-                          }))
-                        }
-                        className={buttonStyles.quickAction}
-                      >
-                        全不选
-                      </button>
-                      <button
-                        type='button'
-                        onClick={() =>
-                          setNewUserGroup((prev) => ({
-                            ...prev,
-                            permissions: [...DEFAULT_GROUP_PERMISSIONS],
-                          }))
-                        }
-                        className={buttonStyles.quickAction}
-                      >
-                        全选
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* 可用视频源 */}
-                  <div>
-                    <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-4'>
-                      可用视频源
-                    </label>
-                    <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3'>
-                      {config?.SourceConfig?.map((source) => (
-                        <label
-                          key={source.key}
-                          className='flex items-center space-x-3 p-3 border border-[var(--tm-line)] rounded-lg hover:bg-[var(--tm-line)] cursor-pointer transition-colors'
-                        >
-                          <input
-                            type='checkbox'
-                            checked={newUserGroup.enabledApis.includes(
-                              source.key
-                            )}
-                            onChange={(e) => {
-                              if (e.target.checked) {
-                                setNewUserGroup((prev) => ({
-                                  ...prev,
-                                  enabledApis: [
-                                    ...prev.enabledApis,
-                                    source.key,
-                                  ],
-                                }));
-                              } else {
-                                setNewUserGroup((prev) => ({
-                                  ...prev,
-                                  enabledApis: prev.enabledApis.filter(
-                                    (api) => api !== source.key
-                                  ),
-                                }));
-                              }
-                            }}
-                            className='rounded text-[color:var(--tm-text)] focus:ring-[var(--tm-text)] bg-[var(--tm-surface)]'
-                          />
-                          <div className='flex-1 min-w-0'>
-                            <div className='text-sm font-medium text-[color:var(--tm-text)] truncate'>
-                              {source.name}
-                            </div>
-                            {source.api && (
-                              <div className='text-[13px] text-[color:var(--tm-muted)] truncate'>
-                                {extractDomain(source.api)}
-                              </div>
-                            )}
-                          </div>
-                        </label>
-                      ))}
-                    </div>
-
-                    {/* 快速操作按钮 */}
-                    <div className='mt-4 flex space-x-2'>
-                      <button
-                        onClick={() =>
-                          setNewUserGroup((prev) => ({
-                            ...prev,
-                            enabledApis: [],
-                          }))
-                        }
-                        className={buttonStyles.quickAction}
-                      >
-                        全不选（无限制）
-                      </button>
-                      <button
-                        onClick={() => {
-                          const allApis =
-                            config?.SourceConfig?.filter(
-                              (source) => !source.disabled
-                            ).map((s) => s.key) || [];
-                          setNewUserGroup((prev) => ({
-                            ...prev,
-                            enabledApis: allApis,
-                          }));
-                        }}
-                        className={buttonStyles.quickAction}
-                      >
-                        全选
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* 操作按钮 */}
-                  <div className='flex justify-end space-x-3 pt-4 border-t border-[var(--tm-line)]'>
-                    <button
-                      onClick={() => {
-                        setShowAddUserGroupForm(false);
-                        setNewUserGroup({
-                          name: '',
-                          enabledApis: [],
-                          permissions: [...DEFAULT_GROUP_PERMISSIONS],
-                        });
-                      }}
-                      className={`px-6 py-2.5 text-sm font-medium ${buttonStyles.secondary}`}
-                    >
-                      取消
-                    </button>
-                    <button
-                      onClick={handleAddUserGroup}
-                      disabled={
-                        !newUserGroup.name.trim() ||
-                        isLoading('userGroup_add_new')
-                      }
-                      className={`px-6 py-2.5 text-sm font-medium ${
-                        !newUserGroup.name.trim() ||
-                        isLoading('userGroup_add_new')
-                          ? buttonStyles.disabled
-                          : buttonStyles.primary
-                      }`}
-                    >
-                      {isLoading('userGroup_add_new')
-                        ? '添加中...'
-                        : '添加用户组'}
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>,
-          document.body
-        )}
-
-      {/* 编辑用户组弹窗 */}
-      {showEditUserGroupForm &&
-        editingUserGroup &&
-        createPortal(
-          <div
-            className='fixed inset-0 bg-[var(--tm-scrim)] z-50 flex items-center justify-center p-4'
-            onClick={() => {
-              setShowEditUserGroupForm(false);
-              setEditingUserGroup(null);
-            }}
-          >
-            <div
-              className='bg-[var(--tm-surface)] rounded-lg shadow-xl max-w-4xl w-full max-h-[80vh] overflow-y-auto'
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className='p-6'>
-                <div className='flex items-center justify-between mb-6'>
-                  <h3 className='text-xl font-medium text-[color:var(--tm-text)]'>
-                    编辑用户组 - {editingUserGroup.name}
-                  </h3>
-                  <button
-                    onClick={() => {
-                      setShowEditUserGroupForm(false);
-                      setEditingUserGroup(null);
-                    }}
-                    className='text-[color:var(--tm-muted)] hover:text-[color:var(--tm-muted)] transition-colors min-h-[44px] tm-press'
-                  >
-                    <svg
-                      className='w-6 h-6'
-                      fill='none'
-                      stroke='currentColor'
-                      viewBox='0 0 24 24'
-                    >
-                      <path
-                        strokeLinecap='round'
-                        strokeLinejoin='round'
-                        strokeWidth={2}
-                        d='M6 18L18 6M6 6l12 12'
-                      />
-                    </svg>
-                  </button>
-                </div>
-
-                <div className='space-y-6'>
-                  {/* 可用视频源 */}
-                  <div>
-                    <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-4'>
-                      可用视频源
-                    </label>
-                    <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3'>
-                      {config?.SourceConfig?.map((source) => (
-                        <label
-                          key={source.key}
-                          className='flex items-center space-x-3 p-3 border border-[var(--tm-line)] rounded-lg hover:bg-[var(--tm-line)] cursor-pointer transition-colors'
-                        >
-                          <input
-                            type='checkbox'
-                            checked={editingUserGroup.enabledApis.includes(
-                              source.key
-                            )}
-                            onChange={(e) => {
-                              if (e.target.checked) {
-                                setEditingUserGroup((prev) =>
-                                  prev
-                                    ? {
-                                        ...prev,
-                                        enabledApis: [
-                                          ...prev.enabledApis,
-                                          source.key,
-                                        ],
-                                      }
-                                    : null
-                                );
-                              } else {
-                                setEditingUserGroup((prev) =>
-                                  prev
-                                    ? {
-                                        ...prev,
-                                        enabledApis: prev.enabledApis.filter(
-                                          (api) => api !== source.key
-                                        ),
-                                      }
-                                    : null
-                                );
-                              }
-                            }}
-                            className='rounded text-[color:var(--tm-text)] focus:ring-[var(--tm-text)] bg-[var(--tm-surface)]'
-                          />
-                          <div className='flex-1 min-w-0'>
-                            <div className='text-sm font-medium text-[color:var(--tm-text)] truncate'>
-                              {source.name}
-                            </div>
-                            {source.api && (
-                              <div className='text-[13px] text-[color:var(--tm-muted)] truncate'>
-                                {extractDomain(source.api)}
-                              </div>
-                            )}
-                          </div>
-                        </label>
-                      ))}
-                    </div>
-
-                    {/* 快速操作按钮 */}
-                    <div className='mt-4 flex space-x-2'>
-                      <button
-                        onClick={() =>
-                          setEditingUserGroup((prev) =>
-                            prev ? { ...prev, enabledApis: [] } : null
-                          )
-                        }
-                        className={buttonStyles.quickAction}
-                      >
-                        全不选（无限制）
-                      </button>
-                      <button
-                        onClick={() => {
-                          const allApis =
-                            config?.SourceConfig?.filter(
-                              (source) => !source.disabled
-                            ).map((s) => s.key) || [];
-                          setEditingUserGroup((prev) =>
-                            prev ? { ...prev, enabledApis: allApis } : null
-                          );
-                        }}
-                        className={buttonStyles.quickAction}
-                      >
-                        全选
-                      </button>
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-4'>
-                      功能权限
-                    </label>
-                    <div className='grid grid-cols-1 md:grid-cols-2 gap-3'>
-                      {FEATURE_PERMISSION_OPTIONS.map((permission) => (
-                        <label
-                          key={permission.key}
-                          className='flex items-start space-x-3 p-3 border border-[var(--tm-line)] rounded-lg hover:bg-[var(--tm-line)] cursor-pointer transition-colors'
-                        >
-                          <input
-                            type='checkbox'
-                            checked={editingUserGroup.permissions.includes(
-                              permission.key
-                            )}
-                            onChange={(e) => {
-                              if (e.target.checked) {
-                                setEditingUserGroup((prev) =>
-                                  prev
-                                    ? {
-                                        ...prev,
-                                        permissions: [
-                                          ...prev.permissions,
-                                          permission.key,
-                                        ],
-                                      }
-                                    : null
-                                );
-                              } else {
-                                setEditingUserGroup((prev) =>
-                                  prev
-                                    ? {
-                                        ...prev,
-                                        permissions: prev.permissions.filter(
-                                          (item) => item !== permission.key
-                                        ),
-                                      }
-                                    : null
-                                );
-                              }
-                            }}
-                            className='mt-0.5 rounded text-[color:var(--tm-text)] focus:ring-[var(--tm-text)] bg-[var(--tm-surface)]'
-                          />
-                          <div className='flex-1 min-w-0'>
-                            <div className='text-sm font-medium text-[color:var(--tm-text)]'>
-                              {permission.label}
-                            </div>
-                            <div className='text-[13px] text-[color:var(--tm-muted)]'>
-                              {permission.description}
-                            </div>
-                          </div>
-                        </label>
-                      ))}
-                    </div>
-                    <div className='mt-4 flex space-x-2'>
-                      <button
-                        type='button'
-                        onClick={() =>
-                          setEditingUserGroup((prev) =>
-                            prev ? { ...prev, permissions: [] } : null
-                          )
-                        }
-                        className={buttonStyles.quickAction}
-                      >
-                        全不选
-                      </button>
-                      <button
-                        type='button'
-                        onClick={() =>
-                          setEditingUserGroup((prev) =>
-                            prev
-                              ? {
-                                  ...prev,
-                                  permissions: [...DEFAULT_GROUP_PERMISSIONS],
-                                }
-                              : null
-                          )
-                        }
-                        className={buttonStyles.quickAction}
-                      >
-                        全选
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* 操作按钮 */}
-                  <div className='flex justify-end space-x-3 pt-4 border-t border-[var(--tm-line)]'>
-                    <button
-                      onClick={() => {
-                        setShowEditUserGroupForm(false);
-                        setEditingUserGroup(null);
-                      }}
-                      className={`px-6 py-2.5 text-sm font-medium ${buttonStyles.secondary}`}
-                    >
-                      取消
-                    </button>
-                    <button
-                      onClick={handleEditUserGroup}
-                      disabled={isLoading(
-                        `userGroup_edit_${editingUserGroup?.name}`
-                      )}
-                      className={`px-6 py-2.5 text-sm font-medium ${
-                        isLoading(`userGroup_edit_${editingUserGroup?.name}`)
-                          ? buttonStyles.disabled
-                          : buttonStyles.primary
-                      }`}
-                    >
-                      {isLoading(`userGroup_edit_${editingUserGroup?.name}`)
-                        ? '保存中...'
-                        : '保存修改'}
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>,
-          document.body
-        )}
+          </div>
+        </ModalLayer>
+      )}
 
       {/* 配置用户组弹窗 */}
-      {showConfigureUserGroupModal &&
-        selectedUserForGroup &&
-        createPortal(
+      {showConfigureUserGroupModal && selectedUserForGroup && (
+        <ModalLayer
+          variant='panel'
+          label='配置用户组'
+          onClose={() => {
+            setShowConfigureUserGroupModal(false);
+            setSelectedUserForGroup(null);
+            setSelectedUserGroups([]);
+          }}
+        >
           <div
-            className='fixed inset-0 bg-[var(--tm-scrim)] z-50 flex items-center justify-center p-4'
-            onClick={() => {
-              setShowConfigureUserGroupModal(false);
-              setSelectedUserForGroup(null);
-              setSelectedUserGroups([]);
-            }}
+            className='bg-[var(--tm-surface)] rounded-lg shadow-xl max-w-4xl w-full max-h-[80vh] overflow-y-auto'
+            onClick={(e) => e.stopPropagation()}
           >
-            <div
-              className='bg-[var(--tm-surface)] rounded-lg shadow-xl max-w-4xl w-full max-h-[80vh] overflow-y-auto'
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className='p-6'>
-                <div className='flex items-center justify-between mb-6'>
-                  <h3 className='text-xl font-medium text-[color:var(--tm-text)]'>
-                    配置用户组 - {selectedUserForGroup.username}
-                  </h3>
-                  <button
-                    onClick={() => {
-                      setShowConfigureUserGroupModal(false);
-                      setSelectedUserForGroup(null);
-                      setSelectedUserGroups([]);
-                    }}
-                    className='text-[color:var(--tm-muted)] hover:text-[color:var(--tm-muted)] transition-colors min-h-[44px] tm-press'
+            <div className='p-6'>
+              <div className='flex items-center justify-between mb-6'>
+                <h3 className='text-xl font-medium text-[color:var(--tm-text)]'>
+                  配置用户组 - {selectedUserForGroup.username}
+                </h3>
+                <button
+                  onClick={() => {
+                    setShowConfigureUserGroupModal(false);
+                    setSelectedUserForGroup(null);
+                    setSelectedUserGroups([]);
+                  }}
+                  className='text-[color:var(--tm-muted)] hover:text-[color:var(--tm-muted)] transition-colors min-h-[44px] tm-press'
+                >
+                  <svg
+                    className='w-6 h-6'
+                    fill='none'
+                    stroke='currentColor'
+                    viewBox='0 0 24 24'
                   >
+                    <path
+                      strokeLinecap='round'
+                      strokeLinejoin='round'
+                      strokeWidth={2}
+                      d='M6 18L18 6M6 6l12 12'
+                    />
+                  </svg>
+                </button>
+              </div>
+
+              <div className='mb-6'>
+                <div className='bg-[var(--tm-surface-raised)] border border-[var(--tm-line)] rounded-lg p-4'>
+                  <div className='flex items-center space-x-2 mb-2'>
                     <svg
-                      className='w-6 h-6'
+                      className='w-5 h-5 text-[color:var(--tm-text)]'
                       fill='none'
                       stroke='currentColor'
                       viewBox='0 0 24 24'
@@ -2998,13 +2990,153 @@ const UserConfig = ({
                         strokeLinecap='round'
                         strokeLinejoin='round'
                         strokeWidth={2}
-                        d='M6 18L18 6M6 6l12 12'
+                        d='M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z'
                       />
                     </svg>
-                  </button>
+                    <span className='text-sm font-medium text-[color:var(--tm-text)]'>
+                      配置说明
+                    </span>
+                  </div>
+                  <p className='text-sm text-[color:var(--tm-text)] mt-1'>
+                    提示：选择"无用户组"为无限制，选择特定用户组将限制用户只能访问该用户组允许的采集源
+                  </p>
+                </div>
+              </div>
+
+              {/* 用户组选择 - 下拉选择器 */}
+              <div className='mb-6'>
+                <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
+                  选择用户组：
+                </label>
+                <Select
+                  value={
+                    selectedUserGroups.length > 0 ? selectedUserGroups[0] : ''
+                  }
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setSelectedUserGroups(value ? [value] : []);
+                  }}
+                  className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)] focus:ring-2 focus:ring-[var(--tm-text)] focus:border-transparent transition-colors'
+                >
+                  <option value=''>无用户组（无限制）</option>
+                  {userGroups.map((group) => (
+                    <option key={group.name} value={group.name}>
+                      {group.name}{' '}
+                      {group.enabledApis && group.enabledApis.length > 0
+                        ? `(${group.enabledApis.length} 个源)`
+                        : ''}
+                    </option>
+                  ))}
+                </Select>
+                <p className='mt-2 text-[13px] text-[color:var(--tm-muted)]'>
+                  选择"无用户组"为无限制，选择特定用户组将限制用户只能访问该用户组允许的采集源
+                </p>
+              </div>
+
+              {/* 操作按钮 */}
+              <div className='flex justify-end space-x-3'>
+                <button
+                  onClick={() => {
+                    setShowConfigureUserGroupModal(false);
+                    setSelectedUserForGroup(null);
+                    setSelectedUserGroups([]);
+                  }}
+                  className={`px-6 py-2.5 text-sm font-medium ${buttonStyles.secondary}`}
+                >
+                  取消
+                </button>
+                <button
+                  onClick={handleSaveUserGroups}
+                  disabled={isLoading(
+                    `saveUserGroups_${selectedUserForGroup?.username}`
+                  )}
+                  className={`px-6 py-2.5 text-sm font-medium ${
+                    isLoading(
+                      `saveUserGroups_${selectedUserForGroup?.username}`
+                    )
+                      ? buttonStyles.disabled
+                      : buttonStyles.success
+                  }`}
+                >
+                  {isLoading(`saveUserGroups_${selectedUserForGroup?.username}`)
+                    ? '配置中...'
+                    : '确认配置'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </ModalLayer>
+      )}
+
+      {/* 删除用户组确认弹窗 */}
+      {showDeleteUserGroupModal && deletingUserGroup && (
+        <ModalLayer
+          variant='confirm'
+          label='确认删除用户组'
+          onClose={() => {
+            setShowDeleteUserGroupModal(false);
+            setDeletingUserGroup(null);
+          }}
+        >
+          <div
+            className='bg-[var(--tm-surface)] rounded-lg shadow-xl max-w-2xl w-full'
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className='p-6'>
+              <div className='flex items-center justify-between mb-6'>
+                <h3 className='text-xl font-medium text-[color:var(--tm-text)]'>
+                  确认删除用户组
+                </h3>
+                <button
+                  onClick={() => {
+                    setShowDeleteUserGroupModal(false);
+                    setDeletingUserGroup(null);
+                  }}
+                  className='text-[color:var(--tm-muted)] hover:text-[color:var(--tm-muted)] transition-colors min-h-[44px] tm-press'
+                >
+                  <svg
+                    className='w-6 h-6'
+                    fill='none'
+                    stroke='currentColor'
+                    viewBox='0 0 24 24'
+                  >
+                    <path
+                      strokeLinecap='round'
+                      strokeLinejoin='round'
+                      strokeWidth={2}
+                      d='M6 18L18 6M6 6l12 12'
+                    />
+                  </svg>
+                </button>
+              </div>
+
+              <div className='mb-6'>
+                <div className='bg-[var(--tm-surface-raised)] border border-[var(--tm-line)] rounded-lg p-4 mb-4'>
+                  <div className='flex items-center space-x-2 mb-2'>
+                    <svg
+                      className='w-5 h-5 text-[color:var(--tm-text)]'
+                      fill='none'
+                      stroke='currentColor'
+                      viewBox='0 0 24 24'
+                    >
+                      <path
+                        strokeLinecap='round'
+                        strokeLinejoin='round'
+                        strokeWidth={2}
+                        d='M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z'
+                      />
+                    </svg>
+                    <span className='text-sm font-medium text-[color:var(--tm-text)]'>
+                      危险操作警告
+                    </span>
+                  </div>
+                  <p className='text-sm text-[color:var(--tm-text)]'>
+                    删除用户组 <strong>{deletingUserGroup.name}</strong>{' '}
+                    将影响所有使用该组的用户，此操作不可恢复！
+                  </p>
                 </div>
 
-                <div className='mb-6'>
+                {deletingUserGroup.affectedUsers.length > 0 ? (
                   <div className='bg-[var(--tm-surface-raised)] border border-[var(--tm-line)] rounded-lg p-4'>
                     <div className='flex items-center space-x-2 mb-2'>
                       <svg
@@ -3017,33 +3149,259 @@ const UserConfig = ({
                           strokeLinecap='round'
                           strokeLinejoin='round'
                           strokeWidth={2}
-                          d='M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z'
+                          d='M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z'
                         />
                       </svg>
                       <span className='text-sm font-medium text-[color:var(--tm-text)]'>
-                        配置说明
+                        <TriangleAlert
+                          className='mr-1 inline-block h-4 w-4 align-[-0.125em]'
+                          aria-hidden='true'
+                        />
+                        将影响 {deletingUserGroup.affectedUsers.length} 个用户：
                       </span>
                     </div>
-                    <p className='text-sm text-[color:var(--tm-text)] mt-1'>
-                      提示：选择"无用户组"为无限制，选择特定用户组将限制用户只能访问该用户组允许的采集源
+                    <div className='space-y-1'>
+                      {deletingUserGroup.affectedUsers.map((user, index) => (
+                        <div
+                          key={index}
+                          className='text-sm text-[color:var(--tm-text)]'
+                        >
+                          • {user.username} ({user.role})
+                        </div>
+                      ))}
+                    </div>
+                    <p className='text-[13px] text-[color:var(--tm-text)] mt-2'>
+                      这些用户的用户组将被自动移除
                     </p>
                   </div>
+                ) : (
+                  <div className='bg-[var(--tm-surface-raised)] border border-[var(--tm-line)] rounded-lg p-4'>
+                    <div className='flex items-center space-x-2'>
+                      <svg
+                        className='w-5 h-5 text-[color:var(--tm-text)]'
+                        fill='none'
+                        stroke='currentColor'
+                        viewBox='0 0 24 24'
+                      >
+                        <path
+                          strokeLinecap='round'
+                          strokeLinejoin='round'
+                          strokeWidth={2}
+                          d='M5 13l4 4L19 7'
+                        />
+                      </svg>
+                      <span className='text-sm font-medium text-[color:var(--tm-text)]'>
+                        <CircleCheck
+                          className='mr-1 inline-block h-4 w-4 align-[-0.125em]'
+                          aria-hidden='true'
+                        />
+                        当前没有用户使用此用户组
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* 操作按钮 */}
+              <div className='flex justify-end space-x-3'>
+                <button
+                  onClick={() => {
+                    setShowDeleteUserGroupModal(false);
+                    setDeletingUserGroup(null);
+                  }}
+                  className={`px-6 py-2.5 text-sm font-medium ${buttonStyles.secondary}`}
+                >
+                  取消
+                </button>
+                <button
+                  onClick={handleConfirmDeleteUserGroup}
+                  disabled={isLoading(
+                    `userGroup_delete_${deletingUserGroup?.name}`
+                  )}
+                  className={`px-6 py-2.5 text-sm font-medium ${
+                    isLoading(`userGroup_delete_${deletingUserGroup?.name}`)
+                      ? buttonStyles.disabled
+                      : buttonStyles.danger
+                  }`}
+                >
+                  {isLoading(`userGroup_delete_${deletingUserGroup?.name}`)
+                    ? '删除中...'
+                    : '确认删除'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </ModalLayer>
+      )}
+
+      {/* 删除用户确认弹窗 */}
+      {showDeleteUserModal && deletingUser && (
+        <ModalLayer
+          variant='confirm'
+          label='确认删除用户'
+          onClose={() => {
+            setShowDeleteUserModal(false);
+            setDeletingUser(null);
+          }}
+        >
+          <div
+            className='bg-[var(--tm-surface)] rounded-lg shadow-xl max-w-2xl w-full'
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className='p-6'>
+              <div className='flex items-center justify-between mb-6'>
+                <h3 className='text-xl font-medium text-[color:var(--tm-text)]'>
+                  确认删除用户
+                </h3>
+                <button
+                  onClick={() => {
+                    setShowDeleteUserModal(false);
+                    setDeletingUser(null);
+                  }}
+                  className='text-[color:var(--tm-muted)] hover:text-[color:var(--tm-muted)] transition-colors min-h-[44px] tm-press'
+                >
+                  <svg
+                    className='w-6 h-6'
+                    fill='none'
+                    stroke='currentColor'
+                    viewBox='0 0 24 24'
+                  >
+                    <path
+                      strokeLinecap='round'
+                      strokeLinejoin='round'
+                      strokeWidth={2}
+                      d='M6 18L18 6M6 6l12 12'
+                    />
+                  </svg>
+                </button>
+              </div>
+
+              <div className='mb-6'>
+                <div className='bg-[var(--tm-surface-raised)] border border-[var(--tm-line)] rounded-lg p-4 mb-4'>
+                  <div className='flex items-center space-x-2 mb-2'>
+                    <svg
+                      className='w-5 h-5 text-[color:var(--tm-text)]'
+                      fill='none'
+                      stroke='currentColor'
+                      viewBox='0 0 24 24'
+                    >
+                      <path
+                        strokeLinecap='round'
+                        strokeLinejoin='round'
+                        strokeWidth={2}
+                        d='M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z'
+                      />
+                    </svg>
+                    <span className='text-sm font-medium text-[color:var(--tm-text)]'>
+                      危险操作警告
+                    </span>
+                  </div>
+                  <p className='text-sm text-[color:var(--tm-text)]'>
+                    删除用户 <strong>{deletingUser}</strong>{' '}
+                    将同时删除其搜索历史、播放记录和收藏夹，此操作不可恢复！
+                  </p>
                 </div>
 
-                {/* 用户组选择 - 下拉选择器 */}
-                <div className='mb-6'>
+                {/* 操作按钮 */}
+                <div className='flex justify-end space-x-3'>
+                  <button
+                    onClick={() => {
+                      setShowDeleteUserModal(false);
+                      setDeletingUser(null);
+                    }}
+                    className={`px-6 py-2.5 text-sm font-medium ${buttonStyles.secondary}`}
+                  >
+                    取消
+                  </button>
+                  <button
+                    onClick={handleConfirmDeleteUser}
+                    className={`px-6 py-2.5 text-sm font-medium ${buttonStyles.danger}`}
+                  >
+                    确认删除
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </ModalLayer>
+      )}
+
+      {/* 批量设置用户组弹窗 */}
+      {showBatchUserGroupModal && (
+        <ModalLayer
+          variant='panel'
+          label='批量设置用户组'
+          onClose={() => {
+            setShowBatchUserGroupModal(false);
+            setSelectedUserGroup('');
+          }}
+        >
+          <div
+            className='bg-[var(--tm-surface)] rounded-lg shadow-xl max-w-2xl w-full'
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className='p-6'>
+              <div className='flex items-center justify-between mb-6'>
+                <h3 className='text-xl font-medium text-[color:var(--tm-text)]'>
+                  批量设置用户组
+                </h3>
+                <button
+                  onClick={() => {
+                    setShowBatchUserGroupModal(false);
+                    setSelectedUserGroup('');
+                  }}
+                  className='text-[color:var(--tm-muted)] hover:text-[color:var(--tm-muted)] transition-colors min-h-[44px] tm-press'
+                >
+                  <svg
+                    className='w-6 h-6'
+                    fill='none'
+                    stroke='currentColor'
+                    viewBox='0 0 24 24'
+                  >
+                    <path
+                      strokeLinecap='round'
+                      strokeLinejoin='round'
+                      strokeWidth={2}
+                      d='M6 18L18 6M6 6l12 12'
+                    />
+                  </svg>
+                </button>
+              </div>
+
+              <div className='mb-6'>
+                <div className='bg-[var(--tm-surface-raised)] border border-[var(--tm-line)] rounded-lg p-4 mb-4'>
+                  <div className='flex items-center space-x-2 mb-2'>
+                    <svg
+                      className='w-5 h-5 text-[color:var(--tm-text)]'
+                      fill='none'
+                      stroke='currentColor'
+                      viewBox='0 0 24 24'
+                    >
+                      <path
+                        strokeLinecap='round'
+                        strokeLinejoin='round'
+                        strokeWidth={2}
+                        d='M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z'
+                      />
+                    </svg>
+                    <span className='text-sm font-medium text-[color:var(--tm-text)]'>
+                      批量操作说明
+                    </span>
+                  </div>
+                  <p className='text-sm text-[color:var(--tm-text)]'>
+                    将为选中的 <strong>{selectedUsers.size} 个用户</strong>{' '}
+                    设置用户组，选择"无用户组"为无限制
+                  </p>
+                </div>
+
+                <div>
                   <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
                     选择用户组：
                   </label>
                   <Select
-                    value={
-                      selectedUserGroups.length > 0 ? selectedUserGroups[0] : ''
-                    }
-                    onChange={(e) => {
-                      const value = e.target.value;
-                      setSelectedUserGroups(value ? [value] : []);
-                    }}
+                    onChange={(e) => setSelectedUserGroup(e.target.value)}
                     className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)] focus:ring-2 focus:ring-[var(--tm-text)] focus:border-transparent transition-colors'
+                    value={selectedUserGroup}
                   >
                     <option value=''>无用户组（无限制）</option>
                     {userGroups.map((group) => (
@@ -3059,429 +3417,35 @@ const UserConfig = ({
                     选择"无用户组"为无限制，选择特定用户组将限制用户只能访问该用户组允许的采集源
                   </p>
                 </div>
+              </div>
 
-                {/* 操作按钮 */}
-                <div className='flex justify-end space-x-3'>
-                  <button
-                    onClick={() => {
-                      setShowConfigureUserGroupModal(false);
-                      setSelectedUserForGroup(null);
-                      setSelectedUserGroups([]);
-                    }}
-                    className={`px-6 py-2.5 text-sm font-medium ${buttonStyles.secondary}`}
-                  >
-                    取消
-                  </button>
-                  <button
-                    onClick={handleSaveUserGroups}
-                    disabled={isLoading(
-                      `saveUserGroups_${selectedUserForGroup?.username}`
-                    )}
-                    className={`px-6 py-2.5 text-sm font-medium ${
-                      isLoading(
-                        `saveUserGroups_${selectedUserForGroup?.username}`
-                      )
-                        ? buttonStyles.disabled
-                        : buttonStyles.success
-                    }`}
-                  >
-                    {isLoading(
-                      `saveUserGroups_${selectedUserForGroup?.username}`
-                    )
-                      ? '配置中...'
-                      : '确认配置'}
-                  </button>
-                </div>
+              {/* 操作按钮 */}
+              <div className='flex justify-end space-x-3'>
+                <button
+                  onClick={() => {
+                    setShowBatchUserGroupModal(false);
+                    setSelectedUserGroup('');
+                  }}
+                  className={`px-6 py-2.5 text-sm font-medium ${buttonStyles.secondary}`}
+                >
+                  取消
+                </button>
+                <button
+                  onClick={() => handleBatchSetUserGroup(selectedUserGroup)}
+                  disabled={isLoading('batchSetUserGroup')}
+                  className={`px-6 py-2.5 text-sm font-medium ${
+                    isLoading('batchSetUserGroup')
+                      ? buttonStyles.disabled
+                      : buttonStyles.success
+                  }`}
+                >
+                  {isLoading('batchSetUserGroup') ? '设置中...' : '确认设置'}
+                </button>
               </div>
             </div>
-          </div>,
-          document.body
-        )}
-
-      {/* 删除用户组确认弹窗 */}
-      {showDeleteUserGroupModal &&
-        deletingUserGroup &&
-        createPortal(
-          <div
-            className='fixed inset-0 bg-[var(--tm-scrim)] z-50 flex items-center justify-center p-4'
-            onClick={() => {
-              setShowDeleteUserGroupModal(false);
-              setDeletingUserGroup(null);
-            }}
-          >
-            <div
-              className='bg-[var(--tm-surface)] rounded-lg shadow-xl max-w-2xl w-full'
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className='p-6'>
-                <div className='flex items-center justify-between mb-6'>
-                  <h3 className='text-xl font-medium text-[color:var(--tm-text)]'>
-                    确认删除用户组
-                  </h3>
-                  <button
-                    onClick={() => {
-                      setShowDeleteUserGroupModal(false);
-                      setDeletingUserGroup(null);
-                    }}
-                    className='text-[color:var(--tm-muted)] hover:text-[color:var(--tm-muted)] transition-colors min-h-[44px] tm-press'
-                  >
-                    <svg
-                      className='w-6 h-6'
-                      fill='none'
-                      stroke='currentColor'
-                      viewBox='0 0 24 24'
-                    >
-                      <path
-                        strokeLinecap='round'
-                        strokeLinejoin='round'
-                        strokeWidth={2}
-                        d='M6 18L18 6M6 6l12 12'
-                      />
-                    </svg>
-                  </button>
-                </div>
-
-                <div className='mb-6'>
-                  <div className='bg-[var(--tm-surface-raised)] border border-[var(--tm-line)] rounded-lg p-4 mb-4'>
-                    <div className='flex items-center space-x-2 mb-2'>
-                      <svg
-                        className='w-5 h-5 text-[color:var(--tm-text)]'
-                        fill='none'
-                        stroke='currentColor'
-                        viewBox='0 0 24 24'
-                      >
-                        <path
-                          strokeLinecap='round'
-                          strokeLinejoin='round'
-                          strokeWidth={2}
-                          d='M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z'
-                        />
-                      </svg>
-                      <span className='text-sm font-medium text-[color:var(--tm-text)]'>
-                        危险操作警告
-                      </span>
-                    </div>
-                    <p className='text-sm text-[color:var(--tm-text)]'>
-                      删除用户组 <strong>{deletingUserGroup.name}</strong>{' '}
-                      将影响所有使用该组的用户，此操作不可恢复！
-                    </p>
-                  </div>
-
-                  {deletingUserGroup.affectedUsers.length > 0 ? (
-                    <div className='bg-[var(--tm-surface-raised)] border border-[var(--tm-line)] rounded-lg p-4'>
-                      <div className='flex items-center space-x-2 mb-2'>
-                        <svg
-                          className='w-5 h-5 text-[color:var(--tm-text)]'
-                          fill='none'
-                          stroke='currentColor'
-                          viewBox='0 0 24 24'
-                        >
-                          <path
-                            strokeLinecap='round'
-                            strokeLinejoin='round'
-                            strokeWidth={2}
-                            d='M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z'
-                          />
-                        </svg>
-                        <span className='text-sm font-medium text-[color:var(--tm-text)]'>
-                          <TriangleAlert
-                            className='mr-1 inline-block h-4 w-4 align-[-0.125em]'
-                            aria-hidden='true'
-                          />
-                          将影响 {deletingUserGroup.affectedUsers.length}{' '}
-                          个用户：
-                        </span>
-                      </div>
-                      <div className='space-y-1'>
-                        {deletingUserGroup.affectedUsers.map((user, index) => (
-                          <div
-                            key={index}
-                            className='text-sm text-[color:var(--tm-text)]'
-                          >
-                            • {user.username} ({user.role})
-                          </div>
-                        ))}
-                      </div>
-                      <p className='text-[13px] text-[color:var(--tm-text)] mt-2'>
-                        这些用户的用户组将被自动移除
-                      </p>
-                    </div>
-                  ) : (
-                    <div className='bg-[var(--tm-surface-raised)] border border-[var(--tm-line)] rounded-lg p-4'>
-                      <div className='flex items-center space-x-2'>
-                        <svg
-                          className='w-5 h-5 text-[color:var(--tm-text)]'
-                          fill='none'
-                          stroke='currentColor'
-                          viewBox='0 0 24 24'
-                        >
-                          <path
-                            strokeLinecap='round'
-                            strokeLinejoin='round'
-                            strokeWidth={2}
-                            d='M5 13l4 4L19 7'
-                          />
-                        </svg>
-                        <span className='text-sm font-medium text-[color:var(--tm-text)]'>
-                          <CircleCheck
-                            className='mr-1 inline-block h-4 w-4 align-[-0.125em]'
-                            aria-hidden='true'
-                          />
-                          当前没有用户使用此用户组
-                        </span>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* 操作按钮 */}
-                <div className='flex justify-end space-x-3'>
-                  <button
-                    onClick={() => {
-                      setShowDeleteUserGroupModal(false);
-                      setDeletingUserGroup(null);
-                    }}
-                    className={`px-6 py-2.5 text-sm font-medium ${buttonStyles.secondary}`}
-                  >
-                    取消
-                  </button>
-                  <button
-                    onClick={handleConfirmDeleteUserGroup}
-                    disabled={isLoading(
-                      `userGroup_delete_${deletingUserGroup?.name}`
-                    )}
-                    className={`px-6 py-2.5 text-sm font-medium ${
-                      isLoading(`userGroup_delete_${deletingUserGroup?.name}`)
-                        ? buttonStyles.disabled
-                        : buttonStyles.danger
-                    }`}
-                  >
-                    {isLoading(`userGroup_delete_${deletingUserGroup?.name}`)
-                      ? '删除中...'
-                      : '确认删除'}
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>,
-          document.body
-        )}
-
-      {/* 删除用户确认弹窗 */}
-      {showDeleteUserModal &&
-        deletingUser &&
-        createPortal(
-          <div
-            className='fixed inset-0 bg-[var(--tm-scrim)] z-50 flex items-center justify-center p-4'
-            onClick={() => {
-              setShowDeleteUserModal(false);
-              setDeletingUser(null);
-            }}
-          >
-            <div
-              className='bg-[var(--tm-surface)] rounded-lg shadow-xl max-w-2xl w-full'
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className='p-6'>
-                <div className='flex items-center justify-between mb-6'>
-                  <h3 className='text-xl font-medium text-[color:var(--tm-text)]'>
-                    确认删除用户
-                  </h3>
-                  <button
-                    onClick={() => {
-                      setShowDeleteUserModal(false);
-                      setDeletingUser(null);
-                    }}
-                    className='text-[color:var(--tm-muted)] hover:text-[color:var(--tm-muted)] transition-colors min-h-[44px] tm-press'
-                  >
-                    <svg
-                      className='w-6 h-6'
-                      fill='none'
-                      stroke='currentColor'
-                      viewBox='0 0 24 24'
-                    >
-                      <path
-                        strokeLinecap='round'
-                        strokeLinejoin='round'
-                        strokeWidth={2}
-                        d='M6 18L18 6M6 6l12 12'
-                      />
-                    </svg>
-                  </button>
-                </div>
-
-                <div className='mb-6'>
-                  <div className='bg-[var(--tm-surface-raised)] border border-[var(--tm-line)] rounded-lg p-4 mb-4'>
-                    <div className='flex items-center space-x-2 mb-2'>
-                      <svg
-                        className='w-5 h-5 text-[color:var(--tm-text)]'
-                        fill='none'
-                        stroke='currentColor'
-                        viewBox='0 0 24 24'
-                      >
-                        <path
-                          strokeLinecap='round'
-                          strokeLinejoin='round'
-                          strokeWidth={2}
-                          d='M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z'
-                        />
-                      </svg>
-                      <span className='text-sm font-medium text-[color:var(--tm-text)]'>
-                        危险操作警告
-                      </span>
-                    </div>
-                    <p className='text-sm text-[color:var(--tm-text)]'>
-                      删除用户 <strong>{deletingUser}</strong>{' '}
-                      将同时删除其搜索历史、播放记录和收藏夹，此操作不可恢复！
-                    </p>
-                  </div>
-
-                  {/* 操作按钮 */}
-                  <div className='flex justify-end space-x-3'>
-                    <button
-                      onClick={() => {
-                        setShowDeleteUserModal(false);
-                        setDeletingUser(null);
-                      }}
-                      className={`px-6 py-2.5 text-sm font-medium ${buttonStyles.secondary}`}
-                    >
-                      取消
-                    </button>
-                    <button
-                      onClick={handleConfirmDeleteUser}
-                      className={`px-6 py-2.5 text-sm font-medium ${buttonStyles.danger}`}
-                    >
-                      确认删除
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>,
-          document.body
-        )}
-
-      {/* 批量设置用户组弹窗 */}
-      {showBatchUserGroupModal &&
-        createPortal(
-          <div
-            className='fixed inset-0 bg-[var(--tm-scrim)] z-50 flex items-center justify-center p-4'
-            onClick={() => {
-              setShowBatchUserGroupModal(false);
-              setSelectedUserGroup('');
-            }}
-          >
-            <div
-              className='bg-[var(--tm-surface)] rounded-lg shadow-xl max-w-2xl w-full'
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className='p-6'>
-                <div className='flex items-center justify-between mb-6'>
-                  <h3 className='text-xl font-medium text-[color:var(--tm-text)]'>
-                    批量设置用户组
-                  </h3>
-                  <button
-                    onClick={() => {
-                      setShowBatchUserGroupModal(false);
-                      setSelectedUserGroup('');
-                    }}
-                    className='text-[color:var(--tm-muted)] hover:text-[color:var(--tm-muted)] transition-colors min-h-[44px] tm-press'
-                  >
-                    <svg
-                      className='w-6 h-6'
-                      fill='none'
-                      stroke='currentColor'
-                      viewBox='0 0 24 24'
-                    >
-                      <path
-                        strokeLinecap='round'
-                        strokeLinejoin='round'
-                        strokeWidth={2}
-                        d='M6 18L18 6M6 6l12 12'
-                      />
-                    </svg>
-                  </button>
-                </div>
-
-                <div className='mb-6'>
-                  <div className='bg-[var(--tm-surface-raised)] border border-[var(--tm-line)] rounded-lg p-4 mb-4'>
-                    <div className='flex items-center space-x-2 mb-2'>
-                      <svg
-                        className='w-5 h-5 text-[color:var(--tm-text)]'
-                        fill='none'
-                        stroke='currentColor'
-                        viewBox='0 0 24 24'
-                      >
-                        <path
-                          strokeLinecap='round'
-                          strokeLinejoin='round'
-                          strokeWidth={2}
-                          d='M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z'
-                        />
-                      </svg>
-                      <span className='text-sm font-medium text-[color:var(--tm-text)]'>
-                        批量操作说明
-                      </span>
-                    </div>
-                    <p className='text-sm text-[color:var(--tm-text)]'>
-                      将为选中的 <strong>{selectedUsers.size} 个用户</strong>{' '}
-                      设置用户组，选择"无用户组"为无限制
-                    </p>
-                  </div>
-
-                  <div>
-                    <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
-                      选择用户组：
-                    </label>
-                    <Select
-                      onChange={(e) => setSelectedUserGroup(e.target.value)}
-                      className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)] focus:ring-2 focus:ring-[var(--tm-text)] focus:border-transparent transition-colors'
-                      value={selectedUserGroup}
-                    >
-                      <option value=''>无用户组（无限制）</option>
-                      {userGroups.map((group) => (
-                        <option key={group.name} value={group.name}>
-                          {group.name}{' '}
-                          {group.enabledApis && group.enabledApis.length > 0
-                            ? `(${group.enabledApis.length} 个源)`
-                            : ''}
-                        </option>
-                      ))}
-                    </Select>
-                    <p className='mt-2 text-[13px] text-[color:var(--tm-muted)]'>
-                      选择"无用户组"为无限制，选择特定用户组将限制用户只能访问该用户组允许的采集源
-                    </p>
-                  </div>
-                </div>
-
-                {/* 操作按钮 */}
-                <div className='flex justify-end space-x-3'>
-                  <button
-                    onClick={() => {
-                      setShowBatchUserGroupModal(false);
-                      setSelectedUserGroup('');
-                    }}
-                    className={`px-6 py-2.5 text-sm font-medium ${buttonStyles.secondary}`}
-                  >
-                    取消
-                  </button>
-                  <button
-                    onClick={() => handleBatchSetUserGroup(selectedUserGroup)}
-                    disabled={isLoading('batchSetUserGroup')}
-                    className={`px-6 py-2.5 text-sm font-medium ${
-                      isLoading('batchSetUserGroup')
-                        ? buttonStyles.disabled
-                        : buttonStyles.success
-                    }`}
-                  >
-                    {isLoading('batchSetUserGroup') ? '设置中...' : '确认设置'}
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>,
-          document.body
-        )}
+          </div>
+        </ModalLayer>
+      )}
 
       {/* 通用弹窗组件 */}
       <AlertModal
@@ -4204,280 +4168,275 @@ const OpenListConfigComponent = ({
           </button>
         </div>
 
-        {pathMetaDialogOpen &&
-          createPortal(
+        {pathMetaDialogOpen && (
+          <ModalLayer
+            variant='panel'
+            label='路径元信息'
+            onClose={() => setPathMetaDialogOpen(false)}
+          >
             <div
-              className='fixed inset-0 bg-[var(--tm-scrim)] z-[10002] flex items-center justify-center p-4'
-              onClick={() => setPathMetaDialogOpen(false)}
-              onTouchMove={(e) => e.preventDefault()}
-              onWheel={(e) => e.preventDefault()}
-              style={{ touchAction: 'none' }}
+              className='w-full max-w-3xl max-h-[85vh] flex flex-col rounded-xl bg-[var(--tm-surface)] shadow-xl border border-[var(--tm-line)]'
+              onClick={(e) => e.stopPropagation()}
+              onTouchMove={(e) => e.stopPropagation()}
+              onWheel={(e) => e.stopPropagation()}
+              style={{ touchAction: 'auto' }}
             >
-              <div
-                className='w-full max-w-3xl max-h-[85vh] flex flex-col rounded-xl bg-[var(--tm-surface)] shadow-xl border border-[var(--tm-line)]'
-                onClick={(e) => e.stopPropagation()}
-                onTouchMove={(e) => e.stopPropagation()}
-                onWheel={(e) => e.stopPropagation()}
-                style={{ touchAction: 'auto' }}
-              >
-                <div className='flex items-center justify-between px-5 py-4 border-b border-[var(--tm-line)]'>
-                  <h3 className='text-base font-medium text-[color:var(--tm-text)]'>
-                    路径元信息
-                  </h3>
-                  <button
-                    type='button'
-                    onClick={() => setPathMetaDialogOpen(false)}
-                    className='text-[color:var(--tm-muted)] hover:text-[color:var(--tm-muted)] hover:text-[color:var(--tm-text)] text-sm px-2 py-1 min-h-[44px] tm-press'
-                  >
-                    关闭
-                  </button>
-                </div>
-
-                <div className='px-5 py-3 text-[13px] text-[color:var(--tm-muted)] border-b border-[var(--tm-line)]'>
-                  填写目录路径即可作用于其下所有影片（如
-                  /videos）。更具体的路径优先。改完后点「保存配置」才会生效。
-                </div>
-
-                <div className='flex-1 overflow-y-auto px-5 py-4 space-y-2'>
-                  {pathMetaRows.length === 0 ? (
-                    <p className='text-sm text-[color:var(--tm-muted)] text-center py-8'>
-                      暂无配置，点击下方「添加」开始
-                    </p>
-                  ) : (
-                    pathMetaRows.map((row, index) => {
-                      const expanded = pathMetaExpanded.has(index);
-                      return (
-                        <div
-                          key={index}
-                          className='border border-[var(--tm-line)] rounded-lg'
-                        >
-                          {/* 折叠头部：路径 + 展开箭头 + 删除 */}
-                          <div className='flex items-center gap-2 px-3 py-2'>
-                            <button
-                              type='button'
-                              onClick={() =>
-                                setPathMetaExpanded((prev) => {
-                                  const next = new Set(prev);
-                                  if (next.has(index)) {
-                                    next.delete(index);
-                                  } else {
-                                    next.add(index);
-                                  }
-                                  return next;
-                                })
-                              }
-                              className='flex-shrink-0 text-[color:var(--tm-muted)] hover:text-[color:var(--tm-muted)] hover:text-[color:var(--tm-text)] min-h-[44px] tm-press'
-                              aria-label={expanded ? '收起' : '展开'}
-                            >
-                              {expanded ? (
-                                <ChevronUp className='h-4 w-4' />
-                              ) : (
-                                <ChevronDown className='h-4 w-4' />
-                              )}
-                            </button>
-                            <input
-                              aria-label='路径，如 /videos'
-                              type='text'
-                              value={row.path}
-                              onChange={(e) => {
-                                const value = e.target.value;
-                                setPathMetaRows((rows) =>
-                                  rows.map((r, i) =>
-                                    i === index ? { ...r, path: value } : r
-                                  )
-                                );
-                              }}
-                              placeholder='路径，如 /videos'
-                              className='flex-1 min-w-0 px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)] text-sm focus:ring-2 focus:ring-[var(--tm-text)] focus:border-transparent'
-                            />
-                            <button
-                              type='button'
-                              onClick={() =>
-                                setPathMetaRows((rows) =>
-                                  rows.filter((_, i) => i !== index)
-                                )
-                              }
-                              className='flex-shrink-0 px-2 py-1 text-sm text-[color:var(--tm-text)] hover:text-[color:var(--tm-text)] min-h-[44px] tm-press'
-                            >
-                              删除
-                            </button>
-                          </div>
-
-                          {/* 展开配置区：分类、自动刷新、代理播放、代理缓存时长 */}
-                          {expanded && (
-                            <div className='border-t border-[var(--tm-line)] px-3 py-3 space-y-3'>
-                              <div>
-                                <label className='block text-[13px] text-[color:var(--tm-muted)] mb-1'>
-                                  分类
-                                </label>
-                                <input
-                                  aria-label='分类，如 动漫'
-                                  type='text'
-                                  value={row.category}
-                                  onChange={(e) => {
-                                    const value = e.target.value;
-                                    setPathMetaRows((rows) =>
-                                      rows.map((r, i) =>
-                                        i === index
-                                          ? { ...r, category: value }
-                                          : r
-                                      )
-                                    );
-                                  }}
-                                  placeholder='分类，如 动漫'
-                                  className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)] text-sm focus:ring-2 focus:ring-[var(--tm-text)] focus:border-transparent'
-                                />
-                              </div>
-
-                              <div className='flex items-center justify-between'>
-                                <span className='text-sm text-[color:var(--tm-muted)]'>
-                                  播放自动刷新
-                                  <span className='block text-[13px] text-[color:var(--tm-muted)]'>
-                                    播放时约 14 分钟自动刷新链接
-                                  </span>
-                                </span>
-                                <button
-                                  type='button'
-                                  onClick={() =>
-                                    setPathMetaRows((rows) =>
-                                      rows.map((r, i) =>
-                                        i === index
-                                          ? {
-                                              ...r,
-                                              refresh14m: !r.refresh14m,
-                                            }
-                                          : r
-                                      )
-                                    )
-                                  }
-                                  className='tm-switch-btn'
-                                  role='switch'
-                                  aria-checked={!!row.refresh14m}
-                                  aria-label='播放自动刷新'
-                                >
-                                  <span
-                                    className='tm-switch-btn-thumb'
-                                    aria-hidden='true'
-                                  />
-                                </button>
-                              </div>
-
-                              <div className='flex items-center justify-between'>
-                                <span className='text-sm text-[color:var(--tm-muted)]'>
-                                  代理播放
-                                  <span className='block text-[13px] text-[color:var(--tm-muted)]'>
-                                    播放链接通过服务器代理
-                                  </span>
-                                </span>
-                                <button
-                                  type='button'
-                                  onClick={() =>
-                                    setPathMetaRows((rows) =>
-                                      rows.map((r, i) =>
-                                        i === index
-                                          ? {
-                                              ...r,
-                                              proxyPlay: !r.proxyPlay,
-                                            }
-                                          : r
-                                      )
-                                    )
-                                  }
-                                  className='tm-switch-btn'
-                                  role='switch'
-                                  aria-checked={!!row.proxyPlay}
-                                  aria-label='代理播放'
-                                >
-                                  <span
-                                    className='tm-switch-btn-thumb'
-                                    aria-hidden='true'
-                                  />
-                                </button>
-                              </div>
-
-                              <div className='flex items-center gap-2'>
-                                <label className='text-sm text-[color:var(--tm-muted)] whitespace-nowrap'>
-                                  代理缓存时长（分钟）
-                                </label>
-                                <input
-                                  aria-label='60'
-                                  type='number'
-                                  min={1}
-                                  max={1440}
-                                  value={row.proxyCacheMinutes}
-                                  onChange={(e) => {
-                                    const value = parseInt(e.target.value, 10);
-                                    setPathMetaRows((rows) =>
-                                      rows.map((r, i) =>
-                                        i === index
-                                          ? {
-                                              ...r,
-                                              proxyCacheMinutes:
-                                                Number.isFinite(value)
-                                                  ? value
-                                                  : 60,
-                                            }
-                                          : r
-                                      )
-                                    );
-                                  }}
-                                  placeholder='60'
-                                  className='w-24 px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)] text-sm focus:ring-2 focus:ring-[var(--tm-text)] focus:border-transparent'
-                                />
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })
-                  )}
-                </div>
-
-                <div className='flex items-center justify-between gap-3 px-5 py-4 border-t border-[var(--tm-line)]'>
-                  <button
-                    type='button'
-                    onClick={() => {
-                      setPathMetaRows((rows) => [
-                        ...rows,
-                        {
-                          path: '',
-                          category: '',
-                          refresh14m: false,
-                          proxyPlay: false,
-                          proxyCacheMinutes: 60,
-                        },
-                      ]);
-                      // 新添加的行默认展开，便于直接配置
-                      setPathMetaExpanded((prev) => {
-                        const next = new Set(prev);
-                        next.add(pathMetaRows.length);
-                        return next;
-                      });
-                    }}
-                    className={buttonStyles.primary}
-                  >
-                    添加
-                  </button>
-                  <button
-                    type='button'
-                    onClick={() => {
-                      if (
-                        pathMetaRows.some((row) => !(row.path || '').trim())
-                      ) {
-                        showError('路径不能为空', showAlert);
-                        return;
-                      }
-                      setPathMetaDialogOpen(false);
-                    }}
-                    className={buttonStyles.success}
-                  >
-                    完成
-                  </button>
-                </div>
+              <div className='flex items-center justify-between px-5 py-4 border-b border-[var(--tm-line)]'>
+                <h3 className='text-base font-medium text-[color:var(--tm-text)]'>
+                  路径元信息
+                </h3>
+                <button
+                  type='button'
+                  onClick={() => setPathMetaDialogOpen(false)}
+                  className='text-[color:var(--tm-muted)] hover:text-[color:var(--tm-muted)] hover:text-[color:var(--tm-text)] text-sm px-2 py-1 min-h-[44px] tm-press'
+                >
+                  关闭
+                </button>
               </div>
-            </div>,
-            document.body
-          )}
+
+              <div className='px-5 py-3 text-[13px] text-[color:var(--tm-muted)] border-b border-[var(--tm-line)]'>
+                填写目录路径即可作用于其下所有影片（如
+                /videos）。更具体的路径优先。改完后点「保存配置」才会生效。
+              </div>
+
+              <div className='flex-1 overflow-y-auto px-5 py-4 space-y-2'>
+                {pathMetaRows.length === 0 ? (
+                  <p className='text-sm text-[color:var(--tm-muted)] text-center py-8'>
+                    暂无配置，点击下方「添加」开始
+                  </p>
+                ) : (
+                  pathMetaRows.map((row, index) => {
+                    const expanded = pathMetaExpanded.has(index);
+                    return (
+                      <div
+                        key={index}
+                        className='border border-[var(--tm-line)] rounded-lg'
+                      >
+                        {/* 折叠头部：路径 + 展开箭头 + 删除 */}
+                        <div className='flex items-center gap-2 px-3 py-2'>
+                          <button
+                            type='button'
+                            onClick={() =>
+                              setPathMetaExpanded((prev) => {
+                                const next = new Set(prev);
+                                if (next.has(index)) {
+                                  next.delete(index);
+                                } else {
+                                  next.add(index);
+                                }
+                                return next;
+                              })
+                            }
+                            className='flex-shrink-0 text-[color:var(--tm-muted)] hover:text-[color:var(--tm-muted)] hover:text-[color:var(--tm-text)] min-h-[44px] tm-press'
+                            aria-label={expanded ? '收起' : '展开'}
+                          >
+                            {expanded ? (
+                              <ChevronUp className='h-4 w-4' />
+                            ) : (
+                              <ChevronDown className='h-4 w-4' />
+                            )}
+                          </button>
+                          <input
+                            aria-label='路径，如 /videos'
+                            type='text'
+                            value={row.path}
+                            onChange={(e) => {
+                              const value = e.target.value;
+                              setPathMetaRows((rows) =>
+                                rows.map((r, i) =>
+                                  i === index ? { ...r, path: value } : r
+                                )
+                              );
+                            }}
+                            placeholder='路径，如 /videos'
+                            className='flex-1 min-w-0 px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)] text-sm focus:ring-2 focus:ring-[var(--tm-text)] focus:border-transparent'
+                          />
+                          <button
+                            type='button'
+                            onClick={() =>
+                              setPathMetaRows((rows) =>
+                                rows.filter((_, i) => i !== index)
+                              )
+                            }
+                            className='flex-shrink-0 px-2 py-1 text-sm text-[color:var(--tm-text)] hover:text-[color:var(--tm-text)] min-h-[44px] tm-press'
+                          >
+                            删除
+                          </button>
+                        </div>
+
+                        {/* 展开配置区：分类、自动刷新、代理播放、代理缓存时长 */}
+                        {expanded && (
+                          <div className='border-t border-[var(--tm-line)] px-3 py-3 space-y-3'>
+                            <div>
+                              <label className='block text-[13px] text-[color:var(--tm-muted)] mb-1'>
+                                分类
+                              </label>
+                              <input
+                                aria-label='分类，如 动漫'
+                                type='text'
+                                value={row.category}
+                                onChange={(e) => {
+                                  const value = e.target.value;
+                                  setPathMetaRows((rows) =>
+                                    rows.map((r, i) =>
+                                      i === index
+                                        ? { ...r, category: value }
+                                        : r
+                                    )
+                                  );
+                                }}
+                                placeholder='分类，如 动漫'
+                                className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)] text-sm focus:ring-2 focus:ring-[var(--tm-text)] focus:border-transparent'
+                              />
+                            </div>
+
+                            <div className='flex items-center justify-between'>
+                              <span className='text-sm text-[color:var(--tm-muted)]'>
+                                播放自动刷新
+                                <span className='block text-[13px] text-[color:var(--tm-muted)]'>
+                                  播放时约 14 分钟自动刷新链接
+                                </span>
+                              </span>
+                              <button
+                                type='button'
+                                onClick={() =>
+                                  setPathMetaRows((rows) =>
+                                    rows.map((r, i) =>
+                                      i === index
+                                        ? {
+                                            ...r,
+                                            refresh14m: !r.refresh14m,
+                                          }
+                                        : r
+                                    )
+                                  )
+                                }
+                                className='tm-switch-btn'
+                                role='switch'
+                                aria-checked={!!row.refresh14m}
+                                aria-label='播放自动刷新'
+                              >
+                                <span
+                                  className='tm-switch-btn-thumb'
+                                  aria-hidden='true'
+                                />
+                              </button>
+                            </div>
+
+                            <div className='flex items-center justify-between'>
+                              <span className='text-sm text-[color:var(--tm-muted)]'>
+                                代理播放
+                                <span className='block text-[13px] text-[color:var(--tm-muted)]'>
+                                  播放链接通过服务器代理
+                                </span>
+                              </span>
+                              <button
+                                type='button'
+                                onClick={() =>
+                                  setPathMetaRows((rows) =>
+                                    rows.map((r, i) =>
+                                      i === index
+                                        ? {
+                                            ...r,
+                                            proxyPlay: !r.proxyPlay,
+                                          }
+                                        : r
+                                    )
+                                  )
+                                }
+                                className='tm-switch-btn'
+                                role='switch'
+                                aria-checked={!!row.proxyPlay}
+                                aria-label='代理播放'
+                              >
+                                <span
+                                  className='tm-switch-btn-thumb'
+                                  aria-hidden='true'
+                                />
+                              </button>
+                            </div>
+
+                            <div className='flex items-center gap-2'>
+                              <label className='text-sm text-[color:var(--tm-muted)] whitespace-nowrap'>
+                                代理缓存时长（分钟）
+                              </label>
+                              <input
+                                aria-label='60'
+                                type='number'
+                                min={1}
+                                max={1440}
+                                value={row.proxyCacheMinutes}
+                                onChange={(e) => {
+                                  const value = parseInt(e.target.value, 10);
+                                  setPathMetaRows((rows) =>
+                                    rows.map((r, i) =>
+                                      i === index
+                                        ? {
+                                            ...r,
+                                            proxyCacheMinutes: Number.isFinite(
+                                              value
+                                            )
+                                              ? value
+                                              : 60,
+                                          }
+                                        : r
+                                    )
+                                  );
+                                }}
+                                placeholder='60'
+                                className='w-24 px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)] text-sm focus:ring-2 focus:ring-[var(--tm-text)] focus:border-transparent'
+                              />
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+
+              <div className='flex items-center justify-between gap-3 px-5 py-4 border-t border-[var(--tm-line)]'>
+                <button
+                  type='button'
+                  onClick={() => {
+                    setPathMetaRows((rows) => [
+                      ...rows,
+                      {
+                        path: '',
+                        category: '',
+                        refresh14m: false,
+                        proxyPlay: false,
+                        proxyCacheMinutes: 60,
+                      },
+                    ]);
+                    // 新添加的行默认展开，便于直接配置
+                    setPathMetaExpanded((prev) => {
+                      const next = new Set(prev);
+                      next.add(pathMetaRows.length);
+                      return next;
+                    });
+                  }}
+                  className={buttonStyles.primary}
+                >
+                  添加
+                </button>
+                <button
+                  type='button'
+                  onClick={() => {
+                    if (pathMetaRows.some((row) => !(row.path || '').trim())) {
+                      showError('路径不能为空', showAlert);
+                      return;
+                    }
+                    setPathMetaDialogOpen(false);
+                  }}
+                  className={buttonStyles.success}
+                >
+                  完成
+                </button>
+              </div>
+            </div>
+          </ModalLayer>
+        )}
 
         <div className='flex gap-3'>
           <button
@@ -8184,454 +8143,438 @@ const VideoSourceConfig = ({
         </table>
       </div>
 
-      {showSpecialSourcesModal &&
-        createPortal(
+      {showSpecialSourcesModal && (
+        <ModalLayer
+          variant='panel'
+          label='特殊源设置'
+          onClose={closeSpecialSourcesModal}
+        >
           <div
-            className='fixed inset-0 z-[10000] flex items-center justify-center bg-[color:color-mix(in_srgb,var(--tm-room-cinema-bg)_60%,transparent)] p-4 backdrop-blur-sm'
-            onClick={closeSpecialSourcesModal}
+            className='flex max-h-[84vh] w-full max-w-4xl flex-col overflow-hidden rounded-2xl border border-[var(--tm-line)] bg-[var(--tm-surface)] shadow-2xl'
+            onClick={(e) => e.stopPropagation()}
           >
-            <div
-              className='flex max-h-[84vh] w-full max-w-4xl flex-col overflow-hidden rounded-2xl border border-[var(--tm-line)] bg-[var(--tm-surface)] shadow-2xl'
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className='flex items-start justify-between gap-4 border-b border-[var(--tm-line)] px-6 py-5'>
-                <div>
-                  <h3 className='text-xl font-medium text-[color:var(--tm-text)]'>
-                    特殊源设置
-                  </h3>
-                  <p className='mt-1 text-sm text-[color:var(--tm-muted)]'>
-                    选中的视频源对普通搜索完全隐藏，只在 /under 入口可用；/under
-                    也不会出现普通源。开关状态见 /sp。
-                  </p>
+            <div className='flex items-start justify-between gap-4 border-b border-[var(--tm-line)] px-6 py-5'>
+              <div>
+                <h3 className='text-xl font-medium text-[color:var(--tm-text)]'>
+                  特殊源设置
+                </h3>
+                <p className='mt-1 text-sm text-[color:var(--tm-muted)]'>
+                  选中的视频源对普通搜索完全隐藏，只在 /under 入口可用；/under
+                  也不会出现普通源。开关状态见 /sp。
+                </p>
+              </div>
+              <button
+                onClick={closeSpecialSourcesModal}
+                className='text-2xl leading-none text-[color:var(--tm-muted)] transition-colors hover:text-[color:var(--tm-muted)] min-h-[44px] tm-press'
+                aria-label='关闭特殊源设置弹窗'
+              >
+                ×
+              </button>
+            </div>
+
+            <div className='min-h-0 flex-1 overflow-y-auto px-6 py-5'>
+              <div className='mb-5 rounded-lg border border-[var(--tm-line)] bg-[var(--tm-surface-raised)] p-4'>
+                <div className='text-sm font-medium text-[color:var(--tm-text)]'>
+                  配置说明
                 </div>
+                <p className='mt-1 text-sm text-[color:var(--tm-text)]'>
+                  这里维护的是特殊源列表，不是用户权限；TVBox、Web 电视
+                  及第三方电视端始终不会使用这些特殊源。
+                </p>
+              </div>
+
+              <div className='grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3'>
+                {config?.SourceConfig?.map((source) => (
+                  <label
+                    key={source.key}
+                    className='flex cursor-pointer items-center space-x-3 rounded-lg border border-[var(--tm-line)] p-3 transition-colors hover:bg-[var(--tm-line)]'
+                  >
+                    <input
+                      type='checkbox'
+                      checked={specialSourceDraftApis.includes(source.key)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSpecialSourceDraftApis((prev) =>
+                            prev.includes(source.key)
+                              ? prev
+                              : [...prev, source.key]
+                          );
+                        } else {
+                          setSpecialSourceDraftApis((prev) =>
+                            prev.filter((api) => api !== source.key)
+                          );
+                        }
+                      }}
+                      className='rounded text-[color:var(--tm-text)] focus:ring-[var(--tm-text)] bg-[var(--tm-surface)]'
+                    />
+                    <div className='min-w-0 flex-1'>
+                      <div className='truncate text-sm font-medium text-[color:var(--tm-text)]'>
+                        {source.name}
+                      </div>
+                      <div className='truncate text-[13px] text-[color:var(--tm-muted)]'>
+                        {source.key}
+                      </div>
+                    </div>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            <div className='flex flex-wrap items-center justify-between gap-3 border-t border-[var(--tm-line)] bg-[var(--tm-surface-raised)] px-6 py-4'>
+              <div className='flex flex-wrap gap-2'>
+                <button
+                  onClick={() => setSpecialSourceDraftApis([])}
+                  className={buttonStyles.quickAction}
+                >
+                  全不选
+                </button>
+                <button
+                  onClick={() => {
+                    const allApis =
+                      config?.SourceConfig?.filter(
+                        (source) => !source.disabled
+                      ).map((source) => source.key) || [];
+                    setSpecialSourceDraftApis(allApis);
+                  }}
+                  className={buttonStyles.quickAction}
+                >
+                  全选启用源
+                </button>
+              </div>
+              <div className='flex items-center gap-3'>
+                <span className='text-sm text-[color:var(--tm-muted)]'>
+                  已选择：
+                  <span className='font-medium text-[color:var(--tm-text)]'>
+                    {specialSourceDraftApis.length} 个源
+                  </span>
+                </span>
                 <button
                   onClick={closeSpecialSourcesModal}
-                  className='text-2xl leading-none text-[color:var(--tm-muted)] transition-colors hover:text-[color:var(--tm-muted)] min-h-[44px] tm-press'
-                  aria-label='关闭特殊源设置弹窗'
+                  className={buttonStyles.secondary}
                 >
-                  ×
+                  取消
+                </button>
+                <button
+                  onClick={handleSaveSpecialSources}
+                  disabled={isLoading('saveSpecialSources')}
+                  className={`px-4 py-2 ${
+                    isLoading('saveSpecialSources')
+                      ? buttonStyles.disabled
+                      : buttonStyles.success
+                  }`}
+                >
+                  {isLoading('saveSpecialSources') ? '保存中...' : '保存'}
                 </button>
               </div>
+            </div>
+          </div>
+        </ModalLayer>
+      )}
 
-              <div className='min-h-0 flex-1 overflow-y-auto px-6 py-5'>
-                <div className='mb-5 rounded-lg border border-[var(--tm-line)] bg-[var(--tm-surface-raised)] p-4'>
-                  <div className='text-sm font-medium text-[color:var(--tm-text)]'>
-                    配置说明
-                  </div>
-                  <p className='mt-1 text-sm text-[color:var(--tm-text)]'>
-                    这里维护的是特殊源列表，不是用户权限；TVBox、Web 电视
-                    及第三方电视端始终不会使用这些特殊源。
-                  </p>
-                </div>
-
-                <div className='grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3'>
-                  {config?.SourceConfig?.map((source) => (
-                    <label
-                      key={source.key}
-                      className='flex cursor-pointer items-center space-x-3 rounded-lg border border-[var(--tm-line)] p-3 transition-colors hover:bg-[var(--tm-line)]'
-                    >
-                      <input
-                        type='checkbox'
-                        checked={specialSourceDraftApis.includes(source.key)}
-                        onChange={(e) => {
-                          if (e.target.checked) {
-                            setSpecialSourceDraftApis((prev) =>
-                              prev.includes(source.key)
-                                ? prev
-                                : [...prev, source.key]
-                            );
-                          } else {
-                            setSpecialSourceDraftApis((prev) =>
-                              prev.filter((api) => api !== source.key)
-                            );
-                          }
-                        }}
-                        className='rounded text-[color:var(--tm-text)] focus:ring-[var(--tm-text)] bg-[var(--tm-surface)]'
-                      />
-                      <div className='min-w-0 flex-1'>
-                        <div className='truncate text-sm font-medium text-[color:var(--tm-text)]'>
-                          {source.name}
-                        </div>
-                        <div className='truncate text-[13px] text-[color:var(--tm-muted)]'>
-                          {source.key}
-                        </div>
-                      </div>
-                    </label>
-                  ))}
-                </div>
+      {showClientAdSourcesModal && (
+        <ModalLayer
+          variant='panel'
+          label='客户端去广告配置'
+          onClose={closeClientAdSourcesModal}
+        >
+          <div
+            className='flex max-h-[84vh] w-full max-w-4xl flex-col overflow-hidden rounded-2xl border border-[var(--tm-line)] bg-[var(--tm-surface)] shadow-2xl'
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className='flex items-start justify-between gap-4 border-b border-[var(--tm-line)] px-6 py-5'>
+              <div>
+                <h3 className='text-xl font-medium text-[color:var(--tm-text)]'>
+                  客户端去广告配置
+                </h3>
+                <p className='mt-1 text-sm text-[color:var(--tm-text)]'>
+                  <TriangleAlert
+                    className='mr-1 inline-block h-4 w-4 align-[-0.125em]'
+                    aria-hidden='true'
+                  />
+                  客户端已具备本地去广告功能，该功能可能在未来移除
+                </p>
               </div>
+              <button
+                onClick={closeClientAdSourcesModal}
+                className='text-2xl leading-none text-[color:var(--tm-muted)] transition-colors hover:text-[color:var(--tm-muted)] min-h-[44px] tm-press'
+                aria-label='关闭客户端去广告配置弹窗'
+              >
+                ×
+              </button>
+            </div>
 
-              <div className='flex flex-wrap items-center justify-between gap-3 border-t border-[var(--tm-line)] bg-[var(--tm-surface-raised)] px-6 py-4'>
-                <div className='flex flex-wrap gap-2'>
-                  <button
-                    onClick={() => setSpecialSourceDraftApis([])}
-                    className={buttonStyles.quickAction}
+            <div className='min-h-0 flex-1 overflow-y-auto px-6 py-5'>
+              <div className='grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3'>
+                {config?.SourceConfig?.map((source) => (
+                  <label
+                    key={source.key}
+                    className='flex cursor-pointer items-center space-x-3 rounded-lg border border-[var(--tm-line)] p-3 transition-colors hover:bg-[var(--tm-line)]'
                   >
-                    全不选
-                  </button>
-                  <button
-                    onClick={() => {
-                      const allApis =
-                        config?.SourceConfig?.filter(
-                          (source) => !source.disabled
-                        ).map((source) => source.key) || [];
-                      setSpecialSourceDraftApis(allApis);
-                    }}
-                    className={buttonStyles.quickAction}
-                  >
-                    全选启用源
-                  </button>
-                </div>
-                <div className='flex items-center gap-3'>
-                  <span className='text-sm text-[color:var(--tm-muted)]'>
-                    已选择：
-                    <span className='font-medium text-[color:var(--tm-text)]'>
-                      {specialSourceDraftApis.length} 个源
-                    </span>
-                  </span>
-                  <button
-                    onClick={closeSpecialSourcesModal}
-                    className={buttonStyles.secondary}
-                  >
-                    取消
-                  </button>
-                  <button
-                    onClick={handleSaveSpecialSources}
-                    disabled={isLoading('saveSpecialSources')}
-                    className={`px-4 py-2 ${
-                      isLoading('saveSpecialSources')
-                        ? buttonStyles.disabled
-                        : buttonStyles.success
-                    }`}
-                  >
-                    {isLoading('saveSpecialSources') ? '保存中...' : '保存'}
-                  </button>
-                </div>
+                    <input
+                      type='checkbox'
+                      checked={clientAdSourceDraftApis.includes(source.key)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setClientAdSourceDraftApis((prev) =>
+                            prev.includes(source.key)
+                              ? prev
+                              : [...prev, source.key]
+                          );
+                        } else {
+                          setClientAdSourceDraftApis((prev) =>
+                            prev.filter((api) => api !== source.key)
+                          );
+                        }
+                      }}
+                      className='rounded text-[color:var(--tm-text)] focus:ring-[var(--tm-text)] bg-[var(--tm-surface)]'
+                    />
+                    <div className='min-w-0 flex-1'>
+                      <div className='truncate text-sm font-medium text-[color:var(--tm-text)]'>
+                        {source.name}
+                      </div>
+                      <div className='truncate text-[13px] text-[color:var(--tm-muted)]'>
+                        {source.key}
+                      </div>
+                    </div>
+                  </label>
+                ))}
               </div>
             </div>
-          </div>,
-          document.body
-        )}
 
-      {showClientAdSourcesModal &&
-        createPortal(
-          <div
-            className='fixed inset-0 z-[10000] flex items-center justify-center bg-[color:color-mix(in_srgb,var(--tm-room-cinema-bg)_60%,transparent)] p-4 backdrop-blur-sm'
-            onClick={closeClientAdSourcesModal}
-          >
-            <div
-              className='flex max-h-[84vh] w-full max-w-4xl flex-col overflow-hidden rounded-2xl border border-[var(--tm-line)] bg-[var(--tm-surface)] shadow-2xl'
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className='flex items-start justify-between gap-4 border-b border-[var(--tm-line)] px-6 py-5'>
-                <div>
-                  <h3 className='text-xl font-medium text-[color:var(--tm-text)]'>
-                    客户端去广告配置
-                  </h3>
-                  <p className='mt-1 text-sm text-[color:var(--tm-text)]'>
-                    <TriangleAlert
-                      className='mr-1 inline-block h-4 w-4 align-[-0.125em]'
-                      aria-hidden='true'
-                    />
-                    客户端已具备本地去广告功能，该功能可能在未来移除
-                  </p>
-                </div>
+            <div className='flex flex-wrap items-center justify-between gap-3 border-t border-[var(--tm-line)] bg-[var(--tm-surface-raised)] px-6 py-4'>
+              <div className='flex flex-wrap gap-2'>
+                <button
+                  onClick={() => setClientAdSourceDraftApis([])}
+                  className={buttonStyles.quickAction}
+                >
+                  全不选
+                </button>
+                <button
+                  onClick={() => {
+                    const allApis =
+                      config?.SourceConfig?.filter(
+                        (source) => !source.disabled
+                      ).map((source) => source.key) || [];
+                    setClientAdSourceDraftApis(allApis);
+                  }}
+                  className={buttonStyles.quickAction}
+                >
+                  全选启用源
+                </button>
+              </div>
+              <div className='flex items-center gap-3'>
+                <span className='text-sm text-[color:var(--tm-muted)]'>
+                  已选择：
+                  <span className='font-medium text-[color:var(--tm-text)]'>
+                    {clientAdSourceDraftApis.length} 个源
+                  </span>
+                </span>
                 <button
                   onClick={closeClientAdSourcesModal}
-                  className='text-2xl leading-none text-[color:var(--tm-muted)] transition-colors hover:text-[color:var(--tm-muted)] min-h-[44px] tm-press'
-                  aria-label='关闭客户端去广告配置弹窗'
+                  className={buttonStyles.secondary}
                 >
-                  ×
+                  取消
+                </button>
+                <button
+                  onClick={handleSaveClientAdSources}
+                  disabled={isLoading('saveClientAdSources')}
+                  className={`px-4 py-2 ${
+                    isLoading('saveClientAdSources')
+                      ? buttonStyles.disabled
+                      : buttonStyles.success
+                  }`}
+                >
+                  {isLoading('saveClientAdSources') ? '保存中...' : '保存'}
                 </button>
               </div>
-
-              <div className='min-h-0 flex-1 overflow-y-auto px-6 py-5'>
-                <div className='grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3'>
-                  {config?.SourceConfig?.map((source) => (
-                    <label
-                      key={source.key}
-                      className='flex cursor-pointer items-center space-x-3 rounded-lg border border-[var(--tm-line)] p-3 transition-colors hover:bg-[var(--tm-line)]'
-                    >
-                      <input
-                        type='checkbox'
-                        checked={clientAdSourceDraftApis.includes(source.key)}
-                        onChange={(e) => {
-                          if (e.target.checked) {
-                            setClientAdSourceDraftApis((prev) =>
-                              prev.includes(source.key)
-                                ? prev
-                                : [...prev, source.key]
-                            );
-                          } else {
-                            setClientAdSourceDraftApis((prev) =>
-                              prev.filter((api) => api !== source.key)
-                            );
-                          }
-                        }}
-                        className='rounded text-[color:var(--tm-text)] focus:ring-[var(--tm-text)] bg-[var(--tm-surface)]'
-                      />
-                      <div className='min-w-0 flex-1'>
-                        <div className='truncate text-sm font-medium text-[color:var(--tm-text)]'>
-                          {source.name}
-                        </div>
-                        <div className='truncate text-[13px] text-[color:var(--tm-muted)]'>
-                          {source.key}
-                        </div>
-                      </div>
-                    </label>
-                  ))}
-                </div>
-              </div>
-
-              <div className='flex flex-wrap items-center justify-between gap-3 border-t border-[var(--tm-line)] bg-[var(--tm-surface-raised)] px-6 py-4'>
-                <div className='flex flex-wrap gap-2'>
-                  <button
-                    onClick={() => setClientAdSourceDraftApis([])}
-                    className={buttonStyles.quickAction}
-                  >
-                    全不选
-                  </button>
-                  <button
-                    onClick={() => {
-                      const allApis =
-                        config?.SourceConfig?.filter(
-                          (source) => !source.disabled
-                        ).map((source) => source.key) || [];
-                      setClientAdSourceDraftApis(allApis);
-                    }}
-                    className={buttonStyles.quickAction}
-                  >
-                    全选启用源
-                  </button>
-                </div>
-                <div className='flex items-center gap-3'>
-                  <span className='text-sm text-[color:var(--tm-muted)]'>
-                    已选择：
-                    <span className='font-medium text-[color:var(--tm-text)]'>
-                      {clientAdSourceDraftApis.length} 个源
-                    </span>
-                  </span>
-                  <button
-                    onClick={closeClientAdSourcesModal}
-                    className={buttonStyles.secondary}
-                  >
-                    取消
-                  </button>
-                  <button
-                    onClick={handleSaveClientAdSources}
-                    disabled={isLoading('saveClientAdSources')}
-                    className={`px-4 py-2 ${
-                      isLoading('saveClientAdSources')
-                        ? buttonStyles.disabled
-                        : buttonStyles.success
-                    }`}
-                  >
-                    {isLoading('saveClientAdSources') ? '保存中...' : '保存'}
-                  </button>
-                </div>
-              </div>
             </div>
-          </div>,
-          document.body
-        )}
+          </div>
+        </ModalLayer>
+      )}
 
-      {showWeightModal &&
-        createPortal(
-          <>
+      {showWeightModal && (
+        <ModalLayer
+          variant='panel'
+          label='视频源权重设置'
+          onClose={handleCloseWeightModal}
+        >
+          <div
+            className='flex w-full max-w-6xl max-h-[90vh] flex-col overflow-hidden rounded-2xl border border-[var(--tm-line)] bg-[var(--tm-surface)] shadow-2xl'
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className='flex items-start justify-between gap-4 border-b border-[var(--tm-line)] px-6 py-5'>
+              <div>
+                <h3 className='text-xl font-medium text-[color:var(--tm-text)]'>
+                  视频源权重设置
+                </h3>
+              </div>
+              <button
+                onClick={handleCloseWeightModal}
+                className='text-[color:var(--tm-muted)] hover:text-[color:var(--tm-muted)] transition-colors text-2xl leading-none min-h-[44px] tm-press'
+                aria-label='关闭权重设置弹窗'
+              >
+                ×
+              </button>
+            </div>
+
             <div
-              className='fixed inset-0 bg-[color:color-mix(in_srgb,var(--tm-room-cinema-bg)_60%,transparent)] backdrop-blur-sm z-[10000]'
-              onClick={handleCloseWeightModal}
+              className='flex-1 min-h-0 overflow-y-auto px-0 overscroll-contain'
+              data-panel-content
+              data-weight-modal-scroll
               onTouchMove={(e) => {
-                e.preventDefault();
+                e.stopPropagation();
               }}
               onWheel={(e) => {
-                e.preventDefault();
+                e.stopPropagation();
               }}
               style={{
-                touchAction: 'none',
+                touchAction: 'pan-y',
+                overscrollBehavior: 'contain',
               }}
-            />
-            <div
-              className='fixed left-1/2 top-1/2 z-[10001] flex w-[calc(100%-1rem)] max-w-6xl max-h-[90vh] -translate-x-1/2 -translate-y-1/2 flex-col overflow-hidden rounded-2xl border border-[var(--tm-line)] bg-[var(--tm-surface)] shadow-2xl'
-              onClick={(e) => e.stopPropagation()}
             >
-              <div className='flex items-start justify-between gap-4 border-b border-[var(--tm-line)] px-6 py-5'>
-                <div>
-                  <h3 className='text-xl font-medium text-[color:var(--tm-text)]'>
-                    视频源权重设置
-                  </h3>
+              <div className='flex flex-wrap items-center justify-between gap-3 px-6 py-4'>
+                <div className='text-sm text-[color:var(--tm-muted)]'>
+                  排序越靠前，推荐权重越高；拖动后再次生成推荐值时，会把当前列表均匀映射到
+                  0~40。
                 </div>
+                <div className='flex flex-wrap items-center gap-2'>
+                  <button
+                    onClick={handleApplyRecommendedWeights}
+                    className={buttonStyles.primarySmall}
+                  >
+                    按当前顺序生成推荐权重
+                  </button>
+                  <button
+                    onClick={handleResetWeightDraft}
+                    className={buttonStyles.secondarySmall}
+                  >
+                    恢复当前配置
+                  </button>
+                </div>
+              </div>
+
+              <div className='px-6 pb-6'>
+                <div className='overflow-x-auto'>
+                  <div className='grid min-w-[820px] grid-cols-[88px_minmax(0,1fr)_112px_112px_220px] gap-3 px-4 pb-3 text-[13px] font-medium uppercase tracking-wide text-[color:var(--tm-muted)]'>
+                    <div>排序</div>
+                    <div>视频源</div>
+                    <div>状态</div>
+                    <div>推荐值</div>
+                    <div>生效权重</div>
+                  </div>
+                  <div className='min-w-[820px] rounded-2xl border border-[var(--tm-line)] bg-[var(--tm-surface-raised)] p-3'>
+                    <DndContext
+                      sensors={sensors}
+                      collisionDetection={closestCenter}
+                      onDragEnd={handleWeightModalDragEnd}
+                      autoScroll={false}
+                      modifiers={[
+                        restrictToVerticalAxis,
+                        restrictToParentElement,
+                      ]}
+                    >
+                      <SortableContext
+                        items={weightDraftSources.map((source) => source.key)}
+                        strategy={verticalListSortingStrategy}
+                      >
+                        <div className='space-y-3'>
+                          {weightDraftSources.map((source, index) => {
+                            const recommendedWeight =
+                              recommendedWeightMap.get(source.key) ?? 0;
+                            return (
+                              <WeightModalRow
+                                key={source.key}
+                                source={source}
+                                index={index}
+                                recommendedWeight={recommendedWeight}
+                              />
+                            );
+                          })}
+                        </div>
+                      </SortableContext>
+                    </DndContext>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className='flex items-center justify-end gap-3 border-t border-[var(--tm-line)] px-6 py-4'>
+              <div className='flex items-center gap-3'>
                 <button
                   onClick={handleCloseWeightModal}
-                  className='text-[color:var(--tm-muted)] hover:text-[color:var(--tm-muted)] transition-colors text-2xl leading-none min-h-[44px] tm-press'
-                  aria-label='关闭权重设置弹窗'
+                  className={buttonStyles.secondary}
                 >
-                  ×
+                  取消
+                </button>
+                <button
+                  onClick={handleSaveWeightConfig}
+                  disabled={
+                    !weightModalChanged || isLoading('saveWeightConfig')
+                  }
+                  className={`px-4 py-2 ${
+                    !weightModalChanged || isLoading('saveWeightConfig')
+                      ? buttonStyles.disabled
+                      : buttonStyles.success
+                  }`}
+                >
+                  {isLoading('saveWeightConfig') ? '保存中...' : '保存'}
                 </button>
               </div>
-
-              <div
-                className='flex-1 min-h-0 overflow-y-auto px-0 overscroll-contain'
-                data-panel-content
-                data-weight-modal-scroll
-                onTouchMove={(e) => {
-                  e.stopPropagation();
-                }}
-                onWheel={(e) => {
-                  e.stopPropagation();
-                }}
-                style={{
-                  touchAction: 'pan-y',
-                  overscrollBehavior: 'contain',
-                }}
-              >
-                <div className='flex flex-wrap items-center justify-between gap-3 px-6 py-4'>
-                  <div className='text-sm text-[color:var(--tm-muted)]'>
-                    排序越靠前，推荐权重越高；拖动后再次生成推荐值时，会把当前列表均匀映射到
-                    0~40。
-                  </div>
-                  <div className='flex flex-wrap items-center gap-2'>
-                    <button
-                      onClick={handleApplyRecommendedWeights}
-                      className={buttonStyles.primarySmall}
-                    >
-                      按当前顺序生成推荐权重
-                    </button>
-                    <button
-                      onClick={handleResetWeightDraft}
-                      className={buttonStyles.secondarySmall}
-                    >
-                      恢复当前配置
-                    </button>
-                  </div>
-                </div>
-
-                <div className='px-6 pb-6'>
-                  <div className='overflow-x-auto'>
-                    <div className='grid min-w-[820px] grid-cols-[88px_minmax(0,1fr)_112px_112px_220px] gap-3 px-4 pb-3 text-[13px] font-medium uppercase tracking-wide text-[color:var(--tm-muted)]'>
-                      <div>排序</div>
-                      <div>视频源</div>
-                      <div>状态</div>
-                      <div>推荐值</div>
-                      <div>生效权重</div>
-                    </div>
-                    <div className='min-w-[820px] rounded-2xl border border-[var(--tm-line)] bg-[var(--tm-surface-raised)] p-3'>
-                      <DndContext
-                        sensors={sensors}
-                        collisionDetection={closestCenter}
-                        onDragEnd={handleWeightModalDragEnd}
-                        autoScroll={false}
-                        modifiers={[
-                          restrictToVerticalAxis,
-                          restrictToParentElement,
-                        ]}
-                      >
-                        <SortableContext
-                          items={weightDraftSources.map((source) => source.key)}
-                          strategy={verticalListSortingStrategy}
-                        >
-                          <div className='space-y-3'>
-                            {weightDraftSources.map((source, index) => {
-                              const recommendedWeight =
-                                recommendedWeightMap.get(source.key) ?? 0;
-                              return (
-                                <WeightModalRow
-                                  key={source.key}
-                                  source={source}
-                                  index={index}
-                                  recommendedWeight={recommendedWeight}
-                                />
-                              );
-                            })}
-                          </div>
-                        </SortableContext>
-                      </DndContext>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className='flex items-center justify-end gap-3 border-t border-[var(--tm-line)] px-6 py-4'>
-                <div className='flex items-center gap-3'>
-                  <button
-                    onClick={handleCloseWeightModal}
-                    className={buttonStyles.secondary}
-                  >
-                    取消
-                  </button>
-                  <button
-                    onClick={handleSaveWeightConfig}
-                    disabled={
-                      !weightModalChanged || isLoading('saveWeightConfig')
-                    }
-                    className={`px-4 py-2 ${
-                      !weightModalChanged || isLoading('saveWeightConfig')
-                        ? buttonStyles.disabled
-                        : buttonStyles.success
-                    }`}
-                  >
-                    {isLoading('saveWeightConfig') ? '保存中...' : '保存'}
-                  </button>
-                </div>
-              </div>
             </div>
-          </>,
-          document.body
-        )}
+          </div>
+        </ModalLayer>
+      )}
 
       {/* 有效性检测弹窗 */}
-      {showValidationModal &&
-        createPortal(
+      {showValidationModal && (
+        <ModalLayer
+          variant='panel'
+          label='视频源有效性检测'
+          onClose={() => setShowValidationModal(false)}
+        >
           <div
-            className='fixed inset-0 bg-[var(--tm-scrim)] flex items-center justify-center z-50'
-            onClick={() => setShowValidationModal(false)}
+            className='bg-[var(--tm-surface)] rounded-lg p-6 w-full max-w-md mx-4'
+            onClick={(e) => e.stopPropagation()}
           >
-            <div
-              className='bg-[var(--tm-surface)] rounded-lg p-6 w-full max-w-md mx-4'
-              onClick={(e) => e.stopPropagation()}
-            >
-              <h3 className='text-lg font-medium text-[color:var(--tm-text)] mb-4'>
-                视频源有效性检测
-              </h3>
-              <p className='text-sm text-[color:var(--tm-muted)] mb-4'>
-                请输入检测用的搜索关键词
-              </p>
-              <div className='space-y-4'>
-                <input
-                  aria-label='请输入搜索关键词'
-                  type='text'
-                  placeholder='请输入搜索关键词'
-                  value={searchKeyword}
-                  onChange={(e) => setSearchKeyword(e.target.value)}
-                  className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)]'
-                  onKeyPress={(e) =>
-                    e.key === 'Enter' && handleValidateSources()
-                  }
-                />
-                <div className='flex justify-end space-x-3'>
-                  <button
-                    onClick={() => setShowValidationModal(false)}
-                    className='px-4 py-2 text-[color:var(--tm-muted)] hover:text-[color:var(--tm-text)] transition-colors min-h-[44px] tm-press'
-                  >
-                    取消
-                  </button>
-                  <button
-                    onClick={handleValidateSources}
-                    disabled={!searchKeyword.trim()}
-                    className={`px-4 py-2 ${
-                      !searchKeyword.trim()
-                        ? buttonStyles.disabled
-                        : buttonStyles.success
-                    }`}
-                  >
-                    开始检测
-                  </button>
-                </div>
+            <h3 className='text-lg font-medium text-[color:var(--tm-text)] mb-4'>
+              视频源有效性检测
+            </h3>
+            <p className='text-sm text-[color:var(--tm-muted)] mb-4'>
+              请输入检测用的搜索关键词
+            </p>
+            <div className='space-y-4'>
+              <input
+                aria-label='请输入搜索关键词'
+                type='text'
+                placeholder='请输入搜索关键词'
+                value={searchKeyword}
+                onChange={(e) => setSearchKeyword(e.target.value)}
+                className='w-full px-3 py-2 border border-[var(--tm-line)] rounded-lg bg-[var(--tm-surface)] text-[color:var(--tm-text)]'
+                onKeyPress={(e) => e.key === 'Enter' && handleValidateSources()}
+              />
+              <div className='flex justify-end space-x-3'>
+                <button
+                  onClick={() => setShowValidationModal(false)}
+                  className='px-4 py-2 text-[color:var(--tm-muted)] hover:text-[color:var(--tm-text)] transition-colors min-h-[44px] tm-press'
+                >
+                  取消
+                </button>
+                <button
+                  onClick={handleValidateSources}
+                  disabled={!searchKeyword.trim()}
+                  className={`px-4 py-2 ${
+                    !searchKeyword.trim()
+                      ? buttonStyles.disabled
+                      : buttonStyles.success
+                  }`}
+                >
+                  开始检测
+                </button>
               </div>
             </div>
-          </div>,
-          document.body
-        )}
+          </div>
+        </ModalLayer>
+      )}
 
       {/* 通用弹窗组件 */}
       <AlertModal
@@ -8646,82 +8589,81 @@ const VideoSourceConfig = ({
       />
 
       {/* 批量操作确认弹窗 */}
-      {confirmModal.isOpen &&
-        createPortal(
+      {confirmModal.isOpen && (
+        <ModalLayer
+          variant='confirm'
+          label={confirmModal.title}
+          onClose={confirmModal.onCancel}
+        >
           <div
-            className='fixed inset-0 bg-[var(--tm-scrim)] z-[10020] flex items-center justify-center p-4'
-            onClick={confirmModal.onCancel}
+            className='bg-[var(--tm-surface)] rounded-lg shadow-xl max-w-md w-full'
+            onClick={(e) => e.stopPropagation()}
           >
-            <div
-              className='bg-[var(--tm-surface)] rounded-lg shadow-xl max-w-md w-full'
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className='p-6'>
-                <div className='flex items-center justify-between mb-4'>
-                  <h3 className='text-lg font-medium text-[color:var(--tm-text)]'>
-                    {confirmModal.title}
-                  </h3>
-                  <button
-                    onClick={confirmModal.onCancel}
-                    className='text-[color:var(--tm-muted)] hover:text-[color:var(--tm-muted)] transition-colors min-h-[44px] tm-press'
+            <div className='p-6'>
+              <div className='flex items-center justify-between mb-4'>
+                <h3 className='text-lg font-medium text-[color:var(--tm-text)]'>
+                  {confirmModal.title}
+                </h3>
+                <button
+                  onClick={confirmModal.onCancel}
+                  className='text-[color:var(--tm-muted)] hover:text-[color:var(--tm-muted)] transition-colors min-h-[44px] tm-press'
+                >
+                  <svg
+                    className='w-5 h-5'
+                    fill='none'
+                    stroke='currentColor'
+                    viewBox='0 0 24 24'
                   >
-                    <svg
-                      className='w-5 h-5'
-                      fill='none'
-                      stroke='currentColor'
-                      viewBox='0 0 24 24'
-                    >
-                      <path
-                        strokeLinecap='round'
-                        strokeLinejoin='round'
-                        strokeWidth={2}
-                        d='M6 18L18 6M6 6l12 12'
-                      />
-                    </svg>
-                  </button>
-                </div>
+                    <path
+                      strokeLinecap='round'
+                      strokeLinejoin='round'
+                      strokeWidth={2}
+                      d='M6 18L18 6M6 6l12 12'
+                    />
+                  </svg>
+                </button>
+              </div>
 
-                <div className='mb-6'>
-                  <p className='text-sm text-[color:var(--tm-muted)]'>
-                    {confirmModal.message}
-                  </p>
-                </div>
+              <div className='mb-6'>
+                <p className='text-sm text-[color:var(--tm-muted)]'>
+                  {confirmModal.message}
+                </p>
+              </div>
 
-                {/* 操作按钮 */}
-                <div className='flex justify-end space-x-3'>
-                  <button
-                    onClick={confirmModal.onCancel}
-                    className={`px-4 py-2 text-sm font-medium ${buttonStyles.secondary}`}
-                  >
-                    取消
-                  </button>
-                  <button
-                    onClick={confirmModal.onConfirm}
-                    disabled={
-                      isLoading('batchSource_batch_enable') ||
-                      isLoading('batchSource_batch_disable') ||
-                      isLoading('batchSource_batch_delete')
-                    }
-                    className={`px-4 py-2 text-sm font-medium ${
-                      isLoading('batchSource_batch_enable') ||
-                      isLoading('batchSource_batch_disable') ||
-                      isLoading('batchSource_batch_delete')
-                        ? buttonStyles.disabled
-                        : buttonStyles.success
-                    }`}
-                  >
-                    {isLoading('batchSource_batch_enable') ||
+              {/* 操作按钮 */}
+              <div className='flex justify-end space-x-3'>
+                <button
+                  onClick={confirmModal.onCancel}
+                  className={`px-4 py-2 text-sm font-medium ${buttonStyles.secondary}`}
+                >
+                  取消
+                </button>
+                <button
+                  onClick={confirmModal.onConfirm}
+                  disabled={
+                    isLoading('batchSource_batch_enable') ||
                     isLoading('batchSource_batch_disable') ||
                     isLoading('batchSource_batch_delete')
-                      ? '操作中...'
-                      : '确认'}
-                  </button>
-                </div>
+                  }
+                  className={`px-4 py-2 text-sm font-medium ${
+                    isLoading('batchSource_batch_enable') ||
+                    isLoading('batchSource_batch_disable') ||
+                    isLoading('batchSource_batch_delete')
+                      ? buttonStyles.disabled
+                      : buttonStyles.success
+                  }`}
+                >
+                  {isLoading('batchSource_batch_enable') ||
+                  isLoading('batchSource_batch_disable') ||
+                  isLoading('batchSource_batch_delete')
+                    ? '操作中...'
+                    : '确认'}
+                </button>
               </div>
             </div>
-          </div>,
-          document.body
-        )}
+          </div>
+        </ModalLayer>
+      )}
     </div>
   );
 };
@@ -12810,75 +12752,74 @@ const SiteConfigComponent = ({
       />
 
       {/* 开启评论确认弹窗 */}
-      {showEnableCommentsModal &&
-        createPortal(
+      {showEnableCommentsModal && (
+        <ModalLayer
+          variant='panel'
+          label='开启评论与相似推荐功能'
+          onClose={() => setShowEnableCommentsModal(false)}
+        >
           <div
-            className='fixed inset-0 bg-[var(--tm-scrim)] z-50 flex items-center justify-center p-4'
-            onClick={() => setShowEnableCommentsModal(false)}
+            className='bg-[var(--tm-surface)] rounded-lg shadow-xl max-w-md w-full'
+            onClick={(e) => e.stopPropagation()}
           >
-            <div
-              className='bg-[var(--tm-surface)] rounded-lg shadow-xl max-w-md w-full'
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className='p-6'>
-                <div className='flex items-center justify-between mb-6'>
-                  <h3 className='text-xl font-medium text-[color:var(--tm-text)]'>
-                    开启评论与相似推荐功能
-                  </h3>
-                  <button
-                    onClick={() => setShowEnableCommentsModal(false)}
-                    className='text-[color:var(--tm-muted)] hover:text-[color:var(--tm-muted)] transition-colors min-h-[44px] tm-press'
+            <div className='p-6'>
+              <div className='flex items-center justify-between mb-6'>
+                <h3 className='text-xl font-medium text-[color:var(--tm-text)]'>
+                  开启评论与相似推荐功能
+                </h3>
+                <button
+                  onClick={() => setShowEnableCommentsModal(false)}
+                  className='text-[color:var(--tm-muted)] hover:text-[color:var(--tm-muted)] transition-colors min-h-[44px] tm-press'
+                >
+                  <svg
+                    className='w-6 h-6'
+                    fill='none'
+                    stroke='currentColor'
+                    viewBox='0 0 24 24'
                   >
-                    <svg
-                      className='w-6 h-6'
-                      fill='none'
-                      stroke='currentColor'
-                      viewBox='0 0 24 24'
-                    >
-                      <path
-                        strokeLinecap='round'
-                        strokeLinejoin='round'
-                        strokeWidth={2}
-                        d='M6 18L18 6M6 6l12 12'
-                      />
-                    </svg>
-                  </button>
-                </div>
+                    <path
+                      strokeLinecap='round'
+                      strokeLinejoin='round'
+                      strokeWidth={2}
+                      d='M6 18L18 6M6 6l12 12'
+                    />
+                  </svg>
+                </button>
+              </div>
 
-                <div className='mb-6'>
-                  <div className='bg-[var(--tm-surface-raised)] border border-[var(--tm-line)] rounded-lg p-4'>
-                    <div className='flex items-center space-x-2 mb-2'>
-                      <AlertTriangle className='w-5 h-5 text-[color:var(--tm-text)]' />
-                      <span className='text-sm font-medium text-[color:var(--tm-text)]'>
-                        重要提示
-                      </span>
-                    </div>
-                    <p className='text-sm text-[color:var(--tm-text)]'>
-                      评论功能为逆向抓取豆瓣评论数据，此功能仅供学习，开启后请自行承担相关责任和风险。
-                    </p>
+              <div className='mb-6'>
+                <div className='bg-[var(--tm-surface-raised)] border border-[var(--tm-line)] rounded-lg p-4'>
+                  <div className='flex items-center space-x-2 mb-2'>
+                    <AlertTriangle className='w-5 h-5 text-[color:var(--tm-text)]' />
+                    <span className='text-sm font-medium text-[color:var(--tm-text)]'>
+                      重要提示
+                    </span>
                   </div>
-                </div>
-
-                {/* 操作按钮 */}
-                <div className='flex justify-end space-x-3'>
-                  <button
-                    onClick={() => setShowEnableCommentsModal(false)}
-                    className={`px-6 py-2.5 text-sm font-medium ${buttonStyles.secondary}`}
-                  >
-                    取消
-                  </button>
-                  <button
-                    onClick={handleConfirmEnableComments}
-                    className={`px-6 py-2.5 text-sm font-medium ${buttonStyles.primary}`}
-                  >
-                    我已知晓，确认开启
-                  </button>
+                  <p className='text-sm text-[color:var(--tm-text)]'>
+                    评论功能为逆向抓取豆瓣评论数据，此功能仅供学习，开启后请自行承担相关责任和风险。
+                  </p>
                 </div>
               </div>
+
+              {/* 操作按钮 */}
+              <div className='flex justify-end space-x-3'>
+                <button
+                  onClick={() => setShowEnableCommentsModal(false)}
+                  className={`px-6 py-2.5 text-sm font-medium ${buttonStyles.secondary}`}
+                >
+                  取消
+                </button>
+                <button
+                  onClick={handleConfirmEnableComments}
+                  className={`px-6 py-2.5 text-sm font-medium ${buttonStyles.primary}`}
+                >
+                  我已知晓，确认开启
+                </button>
+              </div>
             </div>
-          </div>,
-          document.body
-        )}
+          </div>
+        </ModalLayer>
+      )}
     </div>
   );
 };
@@ -13662,75 +13603,74 @@ const RegistrationConfigComponent = ({
       />
 
       {/* 开启注册确认弹窗 */}
-      {showEnableRegistrationModal &&
-        createPortal(
+      {showEnableRegistrationModal && (
+        <ModalLayer
+          variant='panel'
+          label='开启注册功能'
+          onClose={() => setShowEnableRegistrationModal(false)}
+        >
           <div
-            className='fixed inset-0 bg-[var(--tm-scrim)] z-50 flex items-center justify-center p-4'
-            onClick={() => setShowEnableRegistrationModal(false)}
+            className='bg-[var(--tm-surface)] rounded-lg shadow-xl max-w-md w-full'
+            onClick={(e) => e.stopPropagation()}
           >
-            <div
-              className='bg-[var(--tm-surface)] rounded-lg shadow-xl max-w-md w-full'
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className='p-6'>
-                <div className='flex items-center justify-between mb-6'>
-                  <h3 className='text-xl font-medium text-[color:var(--tm-text)]'>
-                    开启注册功能
-                  </h3>
-                  <button
-                    onClick={() => setShowEnableRegistrationModal(false)}
-                    className='text-[color:var(--tm-muted)] hover:text-[color:var(--tm-muted)] transition-colors min-h-[44px] tm-press'
+            <div className='p-6'>
+              <div className='flex items-center justify-between mb-6'>
+                <h3 className='text-xl font-medium text-[color:var(--tm-text)]'>
+                  开启注册功能
+                </h3>
+                <button
+                  onClick={() => setShowEnableRegistrationModal(false)}
+                  className='text-[color:var(--tm-muted)] hover:text-[color:var(--tm-muted)] transition-colors min-h-[44px] tm-press'
+                >
+                  <svg
+                    className='w-6 h-6'
+                    fill='none'
+                    stroke='currentColor'
+                    viewBox='0 0 24 24'
                   >
-                    <svg
-                      className='w-6 h-6'
-                      fill='none'
-                      stroke='currentColor'
-                      viewBox='0 0 24 24'
-                    >
-                      <path
-                        strokeLinecap='round'
-                        strokeLinejoin='round'
-                        strokeWidth={2}
-                        d='M6 18L18 6M6 6l12 12'
-                      />
-                    </svg>
-                  </button>
-                </div>
+                    <path
+                      strokeLinecap='round'
+                      strokeLinejoin='round'
+                      strokeWidth={2}
+                      d='M6 18L18 6M6 6l12 12'
+                    />
+                  </svg>
+                </button>
+              </div>
 
-                <div className='mb-6'>
-                  <div className='bg-[var(--tm-surface-raised)] border border-[var(--tm-line)] rounded-lg p-4'>
-                    <div className='flex items-center space-x-2 mb-2'>
-                      <AlertTriangle className='w-5 h-5 text-[color:var(--tm-text)]' />
-                      <span className='text-sm font-medium text-[color:var(--tm-text)]'>
-                        安全提示
-                      </span>
-                    </div>
-                    <p className='text-sm text-[color:var(--tm-text)]'>
-                      为了您的安全和避免潜在的法律风险,如果您的网站部署在公网不建议开启。
-                    </p>
+              <div className='mb-6'>
+                <div className='bg-[var(--tm-surface-raised)] border border-[var(--tm-line)] rounded-lg p-4'>
+                  <div className='flex items-center space-x-2 mb-2'>
+                    <AlertTriangle className='w-5 h-5 text-[color:var(--tm-text)]' />
+                    <span className='text-sm font-medium text-[color:var(--tm-text)]'>
+                      安全提示
+                    </span>
                   </div>
-                </div>
-
-                {/* 操作按钮 */}
-                <div className='flex justify-end space-x-3'>
-                  <button
-                    onClick={() => setShowEnableRegistrationModal(false)}
-                    className={`px-6 py-2.5 text-sm font-medium ${buttonStyles.secondary}`}
-                  >
-                    取消
-                  </button>
-                  <button
-                    onClick={handleConfirmEnableRegistration}
-                    className={`px-6 py-2.5 text-sm font-medium ${buttonStyles.primary}`}
-                  >
-                    我已知晓，确认开启
-                  </button>
+                  <p className='text-sm text-[color:var(--tm-text)]'>
+                    为了您的安全和避免潜在的法律风险,如果您的网站部署在公网不建议开启。
+                  </p>
                 </div>
               </div>
+
+              {/* 操作按钮 */}
+              <div className='flex justify-end space-x-3'>
+                <button
+                  onClick={() => setShowEnableRegistrationModal(false)}
+                  className={`px-6 py-2.5 text-sm font-medium ${buttonStyles.secondary}`}
+                >
+                  取消
+                </button>
+                <button
+                  onClick={handleConfirmEnableRegistration}
+                  className={`px-6 py-2.5 text-sm font-medium ${buttonStyles.primary}`}
+                >
+                  我已知晓，确认开启
+                </button>
+              </div>
             </div>
-          </div>,
-          document.body
-        )}
+          </div>
+        </ModalLayer>
+      )}
     </div>
   );
 };
@@ -14184,60 +14124,65 @@ const SuwayomiConfigComponent = ({
         </div>
 
         {/* 漫画展馆免责声明弹窗 */}
-        {showMangaDisclaimer &&
-          createPortal(
-            <div className='fixed inset-0 bg-[var(--tm-scrim)] z-50 flex items-center justify-center p-4'>
-              <div className='bg-[var(--tm-surface)] rounded-lg shadow-xl max-w-md w-full border border-[var(--tm-line)]'>
-                <div className='p-6'>
-                  <div className='flex justify-center mb-4'>
-                    <AlertTriangle className='w-12 h-12 text-[color:var(--tm-text)]' />
-                  </div>
+        {showMangaDisclaimer && (
+          <ModalLayer
+            variant='dialog'
+            label='免责声明'
+            onClose={() => {
+              setShowMangaDisclaimer(false);
+              setMangaCountdown(10);
+            }}
+          >
+            <div className='bg-[var(--tm-surface)] rounded-lg shadow-xl max-w-md w-full border border-[var(--tm-line)]'>
+              <div className='p-6'>
+                <div className='flex justify-center mb-4'>
+                  <AlertTriangle className='w-12 h-12 text-[color:var(--tm-text)]' />
+                </div>
 
-                  <h3 className='text-xl font-bold text-[color:var(--tm-text)] mb-4 text-center'>
-                    免责声明
-                  </h3>
+                <h3 className='text-xl font-bold text-[color:var(--tm-text)] mb-4 text-center'>
+                  免责声明
+                </h3>
 
-                  <div className='bg-[var(--tm-surface-raised)] border border-[var(--tm-line)] rounded-lg p-4 mb-6'>
-                    <p className='text-sm text-[color:var(--tm-muted)] leading-relaxed'>
-                      本功能仅供个人学习和技术研究使用，请勿将其部署在公网环境中，更不得用于任何违法违规行为。
-                      使用本功能所产生的一切法律责任由使用者自行承担，与开发者无关。
-                      启用此功能即表示您已充分理解并同意承担相应风险。
-                    </p>
-                  </div>
+                <div className='bg-[var(--tm-surface-raised)] border border-[var(--tm-line)] rounded-lg p-4 mb-6'>
+                  <p className='text-sm text-[color:var(--tm-muted)] leading-relaxed'>
+                    本功能仅供个人学习和技术研究使用，请勿将其部署在公网环境中，更不得用于任何违法违规行为。
+                    使用本功能所产生的一切法律责任由使用者自行承担，与开发者无关。
+                    启用此功能即表示您已充分理解并同意承担相应风险。
+                  </p>
+                </div>
 
-                  <div className='flex gap-3 justify-center'>
-                    <button
-                      onClick={() => {
-                        setShowMangaDisclaimer(false);
-                        setMangaCountdown(10);
-                      }}
-                      className={buttonStyles.secondary}
-                    >
-                      取消
-                    </button>
-                    <button
-                      onClick={() => {
-                        setEnabled(true);
-                        setShowMangaDisclaimer(false);
-                        setMangaCountdown(10);
-                      }}
-                      disabled={mangaCountdown > 0}
-                      className={
-                        mangaCountdown > 0
-                          ? buttonStyles.disabled
-                          : buttonStyles.danger
-                      }
-                    >
-                      {mangaCountdown > 0
-                        ? `确认 (${mangaCountdown}s)`
-                        : '确认启用'}
-                    </button>
-                  </div>
+                <div className='flex gap-3 justify-center'>
+                  <button
+                    onClick={() => {
+                      setShowMangaDisclaimer(false);
+                      setMangaCountdown(10);
+                    }}
+                    className={buttonStyles.secondary}
+                  >
+                    取消
+                  </button>
+                  <button
+                    onClick={() => {
+                      setEnabled(true);
+                      setShowMangaDisclaimer(false);
+                      setMangaCountdown(10);
+                    }}
+                    disabled={mangaCountdown > 0}
+                    className={
+                      mangaCountdown > 0
+                        ? buttonStyles.disabled
+                        : buttonStyles.danger
+                    }
+                  >
+                    {mangaCountdown > 0
+                      ? `确认 (${mangaCountdown}s)`
+                      : '确认启用'}
+                  </button>
                 </div>
               </div>
-            </div>,
-            document.body
-          )}
+            </div>
+          </ModalLayer>
+        )}
 
         <div>
           <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
@@ -14700,60 +14645,65 @@ const OPDSConfigComponent = ({
       </div>
 
       {/* 电子书馆免责声明弹窗 */}
-      {showBooksDisclaimer &&
-        createPortal(
-          <div className='fixed inset-0 bg-[var(--tm-scrim)] z-50 flex items-center justify-center p-4'>
-            <div className='bg-[var(--tm-surface)] rounded-lg shadow-xl max-w-md w-full border border-[var(--tm-line)]'>
-              <div className='p-6'>
-                <div className='flex justify-center mb-4'>
-                  <AlertTriangle className='w-12 h-12 text-[color:var(--tm-text)]' />
-                </div>
+      {showBooksDisclaimer && (
+        <ModalLayer
+          variant='dialog'
+          label='免责声明'
+          onClose={() => {
+            setShowBooksDisclaimer(false);
+            setBooksCountdown(10);
+          }}
+        >
+          <div className='bg-[var(--tm-surface)] rounded-lg shadow-xl max-w-md w-full border border-[var(--tm-line)]'>
+            <div className='p-6'>
+              <div className='flex justify-center mb-4'>
+                <AlertTriangle className='w-12 h-12 text-[color:var(--tm-text)]' />
+              </div>
 
-                <h3 className='text-xl font-bold text-[color:var(--tm-text)] mb-4 text-center'>
-                  免责声明
-                </h3>
+              <h3 className='text-xl font-bold text-[color:var(--tm-text)] mb-4 text-center'>
+                免责声明
+              </h3>
 
-                <div className='bg-[var(--tm-surface-raised)] border border-[var(--tm-line)] rounded-lg p-4 mb-6'>
-                  <p className='text-sm text-[color:var(--tm-muted)] leading-relaxed'>
-                    本功能仅供个人学习和技术研究使用，请勿将其部署在公网环境中，更不得用于任何违法违规行为。
-                    使用本功能所产生的一切法律责任由使用者自行承担，与开发者无关。
-                    启用此功能即表示您已充分理解并同意承担相应风险。
-                  </p>
-                </div>
+              <div className='bg-[var(--tm-surface-raised)] border border-[var(--tm-line)] rounded-lg p-4 mb-6'>
+                <p className='text-sm text-[color:var(--tm-muted)] leading-relaxed'>
+                  本功能仅供个人学习和技术研究使用，请勿将其部署在公网环境中，更不得用于任何违法违规行为。
+                  使用本功能所产生的一切法律责任由使用者自行承担，与开发者无关。
+                  启用此功能即表示您已充分理解并同意承担相应风险。
+                </p>
+              </div>
 
-                <div className='flex gap-3 justify-center'>
-                  <button
-                    onClick={() => {
-                      setShowBooksDisclaimer(false);
-                      setBooksCountdown(10);
-                    }}
-                    className={buttonStyles.secondary}
-                  >
-                    取消
-                  </button>
-                  <button
-                    onClick={() => {
-                      setEnabled(true);
-                      setShowBooksDisclaimer(false);
-                      setBooksCountdown(10);
-                    }}
-                    disabled={booksCountdown > 0}
-                    className={
-                      booksCountdown > 0
-                        ? buttonStyles.disabled
-                        : buttonStyles.danger
-                    }
-                  >
-                    {booksCountdown > 0
-                      ? `确认 (${booksCountdown}s)`
-                      : '确认启用'}
-                  </button>
-                </div>
+              <div className='flex gap-3 justify-center'>
+                <button
+                  onClick={() => {
+                    setShowBooksDisclaimer(false);
+                    setBooksCountdown(10);
+                  }}
+                  className={buttonStyles.secondary}
+                >
+                  取消
+                </button>
+                <button
+                  onClick={() => {
+                    setEnabled(true);
+                    setShowBooksDisclaimer(false);
+                    setBooksCountdown(10);
+                  }}
+                  disabled={booksCountdown > 0}
+                  className={
+                    booksCountdown > 0
+                      ? buttonStyles.disabled
+                      : buttonStyles.danger
+                  }
+                >
+                  {booksCountdown > 0
+                    ? `确认 (${booksCountdown}s)`
+                    : '确认启用'}
+                </button>
               </div>
             </div>
-          </div>,
-          document.body
-        )}
+          </div>
+        </ModalLayer>
+      )}
 
       <div>
         <label className='mb-2 block text-sm font-medium text-[color:var(--tm-muted)]'>
@@ -17537,60 +17487,65 @@ const MusicConfigComponent = ({
       </div>
 
       {/* 音乐免责声明弹窗 */}
-      {showMusicDisclaimer &&
-        createPortal(
-          <div className='fixed inset-0 bg-[var(--tm-scrim)] z-50 flex items-center justify-center p-4'>
-            <div className='bg-[var(--tm-surface)] rounded-lg shadow-xl max-w-md w-full border border-[var(--tm-line)]'>
-              <div className='p-6'>
-                <div className='flex justify-center mb-4'>
-                  <AlertTriangle className='w-12 h-12 text-[color:var(--tm-text)]' />
-                </div>
+      {showMusicDisclaimer && (
+        <ModalLayer
+          variant='dialog'
+          label='免责声明'
+          onClose={() => {
+            setShowMusicDisclaimer(false);
+            setMusicCountdown(10);
+          }}
+        >
+          <div className='bg-[var(--tm-surface)] rounded-lg shadow-xl max-w-md w-full border border-[var(--tm-line)]'>
+            <div className='p-6'>
+              <div className='flex justify-center mb-4'>
+                <AlertTriangle className='w-12 h-12 text-[color:var(--tm-text)]' />
+              </div>
 
-                <h3 className='text-xl font-bold text-[color:var(--tm-text)] mb-4 text-center'>
-                  免责声明
-                </h3>
+              <h3 className='text-xl font-bold text-[color:var(--tm-text)] mb-4 text-center'>
+                免责声明
+              </h3>
 
-                <div className='bg-[var(--tm-surface-raised)] border border-[var(--tm-line)] rounded-lg p-4 mb-6'>
-                  <p className='text-sm text-[color:var(--tm-muted)] leading-relaxed'>
-                    本功能仅供个人学习和技术研究使用，请勿将其部署在公网环境中，更不得用于任何违法违规行为。
-                    使用本功能所产生的一切法律责任由使用者自行承担，与开发者无关。
-                    启用此功能即表示您已充分理解并同意承担相应风险。
-                  </p>
-                </div>
+              <div className='bg-[var(--tm-surface-raised)] border border-[var(--tm-line)] rounded-lg p-4 mb-6'>
+                <p className='text-sm text-[color:var(--tm-muted)] leading-relaxed'>
+                  本功能仅供个人学习和技术研究使用，请勿将其部署在公网环境中，更不得用于任何违法违规行为。
+                  使用本功能所产生的一切法律责任由使用者自行承担，与开发者无关。
+                  启用此功能即表示您已充分理解并同意承担相应风险。
+                </p>
+              </div>
 
-                <div className='flex gap-3 justify-center'>
-                  <button
-                    onClick={() => {
-                      setShowMusicDisclaimer(false);
-                      setMusicCountdown(10);
-                    }}
-                    className={buttonStyles.secondary}
-                  >
-                    取消
-                  </button>
-                  <button
-                    onClick={() => {
-                      setEnabled(true);
-                      setShowMusicDisclaimer(false);
-                      setMusicCountdown(10);
-                    }}
-                    disabled={musicCountdown > 0}
-                    className={
-                      musicCountdown > 0
-                        ? buttonStyles.disabled
-                        : buttonStyles.danger
-                    }
-                  >
-                    {musicCountdown > 0
-                      ? `确认 (${musicCountdown}s)`
-                      : '确认启用'}
-                  </button>
-                </div>
+              <div className='flex gap-3 justify-center'>
+                <button
+                  onClick={() => {
+                    setShowMusicDisclaimer(false);
+                    setMusicCountdown(10);
+                  }}
+                  className={buttonStyles.secondary}
+                >
+                  取消
+                </button>
+                <button
+                  onClick={() => {
+                    setEnabled(true);
+                    setShowMusicDisclaimer(false);
+                    setMusicCountdown(10);
+                  }}
+                  disabled={musicCountdown > 0}
+                  className={
+                    musicCountdown > 0
+                      ? buttonStyles.disabled
+                      : buttonStyles.danger
+                  }
+                >
+                  {musicCountdown > 0
+                    ? `确认 (${musicCountdown}s)`
+                    : '确认启用'}
+                </button>
               </div>
             </div>
-          </div>,
-          document.body
-        )}
+          </div>
+        </ModalLayer>
+      )}
 
       <div className='space-y-4'>
         <div className='flex items-center justify-between p-4 bg-[var(--tm-surface-raised)] rounded-lg border border-[var(--tm-line)]'>
@@ -18632,59 +18587,65 @@ const WebLiveConfig = ({
       </div>
 
       {/* 免责声明弹窗 */}
-      {showDisclaimerModal &&
-        createPortal(
-          <div className='fixed inset-0 bg-[var(--tm-scrim)] z-50 flex items-center justify-center p-4'>
-            <div className='bg-[var(--tm-surface)] rounded-lg shadow-xl max-w-md w-full border border-[var(--tm-line)]'>
-              <div className='p-6'>
-                <div className='flex justify-center mb-4'>
-                  <AlertTriangle className='w-12 h-12 text-[color:var(--tm-text)]' />
-                </div>
+      {showDisclaimerModal && (
+        <ModalLayer
+          variant='dialog'
+          label='免责声明'
+          onClose={() => {
+            if (isEnabling) return 'blocked';
+            setShowDisclaimerModal(false);
+            setCountdown(10);
+          }}
+        >
+          <div className='bg-[var(--tm-surface)] rounded-lg shadow-xl max-w-md w-full border border-[var(--tm-line)]'>
+            <div className='p-6'>
+              <div className='flex justify-center mb-4'>
+                <AlertTriangle className='w-12 h-12 text-[color:var(--tm-text)]' />
+              </div>
 
-                <h3 className='text-xl font-bold text-[color:var(--tm-text)] mb-4 text-center'>
-                  免责声明
-                </h3>
+              <h3 className='text-xl font-bold text-[color:var(--tm-text)] mb-4 text-center'>
+                免责声明
+              </h3>
 
-                <div className='bg-[var(--tm-surface-raised)] border border-[var(--tm-line)] rounded-lg p-4 mb-6'>
-                  <p className='text-sm text-[color:var(--tm-muted)] leading-relaxed'>
-                    本功能仅供个人学习和技术研究使用，请勿将其部署在公网环境中，更不得用于任何违法违规行为。
-                    使用本功能所产生的一切法律责任由使用者自行承担，与开发者无关。
-                    启用此功能即表示您已充分理解并同意承担相应风险。
-                  </p>
-                </div>
+              <div className='bg-[var(--tm-surface-raised)] border border-[var(--tm-line)] rounded-lg p-4 mb-6'>
+                <p className='text-sm text-[color:var(--tm-muted)] leading-relaxed'>
+                  本功能仅供个人学习和技术研究使用，请勿将其部署在公网环境中，更不得用于任何违法违规行为。
+                  使用本功能所产生的一切法律责任由使用者自行承担，与开发者无关。
+                  启用此功能即表示您已充分理解并同意承担相应风险。
+                </p>
+              </div>
 
-                <div className='flex gap-3 justify-center'>
-                  <button
-                    onClick={() => {
-                      setShowDisclaimerModal(false);
-                      setCountdown(10);
-                    }}
-                    className={buttonStyles.secondary}
-                    disabled={isEnabling}
-                  >
-                    取消
-                  </button>
-                  <button
-                    onClick={handleConfirmEnable}
-                    disabled={countdown > 0 || isEnabling}
-                    className={
-                      countdown > 0 || isEnabling
-                        ? buttonStyles.disabled
-                        : buttonStyles.danger
-                    }
-                  >
-                    {isEnabling
-                      ? '启用中...'
-                      : countdown > 0
-                      ? `确认 (${countdown}s)`
-                      : '确认启用'}
-                  </button>
-                </div>
+              <div className='flex gap-3 justify-center'>
+                <button
+                  onClick={() => {
+                    setShowDisclaimerModal(false);
+                    setCountdown(10);
+                  }}
+                  className={buttonStyles.secondary}
+                  disabled={isEnabling}
+                >
+                  取消
+                </button>
+                <button
+                  onClick={handleConfirmEnable}
+                  disabled={countdown > 0 || isEnabling}
+                  className={
+                    countdown > 0 || isEnabling
+                      ? buttonStyles.disabled
+                      : buttonStyles.danger
+                  }
+                >
+                  {isEnabling
+                    ? '启用中...'
+                    : countdown > 0
+                    ? `确认 (${countdown}s)`
+                    : '确认启用'}
+                </button>
               </div>
             </div>
-          </div>,
-          document.body
-        )}
+          </div>
+        </ModalLayer>
+      )}
 
       <div className='flex items-center justify-between'>
         <h4 className='text-sm font-medium text-[color:var(--tm-muted)]'>
@@ -20247,27 +20208,46 @@ function AdminPageClient() {
       />
 
       {/* 重置配置确认弹窗 */}
-      {showResetConfigModal &&
-        createPortal(
+      {showResetConfigModal && (
+        <ModalLayer
+          variant='confirm'
+          label='确认重置配置'
+          onClose={() => setShowResetConfigModal(false)}
+        >
           <div
-            className='fixed inset-0 bg-[var(--tm-scrim)] z-50 flex items-center justify-center p-4'
-            onClick={() => setShowResetConfigModal(false)}
+            className='bg-[var(--tm-surface)] rounded-lg shadow-xl max-w-2xl w-full'
+            onClick={(e) => e.stopPropagation()}
           >
-            <div
-              className='bg-[var(--tm-surface)] rounded-lg shadow-xl max-w-2xl w-full'
-              onClick={(e) => e.stopPropagation()}
-            >
-              <div className='p-6'>
-                <div className='flex items-center justify-between mb-6'>
-                  <h3 className='text-xl font-medium text-[color:var(--tm-text)]'>
-                    确认重置配置
-                  </h3>
-                  <button
-                    onClick={() => setShowResetConfigModal(false)}
-                    className='text-[color:var(--tm-muted)] hover:text-[color:var(--tm-muted)] transition-colors min-h-[44px] tm-press'
+            <div className='p-6'>
+              <div className='flex items-center justify-between mb-6'>
+                <h3 className='text-xl font-medium text-[color:var(--tm-text)]'>
+                  确认重置配置
+                </h3>
+                <button
+                  onClick={() => setShowResetConfigModal(false)}
+                  className='text-[color:var(--tm-muted)] hover:text-[color:var(--tm-muted)] transition-colors min-h-[44px] tm-press'
+                >
+                  <svg
+                    className='w-6 h-6'
+                    fill='none'
+                    stroke='currentColor'
+                    viewBox='0 0 24 24'
                   >
+                    <path
+                      strokeLinecap='round'
+                      strokeLinejoin='round'
+                      strokeWidth={2}
+                      d='M6 18L18 6M6 6l12 12'
+                    />
+                  </svg>
+                </button>
+              </div>
+
+              <div className='mb-6'>
+                <div className='bg-[var(--tm-surface-raised)] border border-[var(--tm-line)] rounded-lg p-4 mb-4'>
+                  <div className='flex items-center space-x-2 mb-2'>
                     <svg
-                      className='w-6 h-6'
+                      className='w-5 h-5 text-[color:var(--tm-text)]'
                       fill='none'
                       stroke='currentColor'
                       viewBox='0 0 24 24'
@@ -20276,67 +20256,47 @@ function AdminPageClient() {
                         strokeLinecap='round'
                         strokeLinejoin='round'
                         strokeWidth={2}
-                        d='M6 18L18 6M6 6l12 12'
+                        d='M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z'
                       />
                     </svg>
-                  </button>
-                </div>
-
-                <div className='mb-6'>
-                  <div className='bg-[var(--tm-surface-raised)] border border-[var(--tm-line)] rounded-lg p-4 mb-4'>
-                    <div className='flex items-center space-x-2 mb-2'>
-                      <svg
-                        className='w-5 h-5 text-[color:var(--tm-text)]'
-                        fill='none'
-                        stroke='currentColor'
-                        viewBox='0 0 24 24'
-                      >
-                        <path
-                          strokeLinecap='round'
-                          strokeLinejoin='round'
-                          strokeWidth={2}
-                          d='M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z'
-                        />
-                      </svg>
-                      <span className='text-sm font-medium text-[color:var(--tm-text)]'>
-                        <TriangleAlert
-                          className='mr-1 inline-block h-4 w-4 align-[-0.125em]'
-                          aria-hidden='true'
-                        />
-                        危险操作警告
-                      </span>
-                    </div>
-                    <p className='text-sm text-[color:var(--tm-text)]'>
-                      此操作将重置用户封禁和管理员设置、自定义视频源，站点配置将重置为默认值，是否继续？
-                    </p>
+                    <span className='text-sm font-medium text-[color:var(--tm-text)]'>
+                      <TriangleAlert
+                        className='mr-1 inline-block h-4 w-4 align-[-0.125em]'
+                        aria-hidden='true'
+                      />
+                      危险操作警告
+                    </span>
                   </div>
-                </div>
-
-                {/* 操作按钮 */}
-                <div className='flex justify-end space-x-3'>
-                  <button
-                    onClick={() => setShowResetConfigModal(false)}
-                    className={`px-6 py-2.5 text-sm font-medium ${buttonStyles.secondary}`}
-                  >
-                    取消
-                  </button>
-                  <button
-                    onClick={handleConfirmResetConfig}
-                    disabled={isLoading('resetConfig')}
-                    className={`px-6 py-2.5 text-sm font-medium ${
-                      isLoading('resetConfig')
-                        ? buttonStyles.disabled
-                        : buttonStyles.danger
-                    }`}
-                  >
-                    {isLoading('resetConfig') ? '重置中...' : '确认重置'}
-                  </button>
+                  <p className='text-sm text-[color:var(--tm-text)]'>
+                    此操作将重置用户封禁和管理员设置、自定义视频源，站点配置将重置为默认值，是否继续？
+                  </p>
                 </div>
               </div>
+
+              {/* 操作按钮 */}
+              <div className='flex justify-end space-x-3'>
+                <button
+                  onClick={() => setShowResetConfigModal(false)}
+                  className={`px-6 py-2.5 text-sm font-medium ${buttonStyles.secondary}`}
+                >
+                  取消
+                </button>
+                <button
+                  onClick={handleConfirmResetConfig}
+                  disabled={isLoading('resetConfig')}
+                  className={`px-6 py-2.5 text-sm font-medium ${
+                    isLoading('resetConfig')
+                      ? buttonStyles.disabled
+                      : buttonStyles.danger
+                  }`}
+                >
+                  {isLoading('resetConfig') ? '重置中...' : '确认重置'}
+                </button>
+              </div>
             </div>
-          </div>,
-          document.body
-        )}
+          </div>
+        </ModalLayer>
+      )}
     </PageLayout>
   );
 }

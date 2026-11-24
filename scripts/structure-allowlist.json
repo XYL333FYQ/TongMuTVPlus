@@ -7,7 +7,6 @@
   "blocks": [],
   "eslintDisable": [],
   "parts:portal": [
-    "src/app/admin/page.tsx ×22",
     "src/app/books/read/page.tsx ×4",
     "src/app/movie-request/page.tsx ×2",
     "src/app/music/MusicClient.tsx ×1",
