@@ -33,7 +33,6 @@ import {
   CheckCircle,
   ChevronDown,
   ChevronUp,
-  CircleCheck,
   Cloud,
   Copy,
   Database,
@@ -187,14 +186,15 @@ const AlertModal = ({
   showConfirm = false,
   onConfirm,
 }: AlertModalProps) => {
-  // 出现和消失的动画由弹窗层负责；这里只管定时自动关
+  // 出现和消失的动画由弹窗层负责；这里只管定时自动关。
+  // onClose 每次渲染都是新函数，放进 ref，父组件重渲染不会重新计时
+  const closeRef = useRef(onClose);
+  closeRef.current = onClose;
   useEffect(() => {
     if (!isOpen || !timer) return;
-    const handle = setTimeout(() => {
-      onClose();
-    }, timer);
+    const handle = setTimeout(() => closeRef.current(), timer);
     return () => clearTimeout(handle);
-  }, [isOpen, timer, onClose]);
+  }, [isOpen, timer]);
 
   if (!isOpen) return null;
 
@@ -2106,7 +2106,7 @@ const UserConfig = ({
       {/* 查看用户设备弹窗 */}
       {showUserDevicesModal && selectedDeviceUsername && (
         <ModalLayer
-          variant='panel'
+          variant='dialog'
           label='用户设备'
           onClose={() => {
             setShowUserDevicesModal(false);
@@ -2254,7 +2254,7 @@ const UserConfig = ({
       {/* 配置用户采集源权限弹窗 */}
       {showConfigureApisModal && selectedUser && (
         <ModalLayer
-          variant='panel'
+          variant='dialog'
           label='配置用户采集源权限'
           onClose={() => {
             setShowConfigureApisModal(false);
@@ -2427,7 +2427,7 @@ const UserConfig = ({
       {/* 添加用户组弹窗 */}
       {showAddUserGroupForm && (
         <ModalLayer
-          variant='panel'
+          variant='dialog'
           label='添加新用户组'
           onClose={() => {
             setShowAddUserGroupForm(false);
@@ -2689,7 +2689,7 @@ const UserConfig = ({
       {/* 编辑用户组弹窗 */}
       {showEditUserGroupForm && editingUserGroup && (
         <ModalLayer
-          variant='panel'
+          variant='dialog'
           label='编辑用户组'
           onClose={() => {
             setShowEditUserGroupForm(false);
@@ -2937,7 +2937,7 @@ const UserConfig = ({
       {/* 配置用户组弹窗 */}
       {showConfigureUserGroupModal && selectedUserForGroup && (
         <ModalLayer
-          variant='panel'
+          variant='dialog'
           label='配置用户组'
           onClose={() => {
             setShowConfigureUserGroupModal(false);
@@ -3154,10 +3154,6 @@ const UserConfig = ({
                         />
                       </svg>
                       <span className='text-sm font-medium text-[color:var(--tm-text)]'>
-                        <TriangleAlert
-                          className='mr-1 inline-block h-4 w-4 align-[-0.125em]'
-                          aria-hidden='true'
-                        />
                         将影响 {deletingUserGroup.affectedUsers.length} 个用户：
                       </span>
                     </div>
@@ -3192,10 +3188,6 @@ const UserConfig = ({
                         />
                       </svg>
                       <span className='text-sm font-medium text-[color:var(--tm-text)]'>
-                        <CircleCheck
-                          className='mr-1 inline-block h-4 w-4 align-[-0.125em]'
-                          aria-hidden='true'
-                        />
                         当前没有用户使用此用户组
                       </span>
                     </div>
@@ -3330,7 +3322,7 @@ const UserConfig = ({
       {/* 批量设置用户组弹窗 */}
       {showBatchUserGroupModal && (
         <ModalLayer
-          variant='panel'
+          variant='dialog'
           label='批量设置用户组'
           onClose={() => {
             setShowBatchUserGroupModal(false);
@@ -4171,7 +4163,7 @@ const OpenListConfigComponent = ({
 
         {pathMetaDialogOpen && (
           <ModalLayer
-            variant='panel'
+            variant='dialog'
             label='路径元信息'
             onClose={() => setPathMetaDialogOpen(false)}
           >
@@ -8146,7 +8138,7 @@ const VideoSourceConfig = ({
 
       {showSpecialSourcesModal && (
         <ModalLayer
-          variant='panel'
+          variant='dialog'
           label='特殊源设置'
           onClose={closeSpecialSourcesModal}
         >
@@ -8274,7 +8266,7 @@ const VideoSourceConfig = ({
 
       {showClientAdSourcesModal && (
         <ModalLayer
-          variant='panel'
+          variant='dialog'
           label='客户端去广告配置'
           onClose={closeClientAdSourcesModal}
         >
@@ -8395,7 +8387,7 @@ const VideoSourceConfig = ({
 
       {showWeightModal && (
         <ModalLayer
-          variant='panel'
+          variant='dialog'
           label='视频源权重设置'
           onClose={handleCloseWeightModal}
         >
@@ -8534,7 +8526,7 @@ const VideoSourceConfig = ({
           onClose={() => setShowValidationModal(false)}
         >
           <div
-            className='bg-[var(--tm-surface)] rounded-lg p-6 w-full max-w-md mx-4'
+            className='bg-[var(--tm-surface)] rounded-lg p-6 w-full max-w-md'
             onClick={(e) => e.stopPropagation()}
           >
             <h3 className='text-lg font-medium text-[color:var(--tm-text)] mb-4'>
@@ -20261,10 +20253,6 @@ function AdminPageClient() {
                       />
                     </svg>
                     <span className='text-sm font-medium text-[color:var(--tm-text)]'>
-                      <TriangleAlert
-                        className='mr-1 inline-block h-4 w-4 align-[-0.125em]'
-                        aria-hidden='true'
-                      />
                       危险操作警告
                     </span>
                   </div>

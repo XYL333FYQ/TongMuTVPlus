@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 
-import { readSetting, writeSetting } from '@/lib/settings';
+import { readSettingStrict, writeSetting } from '@/lib/settings';
 
 export interface VisualPreferences {
   noBlur: boolean;
@@ -31,8 +31,11 @@ function normalize(value: unknown): VisualPreferences {
   };
 }
 function read(): VisualPreferences {
+  // 存储读不了（隐私模式、被禁用）时沿用这次会话里选的，不退回默认值
+  const raw = readSettingStrict(STORAGE_KEY);
+  if (raw === undefined) return memoryPreferences;
   try {
-    return normalize(JSON.parse(readSetting(STORAGE_KEY) || '{}'));
+    return normalize(JSON.parse(raw || '{}'));
   } catch {
     return memoryPreferences;
   }

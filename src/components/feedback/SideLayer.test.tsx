@@ -62,3 +62,33 @@ test('Esc 只关最上面、开着的那一层；上面有模态弹窗时不关'
   modal.remove();
   rerender(<></>);
 });
+
+test('一直挂着的抽屉：打开时记下触发按钮，收起时把焦点还回去', () => {
+  const trigger = document.createElement('button');
+  document.body.appendChild(trigger);
+  const inside = { current: null as HTMLButtonElement | null };
+  const view = (open: boolean) => (
+    <SideLayer
+      open={open}
+      semantics='region'
+      label='AI影视助手'
+      initialFocus={inside}
+      onClose={jest.fn()}
+    >
+      <button
+        ref={(node) => {
+          inside.current = node;
+        }}
+      >
+        关闭
+      </button>
+    </SideLayer>
+  );
+  const { rerender } = render(view(false));
+  trigger.focus();
+  rerender(view(true));
+  expect(document.activeElement).toBe(inside.current);
+  rerender(view(false));
+  expect(document.activeElement).toBe(trigger);
+  trigger.remove();
+});

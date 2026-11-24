@@ -2825,7 +2825,6 @@ export default function MusicClient({
           <div className='fixed top-4 right-4 z-[80] pointer-events-none'>
             <div className='relative w-16 h-16 md:w-20 md:h-20'>
               <div className='absolute inset-0 rounded-full border-4 border-line' />
-              <BusyDots className='absolute inset-0' />
               <div className='absolute inset-1 rounded-full bg-surface backdrop-blur-md border border-line flex flex-col items-center justify-center'>
                 <div className='text-[13px] md:text-[13px] text-muted leading-none mb-1'>
                   解析中
@@ -2833,6 +2832,7 @@ export default function MusicClient({
                 <div className='text-lg md:text-xl font-bold text-fg leading-none'>
                   {resolvingCount}
                 </div>
+                <BusyDots size={12} className='mt-1 text-muted' />
               </div>
             </div>
           </div>

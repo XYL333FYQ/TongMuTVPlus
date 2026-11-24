@@ -45,14 +45,15 @@ const AlertModal = ({
   showConfirm = false,
   timer,
 }: AlertModalProps) => {
-  // 出现和消失的动画由弹窗层负责；这里只管定时自动关
+  // 出现和消失的动画由弹窗层负责；这里只管定时自动关。
+  // onClose 每次渲染都是新函数，放进 ref，父组件重渲染不会重新计时
+  const closeRef = useRef(onClose);
+  closeRef.current = onClose;
   useEffect(() => {
     if (!isOpen || !timer) return;
-    const handle = setTimeout(() => {
-      onClose();
-    }, timer);
+    const handle = setTimeout(() => closeRef.current(), timer);
     return () => clearTimeout(handle);
-  }, [isOpen, timer, onClose]);
+  }, [isOpen, timer]);
 
   if (!isOpen) return null;
 

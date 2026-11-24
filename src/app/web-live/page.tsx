@@ -1,6 +1,6 @@
 'use client';
 
-import { AlertTriangle, Download, Play, Radio } from 'lucide-react';
+import { AlertTriangle, Download, Hourglass, Play, Radio } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 
@@ -15,7 +15,6 @@ import { useAudioFocus } from '@/hooks/useAudioFocus';
 import { useLatestMediaRequest } from '@/hooks/useLatestMediaRequest';
 import { usePlaybackSessionSafe } from '@/hooks/usePlaybackSession';
 
-import BusyDots from '@/components/feedback/BusyDots';
 import LoadingStyle, {
   type LoadingStep,
   LoadingErrorStyle,
@@ -53,7 +52,7 @@ const WEB_LIVE_LOADING_STEPS: WebLiveLoadingStepKey[] = [
 
 /* 播放器蒙层只有两步：加载，然后播放 */
 const WEB_LIVE_PLAYER_STEPS: LoadingStep[] = [
-  { label: '加载', icon: <BusyDots /> },
+  { label: '加载', icon: <Hourglass /> },
   { label: '播放', icon: <Play /> },
 ];
 

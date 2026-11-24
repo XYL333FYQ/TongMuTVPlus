@@ -60,15 +60,10 @@ export default function SideLayer({
   useEffect(() => {
     const element = layer.current;
     if (!element) return;
-    const trigger =
-      document.activeElement instanceof HTMLElement
-        ? document.activeElement
-        : null;
     if (element instanceof HTMLDialogElement) {
       if (typeof element.show === 'function') element.show();
       else element.setAttribute('open', '');
     }
-    focusTarget.current?.current?.focus({ preventScroll: true });
     const keys = (event: KeyboardEvent) => {
       if (!active.current) return;
       if (event.defaultPrevented || event.key !== 'Escape') return;
@@ -90,9 +85,27 @@ export default function SideLayer({
         if (typeof element.close === 'function') element.close();
         else element.removeAttribute('open');
       }
-      if (trigger?.isConnected) trigger.focus({ preventScroll: true });
     };
   }, [host]);
+
+  // 焦点：每次打开时记下是谁打开的、移到面板里；收起或卸载时，焦点还在面板里（或已经掉到 body）才还回去。
+  // 一直挂着的抽屉（AI 助手）不会在离开页面时把焦点抢回页面刚打开时的元素。
+  useEffect(() => {
+    if (!open || !host) return;
+    const element = layer.current;
+    const trigger =
+      document.activeElement instanceof HTMLElement &&
+      document.activeElement !== document.body
+        ? document.activeElement
+        : null;
+    focusTarget.current?.current?.focus({ preventScroll: true });
+    return () => {
+      const current = document.activeElement;
+      const lost =
+        !current || current === document.body || !!element?.contains(current);
+      if (lost && trigger?.isConnected) trigger.focus({ preventScroll: true });
+    };
+  }, [open, host]);
 
   if (!host) return null;
   const props = {

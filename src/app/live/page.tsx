@@ -7,6 +7,7 @@ import {
   Frown,
   GitBranch,
   Heart,
+  Hourglass,
   Play,
   Radio,
   RefreshCw,
@@ -39,7 +40,6 @@ import { useAudioFocus } from '@/hooks/useAudioFocus';
 import { usePlaybackSessionSafe } from '@/hooks/usePlaybackSession';
 
 import EpgScrollableRow from '@/components/EpgScrollableRow';
-import BusyDots from '@/components/feedback/BusyDots';
 import LoadingStyle, {
   type LoadingStep,
   LoadingErrorStyle,
@@ -136,7 +136,7 @@ const LIVE_LOADING_STEPS: LiveLoadingStepKey[] = [
 
 /* 播放器蒙层只有两步：加载，然后播放 */
 const LIVE_PLAYER_STEPS: LoadingStep[] = [
-  { label: '加载', icon: <BusyDots /> },
+  { label: '加载', icon: <Hourglass /> },
   { label: '播放', icon: <Play /> },
 ];
 
