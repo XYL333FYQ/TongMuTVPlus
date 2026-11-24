@@ -2,8 +2,6 @@
 
 import { Keyboard, Router, Users, X } from 'lucide-react';
 
-import './PlaybackTools.css';
-
 import BusyDots from '@/components/feedback/BusyDots';
 import ProxyImage from '@/components/ProxyImage';
 

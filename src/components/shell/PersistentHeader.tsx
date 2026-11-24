@@ -10,8 +10,6 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useId, useState, useSyncExternalStore } from 'react';
 
-import './PersistentHeader.css';
-
 import { BRAND_NAME, PROJECT_REPOSITORY_URL } from '@/lib/brand';
 import { useRememberedTabHref } from '@/hooks/useRememberedTabHref';
 

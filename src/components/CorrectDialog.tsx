@@ -438,7 +438,7 @@ export default function CorrectDialog({
         <h2 className='text-lg font-medium text-fg'>纠错：{currentTitle}</h2>
         <button
           onClick={onClose}
-          className='text-muted hover:text-fg min-h-[44px] tm-press'
+          className='text-muted hover:text-fg min-h-[44px] min-w-[44px] inline-flex items-center justify-center tm-press'
         >
           <X size={24} />
         </button>

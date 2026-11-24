@@ -1,7 +1,5 @@
 'use client';
 
-import './PlaybackComments.css';
-
 import AIComments from '@/components/AIComments';
 import DoubanComments from '@/components/DoubanComments';
 

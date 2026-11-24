@@ -1,0 +1,17 @@
+/* 自己看各组件由 Tailwind 类转来的样式，汇总在这里由根布局最先引入（占原来 Tailwind 工具类的位置，
+   后面的 tm- 样式在同等具体度时能覆盖它们）。各文件里的块见 docs/STANDARD.md 块名登记表。 */
+@import './page/DanmakuSourceDialog.css';
+@import './page/EpisodePanel.css';
+@import './page/FallbackRecommendations.css';
+@import './page/PansouDialog.css';
+@import './page/PlaybackComments.css';
+@import './page/PlaybackDetail.css';
+@import './page/PlaybackDock.css';
+@import './page/PlaybackFailure.css';
+@import './page/PlaybackLoading.css';
+@import './page/PlaybackRail.css';
+@import './page/PlaybackTitle.css';
+@import './page/PlaybackTools.css';
+@import './page/ShortcutDialog.css';
+@import './page/VideoOverlays.css';
+@import './surface/PlaybackSurface.css';

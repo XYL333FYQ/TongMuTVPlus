@@ -3,8 +3,6 @@
 import { Keyboard, X } from 'lucide-react';
 import { useEffect } from 'react';
 
-import './ShortcutDialog.css';
-
 const PLAY_SHORTCUT_GROUPS = [
   {
     title: '播放控制',

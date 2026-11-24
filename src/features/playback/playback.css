@@ -633,10 +633,6 @@ body:has(.tm-solo-selector[data-tm-sheet], .tm-solo-tools[data-tm-sheet])
   padding: 1px 9px;
   font-size: 12px;
 }
-:where(html:not([data-tm-device='wide'])) .tm-solo-detail h1 button {
-  min-width: 40px;
-  min-height: 40px;
-}
 :where(html:not([data-tm-device='wide']))
   .tm-solo-detail
   :is(

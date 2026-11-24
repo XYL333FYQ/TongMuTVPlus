@@ -1,8 +1,6 @@
 'use client';
 import React from 'react';
 
-import './DetailAuxiliaryPanels.css';
-
 import { getTMDBImageUrl } from '@/lib/tmdb-image-base';
 
 import EmptyState from '@/components/feedback/EmptyState';

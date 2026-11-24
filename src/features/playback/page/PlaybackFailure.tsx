@@ -3,8 +3,6 @@
 import { ArrowLeft, Frown, RefreshCw, Search } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
-import './PlaybackFailure.css';
-
 import { usePlaybackSession } from '@/hooks/usePlaybackSession';
 
 import { LoadingErrorStyle } from '@/components/feedback/LoadingStyle';

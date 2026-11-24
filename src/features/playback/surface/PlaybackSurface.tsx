@@ -8,8 +8,6 @@
 import { useRouter } from 'next/navigation';
 import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 
-import './PlaybackSurface.css';
-
 import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
 import {
   generateStorageKey,

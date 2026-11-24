@@ -4,7 +4,6 @@ import { AlertTriangle } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
 import '@/styles/panels.css';
-import './HttpWarningDialog.css';
 
 import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
 import { useReducedMotionSetting } from '@/lib/motion';

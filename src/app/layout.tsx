@@ -4,6 +4,22 @@ import type { Metadata, Viewport } from 'next';
 import { cookies } from 'next/headers';
 import { Suspense } from 'react';
 
+// 由 Tailwind 类转来的组件样式：放在最前面，占原来 Tailwind 工具类的位置（后面的 tm- 样式在同等具体度时能覆盖它们）
+import '@/components/ContinueWatching.css';
+import '@/components/detail/DetailActors.css';
+import '@/components/detail/DetailAuxiliaryPanels.css';
+import '@/components/detail/DetailEpisodes.css';
+import '@/components/detail/DetailShell.css';
+import '@/components/detail/DetailSidePanel.css';
+import '@/components/feedback/HttpWarningDialog.css';
+import '@/components/feedback/MobileActionSheet.css';
+import '@/components/feedback/ReleaseNoticeDialog.css';
+import '@/components/shell/ClientBuildInfo.css';
+import '@/components/shell/ClientUpdatePrompt.css';
+import '@/components/shell/PageHeader.css';
+import '@/components/shell/PerfProbe.css';
+import '@/components/shell/PersistentHeader.css';
+import '@/features/playback/converted.css';
 import '@/styles/tokens.css';
 import '@/styles/base.css';
 import '@/styles/primitives.css';

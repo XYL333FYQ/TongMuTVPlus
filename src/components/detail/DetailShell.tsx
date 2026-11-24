@@ -11,7 +11,6 @@ import {
 } from 'react';
 
 import './detail.css';
-import './DetailShell.css';
 
 import { getDeviceTier } from '@/lib/device-tier';
 import { isReducedMotionSetting, useReducedMotionSetting } from '@/lib/motion';

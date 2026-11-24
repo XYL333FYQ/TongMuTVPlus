@@ -11,8 +11,6 @@ import {
   Sparkles,
 } from 'lucide-react';
 
-import './PlaybackRail.css';
-
 import type { PlaybackDrawer } from './PlaybackDrawers';
 import type { PlaybackPanel } from './types';
 

@@ -2,8 +2,6 @@
 
 import { AlertCircle, Cloud, Heart, Sparkles } from 'lucide-react';
 
-import './PlaybackDetail.css';
-
 import type { SearchResult } from '@/lib/types';
 
 import FilmPoster from '@/components/poster/FilmPoster';

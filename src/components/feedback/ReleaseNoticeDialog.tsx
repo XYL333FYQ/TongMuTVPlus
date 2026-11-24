@@ -3,8 +3,6 @@
 import { motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
 
-import './ReleaseNoticeDialog.css';
-
 import { apiFetch } from '@/lib/api-client';
 import { detectClient } from '@/lib/client-update';
 import { useReducedMotionSetting } from '@/lib/motion';

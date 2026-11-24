@@ -3,8 +3,6 @@
 import { X } from 'lucide-react';
 import type { ReactNode } from 'react';
 
-import './EpisodePanel.css';
-
 interface EpisodePanelProps {
   /** 手机 / 平板：作为底部面板打开 */
   open: boolean;

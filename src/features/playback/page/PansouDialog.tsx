@@ -2,8 +2,6 @@
 
 import { X } from 'lucide-react';
 
-import './PansouDialog.css';
-
 import Drawer from '@/components/Drawer';
 import PansouSearch from '@/components/PansouSearch';
 

@@ -8,8 +8,6 @@ import {
   RefreshCw,
 } from 'lucide-react';
 
-import './PlaybackDock.css';
-
 import type { PlaybackPanel } from './types';
 
 interface PlaybackDockProps {

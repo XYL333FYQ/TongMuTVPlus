@@ -2,8 +2,6 @@
 
 import { useEffect, useState } from 'react';
 
-import './ClientBuildInfo.css';
-
 import {
   type ClientInfo,
   detectClient,

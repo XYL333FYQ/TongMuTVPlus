@@ -2,7 +2,6 @@ import { Radio, X } from 'lucide-react';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import '@/styles/panels.css';
-import './MobileActionSheet.css';
 
 import { logger } from '@/lib/logger';
 import { useReducedMotionSetting } from '@/lib/motion';

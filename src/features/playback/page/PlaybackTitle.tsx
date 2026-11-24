@@ -1,7 +1,5 @@
 'use client';
 
-import './PlaybackTitle.css';
-
 import type { SearchResult } from '@/lib/types';
 
 import { seriesStatus } from '../lib/series-status';

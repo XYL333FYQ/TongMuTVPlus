@@ -928,7 +928,7 @@ export default function AIChatPanel({
         </div>
         <button
           onClick={onClose}
-          className='rounded-lg p-2 text-muted transition-colors hover:bg-line flex-shrink-0 min-h-[44px] tm-press'
+          className='rounded-lg p-2 text-muted transition-colors hover:bg-line flex-shrink-0 min-h-[44px] min-w-[44px] inline-flex items-center justify-center tm-press'
         >
           <X size={20} />
         </button>

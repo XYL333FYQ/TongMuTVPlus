@@ -1,8 +1,6 @@
 'use client';
 import React from 'react';
 
-import './DetailEpisodes.css';
-
 import { getTMDBImageUrl } from '@/lib/tmdb-image-base';
 
 import FilmPoster from '@/components/poster/FilmPoster';

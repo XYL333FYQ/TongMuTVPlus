@@ -2,8 +2,6 @@
 
 import { Clapperboard, TriangleAlert } from 'lucide-react';
 
-import './VideoOverlays.css';
-
 import BusyDots from '@/components/feedback/BusyDots';
 import LoadingStyle, {
   LoadingErrorStyle,

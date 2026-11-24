@@ -3,8 +3,6 @@
 import { Sparkles } from 'lucide-react';
 import { type MouseEvent, type WheelEvent, useRef } from 'react';
 
-import './FallbackRecommendations.css';
-
 import VideoCard from '@/components/VideoCard';
 
 import type { FallbackRecommendation } from './types';

@@ -3,8 +3,6 @@
 import { usePathname } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 
-import './PerfProbe.css';
-
 import {
   createNavigationCapture,
   NAV_DOCUMENT_TRACE_KEY,

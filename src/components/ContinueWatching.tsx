@@ -4,7 +4,6 @@ import { ChevronRight } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
 import '@/styles/panels.css';
-import './ContinueWatching.css';
 
 import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
 import type { PlayRecord } from '@/lib/db.client';

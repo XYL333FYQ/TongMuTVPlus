@@ -1,7 +1,5 @@
 'use client';
 
-import './DanmakuSourceDialog.css';
-
 import type { DanmakuAnime } from '@/lib/danmaku/types';
 
 import FilmPoster from '@/components/poster/FilmPoster';

@@ -2,8 +2,6 @@
 
 import { Clapperboard, Search, Sparkles, Zap } from 'lucide-react';
 
-import './PlaybackLoading.css';
-
 import LoadingStyle from '@/components/feedback/LoadingStyle';
 
 import {

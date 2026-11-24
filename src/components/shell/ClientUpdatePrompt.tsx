@@ -3,8 +3,6 @@
 import { motion } from 'framer-motion';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import './ClientUpdatePrompt.css';
-
 import { apiFetch } from '@/lib/api-client';
 import { CLIENT_PACKAGES } from '@/lib/client-downloads';
 import {
