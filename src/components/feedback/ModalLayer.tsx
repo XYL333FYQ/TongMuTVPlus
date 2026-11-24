@@ -128,7 +128,15 @@ export default function ModalLayer({
       onKeyDown={(event) => {
         // Esc 归最上面这一层，页面上监听 Esc 的地方（播放器、菜单）收不到
         if (event.key === 'Escape') event.stopPropagation();
-        if (event.key !== 'Tab' || event.defaultPrevented) return;
+        // Ctrl / Alt / Cmd + Tab 是浏览器和系统的快捷键（切标签页、切窗口），不拦
+        if (
+          event.key !== 'Tab' ||
+          event.defaultPrevented ||
+          event.ctrlKey ||
+          event.altKey ||
+          event.metaKey
+        )
+          return;
         const items = Array.from(
           event.currentTarget.querySelectorAll<HTMLElement>(FOCUSABLE)
         );

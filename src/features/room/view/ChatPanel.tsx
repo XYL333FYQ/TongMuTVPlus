@@ -25,43 +25,9 @@ import './ChatPanel.css';
 
 import BusyDots from '@/components/feedback/BusyDots';
 
-import type { ChatMessage } from '@/types/watch-room';
+import { EMOJIS } from './chat-emoji';
 
-/** 常用表情：单独发出时放大显示 */
-export const EMOJIS = [
-  '😀',
-  '😂',
-  '🤣',
-  '😊',
-  '😍',
-  '🥰',
-  '😘',
-  '😎',
-  '🤔',
-  '😮',
-  '😱',
-  '😭',
-  '😤',
-  '😴',
-  '🤯',
-  '🥲',
-  '👍',
-  '👏',
-  '🙏',
-  '💪',
-  '👀',
-  '🎉',
-  '❤️',
-  '💔',
-  '🔥',
-  '✨',
-  '💯',
-  '🍿',
-  '🎬',
-  '🌙',
-  '☕',
-  '🤝',
-];
+import type { ChatMessage } from '@/types/watch-room';
 
 function time(value: number) {
   const date = new Date(value);

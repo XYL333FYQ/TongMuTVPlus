@@ -18,7 +18,6 @@ import {
   X,
 } from 'lucide-react';
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
 
 import './tv-surfaces.css';
 
@@ -28,6 +27,8 @@ import type {
   TVRemoteKey,
   TVRemoteTextMode,
 } from '@/lib/tv-remote-types';
+
+import ModalLayer from '@/components/feedback/ModalLayer';
 
 type TVRemotePanelProps = {
   isOpen: boolean;
@@ -105,7 +106,6 @@ export default function TVRemotePanel({
   const [closing, setClosing] = useState(false);
   const reduced = useReducedMotionSetting();
   const titleId = useId();
-  const dialogRef = useRef<HTMLDialogElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
   const closeCallback = useRef(onClose);
   closeCallback.current = onClose;
@@ -224,96 +224,34 @@ export default function TVRemotePanel({
 
   useEffect(() => {
     if (!isOpen || !mounted) return;
-    const dialog = dialogRef.current;
-    if (!dialog) return;
-    const trigger =
-      document.activeElement instanceof HTMLElement &&
-      document.activeElement !== document.body
-        ? document.activeElement
-        : null;
     closeRequested.current = false;
     setClosing(false);
-    const nativeModal = typeof dialog.showModal === 'function';
-    if (nativeModal) dialog.showModal();
-    else dialog.setAttribute('open', '');
-    closeRef.current?.focus({ preventScroll: true });
-
-    const cancel = (event: Event) => {
-      event.preventDefault();
-      requestClose();
-    };
-    const keys = (event: KeyboardEvent) => {
-      if (event.defaultPrevented) return;
-      if (!nativeModal && event.key === 'Escape') {
-        event.preventDefault();
-        event.stopPropagation();
-        requestClose();
-      }
-      if (event.key !== 'Tab' || event.ctrlKey || event.altKey || event.metaKey)
-        return;
-      const targets = Array.from(
-        dialog.querySelectorAll<HTMLElement>(
-          'button:not(:disabled),a[href],input:not(:disabled),select:not(:disabled),textarea:not(:disabled),[tabindex="0"]'
-        )
-      ).filter(
-        (node) =>
-          node.getClientRects().length || process.env.NODE_ENV === 'test'
-      );
-      const first = targets[0];
-      const last = targets[targets.length - 1];
-      if (event.shiftKey && document.activeElement === first) {
-        event.preventDefault();
-        last?.focus();
-      } else if (!event.shiftKey && document.activeElement === last) {
-        event.preventDefault();
-        first?.focus();
-      }
-    };
-    dialog.addEventListener('cancel', cancel);
-    dialog.addEventListener('keydown', keys);
     return () => {
       if (dismissTimer.current !== null) clearTimeout(dismissTimer.current);
       dismissTimer.current = null;
-      dialog.removeEventListener('cancel', cancel);
-      dialog.removeEventListener('keydown', keys);
-      if (typeof dialog.close === 'function') dialog.close();
-      else dialog.removeAttribute('open');
-      const target = trigger?.isConnected
-        ? trigger
-        : Array.from(
-            document.querySelectorAll<HTMLElement>('[aria-label="账号菜单"]')
-          ).find((node) => node.getClientRects().length > 0);
-      target?.focus({ preventScroll: true });
+      // 弹窗层已经把焦点还给打开它的按钮；那个按钮在账号菜单里、菜单已经收起时，
+      // 焦点会掉到页面上，改交给现在看得见的那个账号菜单按钮
+      if (document.activeElement && document.activeElement !== document.body)
+        return;
+      Array.from(
+        document.querySelectorAll<HTMLElement>('[aria-label="账号菜单"]')
+      )
+        .find((node) => node.getClientRects().length > 0)
+        ?.focus({ preventScroll: true });
     };
-  }, [isOpen, mounted, requestClose]);
+  }, [isOpen, mounted]);
 
   if (!isOpen || !mounted) return null;
 
-  return createPortal(
-    <dialog
-      ref={dialogRef}
-      role='dialog'
-      aria-modal='true'
-      aria-labelledby={titleId}
-      className='tm-tv-remote-layer'
-      data-closing={closing}
+  return (
+    <ModalLayer
+      label='电视遥控器'
+      onClose={requestClose}
+      initialFocus={closeRef}
+      className={closing ? 'tm-tv-remote-closing' : ''}
     >
       <motion.div
-        className='tm-tv-remote-backdrop fixed inset-0 z-[1000] bg-ink/60'
-        initial={{ opacity: 0 }}
-        animate={{ opacity: closing ? 0 : 1 }}
-        transition={{
-          duration: reduced ? 0.12 : closing ? 0.32 : 0.2,
-          ease: [0.22, 1, 0.36, 1],
-        }}
-        onClick={requestClose}
-        onTouchMove={(e) => e.preventDefault()}
-        onWheel={(e) => e.preventDefault()}
-        style={{ touchAction: 'none' }}
-      />
-      <motion.div
-        className='tm-tv-remote-dialog fixed inset-x-3 top-1/2 z-[1001] mx-auto max-h-[94vh] max-w-md -translate-y-1/2 overflow-hidden rounded-3xl border border-line bg-surface shadow-2xl shadow-ink/30'
-        style={{ transform: 'translateY(-50%)' }}
+        className='tm-tv-remote-dialog w-full max-h-[94vh] max-w-md overflow-hidden rounded-3xl border border-line bg-surface shadow-2xl shadow-ink/30'
         initial={{ opacity: 0 }}
         animate={{ opacity: closing ? 0 : 1 }}
         transition={{
@@ -540,7 +478,6 @@ export default function TVRemotePanel({
           )}
         </motion.div>
       </motion.div>
-    </dialog>,
-    document.body
+    </ModalLayer>
   );
 }

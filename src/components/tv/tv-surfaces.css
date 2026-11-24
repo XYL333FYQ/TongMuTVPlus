@@ -84,26 +84,8 @@ html[data-tm-no-blur='true'] :is(.tm-tv-player-panel, .tm-tv-player-control) {
 html[data-tm-no-blur='true'] .tm-tv-browse-backdrop img {
   filter: none;
 }
-.tm-tv-remote-layer {
-  position: fixed;
-  inset: 0;
-  z-index: 1000;
-  width: 100%;
-  height: 100dvh;
-  max-width: none;
-  max-height: none;
-  margin: 0;
-  padding: 0;
-  border: 0;
-  overflow: visible;
-  background: transparent;
-  color: var(--tm-text);
-  font: inherit;
-}
-.tm-tv-remote-layer::backdrop {
-  background: transparent;
-}
-.tm-tv-remote-layer[data-closing='true'] {
+/* 遥控器弹窗本身归公共弹窗层；退场动画期间不再接收点按 */
+.tm-tv-remote-closing {
   pointer-events: none;
 }
 .tm-tv-remote-dialog,

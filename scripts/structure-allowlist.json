@@ -6,17 +6,14 @@
   "duplicates": [],
   "blocks": [],
   "eslintDisable": [],
-  "parts:portal": [
-    "src/components/tv/TVRemotePanel.tsx ×1",
-    "src/features/room/activities/RoomLiveMessages.tsx ×1"
-  ],
+  "parts:portal": [],
   "parts:storage": [],
   "parts:screen": [],
   "parts:player": [],
   "parts:timeFormat": [],
   "parts:toast": [],
   "parts:spinner": [],
-  "parts:emoji": ["src/features/room/view/ChatPanel.tsx ×32"],
+  "parts:emoji": [],
   "eslintDisableInline": [
     "src/app/admin/page.tsx ×2",
     "src/app/api/admin/authorization-sweep.test.ts ×1",
