@@ -197,9 +197,10 @@ export function useScreenShare(
         }
       };
 
-      if (senderMode && displayStreamRef.current) {
-        displayStreamRef.current.getTracks().forEach((track) => {
-          pc.addTrack(track, displayStreamRef.current!);
+      const displayStream = displayStreamRef.current;
+      if (senderMode && displayStream) {
+        displayStream.getTracks().forEach((track) => {
+          pc.addTrack(track, displayStream);
         });
       } else {
         pc.ontrack = (event) => {

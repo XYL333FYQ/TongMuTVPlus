@@ -1226,7 +1226,7 @@ export async function GET(request: NextRequest) {
               isOVA: parsed.isOVA,
             };
           } else {
-            episodeInfo = videoInfo!.episodes[file.name] || {
+            episodeInfo = videoInfo?.episodes[file.name] || {
               episode: index + 1,
               season: undefined,
               title: undefined,

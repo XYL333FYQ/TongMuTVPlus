@@ -3,13 +3,13 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getConfig } from '@/lib/config';
 import { logger } from '@/lib/logger';
 import {
+  type TMDBMovie,
+  type TMDBMultiResult,
+  type TMDBTVShow,
   getTMDBImageUrl,
   getTMDBMovieRecommendations,
   getTMDBTVRecommendations,
   searchTMDBMulti,
-  type TMDBMovie,
-  type TMDBMultiResult,
-  type TMDBTVShow,
 } from '@/lib/tmdb.client';
 
 // 服务器端缓存（1天）
@@ -95,7 +95,8 @@ export async function GET(request: NextRequest) {
       tmdbId = parseInt(id);
     } else {
       // 否则搜索
-      const cleanedTitle = removeSeasonInfo(title!);
+      if (!title) throw new Error('缺少标题');
+      const cleanedTitle = removeSeasonInfo(title);
       const cacheKey = `search:${cleanedTitle}`;
 
       // 检查服务器缓存
@@ -130,7 +131,7 @@ export async function GET(request: NextRequest) {
         );
 
         // 精确匹配
-        const matched = findExactMatch(validResults, title!);
+        const matched = findExactMatch(validResults, title);
 
         if (!matched) {
           return NextResponse.json(

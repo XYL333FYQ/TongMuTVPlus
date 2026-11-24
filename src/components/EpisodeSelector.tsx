@@ -136,8 +136,8 @@ const EpisodeButton: React.FC<EpisodeButtonProps> = ({
     enableOriginalNamePopup && !!originalTitle && originalTitle.trim() !== '';
 
   const showOriginalName = useCallback(() => {
-    if (!canShowOriginalName || !buttonRef.current) return;
-    onShowOriginalName(originalTitle!, buttonRef.current);
+    if (!canShowOriginalName || !originalTitle || !buttonRef.current) return;
+    onShowOriginalName(originalTitle, buttonRef.current);
   }, [canShowOriginalName, onShowOriginalName, originalTitle]);
 
   const longPressProps = useLongPress({

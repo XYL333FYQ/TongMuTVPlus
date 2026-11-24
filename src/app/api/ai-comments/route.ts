@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+import type { AdminConfig } from '@/lib/admin.types';
 import {
   AIComment,
   AICommentProtocol,
@@ -8,7 +9,6 @@ import {
 import { ToolDataSources } from '@/lib/ai-tool-agent';
 import { getConfig } from '@/lib/config';
 import { logger } from '@/lib/logger';
-import type { AdminConfig } from '@/lib/admin.types';
 
 export const runtime = 'nodejs';
 

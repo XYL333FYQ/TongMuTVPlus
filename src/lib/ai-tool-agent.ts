@@ -433,10 +433,11 @@ export async function fetchPageText(urlStr: string): Promise<string> {
 
     const maxBytes = 200_000;
     const reader = res.body?.getReader();
+    if (!reader) throw new Error('网页没有返回内容');
     const decoder = new TextDecoder();
     let collected = '';
     while (collected.length < maxBytes) {
-      const { done, value } = await reader!.read();
+      const { done, value } = await reader.read();
       if (done) break;
       collected += decoder.decode(value, { stream: true });
     }
@@ -806,7 +807,8 @@ const openaiCompletionsAdapter: ProviderAdapter = {
     }
 
     // 流式解析
-    const reader = res.body!.getReader();
+    if (!res.body) throw new Error('AI 接口没有返回内容');
+    const reader = res.body.getReader();
     const decoder = new TextDecoder();
     let buffer = '';
     let content = '';
@@ -1081,7 +1083,8 @@ const openaiResponsesAdapter: ProviderAdapter = {
     }
 
     // 流式解析
-    const reader = res.body!.getReader();
+    if (!res.body) throw new Error('AI 接口没有返回内容');
+    const reader = res.body.getReader();
     const decoder = new TextDecoder();
     let buffer = '';
     // key: item_id；value: { id, name, rawArgs }
@@ -1383,7 +1386,8 @@ const claudeAdapter: ProviderAdapter = {
     }
 
     // 流式解析
-    const reader = res.body!.getReader();
+    if (!res.body) throw new Error('AI 接口没有返回内容');
+    const reader = res.body.getReader();
     const decoder = new TextDecoder();
     let buffer = '';
     let text = '';

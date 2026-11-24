@@ -3,6 +3,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getAvailableApiSites, getConfig } from '@/lib/config';
 import { getDetailFromApi } from '@/lib/downstream';
+import type { OpenListFile } from '@/lib/openlist.client';
+import type { MetaInfo } from '@/lib/openlist-cache';
 import { PRIVATE_MEDIA_HEADERS } from '@/lib/private-media-headers';
 import {
   executeSavedSourceScript,
@@ -10,8 +12,6 @@ import {
   normalizeScriptSources,
   parseScriptSourceValue,
 } from '@/lib/source-script';
-import type { MetaInfo } from '@/lib/openlist-cache';
-import type { OpenListFile } from '@/lib/openlist.client';
 
 export const runtime = 'nodejs';
 
@@ -240,7 +240,7 @@ export async function GET(request: NextRequest) {
               isOVA: parsed.isOVA,
             };
           } else {
-            episodeInfo = videoInfo!.episodes[file.name] || {
+            episodeInfo = videoInfo?.episodes[file.name] || {
               episode: index + 1,
               season: undefined,
               title: undefined,

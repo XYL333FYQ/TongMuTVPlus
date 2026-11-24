@@ -63,7 +63,8 @@ function getRootPaths(openListConfig: AdminConfig['OpenListConfig']): string[] {
 async function migrateToMultiRoot(
   openListConfig: NonNullable<AdminConfig['OpenListConfig']>
 ): Promise<void> {
-  const oldRootPath = openListConfig.RootPath!;
+  const oldRootPath = openListConfig.RootPath;
+  if (!oldRootPath) return;
 
   logger.info('[OpenList Migration] 检测到旧版配置，开始迁移...');
 
@@ -90,8 +91,9 @@ async function migrateToMultiRoot(
 
   // 4. 更新配置：RootPath -> RootPaths
   const config = await getConfig();
-  config.OpenListConfig!.RootPaths = [oldRootPath];
-  delete config.OpenListConfig!.RootPath;
+  if (!config.OpenListConfig) return;
+  config.OpenListConfig.RootPaths = [oldRootPath];
+  delete config.OpenListConfig.RootPath;
   await db.saveAdminConfig(config);
 
   logger.info('[OpenList Migration] 配置迁移完成');
@@ -458,8 +460,12 @@ async function performMultiRootScan(
     setCachedMetaInfo(metaInfo);
 
     const config = await getConfig();
-    config.OpenListConfig!.LastRefreshTime = Date.now();
-    config.OpenListConfig!.ResourceCount = Object.keys(metaInfo.folders).length;
+    if (config.OpenListConfig) {
+      config.OpenListConfig.LastRefreshTime = Date.now();
+      config.OpenListConfig.ResourceCount = Object.keys(
+        metaInfo.folders
+      ).length;
+    }
     await db.saveAdminConfig(config);
 
     completeScanTask(taskId, {

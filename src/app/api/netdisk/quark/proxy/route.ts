@@ -34,7 +34,8 @@ async function pipeUpstream(response: Response, range: string | null) {
   responseHeaders.set('Cache-Control', 'private, no-store');
 
   const { readable, writable } = new TransformStream();
-  const reader = response.body!.getReader();
+  if (!response.body) throw new Error('网盘没有返回内容');
+  const reader = response.body.getReader();
 
   void (async () => {
     const writer = writable.getWriter();

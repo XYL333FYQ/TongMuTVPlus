@@ -183,6 +183,7 @@ function RoomPage() {
     <>
       {current && !showLobby ? (
         <RoomView
+          current={current}
           pick={pick}
           onPickHandled={() => router.replace('/watch-room', { scroll: false })}
           onBack={() => setShowLobby(true)}

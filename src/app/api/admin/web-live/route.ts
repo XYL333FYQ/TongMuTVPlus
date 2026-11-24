@@ -122,7 +122,7 @@ export async function POST(request: NextRequest) {
           );
         }
         const sortedSources = keys
-          .map((key) => config.WebLiveConfig!.find((s) => s.key === key))
+          .map((key) => config.WebLiveConfig?.find((s) => s.key === key))
           .filter((s): s is NonNullable<typeof s> => s !== undefined);
         // 排序只调整顺序：列表里没有的源（如别人刚添加的）按原顺序接在后面，不能被删掉
         const unlisted = config.WebLiveConfig.filter(

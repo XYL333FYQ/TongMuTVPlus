@@ -215,7 +215,7 @@ export async function GET(request: NextRequest) {
           };
         } else {
           // 如果解析失败，尝试从 videoInfo 获取
-          episodeInfo = videoInfo!.episodes[file.name];
+          episodeInfo = videoInfo?.episodes[file.name];
           if (!episodeInfo) {
             // 如果 videoInfo 中也没有，使用索引
             episodeInfo = {

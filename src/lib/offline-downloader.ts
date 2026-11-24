@@ -353,9 +353,8 @@ export class OfflineDownloader {
     let downloadedCount = 0;
 
     const downloadNext = async (): Promise<void> => {
-      if (queue.length === 0) return;
-
-      const segment = queue.shift()!;
+      const segment = queue.shift();
+      if (segment === undefined) return;
       const segmentPath = path.join(task.downloadDir, segment.filename);
 
       // 如果文件已存在且大小 > 0，跳过下载

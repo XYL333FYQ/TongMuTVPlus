@@ -80,9 +80,8 @@ export async function GET(
       | 'Primary'
       | 'Backdrop'
       | 'Logo';
-    const maxWidth = searchParams.get('maxWidth')
-      ? parseInt(searchParams.get('maxWidth')!)
-      : undefined;
+    const maxWidthParam = searchParams.get('maxWidth');
+    const maxWidth = maxWidthParam ? parseInt(maxWidthParam) : undefined;
     const embyKey = searchParams.get('embyKey') || undefined;
 
     // 获取 Emby 客户端

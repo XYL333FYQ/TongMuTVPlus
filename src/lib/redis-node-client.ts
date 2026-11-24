@@ -101,7 +101,8 @@ export function createRedisClient(
       pingInterval: 30000, // 30秒 ping 一次，保持连接活跃
     };
 
-    client = createClient(clientConfig);
+    const newClient: RedisClientType = createClient(clientConfig);
+    client = newClient;
 
     // 添加错误事件监听
     client.on('error', (err) => {
@@ -123,7 +124,7 @@ export function createRedisClient(
     // 初始连接，带重试机制
     const connectWithRetry = async () => {
       try {
-        await client!.connect();
+        await newClient.connect();
         logger.info(`${config.clientName} connected successfully`);
       } catch (err) {
         logger.error(`${config.clientName} initial connection failed:`, err);

@@ -8,11 +8,11 @@ class LockManager {
 
   async acquire(key: string): Promise<() => void> {
     // 获取或创建锁对象
-    if (!this.locks.has(key)) {
-      this.locks.set(key, { locked: false, queue: [] });
+    let lock = this.locks.get(key);
+    if (!lock) {
+      lock = { locked: false, queue: [] };
+      this.locks.set(key, lock);
     }
-
-    const lock = this.locks.get(key)!;
 
     // 如果锁未被占用，立即获取
     if (!lock.locked) {

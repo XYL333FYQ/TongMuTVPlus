@@ -112,7 +112,9 @@ class EmbyManager {
       this.clients.set(key, new EmbyClient(sourceConfig));
     }
 
-    return this.clients.get(key)!;
+    const client = this.clients.get(key);
+    if (!client) throw new Error(`Emby 源 ${key} 初始化失败`);
+    return client;
   }
 
   /**
@@ -129,11 +131,13 @@ class EmbyManager {
     >();
 
     for (const source of enabledSources) {
-      if (!this.clients.has(source.key)) {
-        this.clients.set(source.key, new EmbyClient(source));
+      let client = this.clients.get(source.key);
+      if (!client) {
+        client = new EmbyClient(source);
+        this.clients.set(source.key, client);
       }
       result.set(source.key, {
-        client: this.clients.get(source.key)!,
+        client,
         config: source,
       });
     }

@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import {
+  type LxPagePayload,
   isMusicSource,
   lxGetJson,
   LxServerSong,
   normalizeLxSong,
   unwrapLxArray,
-  type LxPagePayload,
 } from '@/lib/music-v2';
 import { badRequest, internalError } from '@/lib/music-v2-api';
 

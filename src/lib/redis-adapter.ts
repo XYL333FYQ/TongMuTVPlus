@@ -55,7 +55,7 @@ export class StandardRedisAdapter implements RedisAdapter {
     value?: string
   ): Promise<number> {
     if (typeof fieldOrData === 'string') {
-      return this.client.hSet(key, fieldOrData, value!);
+      return this.client.hSet(key, fieldOrData, value ?? '');
     } else {
       return this.client.hSet(key, fieldOrData);
     }
@@ -167,7 +167,7 @@ export class UpstashRedisAdapter implements RedisAdapter {
   ): Promise<number> {
     if (typeof fieldOrData === 'string') {
       // Upstash 会自动序列化，但我们传入的已经是字符串，所以直接存储
-      return this.client.hset(key, { [fieldOrData]: value! });
+      return this.client.hset(key, { [fieldOrData]: value ?? '' });
     } else {
       return this.client.hset(key, fieldOrData);
     }

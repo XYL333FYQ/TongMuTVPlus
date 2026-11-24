@@ -164,9 +164,10 @@ class HybridCacheManager {
    */
   getOrCreateRequest<T>(key: string, fetcher: () => Promise<T>): Promise<T> {
     // 如果已有正在进行的请求，直接返回
-    if (this.pendingRequests.has(key)) {
+    const pending = this.pendingRequests.get(key);
+    if (pending) {
       logger.info(`[${key}] 复用进行中的请求`);
-      return this.pendingRequests.get(key)!;
+      return pending as Promise<T>;
     }
 
     logger.info(`[${key}] 创建新请求`);

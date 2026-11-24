@@ -427,8 +427,8 @@ export function DownloadManagementPanel({
       for (const task of tasksToExport) {
         try {
           const parts =
-            task.downloadMode === 'filesystem'
-              ? await readFilesystemTaskAsBlobParts(task, dirHandle!)
+            task.downloadMode === 'filesystem' && dirHandle
+              ? await readFilesystemTaskAsBlobParts(task, dirHandle)
               : await readIndexedDBTaskAsBlobParts(task);
           const blob = new Blob(parts, { type: 'video/MP2T' });
           triggerBlobDownload(blob, getTaskExportFilename(task, usedFilenames));

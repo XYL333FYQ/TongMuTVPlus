@@ -182,10 +182,12 @@ export function OfflineDownloadPanel({
 
     libraryTasks.forEach((task) => {
       const key = `${task.source}_${task.videoId}`;
-      if (!videoMap.has(key)) {
-        videoMap.set(key, { video: task, episodes: [] });
+      let entry = videoMap.get(key);
+      if (!entry) {
+        entry = { video: task, episodes: [] };
+        videoMap.set(key, entry);
       }
-      videoMap.get(key)!.episodes.push(task);
+      entry.episodes.push(task);
     });
 
     // 按集数排序

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { isMusicSource, lxGetJson, type LxPagePayload } from '@/lib/music-v2';
+import { type LxPagePayload, isMusicSource, lxGetJson } from '@/lib/music-v2';
 import { badRequest, internalError } from '@/lib/music-v2-api';
 
 export const runtime = 'nodejs';

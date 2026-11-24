@@ -7,9 +7,11 @@ import { getBangumiSubject, getBangumiSubjectUrl } from '@/lib/bangumi.client';
 import { logger } from '@/lib/logger';
 import { useReducedMotionSetting } from '@/lib/motion';
 import { appendSpecialSourceParam } from '@/lib/special-source.client';
+import type { TMDBSearchResult, TMDBSeasonInfo } from '@/lib/tmdb.search';
 import { getTMDBImageUrl } from '@/lib/tmdb-image-base';
 import { processImageUrl } from '@/lib/utils';
 
+import type { TmdbCandidate } from '@/components/detail/DetailAuxiliaryPanels';
 import { useExternalAction } from '@/components/ExternalLink';
 import ImageViewer from '@/components/feedback/ImageViewer';
 
@@ -26,8 +28,6 @@ import DetailMoreMenu, { type DetailMenuItem } from './detail/DetailMoreMenu';
 import DetailShell from './detail/DetailShell';
 import DetailSidePanel from './detail/DetailSidePanel';
 import type { DetailData, Episode, GalleryImage } from './detail/types';
-import type { TMDBSearchResult, TMDBSeasonInfo } from '@/lib/tmdb.search';
-import type { TmdbCandidate } from '@/components/detail/DetailAuxiliaryPanels';
 
 interface DetailPanelProps {
   isOpen: boolean;

@@ -81,7 +81,7 @@ import {
 } from '../lib/room-presentation';
 import { useRoomSession } from '../session/context';
 
-import type { PlayState, RoomPermission } from '@/types/watch-room';
+import type { PlayState, Room, RoomPermission } from '@/types/watch-room';
 
 type Panel =
   | 'playlist'
@@ -95,11 +95,14 @@ type SideTab = 'chat' | 'playlist' | 'members' | 'activities';
 const SIDE_TABS: SideTab[] = ['chat', 'playlist', 'members', 'activities'];
 
 export default function RoomView({
+  current,
   onLeave,
   onBack,
   pick,
   onPickHandled,
 }: {
+  /** 当前房间（RoomRoute 只在有房间时渲染这一页） */
+  current: Room;
   onLeave(): void;
   onBack(): void;
   /** 从站内其他地方带来的片名：打开选片并搜它 */
@@ -108,7 +111,6 @@ export default function RoomView({
 }) {
   const room = useWatchRoomContext();
   const session = useRoomSession();
-  const current = room.currentRoom!;
   const self = getAuthInfoFromBrowserCookie()?.username || '';
   const can = useCallback(
     (permission: RoomPermission) =>

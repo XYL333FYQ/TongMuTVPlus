@@ -441,7 +441,7 @@ export class EmbyClient {
 
     const token = this.apiKey || this.authToken;
     const searchParams = new URLSearchParams({
-      userId: this.userId!,
+      userId: this.userId,
       Fields: 'MediaSources',
     });
 
@@ -469,7 +469,7 @@ export class EmbyClient {
 
       // 重试请求
       const retrySearchParams = new URLSearchParams({
-        userId: this.userId!,
+        userId: this.userId,
         Fields: 'MediaSources',
       });
 

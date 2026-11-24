@@ -203,6 +203,7 @@ export function makeLoadPlayer(ctx: LoadPlayerContext) {
     ) {
       return;
     }
+    const container = artRef.current;
 
     // 这类源会先异步补全详情，如果 episodes 为空则跳过
     if (
@@ -262,7 +263,7 @@ export function makeLoadPlayer(ctx: LoadPlayerContext) {
 
         if (!watchPlayerRef.current) {
           watchPlayerRef.current = new WatchPlayer({
-            container: artRef.current!,
+            container,
           });
           stopKeyboardRef.current = bindKeyboard({
             player: watchPlayerRef.current,

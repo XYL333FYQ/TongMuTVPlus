@@ -4,6 +4,7 @@ import { AlertTriangle, Download, Hourglass, Play, Radio } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 
+import type { AdminConfig } from '@/lib/admin.types';
 import { apiFetch } from '@/lib/api-client';
 import { logger } from '@/lib/logger';
 import {
@@ -33,7 +34,6 @@ import {
   useWebLiveSync,
   webLiveReference,
 } from '@/features/room/activities';
-import type { AdminConfig } from '@/lib/admin.types';
 
 // 播放器库按需加载，首次进页面时才 import
 let Artplayer: typeof import('artplayer').default | null = null;

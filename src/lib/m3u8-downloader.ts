@@ -873,7 +873,7 @@ export class M3U8Downloader {
   private parseIV(ivString: string): Uint8Array {
     const hex = ivString.replace(/^0x/, '');
     return new Uint8Array(
-      hex.match(/.{1,2}/g)!.map((byte) => parseInt(byte, 16))
+      (hex.match(/.{1,2}/g) ?? []).map((byte) => parseInt(byte, 16))
     );
   }
 

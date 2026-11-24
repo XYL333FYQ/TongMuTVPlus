@@ -48,12 +48,15 @@ export default function MediaSessionBridge() {
       );
       const active = (media: HTMLMediaElement | null | undefined) =>
         Boolean(media && all.includes(media) && !media.paused && !media.ended);
-      current = active(preferred)
-        ? preferred!
-        : active(current)
-        ? current
-        : all.find((media) => active(media)) ||
-          (current && all.includes(current) && !current.ended ? current : null);
+      current =
+        preferred && active(preferred)
+          ? preferred
+          : active(current)
+          ? current
+          : all.find((media) => active(media)) ||
+            (current && all.includes(current) && !current.ended
+              ? current
+              : null);
       selected.current = current;
       const mediaTitle =
         (current === controller?.video && title) ||

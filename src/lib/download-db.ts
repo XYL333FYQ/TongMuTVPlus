@@ -69,6 +69,12 @@ const COMPLETED_TASKS_STORE = 'completedTasks';
 class DownloadDB {
   private db: IDBDatabase | null = null;
 
+  /** init() 之后才调用：打开失败时这里报错，不让事务落在 null 上 */
+  private requireDb(): IDBDatabase {
+    if (!this.db) throw new Error('下载数据库没有打开');
+    return this.db;
+  }
+
   async init(): Promise<void> {
     if (this.db) return;
 
@@ -115,7 +121,7 @@ class DownloadDB {
   async saveActiveTask(task: SavedTask): Promise<void> {
     await this.init();
     return new Promise((resolve, reject) => {
-      const transaction = this.db!.transaction(
+      const transaction = this.requireDb().transaction(
         [ACTIVE_TASKS_STORE],
         'readwrite'
       );
@@ -131,7 +137,7 @@ class DownloadDB {
   async saveActiveTasks(tasks: SavedTask[]): Promise<void> {
     await this.init();
     return new Promise((resolve, reject) => {
-      const transaction = this.db!.transaction(
+      const transaction = this.requireDb().transaction(
         [ACTIVE_TASKS_STORE],
         'readwrite'
       );
@@ -154,7 +160,7 @@ class DownloadDB {
   async getActiveTasks(): Promise<SavedTask[]> {
     await this.init();
     return new Promise((resolve, reject) => {
-      const transaction = this.db!.transaction(
+      const transaction = this.requireDb().transaction(
         [ACTIVE_TASKS_STORE],
         'readonly'
       );
@@ -170,7 +176,7 @@ class DownloadDB {
   async deleteActiveTask(id: string): Promise<void> {
     await this.init();
     return new Promise((resolve, reject) => {
-      const transaction = this.db!.transaction(
+      const transaction = this.requireDb().transaction(
         [ACTIVE_TASKS_STORE],
         'readwrite'
       );
@@ -186,7 +192,7 @@ class DownloadDB {
   async deleteActiveTasks(ids: string[]): Promise<void> {
     await this.init();
     return new Promise((resolve, reject) => {
-      const transaction = this.db!.transaction(
+      const transaction = this.requireDb().transaction(
         [ACTIVE_TASKS_STORE],
         'readwrite'
       );
@@ -205,7 +211,7 @@ class DownloadDB {
   async saveCompletedTask(task: CompletedTask): Promise<void> {
     await this.init();
     return new Promise((resolve, reject) => {
-      const transaction = this.db!.transaction(
+      const transaction = this.requireDb().transaction(
         [COMPLETED_TASKS_STORE],
         'readwrite'
       );
@@ -221,7 +227,7 @@ class DownloadDB {
   async getCompletedTasks(): Promise<CompletedTask[]> {
     await this.init();
     return new Promise((resolve, reject) => {
-      const transaction = this.db!.transaction(
+      const transaction = this.requireDb().transaction(
         [COMPLETED_TASKS_STORE],
         'readonly'
       );
@@ -247,7 +253,7 @@ class DownloadDB {
   async deleteCompletedTask(id: string): Promise<void> {
     await this.init();
     return new Promise((resolve, reject) => {
-      const transaction = this.db!.transaction(
+      const transaction = this.requireDb().transaction(
         [COMPLETED_TASKS_STORE],
         'readwrite'
       );
@@ -263,7 +269,7 @@ class DownloadDB {
   async deleteCompletedTasks(ids: string[]): Promise<void> {
     await this.init();
     return new Promise((resolve, reject) => {
-      const transaction = this.db!.transaction(
+      const transaction = this.requireDb().transaction(
         [COMPLETED_TASKS_STORE],
         'readwrite'
       );
@@ -286,7 +292,7 @@ class DownloadDB {
   ): Promise<boolean> {
     await this.init();
     return new Promise((resolve, reject) => {
-      const transaction = this.db!.transaction(
+      const transaction = this.requireDb().transaction(
         [COMPLETED_TASKS_STORE],
         'readonly'
       );

@@ -87,13 +87,14 @@ export function installTouchControls(
   const cluster = layer?.querySelector<HTMLElement>('.tm-touch');
   const exit = layer?.querySelector<HTMLButtonElement>('.tm-touch-exit');
   if (!layer || !cluster || !exit) return () => undefined;
-  const back = cluster.querySelector<HTMLButtonElement>('[data-act="back"]')!;
+  const back = cluster.querySelector<HTMLButtonElement>('[data-act="back"]');
   const toggle = cluster.querySelector<HTMLButtonElement>(
     '[data-act="toggle"]'
-  )!;
+  );
   const forward = cluster.querySelector<HTMLButtonElement>(
     '[data-act="forward"]'
-  )!;
+  );
+  if (!back || !toggle || !forward) return () => undefined;
   back.innerHTML = ICONS.back;
   forward.innerHTML = ICONS.forward;
   toggle.innerHTML = ICONS.play + ICONS.pause;

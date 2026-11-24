@@ -28,12 +28,10 @@ function extractCookieValue(setCookieHeader: string): string {
 /**
  * 检查缓存的 cookie 是否有效
  */
-function isCookieCacheValid(): boolean {
-  if (!cookieCache) {
-    return false;
-  }
-  // 提前 20 秒过期，确保不会在使用时过期
-  return Date.now() < cookieCache.expiresAt - 20000;
+/** 缓存还有效时返回它（提前 20 秒过期，确保不会在使用时过期），否则返回 null */
+function validCookieCache(): NonNullable<typeof cookieCache> | null {
+  if (!cookieCache) return null;
+  return Date.now() < cookieCache.expiresAt - 20000 ? cookieCache : null;
 }
 
 /**
@@ -95,9 +93,10 @@ export async function getDoubanCookie(
   forceRefresh = false
 ): Promise<string> {
   // 检查缓存
-  if (!forceRefresh && isCookieCacheValid()) {
+  const cached = forceRefresh ? null : validCookieCache();
+  if (cached) {
     logger.info('Using cached douban cookie');
-    return cookieCache!.cookie;
+    return cached.cookie;
   }
 
   const headers = {
@@ -220,13 +219,14 @@ export async function fetchDoubanWithVerification(
 
   try {
     // 如果有缓存的 cookie，先尝试使用
-    if (isCookieCacheValid()) {
+    const cached = validCookieCache();
+    if (cached) {
       logger.info('Trying with cached cookie...');
       const response = await fetch(url, {
         ...options,
         headers: {
           ...headers,
-          Cookie: cookieCache!.cookie,
+          Cookie: cached.cookie,
         },
       });
 

@@ -61,7 +61,8 @@ export default function Recommendations(props: {
   const load = useCallback(async (target: Kind) => {
     setState('loading');
     try {
-      const params = KINDS.find((item) => item.id === target)!.params;
+      const params = (KINDS.find((item) => item.id === target) ?? KINDS[0])
+        .params;
       const data = await getDoubanCategories({
         ...params,
         pageStart: 0,

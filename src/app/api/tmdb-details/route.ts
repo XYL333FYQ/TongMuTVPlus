@@ -91,7 +91,8 @@ export async function GET(request: NextRequest) {
       tmdbId = parseInt(id, 10);
     } else {
       // 否则需要搜索获取ID
-      const cleanedTitle = removeSeasonInfo(title!);
+      if (!title) throw new Error('缺少标题');
+      const cleanedTitle = removeSeasonInfo(title);
       const cacheKey = `search_${cleanedTitle}`;
 
       // 检查服务器缓存

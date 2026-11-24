@@ -260,7 +260,7 @@ export async function getOpenListDetail(id: string): Promise<SearchResult> {
           isOVA: parsed.isOVA,
         };
       } else {
-        episodeInfo = videoInfo!.episodes[file.name] || {
+        episodeInfo = videoInfo?.episodes[file.name] || {
           episode: index + 1,
           season: undefined,
           title: undefined,
@@ -317,7 +317,7 @@ export async function getOpenListDetail(id: string): Promise<SearchResult> {
           folderName
         )}&fileName=${encodeURIComponent(ep.fileName)}`
     ),
-    episodes_titles: episodes.map((ep) => ep.title!),
+    episodes_titles: episodes.map((ep) => ep.title || ''),
     proxyMode: false, // openlist 源不使用代理模式
     category: pathMetaResolved.category || undefined,
     refresh14m: pathMetaResolved.refresh14m,
@@ -386,7 +386,7 @@ export async function getXiaoyaDetail(id: string): Promise<SearchResult> {
       (ep) =>
         `/api/xiaoya/play?path=${encodeURIComponent(base58Encode(ep.path))}`
     ),
-    episodes_titles: episodes.map((ep) => ep.title!),
+    episodes_titles: episodes.map((ep) => ep.title || ''),
     subtitles: [],
     proxyMode: false,
     metadataSource: metadata.source,

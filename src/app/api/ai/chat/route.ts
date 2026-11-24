@@ -70,7 +70,8 @@ async function streamOpenAIChat(
     );
   }
 
-  return enableStreaming ? response.body! : response;
+  if (enableStreaming && !response.body) throw new Error('AI 接口没有返回内容');
+  return enableStreaming && response.body ? response.body : response;
 }
 
 /**

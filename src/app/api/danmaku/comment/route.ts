@@ -64,7 +64,7 @@ export async function GET(request: NextRequest) {
     } else {
       // 通过视频 URL 获取弹幕 - 使用 XML 格式
       apiUrl = `${baseUrl}/api/v2/comment?url=${encodeURIComponent(
-        url!
+        url || ''
       )}&format=xml`;
     }
 

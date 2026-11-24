@@ -480,8 +480,9 @@ export class D1Storage implements IStorage {
     try {
       // 使用批量插入，D1 支持 batch 操作
       const statements = records.map(({ key, record }) =>
-        this.db!.prepare(
-          `
+        this.db
+          .prepare(
+            `
             INSERT INTO music_play_records (username, key, platform, song_id, name, artist, album, pic, play_time, duration, save_time)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ON CONFLICT(username, key) DO UPDATE SET
@@ -495,19 +496,20 @@ export class D1Storage implements IStorage {
               duration = excluded.duration,
               save_time = excluded.save_time
           `
-        ).bind(
-          userName,
-          key,
-          record.platform,
-          record.id,
-          record.name,
-          record.artist,
-          record.album || null,
-          record.pic || null,
-          record.play_time,
-          record.duration,
-          record.save_time
-        )
+          )
+          .bind(
+            userName,
+            key,
+            record.platform,
+            record.id,
+            record.name,
+            record.artist,
+            record.album || null,
+            record.pic || null,
+            record.play_time,
+            record.duration,
+            record.save_time
+          )
       );
 
       if (this.db.batch) {

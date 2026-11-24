@@ -406,6 +406,10 @@ export function DownloadProvider({ children }: { children: React.ReactNode }) {
           metadata?.videoId &&
           metadata?.episodeIndex !== undefined
         ) {
+          // 下面在回调里用，先取出已经判断过的值
+          const savedSource = metadata.source;
+          const savedVideoId = metadata.videoId;
+          const savedEpisodeIndex = metadata.episodeIndex;
           try {
             const dbName = 'MoonTVPlus';
             const storeName = 'dirHandles';
@@ -440,17 +444,16 @@ export function DownloadProvider({ children }: { children: React.ReactNode }) {
                   try {
                     // 检查子目录和 playlist.m3u8 是否存在
                     const sourceDirHandle = await dirHandle.getDirectoryHandle(
-                      metadata.source!,
+                      savedSource,
                       { create: false }
                     );
                     const videoIdDirHandle =
-                      await sourceDirHandle.getDirectoryHandle(
-                        metadata.videoId!,
-                        { create: false }
-                      );
+                      await sourceDirHandle.getDirectoryHandle(savedVideoId, {
+                        create: false,
+                      });
                     const epDirHandle =
                       await videoIdDirHandle.getDirectoryHandle(
-                        `ep${metadata.episodeIndex! + 1}`,
+                        `ep${savedEpisodeIndex + 1}`,
                         { create: false }
                       );
 

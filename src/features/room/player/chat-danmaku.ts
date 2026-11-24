@@ -137,9 +137,10 @@ export class ChatDanmaku {
       </button>
       <input class="tm-room-dm-input" type="text" maxlength="100" placeholder="发条弹幕" aria-label="发弹幕" enterkeyhint="send" autocomplete="off" />
       <button type="submit" class="tm-room-dm-send" aria-label="发送弹幕">发送</button>`;
-    const toggle = box.querySelector<HTMLButtonElement>('.tm-room-dm-switch')!;
-    const input = box.querySelector<HTMLInputElement>('.tm-room-dm-input')!;
-    const send = box.querySelector<HTMLButtonElement>('.tm-room-dm-send')!;
+    const toggle = box.querySelector<HTMLButtonElement>('.tm-room-dm-switch');
+    const input = box.querySelector<HTMLInputElement>('.tm-room-dm-input');
+    const send = box.querySelector<HTMLButtonElement>('.tm-room-dm-send');
+    if (!toggle || !input || !send) throw new Error('弹幕输入条模板缺元素');
 
     // 点在输入框里不应触发播放器的“点画面暂停”和快捷键
     ['click', 'dblclick', 'mousedown', 'touchstart', 'pointerdown'].forEach(
