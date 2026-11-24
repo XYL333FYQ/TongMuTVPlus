@@ -3,14 +3,14 @@
 import { Download, ExternalLink } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
-import { getPlatform } from '@/lib/platform';
 import {
   nativeContentExportAvailable,
   saveNativeContent,
 } from '@/lib/content-export';
+import { getPlatform } from '@/lib/platform';
 
-import { LIBRARY_GHOST_BUTTON } from '@/components/media/library';
 import { notify } from '@/components/feedback/AppDialogs';
+import { LIBRARY_GHOST_BUTTON } from '@/components/media/library';
 
 export default function BookPdfActions({
   url,

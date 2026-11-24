@@ -1,12 +1,12 @@
 'use client';
 
 import { AlertCircle, CheckCircle } from 'lucide-react';
-import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 
 import '@/styles/controls.css';
 
 import { apiFetch } from '@/lib/api-client';
+import { logger } from '@/lib/logger';
 import { getTMDBImageUrl } from '@/lib/tmdb-image-base';
 import { processImageUrl } from '@/lib/utils';
 
@@ -42,7 +42,6 @@ interface MovieRequest {
 }
 
 export default function MovieRequestPage() {
-  const router = useRouter();
   const [searchKeyword, setSearchKeyword] = useState('');
   const [searchResults, setSearchResults] = useState<TMDBResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
@@ -107,7 +106,7 @@ export default function MovieRequestPage() {
       setSearchedKeyword(searchKeyword.trim());
     } catch (err) {
       if (searchRequestIdRef.current !== requestId) return;
-      console.error('搜索失败:', err);
+      logger.error('搜索失败:', err);
       setAlertModal({
         isOpen: true,
         type: 'error',
@@ -153,7 +152,7 @@ export default function MovieRequestPage() {
         }
       } catch (err) {
         if (seasonRequestIdRef.current !== requestId) return;
-        console.error('加载季度失败:', err);
+        logger.error('加载季度失败:', err);
         setSeasonsError('季度信息暂时无法获取');
       } finally {
         if (seasonRequestIdRef.current === requestId) setLoadingSeasons(false);
@@ -228,7 +227,7 @@ export default function MovieRequestPage() {
         });
       }
     } catch (err) {
-      console.error('求片失败:', err);
+      logger.error('求片失败:', err);
       setAlertModal({
         isOpen: true,
         type: 'error',
@@ -267,7 +266,7 @@ export default function MovieRequestPage() {
         }
       } catch (err) {
         if (cancelled) return;
-        console.error('加载求片列表失败:', err);
+        logger.error('加载求片列表失败:', err);
         // 失败时提示并给重试，不显示成“还没有求片记录”
         setMyRequestsError('求片记录暂时无法获取');
       } finally {
@@ -290,7 +289,7 @@ export default function MovieRequestPage() {
         setMyRequests(data.requests);
       }
     } catch (err) {
-      console.error('刷新求片列表失败:', err);
+      logger.error('刷新求片列表失败:', err);
     }
   };
 

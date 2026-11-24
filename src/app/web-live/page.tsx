@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 
 import { apiFetch } from '@/lib/api-client';
+import { logger } from '@/lib/logger';
 import {
   attachFlvStream,
   attachHlsStream,
@@ -205,7 +206,7 @@ export default function WebLivePage() {
         await new Promise((resolve) => setTimeout(resolve, 500));
       }
     } catch (err) {
-      console.error('获取直播源失败:', err);
+      logger.error('获取直播源失败:', err);
     } finally {
       setLoading(false);
     }
@@ -261,7 +262,7 @@ export default function WebLivePage() {
     if (!flvjs) return;
     attachFlvStream(flvjs, video, url, {
       onError: (errorType, errorDetail) => {
-        console.error('FLV.js error:', errorType, errorDetail);
+        logger.error('FLV.js error:', errorType, errorDetail);
         setErrorMessage(`播放失败: ${errorType} - ${errorDetail}`);
         setVideoUrl('');
       },
@@ -294,7 +295,7 @@ export default function WebLivePage() {
         artPlayerRef.current.destroy();
         artPlayerRef.current = null;
       } catch (err) {
-        console.warn('清理播放器资源时出错:', err);
+        logger.warn('清理播放器资源时出错:', err);
         artPlayerRef.current = null;
       }
     }

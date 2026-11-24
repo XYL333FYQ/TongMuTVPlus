@@ -26,6 +26,7 @@ const ProxyImage: React.FC<ProxyImageProps> = ({
   decoding = 'async',
   onError,
   src: _src,
+  alt = '',
   ...props
 }) => {
   const initialSrc = useMemo(
@@ -90,6 +91,7 @@ const ProxyImage: React.FC<ProxyImageProps> = ({
   return (
     <img
       {...props}
+      alt={alt}
       ref={imgRef}
       src={currentSrc}
       loading={loading}

@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 
 import { apiFetch } from '@/lib/api-client';
 import { clearAuthCookie, getAuthInfoFromBrowserCookie } from '@/lib/auth';
+import { logger } from '@/lib/logger';
 import { TOKEN_CONFIG } from '@/lib/refresh-token';
 import { isLoginPathname, resolveLoginPath } from '@/lib/tv-mode';
 
@@ -49,16 +50,16 @@ export function TokenRefreshManager() {
           });
 
           if (response.ok) {
-            console.log('[Token] Refreshed successfully');
+            logger.info('[Token] Refreshed successfully');
             return true;
           } else {
-            console.error('[Token] Refresh failed:', response.status);
+            logger.error('[Token] Refresh failed:', response.status);
 
             // 刷新失败，先登出再跳转登录
             if (response.status === 401 || response.status === 403) {
               // 如果在登录页面，跳过登出和跳转逻辑
               if (isLoginPathname(window.location.pathname)) {
-                console.log(
+                logger.info(
                   '[Token] On login page, skipping logout and redirect'
                 );
                 return false;
@@ -70,7 +71,7 @@ export function TokenRefreshManager() {
                   credentials: 'include',
                 });
               } catch (error) {
-                console.error('[Token] Logout error:', error);
+                logger.error('[Token] Logout error:', error);
                 // 登出失败时清除前端cookie
                 clearAuthCookie();
               }
@@ -82,7 +83,7 @@ export function TokenRefreshManager() {
             return false;
           }
         } catch (error) {
-          console.error('[Token] Refresh error:', error);
+          logger.error('[Token] Refresh error:', error);
           return false;
         } finally {
           isRefreshing = false;
@@ -104,7 +105,7 @@ export function TokenRefreshManager() {
 
       // Refresh Token 已过期
       if (now >= authInfo.refreshExpires) {
-        console.log('[Token] Refresh token expired, redirecting to login');
+        logger.info('[Token] Refresh token expired, redirecting to login');
         if (isLoginPathname(window.location.pathname)) {
           return false;
         }
@@ -115,7 +116,7 @@ export function TokenRefreshManager() {
             credentials: 'include',
           })
           .catch((error) => {
-            console.error('[Token] Logout error:', error);
+            logger.error('[Token] Logout error:', error);
             // 登出失败时清除前端cookie
             clearAuthCookie();
           })
@@ -174,7 +175,7 @@ export function TokenRefreshManager() {
 
       // 请求前检查：Token 即将过期时主动刷新
       if (shouldRefreshToken()) {
-        console.log('[Token] Expiring soon, refreshing proactively...');
+        logger.info('[Token] Expiring soon, refreshing proactively...');
         await refreshToken();
       }
 
@@ -185,7 +186,7 @@ export function TokenRefreshManager() {
       if (response.status === 401) {
         // 如果在登录页面，跳过刷新逻辑
         if (isLoginPathname(window.location.pathname)) {
-          console.log('[Token] On login page, skipping refresh logic');
+          logger.info('[Token] On login page, skipping refresh logic');
           return response;
         }
 
@@ -201,7 +202,7 @@ export function TokenRefreshManager() {
             responseText.includes('Refresh token expired') ||
             responseText.includes('Access token expired')
           ) {
-            console.log(
+            logger.info(
               '[Token] Received 401 with auth error, attempting refresh and retry...'
             );
 
@@ -213,13 +214,13 @@ export function TokenRefreshManager() {
 
               // 如果重试后仍然是 401，说明有问题，先登出再跳转登录
               if (response.status === 401) {
-                console.error(
+                logger.error(
                   '[Token] Still 401 after refresh, redirecting to login'
                 );
 
                 // 如果在登录页面，跳过登出和跳转逻辑
                 if (isLoginPathname(window.location.pathname)) {
-                  console.log(
+                  logger.info(
                     '[Token] On login page, skipping logout and redirect'
                   );
                   return response;
@@ -231,7 +232,7 @@ export function TokenRefreshManager() {
                     credentials: 'include',
                   });
                 } catch (error) {
-                  console.error('[Token] Logout error:', error);
+                  logger.error('[Token] Logout error:', error);
                   // 登出失败时清除前端cookie
                   clearAuthCookie();
                 }
@@ -242,12 +243,12 @@ export function TokenRefreshManager() {
               }
             }
           } else {
-            console.log(
+            logger.info(
               '[Token] Received 401 but not an auth error, skipping refresh'
             );
           }
         } catch (error) {
-          console.error('[Token] Failed to read response body:', error);
+          logger.error('[Token] Failed to read response body:', error);
         }
       }
 

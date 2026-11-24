@@ -5,6 +5,7 @@
 import type { MutableRefObject } from 'react';
 
 import { apiFetch } from '@/lib/api-client';
+import { logger } from '@/lib/logger';
 import { SearchResult } from '@/lib/types';
 
 import type { Art } from '@/features/player';
@@ -102,14 +103,14 @@ export function makeHandleDownloadEpisode(ctx: DownloadEpisodeContext) {
           if (response.ok) {
             successCount++;
           } else {
-            console.error(
+            logger.error(
               `离线下载任务创建失败 (第${episodeIndex + 1}集):`,
               data.error
             );
             failCount++;
           }
         } catch (error) {
-          console.error(
+          logger.error(
             `离线下载任务创建失败 (第${episodeIndex + 1}集):`,
             error
           );
@@ -126,7 +127,7 @@ export function makeHandleDownloadEpisode(ctx: DownloadEpisodeContext) {
           });
           successCount++;
         } catch (error) {
-          console.error(`添加下载任务失败 (第${episodeIndex + 1}集):`, error);
+          logger.error(`添加下载任务失败 (第${episodeIndex + 1}集):`, error);
           failCount++;
         }
       } else {
@@ -143,7 +144,7 @@ export function makeHandleDownloadEpisode(ctx: DownloadEpisodeContext) {
           // 添加延迟避免浏览器阻止多个下载
           await new Promise((resolve) => setTimeout(resolve, 300));
         } catch (error) {
-          console.error(`下载失败 (第${episodeIndex + 1}集):`, error);
+          logger.error(`下载失败 (第${episodeIndex + 1}集):`, error);
           failCount++;
         }
       }

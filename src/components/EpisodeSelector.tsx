@@ -31,6 +31,7 @@ import {
 } from '@/lib/db.client';
 import { isEpisodeHiddenByFilter } from '@/lib/episode-filter';
 import { loadAllLocalEpisodeProgressRecords } from '@/lib/episode-progress';
+import { logger } from '@/lib/logger';
 import type { SpeedTestErrorType } from '@/lib/media-engines';
 import {
   getVideoResolutionFromM3u8,
@@ -533,7 +534,7 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
         watched.add(record.index);
       }
     } catch (error) {
-      console.warn(
+      logger.warn(
         '[EpisodeSelector] Failed to read cached play records:',
         error
       );
@@ -553,7 +554,7 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
         }
       }
     } catch (error) {
-      console.warn(
+      logger.warn(
         '[EpisodeSelector] Failed to read local episode progress:',
         error
       );

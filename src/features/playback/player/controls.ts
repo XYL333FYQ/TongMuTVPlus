@@ -5,6 +5,7 @@
 import type { MutableRefObject } from 'react';
 
 import { isHandheld, isInstalledWebApp } from '@/lib/device-tier';
+import { logger } from '@/lib/logger';
 
 import type { Art } from '@/features/player';
 
@@ -82,7 +83,7 @@ export function buildControls(ctx: ControlsContext) {
             style: {
               color: 'var(--tm-room-player-text)',
             },
-            mounted: function ($el: HTMLElement) {
+            mounted: function () {
               // 添加 CSS 样式：横屏和竖屏都显示
               const style = document.createElement('style');
               style.textContent = ` /* iOS 自定义全屏按钮在所有方向都显示 */ .ios-portrait-fullscreen { display: inline-flex !important; } /* iOS 全屏选择对话框样式（遵循项目统一风格） */ .ios-fullscreen-dialog { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: var(--tm-surface); backdrop-filter: blur(4px); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 16px; } .ios-fullscreen-dialog-content { background: var(--tm-surface); border-radius: var(--tm-radius-md); max-width: 480px; width: 100%; box-shadow: 0 20px 60px var(--tm-text); overflow: hidden; } .dark .ios-fullscreen-dialog-content { background: var(--tm-surface); } /* 标题栏 */ .ios-fullscreen-dialog-header { background: linear-gradient(135deg, var(--tm-surface) 0%, var(--tm-surface) 100%); padding: 20px 24px; } .ios-fullscreen-dialog-title { font-size: 20px; font-weight: 700; color: var(--tm-text); display: flex; align-items: center; gap: 10px; margin-bottom: 6px; } .ios-fullscreen-dialog-title svg { stroke: var(--tm-text); } .ios-fullscreen-dialog-subtitle { font-size: 14px; color: var(--tm-text); margin: 0; } /* 选项列表 */ .ios-fullscreen-dialog-options { padding: 16px; display: flex; flex-direction: column; gap: 12px; } .ios-fullscreen-option { display: flex; align-items: center; gap: 16px; padding: 16px; background: var(--tm-surface); border: 2px solid transparent; border-radius: var(--tm-radius-md); cursor: pointer; transition: all 0.2s; text-align: left; } .dark .ios-fullscreen-option { background: var(--tm-surface); } .ios-fullscreen-option:hover { background: var(--tm-surface); border-color: var(--tm-line); box-shadow: 0 4px 12px var(--tm-text); } .dark .ios-fullscreen-option:hover { background: var(--tm-surface); } .ios-fullscreen-option:active { transform: scale(0.98); } /* 推荐选项 */ .ios-fullscreen-option-recommended { border-color: var(--tm-line); } /* 选项图标 */ .ios-fullscreen-option-icon { flex-shrink: 0; width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; background: var(--tm-surface); border-radius: var(--tm-radius-sm); color: var(--tm-text); } .dark .ios-fullscreen-option-icon { background: var(--tm-surface); } .ios-fullscreen-option-recommended .ios-fullscreen-option-icon { background: var(--tm-text); color: var(--tm-accent-contrast); } /* 选项内容 */ .ios-fullscreen-option-content { flex: 1; } .ios-fullscreen-option-title { font-size: 16px; font-weight: 500; color: var(--tm-text); margin-bottom: 4px; display: flex; align-items: center; gap: 8px; } .dark .ios-fullscreen-option-title { color: var(--tm-text); } .ios-fullscreen-option-badge { display: inline-block; padding: 2px 8px; background: var(--tm-text); color: var(--tm-accent-contrast); font-size: 13px; font-weight: 500; border-radius: var(--tm-radius-sm); } .ios-fullscreen-option-desc { font-size: 13px; color: var(--tm-text); line-height: 1.4; } .dark .ios-fullscreen-option-desc { color: var(--tm-text); } /* 箭头图标 */ .ios-fullscreen-option-arrow { flex-shrink: 0; color: var(--tm-text); transition: transform 0.2s; } .dark .ios-fullscreen-option-arrow { color: var(--tm-text); } .ios-fullscreen-option:hover .ios-fullscreen-option-arrow { transform: translateX(4px); color: var(--tm-text); } /* 底部提示 */ .ios-fullscreen-dialog-footer { padding: 16px 24px; background: var(--tm-surface); border-top: 1px solid var(--tm-line); display: flex; align-items: flex-start; gap: 10px; font-size: 13px; color: var(--tm-text); line-height: 1.5; } .dark .ios-fullscreen-dialog-footer { background: var(--tm-surface); border-top-color: var(--tm-line); color: var(--tm-text); } .ios-fullscreen-dialog-footer svg { flex-shrink: 0; margin-top: 2px; stroke: currentColor; } `;
@@ -111,11 +112,11 @@ export function buildControls(ctx: ControlsContext) {
                     const result = exitFullscreen.call(document);
                     if (result && typeof result.catch === 'function') {
                       result.catch((err: Error) =>
-                        console.error('退出全屏失败:', err)
+                        logger.error('退出全屏失败:', err)
                       );
                     }
                   } catch (err) {
-                    console.error('退出全屏失败:', err);
+                    logger.error('退出全屏失败:', err);
                   }
                 }
                 return;
@@ -133,7 +134,7 @@ export function buildControls(ctx: ControlsContext) {
                 if (container && container.webkitEnterFullscreen) {
                   Promise.resolve(container.webkitEnterFullscreen()).catch(
                     (err: Error) => {
-                      console.error('PWA 全屏失败:', err);
+                      logger.error('PWA 全屏失败:', err);
                       // 如果失败，降级使用网页全屏
                       if (artPlayerRef.current)
                         artPlayerRef.current.fullscreenWeb = true;

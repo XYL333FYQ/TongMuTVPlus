@@ -7,6 +7,7 @@ import type { MutableRefObject } from 'react';
 import { isAnimeCategoryText } from '@/lib/anime-keyword-expr';
 import { savePlayRecord } from '@/lib/db.client';
 import { saveLocalEpisodeProgress } from '@/lib/episode-progress';
+import { logger } from '@/lib/logger';
 import { SearchResult } from '@/lib/types';
 
 import type { Art } from '@/features/player';
@@ -90,14 +91,14 @@ export function makeSaveCurrentPlayProgress(ctx: SaveProgressContext) {
 
       lastSavedPlayTimeRef.current = playTime;
       lastSaveTimeRef.current = Date.now();
-      console.log('播放进度已保存:', {
+      logger.info('播放进度已保存:', {
         title: videoTitleRef.current,
         episode: currentEpisodeIndexRef.current + 1,
         year: detailRef.current?.year,
         progress: `${Math.floor(currentTime)}/${Math.floor(duration)}`,
       });
     } catch (err) {
-      console.error('保存播放进度失败:', err);
+      logger.error('保存播放进度失败:', err);
     }
   };
 }

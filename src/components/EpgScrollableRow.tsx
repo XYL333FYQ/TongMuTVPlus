@@ -236,24 +236,6 @@ export default function EpgScrollableRow({
   };
 
   // 计算当前时间在时间线上的位置百分比
-  const getCurrentTimePosition = () => {
-    if (programs.length === 0) return 0;
-
-    try {
-      const firstProgram = programs[0];
-      const lastProgram = programs[programs.length - 1];
-      const startTime = parseCustomTimeFormat(firstProgram.start).getTime();
-      const endTime = parseCustomTimeFormat(lastProgram.end).getTime();
-      const currentTimeMs = currentTime.getTime();
-
-      if (currentTimeMs < startTime) return 0;
-      if (currentTimeMs > endTime) return 100;
-
-      return ((currentTimeMs - startTime) / (endTime - startTime)) * 100;
-    } catch {
-      return 0;
-    }
-  };
 
   // 加载中状态
   if (isLoading) {
@@ -476,7 +458,7 @@ export default function EpgScrollableRow({
               {/* 时间线容器 - 可横向滚动 */}
               <div
                 className='relative'
-                onMouseEnter={(e) => {
+                onMouseEnter={() => {
                   const container = timelineHorizontalRef.current;
                   if (container) {
                     const handleWheel = (e: WheelEvent) => {
@@ -491,7 +473,7 @@ export default function EpgScrollableRow({
                     (container as any)._wheelHandler = handleWheel;
                   }
                 }}
-                onMouseLeave={(e) => {
+                onMouseLeave={() => {
                   const container = timelineHorizontalRef.current;
                   if (container && (container as any)._wheelHandler) {
                     container.removeEventListener(

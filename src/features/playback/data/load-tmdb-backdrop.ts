@@ -5,6 +5,7 @@
 import type { Dispatch, MutableRefObject, SetStateAction } from 'react';
 
 import { apiFetch } from '@/lib/api-client';
+import { logger } from '@/lib/logger';
 import { isNetdiskSource } from '@/lib/netdisk/source';
 import {
   getRecommendationCache,
@@ -111,7 +112,7 @@ export function makeLoadTmdbBackdrop(ctx: LoadTmdbBackdropContext) {
         const cachedId = getRecommendationCache<string>(mappingCacheKey);
 
         if (cachedId) {
-          console.log('使用缓存的TMDB ID映射');
+          logger.info('使用缓存的TMDB ID映射');
           // 记录 tmdbId，交由懒加载按需拉取分集名称（弹幕优先，降级 TMDB）
           setResolvedTmdbIdStr(cachedId);
 
@@ -172,11 +173,11 @@ export function makeLoadTmdbBackdrop(ctx: LoadTmdbBackdropContext) {
             );
             setRecommendationCache(detailsCacheKey, result);
           } catch (e) {
-            console.error('保存缓存失败:', e);
+            logger.error('保存缓存失败:', e);
           }
         }
       } catch (error) {
-        console.error('获取TMDB背景图失败:', error);
+        logger.error('获取TMDB背景图失败:', error);
         setTmdbBackdrop(null);
       }
     };

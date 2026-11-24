@@ -40,6 +40,7 @@ import {
 
 import { apiFetch } from '@/lib/api-client';
 import { cn } from '@/lib/cn';
+import { logger } from '@/lib/logger';
 import {
   getSourceDisplayLabel,
   normalizeSource,
@@ -554,10 +555,6 @@ export default function MusicClient({
   const [mobileLyricsView, setMobileLyricsView] = useState<'lyrics' | 'vinyl'>(
     'lyrics'
   );
-  const [musicProxyEnabled, setMusicProxyEnabled] = useState(() => {
-    if (typeof window === 'undefined') return true;
-    return (window as any).RUNTIME_CONFIG?.MUSIC_PROXY_ENABLED !== false;
-  });
   const [lyrics, setLyrics] = useState<LyricLine[]>([]);
   const [currentLyricIndex, setCurrentLyricIndex] = useState(-1);
   const [currentSongUrl, setCurrentSongUrl] = useState('');
@@ -993,7 +990,7 @@ export default function MusicClient({
       lastPlayedAt,
       recordQuality
     ).catch((err) => {
-      console.error('保存播放记录到数据库失败:', err);
+      logger.error('保存播放记录到数据库失败:', err);
     });
   };
 
@@ -1048,15 +1045,6 @@ export default function MusicClient({
     removeSetting('musicPlayState');
   };
 
-  // 从 localStorage 恢复播放状态（已废弃，现在统一使用数据库）
-  const restorePlayState = async () => {
-    // 此函数已不再使用，所有状态恢复都在 initializePlayState 中完成
-  };
-
-  useEffect(() => {
-    setMusicProxyEnabled(getMusicProxyEnabled());
-  }, []);
-
   // 页面加载时恢复播放状态和数据库记录
   useEffect(() => {
     const initializePlayState = async () => {
@@ -1106,7 +1094,6 @@ export default function MusicClient({
         // 4. 使用数据库的最新记录（歌曲和进度都从数据库获取）
         if (sortedRecords.length > 0) {
           const proxyEnabled = getMusicProxyEnabled();
-          setMusicProxyEnabled(proxyEnabled);
           const latestIndex = queueRecords.reduce(
             (bestIndex, record, index) => {
               if (bestIndex < 0) return index;
@@ -1167,7 +1154,7 @@ export default function MusicClient({
                 }
               })
               .catch((error) => {
-                console.error('加载歌词失败:', error);
+                logger.error('加载歌词失败:', error);
               });
           } else {
             const data = await fetchPlayData(
@@ -1200,7 +1187,7 @@ export default function MusicClient({
           }
         }
       } catch (error) {
-        console.error('加载播放记录失败:', error);
+        logger.error('加载播放记录失败:', error);
       }
     };
 
@@ -1372,7 +1359,7 @@ export default function MusicClient({
       await playSong(targetSongs[0], 0);
       notify(`已开始播放 ${title}`, 'success');
     } catch (error) {
-      console.error('播放全部失败:', error);
+      logger.error('播放全部失败:', error);
       notify('播放全部失败', 'error');
     }
   };
@@ -1417,7 +1404,6 @@ export default function MusicClient({
       // 使用歌曲自己的平台信息，如果没有则使用当前选择的平台
       const platform = song.platform || currentSource;
       const proxyEnabled = getMusicProxyEnabled();
-      setMusicProxyEnabled(proxyEnabled);
       const syncSong = { ...song, platform };
 
       // 记录歌曲开始播放的时间
@@ -1496,7 +1482,7 @@ export default function MusicClient({
           audioRef.current.src = streamUrl;
           audioRef.current.load();
           audioRef.current.play().catch((err) => {
-            console.error('播放失败:', err);
+            logger.error('播放失败:', err);
             setIsBuffering(false);
           });
           setIsPlaying(true);
@@ -1522,11 +1508,11 @@ export default function MusicClient({
                 setLyrics(parsedLyrics);
               }
             } else {
-              console.error('播放信息获取失败:', data);
+              logger.error('播放信息获取失败:', data);
             }
           })
           .catch((error) => {
-            console.error('加载歌词失败:', error);
+            logger.error('加载歌词失败:', error);
           });
       } else {
         const data = await fetchPlayData(song, platform, quality, true);
@@ -1555,17 +1541,17 @@ export default function MusicClient({
             audioRef.current.src = data.data.play.directUrl;
             audioRef.current.load();
             audioRef.current.play().catch((err) => {
-              console.error('播放失败:', err);
+              logger.error('播放失败:', err);
               setIsBuffering(false);
             });
             setIsPlaying(true);
           }
         } else {
-          console.error('播放信息获取失败:', data);
+          logger.error('播放信息获取失败:', data);
         }
       }
     } catch (error) {
-      console.error('播放失败:', error);
+      logger.error('播放失败:', error);
       setIsBuffering(false);
     } finally {
       endResolving();
@@ -1653,13 +1639,13 @@ export default function MusicClient({
             audioRef.current.currentTime,
             audioRef.current.duration || 0
           ).catch((err) => {
-            console.error('暂停时保存播放记录失败:', err);
+            logger.error('暂停时保存播放记录失败:', err);
           });
         }
       } else {
         setIsBuffering(true);
         audioRef.current.play().catch((err) => {
-          console.error('播放失败:', err);
+          logger.error('播放失败:', err);
           setIsBuffering(false);
         });
         setIsPlaying(true);
@@ -1738,7 +1724,6 @@ export default function MusicClient({
     beginResolving();
     try {
       const proxyEnabled = getMusicProxyEnabled();
-      setMusicProxyEnabled(proxyEnabled);
 
       let nextSongUrl = '';
 
@@ -1823,7 +1808,7 @@ export default function MusicClient({
               audio.currentTime = seekTime;
             }
           } catch (error) {
-            console.warn('切换音质后恢复播放进度失败:', error);
+            logger.warn('切换音质后恢复播放进度失败:', error);
           }
         }
 
@@ -1834,7 +1819,7 @@ export default function MusicClient({
             .play()
             .then(() => setIsPlaying(true))
             .catch((error) => {
-              console.error('切换音质后播放失败:', error);
+              logger.error('切换音质后播放失败:', error);
               setIsPlaying(false);
               setIsBuffering(false);
             });
@@ -1852,19 +1837,12 @@ export default function MusicClient({
       audio.load();
       setIsPlaying(shouldResume);
     } catch (error) {
-      console.error('切换音质失败:', error);
+      logger.error('切换音质失败:', error);
       setIsBuffering(false);
       notify((error as Error).message || '切换音质失败', 'error');
     } finally {
       endResolving();
     }
-  };
-
-  const cycleQuality = () => {
-    const qualities: MusicQuality[] = ['128k', '320k', 'flac', 'flac24bit'];
-    const currentIndex = qualities.indexOf(quality);
-    const nextIndex = (currentIndex + 1) % qualities.length;
-    void handleQualityChange(qualities[nextIndex]);
   };
 
   // 拖拽调整播放顺序。playlist / playRecords 是下标严格对齐的并行数组，必须同步移动；
@@ -1906,7 +1884,7 @@ export default function MusicClient({
       });
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
     } catch (error) {
-      console.error('保存播放顺序失败:', error);
+      logger.error('保存播放顺序失败:', error);
       setPlaylist(prevPlaylist);
       setPlayRecords(prevRecords);
       setPlaylistIndex(prevIndex);
@@ -1934,7 +1912,7 @@ export default function MusicClient({
         setPlaylistIndex(playlistIndex - 1);
       }
     } catch (error) {
-      console.error('删除播放记录失败:', error);
+      logger.error('删除播放记录失败:', error);
     }
   };
 
@@ -1953,7 +1931,7 @@ export default function MusicClient({
           setPlaylistIndex(-1);
           notify('播放记录已清空', 'success');
         } catch (error) {
-          console.error('清空播放记录失败:', error);
+          logger.error('清空播放记录失败:', error);
           notify('清空播放记录失败', 'error');
         } finally {
           setConfirmModal({
@@ -2064,7 +2042,7 @@ export default function MusicClient({
       .then((buffer) => {
         if (!cancelled && convolver) convolver.buffer = buffer;
       })
-      .catch((error) => console.warn('加载环境混响音效失败:', error));
+      .catch((error) => logger.warn('加载环境混响音效失败:', error));
     return () => {
       cancelled = true;
     };
@@ -2141,7 +2119,7 @@ export default function MusicClient({
                 audio.currentTime,
                 audio.duration || 0
               ).catch((err) => {
-                console.error('保存播放记录到数据库失败:', err);
+                logger.error('保存播放记录到数据库失败:', err);
               });
             }
             return updated;
@@ -2196,7 +2174,7 @@ export default function MusicClient({
               record.playTime,
               audio.duration
             ).catch((err) => {
-              console.error('保存播放记录到数据库失败:', err);
+              logger.error('保存播放记录到数据库失败:', err);
             });
           }
           return updated;
@@ -2420,25 +2398,6 @@ export default function MusicClient({
       case 'flac24bit':
         return 'HR';
     }
-  };
-
-  const getSourceLabel = () => {
-    return getSourceDisplayLabel(currentSource, false);
-  };
-
-  const resetAudioEffects = () => {
-    setEqGains([...DEFAULT_EQ_GAINS]);
-    setEqPreset('Flat');
-    setEqualizerEnabled(false);
-    setLoudnessEnabled(false);
-    setReverbEnabled(false);
-    setReverbMix(12);
-    setReverbPreset('none');
-    setReverbMainGain(100);
-    setPitchRate(1);
-    setSurroundEnabled(false);
-    setSurroundSpeed(25);
-    setSurroundDistance(5);
   };
 
   const applyEqPreset = (name: string) => {
@@ -2666,7 +2625,7 @@ export default function MusicClient({
           await audioContextRef.current.resume();
         }
       } catch (error) {
-        console.warn('初始化频谱分析器失败，将使用模拟动画:', error);
+        logger.warn('初始化频谱分析器失败，将使用模拟动画:', error);
       }
     };
 

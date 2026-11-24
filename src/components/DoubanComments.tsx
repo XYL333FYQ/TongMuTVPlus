@@ -4,6 +4,7 @@ import { CircleX } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 
 import { apiFetch } from '@/lib/api-client';
+import { logger } from '@/lib/logger';
 import { useEnableComments } from '@/hooks/useEnableComments';
 
 import BusyDots from '@/components/feedback/BusyDots';
@@ -24,9 +25,6 @@ interface DoubanCommentsProps {
 }
 
 // 获取运行时配置的类型
-interface RuntimeConfig {
-  EnableComments: boolean;
-}
 
 export default function DoubanComments({ doubanId }: DoubanCommentsProps) {
   const [comments, setComments] = useState<DoubanComment[]>([]);
@@ -42,7 +40,7 @@ export default function DoubanComments({ doubanId }: DoubanCommentsProps) {
   const fetchComments = useCallback(
     async (startIndex: number) => {
       try {
-        console.log('正在获取评论，起始位置:', startIndex);
+        logger.info('正在获取评论，起始位置:', startIndex);
         setLoading(true);
         setError(null);
 
@@ -55,7 +53,7 @@ export default function DoubanComments({ doubanId }: DoubanCommentsProps) {
         }
 
         const data = await response.json();
-        console.log('获取到评论数据:', {
+        logger.info('获取到评论数据:', {
           newComments: data.comments.length,
           total: data.total,
           hasMore: data.hasMore,
@@ -66,7 +64,7 @@ export default function DoubanComments({ doubanId }: DoubanCommentsProps) {
           setComments(data.comments);
         } else {
           setComments((prev) => {
-            console.log(
+            logger.info(
               '追加评论，之前:',
               prev.length,
               '新增:',
@@ -78,14 +76,14 @@ export default function DoubanComments({ doubanId }: DoubanCommentsProps) {
 
         setTotal(data.total);
         setHasMore(data.hasMore);
-        console.log(
+        logger.info(
           '更新后状态 - hasMore:',
           data.hasMore,
           'total:',
           data.total
         );
       } catch (err) {
-        console.error('获取评论失败:', err);
+        logger.error('获取评论失败:', err);
         setError(err instanceof Error ? err.message : '获取评论失败');
       } finally {
         setLoading(false);
@@ -105,13 +103,13 @@ export default function DoubanComments({ doubanId }: DoubanCommentsProps) {
   }, [doubanId]); // 只在 doubanId 变化时重新获取
 
   const startLoading = () => {
-    console.log('开始加载评论');
+    logger.info('开始加载评论');
     setHasStartedLoading(true);
     fetchComments(0);
   };
 
   const loadMore = () => {
-    console.log('点击加载更多，当前状态:', {
+    logger.info('点击加载更多，当前状态:', {
       loading,
       hasMore,
       commentsLength: comments.length,

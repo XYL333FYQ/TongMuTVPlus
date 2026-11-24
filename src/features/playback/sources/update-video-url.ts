@@ -6,6 +6,7 @@ import type { Dispatch, MutableRefObject, SetStateAction } from 'react';
 
 import { apiFetch } from '@/lib/api-client';
 import { getIndexedDBVideoPlaybackUrl } from '@/lib/indexeddb-video-cache';
+import { logger } from '@/lib/logger';
 import { SearchResult } from '@/lib/types';
 
 import type { Art } from '@/features/player';
@@ -130,7 +131,7 @@ export function makeUpdateVideoUrl(ctx: UpdateVideoUrlContext) {
           video.removeAttribute('src');
           video.load();
         } catch (error) {
-          console.warn('切集时清空旧视频源失败:', error);
+          logger.warn('切集时清空旧视频源失败:', error);
         }
       }
 
@@ -210,7 +211,7 @@ export function makeUpdateVideoUrl(ctx: UpdateVideoUrlContext) {
         if (requestSeq !== videoUrlRequestSeqRef.current) {
           return;
         }
-        console.error('获取播放链接失败:', error);
+        logger.error('获取播放链接失败:', error);
         setVideoQualities([]);
       }
     } else {
@@ -268,7 +269,7 @@ export function makeUpdateVideoUrl(ctx: UpdateVideoUrlContext) {
               // 替换为 Blob URL
               modifiedLines.push(line.replace(trimmedLine, blobUrl));
             } catch (error) {
-              console.error(`读取 ts 文件失败: ${trimmedLine}`, error);
+              logger.error(`读取 ts 文件失败: ${trimmedLine}`, error);
               modifiedLines.push(line);
             }
           }
@@ -284,7 +285,7 @@ export function makeUpdateVideoUrl(ctx: UpdateVideoUrlContext) {
               blobUrls.push(keyBlobUrl);
               modifiedLines.push(line.replace('key.key', keyBlobUrl));
             } catch (error) {
-              console.error('读取密钥文件失败:', error);
+              logger.error('读取密钥文件失败:', error);
               modifiedLines.push(line);
             }
           } else {
@@ -303,12 +304,12 @@ export function makeUpdateVideoUrl(ctx: UpdateVideoUrlContext) {
         // 保存 Blob URLs 到 window，以便在切换视频时清理
         window.__localFileBlobUrls = blobUrls;
 
-        console.log(
+        logger.info(
           '使用 File System API 本地文件播放（Blob URL 模式）:',
           episodeTitle
         );
       } catch (error) {
-        console.error('读取本地文件失败:', error);
+        logger.error('读取本地文件失败:', error);
       }
     }
 
@@ -336,7 +337,7 @@ export function makeUpdateVideoUrl(ctx: UpdateVideoUrlContext) {
         }
         newUrl = indexedDBCheck.url;
         nextPlaybackSourceBadge = 'local';
-        console.log(
+        logger.info(
           `使用 IndexedDB 本地缓存播放（${
             indexedDBCheck.mode === 'service-worker'
               ? 'Service Worker'
@@ -362,7 +363,7 @@ export function makeUpdateVideoUrl(ctx: UpdateVideoUrlContext) {
         // 使用本地代理接口,URL以.m3u8结尾以便Artplayer自动识别
         newUrl = `/api/offline-download/local/${currentSource}/${currentId}/${episodeIndex}/playlist.m3u8`;
         nextPlaybackSourceBadge = 'offline';
-        console.log('使用服务器端本地下载文件播放:', newUrl);
+        logger.info('使用服务器端本地下载文件播放:', newUrl);
       } else {
         const isM3u8 =
           newUrl.toLowerCase().includes('.m3u') ||
@@ -373,19 +374,19 @@ export function makeUpdateVideoUrl(ctx: UpdateVideoUrlContext) {
           newUrl = `/api/proxy/vod/m3u8?url=${encodeURIComponent(
             newUrl
           )}&source=${encodeURIComponent(currentSource)}`;
-          console.log('使用代理模式播放:', newUrl);
+          logger.info('使用代理模式播放:', newUrl);
         } else if (currentSource === 'directplay' && newUrl && isM3u8) {
           // 直链播放模式：检查 localStorage 是否记录了该域名需要代理
           if (isDirectplayDomainProxied(newUrl)) {
             newUrl = `/api/proxy-m3u8?url=${encodeURIComponent(
               newUrl
             )}&source=directplay`;
-            console.log('直链播放（域名已记忆）使用代理模式:', newUrl);
+            logger.info('直链播放（域名已记忆）使用代理模式:', newUrl);
           } else {
-            console.log('直链播放默认直连模式，不使用代理:', newUrl);
+            logger.info('直链播放默认直连模式，不使用代理:', newUrl);
           }
         } else if (!isM3u8) {
-          console.log('非 m3u8 格式，豁免代理框架，直接播放原始URL:', newUrl);
+          logger.info('非 m3u8 格式，豁免代理框架，直接播放原始URL:', newUrl);
         }
       }
     }

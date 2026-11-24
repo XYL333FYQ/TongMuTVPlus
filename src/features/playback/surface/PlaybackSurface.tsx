@@ -26,6 +26,7 @@ import {
   EPISODE_TITLE_CORRECTION_EVENT,
   getEpisodeTitleCorrection,
 } from '@/lib/episode-title-correction';
+import { logger } from '@/lib/logger';
 import { isNetdiskSource, normalizeNetdiskSource } from '@/lib/netdisk/source';
 import { isPrivilegedRole } from '@/lib/roles';
 import { readJson, readSetting, writeSetting } from '@/lib/settings';
@@ -416,7 +417,7 @@ function PlayPageClient() {
         artPlayerRef.current.layers.remove('play-record-jump');
         playRecordJumpLayerRef.current = null;
       } catch (err) {
-        console.warn('[PlayRecordJump] 移除跳转按钮失败:', err);
+        logger.warn('[PlayRecordJump] 移除跳转按钮失败:', err);
       }
     }
 
@@ -473,7 +474,7 @@ function PlayPageClient() {
       try {
         nextEpisodePreCacheHlsRef.current.destroy();
       } catch (e) {
-        console.error('清理预缓存 HLS 实例失败:', e);
+        logger.error('清理预缓存 HLS 实例失败:', e);
       }
       nextEpisodePreCacheHlsRef.current = null;
     }
@@ -764,7 +765,7 @@ function PlayPageClient() {
     try {
       pruneLocalEpisodeProgressStorage();
     } catch (error) {
-      console.warn('[Play] Failed to prune local episode progress:', error);
+      logger.warn('[Play] Failed to prune local episode progress:', error);
     }
   }, []);
 
@@ -1227,7 +1228,7 @@ function PlayPageClient() {
           !!artPlayerRef.current.fullscreenWeb;
         artPlayerRef.current = null;
       } catch (err) {
-        console.warn('清理播放器资源时出错:', err);
+        logger.warn('清理播放器资源时出错:', err);
         artPlayerRef.current = null;
       }
     }
@@ -1319,7 +1320,7 @@ function PlayPageClient() {
           setSkipConfig(config);
         }
       } catch (err) {
-        console.error('读取跳过片头片尾配置失败:', err);
+        logger.error('读取跳过片头片尾配置失败:', err);
       }
     };
 
@@ -1436,7 +1437,7 @@ function PlayPageClient() {
         return currentRecord.play_time;
       }
     } catch (error) {
-      console.warn('[Play] Failed to read source-switch play record:', error);
+      logger.warn('[Play] Failed to read source-switch play record:', error);
     }
 
     return loadLocalEpisodeProgress(episodeProgressContentKey, episodeIndex);
@@ -1503,7 +1504,7 @@ function PlayPageClient() {
         duration
       );
     } catch (error) {
-      console.warn(
+      logger.warn(
         '[Play] Failed to save local episode progress before episode switch:',
         error
       );
@@ -1702,7 +1703,7 @@ function PlayPageClient() {
     // 从 localStorage 读取纠错信息
     const correction = getXiaoyaCorrection(detail.source, detail.id);
     if (correction) {
-      console.log('应用纠错信息:', correction);
+      logger.info('应用纠错信息:', correction);
 
       // 只更新显示相关的状态，不更新 detail（避免触发其他 useEffect）
       if (correction.title) {
@@ -1735,7 +1736,7 @@ function PlayPageClient() {
         applyCorrectionsToSources(prevSources)
       );
 
-      console.log('已应用纠错信息');
+      logger.info('已应用纠错信息');
     }
   };
 

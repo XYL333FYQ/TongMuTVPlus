@@ -121,7 +121,7 @@ export function DownloadBubble() {
       <button
         onMouseDown={handleMouseDown}
         onTouchStart={handleTouchStart}
-        onClick={(e) => {
+        onClick={() => {
           if (!isDragging) {
             setShowDownloadPanel(true);
           }

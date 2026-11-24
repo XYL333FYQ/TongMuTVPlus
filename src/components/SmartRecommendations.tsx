@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from 'react';
 import '@/styles/panels.css';
 
 import { apiFetch } from '@/lib/api-client';
+import { logger } from '@/lib/logger';
 import {
   getRecommendationCache,
   recommendationCacheKeys,
@@ -73,7 +74,7 @@ export default function SmartRecommendations({
     if (!videoTitle) return;
 
     try {
-      console.log('正在获取TMDB推荐');
+      logger.info('正在获取TMDB推荐');
       setLoading(true);
 
       const mappingCacheKey =
@@ -81,7 +82,7 @@ export default function SmartRecommendations({
       const cachedId = getRecommendationCache<string>(mappingCacheKey);
 
       if (cachedId) {
-        console.log('使用缓存的TMDB ID映射');
+        logger.info('使用缓存的TMDB ID映射');
 
         const recommendationsCacheKey =
           recommendationCacheKeys.tmdbRecommendations(cachedId);
@@ -90,7 +91,7 @@ export default function SmartRecommendations({
         );
 
         if (recommendationsCache && recommendationsCache.length > 0) {
-          console.log('使用缓存的TMDB推荐数据');
+          logger.info('使用缓存的TMDB推荐数据');
           setRecommendations(recommendationsCache);
           setLoading(false);
           return;
@@ -127,13 +128,13 @@ export default function SmartRecommendations({
               recommendationsData
             );
           } catch (e) {
-            console.error('保存缓存失败:', e);
+            logger.error('保存缓存失败:', e);
           }
         }
       }
     } catch (err) {
       // 失败时保留已有列表，不整块卸载
-      console.error('获取TMDB推荐失败:', err);
+      logger.error('获取TMDB推荐失败:', err);
     } finally {
       setLoading(false);
     }
@@ -143,14 +144,14 @@ export default function SmartRecommendations({
     if (!doubanId) return;
 
     try {
-      console.log('正在获取豆瓣推荐');
+      logger.info('正在获取豆瓣推荐');
       setLoading(true);
 
       const cacheKey = recommendationCacheKeys.doubanRecommendations(doubanId);
       const cached = getRecommendationCache<Recommendation[]>(cacheKey);
 
       if (cached && cached.length > 0) {
-        console.log('使用缓存的豆瓣推荐数据');
+        logger.info('使用缓存的豆瓣推荐数据');
         setRecommendations(cached);
         setLoading(false);
         return;
@@ -172,14 +173,14 @@ export default function SmartRecommendations({
         setRecommendationCache(cacheKey, recommendationsData);
       } else if (allowTmdbFallback()) {
         // 豆瓣无推荐结果，混合模式下回退 TMDB
-        console.log('豆瓣推荐为空，回退 TMDB');
+        logger.info('豆瓣推荐为空，回退 TMDB');
         await fetchTMDBRecommendations();
       }
     } catch (err) {
-      console.error('获取豆瓣推荐失败:', err);
+      logger.error('获取豆瓣推荐失败:', err);
       // 混合模式：豆瓣失败回退 TMDB；回退也失败时（内部已兜底）保留已有列表
       if (allowTmdbFallback()) {
-        console.log('豆瓣推荐失败，回退 TMDB');
+        logger.info('豆瓣推荐失败，回退 TMDB');
         await fetchTMDBRecommendations();
       }
     } finally {

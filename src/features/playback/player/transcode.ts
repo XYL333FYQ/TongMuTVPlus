@@ -5,6 +5,7 @@
 import type { Dispatch, MutableRefObject, SetStateAction } from 'react';
 
 import { apiFetch } from '@/lib/api-client';
+import { logger } from '@/lib/logger';
 import { getTranscoderCookieHeader } from '@/lib/transcoder-cookie.client';
 
 import { notify } from '@/components/feedback/AppDialogs';
@@ -118,7 +119,7 @@ export function makeHandleCreateTranscodeSession(ctx: TranscodeContext) {
       setVideoUrl(playUrl);
       notify('转码任务已创建，等待 3 秒后已切换到转码地址', 'success');
     } catch (error) {
-      console.error('创建转码任务失败:', error);
+      logger.error('创建转码任务失败:', error);
       notify(
         error instanceof Error ? error.message : '创建转码任务失败',
         'error'

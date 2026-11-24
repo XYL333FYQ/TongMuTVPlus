@@ -5,6 +5,8 @@ import { Music2 } from 'lucide-react';
 import { useEffect, useRef } from 'react';
 import ReactDOM from 'react-dom/client';
 
+import { logger } from '@/lib/logger';
+
 interface Song {
   id: string;
   name: string;
@@ -316,12 +318,8 @@ export default function LyricsPiPWindow({
   currentSong,
   lyrics,
   currentLyricIndex,
-  isPlaying,
-  currentTime,
   opacity,
   minimized,
-  onOpacityChange,
-  onMinimizedChange,
   onLyricSeek,
   onClose,
 }: LyricsPiPWindowProps) {
@@ -411,7 +409,7 @@ export default function LyricsPiPWindow({
   useEffect(() => {
     const openPiPWindow = async () => {
       if (!('documentPictureInPicture' in window)) {
-        console.error('浏览器不支持 Document Picture-in-Picture API');
+        logger.error('浏览器不支持 Document Picture-in-Picture API');
         return;
       }
 
@@ -441,7 +439,7 @@ export default function LyricsPiPWindow({
         // 渲染内容
         renderPiPContent(pipWin);
       } catch (error) {
-        console.error('打开画中画窗口失败:', error);
+        logger.error('打开画中画窗口失败:', error);
         onClose();
       }
     };

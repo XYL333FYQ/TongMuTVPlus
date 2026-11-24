@@ -10,6 +10,7 @@ import {
   getIndexedDBVideoManifestByEpisode,
   getIndexedDBVideoSegments,
 } from '@/lib/indexeddb-video-cache';
+import { logger } from '@/lib/logger';
 
 import { notifyError } from '@/components/feedback/AppDialogs';
 import { ConfirmDialog } from '@/components/feedback/ConfirmDialog';
@@ -56,7 +57,7 @@ export function DownloadManagementPanel({
       const tasks = await downloadDB.getCompletedTasks();
       setCompletedTasks(tasks);
     } catch (error) {
-      console.error('加载已完成任务失败:', error);
+      logger.error('加载已完成任务失败:', error);
     }
   };
 
@@ -165,7 +166,7 @@ export function DownloadManagementPanel({
                 mode: 'readwrite',
               });
               if (permission !== 'granted') {
-                console.error('未获得写权限，无法删除文件');
+                logger.error('未获得写权限，无法删除文件');
                 continue;
               }
 
@@ -183,14 +184,14 @@ export function DownloadManagementPanel({
                   `ep${task.episodeIndex + 1}`,
                   { recursive: true }
                 );
-                console.log(
+                logger.info(
                   '已删除文件:',
                   task.source,
                   task.videoId,
                   `ep${task.episodeIndex + 1}`
                 );
               } catch (deleteError) {
-                console.error('删除目录失败:', deleteError);
+                logger.error('删除目录失败:', deleteError);
                 // 如果目录不存在，也算成功
                 if ((deleteError as Error).name !== 'NotFoundError') {
                   throw deleteError;
@@ -198,7 +199,7 @@ export function DownloadManagementPanel({
               }
             }
           } catch (error) {
-            console.error('删除文件失败:', task.title, error);
+            logger.error('删除文件失败:', task.title, error);
           }
         } else if (task.downloadMode === 'indexeddb') {
           try {
@@ -207,14 +208,14 @@ export function DownloadManagementPanel({
               task.videoId,
               task.episodeIndex
             );
-            console.log(
+            logger.info(
               '已删除 IndexedDB 视频缓存:',
               task.source,
               task.videoId,
               task.episodeIndex
             );
           } catch (error) {
-            console.error('删除 IndexedDB 视频缓存失败:', task.title, error);
+            logger.error('删除 IndexedDB 视频缓存失败:', task.title, error);
           }
         }
       }
@@ -224,7 +225,7 @@ export function DownloadManagementPanel({
       await loadCompletedTasks();
       setSelectedIds(new Set());
     } catch (error) {
-      console.error('删除任务失败:', error);
+      logger.error('删除任务失败:', error);
       notifyError('删除失败，请重试');
     } finally {
       setIsDeleting(false);
@@ -433,7 +434,7 @@ export function DownloadManagementPanel({
           triggerBlobDownload(blob, getTaskExportFilename(task, usedFilenames));
           exportedCount += 1;
         } catch (error) {
-          console.error('导出任务失败:', task.title, error);
+          logger.error('导出任务失败:', task.title, error);
           failedTitles.push(`第 ${task.episodeIndex + 1} 集`);
         }
       }
@@ -451,7 +452,7 @@ export function DownloadManagementPanel({
         );
       }
     } catch (error) {
-      console.error('导出失败:', error);
+      logger.error('导出失败:', error);
       notifyError(
         `导出失败：${error instanceof Error ? error.message : String(error)}`
       );

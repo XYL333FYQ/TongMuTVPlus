@@ -18,6 +18,7 @@ import {
   isHierarchicalCategories,
   pickDefaultSelection,
 } from '@/lib/category-tree';
+import { logger } from '@/lib/logger';
 import { getPageScrollTop, scrollPageTo } from '@/lib/page-scroll';
 import { readSetting, removeSetting, writeSetting } from '@/lib/settings';
 import { SearchResult } from '@/lib/types';
@@ -223,7 +224,7 @@ function DuanjuPageClient() {
         }
       } catch (error) {
         if (cancelled) return;
-        console.error('Failed to load duanju sources:', error);
+        logger.error('Failed to load duanju sources:', error);
         setSourcesError('采集源暂时无法获取');
       } finally {
         if (!cancelled) setIsLoadingSources(false);
@@ -309,7 +310,7 @@ function DuanjuPageClient() {
         }
       } catch (error) {
         if (cancelled) return;
-        console.error('Failed to load duanju categories:', error);
+        logger.error('Failed to load duanju categories:', error);
         // 分类加载失败时回退到采集源标记的短剧分类，保证列表可用
         const source = sources.find((item) => item.key === selectedSource);
         if (source?.typeId) {
@@ -399,7 +400,7 @@ function DuanjuPageClient() {
         setHasMore(data.page < data.pageCount);
       } catch (error) {
         if (cancelled) return;
-        console.error('Failed to load duanju videos:', error);
+        logger.error('Failed to load duanju videos:', error);
         // 失败后停住自动翻页，保留已加载内容，等用户重试同一页
         setVideosError(
           currentPage === 1

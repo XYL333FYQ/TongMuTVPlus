@@ -7,6 +7,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { apiFetch } from '@/lib/api-client';
 import { viewportSize } from '@/lib/device-tier';
 import { getDoubanDetail } from '@/lib/douban.client';
+import { logger } from '@/lib/logger';
 import { useReducedMotionSetting } from '@/lib/motion';
 import { filmPlaybackHref, roomSelectionHref } from '@/lib/playback-links';
 import { type SettingKey, readSetting, writeSetting } from '@/lib/settings';
@@ -345,7 +346,7 @@ export default function BannerCarousel({
         if (generation === trendingGeneration.current) {
           // 拉不到就显示“暂时没有推荐内容”，原始错误留给排查
           // eslint-disable-next-line no-console
-          console.error('获取热门内容失败:', error);
+          logger.error('获取热门内容失败:', error);
         }
       } finally {
         if (generation === trendingGeneration.current) setIsLoading(false);

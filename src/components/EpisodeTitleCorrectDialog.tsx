@@ -11,6 +11,7 @@ import {
   getEpisodeTitleCorrection,
   setEpisodeTitleCorrection,
 } from '@/lib/episode-title-correction';
+import { logger } from '@/lib/logger';
 import { getTMDBImageUrl } from '@/lib/tmdb-image-base';
 
 import ModalLayer from '@/components/feedback/ModalLayer';
@@ -109,7 +110,7 @@ export default function EpisodeTitleCorrectDialog({
         setError('搜索失败');
       }
     } catch (err) {
-      console.error('TMDB 搜索失败:', err);
+      logger.error('TMDB 搜索失败:', err);
       setError('搜索失败，请重试');
     } finally {
       setSearching(false);
@@ -127,7 +128,7 @@ export default function EpisodeTitleCorrectDialog({
       setError('获取季度列表失败');
       return [];
     } catch (err) {
-      console.error('获取季度列表失败:', err);
+      logger.error('获取季度列表失败:', err);
       setError('获取季度列表失败，请重试');
       return [];
     } finally {

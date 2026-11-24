@@ -3,6 +3,7 @@
  */
 
 import { apiFetch } from '@/lib/api-client';
+import { logger } from '@/lib/logger';
 
 /** 页面传进来的状态和函数（名字和页面里的一样） */
 export interface LocalDownloadContext {
@@ -33,7 +34,7 @@ export function makeCheckLocalDownload(ctx: LocalDownloadContext) {
         return data.downloaded || false;
       }
     } catch (error) {
-      console.error('检查本地下载失败:', error);
+      logger.error('检查本地下载失败:', error);
     }
 
     return false;

@@ -14,6 +14,7 @@ import {
 import { useEffect, useRef, useState } from 'react';
 
 import { apiFetch } from '@/lib/api-client';
+import { logger } from '@/lib/logger';
 
 import BusyDots from '@/components/feedback/BusyDots';
 import ModalLayer from '@/components/feedback/ModalLayer';
@@ -213,7 +214,7 @@ const DataMigration = ({ onRefreshConfig }: DataMigrationProps) => {
           const progress = JSON.parse(event.data);
           setExportProgress(progress);
         } catch (e) {
-          console.error('Failed to parse progress:', e);
+          logger.error('Failed to parse progress:', e);
         }
       };
 
@@ -320,7 +321,7 @@ const DataMigration = ({ onRefreshConfig }: DataMigrationProps) => {
           const progress = JSON.parse(event.data);
           setImportProgress(progress);
         } catch (e) {
-          console.error('Failed to parse progress:', e);
+          logger.error('Failed to parse progress:', e);
         }
       };
 

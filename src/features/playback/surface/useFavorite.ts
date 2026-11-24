@@ -11,6 +11,7 @@ import {
   saveFavorite,
   subscribeToDataUpdates,
 } from '@/lib/db.client';
+import { logger } from '@/lib/logger';
 import type { SearchResult } from '@/lib/types';
 
 import { seriesStatus } from '../lib/series-status';
@@ -45,7 +46,7 @@ export function useFavorite({
         const fav = await isFavorited(currentSource, currentId);
         setFavorited(fav);
       } catch (err) {
-        console.error('检查收藏状态失败:', err);
+        logger.error('检查收藏状态失败:', err);
       }
     })();
   }, [currentSource, currentId]);
@@ -97,7 +98,7 @@ export function useFavorite({
         setFavorited(true);
       }
     } catch (err) {
-      console.error('切换收藏失败:', err);
+      logger.error('切换收藏失败:', err);
     }
   };
 

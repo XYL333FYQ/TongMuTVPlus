@@ -5,6 +5,7 @@
 import type { Dispatch, MutableRefObject, SetStateAction } from 'react';
 
 import { deleteSkipConfig, saveSkipConfig } from '@/lib/db.client';
+import { logger } from '@/lib/logger';
 import { formatPaddedClock } from '@/lib/time';
 
 import type { Art, ArtSettingOption } from '@/features/player';
@@ -80,7 +81,7 @@ export function makeHandleSkipConfigChange(ctx: SkipConfigContext) {
                     )}`,
             });
           } catch (settingErr) {
-            console.warn('更新播放器设置失败:', settingErr);
+            logger.warn('更新播放器设置失败:', settingErr);
           }
         }
       } else {
@@ -90,9 +91,9 @@ export function makeHandleSkipConfigChange(ctx: SkipConfigContext) {
           newConfig
         );
       }
-      console.log('跳过片头片尾配置已保存:', newConfig);
+      logger.info('跳过片头片尾配置已保存:', newConfig);
     } catch (err) {
-      console.error('保存跳过片头片尾配置失败:', err);
+      logger.error('保存跳过片头片尾配置失败:', err);
     }
   };
 }

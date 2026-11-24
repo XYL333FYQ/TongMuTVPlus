@@ -2,7 +2,7 @@
  * 自己看：这一集有没有用 File System API 下载到本机。
  */
 
-import type { Art } from '@/features/player';
+import { logger } from '@/lib/logger';
 
 export async function checkFileSystemDownload(
   title: string,
@@ -86,7 +86,7 @@ export async function checkFileSystemDownload(
                 mode: 'read',
               });
               if (requestPermission !== 'granted') {
-                console.warn('未获得读权限');
+                logger.warn('未获得读权限');
                 resolve({ hasLocal: false });
                 return;
               }
@@ -113,7 +113,7 @@ export async function checkFileSystemDownload(
               await epDirHandle.getFileHandle('playlist.m3u8', {
                 create: false,
               });
-              console.log(
+              logger.info(
                 '找到本地下载文件:',
                 title,
                 `(${source}/${videoId}/ep${episodeIndex + 1})`
@@ -125,7 +125,7 @@ export async function checkFileSystemDownload(
             }
           } catch (error) {
             // 文件不存在
-            console.error('检查本地文件失败:', error);
+            logger.error('检查本地文件失败:', error);
             resolve({ hasLocal: false });
           }
         };
@@ -140,7 +140,7 @@ export async function checkFileSystemDownload(
       };
     });
   } catch (error) {
-    console.error('检查 File System API 下载失败:', error);
+    logger.error('检查 File System API 下载失败:', error);
     return { hasLocal: false };
   }
 }

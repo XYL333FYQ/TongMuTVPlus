@@ -101,8 +101,11 @@ export default function AnimeSubscribeModal({
 
   if (!isOpen) return null;
 
+  // 选中的字幕组 / 排除项要看得出来
   const chipClass = (active: boolean) =>
-    `px-2 py-0.5 text-[13px] rounded-full border transition-colors bg-raised text-fg`;
+    `px-2 py-0.5 text-[13px] rounded-full border transition-colors ${
+      active ? 'border-fg bg-fg text-inverse' : 'border-line bg-raised text-fg'
+    }`;
 
   const handleFansubSelect = (preset: AnimeFansubPreset) => {
     setForm((prev) => ({

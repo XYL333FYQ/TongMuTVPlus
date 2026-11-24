@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { type Socket, io } from 'socket.io-client';
 
 import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
+import { logger } from '@/lib/logger';
 import { readSetting, writeSetting } from '@/lib/settings';
 import { applyTVRemoteText, fireTVRemoteKey } from '@/lib/tv-remote-core';
 import type {
@@ -133,7 +134,7 @@ export default function TVRemoteReceiver() {
         ) => {
           if (error || !response?.success) {
             // eslint-disable-next-line no-console
-            console.warn(
+            logger.warn(
               '[TVRemote] TV registration failed:',
               error || response?.error
             );

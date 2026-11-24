@@ -40,6 +40,7 @@ import {
   getSearchHistory,
   subscribeToDataUpdates,
 } from '@/lib/db.client';
+import { logger } from '@/lib/logger';
 import {
   type PublicCatalogItem,
   publicCatalogCategories,
@@ -135,9 +136,6 @@ export function SearchPageClient({
   const [pansouCloudFilterOpen, setPansouCloudFilterOpen] = useState(false);
   const pansouCloudFilterButtonRef = useRef<HTMLButtonElement | null>(null);
   // 用户权限
-  const [userRole, setUserRole] = useState<'owner' | 'admin' | 'user' | null>(
-    null
-  );
   const [netdiskSearchEnabled, setNetdiskSearchEnabled] = useState(false);
   const [magnetSearchEnabled, setMagnetSearchEnabled] = useState(false);
   // 源站寻片开关（/under 需要它的特殊源版本入口）
@@ -304,7 +302,7 @@ export function SearchPageClient({
         return parsed.results;
       }
     } catch (error) {
-      console.error('Failed to get cached results:', error);
+      logger.error('Failed to get cached results:', error);
     }
     return null;
   };
@@ -326,7 +324,7 @@ export function SearchPageClient({
       };
       writeSetting(cacheKey, JSON.stringify(payload));
     } catch (error) {
-      console.error('Failed to cache results:', error);
+      logger.error('Failed to cache results:', error);
     }
   };
 
@@ -347,7 +345,7 @@ export function SearchPageClient({
       const cacheKey = getCacheKey(query);
       removeSetting(cacheKey);
     } catch (error) {
-      console.error('Failed to clear cached results:', error);
+      logger.error('Failed to clear cached results:', error);
     }
   };
 
@@ -1233,7 +1231,6 @@ export function SearchPageClient({
       !authInfo?.username && !authInfo?.password && !authInfo?.signature;
     setIsGuest(guest);
     setCanManageSources(isPrivilegedRole(authInfo?.role));
-    setUserRole(authInfo?.role || null);
     const runtimeConfig = (window as any).RUNTIME_CONFIG || {};
     setNetdiskSearchEnabled(!guest && !!runtimeConfig.NETDISK_SEARCH_ENABLED);
     setMagnetSearchEnabled(!guest && !!runtimeConfig.MAGNET_SEARCH_ENABLED);
@@ -1384,7 +1381,7 @@ export function SearchPageClient({
             return; // 等待 URL 更新后重新触发此 effect
           }
         } catch (error) {
-          console.error('[URL参数监听] 繁体转简体转换失败:', error);
+          logger.error('[URL参数监听] 繁体转简体转换失败:', error);
         }
       }
     }
@@ -1838,7 +1835,7 @@ export function SearchPageClient({
         try {
           trimmed = convertSearchText(trimmed);
         } catch (error) {
-          console.error('繁体转简体转换失败:', error);
+          logger.error('繁体转简体转换失败:', error);
         }
       }
     }
@@ -1878,7 +1875,7 @@ export function SearchPageClient({
         try {
           processedSuggestion = convertSearchText(suggestion);
         } catch (error) {
-          console.error('繁体转简体转换失败:', error);
+          logger.error('繁体转简体转换失败:', error);
         }
       }
     }

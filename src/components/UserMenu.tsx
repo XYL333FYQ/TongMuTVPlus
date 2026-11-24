@@ -37,6 +37,7 @@ import {
   LOCAL_SETTINGS_KEYS,
   LOCAL_SETTINGS_SYNC_LAST_PULL_KEY,
 } from '@/lib/local-settings-sync';
+import { logger } from '@/lib/logger';
 import { isOwnerRole, isPrivilegedRole } from '@/lib/roles';
 import {
   notificationWorkerScript,
@@ -443,7 +444,7 @@ export const UserMenu: React.FC = () => {
       const stats = await getDanmakuCacheStats();
       setDanmakuCacheUsage(formatCacheSize(stats.totalSize));
     } catch (error) {
-      console.error('获取弹幕缓存占用失败:', error);
+      logger.error('获取弹幕缓存占用失败:', error);
       setDanmakuCacheUsage('获取失败');
     }
   }, [formatCacheSize]);
@@ -487,7 +488,7 @@ export const UserMenu: React.FC = () => {
         );
       }
     } catch (error) {
-      console.error('获取订阅URL失败:', error);
+      logger.error('获取订阅URL失败:', error);
     } finally {
       setIsLoadingSubscribeUrl(false);
     }
@@ -539,7 +540,7 @@ export const UserMenu: React.FC = () => {
             }
           }
         } catch (error) {
-          console.error('重置token失败:', error);
+          logger.error('重置token失败:', error);
           const messageEl = document.getElementById('tvbox-token-message');
           if (messageEl) {
             messageEl.textContent = '重置失败，请重试';
@@ -640,7 +641,7 @@ export const UserMenu: React.FC = () => {
         .then((response) => (response.ok ? response.text() : ''))
         .then(setBangumiProxyScript)
         .catch((error) => {
-          console.error('加载 Bangumi Workers 脚本失败:', error);
+          logger.error('加载 Bangumi Workers 脚本失败:', error);
         });
 
       const savedDoubanImageProxyType = readSetting('doubanImageProxyType');
@@ -803,7 +804,7 @@ export const UserMenu: React.FC = () => {
         try {
           setHomeModules(JSON.parse(savedHomeModules));
         } catch (error) {
-          console.error('解析首页模块配置失败:', error);
+          logger.error('解析首页模块配置失败:', error);
         }
       }
 
@@ -913,7 +914,7 @@ export const UserMenu: React.FC = () => {
         setTelegramUsername(telegramData.binding?.telegramUsername || '');
       }
     } catch (error) {
-      console.error('加载通知设置失败:', error);
+      logger.error('加载通知设置失败:', error);
     } finally {
       setEmailSettingsLoading(false);
     }
@@ -1016,7 +1017,7 @@ export const UserMenu: React.FC = () => {
         });
         setPushNotifications(false);
       } catch (error) {
-        console.error('关闭浏览器通知失败:', error);
+        logger.error('关闭浏览器通知失败:', error);
         setEmailSettingsMessage('关闭浏览器通知失败，请重试');
         setEmailSettingsMessageType('error');
       } finally {
@@ -1076,7 +1077,7 @@ export const UserMenu: React.FC = () => {
       setEmailSettingsMessage('浏览器系统通知已开启');
       setEmailSettingsMessageType('success');
     } catch (error) {
-      console.error('开启浏览器通知失败:', error);
+      logger.error('开启浏览器通知失败:', error);
       setPushNotifications(false);
       setEmailSettingsMessage(
         error instanceof Error ? error.message : '开启浏览器通知失败'
@@ -1115,7 +1116,7 @@ export const UserMenu: React.FC = () => {
         setEmailSettingsMessageType('error');
       }
     } catch (error) {
-      console.error('保存通知设置失败:', error);
+      logger.error('保存通知设置失败:', error);
       setEmailSettingsMessage('保存失败，请重试');
       setEmailSettingsMessageType('error');
     } finally {
@@ -1133,7 +1134,7 @@ export const UserMenu: React.FC = () => {
         setDevices(data.devices || []);
       }
     } catch (error) {
-      console.error('加载设备列表失败:', error);
+      logger.error('加载设备列表失败:', error);
     } finally {
       setDevicesLoading(false);
     }
@@ -1164,7 +1165,7 @@ export const UserMenu: React.FC = () => {
             notifyError('撤销失败，请重试');
           }
         } catch (error) {
-          console.error('撤销设备失败:', error);
+          logger.error('撤销设备失败:', error);
           notifyError('撤销失败，请重试');
         } finally {
           setRevoking(null);
@@ -1194,7 +1195,7 @@ export const UserMenu: React.FC = () => {
             notifyError('操作失败，请重试');
           }
         } catch (error) {
-          console.error('登出所有设备失败:', error);
+          logger.error('登出所有设备失败:', error);
           notifyError('操作失败，请重试');
         }
       },
@@ -1356,7 +1357,7 @@ export const UserMenu: React.FC = () => {
         headers: { 'Content-Type': 'application/json' },
       });
     } catch (error) {
-      console.error('注销请求失败:', error);
+      logger.error('注销请求失败:', error);
     }
     window.location.href = '/';
   };
@@ -1491,14 +1492,14 @@ export const UserMenu: React.FC = () => {
           const rawValue = barcodes?.[0]?.rawValue;
           if (rawValue && handleQrLoginResult(rawValue)) return;
         } catch (error) {
-          console.error('二维码识别失败:', error);
+          logger.error('二维码识别失败:', error);
         }
         window.setTimeout(scan, 350);
       };
 
       scan();
     } catch (error) {
-      console.error('打开摄像头失败:', error);
+      logger.error('打开摄像头失败:', error);
       setTvQrScannerError('无法打开摄像头，请检查浏览器相机权限后重试。');
       setTvQrScannerStatus('');
       stopTvQrScanner();
@@ -1536,7 +1537,7 @@ export const UserMenu: React.FC = () => {
         setCopySuccess(false);
       }, 2000);
     } catch (error) {
-      console.error('复制失败:', error);
+      logger.error('复制失败:', error);
     }
   };
 
@@ -1793,7 +1794,7 @@ export const UserMenu: React.FC = () => {
         };
       });
     } catch (err) {
-      console.error('选择目录失败:', err);
+      logger.error('选择目录失败:', err);
     }
   };
 
@@ -1871,7 +1872,7 @@ export const UserMenu: React.FC = () => {
       setBangumiProxyScriptCopied(true);
       setTimeout(() => setBangumiProxyScriptCopied(false), 2000);
     } catch (error) {
-      console.error('复制 Bangumi Workers 脚本失败:', error);
+      logger.error('复制 Bangumi Workers 脚本失败:', error);
     }
   };
 
@@ -2763,14 +2764,14 @@ export const UserMenu: React.FC = () => {
       await clearAllDanmakuCache();
       setClearCacheMessage('弹幕缓存已清除成功！');
       setDanmakuCacheUsage('0 B');
-      console.log('弹幕缓存已清除');
+      logger.info('弹幕缓存已清除');
 
       // 3秒后自动清除提示
       setTimeout(() => {
         setClearCacheMessage(null);
       }, 3000);
     } catch (error) {
-      console.error('清除弹幕缓存失败:', error);
+      logger.error('清除弹幕缓存失败:', error);
       setClearCacheMessage('清除失败，请重试');
 
       // 3秒后自动清除提示

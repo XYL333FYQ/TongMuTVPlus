@@ -4,6 +4,8 @@ import { AlertTriangle, RefreshCw } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect } from 'react';
 
+import { logger } from '@/lib/logger';
+
 import EmptyState from '@/components/feedback/EmptyState';
 import PageContainer from '@/components/PageContainer';
 import PageLayout from '@/components/PageLayout';
@@ -18,7 +20,7 @@ export default function RouteError({
   reset: () => void;
 }) {
   useEffect(() => {
-    console.error('页面渲染出错:', error);
+    logger.error('页面渲染出错:', error);
   }, [error]);
 
   return (

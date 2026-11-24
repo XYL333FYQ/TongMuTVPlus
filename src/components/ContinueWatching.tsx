@@ -14,6 +14,7 @@ import {
   getCachedPlayRecordsSnapshot,
   subscribeToDataUpdates,
 } from '@/lib/db.client';
+import { logger } from '@/lib/logger';
 import { usePageRefresh } from '@/hooks/usePageRefresh';
 
 import SectionHeader from '@/components/catalog/SectionHeader';
@@ -98,7 +99,7 @@ export default function ContinueWatching({
       } catch (error) {
         // 拿不到就显示为空，原始错误留给排查
         // eslint-disable-next-line no-console
-        console.error('获取播放记录失败:', error);
+        logger.error('获取播放记录失败:', error);
         setPlayRecords([]);
       } finally {
         setLoading(false);

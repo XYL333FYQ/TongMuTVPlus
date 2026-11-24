@@ -4,6 +4,7 @@
 
 import type { Dispatch, SetStateAction } from 'react';
 
+import { logger } from '@/lib/logger';
 import { getVideoResolutionFromM3u8 } from '@/lib/media-engines';
 import { SearchResult } from '@/lib/types';
 
@@ -80,7 +81,7 @@ export function makePreferBestSource(ctx: PreferBestSourceContext) {
       ) as SourceTestResult[];
 
       if (successfulResults.length === 0) {
-        console.warn('所有播放源测速都失败，按权重排序');
+        logger.warn('所有播放源测速都失败，按权重排序');
         return sortedByWeight[0];
       }
 
@@ -120,9 +121,9 @@ export function makePreferBestSource(ctx: PreferBestSourceContext) {
 
       resultsWithScore.sort((a, b) => b.score - a.score);
 
-      console.log('播放源评分排序结果:');
+      logger.info('播放源评分排序结果:');
       resultsWithScore.forEach((result, index) => {
-        console.log(
+        logger.info(
           `${index + 1}. ${
             result.source.source_name
           } - 评分: ${result.score.toFixed(2)} (${result.testResult.quality}, ${
@@ -139,7 +140,7 @@ export function makePreferBestSource(ctx: PreferBestSourceContext) {
     ): Promise<MaybeSourceTestResult> => {
       try {
         if (!source.episodes || source.episodes.length === 0) {
-          console.warn(`播放源 ${source.source_name} 没有可用的播放地址`);
+          logger.warn(`播放源 ${source.source_name} 没有可用的播放地址`);
           return null;
         }
 

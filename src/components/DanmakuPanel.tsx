@@ -11,6 +11,7 @@ import type {
   DanmakuEpisode,
   DanmakuSelection,
 } from '@/lib/danmaku/types';
+import { logger } from '@/lib/logger';
 
 import BusyDots from '@/components/feedback/BusyDots';
 import EmptyState from '@/components/feedback/EmptyState';
@@ -75,7 +76,7 @@ export default function DanmakuPanel({
         );
       }
     } catch (error) {
-      console.error('搜索失败:', error);
+      logger.error('搜索失败:', error);
       setSearchError('搜索失败，请检查弹幕 API 服务是否正常运行');
       setSearchResults([]);
     } finally {
@@ -98,7 +99,7 @@ export default function DanmakuPanel({
         setSearchError('该剧集暂无弹幕信息');
       }
     } catch (error) {
-      console.error('获取剧集失败:', error);
+      logger.error('获取剧集失败:', error);
       setEpisodes([]);
       setSearchError('获取剧集失败');
     } finally {
@@ -167,7 +168,7 @@ export default function DanmakuPanel({
         onUploadDanmaku?.(comments);
         setSearchError(null);
       } catch (error) {
-        console.error('上传弹幕失败:', error);
+        logger.error('上传弹幕失败:', error);
         setSearchError('弹幕文件解析失败');
       } finally {
         if (fileInputRef.current) {

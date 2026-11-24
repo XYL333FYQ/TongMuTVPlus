@@ -5,6 +5,7 @@
 import type { Dispatch, SetStateAction } from 'react';
 
 import { getDoubanDetail } from '@/lib/douban.client';
+import { logger } from '@/lib/logger';
 
 /** 页面传进来的状态和函数（名字和页面里的一样） */
 export interface LoadDoubanRatingContext {
@@ -79,7 +80,7 @@ export function makeLoadDoubanRating(ctx: LoadDoubanRatingContext) {
           }
         }
       } catch (error) {
-        console.error('获取豆瓣评分失败:', error);
+        logger.error('获取豆瓣评分失败:', error);
         setDoubanRating(null);
         setDoubanCardSubtitle('');
         setDoubanAka([]);

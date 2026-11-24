@@ -17,6 +17,7 @@ import {
   loadLocalEpisodeProgress,
   saveLocalEpisodeProgress,
 } from '@/lib/episode-progress';
+import { logger } from '@/lib/logger';
 import { appendSpecialSourceParam } from '@/lib/special-source.client';
 import { getTMDBImageUrl } from '@/lib/tmdb-image-base';
 import { SearchResult } from '@/lib/types';
@@ -125,7 +126,7 @@ export function makeHandleSourceChange(ctx: ChangeSourceContext) {
 
       // 记录当前播放进度（仅在同一集数切换时恢复）
       const currentPlayTime = artPlayerRef.current?.currentTime || 0;
-      console.log('换源前当前播放时间:', currentPlayTime);
+      logger.info('换源前当前播放时间:', currentPlayTime);
 
       // 清除并设置下一个跳过片头片尾配置
       if (currentSourceRef.current && currentIdRef.current) {
@@ -136,7 +137,7 @@ export function makeHandleSourceChange(ctx: ChangeSourceContext) {
           );
           await saveSkipConfig(newSource, newId, skipConfigRef.current);
         } catch (err) {
-          console.error('清除跳过片头片尾配置失败:', err);
+          logger.error('清除跳过片头片尾配置失败:', err);
         }
       }
 
@@ -171,7 +172,7 @@ export function makeHandleSourceChange(ctx: ChangeSourceContext) {
             throw new Error('获取视频详情失败');
           }
         } catch (err) {
-          console.error('获取视频详情失败:', err);
+          logger.error('获取视频详情失败:', err);
           setIsVideoLoading(false);
           setError('获取视频详情失败，请重试');
           return;
@@ -207,11 +208,11 @@ export function makeHandleSourceChange(ctx: ChangeSourceContext) {
         oldEpisodeCount !== newEpisodeCount
       ) {
         const titleForCache = detail?.title || videoTitle;
-        console.log(
+        logger.info(
           `换源集数不一致 (${oldEpisodeCount} -> ${newEpisodeCount})，清除弹幕缓存: ${titleForCache}`
         );
         clearDanmakuCacheByTitle(titleForCache).catch((err) => {
-          console.error('清除弹幕缓存失败:', err);
+          logger.error('清除弹幕缓存失败:', err);
         });
       }
 
@@ -245,7 +246,7 @@ export function makeHandleSourceChange(ctx: ChangeSourceContext) {
       if (newDetail.source === 'xiaoya') {
         const correction = getXiaoyaCorrection(newDetail.source, newDetail.id);
         if (correction) {
-          console.log('换源到小雅源，发现纠错信息，正在应用...', correction);
+          logger.info('换源到小雅源，发现纠错信息，正在应用...', correction);
           if (correction.title) {
             finalTitle = correction.title;
           }
@@ -303,7 +304,7 @@ export function makeHandleSourceChange(ctx: ChangeSourceContext) {
             await savePlayRecord(newSource, newId, migratedRecord);
           }
         } catch (error) {
-          console.warn(
+          logger.warn(
             '[Play] Failed to migrate source-switch play record:',
             error
           );

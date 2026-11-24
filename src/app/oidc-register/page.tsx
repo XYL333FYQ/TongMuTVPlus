@@ -7,6 +7,7 @@ import { Suspense, useEffect, useState } from 'react';
 import '@/styles/auth.css';
 
 import { apiFetch } from '@/lib/api-client';
+import { logger } from '@/lib/logger';
 import { fadeUp, useReducedMotionSetting } from '@/lib/motion';
 
 import AuthVersion from '@/components/auth/AuthVersion';
@@ -38,7 +39,7 @@ function OIDCRegisterPageClient() {
           );
         }
       } catch (error) {
-        console.error('检查session失败:', error);
+        logger.error('检查session失败:', error);
         router.replace('/login');
       }
     };

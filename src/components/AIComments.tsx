@@ -4,6 +4,7 @@ import { CircleX } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 
 import { apiFetch } from '@/lib/api-client';
+import { logger } from '@/lib/logger';
 
 import BusyDots from '@/components/feedback/BusyDots';
 
@@ -31,7 +32,7 @@ export default function AIComments({ movieName, movieInfo }: AICommentsProps) {
 
   const fetchComments = useCallback(async () => {
     try {
-      console.log('正在生成AI评论...');
+      logger.info('正在生成AI评论...');
       setLoading(true);
       setError(null);
 
@@ -57,10 +58,10 @@ export default function AIComments({ movieName, movieInfo }: AICommentsProps) {
         throw new Error(data.error || '生成AI评论失败');
       }
 
-      console.log('AI评论生成成功:', data.comments?.length ?? 0);
+      logger.info('AI评论生成成功:', data.comments?.length ?? 0);
       setComments(data.comments || []);
     } catch (err) {
-      console.error('生成AI评论失败:', err);
+      logger.error('生成AI评论失败:', err);
       setError(err instanceof Error ? err.message : '生成AI评论失败');
     } finally {
       setLoading(false);
@@ -76,13 +77,13 @@ export default function AIComments({ movieName, movieInfo }: AICommentsProps) {
   }, [movieName]);
 
   const startLoading = () => {
-    console.log('开始生成AI评论');
+    logger.info('开始生成AI评论');
     setHasStartedLoading(true);
     fetchComments();
   };
 
   const regenerate = () => {
-    console.log('重新生成AI评论');
+    logger.info('重新生成AI评论');
     fetchComments();
   };
 

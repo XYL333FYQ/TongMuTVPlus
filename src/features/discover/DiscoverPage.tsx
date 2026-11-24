@@ -13,6 +13,7 @@ import {
   HOME_MODULE_KEYS,
   loadHomeCatalogue,
 } from '@/lib/home-catalogue';
+import { logger } from '@/lib/logger';
 import { useReducedMotionSetting } from '@/lib/motion';
 import { type SettingKey, readSetting, writeSetting } from '@/lib/settings';
 import type { TMDBItem } from '@/lib/tmdb.client';
@@ -315,7 +316,7 @@ function HomeClient() {
       } catch (error) {
         // 存的首页模块配置坏了就用默认的；原始错误留给排查
         // eslint-disable-next-line no-console
-        console.error('解析首页模块配置失败:', error);
+        logger.error('解析首页模块配置失败:', error);
       }
     }
 
@@ -488,7 +489,7 @@ function HomeClient() {
         if (result.failed.length) {
           // 拿到的几块照常显示，没拿到的留给排查
           // eslint-disable-next-line no-console
-          console.error('首页部分内容暂时无法获取:', result.failed.join(', '));
+          logger.error('首页部分内容暂时无法获取:', result.failed.join(', '));
         }
         setLoading(false);
       });

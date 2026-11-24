@@ -10,6 +10,7 @@ import {
   getEpisodeFilterConfig,
 } from '@/lib/db.client';
 import { normalizeEpisodeFilterConfig } from '@/lib/episode-filter';
+import { logger } from '@/lib/logger';
 import type { EpisodeFilterConfig } from '@/lib/types';
 
 import type { DanmakuController } from '@/features/player';
@@ -45,7 +46,7 @@ export function useFilterConfigs(danmaku: DanmakuController) {
           episodeFilterConfigRef.current = defaultEpisodeConfig;
         }
       } catch (error) {
-        console.error('加载过滤配置失败:', error);
+        logger.error('加载过滤配置失败:', error);
       }
     };
     loadFilterConfig();

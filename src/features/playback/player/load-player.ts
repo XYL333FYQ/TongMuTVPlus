@@ -4,6 +4,7 @@
 
 import type { Dispatch, MutableRefObject, SetStateAction } from 'react';
 
+import { logger } from '@/lib/logger';
 import { SearchResult } from '@/lib/types';
 
 import type { Art } from '@/features/player';
@@ -226,7 +227,7 @@ export function makeLoadPlayer(ctx: LoadPlayerContext) {
       setError('视频地址无效');
       return;
     }
-    console.log(videoUrl);
+    logger.info(videoUrl);
 
     const { ios: isIOS } = playerEnvironment();
 
@@ -412,7 +413,7 @@ export function makeLoadPlayer(ctx: LoadPlayerContext) {
           { recreate }
         );
       } catch (err) {
-        console.error('创建播放器失败:', err);
+        logger.error('创建播放器失败:', err);
         setError('播放器初始化失败');
       }
     };

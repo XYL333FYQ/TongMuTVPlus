@@ -355,7 +355,6 @@ export default function RoomForm(props: {
                 type='button'
                 role='radio'
                 aria-checked={values.autoPlay.mode === mode}
-                aria-selected={values.autoPlay.mode === mode}
                 onClick={() => set('autoPlay', { ...values.autoPlay, mode })}
               >
                 {label}

@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import { logger } from '@/lib/logger';
+
 import { useWatchRoomContextSafe } from '@/components/WatchRoomProvider';
 
 import type { ScreenState } from '@/types/watch-room';
@@ -228,7 +230,7 @@ export function useScreenShare(
           offer,
         });
       } catch (err) {
-        console.error('[ScreenShare] Failed to send offer:', err);
+        logger.error('[ScreenShare] Failed to send offer:', err);
         setError('无法建立屏幕共享连接');
       }
     },
@@ -312,7 +314,7 @@ export function useScreenShare(
           .map((member) => sendOfferToMember(member.id))
       );
     } catch (err) {
-      console.error('[ScreenShare] Failed to start sharing:', err);
+      logger.error('[ScreenShare] Failed to start sharing:', err);
       if (displayStreamRef.current === stream) cleanupSharingResources();
       else stream?.getTracks().forEach((track) => track.stop());
       setError((err as Error | null)?.message || '开启屏幕共享失败');
@@ -347,7 +349,7 @@ export function useScreenShare(
           answer,
         });
       } catch (err) {
-        console.error('[ScreenShare] Failed to handle offer:', err);
+        logger.error('[ScreenShare] Failed to handle offer:', err);
         setError('接收共享画面失败');
       }
     };
@@ -364,7 +366,7 @@ export function useScreenShare(
       try {
         await pc.setRemoteDescription(new RTCSessionDescription(data.answer));
       } catch (err) {
-        console.error('[ScreenShare] Failed to handle answer:', err);
+        logger.error('[ScreenShare] Failed to handle answer:', err);
       }
     };
 
@@ -378,7 +380,7 @@ export function useScreenShare(
       try {
         await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
       } catch (err) {
-        console.error('[ScreenShare] Failed to handle ICE:', err);
+        logger.error('[ScreenShare] Failed to handle ICE:', err);
       }
     };
 

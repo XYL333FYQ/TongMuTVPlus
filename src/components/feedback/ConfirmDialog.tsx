@@ -3,6 +3,8 @@
 import { AlertTriangle, X } from 'lucide-react';
 import { useEffect, useId, useRef, useState } from 'react';
 
+import { logger } from '@/lib/logger';
+
 import ModalLayer from '@/components/feedback/ModalLayer';
 
 interface ConfirmDialogProps {
@@ -65,7 +67,7 @@ export function ConfirmDialog({
     result
       .catch((error) => {
         // 失败时保留弹窗并恢复按钮，具体提示由调用方负责
-        console.error('确认操作失败:', error);
+        logger.error('确认操作失败:', error);
       })
       .finally(() => {
         pendingRef.current = false;

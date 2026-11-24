@@ -708,7 +708,6 @@ export default function MusicPage() {
   const themeRootClass = 'bg-surface text-fg';
   const showCoverPanel = mobilePanel === 'cover';
   const showLyricsPanel = mobilePanel === 'lyrics';
-  const isPlaying = Boolean(state?.isPlaying);
   const lyricActiveClass =
     'tm-room-lyric-current scale-105 text-lg font-bold text-fg md:text-2xl';
   const lyricNearbyClass = 'text-base text-muted';

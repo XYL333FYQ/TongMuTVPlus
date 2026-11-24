@@ -13,6 +13,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { apiFetch } from '@/lib/api-client';
+import { logger } from '@/lib/logger';
 import { PansouLink, PansouSearchResult } from '@/lib/pansou.client';
 import { usePageRefresh } from '@/hooks/usePageRefresh';
 
@@ -375,7 +376,7 @@ export default function PansouSearch({
       setCopiedUrl(url);
       setTimeout(() => setCopiedUrl(null), 2000);
     } catch (err) {
-      console.error('复制失败:', err);
+      logger.error('复制失败:', err);
     }
   };
 

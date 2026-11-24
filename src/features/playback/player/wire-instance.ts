@@ -8,6 +8,7 @@ import type { Dispatch, MutableRefObject, SetStateAction } from 'react';
 import { apiFetch } from '@/lib/api-client';
 import { generateStorageKey, getAllPlayRecords } from '@/lib/db.client';
 import { DEVICE_TIER_EVENT, getDeviceTier } from '@/lib/device-tier';
+import { logger } from '@/lib/logger';
 import { installTouchControls } from '@/lib/player-touch-controls';
 import { readSetting } from '@/lib/settings';
 import { formatClock, formatPaddedClock } from '@/lib/time';
@@ -109,13 +110,13 @@ export function makeWireInstance(ctx: WireInstanceContext) {
         try {
           art.fullscreenWeb = true;
         } catch (err) {
-          console.warn('恢复网页全屏失败:', err);
+          logger.warn('恢复网页全屏失败:', err);
         }
       }
 
       // 标记播放器已就绪，触发 usePlaySync 设置事件监听器
       setPlayerReady(true);
-      console.log('[PlayPage] Player ready, triggering sync setup');
+      logger.info('[PlayPage] Player ready, triggering sync setup');
 
       // 控制截图按钮在小屏幕竖屏时隐藏
       const updateScreenshotVisibility = () => {
@@ -152,7 +153,7 @@ export function makeWireInstance(ctx: WireInstanceContext) {
               isAdjusting = true; // 设置标记，防止重复触发
               const adjustedLeft = -246;
               panel.style.left = `${adjustedLeft}px`;
-              console.log(
+              logger.info(
                 '[iOS] 已调整弹幕设置面板位置: 从',
                 currentLeft,
                 '调整为',
@@ -193,7 +194,7 @@ export function makeWireInstance(ctx: WireInstanceContext) {
     });
     // 监听网页全屏事件，控制导航栏显示隐藏
     art.on('fullscreenWeb', (isFullscreen: boolean) => {
-      console.log('网页全屏状态变化:', isFullscreen);
+      logger.info('网页全屏状态变化:', isFullscreen);
       setIsWebFullscreen(isFullscreen);
     });
 
@@ -223,9 +224,9 @@ export function makeWireInstance(ctx: WireInstanceContext) {
             target = Math.max(0, duration - 5);
           }
           art.currentTime = target;
-          console.log('成功恢复播放进度到:', resumeTimeRef.current);
+          logger.info('成功恢复播放进度到:', resumeTimeRef.current);
         } catch (err) {
-          console.warn('恢复播放进度失败:', err);
+          logger.warn('恢复播放进度失败:', err);
         }
       }
       resumeTimeRef.current = null;
@@ -236,7 +237,7 @@ export function makeWireInstance(ctx: WireInstanceContext) {
         art.pause();
       } else if (shouldResumePlaying === true) {
         Promise.resolve(art.play()).catch((error) => {
-          console.warn('[Harmony HLS] 恢复播放失败:', error);
+          logger.warn('[Harmony HLS] 恢复播放失败:', error);
         });
       }
 
@@ -423,7 +424,7 @@ export function makeWireInstance(ctx: WireInstanceContext) {
                 });
               }
 
-              console.log(
+              logger.info(
                 '[PlayRecordJump] 显示跳转按钮，当前时间:',
                 currentTime,
                 '记录时间:',
@@ -438,7 +439,7 @@ export function makeWireInstance(ctx: WireInstanceContext) {
             playRecordJumpInitialCheckRef.current = false;
           }
         } catch (err) {
-          console.error('[PlayRecordJump] 检查播放记录失败:', err);
+          logger.error('[PlayRecordJump] 检查播放记录失败:', err);
           // 即使出错也标记为已检查过
           playRecordJumpInitialCheckRef.current = false;
         }

@@ -7,6 +7,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { apiFetch } from '@/lib/api-client';
+import { logger } from '@/lib/logger';
 import { base58Encode } from '@/lib/utils';
 
 import CapsuleSwitch from '@/components/catalog/CapsuleSwitch';
@@ -162,7 +163,7 @@ export default function PrivateLibraryPage() {
         setXiaoyaSearchResults(data.videos || []);
       }
     } catch (err) {
-      console.error('搜索失败:', err);
+      logger.error('搜索失败:', err);
       setError('搜索失败');
       setXiaoyaSearchResults([]);
     } finally {
@@ -205,7 +206,7 @@ export default function PrivateLibraryPage() {
           }
         }
       } catch (error) {
-        console.error('获取Emby源列表失败:', error);
+        logger.error('获取Emby源列表失败:', error);
       }
     };
 
@@ -302,7 +303,7 @@ export default function PrivateLibraryPage() {
         const data = await response.json();
 
         if (data.error) {
-          console.error('获取 Emby 媒体库列表失败:', data.error);
+          logger.error('获取 Emby 媒体库列表失败:', data.error);
           setEmbyViews([]);
         } else {
           setEmbyViews(data.views || []);
@@ -323,7 +324,7 @@ export default function PrivateLibraryPage() {
           }
         }
       } catch (err) {
-        console.error('获取 Emby 媒体库列表失败:', err);
+        logger.error('获取 Emby 媒体库列表失败:', err);
         setEmbyViews([]);
       } finally {
         setLoadingViews(false);
@@ -510,7 +511,7 @@ export default function PrivateLibraryPage() {
         if (err.name === 'AbortError') {
           return;
         }
-        console.error('获取视频列表失败:', err);
+        logger.error('获取视频列表失败:', err);
         setError('获取视频列表失败');
         if (isInitial) {
           setVideos([]);
@@ -547,19 +548,6 @@ export default function PrivateLibraryPage() {
     sortOrder,
     openlistCategory,
   ]);
-
-  const handleVideoClick = (video: Video) => {
-    // 构建source参数
-    let sourceParam = sourceType;
-    if (sourceType === 'emby' && embyKey && embySourceOptions.length > 1) {
-      sourceParam = `emby:${embyKey}`;
-    }
-
-    // 跳转到播放页面
-    router.push(
-      `/play?source=${sourceParam}&id=${encodeURIComponent(video.id)}`
-    );
-  };
 
   // 使用 Intersection Observer 监听滚动
   useEffect(() => {

@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from 'react';
 
 import '../tv-surfaces.css';
 
+import { logger } from '@/lib/logger';
 import {
   attachFlvStream,
   attachHlsStream,
@@ -268,7 +269,7 @@ export default function TVNativeVideo({
         videoEl.muted = false;
         playSafely();
       } catch (err) {
-        console.error('[TVNativeVideo] attach failed:', err);
+        logger.error('[TVNativeVideo] attach failed:', err);
         setError('播放器初始化失败');
         setLoading(false);
       }

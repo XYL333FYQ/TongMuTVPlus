@@ -27,6 +27,7 @@ import {
   savePlayRecord,
   subscribeToDataUpdates,
 } from '@/lib/db.client';
+import { logger } from '@/lib/logger';
 import {
   attachFlvStream,
   attachHlsStream,
@@ -158,7 +159,7 @@ function LivePageClient() {
           flvjs = flvModule.default;
           setPlayerLibsReady(true);
         })
-        .catch((error) => console.error('加载播放器失败:', error));
+        .catch((error) => logger.error('加载播放器失败:', error));
 
       const runtimeConfig = (window as any).RUNTIME_CONFIG;
       if (runtimeConfig?.LIVE_ENABLED === false) {
@@ -556,7 +557,7 @@ function LivePageClient() {
         setLoading(false);
       }, 1000);
     } catch (err) {
-      console.error('获取直播源失败:', err);
+      logger.error('获取直播源失败:', err);
       // 不设置错误，而是显示空状态
       setLiveSources([]);
       setLoading(false);
@@ -674,7 +675,7 @@ function LivePageClient() {
                 }
               );
             } catch (err) {
-              console.error('保存播放记录失败:', err);
+              logger.error('保存播放记录失败:', err);
             }
           }
 
@@ -734,7 +735,7 @@ function LivePageClient() {
       return true;
     } catch (err) {
       if (!request.isCurrent()) return false;
-      console.error('获取频道列表失败:', err);
+      logger.error('获取频道列表失败:', err);
       // 不设置错误，而是设置空频道列表
       setCurrentChannels([]);
       setGroupedChannels({});
@@ -784,7 +785,7 @@ function LivePageClient() {
       const newUrl = `?${newSearchParams.toString()}`;
       router.replace(newUrl);
     } catch (err) {
-      console.error('切换直播源失败:', err);
+      logger.error('切换直播源失败:', err);
       // 不设置错误，保持当前状态
     } finally {
       // 过期的那次不解锁，由最新那次切换完成后解锁
@@ -819,7 +820,7 @@ function LivePageClient() {
           }
         }
       } catch (error) {
-        console.error('获取节目单信息失败:', error);
+        logger.error('获取节目单信息失败:', error);
       } finally {
         if (request.isCurrent()) setIsEpgLoading(false);
       }
@@ -905,7 +906,7 @@ function LivePageClient() {
           }
         );
       } catch (err) {
-        console.error('保存播放记录失败:', err);
+        logger.error('保存播放记录失败:', err);
       }
     }
   };
@@ -984,7 +985,7 @@ function LivePageClient() {
 
       // 等待视频元数据加载完成
       if (!video.videoWidth || !video.videoHeight) {
-        console.warn('视频尺寸未就绪，等待loadedmetadata事件');
+        logger.warn('视频尺寸未就绪，等待loadedmetadata事件');
         await new Promise<void>((resolve) => {
           const handler = () => {
             video.removeEventListener('loadedmetadata', handler);
@@ -1190,7 +1191,7 @@ function LivePageClient() {
       };
       syncAnime4KCanvasFlip();
 
-      console.log(
+      logger.info(
         'Anime4K超分已启用，模式:',
         anime4kModeRef.current,
         '倍数:',
@@ -1200,7 +1201,7 @@ function LivePageClient() {
         artPlayerRef.current.notice.show = `超分已启用 (${anime4kModeRef.current}, ${scale}x)`;
       }
     } catch (err) {
-      console.error('初始化Anime4K失败:', err);
+      logger.error('初始化Anime4K失败:', err);
 
       // 清理已创建的资源
       if (frameRequestId) {
@@ -1281,9 +1282,9 @@ function LivePageClient() {
           artPlayerRef.current.video.style.zIndex = '';
         }
 
-        console.log('Anime4K已清理');
+        logger.info('Anime4K已清理');
       } catch (err) {
-        console.warn('清理Anime4K时出错:', err);
+        logger.warn('清理Anime4K时出错:', err);
       }
     }
   };
@@ -1307,7 +1308,7 @@ function LivePageClient() {
       writeSetting('enable_anime4k', String(enabled));
       return enabled;
     } catch (err) {
-      console.error('切换超分状态失败:', err);
+      logger.error('切换超分状态失败:', err);
       if (artPlayerRef.current) {
         artPlayerRef.current.notice.show = '切换超分状态失败';
       }
@@ -1333,7 +1334,7 @@ function LivePageClient() {
         await initAnime4K();
       }
     } catch (err) {
-      console.error('更改超分模式失败:', err);
+      logger.error('更改超分模式失败:', err);
       if (artPlayerRef.current) {
         artPlayerRef.current.notice.show = '更改超分模式失败';
       }
@@ -1358,7 +1359,7 @@ function LivePageClient() {
         await initAnime4K();
       }
     } catch (err) {
-      console.error('更改超分倍数失败:', err);
+      logger.error('更改超分倍数失败:', err);
       if (artPlayerRef.current) {
         artPlayerRef.current.notice.show = '更改超分倍数失败';
       }
@@ -1401,7 +1402,7 @@ function LivePageClient() {
         artPlayerRef.current.destroy();
         artPlayerRef.current = null;
       } catch (err) {
-        console.warn('清理播放器资源时出错:', err);
+        logger.warn('清理播放器资源时出错:', err);
         artPlayerRef.current = null;
       }
     }
@@ -1938,13 +1939,13 @@ function LivePageClient() {
           );
         }
       } catch (err) {
-        console.error('收藏操作失败:', err);
+        logger.error('收藏操作失败:', err);
         // 如果操作失败，回滚状态
         setFavorited(currentFavorited);
         favoritedRef.current = currentFavorited;
       }
     } catch (err) {
-      console.error('切换收藏失败:', err);
+      logger.error('切换收藏失败:', err);
     }
   };
 
@@ -1953,7 +1954,7 @@ function LivePageClient() {
     const checkWebGPUSupport = async () => {
       if (typeof navigator === 'undefined' || !('gpu' in navigator)) {
         setWebGPUSupported(false);
-        console.log('WebGPU不支持：浏览器不支持WebGPU API');
+        logger.info('WebGPU不支持：浏览器不支持WebGPU API');
         return;
       }
 
@@ -1961,15 +1962,15 @@ function LivePageClient() {
         const adapter = await (navigator as any).gpu.requestAdapter();
         if (!adapter) {
           setWebGPUSupported(false);
-          console.log('WebGPU不支持：无法获取GPU适配器');
+          logger.info('WebGPU不支持：无法获取GPU适配器');
           return;
         }
 
         setWebGPUSupported(true);
-        console.log('WebGPU支持检测：支持');
+        logger.info('WebGPU支持检测：支持');
       } catch (err) {
         setWebGPUSupported(false);
-        console.log('WebGPU不支持：', err);
+        logger.info('WebGPU不支持：', err);
       }
     };
 
@@ -1993,7 +1994,7 @@ function LivePageClient() {
         setFavorited(fav);
         favoritedRef.current = fav;
       } catch (err) {
-        console.error('检查收藏状态失败:', err);
+        logger.error('检查收藏状态失败:', err);
       }
     })();
   }, [currentSource, currentChannel]);
@@ -2053,7 +2054,7 @@ function LivePageClient() {
 
   function m3u8Loader(video: HTMLVideoElement, url: string) {
     if (!Hls) {
-      console.error('HLS.js 未加载');
+      logger.error('HLS.js 未加载');
       return;
     }
 
@@ -2136,7 +2137,7 @@ function LivePageClient() {
     });
 
     hls.on(Hls.Events.ERROR, function (event: any, data: any) {
-      console.error('HLS Error:', event, data);
+      logger.error('HLS Error:', event, data);
 
       if (data.fatal) {
         switch (data.type) {
@@ -2156,13 +2157,13 @@ function LivePageClient() {
 
   function flvLoader(video: HTMLVideoElement, url: string) {
     if (!flvjs) {
-      console.error('FLV.js 未加载');
+      logger.error('FLV.js 未加载');
       return;
     }
 
     attachFlvStream(flvjs, video, url, {
       onError: (errorType, errorDetail) => {
-        console.error('FLV.js error:', errorType, errorDetail);
+        logger.error('FLV.js error:', errorType, errorDetail);
       },
     });
   }
@@ -2183,7 +2184,7 @@ function LivePageClient() {
         return;
       }
 
-      console.log('视频URL:', videoUrl);
+      logger.info('视频URL:', videoUrl);
 
       // 销毁之前的播放器实例并创建新的
       if (artPlayerRef.current) {
@@ -2206,7 +2207,7 @@ function LivePageClient() {
           const precheckResponse = await apiFetch(precheckUrl);
           if (cancelled) return;
           if (!precheckResponse.ok) {
-            console.error('预检查失败:', precheckResponse.statusText);
+            logger.error('预检查失败:', precheckResponse.statusText);
             setIsVideoLoading(false);
             return;
           }
@@ -2215,13 +2216,13 @@ function LivePageClient() {
           if (precheckResult?.success && precheckResult?.type) {
             type = precheckResult.type;
           } else {
-            console.error('预检查返回无效结果:', precheckResult);
+            logger.error('预检查返回无效结果:', precheckResult);
             setIsVideoLoading(false);
             return;
           }
         } catch (err) {
           if (cancelled) return;
-          console.error('预检查异常:', err);
+          logger.error('预检查异常:', err);
           setIsVideoLoading(false);
           return;
         }
@@ -2406,7 +2407,7 @@ function LivePageClient() {
         });
 
         artPlayerRef.current.on('error', (err: any) => {
-          console.error('播放器错误:', err);
+          logger.error('播放器错误:', err);
         });
 
         if (artPlayerRef.current?.video) {
@@ -2416,7 +2417,7 @@ function LivePageClient() {
           );
         }
       } catch (err) {
-        console.error('创建播放器失败:', err);
+        logger.error('创建播放器失败:', err);
         // 不设置错误，只记录日志
       }
     };
@@ -3188,8 +3189,6 @@ function LivePageClient() {
                             const channel = item.channel;
                             const isActive = channel.id === currentChannel?.id;
                             const testLabel = getLineTestLabel(channel);
-                            const testResult =
-                              lineTestResults[getLineTestKey(channel)];
                             const isTesting = isTestingLineGroup(
                               getItemChannels(item)
                             );
@@ -3391,8 +3390,6 @@ function LivePageClient() {
                                     const isActive =
                                       channel.id === currentChannel?.id;
                                     const testLabel = getLineTestLabel(channel);
-                                    const testResult =
-                                      lineTestResults[getLineTestKey(channel)];
                                     const isBestLine =
                                       bestLine?.id === channel.id;
                                     return (

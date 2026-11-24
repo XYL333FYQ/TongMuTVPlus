@@ -4,6 +4,7 @@
 
 import type { Dispatch, MutableRefObject, SetStateAction } from 'react';
 
+import { logger } from '@/lib/logger';
 import { getVideoResolutionFromM3u8 } from '@/lib/media-engines';
 import { SearchResult } from '@/lib/types';
 
@@ -70,7 +71,7 @@ export function makeFetchCurrentSourceVideoInfo(ctx: SourceVideoInfoContext) {
         // 直链模式且未走代理：跳过 HLS.js 探测。
         // getVideoResolutionFromM3u8 内部使用 HLS.js (XMLHttpRequest) 加载，
         // 而 XHR 受 CORS 限制，探测必然失败。实际播放器通过 <video src> 加载不受 CORS 影响。
-        console.log(
+        logger.info(
           '[视频信息] 直链直连模式，跳过分辨率探测（避免 CORS 误报）'
         );
         setCurrentSourceVideoInfo(null);
@@ -86,7 +87,7 @@ export function makeFetchCurrentSourceVideoInfo(ctx: SourceVideoInfoContext) {
       const info = await getVideoResolutionFromM3u8(episodeUrl, 4000);
       setCurrentSourceVideoInfo(info);
     } catch (error) {
-      console.error('获取视频信息失败:', error);
+      logger.error('获取视频信息失败:', error);
       setCurrentSourceVideoInfo(null);
     }
   };

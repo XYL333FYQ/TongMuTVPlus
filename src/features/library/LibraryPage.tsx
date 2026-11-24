@@ -14,6 +14,7 @@ import {
   getDoubanList,
   getDoubanRecommends,
 } from '@/lib/douban.client';
+import { logger } from '@/lib/logger';
 import { publicCatalogCategories } from '@/lib/public-catalog';
 import { DoubanItem, DoubanResult } from '@/lib/types';
 import { useClientMemoryState } from '@/hooks/useClientMemoryState';
@@ -552,7 +553,7 @@ function DoubanPageClient() {
       } catch (err) {
         // 界面上已经提示“影视信息暂时无法获取”，原始错误留给排查
         // eslint-disable-next-line no-console
-        if (!signal?.aborted) console.error(err);
+        if (!signal?.aborted) logger.error(err);
         if (
           !signal?.aborted &&
           generation === dataGeneration.current &&

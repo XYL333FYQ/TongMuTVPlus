@@ -6,6 +6,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { apiFetch } from '@/lib/api-client';
 import { cn } from '@/lib/cn';
 import { matchesMedia } from '@/lib/device-tier';
+import { logger } from '@/lib/logger';
 import { playMusicList } from '@/lib/music/actions';
 import { getApiErrorMessage } from '@/lib/music/errors';
 import { mapSong } from '@/lib/music/shared';
@@ -160,7 +161,7 @@ export default function MusicMyPlaylistsPage() {
       }
       loadUserPlaylists();
     } catch (error) {
-      console.error('删除歌单失败:', error);
+      logger.error('删除歌单失败:', error);
       notifyError('删除歌单失败');
     } finally {
       setDeletingPlaylistId(null);
@@ -193,7 +194,7 @@ export default function MusicMyPlaylistsPage() {
 
       loadUserPlaylistSongs(selectedUserPlaylist.id);
     } catch (error) {
-      console.error('移除歌曲失败:', error);
+      logger.error('移除歌曲失败:', error);
       notifyError('移除歌曲失败');
     } finally {
       setRemovingSongId(null);

@@ -24,6 +24,7 @@ import {
   pickDefaultSelection,
 } from '@/lib/category-tree';
 import { ApiSite } from '@/lib/config';
+import { logger } from '@/lib/logger';
 import { getPageScrollTop, scrollPageTo } from '@/lib/page-scroll';
 import { readSetting, removeSetting, writeSetting } from '@/lib/settings';
 import { appendSpecialSourceParam } from '@/lib/special-source.client';
@@ -250,7 +251,7 @@ function SourceSearchPageClient() {
         }
       } catch (error) {
         if (cancelled) return;
-        console.error('Failed to load API sources:', error);
+        logger.error('Failed to load API sources:', error);
         setSourcesError('视频源暂时无法获取');
       } finally {
         if (!cancelled) setIsLoadingSources(false);
@@ -308,7 +309,7 @@ function SourceSearchPageClient() {
         setSelectedCategory(category);
       } catch (error) {
         if (cancelled) return;
-        console.error('Failed to load categories:', error);
+        logger.error('Failed to load categories:', error);
         setCategoriesError('分类暂时无法获取');
       } finally {
         if (!cancelled) setIsLoadingCategories(false);
@@ -343,7 +344,7 @@ function SourceSearchPageClient() {
         setHasMore(data.page < data.pageCount);
       } catch (error) {
         if (cancelled) return;
-        console.error('Failed to load videos:', error);
+        logger.error('Failed to load videos:', error);
         setVideosError(
           page === 1 ? '视频列表暂时无法获取' : '下一页加载失败，已保留当前内容'
         );

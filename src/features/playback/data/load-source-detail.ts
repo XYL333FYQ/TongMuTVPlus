@@ -10,6 +10,7 @@ import {
   buildEpisodeProgressContentKey,
   loadLocalEpisodeProgress,
 } from '@/lib/episode-progress';
+import { logger } from '@/lib/logger';
 import { type SettingKey, readSetting, writeSetting } from '@/lib/settings';
 import {
   appendSpecialSourceParam,
@@ -146,7 +147,7 @@ export function makeLoadSourceDetail(ctx: LoadSourceDetailContext) {
         setAvailableSources(sourcesWithCorrections);
         return sourcesWithCorrections;
       } catch (err) {
-        console.error('获取视频详情失败:', err);
+        logger.error('获取视频详情失败:', err);
         return [];
       } finally {
         setSourceSearchLoading(false);
@@ -356,7 +357,7 @@ export function makeLoadSourceDetail(ctx: LoadSourceDetailContext) {
           return parsed;
         }
       } catch (error) {
-        console.error('[Play] 读取缓存失败:', error);
+        logger.error('[Play] 读取缓存失败:', error);
       }
       return null;
     };
@@ -379,7 +380,7 @@ export function makeLoadSourceDetail(ctx: LoadSourceDetailContext) {
         };
         writeSetting(cacheKey, JSON.stringify(payload));
       } catch (error) {
-        console.error('[Play] 写入缓存失败:', error);
+        logger.error('[Play] 写入缓存失败:', error);
       }
     };
 
@@ -412,7 +413,7 @@ export function makeLoadSourceDetail(ctx: LoadSourceDetailContext) {
       try {
         const cachedPayload = readSearchCache(query);
         if (cachedPayload) {
-          console.log(
+          logger.info(
             `[Play] 使用 sessionStorage ${
               cachedPayload.status === 'partial' ? '临时' : '完整'
             }缓存的搜索结果`
@@ -493,7 +494,7 @@ export function makeLoadSourceDetail(ctx: LoadSourceDetailContext) {
         try {
           directUrl = base58Decode(currentId);
         } catch (decodeError) {
-          console.error('直链地址解析失败:', decodeError);
+          logger.error('直链地址解析失败:', decodeError);
           setError('直链地址解析失败');
           setLoading(false);
           return;
@@ -591,7 +592,7 @@ export function makeLoadSourceDetail(ctx: LoadSourceDetailContext) {
               sourcesInfo = currentSourceDetail;
             }
           } catch (err) {
-            console.error('获取当前源详情失败:', err);
+            logger.error('获取当前源详情失败:', err);
           }
         }
 
@@ -613,7 +614,7 @@ export function makeLoadSourceDetail(ctx: LoadSourceDetailContext) {
             setBackgroundSourcesLoading(false);
           })
           .catch((err) => {
-            console.error('异步获取其他源失败:', err);
+            logger.error('异步获取其他源失败:', err);
             setBackgroundSourcesLoading(false);
           });
       } else {
@@ -643,7 +644,7 @@ export function makeLoadSourceDetail(ctx: LoadSourceDetailContext) {
             isLazyDetailSource(detailData.source) &&
             (!detailData.episodes || detailData.episodes.length === 0)
           ) {
-            console.log('[Play] Fetching lazy detail for selected source...');
+            logger.info('[Play] Fetching lazy detail for selected source...');
             // currentSource 已经是完整格式
             const detailSources = await fetchSourceDetail(
               currentSource,
@@ -705,14 +706,14 @@ export function makeLoadSourceDetail(ctx: LoadSourceDetailContext) {
         }
       }
 
-      console.log(detailData.source, detailData.id);
+      logger.info(detailData.source, detailData.id);
 
       // 这类源统一通过详情接口补全播放数据
       if (
         isLazyDetailSource(detailData.source) &&
         (!detailData.episodes || detailData.episodes.length === 0)
       ) {
-        console.log('[Play] Fetching lazy detail after source selection...');
+        logger.info('[Play] Fetching lazy detail after source selection...');
         const detailSources = await fetchSourceDetail(
           detailData.source,
           detailData.id,
@@ -735,7 +736,7 @@ export function makeLoadSourceDetail(ctx: LoadSourceDetailContext) {
           detailData.id
         );
         if (correction) {
-          console.log('发现小雅源纠错信息，正在应用...', correction);
+          logger.info('发现小雅源纠错信息，正在应用...', correction);
           detailData = applyCorrection(detailData, correction);
           // 同时设置纠错后的描述
           if (correction.overview) {
@@ -790,7 +791,6 @@ export function makeLoadSourceDetail(ctx: LoadSourceDetailContext) {
 
         // 确定初始集数索引
         let initialIndex = 0;
-        let shouldResumeTime = false;
         // Explicit room/queue selection takes precedence over personal viewing history.
         const requestedIndex = parsePlaybackEpisodeIndex(
           searchParams.get('episode')
@@ -813,9 +813,8 @@ export function makeLoadSourceDetail(ctx: LoadSourceDetailContext) {
             // 如果播放记录的集数和点击的文件集数一致，则使用播放记录的时间
             if (recordIndex === initialEpisodeIndex) {
               initialIndex = recordIndex;
-              shouldResumeTime = true;
               resumeTimeRef.current = recordTime;
-              console.log(
+              logger.info(
                 '[Play] 播放记录集数与点击文件一致，恢复播放进度:',
                 recordTime
               );
@@ -827,14 +826,13 @@ export function makeLoadSourceDetail(ctx: LoadSourceDetailContext) {
                 initialIndex
               );
               resumeTimeRef.current = localEpisodeTime;
-              console.log('[Play] 使用点击的文件集数:', initialIndex);
+              logger.info('[Play] 使用点击的文件集数:', initialIndex);
             }
           } else {
             // 没有initialEpisodeIndex，使用播放记录
             initialIndex = recordIndex;
-            shouldResumeTime = true;
             resumeTimeRef.current = recordTime;
-            console.log('[Play] 使用播放记录集数:', initialIndex);
+            logger.info('[Play] 使用播放记录集数:', initialIndex);
           }
         } else {
           // 没有播放记录
@@ -845,7 +843,7 @@ export function makeLoadSourceDetail(ctx: LoadSourceDetailContext) {
               detailEpisodeProgressContentKey,
               initialIndex
             );
-            console.log(
+            logger.info(
               '[Play] 没有播放记录，使用点击的文件集数:',
               initialIndex
             );
@@ -856,7 +854,7 @@ export function makeLoadSourceDetail(ctx: LoadSourceDetailContext) {
               detailEpisodeProgressContentKey,
               initialIndex
             );
-            console.log('[Play] 没有播放记录，从第0集开始');
+            logger.info('[Play] 没有播放记录，从第0集开始');
           }
         }
 
@@ -866,7 +864,7 @@ export function makeLoadSourceDetail(ctx: LoadSourceDetailContext) {
           currentEpisodeIndexRef.current = initialIndex;
         }
       } catch (err) {
-        console.error('读取播放记录失败:', err);
+        logger.error('读取播放记录失败:', err);
       }
 
       // 短暂延迟让用户看到完成状态

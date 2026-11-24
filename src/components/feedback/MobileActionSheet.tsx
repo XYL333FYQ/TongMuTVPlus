@@ -3,6 +3,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import '@/styles/panels.css';
 
+import { logger } from '@/lib/logger';
 import { useReducedMotionSetting } from '@/lib/motion';
 import { usePullDownClose } from '@/hooks/usePullDownClose';
 
@@ -283,7 +284,7 @@ const MobileActionSheet: React.FC<MobileActionSheetProps> = ({
                     // 异步操作失败时记录下来，避免未处理的 Promise 拒绝
                     // 同步调用以保留点击手势（剪贴板、打开新窗口需要）
                     Promise.resolve(action.onClick()).catch((error) =>
-                      console.error('操作失败:', error)
+                      logger.error('操作失败:', error)
                     );
                     requestClose();
                   }}

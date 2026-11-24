@@ -16,6 +16,7 @@ import { isAnimeCategoryText } from '@/lib/anime-keyword-expr';
 import { apiFetch } from '@/lib/api-client';
 import { cleanEpisodeDisplayName } from '@/lib/danmaku/format';
 import type { EpisodeTitleCorrection } from '@/lib/episode-title-correction';
+import { logger } from '@/lib/logger';
 import type { SearchResult } from '@/lib/types';
 
 import type { DanmakuState } from '@/features/player';
@@ -98,7 +99,7 @@ export function useEpisodeNames({
           setTmdbEpisodeNames(names);
         }
       } catch (err) {
-        console.error('获取TMDB分集名称失败:', err);
+        logger.error('获取TMDB分集名称失败:', err);
       }
     },
     // 后两个是页面传进来的 setState 和 ref，不会变

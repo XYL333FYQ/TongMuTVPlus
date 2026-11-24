@@ -4,6 +4,7 @@ import { Film, Inbox } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 
 import { apiFetch } from '@/lib/api-client';
+import { logger } from '@/lib/logger';
 
 import { askConfirm, notifyError } from '@/components/feedback/AppDialogs';
 import BusyDots from '@/components/feedback/BusyDots';
@@ -46,7 +47,7 @@ export function OfflineDownloadPanel({
   onClose,
 }: OfflineDownloadPanelProps) {
   const [tasks, setTasks] = useState<OfflineDownloadTask[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading] = useState(false);
   const [viewMode, setViewMode] = useState<'tasks' | 'library'>('tasks'); // 视图模式：任务列表或视频库
 
   // 获取任务列表
@@ -58,7 +59,7 @@ export function OfflineDownloadPanel({
         setTasks(data.tasks || []);
       }
     } catch (error) {
-      console.error('获取离线下载任务列表失败:', error);
+      logger.error('获取离线下载任务列表失败:', error);
     }
   };
 
@@ -80,7 +81,7 @@ export function OfflineDownloadPanel({
         notifyError(`删除失败: ${data.error}`);
       }
     } catch (error) {
-      console.error('删除任务失败:', error);
+      logger.error('删除任务失败:', error);
       notifyError('删除任务失败');
     }
   };
@@ -96,7 +97,6 @@ export function OfflineDownloadPanel({
       );
 
       if (response.ok) {
-        const data = await response.json();
         // 更新任务状态（保留进度，只重试失败的片段）
         setTasks((prev) =>
           prev.map((t) =>
@@ -117,7 +117,7 @@ export function OfflineDownloadPanel({
         notifyError(`重试失败: ${data.error}`);
       }
     } catch (error) {
-      console.error('重试任务失败:', error);
+      logger.error('重试任务失败:', error);
       notifyError('重试任务失败');
     }
   };
