@@ -13,6 +13,7 @@
  *
  * 全角 ＆｜（） 会归一化为半角。
  */
+import { logger } from '@/lib/logger';
 
 export type KeywordExprMode = 'and' | 'or';
 
@@ -220,7 +221,7 @@ export function matchesFilter(title: string, filterText: string): boolean {
   if (!filterText) return true;
   const result = matchKeywordExpr(title, filterText, 'and');
   if (result.error) {
-    console.warn(
+    logger.warn(
       `[AnimeSubscription] 过滤表达式无效: ${result.error} | ${filterText}`
     );
   }
@@ -232,7 +233,7 @@ export function matchesExclude(title: string, excludeText?: string): boolean {
   if (!excludeText) return false;
   const result = matchKeywordExpr(title, excludeText, 'or');
   if (result.error) {
-    console.warn(
+    logger.warn(
       `[AnimeSubscription] 排除表达式无效: ${result.error} | ${excludeText}`
     );
     // 非法排除式：保守起见不排除（避免误杀全部），但已打日志
@@ -242,10 +243,10 @@ export function matchesExclude(title: string, excludeText?: string): boolean {
 }
 
 /** 校验表达式是否可解析（供 API/UI） */
-export function validateKeywordExpr(
-  exprText: string | undefined | null,
-  mode: KeywordExprMode = 'and'
-): { ok: boolean; error?: string } {
+export function validateKeywordExpr(exprText: string | undefined | null): {
+  ok: boolean;
+  error?: string;
+} {
   if (exprText == null || !String(exprText).trim()) {
     return { ok: true };
   }

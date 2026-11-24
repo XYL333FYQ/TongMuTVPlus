@@ -1,5 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any,no-console,no-case-declarations */
 
+import { logger } from '@/lib/logger';
+
 import { DoubanItem, DoubanResult } from './types';
 
 interface DoubanRequestOptions {
@@ -335,7 +337,7 @@ async function requestDoubanWithFallback<T>(
       throw primaryError;
     }
 
-    console.warn(
+    logger.warn(
       `[Douban] 主渠道失败，切换备用渠道: ${primary.proxyType} -> ${backup.proxyType}`,
       primaryError
     );
@@ -702,7 +704,7 @@ async function fetchDoubanRecommends(
     reqParams.append('sort', sort);
   }
   const target = `${baseUrl}?${reqParams.toString()}`;
-  console.log(target);
+  logger.info(target);
   try {
     const doubanData = await readCatalogueResponse<DoubanRecommendApiResponse>(
       target,

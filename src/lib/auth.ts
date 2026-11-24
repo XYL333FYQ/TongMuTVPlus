@@ -1,5 +1,7 @@
 import { NextRequest } from 'next/server';
 
+import { logger } from '@/lib/logger';
+
 import { isAccessTokenInvalidated } from './access-token-invalidation';
 
 export type AuthInfo = {
@@ -137,6 +139,6 @@ export function clearAuthCookie(): void {
         '; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax';
     }
   } catch (error) {
-    console.error('[Auth] Failed to clear cookie:', error);
+    logger.error('[Auth] Failed to clear cookie:', error);
   }
 }

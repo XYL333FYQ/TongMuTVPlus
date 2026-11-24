@@ -6,6 +6,8 @@
 // @ts-expect-error - mux.js 没有类型定义
 import * as muxjs from 'mux.js';
 
+import { logger } from '@/lib/logger';
+
 import { AESDecryptor } from './aes-decryptor';
 import {
   buildIndexedDBVideoCacheKey,
@@ -363,12 +365,12 @@ export class M3U8Downloader {
       const epDirName = `ep${task.episodeIndex + 1}`;
       await videoIdDirHandle.removeEntry(epDirName, { recursive: true });
 
-      console.log(
+      logger.info(
         `已删除未完成的下载文件: ${task.source}/${task.videoId}/${epDirName}`
       );
     } catch (error) {
       // 如果目录不存在或删除失败，忽略错误
-      console.warn('删除文件失败（可能目录不存在）:', error);
+      logger.warn('删除文件失败（可能目录不存在）:', error);
     }
   }
 
@@ -381,9 +383,9 @@ export class M3U8Downloader {
 
     try {
       await deleteIndexedDBVideoCache(cacheKey);
-      console.log(`已删除未完成的 IndexedDB 视频缓存: ${cacheKey}`);
+      logger.info(`已删除未完成的 IndexedDB 视频缓存: ${cacheKey}`);
     } catch (error) {
-      console.warn('删除 IndexedDB 视频缓存失败:', error);
+      logger.warn('删除 IndexedDB 视频缓存失败:', error);
     }
   }
 
@@ -537,7 +539,7 @@ export class M3U8Downloader {
             durationMs: Date.now() - startTime,
             httpStatus,
           });
-          console.log(
+          logger.info(
             `片段 ${index} ${reason}，正在重试 (${
               currentRetry + 1
             }/${maxRetries})...`
@@ -670,7 +672,7 @@ export class M3U8Downloader {
         .then(() => this.markSegmentSuccess(task, index))
         .then(() => callback())
         .catch((error) => {
-          console.error('保存分片失败:', error);
+          logger.error('保存分片失败:', error);
           task.finishList[index].status = 'is-error';
           task.errorNum++;
           this.options.onError?.(task, `保存分片 ${index + 1} 失败: ${error}`);
@@ -758,7 +760,7 @@ export class M3U8Downloader {
    * 获取 M3U8 文件
    */
   private async fetchM3U8(url: string): Promise<string> {
-    console.log('fetchM3U8 - 请求 URL:', url);
+    logger.info('fetchM3U8 - 请求 URL:', url);
     return new Promise((resolve, reject) => {
       const xhr = new XMLHttpRequest();
       xhr.onreadystatechange = () => {
@@ -766,7 +768,7 @@ export class M3U8Downloader {
           if (xhr.status >= 200 && xhr.status < 300) {
             resolve(xhr.responseText);
           } else {
-            console.error('fetchM3U8 失败 - URL:', url, 'Status:', xhr.status);
+            logger.error('fetchM3U8 失败 - URL:', url, 'Status:', xhr.status);
             reject(new Error(`HTTP ${xhr.status}`));
           }
         }
@@ -929,7 +931,7 @@ export class M3U8Downloader {
     try {
       return task.aesConf.decryption.decrypt(data, 0, iv.buffer, true);
     } catch (error) {
-      console.error('AES 解密失败:', error);
+      logger.error('AES 解密失败:', error);
       return data;
     }
   }
@@ -967,7 +969,7 @@ export class M3U8Downloader {
         transMuxer.push(new Uint8Array(data));
         transMuxer.flush();
       } catch (error) {
-        console.error('MP4 转码失败:', error);
+        logger.error('MP4 转码失败:', error);
         // 转码失败，返回原始数据
         callback(data);
       }
@@ -1066,7 +1068,7 @@ export class M3U8Downloader {
         );
         targetDirHandle = epDirHandle;
       } catch (error) {
-        console.error('创建子目录失败:', error);
+        logger.error('创建子目录失败:', error);
         throw error;
       }
     }
@@ -1081,7 +1083,7 @@ export class M3U8Downloader {
       await writable.write(data);
       await writable.close();
     } catch (error) {
-      console.error(`保存分片 ${filename} 失败:`, error);
+      logger.error(`保存分片 ${filename} 失败:`, error);
       throw error;
     }
   }
@@ -1091,7 +1093,7 @@ export class M3U8Downloader {
    */
   private async generateLocalPlaylist(task: M3U8DownloadTask): Promise<void> {
     if (!task.filesystemDirHandle || !task.m3u8Content) {
-      console.error('无法生成播放列表：缺少目录句柄或 M3U8 内容');
+      logger.error('无法生成播放列表：缺少目录句柄或 M3U8 内容');
       return;
     }
 
@@ -1114,7 +1116,7 @@ export class M3U8Downloader {
         );
         targetDirHandle = epDirHandle;
       } catch (error) {
-        console.error('获取子目录失败:', error);
+        logger.error('获取子目录失败:', error);
         return;
       }
     }
@@ -1173,7 +1175,7 @@ export class M3U8Downloader {
       await writable.write(playlistContent);
       await writable.close();
     } catch (error) {
-      console.error('生成播放列表失败:', error);
+      logger.error('生成播放列表失败:', error);
     }
   }
 
@@ -1263,7 +1265,7 @@ export class M3U8Downloader {
       await writable.write(keyData);
       await writable.close();
     } catch (error) {
-      console.error('保存密钥失败:', error);
+      logger.error('保存密钥失败:', error);
     }
   }
 }

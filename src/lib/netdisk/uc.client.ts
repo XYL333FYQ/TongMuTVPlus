@@ -4,6 +4,7 @@ import crypto from 'node:crypto';
 
 import { getConfig, setCachedConfig } from '@/lib/config';
 import { db } from '@/lib/db';
+import { logger } from '@/lib/logger';
 
 const UC_SHARE_API_BASE = 'https://pc-api.uc.cn/1/clouddrive';
 const UC_DRIVE_API_BASE = 'https://pc-api.uc.cn/1/clouddrive';
@@ -116,9 +117,9 @@ async function persistRenewedUCCookie(
 
         await db.saveAdminConfig(config);
         await setCachedConfig(config);
-        console.log(`[uc] renewed cookie fields: ${names.join(', ')}`);
+        logger.info(`[uc] renewed cookie fields: ${names.join(', ')}`);
       } catch (error) {
-        console.warn('[uc] persist renewed cookie failed:', error);
+        logger.warn('[uc] persist renewed cookie failed:', error);
       }
     });
 

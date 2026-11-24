@@ -2,6 +2,7 @@
 
 import { BRAND_NAME } from '@/lib/brand';
 import { db } from '@/lib/db';
+import { logger } from '@/lib/logger';
 import { normalizeApiBaseUrl } from '@/lib/url';
 
 import { AdminConfig } from './admin.types';
@@ -262,10 +263,10 @@ async function getInitConfig(
         const decodedBytes = bs58.decode(configContent);
         const decodedContent = new TextDecoder().decode(decodedBytes);
         configFile = decodedContent;
-        console.log('已从订阅 URL 获取配置');
+        logger.info('已从订阅 URL 获取配置');
       }
     } catch (e) {
-      console.error('从订阅 URL 获取配置失败:', e);
+      logger.error('从订阅 URL 获取配置失败:', e);
     }
   }
 
@@ -457,7 +458,7 @@ export async function getConfig(): Promise<AdminConfig> {
 
     // localStorage 模式下直接从环境变量初始化
     if (storageType === 'localstorage') {
-      console.log('localStorage 模式：从环境变量初始化配置');
+      logger.info('localStorage 模式：从环境变量初始化配置');
       const adminConfig = await getInitConfig('');
       cachedConfig = configSelfCheck(adminConfig);
       configInitPromise = null;
@@ -470,7 +471,7 @@ export async function getConfig(): Promise<AdminConfig> {
     try {
       adminConfig = await db.getAdminConfig();
     } catch (e) {
-      console.error('获取管理员配置失败:', e);
+      logger.error('获取管理员配置失败:', e);
       dbReadFailed = true;
     }
 
@@ -478,11 +479,11 @@ export async function getConfig(): Promise<AdminConfig> {
     if (!adminConfig) {
       if (dbReadFailed) {
         // 数据库读取失败，使用默认配置但不保存，避免覆盖数据库
-        console.warn('数据库读取失败，使用临时默认配置（不会保存到数据库）');
+        logger.warn('数据库读取失败，使用临时默认配置（不会保存到数据库）');
         adminConfig = await getInitConfig('');
       } else {
         // 数据库中确实没有配置，首次初始化并保存
-        console.log('首次初始化配置');
+        logger.info('首次初始化配置');
         adminConfig = await getInitConfig('');
         await db.saveAdminConfig(adminConfig);
       }
@@ -501,9 +502,9 @@ export async function getConfig(): Promise<AdminConfig> {
     if (!dbReadFailed && needsEmbyMigration) {
       try {
         await db.saveAdminConfig(adminConfig);
-        console.log('[Config] Emby配置迁移已保存到数据库');
+        logger.info('[Config] Emby配置迁移已保存到数据库');
       } catch (error) {
-        console.error('[Config] 保存迁移后的配置失败:', error);
+        logger.error('[Config] 保存迁移后的配置失败:', error);
       }
     }
 
@@ -517,16 +518,16 @@ export async function getConfig(): Promise<AdminConfig> {
         // 检查是否支持V2存储
         const storage = (db as any).storage;
         if (storage && typeof storage.createUserV2 === 'function') {
-          console.log('检测到配置中有用户，开始自动迁移...');
+          logger.info('检测到配置中有用户，开始自动迁移...');
           await db.migrateUsersFromConfig(adminConfig);
           // 迁移完成后，清空配置中的用户列表并保存
           adminConfig.UserConfig.Users = [];
           await db.saveAdminConfig(adminConfig);
           cachedConfig = adminConfig;
-          console.log('用户自动迁移完成');
+          logger.info('用户自动迁移完成');
         }
       } catch (error) {
-        console.error('自动迁移用户失败:', error);
+        logger.error('自动迁移用户失败:', error);
         // 不影响主流程，继续执行
       }
     }
@@ -859,7 +860,7 @@ export function configSelfCheck(adminConfig: AdminConfig): AdminConfig {
   if (adminConfig.EmbyConfig) {
     // 如果是旧格式（有ServerURL但没有Sources）
     if (adminConfig.EmbyConfig.ServerURL && !adminConfig.EmbyConfig.Sources) {
-      console.log('[Config] 检测到旧格式Emby配置，自动迁移到新格式');
+      logger.info('[Config] 检测到旧格式Emby配置，自动迁移到新格式');
       const oldConfig = adminConfig.EmbyConfig;
       adminConfig.EmbyConfig = {
         Sources: [
@@ -1258,7 +1259,7 @@ export async function resetConfig() {
   try {
     originConfig = await db.getAdminConfig();
   } catch (e) {
-    console.error('获取管理员配置失败:', e);
+    logger.error('获取管理员配置失败:', e);
   }
   if (!originConfig) {
     originConfig = {} as AdminConfig;

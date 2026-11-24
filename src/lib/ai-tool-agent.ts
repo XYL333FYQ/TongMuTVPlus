@@ -26,6 +26,7 @@ import {
 } from '@/lib/ai-orchestrator';
 import { BRAND_NAME } from '@/lib/brand';
 import { db } from '@/lib/db';
+import { logger } from '@/lib/logger';
 import { guardedFetch, ProxyTargetBlockedError } from '@/lib/server/ssrf';
 import { getTMDBTrendingContent, searchTMDBMulti } from '@/lib/tmdb.client';
 
@@ -639,7 +640,7 @@ async function dispatchTool(
 
     return { name, ok: false, text: `未知工具: ${name}` };
   } catch (error) {
-    console.error(`工具 ${name} 执行失败:`, error);
+    logger.error(`工具 ${name} 执行失败:`, error);
     return {
       name,
       ok: false,
@@ -673,7 +674,7 @@ function parseToolArgs(rawArgs: any, fallbackName: string): any {
         /* fall through */
       }
     }
-    console.warn(`工具参数解析失败（${fallbackName}）:`, source.slice(0, 100));
+    logger.warn(`工具参数解析失败（${fallbackName}）:`, source.slice(0, 100));
     return {};
   }
 }
@@ -865,7 +866,7 @@ const openaiCompletionsAdapter: ProviderAdapter = {
             }
           }
         } catch (e) {
-          console.error('Parse stream chunk error:', e);
+          logger.error('Parse stream chunk error:', e);
         }
       }
     }
@@ -1181,7 +1182,7 @@ const openaiResponsesAdapter: ProviderAdapter = {
           }
         } catch (e) {
           if (e instanceof Error && e.message.includes('failed')) throw e;
-          console.error('Parse Responses stream chunk error:', e);
+          logger.error('Parse Responses stream chunk error:', e);
         }
       }
     }
@@ -1444,7 +1445,7 @@ const claudeAdapter: ProviderAdapter = {
             // thinking_delta 等跳过
           }
         } catch (e) {
-          console.error('Parse Claude stream chunk error:', e);
+          logger.error('Parse Claude stream chunk error:', e);
         }
       }
     }
@@ -1787,7 +1788,7 @@ async function compressTranscript(
     try {
       summary = await summarizeWithProvider(providerOpts, rawText);
     } catch (e) {
-      console.error('上下文摘要失败，降级为直接丢弃工具消息:', e);
+      logger.error('上下文摘要失败，降级为直接丢弃工具消息:', e);
     }
   }
   summary = (summary || '').trim();
@@ -2034,7 +2035,7 @@ export async function runToolAgent(
         }
         send('[DONE]');
       } catch (error) {
-        console.error('AI agent 流式错误:', error);
+        logger.error('AI agent 流式错误:', error);
         if (!closed) {
           const msg =
             error instanceof DOMException && error.name === 'AbortError'

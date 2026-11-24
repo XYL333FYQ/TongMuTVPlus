@@ -11,4 +11,6 @@ export const HTMLConverter = () => (text: string) => text;
 
 export const Locale = { from: {}, to: {} };
 
-export default { Converter };
+const openccShim = { Converter };
+
+export default openccShim;

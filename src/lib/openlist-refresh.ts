@@ -6,6 +6,7 @@ import type { AdminConfig } from '@/lib/admin.types';
 import { getConfig } from '@/lib/config';
 import { generateFolderKey } from '@/lib/crypto';
 import { db } from '@/lib/db';
+import { logger } from '@/lib/logger';
 import { OpenListClient } from '@/lib/openlist.client';
 import {
   invalidateMetaInfoCache,
@@ -64,7 +65,7 @@ async function migrateToMultiRoot(
 ): Promise<void> {
   const oldRootPath = openListConfig.RootPath!;
 
-  console.log('[OpenList Migration] 检测到旧版配置，开始迁移...');
+  logger.info('[OpenList Migration] 检测到旧版配置，开始迁移...');
 
   // 1. 读取现有 metainfo
   const metainfoContent = await db.getGlobalValue('video.metainfo');
@@ -79,12 +80,12 @@ async function migrateToMultiRoot(
       }${oldFolderName}`;
       info.folderName = newFolderName;
 
-      console.log(`[Migration] ${oldFolderName} -> ${newFolderName}`);
+      logger.info(`[Migration] ${oldFolderName} -> ${newFolderName}`);
     }
 
     // 3. 保存迁移后的 metainfo
     await db.setGlobalValue('video.metainfo', JSON.stringify(metaInfo));
-    console.log('[OpenList Migration] MetaInfo 迁移完成');
+    logger.info('[OpenList Migration] MetaInfo 迁移完成');
   }
 
   // 4. 更新配置：RootPath -> RootPaths
@@ -93,7 +94,7 @@ async function migrateToMultiRoot(
   delete config.OpenListConfig!.RootPath;
   await db.saveAdminConfig(config);
 
-  console.log('[OpenList Migration] 配置迁移完成');
+  logger.info('[OpenList Migration] 配置迁移完成');
 }
 
 /**
@@ -149,7 +150,7 @@ export async function startOpenListRefresh(
     clearMetaInfo,
     openListConfig.ScanMode || 'hybrid'
   ).catch((error) => {
-    console.error('[OpenList Refresh] 后台扫描失败:', error);
+    logger.error('[OpenList Refresh] 后台扫描失败:', error);
     failScanTask(taskId, (error as Error).message);
   });
 
@@ -170,7 +171,7 @@ async function loadMetaInfo(clearMetaInfo: boolean): Promise<MetaInfo> {
       return JSON.parse(metainfoContent);
     }
   } catch (error) {
-    console.error('[OpenList Refresh] 读取现有 metainfo 失败:', error);
+    logger.error('[OpenList Refresh] 读取现有 metainfo 失败:', error);
   }
 
   return {
@@ -239,7 +240,7 @@ async function performMultiRootScan(
 
     for (let i = 0; i < rootPaths.length; i++) {
       const rootPath = rootPaths[i];
-      console.log(
+      logger.info(
         `[OpenList Refresh] 列举根目录 (${i + 1}/${
           rootPaths.length
         }): ${rootPath}`
@@ -249,11 +250,11 @@ async function performMultiRootScan(
         const folders = await listRootFolders(client, rootPath);
         rootFolderGroups.push({ rootPath, folders });
         totalFolders += folders.length;
-        console.log(
+        logger.info(
           `[OpenList Refresh] 根目录 ${rootPath} 发现 ${folders.length} 个文件夹`
         );
       } catch (error) {
-        console.error(`[OpenList Refresh] 根目录 ${rootPath} 列举失败:`, error);
+        logger.error(`[OpenList Refresh] 根目录 ${rootPath} 列举失败:`, error);
       }
     }
 
@@ -275,7 +276,7 @@ async function performMultiRootScan(
     }
 
     for (const { rootPath, folders } of rootFolderGroups) {
-      console.log(
+      logger.info(
         `[OpenList Refresh] 处理根目录: ${rootPath} (${folders.length} 个文件夹)`
       );
 
@@ -307,10 +308,10 @@ async function performMultiRootScan(
             seasonNumber = torrentInfo.season || null;
             year = torrentInfo.year || null;
 
-            console.log(
+            logger.info(
               `[OpenList Refresh] 种子库模式 - 文件夹: ${folder.name}`
             );
-            console.log(
+            logger.info(
               `[OpenList Refresh] 解析结果 - 标题: ${searchQuery}, 季度: ${seasonNumber}, 年份: ${year}`
             );
 
@@ -335,10 +336,10 @@ async function performMultiRootScan(
             seasonNumber = seasonInfo.seasonNumber;
             year = seasonInfo.year;
 
-            console.log(
+            logger.info(
               `[OpenList Refresh] 名字匹配模式 - 文件夹: ${folder.name}`
             );
-            console.log(
+            logger.info(
               `[OpenList Refresh] 清理后标题: ${searchQuery}, 季度: ${seasonNumber}, 年份: ${year}`
             );
 
@@ -395,13 +396,13 @@ async function performMultiRootScan(
                     folderInfo.release_date = seasonDetails.season.air_date;
                   }
                 } else {
-                  console.warn(
+                  logger.warn(
                     `[OpenList Refresh] 获取季度 ${seasonNumber} 详情失败`
                   );
                   folderInfo.season_number = seasonNumber;
                 }
               } catch (error) {
-                console.error(`[OpenList Refresh] 获取季度详情异常:`, error);
+                logger.error(`[OpenList Refresh] 获取季度详情异常:`, error);
                 folderInfo.season_number = seasonNumber;
               }
             }
@@ -428,7 +429,7 @@ async function performMultiRootScan(
 
           await new Promise((resolve) => setTimeout(resolve, 300));
         } catch (error) {
-          console.error(
+          logger.error(
             `[OpenList Refresh] 处理文件夹失败: ${folder.name}`,
             error
           );
@@ -468,7 +469,7 @@ async function performMultiRootScan(
       errors: errorCount,
     });
   } catch (error) {
-    console.error('[OpenList Refresh] 扫描失败:', error);
+    logger.error('[OpenList Refresh] 扫描失败:', error);
     failScanTask(taskId, (error as Error).message);
     throw error;
   }

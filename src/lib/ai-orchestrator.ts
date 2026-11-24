@@ -8,6 +8,7 @@ import { parseStringPromise } from 'xml2js';
 
 import { BRAND_NAME } from '@/lib/brand';
 import { fetchDoubanData as fetchDoubanAPI } from '@/lib/douban';
+import { logger } from '@/lib/logger';
 import { getNextApiKey } from '@/lib/tmdb.client';
 import { normalizeApiBaseUrl } from '@/lib/url';
 
@@ -242,7 +243,7 @@ export async function fetchWebSearch(
       };
     }
   } catch (error) {
-    console.error('Web search error:', error);
+    logger.error('Web search error:', error);
     return null;
   }
 }
@@ -262,7 +263,7 @@ export async function fetchDoubanData(params: {
     // 1. 通过 ID 获取详情
     if (params.id) {
       const url = `https://m.douban.com/rexxar/api/v2/subject/${params.id}`;
-      console.log('获取豆瓣详情:', params.id);
+      logger.info('获取豆瓣详情:', params.id);
       return await fetchDoubanAPI(url);
     }
 
@@ -273,7 +274,7 @@ export async function fetchDoubanData(params: {
       }?start=0&limit=20&category=${encodeURIComponent(
         params.category
       )}&type=${encodeURIComponent(params.type)}`;
-      console.log('获取豆瓣分类:', params.kind, params.category, params.type);
+      logger.info('获取豆瓣分类:', params.kind, params.category, params.type);
       return await fetchDoubanAPI(url);
     }
 
@@ -283,14 +284,14 @@ export async function fetchDoubanData(params: {
       const url = `https://movie.douban.com/j/search_subjects?type=${kind}&tag=${encodeURIComponent(
         params.query
       )}&sort=recommend&page_limit=20&page_start=0`;
-      console.log('搜索豆瓣:', params.query, kind);
+      logger.info('搜索豆瓣:', params.query, kind);
       return await fetchDoubanAPI(url);
     }
 
-    console.log('豆瓣数据获取参数不完整:', params);
+    logger.info('豆瓣数据获取参数不完整:', params);
     return null;
   } catch (error) {
-    console.error('豆瓣数据获取失败:', error);
+    logger.error('豆瓣数据获取失败:', error);
     return null;
   }
 }
@@ -311,12 +312,12 @@ export async function fetchTMDBData(
   try {
     const actualKey = getNextApiKey(tmdbApiKey || '');
     if (!actualKey) {
-      console.log('TMDB API Key 未配置，跳过TMDB数据获取');
+      logger.info('TMDB API Key 未配置，跳过TMDB数据获取');
       return null;
     }
 
     if (!params.id || !params.type) {
-      console.log('TMDB数据获取参数不完整:', params);
+      logger.info('TMDB数据获取参数不完整:', params);
       return null;
     }
 
@@ -326,7 +327,7 @@ export async function fetchTMDBData(
     // TMDB API: https://api.themoviedb.org/3/{type}/{id}
     const url = `${baseUrl}/3/${params.type}/${params.id}?api_key=${actualKey}&language=zh-CN&append_to_response=keywords,similar`;
 
-    console.log('获取TMDB详情:', params.type, params.id);
+    logger.info('获取TMDB详情:', params.type, params.id);
 
     const fetchOptions: any = tmdbProxy
       ? {
@@ -340,13 +341,13 @@ export async function fetchTMDBData(
     const response = await fetch(url, fetchOptions);
 
     if (!response.ok) {
-      console.error('TMDB API 请求失败:', response.status, response.statusText);
+      logger.error('TMDB API 请求失败:', response.status, response.statusText);
       return null;
     }
 
     return await response.json();
   } catch (error) {
-    console.error('TMDB数据获取失败:', error);
+    logger.error('TMDB数据获取失败:', error);
     return null;
   }
 }
@@ -404,7 +405,7 @@ export function formatSearchResults(
         .join('\n');
     }
   } catch (error) {
-    console.error('Format search results error:', error);
+    logger.error('Format search results error:', error);
   }
 
   return '';
@@ -592,7 +593,7 @@ ${
       return JSON.parse(cleanedContent);
     }
   } catch (error) {
-    console.error('决策模型调用失败:', error);
+    logger.error('决策模型调用失败:', error);
     // 失败时返回null，由调用方降级到传统意图分析
     return null as any;
   }
@@ -635,7 +636,7 @@ export async function orchestrateDataSources(
     config.decisionApiKey &&
     config.decisionModel
   ) {
-    console.log('使用决策模型分析...');
+    logger.info('使用决策模型分析...');
 
     // 确定哪些数据源是可用的
     const hasWebSearchProvider = !!(
@@ -665,17 +666,17 @@ export async function orchestrateDataSources(
       }
     );
 
-    console.log('决策模型结果:', decision);
+    logger.info('决策模型结果:', decision);
   }
 
   // 如果决策模型失败或未启用，降级到传统意图分析
   if (!decision) {
     if (config?.enableDecisionModel) {
-      console.log('决策模型失败，降级到传统意图分析');
+      logger.info('决策模型失败，降级到传统意图分析');
     }
     // 传统关键词匹配分析
     intent = analyzeIntent(userMessage, context);
-    console.log('意图分析结果:', intent);
+    logger.info('意图分析结果:', intent);
   } else {
     // 将决策结果转换为 IntentAnalysisResult 格式
     // 保留决策模型的查询优化
@@ -919,7 +920,7 @@ ${today}
 
 现在请回答用户的问题。`;
 
-  console.log('生成的系统提示词长度:', systemPrompt.length);
+  logger.info('生成的系统提示词长度:', systemPrompt.length);
 
   return {
     systemPrompt,

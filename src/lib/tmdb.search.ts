@@ -1,5 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
+import { logger } from '@/lib/logger';
+
 import { safeFetch } from './safe-http';
 import { getNextApiKey } from './tmdb.client';
 
@@ -87,7 +89,7 @@ export async function searchTMDB(
     const response = await universalFetch(url, proxy);
 
     if (!response.ok) {
-      console.error('TMDB 搜索失败:', response.status, response.statusText);
+      logger.error('TMDB 搜索失败:', response.status, response.statusText);
       return { code: response.status, result: null };
     }
 
@@ -108,7 +110,7 @@ export async function searchTMDB(
       result: validResults[0],
     };
   } catch (error) {
-    console.error('TMDB 搜索异常:', error);
+    logger.error('TMDB 搜索异常:', error);
     return { code: 500, result: null };
   }
 }
@@ -161,7 +163,7 @@ export async function getTVSeasons(
     const response = await universalFetch(url, proxy);
 
     if (!response.ok) {
-      console.error(
+      logger.error(
         'TMDB 获取电视剧详情失败:',
         response.status,
         response.statusText
@@ -181,7 +183,7 @@ export async function getTVSeasons(
       seasons: validSeasons,
     };
   } catch (error) {
-    console.error('TMDB 获取季度列表异常:', error);
+    logger.error('TMDB 获取季度列表异常:', error);
     return { code: 500, seasons: null };
   }
 }
@@ -208,7 +210,7 @@ export async function getTVSeasonDetails(
     const response = await universalFetch(url, proxy);
 
     if (!response.ok) {
-      console.error(
+      logger.error(
         'TMDB 获取季度详情失败:',
         response.status,
         response.statusText
@@ -223,7 +225,7 @@ export async function getTVSeasonDetails(
       season: data,
     };
   } catch (error) {
-    console.error('TMDB 获取季度详情异常:', error);
+    logger.error('TMDB 获取季度详情异常:', error);
     return { code: 500, season: null };
   }
 }
@@ -263,7 +265,7 @@ export async function getTVEpisodeImages(
     const response = await universalFetch(url, proxy);
 
     if (!response.ok) {
-      console.error(
+      logger.error(
         'TMDB 获取集数剧照失败:',
         response.status,
         response.statusText
@@ -284,7 +286,7 @@ export async function getTVEpisodeImages(
       stills,
     };
   } catch (error) {
-    console.error('TMDB 获取集数剧照异常:', error);
+    logger.error('TMDB 获取集数剧照异常:', error);
     return { code: 500, stills: null };
   }
 }

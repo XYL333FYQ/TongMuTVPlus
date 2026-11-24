@@ -8,6 +8,8 @@
  * 注意：此模块仅在服务端使用，通过 webpack 配置排除客户端打包
  */
 
+import { logger } from '@/lib/logger';
+
 import { AdminConfig } from './admin.types';
 import { BookReadRecord, BookShelfItem } from './book.types';
 import { DatabaseAdapter } from './d1-adapter';
@@ -73,13 +75,13 @@ export class PostgresStorage implements IStorage {
       try {
         const result = await this.db.prepare(statement).run();
         if (!result.success && result.error) {
-          console.warn(
+          logger.warn(
             'PostgresStorage.ensureMangaShelfColumns warning:',
             result.error
           );
         }
       } catch (err) {
-        console.warn('PostgresStorage.ensureMangaShelfColumns warning:', err);
+        logger.warn('PostgresStorage.ensureMangaShelfColumns warning:', err);
       }
     }
   }
@@ -99,7 +101,7 @@ export class PostgresStorage implements IStorage {
       if (!result) return null;
       return this.rowToPlayRecord(result);
     } catch (err) {
-      console.error('PostgresStorage.getPlayRecord error:', err);
+      logger.error('PostgresStorage.getPlayRecord error:', err);
       throw err;
     }
   }
@@ -152,7 +154,7 @@ export class PostgresStorage implements IStorage {
         )
         .run();
     } catch (err) {
-      console.error('PostgresStorage.setPlayRecord error:', err);
+      logger.error('PostgresStorage.setPlayRecord error:', err);
       throw err;
     }
   }
@@ -177,7 +179,7 @@ export class PostgresStorage implements IStorage {
       }
       return records;
     } catch (err) {
-      console.error('PostgresStorage.getAllPlayRecords error:', err);
+      logger.error('PostgresStorage.getAllPlayRecords error:', err);
       throw err;
     }
   }
@@ -189,7 +191,7 @@ export class PostgresStorage implements IStorage {
         .bind(userName, key)
         .run();
     } catch (err) {
-      console.error('PostgresStorage.deletePlayRecord error:', err);
+      logger.error('PostgresStorage.deletePlayRecord error:', err);
       throw err;
     }
   }
@@ -209,7 +211,7 @@ export class PostgresStorage implements IStorage {
         .bind(userName, ...uniqueKeys)
         .run();
     } catch (err) {
-      console.error('PostgresStorage.deletePlayRecords error:', err);
+      logger.error('PostgresStorage.deletePlayRecords error:', err);
       throw err;
     }
   }
@@ -250,11 +252,11 @@ export class PostgresStorage implements IStorage {
         .bind(userName, maxRecords)
         .run();
 
-      console.log(
+      logger.info(
         `PostgresStorage: Cleaned up old play records for user ${userName}`
       );
     } catch (err) {
-      console.error('PostgresStorage.cleanupOldPlayRecords error:', err);
+      logger.error('PostgresStorage.cleanupOldPlayRecords error:', err);
       throw err;
     }
   }
@@ -266,7 +268,7 @@ export class PostgresStorage implements IStorage {
         .bind(userName)
         .run();
     } catch (err) {
-      console.error('PostgresStorage.migratePlayRecords error:', err);
+      logger.error('PostgresStorage.migratePlayRecords error:', err);
     }
   }
 
@@ -282,7 +284,7 @@ export class PostgresStorage implements IStorage {
       if (!result) return null;
       return this.rowToFavorite(result);
     } catch (err) {
-      console.error('PostgresStorage.getFavorite error:', err);
+      logger.error('PostgresStorage.getFavorite error:', err);
       throw err;
     }
   }
@@ -331,7 +333,7 @@ export class PostgresStorage implements IStorage {
         )
         .run();
     } catch (err) {
-      console.error('PostgresStorage.setFavorite error:', err);
+      logger.error('PostgresStorage.setFavorite error:', err);
       throw err;
     }
   }
@@ -356,7 +358,7 @@ export class PostgresStorage implements IStorage {
       }
       return favorites;
     } catch (err) {
-      console.error('PostgresStorage.getAllFavorites error:', err);
+      logger.error('PostgresStorage.getAllFavorites error:', err);
       throw err;
     }
   }
@@ -368,7 +370,7 @@ export class PostgresStorage implements IStorage {
         .bind(userName, key)
         .run();
     } catch (err) {
-      console.error('PostgresStorage.deleteFavorite error:', err);
+      logger.error('PostgresStorage.deleteFavorite error:', err);
       throw err;
     }
   }
@@ -380,7 +382,7 @@ export class PostgresStorage implements IStorage {
         .bind(userName)
         .run();
     } catch (err) {
-      console.error('PostgresStorage.migrateFavorites error:', err);
+      logger.error('PostgresStorage.migrateFavorites error:', err);
     }
   }
 
@@ -457,12 +459,12 @@ export class PostgresStorage implements IStorage {
             .bind(await this.hashPassword(password), userName)
             .run();
         } catch (err) {
-          console.error('PostgresStorage.upgradePasswordHash error:', err);
+          logger.error('PostgresStorage.upgradePasswordHash error:', err);
         }
       }
       return check.ok;
     } catch (err) {
-      console.error('PostgresStorage.verifyUser error:', err);
+      logger.error('PostgresStorage.verifyUser error:', err);
       return false;
     }
   }
@@ -481,7 +483,7 @@ export class PostgresStorage implements IStorage {
 
       return result !== null;
     } catch (err) {
-      console.error('PostgresStorage.checkUserExist error:', err);
+      logger.error('PostgresStorage.checkUserExist error:', err);
       return false;
     }
   }
@@ -495,7 +497,7 @@ export class PostgresStorage implements IStorage {
         .bind(passwordHash, userName)
         .run();
     } catch (err) {
-      console.error('PostgresStorage.changePassword error:', err);
+      logger.error('PostgresStorage.changePassword error:', err);
       throw err;
     }
   }
@@ -508,7 +510,7 @@ export class PostgresStorage implements IStorage {
         .bind(userName)
         .run();
     } catch (err) {
-      console.error('PostgresStorage.deleteUser error:', err);
+      logger.error('PostgresStorage.deleteUser error:', err);
       throw err;
     }
   }
@@ -522,7 +524,7 @@ export class PostgresStorage implements IStorage {
       if (!results.results) return [];
       return results.results.map((row) => row.username as string);
     } catch (err) {
-      console.error('PostgresStorage.getAllUsers error:', err);
+      logger.error('PostgresStorage.getAllUsers error:', err);
       return [];
     }
   }
@@ -598,9 +600,9 @@ export class PostgresStorage implements IStorage {
               ownerInfo.created_at
             )
             .run();
-          console.log(`Created database record for site owner: ${userName}`);
+          logger.info(`Created database record for site owner: ${userName}`);
         } catch (insertErr) {
-          console.error('Failed to create owner record:', insertErr);
+          logger.error('Failed to create owner record:', insertErr);
           // 即使插入失败，仍然返回默认信息
         }
 
@@ -612,7 +614,7 @@ export class PostgresStorage implements IStorage {
 
       return null;
     } catch (err) {
-      console.error('PostgresStorage.getUserInfoV2 error:', err);
+      logger.error('PostgresStorage.getUserInfoV2 error:', err);
       return null;
     }
   }
@@ -650,7 +652,7 @@ export class PostgresStorage implements IStorage {
         )
         .run();
     } catch (err) {
-      console.error('PostgresStorage.createUserV2 error:', err);
+      logger.error('PostgresStorage.createUserV2 error:', err);
       throw err;
     }
   }
@@ -789,7 +791,7 @@ export class PostgresStorage implements IStorage {
 
       return { users, total };
     } catch (err) {
-      console.error('PostgresStorage.getUserListV2 error:', err);
+      logger.error('PostgresStorage.getUserListV2 error:', err);
       return { users: [], total: 0 };
     }
   }
@@ -815,12 +817,12 @@ export class PostgresStorage implements IStorage {
             .bind(await this.hashPassword(password), userName)
             .run();
         } catch (err) {
-          console.error('PostgresStorage.upgradePasswordHash error:', err);
+          logger.error('PostgresStorage.upgradePasswordHash error:', err);
         }
       }
       return check.ok;
     } catch (err) {
-      console.error('PostgresStorage.verifyUserV2 error:', err);
+      logger.error('PostgresStorage.verifyUserV2 error:', err);
       return false;
     }
   }
@@ -878,7 +880,7 @@ export class PostgresStorage implements IStorage {
       const { userInfoCache } = await import('./user-cache');
       userInfoCache.delete(userName);
     } catch (err) {
-      console.error('PostgresStorage.updateUserInfoV2 error:', err);
+      logger.error('PostgresStorage.updateUserInfoV2 error:', err);
       throw err;
     }
   }
@@ -892,7 +894,7 @@ export class PostgresStorage implements IStorage {
         .bind(passwordHash, userName)
         .run();
     } catch (err) {
-      console.error('PostgresStorage.changePasswordV2 error:', err);
+      logger.error('PostgresStorage.changePasswordV2 error:', err);
       throw err;
     }
   }
@@ -906,7 +908,7 @@ export class PostgresStorage implements IStorage {
 
       return !!user;
     } catch (err) {
-      console.error('PostgresStorage.checkUserExistV2 error:', err);
+      logger.error('PostgresStorage.checkUserExistV2 error:', err);
       return false;
     }
   }
@@ -920,7 +922,7 @@ export class PostgresStorage implements IStorage {
 
       return user ? (user.username as string) : null;
     } catch (err) {
-      console.error('PostgresStorage.getUserByOidcSub error:', err);
+      logger.error('PostgresStorage.getUserByOidcSub error:', err);
       return null;
     }
   }
@@ -937,7 +939,7 @@ export class PostgresStorage implements IStorage {
       const { userInfoCache } = await import('./user-cache');
       userInfoCache.delete(userName);
     } catch (err) {
-      console.error('PostgresStorage.deleteUserV2 error:', err);
+      logger.error('PostgresStorage.deleteUserV2 error:', err);
       throw err;
     }
   }
@@ -959,7 +961,7 @@ export class PostgresStorage implements IStorage {
 
       return result.results.map((row: any) => row.username as string);
     } catch (err) {
-      console.error('PostgresStorage.getUsersByTag error:', err);
+      logger.error('PostgresStorage.getUsersByTag error:', err);
       return [];
     }
   }
@@ -973,7 +975,7 @@ export class PostgresStorage implements IStorage {
 
       return user ? (user.password_hash as string) : null;
     } catch (err) {
-      console.error('PostgresStorage.getUserPasswordHash error:', err);
+      logger.error('PostgresStorage.getUserPasswordHash error:', err);
       return null;
     }
   }
@@ -988,7 +990,7 @@ export class PostgresStorage implements IStorage {
         .bind(passwordHash, userName)
         .run();
     } catch (err) {
-      console.error('PostgresStorage.setUserPasswordHash error:', err);
+      logger.error('PostgresStorage.setUserPasswordHash error:', err);
       throw err;
     }
   }
@@ -1027,7 +1029,7 @@ export class PostgresStorage implements IStorage {
         )
         .run();
     } catch (err) {
-      console.error('PostgresStorage.createUserWithHashedPassword error:', err);
+      logger.error('PostgresStorage.createUserWithHashedPassword error:', err);
       throw err;
     }
   }
@@ -1041,7 +1043,7 @@ export class PostgresStorage implements IStorage {
 
       return result?.email as string | null;
     } catch (err) {
-      console.error('PostgresStorage.getUserEmail error:', err);
+      logger.error('PostgresStorage.getUserEmail error:', err);
       return null;
     }
   }
@@ -1057,7 +1059,7 @@ export class PostgresStorage implements IStorage {
       const { userInfoCache } = await import('./user-cache');
       userInfoCache.delete(userName);
     } catch (err) {
-      console.error('PostgresStorage.setUserEmail error:', err);
+      logger.error('PostgresStorage.setUserEmail error:', err);
       throw err;
     }
   }
@@ -1071,7 +1073,7 @@ export class PostgresStorage implements IStorage {
 
       return result?.email_notifications === 1;
     } catch (err) {
-      console.error(
+      logger.error(
         'PostgresStorage.getEmailNotificationPreference error:',
         err
       );
@@ -1095,7 +1097,7 @@ export class PostgresStorage implements IStorage {
       const { userInfoCache } = await import('./user-cache');
       userInfoCache.delete(userName);
     } catch (err) {
-      console.error(
+      logger.error(
         'PostgresStorage.setEmailNotificationPreference error:',
         err
       );
@@ -1139,7 +1141,7 @@ export class PostgresStorage implements IStorage {
         )
         .run();
     } catch (err) {
-      console.error('PostgresStorage.upsertPushSubscription error:', err);
+      logger.error('PostgresStorage.upsertPushSubscription error:', err);
       throw err;
     }
   }
@@ -1171,7 +1173,7 @@ export class PostgresStorage implements IStorage {
         failureCount: Number(row.failure_count || 0),
       }));
     } catch (err) {
-      console.error('PostgresStorage.getEnabledPushSubscriptions error:', err);
+      logger.error('PostgresStorage.getEnabledPushSubscriptions error:', err);
       return [];
     }
   }
@@ -1188,7 +1190,7 @@ export class PostgresStorage implements IStorage {
         .bind(userName, endpoint)
         .run();
     } catch (err) {
-      console.error(
+      logger.error(
         'PostgresStorage.deletePushSubscriptionByEndpoint error:',
         err
       );
@@ -1207,7 +1209,7 @@ export class PostgresStorage implements IStorage {
         .bind(userName, tokenId)
         .run();
     } catch (err) {
-      console.error(
+      logger.error(
         'PostgresStorage.deletePushSubscriptionsByTokenId error:',
         err
       );
@@ -1223,7 +1225,7 @@ export class PostgresStorage implements IStorage {
         .bind(userName)
         .run();
     } catch (err) {
-      console.error('PostgresStorage.deleteAllPushSubscriptions error:', err);
+      logger.error('PostgresStorage.deleteAllPushSubscriptions error:', err);
     }
   }
 
@@ -1250,7 +1252,7 @@ export class PostgresStorage implements IStorage {
           .run();
       }
     } catch (err) {
-      console.error(
+      logger.error(
         'PostgresStorage.updatePushSubscriptionDeliveryStats error:',
         err
       );
@@ -1268,7 +1270,7 @@ export class PostgresStorage implements IStorage {
 
       return result?.tvbox_subscribe_token || null;
     } catch (err) {
-      console.error('PostgresStorage.getTvboxSubscribeToken error:', err);
+      logger.error('PostgresStorage.getTvboxSubscribeToken error:', err);
       return null;
     }
   }
@@ -1286,7 +1288,7 @@ export class PostgresStorage implements IStorage {
       const { userInfoCache } = await import('./user-cache');
       userInfoCache.delete(userName);
     } catch (err) {
-      console.error('PostgresStorage.setTvboxSubscribeToken error:', err);
+      logger.error('PostgresStorage.setTvboxSubscribeToken error:', err);
       throw err;
     }
   }
@@ -1300,7 +1302,7 @@ export class PostgresStorage implements IStorage {
 
       return result?.username || null;
     } catch (err) {
-      console.error('PostgresStorage.getUsernameByTvboxToken error:', err);
+      logger.error('PostgresStorage.getUsernameByTvboxToken error:', err);
       return null;
     }
   }
@@ -1330,7 +1332,7 @@ export class PostgresStorage implements IStorage {
         save_time: result.save_time,
       };
     } catch (err) {
-      console.error('PostgresStorage.getMusicPlayRecord error:', err);
+      logger.error('PostgresStorage.getMusicPlayRecord error:', err);
       return null;
     }
   }
@@ -1371,7 +1373,7 @@ export class PostgresStorage implements IStorage {
         )
         .run();
     } catch (err) {
-      console.error('PostgresStorage.setMusicPlayRecord error:', err);
+      logger.error('PostgresStorage.setMusicPlayRecord error:', err);
       throw err;
     }
   }
@@ -1421,7 +1423,7 @@ export class PostgresStorage implements IStorage {
         await this.db.batch(statements);
       }
     } catch (err) {
-      console.error('PostgresStorage.batchSetMusicPlayRecords error:', err);
+      logger.error('PostgresStorage.batchSetMusicPlayRecords error:', err);
       throw err;
     }
   }
@@ -1455,7 +1457,7 @@ export class PostgresStorage implements IStorage {
       }
       return records;
     } catch (err) {
-      console.error('PostgresStorage.getAllMusicPlayRecords error:', err);
+      logger.error('PostgresStorage.getAllMusicPlayRecords error:', err);
       throw err;
     }
   }
@@ -1469,7 +1471,7 @@ export class PostgresStorage implements IStorage {
         .bind(userName, key)
         .run();
     } catch (err) {
-      console.error('PostgresStorage.deleteMusicPlayRecord error:', err);
+      logger.error('PostgresStorage.deleteMusicPlayRecord error:', err);
       throw err;
     }
   }
@@ -1481,7 +1483,7 @@ export class PostgresStorage implements IStorage {
         .bind(userName)
         .run();
     } catch (err) {
-      console.error('PostgresStorage.clearAllMusicPlayRecords error:', err);
+      logger.error('PostgresStorage.clearAllMusicPlayRecords error:', err);
       throw err;
     }
   }
@@ -1517,7 +1519,7 @@ export class PostgresStorage implements IStorage {
         )
         .run();
     } catch (err) {
-      console.error('PostgresStorage.createMusicPlaylist error:', err);
+      logger.error('PostgresStorage.createMusicPlaylist error:', err);
       throw err;
     }
   }
@@ -1541,7 +1543,7 @@ export class PostgresStorage implements IStorage {
         updated_at: result.updated_at,
       };
     } catch (err) {
-      console.error('PostgresStorage.getMusicPlaylist error:', err);
+      logger.error('PostgresStorage.getMusicPlaylist error:', err);
       return null;
     }
   }
@@ -1567,7 +1569,7 @@ export class PostgresStorage implements IStorage {
         updated_at: row.updated_at,
       }));
     } catch (err) {
-      console.error('PostgresStorage.getUserMusicPlaylists error:', err);
+      logger.error('PostgresStorage.getUserMusicPlaylists error:', err);
       return [];
     }
   }
@@ -1614,7 +1616,7 @@ export class PostgresStorage implements IStorage {
         .bind(...values)
         .run();
     } catch (err) {
-      console.error('PostgresStorage.updateMusicPlaylist error:', err);
+      logger.error('PostgresStorage.updateMusicPlaylist error:', err);
       throw err;
     }
   }
@@ -1626,7 +1628,7 @@ export class PostgresStorage implements IStorage {
         .bind(playlistId)
         .run();
     } catch (err) {
-      console.error('PostgresStorage.deleteMusicPlaylist error:', err);
+      logger.error('PostgresStorage.deleteMusicPlaylist error:', err);
       throw err;
     }
   }
@@ -1689,7 +1691,7 @@ export class PostgresStorage implements IStorage {
         .bind(now, playlistId)
         .run();
     } catch (err) {
-      console.error('PostgresStorage.addSongToPlaylist error:', err);
+      logger.error('PostgresStorage.addSongToPlaylist error:', err);
       throw err;
     }
   }
@@ -1713,7 +1715,7 @@ export class PostgresStorage implements IStorage {
         .bind(Date.now(), playlistId)
         .run();
     } catch (err) {
-      console.error('PostgresStorage.removeSongFromPlaylist error:', err);
+      logger.error('PostgresStorage.removeSongFromPlaylist error:', err);
       throw err;
     }
   }
@@ -1741,7 +1743,7 @@ export class PostgresStorage implements IStorage {
         sort_order: row.sort_order,
       }));
     } catch (err) {
-      console.error('PostgresStorage.getPlaylistSongs error:', err);
+      logger.error('PostgresStorage.getPlaylistSongs error:', err);
       return [];
     }
   }
@@ -1769,7 +1771,7 @@ export class PostgresStorage implements IStorage {
         .bind(Date.now(), playlistId)
         .run();
     } catch (err) {
-      console.error('PostgresStorage.updatePlaylistSongOrder error:', err);
+      logger.error('PostgresStorage.updatePlaylistSongOrder error:', err);
       throw err;
     }
   }
@@ -1807,7 +1809,7 @@ export class PostgresStorage implements IStorage {
         sortOrder: row.sort_order ?? undefined,
       }));
     } catch (err) {
-      console.error('PostgresStorage.listMusicV2History error:', err);
+      logger.error('PostgresStorage.listMusicV2History error:', err);
       return [];
     }
   }
@@ -1863,7 +1865,7 @@ export class PostgresStorage implements IStorage {
         )
         .run();
     } catch (err) {
-      console.error('PostgresStorage.upsertMusicV2History error:', err);
+      logger.error('PostgresStorage.upsertMusicV2History error:', err);
       throw err;
     }
   }
@@ -2150,7 +2152,7 @@ export class PostgresStorage implements IStorage {
       if (!results.results) return [];
       return results.results.map((row) => row.keyword as string);
     } catch (err) {
-      console.error('PostgresStorage.getSearchHistory error:', err);
+      logger.error('PostgresStorage.getSearchHistory error:', err);
       return [];
     }
   }
@@ -2198,7 +2200,7 @@ export class PostgresStorage implements IStorage {
           .run();
       }
     } catch (err) {
-      console.error('PostgresStorage.addSearchHistory error:', err);
+      logger.error('PostgresStorage.addSearchHistory error:', err);
       throw err;
     }
   }
@@ -2219,7 +2221,7 @@ export class PostgresStorage implements IStorage {
           .run();
       }
     } catch (err) {
-      console.error('PostgresStorage.deleteSearchHistory error:', err);
+      logger.error('PostgresStorage.deleteSearchHistory error:', err);
       throw err;
     }
   }
@@ -2264,7 +2266,7 @@ export class PostgresStorage implements IStorage {
             : Number(result.unread_chapter_count),
       };
     } catch (err) {
-      console.error('PostgresStorage.getMangaShelf error:', err);
+      logger.error('PostgresStorage.getMangaShelf error:', err);
       throw err;
     }
   }
@@ -2324,7 +2326,7 @@ export class PostgresStorage implements IStorage {
         )
         .run();
     } catch (err) {
-      console.error('PostgresStorage.setMangaShelf error:', err);
+      logger.error('PostgresStorage.setMangaShelf error:', err);
       throw err;
     }
   }
@@ -2374,7 +2376,7 @@ export class PostgresStorage implements IStorage {
 
       return shelves;
     } catch (err) {
-      console.error('PostgresStorage.getAllMangaShelf error:', err);
+      logger.error('PostgresStorage.getAllMangaShelf error:', err);
       throw err;
     }
   }
@@ -2386,7 +2388,7 @@ export class PostgresStorage implements IStorage {
         .bind(userName, key)
         .run();
     } catch (err) {
-      console.error('PostgresStorage.deleteMangaShelf error:', err);
+      logger.error('PostgresStorage.deleteMangaShelf error:', err);
       throw err;
     }
   }
@@ -2419,7 +2421,7 @@ export class PostgresStorage implements IStorage {
         saveTime: Number(result.save_time || 0),
       };
     } catch (err) {
-      console.error('PostgresStorage.getMangaReadRecord error:', err);
+      logger.error('PostgresStorage.getMangaReadRecord error:', err);
       throw err;
     }
   }
@@ -2467,7 +2469,7 @@ export class PostgresStorage implements IStorage {
         )
         .run();
     } catch (err) {
-      console.error('PostgresStorage.setMangaReadRecord error:', err);
+      logger.error('PostgresStorage.setMangaReadRecord error:', err);
       throw err;
     }
   }
@@ -2503,7 +2505,7 @@ export class PostgresStorage implements IStorage {
 
       return records;
     } catch (err) {
-      console.error('PostgresStorage.getAllMangaReadRecords error:', err);
+      logger.error('PostgresStorage.getAllMangaReadRecords error:', err);
       throw err;
     }
   }
@@ -2517,7 +2519,7 @@ export class PostgresStorage implements IStorage {
         .bind(userName, key)
         .run();
     } catch (err) {
-      console.error('PostgresStorage.deleteMangaReadRecord error:', err);
+      logger.error('PostgresStorage.deleteMangaReadRecord error:', err);
       throw err;
     }
   }
@@ -2555,7 +2557,7 @@ export class PostgresStorage implements IStorage {
         .bind(userName, maxRecords)
         .run();
     } catch (err) {
-      console.error('PostgresStorage.cleanupOldMangaReadRecords error:', err);
+      logger.error('PostgresStorage.cleanupOldMangaReadRecords error:', err);
       throw err;
     }
   }
@@ -2600,7 +2602,7 @@ export class PostgresStorage implements IStorage {
         saveTime: Number(result.save_time || 0),
       };
     } catch (err) {
-      console.error('PostgresStorage.getBookShelf error:', err);
+      logger.error('PostgresStorage.getBookShelf error:', err);
       throw err;
     }
   }
@@ -2658,7 +2660,7 @@ export class PostgresStorage implements IStorage {
         )
         .run();
     } catch (err) {
-      console.error('PostgresStorage.setBookShelf error:', err);
+      logger.error('PostgresStorage.setBookShelf error:', err);
       throw err;
     }
   }
@@ -2704,7 +2706,7 @@ export class PostgresStorage implements IStorage {
       }
       return shelves;
     } catch (err) {
-      console.error('PostgresStorage.getAllBookShelf error:', err);
+      logger.error('PostgresStorage.getAllBookShelf error:', err);
       throw err;
     }
   }
@@ -2716,7 +2718,7 @@ export class PostgresStorage implements IStorage {
         .bind(userName, key)
         .run();
     } catch (err) {
-      console.error('PostgresStorage.deleteBookShelf error:', err);
+      logger.error('PostgresStorage.deleteBookShelf error:', err);
       throw err;
     }
   }
@@ -2757,7 +2759,7 @@ export class PostgresStorage implements IStorage {
         saveTime: Number(result.save_time || 0),
       };
     } catch (err) {
-      console.error('PostgresStorage.getBookReadRecord error:', err);
+      logger.error('PostgresStorage.getBookReadRecord error:', err);
       throw err;
     }
   }
@@ -2815,7 +2817,7 @@ export class PostgresStorage implements IStorage {
         )
         .run();
     } catch (err) {
-      console.error('PostgresStorage.setBookReadRecord error:', err);
+      logger.error('PostgresStorage.setBookReadRecord error:', err);
       throw err;
     }
   }
@@ -2857,7 +2859,7 @@ export class PostgresStorage implements IStorage {
       }
       return records;
     } catch (err) {
-      console.error('PostgresStorage.getAllBookReadRecords error:', err);
+      logger.error('PostgresStorage.getAllBookReadRecords error:', err);
       throw err;
     }
   }
@@ -2871,7 +2873,7 @@ export class PostgresStorage implements IStorage {
         .bind(userName, key)
         .run();
     } catch (err) {
-      console.error('PostgresStorage.deleteBookReadRecord error:', err);
+      logger.error('PostgresStorage.deleteBookReadRecord error:', err);
       throw err;
     }
   }
@@ -2907,7 +2909,7 @@ export class PostgresStorage implements IStorage {
         .bind(userName, maxRecords)
         .run();
     } catch (err) {
-      console.error('PostgresStorage.cleanupOldBookReadRecords error:', err);
+      logger.error('PostgresStorage.cleanupOldBookReadRecords error:', err);
       throw err;
     }
   }
@@ -2933,7 +2935,7 @@ export class PostgresStorage implements IStorage {
         outro_time: result.outro_time as number,
       };
     } catch (err) {
-      console.error('PostgresStorage.getSkipConfig error:', err);
+      logger.error('PostgresStorage.getSkipConfig error:', err);
       return null;
     }
   }
@@ -2966,7 +2968,7 @@ export class PostgresStorage implements IStorage {
         )
         .run();
     } catch (err) {
-      console.error('PostgresStorage.setSkipConfig error:', err);
+      logger.error('PostgresStorage.setSkipConfig error:', err);
       throw err;
     }
   }
@@ -2983,7 +2985,7 @@ export class PostgresStorage implements IStorage {
         .bind(userName, key)
         .run();
     } catch (err) {
-      console.error('PostgresStorage.deleteSkipConfig error:', err);
+      logger.error('PostgresStorage.deleteSkipConfig error:', err);
       throw err;
     }
   }
@@ -3009,7 +3011,7 @@ export class PostgresStorage implements IStorage {
       }
       return configs;
     } catch (err) {
-      console.error('PostgresStorage.getAllSkipConfigs error:', err);
+      logger.error('PostgresStorage.getAllSkipConfigs error:', err);
       return {};
     }
   }
@@ -3021,7 +3023,7 @@ export class PostgresStorage implements IStorage {
         .bind(userName)
         .run();
     } catch (err) {
-      console.error('PostgresStorage.migrateSkipConfigs error:', err);
+      logger.error('PostgresStorage.migrateSkipConfigs error:', err);
     }
   }
 
@@ -3039,7 +3041,7 @@ export class PostgresStorage implements IStorage {
       if (!result) return null;
       return JSON.parse(result.rules as string);
     } catch (err) {
-      console.error('PostgresStorage.getDanmakuFilterConfig error:', err);
+      logger.error('PostgresStorage.getDanmakuFilterConfig error:', err);
       return null;
     }
   }
@@ -3060,7 +3062,7 @@ export class PostgresStorage implements IStorage {
         .bind(userName, JSON.stringify(config))
         .run();
     } catch (err) {
-      console.error('PostgresStorage.setDanmakuFilterConfig error:', err);
+      logger.error('PostgresStorage.setDanmakuFilterConfig error:', err);
       throw err;
     }
   }
@@ -3072,7 +3074,7 @@ export class PostgresStorage implements IStorage {
         .bind(userName)
         .run();
     } catch (err) {
-      console.error('PostgresStorage.deleteDanmakuFilterConfig error:', err);
+      logger.error('PostgresStorage.deleteDanmakuFilterConfig error:', err);
       throw err;
     }
   }
@@ -3099,7 +3101,7 @@ export class PostgresStorage implements IStorage {
         metadata: row.metadata ? JSON.parse(row.metadata as string) : undefined,
       }));
     } catch (err) {
-      console.error('PostgresStorage.getNotifications error:', err);
+      logger.error('PostgresStorage.getNotifications error:', err);
       return [];
     }
   }
@@ -3130,7 +3132,7 @@ export class PostgresStorage implements IStorage {
 
       await dispatchNotificationChannels(this, userName, notification);
     } catch (err) {
-      console.error('PostgresStorage.addNotification error:', err);
+      logger.error('PostgresStorage.addNotification error:', err);
       throw err;
     }
   }
@@ -3147,7 +3149,7 @@ export class PostgresStorage implements IStorage {
         .bind(userName, notificationId)
         .run();
     } catch (err) {
-      console.error('PostgresStorage.markNotificationAsRead error:', err);
+      logger.error('PostgresStorage.markNotificationAsRead error:', err);
       throw err;
     }
   }
@@ -3162,7 +3164,7 @@ export class PostgresStorage implements IStorage {
         .bind(userName, notificationId)
         .run();
     } catch (err) {
-      console.error('PostgresStorage.deleteNotification error:', err);
+      logger.error('PostgresStorage.deleteNotification error:', err);
       throw err;
     }
   }
@@ -3174,7 +3176,7 @@ export class PostgresStorage implements IStorage {
         .bind(userName)
         .run();
     } catch (err) {
-      console.error('PostgresStorage.clearAllNotifications error:', err);
+      logger.error('PostgresStorage.clearAllNotifications error:', err);
       throw err;
     }
   }
@@ -3190,7 +3192,7 @@ export class PostgresStorage implements IStorage {
 
       return (result?.count as number) || 0;
     } catch (err) {
-      console.error('PostgresStorage.getUnreadNotificationCount error:', err);
+      logger.error('PostgresStorage.getUnreadNotificationCount error:', err);
       return 0;
     }
   }
@@ -3206,7 +3208,7 @@ export class PostgresStorage implements IStorage {
       if (!results.results) return [];
       return results.results.map((row) => this.rowToMovieRequest(row));
     } catch (err) {
-      console.error('PostgresStorage.getAllMovieRequests error:', err);
+      logger.error('PostgresStorage.getAllMovieRequests error:', err);
       return [];
     }
   }
@@ -3221,7 +3223,7 @@ export class PostgresStorage implements IStorage {
       if (!result) return null;
       return this.rowToMovieRequest(result);
     } catch (err) {
-      console.error('PostgresStorage.getMovieRequest error:', err);
+      logger.error('PostgresStorage.getMovieRequest error:', err);
       return null;
     }
   }
@@ -3259,7 +3261,7 @@ export class PostgresStorage implements IStorage {
         )
         .run();
     } catch (err) {
-      console.error('PostgresStorage.createMovieRequest error:', err);
+      logger.error('PostgresStorage.createMovieRequest error:', err);
       throw err;
     }
   }
@@ -3312,7 +3314,7 @@ export class PostgresStorage implements IStorage {
         .bind(...values)
         .run();
     } catch (err) {
-      console.error('PostgresStorage.updateMovieRequest error:', err);
+      logger.error('PostgresStorage.updateMovieRequest error:', err);
       throw err;
     }
   }
@@ -3324,7 +3326,7 @@ export class PostgresStorage implements IStorage {
         .bind(requestId)
         .run();
     } catch (err) {
-      console.error('PostgresStorage.deleteMovieRequest error:', err);
+      logger.error('PostgresStorage.deleteMovieRequest error:', err);
       throw err;
     }
   }
@@ -3341,7 +3343,7 @@ export class PostgresStorage implements IStorage {
       if (!results.results) return [];
       return results.results.map((row) => row.request_id as string);
     } catch (err) {
-      console.error('PostgresStorage.getUserMovieRequests error:', err);
+      logger.error('PostgresStorage.getUserMovieRequests error:', err);
       return [];
     }
   }
@@ -3358,7 +3360,7 @@ export class PostgresStorage implements IStorage {
         .bind(userName, requestId)
         .run();
     } catch (err) {
-      console.error('PostgresStorage.addUserMovieRequest error:', err);
+      logger.error('PostgresStorage.addUserMovieRequest error:', err);
       throw err;
     }
   }
@@ -3375,7 +3377,7 @@ export class PostgresStorage implements IStorage {
         .bind(userName, requestId)
         .run();
     } catch (err) {
-      console.error('PostgresStorage.removeUserMovieRequest error:', err);
+      logger.error('PostgresStorage.removeUserMovieRequest error:', err);
       throw err;
     }
   }
@@ -3412,7 +3414,7 @@ export class PostgresStorage implements IStorage {
       if (!result) return null;
       return JSON.parse(result.config as string);
     } catch (err) {
-      console.error('PostgresStorage.getAdminConfig error:', err);
+      logger.error('PostgresStorage.getAdminConfig error:', err);
       return null;
     }
   }
@@ -3430,7 +3432,7 @@ export class PostgresStorage implements IStorage {
         .bind(JSON.stringify(config), Date.now())
         .run();
     } catch (err) {
-      console.error('PostgresStorage.setAdminConfig error:', err);
+      logger.error('PostgresStorage.setAdminConfig error:', err);
       throw err;
     }
   }
@@ -3457,7 +3459,7 @@ export class PostgresStorage implements IStorage {
         updatedAt: Number(result.updated_at),
       };
     } catch (err) {
-      console.error('PostgresStorage.getUserLocalSettings error:', err);
+      logger.error('PostgresStorage.getUserLocalSettings error:', err);
       return null;
     }
   }
@@ -3511,7 +3513,7 @@ export class PostgresStorage implements IStorage {
 
       return { ok: true, version, updatedAt: now };
     } catch (err) {
-      console.error('PostgresStorage.setUserLocalSettings error:', err);
+      logger.error('PostgresStorage.setUserLocalSettings error:', err);
       throw err;
     }
   }
@@ -3548,7 +3550,7 @@ export class PostgresStorage implements IStorage {
             message.includes('no such table') ||
             message.includes('does not exist')
           ) {
-            console.warn(
+            logger.warn(
               'PostgresStorage.clearAllData warning:',
               table,
               message
@@ -3559,7 +3561,7 @@ export class PostgresStorage implements IStorage {
         }
       }
     } catch (err) {
-      console.error('PostgresStorage.clearAllData error:', err);
+      logger.error('PostgresStorage.clearAllData error:', err);
       throw err;
     }
   }
@@ -3573,7 +3575,7 @@ export class PostgresStorage implements IStorage {
 
       return result ? (result.value as string) : null;
     } catch (err) {
-      console.error('PostgresStorage.getGlobalValue error:', err);
+      logger.error('PostgresStorage.getGlobalValue error:', err);
       return null;
     }
   }
@@ -3591,7 +3593,7 @@ export class PostgresStorage implements IStorage {
         .bind(key, value, Date.now())
         .run();
     } catch (err) {
-      console.error('PostgresStorage.setGlobalValue error:', err);
+      logger.error('PostgresStorage.setGlobalValue error:', err);
       throw err;
     }
   }
@@ -3603,7 +3605,7 @@ export class PostgresStorage implements IStorage {
         .bind(key)
         .run();
     } catch (err) {
-      console.error('PostgresStorage.deleteGlobalValue error:', err);
+      logger.error('PostgresStorage.deleteGlobalValue error:', err);
       throw err;
     }
   }
@@ -3635,7 +3637,7 @@ export class PostgresStorage implements IStorage {
         .first();
       return row ? this.mapTelegramBinding(row) : null;
     } catch (err) {
-      console.error('PostgresStorage.getTelegramBinding error:', err);
+      logger.error('PostgresStorage.getTelegramBinding error:', err);
       return null;
     }
   }
@@ -3650,7 +3652,7 @@ export class PostgresStorage implements IStorage {
         .first();
       return row ? this.mapTelegramBinding(row) : null;
     } catch (err) {
-      console.error(
+      logger.error(
         'PostgresStorage.getTelegramBindingByTelegramUserId error:',
         err
       );
@@ -3693,7 +3695,7 @@ export class PostgresStorage implements IStorage {
         )
         .run();
     } catch (err) {
-      console.error('PostgresStorage.upsertTelegramBinding error:', err);
+      logger.error('PostgresStorage.upsertTelegramBinding error:', err);
       throw err;
     }
   }
@@ -3731,7 +3733,7 @@ export class PostgresStorage implements IStorage {
         used: row.used === 1 || row.used === true,
       };
     } catch (err) {
-      console.error('PostgresStorage.getTelegramBindSession error:', err);
+      logger.error('PostgresStorage.getTelegramBindSession error:', err);
       return null;
     }
   }
@@ -3761,7 +3763,7 @@ export class PostgresStorage implements IStorage {
         )
         .run();
     } catch (err) {
-      console.error('PostgresStorage.upsertTelegramBindSession error:', err);
+      logger.error('PostgresStorage.upsertTelegramBindSession error:', err);
       throw err;
     }
   }
@@ -3784,7 +3786,7 @@ export class PostgresStorage implements IStorage {
 
       return (result?.last_check_time as number) || 0;
     } catch (err) {
-      console.error('PostgresStorage.getLastFavoriteCheckTime error:', err);
+      logger.error('PostgresStorage.getLastFavoriteCheckTime error:', err);
       return 0;
     }
   }
@@ -3805,7 +3807,7 @@ export class PostgresStorage implements IStorage {
         .bind(userName, timestamp)
         .run();
     } catch (err) {
-      console.error('PostgresStorage.setLastFavoriteCheckTime error:', err);
+      logger.error('PostgresStorage.setLastFavoriteCheckTime error:', err);
       throw err;
     }
   }
@@ -3822,7 +3824,7 @@ export class PostgresStorage implements IStorage {
         .bind(timestamp, userName)
         .run();
     } catch (err) {
-      console.error('PostgresStorage.updateLastMovieRequestTime error:', err);
+      logger.error('PostgresStorage.updateLastMovieRequestTime error:', err);
       throw err;
     }
   }

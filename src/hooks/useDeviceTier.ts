@@ -4,10 +4,10 @@ import { useSyncExternalStore } from 'react';
 
 import {
   type DeviceTier,
+  type PageLayout,
   getDeviceTier,
   isCoarsePointer,
   onDeviceTierChange,
-  type PageLayout,
   pageLayoutFor,
 } from '@/lib/device-tier';
 

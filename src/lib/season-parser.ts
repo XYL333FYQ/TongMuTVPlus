@@ -2,6 +2,7 @@
  * 季度标识解析工具
  * 用于从文件夹名称中识别和提取季度信息
  */
+import { logger } from '@/lib/logger';
 
 export interface SeasonInfo {
   /** 清理后的标题（移除季度标识和年份） */
@@ -195,12 +196,12 @@ export function testSeasonParser() {
     'Stranger Things S03',
   ];
 
-  console.log('Season Parser Test Results:');
+  logger.info('Season Parser Test Results:');
   testCases.forEach((title) => {
     const result = parseSeasonFromTitle(title);
-    console.log(`Input: "${title}"`);
-    console.log(`  Clean Title: "${result.cleanTitle}"`);
-    console.log(`  Season: ${result.seasonNumber}`);
-    console.log('');
+    logger.info(`Input: "${title}"`);
+    logger.info(`  Clean Title: "${result.cleanTitle}"`);
+    logger.info(`  Season: ${result.seasonNumber}`);
+    logger.info('');
   });
 }

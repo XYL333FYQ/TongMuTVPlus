@@ -1,5 +1,7 @@
 'use client';
 
+import { logger } from '@/lib/logger';
+
 export type AnimeDataSource =
   | 'direct'
   | 'server-proxy'
@@ -234,7 +236,7 @@ async function requestWithFallback<T>(
       return await fetchBangumiJson<T>(backup, path, signal, force);
     } catch (backupError) {
       if (signal?.aborted) throw backupError;
-      console.error('Bangumi 主源与备用源均请求失败:', {
+      logger.error('Bangumi 主源与备用源均请求失败:', {
         primary,
         backup,
         primaryError,

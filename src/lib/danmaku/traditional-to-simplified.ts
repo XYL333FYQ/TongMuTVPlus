@@ -8,6 +8,7 @@
  *   - 其余用户永远不下载。
  * 服务端构建（Cloudflare）仍由 next.config.js 的 alias 把 opencc-js 指向空实现。
  */
+import { logger } from '@/lib/logger';
 
 type OpenCCConverter = (text: string) => string;
 
@@ -29,7 +30,7 @@ export function loadTraditionalToSimplifiedConverter(): Promise<OpenCCConverter 
         return danmakuConverter;
       })
       .catch((error) => {
-        console.error('初始化繁简转换器失败:', error);
+        logger.error('初始化繁简转换器失败:', error);
         danmakuConverter = null;
         // 允许下次再试（比如网络恢复后）
         danmakuConverterPromise = null;
@@ -76,7 +77,7 @@ export function convertDanmakuText(text: string): string {
   try {
     return danmakuConverter(text);
   } catch (error) {
-    console.error('弹幕繁简转换失败:', error);
+    logger.error('弹幕繁简转换失败:', error);
     return text;
   }
 }

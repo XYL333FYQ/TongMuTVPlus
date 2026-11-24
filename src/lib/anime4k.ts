@@ -7,6 +7,8 @@
 // canCopyExternalImageToTexture() 探测；探测失败则退回 createImageBitmap(video) 路径。
 import type { Anime4KPipeline } from 'anime4k-webgpu';
 
+import { logger } from '@/lib/logger';
+
 export interface Anime4KModeConstructor {
   new (args: {
     device: GPUDevice;
@@ -278,7 +280,7 @@ export async function createAnime4KRenderer(
     } catch (err) {
       if (!destroyed) {
         // eslint-disable-next-line no-console
-        console.error('[Anime4K] 帧处理失败:', err);
+        logger.error('[Anime4K] 帧处理失败:', err);
       }
     }
     rafId = requestAnimationFrame(loop);

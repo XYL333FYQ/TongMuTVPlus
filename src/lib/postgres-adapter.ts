@@ -10,6 +10,8 @@
 
 import { sql } from '@vercel/postgres';
 
+import { logger } from '@/lib/logger';
+
 import { D1PreparedStatement, D1Result, DatabaseAdapter } from './d1-adapter';
 
 /**
@@ -35,7 +37,7 @@ export class PostgresAdapter implements DatabaseAdapter {
     });
   }
 
-  exec(query: string): void {
+  exec(_query: string): void {
     // Vercel Postgres 不支持直接 exec，需要使用 sql 模板
     throw new Error(
       'exec() is not supported for Vercel Postgres. Use prepare() instead.'
@@ -93,7 +95,7 @@ class PostgresPreparedStatement implements D1PreparedStatement {
 
       return row as T;
     } catch (err) {
-      console.error('Postgres first() error:', err);
+      logger.error('Postgres first() error:', err);
       return null;
     }
   }
@@ -116,7 +118,7 @@ class PostgresPreparedStatement implements D1PreparedStatement {
         results: result.rows,
       };
     } catch (err: any) {
-      console.error('Postgres run() error:', err);
+      logger.error('Postgres run() error:', err);
       return {
         success: false,
         error: err.message,
@@ -138,7 +140,7 @@ class PostgresPreparedStatement implements D1PreparedStatement {
         results: result.rows || [],
       };
     } catch (err: any) {
-      console.error('Postgres all() error:', err);
+      logger.error('Postgres all() error:', err);
       return {
         success: false,
         error: err.message,

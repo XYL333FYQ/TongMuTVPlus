@@ -6,6 +6,8 @@
  * 注意：此模块仅在服务端使用，通过 webpack 配置排除客户端打包
  */
 
+import { logger } from '@/lib/logger';
+
 import { AdminConfig } from './admin.types';
 import { BookReadRecord, BookShelfItem } from './book.types';
 import { DatabaseAdapter } from './d1-adapter';
@@ -76,7 +78,7 @@ export class D1Storage implements IStorage {
           result.error &&
           !/duplicate column|already exists/i.test(result.error)
         ) {
-          console.warn(
+          logger.warn(
             'D1Storage.ensureMangaShelfColumns warning:',
             result.error
           );
@@ -84,7 +86,7 @@ export class D1Storage implements IStorage {
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
         if (!/duplicate column|already exists|no such table/i.test(message)) {
-          console.warn('D1Storage.ensureMangaShelfColumns warning:', err);
+          logger.warn('D1Storage.ensureMangaShelfColumns warning:', err);
         }
       }
     }
@@ -105,7 +107,7 @@ export class D1Storage implements IStorage {
       if (!result) return null;
       return this.rowToPlayRecord(result);
     } catch (err) {
-      console.error('D1Storage.getPlayRecord error:', err);
+      logger.error('D1Storage.getPlayRecord error:', err);
       throw err;
     }
   }
@@ -158,7 +160,7 @@ export class D1Storage implements IStorage {
         )
         .run();
     } catch (err) {
-      console.error('D1Storage.setPlayRecord error:', err);
+      logger.error('D1Storage.setPlayRecord error:', err);
       throw err;
     }
   }
@@ -183,7 +185,7 @@ export class D1Storage implements IStorage {
       }
       return records;
     } catch (err) {
-      console.error('D1Storage.getAllPlayRecords error:', err);
+      logger.error('D1Storage.getAllPlayRecords error:', err);
       throw err;
     }
   }
@@ -195,7 +197,7 @@ export class D1Storage implements IStorage {
         .bind(userName, key)
         .run();
     } catch (err) {
-      console.error('D1Storage.deletePlayRecord error:', err);
+      logger.error('D1Storage.deletePlayRecord error:', err);
       throw err;
     }
   }
@@ -213,7 +215,7 @@ export class D1Storage implements IStorage {
         .bind(userName, ...uniqueKeys)
         .run();
     } catch (err) {
-      console.error('D1Storage.deletePlayRecords error:', err);
+      logger.error('D1Storage.deletePlayRecords error:', err);
       throw err;
     }
   }
@@ -254,11 +256,11 @@ export class D1Storage implements IStorage {
         .bind(userName, userName, maxRecords)
         .run();
 
-      console.log(
+      logger.info(
         `D1Storage: Cleaned up old play records for user ${userName}`
       );
     } catch (err) {
-      console.error('D1Storage.cleanupOldPlayRecords error:', err);
+      logger.error('D1Storage.cleanupOldPlayRecords error:', err);
       throw err;
     }
   }
@@ -275,7 +277,7 @@ export class D1Storage implements IStorage {
       // 清除缓存
       userInfoCache?.delete(userName);
     } catch (err) {
-      console.error('D1Storage.migratePlayRecords error:', err);
+      logger.error('D1Storage.migratePlayRecords error:', err);
     }
   }
 
@@ -291,7 +293,7 @@ export class D1Storage implements IStorage {
       if (!result) return null;
       return this.rowToFavorite(result);
     } catch (err) {
-      console.error('D1Storage.getFavorite error:', err);
+      logger.error('D1Storage.getFavorite error:', err);
       throw err;
     }
   }
@@ -340,7 +342,7 @@ export class D1Storage implements IStorage {
         )
         .run();
     } catch (err) {
-      console.error('D1Storage.setFavorite error:', err);
+      logger.error('D1Storage.setFavorite error:', err);
       throw err;
     }
   }
@@ -365,7 +367,7 @@ export class D1Storage implements IStorage {
       }
       return favorites;
     } catch (err) {
-      console.error('D1Storage.getAllFavorites error:', err);
+      logger.error('D1Storage.getAllFavorites error:', err);
       throw err;
     }
   }
@@ -377,7 +379,7 @@ export class D1Storage implements IStorage {
         .bind(userName, key)
         .run();
     } catch (err) {
-      console.error('D1Storage.deleteFavorite error:', err);
+      logger.error('D1Storage.deleteFavorite error:', err);
       throw err;
     }
   }
@@ -393,7 +395,7 @@ export class D1Storage implements IStorage {
       // 清除缓存
       userInfoCache?.delete(userName);
     } catch (err) {
-      console.error('D1Storage.migrateFavorites error:', err);
+      logger.error('D1Storage.migrateFavorites error:', err);
     }
   }
 
@@ -422,7 +424,7 @@ export class D1Storage implements IStorage {
         save_time: result.save_time,
       };
     } catch (err) {
-      console.error('D1Storage.getMusicPlayRecord error:', err);
+      logger.error('D1Storage.getMusicPlayRecord error:', err);
       return null;
     }
   }
@@ -463,7 +465,7 @@ export class D1Storage implements IStorage {
         )
         .run();
     } catch (err) {
-      console.error('D1Storage.setMusicPlayRecord error:', err);
+      logger.error('D1Storage.setMusicPlayRecord error:', err);
       throw err;
     }
   }
@@ -512,7 +514,7 @@ export class D1Storage implements IStorage {
         await this.db.batch(statements);
       }
     } catch (err) {
-      console.error('D1Storage.batchSetMusicPlayRecords error:', err);
+      logger.error('D1Storage.batchSetMusicPlayRecords error:', err);
       throw err;
     }
   }
@@ -546,7 +548,7 @@ export class D1Storage implements IStorage {
       }
       return records;
     } catch (err) {
-      console.error('D1Storage.getAllMusicPlayRecords error:', err);
+      logger.error('D1Storage.getAllMusicPlayRecords error:', err);
       throw err;
     }
   }
@@ -560,7 +562,7 @@ export class D1Storage implements IStorage {
         .bind(userName, key)
         .run();
     } catch (err) {
-      console.error('D1Storage.deleteMusicPlayRecord error:', err);
+      logger.error('D1Storage.deleteMusicPlayRecord error:', err);
       throw err;
     }
   }
@@ -572,7 +574,7 @@ export class D1Storage implements IStorage {
         .bind(userName)
         .run();
     } catch (err) {
-      console.error('D1Storage.clearAllMusicPlayRecords error:', err);
+      logger.error('D1Storage.clearAllMusicPlayRecords error:', err);
       throw err;
     }
   }
@@ -608,7 +610,7 @@ export class D1Storage implements IStorage {
         )
         .run();
     } catch (err) {
-      console.error('D1Storage.createMusicPlaylist error:', err);
+      logger.error('D1Storage.createMusicPlaylist error:', err);
       throw err;
     }
   }
@@ -632,7 +634,7 @@ export class D1Storage implements IStorage {
         updated_at: result.updated_at,
       };
     } catch (err) {
-      console.error('D1Storage.getMusicPlaylist error:', err);
+      logger.error('D1Storage.getMusicPlaylist error:', err);
       return null;
     }
   }
@@ -658,7 +660,7 @@ export class D1Storage implements IStorage {
         updated_at: row.updated_at,
       }));
     } catch (err) {
-      console.error('D1Storage.getUserMusicPlaylists error:', err);
+      logger.error('D1Storage.getUserMusicPlaylists error:', err);
       return [];
     }
   }
@@ -699,7 +701,7 @@ export class D1Storage implements IStorage {
         .bind(...values)
         .run();
     } catch (err) {
-      console.error('D1Storage.updateMusicPlaylist error:', err);
+      logger.error('D1Storage.updateMusicPlaylist error:', err);
       throw err;
     }
   }
@@ -712,7 +714,7 @@ export class D1Storage implements IStorage {
         .bind(playlistId)
         .run();
     } catch (err) {
-      console.error('D1Storage.deleteMusicPlaylist error:', err);
+      logger.error('D1Storage.deleteMusicPlaylist error:', err);
       throw err;
     }
   }
@@ -788,7 +790,7 @@ export class D1Storage implements IStorage {
           .run();
       }
     } catch (err) {
-      console.error('D1Storage.addSongToPlaylist error:', err);
+      logger.error('D1Storage.addSongToPlaylist error:', err);
       throw err;
     }
   }
@@ -812,7 +814,7 @@ export class D1Storage implements IStorage {
         .bind(Date.now(), playlistId)
         .run();
     } catch (err) {
-      console.error('D1Storage.removeSongFromPlaylist error:', err);
+      logger.error('D1Storage.removeSongFromPlaylist error:', err);
       throw err;
     }
   }
@@ -840,7 +842,7 @@ export class D1Storage implements IStorage {
         sort_order: row.sort_order,
       }));
     } catch (err) {
-      console.error('D1Storage.getPlaylistSongs error:', err);
+      logger.error('D1Storage.getPlaylistSongs error:', err);
       return [];
     }
   }
@@ -860,7 +862,7 @@ export class D1Storage implements IStorage {
 
       return result !== null;
     } catch (err) {
-      console.error('D1Storage.isSongInPlaylist error:', err);
+      logger.error('D1Storage.isSongInPlaylist error:', err);
       return false;
     }
   }
@@ -898,7 +900,7 @@ export class D1Storage implements IStorage {
         sortOrder: row.sort_order ?? undefined,
       }));
     } catch (err) {
-      console.error('D1Storage.listMusicV2History error:', err);
+      logger.error('D1Storage.listMusicV2History error:', err);
       return [];
     }
   }
@@ -954,7 +956,7 @@ export class D1Storage implements IStorage {
         )
         .run();
     } catch (err) {
-      console.error('D1Storage.upsertMusicV2History error:', err);
+      logger.error('D1Storage.upsertMusicV2History error:', err);
       throw err;
     }
   }
@@ -1310,12 +1312,12 @@ export class D1Storage implements IStorage {
             .run();
           userInfoCache?.delete(userName);
         } catch (err) {
-          console.error('D1Storage.upgradePasswordHash error:', err);
+          logger.error('D1Storage.upgradePasswordHash error:', err);
         }
       }
       return check.ok;
     } catch (err) {
-      console.error('D1Storage.verifyUser error:', err);
+      logger.error('D1Storage.verifyUser error:', err);
       return false;
     }
   }
@@ -1334,7 +1336,7 @@ export class D1Storage implements IStorage {
 
       return result !== null;
     } catch (err) {
-      console.error('D1Storage.checkUserExist error:', err);
+      logger.error('D1Storage.checkUserExist error:', err);
       return false;
     }
   }
@@ -1348,7 +1350,7 @@ export class D1Storage implements IStorage {
         .bind(passwordHash, userName)
         .run();
     } catch (err) {
-      console.error('D1Storage.changePassword error:', err);
+      logger.error('D1Storage.changePassword error:', err);
       throw err;
     }
   }
@@ -1361,7 +1363,7 @@ export class D1Storage implements IStorage {
         .bind(userName)
         .run();
     } catch (err) {
-      console.error('D1Storage.deleteUser error:', err);
+      logger.error('D1Storage.deleteUser error:', err);
       throw err;
     }
   }
@@ -1375,7 +1377,7 @@ export class D1Storage implements IStorage {
       if (!results.results) return [];
       return results.results.map((row) => row.username as string);
     } catch (err) {
-      console.error('D1Storage.getAllUsers error:', err);
+      logger.error('D1Storage.getAllUsers error:', err);
       return [];
     }
   }
@@ -1456,9 +1458,9 @@ export class D1Storage implements IStorage {
               ownerInfo.created_at
             )
             .run();
-          console.log(`Created database record for site owner: ${userName}`);
+          logger.info(`Created database record for site owner: ${userName}`);
         } catch (insertErr) {
-          console.error('Failed to create owner record:', insertErr);
+          logger.error('Failed to create owner record:', insertErr);
           // 即使插入失败，仍然返回默认信息
         }
 
@@ -1469,7 +1471,7 @@ export class D1Storage implements IStorage {
 
       return null;
     } catch (err) {
-      console.error('D1Storage.getUserInfoV2 error:', err);
+      logger.error('D1Storage.getUserInfoV2 error:', err);
       return null;
     }
   }
@@ -1510,7 +1512,7 @@ export class D1Storage implements IStorage {
       // 清除缓存
       userInfoCache?.delete(userName);
     } catch (err) {
-      console.error('D1Storage.createUserV2 error:', err);
+      logger.error('D1Storage.createUserV2 error:', err);
       throw err;
     }
   }
@@ -1649,7 +1651,7 @@ export class D1Storage implements IStorage {
 
       return { users, total };
     } catch (err) {
-      console.error('D1Storage.getUserListV2 error:', err);
+      logger.error('D1Storage.getUserListV2 error:', err);
       return { users: [], total: 0 };
     }
   }
@@ -1676,12 +1678,12 @@ export class D1Storage implements IStorage {
             .run();
           userInfoCache?.delete(userName);
         } catch (err) {
-          console.error('D1Storage.upgradePasswordHash error:', err);
+          logger.error('D1Storage.upgradePasswordHash error:', err);
         }
       }
       return check.ok;
     } catch (err) {
-      console.error('D1Storage.verifyUserV2 error:', err);
+      logger.error('D1Storage.verifyUserV2 error:', err);
       return false;
     }
   }
@@ -1733,7 +1735,7 @@ export class D1Storage implements IStorage {
       // 清除缓存
       userInfoCache?.delete(userName);
     } catch (err) {
-      console.error('D1Storage.updateUserInfoV2 error:', err);
+      logger.error('D1Storage.updateUserInfoV2 error:', err);
       throw err;
     }
   }
@@ -1750,7 +1752,7 @@ export class D1Storage implements IStorage {
       // 清除缓存
       userInfoCache?.delete(userName);
     } catch (err) {
-      console.error('D1Storage.changePasswordV2 error:', err);
+      logger.error('D1Storage.changePasswordV2 error:', err);
       throw err;
     }
   }
@@ -1764,7 +1766,7 @@ export class D1Storage implements IStorage {
 
       return !!user;
     } catch (err) {
-      console.error('D1Storage.checkUserExistV2 error:', err);
+      logger.error('D1Storage.checkUserExistV2 error:', err);
       return false;
     }
   }
@@ -1778,7 +1780,7 @@ export class D1Storage implements IStorage {
 
       return user ? (user.username as string) : null;
     } catch (err) {
-      console.error('D1Storage.getUserByOidcSub error:', err);
+      logger.error('D1Storage.getUserByOidcSub error:', err);
       return null;
     }
   }
@@ -1794,7 +1796,7 @@ export class D1Storage implements IStorage {
       // 清除缓存
       userInfoCache?.delete(userName);
     } catch (err) {
-      console.error('D1Storage.deleteUserV2 error:', err);
+      logger.error('D1Storage.deleteUserV2 error:', err);
       throw err;
     }
   }
@@ -1816,7 +1818,7 @@ export class D1Storage implements IStorage {
 
       return result.results.map((row: any) => row.username as string);
     } catch (err) {
-      console.error('D1Storage.getUsersByTag error:', err);
+      logger.error('D1Storage.getUsersByTag error:', err);
       return [];
     }
   }
@@ -1831,7 +1833,7 @@ export class D1Storage implements IStorage {
 
       return user ? (user.password_hash as string) : null;
     } catch (err) {
-      console.error('D1Storage.getUserPasswordHash error:', err);
+      logger.error('D1Storage.getUserPasswordHash error:', err);
       return null;
     }
   }
@@ -1847,7 +1849,7 @@ export class D1Storage implements IStorage {
         .bind(passwordHash, userName)
         .run();
     } catch (err) {
-      console.error('D1Storage.setUserPasswordHash error:', err);
+      logger.error('D1Storage.setUserPasswordHash error:', err);
       throw err;
     }
   }
@@ -1887,7 +1889,7 @@ export class D1Storage implements IStorage {
         )
         .run();
     } catch (err) {
-      console.error('D1Storage.createUserWithHashedPassword error:', err);
+      logger.error('D1Storage.createUserWithHashedPassword error:', err);
       throw err;
     }
   }
@@ -1901,7 +1903,7 @@ export class D1Storage implements IStorage {
 
       return result?.email as string | null;
     } catch (err) {
-      console.error('D1Storage.getUserEmail error:', err);
+      logger.error('D1Storage.getUserEmail error:', err);
       return null;
     }
   }
@@ -1916,7 +1918,7 @@ export class D1Storage implements IStorage {
       // 清除缓存
       userInfoCache?.delete(userName);
     } catch (err) {
-      console.error('D1Storage.setUserEmail error:', err);
+      logger.error('D1Storage.setUserEmail error:', err);
       throw err;
     }
   }
@@ -1930,7 +1932,7 @@ export class D1Storage implements IStorage {
 
       return result?.email_notifications === 1;
     } catch (err) {
-      console.error('D1Storage.getEmailNotificationPreference error:', err);
+      logger.error('D1Storage.getEmailNotificationPreference error:', err);
       return true; // 默认开启
     }
   }
@@ -1948,7 +1950,7 @@ export class D1Storage implements IStorage {
       // 清除缓存
       userInfoCache?.delete(userName);
     } catch (err) {
-      console.error('D1Storage.setEmailNotificationPreference error:', err);
+      logger.error('D1Storage.setEmailNotificationPreference error:', err);
       throw err;
     }
   }
@@ -1992,7 +1994,7 @@ export class D1Storage implements IStorage {
         throw new Error(result.error || '保存浏览器通知订阅失败');
       }
     } catch (err) {
-      console.error('D1Storage.upsertPushSubscription error:', err);
+      logger.error('D1Storage.upsertPushSubscription error:', err);
       throw err;
     }
   }
@@ -2024,7 +2026,7 @@ export class D1Storage implements IStorage {
         failureCount: Number(row.failure_count || 0),
       }));
     } catch (err) {
-      console.error('D1Storage.getEnabledPushSubscriptions error:', err);
+      logger.error('D1Storage.getEnabledPushSubscriptions error:', err);
       return [];
     }
   }
@@ -2041,7 +2043,7 @@ export class D1Storage implements IStorage {
         .bind(userName, endpoint)
         .run();
     } catch (err) {
-      console.error('D1Storage.deletePushSubscriptionByEndpoint error:', err);
+      logger.error('D1Storage.deletePushSubscriptionByEndpoint error:', err);
     }
   }
 
@@ -2057,7 +2059,7 @@ export class D1Storage implements IStorage {
         .bind(userName, tokenId)
         .run();
     } catch (err) {
-      console.error('D1Storage.deletePushSubscriptionsByTokenId error:', err);
+      logger.error('D1Storage.deletePushSubscriptionsByTokenId error:', err);
     }
   }
 
@@ -2070,7 +2072,7 @@ export class D1Storage implements IStorage {
         .bind(userName)
         .run();
     } catch (err) {
-      console.error('D1Storage.deleteAllPushSubscriptions error:', err);
+      logger.error('D1Storage.deleteAllPushSubscriptions error:', err);
     }
   }
 
@@ -2097,10 +2099,7 @@ export class D1Storage implements IStorage {
           .run();
       }
     } catch (err) {
-      console.error(
-        'D1Storage.updatePushSubscriptionDeliveryStats error:',
-        err
-      );
+      logger.error('D1Storage.updatePushSubscriptionDeliveryStats error:', err);
     }
   }
 
@@ -2115,7 +2114,7 @@ export class D1Storage implements IStorage {
 
       return result?.tvbox_subscribe_token || null;
     } catch (err) {
-      console.error('D1Storage.getTvboxSubscribeToken error:', err);
+      logger.error('D1Storage.getTvboxSubscribeToken error:', err);
       return null;
     }
   }
@@ -2135,7 +2134,7 @@ export class D1Storage implements IStorage {
       // 清除缓存
       userInfoCache?.delete(userName);
     } catch (err) {
-      console.error('D1Storage.setTvboxSubscribeToken error:', err);
+      logger.error('D1Storage.setTvboxSubscribeToken error:', err);
       throw err;
     }
   }
@@ -2149,7 +2148,7 @@ export class D1Storage implements IStorage {
 
       return result?.username || null;
     } catch (err) {
-      console.error('D1Storage.getUsernameByTvboxToken error:', err);
+      logger.error('D1Storage.getUsernameByTvboxToken error:', err);
       return null;
     }
   }
@@ -2168,7 +2167,7 @@ export class D1Storage implements IStorage {
       if (!results.results) return [];
       return results.results.map((row) => row.keyword as string);
     } catch (err) {
-      console.error('D1Storage.getSearchHistory error:', err);
+      logger.error('D1Storage.getSearchHistory error:', err);
       return [];
     }
   }
@@ -2216,7 +2215,7 @@ export class D1Storage implements IStorage {
           .run();
       }
     } catch (err) {
-      console.error('D1Storage.addSearchHistory error:', err);
+      logger.error('D1Storage.addSearchHistory error:', err);
       throw err;
     }
   }
@@ -2237,7 +2236,7 @@ export class D1Storage implements IStorage {
           .run();
       }
     } catch (err) {
-      console.error('D1Storage.deleteSearchHistory error:', err);
+      logger.error('D1Storage.deleteSearchHistory error:', err);
       throw err;
     }
   }
@@ -2282,7 +2281,7 @@ export class D1Storage implements IStorage {
             : Number(result.unread_chapter_count),
       };
     } catch (err) {
-      console.error('D1Storage.getMangaShelf error:', err);
+      logger.error('D1Storage.getMangaShelf error:', err);
       throw err;
     }
   }
@@ -2342,7 +2341,7 @@ export class D1Storage implements IStorage {
         )
         .run();
     } catch (err) {
-      console.error('D1Storage.setMangaShelf error:', err);
+      logger.error('D1Storage.setMangaShelf error:', err);
       throw err;
     }
   }
@@ -2392,7 +2391,7 @@ export class D1Storage implements IStorage {
 
       return shelves;
     } catch (err) {
-      console.error('D1Storage.getAllMangaShelf error:', err);
+      logger.error('D1Storage.getAllMangaShelf error:', err);
       throw err;
     }
   }
@@ -2404,7 +2403,7 @@ export class D1Storage implements IStorage {
         .bind(userName, key)
         .run();
     } catch (err) {
-      console.error('D1Storage.deleteMangaShelf error:', err);
+      logger.error('D1Storage.deleteMangaShelf error:', err);
       throw err;
     }
   }
@@ -2437,7 +2436,7 @@ export class D1Storage implements IStorage {
         saveTime: Number(result.save_time || 0),
       };
     } catch (err) {
-      console.error('D1Storage.getMangaReadRecord error:', err);
+      logger.error('D1Storage.getMangaReadRecord error:', err);
       throw err;
     }
   }
@@ -2485,7 +2484,7 @@ export class D1Storage implements IStorage {
         )
         .run();
     } catch (err) {
-      console.error('D1Storage.setMangaReadRecord error:', err);
+      logger.error('D1Storage.setMangaReadRecord error:', err);
       throw err;
     }
   }
@@ -2521,7 +2520,7 @@ export class D1Storage implements IStorage {
 
       return records;
     } catch (err) {
-      console.error('D1Storage.getAllMangaReadRecords error:', err);
+      logger.error('D1Storage.getAllMangaReadRecords error:', err);
       throw err;
     }
   }
@@ -2535,7 +2534,7 @@ export class D1Storage implements IStorage {
         .bind(userName, key)
         .run();
     } catch (err) {
-      console.error('D1Storage.deleteMangaReadRecord error:', err);
+      logger.error('D1Storage.deleteMangaReadRecord error:', err);
       throw err;
     }
   }
@@ -2573,7 +2572,7 @@ export class D1Storage implements IStorage {
         .bind(userName, userName, maxRecords)
         .run();
     } catch (err) {
-      console.error('D1Storage.cleanupOldMangaReadRecords error:', err);
+      logger.error('D1Storage.cleanupOldMangaReadRecords error:', err);
       throw err;
     }
   }
@@ -2617,7 +2616,7 @@ export class D1Storage implements IStorage {
         saveTime: Number(result.save_time || 0),
       };
     } catch (err) {
-      console.error('D1Storage.getBookShelf error:', err);
+      logger.error('D1Storage.getBookShelf error:', err);
       throw err;
     }
   }
@@ -2675,7 +2674,7 @@ export class D1Storage implements IStorage {
         )
         .run();
     } catch (err) {
-      console.error('D1Storage.setBookShelf error:', err);
+      logger.error('D1Storage.setBookShelf error:', err);
       throw err;
     }
   }
@@ -2721,7 +2720,7 @@ export class D1Storage implements IStorage {
       }
       return shelves;
     } catch (err) {
-      console.error('D1Storage.getAllBookShelf error:', err);
+      logger.error('D1Storage.getAllBookShelf error:', err);
       throw err;
     }
   }
@@ -2733,7 +2732,7 @@ export class D1Storage implements IStorage {
         .bind(userName, key)
         .run();
     } catch (err) {
-      console.error('D1Storage.deleteBookShelf error:', err);
+      logger.error('D1Storage.deleteBookShelf error:', err);
       throw err;
     }
   }
@@ -2774,7 +2773,7 @@ export class D1Storage implements IStorage {
         saveTime: Number(result.save_time || 0),
       };
     } catch (err) {
-      console.error('D1Storage.getBookReadRecord error:', err);
+      logger.error('D1Storage.getBookReadRecord error:', err);
       throw err;
     }
   }
@@ -2832,7 +2831,7 @@ export class D1Storage implements IStorage {
         )
         .run();
     } catch (err) {
-      console.error('D1Storage.setBookReadRecord error:', err);
+      logger.error('D1Storage.setBookReadRecord error:', err);
       throw err;
     }
   }
@@ -2874,7 +2873,7 @@ export class D1Storage implements IStorage {
       }
       return records;
     } catch (err) {
-      console.error('D1Storage.getAllBookReadRecords error:', err);
+      logger.error('D1Storage.getAllBookReadRecords error:', err);
       throw err;
     }
   }
@@ -2886,7 +2885,7 @@ export class D1Storage implements IStorage {
         .bind(userName, key)
         .run();
     } catch (err) {
-      console.error('D1Storage.deleteBookReadRecord error:', err);
+      logger.error('D1Storage.deleteBookReadRecord error:', err);
       throw err;
     }
   }
@@ -2922,7 +2921,7 @@ export class D1Storage implements IStorage {
         .bind(userName, userName, maxRecords)
         .run();
     } catch (err) {
-      console.error('D1Storage.cleanupOldBookReadRecords error:', err);
+      logger.error('D1Storage.cleanupOldBookReadRecords error:', err);
       throw err;
     }
   }
@@ -2948,7 +2947,7 @@ export class D1Storage implements IStorage {
         outro_time: result.outro_time as number,
       };
     } catch (err) {
-      console.error('D1Storage.getSkipConfig error:', err);
+      logger.error('D1Storage.getSkipConfig error:', err);
       return null;
     }
   }
@@ -2981,7 +2980,7 @@ export class D1Storage implements IStorage {
         )
         .run();
     } catch (err) {
-      console.error('D1Storage.setSkipConfig error:', err);
+      logger.error('D1Storage.setSkipConfig error:', err);
       throw err;
     }
   }
@@ -2998,7 +2997,7 @@ export class D1Storage implements IStorage {
         .bind(userName, key)
         .run();
     } catch (err) {
-      console.error('D1Storage.deleteSkipConfig error:', err);
+      logger.error('D1Storage.deleteSkipConfig error:', err);
       throw err;
     }
   }
@@ -3024,7 +3023,7 @@ export class D1Storage implements IStorage {
       }
       return configs;
     } catch (err) {
-      console.error('D1Storage.getAllSkipConfigs error:', err);
+      logger.error('D1Storage.getAllSkipConfigs error:', err);
       return {};
     }
   }
@@ -3039,7 +3038,7 @@ export class D1Storage implements IStorage {
       // 清除缓存
       userInfoCache?.delete(userName);
     } catch (err) {
-      console.error('D1Storage.migrateSkipConfigs error:', err);
+      logger.error('D1Storage.migrateSkipConfigs error:', err);
     }
   }
 
@@ -3057,7 +3056,7 @@ export class D1Storage implements IStorage {
       if (!result) return null;
       return JSON.parse(result.rules as string);
     } catch (err) {
-      console.error('D1Storage.getDanmakuFilterConfig error:', err);
+      logger.error('D1Storage.getDanmakuFilterConfig error:', err);
       return null;
     }
   }
@@ -3078,7 +3077,7 @@ export class D1Storage implements IStorage {
         .bind(userName, JSON.stringify(config))
         .run();
     } catch (err) {
-      console.error('D1Storage.setDanmakuFilterConfig error:', err);
+      logger.error('D1Storage.setDanmakuFilterConfig error:', err);
       throw err;
     }
   }
@@ -3090,7 +3089,7 @@ export class D1Storage implements IStorage {
         .bind(userName)
         .run();
     } catch (err) {
-      console.error('D1Storage.deleteDanmakuFilterConfig error:', err);
+      logger.error('D1Storage.deleteDanmakuFilterConfig error:', err);
       throw err;
     }
   }
@@ -3117,7 +3116,7 @@ export class D1Storage implements IStorage {
         metadata: row.metadata ? JSON.parse(row.metadata as string) : undefined,
       }));
     } catch (err) {
-      console.error('D1Storage.getNotifications error:', err);
+      logger.error('D1Storage.getNotifications error:', err);
       return [];
     }
   }
@@ -3148,7 +3147,7 @@ export class D1Storage implements IStorage {
 
       await dispatchNotificationChannels(this, userName, notification);
     } catch (err) {
-      console.error('D1Storage.addNotification error:', err);
+      logger.error('D1Storage.addNotification error:', err);
       throw err;
     }
   }
@@ -3165,7 +3164,7 @@ export class D1Storage implements IStorage {
         .bind(userName, notificationId)
         .run();
     } catch (err) {
-      console.error('D1Storage.markNotificationAsRead error:', err);
+      logger.error('D1Storage.markNotificationAsRead error:', err);
       throw err;
     }
   }
@@ -3180,7 +3179,7 @@ export class D1Storage implements IStorage {
         .bind(userName, notificationId)
         .run();
     } catch (err) {
-      console.error('D1Storage.deleteNotification error:', err);
+      logger.error('D1Storage.deleteNotification error:', err);
       throw err;
     }
   }
@@ -3192,7 +3191,7 @@ export class D1Storage implements IStorage {
         .bind(userName)
         .run();
     } catch (err) {
-      console.error('D1Storage.clearAllNotifications error:', err);
+      logger.error('D1Storage.clearAllNotifications error:', err);
       throw err;
     }
   }
@@ -3208,7 +3207,7 @@ export class D1Storage implements IStorage {
 
       return (result?.count as number) || 0;
     } catch (err) {
-      console.error('D1Storage.getUnreadNotificationCount error:', err);
+      logger.error('D1Storage.getUnreadNotificationCount error:', err);
       return 0;
     }
   }
@@ -3224,7 +3223,7 @@ export class D1Storage implements IStorage {
       if (!results.results) return [];
       return results.results.map((row) => this.rowToMovieRequest(row));
     } catch (err) {
-      console.error('D1Storage.getAllMovieRequests error:', err);
+      logger.error('D1Storage.getAllMovieRequests error:', err);
       return [];
     }
   }
@@ -3239,7 +3238,7 @@ export class D1Storage implements IStorage {
       if (!result) return null;
       return this.rowToMovieRequest(result);
     } catch (err) {
-      console.error('D1Storage.getMovieRequest error:', err);
+      logger.error('D1Storage.getMovieRequest error:', err);
       return null;
     }
   }
@@ -3277,7 +3276,7 @@ export class D1Storage implements IStorage {
         )
         .run();
     } catch (err) {
-      console.error('D1Storage.createMovieRequest error:', err);
+      logger.error('D1Storage.createMovieRequest error:', err);
       throw err;
     }
   }
@@ -3325,7 +3324,7 @@ export class D1Storage implements IStorage {
         .bind(...values)
         .run();
     } catch (err) {
-      console.error('D1Storage.updateMovieRequest error:', err);
+      logger.error('D1Storage.updateMovieRequest error:', err);
       throw err;
     }
   }
@@ -3337,7 +3336,7 @@ export class D1Storage implements IStorage {
         .bind(requestId)
         .run();
     } catch (err) {
-      console.error('D1Storage.deleteMovieRequest error:', err);
+      logger.error('D1Storage.deleteMovieRequest error:', err);
       throw err;
     }
   }
@@ -3354,7 +3353,7 @@ export class D1Storage implements IStorage {
       if (!results.results) return [];
       return results.results.map((row) => row.request_id as string);
     } catch (err) {
-      console.error('D1Storage.getUserMovieRequests error:', err);
+      logger.error('D1Storage.getUserMovieRequests error:', err);
       return [];
     }
   }
@@ -3371,7 +3370,7 @@ export class D1Storage implements IStorage {
         .bind(userName, requestId)
         .run();
     } catch (err) {
-      console.error('D1Storage.addUserMovieRequest error:', err);
+      logger.error('D1Storage.addUserMovieRequest error:', err);
       throw err;
     }
   }
@@ -3388,7 +3387,7 @@ export class D1Storage implements IStorage {
         .bind(userName, requestId)
         .run();
     } catch (err) {
-      console.error('D1Storage.removeUserMovieRequest error:', err);
+      logger.error('D1Storage.removeUserMovieRequest error:', err);
       throw err;
     }
   }
@@ -3425,7 +3424,7 @@ export class D1Storage implements IStorage {
       if (!result) return null;
       return JSON.parse(result.config as string);
     } catch (err) {
-      console.error('D1Storage.getAdminConfig error:', err);
+      logger.error('D1Storage.getAdminConfig error:', err);
       return null;
     }
   }
@@ -3443,7 +3442,7 @@ export class D1Storage implements IStorage {
         .bind(JSON.stringify(config), Date.now())
         .run();
     } catch (err) {
-      console.error('D1Storage.setAdminConfig error:', err);
+      logger.error('D1Storage.setAdminConfig error:', err);
       throw err;
     }
   }
@@ -3470,7 +3469,7 @@ export class D1Storage implements IStorage {
         updatedAt: Number(result.updated_at),
       };
     } catch (err) {
-      console.error('D1Storage.getUserLocalSettings error:', err);
+      logger.error('D1Storage.getUserLocalSettings error:', err);
       return null;
     }
   }
@@ -3524,7 +3523,7 @@ export class D1Storage implements IStorage {
 
       return { ok: true, version, updatedAt: now };
     } catch (err) {
-      console.error('D1Storage.setUserLocalSettings error:', err);
+      logger.error('D1Storage.setUserLocalSettings error:', err);
       throw err;
     }
   }
@@ -3561,14 +3560,14 @@ export class D1Storage implements IStorage {
             message.includes('no such table') ||
             message.includes('does not exist')
           ) {
-            console.warn('D1Storage.clearAllData warning:', table, message);
+            logger.warn('D1Storage.clearAllData warning:', table, message);
             continue;
           }
           throw err;
         }
       }
     } catch (err) {
-      console.error('D1Storage.clearAllData error:', err);
+      logger.error('D1Storage.clearAllData error:', err);
       throw err;
     }
   }
@@ -3582,7 +3581,7 @@ export class D1Storage implements IStorage {
 
       return result ? (result.value as string) : null;
     } catch (err) {
-      console.error('D1Storage.getGlobalValue error:', err);
+      logger.error('D1Storage.getGlobalValue error:', err);
       return null;
     }
   }
@@ -3600,7 +3599,7 @@ export class D1Storage implements IStorage {
         .bind(key, value, Date.now())
         .run();
     } catch (err) {
-      console.error('D1Storage.setGlobalValue error:', err);
+      logger.error('D1Storage.setGlobalValue error:', err);
       throw err;
     }
   }
@@ -3612,7 +3611,7 @@ export class D1Storage implements IStorage {
         .bind(key)
         .run();
     } catch (err) {
-      console.error('D1Storage.deleteGlobalValue error:', err);
+      logger.error('D1Storage.deleteGlobalValue error:', err);
       throw err;
     }
   }
@@ -3643,7 +3642,7 @@ export class D1Storage implements IStorage {
         .first();
       return row ? this.mapTelegramBinding(row) : null;
     } catch (err) {
-      console.error('D1Storage.getTelegramBinding error:', err);
+      logger.error('D1Storage.getTelegramBinding error:', err);
       return null;
     }
   }
@@ -3658,7 +3657,7 @@ export class D1Storage implements IStorage {
         .first();
       return row ? this.mapTelegramBinding(row) : null;
     } catch (err) {
-      console.error('D1Storage.getTelegramBindingByTelegramUserId error:', err);
+      logger.error('D1Storage.getTelegramBindingByTelegramUserId error:', err);
       return null;
     }
   }
@@ -3698,7 +3697,7 @@ export class D1Storage implements IStorage {
         )
         .run();
     } catch (err) {
-      console.error('D1Storage.upsertTelegramBinding error:', err);
+      logger.error('D1Storage.upsertTelegramBinding error:', err);
       throw err;
     }
   }
@@ -3736,7 +3735,7 @@ export class D1Storage implements IStorage {
         used: row.used === 1,
       };
     } catch (err) {
-      console.error('D1Storage.getTelegramBindSession error:', err);
+      logger.error('D1Storage.getTelegramBindSession error:', err);
       return null;
     }
   }
@@ -3766,7 +3765,7 @@ export class D1Storage implements IStorage {
         )
         .run();
     } catch (err) {
-      console.error('D1Storage.upsertTelegramBindSession error:', err);
+      logger.error('D1Storage.upsertTelegramBindSession error:', err);
       throw err;
     }
   }
@@ -3789,7 +3788,7 @@ export class D1Storage implements IStorage {
 
       return (result?.last_check_time as number) || 0;
     } catch (err) {
-      console.error('D1Storage.getLastFavoriteCheckTime error:', err);
+      logger.error('D1Storage.getLastFavoriteCheckTime error:', err);
       return 0;
     }
   }
@@ -3810,7 +3809,7 @@ export class D1Storage implements IStorage {
         .bind(userName, timestamp)
         .run();
     } catch (err) {
-      console.error('D1Storage.setLastFavoriteCheckTime error:', err);
+      logger.error('D1Storage.setLastFavoriteCheckTime error:', err);
       throw err;
     }
   }
@@ -3827,7 +3826,7 @@ export class D1Storage implements IStorage {
         .bind(timestamp, userName)
         .run();
     } catch (err) {
-      console.error('D1Storage.updateLastMovieRequestTime error:', err);
+      logger.error('D1Storage.updateLastMovieRequestTime error:', err);
       throw err;
     }
   }

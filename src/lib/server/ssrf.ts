@@ -1,5 +1,7 @@
 import dns from 'dns';
 
+import { logger } from '@/lib/logger';
+
 /**
  * 判断 IP 地址是否为内网/本地私有地址
  * 覆盖 IPv4 和 IPv6，彻底杜绝所有变体绕过。
@@ -101,7 +103,7 @@ export async function validateProxyUrlServerSide(
 
     // 4. 对物理 IP 进行内网校验
     if (isPrivateIP(lookupResult.address)) {
-      console.warn(
+      logger.warn(
         `[SSRF 防护] 拦截到尝试访问内部网络的请求 URL: ${urlStr} (解析出的底层 IP: ${lookupResult.address})`
       );
       return false;
@@ -110,7 +112,7 @@ export async function validateProxyUrlServerSide(
     return true;
   } catch (error) {
     // 凡是报错（无论是 URL 解析失败，还是 DNS 解析失败，还是域名不存在），均作为不安全拒绝
-    console.warn(`[SSRF 防护] URL解析失败或不合法, 拒绝代理请求: ${urlStr}`);
+    logger.warn(`[SSRF 防护] URL解析失败或不合法, 拒绝代理请求: ${urlStr}`);
     return false;
   }
 }

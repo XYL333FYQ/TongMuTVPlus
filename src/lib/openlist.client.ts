@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
+import { logger } from '@/lib/logger';
 import { normalizeApiBaseUrl } from '@/lib/url';
 
 // Token 内存缓存
@@ -93,7 +94,7 @@ export class OpenListClient {
     }
 
     // 否则重新登录
-    console.log('[OpenListClient] Token 不存在或已过期，重新登录');
+    logger.info('[OpenListClient] Token 不存在或已过期，重新登录');
     this.token = await OpenListClient.login(
       this.baseURL,
       this.username,
@@ -106,7 +107,7 @@ export class OpenListClient {
       expiresAt: Date.now() + 60 * 60 * 1000,
     });
 
-    console.log('[OpenListClient] 登录成功，Token 已缓存');
+    logger.info('[OpenListClient] 登录成功，Token 已缓存');
     return this.token;
   }
 
@@ -116,7 +117,7 @@ export class OpenListClient {
   private clearTokenCache(): void {
     const cacheKey = `${this.baseURL}:${this.username}`;
     tokenCache.delete(cacheKey);
-    console.log('[OpenListClient] Token 缓存已清除');
+    logger.info('[OpenListClient] Token 缓存已清除');
   }
 
   /**
@@ -143,7 +144,7 @@ export class OpenListClient {
 
     // 检查 HTTP status 401
     if (response.status === 401 && !retried) {
-      console.log('[OpenListClient] 收到 HTTP 401，清除 Token 缓存并重试');
+      logger.info('[OpenListClient] 收到 HTTP 401，清除 Token 缓存并重试');
       this.clearTokenCache();
       return this.fetchWithRetry(url, options, true);
     }
@@ -156,7 +157,7 @@ export class OpenListClient {
         const data = await clonedResponse.json();
 
         if (data.code === 401) {
-          console.log(
+          logger.info(
             '[OpenListClient] 响应体 code 为 401，Token 已过期，清除缓存并重试'
           );
           this.clearTokenCache();
@@ -164,7 +165,7 @@ export class OpenListClient {
         }
       } catch (error) {
         // 如果解析 JSON 失败，忽略错误，返回原始响应
-        console.warn('[OpenListClient] 解析响应 JSON 失败:', error);
+        logger.warn('[OpenListClient] 解析响应 JSON 失败:', error);
       }
     }
     return response;
@@ -265,10 +266,10 @@ export class OpenListClient {
       );
 
       if (!response.ok) {
-        console.warn(`刷新目录缓存失败: ${response.status}`);
+        logger.warn(`刷新目录缓存失败: ${response.status}`);
       }
     } catch (error) {
-      console.warn('刷新目录缓存失败:', error);
+      logger.warn('刷新目录缓存失败:', error);
     }
   }
 

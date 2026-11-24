@@ -1,5 +1,7 @@
 /* eslint-disable no-console, @typescript-eslint/no-explicit-any, @typescript-eslint/no-non-null-assertion */
 
+import { logger } from '@/lib/logger';
+
 import { AdminConfig } from './admin.types';
 import { BookReadRecord, BookShelfItem } from './book.types';
 import { MangaReadRecord, MangaShelfItem } from './manga.types';
@@ -154,7 +156,7 @@ export abstract class BaseRedisStorage implements IStorage {
     // 检查是否已有正在进行的操作
     const existingLock = playRecordLocks.get(userName);
     if (existingLock) {
-      console.log(`用户 ${userName} 的播放记录操作正在进行中，跳过清理`);
+      logger.info(`用户 ${userName} 的播放记录操作正在进行中，跳过清理`);
       await existingLock;
       return;
     }
@@ -190,7 +192,7 @@ export abstract class BaseRedisStorage implements IStorage {
         return;
       }
 
-      console.log(
+      logger.info(
         `用户 ${userName} 的播放记录数 ${recordCount} 超过阈值 ${threshold}，开始清理...`
       );
 
@@ -208,9 +210,9 @@ export abstract class BaseRedisStorage implements IStorage {
         await this.deletePlayRecord(userName, key);
       }
 
-      console.log(`已删除用户 ${userName} 的 ${deleteCount} 条最旧播放记录`);
+      logger.info(`已删除用户 ${userName} 的 ${deleteCount} 条最旧播放记录`);
     } catch (error) {
-      console.error(`清理用户 ${userName} 播放记录失败:`, error);
+      logger.error(`清理用户 ${userName} 播放记录失败:`, error);
       // 清理失败不影响主流程，只记录错误
     }
   }
@@ -220,7 +222,7 @@ export abstract class BaseRedisStorage implements IStorage {
     // 检查是否已有正在进行的迁移
     const existingMigration = playRecordLocks.get(userName);
     if (existingMigration) {
-      console.log(`用户 ${userName} 的播放记录正在迁移中，等待完成...`);
+      logger.info(`用户 ${userName} 的播放记录正在迁移中，等待完成...`);
       await existingMigration;
       return;
     }
@@ -239,12 +241,12 @@ export abstract class BaseRedisStorage implements IStorage {
 
   // 实际执行迁移的方法
   private async doMigration(userName: string): Promise<void> {
-    console.log(`开始迁移用户 ${userName} 的播放记录...`);
+    logger.info(`开始迁移用户 ${userName} 的播放记录...`);
 
     // 1. 检查是否已经迁移过
     const userInfo = await this.getUserInfoV2(userName);
     if (userInfo?.playrecord_migrated) {
-      console.log(`用户 ${userName} 的播放记录已经迁移过，跳过`);
+      logger.info(`用户 ${userName} 的播放记录已经迁移过，跳过`);
       return;
     }
 
@@ -255,7 +257,7 @@ export abstract class BaseRedisStorage implements IStorage {
     );
 
     if (oldKeys.length === 0) {
-      console.log(`用户 ${userName} 没有旧的播放记录，标记为已迁移`);
+      logger.info(`用户 ${userName} 没有旧的播放记录，标记为已迁移`);
       // 即使没有数据也标记为已迁移
       await this.withRetry(() =>
         this.adapter.hSet(
@@ -270,7 +272,7 @@ export abstract class BaseRedisStorage implements IStorage {
       return;
     }
 
-    console.log(`找到 ${oldKeys.length} 条旧播放记录，开始迁移...`);
+    logger.info(`找到 ${oldKeys.length} 条旧播放记录，开始迁移...`);
 
     // 3. 批量获取旧数据
     const oldValues = await this.withRetry(() => this.adapter.mGet(oldKeys));
@@ -291,14 +293,14 @@ export abstract class BaseRedisStorage implements IStorage {
       await this.withRetry(() =>
         this.adapter.hSet(this.prHashKey(userName), hashData)
       );
-      console.log(
+      logger.info(
         `成功迁移 ${Object.keys(hashData).length} 条播放记录到hash结构`
       );
     }
 
     // 6. 删除旧的key
     await this.withRetry(() => this.adapter.del(oldKeys));
-    console.log(`删除了 ${oldKeys.length} 个旧的播放记录key`);
+    logger.info(`删除了 ${oldKeys.length} 个旧的播放记录key`);
 
     // 7. 标记迁移完成
     await this.withRetry(() =>
@@ -313,7 +315,7 @@ export abstract class BaseRedisStorage implements IStorage {
     const { userInfoCache } = await import('./user-cache');
     userInfoCache?.delete(userName);
 
-    console.log(`用户 ${userName} 的播放记录迁移完成`);
+    logger.info(`用户 ${userName} 的播放记录迁移完成`);
   }
 
   // ---------- 收藏 ----------
@@ -372,7 +374,7 @@ export abstract class BaseRedisStorage implements IStorage {
     // 检查是否已有正在进行的迁移
     const existingMigration = playRecordLocks.get(userName);
     if (existingMigration) {
-      console.log(`用户 ${userName} 的收藏正在迁移中，等待完成...`);
+      logger.info(`用户 ${userName} 的收藏正在迁移中，等待完成...`);
       await existingMigration;
       return;
     }
@@ -391,12 +393,12 @@ export abstract class BaseRedisStorage implements IStorage {
 
   // 实际执行收藏迁移的方法
   private async doFavoriteMigration(userName: string): Promise<void> {
-    console.log(`开始迁移用户 ${userName} 的收藏...`);
+    logger.info(`开始迁移用户 ${userName} 的收藏...`);
 
     // 1. 检查是否已经迁移过
     const userInfo = await this.getUserInfoV2(userName);
     if (userInfo?.favorite_migrated) {
-      console.log(`用户 ${userName} 的收藏已经迁移过，跳过`);
+      logger.info(`用户 ${userName} 的收藏已经迁移过，跳过`);
       return;
     }
 
@@ -407,7 +409,7 @@ export abstract class BaseRedisStorage implements IStorage {
     );
 
     if (oldKeys.length === 0) {
-      console.log(`用户 ${userName} 没有旧的收藏，标记为已迁移`);
+      logger.info(`用户 ${userName} 没有旧的收藏，标记为已迁移`);
       // 即使没有数据也标记为已迁移
       await this.withRetry(() =>
         this.adapter.hSet(
@@ -422,7 +424,7 @@ export abstract class BaseRedisStorage implements IStorage {
       return;
     }
 
-    console.log(`找到 ${oldKeys.length} 条旧收藏，开始迁移...`);
+    logger.info(`找到 ${oldKeys.length} 条旧收藏，开始迁移...`);
 
     // 3. 批量获取旧数据
     const oldValues = await this.withRetry(() => this.adapter.mGet(oldKeys));
@@ -443,12 +445,12 @@ export abstract class BaseRedisStorage implements IStorage {
       await this.withRetry(() =>
         this.adapter.hSet(this.favHashKey(userName), hashData)
       );
-      console.log(`成功迁移 ${Object.keys(hashData).length} 条收藏到hash结构`);
+      logger.info(`成功迁移 ${Object.keys(hashData).length} 条收藏到hash结构`);
     }
 
     // 6. 删除旧的key
     await this.withRetry(() => this.adapter.del(oldKeys));
-    console.log(`删除了 ${oldKeys.length} 个旧的收藏key`);
+    logger.info(`删除了 ${oldKeys.length} 个旧的收藏key`);
 
     // 7. 标记迁移完成
     await this.withRetry(() =>
@@ -459,7 +461,7 @@ export abstract class BaseRedisStorage implements IStorage {
     const { userInfoCache } = await import('./user-cache');
     userInfoCache?.delete(userName);
 
-    console.log(`用户 ${userName} 的收藏迁移完成`);
+    logger.info(`用户 ${userName} 的收藏迁移完成`);
   }
 
   // ---------- 音乐播放记录相关 ----------
@@ -1226,7 +1228,7 @@ export abstract class BaseRedisStorage implements IStorage {
         );
         userInfoCache?.delete(userName);
       } catch (err) {
-        console.error('upgradePasswordHash error:', err);
+        logger.error('upgradePasswordHash error:', err);
       }
     }
     return check.ok;
@@ -1293,9 +1295,9 @@ export abstract class BaseRedisStorage implements IStorage {
             })
           );
 
-          console.log(`Created database record for site owner: ${userName}`);
+          logger.info(`Created database record for site owner: ${userName}`);
         } catch (insertErr) {
-          console.error('Failed to create owner record:', insertErr);
+          logger.error('Failed to create owner record:', insertErr);
           // 即使插入失败，仍然返回默认信息
         }
 
@@ -1935,7 +1937,7 @@ export abstract class BaseRedisStorage implements IStorage {
         updatedAt: Number(parsed.updatedAt) || 0,
       };
     } catch (err) {
-      console.error('getUserLocalSettings parse error:', err);
+      logger.error('getUserLocalSettings parse error:', err);
       return null;
     }
   }
@@ -2041,7 +2043,7 @@ export abstract class BaseRedisStorage implements IStorage {
   async migrateSkipConfigs(userName: string): Promise<void> {
     const existingMigration = playRecordLocks.get(`${userName}:skip`);
     if (existingMigration) {
-      console.log(`用户 ${userName} 的跳过配置正在迁移中，等待完成...`);
+      logger.info(`用户 ${userName} 的跳过配置正在迁移中，等待完成...`);
       await existingMigration;
       return;
     }
@@ -2057,11 +2059,11 @@ export abstract class BaseRedisStorage implements IStorage {
   }
 
   private async doSkipConfigMigration(userName: string): Promise<void> {
-    console.log(`开始迁移用户 ${userName} 的跳过配置...`);
+    logger.info(`开始迁移用户 ${userName} 的跳过配置...`);
 
     const userInfo = await this.getUserInfoV2(userName);
     if (userInfo?.skip_migrated) {
-      console.log(`用户 ${userName} 的跳过配置已经迁移过，跳过`);
+      logger.info(`用户 ${userName} 的跳过配置已经迁移过，跳过`);
       return;
     }
 
@@ -2071,7 +2073,7 @@ export abstract class BaseRedisStorage implements IStorage {
     );
 
     if (oldKeys.length === 0) {
-      console.log(`用户 ${userName} 没有旧的跳过配置，标记为已迁移`);
+      logger.info(`用户 ${userName} 没有旧的跳过配置，标记为已迁移`);
       await this.withRetry(() =>
         this.adapter.hSet(this.userInfoKey(userName), 'skip_migrated', 'true')
       );
@@ -2098,13 +2100,13 @@ export abstract class BaseRedisStorage implements IStorage {
       await this.withRetry(() =>
         this.adapter.hSet(this.skipHashKey(userName), hashData)
       );
-      console.log(
+      logger.info(
         `成功迁移 ${Object.keys(hashData).length} 条跳过配置到hash结构`
       );
     }
 
     await this.withRetry(() => this.adapter.del(oldKeys));
-    console.log(`删除了 ${oldKeys.length} 个旧的跳过配置key`);
+    logger.info(`删除了 ${oldKeys.length} 个旧的跳过配置key`);
 
     await this.withRetry(() =>
       this.adapter.hSet(this.userInfoKey(userName), 'skip_migrated', 'true')
@@ -2112,7 +2114,7 @@ export abstract class BaseRedisStorage implements IStorage {
     const { userInfoCache } = await import('./user-cache');
     userInfoCache?.delete(userName);
 
-    console.log(`用户 ${userName} 的跳过配置迁移完成`);
+    logger.info(`用户 ${userName} 的跳过配置迁移完成`);
   }
 
   // ---------- 弹幕过滤配置 ----------
@@ -2159,9 +2161,9 @@ export abstract class BaseRedisStorage implements IStorage {
       // 删除管理员配置
       await this.withRetry(() => this.adapter.del(this.adminConfigKey()));
 
-      console.log('所有数据已清空');
+      logger.info('所有数据已清空');
     } catch (error) {
-      console.error('清空数据失败:', error);
+      logger.error('清空数据失败:', error);
       throw new Error('清空数据失败');
     }
   }

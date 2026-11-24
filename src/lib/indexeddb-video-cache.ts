@@ -4,6 +4,7 @@
  * 注意：视频分片/播放列表不存入现有下载元信息库，避免大体积 Blob
  * 与任务/用户元信息混在一起。
  */
+import { logger } from '@/lib/logger';
 
 export const INDEXEDDB_VIDEO_CACHE_DB_NAME = 'MoonTVPlusVideoCache';
 export const INDEXEDDB_VIDEO_CACHE_DB_VERSION = 1;
@@ -583,7 +584,7 @@ export async function ensureIndexedDBVideoServiceWorker(): Promise<boolean> {
     await waitForServiceWorkerActivation(registration);
     return waitForServiceWorkerController();
   } catch (error) {
-    console.warn(
+    logger.warn(
       '[IndexedDBVideo] Service Worker 不可用，降级为 Blob URL 播放:',
       error
     );
@@ -724,7 +725,7 @@ export async function getIndexedDBVideoPlaybackUrl(
 
     return createIndexedDBVideoBlobPlaybackUrl(manifest.cacheKey);
   } catch (error) {
-    console.error('[IndexedDBVideo] 获取本地播放地址失败:', error);
+    logger.error('[IndexedDBVideo] 获取本地播放地址失败:', error);
     return { hasLocal: false, reason: String(error) };
   }
 }

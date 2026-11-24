@@ -1,5 +1,6 @@
 /* eslint-disable no-console, @typescript-eslint/no-explicit-any, @typescript-eslint/no-non-null-assertion, @typescript-eslint/no-var-requires */
 
+import { logger } from '@/lib/logger';
 import { isOwnerRole } from '@/lib/roles';
 
 import { AdminConfig } from './admin.types';
@@ -106,7 +107,7 @@ function getPostgresAdapter(): any {
   // 动态导入适配器以避免客户端打包
   const { PostgresAdapter } = require('./postgres-adapter');
 
-  console.log('Using Vercel Postgres database');
+  logger.info('Using Vercel Postgres database');
 
   return new PostgresAdapter();
 }
@@ -129,7 +130,7 @@ function getTursoAdapter(): any {
     );
   }
 
-  console.log('Using Turso (libSQL) database');
+  logger.info('Using Turso (libSQL) database');
 
   return new TursoAdapter(tursoUrl, tursoToken);
 }
@@ -170,10 +171,10 @@ function getD1Adapter(): any {
                 );
               }
 
-              console.log('Using Cloudflare D1 database');
+              logger.info('Using Cloudflare D1 database');
               cachedAdapter = new CloudflareD1Adapter(env.DB);
             } catch (error) {
-              console.error('Failed to initialize Cloudflare D1:', error);
+              logger.error('Failed to initialize Cloudflare D1:', error);
               throw error;
             }
           }
@@ -764,20 +765,20 @@ export class DbManager {
       return;
     }
 
-    console.log(`开始迁移 ${users.length} 个用户...`);
+    logger.info(`开始迁移 ${users.length} 个用户...`);
 
     for (const user of users) {
       try {
         // 跳过环境变量中的站长（站长使用环境变量认证，不需要迁移）
         if (user.username === process.env.USERNAME) {
-          console.log(`跳过站长 ${user.username} 的迁移`);
+          logger.info(`跳过站长 ${user.username} 的迁移`);
           continue;
         }
 
         // 检查用户是否已经迁移
         const exists = await this.checkUserExistV2(user.username);
         if (exists) {
-          console.log(`用户 ${user.username} 已存在，跳过迁移`);
+          logger.info(`用户 ${user.username} 已存在，跳过迁移`);
           continue;
         }
 
@@ -787,7 +788,7 @@ export class DbManager {
         // 如果是OIDC用户，生成随机密码（OIDC用户不需要密码登录）
         if ((user as any).oidcSub) {
           password = crypto.randomUUID();
-          console.log(`用户 ${user.username} (OIDC用户) 使用随机密码迁移`);
+          logger.info(`用户 ${user.username} (OIDC用户) 使用随机密码迁移`);
         }
         // 尝试从旧的存储中获取密码
         else {
@@ -798,17 +799,17 @@ export class DbManager {
               );
               if (storedPassword) {
                 password = storedPassword;
-                console.log(`用户 ${user.username} 使用旧密码迁移`);
+                logger.info(`用户 ${user.username} 使用旧密码迁移`);
               } else {
                 // 没有旧密码，使用默认密码
                 password = 'defaultPassword123';
-                console.log(`用户 ${user.username} 没有旧密码，使用默认密码`);
+                logger.info(`用户 ${user.username} 没有旧密码，使用默认密码`);
               }
             } else {
               password = 'defaultPassword123';
             }
           } catch (err) {
-            console.error(
+            logger.error(
               `获取用户 ${user.username} 的密码失败，使用默认密码`,
               err
             );
@@ -819,7 +820,7 @@ export class DbManager {
         // 将站长角色转换为普通角色
         const migratedRole = isOwnerRole(user.role) ? 'user' : user.role;
         if (isOwnerRole(user.role)) {
-          console.log(`用户 ${user.username} 的角色从 owner 转换为 user`);
+          logger.info(`用户 ${user.username} 的角色从 owner 转换为 user`);
         }
 
         // 创建新用户
@@ -837,13 +838,13 @@ export class DbManager {
           await this.updateUserInfoV2(user.username, { banned: true });
         }
 
-        console.log(`用户 ${user.username} 迁移成功`);
+        logger.info(`用户 ${user.username} 迁移成功`);
       } catch (err) {
-        console.error(`迁移用户 ${user.username} 失败:`, err);
+        logger.error(`迁移用户 ${user.username} 失败:`, err);
       }
     }
 
-    console.log('用户迁移完成');
+    logger.info('用户迁移完成');
   }
 
   // ---------- 搜索历史 ----------

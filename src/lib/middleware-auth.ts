@@ -1,6 +1,7 @@
 /* eslint-disable no-console */
 
 import { getAuthSigningSecret } from '@/lib/auth-secret';
+import { logger } from '@/lib/logger';
 
 import { TOKEN_CONFIG, verifyRefreshToken } from './refresh-token';
 
@@ -40,7 +41,7 @@ export async function refreshAccessToken(
   const isValid = await verifyRefreshToken(username, tokenId, refreshToken);
 
   if (!isValid) {
-    console.log(`Refresh token invalid for ${username}:${tokenId}`);
+    logger.info(`Refresh token invalid for ${username}:${tokenId}`);
     return null;
   }
 
@@ -68,7 +69,7 @@ export async function refreshAccessToken(
     signature,
   };
 
-  console.log(`Refreshed access token for ${username}`);
+  logger.info(`Refreshed access token for ${username}`);
 
   return encodeURIComponent(JSON.stringify(authData));
 }

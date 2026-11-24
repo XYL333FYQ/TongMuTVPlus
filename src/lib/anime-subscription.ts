@@ -10,6 +10,7 @@ import {
 import { getConfig, setCachedConfig } from '@/lib/config';
 import { db, getStorage } from '@/lib/db';
 import { EmailService } from '@/lib/email.service';
+import { logger } from '@/lib/logger';
 import { getMagnetBaseUrl, universalMagnetFetch } from '@/lib/magnet.client';
 import {
   addOpenListOfflineDownload,
@@ -311,7 +312,7 @@ async function refillMissingEpisodeResults(
 
   // 单次检查最多补搜 24 集，避免源站压力过大
   const toSearch = missing.slice(0, 24);
-  console.log(
+  logger.info(
     `[AnimeSubscription] ${subscription.title}: 缺集重新检索 ${toSearch.join(
       ','
     )}（上限内；总缺 ${missing.length}）`
@@ -329,7 +330,7 @@ async function refillMissingEpisodeResults(
         onlyEpisode: ep,
       });
       if (matched.length === 0) {
-        console.log(
+        logger.info(
           `[AnimeSubscription] ${subscription.title}: 补搜「${keyword}」未命中第${ep}集`
         );
         continue;
@@ -341,11 +342,11 @@ async function refillMissingEpisodeResults(
         merged.push(item);
       }
       haveEp.add(ep);
-      console.log(
+      logger.info(
         `[AnimeSubscription] ${subscription.title}: 补搜第${ep}集命中 ${matched.length} 条`
       );
     } catch (err) {
-      console.error(
+      logger.error(
         `[AnimeSubscription] ${subscription.title}: 补搜第${ep}集失败`,
         err
       );
@@ -512,11 +513,11 @@ async function sendAnimeUpdateNotifications(
       }
     }
   } catch (error) {
-    console.error('[AnimeSubscription] 获取站长用户名失败:', error);
+    logger.error('[AnimeSubscription] 获取站长用户名失败:', error);
   }
 
   if (!ownerUsername) {
-    console.warn('[AnimeSubscription] 未找到站长用户，跳过通知');
+    logger.warn('[AnimeSubscription] 未找到站长用户，跳过通知');
     return;
   }
 
@@ -549,9 +550,9 @@ async function sendAnimeUpdateNotifications(
           episodes: episodes,
         },
       });
-      console.log(`[AnimeSubscription] 已发送站内通知给用户: ${username}`);
+      logger.info(`[AnimeSubscription] 已发送站内通知给用户: ${username}`);
     } catch (error) {
-      console.error(
+      logger.error(
         `[AnimeSubscription] 发送站内通知失败 (${username}):`,
         error
       );
@@ -576,7 +577,7 @@ async function sendAnimeUpdateNotifications(
         emailsToSend.push({ username, email });
       }
     } catch (error) {
-      console.error(
+      logger.error(
         `[AnimeSubscription] 获取用户邮箱失败 (${username}):`,
         error
       );
@@ -626,9 +627,9 @@ async function sendAnimeUpdateNotifications(
         });
       }
 
-      console.log(`[AnimeSubscription] 已发送邮件通知给: ${email}`);
+      logger.info(`[AnimeSubscription] 已发送邮件通知给: ${email}`);
     } catch (error) {
-      console.error(`[AnimeSubscription] 发送邮件失败 (${email}):`, error);
+      logger.error(`[AnimeSubscription] 发送邮件失败 (${email}):`, error);
     }
   }
 }
@@ -665,11 +666,11 @@ export async function checkSubscription(subscription: AnimeSubscription) {
       )
     );
     if (before > newEpisodes.length) {
-      console.log(
+      logger.info(
         `[AnimeSubscription] ${subscription.title}: 单集只下一次，${before} → ${newEpisodes.length} 条`
       );
       for (const item of newEpisodes) {
-        console.log(
+        logger.info(
           `[AnimeSubscription] ${subscription.title}: 第${item.episode}集选用「${item.title}」`
         );
       }
@@ -693,12 +694,12 @@ export async function checkSubscription(subscription: AnimeSubscription) {
       subscription.lastEpisode = item.episode;
       downloaded.push(item.episode);
 
-      console.log(
+      logger.info(
         `[AnimeSubscription] ${subscription.title}: 已添加第${item.episode}集到下载队列`
       );
     } catch (error) {
       // 失败则停止，下次继续尝试这一集
-      console.error(
+      logger.error(
         `[AnimeSubscription] ${subscription.title}: 下载第${item.episode}集失败`,
         error
       );
@@ -714,7 +715,7 @@ export async function checkSubscription(subscription: AnimeSubscription) {
     try {
       await sendAnimeUpdateNotifications(subscription, downloaded);
     } catch (error) {
-      console.error(
+      logger.error(
         `[AnimeSubscription] ${subscription.title}: 发送通知失败`,
         error
       );
@@ -732,18 +733,18 @@ export async function checkSubscription(subscription: AnimeSubscription) {
  * 检查所有订阅（定时任务调用）
  */
 export async function checkAnimeSubscriptions() {
-  console.log('[AnimeSubscription] 开始检查动漫订阅');
+  logger.info('[AnimeSubscription] 开始检查动漫订阅');
 
   const config = await getConfig();
   const animeConfig = config.AnimeSubscriptionConfig;
 
   if (!animeConfig?.Enabled) {
-    console.log('[AnimeSubscription] 动漫订阅功能未启用，跳过检查');
+    logger.info('[AnimeSubscription] 动漫订阅功能未启用，跳过检查');
     return;
   }
 
   const subscriptions = animeConfig.Subscriptions || [];
-  console.log(`[AnimeSubscription] 共有 ${subscriptions.length} 个订阅`);
+  logger.info(`[AnimeSubscription] 共有 ${subscriptions.length} 个订阅`);
 
   const now = Date.now();
   const MIN_CHECK_INTERVAL = 30 * 60 * 1000; // 30分钟
@@ -754,7 +755,7 @@ export async function checkAnimeSubscriptions() {
 
   for (const sub of subscriptions) {
     if (!sub.enabled) {
-      console.log(`[AnimeSubscription] 跳过已禁用的订阅: ${sub.title}`);
+      logger.info(`[AnimeSubscription] 跳过已禁用的订阅: ${sub.title}`);
       skippedCount++;
       continue;
     }
@@ -765,7 +766,7 @@ export async function checkAnimeSubscriptions() {
       const remainingMinutes = Math.ceil(
         (MIN_CHECK_INTERVAL - timeSinceLastCheck) / 60000
       );
-      console.log(
+      logger.info(
         `[AnimeSubscription] 跳过 ${sub.title}: 距离上次检查仅 ${Math.floor(
           timeSinceLastCheck / 60000
         )} 分钟，还需等待 ${remainingMinutes} 分钟`
@@ -775,17 +776,17 @@ export async function checkAnimeSubscriptions() {
     }
 
     try {
-      console.log(
+      logger.info(
         `[AnimeSubscription] 检查订阅: ${sub.title} (源: ${sub.source}, 上次集数: ${sub.lastEpisode})`
       );
       const result = await checkSubscription(sub);
-      console.log(
+      logger.info(
         `[AnimeSubscription] ${sub.title}: 找到 ${result.found} 个新集数，成功下载 ${result.downloaded} 个`
       );
       configChanged = true;
       checkedCount++;
     } catch (error) {
-      console.error(`[AnimeSubscription] ${sub.title}: 检查失败`, error);
+      logger.error(`[AnimeSubscription] ${sub.title}: 检查失败`, error);
       errorCount++;
     }
   }
@@ -794,10 +795,10 @@ export async function checkAnimeSubscriptions() {
   if (configChanged) {
     await db.saveAdminConfig(config);
     await setCachedConfig(config);
-    console.log('[AnimeSubscription] 配置已更新并保存');
+    logger.info('[AnimeSubscription] 配置已更新并保存');
   }
 
-  console.log(
+  logger.info(
     `[AnimeSubscription] 检查完成 - 总计: ${subscriptions.length}, 已检查: ${checkedCount}, 跳过: ${skippedCount}, 失败: ${errorCount}`
   );
 }

@@ -3,6 +3,7 @@
 import type { NextRequest } from 'next/server';
 
 import { BRAND_NAME } from '@/lib/brand';
+import { logger } from '@/lib/logger';
 
 import type { AdminConfig } from './admin.types';
 import {
@@ -516,7 +517,7 @@ async function fetchTelegramApi(
 
   if (isCloudflareEnvironment()) {
     if (config?.apiProxy) {
-      console.warn(
+      logger.warn(
         'TELEGRAM_API_PROXY is ignored in Cloudflare runtime; use TELEGRAM_API_BASE_URL instead.'
       );
     }
@@ -687,7 +688,7 @@ export async function dispatchTelegramNotification(
       )
     );
   } catch (error) {
-    console.error('Telegram notification failed:', error);
+    logger.error('Telegram notification failed:', error);
   }
 }
 

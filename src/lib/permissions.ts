@@ -11,6 +11,7 @@ import {
   sanitizeFeaturePermissions,
   sanitizeFeaturePolicies,
 } from '@/lib/feature-permissions';
+import { logger } from '@/lib/logger';
 import { isPrivileged, roleOf } from '@/lib/require-role';
 
 export type FeatureAccessMap = Record<FeaturePermissionKey, boolean>;
@@ -86,7 +87,7 @@ export async function getUserFeatureAccess(
   try {
     return await getUserFeatureAccessMap(username);
   } catch (error) {
-    console.error('[Permissions] Failed to load feature access:', error);
+    logger.error('[Permissions] Failed to load feature access:', error);
     return username === process.env.USERNAME
       ? createFullFeatureAccessMap()
       : createEmptyFeatureAccessMap();

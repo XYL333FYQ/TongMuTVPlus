@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, no-console */
+import { logger } from '@/lib/logger';
 
 /**
  * 后台扫描任务管理
@@ -53,7 +54,7 @@ export function updateScanTaskProgress(
   let task = tasks.get(id);
   if (!task) {
     // 如果任务不存在（可能因为模块重新加载），重新创建任务
-    console.warn(`[ScanTask] 任务 ${id} 不存在，重新创建`);
+    logger.warn(`[ScanTask] 任务 ${id} 不存在，重新创建`);
     task = {
       id,
       status: 'running',
@@ -72,7 +73,7 @@ export function completeScanTask(id: string, result: ScanTask['result']): void {
   let task = tasks.get(id);
   if (!task) {
     // 如果任务不存在（可能因为模块重新加载），重新创建任务
-    console.warn(`[ScanTask] 任务 ${id} 不存在，重新创建并标记为完成`);
+    logger.warn(`[ScanTask] 任务 ${id} 不存在，重新创建并标记为完成`);
     task = {
       id,
       status: 'completed',
@@ -96,7 +97,7 @@ export function failScanTask(id: string, error: string): void {
   let task = tasks.get(id);
   if (!task) {
     // 如果任务不存在（可能因为模块重新加载），重新创建任务
-    console.warn(`[ScanTask] 任务 ${id} 不存在，重新创建并标记为失败`);
+    logger.warn(`[ScanTask] 任务 ${id} 不存在，重新创建并标记为失败`);
     task = {
       id,
       status: 'failed',
