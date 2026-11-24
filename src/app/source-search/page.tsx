@@ -30,6 +30,7 @@ import { SearchResult } from '@/lib/types';
 
 import CapsuleSwitch from '@/components/catalog/CapsuleSwitch';
 import PosterGrid from '@/components/catalog/PosterGrid';
+import EmptyState from '@/components/feedback/EmptyState';
 import RetryNotice from '@/components/feedback/RetryNotice';
 import PageContainer from '@/components/PageContainer';
 import PageLayout from '@/components/PageLayout';
@@ -717,9 +718,7 @@ function SourceSearchPageClient() {
                   onRetry={() => setVideosRetry((value) => value + 1)}
                 />
               ) : videos.length === 0 ? (
-                <div className='tm-empty'>
-                  <p className='tm-empty-title'>暂无视频</p>
-                </div>
+                <EmptyState title='暂无视频' />
               ) : (
                 <>
                   <PosterGrid className=''>

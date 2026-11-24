@@ -24,6 +24,7 @@ import {
 import './ChatPanel.css';
 
 import BusyDots from '@/components/feedback/BusyDots';
+import EmptyState from '@/components/feedback/EmptyState';
 import Switch from '@/components/ui/Switch';
 
 import { EMOJIS } from './chat-emoji';
@@ -159,10 +160,12 @@ export default function ChatPanel(props: ChatPanelProps) {
           </button>
         )}
         {!props.messages.length && (
-          <div className='tm-room-chat-empty'>
-            <MessageSquareText size={26} aria-hidden='true' />
-            <span>还没有消息</span>
-          </div>
+          <EmptyState
+            compact
+            icon={<MessageSquareText size={24} />}
+            title='还没有消息'
+            className='tm-room-chat-empty'
+          />
         )}
         {props.messages.map((message, index) => {
           const mine = (message.accountId || message.userName) === props.self;

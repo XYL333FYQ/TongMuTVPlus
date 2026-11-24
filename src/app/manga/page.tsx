@@ -19,9 +19,10 @@ import {
   MangaSource,
 } from '@/lib/manga.types';
 
+import EmptyState from '@/components/feedback/EmptyState';
+import RetryNotice from '@/components/feedback/RetryNotice';
 import { mangaCardItem } from '@/components/media/adapters';
 import ContinueReadingCard from '@/components/media/ContinueReadingCard';
-import EmptyState from '@/components/media/EmptyState';
 import {
   BOOK_RAIL_ITEM,
   SPINE_TAB,
@@ -368,7 +369,7 @@ export default function MangaRecommendPage() {
         <MediaSectionHeader title='书库' subtitle={`按 ${badge} 排序`} />
 
         {error ? (
-          <EmptyState tone='error' description={error} />
+          <RetryNotice message={error} />
         ) : booting ? (
           <MediaGridSkeleton count={18} className={WALL_CLASS} />
         ) : result.mangas.length === 0 ? (

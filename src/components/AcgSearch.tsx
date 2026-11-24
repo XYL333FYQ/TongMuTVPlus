@@ -17,6 +17,7 @@ import { usePageRefresh } from '@/hooks/usePageRefresh';
 import CapsuleSwitch from '@/components/catalog/CapsuleSwitch';
 import { notify } from '@/components/feedback/AppDialogs';
 import BusyDots from '@/components/feedback/BusyDots';
+import EmptyState from '@/components/feedback/EmptyState';
 import Select from '@/components/ui/Select';
 
 interface AcgSearchItem {
@@ -613,12 +614,7 @@ export default function AcgSearch({
 
     if (allItems.length === 0) {
       return (
-        <div className='flex items-center justify-center py-12'>
-          <div className='text-center'>
-            <AlertCircle className='mx-auto h-12 w-12 text-muted' />
-            <p className='mt-4 text-sm text-muted'>未找到相关资源</p>
-          </div>
-        </div>
+        <EmptyState icon={<AlertCircle size={24} />} title='未找到相关资源' />
       );
     }
 

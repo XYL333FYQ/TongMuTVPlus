@@ -15,8 +15,8 @@ import {
 } from '@/lib/db.client';
 import { MangaReadRecord, MangaShelfItem } from '@/lib/manga.types';
 
+import EmptyState from '@/components/feedback/EmptyState';
 import MangaHistoryCard from '@/components/manga/MangaHistoryCard';
-import EmptyState from '@/components/media/EmptyState';
 import { LIBRARY_ACCENT_ICON, LIBRARY_MUTED } from '@/components/media/library';
 import MediaGrid from '@/components/media/MediaGrid';
 import MediaGridSkeleton from '@/components/media/MediaGridSkeleton';

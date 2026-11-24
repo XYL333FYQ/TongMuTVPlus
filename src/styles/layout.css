@@ -315,6 +315,31 @@ html[data-tm-no-blur='true'] .tm-fade-image {
   font-size: var(--tm-fs-small);
   line-height: 1.6;
 }
+/* 根布局出错时整页只有这一块 */
+.tm-empty-page {
+  display: grid;
+  min-height: 100vh;
+  place-items: center;
+}
+.tm-empty-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 8px;
+}
+/* 面板、弹窗里的列表：留白和图标都小一档 */
+.tm-empty[data-compact] {
+  gap: 8px;
+  padding: 32px 16px;
+}
+.tm-empty[data-compact] .tm-empty-icon {
+  width: 44px;
+  height: 44px;
+}
+.tm-empty[data-compact] .tm-empty-title {
+  font-size: var(--tm-fs-body);
+}
 
 /* —— 横向滚动列表 —— */
 .tm-shelf {

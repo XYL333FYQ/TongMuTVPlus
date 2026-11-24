@@ -24,11 +24,12 @@ import {
 } from '@/lib/manga.types';
 import { type SettingKey, readSetting, writeSetting } from '@/lib/settings';
 
+import EmptyState from '@/components/feedback/EmptyState';
+import RetryNotice from '@/components/feedback/RetryNotice';
 import {
   mangaCardItem,
   mangaItemDetailHref,
 } from '@/components/media/adapters';
-import EmptyState from '@/components/media/EmptyState';
 import {
   LIBRARY_BUTTON,
   LIBRARY_FIELD,
@@ -550,11 +551,10 @@ export default function MangaSearchPage() {
             ) : undefined
           }
         />
-        {error && <EmptyState tone='error' description={error} />}
+        {error && <RetryNotice message={error} />}
         {!loading && failedSourceCount > 0 ? (
-          <EmptyState
-            tone='error'
-            description={`有 ${failedSourceCount} 个来源没有返回结果，当前只显示其余来源的结果，可能不完整。`}
+          <RetryNotice
+            message={`有 ${failedSourceCount} 个来源没有返回结果，当前只显示其余来源的结果，可能不完整。`}
           />
         ) : null}
         {loading && results.length === 0 ? (

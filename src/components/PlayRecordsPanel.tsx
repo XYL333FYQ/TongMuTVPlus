@@ -13,6 +13,7 @@ import {
 
 import BusyDots from '@/components/feedback/BusyDots';
 import { ConfirmDialog } from '@/components/feedback/ConfirmDialog';
+import EmptyState from '@/components/feedback/EmptyState';
 import ModalLayer from '@/components/feedback/ModalLayer';
 import VideoCard from '@/components/VideoCard';
 
@@ -246,10 +247,11 @@ export default function PlayRecordsPanel({
                 <BusyDots size={32} />
               </div>
             ) : playRecords.length === 0 ? (
-              <div className='flex flex-col items-center justify-center py-12 text-muted'>
-                <History className='w-12 h-12 mb-3 opacity-30' />
-                <p className='text-sm'>暂无播放记录</p>
-              </div>
+              <EmptyState
+                compact
+                icon={<History size={24} />}
+                title='暂无播放记录'
+              />
             ) : (
               <div className='grid grid-cols-3 gap-x-2 gap-y-14 sm:gap-y-20 px-0 sm:px-2 sm:grid-cols-[repeat(auto-fill,_minmax(11rem,_1fr))] sm:gap-x-8'>
                 {playRecords.map((record) => {

@@ -13,6 +13,7 @@ import {
 
 import { notifyError } from '@/components/feedback/AppDialogs';
 import { ConfirmDialog } from '@/components/feedback/ConfirmDialog';
+import EmptyState from '@/components/feedback/EmptyState';
 import ModalLayer from '@/components/feedback/ModalLayer';
 
 interface DownloadManagementPanelProps {
@@ -615,7 +616,7 @@ export function DownloadManagementPanel({
           {/* Content */}
           <div className='flex-1 overflow-y-auto p-3 sm:p-4'>
             {completedTasks.length === 0 ? (
-              <div className='text-center py-12 text-muted'>暂无下载记录</div>
+              <EmptyState compact title='暂无下载记录' />
             ) : (
               <div className='space-y-3'>
                 {videoGroups.map((group) => {

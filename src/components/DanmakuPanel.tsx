@@ -13,6 +13,7 @@ import type {
 } from '@/lib/danmaku/types';
 
 import BusyDots from '@/components/feedback/BusyDots';
+import EmptyState from '@/components/feedback/EmptyState';
 
 interface DanmakuPanelProps {
   videoTitle: string;
@@ -628,9 +629,7 @@ export default function DanmakuPanel({
               )}
 
               {!isLoadingEpisodes && episodes.length === 0 && (
-                <div className='py-8 text-center text-sm text-muted'>
-                  暂无剧集信息
-                </div>
+                <EmptyState compact title='暂无剧集信息' />
               )}
             </div>
           )}

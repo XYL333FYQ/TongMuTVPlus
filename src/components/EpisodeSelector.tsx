@@ -45,6 +45,7 @@ import DanmakuPanel from '@/components/DanmakuPanel';
 import EpisodeFilterSettings from '@/components/EpisodeFilterSettings';
 import EpisodeTitleCorrectDialog from '@/components/EpisodeTitleCorrectDialog';
 import BusyDots from '@/components/feedback/BusyDots';
+import EmptyState from '@/components/feedback/EmptyState';
 import Popover from '@/components/feedback/Popover';
 import FilmPoster from '@/components/poster/FilmPoster';
 
@@ -1418,14 +1419,11 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
           {!sourceSearchLoading &&
             !sourceSearchError &&
             availableSources.length === 0 && (
-              <div className='flex items-center justify-center py-8'>
-                <div className='text-center'>
-                  <div className='mb-2 text-muted'>
-                    <Tv className='mx-auto h-6 w-6' aria-hidden='true' />
-                  </div>
-                  <p className={`text-sm ${mutedTextClass}`}>暂无可用的换源</p>
-                </div>
-              </div>
+              <EmptyState
+                compact
+                icon={<Tv size={24} />}
+                title='暂无可用的换源'
+              />
             )}
 
           {!sourceSearchLoading &&

@@ -6,6 +6,7 @@ import { useMemo } from 'react';
 import type { TMDBVideoItem } from '@/lib/tmdb.client';
 
 import BusyDots from '@/components/feedback/BusyDots';
+import EmptyState from '@/components/feedback/EmptyState';
 import ModalLayer from '@/components/feedback/ModalLayer';
 
 interface TrailerPickerDialogProps {
@@ -94,13 +95,12 @@ export default function TrailerPickerDialog({
               )}
             </div>
           ) : sortedVideos.length === 0 ? (
-            <div className='flex flex-col items-center justify-center rounded-2xl border border-dashed border-line bg-raised px-6 py-12 text-center'>
-              <Youtube className='mb-3 h-12 w-12 text-muted' />
-              <h4 className='text-base font-medium text-fg'>未找到预告片</h4>
-              <p className='mt-2 text-sm text-muted'>
-                该影片在 TMDB 中没有可用的 YouTube 视频。
-              </p>
-            </div>
+            <EmptyState
+              compact
+              icon={<Youtube size={24} />}
+              title='未找到预告片'
+              description='该影片在 TMDB 中没有可用的 YouTube 视频。'
+            />
           ) : (
             <div className='space-y-3'>
               {sortedVideos.map((video) => (

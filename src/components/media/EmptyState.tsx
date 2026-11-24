@@ -1,13 +1,11 @@
-import { cn } from '@/lib/cn';
+import type { ReactNode } from 'react';
 
-import { LIBRARY_MUTED, LIBRARY_SERIF } from './library';
+import FeedbackEmptyState from '@/components/feedback/EmptyState';
+import RetryNotice from '@/components/feedback/RetryNotice';
 
 /**
- * 空态与错误态。
- *
- * 空态一律**不加边框、不加纸面底**：居中的中型图标 + 一句指示即可。带线白底的
- * 占位符看起来像未填充的表单，是最典型的 AI 生成痕迹，这里刻意去掉。
- * 错误态是另一回事——它需要显眼，保留红色描边横幅。
+ * 旧接口的转接：页面都已改用 feedback/EmptyState 和 RetryNotice，
+ * 这里只留给 MediaFeedback 的展示测试（改测试要先问用户，见 PROGRESS）。
  */
 export default function EmptyState({
   icon,
@@ -15,55 +13,21 @@ export default function EmptyState({
   description,
   action,
   tone = 'default',
-  className,
 }: {
-  icon?: React.ReactNode;
+  icon?: ReactNode;
   title?: string;
   description?: string;
-  action?: React.ReactNode;
+  action?: ReactNode;
   tone?: 'default' | 'error';
-  className?: string;
 }) {
-  if (tone === 'error') {
-    return (
-      <div
-        role='alert'
-        className={cn(
-          'flex flex-wrap items-center justify-between gap-3 rounded-md border border-danger bg-raised p-4 text-sm text-fg',
-          className
-        )}
-      >
-        <span className='min-w-0'>{description || title}</span>
-        {action ? <div className='flex flex-wrap gap-3'>{action}</div> : null}
-      </div>
-    );
-  }
-
+  if (tone === 'error')
+    return <RetryNotice message={description || title} action={action} />;
   return (
-    <div
-      className={cn(
-        'flex flex-col items-center px-4 py-14 text-center',
-        className
-      )}
-    >
-      {icon ? (
-        <div className='flex h-14 w-14 items-center justify-center rounded-full bg-raised text-fg'>
-          {icon}
-        </div>
-      ) : null}
-      {title ? (
-        <div className={cn('mt-4 text-lg font-medium text-fg', LIBRARY_SERIF)}>
-          {title}
-        </div>
-      ) : null}
-      {description ? (
-        <p className={cn('mt-1.5 max-w-md text-sm leading-6', LIBRARY_MUTED)}>
-          {description}
-        </p>
-      ) : null}
-      {action ? (
-        <div className='mt-5 flex flex-wrap justify-center gap-3'>{action}</div>
-      ) : null}
-    </div>
+    <FeedbackEmptyState
+      icon={icon}
+      title={title || description || ''}
+      description={title ? description : undefined}
+      action={action}
+    />
   );
 }

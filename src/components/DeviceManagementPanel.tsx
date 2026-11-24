@@ -4,6 +4,7 @@ import { LucideIcon, Monitor, X } from 'lucide-react';
 
 import { getDeviceDisplayName } from '@/lib/device-display';
 
+import EmptyState from '@/components/feedback/EmptyState';
 import ModalLayer from '@/components/feedback/ModalLayer';
 
 interface DeviceItem {
@@ -72,10 +73,11 @@ export function DeviceManagementPanel({
                 </div>
               </div>
             ) : devices.length === 0 ? (
-              <div className='text-center py-8'>
-                <Monitor className='w-12 h-12 mx-auto text-muted mb-3' />
-                <p className='text-sm text-muted'>暂无登录设备</p>
-              </div>
+              <EmptyState
+                compact
+                icon={<Monitor size={24} />}
+                title='暂无登录设备'
+              />
             ) : (
               <div className='space-y-3'>
                 {devices

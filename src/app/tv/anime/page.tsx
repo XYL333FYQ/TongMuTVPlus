@@ -8,6 +8,7 @@ import {
   GetBangumiCalendarData,
 } from '@/lib/bangumi.client';
 
+import EmptyState from '@/components/feedback/EmptyState';
 import TVCard from '@/components/tv/TVCard';
 import TVLayout from '@/components/tv/TVLayout';
 import TVRow from '@/components/tv/TVRow';
@@ -182,9 +183,7 @@ export default function TVAnimePage() {
                 ))}
               </div>
             ) : (
-              <div className='rounded-3xl border border-line bg-raised p-4 md:p-8 text-base text-muted'>
-                暂无更新时间表数据
-              </div>
+              <EmptyState title='暂无更新时间表数据' />
             )}
           </section>
           {rows.map((section) => (

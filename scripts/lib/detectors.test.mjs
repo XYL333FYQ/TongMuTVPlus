@@ -46,6 +46,20 @@ test('counts each ingredient', () => {
   assert.equal(countMatches("getByRole('switch')", 'switch'), 0);
   assert.equal(
     countMatches(
+      "<div className='tm-empty'><p className='tm-empty-title'>x</p></div><main className='tm-empty-page' />",
+      'emptyState'
+    ),
+    2
+  );
+  assert.equal(
+    countMatches(
+      "<div className='tm-library-feedback' role='alert' />",
+      'retryNotice'
+    ),
+    1
+  );
+  assert.equal(
+    countMatches(
       "<img src={item.poster} alt='' /><Image fill src={displayPoster} /><div className='tm-poster' />",
       'poster'
     ),

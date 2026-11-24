@@ -21,8 +21,9 @@ import {
 } from '@/lib/book-route-cache.client';
 import { cn } from '@/lib/cn';
 
+import EmptyState from '@/components/feedback/EmptyState';
+import RetryNotice from '@/components/feedback/RetryNotice';
 import { bookCardItem } from '@/components/media/adapters';
-import EmptyState from '@/components/media/EmptyState';
 import {
   LIBRARY_GHOST_BUTTON,
   LIBRARY_SKELETON,
@@ -616,10 +617,8 @@ export default function BooksCatalogPage() {
             </div>
           ) : null}
           {error ? (
-            <EmptyState
-              tone='error'
-              title='目录加载失败'
-              description={error}
+            <RetryNotice
+              message={error}
               action={
                 <button
                   type='button'

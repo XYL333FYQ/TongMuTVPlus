@@ -18,6 +18,7 @@ import { usePageRefresh } from '@/hooks/usePageRefresh';
 import { useExternalAction } from '@/components/ExternalLink';
 import { notify } from '@/components/feedback/AppDialogs';
 import BusyDots from '@/components/feedback/BusyDots';
+import EmptyState from '@/components/feedback/EmptyState';
 import Select from '@/components/ui/Select';
 
 interface PansouSearchProps {
@@ -749,12 +750,7 @@ export default function PansouSearch({
 
     if (!results || results.total === 0 || !results.merged_by_type) {
       return (
-        <div className='flex items-center justify-center py-12'>
-          <div className='text-center'>
-            <AlertCircle className='mx-auto h-12 w-12 text-muted' />
-            <p className='mt-4 text-sm text-muted'>未找到相关资源</p>
-          </div>
-        </div>
+        <EmptyState icon={<AlertCircle size={24} />} title='未找到相关资源' />
       );
     }
 

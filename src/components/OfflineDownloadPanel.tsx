@@ -1,9 +1,11 @@
 'use client';
 
+import { Film, Inbox } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 
 import { askConfirm, notifyError } from '@/components/feedback/AppDialogs';
 import BusyDots from '@/components/feedback/BusyDots';
+import EmptyState from '@/components/feedback/EmptyState';
 import ModalLayer from '@/components/feedback/ModalLayer';
 import FilmPoster from '@/components/poster/FilmPoster';
 
@@ -255,22 +257,7 @@ export function OfflineDownloadPanel({
           ) : viewMode === 'library' ? (
             // 视频库视图
             libraryVideos.length === 0 ? (
-              <div className='flex flex-col items-center justify-center h-full text-muted'>
-                <svg
-                  className='w-16 h-16 mb-4'
-                  fill='none'
-                  stroke='currentColor'
-                  viewBox='0 0 24 24'
-                >
-                  <path
-                    strokeLinecap='round'
-                    strokeLinejoin='round'
-                    strokeWidth='2'
-                    d='M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16a1 1 0 001-1V5a1 1 0 00-1-1H4a1 1 0 00-1 1v14a1 1 0 001 1z'
-                  />
-                </svg>
-                <p className='text-lg'>暂无已完成的视频</p>
-              </div>
+              <EmptyState icon={<Film size={24} />} title='暂无已完成的视频' />
             ) : (
               libraryVideos.map(({ video, episodes }) => (
                 <div
@@ -396,22 +383,7 @@ export function OfflineDownloadPanel({
             )
           ) : tasks.length === 0 ? (
             // 任务列表为空
-            <div className='flex flex-col items-center justify-center h-full text-muted'>
-              <svg
-                className='w-16 h-16 mb-4'
-                fill='none'
-                stroke='currentColor'
-                viewBox='0 0 24 24'
-              >
-                <path
-                  strokeLinecap='round'
-                  strokeLinejoin='round'
-                  strokeWidth='2'
-                  d='M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4'
-                />
-              </svg>
-              <p className='text-lg'>暂无离线下载任务</p>
-            </div>
+            <EmptyState icon={<Inbox size={24} />} title='暂无离线下载任务' />
           ) : (
             // 任务列表视图
             tasks.map((task) => (

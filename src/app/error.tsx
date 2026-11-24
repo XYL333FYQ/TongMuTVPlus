@@ -4,6 +4,7 @@ import { AlertTriangle, RefreshCw } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect } from 'react';
 
+import EmptyState from '@/components/feedback/EmptyState';
 import PageContainer from '@/components/PageContainer';
 import PageLayout from '@/components/PageLayout';
 
@@ -23,27 +24,31 @@ export default function RouteError({
   return (
     <PageLayout>
       <PageContainer>
-        <div className='tm-empty' role='alert'>
-          <AlertTriangle className='tm-empty-icon' aria-hidden />
-          <h1 className='tm-empty-title'>页面出了点问题</h1>
-          <p className='tm-empty-desc'>
-            可以重试一次；如果一直这样，请把出错时间告诉站长
-            {error.digest ? `（编号 ${error.digest}）` : ''}
-          </p>
-          <div className='flex flex-wrap justify-center gap-3'>
-            <button
-              type='button'
-              className='tm-btn tm-btn-primary'
-              onClick={reset}
-            >
-              <RefreshCw size={16} aria-hidden />
-              重试
-            </button>
-            <Link href='/' className='tm-btn tm-btn-secondary'>
-              回到首页
-            </Link>
-          </div>
-        </div>
+        <EmptyState
+          role='alert'
+          titleAs='h1'
+          icon={<AlertTriangle size={24} />}
+          title='页面出了点问题'
+          description={
+            '可以重试一次；如果一直这样，请把出错时间告诉站长' +
+            (error.digest ? `（编号 ${error.digest}）` : '')
+          }
+          action={
+            <>
+              <button
+                type='button'
+                className='tm-btn tm-btn-primary'
+                onClick={reset}
+              >
+                <RefreshCw size={16} aria-hidden />
+                重试
+              </button>
+              <Link href='/' className='tm-btn tm-btn-secondary'>
+                回到首页
+              </Link>
+            </>
+          }
+        />
       </PageContainer>
     </PageLayout>
   );

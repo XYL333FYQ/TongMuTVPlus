@@ -20,8 +20,9 @@ import { cn } from '@/lib/cn';
 import { type SettingKey, readSetting, writeSetting } from '@/lib/settings';
 
 import BusyDots from '@/components/feedback/BusyDots';
+import EmptyState from '@/components/feedback/EmptyState';
+import RetryNotice from '@/components/feedback/RetryNotice';
 import { bookCardItem } from '@/components/media/adapters';
-import EmptyState from '@/components/media/EmptyState';
 import {
   LIBRARY_BUTTON,
   LIBRARY_FIELD,
@@ -655,11 +656,10 @@ export default function BooksSearchPage() {
         {loading && result.results.length === 0 ? (
           <MediaGridSkeleton count={12} />
         ) : null}
-        {error ? <EmptyState tone='error' description={error} /> : null}
+        {error ? <RetryNotice message={error} /> : null}
         {!loading && result.failedSources.length > 0 ? (
-          <EmptyState
-            tone='error'
-            description={`有 ${
+          <RetryNotice
+            message={`有 ${
               result.failedSources.length
             } 个书源没有返回结果（${result.failedSources
               .map((item) => item.sourceName)

@@ -9,7 +9,7 @@ import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
 import { SearchResult } from '@/lib/types';
 
 import CapsuleSwitch from '@/components/catalog/CapsuleSwitch';
-import EmptyState from '@/components/media/EmptyState';
+import EmptyState from '@/components/feedback/EmptyState';
 import PageContainer from '@/components/PageContainer';
 import PageLayout from '@/components/PageLayout';
 import { PosterSkeleton } from '@/components/poster/FilmPoster';
@@ -233,9 +233,7 @@ export default function AdvancedRecommendationPage() {
                   ))}
                 </div>
               ) : !isLoadingVideos && !error ? (
-                <div className='tm-empty'>
-                  <p className='tm-empty-title'>这个来源暂时没有推荐</p>
-                </div>
+                <EmptyState title='这个来源暂时没有推荐' />
               ) : null}
 
               {isLoadingVideos && (

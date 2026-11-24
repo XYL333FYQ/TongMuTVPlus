@@ -13,8 +13,8 @@ import {
 import { cn } from '@/lib/cn';
 import { processImageUrl } from '@/lib/utils';
 
+import EmptyState from '@/components/feedback/EmptyState';
 import { bookCardItem } from '@/components/media/adapters';
-import EmptyState from '@/components/media/EmptyState';
 import { LIBRARY_ACCENT_ICON, LIBRARY_MUTED } from '@/components/media/library';
 import MediaGrid from '@/components/media/MediaGrid';
 import MediaGridSkeleton from '@/components/media/MediaGridSkeleton';

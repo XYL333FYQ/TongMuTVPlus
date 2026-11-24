@@ -9,6 +9,7 @@ import '@/styles/controls.css';
 import { getTMDBImageUrl } from '@/lib/tmdb-image-base';
 import { processImageUrl } from '@/lib/utils';
 
+import EmptyState from '@/components/feedback/EmptyState';
 import ModalLayer from '@/components/feedback/ModalLayer';
 import RetryNotice from '@/components/feedback/RetryNotice';
 import PageContainer from '@/components/PageContainer';
@@ -355,9 +356,7 @@ export default function MovieRequestPage() {
                 onRetry={() => setMyRequestsRetry((value) => value + 1)}
               />
             ) : myRequests.length === 0 ? (
-              <div className='tm-empty'>
-                <p className='tm-empty-title'>还没有求片记录</p>
-              </div>
+              <EmptyState title='还没有求片记录' />
             ) : (
               <div className='tm-poster-grid'>
                 {myRequests.map((request) => (
@@ -430,9 +429,7 @@ export default function MovieRequestPage() {
             ))}
           </div>
         ) : searchedKeyword && !isSearching ? (
-          <div className='tm-empty'>
-            <p className='tm-empty-title'>没有找到“{searchedKeyword}”</p>
-          </div>
+          <EmptyState title={<>没有找到“{searchedKeyword}”</>} />
         ) : null}
       </PageContainer>
 

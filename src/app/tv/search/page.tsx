@@ -8,6 +8,7 @@ import { addSearchHistory, getSearchHistory } from '@/lib/db.client';
 import { type SettingKey, writeSetting } from '@/lib/settings';
 import { SearchResult } from '@/lib/types';
 
+import EmptyState from '@/components/feedback/EmptyState';
 import FilmPoster from '@/components/poster/FilmPoster';
 import TVLayout from '@/components/tv/TVLayout';
 
@@ -240,9 +241,7 @@ export default function TVSearchPage() {
                 {error}
               </div>
             ) : loading ? null : displayResults.length === 0 ? (
-              <div className='rounded-3xl border border-line bg-raised p-4 md:p-8 text-base font-medium text-muted'>
-                未找到相关结果
-              </div>
+              <EmptyState title='未找到相关结果' />
             ) : (
               <div className='grid grid-cols-2 gap-5 md:grid-cols-3 lg:grid-cols-4'>
                 {displayResults.map((item, index) => (

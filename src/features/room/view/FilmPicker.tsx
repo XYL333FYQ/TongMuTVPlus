@@ -12,6 +12,7 @@ import './FilmPicker.css';
 import type { SearchResult } from '@/lib/types';
 
 import BusyDots from '@/components/feedback/BusyDots';
+import EmptyState from '@/components/feedback/EmptyState';
 import FilmPoster from '@/components/poster/FilmPoster';
 
 import {
@@ -148,7 +149,7 @@ export default function FilmPicker(props: {
         </p>
       )}
       {results && !groups.length && !loading && (
-        <p className='tm-room-empty'>没有找到，换个关键词试试</p>
+        <EmptyState compact title='没有找到，换个关键词试试' />
       )}
       <ul className='tm-room-picker-results'>
         {groups.map((item) => (

@@ -18,6 +18,7 @@ import {
 import { DanmakuFilterConfig, DanmakuFilterRule } from '@/lib/types';
 
 import BusyDots from '@/components/feedback/BusyDots';
+import EmptyState from '@/components/feedback/EmptyState';
 import ModalLayer from '@/components/feedback/ModalLayer';
 import Select from '@/components/ui/Select';
 import Switch from '@/components/ui/Switch';
@@ -276,17 +277,12 @@ export default function DanmakuFilterSettings({
                 </div>
               </div>
             ) : config.rules.length === 0 ? (
-              <div className='text-center py-12 text-muted'>
-                <div className='inline-flex flex-col items-center gap-3'>
-                  <div className='w-16 h-16 bg-raised rounded-full flex items-center justify-center'>
-                    <Plus size={24} className='text-muted' />
-                  </div>
-                  <div>
-                    <p className='font-medium'>暂无屏蔽规则</p>
-                    <p className='text-sm mt-1'>点击上方添加关键字</p>
-                  </div>
-                </div>
-              </div>
+              <EmptyState
+                compact
+                icon={<Plus size={24} />}
+                title='暂无屏蔽规则'
+                description='点击上方添加关键字'
+              />
             ) : (
               <div className='space-y-2'>
                 {config.rules.map((rule) => (

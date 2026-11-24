@@ -18,10 +18,10 @@ import {
   getBookRouteCache,
 } from '@/lib/book-route-cache.client';
 import { cn } from '@/lib/cn';
-import { getPlatform } from '@/lib/platform';
 import { nativeContentExportAvailable } from '@/lib/content-export';
+import { getPlatform } from '@/lib/platform';
 
-import EmptyState from '@/components/media/EmptyState';
+import RetryNotice from '@/components/feedback/RetryNotice';
 import {
   BOOK_COVER_LIFT,
   BOOK_SPINE_OVERLAY,
@@ -283,7 +283,7 @@ export default function BookDetailPage() {
     cacheBookDetail(detail);
   };
 
-  if (error) return <EmptyState tone='error' description={error} />;
+  if (error) return <RetryNotice message={error} />;
   if (!detail) return <DetailSkeleton />;
 
   const visibleChapters = showAllChapters

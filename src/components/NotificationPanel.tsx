@@ -11,6 +11,7 @@ import { isPrivilegedRole } from '@/lib/roles';
 import { Notification } from '@/lib/types';
 
 import BusyDots from '@/components/feedback/BusyDots';
+import EmptyState from '@/components/feedback/EmptyState';
 import ModalLayer from '@/components/feedback/ModalLayer';
 
 interface NotificationPanelProps {
@@ -244,10 +245,7 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({
               <BusyDots size={32} />
             </div>
           ) : notifications.length === 0 ? (
-            <div className='flex flex-1 flex-col items-center justify-center py-12 text-muted'>
-              <Bell className='w-12 h-12 mb-3 opacity-30' />
-              <p className='text-sm'>暂无通知</p>
-            </div>
+            <EmptyState compact icon={<Bell size={24} />} title='暂无通知' />
           ) : (
             <div className='space-y-2'>
               {notifications.map((notification) => (

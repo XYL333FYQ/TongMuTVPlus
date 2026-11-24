@@ -22,6 +22,8 @@ import { useViewerIdentity } from '@/hooks/useViewerIdentity';
 
 import PosterGrid from '@/components/catalog/PosterGrid';
 import PublicCatalogPage from '@/components/catalog/PublicCatalogPage';
+import EmptyState from '@/components/feedback/EmptyState';
+import RetryNotice from '@/components/feedback/RetryNotice';
 import PageContainer from '@/components/PageContainer';
 import PageLayout from '@/components/PageLayout';
 import VideoCard from '@/components/VideoCard';
@@ -1078,21 +1080,14 @@ function DoubanPageClient() {
           )}
 
           {loadingError && (
-            <div className='tm-library-feedback' role='alert'>
-              <span>{loadingError}</span>
-              <button
-                type='button'
-                className='tm-btn tm-btn-secondary'
-                onClick={() =>
-                  currentPage > 0
-                    ? setRetryAttempt((value) => value + 1)
-                    : void loadInitialData(false)
-                }
-              >
-                <RefreshCw size={16} aria-hidden />
-                重试加载
-              </button>
-            </div>
+            <RetryNotice
+              message={loadingError}
+              onRetry={() =>
+                currentPage > 0
+                  ? setRetryAttempt((value) => value + 1)
+                  : void loadInitialData(false)
+              }
+            />
           )}
           {/* 自动触底与手动按钮共用同一页号；失败时重试原页。 */}
           {!isScheduleView && hasMore && !loading && (
@@ -1137,11 +1132,7 @@ function DoubanPageClient() {
           {!isScheduleView &&
             !loading &&
             !loadingError &&
-            doubanData.length === 0 && (
-              <div className='tm-empty'>
-                <p className='tm-empty-desc'>暂时没有相关内容</p>
-              </div>
-            )}
+            doubanData.length === 0 && <EmptyState title='暂时没有相关内容' />}
         </div>
       </PageContainer>
     </PageLayout>

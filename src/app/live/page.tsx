@@ -40,6 +40,7 @@ import { useAudioFocus } from '@/hooks/useAudioFocus';
 import { usePlaybackSessionSafe } from '@/hooks/usePlaybackSession';
 
 import EpgScrollableRow from '@/components/EpgScrollableRow';
+import EmptyState from '@/components/feedback/EmptyState';
 import LoadingStyle, {
   type LoadingStep,
   LoadingErrorStyle,
@@ -3523,17 +3524,11 @@ function LivePageClient() {
                           );
                         })
                       ) : (
-                        <div className='flex flex-col items-center justify-center py-12 text-center'>
-                          <div className='w-16 h-16 bg-raised rounded-full flex items-center justify-center mb-4'>
-                            <Radio className='w-8 h-8 text-muted' />
-                          </div>
-                          <p className='text-muted font-medium'>
-                            暂无可用直播源
-                          </p>
-                          <p className='text-sm text-muted mt-1'>
-                            请检查网络连接或联系管理员添加直播源
-                          </p>
-                        </div>
+                        <EmptyState
+                          icon={<Radio size={24} />}
+                          title='暂无可用直播源'
+                          description='请检查网络连接或联系管理员添加直播源'
+                        />
                       )}
                     </div>
                   </div>

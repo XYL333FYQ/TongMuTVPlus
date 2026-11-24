@@ -27,13 +27,6 @@
   color: var(--tm-danger);
   font-size: 13px;
 }
-.tm-room-empty {
-  margin: 0;
-  padding: 16px;
-  color: var(--tm-muted);
-  font-size: 13px;
-  text-align: center;
-}
 .tm-room-spacer {
   flex: 1;
 }

@@ -9,8 +9,9 @@ import { BookReadRecord, BookSource } from '@/lib/book.types';
 import { buildBookReadPath } from '@/lib/book-route-cache.client';
 import { cn } from '@/lib/cn';
 
+import EmptyState from '@/components/feedback/EmptyState';
+import RetryNotice from '@/components/feedback/RetryNotice';
 import ContinueReadingCard from '@/components/media/ContinueReadingCard';
-import EmptyState from '@/components/media/EmptyState';
 import {
   BOOK_RAIL_ITEM,
   LIBRARY_BUTTON,
@@ -185,7 +186,7 @@ export default function BooksHomePage() {
 
         {loading ? <SourceCardSkeleton /> : null}
 
-        {error ? <EmptyState tone='error' description={error} /> : null}
+        {error ? <RetryNotice message={error} /> : null}
 
         <div className='grid gap-4 md:grid-cols-2 xl:grid-cols-3'>
           {sources.map((source) => (

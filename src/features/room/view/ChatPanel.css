@@ -28,19 +28,9 @@
   background: var(--tm-surface-raised);
   color: var(--tm-text);
 }
+/* 没消息时占满消息区（样子是全站的空状态） */
 .tm-room-chat-empty {
-  display: flex;
   flex: 1;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  color: var(--tm-muted);
-  font-size: 13px;
-}
-.tm-room-chat-empty strong {
-  color: var(--tm-text);
-  font-size: 14px;
 }
 .tm-room-chat-message {
   display: flex;

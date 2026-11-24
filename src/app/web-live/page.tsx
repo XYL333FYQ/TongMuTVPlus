@@ -15,6 +15,7 @@ import { useAudioFocus } from '@/hooks/useAudioFocus';
 import { useLatestMediaRequest } from '@/hooks/useLatestMediaRequest';
 import { usePlaybackSessionSafe } from '@/hooks/usePlaybackSession';
 
+import EmptyState from '@/components/feedback/EmptyState';
 import LoadingStyle, {
   type LoadingStep,
   LoadingErrorStyle,
@@ -1126,12 +1127,10 @@ export default function WebLivePage() {
                           </button>
                         ))
                       ) : (
-                        <div className='flex flex-col items-center justify-center py-12 text-center'>
-                          <div className='w-16 h-16 bg-raised rounded-full flex items-center justify-center mb-4'>
-                            <Radio className='w-8 h-8 text-muted' />
-                          </div>
-                          <p className='text-muted font-medium'>暂无可用平台</p>
-                        </div>
+                        <EmptyState
+                          icon={<Radio size={24} />}
+                          title='暂无可用平台'
+                        />
                       )}
                     </div>
                   </div>

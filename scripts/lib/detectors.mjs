@@ -51,6 +51,15 @@ export const DETECTORS = {
       /<(?:img|Image)\b(?:[^>]|=>)*?\bsrc=\{[^}]*[Pp]oster[^}]*\}|\btm-poster(?![-\w])/g,
     label: '自己画海报',
   },
+  // 空状态、加载失败：自己套全站空状态 / 失败提示的类
+  emptyState: {
+    pattern: /\btm-empty(?:-(?:icon|title|desc|actions))?(?![-\w])/g,
+    label: '自己画空状态',
+  },
+  retryNotice: {
+    pattern: /\btm-library-feedback(?![-\w])/g,
+    label: '自己画加载失败提示',
+  },
   // 不属于哪个零件：行内跳过代码检查的注释（S8），全部 src 都统计
   eslintDisableInline: {
     pattern: /eslint-disable-(?:next-)?line\b/g,

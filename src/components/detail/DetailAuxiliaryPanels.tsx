@@ -3,6 +3,7 @@ import React from 'react';
 
 import { getTMDBImageUrl } from '@/lib/tmdb-image-base';
 
+import EmptyState from '@/components/feedback/EmptyState';
 import FilmPoster from '@/components/poster/FilmPoster';
 import ProxyImage from '@/components/ProxyImage';
 
@@ -69,7 +70,7 @@ export function GalleryContent({
       )}
 
       {!galleryLoading && !galleryError && galleryImages.length === 0 && (
-        <div className='text-center py-12 text-muted'>暂无图片</div>
+        <EmptyState compact title='暂无图片' />
       )}
 
       {!galleryLoading && !galleryError && galleryImages.length > 0 && (
@@ -166,9 +167,7 @@ export function StillsContent({
 
       {!episodeStillsLoading &&
         !episodeStillsError &&
-        episodeStills.length === 0 && (
-          <div className='text-center py-12 text-muted'>暂无剧照</div>
-        )}
+        episodeStills.length === 0 && <EmptyState compact title='暂无剧照' />}
 
       {!episodeStillsLoading &&
         !episodeStillsError &&

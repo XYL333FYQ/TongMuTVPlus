@@ -14,6 +14,7 @@ import { getDoubanCategories } from '@/lib/douban.client';
 import type { DoubanItem } from '@/lib/types';
 
 import BusyDots from '@/components/feedback/BusyDots';
+import RetryNotice from '@/components/feedback/RetryNotice';
 import FilmPoster, { PosterSkeleton } from '@/components/poster/FilmPoster';
 
 const KINDS = [
@@ -175,7 +176,10 @@ export default function Recommendations(props: {
         </div>
       </header>
       {state === 'error' ? (
-        <p className='tm-room-empty'>热门片单暂时读不到，点右上角重试</p>
+        <RetryNotice
+          message='热门片单暂时读不到'
+          onRetry={() => void load(kind)}
+        />
       ) : (
         <ul className='tm-room-recs-row' aria-busy={state === 'loading'}>
           {(state === 'loading' && !items.length

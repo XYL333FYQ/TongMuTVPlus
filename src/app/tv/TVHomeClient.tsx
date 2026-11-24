@@ -9,6 +9,7 @@ import {
   PlayRecord,
 } from '@/lib/db.client';
 
+import EmptyState from '@/components/feedback/EmptyState';
 import TVLayout from '@/components/tv/TVLayout';
 import TVRow from '@/components/tv/TVRow';
 import { TVItem, TVSection } from '@/components/tv/types';
@@ -160,9 +161,7 @@ export default function TVHomeClient() {
           <span className='sr-only'>正在加载电视首页...</span>
         </div>
       ) : empty ? (
-        <div className='rounded-md border border-line bg-raised p-10 text-base text-muted'>
-          暂无首页内容
-        </div>
+        <EmptyState title='暂无首页内容' />
       ) : (
         sections.map((section) => (
           <TVRow key={section.title} section={section} />

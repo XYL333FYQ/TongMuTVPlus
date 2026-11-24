@@ -3,6 +3,7 @@
 
 import { useEffect, useState } from 'react';
 
+import EmptyState from '@/components/feedback/EmptyState';
 import ModalLayer from '@/components/feedback/ModalLayer';
 
 interface Song {
@@ -322,9 +323,7 @@ export default function AddToPlaylistModal({
           {loading ? (
             <MusicLoadingIndicator className='py-8' />
           ) : playlists.length === 0 ? (
-            <div className='text-center py-8 text-muted'>
-              还没有歌单，创建一个吧
-            </div>
+            <EmptyState compact title='还没有歌单，创建一个吧' />
           ) : (
             <div className='space-y-2'>
               {playlists.map((playlist) => (

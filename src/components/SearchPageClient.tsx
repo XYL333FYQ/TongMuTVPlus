@@ -64,6 +64,7 @@ import AcgSearch from '@/components/AcgSearch';
 import CapsuleSwitch from '@/components/catalog/CapsuleSwitch';
 import ContinueWatching from '@/components/ContinueWatching';
 import BusyDots from '@/components/feedback/BusyDots';
+import EmptyState from '@/components/feedback/EmptyState';
 import ImageViewer from '@/components/feedback/ImageViewer';
 import Popover from '@/components/feedback/Popover';
 import PageContainer from '@/components/PageContainer';
@@ -2416,30 +2417,31 @@ export function SearchPageClient({
                         ))}
                       </div>
                     ) : noSearchSources ? (
-                      <div className='tm-empty'>
-                        <Search className='tm-empty-icon' aria-hidden />
-                        <p className='tm-empty-title'>还没有可搜索的视频源</p>
-                        <p className='tm-empty-desc'>
-                          {canManageSources
+                      <EmptyState
+                        icon={<Search size={24} />}
+                        title='还没有可搜索的视频源'
+                        description={
+                          canManageSources
                             ? '在管理面板添加视频源后，就能搜索和播放影片'
-                            : '站长还没有添加视频源，暂时无法搜索和播放'}
-                        </p>
-                        {canManageSources && (
-                          <Link href='/admin' className='tm-btn tm-btn-primary'>
-                            去管理面板
-                          </Link>
-                        )}
-                      </div>
+                            : '站长还没有添加视频源，暂时无法搜索和播放'
+                        }
+                        action={
+                          canManageSources ? (
+                            <Link
+                              href='/admin'
+                              className='tm-btn tm-btn-primary'
+                            >
+                              去管理面板
+                            </Link>
+                          ) : undefined
+                        }
+                      />
                     ) : (
-                      <div className='tm-empty'>
-                        <Search className='tm-empty-icon' aria-hidden />
-                        <p className='tm-empty-title'>
-                          没有找到“{searchQuery}”
-                        </p>
-                        <p className='tm-empty-desc'>
-                          换个关键词，或检查错别字
-                        </p>
-                      </div>
+                      <EmptyState
+                        icon={<Search size={24} />}
+                        title={<>没有找到“{searchQuery}”</>}
+                        description='换个关键词，或检查错别字'
+                      />
                     )
                   ) : (
                     (() => {

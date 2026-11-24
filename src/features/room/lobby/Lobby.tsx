@@ -10,6 +10,7 @@ import { FormEvent, useCallback, useEffect, useRef, useState } from 'react';
 import './Lobby.css';
 
 import BusyDots from '@/components/feedback/BusyDots';
+import RetryNotice from '@/components/feedback/RetryNotice';
 import FilmPoster from '@/components/poster/FilmPoster';
 
 import { roomCoverSource } from '../lib/room-cover';
@@ -205,7 +206,7 @@ export default function Lobby(props: {
       </div>
 
       {failure ? (
-        <p className='tm-room-empty'>{failure}</p>
+        <RetryNotice message={failure} onRetry={() => void refresh()} />
       ) : !loading && !rooms.length ? (
         <div className='tm-room-lobby-empty-card'>
           <Film size={28} aria-hidden='true' />

@@ -8,6 +8,7 @@ import { useEffect, useState } from 'react';
 import { type SettingKey, writeSetting } from '@/lib/settings';
 import { getTMDBImageUrl } from '@/lib/tmdb-image-base';
 
+import EmptyState from '@/components/feedback/EmptyState';
 import ModalLayer from '@/components/feedback/ModalLayer';
 import SideLayer from '@/components/feedback/SideLayer';
 import FilmPoster from '@/components/poster/FilmPoster';
@@ -730,7 +731,7 @@ export default function CorrectDialog({
                 加载季度列表中...
               </div>
             ) : seasons.length === 0 ? (
-              <div className='text-center py-12 text-muted'>未找到季度信息</div>
+              <EmptyState compact title='未找到季度信息' />
             ) : (
               <div className='space-y-3'>
                 {seasons.map((season) => (

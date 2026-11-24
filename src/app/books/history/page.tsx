@@ -33,8 +33,8 @@ import { cn } from '@/lib/cn';
 import { subscribeToDataUpdates } from '@/lib/db.client';
 import { processImageUrl } from '@/lib/utils';
 
+import EmptyState from '@/components/feedback/EmptyState';
 import ModalLayer from '@/components/feedback/ModalLayer';
-import EmptyState from '@/components/media/EmptyState';
 import {
   LIBRARY_ACCENT_ICON,
   LIBRARY_FOCUS,
@@ -335,7 +335,7 @@ export default function BookHistoryPage() {
                 </div>
               </div>
 
-              {cacheLoading ? <EmptyState description='正在读取缓存…' /> : null}
+              {cacheLoading ? <EmptyState title='正在读取缓存…' /> : null}
               {!cacheLoading && cacheItems.length === 0 ? (
                 <EmptyState
                   icon={<Database className='h-7 w-7' />}

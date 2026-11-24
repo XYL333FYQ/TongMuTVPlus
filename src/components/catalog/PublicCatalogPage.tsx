@@ -1,6 +1,6 @@
 'use client';
 
-import { Film, RefreshCw, Star } from 'lucide-react';
+import { Film, Star } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
@@ -25,6 +25,8 @@ import PosterGrid from '@/components/catalog/PosterGrid';
 import PosterMotion from '@/components/catalog/PosterMotion';
 import PublicPoster from '@/components/catalog/PublicPoster';
 import SectionHeader from '@/components/catalog/SectionHeader';
+import EmptyState from '@/components/feedback/EmptyState';
+import RetryNotice from '@/components/feedback/RetryNotice';
 import PageContainer from '@/components/PageContainer';
 import PageLayout from '@/components/PageLayout';
 import FilmPoster from '@/components/poster/FilmPoster';
@@ -166,17 +168,11 @@ function CatalogFeedback({
 }) {
   if (feed.error)
     return (
-      <div className='tm-empty' role='status'>
-        <p className='tm-empty-desc'>{feed.error}</p>
-        <button
-          type='button'
-          onClick={() => void feed.load(feed.items.length === 0)}
-          className='tm-btn tm-btn-ghost tm-btn-sm'
-        >
-          <RefreshCw size={14} />
-          重新获取
-        </button>
-      </div>
+      <RetryNotice
+        message={feed.error}
+        retryLabel='重新获取'
+        onRetry={() => void feed.load(feed.items.length === 0)}
+      />
     );
   if (feed.loading && !feed.items.length) {
     const placeholders = Array.from({ length: 12 }, (_, index) => (
@@ -190,12 +186,7 @@ function CatalogFeedback({
   }
   if (!feed.loading && !feed.items.length)
     return (
-      <div className='tm-empty'>
-        <span className='tm-empty-icon'>
-          <Film size={24} />
-        </span>
-        <p className='tm-empty-desc'>暂时没有相关影视信息</p>
-      </div>
+      <EmptyState icon={<Film size={24} />} title='暂时没有相关影视信息' />
     );
   return null;
 }

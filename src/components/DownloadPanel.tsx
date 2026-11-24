@@ -1,9 +1,12 @@
 'use client';
 
+import { FileText, Inbox } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
 
 import { M3U8DownloadTask, M3U8SegmentLogStatus } from '@/lib/m3u8-downloader';
 import { formatLocalTime } from '@/lib/time';
+
+import EmptyState from '@/components/feedback/EmptyState';
 
 import { useDownload } from '@/contexts/DownloadContext';
 
@@ -175,22 +178,7 @@ export function DownloadPanel() {
         {/* 任务列表 */}
         <div className='flex-1 overflow-y-auto p-4 space-y-3'>
           {tasks.length === 0 ? (
-            <div className='flex min-h-[320px] flex-col items-center justify-center text-muted'>
-              <svg
-                className='mb-4 h-16 w-16'
-                fill='none'
-                stroke='currentColor'
-                viewBox='0 0 24 24'
-              >
-                <path
-                  strokeLinecap='round'
-                  strokeLinejoin='round'
-                  strokeWidth='2'
-                  d='M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4'
-                />
-              </svg>
-              <p className='text-lg'>暂无下载任务</p>
-            </div>
+            <EmptyState icon={<Inbox size={24} />} title='暂无下载任务' />
           ) : (
             tasks.map((task) => {
               const progress = getProgress(task.id);
@@ -482,22 +470,11 @@ export function DownloadPanel() {
 
             <div className='flex-1 overflow-y-auto p-4'>
               {filteredLogs.length === 0 ? (
-                <div className='flex min-h-[220px] flex-col items-center justify-center rounded-xl border border-dashed border-line text-muted'>
-                  <svg
-                    className='mb-3 h-10 w-10'
-                    fill='none'
-                    stroke='currentColor'
-                    viewBox='0 0 24 24'
-                  >
-                    <path
-                      strokeLinecap='round'
-                      strokeLinejoin='round'
-                      strokeWidth='2'
-                      d='M9 12h6m-6 4h6M7 4h10a2 2 0 012 2v12a2 2 0 01-2 2H7a2 2 0 01-2-2V6a2 2 0 012-2z'
-                    />
-                  </svg>
-                  <p className='text-sm'>暂无匹配的分片日志</p>
-                </div>
+                <EmptyState
+                  compact
+                  icon={<FileText size={24} />}
+                  title='暂无匹配的分片日志'
+                />
               ) : (
                 <div className='space-y-2'>
                   {filteredLogs.map((log) => (
