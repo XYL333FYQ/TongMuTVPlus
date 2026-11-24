@@ -85,6 +85,7 @@ import {
 } from '@/lib/feature-permissions';
 import { isAdminRole, isOwnerRole } from '@/lib/roles';
 import { lockScroll } from '@/lib/scroll-lock';
+import { readSetting, writeSetting } from '@/lib/settings';
 import { useNotificationTargetFocus } from '@/hooks/useNotificationTargetFocus';
 
 import AnimeSubscriptionComponent from '@/components/AnimeSubscriptionComponent';
@@ -18982,7 +18983,7 @@ function AdminPageClient() {
   // PC 左右布局：当前选中的区块（单选），持久化以便保存刷新后仍停留在原区块
   const [activeKey, setActiveKey] = useState<string>(() => {
     if (typeof window === 'undefined') return 'siteConfig';
-    return localStorage.getItem('admin_active_section') || 'siteConfig';
+    return readSetting('admin_active_section') || 'siteConfig';
   });
   // PC 内容区滚动容器，切换区块时回到顶部
   const contentScrollRef = useRef<HTMLDivElement | null>(null);
@@ -19141,7 +19142,7 @@ function AdminPageClient() {
       });
     }
     if (typeof window !== 'undefined') {
-      localStorage.setItem('admin_active_section', key);
+      writeSetting('admin_active_section', key);
     }
     // 首次进入用户管理时懒加载用户列表
     if (key === 'userConfig' && !usersV2) {

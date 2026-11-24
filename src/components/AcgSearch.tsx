@@ -11,6 +11,7 @@ import {
 import { usePathname } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import { readSetting, writeSetting } from '@/lib/settings';
 import { usePageRefresh } from '@/hooks/usePageRefresh';
 
 import CapsuleSwitch from '@/components/catalog/CapsuleSwitch';
@@ -106,7 +107,7 @@ const acgSourceOptions: Array<{ label: string; value: AcgSearchSource }> = [
 
 function getStoredAcgSource(): AcgSearchSource {
   if (typeof window === 'undefined') return 'acgrip';
-  const saved = window.localStorage.getItem(ACG_SOURCE_STORAGE_KEY);
+  const saved = readSetting(ACG_SOURCE_STORAGE_KEY);
   return acgSourceOptions.some((option) => option.value === saved)
     ? (saved as AcgSearchSource)
     : 'acgrip';
@@ -209,7 +210,7 @@ export default function AcgSearch({
 
   const handleSourceChange = (value: AcgSearchSource) => {
     setSource(value);
-    window.localStorage.setItem(ACG_SOURCE_STORAGE_KEY, value);
+    writeSetting(ACG_SOURCE_STORAGE_KEY, value);
     window.dispatchEvent(
       new CustomEvent('acg-search-source-change', { detail: value })
     );

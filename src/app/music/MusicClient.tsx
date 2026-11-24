@@ -45,6 +45,7 @@ import {
   SourcePill,
 } from '@/lib/music/shared';
 import type { MusicQuality, MusicSource, Song } from '@/lib/music/types';
+import { readSetting, removeSetting, writeSetting } from '@/lib/settings';
 import { formatClock } from '@/lib/time';
 import { useAudioFocus } from '@/hooks/useAudioFocus';
 
@@ -636,7 +637,7 @@ export default function MusicClient({
   const [pipMinimized, setPipMinimized] = useState(false);
   const [showSpectrum, setShowSpectrum] = useState(() => {
     if (typeof window === 'undefined') return true;
-    return localStorage.getItem('musicShowSpectrum') !== '0';
+    return readSetting('musicShowSpectrum') !== '0';
   });
   const [spectrumBars, setSpectrumBars] = useState<number[]>(() =>
     Array.from({ length: SPECTRUM_BIN_COUNT }, () => SPECTRUM_IDLE_LEVEL)
@@ -645,55 +646,42 @@ export default function MusicClient({
   useEffect(() => {
     if (typeof window === 'undefined') return;
     try {
-      const saved = JSON.parse(localStorage.getItem('musicEqGains') || 'null');
+      const saved = JSON.parse(readSetting('musicEqGains') || 'null');
       if (Array.isArray(saved) && saved.length === EQ_BANDS.length)
         setEqGains(
           saved.map((value) => Math.max(-12, Math.min(12, Number(value) || 0)))
         );
-      setEqualizerEnabled(localStorage.getItem('musicEqEnabled') === '1');
-      setLoudnessEnabled(localStorage.getItem('musicLoudnessEnabled') === '1');
-      setReverbEnabled(localStorage.getItem('musicReverbEnabled') === '1');
+      setEqualizerEnabled(readSetting('musicEqEnabled') === '1');
+      setLoudnessEnabled(readSetting('musicLoudnessEnabled') === '1');
+      setReverbEnabled(readSetting('musicReverbEnabled') === '1');
       setReverbPreset(
-        (localStorage.getItem(
-          'musicReverbPreset'
-        ) as keyof typeof REVERB_PRESETS) || 'none'
+        (readSetting('musicReverbPreset') as keyof typeof REVERB_PRESETS) ||
+          'none'
       );
       setReverbMainGain(
         Math.max(
           0,
-          Math.min(
-            150,
-            Number(localStorage.getItem('musicReverbMainGain')) || 100
-          )
+          Math.min(150, Number(readSetting('musicReverbMainGain')) || 100)
         )
       );
       setReverbMix(
-        Math.max(
-          0,
-          Math.min(40, Number(localStorage.getItem('musicReverbMix')) || 12)
-        )
+        Math.max(0, Math.min(40, Number(readSetting('musicReverbMix')) || 12))
       );
-      setEqPreset(localStorage.getItem('musicEqPreset') || 'Flat');
+      setEqPreset(readSetting('musicEqPreset') || 'Flat');
       setPitchRate(
-        Math.max(
-          0.5,
-          Math.min(1.5, Number(localStorage.getItem('musicPitchRate')) || 1)
-        )
+        Math.max(0.5, Math.min(1.5, Number(readSetting('musicPitchRate')) || 1))
       );
-      setSurroundEnabled(localStorage.getItem('musicSurroundEnabled') === '1');
+      setSurroundEnabled(readSetting('musicSurroundEnabled') === '1');
       setSurroundSpeed(
         Math.max(
           5,
-          Math.min(60, Number(localStorage.getItem('musicSurroundSpeed')) || 25)
+          Math.min(60, Number(readSetting('musicSurroundSpeed')) || 25)
         )
       );
       setSurroundDistance(
         Math.max(
           1,
-          Math.min(
-            10,
-            Number(localStorage.getItem('musicSurroundDistance')) || 5
-          )
+          Math.min(10, Number(readSetting('musicSurroundDistance')) || 5)
         )
       );
     } catch {
@@ -703,18 +691,18 @@ export default function MusicClient({
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    localStorage.setItem('musicEqGains', JSON.stringify(eqGains));
-    localStorage.setItem('musicEqEnabled', equalizerEnabled ? '1' : '0');
-    localStorage.setItem('musicLoudnessEnabled', loudnessEnabled ? '1' : '0');
-    localStorage.setItem('musicReverbEnabled', reverbEnabled ? '1' : '0');
-    localStorage.setItem('musicReverbMix', String(reverbMix));
-    localStorage.setItem('musicReverbPreset', reverbPreset);
-    localStorage.setItem('musicReverbMainGain', String(reverbMainGain));
-    localStorage.setItem('musicEqPreset', eqPreset);
-    localStorage.setItem('musicPitchRate', String(pitchRate));
-    localStorage.setItem('musicSurroundEnabled', surroundEnabled ? '1' : '0');
-    localStorage.setItem('musicSurroundSpeed', String(surroundSpeed));
-    localStorage.setItem('musicSurroundDistance', String(surroundDistance));
+    writeSetting('musicEqGains', JSON.stringify(eqGains));
+    writeSetting('musicEqEnabled', equalizerEnabled ? '1' : '0');
+    writeSetting('musicLoudnessEnabled', loudnessEnabled ? '1' : '0');
+    writeSetting('musicReverbEnabled', reverbEnabled ? '1' : '0');
+    writeSetting('musicReverbMix', String(reverbMix));
+    writeSetting('musicReverbPreset', reverbPreset);
+    writeSetting('musicReverbMainGain', String(reverbMainGain));
+    writeSetting('musicEqPreset', eqPreset);
+    writeSetting('musicPitchRate', String(pitchRate));
+    writeSetting('musicSurroundEnabled', surroundEnabled ? '1' : '0');
+    writeSetting('musicSurroundSpeed', String(surroundSpeed));
+    writeSetting('musicSurroundDistance', String(surroundDistance));
   }, [
     eqGains,
     equalizerEnabled,
@@ -1027,7 +1015,7 @@ export default function MusicClient({
       playlistIndex,
     };
 
-    localStorage.setItem('musicPlayState', JSON.stringify(playState));
+    writeSetting('musicPlayState', JSON.stringify(playState));
   };
 
   // 清空当前播放状态，并在需要时停止正在播放的音频
@@ -1056,7 +1044,7 @@ export default function MusicClient({
     lastSaveTimeRef.current = 0;
     currentTimeRef.current = 0;
 
-    localStorage.removeItem('musicPlayState');
+    removeSetting('musicPlayState');
   };
 
   // 从 localStorage 恢复播放状态（已废弃，现在统一使用数据库）
@@ -1105,7 +1093,7 @@ export default function MusicClient({
         }
 
         // 3. 获取 localStorage 配置（只获取配置，不获取歌曲信息）
-        const savedPlayState = localStorage.getItem('musicPlayState');
+        const savedPlayState = readSetting('musicPlayState');
         const playState = savedPlayState ? JSON.parse(savedPlayState) : {};
 
         // 恢复配置状态（不包括歌曲）
@@ -1220,8 +1208,8 @@ export default function MusicClient({
 
   // 恢复 PiP 偏好设置
   useEffect(() => {
-    const savedOpacity = localStorage.getItem('lyricsPiPOpacity');
-    const savedMinimized = localStorage.getItem('lyricsPiPMinimized');
+    const savedOpacity = readSetting('lyricsPiPOpacity');
+    const savedMinimized = readSetting('lyricsPiPMinimized');
     if (savedOpacity) setPipOpacity(parseFloat(savedOpacity));
     if (savedMinimized) setPipMinimized(savedMinimized === 'true');
   }, []);
@@ -1232,17 +1220,11 @@ export default function MusicClient({
       switch (event.data.type) {
         case 'PIP_OPACITY_CHANGE':
           setPipOpacity(event.data.opacity);
-          localStorage.setItem(
-            'lyricsPiPOpacity',
-            event.data.opacity.toString()
-          );
+          writeSetting('lyricsPiPOpacity', event.data.opacity.toString());
           break;
         case 'PIP_MINIMIZED_CHANGE':
           setPipMinimized(event.data.minimized);
-          localStorage.setItem(
-            'lyricsPiPMinimized',
-            event.data.minimized.toString()
-          );
+          writeSetting('lyricsPiPMinimized', event.data.minimized.toString());
           break;
         case 'PIP_CLOSE':
           setShowPiPLyrics(false);
@@ -2423,7 +2405,7 @@ export default function MusicClient({
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    localStorage.setItem('musicShowSpectrum', showSpectrum ? '1' : '0');
+    writeSetting('musicShowSpectrum', showSpectrum ? '1' : '0');
   }, [showSpectrum]);
 
   const getQualityLabel = () => {
@@ -4573,11 +4555,11 @@ export default function MusicClient({
             minimized={pipMinimized}
             onOpacityChange={(opacity) => {
               setPipOpacity(opacity);
-              localStorage.setItem('lyricsPiPOpacity', opacity.toString());
+              writeSetting('lyricsPiPOpacity', opacity.toString());
             }}
             onMinimizedChange={(minimized) => {
               setPipMinimized(minimized);
-              localStorage.setItem('lyricsPiPMinimized', minimized.toString());
+              writeSetting('lyricsPiPMinimized', minimized.toString());
             }}
             onLyricSeek={seekToLyric}
             onClose={() => setShowPiPLyrics(false)}

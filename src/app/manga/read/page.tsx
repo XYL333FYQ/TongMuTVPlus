@@ -20,6 +20,7 @@ import type {
   MangaShelfItem,
 } from '@/lib/manga.types';
 import { isReducedMotionSetting } from '@/lib/motion';
+import { readSetting, writeSetting } from '@/lib/settings';
 import { processImageUrl } from '@/lib/utils';
 
 import {
@@ -312,16 +313,14 @@ export default function MangaReadPage() {
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    const savedMode = window.localStorage.getItem(
-      READ_MODE_STORAGE_KEY
-    ) as ReadMode | null;
+    const savedMode = readSetting(READ_MODE_STORAGE_KEY) as ReadMode | null;
     if (
       savedMode &&
       READ_MODE_OPTIONS.some((item) => item.value === savedMode)
     ) {
       setReadMode(savedMode);
     }
-    const savedScaleMode = window.localStorage.getItem(
+    const savedScaleMode = readSetting(
       SCALE_MODE_STORAGE_KEY
     ) as ScaleMode | null;
     if (
@@ -330,9 +329,7 @@ export default function MangaReadPage() {
     ) {
       setScaleMode(savedScaleMode);
     }
-    const savedGap = Number(
-      window.localStorage.getItem(PAGE_GAP_STORAGE_KEY) || 0
-    );
+    const savedGap = Number(readSetting(PAGE_GAP_STORAGE_KEY) || 0);
     if (!Number.isNaN(savedGap)) {
       setPageGap(Math.min(Math.max(savedGap, 0), 48));
     }
@@ -340,17 +337,17 @@ export default function MangaReadPage() {
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    window.localStorage.setItem(READ_MODE_STORAGE_KEY, readMode);
+    writeSetting(READ_MODE_STORAGE_KEY, readMode);
   }, [readMode]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    window.localStorage.setItem(SCALE_MODE_STORAGE_KEY, scaleMode);
+    writeSetting(SCALE_MODE_STORAGE_KEY, scaleMode);
   }, [scaleMode]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    window.localStorage.setItem(PAGE_GAP_STORAGE_KEY, String(pageGap));
+    writeSetting(PAGE_GAP_STORAGE_KEY, String(pageGap));
   }, [pageGap]);
 
   useEffect(() => {

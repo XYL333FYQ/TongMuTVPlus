@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from 'react';
 
+import { readSetting, writeSetting } from '@/lib/settings';
+
 export interface VisualPreferences {
   noBlur: boolean;
   reduceMotion: boolean;
@@ -30,7 +32,7 @@ function normalize(value: unknown): VisualPreferences {
 }
 function read(): VisualPreferences {
   try {
-    return normalize(JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'));
+    return normalize(JSON.parse(readSetting(STORAGE_KEY) || '{}'));
   } catch {
     return memoryPreferences;
   }
@@ -79,7 +81,7 @@ export function useVisualPreferences() {
   const update = (patch: Partial<VisualPreferences>) => {
     const next = normalize({ ...preferences, ...patch });
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+      writeSetting(STORAGE_KEY, JSON.stringify(next));
     } catch {
       /* In-memory preferences still work. */
     }

@@ -22,6 +22,7 @@ import {
   MangaShelfItem,
   MangaSource,
 } from '@/lib/manga.types';
+import { type SettingKey, readSetting, writeSetting } from '@/lib/settings';
 
 import {
   mangaCardItem,
@@ -72,7 +73,7 @@ export default function MangaSearchPage() {
   const [useFluidSearch, setUseFluidSearch] = useState(true);
 
   const getCacheKey = useCallback(
-    (keyword: string, selectedSourceId: string) => {
+    (keyword: string, selectedSourceId: string): SettingKey => {
       return `manga_search_cache_${
         selectedSourceId || 'all'
       }_${keyword.trim()}`;
@@ -84,9 +85,7 @@ export default function MangaSearchPage() {
     (keyword: string, selectedSourceId: string) => {
       if (typeof window === 'undefined' || !keyword.trim()) return null;
       try {
-        const cached = sessionStorage.getItem(
-          getCacheKey(keyword, selectedSourceId)
-        );
+        const cached = readSetting(getCacheKey(keyword, selectedSourceId));
         return cached ? (JSON.parse(cached) as MangaSearchItem[]) : null;
       } catch {
         return null;
@@ -103,7 +102,7 @@ export default function MangaSearchPage() {
     ) => {
       if (typeof window === 'undefined' || !keyword.trim()) return;
       try {
-        sessionStorage.setItem(
+        writeSetting(
           getCacheKey(keyword, selectedSourceId),
           JSON.stringify(nextResults)
         );
@@ -117,7 +116,7 @@ export default function MangaSearchPage() {
   const readFluidSearchSetting = useCallback(() => {
     if (typeof window === 'undefined') return true;
     try {
-      const savedFluidSearch = localStorage.getItem('fluidSearch');
+      const savedFluidSearch = readSetting('fluidSearch');
       if (savedFluidSearch !== null)
         return JSON.parse(savedFluidSearch) !== false;
     } catch {
@@ -174,10 +173,7 @@ export default function MangaSearchPage() {
     }) => {
       if (typeof window === 'undefined') return;
       try {
-        sessionStorage.setItem(
-          MANGA_SEARCH_STATE_KEY,
-          JSON.stringify(nextState)
-        );
+        writeSetting(MANGA_SEARCH_STATE_KEY, JSON.stringify(nextState));
       } catch {
         // ignore session cache failures
       }
@@ -188,7 +184,7 @@ export default function MangaSearchPage() {
   const restoreSearchState = useCallback(() => {
     if (typeof window === 'undefined') return null;
     try {
-      const cached = sessionStorage.getItem(MANGA_SEARCH_STATE_KEY);
+      const cached = readSetting(MANGA_SEARCH_STATE_KEY);
       return cached
         ? (JSON.parse(cached) as {
             query: string;

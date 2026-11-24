@@ -5,6 +5,7 @@ import type { Socket } from 'socket.io-client';
 
 import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
 import { noteRoomServerTime, syncRoomClock } from '@/lib/room-clock';
+import { readSetting, removeSetting, writeSetting } from '@/lib/settings';
 import {
   type WatchRoomSocket,
   watchRoomSocketManager,
@@ -321,7 +322,7 @@ export function useWatchRoom(
 
   const remember = useCallback((room: Room) => {
     const username = getAuthInfoFromBrowserCookie()?.username || '';
-    localStorage.setItem(
+    writeSetting(
       STORAGE_KEY,
       JSON.stringify({
         roomId: room.id,
@@ -824,7 +825,7 @@ export function useWatchRoom(
 export function getStoredRoomInfo(): StoredRoomInfo | null {
   if (typeof window === 'undefined') return null;
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = readSetting(STORAGE_KEY);
     if (!raw) return null;
     const value = JSON.parse(raw) as StoredRoomInfo;
     if (
@@ -839,5 +840,5 @@ export function getStoredRoomInfo(): StoredRoomInfo | null {
   }
 }
 function clearStoredRoomInfo() {
-  localStorage.removeItem(STORAGE_KEY);
+  removeSetting(STORAGE_KEY);
 }

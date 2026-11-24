@@ -18,6 +18,7 @@ import type { CSSProperties } from 'react';
 import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 
 import { deleteFavorite, isFavorited, saveFavorite } from '@/lib/db.client';
+import { readSetting, writeSetting } from '@/lib/settings';
 
 import TVNativeVideo from '@/components/tv/player/TVNativeVideo';
 import TVVirtualRemote from '@/components/tv/TVVirtualRemote';
@@ -62,12 +63,12 @@ const REMOTE_KEY_DEDUPE_MS = 350;
 function loadTVVolumeState() {
   if (typeof window === 'undefined') return { volume: 1, muted: false };
 
-  const savedVolume = localStorage.getItem(TV_VOLUME_KEY);
+  const savedVolume = readSetting(TV_VOLUME_KEY);
   const parsedVolume = savedVolume === null ? NaN : Number(savedVolume);
   const volume = Number.isFinite(parsedVolume)
     ? Math.max(0, Math.min(1, parsedVolume))
     : 1;
-  const savedMuted = localStorage.getItem(TV_MUTED_KEY);
+  const savedMuted = readSetting(TV_MUTED_KEY);
 
   return {
     volume,
@@ -317,7 +318,7 @@ function TVLivePlayClient() {
   useEffect(() => {
     if (!source || !channel) return;
     try {
-      localStorage.setItem(
+      writeSetting(
         TV_LIVE_LAST_CHANNEL_KEY,
         JSON.stringify({
           source: source.key,
@@ -336,8 +337,8 @@ function TVLivePlayClient() {
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    localStorage.setItem(TV_VOLUME_KEY, String(volume));
-    localStorage.setItem(TV_MUTED_KEY, String(muted));
+    writeSetting(TV_VOLUME_KEY, String(volume));
+    writeSetting(TV_MUTED_KEY, String(muted));
   }, [muted, volume]);
 
   useEffect(() => {

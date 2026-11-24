@@ -6,6 +6,7 @@ import { Search, X } from 'lucide-react';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
 
+import { type SettingKey, writeSetting } from '@/lib/settings';
 import { getTMDBImageUrl } from '@/lib/tmdb-image-base';
 import { processImageUrl } from '@/lib/utils';
 
@@ -261,12 +262,12 @@ export default function CorrectDialog({
       // 根据源类型选择不同的存储方式
       if (source === 'xiaoya') {
         // 小雅源：存储到 localStorage
-        const storageKey = `xiaoya_correction_${videoKey}`;
+        const storageKey: SettingKey = `xiaoya_correction_${videoKey}`;
         const correctionInfo = {
           ...correctionData,
           correctedAt: Date.now(),
         };
-        localStorage.setItem(storageKey, JSON.stringify(correctionInfo));
+        writeSetting(storageKey, JSON.stringify(correctionInfo));
         console.log(
           '小雅源纠错信息已存储到 localStorage:',
           storageKey,
@@ -387,12 +388,12 @@ export default function CorrectDialog({
       // 根据源类型选择不同的存储方式
       if (source === 'xiaoya') {
         // 小雅源：存储到 localStorage
-        const storageKey = `xiaoya_correction_${videoKey}`;
+        const storageKey: SettingKey = `xiaoya_correction_${videoKey}`;
         const correctionInfo = {
           ...correctionData,
           correctedAt: Date.now(),
         };
-        localStorage.setItem(storageKey, JSON.stringify(correctionInfo));
+        writeSetting(storageKey, JSON.stringify(correctionInfo));
         console.log(
           '小雅源纠错信息已存储到 localStorage:',
           storageKey,

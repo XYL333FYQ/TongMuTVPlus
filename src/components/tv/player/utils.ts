@@ -1,3 +1,4 @@
+import { readSetting } from '@/lib/settings';
 import { SearchResult } from '@/lib/types';
 
 type SearchCachePayload = {
@@ -11,7 +12,7 @@ function getCachedSearchResults(query?: string | null) {
   const keyword = query?.trim();
   if (!keyword || typeof window === 'undefined') return null;
   try {
-    const cached = sessionStorage.getItem(`search_cache_${keyword}`);
+    const cached = readSetting(`search_cache_${keyword}`);
     if (!cached) return null;
     const parsed = JSON.parse(cached) as SearchCachePayload;
     if (Array.isArray(parsed.results) && parsed.results.length > 0)

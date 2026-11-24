@@ -5,6 +5,7 @@ import {
   readJson,
   readNumber,
   readSetting,
+  readSettingStrict,
   removeSetting,
   subscribeSetting,
   writeSetting,
@@ -144,4 +145,21 @@ test('only synced keys from the registry are accepted from the cloud', () => {
   expect(isSyncedSettingKey('liveDirectConnect')).toBe(false);
   expect(isSyncedSettingKey('theme')).toBe(false);
   expect(isSyncedSettingKey('__proto__')).toBe(false);
+});
+
+describe('存储不可用时', () => {
+  afterEach(() => jest.restoreAllMocks());
+
+  it('readSettingStrict 把“读不了”（undefined）和“没存过”（null）分开；写入告诉调用方没存进去', () => {
+    expect(readSettingStrict('musicEqEnabled')).toBeNull();
+    jest.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
+      throw Error('restricted');
+    });
+    jest.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw Error('restricted');
+    });
+    expect(readSettingStrict('musicEqEnabled')).toBeUndefined();
+    expect(readSetting('musicEqEnabled')).toBeNull();
+    expect(writeSetting('musicEqEnabled', 'true')).toBe(false);
+  });
 });

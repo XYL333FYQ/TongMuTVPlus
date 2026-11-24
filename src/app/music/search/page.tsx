@@ -8,6 +8,7 @@ import { cn } from '@/lib/cn';
 import { playMusicList } from '@/lib/music/actions';
 import { mapSong, musicSources, normalizeSource } from '@/lib/music/shared';
 import type { Song } from '@/lib/music/types';
+import { type SettingKey, readSetting, writeSetting } from '@/lib/settings';
 import { formatLocalDate } from '@/lib/time';
 
 import BusyDots from '@/components/feedback/BusyDots';
@@ -92,7 +93,7 @@ const sourceOptions = musicSources.map((item) => ({
 /** 歌手和专辑只有这两个音源有搜。少了就在这个列表里报，省得用户空搜一趟。 */
 const DETAIL_SEARCH_SOURCES = ['wy', 'tx'];
 
-function getHotSearchCacheKey(source: string) {
+function getHotSearchCacheKey(source: string): SettingKey {
   return `music_hot_search_${source}`;
 }
 
@@ -223,7 +224,7 @@ export default function MusicSearchPage() {
 
     if (!forceRefresh) {
       try {
-        const cached = localStorage.getItem(cacheKey);
+        const cached = readSetting(cacheKey);
         if (cached) {
           const { data, timestamp } = JSON.parse(cached);
           if (Array.isArray(data)) {
@@ -258,7 +259,7 @@ export default function MusicSearchPage() {
           );
           setHotSearches(nextHotSearches);
           try {
-            localStorage.setItem(
+            writeSetting(
               cacheKey,
               JSON.stringify({ data: nextHotSearches, timestamp: Date.now() })
             );

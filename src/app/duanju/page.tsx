@@ -18,6 +18,7 @@ import {
   pickDefaultSelection,
 } from '@/lib/category-tree';
 import { getPageScrollTop, scrollPageTo } from '@/lib/page-scroll';
+import { readSetting, removeSetting, writeSetting } from '@/lib/settings';
 import { SearchResult } from '@/lib/types';
 import { useViewerIdentity } from '@/hooks/useViewerIdentity';
 
@@ -62,8 +63,8 @@ const useIsomorphicLayoutEffect =
 const consumeSnapshot = (): DuanjuSnapshot | null => {
   if (typeof window === 'undefined') return null;
   try {
-    const raw = sessionStorage.getItem(DUANJU_STATE_KEY);
-    sessionStorage.removeItem(DUANJU_STATE_KEY);
+    const raw = readSetting(DUANJU_STATE_KEY);
+    removeSetting(DUANJU_STATE_KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw) as DuanjuSnapshot;
     if (
@@ -182,7 +183,7 @@ function DuanjuPageClient() {
     const snapshot = snapshotRef.current;
     if (!snapshot || snapshot.videos.length === 0) return;
     try {
-      sessionStorage.setItem(
+      writeSetting(
         DUANJU_STATE_KEY,
         JSON.stringify({ ...snapshot, scrollTop: getPageScrollTop() })
       );

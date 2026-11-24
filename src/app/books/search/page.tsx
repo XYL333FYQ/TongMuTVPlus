@@ -17,6 +17,7 @@ import {
   cacheBookListItem,
 } from '@/lib/book-route-cache.client';
 import { cn } from '@/lib/cn';
+import { type SettingKey, readSetting, writeSetting } from '@/lib/settings';
 
 import BusyDots from '@/components/feedback/BusyDots';
 import { bookCardItem } from '@/components/media/adapters';
@@ -85,7 +86,7 @@ export default function BooksSearchPage() {
   const flushTimerRef = useRef<number | null>(null);
 
   const getCacheKey = useCallback(
-    (keyword: string, selectedSourceId: string) =>
+    (keyword: string, selectedSourceId: string): SettingKey =>
       `book_search_cache_${selectedSourceId || 'all'}_${keyword.trim()}`,
     []
   );
@@ -94,9 +95,7 @@ export default function BooksSearchPage() {
     (keyword: string, selectedSourceId: string) => {
       if (typeof window === 'undefined' || !keyword.trim()) return null;
       try {
-        const raw = sessionStorage.getItem(
-          getCacheKey(keyword, selectedSourceId)
-        );
+        const raw = readSetting(getCacheKey(keyword, selectedSourceId));
         return raw ? (JSON.parse(raw) as BookSearchResult) : null;
       } catch {
         return null;
@@ -113,7 +112,7 @@ export default function BooksSearchPage() {
     ) => {
       if (typeof window === 'undefined' || !keyword.trim()) return;
       try {
-        sessionStorage.setItem(
+        writeSetting(
           getCacheKey(keyword, selectedSourceId),
           JSON.stringify(nextResult)
         );
@@ -127,7 +126,7 @@ export default function BooksSearchPage() {
   const readFluidSearchSetting = useCallback(() => {
     if (typeof window === 'undefined') return true;
     try {
-      const savedFluidSearch = localStorage.getItem('fluidSearch');
+      const savedFluidSearch = readSetting('fluidSearch');
       if (savedFluidSearch !== null)
         return JSON.parse(savedFluidSearch) !== false;
     } catch {
@@ -177,10 +176,7 @@ export default function BooksSearchPage() {
     (nextState: { q: string; sourceId: string; result: BookSearchResult }) => {
       if (typeof window === 'undefined') return;
       try {
-        sessionStorage.setItem(
-          BOOK_SEARCH_STATE_KEY,
-          JSON.stringify(nextState)
-        );
+        writeSetting(BOOK_SEARCH_STATE_KEY, JSON.stringify(nextState));
       } catch {
         // Ignore storage failures.
       }
@@ -191,7 +187,7 @@ export default function BooksSearchPage() {
   const restoreSearchState = useCallback(() => {
     if (typeof window === 'undefined') return null;
     try {
-      const raw = sessionStorage.getItem(BOOK_SEARCH_STATE_KEY);
+      const raw = readSetting(BOOK_SEARCH_STATE_KEY);
       return raw
         ? (JSON.parse(raw) as {
             q: string;

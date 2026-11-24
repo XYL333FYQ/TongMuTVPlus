@@ -45,6 +45,12 @@ import {
 } from '@/lib/public-catalog';
 import { isPrivilegedRole } from '@/lib/roles';
 import {
+  type SettingKey,
+  readSetting,
+  removeSetting,
+  writeSetting,
+} from '@/lib/settings';
+import {
   appendSpecialSourceParam,
   isSpecialSourceContext,
   SPECIAL_SOURCE_PATH,
@@ -86,9 +92,9 @@ type SearchCachePayload = {
 };
 
 // 读取本地保存的布尔设置；值被改坏（如手改成 yes）时用默认值，不让整页白屏
-const readStoredBoolean = (key: string): boolean | null => {
+const readStoredBoolean = (key: SettingKey): boolean | null => {
   try {
-    const raw = localStorage.getItem(key);
+    const raw = readSetting(key);
     if (raw === null) return null;
     const value = JSON.parse(raw);
     return typeof value === 'boolean' ? value : null;
@@ -274,7 +280,7 @@ export function SearchPageClient({
   const advancedDropdownRefs = useRef<HTMLDivElement[]>([]);
 
   // 生成缓存键
-  const getCacheKey = (query: string) => {
+  const getCacheKey = (query: string): SettingKey => {
     const suffixParts = [
       isSpecialSourceContext() ? 'special' : '',
       privateLibraryOnly ? 'private' : '',
@@ -288,7 +294,7 @@ export function SearchPageClient({
     if (typeof window === 'undefined') return null;
     try {
       const cacheKey = getCacheKey(query);
-      const cached = sessionStorage.getItem(cacheKey);
+      const cached = readSetting(cacheKey);
       if (!cached) return null;
 
       const parsed = JSON.parse(cached) as SearchCachePayload;
@@ -316,7 +322,7 @@ export function SearchPageClient({
         query: query.trim(),
         updatedAt: Date.now(),
       };
-      sessionStorage.setItem(cacheKey, JSON.stringify(payload));
+      writeSetting(cacheKey, JSON.stringify(payload));
     } catch (error) {
       console.error('Failed to cache results:', error);
     }
@@ -337,7 +343,7 @@ export function SearchPageClient({
     if (typeof window === 'undefined') return;
     try {
       const cacheKey = getCacheKey(query);
-      sessionStorage.removeItem(cacheKey);
+      removeSetting(cacheKey);
     } catch (error) {
       console.error('Failed to clear cached results:', error);
     }
@@ -434,7 +440,7 @@ export function SearchPageClient({
   const [resultDisplayMode, setResultDisplayMode] = useState<'card' | 'list'>(
     () => {
       if (typeof window !== 'undefined') {
-        const saved = localStorage.getItem('searchResultDisplayMode');
+        const saved = readSetting('searchResultDisplayMode');
         if (saved === 'card' || saved === 'list') {
           return saved;
         }
@@ -957,7 +963,7 @@ export function SearchPageClient({
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      localStorage.setItem('searchResultDisplayMode', resultDisplayMode);
+      writeSetting('searchResultDisplayMode', resultDisplayMode);
     }
   }, [resultDisplayMode]);
 
@@ -967,10 +973,7 @@ export function SearchPageClient({
       typeof window !== 'undefined' &&
       privateLibraryOnlyLoadedRef.current
     ) {
-      localStorage.setItem(
-        'searchPrivateLibraryOnly',
-        String(privateLibraryOnly)
-      );
+      writeSetting('searchPrivateLibraryOnly', String(privateLibraryOnly));
     }
   }, [privateLibraryOnly, isGuest]);
 
@@ -1257,7 +1260,7 @@ export function SearchPageClient({
     // 没开的用户不用等这本约 480KB 的字典就能直接搜
     if (
       typeof window !== 'undefined' &&
-      localStorage.getItem('searchTraditionalToSimplified') === 'true'
+      readSetting('searchTraditionalToSimplified') === 'true'
     ) {
       loadTraditionalToSimplifiedConverter()
         .then(() => {
@@ -1285,14 +1288,12 @@ export function SearchPageClient({
       }
 
       // 读取精确搜索设置
-      const savedExactSearch = localStorage.getItem('exactSearch');
+      const savedExactSearch = readSetting('exactSearch');
       if (savedExactSearch !== null) {
         setExactSearch(savedExactSearch === 'true');
       }
 
-      const savedPrivateLibraryOnly = localStorage.getItem(
-        'searchPrivateLibraryOnly'
-      );
+      const savedPrivateLibraryOnly = readSetting('searchPrivateLibraryOnly');
       // /under 特殊源入口只搜影视源，一律关掉「只搜私人影库」（跳过 localStorage 恢复）
       if (
         !guest &&
@@ -1367,7 +1368,7 @@ export function SearchPageClient({
 
     // 如果开启了繁体转简体，进行转换
     if (query && typeof window !== 'undefined') {
-      const searchTraditionalToSimplified = localStorage.getItem(
+      const searchTraditionalToSimplified = readSetting(
         'searchTraditionalToSimplified'
       );
 
@@ -1837,7 +1838,7 @@ export function SearchPageClient({
 
     // 如果开启了繁体转简体，进行转换
     if (typeof window !== 'undefined') {
-      const searchTraditionalToSimplified = localStorage.getItem(
+      const searchTraditionalToSimplified = readSetting(
         'searchTraditionalToSimplified'
       );
       if (searchTraditionalToSimplified === 'true') {
@@ -1877,7 +1878,7 @@ export function SearchPageClient({
 
     // 如果开启了繁体转简体，进行转换
     if (typeof window !== 'undefined') {
-      const searchTraditionalToSimplified = localStorage.getItem(
+      const searchTraditionalToSimplified = readSetting(
         'searchTraditionalToSimplified'
       );
       if (searchTraditionalToSimplified === 'true') {

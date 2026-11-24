@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { FormEvent, useEffect, useMemo, useRef, useState } from 'react';
 
 import { addSearchHistory, getSearchHistory } from '@/lib/db.client';
+import { type SettingKey, writeSetting } from '@/lib/settings';
 import { SearchResult } from '@/lib/types';
 import { processImageUrl } from '@/lib/utils';
 
@@ -21,13 +22,13 @@ const hot = [
   '权力的游戏',
 ];
 
-function getSearchCacheKey(query: string) {
+function getSearchCacheKey(query: string): SettingKey {
   return `search_cache_${query.trim()}`;
 }
 
 function setCachedSearchResults(query: string, nextResults: SearchResult[]) {
   try {
-    sessionStorage.setItem(
+    writeSetting(
       getSearchCacheKey(query),
       JSON.stringify({
         status: 'complete',

@@ -11,6 +11,12 @@ import type { VideoContext } from '@/lib/ai-orchestrator';
 import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
 import { AI_WELCOME_MESSAGE } from '@/lib/brand';
 import { viewportSize } from '@/lib/device-tier';
+import {
+  type SettingKey,
+  readSetting,
+  removeSetting,
+  writeSetting,
+} from '@/lib/settings';
 
 import BusyDots from '@/components/feedback/BusyDots';
 import ModalLayer from '@/components/feedback/ModalLayer';
@@ -285,7 +291,7 @@ export default function AIChatPanel({
   const pathname = usePathname();
 
   // 使用 useMemo 稳定 storage key，只在实际内容变化时才改变
-  const storageKey = useMemo(() => {
+  const storageKey = useMemo<SettingKey>(() => {
     if (context?.title) {
       return `ai-chat-${context.title}-${context.year || ''}-${
         context.type || ''
@@ -542,7 +548,7 @@ export default function AIChatPanel({
     // 如果已经加载过当前 storageKey，跳过
     if (hasLoadedRef.current) return;
 
-    const savedMessages = sessionStorage.getItem(storageKey);
+    const savedMessages = readSetting(storageKey);
 
     if (savedMessages) {
       try {
@@ -564,7 +570,7 @@ export default function AIChatPanel({
     if (typeof window === 'undefined') return;
 
     try {
-      sessionStorage.setItem(storageKey, JSON.stringify(messages));
+      writeSetting(storageKey, JSON.stringify(messages));
     } catch (error) {
       console.error('保存聊天记录失败:', error);
     }
@@ -890,7 +896,7 @@ export default function AIChatPanel({
     if (typeof window === 'undefined') return;
 
     // 清除sessionStorage
-    sessionStorage.removeItem(storageKey);
+    removeSetting(storageKey);
 
     // 重置消息为欢迎消息
     clearToolChain();

@@ -17,6 +17,8 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import { readSettingStrict, removeSetting, writeSetting } from '@/lib/settings';
+
 const LEASE_KEY = 'tongmutvplus:audible-tab';
 const LEASE_MS = 6500;
 const LOCAL_FOCUS_EVENT = 'tongmu:audio-focus';
@@ -29,26 +31,19 @@ let memoryOnly = false;
 let participants = 0;
 function readLease() {
   if (!memoryOnly) {
-    try {
-      memoryLease = parseAudioLease(
-        localStorage.getItem(LEASE_KEY),
-        Date.now()
-      );
-    } catch {
-      memoryOnly = true;
-    }
+    // 存储读不了（被禁用）就改成只在本页内存里记
+    const raw = readSettingStrict(LEASE_KEY);
+    if (raw === undefined) memoryOnly = true;
+    else memoryLease = parseAudioLease(raw, Date.now());
   }
   return memoryLease && memoryLease.expiresAt > Date.now() ? memoryLease : null;
 }
 function writeLease(lease: Lease | null) {
   memoryLease = lease;
   if (!memoryOnly) {
-    try {
-      if (lease) localStorage.setItem(LEASE_KEY, JSON.stringify(lease));
-      else localStorage.removeItem(LEASE_KEY);
-    } catch {
-      memoryOnly = true;
-    }
+    if (lease) {
+      if (!writeSetting(LEASE_KEY, JSON.stringify(lease))) memoryOnly = true;
+    } else removeSetting(LEASE_KEY);
   }
 }
 

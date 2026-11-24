@@ -22,6 +22,7 @@ import {
 } from 'react';
 
 import { clearAuthCookie, getAuthInfoFromBrowserCookie } from '@/lib/auth';
+import { readSetting } from '@/lib/settings';
 import { formatDateTime } from '@/lib/time';
 import {
   type TVPlayerUpDownAction,
@@ -91,7 +92,7 @@ export default function TVMePage() {
       setLocalRemoteUrl(
         bridgeUrl ||
           window.__MOONTV_LOCAL_REMOTE_URL ||
-          localStorage.getItem(LOCAL_REMOTE_URL_KEY) ||
+          readSetting(LOCAL_REMOTE_URL_KEY) ||
           ''
       );
     };

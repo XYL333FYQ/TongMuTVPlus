@@ -52,6 +52,7 @@ import {
   saveFavorite,
   savePlayRecord,
 } from '@/lib/db.client';
+import { readSetting, writeSetting } from '@/lib/settings';
 import { formatPaddedClock } from '@/lib/time';
 import { loadTVPlayerUpDownAction } from '@/lib/tv-preferences';
 import { SearchResult } from '@/lib/types';
@@ -95,12 +96,12 @@ const DEFAULT_TV_DANMAKU_SETTINGS: TVDanmakuSettings = {
 function loadTVVolumeState() {
   if (typeof window === 'undefined') return { volume: 1, muted: false };
 
-  const savedVolume = localStorage.getItem(TV_VOLUME_KEY);
+  const savedVolume = readSetting(TV_VOLUME_KEY);
   const parsedVolume = savedVolume === null ? NaN : Number(savedVolume);
   const volume = Number.isFinite(parsedVolume)
     ? Math.max(0, Math.min(1, parsedVolume))
     : 1;
-  const savedMuted = localStorage.getItem(TV_MUTED_KEY);
+  const savedMuted = readSetting(TV_MUTED_KEY);
 
   return {
     volume,
@@ -112,7 +113,7 @@ function loadTVDanmakuSettings(): TVDanmakuSettings {
   if (typeof window === 'undefined') return DEFAULT_TV_DANMAKU_SETTINGS;
 
   try {
-    const saved = localStorage.getItem(TV_DANMAKU_SETTINGS_KEY);
+    const saved = readSetting(TV_DANMAKU_SETTINGS_KEY);
     if (!saved) return DEFAULT_TV_DANMAKU_SETTINGS;
     const parsed = JSON.parse(saved) as Partial<TVDanmakuSettings>;
     return {
@@ -452,14 +453,14 @@ function TVPlayClient() {
   } | null>(null);
   const [adFilterEnabled, setAdFilterEnabled] = useState(() => {
     if (typeof window === 'undefined') return true;
-    const saved = localStorage.getItem('enable_blockad');
+    const saved = readSetting('enable_blockad');
     return saved === null ? true : saved === 'true';
   });
   const [danmakuEnabled, setDanmakuEnabled] = useState(() => {
     if (typeof window === 'undefined') return true;
     const saved = loadDanmakuDisplayState();
     if (saved !== null) return saved;
-    const legacySaved = localStorage.getItem('tv_danmaku_enabled');
+    const legacySaved = readSetting('tv_danmaku_enabled');
     return legacySaved === null ? true : legacySaved === 'true';
   });
   const [danmakuItems, setDanmakuItems] = useState<
@@ -480,7 +481,7 @@ function TVPlayClient() {
   >([]);
   const [playbackRate, setPlaybackRate] = useState(() => {
     if (typeof window === 'undefined') return 1;
-    return Number(localStorage.getItem('tv_playback_rate') || '1') || 1;
+    return Number(readSetting('tv_playback_rate') || '1') || 1;
   });
   const [skipConfig, setSkipConfig] = useState<{
     enable?: boolean;
@@ -607,32 +608,29 @@ function TVPlayClient() {
 
   useEffect(() => {
     if (typeof window !== 'undefined')
-      localStorage.setItem('enable_blockad', String(adFilterEnabled));
+      writeSetting('enable_blockad', String(adFilterEnabled));
   }, [adFilterEnabled]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
     saveDanmakuDisplayState(danmakuEnabled);
-    localStorage.setItem('tv_danmaku_enabled', String(danmakuEnabled));
+    writeSetting('tv_danmaku_enabled', String(danmakuEnabled));
   }, [danmakuEnabled]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    localStorage.setItem(
-      TV_DANMAKU_SETTINGS_KEY,
-      JSON.stringify(danmakuSettings)
-    );
+    writeSetting(TV_DANMAKU_SETTINGS_KEY, JSON.stringify(danmakuSettings));
   }, [danmakuSettings]);
 
   useEffect(() => {
     if (typeof window !== 'undefined')
-      localStorage.setItem('tv_playback_rate', String(playbackRate));
+      writeSetting('tv_playback_rate', String(playbackRate));
   }, [playbackRate]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    localStorage.setItem(TV_VOLUME_KEY, String(volume));
-    localStorage.setItem(TV_MUTED_KEY, String(muted));
+    writeSetting(TV_VOLUME_KEY, String(volume));
+    writeSetting(TV_MUTED_KEY, String(muted));
   }, [muted, volume]);
 
   useEffect(() => {

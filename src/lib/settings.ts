@@ -115,6 +115,70 @@ export const SETTINGS = {
   watch_room_screen_quality: local,
   watch_room_no_connect: local,
   watch_room_no_connect_timestamp: local,
+
+  // —— 上游页面各自的设置和缓存（键名照旧；按最早用到它的文件分组） ——
+  // app/admin/page.tsx
+  admin_active_section: local,
+  // app/books/read/page.tsx
+  books_epub_reader_settings: local,
+  books_epub_scrolled_positions: local,
+  books_tts_settings: local,
+  books_tts_voices_cache: local,
+  // app/books/search/page.tsx
+  book_search_state: session,
+  // app/duanju/page.tsx
+  duanju_state: session,
+  // app/login/page.tsx
+  rememberedCredentials: local,
+  // app/manga/read/page.tsx
+  mangaPageGap: local,
+  mangaReadMode: local,
+  mangaScaleMode: local,
+  // app/manga/search/page.tsx
+  manga_search_state: session,
+  // app/music/MusicClient.tsx
+  lyricsPiPMinimized: local,
+  lyricsPiPOpacity: local,
+  musicEqEnabled: local,
+  musicEqGains: local,
+  musicEqPreset: local,
+  musicLoudnessEnabled: local,
+  musicPitchRate: local,
+  musicPlayState: local,
+  musicReverbEnabled: local,
+  musicReverbMainGain: local,
+  musicReverbMix: local,
+  musicReverbPreset: local,
+  musicShowSpectrum: local,
+  musicSurroundDistance: local,
+  musicSurroundEnabled: local,
+  musicSurroundSpeed: local,
+  // app/source-search/page.tsx
+  source_search_state: session,
+  // app/tv/live/page.tsx
+  tv_live_last_channel: local,
+  // app/tv/live/play/page.tsx
+  tv_player_muted: local,
+  tv_player_volume: local,
+  // app/tv/me/page.tsx
+  moontv_local_remote_url: local,
+  // app/tv/play/page.tsx
+  tv_danmaku_enabled: local,
+  tv_danmaku_settings: local,
+  tv_playback_rate: local,
+  // components/AcgSearch.tsx
+  acgSearchSource: local,
+  // components/SearchPageClient.tsx
+  searchPrivateLibraryOnly: local,
+  searchResultDisplayMode: local,
+  // components/tv/TVRemoteReceiver.tsx
+  moontv_tv_remote_device_id: local,
+  // hooks/useAudioFocus.ts
+  'tongmutvplus:audible-tab': local,
+  // hooks/useVisualPreferences.ts
+  'tm-visual-preferences-v1': local,
+  // hooks/useWatchRoom.ts
+  watch_room_info: local,
 } as const satisfies Record<string, SettingSpec>;
 
 /** 带变量的键：前缀登记在这里，后面拼影片、片源或搜索词 */
@@ -122,6 +186,12 @@ export const SETTING_FAMILIES = {
   banner_trending_cache_: local,
   xiaoya_correction_: local,
   search_cache_: session,
+  book_search_cache_: session,
+  manga_search_cache_: session,
+  'ai-chat-': session,
+  music_hot_search_: local,
+  music_songlist_tags_: local,
+  music_songlists_: local,
 } as const satisfies Record<string, SettingSpec>;
 
 type FixedKey = keyof typeof SETTINGS;
@@ -162,20 +232,37 @@ function announce(key: SettingKey, value: string | null) {
 }
 
 export function readSetting(key: SettingKey): string | null {
+  return readSettingStrict(key) ?? null;
+}
+
+/**
+ * 和 readSetting 一样，但读不了（存储被禁用、抛错）时返回 undefined，好跟“没存过”（null）分开。
+ * 需要在存储不可用时改走内存的地方用它（例如多个标签页抢声音）。
+ */
+export function readSettingStrict(key: SettingKey): string | null | undefined {
+  const storage = storageOf(key);
+  if (!storage) return undefined;
   try {
-    return storageOf(key)?.getItem(key) ?? null;
+    return storage.getItem(key);
   } catch {
-    return null;
+    return undefined;
   }
 }
 
-export function writeSetting(key: SettingKey, value: string): void {
+/** 返回这次有没有真的存进去（隐私模式、配额满时是 false，不抛错） */
+export function writeSetting(key: SettingKey, value: string): boolean {
+  let stored = false;
   try {
-    storageOf(key)?.setItem(key, value);
+    const storage = storageOf(key);
+    if (storage) {
+      storage.setItem(key, value);
+      stored = true;
+    }
   } catch {
     // 隐私模式或配额满：这次存不下，不影响当前操作
   }
   announce(key, value);
+  return stored;
 }
 
 export function removeSetting(key: SettingKey): void {

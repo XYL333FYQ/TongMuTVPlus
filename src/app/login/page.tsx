@@ -12,6 +12,7 @@ import '@/styles/auth.css';
 import { useReducedMotionSetting } from '@/lib/motion';
 import { getPlatform } from '@/lib/platform';
 import { decodeQueryText, getSafeRedirect } from '@/lib/safe-redirect';
+import { readSetting, removeSetting, writeSetting } from '@/lib/settings';
 
 import AuthVersion from '@/components/auth/AuthVersion';
 import { useExternalAction } from '@/components/ExternalLink';
@@ -186,9 +187,7 @@ function LoginPageClient() {
       setTelegramLoginEnabled(Boolean(runtimeConfig?.ENABLE_TELEGRAM_LOGIN));
 
       // 从localStorage读取记住的密码信息
-      const rememberedCredentials = localStorage.getItem(
-        'rememberedCredentials'
-      );
+      const rememberedCredentials = readSetting('rememberedCredentials');
       if (rememberedCredentials) {
         try {
           const credentials = JSON.parse(rememberedCredentials);
@@ -201,7 +200,7 @@ function LoginPageClient() {
           setRememberPassword(true);
         } catch (error) {
           // 清除无效的数据
-          localStorage.removeItem('rememberedCredentials');
+          removeSetting('rememberedCredentials');
         }
       }
     }
@@ -280,13 +279,10 @@ function LoginPageClient() {
           if (shouldAskUsername && username) {
             credentials.username = username;
           }
-          localStorage.setItem(
-            'rememberedCredentials',
-            JSON.stringify(credentials)
-          );
+          writeSetting('rememberedCredentials', JSON.stringify(credentials));
         } else {
           // 如果不记住密码，清除已存储的信息
-          localStorage.removeItem('rememberedCredentials');
+          removeSetting('rememberedCredentials');
         }
 
         const redirect = getSafeRedirect(searchParams.get('redirect'));

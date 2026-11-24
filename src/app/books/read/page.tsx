@@ -53,6 +53,7 @@ import {
 } from '@/lib/book-tts-progress.client';
 import { cn } from '@/lib/cn';
 import { viewportSize } from '@/lib/device-tier';
+import { readSetting, writeSetting } from '@/lib/settings';
 import { formatPaddedClock } from '@/lib/time';
 
 import BookPdfActions from '@/components/books/BookPdfActions';
@@ -223,7 +224,7 @@ const THEME_STYLES: Record<
 function loadTtsSettings(): TtsSettings {
   if (typeof window === 'undefined') return DEFAULT_TTS_SETTINGS;
   try {
-    const raw = localStorage.getItem(TTS_SETTINGS_STORAGE_KEY);
+    const raw = readSetting(TTS_SETTINGS_STORAGE_KEY);
     if (!raw) return DEFAULT_TTS_SETTINGS;
     return {
       ...DEFAULT_TTS_SETTINGS,
@@ -237,7 +238,7 @@ function loadTtsSettings(): TtsSettings {
 function loadCachedTtsVoices(): TtsVoicesCache | null {
   if (typeof window === 'undefined') return null;
   try {
-    const raw = localStorage.getItem(TTS_VOICES_STORAGE_KEY);
+    const raw = readSetting(TTS_VOICES_STORAGE_KEY);
     if (!raw) return null;
     const cache = JSON.parse(raw) as Partial<TtsVoicesCache>;
     if (!Array.isArray(cache.voices) || cache.voices.length === 0) return null;
@@ -253,7 +254,7 @@ function loadCachedTtsVoices(): TtsVoicesCache | null {
 
 function saveCachedTtsVoices(cache: Omit<TtsVoicesCache, 'savedAt'>) {
   if (typeof window === 'undefined' || cache.voices.length === 0) return;
-  localStorage.setItem(
+  writeSetting(
     TTS_VOICES_STORAGE_KEY,
     JSON.stringify({ ...cache, savedAt: Date.now() })
   );
@@ -336,7 +337,7 @@ async function loadEpubScript() {
 function loadReaderSettings(): ReaderSettings {
   if (typeof window === 'undefined') return DEFAULT_SETTINGS;
   try {
-    const raw = localStorage.getItem(SETTINGS_STORAGE_KEY);
+    const raw = readSetting(SETTINGS_STORAGE_KEY);
     if (!raw) return DEFAULT_SETTINGS;
     return {
       ...DEFAULT_SETTINGS,
@@ -358,7 +359,7 @@ function buildScrolledPositionKey(
 function loadScrolledPositions(): Record<string, ScrolledReadingPosition> {
   if (typeof window === 'undefined') return {};
   try {
-    const raw = localStorage.getItem(SCROLLED_POSITION_STORAGE_KEY);
+    const raw = readSetting(SCROLLED_POSITION_STORAGE_KEY);
     return raw
       ? (JSON.parse(raw) as Record<string, ScrolledReadingPosition>)
       : {};
@@ -375,7 +376,7 @@ function saveScrolledPosition(
   if (typeof window === 'undefined') return;
   const all = loadScrolledPositions();
   all[buildScrolledPositionKey(sourceId, bookId, position.href)] = position;
-  localStorage.setItem(SCROLLED_POSITION_STORAGE_KEY, JSON.stringify(all));
+  writeSetting(SCROLLED_POSITION_STORAGE_KEY, JSON.stringify(all));
 }
 
 function getScrolledPosition(
@@ -741,15 +742,12 @@ function ChapterReader({ manifest }: { manifest: BookReadManifest }) {
 
   useEffect(() => {
     if (typeof window !== 'undefined')
-      localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings));
+      writeSetting(SETTINGS_STORAGE_KEY, JSON.stringify(settings));
   }, [settings]);
 
   useEffect(() => {
     if (typeof window !== 'undefined')
-      localStorage.setItem(
-        TTS_SETTINGS_STORAGE_KEY,
-        JSON.stringify(ttsSettings)
-      );
+      writeSetting(TTS_SETTINGS_STORAGE_KEY, JSON.stringify(ttsSettings));
     ttsSettingsRef.current = ttsSettings;
   }, [ttsSettings]);
 
@@ -2213,16 +2211,13 @@ export default function BookReadPage() {
   useEffect(() => {
     settingsRef.current = settings;
     if (typeof window !== 'undefined') {
-      localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings));
+      writeSetting(SETTINGS_STORAGE_KEY, JSON.stringify(settings));
     }
   }, [settings]);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      localStorage.setItem(
-        TTS_SETTINGS_STORAGE_KEY,
-        JSON.stringify(ttsSettings)
-      );
+      writeSetting(TTS_SETTINGS_STORAGE_KEY, JSON.stringify(ttsSettings));
     }
     ttsSettingsRef.current = ttsSettings;
   }, [ttsSettings]);

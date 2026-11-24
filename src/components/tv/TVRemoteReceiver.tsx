@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { type Socket, io } from 'socket.io-client';
 
 import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
+import { readSetting, writeSetting } from '@/lib/settings';
 import { applyTVRemoteText, fireTVRemoteKey } from '@/lib/tv-remote-core';
 import type {
   TVRemoteKeyCommand,
@@ -26,13 +27,13 @@ const receiverState: TVRemoteReceiverSingleton = {
 };
 
 function getDeviceId() {
-  let id = localStorage.getItem(DEVICE_ID_KEY);
+  let id = readSetting(DEVICE_ID_KEY);
   if (!id) {
     id =
       typeof crypto !== 'undefined' && 'randomUUID' in crypto
         ? crypto.randomUUID()
         : `tv-${Date.now()}-${Math.random().toString(36).slice(2)}`;
-    localStorage.setItem(DEVICE_ID_KEY, id);
+    writeSetting(DEVICE_ID_KEY, id);
   }
   return id;
 }
@@ -55,7 +56,7 @@ export default function TVRemoteReceiver() {
       try {
         const url = decodeURIComponent(match[1]);
         if (url.startsWith('http://') || url.startsWith('https://')) {
-          localStorage.setItem(LOCAL_REMOTE_URL_KEY, url);
+          writeSetting(LOCAL_REMOTE_URL_KEY, url);
           window.__MOONTV_LOCAL_REMOTE_URL = url;
           window.dispatchEvent(
             new CustomEvent('moontv:local-remote-info', {

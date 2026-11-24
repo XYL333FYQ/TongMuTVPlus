@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 
 import { cn } from '@/lib/cn';
 import { musicSources, normalizeSource } from '@/lib/music/shared';
+import { type SettingKey, readSetting, writeSetting } from '@/lib/settings';
 
 import CoverCard from '@/components/music/CoverCard';
 import MusicEmpty, {
@@ -71,9 +72,9 @@ const sourceOptions = musicSources.map((item) => ({
 
 const SONGLIST_CACHE_TTL = 60 * 60 * 1000;
 
-function readCache<T>(key: string): T | null {
+function readCache<T>(key: SettingKey): T | null {
   try {
-    const raw = localStorage.getItem(key);
+    const raw = readSetting(key);
     if (!raw) return null;
     const cached = JSON.parse(raw);
     if (Date.now() - Number(cached.timestamp || 0) > SONGLIST_CACHE_TTL)
@@ -84,9 +85,9 @@ function readCache<T>(key: string): T | null {
   }
 }
 
-function writeCache(key: string, data: unknown) {
+function writeCache(key: SettingKey, data: unknown) {
   try {
-    localStorage.setItem(key, JSON.stringify({ data, timestamp: Date.now() }));
+    writeSetting(key, JSON.stringify({ data, timestamp: Date.now() }));
   } catch {
     // ignore cache write failure
   }
@@ -158,7 +159,7 @@ export default function MusicSongListsPage() {
   }, [showTagMenu]);
 
   useEffect(() => {
-    const cacheKey = `music_songlist_tags_${source}`;
+    const cacheKey: SettingKey = `music_songlist_tags_${source}`;
     const cached = readCache<{
       groups: SongListGroup[];
       hotTags: SongListTag[];
@@ -195,7 +196,7 @@ export default function MusicSongListsPage() {
   }, [source]);
 
   useEffect(() => {
-    const cacheKey = `music_songlists_${source}_${tagId}_${sortId}_${page}`;
+    const cacheKey: SettingKey = `music_songlists_${source}_${tagId}_${sortId}_${page}`;
     const cached = readCache<{ list: SongListItem[]; total: number }>(cacheKey);
     setLoadingList(true);
     if (cached) {

@@ -33,6 +33,7 @@ import {
   detachHlsStream,
 } from '@/lib/media-engines';
 import { createRequestGate } from '@/lib/request-gate';
+import { readSetting, writeSetting } from '@/lib/settings';
 import { parseCustomTimeFormat } from '@/lib/time';
 import { useAudioFocus } from '@/hooks/useAudioFocus';
 import { usePlaybackSessionSafe } from '@/hooks/usePlaybackSession';
@@ -450,14 +451,14 @@ function LivePageClient() {
   const [anime4kEnabled, setAnime4kEnabled] = useState<boolean>(false);
   const [anime4kMode, setAnime4kMode] = useState<string>(() => {
     if (typeof window !== 'undefined') {
-      const v = localStorage.getItem('anime4k_mode');
+      const v = readSetting('anime4k_mode');
       if (v !== null) return v;
     }
     return 'ModeA';
   });
   const [anime4kScale, setAnime4kScale] = useState<number>(() => {
     if (typeof window !== 'undefined') {
-      const v = localStorage.getItem('anime4k_scale');
+      const v = readSetting('anime4k_scale');
       if (v !== null) return parseFloat(v);
     }
     return 2.0;
@@ -1299,7 +1300,7 @@ function LivePageClient() {
         await cleanupAnime4K();
       }
       setAnime4kEnabled(enabled);
-      localStorage.setItem('enable_anime4k', String(enabled));
+      writeSetting('enable_anime4k', String(enabled));
       return enabled;
     } catch (err) {
       console.error('切换超分状态失败:', err);
@@ -1314,7 +1315,7 @@ function LivePageClient() {
   const changeAnime4KMode = async (mode: string) => {
     try {
       setAnime4kMode(mode);
-      localStorage.setItem('anime4k_mode', mode);
+      writeSetting('anime4k_mode', mode);
 
       if (anime4kEnabledRef.current) {
         // 检查视频是否准备好
@@ -1339,7 +1340,7 @@ function LivePageClient() {
   const changeAnime4KScale = async (scale: number) => {
     try {
       setAnime4kScale(scale);
-      localStorage.setItem('anime4k_scale', scale.toString());
+      writeSetting('anime4k_scale', scale.toString());
 
       if (anime4kEnabledRef.current) {
         // 检查视频是否准备好

@@ -11,6 +11,7 @@ import React, {
 } from 'react';
 
 import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
+import { readSetting, removeSetting } from '@/lib/settings';
 import { useWatchRoom } from '@/hooks/useWatchRoom';
 
 import { notify } from '@/components/feedback/AppDialogs';
@@ -89,10 +90,9 @@ export function WatchRoomProvider({ children }: WatchRoomProviderProps) {
     if (typeof window === 'undefined') return;
 
     const refreshWatchRoomConnectionState = () => {
-      const noConnect =
-        window.localStorage.getItem(WATCH_ROOM_NO_CONNECT_KEY) === '1';
+      const noConnect = readSetting(WATCH_ROOM_NO_CONNECT_KEY) === '1';
       const lastActiveAt = Number(
-        window.localStorage.getItem(WATCH_ROOM_NO_CONNECT_TIMESTAMP_KEY) || 0
+        readSetting(WATCH_ROOM_NO_CONNECT_TIMESTAMP_KEY) || 0
       );
       const isScreenPage = pathname === WATCH_ROOM_SCREEN_PATH;
       const isExpired =
@@ -100,8 +100,8 @@ export function WatchRoomProvider({ children }: WatchRoomProviderProps) {
         Date.now() - lastActiveAt > WATCH_ROOM_NO_CONNECT_TTL_MS;
 
       if (noConnect && isExpired) {
-        window.localStorage.removeItem(WATCH_ROOM_NO_CONNECT_KEY);
-        window.localStorage.removeItem(WATCH_ROOM_NO_CONNECT_TIMESTAMP_KEY);
+        removeSetting(WATCH_ROOM_NO_CONNECT_KEY);
+        removeSetting(WATCH_ROOM_NO_CONNECT_TIMESTAMP_KEY);
       }
 
       setShouldDisableWatchRoomConnection(

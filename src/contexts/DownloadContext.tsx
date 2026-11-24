@@ -17,6 +17,7 @@ import {
   requestIndexedDBVideoPersistentStorage,
 } from '@/lib/indexeddb-video-cache';
 import { M3U8Downloader, M3U8DownloadTask } from '@/lib/m3u8-downloader';
+import { readSetting } from '@/lib/settings';
 
 import { notify } from '@/components/feedback/AppDialogs';
 
@@ -60,7 +61,7 @@ export function DownloadProvider({ children }: { children: React.ReactNode }) {
       // 从localStorage读取最大同时下载限制，默认6个
       const maxConcurrentDownloads =
         typeof window !== 'undefined'
-          ? Number(localStorage.getItem('maxConcurrentDownloads') || 6)
+          ? Number(readSetting('maxConcurrentDownloads') || 6)
           : 6;
 
       const allTasks = currentDownloader.getAllTasks();
@@ -392,7 +393,7 @@ export function DownloadProvider({ children }: { children: React.ReactNode }) {
         // 读取下载模式设置
         const downloadMode =
           typeof window !== 'undefined'
-            ? (localStorage.getItem('downloadMode') as
+            ? (readSetting('downloadMode') as
                 | 'browser'
                 | 'filesystem'
                 | 'indexeddb') || 'browser'
@@ -628,7 +629,7 @@ export function DownloadProvider({ children }: { children: React.ReactNode }) {
         // 从localStorage读取最大同时下载限制，默认6个
         const maxConcurrentDownloads =
           typeof window !== 'undefined'
-            ? Number(localStorage.getItem('maxConcurrentDownloads') || 6)
+            ? Number(readSetting('maxConcurrentDownloads') || 6)
             : 6;
 
         // 检查当前正在下载的任务数量（包括正在启动的）
@@ -674,7 +675,7 @@ export function DownloadProvider({ children }: { children: React.ReactNode }) {
       // 从localStorage读取最大同时下载限制，默认6个
       const maxConcurrentDownloads =
         typeof window !== 'undefined'
-          ? Number(localStorage.getItem('maxConcurrentDownloads') || 6)
+          ? Number(readSetting('maxConcurrentDownloads') || 6)
           : 6;
 
       const currentDownloadingCount = downloader

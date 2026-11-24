@@ -37,6 +37,7 @@ import {
   SpeedTestError,
 } from '@/lib/media-engines';
 import { isNetdiskSource } from '@/lib/netdisk/source';
+import { readSetting } from '@/lib/settings';
 import { EpisodeFilterConfig, SearchResult } from '@/lib/types';
 import { useLongPress } from '@/hooks/useLongPress';
 
@@ -615,7 +616,7 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
   // 读取本地"优选和测速"开关，默认开启
   const [optimizationEnabled] = useState<boolean>(() => {
     if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('enableOptimization');
+      const saved = readSetting('enableOptimization');
       if (saved !== null) {
         try {
           return JSON.parse(saved);
@@ -630,7 +631,7 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
   // 读取测速超时设置，默认4秒
   const [speedTestTimeout] = useState<number>(() => {
     if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('speedTestTimeout');
+      const saved = readSetting('speedTestTimeout');
       if (saved !== null) {
         return Number(saved);
       }

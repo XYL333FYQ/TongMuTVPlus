@@ -10,6 +10,7 @@ import {
   getAllPlayRecords,
   PlayRecord,
 } from '@/lib/db.client';
+import { readSetting } from '@/lib/settings';
 
 import TVLayout from '@/components/tv/TVLayout';
 
@@ -57,7 +58,7 @@ export default function TVLivePage() {
 
   useEffect(() => {
     try {
-      const saved = localStorage.getItem(TV_LIVE_LAST_CHANNEL_KEY);
+      const saved = readSetting(TV_LIVE_LAST_CHANNEL_KEY);
       if (saved) {
         const parsed = JSON.parse(saved) as Partial<LastLiveChannel>;
         if (parsed.source && parsed.id && parsed.title) {

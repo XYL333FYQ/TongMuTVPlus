@@ -24,6 +24,7 @@ import {
 } from '@/lib/category-tree';
 import { ApiSite } from '@/lib/config';
 import { getPageScrollTop, scrollPageTo } from '@/lib/page-scroll';
+import { readSetting, removeSetting, writeSetting } from '@/lib/settings';
 import { appendSpecialSourceParam } from '@/lib/special-source.client';
 import { SearchResult } from '@/lib/types';
 
@@ -72,8 +73,8 @@ const useIsomorphicLayoutEffect =
 const consumeSnapshot = (): SourceSearchSnapshot | null => {
   if (typeof window === 'undefined') return null;
   try {
-    const raw = sessionStorage.getItem(SOURCE_SEARCH_STATE_KEY);
-    sessionStorage.removeItem(SOURCE_SEARCH_STATE_KEY);
+    const raw = readSetting(SOURCE_SEARCH_STATE_KEY);
+    removeSetting(SOURCE_SEARCH_STATE_KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw) as SourceSearchSnapshot;
     if (
@@ -211,7 +212,7 @@ function SourceSearchPageClient() {
     const snapshot = snapshotRef.current;
     if (!snapshot || snapshot.videos.length === 0) return;
     try {
-      sessionStorage.setItem(
+      writeSetting(
         SOURCE_SEARCH_STATE_KEY,
         JSON.stringify({ ...snapshot, scrollTop: getPageScrollTop() })
       );
