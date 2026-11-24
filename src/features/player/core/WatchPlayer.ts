@@ -644,3 +644,10 @@ function writeVolume(volume: number) {
   if (Number.isFinite(volume) && volume > 0)
     writeSetting('tm_player_volume', String(volume));
 }
+
+/*
+ * 拆分说明（STANDARD S6）：WatchPlayer 是两个播放器（自己看、房间）共用的内核，一个实例从建立到销毁
+ * 管着同一个 <video>、Artplayer 实例、hls.js 实例和插件清理表。加载、换源、错误重试、音量记忆都要读写
+ * 这些同一份状态，拆成多个文件就得把内部字段公开出去，反而破坏“外面只能经方法操作播放器”的边界，
+ * 所以留在一个文件里；插件（弹幕、字幕、链接刷新等）已经各自在 plugins/ 下。
+ */

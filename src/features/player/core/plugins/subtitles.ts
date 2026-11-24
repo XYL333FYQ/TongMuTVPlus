@@ -431,3 +431,8 @@ export class SubtitleController {
     });
   }
 }
+
+/*
+ * 拆分说明（STANDARD S6）：字幕插件的解析、切换、样式和自动加载共用同一个 Artplayer 实例和当前轨道表，
+ * 拆开要把这些内部状态传来传去，所以留在一个文件里。
+ */
