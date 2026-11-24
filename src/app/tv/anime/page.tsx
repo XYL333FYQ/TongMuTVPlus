@@ -1,6 +1,6 @@
 'use client';
 
-import { CalendarDays, Loader2 } from 'lucide-react';
+import { CalendarDays } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 
 import {
@@ -162,7 +162,6 @@ export default function TVAnimePage() {
           aria-label='正在加载'
           className='tm-skeleton mt-16 h-48 rounded-3xl'
         >
-          <Loader2 className='hidden' aria-hidden='true' />
           <span className='sr-only'>正在加载动漫内容...</span>
         </div>
       ) : (

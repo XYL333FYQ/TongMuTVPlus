@@ -6,7 +6,6 @@ import {
   ChevronUp,
   Gauge,
   Headphones,
-  Loader2,
   Moon,
   Pause,
   Play,
@@ -58,6 +57,7 @@ import { viewportSize } from '@/lib/device-tier';
 import { formatPaddedClock } from '@/lib/time';
 
 import BookPdfActions from '@/components/books/BookPdfActions';
+import BusyDots from '@/components/feedback/BusyDots';
 import {
   LIBRARY_BUTTON,
   LIBRARY_FIELD,
@@ -1584,7 +1584,9 @@ function ChapterReader({ manifest }: { manifest: BookReadManifest }) {
               <div
                 className={cn(READER_SHEET, 'px-6 py-5 text-center shadow-sm')}
               >
-                <Loader2 className='mx-auto h-6 w-6 animate-spin text-fg' />
+                <div className='flex justify-center text-fg'>
+                  <BusyDots size={24} />
+                </div>
                 <div className='mt-3 text-sm font-medium text-muted'>
                   加载中...
                 </div>
@@ -1679,7 +1681,7 @@ function ChapterReader({ manifest }: { manifest: BookReadManifest }) {
                     )}
                   >
                     {ttsLoadingChunkIndex !== null ? (
-                      <Loader2 className='h-4 w-4 animate-spin' />
+                      <BusyDots />
                     ) : ttsStatus === 'playing' ? (
                       <Pause className='h-4 w-4' />
                     ) : (
@@ -1806,7 +1808,7 @@ function ChapterReader({ manifest }: { manifest: BookReadManifest }) {
                     )}
                   >
                     {ttsLoadingChunkIndex !== null ? (
-                      <Loader2 className='h-5 w-5 animate-spin' />
+                      <BusyDots size={20} />
                     ) : ttsStatus === 'playing' ? (
                       <Pause className='h-5 w-5' />
                     ) : (
@@ -3987,7 +3989,7 @@ export default function BookReadPage() {
                     )}
                   >
                     {ttsLoadingChunkIndex !== null ? (
-                      <Loader2 className='h-4 w-4 animate-spin' />
+                      <BusyDots />
                     ) : ttsStatus === 'playing' ? (
                       <Pause className='h-4 w-4' />
                     ) : (
@@ -4119,7 +4121,7 @@ export default function BookReadPage() {
                     )}
                   >
                     {ttsLoadingChunkIndex !== null ? (
-                      <Loader2 className='h-5 w-5 animate-spin' />
+                      <BusyDots size={20} />
                     ) : ttsStatus === 'playing' ? (
                       <Pause className='h-5 w-5' />
                     ) : (

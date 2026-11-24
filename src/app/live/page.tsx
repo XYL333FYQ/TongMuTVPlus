@@ -6,7 +6,6 @@ import {
   Download,
   GitBranch,
   Heart,
-  Loader2,
   Play,
   Radio,
   RefreshCw,
@@ -37,6 +36,7 @@ import { useAudioFocus } from '@/hooks/useAudioFocus';
 import { usePlaybackSessionSafe } from '@/hooks/usePlaybackSession';
 
 import EpgScrollableRow from '@/components/EpgScrollableRow';
+import BusyDots from '@/components/feedback/BusyDots';
 import LoadingStyle, {
   type LoadingStep,
   LoadingErrorStyle,
@@ -133,7 +133,7 @@ const LIVE_LOADING_STEPS: LiveLoadingStepKey[] = [
 
 /* 播放器蒙层只有两步：加载，然后播放 */
 const LIVE_PLAYER_STEPS: LoadingStep[] = [
-  { label: '加载', icon: <Loader2 /> },
+  { label: '加载', icon: <BusyDots /> },
   { label: '播放', icon: <Play /> },
 ];
 
@@ -2527,8 +2527,6 @@ function LivePageClient() {
                   <div className='relative mb-8'>
                     <div className='relative mx-auto w-24 h-24 bg-surface rounded-2xl shadow-2xl flex items-center justify-center transform hover:scale-105 transition-transform duration-300'>
                       <div className='text-fg text-4xl'>📺</div>
-                      {/* 旋转光环 */}
-                      <div className='absolute -inset-2 bg-surface rounded-2xl opacity-20 animate-spin'></div>
                     </div>
 
                     {/* 浮动粒子效果 */}
@@ -2796,7 +2794,6 @@ function LivePageClient() {
                             <div className='relative mb-8'>
                               <div className='relative mx-auto w-24 h-24 bg-surface rounded-2xl shadow-2xl flex items-center justify-center transform hover:scale-105 transition-transform duration-300'>
                                 <div className='text-fg text-4xl'>📺</div>
-                                <div className='absolute -inset-2 bg-surface rounded-2xl opacity-20 animate-spin'></div>
                               </div>
                             </div>
                             <div className='space-y-2'>

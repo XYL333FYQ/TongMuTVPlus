@@ -10,6 +10,7 @@ import { mapSong, musicSources, normalizeSource } from '@/lib/music/shared';
 import type { Song } from '@/lib/music/types';
 import { formatLocalDate } from '@/lib/time';
 
+import BusyDots from '@/components/feedback/BusyDots';
 import CoverCard from '@/components/music/CoverCard';
 import MusicEmpty, {
   MusicCardGridSkeleton,
@@ -644,13 +645,11 @@ export default function MusicSearchPage() {
               title='刷新热搜'
               className={MUSIC_ICON_BUTTON}
             >
-              <RefreshCw
-                className={cn(
-                  'h-3.5 w-3.5',
-                  hotLoading && 'animate-spin motion-reduce:animate-none'
-                )}
-                strokeWidth={2}
-              />
+              {hotLoading ? (
+                <BusyDots size={14} />
+              ) : (
+                <RefreshCw className='h-3.5 w-3.5' strokeWidth={2} />
+              )}
             </button>
           </div>
 

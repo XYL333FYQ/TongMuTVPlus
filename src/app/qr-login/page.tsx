@@ -1,6 +1,6 @@
 'use client';
 
-import { CheckCircle, Loader2, LogIn, XCircle } from 'lucide-react';
+import { CheckCircle, LogIn, XCircle } from 'lucide-react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useState } from 'react';
@@ -9,6 +9,7 @@ import '@/styles/auth.css';
 
 import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
 
+import BusyDots from '@/components/feedback/BusyDots';
 import PageContainer from '@/components/PageContainer';
 
 function QrLoginClient() {
@@ -92,7 +93,7 @@ function QrLoginClient() {
               className='tm-btn tm-btn-primary tm-btn-lg w-full'
             >
               {loading ? (
-                <Loader2 className='h-5 w-5 animate-spin' />
+                <BusyDots size={20} />
               ) : (
                 <CheckCircle className='h-5 w-5' />
               )}

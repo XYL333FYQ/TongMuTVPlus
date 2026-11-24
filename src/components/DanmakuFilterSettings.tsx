@@ -10,6 +10,7 @@ import {
 } from '@/lib/db.client';
 import { DanmakuFilterConfig, DanmakuFilterRule } from '@/lib/types';
 
+import BusyDots from '@/components/feedback/BusyDots';
 import ModalLayer from '@/components/feedback/ModalLayer';
 import Select from '@/components/ui/Select';
 
@@ -254,7 +255,7 @@ export default function DanmakuFilterSettings({
             {loading ? (
               <div className='text-center py-12 text-muted'>
                 <div className='inline-flex items-center gap-2'>
-                  <div className='w-4 h-4 border-2 border-line border-t-line rounded-full animate-spin'></div>
+                  <BusyDots />
                   <span>加载中...</span>
                 </div>
               </div>
@@ -341,7 +342,7 @@ export default function DanmakuFilterSettings({
             >
               {saving ? (
                 <span className='inline-flex items-center gap-2'>
-                  <div className='w-4 h-4 border-2 border-line border-t-transparent rounded-full animate-spin'></div>
+                  <BusyDots />
                   保存中...
                 </span>
               ) : (

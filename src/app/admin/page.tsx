@@ -88,6 +88,7 @@ import AnimeSubscriptionComponent from '@/components/AnimeSubscriptionComponent'
 import CorrectDialog from '@/components/CorrectDialog';
 import DataMigration from '@/components/DataMigration';
 import { askConfirm } from '@/components/feedback/AppDialogs';
+import BusyDots from '@/components/feedback/BusyDots';
 import PageLayout from '@/components/PageLayout';
 import Select from '@/components/ui/Select';
 
@@ -7945,7 +7946,7 @@ const VideoSourceConfig = ({
                 >
                   {isValidating ? (
                     <>
-                      <div className='w-3 h-3 border border-[var(--tm-text)] border-t-transparent rounded-full animate-spin'></div>
+                      <BusyDots size={12} />
                       <span>检测中...</span>
                     </>
                   ) : (
@@ -9980,7 +9981,7 @@ const ConfigFileComponent = ({
             >
               {isLoading('fetchConfig') ? (
                 <div className='flex items-center justify-center gap-2'>
-                  <div className='w-4 h-4 border-2 border-[var(--tm-text)] border-t-transparent rounded-full animate-spin'></div>
+                  <BusyDots />
                   拉取中…
                 </div>
               ) : (
@@ -10095,7 +10096,7 @@ const ConfigFileComponent = ({
               <div className='flex items-center space-x-2'>
                 {isLoading('uploadConfig') ? (
                   <>
-                    <div className='w-4 h-4 border-2 border-[var(--tm-text)] border-t-transparent rounded-full animate-spin'></div>
+                    <BusyDots />
                     <span className='text-sm text-[color:var(--tm-muted)]'>
                       上传中...
                     </span>
@@ -16374,7 +16375,7 @@ const MovieRequestsComponent = ({
 
         {loading ? (
           <div className='flex justify-center py-8'>
-            <div className='w-6 h-6 border-2 border-[var(--tm-text)] border-t-transparent rounded-full animate-spin' />
+            <BusyDots size={24} />
           </div>
         ) : requests.length === 0 ? (
           <div className='text-center py-8 text-[color:var(--tm-muted)]'>

@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 
 import { askConfirm, notifyError } from '@/components/feedback/AppDialogs';
+import BusyDots from '@/components/feedback/BusyDots';
 import ModalLayer from '@/components/feedback/ModalLayer';
 
 interface OfflineDownloadTask {
@@ -248,7 +249,7 @@ export function OfflineDownloadPanel({
         <div className='flex-1 overflow-y-auto p-4 space-y-3'>
           {loading ? (
             <div className='flex items-center justify-center h-full'>
-              <div className='animate-spin rounded-full h-12 w-12 border-b-2 border-line'></div>
+              <BusyDots size={48} />
             </div>
           ) : viewMode === 'library' ? (
             // 视频库视图

@@ -7,7 +7,6 @@ import {
   Copy,
   Download,
   ExternalLink,
-  Loader2,
 } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -16,6 +15,7 @@ import { usePageRefresh } from '@/hooks/usePageRefresh';
 
 import CapsuleSwitch from '@/components/catalog/CapsuleSwitch';
 import { notify } from '@/components/feedback/AppDialogs';
+import BusyDots from '@/components/feedback/BusyDots';
 import Select from '@/components/ui/Select';
 
 interface AcgSearchItem {
@@ -590,7 +590,9 @@ export default function AcgSearch({
       return (
         <div className='flex items-center justify-center py-12'>
           <div className='text-center'>
-            <Loader2 className='mx-auto h-8 w-8 animate-spin text-fg' />
+            <div className='flex justify-center text-fg'>
+              <BusyDots size={32} />
+            </div>
             <p className='mt-4 text-sm text-muted'>正在搜索动漫资源...</p>
           </div>
         </div>
@@ -682,7 +684,7 @@ export default function AcgSearch({
                   >
                     {downloadingId === itemId ? (
                       <>
-                        <Loader2 className='h-4 w-4 animate-spin' />
+                        <BusyDots />
                         <span>下载中...</span>
                       </>
                     ) : (
@@ -700,7 +702,7 @@ export default function AcgSearch({
                   >
                     {isHealthChecking ? (
                       <>
-                        <Loader2 className='h-4 w-4 animate-spin' />
+                        <BusyDots />
                         <span>测活中...</span>
                       </>
                     ) : (
@@ -719,7 +721,7 @@ export default function AcgSearch({
                     title='复制磁链'
                   >
                     {copyingId === itemId ? (
-                      <Loader2 className='h-4 w-4 animate-spin' />
+                      <BusyDots />
                     ) : (
                       <Copy className='h-4 w-4' />
                     )}
@@ -751,7 +753,9 @@ export default function AcgSearch({
               className='flex items-center justify-center py-8'
             >
               <div className='text-center'>
-                <Loader2 className='mx-auto h-6 w-6 animate-spin text-fg' />
+                <div className='flex justify-center text-fg'>
+                  <BusyDots size={24} />
+                </div>
                 <p className='mt-2 text-sm text-muted'>加载更多...</p>
               </div>
             </div>

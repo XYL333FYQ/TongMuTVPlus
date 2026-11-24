@@ -7,7 +7,6 @@ import {
   Copy,
   Download,
   ExternalLink,
-  Loader2,
   RefreshCw,
 } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
@@ -18,6 +17,7 @@ import { usePageRefresh } from '@/hooks/usePageRefresh';
 
 import { useExternalAction } from '@/components/ExternalLink';
 import { notify } from '@/components/feedback/AppDialogs';
+import BusyDots from '@/components/feedback/BusyDots';
 import Select from '@/components/ui/Select';
 
 interface PansouSearchProps {
@@ -720,7 +720,9 @@ export default function PansouSearch({
       return (
         <div className='flex items-center justify-center py-12'>
           <div className='text-center'>
-            <Loader2 className='mx-auto h-8 w-8 animate-spin text-fg' />
+            <div className='flex justify-center text-fg'>
+              <BusyDots size={32} />
+            </div>
             <p className='mt-4 text-sm text-muted'>正在搜索网盘资源...</p>
           </div>
         </div>
@@ -974,7 +976,7 @@ export default function PansouSearch({
                             >
                               {downloadingUrl === link.url ? (
                                 <>
-                                  <Loader2 className='h-3.5 w-3.5 animate-spin' />
+                                  <BusyDots size={14} />
                                   <span className='hidden sm:inline'>
                                     下载中...
                                   </span>
@@ -999,7 +1001,7 @@ export default function PansouSearch({
                             >
                               {magnetHealthCheckingIds[link.url] ? (
                                 <>
-                                  <Loader2 className='h-3.5 w-3.5 animate-spin' />
+                                  <BusyDots size={14} />
                                   <span className='hidden sm:inline'>
                                     测活中...
                                   </span>

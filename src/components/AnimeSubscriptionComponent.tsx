@@ -4,7 +4,6 @@
 import {
   AlertCircle,
   FlaskConical,
-  Loader2,
   Plus,
   RefreshCw,
   Sparkles,
@@ -33,6 +32,7 @@ import {
 } from '@/lib/anime-filter-presets';
 import { formatTimeAgo } from '@/lib/time';
 
+import BusyDots from '@/components/feedback/BusyDots';
 import Select from '@/components/ui/Select';
 
 import {
@@ -759,7 +759,7 @@ export default function AnimeSubscriptionComponent({
                   className='flex items-center gap-1 px-2 py-0.5 text-[13px] rounded-full border border-line text-fg hover:bg-line transition-colors disabled:opacity-50 min-h-[44px] tm-press'
                 >
                   {recognizing ? (
-                    <Loader2 size={12} className='animate-spin' />
+                    <BusyDots size={12} />
                   ) : (
                     <Sparkles size={12} />
                   )}
@@ -894,7 +894,7 @@ export default function AnimeSubscriptionComponent({
                   className='flex items-center gap-1 px-2 py-0.5 text-[13px] rounded-full border border-line text-fg hover:bg-line transition-colors disabled:opacity-50 min-h-[44px] tm-press'
                 >
                   {testing ? (
-                    <Loader2 size={12} className='animate-spin' />
+                    <BusyDots size={12} />
                   ) : (
                     <FlaskConical size={12} />
                   )}
@@ -1098,7 +1098,7 @@ export default function AnimeSubscriptionComponent({
                 disabled={loading}
                 className='px-4 py-2 rounded-lg bg-fg text-inverse hover:opacity-90 transition-colors disabled:opacity-50 flex items-center gap-2 min-h-[44px] tm-press'
               >
-                {loading && <Loader2 size={16} className='animate-spin' />}
+                {loading && <BusyDots />}
                 {editingSubscription ? '更新' : '添加'}
               </button>
             </div>
@@ -1174,7 +1174,7 @@ export default function AnimeSubscriptionComponent({
                     title='立即检查'
                   >
                     {checkingId === sub.id ? (
-                      <Loader2 size={18} className='animate-spin' />
+                      <BusyDots size={18} />
                     ) : (
                       <RefreshCw size={18} />
                     )}
@@ -1269,7 +1269,7 @@ export default function AnimeSubscriptionComponent({
                   >
                     {checkingId === sub.id ? (
                       <>
-                        <Loader2 size={16} className='animate-spin' />
+                        <BusyDots />
                         <span>检查中</span>
                       </>
                     ) : (

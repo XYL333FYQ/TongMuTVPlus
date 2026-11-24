@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useState } from 'react';
 
+import BusyDots from '@/components/feedback/BusyDots';
+
 interface AIComment {
   id: string;
   userName: string;
@@ -150,7 +152,7 @@ export default function AIComments({ movieName, movieInfo }: AICommentsProps) {
   if (loading && comments.length === 0) {
     return (
       <div className='flex flex-col items-center justify-center py-12'>
-        <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-line mb-3'></div>
+        <BusyDots size={32} className='mb-3' />
         <span className='text-muted'>AI正在生成评论...</span>
         <span className='text-[13px] text-muted mt-2'>这可能需要几秒钟</span>
       </div>

@@ -1,6 +1,6 @@
 'use client';
 
-import { FlaskConical, Loader2, Sparkles, X } from 'lucide-react';
+import { FlaskConical, Sparkles, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 import {
@@ -20,6 +20,7 @@ import {
   isFansubPresetActive,
 } from '@/lib/anime-filter-presets';
 
+import BusyDots from '@/components/feedback/BusyDots';
 import ModalLayer from '@/components/feedback/ModalLayer';
 import Select from '@/components/ui/Select';
 
@@ -311,11 +312,7 @@ export default function AnimeSubscribeModal({
                 title='按番剧名搜索一次，识别字幕组与字幕形态'
                 className='flex items-center gap-1 px-2 py-0.5 text-[13px] rounded-full border border-line text-fg hover:bg-line transition-colors disabled:opacity-50 min-h-[44px] tm-press'
               >
-                {recognizing ? (
-                  <Loader2 size={12} className='animate-spin' />
-                ) : (
-                  <Sparkles size={12} />
-                )}
+                {recognizing ? <BusyDots size={12} /> : <Sparkles size={12} />}
                 智能识别
               </button>
             </div>
@@ -438,11 +435,7 @@ export default function AnimeSubscribeModal({
                 title='按当前表单实际搜索一次，查看能过滤到哪些集数'
                 className='flex items-center gap-1 px-2 py-0.5 text-[13px] rounded-full border border-line text-fg hover:bg-line transition-colors disabled:opacity-50 min-h-[44px] tm-press'
               >
-                {testing ? (
-                  <Loader2 size={12} className='animate-spin' />
-                ) : (
-                  <FlaskConical size={12} />
-                )}
+                {testing ? <BusyDots size={12} /> : <FlaskConical size={12} />}
                 测试
               </button>
             </div>
@@ -625,7 +618,7 @@ export default function AnimeSubscribeModal({
               disabled={loading}
               className='px-4 py-2 rounded-lg text-sm bg-fg text-inverse hover:opacity-90 disabled:opacity-50 flex items-center gap-2 min-h-[44px] tm-press'
             >
-              {loading ? <Loader2 size={16} className='animate-spin' /> : null}
+              {loading ? <BusyDots /> : null}
               添加订阅
             </button>
           </div>

@@ -13,6 +13,8 @@ import {
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
+import BusyDots from '@/components/feedback/BusyDots';
+
 interface DataMigrationProps {
   onRefreshConfig?: () => Promise<void>;
 }
@@ -504,7 +506,7 @@ const DataMigration = ({ onRefreshConfig }: DataMigrationProps) => {
                 {isExporting ? (
                   <div className='space-y-2'>
                     <div className='flex items-center justify-center gap-2'>
-                      <div className='w-4 h-4 border-2 border-line border-t-transparent rounded-full animate-spin'></div>
+                      <BusyDots />
                       导出中...
                     </div>
                     {exportProgress && (
@@ -607,7 +609,7 @@ const DataMigration = ({ onRefreshConfig }: DataMigrationProps) => {
                 {isImporting ? (
                   <div className='space-y-2'>
                     <div className='flex items-center justify-center gap-2'>
-                      <div className='w-4 h-4 border-2 border-line border-t-transparent rounded-full animate-spin'></div>
+                      <BusyDots />
                       导入中...
                     </div>
                     {importProgress && (

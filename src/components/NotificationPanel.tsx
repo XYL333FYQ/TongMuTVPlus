@@ -10,6 +10,7 @@ import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
 import { isPrivilegedRole } from '@/lib/roles';
 import { Notification } from '@/lib/types';
 
+import BusyDots from '@/components/feedback/BusyDots';
 import ModalLayer from '@/components/feedback/ModalLayer';
 
 interface NotificationPanelProps {
@@ -240,7 +241,7 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({
 
           {loading ? (
             <div className='flex items-center justify-center py-12'>
-              <div className='w-8 h-8 border-4 border-line border-t-transparent rounded-full animate-spin'></div>
+              <BusyDots size={32} />
             </div>
           ) : notifications.length === 0 ? (
             <div className='flex flex-1 flex-col items-center justify-center py-12 text-muted'>

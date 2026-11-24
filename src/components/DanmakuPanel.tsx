@@ -12,6 +12,8 @@ import type {
   DanmakuSelection,
 } from '@/lib/danmaku/types';
 
+import BusyDots from '@/components/feedback/BusyDots';
+
 interface DanmakuPanelProps {
   videoTitle: string;
   currentEpisodeIndex: number;
@@ -349,7 +351,7 @@ export default function DanmakuPanel({
             className='flex flex-shrink-0 items-center justify-center gap-2 rounded-lg bg-fg px-3 py-2 text-sm font-medium text-inverse transition-colors hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 lg:px-4 min-w-[44px] min-h-[44px] tm-press'
           >
             {isSearching ? (
-              <div className='h-4 w-4 animate-spin rounded-full border-2 border-line border-t-transparent' />
+              <BusyDots />
             ) : (
               <MagnifyingGlassIcon className='h-4 w-4' />
             )}
@@ -408,7 +410,7 @@ export default function DanmakuPanel({
               {/* 加载中 */}
               {isLoadingEpisodes && (
                 <div className='flex items-center justify-center py-8'>
-                  <div className='h-8 w-8 animate-spin rounded-full border-4 border-line border-t-line' />
+                  <BusyDots size={32} />
                 </div>
               )}
 

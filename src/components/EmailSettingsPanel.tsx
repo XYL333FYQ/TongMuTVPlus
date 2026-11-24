@@ -3,6 +3,7 @@
 import { Bell, Info, Mail, MonitorSmartphone, Send, X } from 'lucide-react';
 import { useState } from 'react';
 
+import BusyDots from '@/components/feedback/BusyDots';
 import ModalLayer from '@/components/feedback/ModalLayer';
 
 interface EmailSettingsPanelProps {
@@ -61,9 +62,7 @@ function Toggle({
         className='tm-switch-btn-thumb flex items-center justify-center'
         aria-hidden='true'
       >
-        {busy ? (
-          <span className='h-3 w-3 animate-spin rounded-full border-2 border-line border-t-transparent' />
-        ) : null}
+        {busy ? <BusyDots size={12} /> : null}
       </span>
     </button>
   );
@@ -388,7 +387,7 @@ export function EmailSettingsPanel({
               >
                 {emailSettingsSaving ? (
                   <>
-                    <span className='h-4 w-4 animate-spin rounded-full border-2 border-line border-t-transparent' />
+                    <BusyDots />
                     <span>保存中...</span>
                   </>
                 ) : (

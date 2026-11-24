@@ -1,9 +1,10 @@
 'use client';
 
-import { Loader2, Smartphone } from 'lucide-react';
+import { Smartphone } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 
+import BusyDots from '@/components/feedback/BusyDots';
 import PageContainer from '@/components/PageContainer';
 import TVLayout from '@/components/tv/TVLayout';
 
@@ -102,7 +103,7 @@ export default function TVLoginPage() {
             />
           ) : (
             <div className='flex h-[360px] items-center justify-center'>
-              <Loader2 className='h-12 w-12 animate-spin' />
+              <BusyDots size={48} />
             </div>
           )}
           <div className='mt-5 text-2xl font-black'>剩余 {left} 秒</div>

@@ -4,6 +4,8 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { useEnableComments } from '@/hooks/useEnableComments';
 
+import BusyDots from '@/components/feedback/BusyDots';
+
 interface DoubanComment {
   id: string;
   userName: string;
@@ -195,7 +197,7 @@ export default function DoubanComments({ doubanId }: DoubanCommentsProps) {
   if (loading && comments.length === 0) {
     return (
       <div className='flex items-center justify-center py-12'>
-        <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-line'></div>
+        <BusyDots size={32} />
         <span className='ml-3 text-muted'>加载评论中...</span>
       </div>
     );

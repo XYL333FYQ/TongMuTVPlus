@@ -1,15 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 'use client';
 
-import {
-  Bot,
-  Loader2,
-  RefreshCw,
-  Send,
-  Sparkles,
-  Trash2,
-  X,
-} from 'lucide-react';
+import { Bot, RefreshCw, Send, Sparkles, Trash2, X } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
@@ -21,6 +13,7 @@ import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
 import { AI_WELCOME_MESSAGE } from '@/lib/brand';
 import { viewportSize } from '@/lib/device-tier';
 
+import BusyDots from '@/components/feedback/BusyDots';
 import ModalLayer from '@/components/feedback/ModalLayer';
 
 interface ChatMessage {
@@ -389,7 +382,7 @@ export default function AIChatPanel({
           return (
             <div key={i} className='flex items-center gap-2 text-sm text-muted'>
               {live && status === 'running' ? (
-                <Loader2 size={14} className='animate-spin text-fg' />
+                <BusyDots size={14} className='text-fg' />
               ) : (
                 <span
                   className={status === 'failed' ? 'text-danger' : 'text-fg'}
@@ -1014,10 +1007,7 @@ export default function AIChatPanel({
                         !message.content &&
                         toolChain.length === 0 && (
                           <div className='flex items-center gap-2'>
-                            <Loader2
-                              size={16}
-                              className='animate-spin text-muted'
-                            />
+                            <BusyDots className='text-muted' />
                             <span className='text-sm text-muted'>
                               AI正在思考...
                             </span>
@@ -1071,11 +1061,7 @@ export default function AIChatPanel({
             disabled={!input.trim() || isStreaming}
             className='flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-fg text-inverse transition-colors hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 min-h-[44px] tm-press'
           >
-            {isStreaming ? (
-              <Loader2 size={20} className='animate-spin' />
-            ) : (
-              <Send size={20} />
-            )}
+            {isStreaming ? <BusyDots size={20} /> : <Send size={20} />}
           </button>
         </div>
 

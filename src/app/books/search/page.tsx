@@ -1,6 +1,6 @@
 'use client';
 
-import { Loader2, Search, X } from 'lucide-react';
+import { Search, X } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
   startTransition,
@@ -18,6 +18,7 @@ import {
 } from '@/lib/book-route-cache.client';
 import { cn } from '@/lib/cn';
 
+import BusyDots from '@/components/feedback/BusyDots';
 import { bookCardItem } from '@/components/media/adapters';
 import EmptyState from '@/components/media/EmptyState';
 import {
@@ -617,11 +618,7 @@ export default function BooksSearchPage() {
                   'h-12 w-full cursor-pointer px-6 disabled:cursor-not-allowed disabled:opacity-70 lg:w-auto min-h-[44px] tm-press'
                 )}
               >
-                {loading ? (
-                  <Loader2 className='h-4 w-4 animate-spin' />
-                ) : (
-                  <Search className='h-4 w-4' />
-                )}
+                {loading ? <BusyDots /> : <Search className='h-4 w-4' />}
                 {loading ? '搜索中' : '搜索'}
               </button>
             </div>

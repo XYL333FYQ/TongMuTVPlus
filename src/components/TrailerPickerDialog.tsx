@@ -1,17 +1,11 @@
 'use client';
 
-import {
-  ExternalLink,
-  Film,
-  Loader2,
-  PlayCircle,
-  X,
-  Youtube,
-} from 'lucide-react';
+import { ExternalLink, Film, PlayCircle, X, Youtube } from 'lucide-react';
 import { useMemo } from 'react';
 
 import type { TMDBVideoItem } from '@/lib/tmdb.client';
 
+import BusyDots from '@/components/feedback/BusyDots';
 import ModalLayer from '@/components/feedback/ModalLayer';
 
 interface TrailerPickerDialogProps {
@@ -94,7 +88,7 @@ export default function TrailerPickerDialog({
                   onClick={onRetry}
                   className='inline-flex items-center gap-2 rounded-lg bg-fg px-4 py-2 text-inverse transition-colors hover:opacity-90 min-h-[44px] tm-press'
                 >
-                  <Loader2 size={16} className='animate-spin' />
+                  <BusyDots />
                   重试
                 </button>
               )}

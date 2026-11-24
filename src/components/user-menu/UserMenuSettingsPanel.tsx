@@ -28,6 +28,8 @@ import type { Dispatch, SetStateAction } from 'react';
 
 import { writeSetting } from '@/lib/settings';
 
+import BusyDots from '@/components/feedback/BusyDots';
+
 import type { HomeBannerHeightScale, HomeModule } from '../UserMenu';
 
 export interface UserMenuSettingsPanelProps {
@@ -2182,7 +2184,7 @@ export default function UserMenuSettingsPanel(
                   >
                     {isClearingCache ? (
                       <>
-                        <div className='w-4 h-4 border-2 border-line border-t-transparent rounded-full animate-spin'></div>
+                        <BusyDots />
                         <span>清除中...</span>
                       </>
                     ) : (

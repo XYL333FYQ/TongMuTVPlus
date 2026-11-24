@@ -12,6 +12,7 @@ import {
   subscribeToDataUpdates,
 } from '@/lib/db.client';
 
+import BusyDots from '@/components/feedback/BusyDots';
 import { ConfirmDialog } from '@/components/feedback/ConfirmDialog';
 import ModalLayer from '@/components/feedback/ModalLayer';
 import VideoCard from '@/components/VideoCard';
@@ -167,7 +168,7 @@ export const FavoritesPanel: React.FC<FavoritesPanelProps> = ({
           <div className='flex-1 overflow-y-auto p-6'>
             {loading ? (
               <div className='flex items-center justify-center py-12'>
-                <div className='w-8 h-8 border-4 border-line border-t-transparent rounded-full animate-spin'></div>
+                <BusyDots size={32} />
               </div>
             ) : favoriteItems.length === 0 ? (
               <div className='flex flex-col items-center justify-center py-12 text-muted'>

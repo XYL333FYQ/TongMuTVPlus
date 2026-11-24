@@ -1,6 +1,5 @@
 'use client';
 
-import { Loader2 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 
 import {
@@ -158,7 +157,6 @@ export default function TVHomeClient() {
           aria-label='正在加载'
           className='tm-skeleton mt-16 h-48 rounded-3xl'
         >
-          <Loader2 className='hidden' aria-hidden='true' />
           <span className='sr-only'>正在加载电视首页...</span>
         </div>
       ) : empty ? (

@@ -1,13 +1,6 @@
 'use client';
 
-import {
-  Folder,
-  HardDrive,
-  Loader2,
-  Lock,
-  PlayCircle,
-  Server,
-} from 'lucide-react';
+import { Folder, HardDrive, Lock, PlayCircle, Server } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
@@ -232,7 +225,6 @@ export default function TVPrivatePage() {
           aria-label='正在加载'
           className='tm-skeleton mt-16 h-48 rounded-3xl'
         >
-          <Loader2 className='hidden' aria-hidden='true' />
           <span className='sr-only'>正在加载私人影库...</span>
         </div>
       )}

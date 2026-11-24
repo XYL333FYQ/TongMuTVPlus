@@ -40,6 +40,7 @@ import { useLongPress } from '@/hooks/useLongPress';
 import DanmakuPanel from '@/components/DanmakuPanel';
 import EpisodeFilterSettings from '@/components/EpisodeFilterSettings';
 import EpisodeTitleCorrectDialog from '@/components/EpisodeTitleCorrectDialog';
+import BusyDots from '@/components/feedback/BusyDots';
 import Popover from '@/components/feedback/Popover';
 import ProxyImage from '@/components/ProxyImage';
 
@@ -1379,7 +1380,7 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
 
           {sourceSearchLoading && (
             <div className='flex items-center justify-center py-8'>
-              <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-line'></div>
+              <BusyDots size={32} />
               <span className={`ml-2 text-sm ${mutedTextClass}`}>
                 搜索中...
               </span>
@@ -1619,7 +1620,7 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
                 {/* 后台加载提示 */}
                 {backgroundSourcesLoading && (
                   <div className='flex items-center justify-center py-6 border-t border-line'>
-                    <div className='animate-spin rounded-full h-6 w-6 border-b-2 border-line'></div>
+                    <BusyDots size={24} />
                     <span className={`ml-2 text-sm ${mutedTextClass}`}>
                       正在加载更多播放源...
                     </span>

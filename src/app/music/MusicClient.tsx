@@ -51,6 +51,7 @@ import { useAudioFocus } from '@/hooks/useAudioFocus';
 
 import AddToPlaylistModal from '@/components/AddToPlaylistModal';
 import { notify } from '@/components/feedback/AppDialogs';
+import BusyDots from '@/components/feedback/BusyDots';
 import LyricsPiPWindow from '@/components/LyricsPiPWindow';
 import MusicEmpty from '@/components/music/MusicEmpty';
 import MusicSidebarDrawer from '@/components/music/MusicSidebarDrawer';
@@ -2842,7 +2843,7 @@ export default function MusicClient({
           <div className='fixed top-4 right-4 z-[80] pointer-events-none'>
             <div className='relative w-16 h-16 md:w-20 md:h-20'>
               <div className='absolute inset-0 rounded-full border-4 border-line' />
-              <div className='absolute inset-0 rounded-full border-4 border-transparent border-t-line border-r-line animate-spin shadow-[0_0_20px_color-mix(in_srgb,_var(--tm-text)_35%,_transparent)]' />
+              <BusyDots className='absolute inset-0' />
               <div className='absolute inset-1 rounded-full bg-surface backdrop-blur-md border border-line flex flex-col items-center justify-center'>
                 <div className='text-[13px] md:text-[13px] text-muted leading-none mb-1'>
                   解析中

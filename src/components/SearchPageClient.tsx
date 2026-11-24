@@ -58,6 +58,7 @@ import AcgSearch from '@/components/AcgSearch';
 import CapsuleSwitch from '@/components/catalog/CapsuleSwitch';
 import PublicPoster from '@/components/catalog/PublicPoster';
 import ContinueWatching from '@/components/ContinueWatching';
+import BusyDots from '@/components/feedback/BusyDots';
 import ImageViewer from '@/components/feedback/ImageViewer';
 import Popover from '@/components/feedback/Popover';
 import PageContainer from '@/components/PageContainer';
@@ -2302,9 +2303,7 @@ export function SearchPageClient({
                         {!isFromCache && totalSources > 0 && useFluidSearch && (
                           <span className='inline-flex items-center gap-1'>
                             源 {completedSources}/{totalSources}
-                            {isLoading && (
-                              <span className='inline-block h-3 w-3 animate-spin rounded-full border-2 border-line border-t-fg' />
-                            )}
+                            {isLoading && <BusyDots size={12} />}
                           </span>
                         )}
                       </p>
@@ -2320,11 +2319,11 @@ export function SearchPageClient({
                           className='tm-btn tm-btn-ghost tm-btn-sm min-h-[44px] min-w-[44px]'
                           aria-label='强制刷新搜索结果'
                         >
-                          <RefreshCw
-                            className={`h-4 w-4 ${
-                              isLoading ? 'animate-spin' : ''
-                            }`}
-                          />
+                          {isLoading ? (
+                            <BusyDots />
+                          ) : (
+                            <RefreshCw className='h-4 w-4' />
+                          )}
                           <span>刷新</span>
                         </button>
                       )}

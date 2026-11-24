@@ -7,7 +7,6 @@ import {
   Info,
   Layers,
   ListVideo,
-  Loader2,
   Maximize,
   MessageCircle,
   Pause,
@@ -57,6 +56,7 @@ import { formatPaddedClock } from '@/lib/time';
 import { loadTVPlayerUpDownAction } from '@/lib/tv-preferences';
 import { SearchResult } from '@/lib/types';
 
+import BusyDots from '@/components/feedback/BusyDots';
 import TVNativeVideo from '@/components/tv/player/TVNativeVideo';
 import {
   fetchTVDetail,
@@ -1267,7 +1267,7 @@ function TVPlayClient() {
   if (loading) {
     return (
       <main className='fixed inset-0 flex items-center justify-center bg-surface text-3xl font-bold text-fg'>
-        <Loader2 className='mr-4 h-10 w-10 animate-spin text-fg' />
+        <BusyDots size={40} className='mr-4 text-fg' />
         正在进入电视播放...
       </main>
     );
@@ -1361,7 +1361,7 @@ function TVPlayClient() {
             </div>
           ) : (
             <>
-              <Loader2 className='mr-4 h-10 w-10 animate-spin text-fg' />
+              <BusyDots size={40} className='mr-4 text-fg' />
               {resolving ? '正在解析播放地址...' : '准备播放...'}
             </>
           )}
