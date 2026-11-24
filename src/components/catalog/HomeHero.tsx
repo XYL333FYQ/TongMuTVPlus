@@ -16,8 +16,6 @@ import {
   useState,
 } from 'react';
 
-import './HomeHero.css';
-
 import { posterTiltHandlers, useReducedMotionSetting } from '@/lib/motion';
 import { useLatest } from '@/hooks/useLatest';
 

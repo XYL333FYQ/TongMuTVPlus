@@ -24,16 +24,7 @@
     "src/lib/device-tier.test.ts ×2",
     "src/lib/turso-adapter.ts ×1"
   ],
-  "important": [
-    "src/components/detail/detail.css ×3",
-    "src/features/playback/playback.css ×8",
-    "src/features/room/room.css ×1",
-    "src/styles/base.css ×1",
-    "src/styles/loading.css ×21",
-    "src/styles/panels.css ×2",
-    "src/styles/primitives.css ×2",
-    "src/styles/shell.css ×2"
-  ],
+  "important": [],
   "lintWarnings": [
     "src/app/source-search/page.loading.test.tsx :: @typescript-eslint/no-non-null-assertion ×1",
     "src/components/MobileBottomNav.scrub.test.tsx :: @typescript-eslint/no-non-null-assertion ×1",

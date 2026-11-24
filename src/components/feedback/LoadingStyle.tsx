@@ -4,7 +4,6 @@ import { AlertCircle, X } from 'lucide-react';
 import { type ReactNode } from 'react';
 
 import '@/styles/loading.css';
-import './LoadingStyle.css';
 
 export interface LoadingStep {
   label: string;

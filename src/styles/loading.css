@@ -357,15 +357,6 @@ html[data-loading-style='grid'] .mtv-err-box {
   }
 }
 
-/* 方格款在 PC（≥1024）整体放大 2.5 倍：只放大铺满整屏的加载页那一版，
-   播放器内的深色小图标（.mtv-on-dark）保持原样。用 transform 统一缩放，
-   连描边、光环、光点、漂浮位移一起等比放大，不必逐个改尺寸。 */
-@media (min-width: 1024px) {
-  .mtv-load-grid:not(.mtv-on-dark) .mtv-grid {
-    transform: scale(2.5);
-  }
-}
-
 /* Keep the existing three-way selector and stage data; replace only its paint. */
 html .tm-loading.tm-loading {
   --mtv-acc: var(--tm-text);
@@ -402,13 +393,13 @@ html .tm-loading.mtv-on-dark {
 }
 /* P2 removed the sidebar; the old loading overlay still reserved its width. */
 html .mtv-load-overlay {
-  left: 0 !important;
+  left: 0;
 }
 html .tm-loading .mtv-grid {
   display: flex;
   flex-direction: column;
   align-items: center;
-  transform: none !important;
+  transform: none;
   gap: 24px;
 }
 html .tm-loading .mtv-grid-panels {
@@ -663,51 +654,128 @@ html .tm-loading .mtv-tal-bar i::after {
 }
 html .tm-loading[data-tm-loading-state='loading'] {
   opacity: 0;
-  animation: tm-loading-appear 0s 150ms forwards !important;
+  animation: tm-loading-appear 0s 150ms forwards;
 }
 html
   .tm-loading
   :is(.mtv-grid-panels, .mtv-tal-circle, .tm-loading-classic-symbol) {
   opacity: 1;
-  animation: none !important;
+  animation: none;
 }
 html .tm-loading.mtv-load-classic *,
 html .tm-loading.mtv-err-legacy * {
-  background-color: transparent !important;
-  background-image: none !important;
-  border-color: var(--tm-line) !important;
-  color: var(--tm-text) !important;
-  box-shadow: none !important;
-  filter: none !important;
-  backdrop-filter: none !important;
-  animation: none !important;
-  transition: none !important;
+  background-color: transparent;
+  background-image: none;
+  border-color: var(--tm-line);
+  color: var(--tm-text);
+  box-shadow: none;
+  filter: none;
+  backdrop-filter: none;
+  animation: none;
+  transition: none;
 }
 html
   .tm-loading
-  :is([class~='animate-spin'], [class~='animate-bounce'], [class*='-inset-']) {
-  display: none !important;
+  :is(
+    [class~='animate-spin'],
+    :is(
+        :is(
+            [class~='animate-bounce'],
+            .tm-pfail-div-8,
+            .tm-pfail-div-9,
+            .tm-pfail-div-10,
+            .tm-pload-div-7,
+            .tm-pload-div-8,
+            .tm-pload-div-9,
+            .tm-poverlay-div-9,
+            .tm-poverlay-div-10,
+            .tm-poverlay-div-11
+          ),
+        .tm-pfail-div-8,
+        .tm-pfail-div-9,
+        .tm-pfail-div-10,
+        .tm-pload-div-7,
+        .tm-pload-div-8,
+        .tm-pload-div-9,
+        .tm-poverlay-div-9,
+        .tm-poverlay-div-10,
+        .tm-poverlay-div-11
+      ),
+    :is(:is([class*='-inset-'], .tm-pfail-div-6), .tm-pfail-div-6)
+  ) {
+  display: none;
 }
 html
   .tm-loading
-  :is([class~='w-24'][class~='h-24'], [class~='w-3'][class~='h-3']) {
-  background: var(--tm-surface-raised) !important;
+  :is(
+    :is(
+        :is(
+            [class~='w-24'][class~='h-24'],
+            .tm-pfail-div-5,
+            .tm-pload-div-4,
+            .tm-poverlay-div-4,
+            .tm-poverlay-div-7
+          ),
+        .tm-pfail-div-5,
+        .tm-pload-div-4,
+        .tm-poverlay-div-4,
+        .tm-poverlay-div-7
+      ),
+    :is(:is([class~='w-3'][class~='h-3'], .tm-pload-div-12), .tm-pload-div-12)
+  ) {
+  background: var(--tm-surface-raised);
 }
-html .tm-loading [class~='w-24'][class~='h-24'] {
-  transform: none !important;
+html
+  .tm-loading
+  :is(
+    :is(
+        [class~='w-24'][class~='h-24'],
+        .tm-pfail-div-5,
+        .tm-pload-div-4,
+        .tm-poverlay-div-4,
+        .tm-poverlay-div-7
+      ),
+    .tm-pfail-div-5,
+    .tm-pload-div-4,
+    .tm-poverlay-div-4,
+    .tm-poverlay-div-7
+  ) {
+  transform: none;
 }
-html .tm-loading [class~='w-24'][class~='h-24'] > svg {
+html
+  .tm-loading
+  :is(
+    :is(
+        [class~='w-24'][class~='h-24'],
+        .tm-pfail-div-5,
+        .tm-pload-div-4,
+        .tm-poverlay-div-4,
+        .tm-poverlay-div-7
+      ),
+    .tm-pfail-div-5,
+    .tm-pload-div-4,
+    .tm-poverlay-div-4,
+    .tm-poverlay-div-7
+  )
+  > svg {
   visibility: hidden;
 }
-html .tm-loading [class~='scale-125'] {
-  background: var(--tm-text) !important;
-  transform: none !important;
+html
+  .tm-loading
+  :is(:is([class~='scale-125'], .tm-pload-div-13), .tm-pload-div-13) {
+  background: var(--tm-text);
+  transform: none;
 }
-html .tm-loading :is([class~='w-80'], [class~='max-w-80']) {
+html
+  .tm-loading
+  :is(
+    :is(:is([class~='w-80'], .tm-pload-div-10), .tm-pload-div-10),
+    [class~='max-w-80']
+  ) {
   max-width: 100%;
 }
 html .tm-loading.mtv-load-classic [style*='width:'] {
-  background: var(--tm-text) !important;
+  background: var(--tm-text);
 }
 html .tm-loading :is(.mtv-load-classic, .mtv-err-legacy) {
   position: relative;
@@ -773,7 +841,7 @@ html
     .tm-loading-classic-symbol
   ) {
   opacity: 1;
-  animation: none !important;
+  animation: none;
 }
 html
   .tm-loading[data-tm-loading-state='error']
@@ -783,7 +851,7 @@ html
     .tm-loading-classic-symbol svg *,
     .mtv-panel[data-tm-active='true'] svg
   ) {
-  color: var(--tm-danger) !important;
+  color: var(--tm-danger);
 }
 html .tm-loading[data-tm-loading-state='error'] ::after {
   display: none;
@@ -813,6 +881,9 @@ html[data-tm-reduced-motion='true']
   display: none !important;
 }
 @media (prefers-reduced-motion: reduce) {
+  html .tm-loading[data-tm-loading-state='loading'] {
+    animation: tm-loading-appear 0s 150ms forwards !important;
+  }
   html
     .tm-loading
     :is(.mtv-tal-icon, .mtv-tal-ticks, .mtv-tal-line, .mtv-panel.cur) {

@@ -647,11 +647,11 @@ html[data-tm-reduced-motion='true'] .tm-mobile-nav-thumb {
 /* 手机页面切换：前进从右侧滑入，后退从左侧滑入（只动 transform 和 opacity） */
 @media (max-width: 767px) {
   html:not([data-tm-reduced-motion='true'])[data-tm-nav='forward']
-    .tm-page-transition {
+    .tm-page-transition:not(.tm-page-instant) {
     animation-name: tm-page-enter-forward;
   }
   html:not([data-tm-reduced-motion='true'])[data-tm-nav='back']
-    .tm-page-transition {
+    .tm-page-transition:not(.tm-page-instant) {
     animation-name: tm-page-enter-back;
   }
 }
@@ -1183,11 +1183,12 @@ html[data-tm-reduced-motion='true'] .tm-explore-card:active {
   bottom: 24px;
 }
 
-html[data-tm-reduced-motion='true'] .tm-page-transition {
+html[data-tm-reduced-motion='true']:not([data-tm-nav='tab'])
+  .tm-page-transition:not(.tm-page-instant) {
   animation: tm-fade 120ms var(--tm-ease-out) backwards !important;
 }
 @media (prefers-reduced-motion: reduce) {
-  .tm-page-transition {
+  html:not([data-tm-nav='tab']) .tm-page-transition:not(.tm-page-instant) {
     animation: tm-fade 120ms var(--tm-ease-out) backwards !important;
   }
 }
@@ -1199,7 +1200,7 @@ html[data-tm-reduced-motion='true'] .tm-page-transition {
 
 /* —— 切页即时占位（RouteSkeleton）：不播进场动画，网格/列表铺满 —— */
 html .tm-page-transition.tm-page-instant {
-  animation: none !important;
+  animation: none;
 }
 .tm-route-skeleton-grid {
   display: grid;
@@ -1413,7 +1414,7 @@ html[data-tm-reduced-motion='true'] .tm-launch-cue {
 /* 底栏切换标签：直接换页，不做整页位移动画（新页面渲染占住主线程时，位移动画只剩几帧，看着卡）。
  * 只留一个很短的淡入，避免内容生硬地闪出来。 */
 html[data-tm-nav='tab'] .tm-page-transition {
-  animation: tm-page-fade 120ms linear backwards !important;
+  animation: tm-page-fade 120ms linear backwards;
 }
 
 /* 手机横屏（lib/device-tier.ts）：页面开了 viewport-fit=cover，左右要让开刘海和圆角 */

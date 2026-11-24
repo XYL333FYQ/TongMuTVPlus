@@ -11,8 +11,8 @@ html .tm-profile-panel {
     backwards;
 }
 html .tm-profile-panel .tm-profile-role {
-  background: var(--tm-surface-raised) !important;
-  color: var(--tm-muted) !important;
+  background: var(--tm-surface-raised);
+  color: var(--tm-muted);
 }
 html .tm-profile-panel h3,
 html .tm-http-warning-panel h3 {

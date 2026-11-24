@@ -408,9 +408,6 @@
   align-items: center;
   justify-content: space-between;
 }
-.tm-room-field-inline input {
-  width: 96px !important;
-}
 .tm-room-field input,
 .tm-room-field textarea {
   min-height: 44px;
@@ -422,6 +419,9 @@
   font: inherit;
   font-size: 14px;
   resize: vertical;
+}
+.tm-room-field-inline input {
+  width: 96px;
 }
 .tm-room-switch-row {
   display: flex;

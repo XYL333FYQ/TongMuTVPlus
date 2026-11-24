@@ -2,8 +2,6 @@
 
 import { type ReactNode, useState } from 'react';
 
-import './DetailContent.css';
-
 import PosterAmbient from '@/components/catalog/PosterAmbient';
 import FilmPoster from '@/components/poster/FilmPoster';
 import ProxyImage from '@/components/ProxyImage';

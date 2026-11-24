@@ -324,7 +324,7 @@ export default function ScreenSharePage() {
                     )
                   }
                   disabled={isStarting || isSharing}
-                  className='min-h-[44px] w-full rounded-lg border border-line bg-raised px-3 py-2 text-sm text-fg disabled:cursor-not-allowed disabled:opacity-50'
+                  className='tm-room-share-select-1'
                 >
                   {screenShareQualityOptions.map((option) => (
                     <option key={option.value} value={option.value}>

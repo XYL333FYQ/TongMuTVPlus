@@ -57,7 +57,7 @@ body.tm-app :is(input, select, textarea) {
   accent-color: var(--tm-text);
 }
 body.tm-app :is(input, select, textarea):focus {
-  --tw-ring-color: var(--tm-text) !important;
+  --tw-ring-color: var(--tm-text);
   --tw-ring-offset-color: var(--tm-bg);
   border-color: var(--tm-text);
 }

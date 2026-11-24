@@ -94,6 +94,8 @@
   --tm-wide-unit: 1px;
   --tm-grid-gap: 24px;
   --tm-content-gutter: 16px;
+  /* 自己看：电脑档播放区（画面 + 选集）的高度，随屏宽分三档 */
+  --tm-solo-stage-height: 520px;
   --tm-section-gap: 36px;
   --tm-header-height: 64px;
   --tm-bottom-nav-height: 64px;
@@ -233,6 +235,16 @@ html[data-tm-shell] {
   :root {
     --tm-content-gutter: 40px;
     --tm-header-height: 68px;
+  }
+}
+@media (min-width: 1280px) {
+  :root {
+    --tm-solo-stage-height: 620px;
+  }
+}
+@media (min-width: 1536px) {
+  :root {
+    --tm-solo-stage-height: 680px;
   }
 }
 /* Every route, standalone page and body portal shares the reference scale.

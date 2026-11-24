@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 
+import { matchesMedia, watchMedia } from '@/lib/device-tier';
 import { readSettingStrict, writeSetting } from '@/lib/settings';
 
 export interface VisualPreferences {
@@ -18,6 +19,9 @@ const defaults: VisualPreferences = {
   playerEase: false,
 };
 let memoryPreferences = defaults;
+/** 系统设置里打开了“减少透明度”：和用户关掉背景模糊一样处理 */
+const REDUCED_TRANSPARENCY = '(prefers-reduced-transparency: reduce)';
+const systemNoBlur = () => matchesMedia(REDUCED_TRANSPARENCY);
 
 function normalize(value: unknown): VisualPreferences {
   const record =
@@ -42,7 +46,9 @@ function read(): VisualPreferences {
 }
 function apply(preferences: VisualPreferences) {
   memoryPreferences = preferences;
-  document.documentElement.dataset.tmNoBlur = String(preferences.noBlur);
+  document.documentElement.dataset.tmNoBlur = String(
+    preferences.noBlur || systemNoBlur()
+  );
   document.documentElement.dataset.tmReducedMotion = String(
     preferences.reduceMotion
   );
@@ -71,6 +77,9 @@ export function useVisualPreferences() {
     };
     window.addEventListener(CHANGE_EVENT, changed);
     window.addEventListener('storage', stored);
+    const stopSystem = watchMedia(REDUCED_TRANSPARENCY, () =>
+      apply(memoryPreferences)
+    );
     const initial = read();
     accept(initial);
     setReady(true);
@@ -78,6 +87,7 @@ export function useVisualPreferences() {
     return () => {
       window.removeEventListener(CHANGE_EVENT, changed);
       window.removeEventListener('storage', stored);
+      stopSystem();
     };
   }, []);
 

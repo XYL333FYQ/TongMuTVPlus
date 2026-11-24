@@ -99,3 +99,24 @@
     var(--tm-bottom-nav-height, 64px) + 32px + var(--tm-safe-bottom, 0px)
   );
 }
+
+/* min-h-[44px] w-full rounded-lg border border-line bg-raised px-3 py-2 text-sm text-fg disabled:cursor-not-allowed disabled:opacity-50 */
+.tm-room-share-select-1 {
+  min-height: 44px;
+  width: 100%;
+  border-radius: var(--tm-radius-md);
+  border-width: 1px;
+  border-color: var(--tm-line);
+  background-color: var(--tm-surface-raised);
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  color: var(--tm-text);
+}
+.tm-room-share-select-1:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
