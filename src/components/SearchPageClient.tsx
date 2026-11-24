@@ -77,6 +77,7 @@ import SearchResultFilter, {
 import SearchSuggestions from '@/components/SearchSuggestions';
 import BackToTop from '@/components/shell/BackToTop';
 import { pageTitleForPath } from '@/components/shell/TongMuNavigation';
+import Switch from '@/components/ui/Switch';
 import VideoCard, { VideoCardHandle } from '@/components/VideoCard';
 import VirtualScrollableGrid from '@/components/VirtualScrollableGrid';
 
@@ -2158,34 +2159,20 @@ export function SearchPageClient({
                   >
                     <label className='flex cursor-pointer select-none items-center justify-between gap-3 rounded-lg px-1 py-2'>
                       <span className='text-sm text-muted'>聚合</span>
-                      <div className='relative'>
-                        <input
-                          type='checkbox'
-                          className='peer sr-only'
-                          checked={viewMode === 'agg'}
-                          onChange={() =>
-                            setViewMode(viewMode === 'agg' ? 'all' : 'agg')
-                          }
-                        />
-                        <div className='tm-switch-track'></div>
-                        <div className='tm-switch-thumb'></div>
-                      </div>
+                      <Switch
+                        checked={viewMode === 'agg'}
+                        onChange={() =>
+                          setViewMode(viewMode === 'agg' ? 'all' : 'agg')
+                        }
+                      />
                     </label>
                     {privateLibrarySearchEnabled && !isSpecialEntry && (
                       <label className='flex cursor-pointer select-none items-center justify-between gap-3 rounded-lg px-1 py-2'>
                         <span className='text-sm text-muted'>只搜私人影库</span>
-                        <div className='relative'>
-                          <input
-                            type='checkbox'
-                            className='peer sr-only'
-                            checked={privateLibraryOnly}
-                            onChange={(e) =>
-                              setPrivateLibraryOnly(e.target.checked)
-                            }
-                          />
-                          <div className='tm-switch-track'></div>
-                          <div className='tm-switch-thumb'></div>
-                        </div>
+                        <Switch
+                          checked={privateLibraryOnly}
+                          onChange={(next) => setPrivateLibraryOnly(next)}
+                        />
                       </label>
                     )}
                     <div className='mt-2 border-t border-line pt-2'>
@@ -2376,38 +2363,22 @@ export function SearchPageClient({
                         >
                           <label className='flex cursor-pointer select-none items-center justify-between gap-3 rounded-lg px-1 py-2'>
                             <span className='text-sm text-muted'>聚合</span>
-                            <div className='relative'>
-                              <input
-                                type='checkbox'
-                                className='peer sr-only'
-                                checked={viewMode === 'agg'}
-                                onChange={() =>
-                                  setViewMode(
-                                    viewMode === 'agg' ? 'all' : 'agg'
-                                  )
-                                }
-                              />
-                              <div className='tm-switch-track'></div>
-                              <div className='tm-switch-thumb'></div>
-                            </div>
+                            <Switch
+                              checked={viewMode === 'agg'}
+                              onChange={() =>
+                                setViewMode(viewMode === 'agg' ? 'all' : 'agg')
+                              }
+                            />
                           </label>
                           {privateLibrarySearchEnabled && !isSpecialEntry && (
                             <label className='flex cursor-pointer select-none items-center justify-between gap-3 rounded-lg px-1 py-2'>
                               <span className='text-sm text-muted'>
                                 只搜私人影库
                               </span>
-                              <div className='relative'>
-                                <input
-                                  type='checkbox'
-                                  className='peer sr-only'
-                                  checked={privateLibraryOnly}
-                                  onChange={(e) =>
-                                    setPrivateLibraryOnly(e.target.checked)
-                                  }
-                                />
-                                <div className='tm-switch-track'></div>
-                                <div className='tm-switch-thumb'></div>
-                              </div>
+                              <Switch
+                                checked={privateLibraryOnly}
+                                onChange={(next) => setPrivateLibraryOnly(next)}
+                              />
                             </label>
                           )}
                           <div className='mt-2 border-t border-line pt-2'>

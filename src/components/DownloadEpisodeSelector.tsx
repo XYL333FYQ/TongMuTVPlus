@@ -3,6 +3,7 @@
 import React, { useMemo, useState } from 'react';
 
 import ModalLayer from '@/components/feedback/ModalLayer';
+import Switch from '@/components/ui/Switch';
 
 interface DownloadEpisodeSelectorProps {
   /** 是否显示弹窗 */
@@ -209,16 +210,11 @@ const DownloadEpisodeSelector: React.FC<DownloadEpisodeSelectorProps> = ({
               </div>
             </div>
             {/* 开关 */}
-            <button
-              type='button'
-              role='switch'
-              aria-checked={offlineMode}
+            <Switch
+              checked={offlineMode}
+              onChange={() => setOfflineMode(!offlineMode)}
               aria-label='服务器离线下载'
-              onClick={() => setOfflineMode(!offlineMode)}
-              className='tm-switch-btn'
-            >
-              <span className='tm-switch-btn-thumb' aria-hidden='true' />
-            </button>
+            />
           </div>
         )}
 

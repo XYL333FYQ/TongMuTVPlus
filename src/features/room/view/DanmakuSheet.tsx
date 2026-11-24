@@ -11,12 +11,13 @@ import { useEffect, useState } from 'react';
 import './DanmakuSheet.css';
 
 import DanmakuPanel from '@/components/DanmakuPanel';
+import Switch from '@/components/ui/Switch';
 
 import type { DanmakuController } from '@/features/player';
 
 import type { ChatDanmaku } from '../player/chat-danmaku';
 
-function Switch(props: {
+function SwitchRow(props: {
   id: string;
   label: string;
   hint?: string;
@@ -29,12 +30,10 @@ function Switch(props: {
         <span className='tm-room-switch-label'>{props.label}</span>
         {props.hint && <small>{props.hint}</small>}
       </span>
-      <input
+      <Switch
         id={props.id}
-        type='checkbox'
-        role='switch'
         checked={props.checked}
-        onChange={(event) => props.onChange(event.target.checked)}
+        onChange={(next) => props.onChange(next)}
       />
     </label>
   );
@@ -76,7 +75,7 @@ export default function DanmakuSheet(props: {
         <p className='tm-room-hint'>
           弹幕库里其他观众的弹幕，白字，只在你这台设备上显示。
         </p>
-        <Switch
+        <SwitchRow
           id='tm-room-danmaku-source'
           label='显示弹幕源'
           checked={sourceOn}
@@ -114,13 +113,13 @@ export default function DanmakuSheet(props: {
         <p className='tm-room-hint'>
           房间里的聊天飘成弹幕，带名字和描边。全屏时控制条里也能直接发。
         </p>
-        <Switch
+        <SwitchRow
           id='tm-room-danmaku-room'
           label='聊天消息飘成弹幕'
           checked={props.roomDanmaku}
           onChange={props.onRoomDanmaku}
         />
-        <Switch
+        <SwitchRow
           id='tm-room-danmaku-self'
           label='显示我自己发的'
           checked={showSelf}

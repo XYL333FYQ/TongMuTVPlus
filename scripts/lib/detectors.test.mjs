@@ -36,6 +36,14 @@ test('counts each ingredient', () => {
     countMatches("document.body.style.overflow = 'hidden'", 'scrollLock'),
     1
   );
+  assert.equal(
+    countMatches(
+      "<button role='switch' className='tm-switch-btn'><span className='tm-switch-btn-thumb' /></button>",
+      'switch'
+    ),
+    3
+  );
+  assert.equal(countMatches("getByRole('switch')", 'switch'), 0);
 });
 
 test('CRLF and LF count the same', () => {

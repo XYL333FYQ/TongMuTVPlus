@@ -30,6 +30,7 @@ import type { Dispatch, SetStateAction } from 'react';
 import { writeSetting } from '@/lib/settings';
 
 import BusyDots from '@/components/feedback/BusyDots';
+import Switch from '@/components/ui/Switch';
 
 import type { HomeBannerHeightScale, HomeModule } from '../UserMenu';
 
@@ -1111,18 +1112,10 @@ export default function UserMenuSettingsPanel(
                     </p>
                   </div>
                   <label className='flex items-center cursor-pointer'>
-                    <div className='relative'>
-                      <input
-                        type='checkbox'
-                        className='sr-only peer'
-                        checked={defaultAggregateSearch}
-                        onChange={(e) =>
-                          handleAggregateToggle(e.target.checked)
-                        }
-                      />
-                      <div className='tm-switch-track'></div>
-                      <div className='tm-switch-thumb'></div>
-                    </div>
+                    <Switch
+                      checked={defaultAggregateSearch}
+                      onChange={(next) => handleAggregateToggle(next)}
+                    />
                   </label>
                 </div>
 
@@ -1137,18 +1130,10 @@ export default function UserMenuSettingsPanel(
                     </p>
                   </div>
                   <label className='flex items-center cursor-pointer'>
-                    <div className='relative'>
-                      <input
-                        type='checkbox'
-                        className='sr-only peer'
-                        checked={enableOptimization}
-                        onChange={(e) =>
-                          handleOptimizationToggle(e.target.checked)
-                        }
-                      />
-                      <div className='tm-switch-track'></div>
-                      <div className='tm-switch-thumb'></div>
-                    </div>
+                    <Switch
+                      checked={enableOptimization}
+                      onChange={(next) => handleOptimizationToggle(next)}
+                    />
                   </label>
                 </div>
 
@@ -1339,18 +1324,10 @@ export default function UserMenuSettingsPanel(
                     </p>
                   </div>
                   <label className='flex items-center cursor-pointer'>
-                    <div className='relative'>
-                      <input
-                        type='checkbox'
-                        className='sr-only peer'
-                        checked={fluidSearch}
-                        onChange={(e) =>
-                          handleFluidSearchToggle(e.target.checked)
-                        }
-                      />
-                      <div className='tm-switch-track'></div>
-                      <div className='tm-switch-thumb'></div>
-                    </div>
+                    <Switch
+                      checked={fluidSearch}
+                      onChange={(next) => handleFluidSearchToggle(next)}
+                    />
                   </label>
                 </div>
 
@@ -1365,18 +1342,12 @@ export default function UserMenuSettingsPanel(
                     </p>
                   </div>
                   <label className='flex items-center cursor-pointer'>
-                    <div className='relative'>
-                      <input
-                        type='checkbox'
-                        className='sr-only peer'
-                        checked={tmdbBackdropDisabled}
-                        onChange={(e) =>
-                          handleTmdbBackdropDisabledToggle(e.target.checked)
-                        }
-                      />
-                      <div className='tm-switch-track'></div>
-                      <div className='tm-switch-thumb'></div>
-                    </div>
+                    <Switch
+                      checked={tmdbBackdropDisabled}
+                      onChange={(next) =>
+                        handleTmdbBackdropDisabledToggle(next)
+                      }
+                    />
                   </label>
                 </div>
 
@@ -1391,18 +1362,10 @@ export default function UserMenuSettingsPanel(
                     </p>
                   </div>
                   <label className='flex items-center cursor-pointer'>
-                    <div className='relative'>
-                      <input
-                        type='checkbox'
-                        className='sr-only peer'
-                        checked={enableTrailers}
-                        onChange={(e) =>
-                          handleEnableTrailersToggle(e.target.checked)
-                        }
-                      />
-                      <div className='tm-switch-track'></div>
-                      <div className='tm-switch-thumb'></div>
-                    </div>
+                    <Switch
+                      checked={enableTrailers}
+                      onChange={(next) => handleEnableTrailersToggle(next)}
+                    />
                   </label>
                 </div>
 
@@ -1417,20 +1380,12 @@ export default function UserMenuSettingsPanel(
                     </p>
                   </div>
                   <label className='flex items-center cursor-pointer'>
-                    <div className='relative'>
-                      <input
-                        type='checkbox'
-                        className='sr-only peer'
-                        checked={searchTraditionalToSimplified}
-                        onChange={(e) =>
-                          handleSearchTraditionalToSimplifiedToggle(
-                            e.target.checked
-                          )
-                        }
-                      />
-                      <div className='tm-switch-track'></div>
-                      <div className='tm-switch-thumb'></div>
-                    </div>
+                    <Switch
+                      checked={searchTraditionalToSimplified}
+                      onChange={(next) =>
+                        handleSearchTraditionalToSimplifiedToggle(next)
+                      }
+                    />
                   </label>
                 </div>
 
@@ -1443,18 +1398,10 @@ export default function UserMenuSettingsPanel(
                     </p>
                   </div>
                   <label className='flex items-center cursor-pointer'>
-                    <div className='relative'>
-                      <input
-                        type='checkbox'
-                        className='sr-only peer'
-                        checked={exactSearch}
-                        onChange={(e) =>
-                          handleExactSearchToggle(e.target.checked)
-                        }
-                      />
-                      <div className='tm-switch-track'></div>
-                      <div className='tm-switch-thumb'></div>
-                    </div>
+                    <Switch
+                      checked={exactSearch}
+                      onChange={(next) => handleExactSearchToggle(next)}
+                    />
                   </label>
                 </div>
 
@@ -1469,18 +1416,10 @@ export default function UserMenuSettingsPanel(
                     </p>
                   </div>
                   <label className='flex items-center cursor-pointer'>
-                    <div className='relative'>
-                      <input
-                        type='checkbox'
-                        className='sr-only peer'
-                        checked={saveLivePlayRecords}
-                        onChange={(e) =>
-                          handleSaveLivePlayRecordsToggle(e.target.checked)
-                        }
-                      />
-                      <div className='tm-switch-track'></div>
-                      <div className='tm-switch-thumb'></div>
-                    </div>
+                    <Switch
+                      checked={saveLivePlayRecords}
+                      onChange={(next) => handleSaveLivePlayRecordsToggle(next)}
+                    />
                   </label>
                 </div>
               </div>
@@ -1889,18 +1828,10 @@ export default function UserMenuSettingsPanel(
                     </p>
                   </div>
                   <label className='flex items-center cursor-pointer'>
-                    <div className='relative'>
-                      <input
-                        type='checkbox'
-                        className='sr-only peer'
-                        checked={nextEpisodePreCache}
-                        onChange={(e) =>
-                          handleNextEpisodePreCacheToggle(e.target.checked)
-                        }
-                      />
-                      <div className='tm-switch-track'></div>
-                      <div className='tm-switch-thumb'></div>
-                    </div>
+                    <Switch
+                      checked={nextEpisodePreCache}
+                      onChange={(next) => handleNextEpisodePreCacheToggle(next)}
+                    />
                   </label>
                 </div>
 
@@ -1915,18 +1846,12 @@ export default function UserMenuSettingsPanel(
                     </p>
                   </div>
                   <label className='flex items-center cursor-pointer'>
-                    <div className='relative'>
-                      <input
-                        type='checkbox'
-                        className='sr-only peer'
-                        checked={disablePlaybackThumbnail}
-                        onChange={(e) =>
-                          handleDisablePlaybackThumbnailToggle(e.target.checked)
-                        }
-                      />
-                      <div className='tm-switch-track'></div>
-                      <div className='tm-switch-thumb'></div>
-                    </div>
+                    <Switch
+                      checked={disablePlaybackThumbnail}
+                      onChange={(next) =>
+                        handleDisablePlaybackThumbnailToggle(next)
+                      }
+                    />
                   </label>
                 </div>
 
@@ -1941,18 +1866,12 @@ export default function UserMenuSettingsPanel(
                     </p>
                   </div>
                   <label className='flex items-center cursor-pointer'>
-                    <div className='relative'>
-                      <input
-                        type='checkbox'
-                        className='sr-only peer'
-                        checked={disableEpisodeTitleFetch}
-                        onChange={(e) =>
-                          handleDisableEpisodeTitleFetchToggle(e.target.checked)
-                        }
-                      />
-                      <div className='tm-switch-track'></div>
-                      <div className='tm-switch-thumb'></div>
-                    </div>
+                    <Switch
+                      checked={disableEpisodeTitleFetch}
+                      onChange={(next) =>
+                        handleDisableEpisodeTitleFetchToggle(next)
+                      }
+                    />
                   </label>
                 </div>
               </div>
@@ -1988,18 +1907,12 @@ export default function UserMenuSettingsPanel(
                     </p>
                   </div>
                   <label className='flex items-center cursor-pointer'>
-                    <div className='relative'>
-                      <input
-                        type='checkbox'
-                        className='sr-only peer'
-                        checked={disableAutoLoadDanmaku}
-                        onChange={(e) =>
-                          handleDisableAutoLoadDanmakuToggle(e.target.checked)
-                        }
-                      />
-                      <div className='tm-switch-track'></div>
-                      <div className='tm-switch-thumb'></div>
-                    </div>
+                    <Switch
+                      checked={disableAutoLoadDanmaku}
+                      onChange={(next) =>
+                        handleDisableAutoLoadDanmakuToggle(next)
+                      }
+                    />
                   </label>
                 </div>
 
@@ -2014,20 +1927,12 @@ export default function UserMenuSettingsPanel(
                     </p>
                   </div>
                   <label className='flex items-center cursor-pointer'>
-                    <div className='relative'>
-                      <input
-                        type='checkbox'
-                        className='sr-only peer'
-                        checked={nextEpisodeDanmakuPreload}
-                        onChange={(e) =>
-                          handleNextEpisodeDanmakuPreloadToggle(
-                            e.target.checked
-                          )
-                        }
-                      />
-                      <div className='tm-switch-track'></div>
-                      <div className='tm-switch-thumb'></div>
-                    </div>
+                    <Switch
+                      checked={nextEpisodeDanmakuPreload}
+                      onChange={(next) =>
+                        handleNextEpisodeDanmakuPreloadToggle(next)
+                      }
+                    />
                   </label>
                 </div>
 
@@ -2042,18 +1947,12 @@ export default function UserMenuSettingsPanel(
                     </p>
                   </div>
                   <label className='flex items-center cursor-pointer'>
-                    <div className='relative'>
-                      <input
-                        type='checkbox'
-                        className='sr-only peer'
-                        checked={danmakuHeatmapDisabled}
-                        onChange={(e) =>
-                          handleDanmakuHeatmapDisabledToggle(e.target.checked)
-                        }
-                      />
-                      <div className='tm-switch-track'></div>
-                      <div className='tm-switch-thumb'></div>
-                    </div>
+                    <Switch
+                      checked={danmakuHeatmapDisabled}
+                      onChange={(next) =>
+                        handleDanmakuHeatmapDisabledToggle(next)
+                      }
+                    />
                   </label>
                 </div>
 
@@ -2068,20 +1967,12 @@ export default function UserMenuSettingsPanel(
                     </p>
                   </div>
                   <label className='flex items-center cursor-pointer'>
-                    <div className='relative'>
-                      <input
-                        type='checkbox'
-                        className='sr-only peer'
-                        checked={danmakuTraditionalToSimplified}
-                        onChange={(e) =>
-                          handleDanmakuTraditionalToSimplifiedToggle(
-                            e.target.checked
-                          )
-                        }
-                      />
-                      <div className='tm-switch-track'></div>
-                      <div className='tm-switch-thumb'></div>
-                    </div>
+                    <Switch
+                      checked={danmakuTraditionalToSimplified}
+                      onChange={(next) =>
+                        handleDanmakuTraditionalToSimplifiedToggle(next)
+                      }
+                    />
                   </label>
                 </div>
 

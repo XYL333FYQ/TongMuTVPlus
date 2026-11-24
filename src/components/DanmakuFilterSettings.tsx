@@ -5,8 +5,6 @@ import {
   Lightbulb,
   MessageSquare,
   Plus,
-  ToggleLeft,
-  ToggleRight,
   Trash2,
   Wrench,
   X,
@@ -22,6 +20,7 @@ import { DanmakuFilterConfig, DanmakuFilterRule } from '@/lib/types';
 import BusyDots from '@/components/feedback/BusyDots';
 import ModalLayer from '@/components/feedback/ModalLayer';
 import Select from '@/components/ui/Select';
+import Switch from '@/components/ui/Switch';
 
 interface DanmakuFilterSettingsProps {
   isOpen: boolean;
@@ -296,22 +295,11 @@ export default function DanmakuFilterSettings({
                     className='bg-raised rounded-xl p-4 flex items-center gap-3 active:bg-raised transition-colors duration-150'
                   >
                     {/* 启用/禁用按钮 */}
-                    <button
-                      onClick={() => handleToggleRule(rule.id)}
-                      className='flex-shrink-0 active:scale-95 transition-transform duration-150 min-h-[44px] tm-press'
-                    >
-                      {rule.enabled ? (
-                        <ToggleRight
-                          size={28}
-                          className='text-fg hover:text-fg transition-colors duration-150'
-                        />
-                      ) : (
-                        <ToggleLeft
-                          size={28}
-                          className='text-muted hover:text-fg transition-colors duration-150'
-                        />
-                      )}
-                    </button>
+                    <Switch
+                      checked={rule.enabled}
+                      onChange={() => handleToggleRule(rule.id)}
+                      aria-label={`启用规则：${rule.keyword}`}
+                    />
 
                     {/* 关键字 */}
                     <div className='flex-1 min-w-0'>

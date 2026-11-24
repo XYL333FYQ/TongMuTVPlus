@@ -8,6 +8,7 @@ import { ImagePlus, Trash2, X } from 'lucide-react';
 import { FormEvent, ReactNode, useRef, useState } from 'react';
 
 import ModalLayer from '@/components/feedback/ModalLayer';
+import Switch from '@/components/ui/Switch';
 
 import { compressRoomCover } from '../lib/room-cover';
 
@@ -125,7 +126,7 @@ export function Dialog({
   );
 }
 
-function Switch({
+function SwitchRow({
   label,
   hint,
   checked,
@@ -142,12 +143,7 @@ function Switch({
         <span className='tm-room-switch-label'>{label}</span>
         {hint && <small>{hint}</small>}
       </span>
-      <input
-        type='checkbox'
-        role='switch'
-        checked={checked}
-        onChange={(event) => onChange(event.target.checked)}
-      />
+      <Switch checked={checked} onChange={(next) => onChange(next)} />
     </label>
   );
 }
@@ -253,13 +249,13 @@ export default function RoomForm(props: {
 
       <section className='tm-room-form-section'>
         <h3>谁能进来</h3>
-        <Switch
+        <SwitchRow
           label='公开房间'
           hint='出现在公开房间列表里'
           checked={values.isPublic}
           onChange={(v) => set('isPublic', v)}
         />
-        <Switch
+        <SwitchRow
           label='加入需要同意'
           hint='新成员要等房主或管理员通过'
           checked={values.requireApproval}
@@ -329,13 +325,13 @@ export default function RoomForm(props: {
 
       <section className='tm-room-form-section'>
         <h3>放映</h3>
-        <Switch
+        <SwitchRow
           label='等人缓冲'
           hint='有人卡住时全房间暂停等他，最多等 30 秒'
           checked={values.waitForBuffering}
           onChange={(v) => set('waitForBuffering', v)}
         />
-        <Switch
+        <SwitchRow
           label='自动连播'
           hint='播完自动放下一集或片单里的下一部'
           checked={values.autoPlay.enabled}
@@ -367,7 +363,7 @@ export default function RoomForm(props: {
             ))}
           </div>
         )}
-        <Switch
+        <SwitchRow
           label='聊天'
           hint='关闭后只有房主和管理员能发言'
           checked={values.chatEnabled}

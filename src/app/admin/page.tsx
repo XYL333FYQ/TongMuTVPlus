@@ -94,6 +94,7 @@ import BusyDots from '@/components/feedback/BusyDots';
 import ModalLayer from '@/components/feedback/ModalLayer';
 import PageLayout from '@/components/PageLayout';
 import Select from '@/components/ui/Select';
+import Switch from '@/components/ui/Switch';
 
 import { builtInThemes as builtInThemeDefinitions } from '@/styles/themes';
 
@@ -148,14 +149,6 @@ const buttonStyles = {
     'px-3 py-1.5 text-sm font-medium bg-[var(--tm-surface-raised)] text-[color:var(--tm-muted)] cursor-not-allowed rounded-lg transition-colors',
   disabledSmall:
     'px-2 py-1 text-[13px] font-medium bg-[var(--tm-surface-raised)] text-[color:var(--tm-muted)] cursor-not-allowed rounded-md transition-colors',
-  // 开关按钮样式（与站内 tm-switch 一致）
-  toggleOn: 'bg-[var(--tm-text)]',
-  toggleOff:
-    'bg-[var(--tm-surface-raised)] shadow-[inset_0_0_0_1px_var(--tm-line-strong)]',
-  toggleThumb:
-    'bg-[var(--tm-accent-contrast)] shadow-[var(--tm-shadow-sm)] ring-1 ring-[var(--tm-line-strong)]',
-  toggleThumbOn: 'translate-x-6',
-  toggleThumbOff: 'translate-x-1',
   // 快速操作按钮样式
   quickAction:
     'px-3 py-1.5 text-[13px] font-medium text-[color:var(--tm-muted)] bg-[var(--tm-surface)] border border-[var(--tm-line)] hover:bg-[var(--tm-surface-raised)] rounded-md transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--tm-text)]',
@@ -3860,16 +3853,12 @@ const OpenListConfigComponent = ({
           </p>
         </div>
         <label className='relative inline-flex items-center cursor-pointer'>
-          <input
-            aria-label='启用私人影库'
-            type='checkbox'
+          <Switch
             checked={enabled}
+            onChange={(next) => setEnabled(next)}
+            aria-label='启用私人影库'
             disabled={!isOwnerRole(role)}
-            onChange={(e) => setEnabled(e.target.checked)}
-            className='sr-only peer'
           />
-          <div className='tm-switch-track'></div>
-          <div className='tm-switch-thumb'></div>
         </label>
       </div>
 
@@ -3999,21 +3988,16 @@ const OpenListConfigComponent = ({
                 OpenList，扫描和播放仍使用上方主 OpenList
               </p>
             </div>
-            <button
-              type='button'
-              onClick={() =>
+            <Switch
+              checked={!!offlineDownloadUseCustomSource}
+              onChange={() =>
                 setOfflineDownloadUseCustomSource(
                   !offlineDownloadUseCustomSource
                 )
               }
               disabled={!enabled}
-              className='tm-switch-btn'
-              role='switch'
-              aria-checked={!!offlineDownloadUseCustomSource}
               aria-label='离线下载使用独立 OpenList 源'
-            >
-              <span className='tm-switch-btn-thumb' aria-hidden='true' />
-            </button>
+            />
           </div>
 
           {offlineDownloadUseCustomSource && (
@@ -4116,16 +4100,12 @@ const OpenListConfigComponent = ({
               开启后将直接返回直连链接，不使用视频预览流
             </p>
           </div>
-          <button
-            onClick={() => setDisableVideoPreview(!disableVideoPreview)}
+          <Switch
+            checked={!!disableVideoPreview}
+            onChange={() => setDisableVideoPreview(!disableVideoPreview)}
             disabled={!enabled}
-            className='tm-switch-btn'
-            role='switch'
-            aria-checked={!!disableVideoPreview}
             aria-label='禁用预览视频'
-          >
-            <span className='tm-switch-btn-thumb' aria-hidden='true' />
-          </button>
+          />
         </div>
 
         <div className='flex items-center justify-between py-3 border-b border-[var(--tm-line)]'>
@@ -4284,9 +4264,9 @@ const OpenListConfigComponent = ({
                                   播放时约 14 分钟自动刷新链接
                                 </span>
                               </span>
-                              <button
-                                type='button'
-                                onClick={() =>
+                              <Switch
+                                checked={!!row.refresh14m}
+                                onChange={() =>
                                   setPathMetaRows((rows) =>
                                     rows.map((r, i) =>
                                       i === index
@@ -4298,16 +4278,8 @@ const OpenListConfigComponent = ({
                                     )
                                   )
                                 }
-                                className='tm-switch-btn'
-                                role='switch'
-                                aria-checked={!!row.refresh14m}
                                 aria-label='播放自动刷新'
-                              >
-                                <span
-                                  className='tm-switch-btn-thumb'
-                                  aria-hidden='true'
-                                />
-                              </button>
+                              />
                             </div>
 
                             <div className='flex items-center justify-between'>
@@ -4317,9 +4289,9 @@ const OpenListConfigComponent = ({
                                   播放链接通过服务器代理
                                 </span>
                               </span>
-                              <button
-                                type='button'
-                                onClick={() =>
+                              <Switch
+                                checked={!!row.proxyPlay}
+                                onChange={() =>
                                   setPathMetaRows((rows) =>
                                     rows.map((r, i) =>
                                       i === index
@@ -4331,16 +4303,8 @@ const OpenListConfigComponent = ({
                                     )
                                   )
                                 }
-                                className='tm-switch-btn'
-                                role='switch'
-                                aria-checked={!!row.proxyPlay}
                                 aria-label='代理播放'
-                              >
-                                <span
-                                  className='tm-switch-btn-thumb'
-                                  aria-hidden='true'
-                                />
-                              </button>
+                              />
                             </div>
 
                             <div className='flex items-center gap-2'>
@@ -5047,15 +5011,11 @@ const NetDiskConfigComponent = ({
               </p>
             </div>
             <label className='relative inline-flex items-center cursor-pointer'>
-              <input
-                aria-label='启用夸克网盘'
-                type='checkbox'
+              <Switch
                 checked={enabled}
-                onChange={(e) => setEnabled(e.target.checked)}
-                className='sr-only peer'
+                onChange={(next) => setEnabled(next)}
+                aria-label='启用夸克网盘'
               />
-              <div className='tm-switch-track'></div>
-              <div className='tm-switch-thumb'></div>
             </label>
           </div>
 
@@ -5123,16 +5083,12 @@ const NetDiskConfigComponent = ({
               </p>
             </div>
             <label className='relative inline-flex items-center cursor-pointer'>
-              <input
-                aria-label='夸克多线程播放'
-                type='checkbox'
+              <Switch
                 checked={quarkMultiThreadPlayback}
-                onChange={(e) => setQuarkMultiThreadPlayback(e.target.checked)}
+                onChange={(next) => setQuarkMultiThreadPlayback(next)}
+                aria-label='夸克多线程播放'
                 disabled={!enabled}
-                className='sr-only peer'
               />
-              <div className='tm-switch-track'></div>
-              <div className='tm-switch-thumb'></div>
             </label>
           </div>
 
@@ -5170,15 +5126,11 @@ const NetDiskConfigComponent = ({
               </p>
             </div>
             <label className='relative inline-flex items-center cursor-pointer'>
-              <input
-                aria-label='启用移动云盘'
-                type='checkbox'
+              <Switch
                 checked={mobileEnabled}
-                onChange={(e) => setMobileEnabled(e.target.checked)}
-                className='sr-only peer'
+                onChange={(next) => setMobileEnabled(next)}
+                aria-label='启用移动云盘'
               />
-              <div className='tm-switch-track'></div>
-              <div className='tm-switch-thumb'></div>
             </label>
           </div>
 
@@ -5237,15 +5189,11 @@ const NetDiskConfigComponent = ({
               </p>
             </div>
             <label className='relative inline-flex items-center cursor-pointer'>
-              <input
-                aria-label='启用百度网盘'
-                type='checkbox'
+              <Switch
                 checked={baiduEnabled}
-                onChange={(e) => setBaiduEnabled(e.target.checked)}
-                className='sr-only peer'
+                onChange={(next) => setBaiduEnabled(next)}
+                aria-label='启用百度网盘'
               />
-              <div className='tm-switch-track'></div>
-              <div className='tm-switch-thumb'></div>
             </label>
           </div>
 
@@ -5308,15 +5256,11 @@ const NetDiskConfigComponent = ({
               </p>
             </div>
             <label className='relative inline-flex items-center cursor-pointer'>
-              <input
-                aria-label='启用天翼云盘'
-                type='checkbox'
+              <Switch
                 checked={tianyiEnabled}
-                onChange={(e) => setTianyiEnabled(e.target.checked)}
-                className='sr-only peer'
+                onChange={(next) => setTianyiEnabled(next)}
+                aria-label='启用天翼云盘'
               />
-              <div className='tm-switch-track'></div>
-              <div className='tm-switch-thumb'></div>
             </label>
           </div>
 
@@ -5391,15 +5335,11 @@ const NetDiskConfigComponent = ({
               </p>
             </div>
             <label className='relative inline-flex items-center cursor-pointer'>
-              <input
-                aria-label='启用123网盘'
-                type='checkbox'
+              <Switch
                 checked={pan123Enabled}
-                onChange={(e) => setPan123Enabled(e.target.checked)}
-                className='sr-only peer'
+                onChange={(next) => setPan123Enabled(next)}
+                aria-label='启用123网盘'
               />
-              <div className='tm-switch-track'></div>
-              <div className='tm-switch-thumb'></div>
             </label>
           </div>
 
@@ -5474,15 +5414,11 @@ const NetDiskConfigComponent = ({
               </p>
             </div>
             <label className='relative inline-flex items-center cursor-pointer'>
-              <input
-                aria-label='启用UC网盘'
-                type='checkbox'
+              <Switch
                 checked={ucEnabled}
-                onChange={(e) => setUcEnabled(e.target.checked)}
-                className='sr-only peer'
+                onChange={(next) => setUcEnabled(next)}
+                aria-label='启用UC网盘'
               />
-              <div className='tm-switch-track'></div>
-              <div className='tm-switch-thumb'></div>
             </label>
           </div>
 
@@ -5567,15 +5503,11 @@ const NetDiskConfigComponent = ({
               </p>
             </div>
             <label className='relative inline-flex items-center cursor-pointer'>
-              <input
-                aria-label='启用115网盘'
-                type='checkbox'
+              <Switch
                 checked={pan115Enabled}
-                onChange={(e) => setPan115Enabled(e.target.checked)}
-                className='sr-only peer'
+                onChange={(next) => setPan115Enabled(next)}
+                aria-label='启用115网盘'
               />
-              <div className='tm-switch-track'></div>
-              <div className='tm-switch-thumb'></div>
             </label>
           </div>
 
@@ -6477,18 +6409,14 @@ const EmbyConfigComponent = ({
               <label className='text-sm font-medium text-[color:var(--tm-muted)]'>
                 启用此源
               </label>
-              <button
-                onClick={() =>
+              <Switch
+                checked={!!formData.enabled}
+                onChange={() =>
                   setFormData({ ...formData, enabled: !formData.enabled })
                 }
                 disabled={!isOwnerRole(role)}
                 aria-label='启用此 Emby 源（只有站长可以更改）'
-                className='tm-switch-btn'
-                role='switch'
-                aria-checked={!!formData.enabled}
-              >
-                <span className='tm-switch-btn-thumb' aria-hidden='true' />
-              </button>
+              />
             </div>
 
             {/* 高级选项 */}
@@ -6507,20 +6435,16 @@ const EmbyConfigComponent = ({
                     启用后将从播放链接中移除 /emby 前缀
                   </p>
                 </div>
-                <button
-                  onClick={() =>
+                <Switch
+                  checked={!!formData.removeEmbyPrefix}
+                  onChange={() =>
                     setFormData({
                       ...formData,
                       removeEmbyPrefix: !formData.removeEmbyPrefix,
                     })
                   }
-                  className='tm-switch-btn'
-                  role='switch'
-                  aria-checked={!!formData.removeEmbyPrefix}
                   aria-label='播放链接移除 /emby 前缀'
-                >
-                  <span className='tm-switch-btn-thumb' aria-hidden='true' />
-                </button>
+                />
               </div>
 
               {/* 选项2: 拼接MediaSourceId参数 */}
@@ -6534,20 +6458,16 @@ const EmbyConfigComponent = ({
                     并添加到播放链接
                   </p>
                 </div>
-                <button
-                  onClick={() =>
+                <Switch
+                  checked={!!formData.appendMediaSourceId}
+                  onChange={() =>
                     setFormData({
                       ...formData,
                       appendMediaSourceId: !formData.appendMediaSourceId,
                     })
                   }
-                  className='tm-switch-btn'
-                  role='switch'
-                  aria-checked={!!formData.appendMediaSourceId}
                   aria-label='拼接 MediaSourceId 参数'
-                >
-                  <span className='tm-switch-btn-thumb' aria-hidden='true' />
-                </button>
+                />
               </div>
 
               {/* 选项3: 转码mp4 */}
@@ -6560,20 +6480,16 @@ const EmbyConfigComponent = ({
                     启用后将使用 stream.mp4 格式并移除 Static 参数
                   </p>
                 </div>
-                <button
-                  onClick={() =>
+                <Switch
+                  checked={!!formData.transcodeMp4}
+                  onChange={() =>
                     setFormData({
                       ...formData,
                       transcodeMp4: !formData.transcodeMp4,
                     })
                   }
-                  className='tm-switch-btn'
-                  role='switch'
-                  aria-checked={!!formData.transcodeMp4}
                   aria-label='转码 mp4'
-                >
-                  <span className='tm-switch-btn-thumb' aria-hidden='true' />
-                </button>
+                />
               </div>
 
               {/* 视频播放代理开关 */}
@@ -6586,17 +6502,13 @@ const EmbyConfigComponent = ({
                     启用后视频播放将通过服务器代理
                   </p>
                 </div>
-                <button
-                  onClick={() =>
+                <Switch
+                  checked={!!formData.proxyPlay}
+                  onChange={() =>
                     setFormData({ ...formData, proxyPlay: !formData.proxyPlay })
                   }
-                  className='tm-switch-btn'
-                  role='switch'
-                  aria-checked={!!formData.proxyPlay}
                   aria-label='视频播放代理'
-                >
-                  <span className='tm-switch-btn-thumb' aria-hidden='true' />
-                </button>
+                />
               </div>
 
               {/* 自定义User-Agent */}
@@ -7532,23 +7444,14 @@ const VideoSourceConfig = ({
           </span>
         </td>
         <td className='px-6 py-4 whitespace-nowrap text-center'>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              handleToggleProxyMode(source.key);
-            }}
+          <Switch
+            checked={!!source.proxyMode}
+            onClick={(e) => e.stopPropagation()}
+            onChange={() => handleToggleProxyMode(source.key)}
             disabled={isLoading(`toggleProxyMode_${source.key}`)}
-            type='button'
-            role='switch'
-            aria-checked={!!source.proxyMode}
             aria-label={`${source.name}代理模式`}
-            className='tm-admin-proxy-switch'
             title={source.proxyMode ? '代理模式已启用' : '代理模式已禁用'}
-          >
-            <span className='tm-admin-proxy-track' aria-hidden='true'>
-              <span />
-            </span>
-          </button>
+          />
         </td>
         <td className='px-6 py-4 whitespace-nowrap max-w-[1rem]'>
           {(() => {
@@ -9952,17 +9855,12 @@ const ConfigFileComponent = ({
                 启用后系统将定期自动拉取最新配置
               </p>
             </div>
-            <button
-              type='button'
-              onClick={() => setAutoUpdate(!autoUpdate)}
+            <Switch
+              checked={!!autoUpdate}
+              onChange={() => setAutoUpdate(!autoUpdate)}
               disabled={false}
-              className='tm-switch-btn'
-              role='switch'
-              aria-checked={!!autoUpdate}
               aria-label='自动更新配置'
-            >
-              <span className='tm-switch-btn-thumb' aria-hidden='true' />
-            </button>
+            />
           </div>
         </div>
       </div>
@@ -11691,21 +11589,16 @@ const SiteConfigComponent = ({
           <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
             禁用黄色过滤器
           </label>
-          <button
-            type='button'
-            onClick={() =>
+          <Switch
+            checked={!!siteSettings.DisableYellowFilter}
+            onChange={() =>
               setSiteSettings((prev) => ({
                 ...prev,
                 DisableYellowFilter: !prev.DisableYellowFilter,
               }))
             }
-            className='tm-switch-btn'
-            role='switch'
-            aria-checked={!!siteSettings.DisableYellowFilter}
             aria-label='禁用黄色过滤器'
-          >
-            <span className='tm-switch-btn-thumb' aria-hidden='true' />
-          </button>
+          />
         </div>
         <p className='mt-1 text-[13px] text-[color:var(--tm-muted)]'>
           禁用黄色内容的过滤功能，允许显示所有内容。
@@ -11718,21 +11611,16 @@ const SiteConfigComponent = ({
           <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
             启用流式搜索
           </label>
-          <button
-            type='button'
-            onClick={() =>
+          <Switch
+            checked={!!siteSettings.FluidSearch}
+            onChange={() =>
               setSiteSettings((prev) => ({
                 ...prev,
                 FluidSearch: !prev.FluidSearch,
               }))
             }
-            className='tm-switch-btn'
-            role='switch'
-            aria-checked={!!siteSettings.FluidSearch}
             aria-label='启用流式搜索'
-          >
-            <span className='tm-switch-btn-thumb' aria-hidden='true' />
-          </button>
+          />
         </div>
         <p className='mt-1 text-[13px] text-[color:var(--tm-muted)]'>
           启用后搜索结果将实时流式返回,提升用户体验。
@@ -11944,22 +11832,16 @@ const SiteConfigComponent = ({
               </p>
             </div>
             <label className='flex items-center cursor-pointer'>
-              <div className='relative'>
-                <input
-                  type='checkbox'
-                  className='sr-only peer'
-                  aria-label='默认自动加载弹幕'
-                  checked={siteSettings.DanmakuAutoLoadDefault !== false}
-                  onChange={(e) =>
-                    setSiteSettings((prev) => ({
-                      ...prev,
-                      DanmakuAutoLoadDefault: e.target.checked,
-                    }))
-                  }
-                />
-                <div className='tm-switch-track'></div>
-                <div className='tm-switch-thumb'></div>
-              </div>
+              <Switch
+                checked={siteSettings.DanmakuAutoLoadDefault !== false}
+                onChange={(next) =>
+                  setSiteSettings((prev) => ({
+                    ...prev,
+                    DanmakuAutoLoadDefault: next,
+                  }))
+                }
+                aria-label='默认自动加载弹幕'
+              />
             </label>
           </div>
         </div>
@@ -12498,18 +12380,13 @@ const SiteConfigComponent = ({
               <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
                 开启评论与相似推荐
               </label>
-              <button
-                type='button'
-                onClick={() =>
+              <Switch
+                checked={!!siteSettings.EnableComments}
+                onChange={() =>
                   handleCommentsToggle(!siteSettings.EnableComments)
                 }
-                className='tm-switch-btn'
-                role='switch'
-                aria-checked={!!siteSettings.EnableComments}
                 aria-label='开启评论与相似推荐'
-              >
-                <span className='tm-switch-btn-thumb' aria-hidden='true' />
-              </button>
+              />
             </div>
             <p className='mt-1 text-[13px] text-[color:var(--tm-muted)]'>
               开启后将显示豆瓣评论与相似推荐。评论为逆向抓取，请自行承担责任。
@@ -12539,21 +12416,16 @@ const SiteConfigComponent = ({
                 和自定义代码
               </p>
             </div>
-            <button
-              type='button'
-              onClick={() =>
+            <Switch
+              checked={!!siteSettings.AnalyticsEnabled}
+              onChange={() =>
                 setSiteSettings((prev) => ({
                   ...prev,
                   AnalyticsEnabled: !prev.AnalyticsEnabled,
                 }))
               }
-              className='tm-switch-btn'
-              role='switch'
-              aria-checked={!!siteSettings.AnalyticsEnabled}
               aria-label='启用流量统计'
-            >
-              <span className='tm-switch-btn-thumb' aria-hidden='true' />
-            </button>
+            />
           </div>
 
           {siteSettings.AnalyticsEnabled && (
@@ -12980,20 +12852,15 @@ const RegistrationConfigComponent = ({
                 <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
                   开启注册
                 </label>
-                <button
-                  type='button'
-                  onClick={() =>
+                <Switch
+                  checked={!!registrationSettings.EnableRegistration}
+                  onChange={() =>
                     handleRegistrationToggle(
                       !registrationSettings.EnableRegistration
                     )
                   }
-                  className='tm-switch-btn'
-                  role='switch'
-                  aria-checked={!!registrationSettings.EnableRegistration}
                   aria-label='开启注册'
-                >
-                  <span className='tm-switch-btn-thumb' aria-hidden='true' />
-                </button>
+                />
               </div>
               <p className='mt-1 text-[13px] text-[color:var(--tm-muted)]'>
                 开启后登录页面将显示注册按钮，允许用户自行注册账号。
@@ -13048,24 +12915,17 @@ const RegistrationConfigComponent = ({
                 <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
                   要求注册邀请码
                 </label>
-                <button
-                  type='button'
-                  onClick={() =>
+                <Switch
+                  checked={!!registrationSettings.RequireRegistrationInviteCode}
+                  onChange={() =>
                     setRegistrationSettings((prev) => ({
                       ...prev,
                       RequireRegistrationInviteCode:
                         !prev.RequireRegistrationInviteCode,
                     }))
                   }
-                  className='tm-switch-btn'
-                  role='switch'
-                  aria-checked={
-                    !!registrationSettings.RequireRegistrationInviteCode
-                  }
                   aria-label='要求注册邀请码'
-                >
-                  <span className='tm-switch-btn-thumb' aria-hidden='true' />
-                </button>
+                />
               </div>
               <p className='mt-1 text-[13px] text-[color:var(--tm-muted)]'>
                 开启后，普通注册必须填写管理员设置的统一邀请码。
@@ -13099,28 +12959,21 @@ const RegistrationConfigComponent = ({
                 <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
                   注册启用Cloudflare Turnstile
                 </label>
-                <button
-                  type='button'
-                  disabled={
-                    !registrationSettings.TurnstileSiteKey ||
-                    !registrationSettings.TurnstileSecretKey
-                  }
-                  onClick={() =>
+                <Switch
+                  checked={!!registrationSettings.RegistrationRequireTurnstile}
+                  onChange={() =>
                     setRegistrationSettings((prev) => ({
                       ...prev,
                       RegistrationRequireTurnstile:
                         !prev.RegistrationRequireTurnstile,
                     }))
                   }
-                  className='tm-switch-btn'
-                  role='switch'
-                  aria-checked={
-                    !!registrationSettings.RegistrationRequireTurnstile
+                  disabled={
+                    !registrationSettings.TurnstileSiteKey ||
+                    !registrationSettings.TurnstileSecretKey
                   }
                   aria-label='注册启用 Cloudflare Turnstile'
-                >
-                  <span className='tm-switch-btn-thumb' aria-hidden='true' />
-                </button>
+                />
               </div>
               <p className='mt-1 text-[13px] text-[color:var(--tm-muted)]'>
                 开启后注册时需要通过Cloudflare Turnstile人机验证。
@@ -13139,25 +12992,20 @@ const RegistrationConfigComponent = ({
                 <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
                   登录启用Cloudflare Turnstile
                 </label>
-                <button
-                  type='button'
-                  disabled={
-                    !registrationSettings.TurnstileSiteKey ||
-                    !registrationSettings.TurnstileSecretKey
-                  }
-                  onClick={() =>
+                <Switch
+                  checked={!!registrationSettings.LoginRequireTurnstile}
+                  onChange={() =>
                     setRegistrationSettings((prev) => ({
                       ...prev,
                       LoginRequireTurnstile: !prev.LoginRequireTurnstile,
                     }))
                   }
-                  className='tm-switch-btn'
-                  role='switch'
-                  aria-checked={!!registrationSettings.LoginRequireTurnstile}
+                  disabled={
+                    !registrationSettings.TurnstileSiteKey ||
+                    !registrationSettings.TurnstileSecretKey
+                  }
                   aria-label='登录启用 Cloudflare Turnstile'
-                >
-                  <span className='tm-switch-btn-thumb' aria-hidden='true' />
-                </button>
+                />
               </div>
               <p className='mt-1 text-[13px] text-[color:var(--tm-muted)]'>
                 开启后登录时需要通过Cloudflare Turnstile人机验证。
@@ -13230,21 +13078,16 @@ const RegistrationConfigComponent = ({
               <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
                 启用OIDC登录
               </label>
-              <button
-                type='button'
-                onClick={() =>
+              <Switch
+                checked={!!registrationSettings.EnableOIDCLogin}
+                onChange={() =>
                   setRegistrationSettings((prev) => ({
                     ...prev,
                     EnableOIDCLogin: !prev.EnableOIDCLogin,
                   }))
                 }
-                className='tm-switch-btn'
-                role='switch'
-                aria-checked={!!registrationSettings.EnableOIDCLogin}
                 aria-label='启用 OIDC 登录'
-              >
-                <span className='tm-switch-btn-thumb' aria-hidden='true' />
-              </button>
+              />
             </div>
             <p className='mt-1 text-[13px] text-[color:var(--tm-muted)]'>
               开启后登录页面将显示OIDC登录按钮
@@ -13257,21 +13100,16 @@ const RegistrationConfigComponent = ({
               <label className='block text-sm font-medium text-[color:var(--tm-muted)] mb-2'>
                 启用OIDC注册
               </label>
-              <button
-                type='button'
-                onClick={() =>
+              <Switch
+                checked={!!registrationSettings.EnableOIDCRegistration}
+                onChange={() =>
                   setRegistrationSettings((prev) => ({
                     ...prev,
                     EnableOIDCRegistration: !prev.EnableOIDCRegistration,
                   }))
                 }
-                className='tm-switch-btn'
-                role='switch'
-                aria-checked={!!registrationSettings.EnableOIDCRegistration}
                 aria-label='启用 OIDC 注册'
-              >
-                <span className='tm-switch-btn-thumb' aria-hidden='true' />
-              </button>
+              />
             </div>
             <p className='mt-1 text-[13px] text-[color:var(--tm-muted)]'>
               开启后允许通过OIDC方式注册新用户（需要先启用OIDC登录）
@@ -14091,9 +13929,9 @@ const SuwayomiConfigComponent = ({
                 : '漫画展馆的开放开关只有站长可以更改。'}
             </p>
           </div>
-          <button
-            disabled={!isOwnerRole(role)}
-            onClick={() => {
+          <Switch
+            checked={!!enabled}
+            onChange={() => {
               if (!enabled) {
                 setShowMangaDisclaimer(true);
                 setMangaCountdown(10);
@@ -14101,13 +13939,9 @@ const SuwayomiConfigComponent = ({
                 setEnabled(false);
               }
             }}
-            className='tm-switch-btn'
-            role='switch'
-            aria-checked={!!enabled}
+            disabled={!isOwnerRole(role)}
             aria-label='启用漫画展馆'
-          >
-            <span className='tm-switch-btn-thumb' aria-hidden='true' />
-          </button>
+          />
         </div>
 
         {/* 漫画展馆免责声明弹窗 */}
@@ -14612,9 +14446,9 @@ const OPDSConfigComponent = ({
               : '电子书馆的开放开关只有站长可以更改。'}
           </p>
         </div>
-        <button
-          disabled={!isOwnerRole(role)}
-          onClick={() => {
+        <Switch
+          checked={!!enabled}
+          onChange={() => {
             if (!enabled) {
               setShowBooksDisclaimer(true);
               setBooksCountdown(10);
@@ -14622,13 +14456,9 @@ const OPDSConfigComponent = ({
               setEnabled(false);
             }
           }}
-          className='tm-switch-btn'
-          role='switch'
-          aria-checked={!!enabled}
+          disabled={!isOwnerRole(role)}
           aria-label='启用电子书馆'
-        >
-          <span className='tm-switch-btn-thumb' aria-hidden='true' />
-        </button>
+        />
       </div>
 
       {/* 电子书馆免责声明弹窗 */}
@@ -14779,9 +14609,9 @@ const OPDSConfigComponent = ({
                     ) : null}
                   </div>
                   <div className='flex items-center gap-2'>
-                    <button
-                      type='button'
-                      onClick={() =>
+                    <Switch
+                      checked={!!(sub.enabled !== false)}
+                      onChange={() =>
                         setLegadoSubscriptions((prev) =>
                           (prev || []).map((item) =>
                             item.id === sub.id
@@ -14790,16 +14620,8 @@ const OPDSConfigComponent = ({
                           )
                         )
                       }
-                      className='tm-switch-btn'
-                      role='switch'
-                      aria-checked={!!(sub.enabled !== false)}
                       aria-label='启用该 Legado 订阅'
-                    >
-                      <span
-                        className='tm-switch-btn-thumb'
-                        aria-hidden='true'
-                      />
-                    </button>
+                    />
                     <button
                       type='button'
                       onClick={() => refreshLegadoSubscription(sub.id)}
@@ -14865,23 +14687,15 @@ const OPDSConfigComponent = ({
                     </div>
                   </div>
                   <div className='flex items-center gap-2'>
-                    <button
-                      type='button'
-                      onClick={() =>
+                    <Switch
+                      checked={!!(source.enabled !== false)}
+                      onChange={() =>
                         updateSource(index, {
                           enabled: source.enabled === false,
                         })
                       }
-                      className='tm-switch-btn'
-                      role='switch'
-                      aria-checked={!!(source.enabled !== false)}
                       aria-label='启用该 OPDS 书源'
-                    >
-                      <span
-                        className='tm-switch-btn-thumb'
-                        aria-hidden='true'
-                      />
-                    </button>
+                    />
                     <button
                       type='button'
                       onClick={() => handleTest(index)}
@@ -15173,16 +14987,12 @@ const XiaoyaConfigComponent = ({
                 : '小雅的开放开关只有站长可以更改'}
             </p>
           </div>
-          <button
-            onClick={() => setEnabled(!enabled)}
+          <Switch
+            checked={!!enabled}
+            onChange={() => setEnabled(!enabled)}
             disabled={!isOwnerRole(role)}
-            className='tm-switch-btn'
-            role='switch'
-            aria-checked={!!enabled}
             aria-label='启用小雅功能'
-          >
-            <span className='tm-switch-btn-thumb' aria-hidden='true' />
-          </button>
+          />
         </div>
 
         <div>
@@ -15254,15 +15064,11 @@ const XiaoyaConfigComponent = ({
               开启后将直接返回直连链接，不使用视频预览流
             </p>
           </div>
-          <button
-            onClick={() => setDisableVideoPreview(!disableVideoPreview)}
-            className='tm-switch-btn'
-            role='switch'
-            aria-checked={!!disableVideoPreview}
+          <Switch
+            checked={!!disableVideoPreview}
+            onChange={() => setDisableVideoPreview(!disableVideoPreview)}
             aria-label='禁用预览视频'
-          >
-            <span className='tm-switch-btn-thumb' aria-hidden='true' />
-          </button>
+          />
         </div>
 
         <div className='flex gap-3'>
@@ -15483,15 +15289,11 @@ const TelegramConfigComponent = ({
               开启后显示绑定与 Telegram 登录入口
             </p>
           </div>
-          <button
-            onClick={() => setEnabled(!enabled)}
-            className='tm-switch-btn'
-            role='switch'
-            aria-checked={!!enabled}
+          <Switch
+            checked={!!enabled}
+            onChange={() => setEnabled(!enabled)}
             aria-label='启用 Telegram Bot'
-          >
-            <span className='tm-switch-btn-thumb' aria-hidden='true' />
-          </button>
+          />
         </div>
 
         <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
@@ -15849,15 +15651,11 @@ const EmailConfigComponent = ({
               开启后用户可以接收收藏更新的邮件通知
             </p>
           </div>
-          <button
-            onClick={() => setEnabled(!enabled)}
-            className='tm-switch-btn'
-            role='switch'
-            aria-checked={!!enabled}
+          <Switch
+            checked={!!enabled}
+            onChange={() => setEnabled(!enabled)}
             aria-label='启用邮件通知'
-          >
-            <span className='tm-switch-btn-thumb' aria-hidden='true' />
-          </button>
+          />
         </div>
 
         {/* 发送方式选择 */}
@@ -16256,16 +16054,12 @@ const MovieRequestsComponent = ({
               </p>
             </div>
             <label className='relative inline-flex items-center cursor-pointer'>
-              <input
-                aria-label='启用求片功能'
-                type='checkbox'
+              <Switch
                 checked={enableMovieRequest}
+                onChange={(next) => setEnableMovieRequest(next)}
+                aria-label='启用求片功能'
                 disabled={!isOwnerRole(role)}
-                onChange={(e) => setEnableMovieRequest(e.target.checked)}
-                className='sr-only peer'
               />
-              <div className='tm-switch-track'></div>
-              <div className='tm-switch-thumb'></div>
             </label>
           </div>
 
@@ -16624,15 +16418,11 @@ const AIConfigComponent = ({
           </p>
         </div>
         <label className='relative inline-flex items-center cursor-pointer'>
-          <input
-            aria-label='启用AI问片功能'
-            type='checkbox'
+          <Switch
             checked={enabled}
-            onChange={(e) => setEnabled(e.target.checked)}
-            className='sr-only peer'
+            onChange={(next) => setEnabled(next)}
+            aria-label='启用AI问片功能'
           />
-          <div className='tm-switch-track'></div>
-          <div className='tm-switch-thumb'></div>
         </label>
       </div>
 
@@ -16981,15 +16771,11 @@ const AIConfigComponent = ({
             </p>
           </div>
           <label className='relative inline-flex items-center cursor-pointer'>
-            <input
-              aria-label='启用联网搜索'
-              type='checkbox'
+            <Switch
               checked={enableWebSearch}
-              onChange={(e) => setEnableWebSearch(e.target.checked)}
-              className='sr-only peer'
+              onChange={(next) => setEnableWebSearch(next)}
+              aria-label='启用联网搜索'
             />
-            <div className='tm-switch-track'></div>
-            <div className='tm-switch-thumb'></div>
           </label>
         </div>
 
@@ -17151,15 +16937,11 @@ const AIConfigComponent = ({
               </div>
             </div>
             <label className='relative inline-flex items-center cursor-pointer'>
-              <input
-                aria-label={item.label}
-                type='checkbox'
+              <Switch
                 checked={item.state}
-                onChange={(e) => item.setState(e.target.checked)}
-                className='sr-only peer'
+                onChange={(next) => item.setState(next)}
+                aria-label={item.label}
               />
-              <div className='tm-switch-track'></div>
-              <div className='tm-switch-thumb'></div>
             </label>
           </div>
         ))}
@@ -17239,15 +17021,11 @@ const AIConfigComponent = ({
                 启用后AI消息将实时流式显示，关闭后将等待完整响应后一次性显示
               </p>
             </div>
-            <button
-              onClick={() => setEnableStreaming(!enableStreaming)}
-              className='tm-switch-btn'
-              role='switch'
-              aria-checked={!!enableStreaming}
+            <Switch
+              checked={!!enableStreaming}
+              onChange={() => setEnableStreaming(!enableStreaming)}
               aria-label='流式响应'
-            >
-              <span className='tm-switch-btn-thumb' aria-hidden='true' />
-            </button>
+            />
           </div>
         </div>
       </details>
@@ -17453,23 +17231,19 @@ const MusicConfigComponent = ({
           </p>
         </div>
         <label className='relative inline-flex items-center cursor-pointer'>
-          <input
-            aria-label='启用音乐功能'
-            type='checkbox'
+          <Switch
             checked={enabled}
-            disabled={!isOwnerRole(role)}
-            onChange={(e) => {
-              if (e.target.checked) {
+            onChange={(next) => {
+              if (next) {
                 setShowMusicDisclaimer(true);
                 setMusicCountdown(10);
               } else {
                 setEnabled(false);
               }
             }}
-            className='sr-only peer'
+            aria-label='启用音乐功能'
+            disabled={!isOwnerRole(role)}
           />
-          <div className='tm-switch-track'></div>
-          <div className='tm-switch-thumb'></div>
         </label>
       </div>
 
@@ -17545,15 +17319,11 @@ const MusicConfigComponent = ({
             </p>
           </div>
           <label className='relative inline-flex items-center cursor-pointer'>
-            <input
-              aria-label='启用播放代理'
-              type='checkbox'
+            <Switch
               checked={proxyEnabled}
-              onChange={(e) => setProxyEnabled(e.target.checked)}
-              className='sr-only peer'
+              onChange={(next) => setProxyEnabled(next)}
+              aria-label='启用播放代理'
             />
-            <div className='tm-switch-track'></div>
-            <div className='tm-switch-thumb'></div>
           </label>
         </div>
 
@@ -18557,19 +18327,15 @@ const WebLiveConfig = ({
                 : '网络直播的开放开关只有站长可以更改'}
             </p>
           </div>
-          <button
-            onClick={handleToggleWebLiveEnabled}
+          <Switch
+            checked={!!config.WebLiveEnabled}
+            onChange={() => handleToggleWebLiveEnabled()}
             disabled={isLoading('toggleWebLiveEnabled') || !isOwnerRole(role)}
             title={
               !isOwnerRole(role) ? '只有站长可以开放或关闭网络直播' : undefined
             }
-            className='tm-switch-btn'
-            role='switch'
-            aria-checked={!!config.WebLiveEnabled}
             aria-label='网络直播功能总开关'
-          >
-            <span className='tm-switch-btn-thumb' aria-hidden='true' />
-          </button>
+          />
         </div>
       </div>
 

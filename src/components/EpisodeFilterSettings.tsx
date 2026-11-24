@@ -6,8 +6,6 @@ import {
   MessageSquare,
   Plus,
   Repeat,
-  ToggleLeft,
-  ToggleRight,
   Trash2,
   Wrench,
   X,
@@ -24,6 +22,7 @@ import { EpisodeFilterConfig, EpisodeFilterRule } from '@/lib/types';
 import BusyDots from '@/components/feedback/BusyDots';
 import ModalLayer from '@/components/feedback/ModalLayer';
 import Select from '@/components/ui/Select';
+import Switch from '@/components/ui/Switch';
 
 interface EpisodeFilterSettingsProps {
   isOpen: boolean;
@@ -252,26 +251,12 @@ export default function EpisodeFilterSettings({
                   启用时必须至少保留一条规则才能保存。
                 </p>
               </div>
-              <button
-                onClick={handleToggleReverseMode}
-                role='switch'
-                aria-checked={!!config.reverseMode}
+              <Switch
+                checked={!!config.reverseMode}
+                onChange={() => handleToggleReverseMode()}
                 aria-label='相反模式'
-                className='flex-shrink-0 active:scale-95 transition-transform duration-150 min-h-[44px] tm-press'
                 title={config.reverseMode ? '关闭相反模式' : '开启相反模式'}
-              >
-                {config.reverseMode ? (
-                  <ToggleRight
-                    size={28}
-                    className='text-fg hover:text-fg transition-colors duration-150'
-                  />
-                ) : (
-                  <ToggleLeft
-                    size={28}
-                    className='text-muted hover:text-fg transition-colors duration-150'
-                  />
-                )}
-              </button>
+              />
             </div>
 
             <h3 className='text-sm font-medium text-muted'>添加屏蔽规则</h3>
@@ -367,22 +352,11 @@ export default function EpisodeFilterSettings({
                     className='bg-raised rounded-xl p-4 flex items-center gap-3 active:bg-raised transition-colors duration-150'
                   >
                     {/* 启用/禁用按钮 */}
-                    <button
-                      onClick={() => handleToggleRule(rule.id)}
-                      className='flex-shrink-0 active:scale-95 transition-transform duration-150 min-h-[44px] tm-press'
-                    >
-                      {rule.enabled ? (
-                        <ToggleRight
-                          size={28}
-                          className='text-fg hover:text-fg transition-colors duration-150'
-                        />
-                      ) : (
-                        <ToggleLeft
-                          size={28}
-                          className='text-muted hover:text-fg transition-colors duration-150'
-                        />
-                      )}
-                    </button>
+                    <Switch
+                      checked={rule.enabled}
+                      onChange={() => handleToggleRule(rule.id)}
+                      aria-label={`启用规则：${rule.keyword}`}
+                    />
 
                     {/* 关键字 */}
                     <div className='flex-1 min-w-0'>

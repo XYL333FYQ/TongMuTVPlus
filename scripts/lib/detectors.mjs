@@ -41,6 +41,10 @@ export const DETECTORS = {
     pattern: /[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/gu,
     label: '用 emoji 当图标',
   },
+  switch: {
+    pattern: /\brole=\{?['"]switch['"]|\btm-switch-(?:btn|track|thumb)\b/g,
+    label: '自己画开关',
+  },
   // 不属于哪个零件：行内跳过代码检查的注释（S8），全部 src 都统计
   eslintDisableInline: {
     pattern: /eslint-disable-(?:next-)?line\b/g,

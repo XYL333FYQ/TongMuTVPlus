@@ -34,6 +34,7 @@ import { formatTimeAgo } from '@/lib/time';
 import BusyDots from '@/components/feedback/BusyDots';
 import ModalLayer from '@/components/feedback/ModalLayer';
 import Select from '@/components/ui/Select';
+import Switch from '@/components/ui/Switch';
 
 import {
   AnimeSubscription,
@@ -56,30 +57,6 @@ const downloadToolOptions: Array<{
 ];
 
 // Switch 组件
-const Switch = ({
-  checked,
-  onChange,
-  disabled,
-  label,
-}: {
-  checked: boolean;
-  onChange: (checked: boolean) => void;
-  disabled?: boolean;
-  label?: string;
-}) => (
-  <button
-    type='button'
-    role='switch'
-    aria-checked={checked}
-    aria-label={label}
-    disabled={disabled}
-    onClick={() => onChange(!checked)}
-    className='tm-switch-btn'
-  >
-    <span className='tm-switch-btn-thumb' aria-hidden='true' />
-  </button>
-);
-
 // AlertModal 组件
 interface AlertModalProps {
   isOpen: boolean;
@@ -631,7 +608,7 @@ export default function AnimeSubscriptionComponent({
             <span className='text-sm font-medium text-muted'>启用追番功能</span>
             <Switch
               checked={enabled}
-              label='启用追番功能'
+              aria-label='启用追番功能'
               onChange={handleToggleEnabled}
               disabled={loading}
             />
@@ -1034,7 +1011,7 @@ export default function AnimeSubscriptionComponent({
                 </span>
                 <Switch
                   checked={formData.enabled}
-                  label='启用此订阅'
+                  aria-label='启用此订阅'
                   onChange={(checked) =>
                     setFormData({ ...formData, enabled: checked })
                   }
@@ -1046,7 +1023,7 @@ export default function AnimeSubscriptionComponent({
                 </span>
                 <Switch
                   checked={formData.onePerEpisode}
-                  label='单集只下载一次'
+                  aria-label='单集只下载一次'
                   onChange={(checked) =>
                     setFormData({ ...formData, onePerEpisode: checked })
                   }
@@ -1058,7 +1035,7 @@ export default function AnimeSubscriptionComponent({
                 </span>
                 <Switch
                   checked={formData.refillMissingEpisodes}
-                  label='缺集重新检索'
+                  aria-label='缺集重新检索'
                   onChange={(checked) =>
                     setFormData({ ...formData, refillMissingEpisodes: checked })
                   }
@@ -1147,7 +1124,7 @@ export default function AnimeSubscriptionComponent({
                 <div className='flex items-center gap-2'>
                   <Switch
                     checked={sub.enabled}
-                    label='启用此订阅'
+                    aria-label='启用此订阅'
                     onChange={() => handleToggleSubscription(sub)}
                     disabled={loading}
                   />
@@ -1225,7 +1202,7 @@ export default function AnimeSubscriptionComponent({
                   </div>
                   <Switch
                     checked={sub.enabled}
-                    label='启用此订阅'
+                    aria-label='启用此订阅'
                     onChange={() => handleToggleSubscription(sub)}
                     disabled={loading}
                   />

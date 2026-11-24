@@ -5,6 +5,7 @@ import { useState } from 'react';
 
 import BusyDots from '@/components/feedback/BusyDots';
 import ModalLayer from '@/components/feedback/ModalLayer';
+import Switch from '@/components/ui/Switch';
 
 interface EmailSettingsPanelProps {
   isOpen: boolean;
@@ -49,22 +50,13 @@ function Toggle({
   onChange: () => void;
 }) {
   return (
-    <button
-      type='button'
-      role='switch'
-      aria-checked={checked}
-      aria-label={label}
-      onClick={onChange}
+    <Switch
+      checked={checked}
+      onChange={() => onChange()}
+      busy={busy}
       disabled={disabled}
-      className='tm-switch-btn'
-    >
-      <span
-        className='tm-switch-btn-thumb flex items-center justify-center'
-        aria-hidden='true'
-      >
-        {busy ? <BusyDots size={12} /> : null}
-      </span>
-    </button>
+      aria-label={label}
+    />
   );
 }
 

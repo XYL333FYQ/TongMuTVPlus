@@ -8,6 +8,8 @@ import {
   setSpecialSourceEnabledOnDevice,
 } from '@/lib/special-source.client';
 
+import Switch from '@/components/ui/Switch';
+
 /**
  * /sp 页面的特殊源入口开关。
  * 本机开关：只写 cookie，任何人都能自行切换，只对自己这台设备/浏览器生效。
@@ -34,16 +36,11 @@ export default function SpecialSourceToggle({
   };
 
   return (
-    <button
-      type='button'
-      onClick={handleToggle}
-      role='switch'
-      aria-checked={enabled}
+    <Switch
+      checked={enabled}
+      onChange={() => handleToggle()}
       aria-label={enabled ? '特殊源入口已开启' : '特殊源入口已关闭'}
       title='点击切换本机的特殊源入口'
-      className='tm-switch-btn'
-    >
-      <span className='tm-switch-btn-thumb' aria-hidden='true' />
-    </button>
+    />
   );
 }

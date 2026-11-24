@@ -451,7 +451,6 @@
   color: var(--tm-muted);
   font-size: 12px;
 }
-.tm-room-switch-row input,
 .tm-room-perm input {
   width: 18px;
   height: 18px;

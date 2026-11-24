@@ -24,6 +24,7 @@ import {
 import './ChatPanel.css';
 
 import BusyDots from '@/components/feedback/BusyDots';
+import Switch from '@/components/ui/Switch';
 
 import { EMOJIS } from './chat-emoji';
 
@@ -293,16 +294,13 @@ export default function ChatPanel(props: ChatPanelProps) {
         className='tm-room-chat-compose-foot'
         data-has-error={error ? 'true' : undefined}
       >
-        <button
-          type='button'
-          className='tm-room-chat-dm-row'
-          role='switch'
-          aria-checked={props.danmaku}
-          onClick={() => props.onDanmakuChange(!props.danmaku)}
-        >
-          <i className='tm-room-chat-dm-row-switch' aria-hidden='true' />
+        <label className='tm-room-chat-dm-row'>
+          <Switch
+            checked={props.danmaku}
+            onChange={(next) => props.onDanmakuChange(next)}
+          />
           消息飘成弹幕
-        </button>
+        </label>
         {error ? (
           <span className='tm-room-chat-compose-error' role='alert'>
             {error}

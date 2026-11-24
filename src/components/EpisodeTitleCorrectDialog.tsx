@@ -15,6 +15,7 @@ import { getTMDBImageUrl } from '@/lib/tmdb-image-base';
 import { processImageUrl } from '@/lib/utils';
 
 import ModalLayer from '@/components/feedback/ModalLayer';
+import Switch from '@/components/ui/Switch';
 
 interface TMDBResult {
   id: number;
@@ -317,17 +318,12 @@ function SwitchButton({
   label?: string;
 }) {
   return (
-    <button
-      type='button'
-      role='switch'
-      aria-checked={checked}
-      aria-label={label}
+    <Switch
+      checked={checked}
+      onChange={() => onClick()}
       disabled={disabled}
-      onClick={onClick}
-      className='tm-switch-btn'
-    >
-      <span className='tm-switch-btn-thumb' aria-hidden='true' />
-    </button>
+      aria-label={label}
+    />
   );
 }
 
