@@ -274,3 +274,9 @@ z-index 只写下面的令牌（定义在 `styles/tokens.css`）。同一个组�
 确实拆不开或必须破例的，在这里写明文件和理由。检查范围同步排除（`scripts/structure-scope.json` 的 `excluded`）。
 
 - `src/features/room/MusicPage.tsx`（`/watch-room/music`，房间里一起听音乐）：界面沿用上游音乐页，282 个 Tailwind 类，和音乐模块其他页面一个样子。它属于房间的入口所以放在 `features/room`，但样式按上游页面对待；以后整理音乐模块时一起改成 `tm-` 类。
+
+- 超过约 400 行但不拆（S6）：
+  - `src/features/player/core/WatchPlayer.ts`：两个播放器共用的内核，一个实例管着同一个 `<video>`、Artplayer、hls.js 和插件清理表；拆开要把内部字段公开，破坏“外面只能经方法操作播放器”的边界。
+  - `src/features/player/core/plugins/danmaku.ts`：纯函数已拆到 `danmaku-match.ts`；控制器的方法共用一个运行序号判断请求是否过期，拆开容易让过期请求覆盖新结果。
+  - `src/features/player/core/plugins/subtitles.ts`：解析、切换、样式、自动加载共用同一个 Artplayer 实例和轨道表。
+  - `src/features/room/sync/sync-engine.ts`：一个状态机（期望状态 desired、回声判断、对齐记号都在一个类里），规则见文件开头；拆开会把“只有对齐过之后的本机事件才算用户操作”这条约束分散到几处。
