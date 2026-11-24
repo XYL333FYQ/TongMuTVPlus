@@ -11,7 +11,8 @@ import './MembersPanel.css';
 
 import { isAdminRole, isOwnerRole } from '@/lib/roles';
 
-import { Dialog, MEMBER_PERMISSION_LABELS } from './RoomForm';
+import { MEMBER_PERMISSION_LABELS } from './room-form-values';
+import { Dialog } from './RoomForm';
 
 import type {
   Room,

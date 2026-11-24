@@ -62,6 +62,7 @@ import FilmPicker from './FilmPicker';
 import MembersPanel from './MembersPanel';
 import PlaylistPanel from './PlaylistPanel';
 import Recommendations from './Recommendations';
+import { valuesFromRoom } from './room-form-values';
 import {
   ActivityLaunchers,
   activityOf,
@@ -69,7 +70,7 @@ import {
   ActivityStage,
 } from './RoomActivities';
 import RoomChat from './RoomChat';
-import RoomForm, { Dialog, valuesFromRoom } from './RoomForm';
+import RoomForm, { Dialog } from './RoomForm';
 import {
   filmFromQueue,
   filmFromState,

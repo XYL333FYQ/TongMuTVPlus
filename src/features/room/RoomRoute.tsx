@@ -18,11 +18,11 @@ import { filmFromHref, playChange } from './lib/commands';
 import { isExternalRoomServer } from './lib/external-room-server';
 import { defaultRoomName } from './lib/room-presentation';
 import Lobby from './lobby/Lobby';
-import RoomForm, {
+import {
+  type RoomFormValues,
   defaultRoomValues,
-  Dialog,
-  RoomFormValues,
-} from './view/RoomForm';
+} from './view/room-form-values';
+import RoomForm, { Dialog } from './view/RoomForm';
 import RoomView from './view/RoomView';
 
 function RoomPage() {

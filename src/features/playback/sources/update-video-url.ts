@@ -12,6 +12,7 @@ import { SearchResult } from '@/lib/types';
 import type { Art } from '@/features/player';
 import { LinkRefresher } from '@/features/player';
 
+import { localPlaylistFromDirectory } from './local-playlist';
 import type { PlaybackSourceBadge } from '../page/types';
 
 /** 页面传进来的状态和函数（名字和页面里的一样） */
@@ -236,73 +237,14 @@ export function makeUpdateVideoUrl(ctx: UpdateVideoUrlContext) {
       // 使用本地文件播放
       try {
         cleanupLocalPlaybackBlobUrls();
-        // 读取 m3u8 文件
-        const fileHandle = await fileSystemCheck.dirHandle.getFileHandle(
-          'playlist.m3u8',
-          { create: false }
+        const local = await localPlaylistFromDirectory(
+          fileSystemCheck.dirHandle
         );
-        const file = await fileHandle.getFile();
-        const content = await file.text();
-
-        // 解析 m3u8 文件，为每个 ts 文件创建 Blob URL
-        const lines = content.split('\n');
-        const modifiedLines: string[] = [];
-        const blobUrls: string[] = []; // 保存 Blob URL 以便后续清理
-
-        for (const line of lines) {
-          const trimmedLine = line.trim();
-
-          // 如果是 ts 文件
-          if (trimmedLine.endsWith('.ts')) {
-            try {
-              // 读取 ts 文件
-              const tsFileHandle =
-                await fileSystemCheck.dirHandle.getFileHandle(trimmedLine, {
-                  create: false,
-                });
-              const tsFile = await tsFileHandle.getFile();
-
-              // 创建 Blob URL
-              const blobUrl = URL.createObjectURL(tsFile);
-              blobUrls.push(blobUrl);
-
-              // 替换为 Blob URL
-              modifiedLines.push(line.replace(trimmedLine, blobUrl));
-            } catch (error) {
-              logger.error(`读取 ts 文件失败: ${trimmedLine}`, error);
-              modifiedLines.push(line);
-            }
-          }
-          // 如果是加密密钥
-          else if (trimmedLine.includes('key.key')) {
-            try {
-              const keyFileHandle =
-                await fileSystemCheck.dirHandle.getFileHandle('key.key', {
-                  create: false,
-                });
-              const keyFile = await keyFileHandle.getFile();
-              const keyBlobUrl = URL.createObjectURL(keyFile);
-              blobUrls.push(keyBlobUrl);
-              modifiedLines.push(line.replace('key.key', keyBlobUrl));
-            } catch (error) {
-              logger.error('读取密钥文件失败:', error);
-              modifiedLines.push(line);
-            }
-          } else {
-            modifiedLines.push(line);
-          }
-        }
-
-        // 创建修改后的 m3u8 的 Blob URL
-        const modifiedContent = modifiedLines.join('\n');
-        const m3u8Blob = new Blob([modifiedContent], {
-          type: 'application/vnd.apple.mpegurl',
-        });
-        newUrl = URL.createObjectURL(m3u8Blob);
+        newUrl = local.url;
         nextPlaybackSourceBadge = 'local';
 
         // 保存 Blob URLs 到 window，以便在切换视频时清理
-        window.__localFileBlobUrls = blobUrls;
+        window.__localFileBlobUrls = local.blobUrls;
 
         logger.info(
           '使用 File System API 本地文件播放（Blob URL 模式）:',
