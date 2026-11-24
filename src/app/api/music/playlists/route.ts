@@ -1,5 +1,3 @@
-/* eslint-disable no-console */
-
 import { randomUUID } from 'crypto';
 import { NextRequest, NextResponse } from 'next/server';
 

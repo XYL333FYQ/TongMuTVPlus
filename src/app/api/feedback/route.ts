@@ -1,5 +1,3 @@
-/* eslint-disable no-console */
-
 import { nanoid } from 'nanoid';
 import { NextRequest, NextResponse } from 'next/server';
 

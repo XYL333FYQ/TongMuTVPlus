@@ -1,4 +1,4 @@
-/* eslint-disable no-console,no-case-declarations */
+/* eslint-disable no-case-declarations */
 
 import { NextRequest, NextResponse } from 'next/server';
 
