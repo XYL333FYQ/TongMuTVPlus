@@ -3283,7 +3283,7 @@ const UserConfig = ({
                   </div>
                   <p className='text-sm text-[color:var(--tm-text)]'>
                     删除用户 <strong>{deletingUser}</strong>{' '}
-                    将同时删除其搜索历史、播放记录和收藏夹，此操作不可恢复！
+                    将同时删除其搜索历史、播放记录和收藏，此操作不可恢复！
                   </p>
                 </div>
 

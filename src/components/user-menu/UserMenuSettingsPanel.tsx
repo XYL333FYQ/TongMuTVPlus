@@ -1412,7 +1412,7 @@ export default function UserMenuSettingsPanel(
                       保存直播的播放记录
                     </h4>
                     <p className='text-[13px] text-muted mt-1'>
-                      开启后将保存直播频道观看记录
+                      开启后将保存直播频道播放记录
                     </p>
                   </div>
                   <label className='flex items-center cursor-pointer'>

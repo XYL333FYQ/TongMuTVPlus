@@ -28,7 +28,7 @@ const tabs: MediaShellTab[] = [
   { href: '/books', label: '发现', icon: Library },
   { href: '/books/search', label: '搜索', icon: Search },
   { href: '/books/shelf', label: '书架', icon: BookOpen },
-  { href: '/books/history', label: '历史', icon: History },
+  { href: '/books/history', label: '阅读记录', icon: History },
 ];
 
 // 阅读页内容区样式：保持改造前的原值，仅把移动端顶栏高度对齐到外壳统一的 h-14

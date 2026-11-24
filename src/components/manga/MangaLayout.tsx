@@ -23,7 +23,7 @@ const tabs: MediaShellTab[] = [
   { href: '/manga', label: '推荐', icon: Compass },
   { href: '/manga/search', label: '搜索', icon: Search },
   { href: '/manga/shelf', label: '书架', icon: BookOpen },
-  { href: '/manga/history', label: '历史', icon: History },
+  { href: '/manga/history', label: '阅读记录', icon: History },
 ];
 
 // 阅读页内容区样式：保持改造前的原值，避免 /manga/read 布局回归

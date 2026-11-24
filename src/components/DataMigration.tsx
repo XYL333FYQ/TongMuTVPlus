@@ -478,7 +478,7 @@ const DataMigration = ({ onRefreshConfig }: DataMigrationProps) => {
                     <div>• 管理配置</div>
                     <div>• 用户数据</div>
                     <div>• 播放记录</div>
-                    <div>• 收藏夹</div>
+                    <div>• 收藏</div>
                     <div>• 搜索历史</div>
                     <div>• 音乐数据</div>
                   </div>

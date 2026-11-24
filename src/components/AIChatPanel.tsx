@@ -328,7 +328,7 @@ export default function AIChatPanel({
     douban_lookup: '豆瓣数据',
     tmdb_lookup: 'TMDB 数据',
     get_user_favorites: '读取收藏',
-    get_user_recent: '最近观看',
+    get_user_recent: '读取播放记录',
   };
 
   // 工具名称 → 关键参数提取（用于工具链展示）

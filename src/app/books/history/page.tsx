@@ -241,7 +241,7 @@ export default function BookHistoryPage() {
                     item.author,
                     item.sourceId
                       ? getReadableChapterLabel(item)
-                      : '历史记录缺少书源信息',
+                      : '阅读记录缺少书源信息',
                   ]
                     .filter(Boolean)
                     .join(' · '),

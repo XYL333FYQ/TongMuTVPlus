@@ -295,7 +295,7 @@ export default function ContinueWatching({
         <ConfirmDialog
           isOpen={showConfirmDialog}
           title='清空播放记录'
-          message='清空全部观看记录？此操作不能撤销'
+          message='清空全部播放记录？此操作不能撤销'
           confirmText='确定清空'
           variant='danger'
           onConfirm={handleClearConfirm}
