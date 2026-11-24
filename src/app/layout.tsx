@@ -460,7 +460,6 @@ export default async function RootLayout({
         <meta name='moontvplus-site' content='1' />
         <link rel='apple-touch-icon' href='/icons/icon-180x180.png' />
         {/* 端标记（app / desktop / web）：在任何页面脚本之前写到 <html> 上，样式与手势按它分端 */}
-        {/* eslint-disable-next-line @next/next/no-sync-scripts */}
         <script dangerouslySetInnerHTML={{ __html: PLATFORM_BOOT_SCRIPT }} />
         {/* 设备档位（phone / phone-landscape / tablet / wide）：整页按哪套排版，见 lib/device-tier.ts */}
         <script dangerouslySetInnerHTML={{ __html: DEVICE_TIER_BOOT_SCRIPT }} />
@@ -470,7 +469,6 @@ export default async function RootLayout({
         {/* 主题CSS */}
         <link rel='stylesheet' href={`/api/theme/css?v=${themeCssVersion}`} />
         {/* 将配置序列化后直接写入脚本，浏览器端可通过 window.RUNTIME_CONFIG 获取 */}
-        {/* eslint-disable-next-line @next/next/no-sync-scripts */}
         <script
           dangerouslySetInnerHTML={{
             __html: `window.RUNTIME_CONFIG = ${JSON.stringify(
@@ -483,7 +481,6 @@ export default async function RootLayout({
           analyticsProvider === 'umami' &&
           analyticsScriptUrl && (
             <>
-              {/* eslint-disable-next-line @next/next/no-sync-scripts */}
               <script
                 async
                 defer
@@ -496,7 +493,6 @@ export default async function RootLayout({
           analyticsProvider === 'google' &&
           analyticsWebsiteId && (
             <>
-              {/* eslint-disable-next-line @next/next/no-sync-scripts */}
               <script
                 async
                 src={`https://www.googletagmanager.com/gtag/js?id=${analyticsWebsiteId}`}

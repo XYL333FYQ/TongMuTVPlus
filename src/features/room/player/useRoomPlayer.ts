@@ -19,6 +19,7 @@ import { installTouchControls } from '@/lib/player-touch-controls';
 import { roomServerNow } from '@/lib/room-clock';
 import type { SearchResult } from '@/lib/types';
 import { base58Decode } from '@/lib/utils';
+import { useLatest } from '@/hooks/useLatest';
 
 import {
   type SourceSubtitle,
@@ -277,17 +278,20 @@ export function useRoomPlayer(options: {
   const nextKey = state ? mediaKey(state) : '';
   const episodeCount = detail?.episodes?.length || 0;
   const currentEpisode = state?.episode || 1;
+  // 换片 / 换集时才重建“下一集”；房间状态读这一轮渲染的
+  const stateLatest = useLatest(state);
   useEffect(() => {
+    const current = stateLatest.current;
     nextEpisode.current =
-      state && options.canChangeMedia && currentEpisode < episodeCount
+      current && options.canChangeMedia && currentEpisode < episodeCount
         ? () =>
             void latest.current.commands
               .roomCommand(
                 'play:change',
                 playChange(
-                  filmFromState(state),
+                  filmFromState(current),
                   currentEpisode + 1,
-                  state.queueItemId
+                  current.queueItemId
                 ) as unknown as Record<string, unknown>
               )
               .catch((reason: unknown) =>
@@ -295,8 +299,16 @@ export function useRoomPlayer(options: {
               )
         : null;
     syncNext();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [nextKey, options.canChangeMedia, currentEpisode, episodeCount, player]);
+  }, [
+    nextKey,
+    options.canChangeMedia,
+    currentEpisode,
+    episodeCount,
+    player,
+    stateLatest,
+    notice,
+    syncNext,
+  ]);
 
   useEffect(() => {
     engine.setPort(player ? portFor(player) : null);
@@ -306,6 +318,8 @@ export function useRoomPlayer(options: {
   const roomKey = state ? mediaKey(state) : '';
   useEffect(() => {
     if (!player) return;
+    // 只在换片（roomKey 变）时加载；同一部片的状态变化不重来
+    const state = stateLatest.current;
     if (!state) {
       loadingKey.current = '';
       setLocal(null);
@@ -377,8 +391,7 @@ export function useRoomPlayer(options: {
       setLoading(false);
       setError(reason instanceof Error ? reason.message : '加载失败');
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [player, roomKey]);
+  }, [player, roomKey, stateLatest, danmaku, subtitles]);
 
   // ------------------------------------------------------------ 同步
   const roomId = room?.id || null;

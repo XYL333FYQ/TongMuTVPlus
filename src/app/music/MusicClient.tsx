@@ -2518,6 +2518,8 @@ export default function MusicClient({
     return () => window.clearInterval(timerId);
   }, [sleepTimerEndAt, savePlayStateLatest]);
 
+  const customSleepHoursLatest = useLatest(customSleepHours);
+  const customSleepMinutesLatest = useLatest(customSleepMinutes);
   useEffect(() => {
     if (!showSleepTimerMenu) return;
 
@@ -2528,12 +2530,17 @@ export default function MusicClient({
       });
     };
 
-    // 只在弹窗打开时定位一次。不要把 customSleepHours/customSleepMinutes
+    // 只在弹窗打开时定位一次。不要把 customSleepHoursLatest.current/customSleepMinutesLatest.current
     // 放进依赖，否则滚动触发 setState 后又反向改 scrollTop，会造成频闪。
-    scrollToSelected(sleepHoursPickerRef.current, customSleepHours);
-    scrollToSelected(sleepMinutesPickerRef.current, customSleepMinutes);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [showSleepTimerMenu]);
+    scrollToSelected(
+      sleepHoursPickerRef.current,
+      customSleepHoursLatest.current
+    );
+    scrollToSelected(
+      sleepMinutesPickerRef.current,
+      customSleepMinutesLatest.current
+    );
+  }, [showSleepTimerMenu, customSleepHoursLatest, customSleepMinutesLatest]);
 
   useEffect(() => {
     currentTimeRef.current = currentTime;

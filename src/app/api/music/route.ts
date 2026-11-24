@@ -3,6 +3,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getConfig } from '@/lib/config';
+import { compileFunction, evaluateExpression } from '@/lib/dynamic-code';
 import { logger } from '@/lib/logger';
 import { OpenListClient } from '@/lib/openlist.client';
 import { requireFeaturePermission } from '@/lib/permissions';
@@ -302,8 +303,7 @@ async function executeMethod(
 
             // 尝试计算表达式
             try {
-              // eslint-disable-next-line no-eval
-              result = eval(result);
+              result = evaluateExpression(result);
             } catch (err) {
               logger.error(
                 `[executeMethod] Cloudflare 环境执行表达式失败: ${expr}`,
@@ -316,9 +316,8 @@ async function executeMethod(
             return String(result);
           } else {
             // 在 Node.js 环境下，使用 Function 构造器
-            // eslint-disable-next-line no-new-func
-            const func = new Function(
-              ...Object.keys(evalContext),
+            const func = compileFunction(
+              Object.keys(evalContext),
               `return ${expression}`
             );
             const result = func(...Object.values(evalContext));
@@ -389,8 +388,9 @@ async function executeMethod(
     } else {
       // 在 Node.js 环境下，直接执行 transform
       try {
-        // eslint-disable-next-line no-eval
-        const transformFn = eval(`(${config.transform})`);
+        const transformFn = evaluateExpression(config.transform) as (
+          input: unknown
+        ) => unknown;
         data = transformFn(data);
       } catch (err) {
         logger.error('[executeMethod] Transform 函数执行失败:', err);

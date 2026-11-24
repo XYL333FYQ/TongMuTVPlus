@@ -13535,7 +13535,6 @@ const CustomAdFilterConfig = ({
       // 如果数据库没有保存的代码，使用默认代码
       setAdFilterCode(defaultAdFilterCode);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [config]);
 
   // 移除 TypeScript 类型注解，转换为纯 JavaScript
@@ -18823,7 +18822,6 @@ function AdminPageClient() {
       fetchUsersV2();
     }
     // 仅在挂载时执行
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fetchConfig]);
 
   // PC 切换区块时，内容区滚动回顶部

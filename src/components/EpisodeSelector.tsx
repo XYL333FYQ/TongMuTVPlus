@@ -38,6 +38,7 @@ import {
 import { isNetdiskSource } from '@/lib/netdisk/source';
 import { readSetting } from '@/lib/settings';
 import { EpisodeFilterConfig, SearchResult } from '@/lib/types';
+import { useLatest } from '@/hooks/useLatest';
 import { useLongPress } from '@/hooks/useLongPress';
 
 import DanmakuPanel from '@/components/DanmakuPanel';
@@ -581,12 +582,16 @@ const EpisodeSelector: React.FC<EpisodeSelectorProps> = ({
   }, [isRoomMember, activeTab]);
 
   // 外面点了“选集 / 换源 / 弹幕”：切到对应选项卡（房员仍只能看弹幕）
+  // 只在外面发来新的请求（nonce 变了）时切换；请求内容和房员状态读最新的
+  const requestedNonce = requestedTab?.nonce;
+  const requestedTabLatest = useLatest(requestedTab);
+  const isRoomMemberLatest = useLatest(isRoomMember);
   useEffect(() => {
-    if (!requestedTab) return;
-    if (isRoomMember && requestedTab.tab !== 'danmaku') return;
-    setActiveTab(requestedTab.tab);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [requestedTab?.nonce]);
+    const request = requestedTabLatest.current;
+    if (requestedNonce === undefined || !request) return;
+    if (isRoomMemberLatest.current && request.tab !== 'danmaku') return;
+    setActiveTab(request.tab);
+  }, [requestedNonce, requestedTabLatest, isRoomMemberLatest]);
 
   // 当前分组索引（0 开始）
   const initialPage = Math.max(

@@ -103,24 +103,6 @@ export function titleContainsEpisode(title: string, episode: number): boolean {
 }
 
 /**
- * 校验自定义集数正则：可编译且结果可解析即合法
- */
-export function validateEpisodeRegex(regex: string): {
-  ok: boolean;
-  error?: string;
-} {
-  const trimmed = regex.trim();
-  if (!trimmed) return { ok: true };
-  try {
-    // eslint-disable-next-line no-new
-    new RegExp(trimmed);
-    return { ok: true };
-  } catch (e) {
-    return { ok: false, error: e instanceof Error ? e.message : '正则无效' };
-  }
-}
-
-/**
  * 用自定义正则从标题中提取集数（首个捕获组；无捕获组时取整个匹配）
  */
 export function extractEpisodeWithRegex(

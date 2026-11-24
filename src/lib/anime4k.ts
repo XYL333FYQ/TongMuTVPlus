@@ -94,8 +94,8 @@ async function canCopyExternalImageToTexture(): Promise<boolean> {
     // 用 VideoFrame 探测外部图像拷贝支持：Firefox 的 WebGPU（wgpu）不支持把
     // VideoFrame 作为 copyExternalImageToTexture 源，会抛异常 → 主循环退回 ImageBitmap 路径。
     // 旧版 TS lib 没有 VideoFrame 类型，运行时取构造器即可。
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const VideoFrameCtor = (window as any).VideoFrame as unknown;
+    const VideoFrameCtor: unknown = (window as { VideoFrame?: unknown })
+      .VideoFrame;
     if (typeof VideoFrameCtor !== 'function') return false;
     const frame = new (VideoFrameCtor as {
       new (source: CanvasImageSource, opts: { timestamp: number }): ImageBitmap;
@@ -279,7 +279,6 @@ export async function createAnime4KRenderer(
       await copyCurrentFrame();
     } catch (err) {
       if (!destroyed) {
-        // eslint-disable-next-line no-console
         logger.error('[Anime4K] 帧处理失败:', err);
       }
     }
@@ -293,8 +292,7 @@ export async function createAnime4KRenderer(
     cancelAnimationFrame(rafId);
     try {
       // Anime4KPipeline 接口未声明 destroy，运行时可安全调用
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (pipeline as any).destroy?.();
+      (pipeline as { destroy?: () => void }).destroy?.();
     } catch {
       /* 忽略 */
     }

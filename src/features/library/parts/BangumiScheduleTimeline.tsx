@@ -113,7 +113,6 @@ function BangumiScheduleTimeline({
       })
       .catch((err) => {
         // 界面上已经提示“时刻表加载失败”，原始错误留给排查
-        // eslint-disable-next-line no-console
         logger.error('获取时刻表失败:', err);
         setError('时刻表加载失败，请稍后重试');
         setLoading(false);

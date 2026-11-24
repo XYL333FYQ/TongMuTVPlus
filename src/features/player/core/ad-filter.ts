@@ -7,6 +7,7 @@ import type {
 } from 'hls.js';
 
 import { apiFetch } from '@/lib/api-client';
+import { compileFunction } from '@/lib/dynamic-code';
 import { readSetting, removeSetting, writeSetting } from '@/lib/settings';
 
 import type { HlsConstructor } from './art-types';
@@ -99,15 +100,15 @@ export function filterAds(source: string, content: string): string {
   if (customCode.trim()) {
     try {
       // 管理员在后台配置的过滤函数
-      // eslint-disable-next-line no-new-func
-      const run = new Function(
-        'type',
-        'm3u8Content',
+      const run = compileFunction(
+        ['type', 'm3u8Content'],
         `${stripTypes(
           customCode
         )}\nreturn filterAdsFromM3U8(type, m3u8Content);`
       );
-      return run(source, content);
+      const filtered = run(source, content);
+      // 自定义函数没返回文本时按出错处理
+      if (typeof filtered === 'string') return filtered;
     } catch {
       // 自定义代码出错就用默认规则
     }

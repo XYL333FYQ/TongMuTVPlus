@@ -13,6 +13,8 @@ import { useEffect, useRef } from 'react';
 
 import './RoomDock.css';
 
+import { useLatest } from '@/hooks/useLatest';
+
 import type { RoomVoice } from './context';
 import RoomChat from '../view/RoomChat';
 
@@ -23,17 +25,17 @@ export function RoomChatSheet(props: {
   onClose(): void;
 }) {
   const panel = useRef<HTMLElement | null>(null);
+  const propsLatest = useLatest(props);
   useEffect(() => {
     const close = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') props.onClose();
+      if (event.key === 'Escape') propsLatest.current.onClose();
     };
     window.addEventListener('keydown', close);
     panel.current
       ?.querySelector<HTMLInputElement>('input[type="text"], input:not([type])')
       ?.focus({ preventScroll: true });
     return () => window.removeEventListener('keydown', close);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [propsLatest]);
   return (
     <section
       ref={panel}

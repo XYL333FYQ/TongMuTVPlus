@@ -552,7 +552,6 @@ function DoubanPageClient() {
         }
       } catch (err) {
         // 界面上已经提示“影视信息暂时无法获取”，原始错误留给排查
-        // eslint-disable-next-line no-console
         if (!signal?.aborted) logger.error(err);
         if (
           !signal?.aborted &&

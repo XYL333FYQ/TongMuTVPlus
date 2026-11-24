@@ -30,6 +30,7 @@ import {
   isFansubPresetActive,
 } from '@/lib/anime-filter-presets';
 import { apiFetch } from '@/lib/api-client';
+import { validateEpisodeRegex } from '@/lib/episode-regex';
 import { formatTimeAgo } from '@/lib/time';
 
 import BusyDots from '@/components/feedback/BusyDots';
@@ -373,17 +374,8 @@ export default function AnimeSubscriptionComponent({
   };
 
   /** 校验自定义集数正则（客户端快速反馈） */
-  const checkEpisodeRegex = (regex: string): string | null => {
-    const trimmed = regex.trim();
-    if (!trimmed) return null;
-    try {
-      // eslint-disable-next-line no-new
-      new RegExp(trimmed);
-      return null;
-    } catch (e) {
-      return e instanceof Error ? e.message : '正则无效';
-    }
-  };
+  const checkEpisodeRegex = (regex: string): string | null =>
+    validateEpisodeRegex(regex).error ?? null;
 
   /** 测试：按当前表单实际搜索一次，展示关键词命中与集数提取结果 */
   const handleTest = async () => {

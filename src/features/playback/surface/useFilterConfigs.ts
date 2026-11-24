@@ -12,6 +12,7 @@ import {
 import { normalizeEpisodeFilterConfig } from '@/lib/episode-filter';
 import { logger } from '@/lib/logger';
 import type { EpisodeFilterConfig } from '@/lib/types';
+import { useLatest } from '@/hooks/useLatest';
 
 import type { DanmakuController } from '@/features/player';
 
@@ -26,11 +27,12 @@ export function useFilterConfigs(danmaku: DanmakuController) {
   }, []);
 
   // 加载弹幕过滤配置
+  const danmakuLatest = useLatest(danmaku);
   useEffect(() => {
     const loadFilterConfig = async () => {
       try {
         const config = await getDanmakuFilterConfig();
-        danmaku.setFilter(config || { rules: [] });
+        danmakuLatest.current.setFilter(config || { rules: [] });
 
         // 加载集数过滤配置
         const episodeConfig = await getEpisodeFilterConfig();
@@ -50,9 +52,8 @@ export function useFilterConfigs(danmaku: DanmakuController) {
       }
     };
     loadFilterConfig();
-    // 只在进页时读一次（danmaku 控制器在页面里只建一次）
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    // 只在进页时读一次（danmakuLatest.current 控制器在页面里只建一次）
+  }, [danmakuLatest]);
 
   // 同步集数过滤配置到ref
   useEffect(() => {

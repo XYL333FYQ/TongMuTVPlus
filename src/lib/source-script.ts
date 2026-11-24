@@ -4,13 +4,10 @@ import * as cheerio from 'cheerio/slim';
 import { nanoid } from 'nanoid';
 
 import { db } from '@/lib/db';
+import { nodeRequire } from '@/lib/node-require';
 
 const SOURCE_SCRIPT_REGISTRY_KEY = 'source-script:registry';
 const DEFAULT_TIMEOUT_MS = 20000;
-
-// 绕过 webpack 静态分析，获取真正的 Node.js require
-// eslint-disable-next-line no-eval
-const _nodeRequire = eval('require') as NodeRequire;
 
 // ---- 内存缓存 ----
 let _registryCache: { data: SourceScriptRegistry; ts: number } | null = null;
@@ -458,7 +455,7 @@ function getOrCompileScript(script: SourceScriptRecord) {
   if (cached) return cached;
 
   const factory = createScriptFactory(script.code);
-  const compiled = normalizeScript(factory(_nodeRequire));
+  const compiled = normalizeScript(factory(nodeRequire));
 
   if (_compiledCache.size >= MAX_COMPILED_CACHE_SIZE) {
     const firstKey = _compiledCache.keys().next().value;
@@ -678,7 +675,7 @@ export async function testSourceScript(input: {
     };
 
     const factory = createScriptFactory(input.code);
-    const compiled = normalizeScript(factory(_nodeRequire));
+    const compiled = normalizeScript(factory(nodeRequire));
     const hook = compiled[input.hook];
     if (typeof hook !== 'function') {
       throw new Error(`脚本未实现 ${input.hook} hook`);

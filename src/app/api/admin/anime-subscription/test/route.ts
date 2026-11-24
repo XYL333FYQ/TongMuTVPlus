@@ -2,10 +2,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { validateKeywordExpr } from '@/lib/anime-keyword-expr';
-import {
-  testEpisodeFilter,
-  validateEpisodeRegex,
-} from '@/lib/anime-subscription';
+import { testEpisodeFilter } from '@/lib/anime-subscription';
+import { validateEpisodeRegex } from '@/lib/episode-regex';
 import { logger } from '@/lib/logger';
 import { isCaller, requireRole } from '@/lib/require-role';
 

@@ -214,7 +214,6 @@ export function useAudioFocus(
         memoryOnly = false;
       }
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [video, enforce, claimSound, notifyOthers, initialMuted]);
   return { ownsSound, claimSound };
 }

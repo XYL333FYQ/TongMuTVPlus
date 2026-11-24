@@ -2,9 +2,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { validateKeywordExpr } from '@/lib/anime-keyword-expr';
-import { validateEpisodeRegex } from '@/lib/anime-subscription';
 import { getConfig } from '@/lib/config';
 import { db } from '@/lib/db';
+import { validateEpisodeRegex } from '@/lib/episode-regex';
 import { logger } from '@/lib/logger';
 import { isCaller, requireRole } from '@/lib/require-role';
 

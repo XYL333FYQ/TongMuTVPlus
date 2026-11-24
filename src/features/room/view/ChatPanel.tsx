@@ -23,6 +23,8 @@ import {
 
 import './ChatPanel.css';
 
+import { useLatest } from '@/hooks/useLatest';
+
 import BusyDots from '@/components/feedback/BusyDots';
 import EmptyState from '@/components/feedback/EmptyState';
 import Switch from '@/components/ui/Switch';
@@ -76,10 +78,10 @@ export default function ChatPanel(props: ChatPanelProps) {
     if (element && stick.current) element.scrollTop = element.scrollHeight;
   }, [props.messages.length]);
 
+  const propsLatest = useLatest(props);
   useEffect(() => {
-    if (last?.seq) props.onRead(last.seq);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [last?.seq]);
+    if (last?.seq) propsLatest.current.onRead(last.seq);
+  }, [last?.seq, propsLatest]);
 
   useEffect(() => {
     if (!emojiOpen) return;

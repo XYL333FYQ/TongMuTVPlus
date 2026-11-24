@@ -345,7 +345,6 @@ export default function BannerCarousel({
       } catch (error) {
         if (generation === trendingGeneration.current) {
           // 拉不到就显示“暂时没有推荐内容”，原始错误留给排查
-          // eslint-disable-next-line no-console
           logger.error('获取热门内容失败:', error);
         }
       } finally {

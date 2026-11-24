@@ -2,10 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { isTVModeEnabled } from '@/lib/tv-mode';
-
-// tv-remote-hub 是 server.js 共用的 CommonJS 模块，需与自定义服务器拿到同一个实例
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const { listTVRemoteDevices } = require('@/lib/tv-remote-hub');
+// tv-remote-hub 是 server.js 也在用的 CommonJS 模块，状态挂在 globalThis 上，两边拿到同一份
+import { listTVRemoteDevices } from '@/lib/tv-remote-hub';
 
 export const runtime = 'nodejs';
 

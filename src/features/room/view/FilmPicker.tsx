@@ -10,6 +10,7 @@ import { FormEvent, useEffect, useMemo, useState } from 'react';
 import './FilmPicker.css';
 
 import type { SearchResult } from '@/lib/types';
+import { useLatest } from '@/hooks/useLatest';
 
 import BusyDots from '@/components/feedback/BusyDots';
 import EmptyState from '@/components/feedback/EmptyState';
@@ -93,10 +94,11 @@ export default function FilmPicker(props: {
   };
 
   // 从推荐或站内其他地方带着片名进来：直接搜，同名的那部自动展开片源
+  const propsLatest = useLatest(props);
+  const searchLatest = useLatest(search);
   useEffect(() => {
-    if (props.initialQuery) void search();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    if (propsLatest.current.initialQuery) void searchLatest.current();
+  }, [propsLatest, searchLatest]);
   useEffect(() => {
     if (!props.initialQuery || !groups.length) return;
     const wanted = normalizeTitle(props.initialQuery);

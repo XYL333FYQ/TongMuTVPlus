@@ -315,7 +315,6 @@ function HomeClient() {
         setHomeModules(JSON.parse(savedHomeModules));
       } catch (error) {
         // 存的首页模块配置坏了就用默认的；原始错误留给排查
-        // eslint-disable-next-line no-console
         logger.error('解析首页模块配置失败:', error);
       }
     }
@@ -426,7 +425,6 @@ function HomeClient() {
         setShowAnnouncement(Boolean(!hasSeenAnnouncement && announcement));
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [announcement, announcementDisplayMode]);
 
   useEffect(() => {
@@ -488,7 +486,6 @@ function HomeClient() {
         applyHomeCatalogue(result.data);
         if (result.failed.length) {
           // 拿到的几块照常显示，没拿到的留给排查
-          // eslint-disable-next-line no-console
           logger.error('首页部分内容暂时无法获取:', result.failed.join(', '));
         }
         setLoading(false);

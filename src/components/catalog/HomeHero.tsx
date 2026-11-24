@@ -17,6 +17,7 @@ import {
 } from 'react';
 
 import { posterTiltHandlers, useReducedMotionSetting } from '@/lib/motion';
+import { useLatest } from '@/hooks/useLatest';
 
 import { useHeroAutoplay } from '@/components/catalog/useHeroAutoplay';
 import FilmPoster from '@/components/poster/FilmPoster';
@@ -133,6 +134,7 @@ export default function HomeHero({
       void image.decode().then(finish, finish);
     else finish();
   };
+  const markLoadedLatest = useLatest(markLoaded);
   useEffect(() => {
     if (ready) {
       // Retain only image art: an outgoing preview must never keep playing sound.
@@ -140,7 +142,7 @@ export default function HomeHero({
       return;
     }
     const image = currentFrame.current?.querySelector<HTMLImageElement>('img');
-    if (image?.complete && image.naturalWidth) markLoaded(image);
+    if (image?.complete && image.naturalWidth) markLoadedLatest.current(image);
     // A failed source must not trap the carousel on the previous poster forever.
     const timeout = window.setTimeout(() => {
       setFailedId(id);
@@ -148,8 +150,7 @@ export default function HomeHero({
     }, 5000);
     return () => window.clearTimeout(timeout);
     // art is a caller-owned element; loading depends on its stable item identity.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id, ready, portrait, media, art]);
+  }, [id, ready, portrait, media, art, markLoadedLatest]);
   const distance = useMotionValue(0);
   const y = useTransform(distance, (value) => value * 0.3);
   const opacity = useTransform(distance, [0, 420], [1, 0]);

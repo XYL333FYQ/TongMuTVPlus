@@ -2191,6 +2191,11 @@ export const UserMenu: React.FC = () => {
 
   // ---------- 本地设置云同步 ----------
 
+  // 拉取函数定义在下面；只在挂载时调用一次，经 ref 拿到这一份
+  const pullRemoteSettingsRef = useRef<
+    ((manual: boolean) => Promise<boolean>) | null
+  >(null);
+
   // 初始化：读取根布局注入的全局模式
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -2226,11 +2231,11 @@ export const UserMenu: React.FC = () => {
       if (!syncState || syncState.username !== username) {
         (window as any).__moontvLocalSettingsAutoPull = {
           username,
-          promise: pullRemoteSettings(false),
+          promise:
+            pullRemoteSettingsRef.current?.(false) ?? Promise.resolve(false),
         };
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // 读取白名单键的当前快照（仅含已设置的键）
@@ -2576,22 +2581,22 @@ export const UserMenu: React.FC = () => {
     );
   };
 
-  // 监听其他实例的恢复广播，同步本实例状态
+  // 监听其他实例的恢复广播，同步本实例状态（处理函数读最新的一份）
+  const applyRemotePayloadCoreLatest = useLatest(applyRemotePayloadCore);
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const handler = (event: Event) => {
       const detail = (event as CustomEvent<{ payload?: LocalSettingsPayload }>)
         .detail;
       if (detail?.payload) {
-        applyRemotePayloadCore(detail.payload);
+        applyRemotePayloadCoreLatest.current(detail.payload);
       }
     };
     window.addEventListener('moontv_local_settings_applied', handler);
     return () => {
       window.removeEventListener('moontv_local_settings_applied', handler);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [applyRemotePayloadCoreLatest]);
 
   // 云同步结果以 Toast 展示
   const showSyncToast = (text: string, ok: boolean) => {
@@ -2641,6 +2646,7 @@ export const UserMenu: React.FC = () => {
       if (manual) setSyncBusy(false);
     }
   };
+  pullRemoteSettingsRef.current = pullRemoteSettings;
 
   // 上传本地设置到云端（手动备份 / 自动静默同步共用）
   const pushRemoteSettings = async (opts?: {

@@ -999,11 +999,11 @@ function PlayPageClient() {
     mediaReady,
     reportMedia,
   ]);
+  const reportMediaLatest = useLatest(reportMedia);
   useEffect(
-    () => () => reportMedia(null),
+    () => () => reportMediaLatest.current(null),
     // 卸载时清空：这个播放实例不再在放任何影片
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    []
+    [reportMediaLatest]
   );
   const watchRoomContext = useWatchRoomContextSafe();
   useEffect(() => {
@@ -1037,6 +1037,8 @@ function PlayPageClient() {
   ]);
   // 切集后把集数写回播放地址（不重建播放器）。否则地址仍是上一集：
   // 刷新、复制链接、带着当前影片开房间时都会被当成另一部片而重新加载。
+  const commitPlaybackHrefLatest = useLatest(commitPlaybackHref);
+  const playbackSessionLatest = useLatest(playbackSession);
   useEffect(() => {
     if (loading || !detail || !currentSource || !currentId) return;
     if (
@@ -1045,16 +1047,23 @@ function PlayPageClient() {
     )
       return;
     const current = new URL(
-      playbackSession.href || '/play',
+      playbackSessionLatest.current.href || '/play',
       window.location.origin
     );
     if (current.pathname !== '/play') return;
     const episode = String(currentEpisodeIndex + 1);
     if (current.searchParams.get('episode') === episode) return;
     current.searchParams.set('episode', episode);
-    commitPlaybackHref(current);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentEpisodeIndex, detail, currentSource, currentId, loading]);
+    commitPlaybackHrefLatest.current(current);
+  }, [
+    currentEpisodeIndex,
+    detail,
+    currentSource,
+    currentId,
+    loading,
+    commitPlaybackHrefLatest,
+    playbackSessionLatest,
+  ]);
 
   const [isCreatingRoom, setIsCreatingRoom] = useState(false);
 

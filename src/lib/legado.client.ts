@@ -6,6 +6,8 @@ import he from 'he';
 import vm from 'vm';
 import xpath from 'xpath';
 
+import { compileFunction } from '@/lib/dynamic-code';
+
 import {
   BookAcquisitionLink,
   BookCatalogResult,
@@ -277,13 +279,8 @@ function safeEvalTemplateExpression(
       encodeURIComponent(String(value ?? '')),
   };
   try {
-    // eslint-disable-next-line no-new-func
-    const fn = new Function(
-      'key',
-      'keyword',
-      'searchTerms',
-      'page',
-      'java',
+    const fn = compileFunction(
+      ['key', 'keyword', 'searchTerms', 'page', 'java'],
       `return (${expr});`
     );
     return jsonPrimitiveToString(fn(key, keyword, searchTerms, page, java));

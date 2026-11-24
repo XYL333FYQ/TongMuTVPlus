@@ -133,7 +133,6 @@ export default function TVRemoteReceiver() {
           response?: { success: boolean; error?: string }
         ) => {
           if (error || !response?.success) {
-            // eslint-disable-next-line no-console
             logger.warn(
               '[TVRemote] TV registration failed:',
               error || response?.error

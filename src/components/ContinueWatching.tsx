@@ -98,7 +98,6 @@ export default function ContinueWatching({
         updatePlayRecords(allRecords);
       } catch (error) {
         // 拿不到就显示为空，原始错误留给排查
-        // eslint-disable-next-line no-console
         logger.error('获取播放记录失败:', error);
         setPlayRecords([]);
       } finally {

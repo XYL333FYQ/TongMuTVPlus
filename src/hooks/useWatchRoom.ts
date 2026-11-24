@@ -732,9 +732,7 @@ export function useWatchRoom(
   /** 本账号在房间里是否有某项权限（参照 SyncTV） */
   const hasPermission = useCallback(
     (permission: RoomPermission) =>
-      Boolean(roomRef.current?.myPermissions?.includes(permission)),
-    // currentRoom 变化时重新计算
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+      Boolean(currentRoom?.myPermissions?.includes(permission)),
     [currentRoom]
   );
   const sendChatMessage = useCallback(
