@@ -1,0 +1,137 @@
+/* loading.css 按块拆出的一段（tm-loading-classic、tm-busy），引入顺序紧跟前一段，层叠结果不变 */
+html .tm-loading .tm-loading-classic-symbol::after {
+  content: '';
+  display: block;
+  position: absolute;
+  inset: 0;
+  border: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in srgb, var(--tm-loading-shine) 6%, transparent),
+    transparent
+  );
+  box-shadow: none;
+  animation: tm-loading-sweep 1.6s linear infinite;
+}
+
+html .tm-loading .tm-loading-classic-symbol {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 96px;
+  height: 96px;
+  overflow: hidden;
+  border-radius: var(--tm-radius-md);
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+html
+  .tm-loading[data-tm-loading-state='loading']
+  .tm-loading-classic-symbol::before {
+  content: '';
+  position: absolute;
+  inset: 14px;
+  border-radius: var(--tm-radius-full);
+  background: conic-gradient(
+    from 0deg,
+    color-mix(in srgb, var(--tm-text) 12%, transparent) 0deg 160deg,
+    var(--tm-text) 345deg,
+    color-mix(in srgb, var(--tm-text) 12%, transparent) 360deg
+  );
+  -webkit-mask: radial-gradient(
+    farthest-side,
+    transparent calc(100% - 2px),
+    var(--tm-text) calc(100% - 1.5px)
+  );
+  mask: radial-gradient(
+    farthest-side,
+    transparent calc(100% - 2px),
+    var(--tm-text) calc(100% - 1.5px)
+  );
+  animation: mtv-spin 1.35s linear infinite;
+}
+
+html .tm-loading .tm-loading-classic-symbol svg {
+  width: 32px;
+  height: 32px;
+}
+
+@keyframes tm-loading-appear {
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes tm-loading-sweep {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes tm-loading-icon-enter {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* —— 处理中（BusyDots）：三个小点依次淡入淡出，颜色跟文字走，不转圈 —— */
+.tm-busy {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--tm-busy-gap, 3px);
+  vertical-align: middle;
+}
+
+.tm-busy > span {
+  width: var(--tm-busy-dot, 4px);
+  height: var(--tm-busy-dot, 4px);
+  border-radius: var(--tm-radius-full);
+  background: currentColor;
+  opacity: 0.25;
+  animation: tm-busy-dot 1.2s ease-in-out infinite;
+}
+
+.tm-busy > span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.tm-busy > span:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes tm-busy-dot {
+  0%,
+  100% {
+    opacity: 0.25;
+  }
+  40% {
+    opacity: 1;
+  }
+}
+
+html[data-tm-reduced-motion='true'] .tm-busy > span {
+  animation: none;
+  opacity: 0.6;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tm-busy > span {
+    animation: none;
+    opacity: 0.6;
+  }
+}

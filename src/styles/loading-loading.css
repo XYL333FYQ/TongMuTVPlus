@@ -1,0 +1,360 @@
+/* loading.css 按块拆出的一段（tm-loading），引入顺序紧跟前一段，层叠结果不变 */
+/* Keep the existing three-way selector and stage data; replace only its paint. */
+html .tm-loading.tm-loading {
+  --mtv-acc: var(--tm-text);
+  --mtv-acc-hover: var(--tm-text);
+  --mtv-ink: var(--tm-text);
+  --mtv-done: var(--tm-text);
+  --mtv-surface: var(--tm-surface);
+  --tm-loading-shine: var(--tm-room-player-text);
+  position: relative;
+  color: var(--tm-text);
+  border-color: var(--tm-line);
+  font-family: var(--tm-font-sans);
+  letter-spacing: 0;
+}
+
+html .tm-loading * {
+  border-color: var(--tm-line);
+}
+
+html .tm-loading.mtv-on-dark {
+  --tm-bg: var(--tm-room-cinema-bg);
+  --tm-surface: var(--tm-room-cinema-bg);
+  --tm-surface-raised: color-mix(
+    in srgb,
+    var(--tm-room-cinema-bg) 85%,
+    var(--tm-room-player-text)
+  );
+  --tm-text: var(--tm-room-player-text);
+  --tm-muted: color-mix(
+    in srgb,
+    var(--tm-room-player-text) 72%,
+    var(--tm-room-cinema-bg)
+  );
+  --tm-line: color-mix(in srgb, var(--tm-room-player-text) 15%, transparent);
+  --tm-accent-contrast: var(--tm-room-cinema-bg);
+}
+
+/* P2 removed the sidebar; the old loading overlay still reserved its width. */
+html .mtv-load-overlay {
+  left: 0;
+}
+
+html .tm-loading :is(.tm-loading-tal, .tm-loading-tal-dead) {
+  --mtv-acc: var(--tm-text);
+  --mtv-acc-hover: var(--tm-text);
+  --mtv-tal-ember: var(--tm-danger);
+  --mtv-tal-fog: transparent;
+  gap: 24px;
+  background: none;
+}
+
+html .tm-loading .mtv-tal-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: calc(var(--mtv-tal-s) * 40 / 150);
+  height: calc(var(--mtv-tal-s) * 40 / 150);
+  color: var(--tm-text);
+  filter: none;
+  opacity: 1;
+  animation: none;
+}
+
+html .tm-loading .mtv-tal-icon.pop {
+  animation: tm-loading-icon-enter var(--tm-d-panel) var(--tm-ease-out) both;
+}
+
+html .tm-loading .mtv-tal-phrase {
+  margin: 0;
+  color: var(--tm-text);
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.7;
+  letter-spacing: 0;
+}
+
+html .tm-loading .mtv-tal-bar {
+  width: 100%;
+  max-width: calc(var(--mtv-tal-s) * 200 / 150);
+  height: calc(var(--mtv-tal-s) * 3 / 150);
+  border-radius: var(--tm-radius-full);
+  overflow: hidden;
+  background: var(--tm-line);
+}
+
+html .tm-loading .mtv-tal-bar i {
+  position: relative;
+  display: block;
+  height: 100%;
+  border-radius: var(--tm-radius-full);
+  overflow: hidden;
+  background: var(--tm-text);
+  box-shadow: none;
+  filter: none;
+  animation: none;
+  transition: width 320ms var(--tm-ease-out);
+}
+
+html .tm-loading .mtv-tal-bar i::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -55%;
+  width: 55%;
+  border-radius: var(--tm-radius-full);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in srgb, var(--tm-accent-contrast) 42%, transparent),
+    transparent
+  );
+  animation: mtv-tal-flow 1.35s var(--tm-ease-in-out) infinite;
+  display: block;
+}
+
+html .tm-loading[data-tm-loading-state='loading'] {
+  opacity: 0;
+  animation: tm-loading-appear 0s 150ms forwards;
+}
+
+html
+  .tm-loading
+  :is(
+    .tm-loading-grid-panels,
+    .tm-loading-tal-circle,
+    .tm-loading-classic-symbol
+  ) {
+  opacity: 1;
+  animation: none;
+}
+
+html .tm-loading.mtv-load-classic *,
+html .tm-loading.mtv-err-legacy * {
+  background-color: transparent;
+  background-image: none;
+  border-color: var(--tm-line);
+  color: var(--tm-text);
+  box-shadow: none;
+  filter: none;
+  backdrop-filter: none;
+  animation: none;
+  transition: none;
+}
+
+html
+  .tm-loading
+  :is(
+    [class~='animate-spin'],
+    :is(
+        :is(
+            [class~='animate-bounce'],
+            .tm-pfail-div-8,
+            .tm-pfail-div-9,
+            .tm-pfail-div-10,
+            .tm-pload-div-7,
+            .tm-pload-div-8,
+            .tm-pload-div-9,
+            .tm-poverlay-div-9,
+            .tm-poverlay-div-10,
+            .tm-poverlay-div-11
+          ),
+        .tm-pfail-div-8,
+        .tm-pfail-div-9,
+        .tm-pfail-div-10,
+        .tm-pload-div-7,
+        .tm-pload-div-8,
+        .tm-pload-div-9,
+        .tm-poverlay-div-9,
+        .tm-poverlay-div-10,
+        .tm-poverlay-div-11
+      ),
+    :is(:is([class*='-inset-'], .tm-pfail-div-6), .tm-pfail-div-6)
+  ) {
+  display: none;
+}
+
+html
+  .tm-loading
+  :is(
+    :is(
+        :is(
+            [class~='w-24'][class~='h-24'],
+            .tm-pfail-div-5,
+            .tm-pload-div-4,
+            .tm-poverlay-div-4,
+            .tm-poverlay-div-7
+          ),
+        .tm-pfail-div-5,
+        .tm-pload-div-4,
+        .tm-poverlay-div-4,
+        .tm-poverlay-div-7
+      ),
+    :is(:is([class~='w-3'][class~='h-3'], .tm-pload-div-12), .tm-pload-div-12)
+  ) {
+  background: var(--tm-surface-raised);
+}
+
+html
+  .tm-loading
+  :is(
+    :is(
+        [class~='w-24'][class~='h-24'],
+        .tm-pfail-div-5,
+        .tm-pload-div-4,
+        .tm-poverlay-div-4,
+        .tm-poverlay-div-7
+      ),
+    .tm-pfail-div-5,
+    .tm-pload-div-4,
+    .tm-poverlay-div-4,
+    .tm-poverlay-div-7
+  ) {
+  transform: none;
+}
+
+html
+  .tm-loading
+  :is(
+    :is(
+        [class~='w-24'][class~='h-24'],
+        .tm-pfail-div-5,
+        .tm-pload-div-4,
+        .tm-poverlay-div-4,
+        .tm-poverlay-div-7
+      ),
+    .tm-pfail-div-5,
+    .tm-pload-div-4,
+    .tm-poverlay-div-4,
+    .tm-poverlay-div-7
+  )
+  > svg {
+  visibility: hidden;
+}
+
+html
+  .tm-loading
+  :is(:is([class~='scale-125'], .tm-pload-div-13), .tm-pload-div-13) {
+  background: var(--tm-text);
+  transform: none;
+}
+
+html
+  .tm-loading
+  :is(
+    :is(:is([class~='w-80'], .tm-pload-div-10), .tm-pload-div-10),
+    [class~='max-w-80']
+  ) {
+  max-width: 100%;
+}
+
+html .tm-loading.mtv-load-classic [style*='width:'] {
+  background: var(--tm-text);
+}
+
+html .tm-loading :is(.mtv-load-classic, .mtv-err-legacy) {
+  position: relative;
+}
+
+html .tm-loading [class~='text-4xl'] {
+  visibility: hidden;
+}
+
+html .tm-loading.mtv-load-classic p {
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.7;
+}
+
+html
+  .tm-loading[data-tm-loading-state='error']
+  :is(
+    .tm-loading-grid-panels,
+    .tm-loading-tal-circle,
+    .tm-loading-tal-ticks,
+    .tm-loading-tal-line,
+    .tm-loading-classic-symbol
+  ) {
+  opacity: 1;
+  animation: none;
+}
+
+html
+  .tm-loading[data-tm-loading-state='error']
+  :is(
+    .mtv-tal-icon,
+    .tm-loading-classic-symbol svg,
+    .tm-loading-classic-symbol svg *,
+    .tm-loading-panel[data-tm-active='true'] svg
+  ) {
+  color: var(--tm-danger);
+}
+
+html .tm-loading[data-tm-loading-state='error'] ::after {
+  display: none;
+}
+
+html[data-tm-reduced-motion='true']
+  .tm-loading[data-tm-loading-state='loading'] {
+  animation: tm-loading-appear 0s 150ms forwards !important;
+}
+
+html[data-tm-reduced-motion='true']
+  .tm-loading
+  :is(
+    .mtv-tal-icon,
+    .tm-loading-tal-ticks,
+    .tm-loading-tal-line,
+    .tm-loading-panel.cur
+  ) {
+  animation: none !important;
+  transform: none !important;
+}
+
+html[data-tm-reduced-motion='true']
+  .tm-loading
+  :is(
+    .tm-loading-panel,
+    .tm-loading-tal-core,
+    .tm-loading-classic-symbol,
+    .mtv-tal-bar i
+  )::after,
+html[data-tm-reduced-motion='true']
+  .tm-loading
+  :is(.tm-loading-panel.cur, .tm-loading-classic-symbol)::before {
+  animation: none !important;
+  display: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html .tm-loading[data-tm-loading-state='loading'] {
+    animation: tm-loading-appear 0s 150ms forwards !important;
+  }
+  html
+    .tm-loading
+    :is(
+      .mtv-tal-icon,
+      .tm-loading-tal-ticks,
+      .tm-loading-tal-line,
+      .tm-loading-panel.cur
+    ) {
+    animation: none !important;
+    transform: none !important;
+  }
+  html
+    .tm-loading
+    :is(
+      .tm-loading-panel,
+      .tm-loading-tal-core,
+      .tm-loading-classic-symbol,
+      .mtv-tal-bar i
+    )::after,
+  html
+    .tm-loading
+    :is(.tm-loading-panel.cur, .tm-loading-classic-symbol)::before {
+    animation: none !important;
+    display: none !important;
+  }
+}

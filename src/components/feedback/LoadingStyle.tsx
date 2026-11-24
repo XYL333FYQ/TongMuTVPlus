@@ -4,6 +4,10 @@ import { AlertCircle, X } from 'lucide-react';
 import { type ReactNode } from 'react';
 
 import '@/styles/loading.css';
+import '@/styles/loading-bubble.css';
+import '@/styles/loading-grid.css';
+import '@/styles/loading-loading.css';
+import '@/styles/loading-classic.css';
 
 export interface LoadingStep {
   label: string;
@@ -38,9 +42,9 @@ const barPctAt = (idx: number, len: number) =>
 
 const TalismanFrame = () => (
   <>
-    <div className='mtv-tal-ring mtv-tal-ticks' />
+    <div className='tm-loading-tal-ring tm-loading-tal-ticks' />
 
-    <div className='mtv-tal-ring mtv-tal-line' />
+    <div className='tm-loading-tal-ring tm-loading-tal-line' />
   </>
 );
 
@@ -72,12 +76,12 @@ export default function LoadingStyle({
         className={`tm-loading mtv-load mtv-load-grid${dark}`}
         data-tm-loading-state='loading'
       >
-        <div className='mtv-grid'>
-          <div className='mtv-grid-panels'>
+        <div className='tm-loading-grid'>
+          <div className='tm-loading-grid-panels'>
             {steps.map((step, i) => (
               <div
                 key={step.label}
-                className={`mtv-panel${i <= idx ? ' on' : ''}${
+                className={`tm-loading-panel${i <= idx ? ' on' : ''}${
                   i === idx ? ' cur' : ''
                 }`}
               >
@@ -86,7 +90,7 @@ export default function LoadingStyle({
               </div>
             ))}
           </div>
-          <p className='mtv-bubble'>{message}</p>
+          <p className='tm-loading-bubble'>{message}</p>
         </div>
       </div>
 
@@ -95,18 +99,18 @@ export default function LoadingStyle({
         className={`tm-loading mtv-load mtv-load-talisman${dark}`}
         data-tm-loading-state='loading'
       >
-        <div className='mtv-tal'>
-          <div className='mtv-tal-circle'>
+        <div className='tm-loading-tal'>
+          <div className='tm-loading-tal-circle'>
             <TalismanFrame />
             {/* key 换阶段时重挂载，动画才会重播 */}
 
-            <div className='mtv-tal-core'>
+            <div className='tm-loading-tal-core'>
               <div key={idx} className='mtv-tal-icon pop'>
                 {steps[idx]?.icon}
               </div>
             </div>
           </div>
-          <div className='mtv-tal-body'>
+          <div className='tm-loading-tal-body'>
             <p className='mtv-tal-phrase'>{message}</p>
             {/* 只有整页加载才有进度条。播放器蒙层是换源/换集的短暂过渡，
                 「初始化 → 播放」两步之间跨了 90%，摆个进度条是个假指标。 */}
@@ -155,10 +159,10 @@ export function LoadingErrorStyle({
         className={`tm-loading mtv-load mtv-load-talisman${dark}`}
         data-tm-loading-state='error'
       >
-        <div className='mtv-tal mtv-tal-dead'>
-          <div className='mtv-tal-circle'>
+        <div className='tm-loading-tal tm-loading-tal-dead'>
+          <div className='tm-loading-tal-circle'>
             <TalismanFrame />
-            <div className='mtv-tal-core'>
+            <div className='tm-loading-tal-core'>
               <div className='mtv-tal-icon'>
                 <AlertCircle />
               </div>
@@ -172,12 +176,12 @@ export function LoadingErrorStyle({
         className={`tm-loading mtv-load mtv-load-grid${dark}`}
         data-tm-loading-state='error'
       >
-        <div className='mtv-grid mtv-grid-dead'>
-          <div className='mtv-grid-panels'>
+        <div className='tm-loading-grid tm-loading-grid-dead'>
+          <div className='tm-loading-grid-panels'>
             {steps.map((step, i) => (
               <div
                 key={step.label}
-                className='mtv-panel'
+                className='tm-loading-panel'
                 data-tm-active={i === idx}
               >
                 {i === idx ? <X /> : step.icon}
@@ -186,7 +190,7 @@ export function LoadingErrorStyle({
             ))}
           </div>
           {/* 文案搬进对话框后，红框里那句同样的话就不必再来一遍 */}
-          <p className='mtv-bubble'>{message}</p>
+          <p className='tm-loading-bubble'>{message}</p>
         </div>
       </div>
     </>

@@ -47,7 +47,7 @@
 }
 
 /* The full-page loader uses a 300px dial; keep its preview inside the stage. */
-html .tm-settings-preview-stage .mtv-tal {
+html .tm-settings-preview-stage .tm-loading-tal {
   --mtv-tal-s: 140px;
 }
 

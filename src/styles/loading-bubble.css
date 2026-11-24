@@ -1,0 +1,325 @@
+/* loading.css 按块拆出的一段（tm-loading-bubble、tm-loading-tal），引入顺序紧跟前一段，层叠结果不变 */
+/* 气泡的小尖角：外层描边色三角，里层底色三角叠在上面 */
+.tm-loading-bubble::before {
+  content: '';
+  position: absolute;
+  width: 0;
+  height: 0;
+  top: -12px;
+  left: 28px;
+  border-left: 10px solid transparent;
+  border-right: 10px solid transparent;
+  border-bottom: 12px solid var(--mtv-ink);
+}
+
+.tm-loading-bubble::after {
+  content: '';
+  position: absolute;
+  width: 0;
+  height: 0;
+  top: -7.5px;
+  left: 30.5px;
+  border-left: 7.5px solid transparent;
+  border-right: 7.5px solid transparent;
+  border-bottom: 9px solid var(--mtv-surface);
+}
+
+.mtv-on-dark .tm-loading-bubble {
+  max-width: 260px;
+  padding: 8px 14px;
+  font-size: 13px;
+}
+
+@media (min-width: 1024px) {
+  .mtv-on-dark .tm-loading-bubble {
+    max-width: 300px;
+    padding: 10px 17px;
+    font-size: 15px;
+  }
+}
+
+@media (min-width: 768px) {
+  .mtv-load-overlay {
+    left: 16rem;
+  }
+  html[data-sidebar-collapsed] .mtv-load-overlay {
+    left: 4rem;
+  }
+}
+
+html .tm-loading .tm-loading-bubble::before,
+html .tm-loading .tm-loading-bubble::after {
+  display: none;
+}
+
+html .tm-loading .tm-loading-bubble {
+  position: relative;
+  max-width: 300px;
+  margin: 0;
+  border-radius: var(--tm-radius-md);
+  overflow-wrap: anywhere;
+  border: 0;
+  padding: 0;
+  background: none;
+  color: var(--tm-text);
+  box-shadow: none;
+  transform: none;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.7;
+  letter-spacing: 0;
+}
+
+/* ---------------- ② 符阵 ---------------- */
+.tm-loading-tal {
+  /* 阵盘直径。其余尺寸都按 150px 的原始比例推导，改这一个值即可整体缩放 */
+  --mtv-tal-s: 300px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 32px;
+  /* 阵心的柔光底；底色透明，让站点背景透出来 */
+  background: radial-gradient(
+    70% 70% at 50% 40%,
+    color-mix(in srgb, var(--mtv-acc) 13%, transparent),
+    transparent 70%
+  );
+}
+
+.tm-loading-tal-ring {
+  position: absolute;
+  border-radius: var(--tm-radius-full);
+}
+
+/* 细密刻度环：conic-gradient 出刻度，再用 mask 抠成细环 */
+.tm-loading-tal-ticks {
+  inset: 0;
+  background: repeating-conic-gradient(
+    from 0deg,
+    var(--mtv-acc) 0 0.7deg,
+    transparent 0.7deg 15deg
+  );
+  -webkit-mask: radial-gradient(
+    circle,
+    transparent 62%,
+    var(--tm-text) 63% 70%,
+    transparent 71%
+  );
+  mask: radial-gradient(
+    circle,
+    transparent 62%,
+    var(--tm-text) 63% 70%,
+    transparent 71%
+  );
+  animation: mtv-spin 26s linear infinite;
+}
+
+/* 粗刻度环，反向 */
+/* 细线圆 */
+.tm-loading-tal-line {
+  inset: calc(var(--mtv-tal-s) * 25 / 150);
+  border: calc(var(--mtv-tal-s) * 1.5 / 150) solid var(--mtv-acc-hover);
+  opacity: 0.5;
+}
+
+/* 六芒星 */
+/* 呼吸光晕 */
+@keyframes mtv-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* 十六字卦位 */
+/* 上升光点 */
+/* 换阶段时炸开的圆环 */
+/* 阵心图标：白色描边 + 主题色辉光，底下不垫色块 */
+.mtv-tal-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* 文案 + 底部细进度条 */
+.tm-loading-tal-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  text-align: center;
+}
+
+/* 轨道是主题色的淡影，填充是同色深浅渐变。宽度按阵盘比例推，但先撞容器宽度，
+   窄屏（fixed 铺满、左右各留 24px）上不会顶出去。 */
+/* 脉冲：一个 1.2s 的心跳里，一段亮光在填充内从左往右游过去（mtv-tal-flow），
+   整条同时「攒力」亮起来、在光游到头部时最盛（mtv-tal-charge）。两个动画共用
+   周期，天然同相，不必靠 delay。光只在填充段里走 —— 不越出前沿。 */
+/* 线内流光：头尾透明的渐变，亮端在前，看着是一段游走的光而不是挪动的色块。
+   起点整段落在填充左侧之外（left: -55%），终点整段越过头部，两端都由
+   overflow 裁掉，所以只在条内可见，来回都不露头。 */
+@keyframes mtv-tal-charge {
+  0%,
+  100% {
+    filter: brightness(1);
+  }
+  55% {
+    filter: brightness(1.4);
+  }
+  80% {
+    filter: brightness(1.06);
+  }
+}
+
+@keyframes mtv-tal-flow {
+  0% {
+    transform: translateX(0);
+  }
+  /* 元素宽是填充的 55%，要走完「自身 + 整条填充」= 100%/55% ≈ 282% 自身宽 */
+  58%,
+  100% {
+    transform: translateX(282%);
+  }
+}
+
+.tm-loading-tal-dead {
+  --mtv-acc: var(--tm-text);
+  --mtv-acc-hover: var(--tm-text);
+  --mtv-tal-ember: var(--tm-text);
+  --mtv-tal-fog: color-mix(in srgb, var(--tm-text) 55%, transparent);
+  /* 失败页还要放标题、报错、按钮，阵盘收小一号免得整页被顶下去 */
+  --mtv-tal-s: 220px;
+}
+
+.dark .tm-loading-tal-dead {
+  --mtv-acc: var(--tm-text);
+  --mtv-acc-hover: var(--tm-text);
+  --mtv-tal-ember: var(--tm-text);
+  --mtv-tal-fog: color-mix(in srgb, var(--tm-text) 60%, transparent);
+}
+
+.tm-loading-tal-dead .tm-loading-tal-line {
+  opacity: 0.22;
+}
+
+/* 阵心不再是发光的图标，只剩一枚熄灭的警告 */
+.tm-loading-tal-dead .mtv-tal-icon {
+  color: var(--mtv-tal-ember);
+  filter: none;
+  opacity: 0.9;
+}
+
+/* 移动端播放器只有 300px 高，底座得收着放，否则整块会溢到画面外面 */
+.mtv-on-dark .tm-loading-tal {
+  --mtv-tal-s: 116px;
+  gap: 12px;
+}
+
+/* 失败态底下还压着标题和按钮，阵再收一号 */
+.mtv-on-dark .tm-loading-tal-dead {
+  --mtv-tal-s: 88px;
+}
+
+@media (min-width: 1024px) {
+  .mtv-on-dark .tm-loading-tal {
+    --mtv-tal-s: 218px;
+    gap: 18px;
+  }
+  .mtv-on-dark .tm-loading-tal-dead {
+    --mtv-tal-s: 176px;
+  }
+}
+
+html .tm-loading .tm-loading-tal-core::after {
+  content: '';
+  display: block;
+  position: absolute;
+  inset: 0;
+  border: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in srgb, var(--tm-loading-shine) 6%, transparent),
+    transparent
+  );
+  box-shadow: none;
+  animation: tm-loading-sweep 1.6s linear infinite;
+}
+
+html .tm-loading .tm-loading-tal-circle {
+  position: relative;
+  width: var(--mtv-tal-s);
+  height: var(--mtv-tal-s);
+  overflow: hidden;
+  border-radius: var(--tm-radius-full);
+  background: radial-gradient(
+    circle at 50% 50%,
+    var(--tm-surface-raised) 0%,
+    color-mix(in srgb, var(--tm-surface-raised) 72%, transparent) 68%,
+    transparent 100%
+  );
+}
+
+/* 精密黑白灰双环星轨：外圈 24 格细刻度慢旋，内圈流光圆弧快旋 */
+html .tm-loading .tm-loading-tal-ticks {
+  inset: 0;
+  border: 0;
+  box-shadow: none;
+  filter: none;
+  opacity: 0.72;
+  background: repeating-conic-gradient(
+    from 0deg,
+    color-mix(in srgb, var(--tm-text) 48%, transparent) 0 1deg,
+    transparent 1deg 15deg
+  );
+  -webkit-mask: radial-gradient(
+    circle,
+    transparent 63%,
+    var(--tm-text) 64% 70%,
+    transparent 71%
+  );
+  mask: radial-gradient(
+    circle,
+    transparent 63%,
+    var(--tm-text) 64% 70%,
+    transparent 71%
+  );
+  animation: mtv-spin 22s linear infinite;
+}
+
+html .tm-loading .tm-loading-tal-line {
+  inset: calc(var(--mtv-tal-s) * 24 / 150);
+  border: 0;
+  box-shadow: none;
+  filter: none;
+  opacity: 0.92;
+  background: conic-gradient(
+    from 0deg,
+    color-mix(in srgb, var(--tm-text) 12%, transparent) 0deg 140deg,
+    color-mix(in srgb, var(--tm-text) 36%, transparent) 250deg,
+    var(--tm-text) 348deg,
+    color-mix(in srgb, var(--tm-text) 12%, transparent) 360deg
+  );
+  -webkit-mask: radial-gradient(
+    farthest-side,
+    transparent calc(100% - 2px),
+    var(--tm-text) calc(100% - 1.5px)
+  );
+  mask: radial-gradient(
+    farthest-side,
+    transparent calc(100% - 2px),
+    var(--tm-text) calc(100% - 1.5px)
+  );
+  animation: mtv-spin 1.65s linear infinite;
+}
+
+html .tm-loading .tm-loading-tal-core {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border-radius: inherit;
+}
