@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { recognizeFansubGroups } from '@/lib/anime-fansub-recognize';
 import { searchACG } from '@/lib/anime-subscription';
+import { logger } from '@/lib/logger';
 import { isCaller, requireRole } from '@/lib/require-role';
 
 export const runtime = 'nodejs';
@@ -33,7 +34,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(result);
   } catch (error: any) {
-    console.error('追番订阅智能识别失败:', error);
+    logger.error('追番订阅智能识别失败:', error);
     return NextResponse.json(
       { error: error.message || '智能识别失败' },
       { status: 500 }

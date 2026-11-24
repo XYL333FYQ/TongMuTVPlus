@@ -9,6 +9,7 @@ import { configSelfCheck, setCachedConfig } from '@/lib/config';
 import { SimpleCrypto } from '@/lib/crypto';
 import { clearProgress, updateProgress } from '@/lib/data-migration-progress';
 import { db } from '@/lib/db';
+import { logger } from '@/lib/logger';
 import { isCaller, requireRole } from '@/lib/require-role';
 import { isOwnerRole } from '@/lib/roles';
 
@@ -138,7 +139,7 @@ export async function POST(req: NextRequest) {
     for (const user of existingUsers.users) {
       await db.deleteUserV2(user.username);
     }
-    console.log(`已清除 ${existingUsers.users.length} 个现有V2用户`);
+    logger.info(`已清除 ${existingUsers.users.length} 个现有V2用户`);
 
     // 导入管理员配置
     importData.data.adminConfig = configSelfCheck(importData.data.adminConfig);
@@ -148,9 +149,9 @@ export async function POST(req: NextRequest) {
     // 清除短剧视频源缓存（因为导入的配置可能包含不同的视频源）
     try {
       await db.deleteGlobalValue('duanju');
-      console.log('已清除短剧视频源缓存');
+      logger.info('已清除短剧视频源缓存');
     } catch (error) {
-      console.error('清除短剧视频源缓存失败:', error);
+      logger.error('清除短剧视频源缓存失败:', error);
       // 不影响主流程，继续执行
     }
 
@@ -163,7 +164,7 @@ export async function POST(req: NextRequest) {
     );
 
     const userCount = Object.keys(userData).length;
-    console.log(`准备导入 ${userCount} 个用户的数据`);
+    logger.info(`准备导入 ${userCount} 个用户的数据`);
     updateProgress(
       username,
       'import',
@@ -184,7 +185,7 @@ export async function POST(req: NextRequest) {
 
     for (let i = 0; i < usernames.length; i += CHUNK_SIZE) {
       const chunk = usernames.slice(i, i + CHUNK_SIZE);
-      console.log(
+      logger.info(
         `处理第 ${Math.floor(i / CHUNK_SIZE) + 1} 批用户 (${chunk.length} 个)`
       );
       updateProgress(
@@ -234,7 +235,7 @@ export async function POST(req: NextRequest) {
                   userV2?.enabledApis,
                   userV2?.banned
                 );
-                console.log(`用户 ${username} 导入成功 (${storageType})`);
+                logger.info(`用户 ${username} 导入成功 (${storageType})`);
               } else {
                 throw new Error(
                   `${storageType} storage 缺少 createUserWithHashedPassword 方法`
@@ -253,7 +254,7 @@ export async function POST(req: NextRequest) {
                   userV2?.enabledApis,
                   userV2?.banned
                 );
-                console.log(`用户 ${username} 导入成功 (Postgres)`);
+                logger.info(`用户 ${username} 导入成功 (Postgres)`);
               } else {
                 throw new Error(
                   `Postgres storage 缺少 createUserWithHashedPassword 方法`
@@ -298,10 +299,10 @@ export async function POST(req: NextRequest) {
                 );
               }
 
-              console.log(`用户 ${username} 导入成功 (Redis)`);
+              logger.info(`用户 ${username} 导入成功 (Redis)`);
             }
           } else {
-            console.log(`跳过用户 ${username}：没有passwordV2`);
+            logger.info(`跳过用户 ${username}：没有passwordV2`);
             return 'skipped' as const;
           }
 
@@ -564,7 +565,7 @@ export async function POST(req: NextRequest) {
 
           return 'imported' as const;
         } catch (error) {
-          console.error(`导入用户 ${username} 失败:`, error);
+          logger.error(`导入用户 ${username} 失败:`, error);
           failedUsers.push(username);
           return 'failed' as const;
         }
@@ -574,7 +575,7 @@ export async function POST(req: NextRequest) {
       const results = await Promise.all(importPromises);
       importedCount += results.filter((r) => r === 'imported').length;
 
-      console.log(`已完成 ${importedCount}/${userCount} 个用户`);
+      logger.info(`已完成 ${importedCount}/${userCount} 个用户`);
       updateProgress(
         username,
         'import',
@@ -585,7 +586,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    console.log(`成功导入 ${importedCount} 个用户的user:info`);
+    logger.info(`成功导入 ${importedCount} 个用户的user:info`);
 
     // 有用户没导入完整时不能报成功：现有数据已经清空，站长需要知道哪些账号缺数据
     if (failedUsers.length > 0) {
@@ -629,7 +630,7 @@ export async function POST(req: NextRequest) {
           : '未知版本',
     });
   } catch (error) {
-    console.error('数据导入失败:', error);
+    logger.error('数据导入失败:', error);
     // 清除进度信息
     const authInfo = getAuthInfoFromCookie(req);
     if (authInfo?.username) {

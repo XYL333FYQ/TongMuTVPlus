@@ -3,6 +3,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getConfig } from '@/lib/config';
+import { logger } from '@/lib/logger';
 
 import { getThemeCSS } from '@/styles/themes';
 
@@ -69,7 +70,7 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error('获取主题CSS失败:', error);
+    logger.error('获取主题CSS失败:', error);
     return new NextResponse('', {
       headers: {
         'Content-Type': 'text/css',

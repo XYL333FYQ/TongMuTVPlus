@@ -5,6 +5,7 @@ import { validateKeywordExpr } from '@/lib/anime-keyword-expr';
 import { validateEpisodeRegex } from '@/lib/anime-subscription';
 import { getConfig } from '@/lib/config';
 import { db } from '@/lib/db';
+import { logger } from '@/lib/logger';
 import { isCaller, requireRole } from '@/lib/require-role';
 
 import { AnimeSubscription } from '@/types/anime-subscription';
@@ -33,7 +34,7 @@ export async function GET(req: NextRequest) {
       DownloadTool: animeConfig.DownloadTool || 'aria2',
     });
   } catch (error: any) {
-    console.error('获取追番订阅配置失败:', error);
+    logger.error('获取追番订阅配置失败:', error);
     return NextResponse.json(
       { error: error.message || '获取配置失败' },
       { status: 500 }
@@ -73,7 +74,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: '无效的搜索源' }, { status: 400 });
     }
 
-    const filterCheck = validateKeywordExpr(String(filterText), 'and');
+    const filterCheck = validateKeywordExpr(String(filterText));
     if (!filterCheck.ok) {
       return NextResponse.json(
         { error: `过滤关键词表达式无效: ${filterCheck.error}` },
@@ -81,7 +82,7 @@ export async function POST(req: NextRequest) {
       );
     }
     if (typeof excludeText === 'string' && excludeText.trim()) {
-      const excludeCheck = validateKeywordExpr(excludeText, 'or');
+      const excludeCheck = validateKeywordExpr(excludeText);
       if (!excludeCheck.ok) {
         return NextResponse.json(
           { error: `排除关键词表达式无效: ${excludeCheck.error}` },
@@ -165,7 +166,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(newSubscription);
   } catch (error: any) {
-    console.error('创建追番订阅失败:', error);
+    logger.error('创建追番订阅失败:', error);
     return NextResponse.json(
       { error: error.message || '创建订阅失败' },
       { status: 500 }

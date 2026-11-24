@@ -3,6 +3,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { db } from '@/lib/db';
+import { logger } from '@/lib/logger';
 import { isCaller, requireRole } from '@/lib/require-role';
 import { DanmakuFilterConfig } from '@/lib/types';
 
@@ -23,7 +24,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(filterConfig);
   } catch (error) {
-    console.error('获取弹幕过滤配置失败:', error);
+    logger.error('获取弹幕过滤配置失败:', error);
     return NextResponse.json(
       { error: '获取弹幕过滤配置失败' },
       { status: 500 }
@@ -60,7 +61,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('保存弹幕过滤配置失败:', error);
+    logger.error('保存弹幕过滤配置失败:', error);
     return NextResponse.json(
       { error: '保存弹幕过滤配置失败' },
       { status: 500 }

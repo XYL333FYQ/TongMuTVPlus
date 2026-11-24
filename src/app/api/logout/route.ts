@@ -5,6 +5,7 @@ import { getAuthInfoFromCookie } from '@/lib/auth';
 import { setAuthCookie } from '@/lib/auth-cookie';
 import { isSecureRequest } from '@/lib/cookie-security';
 import { getStorage } from '@/lib/db';
+import { logger } from '@/lib/logger';
 import { revokeRefreshToken } from '@/lib/refresh-token';
 
 export const runtime = 'nodejs';
@@ -23,7 +24,7 @@ export async function POST(request: NextRequest) {
         authInfo.tokenId
       );
     } catch (error) {
-      console.error('Failed to revoke refresh token:', error);
+      logger.error('Failed to revoke refresh token:', error);
     }
   }
 

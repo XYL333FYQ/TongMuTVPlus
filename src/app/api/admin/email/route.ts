@@ -5,6 +5,7 @@ import { BRAND_NAME } from '@/lib/brand';
 import { getConfig } from '@/lib/config';
 import { getStorage } from '@/lib/db';
 import { EmailService } from '@/lib/email.service';
+import { logger } from '@/lib/logger';
 import { isCaller, requireRole } from '@/lib/require-role';
 
 export const runtime = 'nodejs';
@@ -48,7 +49,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(safeConfig);
   } catch (error) {
-    console.error('获取邮件配置失败:', error);
+    logger.error('获取邮件配置失败:', error);
     return NextResponse.json(
       { error: (error as Error).message },
       { status: 500 }
@@ -91,7 +92,7 @@ export async function POST(request: NextRequest) {
           message: '测试邮件发送成功',
         });
       } catch (error) {
-        console.error('发送测试邮件失败:', error);
+        logger.error('发送测试邮件失败:', error);
         return NextResponse.json(
           { error: `发送失败: ${(error as Error).message}` },
           { status: 500 }
@@ -166,7 +167,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ error: '无效的操作' }, { status: 400 });
   } catch (error) {
-    console.error('处理邮件配置失败:', error);
+    logger.error('处理邮件配置失败:', error);
     return NextResponse.json(
       { error: (error as Error).message },
       { status: 500 }

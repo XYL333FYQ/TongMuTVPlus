@@ -6,6 +6,7 @@ import * as fs from 'fs';
 import { NextRequest, NextResponse } from 'next/server';
 import * as path from 'path';
 
+import { logger } from '@/lib/logger';
 import { isCaller, requireRole } from '@/lib/require-role';
 
 // 检查是否启用离线下载功能
@@ -129,7 +130,7 @@ export async function GET(
       },
     });
   } catch (error) {
-    console.error('代理本地文件失败:', error);
+    logger.error('代理本地文件失败:', error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : '代理失败' },
       { status: 500 }

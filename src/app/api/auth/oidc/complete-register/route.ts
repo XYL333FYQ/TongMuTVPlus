@@ -6,6 +6,7 @@ import { getAuthSigningSecret } from '@/lib/auth-secret';
 import { getConfig } from '@/lib/config';
 import { isSecureRequest } from '@/lib/cookie-security';
 import { db } from '@/lib/db';
+import { logger } from '@/lib/logger';
 import { verifyOidcSession } from '@/lib/oidc-session';
 import {
   generateRefreshToken,
@@ -247,14 +248,14 @@ export async function POST(request: NextRequest) {
 
       return response;
     } catch (err) {
-      console.error('创建用户失败', err);
+      logger.error('创建用户失败', err);
       return NextResponse.json(
         { error: '注册失败，请稍后重试' },
         { status: 500 }
       );
     }
   } catch (error) {
-    console.error('OIDC注册完成失败:', error);
+    logger.error('OIDC注册完成失败:', error);
     return NextResponse.json({ error: '服务器错误' }, { status: 500 });
   }
 }

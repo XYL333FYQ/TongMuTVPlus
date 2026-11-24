@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { getConfig } from '@/lib/config';
 import { db } from '@/lib/db';
+import { logger } from '@/lib/logger';
 import { isCaller, requireRole } from '@/lib/require-role';
 import { normalizeApiBaseUrl } from '@/lib/url';
 
@@ -239,7 +240,7 @@ export async function POST(request: NextRequest) {
       }
     );
   } catch (error) {
-    console.error('更新AI配置失败:', error);
+    logger.error('更新AI配置失败:', error);
     return NextResponse.json(
       {
         error: '更新AI配置失败',

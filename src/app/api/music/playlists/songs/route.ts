@@ -3,6 +3,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { db } from '@/lib/db';
+import { logger } from '@/lib/logger';
 import { requireFeaturePermission } from '@/lib/permissions';
 import { isCaller, requireRole } from '@/lib/require-role';
 
@@ -40,7 +41,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ songs });
   } catch (error) {
-    console.error('GET /api/music/playlists/songs error:', error);
+    logger.error('GET /api/music/playlists/songs error:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
@@ -102,7 +103,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('POST /api/music/playlists/songs error:', error);
+    logger.error('POST /api/music/playlists/songs error:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
@@ -144,7 +145,7 @@ export async function DELETE(request: NextRequest) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('DELETE /api/music/playlists/songs error:', error);
+    logger.error('DELETE /api/music/playlists/songs error:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

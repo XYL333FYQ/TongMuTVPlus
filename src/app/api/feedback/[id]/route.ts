@@ -14,6 +14,7 @@ import {
   parseFeedbackList,
   withFeedbackLock,
 } from '@/lib/feedback';
+import { logger } from '@/lib/logger';
 import { isCaller, isOwner, requireRole } from '@/lib/require-role';
 
 export const runtime = 'nodejs';
@@ -135,11 +136,11 @@ export async function PATCH(
         metadata: { feedbackId: item.id },
       });
     } catch (error) {
-      console.error('通知申请人失败:', error);
+      logger.error('通知申请人失败:', error);
     }
     return NextResponse.json({ ok: true, item });
   } catch (error) {
-    console.error('处理反馈失败:', error);
+    logger.error('处理反馈失败:', error);
     return NextResponse.json({ error: '处理失败' }, { status: 500 });
   }
 }

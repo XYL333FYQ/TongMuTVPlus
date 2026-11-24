@@ -5,6 +5,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getConfig } from '@/lib/config';
 import { db } from '@/lib/db';
 import { deleteCachedLiveChannels, refreshLiveChannels } from '@/lib/live';
+import { logger } from '@/lib/logger';
 import { isCaller, isOwner, requireRole } from '@/lib/require-role';
 
 export const runtime = 'nodejs';
@@ -73,7 +74,7 @@ export async function POST(request: NextRequest) {
           const nums = await refreshLiveChannels(liveInfo);
           liveInfo.channelNumber = nums;
         } catch (error) {
-          console.error('刷新直播源失败:', error);
+          logger.error('刷新直播源失败:', error);
           liveInfo.channelNumber = 0;
         }
 
@@ -145,7 +146,7 @@ export async function POST(request: NextRequest) {
           const nums = await refreshLiveChannels(editSource);
           editSource.channelNumber = nums;
         } catch (error) {
-          console.error('刷新直播源失败:', error);
+          logger.error('刷新直播源失败:', error);
           editSource.channelNumber = 0;
         }
         break;

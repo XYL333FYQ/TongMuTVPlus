@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getStorage } from '@/lib/db';
+import { logger } from '@/lib/logger';
 import { isCaller, requireRole } from '@/lib/require-role';
 
 export const runtime = 'nodejs';
@@ -27,7 +28,7 @@ export async function GET(
 
     return NextResponse.json({ request: movieRequest });
   } catch (error) {
-    console.error('获取求片详情失败:', error);
+    logger.error('获取求片详情失败:', error);
     return NextResponse.json(
       { error: (error as Error).message },
       { status: 500 }
@@ -92,7 +93,7 @@ export async function PATCH(
       request: { ...movieRequest, ...updates },
     });
   } catch (error) {
-    console.error('更新求片失败:', error);
+    logger.error('更新求片失败:', error);
     return NextResponse.json(
       { error: (error as Error).message },
       { status: 500 }
@@ -128,7 +129,7 @@ export async function DELETE(
 
     return NextResponse.json({ message: '删除成功' });
   } catch (error) {
-    console.error('删除求片失败:', error);
+    logger.error('删除求片失败:', error);
     return NextResponse.json(
       { error: (error as Error).message },
       { status: 500 }

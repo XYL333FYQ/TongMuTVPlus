@@ -8,6 +8,7 @@ import { getAuthSigningSecret } from '@/lib/auth-secret';
 import { getConfig } from '@/lib/config';
 import { isSecureRequest } from '@/lib/cookie-security';
 import { db } from '@/lib/db';
+import { logger } from '@/lib/logger';
 import {
   checkAccountLock,
   checkLoginBan,
@@ -43,7 +44,7 @@ function buildLoginResponse(authToken?: string | null) {
     body.token = authToken;
     const authInfo = parseAuthInfo(authToken);
     if (authInfo) {
-      const { password, ...rest } = authInfo;
+      const { password: _password, ...rest } = authInfo;
       body.auth = rest;
     }
   }
@@ -118,7 +119,7 @@ async function generateAuthCookie(
           lastUsed: now,
         });
       } catch (error) {
-        console.error('Failed to store refresh token:', error);
+        logger.error('Failed to store refresh token:', error);
       }
     }
 
@@ -161,7 +162,7 @@ async function verifyTurnstileToken(
     const data = await response.json();
     return data.success === true;
   } catch (error) {
-    console.error('Turnstile验证失败:', error);
+    logger.error('Turnstile验证失败:', error);
     return false;
   }
 }
@@ -330,7 +331,7 @@ export async function POST(req: NextRequest) {
       }
 
       if (!siteConfig.TurnstileSecretKey) {
-        console.error('Turnstile Secret Key未配置');
+        logger.error('Turnstile Secret Key未配置');
         return NextResponse.json({ error: '服务器配置错误' }, { status: 500 });
       }
 
@@ -430,11 +431,11 @@ export async function POST(req: NextRequest) {
       sameSite: 'lax',
     });
 
-    console.log(`Cookie已设置`);
+    logger.info(`Cookie已设置`);
 
     return response;
   } catch (error) {
-    console.error('登录接口异常', error);
+    logger.error('登录接口异常', error);
     return NextResponse.json({ error: '服务器错误' }, { status: 500 });
   }
 }

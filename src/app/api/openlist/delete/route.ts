@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { getConfig } from '@/lib/config';
 import { db } from '@/lib/db';
+import { logger } from '@/lib/logger';
 import {
   invalidateMetaInfoCache,
   MetaInfo,
@@ -87,7 +88,7 @@ export async function POST(request: NextRequest) {
       message: '删除成功',
     });
   } catch (error) {
-    console.error('删除视频记录失败:', error);
+    logger.error('删除视频记录失败:', error);
     return NextResponse.json(
       { error: '删除失败', details: (error as Error).message },
       { status: 500 }

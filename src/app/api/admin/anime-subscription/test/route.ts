@@ -6,6 +6,7 @@ import {
   testEpisodeFilter,
   validateEpisodeRegex,
 } from '@/lib/anime-subscription';
+import { logger } from '@/lib/logger';
 import { isCaller, requireRole } from '@/lib/require-role';
 
 export const runtime = 'nodejs';
@@ -43,7 +44,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: '无效的搜索源' }, { status: 400 });
     }
 
-    const filterCheck = validateKeywordExpr(String(filterText), 'and');
+    const filterCheck = validateKeywordExpr(String(filterText));
     if (!filterCheck.ok) {
       return NextResponse.json(
         { error: `过滤关键词表达式无效: ${filterCheck.error}` },
@@ -51,7 +52,7 @@ export async function POST(req: NextRequest) {
       );
     }
     if (typeof excludeText === 'string' && excludeText.trim()) {
-      const excludeCheck = validateKeywordExpr(excludeText, 'or');
+      const excludeCheck = validateKeywordExpr(excludeText);
       if (!excludeCheck.ok) {
         return NextResponse.json(
           { error: `排除关键词表达式无效: ${excludeCheck.error}` },
@@ -83,7 +84,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(result);
   } catch (error: any) {
-    console.error('追番订阅集数测试失败:', error);
+    logger.error('追番订阅集数测试失败:', error);
     return NextResponse.json(
       { error: error.message || '测试失败' },
       { status: 500 }

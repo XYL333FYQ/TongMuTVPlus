@@ -3,6 +3,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getConfig } from '@/lib/config';
+import { logger } from '@/lib/logger';
 import { hasFeaturePermission } from '@/lib/permissions';
 import { authenticateRequest } from '@/lib/request-auth';
 
@@ -87,7 +88,7 @@ export async function GET(
 
     // 构建 Emby 原始播放链接（强制获取直接URL，避免代理循环）
     let embyStreamUrl = await client.getStreamUrl(itemId, true, true);
-    console.log(embyStreamUrl);
+    logger.info(embyStreamUrl);
 
     // 构建请求头，转发 Range 请求，并添加自定义 User-Agent
     const requestHeaders: HeadersInit = {
@@ -111,7 +112,7 @@ export async function GET(
 
       // 如果返回 401，尝试重新认证并重试
       if (videoResponse.status === 401) {
-        console.log('[Emby Play] 收到 401 错误，尝试重新认证');
+        logger.info('[Emby Play] 收到 401 错误，尝试重新认证');
         const { embyManager } = await import('@/lib/emby-manager');
         embyManager.clearCache();
         client = await getEmbyClient(embyKey);
@@ -139,7 +140,7 @@ export async function GET(
       clearTimeout(timeoutId);
 
       if (!videoResponse.ok) {
-        console.error('[Emby Play] 获取视频流失败:', {
+        logger.error('[Emby Play] 获取视频流失败:', {
           itemId,
           status: videoResponse.status,
           statusText: videoResponse.statusText,
@@ -196,7 +197,7 @@ export async function GET(
           }
         } catch (error) {
           // 客户端断开连接或其他错误
-          console.log(
+          logger.info(
             '[Emby Play] 流传输中断:',
             error instanceof Error ? error.message : 'Unknown error'
           );
@@ -227,13 +228,13 @@ export async function GET(
       clearTimeout(timeoutId);
 
       if (error instanceof Error && error.name === 'AbortError') {
-        console.error('[Emby Play] 请求超时');
+        logger.error('[Emby Play] 请求超时');
         return NextResponse.json({ error: '请求超时' }, { status: 504 });
       }
       throw error;
     }
   } catch (error) {
-    console.error('[Emby Play] 错误:', error);
+    logger.error('[Emby Play] 错误:', error);
     return NextResponse.json(
       { error: '播放失败', details: (error as Error).message },
       { status: 500 }

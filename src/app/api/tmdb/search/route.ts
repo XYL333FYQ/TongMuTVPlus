@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig } from '@/lib/config';
+import { logger } from '@/lib/logger';
 import { searchTMDBMulti } from '@/lib/tmdb.client';
 
 export const runtime = 'nodejs';
@@ -63,7 +64,7 @@ export async function GET(request: NextRequest) {
       total: validResults.length,
     });
   } catch (error) {
-    console.error('TMDB搜索失败:', error);
+    logger.error('TMDB搜索失败:', error);
     return NextResponse.json(
       { error: '搜索失败', details: (error as Error).message },
       { status: 500 }

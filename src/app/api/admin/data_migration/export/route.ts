@@ -8,6 +8,7 @@ import { getAuthInfoFromCookie } from '@/lib/auth';
 import { SimpleCrypto } from '@/lib/crypto';
 import { clearProgress, updateProgress } from '@/lib/data-migration-progress';
 import { db } from '@/lib/db';
+import { logger } from '@/lib/logger';
 import { isCaller, requireRole } from '@/lib/require-role';
 import { CURRENT_VERSION } from '@/lib/version';
 
@@ -67,7 +68,7 @@ export async function POST(req: NextRequest) {
       process.env.USERNAME
     );
     exportData.data.usersV2 = usersV2Result.users;
-    console.log(`从getUserListV2获取到 ${usersV2Result.users.length} 个用户`);
+    logger.info(`从getUserListV2获取到 ${usersV2Result.users.length} 个用户`);
 
     // 获取所有用户（getAllUsers返回的是V2用户）
     let allUsers = await db.getAllUsers();
@@ -79,10 +80,10 @@ export async function POST(req: NextRequest) {
       }
     });
     allUsers = Array.from(new Set(allUsers));
-    console.log(`准备导出 ${allUsers.length} 个V2用户（包括站长）`);
+    logger.info(`准备导出 ${allUsers.length} 个V2用户（包括站长）`);
 
     // 为每个用户收集数据（只导出V2用户）- 使用并行处理
-    console.log(`开始并行导出 ${allUsers.length} 个用户的数据...`);
+    logger.info(`开始并行导出 ${allUsers.length} 个用户的数据...`);
     updateProgress(
       username,
       'export',
@@ -101,7 +102,7 @@ export async function POST(req: NextRequest) {
 
     for (let i = 0; i < allUsers.length; i += CHUNK_SIZE) {
       const chunk = allUsers.slice(i, i + CHUNK_SIZE);
-      console.log(
+      logger.info(
         `处理第 ${Math.floor(i / CHUNK_SIZE) + 1} 批用户 (${chunk.length} 个)`
       );
 
@@ -119,7 +120,7 @@ export async function POST(req: NextRequest) {
 
           // 跳过没有V2密码的用户
           if (!finalPasswordV2) {
-            console.log(`跳过用户 ${username}：没有V2密码`);
+            logger.info(`跳过用户 ${username}：没有V2密码`);
             return null;
           }
 
@@ -194,7 +195,7 @@ export async function POST(req: NextRequest) {
           };
         } catch (error) {
           // 不能静默跳过：缺了某个用户的备份一旦用于恢复，会把这个账号连同数据一起删掉
-          console.error(`导出用户 ${username} 数据失败:`, error);
+          logger.error(`导出用户 ${username} 数据失败:`, error);
           throw new Error(
             `读取用户 ${username} 的数据失败，备份已取消，请稍后重试：${
               error instanceof Error ? error.message : String(error)
@@ -223,10 +224,10 @@ export async function POST(req: NextRequest) {
         }
       }
 
-      console.log(`已完成 ${exportedCount}/${allUsers.length} 个用户`);
+      logger.info(`已完成 ${exportedCount}/${allUsers.length} 个用户`);
     }
 
-    console.log(`成功导出 ${exportedCount} 个用户的数据`);
+    logger.info(`成功导出 ${exportedCount} 个用户的数据`);
 
     // 将数据转换为JSON字符串
     updateProgress(
@@ -296,7 +297,7 @@ export async function POST(req: NextRequest) {
       },
     });
   } catch (error) {
-    console.error('数据导出失败:', error);
+    logger.error('数据导出失败:', error);
     // 清除进度信息
     const authInfo = getAuthInfoFromCookie(req);
     if (authInfo?.username) {
@@ -349,7 +350,7 @@ async function getUserPasswordV2(username: string): Promise<string | null> {
     return null;
   } catch (error) {
     // 读取失败与“没有密码”不同，交给上层取消整个备份
-    console.error(`获取用户 ${username} V2密码失败:`, error);
+    logger.error(`获取用户 ${username} V2密码失败:`, error);
     throw error;
   }
 }

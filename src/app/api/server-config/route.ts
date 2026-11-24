@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { BRAND_NAME } from '@/lib/brand';
 import { getConfig } from '@/lib/config';
+import { logger } from '@/lib/logger';
 import { defaultReleaseInfo } from '@/lib/release-info';
 import { getReleaseSnapshot } from '@/lib/server/release-store';
 import { CURRENT_VERSION } from '@/lib/version';
@@ -12,7 +13,7 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic'; // 禁用缓存
 
 export async function GET(request: NextRequest) {
-  console.log('server-config called: ', request.url);
+  logger.info('server-config called: ', request.url);
 
   const storageType = process.env.NEXT_PUBLIC_STORAGE_TYPE || 'localstorage';
 

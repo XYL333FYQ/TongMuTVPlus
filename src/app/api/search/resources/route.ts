@@ -3,13 +3,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getAvailableApiSites } from '@/lib/config';
+import { logger } from '@/lib/logger';
 import { listEnabledSourceScripts } from '@/lib/source-script';
 
 export const runtime = 'nodejs';
 
 // OrionTV 兼容接口
 export async function GET(request: NextRequest) {
-  console.log('request', request.url);
+  logger.info('request', request.url);
   try {
     const apiSites = await getAvailableApiSites();
     const scriptSites = (await listEnabledSourceScripts()).map((item) => ({

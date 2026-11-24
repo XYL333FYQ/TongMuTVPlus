@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { AdminConfigResult } from '@/lib/admin.types';
 import { getConfig } from '@/lib/config';
+import { logger } from '@/lib/logger';
 import { describeModuleActivationChanges } from '@/lib/module-availability';
 import { isCaller, isOwner, requireRole } from '@/lib/require-role';
 
@@ -36,7 +37,7 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error('获取管理员配置失败:', error);
+    logger.error('获取管理员配置失败:', error);
     return NextResponse.json(
       {
         error: '获取管理员配置失败',
@@ -94,7 +95,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true, message: '配置已保存' });
   } catch (error) {
-    console.error('保存配置失败:', error);
+    logger.error('保存配置失败:', error);
     return NextResponse.json(
       { error: '保存配置失败: ' + (error as Error).message },
       { status: 500 }

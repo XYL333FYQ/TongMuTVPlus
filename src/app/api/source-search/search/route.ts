@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { API_CONFIG, getAvailableApiSites } from '@/lib/config';
+import { logger } from '@/lib/logger';
 import { SearchResult } from '@/lib/types';
 
 export const runtime = 'nodejs';
@@ -119,7 +120,7 @@ export async function GET(request: NextRequest) {
       pageCount: searchData.pagecount || 0,
     });
   } catch (error) {
-    console.error('Failed to search videos:', error);
+    logger.error('Failed to search videos:', error);
     return NextResponse.json({ error: '搜索失败' }, { status: 500 });
   }
 }

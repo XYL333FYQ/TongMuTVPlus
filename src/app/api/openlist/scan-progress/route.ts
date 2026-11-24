@@ -3,6 +3,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getAuthInfoFromCookie } from '@/lib/auth';
+import { logger } from '@/lib/logger';
 import { requireFeaturePermission } from '@/lib/permissions';
 import { getScanTask } from '@/lib/scan-task';
 
@@ -43,7 +44,7 @@ export async function GET(request: NextRequest) {
       task,
     });
   } catch (error) {
-    console.error('获取扫描进度失败:', error);
+    logger.error('获取扫描进度失败:', error);
     return NextResponse.json(
       { error: '获取失败', details: (error as Error).message },
       { status: 500 }

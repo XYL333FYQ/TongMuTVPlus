@@ -6,6 +6,7 @@ import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getAvailableApiSites, getConfig } from '@/lib/config';
 import { getDetailFromApiV2 } from '@/lib/downstream';
 import { getProxyToken } from '@/lib/emby-token';
+import { logger } from '@/lib/logger';
 import {
   createBaiduNetdiskSession,
   getBaiduNetdiskSession,
@@ -388,9 +389,9 @@ export async function GET(request: NextRequest) {
       let decodedDirPath: string;
       try {
         decodedDirPath = base58Decode(id);
-        console.log('[xiaoya] 解码目录路径:', decodedDirPath);
+        logger.info('[xiaoya] 解码目录路径:', decodedDirPath);
       } catch (decodeError) {
-        console.error('[xiaoya] Base58解码失败:', decodeError);
+        logger.error('[xiaoya] Base58解码失败:', decodeError);
         throw new Error('无效的视频ID');
       }
 
@@ -406,7 +407,7 @@ export async function GET(request: NextRequest) {
         clickedFilePath = `${decodedDirPath}${
           decodedDirPath.endsWith('/') ? '' : '/'
         }${fileName}`;
-        console.log('[xiaoya] 用户点击的文件路径:', clickedFilePath);
+        logger.info('[xiaoya] 用户点击的文件路径:', clickedFilePath);
       }
 
       // 获取元数据（使用目录路径或点击的文件路径）
@@ -428,7 +429,7 @@ export async function GET(request: NextRequest) {
         clickedFileIndex = episodes.findIndex(
           (ep) => ep.path === clickedFilePath
         );
-        console.log('[xiaoya] 文件在集数列表中的索引:', clickedFileIndex);
+        logger.info('[xiaoya] 文件在集数列表中的索引:', clickedFileIndex);
       }
 
       const result = {
@@ -456,7 +457,7 @@ export async function GET(request: NextRequest) {
 
       return NextResponse.json(result, { headers: PRIVATE_MEDIA_HEADERS });
     } catch (error) {
-      console.error('[xiaoya] 获取详情失败:', error);
+      logger.error('[xiaoya] 获取详情失败:', error);
       return NextResponse.json(
         { error: (error as Error).message },
         { status: 500 }
@@ -806,7 +807,7 @@ export async function GET(request: NextRequest) {
         { headers: PRIVATE_MEDIA_HEADERS }
       );
     } catch (error) {
-      console.error('[netdisk-123][source-detail] error', error);
+      logger.error('[netdisk-123][source-detail] error', error);
       return NextResponse.json(
         { error: (error as Error).message },
         { status: 500 }

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getConfig } from '@/lib/config';
+import { logger } from '@/lib/logger';
 import { authorizeMediaProxy } from '@/lib/media-proxy-auth';
 import { validateProxyUrlServerSide } from '@/lib/server/ssrf';
 
@@ -108,7 +109,7 @@ export async function GET(request: NextRequest) {
 
     if (!isTextType) {
       if (source === DIRECT_PLAY_SOURCE) {
-        console.log(
+        logger.info(
           `[Proxy-M3U8] 检测到非文本媒体流 (Content-Type: ${contentType}), 针对 directplay 直链代理模式，直接透传二进制流, URL: ${m3u8Url}`
         );
         // 构造一个新的 Response 对象用于二进制直接透传，确保包含了支持跨域的 header
@@ -126,7 +127,7 @@ export async function GET(request: NextRequest) {
         });
       }
 
-      console.warn(
+      logger.warn(
         `[Proxy-M3U8] 拦截到非文本媒体流 (Content-Type: ${contentType}), 拒绝按文本解析, URL: ${m3u8Url}`
       );
       return NextResponse.json(
@@ -150,7 +151,7 @@ export async function GET(request: NextRequest) {
       !trimmedContent.startsWith('#EXTM3U') &&
       !trimmedContent.startsWith('#EXT')
     ) {
-      console.warn(
+      logger.warn(
         `[Proxy-M3U8] 内容校验失败：响应体不以 #EXTM3U 或 #EXT 开头, 可能非有效 m3u8, URL: ${m3u8Url}`
       );
       // 不直接拒绝（可能是不规范但仍可播放的 m3u8），仅打印警告继续处理
@@ -186,7 +187,7 @@ export async function GET(request: NextRequest) {
           );
           m3u8Content = customFunction(source, m3u8Content);
         } catch (err) {
-          console.error('执行自定义去广告代码失败,使用默认规则:', err);
+          logger.error('执行自定义去广告代码失败,使用默认规则:', err);
           // 继续使用默认规则
           m3u8Content = filterAdsFromM3U8Default(source, m3u8Content);
         }
@@ -216,7 +217,7 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error('代理 m3u8 失败:', error);
+    logger.error('代理 m3u8 失败:', error);
     return NextResponse.json(
       { error: '代理失败', details: (error as Error).message },
       { status: 500 }

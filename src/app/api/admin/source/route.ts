@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { getConfig } from '@/lib/config';
 import { db } from '@/lib/db';
+import { logger } from '@/lib/logger';
 import { isCaller, requireRole } from '@/lib/require-role';
 
 export const runtime = 'nodejs';
@@ -446,9 +447,9 @@ export async function POST(request: NextRequest) {
     // 清除短剧视频源缓存（因为视频源发生了变动）
     try {
       await db.deleteGlobalValue('duanju');
-      console.log('已清除短剧视频源缓存');
+      logger.info('已清除短剧视频源缓存');
     } catch (error) {
-      console.error('清除短剧视频源缓存失败:', error);
+      logger.error('清除短剧视频源缓存失败:', error);
       // 不影响主流程，继续执行
     }
 
@@ -467,7 +468,7 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error('视频源管理操作失败:', error);
+    logger.error('视频源管理操作失败:', error);
     return NextResponse.json(
       {
         error: '视频源管理操作失败',

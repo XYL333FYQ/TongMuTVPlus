@@ -5,6 +5,7 @@ import { validateKeywordExpr } from '@/lib/anime-keyword-expr';
 import { validateEpisodeRegex } from '@/lib/anime-subscription';
 import { getConfig } from '@/lib/config';
 import { db } from '@/lib/db';
+import { logger } from '@/lib/logger';
 import { isCaller, requireRole } from '@/lib/require-role';
 
 export const runtime = 'nodejs';
@@ -58,10 +59,7 @@ export async function PUT(
       subscription.title = normalizedTitle;
     }
     if (updates.filterText !== undefined) {
-      const filterCheck = validateKeywordExpr(
-        String(updates.filterText),
-        'and'
-      );
+      const filterCheck = validateKeywordExpr(String(updates.filterText));
       if (!filterCheck.ok) {
         return NextResponse.json(
           { error: `过滤关键词表达式无效: ${filterCheck.error}` },
@@ -76,7 +74,7 @@ export async function PUT(
           ? updates.excludeText.trim()
           : '';
       if (rawExclude) {
-        const excludeCheck = validateKeywordExpr(rawExclude, 'or');
+        const excludeCheck = validateKeywordExpr(rawExclude);
         if (!excludeCheck.ok) {
           return NextResponse.json(
             { error: `排除关键词表达式无效: ${excludeCheck.error}` },
@@ -139,7 +137,7 @@ export async function PUT(
 
     return NextResponse.json(subscription);
   } catch (error: any) {
-    console.error('更新追番订阅失败:', error);
+    logger.error('更新追番订阅失败:', error);
     return NextResponse.json(
       { error: error.message || '更新订阅失败' },
       { status: 500 }
@@ -174,7 +172,7 @@ export async function DELETE(
 
     return NextResponse.json({ success: true });
   } catch (error: any) {
-    console.error('删除追番订阅失败:', error);
+    logger.error('删除追番订阅失败:', error);
     return NextResponse.json(
       { error: error.message || '删除订阅失败' },
       { status: 500 }

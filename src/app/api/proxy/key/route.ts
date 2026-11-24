@@ -3,6 +3,7 @@
 import { NextResponse } from 'next/server';
 
 import { getConfig } from '@/lib/config';
+import { logger } from '@/lib/logger';
 import {
   guardedFetch,
   hostsOf,
@@ -30,7 +31,7 @@ export async function GET(request: Request) {
 
   try {
     const decodedUrl = decodeURIComponent(url);
-    console.log(decodedUrl);
+    logger.info(decodedUrl);
     const response = await guardedFetch(
       decodedUrl,
       {

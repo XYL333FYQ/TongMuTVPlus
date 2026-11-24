@@ -7,6 +7,7 @@ import {
 } from '@/lib/ai-comment-generator';
 import { ToolDataSources } from '@/lib/ai-tool-agent';
 import { getConfig } from '@/lib/config';
+import { logger } from '@/lib/logger';
 
 export const runtime = 'nodejs';
 
@@ -197,7 +198,7 @@ export async function GET(request: NextRequest) {
         };
         send(payload);
       } catch (error) {
-        console.error('AI评论生成失败:', error);
+        logger.error('AI评论生成失败:', error);
         const errorMessage =
           error instanceof Error ? error.message : 'AI评论生成失败';
         send({ error: errorMessage });

@@ -13,6 +13,7 @@ import {
 } from '@/lib/ai-tool-agent';
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig } from '@/lib/config';
+import { logger } from '@/lib/logger';
 import { hasFeaturePermission } from '@/lib/permissions';
 import { createThinkFilter } from '@/lib/think-filter';
 
@@ -147,7 +148,7 @@ function transformToSSE(
               } catch (e) {
                 // 只在非空数据解析失败时打印错误
                 if (data.length > 0) {
-                  console.error(
+                  logger.error(
                     'Parse stream chunk error:',
                     e,
                     'Data:',
@@ -177,7 +178,7 @@ function transformToSSE(
                 }
                 if (text) emit(thinkFilter.push(text));
               } catch (e) {
-                console.error('Parse final buffer error:', e);
+                logger.error('Parse final buffer error:', e);
               }
             }
           }
@@ -185,7 +186,7 @@ function transformToSSE(
         // 流结束：把还留着的普通文字（例如末尾疑似半个标签的部分）补发出去
         emit(thinkFilter.flush());
       } catch (error) {
-        console.error('Stream error:', error);
+        logger.error('Stream error:', error);
         const message = error instanceof Error ? error.message : String(error);
         controller.enqueue(
           new TextEncoder().encode(
@@ -369,7 +370,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log('收到AI聊天请求:', {
+    logger.info('收到AI聊天请求:', {
       message: message.slice(0, 50),
       context,
       historyLength: history.length,
@@ -394,7 +395,7 @@ export async function POST(request: NextRequest) {
       decisionModel: aiConfig.DecisionCustomModel,
     });
 
-    console.log(
+    logger.info(
       '数据协调完成, systemPrompt长度:',
       orchestrationResult.systemPrompt.length
     );
@@ -459,7 +460,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ content });
     }
   } catch (error) {
-    console.error('AI聊天API错误:', error);
+    logger.error('AI聊天API错误:', error);
     return NextResponse.json(
       {
         error: 'AI聊天请求失败',

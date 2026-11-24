@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig } from '@/lib/config';
-import { OpenListClient } from '@/lib/openlist.client';
+import { logger } from '@/lib/logger';
 import { invalidateVideoInfoCache } from '@/lib/openlist-cache';
 import { requireFeaturePermission } from '@/lib/permissions';
 
@@ -52,11 +52,6 @@ export async function POST(request: NextRequest) {
 
     // folder 已经是完整路径，直接使用
     const folderPath = folder;
-    const client = new OpenListClient(
-      openListConfig.URL,
-      openListConfig.Username,
-      openListConfig.Password
-    );
 
     // 清除缓存
     invalidateVideoInfoCache(folderPath);
@@ -66,7 +61,7 @@ export async function POST(request: NextRequest) {
       message: '刷新成功',
     });
   } catch (error) {
-    console.error('刷新视频失败:', error);
+    logger.error('刷新视频失败:', error);
     return NextResponse.json(
       { error: '刷新失败', details: (error as Error).message },
       { status: 500 }

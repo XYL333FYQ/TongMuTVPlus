@@ -3,6 +3,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { db } from '@/lib/db';
+import { logger } from '@/lib/logger';
 import { isCaller, requireRole } from '@/lib/require-role';
 
 export const runtime = 'nodejs';
@@ -22,7 +23,7 @@ export async function GET(request: NextRequest) {
     const history = await db.getSearchHistory(caller.username);
     return NextResponse.json(history, { status: 200 });
   } catch (err) {
-    console.error('获取搜索历史失败', err);
+    logger.error('获取搜索历史失败', err);
     return NextResponse.json(
       { error: 'Internal Server Error' },
       { status: 500 }
@@ -55,7 +56,7 @@ export async function POST(request: NextRequest) {
     const history = await db.getSearchHistory(caller.username);
     return NextResponse.json(history.slice(0, HISTORY_LIMIT), { status: 200 });
   } catch (err) {
-    console.error('添加搜索历史失败', err);
+    logger.error('添加搜索历史失败', err);
     return NextResponse.json(
       { error: 'Internal Server Error' },
       { status: 500 }
@@ -81,7 +82,7 @@ export async function DELETE(request: NextRequest) {
 
     return NextResponse.json({ success: true }, { status: 200 });
   } catch (err) {
-    console.error('删除搜索历史失败', err);
+    logger.error('删除搜索历史失败', err);
     return NextResponse.json(
       { error: 'Internal Server Error' },
       { status: 500 }

@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { API_CONFIG, getCacheTime, getConfig } from '@/lib/config';
 import { getDuanjuSources, isDuanjuTypeName } from '@/lib/duanju';
+import { logger } from '@/lib/logger';
 import { yellowWords } from '@/lib/yellow';
 
 export const runtime = 'nodejs';
@@ -88,7 +89,7 @@ export async function GET(request: NextRequest) {
       }
     );
   } catch (error) {
-    console.error('获取短剧分类失败:', error);
+    logger.error('获取短剧分类失败:', error);
     return NextResponse.json(
       {
         code: 500,

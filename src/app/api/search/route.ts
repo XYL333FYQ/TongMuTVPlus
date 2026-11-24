@@ -6,6 +6,7 @@ import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getAvailableApiSites, getConfig } from '@/lib/config';
 import { searchFromApi } from '@/lib/downstream';
 import { getProxyToken } from '@/lib/emby-token';
+import { logger } from '@/lib/logger';
 import { hasFeaturePermission } from '@/lib/permissions';
 import { PRIVATE_MEDIA_HEADERS } from '@/lib/private-media-headers';
 import {
@@ -71,8 +72,8 @@ export async function GET(request: NextRequest) {
   const embySourcesMap = await embyManager.getAllClients();
   const embySources = canAccessEmby ? Array.from(embySourcesMap.values()) : [];
 
-  console.log('[Search] Emby sources count:', embySources.length);
-  console.log(
+  logger.info('[Search] Emby sources count:', embySources.length);
+  logger.info(
     '[Search] Emby sources:',
     embySources.map((s) => ({ key: s.config.key, name: s.config.name }))
   );
@@ -119,7 +120,7 @@ export async function GET(request: NextRequest) {
             douban_id: 0,
           }));
         } catch (error) {
-          console.error(`[Search] 搜索 ${embyConfig.name} 失败:`, error);
+          logger.error(`[Search] 搜索 ${embyConfig.name} 失败:`, error);
           return [];
         }
       })(),
@@ -127,7 +128,7 @@ export async function GET(request: NextRequest) {
         setTimeout(() => reject(new Error(`${embyConfig.name} timeout`)), 20000)
       ),
     ]).catch((error) => {
-      console.error(`[Search] 搜索 ${embyConfig.name} 超时:`, error);
+      logger.error(`[Search] 搜索 ${embyConfig.name} 超时:`, error);
       return [];
     })
   );
@@ -183,7 +184,7 @@ export async function GET(request: NextRequest) {
             }
             return [];
           } catch (error) {
-            console.error('[Search] 搜索 OpenList 失败:', error);
+            logger.error('[Search] 搜索 OpenList 失败:', error);
             return [];
           }
         })(),
@@ -191,7 +192,7 @@ export async function GET(request: NextRequest) {
           setTimeout(() => reject(new Error('OpenList timeout')), 20000)
         ),
       ]).catch((error) => {
-        console.error('[Search] 搜索 OpenList 超时:', error);
+        logger.error('[Search] 搜索 OpenList 超时:', error);
         return [];
       })
     : Promise.resolve([]);
@@ -204,7 +205,7 @@ export async function GET(request: NextRequest) {
         setTimeout(() => reject(new Error(`${site.name} timeout`)), 20000)
       ),
     ]).catch((err) => {
-      console.warn(`搜索失败 ${site.name}:`, err.message);
+      logger.warn(`搜索失败 ${site.name}:`, err.message);
       return []; // 返回空数组而不是抛出错误
     })
   );
@@ -245,7 +246,7 @@ export async function GET(request: NextRequest) {
 
           return searchResults.flat();
         } catch (error) {
-          console.error(`[Search] 搜索脚本 ${script.name} 失败:`, error);
+          logger.error(`[Search] 搜索脚本 ${script.name} 失败:`, error);
           return [];
         }
       })(),
@@ -253,7 +254,7 @@ export async function GET(request: NextRequest) {
         setTimeout(() => reject(new Error(`${script.name} timeout`)), 20000)
       ),
     ]).catch((error) => {
-      console.error(`[Search] 搜索脚本 ${script.name} 超时:`, error);
+      logger.error(`[Search] 搜索脚本 ${script.name} 超时:`, error);
       return [];
     })
   );
@@ -321,7 +322,7 @@ export async function GET(request: NextRequest) {
       }
     );
   } catch (error) {
-    console.error('[Search] 搜索结果处理失败:', error);
+    logger.error('[Search] 搜索结果处理失败:', error);
     return NextResponse.json({ error: '搜索失败' }, { status: 500 });
   }
 }

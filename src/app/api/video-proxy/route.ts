@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 
+import { logger } from '@/lib/logger';
 import { validateProxyUrlServerSide } from '@/lib/server/ssrf';
 
 export const runtime = 'nodejs';
@@ -93,7 +94,7 @@ export async function GET(request: Request) {
       headers,
     });
   } catch (error) {
-    console.error('Error proxying video:', error);
+    logger.error('Error proxying video:', error);
     return NextResponse.json(
       { error: 'Error fetching video' },
       { status: 500 }

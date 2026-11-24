@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+import { logger } from '@/lib/logger';
 import {
   extractSongmid,
   isMusicSource,
@@ -183,7 +184,7 @@ export async function GET(request: NextRequest) {
         signal: AbortSignal.timeout(90000),
         cache: 'no-store',
       });
-      console.warn(
+      logger.warn(
         '[music-v2/stream] upstream fetch failed once, retried with refreshed URL',
         {
           source,

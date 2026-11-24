@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig } from '@/lib/config';
+import { logger } from '@/lib/logger';
 import { OpenListClient } from '@/lib/openlist.client';
 import {
   is115OpenListProvider,
@@ -36,7 +37,7 @@ async function getFinalUrl(url: string, maxRedirects = 5): Promise<string> {
         },
       });
     } catch (error) {
-      console.log(
+      logger.info(
         '[openlist/play] HEAD 请求失败，降级使用 GET:',
         (error as Error).message
       );
@@ -64,7 +65,7 @@ async function getFinalUrl(url: string, maxRedirects = 5): Promise<string> {
         }
         return getResponse.status < 400 ? finalUrl : currentUrl;
       } catch (error) {
-        console.error('[openlist/play] 获取最终 URL 失败:', error);
+        logger.error('[openlist/play] 获取最终 URL 失败:', error);
         return currentUrl;
       }
     }
@@ -291,7 +292,7 @@ export async function GET(request: NextRequest) {
       const fileResponse = await client.getFile(filePath);
 
       if (fileResponse.code !== 200 || !fileResponse.data.raw_url) {
-        console.error('[OpenList Play] 获取播放URL失败:', {
+        logger.error('[OpenList Play] 获取播放URL失败:', {
           fileName,
           code: fileResponse.code,
           message: fileResponse.message,
@@ -376,7 +377,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(qualities[0].url);
     } catch (error) {
       // 视频预览流失败，降级到直连方法
-      console.log(
+      logger.info(
         '[openlist/play] 视频预览流失败，降级到直连方法:',
         (error as Error).message
       );
@@ -384,7 +385,7 @@ export async function GET(request: NextRequest) {
       const fileResponse = await client.getFile(filePath);
 
       if (fileResponse.code !== 200 || !fileResponse.data.raw_url) {
-        console.error('[OpenList Play] 获取播放URL失败:', {
+        logger.error('[OpenList Play] 获取播放URL失败:', {
           fileName,
           code: fileResponse.code,
           message: fileResponse.message,
@@ -414,7 +415,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(playUrl);
     }
   } catch (error) {
-    console.error('获取播放链接失败:', error);
+    logger.error('获取播放链接失败:', error);
     return NextResponse.json(
       { error: '获取失败', details: (error as Error).message },
       { status: 500 }

@@ -16,6 +16,7 @@ import {
   setBangumiScheduleMemoryCache,
 } from '@/lib/bangumi-schedule-cache.server';
 import { getConfig } from '@/lib/config';
+import { logger } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 
@@ -167,7 +168,7 @@ export async function GET() {
       headers: { 'Cache-Control': 'public, max-age=3600' },
     });
   } catch (error) {
-    console.error('获取 Bangumi 时刻表失败:', error);
+    logger.error('获取 Bangumi 时刻表失败:', error);
     return NextResponse.json(
       { error: '获取 Bangumi 时刻表失败' },
       { status: 500 }

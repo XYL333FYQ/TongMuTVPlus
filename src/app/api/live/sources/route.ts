@@ -3,12 +3,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getConfig } from '@/lib/config';
+import { logger } from '@/lib/logger';
 import { requireFeaturePermission } from '@/lib/permissions';
 
 export const runtime = 'nodejs';
 
 export async function GET(request: NextRequest) {
-  console.log(request.url);
+  logger.info(request.url);
   try {
     const authResult = await requireFeaturePermission(
       request,
@@ -32,7 +33,7 @@ export async function GET(request: NextRequest) {
       data: liveSources,
     });
   } catch (error) {
-    console.error('获取直播源失败:', error);
+    logger.error('获取直播源失败:', error);
     return NextResponse.json({ error: '获取直播源失败' }, { status: 500 });
   }
 }

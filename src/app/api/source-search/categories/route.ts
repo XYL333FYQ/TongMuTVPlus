@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { API_CONFIG, getAvailableApiSites, getConfig } from '@/lib/config';
+import { logger } from '@/lib/logger';
 import { yellowWords } from '@/lib/yellow';
 
 export const runtime = 'nodejs';
@@ -80,7 +81,7 @@ export async function GET(request: NextRequest) {
       })),
     });
   } catch (error) {
-    console.error('Failed to get categories:', error);
+    logger.error('Failed to get categories:', error);
     return NextResponse.json({ error: '获取分类列表失败' }, { status: 500 });
   }
 }

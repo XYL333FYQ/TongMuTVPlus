@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { getConfig, refineConfig } from '@/lib/config';
 import { db } from '@/lib/db';
+import { logger } from '@/lib/logger';
 import { isCaller, requireRole } from '@/lib/require-role';
 
 export const runtime = 'nodejs';
@@ -72,9 +73,9 @@ export async function POST(request: NextRequest) {
     // 清除短剧视频源缓存（因为配置文件可能包含新的视频源）
     try {
       await db.deleteGlobalValue('duanju');
-      console.log('已清除短剧视频源缓存');
+      logger.info('已清除短剧视频源缓存');
     } catch (error) {
-      console.error('清除短剧视频源缓存失败:', error);
+      logger.error('清除短剧视频源缓存失败:', error);
       // 不影响主流程，继续执行
     }
 
@@ -83,7 +84,7 @@ export async function POST(request: NextRequest) {
       message: '配置文件更新成功',
     });
   } catch (error) {
-    console.error('更新配置文件失败:', error);
+    logger.error('更新配置文件失败:', error);
     return NextResponse.json(
       {
         error: '更新配置文件失败',

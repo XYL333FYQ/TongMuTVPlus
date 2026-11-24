@@ -10,6 +10,7 @@ import { getAuthInfoFromCookie } from '@/lib/auth';
 import { setAuthCookie } from '@/lib/auth-cookie';
 import { isSecureRequest } from '@/lib/cookie-security';
 import { getStorage } from '@/lib/db';
+import { logger } from '@/lib/logger';
 import {
   getUserDevices,
   revokeAllRefreshTokens,
@@ -37,7 +38,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ devices: devicesWithCurrent });
   } catch (error) {
-    console.error('Failed to get devices:', error);
+    logger.error('Failed to get devices:', error);
     return NextResponse.json({ error: 'Server error' }, { status: 500 });
   }
 }
@@ -67,7 +68,7 @@ export async function DELETE(request: NextRequest) {
 
     return NextResponse.json({ ok: true });
   } catch (error) {
-    console.error('Failed to revoke device:', error);
+    logger.error('Failed to revoke device:', error);
     return NextResponse.json({ error: 'Server error' }, { status: 500 });
   }
 }
@@ -98,7 +99,7 @@ export async function POST(request: NextRequest) {
 
     return response;
   } catch (error) {
-    console.error('Failed to revoke all devices:', error);
+    logger.error('Failed to revoke all devices:', error);
     return NextResponse.json({ error: 'Server error' }, { status: 500 });
   }
 }

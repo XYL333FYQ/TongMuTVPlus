@@ -13,6 +13,7 @@ import {
   trimFeedback,
   withFeedbackLock,
 } from '@/lib/feedback';
+import { logger } from '@/lib/logger';
 import { getUserFeatureAccess } from '@/lib/permissions';
 import { isCaller, requireRole } from '@/lib/require-role';
 
@@ -50,7 +51,7 @@ export async function GET(request: NextRequest) {
       { headers: { 'Cache-Control': 'no-store' } }
     );
   } catch (error) {
-    console.error('读取反馈失败:', error);
+    logger.error('读取反馈失败:', error);
     return NextResponse.json({ error: '读取反馈失败' }, { status: 500 });
   }
 }
@@ -130,12 +131,12 @@ export async function POST(request: NextRequest) {
           metadata: { feedbackId: result.item.id, username },
         });
       } catch (error) {
-        console.error('通知站长失败:', error);
+        logger.error('通知站长失败:', error);
       }
     }
     return NextResponse.json({ ok: true, item: result.item });
   } catch (error) {
-    console.error('提交反馈失败:', error);
+    logger.error('提交反馈失败:', error);
     return NextResponse.json(
       { error: '提交失败，请稍后再试' },
       { status: 500 }

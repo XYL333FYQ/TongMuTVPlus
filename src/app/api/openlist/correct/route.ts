@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { getConfig } from '@/lib/config';
 import { db } from '@/lib/db';
-import { OpenListClient } from '@/lib/openlist.client';
+import { logger } from '@/lib/logger';
 import {
   getCachedMetaInfo,
   invalidateMetaInfoCache,
@@ -36,7 +36,6 @@ export async function POST(request: NextRequest) {
     const {
       key,
       tmdbId,
-      doubanId,
       title,
       posterPath,
       releaseDate,
@@ -71,25 +70,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const client = new OpenListClient(
-      openListConfig.URL,
-      openListConfig.Username,
-      openListConfig.Password
-    );
-
     // 读取现有 metainfo (从数据库或缓存)
     let metaInfo: MetaInfo | null = getCachedMetaInfo();
 
     if (!metaInfo) {
       try {
-        console.log('[OpenList Correct] 尝试从数据库读取 metainfo');
+        logger.info('[OpenList Correct] 尝试从数据库读取 metainfo');
         const metainfoJson = await db.getGlobalValue('video.metainfo');
 
         if (metainfoJson) {
           metaInfo = JSON.parse(metainfoJson);
         }
       } catch (error) {
-        console.error('[OpenList Correct] 从数据库读取 metainfo 失败:', error);
+        logger.error('[OpenList Correct] 从数据库读取 metainfo 失败:', error);
         return NextResponse.json(
           { error: 'metainfo 读取失败' },
           { status: 500 }
@@ -142,7 +135,7 @@ export async function POST(request: NextRequest) {
       message: '纠错成功',
     });
   } catch (error) {
-    console.error('视频纠错失败:', error);
+    logger.error('视频纠错失败:', error);
     return NextResponse.json(
       { error: '纠错失败', details: (error as Error).message },
       { status: 500 }

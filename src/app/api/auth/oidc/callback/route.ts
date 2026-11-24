@@ -6,6 +6,7 @@ import { getAuthSigningSecret } from '@/lib/auth-secret';
 import { getConfig } from '@/lib/config';
 import { isSecureRequest } from '@/lib/cookie-security';
 import { db } from '@/lib/db';
+import { logger } from '@/lib/logger';
 import { signOidcSession } from '@/lib/oidc-session';
 import {
   generateRefreshToken,
@@ -134,7 +135,7 @@ export async function GET(request: NextRequest) {
 
     // 检查是否有错误
     if (error) {
-      console.error('OIDC认证错误:', error);
+      logger.error('OIDC认证错误:', error);
       return NextResponse.redirect(
         new URL(`/login?error=${encodeURIComponent('OIDC认证失败')}`, origin)
       );
@@ -188,7 +189,7 @@ export async function GET(request: NextRequest) {
     });
 
     if (!tokenResponse.ok) {
-      console.error('获取token失败:', await tokenResponse.text());
+      logger.error('获取token失败:', await tokenResponse.text());
       return NextResponse.redirect(
         new URL('/login?error=' + encodeURIComponent('获取token失败'), origin)
       );
@@ -212,7 +213,7 @@ export async function GET(request: NextRequest) {
     });
 
     if (!userInfoResponse.ok) {
-      console.error('获取用户信息失败:', await userInfoResponse.text());
+      logger.error('获取用户信息失败:', await userInfoResponse.text());
       return NextResponse.redirect(
         new URL(
           '/login?error=' + encodeURIComponent('获取用户信息失败'),
@@ -305,7 +306,7 @@ export async function GET(request: NextRequest) {
 
     return response;
   } catch (error) {
-    console.error('OIDC回调处理失败:', error);
+    logger.error('OIDC回调处理失败:', error);
     const origin = process.env.SITE_BASE || request.nextUrl.origin;
     return NextResponse.redirect(
       new URL('/login?error=' + encodeURIComponent('服务器错误'), origin)

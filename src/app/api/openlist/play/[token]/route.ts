@@ -3,6 +3,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getConfig } from '@/lib/config';
+import { logger } from '@/lib/logger';
 import { OpenListClient } from '@/lib/openlist.client';
 import { hasFeaturePermission } from '@/lib/permissions';
 import { authenticateRequest } from '@/lib/request-auth';
@@ -124,7 +125,7 @@ export async function GET(
     const fileResponse = await client.getFile(filePath);
 
     if (fileResponse.code !== 200 || !fileResponse.data.raw_url) {
-      console.error('[OpenList Play] 获取播放URL失败:', {
+      logger.error('[OpenList Play] 获取播放URL失败:', {
         fileName,
         code: fileResponse.code,
         message: fileResponse.message,
@@ -148,7 +149,7 @@ export async function GET(
 
     return NextResponse.redirect(playUrl);
   } catch (error) {
-    console.error('获取播放链接失败:', error);
+    logger.error('获取播放链接失败:', error);
     return NextResponse.json(
       { error: '获取失败', details: (error as Error).message },
       { status: 500 }

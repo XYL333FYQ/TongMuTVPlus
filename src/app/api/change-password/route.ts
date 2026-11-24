@@ -6,6 +6,7 @@ import { invalidateDeviceAccessToken } from '@/lib/access-token-invalidation';
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getStorage } from '@/lib/db';
 import { db } from '@/lib/db';
+import { logger } from '@/lib/logger';
 import { getUserDevices, revokeRefreshToken } from '@/lib/refresh-token';
 
 export const runtime = 'nodejs';
@@ -66,19 +67,19 @@ export async function POST(request: NextRequest) {
             username,
             device.tokenId
           );
-          console.log(
+          logger.info(
             `Revoked token ${device.tokenId} for ${username} after password change`
           );
         }
       }
 
-      console.log(
+      logger.info(
         `Password changed for ${username}, revoked ${
           devices.length - 1
         } other devices`
       );
     } catch (error) {
-      console.error(
+      logger.error(
         'Failed to revoke other devices after password change:',
         error
       );
@@ -87,7 +88,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ ok: true });
   } catch (error) {
-    console.error('修改密码失败:', error);
+    logger.error('修改密码失败:', error);
     return NextResponse.json(
       {
         error: '修改密码失败',

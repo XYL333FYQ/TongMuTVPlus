@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+import { logger } from '@/lib/logger';
 import {
   extractSongmid,
   fetchLxLyric,
@@ -194,7 +195,7 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error('[music-v2] play route error:', error);
+    logger.error('[music-v2] play route error:', error);
     return internalError('获取播放信息失败', (error as Error).message);
   }
 }

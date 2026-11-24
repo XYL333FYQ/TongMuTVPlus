@@ -4,6 +4,7 @@ import { parseStringPromise } from 'xml2js';
 
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig } from '@/lib/config';
+import { logger } from '@/lib/logger';
 import { getMagnetBaseUrl, universalMagnetFetch } from '@/lib/magnet.client';
 import { hasFeaturePermission } from '@/lib/permissions';
 
@@ -154,7 +155,7 @@ export async function POST(req: NextRequest) {
       items: results,
     });
   } catch (error: any) {
-    console.error('DMHY 搜索失败:', error);
+    logger.error('DMHY 搜索失败:', error);
     return NextResponse.json(
       { error: error.message || '搜索失败' },
       { status: 500 }

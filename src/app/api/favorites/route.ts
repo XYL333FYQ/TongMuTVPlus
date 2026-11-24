@@ -3,6 +3,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { db } from '@/lib/db';
+import { logger } from '@/lib/logger';
 import { isCaller, requireRole } from '@/lib/require-role';
 import { Favorite } from '@/lib/types';
 
@@ -26,14 +27,14 @@ export async function GET(request: NextRequest) {
 
       // 检查收藏迁移标识，没有迁移标识时执行迁移
       if (!userInfoV2.favorite_migrated) {
-        console.log(`用户 ${caller.username} 收藏未迁移，开始执行迁移...`);
+        logger.info(`用户 ${caller.username} 收藏未迁移，开始执行迁移...`);
         await db.migrateFavorites(caller.username);
       }
     } else {
       // 站长也需要执行迁移（站长可能不在数据库中，直接尝试迁移）
       const userInfoV2 = await db.getUserInfoV2(caller.username);
       if (!userInfoV2 || !userInfoV2.favorite_migrated) {
-        console.log(`站长 ${caller.username} 收藏未迁移，开始执行迁移...`);
+        logger.info(`站长 ${caller.username} 收藏未迁移，开始执行迁移...`);
         await db.migrateFavorites(caller.username);
       }
     }
@@ -58,7 +59,7 @@ export async function GET(request: NextRequest) {
     const favorites = await db.getAllFavorites(caller.username);
     return NextResponse.json(favorites, { status: 200 });
   } catch (err) {
-    console.error('获取收藏失败', err);
+    logger.error('获取收藏失败', err);
     return NextResponse.json(
       { error: 'Internal Server Error' },
       { status: 500 }
@@ -110,7 +111,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true }, { status: 200 });
   } catch (err) {
-    console.error('保存收藏失败', err);
+    logger.error('保存收藏失败', err);
     return NextResponse.json(
       { error: 'Internal Server Error' },
       { status: 500 }
@@ -189,7 +190,7 @@ export async function DELETE(request: NextRequest) {
 
     return NextResponse.json({ success: true }, { status: 200 });
   } catch (err) {
-    console.error('删除收藏失败', err);
+    logger.error('删除收藏失败', err);
     return NextResponse.json(
       { error: 'Internal Server Error' },
       { status: 500 }

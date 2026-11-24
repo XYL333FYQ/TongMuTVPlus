@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig } from '@/lib/config';
+import { logger } from '@/lib/logger';
 import { getTMDBCredits } from '@/lib/tmdb.client';
 
 export const runtime = 'nodejs';
@@ -63,7 +64,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(response.credits);
   } catch (error) {
-    console.error('TMDB演职人员信息获取失败:', error);
+    logger.error('TMDB演职人员信息获取失败:', error);
     return NextResponse.json(
       { error: '获取演职人员信息失败', details: (error as Error).message },
       { status: 500 }

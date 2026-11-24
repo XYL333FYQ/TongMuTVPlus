@@ -3,6 +3,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getAuthInfoFromCookie } from '@/lib/auth';
+import { logger } from '@/lib/logger';
 import { OpenListClient } from '@/lib/openlist.client';
 import { requireFeaturePermission } from '@/lib/permissions';
 
@@ -53,7 +54,7 @@ export async function POST(request: NextRequest) {
       );
     }
   } catch (error) {
-    console.error('检查 OpenList 连通性失败:', error);
+    logger.error('检查 OpenList 连通性失败:', error);
     return NextResponse.json(
       {
         success: false,

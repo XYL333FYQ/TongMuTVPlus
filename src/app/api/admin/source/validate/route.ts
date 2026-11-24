@@ -4,6 +4,7 @@ import { NextRequest } from 'next/server';
 
 import { getConfig } from '@/lib/config';
 import { API_CONFIG } from '@/lib/config';
+import { logger } from '@/lib/logger';
 import { isCaller, requireRole } from '@/lib/require-role';
 
 export const runtime = 'nodejs';
@@ -48,7 +49,7 @@ export async function GET(request: NextRequest) {
           controller.enqueue(data);
           return true;
         } catch (error) {
-          console.warn('Failed to enqueue data:', error);
+          logger.warn('Failed to enqueue data:', error);
           streamClosed = true;
           return false;
         }
@@ -137,7 +138,7 @@ export async function GET(request: NextRequest) {
             clearTimeout(timeoutId);
           }
         } catch (error) {
-          console.warn(`验证失败 ${site.name}:`, error);
+          logger.warn(`验证失败 ${site.name}:`, error);
 
           // 发送源错误事件
           completedSources++;
@@ -168,7 +169,7 @@ export async function GET(request: NextRequest) {
           try {
             controller.close();
           } catch (error) {
-            console.warn('Failed to close controller:', error);
+            logger.warn('Failed to close controller:', error);
           }
         }
       }
@@ -176,7 +177,7 @@ export async function GET(request: NextRequest) {
 
     cancel() {
       streamClosed = true;
-      console.log('Client disconnected, cancelling validation stream');
+      logger.info('Client disconnected, cancelling validation stream');
     },
   });
 

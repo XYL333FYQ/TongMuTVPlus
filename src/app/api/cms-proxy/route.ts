@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { getConfig } from '@/lib/config';
 import { db } from '@/lib/db';
+import { logger } from '@/lib/logger';
 import { authorizeMediaProxy } from '@/lib/media-proxy-auth';
 import {
   getCachedMetaInfo,
@@ -62,7 +63,7 @@ export async function GET(request: NextRequest) {
     });
 
     // 请求原始 CMS API
-    console.log('CMS 代理请求:', `${targetUrl.origin}${targetUrl.pathname}`);
+    logger.info('CMS 代理请求:', `${targetUrl.origin}${targetUrl.pathname}`);
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 15000); // 15秒超时
@@ -79,11 +80,7 @@ export async function GET(request: NextRequest) {
 
       if (!response.ok) {
         clearTimeout(timeoutId);
-        console.error(
-          'CMS API 请求失败:',
-          response.status,
-          response.statusText
-        );
+        logger.error('CMS API 请求失败:', response.status, response.statusText);
         return NextResponse.json(
           { error: '请求 CMS API 失败' },
           { status: response.status }
@@ -93,7 +90,7 @@ export async function GET(request: NextRequest) {
       // 超时要管到响应体读完：只拿到响应头就清掉，对方卡住正文时请求会一直挂着
       const data = await response.json();
       clearTimeout(timeoutId);
-      console.log('CMS API 返回数据:', {
+      logger.info('CMS API 返回数据:', {
         code: data.code,
         msg: data.msg,
         page: data.page,
@@ -120,7 +117,7 @@ export async function GET(request: NextRequest) {
         origin = `${proto}://${host}`;
       }
 
-      console.log('CMS 代理 origin:', origin);
+      logger.info('CMS 代理 origin:', origin);
 
       // 处理返回数据，替换播放链接为代理链接
       const processedData = processCmsResponse(
@@ -140,7 +137,7 @@ export async function GET(request: NextRequest) {
       clearTimeout(timeoutId);
 
       if (fetchError.name === 'AbortError') {
-        console.error(
+        logger.error(
           'CMS API 请求超时:',
           `${targetUrl.origin}${targetUrl.pathname}`
         );
@@ -150,7 +147,7 @@ export async function GET(request: NextRequest) {
       throw fetchError;
     }
   } catch (error) {
-    console.error('CMS 代理失败:', error);
+    logger.error('CMS 代理失败:', error);
     return NextResponse.json(
       { error: '代理失败', details: (error as Error).message },
       { status: 500 }
@@ -217,7 +214,7 @@ function processCmsResponse(
 
           // 只为第一个视频输出详细日志
           if (index === 0) {
-            console.log('播放地址处理:', {
+            logger.info('播放地址处理:', {
               vod_name: item.vod_name,
               vod_play_from: item.vod_play_from,
               original_length: originalUrl.length,
@@ -226,7 +223,7 @@ function processCmsResponse(
           }
         } catch (error) {
           // 如果处理失败，保持原样
-          console.error('处理播放地址失败:', error, item.vod_name);
+          logger.error('处理播放地址失败:', error, item.vod_name);
         }
       }
       return item;
@@ -484,7 +481,7 @@ async function handleOpenListProxy(request: NextRequest) {
         ],
       });
     } catch (error) {
-      console.error('获取 OpenList 视频详情失败:', error);
+      logger.error('获取 OpenList 视频详情失败:', error);
       return NextResponse.json(
         { code: 0, msg: '获取详情失败', list: [] },
         { status: 200 }

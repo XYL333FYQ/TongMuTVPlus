@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { getConfig } from '@/lib/config';
 import { db } from '@/lib/db';
+import { logger } from '@/lib/logger';
 import { isCaller, requireRole } from '@/lib/require-role';
 
 export const runtime = 'nodejs';
@@ -175,7 +176,7 @@ export async function POST(request: NextRequest) {
       }
     );
   } catch (error) {
-    console.error('分类管理操作失败:', error);
+    logger.error('分类管理操作失败:', error);
     return NextResponse.json(
       {
         error: '分类管理操作失败',

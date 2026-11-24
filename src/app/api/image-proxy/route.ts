@@ -5,6 +5,7 @@ import { NextResponse } from 'next/server';
 import nodeFetch from 'node-fetch';
 
 import { getConfig } from '@/lib/config';
+import { logger } from '@/lib/logger';
 import {
   guardedFetch,
   isProxyTargetAllowed,
@@ -156,7 +157,7 @@ export async function GET(request: Request) {
     if (error instanceof ProxyTargetBlockedError) {
       return NextResponse.json({ error: error.message }, { status: 403 });
     }
-    console.error('图片代理请求失败:', error);
+    logger.error('图片代理请求失败:', error);
     return NextResponse.json(
       { error: 'Error fetching image' },
       { status: 500 }

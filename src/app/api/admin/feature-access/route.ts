@@ -13,6 +13,7 @@ import {
   sanitizeFeaturePermissions,
   sanitizeFeaturePolicies,
 } from '@/lib/feature-permissions';
+import { logger } from '@/lib/logger';
 import { isCaller, isOwner, requireRole } from '@/lib/require-role';
 
 export const runtime = 'nodejs';
@@ -101,7 +102,7 @@ export async function POST(request: NextRequest) {
     await setCachedConfig(config);
     return NextResponse.json({ ok: true });
   } catch (error) {
-    console.error('更新功能权限失败:', error);
+    logger.error('更新功能权限失败:', error);
     return NextResponse.json({ error: '更新功能权限失败' }, { status: 500 });
   }
 }

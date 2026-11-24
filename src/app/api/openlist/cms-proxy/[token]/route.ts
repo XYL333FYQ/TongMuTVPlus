@@ -3,6 +3,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getConfig } from '@/lib/config';
+import { logger } from '@/lib/logger';
 import { hasFeaturePermission } from '@/lib/permissions';
 
 export const runtime = 'nodejs';
@@ -111,10 +112,7 @@ export async function GET(
           }
         }
       } catch (error) {
-        console.error(
-          '[OpenList CMS Proxy] 从数据库读取 metainfo 失败:',
-          error
-        );
+        logger.error('[OpenList CMS Proxy] 从数据库读取 metainfo 失败:', error);
       }
     }
 
@@ -143,7 +141,7 @@ export async function GET(
           request
         );
       }
-      return await handleSearch(metaInfo, wd, request);
+      return await handleSearch(metaInfo, wd);
     }
 
     // 详情模式
@@ -170,9 +168,9 @@ export async function GET(
     }
 
     // 列表模式（返回所有）
-    return await handleSearch(metaInfo, '', request);
+    return await handleSearch(metaInfo, '');
   } catch (error) {
-    console.error('[OpenList CMS Proxy] 错误:', error);
+    logger.error('[OpenList CMS Proxy] 错误:', error);
     return NextResponse.json(
       {
         code: 500,
@@ -191,11 +189,7 @@ export async function GET(
 /**
  * 处理搜索请求
  */
-async function handleSearch(
-  metaInfo: any,
-  query: string,
-  request: NextRequest
-) {
+async function handleSearch(metaInfo: any, query: string) {
   const { getTMDBImageUrl } = await import('@/lib/tmdb.search');
 
   const lowerQuery = query.toLowerCase();

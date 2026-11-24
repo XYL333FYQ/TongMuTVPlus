@@ -25,7 +25,7 @@ function buildRefreshResponse(authToken?: string | null) {
     body.token = authToken;
     const authInfo = parseAuthInfo(authToken);
     if (authInfo) {
-      const { password, ...rest } = authInfo;
+      const { password: _password, ...rest } = authInfo;
       body.auth = rest;
     }
   }

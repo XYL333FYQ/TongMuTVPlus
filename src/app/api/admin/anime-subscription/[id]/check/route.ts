@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { checkSubscription } from '@/lib/anime-subscription';
 import { getConfig } from '@/lib/config';
 import { db } from '@/lib/db';
+import { logger } from '@/lib/logger';
 import { isCaller, requireRole } from '@/lib/require-role';
 
 export const runtime = 'nodejs';
@@ -41,7 +42,7 @@ export async function POST(
       ...result,
     });
   } catch (error: any) {
-    console.error('检查追番订阅失败:', error);
+    logger.error('检查追番订阅失败:', error);
     return NextResponse.json(
       { error: error.message || '检查失败' },
       { status: 500 }

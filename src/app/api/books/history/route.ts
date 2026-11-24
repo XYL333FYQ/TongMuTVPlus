@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { BookReadRecord } from '@/lib/book.types';
 import { db } from '@/lib/db';
+import { logger } from '@/lib/logger';
 
 import { getAuthorizedBooksUsername } from '../_utils';
 
@@ -101,7 +102,7 @@ export async function POST(request: NextRequest) {
       (db as any).storage
         .cleanupOldBookReadRecords(username)
         .catch((err: Error) => {
-          console.error('异步清理电子书阅读历史失败:', err);
+          logger.error('异步清理电子书阅读历史失败:', err);
         });
     }
 

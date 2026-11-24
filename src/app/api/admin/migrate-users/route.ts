@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { getConfig } from '@/lib/config';
 import { db } from '@/lib/db';
+import { logger } from '@/lib/logger';
 import { isCaller, requireRole } from '@/lib/require-role';
 import { isOwnerRole } from '@/lib/roles';
 
@@ -59,7 +60,7 @@ export async function POST(request: NextRequest) {
       }
     );
   } catch (error) {
-    console.error('用户数据迁移失败:', error);
+    logger.error('用户数据迁移失败:', error);
     return NextResponse.json(
       {
         error: '用户数据迁移失败',

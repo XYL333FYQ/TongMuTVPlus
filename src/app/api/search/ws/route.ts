@@ -6,6 +6,7 @@ import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getAvailableApiSites, getConfig } from '@/lib/config';
 import { searchFromApi } from '@/lib/downstream';
 import { getProxyToken } from '@/lib/emby-token';
+import { logger } from '@/lib/logger';
 import { hasFeaturePermission } from '@/lib/permissions';
 import {
   executeSavedSourceScript,
@@ -103,7 +104,7 @@ export async function GET(request: NextRequest) {
           return true;
         } catch (error) {
           // 控制器已关闭或出现其他错误
-          console.warn('Failed to enqueue data:', error);
+          logger.warn('Failed to enqueue data:', error);
           streamClosed = true;
           return false;
         }
@@ -117,7 +118,7 @@ export async function GET(request: NextRequest) {
           const embySourcesMap = await embyManager.getAllClients();
           embySourcesCount = embySourcesMap.size;
         } catch (error) {
-          console.error('[Search WS] 获取 Emby 源数量失败:', error);
+          logger.error('[Search WS] 获取 Emby 源数量失败:', error);
         }
       }
 
@@ -157,7 +158,7 @@ export async function GET(request: NextRequest) {
           try {
             controller.close();
           } catch (error) {
-            console.warn('Failed to close controller:', error);
+            logger.warn('Failed to close controller:', error);
           }
         }
       };
@@ -247,7 +248,7 @@ export async function GET(request: NextRequest) {
 
                   return results;
                 } catch (error) {
-                  console.error(
+                  logger.error(
                     `[Search WS] 搜索 ${embyConfig.name} 失败:`,
                     error
                   );
@@ -278,7 +279,7 @@ export async function GET(request: NextRequest) {
 
             await Promise.all(embySearchPromises);
           } catch (error) {
-            console.error('[Search WS] 搜索 Emby 整体失败:', error);
+            logger.error('[Search WS] 搜索 Emby 整体失败:', error);
             // 如果整个 emby 搜索失败，需要补齐未完成的源
             const remainingSources = embySourcesCount - embyCompletedCount;
             for (let i = 0; i < remainingSources; i++) {
@@ -324,7 +325,7 @@ export async function GET(request: NextRequest) {
 
               if (metaInfo && metaInfo.folders) {
                 return Object.entries(metaInfo.folders)
-                  .filter(([key, info]: [string, any]) => {
+                  .filter(([, info]: [string, any]) => {
                     const matchFolder = info.folderName
                       .toLowerCase()
                       .includes(query.toLowerCase());
@@ -350,7 +351,7 @@ export async function GET(request: NextRequest) {
               }
               return [];
             } catch (error) {
-              console.error('[Search WS] 搜索 OpenList 失败:', error);
+              logger.error('[Search WS] 搜索 OpenList 失败:', error);
               return [];
             }
           })(),
@@ -383,7 +384,7 @@ export async function GET(request: NextRequest) {
             maybeComplete();
           })
           .catch((error) => {
-            console.error('[Search WS] 搜索 OpenList 超时:', error);
+            logger.error('[Search WS] 搜索 OpenList 超时:', error);
             completedSources++;
             if (!streamClosed) {
               const sourceEvent = `data: ${JSON.stringify({
@@ -453,7 +454,7 @@ export async function GET(request: NextRequest) {
             allResults.push(...filteredResults);
           }
         } catch (error) {
-          console.warn(`搜索失败 ${site.name}:`, error);
+          logger.warn(`搜索失败 ${site.name}:`, error);
 
           // 发送源错误事件
           completedSources++;
@@ -491,7 +492,7 @@ export async function GET(request: NextRequest) {
               try {
                 controller.close();
               } catch (error) {
-                console.warn('Failed to close controller:', error);
+                logger.warn('Failed to close controller:', error);
               }
             }
           }
@@ -581,7 +582,7 @@ export async function GET(request: NextRequest) {
             allResults.push(...filteredResults);
           }
         } catch (error) {
-          console.warn(`搜索脚本失败 ${script.name}:`, error);
+          logger.warn(`搜索脚本失败 ${script.name}:`, error);
 
           completedSources++;
 
@@ -615,7 +616,7 @@ export async function GET(request: NextRequest) {
               try {
                 controller.close();
               } catch (error) {
-                console.warn('Failed to close controller:', error);
+                logger.warn('Failed to close controller:', error);
               }
             }
           }
@@ -629,7 +630,7 @@ export async function GET(request: NextRequest) {
     cancel() {
       // 客户端断开连接时，标记流已关闭
       streamClosed = true;
-      console.log('Client disconnected, cancelling search stream');
+      logger.info('Client disconnected, cancelling search stream');
     },
   });
 

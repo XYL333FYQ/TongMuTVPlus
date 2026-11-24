@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { getAuthInfoFromCookie } from '@/lib/auth';
 import { getConfig } from '@/lib/config';
+import { logger } from '@/lib/logger';
 import {
   getPan123PlayInfo,
   listPan123ShareVideos,
@@ -94,7 +95,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.redirect(selectedUrl);
   } catch (error) {
-    console.error('[netdisk-123][play] error', error);
+    logger.error('[netdisk-123][play] error', error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : '获取播放地址失败' },
       { status: 500 }

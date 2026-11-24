@@ -6,6 +6,7 @@ import { invalidateUserAccessTokens } from '@/lib/access-token-invalidation';
 import { getConfig } from '@/lib/config';
 import { db, getStorage } from '@/lib/db';
 import { sanitizeFeaturePermissions } from '@/lib/feature-permissions';
+import { logger } from '@/lib/logger';
 import { revokeAllRefreshTokens } from '@/lib/refresh-token';
 import { isCaller, isOwner, requireRole } from '@/lib/require-role';
 import { isAdminRole, isOwnerRole } from '@/lib/roles';
@@ -23,9 +24,9 @@ async function terminateUserSessions(
     await revokeAllRefreshTokens(username);
     const storage = getStorage();
     await storage.deleteAllPushSubscriptions?.(username);
-    console.log(`Terminated all sessions for ${username}: ${reason}`);
+    logger.info(`Terminated all sessions for ${username}: ${reason}`);
   } catch (error) {
-    console.error(`Failed to terminate sessions for ${username}:`, error);
+    logger.error(`Failed to terminate sessions for ${username}:`, error);
   }
 }
 
@@ -433,7 +434,7 @@ export async function POST(request: NextRequest) {
             adminConfig.UserConfig.Tags.splice(groupIndex, 1);
 
             // 记录删除操作的影响
-            console.log(
+            logger.info(
               `删除用户组 "${groupName}"，影响用户: ${
                 affectedUsers.length > 0 ? affectedUsers.join(', ') : '无'
               }`
@@ -537,7 +538,7 @@ export async function POST(request: NextRequest) {
       }
     );
   } catch (error) {
-    console.error('用户管理操作失败:', error);
+    logger.error('用户管理操作失败:', error);
     return NextResponse.json(
       {
         error: '用户管理操作失败',
