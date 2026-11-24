@@ -265,7 +265,7 @@ export default function AnimeSubscribeModal({
 
   // 遮罩、Esc / 返回键 / 点外面关闭、滚动锁由弹窗层负责
   return (
-    <ModalLayer label='添加追番订阅' onClose={onClose}>
+    <ModalLayer variant='panel' label='添加追番订阅' onClose={onClose}>
       <div
         className={`relative w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-xl bg-surface shadow-xl transition-all duration-200 ${
           visible ? 'opacity-100 scale-100' : 'opacity-0 scale-95'

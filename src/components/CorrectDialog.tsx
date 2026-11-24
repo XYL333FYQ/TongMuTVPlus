@@ -881,7 +881,7 @@ export default function CorrectDialog({
   if (!useDrawer) {
     // 弹窗模式：遮罩、Esc / 返回键 / 点外面关闭、滚动锁由弹窗层负责
     return (
-      <ModalLayer label='影片纠错' onClose={onClose}>
+      <ModalLayer variant='panel' label='影片纠错' onClose={onClose}>
         <div className='bg-surface rounded-lg shadow-xl w-full max-w-2xl max-h-[80vh] overflow-hidden flex flex-col'>
           {dialogContent}
         </div>

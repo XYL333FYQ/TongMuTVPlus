@@ -6,7 +6,9 @@ import { createPortal } from 'react-dom';
 import '@/styles/modal-layer.css';
 
 import { cn } from '@/lib/cn';
+import { useDeviceTier } from '@/hooks/useDeviceTier';
 
+import ModalLayer from './ModalLayer';
 import {
   type AnchoredLayerOptions,
   type DismissReason,
@@ -18,6 +20,9 @@ import {
  * 里面放什么、长什么样由调用方的类名决定。渲染它就是打开，不渲染就是关上。
  *
  * 挂进打开的弹窗时是“客人”（data-tm-layer-guest），弹窗层的款式规则不把它当面板。
+ *
+ * 各端怎么出现（设计稿 docs/design/prototypes/popup-per-device.html P-2）：
+ * 平板、电脑贴着按钮；手机两档改成弹窗层的底部面板（里面放同样的内容），只是提示的除外。
  */
 export default function Popover({
   anchor,
@@ -40,13 +45,32 @@ export default function Popover({
   interactive?: boolean;
 }) {
   const panelRef = useRef<HTMLDivElement>(null);
+  const tier = useDeviceTier();
+  const asSheet =
+    interactive && (tier === 'phone' || tier === 'phone-landscape');
   const { host, style, up } = useAnchoredLayer({
-    open: true,
+    open: !asSheet,
     anchor,
     panelRef,
     onDismiss,
     ...placement,
   });
+  if (asSheet)
+    return (
+      <ModalLayer
+        variant='sheet'
+        label={label ?? '选项'}
+        onClose={() => onDismiss('outside')}
+      >
+        <div
+          id={id}
+          role={role}
+          className={cn('tm-popover-layer-sheet', className)}
+        >
+          {children}
+        </div>
+      </ModalLayer>
+    );
   if (!host) return null;
   return createPortal(
     <div

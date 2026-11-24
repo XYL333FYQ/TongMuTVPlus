@@ -73,12 +73,12 @@ test.each([
   ['电视访问', '电视访问'],
   ['客户端安装', '客户端安装指南'],
 ])(
-  'the “%s” panel opens in the default modal layer',
+  'the “%s” panel opens in the panel variant (bottom on phones, right on tablets, centred on desktop)',
   async (entry, heading) => {
     render(<UserMenu />);
     const layer = (await openFromMenu(entry, heading)).closest('dialog');
     expect(layer).toHaveClass('tm-modal-layer');
-    expect(layer?.className).not.toMatch(/tm-modal-layer--/);
+    expect(layer).toHaveClass('tm-modal-layer', 'tm-modal-layer--panel');
   }
 );
 

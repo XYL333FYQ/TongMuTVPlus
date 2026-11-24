@@ -1130,7 +1130,7 @@ export default function AIChatPanel({
     // 弹窗模式：遮罩、焦点、Esc / 返回键、点外面关闭、滚动锁都由弹窗层负责
     if (!isOpen) return null;
     return (
-      <ModalLayer label='AI影视助手' onClose={onClose}>
+      <ModalLayer variant='panel' label='AI影视助手' onClose={onClose}>
         <div className='relative flex h-[85vh] sm:h-[80vh] max-h-[90vh] sm:max-h-[600px] w-full max-w-3xl flex-col rounded-2xl bg-surface shadow-2xl'>
           {content}
         </div>

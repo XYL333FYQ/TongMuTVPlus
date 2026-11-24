@@ -129,7 +129,7 @@ const DownloadEpisodeSelector: React.FC<DownloadEpisodeSelectorProps> = ({
   if (!isOpen) return null;
 
   return (
-    <ModalLayer label='选择要下载的集数' onClose={onClose}>
+    <ModalLayer variant='panel' label='选择要下载的集数' onClose={onClose}>
       <div className='tm-modal bg-surface rounded-xl shadow-2xl w-[90vw] max-w-4xl max-h-[80dvh] flex flex-col overflow-hidden border border-line'>
         {/* 标题栏：窄屏时标题独占一行，批量操作换到下一行 */}
         <div className='flex flex-wrap items-start justify-between gap-x-4 gap-y-2 px-6 py-4 border-b border-line'>

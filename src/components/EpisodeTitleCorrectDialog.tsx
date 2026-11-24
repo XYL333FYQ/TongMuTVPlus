@@ -165,7 +165,7 @@ export default function EpisodeTitleCorrectDialog({
   const hasTmdb = typeof correction.tmdbId === 'number';
 
   return (
-    <ModalLayer label='手动矫正标题' onClose={onClose}>
+    <ModalLayer variant='panel' label='手动矫正标题' onClose={onClose}>
       <div className='tm-modal w-full max-w-md max-h-[85dvh] overflow-hidden flex flex-col rounded-2xl bg-surface shadow-xl'>
         {/* 头部 */}
         <div className='flex items-center justify-between px-5 py-4 border-b border-line'>

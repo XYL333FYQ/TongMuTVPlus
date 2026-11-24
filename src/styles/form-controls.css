@@ -78,6 +78,15 @@
   transform-origin: bottom center;
   animation-name: tm-select-in-up;
 }
+/* 手机两档：选项放在弹窗层的底部面板里（位置、圆角、让开系统横条归 sheet 款式） */
+.tm-select-sheet {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 8px;
+  color: var(--tm-text);
+  background: var(--tm-surface);
+  outline: none;
+}
 .tm-select-option {
   display: flex;
   align-items: center;

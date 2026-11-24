@@ -41,7 +41,8 @@
   max-width: 480px;
   animation: tm-modal-layer-in var(--tm-d-panel) var(--tm-ease-out);
 }
-.tm-modal-layer--drawer > :where(:not([data-tm-layer-guest])) {
+.tm-modal-layer--drawer > :where(:not([data-tm-layer-guest])),
+.tm-modal-layer--panel > :where(:not([data-tm-layer-guest])) {
   animation: tm-modal-layer-in var(--tm-d-panel) var(--tm-ease-out);
 }
 
@@ -52,26 +53,38 @@
 .tm-modal-layer--drawer[open] {
   place-items: stretch end;
 }
+/* 面板（普通弹窗，设计稿 docs/design/prototypes/popup-per-device.html P-1）：
+   手机两档同底部面板，平板同右侧抽屉，电脑就是默认的居中 */
+html[data-tm-device='tablet'] .tm-modal-layer--panel {
+  padding: 0;
+}
+html[data-tm-device='tablet'] .tm-modal-layer--panel[open] {
+  place-items: stretch end;
+}
 html:is([data-tm-device='tablet'], [data-tm-device='wide'])
   .tm-modal-layer--drawer
+  > :where(:not([data-tm-layer-guest])),
+html[data-tm-device='tablet']
+  .tm-modal-layer--panel
   > :where(:not([data-tm-layer-guest])) {
   width: min(400px, 100%);
   height: 100%;
   max-height: none;
+  border-radius: 0;
   padding-top: max(var(--tm-safe-top), var(--tm-window-controls-h));
   animation-name: tm-modal-layer-drawer-in;
 }
 
-/* 手机两档：底部面板和抽屉都从底部拉起，贴底、顶部两角圆，底部让开系统横条 */
+/* 手机两档：底部面板、抽屉、面板都从底部拉起，贴底、顶部两角圆，底部让开系统横条 */
 html:is([data-tm-device='phone'], [data-tm-device='phone-landscape'])
-  :is(.tm-modal-layer--sheet, .tm-modal-layer--drawer) {
+  :is(.tm-modal-layer--sheet, .tm-modal-layer--drawer, .tm-modal-layer--panel) {
   padding: 0;
   place-items: end center;
   /* 行高定死成整层高：面板的 max-height 百分比才有依据，内容比屏幕高时面板里面滚动、不出屏 */
   grid-template-rows: minmax(0, 1fr);
 }
 html:is([data-tm-device='phone'], [data-tm-device='phone-landscape'])
-  :is(.tm-modal-layer--sheet, .tm-modal-layer--drawer)
+  :is(.tm-modal-layer--sheet, .tm-modal-layer--drawer, .tm-modal-layer--panel)
   > :where(:not([data-tm-layer-guest])) {
   width: 100%;
   max-width: 560px;
@@ -145,6 +158,11 @@ html[data-tm-reduced-motion='true']
 }
 .tm-popover-layer[data-up] {
   animation-name: tm-popover-layer-up;
+}
+/* 手机两档改在底部面板里（弹窗层的 sheet 款式管位置），这里只让内容在面板里滚动 */
+.tm-popover-layer-sheet {
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 .tm-popover-layer[data-passive] {
   pointer-events: none;

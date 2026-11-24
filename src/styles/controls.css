@@ -242,6 +242,11 @@
   transition: color var(--tm-d-hover) var(--tm-ease-out),
     background-color var(--tm-d-hover) var(--tm-ease-out);
 }
+/* 手机两档在底部面板里点选：点按区 44 */
+html:is([data-tm-device='phone'], [data-tm-device='phone-landscape'])
+  .tm-popover-option {
+  min-height: 44px;
+}
 .tm-popover-option:hover {
   background: var(--tm-surface-raised);
   color: var(--tm-text);

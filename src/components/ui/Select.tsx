@@ -19,7 +19,9 @@ import {
 import { createPortal } from 'react-dom';
 
 import { cn } from '@/lib/cn';
+import { useDeviceTier } from '@/hooks/useDeviceTier';
 
+import ModalLayer from '@/components/feedback/ModalLayer';
 import { useAnchoredLayer } from '@/components/feedback/useAnchoredLayer';
 
 // 全站统一的下拉选择。用法与原生 <select> 一致（value / onChange / <option>），
@@ -147,8 +149,11 @@ export default function Select({
   };
 
   // 位置、挂在哪（打开的弹窗里或 body）、在外面按下就关：公共浮层规则；Esc 自己处理（要把焦点还给按钮）
+  // 手机两档在底部面板里选（设计稿 popup-per-device.html P-2），平板、电脑贴着按钮
+  const tier = useDeviceTier();
+  const asSheet = tier === 'phone' || tier === 'phone-landscape';
   const { host, style, up, placed } = useAnchoredLayer({
-    open,
+    open: open && !asSheet,
     anchor: open ? triggerRef.current : null,
     panelRef: listRef,
     onDismiss: () => close(false),
@@ -162,8 +167,9 @@ export default function Select({
 
   // 打开后把焦点交给列表，才能用键盘操作
   useEffect(() => {
-    if (open && placed) listRef.current?.focus({ preventScroll: true });
-  }, [open, placed]);
+    if (open && (placed || asSheet))
+      listRef.current?.focus({ preventScroll: true });
+  }, [open, placed, asSheet]);
 
   // 当前项滚动到可见
   useEffect(() => {
@@ -240,6 +246,30 @@ export default function Select({
     }
   };
 
+  const optionNodes = (
+    <>
+      {options.map((option, index) => (
+        <div
+          key={`${option.value}-${index}`}
+          id={`${listId}-${index}`}
+          role='option'
+          data-index={index}
+          aria-selected={index === selectedIndex}
+          aria-disabled={option.disabled || undefined}
+          data-active={index === active ? '' : undefined}
+          className='tm-select-option'
+          onPointerEnter={() => !option.disabled && setActive(index)}
+          onClick={() => choose(index)}
+        >
+          <span>{option.label || NBSP}</span>
+          {index === selectedIndex ? (
+            <Check size={16} strokeWidth={2.4} aria-hidden='true' />
+          ) : null}
+        </div>
+      ))}
+    </>
+  );
+
   const label = selected?.label ?? placeholder ?? '';
 
   return (
@@ -270,7 +300,29 @@ export default function Select({
         <ChevronDown className='tm-select-caret' aria-hidden='true' />
       </button>
       {name ? <input type='hidden' name={name} value={current} /> : null}
-      {open && host
+      {open && asSheet ? (
+        <ModalLayer
+          variant='sheet'
+          label={aria['aria-label'] || title || '选择'}
+          onClose={() => close(true)}
+        >
+          <div
+            ref={listRef}
+            id={listId}
+            role='listbox'
+            tabIndex={-1}
+            aria-label={aria['aria-label'] || title}
+            aria-activedescendant={
+              active >= 0 ? `${listId}-${active}` : undefined
+            }
+            className='tm-select-sheet'
+            onKeyDown={onListKeyDown}
+          >
+            {optionNodes}
+          </div>
+        </ModalLayer>
+      ) : null}
+      {open && !asSheet && host
         ? createPortal(
             <div
               ref={listRef}
@@ -288,25 +340,7 @@ export default function Select({
               style={style}
               onKeyDown={onListKeyDown}
             >
-              {options.map((option, index) => (
-                <div
-                  key={`${option.value}-${index}`}
-                  id={`${listId}-${index}`}
-                  role='option'
-                  data-index={index}
-                  aria-selected={index === selectedIndex}
-                  aria-disabled={option.disabled || undefined}
-                  data-active={index === active ? '' : undefined}
-                  className='tm-select-option'
-                  onPointerEnter={() => !option.disabled && setActive(index)}
-                  onClick={() => choose(index)}
-                >
-                  <span>{option.label || NBSP}</span>
-                  {index === selectedIndex ? (
-                    <Check size={16} strokeWidth={2.4} aria-hidden='true' />
-                  ) : null}
-                </div>
-              ))}
+              {optionNodes}
             </div>,
             host
           )

@@ -843,6 +843,7 @@ function HomeClient() {
 
       {showDirectPlayDialog && (
         <ModalLayer
+          variant='panel'
           label='直链播放'
           onClose={() => setShowDirectPlayDialog(false)}
         >

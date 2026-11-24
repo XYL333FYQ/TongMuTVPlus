@@ -266,3 +266,15 @@ test('a toast shown over an open layer joins it as a guest', async () => {
     'data-tm-layer-guest'
   );
 });
+
+test('the panel variant marks the layer so each device tier can place it', () => {
+  render(
+    <ModalLayer label='个人中心' variant='panel' onClose={jest.fn()}>
+      <p>内容</p>
+    </ModalLayer>
+  );
+  expect(screen.getByRole('dialog', { name: '个人中心' })).toHaveClass(
+    'tm-modal-layer',
+    'tm-modal-layer--panel'
+  );
+});

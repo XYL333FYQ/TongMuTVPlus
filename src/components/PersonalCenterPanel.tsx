@@ -40,7 +40,7 @@ export function PersonalCenterPanel({
   if (!isOpen || !mounted) return null;
 
   return (
-    <ModalLayer label='个人中心' onClose={onClose}>
+    <ModalLayer variant='panel' label='个人中心' onClose={onClose}>
       <div className='tm-profile-panel w-full max-w-md overflow-hidden rounded-2xl bg-surface shadow-xl'>
         <div
           className='p-6'

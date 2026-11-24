@@ -172,7 +172,7 @@ export default function PlayRecordsPanel({
 
   return (
     <>
-      <ModalLayer label='播放记录' onClose={onClose}>
+      <ModalLayer variant='panel' label='播放记录' onClose={onClose}>
         <div className='w-full max-w-4xl max-h-[85dvh] bg-surface rounded-xl shadow-xl flex flex-col overflow-hidden'>
           <div className='flex items-center justify-between px-6 py-4 border-b border-line'>
             <div className='flex items-center gap-2'>

@@ -115,7 +115,7 @@ export function EmailSettingsPanel({
   ];
 
   return (
-    <ModalLayer label='通知设置' onClose={onClose}>
+    <ModalLayer variant='panel' label='通知设置' onClose={onClose}>
       <div className='w-full max-w-lg overflow-hidden rounded-2xl bg-surface shadow-xl'>
         <div
           className='max-h-[85vh] overflow-y-auto p-6'

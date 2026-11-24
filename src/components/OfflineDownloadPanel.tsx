@@ -191,7 +191,7 @@ export function OfflineDownloadPanel({
 
   // 遮罩、位置、Esc / 返回键 / 点外面关闭、滚动锁由弹窗层负责
   return (
-    <ModalLayer label='离线下载' onClose={onClose}>
+    <ModalLayer variant='panel' label='离线下载' onClose={onClose}>
       <div className='bg-surface rounded-lg shadow-2xl w-full max-w-4xl max-h-[80vh] flex flex-col'>
         {/* 标题栏 */}
         <div className='flex items-center justify-between p-4 border-b border-line'>

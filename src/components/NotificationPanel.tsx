@@ -184,7 +184,7 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({
   }, [isOpen]);
 
   return (
-    <ModalLayer label='通知中心' onClose={onClose}>
+    <ModalLayer variant='panel' label='通知中心' onClose={onClose}>
       {/* 通知面板：原生模态层负责遮罩、焦点约束与 Esc */}
       <div className='tm-modal w-full max-w-lg min-h-[520px] max-h-[80dvh] bg-surface rounded-xl shadow-xl flex flex-col overflow-hidden max-sm:min-h-[70dvh]'>
         {/* 标题栏 */}

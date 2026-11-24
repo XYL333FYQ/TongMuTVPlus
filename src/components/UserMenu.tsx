@@ -3387,13 +3387,21 @@ export const UserMenu: React.FC = () => {
       {syncToast && <Toast {...syncToast} />}
 
       {isChangePasswordOpen && (
-        <ModalLayer label='修改密码' onClose={handleCloseChangePassword}>
+        <ModalLayer
+          variant='panel'
+          label='修改密码'
+          onClose={handleCloseChangePassword}
+        >
           {changePasswordPanel}
         </ModalLayer>
       )}
 
       {isSubscribeOpen && (
-        <ModalLayer label='电视访问' onClose={handleCloseSubscribe}>
+        <ModalLayer
+          variant='panel'
+          label='电视访问'
+          onClose={handleCloseSubscribe}
+        >
           {renderSubscribePanel()}
         </ModalLayer>
       )}
@@ -3496,6 +3504,7 @@ export const UserMenu: React.FC = () => {
 
       {isEcoAppsOpen && (
         <ModalLayer
+          variant='panel'
           label='客户端安装指南'
           onClose={() => setIsEcoAppsOpen(false)}
         >

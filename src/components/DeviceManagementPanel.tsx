@@ -40,7 +40,7 @@ export function DeviceManagementPanel({
   if (!isOpen || !mounted) return null;
 
   return (
-    <ModalLayer label='设备管理' onClose={onClose}>
+    <ModalLayer variant='panel' label='设备管理' onClose={onClose}>
       <div className='w-full max-w-lg bg-surface rounded-xl shadow-xl overflow-hidden'>
         <div
           className='h-full max-h-[80vh] flex flex-col'

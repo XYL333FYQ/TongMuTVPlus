@@ -10,11 +10,19 @@ import { lockScroll } from '@/lib/scroll-lock';
 import { useBackLayer } from '@/hooks/useBackLayer';
 
 /**
- * 五种款式（设计稿 docs/design/prototypes/modal-layer.html）：
- * dialog 居中面板（默认，样子和以前一样）；sheet 底部面板；drawer 侧边抽屉（手机从底部拉起）；
+ * 六种款式（设计稿 docs/design/prototypes/modal-layer.html、popup-per-device.html）：
+ * dialog 居中（默认；只用于一句话的提醒，例如复制链接、HTTP 警告）；
+ * panel 普通弹窗：手机从底部拉起、平板从右侧滑出、电脑居中；
+ * sheet 菜单类面板（手机从底部拉起，平板电脑居中）；drawer 侧边抽屉（手机从底部拉起）；
  * confirm 确认框；viewer 整屏查看。
  */
-export type ModalVariant = 'dialog' | 'sheet' | 'drawer' | 'confirm' | 'viewer';
+export type ModalVariant =
+  | 'dialog'
+  | 'panel'
+  | 'sheet'
+  | 'drawer'
+  | 'confirm'
+  | 'viewer';
 
 const FOCUSABLE = [
   'button:not(:disabled):not([hidden])',

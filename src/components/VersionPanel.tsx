@@ -26,6 +26,7 @@ export const VersionPanel: React.FC<VersionPanelProps> = ({
 
   return (
     <ModalLayer
+      variant='panel'
       label={`${BRAND_NAME} · 版本信息`}
       onClose={onClose}
       initialFocus={closeButton}

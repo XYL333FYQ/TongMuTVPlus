@@ -131,7 +131,7 @@ export const FavoritesPanel: React.FC<FavoritesPanelProps> = ({
 
   return (
     <>
-      <ModalLayer label='我的收藏' onClose={onClose}>
+      <ModalLayer variant='panel' label='我的收藏' onClose={onClose}>
         <div className='w-full max-w-4xl max-h-[85dvh] bg-surface rounded-xl shadow-xl flex flex-col overflow-hidden'>
           {/* 标题栏 */}
           <div className='flex items-center justify-between px-6 py-4 border-b border-line'>
