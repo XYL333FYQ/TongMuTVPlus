@@ -278,3 +278,26 @@ test('the panel variant marks the layer so each device tier can place it', () =>
     'tm-modal-layer--panel'
   );
 });
+
+test('浏览器把焦点给了能滚动的面板时，改为聚焦弹窗本身（不画一圈焦点环）', () => {
+  const stub = HTMLDialogElement.prototype.showModal;
+  // 模拟 Chrome：没有可先聚焦的按钮时，把焦点给能滚动的面板
+  HTMLDialogElement.prototype.showModal = function () {
+    this.setAttribute('open', '');
+    this.querySelector<HTMLElement>('[data-scroll]')?.focus();
+  };
+  try {
+    render(
+      <ModalLayer label='长表单' onClose={jest.fn()}>
+        <div data-scroll tabIndex={-1}>
+          很长的内容
+        </div>
+      </ModalLayer>
+    );
+    expect(document.activeElement).toBe(
+      screen.getByRole('dialog', { name: '长表单' })
+    );
+  } finally {
+    HTMLDialogElement.prototype.showModal = stub;
+  }
+});
