@@ -4,8 +4,16 @@ import { AlertTriangle, Download, Loader2, Play, Radio } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 
+import {
+  attachFlvStream,
+  attachHlsStream,
+  createLivePlayer,
+  detachFlvStream,
+  detachHlsStream,
+} from '@/lib/media-engines';
 import { useAudioFocus } from '@/hooks/useAudioFocus';
 import { useLatestMediaRequest } from '@/hooks/useLatestMediaRequest';
+import { usePlaybackSessionSafe } from '@/hooks/usePlaybackSession';
 
 import LoadingStyle, {
   type LoadingStep,
@@ -15,7 +23,6 @@ import PageContainer from '@/components/PageContainer';
 import PageLayout from '@/components/PageLayout';
 import { useWatchRoomContextSafe } from '@/components/WatchRoomProvider';
 
-import { usePlaybackSessionSafe } from '@/hooks/usePlaybackSession';
 import {
   RoomActivityActions,
   RoomLiveMessages,
@@ -245,30 +252,18 @@ export default function WebLivePage() {
 
   function m3u8Loader(video: HTMLVideoElement, url: string) {
     if (!Hls) return;
-    const hls = new Hls({
-      debug: false,
-      enableWorker: true,
-      lowLatencyMode: true,
-    });
-    hls.loadSource(url);
-    hls.attachMedia(video);
-    (video as any).hls = hls;
+    attachHlsStream(Hls, video, url, { lowLatencyMode: true });
   }
 
   function flvLoader(video: HTMLVideoElement, url: string) {
     if (!flvjs) return;
-    const flvPlayer = flvjs.createPlayer({ type: 'flv', url, isLive: true });
-    flvPlayer.attachMediaElement(video);
-    flvPlayer.on(
-      flvjs.Events.ERROR,
-      (errorType: string, errorDetail: string) => {
+    attachFlvStream(flvjs, video, url, {
+      onError: (errorType, errorDetail) => {
         console.error('FLV.js error:', errorType, errorDetail);
         setErrorMessage(`播放失败: ${errorType} - ${errorDetail}`);
         setVideoUrl('');
-      }
-    );
-    flvPlayer.load();
-    (video as any).flv = flvPlayer;
+      },
+    });
   }
 
   // 清理播放器资源的统一函数
@@ -283,27 +278,10 @@ export default function WebLivePage() {
           artPlayerRef.current.video.load();
         }
 
-        // 销毁 HLS 实例
-        if (artPlayerRef.current.video && artPlayerRef.current.video.hls) {
-          artPlayerRef.current.video.hls.destroy();
-          artPlayerRef.current.video.hls = null;
-        }
-
-        // 销毁 FLV 实例
-        if (
-          artPlayerRef.current.video &&
-          (artPlayerRef.current.video as any).flv
-        ) {
-          try {
-            if ((artPlayerRef.current.video as any).flv.unload) {
-              (artPlayerRef.current.video as any).flv.unload();
-            }
-            (artPlayerRef.current.video as any).flv.destroy();
-            (artPlayerRef.current.video as any).flv = null;
-          } catch (flvError) {
-            console.warn('FLV实例销毁时出错:', flvError);
-            (artPlayerRef.current.video as any).flv = null;
-          }
+        // 销毁 HLS / FLV 实例
+        if (artPlayerRef.current.video) {
+          detachHlsStream(artPlayerRef.current.video);
+          detachFlvStream(artPlayerRef.current.video);
         }
 
         // 移除所有事件监听器
@@ -326,11 +304,9 @@ export default function WebLivePage() {
     // 销毁旧的播放器实例
     cleanupPlayer();
 
-    artPlayerRef.current = new Artplayer({
+    artPlayerRef.current = createLivePlayer(Artplayer, {
       container: artRef.current,
-      theme: 'var(--tm-room-player-text)',
       url: videoUrl,
-      isLive: true,
       mutex: false,
       muted: true,
       autoplay: true,
@@ -338,10 +314,6 @@ export default function WebLivePage() {
       customType: {
         m3u8: m3u8Loader,
         flv: flvLoader,
-      },
-      icons: {
-        loading:
-          '<span aria-hidden="true" class="tm-skeleton" style="display:block;width:48px;height:8px;border-radius:var(--tm-radius-full);background:color-mix(in srgb,var(--tm-room-player-text) 12%,transparent)"></span>',
       },
     });
     artPlayerRef.current.on('ready', () => {

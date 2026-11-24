@@ -24,9 +24,17 @@ import {
   savePlayRecord,
   subscribeToDataUpdates,
 } from '@/lib/db.client';
+import {
+  attachFlvStream,
+  attachHlsStream,
+  createLivePlayer,
+  detachFlvStream,
+  detachHlsStream,
+} from '@/lib/media-engines';
 import { createRequestGate } from '@/lib/request-gate';
 import { parseCustomTimeFormat } from '@/lib/time';
 import { useAudioFocus } from '@/hooks/useAudioFocus';
+import { usePlaybackSessionSafe } from '@/hooks/usePlaybackSession';
 
 import EpgScrollableRow from '@/components/EpgScrollableRow';
 import LoadingStyle, {
@@ -37,7 +45,6 @@ import PageContainer from '@/components/PageContainer';
 import PageLayout from '@/components/PageLayout';
 import { useWatchRoomContextSafe } from '@/components/WatchRoomProvider';
 
-import { usePlaybackSessionSafe } from '@/hooks/usePlaybackSession';
 import {
   RoomActivityActions,
   RoomLiveMessages,
@@ -1369,28 +1376,10 @@ function LivePageClient() {
           artPlayerRef.current.video.load();
         }
 
-        // 销毁 HLS 实例
-        if (artPlayerRef.current.video && artPlayerRef.current.video.hls) {
-          artPlayerRef.current.video.hls.destroy();
-          artPlayerRef.current.video.hls = null;
-        }
-
-        // 销毁 FLV 实例 - 增强清理逻辑
-        if (artPlayerRef.current.video && artPlayerRef.current.video.flv) {
-          try {
-            // 先停止加载
-            if (artPlayerRef.current.video.flv.unload) {
-              artPlayerRef.current.video.flv.unload();
-            }
-            // 销毁播放器
-            artPlayerRef.current.video.flv.destroy();
-            // 确保引用被清空
-            artPlayerRef.current.video.flv = null;
-          } catch (flvError) {
-            console.warn('FLV实例销毁时出错:', flvError);
-            // 强制清空引用
-            artPlayerRef.current.video.flv = null;
-          }
+        // 销毁 HLS / FLV 实例
+        if (artPlayerRef.current.video) {
+          detachHlsStream(artPlayerRef.current.video);
+          detachFlvStream(artPlayerRef.current.video);
         }
 
         // 移除所有事件监听器
@@ -2131,29 +2120,13 @@ function LivePageClient() {
       }
     }
 
-    // 清理之前的 HLS 实例
-    if (video.hls) {
-      try {
-        video.hls.destroy();
-        video.hls = null;
-      } catch (err) {
-        console.warn('清理 HLS 实例时出错:', err);
-      }
-    }
-
-    const hls = new Hls({
-      debug: false,
-      enableWorker: true,
+    const hls = attachHlsStream(Hls, video, url, {
       lowLatencyMode: true,
       maxBufferLength: 30,
       backBufferLength: 30,
       maxBufferSize: 60 * 1000 * 1000,
       loader: CustomHlsJsLoader,
     });
-
-    hls.loadSource(url);
-    hls.attachMedia(video);
-    video.hls = hls;
 
     hls.on(Hls.Events.ERROR, function (event: any, data: any) {
       console.error('HLS Error:', event, data);
@@ -2180,33 +2153,11 @@ function LivePageClient() {
       return;
     }
 
-    // 清理之前的 FLV 实例
-    if (video.flv) {
-      try {
-        if (video.flv.unload) {
-          video.flv.unload();
-        }
-        video.flv.destroy();
-        video.flv = null;
-      } catch (err) {
-        console.warn('清理 FLV 实例时出错:', err);
-      }
-    }
-
-    const flvPlayer = flvjs.createPlayer({
-      type: 'flv',
-      url,
-      isLive: true,
-    });
-    flvPlayer.attachMediaElement(video);
-    flvPlayer.on(
-      flvjs.Events.ERROR,
-      (errorType: string, errorDetail: string) => {
+    attachFlvStream(flvjs, video, url, {
+      onError: (errorType, errorDetail) => {
         console.error('FLV.js error:', errorType, errorDetail);
-      }
-    );
-    flvPlayer.load();
-    video.flv = flvPlayer;
+      },
+    });
   }
 
   // 播放器初始化
@@ -2299,12 +2250,11 @@ function LivePageClient() {
         // 创建新的播放器实例
         Artplayer.USE_RAF = true;
 
-        artPlayerRef.current = new Artplayer({
+        artPlayerRef.current = createLivePlayer(Artplayer, {
           container: artRef.current,
           url: targetUrl,
           poster: currentChannel.logo,
           volume: 0.7,
-          isLive: true, // 设置为直播模式
           muted: true,
           autoplay: true,
           pip: true,
@@ -2324,10 +2274,6 @@ function LivePageClient() {
           playsInline: true,
           autoPlayback: false,
           airplay: true,
-          theme: getComputedStyle(document.documentElement)
-            .getPropertyValue('--tm-text')
-            .trim(),
-          lang: 'zh-cn',
           hotkey: false,
           fastForward: false, // 直播不需要快进
           autoOrientation: true,
@@ -2338,10 +2284,6 @@ function LivePageClient() {
           },
           type: type,
           customType: customType,
-          icons: {
-            loading:
-              '<img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI1MCIgaGVpZ2h0PSI1MCIgdmlld0JveD0iMCAwIDUwIDUwIj48cGF0aCBkPSJNMjUuMjUxIDYuNDYxYy0xMC4zMTggMC0xOC42ODMgOC4zNjUtMTguNjgzIDE4LjY4M2g0LjA2OGMwLTguMDcgNi41NDUtMTQuNjE1IDE0LjYxNS0xNC42MTVWNi40NjF6IiBmaWxsPSIjMDA5Njg4Ij48YW5pbWF0ZVRyYW5zZm9ybSBhdHRyaWJ1dGVOYW1lPSJ0cmFuc2Zvcm0iIGF0dHJpYnV0ZVR5cGU9IlhNTCIgZHVyPSIxcyIgZnJvbT0iMCAyNSAyNSIgcmVwZWF0Q291bnQ9ImluZGVmaW5pdGUiIHRvPSIzNjAgMjUgMjUiIHR5cGU9InJvdGF0ZSIvPjwvcGF0aD48L3N2Zz4=">',
-          },
           settings: [
             ...(webGPUSupported
               ? [

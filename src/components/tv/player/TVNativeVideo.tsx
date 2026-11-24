@@ -5,12 +5,12 @@ import { useEffect, useRef, useState } from 'react';
 
 import '../tv-surfaces.css';
 
-declare global {
-  interface HTMLVideoElement {
-    hls?: any;
-    flv?: any;
-  }
-}
+import {
+  attachFlvStream,
+  attachHlsStream,
+  detachFlvStream,
+  detachHlsStream,
+} from '@/lib/media-engines';
 
 type SourceType = 'm3u8' | 'flv' | 'native';
 
@@ -153,14 +153,8 @@ export default function TVNativeVideo({
     setPlaying(false);
 
     const cleanup = () => {
-      if (videoEl.hls) {
-        videoEl.hls.destroy();
-        videoEl.hls = null;
-      }
-      if (videoEl.flv) {
-        videoEl.flv.destroy();
-        videoEl.flv = null;
-      }
+      detachHlsStream(videoEl);
+      detachFlvStream(videoEl);
       videoEl.removeAttribute('src');
       videoEl.load();
     };
@@ -246,16 +240,12 @@ export default function TVNativeVideo({
                   }
                 }
               : undefined;
-            const hls = new Hls({
-              enableWorker: true,
+            attachHlsStream(Hls, videoEl, url, {
               lowLatencyMode: live,
               backBufferLength: live ? 10 : 30,
               maxBufferLength: live ? 18 : 45,
               ...(CustomLoader ? { loader: CustomLoader } : {}),
             });
-            hls.loadSource(url);
-            hls.attachMedia(videoEl);
-            videoEl.hls = hls;
           } else {
             videoEl.src = url;
           }
@@ -264,10 +254,7 @@ export default function TVNativeVideo({
           if (disposed) return;
           const flvjs = flvModule.default;
           if (flvjs.isSupported()) {
-            const flv = flvjs.createPlayer({ type: 'flv', url, isLive: live });
-            flv.attachMediaElement(videoEl);
-            flv.load();
-            videoEl.flv = flv;
+            attachFlvStream(flvjs, videoEl, url, { isLive: live });
           } else {
             videoEl.src = url;
           }

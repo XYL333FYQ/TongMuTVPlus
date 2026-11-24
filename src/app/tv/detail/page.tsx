@@ -11,8 +11,9 @@ import {
   useState,
 } from 'react';
 
+import { getVideoResolutionFromM3u8 } from '@/lib/media-engines';
 import { SearchResult } from '@/lib/types';
-import { getVideoResolutionFromM3u8, processImageUrl } from '@/lib/utils';
+import { processImageUrl } from '@/lib/utils';
 
 import {
   fetchTVDetail,

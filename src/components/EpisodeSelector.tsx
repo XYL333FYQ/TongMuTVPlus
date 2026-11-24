@@ -28,10 +28,13 @@ import {
 } from '@/lib/db.client';
 import { isEpisodeHiddenByFilter } from '@/lib/episode-filter';
 import { loadAllLocalEpisodeProgressRecords } from '@/lib/episode-progress';
+import type { SpeedTestErrorType } from '@/lib/media-engines';
+import {
+  getVideoResolutionFromM3u8,
+  SpeedTestError,
+} from '@/lib/media-engines';
 import { isNetdiskSource } from '@/lib/netdisk/source';
 import { EpisodeFilterConfig, SearchResult } from '@/lib/types';
-import type { SpeedTestErrorType } from '@/lib/utils';
-import { getVideoResolutionFromM3u8, SpeedTestError } from '@/lib/utils';
 import { useLongPress } from '@/hooks/useLongPress';
 
 import DanmakuPanel from '@/components/DanmakuPanel';

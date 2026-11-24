@@ -4,8 +4,8 @@
 
 import type { Dispatch, SetStateAction } from 'react';
 
+import { getVideoResolutionFromM3u8 } from '@/lib/media-engines';
 import { SearchResult } from '@/lib/types';
-import { getVideoResolutionFromM3u8 } from '@/lib/utils';
 
 /** 页面传进来的状态和函数（名字和页面里的一样） */
 export interface PreferBestSourceContext {

@@ -7,7 +7,7 @@ jest.mock('hls.js', () => ({
   },
 }));
 
-import { getVideoResolutionFromM3u8, SpeedTestError } from './utils';
+import { getVideoResolutionFromM3u8, SpeedTestError } from './media-engines';
 
 const createElement = document.createElement.bind(document);
 const originalFetch = global.fetch;
