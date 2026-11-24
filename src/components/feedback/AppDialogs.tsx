@@ -28,6 +28,8 @@ interface ToastItem {
   id: number;
   message: string;
   type: NotifyType;
+  /** 显示多久（毫秒），不传用提示条的默认 3 秒 */
+  duration?: number;
 }
 
 type Listener = () => void;
@@ -40,9 +42,13 @@ function emit() {
   listeners.forEach((listener) => listener());
 }
 
-export function notify(message: string, type: NotifyType = 'info') {
+export function notify(
+  message: string,
+  type: NotifyType = 'info',
+  options: { duration?: number } = {}
+) {
   toastSeq += 1;
-  toastItem = { id: toastSeq, message, type };
+  toastItem = { id: toastSeq, message, type, duration: options.duration };
   emit();
 }
 
@@ -86,6 +92,7 @@ export function AppDialogHost() {
           key={toastItem.id}
           message={toastItem.message}
           type={toastItem.type}
+          duration={toastItem.duration}
           onClose={() => {
             toastItem = null;
             emit();

@@ -8,6 +8,7 @@ import { cn } from '@/lib/cn';
 import { playMusicList } from '@/lib/music/actions';
 import { mapSong, musicSources, normalizeSource } from '@/lib/music/shared';
 import type { Song } from '@/lib/music/types';
+import { formatLocalDate } from '@/lib/time';
 
 import CoverCard from '@/components/music/CoverCard';
 import MusicEmpty, {
@@ -94,13 +95,6 @@ function getHotSearchCacheKey(source: string) {
   return `music_hot_search_${source}`;
 }
 
-function formatPublishTime(value?: string | number) {
-  if (!value) return '';
-  const date = typeof value === 'number' ? new Date(value) : new Date(value);
-  if (Number.isNaN(date.getTime())) return String(value);
-  return date.toLocaleDateString();
-}
-
 function SingerGrid({
   singers,
   onOpen,
@@ -182,7 +176,7 @@ function AlbumGrid({
           name={album.name}
           cover={album.picUrl}
           sub={album.artistName || '未知歌手'}
-          meta={formatPublishTime(album.publishTime)}
+          meta={album.publishTime ? formatLocalDate(album.publishTime) : ''}
           onOpen={() => onOpen(album)}
         />
       ))}

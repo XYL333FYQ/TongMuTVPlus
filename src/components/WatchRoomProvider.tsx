@@ -13,7 +13,7 @@ import React, {
 import { getAuthInfoFromBrowserCookie } from '@/lib/auth';
 import { useWatchRoom } from '@/hooks/useWatchRoom';
 
-import Toast, { ToastProps } from '@/components/feedback/Toast';
+import { notify } from '@/components/feedback/AppDialogs';
 
 import type { WatchRoomConfig } from '@/types/watch-room';
 
@@ -56,7 +56,6 @@ export function WatchRoomProvider({ children }: WatchRoomProviderProps) {
   const pathname = usePathname();
   const [config, setConfig] = useState<WatchRoomConfig | null>(null);
   const [isEnabled, setIsEnabled] = useState(false);
-  const [toast, setToast] = useState<ToastProps | null>(null);
   const [reconnectFailed, setReconnectFailed] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [
@@ -70,19 +69,9 @@ export function WatchRoomProvider({ children }: WatchRoomProviderProps) {
 
     // 显示Toast提示
     if (data?.reason === 'owner_left') {
-      setToast({
-        message: '房主已解散房间',
-        type: 'error',
-        duration: 4000,
-        onClose: () => setToast(null),
-      });
+      notify('房主已解散房间', 'error', { duration: 4000 });
     } else {
-      setToast({
-        message: '房间已被删除',
-        type: 'info',
-        duration: 3000,
-        onClose: () => setToast(null),
-      });
+      notify('房间已被删除', 'info', { duration: 3000 });
     }
   }, []);
 
@@ -90,12 +79,7 @@ export function WatchRoomProvider({ children }: WatchRoomProviderProps) {
   const handleStateCleared = useCallback(() => {
     console.log('[WatchRoomProvider] Room state cleared');
 
-    setToast({
-      message: '本次放映已结束，房间继续保留',
-      type: 'info',
-      duration: 4000,
-      onClose: () => setToast(null),
-    });
+    notify('本次放映已结束，房间继续保留', 'info', { duration: 4000 });
   }, []);
 
   const watchRoom = useWatchRoom(handleRoomDeleted, handleStateCleared);
@@ -303,7 +287,6 @@ export function WatchRoomProvider({ children }: WatchRoomProviderProps) {
   return (
     <WatchRoomContext.Provider value={contextValue}>
       {children}
-      {toast && <Toast {...toast} />}
     </WatchRoomContext.Provider>
   );
 }

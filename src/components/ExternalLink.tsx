@@ -1,5 +1,6 @@
 'use client';
 
+import type { AnchorHTMLAttributes, MouseEvent } from 'react';
 import {
   forwardRef,
   useCallback,
@@ -7,8 +8,8 @@ import {
   useState,
   useSyncExternalStore,
 } from 'react';
-import type { AnchorHTMLAttributes, MouseEvent } from 'react';
 
+import type { ExternalLinkMode } from '@/lib/external-links';
 import {
   copyExternalLink,
   externalLinkDescription,
@@ -16,9 +17,8 @@ import {
   getExternalLinkMode,
   getExternalLinkModeFor,
 } from '@/lib/external-links';
-import type { ExternalLinkMode } from '@/lib/external-links';
 
-import Toast from '@/components/feedback/Toast';
+import { notify } from '@/components/feedback/AppDialogs';
 import ModalLayer from '@/components/feedback/ModalLayer';
 
 const subscribe = () => () => undefined;
@@ -30,7 +30,6 @@ export function useExternalAction() {
     getExternalLinkMode,
     (): ExternalLinkMode => 'tab'
   );
-  const [copied, setCopied] = useState(false);
   const [manual, setManual] = useState<string | null>(null);
   const fieldId = useId();
   const modeFor = useCallback(
@@ -44,7 +43,7 @@ export function useExternalAction() {
         return;
       }
       void copyExternalLink(href).then((success) => {
-        setCopied(success);
+        if (success) notify('链接已复制，可粘贴到相应应用打开。', 'success');
         setManual(success ? null : externalLinkText(href));
       });
     },
@@ -52,13 +51,6 @@ export function useExternalAction() {
   );
   const feedback = (
     <>
-      {copied && (
-        <Toast
-          message='链接已复制，可粘贴到相应应用打开。'
-          type='success'
-          onClose={() => setCopied(false)}
-        />
-      )}
       {manual && (
         <ModalLayer label='复制链接' onClose={() => setManual(null)}>
           <div className='tm-modal w-full max-w-md rounded-2xl border border-line bg-surface p-5 text-fg'>

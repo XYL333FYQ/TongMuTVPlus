@@ -9,12 +9,13 @@ import {
   ExternalLink,
   Loader2,
 } from 'lucide-react';
-import { useCallback, useEffect, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
+import { useCallback, useEffect, useRef, useState } from 'react';
+
 import { usePageRefresh } from '@/hooks/usePageRefresh';
 
 import CapsuleSwitch from '@/components/catalog/CapsuleSwitch';
-import Toast, { ToastProps } from '@/components/feedback/Toast';
+import { notify } from '@/components/feedback/AppDialogs';
 import Select from '@/components/ui/Select';
 
 interface AcgSearchItem {
@@ -162,7 +163,6 @@ export default function AcgSearch({
   const [selectedItem, setSelectedItem] = useState<AcgSearchItem | null>(null);
   const [customName, setCustomName] = useState('');
   const [downloadTool, setDownloadTool] = useState<DownloadTool>('aria2');
-  const [toast, setToast] = useState<ToastProps | null>(null);
   const [healthMap, setHealthMap] = useState<Record<string, MagnetHealthView>>(
     {}
   );
@@ -512,11 +512,7 @@ export default function AcgSearch({
         },
       }));
     } catch (err: any) {
-      setToast({
-        message: err.message || '测活失败',
-        type: 'error',
-        onClose: () => setToast(null),
-      });
+      notify(err.message || '测活失败', 'error');
     } finally {
       setHealthCheckingIds((prev) => {
         const next = { ...prev };
@@ -561,17 +557,9 @@ export default function AcgSearch({
         throw new Error(data.error || '添加下载任务失败');
       }
 
-      setToast({
-        message: data.message || '已添加到离线下载队列',
-        type: 'success',
-        onClose: () => setToast(null),
-      });
+      notify(data.message || '已添加到离线下载队列', 'success');
     } catch (err: any) {
-      setToast({
-        message: err.message || '添加下载任务失败',
-        type: 'error',
-        onClose: () => setToast(null),
-      });
+      notify(err.message || '添加下载任务失败', 'error');
     } finally {
       setDownloadingId(null);
       setSelectedItem(null);
@@ -589,17 +577,9 @@ export default function AcgSearch({
     setCopyingId(itemId);
     try {
       await navigator.clipboard.writeText(link);
-      setToast({
-        message: '链接已复制',
-        type: 'success',
-        onClose: () => setToast(null),
-      });
+      notify('链接已复制', 'success');
     } catch (err: any) {
-      setToast({
-        message: err.message || '复制失败',
-        type: 'error',
-        onClose: () => setToast(null),
-      });
+      notify(err.message || '复制失败', 'error');
     } finally {
       setCopyingId(null);
     }
@@ -854,7 +834,6 @@ export default function AcgSearch({
       {renderBody()}
 
       {/* Toast 提示 */}
-      {toast && <Toast {...toast} />}
     </div>
   );
 }

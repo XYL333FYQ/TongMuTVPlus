@@ -22,6 +22,7 @@ import {
 } from 'react';
 
 import { clearAuthCookie, getAuthInfoFromBrowserCookie } from '@/lib/auth';
+import { formatDateTime } from '@/lib/time';
 import {
   type TVPlayerUpDownAction,
   DEFAULT_TV_PLAYER_UP_DOWN_ACTION,
@@ -61,21 +62,6 @@ function getRoleText(role?: AuthInfo['role']) {
       return '用户';
     default:
       return '访客';
-  }
-}
-
-function formatDateTime(value?: number) {
-  if (!value) return '当前会话';
-  try {
-    return new Intl.DateTimeFormat('zh-CN', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-    }).format(new Date(value));
-  } catch {
-    return '当前会话';
   }
 }
 
@@ -233,7 +219,9 @@ export default function TVMePage() {
                     登录时间
                   </div>
                   <div className='mt-4 text-base font-medium text-fg'>
-                    {formatDateTime(authInfo.timestamp)}
+                    {(authInfo.timestamp &&
+                      formatDateTime(authInfo.timestamp)) ||
+                      '当前会话'}
                   </div>
                 </div>
               </div>

@@ -6,7 +6,7 @@ import type { Dispatch, MutableRefObject, SetStateAction } from 'react';
 
 import { getTranscoderCookieHeader } from '@/lib/transcoder-cookie.client';
 
-import { ToastProps } from '@/components/feedback/Toast';
+import { notify } from '@/components/feedback/AppDialogs';
 
 import type { Art } from '@/features/player';
 import { LinkRefresher } from '@/features/player';
@@ -26,7 +26,6 @@ export interface TranscodeContext {
   setIsTranscoding: Dispatch<SetStateAction<boolean>>;
   setIsVideoLoading: Dispatch<SetStateAction<boolean>>;
   setPlaybackSourceBadge: Dispatch<SetStateAction<PlaybackSourceBadge>>;
-  setToast: Dispatch<SetStateAction<ToastProps | null>>;
   setVideoError: Dispatch<SetStateAction<string | null>>;
   setVideoLoadingStage: Dispatch<
     SetStateAction<'initing' | 'sourceChanging' | 'episodeChanging'>
@@ -43,7 +42,6 @@ export function makeHandleCreateTranscodeSession(ctx: TranscodeContext) {
     resolveCurrentExternalPlaybackUrl,
     setIsTranscoding,
     setPlaybackSourceBadge,
-    setToast,
     setVideoQualities,
     setVideoUrl,
   } = ctx;
@@ -117,18 +115,13 @@ export function makeHandleCreateTranscodeSession(ctx: TranscodeContext) {
       ctx.setVideoLoadingStage('sourceChanging');
       setPlaybackSourceBadge(null);
       setVideoUrl(playUrl);
-      setToast({
-        message: '转码任务已创建，等待 3 秒后已切换到转码地址',
-        type: 'success',
-        onClose: () => setToast(null),
-      });
+      notify('转码任务已创建，等待 3 秒后已切换到转码地址', 'success');
     } catch (error) {
       console.error('创建转码任务失败:', error);
-      setToast({
-        message: error instanceof Error ? error.message : '创建转码任务失败',
-        type: 'error',
-        onClose: () => setToast(null),
-      });
+      notify(
+        error instanceof Error ? error.message : '创建转码任务失败',
+        'error'
+      );
     } finally {
       setIsTranscoding(false);
     }

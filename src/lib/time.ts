@@ -91,3 +91,60 @@ export function formatDuration(seconds: number): string {
   const rest = value % 60;
   return rest ? `${minutes}分${rest}秒` : `${minutes}分钟`;
 }
+
+// —— 日期和时刻：全站只在这里格式化 ——
+
+function toDate(value: Date | string | number): Date {
+  return value instanceof Date ? value : new Date(value);
+}
+
+/** 本地日期（浏览器语言）：2026/11/23；解析不了原样返回 */
+export function formatLocalDate(value: string | number): string {
+  const date = toDate(value);
+  return Number.isNaN(date.getTime())
+    ? String(value)
+    : date.toLocaleDateString();
+}
+
+/** 本地时刻（浏览器语言）：14:05:09 */
+export function formatLocalTime(value: Date | string | number): string {
+  return toDate(value).toLocaleTimeString();
+}
+
+/** 年月日加时分：2026/11/23 14:05；解析不了返回 null，由调用方决定写什么 */
+export function formatDateTime(value: Date | string | number): string | null {
+  try {
+    return new Intl.DateTimeFormat('zh-CN', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+    }).format(toDate(value));
+  } catch {
+    return null;
+  }
+}
+
+/** 机器也好读的时间戳：2026-11-23 14:05:09（本地时区） */
+export function formatTimestamp(value: Date | string | number): string {
+  const date = toDate(value);
+  return `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(
+    date.getDate()
+  )} ${pad2(date.getHours())}:${pad2(date.getMinutes())}:${pad2(
+    date.getSeconds()
+  )}`;
+}
+
+/** 距现在多久：刚刚、5分钟前、3小时前、2天前 */
+export function formatTimeAgo(
+  timestamp: number,
+  now: number = Date.now()
+): string {
+  const minutes = Math.floor((now - timestamp) / 60000);
+  if (minutes < 1) return '刚刚';
+  if (minutes < 60) return `${minutes}分钟前`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}小时前`;
+  return `${Math.floor(hours / 24)}天前`;
+}

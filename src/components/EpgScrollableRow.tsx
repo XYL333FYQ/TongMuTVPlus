@@ -212,10 +212,6 @@ export default function EpgScrollableRow({
   }, [viewMode]);
 
   // 格式化时间显示
-  const formatTime = (timeString: string) => {
-    return formatTimeToHHMM(timeString);
-  };
-
   // 判断节目是否正在播放
   const isCurrentlyPlaying = (program: EpgProgram) => {
     try {
@@ -424,10 +420,10 @@ export default function EpgScrollableRow({
                           : 'text-muted'
                       } `}
                     >
-                      {formatTime(program.start)}
+                      {formatTimeToHHMM(program.start)}
                     </span>
                     <span className='text-[13px] text-muted'>
-                      {formatTime(program.end)}
+                      {formatTimeToHHMM(program.end)}
                     </span>
                   </div>
 
@@ -539,7 +535,7 @@ export default function EpgScrollableRow({
                                   : 'text-fg'
                               } `}
                             >
-                              {formatTime(program.start)}
+                              {formatTimeToHHMM(program.start)}
                             </span>
                             <span className='text-[13px] text-muted'>
                               {Math.round(duration)}分钟
@@ -671,7 +667,7 @@ export default function EpgScrollableRow({
                                 : 'text-fg'
                             } `}
                           >
-                            {formatTime(program.start)}
+                            {formatTimeToHHMM(program.start)}
                           </span>
                           <span className='text-[13px] text-muted'>
                             {Math.round(duration)}分钟

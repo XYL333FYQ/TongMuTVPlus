@@ -28,10 +28,10 @@ import PosterMotion from '@/components/catalog/PosterMotion';
 import PublicCatalogPage from '@/components/catalog/PublicCatalogPage';
 import SectionHeader from '@/components/catalog/SectionHeader';
 import ContinueWatching from '@/components/ContinueWatching';
+import { notify } from '@/components/feedback/AppDialogs';
 import HttpWarningDialog from '@/components/feedback/HttpWarningDialog';
 import ModalLayer from '@/components/feedback/ModalLayer';
 import ReleaseNoticeDialog from '@/components/feedback/ReleaseNoticeDialog';
-import Toast, { ToastProps } from '@/components/feedback/Toast';
 import PageContainer from '@/components/PageContainer';
 import PageLayout from '@/components/PageLayout';
 import { useSite } from '@/components/SiteProvider';
@@ -130,7 +130,6 @@ function HomeClient() {
   const [showDirectPlayDialog, setShowDirectPlayDialog] = useState(false);
   const [directPlayUrl, setDirectPlayUrl] = useState('');
   const [directPlaySubmitting, setDirectPlaySubmitting] = useState(false);
-  const [toast, setToast] = useState<ToastProps | null>(null);
 
   const detectNetdiskLink = (
     url: string
@@ -300,11 +299,7 @@ function HomeClient() {
       setDirectPlayUrl('');
       router.push(targetUrl);
     } catch (error) {
-      setToast({
-        message: error instanceof Error ? error.message : '播放失败',
-        type: 'error',
-        onClose: () => setToast(null),
-      });
+      notify(error instanceof Error ? error.message : '播放失败', 'error');
     } finally {
       setDirectPlaySubmitting(false);
     }
@@ -909,8 +904,6 @@ function HomeClient() {
           </motion.div>
         </ModalLayer>
       )}
-
-      {toast && <Toast {...toast} />}
     </PageLayout>
   );
 }

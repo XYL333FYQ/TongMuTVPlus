@@ -31,6 +31,7 @@ import {
   isExcludePresetActive,
   isFansubPresetActive,
 } from '@/lib/anime-filter-presets';
+import { formatTimeAgo } from '@/lib/time';
 
 import Select from '@/components/ui/Select';
 
@@ -637,19 +638,6 @@ export default function AnimeSubscriptionComponent({
     }
   };
 
-  const formatTime = (timestamp: number) => {
-    if (!timestamp) return '从未';
-    const now = Date.now();
-    const diff = now - timestamp;
-    const minutes = Math.floor(diff / 60000);
-    if (minutes < 1) return '刚刚';
-    if (minutes < 60) return `${minutes}分钟前`;
-    const hours = Math.floor(minutes / 60);
-    if (hours < 24) return `${hours}小时前`;
-    const days = Math.floor(hours / 24);
-    return `${days}天前`;
-  };
-
   return (
     <div className='space-y-6'>
       {/* 顶部控制 */}
@@ -1164,7 +1152,12 @@ export default function AnimeSubscriptionComponent({
                       <p>集数正则：{sub.episodeRegex}</p>
                     ) : null}
                     <p>当前集数：第 {sub.lastEpisode} 集</p>
-                    <p>上次检查：{formatTime(sub.lastCheckTime)}</p>
+                    <p>
+                      上次检查：
+                      {sub.lastCheckTime
+                        ? formatTimeAgo(sub.lastCheckTime)
+                        : '从未'}
+                    </p>
                   </div>
                 </div>
                 <div className='flex items-center gap-2'>
@@ -1263,7 +1256,9 @@ export default function AnimeSubscriptionComponent({
                   ) : null}
                   <p>
                     集数：第 {sub.lastEpisode} 集 ·{' '}
-                    {formatTime(sub.lastCheckTime)}
+                    {sub.lastCheckTime
+                      ? formatTimeAgo(sub.lastCheckTime)
+                      : '从未'}
                   </p>
                 </div>
                 <div className='flex items-center gap-2 pt-1'>

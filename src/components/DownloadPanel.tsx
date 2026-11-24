@@ -3,6 +3,7 @@
 import React, { useMemo, useState } from 'react';
 
 import { M3U8DownloadTask, M3U8SegmentLogStatus } from '@/lib/m3u8-downloader';
+import { formatLocalTime } from '@/lib/time';
 
 import { useDownload } from '@/contexts/DownloadContext';
 
@@ -124,9 +125,6 @@ export function DownloadPanel() {
         return status;
     }
   };
-
-  const formatTime = (timestamp: number) =>
-    new Date(timestamp).toLocaleTimeString();
 
   const logStats = logTask
     ? {
@@ -508,7 +506,7 @@ export function DownloadPanel() {
                       className='grid gap-3 rounded-xl border border-line bg-surface p-3 text-sm md:grid-cols-[120px_110px_1fr_160px]'
                     >
                       <div className='font-mono text-[13px] text-muted'>
-                        {formatTime(log.timestamp)}
+                        {formatLocalTime(log.timestamp)}
                       </div>
                       <div>
                         <span

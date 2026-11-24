@@ -46,7 +46,7 @@ import {
 import DanmakuFilterSettings from '@/components/DanmakuFilterSettings';
 import DownloadEpisodeSelector from '@/components/DownloadEpisodeSelector';
 import EpisodeSelector from '@/components/EpisodeSelector';
-import Toast, { ToastProps } from '@/components/feedback/Toast';
+import { notify } from '@/components/feedback/AppDialogs';
 import PageLayout from '@/components/PageLayout';
 import { useSite } from '@/components/SiteProvider';
 import SmartRecommendations from '@/components/SmartRecommendations';
@@ -273,9 +273,7 @@ function PlayPageClient() {
   } = useFilterConfigs(danmaku);
   const [showDanmakuFilterSettings, setShowDanmakuFilterSettings] =
     useState(false);
-  const [toast, setToast] = useState<ToastProps | null>(null);
-  const showToast: ShowToast = (message, type) =>
-    setToast({ message, type, onClose: () => setToast(null) });
+  const showToast: ShowToast = (message, type) => notify(message, type);
   const [isTranscoding, setIsTranscoding] = useState(false);
 
   // 视频基本信息
@@ -674,7 +672,6 @@ function PlayPageClient() {
       return setIsVideoLoading;
     },
     setPlaybackSourceBadge,
-    setToast,
     get setVideoError() {
       return setVideoError;
     },
@@ -950,12 +947,7 @@ function PlayPageClient() {
   const subtitlesRef = useRef<SubtitleController | null>(null);
   const subtitles = (subtitlesRef.current ??= new SubtitleController(
     (message, type) =>
-      setToast({
-        message,
-        type,
-        ...(type === 'info' ? { duration: 5000 } : {}),
-        onClose: () => setToast(null),
-      }),
+      notify(message, type, type === 'info' ? { duration: 5000 } : {}),
     () => customSubtitleInputRef.current?.click()
   ));
   const episodeSubtitles = () =>
@@ -1066,12 +1058,7 @@ function PlayPageClient() {
       return;
     }
     if (!watchRoom || !watchRoom.isConnected) {
-      setToast({
-        message: '观影室服务未连接',
-        type: 'error',
-        duration: 3000,
-        onClose: () => setToast(null),
-      });
+      notify('观影室服务未连接', 'error', { duration: 3000 });
       return;
     }
 
@@ -1088,11 +1075,8 @@ function PlayPageClient() {
       // 空房间会自动接着这部影片和当前进度一起看（RoomPlaybackBridge）。
       router.push(`/watch-room?room=${encodeURIComponent(room.id)}`);
     } catch (error) {
-      setToast({
-        message: (error as Error | null)?.message || '创建观影室失败',
-        type: 'error',
+      notify((error as Error | null)?.message || '创建观影室失败', 'error', {
         duration: 3000,
-        onClose: () => setToast(null),
       });
     } finally {
       setIsCreatingRoom(false);
@@ -2153,7 +2137,6 @@ function PlayPageClient() {
       </div>
 
       {/* Toast通知 */}
-      {toast && <Toast {...toast} />}
 
       <input
         ref={customSubtitleInputRef}
@@ -2194,11 +2177,7 @@ function PlayPageClient() {
           }
         }}
         onShowToast={(message, type) => {
-          setToast({
-            message,
-            type,
-            onClose: () => setToast(null),
-          });
+          notify(message, type);
         }}
       />
 

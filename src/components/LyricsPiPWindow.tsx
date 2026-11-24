@@ -328,10 +328,12 @@ export default function LyricsPiPWindow({
     container.id = 'pip-lyrics-root';
     pipWin.document.body.appendChild(container);
 
-    // 设置 body 样式
-    pipWin.document.body.style.margin = '0';
-    pipWin.document.body.style.padding = '0';
-    pipWin.document.body.style.overflow = 'hidden';
+    // 画中画是一个单独的小窗口：它自己的 body 去掉边距、不出滚动条（不是锁主页面的滚动）
+    Object.assign(pipWin.document.body.style, {
+      margin: '0',
+      padding: '0',
+      overflow: 'hidden',
+    });
 
     // 使用 ReactDOM 渲染组件到 PiP 窗口
     const root = ReactDOM.createRoot(container);

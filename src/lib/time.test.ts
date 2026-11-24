@@ -1,4 +1,12 @@
-import { formatClock, formatDuration, formatPaddedClock } from './time';
+import {
+  formatClock,
+  formatDateTime,
+  formatDuration,
+  formatLocalDate,
+  formatPaddedClock,
+  formatTimeAgo,
+  formatTimestamp,
+} from './time';
 
 test('formatClock', () => {
   expect(formatClock(309)).toBe('5:09');
@@ -23,4 +31,23 @@ test('formatDuration', () => {
   expect(formatDuration(120)).toBe('2分钟');
   expect(formatDuration(180.6)).toBe('3分钟');
   expect(formatDuration(NaN)).toBe('0秒');
+});
+
+test('formatTimeAgo', () => {
+  const now = 10 * 86_400_000;
+  expect(formatTimeAgo(now - 30_000, now)).toBe('刚刚');
+  expect(formatTimeAgo(now - 5 * 60_000, now)).toBe('5分钟前');
+  expect(formatTimeAgo(now - 3 * 3_600_000, now)).toBe('3小时前');
+  expect(formatTimeAgo(now - 2 * 86_400_000, now)).toBe('2天前');
+});
+
+test('formatTimestamp 补齐两位', () => {
+  expect(formatTimestamp(new Date(2026, 0, 5, 7, 8, 9))).toBe(
+    '2026-01-05 07:08:09'
+  );
+});
+
+test('解析不了的日期', () => {
+  expect(formatLocalDate('不是日期')).toBe('不是日期');
+  expect(formatDateTime('不是日期')).toBeNull();
 });

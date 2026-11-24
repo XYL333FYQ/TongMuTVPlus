@@ -7,6 +7,7 @@ import {
   runToolAgent,
   ToolDataSources,
 } from '@/lib/ai-tool-agent';
+import { formatTimestamp } from '@/lib/time';
 import { normalizeApiBaseUrl } from '@/lib/url';
 
 export interface AIComment {
@@ -437,7 +438,7 @@ export async function generateAIComments(
         userAvatar: generateAvatar(index),
         rating: comment.rating,
         content: comment.content,
-        time: formatTime(date),
+        time: formatTimestamp(date),
         votes: generateVotes(comment.sentiment),
         isAiGenerated: true,
       };
@@ -473,17 +474,6 @@ function generateAvatar(seed: number): string {
 }
 
 // 格式化时间
-function formatTime(date: Date): string {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  const hours = String(date.getHours()).padStart(2, '0');
-  const minutes = String(date.getMinutes()).padStart(2, '0');
-  const seconds = String(date.getSeconds()).padStart(2, '0');
-
-  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
-}
-
 // 根据情感生成点赞数
 function generateVotes(sentiment: string): number {
   if (sentiment === 'positive') {

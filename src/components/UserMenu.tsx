@@ -56,11 +56,10 @@ import { useUnreadNotificationCount } from '@/hooks/useUnreadNotificationCount';
 
 import ThemeSettings from '@/components/account/ThemeSettings';
 import VisualPreferenceControls from '@/components/account/VisualPreferenceControls';
-import { notifyError } from '@/components/feedback/AppDialogs';
+import { notify, notifyError } from '@/components/feedback/AppDialogs';
 import { ConfirmDialog } from '@/components/feedback/ConfirmDialog';
 import ModalLayer from '@/components/feedback/ModalLayer';
 import Popover from '@/components/feedback/Popover';
-import Toast, { ToastProps } from '@/components/feedback/Toast';
 import { MoreMenu } from '@/components/shell/TongMuNavigation';
 
 import { useVersionCheck } from './VersionCheckProvider';
@@ -342,7 +341,6 @@ export const UserMenu: React.FC = () => {
   const [syncMode, setSyncMode] = useState<'off' | 'manual' | 'auto'>('off');
   const [syncAvailable, setSyncAvailable] = useState(false);
   const [syncBusy, setSyncBusy] = useState(false);
-  const [syncToast, setSyncToast] = useState<ToastProps | null>(null);
   const [isCloudBackupDropdownOpen, setIsCloudBackupDropdownOpen] =
     useState(false);
 
@@ -2615,11 +2613,7 @@ export const UserMenu: React.FC = () => {
 
   // 云同步结果以 Toast 展示
   const showSyncToast = (text: string, ok: boolean) => {
-    setSyncToast({
-      message: text,
-      type: ok ? 'success' : 'error',
-      onClose: () => setSyncToast(null),
-    });
+    notify(text, ok ? 'success' : 'error');
   };
 
   // 从云端拉取副本（自动模式进入网站时、手动恢复时调用）
@@ -3384,7 +3378,6 @@ export const UserMenu: React.FC = () => {
       )}
 
       {/* 云备份操作结果（提示条自己挂到最上面的弹窗或 body 上） */}
-      {syncToast && <Toast {...syncToast} />}
 
       {isChangePasswordOpen && (
         <ModalLayer

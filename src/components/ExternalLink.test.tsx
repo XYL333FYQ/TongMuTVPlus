@@ -6,6 +6,8 @@ import {
   waitFor,
 } from '@testing-library/react';
 
+import { AppDialogHost } from '@/components/feedback/AppDialogs';
+
 import ExternalLink, { useExternalAction } from './ExternalLink';
 
 const desktop = window as Window & { TMDesktop?: { externalLinks?: boolean } };
@@ -55,10 +57,14 @@ test('old Windows copies an absolute link instead of a silently denied new windo
     configurable: true,
     value: { writeText },
   });
+  // 复制成功的提示走全站提示条（notify），要挂上根布局里的提示宿主
   render(
-    <ExternalLink href='/play?id=one' label='播放链接'>
-      播放
-    </ExternalLink>
+    <>
+      <ExternalLink href='/play?id=one' label='播放链接'>
+        播放
+      </ExternalLink>
+      <AppDialogHost />
+    </>
   );
   const link = screen.getByRole('link', { name: '播放链接（复制链接）' });
   expect(fireEvent.click(link)).toBe(false);
