@@ -912,7 +912,7 @@ export default function AIChatPanel({
       <div className='flex items-center justify-between border-b border-line p-4'>
         <div className='flex items-center gap-3 min-w-0 flex-1'>
           <div className='flex h-10 w-10 items-center justify-center rounded-full bg-fg flex-shrink-0'>
-            <Sparkles size={20} className='text-fg' />
+            <Sparkles size={20} className='text-inverse' />
           </div>
           <div className='min-w-0 flex-1'>
             <h2 className='text-lg font-medium text-fg'>AI影视助手</h2>

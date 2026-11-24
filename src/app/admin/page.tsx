@@ -83,7 +83,6 @@ import {
   FEATURE_PERMISSION_OPTIONS,
 } from '@/lib/feature-permissions';
 import { isAdminRole, isOwnerRole } from '@/lib/roles';
-import { lockScroll } from '@/lib/scroll-lock';
 import { readSetting, writeSetting } from '@/lib/settings';
 import { useNotificationTargetFocus } from '@/hooks/useNotificationTargetFocus';
 
@@ -650,11 +649,6 @@ const UserConfig = ({
 
   // 当前登录用户名
   const currentUsername = getAuthInfoFromBrowserCookie()?.username || null;
-
-  // 查看用户设备弹窗打开时锁定背景滚动，避免滚动穿透
-  useEffect(() => {
-    if (showUserDevicesModal) return lockScroll();
-  }, [showUserDevicesModal]);
 
   // 判断是否有旧版用户数据需要迁移
   const hasOldUserData =

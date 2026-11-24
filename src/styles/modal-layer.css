@@ -18,6 +18,10 @@
   display: grid;
   place-items: center;
 }
+/* 没有可先聚焦的按钮时焦点放在弹窗本身：它只是容器，不画焦点环 */
+.tm-modal-layer:focus {
+  outline: none;
+}
 .tm-modal-layer:modal {
   overscroll-behavior: contain;
 }

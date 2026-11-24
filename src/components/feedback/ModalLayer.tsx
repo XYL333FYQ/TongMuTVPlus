@@ -98,7 +98,20 @@ export default function ModalLayer({
     // 旧浏览器（iOS 15.4 以前）没有 showModal：退回普通打开，其余行为照旧
     if (typeof dialog.showModal === 'function') dialog.showModal();
     else dialog.setAttribute('open', '');
-    focusRef.current?.current?.focus({ preventScroll: true });
+    if (focusRef.current?.current) {
+      focusRef.current.current.focus({ preventScroll: true });
+    } else {
+      // 没指定先聚焦谁时，浏览器会把焦点给弹窗里第一个能聚焦的东西——内容能滚动时那就是
+      // 滚动的面板本身（Chrome 会画一圈焦点环）。落到不能操作的元素上就改为聚焦弹窗本身
+      const landed = document.activeElement;
+      if (
+        landed instanceof HTMLElement &&
+        landed !== dialog &&
+        dialog.contains(landed) &&
+        !landed.matches(FOCUSABLE)
+      )
+        dialog.focus({ preventScroll: true });
+    }
     const unlock = lockScroll();
     return () => {
       unlock();
@@ -118,6 +131,7 @@ export default function ModalLayer({
       aria-label={label}
       aria-describedby={describedBy}
       aria-modal='true'
+      tabIndex={-1}
       className={`tm-modal-layer${variantClass} ${className}`}
       onCancel={(event) => {
         event.preventDefault();

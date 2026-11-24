@@ -37,7 +37,6 @@ import {
   LOCAL_SETTINGS_SYNC_LAST_PULL_KEY,
 } from '@/lib/local-settings-sync';
 import { isOwnerRole, isPrivilegedRole } from '@/lib/roles';
-import { lockScroll } from '@/lib/scroll-lock';
 import {
   notificationWorkerScript,
   waitForActiveWorker,
@@ -203,12 +202,6 @@ export const UserMenu: React.FC = () => {
   const tvQrStreamRef = useRef<MediaStream | null>(null);
   const tvQrScanStopRef = useRef(false);
   const [tvAccessTab, setTvAccessTab] = useState<'tvbox' | 'web'>('tvbox');
-
-  // 电视遥控面板（上游“电视”区）还是自己的原生弹窗，打开时由这里锁住页面；
-  // 其余面板都在弹窗层里，由它锁
-  useEffect(() => {
-    if (isTVRemoteOpen) return lockScroll();
-  }, [isTVRemoteOpen]);
 
   // 设置相关状态
   const [defaultAggregateSearch, setDefaultAggregateSearch] = useState(true);
