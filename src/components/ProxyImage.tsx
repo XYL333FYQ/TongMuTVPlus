@@ -58,8 +58,11 @@ const ProxyImage = forwardRef<HTMLImageElement, ProxyImageProps>(
     const imgRef = useRef<HTMLImageElement | null>(null);
     useImperativeHandle(ref, () => imgRef.current as HTMLImageElement);
 
+    // 失败后重试一次：换一个新的 <img>（同一个地址再设一遍不会重新加载）
+    const [attempt, setAttempt] = useState(0);
     useEffect(() => {
       setCurrentSrc(initialSrc);
+      setAttempt(0);
     }, [initialSrc]);
 
     // 主源图片域主页探测：失败则 sticky 走备源（替代原 5s complete 误判）
@@ -104,10 +107,10 @@ const ProxyImage = forwardRef<HTMLImageElement, ProxyImageProps>(
         return;
       }
 
-      if (retryOnError && !img.dataset.retried) {
-        img.dataset.retried = 'true';
+      if (retryOnError && attempt === 0) {
         window.setTimeout(() => {
           setCurrentSrc(initialSrc);
+          setAttempt(1);
         }, retryDelay);
       }
 
@@ -117,6 +120,7 @@ const ProxyImage = forwardRef<HTMLImageElement, ProxyImageProps>(
     return (
       <img
         {...props}
+        key={attempt}
         alt={alt}
         ref={imgRef}
         // 不走代理时没有换源，地址跟着 props 同步变，不等下一轮 effect

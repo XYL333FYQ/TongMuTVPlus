@@ -1,4 +1,4 @@
-/* PlaybackTools.tsx 的样式（块 tm-ptools）：由原来的 Tailwind 类按 Tailwind 自己的输出原样转来，计算样式不变。 */
+/* PlaybackTools.tsx 的样式（块 tm-ptools）：由原来的 Tailwind 类按 Tailwind 自己的输出原样转来，宽度断点改成设备档位（sm / md → 非手机档，lg 及以上 → 电脑档，见 lib/device-tier.ts），其余计算样式不变。 */
 /* mt-3 px-2 wide:flex-shrink-0 */
 .tm-ptools-div-1 {
   margin-top: 0.75rem;

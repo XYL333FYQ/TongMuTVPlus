@@ -9,7 +9,11 @@ export function compileFunction(
   return new Function(...params, body) as (...args: unknown[]) => unknown;
 }
 
-/** 计算一段表达式的值（等同于把它包在 return 里运行） */
-export function evaluateExpression(expression: string): unknown {
-  return compileFunction([], `return (${expression});`)();
+/**
+ * 计算一段代码的值，和原来的 eval 一样：可以是几条语句，取最后一条的值。
+ * 用间接 eval（全局作用域），代码碰不到调用处的局部变量。
+ */
+export function evaluateExpression(code: string): unknown {
+  const globalEval = globalThis.eval;
+  return globalEval(code);
 }

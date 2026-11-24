@@ -1,4 +1,4 @@
-/* PlaybackComments.tsx 的样式（块 tm-pcomments）：由原来的 Tailwind 类按 Tailwind 自己的输出原样转来，计算样式不变。 */
+/* PlaybackComments.tsx 的样式（块 tm-pcomments）：由原来的 Tailwind 类按 Tailwind 自己的输出原样转来，宽度断点改成设备档位（sm / md → 非手机档，lg 及以上 → 电脑档，见 lib/device-tier.ts），其余计算样式不变。 */
 /* mt-6 -mx-3 md:mx-0 md:px-4 */
 .tm-pcomments-div-1 {
   margin-left: -0.75rem;

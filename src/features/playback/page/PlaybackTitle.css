@@ -1,4 +1,4 @@
-/* PlaybackTitle.tsx 的样式（块 tm-ptitle）：由原来的 Tailwind 类按 Tailwind 自己的输出原样转来，计算样式不变。 */
+/* PlaybackTitle.tsx 的样式（块 tm-ptitle）：由原来的 Tailwind 类按 Tailwind 自己的输出原样转来，宽度断点改成设备档位（sm / md → 非手机档，lg 及以上 → 电脑档，见 lib/device-tier.ts），其余计算样式不变。 */
 /* py-1 */
 .tm-ptitle-div-1 {
   padding-top: 0.25rem;

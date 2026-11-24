@@ -1,4 +1,4 @@
-/* PlaybackDetail.tsx 的样式（块 tm-pdetail）：由原来的 Tailwind 类按 Tailwind 自己的输出原样转来，计算样式不变。 */
+/* PlaybackDetail.tsx 的样式（块 tm-pdetail）：由原来的 Tailwind 类按 Tailwind 自己的输出原样转来，宽度断点改成设备档位（sm / md → 非手机档，lg 及以上 → 电脑档，见 lib/device-tier.ts），其余计算样式不变。 */
 /* grid grid-cols-1 md:grid-cols-5 lg:grid-cols-6 gap-4 */
 .tm-pdetail-div-1 {
   display: grid;

@@ -388,7 +388,7 @@ async function executeMethod(
     } else {
       // 在 Node.js 环境下，直接执行 transform
       try {
-        const transformFn = evaluateExpression(config.transform) as (
+        const transformFn = evaluateExpression(`(${config.transform})`) as (
           input: unknown
         ) => unknown;
         data = transformFn(data);

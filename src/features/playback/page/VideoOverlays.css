@@ -1,4 +1,4 @@
-/* VideoOverlays.tsx 的样式（块 tm-poverlay）：由原来的 Tailwind 类按 Tailwind 自己的输出原样转来，计算样式不变。 */
+/* VideoOverlays.tsx 的样式（块 tm-poverlay）：由原来的 Tailwind 类按 Tailwind 自己的输出原样转来，宽度断点改成设备档位（sm / md → 非手机档，lg 及以上 → 电脑档，见 lib/device-tier.ts），其余计算样式不变。 */
 /* absolute inset-0 bg-ink/85 backdrop-blur-sm rounded-xl flex items-center justify-center z-[var(--tm-z-player-cover)] transition-all duration-300 */
 .tm-poverlay-div-1 {
   position: absolute;

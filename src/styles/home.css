@@ -942,7 +942,8 @@ html[data-tm-reduced-motion='true'] .tm-home-room-create-link {
 .tm-media-initial {
   display: grid;
   place-items: center;
-  font-size: 48px;
+  /* 各处缩略图用 --tm-poster-initial-size 定首字大小（小窗、片单、详情等） */
+  font-size: var(--tm-poster-initial-size, 48px);
   font-weight: 600;
   color: var(--tm-on-art);
   background: repeating-linear-gradient(

@@ -248,7 +248,6 @@ body:has(.tm-playback-host[data-presentation='folded']) .tm-back-to-top {
 .tm-poster-initial {
   position: absolute;
   inset: 0;
-  font-size: var(--tm-poster-initial-size, 48px);
 }
 .tm-poster-title {
   display: block;
