@@ -7,6 +7,7 @@ import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
 
 import type { BangumiCalendarData } from '@/lib/bangumi.client';
 import { AI_WELCOME_MESSAGE } from '@/lib/brand';
+import { directPlayHref } from '@/lib/direct-play-link';
 import {
   type HomeCatalogueData,
   HOME_CACHE_KEYS,
@@ -19,7 +20,7 @@ import { type SettingKey, readSetting, writeSetting } from '@/lib/settings';
 import type { TMDBItem } from '@/lib/tmdb.client';
 import { getTMDBImageUrl } from '@/lib/tmdb-image-base';
 import { type SearchResult, DoubanItem } from '@/lib/types';
-import { base58Encode, processImageUrl } from '@/lib/utils';
+import { processImageUrl } from '@/lib/utils';
 import { usePageRefresh } from '@/hooks/usePageRefresh';
 import { useViewerIdentity } from '@/hooks/useViewerIdentity';
 
@@ -132,106 +133,6 @@ function HomeClient() {
   const [directPlayUrl, setDirectPlayUrl] = useState('');
   const [directPlaySubmitting, setDirectPlaySubmitting] = useState(false);
 
-  const detectNetdiskLink = (
-    url: string
-  ): {
-    provider: 'quark' | 'mobile' | 'baidu' | 'tianyi' | '123' | 'uc' | '115';
-    shareUrl: string;
-    passcode?: string;
-  } | null => {
-    const trimmed = url.trim();
-
-    const pickPasscode = (...values: Array<string | undefined>) =>
-      values.map((item) => item?.trim()).find(Boolean);
-
-    const inlinePasscode = (text: string) =>
-      pickPasscode(
-        text.match(
-          /(?:提取码|访问码|密码)\s*[:：=]?\s*([a-zA-Z0-9]{4,8})/i
-        )?.[1],
-        text.match(/[?&](?:pwd|passcode|accessCode)=([^&\s]+)/i)?.[1]
-      );
-
-    if (
-      /https:\/\/(?:www\.)?123(?:684|865|912|pan)\.(?:com|cn)\/s\//i.test(
-        trimmed
-      )
-    ) {
-      return {
-        provider: '123',
-        shareUrl: trimmed,
-        passcode: pickPasscode(
-          trimmed.match(/[?&]pwd=([^&]+)/i)?.[1],
-          inlinePasscode(trimmed)
-        ),
-      };
-    }
-
-    if (
-      /https:\/\/cloud\.189\.cn\/(web\/share\?code=|t\/)/i.test(trimmed) ||
-      /https:\/\/h5\.cloud\.189\.cn\/share\.html#\/t\//i.test(trimmed)
-    ) {
-      return {
-        provider: 'tianyi',
-        shareUrl: trimmed,
-        passcode: pickPasscode(
-          trimmed.match(/[?&]pwd=([^&]+)/i)?.[1],
-          inlinePasscode(trimmed)
-        ),
-      };
-    }
-
-    if (/pan\.baidu\.com\/(s\/|wap\/init\?surl=)/i.test(trimmed)) {
-      return {
-        provider: 'baidu',
-        shareUrl: trimmed,
-        passcode: pickPasscode(
-          trimmed.match(/[?&](?:pwd|accessCode)=([^&]+)/i)?.[1],
-          inlinePasscode(trimmed)
-        ),
-      };
-    }
-
-    if (/https:\/\/pan\.quark\.cn\/s\//i.test(trimmed)) {
-      return {
-        provider: 'quark',
-        shareUrl: trimmed,
-        passcode: pickPasscode(
-          trimmed.match(/[?&](?:pwd|passcode)=([^&]+)/i)?.[1],
-          inlinePasscode(trimmed)
-        ),
-      };
-    }
-
-    if (/https:\/\/drive\.uc\.cn\/s\//i.test(trimmed)) {
-      return {
-        provider: 'uc',
-        shareUrl: trimmed,
-        passcode: pickPasscode(
-          trimmed.match(/[?&](?:pwd|passcode)=([^&]+)/i)?.[1],
-          inlinePasscode(trimmed)
-        ),
-      };
-    }
-
-    if (/https:\/\/(?:yun|caiyun)\.139\.com\//i.test(trimmed)) {
-      return { provider: 'mobile', shareUrl: trimmed };
-    }
-
-    if (/https:\/\/(?:115|anxia|115cdn)\.com\/s\//i.test(trimmed)) {
-      return {
-        provider: '115',
-        shareUrl: trimmed,
-        passcode: pickPasscode(
-          trimmed.match(/[?&](?:password|pwd|passcode)=([^&]+)/i)?.[1],
-          inlinePasscode(trimmed)
-        ),
-      };
-    }
-
-    return null;
-  };
-
   const handleDirectPlay = () => {
     setDirectPlayUrl('');
     setShowDirectPlayDialog(true);
@@ -251,51 +152,8 @@ function HomeClient() {
     if (!trimmed) return;
     setDirectPlaySubmitting(true);
     try {
-      const netdisk = detectNetdiskLink(trimmed);
-      if (netdisk && !netdiskTempPlayEnabled) {
-        throw new Error('无权限使用临时播放');
-      }
-
-      if (netdisk) {
-        const source =
-          netdisk.provider === 'mobile'
-            ? 'netdisk-mobile'
-            : netdisk.provider === 'baidu'
-            ? 'netdisk-baidu'
-            : netdisk.provider === 'tianyi'
-            ? 'netdisk-tianyi'
-            : netdisk.provider === '115'
-            ? 'netdisk-115'
-            : netdisk.provider === 'uc'
-            ? 'netdisk-uc'
-            : netdisk.provider === '123'
-            ? 'netdisk-123'
-            : 'netdisk-quark';
-        const id = base58Encode(
-          JSON.stringify({
-            shareUrl: netdisk.shareUrl,
-            passcode: netdisk.passcode || '',
-          })
-        );
-        if (!id) {
-          throw new Error('网盘链接编码失败');
-        }
-        const targetUrl = `/play?source=${encodeURIComponent(
-          source
-        )}&id=${encodeURIComponent(id)}&title=${encodeURIComponent(
-          '网盘直链播放'
-        )}`;
-        setShowDirectPlayDialog(false);
-        setDirectPlayUrl('');
-        router.push(targetUrl);
-        return;
-      }
-
-      const encoded = base58Encode(trimmed);
-      if (!encoded) return;
-      const targetUrl = `/play?source=directplay&id=${encodeURIComponent(
-        encoded
-      )}`;
+      const targetUrl = directPlayHref(trimmed, netdiskTempPlayEnabled);
+      if (!targetUrl) return;
       setShowDirectPlayDialog(false);
       setDirectPlayUrl('');
       router.push(targetUrl);
