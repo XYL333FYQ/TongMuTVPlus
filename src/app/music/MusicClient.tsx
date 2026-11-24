@@ -50,6 +50,7 @@ import type { MusicQuality, MusicSource, Song } from '@/lib/music/types';
 import { readSetting, removeSetting, writeSetting } from '@/lib/settings';
 import { formatClock } from '@/lib/time';
 import { useAudioFocus } from '@/hooks/useAudioFocus';
+import { useLatest } from '@/hooks/useLatest';
 
 import AddToPlaylistModal from '@/components/AddToPlaylistModal';
 import { notify } from '@/components/feedback/AppDialogs';
@@ -729,11 +730,13 @@ export default function MusicClient({
     setAudioElement(element);
   }, []);
   const { ownsSound, claimSound } = useAudioFocus(audioElement, false);
+  // 房间接口里的两个函数单独拿出来，依赖只跟着它们变
+  const { beginLocalPlayback, publish: publishMusicRoom } = musicRoom;
   // 本机真正开始出声：不是在给房间发布时，先退出跟随并停掉房间电影，再拿声音归属
   useEffect(() => {
     if (!audioElement) return;
     const onPlay = () => {
-      void musicRoom.beginLocalPlayback().then((ok) => {
+      void beginLocalPlayback().then((ok) => {
         if (ok) {
           claimSound();
           return;
@@ -744,7 +747,7 @@ export default function MusicClient({
     };
     audioElement.addEventListener('play', onPlay);
     return () => audioElement.removeEventListener('play', onPlay);
-  }, [audioElement, musicRoom.beginLocalPlayback, claimSound]);
+  }, [audioElement, beginLocalPlayback, claimSound]);
   const lyricsContainerRef = useRef<HTMLDivElement>(null);
   const sleepHoursPickerRef = useRef<HTMLDivElement>(null);
   const sleepMinutesPickerRef = useRef<HTMLDivElement>(null);
@@ -782,8 +785,7 @@ export default function MusicClient({
       kind: 'update' | 'play' | 'pause' | 'seek' | 'change',
       state: MusicSyncState
     ) => {
-      void musicRoom
-        .publish(kind, state)
+      void publishMusicRoom(kind, state)
         .then(() => setRoomActionError(''))
         .catch((error) =>
           setRoomActionError(
@@ -791,7 +793,7 @@ export default function MusicClient({
           )
         );
     },
-    [musicRoom.publish]
+    [publishMusicRoom]
   );
 
   const toMusicQueueItem = (song: Song): MusicQueueItem => ({
@@ -1229,9 +1231,10 @@ export default function MusicClient({
   }, []);
 
   // 监听播放状态变化，自动保存
+  const savePlayStateLatest = useLatest(savePlayState);
   useEffect(() => {
     if (currentSong) {
-      savePlayState();
+      savePlayStateLatest.current();
     }
   }, [
     currentSong,
@@ -1244,6 +1247,7 @@ export default function MusicClient({
     lyrics,
     playRecords,
     playlistIndex,
+    savePlayStateLatest,
   ]);
 
   useEffect(() => {
@@ -1254,10 +1258,11 @@ export default function MusicClient({
     currentSourceRef.current = currentSource;
   }, [currentSource]);
 
+  const buildMusicRoomStateLatest = useLatest(buildMusicRoomState);
   useEffect(() => {
     if (!isPublishingToRoom || !currentSong) return;
 
-    publishToRoom('update', buildMusicRoomState(currentSong));
+    publishToRoom('update', buildMusicRoomStateLatest.current(currentSong));
   }, [
     isPublishingToRoom,
     publishToRoom,
@@ -1266,6 +1271,7 @@ export default function MusicClient({
     playlistIndex,
     playMode,
     quality,
+    buildMusicRoomStateLatest,
   ]);
 
   useEffect(() => {
@@ -1274,7 +1280,7 @@ export default function MusicClient({
     const interval = window.setInterval(() => {
       publishToRoom(
         'update',
-        buildMusicRoomState(currentSong, {
+        buildMusicRoomStateLatest.current(currentSong, {
           currentTime:
             audioRef.current?.currentTime || currentTimeRef.current || 0,
           isPlaying: true,
@@ -1292,6 +1298,7 @@ export default function MusicClient({
     playlistIndex,
     playMode,
     quality,
+    buildMusicRoomStateLatest,
   ]);
 
   // 监听 playRecords 变化，更新 playlistIndex
@@ -2075,6 +2082,10 @@ export default function MusicClient({
     };
   }, [surroundEnabled, surroundSpeed, surroundDistance]);
 
+  const playNextLatest = useLatest(playNext);
+  const playSongLatest = useLatest(playSong);
+  const playlistLatest = useLatest(playlist);
+  const saveHistoryRecordLatest = useLatest(saveHistoryRecord);
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio) return;
@@ -2117,20 +2128,22 @@ export default function MusicClient({
 
               // 保存到数据库
               const record = updated[playlistIndex];
-              saveHistoryRecord(
-                record,
-                currentSong,
-                audio.currentTime,
-                audio.duration || 0
-              ).catch((err) => {
-                logger.error('保存播放记录到数据库失败:', err);
-              });
+              saveHistoryRecordLatest
+                .current(
+                  record,
+                  currentSong,
+                  audio.currentTime,
+                  audio.duration || 0
+                )
+                .catch((err) => {
+                  logger.error('保存播放记录到数据库失败:', err);
+                });
             }
             return updated;
           });
         }
 
-        savePlayState();
+        savePlayStateLatest.current();
       }
     };
 
@@ -2172,14 +2185,11 @@ export default function MusicClient({
 
             // 保存到数据库（包含时长信息）
             const record = updated[playlistIndex];
-            saveHistoryRecord(
-              record,
-              currentSong,
-              record.playTime,
-              audio.duration
-            ).catch((err) => {
-              logger.error('保存播放记录到数据库失败:', err);
-            });
+            saveHistoryRecordLatest
+              .current(record, currentSong, record.playTime, audio.duration)
+              .catch((err) => {
+                logger.error('保存播放记录到数据库失败:', err);
+              });
           }
           return updated;
         });
@@ -2191,13 +2201,15 @@ export default function MusicClient({
         audio.currentTime = 0;
         audio.play();
       } else if (playMode === 'random') {
-        if (playlist.length > 0) {
-          const randomIndex = Math.floor(Math.random() * playlist.length);
+        if (playlistLatest.current.length > 0) {
+          const randomIndex = Math.floor(
+            Math.random() * playlistLatest.current.length
+          );
           setPlaylistIndex(randomIndex);
-          playSong(playlist[randomIndex], -1);
+          playSongLatest.current(playlistLatest.current[randomIndex], -1);
         }
       } else {
-        playNext();
+        playNextLatest.current();
       }
     };
 
@@ -2236,6 +2248,11 @@ export default function MusicClient({
     playlistIndex,
     playRecords,
     quality,
+    playNextLatest,
+    playSongLatest,
+    playlistLatest,
+    saveHistoryRecordLatest,
+    savePlayStateLatest,
   ]);
 
   // 歌词自动滚动
@@ -2490,7 +2507,7 @@ export default function MusicClient({
       if (audioRef.current && !audioRef.current.paused) {
         audioRef.current.pause();
         setIsPlaying(false);
-        savePlayState();
+        savePlayStateLatest.current();
       }
 
       notify('睡眠定时结束，已暂停播放', 'info');
@@ -2499,7 +2516,7 @@ export default function MusicClient({
     updateSleepTimer();
     const timerId = window.setInterval(updateSleepTimer, 1000);
     return () => window.clearInterval(timerId);
-  }, [sleepTimerEndAt]);
+  }, [sleepTimerEndAt, savePlayStateLatest]);
 
   useEffect(() => {
     if (!showSleepTimerMenu) return;
@@ -2733,18 +2750,23 @@ export default function MusicClient({
     };
   }, []);
 
+  const addSongToQueueLatest = useLatest(addSongToQueue);
+  const handlePlayAllCurrentSongsWithLatest = useLatest(
+    handlePlayAllCurrentSongsWith
+  );
   useEffect(() => {
     const handlePlaySongEvent = (event: Event) => {
       const detail = (event as CustomEvent<{ song: Song; index?: number }>)
         .detail;
-      if (detail?.song) void playSong(detail.song, detail.index ?? -1);
+      if (detail?.song)
+        void playSongLatest.current(detail.song, detail.index ?? -1);
     };
 
     const handlePlayAllEvent = (event: Event) => {
       const detail = (event as CustomEvent<{ songs: Song[]; title?: string }>)
         .detail;
       if (!detail?.songs?.length) return;
-      void handlePlayAllCurrentSongsWith(
+      void handlePlayAllCurrentSongsWithLatest.current(
         detail.songs,
         detail.title || '当前列表'
       );
@@ -2761,7 +2783,7 @@ export default function MusicClient({
     const handlePlayLaterEvent = (event: Event) => {
       const detail = (event as CustomEvent<{ song: Song }>).detail;
       if (!detail?.song) return;
-      void addSongToQueue(detail.song);
+      void addSongToQueueLatest.current(detail.song);
     };
 
     window.addEventListener('music:play-song', handlePlaySongEvent);
@@ -2777,7 +2799,16 @@ export default function MusicClient({
       );
       window.removeEventListener('music:play-later', handlePlayLaterEvent);
     };
-  }, [playlist, playRecords, currentSong, quality, currentSource]);
+  }, [
+    playlist,
+    playRecords,
+    currentSong,
+    quality,
+    currentSource,
+    addSongToQueueLatest,
+    handlePlayAllCurrentSongsWithLatest,
+    playSongLatest,
+  ]);
 
   return (
     // 底色和字色都不在这里兜底：`.music-theme` 的渐变底写在 app/music/music.css 里，

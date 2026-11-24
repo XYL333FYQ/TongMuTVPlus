@@ -23,6 +23,7 @@ import type {
 import { isReducedMotionSetting } from '@/lib/motion';
 import { readSetting, writeSetting } from '@/lib/settings';
 import { processImageUrl } from '@/lib/utils';
+import { useLatest } from '@/hooks/useLatest';
 
 import {
   LIBRARY_BUTTON,
@@ -46,6 +47,9 @@ import {
 } from '@/components/media/library';
 import ReaderDialog from '@/components/media/ReaderDialog';
 import ProxyImage from '@/components/ProxyImage';
+
+// 还没拿到本章页面时的空列表：固定一个，依赖它的 effect 不会每次渲染都重跑
+const NO_PAGES: string[] = [];
 
 type ReadMode = 'single' | 'double' | 'vertical' | 'horizontal';
 type ScaleMode = 'fit' | 'original';
@@ -195,7 +199,15 @@ export default function MangaReadPage() {
     chapterId: string;
     pages: string[];
   }>({ chapterId: '', pages: [] });
-  const pages = chapterPages.chapterId === chapterId ? chapterPages.pages : [];
+  const pages = useMemo(
+    () =>
+      chapterPages.chapterId === chapterId ? chapterPages.pages : NO_PAGES,
+    [chapterPages, chapterId]
+  );
+  // 横向翻页函数定义在下面；上面的 effect 通过这个 ref 调用最新的一份
+  const scrollHorizontalToPageRef = useRef<
+    ((page: number, behavior?: ScrollBehavior) => void) | null
+  >(null);
   const [activePage, setActivePage] = useState(0);
   const [readMode, setReadMode] = useState<ReadMode>('vertical');
   const [scaleMode, setScaleMode] = useState<ScaleMode>('fit');
@@ -423,6 +435,7 @@ export default function MangaReadPage() {
     preloadedImageUrlsRef.current.clear();
   }, [chapterId]);
 
+  const applyPendingAnchorLatest = useLatest(applyPendingAnchor);
   useEffect(() => {
     if (!pages.length || !mangaId || !sourceId || !chapterId) return;
 
@@ -437,14 +450,14 @@ export default function MangaReadPage() {
       if (readMode === 'vertical') {
         pendingAnchorPageRef.current = targetPage;
         pendingAnchorDeadlineRef.current = Date.now() + ANCHOR_HOLD_MS;
-        applyPendingAnchor();
+        applyPendingAnchorLatest.current();
         return;
       }
 
       getVerticalScroller().scrollTo({ top: 0, left: 0, behavior: 'auto' });
 
       if (readMode === 'horizontal') {
-        scrollHorizontalToPage(targetPage, 'auto');
+        scrollHorizontalToPageRef.current?.(targetPage, 'auto');
       }
     };
 
@@ -481,7 +494,14 @@ export default function MangaReadPage() {
     return () => {
       cancelled = true;
     };
-  }, [chapterId, mangaId, pages.length, readMode, sourceId]);
+  }, [
+    chapterId,
+    mangaId,
+    pages.length,
+    readMode,
+    sourceId,
+    applyPendingAnchorLatest,
+  ]);
 
   useEffect(() => {
     setShowChapterComplete(false);
@@ -507,6 +527,9 @@ export default function MangaReadPage() {
     };
   }, [readMode]);
 
+  const getCurrentVerticalPageIndexLatest = useLatest(
+    getCurrentVerticalPageIndex
+  );
   useEffect(() => {
     if (
       readMode !== 'vertical' ||
@@ -524,8 +547,8 @@ export default function MangaReadPage() {
 
     const updateActivePageFromViewport = () => {
       ticking = false;
-      applyPendingAnchor();
-      const nextIndex = getCurrentVerticalPageIndex();
+      applyPendingAnchorLatest.current();
+      const nextIndex = getCurrentVerticalPageIndexLatest.current();
       currentVerticalPageIndexRef.current = nextIndex;
 
       setActivePage((prev) => (prev === nextIndex ? prev : nextIndex));
@@ -585,7 +608,15 @@ export default function MangaReadPage() {
       window.removeEventListener('resize', requestUpdate);
       resizeObserver?.disconnect();
     };
-  }, [readMode, pages, mangaId, sourceId, chapterId]);
+  }, [
+    readMode,
+    pages,
+    mangaId,
+    sourceId,
+    chapterId,
+    applyPendingAnchorLatest,
+    getCurrentVerticalPageIndexLatest,
+  ]);
 
   useEffect(() => {
     if (readMode !== 'horizontal') return;
@@ -630,7 +661,7 @@ export default function MangaReadPage() {
 
     if (readMode === 'horizontal') {
       window.setTimeout(() => {
-        scrollHorizontalToPage(targetPage, 'auto');
+        scrollHorizontalToPageRef.current?.(targetPage, 'auto');
       }, 0);
     }
   }, [activePage, pages.length, readMode]);
@@ -668,10 +699,11 @@ export default function MangaReadPage() {
     title,
   ]);
 
+  const getPreloadAnchorPageLatest = useLatest(getPreloadAnchorPage);
   useEffect(() => {
     if (typeof window === 'undefined' || !pages.length) return;
 
-    const anchorPage = getPreloadAnchorPage();
+    const anchorPage = getPreloadAnchorPageLatest.current();
     const preloadTargets = pages.slice(
       anchorPage + 1,
       anchorPage + 1 + PRELOAD_PAGE_COUNT
@@ -687,7 +719,7 @@ export default function MangaReadPage() {
       img.src = resolvedUrl;
       preloadedImageUrlsRef.current.add(resolvedUrl);
     });
-  }, [activePage, pages, readMode]);
+  }, [activePage, pages, readMode, getPreloadAnchorPageLatest]);
 
   useEffect(() => {
     if (!mangaId || !sourceId || !chapterId) return;
@@ -708,7 +740,7 @@ export default function MangaReadPage() {
         readMode === 'vertical' && readLiveViewport
           ? {
               ...record,
-              pageIndex: getCurrentVerticalPageIndex(),
+              pageIndex: getCurrentVerticalPageIndexLatest.current(),
             }
           : record;
 
@@ -755,7 +787,13 @@ export default function MangaReadPage() {
       // 否则距上次定时保存最多 10 秒的阅读进度会丢
       flushPendingRecord(false);
     };
-  }, [chapterId, mangaId, readMode, sourceId]);
+  }, [
+    chapterId,
+    mangaId,
+    readMode,
+    sourceId,
+    getCurrentVerticalPageIndexLatest,
+  ]);
 
   useEffect(() => {
     if (!mangaId || !sourceId || !chapterId || !mangaDetail) return;
@@ -851,6 +889,7 @@ export default function MangaReadPage() {
       behavior,
     });
   };
+  scrollHorizontalToPageRef.current = scrollHorizontalToPage;
 
   const openJumpDialog = () => {
     if (pages.length <= 1) return;

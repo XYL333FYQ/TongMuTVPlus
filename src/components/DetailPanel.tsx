@@ -10,6 +10,7 @@ import { appendSpecialSourceParam } from '@/lib/special-source.client';
 import type { TMDBSearchResult, TMDBSeasonInfo } from '@/lib/tmdb.search';
 import { getTMDBImageUrl } from '@/lib/tmdb-image-base';
 import { processImageUrl } from '@/lib/utils';
+import { useLatest } from '@/hooks/useLatest';
 
 import type { TmdbCandidate } from '@/components/detail/DetailAuxiliaryPanels';
 import { useExternalAction } from '@/components/ExternalLink';
@@ -351,6 +352,7 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
     setMounted(true);
   }, []);
 
+  const fetchGalleryImagesLatest = useLatest(fetchGalleryImages);
   useEffect(() => {
     if (!showGallery) {
       setGalleryImages([]);
@@ -363,8 +365,8 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
       return;
     }
 
-    fetchGalleryImages();
-  }, [showGallery, galleryTmdbId, galleryMediaType]);
+    fetchGalleryImagesLatest.current();
+  }, [showGallery, galleryTmdbId, galleryMediaType, fetchGalleryImagesLatest]);
 
   useEffect(() => {
     if (!showGallery || !galleryScrollRef.current) return;
@@ -594,6 +596,9 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
   };
 
   // 获取详情数据
+  const applyTmdbResultLatest = useLatest(applyTmdbResult);
+  const getMediaTypeHintLatest = useLatest(getMediaTypeHint);
+  const parseTmdbSearchInfoLatest = useLatest(parseTmdbSearchInfo);
   useEffect(() => {
     if (!isOpen) {
       return;
@@ -749,7 +754,8 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
     // 提取 TMDB 数据获取逻辑为独立函数
     const fetchTmdbData = async () => {
       setCurrentSource('tmdb');
-      const { searchTitle, extractedSeasonNumber } = parseTmdbSearchInfo();
+      const { searchTitle, extractedSeasonNumber } =
+        parseTmdbSearchInfoLatest.current();
 
       const searchResponse = await apiFetch(
         `/api/tmdb/search?query=${encodeURIComponent(searchTitle)}`
@@ -763,10 +769,11 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
         // 保存全部搜索结果,供纠错切换
         setTmdbResults(searchData.results);
         const best = pickBestTmdbResult(searchData.results, {
-          mediaTypeHint: getMediaTypeHint(),
+          mediaTypeHint: getMediaTypeHintLatest.current(),
           year,
         });
-        if (best) await applyTmdbResult(best, extractedSeasonNumber);
+        if (best)
+          await applyTmdbResultLatest.current(best, extractedSeasonNumber);
         return;
       }
 
@@ -789,6 +796,9 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
     sourceId,
     source,
     isUsingTmdb,
+    applyTmdbResultLatest,
+    getMediaTypeHintLatest,
+    parseTmdbSearchInfoLatest,
   ]);
 
   // 切换数据源的函数

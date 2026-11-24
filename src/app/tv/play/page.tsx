@@ -56,6 +56,7 @@ import { readSetting, writeSetting } from '@/lib/settings';
 import { formatPaddedClock } from '@/lib/time';
 import { loadTVPlayerUpDownAction } from '@/lib/tv-preferences';
 import { SearchResult } from '@/lib/types';
+import { useLatest } from '@/hooks/useLatest';
 
 import BusyDots from '@/components/feedback/BusyDots';
 import FilmPoster from '@/components/poster/FilmPoster';
@@ -520,6 +521,7 @@ function TVPlayClient() {
   const fileName = searchParams.get('fileName');
   const initialIndex = Number(searchParams.get('index') || '0');
 
+  const searchParamsLatest = useLatest(searchParams);
   useEffect(() => {
     let alive = true;
     setLoading(true);
@@ -530,7 +532,7 @@ function TVPlayClient() {
         setDetail(data.detail);
         setSources(data.sources);
         const maxIndex = Math.max(0, (data.detail.episodes?.length || 1) - 1);
-        const explicitIndex = searchParams.has('index');
+        const explicitIndex = searchParamsLatest.current.has('index');
         const safeIndex = Math.max(
           0,
           Math.min(
@@ -568,7 +570,7 @@ function TVPlayClient() {
     return () => {
       alive = false;
     };
-  }, [source, id, title, fileName, initialIndex]);
+  }, [source, id, title, fileName, initialIndex, searchParamsLatest]);
 
   useEffect(() => {
     let alive = true;
@@ -685,15 +687,17 @@ function TVPlayClient() {
     };
   }, [danmakuEnabled, detail?.title, episodeIndex, title]);
 
+  // 弹幕跟着播放时间（state 里的数字）推进
+  const currentTime = time.current;
   useEffect(() => {
     if (!danmakuEnabled || danmakuItems.length === 0) {
       setActiveDanmakuItems([]);
       spawnedDanmakuRef.current.clear();
-      lastDanmakuTimeRef.current = time.current;
+      lastDanmakuTimeRef.current = currentTime;
       return;
     }
 
-    const current = time.current;
+    const current = currentTime;
     const previous = lastDanmakuTimeRef.current;
     const jumped = current < previous - 1 || current - previous > 2;
     const spawnWindow = jumped
@@ -733,7 +737,7 @@ function TVPlayClient() {
     });
 
     lastDanmakuTimeRef.current = current;
-  }, [danmakuEnabled, danmakuItems, time.current]);
+  }, [danmakuEnabled, danmakuItems, currentTime]);
 
   useEffect(() => {
     if (!detail?.source || !detail?.id) return;
@@ -755,6 +759,7 @@ function TVPlayClient() {
     setShowPanel(true);
   };
 
+  const switchEpisodeLatest = useLatest(switchEpisode);
   const onTime = useCallback(
     (current: number, duration: number) => {
       const next = { current, duration };
@@ -790,10 +795,10 @@ function TVPlayClient() {
         skippedOutroRef.current !== episodeKey
       ) {
         skippedOutroRef.current = episodeKey;
-        switchEpisode(episodeIndex + 1);
+        switchEpisodeLatest.current(episodeIndex + 1);
       }
     },
-    [detail, episodeIndex, skipConfig]
+    [detail, episodeIndex, skipConfig, switchEpisodeLatest]
   );
 
   useEffect(() => {
@@ -1034,6 +1039,7 @@ function TVPlayClient() {
     }
   }, [showDanmakuSettings]);
 
+  const seekByLatest = useLatest(seekBy);
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       if (showDetail && event.key === 'Escape') {
@@ -1085,7 +1091,7 @@ function TVPlayClient() {
         if (digitTimerRef.current) window.clearTimeout(digitTimerRef.current);
         digitTimerRef.current = window.setTimeout(() => {
           const target = Number(nextBuffer);
-          if (target > 0) switchEpisode(target - 1);
+          if (target > 0) switchEpisodeLatest.current(target - 1);
           setDigitBuffer('');
         }, 850);
       }
@@ -1149,7 +1155,7 @@ function TVPlayClient() {
       ) {
         event.preventDefault();
         const base = event.repeat ? 30 : 10;
-        seekBy(event.key === 'ArrowLeft' ? -base : base, true);
+        seekByLatest.current(event.key === 'ArrowLeft' ? -base : base, true);
         return;
       }
 
@@ -1184,8 +1190,9 @@ function TVPlayClient() {
           blurTVPlayerControl();
         } else router.back();
       }
-      if (event.key === 'PageUp') switchEpisode(episodeIndex - 1);
-      if (event.key === 'PageDown') switchEpisode(episodeIndex + 1);
+      if (event.key === 'PageUp') switchEpisodeLatest.current(episodeIndex - 1);
+      if (event.key === 'PageDown')
+        switchEpisodeLatest.current(episodeIndex + 1);
     };
     window.addEventListener('keydown', onKey, true);
     return () => window.removeEventListener('keydown', onKey, true);
@@ -1201,6 +1208,8 @@ function TVPlayClient() {
     showPanel,
     upDownAction,
     volume,
+    seekByLatest,
+    switchEpisodeLatest,
   ]);
 
   useEffect(() => {

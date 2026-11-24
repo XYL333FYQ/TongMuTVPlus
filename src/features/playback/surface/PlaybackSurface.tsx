@@ -38,6 +38,7 @@ import { processImageUrl } from '@/lib/utils';
 import { useDeviceTier } from '@/hooks/useDeviceTier';
 import { useEnableAIComments } from '@/hooks/useEnableAIComments';
 import { useEnableComments } from '@/hooks/useEnableComments';
+import { useLatest } from '@/hooks/useLatest';
 import { usePlaybackEpisode } from '@/hooks/usePlaybackEpisode';
 import {
   usePlaybackSearchParams,
@@ -128,6 +129,9 @@ function PlayPageClient() {
   const router = useRouter();
   const searchParams = usePlaybackSearchParams();
   const playbackSession = usePlaybackSession();
+  // 会话的几个方法单独拿出来，effect 的依赖只跟着它们变
+  const { reportMedia, attachController, setMetadata, reloadPlayback } =
+    playbackSession;
   const surfaceActiveRef = useRef(true);
   useEffect(() => {
     surfaceActiveRef.current = true;
@@ -255,10 +259,13 @@ function PlayPageClient() {
   const anime4k = (anime4kRef.current ??= new Anime4KController());
 
   // 弹幕（内核 DanmakuController，和房间同一份）：自动匹配、手动选、上传、过滤、数量上限、下一集预加载
-  const danmakuRef = useRef<DanmakuController | null>(null);
-  const danmaku = (danmakuRef.current ??= new DanmakuController((text) => {
-    if (artPlayerRef.current) artPlayerRef.current.notice.show = text;
-  }));
+  // 整个页面只建一个（惰性初始值只跑一次），依赖它的 effect 不会每次渲染都重跑
+  const [danmaku] = useState(
+    () =>
+      new DanmakuController((text) => {
+        if (artPlayerRef.current) artPlayerRef.current.notice.show = text;
+      })
+  );
   const [danmakuState, setDanmakuState] = useState<DanmakuState>(danmaku.state);
   useEffect(() => {
     setDanmakuState(danmaku.state);
@@ -498,40 +505,42 @@ function PlayPageClient() {
   }, [currentEpisodeIndex, videoTitle, loading, isDirectPlay, danmaku]);
 
   // 获取豆瓣评分数据
+  const loadDoubanRatingContext = useLatest({
+    isDirectPlay,
+    setDoubanAka,
+    setDoubanCardSubtitle,
+    setDoubanRating,
+    setDoubanYear,
+    videoDoubanId,
+  });
   useEffect(
-    makeLoadDoubanRating({
-      isDirectPlay,
-      setDoubanAka,
-      setDoubanCardSubtitle,
-      setDoubanRating,
-      setDoubanYear,
-      videoDoubanId,
-    }),
-    [videoDoubanId, isDirectPlay]
+    () => makeLoadDoubanRating(loadDoubanRatingContext.current)(),
+    [videoDoubanId, isDirectPlay, loadDoubanRatingContext]
   );
 
   // 获取TMDB背景图
+  const loadTmdbBackdropContext = useLatest({
+    correctedDesc,
+    detailRef,
+    isDirectPlay,
+    setCorrectedDesc,
+    setDetail,
+    setDoubanCardSubtitle,
+    setDoubanRating,
+    setDoubanYear,
+    setNetdiskTMDBMeta,
+    setPendingNetdiskTMDBData,
+    setResolvedTmdbIdStr,
+    setTmdbBackdrop,
+    setTmdbEpisodeNames,
+    setVideoCover,
+    setVideoYear,
+    videoDoubanId,
+    videoTitle,
+  });
   useEffect(
-    makeLoadTmdbBackdrop({
-      correctedDesc,
-      detailRef,
-      isDirectPlay,
-      setCorrectedDesc,
-      setDetail,
-      setDoubanCardSubtitle,
-      setDoubanRating,
-      setDoubanYear,
-      setNetdiskTMDBMeta,
-      setPendingNetdiskTMDBData,
-      setResolvedTmdbIdStr,
-      setTmdbBackdrop,
-      setTmdbEpisodeNames,
-      setVideoCover,
-      setVideoYear,
-      videoDoubanId,
-      videoTitle,
-    }),
-    [videoTitle, videoDoubanId, isDirectPlay]
+    () => makeLoadTmdbBackdrop(loadTmdbBackdropContext.current)(),
+    [videoTitle, videoDoubanId, isDirectPlay, loadTmdbBackdropContext]
   );
 
   // 总集数
@@ -925,7 +934,6 @@ function PlayPageClient() {
   const [playerReady, setPlayerReady] = useState(false);
 
   // 播放进度保存相关
-  const saveIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const lastSaveTimeRef = useRef<number>(0);
   const lastSavedPlayTimeRef = useRef<number | null>(null);
 
@@ -961,10 +969,10 @@ function PlayPageClient() {
   const queueItemId = searchParams.get('queueId') || undefined;
   useEffect(() => {
     if (!currentSource || !currentId) {
-      playbackSession.reportMedia(null);
+      reportMedia(null);
       return;
     }
-    playbackSession.reportMedia({
+    reportMedia({
       source: currentSource,
       videoId: String(currentId),
       episode: currentEpisodeIndex + 1,
@@ -989,10 +997,10 @@ function PlayPageClient() {
     videoUrl,
     queueItemId,
     mediaReady,
-    playbackSession.reportMedia,
+    reportMedia,
   ]);
   useEffect(
-    () => () => playbackSession.reportMedia(null),
+    () => () => reportMedia(null),
     // 卸载时清空：这个播放实例不再在放任何影片
     // eslint-disable-next-line react-hooks/exhaustive-deps
     []
@@ -1000,11 +1008,11 @@ function PlayPageClient() {
   const watchRoomContext = useWatchRoomContextSafe();
   useEffect(() => {
     if (!playerReady || !artPlayerRef.current) return;
-    playbackSession.attachController(artPlayerRef.current);
-    return () => playbackSession.attachController(null);
-  }, [playerReady, playbackSession.attachController]);
+    attachController(artPlayerRef.current);
+    return () => attachController(null);
+  }, [playerReady, attachController]);
   useEffect(() => {
-    playbackSession.setMetadata({
+    setMetadata({
       title: videoTitle || detail?.title || '正在准备影片',
       episode: currentEpisodeIndex + 1,
       poster: detail?.poster,
@@ -1025,7 +1033,7 @@ function PlayPageClient() {
     loading,
     error,
     videoError,
-    playbackSession.setMetadata,
+    setMetadata,
   ]);
   // 切集后把集数写回播放地址（不重建播放器）。否则地址仍是上一集：
   // 刷新、复制链接、带着当前影片开房间时都会被当成另一部片而重新加载。
@@ -1256,68 +1264,76 @@ function PlayPageClient() {
   });
 
   // 当集数索引变化时自动更新视频地址
+  const updateVideoUrlLatest = useLatest(updateVideoUrl);
   useEffect(() => {
-    updateVideoUrl(detail, currentEpisodeIndex);
-  }, [detail, currentEpisodeIndex]);
+    updateVideoUrlLatest.current(detail, currentEpisodeIndex);
+  }, [detail, currentEpisodeIndex, updateVideoUrlLatest]);
 
   // 进入页面时直接获取全部源信息
+  const loadSourceDetailContext = useLatest({
+    commitPlaybackHref,
+    currentEpisodeIndex,
+    currentEpisodeIndexRef,
+    currentId,
+    currentSource,
+    fileName,
+    initialEpisodeProgressTitle,
+    initialEpisodeProgressYear,
+    isLazyDetailSource,
+    needPreferRef,
+    optimizationEnabled,
+    playbackSession,
+    preferBestSource,
+    resumeTimeRef,
+    searchParams,
+    searchTitle,
+    searchType,
+    setAvailableSources,
+    setBackgroundSourcesLoading,
+    setCorrectedDesc,
+    setCurrentEpisodeIndex,
+    setCurrentId,
+    setCurrentSource,
+    setDetail,
+    setError,
+    setFallbackRecommendations,
+    setHasCompletedSearchRequest,
+    setLoading,
+    setLoadingMessage,
+    setLoadingStage,
+    setNeedPrefer,
+    setSourceProxyMode,
+    setSourceSearchError,
+    setSourceSearchLoading,
+    setVideoCover,
+    setVideoDoubanId,
+    setVideoTitle,
+    setVideoYear,
+    videoTitle,
+    videoTitleRef,
+    videoYearRef,
+  });
   useEffect(
-    makeLoadSourceDetail({
-      commitPlaybackHref,
-      currentEpisodeIndex,
-      currentEpisodeIndexRef,
-      currentId,
-      currentSource,
-      fileName,
-      initialEpisodeProgressTitle,
-      initialEpisodeProgressYear,
-      isLazyDetailSource,
-      needPreferRef,
-      optimizationEnabled,
-      playbackSession,
-      preferBestSource,
-      resumeTimeRef,
-      searchParams,
-      searchTitle,
-      searchType,
-      setAvailableSources,
-      setBackgroundSourcesLoading,
-      setCorrectedDesc,
-      setCurrentEpisodeIndex,
-      setCurrentId,
-      setCurrentSource,
-      setDetail,
-      setError,
-      setFallbackRecommendations,
-      setHasCompletedSearchRequest,
-      setLoading,
-      setLoadingMessage,
-      setLoadingStage,
-      setNeedPrefer,
-      setSourceProxyMode,
-      setSourceSearchError,
-      setSourceSearchLoading,
-      setVideoCover,
-      setVideoDoubanId,
-      setVideoTitle,
-      setVideoYear,
-      videoTitle,
-      videoTitleRef,
-      videoYearRef,
-    }),
-    []
+    () => makeLoadSourceDetail(loadSourceDetailContext.current)(),
+    [loadSourceDetailContext]
   );
 
   // 跳过片头片尾配置处理
+  const currentIdLatest = useLatest(currentId);
+  const currentSourceLatest = useLatest(currentSource);
+  const setSkipConfigLatest = useLatest(setSkipConfig);
   useEffect(() => {
     // 仅在初次挂载时检查跳过片头片尾配置
     const initSkipConfig = async () => {
-      if (!currentSource || !currentId) return;
+      if (!currentSourceLatest.current || !currentIdLatest.current) return;
 
       try {
-        const config = await getSkipConfig(currentSource, currentId);
+        const config = await getSkipConfig(
+          currentSourceLatest.current,
+          currentIdLatest.current
+        );
         if (config) {
-          setSkipConfig(config);
+          setSkipConfigLatest.current(config);
         }
       } catch (err) {
         logger.error('读取跳过片头片尾配置失败:', err);
@@ -1325,9 +1341,11 @@ function PlayPageClient() {
     };
 
     initSkipConfig();
-  }, []);
+  }, [currentIdLatest, currentSourceLatest, setSkipConfigLatest]);
 
   // 监听 URL 参数变化，处理换源和换视频（用于房员跟随房主操作）
+  const reloadPlaybackLatest = useLatest(reloadPlayback);
+  const setCurrentEpisodeIndexLatest = useLatest(setCurrentEpisodeIndex);
   useEffect(() => {
     const urlSource = normalizeNetdiskSource(searchParams.get('source'));
     const urlId = searchParams.get('id');
@@ -1371,7 +1389,7 @@ function PlayPageClient() {
           targetEpisode >= 0 &&
           targetEpisode < targetSource.episodes.length
         ) {
-          setCurrentEpisodeIndex(targetEpisode);
+          setCurrentEpisodeIndexLatest.current(targetEpisode);
 
           // 如果是同一集,保存播放进度以便恢复
           if (targetEpisode === currentEpisodeIndex && currentPlayTime > 1) {
@@ -1382,7 +1400,7 @@ function PlayPageClient() {
         }
       } else {
         // Recreate the media surface while preserving the room and global navigation.
-        playbackSession.reloadPlayback();
+        reloadPlaybackLatest.current();
       }
     }
   }, [
@@ -1391,24 +1409,30 @@ function PlayPageClient() {
     currentId,
     availableSources,
     currentEpisodeIndex,
+    reloadPlaybackLatest,
+    setCurrentEpisodeIndexLatest,
   ]);
 
   // 监听 detail 和 currentEpisodeIndex 变化，自动获取视频信息
+  const fetchCurrentSourceVideoInfoLatest = useLatest(
+    fetchCurrentSourceVideoInfo
+  );
   useEffect(() => {
     if (detail && detail.episodes && detail.episodes.length > 0) {
-      fetchCurrentSourceVideoInfo();
+      fetchCurrentSourceVideoInfoLatest.current();
     }
-  }, [detail, currentEpisodeIndex]);
+  }, [detail, currentEpisodeIndex, fetchCurrentSourceVideoInfoLatest]);
 
   // 监听 detail 和 currentEpisodeIndex 变化，动态更新字幕
+  const subtitlesLatest = useLatest(subtitles);
   useEffect(() => {
     if (!artPlayerRef.current || !detail) return;
 
-    subtitles.setTracks(
+    subtitlesLatest.current.setTracks(
       (detail.subtitles?.[currentEpisodeIndex] || []) as SourceSubtitle[],
       String(currentEpisodeIndex)
     );
-  }, [detail, currentEpisodeIndex]);
+  }, [detail, currentEpisodeIndex, subtitlesLatest]);
 
   const getSourceSwitchResumeTime = async (
     episodeIndex: number,
@@ -1651,16 +1675,18 @@ function PlayPageClient() {
     videoTitleRef,
   });
 
+  const saveCurrentPlayProgressLatest = useLatest(saveCurrentPlayProgress);
   useEffect(() => {
     // 页面即将卸载时保存播放进度和清理资源
     const handleBeforeUnload = () => {
-      saveCurrentPlayProgress();
+      saveCurrentPlayProgressLatest.current();
       cleanupPlayer();
     };
 
     // 页面切到后台时保存播放进度（防息屏由 wakeLockPlugin 管）
     const handleVisibilityChange = () => {
-      if (document.visibilityState === 'hidden') saveCurrentPlayProgress();
+      if (document.visibilityState === 'hidden')
+        saveCurrentPlayProgressLatest.current();
     };
 
     // 添加事件监听器
@@ -1672,16 +1698,7 @@ function PlayPageClient() {
       window.removeEventListener('beforeunload', handleBeforeUnload);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [currentEpisodeIndex, detail]);
-
-  // 清理定时器
-  useEffect(() => {
-    return () => {
-      if (saveIntervalRef.current) {
-        clearInterval(saveIntervalRef.current);
-      }
-    };
-  }, []);
+  }, [currentEpisodeIndex, detail, saveCurrentPlayProgressLatest]);
 
   // ---------------------------------------------------------------------------
   // 收藏相关
@@ -1740,80 +1757,82 @@ function PlayPageClient() {
     }
   };
 
+  const loadPlayerContext = useLatest({
+    activeAdBlockRef,
+    anime4k,
+    artPlayerRef,
+    artRef,
+    blockAdEnabled,
+    blockAdEnabledRef,
+    currentEpisodeIndex,
+    currentEpisodeIndexRef,
+    currentIdRef,
+    currentSource,
+    currentSourceRef,
+    danmaku,
+    danmakuHeatmapDisabledRef,
+    danmakuHeatmapEnabledRef,
+    detail,
+    detailRef,
+    episodeSubtitles,
+    handleNextEpisode,
+    handleSkipConfigChange,
+    harmonyHlsPlaybackMode,
+    isEpisodeFilteredByTitle,
+    isHarmonyOS,
+    isLazyDetailSource,
+    isPlaybackThumbnailDisabled,
+    keyboardRef,
+    lastSaveTimeRef,
+    lastSkipCheckRef,
+    lastVolumeRef,
+    linkRefresher,
+    loading,
+    nativeHlsAdBlockEnabled,
+    netdiskHlsPlaybackMode,
+    nextEpisodeDanmakuPreloadTriggeredRef,
+    nextEpisodePreCacheTriggeredRef,
+    playRecordJumpDismissedRef,
+    playRecordJumpInitialCheckRef,
+    playRecordJumpLayerRef,
+    playerEpisodeLabel,
+    proxyAttemptedRef,
+    quickForwardSecondsRef,
+    releasePlayerResources,
+    restoreWebFullscreenOnReadyRef,
+    resumePlayingAfterHlsModeSwitchRef,
+    resumeTimeRef,
+    saveCurrentPlayProgress,
+    searchParams,
+    seekQuickForward,
+    seekStepSecondsRef,
+    setBlockAdEnabled,
+    setCorsFailedUrl,
+    setCurrentEpisodeIndex,
+    setDanmakuHeatmapEnabled,
+    setError,
+    setIsVideoLoading,
+    setIsWebFullscreen,
+    setPlayerReady,
+    setQuickForwardSeconds,
+    setSeekStepSeconds,
+    setShowDanmakuFilterSettings,
+    setVideoError,
+    skipConfigRef,
+    stopKeyboardRef,
+    subtitles,
+    supportsNativeHls,
+    totalEpisodes,
+    videoCover,
+    videoMediaTypeRef,
+    videoQualities,
+    videoTitle,
+    videoUrl,
+    watchPlayerRef,
+  });
+
   useEffect(
-    makeLoadPlayer({
-      activeAdBlockRef,
-      anime4k,
-      artPlayerRef,
-      artRef,
-      blockAdEnabled,
-      blockAdEnabledRef,
-      currentEpisodeIndex,
-      currentEpisodeIndexRef,
-      currentIdRef,
-      currentSource,
-      currentSourceRef,
-      danmaku,
-      danmakuHeatmapDisabledRef,
-      danmakuHeatmapEnabledRef,
-      detail,
-      detailRef,
-      episodeSubtitles,
-      handleNextEpisode,
-      handleSkipConfigChange,
-      harmonyHlsPlaybackMode,
-      isEpisodeFilteredByTitle,
-      isHarmonyOS,
-      isLazyDetailSource,
-      isPlaybackThumbnailDisabled,
-      keyboardRef,
-      lastSaveTimeRef,
-      lastSkipCheckRef,
-      lastVolumeRef,
-      linkRefresher,
-      loading,
-      nativeHlsAdBlockEnabled,
-      netdiskHlsPlaybackMode,
-      nextEpisodeDanmakuPreloadTriggeredRef,
-      nextEpisodePreCacheTriggeredRef,
-      playRecordJumpDismissedRef,
-      playRecordJumpInitialCheckRef,
-      playRecordJumpLayerRef,
-      playerEpisodeLabel,
-      proxyAttemptedRef,
-      quickForwardSecondsRef,
-      releasePlayerResources,
-      restoreWebFullscreenOnReadyRef,
-      resumePlayingAfterHlsModeSwitchRef,
-      resumeTimeRef,
-      saveCurrentPlayProgress,
-      searchParams,
-      seekQuickForward,
-      seekStepSecondsRef,
-      setBlockAdEnabled,
-      setCorsFailedUrl,
-      setCurrentEpisodeIndex,
-      setDanmakuHeatmapEnabled,
-      setError,
-      setIsVideoLoading,
-      setIsWebFullscreen,
-      setPlayerReady,
-      setQuickForwardSeconds,
-      setSeekStepSeconds,
-      setShowDanmakuFilterSettings,
-      setVideoError,
-      skipConfigRef,
-      stopKeyboardRef,
-      subtitles,
-      supportsNativeHls,
-      totalEpisodes,
-      videoCover,
-      videoMediaTypeRef,
-      videoQualities,
-      videoTitle,
-      videoUrl,
-      watchPlayerRef,
-    }),
+    () => makeLoadPlayer(loadPlayerContext.current)(),
     [
       videoUrl,
       loading,
@@ -1821,17 +1840,13 @@ function PlayPageClient() {
       harmonyHlsPlaybackMode,
       nativeHlsAdBlockEnabled,
       netdiskHlsPlaybackMode,
+      loadPlayerContext,
     ]
   );
 
-  // 当组件卸载时清理定时器和播放器资源
+  // 当组件卸载时清理播放器资源
   useEffect(() => {
     return () => {
-      // 清理定时器
-      if (saveIntervalRef.current) {
-        clearInterval(saveIntervalRef.current);
-      }
-
       // 销毁播放器实例
       cleanupPlayer();
     };

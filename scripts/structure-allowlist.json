@@ -70,11 +70,7 @@
     "src/styles/shell.css ×2"
   ],
   "lintWarnings": [
-    "src/app/manga/read/page.tsx :: react-hooks/exhaustive-deps ×6",
-    "src/app/music/MusicClient.tsx :: react-hooks/exhaustive-deps ×8",
     "src/app/source-search/page.loading.test.tsx :: @typescript-eslint/no-non-null-assertion ×1",
-    "src/app/tv/play/page.tsx :: react-hooks/exhaustive-deps ×4",
-    "src/components/DetailPanel.tsx :: react-hooks/exhaustive-deps ×2",
     "src/components/MobileBottomNav.scrub.test.tsx :: @typescript-eslint/no-non-null-assertion ×1",
     "src/components/ProxyImage.tsx :: @next/next/no-img-element ×1",
     "src/components/catalog/HomeHero.test.tsx :: @next/next/no-img-element ×12",
@@ -86,7 +82,6 @@
     "src/components/shell/MobileGestures.refresh.test.tsx :: @typescript-eslint/no-non-null-assertion ×1",
     "src/features/discover/banner/BannerCarousel.refresh.test.tsx :: @typescript-eslint/no-non-null-assertion ×3",
     "src/features/playback/PlaybackSessionProvider.test.tsx :: unused-imports/no-unused-vars ×1",
-    "src/features/playback/surface/PlaybackSurface.tsx :: react-hooks/exhaustive-deps ×17",
     "src/features/player/core/ad-filter.test.ts :: @typescript-eslint/no-explicit-any ×7",
     "src/features/room/HomeRooms.test.tsx :: @typescript-eslint/no-explicit-any ×2",
     "src/features/room/MusicPage.test.tsx :: @typescript-eslint/no-explicit-any ×3",
