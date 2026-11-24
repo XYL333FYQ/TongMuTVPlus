@@ -1,0 +1,329 @@
+/* primitives.css 按块拆出的一段（tm-tabs、tm-tab、tm-chips、tm-chip、tm-input、tm-field、tm-switch、tm-badge），引入顺序紧跟前一段，层叠结果不变 */
+/* —— 一级标签（下划线）：电影 / 剧集 —— */
+.tm-tabs {
+  display: flex;
+  gap: 28px;
+  overflow-x: auto;
+  border-bottom: 1px solid var(--tm-line);
+}
+
+/* 触屏：间距挪进左右内边距，视觉不变、点按区够 44px */
+@media (pointer: coarse) {
+  .tm-tabs {
+    gap: 12px;
+  }
+}
+
+@media (min-width: 1700px) {
+  .tm-tabs {
+    gap: calc(28 * var(--tm-wide-unit));
+  }
+}
+
+.tm-tab {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  min-height: 48px;
+  font-size: var(--tm-fs-subtitle);
+  font-weight: 500;
+  color: var(--tm-muted);
+  white-space: nowrap;
+  transition: color var(--tm-d-hover) var(--tm-ease-out);
+}
+
+.tm-tab:hover {
+  color: var(--tm-text);
+}
+
+.tm-tab:is(
+    [aria-current='page'],
+    [aria-selected='true'],
+    [data-active='true']
+  ) {
+  color: var(--tm-text);
+}
+
+.tm-tab:is(
+    [aria-current='page'],
+    [aria-selected='true'],
+    [data-active='true']
+  )::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 2px;
+  border-radius: var(--tm-radius-sm);
+  background: var(--tm-text);
+}
+
+@media (pointer: coarse) {
+  .tm-tab {
+    padding-inline: 8px;
+  }
+  .tm-tab:is(
+      [aria-current='page'],
+      [aria-selected='true'],
+      [data-active='true']
+    )::after {
+    left: 8px;
+    right: 8px;
+  }
+}
+
+@media (min-width: 1700px) {
+  .tm-tab {
+    min-height: calc(48 * var(--tm-wide-unit));
+  }
+}
+
+/* —— 二级筛选（胶囊）：热门 / 最新 —— */
+.tm-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.tm-chips[data-scroll='true'] {
+  flex-wrap: nowrap;
+  overflow-x: auto;
+}
+
+.tm-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  min-height: 36px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: var(--tm-radius-sm);
+  font-size: var(--tm-fs-small);
+  font-weight: 500;
+  color: var(--tm-muted);
+  background: transparent;
+  white-space: nowrap;
+  transition: scale var(--tm-d-press) var(--tm-ease-out),
+    background-color var(--tm-d-hover) var(--tm-ease-out),
+    color var(--tm-d-hover) var(--tm-ease-out),
+    border-color var(--tm-d-hover) var(--tm-ease-out);
+}
+
+.tm-chip:hover {
+  color: var(--tm-text);
+  border-color: var(--tm-line-strong);
+}
+
+.tm-chip:active {
+  scale: 0.97;
+}
+
+.tm-chip:is(
+    [aria-pressed='true'],
+    [aria-current='page'],
+    [aria-selected='true'],
+    [data-active='true']
+  ) {
+  color: var(--tm-accent-contrast);
+  background: var(--tm-text);
+  border-color: var(--tm-text);
+}
+
+@media (pointer: coarse) {
+  .tm-chip {
+    min-height: 44px;
+  }
+}
+
+/* —— 输入 —— */
+.tm-input {
+  width: 100%;
+  min-height: 44px;
+  padding: 0 14px;
+  border: 1px solid var(--tm-line);
+  border-radius: var(--tm-radius-sm);
+  background: var(--tm-surface);
+  color: var(--tm-text);
+  font-size: var(--tm-fs-small);
+  transition: border-color var(--tm-d-hover) var(--tm-ease-out),
+    background-color var(--tm-d-hover) var(--tm-ease-out);
+}
+
+/* 触屏上输入框字号不得小于 16px：iOS Safari 聚焦小于 16px 的输入框会自动放大整页。后台沿用自己的紧凑尺寸。 */
+@media (pointer: coarse) {
+  body.tm-app
+    :is(
+      input:not(
+          [type='checkbox'],
+          [type='radio'],
+          [type='range'],
+          [type='file'],
+          [type='hidden'],
+          [type='button'],
+          [type='submit'],
+          [type='reset']
+        ),
+      textarea,
+      select
+    ):not(.tm-admin-page *) {
+    font-size: max(16px, 1em);
+  }
+}
+
+.tm-input::placeholder {
+  color: var(--tm-muted);
+}
+
+.tm-input:hover {
+  border-color: var(--tm-line-strong);
+}
+
+.tm-input:focus {
+  outline: none;
+  border-color: var(--tm-text);
+  box-shadow: 0 0 0 1px var(--tm-text);
+}
+
+.tm-field-label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: var(--tm-fs-caption);
+  font-weight: 500;
+  color: var(--tm-muted);
+}
+
+/* 开关（components/ui/Switch）：<button role="switch" aria-checked class="tm-switch-btn"> + thumb。
+ * 可见轨道固定 44×26，点按区用伪元素外扩到 44px 高，不会被撑成圆盘。 */
+.tm-switch-btn {
+  position: relative;
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  width: 44px;
+  height: 26px;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  border-radius: var(--tm-radius-pill);
+  background: var(--tm-surface-raised);
+  box-shadow: inset 0 0 0 1px var(--tm-line-strong);
+  cursor: pointer;
+  transition: background-color var(--tm-d-hover) var(--tm-ease-out),
+    box-shadow var(--tm-d-hover) var(--tm-ease-out);
+}
+
+.tm-switch-btn::before {
+  content: '';
+  position: absolute;
+  inset: -9px -2px;
+}
+
+.tm-switch-btn-thumb {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  top: 3px;
+  left: 3px;
+  width: 20px;
+  height: 20px;
+  border-radius: var(--tm-radius-full);
+  background: var(--tm-text);
+  box-shadow: var(--tm-shadow-sm);
+  pointer-events: none;
+  transition: transform var(--tm-d-hover) var(--tm-spring),
+    background-color var(--tm-d-hover) var(--tm-ease-out);
+}
+
+.tm-switch-btn:hover:not(:disabled):not([aria-checked='true']) {
+  box-shadow: inset 0 0 0 1px var(--tm-text);
+}
+
+.tm-switch-btn[aria-checked='true'] {
+  background: var(--tm-text);
+  box-shadow: none;
+}
+
+.tm-switch-btn[aria-checked='true'] .tm-switch-btn-thumb {
+  background: var(--tm-accent-contrast);
+  transform: translateX(18px);
+}
+
+.tm-switch-btn:focus-visible {
+  outline: 2px solid var(--tm-text);
+  outline-offset: 2px;
+}
+
+.tm-switch-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+html[data-tm-reduced-motion] .tm-switch-btn,
+html[data-tm-reduced-motion] .tm-switch-btn-thumb {
+  transition: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tm-switch-btn,
+  .tm-switch-btn-thumb {
+    transition: none;
+  }
+}
+
+/* —— 小徽标 —— */
+.tm-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 24px;
+  padding: 0 10px;
+  border-radius: var(--tm-radius-sm);
+  font-size: var(--tm-fs-badge);
+  font-weight: 500;
+  color: var(--tm-text);
+  background: var(--tm-surface-raised);
+  border: 0;
+}
+
+.tm-badge[data-state='fulfilled'] {
+  color: var(--tm-accent-contrast);
+  background: var(--tm-text);
+  border-color: transparent;
+}
+
+.tm-badge[data-on-art='true'] {
+  color: var(--tm-on-art);
+  background: var(--tm-scrim);
+  border-color: transparent;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* 评分角标：左上角，黑色半透明底与白字。 */
+.mtv-rate {
+  position: absolute;
+  top: 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  left: 8px;
+  /* 在影片卡片画面里：评分 1、指针高光 2、播放源数量 3 */
+  z-index: 1;
+  padding: 2px 7px;
+  border-radius: var(--tm-radius-xs);
+  font-size: var(--tm-fs-badge);
+  font-weight: 500;
+  line-height: 1.5;
+  color: var(--tm-on-art);
+  background: var(--tm-rating-bg);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.mtv-rate svg {
+  fill: var(--tm-rating-star);
+  stroke: none;
+}

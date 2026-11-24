@@ -1,0 +1,337 @@
+/* layout.css 按块拆出的一段（tm-poster、tm-fade-image、tm-empty、tm-shelf、tm-public），引入顺序紧跟前一段，层叠结果不变 */
+.tm-poster-grid {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 24px var(--tm-grid-gap);
+  min-width: 0;
+}
+
+.tm-poster-grid > * {
+  grid-column: span 4;
+  min-width: 0;
+}
+
+@media (min-width: 768px) {
+  .tm-poster-grid > * {
+    grid-column: span 3;
+  }
+}
+
+@media (min-width: 1200px) {
+  .tm-poster-grid > * {
+    grid-column: span 2;
+  }
+}
+
+/* —— 海报（components/poster/FilmPoster，和影片卡片同一套观感） ——
+ * 尺寸由使用方定；小缩略图用 --tm-art-radius 换小一档的圆角令牌 */
+.tm-poster {
+  position: relative;
+  display: block;
+  aspect-ratio: 2 / 3;
+  overflow: hidden;
+  border-radius: var(--tm-art-radius, var(--tm-radius-md));
+  background: var(--tm-art-bg, var(--tm-surface-raised));
+  box-shadow: var(--tm-art-shadow, var(--tm-shadow-poster));
+  transition: box-shadow var(--tm-d-hover) var(--tm-ease-out);
+}
+
+.tm-poster::after {
+  /* 海报用阴影区分层级，不额外叠边框。 */
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: none;
+  pointer-events: none;
+}
+
+.tm-poster[data-ratio='landscape'] {
+  aspect-ratio: 16 / 9;
+}
+
+.tm-poster img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.tm-poster[data-fit='contain'] img {
+  object-fit: contain;
+}
+
+.tm-poster-initial {
+  position: absolute;
+  inset: 0;
+}
+
+.tm-poster-title {
+  display: block;
+  margin-top: 10px;
+  overflow: hidden;
+  font-size: var(--tm-fs-small);
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--tm-text);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tm-poster-meta {
+  display: block;
+  margin-top: 2px;
+  overflow: hidden;
+  font-size: var(--tm-fs-caption);
+  color: var(--tm-muted);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (min-width: 1700px) {
+  .tm-poster-grid {
+    row-gap: var(--tm-grid-gap);
+  }
+}
+
+/* 图片加载：模糊到清晰 */
+.tm-fade-image {
+  transition: opacity var(--tm-d-panel) var(--tm-ease-out),
+    filter var(--tm-d-panel) var(--tm-ease-out);
+}
+
+.tm-fade-image[data-loaded='false'] {
+  opacity: 0;
+  filter: blur(12px);
+}
+
+html[data-tm-no-blur='true'] .tm-fade-image {
+  filter: none !important;
+}
+
+/* —— 空状态 —— */
+.tm-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 64px 24px;
+  text-align: center;
+  color: var(--tm-muted);
+}
+
+.tm-empty-icon {
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  margin-bottom: 4px;
+  border-radius: var(--tm-radius-lg);
+  background: var(--tm-surface-raised);
+  color: var(--tm-muted);
+}
+
+.tm-empty-title {
+  font-size: var(--tm-fs-subtitle);
+  font-weight: 500;
+  color: var(--tm-text);
+}
+
+.tm-empty-desc {
+  max-width: 360px;
+  font-size: var(--tm-fs-small);
+  line-height: 1.6;
+}
+
+/* 根布局出错时整页只有这一块 */
+.tm-empty-page {
+  display: grid;
+  min-height: 100vh;
+  place-items: center;
+}
+
+.tm-empty-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+/* 面板、弹窗里的列表：留白和图标都小一档 */
+.tm-empty[data-compact] {
+  gap: 8px;
+  padding: 32px 16px;
+}
+
+.tm-empty[data-compact] .tm-empty-icon {
+  width: 44px;
+  height: 44px;
+}
+
+.tm-empty[data-compact] .tm-empty-title {
+  font-size: var(--tm-fs-body);
+}
+
+/* —— 横向滚动列表 —— */
+.tm-shelf {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: calc((100% - 2 * 24px) / 3);
+  gap: 24px;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x mandatory;
+  scroll-padding-inline: var(--tm-content-gutter);
+  padding-inline: var(--tm-content-gutter);
+  margin-inline: calc(var(--tm-content-gutter) * -1);
+  /* 留出悬停放大与阴影的空间，再用负外边距抵消 */
+  padding-block: 12px 28px;
+  margin-block: -12px -16px;
+}
+
+.tm-shelf > * {
+  min-width: 0;
+  scroll-snap-align: start;
+}
+
+@media (min-width: 768px) {
+  .tm-shelf {
+    grid-auto-columns: calc((100% - 3 * 24px) / 4);
+  }
+}
+
+@media (min-width: 1200px) {
+  .tm-shelf {
+    grid-auto-columns: calc((100% - 5 * 24px) / 6);
+  }
+}
+
+/* 片架翻页按钮：只在能精确指向的设备上悬停出现 */
+.tm-shelf-frame {
+  position: relative;
+}
+
+.tm-shelf-nav {
+  position: absolute;
+  z-index: var(--tm-z-page-float);
+  top: calc(50% - 40px);
+  display: none;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: var(--tm-radius-pill);
+  background: var(--tm-glass-solid);
+  color: var(--tm-text);
+  box-shadow: var(--tm-shadow-md);
+  opacity: 0;
+  transition: opacity var(--tm-d-hover) var(--tm-ease-out),
+    scale var(--tm-d-press) var(--tm-ease-out);
+}
+
+.tm-shelf-nav[data-side='start'] {
+  left: -22px;
+}
+
+.tm-shelf-nav[data-side='end'] {
+  right: -22px;
+}
+
+.tm-shelf-nav:active {
+  scale: 0.94;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .tm-shelf-nav {
+    display: grid;
+  }
+  .tm-shelf-frame:hover .tm-shelf-nav,
+  .tm-shelf-nav:focus-visible {
+    opacity: 1;
+  }
+}
+
+/* 整页加载 / 出错时的一行状态：role="status" 自动挂载黑白灰星轨光学加载环 */
+.tm-public-feedback {
+  padding: 96px 16px;
+  text-align: center;
+  color: var(--tm-muted);
+}
+
+.tm-public-feedback[role='status'] {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  min-height: 42vh;
+  font-size: var(--tm-fs-caption);
+  letter-spacing: 0.02em;
+}
+
+.tm-public-feedback[role='status']::before {
+  content: '';
+  display: block;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--tm-radius-full);
+  background: conic-gradient(
+    from 0deg,
+    color-mix(in srgb, var(--tm-text) 10%, transparent) 0deg 90deg,
+    color-mix(in srgb, var(--tm-text) 28%, transparent) 210deg,
+    var(--tm-text) 345deg,
+    color-mix(in srgb, var(--tm-text) 10%, transparent) 360deg
+  );
+  -webkit-mask: radial-gradient(
+    farthest-side,
+    transparent calc(100% - 2.5px),
+    var(--tm-text) calc(100% - 2px)
+  );
+  mask: radial-gradient(
+    farthest-side,
+    transparent calc(100% - 2.5px),
+    var(--tm-text) calc(100% - 2px)
+  );
+  animation: tm-orbital-spin 1.1s linear infinite;
+}
+
+html[data-tm-reduced-motion='true'] .tm-public-feedback[role='status']::before {
+  animation: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tm-public-feedback[role='status']::before {
+    animation: none !important;
+  }
+}
+
+/* 访客页海报卡片与缺图占位 */
+.tm-public-card {
+  display: block;
+  width: 100%;
+  text-align: left;
+  box-shadow: var(--tm-shadow-sm);
+}
+
+.tm-public-image-missing {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  min-height: 100px;
+  color: var(--tm-muted);
+  background: var(--tm-surface);
+}
+
+@media (min-width: 1700px) {
+  .tm-public-feedback {
+    padding: calc(96 * var(--tm-wide-unit)) var(--tm-content-gutter);
+  }
+  .tm-public-feedback[role='status']::before {
+    width: calc(40 * var(--tm-wide-unit));
+    height: calc(40 * var(--tm-wide-unit));
+  }
+}

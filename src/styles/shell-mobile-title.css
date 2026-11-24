@@ -1,0 +1,316 @@
+/* shell.css 按块拆出的一段（tm-mobile-title、tm-mobile-page、tm-mobile-account、tm-mobile-back、tm-mobile-nav、tm-ptr），引入顺序紧跟前一段，层叠结果不变 */
+.tm-mobile-title-row {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  height: var(--tm-header-height);
+  padding-inline: 16px 8px;
+}
+
+.tm-mobile-header-v2[data-has-subtitle='true'] .tm-mobile-title-row {
+  height: calc(var(--tm-header-height) + 20px);
+  align-items: start;
+  padding-top: 10px;
+}
+
+.tm-mobile-header-v2[data-has-subtitle='true'][data-compact='true']
+  .tm-mobile-title-row {
+  height: var(--tm-header-height);
+  align-items: center;
+  padding-top: 0;
+}
+
+/* 访客多一个登录入口，标题使用操作区之外的实际剩余宽度。 */
+.tm-mobile-title-row:has(.tm-guest-login) {
+  grid-template-columns: minmax(0, 1fr) auto;
+  column-gap: 8px;
+}
+
+/* Extra actions share the same bounded title lane as the guest login controls. */
+.tm-mobile-header-v2[data-room-actions='true'] .tm-mobile-title-row {
+  grid-template-columns: minmax(0, 1fr) auto;
+  column-gap: 8px;
+}
+
+.tm-mobile-title-row:has(.tm-mobile-back):has(.tm-guest-login),
+.tm-mobile-header-v2[data-room-actions='true']
+  .tm-mobile-title-row:has(.tm-mobile-back) {
+  grid-template-columns: 44px minmax(0, 1fr) auto;
+  column-gap: 4px;
+}
+
+.tm-mobile-page-title {
+  grid-column: 2;
+  grid-row: 1;
+  justify-self: center;
+  min-width: 0;
+  max-width: calc(100dvw - 224px);
+  margin: 0;
+  overflow: hidden;
+  font-size: 19px;
+  font-weight: 600;
+  line-height: 1.2;
+  transform-origin: center;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.tm-mobile-header-v2[data-compact='true'] .tm-mobile-page-title {
+  grid-column: 2;
+  justify-self: center;
+  max-width: calc(100dvw - 224px);
+  margin-left: 0;
+  transform-origin: center;
+}
+
+.tm-mobile-page-subtitle {
+  position: absolute;
+  top: calc(var(--tm-header-height) - 12px);
+  left: 16px;
+  font-size: var(--tm-fs-caption);
+  color: var(--tm-muted);
+}
+
+.tm-mobile-header-v2[data-has-subtitle='true'][data-compact='true']
+  .tm-mobile-page-subtitle {
+  display: none;
+}
+
+.tm-mobile-back + .tm-mobile-page-title {
+  margin-left: 0;
+}
+
+.tm-mobile-title-row:has(.tm-guest-login) .tm-mobile-page-title {
+  grid-column: 1;
+  max-width: 100%;
+}
+
+.tm-mobile-header-v2[data-room-actions='true'] .tm-mobile-page-title {
+  grid-column: 1;
+  max-width: 100%;
+}
+
+.tm-mobile-title-row:has(.tm-mobile-back):has(.tm-guest-login)
+  .tm-mobile-page-title,
+.tm-mobile-header-v2[data-room-actions='true']
+  .tm-mobile-title-row:has(.tm-mobile-back)
+  .tm-mobile-page-title {
+  grid-column: 2;
+}
+
+:where(html:is([data-tm-device='phone'], [data-tm-device='phone-landscape']))
+  body:has(.tm-shell[data-tab='true'])
+  .tm-mobile-header-v2
+  .tm-mobile-page-title {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.tm-mobile-account {
+  display: flex;
+  align-items: center;
+  grid-column: 3;
+  grid-row: 1;
+  justify-self: end;
+  min-width: 0;
+  flex-shrink: 0;
+}
+
+.tm-mobile-account > button {
+  min-width: 44px;
+  min-height: 44px;
+  flex-shrink: 0;
+}
+
+.tm-mobile-title-row:has(.tm-guest-login) .tm-mobile-account {
+  grid-column: 2;
+}
+
+.tm-mobile-header-v2[data-room-actions='true'] .tm-mobile-account {
+  grid-column: 2;
+}
+
+.tm-mobile-title-row:has(.tm-mobile-back):has(.tm-guest-login)
+  .tm-mobile-account,
+.tm-mobile-header-v2[data-room-actions='true']
+  .tm-mobile-title-row:has(.tm-mobile-back)
+  .tm-mobile-account {
+  grid-column: 3;
+}
+
+.tm-mobile-back {
+  position: absolute;
+  left: 4px;
+  z-index: 2;
+}
+
+.tm-mobile-title-row:has(.tm-guest-login) .tm-mobile-back,
+.tm-mobile-header-v2[data-room-actions='true'] .tm-mobile-back {
+  position: static;
+  grid-column: 1;
+  grid-row: 1;
+}
+
+/*
+ * —— 手机悬浮底栏 ——
+ * 底栏只有一份，常驻在根布局里，切页时不销毁重建（滑块、高亮因此能连续过渡）。
+ * 页面里有带导航的外壳时（PageLayout 放一个 data-tm-nav-page 标记）才显示。
+ */
+.tm-mobile-nav {
+  position: fixed;
+  left: 12px;
+  right: 12px;
+  bottom: calc(12px + var(--tm-safe-bottom));
+  z-index: var(--tm-z-nav);
+  display: none;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 2px;
+  height: var(--tm-bottom-nav-height);
+  padding: 6px;
+  border-radius: var(--tm-radius-md);
+  box-shadow: inset 0 1px 0 var(--tm-glass-highlight), var(--tm-shadow-md);
+  transition: opacity var(--tm-d-hero) var(--tm-ease-out);
+  /* 底栏按住拖动：滑块跟手，经过的项高亮，松手跳转。
+     底栏上的手指动作全归底栏：浏览器不抢去滚动页面，拖动就不会被中途取消而不跳转 */
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+.tm-mobile-nav-item {
+  position: relative;
+  z-index: 1;
+  -webkit-tap-highlight-color: transparent;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  min-width: 44px;
+  min-height: 44px;
+  border-radius: var(--tm-radius-md);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--tm-muted);
+  transition: color var(--tm-d-hover) var(--tm-ease-out),
+    background-color var(--tm-d-hover) var(--tm-ease-out),
+    scale var(--tm-d-press) var(--tm-ease-out);
+}
+
+.tm-mobile-nav-item[data-active='true'] {
+  color: var(--tm-text);
+  background: var(--tm-line);
+}
+
+.tm-mobile-nav-item:active {
+  scale: 0.95;
+}
+
+:where(html:is([data-tm-device='phone'], [data-tm-device='phone-landscape']))
+  body:has([data-tm-nav-page])
+  .tm-mobile-nav,
+:where(html:is([data-tm-device='phone'], [data-tm-device='phone-landscape']))
+  .tm-mobile-nav[data-tab-route] {
+  display: grid;
+}
+
+/* Keep the same nav node/geometry while the IME is open, so closing the
+     keyboard does not restart display/entry transitions. Desktop/web unchanged. */
+html:where(
+    :is([data-tm-device='phone'], [data-tm-device='phone-landscape'])
+  )[data-tm-platform='app'][data-tm-keyboard='open']
+  .tm-mobile-nav {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.tm-mobile-nav-thumb {
+  position: absolute;
+  top: 6px;
+  bottom: 6px;
+  left: 0;
+  z-index: 0;
+  border-radius: var(--tm-radius-md);
+  background: var(--tm-line);
+  pointer-events: none;
+  /* 提前独占一层：滑动一开始就由合成器线程接手，不用临时建层、重画 */
+  will-change: transform;
+  transition: transform var(--tm-d-panel) var(--tm-ease-out),
+    scale var(--tm-d-hover) var(--tm-ease-out);
+}
+
+.tm-mobile-nav[data-thumb='true'] .tm-mobile-nav-item[data-active='true'] {
+  background: transparent;
+}
+
+.tm-mobile-nav[data-scrubbing='true'] .tm-mobile-nav-thumb {
+  transition: scale var(--tm-d-hover) var(--tm-ease-out);
+  scale: 1.08;
+}
+
+.tm-mobile-nav-item[data-hover='true'] {
+  color: var(--tm-text);
+}
+
+html[data-tm-reduced-motion='true'] .tm-mobile-nav-thumb {
+  transition: none;
+  scale: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tm-mobile-nav-thumb {
+    transition: none;
+    scale: 1;
+  }
+}
+
+:where(html:not([data-tm-device='phone'], [data-tm-device='phone-landscape']))
+  .tm-mobile-nav {
+  display: none;
+}
+
+:where(html[data-tm-device='phone-landscape']) .tm-mobile-nav {
+  right: max(12px, env(safe-area-inset-right));
+  left: max(12px, env(safe-area-inset-left));
+}
+
+html:where(:not([data-tm-device='wide']))
+  body:has(.tm-playback-host[data-presentation='full'] .tm-solo-dock)
+  .tm-mobile-nav {
+  display: none;
+}
+
+/* 下拉刷新指示 */
+.tm-ptr {
+  position: fixed;
+  left: 50%;
+  top: calc(var(--tm-safe-top) + var(--tm-header-height) + 8px);
+  z-index: var(--tm-z-nav);
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1px solid var(--tm-line);
+  background: var(--tm-surface-raised);
+  color: var(--tm-text);
+  box-shadow: var(--tm-shadow-sm);
+  opacity: 0;
+  transform: translate(-50%, -48px);
+  pointer-events: none;
+}
+
+@media (min-width: 768px) {
+  .tm-ptr {
+    display: none;
+  }
+}

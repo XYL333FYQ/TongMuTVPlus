@@ -1,0 +1,67 @@
+/* home.css 按块拆出的一段（tm-home-new、tm-home-hint、tm-home-tools、tm-home-skeleton、tm-home-categories、tm-home-announcement、tm-home-dialog、tm-home-direct、tm-home-hero-youtube），引入顺序紧跟前一段，层叠结果不变 */
+.tm-home-resume-item .tm-home-new-episodes {
+  top: 4px;
+  right: auto;
+  left: 4px;
+}
+
+.tm-home-new-episodes {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+}
+
+.tm-home-hint {
+  margin-top: 12px;
+  font-size: var(--tm-fs-caption);
+  color: var(--tm-muted);
+}
+
+.tm-home-tools {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 24px;
+}
+
+/* —— 片架 —— */
+.tm-home-skeleton {
+  aspect-ratio: 2 / 3;
+  border-radius: var(--tm-radius-md);
+}
+
+/* 访客首页的分类入口 */
+.tm-home-categories {
+  margin-top: var(--tm-section-gap);
+}
+
+/* —— 首页的公告、直链播放对话框（外框是全站的 tm-modal） —— */
+.tm-home-announcement-text {
+  margin-top: 0.75rem;
+  white-space: pre-wrap;
+  color: var(--tm-muted);
+}
+
+.tm-home-dialog-action {
+  width: 100%;
+}
+
+.tm-home-direct-body > :not([hidden]) ~ :not([hidden]) {
+  margin-top: 0.75rem;
+  margin-bottom: 0px;
+}
+
+.tm-home-direct-hint {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  color: var(--tm-muted);
+}
+
+.tm-home-direct-note {
+  font-size: 13px;
+  color: var(--tm-muted);
+}
+
+/* 大图区的预告片：不接点击，点击交给大图本身 */
+.tm-home-hero-youtube {
+  pointer-events: none;
+}

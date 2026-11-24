@@ -1,0 +1,320 @@
+/* shell.css 按块拆出的一段（tm-logo、tm-primary-nav、tm-repository、tm-account、tm-mobile-header），引入顺序紧跟前一段，层叠结果不变 */
+.tm-logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  color: var(--tm-text);
+  white-space: nowrap;
+}
+
+.tm-logo > span {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: var(--tm-radius-sm);
+  background: var(--tm-text);
+  color: var(--tm-accent-contrast);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.tm-logo > strong {
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+@media (min-width: 1700px) {
+  .tm-logo {
+    gap: calc(10 * var(--tm-wide-unit));
+  }
+  .tm-logo > span {
+    width: calc(30 * var(--tm-wide-unit));
+    height: calc(30 * var(--tm-wide-unit));
+    font-size: calc(12 * var(--tm-wide-unit));
+  }
+  .tm-logo > strong {
+    font-size: calc(17 * var(--tm-wide-unit));
+  }
+}
+
+.tm-primary-nav {
+  background: var(--tm-surface-raised);
+  display: flex;
+  gap: 2px;
+  padding: 4px;
+  border-radius: var(--tm-radius-pill);
+}
+
+.tm-primary-nav-item {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-height: 34px;
+  padding: 0 20px;
+  border-radius: var(--tm-radius-pill);
+  font-size: var(--tm-fs-small);
+  font-weight: 500;
+  color: var(--tm-muted);
+  transition: color var(--tm-d-hover) var(--tm-ease-out);
+}
+
+.tm-primary-nav-item:hover {
+  color: var(--tm-text);
+}
+
+.tm-primary-nav-item > span:not(.tm-primary-nav-selection) {
+  position: relative;
+  z-index: 1;
+}
+
+.tm-primary-nav-item[data-active='true'] {
+  color: var(--tm-text);
+  font-weight: 600;
+}
+
+@media (pointer: coarse) {
+  .tm-primary-nav-item {
+    min-height: 44px;
+  }
+}
+
+.tm-primary-nav-selection {
+  box-shadow: var(--tm-shadow-sm);
+  position: absolute;
+  inset: 0;
+  border-radius: var(--tm-radius-pill);
+  background: var(--tm-surface);
+}
+
+@media (min-width: 1700px) {
+  .tm-primary-nav {
+    padding: calc(4 * var(--tm-wide-unit));
+  }
+  .tm-primary-nav-item {
+    min-height: calc(34 * var(--tm-wide-unit));
+    padding-inline: calc(20 * var(--tm-wide-unit));
+  }
+}
+
+@media (min-width: 1700px) and (pointer: coarse) {
+  .tm-primary-nav-item {
+    min-height: max(44px, calc(34 * var(--tm-wide-unit)));
+  }
+}
+
+.tm-repository-trigger {
+  position: relative;
+  display: inline-flex;
+  flex-shrink: 0;
+}
+
+.tm-repository-tooltip {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  z-index: 1;
+  padding-top: 8px;
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+
+.tm-repository-tooltip > span {
+  display: block;
+  padding: 8px 12px;
+  border: 1px solid var(--tm-line);
+  border-radius: var(--tm-radius-sm);
+  background: var(--tm-surface-raised);
+  color: var(--tm-text);
+  box-shadow: var(--tm-shadow-sm);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+.tm-account-initial {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--tm-radius-full);
+  background: var(--tm-text);
+  color: var(--tm-accent-contrast);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.tm-account-placeholder {
+  width: 44px;
+  height: 44px;
+}
+
+@media (min-width: 1700px) {
+  .tm-account-initial {
+    width: calc(32 * var(--tm-wide-unit));
+    height: calc(32 * var(--tm-wide-unit));
+    font-size: calc(13 * var(--tm-wide-unit));
+  }
+}
+
+.tm-account-indicator {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 8px;
+  height: 8px;
+  border: 0;
+  border-radius: var(--tm-radius-full);
+  background: var(--tm-text);
+}
+
+.tm-mobile-account > .tm-account-placeholder {
+  width: 48px;
+  height: 48px;
+}
+
+.tm-mobile-account .tm-account-initial {
+  width: 36px;
+  height: 36px;
+  font-size: 15px;
+}
+
+/* 位置、宽度、层级、最大高度、入场归公共浮层（.tm-popover-layer / useAnchoredLayer），这里只管外观 */
+.tm-account-menu {
+  padding: 6px;
+  border: 0;
+  border-radius: var(--tm-radius-lg);
+  background: var(--tm-surface);
+  color: var(--tm-text);
+  font-size: var(--tm-fs-small);
+  box-shadow: var(--tm-shadow-lg);
+}
+
+.tm-account-menu svg {
+  color: var(--tm-muted);
+}
+
+.tm-account-menu-heading {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 64px;
+  padding: 10px 12px;
+  border-radius: var(--tm-radius-md);
+  text-align: left;
+  transition: background-color var(--tm-d-hover) var(--tm-ease-out);
+}
+
+.tm-account-menu-heading:hover {
+  background: var(--tm-surface-raised);
+}
+
+/* 菜单展开时各组依次淡入 */
+.tm-account-menu > * {
+  animation: tm-menu-group-in var(--tm-d-panel) var(--tm-ease-out) backwards;
+}
+
+.tm-account-menu > :nth-child(2) {
+  animation-delay: 20ms;
+}
+
+.tm-account-menu > :nth-child(3) {
+  animation-delay: 40ms;
+}
+
+.tm-account-menu > :nth-child(4) {
+  animation-delay: 60ms;
+}
+
+.tm-account-menu > :nth-child(5) {
+  animation-delay: 80ms;
+}
+
+.tm-account-menu > :nth-child(n + 6) {
+  animation-delay: 100ms;
+}
+
+@keyframes tm-menu-group-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+
+html[data-tm-reduced-motion='true'] .tm-account-menu > * {
+  animation: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tm-account-menu > * {
+    animation: none;
+  }
+}
+
+:where(html:not([data-tm-device='phone'], [data-tm-device='phone-landscape']))
+  .tm-account-menu {
+  right: var(--tm-content-gutter);
+  box-shadow: var(--tm-shadow-sm);
+}
+
+/* —— 手机工具栏：页名从首屏起保持居中，控件随栏高协调放大 —— */
+/*
+ * 顶栏常驻在根布局（PersistentHeader），切页不重建。
+ * 页面里有 PageLayout 放的 data-tm-nav-page 标记才显示，与底栏同一规则。
+ */
+.tm-mobile-header-v2 {
+  display: none;
+  position: fixed;
+  inset: 0 0 auto;
+  z-index: var(--tm-z-header);
+  padding-top: var(--tm-safe-top);
+  color: var(--tm-text);
+  transition: opacity var(--tm-d-hero) var(--tm-ease-out);
+}
+
+:where(html:is([data-tm-device='phone'], [data-tm-device='phone-landscape']))
+  body:has(.tm-shell[data-tab='true'])
+  .tm-mobile-header-v2 {
+  position: absolute;
+}
+
+/* 首页大图在手机上铺到屏幕最顶（大图的样式见 home.css），顶栏按钮浮在图上 */
+@media (max-width: 599px) {
+  body:has(.tm-shell[data-tab='true'][data-page='/'] .tm-home-hero-panel)
+    .tm-mobile-header-v2 {
+    color: var(--tm-on-art);
+  }
+  body:has(.tm-shell[data-tab='true'][data-page='/'] .tm-home-hero-panel)
+    .tm-mobile-header-v2
+    :is(.tm-shell-icon, .tm-theme-toggle) {
+    color: inherit;
+  }
+  body:has(.tm-shell[data-tab='true'][data-page='/'] .tm-home-hero-panel)
+    .tm-mobile-header-v2
+    :is(.tm-guest-login, .tm-account-initial) {
+    background: var(--tm-on-art);
+    color: var(--tm-on-art-ink);
+  }
+}
+
+:where(html:is([data-tm-device='phone'], [data-tm-device='phone-landscape']))
+  body:has([data-tm-nav-page])
+  .tm-mobile-header-v2 {
+  display: block;
+}
+
+:where(html:not([data-tm-device='phone'], [data-tm-device='phone-landscape']))
+  .tm-mobile-header-v2 {
+  display: none;
+}
+
+/* 手机横屏（lib/device-tier.ts）：页面开了 viewport-fit=cover，左右要让开刘海和圆角 */
+:where(html[data-tm-device='phone-landscape']) .tm-mobile-header-v2 {
+  padding-right: env(safe-area-inset-right);
+  padding-left: env(safe-area-inset-left);
+}

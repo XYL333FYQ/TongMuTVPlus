@@ -1,0 +1,178 @@
+/* controls.css 按块拆出的一段（tm-expand-search、tm-visual-preferences、tm-display-chevron），引入顺序紧跟前一段，层叠结果不变 */
+/* 可展开的小搜索框：收起时只剩放大镜按钮 */
+.tm-expand-search {
+  display: flex;
+  align-items: center;
+  height: 40px;
+  overflow: hidden;
+  border: 0;
+  border-radius: var(--tm-radius-pill);
+  background: var(--tm-surface);
+  transition: width var(--tm-d-panel) var(--tm-ease-out);
+}
+
+.tm-expand-search-btn {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  color: var(--tm-muted);
+}
+
+.tm-expand-search-btn:hover {
+  color: var(--tm-text);
+}
+
+.tm-expand-search-input {
+  width: 100%;
+  height: 40px;
+  padding-right: 14px;
+  border: 0;
+  background: transparent;
+  font-size: var(--tm-fs-small);
+  color: var(--tm-text);
+  transition: opacity var(--tm-d-hover) var(--tm-ease-out);
+}
+
+.tm-expand-search-input::placeholder {
+  color: var(--tm-muted);
+}
+
+.tm-expand-search-input:focus {
+  outline: none;
+}
+
+.tm-expand-search:focus-within {
+  border-color: var(--tm-line-strong);
+}
+
+/* 显示偏好：「我的」页保留说明，账号菜单使用紧凑行。 */
+.tm-visual-preferences {
+  min-width: 0;
+  border: 0;
+  border-top: 1px solid var(--tm-line);
+  margin-top: 24px;
+  padding-top: 19px;
+}
+
+.tm-visual-preferences legend {
+  padding: 0 8px 0 0;
+  font-size: 14px;
+  color: var(--tm-muted);
+}
+
+.tm-visual-preferences label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 10px 0;
+  cursor: pointer;
+}
+
+.tm-visual-preferences strong {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.tm-visual-preferences small {
+  display: block;
+  margin-top: 4px;
+  color: var(--tm-muted);
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.tm-visual-preferences p {
+  display: block;
+  margin: 12px 0 0;
+  color: var(--tm-muted);
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.tm-visual-preferences input {
+  appearance: none;
+  -webkit-appearance: none;
+  position: relative;
+  width: 44px;
+  height: 24px;
+  flex-shrink: 0;
+  margin: 0;
+  border: 1px solid var(--tm-line);
+  border-radius: var(--tm-radius-full);
+  background: var(--tm-surface-raised);
+  cursor: pointer;
+}
+
+.tm-visual-preferences input::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 18px;
+  height: 18px;
+  border-radius: var(--tm-radius-full);
+  background: var(--tm-muted);
+  transition: transform 200ms var(--tm-spring);
+}
+
+.tm-visual-preferences input:checked {
+  background: var(--tm-text);
+  border-color: var(--tm-text);
+}
+
+.tm-visual-preferences input:checked::after {
+  transform: translateX(20px);
+  background: var(--tm-accent-contrast);
+}
+
+.tm-visual-preferences input:focus-visible {
+  outline: 2px solid var(--tm-text);
+  outline-offset: 2px;
+}
+
+.tm-visual-preferences input:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.tm-visual-preferences[data-layout='menu'] {
+  border: 0;
+  margin: 0;
+  padding: 0 12px 4px 42px;
+}
+
+.tm-visual-preferences[data-layout='menu'] label {
+  min-height: 44px;
+  gap: 12px;
+  padding: 0;
+}
+
+.tm-visual-preferences[data-layout='menu'] strong {
+  font-size: var(--tm-fs-small);
+}
+
+.tm-visual-preferences-disclosure > summary {
+  list-style: none;
+  cursor: pointer;
+}
+
+.tm-visual-preferences-disclosure > summary::-webkit-details-marker {
+  display: none;
+}
+
+.tm-visual-preferences-disclosure > summary:focus-visible {
+  outline: 2px solid var(--tm-text);
+  outline-offset: 2px;
+}
+
+.tm-visual-preferences-disclosure .tm-display-chevron {
+  margin-inline-start: auto;
+}
+
+.tm-visual-preferences-disclosure[open] .tm-display-chevron {
+  transform: rotate(180deg);
+}

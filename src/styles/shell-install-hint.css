@@ -1,0 +1,221 @@
+/* shell.css 按块拆出的一段（tm-install-hint、tm-guest、tm-menu、tm-more-trigger），引入顺序紧跟前一段，层叠结果不变 */
+/* iPhone 安装到主屏幕引导 */
+.tm-install-hint {
+  position: fixed;
+  left: 12px;
+  right: 12px;
+  bottom: calc(var(--tm-bottom-nav-height) + 28px + var(--tm-safe-bottom));
+  z-index: var(--tm-z-nav);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: var(--tm-radius-md);
+  font-size: 14px;
+  color: var(--tm-text);
+  box-shadow: var(--tm-shadow-md);
+}
+
+.tm-install-hint p {
+  flex: 1;
+  margin: 0;
+}
+
+.tm-install-hint .tm-install-hint-btn {
+  min-height: 44px;
+  flex-shrink: 0;
+}
+
+/* —— 账号菜单 —— */
+.tm-guest-account {
+  position: relative;
+}
+
+.tm-guest-login {
+  margin-inline: 4px;
+}
+
+.tm-guest-account summary {
+  list-style: none;
+  cursor: pointer;
+}
+
+.tm-guest-account summary::-webkit-details-marker {
+  display: none;
+}
+
+.tm-menu-avatar {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--tm-radius-full);
+  background: var(--tm-text);
+  color: var(--tm-accent-contrast);
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.tm-menu-identity {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.tm-menu-name {
+  overflow: hidden;
+  font-size: var(--tm-fs-body);
+  font-weight: 600;
+  color: var(--tm-text);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tm-menu-role {
+  font-size: var(--tm-fs-caption);
+  color: var(--tm-muted);
+}
+
+.tm-account-menu .tm-menu-chevron {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  transition: translate var(--tm-d-hover) var(--tm-ease-out);
+}
+
+.tm-account-menu-heading:hover .tm-menu-chevron {
+  translate: 2px 0;
+}
+
+/* 分组：组与组之间一条细线 */
+.tm-menu-group {
+  padding-top: 4px;
+  margin-top: 4px;
+  border-top: 1px solid var(--tm-line);
+}
+
+.tm-menu-footer {
+  padding-top: 4px;
+  margin-top: 4px;
+  border-top: 1px solid var(--tm-line);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.tm-menu-footer > .tm-menu-item {
+  width: auto;
+  flex: 1;
+}
+
+.tm-menu-unread {
+  margin-left: auto;
+  padding: 0 8px;
+  border-radius: var(--tm-radius-full);
+  background: var(--tm-text);
+  color: var(--tm-accent-contrast);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 20px;
+}
+
+.tm-menu-item,
+.tm-menu-link {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 44px;
+  padding: 0 12px;
+  border-radius: var(--tm-radius-sm);
+  font-size: var(--tm-fs-small);
+  font-weight: 500;
+  color: var(--tm-text);
+  text-align: left;
+  transition: background-color var(--tm-d-hover) var(--tm-ease-out);
+}
+
+.tm-menu-item:hover,
+.tm-menu-link:hover {
+  background: var(--tm-surface-raised);
+}
+
+.tm-menu-item > svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  color: var(--tm-muted);
+}
+
+.tm-menu-link > svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+.tm-menu-version {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 12px;
+  border-radius: var(--tm-radius-sm);
+  font-size: var(--tm-fs-caption);
+  color: var(--tm-muted);
+  transition: color var(--tm-d-hover) var(--tm-ease-out);
+}
+
+.tm-menu-version:hover {
+  color: var(--tm-text);
+}
+
+.tm-menu-update-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: var(--tm-radius-full);
+  background: var(--tm-text);
+}
+
+.tm-menu-theme {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 10px 12px;
+}
+
+.tm-menu-theme > span {
+  font-size: var(--tm-fs-caption);
+  color: var(--tm-muted);
+}
+
+.tm-more-trigger {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 44px;
+  padding: 0 12px;
+  border-radius: var(--tm-radius-sm);
+  font-size: var(--tm-fs-small);
+  font-weight: 500;
+  color: var(--tm-text);
+  text-align: left;
+  transition: background-color var(--tm-d-hover) var(--tm-ease-out);
+}
+
+.tm-more-trigger:hover {
+  background: var(--tm-surface-raised);
+}
+
+.tm-more-trigger > svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}

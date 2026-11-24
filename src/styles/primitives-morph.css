@@ -1,0 +1,26 @@
+/* primitives.css 按块拆出的一段（tm-morph），引入顺序紧跟前一段，层叠结果不变 */
+[data-tm-celestial='solar'] .tm-morph-disc {
+  transform: scale(0.56);
+}
+
+[data-tm-celestial='solar'] .tm-morph-bite {
+  transform: translate(14px, -14px);
+}
+
+[data-tm-celestial='solar'] .tm-morph-rays {
+  opacity: 1;
+  transform: rotate(0deg) scale(1);
+}
+
+[data-tm-celestial='lunar'] .tm-morph-disc {
+  transform: scale(1);
+}
+
+[data-tm-celestial='lunar'] .tm-morph-bite {
+  transform: translate(0, 0);
+}
+
+[data-tm-celestial='lunar'] .tm-morph-rays {
+  opacity: 0;
+  transform: rotate(-60deg) scale(0.4);
+}

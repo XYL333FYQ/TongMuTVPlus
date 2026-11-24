@@ -1,0 +1,332 @@
+/* home.css 按块拆出的一段（tm-home-hero-extra、tm-home-hero-loading、tm-home-hero-showcase、tm-home-hero-poster、tm-home-hero-deck、tm-home-hero-controls、tm-home-hero-control、tm-home-hero-counter），引入顺序紧跟前一段，层叠结果不变 */
+.tm-home-hero-extra {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+}
+
+.tm-home-hero-extra button {
+  color: var(--tm-on-art);
+  background: var(--tm-scrim-soft);
+}
+
+.tm-home-hero-loading {
+  display: grid;
+  place-items: center;
+  min-height: 480px;
+  color: var(--tm-on-art-muted);
+}
+
+@media (min-width: 1700px) {
+  .tm-home-hero-loading {
+    min-height: calc(480 * var(--tm-wide-unit));
+  }
+}
+
+.tm-home-hero-showcase {
+  min-width: 0;
+  height: calc(408 * var(--tm-wide-unit));
+}
+
+@media (min-width: 900px) and (max-width: 1199px) {
+  .tm-home-hero-showcase {
+    height: 384px;
+  }
+}
+
+@media (min-width: 600px) and (max-width: 899px) {
+  .tm-home-hero-showcase {
+    height: 344px;
+  }
+}
+
+@media (max-width: 599px) {
+  .tm-home-hero-showcase {
+    width: 100%;
+    height: 274px;
+    order: 1;
+  }
+}
+
+.tm-home-hero-poster-deck {
+  position: relative;
+  height: calc(364 * var(--tm-wide-unit));
+  isolation: isolate;
+}
+
+.tm-home-hero-poster {
+  position: absolute;
+  width: min(44%, calc(238 * var(--tm-wide-unit)));
+  aspect-ratio: 2 / 3;
+  top: 54.5%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 2;
+}
+
+/* 两侧的海报：比主海报小、略低、压在主海报下面，向内转一点 */
+.tm-home-hero-poster-left {
+  width: min(34%, calc(178 * var(--tm-wide-unit)));
+  top: 57%;
+  z-index: 1;
+  left: 18%;
+  transform: translate(-50%, -50%) perspective(680px) rotateY(-24deg);
+}
+
+.tm-home-hero-poster-right {
+  width: min(34%, calc(178 * var(--tm-wide-unit)));
+  top: 57%;
+  z-index: 1;
+  left: 82%;
+  transform: translate(-50%, -50%) perspective(680px) rotateY(24deg);
+}
+
+.tm-home-hero-poster-surface {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: var(--tm-radius-sm);
+  background: var(--tm-hero-bg);
+  box-shadow: inset 0 1px 0 var(--tm-art-grain), var(--tm-shadow-lg);
+  outline: 1px solid var(--tm-art-glass-line);
+  outline-offset: -1px;
+  transform: perspective(900px) rotateX(var(--tm-poster-rx, 0deg))
+    rotateY(var(--tm-poster-ry, 0deg));
+  transition: transform var(--tm-d-panel) var(--tm-ease-out),
+    box-shadow var(--tm-d-hover) var(--tm-ease-out);
+  overflow: clip;
+  touch-action: pan-y pinch-zoom;
+}
+
+.tm-home-hero-poster-surface::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  background: radial-gradient(
+    circle at var(--mx, 50%) var(--my, 50%),
+    var(--tm-art-glass-line),
+    transparent 58%
+  );
+  transition: opacity var(--tm-d-hover) var(--tm-ease-out);
+}
+
+.tm-home-hero-poster-main .tm-home-hero-poster-surface {
+  border-radius: var(--tm-radius-md);
+}
+
+.tm-home-hero-poster-face {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  overflow: clip;
+  display: block;
+}
+
+.tm-home-hero-poster-face > span:not(.tm-home-hero-poster-fallback) {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: inherit;
+}
+
+.tm-home-hero-poster-face > img {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: inherit;
+  opacity: 1;
+  filter: none;
+  transform: none;
+}
+
+.tm-home-hero-poster-fallback {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: var(--tm-hero-bg);
+  color: var(--tm-on-art-muted);
+  font-size: 48px;
+  font-weight: 700;
+}
+
+.tm-home-hero-poster-surface:focus-visible {
+  outline: 2px solid var(--tm-on-art);
+  outline-offset: 4px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .tm-home-hero-poster:hover,
+  .tm-home-hero-poster:focus-within {
+    z-index: 3;
+  }
+  .tm-home-hero-poster-surface:hover,
+  .tm-home-hero-poster-surface:focus-visible {
+    transform: perspective(900px) translateY(-6px)
+      rotateX(var(--tm-poster-rx, 0deg)) rotateY(var(--tm-poster-ry, 0deg))
+      scale(1.025);
+    box-shadow: inset 0 1px 0 var(--tm-art-grain), var(--tm-shadow-poster-hover);
+  }
+  .tm-home-hero-poster-surface:hover::after {
+    opacity: 1;
+  }
+}
+
+@media (min-width: 900px) and (max-width: 1199px) {
+  .tm-home-hero-poster-deck {
+    height: 340px;
+  }
+}
+
+@media (min-width: 600px) and (max-width: 899px) {
+  .tm-home-hero-poster-deck {
+    height: 300px;
+  }
+  .tm-home-hero-poster-main {
+    width: 51%;
+  }
+  .tm-home-hero-poster-left {
+    left: 17%;
+    width: 32%;
+  }
+  .tm-home-hero-poster-right {
+    left: 83%;
+    width: 32%;
+  }
+}
+
+@media (max-width: 599px) {
+  .tm-home-hero-poster-deck {
+    height: 230px;
+  }
+  .tm-home-hero-poster-main {
+    width: min(44%, 148px);
+    left: 50%;
+    top: 50%;
+  }
+  .tm-home-hero-poster-left {
+    width: min(31%, 108px);
+    top: 54%;
+    left: 18%;
+  }
+  .tm-home-hero-poster-right {
+    width: min(31%, 108px);
+    top: 54%;
+    left: 82%;
+  }
+}
+
+html[data-tm-reduced-motion='true'] .tm-home-hero-poster-surface {
+  transform: none !important;
+  transition: none !important;
+}
+
+html[data-tm-reduced-motion='true'] .tm-home-hero-poster-surface::after {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tm-home-hero-poster-surface {
+    transform: none !important;
+    transition: none !important;
+  }
+  .tm-home-hero-poster-surface::after {
+    display: none;
+  }
+}
+
+/* 两侧和缩略图里的海报（FilmPoster）铺满外框，圆角、阴影交给外框 */
+.tm-home-hero-deck-art {
+  --tm-art-radius: 0px;
+  --tm-art-shadow: none;
+  --tm-poster-initial-size: 40px;
+  width: 100%;
+  height: 100%;
+  --tm-art-bg: var(--tm-hero-bg);
+}
+
+.tm-home-hero-controls {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: calc(12 * var(--tm-wide-unit));
+  min-height: calc(44 * var(--tm-wide-unit));
+  transform: translate(1%, 12px);
+}
+
+@media (max-width: 599px) {
+  .tm-home-hero-controls {
+    transform: none;
+  }
+}
+
+.tm-home-hero-control {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: calc(44 * var(--tm-wide-unit));
+  min-width: calc(44 * var(--tm-wide-unit));
+  height: calc(44 * var(--tm-wide-unit));
+  border-radius: var(--tm-radius-full);
+  color: var(--tm-on-art);
+  isolation: isolate;
+  transition: transform var(--tm-d-press) var(--tm-ease-out),
+    opacity var(--tm-d-hover) var(--tm-ease-out);
+}
+
+.tm-home-hero-control::before {
+  content: '';
+  position: absolute;
+  inset: 4px;
+  background: var(--tm-art-glass);
+  border-radius: inherit;
+  z-index: -1;
+  transition: background var(--tm-d-hover);
+}
+
+.tm-home-hero-control:focus-visible {
+  outline: 2px solid var(--tm-on-art);
+  outline-offset: 4px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .tm-home-hero-control:hover::before {
+    background: var(--tm-art-glass-line);
+  }
+  .tm-home-hero-control:active {
+    transform: scale(0.94);
+  }
+}
+
+html[data-tm-reduced-motion='true'] .tm-home-hero-control {
+  transform: none !important;
+  transition: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tm-home-hero-control {
+    transform: none !important;
+    transition: none !important;
+  }
+}
+
+.tm-home-hero-counter {
+  white-space: nowrap;
+  font-size: calc(14 * var(--tm-wide-unit));
+  font-variant-numeric: tabular-nums;
+  color: var(--tm-on-art-muted);
+}
+
+.tm-home-hero-counter strong {
+  color: var(--tm-on-art);
+  font-weight: 600;
+}

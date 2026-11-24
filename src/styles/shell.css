@@ -1,7 +1,6 @@
 /*
  * 站点外壳：桌面顶栏 + 胶囊导航、手机大标题顶栏、手机悬浮底栏、账号菜单、「更多」面板。
  */
-
 .tm-shell {
   position: relative;
   min-height: 100dvh;
@@ -9,6 +8,7 @@
   background: var(--tm-bg);
   color: var(--tm-text);
 }
+
 /* 首页顶部聚光：极淡的白色椭圆，给黑底一点纵深 */
 .tm-shell::before {
   content: '';
@@ -22,10 +22,12 @@
     transparent
   );
 }
+
 .tm-shell-body {
   position: relative;
   min-width: 0;
 }
+
 .tm-shell-backdrop {
   position: absolute;
   inset: 0;
@@ -34,139 +36,7 @@
   background-position: center;
   pointer-events: none;
 }
-.tm-main {
-  position: relative;
-  min-width: 0;
-  min-height: 100dvh;
-  padding-top: calc(var(--tm-header-height) + 8px + var(--tm-safe-top));
-  padding-bottom: calc(
-    var(--tm-bottom-nav-height) + var(--tm-safe-bottom) + 56px
-  );
-}
-.tm-shell-no-navigation .tm-main {
-  padding: 0;
-}
-.tm-embedded-page {
-  width: 100%;
-  min-width: 0;
-}
-.tm-page-transition {
-  min-width: 0;
-  animation: tm-page-enter var(--tm-d-page) var(--tm-ease-out) backwards;
-}
-@keyframes tm-page-enter {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-}
 
-/* —— 桌面顶栏 —— */
-/* 顶栏、手机顶栏、底栏显隐时一样淡入淡出 */
-.tm-top-header {
-  display: none;
-  transition: opacity var(--tm-d-hero) var(--tm-ease-out);
-}
-.tm-header-glass {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  opacity: 0;
-  border-width: 0 0 1px;
-  border-radius: 0;
-  box-shadow: none;
-  transition: opacity var(--tm-d-hover) var(--tm-ease-out);
-}
-[data-scrolled='true'] > .tm-header-glass {
-  opacity: 1;
-}
-.tm-top-header-grid {
-  position: relative;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
-  align-items: center;
-  gap: 16px;
-  height: var(--tm-header-height);
-}
-.tm-header-brand {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-width: 0;
-}
-.tm-logo {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  min-height: 44px;
-  color: var(--tm-text);
-  white-space: nowrap;
-}
-.tm-logo > span {
-  display: grid;
-  place-items: center;
-  width: 30px;
-  height: 30px;
-  border-radius: var(--tm-radius-sm);
-  background: var(--tm-text);
-  color: var(--tm-accent-contrast);
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-}
-.tm-logo > strong {
-  font-size: 17px;
-  font-weight: 700;
-  letter-spacing: -0.01em;
-}
-.tm-primary-nav {
-  background: var(--tm-surface-raised);
-  display: flex;
-  gap: 2px;
-  padding: 4px;
-  border-radius: var(--tm-radius-pill);
-}
-.tm-primary-nav-item {
-  position: relative;
-  display: grid;
-  place-items: center;
-  min-height: 34px;
-  padding: 0 20px;
-  border-radius: var(--tm-radius-pill);
-  font-size: var(--tm-fs-small);
-  font-weight: 500;
-  color: var(--tm-muted);
-  transition: color var(--tm-d-hover) var(--tm-ease-out);
-}
-.tm-primary-nav-item:hover {
-  color: var(--tm-text);
-}
-.tm-primary-nav-item > span:not(.tm-primary-nav-selection) {
-  position: relative;
-  z-index: 1;
-}
-.tm-primary-nav-item[data-active='true'] {
-  color: var(--tm-text);
-  font-weight: 600;
-}
-@media (pointer: coarse) {
-  .tm-primary-nav-item {
-    min-height: 44px;
-  }
-}
-.tm-primary-nav-selection {
-  box-shadow: var(--tm-shadow-sm);
-  position: absolute;
-  inset: 0;
-  border-radius: var(--tm-radius-pill);
-  background: var(--tm-surface);
-}
-.tm-header-actions {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 4px;
-}
 .tm-shell-icon {
   display: inline-grid;
   place-items: center;
@@ -177,74 +47,12 @@
   color: var(--tm-text);
   transition: background-color var(--tm-d-hover) var(--tm-ease-out);
 }
+
 .tm-shell-icon:hover {
   background: var(--tm-surface-raised);
 }
-.tm-repository-trigger {
-  position: relative;
-  display: inline-flex;
-  flex-shrink: 0;
-}
-.tm-repository-tooltip {
-  position: absolute;
-  top: 100%;
-  left: 50%;
-  z-index: 1;
-  padding-top: 8px;
-  transform: translateX(-50%);
-  white-space: nowrap;
-}
-.tm-repository-tooltip > span {
-  display: block;
-  padding: 8px 12px;
-  border: 1px solid var(--tm-line);
-  border-radius: var(--tm-radius-sm);
-  background: var(--tm-surface-raised);
-  color: var(--tm-text);
-  box-shadow: var(--tm-shadow-sm);
-  font-family: inherit;
-  font-size: 13px;
-  font-weight: 500;
-  line-height: 1.5;
-}
-.tm-account-initial {
-  display: grid;
-  place-items: center;
-  width: 32px;
-  height: 32px;
-  border-radius: var(--tm-radius-full);
-  background: var(--tm-text);
-  color: var(--tm-accent-contrast);
-  font-size: 13px;
-  font-weight: 700;
-}
-.tm-account-placeholder {
-  width: 44px;
-  height: 44px;
-}
-/* Shared desktop scale: navigation must not change size between destinations. */
+
 @media (min-width: 1700px) {
-  .tm-shell .tm-main {
-    padding-top: calc(8 * var(--tm-wide-unit));
-  }
-  .tm-logo {
-    gap: calc(10 * var(--tm-wide-unit));
-  }
-  .tm-logo > span {
-    width: calc(30 * var(--tm-wide-unit));
-    height: calc(30 * var(--tm-wide-unit));
-    font-size: calc(12 * var(--tm-wide-unit));
-  }
-  .tm-logo > strong {
-    font-size: calc(17 * var(--tm-wide-unit));
-  }
-  .tm-primary-nav {
-    padding: calc(4 * var(--tm-wide-unit));
-  }
-  .tm-primary-nav-item {
-    min-height: calc(34 * var(--tm-wide-unit));
-    padding-inline: calc(20 * var(--tm-wide-unit));
-  }
   .tm-shell-icon {
     width: calc(44 * var(--tm-wide-unit));
     height: calc(44 * var(--tm-wide-unit));
@@ -253,180 +61,60 @@
     width: calc(18 * var(--tm-wide-unit));
     height: calc(18 * var(--tm-wide-unit));
   }
-  .tm-account-initial {
-    width: calc(32 * var(--tm-wide-unit));
-    height: calc(32 * var(--tm-wide-unit));
-    font-size: calc(13 * var(--tm-wide-unit));
-  }
-}
-@media (min-width: 1700px) and (pointer: coarse) {
-  .tm-primary-nav-item {
-    min-height: max(44px, calc(34 * var(--tm-wide-unit)));
-  }
-}
-.tm-account-indicator {
-  position: absolute;
-  top: 6px;
-  right: 6px;
-  width: 8px;
-  height: 8px;
-  border: 0;
-  border-radius: var(--tm-radius-full);
-  background: var(--tm-text);
 }
 
-/* —— 手机工具栏：页名从首屏起保持居中，控件随栏高协调放大 —— */
-/*
- * 顶栏常驻在根布局（PersistentHeader），切页不重建。
- * 页面里有 PageLayout 放的 data-tm-nav-page 标记才显示，与底栏同一规则。
- */
-.tm-mobile-header-v2 {
-  display: none;
-  position: fixed;
-  inset: 0 0 auto;
-  z-index: var(--tm-z-header);
-  padding-top: var(--tm-safe-top);
-  color: var(--tm-text);
-  transition: opacity var(--tm-d-hero) var(--tm-ease-out);
-}
-.tm-mobile-title-row {
-  position: relative;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
-  align-items: center;
-  height: var(--tm-header-height);
-  padding-inline: 16px 8px;
-}
-.tm-mobile-page-title {
-  grid-column: 2;
-  grid-row: 1;
-  justify-self: center;
-  min-width: 0;
-  max-width: calc(100dvw - 224px);
-  margin: 0;
-  overflow: hidden;
-  font-size: 19px;
-  font-weight: 600;
-  line-height: 1.2;
-  transform-origin: center;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
-.tm-mobile-header-v2[data-compact='true'] .tm-mobile-page-title {
-  grid-column: 2;
-  justify-self: center;
-  max-width: calc(100dvw - 224px);
-  margin-left: 0;
-  transform-origin: center;
-}
-.tm-mobile-account {
-  display: flex;
-  align-items: center;
-  grid-column: 3;
-  grid-row: 1;
-  justify-self: end;
-  min-width: 0;
-  flex-shrink: 0;
-}
-.tm-mobile-account > button {
-  min-width: 44px;
-  min-height: 44px;
-  flex-shrink: 0;
-}
-.tm-mobile-account > .tm-account-placeholder,
 .tm-mobile-account .tm-shell-icon {
   width: 48px;
   height: 48px;
 }
-.tm-mobile-account .tm-account-initial {
-  width: 36px;
-  height: 36px;
-  font-size: 15px;
+
+:where(html:not([data-tm-device='phone'], [data-tm-device='phone-landscape']))
+  .tm-shell:not(.tm-shell-no-navigation)
+  > .tm-shell-body {
+  padding-top: var(--tm-header-height);
 }
-.tm-mobile-page-subtitle {
-  position: absolute;
-  top: calc(var(--tm-header-height) - 12px);
-  left: 16px;
-  font-size: var(--tm-fs-caption);
-  color: var(--tm-muted);
+
+.tm-shell .music-theme > .fixed.bottom-6 {
+  bottom: calc(96px + var(--tm-safe-bottom));
 }
-.tm-mobile-header-v2[data-has-subtitle='true'] .tm-mobile-title-row {
-  height: calc(var(--tm-header-height) + 20px);
-  align-items: start;
-  padding-top: 10px;
+
+:where(html:not([data-tm-device='phone'], [data-tm-device='phone-landscape']))
+  .tm-shell
+  .music-theme
+  > .fixed.bottom-6 {
+  bottom: 24px;
 }
-.tm-mobile-header-v2[data-has-subtitle='true'][data-compact='true']
-  .tm-mobile-title-row {
-  height: var(--tm-header-height);
-  align-items: center;
+
+html[data-tm-immersive='bare'] .tm-shell > .tm-shell-body {
   padding-top: 0;
 }
-.tm-mobile-header-v2[data-has-subtitle='true'][data-compact='true']
-  .tm-mobile-page-subtitle {
-  display: none;
+
+.tm-main {
+  position: relative;
+  min-width: 0;
+  min-height: 100dvh;
+  padding-top: calc(var(--tm-header-height) + 8px + var(--tm-safe-top));
+  padding-bottom: calc(
+    var(--tm-bottom-nav-height) + var(--tm-safe-bottom) + 56px
+  );
 }
-.tm-mobile-back {
-  position: absolute;
-  left: 4px;
-  z-index: 2;
+
+.tm-shell-no-navigation .tm-main {
+  padding: 0;
 }
-.tm-mobile-back + .tm-mobile-page-title {
-  margin-left: 0;
+
+/* Shared desktop scale: navigation must not change size between destinations. */
+@media (min-width: 1700px) {
+  .tm-shell .tm-main {
+    padding-top: calc(8 * var(--tm-wide-unit));
+  }
 }
-/* 访客多一个登录入口，标题使用操作区之外的实际剩余宽度。 */
-.tm-mobile-title-row:has(.tm-guest-login) {
-  grid-template-columns: minmax(0, 1fr) auto;
-  column-gap: 8px;
-}
-.tm-mobile-title-row:has(.tm-guest-login) .tm-mobile-page-title {
-  grid-column: 1;
-  max-width: 100%;
-}
-.tm-mobile-title-row:has(.tm-guest-login) .tm-mobile-account {
-  grid-column: 2;
-}
-/* Extra actions share the same bounded title lane as the guest login controls. */
-.tm-mobile-header-v2[data-room-actions='true'] .tm-mobile-title-row {
-  grid-template-columns: minmax(0, 1fr) auto;
-  column-gap: 8px;
-}
-.tm-mobile-header-v2[data-room-actions='true'] .tm-mobile-page-title {
-  grid-column: 1;
-  max-width: 100%;
-}
-.tm-mobile-header-v2[data-room-actions='true'] .tm-mobile-account {
-  grid-column: 2;
-}
-.tm-mobile-title-row:has(.tm-mobile-back):has(.tm-guest-login),
-.tm-mobile-header-v2[data-room-actions='true']
-  .tm-mobile-title-row:has(.tm-mobile-back) {
-  grid-template-columns: 44px minmax(0, 1fr) auto;
-  column-gap: 4px;
-}
-.tm-mobile-title-row:has(.tm-mobile-back):has(.tm-guest-login)
-  .tm-mobile-page-title,
-.tm-mobile-header-v2[data-room-actions='true']
-  .tm-mobile-title-row:has(.tm-mobile-back)
-  .tm-mobile-page-title {
-  grid-column: 2;
-}
-.tm-mobile-title-row:has(.tm-mobile-back):has(.tm-guest-login)
-  .tm-mobile-account,
-.tm-mobile-header-v2[data-room-actions='true']
-  .tm-mobile-title-row:has(.tm-mobile-back)
-  .tm-mobile-account {
-  grid-column: 3;
-}
-.tm-mobile-title-row:has(.tm-guest-login) .tm-mobile-back,
-.tm-mobile-header-v2[data-room-actions='true'] .tm-mobile-back {
-  position: static;
-  grid-column: 1;
-  grid-row: 1;
-}
+
 :where(html:is([data-tm-device='phone'], [data-tm-device='phone-landscape']))
   .tm-main {
   padding-top: calc(var(--tm-header-height) + var(--tm-safe-top));
 }
+
 /*
    * 一级页（底栏上的五个页）：底栏已经写明页名，顶部不再重复一遍。
    * 顶栏只剩右侧几个按钮，行高收到 44px，没有底色，随页面一起滚走（像 Apple TV App），
@@ -436,212 +124,59 @@
   body:has(.tm-shell[data-tab='true']) {
   --tm-header-height: 44px;
 }
-:where(html:is([data-tm-device='phone'], [data-tm-device='phone-landscape']))
-  body:has(.tm-shell[data-tab='true'])
-  .tm-mobile-header-v2 {
-  position: absolute;
+
+:where(html:not([data-tm-device='phone'], [data-tm-device='phone-landscape']))
+  .tm-main {
+  padding-top: 8px;
+  padding-bottom: 96px;
 }
-:where(html:is([data-tm-device='phone'], [data-tm-device='phone-landscape']))
-  body:has(.tm-shell[data-tab='true'])
-  .tm-mobile-header-v2
-  .tm-header-glass {
+
+:where(html[data-tm-device='phone-landscape']) .tm-main {
+  padding-right: env(safe-area-inset-right);
+  padding-left: env(safe-area-inset-left);
+}
+
+/* ---------------------------------------------------------------- 沉浸模式（hooks/useImmersiveShell） */
+/* bare：顶栏、手机顶栏、底栏都不显示，给它们留的位置也收回来（手机、触屏平板上的房间页） */
+html[data-tm-immersive='bare']
+  :is(.tm-top-header, .tm-mobile-header-v2, .tm-mobile-nav) {
   display: none;
 }
-:where(html:is([data-tm-device='phone'], [data-tm-device='phone-landscape']))
-  body:has(.tm-shell[data-tab='true'])
-  .tm-mobile-header-v2
-  .tm-mobile-page-title {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  margin: -1px;
-  padding: 0;
-  overflow: hidden;
-  clip: rect(0 0 0 0);
-  white-space: nowrap;
+
+/* fit：外壳照常，主区域不留上下空白、不撑满一屏（窄的电脑窗口上的房间页）；bare 也一样 */
+html:is([data-tm-immersive='bare'], [data-tm-immersive='fit']) .tm-main {
+  min-height: 0;
+  padding-top: 0;
+  padding-bottom: 0;
 }
-/* 首页大图在手机上铺到屏幕最顶（大图的样式见 home.css），顶栏按钮浮在图上 */
-@media (max-width: 599px) {
-  /* 大图两种主题下都是深色的，浮在上面的按钮用图上的浅色 */
-  body:has(.tm-shell[data-tab='true'][data-page='/'] .tm-home-hero-panel)
-    .tm-mobile-header-v2 {
-    color: var(--tm-on-art);
+
+/* flush：外壳照常，主区域不留底部空白（电脑上的房间页） */
+html[data-tm-immersive='flush'] .tm-main {
+  padding-bottom: 0;
+}
+
+/* 自己看的播放页完整显示时（手机 / 平板）：页面底部让出它的操作坞，手机底栏不出现 */
+:where(html:not([data-tm-device='wide']))
+  body:has(.tm-playback-host[data-presentation='full'] .tm-solo-dock)
+  .tm-main {
+  padding-bottom: calc(84px + var(--tm-safe-bottom, 0px));
+}
+
+.tm-embedded-page {
+  width: 100%;
+  min-width: 0;
+}
+
+.tm-page-transition {
+  min-width: 0;
+  animation: tm-page-enter var(--tm-d-page) var(--tm-ease-out) backwards;
+}
+
+@keyframes tm-page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
   }
-  body:has(.tm-shell[data-tab='true'][data-page='/'] .tm-home-hero-panel)
-    .tm-mobile-header-v2
-    :is(.tm-shell-icon, .tm-theme-toggle) {
-    color: inherit;
-  }
-  body:has(.tm-shell[data-tab='true'][data-page='/'] .tm-home-hero-panel)
-    .tm-mobile-header-v2
-    :is(.tm-guest-login, .tm-account-initial) {
-    background: var(--tm-on-art);
-    color: var(--tm-on-art-ink);
-  }
-}
-
-/*
- * —— 手机悬浮底栏 ——
- * 底栏只有一份，常驻在根布局里，切页时不销毁重建（滑块、高亮因此能连续过渡）。
- * 页面里有带导航的外壳时（PageLayout 放一个 data-tm-nav-page 标记）才显示。
- */
-.tm-mobile-nav {
-  position: fixed;
-  left: 12px;
-  right: 12px;
-  bottom: calc(12px + var(--tm-safe-bottom));
-  z-index: var(--tm-z-nav);
-  display: none;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 2px;
-  height: var(--tm-bottom-nav-height);
-  padding: 6px;
-  border-radius: var(--tm-radius-md);
-  box-shadow: inset 0 1px 0 var(--tm-glass-highlight), var(--tm-shadow-md);
-  transition: opacity var(--tm-d-hero) var(--tm-ease-out);
-  /* 底栏按住拖动：滑块跟手，经过的项高亮，松手跳转。
-     底栏上的手指动作全归底栏：浏览器不抢去滚动页面，拖动就不会被中途取消而不跳转 */
-  touch-action: none;
-  user-select: none;
-  -webkit-user-select: none;
-  -webkit-touch-callout: none;
-}
-.tm-mobile-nav-item {
-  position: relative;
-  z-index: 1;
-  -webkit-tap-highlight-color: transparent;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 2px;
-  min-width: 44px;
-  min-height: 44px;
-  border-radius: var(--tm-radius-md);
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--tm-muted);
-  transition: color var(--tm-d-hover) var(--tm-ease-out),
-    background-color var(--tm-d-hover) var(--tm-ease-out),
-    scale var(--tm-d-press) var(--tm-ease-out);
-}
-.tm-mobile-nav-item[data-active='true'] {
-  color: var(--tm-text);
-  background: var(--tm-line);
-}
-.tm-mobile-nav-item:active {
-  scale: 0.95;
-}
-
-:where(html:is([data-tm-device='phone'], [data-tm-device='phone-landscape']))
-  body:has([data-tm-nav-page])
-  .tm-mobile-header-v2 {
-  display: block;
-}
-
-:where(html:is([data-tm-device='phone'], [data-tm-device='phone-landscape']))
-  body:has([data-tm-nav-page])
-  .tm-mobile-nav,
-:where(html:is([data-tm-device='phone'], [data-tm-device='phone-landscape']))
-  .tm-mobile-nav[data-tab-route] {
-  display: grid;
-}
-
-/* Keep the same nav node/geometry while the IME is open, so closing the
-     keyboard does not restart display/entry transitions. Desktop/web unchanged. */
-
-html:where(
-    :is([data-tm-device='phone'], [data-tm-device='phone-landscape'])
-  )[data-tm-platform='app'][data-tm-keyboard='open']
-  .tm-mobile-nav {
-  opacity: 0;
-  visibility: hidden;
-  pointer-events: none;
-}
-
-.tm-mobile-nav-thumb {
-  position: absolute;
-  top: 6px;
-  bottom: 6px;
-  left: 0;
-  z-index: 0;
-  border-radius: var(--tm-radius-md);
-  background: var(--tm-line);
-  pointer-events: none;
-  /* 提前独占一层：滑动一开始就由合成器线程接手，不用临时建层、重画 */
-  will-change: transform;
-  transition: transform var(--tm-d-panel) var(--tm-ease-out),
-    scale var(--tm-d-hover) var(--tm-ease-out);
-}
-.tm-mobile-nav[data-thumb='true'] .tm-mobile-nav-item[data-active='true'] {
-  background: transparent;
-}
-.tm-mobile-nav[data-scrubbing='true'] .tm-mobile-nav-thumb {
-  transition: scale var(--tm-d-hover) var(--tm-ease-out);
-  scale: 1.08;
-}
-.tm-mobile-nav-item[data-hover='true'] {
-  color: var(--tm-text);
-}
-html[data-tm-reduced-motion='true'] .tm-mobile-nav-thumb {
-  transition: none;
-  scale: 1;
-}
-@media (prefers-reduced-motion: reduce) {
-  .tm-mobile-nav-thumb {
-    transition: none;
-    scale: 1;
-  }
-}
-
-/* 下拉刷新指示 */
-.tm-ptr {
-  position: fixed;
-  left: 50%;
-  top: calc(var(--tm-safe-top) + var(--tm-header-height) + 8px);
-  z-index: var(--tm-z-nav);
-  display: grid;
-  place-items: center;
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  border: 1px solid var(--tm-line);
-  background: var(--tm-surface-raised);
-  color: var(--tm-text);
-  box-shadow: var(--tm-shadow-sm);
-  opacity: 0;
-  transform: translate(-50%, -48px);
-  pointer-events: none;
-}
-@media (min-width: 768px) {
-  .tm-ptr {
-    display: none;
-  }
-}
-
-/* iPhone 安装到主屏幕引导 */
-.tm-install-hint {
-  position: fixed;
-  left: 12px;
-  right: 12px;
-  bottom: calc(var(--tm-bottom-nav-height) + 28px + var(--tm-safe-bottom));
-  z-index: var(--tm-z-nav);
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 14px;
-  border-radius: var(--tm-radius-md);
-  font-size: 14px;
-  color: var(--tm-text);
-  box-shadow: var(--tm-shadow-md);
-}
-.tm-install-hint p {
-  flex: 1;
-  margin: 0;
-}
-.tm-install-hint .tm-install-hint-btn {
-  min-height: 44px;
-  flex-shrink: 0;
 }
 
 /* 手机页面切换：前进从右侧滑入，后退从左侧滑入（只动 transform 和 opacity） */
@@ -655,435 +190,67 @@ html[data-tm-reduced-motion='true'] .tm-mobile-nav-thumb {
     animation-name: tm-page-enter-back;
   }
 }
+
 @keyframes tm-page-enter-forward {
   from {
     opacity: 0;
     transform: translateX(28px);
   }
 }
+
 @keyframes tm-page-enter-back {
   from {
     opacity: 0;
     transform: translateX(-28px);
   }
 }
+
 @keyframes tm-page-fade {
   from {
     opacity: 0;
   }
 }
 
-/* —— 账号菜单 —— */
-.tm-guest-account {
-  position: relative;
+html[data-tm-reduced-motion='true']:not([data-tm-nav='tab'])
+  .tm-page-transition:not(.tm-page-instant) {
+  animation: tm-fade 120ms var(--tm-ease-out) backwards !important;
 }
-.tm-guest-login {
-  margin-inline: 4px;
+
+@media (prefers-reduced-motion: reduce) {
+  html:not([data-tm-nav='tab']) .tm-page-transition:not(.tm-page-instant) {
+    animation: tm-fade 120ms var(--tm-ease-out) backwards !important;
+  }
 }
-.tm-guest-account summary {
-  list-style: none;
-  cursor: pointer;
+
+@keyframes tm-fade {
+  from {
+    opacity: 0;
+  }
 }
-.tm-guest-account summary::-webkit-details-marker {
+
+/* 底栏切换标签：直接换页，不做整页位移动画（新页面渲染占住主线程时，位移动画只剩几帧，看着卡）。
+ * 只留一个很短的淡入，避免内容生硬地闪出来。 */
+html[data-tm-nav='tab'] .tm-page-transition {
+  animation: tm-page-fade 120ms linear backwards;
+}
+
+/* —— 桌面顶栏 —— */
+/* 顶栏、手机顶栏、底栏显隐时一样淡入淡出 */
+.tm-top-header {
   display: none;
-}
-/* 位置、宽度、层级、最大高度、入场归公共浮层（.tm-popover-layer / useAnchoredLayer），这里只管外观 */
-.tm-account-menu {
-  padding: 6px;
-  border: 0;
-  border-radius: var(--tm-radius-lg);
-  background: var(--tm-surface);
-  color: var(--tm-text);
-  font-size: var(--tm-fs-small);
-  box-shadow: var(--tm-shadow-lg);
-}
-.tm-account-menu svg {
-  color: var(--tm-muted);
-}
-.tm-account-menu-heading {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  width: 100%;
-  min-height: 64px;
-  padding: 10px 12px;
-  border-radius: var(--tm-radius-md);
-  text-align: left;
-  transition: background-color var(--tm-d-hover) var(--tm-ease-out);
-}
-.tm-account-menu-heading:hover {
-  background: var(--tm-surface-raised);
-}
-.tm-menu-avatar {
-  display: grid;
-  place-items: center;
-  flex-shrink: 0;
-  width: 44px;
-  height: 44px;
-  border-radius: var(--tm-radius-full);
-  background: var(--tm-text);
-  color: var(--tm-accent-contrast);
-  font-size: 18px;
-  font-weight: 700;
-}
-.tm-menu-identity {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-}
-.tm-menu-name {
-  overflow: hidden;
-  font-size: var(--tm-fs-body);
-  font-weight: 600;
-  color: var(--tm-text);
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.tm-menu-role {
-  font-size: var(--tm-fs-caption);
-  color: var(--tm-muted);
-}
-.tm-account-menu .tm-menu-chevron {
-  width: 16px;
-  height: 16px;
-  flex-shrink: 0;
-  transition: translate var(--tm-d-hover) var(--tm-ease-out);
-}
-.tm-account-menu-heading:hover .tm-menu-chevron {
-  translate: 2px 0;
-}
-/* 分组：组与组之间一条细线 */
-.tm-menu-group {
-  padding-top: 4px;
-  margin-top: 4px;
-  border-top: 1px solid var(--tm-line);
-}
-.tm-menu-footer {
-  padding-top: 4px;
-  margin-top: 4px;
-  border-top: 1px solid var(--tm-line);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-}
-.tm-menu-footer > .tm-menu-item {
-  width: auto;
-  flex: 1;
-}
-.tm-menu-unread {
-  margin-left: auto;
-  padding: 0 8px;
-  border-radius: var(--tm-radius-full);
-  background: var(--tm-text);
-  color: var(--tm-accent-contrast);
-  font-size: 12px;
-  font-weight: 700;
-  line-height: 20px;
-}
-.tm-menu-item,
-.tm-more-trigger,
-.tm-menu-link {
-  position: relative;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  width: 100%;
-  min-height: 44px;
-  padding: 0 12px;
-  border-radius: var(--tm-radius-sm);
-  font-size: var(--tm-fs-small);
-  font-weight: 500;
-  color: var(--tm-text);
-  text-align: left;
-  transition: background-color var(--tm-d-hover) var(--tm-ease-out);
-}
-.tm-menu-item:hover,
-.tm-more-trigger:hover,
-.tm-menu-link:hover {
-  background: var(--tm-surface-raised);
-}
-.tm-menu-item > svg {
-  width: 18px;
-  height: 18px;
-  flex-shrink: 0;
-  color: var(--tm-muted);
-}
-.tm-more-trigger > svg,
-.tm-menu-link > svg {
-  width: 18px;
-  height: 18px;
-  flex-shrink: 0;
-}
-.tm-menu-version {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  min-height: 44px;
-  padding: 0 12px;
-  border-radius: var(--tm-radius-sm);
-  font-size: var(--tm-fs-caption);
-  color: var(--tm-muted);
-  transition: color var(--tm-d-hover) var(--tm-ease-out);
-}
-.tm-menu-version:hover {
-  color: var(--tm-text);
-}
-.tm-menu-update-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: var(--tm-radius-full);
-  background: var(--tm-text);
-}
-/* 菜单展开时各组依次淡入 */
-.tm-account-menu > * {
-  animation: tm-menu-group-in var(--tm-d-panel) var(--tm-ease-out) backwards;
-}
-.tm-account-menu > :nth-child(2) {
-  animation-delay: 20ms;
-}
-.tm-account-menu > :nth-child(3) {
-  animation-delay: 40ms;
-}
-.tm-account-menu > :nth-child(4) {
-  animation-delay: 60ms;
-}
-.tm-account-menu > :nth-child(5) {
-  animation-delay: 80ms;
-}
-.tm-account-menu > :nth-child(n + 6) {
-  animation-delay: 100ms;
-}
-@keyframes tm-menu-group-in {
-  from {
-    opacity: 0;
-    transform: translateY(-4px);
-  }
-}
-html[data-tm-reduced-motion='true'] .tm-account-menu > * {
-  animation: none;
-}
-@media (prefers-reduced-motion: reduce) {
-  .tm-account-menu > * {
-    animation: none;
-  }
-}
-.tm-menu-theme {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  padding: 10px 12px;
-}
-.tm-menu-theme > span {
-  font-size: var(--tm-fs-caption);
-  color: var(--tm-muted);
+  transition: opacity var(--tm-d-hero) var(--tm-ease-out);
 }
 
-/* —— 「更多」面板 —— */
-.tm-explore-dialog {
-  position: fixed;
-  width: min(calc(720 * var(--tm-wide-unit, 1px)), calc(100vw - 32px));
-  max-height: min(calc(760 * var(--tm-wide-unit, 1px)), calc(100dvh - 48px));
-  padding: 0;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  border: 0;
-  border-radius: var(--tm-radius-xl);
-  background: var(--tm-surface);
-  color: var(--tm-text);
-  box-shadow: var(--tm-shadow-lg);
-}
-.tm-explore-dialog[open] {
-  animation: tm-dialog-in var(--tm-d-panel) var(--tm-ease-out);
-}
-@keyframes tm-dialog-in {
-  from {
-    opacity: 0;
-    transform: translateY(12px) scale(0.98);
-  }
-}
-.tm-explore-dialog::backdrop {
-  background: var(--tm-scrim);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
-}
-html[data-tm-no-blur='true'] .tm-explore-dialog::backdrop {
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
-}
-.tm-explore-content {
-  padding: calc(28 * var(--tm-wide-unit, 1px));
-}
-.tm-explore-heading {
-  display: flex;
+.tm-top-header-grid {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   align-items: center;
-  justify-content: space-between;
   gap: 16px;
-  margin-bottom: 20px;
-}
-.tm-explore-heading h2 {
-  font-size: var(--tm-fs-section);
-  font-weight: 700;
-}
-.tm-icon-button {
-  display: inline-grid;
-  place-items: center;
-  width: 44px;
-  height: 44px;
-  border-radius: var(--tm-radius-full);
-  background: var(--tm-surface-raised);
-  color: var(--tm-text);
-}
-.tm-explore-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 8px;
-  margin-bottom: 24px;
-}
-.tm-explore-card {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 12px;
-  min-height: 64px;
-  padding: calc(16 * var(--tm-wide-unit, 1px));
-  text-align: start;
-  color: var(--tm-text);
-  border: 0;
-  border-radius: var(--tm-radius-md);
-  background: var(--tm-bg);
-  transition: border-color var(--tm-d-hover) var(--tm-ease-out),
-    background-color var(--tm-d-hover) var(--tm-ease-out),
-    scale var(--tm-d-press) var(--tm-ease-out);
-  box-shadow: var(--tm-shadow-sm);
-}
-.tm-explore-card:hover {
-  border-color: var(--tm-line-strong);
-  background: var(--tm-surface-raised);
-}
-.tm-explore-card:active {
-  scale: 0.98;
-}
-.tm-explore-card > svg {
-  color: var(--tm-text);
-  width: calc(24 * var(--tm-wide-unit, 1px));
-  height: calc(24 * var(--tm-wide-unit, 1px));
-}
-.tm-explore-card strong {
-  display: block;
-  font-size: var(--tm-fs-small);
-  font-weight: 500;
-}
-.tm-explore-card small {
-  display: block;
-  margin-top: 2px;
-  font-size: var(--tm-fs-caption);
-  line-height: 1.5;
-  color: var(--tm-muted);
-}
-/* 「更多功能」分组：组标题 + 各组独立网格，入口数量固定不因开放状态变化 */
-.tm-explore-group {
-  margin-bottom: 20px;
-}
-.tm-explore-group:last-child {
-  margin-bottom: 0;
-}
-.tm-explore-group-title {
-  margin-bottom: 8px;
-  font-size: var(--tm-fs-caption);
-  font-weight: 500;
-  color: var(--tm-muted);
-}
-.tm-explore-grid-2 {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-.tm-explore-grid-1 {
-  grid-template-columns: minmax(0, 1fr);
-}
-.tm-explore-card[data-locked='true'] > svg {
-  color: var(--tm-muted);
-}
-.tm-explore-card-badge {
-  display: inline-block;
-  margin-top: 6px;
-  padding: 2px 8px;
-  border-radius: var(--tm-radius-full);
-  background: var(--tm-surface-raised);
-  font-size: var(--tm-fs-caption);
-  font-style: normal;
-  line-height: 1.5;
-  color: var(--tm-muted);
-}
-/* 入口状态提示弹窗：只说明原因，关闭后回到「更多功能」面板 */
-.tm-explore-notice {
-  position: fixed;
-  width: min(calc(360 * var(--tm-wide-unit, 1px)), calc(100vw - 48px));
-  padding: 0;
-  border: 0;
-  border-radius: var(--tm-radius-lg);
-  background: var(--tm-surface);
-  color: var(--tm-text);
-  box-shadow: var(--tm-shadow-lg);
-}
-.tm-explore-notice[open] {
-  animation: tm-dialog-in var(--tm-d-panel) var(--tm-ease-out);
-}
-.tm-explore-notice::backdrop {
-  background: var(--tm-scrim);
-}
-.tm-explore-notice-panel {
-  padding: 24px;
-}
-.tm-explore-notice-panel h2 {
-  font-size: var(--tm-fs-body);
-  font-weight: 700;
-}
-.tm-explore-notice-panel p {
-  margin-top: 8px;
-  font-size: var(--tm-fs-small);
-  line-height: 1.6;
-  color: var(--tm-muted);
-}
-.tm-explore-notice-actions {
-  display: flex;
-  gap: 8px;
-  margin-top: 20px;
-}
-.tm-explore-notice-actions .tm-explore-notice-btn {
-  flex: 1;
-  min-height: 44px;
-}
-
-html[data-tm-reduced-motion='true']
-  :is(.tm-explore-dialog, .tm-explore-notice)[open] {
-  animation: tm-fade 120ms var(--tm-ease-out);
-}
-html[data-tm-reduced-motion='true'] .tm-explore-card:active {
-  scale: 1;
-}
-@media (prefers-reduced-motion: reduce) {
-  :is(.tm-explore-dialog, .tm-explore-notice)[open] {
-    animation: tm-fade 120ms var(--tm-ease-out);
-  }
-  .tm-explore-card:active {
-    scale: 1;
-  }
-}
-
-@media (max-width: 767px) {
-  .tm-explore-content {
-    padding: 20px 16px;
-  }
-  .tm-explore-grid:not(.tm-explore-grid-1) {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
+  height: var(--tm-header-height);
 }
 
 /* 顶栏常驻在根布局、不在页面流里：固定在顶部，页面主体留出同样的高度，版面与原来一致 */
-
 :where(html:not([data-tm-device='phone'], [data-tm-device='phone-landscape']))
   body:has([data-tm-nav-page])
   .tm-top-header {
@@ -1096,369 +263,38 @@ html[data-tm-reduced-motion='true'] .tm-explore-card:active {
   height: var(--tm-header-height);
 }
 
-:where(html:not([data-tm-device='phone'], [data-tm-device='phone-landscape']))
-  .tm-shell:not(.tm-shell-no-navigation)
-  > .tm-shell-body {
-  padding-top: var(--tm-header-height);
-}
-
-:where(html:not([data-tm-device='phone'], [data-tm-device='phone-landscape']))
-  .tm-main {
-  padding-top: 8px;
-  padding-bottom: 96px;
-}
-
-:where(html:not([data-tm-device='phone'], [data-tm-device='phone-landscape']))
-  .tm-mobile-header-v2,
-:where(html:not([data-tm-device='phone'], [data-tm-device='phone-landscape']))
-  .tm-mobile-nav {
-  display: none;
-}
-
-:where(html:not([data-tm-device='phone'], [data-tm-device='phone-landscape']))
-  .tm-account-menu {
-  right: var(--tm-content-gutter);
-  box-shadow: var(--tm-shadow-sm);
-}
-
-/* 音乐等自带二级导航的页面：放在全站顶栏下方的正常文档流里 */
-.tm-shell .tm-media-shell {
-  display: flex;
-  flex-direction: column;
-}
-.tm-shell .tm-media-shell > header {
-  position: relative;
-  top: auto;
-}
-.tm-shell .tm-media-shell > header a[href='/'] {
-  display: none;
-}
-.tm-shell .tm-media-shell > nav {
-  position: sticky;
-  bottom: auto;
-  top: calc(var(--tm-header-height) + var(--tm-safe-top));
-  order: 1;
-}
-.tm-shell .tm-media-shell > main {
-  order: 2;
-  width: 100%;
-  padding-top: 24px;
-}
-.tm-shell .music-theme > .fixed.bottom-6 {
-  bottom: calc(96px + var(--tm-safe-bottom));
-}
-/* 子页名称交给共用顶栏，局部页头保留说明与返回入口。 */
-:where(html:is([data-tm-device='phone'], [data-tm-device='phone-landscape']))
-  .tm-shell
-  .tm-media-shell
-  > .tm-media-page-head {
-  border-bottom: 0;
-}
-:where(html:is([data-tm-device='phone'], [data-tm-device='phone-landscape']))
-  .tm-shell
-  .tm-media-page-head-row {
-  height: auto;
-}
-:where(html:is([data-tm-device='phone'], [data-tm-device='phone-landscape']))
-  .tm-shell
-  .tm-media-page-title {
-  display: none;
-}
-:where(html:is([data-tm-device='phone'], [data-tm-device='phone-landscape']))
-  .tm-shell
-  .tm-media-shell
-  > main {
-  padding-top: 16px;
-}
-:where(html:not([data-tm-device='phone'], [data-tm-device='phone-landscape']))
-  .tm-shell
-  .tm-media-shell
-  > nav {
-  top: var(--tm-header-height);
-}
-:where(html:not([data-tm-device='phone'], [data-tm-device='phone-landscape']))
-  .tm-shell
-  .music-theme
-  > .fixed.bottom-6 {
-  bottom: 24px;
-}
-
-html[data-tm-reduced-motion='true']:not([data-tm-nav='tab'])
-  .tm-page-transition:not(.tm-page-instant) {
-  animation: tm-fade 120ms var(--tm-ease-out) backwards !important;
-}
-@media (prefers-reduced-motion: reduce) {
-  html:not([data-tm-nav='tab']) .tm-page-transition:not(.tm-page-instant) {
-    animation: tm-fade 120ms var(--tm-ease-out) backwards !important;
-  }
-}
-@keyframes tm-fade {
-  from {
-    opacity: 0;
-  }
-}
-
-/* —— 切页即时占位（RouteSkeleton）：不播进场动画，网格/列表铺满 —— */
-html .tm-page-transition.tm-page-instant {
-  animation: none;
-}
-.tm-route-skeleton-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
-  margin-top: 20px;
-}
-.tm-route-skeleton-list {
-  display: grid;
-  gap: 12px;
-  margin-top: 20px;
-}
-@media (min-width: 768px) {
-  .tm-route-skeleton-grid {
-    grid-template-columns: repeat(6, minmax(0, 1fr));
-    gap: 16px;
-  }
-}
-
-/* 卡顿测速条（?perf=1 才出现）：只读，不挡操作 */
-.tm-perf-probe {
-  position: fixed;
-  top: calc(var(--tm-safe-top) + 4px);
-  left: 4px;
-  right: 4px;
-  z-index: calc(var(--tm-z-top) + 1);
-  padding: 6px 8px;
-  border-radius: var(--tm-radius-sm);
-  background: var(--tm-surface);
-  color: var(--tm-text);
-  font: 12px/1.4 ui-monospace, monospace;
+.tm-header-glass {
+  position: absolute;
+  inset: 0;
   pointer-events: none;
-  overflow-wrap: anywhere;
-}
-.tm-perf-control {
-  pointer-events: auto;
-  margin-top: 4px;
-}
-.tm-perf-control textarea {
-  width: 100%;
-  max-height: 160px;
+  opacity: 0;
+  border-width: 0 0 1px;
+  border-radius: 0;
+  box-shadow: none;
+  transition: opacity var(--tm-d-hover) var(--tm-ease-out);
 }
 
-/*
- * 按端区分点按与选中手感（data-tm-platform 见 src/lib/platform.ts）：
- *   所有触屏：去掉点按时的灰色高亮块（浏览器里也只是少一块灰，无副作用）。
- *   app：像原生 App——界面文字、图片长按不出选择手柄和系统菜单；输入框、聊天消息、
- *        代码块以及标了 tm-selectable 的内容仍可选中复制。
- *   web / desktop：保持网页习惯，文字可选中，不拦长按。
- * 以前只按 (pointer: coarse) 判断，手机浏览器也被一并禁了界面元素的选中。
- */
-@media (pointer: coarse) {
-  a,
-  button,
-  summary,
-  [role='button'],
-  [role='tab'] {
-    -webkit-tap-highlight-color: transparent;
-  }
+[data-scrolled='true'] > .tm-header-glass {
+  opacity: 1;
 }
-html[data-tm-platform='app'] body {
-  -webkit-user-select: none;
-  user-select: none;
-  -webkit-touch-callout: none;
+
+:where(html:is([data-tm-device='phone'], [data-tm-device='phone-landscape']))
+  body:has(.tm-shell[data-tab='true'])
+  .tm-mobile-header-v2
+  .tm-header-glass {
+  display: none;
 }
-html[data-tm-platform='app'] img,
-html[data-tm-platform='app'] a {
-  -webkit-touch-callout: none;
-  -webkit-user-drag: none;
-}
-html[data-tm-platform='app']
-  :is(
-    input,
-    textarea,
-    [contenteditable='true'],
-    pre,
-    code,
-    .tm-selectable,
-    .tm-admin-select-all-text
-  ) {
-  -webkit-user-select: text;
-  user-select: text;
-  -webkit-touch-callout: default;
-}
-html[data-tm-shell] {
-  overscroll-behavior-y: none;
-}
-.tm-launch-cue {
-  position: fixed;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  left: 0;
-  z-index: calc(var(--tm-z-overlay) - 1);
+
+.tm-header-brand {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  background: inherit;
-  background: var(--tm-bg);
-  background-image: radial-gradient(
-    ellipse at center,
-    var(--tm-spot),
-    transparent 67%
-  );
-  color: var(--tm-text);
-  pointer-events: none;
-  animation: tm-launch-out 680ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  gap: 8px;
+  min-width: 0;
 }
 
-.tm-launch-aperture {
-  position: relative;
-  width: 156px;
-  height: 86px;
-  margin-bottom: 18px;
-  animation: tm-launch-open 460ms cubic-bezier(0.22, 1, 0.36, 1) both;
-}
-
-/* 光圈两道椭圆环：外环斜向左，内环斜向右 */
-.tm-launch-aperture::before {
-  position: absolute;
-  content: '';
-  inset: 9px 20px;
-  border: 1px solid var(--tm-line-strong);
-  border-radius: 50%;
-  transform: rotate(-18deg);
-}
-
-.tm-launch-aperture::after {
-  position: absolute;
-  content: '';
-  inset: 16px 27px;
-  border: 1px solid var(--tm-line);
-  border-radius: 50%;
-  transform: rotate(18deg);
-}
-
-.tm-launch-beam {
-  position: absolute;
-  top: 50%;
-  left: 0;
-  width: 100%;
-  height: 2px;
-  background: linear-gradient(90deg, transparent, currentColor, transparent);
-  animation: tm-launch-sweep 490ms cubic-bezier(0.22, 1, 0.36, 1) both;
-}
-
-.tm-launch-wordmark {
-  font-size: 24px;
-  font-weight: 600;
-  letter-spacing: -0.035em;
-  animation: tm-launch-type 370ms 70ms cubic-bezier(0.22, 1, 0.36, 1) both;
-}
-
-.tm-launch-wordmark small {
-  color: var(--tm-muted);
-  font-size: 0.68em;
-  letter-spacing: 0.05em;
-}
-
-@keyframes tm-launch-open {
-  from {
-    opacity: 0;
-    transform: scale(0.68) rotate(-12deg);
-  }
-}
-
-@keyframes tm-launch-sweep {
-  0% {
-    opacity: 0;
-    transform: translateX(-24%) scaleX(0.3);
-  }
-  46% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0.6;
-    transform: translateX(0) scaleX(1);
-  }
-}
-
-@keyframes tm-launch-type {
-  from {
-    opacity: 0;
-    transform: translateY(7px);
-  }
-}
-
-@keyframes tm-launch-out {
-  0%,
-  47% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0;
-    visibility: hidden;
-  }
-}
-
-html[data-tm-native-launch='true'] .tm-launch-cue,
-html[data-tm-reduced-motion='true'] .tm-launch-cue {
-  display: none;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .tm-launch-cue {
-    display: none;
-  }
-}
-
-/* 底栏切换标签：直接换页，不做整页位移动画（新页面渲染占住主线程时，位移动画只剩几帧，看着卡）。
- * 只留一个很短的淡入，避免内容生硬地闪出来。 */
-html[data-tm-nav='tab'] .tm-page-transition {
-  animation: tm-page-fade 120ms linear backwards;
-}
-
-/* 手机横屏（lib/device-tier.ts）：页面开了 viewport-fit=cover，左右要让开刘海和圆角 */
-:where(html[data-tm-device='phone-landscape']) .tm-mobile-header-v2 {
-  padding-right: env(safe-area-inset-right);
-  padding-left: env(safe-area-inset-left);
-}
-:where(html[data-tm-device='phone-landscape']) .tm-mobile-nav {
-  right: max(12px, env(safe-area-inset-right));
-  left: max(12px, env(safe-area-inset-left));
-}
-:where(html[data-tm-device='phone-landscape']) .tm-main {
-  padding-right: env(safe-area-inset-right);
-  padding-left: env(safe-area-inset-left);
-}
-
-/* ---------------------------------------------------------------- 沉浸模式（hooks/useImmersiveShell） */
-/* bare：顶栏、手机顶栏、底栏都不显示，给它们留的位置也收回来（手机、触屏平板上的房间页） */
-html[data-tm-immersive='bare']
-  :is(.tm-top-header, .tm-mobile-header-v2, .tm-mobile-nav) {
-  display: none;
-}
-html[data-tm-immersive='bare'] .tm-shell > .tm-shell-body {
-  padding-top: 0;
-}
-/* fit：外壳照常，主区域不留上下空白、不撑满一屏（窄的电脑窗口上的房间页）；bare 也一样 */
-html:is([data-tm-immersive='bare'], [data-tm-immersive='fit']) .tm-main {
-  min-height: 0;
-  padding-top: 0;
-  padding-bottom: 0;
-}
-/* flush：外壳照常，主区域不留底部空白（电脑上的房间页） */
-html[data-tm-immersive='flush'] .tm-main {
-  padding-bottom: 0;
-}
-
-/* 自己看的播放页完整显示时（手机 / 平板）：页面底部让出它的操作坞，手机底栏不出现 */
-:where(html:not([data-tm-device='wide']))
-  body:has(.tm-playback-host[data-presentation='full'] .tm-solo-dock)
-  .tm-main {
-  padding-bottom: calc(84px + var(--tm-safe-bottom, 0px));
-}
-html:where(:not([data-tm-device='wide']))
-  body:has(.tm-playback-host[data-presentation='full'] .tm-solo-dock)
-  .tm-mobile-nav {
-  display: none;
+.tm-header-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
 }
