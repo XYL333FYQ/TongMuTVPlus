@@ -75,7 +75,6 @@ html:is([data-tm-device='phone'], [data-tm-device='phone-landscape'])
   > :where(:not([data-tm-layer-guest])) {
   width: 100%;
   max-width: 560px;
-  height: auto;
   max-height: calc(100% - 32px);
   padding-bottom: var(--tm-safe-bottom);
   border-radius: var(--tm-radius-md) var(--tm-radius-md) 0 0;

@@ -1,11 +1,5 @@
 'use client';
 
-import {
-  motion,
-  useDragControls,
-  useMotionValue,
-  useTransform,
-} from 'framer-motion';
 import { X } from 'lucide-react';
 import {
   type ReactNode,
@@ -20,32 +14,38 @@ import './detail.css';
 
 import { getDeviceTier } from '@/lib/device-tier';
 import { isReducedMotionSetting, useReducedMotionSetting } from '@/lib/motion';
-import { useBackLayer } from '@/hooks/useBackLayer';
 import { useDeviceTier } from '@/hooks/useDeviceTier';
+import { usePullDownClose } from '@/hooks/usePullDownClose';
+
+import ModalLayer from '@/components/feedback/ModalLayer';
 
 // 手机上点海报进详情：从被点的海报卡位置放大展开（只动 transform 和 opacity）。
-// 减少动态、桌面抽屉、没有触发元素或元素不在屏幕内时返回 null，沿用原来的底部滑入。
+// 减少动态、没有触发元素或元素不在屏幕内时返回 null，沿用底部滑入。
 function posterOrigin(
   trigger: HTMLElement | null | undefined,
-  kind: string,
-  drawer: boolean
+  kind: string
 ): DOMRect | null {
   if (typeof window === 'undefined' || !trigger) return null;
-  if (kind !== 'detail' || drawer || isReducedMotionSetting()) return null;
+  if (kind !== 'detail' || isReducedMotionSetting()) return null;
   if (getDeviceTier() !== 'phone') return null;
   const rect = trigger.getBoundingClientRect();
   if (rect.width < 40 || rect.height < 40) return null;
-  if (rect.bottom < 0 || rect.top > window.innerHeight) return null;
+  if (rect.bottom < 0 || rect.top > document.documentElement.clientHeight)
+    return null;
   return rect;
 }
 
+/**
+ * 影片详情的弹窗外壳（设计稿 docs/design/prototypes/detail-shell.html）：
+ * 遮罩、焦点、Esc / 返回键、滚动锁都归公共弹窗层；手机竖屏是底部面板（离顶 56、拖动条下拉关闭），
+ * 其余三档是居中大面板（最宽 1000）。进退场由这里自己管（海报放大展开、下拉跟手），不用款式自带的入场。
+ * 播放页右侧不挡页面的那一种是 DetailSidePanel。
+ */
 export default function DetailShell({
   children,
   title,
   onClose,
   visible = true,
-  drawer = false,
-  drawerWidth = '',
   tools,
   footer,
   kind = 'detail',
@@ -55,22 +55,18 @@ export default function DetailShell({
   title: string;
   onClose: () => void;
   visible?: boolean;
-  drawer?: boolean;
-  drawerWidth?: string;
   tools?: ReactNode;
   footer?: ReactNode;
-  kind?: 'detail' | 'auxiliary' | 'gallery' | 'image';
+  kind?: 'detail' | 'auxiliary' | 'gallery';
   returnFocusRef?: React.RefObject<HTMLElement>;
 }) {
-  const dialog = useRef<HTMLDialogElement>(null);
   const panel = useRef<HTMLElement>(null);
-  const [origin] = useState(() =>
-    posterOrigin(returnFocusRef?.current, kind, drawer)
-  );
   const close = useRef<HTMLButtonElement>(null);
+  const [origin] = useState(() => posterOrigin(returnFocusRef?.current, kind));
   const callback = useRef(onClose);
   callback.current = onClose;
   const [closing, setClosing] = useState(false);
+  const [entered, setEntered] = useState(false);
   const dismissTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const requestClose = () => {
     if (dismissTimer.current !== null) return;
@@ -83,82 +79,24 @@ export default function DetailShell({
       isReducedMotionSetting() ? 120 : 320
     );
   };
-  const dismiss = useRef(requestClose);
-  dismiss.current = requestClose;
-  useBackLayer(true, () => dismiss.current());
+  useEffect(
+    () => () => {
+      if (dismissTimer.current !== null) clearTimeout(dismissTimer.current);
+    },
+    []
+  );
+  // 先以“进场前”渲染一帧，再切到“出现”，进场由样式过渡完成（详情由外面控制何时可见）
+  useEffect(() => {
+    if (!visible) return;
+    const frame = requestAnimationFrame(() => setEntered(true));
+    return () => cancelAnimationFrame(frame);
+  }, [visible]);
   const titleId = useId();
   const reduced = useReducedMotionSetting();
-  const initialReduced = useRef(isReducedMotionSetting()).current;
-  // 手机竖屏是底部面板，其余（手机横屏、平板、电脑）是右侧抽屉：和房间面板同一规则
-  const mobile = useDeviceTier() === 'phone';
-  const controls = useDragControls();
-  const y = useMotionValue(0);
-  const shade = useTransform(y, [0, 600], [1, 0]);
-  useEffect(() => {
-    const element = dialog.current;
-    if (!element) return;
-    const trigger =
-      returnFocusRef?.current ||
-      (document.activeElement instanceof HTMLElement
-        ? document.activeElement
-        : null);
-    // Native modal top layer owns focus/inertness and dispatches cancel only to the top dialog.
-    if (drawer && typeof element.show === 'function') element.show();
-    else if (!drawer && typeof element.showModal === 'function')
-      element.showModal();
-    else element.setAttribute('open', '');
-    close.current?.focus({ preventScroll: true });
-    const cancel = (event: Event) => {
-      event.preventDefault();
-      dismiss.current();
-    };
-    const keys = (event: KeyboardEvent) => {
-      if (event.defaultPrevented) return;
-      if (
-        drawer &&
-        event.key === 'Escape' &&
-        !document.querySelector('dialog[open][aria-modal="true"]') &&
-        Array.from(
-          document.querySelectorAll('dialog[open][data-drawer="true"]')
-        ).pop() === element
-      ) {
-        event.preventDefault();
-        dismiss.current();
-      }
-      if (!drawer && event.key === 'Tab') {
-        const targets = Array.from(
-          element.querySelectorAll<HTMLElement>(
-            'button:not(:disabled),a[href],input:not(:disabled),select:not(:disabled),textarea:not(:disabled),[tabindex="0"]'
-          )
-        ).filter(
-          (node) =>
-            node.getClientRects().length || process.env.NODE_ENV === 'test'
-        );
-        const first = targets[0],
-          last = targets[targets.length - 1];
-        if (event.shiftKey && document.activeElement === first) {
-          event.preventDefault();
-          last?.focus();
-        } else if (!event.shiftKey && document.activeElement === last) {
-          event.preventDefault();
-          first?.focus();
-        }
-      }
-    };
-    element.addEventListener('cancel', cancel);
-    element.addEventListener('keydown', keys);
-    if (drawer) document.addEventListener('keydown', keys);
-    return () => {
-      if (dismissTimer.current !== null) clearTimeout(dismissTimer.current);
-      element.removeEventListener('cancel', cancel);
-      element.removeEventListener('keydown', keys);
-      if (drawer) document.removeEventListener('keydown', keys);
-      if (typeof element.close === 'function') element.close();
-      else element.removeAttribute('open');
-      if (trigger?.isConnected) trigger.focus({ preventScroll: true });
-    };
-  }, [drawer, returnFocusRef]);
-  const sheet = mobile && !drawer && kind !== 'image';
+  const sheet = useDeviceTier() === 'phone';
+  const pull = usePullDownClose(requestClose, {
+    enabled: sheet && !closing,
+  });
   useLayoutEffect(() => {
     const element = panel.current;
     if (!element || !origin || typeof element.animate !== 'function') return;
@@ -181,73 +119,34 @@ export default function DetailShell({
       { duration: 360, easing: 'cubic-bezier(0.22, 1, 0.36, 1)' }
     );
   }, [origin]);
-  const shown = visible && !closing;
+  const state =
+    closing || (entered && !visible)
+      ? 'closing'
+      : entered
+      ? 'open'
+      : 'entering';
+  const offset = reduced ? 0 : pull.offset;
   return (
-    <dialog
-      ref={dialog}
-      className='tm-detail-dialog'
-      data-drawer={drawer}
-      data-kind={kind}
-      role='dialog'
-      aria-modal={!drawer}
-      aria-labelledby={titleId}
+    <ModalLayer
+      label={title}
+      onClose={requestClose}
+      variant={sheet ? 'sheet' : 'dialog'}
+      className='tm-detail-layer'
+      initialFocus={close}
+      returnFocusRef={returnFocusRef}
     >
-      {!drawer && (
-        <motion.div
-          className='tm-detail-mask'
-          initial={{ opacity: 0 }}
-          animate={{ opacity: shown ? 1 : 0 }}
-          transition={{ duration: reduced ? 0.12 : 0.2 }}
-          onClick={requestClose}
-        >
-          <motion.div
-            className='tm-detail-mask-shade'
-            style={{ opacity: reduced ? 1 : shade }}
-          />
-        </motion.div>
-      )}
-      <motion.section
+      <section
         ref={panel}
-        className={`tm-detail-panel tm-detail-surface ${
-          drawer ? drawerWidth : ''
-        }`}
-        data-sheet={sheet}
-        data-visible={shown}
-        initial={{
-          opacity: 0,
-          scale: initialReduced || drawer || sheet ? 1 : 0.98,
-          x: drawer && !initialReduced ? '100%' : 0,
-          y: sheet && !initialReduced && !origin ? '100%' : 0,
-        }}
-        animate={{
-          opacity: shown ? 1 : 0,
-          scale: shown || reduced || drawer || sheet ? 1 : 0.98,
-          x: !shown && drawer && !reduced ? '100%' : 0,
-          y: !shown && sheet && !reduced ? '100%' : 0,
-        }}
-        transition={{
-          duration: reduced ? 0.12 : 0.32,
-          ease: [0.22, 1, 0.36, 1],
-          y:
-            sheet && !reduced
-              ? { type: 'spring', duration: 0.32, bounce: 0.12 }
-              : { duration: reduced ? 0.12 : 0.32 },
-        }}
-        drag={sheet ? 'y' : false}
-        dragControls={controls}
-        dragListener={false}
-        dragConstraints={{ top: 0, bottom: 0 }}
-        dragElastic={{ top: 0, bottom: 0.6 }}
-        dragMomentum={false}
-        onDragEnd={(_, info) => {
-          if (
-            info.offset.y > 120 ||
-            (info.offset.y > 20 && info.velocity.y > 600)
-          )
-            requestClose();
-        }}
-        onUpdate={(values) => {
-          if (typeof values.y === 'number') y.set(values.y);
+        className='tm-detail-panel tm-detail-surface'
+        data-kind={kind}
+        data-state={state}
+        data-origin={origin ? '' : undefined}
+        data-dragging={pull.dragging || undefined}
+        aria-labelledby={titleId}
+        style={{
+          // 进退场归这里（data-state 过渡、海报放大），不叠款式自带的入场动画
+          animation: 'none',
+          transform: offset > 0 ? `translateY(${offset}px)` : undefined,
         }}
       >
         <h2 id={titleId} className='sr-only'>
@@ -259,7 +158,7 @@ export default function DetailShell({
             role='button'
             tabIndex={0}
             aria-label='下拉关闭详情'
-            onPointerDown={(event) => controls.start(event)}
+            {...pull.handlers}
             onKeyDown={(event) => {
               if (['Enter', ' ', 'ArrowDown'].includes(event.key)) {
                 event.preventDefault();
@@ -284,7 +183,7 @@ export default function DetailShell({
         </div>
         <div className='tm-detail-scroll'>{children}</div>
         {sheet && footer}
-      </motion.section>
-    </dialog>
+      </section>
+    </ModalLayer>
   );
 }

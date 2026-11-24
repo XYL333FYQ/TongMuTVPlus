@@ -10,7 +10,7 @@ import { getTMDBImageUrl } from '@/lib/tmdb-image-base';
 import { processImageUrl } from '@/lib/utils';
 
 import { useExternalAction } from '@/components/ExternalLink';
-import ProxyImage from '@/components/ProxyImage';
+import ImageViewer from '@/components/feedback/ImageViewer';
 
 import DetailActions from './detail/DetailActions';
 import DetailActors from './detail/DetailActors';
@@ -23,6 +23,7 @@ import DetailContent from './detail/DetailContent';
 import DetailEpisodes from './detail/DetailEpisodes';
 import DetailMoreMenu, { type DetailMenuItem } from './detail/DetailMoreMenu';
 import DetailShell from './detail/DetailShell';
+import DetailSidePanel from './detail/DetailSidePanel';
 import type { DetailData, Episode, GalleryImage } from './detail/types';
 
 interface DetailPanelProps {
@@ -103,6 +104,36 @@ const pickBestTmdbResult = (
 
   return best;
 };
+
+// 播放页右侧是不挡页面的侧栏（设计稿 D-4），其余地方是弹窗层里的详情
+function DetailFrame({
+  drawer,
+  drawerWidth,
+  returnFocusRef,
+  kind = 'detail',
+  ...props
+}: {
+  drawer: boolean;
+  drawerWidth: string;
+  returnFocusRef?: React.RefObject<HTMLElement>;
+  title: string;
+  onClose: () => void;
+  children: React.ReactNode;
+  kind?: 'detail' | 'auxiliary' | 'gallery';
+  visible?: boolean;
+  tools?: React.ReactNode;
+  footer?: React.ReactNode;
+}) {
+  if (drawer)
+    return <DetailSidePanel {...props} kind={kind} width={drawerWidth} />;
+  return (
+    <DetailShell
+      {...props}
+      kind={kind}
+      returnFocusRef={kind === 'detail' ? returnFocusRef : undefined}
+    />
+  );
+}
 
 const DetailPanel: React.FC<DetailPanelProps> = ({
   isOpen,
@@ -1243,16 +1274,15 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
       }}
     />
   );
+  const frameProps = { drawer: useDrawer, drawerWidth, returnFocusRef };
   const content = (
     <>
       {externalAction.feedback}
-      <DetailShell
+      <DetailFrame
+        {...frameProps}
         title={detailData?.title || title}
-        returnFocusRef={returnFocusRef}
         visible={isAnimating}
         onClose={onClose}
-        drawer={useDrawer}
-        drawerWidth={drawerWidth}
         tools={tools}
         footer={
           <div className='tm-detail-mobile-actions tm-glass'>{actions}</div>
@@ -1305,14 +1335,13 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
             )
           }
         />
-      </DetailShell>
+      </DetailFrame>
       {showGallery && (
-        <DetailShell
+        <DetailFrame
+          {...frameProps}
           title='照片墙'
           kind='gallery'
           onClose={() => setShowGallery(false)}
-          drawer={useDrawer}
-          drawerWidth={drawerWidth}
         >
           <p className='tm-detail-aux-title'>
             照片墙{!galleryLoading && ' · ' + galleryTotal + ' 张'}
@@ -1327,15 +1356,14 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
             title={title}
             handleImageClick={handleImageClick}
           />
-        </DetailShell>
+        </DetailFrame>
       )}
       {showEpisodeStills && (
-        <DetailShell
+        <DetailFrame
+          {...frameProps}
           title={episodeStillsTitle}
           kind='auxiliary'
           onClose={() => setShowEpisodeStills(false)}
-          drawer={useDrawer}
-          drawerWidth={drawerWidth}
         >
           <p className='tm-detail-aux-title'>{episodeStillsTitle}</p>
           <StillsContent
@@ -1345,15 +1373,14 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
             episodeStillsTitle={episodeStillsTitle}
             handleImageClick={handleImageClick}
           />
-        </DetailShell>
+        </DetailFrame>
       )}
       {showTmdbCorrection && (
-        <DetailShell
+        <DetailFrame
+          {...frameProps}
           title='纠正匹配'
           kind='auxiliary'
           onClose={() => setShowTmdbCorrection(false)}
-          drawer={useDrawer}
-          drawerWidth={drawerWidth}
         >
           <p className='tm-detail-aux-title'>选择正确的条目</p>
           <CorrectionContent
@@ -1361,22 +1388,15 @@ const DetailPanel: React.FC<DetailPanelProps> = ({
             detailData={detailData}
             handleSelectTmdbResult={handleSelectTmdbResult}
           />
-        </DetailShell>
+        </DetailFrame>
       )}
-      {showImageViewer && (
-        <DetailShell
-          title={(detailData?.title || title) + ' 海报'}
-          kind='image'
-          onClose={() => setShowImageViewer(false)}
-        >
-          <ProxyImage
-            originalSrc={selectedImage}
-            alt={detailData?.title || title}
-            className='tm-detail-full-image'
-            loading='eager'
-          />
-        </DetailShell>
-      )}
+      {/* 看大图：全站共用的看图零件（设计稿 D-3） */}
+      <ImageViewer
+        isOpen={showImageViewer}
+        onClose={() => setShowImageViewer(false)}
+        imageUrl={selectedImage}
+        alt={(detailData?.title || title) + ' 海报'}
+      />
     </>
   );
   return createPortal(content, document.body);

@@ -48,6 +48,7 @@ export default function ModalLayer({
   role,
   describedBy,
   initialFocus,
+  returnFocusRef,
 }: {
   label: string;
   onClose: () => BackResult | void;
@@ -60,11 +61,15 @@ export default function ModalLayer({
   describedBy?: string;
   /** 打开后先聚焦它（例如确认框的“取消”），不给就交给浏览器 */
   initialFocus?: RefObject<HTMLElement>;
+  /** 关掉后焦点回到它（例如触屏点开详情时海报卡没拿到焦点）；不给就回到打开时有焦点的元素 */
+  returnFocusRef?: RefObject<HTMLElement>;
 }) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const pressedBackdrop = useRef(false);
   const focusRef = useRef(initialFocus);
   focusRef.current = initialFocus;
+  const returnRef = useRef(returnFocusRef);
+  returnRef.current = returnFocusRef;
   // 服务端和水合时没有 body，先不渲染；其余时候第一次渲染就挂上，
   // 调用方同一次提交里的 effect 就能拿到弹窗里的元素
   const onClient = useSyncExternalStore(
@@ -78,9 +83,10 @@ export default function ModalLayer({
     const dialog = dialogRef.current;
     if (!host || !dialog) return;
     const trigger =
-      document.activeElement instanceof HTMLElement
+      returnRef.current?.current ||
+      (document.activeElement instanceof HTMLElement
         ? document.activeElement
-        : null;
+        : null);
     // 旧浏览器（iOS 15.4 以前）没有 showModal：退回普通打开，其余行为照旧
     if (typeof dialog.showModal === 'function') dialog.showModal();
     else dialog.setAttribute('open', '');
