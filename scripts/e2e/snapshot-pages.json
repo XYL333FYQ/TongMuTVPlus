@@ -95,5 +95,27 @@
     "href": "/play?source=directplay&id=axopD2eJJx4cCySw2YHLQGFH4LmW7Gr2RPUhuA1PYHWtPqBZYkrDiiGCN8AP&title=Big%20Buck%20Bunny",
     "wait": 8000,
     "prepare": "(() => { const want = [\"快捷键\"]; const vis = (el) => { const r = el.getBoundingClientRect(); return r.width > 0 && r.height > 0 && getComputedStyle(el).visibility !== 'hidden'; }; const all = [...document.querySelectorAll('button')].filter(vis); const hit = all.find((el) => want.some((w) => el.textContent.trim().startsWith(w))); if (hit) hit.click(); return new Promise((r) => setTimeout(() => r(hit ? 'clicked' : 'none'), 1500)); })()"
+  },
+  {
+    "name": "my",
+    "href": "/my",
+    "wait": 6000
+  },
+  {
+    "name": "my-sheet",
+    "href": "/my",
+    "wait": 6000,
+    "prepare": "(() => { const card = document.querySelector('.tm-video-card-tile'); if (!card) return 'none'; const r = card.getBoundingClientRect(); card.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: r.x + 10, clientY: r.y + 10 })); return new Promise((res) => setTimeout(() => res('opened'), 1800)); })()"
+  },
+  {
+    "name": "my-detail",
+    "href": "/my",
+    "wait": 6000,
+    "prepare": "(async () => { await (() => { const card = document.querySelector('.tm-video-card-tile'); if (!card) return 'none'; const r = card.getBoundingClientRect(); card.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: r.x + 10, clientY: r.y + 10 })); return new Promise((res) => setTimeout(() => res('opened'), 1800)); })(); return (() => { const want = [\"详情\"]; const vis = (el) => { const r = el.getBoundingClientRect(); return r.width > 0 && r.height > 0 && getComputedStyle(el).visibility !== 'hidden'; }; const all = [...document.querySelectorAll('button, [role=menuitem], a')].filter(vis); const hit = all.find((el) => want.some((w) => (el.getAttribute('aria-label') || '') === w || el.textContent.trim() === w)); if (hit) hit.click(); return new Promise((r) => setTimeout(() => r(hit ? 'clicked' : 'none'), 1800)); })(); })()"
+  },
+  {
+    "name": "play-fail",
+    "href": "/play?source=directplay&id=2bP4pJiMnJhCAN3n1q6F4KM6PFJWtixzfUUnKGDpQVm&title=%E6%89%93%E4%B8%8D%E5%BC%80%E7%9A%84%E7%89%87",
+    "wait": 9000
   }
 ]
