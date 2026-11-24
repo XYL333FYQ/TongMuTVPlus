@@ -789,17 +789,12 @@
   );
   transition: opacity var(--tm-d-hover) var(--tm-ease-out);
 }
-/* 缩略图里的画面层和进度条跟着外框圆角走，底色、进度条不会从圆角下露出来 */
+/* 缩略图里的画面层（含横向卡片的标题条、进度条）跟着外框圆角裁，底色不会从圆角下露出来 */
 .tm-video-card-clip {
   border-radius: var(--tm-art-radius, var(--tm-radius-md));
   position: absolute;
   inset: 0px;
   overflow: hidden;
-}
-.tm-video-card-art .tm-video-horizontal-progress {
-  overflow: hidden;
-  border-radius: 0 0 var(--tm-art-radius, var(--tm-radius-md))
-    var(--tm-art-radius, var(--tm-radius-md));
 }
 .tm-video-card-art img {
   transition: opacity var(--tm-d-panel) var(--tm-ease-out),

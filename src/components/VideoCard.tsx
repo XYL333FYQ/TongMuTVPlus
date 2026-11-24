@@ -869,6 +869,94 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
 
               {/* 悬浮遮罩 */}
               <div className='tm-video-card-overlay' />
+
+              {/* 横向模式：标题和进度条在海报上，放在裁切层里，跟画面一起按圆角裁 */}
+              {orientation === 'horizontal' && (
+                <>
+                  {/* 顶部渐变遮罩 - 用于标题背景 */}
+                  <div className='tm-video-horizontal-title'>
+                    {/* 标题 */}
+                    <div className='tm-video-horizontal-heading'>
+                      <span
+                        className='tm-video-horizontal-name'
+                        title={actualTitle}
+                      >
+                        {actualTitle}
+                      </span>
+                    </div>
+
+                    {/* 集数信息 - 只有超过1集时才显示 */}
+                    {currentEpisode && actualEpisodes && actualEpisodes > 1 && (
+                      <div className='tm-video-horizontal-meta'>
+                        第{currentEpisode}集 · 共{actualEpisodes}集
+                      </div>
+                    )}
+
+                    {/* 直链地址 */}
+                    {isDirectPlaySource && directLinkUrl && (
+                      <div
+                        className='tm-video-horizontal-url'
+                        title={directLinkUrl}
+                      >
+                        {directLinkUrl}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* 底部渐变遮罩 - 用于进度条背景 */}
+                  <div className='tm-video-horizontal-progress'>
+                    {/* 进度条 */}
+                    {config.showProgress &&
+                      progress !== undefined &&
+                      origin !== 'live' && (
+                        <div>
+                          {/* 来源和时长显示 - 在进度条上方 */}
+                          <div className='tm-video-horizontal-row'>
+                            {/* 时长显示 - 左侧 */}
+                            {from === 'playrecord' &&
+                              playTime !== undefined &&
+                              totalTime !== undefined && (
+                                <div className='tm-video-horizontal-time'>
+                                  {formatDuration(playTime)}
+                                </div>
+                              )}
+
+                            {/* 来源 - 右侧 */}
+                            {config.showSourceName &&
+                              source_name &&
+                              !cmsData && (
+                                <span className='tm-video-horizontal-source'>
+                                  {source_name}
+                                </span>
+                              )}
+                          </div>
+                          <div className='tm-video-horizontal-bar'>
+                            <div
+                              className='tm-video-horizontal-fill'
+                              style={{ width: `${progress}%` }}
+                            />
+                          </div>
+                        </div>
+                      )}
+
+                    {/* 直播时只显示来源 */}
+                    {origin === 'live' &&
+                      config.showSourceName &&
+                      source_name &&
+                      !cmsData && (
+                        <div className='tm-video-horizontal-live'>
+                          <span className='tm-video-horizontal-source'>
+                            <Radio
+                              size={8}
+                              className='tm-video-card-live-icon'
+                            />
+                            {source_name}
+                          </span>
+                        </div>
+                      )}
+                  </div>
+                </>
+              )}
             </div>
 
             {/* 播放按钮或上映倒计时 */}
@@ -1125,89 +1213,6 @@ const VideoCard = forwardRef<VideoCardHandle, VideoCardProps>(
                   </div>
                 );
               })()}
-
-            {/* 横向模式：标题和进度条在海报上 */}
-            {orientation === 'horizontal' && (
-              <>
-                {/* 顶部渐变遮罩 - 用于标题背景 */}
-                <div className='tm-video-horizontal-title'>
-                  {/* 标题 */}
-                  <div className='tm-video-horizontal-heading'>
-                    <span
-                      className='tm-video-horizontal-name'
-                      title={actualTitle}
-                    >
-                      {actualTitle}
-                    </span>
-                  </div>
-
-                  {/* 集数信息 - 只有超过1集时才显示 */}
-                  {currentEpisode && actualEpisodes && actualEpisodes > 1 && (
-                    <div className='tm-video-horizontal-meta'>
-                      第{currentEpisode}集 · 共{actualEpisodes}集
-                    </div>
-                  )}
-
-                  {/* 直链地址 */}
-                  {isDirectPlaySource && directLinkUrl && (
-                    <div
-                      className='tm-video-horizontal-url'
-                      title={directLinkUrl}
-                    >
-                      {directLinkUrl}
-                    </div>
-                  )}
-                </div>
-
-                {/* 底部渐变遮罩 - 用于进度条背景 */}
-                <div className='tm-video-horizontal-progress'>
-                  {/* 进度条 */}
-                  {config.showProgress &&
-                    progress !== undefined &&
-                    origin !== 'live' && (
-                      <div>
-                        {/* 来源和时长显示 - 在进度条上方 */}
-                        <div className='tm-video-horizontal-row'>
-                          {/* 时长显示 - 左侧 */}
-                          {from === 'playrecord' &&
-                            playTime !== undefined &&
-                            totalTime !== undefined && (
-                              <div className='tm-video-horizontal-time'>
-                                {formatDuration(playTime)}
-                              </div>
-                            )}
-
-                          {/* 来源 - 右侧 */}
-                          {config.showSourceName && source_name && !cmsData && (
-                            <span className='tm-video-horizontal-source'>
-                              {source_name}
-                            </span>
-                          )}
-                        </div>
-                        <div className='tm-video-horizontal-bar'>
-                          <div
-                            className='tm-video-horizontal-fill'
-                            style={{ width: `${progress}%` }}
-                          />
-                        </div>
-                      </div>
-                    )}
-
-                  {/* 直播时只显示来源 */}
-                  {origin === 'live' &&
-                    config.showSourceName &&
-                    source_name &&
-                    !cmsData && (
-                      <div className='tm-video-horizontal-live'>
-                        <span className='tm-video-horizontal-source'>
-                          <Radio size={8} className='tm-video-card-live-icon' />
-                          {source_name}
-                        </span>
-                      </div>
-                    )}
-                </div>
-              </>
-            )}
           </div>
 
           {compactRecord && (
